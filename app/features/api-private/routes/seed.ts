@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import { z } from "zod";
 import { seed } from "~/db/seed";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
@@ -28,5 +28,5 @@ export const action: ActionFunction = async ({ request }) => {
 
 	await refreshSendouQInstance();
 
-	return null;
+	return Response.json(null);
 };

@@ -1,4 +1,4 @@
-import { type ActionFunction, redirect } from "@remix-run/node";
+import { type ActionFunction, redirect } from "react-router";
 import { requireUserId } from "~/features/auth/core/user.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";

@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import invariant from "~/utils/invariant";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import { articleBySlug } from "../core/bySlug.server";

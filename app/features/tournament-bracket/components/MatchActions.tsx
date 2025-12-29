@@ -1,5 +1,5 @@
-import { Form, useFetcher, useLoaderData } from "@remix-run/react";
 import * as React from "react";
+import { Form, useFetcher, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { EditIcon } from "~/components/icons/Edit";
 import { Label } from "~/components/Label";

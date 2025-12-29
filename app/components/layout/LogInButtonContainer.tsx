@@ -1,6 +1,6 @@
-import { useSearchParams } from "@remix-run/react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { LOG_IN_URL, SENDOU_INK_DISCORD_URL } from "~/utils/urls";

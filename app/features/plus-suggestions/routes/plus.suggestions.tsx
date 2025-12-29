@@ -1,7 +1,6 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import type { ShouldRevalidateFunction } from "@remix-run/react";
-import { Link, Outlet, useLoaderData, useSearchParams } from "@remix-run/react";
 import clsx from "clsx";
+import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
+import { Link, Outlet, useLoaderData, useSearchParams } from "react-router";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { Catcher } from "~/components/Catcher";
@@ -18,7 +17,7 @@ import {
 } from "~/features/plus-voting/core";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-import { metaTags } from "~/utils/remix";
+import { metaTags, type SerializeFrom } from "~/utils/remix";
 import { userPage } from "~/utils/urls";
 import { action } from "../actions/plus.suggestions.server";
 import { loader } from "../loaders/plus.suggestions.server";

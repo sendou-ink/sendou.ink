@@ -1,5 +1,5 @@
-import { Form, Link, useLoaderData } from "@remix-run/react";
 import * as React from "react";
+import { Form, Link, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { TrashIcon } from "~/components/icons/Trash";

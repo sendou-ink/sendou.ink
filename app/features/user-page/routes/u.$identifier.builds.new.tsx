@@ -1,11 +1,6 @@
-import {
-	Form,
-	useLoaderData,
-	useMatches,
-	useSearchParams,
-} from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { Form, useLoaderData, useMatches, useSearchParams } from "react-router";
 import { AbilitiesSelector } from "~/components/AbilitiesSelector";
 import { Alert } from "~/components/Alert";
 import { SendouButton } from "~/components/elements/Button";

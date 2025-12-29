@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";

@@ -1,5 +1,4 @@
-import type { LoaderFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
+import type { LoaderFunction } from "react-router";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { canAccessLohiEndpoint } from "~/utils/remix.server";
 
@@ -12,12 +11,12 @@ export const loader: LoaderFunction = async ({ request }) => {
 		throw new Response(null, { status: 403 });
 	}
 
-	return json<PlusListLoaderData>({
+	return {
 		users: Object.fromEntries(
 			(await UserRepository.findAllPlusServerMembers()).map((u) => [
 				u.discordId,
 				u.plusTier,
 			]),
 		),
-	});
+	};
 };

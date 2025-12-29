@@ -1,5 +1,5 @@
-import type { ActionFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
+import { redirect } from "react-router";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";

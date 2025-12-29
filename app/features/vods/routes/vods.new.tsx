@@ -1,4 +1,3 @@
-import { useLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import {
 	Controller,
@@ -8,6 +7,7 @@ import {
 	useWatch,
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { useLoaderData } from "react-router";
 import type { z } from "zod";
 import { SendouButton } from "~/components/elements/Button";
 import { UserSearch } from "~/components/elements/UserSearch";

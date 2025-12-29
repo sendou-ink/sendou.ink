@@ -1,7 +1,7 @@
-import { useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { useLoaderData } from "react-router";
 import type { z } from "zod";
 import { TournamentSearch } from "~/components/elements/TournamentSearch";
 import { DateFormField } from "~/components/form/DateFormField";

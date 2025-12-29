@@ -1,7 +1,7 @@
-import { Link, useFetcher } from "@remix-run/react";
 import clsx from "clsx";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { Link, useFetcher } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";

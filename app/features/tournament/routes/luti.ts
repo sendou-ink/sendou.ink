@@ -1,4 +1,4 @@
-import { redirect } from "@remix-run/node";
+import { redirect } from "react-router";
 import { notFoundIfFalsy } from "../../../utils/remix.server";
 import { tournamentPage } from "../../../utils/urls";
 import { LEAGUES } from "../tournament-constants";

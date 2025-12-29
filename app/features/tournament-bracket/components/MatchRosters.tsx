@@ -1,5 +1,5 @@
-import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
+import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { tournamentTeamPage, userPage } from "~/utils/urls";

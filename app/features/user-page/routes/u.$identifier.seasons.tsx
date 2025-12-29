@@ -1,13 +1,13 @@
+import clsx from "clsx";
+import * as React from "react";
+import { useTranslation } from "react-i18next";
 import {
 	Link,
 	useLoaderData,
 	useMatches,
 	useNavigate,
 	useSearchParams,
-} from "@remix-run/react";
-import clsx from "clsx";
-import * as React from "react";
-import { useTranslation } from "react-i18next";
+} from "react-router";
 import { Avatar } from "~/components/Avatar";
 import Chart from "~/components/Chart";
 import { SendouButton } from "~/components/elements/Button";

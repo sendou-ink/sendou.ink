@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { cors } from "remix-utils/cors";
 import { z } from "zod";
 import { db } from "~/db/sql";
@@ -48,5 +48,5 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		teamPageUrl: `https://sendou.ink/t/${team.customUrl}`,
 	};
 
-	return await cors(request, json(result));
+	return await cors(request, Response.json(result));
 };

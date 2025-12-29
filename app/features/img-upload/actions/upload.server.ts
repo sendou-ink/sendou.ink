@@ -1,10 +1,7 @@
-import type { ActionFunctionArgs, UploadHandler } from "@remix-run/node";
-import {
-	unstable_composeUploadHandlers as composeUploadHandlers,
-	unstable_createMemoryUploadHandler as createMemoryUploadHandler,
-	unstable_parseMultipartFormData as parseMultipartFormData,
-	redirect,
-} from "@remix-run/node";
+import type { FileUpload } from "@remix-run/form-data-parser";
+import { parseFormData } from "@remix-run/form-data-parser";
+import type { ActionFunctionArgs } from "react-router";
+import { redirect } from "react-router";
 import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
@@ -20,7 +17,7 @@ import {
 } from "~/utils/remix.server";
 import { teamPage, tournamentOrganizationPage } from "~/utils/urls";
 import * as ImageRepository from "../ImageRepository.server";
-import { s3UploadHandler } from "../s3.server";
+import { uploadStreamToS3 } from "../s3.server";
 import { MAX_UNVALIDATED_IMG_COUNT } from "../upload-constants";
 import { requestToImgType } from "../upload-utils";
 
@@ -45,11 +42,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		"Too many unvalidated images",
 	);
 
-	const uploadHandler: UploadHandler = composeUploadHandlers(
-		s3UploadHandler(),
-		createMemoryUploadHandler(),
-	);
-	const formData = await parseMultipartFormData(request, uploadHandler);
+	const uploadHandler = async (fileUpload: FileUpload) => {
+		if (fileUpload.fieldName === "img") {
+			const [, ending] = fileUpload.name.split(".");
+			invariant(ending);
+			const newFilename = `img-${Date.now()}.${ending}`;
+
+			const uploadedFileLocation = await uploadStreamToS3(
+				fileUpload.stream(),
+				newFilename,
+			);
+			return uploadedFileLocation;
+		}
+		return null;
+	};
+
+	const formData = await parseFormData(request, uploadHandler);
 	const imgSrc = formData.get("img") as string | null;
 	invariant(imgSrc);
 

@@ -1,8 +1,8 @@
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { useFetcher } from "@remix-run/react";
 import * as React from "react";
 import { type DefaultValues, FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { useFetcher } from "react-router";
 import type { z } from "zod";
 import { logger } from "~/utils/logger";
 import type { ActionError } from "~/utils/remix.server";

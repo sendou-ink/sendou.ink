@@ -1,4 +1,4 @@
-import type { MetaFunction } from "@remix-run/node";
+import type { MetaFunction } from "react-router";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { YouTubeIcon } from "~/components/icons/YouTube";
 import { Main } from "~/components/Main";

@@ -1,4 +1,4 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from "react-router";
 import { requireUserId } from "~/features/auth/core/user.server";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
 import { parseRequestPayload } from "~/utils/remix.server";

@@ -1,5 +1,5 @@
 import cachified from "@epic-web/cachified";
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import type { Tables } from "~/db/tables";
 import { getUserId } from "~/features/auth/core/user.server";
 import * as Changelog from "~/features/front-page/core/Changelog.server";

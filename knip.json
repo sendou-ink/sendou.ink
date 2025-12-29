@@ -7,11 +7,9 @@
 	"tags": ["-lintignore"],
 	"ignoreDependencies": [
 		"react-compiler-runtime",
-		"react-router-dom",
 		"babel-plugin-react-compiler"
 	],
 	"entry": [
-		"app/routes.ts",
 		"app/features/*/routes/**/*.{ts,tsx}",
 		"migrations/**/*.js",
 		"scripts/**/*.{js,cjs,mjs,jsx,ts,cts,mts,tsx}",

@@ -1,4 +1,4 @@
-import { type ActionFunctionArgs, redirect } from "@remix-run/node";
+import { type ActionFunctionArgs, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { badRequestIfFalsy, unauthorizedIfFalsy } from "~/utils/remix.server";
 import { userVodsPage } from "~/utils/urls";

@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { notFoundIfFalsy } from "../../../utils/remix.server";

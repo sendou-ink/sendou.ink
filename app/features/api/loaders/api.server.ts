@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ApiRepository from "../ApiRepository.server";
 import { checkUserHasApiAccess } from "../core/perms";

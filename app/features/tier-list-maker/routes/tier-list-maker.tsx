@@ -8,12 +8,12 @@ import {
 	useSensors,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import type { MetaFunction } from "@remix-run/react";
 import { snapdom } from "@zumer/snapdom";
 import clsx from "clsx";
 import { useRef } from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";

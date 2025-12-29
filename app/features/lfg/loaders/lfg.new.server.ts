@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";

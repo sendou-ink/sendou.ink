@@ -1,4 +1,4 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from "react-router";
 import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";

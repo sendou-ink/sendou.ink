@@ -1,4 +1,4 @@
-import { Form, useMatches, useParams } from "@remix-run/react";
+import { Form, useMatches, useParams } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { Redirect } from "~/components/Redirect";

@@ -1,9 +1,9 @@
-import { Link, useFetcher } from "@remix-run/react";
 import clsx from "clsx";
 import type { SqlBool } from "kysely";
 import * as React from "react";
 import { Flipped } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
+import { Link, useFetcher } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -85,12 +85,16 @@ export function GroupCard({
 
 	const enableKicking = group.usersRole === "OWNER" && !displayOnly;
 
+	// broke after Remix single fetch future flag got toggled on, not sure why this is needed
+	const members: Array<SQGroupMember | SQMatchGroupMember> | undefined =
+		group.members;
+
 	return (
 		<GroupCardContainer groupId={group.id} isOwnGroup={isOwnGroup}>
 			<section className={styles.group} data-testid="sendouq-group-card">
-				{group.members ? (
+				{members ? (
 					<div className="stack md">
-						{group.members.map((member) => {
+						{members.map((member) => {
 							return (
 								<GroupMember
 									member={member}
@@ -216,6 +220,7 @@ export function GroupCard({
 							variant={action === "UNLIKE" ? "destructive" : "outlined"}
 							_action={action}
 							state={fetcher.state}
+							testId="group-card-action-button"
 						>
 							{action === "MATCH_UP" || action === "MATCH_UP_RECHALLENGE"
 								? t("q:looking.groups.actions.startMatch")

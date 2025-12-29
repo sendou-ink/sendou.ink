@@ -1,9 +1,9 @@
-import { Form, Link, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import Compressor from "compressorjs";
 import Markdown from "markdown-to-jsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { Form, Link, useFetcher, useLoaderData } from "react-router";
 import { useCopyToClipboard } from "react-use";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
