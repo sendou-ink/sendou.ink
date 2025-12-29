@@ -19,10 +19,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		SendouQ.usersInQueue,
 	);
 
-	const groups = isPreview
-		? SendouQ.previewGroups(user.id, privateNotes)
-		: SendouQ.lookingGroups(user.id, privateNotes);
 	const ownGroup = SendouQ.findOwnGroup(user.id);
+	const groups =
+		isPreview && !ownGroup
+			? SendouQ.previewGroups(user.id, privateNotes)
+			: SendouQ.lookingGroups(user.id, privateNotes);
 
 	if (!isPreview) {
 		sqRedirectIfNeeded({
