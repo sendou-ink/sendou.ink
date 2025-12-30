@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import { Alert } from "~/components/Alert";
 import { InputFormField } from "~/components/form/InputFormField";
 import { SendouForm } from "~/components/form/SendouForm";

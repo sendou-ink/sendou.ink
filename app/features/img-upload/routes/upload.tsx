@@ -1,7 +1,7 @@
-import { useFetcher, useLoaderData } from "@remix-run/react";
 import Compressor from "compressorjs";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { useFetcher, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { Main } from "~/components/Main";
 import invariant from "~/utils/invariant";

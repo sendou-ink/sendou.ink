@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { cors } from "remix-utils/cors";
 import { z } from "zod/v4";
 import { identifierToUserIdQuery } from "~/features/user-page/UserRepository.server";
@@ -27,5 +27,5 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		customUrl: user.customUrl,
 	};
 
-	return await cors(request, json(result));
+	return await cors(request, Response.json(result));
 };

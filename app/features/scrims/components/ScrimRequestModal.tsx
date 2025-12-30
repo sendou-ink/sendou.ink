@@ -1,5 +1,5 @@
-import { useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import { useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SelectFormField } from "~/components/form/SelectFormField";

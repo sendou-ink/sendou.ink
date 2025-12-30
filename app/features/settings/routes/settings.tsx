@@ -1,12 +1,12 @@
-import type { MetaFunction } from "@remix-run/node";
+import * as React from "react";
+import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
 import {
 	useFetcher,
 	useLoaderData,
 	useNavigate,
 	useSearchParams,
-} from "@remix-run/react";
-import * as React from "react";
-import { useTranslation } from "react-i18next";
+} from "react-router";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";

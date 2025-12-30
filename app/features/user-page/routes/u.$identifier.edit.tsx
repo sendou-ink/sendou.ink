@@ -1,7 +1,7 @@
-import { Form, Link, useLoaderData, useMatches } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { Form, Link, useLoaderData, useMatches } from "react-router";
 import { CustomizedColorsInput } from "~/components/CustomizedColorsInput";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";

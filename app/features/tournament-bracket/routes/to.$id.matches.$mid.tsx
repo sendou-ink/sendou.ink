@@ -1,6 +1,6 @@
-import { Form, useLoaderData, useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
+import { Form, useLoaderData, useRevalidator } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
 import { ArrowLongLeftIcon } from "~/components/icons/ArrowLongLeft";
 import { containerClassName } from "~/components/Main";
@@ -386,6 +386,18 @@ function EndedEarlyMessage() {
 
 	const winnerTeam = winnerTeamId ? tournament.teamById(winnerTeamId) : null;
 
+	const opponentOneTeam = data.match.opponentOne?.id
+		? tournament.teamById(data.match.opponentOne.id)
+		: null;
+	const opponentTwoTeam = data.match.opponentTwo?.id
+		? tournament.teamById(data.match.opponentTwo.id)
+		: null;
+	const droppedTeam = opponentOneTeam?.droppedOut
+		? opponentOneTeam
+		: opponentTwoTeam?.droppedOut
+			? opponentTwoTeam
+			: null;
+
 	return (
 		<div className={styles.duringMatchActions}>
 			<div className={clsx(styles.lockedBanner, styles.lockedBannerLonely)}>
@@ -393,7 +405,9 @@ function EndedEarlyMessage() {
 					<div className="text-lg text-center font-bold">Match ended early</div>
 					{winnerTeam ? (
 						<div className="text-xs text-lighter text-center">
-							The organizer ended this match as it exceeded the time limit.
+							{droppedTeam
+								? `${droppedTeam.name} dropped out of the tournament.`
+								: "The organizer ended this match as it exceeded the time limit."}{" "}
 							Winner: {winnerTeam.name}
 						</div>
 					) : null}

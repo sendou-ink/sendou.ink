@@ -1,6 +1,6 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { cors } from "remix-utils/cors";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
@@ -37,5 +37,5 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		})),
 	};
 
-	return await cors(request, json(result));
+	return await cors(request, Response.json(result));
 };

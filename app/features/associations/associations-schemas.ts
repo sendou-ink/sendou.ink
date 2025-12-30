@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 import { _action, id, inviteCode, safeStringSchema } from "~/utils/zod";
 import { ASSOCIATION } from "./associations-constants";
 

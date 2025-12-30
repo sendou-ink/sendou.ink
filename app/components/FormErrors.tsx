@@ -1,5 +1,5 @@
-import { useActionData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import { useActionData } from "react-router";
 import type { Namespace } from "~/modules/i18n/resources.server";
 import styles from "./FormErrors.module.css";
 

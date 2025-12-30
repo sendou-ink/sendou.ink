@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import {
 	bracketProgressionSchema,

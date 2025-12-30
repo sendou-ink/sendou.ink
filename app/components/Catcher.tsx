@@ -1,9 +1,9 @@
+import * as React from "react";
 import {
 	isRouteErrorResponse,
 	useRevalidator,
 	useRouteError,
-} from "@remix-run/react";
-import * as React from "react";
+} from "react-router";
 import { useLocation } from "react-use";
 import { useUser } from "~/features/auth/core/user";
 import {

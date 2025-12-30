@@ -1,5 +1,5 @@
-import { Form, useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import { Form, useLoaderData } from "react-router";
 import { FormErrors } from "~/components/FormErrors";
 import { SubmitButton } from "~/components/SubmitButton";
 import { UserResultsTable } from "~/features/user-page/components/UserResultsTable";

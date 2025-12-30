@@ -1,4 +1,5 @@
-import { useFetcher } from "@remix-run/react";
+import type { JSX } from "react";
+import { useFetcher } from "react-router";
 import { InfoPopover } from "~/components/InfoPopover";
 import { LockIcon } from "~/components/icons/Lock";
 import { UnlockIcon } from "~/components/icons/Unlock";

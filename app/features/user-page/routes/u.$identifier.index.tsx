@@ -1,6 +1,6 @@
-import { Link, useLoaderData, useMatches } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
+import { Link, useLoaderData, useMatches } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";

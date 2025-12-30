@@ -1,8 +1,7 @@
-import type { MetaFunction } from "@remix-run/node";
-import type { ShouldRevalidateFunction } from "@remix-run/react";
 import clsx from "clsx";
-import React from "react";
+import React, { type JSX } from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
 import { Ability } from "~/components/Ability";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { Image, WeaponImage } from "~/components/Image";

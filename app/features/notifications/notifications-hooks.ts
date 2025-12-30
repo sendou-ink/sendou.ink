@@ -1,5 +1,5 @@
-import { useFetcher } from "@remix-run/react";
 import * as React from "react";
+import { useFetcher } from "react-router";
 import { NOTIFICATIONS_MARK_AS_SEEN_ROUTE } from "~/utils/urls";
 
 export function useMarkNotificationsAsSeen(unseenIds: number[]) {

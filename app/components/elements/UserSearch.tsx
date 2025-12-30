@@ -1,4 +1,3 @@
-import { useFetcher } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import {
@@ -15,6 +14,7 @@ import {
 	SelectValue,
 } from "react-aria-components";
 import { useTranslation } from "react-i18next";
+import { useFetcher } from "react-router";
 import { useDebounce } from "react-use";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouLabel } from "~/components/elements/Label";

@@ -1,10 +1,11 @@
-import { Link, type LinkProps } from "@remix-run/react";
 import clsx from "clsx";
+import type { JSX } from "react";
 import * as React from "react";
 import {
 	Button as ReactAriaButton,
 	type ButtonProps as ReactAriaButtonProps,
 } from "react-aria-components";
+import { Link, type LinkProps } from "react-router";
 import { assertUnreachable } from "~/utils/types";
 import styles from "./Button.module.css";
 

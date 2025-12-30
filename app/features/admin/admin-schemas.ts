@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 import { friendCode } from "~/utils/zod";
 
 export const adminActionSearchParamsSchema = z.object({

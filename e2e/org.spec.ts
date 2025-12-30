@@ -8,6 +8,7 @@ import {
 	seed,
 	selectUser,
 	submit,
+	waitForPOSTResponse,
 } from "~/utils/playwright";
 import {
 	TOURNAMENT_NEW_PAGE,
@@ -131,7 +132,7 @@ test.describe("Tournament Organization", () => {
 		await navigate({ page, url });
 		await bannedUsersTab.click();
 		await page.getByRole("button", { name: "Unban" }).click();
-		await page.getByTestId("confirm-button").click();
+		await submit(page, "confirm-button");
 
 		// 4. As the unbanned user, verify they can now join a tournament
 		await impersonate(page, NZAP_TEST_ID);
@@ -173,7 +174,9 @@ test.describe("Tournament Organization", () => {
 			url: "/org/sendouink",
 		});
 
-		await page.getByTestId("is-established-switch").click();
+		await waitForPOSTResponse(page, () =>
+			page.getByTestId("is-established-switch").click(),
+		);
 
 		await impersonate(page, ORG_ADMIN_ID);
 		await navigate({

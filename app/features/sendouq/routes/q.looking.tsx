@@ -1,9 +1,9 @@
-import type { MetaFunction } from "@remix-run/node";
-import { useFetcher, useLoaderData, useSearchParams } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { useFetcher, useLoaderData, useSearchParams } from "react-router";
 import { Alert } from "~/components/Alert";
 import { LinkButton } from "~/components/elements/Button";
 import {

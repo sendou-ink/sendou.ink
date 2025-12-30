@@ -1,4 +1,4 @@
-import { type ActionFunction, redirect } from "@remix-run/node";
+import { type ActionFunction, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { errorToastIfFalsy, notFoundIfFalsy } from "~/utils/remix.server";
 import { teamPage } from "~/utils/urls";

@@ -1,13 +1,21 @@
+import clsx from "clsx";
+import generalI18next from "i18next";
+import NProgress from "nprogress";
+import * as React from "react";
+import { I18nProvider, RouterProvider } from "react-aria-components";
+import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
+import { useTranslation } from "react-i18next";
 import type {
 	LoaderFunctionArgs,
 	MetaFunction,
-	SerializeFrom,
-} from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+	NavigateOptions,
+} from "react-router";
 import {
+	data,
 	Links,
 	Meta,
 	Outlet,
+	redirect,
 	Scripts,
 	ScrollRestoration,
 	type ShouldRevalidateFunction,
@@ -17,15 +25,7 @@ import {
 	useNavigate,
 	useNavigation,
 	useSearchParams,
-} from "@remix-run/react";
-import clsx from "clsx";
-import generalI18next from "i18next";
-import NProgress from "nprogress";
-import * as React from "react";
-import { I18nProvider, RouterProvider } from "react-aria-components";
-import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
-import { useTranslation } from "react-i18next";
-import type { NavigateOptions } from "react-router-dom";
+} from "react-router";
 import { useDebounce } from "react-use";
 import { useChangeLanguage } from "remix-i18next/react";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
@@ -50,7 +50,7 @@ import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
 import { i18nCookie, i18next } from "./modules/i18n/i18next.server";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { allI18nNamespaces } from "./utils/i18n";
-import { isRevalidation, metaTags } from "./utils/remix";
+import { isRevalidation, metaTags, type SerializeFrom } from "./utils/remix";
 import { SUSPENDED_PAGE } from "./utils/urls";
 
 import "~/styles/vars.css";
@@ -97,7 +97,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		return redirect(SUSPENDED_PAGE);
 	}
 
-	return json(
+	return data(
 		{
 			locale,
 			theme: themeSession.getTheme(),

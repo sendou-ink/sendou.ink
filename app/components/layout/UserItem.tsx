@@ -1,6 +1,6 @@
-import { Link } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import { useUser } from "~/features/auth/core/user";
 import { userPage } from "~/utils/urls";
 import { Avatar } from "../Avatar";

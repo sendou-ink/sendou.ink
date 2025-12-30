@@ -1,6 +1,6 @@
-import { isRouteErrorResponse, useRouteError } from "@remix-run/react";
 import clsx from "clsx";
 import type * as React from "react";
+import { isRouteErrorResponse, useRouteError } from "react-router";
 import { useHasRole } from "~/modules/permissions/hooks";
 import styles from "./Main.module.css";
 

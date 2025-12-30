@@ -1,9 +1,9 @@
-import type { MetaFunction } from "@remix-run/node";
-import { Form, Link, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import Compressor from "compressorjs";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { Form, Link, useFetcher, useLoaderData } from "react-router";
 import type { AlertVariation } from "~/components/Alert";
 import { Alert } from "~/components/Alert";
 import { Badge } from "~/components/Badge";

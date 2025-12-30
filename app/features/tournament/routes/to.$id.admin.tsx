@@ -1,7 +1,7 @@
-import { useFetcher } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { useFetcher } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -173,12 +173,12 @@ const actions = [
 	{
 		type: "DROP_TEAM_OUT",
 		inputs: ["REGISTERED_TEAM"] as InputType[],
-		when: ["TOURNAMENT_AFTER_START", "IS_SWISS"],
+		when: ["TOURNAMENT_AFTER_START"],
 	},
 	{
 		type: "UNDO_DROP_TEAM_OUT",
 		inputs: ["REGISTERED_TEAM"] as InputType[],
-		when: ["TOURNAMENT_AFTER_START", "IS_SWISS"],
+		when: ["TOURNAMENT_AFTER_START"],
 	},
 	{
 		type: "UPDATE_IN_GAME_NAME",
@@ -229,13 +229,6 @@ function TeamActions() {
 				}
 				case "TOURNAMENT_AFTER_START": {
 					if (!tournament.hasStarted) {
-						return false;
-					}
-
-					break;
-				}
-				case "IS_SWISS": {
-					if (!tournament.brackets.some((b) => b.type === "swiss")) {
 						return false;
 					}
 

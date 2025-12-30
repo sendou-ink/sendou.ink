@@ -1,9 +1,9 @@
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { useFetcher } from "@remix-run/react";
 import * as React from "react";
 import { type DefaultValues, FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import type { z } from "zod/v4";
+import { useFetcher } from "react-router";
+import type { z } from "zod";
 import { logger } from "~/utils/logger";
 import type { ActionError } from "~/utils/remix.server";
 import { LinkButton } from "../elements/Button";
@@ -27,7 +27,7 @@ export function SendouForm<T extends z.ZodTypeAny>({
 	const { t } = useTranslation(["common"]);
 	const fetcher = useFetcher<any>();
 	const methods = useForm({
-		resolver: standardSchemaResolver(schema),
+		resolver: standardSchemaResolver(schema as any),
 		defaultValues,
 	});
 

@@ -85,10 +85,16 @@ export function impersonate(page: Page, userId = ADMIN_ID) {
 }
 
 export async function submit(page: Page, testId?: string) {
+	return waitForPOSTResponse(page, async () => {
+		await page.getByTestId(testId ?? "submit-button").click();
+	});
+}
+
+export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 	const responsePromise = page.waitForResponse(
 		(res) => res.request().method() === "POST",
 	);
-	await page.getByTestId(testId ?? "submit-button").click();
+	await cb();
 	await responsePromise;
 }
 
@@ -97,14 +103,7 @@ export function isNotVisible(locator: Locator) {
 }
 
 export function modalClickConfirmButton(page: Page) {
-	return page.getByTestId("confirm-button").click();
-}
-
-export async function fetchSendouInk<T>(url: string) {
-	const res = await fetch(`http://localhost:6173${url}`);
-	if (!res.ok) throw new Error("Response not successful");
-
-	return res.json() as T;
+	return submit(page, "confirm-button");
 }
 
 export const startBracket = async (page: Page, tournamentId = 2) => {
@@ -117,7 +116,7 @@ export const startBracket = async (page: Page, tournamentId = 2) => {
 	});
 
 	await page.getByTestId("finalize-bracket-button").click();
-	await page.getByTestId("confirm-finalize-bracket-button").click();
+	await submit(page, "confirm-finalize-bracket-button");
 };
 
 /** Sets a date using the `<SendouDatePicker />` component */
