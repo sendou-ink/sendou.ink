@@ -5,6 +5,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.server";
 import * as TournamentMatchRepository from "~/features/tournament-bracket/TournamentMatchRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -220,6 +221,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 						userId,
 						tournamentTeamId: match.opponentTwo!.id!,
 					});
+				}
+
+				if (setOver) {
+					endDroppedTeamMatches({ tournament, manager });
 				}
 			})();
 

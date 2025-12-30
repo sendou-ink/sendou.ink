@@ -9,13 +9,17 @@ export class Update extends BaseUpdater {
 	 * This will update related matches accordingly.
 	 *
 	 * @param match Values to change in a match.
+	 * @param force If true, bypasses the locked match check.
 	 */
-	public match<M extends Match = Match>(match: DeepPartial<M>): void {
+	public match<M extends Match = Match>(
+		match: DeepPartial<M>,
+		force?: boolean,
+	): void {
 		if (match.id === undefined) throw Error("No match id given.");
 
 		const stored = this.storage.select("match", match.id);
 		if (!stored) throw Error("Match not found.");
 
-		this.updateMatch(stored, match);
+		this.updateMatch(stored, match, force);
 	}
 }

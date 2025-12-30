@@ -337,8 +337,15 @@ export class Tournament {
 			})
 			.map(({ id }) => id);
 
+		// Filter out dropped teams from advancing to follow-up brackets
+		const allTeams = teams.concat(overridesWithoutRepeats);
+		const activeTeams = allTeams.filter((teamId) => {
+			const team = this.teamById(teamId);
+			return team && !team.droppedOut;
+		});
+
 		return {
-			teams: teams.concat(overridesWithoutRepeats),
+			teams: activeTeams,
 			relevantMatchesFinished: allRelevantMatchesFinished,
 		};
 	}
