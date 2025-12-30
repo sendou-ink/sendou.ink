@@ -47,7 +47,7 @@
 		"@tldraw/tldraw": "^3.12.1",
 		"@zumer/snapdom": "^2.0.1",
 		"aws-sdk": "^2.1693.0",
-		"better-sqlite3": "11.9.1",
+		"better-sqlite3": "^12.5.0",
 		"clsx": "^2.1.1",
 		"compressorjs": "^1.2.1",
 		"date-fns": "^4.1.0",
