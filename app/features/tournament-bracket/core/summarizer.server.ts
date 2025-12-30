@@ -208,11 +208,6 @@ export function calculateIndividualPlayerSkills({
  * For dropped team sets without game results, uses the activeRosterUserIds from the team records.
  */
 function matchToSetMostPlayedUsers(match: AllMatchResult) {
-	const winnerTeamId =
-		match.opponentOne.result === "win"
-			? match.opponentOne.id
-			: match.opponentTwo.id;
-
 	const winner =
 		match.opponentOne.result === "win" ? match.opponentOne : match.opponentTwo;
 	const loser =
@@ -258,10 +253,10 @@ function matchToSetMostPlayedUsers(match: AllMatchResult) {
 
 	const participants = match.maps.flatMap((m) => m.participants);
 	const winnerUserIds = participants
-		.filter((p) => p.tournamentTeamId === winnerTeamId)
+		.filter((p) => p.tournamentTeamId === winner.id)
 		.map((p) => p.userId);
 	const loserUserIds = participants
-		.filter((p) => p.tournamentTeamId !== winnerTeamId)
+		.filter((p) => p.tournamentTeamId !== winner.id)
 		.map((p) => p.userId);
 
 	return {
