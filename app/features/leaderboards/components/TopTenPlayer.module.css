@@ -1,0 +1,24 @@
+.container {
+	height: 125px;
+	width: 125px;
+	border-radius: 100%;
+	background-color: var(--color-bg-high);
+	overflow: hidden;
+	position: relative;
+}
+
+.containerSmall {
+	height: 41.6667px;
+	width: 41.6667px;
+}
+
+.imgContainer {
+	position: absolute;
+	top: var(--winner-top, 5px);
+	left: var(--winner-left, 25px);
+}
+
+.img {
+	overflow: visible;
+	max-width: initial;
+}

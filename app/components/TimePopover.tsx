@@ -9,6 +9,7 @@ import { SendouButton } from "./elements/Button";
 import popoverStyles from "./elements/Popover.module.css";
 import { CheckmarkIcon } from "./icons/Checkmark";
 import { ClipboardIcon } from "./icons/Clipboard";
+import styles from "./TimePopover.module.css";
 
 export default function TimePopover({
 	time,
@@ -55,8 +56,9 @@ export default function TimePopover({
 				ref={triggerRef}
 				className={clsx(
 					className,
-					"clickable text-only-button",
-					underline ? "dotted" : "",
+					"clickable",
+					styles.textOnlyButton,
+					underline ? styles.dotted : "",
 				)}
 				onClick={() => {
 					setOpen(true);

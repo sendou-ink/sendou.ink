@@ -3,6 +3,7 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useDebounce } from "react-use";
 import { CUSTOM_CSS_VAR_COLORS } from "~/features/user-page/user-page-constants";
+import styles from "./CustomizedColorsInput.module.css";
 import { SendouButton } from "./elements/Button";
 import { InfoPopover } from "./InfoPopover";
 import { AlertIcon } from "./icons/Alert";
@@ -72,7 +73,7 @@ export function CustomizedColorsInput({
 
 	return (
 		<details className="w-full">
-			<summary className="colors__summary">
+			<summary className={styles.summary}>
 				<div>
 					<span>{t("custom.colors.title")}</span>
 				</div>
@@ -86,7 +87,7 @@ export function CustomizedColorsInput({
 						colorsWithDefaultsFilteredOut(colors, defaultColors),
 					)}
 				/>
-				<div className="colors__container colors__grid">
+				<div className={clsx(styles.container, styles.grid)}>
 					{CUSTOM_CSS_VAR_COLORS.filter(
 						(cssVar) => cssVar !== "bg-lightest",
 					).map((cssVar) => {
@@ -138,12 +139,10 @@ export function CustomizedColorsInput({
 				<Label labelClassName="stack horizontal sm items-center">
 					{t("custom.colors.contrast.title")}
 					<InfoPopover tiny>
-						<div className="colors__description">
-							{t("custom.colors.contrast.description")}
-						</div>
+						<div>{t("custom.colors.contrast.description")}</div>
 					</InfoPopover>
 				</Label>
-				<table className="colors__container colors__table">
+				<table className={clsx(styles.container, styles.table)}>
 					<thead>
 						<tr>
 							<th>{t("custom.colors.contrast.first-color")}</th>
@@ -160,8 +159,10 @@ export function CustomizedColorsInput({
 									<td>{t(`custom.colors.${contrast.colors[1]}`)}</td>
 									<td
 										className={clsx(
-											"colors__contrast",
-											contrast.contrast.AA.failed ? "fail" : "success",
+											styles.contrast,
+											contrast.contrast.AA.failed
+												? styles.fail
+												: styles.success,
 										)}
 									>
 										{contrast.contrast.AA.failed ? (
@@ -173,8 +174,10 @@ export function CustomizedColorsInput({
 									</td>
 									<td
 										className={clsx(
-											"colors__contrast",
-											contrast.contrast.AAA.failed ? "fail" : "success",
+											styles.contrast,
+											contrast.contrast.AAA.failed
+												? styles.fail
+												: styles.success,
 										)}
 									>
 										{contrast.contrast.AAA.failed ? (

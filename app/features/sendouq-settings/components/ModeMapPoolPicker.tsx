@@ -9,6 +9,7 @@ import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { nullFilledArray } from "~/utils/arrays";
 import { stageImageUrl } from "~/utils/urls";
 import { BANNED_MAPS } from "../banned-maps";
+import styles from "./ModeMapPoolPicker.module.css";
 
 export function ModeMapPoolPicker({
 	mode,
@@ -63,7 +64,7 @@ export function ModeMapPoolPicker({
 	};
 
 	return (
-		<div className="map-pool-picker stack sm">
+		<div className={clsx(styles.container, "stack sm")}>
 			<div className="stack sm horizontal justify-center">
 				{nullFilledArray(amountToPick).map((_, index) => {
 					return (
@@ -75,7 +76,7 @@ export function ModeMapPoolPicker({
 					);
 				})}
 			</div>
-			<Divider className="map-pool-picker__divider">
+			<Divider className={styles.divider}>
 				<ModeImage mode={mode} size={32} />
 			</Divider>
 			<div className="stack sm horizontal flex-wrap justify-center mt-1">
@@ -113,15 +114,11 @@ export function ModeMapPoolPicker({
 function MapSlot({ number, picked }: { number: number; picked: boolean }) {
 	return (
 		<div
-			className={clsx("map-pool-picker__slot", {
-				"map-pool-picker__slot__picked": picked,
+			className={clsx(styles.slot, {
+				[styles.slotPicked]: picked,
 			})}
 		>
-			{picked ? (
-				<CheckmarkIcon className="map-pool-picker__slot__icon" />
-			) : (
-				number
-			)}
+			{picked ? <CheckmarkIcon className={styles.slotIcon} /> : number}
 		</div>
 	);
 }
@@ -148,10 +145,9 @@ function MapButton({
 	return (
 		<div className="stack items-center relative">
 			<button
-				className={clsx("map-pool-picker__map-button", {
-					"map-pool-picker__map-button__wiggle": wiggle,
-					"map-pool-picker__map-button__greyed-out":
-						selected || banned || tiebreaker,
+				className={clsx(styles.mapButton, {
+					[styles.mapButtonWiggle]: wiggle,
+					[styles.mapButtonGreyedOut]: selected || banned || tiebreaker,
 				})}
 				style={{ "--map-image-url": `url("${stageImageUrl(stageId)}.png")` }}
 				onClick={onClick}
@@ -160,21 +156,14 @@ function MapButton({
 				data-testid={testId}
 			/>
 			{selected ? (
-				<CheckmarkIcon
-					className="map-pool-picker__map-button__icon"
-					onClick={onClick}
-				/>
+				<CheckmarkIcon className={styles.mapButtonIcon} onClick={onClick} />
 			) : null}
 			{tiebreaker ? (
-				<div className="map-pool-picker__map-button__text text-info">
-					Tiebreak
-				</div>
+				<div className={clsx(styles.mapButtonText, "text-info")}>Tiebreak</div>
 			) : banned ? (
-				<div className="map-pool-picker__map-button__text text-error">
-					Banned
-				</div>
+				<div className={clsx(styles.mapButtonText, "text-error")}>Banned</div>
 			) : null}
-			<div className="map-pool-picker__map-button__label">
+			<div className={styles.mapButtonLabel}>
 				{t(`game-misc:STAGE_${stageId}`)}
 			</div>
 		</div>

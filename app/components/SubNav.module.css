@@ -1,0 +1,63 @@
+.container {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--s-4);
+	margin-block-end: var(--s-8);
+}
+
+.secondary {
+	margin-block-end: var(--s-2);
+}
+
+.linkContainer {
+	display: flex;
+	max-width: 110px;
+	flex: 1;
+	flex-direction: column;
+	align-items: center;
+	color: var(--color-text);
+	gap: var(--s-1-5);
+}
+
+.linkContainer.active {
+	color: var(--color-text-accent);
+}
+
+.link {
+	width: 100%;
+	padding: var(--s-1) var(--s-4);
+	border-radius: var(--rounded);
+	background-color: var(--color-bg-high);
+	cursor: pointer;
+	font-size: var(--fonts-xs);
+	text-align: center;
+	white-space: nowrap;
+}
+
+.linkSecondary {
+	font-size: var(--fonts-xxs);
+	padding: var(--s-0-5) var(--s-2);
+	background-color: var(--color-bg-high);
+}
+
+.container.compact .link {
+	padding: var(--s-1) var(--s-2);
+}
+
+.borderGuy {
+	width: 78%;
+	height: 3px;
+	border-radius: var(--rounded);
+	background-color: var(--color-bg-higher);
+	visibility: hidden;
+}
+
+.borderGuySecondary {
+	height: 2.5px;
+	background-color: var(--color-bg-high);
+}
+
+.linkContainer.active > .borderGuy {
+	visibility: initial;
+}

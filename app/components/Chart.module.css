@@ -1,0 +1,34 @@
+.container {
+	height: var(--chart-height, 175px);
+	width: var(--chart-width);
+	background-color: var(--chart-bg, var(--color-bg-high));
+	border-radius: var(--rounded);
+}
+
+.tooltip {
+	border: 1.75px solid var(--color-border);
+	border-radius: var(--rounded);
+	background-color: var(--color-bg);
+	padding: var(--s-1) var(--s-2);
+	font-weight: var(--semi-bold);
+	font-size: var(--fonts-sm);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.tooltipValue {
+	margin-inline-start: auto;
+	min-width: 40px;
+}
+
+.dot {
+	background-color: var(--dot-color);
+	border-radius: 100%;
+	width: 12px;
+	height: 12px;
+}
+
+.dotFocused {
+	outline: 3px solid var(--dot-color-outline);
+}

@@ -10,6 +10,7 @@ import { useTimeFormat } from "../../../hooks/useTimeFormat";
 import { MESSAGE_MAX_LENGTH } from "../chat-constants";
 import { useChat, useChatAutoScroll } from "../chat-hooks";
 import type { ChatMessage, ChatProps, ChatUser } from "../chat-types";
+import styles from "./Chat.module.css";
 
 export function ConnectedChat(props: ChatProps) {
 	const chat = useChat(props);
@@ -100,7 +101,7 @@ export function Chat({
 	};
 
 	return (
-		<section className={clsx("chat__container", className, { hidden })}>
+		<section className={clsx(styles.container, className, { hidden })}>
 			{rooms.length > 1 ? (
 				<div className="stack horizontal">
 					{rooms.map((room) => {
@@ -109,30 +110,33 @@ export function Chat({
 						return (
 							<Button
 								key={room.code}
-								className={clsx("chat__room-button", {
-									current: currentRoom === room.code,
+								className={clsx(styles.roomButton, {
+									[styles.roomButtonCurrent]: currentRoom === room.code,
 								})}
 								onPress={() => {
 									setCurrentRoom(room.code);
 									resetScroller();
 								}}
 							>
-								<span className="chat__room-button__unseen invisible" />
+								<span className={clsx(styles.roomButtonUnseen, "invisible")} />
 								{room.label}
 								{unseen ? (
-									<span className="chat__room-button__unseen">{unseen}</span>
+									<span className={styles.roomButtonUnseen}>{unseen}</span>
 								) : (
-									<span className="chat__room-button__unseen invisible" />
+									<span
+										className={clsx(styles.roomButtonUnseen, "invisible")}
+									/>
 								)}
 							</Button>
 						);
 					})}
 				</div>
 			) : null}
-			<div className="chat__input-container">
+			<div className={styles.inputContainer}>
 				<ol
 					className={clsx(
-						"chat__messages scrollbar",
+						styles.messages,
+						"scrollbar",
 						messagesContainerClassName,
 					)}
 					ref={messagesContainerRef}
@@ -164,7 +168,7 @@ export function Chat({
 				</ol>
 				{unseenMessagesInTheRoom ? (
 					<SendouButton
-						className="chat__unseen-messages"
+						className={styles.unseenMessages}
 						onPress={scrollToBottom}
 					>
 						{t("common:chat.newMessages")}
@@ -178,7 +182,7 @@ export function Chat({
 						disabled={sendingMessagesDisabled}
 						maxLength={MESSAGE_MAX_LENGTH}
 					/>{" "}
-					<div className="chat__bottom-row">
+					<div className={styles.bottomRow}>
 						{readyState === "CONNECTED" || readyState === "CONNECTING" ? (
 							<div className="text-xxs font-semi-bold text-lighter">
 								{t(
@@ -216,12 +220,12 @@ function Message({
 	missingUserName?: string;
 }) {
 	return (
-		<li className="chat__message">
+		<li className={styles.message}>
 			{user ? <Avatar user={user} size="xs" /> : null}
 			<div>
 				<div className="stack horizontal sm items-center">
 					<div
-						className="chat__message__user"
+						className={styles.messageUser}
 						style={
 							user?.chatNameColor
 								? { "--chat-user-color": user.chatNameColor }
@@ -240,8 +244,8 @@ function Message({
 					) : null}
 				</div>
 				<div
-					className={clsx("chat__message__contents", {
-						pending: message.pending,
+					className={clsx(styles.messageContents, {
+						[styles.messageContentsPending]: message.pending,
 					})}
 				>
 					{message.contents}
@@ -259,12 +263,17 @@ function SystemMessage({
 	text: string;
 }) {
 	return (
-		<li className="chat__message">
+		<li className={styles.message}>
 			<div>
 				<div className="stack horizontal sm">
 					<MessageTimestamp timestamp={message.timestamp} />
 				</div>
-				<div className="chat__message__contents text-xs text-lighter font-semi-bold">
+				<div
+					className={clsx(
+						styles.messageContents,
+						"text-xs text-lighter font-semi-bold",
+					)}
+				>
 					{text}
 				</div>
 			</div>
@@ -277,7 +286,7 @@ function MessageTimestamp({ timestamp }: { timestamp: number }) {
 	const moreThanDayAgo = sub(new Date(), { days: 1 }) > new Date(timestamp);
 
 	return (
-		<time className="chat__message__time">
+		<time className={styles.messageTime}>
 			{moreThanDayAgo
 				? formatDateTime(new Date(timestamp), {
 						day: "numeric",

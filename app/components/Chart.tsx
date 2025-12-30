@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Theme, useTheme } from "~/features/theme/core/provider";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
+import styles from "./Chart.module.css";
 
 export default function Chart({
 	options,
@@ -62,11 +63,11 @@ export default function Chart({
 	);
 
 	if (!isMounted) {
-		return <div className={clsx("chart__container", containerClassName)} />;
+		return <div className={clsx(styles.container, containerClassName)} />;
 	}
 
 	return (
-		<div className={clsx("chart__container", containerClassName)}>
+		<div className={clsx(styles.container, containerClassName)}>
 			<ReactChart
 				options={{
 					data: options,
@@ -124,7 +125,7 @@ function ChartTooltip({
 	};
 
 	return (
-		<div className="chart__tooltip">
+		<div className={styles.tooltip}>
 			<h3 className="text-center text-md">
 				{header()}
 				{headerSuffix}
@@ -135,8 +136,8 @@ function ChartTooltip({
 				return (
 					<div key={index} className="stack horizontal items-center sm">
 						<div
-							className={clsx("chart__dot", {
-								chart__dot__focused:
+							className={clsx(styles.dot, {
+								[styles.dotFocused]:
 									focusedDatum?.seriesId === dataPoint.seriesId,
 							})}
 							style={{
@@ -144,10 +145,8 @@ function ChartTooltip({
 								"--dot-color-outline": color.replace(")", "-transparent)"),
 							}}
 						/>
-						<div className="chart__tooltip__label">
-							{dataPoint.originalSeries.label}
-						</div>
-						<div className="chart__tooltip__value">
+						<div>{dataPoint.originalSeries.label}</div>
+						<div className={styles.tooltipValue}>
 							{dataPoint.secondaryValue}
 							{valueSuffix}
 						</div>

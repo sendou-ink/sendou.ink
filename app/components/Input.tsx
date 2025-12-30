@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import styles from "./Input.module.css";
 
 export function Input({
 	name,
@@ -47,11 +48,11 @@ export function Input({
 }) {
 	return (
 		<div
-			className={clsx("input-container", className, {
-				"input__read-only": readOnly,
+			className={clsx(styles.container, className, {
+				[styles.readOnly]: readOnly,
 			})}
 		>
-			{leftAddon ? <div className="input-addon">{leftAddon}</div> : null}
+			{leftAddon ? <div className={styles.addon}>{leftAddon}</div> : null}
 			<input
 				className="in-container"
 				name={name}

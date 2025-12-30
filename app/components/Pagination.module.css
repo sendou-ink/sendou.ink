@@ -1,0 +1,44 @@
+.container {
+	display: grid;
+	grid-template-columns: auto auto auto;
+	gap: var(--s-2);
+	align-items: center;
+	justify-items: center;
+	justify-content: center;
+}
+
+.dots {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-1);
+	flex-wrap: wrap;
+}
+
+.dot {
+	width: 0.6rem;
+	height: 0.6rem;
+	border-radius: 50%;
+	background-color: var(--color-bg-higher);
+	transition: all 0.2s ease;
+}
+
+.dotActive {
+	background-color: var(--color-text-accent);
+}
+
+.pageCount {
+	font-size: var(--fonts-sm);
+	font-weight: var(--bold);
+	color: var(--color-accent);
+}
+
+@media screen and (min-width: 640px) {
+	.dots {
+		display: flex;
+	}
+
+	.pageCount {
+		display: none;
+	}
+}

@@ -21,6 +21,7 @@ import { ResponsiveMasonry } from "../../../modules/responsive-masonry/component
 import { ART_PER_PAGE } from "../art-constants";
 import type { ListedArt } from "../art-types";
 import { previewUrl } from "../art-utils";
+import styles from "./ArtGrid.module.css";
 
 export function ArtGrid({
 	arts,
@@ -107,18 +108,18 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 				alt=""
 				src={art.url}
 				loading="lazy"
-				className="art__dialog__img"
+				className={styles.dialogImg}
 				onLoad={() => setImageLoaded(true)}
 			/>
 			{art.tags || art.linkedUsers ? (
 				<div
-					className={clsx("art__tags-container", { invisible: !imageLoaded })}
+					className={clsx(styles.tagsContainer, { invisible: !imageLoaded })}
 				>
 					{art.linkedUsers?.map((user) => (
 						<Link
 							to={userPage(user)}
 							key={user.discordId}
-							className="art__dialog__tag art__dialog__tag__user"
+							className={clsx(styles.dialogTag, styles.dialogTagUser)}
 						>
 							{user.username}
 						</Link>
@@ -127,7 +128,7 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 						<Link
 							to={artPage(tag.name)}
 							key={tag.id}
-							className="art__dialog__tag"
+							className={styles.dialogTag}
 						>
 							#{tag.name}
 						</Link>
@@ -136,7 +137,7 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 			) : null}
 			{art.description ? (
 				<div
-					className={clsx("art__dialog__description", {
+					className={clsx(styles.dialogDescription, {
 						invisible: !imageLoaded,
 					})}
 				>
@@ -180,7 +181,7 @@ function ImagePreview({
 			loading="lazy"
 			onClick={onClick}
 			onLoad={() => setImageLoaded(true)}
-			className={enablePreview ? "art__thumbnail" : undefined}
+			className={enablePreview ? styles.thumbnail : undefined}
 		/>
 	);
 

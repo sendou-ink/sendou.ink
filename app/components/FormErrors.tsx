@@ -1,6 +1,7 @@
 import { useActionData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import type { Namespace } from "~/modules/i18n/resources.server";
+import styles from "./FormErrors.module.css";
 
 export function FormErrors({ namespace }: { namespace: Namespace }) {
 	const { t } = useTranslation(["common", namespace]);
@@ -11,7 +12,7 @@ export function FormErrors({ namespace }: { namespace: Namespace }) {
 	}
 
 	return (
-		<div className="form-errors">
+		<div className={styles.container}>
 			<h4>{t("common:forms.errors.title")}:</h4>
 			<ol>
 				{actionData.errors.map((error) => (

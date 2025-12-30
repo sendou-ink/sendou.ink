@@ -1,0 +1,135 @@
+.container {
+	--map-width: 90px;
+	--map-height: 50px;
+}
+
+.slot {
+	font-size: var(--fonts-xs);
+	display: grid;
+	place-items: center;
+	color: var(--color-text-high);
+	border-radius: var(--rounded-sm);
+	font-weight: var(--bold);
+	width: 24px;
+	height: 24px;
+	border: 2px dotted var(--color-bg-higher);
+}
+
+.slotIcon {
+	color: var(--color-success);
+	width: 16px;
+}
+
+.slotPicked {
+	border-style: solid;
+}
+
+.mapImg {
+	border-radius: var(--rounded-sm);
+}
+
+.mapButton {
+	background-image: var(--map-image-url);
+	background-size: contain;
+	height: var(--map-height);
+	width: var(--map-width);
+	border: none;
+	background-color: transparent;
+	transition:
+		filter,
+		opacity 0.2s;
+	border-radius: var(--rounded);
+}
+
+@keyframes wiggle {
+	0% {
+		transform: rotate(0deg);
+	}
+
+	25% {
+		transform: rotate(5deg);
+	}
+
+	75% {
+		transform: rotate(-5deg);
+	}
+
+	100% {
+		transform: rotate(0deg);
+	}
+}
+
+.mapButtonWiggle {
+	animation: wiggle 0.25s infinite;
+	animation-iteration-count: 1;
+}
+
+.mapButton:active {
+	transform: none;
+}
+
+.mapButtonGreyedOut {
+	filter: grayscale(100%) !important;
+	opacity: 0.4 !important;
+}
+
+.mapButtonIcon {
+	position: absolute;
+	top: 2px;
+	fill: var(--color-success);
+	width: 48px;
+	cursor: pointer;
+}
+
+.mapButtonIconError {
+	fill: var(--color-error);
+}
+
+.mapButtonText {
+	position: absolute;
+	top: 14px;
+	text-transform: uppercase;
+	font-weight: var(--bold);
+	cursor: not-allowed;
+}
+
+.mapButtonLabel {
+	font-size: var(--fonts-xxxxs);
+	color: var(--color-text-high);
+	font-weight: var(--semi-bold);
+}
+
+.mapButtonNumber {
+	position: absolute;
+	background-color: var(--color-accent);
+	border-radius: 100%;
+	width: 18px;
+	height: 18px;
+	display: grid;
+	place-items: center;
+	color: var(--color-text-inverse);
+	font-size: var(--fonts-xxsm);
+	font-weight: var(--semi-bold);
+	top: -5px;
+	left: 0;
+}
+
+.mapButtonFrom {
+	position: absolute;
+	bottom: -15px;
+	font-size: var(--fonts-xxs);
+	font-weight: var(--bold);
+}
+
+.divider::before,
+.divider::after {
+	border-bottom: 2px dotted var(--color-bg-higher);
+}
+
+.divider {
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	text-transform: uppercase;
+	display: flex;
+	gap: var(--s-2);
+}

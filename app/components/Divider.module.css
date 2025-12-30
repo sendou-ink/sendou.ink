@@ -1,0 +1,28 @@
+.divider {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	color: var(--color-text-accent);
+	font-size: var(--fonts-lg);
+	text-align: center;
+
+	&::before,
+	&::after {
+		flex: 1;
+		min-width: 1rem;
+		border-bottom: 2px solid var(--color-bg-high);
+		content: "";
+	}
+
+	&:not(:empty)::before {
+		margin-right: 0.25em;
+	}
+
+	&:not(:empty)::after {
+		margin-left: 0.25em;
+	}
+}
+
+.smallText {
+	font-size: var(--fonts-sm);
+}

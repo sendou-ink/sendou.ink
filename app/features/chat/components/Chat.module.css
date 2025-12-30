@@ -1,0 +1,110 @@
+.container {
+	display: flex;
+	flex-direction: column;
+}
+
+.messages {
+	border: 2px solid var(--color-bg-high);
+	border-radius: 0 0 var(--rounded) var(--rounded);
+	padding: var(--s-2-5) 0 0 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	height: 310px;
+	overflow-y: auto;
+}
+
+.message {
+	list-style: none;
+	display: flex;
+	gap: var(--s-2-5);
+}
+
+.messageUser {
+	font-weight: var(--semi-bold);
+	font-size: var(--fonts-sm);
+	color: var(--chat-user-color);
+	max-width: 110px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.messageTime {
+	font-size: var(--fonts-xxs);
+	color: var(--color-text-high);
+	margin-block-start: 3px;
+}
+
+.inputContainer {
+	margin-top: auto;
+	position: relative;
+	--input-width: 100%;
+}
+
+.messageContents {
+	font-size: var(--fonts-sm);
+	word-break: break-word;
+}
+
+.messageContentsPending {
+	opacity: 0.7;
+}
+
+.roomButton {
+	border: 0;
+	background-color: transparent;
+	color: var(--color-text-high);
+	border-radius: var(--rounded) var(--rounded) 0 0;
+	padding: var(--s-1) var(--s-1);
+	border-color: var(--color-bg-high);
+	font-size: var(--fonts-xs);
+	padding-block: var(--s-1);
+	padding-inline: var(--s-2);
+	display: flex;
+	width: auto;
+	align-items: center;
+	justify-content: center;
+	font-weight: var(--bold);
+	flex: 1 1 0px;
+}
+
+.roomButtonCurrent {
+	background-color: var(--color-bg-high);
+	color: var(--color-text);
+}
+
+.roomButtonUnseen {
+	color: var(--color-accent);
+	text-shadow: var(--fonts-xxxs);
+	margin-inline-start: var(--s-1);
+	width: 25px;
+	text-align: left;
+}
+
+.bottomRow {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-block-start: var(--s-2);
+}
+
+.unseenMessages {
+	position: absolute;
+	font-size: var(--fonts-xxs);
+	font-weight: var(--bold);
+	border-radius: var(--rounded-sm);
+	background-color: var(--color-bg-higher);
+	border: none;
+	color: var(--color-text);
+	bottom: 60px;
+	right: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	height: 25px;
+	width: max-content;
+
+	&:active {
+		transform: translate(-50%, -50%);
+	}
+}

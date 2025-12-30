@@ -2,6 +2,7 @@ import clsx from "clsx";
 import * as React from "react";
 import type { Tables } from "~/db/tables";
 import { BLANK_IMAGE_URL, discordAvatarUrl } from "~/utils/urls";
+import styles from "./Avatar.module.css";
 
 const dimensions = {
 	xxxs: 16,
@@ -49,7 +50,7 @@ export function Avatar({
 
 	return (
 		<img
-			className={clsx("avatar", className)}
+			className={clsx(styles.avatar, className)}
 			src={src}
 			alt={alt}
 			title={alt ? alt : undefined}

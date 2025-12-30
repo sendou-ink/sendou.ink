@@ -1,0 +1,49 @@
+.tags {
+	display: flex;
+	max-width: var(--tags-max-width, 18rem);
+	flex-wrap: wrap;
+	padding: 0;
+	font-size: var(--fonts-xxs);
+	font-weight: var(--semi-bold);
+	gap: var(--s-1);
+	list-style: none;
+}
+
+.small {
+	font-size: var(--fonts-xxxs);
+
+	& > li {
+		padding: 0 var(--s-1);
+	}
+}
+
+.centered {
+	justify-content: center;
+}
+
+.tags > li {
+	display: flex;
+	align-items: center;
+	border-radius: var(--rounded);
+	padding-inline: var(--s-1-5);
+	min-height: 20px;
+}
+
+.tag {
+	color: var(--color-text-inverse);
+}
+
+.tagDeleteButton {
+	margin-left: auto;
+
+	& > svg {
+		width: 0.85rem !important;
+		color: var(--color-text-inverse);
+		margin-inline: var(--s-1) 0 !important;
+	}
+}
+
+.tagBadges {
+	display: flex;
+	margin-inline-start: var(--s-1);
+}

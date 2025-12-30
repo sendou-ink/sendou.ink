@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { Button } from "react-aria-components";
 import { SendouPopover } from "./elements/Popover";
+import styles from "./InfoPopover.module.css";
 
 export function InfoPopover({
 	children,
@@ -15,14 +16,9 @@ export function InfoPopover({
 		<SendouPopover
 			trigger={
 				<Button
-					className={clsx(
-						"react-aria-Button",
-						"info-popover__trigger",
-						className,
-						{
-							"info-popover__trigger__tiny": tiny,
-						},
-					)}
+					className={clsx(styles.trigger, className, {
+						[styles.triggerTiny]: tiny,
+					})}
 				>
 					?
 				</Button>

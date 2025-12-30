@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import type * as React from "react";
 import { assertUnreachable } from "~/utils/types";
+import styles from "./Alert.module.css";
 import { AlertIcon } from "./icons/Alert";
 import { CheckmarkIcon } from "./icons/Checkmark";
 import { ErrorIcon } from "./icons/Error";
@@ -22,11 +23,11 @@ export function Alert({
 }) {
 	return (
 		<div
-			className={clsx("alert", alertClassName, {
-				tiny,
-				warning: variation === "WARNING",
-				error: variation === "ERROR",
-				success: variation === "SUCCESS",
+			className={clsx(styles.alert, alertClassName, {
+				[styles.tiny]: tiny,
+				[styles.warning]: variation === "WARNING",
+				[styles.error]: variation === "ERROR",
+				[styles.success]: variation === "SUCCESS",
 			})}
 		>
 			<Icon variation={variation} />{" "}

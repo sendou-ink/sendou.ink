@@ -1,0 +1,7 @@
+.container {
+	font-size: var(--fonts-sm);
+
+	& > h4 {
+		color: var(--color-error);
+	}
+}

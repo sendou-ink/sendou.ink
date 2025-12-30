@@ -1,0 +1,24 @@
+.container {
+	display: flex;
+	align-items: flex-end;
+	gap: var(--s-2);
+	margin-block-end: var(--label-margin);
+
+	& > label {
+		margin: 0;
+	}
+}
+
+.value {
+	color: var(--color-text-high);
+	font-size: var(--fonts-xxs);
+	margin-block-start: -5px;
+}
+
+.valueWarning {
+	color: var(--color-warning);
+}
+
+.valueError {
+	color: var(--color-error);
+}

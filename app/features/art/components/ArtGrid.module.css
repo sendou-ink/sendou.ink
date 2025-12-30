@@ -1,0 +1,81 @@
+.dialogImgContainer {
+	width: 100vw;
+	height: 90vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background-color: transparent;
+	padding: 0;
+	overflow: visible;
+	flex-direction: column;
+
+	&:focus-visible {
+		outline: none;
+	}
+}
+
+.thumbnail {
+	cursor: pointer;
+	transition: all 0.2s ease;
+
+	&:hover {
+		scale: 1.025;
+	}
+}
+
+.dialogTag {
+	background-color: #fff;
+	border-radius: var(--rounded);
+	color: #000;
+	font-size: var(--fonts-xxs);
+	padding-inline: var(--s-1);
+	margin-block: var(--s-1) var(--s-0-5);
+}
+
+.dialogTagUser {
+	background-color: var(--color-accent);
+}
+
+.dialogDescription {
+	font-size: var(--fonts-sm);
+	text-align: center;
+	color: #fff;
+}
+
+.dialogImg {
+	max-width: 100%;
+	max-height: 75vh;
+	width: 100%;
+	height: auto;
+	object-fit: contain;
+	display: block;
+}
+
+.dialogImgContainer img {
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: contain;
+}
+
+.commsHeader {
+	font-weight: var(--bold);
+	color: var(--color-accent);
+	font-size: var(--fonts-sm);
+}
+
+.deleteTagButton {
+	margin-block-start: -5px;
+	margin-inline-start: 1px;
+}
+
+.creationModeSwitcherContainer {
+	height: 20px;
+}
+
+.tagsContainer {
+	display: flex;
+	gap: var(--s-0-5) var(--s-2);
+	justify-content: center;
+	flex-wrap: wrap;
+	margin-block-start: var(--s-0-5);
+}

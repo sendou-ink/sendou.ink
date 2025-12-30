@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toastQueue } from "./elements/Toast";
+import styles from "./YouTubeEmbed.module.css";
 
 export function YouTubeEmbed({
 	id,
@@ -117,16 +118,16 @@ export function YouTubeEmbed({
 		}
 
 		return (
-			<div className="youtube__container--api">
+			<div className={styles.containerApi}>
 				<div ref={containerRef} />
 			</div>
 		);
 	}
 
 	return (
-		<div className="youtube__container">
+		<div className={styles.container}>
 			<iframe
-				className="youtube__iframe"
+				className={styles.iframe}
 				src={`https://www.youtube.com/embed/${id}?autoplay=${
 					autoplay ? "1" : "0"
 				}&controls=1&rel=0&modestbranding=1&start=${start ?? 0}`}

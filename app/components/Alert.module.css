@@ -1,0 +1,56 @@
+.alert {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	border-radius: var(--rounded);
+	background-color: var(--color-info-low);
+	color: var(--color-info-high);
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+	gap: var(--s-2);
+	margin-inline: auto;
+	padding-block: var(--s-1-5);
+	padding-inline: var(--s-3) var(--s-4);
+	text-align: center;
+
+	& > svg {
+		height: 1.75rem;
+		fill: var(--color-info);
+	}
+}
+
+.tiny {
+	font-size: var(--fonts-xs);
+
+	& > svg {
+		height: 1.25rem;
+	}
+}
+
+.warning {
+	background-color: var(--color-warning-low);
+	color: var(--color-warning-high);
+
+	& > svg {
+		fill: var(--color-warning);
+	}
+}
+
+.error {
+	background-color: var(--color-error-low);
+	color: var(--color-error-high);
+
+	& > svg {
+		fill: var(--color-error);
+	}
+}
+
+.success {
+	background-color: var(--color-success-low);
+	color: var(--color-success-high);
+
+	& > svg {
+		fill: var(--color-success);
+	}
+}
