@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { OBJECT_PRONOUNS, SUBJECT_PRONOUNS } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-constants";
 import { isCustomUrl } from "~/utils/urls";
 import {
@@ -84,6 +85,14 @@ export const userEditActionSchema = z
 				.max(50)
 				.refine((val) => val % 5 === 0)
 				.nullable(),
+		),
+		subjectPronoun: z.preprocess(
+			falsyToNull,
+			z.enum(SUBJECT_PRONOUNS).nullable(),
+		),
+		objectPronoun: z.preprocess(
+			falsyToNull,
+			z.enum(OBJECT_PRONOUNS).nullable(),
 		),
 		inGameNameText: z.preprocess(
 			falsyToNull,

@@ -29,8 +29,17 @@ export const action: ActionFunction = async ({ request }) => {
 			: null;
 
 	try {
+		const pronouns =
+			data.subjectPronoun && data.objectPronoun
+				? JSON.stringify({
+						subject: data.subjectPronoun,
+						object: data.objectPronoun,
+					})
+				: null;
+
 		const editedUser = await UserRepository.updateProfile({
 			...data,
+			pronouns,
 			inGameName,
 			userId: user.id,
 		});

@@ -847,6 +847,14 @@ export interface UserPreferences {
 	clockFormat?: "24h" | "12h" | "auto";
 }
 
+export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;
+export const OBJECT_PRONOUNS = ["him", "her", "them", "its", "all"] as const;
+
+export type PRONOUNS = {
+	subject: (typeof SUBJECT_PRONOUNS)[number];
+	object: (typeof OBJECT_PRONOUNS)[number];
+};
+
 export interface User {
 	/** 1 = permabanned, timestamp = ban active till then */
 	banned: Generated<number | null>;
@@ -875,6 +883,7 @@ export interface User {
 	isApiAccesser: Generated<DBBoolean | null>;
 	languages: string | null;
 	motionSens: number | null;
+	pronouns: JSONColumnTypeNullable<PRONOUNS>;
 	patronSince: number | null;
 	patronTier: number | null;
 	patronTill: number | null;
