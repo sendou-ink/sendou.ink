@@ -1,0 +1,61 @@
+.root {
+	--height: var(--toggle-height);
+
+	cursor: pointer;
+	display: grid;
+	grid-template-columns: auto 1fr;
+	align-items: center;
+	gap: 0.571rem;
+	color: var(--text-color);
+	forced-color-adjust: none;
+	font-size: var(--fonts-xs);
+	font-weight: var(--bold);
+	margin-block-end: 0;
+}
+
+.small {
+	--height: var(--toggle-height-small);
+}
+
+.indicator {
+	width: calc(var(--height) * 1.75);
+	height: var(--height);
+	background: var(--color-bg);
+	border: 2px solid var(--color-border);
+	border-radius: 99999px;
+
+	&:before {
+		content: "";
+		display: block;
+		margin: 2px;
+		width: calc(var(--height) - 8px);
+		height: calc(var(--height) - 8px);
+		aspect-ratio: 1 / 1;
+		background: var(--color-border);
+		border-radius: 50%;
+		transition: transform 200ms;
+	}
+}
+
+.root[data-selected] .indicator {
+	background: var(--color-text-accent);
+	border-color: var(--color-text-accent);
+
+	&:before {
+		transform: translateX(calc(var(--height) * 0.75));
+		background: var(--color-text-inverse);
+	}
+}
+
+.root[data-focus-visible] .indicator {
+	outline: 2px solid var(--color-accent-high);
+	outline-offset: 1px;
+}
+
+.root[data-disabled] .indicator {
+	opacity: 0.65;
+}
+
+.root[data-disabled] {
+	cursor: not-allowed;
+}

@@ -1,0 +1,14 @@
+.content {
+	max-width: 20rem;
+	padding: var(--s-2);
+	border: 2px solid var(--color-border);
+	border-radius: var(--rounded);
+	background-color: var(--color-bg);
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+	white-space: pre-wrap;
+}
+
+.dialog {
+	outline: none;
+}

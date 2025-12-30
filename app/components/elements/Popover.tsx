@@ -5,6 +5,7 @@ import {
 	Popover,
 	type PopoverProps,
 } from "react-aria-components";
+import styles from "./Popover.module.css";
 
 /**
  * A reusable popover component that wraps around a trigger element (SendouButton or Button from React Aria Components library).
@@ -38,11 +39,11 @@ export function SendouPopover({
 		<DialogTrigger isOpen={isOpen}>
 			{trigger}
 			<Popover
-				className={clsx("sendou-popover-content", popoverClassName)}
+				className={clsx(styles.content, popoverClassName)}
 				placement={placement}
 				onOpenChange={onOpenChange}
 			>
-				<Dialog>{children}</Dialog>
+				<Dialog className={styles.dialog}>{children}</Dialog>
 			</Popover>
 		</DialogTrigger>
 	);

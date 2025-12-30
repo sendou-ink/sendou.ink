@@ -1,0 +1,81 @@
+.root {
+	background-color: var(--color-bg);
+	border-radius: var(--rounded);
+	padding: var(--s-4);
+	border: var(--border-style);
+	max-width: fit-content;
+}
+
+.header {
+	display: flex;
+	gap: var(--s-2);
+	justify-content: space-between;
+	align-items: center;
+	margin-block-end: var(--s-1);
+	min-width: 250px;
+}
+
+.heading {
+	font-size: var(--fonts-lg);
+}
+
+.navButton {
+	background-color: transparent;
+	color: var(--color-text-accent);
+	border: none;
+	padding: 0;
+	border-radius: 100%;
+
+	&:focus-visible {
+		outline: var(--input-focus-ring);
+		outline-offset: 1px;
+	}
+}
+
+.navIcon {
+	fill: var(--color-text-accent);
+	width: 27.5px;
+}
+
+.grid {
+	width: 100%;
+}
+
+.headerCell {
+	color: var(--color-text-high);
+}
+
+.cell {
+	display: grid;
+	place-items: center;
+	font-size: var(--fonts-sm);
+	padding: var(--s-1-5);
+	width: 35px;
+	height: 35px;
+	border-radius: var(--rounded-sm);
+	outline-color: var(--color-accent);
+
+	&:focus-visible {
+		outline: var(--input-focus-ring);
+		outline-offset: 1px;
+	}
+}
+
+.cell[data-outside-month] {
+	display: none;
+}
+
+.cell[data-disabled] {
+	opacity: 0.5;
+	background-color: transparent !important;
+}
+
+.cell[data-selected] {
+	background-color: var(--color-bg-high);
+	color: var(--color-text-accent);
+}
+
+.cell:hover {
+	background-color: var(--color-bg-high);
+	outline: initial;
+}

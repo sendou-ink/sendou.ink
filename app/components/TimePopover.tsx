@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { SendouButton } from "./elements/Button";
+import popoverStyles from "./elements/Popover.module.css";
 import { CheckmarkIcon } from "./icons/Checkmark";
 import { ClipboardIcon } from "./icons/Clipboard";
 
@@ -65,11 +66,11 @@ export default function TimePopover({
 			</button>
 			<Popover
 				isOpen={open}
-				className={"sendou-popover-content"}
+				className={popoverStyles.content}
 				onOpenChange={setOpen}
 				triggerRef={triggerRef}
 			>
-				<Dialog>
+				<Dialog className={popoverStyles.dialog}>
 					<div className="stack sm">
 						<div className="text-center" suppressHydrationWarning>
 							{formatTime(time, {

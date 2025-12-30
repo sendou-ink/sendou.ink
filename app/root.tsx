@@ -56,7 +56,6 @@ import { SUSPENDED_PAGE } from "./utils/urls";
 import "~/styles/vars.css";
 import "~/styles/normalize.css";
 import "~/styles/common.css";
-import "~/styles/elements.css";
 import "~/styles/utils.css";
 import "~/styles/flags.css";
 import "nprogress/nprogress.css";

@@ -12,6 +12,7 @@ import {
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouCalendar } from "~/components/elements/Calendar";
 import { CalendarIcon } from "../icons/Calendar";
+import styles from "./DatePicker.module.css";
 import { SendouLabel } from "./Label";
 
 interface SendouDatePickerProps<T extends DateValue>
@@ -29,12 +30,20 @@ export function SendouDatePicker<T extends DateValue>({
 	...rest
 }: SendouDatePickerProps<T>) {
 	return (
-		<ReactAriaDatePicker {...rest} validationBehavior="aria">
+		<ReactAriaDatePicker
+			{...rest}
+			validationBehavior="aria"
+			className={styles.root}
+		>
 			<SendouLabel required={isRequired}>{label}</SendouLabel>
-			<Group className="react-aria-Group">
-				<DateInput>{(segment) => <DateSegment segment={segment} />}</DateInput>
-				<Button data-testid="open-calendar-button">
-					<CalendarIcon />
+			<Group className={styles.group}>
+				<DateInput className={styles.dateInput}>
+					{(segment) => (
+						<DateSegment segment={segment} className={styles.segment} />
+					)}
+				</DateInput>
+				<Button data-testid="open-calendar-button" className={styles.button}>
+					<CalendarIcon className={styles.icon} />
 				</Button>
 			</Group>
 			<SendouBottomTexts bottomText={bottomText} errorText={errorText} />

@@ -1,0 +1,46 @@
+.group {
+	height: var(--input-height);
+	padding: 0 var(--input-padding-inline);
+	border: 2px solid var(--color-border);
+	border-radius: var(--rounded-sm);
+	background-color: var(--color-bg);
+	outline: none;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-1-5);
+	width: 100%;
+	cursor: pointer;
+}
+
+.root[data-open] .group {
+	border-color: transparent;
+	outline: 2px solid var(--color-text-accent);
+}
+
+.dateInput {
+	display: flex;
+}
+
+.segment:not([data-type="literal"]) {
+	padding: 0 var(--s-1);
+	border-radius: 5px;
+}
+
+.segment:focus-visible {
+	background-color: var(--color-bg-high);
+	color: var(--color-text-accent);
+	outline: none;
+}
+
+.button {
+	margin-inline-start: auto;
+	background-color: transparent;
+	border: none;
+	outline: none;
+}
+
+.icon {
+	fill: var(--color-text);
+	width: 17.5px;
+}

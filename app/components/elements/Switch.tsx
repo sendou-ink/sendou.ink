@@ -3,6 +3,7 @@ import {
 	Switch as ReactAriaSwitch,
 	type SwitchProps as ReactAriaSwitchProps,
 } from "react-aria-components";
+import styles from "./Switch.module.css";
 
 interface SendouSwitchProps extends ReactAriaSwitchProps {
 	children?: React.ReactNode;
@@ -13,9 +14,9 @@ export function SendouSwitch({ children, size, ...rest }: SendouSwitchProps) {
 	return (
 		<ReactAriaSwitch
 			{...rest}
-			className={clsx("react-aria-Switch", { small: size === "small" })}
+			className={clsx(styles.root, { [styles.small]: size === "small" })}
 		>
-			<div className="indicator" />
+			<div className={styles.indicator} />
 			{children}
 		</ReactAriaSwitch>
 	);
