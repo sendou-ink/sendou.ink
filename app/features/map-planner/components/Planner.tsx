@@ -8,20 +8,16 @@ import {
 	useSensors,
 } from "@dnd-kit/core";
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
-import type {
-	Editor,
-	TLAssetId,
-	TLComponents,
-	TLImageAsset,
-	TLShapeId,
-	TLUiStylePanelProps,
-} from "@tldraw/tldraw";
 import {
 	AssetRecordType,
 	createShapeId,
-	DefaultQuickActions,
 	DefaultStylePanel,
-	DefaultZoomMenu,
+	type Editor,
+	type TLAssetId,
+	type TLComponents,
+	type TLImageAsset,
+	type TLShapeId,
+	type TLUiStylePanelProps,
 	Tldraw,
 } from "@tldraw/tldraw";
 import clsx from "clsx";
@@ -261,19 +257,11 @@ export default function Planner() {
 	);
 }
 
-// Formats the style panel so it can have classnames, this is needed so it can be moved below the header bar which blocks clicks (idk why this is different to the old version), also needed to format the quick actions bar and zoom menu nicely
+// Formats the style panel so it can have classnames, this is needed so it can be moved below the header bar which blocks clicks (idk why this is different to the old version)
 function CustomStylePanel(props: TLUiStylePanelProps) {
 	return (
 		<div className="plans__style-panel">
 			<DefaultStylePanel {...props} />
-			<div className="plans__zoom-quick-actions">
-				<div className="plans__quick-actions">
-					<DefaultQuickActions />
-				</div>
-				<div className="plans__zoom-menu">
-					<DefaultZoomMenu />
-				</div>
-			</div>
 		</div>
 	);
 }
