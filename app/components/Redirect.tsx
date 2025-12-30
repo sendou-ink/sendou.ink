@@ -1,5 +1,5 @@
-import { useNavigate } from "@remix-run/react";
 import * as React from "react";
+import { useNavigate } from "react-router";
 
 export function Redirect({ to }: { to: string }) {
 	const navigate = useNavigate();

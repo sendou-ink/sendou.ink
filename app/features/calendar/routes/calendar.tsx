@@ -1,9 +1,9 @@
-import type { MetaFunction } from "@remix-run/node";
-import { Link, useLoaderData, useNavigate } from "@remix-run/react";
 import clsx from "clsx";
 import type * as React from "react";
 import type { DateValue } from "react-aria-components";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { Link, useLoaderData, useNavigate } from "react-router";
 import { AddNewButton } from "~/components/AddNewButton";
 import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
 import {

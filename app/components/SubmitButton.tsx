@@ -1,4 +1,4 @@
-import { type FetcherWithComponents, useNavigation } from "@remix-run/react";
+import { type FetcherWithComponents, useNavigation } from "react-router";
 import { SendouButton, type SendouButtonProps } from "./elements/Button";
 
 interface SubmitButtonProps extends SendouButtonProps {

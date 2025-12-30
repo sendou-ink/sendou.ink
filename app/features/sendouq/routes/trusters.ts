@@ -1,6 +1,7 @@
-import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { requireUserId } from "~/features/auth/core/user.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
+import type { SerializeFrom } from "~/utils/remix";
 
 export type TrustersLoaderData = SerializeFrom<typeof loader>;
 

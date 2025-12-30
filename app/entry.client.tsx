@@ -1,7 +1,7 @@
-import { RemixBrowser } from "@remix-run/react";
 import i18next from "i18next";
 import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider } from "react-i18next";
+import { HydratedRouter } from "react-router/dom";
 import { i18nLoader } from "./modules/i18n/loader";
 import { logger } from "./utils/logger";
 
@@ -17,7 +17,7 @@ i18nLoader()
 		hydrateRoot(
 			document,
 			<I18nextProvider i18n={i18next}>
-				<RemixBrowser />
+				<HydratedRouter />
 			</I18nextProvider>,
 		),
 	)

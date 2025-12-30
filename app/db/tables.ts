@@ -24,9 +24,10 @@ import type {
 } from "~/modules/in-game-lists/types";
 import type { JSONColumnTypeNullable } from "~/utils/kysely.server";
 
-type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
-	? ColumnType<S, I | undefined, U>
-	: ColumnType<T, T | undefined, T>;
+type Generated<T> =
+	T extends ColumnType<infer S, infer I, infer U>
+		? ColumnType<S, I | undefined, U>
+		: ColumnType<T, T | undefined, T>;
 
 export type MemberRole = (typeof TEAM_MEMBER_ROLES)[number];
 

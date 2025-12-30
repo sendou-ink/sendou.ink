@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import * as AssociationRepository from "~/features/associations/AssociationRepository.server";
 import { requireUserId } from "~/features/auth/core/user.server";
 import type { SerializeFrom } from "~/utils/remix";

@@ -1,4 +1,4 @@
-import { type ActionFunctionArgs, redirect } from "@remix-run/node";
+import { type ActionFunctionArgs, redirect } from "react-router";
 import { ASSOCIATION } from "~/features/associations/associations-constants";
 import { createNewAssociationSchema } from "~/features/associations/associations-schemas";
 import { requireUser } from "~/features/auth/core/user.server";

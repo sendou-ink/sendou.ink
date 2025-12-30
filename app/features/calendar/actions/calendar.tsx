@@ -1,4 +1,4 @@
-import { type ActionFunctionArgs, redirect } from "@remix-run/node";
+import { type ActionFunctionArgs, redirect } from "react-router";
 import { requireUserId } from "~/features/auth/core/user.server";
 import { calendarFiltersSearchParamsSchema } from "~/features/calendar/calendar-schemas";
 import * as UserRepository from "~/features/user-page/UserRepository.server";

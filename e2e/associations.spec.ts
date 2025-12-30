@@ -42,7 +42,7 @@ test.describe("Associations", () => {
 		await expect(page.getByTestId("delete-association")).toHaveCount(2);
 
 		await page.getByTestId("delete-association").first().click();
-		await page.getByTestId("confirm-button").click();
+		await submit(page, "confirm-button");
 
 		await expect(page.getByTestId("delete-association")).toHaveCount(1);
 	});
@@ -69,7 +69,7 @@ test.describe("Associations", () => {
 		await submit(page);
 
 		await page.getByTestId("leave-team-button").click();
-		await page.getByTestId("confirm-button").click();
+		await submit(page, "confirm-button");
 
 		await isNotVisible(page.getByTestId("leave-team-button"));
 	});

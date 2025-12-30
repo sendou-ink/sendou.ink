@@ -1,5 +1,5 @@
-import { Link } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import { WeaponImage } from "~/components/Image";
 import { vodVideoPage } from "~/utils/urls";
 import type { ListVod } from "../vods-types";

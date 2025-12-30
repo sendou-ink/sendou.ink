@@ -1,6 +1,6 @@
-import { Link, useFetcher, useMatches } from "@remix-run/react";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { Link, useFetcher, useMatches } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";

@@ -24,7 +24,7 @@ import {
 import { safeNumberParse } from "~/utils/number";
 import type { ChatUser } from "../chat/chat-types";
 
-const identifierToUserIdQuery = (identifier: string) =>
+export const identifierToUserIdQuery = (identifier: string) =>
 	db
 		.selectFrom("User")
 		.select("User.id")

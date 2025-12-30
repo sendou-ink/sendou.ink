@@ -1,5 +1,5 @@
-import { Link } from "@remix-run/react";
 import clsx from "clsx";
+import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { ModeImage, StageImage } from "~/components/Image";
 import type { Tables } from "~/db/tables";

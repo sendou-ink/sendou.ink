@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import { requireUserId } from "~/features/auth/core/user.server";
 import {
 	errorToastIfFalsy,

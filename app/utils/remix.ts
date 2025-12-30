@@ -2,7 +2,7 @@ import type {
 	Location,
 	ShouldRevalidateFunctionArgs,
 	useLoaderData,
-} from "@remix-run/react";
+} from "react-router";
 import { truncateBySentence } from "./strings";
 import { COMMON_PREVIEW_IMAGE } from "./urls";
 

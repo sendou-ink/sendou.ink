@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 import { SENDOUQ, SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import {
 	_action,

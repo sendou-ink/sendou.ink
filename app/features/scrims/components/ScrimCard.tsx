@@ -1,9 +1,9 @@
-import { Form, Link } from "@remix-run/react";
 import clsx from "clsx";
 import { formatDistance } from "date-fns";
 import type React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Form, Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";

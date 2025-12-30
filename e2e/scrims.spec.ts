@@ -48,7 +48,7 @@ test.describe("Scrims", () => {
 		await expect(page.getByTestId("limited-visibility-popover")).toBeVisible();
 
 		await page.getByRole("button", { name: "Delete" }).first().click();
-		await page.getByTestId("confirm-button").click();
+		await submit(page, "confirm-button");
 
 		await expect(page.getByRole("button", { name: "Delete" })).toHaveCount(1);
 	});
@@ -103,7 +103,7 @@ test.describe("Scrims", () => {
 		});
 
 		await page.getByTestId("confirm-modal-trigger-button").first().click();
-		await page.getByTestId("confirm-button").click();
+		await submit(page, "confirm-button");
 
 		await page.getByTestId("booked-scrims-tab").click();
 
@@ -126,7 +126,7 @@ test.describe("Scrims", () => {
 
 		// Accept the first available scrim request to make it possible to access the scrim details page
 		await page.getByTestId("confirm-modal-trigger-button").first().click();
-		await page.getByTestId("confirm-button").click();
+		await submit(page, "confirm-button");
 
 		await page.getByTestId("booked-scrims-tab").click();
 
@@ -135,7 +135,7 @@ test.describe("Scrims", () => {
 		// Cancel the scrim
 		await page.getByRole("button", { name: "Cancel" }).click();
 		await page.getByLabel("Reason").fill("Oops something came up");
-		await page.getByTestId("cancel-scrim-submit").click();
+		await submit(page, "cancel-scrim-submit");
 
 		// Go back to the scrims page and check if the scrim is marked as canceled
 		await navigate({
@@ -225,7 +225,7 @@ test.describe("Scrims", () => {
 		).toBeVisible();
 
 		await page.getByText("Confirm for 6:30 PM").click();
-		await page.getByTestId("confirm-button").click();
+		await submit(page, "confirm-button");
 
 		await page.getByTestId("booked-scrims-tab").click();
 		await page.getByRole("link", { name: "Contact" }).click();

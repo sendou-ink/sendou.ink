@@ -1,4 +1,3 @@
-import { useFetcher } from "@remix-run/react";
 import {
 	createContext,
 	type ReactNode,
@@ -7,6 +6,7 @@ import {
 	useEffect,
 	useState,
 } from "react";
+import { useFetcher } from "react-router";
 
 const Theme = {
 	DARK: "dark",

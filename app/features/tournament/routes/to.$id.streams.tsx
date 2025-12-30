@@ -1,5 +1,5 @@
-import { useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import { useLoaderData } from "react-router";
 import { Redirect } from "~/components/Redirect";
 import { tournamentRegisterPage } from "~/utils/urls";
 import { TournamentStream } from "../components/TournamentStream";

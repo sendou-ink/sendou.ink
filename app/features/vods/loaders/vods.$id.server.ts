@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import * as VodRepository from "../VodRepository.server";
 

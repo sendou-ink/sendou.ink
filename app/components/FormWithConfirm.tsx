@@ -1,7 +1,7 @@
-import { type FetcherWithComponents, useFetcher } from "@remix-run/react";
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { type FetcherWithComponents, useFetcher } from "react-router";
 import type { SendouButtonProps } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useIsMounted } from "~/hooks/useIsMounted";

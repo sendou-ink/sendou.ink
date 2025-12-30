@@ -1,5 +1,5 @@
-import { useRevalidator } from "@remix-run/react";
 import * as React from "react";
+import { useRevalidator } from "react-router";
 import { useVisibilityChange } from "./useVisibilityChange";
 
 const UPDATE_EVERY_N_SECONDS = 30;

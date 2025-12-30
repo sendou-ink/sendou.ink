@@ -35,7 +35,7 @@ test.describe("Tournament staff", () => {
 			labelName: "New staffer",
 		});
 
-		await page.getByTestId("add-staff-button").click();
+		await submit(page, "add-staff-button");
 		await expect(page.getByTestId(`staff-id-${NZAP_TEST_ID}`)).toBeVisible();
 
 		await page.getByTestId("remove-staff-button").click();
@@ -69,7 +69,7 @@ test.describe("Tournament staff", () => {
 			labelName: "New staffer",
 		});
 
-		await page.getByTestId("add-staff-button").click();
+		await submit(page, "add-staff-button");
 
 		await impersonate(page, NZAP_TEST_ID);
 
@@ -122,7 +122,7 @@ test.describe("Tournament staff", () => {
 			labelName: "New staffer",
 		});
 		await page.getByLabel("Role").selectOption("STREAMER");
-		await page.getByTestId("add-staff-button").click();
+		await submit(page, "add-staff-button");
 
 		await expect(page.getByTestId(`staff-id-${NZAP_TEST_ID}`)).toContainText(
 			"streamer",

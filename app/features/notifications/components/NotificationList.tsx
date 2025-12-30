@@ -1,6 +1,6 @@
-import { Link } from "@remix-run/react";
 import { formatDistance } from "date-fns";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import { Image } from "~/components/Image";
 import type { LoaderNotification } from "~/components/layout/NotificationPopover";
 import {

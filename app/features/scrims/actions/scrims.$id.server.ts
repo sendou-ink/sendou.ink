@@ -1,4 +1,4 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from "react-router";
 import { notify } from "~/features/notifications/core/notify.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import {

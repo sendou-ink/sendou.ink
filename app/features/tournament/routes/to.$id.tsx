@@ -1,12 +1,12 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
+import * as React from "react";
+import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
 import {
 	Outlet,
 	type ShouldRevalidateFunction,
 	useLoaderData,
 	useOutletContext,
-} from "@remix-run/react";
-import * as React from "react";
-import { useTranslation } from "react-i18next";
+} from "react-router";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { SubNav, SubNavLink } from "~/components/SubNav";
@@ -22,7 +22,7 @@ import {
 	tournamentPage,
 	tournamentRegisterPage,
 } from "~/utils/urls";
-import { metaTags } from "../../../utils/remix";
+import { metaTags, type SerializeFrom } from "../../../utils/remix";
 
 import { loader, type TournamentLoaderData } from "../loaders/to.$id.server";
 export { loader };

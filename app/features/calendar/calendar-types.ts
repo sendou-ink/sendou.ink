@@ -1,4 +1,4 @@
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import type { CalendarEventTag, Tables } from "~/db/tables";
 import type { calendarFiltersSearchParamsSchema } from "~/features/calendar/calendar-schemas";
 import type { ModeShortWithSpecial } from "~/modules/in-game-lists/types";

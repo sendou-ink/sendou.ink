@@ -1,7 +1,7 @@
-import { useRevalidator } from "@remix-run/react";
 import { nanoid } from "nanoid";
 import { WebSocket } from "partysocket";
 import React from "react";
+import { useRevalidator } from "react-router";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { soundPath } from "~/utils/urls";

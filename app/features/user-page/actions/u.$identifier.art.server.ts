@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { userArtPageActionSchema } from "~/features/art/art-schemas.server";
 import { requireUserId } from "~/features/auth/core/user.server";

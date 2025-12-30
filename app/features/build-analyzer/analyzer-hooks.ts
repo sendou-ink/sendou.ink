@@ -1,4 +1,4 @@
-import { useSearchParams } from "@remix-run/react";
+import { useSearchParams } from "react-router";
 import { abilities } from "~/modules/in-game-lists/abilities";
 import type {
 	Ability,

@@ -1,7 +1,7 @@
-import type { ShouldRevalidateFunction } from "@remix-run/react";
 import clsx from "clsx";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import type { ShouldRevalidateFunction } from "react-router";
 import { Ability } from "~/components/Ability";
 import { Image, WeaponImage } from "~/components/Image";
 import { Label } from "~/components/Label";
@@ -33,7 +33,7 @@ import {
 import { useObjectDamage } from "../calculator-hooks";
 import type { DamageReceiver } from "../calculator-types";
 import "../calculator.css";
-import type { MetaFunction } from "@remix-run/node";
+import type { MetaFunction } from "react-router";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import type { DamageType } from "~/features/build-analyzer/analyzer-types";

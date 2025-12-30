@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { findByInviteCode } from "../queries/findTeamByInviteCode.server";
 
 export const loader = ({ request }: LoaderFunctionArgs) => {

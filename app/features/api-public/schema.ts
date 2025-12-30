@@ -42,6 +42,20 @@ export interface GetUserResponse {
 	currentRank: SeasonalRank | null;
 }
 
+/** GET /api/user/{userId|discordId|customUrl}/ids */
+
+export interface GetUserIdsResponse {
+	id: number;
+	/**
+	 * @example "79237403620945920"
+	 */
+	discordId: string;
+	/**
+	 * @example "sendou"
+	 */
+	customUrl: string | null;
+}
+
 /** GET /api/team/{teamId} */
 
 export interface GetTeamResponse {

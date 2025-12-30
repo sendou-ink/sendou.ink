@@ -99,6 +99,8 @@ const config: PlaywrightTestConfig = {
 
 	/* Run your local dev server before starting the tests */
 	webServer: {
+		// uncomment to see server logs output
+		// stdout: "pipe",
 		env: {
 			DB_PATH: "db-test-e2e.sqlite3",
 			DISCORD_CLIENT_ID: "123",

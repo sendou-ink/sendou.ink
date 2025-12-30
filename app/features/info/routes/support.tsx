@@ -1,6 +1,6 @@
-import type { MetaFunction } from "@remix-run/node";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
 import { Badge } from "~/components/Badge";
 import { LinkButton } from "~/components/elements/Button";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";

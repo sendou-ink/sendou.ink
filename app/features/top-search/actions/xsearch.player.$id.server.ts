@@ -1,4 +1,4 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { syncXPBadges } from "~/features/badges/queries/syncXPBadges.server";
 import { logger } from "~/utils/logger";

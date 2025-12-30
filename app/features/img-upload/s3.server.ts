@@ -4,11 +4,8 @@ import { PassThrough } from "node:stream";
 
 import { S3 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
-import type { UploadHandler } from "@remix-run/node";
-import { writeAsyncIterableToWritable } from "@remix-run/node";
+import { writeAsyncIterableToWritable } from "@react-router/node";
 import type AWS from "aws-sdk";
-import { nanoid } from "nanoid";
-import invariant from "~/utils/invariant";
 
 const envVars = () => {
 	const {
@@ -76,27 +73,3 @@ export async function uploadStreamToS3(data: any, filename: string) {
 	const file = await stream.promise;
 	return file.Location;
 }
-
-// predeciding file name is useful when you are uploading more than one asset
-// and want them to share name
-export const s3UploadHandler =
-	(preDecidedFilename?: string): UploadHandler =>
-	async ({ name, filename, data }) => {
-		invariant(
-			name !== "smallImg" || preDecidedFilename,
-			"must have predecided filename when uploading many images",
-		);
-
-		if (name !== "img" && name !== "smallImg") {
-			return undefined;
-		}
-
-		const [, ending] = filename!.split(".");
-		invariant(ending);
-		const newFilename = preDecidedFilename
-			? `${preDecidedFilename}${name === "smallImg" ? "-small" : ""}.${ending}`
-			: `${nanoid()}-${Date.now()}.${ending}`;
-
-		const uploadedFileLocation = await uploadStreamToS3(data, newFilename);
-		return uploadedFileLocation;
-	};

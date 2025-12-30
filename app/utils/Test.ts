@@ -1,7 +1,10 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import type { Params } from "@remix-run/react";
+import type {
+	ActionFunctionArgs,
+	LoaderFunctionArgs,
+	Params,
+} from "react-router";
 import { expect } from "vitest";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import { db, sql } from "~/db/sql";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
@@ -63,6 +66,7 @@ export function wrappedAction<T extends z.ZodTypeAny>({
 				request,
 				context: {},
 				params,
+				unstable_pattern: "",
 			});
 
 			return response;
@@ -107,6 +111,7 @@ export function wrappedLoader<T>({
 				request,
 				params,
 				context: {},
+				unstable_pattern: "",
 			});
 
 			return data as T;

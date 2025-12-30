@@ -1,4 +1,4 @@
-import { useSearchParams } from "@remix-run/react";
+import { useSearchParams } from "react-router";
 import { exampleMainWeaponIdWithSpecialWeaponId } from "~/modules/in-game-lists/weapon-ids";
 import { assertType } from "~/utils/types";
 import type { DAMAGE_TYPE } from "../build-analyzer/analyzer-constants";

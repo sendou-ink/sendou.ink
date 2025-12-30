@@ -1,7 +1,7 @@
-import type { SerializeFrom } from "@remix-run/node";
 import { Avatar } from "~/components/Avatar";
 import { UserIcon } from "~/components/icons/User";
 import { twitchThumbnailUrlToSrc } from "~/modules/twitch/utils";
+import type { SerializeFrom } from "~/utils/remix";
 import { twitchUrl } from "~/utils/urls";
 import type { TournamentStreamsLoader } from "../loaders/to.$id.streams.server";
 import { useTournament } from "../routes/to.$id";

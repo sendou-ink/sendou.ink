@@ -1,16 +1,15 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import type { FetcherWithComponents } from "@remix-run/react";
+import clsx from "clsx";
+import * as React from "react";
+import { Flipped, Flipper } from "react-flip-toolkit";
+import { useTranslation } from "react-i18next";
+import type { FetcherWithComponents, MetaFunction } from "react-router";
 import {
 	Link,
 	useFetcher,
 	useLoaderData,
 	useNavigate,
 	useSearchParams,
-} from "@remix-run/react";
-import clsx from "clsx";
-import * as React from "react";
-import { Flipped, Flipper } from "react-flip-toolkit";
-import { useTranslation } from "react-i18next";
+} from "react-router";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
@@ -56,7 +55,7 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import { animate } from "~/utils/flip";
 import invariant from "~/utils/invariant";
 import { safeNumberParse } from "~/utils/number";
-import { metaTags } from "~/utils/remix";
+import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import type { Unpacked } from "~/utils/types";

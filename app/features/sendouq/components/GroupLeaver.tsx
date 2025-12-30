@@ -1,5 +1,5 @@
-import { useFetcher } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import { useFetcher } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { SubmitButton } from "~/components/SubmitButton";

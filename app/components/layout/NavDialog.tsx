@@ -1,5 +1,5 @@
-import { Link } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { navItems } from "~/components/layout/nav-items";
 import { useUser } from "~/features/auth/core/user";

@@ -1,6 +1,6 @@
-import { useFetcher, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { useFetcher, useLoaderData } from "react-router";
 import { useLocation } from "react-use";
 import { Avatar } from "~/components/Avatar";
 import { Badge } from "~/components/Badge";
