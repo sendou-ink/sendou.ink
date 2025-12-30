@@ -80,7 +80,7 @@
 		"react-router": "^7.11.0",
 		"react-use": "^17.6.0",
 		"react-use-draggable-scroll": "^0.4.7",
-		"remeda": "^2.32.0",
+		"remeda": "^2.32.1",
 		"remix-auth": "^4.2.0",
 		"remix-auth-oauth2": "^3.4.1",
 		"remix-i18next": "^7.4.2",
