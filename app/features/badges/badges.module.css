@@ -18,10 +18,6 @@
 	margin-block-start: var(--s-1);
 }
 
-.navLink.active {
-	display: none;
-}
-
 .generalInfoTexts {
 	display: flex;
 	justify-content: space-between;
@@ -88,15 +84,6 @@
 
 .editNumberInput {
 	max-width: 5rem;
-}
-
-.editCancelButton {
-	width: max-content;
-	margin: 0 auto;
-}
-
-.editBigHeader {
-	font-size: var(--fonts-lg);
 }
 
 .editSmallHeader {

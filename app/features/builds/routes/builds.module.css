@@ -6,12 +6,6 @@
 	background-color: var(--color-bg-higher);
 }
 
-.topContainer {
-	display: flex;
-	align-items: center;
-	justify-content: flex-end;
-}
-
 .category {
 	display: flex;
 	flex-direction: column;

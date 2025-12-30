@@ -16,10 +16,6 @@
 	right: 0;
 }
 
-.container {
-	position: relative;
-}
-
 .scrolling {
 	max-height: 300px !important;
 	overflow-y: auto;

@@ -169,24 +169,6 @@
 	border-radius: 100%;
 }
 
-.badges {
-	justify-content: flex-end;
-	display: flex;
-	gap: var(--s-3);
-}
-
-.badges > div {
-	background-color: var(--color-accent-low);
-	border-radius: var(--rounded);
-	font-size: var(--fonts-xs);
-	padding-inline: var(--s-2);
-	font-weight: var(--bold);
-	display: flex;
-	align-items: center;
-	gap: var(--s-1-5);
-	height: 1.5rem;
-}
-
 .actionButtons {
 	display: flex;
 	justify-content: center;

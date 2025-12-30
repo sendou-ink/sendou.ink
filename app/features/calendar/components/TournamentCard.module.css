@@ -143,15 +143,6 @@
 	text-overflow: ellipsis;
 }
 
-.badgesContainer {
-	display: flex;
-	gap: var(--s-1);
-	justify-content: center;
-	background-color: black;
-	border-radius: var(--rounded-sm);
-	padding: var(--s-1);
-}
-
 .badgeNavIcon {
 	min-width: 16px;
 }

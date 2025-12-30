@@ -6,21 +6,6 @@
 	padding-block: var(--s-3);
 }
 
-.poolMeta {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-}
-
-.poolInfo {
-	font-size: var(--fonts-xs);
-	font-weight: var(--bold);
-}
-
-.poolInfo a {
-	font-weight: var(--semi-bold);
-}
-
 .tournamentMapListLink {
 	font-size: var(--fonts-xxs);
 	text-align: center;

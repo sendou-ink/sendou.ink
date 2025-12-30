@@ -34,11 +34,6 @@
 	gap: var(--s-2-5);
 }
 
-.countryName {
-	color: var(--color-text-high);
-	font-weight: var(--bold);
-}
-
 .socials {
 	display: flex;
 	justify-content: center;
@@ -201,14 +196,6 @@
 	padding: var(--s-2);
 	border-radius: 100%;
 	background-color: var(--color-bg-high);
-}
-
-.buildForm {
-	--input-width: min(18rem, 75vw);
-}
-
-.buildFormWeapon {
-	--input-width: 16rem;
 }
 
 .buildFilterButton {

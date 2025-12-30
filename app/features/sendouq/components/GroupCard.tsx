@@ -46,6 +46,12 @@ import { FULL_GROUP_SIZE, SENDOUQ } from "../q-constants";
 import { resolveFutureMatchModes } from "../q-utils";
 import styles from "./GroupCard.module.css";
 
+const SENTIMENT_STYLES = {
+	POSITIVE: styles.avatarPositive,
+	NEUTRAL: styles.avatarNeutral,
+	NEGATIVE: styles.avatarNegative,
+} as const;
+
 export function GroupCard({
 	group,
 	action,
@@ -287,9 +293,7 @@ function GroupMember({
 										size="xs"
 										className={clsx(
 											styles.avatar,
-											styles[
-												`avatar${member.privateNote.sentiment.charAt(0).toUpperCase() + member.privateNote.sentiment.slice(1).toLowerCase()}`
-											],
+											SENTIMENT_STYLES[member.privateNote.sentiment],
 										)}
 									/>
 								</SendouButton>

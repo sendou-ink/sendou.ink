@@ -4,21 +4,6 @@
 	background-color: var(--color-bg-high);
 }
 
-.actionSectionTopPadded {
-	padding: var(--s-3) var(--s-6) var(--s-6) var(--s-6);
-}
-
-.actionSectionTitle {
-	font-size: var(--fonts-lg);
-	font-weight: var(--bold);
-}
-
-.actionSideNote {
-	color: var(--color-text-high);
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
-}
-
 .chatContainer {
 	top: var(--sticky-top);
 	position: sticky;
@@ -29,85 +14,8 @@
 	height: 350px;
 }
 
-.mapPoolCounts {
-	display: grid;
-	width: 250px;
-	margin: 0 auto;
-	color: var(--color-text-high);
-	font-size: var(--fonts-xs);
-	grid-template-columns: repeat(4, 1fr);
-	place-items: center;
-	row-gap: var(--s-2);
-}
-
-.summaryContent {
-	display: inline-flex;
-	gap: var(--s-3);
-}
-
-.summaryContent > svg {
-	width: 1rem;
-}
-
-.roundContainer {
-	width: 250px;
-	margin: 0 auto;
-}
-
 .selectContainer > label {
 	margin-left: var(--s-2-5);
-}
-
-.teamsContainer {
-	display: flex;
-	justify-content: center;
-	gap: var(--s-4);
-}
-
-.teamSelect {
-	width: 150px;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.boRadiosContainer {
-	display: flex;
-	justify-content: center;
-	gap: var(--s-4);
-}
-
-.mapList {
-	display: grid;
-	justify-content: center;
-	column-gap: var(--s-4);
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
-	grid-template-columns: max-content max-content;
-}
-
-.pickInfo {
-	align-self: center;
-	font-size: var(--fonts-xxxs);
-}
-
-.pickInfoTeam1 {
-	color: var(--color-info);
-}
-
-.pickInfoTeam2 {
-	color: var(--color-error-high);
-}
-
-.pickInfoTiebreaker {
-	color: var(--color-warning-high);
-}
-
-.pickInfoBoth {
-	color: var(--color-success-high);
-}
-
-.stageListed {
-	justify-self: flex-start;
 }
 
 .teamWithRoster {
@@ -323,13 +231,6 @@
 	color: var(--color-text-high);
 }
 
-.sectionMapSelectRow {
-	display: flex;
-	align-items: center;
-	gap: var(--s-4);
-	white-space: nowrap;
-}
-
 .sectionIcon {
 	width: 2rem;
 }
@@ -437,17 +338,6 @@
 .seedsTeamMemberName {
 	grid-column: 1 / span 2;
 	font-weight: var(--semi-bold);
-}
-
-.seedsLonelyStat {
-	grid-column: 1 / span 2;
-}
-
-.seedsPlusInfo {
-	display: inline-flex;
-	align-items: center;
-	margin-inline-end: var(--s-4);
-	min-width: 2rem;
 }
 
 .streamUserContainer {
@@ -673,98 +563,4 @@
 	width: 5px;
 	background-color: var(--color-accent-low);
 	border-radius: var(--rounded);
-}
-
-.divGrid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
-	gap: var(--s-4);
-}
-
-.divLink {
-	background-color: var(--color-bg-high);
-	padding: var(--s-2) var(--s-4);
-	border-radius: var(--rounded);
-	font-size: var(--fonts-lg);
-	width: 100%;
-	white-space: nowrap;
-}
-
-.divLink:focus-visible {
-	outline: 3px solid var(--color-accent);
-	outline-offset: 3px;
-}
-
-.divLinkParticipant {
-	outline: 3px solid var(--color-bg-higher);
-	outline-offset: 3px;
-}
-
-.divLinkParticipant svg {
-	fill: var(--color-accent);
-}
-
-.divParticipantCounts {
-	display: flex;
-	align-items: center;
-	color: var(--color-text-high);
-	font-size: var(--fonts-sm);
-	gap: var(--s-2);
-	margin-block-end: var(--s-1);
-}
-
-.divParticipantCounts > svg {
-	width: 1rem;
-	margin-block-end: 1px;
-}
-
-.standingsDividerRow {
-	background: transparent !important;
-	height: auto;
-}
-
-.standingsDividerPadding {
-	padding-block: var(--s-2);
-	background: transparent;
-}
-
-.standingsDividerContent {
-	display: flex;
-	align-items: center;
-	width: 100%;
-	gap: var(--s-2);
-}
-
-.standingsDividerLine {
-	flex: 1;
-	height: 4px;
-	border-radius: var(--rounded);
-}
-
-.standingsDividerText {
-	font-size: var(--fonts-xs);
-	font-weight: var(--bold);
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-	white-space: nowrap;
-	padding: var(--s-0-5) var(--s-1-5);
-	border-radius: var(--rounded);
-}
-
-.standingsDividerQualifiedLine {
-	background-color: var(--color-success);
-}
-
-.standingsDividerQualifiedText {
-	color: var(--color-success);
-	background-color: transparent;
-}
-
-.standingsDividerEliminatedLine {
-	background-color: var(--color-error);
-}
-
-.standingsDividerEliminatedText {
-	color: var(--color-error);
-	background-color: transparent;
 }

@@ -33,10 +33,6 @@
 	letter-spacing: 0.3px;
 }
 
-.infosLabel {
-	margin-block-end: 0;
-}
-
 .infosValue > button {
 	font-size: var(--fonts-xxs);
 }
@@ -209,12 +205,6 @@
 	align-items: center;
 	text-align: center;
 	font-size: var(--fonts-xs);
-}
-
-.duringMatchActionsConfirmScoreText {
-	font-size: var(--fonts-xs);
-	color: var(--color-text);
-	text-align: center;
 }
 
 .duringMatchActionsRosters {
@@ -442,16 +432,6 @@
 	font-size: var(--fonts-sm);
 }
 
-.progress {
-	display: flex;
-	align-items: center;
-	background-color: var(--color-bg-higher);
-	border-radius: var(--rounded);
-	padding: var(--s-2) var(--s-5);
-	font-weight: var(--semi-bold);
-	gap: var(--s-3);
-}
-
 @media screen and (min-width: 480px) {
 	.infos {
 		flex-direction: row;
@@ -586,10 +566,4 @@
 
 .streamPopover {
 	width: 280px;
-}
-
-.finalizeBadgeContainer {
-	padding: var(--s-2);
-	background-color: black;
-	border-radius: var(--rounded);
 }

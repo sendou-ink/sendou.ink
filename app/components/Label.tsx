@@ -33,7 +33,7 @@ export function Label({
 				{children} {required && <span className="text-error">*</span>}
 			</label>
 			{valueLimits ? (
-				<div className={clsx(styles.value, lengthWarning(valueLimits, styles))}>
+				<div className={clsx(styles.value, lengthWarning(valueLimits))}>
 					{valueLimits.current}/{valueLimits.max}
 				</div>
 			) : null}
@@ -41,12 +41,9 @@ export function Label({
 	);
 }
 
-function lengthWarning(
-	valueLimits: NonNullable<LabelProps["valueLimits"]>,
-	s: typeof styles,
-) {
-	if (valueLimits.current > valueLimits.max) return s.valueError;
-	if (valueLimits.current / valueLimits.max >= 0.9) return s.valueWarning;
+function lengthWarning(valueLimits: NonNullable<LabelProps["valueLimits"]>) {
+	if (valueLimits.current > valueLimits.max) return styles.valueError;
+	if (valueLimits.current / valueLimits.max >= 0.9) return styles.valueWarning;
 
 	return;
 }

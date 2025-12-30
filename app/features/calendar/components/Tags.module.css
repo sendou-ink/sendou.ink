@@ -42,8 +42,3 @@
 		margin-inline: var(--s-1) 0 !important;
 	}
 }
-
-.tagBadges {
-	display: flex;
-	margin-inline-start: var(--s-1);
-}

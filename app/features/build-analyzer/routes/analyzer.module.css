@@ -289,13 +289,6 @@
 	grid-template-columns: repeat(41, 1fr);
 }
 
-.inkGridVerticalAbility {
-	grid-row: span 41;
-	display: grid;
-	place-items: center;
-	padding-inline-end: var(--s-2);
-}
-
 .inkGridHorizontalAbility {
 	grid-column: span 41;
 	display: grid;
