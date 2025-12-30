@@ -1,0 +1,40 @@
+.userItem {
+	outline-offset: 1px;
+	border-radius: 100%;
+}
+
+.userItem:focus-visible {
+	outline: 2px solid var(--color-text-accent);
+}
+
+.avatar {
+	width: var(--item-size);
+	height: var(--item-size);
+	color: transparent;
+}
+
+.logInButton {
+	display: flex;
+	height: var(--item-size);
+	align-items: center;
+	justify-content: center;
+	padding: 0.5rem;
+	border: 2px solid;
+	border-color: var(--color-text-accent);
+	border-radius: var(--rounded);
+	background-color: transparent;
+	color: inherit;
+	cursor: pointer;
+	font-size: var(--fonts-xs);
+	font-weight: var(--bold);
+	gap: var(--s-2);
+	text-decoration: none;
+}
+
+.logInButton > svg {
+	width: 1rem;
+}
+
+.logInButton:active {
+	transform: translateY(1px);
+}

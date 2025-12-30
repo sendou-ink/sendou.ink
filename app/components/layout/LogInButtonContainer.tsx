@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { LOG_IN_URL, SENDOU_INK_DISCORD_URL } from "~/utils/urls";
+import styles from "./UserItem.module.css";
 
 export function LogInButtonContainer({
 	children,
@@ -32,7 +33,7 @@ export function LogInButtonContainer({
 								: t("auth.errors.failed")
 						}
 					>
-						<div className="stack md layout__user-item">
+						<div className={`stack md ${styles.userItem}`}>
 							{authError === "aborted" ? (
 								t("auth.errors.discordPermissions")
 							) : (

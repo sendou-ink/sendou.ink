@@ -1,0 +1,127 @@
+.topSection {
+	position: fixed;
+	z-index: 10;
+	top: 25px;
+	left: 50%;
+	display: flex;
+	align-items: center;
+	padding: var(--s-3);
+	border: 2px solid var(--color-border);
+	border-top: transparent;
+	border-radius: 0 0 var(--rounded) var(--rounded);
+	background-color: var(--color-bg);
+	gap: var(--s-4);
+	transform: translate(-50%, -42%);
+}
+
+.outlineToggle {
+	position: fixed;
+	z-index: 10;
+	top: 10%;
+	left: 5px;
+}
+
+.outlineToggleButton {
+	background-color: var(--color-bg-high);
+	color: var(--color-text);
+	font-size: var(--fonts-xs);
+	padding: var(--s-2);
+	width: 140px;
+}
+
+.outlineToggleButtonOutlined {
+	background-color: var(--color-text-accent);
+	color: var(--color-text-inverse);
+}
+
+.weaponsSection {
+	position: fixed;
+	z-index: 10;
+	top: 15%;
+	width: 150px;
+	max-height: 85vh;
+	border: 2px solid var(--color-border);
+	border-left: transparent;
+	border-radius: 0 var(--rounded) var(--rounded) 0;
+	background: var(--color-bg);
+	gap: 2px;
+	overflow-y: auto;
+}
+
+.weaponsSectionWide {
+	width: 175px;
+}
+
+.weaponsSummary {
+	background-color: var(--color-bg-high);
+	font-size: var(--fonts-sm);
+	font-weight: var(--bold);
+	padding: var(--s-2-5);
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.weaponsContainer {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	padding: var(--s-1-5);
+	gap: var(--s-1-5);
+}
+
+.stylePanel {
+	position: fixed;
+	z-index: 10;
+	margin-top: 50px;
+}
+
+.zoomQuickActions {
+	position: absolute;
+	z-index: 10;
+	display: block;
+}
+
+.zoomMenu {
+	position: absolute;
+	right: 0;
+}
+
+.quickActions {
+	display: flex;
+	right: 0;
+}
+
+.draggableButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--s-0-5);
+	border: none;
+	border-radius: var(--rounded);
+	background: transparent;
+	cursor: grab;
+	touch-action: none;
+}
+
+.draggableButton:hover {
+	background-color: var(--color-bg-high);
+}
+
+.weaponDragging {
+	opacity: 0.5;
+}
+
+.dragPreviewContainer {
+	display: block;
+	min-width: 45px;
+	min-height: 45px;
+}
+
+.dragPreview {
+	cursor: grabbing;
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}

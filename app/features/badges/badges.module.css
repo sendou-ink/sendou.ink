@@ -1,4 +1,4 @@
-.badges__container {
+.container {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -10,7 +10,7 @@
 	padding-inline: var(--s-3);
 }
 
-.badges__small-badges {
+.smallBadges {
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: center;
@@ -18,11 +18,11 @@
 	margin-block-start: var(--s-1);
 }
 
-.badges__nav-link.active {
+.navLink.active {
 	display: none;
 }
 
-.badges__general-info-texts {
+.generalInfoTexts {
 	display: flex;
 	justify-content: space-between;
 	color: var(--color-text-high);
@@ -30,24 +30,24 @@
 	padding-inline: var(--s-1);
 }
 
-.badges__explanation {
+.explanation {
 	color: var(--color-text-accent);
 	font-weight: var(--semi-bold);
 	text-align: center;
 }
 
-.badges__managers {
+.managers {
 	color: var(--color-text-high);
 	font-size: var(--fonts-xxs);
 	text-align: center;
 }
 
-.badges__owners-container {
+.ownersContainer {
 	height: 8rem;
 	overflow-y: auto;
 }
 
-.badges__owners {
+.owners {
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: center;
@@ -56,7 +56,7 @@
 	gap: var(--s-1-5);
 }
 
-.badges__owners > li {
+.owners > li {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -64,19 +64,19 @@
 	list-style: none;
 }
 
-.badges__count {
+.count {
 	color: var(--color-accent-high);
 	font-size: var(--fonts-xs);
 }
 
-.badges-edit__users-list > li {
+.editUsersList > li {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	list-style: none;
 }
 
-.badges-edit__users-list {
+.editUsersList {
 	display: flex;
 	flex-direction: column;
 	padding: 0;
@@ -86,35 +86,35 @@
 	padding-block-end: var(--s-2-5);
 }
 
-.badges-edit__number-input {
+.editNumberInput {
 	max-width: 5rem;
 }
 
-.badges-edit__cancel-button {
+.editCancelButton {
 	width: max-content;
 	margin: 0 auto;
 }
 
-.badges-edit__big-header {
+.editBigHeader {
 	font-size: var(--fonts-lg);
 }
 
-.badges-edit__small-header {
+.editSmallHeader {
 	font-size: var(--fonts-md);
 }
 
-.badges-edit__differences {
+.editDifferences {
 	padding: 0;
 	font-size: var(--fonts-xs);
 	list-style: none;
 }
 
-.badges-edit__differences > li::before {
+.editDifferences > li::before {
 	content: "-";
 	padding-inline-end: 5px;
 }
 
-.badges-search__input {
+.searchInput {
 	height: 40px !important;
 	margin: 0 auto;
 	font-size: var(--fonts-lg);

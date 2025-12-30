@@ -51,12 +51,7 @@ export function MemberAdder({
 			<div>
 				<label htmlFor="invite">{t("q:looking.groups.adder.inviteLink")}</label>
 				<div className="stack horizontal sm items-center">
-					<input
-						type="text"
-						value={inviteLink}
-						readOnly
-						id="invite"
-					/>
+					<input type="text" value={inviteLink} readOnly id="invite" />
 					<SendouButton
 						variant={copySuccess ? "outlined-success" : "outlined"}
 						onPress={() => copyToClipboard(inviteLink)}

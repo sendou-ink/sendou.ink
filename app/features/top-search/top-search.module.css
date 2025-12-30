@@ -1,4 +1,4 @@
-.placements__table {
+.table {
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-0-5);
@@ -6,19 +6,19 @@
 	font-weight: var(--semi-bold);
 }
 
-.placements__table__rank {
+.tableRank {
 	min-width: 28px;
 	text-align: right;
 }
 
-.placements__table__name {
+.tableName {
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	overflow: hidden;
 	max-width: 117px;
 }
 
-.placements__tier-header {
+.tierHeader {
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
@@ -26,7 +26,7 @@
 	color: var(--color-text-high);
 }
 
-.placements__table__row {
+.tableRow {
 	background-color: var(--color-bg-high);
 	display: flex;
 	padding: var(--s-2) var(--s-3);
@@ -36,23 +36,23 @@
 	transition: 0.1s ease-in-out background-color;
 }
 
-a.placements__table__row:hover {
+a.tableRow:hover {
 	background-color: var(--color-bg-higher);
 }
 
-.placements__table__row:first-of-type {
+.tableRow:first-of-type {
 	border-radius: var(--rounded) var(--rounded) 0 0;
 }
 
-.placements__table__row:last-of-type {
+.tableRow:last-of-type {
 	border-radius: 0 0 var(--rounded) var(--rounded);
 }
 
-.placements__table__row:only-child {
+.tableRow:only-child {
 	border-radius: var(--rounded);
 }
 
-.placements__table__row__qualification {
+.tableRowQualification {
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
 	justify-content: center;
@@ -61,35 +61,35 @@ a.placements__table__row:hover {
 	gap: var(--s-2);
 }
 
-.placements__table__weapon {
+.tableWeapon {
 	background-color: var(--color-bg);
 	border-radius: 100%;
 }
 
-.placements__table__mode {
+.tableMode {
 	background-color: var(--color-bg);
 	border-radius: 100%;
 	padding: var(--s-1);
 }
 
-.placements__time {
+.time {
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
 	color: var(--color-text-high);
 }
 
-.placements__table__power {
+.tablePower {
 	margin-inline-start: auto;
 }
 
-.placements__table__inner-row {
+.tableInnerRow {
 	display: flex;
 	align-items: center;
 	gap: var(--s-2-5);
 	width: 100%;
 }
 
-.placements__avatar {
+.avatar {
 	min-width: 24px;
 	min-height: 24px;
 }

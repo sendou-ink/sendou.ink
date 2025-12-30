@@ -27,7 +27,7 @@ import { loader } from "../loaders/t.server";
 import { TEAM, TEAMS_PER_PAGE } from "../team-constants";
 export { loader, action };
 
-import "../team.css";
+import styles from "../team.module.css";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -99,8 +99,8 @@ export default function TeamSearchPage() {
 			<NewTeamDialog />
 			<div className="stack sm horizontal justify-between">
 				<Input
-					className="team-search__input"
-					icon={<SearchIcon className="team-search__icon" />}
+					className={styles.searchInput}
+					icon={<SearchIcon className={styles.searchIcon} />}
 					value={inputValue}
 					onChange={(e) => setInputValue(e.target.value)}
 					placeholder={t("team:teamSearch.placeholder")}
@@ -113,7 +113,7 @@ export default function TeamSearchPage() {
 					<Link
 						key={team.customUrl}
 						to={teamPage(team.customUrl)}
-						className="team-search__team"
+						className={styles.searchTeam}
 					>
 						{team.avatarUrl ? (
 							<img
@@ -125,21 +125,18 @@ export default function TeamSearchPage() {
 								loading="lazy"
 							/>
 						) : (
-							<div className="team-search__team__avatar-placeholder">
+							<div className={styles.searchTeamAvatarPlaceholder}>
 								{team.name[0]}
 							</div>
 						)}
 						<div>
-							<div
-								className="team-search__team__name"
-								data-testid={`team-${i}`}
-							>
+							<div className={styles.searchTeamName} data-testid={`team-${i}`}>
 								{team.name}
 								{team.tag ? (
-									<span className="team-search__team__tag">{team.tag}</span>
+									<span className={styles.searchTeamTag}>{team.tag}</span>
 								) : null}
 							</div>
-							<div className="team-search__team__members">
+							<div className={styles.searchTeamMembers}>
 								{team.members.length === 1
 									? team.members[0].username
 									: new Intl.ListFormat(i18n.language, {

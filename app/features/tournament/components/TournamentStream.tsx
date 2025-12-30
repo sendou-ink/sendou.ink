@@ -5,6 +5,7 @@ import { twitchThumbnailUrlToSrc } from "~/modules/twitch/utils";
 import { twitchUrl } from "~/utils/urls";
 import type { TournamentStreamsLoader } from "../loaders/to.$id.streams.server";
 import { useTournament } from "../routes/to.$id";
+import styles from "../tournament.module.css";
 
 export function TournamentStream({
 	stream,
@@ -37,17 +38,17 @@ export function TournamentStream({
 			) : null}
 			<div className="stack md horizontal justify-between">
 				{user && team ? (
-					<div className="tournament__stream__user-container">
+					<div className={styles.streamUserContainer}>
 						<Avatar size="xxs" user={user} /> {user.username}
 						<span className="text-theme-secondary">{team.name}</span>
 					</div>
 				) : (
-					<div className="tournament__stream__user-container">
+					<div className={styles.streamUserContainer}>
 						<Avatar size="xxs" url={tournament.ctx.logoUrl} />
 						Cast <span className="text-lighter">{stream.twitchUserName}</span>
 					</div>
 				)}
-				<div className="tournament__stream__viewer-count">
+				<div className={styles.streamViewerCount}>
 					<UserIcon />
 					{stream.viewerCount}
 				</div>

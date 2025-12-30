@@ -61,6 +61,7 @@ import {
 	type UserSeasonsPageLoaderData,
 } from "../loaders/u.$identifier.seasons.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import styles from "../user-page.module.css";
 export { loader };
 
 export const handle: SendouRouteHandle = {
@@ -155,7 +156,7 @@ export default function UserSeasonsPage() {
 						{t("user:seasons.tabs.opponents")}
 					</SubNavLink>
 				</SubNav>
-				<div className="u__season__info-container">
+				<div className={styles.seasonInfoContainer}>
 					{data.info.weapons ? <Weapons weapons={data.info.weapons} /> : null}
 					{data.info.stages ? (
 						<Stages stages={data.info.stages} seasonViewed={data.season} />
@@ -197,8 +198,8 @@ function SeasonHeader({
 				selectedKey={seasonViewed}
 				onSelectionChange={(seasonNth) => navigate(`?season=${seasonNth}`)}
 				items={options}
-				className="u__season__select"
-				popoverClassName="u__season__select"
+				className={styles.seasonSelect}
+				popoverClassName={styles.seasonSelect}
 			>
 				{({ year, items, key }) => (
 					<SendouSelectItemSection heading={year} key={key}>
@@ -281,13 +282,13 @@ function Winrates({
 
 	return (
 		<div className="stack horizontal sm">
-			<div className="u__season__winrate">
+			<div className={styles.seasonWinrate}>
 				<span className="text-theme text-xxs">Sets</span> {winrates.sets.wins}
 				{t("user:seasons.win.short")} {winrates.sets.losses}
 				{t("user:seasons.loss.short")} (
 				{winrate(winrates.sets.wins, winrates.sets.losses)}%)
 			</div>
-			<div className="u__season__winrate">
+			<div className={styles.seasonWinrate}>
 				<span className="text-theme text-xxs">Maps</span> {winrates.maps.wins}
 				{t("user:seasons.win.short")} {winrates.maps.losses}
 				{t("user:seasons.loss.short")} (
@@ -333,10 +334,10 @@ function Rank({
 					{tier.isPlus ? "+" : ""}
 				</Link>
 				{!isAccurateTiers ? (
-					<div className="u__season__tentative">
+					<div className={styles.seasonTentative}>
 						{t("user:seasons.tentative")}{" "}
 						<SendouPopover
-							popoverClassName="u__season__tentative__explanation"
+							popoverClassName={styles.seasonTentativeExplanation}
 							trigger={
 								<SendouButton variant="minimal" className="ml-1">
 									?
@@ -518,7 +519,12 @@ function StageWeaponUsageStats(props: {
 
 	if (isLoading) {
 		return (
-			<div className="u__season__weapon-usage__container items-center justify-center text-lighter p-2">
+			<div
+				className={clsx(
+					styles.seasonWeaponUsageContainer,
+					"items-center justify-center text-lighter p-2",
+				)}
+			>
 				{t("user:seasons.loading")}
 			</div>
 		);
@@ -528,14 +534,19 @@ function StageWeaponUsageStats(props: {
 
 	if (usages.length === 0) {
 		return (
-			<div className="u__season__weapon-usage__container items-center justify-center text-lighter p-2">
+			<div
+				className={clsx(
+					styles.seasonWeaponUsageContainer,
+					"items-center justify-center text-lighter p-2",
+				)}
+			>
 				{t("user:seasons.noReportedWeapons")}
 			</div>
 		);
 	}
 
 	return (
-		<div className="u__season__weapon-usage__container">
+		<div className={styles.seasonWeaponUsageContainer}>
 			<div className="stack horizontal sm text-xs items-center justify-center">
 				<ModeImage mode={props.modeShort} width={18} />
 				{t(`game-misc:STAGE_${props.stageId}`)}
@@ -551,7 +562,7 @@ function StageWeaponUsageStats(props: {
 				</SendouTabList>
 				{["SELF", "MATE", "ENEMY"].map((id) => (
 					<SendouTabPanel id={id} key={id}>
-						<div className="u__season__weapon-usage__weapons-container">
+						<div className={styles.seasonWeaponUsageWeaponsContainer}>
 							{usages.map((u) => {
 								const winrate = cutToNDecimalPlaces(
 									(u.wins / (u.wins + u.losses)) * 100,
@@ -563,7 +574,7 @@ function StageWeaponUsageStats(props: {
 											weaponSplId={u.weaponSplId}
 											variant="build"
 											width={48}
-											className="u__season__weapon-usage__weapon"
+											className={styles.seasonWeaponUsageWeapon}
 										/>
 										<div
 											className={clsx("text-xs font-bold", {
@@ -612,7 +623,7 @@ function Players({
 					<div key={player.user.id} className="stack">
 						<Link
 							to={userSeasonsPage({ user: player.user, season: seasonViewed })}
-							className="u__season__player-name"
+							className={styles.seasonPlayerName}
 						>
 							<Avatar user={player.user} size="xs" className="mx-auto" />
 							{player.user.username}
@@ -649,15 +660,15 @@ function WeaponCircle({
 	count?: number;
 }) {
 	return (
-		<div className="u__season__weapon-container">
-			<div className="u__season__weapon-border__outer-static" />
+		<div className={styles.seasonWeaponContainer}>
+			<div className={styles.seasonWeaponBorderOuterStatic} />
 			<div
-				className="u__season__weapon-border__outer"
+				className={styles.seasonWeaponBorderOuter}
 				style={{ "--degree": `${degrees}deg` }}
 			>
-				<div className="u__season__weapon-border__inner">{children}</div>
+				<div className={styles.seasonWeaponBorderInner}>{children}</div>
 			</div>
-			{count ? <div className="u__season__weapon-count">{count}</div> : null}
+			{count ? <div className={styles.seasonWeaponCount}>{count}</div> : null}
 		</div>
 	);
 }
@@ -823,14 +834,14 @@ function GroupMatchResult({ match }: { match: SeasonGroupMatch }) {
 		<div>
 			<Link
 				to={sendouQMatchPage(match.id)}
-				className={clsx("u__season__match", {
-					"u__season__match__with-sub-section ": match.spDiff,
+				className={clsx(styles.seasonMatch, {
+					[styles.seasonMatchWithSubSection]: match.spDiff,
 				})}
 			>
 				{rows}
 			</Link>
 			{match.spDiff ? (
-				<div className="u__season__match__sub-section">
+				<div className={styles.seasonMatchSubSection}>
 					{match.spDiff > 0 ? (
 						<span className="text-success">▲</span>
 					) : (
@@ -848,8 +859,8 @@ function TournamentResult({ result }: { result: SeasonTournamentResult }) {
 		<div data-testid="seasons-tournament-result">
 			<Link
 				to={tournamentTeamPage(result)}
-				className={clsx("u__season__match", {
-					"u__season__match__with-sub-section ": result.spDiff,
+				className={clsx(styles.seasonMatch, {
+					[styles.seasonMatchWithSubSection]: result.spDiff,
 				})}
 			>
 				<div className="stack font-bold items-center text-lg text-center">
@@ -862,7 +873,7 @@ function TournamentResult({ result }: { result: SeasonTournamentResult }) {
 					/>
 					{result.tournamentName}
 				</div>
-				<ul className="u__season__match__set-results">
+				<ul className={styles.seasonMatchSetResults}>
 					{result.setResults.filter(Boolean).map((result, i) => (
 						<li key={i} data-is-win={String(result === "W")}>
 							{result}
@@ -871,7 +882,7 @@ function TournamentResult({ result }: { result: SeasonTournamentResult }) {
 				</ul>
 			</Link>
 			{result.spDiff ? (
-				<div className="u__season__match__sub-section">
+				<div className={styles.seasonMatchSubSection}>
 					{result.spDiff > 0 ? (
 						<span className="text-success">▲</span>
 					) : (
@@ -897,9 +908,9 @@ function MatchMembersRow({
 		<div className="stack horizontal xs items-center">
 			{members.map((member) => {
 				return (
-					<div key={member.discordId} className="u__season__match__user">
+					<div key={member.discordId} className={styles.seasonMatchUser}>
 						<Avatar user={member} size="xxs" />
-						<span className="u__season__match__user__name">
+						<span className={styles.seasonMatchUserName}>
 							{member.username}
 						</span>
 						{typeof member.weaponSplId === "number" ? (
@@ -919,7 +930,7 @@ function MatchMembersRow({
 					</div>
 				);
 			})}
-			<div className="u__season__match__score">{score}</div>
+			<div className={styles.seasonMatchScore}>{score}</div>
 		</div>
 	);
 }

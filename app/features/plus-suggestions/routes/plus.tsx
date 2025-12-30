@@ -9,7 +9,7 @@ import {
 	plusSuggestionsNewPage,
 } from "~/utils/urls";
 
-import "~/styles/plus.css";
+import "../plus.module.css";
 
 export const handle: SendouRouteHandle = {
 	navItemName: "plus",

@@ -1,102 +1,102 @@
-.plus__container {
+.container {
 	max-width: 24rem;
 	margin-inline: auto;
 }
 
-.plus__suggested-info-text {
+.suggestedInfoText {
 	color: var(--color-text-high);
 	font-size: var(--fonts-lg);
 }
 
-.plus__top-container {
+.topContainer {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 }
 
-.plus__top-container.content-centered {
+.topContainerCentered {
 	justify-content: center;
 }
 
-.plus__radios {
+.radios {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	gap: var(--s-5);
 }
 
-.plus__radio-container {
+.radioContainer {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	gap: var(--s-1);
 }
 
-.plus__radio-label {
+.radioLabel {
 	font-size: var(--fonts-sm);
 	margin-block-end: 0;
 }
 
-.plus__users-count {
+.usersCount {
 	color: var(--color-text-high);
 	font-size: var(--fonts-xxs);
 }
 
-.plus__suggested-user-info {
+.suggestedUserInfo {
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
 }
 
-.plus__comment {
+.comment {
 	white-space: pre-wrap;
 }
 
-.plus__comment-button {
+.commentButton {
 	max-width: 12rem;
 	margin-inline-start: auto;
 }
 
-.plus__view-comments-action {
+.viewCommentsAction {
 	color: var(--color-text-high);
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
 }
 
-.plus__comment-time {
+.commentTime {
 	color: var(--color-text-high);
 	font-size: var(--fonts-xxs);
 }
 
-.plus__delete-button {
+.deleteButton {
 	display: inline;
 }
 
-.plus__modal-select {
+.modalSelect {
 	max-width: 6rem;
 }
 
-.plus__modal-textarea {
+.modalTextarea {
 	width: 100% !important;
 	resize: none;
 }
 
-.plus-voting__container {
+.votingContainer {
 	max-width: 32rem;
 	margin-inline: auto;
 }
 
-.plus-voting__vote-button {
+.votingVoteButton {
 	width: 4rem;
 }
 
-.plus-voting__vote-button.downvote {
+.votingVoteButtonDownvote {
 	border-color: var(--color-error);
 	color: var(--color-error);
 	outline-color: var(--color-error);
 }
 
-.plus-voting__submit-button {
+.votingSubmitButton {
 	display: flex;
 	width: 12rem;
 	height: 2.5rem;
@@ -104,11 +104,11 @@
 	margin-inline: auto;
 }
 
-.plus-voting__progress {
+.votingProgress {
 	width: 100%;
 }
 
-.plus-voting__alert {
+.votingAlert {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -124,12 +124,12 @@
 	padding-inline: var(--s-3) var(--s-4);
 }
 
-.plus-voting__alert > svg {
+.votingAlert > svg {
 	height: 1.75rem;
 	fill: var(--color-success);
 }
 
-.plus-voting__bio-header {
+.votingBioHeader {
 	font-size: var(--fonts-lg);
 	padding-block-end: var(--s-2);
 }

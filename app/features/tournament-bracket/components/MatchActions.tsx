@@ -11,6 +11,7 @@ import invariant from "~/utils/invariant";
 import * as PickBan from "../core/PickBan";
 import type { TournamentDataTeam } from "../core/Tournament.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import styles from "../tournament-bracket.module.css";
 import {
 	isSetOverByScore,
 	matchIsLocked,
@@ -140,10 +141,7 @@ export function MatchActions({
 				revising={revising}
 			/>
 			{!presentational && bothTeamsHaveActiveRosters ? (
-				<Form
-					method="post"
-					className="tournament-bracket__during-match-actions__actions"
-				>
+				<Form method="post" className={styles.duringMatchActionsActions}>
 					<input type="hidden" name="winnerTeamId" value={winnerId ?? ""} />
 					{showPoints ? (
 						<input type="hidden" name="points" value={JSON.stringify(points)} />
@@ -180,8 +178,8 @@ export function MatchActions({
 				/>
 			) : null}
 			{!result && presentational ? (
-				<div className="tournament-bracket__during-match-actions__actions">
-					<p className="tournament-bracket__during-match-actions__amount-warning-paragraph">
+				<div className={styles.duringMatchActionsActions}>
+					<p className={styles.duringMatchActionsAmountWarningParagraph}>
 						No permissions to report score
 					</p>
 				</div>
@@ -238,7 +236,7 @@ function ReportScoreButtons({
 	);
 	if (leagueRoundStartDate && leagueRoundStartDate > new Date()) {
 		return (
-			<p className="tournament-bracket__during-match-actions__amount-warning-paragraph">
+			<p className={styles.duringMatchActionsAmountWarningParagraph}>
 				League round has not started yet
 			</p>
 		);
@@ -246,7 +244,7 @@ function ReportScoreButtons({
 
 	if (matchLocked) {
 		return (
-			<p className="tournament-bracket__during-match-actions__amount-warning-paragraph">
+			<p className={styles.duringMatchActionsAmountWarningParagraph}>
 				Match is pending to be casted. Please wait a bit
 			</p>
 		);
@@ -258,7 +256,7 @@ function ReportScoreButtons({
 		points[winnerIdx] <= points[winnerIdx === 0 ? 1 : 0]
 	) {
 		return (
-			<p className="tournament-bracket__during-match-actions__amount-warning-paragraph">
+			<p className={styles.duringMatchActionsAmountWarningParagraph}>
 				Winner should have higher score than loser
 			</p>
 		);
@@ -270,7 +268,7 @@ function ReportScoreButtons({
 			(points[0] !== 0 && points[1] === 100))
 	) {
 		return (
-			<p className="tournament-bracket__during-match-actions__amount-warning-paragraph">
+			<p className={styles.duringMatchActionsAmountWarningParagraph}>
 				If there was a KO (100 score), other team should have 0 score
 			</p>
 		);
@@ -278,7 +276,7 @@ function ReportScoreButtons({
 
 	if (typeof winnerIdx !== "number") {
 		return (
-			<p className="tournament-bracket__during-match-actions__amount-warning-paragraph">
+			<p className={styles.duringMatchActionsAmountWarningParagraph}>
 				Please select the winner of this map
 			</p>
 		);

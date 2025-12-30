@@ -15,6 +15,7 @@ import {
 	userPage,
 } from "~/utils/urls";
 import type { UserResultsLoaderData } from "../loaders/u.$identifier.results.server";
+import styles from "../user-page.module.css";
 import { ParticipationPill } from "./ParticipationPill";
 
 export type UserResultsTableProps = {
@@ -139,7 +140,7 @@ export function UserResultsTable({
 										}
 									>
 										<ul
-											className="u__results-players"
+											className={styles.resultsPlayers}
 											data-testid={`mates-cell-placement-${i}`}
 										>
 											{result.mates.map((player) => (

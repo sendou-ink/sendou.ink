@@ -18,6 +18,7 @@ import { BellIcon } from "../icons/Bell";
 import { RefreshIcon } from "../icons/Refresh";
 
 import styles from "./NotificationPopover.module.css";
+import headerStyles from "./TopRightButtons.module.css";
 
 export type LoaderNotification = NonNullable<
 	RootLoaderData["notifications"]
@@ -48,10 +49,10 @@ export function NotificationPopover() {
 			<SendouPopover
 				trigger={
 					<Button
-						className="layout__header__button"
+						className={headerStyles.button}
 						data-testid="notifications-button"
 					>
-						<BellIcon />
+						<BellIcon className={headerStyles.buttonIcon} />
 					</Button>
 				}
 				popoverClassName={clsx(styles.popoverContainer, {

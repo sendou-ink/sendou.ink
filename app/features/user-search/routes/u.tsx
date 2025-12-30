@@ -22,7 +22,7 @@ import {
 import { loader } from "../loaders/u.server";
 export { loader };
 
-import "~/styles/u.css";
+import styles from "~/features/user-page/user-page.module.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["user"],
@@ -77,10 +77,10 @@ export default function UserSearchPage() {
 	}
 
 	return (
-		<Main className="u-search__container">
+		<Main className={styles.searchContainer}>
 			<Input
-				className="u-search__input"
-				icon={<SearchIcon className="u-search__icon" />}
+				className={styles.searchInput}
+				icon={<SearchIcon className={styles.searchIcon} />}
 				value={inputValue}
 				onChange={(e) => setInputValue(e.target.value)}
 			/>
@@ -94,29 +94,29 @@ function UsersList() {
 	const data = useLoaderData<typeof loader>();
 
 	if (!data) {
-		return <div className="u-search__info">{t("user:search.info")}</div>;
+		return <div className={styles.searchInfo}>{t("user:search.info")}</div>;
 	}
 
 	if (data.users.length === 0) {
 		return (
-			<div className="u-search__info">
+			<div className={styles.searchInfo}>
 				{t("user:search.noResults", { query: data.query })}
 			</div>
 		);
 	}
 
 	return (
-		<ul className="u-search__users">
+		<ul className={styles.searchUsers}>
 			{data.users.map((user) => {
 				return (
 					<li key={user.id}>
 						<Link to={userPage(user)}>
-							<div className="u-search__user">
+							<div className={styles.searchUser}>
 								<Avatar size="sm" user={user} />
 								<div>
 									<div>{user.username}</div>
 									{user.inGameName ? (
-										<div className="u-search__ign">
+										<div className={styles.searchIgn}>
 											{t("user:ign.short")}: {user.inGameName}
 										</div>
 									) : null}

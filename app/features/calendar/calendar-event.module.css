@@ -1,23 +1,23 @@
-.event__title {
+.title {
 	line-height: 1.35;
 }
 
-.event__day {
+.day {
 	color: var(--color-text-high);
 }
 
-.event__times {
+.times {
 	display: grid;
 	column-gap: var(--s-1-5);
 	font-weight: var(--semi-bold);
 	grid-template-columns: max-content 1fr;
 }
 
-.event__times > time {
+.times > time {
 	height: 1.25rem;
 }
 
-.event__map-pool-section {
+.mapPoolSection {
 	display: flex;
 	max-width: 32rem;
 	flex-direction: column;
@@ -26,7 +26,7 @@
 	gap: var(--s-4);
 }
 
-.event__create-map-list-link {
+.createMapListLink {
 	display: flex;
 	width: max-content;
 	align-items: center;
@@ -35,7 +35,7 @@
 	gap: var(--s-1-5);
 }
 
-.event__author {
+.author {
 	display: flex;
 	align-items: center;
 	color: var(--color-text-high);
@@ -43,7 +43,7 @@
 	gap: var(--s-1);
 }
 
-.event__results-players {
+.resultsPlayers {
 	display: flex;
 	flex-wrap: wrap;
 	padding: 0;
@@ -51,14 +51,14 @@
 	list-style: none;
 }
 
-.event__results-section {
+.resultsSection {
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-1);
 	overflow-x: auto;
 }
 
-.event__results-participant-count {
+.resultsParticipantCount {
 	color: var(--color-text-high);
 	font-size: var(--fonts-xs);
 }

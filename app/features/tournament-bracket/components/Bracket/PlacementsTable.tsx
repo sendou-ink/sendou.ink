@@ -13,6 +13,7 @@ import { TOURNAMENT } from "../../../tournament/tournament-constants";
 import type { Bracket } from "../../core/Bracket";
 import * as Progression from "../../core/Progression";
 import * as Swiss from "../../core/Swiss";
+import styles from "./bracket.module.css";
 
 export function PlacementsTable({
 	groupId,
@@ -130,7 +131,7 @@ export function PlacementsTable({
 	let eliminatedRowRendered = false;
 
 	return (
-		<table className="rr__placements-table" cellSpacing={0}>
+		<table className={styles.rrPlacementsTable} cellSpacing={0}>
 			<thead>
 				<tr>
 					<th>Team</th>
@@ -451,17 +452,17 @@ function SwissDividerRow({
 		: `Eliminated (@ ${threshold} losses)`;
 
 	return (
-		<tr className="tournament__standings__divider-row">
-			<td colSpan={columnCount} className="tournament__standings__divider">
+		<tr className={styles.standingsDividerRow}>
+			<td colSpan={columnCount} className={styles.standingsDivider}>
 				<div
-					className={clsx("tournament__standings__divider-content", {
-						"tournament__standings__divider--qualified": isQualified,
-						"tournament__standings__divider--eliminated": !isQualified,
+					className={clsx(styles.standingsDividerContent, {
+						[styles.standingsDividerQualified]: isQualified,
+						[styles.standingsDividerEliminated]: !isQualified,
 					})}
 				>
-					<div className="tournament__standings__divider-line" />
-					<span className="tournament__standings__divider-text">{message}</span>
-					<div className="tournament__standings__divider-line" />
+					<div className={styles.standingsDividerLine} />
+					<span className={styles.standingsDividerText}>{message}</span>
+					<div className={styles.standingsDividerLine} />
 				</div>
 			</td>
 		</tr>

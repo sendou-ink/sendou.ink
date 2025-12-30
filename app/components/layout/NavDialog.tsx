@@ -10,6 +10,7 @@ import { Image } from "../Image";
 import { CrossIcon } from "../icons/Cross";
 import { LogOutIcon } from "../icons/LogOut";
 import { LogInButtonContainer } from "./LogInButtonContainer";
+import styles from "./NavDialog.module.css";
 
 export function NavDialog({
 	isOpen,
@@ -27,7 +28,7 @@ export function NavDialog({
 
 	return (
 		<SendouDialog
-			className="layout__overlay-nav__dialog"
+			className={styles.dialog}
 			showHeading={false}
 			aria-label="Site navigation"
 			isFullScreen
@@ -35,21 +36,21 @@ export function NavDialog({
 			<SendouButton
 				icon={<CrossIcon />}
 				variant="minimal-destructive"
-				className="layout__overlay-nav__close-button"
+				className={styles.closeButton}
 				onPress={close}
 				aria-label="Close navigation dialog"
 			/>
-			<div className="layout__overlay-nav__nav-items-container">
+			<div className={styles.itemsContainer}>
 				<LogInButton close={close} />
 				{navItems.map((item) => (
 					<Link
 						to={`/${item.url}`}
-						className="layout__overlay-nav__nav-item"
+						className={styles.navItem}
 						key={item.name}
 						prefetch={item.prefetch ? "render" : undefined}
 						onClick={close}
 					>
-						<div className="layout__overlay-nav__nav-image-container">
+						<div className={styles.imageContainer}>
 							<Image
 								path={navIconUrl(item.name)}
 								height={48}
@@ -85,18 +86,14 @@ function LogInButton({ close }: { close: () => void }) {
 
 	if (user) {
 		return (
-			<Link
-				to={userPage(user)}
-				className="layout__overlay-nav__nav-item"
-				onClick={close}
-			>
-				<div className="layout__overlay-nav__nav-image-container">
+			<Link to={userPage(user)} className={styles.navItem} onClick={close}>
+				<div className={styles.imageContainer}>
 					<Avatar
 						user={user}
 						alt={t("common:header.loggedInAs", {
 							userName: `${user.username}`,
 						})}
-						className="layout__overlay-nav__avatar"
+						className={styles.avatar}
 						size="sm"
 					/>
 				</div>
@@ -106,10 +103,10 @@ function LogInButton({ close }: { close: () => void }) {
 	}
 
 	return (
-		<div className="layout__overlay-nav__nav-item">
+		<div className={styles.navItem}>
 			<LogInButtonContainer>
 				<button
-					className="layout__overlay-nav__log-in-button layout__overlay-nav__nav-image-container"
+					className={`${styles.logInButton} ${styles.imageContainer}`}
 					type="submit"
 				>
 					<Image path={navIconUrl("log_in")} height={48} width={48} alt="" />

@@ -10,6 +10,7 @@ import { Badge } from "~/components/Badge";
 import { DateInput } from "~/components/DateInput";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
 import { CrossIcon } from "~/components/icons/Cross";
@@ -25,20 +26,25 @@ import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
+import { useHasRole } from "~/modules/permissions/hooks";
 import {
 	databaseTimestampToDate,
 	getDateAtNextFullHour,
 	getDateWithHoursOffset,
 } from "~/utils/dates";
 import invariant from "~/utils/invariant";
+import { logger } from "~/utils/logger";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { pathnameFromPotentialURL } from "~/utils/strings";
 import { CREATING_TOURNAMENT_DOC_LINK, FAQ_PAGE } from "~/utils/urls";
+import { action } from "../actions/calendar.new.server";
 import {
 	CALENDAR_EVENT,
 	REG_CLOSES_AT_OPTIONS,
 	type RegClosesAtOption,
 } from "../calendar-constants";
+import styles from "../calendar-new.module.css";
 import {
 	calendarEventMaxDate,
 	calendarEventMinDate,
@@ -47,12 +53,6 @@ import {
 } from "../calendar-utils";
 import { BracketProgressionSelector } from "../components/BracketProgressionSelector";
 import { Tags } from "../components/Tags";
-import "~/styles/calendar-new.css";
-import { SendouSwitch } from "~/components/elements/Switch";
-import { useHasRole } from "~/modules/permissions/hooks";
-import { logger } from "~/utils/logger";
-import { metaTags } from "~/utils/remix";
-import { action } from "../actions/calendar.new.server";
 import { loader } from "../loaders/calendar.new.server";
 export { loader, action };
 
@@ -109,7 +109,7 @@ export default function CalendarNewEventPage() {
 	}
 
 	return (
-		<Main className="calendar-new__container">
+		<Main className={styles.container}>
 			<div className="stack md">
 				<div className="stack horizontal md items-center">
 					<h1 className="text-lg">
@@ -494,7 +494,7 @@ function DatesInput({ allowMultiDate }: { allowMultiDate?: boolean }) {
 								<div key={key} className="stack horizontal sm items-center">
 									<label
 										id={`date-input-${key}-label`}
-										className="calendar-new__day-label"
+										className={styles.dayLabel}
 										htmlFor={`date-input-${key}`}
 									>
 										{t("calendar:day", {
@@ -610,7 +610,7 @@ function TagsAdder() {
 				<label htmlFor={id}>{t("calendar:forms.tags")}</label>
 				<select
 					id={id}
-					className="calendar-new__select"
+					className={styles.select}
 					onChange={(e) =>
 						setTags([...tags, e.target.value as CalendarEventTag])
 					}
@@ -665,7 +665,7 @@ function BadgesAdder() {
 				<label htmlFor={id}>{t("forms.badges")}</label>
 				<select
 					id={id}
-					className="calendar-new__select"
+					className={styles.select}
 					onChange={(e) => {
 						setBadges([
 							...badges,
@@ -684,7 +684,7 @@ function BadgesAdder() {
 				</select>
 			</div>
 			{badges.length > 0 && (
-				<div className="calendar-new__badges">
+				<div className={styles.badges}>
 					{badges.map((badge) => (
 						<div className="stack horizontal md items-center" key={badge.id}>
 							<Badge badge={badge} isAnimated size={32} />
@@ -726,7 +726,7 @@ function AvatarImageInput({
 					<img
 						src={baseEvent.tournament.ctx.logoUrl}
 						alt=""
-						className="calendar-new__avatar-preview"
+						className={styles.avatarPreview}
 					/>
 					<SendouButton
 						variant="outlined"
@@ -782,7 +782,7 @@ function AvatarImageInput({
 					<img
 						src={URL.createObjectURL(avatarImg)}
 						alt=""
-						className="calendar-new__avatar-preview"
+						className={styles.avatarPreview}
 					/>
 				</div>
 			)}

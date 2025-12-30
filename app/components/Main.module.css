@@ -1,0 +1,34 @@
+.container {
+	display: flex;
+	flex-direction: row;
+}
+
+.main {
+	padding-block: var(--s-4) var(--s-32);
+}
+
+.normal {
+	width: 100%;
+	max-width: 48rem;
+	margin: 0 auto;
+	padding-inline: var(--s-3);
+	min-height: 75vh;
+}
+
+.narrow {
+	width: 100%;
+	max-width: 24rem;
+	margin: 0 auto;
+}
+
+.wide {
+	width: 100%;
+	max-width: 72rem;
+	margin: 0 auto;
+}
+
+@media screen and (display-mode: standalone) {
+	.main {
+		padding-block-start: env(safe-area-inset-top);
+	}
+}

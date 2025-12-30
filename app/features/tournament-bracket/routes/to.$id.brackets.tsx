@@ -36,8 +36,7 @@ import type { Bracket as BracketType } from "../core/Bracket";
 import * as PreparedMaps from "../core/PreparedMaps";
 export { action };
 
-import "../tournament-bracket.css";
-import "../components/Bracket/bracket.css";
+import styles from "../tournament-bracket.module.css";
 
 export default function TournamentBracketsPage() {
 	const { t } = useTranslation(["tournament"]);
@@ -175,7 +174,7 @@ export default function TournamentBracketsPage() {
 		<div>
 			<Outlet context={ctx} />
 			{tournament.canFinalize(user) ? (
-				<div className="tournament-bracket__finalize">
+				<div className={styles.finalize}>
 					<LinkButton
 						variant="minimal"
 						testId="finalize-tournament-button"
@@ -193,7 +192,7 @@ export default function TournamentBracketsPage() {
 					<div className="stack sm items-center">
 						<Alert
 							variation="INFO"
-							alertClassName="tournament-bracket__start-bracket-alert"
+							alertClassName={styles.startBracketAlert}
 							textClassName="stack horizontal md items-center"
 						>
 							{bracket.participantTournamentTeamIds.length}/
@@ -203,7 +202,7 @@ export default function TournamentBracketsPage() {
 							) : null}
 						</Alert>
 						{!bracket.canBeStarted ? (
-							<div className="tournament-bracket__mini-alert">
+							<div className={styles.miniAlert}>
 								⚠️{" "}
 								{bracket.isStartingBracket
 									? "Tournament start time is in the future"
@@ -461,16 +460,11 @@ function BracketNav({
 			{/** MOBILE */}
 			<SendouMenu
 				trigger={
-					<SendouButton
-						className={clsx(
-							"tournament-bracket__bracket-nav__link",
-							"tournament-bracket__menu",
-						)}
-					>
+					<SendouButton className={clsx(styles.bracketNavLink, styles.menu)}>
 						{bracketNameForButton(
 							tournament.bracketByIdxOrDefault(bracketIdx).name,
 						)}
-						<span className="tournament-bracket__bracket-nav__chevron">▼</span>
+						<span className={styles.bracketNavChevron}>▼</span>
 					</SendouButton>
 				}
 			>
@@ -485,15 +479,14 @@ function BracketNav({
 				))}
 			</SendouMenu>
 			{/** DESKTOP */}
-			<div className="tournament-bracket__bracket-nav tournament-bracket__button-row">
+			<div className={clsx(styles.bracketNav, styles.buttonRow)}>
 				{visibleBrackets.map((bracket, i) => {
 					return (
 						<SendouButton
 							key={bracket.name}
 							onPress={() => setBracketIdx(i)}
-							className={clsx("tournament-bracket__bracket-nav__link", {
-								"tournament-bracket__bracket-nav__link__selected":
-									bracketIdx === i,
+							className={clsx(styles.bracketNavLink, {
+								[styles.bracketNavLinkSelected]: bracketIdx === i,
 							})}
 						>
 							{bracketNameForButton(bracket.name)}
@@ -513,7 +506,7 @@ function CompactifyButton() {
 			onPress={() => {
 				setBracketExpanded(!bracketExpanded);
 			}}
-			className="tournament-bracket__compactify-button"
+			className={styles.compactifyButton}
 			icon={bracketExpanded ? <EyeSlashIcon /> : <EyeIcon />}
 		>
 			{bracketExpanded ? "Compactify" : "Show all"}

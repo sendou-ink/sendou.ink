@@ -21,6 +21,7 @@ import {
 	type SendouMenuItemProps,
 } from "../elements/Menu";
 import { PlusIcon } from "../icons/Plus";
+import styles from "./TopRightButtons.module.css";
 
 export function AnythingAdder() {
 	const { t } = useTranslation(["common"]);
@@ -103,10 +104,10 @@ export function AnythingAdder() {
 		<SendouMenu
 			trigger={
 				<Button
-					className="layout__header__button"
+					className={styles.button}
 					data-testid="anything-adder-menu-button"
 				>
-					<PlusIcon className="layout__header__button__icon" />
+					<PlusIcon className={styles.buttonIcon} />
 				</Button>
 			}
 		>

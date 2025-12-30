@@ -9,6 +9,7 @@ import { MAX_AP } from "../analyzer-constants";
 import type { FullInkTankOption } from "../analyzer-types";
 import { fullInkTankOptions } from "../core/stats";
 import { weaponParams } from "../core/utils";
+import styles from "../routes/analyzer.module.css";
 
 interface PerInkTankGridProps {
 	weaponSplId: MainWeaponId;
@@ -19,7 +20,7 @@ export function PerInkTankGrid(props: PerInkTankGridProps) {
 
 	return (
 		<SendouPopover
-			popoverClassName="analyzer__ink-grid__container"
+			popoverClassName={styles.inkGridContainer}
 			trigger={
 				<SendouButton variant="minimal" size="small">
 					{t("analyzer:button.showConsumptionGrid")}
@@ -92,19 +93,20 @@ function Grid({ weaponSplId }: PerInkTankGridProps) {
 			</div>
 			{/** biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration */}
 			<div className="stack horizontal sm" onMouseLeave={handleMouseLeaveGrid}>
-				<div className="analyzer__ink-grid__horizontal-ability">
+				<div className={styles.inkGridHorizontalAbility}>
 					<Ability ability="ISS" size="SUBTINY" />
 				</div>
-				<div className="analyzer__ink-grid">
-					<div className="analyzer__ink-grid__horizontal-ability">
+				<div className={styles.inkGrid}>
+					<div className={styles.inkGridHorizontalAbility}>
 						<Ability ability="ISM" size="SUBTINY" />
 					</div>
 					<div />
 					{AP_VALUES_TO_SHOW.map((ap) => (
 						<div
-							className={clsx("analyzer__ink-grid__ap", {
-								"analyzer__ink-grid__ap__focused": ismHovered === ap,
-							})}
+							className={clsx(
+								styles.inkGridAp,
+								ismHovered === ap && styles.inkGridApFocused,
+							)}
 							key={ap}
 						>
 							{ap}
@@ -113,10 +115,11 @@ function Grid({ weaponSplId }: PerInkTankGridProps) {
 					{values.map((row, i) =>
 						[
 							<div
-								className={clsx("analyzer__ink-grid__ap", {
-									"analyzer__ink-grid__ap__focused":
-										issHovered === AP_VALUES_TO_SHOW[i],
-								})}
+								className={clsx(
+									styles.inkGridAp,
+									issHovered === AP_VALUES_TO_SHOW[i] &&
+										styles.inkGridApFocused,
+								)}
 								key={i}
 							>
 								{AP_VALUES_TO_SHOW[i]}
@@ -126,7 +129,7 @@ function Grid({ weaponSplId }: PerInkTankGridProps) {
 								const key = `${i}-${j}`;
 
 								if (cell === "N/A") {
-									return <div className="analyzer__ink-grid__cell" key={key} />;
+									return <div className={styles.inkGridCell} key={key} />;
 								}
 
 								const title = `${cell.shots ?? "-"} (ISM: ${cell.ismAP}, ISS: ${
@@ -137,7 +140,7 @@ function Grid({ weaponSplId }: PerInkTankGridProps) {
 									return (
 										// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration
 										<div
-											className="analyzer__ink-grid__cell"
+											className={styles.inkGridCell}
 											key={key}
 											style={{ "--cell-color": "var(--color-bg-high)" }}
 											title={title}
@@ -154,7 +157,7 @@ function Grid({ weaponSplId }: PerInkTankGridProps) {
 									// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration
 									<div
 										key={key}
-										className="analyzer__ink-grid__cell"
+										className={styles.inkGridCell}
 										style={{ "--cell-color": cell.hex }}
 										title={title}
 										onMouseEnter={() =>

@@ -19,6 +19,7 @@ import { TOURNAMENT_SUB } from "../tournament-subs-constants";
 export { action, loader };
 
 import clsx from "clsx";
+import { mainStyles } from "~/components/Main";
 import styles from "./to.$id.subs.new.module.css";
 
 export const handle: SendouRouteHandle = {
@@ -38,7 +39,7 @@ export default function NewTournamentSubPage() {
 	);
 
 	return (
-		<div className="half-width">
+		<div className={mainStyles.narrow}>
 			<Form method="post" className="stack md items-start">
 				<div className="stack">
 					<h2>{t("tournament:subs.addPost")}</h2>

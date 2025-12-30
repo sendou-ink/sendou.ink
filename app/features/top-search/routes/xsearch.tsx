@@ -15,8 +15,6 @@ import { loader } from "../loaders/xsearch.server";
 import type { MonthYear } from "../top-search-utils";
 export { loader };
 
-import "../top-search.css";
-
 export const handle: SendouRouteHandle = {
 	breadcrumb: () => ({
 		imgPath: navIconUrl("xsearch"),

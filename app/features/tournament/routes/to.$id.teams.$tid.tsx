@@ -23,6 +23,7 @@ import { TeamWithRoster } from "../components/TeamWithRoster";
 import * as Standings from "../core/Standings";
 import type { PlayedSet } from "../core/sets.server";
 import { loader } from "../loaders/to.$id.teams.$tid.server";
+import styles from "../tournament.module.css";
 import { useTournament } from "./to.$id";
 export { loader };
 
@@ -86,7 +87,7 @@ export default function TournamentTeamPage() {
 					teamsCount={tournament.ctx.teams.length}
 				/>
 			) : null}
-			<div className="tournament__team__sets">
+			<div className={styles.teamSets}>
 				{data.sets.map((set) => {
 					return <SetInfo key={set.tournamentMatchId} set={set} team={team} />;
 				})}
@@ -118,46 +119,44 @@ function StatSquares({
 	)?.placement;
 
 	return (
-		<div className="tournament__team__stats">
-			<div className="tournament__team__stat">
-				<div className="tournament__team__stat__title">
+		<div className={styles.teamStats}>
+			<div className={styles.teamStat}>
+				<div className={styles.teamStatTitle}>
 					{t("tournament:team.setWins")}
 				</div>
-				<div className="tournament__team__stat__main">
+				<div className={styles.teamStatMain}>
 					{data.winCounts.sets.won} / {data.winCounts.sets.total}
 				</div>
-				<div className="tournament__team__stat__sub">
+				<div className={styles.teamStatSub}>
 					{data.winCounts.sets.percentage}%
 				</div>
 			</div>
 
-			<div className="tournament__team__stat">
-				<div className="tournament__team__stat__title">
+			<div className={styles.teamStat}>
+				<div className={styles.teamStatTitle}>
 					{t("tournament:team.mapWins")}
 				</div>
-				<div className="tournament__team__stat__main">
+				<div className={styles.teamStatMain}>
 					{data.winCounts.maps.won} / {data.winCounts.maps.total}
 				</div>
-				<div className="tournament__team__stat__sub">
+				<div className={styles.teamStatSub}>
 					{data.winCounts.maps.percentage}%
 				</div>
 			</div>
 
-			<div className="tournament__team__stat">
-				<div className="tournament__team__stat__title">
-					{t("tournament:team.seed")}
-				</div>
-				<div className="tournament__team__stat__main">{seed}</div>
-				<div className="tournament__team__stat__sub">
+			<div className={styles.teamStat}>
+				<div className={styles.teamStatTitle}>{t("tournament:team.seed")}</div>
+				<div className={styles.teamStatMain}>{seed}</div>
+				<div className={styles.teamStatSub}>
 					{t("tournament:team.seed.footer", { count: teamsCount })}
 				</div>
 			</div>
 
-			<div className="tournament__team__stat">
-				<div className="tournament__team__stat__title">
+			<div className={styles.teamStat}>
+				<div className={styles.teamStatTitle}>
 					{t("tournament:team.placement")}
 				</div>
-				<div className="tournament__team__stat__main">
+				<div className={styles.teamStatMain}>
 					{placement ? <Placement placement={placement} textOnly /> : "-"}
 					{undergroundPlacement ? (
 						<>
@@ -167,12 +166,12 @@ function StatSquares({
 					) : null}
 				</div>
 				{undergroundPlacement ? (
-					<div className="tournament__team__stat__sub">
+					<div className={styles.teamStatSub}>
 						{t("tournament:team.placement.footer")}
 					</div>
 				) : null}
 				{standingsResult.type === "multi" ? (
-					<div className="tournament__team__stat__sub">
+					<div className={styles.teamStatSub}>
 						{
 							standingsResult.standings.find((s) =>
 								s.standings.some((s) => s.team.id === data.tournamentTeamId),
@@ -223,17 +222,15 @@ function SetInfo({ set, team }: { set: PlayedSet; team: TournamentDataTeam }) {
 		tournament.matchContextNamesById(set.tournamentMatchId);
 
 	return (
-		<div className="tournament__team__set">
-			<div className="tournament__team__set__top-container">
-				<div className="tournament__team__set__score">
-					{set.score.join("-")}
-				</div>
+		<div className={styles.teamSet}>
+			<div className={styles.teamSetTopContainer}>
+				<div className={styles.teamSetScore}>{set.score.join("-")}</div>
 				<Link
 					to={tournamentMatchPage({
 						matchId: set.tournamentMatchId,
 						tournamentId: tournament.ctx.id,
 					})}
-					className="tournament__team__set__round-name"
+					className={styles.teamSetRoundName}
 				>
 					{roundNameWithoutMatchIdentifier}{" "}
 					{tournament.ctx.settings.bracketProgression.length > 1 ? (
@@ -241,7 +238,7 @@ function SetInfo({ set, team }: { set: PlayedSet; team: TournamentDataTeam }) {
 					) : null}
 				</Link>
 			</div>
-			<div className="overlap-divider">
+			<div className={styles.overlapDivider}>
 				<div className="stack horizontal sm">
 					{set.maps.map(({ stageId, modeShort, result, source }, i) => {
 						return (
@@ -252,15 +249,15 @@ function SetInfo({ set, team }: { set: PlayedSet; team: TournamentDataTeam }) {
 										<ModeImage
 											mode={modeShort}
 											size={20}
-											containerClassName={clsx("tournament__team__set__mode", {
-												tournament__team__set__mode__loss: result === "loss",
+											containerClassName={clsx(styles.teamSetMode, {
+												[styles.teamSetModeLoss]: result === "loss",
 											})}
 										/>
 									</SendouButton>
 								}
 								placement="top"
 							>
-								<div className="tournament__team__set__stage-container">
+								<div className={styles.teamSetStageContainer}>
 									<StageImage
 										stageId={stageId}
 										width={125}
@@ -273,24 +270,24 @@ function SetInfo({ set, team }: { set: PlayedSet; team: TournamentDataTeam }) {
 					})}
 				</div>
 			</div>
-			<div className="tournament__team__set__opponent">
-				<div className="tournament__team__set__opponent__vs">vs.</div>
+			<div className={styles.teamSetOpponent}>
+				<div className={styles.teamSetOpponentVs}>vs.</div>
 				<Link
 					to={tournamentTeamPage({
 						tournamentTeamId: set.opponent.id,
 						tournamentId: tournament.ctx.id,
 					})}
-					className="tournament__team__set__opponent__team"
+					className={styles.teamSetOpponentTeam}
 				>
 					{set.opponent.name}
 				</Link>
-				<div className="tournament__team__set__opponent__members">
+				<div className={styles.teamSetOpponentMembers}>
 					{set.opponent.roster.map((user) => {
 						return (
 							<Link
 								to={userPage(user)}
 								key={user.id}
-								className="tournament__team__set__opponent__member"
+								className={styles.teamSetOpponentMember}
 							>
 								<Avatar user={user} size="xxs" />
 								{user.username}

@@ -30,7 +30,6 @@ import type * as Changelog from "~/features/front-page/core/Changelog.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
-import styles from "~/styles/front.module.css";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BLANK_IMAGE_URL,
@@ -42,8 +41,8 @@ import {
 	SENDOUQ_PAGE,
 	sqHeaderGuyImageUrl,
 } from "~/utils/urls";
-
 import { type LeaderboardEntry, loader } from "../loaders/index.server";
+import styles from "./index.module.css";
 export { loader };
 
 export const handle: SendouRouteHandle = {

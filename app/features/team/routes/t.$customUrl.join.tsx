@@ -3,10 +3,9 @@ import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import "../team.css";
-
 import { action } from "../actions/t.$customUrl.join.server";
 import { loader } from "../loaders/t.$customUrl.join.server";
+import styles from "../team.module.css";
 export { loader, action };
 
 export const handle: SendouRouteHandle = {
@@ -28,7 +27,7 @@ export default function JoinTeamPage() {
 
 	return (
 		<Main>
-			<Form method="post" className="team__invite-container">
+			<Form method="post" className={styles.inviteContainer}>
 				<div className="text-center">
 					{t(`team:validation.${validation}`, { teamName })}
 				</div>

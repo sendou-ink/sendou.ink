@@ -52,7 +52,7 @@ export function Layout({
 		!data?.user?.roles.includes("MINOR_SUPPORT") &&
 		!location.pathname.includes("plans");
 	return (
-		<div className="layout__container">
+		<div className={styles.container}>
 			<NavDialog isOpen={navDialogOpen} close={() => setNavDialogOpen(false)} />
 			{isFrontPage ? (
 				<SendouButton
@@ -62,16 +62,16 @@ export function Layout({
 					onPress={() => setNavDialogOpen(true)}
 				/>
 			) : null}
-			<header className="layout__header layout__item_size">
-				<div className="layout__breadcrumb-container">
-					<Link to="/" className="layout__breadcrumb logo">
+			<header className={clsx(styles.header, styles.itemSize)}>
+				<div className={styles.breadcrumbContainer}>
+					<Link to="/" className={clsx(styles.breadcrumb, styles.logo)}>
 						sendou.ink
 					</Link>
 					{breadcrumbs.flatMap((breadcrumb) => {
 						return [
 							<span
 								key={`${breadcrumb.href}-sep`}
-								className="layout__breadcrumb-separator"
+								className={styles.breadcrumbSeparator}
 							>
 								»
 							</span>,
@@ -101,13 +101,13 @@ function BreadcrumbLink({ data }: { data: Breadcrumb }) {
 		return (
 			<Link
 				to={data.href}
-				className={clsx("layout__breadcrumb", {
+				className={clsx(styles.breadcrumb, {
 					"stack horizontal sm items-center": data.text,
 				})}
 			>
 				{imageIsWithExtension ? (
 					<img
-						className={clsx("layout__breadcrumb__image", {
+						className={clsx(styles.breadcrumbImage, {
 							"rounded-full": data.rounded,
 						})}
 						alt=""
@@ -117,7 +117,7 @@ function BreadcrumbLink({ data }: { data: Breadcrumb }) {
 					/>
 				) : (
 					<Image
-						className={clsx("layout__breadcrumb__image", {
+						className={clsx(styles.breadcrumbImage, {
 							"rounded-full": data.rounded,
 						})}
 						alt=""
@@ -126,15 +126,13 @@ function BreadcrumbLink({ data }: { data: Breadcrumb }) {
 						height={24}
 					/>
 				)}
-				<span className="layout__breadcrumb__text-mobile-hidden">
-					{data.text}
-				</span>
+				<span className={styles.textMobileHidden}>{data.text}</span>
 			</Link>
 		);
 	}
 
 	return (
-		<Link to={data.href} className="layout__breadcrumb">
+		<Link to={data.href} className={styles.breadcrumb}>
 			{data.text}
 		</Link>
 	);

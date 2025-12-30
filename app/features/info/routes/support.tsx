@@ -12,8 +12,7 @@ import {
 } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
-
-import "../support.css";
+import styles from "./support.module.css";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -163,7 +162,7 @@ export default function SupportPage() {
 function SupportTable() {
 	const { t } = useTranslation();
 	return (
-		<div className="support__table">
+		<div className={styles.table}>
 			<div />
 			<div>Support</div>
 			<div>Supporter</div>
@@ -178,7 +177,7 @@ function SupportTable() {
 									{" "}
 									<SendouPopover
 										trigger={
-											<SendouButton className="support__popover-trigger">
+											<SendouButton className={styles.popoverTrigger}>
 												?
 											</SendouButton>
 										}
@@ -190,7 +189,7 @@ function SupportTable() {
 						</div>
 						<div>
 							{perk.tier === 1 ? (
-								<CheckmarkIcon className="support__checkmark" />
+								<CheckmarkIcon className={styles.checkmark} />
 							) : null}
 						</div>
 						{perk.name === "badge" ? (
@@ -204,7 +203,7 @@ function SupportTable() {
 						) : (
 							<div>
 								{perk.tier <= 2 ? (
-									<CheckmarkIcon className="support__checkmark" />
+									<CheckmarkIcon className={styles.checkmark} />
 								) : null}
 							</div>
 						)}
@@ -222,7 +221,7 @@ function SupportTable() {
 						) : (
 							<div>
 								{perk.tier <= 3 ? (
-									<CheckmarkIcon className="support__checkmark" />
+									<CheckmarkIcon className={styles.checkmark} />
 								) : null}
 							</div>
 						)}

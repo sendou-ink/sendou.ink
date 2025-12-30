@@ -1,12 +1,11 @@
 import { z } from "zod/v4";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import "~/styles/calendar-new.css";
 import {
 	bracketProgressionSchema,
 	calendarEventTagSchema,
 } from "~/features/calendar/calendar-schemas";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import {
 	actualNumber,
 	checkboxValueToBoolean,

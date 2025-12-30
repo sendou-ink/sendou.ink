@@ -1,22 +1,22 @@
-.u__container {
+.container {
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-6);
 }
 
-.u__avatar-container {
+.avatarContainer {
 	display: grid;
 	justify-content: center;
 	column-gap: var(--s-2-5);
 	grid-template-areas: "avatar name" "avatar team" "avatar ." "avatar ." "socials .";
 }
 
-.u__avatar {
+.avatar {
 	min-width: 125px;
 	grid-area: avatar;
 }
 
-.u__team {
+.team {
 	display: flex;
 	font-weight: var(--bold);
 	color: var(--color-text);
@@ -25,7 +25,7 @@
 	align-items: center;
 }
 
-.u__name {
+.name {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
@@ -34,12 +34,12 @@
 	gap: var(--s-2-5);
 }
 
-.u__country-name {
+.countryName {
 	color: var(--color-text-high);
 	font-weight: var(--bold);
 }
 
-.u__socials {
+.socials {
 	display: flex;
 	justify-content: center;
 	gap: var(--s-1-5);
@@ -47,59 +47,59 @@
 	padding-block-start: var(--s-2-5);
 }
 
-.u__social-link {
+.socialLink {
 	padding: var(--s-1);
 	border: 1px solid;
 	border-radius: 50%;
 }
 
-.u__extra-info__heading > svg {
+.extraInfoHeading > svg {
 	width: 0.8rem;
 }
 
-.u__social-link > svg {
+.socialLink > svg {
 	width: 0.9rem;
 }
 
-.u__social-link.youtube {
+.socialLinkYoutube {
 	border-color: #f00;
 	background-color: #ff00002f;
 }
 
-.u__social-link.youtube > svg {
+.socialLinkYoutube > svg {
 	fill: #f00;
 }
 
-.u__social-link.twitch {
+.socialLinkTwitch {
 	border-color: #9146ff;
 	background-color: #9146ff2f;
 }
 
-.u__social-link.twitch > svg {
+.socialLinkTwitch > svg {
 	fill: #9146ff;
 }
 
-.u__social-link.battlefy {
+.socialLinkBattlefy {
 	border-color: #de4c5e;
 	background-color: #de4c5e2f;
 }
 
-.u__social-link.battlefy > svg {
+.socialLinkBattlefy > svg {
 	fill: #de4c5e;
 }
 
-.u__social-link.bsky {
+.socialLinkBsky {
 	border-color: #1285fe;
 	background-color: #1285fe2f;
 	display: grid;
 	place-items: center;
 }
 
-.u__social-link.bsky path {
+.socialLinkBsky path {
 	fill: #1285fe;
 }
 
-.u__extra-infos {
+.extraInfos {
 	display: flex;
 	max-width: 24rem;
 	flex-wrap: wrap;
@@ -107,7 +107,7 @@
 	margin-inline: auto;
 }
 
-.u__extra-info {
+.extraInfo {
 	padding: var(--s-1) var(--s-1-5);
 	border-radius: var(--rounded);
 	background-color: var(--color-bg-high);
@@ -117,27 +117,27 @@
 	gap: var(--s-1);
 }
 
-.u__extra-info__heading {
+.extraInfoHeading {
 	color: var(--color-text-accent);
 	font-weight: var(--bold);
 }
 
-.u__results-table-wrapper {
+.resultsTableWrapper {
 	width: 100%;
 	overflow-x: auto;
 }
 
-.u__results-table-highlights {
+.resultsTableHighlights {
 	border: var(--s-2) solid var(--color-bg-high);
 	padding-inline: 0 !important;
 }
 
-.u__results-table-highlights > legend {
+.resultsTableHighlights > legend {
 	margin-inline-start: var(--s-2);
 	padding-inline: var(--s-1);
 }
 
-.u__results-players {
+.resultsPlayers {
 	display: flex;
 	flex-direction: column;
 	padding: 0;
@@ -145,13 +145,13 @@
 	list-style: none;
 }
 
-.u-search__container {
+.searchContainer {
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-12);
 }
 
-.u-search__users {
+.searchUsers {
 	display: flex;
 	width: 325px;
 	flex-direction: column;
@@ -160,7 +160,7 @@
 	gap: var(--s-6);
 }
 
-.u-search__user {
+.searchUser {
 	display: flex;
 	align-items: center;
 	color: var(--color-text);
@@ -169,55 +169,55 @@
 	line-height: 1.2rem;
 }
 
-.u-search__ign {
+.searchIgn {
 	color: var(--color-text-high);
 	font-size: var(--fonts-sm);
 	font-weight: var(--body);
 }
 
-.u-search__users > li {
+.searchUsers > li {
 	list-style: none;
 }
 
-.u-search__input {
+.searchInput {
 	height: 40px !important;
 	margin: 0 auto;
 	font-size: var(--fonts-lg);
 }
 
-.u-search__icon {
+.searchIcon {
 	height: 25px;
 	margin: auto;
 	margin-right: 15px;
 }
 
-.u-search__info {
+.searchInfo {
 	color: var(--color-text-high);
 	font-size: var(--fonts-sm);
 	text-align: center;
 }
 
-.u__weapon {
+.weapon {
 	padding: var(--s-2);
 	border-radius: 100%;
 	background-color: var(--color-bg-high);
 }
 
-.u__build-form {
+.buildForm {
 	--input-width: min(18rem, 75vw);
 }
 
-.u__build-form__weapon {
+.buildFormWeapon {
 	--input-width: 16rem;
 }
 
-.u__build-filter-button {
+.buildFilterButton {
 	padding: 0 var(--s-1-5) !important;
 	gap: var(--s-1);
 	min-height: 32px;
 }
 
-.u__placements {
+.placements {
 	display: flex;
 	flex-wrap: wrap;
 	padding: var(--s-4);
@@ -229,11 +229,11 @@
 	transition: 0.1s ease-in-out background-color;
 }
 
-.u__placements:hover {
+.placements:hover {
 	background-color: var(--color-bg-higher);
 }
 
-.u__placements__mode {
+.placementsMode {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -243,20 +243,20 @@
 }
 
 @media screen and (min-width: 480px) {
-	.u__placements {
+	.placements {
 		gap: var(--s-10);
 	}
 
-	.u__placements__mode {
+	.placementsMode {
 		font-size: var(--fonts-sm);
 	}
 }
 
-.u__season__select {
+.seasonSelect {
 	--select-width: 125px;
 }
 
-.u__season__weapon-container {
+.seasonWeaponContainer {
 	display: flex;
 	align-items: center;
 	font-size: var(--fonts-sm);
@@ -266,7 +266,7 @@
 	width: 60px;
 }
 
-.u__season__weapon-border__outer {
+.seasonWeaponBorderOuter {
 	--degree: 80deg;
 	--smoothing: 0.5deg;
 	--color: var(--color-text-accent);
@@ -283,7 +283,7 @@
 	position: absolute;
 }
 
-.u__season__weapon-border__outer-static {
+.seasonWeaponBorderOuterStatic {
 	height: 60px;
 	width: 60px;
 	background-color: var(--color-bg-high);
@@ -291,7 +291,7 @@
 	border-radius: 50%;
 }
 
-.u__season__weapon-border__inner {
+.seasonWeaponBorderInner {
 	height: 84%;
 	width: 84%;
 	top: 8%;
@@ -303,11 +303,11 @@
 	place-items: center;
 }
 
-.u__season__weapon-count {
+.seasonWeaponCount {
 	margin-top: 62px;
 }
 
-.u__season__player-name {
+.seasonPlayerName {
 	width: 64px;
 	font-size: var(--fonts-xs);
 	white-space: nowrap;
@@ -317,7 +317,7 @@
 	font-weight: var(--semi-bold);
 }
 
-.u__season__match {
+.seasonMatch {
 	background-color: var(--color-bg-high);
 	border-radius: var(--rounded);
 	padding: var(--s-2) var(--s-2-5);
@@ -328,11 +328,11 @@
 	gap: var(--s-4);
 }
 
-.u__season__match__with-sub-section {
+.seasonMatchWithSubSection {
 	border-radius: var(--rounded) var(--rounded) 0 0;
 }
 
-.u__season__match__sub-section {
+.seasonMatchSubSection {
 	border-radius: 0 0 var(--rounded) var(--rounded);
 	background-color: var(--color-bg-high);
 	font-size: var(--fonts-xs);
@@ -344,11 +344,11 @@
 	padding-block: var(--s-0-5);
 }
 
-.u__season__match:hover {
+.seasonMatch:hover {
 	background-color: var(--color-bg-higher);
 }
 
-.u__season__match__user {
+.seasonMatchUser {
 	display: flex;
 	flex-direction: column;
 	font-size: var(--fonts-xs);
@@ -356,20 +356,20 @@
 	align-items: center;
 }
 
-.u__season__match__user__name {
+.seasonMatchUserName {
 	max-width: 60px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
-.u__season__match__score {
+.seasonMatchScore {
 	font-size: var(--fonts-xl);
 	font-weight: var(--bold);
 	margin-inline: auto;
 }
 
-.u__season__match__set-results {
+.seasonMatchSetResults {
 	list-style: none;
 	display: flex;
 	gap: var(--s-2);
@@ -378,7 +378,7 @@
 	padding: 0;
 }
 
-.u__season__match__set-results li {
+.seasonMatchSetResults li {
 	width: 28px;
 	height: 28px;
 	display: grid;
@@ -391,17 +391,17 @@
 	border-color: var(--color-error);
 }
 
-.u__season__match__set-results li[data-is-win="true"] {
+.seasonMatchSetResults li[data-is-win="true"] {
 	border-color: var(--color-success);
 }
 
-.u__season__info-container {
+.seasonInfoContainer {
 	background-color: var(--color-bg-high);
 	padding: var(--s-2-5) var(--s-2);
 	border-radius: var(--rounded);
 }
 
-.u__season__winrate {
+.seasonWinrate {
 	background-color: var(--color-bg-high);
 	padding: var(--s-0-5) var(--s-2);
 	border-radius: var(--rounded);
@@ -409,7 +409,7 @@
 	font-weight: var(--semi-bold);
 }
 
-.u__season__weapon-usage__container {
+.seasonWeaponUsageContainer {
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-2);
@@ -417,7 +417,7 @@
 	min-height: 175px;
 }
 
-.u__season__weapon-usage__weapons-container {
+.seasonWeaponUsageWeaponsContainer {
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--s-2-5);
@@ -426,13 +426,13 @@
 	overflow-y: auto;
 }
 
-.u__season__weapon-usage__weapon {
+.seasonWeaponUsageWeapon {
 	border-radius: 100%;
 	background-color: var(--color-bg-high);
 	padding: var(--s-1-5);
 }
 
-.u__season__tentative {
+.seasonTentative {
 	text-transform: uppercase;
 	font-weight: var(--semi-bold);
 	color: var(--color-text-high);
@@ -444,16 +444,16 @@
 	line-height: 1.3;
 }
 
-.u__season__tentative__explanation {
+.seasonTentativeExplanation {
 	text-transform: initial;
 }
 
-.u__highlights-container {
+.highlightsContainer {
 	position: relative;
 	padding-bottom: 80px; /* Leave space for sticky button */
 }
 
-.u__highlights-sticky-button {
+.highlightsStickyButton {
 	position: sticky;
 	bottom: 0;
 	background-color: var(--color-bg);

@@ -8,6 +8,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { plusSuggestionPage } from "~/utils/urls";
 import { action } from "../actions/plus.suggestions.new.server";
+import styles from "../plus.module.css";
 import { PLUS_SUGGESTION, PLUS_TIERS } from "../plus-suggestions-constants";
 import { canSuggestNewUser } from "../plus-suggestions-utils";
 import type { PlusSuggestionsLoaderData } from "./plus.suggestions";
@@ -50,7 +51,7 @@ export default function PlusNewSuggestionModalPage() {
 					<select
 						id="tier"
 						name="tier"
-						className="plus__modal-select"
+						className={styles.modalSelect}
 						value={targetPlusTier}
 						onChange={(e) => setTargetPlusTier(Number(e.target.value))}
 					>
@@ -107,7 +108,7 @@ export function CommentTextarea({ maxLength }: { maxLength: number }) {
 			<textarea
 				id="comment"
 				name="comment"
-				className="plus__modal-textarea"
+				className={styles.modalTextarea}
 				rows={4}
 				value={value}
 				onChange={handleChange}

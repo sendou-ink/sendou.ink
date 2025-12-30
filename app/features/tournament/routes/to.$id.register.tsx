@@ -60,6 +60,7 @@ import { AlertIcon } from "../../../components/icons/Alert";
 import { action } from "../actions/to.$id.register.server";
 import type { TournamentRegisterPageLoader } from "../loaders/to.$id.register.server";
 import { loader } from "../loaders/to.$id.register.server";
+import styles from "../tournament.module.css";
 import { TOURNAMENT } from "../tournament-constants";
 import {
 	type CounterPickValidationStatus,
@@ -76,16 +77,16 @@ export default function TournamentRegisterPage() {
 
 	return (
 		<div className={clsx("stack lg", containerClassName("normal"))}>
-			<div className="tournament__logo-container">
+			<div className={styles.logoContainer}>
 				<img
 					src={tournament.ctx.logoUrl}
 					alt=""
-					className="tournament__logo"
+					className={styles.logo}
 					width={124}
 					height={124}
 				/>
 				<div>
-					<div className="tournament__title">{tournament.ctx.name}</div>
+					<div className={styles.title}>{tournament.ctx.name}</div>
 					<div>
 						{tournament.ctx.organization ? (
 							<Link
@@ -106,15 +107,15 @@ export default function TournamentRegisterPage() {
 								to={userPage(tournament.ctx.author)}
 								className="stack horizontal xs items-center text-lighter"
 							>
-								<UserIcon className="tournament__info__icon" />{" "}
+								<UserIcon className={styles.infoIcon} />{" "}
 								{tournament.ctx.author.username}
 							</Link>
 						)}
 					</div>
 					{!tournament.isLeagueSignup ? (
-						<div className="tournament__by mt-2">
+						<div className={clsx(styles.by, "mt-2")}>
 							<div className="stack horizontal xs items-center">
-								<ClockIcon className="tournament__info__icon" />{" "}
+								<ClockIcon className={styles.infoIcon} />{" "}
 								{isMounted ? (
 									<TimePopover
 										time={tournament.ctx.startTime}
@@ -131,15 +132,15 @@ export default function TournamentRegisterPage() {
 					) : null}
 					<div className="stack horizontal sm mt-1">
 						{tournament.ranked ? (
-							<div className="tournament__badge tournament__badge__ranked">
+							<div className={clsx(styles.badge, styles.badgeRanked)}>
 								Ranked
 							</div>
 						) : (
-							<div className="tournament__badge tournament__badge__unranked">
+							<div className={clsx(styles.badge, styles.badgeUnranked)}>
 								Unranked
 							</div>
 						)}
-						<div className="tournament__badge tournament__badge__modes">
+						<div className={clsx(styles.badge, styles.badgeModes)}>
 							{tournament.modesIncluded.map((mode) => (
 								<ModeImage key={mode} mode={mode} size={16} />
 							))}
@@ -216,7 +217,7 @@ function TournamentRegisterInfoTabs() {
 							</div>
 						) : null}
 
-						<div className="tournament__info__description">
+						<div className={styles.infoDescription}>
 							<Markdown options={{ wrapper: React.Fragment }}>
 								{tournament.ctx.description ?? ""}
 							</Markdown>
@@ -228,7 +229,7 @@ function TournamentRegisterInfoTabs() {
 
 				{tournament.ctx.rules ? (
 					<SendouTabPanel id="rules">
-						<div className="tournament__info__description">
+						<div className={styles.infoDescription}>
 							<Markdown options={{ wrapper: React.Fragment }}>
 								{tournament.ctx.rules ?? ""}
 							</Markdown>
@@ -436,10 +437,10 @@ function RegistrationProgress({
 
 	return (
 		<div>
-			<h3 className="tournament__section-header text-center">
+			<h3 className={clsx(styles.sectionHeader, "text-center")}>
 				{t("tournament:pre.steps.header")}
 			</h3>
-			<section className="tournament__section stack md">
+			<section className={clsx(styles.section, "stack md")}>
 				<div className="stack horizontal lg justify-center text-sm font-semi-bold">
 					{steps.map((step, i) => {
 						return (
@@ -450,13 +451,17 @@ function RegistrationProgress({
 								{step.name}
 								{step.status === "completed" ? (
 									<CheckmarkIcon
-										className="tournament__section__icon fill-success"
+										className={clsx(styles.sectionIcon, "fill-success")}
 										testId={`checkmark-icon-num-${i + 1}`}
 									/>
 								) : step.status === "notice" ? (
-									<AlertIcon className="tournament__section__icon fill-info p-1" />
+									<AlertIcon
+										className={clsx(styles.sectionIcon, "fill-info p-1")}
+									/>
 								) : (
-									<CrossIcon className="tournament__section__icon fill-error" />
+									<CrossIcon
+										className={clsx(styles.sectionIcon, "fill-error")}
+									/>
 								)}
 							</div>
 						);
@@ -480,7 +485,7 @@ function RegistrationProgress({
 					/>
 				) : null}
 			</section>
-			<div className="tournament__section__warning">
+			<div className={styles.sectionWarning}>
 				{regClosesBeforeStart || tournament.isLeagueSignup ? (
 					<span className="text-warning">
 						Registration closes at {registrationClosesAtString}
@@ -663,7 +668,7 @@ function TeamInfo({
 	return (
 		<div>
 			<div className="stack horizontal justify-between">
-				<h3 className="tournament__section-header">
+				<h3 className={styles.sectionHeader}>
 					2. {t("tournament:pre.info.header")}
 				</h3>
 				{canUnregister &&
@@ -699,7 +704,7 @@ function TeamInfo({
 					</FormWithConfirm>
 				) : null}
 			</div>
-			<section className="tournament__section">
+			<section className={styles.section}>
 				<Form method="post" className="stack md items-center" ref={ref}>
 					<input type="hidden" name="_action" value="UPSERT_TEAM" />
 					{signUpWithTeamId ? (
@@ -707,7 +712,7 @@ function TeamInfo({
 					) : null}
 					<div className="stack sm-plus items-center">
 						{data && data.teams.length > 0 && tournament.registrationOpen ? (
-							<div className="tournament__section__input-container">
+							<div className={styles.sectionInputContainer}>
 								<Label htmlFor="signingUpAs">Team signing up as</Label>
 								<select
 									id="signingUpAs"
@@ -733,7 +738,7 @@ function TeamInfo({
 						) : null}
 
 						{!signUpWithTeamId ? (
-							<div className="tournament__section__input-container">
+							<div className={styles.sectionInputContainer}>
 								<Label htmlFor="teamName">
 									{data && data.teams.length > 0
 										? "Pick-up name"
@@ -755,7 +760,7 @@ function TeamInfo({
 							<input type="hidden" name="teamName" value={teamName} />
 						)}
 						{tournament.registrationOpen || avatarUrl ? (
-							<div className="tournament__section__input-container">
+							<div className={styles.sectionInputContainer}>
 								<Label htmlFor="logo">Logo</Label>
 								{avatarUrl ? (
 									<div className="stack horizontal md items-center">
@@ -863,14 +868,14 @@ function FriendCode() {
 
 	return (
 		<div>
-			<h3 className="tournament__section-header">1. Friend code</h3>
-			<section className="tournament__section">
-				<div className="tournament__section__input-container mx-auto">
+			<h3 className={styles.sectionHeader}>1. Friend code</h3>
+			<section className={styles.section}>
+				<div className={clsx(styles.sectionInputContainer, "mx-auto")}>
 					<FriendCodeInput friendCode={user?.friendCode} />
 				</div>
 			</section>
 			{user?.friendCode ? (
-				<div className="tournament__section__warning">
+				<div className={styles.sectionWarning}>
 					Is the friend code above wrong? Post a message on the{" "}
 					<a
 						href={SENDOU_INK_DISCORD_URL}
@@ -889,10 +894,10 @@ function FriendCode() {
 function GoogleFormsLink() {
 	return (
 		<div>
-			<h3 className="tournament__section-header">
+			<h3 className={styles.sectionHeader}>
 				Additional Requirement: Google Form
 			</h3>
-			<section className="tournament__section stack lg items-center">
+			<section className={clsx(styles.section, "stack lg items-center")}>
 				<a
 					href={import.meta.env.VITE_LEAGUE_GOOGLE_FORM_URL}
 					className="py-4 font-bold"
@@ -902,7 +907,7 @@ function GoogleFormsLink() {
 					Answer survey hosted on Google Forms
 				</a>
 			</section>
-			<div className="tournament__section__warning">
+			<div className={styles.sectionWarning}>
 				Answer to additional question about your team's preferred match time and
 				info to help with seeding
 			</div>
@@ -963,10 +968,10 @@ function FillRoster({
 
 	return (
 		<div>
-			<h3 className="tournament__section-header">
+			<h3 className={styles.sectionHeader}>
 				3. {t("tournament:pre.roster.header")}
 			</h3>
-			<section className="tournament__section stack lg items-center">
+			<section className={clsx(styles.section, "stack lg items-center")}>
 				{playersAvailableToDirectlyAdd.length > 0 && canAddMembers ? (
 					<>
 						<DirectlyAddPlayerSelect
@@ -992,7 +997,7 @@ function FillRoster({
 						</div>
 					</div>
 				) : null}
-				<div className="tournament__roster-grid">
+				<div className={styles.rosterGrid}>
 					{ownTeamMembers.map((member, i) => {
 						return (
 							<div
@@ -1002,7 +1007,7 @@ function FillRoster({
 							>
 								<Avatar size="xsm" user={member} />
 								{tournament.ctx.settings.requireInGameNames ? (
-									<div className="tournament__roster-grid__member-name">
+									<div className={styles.rosterGridMemberName}>
 										<div className="text-center">
 											{member.inGameName ?? member.username}
 										</div>
@@ -1013,7 +1018,7 @@ function FillRoster({
 										) : null}
 									</div>
 								) : (
-									<div className="tournament__roster-grid__member-name">
+									<div className={styles.rosterGridMemberName}>
 										{member.username}
 									</div>
 								)}
@@ -1022,7 +1027,7 @@ function FillRoster({
 					})}
 					{new Array(missingMembers).fill(null).map((_, i) => {
 						return (
-							<div key={i} className="tournament__missing-player">
+							<div key={i} className={styles.missingPlayer}>
 								?
 							</div>
 						);
@@ -1031,7 +1036,10 @@ function FillRoster({
 						return (
 							<div
 								key={i}
-								className="tournament__missing-player tournament__missing-player__optional"
+								className={clsx(
+									styles.missingPlayer,
+									styles.missingPlayerOptional,
+								)}
 							>
 								?
 							</div>
@@ -1043,13 +1051,13 @@ function FillRoster({
 				) : null}
 			</section>
 			{tournament.ctx.settings.requireInGameNames ? (
-				<div className="tournament__section__warning text-warning-important">
+				<div className={clsx(styles.sectionWarning, "text-warning-important")}>
 					Note that you are expected to use the in-game names as listed above.
 					Playing in the event with a different name or using the alias feature
 					might result in disqualification.
 				</div>
 			) : (
-				<div className="tournament__section__warning">
+				<div className={styles.sectionWarning}>
 					{tournament.minMembersPerTeam <= 3
 						? t("tournament:pre.roster.footer.noSubs", {
 								format: `${tournament.minMembersPerTeam}v${tournament.minMembersPerTeam}`,
@@ -1184,10 +1192,10 @@ function CounterPickMapPoolPicker() {
 
 	return (
 		<div>
-			<h3 className="tournament__section-header">
+			<h3 className={styles.sectionHeader}>
 				4. {t("tournament:pre.pool.header")}
 			</h3>
-			<section className="tournament__section">
+			<section className={styles.section}>
 				<fetcher.Form method="post" className="stack lg">
 					<input
 						type="hidden"

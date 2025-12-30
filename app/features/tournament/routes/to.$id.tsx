@@ -27,9 +27,6 @@ import { metaTags } from "../../../utils/remix";
 import { loader, type TournamentLoaderData } from "../loaders/to.$id.server";
 export { loader };
 
-import "~/styles/calendar-event.css";
-import "../tournament.css";
-
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	const navigatedToMatchPage =
 		typeof args.nextParams.mid === "string" &&

@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { TOURNAMENT } from "../../../tournament/tournament-constants";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { getRounds } from "../../core/rounds";
+import styles from "./bracket.module.css";
 import { Match } from "./Match";
 import { RoundHeader } from "./RoundHeader";
 
@@ -17,7 +18,7 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 	let atLeastOneColumnHidden = false;
 	return (
 		<div
-			className="elim-bracket__container"
+			className={styles.elimContainer}
 			style={{ "--round-count": rounds.length }}
 		>
 			{rounds.flatMap((round, roundIdx) => {
@@ -48,7 +49,7 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 				return (
 					<div
 						key={round.id}
-						className="elim-bracket__round-column"
+						className={styles.elimRoundColumn}
 						data-round-id={round.id}
 					>
 						<RoundHeader
@@ -59,8 +60,8 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 							maps={round.maps}
 						/>
 						<div
-							className={clsx("elim-bracket__round-matches-container", {
-								"elim-bracket__round-matches-container__top-bye":
+							className={clsx(styles.elimRoundMatchesContainer, {
+								[styles.elimRoundMatchesContainerTopBye]:
 									!atLeastOneColumnHidden &&
 									props.type === "winners" &&
 									(!props.bracket.data.match[0].opponent1 ||

@@ -50,7 +50,7 @@ import {
 } from "../q-settings-constants";
 export { loader, action };
 
-import "../q-settings.css";
+import styles from "./q.settings.module.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
@@ -153,7 +153,7 @@ function MapPicker() {
 
 	return (
 		<details>
-			<summary className="q-settings__summary">
+			<summary className={styles.summary}>
 				<div>
 					<span>{t("q:settings.maps.header")}</span> <MapIcon />
 				</div>
@@ -257,7 +257,7 @@ function VoiceChat() {
 
 	return (
 		<details>
-			<summary className="q-settings__summary">
+			<summary className={styles.summary}>
 				<div>
 					<span>{t("q:settings.voiceChat.header")}</span>{" "}
 					<MicrophoneFilledIcon />
@@ -388,7 +388,7 @@ function WeaponPool() {
 
 	return (
 		<details>
-			<summary className="q-settings__summary">
+			<summary className={styles.summary}>
 				<div>
 					<span>{t("q:settings.weaponPool.header")}</span> <PuzzleIcon />
 				</div>
@@ -399,7 +399,7 @@ function WeaponPool() {
 					name="weaponPool"
 					value={JSON.stringify(weapons)}
 				/>
-				<div className="q-settings__weapon-pool-select-container">
+				<div className={styles.weaponPoolSelectContainer}>
 					{weapons.length < SENDOUQ_WEAPON_POOL_MAX_SIZE ? (
 						<WeaponSelect
 							onChange={(weaponSplId) => {
@@ -491,7 +491,7 @@ function Sounds() {
 
 	return (
 		<details>
-			<summary className="q-settings__summary">
+			<summary className={styles.summary}>
 				<div>
 					<span>{t("q:settings.sounds.header")}</span> <SpeakerFilledIcon />
 				</div>
@@ -591,9 +591,9 @@ function SoundSlider() {
 
 	return (
 		<div className="stack horizontal xs items-center ml-2-5">
-			<SpeakerFilledIcon className="q-settings__volume-slider-icon" />
+			<SpeakerFilledIcon className={styles.volumeSliderIcon} />
 			<input
-				className="q-settings__volume-slider-input"
+				className={styles.volumeSliderInput}
 				type="range"
 				value={volume}
 				onChange={changeVolume}
@@ -610,7 +610,7 @@ function TrustedUsers() {
 
 	return (
 		<details>
-			<summary className="q-settings__summary">
+			<summary className={styles.summary}>
 				<span>{t("q:settings.trusted.header")}</span> <UsersIcon />
 			</summary>
 			<div className="mb-4">
@@ -684,7 +684,7 @@ function Misc() {
 
 	return (
 		<details>
-			<summary className="q-settings__summary">
+			<summary className={styles.summary}>
 				<div>{t("q:settings.misc.header")}</div>
 			</summary>
 			<fetcher.Form method="post" className="mb-4 ml-2-5 stack sm">

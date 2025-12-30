@@ -31,6 +31,7 @@ import { InfoPopover } from "../../../components/InfoPopover";
 import { ordinalToRoundedSp } from "../../mmr/mmr-utils";
 import { action } from "../actions/to.$id.seeds.server";
 import { loader } from "../loaders/to.$id.seeds.server";
+import styles from "../tournament.module.css";
 import { useTournament } from "./to.$id";
 export { loader, action };
 
@@ -90,7 +91,7 @@ export default function TournamentSeedsPage() {
 					</div>
 				) : (
 					<SendouButton
-						className="tournament__seeds__order-button"
+						className={styles.seedsOrderButton}
 						variant="minimal"
 						size="small"
 						type="button"
@@ -118,11 +119,16 @@ export default function TournamentSeedsPage() {
 				/>
 			) : null}
 			<ul>
-				<li className="tournament__seeds__teams-list-row">
-					<div className="tournament__seeds__teams-container__header" />
-					<div className="tournament__seeds__teams-container__header" />
-					<div className="tournament__seeds__teams-container__header">Name</div>
-					<div className="tournament__seeds__teams-container__header stack horizontal xxs">
+				<li className={styles.seedsTeamsListRow}>
+					<div className={styles.seedsTeamsContainerHeader} />
+					<div className={styles.seedsTeamsContainerHeader} />
+					<div className={styles.seedsTeamsContainerHeader}>Name</div>
+					<div
+						className={clsx(
+							styles.seedsTeamsContainerHeader,
+							"stack horizontal xxs",
+						)}
+					>
 						SP
 						<InfoPopover tiny>
 							Seeding point is a value that tracks players' head-to-head
@@ -130,9 +136,7 @@ export default function TournamentSeedsPage() {
 							different points.
 						</InfoPopover>
 					</div>
-					<div className="tournament__seeds__teams-container__header">
-						Players
-					</div>
+					<div className={styles.seedsTeamsContainerHeader}>Players</div>
 				</li>
 				<DndContext
 					id="team-seed-sorter"
@@ -170,14 +174,10 @@ export default function TournamentSeedsPage() {
 								id={team.id}
 								testId={`seed-team-${team.id}`}
 								disabled={navigation.state !== "idle"}
-								liClassName={clsx(
-									"tournament__seeds__teams-list-row",
-									"sortable",
-									{
-										disabled: navigation.state !== "idle",
-										invisible: activeTeam?.id === team.id,
-									},
-								)}
+								liClassName={clsx(styles.seedsTeamsListRow, "sortable", {
+									disabled: navigation.state !== "idle",
+									invisible: activeTeam?.id === team.id,
+								})}
 							>
 								<RowContents
 									team={team}
@@ -195,7 +195,7 @@ export default function TournamentSeedsPage() {
 
 					<DragOverlay>
 						{activeTeam && (
-							<li className="tournament__seeds__teams-list-row active">
+							<li className={clsx(styles.seedsTeamsListRow, "active")}>
 								<RowContents
 									team={activeTeam}
 									teamSeedingSkill={{
@@ -338,7 +338,7 @@ function SeedAlert({ teamOrder }: { teamOrder: number[] }) {
 	const teamOrderChanged = teamOrder.some((id, i) => id !== teamOrderInDb[i]);
 
 	return (
-		<fetcher.Form method="post" className="tournament__seeds__form">
+		<fetcher.Form method="post" className={styles.seedsForm}>
 			<input type="hidden" name="tournamentId" value={tournament.ctx.id} />
 			<input type="hidden" name="seeds" value={JSON.stringify(teamOrder)} />
 			<input type="hidden" name="_action" value="UPDATE_SEEDS" />
@@ -382,7 +382,7 @@ function RowContents({
 		<>
 			<div>{seed}</div>
 			<div>{logoUrl ? <Avatar url={logoUrl} size="xxs" /> : null}</div>
-			<div className="tournament__seeds__team-name">
+			<div className={styles.seedsTeamName}>
 				{team.checkIns.length > 0 ? "✅ " : "❌ "} {team.name}
 			</div>
 			<div className={clsx({ "text-warning": teamSeedingSkill.outOfOrder })}>
@@ -391,10 +391,10 @@ function RowContents({
 			<div className="stack horizontal sm">
 				{team.members.map((member) => {
 					return (
-						<div key={member.userId} className="tournament__seeds__team-member">
+						<div key={member.userId} className={styles.seedsTeamMember}>
 							<Link
 								to={userResultsPage(member, true)}
-								className="tournament__seeds__team-member__name"
+								className={styles.seedsTeamMemberName}
 							>
 								{member.username}
 							</Link>

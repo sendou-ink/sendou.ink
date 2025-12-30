@@ -9,17 +9,17 @@ import { FormMessage } from "~/components/FormMessage";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
-import { Main } from "~/components/Main";
+import { Main, mainStyles } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
-import { uploadImagePage } from "~/utils/urls";
-import { TEAM } from "../team-constants";
-import { canAddCustomizedColors, isTeamOwner } from "../team-utils";
-import "../team.css";
 import { TeamGoBackButton } from "~/features/team/components/TeamGoBackButton";
 import { metaTags } from "~/utils/remix";
+import { uploadImagePage } from "~/utils/urls";
 import { action } from "../actions/t.$customUrl.edit.server";
 import { loader } from "../loaders/t.$customUrl.edit.server";
+import styles from "../team.module.css";
+import { TEAM } from "../team-constants";
+import { canAddCustomizedColors, isTeamOwner } from "../team-utils";
 export { action, loader };
 
 export const meta: MetaFunction = (args) => {
@@ -37,7 +37,7 @@ export default function EditTeamPage() {
 	return (
 		<Main className="stack lg">
 			<TeamGoBackButton />
-			<div className="half-width">
+			<div className={mainStyles.narrow}>
 				{isTeamOwner({ team, user }) ? (
 					<FormWithConfirm
 						dialogHeading={t("team:deleteTeam.header", { teamName: team.name })}
@@ -83,7 +83,7 @@ function ImageUploadLinks() {
 	return (
 		<div>
 			<Label>{t("team:forms.fields.uploadImages")}</Label>
-			<ol className="team__image-links-list">
+			<ol className={styles.imageLinksList}>
 				<li>
 					<Link
 						to={uploadImagePage({
@@ -116,7 +116,7 @@ function ImageRemoveButtons() {
 	return team.avatarUrl || team.bannerUrl ? (
 		<div>
 			<Label>{t("team:forms.fields.removeImages")}</Label>
-			<ol className="team__image-links-list">
+			<ol className={styles.imageLinksList}>
 				{team.avatarUrl ? (
 					<li>
 						<FormWithConfirm

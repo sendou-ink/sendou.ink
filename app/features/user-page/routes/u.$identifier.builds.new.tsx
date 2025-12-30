@@ -38,6 +38,8 @@ import { loader } from "../loaders/u.$identifier.builds.new.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 export { loader, action };
 
+import { mainStyles } from "~/components/Main";
+
 export const handle: SendouRouteHandle = {
 	i18n: ["weapons", "builds", "gear"],
 };
@@ -63,7 +65,7 @@ export default function NewBuildPage() {
 	}
 
 	return (
-		<div className="half-width u__build-form">
+		<div className={mainStyles.narrow}>
 			<Form className="stack md items-start" method="post">
 				{buildToEdit && (
 					<input type="hidden" name="buildToEditId" value={buildToEdit.id} />

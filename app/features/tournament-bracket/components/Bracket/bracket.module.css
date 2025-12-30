@@ -8,7 +8,7 @@
 	padding-block-end: var(--s-6);
 }
 
-.scrolling-bracket {
+.scrollingBracket {
 	padding: var(--s-4) var(--s-6);
 	max-width: 100%;
 	max-height: min(1000px, 70vh);
@@ -19,7 +19,7 @@
 	overflow: scroll;
 }
 
-.bracket__match__header {
+.matchHeader {
 	position: absolute;
 	display: flex;
 	justify-content: space-between;
@@ -27,7 +27,7 @@
 	margin-block-start: -16px;
 }
 
-.bracket__match__header__box {
+.matchHeaderBox {
 	background-color: var(--color-bg-higher);
 	padding: var(--s-0-5) var(--s-1);
 	border-radius: var(--rounded-sm);
@@ -37,11 +37,11 @@
 	border: 0;
 }
 
-.bracket__match__header__box__button {
+.matchHeaderBoxButton {
 	height: 18.86px;
 }
 
-.bracket__match__timer {
+.matchTimer {
 	position: absolute;
 	top: 50%;
 	left: 0;
@@ -49,7 +49,7 @@
 	margin-inline-start: 8px;
 }
 
-.bracket__match {
+.match {
 	width: var(--match-width);
 	min-height: var(--match-height);
 	max-height: var(--match-height);
@@ -66,56 +66,56 @@
 	transition: background-color 0.2s;
 }
 
-a.bracket__match:hover {
+a.match:hover {
 	background-color: var(--color-bg-high);
 	border-radius: var(--rounded-sm);
 }
 
-.bracket__match__separator {
+.matchSeparator {
 	min-height: 2px;
 	max-height: 2px;
 	width: 100%;
 	background-color: var(--color-bg-higher);
 }
 
-.bracket__match__bye {
+.matchBye {
 	visibility: hidden;
 	min-height: var(--match-height);
 	max-height: var(--match-height);
 }
 
-.bracket__match__seed {
+.matchSeed {
 	color: var(--color-text-accent);
 	margin-inline-end: var(--s-0-5);
 	min-width: 15px;
 	max-width: 15px;
 }
 
-.bracket__match__seed__wide {
+.matchSeedWide {
 	min-width: 22px;
 	max-width: 22px;
 }
 
-.bracket__match__team-name {
+.matchTeamName {
 	max-width: 95px;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
 }
 
-.bracket__match__team-name__narrow {
+.matchTeamNameNarrow {
 	max-width: 75px;
 }
 
-.bracket__match__team-name__narrowest {
+.matchTeamNameNarrowest {
 	max-width: 70px;
 }
 
-.bracket__match__score {
+.matchScore {
 	margin-inline-start: auto;
 }
 
-.elim-bracket__container {
+.elimContainer {
 	--line-width: 30px;
 	display: grid;
 	grid-template-columns: repeat(
@@ -125,7 +125,7 @@ a.bracket__match:hover {
 	overflow: visible;
 }
 
-.elim-bracket__round-matches-container {
+.elimRoundMatchesContainer {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-around;
@@ -135,11 +135,11 @@ a.bracket__match:hover {
 	overflow: visible;
 }
 
-.elim-bracket__round-matches-container__top-bye {
+.elimRoundMatchesContainerTopBye {
 	margin-top: -18px;
 }
 
-.elim-bracket__round-header {
+.elimRoundHeader {
 	text-align: center;
 	background-color: var(--color-bg-higher);
 	font-size: var(--fonts-xs);
@@ -149,7 +149,7 @@ a.bracket__match:hover {
 	border-radius: var(--rounded-sm);
 }
 
-.elim-bracket__round-header__infos {
+.elimRoundHeaderInfos {
 	width: var(--match-width);
 	display: flex;
 	justify-content: space-between;
@@ -158,12 +158,12 @@ a.bracket__match:hover {
 	font-weight: var(--semi-bold);
 }
 
-.elim-bracket__round-column {
+.elimRoundColumn {
 	display: flex;
 	flex-direction: column;
 }
 
-.rr__placements-table {
+.rrPlacementsTable {
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
 	min-width: max-content;
@@ -171,26 +171,69 @@ a.bracket__match:hover {
 	max-width: 600px;
 }
 
-.rr__placements-table thead {
+.rrPlacementsTable thead {
 	color: var(--color-text-high);
 }
 
-.rr__placements-table th {
+.rrPlacementsTable th {
 	text-align: left;
 }
 
-.rr__placements-table th abbr {
+.rrPlacementsTable th abbr {
 	padding-inline: var(--s-2);
 }
 
-.rr__placements-table td span {
+.rrPlacementsTable td span {
 	padding-inline: var(--s-2);
 }
 
-.rr__placements-table tbody tr:nth-child(odd) {
+.rrPlacementsTable tbody tr:nth-child(odd) {
 	background-color: var(--color-bg-high);
 }
 
-.rr__placements-table tbody tr:nth-child(even) {
+.rrPlacementsTable tbody tr:nth-child(even) {
 	background-color: var(--color-bg-higher);
+}
+
+.standingsDividerRow {
+	background-color: transparent !important;
+}
+
+.standingsDivider {
+	padding: 0;
+}
+
+.standingsDividerContent {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-block: var(--s-2);
+}
+
+.standingsDividerQualified .standingsDividerLine {
+	background-color: var(--color-success);
+}
+
+.standingsDividerQualified .standingsDividerText {
+	color: var(--color-success);
+}
+
+.standingsDividerEliminated .standingsDividerLine {
+	background-color: var(--color-error);
+}
+
+.standingsDividerEliminated .standingsDividerText {
+	color: var(--color-error);
+}
+
+.standingsDividerLine {
+	flex: 1;
+	height: 2px;
+	background-color: var(--color-border);
+}
+
+.standingsDividerText {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--bold);
+	white-space: nowrap;
 }

@@ -6,6 +6,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { TournamentMatchStatus } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import styles from "../tournament-bracket.module.css";
 
 const lockingInfo =
 	"You can lock the match to indicate that it should not be started before the cast is ready. Match being locked prevents score reporting and hides the map list till the organizer/streamer unlocks it.";
@@ -106,19 +107,12 @@ function CastInfoWrapper({
 
 	return (
 		<div className="stack horizontal sm justify-center items-center">
-			<fetcher.Form
-				className="tournament-bracket__cast-info-container"
-				method="post"
-			>
-				<div className="tournament-bracket__cast-info-container__label">
-					Cast
-				</div>
+			<fetcher.Form className={styles.castInfoContainer} method="post">
+				<div className={styles.castInfoContainerLabel}>Cast</div>
 
 				<div className="stack horizontal sm items-center justify-between w-full">
 					{children ? (
-						<div className="tournament-bracket__cast-info-container__content">
-							{children}
-						</div>
+						<div className={styles.castInfoContainerContent}>{children}</div>
 					) : null}
 					{submitButtonText && _action ? (
 						<SubmitButton

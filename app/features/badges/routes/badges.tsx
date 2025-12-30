@@ -15,7 +15,7 @@ import { metaTags } from "../../../utils/remix";
 import { type BadgesLoaderData, loader } from "../loaders/badges.server";
 export { loader };
 
-import "~/styles/badges.css";
+import styles from "../badges.module.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: "badges",
@@ -61,10 +61,10 @@ export default function BadgesPageLayout() {
 
 	return (
 		<Main>
-			<div className="badges__container">
+			<div className={styles.container}>
 				<Outlet />
 				<Input
-					className="badges-search__input"
+					className={styles.searchInput}
 					icon={<SearchIcon />}
 					value={inputValue}
 					onChange={(e) => setInputValue(e.target.value)}
@@ -72,10 +72,10 @@ export default function BadgesPageLayout() {
 				{ownBadges.length > 0 ? (
 					<div className="w-full">
 						<Divider smallText>{t("badges:own.divider")}</Divider>
-						<div className="badges__small-badges">
+						<div className={styles.smallBadges}>
 							{ownBadges.map((badge) => (
 								<NavLink
-									className="badges__nav-link"
+									className={styles.navLink}
 									key={badge.id}
 									to={String(badge.id)}
 								>
@@ -87,13 +87,13 @@ export default function BadgesPageLayout() {
 				) : null}
 				{ownBadges.length > 0 || otherBadges.length > 0 ? (
 					<div className="w-full">
-						<div className="badges__small-badges">
+						<div className={styles.smallBadges}>
 							{ownBadges.length > 0 ? (
 								<Divider smallText>{t("badges:other.divider")}</Divider>
 							) : null}
 							{otherBadges.map((badge) => (
 								<NavLink
-									className="badges__nav-link"
+									className={styles.navLink}
 									key={badge.id}
 									to={String(badge.id)}
 								>
@@ -108,7 +108,7 @@ export default function BadgesPageLayout() {
 					</div>
 				)}
 			</div>
-			<div className="badges__general-info-texts">
+			<div className={styles.generalInfoTexts}>
 				<p>
 					<a href={BADGES_DOC_LINK} target="_blank" rel="noopener noreferrer">
 						{t("forYourEvent")}

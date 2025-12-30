@@ -31,7 +31,9 @@ import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import { COUNTRY_CODES, USER } from "../user-page-constants";
 export { loader, action };
 
-import styles from "~/styles/u.$identifier.module.css";
+import { mainStyles } from "~/components/Main";
+import styles from "../user-page.module.css";
+import editStyles from "./u.$identifier.edit.module.css";
 
 export default function UserEditPage() {
 	const { t } = useTranslation(["common", "user"]);
@@ -44,8 +46,8 @@ export default function UserEditPage() {
 	const isArtist = useHasRole("ARTIST");
 
 	return (
-		<div className="half-width">
-			<Form className={styles.container} method="post">
+		<div className={mainStyles.narrow}>
+			<Form className={editStyles.container} method="post">
 				{isSupporter ? (
 					<CustomizedColorsInput initialColors={layoutData.css} />
 				) : null}
@@ -148,9 +150,9 @@ function InGameNameInputs() {
 					maxLength={USER.IN_GAME_NAME_TEXT_MAX_LENGTH}
 					defaultValue={inGameNameParts?.[0]}
 				/>
-				<div className={styles.inGameNameHashtag}>#</div>
+				<div className={editStyles.inGameNameHashtag}>#</div>
 				<Input
-					className={styles.inGameNameDiscriminator}
+					className={editStyles.inGameNameDiscriminator}
 					name="inGameNameDiscriminator"
 					aria-label="In game name discriminator"
 					maxLength={USER.IN_GAME_NAME_DISCRIMINATOR_MAX_LENGTH}
@@ -171,14 +173,14 @@ function SensSelects() {
 	const data = useLoaderData<typeof loader>();
 
 	return (
-		<div className={styles.sensContainer}>
+		<div className={editStyles.sensContainer}>
 			<div>
 				<Label htmlFor="motionSens">{t("user:motionSens")}</Label>
 				<select
 					id="motionSens"
 					name="motionSens"
 					defaultValue={data.user.motionSens ?? undefined}
-					className={styles.sensSelect}
+					className={editStyles.sensSelect}
 				>
 					<option value="">{"-"}</option>
 					{SENS_OPTIONS.map((sens) => (
@@ -195,7 +197,7 @@ function SensSelects() {
 					id="stickSens"
 					name="stickSens"
 					defaultValue={data.user.stickSens ?? undefined}
-					className={styles.sensSelect}
+					className={editStyles.sensSelect}
 				>
 					<option value="">{"-"}</option>
 					{SENS_OPTIONS.map((sens) => (
@@ -280,7 +282,7 @@ function WeaponPoolSelect() {
 	const latestWeapon = weapons[weapons.length - 1];
 
 	return (
-		<div className={clsx("stack md", styles.weaponPool)}>
+		<div className={clsx("stack md", editStyles.weaponPool)}>
 			<input type="hidden" name="weapons" value={JSON.stringify(weapons)} />
 			{weapons.length < USER.WEAPON_POOL_MAX_SIZE ? (
 				<WeaponSelect
@@ -307,7 +309,7 @@ function WeaponPoolSelect() {
 				{weapons.map((weapon) => {
 					return (
 						<div key={weapon.weaponSplId} className="stack xs items-center">
-							<div className="u__weapon">
+							<div className={styles.weapon}>
 								<WeaponImage
 									weaponSplId={weapon.weaponSplId}
 									variant={weapon.isFavorite ? "badge-5-star" : "badge"}
@@ -365,7 +367,7 @@ function BioTextarea({
 	const [value, setValue] = React.useState(initialValue ?? "");
 
 	return (
-		<div className={styles.bioContainer}>
+		<div className={editStyles.bioContainer}>
 			<Label
 				htmlFor="bio"
 				valueLimits={{ current: value.length, max: USER.BIO_MAX_LENGTH }}
@@ -487,7 +489,7 @@ function CommissionTextArea({
 	const [value, setValue] = React.useState(initialValue ?? "");
 
 	return (
-		<div className={styles.bioContainer}>
+		<div className={editStyles.bioContainer}>
 			<Label
 				htmlFor="commissionText"
 				valueLimits={{

@@ -1,8 +1,10 @@
+import clsx from "clsx";
 import { differenceInSeconds } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { InfoPopover } from "~/components/InfoPopover";
 import * as Deadline from "../core/Deadline";
+import styles from "../tournament-bracket.module.css";
 
 interface DeadlineInfoPopoverProps {
 	startedAt: Date;
@@ -36,21 +38,28 @@ export function DeadlineInfoPopover({
 
 	const warningIndicator =
 		status === "warning" ? (
-			<span className="tournament-bracket__deadline-indicator tournament-bracket__deadline-indicator__warning">
+			<span
+				className={clsx(
+					styles.deadlineIndicator,
+					styles.deadlineIndicatorWarning,
+				)}
+			>
 				!
 			</span>
 		) : status === "error" ? (
-			<span className="tournament-bracket__deadline-indicator tournament-bracket__deadline-indicator__error">
+			<span
+				className={clsx(
+					styles.deadlineIndicator,
+					styles.deadlineIndicatorError,
+				)}
+			>
 				!
 			</span>
 		) : null;
 
 	return (
-		<div className="tournament-bracket__deadline-popover">
-			<InfoPopover
-				tiny
-				className="tournament-bracket__deadline-popover__trigger"
-			>
+		<div className={styles.deadlinePopover}>
+			<InfoPopover tiny className={styles.deadlinePopoverTrigger}>
 				{t("tournament:match.deadline.explanation")}
 			</InfoPopover>
 			{warningIndicator}

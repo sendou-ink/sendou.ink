@@ -1,4 +1,4 @@
-.tournament-bracket__finalize {
+.finalize {
 	font-size: var(--fonts-sm);
 	margin-block-end: var(--s-4);
 	display: flex;
@@ -7,18 +7,18 @@
 	justify-content: center;
 }
 
-.tournament-bracket__start-bracket-alert {
+.startBracketAlert {
 	line-height: 1.4;
 }
 
-.tournament-bracket__mini-alert {
+.miniAlert {
 	background-color: var(--color-info-low);
 	font-size: var(--fonts-xxs);
 	border-radius: var(--rounded);
 	padding: var(--s-1) var(--s-2);
 }
 
-.tournament-bracket__infos {
+.infos {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -33,15 +33,15 @@
 	letter-spacing: 0.3px;
 }
 
-.tournament-bracket__infos__label {
+.infosLabel {
 	margin-block-end: 0;
 }
 
-.tournament-bracket__infos__value > button {
+.infosValue > button {
 	font-size: var(--fonts-xxs);
 }
 
-.tournament-bracket__locked-banner {
+.lockedBanner {
 	width: 100%;
 	height: 10rem;
 	background-color: var(--color-bg-higher);
@@ -54,11 +54,11 @@
 	padding-inline: var(--s-2);
 }
 
-.tournament-bracket__locked-banner__lonely {
+.lockedBannerLonely {
 	border-radius: var(--rounded);
 }
 
-.tournament-bracket__stage-banner {
+.stageBanner {
 	display: flex;
 	width: 100%;
 	height: 10rem;
@@ -74,7 +74,7 @@
 	position: relative;
 }
 
-.tournament-bracket__stage-banner__top-bar {
+.stageBannerTopBar {
 	display: flex;
 	justify-content: space-between;
 	padding: var(--s-2);
@@ -86,13 +86,13 @@
 	font-size: var(--fonts-xs);
 }
 
-.tournament-bracket__stage-banner__bottom-bar {
+.stageBannerBottomBar {
 	display: flex;
 	justify-content: flex-end;
 	padding: var(--s-2);
 }
 
-.tournament-bracket__stage-banner__undo-button {
+.stageBannerUndoButton {
 	border: 0;
 	background-color: var(--color-error);
 	color: var(--color-text);
@@ -104,21 +104,17 @@
 	bottom: 8px;
 }
 
-.tournament-bracket__stage-banner__end-set-button {
+.stageBannerEndSetButton {
 	right: 8px;
 	bottom: 8px;
 }
 
-.tournament-bracket__stage-banner:has(
-		.tournament-bracket__stage-banner__end-set-button
-	)
-	.tournament-bracket__stage-banner__undo-button:not(
-		.tournament-bracket__stage-banner__end-set-button
-	) {
+.stageBanner:has(.stageBannerEndSetButton)
+	.stageBannerUndoButton:not(.stageBannerEndSetButton) {
 	right: 72px;
 }
 
-.tournament-bracket__deadline-popover {
+.deadlinePopover {
 	position: absolute;
 	left: 8px;
 	bottom: 8px;
@@ -127,12 +123,12 @@
 	gap: var(--s-1);
 }
 
-.tournament-bracket__deadline-popover__trigger {
+.deadlinePopoverTrigger {
 	margin-block-start: 0;
 	background-color: var(--color-bg-higher) !important;
 }
 
-.tournament-bracket__deadline-indicator {
+.deadlineIndicator {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -143,56 +139,56 @@
 	font-size: var(--fonts-sm);
 }
 
-.tournament-bracket__deadline-indicator__warning {
+.deadlineIndicatorWarning {
 	background-color: var(--color-warning);
 	color: var(--color-text-inverse);
 }
 
-.tournament-bracket__deadline-indicator__error {
+.deadlineIndicatorError {
 	background-color: var(--color-error);
 	color: var(--color-text-inverse);
 }
 
-.tournament-bracket__stage-banner__top-bar__header {
+.stageBannerTopBarHeader {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	gap: var(--s-2);
 }
 
-.tournament-bracket__stage-banner__top-bar__map-text-big {
+.stageBannerTopBarMapTextBig {
 	display: none;
 }
 
 @media screen and (min-width: 480px) {
-	.tournament-bracket__stage-banner__top-bar {
+	.stageBannerTopBar {
 		font-size: initial;
 	}
 
-	.tournament-bracket__stage-banner__top-bar__map-text-small {
+	.stageBannerTopBarMapTextSmall {
 		display: none;
 	}
 
-	.tournament-bracket__stage-banner__top-bar__map-text-big {
+	.stageBannerTopBarMapTextBig {
 		display: initial;
 	}
 }
 
-.tournament-bracket__no-screen {
+.noScreen {
 	display: flex;
 	gap: var(--s-0-5);
 }
 
-.tournament-bracket__no-screen > svg {
+.noScreen > svg {
 	width: 24px;
 	fill: var(--color-success);
 }
 
-.tournament-bracket__no-screen__banned > svg {
+.noScreenBanned > svg {
 	fill: var(--color-error);
 }
 
-.tournament-bracket__during-match-actions {
+.duringMatchActions {
 	display: grid;
 	grid-template-areas:
 		"img"
@@ -201,27 +197,27 @@
 	grid-template-columns: 1fr;
 }
 
-.tournament-bracket__during-match-actions__actions {
+.duringMatchActionsActions {
 	display: flex;
 	justify-content: center;
 	color: var(--color-warning);
 	margin-block-start: var(--s-6);
 }
 
-.tournament-bracket__during-match-actions__amount-warning-paragraph {
+.duringMatchActionsAmountWarningParagraph {
 	display: flex;
 	align-items: center;
 	text-align: center;
 	font-size: var(--fonts-xs);
 }
 
-.tournament-bracket__during-match-actions__confirm-score-text {
+.duringMatchActionsConfirmScoreText {
 	font-size: var(--fonts-xs);
 	color: var(--color-text);
 	text-align: center;
 }
 
-.tournament-bracket__during-match-actions__rosters {
+.duringMatchActionsRosters {
 	display: flex;
 	width: 100%;
 	flex-wrap: wrap;
@@ -230,13 +226,13 @@
 	text-align: center;
 }
 
-.tournament-bracket__during-match-actions__radio-container {
+.duringMatchActionsRadioContainer {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
 
-.tournament-bracket__roster-buttons__container {
+.rosterButtonsContainer {
 	display: flex;
 	gap: var(--s-4);
 	align-items: center;
@@ -245,11 +241,11 @@
 	height: 30px;
 }
 
-.tournament-bracket__edit-roster-button {
+.editRosterButton {
 	font-style: italic;
 }
 
-.tournament-bracket__during-match-actions__team-players {
+.duringMatchActionsTeamPlayers {
 	display: flex;
 	width: 15rem;
 	flex-direction: column;
@@ -258,22 +254,22 @@
 	gap: var(--s-2);
 }
 
-.tournament-bracket__during-match-actions__checkbox-name {
+.duringMatchActionsCheckboxName {
 	display: flex;
 	align-items: center;
 	flex: 1;
 }
 
-.tournament-bracket__during-match-actions__checkbox-name:not(
-		.disabled-opaque
-	):not(.presentational):hover {
+.duringMatchActionsCheckboxName:not(.disabled-opaque):not(
+		.presentational
+	):hover {
 	border-radius: var(--rounded);
 	cursor: pointer;
 	outline: 2px solid var(--color-accent-low);
 	outline-offset: 2px;
 }
 
-.tournament-bracket__during-match-actions__checkbox {
+.duringMatchActionsCheckbox {
 	width: 40% !important;
 	height: 1.5rem !important;
 	appearance: none;
@@ -283,11 +279,11 @@
 	cursor: pointer;
 }
 
-.tournament-bracket__during-match-actions__checkbox:checked {
+.duringMatchActionsCheckbox:checked {
 	background-color: var(--color-accent);
 }
 
-.tournament-bracket__during-match-actions__checkbox::after {
+.duringMatchActionsCheckbox::after {
 	display: flex;
 	width: 100%;
 	height: 100%;
@@ -301,12 +297,12 @@
 	padding-block-end: 1px;
 }
 
-.tournament-bracket__during-match-actions__checkbox:checked::after {
+.duringMatchActionsCheckbox:checked::after {
 	color: var(--color-text-inverse);
 	content: "Playing";
 }
 
-.tournament-bracket__during-match-actions__player-name {
+.duringMatchActionsPlayerName {
 	display: flex;
 	width: 60%;
 	height: 1.5rem;
@@ -323,7 +319,7 @@
 	flex: 1;
 }
 
-.tournament-bracket__during-match-actions__player-name__inner {
+.duringMatchActionsPlayerNameInner {
 	white-space: nowrap;
 	overflow-x: hidden;
 	text-overflow: ellipsis;
@@ -331,17 +327,17 @@
 	max-width: 150px;
 }
 
-.tournament-bracket__during-match-actions__seed {
+.duringMatchActionsSeed {
 	font-size: var(--fonts-xxs);
 	color: var(--color-accent);
 }
 
-.tournament-bracket__during-match-actions__team-name {
+.duringMatchActionsTeamName {
 	color: var(--color-text);
 	font-weight: var(--bold);
 }
 
-.tournament-bracket__rosters {
+.rosters {
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--s-8);
@@ -350,25 +346,25 @@
 	flex-direction: column;
 }
 
-.tournament-bracket__rosters ul {
+.rosters ul {
 	padding: 0;
 	list-style: none;
 }
 
-.tournament-bracket__rosters__spaced-header {
+.rostersSpacedHeader {
 	min-height: 45px;
 	display: flex;
 	align-items: center;
 }
 
 @media screen and (min-width: 640px) {
-	.tournament-bracket__rosters {
+	.rosters {
 		justify-content: space-evenly;
 		flex-direction: row;
 	}
 }
 
-.tournament-bracket__mode-progress {
+.modeProgress {
 	display: block;
 	text-align: center;
 	overflow-x: auto;
@@ -376,13 +372,13 @@
 	margin-bottom: var(--s-1-5);
 }
 
-.tournament-bracket__mode-progress__inner {
+.modeProgressInner {
 	display: inline-flex;
 	gap: var(--s-4);
 	justify-content: flex-start;
 }
 
-.tournament-bracket__mode-progress__image {
+.modeProgressImage {
 	background-color: var(--color-bg-high);
 	border-radius: 100%;
 	padding: var(--s-2-5);
@@ -390,63 +386,63 @@
 	min-width: 40px;
 }
 
-.tournament-bracket__mode-progress__image > svg {
+.modeProgressImage > svg {
 	width: 20px;
 	height: 20px;
 }
 
-.tournament-bracket__mode-progress__image__notable {
+.modeProgressImageNotable {
 	background-color: var(--color-bg-higher);
 	border: none;
 	outline: 2px solid var(--color-bg-higher);
 }
 
-.tournament-bracket__mode-progress__image__team-one-win {
+.modeProgressImageTeamOneWin {
 	outline: 2px solid var(--color-accent);
 }
 
-.tournament-bracket__mode-progress__image__team-two-win {
+.modeProgressImageTeamTwoWin {
 	outline: 2px solid var(--color-accent);
 }
 
-.tournament-bracket__mode-progress__image__selected {
+.modeProgressImageSelected {
 	background-color: var(--color-bg-high);
 }
 
-.tournament-bracket__mode-progress__image__banned {
+.modeProgressImageBanned {
 	outline: 2px solid var(--color-error);
 	background-color: var(--color-bg-high);
 }
 
-.tournament-bracket__mode-progress__image__banned > img {
+.modeProgressImageBanned > img {
 	filter: grayscale(100%);
 }
 
-.tournament-bracket__mode-progress__image__banned__popover-trigger:focus-visible {
+.modeProgressImageBannedPopoverTrigger:focus-visible {
 	outline: none !important;
 }
 
-.tournament-bracket__team-one-dot {
+.teamOneDot {
 	border-radius: 100%;
 	background-color: var(--color-accent);
 	width: 8px;
 	height: 8px;
 }
 
-.tournament-bracket__team-two-dot {
+.teamTwoDot {
 	border-radius: 100%;
 	background-color: var(--color-accent);
 	width: 8px;
 	height: 8px;
 }
 
-.tournament-bracket__points-input {
+.pointsInput {
 	--input-width: 4.5rem;
 	padding: var(--s-3-5) var(--s-2) !important;
 	font-size: var(--fonts-sm);
 }
 
-.tournament-bracket__progress {
+.progress {
 	display: flex;
 	align-items: center;
 	background-color: var(--color-bg-higher);
@@ -457,17 +453,17 @@
 }
 
 @media screen and (min-width: 480px) {
-	.tournament-bracket__infos {
+	.infos {
 		flex-direction: row;
 	}
 }
 
-.tournament-bracket__bracket-nav {
+.bracketNav {
 	display: flex;
 	flex-wrap: wrap;
 }
 
-.tournament-bracket__bracket-nav__link {
+.bracketNavLink {
 	font-size: var(--fonts-xxs);
 	color: var(--color-text-high);
 	border-color: var(--color-bg-higher);
@@ -475,36 +471,34 @@
 	border-radius: 0;
 }
 
-.tournament-bracket__bracket-nav__link__big {
+.bracketNavLinkBig {
 	font-size: var(--fonts-lg);
 }
 
-.tournament-bracket__bracket-nav__link:active {
+.bracketNavLink:active {
 	transform: translateY(0px);
 }
 
-.tournament-bracket__bracket-nav__link:first-of-type {
+.bracketNavLink:first-of-type {
 	border-start-start-radius: var(--rounded);
 	border-end-start-radius: var(--rounded);
 }
 
-.tournament-bracket__bracket-nav__link:not(
-		.tournament-bracket__bracket-nav__link:first-of-type
-	) {
+.bracketNavLink:not(.bracketNavLink:first-of-type) {
 	margin-left: -2px;
 }
 
-.tournament-bracket__bracket-nav__link:last-of-type {
+.bracketNavLink:last-of-type {
 	border-start-end-radius: var(--rounded);
 	border-end-end-radius: var(--rounded);
 }
 
-.tournament-bracket__bracket-nav__link__selected {
+.bracketNavLinkSelected {
 	color: var(--color-text);
 	background-color: var(--color-bg-high);
 }
 
-.tournament-bracket__quick-action {
+.quickAction {
 	font-size: var(--fonts-xs);
 	color: var(--color-text);
 	background-color: var(--color-bg);
@@ -516,42 +510,42 @@
 	align-items: center;
 }
 
-.tournament-bracket__quick-action__spaced {
+.quickActionSpaced {
 	display: flex;
 	gap: var(--s-1-5);
 }
 
-.tournament-bracket__quick-action__very-spaced {
+.quickActionVerySpaced {
 	display: flex;
 	gap: var(--s-3);
 }
 
-.tournament-bracket__quick-action__checkmark {
+.quickActionCheckmark {
 	width: 1rem;
 	color: var(--color-success);
 }
 
-.tournament-bracket__bracket-nav__chevron {
+.bracketNavChevron {
 	margin-inline-start: var(--s-2);
 	font-size: var(--fonts-xxxs);
 	margin-block-end: -2px;
 }
 
-.tournament-bracket__button-row {
+.buttonRow {
 	display: none;
 }
 
 @media screen and (min-width: 600px) {
-	.tournament-bracket__menu {
+	.menu {
 		display: none;
 	}
 
-	.tournament-bracket__button-row {
+	.buttonRow {
 		display: inherit;
 	}
 }
 
-.tournament-bracket__compactify-button {
+.compactifyButton {
 	font-size: var(--fonts-xxs);
 	color: var(--color-text-high);
 	border-color: var(--color-bg-higher);
@@ -559,12 +553,12 @@
 	border-radius: var(--rounded);
 }
 
-.tournament-bracket__compactify-button svg {
+.compactifyButton svg {
 	min-width: 0.85rem;
 	max-width: 0.85rem;
 }
 
-.tournament-bracket__cast-info-container {
+.castInfoContainer {
 	display: flex;
 	gap: var(--s-2);
 	border-radius: var(--rounded);
@@ -572,7 +566,7 @@
 	width: max-content;
 }
 
-.tournament-bracket__cast-info-container__label {
+.castInfoContainerLabel {
 	padding: var(--s-2) var(--s-3-5);
 	text-transform: uppercase;
 	background-color: var(--color-bg-higher);
@@ -584,17 +578,17 @@
 	justify-content: center;
 }
 
-.tournament-bracket__cast-info-container__content {
+.castInfoContainerContent {
 	padding-block: var(--s-2);
 	display: flex;
 	align-items: center;
 }
 
-.tournament-bracket__stream-popover {
+.streamPopover {
 	width: 280px;
 }
 
-.finalize__badge-container {
+.finalizeBadgeContainer {
 	padding: var(--s-2);
 	background-color: black;
 	border-radius: var(--rounded);

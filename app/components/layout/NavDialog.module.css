@@ -1,0 +1,92 @@
+.dialog {
+	min-width: 100vw;
+	min-height: 100vh;
+	border-radius: 0 !important;
+	border: 0 !important;
+}
+
+.closeButton {
+	margin-inline-start: auto;
+	margin-block-end: var(--s-4);
+	margin-inline-end: var(--s-4);
+}
+
+.closeButton > svg {
+	width: 32px;
+}
+
+.itemsContainer {
+	display: flex;
+	margin: 0 auto;
+	gap: var(--s-4) var(--s-4);
+	font-size: 13px;
+	flex-wrap: wrap;
+	justify-content: center;
+	animation: smooth-appear 0.75s ease-out forwards;
+	margin-top: 27.5px;
+	opacity: 0.25;
+	max-width: 48rem;
+}
+
+@keyframes smooth-appear {
+	to {
+		margin-top: 0px;
+		opacity: 1;
+	}
+}
+
+.navItem {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	color: var(--color-text);
+	font-weight: bold;
+	gap: var(--s-1);
+	text-align: center;
+	width: 100px;
+}
+
+.logInButton {
+	display: grid;
+	width: 50px;
+	height: 50px;
+	border: none;
+	border-radius: 100%;
+	background-color: var(--color-bg-high);
+	color: var(--color-text);
+	place-items: center;
+	transition: all 0.2s ease-out;
+}
+
+.imageContainer {
+	display: grid;
+	width: 75px;
+	height: 75px;
+	border-radius: var(--rounded);
+	background-color: var(--color-bg-high);
+	color: var(--color-text);
+	place-items: center;
+	transition: all 0.2s ease-out;
+}
+
+.imageContainer.round {
+	width: 50px;
+	height: 50px;
+	border-radius: 100%;
+}
+
+.avatar {
+	width: 50px;
+	height: 50px;
+}
+
+.imageContainer:hover {
+	background-color: var(--color-bg-higher);
+}
+
+@media screen and (max-width: 640px) {
+	.dialog {
+		padding-block: var(--s-12) !important;
+		padding-inline: 0 !important;
+	}
+}

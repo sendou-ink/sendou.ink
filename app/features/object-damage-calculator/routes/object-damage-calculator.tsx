@@ -1,11 +1,16 @@
+import type { MetaFunction } from "@remix-run/node";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
 import clsx from "clsx";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Ability } from "~/components/Ability";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { Image, WeaponImage } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
+import { WeaponSelect } from "~/components/WeaponSelect";
+import type { DamageType } from "~/features/build-analyzer/analyzer-types";
+import { possibleApValues } from "~/features/build-analyzer/core/utils";
 import {
 	BIG_BUBBLER_ID,
 	BOOYAH_BOMB_ID,
@@ -19,6 +24,8 @@ import {
 	TRIPLE_SPLASHDOWN_ID,
 	WAVE_BREAKER_ID,
 } from "~/modules/in-game-lists/weapon-ids";
+import { roundToNDecimalPlaces } from "~/utils/number";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	mainWeaponImageUrl,
@@ -32,14 +39,7 @@ import {
 } from "~/utils/urls";
 import { useObjectDamage } from "../calculator-hooks";
 import type { DamageReceiver } from "../calculator-types";
-import "../calculator.css";
-import type { MetaFunction } from "@remix-run/node";
-import { SendouSwitch } from "~/components/elements/Switch";
-import { WeaponSelect } from "~/components/WeaponSelect";
-import type { DamageType } from "~/features/build-analyzer/analyzer-types";
-import { possibleApValues } from "~/features/build-analyzer/core/utils";
-import { roundToNDecimalPlaces } from "~/utils/number";
-import { metaTags } from "~/utils/remix";
+import styles from "./object-damage-calculator.module.css";
 
 export const CURRENT_PATCH = "10.1";
 
@@ -79,9 +79,9 @@ export default function ObjectDamagePage() {
 
 	return (
 		<Main className="stack lg">
-			<div className="object-damage__controls">
-				<div className="object-damage__selects">
-					<div className="object-damage__selects__weapon">
+			<div className={styles.controls}>
+				<div className={styles.selects}>
+					<div className={styles.selectsWeapon}>
 						<Label htmlFor="weapon">{t("analyzer:labels.weapon")}</Label>
 						<WeaponSelect
 							includeSubSpecial
@@ -148,11 +148,11 @@ export default function ObjectDamagePage() {
 			) : (
 				<div>{t("analyzer:noDmgData")}</div>
 			)}
-			<div className="object-damage__bottom-container">
+			<div className={styles.bottomContainer}>
 				<div className="text-lighter text-xs">
 					{t("analyzer:dmgHtdExplanation")}
 				</div>
-				<div className="object-damage__patch">
+				<div className={styles.patch}>
 					{t("analyzer:patch")} {CURRENT_PATCH}
 				</div>
 			</div>
@@ -226,14 +226,12 @@ const damageReceiverImages: Record<DamageReceiver, string> = {
 
 const damageReceiverAp: Partial<Record<DamageReceiver, JSX.Element>> = {
 	GreatBarrier_Barrier: (
-		<Ability ability="SPU" size="TINY" className="object-damage__ability" />
+		<Ability ability="SPU" size="TINY" className={styles.ability} />
 	),
 	GreatBarrier_WeakPoint: (
-		<Ability ability="SPU" size="TINY" className="object-damage__ability" />
+		<Ability ability="SPU" size="TINY" className={styles.ability} />
 	),
-	Wsb_Shield: (
-		<Ability ability="BRU" size="TINY" className="object-damage__ability" />
-	),
+	Wsb_Shield: <Ability ability="BRU" size="TINY" className={styles.ability} />,
 };
 
 function DamageReceiversGrid({
@@ -253,7 +251,7 @@ function DamageReceiversGrid({
 	return (
 		<div>
 			<div
-				className="object-damage__grid scrollbar"
+				className={`${styles.grid} scrollbar`}
 				style={{
 					gridTemplateColumns: gridTemplateColumnsValue(
 						damagesToReceivers[0]?.damages.length ?? 0,
@@ -261,13 +259,13 @@ function DamageReceiversGrid({
 				}}
 			>
 				<div
-					className="object-damage__table-header"
+					className={styles.tableHeader}
 					style={{ zIndex: "1", justifyContent: "center" }}
 				>
 					<div>
 						<Label htmlFor="ap">
 							{t("analyzer:labels.amountOf")}
-							<div className="object-damage__ap-label">
+							<div className={styles.apLabel}>
 								<Ability ability="BRU" size="TINY" />
 								<Ability ability="SPU" size="TINY" />
 							</div>
@@ -276,7 +274,7 @@ function DamageReceiversGrid({
 					<div>{children}</div>
 				</div>
 				{damagesToReceivers[0]?.damages.map((damage) => (
-					<div key={damage.id} className="object-damage__table-header">
+					<div key={damage.id} className={styles.tableHeader}>
 						{t(`weapons:${weapon.type}_${weapon.id}` as any)}
 						<div className="text-lighter stack horizontal sm justify-center items-center">
 							{weapon.type === "MAIN" ? (
@@ -285,7 +283,7 @@ function DamageReceiversGrid({
 									width={24}
 									height={24}
 									variant="build"
-									className="object-damage__weapon-image"
+									className={styles.weaponImage}
 								/>
 							) : weapon.type === "SUB" ? (
 								<Image
@@ -293,7 +291,7 @@ function DamageReceiversGrid({
 									path={subWeaponImageUrl(weapon.id)}
 									width={24}
 									height={24}
-									className="object-damage__weapon-image"
+									className={styles.weaponImage}
 								/>
 							) : (
 								<Image
@@ -301,14 +299,12 @@ function DamageReceiversGrid({
 									path={specialWeaponImageUrl(weapon.id)}
 									width={24}
 									height={24}
-									className="object-damage__weapon-image"
+									className={styles.weaponImage}
 								/>
 							)}
 						</div>
 						<div
-							className={clsx("object-damage__distance", {
-								invisible: !damage.distance,
-							})}
+							className={clsx(styles.distance, !damage.distance && "invisible")}
 						>
 							{t("analyzer:distanceInline", {
 								value: Array.isArray(damage.distance)
@@ -325,16 +321,16 @@ function DamageReceiversGrid({
 				{damagesToReceivers.map((damageToReceiver, i) => {
 					return (
 						<React.Fragment key={damageToReceiver.receiver}>
-							<div className="object-damage__table-header">
+							<div className={styles.tableHeader}>
 								<div>
 									<Label htmlFor="ap">
-										<div className="object-damage__ap-label">
+										<div className={styles.apLabel}>
 											{abilityPoints !== "0" &&
 												damageReceiverAp[damageToReceiver.receiver]}
 										</div>
 									</Label>
 									<Image
-										className="object-damage__receiver-image"
+										className={styles.receiverImage}
 										key={i}
 										alt=""
 										path={damageReceiverImages[damageToReceiver.receiver]}
@@ -342,7 +338,7 @@ function DamageReceiversGrid({
 										height={40}
 									/>
 								</div>
-								<div className="object-damage__hp">
+								<div className={styles.hp}>
 									<span data-testid={`hp-${damageToReceiver.receiver}`}>
 										{roundToNDecimalPlaces(damageToReceiver.hitPoints)}
 									</span>
@@ -351,10 +347,10 @@ function DamageReceiversGrid({
 							</div>
 							{damageToReceiver.damages.map((damage) => {
 								return (
-									<div key={damage.id} className="object-damage__table-card">
-										<div className="object-damage__table-card__results">
+									<div key={damage.id} className={styles.tableCard}>
+										<div className={styles.tableCardResults}>
 											<abbr
-												className="object-damage__abbr"
+												className={styles.abbr}
 												title={t("analyzer:stat.category.damage")}
 											>
 												{t("analyzer:damageShort")}
@@ -367,7 +363,7 @@ function DamageReceiversGrid({
 												{damage.value}
 											</div>
 											<abbr
-												className="object-damage__abbr"
+												className={styles.abbr}
 												title={t("analyzer:hitsToDestroyLong")}
 											>
 												{t("analyzer:hitsToDestroyShort")}
@@ -380,7 +376,7 @@ function DamageReceiversGrid({
 												{damage.hitsToDestroy}
 											</div>
 										</div>
-										<div className="object-damage__multiplier">
+										<div className={styles.multiplier}>
 											×{damage.multiplier}
 										</div>
 									</div>

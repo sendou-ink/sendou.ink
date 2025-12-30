@@ -4,6 +4,7 @@ import { Avatar } from "~/components/Avatar";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { tournamentTeamPage, userPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import styles from "../tournament-bracket.module.css";
 
 const INACTIVE_PLAYER_CSS =
 	"tournament__team-with-roster__member__inactive text-lighter-important";
@@ -39,17 +40,16 @@ export function MatchRosters({
 		: null;
 
 	return (
-		<div className="tournament-bracket__rosters">
+		<div className={styles.rosters}>
 			<div className="stack xxs">
 				<div className="stack xs horizontal items-center text-lighter">
-					<div className="tournament-bracket__team-one-dot" />
+					<div className={styles.teamOneDot} />
 					Team 1
 				</div>
 				<h2
 					className={clsx("text-sm", {
 						"text-lighter": !teamOne,
-						"tournament-bracket__rosters__spaced-header":
-							teamOneLogoSrc || teamTwoLogoSrc,
+						[styles.rostersSpacedHeader]: teamOneLogoSrc || teamTwoLogoSrc,
 					})}
 				>
 					{teamOne ? (
@@ -96,14 +96,13 @@ export function MatchRosters({
 			</div>
 			<div className="stack xxs">
 				<div className="stack xs horizontal items-center text-lighter">
-					<div className="tournament-bracket__team-two-dot" />
+					<div className={styles.teamTwoDot} />
 					Team 2
 				</div>
 				<h2
 					className={clsx("text-sm", {
 						"text-lighter": !teamTwo,
-						"tournament-bracket__rosters__spaced-header":
-							teamOneLogoSrc || teamTwoLogoSrc,
+						[styles.rostersSpacedHeader]: teamOneLogoSrc || teamTwoLogoSrc,
 					})}
 				>
 					{teamTwo ? (

@@ -18,7 +18,9 @@ import { tournamentMatchPage, tournamentStreamsPage } from "~/utils/urls";
 import type { Bracket } from "../../core/Bracket";
 import * as Deadline from "../../core/Deadline";
 import type { TournamentData } from "../../core/Tournament.server";
+import parentStyles from "../../tournament-bracket.module.css";
 import { matchEndedEarly } from "../../tournament-bracket-utils";
+import styles from "./bracket.module.css";
 
 interface MatchProps {
 	match: Unpacked<TournamentData["data"]["match"]>;
@@ -35,7 +37,7 @@ export function Match(props: MatchProps) {
 	const isBye = !props.match.opponent1 || !props.match.opponent2;
 
 	if (isBye) {
-		return <div className="bracket__match__bye" />;
+		return <div className={styles.matchBye} />;
 	}
 
 	return (
@@ -43,7 +45,7 @@ export function Match(props: MatchProps) {
 			<MatchHeader {...props} />
 			<MatchWrapper {...props}>
 				<MatchRow {...props} side={1} />
-				<div className="bracket__match__separator" />
+				<div className={styles.matchSeparator} />
 				<MatchRow {...props} side={2} />
 			</MatchWrapper>
 			{!props.hideMatchTimer ? (
@@ -89,15 +91,20 @@ function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 		tournament.ctx.castedMatchesInfo?.lockedMatches?.includes(match.id);
 
 	return (
-		<div className="bracket__match__header">
-			<div className="bracket__match__header__box">
+		<div className={styles.matchHeader}>
+			<div className={styles.matchHeaderBox}>
 				{prefix()}
 				{roundNumber}.{match.number}
 			</div>
 			{toBeCasted ? (
 				<SendouPopover
 					trigger={
-						<SendouButton className="bracket__match__header__box bracket__match__header__box__button">
+						<SendouButton
+							className={clsx(
+								styles.matchHeaderBox,
+								styles.matchHeaderBoxButton,
+							)}
+						>
 							🔒 CAST
 						</SendouButton>
 					}
@@ -109,7 +116,12 @@ function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 					placement="top"
 					popoverClassName="w-max"
 					trigger={
-						<SendouButton className="bracket__match__header__box bracket__match__header__box__button">
+						<SendouButton
+							className={clsx(
+								styles.matchHeaderBox,
+								styles.matchHeaderBoxButton,
+							)}
+						>
 							🔴 LIVE
 						</SendouButton>
 					}
@@ -131,7 +143,7 @@ function MatchWrapper({
 	if (!isPreview) {
 		return (
 			<Link
-				className="bracket__match"
+				className={styles.match}
 				to={tournamentMatchPage({
 					tournamentId: tournament.ctx.id,
 					matchId: match.id,
@@ -143,7 +155,7 @@ function MatchWrapper({
 		);
 	}
 
-	return <div className="bracket__match">{children}</div>;
+	return <div className={styles.match}>{children}</div>;
 }
 
 function MatchRow({
@@ -214,30 +226,30 @@ function MatchRow({
 			title={team?.members.map((m) => m.username).join(", ")}
 		>
 			<div
-				className={clsx("bracket__match__seed", {
+				className={clsx(styles.matchSeed, {
 					"text-lighter-important italic opaque": simulated,
-					bracket__match__seed__wide: isBigSeedNumber,
+					[styles.matchSeedWide]: isBigSeedNumber,
 				})}
 			>
 				{team?.seed}
 			</div>
 			{logoSrc ? <Avatar size="xxxs" url={logoSrc} className="mr-1" /> : null}
 			<div
-				className={clsx("bracket__match__team-name", {
+				className={clsx(styles.matchTeamName, {
 					"text-theme-secondary":
 						!simulated && ownTeam && ownTeam?.id === team?.id,
 					"text-lighter italic opaque": simulated,
-					"bracket__match__team-name__narrow":
+					[styles.matchTeamNameNarrow]:
 						// either but not both
 						(logoSrc || isBigSeedNumber) && !(logoSrc && isBigSeedNumber),
 					// both
-					"bracket__match__team-name__narrowest": logoSrc && isBigSeedNumber,
+					[styles.matchTeamNameNarrowest]: logoSrc && isBigSeedNumber,
 					invisible: !team,
 				})}
 			>
 				{team?.name ?? "???"}
 			</div>{" "}
-			<div className="bracket__match__score">{score()}</div>
+			<div className={styles.matchScore}>{score()}</div>
 		</div>
 	);
 }
@@ -253,7 +265,9 @@ function MatchStreams({ match }: Pick<MatchProps, "match">) {
 
 	if (!fetcher.data || !match.opponent1?.id || !match.opponent2?.id)
 		return (
-			<div className="text-lighter text-center tournament-bracket__stream-popover">
+			<div
+				className={clsx("text-lighter text-center", parentStyles.streamPopover)}
+			>
 				Loading streams...
 			</div>
 		);
@@ -274,7 +288,7 @@ function MatchStreams({ match }: Pick<MatchProps, "match">) {
 
 	if (streamsOfThisMatch.length === 0)
 		return (
-			<div className="tournament-bracket__stream-popover">
+			<div className={parentStyles.streamPopover}>
 				After all there seems to be no streams of this match. Check the{" "}
 				<Link to={tournamentStreamsPage(tournament.ctx.id)}>streams page</Link>{" "}
 				for all the available streams.
@@ -282,7 +296,9 @@ function MatchStreams({ match }: Pick<MatchProps, "match">) {
 		);
 
 	return (
-		<div className="stack md justify-center tournament-bracket__stream-popover">
+		<div
+			className={clsx("stack md justify-center", parentStyles.streamPopover)}
+		>
 			{streamsOfThisMatch.map((stream) => (
 				<TournamentStream
 					key={stream.twitchUserName}
@@ -344,11 +360,8 @@ function MatchTimer({ match, bracket }: Pick<MatchProps, "match" | "bracket">) {
 				: "var(--color-text)";
 
 	return (
-		<div className="bracket__match__timer">
-			<div
-				className="bracket__match__header__box"
-				style={{ color: statusColor }}
-			>
+		<div className={styles.matchTimer}>
+			<div className={styles.matchHeaderBox} style={{ color: statusColor }}>
 				{displayText}
 			</div>
 		</div>

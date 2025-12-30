@@ -6,7 +6,7 @@ import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, PLANNER_URL } from "~/utils/urls";
 
-import "../plans.css";
+import "../plans-global.css";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({

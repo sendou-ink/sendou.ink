@@ -7,6 +7,7 @@ import { useIsMounted } from "~/hooks/useIsMounted";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate, nullPaddedDatesOfMonth } from "~/utils/dates";
 import type { loader } from "../loaders/org.$slug.server";
+import styles from "../tournament-organization.module.css";
 
 interface EventCalendarProps {
 	month: number;
@@ -33,11 +34,11 @@ export function EventCalendar({
 	});
 
 	return (
-		<div className="org__calendar__container">
+		<div className={styles.calendarContainer}>
 			<MonthSelector month={month} year={year} />
-			<div className="org__calendar">
+			<div className={styles.calendar}>
 				{dayHeaders.map((day) => (
-					<div key={day} className="org__calendar__day-header">
+					<div key={day} className={styles.calendarDayHeader}>
 						{day}
 					</div>
 				))}
@@ -79,19 +80,19 @@ function EventCalendarCell({
 
 	return (
 		<div
-			className={clsx("org__calendar__day", {
-				org__calendar__day__previous: !date,
-				org__calendar__day__today:
+			className={clsx(styles.calendarDay, {
+				[styles.calendarDayPrevious]: !date,
+				[styles.calendarDayToday]:
 					isMounted &&
 					date?.getDate() === new Date().getDate() &&
 					date?.getMonth() === new Date().getMonth() &&
 					date?.getFullYear() === new Date().getFullYear(),
 			})}
 		>
-			<div className="org__calendar__day__date">{date?.getUTCDate()}</div>
+			<div className={styles.calendarDayDate}>{date?.getUTCDate()}</div>
 			{events.length === 1 ? (
 				<img
-					className="org__calendar__day__logo"
+					className={styles.calendarDayLogo}
 					src={events[0].logoUrl ?? fallbackLogoUrl}
 					width={32}
 					height={32}
@@ -99,7 +100,7 @@ function EventCalendarCell({
 				/>
 			) : null}
 			{events.length > 1 ? (
-				<div className="org__calendar__day__many-events">{events.length}</div>
+				<div className={styles.calendarDayManyEvents}>{events.length}</div>
 			) : null}
 		</div>
 	);
@@ -115,7 +116,7 @@ function MonthSelector({ month, year }: { month: number; year: number }) {
 	const { formatDate } = useTimeFormat();
 
 	return (
-		<div className="org__calendar__month-selector">
+		<div className={styles.calendarMonthSelector}>
 			<LinkButton
 				variant="minimal"
 				aria-label="Previous month"

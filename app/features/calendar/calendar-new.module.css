@@ -1,12 +1,12 @@
-.calendar-new__container {
+.container {
 	max-width: 38rem;
 }
 
-.calendar-new__select {
+.select {
 	max-width: 16rem;
 }
 
-.calendar-new__badges {
+.badges {
 	width: max-content;
 	padding: var(--s-2);
 	border-radius: var(--rounded);
@@ -15,15 +15,15 @@
 	font-weight: var(--semi-bold);
 }
 
-.calendar-new__day-label {
+.dayLabel {
 	margin: 0;
 }
 
-.calendar-new__range-input {
+.rangeInput {
 	width: 4.25rem;
 }
 
-.calendar-new__avatar-preview {
+.avatarPreview {
 	width: 124px;
 	height: 124px;
 	border-radius: 100%;

@@ -1,3 +1,85 @@
+.container {
+	width: 100%;
+	min-height: 100vh;
+	padding-top: 50px;
+}
+
+.header {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	justify-content: space-between;
+	border-bottom: 1.5px solid var(--color-border);
+	-webkit-backdrop-filter: var(--backdrop-filter);
+	backdrop-filter: var(--backdrop-filter);
+	background-color: transparent;
+	font-weight: bold;
+	padding-block: var(--s-2);
+	padding-inline: var(--s-4);
+	position: fixed;
+	top: 0;
+	z-index: 10;
+}
+
+.itemSize {
+	--item-size: var(--input-height-small);
+}
+
+.breadcrumbContainer {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.breadcrumb {
+	overflow: hidden;
+	max-width: 350px;
+	color: var(--color-text);
+	font-size: var(--fonts-xs);
+	font-weight: 600;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	border-radius: 9999px;
+	height: var(--item-size);
+	display: inline-flex;
+	align-items: center;
+
+	img {
+		height: 100%;
+	}
+
+	&:focus-visible {
+		outline: var(--input-focus-ring);
+		outline-offset: 1px;
+		border-radius: 9999px;
+	}
+}
+
+.breadcrumbImage {
+	min-width: var(--item-size);
+}
+
+.logo {
+	overflow: initial;
+	padding: 0 var(--s-1);
+}
+
+.logo:focus-visible {
+	outline: var(--input-focus-ring);
+	outline-offset: 1px;
+	border-radius: var(--rounded);
+}
+
+.breadcrumbSeparator {
+	font-size: 20px;
+	opacity: 0.4;
+	margin-inline-start: -1px;
+}
+
+.textMobileHidden {
+	display: inline;
+}
+
 .hamburger.fab {
 	display: grid;
 	position: fixed;
@@ -20,5 +102,22 @@
 @media screen and (min-width: 600px) {
 	.hamburger.fab {
 		display: none;
+	}
+}
+
+@media screen and (display-mode: standalone) {
+	.header {
+		align-items: flex-end;
+		padding-top: calc(var(--s-2) + env(safe-area-inset-top));
+	}
+}
+
+@media screen and (max-width: 640px) {
+	.textMobileHidden {
+		display: none;
+	}
+
+	.breadcrumbContainer > a {
+		max-width: 90px;
 	}
 }

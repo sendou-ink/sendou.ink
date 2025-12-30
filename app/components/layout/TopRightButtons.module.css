@@ -1,0 +1,33 @@
+.container {
+	display: flex;
+	gap: var(--s-3);
+	justify-self: flex-end;
+}
+
+.button {
+	display: grid;
+	place-items: center;
+	background-color: var(--color-bg);
+	width: var(--item-size);
+	height: var(--item-size);
+	padding: 0.25rem;
+	border: 2px solid var(--color-border);
+	border-radius: 50%;
+	color: inherit;
+	cursor: pointer;
+}
+
+.button:focus-visible {
+	outline: 2px solid var(--color-text-accent);
+	outline-offset: 1px;
+}
+
+.buttonIcon {
+	width: 1.15rem;
+}
+
+@media screen and (max-width: 640px) {
+	.container > .userItem {
+		display: none;
+	}
+}

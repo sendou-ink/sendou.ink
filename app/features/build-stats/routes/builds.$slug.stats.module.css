@@ -1,10 +1,10 @@
-.build-stats__ability-row {
+.abilityRow {
 	display: flex;
 	align-items: center;
 	gap: var(--s-3);
 }
 
-.build-stats__bars {
+.bars {
 	font-size: var(--fonts-sm);
 	font-weight: var(--semi-bold);
 	display: grid;
@@ -14,11 +14,7 @@
 	row-gap: var(--s-1);
 }
 
-.build-stats__bar {
+.bar {
 	background-color: var(--color-accent);
 	height: 100%;
-}
-
-.build-stats__value-text {
-	width: 100px;
 }

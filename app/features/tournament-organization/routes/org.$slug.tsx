@@ -44,10 +44,9 @@ import { action } from "../actions/org.$slug.server";
 import { EventCalendar } from "../components/EventCalendar";
 import { SocialLinksList } from "../components/SocialLinksList";
 import { loader } from "../loaders/org.$slug.server";
+import styles from "../tournament-organization.module.css";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "../tournament-organization-constants";
 export { action, loader };
-
-import "../tournament-organization.css";
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.data) return [];
@@ -262,7 +261,7 @@ function AllTournamentsView() {
 	const data = useLoaderData<typeof loader>();
 
 	return (
-		<div className="org__events-container">
+		<div className={styles.eventsContainer}>
 			<EventCalendar
 				month={data.month}
 				year={data.year}
@@ -439,7 +438,7 @@ function EventsList({
 }
 
 function SectionDivider({ children }: { children: React.ReactNode }) {
-	return <div className="org__section-divider">{children}</div>;
+	return <div className={styles.sectionDivider}>{children}</div>;
 }
 
 function EventInfo({
@@ -459,14 +458,14 @@ function EventInfo({
 						? tournamentPage(event.tournamentId)
 						: calendarEventPage(event.eventId)
 				}
-				className="org__event-info"
+				className={styles.eventInfo}
 			>
 				{event.logoUrl ? (
 					<img src={event.logoUrl} alt={event.name} width={38} height={38} />
 				) : null}
 				<div>
-					<div className="org__event-info__name">{event.name}</div>
-					<time className="org__event-info__time" suppressHydrationWarning>
+					<div>{event.name}</div>
+					<time className={styles.eventInfoTime} suppressHydrationWarning>
 						{formatDateTime(databaseTimestampToDate(event.startTime), {
 							day: "numeric",
 							month: "numeric",
@@ -562,7 +561,7 @@ function EventLeaderboard({
 		<div className="stack md">
 			{ownEntry ? (
 				<>
-					<ol className="org__leaderboard-list" start={ownEntry.placement}>
+					<ol className={styles.leaderboardList} start={ownEntry.placement}>
 						<li>
 							<EventLeaderboardRow entry={ownEntry.entry} />
 						</li>
@@ -570,7 +569,7 @@ function EventLeaderboard({
 					<Divider />
 				</>
 			) : null}
-			<ol className="org__leaderboard-list">
+			<ol className={styles.leaderboardList}>
 				{leaderboard.map((entry) => (
 					<li key={entry.user.discordId}>
 						<EventLeaderboardRow entry={entry} />
@@ -589,7 +588,7 @@ function EventLeaderboardRow({
 	>[number];
 }) {
 	return (
-		<div className="org__leaderboard-list__row">
+		<div className={styles.leaderboardListRow}>
 			<Link
 				to={userPage(entry.user)}
 				className="stack horizontal sm items-center font-semi-bold text-main-forced"

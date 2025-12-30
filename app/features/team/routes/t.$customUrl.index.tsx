@@ -11,19 +11,19 @@ import { UsersIcon } from "~/components/icons/Users";
 import { Placement } from "~/components/Placement";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
+import type { TeamLoaderData } from "~/features/team/loaders/t.$customUrl.server";
 import { useHasRole } from "~/modules/permissions/hooks";
+import invariant from "~/utils/invariant";
 import { editTeamPage, manageTeamRosterPage, userPage } from "~/utils/urls";
+import { action } from "../actions/t.$customUrl.index.server";
+import type * as TeamRepository from "../TeamRepository.server";
+import styles from "../team.module.css";
 import {
 	isTeamManager,
 	isTeamMember,
 	isTeamOwner,
 	resolveNewOwner,
 } from "../team-utils";
-import "../team.css";
-import type { TeamLoaderData } from "~/features/team/loaders/t.$customUrl.server";
-import invariant from "~/utils/invariant";
-import { action } from "../actions/t.$customUrl.index.server";
-import type * as TeamRepository from "../TeamRepository.server";
 export { action };
 
 export default function TeamIndexPage() {
@@ -70,7 +70,7 @@ function ActionButtons() {
 	);
 
 	return (
-		<div className="team__action-buttons">
+		<div className={styles.actionButtons}>
 			{isTeamMember({ user, team }) && !isMainTeam ? (
 				<ChangeMainTeamButton />
 			) : null}
@@ -150,9 +150,9 @@ function ResultsBanner({
 	results: NonNullable<TeamLoaderData["results"]>;
 }) {
 	return (
-		<Link className="team__results" to="results">
+		<Link className={styles.results} to="results">
 			<div>View {results.count} results</div>
-			<ul className="team__results__placements">
+			<ul className={styles.resultsPlacements}>
 				{results.placements.map(({ placement, count }) => {
 					return (
 						<li key={placement}>
@@ -176,23 +176,23 @@ function MemberRow({
 
 	return (
 		<div
-			className="team__member"
+			className={styles.member}
 			data-testid={member.isOwner ? `member-owner-${member.id}` : undefined}
 		>
 			{member.role ? (
 				<span
-					className="team__member__role"
+					className={styles.memberRole}
 					data-testid={`member-row-role-${number}`}
 				>
 					{t(`team:roles.${member.role}`)}
 				</span>
 			) : null}
-			<div className="team__member__section">
+			<div className={styles.memberSection}>
 				<Link
 					to={userPage(member)}
-					className="team__member__avatar-name-container"
+					className={styles.memberAvatarNameContainer}
 				>
-					<div className="team__member__avatar">
+					<div className={styles.memberAvatar}>
 						<Avatar user={member} size="md" />
 					</div>
 					{member.username}
@@ -221,11 +221,11 @@ function MobileMemberCard({
 	const { t } = useTranslation(["team"]);
 
 	return (
-		<div className="team__member-card__container">
-			<div className="team__member-card">
+		<div className={styles.memberCardContainer}>
+			<div className={styles.memberCard}>
 				<Link to={userPage(member)} className="stack items-center">
 					<Avatar user={member} size="md" />
-					<div className="team__member-card__name">{member.username}</div>
+					<div className={styles.memberCardName}>{member.username}</div>
 				</Link>
 				{member.weapons.length > 0 ? (
 					<div className="stack horizontal md">
@@ -242,7 +242,7 @@ function MobileMemberCard({
 				) : null}
 			</div>
 			{member.role ? (
-				<span className="team__member__role__mobile">
+				<span className={styles.memberRoleMobile}>
 					{t(`team:roles.${member.role}`)}
 				</span>
 			) : null}

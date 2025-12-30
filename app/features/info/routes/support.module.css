@@ -1,4 +1,4 @@
-.support__table {
+.table {
 	display: grid;
 	grid-template-columns: 1fr 1fr 1fr 1fr;
 	place-items: center;
@@ -6,12 +6,12 @@
 	row-gap: var(--s-2);
 }
 
-.support__checkmark {
+.checkmark {
 	color: var(--color-success);
 	width: 25px;
 }
 
-.support__popover-trigger {
+.popoverTrigger {
 	display: inline;
 	height: 1rem;
 	padding: 0;

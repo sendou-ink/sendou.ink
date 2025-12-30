@@ -31,6 +31,7 @@ import {
 } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
 import { action } from "../actions/calendar.$id.server";
+import styles from "../calendar-event.module.css";
 import {
 	canDeleteCalendarEvent,
 	canEditCalendarEvent,
@@ -39,8 +40,6 @@ import {
 import { Tags } from "../components/Tags";
 import { loader } from "../loaders/calendar.$id.server";
 export { loader, action };
-
-import "~/styles/calendar-event.css";
 
 export const meta: MetaFunction = (args) => {
 	const data = args.data as SerializeFrom<typeof loader>;
@@ -88,11 +87,11 @@ export default function CalendarEventPage() {
 	return (
 		<Main className="stack lg">
 			<section className="stack sm">
-				<div className="event__times">
+				<div className={styles.times}>
 					{data.event.startTimes.map((startTime, i) => (
 						<React.Fragment key={startTime}>
 							<span
-								className={clsx("event__day", {
+								className={clsx(styles.day, {
 									hidden: data.event.startTimes.length === 1,
 								})}
 							>
@@ -202,9 +201,9 @@ function Results() {
 	);
 
 	return (
-		<Section title={t("calendar:results")} className="event__results-section">
+		<Section title={t("calendar:results")} className={styles.resultsSection}>
 			{data.event.participantCount && (
-				<div className="event__results-participant-count">
+				<div className={styles.resultsParticipantCount}>
 					{isTeamResults
 						? t("calendar:participatedCount", {
 								count: data.event.participantCount,
@@ -230,7 +229,7 @@ function Results() {
 							</td>
 							<td>{result.teamName}</td>
 							<td>
-								<ul className="event__results-players">
+								<ul className={styles.resultsPlayers}>
 									{result.players.map((player) => {
 										return (
 											<li
@@ -272,10 +271,10 @@ function MapPoolInfo() {
 
 	return (
 		<Section title={t("calendar:forms.mapPool")}>
-			<div className="event__map-pool-section">
+			<div className={styles.mapPoolSection}>
 				<MapPoolStages mapPool={mapPool} />
 				<LinkButton
-					className="event__create-map-list-link"
+					className={styles.createMapListLink}
 					to={mapsPageWithMapPool(mapPool)}
 					variant="outlined"
 					size="small"
@@ -295,7 +294,7 @@ function Description() {
 	return (
 		<Section title={t("forms.description")}>
 			<div className="stack sm">
-				<div className="event__author">
+				<div className={styles.author}>
 					<Avatar user={data.event} size="xs" />
 					{data.event.username}
 				</div>

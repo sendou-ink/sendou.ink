@@ -26,7 +26,7 @@ import {
 } from "../loaders/u.$identifier.server";
 export { loader };
 
-import "~/styles/u.css";
+import "~/features/user-page/user-page.module.css";
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.data) return [];

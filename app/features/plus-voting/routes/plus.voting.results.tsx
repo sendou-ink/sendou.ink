@@ -5,9 +5,8 @@ import { metaTags } from "~/utils/remix";
 import { PLUS_SERVER_DISCORD_URL, userPage } from "~/utils/urls";
 
 import { loader } from "../loaders/plus.voting.results.server";
+import styles from "../plus-voting-results.module.css";
 export { loader };
-
-import "~/styles/plus-history.css";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -30,14 +29,14 @@ export default function PlusVotingResultsPage() {
 			</h2>
 			{data.ownScores && data.ownScores.length > 0 ? (
 				<>
-					<ul className="plus-history__own-scores stack sm">
+					<ul className={clsx(styles.ownScores, "stack sm")}>
 						{data.ownScores.map((result) => (
 							<li key={result.tier}>
 								You{" "}
 								{result.passedVoting ? (
-									<span className="plus-history__success">passed</span>
+									<span className={styles.success}>passed</span>
 								) : (
-									<span className="plus-history__fail">didn&apos;t pass</span>
+									<span className={styles.fail}>didn&apos;t pass</span>
 								)}{" "}
 								the +{result.tier} voting
 								{typeof result.score === "number"
@@ -81,25 +80,25 @@ function Results({
 			<div className="stack lg">
 				{results.map((tiersResults) => (
 					<div className="stack md" key={tiersResults.tier}>
-						<h3 className="plus-history__tier-header">
+						<h3 className={styles.tierHeader}>
 							<span>+{tiersResults.tier}</span>
 						</h3>
 						{(["passed", "failed"] as const).map((status) => (
-							<div key={status} className="plus-history__passed-info-container">
-								<h4 className="plus-history__passed-header">
+							<div key={status} className={styles.passedInfoContainer}>
+								<h4 className={styles.passedHeader}>
 									{status === "passed" ? "Passed" : "Didn't pass"} (
 									{tiersResults[status].length})
 								</h4>
 								{tiersResults[status].map((user) => (
 									<Link
 										to={userPage(user)}
-										className={clsx("plus-history__user-status", {
-											failed: status === "failed",
+										className={clsx(styles.userStatus, {
+											[styles.userStatusFailed]: status === "failed",
 										})}
 										key={user.id}
 									>
 										{user.wasSuggested ? (
-											<span className="plus-history__suggestion-s">S</span>
+											<span className={styles.suggestionS}>S</span>
 										) : null}
 										{user.username}
 									</Link>

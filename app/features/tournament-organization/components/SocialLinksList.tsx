@@ -3,6 +3,7 @@ import { BskyIcon } from "~/components/icons/Bsky";
 import { LinkIcon } from "~/components/icons/Link";
 import { TwitchIcon } from "~/components/icons/Twitch";
 import { YouTubeIcon } from "~/components/icons/YouTube";
+import styles from "../tournament-organization.module.css";
 
 export function SocialLinksList({ links }: { links: string[] }) {
 	return (
@@ -18,12 +19,17 @@ function SocialLink({ url }: { url: string }) {
 	const type = urlToLinkType(url);
 
 	return (
-		<a href={url} target="_blank" rel="noreferrer" className="org__social-link">
+		<a
+			href={url}
+			target="_blank"
+			rel="noreferrer"
+			className={styles.socialLink}
+		>
 			<div
-				className={clsx("org__social-link__icon-container", {
-					youtube: type === "youtube",
-					twitch: type === "twitch",
-					bsky: type === "bsky",
+				className={clsx(styles.socialLinkIconContainer, {
+					[styles.socialLinkYoutube]: type === "youtube",
+					[styles.socialLinkTwitch]: type === "twitch",
+					[styles.socialLinkBsky]: type === "bsky",
 				})}
 			>
 				<SocialLinkIcon url={url} />

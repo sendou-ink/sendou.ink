@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { differenceInMinutes } from "date-fns";
 import * as React from "react";
 import type { TournamentRoundMaps } from "~/db/tables";
@@ -8,6 +9,7 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import type { Unpacked } from "~/utils/types";
 import * as Deadline from "../../core/Deadline";
 import type { TournamentData } from "../../core/Tournament.server";
+import styles from "./bracket.module.css";
 
 export function RoundHeader({
 	roundId,
@@ -39,9 +41,9 @@ export function RoundHeader({
 
 	return (
 		<div>
-			<div className="elim-bracket__round-header">{name}</div>
+			<div className={styles.elimRoundHeader}>{name}</div>
 			{showInfos && bestOf && !leagueRoundStartDate ? (
-				<div className="elim-bracket__round-header__infos">
+				<div className={styles.elimRoundHeaderInfos}>
 					<div>
 						{countPrefix}
 						{bestOf}
@@ -58,7 +60,7 @@ export function RoundHeader({
 			) : leagueRoundStartDate ? (
 				<LeagueRoundStartDate date={leagueRoundStartDate} />
 			) : (
-				<div className="elim-bracket__round-header__infos invisible">
+				<div className={clsx(styles.elimRoundHeaderInfos, "invisible")}>
 					Hidden
 				</div>
 			)}
@@ -70,7 +72,7 @@ function LeagueRoundStartDate({ date }: { date: Date }) {
 	const { formatDate } = useTimeFormat();
 
 	return (
-		<div className="elim-bracket__round-header__infos">
+		<div className={styles.elimRoundHeaderInfos}>
 			<div>
 				{formatDate(date, {
 					month: "short",

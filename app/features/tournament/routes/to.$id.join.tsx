@@ -11,6 +11,7 @@ import { assertUnreachable } from "~/utils/types";
 import { userEditProfilePage } from "~/utils/urls";
 import { action } from "../actions/to.$id.join.server";
 import { loader } from "../loaders/to.$id.join.server";
+import styles from "../tournament.module.css";
 import { validateCanJoinTeam } from "../tournament-utils";
 import { useTournament } from "./to.$id";
 export { action, loader };
@@ -80,7 +81,7 @@ export default function JoinTeamPage() {
 					</div>
 				) : null}
 			</div>
-			<Form method="post" className="tournament__invite-container">
+			<Form method="post" className={styles.inviteContainer}>
 				{validationStatus === "VALID" ? (
 					<div className="stack md items-center">
 						<SubmitButton size="big" isDisabled={!user?.friendCode}>

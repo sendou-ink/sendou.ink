@@ -11,6 +11,7 @@ import { tournamentTeamPage, userPage } from "~/utils/urls";
 import { useTournament } from "../../tournament/routes/to.$id";
 import type { TournamentDataTeam } from "../core/Tournament.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import styles from "../tournament-bracket.module.css";
 import { tournamentTeamToActiveRosterUserIds } from "../tournament-bracket-utils";
 import type { Result } from "./StartedMatch";
 
@@ -53,7 +54,7 @@ export function TeamRosterInputs({
 			: _points;
 
 	return (
-		<div className="tournament-bracket__during-match-actions__rosters">
+		<div className={styles.duringMatchActionsRosters}>
 			{teams.map((team, teamI) => {
 				const winnerRadioChecked = result
 					? result.winnerTeamId === team.id
@@ -253,27 +254,19 @@ function TeamRosterHeader({
 	return (
 		<>
 			<div className="text-xs text-lighter font-semi-bold stack horizontal xs items-center justify-center">
-				<div
-					className={
-						idx === 0
-							? "tournament-bracket__team-one-dot"
-							: "tournament-bracket__team-two-dot"
-					}
-				/>
+				<div className={idx === 0 ? styles.teamOneDot : styles.teamTwoDot} />
 				Team {idx + 1}
 			</div>
 			<h4>
 				{team.seed ? (
-					<span className="tournament-bracket__during-match-actions__seed">
-						#{team.seed}
-					</span>
+					<span className={styles.duringMatchActionsSeed}>#{team.seed}</span>
 				) : null}{" "}
 				<Link
 					to={tournamentTeamPage({
 						tournamentId,
 						tournamentTeamId: team.id,
 					})}
-					className="tournament-bracket__during-match-actions__team-name"
+					className={styles.duringMatchActionsTeamName}
 				>
 					{team.name}
 				</Link>
@@ -316,12 +309,9 @@ function WinnerRadio({
 
 	return (
 		<div
-			className={clsx(
-				"tournament-bracket__during-match-actions__radio-container",
-				{
-					invisible,
-				},
-			)}
+			className={clsx(styles.duringMatchActionsRadioContainer, {
+				invisible,
+			})}
 		>
 			<input
 				type="radio"
@@ -364,7 +354,7 @@ function PointInput({
 	return (
 		<div className="stack horizontal sm items-center">
 			<input
-				className="tournament-bracket__points-input"
+				className={styles.pointsInput}
 				onChange={(e) => onChange(Number(e.target.value))}
 				type="number"
 				min={0}
@@ -423,24 +413,21 @@ function TeamRosterInputsCheckboxes({
 	};
 
 	return (
-		<div className="tournament-bracket__during-match-actions__team-players">
+		<div className={styles.duringMatchActionsTeamPlayers}>
 			{members.map((member, i) => {
 				return (
 					<div className="stack horizontal xs" key={member.id}>
 						<div
 							className={clsx(
-								"tournament-bracket__during-match-actions__checkbox-name",
+								styles.duringMatchActionsCheckboxName,
 								{ "disabled-opaque": mode() === "DISABLED" },
 								{ presentational: mode() === "PRESENTATIONAL" },
 							)}
 						>
 							<input
-								className={clsx(
-									"tournament-bracket__during-match-actions__checkbox",
-									{
-										opaque: presentational,
-									},
-								)}
+								className={clsx(styles.duringMatchActionsCheckbox, {
+									opaque: presentational,
+								})}
 								type="checkbox"
 								id={`${member.id}-${id}`}
 								name="playerName"
@@ -451,10 +438,10 @@ function TeamRosterInputsCheckboxes({
 								data-testid={`player-checkbox-${i}`}
 							/>{" "}
 							<label
-								className="tournament-bracket__during-match-actions__player-name"
+								className={styles.duringMatchActionsPlayerName}
 								htmlFor={`${member.id}-${id}`}
 							>
-								<span className="tournament-bracket__during-match-actions__player-name__inner">
+								<span className={styles.duringMatchActionsPlayerNameInner}>
 									{member.inGameName
 										? inGameNameWithoutDiscriminator(member.inGameName)
 										: member.username}
@@ -490,11 +477,11 @@ function RosterFormWithButtons({
 
 	if (!editingRoster) {
 		return (
-			<div className="tournament-bracket__roster-buttons__container">
+			<div className={styles.rosterButtonsContainer}>
 				<SendouButton
 					size="small"
 					onPress={() => setEditingRoster(true)}
-					className="tournament-bracket__edit-roster-button"
+					className={styles.editRosterButton}
 					variant="minimal"
 					data-testid="edit-active-roster-button"
 				>
@@ -505,10 +492,7 @@ function RosterFormWithButtons({
 	}
 
 	return (
-		<fetcher.Form
-			method="post"
-			className="tournament-bracket__roster-buttons__container"
-		>
+		<fetcher.Form method="post" className={styles.rosterButtonsContainer}>
 			<input
 				type="hidden"
 				name="roster"

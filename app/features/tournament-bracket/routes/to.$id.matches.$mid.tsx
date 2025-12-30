@@ -28,7 +28,8 @@ import {
 } from "../tournament-bracket-utils";
 export { action, loader };
 
-import "../tournament-bracket.css";
+import tournamentStyles from "../../tournament/tournament.module.css";
+import styles from "../tournament-bracket.module.css";
 
 export default function TournamentMatchPage() {
 	const user = useUser();
@@ -172,12 +173,12 @@ function BeforeMatchChat() {
 	}, [data.match.chatCode]);
 
 	return (
-		<div className="tournament__action-section mt-6">
+		<div className={clsx(tournamentStyles.actionSection, "mt-6")}>
 			<ConnectedChat
 				rooms={rooms}
 				users={chatUsers}
-				className="tournament__chat-container"
-				messagesContainerClassName="tournament__chat-messages-container"
+				className={tournamentStyles.chatContainer}
+				messagesContainerClassName={tournamentStyles.chatMessagesContainer}
 				missingUserName="???"
 			/>
 		</div>
@@ -386,8 +387,8 @@ function EndedEarlyMessage() {
 	const winnerTeam = winnerTeamId ? tournament.teamById(winnerTeamId) : null;
 
 	return (
-		<div className="tournament-bracket__during-match-actions">
-			<div className="tournament-bracket__locked-banner tournament-bracket__locked-banner__lonely">
+		<div className={styles.duringMatchActions}>
+			<div className={clsx(styles.lockedBanner, styles.lockedBannerLonely)}>
 				<div className="stack sm items-center">
 					<div className="text-lg text-center font-bold">Match ended early</div>
 					{winnerTeam ? (
@@ -402,7 +403,7 @@ function EndedEarlyMessage() {
 					<Form method="post" className="contents">
 						<SubmitButton
 							_action="REOPEN_MATCH"
-							className="tournament-bracket__stage-banner__undo-button"
+							className={styles.stageBannerUndoButton}
 							testId="reopen-match-button"
 						>
 							Reopen match

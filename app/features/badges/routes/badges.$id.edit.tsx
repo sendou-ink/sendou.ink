@@ -8,6 +8,7 @@ import { TrashIcon } from "~/components/icons/Trash";
 import type { Tables } from "~/db/tables";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { action } from "../actions/badges.$id.edit.server";
+import styles from "../badges.module.css";
 import type { BadgeDetailsLoaderData } from "../loaders/badges.$id.server";
 import type { BadgeDetailsContext } from "./badges.$id";
 export { action };
@@ -54,7 +55,7 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 	return (
 		<div className="stack md mx-auto">
 			<div className="stack sm">
-				<h3 className="badges-edit__small-header">Managers</h3>
+				<h3 className={styles.editSmallHeader}>Managers</h3>
 				<UserSearch
 					key={managers.map((m) => m.id).join("-")}
 					label="Add new manager"
@@ -69,7 +70,7 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 						setManagers([...managers, user]);
 					}}
 				/>
-				<ul className="badges-edit__users-list">
+				<ul className={styles.editUsersList}>
 					{managers.map((manager) => (
 						<li key={manager.id}>
 							{manager.username}
@@ -121,7 +122,7 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 	return (
 		<div className="stack md mx-auto">
 			<div className="stack sm">
-				<h3 className="badges-edit__small-header">Owners</h3>
+				<h3 className={styles.editSmallHeader}>Owners</h3>
 				<UserSearch
 					label="Add new owner"
 					className="text-center mx-auto"
@@ -143,12 +144,12 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 					}}
 				/>
 			</div>
-			<ul className="badges-edit__users-list">
+			<ul className={styles.editUsersList}>
 				{owners.map((owner) => (
 					<li key={owner.id}>
 						{owner.username}
 						<input
-							className="badges-edit__number-input"
+							className={styles.editNumberInput}
 							type="number"
 							value={owner.count}
 							min={0}
@@ -167,7 +168,7 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 				))}
 			</ul>
 			{ownerDifferences.length > 0 ? (
-				<ul className="badges-edit__differences">
+				<ul className={styles.editDifferences}>
 					{ownerDifferences.map((o) => (
 						<li key={o.id}>
 							{o.type === "added" ? (

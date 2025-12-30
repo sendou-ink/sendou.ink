@@ -26,6 +26,7 @@ import {
 } from "~/utils/urls";
 import { loader } from "../loaders/u.$identifier.index.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import styles from "../user-page.module.css";
 export { loader };
 
 export const handle: SendouRouteHandle = {
@@ -39,11 +40,11 @@ export default function UserInfoPage() {
 	const layoutData = parentRoute.data as UserPageLoaderData;
 
 	return (
-		<div className="u__container">
-			<div className="u__avatar-container">
-				<Avatar user={layoutData.user} size="lg" className="u__avatar" />
+		<div className={styles.container}>
+			<div className={styles.avatarContainer}>
+				<Avatar user={layoutData.user} size="lg" className={styles.avatar} />
 				<div>
-					<h2 className="u__name">
+					<h2 className={styles.name}>
 						<div>{layoutData.user.username}</div>
 						<div>
 							{data.user.country ? (
@@ -53,7 +54,7 @@ export default function UserInfoPage() {
 					</h2>
 					<TeamInfo />
 				</div>
-				<div className="u__socials">
+				<div className={styles.socials}>
 					{data.user.twitch ? (
 						<SocialLink type="twitch" identifier={data.user.twitch} />
 					) : null}
@@ -87,7 +88,7 @@ function TeamInfo() {
 		<div className="stack horizontal sm">
 			<Link
 				to={teamPage(data.user.team.customUrl)}
-				className="u__team"
+				className={styles.team}
 				data-testid="main-team-link"
 			>
 				{data.user.team.avatarUrl ? (
@@ -145,7 +146,7 @@ function SecondaryTeamsPopover() {
 					>
 						<Link
 							to={teamPage(team.customUrl)}
-							className="u__team text-main-forced"
+							className={clsx(styles.team, "text-main-forced")}
 						>
 							{team.avatarUrl ? (
 								<img
@@ -199,11 +200,11 @@ export function SocialLink({
 
 	return (
 		<a
-			className={clsx("u__social-link", {
-				youtube: type === "youtube",
-				twitch: type === "twitch",
-				battlefy: type === "battlefy",
-				bsky: type === "bsky",
+			className={clsx(styles.socialLink, {
+				[styles.socialLinkYoutube]: type === "youtube",
+				[styles.socialLinkTwitch]: type === "twitch",
+				[styles.socialLinkBattlefy]: type === "battlefy",
+				[styles.socialLinkBsky]: type === "bsky",
 			})}
 			href={href()}
 		>
@@ -251,30 +252,30 @@ function ExtraInfos() {
 	}
 
 	return (
-		<div className="u__extra-infos">
-			<div className="u__extra-info">#{data.user.id}</div>
+		<div className={styles.extraInfos}>
+			<div className={styles.extraInfo}>#{data.user.id}</div>
 			{data.user.discordUniqueName && (
-				<div className="u__extra-info">
-					<span className="u__extra-info__heading">
+				<div className={styles.extraInfo}>
+					<span className={styles.extraInfoHeading}>
 						<DiscordIcon />
 					</span>{" "}
 					{data.user.discordUniqueName}
 				</div>
 			)}
 			{data.user.inGameName && (
-				<div className="u__extra-info">
-					<span className="u__extra-info__heading">{t("user:ign.short")}</span>{" "}
+				<div className={styles.extraInfo}>
+					<span className={styles.extraInfoHeading}>{t("user:ign.short")}</span>{" "}
 					{data.user.inGameName}
 				</div>
 			)}
 			{typeof data.user.stickSens === "number" && (
-				<div className="u__extra-info">
-					<span className="u__extra-info__heading">{t("user:sens")}</span>{" "}
+				<div className={styles.extraInfo}>
+					<span className={styles.extraInfoHeading}>{t("user:sens")}</span>{" "}
 					{[motionSensText, stickSensText].filter(Boolean).join(" / ")}
 				</div>
 			)}
 			{data.user.plusTier && (
-				<div className="u__extra-info">
+				<div className={styles.extraInfo}>
 					<Image path={navIconUrl("plus")} width={20} height={20} alt="" />{" "}
 					{data.user.plusTier}
 				</div>
@@ -292,7 +293,7 @@ function WeaponPool() {
 		<div className="stack horizontal sm justify-center">
 			{data.user.weapons.map((weapon, i) => {
 				return (
-					<div key={weapon.weaponSplId} className="u__weapon">
+					<div key={weapon.weaponSplId} className={styles.weapon}>
 						<WeaponImage
 							testId={`${weapon.weaponSplId}-${i + 1}`}
 							weaponSplId={weapon.weaponSplId}
@@ -315,7 +316,7 @@ function TopPlacements() {
 	return (
 		<Link
 			to={topSearchPlayerPage(data.user.topPlacements[0].playerId)}
-			className="u__placements"
+			className={styles.placements}
 			data-testid="placements-box"
 		>
 			{modesShort.map((mode) => {
@@ -326,7 +327,7 @@ function TopPlacements() {
 				if (!placement) return null;
 
 				return (
-					<div key={mode} className="u__placements__mode">
+					<div key={mode} className={styles.placementsMode}>
 						<Image path={modeImageUrl(mode)} alt="" width={24} height={24} />
 						<div>
 							{placement.rank} / {placement.power}

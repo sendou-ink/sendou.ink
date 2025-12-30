@@ -18,6 +18,7 @@ import {
 	useNavigation,
 	useSearchParams,
 } from "@remix-run/react";
+import clsx from "clsx";
 import generalI18next from "i18next";
 import NProgress from "nprogress";
 import * as React from "react";
@@ -58,9 +59,7 @@ import "~/styles/common.css";
 import "~/styles/elements.css";
 import "~/styles/utils.css";
 import "~/styles/flags.css";
-import "~/styles/layout.css";
 import "nprogress/nprogress.css";
-import clsx from "clsx";
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	if (isRevalidation(args)) return true;

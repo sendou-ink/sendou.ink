@@ -19,8 +19,6 @@ import { PlacementsTable } from "../components/Placements";
 import { loader } from "../loaders/xsearch.player.$id.server";
 export { loader, action };
 
-import "../top-search.css";
-
 export const handle: SendouRouteHandle = {
 	breadcrumb: ({ match }) => {
 		const data = match.data as SerializeFrom<typeof loader> | undefined;

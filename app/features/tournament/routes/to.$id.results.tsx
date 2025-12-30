@@ -19,6 +19,7 @@ import {
 	tournamentTeamPage,
 } from "~/utils/urls";
 import * as Standings from "../core/Standings";
+import styles from "../tournament.module.css";
 import { useTournament } from "./to.$id";
 
 export default function TournamentResultsPage() {
@@ -135,7 +136,7 @@ function ResultsTable({ standings }: { standings: Standing[] }) {
 										tournamentId: tournament.ctx.id,
 										tournamentTeamId: standing.team.id,
 									})}
-									className="tournament__standings__team-name"
+									className={styles.standingsTeamName}
 									data-testid="result-team-name"
 								>
 									{teamLogoSrc ? <Avatar size="xs" url={teamLogoSrc} /> : null}{" "}
@@ -190,7 +191,7 @@ function MatchHistoryRow({ teamId }: { teamId: number }) {
 				return (
 					<React.Fragment key={match.id}>
 						{bracketChanged ? (
-							<div className="tournament__standings__divider" />
+							<div className={styles.standingsDivider} />
 						) : null}
 						<MatchResultSquare result={match.result} matchId={match.id}>
 							{match.vsSeed}
@@ -219,9 +220,9 @@ function MatchResultSquare({
 				matchId,
 				tournamentId: tournament.ctx.id,
 			})}
-			className={clsx("tournament__standings__match-result-square", {
-				"tournament__standings__match-result-square--win": result === "win",
-				"tournament__standings__match-result-square--loss": result === "loss",
+			className={clsx(styles.standingsMatchResultSquare, {
+				[styles.standingsMatchResultSquareWin]: result === "win",
+				[styles.standingsMatchResultSquareLoss]: result === "loss",
 			})}
 		>
 			{children}

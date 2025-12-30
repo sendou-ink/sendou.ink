@@ -37,11 +37,13 @@ import {
 	specialWeaponImageUrl,
 	stageImageUrl,
 } from "~/utils/urls";
+import tournamentStyles from "../../tournament/tournament.module.css";
 import type { Bracket } from "../core/Bracket";
 import * as Deadline from "../core/Deadline";
 import * as PickBan from "../core/PickBan";
 import type { TournamentDataTeam } from "../core/Tournament.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import styles from "../tournament-bracket.module.css";
 import {
 	groupNumberToLetters,
 	mapCountPlayedInSetWithCertainty,
@@ -168,7 +170,7 @@ export function StartedMatch({
 	];
 
 	return (
-		<div className="tournament-bracket__during-match-actions">
+		<div className={styles.duringMatchActions}>
 			<FancyStageBanner
 				stage={currentStageWithMode}
 				infos={roundInfos}
@@ -190,10 +192,10 @@ export function StartedMatch({
 								name="position"
 								value={currentPosition - 1}
 							/>
-							<div className="tournament-bracket__stage-banner__bottom-bar">
+							<div className={styles.stageBannerBottomBar}>
 								<SubmitButton
 									_action="UNDO_REPORT_SCORE"
-									className="tournament-bracket__stage-banner__undo-button"
+									className={styles.stageBannerUndoButton}
 									testId="undo-score-button"
 								>
 									{t("tournament:match.action.undoLastScore")}
@@ -205,10 +207,10 @@ export function StartedMatch({
 					tournament.matchCanBeReopened(data.match.id) &&
 					presentational && (
 						<Form method="post">
-							<div className="tournament-bracket__stage-banner__bottom-bar">
+							<div className={styles.stageBannerBottomBar}>
 								<SubmitButton
 									_action="REOPEN_MATCH"
-									className="tournament-bracket__stage-banner__undo-button"
+									className={styles.stageBannerUndoButton}
 									testId="reopen-match-button"
 								>
 									{t("tournament:match.action.reopenMatch")}
@@ -354,14 +356,14 @@ function FancyStageBanner({
 	return (
 		<>
 			{inBanPhase ? (
-				<div className="tournament-bracket__locked-banner">
+				<div className={styles.lockedBanner}>
 					<div className="stack sm items-center">
 						<div className="text-lg text-center font-bold">Banning phase</div>
 						<div>Waiting for {banPickingTeam()?.name}</div>
 					</div>
 				</div>
 			) : !stage ? (
-				<div className="tournament-bracket__locked-banner">
+				<div className={styles.lockedBanner}>
 					<div className="stack sm items-center">
 						<div className="text-lg text-center font-bold">Counterpick</div>
 						<div>Waiting for {banPickingTeam()?.name}</div>
@@ -369,7 +371,7 @@ function FancyStageBanner({
 					</div>
 				</div>
 			) : matchIsLocked ? (
-				<div className="tournament-bracket__locked-banner">
+				<div className={styles.lockedBanner}>
 					<div className="stack sm items-center">
 						<div className="text-lg text-center font-bold">
 							Match locked to be casted
@@ -378,7 +380,7 @@ function FancyStageBanner({
 					</div>
 				</div>
 			) : waitingForLeagueRoundToStart ? (
-				<div className="tournament-bracket__locked-banner">
+				<div className={styles.lockedBanner}>
 					<div className="stack sm items-center">
 						<div className="text-lg text-center font-bold">
 							Waiting for league round to start
@@ -394,7 +396,7 @@ function FancyStageBanner({
 					</div>
 				</div>
 			) : waitingForPreviousMatch ? (
-				<div className="tournament-bracket__locked-banner">
+				<div className={styles.lockedBanner}>
 					<div className="stack sm items-center">
 						<div className="text-lg text-center font-bold">
 							Previous match ongoing
@@ -405,7 +407,7 @@ function FancyStageBanner({
 					</div>
 				</div>
 			) : waitingForActiveRosterSelectionFor ? (
-				<div className="tournament-bracket__locked-banner">
+				<div className={styles.lockedBanner}>
 					<div className="stack sm items-center">
 						<div
 							className="text-lg text-center font-bold"
@@ -432,25 +434,20 @@ function FancyStageBanner({
 				</div>
 			) : (
 				<div
-					className={clsx("tournament-bracket__stage-banner", {
+					className={clsx(styles.stageBanner, {
 						rounded: !infos,
 					})}
 					style={style}
 					data-testid="stage-banner"
 				>
-					<div className="tournament-bracket__stage-banner__top-bar">
-						<h4 className="tournament-bracket__stage-banner__top-bar__header">
-							<Image
-								className="tournament-bracket__stage-banner__top-bar__mode-image"
-								path={modeImageUrl(stage.mode)}
-								alt=""
-								width={24}
-							/>
-							<span className="tournament-bracket__stage-banner__top-bar__map-text-small">
+					<div className={styles.stageBannerTopBar}>
+						<h4 className={styles.stageBannerTopBarHeader}>
+							<Image path={modeImageUrl(stage.mode)} alt="" width={24} />
+							<span className={styles.stageBannerTopBarMapTextSmall}>
 								{t(`game-misc:MODE_SHORT_${stage.mode}`)}{" "}
 								{t(`game-misc:STAGE_${stage.stageId}`)}
 							</span>
-							<span className="tournament-bracket__stage-banner__top-bar__map-text-big">
+							<span className={styles.stageBannerTopBarMapTextBig}>
 								{t(`game-misc:MODE_LONG_${stage.mode}`)} on{" "}
 								{t(`game-misc:STAGE_${stage.stageId}`)}
 							</span>
@@ -485,7 +482,7 @@ function FancyStageBanner({
 				/>
 			) : null}
 			{infos && (
-				<div className="tournament-bracket__infos">
+				<div className={styles.infos}>
 					{infos.filter(Boolean).map((info, i) => (
 						<div key={i}>{info}</div>
 					))}
@@ -535,8 +532,8 @@ function ModeProgressIndicator({
 
 	// TODO: this should be button when we click on it
 	return (
-		<div className="tournament-bracket__mode-progress">
-			<div className="tournament-bracket__mode-progress__inner">
+		<div className={styles.modeProgress}>
+			<div className={styles.modeProgressInner}>
 				{nullFilledArray(
 					Math.max(data.mapList?.length ?? 0, data.match.roundMaps?.count ?? 0),
 				).map((_, i) => {
@@ -554,7 +551,7 @@ function ModeProgressIndicator({
 
 					if (!map?.mode) {
 						return (
-							<div key={i} className="tournament-bracket__mode-progress__image">
+							<div key={i} className={styles.modeProgressImage}>
 								<PickIcon />
 							</div>
 						);
@@ -572,10 +569,13 @@ function ModeProgressIndicator({
 									<SendouButton
 										variant="minimal"
 										size="small"
-										className="tournament-bracket__mode-progress__image__banned__popover-trigger"
+										className={styles.modeProgressImageBannedPopoverTrigger}
 									>
 										<Image
-											containerClassName="tournament-bracket__mode-progress__image tournament-bracket__mode-progress__image__banned"
+											containerClassName={clsx(
+												styles.modeProgressImage,
+												styles.modeProgressImageBanned,
+											)}
 											path={modeImageUrl(map.mode)}
 											height={20}
 											width={20}
@@ -597,24 +597,21 @@ function ModeProgressIndicator({
 
 					return (
 						<Image
-							containerClassName={clsx(
-								"tournament-bracket__mode-progress__image",
-								{
-									"tournament-bracket__mode-progress__image__notable":
-										adjustedI <= maxIndexThatWillBePlayedForSure,
-									"tournament-bracket__mode-progress__image__team-one-win":
-										data.results[adjustedI] &&
-										data.results[adjustedI].winnerTeamId ===
-											data.match.opponentOne?.id,
-									"tournament-bracket__mode-progress__image__team-two-win":
-										data.results[adjustedI] &&
-										data.results[adjustedI].winnerTeamId ===
-											data.match.opponentTwo?.id,
-									"tournament-bracket__mode-progress__image__selected":
-										adjustedI === selectedResultIndex,
-									"cursor-pointer": Boolean(setSelectedResultIndex),
-								},
-							)}
+							containerClassName={clsx(styles.modeProgressImage, {
+								[styles.modeProgressImageNotable]:
+									adjustedI <= maxIndexThatWillBePlayedForSure,
+								[styles.modeProgressImageTeamOneWin]:
+									data.results[adjustedI] &&
+									data.results[adjustedI].winnerTeamId ===
+										data.match.opponentOne?.id,
+								[styles.modeProgressImageTeamTwoWin]:
+									data.results[adjustedI] &&
+									data.results[adjustedI].winnerTeamId ===
+										data.match.opponentTwo?.id,
+								[styles.modeProgressImageSelected]:
+									adjustedI === selectedResultIndex,
+								"cursor-pointer": Boolean(setSelectedResultIndex),
+							})}
 							key={i}
 							path={modeImageUrl(map.mode)}
 							height={20}
@@ -766,8 +763,11 @@ function StartedMatchTabs({
 					<Chat
 						rooms={rooms}
 						users={chatUsers}
-						className="tournament__chat-container"
-						messagesContainerClassName="tournament__chat-messages-container pt-0"
+						className={tournamentStyles.chatContainer}
+						messagesContainerClassName={clsx(
+							tournamentStyles.chatMessagesContainer,
+							"pt-0",
+						)}
 						chat={chat}
 						onMount={onChatMount}
 						onUnmount={onChatUnmount}
@@ -822,9 +822,9 @@ function ActionSectionWrapper({
 			}
 		: undefined;
 	return (
-		<section className="tournament__action-section" style={style}>
+		<section className={tournamentStyles.actionSection} style={style}>
 			<div
-				className={clsx("tournament__action-section__content", {
+				className={clsx({
 					"justify-center": rest["justify-center"],
 				})}
 			>
@@ -839,8 +839,8 @@ function ScreenBanIcons({ banned }: { banned: boolean }) {
 
 	return (
 		<div
-			className={clsx("tournament-bracket__no-screen", {
-				"tournament-bracket__no-screen__banned": banned,
+			className={clsx(styles.noScreen, {
+				[styles.noScreenBanned]: banned,
 			})}
 			data-testid={`screen-${banned ? "banned" : "allowed"}`}
 		>
@@ -871,7 +871,10 @@ function EndSetPopover({
 			trigger={
 				<SendouButton
 					variant="minimal"
-					className="tournament-bracket__stage-banner__undo-button tournament-bracket__stage-banner__end-set-button"
+					className={clsx(
+						styles.stageBannerUndoButton,
+						styles.stageBannerEndSetButton,
+					)}
 				>
 					{t("tournament:match.action.endSet")}
 				</SendouButton>

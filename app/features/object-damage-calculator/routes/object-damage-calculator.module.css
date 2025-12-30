@@ -1,30 +1,30 @@
-.object-damage__controls {
+.controls {
 	display: flex;
 	align-items: flex-start;
 	justify-content: space-between;
 }
 
-.object-damage__selects {
+.selects {
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--s-5);
 }
 
-.object-damage__selects__weapon {
+.selectsWeapon {
 	width: 16rem;
 }
 
-.object-damage__ability {
+.ability {
 	position: absolute;
 }
 
-.object-damage__ap-label {
+.apLabel {
 	display: flex;
 	justify-content: center;
 	gap: var(--s-1-5);
 }
 
-.object-damage__grid {
+.grid {
 	column-gap: var(--s-2);
 	display: grid;
 	max-height: 60vh;
@@ -34,17 +34,17 @@
 }
 
 @media screen and (min-width: 431px) {
-	.object-damage__grid {
+	.grid {
 		max-height: 70vh;
 	}
 }
 
-.object-damage__hp {
+.hp {
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
 }
 
-.object-damage__table-header {
+.tableHeader {
 	align-items: center;
 	background-color: var(--color-bg-higher);
 	border-radius: var(--rounded);
@@ -65,23 +65,23 @@
 	width: 100%;
 }
 
-.object-damage__weapon-image {
+.weaponImage {
 	min-width: 24px;
 }
 
-.object-damage__distance {
+.distance {
 	color: var(--color-text-high);
 	font-size: var(--fonts-xxs);
 	margin-block-start: var(--s-0-5);
 }
 
-.object-damage__receiver-image {
+.receiverImage {
 	padding: var(--s-2);
 	border-radius: var(--rounded);
 	background-color: var(--color-bg);
 }
 
-.object-damage__table-card {
+.tableCard {
 	display: grid;
 	width: 100%;
 	height: 100%;
@@ -93,20 +93,20 @@
 	place-items: center;
 }
 
-.object-damage__table-card__results {
+.tableCardResults {
 	display: grid;
 	column-gap: var(--s-2);
 	grid-template-columns: 1fr 1fr;
 	padding-inline: var(--s-2);
 }
 
-.object-damage__abbr {
+.abbr {
 	color: var(--color-text-high);
 	font-weight: var(--bold);
 	text-decoration: none;
 }
 
-.object-damage__multiplier {
+.multiplier {
 	color: var(--color-text-accent);
 	font-size: var(--fonts-xxs);
 	font-weight: var(--bold);
@@ -114,14 +114,14 @@
 	margin-block-start: var(--s-2);
 }
 
-.object-damage__bottom-container {
+.bottomContainer {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
 }
 
-.object-damage__patch {
+.patch {
 	border-radius: var(--rounded);
 	background-color: var(--color-accent-low);
 	color: var(--color-accent-high);
