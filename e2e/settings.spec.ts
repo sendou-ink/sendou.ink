@@ -1,5 +1,4 @@
-import test, { expect } from "@playwright/test";
-import { impersonate, navigate, seed } from "~/utils/playwright";
+import { expect, impersonate, navigate, seed, test } from "~/utils/playwright";
 import { SETTINGS_PAGE } from "~/utils/urls";
 
 test.describe("Settings", () => {

@@ -1,10 +1,17 @@
+import fs from "node:fs";
+import path from "node:path";
 import type { ActionFunction } from "react-router";
 import { z } from "zod";
-import { seed } from "~/db/seed";
+import { sql } from "~/db/sql";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { SEED_VARIATIONS } from "~/features/api-private/constants";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
+import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
+import { cache } from "~/utils/cache.server";
+import { logger } from "~/utils/logger";
 import { parseRequestPayload } from "~/utils/remix.server";
+
+const E2E_SEEDS_DIR = "e2e/seeds";
 
 const seedSchema = z.object({
 	variation: z.enum(SEED_VARIATIONS).nullish(),
@@ -24,9 +31,98 @@ export const action: ActionFunction = async ({ request }) => {
 		schema: seedSchema,
 	});
 
-	await seed(variation);
+	const variationName = variation ?? "DEFAULT";
+	const preSeededDbPath = path.join(
+		E2E_SEEDS_DIR,
+		`db-seed-${variationName}.sqlite3`,
+	);
 
+	if (!fs.existsSync(preSeededDbPath)) {
+		// Fall back to slow seed if pre-seeded db doesn't exist
+		logger.warn(
+			`Pre-seeded database not found for variation "${variationName}", falling back to seeding via code.`,
+		);
+		const { seed } = await import("~/db/seed");
+		await seed(variation);
+	} else {
+		restoreFromPreSeeded(preSeededDbPath);
+		adjustSeedDatesToCurrent(variationName);
+	}
+
+	clearAllTournamentDataCache();
+	cache.clear();
 	await refreshSendouQInstance();
 
 	return Response.json(null);
 };
+
+const REG_OPEN_TOURNAMENT_IDS = [1, 3];
+
+function adjustSeedDatesToCurrent(variation: SeedVariation) {
+	const halfAnHourFromNow = Math.floor((Date.now() + 1000 * 60 * 30) / 1000);
+	const oneHourAgo = Math.floor((Date.now() - 1000 * 60 * 60) / 1000);
+	const now = Math.floor(Date.now() / 1000);
+
+	const tournamentEventIds = sql
+		.prepare(
+			`SELECT id, tournamentId FROM "CalendarEvent" WHERE tournamentId IS NOT NULL`,
+		)
+		.all() as Array<{ id: number; tournamentId: number }>;
+
+	for (const { id, tournamentId } of tournamentEventIds) {
+		const isRegOpen =
+			variation === "REG_OPEN" &&
+			REG_OPEN_TOURNAMENT_IDS.includes(tournamentId);
+
+		sql
+			.prepare(`UPDATE "CalendarEventDate" SET startTime = ? WHERE eventId = ?`)
+			.run(isRegOpen ? halfAnHourFromNow : oneHourAgo, id);
+	}
+
+	sql
+		.prepare(
+			`UPDATE "Group" SET latestActionAt = ?, createdAt = ? WHERE status != 'INACTIVE'`,
+		)
+		.run(now, now);
+
+	sql.prepare(`UPDATE "GroupLike" SET createdAt = ?`).run(now);
+}
+
+function restoreFromPreSeeded(sourcePath: string) {
+	sql.exec(`ATTACH DATABASE '${sourcePath}' AS source`);
+
+	try {
+		const tables = sql
+			.prepare(
+				"SELECT name FROM source.sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+			)
+			.all() as Array<{ name: string }>;
+
+		sql.exec("PRAGMA foreign_keys = OFF");
+
+		for (const { name } of tables) {
+			sql.exec(`DELETE FROM main."${name}"`);
+
+			// Get non-generated columns for this table (table_xinfo includes hidden column info)
+			const columns = sql
+				.prepare(`PRAGMA main.table_xinfo("${name}")`)
+				.all() as Array<{ name: string; hidden: number }>;
+
+			// hidden = 2 or 3 means virtual/stored generated column
+			const nonGeneratedCols = columns
+				.filter((c) => c.hidden === 0)
+				.map((c) => c.name);
+
+			if (nonGeneratedCols.length > 0) {
+				const colList = nonGeneratedCols.map((c) => `"${c}"`).join(", ");
+				sql.exec(
+					`INSERT INTO main."${name}" (${colList}) SELECT ${colList} FROM source."${name}"`,
+				);
+			}
+		}
+
+		sql.exec("PRAGMA foreign_keys = ON");
+	} finally {
+		sql.exec("DETACH DATABASE source");
+	}
+}

@@ -1,17 +1,14 @@
-import { expect, test } from "@playwright/test";
-// import { NZAP_TEST_ID } from "~/db/seed/constants";
-// import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { StageId } from "~/modules/in-game-lists/types";
-// import invariant from "~/utils/invariant";
 import {
+	expect,
 	impersonate,
 	isNotVisible,
 	navigate,
 	seed,
-	// selectUser,
 	submit,
+	test,
 } from "~/utils/playwright";
 import { tournamentBracketsPage, tournamentPage } from "~/utils/urls";
 
