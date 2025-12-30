@@ -11,6 +11,7 @@ notes.md
 
 db*.sqlite3*
 !db-test.sqlite3
+!e2e/seeds/*.sqlite3
 dump
 
 .DS_Store
@@ -23,6 +24,5 @@ dump
 /test-results/
 /playwright-report/
 /playwright/.cache/
-/e2e/seeds/
 
 notepad.txt
