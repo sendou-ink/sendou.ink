@@ -276,63 +276,67 @@ export async function seasonResultsByUserId({
 		.orderBy("Skill.id", "desc")
 		.execute();
 
-	return rows.map((row) => {
-		if (row.groupMatch) {
-			const skillDiff = row.groupMatch?.memento?.users[userId]?.skillDifference;
+	return rows
+		.map((row) => {
+			if (row.groupMatch) {
+				const skillDiff =
+					row.groupMatch?.memento?.users[userId]?.skillDifference;
 
-			const chooseMostPopularWeapon = (userId: number) => {
-				const weaponSplIds = row
-					.groupMatch!.maps.flatMap((map) => map.weapons)
-					.filter((w) => w.userId === userId)
-					.map((w) => w.weaponSplId);
+				const chooseMostPopularWeapon = (userId: number) => {
+					const weaponSplIds = row
+						.groupMatch!.maps.flatMap((map) => map.weapons)
+						.filter((w) => w.userId === userId)
+						.map((w) => w.weaponSplId);
 
-				return mostPopularArrayElement(weaponSplIds);
-			};
+					return mostPopularArrayElement(weaponSplIds);
+				};
 
-			return {
-				type: "GROUP_MATCH" as const,
-				...R.omit(row, ["groupMatch", "tournamentResult"]),
-				// older skills don't have createdAt, so we use groupMatch's createdAt as fallback
-				createdAt: row.createdAt ?? row.groupMatch.createdAt,
-				groupMatch: {
-					...R.omit(row.groupMatch, ["createdAt", "memento", "maps"]),
-					// note there is no corresponding "censoring logic" for tournament result
-					// because for those the sp diff is not inserted in the first place
-					// if it should not be shown to the user
-					spDiff: skillDiff?.calculated ? skillDiff.spDiff : null,
-					groupAlphaMembers: row.groupMatch.groupAlphaMembers.map((m) => ({
-						...m,
-						weaponSplId: chooseMostPopularWeapon(m.id),
-					})),
-					groupBravoMembers: row.groupMatch.groupBravoMembers.map((m) => ({
-						...m,
-						weaponSplId: chooseMostPopularWeapon(m.id),
-					})),
-					score: row.groupMatch.maps.reduce(
-						(acc, cur) => [
-							acc[0] +
-								(cur.winnerGroupId === row.groupMatch!.alphaGroupId ? 1 : 0),
-							acc[1] +
-								(cur.winnerGroupId === row.groupMatch!.bravoGroupId ? 1 : 0),
-						],
-						[0, 0],
-					),
-				},
-			};
-		}
+				return {
+					type: "GROUP_MATCH" as const,
+					...R.omit(row, ["groupMatch", "tournamentResult"]),
+					// older skills don't have createdAt, so we use groupMatch's createdAt as fallback
+					createdAt: row.createdAt ?? row.groupMatch.createdAt,
+					groupMatch: {
+						...R.omit(row.groupMatch, ["createdAt", "memento", "maps"]),
+						// note there is no corresponding "censoring logic" for tournament result
+						// because for those the sp diff is not inserted in the first place
+						// if it should not be shown to the user
+						spDiff: skillDiff?.calculated ? skillDiff.spDiff : null,
+						groupAlphaMembers: row.groupMatch.groupAlphaMembers.map((m) => ({
+							...m,
+							weaponSplId: chooseMostPopularWeapon(m.id),
+						})),
+						groupBravoMembers: row.groupMatch.groupBravoMembers.map((m) => ({
+							...m,
+							weaponSplId: chooseMostPopularWeapon(m.id),
+						})),
+						score: row.groupMatch.maps.reduce(
+							(acc, cur) => [
+								acc[0] +
+									(cur.winnerGroupId === row.groupMatch!.alphaGroupId ? 1 : 0),
+								acc[1] +
+									(cur.winnerGroupId === row.groupMatch!.bravoGroupId ? 1 : 0),
+							],
+							[0, 0],
+						),
+					},
+				};
+			}
 
-		if (row.tournamentResult) {
-			return {
-				type: "TOURNAMENT_RESULT" as const,
-				...R.omit(row, ["groupMatch", "tournamentResult"]),
-				// older skills don't have createdAt, so we use tournament's start time as a fallback
-				createdAt: row.createdAt ?? row.tournamentResult.tournamentStartTime,
-				tournamentResult: row.tournamentResult,
-			};
-		}
+			if (row.tournamentResult) {
+				return {
+					type: "TOURNAMENT_RESULT" as const,
+					...R.omit(row, ["groupMatch", "tournamentResult"]),
+					// older skills don't have createdAt, so we use tournament's start time as a fallback
+					createdAt: row.createdAt ?? row.tournamentResult.tournamentStartTime,
+					tournamentResult: row.tournamentResult,
+				};
+			}
 
-		throw new Error("Row does not contain groupMatch or tournamentResult");
-	});
+			// Skills from dropped teams without tournament results - skip these
+			return null;
+		})
+		.filter((result) => result !== null);
 }
 
 export async function seasonCanceledMatchesByUserId({

@@ -385,6 +385,18 @@ function EndedEarlyMessage() {
 
 	const winnerTeam = winnerTeamId ? tournament.teamById(winnerTeamId) : null;
 
+	const opponentOneTeam = data.match.opponentOne?.id
+		? tournament.teamById(data.match.opponentOne.id)
+		: null;
+	const opponentTwoTeam = data.match.opponentTwo?.id
+		? tournament.teamById(data.match.opponentTwo.id)
+		: null;
+	const droppedTeam = opponentOneTeam?.droppedOut
+		? opponentOneTeam
+		: opponentTwoTeam?.droppedOut
+			? opponentTwoTeam
+			: null;
+
 	return (
 		<div className="tournament-bracket__during-match-actions">
 			<div className="tournament-bracket__locked-banner tournament-bracket__locked-banner__lonely">
@@ -392,7 +404,9 @@ function EndedEarlyMessage() {
 					<div className="text-lg text-center font-bold">Match ended early</div>
 					{winnerTeam ? (
 						<div className="text-xs text-lighter text-center">
-							The organizer ended this match as it exceeded the time limit.
+							{droppedTeam
+								? `${droppedTeam.name} dropped out of the tournament.`
+								: "The organizer ended this match as it exceeded the time limit."}{" "}
 							Winner: {winnerTeam.name}
 						</div>
 					) : null}

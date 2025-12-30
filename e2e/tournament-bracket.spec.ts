@@ -1127,4 +1127,48 @@ test.describe("Tournament bracket", () => {
 		// Verify match ended early
 		await expect(page.getByText("Match ended early")).toBeVisible();
 	});
+
+	test("dropping team out ends ongoing match early and auto-forfeits losers bracket match", async ({
+		page,
+	}) => {
+		const tournamentId = 2;
+
+		await startBracket(page, tournamentId);
+
+		// 1) Report partial score on match 5 (winners bracket)
+		await navigateToMatch(page, 5);
+		await reportResult({ page, amountOfMapsToReport: 1, winner: 1 });
+		await backToBracket(page);
+
+		// 2) Drop team 102 (one of the teams in match 5) via admin
+		await navigate({
+			page,
+			url: tournamentAdminPage(tournamentId),
+		});
+		await page.getByLabel("Action").selectOption("DROP_TEAM_OUT");
+		await page.getByLabel("Team", { exact: true }).selectOption("102");
+		await submit(page);
+
+		// 3) Verify the ongoing match ended early
+		await navigate({
+			page,
+			url: tournamentMatchPage({ tournamentId, matchId: 5 }),
+		});
+		await expect(page.getByText("Match ended early")).toBeVisible();
+		await expect(page.getByText("dropped out of the tournament")).toBeVisible();
+		await backToBracket(page);
+
+		// 4) Complete the adjacent match (match 6) so its loser goes to losers bracket
+		await navigateToMatch(page, 6);
+		await reportResult({ page, amountOfMapsToReport: 2 });
+		await backToBracket(page);
+
+		// 5) The losers bracket match (match 18) should now have teams:
+		//    - Loser of match 5 (team 102, dropped)
+		//    - Loser of match 6
+		//    It should have ended early since team 102 is dropped
+		await navigateToMatch(page, 18);
+		await expect(page.getByText("Match ended early")).toBeVisible();
+		await expect(page.getByText("dropped out of the tournament")).toBeVisible();
+	});
 });

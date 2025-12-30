@@ -73,12 +73,17 @@ export function tournamentSummary({
 	progression: ParsedBracket[];
 }): TournamentSummary {
 	const resultsWithoutEarlyEndedSets = results.filter((match) => {
-		return !matchEndedEarly({
+		const endedEarly = matchEndedEarly({
 			opponentOne: match.opponentOne,
 			opponentTwo: match.opponentTwo,
 			count: match.roundMaps.count,
 			countType: match.roundMaps.type,
 		});
+
+		if (!endedEarly) return true;
+
+		// Include early-ended sets where a team dropped out (they still affect skills)
+		return match.opponentOne.droppedOut || match.opponentTwo.droppedOut;
 	});
 
 	const skills = calculateSeasonalStats
@@ -199,8 +204,32 @@ export function calculateIndividualPlayerSkills({
  * For each team (winner and loser), this function collects all user IDs from the match's map participants,
  * counts their occurrences, and returns the most popular user IDs up to a full team's worth depending on the tournament format (4v4, 3v3 etc.).
  * If there are ties at the cutoff, all tied user IDs are included.
+ *
+ * For dropped team sets without game results, uses the activeRosterUserIds from the team records.
  */
 function matchToSetMostPlayedUsers(match: AllMatchResult) {
+	const winnerTeamId =
+		match.opponentOne.result === "win"
+			? match.opponentOne.id
+			: match.opponentTwo.id;
+
+	const winner =
+		match.opponentOne.result === "win" ? match.opponentOne : match.opponentTwo;
+	const loser =
+		match.opponentOne.result === "win" ? match.opponentTwo : match.opponentOne;
+
+	// Handle dropped team sets without game results - use active roster or member list
+	if (match.maps.length === 0) {
+		const winnerRoster =
+			winner.activeRosterUserIds ?? winner.memberUserIds ?? [];
+		const loserRoster = loser.activeRosterUserIds ?? loser.memberUserIds ?? [];
+
+		return {
+			winnerUserIds: winnerRoster,
+			loserUserIds: loserRoster,
+		};
+	}
+
 	const resolveMostPopularUserIds = (userIds: number[]) => {
 		const counts = userIds.reduce((acc, userId) => {
 			acc.set(userId, (acc.get(userId) ?? 0) + 1);
@@ -227,10 +256,6 @@ function matchToSetMostPlayedUsers(match: AllMatchResult) {
 		return result;
 	};
 
-	const winnerTeamId =
-		match.opponentOne.result === "win"
-			? match.opponentOne.id
-			: match.opponentTwo.id;
 	const participants = match.maps.flatMap((m) => m.participants);
 	const winnerUserIds = participants
 		.filter((p) => p.tournamentTeamId === winnerTeamId)
@@ -264,28 +289,51 @@ function calculateTeamSkills({
 	};
 
 	for (const match of results) {
-		const winnerTeamId =
+		const winner =
 			match.opponentOne.result === "win"
-				? match.opponentOne.id
-				: match.opponentTwo.id;
+				? match.opponentOne
+				: match.opponentTwo;
+		const loser =
+			match.opponentOne.result === "win"
+				? match.opponentTwo
+				: match.opponentOne;
 
-		const winnerTeamIdentifiers = match.maps.flatMap((m) => {
-			const winnerUserIds = m.participants
-				.filter((p) => p.tournamentTeamId === winnerTeamId)
-				.map((p) => p.userId);
+		// Handle dropped team sets without game results - use active roster or member list
+		let winnerTeamIdentifier: string;
+		let loserTeamIdentifier: string;
 
-			return userIdsToIdentifier(winnerUserIds);
-		});
-		const winnerTeamIdentifier = selectMostPopular(winnerTeamIdentifiers);
+		if (match.maps.length === 0) {
+			// Use activeRosterUserIds if set, otherwise fall back to memberUserIds
+			// (teams without subs have their roster trivially inferred from members)
+			const winnerRoster =
+				winner.activeRosterUserIds ?? winner.memberUserIds ?? [];
+			const loserRoster =
+				loser.activeRosterUserIds ?? loser.memberUserIds ?? [];
 
-		const loserTeamIdentifiers = match.maps.flatMap((m) => {
-			const loserUserIds = m.participants
-				.filter((p) => p.tournamentTeamId !== winnerTeamId)
-				.map((p) => p.userId);
+			// Skip if no roster info available (defensive check)
+			if (winnerRoster.length === 0 || loserRoster.length === 0) continue;
 
-			return userIdsToIdentifier(loserUserIds);
-		});
-		const loserTeamIdentifier = selectMostPopular(loserTeamIdentifiers);
+			winnerTeamIdentifier = userIdsToIdentifier(winnerRoster);
+			loserTeamIdentifier = userIdsToIdentifier(loserRoster);
+		} else {
+			const winnerTeamIdentifiers = match.maps.flatMap((m) => {
+				const winnerUserIds = m.participants
+					.filter((p) => p.tournamentTeamId === winner.id)
+					.map((p) => p.userId);
+
+				return userIdsToIdentifier(winnerUserIds);
+			});
+			winnerTeamIdentifier = selectMostPopular(winnerTeamIdentifiers);
+
+			const loserTeamIdentifiers = match.maps.flatMap((m) => {
+				const loserUserIds = m.participants
+					.filter((p) => p.tournamentTeamId !== winner.id)
+					.map((p) => p.userId);
+
+				return userIdsToIdentifier(loserUserIds);
+			});
+			loserTeamIdentifier = selectMostPopular(loserTeamIdentifiers);
+		}
 
 		const [[ratedWinner], [ratedLoser]] = rate(
 			[
@@ -444,6 +492,11 @@ function playerResultDeltas(
 					});
 				}
 			}
+		}
+
+		// Skip sets with no maps (ended early)
+		if (match.maps.length === 0) {
+			continue;
 		}
 
 		const mostPopularParticipants = (() => {
