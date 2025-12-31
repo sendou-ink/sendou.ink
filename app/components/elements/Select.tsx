@@ -66,6 +66,7 @@ export interface SendouSelectProps<T extends object>
  * </SendouSelect>
  * ```
  */
+// xxx: refactor this to only be a Select and SelectFormField adds the label and BottomTexts
 export function SendouSelect<T extends object>({
 	label,
 	description,

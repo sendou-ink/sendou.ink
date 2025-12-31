@@ -1,0 +1,9 @@
+.root {
+	width: 100%;
+}
+
+.root input,
+.root textarea,
+.root select {
+	width: 100%;
+}
