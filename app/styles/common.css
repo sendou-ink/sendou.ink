@@ -426,6 +426,10 @@ abbr[title] {
 	padding-block: var(--s-2-5);
 }
 
+.article img {
+	height: auto;
+}
+
 .calendar__event__tags {
 	display: flex;
 	max-width: var(--tags-max-width, 18rem);
