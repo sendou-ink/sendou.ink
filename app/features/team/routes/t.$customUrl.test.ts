@@ -14,8 +14,8 @@ import { action as _teamPageAction } from "../actions/t.$customUrl.index.server"
 import { action as teamIndexPageAction } from "../actions/t.server";
 import { action as _editTeamAction } from "../routes/t.$customUrl.edit";
 import * as TeamRepository from "../TeamRepository.server";
+import type { createTeamSchema } from "../team-schemas";
 import type {
-	createTeamSchema,
 	editTeamSchema,
 	teamProfilePageActionSchema,
 } from "../team-schemas.server";

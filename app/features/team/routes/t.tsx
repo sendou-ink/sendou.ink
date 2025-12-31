@@ -1,17 +1,16 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Form, Link, useLoaderData, useSearchParams } from "react-router";
+import { Link, useLoaderData, useSearchParams } from "react-router";
 import { AddNewButton } from "~/components/AddNewButton";
 import { Alert } from "~/components/Alert";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { FormErrors } from "~/components/FormErrors";
 import { Input } from "~/components/Input";
 import { SearchIcon } from "~/components/icons/Search";
 import { Main } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
-import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
+import { FormField, SendouForm } from "~/form";
 import { usePagination } from "~/hooks/usePagination";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
@@ -25,6 +24,7 @@ import {
 import { action } from "../actions/t.server";
 import { loader } from "../loaders/t.server";
 import { TEAM, TEAMS_PER_PAGE } from "../team-constants";
+import { createTeamSchema } from "../team-schemas";
 export { loader, action };
 
 import "../team.css";
@@ -40,7 +40,7 @@ export const meta: MetaFunction = (args) => {
 };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["team"],
+	i18n: ["team", "forms"],
 	breadcrumb: () => ({
 		imgPath: navIconUrl("t"),
 		href: TEAM_SEARCH_PAGE,
@@ -196,23 +196,9 @@ function NewTeamDialog() {
 			isOpen={isOpen}
 			onCloseTo={TEAM_SEARCH_PAGE}
 		>
-			<Form method="post" className="stack md">
-				<div className="">
-					<label htmlFor="name">{t("common:forms.name")}</label>
-					<input
-						id="name"
-						name="name"
-						minLength={TEAM.NAME_MIN_LENGTH}
-						maxLength={TEAM.NAME_MAX_LENGTH}
-						required
-						data-testid={isOpen ? "new-team-name-input" : undefined}
-					/>
-				</div>
-				<FormErrors namespace="team" />
-				<div className="mt-2">
-					<SubmitButton>{t("common:actions.create")}</SubmitButton>
-				</div>
-			</Form>
+			<SendouForm schema={createTeamSchema}>
+				{({ keys }) => <FormField name={keys.name} />}
+			</SendouForm>
 		</SendouDialog>
 	);
 }

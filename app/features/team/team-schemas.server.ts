@@ -1,21 +1,27 @@
 import { z } from "zod";
-import {
-	_action,
-	customCssVarObject,
-	falsyToNull,
-	id,
-	safeStringSchema,
-} from "~/utils/zod";
+import { mySlugify } from "~/utils/urls";
+import { _action, customCssVarObject, falsyToNull, id } from "~/utils/zod";
+import * as TeamRepository from "./TeamRepository.server";
 import { TEAM, TEAM_MEMBER_ROLES } from "./team-constants";
+import { createTeamSchema } from "./team-schemas";
+
+// xxx: maybe some wrapper around this? for typesafe i18n keys etc.
+export const createTeamSchemaServer = createTeamSchema.superRefine(
+	async (data, ctx) => {
+		const teams = await TeamRepository.findAllUndisbanded();
+		const customUrl = mySlugify(data.name);
+
+		if (teams.some((team) => team.customUrl === customUrl)) {
+			ctx.addIssue({
+				code: "custom",
+				message: "forms:errors.duplicateName",
+				path: ["name"],
+			});
+		}
+	},
+);
 
 export const teamParamsSchema = z.object({ customUrl: z.string() });
-
-export const createTeamSchema = z.object({
-	name: safeStringSchema({
-		min: TEAM.NAME_MIN_LENGTH,
-		max: TEAM.NAME_MAX_LENGTH,
-	}),
-});
 
 export const teamProfilePageActionSchema = z.union([
 	z.object({

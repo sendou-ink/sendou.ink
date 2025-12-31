@@ -7,7 +7,8 @@ import {
 } from "~/utils/Test";
 import { action as teamIndexPageAction } from "../actions/t.server";
 import { action as _editTeamAction } from "../routes/t.$customUrl.edit";
-import type { createTeamSchema, editTeamSchema } from "../team-schemas.server";
+import type { createTeamSchema } from "../team-schemas";
+import type { editTeamSchema } from "../team-schemas.server";
 
 const createTeamAction = wrappedAction<typeof createTeamSchema>({
 	action: teamIndexPageAction,
@@ -42,7 +43,7 @@ describe("team creation", () => {
 			{ user: "regular", params: { customUrl: "team-1" } },
 		);
 
-		expect(res.errors[0]).toBe("forms.errors.duplicateName");
+		expect(res.errors[0]).toBe("forms:errors.duplicateName");
 	});
 
 	it("prevents editing team name to only special characters", async () => {
