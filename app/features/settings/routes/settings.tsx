@@ -1,18 +1,15 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import {
-	useFetcher,
-	useLoaderData,
-	useNavigate,
-	useSearchParams,
-} from "react-router";
-import { SendouSwitch } from "~/components/elements/Switch";
+import { useLoaderData, useNavigate, useSearchParams } from "react-router";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
 import { Theme, useTheme } from "~/features/theme/core/provider";
+import { FormField } from "~/form/FormField";
+import { SelectFormField } from "~/form/fields/SelectFormField";
+import { SendouForm } from "~/form/SendouForm";
 import { languages } from "~/modules/i18n/config";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -21,6 +18,12 @@ import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
 import { action } from "../actions/settings.server";
 import { loader } from "../loaders/settings.server";
+import {
+	clockFormatSchema,
+	disableBuildAbilitySortingSchema,
+	disallowScrimPickupsFromUntrustedSchema,
+	updateNoScreenSchema,
+} from "../settings-schemas";
 export { loader, action };
 
 export const handle: SendouRouteHandle = {
@@ -36,47 +39,57 @@ export default function SettingsPage() {
 	const user = useUser();
 	const { t } = useTranslation(["common"]);
 
+	// xxx: default values not working?
 	return (
 		<Main halfWidth>
 			<div className="stack md">
 				<h2 className="text-lg">{t("common:pages.settings")}</h2>
 				<LanguageSelector />
 				<ThemeSelector />
-				{user ? <ClockFormatSelector /> : null}
+				{user ? (
+					<SendouForm
+						schema={clockFormatSchema}
+						defaultValues={{
+							newValue: user.preferences.clockFormat ?? "auto",
+						}}
+						autoSubmit
+					>
+						{({ keys }) => <FormField name={keys.newValue} />}
+					</SendouForm>
+				) : null}
 				{user ? (
 					<>
 						<PushNotificationsEnabler />
 						<div className="mt-6 stack md">
-							<PreferenceSelectorSwitch
-								_action="UPDATE_DISABLE_BUILD_ABILITY_SORTING"
-								defaultSelected={
-									user?.preferences.disableBuildAbilitySorting ?? false
-								}
-								label={t(
-									"common:settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.label",
-								)}
-								bottomText={t(
-									"common:settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText",
-								)}
-							/>
-							<PreferenceSelectorSwitch
-								_action="DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED"
-								defaultSelected={
-									user?.preferences.disallowScrimPickupsFromUntrusted ?? false
-								}
-								label={t(
-									"common:settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.label",
-								)}
-								bottomText={t(
-									"common:settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.bottomText",
-								)}
-							/>
-							<PreferenceSelectorSwitch
-								_action="UPDATE_NO_SCREEN"
-								defaultSelected={Boolean(data.noScreen)}
-								label={t("common:settings.UPDATE_NO_SCREEN.label")}
-								bottomText={t("common:settings.UPDATE_NO_SCREEN.bottomText")}
-							/>
+							<SendouForm
+								schema={disableBuildAbilitySortingSchema}
+								defaultValues={{
+									newValue:
+										user.preferences.disableBuildAbilitySorting ?? false,
+								}}
+								autoSubmit
+							>
+								{({ keys }) => <FormField name={keys.newValue} />}
+							</SendouForm>
+							<SendouForm
+								schema={disallowScrimPickupsFromUntrustedSchema}
+								defaultValues={{
+									newValue:
+										user.preferences.disallowScrimPickupsFromUntrusted ?? false,
+								}}
+								autoSubmit
+							>
+								{({ keys }) => <FormField name={keys.newValue} />}
+							</SendouForm>
+							<SendouForm
+								schema={updateNoScreenSchema}
+								defaultValues={{
+									newValue: Boolean(data.noScreen),
+								}}
+								autoSubmit
+							>
+								{({ keys }) => <FormField name={keys.newValue} />}
+							</SendouForm>
 						</div>
 					</>
 				) : null}
@@ -98,28 +111,24 @@ function LanguageSelector() {
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 
-	const handleLanguageChange = (
-		event: React.ChangeEvent<HTMLSelectElement>,
-	) => {
-		const newLang = event.target.value;
+	const languageItems = languages.map((lang) => ({
+		value: lang.code,
+		label: lang.name,
+	}));
+
+	const handleLanguageChange = (newLang: string | null) => {
+		if (!newLang) return;
 		navigate(`?${addUniqueParam(searchParams, "lng", newLang).toString()}`);
 	};
 
 	return (
-		<div>
-			<Label htmlFor="lang">{t("common:header.language")}</Label>
-			<select
-				id="lang"
-				defaultValue={i18n.language}
-				onChange={handleLanguageChange}
-			>
-				{languages.map((lang) => (
-					<option key={lang.code} value={lang.code}>
-						{lang.name}
-					</option>
-				))}
-			</select>
-		</div>
+		<SelectFormField
+			name="lang"
+			label={t("common:header.language")}
+			items={languageItems}
+			value={i18n.language}
+			onChange={handleLanguageChange}
+		/>
 	);
 }
 
@@ -138,55 +147,26 @@ function ThemeSelector() {
 	const { t } = useTranslation(["common"]);
 	const { userTheme, setUserTheme } = useTheme();
 
-	return (
-		<div>
-			<Label htmlFor="theme">{t("common:header.theme")}</Label>
-			<select
-				id="theme"
-				defaultValue={userTheme ?? "auto"}
-				onChange={(e) => setUserTheme(e.target.value as Theme)}
-			>
-				{(["auto", Theme.DARK, Theme.LIGHT] as const).map((theme) => {
-					return (
-						<option key={theme} value={theme}>
-							{t(`common:theme.${theme}`)}
-						</option>
-					);
-				})}
-			</select>
-		</div>
+	const themeItems = (["auto", Theme.DARK, Theme.LIGHT] as const).map(
+		(theme) => ({
+			value: theme,
+			label: t(`common:theme.${theme}`),
+		}),
 	);
-}
 
-function ClockFormatSelector() {
-	const { t } = useTranslation(["common"]);
-	const user = useUser();
-	const fetcher = useFetcher();
-
-	const handleClockFormatChange = (
-		event: React.ChangeEvent<HTMLSelectElement>,
-	) => {
-		const newFormat = event.target.value as "auto" | "24h" | "12h";
-		fetcher.submit(
-			{ _action: "UPDATE_CLOCK_FORMAT", newValue: newFormat },
-			{ method: "post", encType: "application/json" },
-		);
+	const handleThemeChange = (newTheme: string | null) => {
+		if (!newTheme) return;
+		setUserTheme(newTheme as Theme);
 	};
 
 	return (
-		<div>
-			<Label htmlFor="clock-format">{t("common:settings.clockFormat")}</Label>
-			<select
-				id="clock-format"
-				defaultValue={user?.preferences.clockFormat ?? "auto"}
-				onChange={handleClockFormatChange}
-				disabled={fetcher.state !== "idle"}
-			>
-				<option value="auto">{t("common:clockFormat.auto")}</option>
-				<option value="24h">{t("common:clockFormat.24h")}</option>
-				<option value="12h">{t("common:clockFormat.12h")}</option>
-			</select>
-		</div>
+		<SelectFormField
+			name="theme"
+			label={t("common:header.theme")}
+			items={themeItems}
+			value={userTheme ?? "auto"}
+			onChange={handleThemeChange}
+		/>
 	);
 }
 
@@ -277,41 +257,6 @@ function PushNotificationsEnabler() {
 			<FormMessage type="info">
 				{t("common:settings.notifications.description")}
 			</FormMessage>
-		</div>
-	);
-}
-
-function PreferenceSelectorSwitch({
-	_action,
-	label,
-	bottomText,
-	defaultSelected,
-}: {
-	_action: string;
-	label: string;
-	bottomText: string;
-	defaultSelected: boolean;
-}) {
-	const fetcher = useFetcher();
-
-	const onChange = (isSelected: boolean) => {
-		fetcher.submit(
-			{ _action, newValue: isSelected },
-			{ method: "post", encType: "application/json" },
-		);
-	};
-
-	return (
-		<div>
-			<SendouSwitch
-				defaultSelected={defaultSelected}
-				onChange={onChange}
-				isDisabled={fetcher.state !== "idle"}
-				data-testid={`${_action}-switch`}
-			>
-				{label}
-			</SendouSwitch>
-			<FormMessage type="info">{bottomText}</FormMessage>
 		</div>
 	);
 }
