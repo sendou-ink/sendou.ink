@@ -25,5 +25,10 @@
 	"errors.duplicateName": "There is already a team with this name",
 	"errors.noOnlySpecialCharacters": "Name can't be only special characters",
 	"labels.weaponPool": "Weapon pool",
-	"placeholders.weaponPoolFull": "Pool full - remove a weapon to add more"
+	"placeholders.weaponPoolFull": "Pool full - remove a weapon to add more",
+	"labels.voiceChat": "Can voice chat",
+	"labels.languages": "Your languages",
+	"options.voiceChat.yes": "Yes",
+	"options.voiceChat.no": "No",
+	"options.voiceChat.listenOnly": "Listen only"
 }

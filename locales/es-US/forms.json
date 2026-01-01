@@ -25,5 +25,10 @@
 	"errors.duplicateName": "",
 	"errors.noOnlySpecialCharacters": "",
 	"labels.weaponPool": "",
-	"placeholders.weaponPoolFull": ""
+	"placeholders.weaponPoolFull": "",
+	"labels.voiceChat": "",
+	"labels.languages": "",
+	"options.voiceChat.yes": "",
+	"options.voiceChat.no": "",
+	"options.voiceChat.listenOnly": ""
 }

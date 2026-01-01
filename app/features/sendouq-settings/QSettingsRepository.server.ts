@@ -1,6 +1,7 @@
 import { db } from "~/db/sql";
 import type { Tables, UserMapModePreferences } from "~/db/tables";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
+import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 
@@ -19,7 +20,9 @@ export async function settingsByUserId(userId: number) {
 
 	return {
 		...preferences,
-		languages: preferences.languages?.split(","),
+		languages: preferences.languages?.split(",") as
+			| UnifiedLanguageCode[]
+			| undefined,
 	};
 }
 

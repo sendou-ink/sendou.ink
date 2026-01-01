@@ -1,9 +1,8 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
-import { Label } from "~/components/Label";
 import type { FormFieldItemsWithImage, FormFieldProps } from "../types";
-import { FormFieldMessages, useTranslatedTexts } from "./FormFieldWrapper";
+import { FormFieldWrapper } from "./FormFieldWrapper";
 
 type RadioGroupFormFieldProps<V extends string> = Omit<
 	FormFieldProps<"radio-group">,
@@ -25,56 +24,50 @@ export function RadioGroupFormField<V extends string>({
 	onChange,
 	minLength,
 }: RadioGroupFormFieldProps<V>) {
-	const { i18n } = useTranslation();
-	const { translatedLabel } = useTranslatedTexts({ label });
 	const id = React.useId();
 
-	const itemsWithLabels = items.map((item) => ({
-		...item,
-		resolvedLabel:
-			typeof item.label === "function"
-				? item.label(i18n.language)
-				: String(item.label),
-	}));
+	const itemsWithLabels = useItemsWithResolvedLabels(items);
 
 	const required = typeof minLength !== "number" || minLength > 0;
 
 	return (
-		<div
-			className="stack xs"
-			role="radiogroup"
-			aria-orientation="vertical"
-			aria-labelledby={id}
+		<FormFieldWrapper
+			id={id}
+			label={label}
+			required={required}
+			error={error}
+			bottomText={bottomText}
 		>
-			{translatedLabel ? (
-				<Label htmlFor={id} required={required}>
-					{translatedLabel}
-				</Label>
-			) : null}
-			{itemsWithLabels.map((item) => (
-				<div key={item.value} className="stack horizontal sm-plus items-center">
-					<input
-						type="radio"
-						id={`${id}-${item.value}`}
-						name={name}
-						value={item.value}
-						checked={value === item.value}
-						onChange={() => onChange(item.value)}
-						onBlur={onBlur}
-					/>
-					<label
-						htmlFor={`${id}-${item.value}`}
-						className="stack horizontal sm items-center"
-					>
-						{item.imgSrc ? (
-							<Image path={item.imgSrc} width={24} height={24} alt="" />
-						) : null}
-						{item.resolvedLabel}
-					</label>
-				</div>
-			))}
-			<FormFieldMessages error={error} bottomText={bottomText} />
-		</div>
+			<div
+				role="radiogroup"
+				aria-orientation="vertical"
+				aria-labelledby={id}
+				className="stack sm items-start"
+			>
+				{itemsWithLabels.map((item) => (
+					<div key={item.value} className="stack horizontal sm items-center">
+						<input
+							type="radio"
+							id={`${id}-${item.value}`}
+							name={name}
+							value={item.value}
+							checked={value === item.value}
+							onChange={() => onChange(item.value)}
+							onBlur={onBlur}
+						/>
+						<label
+							htmlFor={`${id}-${item.value}`}
+							className="stack horizontal sm items-center mb-0 whitespace-nowrap"
+						>
+							{item.imgSrc ? (
+								<Image path={item.imgSrc} width={24} height={24} alt="" />
+							) : null}
+							{item.resolvedLabel}
+						</label>
+					</div>
+				))}
+			</div>
+		</FormFieldWrapper>
 	);
 }
 
@@ -98,17 +91,9 @@ export function CheckboxGroupFormField<V extends string>({
 	onChange,
 	minLength,
 }: CheckboxGroupFormFieldProps<V>) {
-	const { i18n } = useTranslation();
-	const { translatedLabel } = useTranslatedTexts({ label });
 	const id = React.useId();
 
-	const itemsWithLabels = items.map((item) => ({
-		...item,
-		resolvedLabel:
-			typeof item.label === "function"
-				? item.label(i18n.language)
-				: String(item.label),
-	}));
+	const itemsWithLabels = useItemsWithResolvedLabels(items);
 
 	const required = typeof minLength !== "number" || minLength > 0;
 
@@ -121,35 +106,58 @@ export function CheckboxGroupFormField<V extends string>({
 	};
 
 	return (
-		<fieldset className="stack xs" aria-labelledby={id}>
-			{translatedLabel ? (
-				<Label htmlFor={id} required={required}>
-					{translatedLabel}
-				</Label>
-			) : null}
-			{itemsWithLabels.map((item) => (
-				<div key={item.value} className="stack horizontal sm-plus items-center">
-					<input
-						type="checkbox"
-						id={`${id}-${item.value}`}
-						name={`${name}[]`}
-						value={item.value}
-						checked={value.includes(item.value)}
-						onChange={(e) => handleChange(item.value, e.target.checked)}
-						onClick={() => onBlur?.()}
-					/>
-					<label
-						htmlFor={`${id}-${item.value}`}
-						className="stack horizontal sm items-center"
-					>
-						{item.imgSrc ? (
-							<Image path={item.imgSrc} width={24} height={24} alt="" />
-						) : null}
-						{item.resolvedLabel}
-					</label>
-				</div>
-			))}
-			<FormFieldMessages error={error} bottomText={bottomText} />
-		</fieldset>
+		<FormFieldWrapper
+			id={id}
+			label={label}
+			required={required}
+			error={error}
+			bottomText={bottomText}
+		>
+			<div className="stack sm items-start">
+				{itemsWithLabels.map((item) => (
+					<div key={item.value} className="stack horizontal sm items-center">
+						<input
+							type="checkbox"
+							id={`${id}-${item.value}`}
+							name={`${name}[]`}
+							value={item.value}
+							checked={value.includes(item.value)}
+							onChange={(e) => handleChange(item.value, e.target.checked)}
+							onClick={() => onBlur?.()}
+						/>
+						<label
+							htmlFor={`${id}-${item.value}`}
+							className="stack horizontal sm items-center mb-0 whitespace-nowrap"
+						>
+							{item.imgSrc ? (
+								<Image path={item.imgSrc} width={24} height={24} alt="" />
+							) : null}
+							{item.resolvedLabel}
+						</label>
+					</div>
+				))}
+			</div>
+		</FormFieldWrapper>
 	);
+}
+
+function useItemsWithResolvedLabels<V extends string>(
+	items: FormFieldItemsWithImage<V>,
+) {
+	const { t, i18n } = useTranslation();
+
+	return items.map((item) => {
+		const itemLabel = item.label;
+		const resolvedLabel =
+			typeof itemLabel === "function"
+				? itemLabel(i18n.language)
+				: typeof itemLabel === "string" && itemLabel.includes(":")
+					? t(itemLabel as never)
+					: String(itemLabel);
+
+		return {
+			...item,
+			resolvedLabel,
+		};
+	});
 }

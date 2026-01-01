@@ -29,7 +29,7 @@ type WithTypedTranslationKeys<T> = Omit<T, "label" | "bottomText"> & {
 };
 
 type WithTypedItemLabels<T, V extends string> = Omit<T, "items"> & {
-	items: Array<{ label: FormsTranslationKey; value: V }>;
+	items: Array<{ label: FormsTranslationKey | (() => string); value: V }>;
 };
 
 type WithTypedDualSelectFields<T, V extends string> = Omit<T, "fields"> & {
@@ -49,7 +49,9 @@ function prefixKey(key: FormsTranslationKey | undefined): string | undefined {
 	return key ? `forms:${key}` : undefined;
 }
 
-function prefixItems<V extends string>(items: FormFieldItems<V>) {
+function prefixItems<V extends string>(
+	items: Array<{ label: FormsTranslationKey | (() => string); value: V }>,
+) {
 	return items.map((item) => ({
 		...item,
 		label: typeof item.label === "string" ? `forms:${item.label}` : item.label,

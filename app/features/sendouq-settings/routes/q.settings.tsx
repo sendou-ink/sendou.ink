@@ -9,7 +9,6 @@ import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { ModeImage } from "~/components/Image";
-import { CrossIcon } from "~/components/icons/Cross";
 import { MapIcon } from "~/components/icons/Map";
 import { MicrophoneFilledIcon } from "~/components/icons/MicrophoneFilled";
 import { PuzzleIcon } from "~/components/icons/Puzzle";
@@ -18,7 +17,7 @@ import { TrashIcon } from "~/components/icons/Trash";
 import { UsersIcon } from "~/components/icons/Users";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
-import type { Preference, Tables, UserMapModePreferences } from "~/db/tables";
+import type { Preference, UserMapModePreferences } from "~/db/tables";
 import {
 	soundCodeToLocalStorageKey,
 	soundVolume,
@@ -26,12 +25,10 @@ import {
 import { FormField } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import { languagesUnified } from "~/modules/i18n/config";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
 import {
 	navIconUrl,
 	SENDOUQ_PAGE,
@@ -44,7 +41,10 @@ import { ModeMapPoolPicker } from "../components/ModeMapPoolPicker";
 import { PreferenceRadioGroup } from "../components/PreferenceRadioGroup";
 import { loader } from "../loaders/q.settings.server";
 import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "../q-settings-constants";
-import { updateWeaponPoolSchema } from "../q-settings-schemas";
+import {
+	updateVoiceChatSchema,
+	updateWeaponPoolSchema,
+} from "../q-settings-schemas";
 export { loader, action };
 
 import "../q-settings.css";
@@ -249,8 +249,8 @@ function MapPicker() {
 }
 
 function VoiceChat() {
-	const { t } = useTranslation(["common", "q"]);
-	const fetcher = useFetcher();
+	const { t } = useTranslation(["q"]);
+	const data = useLoaderData<typeof loader>();
 
 	return (
 		<details>
@@ -260,118 +260,23 @@ function VoiceChat() {
 					<MicrophoneFilledIcon />
 				</div>
 			</summary>
-			<fetcher.Form method="post" className="mb-4 ml-2-5 stack sm">
-				<VoiceChatAbility />
-				<Languages />
-				<div>
-					<SubmitButton
-						size="big"
-						className="mt-2 mx-auto"
-						_action="UPDATE_VC"
-						state={fetcher.state}
-					>
-						{t("common:actions.save")}
-					</SubmitButton>
-				</div>
-			</fetcher.Form>
-		</details>
-	);
-}
-
-function VoiceChatAbility() {
-	const { t } = useTranslation(["q"]);
-	const data = useLoaderData<typeof loader>();
-
-	const label = (vc: Tables["User"]["vc"]) => {
-		switch (vc) {
-			case "YES":
-				return t("q:settings.voiceChat.canVC.yes");
-			case "NO":
-				return t("q:settings.voiceChat.canVC.no");
-			case "LISTEN_ONLY":
-				return t("q:settings.voiceChat.canVC.listenOnly");
-			default:
-				assertUnreachable(vc);
-		}
-	};
-
-	return (
-		<div className="stack">
-			<label>{t("q:settings.voiceChat.canVC.header")}</label>
-			{(["YES", "NO", "LISTEN_ONLY"] as const).map((option) => {
-				return (
-					<div key={option} className="stack sm horizontal items-center">
-						<input
-							type="radio"
-							name="vc"
-							id={option}
-							value={option}
-							required
-							defaultChecked={data.settings.vc === option}
-						/>
-						<label htmlFor={option} className="mb-0 text-main-forced">
-							{label(option)}
-						</label>
-					</div>
-				);
-			})}
-		</div>
-	);
-}
-
-function Languages() {
-	const { t } = useTranslation(["q"]);
-	const data = useLoaderData<typeof loader>();
-	const [value, setValue] = React.useState(data.settings.languages ?? []);
-
-	return (
-		<div className="stack">
-			<input type="hidden" name="languages" value={JSON.stringify(value)} />
-			<label>{t("q:settings.voiceChat.languages.header")}</label>
-			<select
-				className="w-max"
-				onChange={(e) => {
-					const newLanguages = [...value, e.target.value].sort((a, b) =>
-						a.localeCompare(b),
-					);
-					setValue(newLanguages);
-				}}
-			>
-				<option value="">
-					{t("q:settings.voiceChat.languages.placeholder")}
-				</option>
-				{languagesUnified
-					.filter((lang) => !value.includes(lang.code))
-					.map((option) => {
-						return (
-							<option key={option.code} value={option.code}>
-								{option.name}
-							</option>
-						);
-					})}
-			</select>
-			<div className="mt-2">
-				{value.map((code) => {
-					const name = languagesUnified.find((l) => l.code === code)?.name;
-
-					return (
-						<div key={code} className="stack horizontal items-center sm">
-							{name}{" "}
-							<SendouButton
-								icon={<CrossIcon />}
-								variant="minimal-destructive"
-								onPress={() => {
-									const newLanguages = value.filter(
-										(codeInArr) => codeInArr !== code,
-									);
-									setValue(newLanguages);
-								}}
-							/>
-						</div>
-					);
-				})}
+			<div className="mb-4 ml-2-5">
+				<SendouForm
+					schema={updateVoiceChatSchema}
+					defaultValues={{
+						vc: data.settings.vc,
+						languages: data.settings.languages ?? [],
+					}}
+				>
+					{({ keys }) => (
+						<>
+							<FormField name={keys.vc} />
+							<FormField name={keys.languages} />
+						</>
+					)}
+				</SendouForm>
 			</div>
-		</div>
+		</details>
 	);
 }
 

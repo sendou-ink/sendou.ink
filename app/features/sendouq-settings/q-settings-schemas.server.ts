@@ -1,16 +1,17 @@
 import { z } from "zod";
-import { languagesUnified } from "~/modules/i18n/config";
 import {
 	_action,
 	checkboxValueToBoolean,
 	id,
 	modeShort,
-	noDuplicates,
 	safeJSONParse,
 	stageId,
 } from "~/utils/zod";
 import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "./q-settings-constants";
-import { updateWeaponPoolSchema } from "./q-settings-schemas";
+import {
+	updateVoiceChatSchema,
+	updateWeaponPoolSchema,
+} from "./q-settings-schemas";
 
 const preference = z.enum(["AVOID", "PREFER"]).optional();
 export const settingsActionSchema = z.union([
@@ -38,19 +39,7 @@ export const settingsActionSchema = z.union([
 				),
 		),
 	}),
-	z.object({
-		_action: _action("UPDATE_VC"),
-		vc: z.enum(["YES", "NO", "LISTEN_ONLY"]),
-		languages: z.preprocess(
-			safeJSONParse,
-			z
-				.array(z.string())
-				.refine(noDuplicates)
-				.refine((val) =>
-					val.every((lang) => languagesUnified.some((l) => l.code === lang)),
-				),
-		),
-	}),
+	updateVoiceChatSchema,
 	updateWeaponPoolSchema,
 	z.object({
 		_action: _action("UPDATE_NO_SCREEN"),
