@@ -23,5 +23,7 @@
 	"errors.notAllowedCharacters": "Contains not allowed characters",
 	"errors.atLeastOneOption": "At least one option must be selected",
 	"errors.duplicateName": "There is already a team with this name",
-	"errors.noOnlySpecialCharacters": "Name can't be only special characters"
+	"errors.noOnlySpecialCharacters": "Name can't be only special characters",
+	"labels.weaponPool": "Weapon pool",
+	"placeholders.weaponPoolFull": "Pool full - remove a weapon to add more"
 }

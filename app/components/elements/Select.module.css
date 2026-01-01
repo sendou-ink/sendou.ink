@@ -50,8 +50,7 @@
 
 .popover {
 	padding: var(--s-1);
-	min-width: var(--select-width);
-	max-width: var(--select-width);
+	width: var(--trigger-width);
 	border: 2px solid var(--border);
 	border-radius: var(--rounded);
 	background-color: var(--bg-darker);

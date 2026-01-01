@@ -19,7 +19,10 @@ import { MultiSelectFormField } from "./fields/MultiSelectFormField";
 import { SelectFormField } from "./fields/SelectFormField";
 import { SwitchFormField } from "./fields/SwitchFormField";
 import { TextareaFormField } from "./fields/TextareaFormField";
-import { WeaponPoolFormField } from "./fields/WeaponPoolFormField";
+import {
+	WeaponPoolFormField,
+	type WeaponPoolItem,
+} from "./fields/WeaponPoolFormField";
 import { useOptionalFormFieldContext } from "./SendouForm";
 import type { FormField as FormFieldType } from "./types";
 import { resolveDefaultValue, validateField } from "./utils";
@@ -210,12 +213,8 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 			<WeaponPoolFormField
 				{...commonProps}
 				{...formField}
-				value={value as Array<{ id: number; isFavorite: boolean }>}
-				onChange={
-					handleChange as (
-						v: Array<{ id: number; isFavorite: boolean }>,
-					) => void
-				}
+				value={value as WeaponPoolItem[]}
+				onChange={handleChange as (v: WeaponPoolItem[]) => void}
 			/>
 		);
 	}

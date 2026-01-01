@@ -1,5 +1,6 @@
 import { db } from "~/db/sql";
-import type { QWeaponPool, Tables, UserMapModePreferences } from "~/db/tables";
+import type { Tables, UserMapModePreferences } from "~/db/tables";
+import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 
@@ -74,13 +75,20 @@ export function updateVoiceChat(args: {
 
 export function updateSendouQWeaponPool(args: {
 	userId: number;
-	weaponPool: QWeaponPool[];
+	weaponPool: WeaponPoolItem[];
 }) {
 	return db
 		.updateTable("User")
 		.set({
 			qWeaponPool:
-				args.weaponPool.length > 0 ? JSON.stringify(args.weaponPool) : null,
+				args.weaponPool.length > 0
+					? JSON.stringify(
+							args.weaponPool.map((wpn) => ({
+								weaponSplId: wpn.id,
+								isFavorite: Number(wpn.isFavorite),
+							})),
+						)
+					: null,
 		})
 		.where("User.id", "=", args.userId)
 		.execute();

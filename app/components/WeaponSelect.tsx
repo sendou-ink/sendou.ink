@@ -46,6 +46,8 @@ interface WeaponSelectProps<
 	isRequired?: boolean;
 	/** If set, selection of weapons that user sees when search input is empty allowing for quick select for e.g. previous selections */
 	quickSelectWeaponsIds?: Array<MainWeaponId>;
+	isDisabled?: boolean;
+	placeholder?: string;
 }
 
 export function WeaponSelect<
@@ -62,6 +64,8 @@ export function WeaponSelect<
 	testId = "weapon-select",
 	isRequired,
 	quickSelectWeaponsIds,
+	isDisabled,
+	placeholder,
 }: WeaponSelectProps<Clearable, IncludeSubSpecial>) {
 	const { t } = useTranslation(["common"]);
 	const { items, filterValue, setFilterValue } = useWeaponItems({
@@ -97,9 +101,10 @@ export function WeaponSelect<
 			aria-label={
 				!label ? t("common:forms.weaponSearch.placeholder") : undefined
 			}
+			isDisabled={isDisabled}
 			items={items}
 			label={label}
-			placeholder={t("common:forms.weaponSearch.placeholder")}
+			placeholder={placeholder ?? t("common:forms.weaponSearch.placeholder")}
 			search={{
 				placeholder: t("common:forms.weaponSearch.search.placeholder"),
 			}}

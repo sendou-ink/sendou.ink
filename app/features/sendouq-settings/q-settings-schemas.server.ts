@@ -6,14 +6,11 @@ import {
 	id,
 	modeShort,
 	noDuplicates,
-	qWeapon,
 	safeJSONParse,
 	stageId,
 } from "~/utils/zod";
-import {
-	AMOUNT_OF_MAPS_IN_POOL_PER_MODE,
-	SENDOUQ_WEAPON_POOL_MAX_SIZE,
-} from "./q-settings-constants";
+import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "./q-settings-constants";
+import { updateWeaponPoolSchema } from "./q-settings-schemas";
 
 const preference = z.enum(["AVOID", "PREFER"]).optional();
 export const settingsActionSchema = z.union([
@@ -54,13 +51,7 @@ export const settingsActionSchema = z.union([
 				),
 		),
 	}),
-	z.object({
-		_action: _action("UPDATE_SENDOUQ_WEAPON_POOL"),
-		weaponPool: z.preprocess(
-			safeJSONParse,
-			z.array(qWeapon).max(SENDOUQ_WEAPON_POOL_MAX_SIZE),
-		),
-	}),
+	updateWeaponPoolSchema,
 	z.object({
 		_action: _action("UPDATE_NO_SCREEN"),
 		noScreen: z.preprocess(checkboxValueToBoolean, z.boolean()),

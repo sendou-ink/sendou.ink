@@ -23,5 +23,7 @@
 	"errors.notAllowedCharacters": "",
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "",
-	"errors.noOnlySpecialCharacters": ""
+	"errors.noOnlySpecialCharacters": "",
+	"labels.weaponPool": "",
+	"placeholders.weaponPoolFull": ""
 }

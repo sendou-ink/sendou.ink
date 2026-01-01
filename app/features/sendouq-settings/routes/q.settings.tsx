@@ -8,24 +8,23 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { ModeImage, WeaponImage } from "~/components/Image";
+import { ModeImage } from "~/components/Image";
 import { CrossIcon } from "~/components/icons/Cross";
 import { MapIcon } from "~/components/icons/Map";
 import { MicrophoneFilledIcon } from "~/components/icons/MicrophoneFilled";
 import { PuzzleIcon } from "~/components/icons/Puzzle";
 import { SpeakerFilledIcon } from "~/components/icons/SpeakerFilled";
-import { StarIcon } from "~/components/icons/Star";
-import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { TrashIcon } from "~/components/icons/Trash";
 import { UsersIcon } from "~/components/icons/Users";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
-import { WeaponSelect } from "~/components/WeaponSelect";
 import type { Preference, Tables, UserMapModePreferences } from "~/db/tables";
 import {
 	soundCodeToLocalStorageKey,
 	soundVolume,
 } from "~/features/chat/chat-utils";
+import { FormField } from "~/form/FormField";
+import { SendouForm } from "~/form/SendouForm";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { languagesUnified } from "~/modules/i18n/config";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -44,10 +43,8 @@ import { BANNED_MAPS } from "../banned-maps";
 import { ModeMapPoolPicker } from "../components/ModeMapPoolPicker";
 import { PreferenceRadioGroup } from "../components/PreferenceRadioGroup";
 import { loader } from "../loaders/q.settings.server";
-import {
-	AMOUNT_OF_MAPS_IN_POOL_PER_MODE,
-	SENDOUQ_WEAPON_POOL_MAX_SIZE,
-} from "../q-settings-constants";
+import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "../q-settings-constants";
+import { updateWeaponPoolSchema } from "../q-settings-schemas";
 export { loader, action };
 
 import "../q-settings.css";
@@ -379,12 +376,13 @@ function Languages() {
 }
 
 function WeaponPool() {
-	const { t } = useTranslation(["common", "q"]);
+	const { t } = useTranslation(["q"]);
 	const data = useLoaderData<typeof loader>();
-	const [weapons, setWeapons] = React.useState(data.settings.qWeaponPool ?? []);
-	const fetcher = useFetcher();
 
-	const latestWeapon = weapons[weapons.length - 1]?.weaponSplId ?? null;
+	const defaultWeaponPool = (data.settings.qWeaponPool ?? []).map((w) => ({
+		id: w.weaponSplId,
+		isFavorite: Boolean(w.isFavorite),
+	}));
 
 	return (
 		<details>
@@ -393,94 +391,16 @@ function WeaponPool() {
 					<span>{t("q:settings.weaponPool.header")}</span> <PuzzleIcon />
 				</div>
 			</summary>
-			<fetcher.Form method="post" className="mb-4 stack items-center">
-				<input
-					type="hidden"
-					name="weaponPool"
-					value={JSON.stringify(weapons)}
-				/>
-				<div className="q-settings__weapon-pool-select-container">
-					{weapons.length < SENDOUQ_WEAPON_POOL_MAX_SIZE ? (
-						<WeaponSelect
-							onChange={(weaponSplId) => {
-								setWeapons([
-									...weapons,
-									{
-										weaponSplId,
-										isFavorite: 0,
-									},
-								]);
-							}}
-							// empty on selection
-							key={latestWeapon ?? "empty"}
-							disabledWeaponIds={weapons.map((w) => w.weaponSplId)}
-						/>
-					) : (
-						<span className="text-xs text-info">
-							{t("q:settings.weaponPool.full")}
-						</span>
-					)}
-				</div>
-				<div className="stack horizontal md justify-center">
-					{weapons.map((weapon) => {
-						return (
-							<div key={weapon.weaponSplId} className="stack xs">
-								<div>
-									<WeaponImage
-										weaponSplId={weapon.weaponSplId}
-										variant={weapon.isFavorite ? "badge-5-star" : "badge"}
-										width={38}
-										height={38}
-									/>
-								</div>
-								<div className="stack sm horizontal items-center justify-center">
-									<SendouButton
-										icon={weapon.isFavorite ? <StarFilledIcon /> : <StarIcon />}
-										variant="minimal"
-										aria-label="Favorite weapon"
-										onPress={() =>
-											setWeapons(
-												weapons.map((w) =>
-													w.weaponSplId === weapon.weaponSplId
-														? {
-																...weapon,
-																isFavorite: weapon.isFavorite === 1 ? 0 : 1,
-															}
-														: w,
-												),
-											)
-										}
-									/>
-									<SendouButton
-										icon={<TrashIcon />}
-										variant="minimal-destructive"
-										aria-label="Delete weapon"
-										onPress={() =>
-											setWeapons(
-												weapons.filter(
-													(w) => w.weaponSplId !== weapon.weaponSplId,
-												),
-											)
-										}
-										data-testid={`delete-weapon-${weapon.weaponSplId}`}
-										size="small"
-									/>
-								</div>
-							</div>
-						);
-					})}
-				</div>
-				<div className="mt-6">
-					<SubmitButton
-						size="big"
-						className="mx-auto"
-						_action="UPDATE_SENDOUQ_WEAPON_POOL"
-						state={fetcher.state}
-					>
-						{t("common:actions.save")}
-					</SubmitButton>
-				</div>
-			</fetcher.Form>
+			<div className="mb-4">
+				<SendouForm
+					schema={updateWeaponPoolSchema}
+					defaultValues={{
+						weaponPool: defaultWeaponPool,
+					}}
+				>
+					{({ keys }) => <FormField name={keys.weaponPool} />}
+				</SendouForm>
+			</div>
 		</details>
 	);
 }

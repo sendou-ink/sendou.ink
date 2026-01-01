@@ -4,6 +4,7 @@ import { type FetcherWithComponents, Form, useActionData } from "react-router";
 import type { z } from "zod";
 import { SubmitButton } from "~/components/SubmitButton";
 import { formRegistry } from "./fields";
+import styles from "./SendouForm.module.css";
 import type { FormField } from "./types";
 import { formDataToObject, validateField } from "./utils";
 
@@ -34,7 +35,6 @@ interface SendouFormProps<T extends z.ZodRawShape> {
 	submitButtonText?: React.ReactNode;
 	action?: string;
 	method?: "post" | "get";
-	className?: string;
 	_action?: string;
 	submitButtonTestId?: string;
 	state?: FetcherWithComponents<unknown>["state"];
@@ -48,7 +48,6 @@ export function SendouForm<T extends z.ZodRawShape>({
 	submitButtonText,
 	action,
 	method = "post",
-	className = "stack md",
 	_action,
 	submitButtonTestId,
 	state,
@@ -156,7 +155,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 				ref={formRef}
 				method={method}
 				action={action}
-				className={className}
+				className={styles.form}
 				onSubmit={handleSubmit}
 			>
 				{constantFields.map((field) => (
