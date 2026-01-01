@@ -172,7 +172,7 @@ test.describe("Scrims", () => {
 		await tournamentButton.click();
 		await tournamentSearchInput.fill("Swim or Sink");
 		await expect(tournamentSearchItem.first()).toBeVisible();
-		await page.keyboard.press("Enter");
+		await tournamentSearchItem.first().click();
 
 		await submit(page);
 
