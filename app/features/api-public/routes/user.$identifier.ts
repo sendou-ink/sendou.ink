@@ -12,7 +12,7 @@ import {
 	handleOptionsRequest,
 	requireBearerAuth,
 } from "../api-public-utils.server";
-import type { GetUserResponse, Pronouns } from "../schema";
+import type { GetUserResponse } from "../schema";
 
 const paramsSchema = z.object({
 	identifier: z.string(),
@@ -108,7 +108,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			: null,
 		url: `https://sendou.ink/u/${user.customUrl ?? user.discordId}`,
 		country: user.country,
-		pronouns: user.pronouns as Pronouns | null,
+		pronouns: user.pronouns,
 		plusServerTier: user.tier as GetUserResponse["plusServerTier"],
 		socials: {
 			twitch: user.twitch,

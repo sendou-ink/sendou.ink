@@ -15,7 +15,7 @@ import {
 	handleOptionsRequest,
 	requireBearerAuth,
 } from "../api-public-utils.server";
-import type { GetTournamentTeamsResponse, Pronouns } from "../schema";
+import type { GetTournamentTeamsResponse } from "../schema";
 
 const paramsSchema = z.object({
 	id,
@@ -149,7 +149,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					country: member.country,
 					captain: Boolean(member.isOwner),
 					inGameName: member.inGameName,
-					pronouns: member.pronouns as Pronouns | null,
+					pronouns: member.pronouns,
 					friendCode: friendCodes[member.userId],
 					joinedAt: databaseTimestampToDate(member.createdAt).toISOString(),
 				};
