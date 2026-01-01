@@ -340,6 +340,11 @@ function GroupMember({
 							member.username
 						)}
 					</Link>
+					{member.pronouns ? (
+						<span className="text-lighter ml-1 text-xxxs">
+							{member.pronouns.subject}/{member.pronouns.object}
+						</span>
+					) : null}
 				</div>
 				<div className="ml-auto stack horizontal sm items-center">
 					{showActions || displayOnly ? (
