@@ -31,7 +31,8 @@ const stm = sql.prepare(/* sql */ `
         "User"."customUrl",
         'discordAvatar',
         "User"."discordAvatar",
-        'chatNameColor', IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."css" ->> 'chat', null)
+        'chatNameColor', IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."css" ->> 'chat', null),
+        'pronouns', json("User"."pronouns")
       )
     ) as "players"
   from "TournamentMatch"
