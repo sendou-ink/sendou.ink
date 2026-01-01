@@ -849,7 +849,7 @@ export interface UserPreferences {
 export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;
 export const OBJECT_PRONOUNS = ["him", "her", "them", "its", "all"] as const;
 
-export type PRONOUNS = {
+export type Pronouns = {
 	subject: typeof SUBJECT_PRONOUNS;
 	object: typeof OBJECT_PRONOUNS;
 };
@@ -882,7 +882,7 @@ export interface User {
 	isApiAccesser: Generated<DBBoolean | null>;
 	languages: string | null;
 	motionSens: number | null;
-	pronouns: JSONColumnTypeNullable<PRONOUNS>;
+	pronouns: JSONColumnTypeNullable<Pronouns>;
 	patronSince: number | null;
 	patronTier: number | null;
 	patronTill: number | null;
