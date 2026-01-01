@@ -85,6 +85,7 @@ export const findMatchById = (id: number) => {
 				customUrl: Tables["User"]["customUrl"];
 				discordAvatar: Tables["User"]["discordAvatar"];
 				chatNameColor: string | null;
+				pronouns: Tables["User"]["pronouns"];
 			}>
 		).filter((player) => player.id),
 	};

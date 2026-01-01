@@ -76,7 +76,7 @@ export function MatchRosters({
 								<li key={p.id}>
 									<Link
 										to={userPage(p)}
-										className={clsx("stack horizontal sm", {
+										className={clsx("stack horizontal sm items-center", {
 											[INACTIVE_PLAYER_CSS]:
 												teamOneParticipatedPlayers.length > 0 &&
 												teamOneParticipatedPlayers.every(
@@ -87,6 +87,11 @@ export function MatchRosters({
 									>
 										<Avatar user={p} size="xxs" />
 										{p.username}
+										{p.pronouns ? (
+											<span className="text-lighter ml-1 text-xxxs">
+												({p.pronouns.subject}/{p.pronouns.object})
+											</span>
+										) : null}
 									</Link>
 								</li>
 							);
@@ -130,7 +135,7 @@ export function MatchRosters({
 								<li key={p.id}>
 									<Link
 										to={userPage(p)}
-										className={clsx("stack horizontal sm", {
+										className={clsx("stack horizontal sm items-center", {
 											[INACTIVE_PLAYER_CSS]:
 												teamTwoParticipatedPlayers.length > 0 &&
 												teamTwoParticipatedPlayers.every(
@@ -141,6 +146,11 @@ export function MatchRosters({
 									>
 										<Avatar user={p} size="xxs" />
 										{p.username}
+										{p.pronouns ? (
+											<span className="text-lighter ml-1 text-xxxs">
+												({p.pronouns.subject}/{p.pronouns.object})
+											</span>
+										) : null}
 									</Link>
 								</li>
 							);
