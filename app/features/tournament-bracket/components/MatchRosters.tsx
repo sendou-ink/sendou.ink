@@ -89,7 +89,7 @@ export function MatchRosters({
 										{p.username}
 										{p.pronouns ? (
 											<span className="text-lighter ml-1 text-xxxs">
-												({p.pronouns.subject}/{p.pronouns.object})
+												{p.pronouns.subject}/{p.pronouns.object}
 											</span>
 										) : null}
 									</Link>
@@ -148,7 +148,7 @@ export function MatchRosters({
 										{p.username}
 										{p.pronouns ? (
 											<span className="text-lighter ml-1 text-xxxs">
-												({p.pronouns.subject}/{p.pronouns.object})
+												{p.pronouns.subject}/{p.pronouns.object}
 											</span>
 										) : null}
 									</Link>
