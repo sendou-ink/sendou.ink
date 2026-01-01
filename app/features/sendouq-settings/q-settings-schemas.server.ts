@@ -1,12 +1,5 @@
 import { z } from "zod";
-import {
-	_action,
-	checkboxValueToBoolean,
-	id,
-	modeShort,
-	safeJSONParse,
-	stageId,
-} from "~/utils/zod";
+import { _action, id, modeShort, safeJSONParse, stageId } from "~/utils/zod";
 import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "./q-settings-constants";
 import {
 	updateVoiceChatSchema,
@@ -41,10 +34,6 @@ export const settingsActionSchema = z.union([
 	}),
 	updateVoiceChatSchema,
 	updateWeaponPoolSchema,
-	z.object({
-		_action: _action("UPDATE_NO_SCREEN"),
-		noScreen: z.preprocess(checkboxValueToBoolean, z.boolean()),
-	}),
 	z.object({
 		_action: _action("REMOVE_TRUST"),
 		userToRemoveTrustFromId: id,

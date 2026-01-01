@@ -12,7 +12,7 @@
 	"bottomTexts.tag": "Typically used before in-game name to indicate membership of a team (e.g. [TAG] PlayerName)",
 	"bottomTexts.disableBuildAbilitySorting": "Outside of your profile page, build abilities are sorted so that same abilities are next to each other. This setting allows you to see the abilities in the order they were authored everywhere.",
 	"bottomTexts.disallowScrimPickupsFromUntrusted": "Only applies if you are in the lobby as group leader. Other group leaders can still pick you up.",
-	"bottomTexts.noScreen": "Affects tournaments, scrims and SendouQ.",
+	"bottomTexts.noScreen": "Affects tournaments, scrims and SendouQ",
 	"options.clockFormat.auto": "Automatic",
 	"options.clockFormat.24h": "24-hour",
 	"options.clockFormat.12h": "12-hour",

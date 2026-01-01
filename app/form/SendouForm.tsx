@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { type FetcherWithComponents, Form, useActionData } from "react-router";
+import { useFetcher } from "react-router";
 import type { z } from "zod";
 import { SubmitButton } from "~/components/SubmitButton";
 import { formRegistry } from "./fields";
@@ -37,7 +37,6 @@ interface SendouFormProps<T extends z.ZodRawShape> {
 	method?: "post" | "get";
 	_action?: string;
 	submitButtonTestId?: string;
-	state?: FetcherWithComponents<unknown>["state"];
 	autoSubmit?: boolean;
 }
 
@@ -50,11 +49,10 @@ export function SendouForm<T extends z.ZodRawShape>({
 	method = "post",
 	_action,
 	submitButtonTestId,
-	state,
 	autoSubmit,
 }: SendouFormProps<T>) {
 	const { t } = useTranslation(["forms"]);
-	const actionData = useActionData<{ fieldErrors?: Record<string, string> }>();
+	const fetcher = useFetcher<{ fieldErrors?: Record<string, string> }>();
 	const [hasSubmitted, setHasSubmitted] = React.useState(false);
 	const [clientErrors, setClientErrors] = React.useState<
 		Partial<Record<string, string>>
@@ -63,10 +61,10 @@ export function SendouForm<T extends z.ZodRawShape>({
 		Partial<Record<string, string>>
 	>({});
 
-	const latestActionData = React.useRef(actionData);
-	if (actionData !== latestActionData.current) {
-		latestActionData.current = actionData;
-		setVisibleServerErrors(actionData?.fieldErrors ?? {});
+	const latestActionData = React.useRef(fetcher.data);
+	if (fetcher.data !== latestActionData.current) {
+		latestActionData.current = fetcher.data;
+		setVisibleServerErrors(fetcher.data?.fieldErrors ?? {});
 	}
 
 	const serverErrors = visibleServerErrors as Partial<
@@ -151,7 +149,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 
 	return (
 		<FormContext.Provider value={value as FormContextValue}>
-			<Form
+			<fetcher.Form
 				ref={formRef}
 				method={method}
 				action={action}
@@ -172,13 +170,13 @@ export function SendouForm<T extends z.ZodRawShape>({
 						<SubmitButton
 							_action={_action}
 							testId={submitButtonTestId}
-							state={state}
+							state={fetcher.state}
 						>
 							{submitButtonText ?? t("submit")}
 						</SubmitButton>
 					</div>
 				)}
-			</Form>
+			</fetcher.Form>
 		</FormContext.Provider>
 	);
 }

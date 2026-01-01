@@ -5,7 +5,6 @@ import type { MetaFunction } from "react-router";
 import { useFetcher, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
-import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { ModeImage } from "~/components/Image";
@@ -22,6 +21,7 @@ import {
 	soundCodeToLocalStorageKey,
 	soundVolume,
 } from "~/features/chat/chat-utils";
+import { updateNoScreenSchema } from "~/features/settings/settings-schemas";
 import { FormField } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -33,6 +33,7 @@ import {
 	navIconUrl,
 	SENDOUQ_PAGE,
 	SENDOUQ_SETTINGS_PAGE,
+	SETTINGS_PAGE,
 	soundPath,
 } from "~/utils/urls";
 import { action } from "../actions/q.settings.server";
@@ -503,40 +504,25 @@ function TrustedUsers() {
 
 function Misc() {
 	const data = useLoaderData<typeof loader>();
-	const [checked, setChecked] = React.useState(Boolean(data.settings.noScreen));
-	const { t } = useTranslation(["common", "q", "weapons"]);
-	const fetcher = useFetcher();
+	const { t } = useTranslation(["q"]);
 
 	return (
 		<details>
 			<summary className="q-settings__summary">
 				<div>{t("q:settings.misc.header")}</div>
 			</summary>
-			<fetcher.Form method="post" className="mb-4 ml-2-5 stack sm">
-				<div className="stack horizontal xs items-center">
-					<SendouSwitch
-						isSelected={checked}
-						onChange={setChecked}
-						id="noScreen"
-						name="noScreen"
-					/>
-					<label className="mb-0" htmlFor="noScreen">
-						{t("q:settings.avoid.label", {
-							special: t("weapons:SPECIAL_19"),
-						})}
-					</label>
-				</div>
-				<div className="mt-6">
-					<SubmitButton
-						size="big"
-						className="mx-auto"
-						_action="UPDATE_NO_SCREEN"
-						state={fetcher.state}
-					>
-						{t("common:actions.save")}
-					</SubmitButton>
-				</div>
-			</fetcher.Form>
+			<div className="mb-4 ml-2-5">
+				<SendouForm
+					schema={updateNoScreenSchema}
+					defaultValues={{
+						newValue: Boolean(data.settings.noScreen),
+					}}
+					action={SETTINGS_PAGE}
+					autoSubmit
+				>
+					{({ names }) => <FormField name={names.newValue} />}
+				</SendouForm>
+			</div>
 		</details>
 	);
 }
