@@ -38,6 +38,8 @@ export interface GetUserResponse {
 	/** Teams user is member of. The main team is always first in the array. */
 	teams: Array<GlobalTeamMembership>;
 	/**
+	 * User's pronouns.
+	 *
 	 * @example { "subject": "he", "object": "him" }
 	 */
 	pronouns: Pronouns | null;
