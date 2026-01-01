@@ -454,6 +454,7 @@ export async function findChatUsersByUserIds(userIds: number[]) {
 			"User.discordId",
 			"User.discordAvatar",
 			"User.username",
+			"User.pronouns",
 			userChatNameColor,
 		])
 		.where("User.id", "in", userIds)

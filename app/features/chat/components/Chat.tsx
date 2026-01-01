@@ -227,6 +227,11 @@ function Message({
 					>
 						{user?.username ?? missingUserName}
 					</div>
+					{user?.pronouns ? (
+						<span className="text-lighter text-xxxs">
+							{user.pronouns.subject}/{user.pronouns.object}
+						</span>
+					) : null}
 					{user?.title ? (
 						<div className="text-xs text-theme-secondary font-semi-bold">
 							{user.title}
