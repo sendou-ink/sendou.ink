@@ -15,7 +15,7 @@ import {
 	handleOptionsRequest,
 	requireBearerAuth,
 } from "../api-public-utils.server";
-import type { GetTournamentTeamsResponse } from "../schema";
+import type { GetTournamentTeamsResponse, Pronouns } from "../schema";
 
 const paramsSchema = z.object({
 	id,
@@ -90,6 +90,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 						"User.discordAvatar",
 						"User.battlefy",
 						"User.country",
+						"User.pronouns",
 						"TournamentTeamMember.inGameName",
 						"TournamentTeamMember.isOwner",
 						"TournamentTeamMember.createdAt",
@@ -148,6 +149,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					country: member.country,
 					captain: Boolean(member.isOwner),
 					inGameName: member.inGameName,
+					pronouns: member.pronouns as Pronouns | null,
 					friendCode: friendCodes[member.userId],
 					joinedAt: databaseTimestampToDate(member.createdAt).toISOString(),
 				};

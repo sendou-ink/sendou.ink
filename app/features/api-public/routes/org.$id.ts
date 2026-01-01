@@ -10,7 +10,7 @@ import {
 	handleOptionsRequest,
 	requireBearerAuth,
 } from "../api-public-utils.server";
-import type { GetTournamentOrganizationResponse } from "../schema";
+import type { GetTournamentOrganizationResponse, Pronouns } from "../schema";
 
 const paramsSchema = z.object({
 	id,
@@ -47,6 +47,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 							"User.id",
 							"User.discordId",
 							"User.username",
+							"User.pronouns",
 							"TournamentOrganizationMember.role",
 							"TournamentOrganizationMember.roleDisplayName",
 						])
@@ -68,6 +69,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			userId: member.id,
 			discordId: member.discordId,
 			name: member.username,
+			pronouns: member.pronouns as Pronouns | null,
 			role: member.role,
 			roleDisplayName: member.roleDisplayName,
 		})),
