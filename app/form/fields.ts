@@ -4,7 +4,6 @@ import {
 	falsyToNull,
 	id,
 	modeShort,
-	safeJSONParse,
 	safeNullableStringSchema,
 	safeStringSchema,
 	stageId,
@@ -62,7 +61,8 @@ export function customJsonField<T extends z.ZodType>(
 	args: Omit<Extract<FormField, { type: "custom" }>, "type">,
 	schema: T,
 ) {
-	return z.preprocess(safeJSONParse, schema.optional()).register(formRegistry, {
+	// @ts-expect-error Complex generic type with registry
+	return schema.optional().register(formRegistry, {
 		...args,
 		type: "custom",
 	});
@@ -177,7 +177,7 @@ export function toggle(
 	>,
 ) {
 	return z
-		.union([z.coerce.boolean(), z.boolean()])
+		.boolean()
 		.optional()
 		.default(false)
 		.register(formRegistry, {
@@ -250,14 +250,10 @@ export function multiSelectOptional<V extends string>(
 	>,
 ) {
 	return z
-		.preprocess(
-			safeJSONParse,
-			z
-				.array(itemsSchema(args.items))
-				.min(1)
-				.refine((val) => !val || val.length === R.unique(val).length)
-				.optional(),
-		)
+		.array(itemsSchema(args.items))
+		.min(1)
+		.refine((val) => !val || val.length === R.unique(val).length)
+		.optional()
 		.register(formRegistry, {
 			...args,
 			label: prefixKey(args.label),
@@ -280,15 +276,12 @@ export function dualSelectOptional<V extends string>(
 		>
 	>,
 ) {
-	let schema = z.preprocess(
-		safeJSONParse,
-		z
-			.tuple([
-				clearableItemsSchema(args.fields[0].items),
-				clearableItemsSchema(args.fields[1].items),
-			])
-			.optional(),
-	);
+	let schema = z
+		.tuple([
+			clearableItemsSchema(args.fields[0].items),
+			clearableItemsSchema(args.fields[1].items),
+		])
+		.optional();
 
 	if (args.validate) {
 		schema = schema.refine(
@@ -391,17 +384,10 @@ export function checkboxGroup<V extends string>(
 	>,
 ) {
 	return z
-		.preprocess(
-			(value) => {
-				if (Array.isArray(value)) return value;
-				if (typeof value === "string") return [value];
-				if (!value) return [];
-				return value;
-			},
-			z.array(itemsSchema(args.items)).min(args.minLength ?? 1, {
-				message: "At least one option must be selected",
-			}),
-		)
+		.array(itemsSchema(args.items))
+		.min(args.minLength ?? 1, {
+			message: "At least one option must be selected",
+		})
 		.register(formRegistry, {
 			...args,
 			label: prefixKey(args.label),
@@ -418,20 +404,14 @@ export function weaponPool(
 	>,
 ) {
 	return z
-		.preprocess(
-			safeJSONParse,
-			z
-				.array(
-					z.object({
-						id: weaponSplId,
-						isFavorite: z.boolean(),
-					}),
-				)
-				.max(args.maxCount)
-				.refine(
-					(val) => val.length === R.uniqueBy(val, (item) => item.id).length,
-				),
+		.array(
+			z.object({
+				id: weaponSplId,
+				isFavorite: z.boolean(),
+			}),
 		)
+		.max(args.maxCount)
+		.refine((val) => val.length === R.uniqueBy(val, (item) => item.id).length)
 		.register(formRegistry, {
 			...args,
 			label: prefixKey(args.label),
@@ -446,28 +426,25 @@ export function mapPool(
 		Omit<Extract<FormField, { type: "map-pool" }>, "type" | "initialValue">
 	>,
 ) {
-	return z
-		.preprocess(
-			safeJSONParse,
-			partialMapPoolSchema(args).refine(
-				(mapPoolData) => {
-					if (!args.minCount) return true;
-					if (!args.modes) return true;
+	return partialMapPoolSchema(args)
+		.refine(
+			(mapPoolData) => {
+				if (!args.minCount) return true;
+				if (!args.modes) return true;
 
-					for (const mode of args.modes) {
-						const modePool = (
-							mapPoolData as Record<string, number[] | undefined>
-						)[mode];
-						if (!modePool?.length || modePool.length < args.minCount) {
-							return false;
-						}
+				for (const mode of args.modes) {
+					const modePool = (
+						mapPoolData as Record<string, number[] | undefined>
+					)[mode];
+					if (!modePool?.length || modePool.length < args.minCount) {
+						return false;
 					}
-					return true;
-				},
-				{
-					message: `Every mode should contain at least the minimum amount of maps (${args.minCount})`,
-				},
-			),
+				}
+				return true;
+			},
+			{
+				message: `Every mode should contain at least the minimum amount of maps (${args.minCount})`,
+			},
 		)
 		.register(formRegistry, {
 			...args,
@@ -554,10 +531,7 @@ export function array<S extends z.ZodType>(
 		Omit<FormFieldArray<"array", S>, "type" | "initialValue">
 	>,
 ) {
-	const schema = z.preprocess(
-		(value) => (!value ? [] : value),
-		z.array(args.field).min(args.min).max(args.max),
-	);
+	const schema = z.array(args.field).min(args.min).max(args.max);
 	// @ts-expect-error Complex generic type with registry
 	return schema.register(formRegistry, {
 		...args,

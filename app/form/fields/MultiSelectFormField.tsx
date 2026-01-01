@@ -8,7 +8,7 @@ import { FormFieldMessages } from "./FormFieldWrapper";
 
 type MultiSelectFormFieldProps<V extends string> = Omit<
 	FormFieldProps<"multi-select">,
-	"items" | "clearable"
+	"items" | "clearable" | "name"
 > & {
 	items: FormFieldItems<V>;
 	value: V[];
@@ -17,7 +17,6 @@ type MultiSelectFormFieldProps<V extends string> = Omit<
 
 export function MultiSelectFormField<V extends string>({
 	label,
-	name,
 	bottomText,
 	items,
 	error,
@@ -105,9 +104,6 @@ export function MultiSelectFormField<V extends string>({
 							</li>
 						))}
 					</ol>
-				) : null}
-				{value.length > 0 ? (
-					<input type="hidden" name={name} value={JSON.stringify(value)} />
 				) : null}
 			</div>
 			<FormFieldMessages error={error} bottomText={bottomText} />

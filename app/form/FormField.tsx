@@ -25,7 +25,7 @@ import {
 } from "./fields/WeaponPoolFormField";
 import { useOptionalFormFieldContext } from "./SendouForm";
 import type { FormField as FormFieldType } from "./types";
-import { resolveDefaultValue, validateField } from "./utils";
+import { validateField } from "./utils";
 
 interface FormFieldProps {
 	name: string;
@@ -72,14 +72,7 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 		return fieldWithLabel as FormFieldType;
 	}, [fieldSchema, name, label]);
 
-	const defaultValue = resolveDefaultValue({
-		name,
-		defaultValues: context?.defaultValues as Record<string, unknown> | null,
-	});
-
-	const [value, setValue] = React.useState<unknown>(
-		defaultValue ?? formField.initialValue,
-	);
+	const value = context?.values[name] ?? formField.initialValue;
 
 	const serverError =
 		context?.serverErrors[name as keyof typeof context.serverErrors];
@@ -98,11 +91,11 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 	};
 
 	const handleChange = (newValue: unknown) => {
-		setValue(newValue);
+		context?.setValue(name, newValue);
 		if (hasSubmitted) {
 			runValidation(newValue);
 		}
-		context?.onFieldChange?.();
+		context?.onFieldChange?.(name, newValue);
 	};
 
 	const displayedError = serverError ?? clientError;
@@ -261,9 +254,7 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 		formField.type === "string-constant" ||
 		formField.type === "id-constant"
 	) {
-		return (
-			<input type="hidden" name={name} value={String(formField.value ?? "")} />
-		);
+		return null;
 	}
 
 	if (formField.type === "array") {

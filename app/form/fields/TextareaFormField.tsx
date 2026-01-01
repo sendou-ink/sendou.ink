@@ -3,14 +3,13 @@ import type { FormFieldProps } from "../types";
 import { ariaAttributes } from "../utils";
 import { FormFieldWrapper } from "./FormFieldWrapper";
 
-type TextareaFormFieldProps = FormFieldProps<"text-area"> & {
+type TextareaFormFieldProps = Omit<FormFieldProps<"text-area">, "name"> & {
 	value: string;
 	onChange: (value: string) => void;
 };
 
 export function TextareaFormField({
 	label,
-	name,
 	bottomText,
 	maxLength,
 	error,
@@ -32,7 +31,6 @@ export function TextareaFormField({
 		>
 			<textarea
 				id={id}
-				name={name}
 				value={value}
 				onChange={(e) => onChange(e.target.value)}
 				onBlur={onBlur}

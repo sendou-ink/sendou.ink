@@ -6,14 +6,13 @@ import { TrashIcon } from "~/components/icons/Trash";
 import { Label } from "~/components/Label";
 import type { FormFieldProps } from "../types";
 
-type ImageFormFieldProps = FormFieldProps<"image"> & {
+type ImageFormFieldProps = Omit<FormFieldProps<"image">, "name"> & {
 	value: File | string | null;
 	onChange: (value: File | string | null) => void;
 };
 
 export function ImageFormField({
 	label,
-	name,
 	error,
 	dimensions,
 	value,
@@ -49,7 +48,6 @@ export function ImageFormField({
 								dimensions === "logo" ? "100%" : "var(--radius-box)",
 						}}
 					/>
-					<input type="hidden" name={name} value="" />
 					<SendouButton
 						size="miniscule"
 						variant="destructive"
@@ -62,7 +60,6 @@ export function ImageFormField({
 			) : (
 				<input
 					id={id}
-					name={name}
 					type="file"
 					accept="image/webp"
 					onChange={handleFileChange}

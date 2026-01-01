@@ -10,7 +10,10 @@ import type {
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import type { FormFieldProps } from "../types";
 
-type MapPoolFormFieldProps = Omit<FormFieldProps<"map-pool">, "modes"> & {
+type MapPoolFormFieldProps = Omit<
+	FormFieldProps<"map-pool">,
+	"modes" | "name"
+> & {
 	modes?: ModeShort[];
 	value: MapPoolObject;
 	onChange: (value: ReadonlyMapPoolObject) => void;
@@ -18,7 +21,6 @@ type MapPoolFormFieldProps = Omit<FormFieldProps<"map-pool">, "modes"> & {
 
 export function MapPoolFormField({
 	label,
-	name,
 	bottomText,
 	error,
 	modes,
@@ -41,7 +43,6 @@ export function MapPoolFormField({
 				handleMapPoolChange={handleMapPoolChange}
 				modesToInclude={modes}
 			/>
-			<input type="hidden" name={name} value={JSON.stringify(value)} />
 			{error ? <FormMessage type="error">{error}</FormMessage> : null}
 			{bottomText && !error ? (
 				<FormMessage type="info">{bottomText}</FormMessage>

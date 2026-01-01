@@ -4,7 +4,7 @@ import { SelectFormField } from "./SelectFormField";
 
 type DualSelectFormFieldProps<V extends string> = Omit<
 	FormFieldProps<"dual-select">,
-	"clearable"
+	"clearable" | "name"
 > & {
 	fields: [
 		{ label?: string; items: FormFieldItems<V> },
@@ -16,7 +16,6 @@ type DualSelectFormFieldProps<V extends string> = Omit<
 };
 
 export function DualSelectFormField<V extends string>({
-	name,
 	bottomText,
 	error,
 	onBlur,
@@ -45,7 +44,6 @@ export function DualSelectFormField<V extends string>({
 					clearable={clearable}
 				/>
 			</div>
-			<input type="hidden" name={name} value={JSON.stringify(value)} />
 			<FormFieldMessages error={error} bottomText={bottomText} />
 		</div>
 	);

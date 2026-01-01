@@ -7,6 +7,7 @@ import { PlusIcon } from "~/components/icons/Plus";
 import type { FormFieldProps } from "../types";
 
 type ArrayFormFieldProps = Omit<FormFieldProps<"array">, "field"> & {
+	name: string;
 	value: unknown[];
 	onChange: (value: unknown[]) => void;
 	renderItem: (index: number, name: string) => React.ReactNode;

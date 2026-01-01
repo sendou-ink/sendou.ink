@@ -1,24 +1,5 @@
 import type { z } from "zod";
 
-export function formDataToObject(formData: FormData) {
-	const result: Record<string, string | string[]> = {};
-
-	for (const [key, value] of formData.entries()) {
-		const newValue = String(value);
-		const existingValue = result[key];
-
-		if (Array.isArray(existingValue)) {
-			existingValue.push(newValue);
-		} else if (typeof existingValue === "string") {
-			result[key] = [existingValue, newValue];
-		} else {
-			result[key] = newValue;
-		}
-	}
-
-	return result;
-}
-
 export function infoMessageId(fieldId: string) {
 	return `${fieldId}-info`;
 }
@@ -72,25 +53,4 @@ export function ariaAttributes({
 		"aria-errormessage": error ? errorMessageId(id) : undefined,
 		"aria-required": required ? ("true" as const) : undefined,
 	};
-}
-
-export function resolveDefaultValue({
-	name,
-	defaultValues,
-}: {
-	name: string;
-	defaultValues: Record<string, unknown> | null | undefined;
-}) {
-	if (!defaultValues) return undefined;
-
-	const idx = name.match(/\[(\d+)\]$/)?.[1];
-	if (idx) {
-		const nameWithoutIdx = name.split("[")[0];
-		const arrayValue = defaultValues[nameWithoutIdx];
-		if (Array.isArray(arrayValue)) {
-			return arrayValue[Number(idx)];
-		}
-	}
-
-	return defaultValues[name];
 }

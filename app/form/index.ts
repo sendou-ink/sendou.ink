@@ -61,4 +61,4 @@ export type {
 	FormFieldSelect,
 } from "./types";
 // Utilities
-export { ariaAttributes, resolveDefaultValue } from "./utils";
+export { ariaAttributes } from "./utils";

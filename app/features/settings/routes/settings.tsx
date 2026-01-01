@@ -123,7 +123,6 @@ function LanguageSelector() {
 
 	return (
 		<SelectFormField
-			name="lang"
 			label={t("common:header.language")}
 			items={languageItems}
 			value={i18n.language}
@@ -161,7 +160,6 @@ function ThemeSelector() {
 
 	return (
 		<SelectFormField
-			name="theme"
 			label={t("common:header.theme")}
 			items={themeItems}
 			value={userTheme ?? "auto"}

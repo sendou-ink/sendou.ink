@@ -6,7 +6,7 @@ import { FormFieldWrapper } from "./FormFieldWrapper";
 
 type RadioGroupFormFieldProps<V extends string> = Omit<
 	FormFieldProps<"radio-group">,
-	"items"
+	"items" | "name"
 > & {
 	items: FormFieldItemsWithImage<V>;
 	value: V;
@@ -15,7 +15,6 @@ type RadioGroupFormFieldProps<V extends string> = Omit<
 
 export function RadioGroupFormField<V extends string>({
 	label,
-	name,
 	bottomText,
 	items,
 	error,
@@ -49,7 +48,7 @@ export function RadioGroupFormField<V extends string>({
 						<input
 							type="radio"
 							id={`${id}-${item.value}`}
-							name={name}
+							name={id}
 							value={item.value}
 							checked={value === item.value}
 							onChange={() => onChange(item.value)}
@@ -73,7 +72,7 @@ export function RadioGroupFormField<V extends string>({
 
 type CheckboxGroupFormFieldProps<V extends string> = Omit<
 	FormFieldProps<"checkbox-group">,
-	"items"
+	"items" | "name"
 > & {
 	items: FormFieldItemsWithImage<V>;
 	value: V[];
@@ -82,7 +81,6 @@ type CheckboxGroupFormFieldProps<V extends string> = Omit<
 
 export function CheckboxGroupFormField<V extends string>({
 	label,
-	name,
 	bottomText,
 	items,
 	error,
@@ -119,7 +117,6 @@ export function CheckboxGroupFormField<V extends string>({
 						<input
 							type="checkbox"
 							id={`${id}-${item.value}`}
-							name={`${name}[]`}
 							value={item.value}
 							checked={value.includes(item.value)}
 							onChange={(e) => handleChange(item.value, e.target.checked)}

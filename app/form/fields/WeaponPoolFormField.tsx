@@ -34,14 +34,13 @@ export type WeaponPoolItem = {
 	isFavorite: boolean;
 };
 
-type WeaponPoolFormFieldProps = FormFieldProps<"weapon-pool"> & {
+type WeaponPoolFormFieldProps = Omit<FormFieldProps<"weapon-pool">, "name"> & {
 	value: WeaponPoolItem[];
 	onChange: (value: WeaponPoolItem[]) => void;
 };
 
 export function WeaponPoolFormField({
 	label,
-	name,
 	bottomText,
 	error,
 	maxCount,
@@ -124,7 +123,6 @@ export function WeaponPoolFormField({
 					isFull ? t("forms:placeholders.weaponPoolFull") : undefined
 				}
 			/>
-			<input type="hidden" name={name} value={JSON.stringify(value)} />
 
 			{value.length > 0 ? (
 				<DndContext

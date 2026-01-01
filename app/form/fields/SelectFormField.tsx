@@ -5,7 +5,7 @@ import type { FormFieldItems, FormFieldProps } from "../types";
 
 type SelectFormFieldProps<V extends string> = Omit<
 	FormFieldProps<"select">,
-	"items" | "clearable" | "onBlur"
+	"items" | "clearable" | "onBlur" | "name"
 > & {
 	items: FormFieldItems<V>;
 	value: V | null;
@@ -17,7 +17,6 @@ type SelectFormFieldProps<V extends string> = Omit<
 
 export function SelectFormField<V extends string>({
 	label,
-	name,
 	bottomText,
 	items,
 	error,
@@ -66,7 +65,6 @@ export function SelectFormField<V extends string>({
 	// xxx: should we switch between react-aria-components Select and a basic one?
 	return (
 		<SendouSelect
-			name={name}
 			label={translatedLabel}
 			items={itemsWithResolvedLabels}
 			selectedKey={value}

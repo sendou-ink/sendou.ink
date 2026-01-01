@@ -137,7 +137,6 @@ export type FormFieldProps<T extends FormField["type"]> = Omit<
 	Extract<FormField, { type: T }>,
 	"type" | "initialValue"
 > & {
-	name?: string;
 	error?: string;
 	onBlur: () => void;
 };

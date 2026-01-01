@@ -6,7 +6,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { formRegistry } from "./fields";
 import styles from "./SendouForm.module.css";
 import type { FormField } from "./types";
-import { formDataToObject, validateField } from "./utils";
+import { validateField } from "./utils";
 
 export interface FormContextValue<T extends z.ZodRawShape = z.ZodRawShape> {
 	schema: z.ZodObject<T>;
@@ -15,7 +15,9 @@ export interface FormContextValue<T extends z.ZodRawShape = z.ZodRawShape> {
 	clientErrors: Partial<Record<string, string>>;
 	hasSubmitted: boolean;
 	setClientError: (name: string, error: string | undefined) => void;
-	onFieldChange?: () => void;
+	onFieldChange?: (name: string, newValue: unknown) => void;
+	values: Record<string, unknown>;
+	setValue: (name: string, value: unknown) => void;
 }
 
 const FormContext = React.createContext<FormContextValue | null>(null);
@@ -61,6 +63,10 @@ export function SendouForm<T extends z.ZodRawShape>({
 		Partial<Record<string, string>>
 	>({});
 
+	const initialValues = buildInitialValues(schema, defaultValues);
+	const [values, setValues] =
+		React.useState<Record<string, unknown>>(initialValues);
+
 	const latestActionData = React.useRef(fetcher.data);
 	if (fetcher.data !== latestActionData.current) {
 		latestActionData.current = fetcher.data;
@@ -70,8 +76,6 @@ export function SendouForm<T extends z.ZodRawShape>({
 	const serverErrors = visibleServerErrors as Partial<
 		Record<keyof z.infer<z.ZodObject<T>>, string>
 	>;
-
-	const formRef = React.useRef<HTMLFormElement>(null);
 
 	const setClientError = (name: string, error: string | undefined) => {
 		setClientErrors((prev) => {
@@ -84,38 +88,61 @@ export function SendouForm<T extends z.ZodRawShape>({
 		});
 	};
 
+	const setValue = (name: string, newValue: unknown) => {
+		setValues((prev) => ({ ...prev, [name]: newValue }));
+	};
+
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
 		setHasSubmitted(true);
 		setVisibleServerErrors({});
 
-		if (!formRef.current) return;
-
-		const formData = new FormData(formRef.current);
-		const data = formDataToObject(formData);
-
 		const newErrors: Record<string, string> = {};
 		for (const key of Object.keys(schema.shape)) {
-			const error = validateField(schema, key, data[key]);
+			const error = validateField(schema, key, values[key]);
 			if (error) {
 				newErrors[key] = error;
 			}
 		}
 
 		if (Object.keys(newErrors).length > 0) {
-			e.preventDefault();
 			setClientErrors(newErrors);
+			return;
 		}
+
+		fetcher.submit(values as Record<string, string>, {
+			method,
+			action,
+			encType: "application/json",
+		});
 	};
 
 	const onFieldChange = autoSubmit
-		? () => {
-				setTimeout(() => {
-					formRef.current?.requestSubmit();
-				}, 0);
+		? (changedName: string, changedValue: unknown) => {
+				const updatedValues = { ...values, [changedName]: changedValue };
+
+				const newErrors: Record<string, string> = {};
+				for (const key of Object.keys(schema.shape)) {
+					const error = validateField(schema, key, updatedValues[key]);
+					if (error) {
+						newErrors[key] = error;
+					}
+				}
+
+				if (Object.keys(newErrors).length > 0) {
+					setClientErrors(newErrors);
+					return;
+				}
+
+				fetcher.submit(updatedValues as Record<string, string>, {
+					method,
+					action,
+					encType: "application/json",
+				});
 			}
 		: undefined;
 
-	const value: FormContextValue<T> = {
+	const contextValue: FormContextValue<T> = {
 		schema,
 		defaultValues,
 		serverErrors,
@@ -123,6 +150,8 @@ export function SendouForm<T extends z.ZodRawShape>({
 		hasSubmitted,
 		setClientError,
 		onFieldChange,
+		values,
+		setValue,
 	};
 
 	const names = Object.fromEntries(
@@ -132,38 +161,14 @@ export function SendouForm<T extends z.ZodRawShape>({
 	const resolvedChildren =
 		typeof children === "function" ? children({ names }) : children;
 
-	// xxx: probably we can have them in the form submission directly
-	const constantFields = Object.entries(schema.shape)
-		.map(([key, fieldSchema]) => {
-			// @ts-expect-error Type instantiation is excessively deep and possibly infinite
-			const formField = formRegistry.get(fieldSchema) as FormField | undefined;
-			if (
-				formField?.type === "string-constant" ||
-				formField?.type === "id-constant"
-			) {
-				return { key, value: formField.value };
-			}
-			return null;
-		})
-		.filter(Boolean) as Array<{ key: string; value: string | number | null }>;
-
 	return (
-		<FormContext.Provider value={value as FormContextValue}>
-			<fetcher.Form
-				ref={formRef}
+		<FormContext.Provider value={contextValue as FormContextValue}>
+			<form
 				method={method}
 				action={action}
 				className={styles.form}
 				onSubmit={handleSubmit}
 			>
-				{constantFields.map((field) => (
-					<input
-						key={field.key}
-						type="hidden"
-						name={field.key}
-						value={String(field.value ?? "")}
-					/>
-				))}
 				{resolvedChildren}
 				{autoSubmit ? null : (
 					<div className="mt-4 stack mx-auto justify-center">
@@ -176,9 +181,31 @@ export function SendouForm<T extends z.ZodRawShape>({
 						</SubmitButton>
 					</div>
 				)}
-			</fetcher.Form>
+			</form>
 		</FormContext.Provider>
 	);
+}
+
+function buildInitialValues<T extends z.ZodRawShape>(
+	schema: z.ZodObject<T>,
+	defaultValues?: Partial<z.infer<z.ZodObject<T>>> | null,
+): Record<string, unknown> {
+	const result: Record<string, unknown> = {};
+
+	for (const [key, fieldSchema] of Object.entries(schema.shape)) {
+		// @ts-expect-error Type instantiation is excessively deep and possibly infinite
+		const formField = formRegistry.get(fieldSchema as z.ZodType) as
+			| FormField
+			| undefined;
+
+		if (defaultValues && key in defaultValues) {
+			result[key] = defaultValues[key as keyof typeof defaultValues];
+		} else if (formField) {
+			result[key] = formField.initialValue;
+		}
+	}
+
+	return result;
 }
 
 export function useFormFieldContext() {
