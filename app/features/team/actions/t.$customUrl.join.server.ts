@@ -8,7 +8,7 @@ import { TEAM } from "../team-constants";
 import { teamParamsSchema } from "../team-schemas.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUser(request);
+	const user = await requireUser();
 	const { customUrl } = teamParamsSchema.parse(params);
 
 	const team = notFoundIfFalsy(

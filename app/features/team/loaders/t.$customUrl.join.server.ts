@@ -10,7 +10,7 @@ import { teamParamsSchema } from "../team-schemas.server";
 import { isTeamFull, isTeamMember } from "../team-utils";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const user = await requireUser(request);
+	const user = await requireUser();
 	const { customUrl } = teamParamsSchema.parse(params);
 
 	const team = notFoundIfFalsy(

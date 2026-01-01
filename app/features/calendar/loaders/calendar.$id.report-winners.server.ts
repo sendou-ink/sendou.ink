@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { requireUserId } from "~/features/auth/core/user.server";
+import { requireUser } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import {
 	notFoundIfFalsy,
@@ -14,7 +14,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 		params: args.params,
 		schema: idObject,
 	});
-	const user = await requireUserId(args.request);
+	const user = await requireUser();
 	const event = notFoundIfFalsy(await CalendarRepository.findById(params.id));
 
 	unauthorizedIfFalsy(

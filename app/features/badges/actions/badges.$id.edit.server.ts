@@ -21,7 +21,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		schema: editBadgeActionSchema,
 	});
 	const badgeId = z.preprocess(actualNumber, z.number()).parse(params.id);
-	const user = await requireUser(request);
+	const user = await requireUser();
 
 	const badge = notFoundIfFalsy(await BadgeRepository.findById(badgeId));
 
