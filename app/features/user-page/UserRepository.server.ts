@@ -167,6 +167,7 @@ export async function findProfileByIdentifier(
 			"User.favoriteBadgeIds",
 			"User.patronTier",
 			"PlusTier.tier as plusTier",
+			"User.pronouns",
 			jsonArrayFrom(
 				eb
 					.selectFrom("UserWeapon")
@@ -895,6 +896,7 @@ type UpdateProfileArgs = Pick<
 	| "customName"
 	| "motionSens"
 	| "stickSens"
+	| "pronouns"
 	| "inGameName"
 	| "battlefy"
 	| "css"
@@ -936,6 +938,7 @@ export function updateProfile(args: UpdateProfileArgs) {
 				customName: args.customName,
 				motionSens: args.motionSens,
 				stickSens: args.stickSens,
+				pronouns: args.pronouns,
 				inGameName: args.inGameName,
 				css: args.css,
 				battlefy: args.battlefy,
