@@ -54,7 +54,7 @@ export default function SettingsPage() {
 						}}
 						autoSubmit
 					>
-						{({ keys }) => <FormField name={keys.newValue} />}
+						{({ names }) => <FormField name={names.newValue} />}
 					</SendouForm>
 				) : null}
 				{user ? (
@@ -69,7 +69,7 @@ export default function SettingsPage() {
 								}}
 								autoSubmit
 							>
-								{({ keys }) => <FormField name={keys.newValue} />}
+								{({ names }) => <FormField name={names.newValue} />}
 							</SendouForm>
 							<SendouForm
 								schema={disallowScrimPickupsFromUntrustedSchema}
@@ -79,7 +79,7 @@ export default function SettingsPage() {
 								}}
 								autoSubmit
 							>
-								{({ keys }) => <FormField name={keys.newValue} />}
+								{({ names }) => <FormField name={names.newValue} />}
 							</SendouForm>
 							<SendouForm
 								schema={updateNoScreenSchema}
@@ -88,7 +88,7 @@ export default function SettingsPage() {
 								}}
 								autoSubmit
 							>
-								{({ keys }) => <FormField name={keys.newValue} />}
+								{({ names }) => <FormField name={names.newValue} />}
 							</SendouForm>
 						</div>
 					</>

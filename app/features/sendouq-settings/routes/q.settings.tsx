@@ -268,10 +268,10 @@ function VoiceChat() {
 						languages: data.settings.languages ?? [],
 					}}
 				>
-					{({ keys }) => (
+					{({ names }) => (
 						<>
-							<FormField name={keys.vc} />
-							<FormField name={keys.languages} />
+							<FormField name={names.vc} />
+							<FormField name={names.languages} />
 						</>
 					)}
 				</SendouForm>
@@ -303,7 +303,7 @@ function WeaponPool() {
 						weaponPool: defaultWeaponPool,
 					}}
 				>
-					{({ keys }) => <FormField name={keys.weaponPool} />}
+					{({ names }) => <FormField name={names.weaponPool} />}
 				</SendouForm>
 			</div>
 		</details>

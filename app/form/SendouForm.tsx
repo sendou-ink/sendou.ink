@@ -20,12 +20,12 @@ export interface FormContextValue<T extends z.ZodRawShape = z.ZodRawShape> {
 
 const FormContext = React.createContext<FormContextValue | null>(null);
 
-type FormKeys<T extends z.ZodRawShape> = {
+type FormNames<T extends z.ZodRawShape> = {
 	[K in keyof T]: K;
 };
 
 export interface FormRenderProps<T extends z.ZodRawShape> {
-	keys: FormKeys<T>;
+	names: FormNames<T>;
 }
 
 interface SendouFormProps<T extends z.ZodRawShape> {
@@ -127,12 +127,12 @@ export function SendouForm<T extends z.ZodRawShape>({
 		onFieldChange,
 	};
 
-	const keys = Object.fromEntries(
+	const names = Object.fromEntries(
 		Object.keys(schema.shape).map((key) => [key, key]),
-	) as FormKeys<T>;
+	) as FormNames<T>;
 
 	const resolvedChildren =
-		typeof children === "function" ? children({ keys }) : children;
+		typeof children === "function" ? children({ names }) : children;
 
 	// xxx: probably we can have them in the form submission directly
 	const constantFields = Object.entries(schema.shape)

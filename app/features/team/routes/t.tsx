@@ -197,7 +197,7 @@ function NewTeamDialog() {
 			onCloseTo={TEAM_SEARCH_PAGE}
 		>
 			<SendouForm schema={createTeamSchema}>
-				{({ keys }) => <FormField name={keys.name} />}
+				{({ names }) => <FormField name={names.name} />}
 			</SendouForm>
 		</SendouDialog>
 	);
