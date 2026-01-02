@@ -15,7 +15,7 @@ import { buildFiltersSearchParams } from "../builds-schemas.server";
 import { filterBuilds } from "../core/filter.server";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const user = await getUser(request);
+	const user = await getUser();
 	const t = await i18next.getFixedT(request, ["weapons", "common"], {
 		lng: "en",
 	});

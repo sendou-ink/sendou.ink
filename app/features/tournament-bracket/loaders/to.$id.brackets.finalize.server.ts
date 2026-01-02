@@ -1,5 +1,5 @@
 import { type LoaderFunctionArgs, redirect } from "react-router";
-import { requireUserId } from "~/features/auth/core/user.server";
+import { requireUser } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import {
@@ -21,8 +21,8 @@ import { idObject } from "~/utils/zod";
 
 export type FinalizeTournamentLoaderData = SerializeFrom<typeof loader>;
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const user = await requireUserId(request);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const user = await requireUser();
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,

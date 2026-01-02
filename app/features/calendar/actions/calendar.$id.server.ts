@@ -1,7 +1,7 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { z } from "zod";
-import { requireUserId } from "~/features/auth/core/user.server";
+import { requireUser } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import {
@@ -14,8 +14,8 @@ import { CALENDAR_PAGE } from "~/utils/urls";
 import { actualNumber, id } from "~/utils/zod";
 import { canDeleteCalendarEvent } from "../calendar-utils";
 
-export const action: ActionFunction = async ({ params, request }) => {
-	const user = await requireUserId(request);
+export const action: ActionFunction = async ({ params }) => {
+	const user = await requireUser();
 	const parsedParams = z
 		.object({ id: z.preprocess(actualNumber, id) })
 		.parse(params);

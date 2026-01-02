@@ -9,7 +9,7 @@ import { videoInputSchema } from "../vods-schemas";
 import { canEditVideo } from "../vods-utils";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser(request);
+	const user = await requireUser();
 	requireRole(user, "VIDEO_ADDER");
 
 	const data = await parseRequestPayload({

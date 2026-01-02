@@ -1,4 +1,3 @@
-import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
@@ -6,8 +5,8 @@ import { userSkills } from "~/features/mmr/tiered.server";
 import type { Unpacked } from "~/utils/types";
 import * as LFGRepository from "../LFGRepository.server";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUser(request);
+export const loader = async () => {
+	const user = await getUser();
 	const posts = await LFGRepository.posts(user);
 
 	return {
