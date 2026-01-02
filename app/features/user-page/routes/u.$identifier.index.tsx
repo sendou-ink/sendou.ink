@@ -261,6 +261,14 @@ function ExtraInfos() {
 					{data.user.discordUniqueName}
 				</div>
 			)}
+			{data.user.pronouns && (
+				<div className="u__extra-info">
+					<span className="u__extra-info__heading">
+						{t("user:usesPronouns")}
+					</span>{" "}
+					{data.user.pronouns.subject}/{data.user.pronouns.object}
+				</div>
+			)}
 			{data.user.inGameName && (
 				<div className="u__extra-info">
 					<span className="u__extra-info__heading">{t("user:ign.short")}</span>{" "}

@@ -90,6 +90,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 						"User.discordAvatar",
 						"User.battlefy",
 						"User.country",
+						"User.pronouns",
 						"TournamentTeamMember.inGameName",
 						"TournamentTeamMember.isOwner",
 						"TournamentTeamMember.createdAt",
@@ -148,6 +149,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					country: member.country,
 					captain: Boolean(member.isOwner),
 					inGameName: member.inGameName,
+					pronouns: member.pronouns,
 					friendCode: friendCodes[member.userId],
 					joinedAt: databaseTimestampToDate(member.createdAt).toISOString(),
 				};

@@ -83,6 +83,7 @@ export async function findById(id: number) {
 									"TournamentOrganizationMember.role",
 									...COMMON_USER_FIELDS,
 									userChatNameColor,
+									"User.pronouns",
 								])
 								.whereRef(
 									"TournamentOrganizationMember.organizationId",
@@ -101,7 +102,7 @@ export async function findById(id: number) {
 			jsonObjectFrom(
 				eb
 					.selectFrom("User")
-					.select([...COMMON_USER_FIELDS, userChatNameColor])
+					.select([...COMMON_USER_FIELDS, userChatNameColor, "User.pronouns"])
 					.whereRef("User.id", "=", "CalendarEvent.authorId"),
 			).as("author"),
 			jsonArrayFrom(
@@ -111,6 +112,7 @@ export async function findById(id: number) {
 					.select([
 						...COMMON_USER_FIELDS,
 						userChatNameColor,
+						"User.pronouns",
 						"TournamentStaff.role",
 					])
 					.where("TournamentStaff.tournamentId", "=", id),
