@@ -227,7 +227,7 @@ function Message({
 				</div>
 			) : null}
 			<div>
-				<div className="stack horizontal sm items-center">
+				<div className="chat__message__info">
 					<div
 						className="chat__message__user"
 						style={

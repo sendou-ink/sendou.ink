@@ -1126,6 +1126,14 @@ html[dir="rtl"] .fix-rtl {
 	gap: var(--s-2-5);
 }
 
+.chat__message__info {
+	display: flex;
+	flex-direction: row;
+	gap: 0 var(--s-1-5);
+	align-items: center;
+	flex-wrap: wrap;
+}
+
 .chat__avatar-wrapper {
 	position: relative;
 	flex-shrink: 0;
@@ -1172,9 +1180,8 @@ html[dir="rtl"] .fix-rtl {
 }
 
 .chat__message__time {
-	font-size: var(--fonts-xxs);
+	font-size: var(--fonts-xxxs);
 	color: var(--text-lighter);
-	margin-block-start: 3px;
 }
 
 .chat__input-container {
