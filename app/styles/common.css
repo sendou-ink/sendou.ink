@@ -1126,6 +1126,41 @@ html[dir="rtl"] .fix-rtl {
 	gap: var(--s-2-5);
 }
 
+.chat__avatar-wrapper {
+	position: relative;
+	flex-shrink: 0;
+}
+
+.chat__avatar-wrapper--staff .avatar {
+	border: 2px solid var(--theme-secondary);
+	border-radius: 50%;
+}
+
+.chat__avatar-badge {
+	position: absolute;
+	bottom: 4px;
+	left: 50%;
+	transform: translateX(-50%);
+	background-color: var(--theme-secondary);
+	color: var(--black-text);
+	font-size: var(--fonts-xxxxs);
+	font-weight: var(--bold);
+	padding: 1px 4px;
+	border-radius: var(--rounded-full);
+	white-space: nowrap;
+	line-height: 1.2;
+}
+
+.chat__pronouns-tag {
+	background-color: var(--bg-lightest);
+	color: var(--text-lighter);
+	font-size: var(--fonts-xxxs);
+	font-weight: var(--semi-bold);
+	padding: 1px 5px;
+	border-radius: var(--rounded-full);
+	white-space: nowrap;
+}
+
 .chat__message__user {
 	font-weight: var(--semi-bold);
 	font-size: var(--fonts-sm);
