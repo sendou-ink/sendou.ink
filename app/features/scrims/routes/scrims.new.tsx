@@ -71,10 +71,7 @@ export default function NewScrimPage() {
 							{(props) => <WithFormField usersTeams={data.teams} {...props} />}
 						</FormField>
 
-						{/** xxx: wrong, should be just FormField..? */}
-						<FormField name={names.at}>
-							{(props) => <DateFormField {...props} />}
-						</FormField>
+						<FormField name={names.at} />
 						<FormField name={names.rangeEnd} />
 
 						<FormField name={names.baseVisibility}>
@@ -351,51 +348,6 @@ function LutiDivsFormField({
 					</select>
 				</div>
 			</div>
-		</FormFieldWrapper>
-	);
-}
-
-function DateFormField({
-	name,
-	value,
-	onChange,
-	error,
-}: {
-	name: string;
-	value: unknown;
-	onChange: (value: unknown) => void;
-	error: string | undefined;
-}) {
-	const { t } = useTranslation(["forms", "scrims"]);
-
-	const dateValue = value as Date | null;
-
-	return (
-		<FormFieldWrapper id={name} name={name}>
-			<SendouDatePicker
-				label={t("forms:labels.scrimStart")}
-				granularity="minute"
-				errorText={error}
-				errorId={errorMessageId(name)}
-				value={dateValue ? dateToDateValue(dateValue) : null}
-				onChange={(val) => {
-					if (val) {
-						const calendarDateTime = val as CalendarDateTime;
-						onChange(
-							new Date(
-								calendarDateTime.year,
-								calendarDateTime.month - 1,
-								calendarDateTime.day,
-								calendarDateTime.hour,
-								calendarDateTime.minute,
-							),
-						);
-					} else {
-						onChange(null);
-					}
-				}}
-				bottomText={t("forms:bottomTexts.scrimStart")}
-			/>
 		</FormFieldWrapper>
 	);
 }
