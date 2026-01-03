@@ -4,8 +4,6 @@
 }
 
 .messages {
-	border: 2px solid var(--color-bg-high);
-	border-radius: 0 0 var(--rounded) var(--rounded);
 	padding: var(--s-2-5) 0 0 0;
 	display: flex;
 	flex-direction: column;
@@ -94,6 +92,7 @@
 
 .roomButton {
 	border: 0;
+	border-bottom: 2px solid var(--color-border);
 	background-color: transparent;
 	color: var(--color-text-high);
 	border-radius: var(--rounded) var(--rounded) 0 0;

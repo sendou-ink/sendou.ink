@@ -2,7 +2,7 @@
 	position: relative;
 	width: 100%;
 	height: 18px;
-	background-color: var(--bg-light);
+	background-color: var(--color-accent-low);
 }
 
 .progressBar {
@@ -10,7 +10,7 @@
 	left: 0;
 	top: 0;
 	height: 100%;
-	background-color: var(--color-accent-low);
+	background-color: var(--color-accent);
 	transition:
 		width 0.5s ease-in-out,
 		background-color 0.3s ease;
@@ -33,7 +33,7 @@
 .gameMarkerLine {
 	width: 2px;
 	height: 100%;
-	background-color: var(--color-text-high);
+	background-color: var(--color-text);
 	opacity: 0.6;
 }
 
@@ -54,7 +54,6 @@
 .gameMarkerText {
 	font-size: var(--fonts-xxxs);
 	font-weight: var(--semi-bold);
-	color: var(--color-text-high);
 	white-space: nowrap;
 }
 

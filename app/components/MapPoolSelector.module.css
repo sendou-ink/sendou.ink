@@ -57,6 +57,11 @@
 	color: var(--color-accent);
 	opacity: 1 !important;
 	outline: initial;
+
+	&:focus-visible {
+		outline: var(--input-focus-ring);
+		outline-offset: 2px;
+	}
 }
 
 .modeButton.selected {

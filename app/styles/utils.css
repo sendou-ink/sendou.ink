@@ -470,10 +470,6 @@
 	all: unset;
 }
 
-.outline-theme:focus {
-	outline: 2px solid var(--color-accent);
-}
-
 .focus-text-decoration:focus-visible {
 	outline: none !important;
 	text-decoration: underline;

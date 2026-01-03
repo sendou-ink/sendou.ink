@@ -68,13 +68,18 @@
 	font-size: var(--fonts-xs);
 	background-color: var(--color-bg);
 	border-radius: var(--rounded);
-	padding: var(--s-0-5) var(--s-1-5);
+	padding: 0 var(--s-1-5);
 	width: max-content;
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
 	font-weight: var(--semi-bold);
-	min-height: 24px;
+	height: 24px;
+
+	& img {
+		height: 24px;
+		width: 24px;
+	}
 }
 
 .extraInfoButton {
@@ -89,7 +94,7 @@
 	font-weight: var(--semi-bold);
 	color: var(--color-text);
 	border: none;
-	min-height: 24px;
+	height: 24px;
 }
 
 .addNoteButton {
@@ -100,7 +105,8 @@
 	font-weight: var(--semi-bold);
 	background-color: var(--color-bg);
 	white-space: nowrap;
-	height: stretch;
+	height: 100%;
+	border-radius: var(--rounded);
 }
 
 .addNoteButtonEdit > svg {

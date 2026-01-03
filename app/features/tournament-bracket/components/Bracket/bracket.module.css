@@ -17,6 +17,7 @@
 	border: 2px solid var(--color-border);
 	border-radius: var(--rounded-sm);
 	overflow: scroll;
+	user-select: none;
 }
 
 .matchHeader {
@@ -210,6 +211,18 @@ a.match:hover {
 	padding-block: var(--s-2);
 }
 
+.standingsDividerLine {
+	flex: 1;
+	height: 2px;
+	background-color: var(--color-border);
+}
+
+.standingsDividerText {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--bold);
+	white-space: nowrap;
+}
+
 .standingsDividerQualified .standingsDividerLine {
 	background-color: var(--color-success);
 }
@@ -224,16 +237,4 @@ a.match:hover {
 
 .standingsDividerEliminated .standingsDividerText {
 	color: var(--color-error);
-}
-
-.standingsDividerLine {
-	flex: 1;
-	height: 2px;
-	background-color: var(--color-border);
-}
-
-.standingsDividerText {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
-	white-space: nowrap;
 }

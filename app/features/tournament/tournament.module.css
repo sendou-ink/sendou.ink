@@ -63,7 +63,7 @@
 	display: grid;
 	grid-template-columns: max-content max-content max-content max-content;
 	border-radius: var(--rounded);
-	border: 2px solid var(--color-accent);
+	border: 2px solid var(--color-text-accent);
 	width: max-content;
 	margin: 0 auto;
 	overflow: hidden;
@@ -74,7 +74,7 @@
 }
 
 .teamWithRosterMapPoolModeInfo {
-	background-color: var(--color-bg);
+	background-color: var(--color-bg-high);
 	display: flex;
 	font-size: var(--fonts-xxs);
 	justify-content: center;

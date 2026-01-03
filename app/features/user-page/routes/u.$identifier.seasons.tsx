@@ -62,6 +62,7 @@ import {
 } from "../loaders/u.$identifier.seasons.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import styles from "../user-page.module.css";
+import { mainStyles } from "~/components/Main";
 export { loader };
 
 export const handle: SendouRouteHandle = {
@@ -83,7 +84,7 @@ export default function UserSeasonsPage() {
 
 	if (data.results.value.length === 0) {
 		return (
-			<div className="stack lg half-width">
+			<div className={clsx(mainStyles.narrow, "stack lg")}>
 				<SeasonHeader
 					seasonViewed={data.season}
 					seasonsParticipatedIn={data.seasonsParticipatedIn}
@@ -99,7 +100,7 @@ export default function UserSeasonsPage() {
 		`?info=${tab}&page=${data.results.currentPage}&season=${data.season}`;
 
 	return (
-		<div className="stack lg half-width">
+		<div className={clsx(mainStyles.narrow, "stack lg")}>
 			<SeasonHeader
 				seasonViewed={data.season}
 				seasonsParticipatedIn={data.seasonsParticipatedIn}

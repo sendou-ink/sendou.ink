@@ -252,7 +252,7 @@ export function MapPoolStages({
 									return (
 										<button
 											key={mode}
-											className={clsx(styles.modeButton, "outline-theme", {
+											className={clsx(styles.modeButton, {
 												[styles.selected]: selected,
 												[styles.preselected]: preselected,
 												invisible:

@@ -40,7 +40,7 @@
 .lockedBanner {
 	width: 100%;
 	height: 10rem;
-	background-color: var(--color-bg-higher);
+	background-color: var(--color-bg-high);
 	border-start-end-radius: var(--rounded);
 	border-start-start-radius: var(--rounded);
 	grid-area: img;
@@ -74,12 +74,12 @@
 	display: flex;
 	justify-content: space-between;
 	padding: var(--s-2);
-	backdrop-filter: blur(5px);
+	backdrop-filter: var(--backdrop-filter);
 	background: rgb(0 0 0 / 40%);
 	border-start-end-radius: var(--rounded);
 	border-start-start-radius: var(--rounded);
-	color: var(--color-text-high);
 	font-size: var(--fonts-xs);
+	color: #fff;
 }
 
 .stageBannerBottomBar {
@@ -89,12 +89,6 @@
 }
 
 .stageBannerUndoButton {
-	border: 0;
-	background-color: var(--color-error);
-	color: var(--color-text);
-	font-size: var(--fonts-xxs);
-	padding-block: var(--s-1);
-	padding-inline: var(--s-2);
 	position: absolute;
 	right: 8px;
 	bottom: 8px;
@@ -128,8 +122,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 20px;
-	height: 20px;
+	width: var(--input-height-smaller);
+	height: var(--input-height-smaller);
 	border-radius: 50%;
 	font-weight: bold;
 	font-size: var(--fonts-sm);
@@ -259,37 +253,40 @@
 	outline-offset: 2px;
 }
 
-.duringMatchActionsCheckbox {
+.duringMatchActionsCheckbox.duringMatchActionsCheckbox {
+	all: unset;
 	width: 40% !important;
 	height: 1.5rem !important;
 	appearance: none;
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-higher);
 	border-end-start-radius: var(--rounded);
 	border-start-start-radius: var(--rounded);
 	cursor: pointer;
-}
-
-.duringMatchActionsCheckbox:checked {
-	background-color: var(--color-accent);
-}
-
-.duringMatchActionsCheckbox::after {
-	display: flex;
-	width: 100%;
-	height: 100%;
-	align-items: center;
-	justify-content: center;
-	color: var(--color-text-high);
-	content: "Inactive";
 	font-size: var(--fonts-xxs);
 	font-weight: var(--bold);
 	letter-spacing: 0.4px;
-	padding-block-end: 1px;
-}
 
-.duringMatchActionsCheckbox:checked::after {
-	color: var(--color-text-inverse);
-	content: "Playing";
+	&::after {
+		all: unset;
+		display: flex;
+		width: 100%;
+		height: 100%;
+		align-items: center;
+		justify-content: center;
+		color: var(--color-text-high);
+		content: "Inactive";
+		padding-block-end: 1px;
+	}
+
+	&:checked {
+		background-color: var(--color-text-accent);
+
+		&::after {
+			display: flex;
+			color: var(--color-text-inverse);
+			content: "Playing";
+		}
+	}
 }
 
 .duringMatchActionsPlayerName {
@@ -319,7 +316,7 @@
 
 .duringMatchActionsSeed {
 	font-size: var(--fonts-xxs);
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 }
 
 .duringMatchActionsTeamName {
@@ -345,6 +342,11 @@
 	min-height: 45px;
 	display: flex;
 	align-items: center;
+}
+
+.inactivePlayer {
+	color: var(--color-text-high);
+	text-decoration: line-through;
 }
 
 @media screen and (min-width: 640px) {
@@ -384,15 +386,15 @@
 .modeProgressImageNotable {
 	background-color: var(--color-bg-higher);
 	border: none;
-	outline: 2px solid var(--color-bg-higher);
+	outline: 2px solid transparent;
 }
 
 .modeProgressImageTeamOneWin {
-	outline: 2px solid var(--color-accent);
+	outline: 2px solid var(--color-info);
 }
 
 .modeProgressImageTeamTwoWin {
-	outline: 2px solid var(--color-accent);
+	outline: 2px solid var(--color-error);
 }
 
 .modeProgressImageSelected {
@@ -414,14 +416,14 @@
 
 .teamOneDot {
 	border-radius: 100%;
-	background-color: var(--color-accent);
+	background-color: var(--color-info);
 	width: 8px;
 	height: 8px;
 }
 
 .teamTwoDot {
 	border-radius: 100%;
-	background-color: var(--color-accent);
+	background-color: var(--color-error);
 	width: 8px;
 	height: 8px;
 }

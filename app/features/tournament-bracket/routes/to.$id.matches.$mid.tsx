@@ -415,11 +415,7 @@ function EndedEarlyMessage() {
 				{tournament.isOrganizer(user) &&
 				tournament.matchCanBeReopened(data.match.id) ? (
 					<Form method="post" className="contents">
-						<SubmitButton
-							_action="REOPEN_MATCH"
-							className={styles.stageBannerUndoButton}
-							testId="reopen-match-button"
-						>
+						<SubmitButton _action="REOPEN_MATCH" testId="reopen-match-button">
 							Reopen match
 						</SubmitButton>
 					</Form>

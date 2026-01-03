@@ -6,8 +6,6 @@ import { tournamentTeamPage, userPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import styles from "../tournament-bracket.module.css";
 
-const INACTIVE_PLAYER_CSS =
-	"tournament__team-with-roster__member__inactive text-lighter-important";
 export function MatchRosters({
 	teams,
 }: {
@@ -77,7 +75,7 @@ export function MatchRosters({
 									<Link
 										to={userPage(p)}
 										className={clsx("stack horizontal sm items-center", {
-											[INACTIVE_PLAYER_CSS]:
+											[styles.inactivePlayer]:
 												teamOneParticipatedPlayers.length > 0 &&
 												teamOneParticipatedPlayers.every(
 													(participatedPlayer) =>
@@ -135,7 +133,7 @@ export function MatchRosters({
 									<Link
 										to={userPage(p)}
 										className={clsx("stack horizontal sm items-center", {
-											[INACTIVE_PLAYER_CSS]:
+											[styles.inactivePlayer]:
 												teamTwoParticipatedPlayers.length > 0 &&
 												teamTwoParticipatedPlayers.every(
 													(participatedPlayer) =>

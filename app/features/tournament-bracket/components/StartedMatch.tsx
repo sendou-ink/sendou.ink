@@ -197,6 +197,8 @@ export function StartedMatch({
 								<SubmitButton
 									_action="UNDO_REPORT_SCORE"
 									className={styles.stageBannerUndoButton}
+									variant="destructive"
+									size="miniscule"
 									testId="undo-score-button"
 								>
 									{t("tournament:match.action.undoLastScore")}
@@ -212,6 +214,8 @@ export function StartedMatch({
 								<SubmitButton
 									_action="REOPEN_MATCH"
 									className={styles.stageBannerUndoButton}
+									variant="destructive"
+									size="miniscule"
 									testId="reopen-match-button"
 								>
 									{t("tournament:match.action.reopenMatch")}
@@ -871,11 +875,12 @@ function EndSetPopover({
 			placement="top"
 			trigger={
 				<SendouButton
-					variant="minimal"
 					className={clsx(
 						styles.stageBannerUndoButton,
 						styles.stageBannerEndSetButton,
 					)}
+					size="miniscule"
+					variant="destructive"
 				>
 					{t("tournament:match.action.endSet")}
 				</SendouButton>

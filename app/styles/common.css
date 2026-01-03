@@ -159,6 +159,11 @@ input[type="checkbox"] {
 			display: block;
 		}
 	}
+
+	/* Hacky selector to remove the margin bottom from the container from Label.tsx */
+	&:has(+ div > label) + div {
+		margin-bottom: 0;
+	}
 }
 
 input[type="radio"] {
@@ -198,6 +203,11 @@ input[type="radio"] {
 		&::after {
 			background-color: var(--color-text-accent);
 		}
+	}
+
+	/* Hacky selector to remove the margin bottom from the container from Label.tsx */
+	&:has(+ div > label) + div {
+		margin-bottom: 0;
 	}
 }
 

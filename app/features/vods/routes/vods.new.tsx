@@ -269,7 +269,7 @@ function PovFormField() {
 							size="small"
 							variant="minimal"
 							onPress={toggleInputType}
-							className="outline-theme mt-2"
+							className="mt-2"
 						>
 							{asPlainInput
 								? t("calendar:forms.team.player.addAsUser")
