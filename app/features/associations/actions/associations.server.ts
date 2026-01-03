@@ -13,7 +13,7 @@ import { assertUnreachable } from "~/utils/types";
 import * as AssociationRepository from "../AssociationRepository.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: associationsPageActionSchema,

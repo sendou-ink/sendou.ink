@@ -12,7 +12,7 @@ import {
 import { assertUnreachable } from "~/utils/types";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-	const loggedInUser = await requireUser(request);
+	const loggedInUser = requireUser();
 
 	requireRole(loggedInUser, "STAFF");
 

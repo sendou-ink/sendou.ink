@@ -1,7 +1,7 @@
 import type { ActionFunction } from "react-router";
 import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { userArtPageActionSchema } from "~/features/art/art-schemas.server";
-import { requireUserId } from "~/features/auth/core/user.server";
+import { requireUser } from "~/features/auth/core/user.server";
 import { logger } from "~/utils/logger";
 import {
 	errorToastIfFalsy,
@@ -11,7 +11,7 @@ import {
 import { assertUnreachable } from "~/utils/types";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUserId(request);
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: userArtPageActionSchema,
