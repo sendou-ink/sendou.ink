@@ -972,6 +972,13 @@ test.describe("Tournament bracket", () => {
 
 		await submit(page, "confirm-finalize-bracket-button");
 
+		await navigate({
+			page,
+			url: tournamentBracketsPage({ tournamentId }),
+		});
+
+		await page.getByRole("button", { name: "Great White" }).click();
+
 		await expect(page.getByTestId("prepared-maps-check-icon")).toBeVisible();
 
 		// we did not prepare maps for group stage
