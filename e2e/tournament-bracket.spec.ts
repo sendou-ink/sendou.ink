@@ -19,6 +19,7 @@ import {
 	tournamentBracketsPage,
 	tournamentMatchPage,
 	tournamentPage,
+	tournamentTeamsPage,
 	userResultsPage,
 } from "~/utils/urls";
 
@@ -532,7 +533,10 @@ test.describe("Tournament bracket", () => {
 		});
 		await submit(page);
 
-		await page.getByTestId("teams-tab").click();
+		await navigate({
+			page,
+			url: tournamentTeamsPage(tournamentId),
+		});
 
 		await expect(
 			page.getByTestId("team-member-name").getByText("Sendou"),
