@@ -38,7 +38,11 @@ export async function getUserFromRequest(
 
 	if (userIsBanned(userId)) {
 		const url = new URL(request.url);
-		if (url.pathname !== SUSPENDED_PAGE) {
+		const isExemptPath =
+			url.pathname === SUSPENDED_PAGE ||
+			// needed for ban E2E tests
+			url.pathname.startsWith("/auth/impersonate");
+		if (!isExemptPath) {
 			throw redirect(SUSPENDED_PAGE);
 		}
 	}
