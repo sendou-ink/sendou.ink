@@ -14,7 +14,6 @@
 	transform: translate(-50%, 0);
 	max-width: 100%;
 	overflow: auto;
-	scrollbar-gutter: stable;
 	animation: scrolling forwards;
 	animation-timeline: scroll(x self);
 }

@@ -47,6 +47,11 @@ div {
 	box-shadow: none !important;
 }
 
+/* Hacky selector to hide navbar if the planner is present */
+header:has(+ .planner) {
+	display: none !important;
+}
+
 /** Hacky selector to remove the help button on bottom left */
 .tlui-help-menu {
 	display: none;
@@ -57,17 +62,6 @@ div {
 }
 
 #pw-oop-bottom_rail {
-	display: none;
-}
-
-.layout__header {
-	z-index: 2;
-	border: none;
-	backdrop-filter: none;
-	background-color: transparent;
-}
-
-.layout__header__right-container {
 	display: none;
 }
 

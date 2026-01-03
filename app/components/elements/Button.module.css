@@ -79,7 +79,7 @@
 }
 
 .minimal {
-	padding: 0 var(--s-1);
+	padding: 0;
 	border: none;
 	background-color: transparent;
 	color: var(--color-text-accent);
@@ -91,7 +91,6 @@
 }
 
 .minimalSuccess {
-	padding: 0 var(--s-1);
 	border: none;
 	background-color: transparent;
 	color: var(--color-success);
@@ -112,7 +111,6 @@
 }
 
 .minimalDestructive {
-	padding: 0 var(--s-1);
 	border: none;
 	background-color: transparent;
 	color: var(--color-error);

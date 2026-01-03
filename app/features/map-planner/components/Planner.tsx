@@ -23,6 +23,7 @@ import {
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { LogOutIcon } from "~/components/icons/LogOut";
 import { useTheme } from "~/features/theme/core/provider";
 import type { LanguageCode } from "~/modules/i18n/config";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -43,7 +44,7 @@ import {
 	subWeaponImageUrl,
 	weaponCategoryUrl,
 } from "~/utils/urls";
-import { SendouButton } from "../../../components/elements/Button";
+import { LinkButton, SendouButton } from "../../../components/elements/Button";
 import { Image } from "../../../components/Image";
 import type { StageBackgroundStyle } from "../plans-types";
 import styles from "./Planner.module.css";
@@ -482,7 +483,7 @@ function StageBackgroundSelector({
 	};
 
 	return (
-		<div className={clsx(styles.topSection, "scrollbar")}>
+		<div className={clsx(styles.topSection, "scrollbar planner")}>
 			<select
 				className="w-max"
 				value={stageId}
@@ -535,6 +536,7 @@ function StageBackgroundSelector({
 			>
 				{t("common:actions.setBg")}
 			</SendouButton>
+			<LinkButton to="/" icon={<LogOutIcon />} variant="outlined" />
 		</div>
 	);
 }
