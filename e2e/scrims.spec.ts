@@ -1,14 +1,15 @@
 import test, { expect } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { scrimsNewFormSchema } from "~/features/scrims/scrims-schemas";
 import {
 	impersonate,
 	navigate,
 	seed,
 	selectUser,
-	setDateTime,
 	submit,
 } from "~/utils/playwright";
+import { createFormHelpers } from "~/utils/playwright-form";
 import { newScrimPostPage, scrimsPage } from "~/utils/urls";
 
 test.describe("Scrims", () => {
@@ -155,21 +156,22 @@ test.describe("Scrims", () => {
 			url: newScrimPostPage(),
 		});
 
+		const form = createFormHelpers(page, scrimsNewFormSchema);
+
 		const tomorrowDate = new Date();
 		tomorrowDate.setDate(tomorrowDate.getDate() + 1);
 		tomorrowDate.setHours(18, 0, 0, 0);
 
-		await setDateTime({ page, date: tomorrowDate, label: "Start" });
+		await form.setDateTime("at", tomorrowDate);
 
-		await page.getByLabel("Start time flexibility").selectOption("+2hours");
+		await form.select("rangeEnd", "+2hours");
 
-		await page.getByLabel("Maps").selectOption("TOURNAMENT");
+		await form.select("maps", "TOURNAMENT");
 
-		const tournamentButton = page.getByLabel("Tournament");
 		const tournamentSearchInput = page.getByTestId("tournament-search-input");
 		const tournamentSearchItem = page.getByTestId("tournament-search-item");
 
-		await tournamentButton.click();
+		await page.getByRole("button", { name: /Tournament search/i }).click();
 		await tournamentSearchInput.fill("Swim or Sink");
 		await expect(tournamentSearchItem.first()).toBeVisible();
 		await page.keyboard.press("Enter");

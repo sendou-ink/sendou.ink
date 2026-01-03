@@ -1,6 +1,16 @@
 import { add, sub } from "date-fns";
 import { z } from "zod";
 import {
+	customJsonField,
+	datetimeRequired,
+	idConstant,
+	select,
+	selectOptional,
+	stringConstant,
+	textAreaOptional,
+	toggle,
+} from "~/form/fields";
+import {
 	_action,
 	date,
 	falsyToNull,
@@ -18,16 +28,19 @@ const deletePostSchema = z.object({
 	scrimPostId: id,
 });
 
+// xxx: some shared form component to get many users..? or just array of UserFormField
 const fromUsers = z.preprocess(
 	filterOutNullishMembers,
 	z
 		.array(id)
 		.min(3, {
-			message: "Must have at least 3 users excluding yourself",
+			// xxx: translation not working
+			message: "forms:errors.minUsersExcludingYourself",
 		})
 		.max(SCRIM.MAX_PICKUP_SIZE_EXCLUDING_OWNER)
 		.refine(noDuplicates, {
-			message: "Users must be unique",
+			// xxx: translation not working
+			message: "forms:errors.usersMustBeUnique",
 		}),
 );
 
@@ -81,7 +94,7 @@ export const divsSchema = z
 			return true;
 		},
 		{
-			message: "Both min and max div must be set or neither",
+			message: "forms:errors.divBothOrNeither",
 		},
 	)
 	.transform((divs) => {
@@ -146,7 +159,7 @@ export const scrimsNewActionSchema = z
 						return true;
 					},
 					{
-						message: "Date can not be in the past",
+						message: "errors.dateInPast",
 					},
 				)
 				.refine(
@@ -156,7 +169,7 @@ export const scrimsNewActionSchema = z
 						return true;
 					},
 					{
-						message: "Date can not be more than 2 weeks in the future",
+						message: "errors.dateTooFarInFuture",
 					},
 				),
 		),
@@ -180,7 +193,7 @@ export const scrimsNewActionSchema = z
 						return true;
 					},
 					{
-						message: "Date can not be in the past",
+						message: "errors.dateInPast",
 					},
 				),
 			forAssociation: associationIdentifierSchema,
@@ -199,7 +212,7 @@ export const scrimsNewActionSchema = z
 		if (post.maps === "TOURNAMENT" && !post.mapsTournamentId) {
 			ctx.addIssue({
 				path: ["mapsTournamentId"],
-				message: "Tournament must be selected when maps is tournament",
+				message: "errors.tournamentMustBeSelected",
 				code: z.ZodIssueCode.custom,
 			});
 		}
@@ -207,7 +220,7 @@ export const scrimsNewActionSchema = z
 		if (post.maps !== "TOURNAMENT" && post.mapsTournamentId) {
 			ctx.addIssue({
 				path: ["mapsTournamentId"],
-				message: "Tournament should only be selected when maps is tournament",
+				message: "errors.tournamentOnlyWhenMapsIsTournament",
 				code: z.ZodIssueCode.custom,
 			});
 		}
@@ -217,7 +230,7 @@ export const scrimsNewActionSchema = z
 		) {
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
-				message: "Not found visibility must be different from base visibility",
+				message: "errors.visibilityMustBeDifferent",
 				code: z.ZodIssueCode.custom,
 			});
 		}
@@ -225,8 +238,7 @@ export const scrimsNewActionSchema = z
 		if (post.baseVisibility === "PUBLIC" && post.notFoundVisibility.at) {
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
-				message:
-					"Not found visibility can not be set if base visibility is public",
+				message: "errors.visibilityNotAllowedWhenPublic",
 				code: z.ZodIssueCode.custom,
 			});
 		}
@@ -234,7 +246,7 @@ export const scrimsNewActionSchema = z
 		if (post.notFoundVisibility.at && post.notFoundVisibility.at < post.at) {
 			ctx.addIssue({
 				path: ["notFoundVisibility", "at"],
-				message: "Date can not be before the scrim date",
+				message: "errors.dateBeforeScrimDate",
 				code: z.ZodIssueCode.custom,
 			});
 		}
@@ -242,7 +254,148 @@ export const scrimsNewActionSchema = z
 		if (post.notFoundVisibility.at && post.at < new Date()) {
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
-				message: "Can not be set if looking for scrim now",
+				message: "errors.canNotSetIfLookingNow",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+	});
+
+export const scrimRequestFormSchema = z.object({
+	_action: stringConstant("NEW_REQUEST"),
+	scrimPostId: idConstant(),
+	from: customJsonField({ initialValue: null }, fromSchema),
+	message: textAreaOptional({
+		label: "labels.scrimRequestMessage",
+		maxLength: SCRIM.REQUEST_MESSAGE_MAX_LENGTH,
+	}),
+	at: customJsonField(
+		{ initialValue: null },
+		z.preprocess(date, z.date()).nullish(),
+	),
+});
+
+const rangeEndItems = [
+	{ label: "options.scrimFlexibility.notFlexible" as const, value: "" },
+	{ label: "options.scrimFlexibility.+30min" as const, value: "+30min" },
+	{ label: "options.scrimFlexibility.+1hour" as const, value: "+1hour" },
+	{ label: "options.scrimFlexibility.+1.5hours" as const, value: "+1.5hours" },
+	{ label: "options.scrimFlexibility.+2hours" as const, value: "+2hours" },
+	{ label: "options.scrimFlexibility.+2.5hours" as const, value: "+2.5hours" },
+	{ label: "options.scrimFlexibility.+3hours" as const, value: "+3hours" },
+] as const;
+
+const mapsItems = [
+	{ label: "options.scrimMaps.noPreference" as const, value: "NO_PREFERENCE" },
+	{ label: "options.scrimMaps.szOnly" as const, value: "SZ" },
+	{ label: "options.scrimMaps.rankedOnly" as const, value: "RANKED" },
+	{ label: "options.scrimMaps.allModes" as const, value: "ALL" },
+	{ label: "options.scrimMaps.tournament" as const, value: "TOURNAMENT" },
+] as const;
+
+export const scrimsNewFormSchema = z
+	.object({
+		at: datetimeRequired({
+			label: "labels.scrimStart",
+			bottomText: "bottomTexts.scrimStart",
+			min: sub(new Date(), { days: 1 }),
+			max: add(new Date(), { days: 15 }),
+			minMessage: "errors.dateInPast",
+			maxMessage: "errors.dateTooFarInFuture",
+		}),
+		rangeEnd: selectOptional({
+			label: "labels.scrimStartFlexibility",
+			bottomText: "bottomTexts.scrimStartFlexibility",
+			items: [...rangeEndItems],
+		}),
+		baseVisibility: customJsonField(
+			{ initialValue: "PUBLIC" },
+			associationIdentifierSchema,
+		),
+		notFoundVisibility: customJsonField(
+			{ initialValue: { at: null, forAssociation: "PUBLIC" } },
+			z.object({
+				at: z
+					.preprocess(date, z.date())
+					.nullish()
+					.refine(
+						(date) => {
+							if (!date) return true;
+							if (date < sub(new Date(), { days: 1 })) return false;
+							return true;
+						},
+						{ message: "errors.dateInPast" },
+					),
+				forAssociation: associationIdentifierSchema,
+			}),
+		),
+		// xxx: double select
+		divs: customJsonField({ initialValue: null }, divsSchema.nullable()),
+		from: customJsonField({ initialValue: null }, fromSchema),
+		postText: textAreaOptional({
+			label: "labels.scrimText",
+			maxLength: MAX_SCRIM_POST_TEXT_LENGTH,
+		}),
+		managedByAnyone: toggle({
+			label: "labels.scrimManagedByAnyone",
+			bottomText: "bottomTexts.scrimManagedByAnyone",
+		}),
+		maps: select({
+			label: "labels.scrimMaps",
+			items: [...mapsItems],
+		}),
+		mapsTournamentId: customJsonField(
+			{ initialValue: null },
+			z.preprocess(falsyToNull, id.nullable()),
+		),
+	})
+	.superRefine((post, ctx) => {
+		if (post.maps === "TOURNAMENT" && !post.mapsTournamentId) {
+			ctx.addIssue({
+				path: ["mapsTournamentId"],
+				message: "errors.tournamentMustBeSelected",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+
+		if (post.maps !== "TOURNAMENT" && post.mapsTournamentId) {
+			ctx.addIssue({
+				path: ["mapsTournamentId"],
+				message: "errors.tournamentOnlyWhenMapsIsTournament",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+
+		if (
+			post.notFoundVisibility.at &&
+			post.notFoundVisibility.forAssociation === post.baseVisibility
+		) {
+			ctx.addIssue({
+				path: ["notFoundVisibility"],
+				message: "errors.visibilityMustBeDifferent",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+
+		if (post.baseVisibility === "PUBLIC" && post.notFoundVisibility.at) {
+			ctx.addIssue({
+				path: ["notFoundVisibility"],
+				message: "errors.visibilityNotAllowedWhenPublic",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+
+		if (post.notFoundVisibility.at && post.notFoundVisibility.at < post.at) {
+			ctx.addIssue({
+				path: ["notFoundVisibility", "at"],
+				message: "errors.dateBeforeScrimDate",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+
+		if (post.notFoundVisibility.at && post.at < new Date()) {
+			ctx.addIssue({
+				path: ["notFoundVisibility"],
+				message: "errors.canNotSetIfLookingNow",
 				code: z.ZodIssueCode.custom,
 			});
 		}

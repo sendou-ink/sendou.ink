@@ -1,15 +1,15 @@
-import { format, parseISO } from "date-fns";
-import * as React from "react";
+import type { CalendarDateTime } from "@internationalized/date";
+import { SendouDatePicker } from "~/components/elements/DatePicker";
+import { dateToDateValue } from "~/utils/dates";
 import type { FormFieldProps } from "../types";
-import { ariaAttributes } from "../utils";
-import { FormFieldWrapper } from "./FormFieldWrapper";
+import { errorMessageId } from "../utils";
+import { FormFieldWrapper, useTranslatedTexts } from "./FormFieldWrapper";
 
 type DatetimeFormFieldProps = FormFieldProps<"datetime"> & {
 	value: Date | undefined;
 	onChange: (value: Date | undefined) => void;
 };
 
-// xxx: this should probably use react-aria-components
 export function DatetimeFormField({
 	name,
 	label,
@@ -20,40 +20,31 @@ export function DatetimeFormField({
 	value,
 	onChange,
 }: DatetimeFormFieldProps) {
-	const id = React.useId();
+	const { translatedLabel, translatedError, translatedBottomText } =
+		useTranslatedTexts({ label, error, bottomText });
 
-	const inputValue = value ? format(value, "yyyy-MM-dd'T'HH:mm") : "";
-
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const valueStr = e.target.value;
-		if (!valueStr) {
+	const handleChange = (val: CalendarDateTime | null) => {
+		if (val) {
+			onChange(
+				new Date(val.year, val.month - 1, val.day, val.hour, val.minute),
+			);
+		} else {
 			onChange(undefined);
-			return;
 		}
-		onChange(parseISO(valueStr));
 	};
 
 	return (
-		<FormFieldWrapper
-			id={id}
-			name={name}
-			label={label}
-			required={required}
-			error={error}
-			bottomText={bottomText}
-		>
-			<input
-				id={id}
-				type="datetime-local"
-				value={inputValue}
+		<FormFieldWrapper id={name} name={name}>
+			<SendouDatePicker
+				label={translatedLabel ?? ""}
+				granularity="minute"
+				errorText={translatedError}
+				errorId={errorMessageId(name)}
+				bottomText={translatedBottomText}
+				isRequired={required}
+				value={value ? dateToDateValue(value) : null}
 				onChange={handleChange}
 				onBlur={() => onBlur?.()}
-				className="plain"
-				{...ariaAttributes({
-					id,
-					bottomText,
-					error,
-				})}
 			/>
 		</FormFieldWrapper>
 	);

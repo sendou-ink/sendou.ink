@@ -1,21 +1,23 @@
-import type { Key } from "react-aria-components";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import type { FormFieldItems, FormFieldProps } from "../types";
+import { ariaAttributes } from "../utils";
+import { FormFieldWrapper } from "./FormFieldWrapper";
 
 type SelectFormFieldProps<V extends string> = Omit<
 	FormFieldProps<"select">,
 	"items" | "clearable" | "onBlur" | "name"
 > & {
+	name?: string;
 	items: FormFieldItems<V>;
 	value: V | null;
 	onChange: (value: V | null) => void;
-	clearable?: boolean;
 	onSelect?: (value: V) => void;
 	onBlur?: () => void;
 };
 
 export function SelectFormField<V extends string>({
+	name,
 	label,
 	bottomText,
 	items,
@@ -23,19 +25,10 @@ export function SelectFormField<V extends string>({
 	onBlur,
 	value,
 	onChange,
-	clearable,
 	onSelect,
 }: SelectFormFieldProps<V>) {
 	const { t, i18n } = useTranslation();
-
-	const translateIfKey = (text: string | undefined): string | undefined => {
-		if (typeof text !== "string") return text;
-		return text.includes(":") ? t(text as never) : text;
-	};
-
-	const translatedLabel = translateIfKey(label);
-	const translatedBottomText = translateIfKey(bottomText);
-	const translatedError = translateIfKey(error);
+	const id = React.useId();
 
 	const itemsWithResolvedLabels = items.map((item) => {
 		const itemLabel = item.label;
@@ -47,41 +40,41 @@ export function SelectFormField<V extends string>({
 					: String(itemLabel);
 
 		return {
-			...item,
-			id: item.value,
+			value: item.value,
 			resolvedLabel,
 		};
 	});
 
-	const handleSelectionChange = (key: Key | null) => {
-		const newValue = key as V | null;
+	const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+		const newValue = e.target.value === "" ? null : (e.target.value as V);
 		onChange(newValue);
 		if (newValue && onSelect) {
 			onSelect(newValue);
 		}
-		onBlur?.();
 	};
 
-	// xxx: should we switch between react-aria-components Select and a basic one?
 	return (
-		<SendouSelect
-			label={translatedLabel}
-			items={itemsWithResolvedLabels}
-			selectedKey={value}
-			onSelectionChange={handleSelectionChange}
-			clearable={clearable}
-			errorText={translatedError}
-			bottomText={translatedBottomText}
+		<FormFieldWrapper
+			id={id}
+			name={name}
+			label={label}
+			error={error}
+			bottomText={bottomText}
 		>
-			{(item) => (
-				<SendouSelectItem
-					key={item.id}
-					id={item.id}
-					textValue={item.resolvedLabel}
-				>
-					{item.resolvedLabel}
-				</SendouSelectItem>
-			)}
-		</SendouSelect>
+			<select
+				id={id}
+				name={name}
+				value={value ?? ""}
+				onChange={handleChange}
+				onBlur={() => onBlur?.()}
+				{...ariaAttributes({ id, error, bottomText })}
+			>
+				{itemsWithResolvedLabels.map((item) => (
+					<option key={item.value} value={item.value}>
+						{item.resolvedLabel}
+					</option>
+				))}
+			</select>
+		</FormFieldWrapper>
 	);
 }

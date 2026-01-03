@@ -12,7 +12,7 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--s-1-5);
-	min-width: var(--select-width);
+	width: var(--select-width);
 
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);

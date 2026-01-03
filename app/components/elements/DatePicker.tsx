@@ -24,19 +24,26 @@ interface SendouDatePickerProps<T extends DateValue>
 	label: string;
 	bottomText?: string;
 	errorText?: string;
+	errorId?: string;
 	size?: FormFieldSize;
 }
 
 export function SendouDatePicker<T extends DateValue>({
 	label,
 	errorText,
+	errorId,
 	bottomText,
 	size,
 	isRequired,
 	...rest
 }: SendouDatePickerProps<T>) {
 	return (
-		<ReactAriaDatePicker {...rest} validationBehavior="aria">
+		<ReactAriaDatePicker
+			{...rest}
+			validationBehavior="aria"
+			aria-label={label}
+			isInvalid={!!errorText}
+		>
 			<SendouLabel required={isRequired}>{label}</SendouLabel>
 			<Group
 				className={clsx("react-aria-Group", formFieldSizeToClassName(size))}
@@ -46,7 +53,11 @@ export function SendouDatePicker<T extends DateValue>({
 					<CalendarIcon />
 				</Button>
 			</Group>
-			<SendouBottomTexts bottomText={bottomText} errorText={errorText} />
+			<SendouBottomTexts
+				bottomText={bottomText}
+				errorText={errorText}
+				errorId={errorId}
+			/>
 			<Popover>
 				<Dialog>
 					<SendouCalendar />

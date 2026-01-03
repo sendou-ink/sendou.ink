@@ -13,6 +13,7 @@ export const LUTI_DIVS = [
 	"11",
 ] as const;
 
+// xxx: inline constants
 export const SCRIM = {
 	MAX_PICKUP_SIZE_EXCLUDING_OWNER: 5,
 	MIN_MEMBERS_PER_TEAM: 4,

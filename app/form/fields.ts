@@ -22,6 +22,10 @@ import type {
 
 export const formRegistry = z.registry<FormField>();
 
+export type RequiresDefault<T extends z.ZodType> = T & {
+	_requiresDefault: true;
+};
+
 type WithTypedTranslationKeys<T> = Omit<T, "label" | "bottomText"> & {
 	label?: FormsTranslationKey;
 	bottomText?: FormsTranslationKey;
@@ -57,6 +61,7 @@ function prefixItems<V extends string>(
 	}));
 }
 
+// xxx: better name... it's not really json
 export function customJsonField<T extends z.ZodType>(
 	args: Omit<Extract<FormField, { type: "custom" }>, "type">,
 	schema: T,
@@ -342,22 +347,24 @@ export function radioGroup<V extends string>(
 
 type DateTimeArgs = WithTypedTranslationKeys<
 	Omit<FormFieldDatetime<"datetime">, "type" | "initialValue" | "required">
->;
-
-function dateTimePreprocess(value: unknown) {
-	if (typeof value !== "string") return value;
-	if (value === "") return undefined;
-	return new Date(value);
-}
+> & {
+	minMessage?: FormsTranslationKey;
+	maxMessage?: FormsTranslationKey;
+};
 
 export function datetimeRequired(args: DateTimeArgs) {
+	const minDate = args.min ?? new Date(Date.UTC(2015, 4, 28));
+	const maxDate = args.max ?? new Date(Date.UTC(2030, 4, 28));
+
 	return z
-		.preprocess(
-			dateTimePreprocess,
-			z
-				.date({ message: "Required" })
-				.min(args.min ?? new Date(Date.UTC(2015, 4, 28)))
-				.max(args.max ?? new Date(Date.UTC(2030, 4, 28))),
+		.date({ message: "forms:errors.required" })
+		.min(
+			minDate,
+			args.minMessage ? { message: `forms:${args.minMessage}` } : undefined,
+		)
+		.max(
+			maxDate,
+			args.maxMessage ? { message: `forms:${args.maxMessage}` } : undefined,
 		)
 		.register(formRegistry, {
 			...args,
@@ -370,15 +377,20 @@ export function datetimeRequired(args: DateTimeArgs) {
 }
 
 export function datetimeOptional(args: DateTimeArgs) {
+	const minDate = args.min ?? new Date(Date.UTC(2015, 4, 28));
+	const maxDate = args.max ?? new Date(Date.UTC(2030, 4, 28));
+
 	return z
-		.preprocess(
-			dateTimePreprocess,
-			z
-				.date()
-				.min(args.min ?? new Date(Date.UTC(2015, 4, 28)))
-				.max(args.max ?? new Date(Date.UTC(2030, 4, 28)))
-				.optional(),
+		.date()
+		.min(
+			minDate,
+			args.minMessage ? { message: `forms:${args.minMessage}` } : undefined,
 		)
+		.max(
+			maxDate,
+			args.maxMessage ? { message: `forms:${args.maxMessage}` } : undefined,
+		)
+		.optional()
 		.register(formRegistry, {
 			...args,
 			label: prefixKey(args.label),
@@ -523,13 +535,15 @@ export function stringConstantOptional<T extends string>(value?: T) {
 	});
 }
 
-export function idConstant<T extends number>(value: T) {
-	// @ts-expect-error Complex generic type with registry
-	return z.literal(value).register(formRegistry, {
+export function idConstant<T extends number>(value: T): z.ZodLiteral<T>;
+export function idConstant(): RequiresDefault<z.ZodNumber>;
+export function idConstant<T extends number>(value?: T) {
+	const schema = value !== undefined ? z.literal(value) : id;
+	return schema.register(formRegistry, {
 		type: "id-constant",
 		initialValue: value,
-		value,
-	});
+		value: value ?? null,
+	}) as never;
 }
 
 export function idConstantOptional<T extends number>(value?: T) {

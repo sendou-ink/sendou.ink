@@ -47,9 +47,10 @@ type CheckableKeys<T extends z.ZodRawShape> = {
 	[K in keyof Inferred<T>]-?: Inferred<T>[K] extends boolean ? K : never;
 }[keyof Inferred<T>];
 
-// xxx: not working
 type SelectableKeys<T extends z.ZodRawShape> = {
-	[K in keyof Inferred<T>]-?: Inferred<T>[K] extends string ? K : never;
+	[K in keyof Inferred<T>]-?: Inferred<T>[K] extends string | null | undefined
+		? K
+		: never;
 }[keyof Inferred<T>];
 
 type FormFieldHelpers<T extends z.ZodRawShape> = {
@@ -62,6 +63,7 @@ type FormFieldHelpers<T extends z.ZodRawShape> = {
 		name: keyof Inferred<T>,
 		weaponNames: string[],
 	) => Promise<void>;
+	setDateTime: (name: keyof Inferred<T>, date: Date) => Promise<void>;
 	submit: () => Promise<void>;
 	getLabel: <K extends keyof Inferred<T>>(name: K) => string;
 	getItemLabel: (name: keyof Inferred<T>, itemValue: string) => string;
@@ -193,6 +195,30 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 					.getByTestId(`weapon-select-option-${weaponName}`)
 					.click();
 			}
+		},
+
+		async setDateTime(name, date) {
+			const label = getLabel(String(name));
+			const hours = date.getHours();
+
+			const selectSpinbutton = async (spinName: string, value: string) => {
+				const locator = page.getByRole("spinbutton", {
+					name: new RegExp(`^${spinName}, ${label}`),
+				});
+				await locator.click();
+				await locator.clear();
+				await locator.fill(value);
+			};
+
+			await selectSpinbutton("year", date.getFullYear().toString());
+			await selectSpinbutton("month", (date.getMonth() + 1).toString());
+			await selectSpinbutton("day", date.getDate().toString());
+			await selectSpinbutton("hour", String(hours % 12 || 12));
+			await selectSpinbutton(
+				"minute",
+				date.getMinutes().toString().padStart(2, "0"),
+			);
+			await selectSpinbutton("AM/PM", hours >= 12 ? "PM" : "AM");
 		},
 
 		async submit() {

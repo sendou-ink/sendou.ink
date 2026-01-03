@@ -43,6 +43,7 @@
 ## Styling
 
 - use CSS modules
+- class names use camelCasing
 - one file containing React code should have a matching CSS module file e.g. `Component.tsx` should have a file with the same root name i.e. `Component.module.css`
 - clsx library is used for conditional class names
 - prefer using [CSS variables](../app/styles/vars.css) for theming

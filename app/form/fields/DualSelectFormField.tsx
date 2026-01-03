@@ -12,7 +12,6 @@ type DualSelectFormFieldProps<V extends string> = Omit<
 	];
 	value: [V | null, V | null];
 	onChange: (value: [V | null, V | null]) => void;
-	clearable?: boolean;
 };
 
 export function DualSelectFormField<V extends string>({
@@ -22,7 +21,6 @@ export function DualSelectFormField<V extends string>({
 	onBlur,
 	value,
 	onChange,
-	clearable,
 	fields,
 }: DualSelectFormFieldProps<V>) {
 	return (
@@ -34,7 +32,6 @@ export function DualSelectFormField<V extends string>({
 					value={value[0]}
 					onChange={(newValue) => onChange([newValue, value[1]])}
 					onBlur={onBlur}
-					clearable={clearable}
 				/>
 				<SelectFormField
 					label={fields[1].label}
@@ -42,7 +39,6 @@ export function DualSelectFormField<V extends string>({
 					value={value[1]}
 					onChange={(newValue) => onChange([value[0], newValue])}
 					onBlur={onBlur}
-					clearable={clearable}
 				/>
 			</div>
 			<FormFieldMessages name={name} error={error} bottomText={bottomText} />

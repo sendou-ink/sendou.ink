@@ -10,6 +10,13 @@ import styles from "./SendouForm.module.css";
 import type { FormField } from "./types";
 import { errorMessageId, validateField } from "./utils";
 
+type RequiredDefaultKeys<T extends z.ZodRawShape> = {
+	[K in keyof T & string]: T[K] extends { _requiresDefault: true } ? K : never;
+}[keyof T & string];
+
+type HasRequiredDefaults<T extends z.ZodRawShape> =
+	RequiredDefaultKeys<T> extends never ? false : true;
+
 export interface FormContextValue<T extends z.ZodRawShape = z.ZodRawShape> {
 	schema: z.ZodObject<T>;
 	defaultValues?: Partial<z.infer<z.ZodObject<T>>> | null;
@@ -33,10 +40,9 @@ export interface FormRenderProps<T extends z.ZodRawShape> {
 	names: FormNames<T>;
 }
 
-interface SendouFormProps<T extends z.ZodRawShape> {
+type BaseFormProps<T extends z.ZodRawShape> = {
 	children: React.ReactNode | ((props: FormRenderProps<T>) => React.ReactNode);
 	schema: z.ZodObject<T>;
-	defaultValues?: Partial<z.infer<z.ZodObject<T>>> | null;
 	title?: React.ReactNode;
 	submitButtonText?: React.ReactNode;
 	action?: string;
@@ -45,7 +51,15 @@ interface SendouFormProps<T extends z.ZodRawShape> {
 	submitButtonTestId?: string;
 	autoSubmit?: boolean;
 	className?: string;
-}
+};
+
+type SendouFormProps<T extends z.ZodRawShape> = BaseFormProps<T> &
+	(HasRequiredDefaults<T> extends true
+		? {
+				defaultValues: Partial<z.infer<z.ZodObject<T>>> &
+					Record<RequiredDefaultKeys<T>, unknown>;
+			}
+		: { defaultValues?: Partial<z.infer<z.ZodObject<T>>> | null });
 
 export function SendouForm<T extends z.ZodRawShape>({
 	children,
