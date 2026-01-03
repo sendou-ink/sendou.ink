@@ -97,7 +97,7 @@ function Association({
 
 	return (
 		<section>
-			<div className="stack horizontal sm">
+			<div className="stack horizontal sm items-center justify-between">
 				<h2 className="text-lg"> {association.name}</h2>
 				{canManage ? (
 					<FormWithConfirm
@@ -208,7 +208,6 @@ function AssociationInviteCodeActions({
 				<SubmitButton
 					variant="minimal-destructive"
 					size="small"
-					className="mt-4"
 					_action="REFRESH_INVITE_CODE"
 					state={fetcher.state}
 				>
@@ -233,7 +232,7 @@ function AssociationMember({
 	const { t } = useTranslation(["common", "scrims"]);
 
 	return (
-		<div className="stack horizontal sm">
+		<div className="stack horizontal sm items-center justify-between">
 			<Link
 				to={userPage(member)}
 				className="text-main-forced stack horizontal sm"
@@ -257,6 +256,7 @@ function AssociationMember({
 						icon={<TrashIcon className="small-icon" />}
 						className="small-text"
 						variant="minimal-destructive"
+						size="small"
 						type="submit"
 					/>
 				</FormWithConfirm>

@@ -263,14 +263,6 @@ function CustomStylePanel(props: TLUiStylePanelProps) {
 	return (
 		<div className={styles.stylePanel}>
 			<DefaultStylePanel {...props} />
-			<div className={styles.zoomQuickActions}>
-				<div className={styles.quickActions}>
-					<DefaultQuickActions />
-				</div>
-				<div className={styles.zoomMenu}>
-					<DefaultZoomMenu />
-				</div>
-			</div>
 		</div>
 	);
 }
@@ -490,7 +482,7 @@ function StageBackgroundSelector({
 	};
 
 	return (
-		<div className={styles.topSection}>
+		<div className={clsx(styles.topSection, "scrollbar")}>
 			<select
 				className="w-max"
 				value={stageId}
@@ -536,7 +528,6 @@ function StageBackgroundSelector({
 				})}
 			</select>
 			<SendouButton
-				size="small"
 				onPress={() =>
 					onAddBackground({ style: backgroundStyle, stageId, mode })
 				}

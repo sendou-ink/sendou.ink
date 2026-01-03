@@ -26,6 +26,7 @@ import { Main } from "../../../components/Main";
 import { databaseTimestampToDate } from "../../../utils/dates";
 import { logger } from "../../../utils/logger";
 import {
+	BLANK_IMAGE_URL,
 	mapsPageWithMapPool,
 	navIconUrl,
 	scrimsPage,
@@ -190,9 +191,7 @@ function GroupCard({
 						to={teamPage(group.team.customUrl)}
 						className="stack horizontal items-center xs font-bold text-xs"
 					>
-						{group.team.avatarUrl ? (
-							<Avatar url={group.team.avatarUrl} size="xxs" />
-						) : null}
+						<Avatar url={group.team.avatarUrl ?? BLANK_IMAGE_URL} size="xxs" />
 						{group.team.name}
 					</Link>
 				) : null}

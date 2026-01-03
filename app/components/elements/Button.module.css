@@ -16,6 +16,7 @@
 	user-select: none;
 	outline-color: var(--color-text-accent);
 	height: var(--input-height);
+	white-space: nowrap;
 }
 
 .button[data-focus-visible],
