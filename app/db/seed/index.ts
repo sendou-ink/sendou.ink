@@ -86,6 +86,7 @@ import {
 	NZAP_TEST_AVATAR,
 	NZAP_TEST_DISCORD_ID,
 	NZAP_TEST_ID,
+	ORG_ADMIN_TEST_ID,
 } from "./constants";
 import placements from "./placements.json";
 
@@ -737,7 +738,10 @@ function patrons() {
 			.all() as any[]
 	)
 		.map((u) => u.id)
-		.filter((id) => id !== NZAP_TEST_ID && id !== ADMIN_ID) as number[];
+		.filter(
+			(id) =>
+				id !== NZAP_TEST_ID && id !== ADMIN_ID && id !== ORG_ADMIN_TEST_ID,
+		) as number[];
 
 	const givePatronStm = sql.prepare(
 		`update user set "patronTier" = $patronTier, "patronSince" = $patronSince where id = $id`,
@@ -2686,7 +2690,7 @@ async function organization() {
 				roleDisplayName: null,
 			},
 			{
-				userId: 3,
+				userId: ORG_ADMIN_TEST_ID,
 				role: "ADMIN",
 				roleDisplayName: null,
 			},
