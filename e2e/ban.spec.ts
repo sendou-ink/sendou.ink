@@ -1,10 +1,12 @@
-import test, { expect, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import {
+	expect,
 	impersonate,
 	navigate,
 	seed,
+	test,
 	waitForPOSTResponse,
 } from "~/utils/playwright";
 import { ADMIN_PAGE, SUSPENDED_PAGE } from "~/utils/urls";
