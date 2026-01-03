@@ -3,6 +3,7 @@ import { z } from "zod";
 import { seed } from "~/db/seed";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { SEED_VARIATIONS } from "~/features/api-private/constants";
+import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import { parseRequestPayload } from "~/utils/remix.server";
 
@@ -26,6 +27,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	await seed(variation);
 
+	await refreshBannedCache();
 	await refreshSendouQInstance();
 
 	return Response.json(null);

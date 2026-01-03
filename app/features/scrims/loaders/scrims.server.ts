@@ -10,7 +10,7 @@ import { scrimsFiltersSearchParamsObject } from "../scrims-schemas";
 import { dividePosts } from "../scrims-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUser(request);
+	const user = await getUser();
 
 	const now = new Date();
 	const associations = user

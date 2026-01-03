@@ -14,7 +14,7 @@ import { deleteSub } from "../queries/deleteSub.server";
 import { deleteSubSchema } from "../tournament-subs-schemas.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUser(request);
+	const user = await requireUser();
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,

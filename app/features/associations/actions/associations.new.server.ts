@@ -7,7 +7,7 @@ import { associationsPage } from "~/utils/urls";
 import * as AssociationRepository from "../AssociationRepository.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUser(request);
+	const user = await requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: createNewAssociationSchema,

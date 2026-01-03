@@ -7,8 +7,8 @@ import * as TeamRepository from "../TeamRepository.server";
 import { teamParamsSchema } from "../team-schemas.server";
 import { isTeamManager } from "../team-utils";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const user = await requireUser(request);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const user = await requireUser();
 	const { customUrl } = teamParamsSchema.parse(params);
 
 	const team = notFoundIfFalsy(

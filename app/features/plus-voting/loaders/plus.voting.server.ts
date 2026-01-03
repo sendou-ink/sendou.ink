@@ -33,8 +33,8 @@ export type PlusVotingLoaderData =
 			};
 	  };
 
-export const loader: LoaderFunction = async ({ request }) => {
-	const user = await getUser(request);
+export const loader: LoaderFunction = async () => {
+	const user = await getUser();
 
 	const now = new Date();
 	const nextVotingRange = nextNonCompletedVoting(now);

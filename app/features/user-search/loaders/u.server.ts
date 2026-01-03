@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
-import { getUserId } from "~/features/auth/core/user.server";
+import { getUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseSearchParams } from "~/utils/remix.server";
@@ -16,7 +16,7 @@ const searchParamsSchema = z.object({
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
-		const user = await getUserId(request);
+		const user = await getUser();
 		if (!user) {
 			return null;
 		}
