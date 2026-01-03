@@ -1,7 +1,8 @@
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
 import {
+	expect,
 	impersonate,
 	isNotVisible,
 	navigate,
@@ -9,6 +10,7 @@ import {
 	selectUser,
 	startBracket,
 	submit,
+	test,
 } from "~/utils/playwright";
 import {
 	NOTIFICATIONS_URL,
@@ -17,6 +19,7 @@ import {
 	tournamentBracketsPage,
 	tournamentMatchPage,
 	tournamentPage,
+	tournamentTeamsPage,
 	userResultsPage,
 } from "~/utils/urls";
 
@@ -530,7 +533,10 @@ test.describe("Tournament bracket", () => {
 		});
 		await submit(page);
 
-		await page.getByTestId("teams-tab").click();
+		await navigate({
+			page,
+			url: tournamentTeamsPage(tournamentId),
+		});
 
 		await expect(
 			page.getByTestId("team-member-name").getByText("Sendou"),
@@ -965,6 +971,13 @@ test.describe("Tournament bracket", () => {
 		await page.getByLabel("Expected teams").selectOption("8");
 
 		await submit(page, "confirm-finalize-bracket-button");
+
+		await navigate({
+			page,
+			url: tournamentBracketsPage({ tournamentId }),
+		});
+
+		await page.getByRole("button", { name: "Great White" }).click();
 
 		await expect(page.getByTestId("prepared-maps-check-icon")).toBeVisible();
 

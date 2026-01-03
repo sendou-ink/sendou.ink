@@ -1,13 +1,15 @@
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
 import type { GearType } from "~/db/tables";
 import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
 import {
+	expect,
 	impersonate,
 	navigate,
 	seed,
 	selectWeapon,
 	submit,
+	test,
 } from "~/utils/playwright";
 import { BUILDS_PAGE, userBuildsPage, userNewBuildPage } from "~/utils/urls";
 

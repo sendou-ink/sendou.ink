@@ -1,7 +1,41 @@
-import { expect, type Locator, type Page } from "@playwright/test";
+import {
+	test as base,
+	expect,
+	type Locator,
+	type Page,
+} from "@playwright/test";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
 import { tournamentBracketsPage } from "./urls";
+
+const BASE_PORT = 6173;
+
+type WorkerFixtures = {
+	workerPort: number;
+	workerBaseURL: string;
+};
+
+export const test = base.extend<object, WorkerFixtures>({
+	workerPort: [
+		// biome-ignore lint/correctness/noEmptyPattern: Playwright requires object destructuring
+		async ({}, use, workerInfo) => {
+			const port = BASE_PORT + workerInfo.parallelIndex;
+			await use(port);
+		},
+		{ scope: "worker" },
+	],
+	workerBaseURL: [
+		async ({ workerPort }, use) => {
+			await use(`http://localhost:${workerPort}`);
+		},
+		{ scope: "worker" },
+	],
+	baseURL: async ({ workerBaseURL }, use) => {
+		await use(workerBaseURL);
+	},
+});
+
+export { expect };
 
 export async function selectWeapon({
 	page,
@@ -65,7 +99,15 @@ export async function selectUser({
 
 /** page.goto that waits for the page to be hydrated before proceeding */
 export async function navigate({ page, url }: { page: Page; url: string }) {
-	await page.goto(url);
+	// Rewrite absolute URLs with localhost to use the worker's baseURL
+	// This handles invite links and other URLs embedded with VITE_SITE_DOMAIN
+	let targetUrl = url;
+	if (url.startsWith("http://localhost:")) {
+		const urlObj = new URL(url);
+		// Extract just the path and search params, let Playwright use the correct baseURL
+		targetUrl = urlObj.pathname + urlObj.search;
+	}
+	await page.goto(targetUrl);
 	await expectIsHydrated(page);
 }
 

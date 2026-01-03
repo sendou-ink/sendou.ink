@@ -1,5 +1,11 @@
-import test, { expect } from "@playwright/test";
-import { impersonate, navigate, seed } from "~/utils/playwright";
+import {
+	expect,
+	impersonate,
+	navigate,
+	seed,
+	test,
+	waitForPOSTResponse,
+} from "~/utils/playwright";
 import { SETTINGS_PAGE } from "~/utils/urls";
 
 test.describe("Settings", () => {
@@ -22,9 +28,9 @@ test.describe("Settings", () => {
 			url: SETTINGS_PAGE,
 		});
 
-		await page
-			.getByTestId("UPDATE_DISABLE_BUILD_ABILITY_SORTING-switch")
-			.click();
+		await waitForPOSTResponse(page, () =>
+			page.getByTestId("UPDATE_DISABLE_BUILD_ABILITY_SORTING-switch").click(),
+		);
 
 		await navigate({
 			page,

@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-import { navigate, seed } from "~/utils/playwright";
+import { expect, navigate, seed, test } from "~/utils/playwright";
 import { topSearchPage, userPage } from "~/utils/urls";
 
 test.describe("Top search", () => {
