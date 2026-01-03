@@ -39,7 +39,6 @@ export default function SettingsPage() {
 	const user = useUser();
 	const { t } = useTranslation(["common"]);
 
-	// xxx: default values not working?
 	return (
 		<Main halfWidth>
 			<div className="stack md">

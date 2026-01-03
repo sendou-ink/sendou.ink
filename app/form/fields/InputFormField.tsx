@@ -3,12 +3,13 @@ import type { FormFieldProps } from "../types";
 import { ariaAttributes } from "../utils";
 import { FormFieldWrapper } from "./FormFieldWrapper";
 
-type InputFormFieldProps = Omit<FormFieldProps<"text-field">, "name"> & {
+type InputFormFieldProps = FormFieldProps<"text-field"> & {
 	value: string;
 	onChange: (value: string) => void;
 };
 
 export function InputFormField({
+	name,
 	label,
 	bottomText,
 	leftAddon,
@@ -24,6 +25,7 @@ export function InputFormField({
 	return (
 		<FormFieldWrapper
 			id={id}
+			name={name}
 			label={label}
 			required={required}
 			error={error}

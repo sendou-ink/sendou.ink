@@ -30,5 +30,17 @@
 	"labels.languages": "",
 	"options.voiceChat.yes": "",
 	"options.voiceChat.no": "",
-	"options.voiceChat.listenOnly": ""
+	"options.voiceChat.listenOnly": "",
+	"labels.buildTitle": "",
+	"labels.buildDescription": "",
+	"labels.buildModes": "",
+	"labels.buildPrivate": "",
+	"labels.buildWeapons": "",
+	"bottomTexts.buildPrivate": "",
+	"modes.TW": "",
+	"modes.SZ": "",
+	"modes.TC": "",
+	"modes.RM": "",
+	"modes.CB": "",
+	"errors.gearAllOrNone": ""
 }

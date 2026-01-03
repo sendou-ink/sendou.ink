@@ -3,12 +3,13 @@ import type { FormFieldProps } from "../types";
 import { ariaAttributes } from "../utils";
 import { FormFieldWrapper } from "./FormFieldWrapper";
 
-type TextareaFormFieldProps = Omit<FormFieldProps<"text-area">, "name"> & {
+type TextareaFormFieldProps = FormFieldProps<"text-area"> & {
 	value: string;
 	onChange: (value: string) => void;
 };
 
 export function TextareaFormField({
+	name,
 	label,
 	bottomText,
 	maxLength,
@@ -22,6 +23,7 @@ export function TextareaFormField({
 	return (
 		<FormFieldWrapper
 			id={id}
+			name={name}
 			label={label}
 			error={error}
 			bottomText={bottomText}
@@ -34,7 +36,6 @@ export function TextareaFormField({
 				value={value}
 				onChange={(e) => onChange(e.target.value)}
 				onBlur={onBlur}
-				className="plain"
 				{...ariaAttributes({
 					id,
 					bottomText,

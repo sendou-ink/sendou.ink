@@ -92,7 +92,12 @@ export interface FormFieldDatetime<T extends string> extends FormFieldBase<T> {
 }
 
 interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
+	minCount?: number;
 	maxCount: number;
+	/** Does the weapon pool have an ordering? If true, the order is fixed and cannot be changed by the user (order ASC by weapon id) */
+	disableSorting?: boolean;
+	/** Can user favorite weapons in the pool? If disabled, all weapons have isFavorite: false */
+	disableFavorites?: boolean;
 }
 
 interface FormFieldMapPool<T extends string> extends FormFieldBase<T> {
@@ -137,6 +142,7 @@ export type FormFieldProps<T extends FormField["type"]> = Omit<
 	Extract<FormField, { type: T }>,
 	"type" | "initialValue"
 > & {
+	name: string;
 	error?: string;
-	onBlur: () => void;
+	onBlur: (latestValue?: unknown) => void;
 };

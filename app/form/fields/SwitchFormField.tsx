@@ -4,16 +4,14 @@ import { SendouSwitch } from "~/components/elements/Switch";
 import type { FormFieldProps } from "../types";
 import { FormFieldMessages } from "./FormFieldWrapper";
 
-type SwitchFormFieldProps = Omit<
-	FormFieldProps<"switch">,
-	"onBlur" | "name"
-> & {
+type SwitchFormFieldProps = Omit<FormFieldProps<"switch">, "onBlur"> & {
 	checked: boolean;
 	onChange: (checked: boolean) => void;
 	isDisabled?: boolean;
 };
 
 export function SwitchFormField({
+	name,
 	label,
 	bottomText,
 	error,
@@ -43,6 +41,7 @@ export function SwitchFormField({
 				</SendouSwitch>
 			</div>
 			<FormFieldMessages
+				name={name}
 				error={translatedError}
 				bottomText={translatedBottomText}
 			/>

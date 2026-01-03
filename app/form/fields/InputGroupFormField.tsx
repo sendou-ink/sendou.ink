@@ -6,7 +6,7 @@ import { FormFieldWrapper } from "./FormFieldWrapper";
 
 type RadioGroupFormFieldProps<V extends string> = Omit<
 	FormFieldProps<"radio-group">,
-	"items" | "name"
+	"items"
 > & {
 	items: FormFieldItemsWithImage<V>;
 	value: V;
@@ -14,6 +14,7 @@ type RadioGroupFormFieldProps<V extends string> = Omit<
 };
 
 export function RadioGroupFormField<V extends string>({
+	name,
 	label,
 	bottomText,
 	items,
@@ -32,6 +33,7 @@ export function RadioGroupFormField<V extends string>({
 	return (
 		<FormFieldWrapper
 			id={id}
+			name={name}
 			label={label}
 			required={required}
 			error={error}
@@ -72,7 +74,7 @@ export function RadioGroupFormField<V extends string>({
 
 type CheckboxGroupFormFieldProps<V extends string> = Omit<
 	FormFieldProps<"checkbox-group">,
-	"items" | "name"
+	"items"
 > & {
 	items: FormFieldItemsWithImage<V>;
 	value: V[];
@@ -80,6 +82,7 @@ type CheckboxGroupFormFieldProps<V extends string> = Omit<
 };
 
 export function CheckboxGroupFormField<V extends string>({
+	name,
 	label,
 	bottomText,
 	items,
@@ -106,6 +109,7 @@ export function CheckboxGroupFormField<V extends string>({
 	return (
 		<FormFieldWrapper
 			id={id}
+			name={name}
 			label={label}
 			required={required}
 			error={error}

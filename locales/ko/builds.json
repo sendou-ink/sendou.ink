@@ -1,5 +1,7 @@
 {
 	"addBuild": "빌드 추가",
+	"forms.title.new": "",
+	"forms.title.edit": "",
 	"reachBuildMaxCount": "빌드 개수 상한에 도달했습니다.",
 	"noBuilds": "빌드가 아직 없습니다. 첫 빌드를 추가하세요!",
 	"buildCard.info": "정보",
@@ -10,8 +12,8 @@
 	"forms.gear.HEAD": "머리 기어",
 	"forms.gear.CLOTHES": "상의 기어",
 	"forms.gear.SHOES": "신발 기어",
+	"forms.abilities": "",
 	"forms.private.info": "개인 빌드는 당신에게만 보여집니다",
-	"forms.noGear.info": "",
 	"deleteConfirm": "'{{title}}' 빌드를 삭제하시겠습니까?",
 	"stats.count.title": "{{weapon}} 빌드 {{count}}개의 통계",
 	"stats.ap.title": "기어 파워 평균",

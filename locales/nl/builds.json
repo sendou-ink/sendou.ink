@@ -1,5 +1,7 @@
 {
 	"addBuild": "Uitrusting toevoegen",
+	"forms.title.new": "",
+	"forms.title.edit": "",
 	"reachBuildMaxCount": "",
 	"noBuilds": "Nog geen uitrustingen gevonden. Voeg je eerste toe!",
 	"buildCard.info": "Info",
@@ -10,8 +12,8 @@
 	"forms.gear.HEAD": "Uitrusting (accessoires)",
 	"forms.gear.CLOTHES": "Uitrusting (kleding)",
 	"forms.gear.SHOES": "Uitrusting (schoenen)",
+	"forms.abilities": "",
 	"forms.private.info": "",
-	"forms.noGear.info": "",
 	"deleteConfirm": "Verwijder uitrusting '{{title}}'?",
 	"stats.count.title": "",
 	"stats.ap.title": "",

@@ -34,16 +34,19 @@ export type WeaponPoolItem = {
 	isFavorite: boolean;
 };
 
-type WeaponPoolFormFieldProps = Omit<FormFieldProps<"weapon-pool">, "name"> & {
+type WeaponPoolFormFieldProps = FormFieldProps<"weapon-pool"> & {
 	value: WeaponPoolItem[];
 	onChange: (value: WeaponPoolItem[]) => void;
 };
 
 export function WeaponPoolFormField({
+	name,
 	label,
 	bottomText,
 	error,
 	maxCount,
+	disableSorting,
+	disableFavorites,
 	value,
 	onChange,
 	onBlur,
@@ -62,14 +65,19 @@ export function WeaponPoolFormField({
 	const disabledWeaponIds = value.map((weapon) => weapon.id);
 
 	const handleSelect = (weaponId: MainWeaponId) => {
-		onChange([
-			...value,
-			{
-				id: weaponId,
-				isFavorite: false,
-			},
-		]);
-		onBlur();
+		const newWeapon = {
+			id: weaponId,
+			isFavorite: false,
+		};
+
+		const newValue = [...value, newWeapon];
+
+		if (disableSorting) {
+			newValue.sort((a, b) => a.id - b.id);
+		}
+
+		onChange(newValue);
+		onBlur(newValue);
 	};
 
 	const handleToggleFavorite = (weaponId: MainWeaponId) => {
@@ -83,8 +91,9 @@ export function WeaponPoolFormField({
 	};
 
 	const handleRemove = (weaponId: MainWeaponId) => {
-		onChange(value.filter((weapon) => weapon.id !== weaponId));
-		onBlur();
+		const newValue = value.filter((weapon) => weapon.id !== weaponId);
+		onChange(newValue);
+		onBlur(newValue);
 	};
 
 	const handleDragEnd = (event: DragEndEvent) => {
@@ -102,9 +111,34 @@ export function WeaponPoolFormField({
 		}
 	};
 
+	const weaponList = (
+		<ul className={styles.list}>
+			{value.map((weapon) =>
+				disableSorting ? (
+					<StaticWeaponItem
+						key={weapon.id}
+						weapon={weapon}
+						showFavoriteToggle={!disableFavorites}
+						onToggleFavorite={handleToggleFavorite}
+						onRemove={handleRemove}
+					/>
+				) : (
+					<SortableWeaponItem
+						key={weapon.id}
+						weapon={weapon}
+						showFavoriteToggle={!disableFavorites}
+						onToggleFavorite={handleToggleFavorite}
+						onRemove={handleRemove}
+					/>
+				),
+			)}
+		</ul>
+	);
+
 	return (
 		<FormFieldWrapper
 			id={id}
+			name={name}
 			label={label}
 			error={error}
 			bottomText={bottomText}
@@ -125,38 +159,89 @@ export function WeaponPoolFormField({
 			/>
 
 			{value.length > 0 ? (
-				<DndContext
-					sensors={sensors}
-					collisionDetection={closestCenter}
-					onDragEnd={handleDragEnd}
-				>
-					<SortableContext
-						items={value.map((weapon) => weapon.id)}
-						strategy={verticalListSortingStrategy}
+				disableSorting ? (
+					weaponList
+				) : (
+					<DndContext
+						sensors={sensors}
+						collisionDetection={closestCenter}
+						onDragEnd={handleDragEnd}
 					>
-						<ul className={styles.list}>
-							{value.map((weapon) => (
-								<SortableWeaponItem
-									key={weapon.id}
-									weapon={weapon}
-									onToggleFavorite={handleToggleFavorite}
-									onRemove={handleRemove}
-								/>
-							))}
-						</ul>
-					</SortableContext>
-				</DndContext>
+						<SortableContext
+							items={value.map((weapon) => weapon.id)}
+							strategy={verticalListSortingStrategy}
+						>
+							{weaponList}
+						</SortableContext>
+					</DndContext>
+				)
 			) : null}
 		</FormFieldWrapper>
 	);
 }
 
-function SortableWeaponItem({
+function StaticWeaponItem({
 	weapon,
+	showFavoriteToggle,
 	onToggleFavorite,
 	onRemove,
 }: {
 	weapon: WeaponPoolItem;
+	showFavoriteToggle: boolean;
+	onToggleFavorite: (id: MainWeaponId) => void;
+	onRemove: (id: MainWeaponId) => void;
+}) {
+	const { t } = useTranslation(["weapons"]);
+
+	return (
+		<li className={styles.item}>
+			<WeaponImage
+				weaponSplId={weapon.id}
+				variant={
+					showFavoriteToggle && weapon.isFavorite ? "badge-5-star" : "badge"
+				}
+				size={32}
+				className={styles.weaponImage}
+			/>
+			<span className={styles.weaponName}>
+				{t(`weapons:MAIN_${weapon.id}`)}
+			</span>
+			<div className={styles.actions}>
+				{showFavoriteToggle ? (
+					<SendouButton
+						variant="minimal"
+						size="small"
+						icon={
+							weapon.isFavorite ? (
+								<StarFilledIcon className={styles.starIconFilled} />
+							) : (
+								<StarIcon className={styles.starIconOutlined} />
+							)
+						}
+						aria-label="Toggle favorite"
+						onPress={() => onToggleFavorite(weapon.id)}
+					/>
+				) : null}
+				<SendouButton
+					variant="minimal-destructive"
+					size="small"
+					icon={<TrashIcon />}
+					aria-label="Delete"
+					onPress={() => onRemove(weapon.id)}
+				/>
+			</div>
+		</li>
+	);
+}
+
+function SortableWeaponItem({
+	weapon,
+	showFavoriteToggle,
+	onToggleFavorite,
+	onRemove,
+}: {
+	weapon: WeaponPoolItem;
+	showFavoriteToggle: boolean;
 	onToggleFavorite: (id: MainWeaponId) => void;
 	onRemove: (id: MainWeaponId) => void;
 }) {
@@ -192,26 +277,31 @@ function SortableWeaponItem({
 			</button>
 			<WeaponImage
 				weaponSplId={weapon.id}
-				variant={weapon.isFavorite ? "badge-5-star" : "badge"}
+				variant={
+					showFavoriteToggle && weapon.isFavorite ? "badge-5-star" : "badge"
+				}
 				size={32}
+				className={styles.weaponImage}
 			/>
 			<span className={styles.weaponName}>
 				{t(`weapons:MAIN_${weapon.id}`)}
 			</span>
 			<div className={styles.actions}>
-				<SendouButton
-					variant="minimal"
-					size="small"
-					icon={
-						weapon.isFavorite ? (
-							<StarFilledIcon className={styles.starIconFilled} />
-						) : (
-							<StarIcon className={styles.starIconOutlined} />
-						)
-					}
-					aria-label="Toggle favorite"
-					onPress={() => onToggleFavorite(weapon.id)}
-				/>
+				{showFavoriteToggle ? (
+					<SendouButton
+						variant="minimal"
+						size="small"
+						icon={
+							weapon.isFavorite ? (
+								<StarFilledIcon className={styles.starIconFilled} />
+							) : (
+								<StarIcon className={styles.starIconOutlined} />
+							)
+						}
+						aria-label="Toggle favorite"
+						onPress={() => onToggleFavorite(weapon.id)}
+					/>
+				) : null}
 				<SendouButton
 					variant="minimal-destructive"
 					size="small"

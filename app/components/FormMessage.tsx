@@ -6,14 +6,17 @@ export function FormMessage({
 	type,
 	className,
 	spaced = true,
+	id,
 }: {
 	children: React.ReactNode;
 	type: "error" | "info";
 	className?: string;
 	spaced?: boolean;
+	id?: string;
 }) {
 	return (
 		<div
+			id={id}
 			className={clsx(
 				{ "info-message": type === "info", "error-message": type === "error" },
 				{ "no-margin": !spaced },

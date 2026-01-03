@@ -4,13 +4,14 @@ import type { FormFieldProps } from "../types";
 import { ariaAttributes } from "../utils";
 import { FormFieldWrapper } from "./FormFieldWrapper";
 
-type DatetimeFormFieldProps = Omit<FormFieldProps<"datetime">, "name"> & {
+type DatetimeFormFieldProps = FormFieldProps<"datetime"> & {
 	value: Date | undefined;
 	onChange: (value: Date | undefined) => void;
 };
 
 // xxx: this should probably use react-aria-components
 export function DatetimeFormField({
+	name,
 	label,
 	bottomText,
 	error,
@@ -35,6 +36,7 @@ export function DatetimeFormField({
 	return (
 		<FormFieldWrapper
 			id={id}
+			name={name}
 			label={label}
 			required={required}
 			error={error}

@@ -13,8 +13,10 @@ import {
 	weaponIdHasAlts,
 	weaponIdToArrayWithAlts,
 } from "~/modules/in-game-lists/weapon-ids";
+import { LimitReachedError } from "~/utils/errors";
 import invariant from "~/utils/invariant";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { BUILD } from "./builds-constants";
 import { sortAbilities } from "./core/ability-sorting.server";
 
 export async function allByUserId(
@@ -94,9 +96,9 @@ interface CreateArgs {
 	title: TablesInsertable["Build"]["title"];
 	description: TablesInsertable["Build"]["description"];
 	modes: Array<ModeShort> | null;
-	headGearSplId: TablesInsertable["Build"]["headGearSplId"];
-	clothesGearSplId: TablesInsertable["Build"]["clothesGearSplId"];
-	shoesGearSplId: TablesInsertable["Build"]["shoesGearSplId"];
+	headGearSplId: number | null;
+	clothesGearSplId: number | null;
+	shoesGearSplId: number | null;
 	weaponSplIds: Array<BuildWeapon["weaponSplId"]>;
 	abilities: BuildAbilitiesTuple;
 	private: TablesInsertable["Build"]["private"];
@@ -123,9 +125,9 @@ async function createInTrx({
 								.sort((a, b) => modesShort.indexOf(a) - modesShort.indexOf(b)),
 						)
 					: null,
-			headGearSplId: args.headGearSplId,
-			clothesGearSplId: args.clothesGearSplId,
-			shoesGearSplId: args.shoesGearSplId,
+			headGearSplId: args.headGearSplId ?? -1,
+			clothesGearSplId: args.clothesGearSplId ?? -1,
+			shoesGearSplId: args.shoesGearSplId ?? -1,
 			private: args.private,
 		})
 		.returningAll()
@@ -182,7 +184,19 @@ async function createInTrx({
 }
 
 export async function create(args: CreateArgs) {
-	return db.transaction().execute(async (trx) => createInTrx({ args, trx }));
+	return db.transaction().execute(async (trx) => {
+		await createInTrx({ args, trx });
+
+		const { count } = await trx
+			.selectFrom("Build")
+			.select((eb) => eb.fn.countAll<number>().as("count"))
+			.where("ownerId", "=", args.ownerId)
+			.executeTakeFirstOrThrow();
+
+		if (count > BUILD.MAX_COUNT) {
+			throw new LimitReachedError("Max amount of builds reached");
+		}
+	});
 }
 
 export async function update(args: CreateArgs & { id: number }) {

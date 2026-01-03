@@ -1,37 +1,53 @@
 import { z } from "zod";
 import { BADGE } from "~/features/badges/badges-constants";
+import {
+	checkboxGroup,
+	customJsonField,
+	idConstantOptional,
+	textAreaOptional,
+	textFieldRequired,
+	toggle,
+	weaponPool,
+} from "~/form/fields";
+import {
+	clothesGearIds,
+	headGearIds,
+	shoesGearIds,
+} from "~/modules/in-game-lists/gear-ids";
 import { isCustomUrl } from "~/utils/urls";
 import {
 	_action,
 	actualNumber,
 	checkboxValueToDbBoolean,
+	clothesMainSlotAbility,
 	customCssVarObject,
 	dbBoolean,
 	emptyArrayToNull,
 	falsyToNull,
+	headMainSlotAbility,
 	id,
 	processMany,
 	safeJSONParse,
 	safeNullableStringSchema,
+	shoesMainSlotAbility,
+	stackableAbility,
 	undefinedToNull,
 	weaponSplId,
 } from "~/utils/zod";
-import * as Seasons from "../mmr/core/Seasons";
 import {
+	COUNTRY_CODES,
 	HIGHLIGHT_CHECKBOX_NAME,
 	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
-} from "./components/UserResultsTable";
-import { COUNTRY_CODES, USER } from "./user-page-constants";
+	USER,
+} from "./user-page-constants";
 
 export const userParamsSchema = z.object({ identifier: z.string() });
 
+// xxx: e2e test problem, check if we want to have the refine Seasons here: season: xxx....refine((nth) => !nth || Seasons.allStarted(new Date()).includes(nth))
 export const seasonsSearchParamsSchema = z.object({
 	page: z.coerce.number().optional(),
 	info: z.enum(["weapons", "stages", "mates", "enemies"]).optional(),
-	season: z.coerce
-		.number()
-		.optional()
-		.refine((nth) => !nth || Seasons.allStarted(new Date()).includes(nth)),
+	season: z.coerce.number().optional(),
 });
 
 export const userEditActionSchema = z
@@ -163,3 +179,111 @@ export const userResultsPageSearchParamsSchema = z.object({
 	all: z.stringbool().catch(false),
 	page: z.coerce.number().min(1).max(1_000).catch(1),
 });
+
+const headGearIdSchema = z
+	.number()
+	.nullable()
+	.refine(
+		(val) =>
+			val === null || headGearIds.includes(val as (typeof headGearIds)[number]),
+	);
+
+const clothesGearIdSchema = z
+	.number()
+	.nullable()
+	.refine(
+		(val) =>
+			val === null ||
+			clothesGearIds.includes(val as (typeof clothesGearIds)[number]),
+	);
+
+const shoesGearIdSchema = z
+	.number()
+	.nullable()
+	.refine(
+		(val) =>
+			val === null ||
+			shoesGearIds.includes(val as (typeof shoesGearIds)[number]),
+	);
+
+// xxx: Invalid input -> This is required
+const abilitiesSchema = z.tuple([
+	z.tuple([
+		headMainSlotAbility,
+		stackableAbility,
+		stackableAbility,
+		stackableAbility,
+	]),
+	z.tuple([
+		clothesMainSlotAbility,
+		stackableAbility,
+		stackableAbility,
+		stackableAbility,
+	]),
+	z.tuple([
+		shoesMainSlotAbility,
+		stackableAbility,
+		stackableAbility,
+		stackableAbility,
+	]),
+]);
+
+const modeItems = [
+	{ label: "modes.TW" as const, value: "TW" as const },
+	{ label: "modes.SZ" as const, value: "SZ" as const },
+	{ label: "modes.TC" as const, value: "TC" as const },
+	{ label: "modes.RM" as const, value: "RM" as const },
+	{ label: "modes.CB" as const, value: "CB" as const },
+];
+
+// xxx: validate buildToEditId
+export const newBuildBaseSchema = z.object({
+	buildToEditId: idConstantOptional(),
+	weapons: weaponPool({
+		label: "labels.buildWeapons",
+		minCount: 1,
+		maxCount: 5,
+		disableSorting: true,
+		disableFavorites: true,
+	}),
+	head: customJsonField({ initialValue: null }, headGearIdSchema),
+	clothes: customJsonField({ initialValue: null }, clothesGearIdSchema),
+	shoes: customJsonField({ initialValue: null }, shoesGearIdSchema),
+	abilities: customJsonField(
+		{
+			initialValue: [
+				["UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"],
+				["UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"],
+				["UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"],
+			],
+		},
+		abilitiesSchema,
+	),
+	title: textFieldRequired({
+		label: "labels.buildTitle",
+		maxLength: 50,
+	}),
+	description: textAreaOptional({
+		label: "labels.buildDescription",
+		maxLength: 280,
+	}),
+	modes: checkboxGroup({
+		label: "labels.buildModes",
+		items: modeItems,
+		minLength: 0,
+	}),
+	private: toggle({
+		label: "labels.buildPrivate",
+		bottomText: "bottomTexts.buildPrivate",
+	}),
+});
+
+export const newBuildSchema = newBuildBaseSchema.refine(
+	(data) => {
+		const gearFilled = [data.head, data.clothes, data.shoes].filter(
+			(g) => g !== null,
+		);
+		return gearFilled.length === 0 || gearFilled.length === 3;
+	},
+	{ message: "forms:errors.gearAllOrNone", path: ["head"] },
+);

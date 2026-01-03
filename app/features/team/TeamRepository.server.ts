@@ -246,7 +246,6 @@ export async function teamsByMemberUserId(
 export async function create(
 	args: Pick<Insertable<Tables["Team"]>, "name"> & {
 		ownerUserId: number;
-		// xxx: resolve isMainTeam in here
 		isMainTeam: boolean;
 	},
 ) {

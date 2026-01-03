@@ -85,15 +85,16 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 		context.setClientError(name, validationError);
 	};
 
-	const handleBlur = () => {
+	const handleBlur = (latestValue?: unknown) => {
 		if (hasSubmitted) return;
-		runValidation(value);
+		runValidation(latestValue ?? value);
 	};
 
 	const handleChange = (newValue: unknown) => {
 		context?.setValue(name, newValue);
-		if (hasSubmitted) {
-			runValidation(newValue);
+		if (hasSubmitted && context) {
+			const updatedValues = { ...context.values, [name]: newValue };
+			context.revalidateAll(updatedValues);
 		}
 		context?.onFieldChange?.(name, newValue);
 	};

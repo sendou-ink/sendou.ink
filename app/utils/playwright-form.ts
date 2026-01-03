@@ -56,15 +56,23 @@ type FormFieldHelpers<T extends z.ZodRawShape> = {
 	fill: (name: FillableKeys<T>, value: string) => Promise<void>;
 	check: (name: CheckableKeys<T>) => Promise<void>;
 	uncheck: (name: CheckableKeys<T>) => Promise<void>;
+	checkItems: (name: keyof Inferred<T>, itemValues: string[]) => Promise<void>;
 	select: (name: SelectableKeys<T>, optionText: string) => Promise<void>;
+	selectWeapons: (
+		name: keyof Inferred<T>,
+		weaponNames: string[],
+	) => Promise<void>;
 	submit: () => Promise<void>;
 	getLabel: <K extends keyof Inferred<T>>(name: K) => string;
+	getItemLabel: (name: keyof Inferred<T>, itemValue: string) => string;
 };
 
 export function createFormHelpers<T extends z.ZodRawShape>(
 	page: Page,
 	schema: z.ZodObject<T>,
+	options?: { submitTestId?: string },
 ): FormFieldHelpers<T> {
+	const submitTestId = options?.submitTestId ?? "submit-button";
 	const getFieldMetadata = (name: string): FormField | undefined => {
 		const fieldSchema = schema.shape[name];
 		if (!fieldSchema) return undefined;
@@ -79,18 +87,27 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 		return resolveTranslation(metadata.label);
 	};
 
-	const getFormLocator = () => {
-		const firstFieldName = Object.keys(schema.shape)[0];
-		if (!firstFieldName) {
-			throw new Error("Schema has no fields");
+	const getItemLabel = (name: string, itemValue: string): string => {
+		const metadata = getFieldMetadata(name);
+		if (!metadata || !("items" in metadata) || !Array.isArray(metadata.items)) {
+			throw new Error(`No items found for field: ${name}`);
 		}
-		const label = getLabel(firstFieldName);
-		return page.getByLabel(label).locator("xpath=ancestor::form");
+		const item = metadata.items.find(
+			(i: { value: string }) => i.value === itemValue,
+		);
+		if (!item || typeof item.label !== "string") {
+			throw new Error(`No item found with value: ${itemValue}`);
+		}
+		return resolveTranslation(item.label);
 	};
 
 	return {
 		getLabel(name) {
 			return getLabel(String(name));
+		},
+
+		getItemLabel(name, itemValue) {
+			return getItemLabel(String(name), itemValue);
 		},
 
 		async fill(name, value) {
@@ -113,6 +130,33 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 			const isChecked = await locator.isChecked();
 			if (isChecked) {
 				await locator.click({ force: true });
+			}
+		},
+
+		async checkItems(name, itemValues) {
+			const metadata = getFieldMetadata(String(name));
+			if (
+				!metadata ||
+				!("items" in metadata) ||
+				!Array.isArray(metadata.items)
+			) {
+				throw new Error(`No items found for field: ${String(name)}`);
+			}
+
+			for (const item of metadata.items as Array<{
+				value: string;
+				label: string;
+			}>) {
+				const itemLabelText = resolveTranslation(item.label);
+				const locator = page.getByLabel(itemLabelText);
+				const isChecked = await locator.isChecked();
+				const shouldBeChecked = itemValues.includes(item.value);
+
+				if (shouldBeChecked && !isChecked) {
+					await locator.click();
+				} else if (!shouldBeChecked && isChecked) {
+					await locator.click();
+				}
 			}
 		},
 
@@ -140,8 +184,19 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 			}
 		},
 
+		async selectWeapons(_name, weaponNames) {
+			for (const weaponName of weaponNames) {
+				await page.getByTestId("weapon-select").click();
+				await page.getByPlaceholder("Search weapons...").fill(weaponName);
+				await page
+					.getByRole("listbox", { name: "Suggestions" })
+					.getByTestId(`weapon-select-option-${weaponName}`)
+					.click();
+			}
+		},
+
 		async submit() {
-			await getFormLocator().locator('button[type="submit"]').click();
+			await page.getByTestId(submitTestId).click();
 		},
 	};
 }

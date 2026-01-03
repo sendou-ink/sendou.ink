@@ -1,9 +1,15 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { requireUserId } from "~/features/auth/core/user.server";
+import {
+	validatedBuildFromSearchParams,
+	validatedWeaponIdFromSearchParams,
+} from "~/features/build-analyzer/core/utils";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
+import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
 import type { Ability } from "~/modules/in-game-lists/types";
 import { actualNumber, id } from "~/utils/zod";
+import type { newBuildBaseSchema } from "../user-page-schemas";
 
 const newBuildLoaderParamsSchema = z.object({
 	buildId: z.preprocess(actualNumber, id),
@@ -25,7 +31,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	);
 
 	return {
-		buildToEdit,
+		defaultValues: buildToEdit
+			? resolveDefaultValues(url.searchParams, buildToEdit)
+			: null,
 		gearIdToAbilities: resolveGearIdToAbilities(),
 	};
 
@@ -42,3 +50,45 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		);
 	}
 };
+
+type NewBuildDefaultValues = Partial<z.infer<typeof newBuildBaseSchema>>;
+
+function resolveDefaultValues(
+	searchParams: URLSearchParams,
+	buildToEdit: Awaited<ReturnType<typeof BuildRepository.allByUserId>>[number],
+): NewBuildDefaultValues {
+	const weapons = resolveDefaultWeapons();
+	const abilities =
+		buildToEdit?.abilities ?? validatedBuildFromSearchParams(searchParams);
+
+	return {
+		buildToEditId: buildToEdit.id,
+		weapons,
+		head: buildToEdit.headGearSplId === -1 ? null : buildToEdit.headGearSplId,
+		clothes:
+			buildToEdit.clothesGearSplId === -1 ? null : buildToEdit.clothesGearSplId,
+		shoes:
+			buildToEdit.shoesGearSplId === -1 ? null : buildToEdit.shoesGearSplId,
+		abilities,
+		title: buildToEdit.title,
+		description: buildToEdit.description,
+		modes: buildToEdit.modes ?? [],
+		private: Boolean(buildToEdit.private),
+	};
+
+	function resolveDefaultWeapons(): WeaponPoolItem[] {
+		if (buildToEdit) {
+			return buildToEdit.weapons.map((wpn) => ({
+				id: wpn.weaponSplId,
+				isFavorite: false,
+			}));
+		}
+
+		const weaponIdFromParams = validatedWeaponIdFromSearchParams(searchParams);
+		if (weaponIdFromParams) {
+			return [{ id: weaponIdFromParams, isFavorite: false }];
+		}
+
+		return [];
+	}
+}

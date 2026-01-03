@@ -8,7 +8,7 @@ import { FormFieldMessages } from "./FormFieldWrapper";
 
 type MultiSelectFormFieldProps<V extends string> = Omit<
 	FormFieldProps<"multi-select">,
-	"items" | "clearable" | "name"
+	"items" | "clearable"
 > & {
 	items: FormFieldItems<V>;
 	value: V[];
@@ -16,6 +16,7 @@ type MultiSelectFormFieldProps<V extends string> = Omit<
 };
 
 export function MultiSelectFormField<V extends string>({
+	name,
 	label,
 	bottomText,
 	items,
@@ -106,7 +107,7 @@ export function MultiSelectFormField<V extends string>({
 					</ol>
 				) : null}
 			</div>
-			<FormFieldMessages error={error} bottomText={bottomText} />
+			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 		</div>
 	);
 }

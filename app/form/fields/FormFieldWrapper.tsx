@@ -2,6 +2,7 @@ import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
+import { errorMessageId } from "../utils";
 import styles from "./FormFieldWrapper.module.css";
 
 export function useTranslatedTexts({
@@ -20,9 +21,11 @@ export function useTranslatedTexts({
 }
 
 export function FormFieldMessages({
+	name,
 	error,
 	bottomText,
 }: {
+	name?: string;
 	error?: string;
 	bottomText?: string;
 }) {
@@ -31,7 +34,11 @@ export function FormFieldMessages({
 	return (
 		<>
 			{translatedError ? (
-				<FormMessage type="error" spaced={false}>
+				<FormMessage
+					type="error"
+					spaced={false}
+					id={name ? errorMessageId(name) : undefined}
+				>
 					{translatedError}
 				</FormMessage>
 			) : null}
@@ -46,6 +53,7 @@ export function FormFieldMessages({
 
 interface FormFieldWrapperProps {
 	id: string;
+	name?: string;
 	label?: string;
 	required?: boolean;
 	error?: string;
@@ -56,6 +64,7 @@ interface FormFieldWrapperProps {
 
 export function FormFieldWrapper({
 	id,
+	name,
 	label,
 	required,
 	error,
@@ -79,7 +88,7 @@ export function FormFieldWrapper({
 					</Label>
 				) : null}
 				{children}
-				<FormFieldMessages error={error} bottomText={bottomText} />
+				<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 			</div>
 		</div>
 	);

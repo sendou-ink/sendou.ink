@@ -30,5 +30,17 @@
 	"labels.languages": "Your languages",
 	"options.voiceChat.yes": "Yes",
 	"options.voiceChat.no": "No",
-	"options.voiceChat.listenOnly": "Listen only"
+	"options.voiceChat.listenOnly": "Listen only",
+	"labels.buildTitle": "Title",
+	"labels.buildDescription": "Description",
+	"labels.buildModes": "Modes",
+	"labels.buildPrivate": "Private",
+	"labels.buildWeapons": "Weapons",
+	"bottomTexts.buildPrivate": "Private builds are only visible to you",
+	"modes.TW": "Turf War",
+	"modes.SZ": "Splat Zones",
+	"modes.TC": "Tower Control",
+	"modes.RM": "Rainmaker",
+	"modes.CB": "Clam Blitz",
+	"errors.gearAllOrNone": "Fill all gear slots or leave all empty"
 }

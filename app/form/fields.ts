@@ -62,7 +62,7 @@ export function customJsonField<T extends z.ZodType>(
 	schema: T,
 ) {
 	// @ts-expect-error Complex generic type with registry
-	return schema.optional().register(formRegistry, {
+	return schema.register(formRegistry, {
 		...args,
 		type: "custom",
 	});
@@ -410,6 +410,7 @@ export function weaponPool(
 				isFavorite: z.boolean(),
 			}),
 		)
+		.min(args.minCount ?? 0)
 		.max(args.maxCount)
 		.refine((val) => val.length === R.uniqueBy(val, (item) => item.id).length)
 		.register(formRegistry, {
@@ -521,7 +522,7 @@ export function idConstantOptional<T extends number>(value?: T) {
 	const schema = value ? z.literal(value).optional() : id.optional();
 	return schema.register(formRegistry, {
 		type: "id-constant",
-		initialValue: value ?? null,
+		initialValue: value,
 		value: value ?? null,
 	});
 }

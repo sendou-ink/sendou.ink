@@ -1,12 +1,14 @@
 import * as React from "react";
+import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import type { z } from "zod";
+import { FormMessage } from "~/components/FormMessage";
 import { SubmitButton } from "~/components/SubmitButton";
 import { formRegistry } from "./fields";
 import styles from "./SendouForm.module.css";
 import type { FormField } from "./types";
-import { validateField } from "./utils";
+import { errorMessageId, validateField } from "./utils";
 
 export interface FormContextValue<T extends z.ZodRawShape = z.ZodRawShape> {
 	schema: z.ZodObject<T>;
@@ -18,6 +20,7 @@ export interface FormContextValue<T extends z.ZodRawShape = z.ZodRawShape> {
 	onFieldChange?: (name: string, newValue: unknown) => void;
 	values: Record<string, unknown>;
 	setValue: (name: string, value: unknown) => void;
+	revalidateAll: (updatedValues: Record<string, unknown>) => void;
 }
 
 const FormContext = React.createContext<FormContextValue | null>(null);
@@ -34,6 +37,7 @@ interface SendouFormProps<T extends z.ZodRawShape> {
 	children: React.ReactNode | ((props: FormRenderProps<T>) => React.ReactNode);
 	schema: z.ZodObject<T>;
 	defaultValues?: Partial<z.infer<z.ZodObject<T>>> | null;
+	title?: React.ReactNode;
 	submitButtonText?: React.ReactNode;
 	action?: string;
 	method?: "post" | "get";
@@ -46,6 +50,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 	children,
 	schema,
 	defaultValues,
+	title,
 	submitButtonText,
 	action,
 	method = "post",
@@ -62,6 +67,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 	const [visibleServerErrors, setVisibleServerErrors] = React.useState<
 		Partial<Record<string, string>>
 	>({});
+	const [fallbackError, setFallbackError] = React.useState<string | null>(null);
 
 	const initialValues = buildInitialValues(schema, defaultValues);
 	const [values, setValues] =
@@ -98,6 +104,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 		setVisibleServerErrors({});
 
 		const newErrors: Record<string, string> = {};
+
 		for (const key of Object.keys(schema.shape)) {
 			const error = validateField(schema, key, values[key]);
 			if (error) {
@@ -105,8 +112,21 @@ export function SendouForm<T extends z.ZodRawShape>({
 			}
 		}
 
+		const fullValidation = schema.safeParse(values);
+		if (!fullValidation.success) {
+			for (const issue of fullValidation.error.issues) {
+				const fieldName = issue.path[0];
+				if (typeof fieldName === "string" && !newErrors[fieldName]) {
+					newErrors[fieldName] = issue.message;
+				}
+			}
+		}
+
 		if (Object.keys(newErrors).length > 0) {
-			setClientErrors(newErrors);
+			flushSync(() => {
+				setClientErrors(newErrors);
+			});
+			scrollToFirstError(newErrors);
 			return;
 		}
 
@@ -115,6 +135,29 @@ export function SendouForm<T extends z.ZodRawShape>({
 			action,
 			encType: "application/json",
 		});
+	};
+
+	const revalidateAll = (updatedValues: Record<string, unknown>) => {
+		const newErrors: Record<string, string> = {};
+
+		for (const key of Object.keys(schema.shape)) {
+			const error = validateField(schema, key, updatedValues[key]);
+			if (error) {
+				newErrors[key] = error;
+			}
+		}
+
+		const fullValidation = schema.safeParse(updatedValues);
+		if (!fullValidation.success) {
+			for (const issue of fullValidation.error.issues) {
+				const fieldName = issue.path[0];
+				if (typeof fieldName === "string" && !newErrors[fieldName]) {
+					newErrors[fieldName] = issue.message;
+				}
+			}
+		}
+
+		setClientErrors(newErrors);
 	};
 
 	const onFieldChange = autoSubmit
@@ -150,9 +193,28 @@ export function SendouForm<T extends z.ZodRawShape>({
 		hasSubmitted,
 		setClientError,
 		onFieldChange,
+		revalidateAll,
 		values,
 		setValue,
 	};
+
+	function scrollToFirstError(errors: Record<string, string>) {
+		const firstErrorField = Object.keys(errors)[0];
+		if (!firstErrorField) return;
+
+		const errorElement = document.getElementById(
+			errorMessageId(firstErrorField),
+		);
+		if (errorElement) {
+			errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
+			setFallbackError(null);
+		} else {
+			const firstError = errors[firstErrorField];
+			setFallbackError(
+				firstError ? `${t(firstError as never)} (${firstErrorField})` : null,
+			);
+		}
+	}
 
 	const names = Object.fromEntries(
 		Object.keys(schema.shape).map((key) => [key, key]),
@@ -169,6 +231,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 				className={styles.form}
 				onSubmit={handleSubmit}
 			>
+				{title ? <h2 className={styles.title}>{title}</h2> : null}
 				{resolvedChildren}
 				{autoSubmit ? null : (
 					<div className="mt-4 stack mx-auto justify-center">
@@ -181,6 +244,11 @@ export function SendouForm<T extends z.ZodRawShape>({
 						</SubmitButton>
 					</div>
 				)}
+				{fallbackError ? (
+					<div className="mt-4 mx-auto">
+						<FormMessage type="error">{fallbackError}</FormMessage>
+					</div>
+				) : null}
 			</form>
 		</FormContext.Provider>
 	);
