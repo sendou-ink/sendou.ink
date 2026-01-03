@@ -68,7 +68,7 @@ test.describe("Scrims", () => {
 
 		await page.getByTestId("available-scrims-tab").click();
 
-		await expect(requestScrimButtonLocator).toBeVisible();
+		await expect(requestScrimButtonLocator.first()).toBeVisible();
 
 		const initialCount = await requestScrimButtonLocator.count();
 
