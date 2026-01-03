@@ -21,6 +21,8 @@ const config: PlaywrightTestConfig = {
 	fullyParallel: true,
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
 	forbidOnly: !!process.env.CI,
+	/* Temporarily repeat each test 5 times to detect flaky tests */
+	repeatEach: process.env.CI ? 5 : 1,
 	retries: 0,
 	/* Number of parallel workers */
 	workers: WORKER_COUNT,
