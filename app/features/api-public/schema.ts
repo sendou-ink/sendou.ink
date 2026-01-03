@@ -444,14 +444,6 @@ type RankTierName =
 	| "BRONZE"
 	| "IRON";
 
-type SubjectPronoun = "he" | "she" | "they" | "it" | "any";
-type ObjectPronoun = "him" | "her" | "them" | "its" | "all";
-
-export interface Pronouns {
-	subject: SubjectPronoun;
-	object: ObjectPronoun;
-}
-
 type Badge = {
 	/**
 	 * @example "Monday Afterparty"
