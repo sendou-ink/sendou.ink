@@ -1,3 +1,4 @@
+import type { Pronouns } from "~/db/tables";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import type { DataTypes, ValueToArray } from "~/modules/brackets-manager/types";
 
@@ -442,14 +443,6 @@ type RankTierName =
 	| "SILVER"
 	| "BRONZE"
 	| "IRON";
-
-type SubjectPronoun = "he" | "she" | "they" | "it" | "any";
-type ObjectPronoun = "him" | "her" | "them" | "its" | "all";
-
-export interface Pronouns {
-	subject: SubjectPronoun;
-	object: ObjectPronoun;
-}
 
 type Badge = {
 	/**
