@@ -1146,7 +1146,7 @@ html[dir="rtl"] .fix-rtl {
 
 .chat__avatar-badge {
 	position: absolute;
-	bottom: 4px;
+	top: 30px;
 	left: 50%;
 	transform: translateX(-50%);
 	background-color: var(--theme-secondary);
