@@ -379,7 +379,13 @@ test.describe("Tournament bracket", () => {
 			await submit(page);
 		}
 
-		await page.getByTestId("brackets-tab").click();
+		await navigate({
+			page,
+			url: tournamentBracketsPage({
+				tournamentId,
+			}),
+		});
+
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
 
