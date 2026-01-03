@@ -847,7 +847,14 @@ export interface UserPreferences {
 }
 
 export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;
-export const OBJECT_PRONOUNS = ["him", "her", "them", "its", "all"] as const;
+export const OBJECT_PRONOUNS = [
+	"him",
+	"her",
+	"them",
+	"its",
+	"all",
+	...SUBJECT_PRONOUNS,
+] as const;
 
 export type Pronouns = {
 	subject: (typeof SUBJECT_PRONOUNS)[number];
