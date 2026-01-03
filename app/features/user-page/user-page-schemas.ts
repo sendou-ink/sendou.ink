@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { OBJECT_PRONOUNS, SUBJECT_PRONOUNS } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-constants";
 import {
 	checkboxGroup,
@@ -28,6 +29,7 @@ import {
 	falsyToNull,
 	headMainSlotAbility,
 	id,
+	nullLiteraltoNull,
 	processMany,
 	safeJSONParse,
 	safeNullableStringSchema,
@@ -101,6 +103,14 @@ export const userEditActionSchema = z
 				.max(50)
 				.refine((val) => val % 5 === 0)
 				.nullable(),
+		),
+		subjectPronoun: z.preprocess(
+			processMany(nullLiteraltoNull, falsyToNull),
+			z.enum(SUBJECT_PRONOUNS).nullable(),
+		),
+		objectPronoun: z.preprocess(
+			processMany(nullLiteraltoNull, falsyToNull),
+			z.enum(OBJECT_PRONOUNS).nullable(),
 		),
 		inGameNameText: z.preprocess(
 			falsyToNull,

@@ -30,7 +30,7 @@ export interface ChatMessage {
 
 export type ChatUser = Pick<
 	Tables["User"],
-	"username" | "discordId" | "discordAvatar"
+	"username" | "discordId" | "discordAvatar" | "pronouns"
 > & {
 	chatNameColor: string | null;
 	title?: string;

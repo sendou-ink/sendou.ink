@@ -95,6 +95,7 @@
 }
 
 .searchField {
+	position: relative;
 	display: flex;
 	gap: var(--s-2);
 
@@ -125,8 +126,14 @@
 }
 
 .searchClearButton {
+	position: absolute;
+	right: var(--s-2);
+	top: 50%;
+	transform: translateY(-50%);
 	background-color: transparent;
 	border: none;
+	padding: 0;
+	cursor: pointer;
 }
 
 [data-empty] .searchClearButton {

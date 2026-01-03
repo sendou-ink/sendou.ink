@@ -174,7 +174,7 @@ test.describe("Scrims", () => {
 		await page.getByRole("button", { name: /Tournament search/i }).click();
 		await tournamentSearchInput.fill("Swim or Sink");
 		await expect(tournamentSearchItem.first()).toBeVisible();
-		await page.keyboard.press("Enter");
+		await tournamentSearchItem.first().click();
 
 		await submit(page);
 
