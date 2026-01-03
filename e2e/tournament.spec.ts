@@ -10,7 +10,11 @@ import {
 	submit,
 	test,
 } from "~/utils/playwright";
-import { tournamentBracketsPage, tournamentPage } from "~/utils/urls";
+import {
+	tournamentBracketsPage,
+	tournamentPage,
+	tournamentTeamsPage,
+} from "~/utils/urls";
 
 // TODO: restore operates admin controls after single fetch tested in prod
 
@@ -260,7 +264,10 @@ test.describe("Tournament", () => {
 
 		await submit(page);
 
-		await page.getByTestId("teams-tab").click();
+		await navigate({
+			page,
+			url: tournamentTeamsPage(1),
+		});
 		await expect(page.getByTestId("team-name").first()).not.toHaveText(
 			"Chimera",
 		);
