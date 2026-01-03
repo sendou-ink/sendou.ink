@@ -11,6 +11,7 @@
 		"migrations/**/*.js",
 		"scripts/**/*.{js,cjs,mjs,jsx,ts,cts,mts,tsx}",
 		"public/sw-2.js",
-		"ley.config.cjs"
+		"ley.config.cjs",
+		"ley-driver.cjs"
 	]
 }
