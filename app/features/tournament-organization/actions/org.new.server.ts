@@ -8,7 +8,7 @@ import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
 import { newOrganizationSchema } from "../tournament-organization-schemas";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	requireRole(user, "TOURNAMENT_ADDER");
 
 	const data = await parseRequestPayload({

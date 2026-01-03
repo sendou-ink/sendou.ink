@@ -4,8 +4,8 @@ import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { organizationFromParams } from "../tournament-organization-utils.server";
 
-export async function loader({ params, request }: LoaderFunctionArgs) {
-	const user = await requireUser(request);
+export async function loader({ params }: LoaderFunctionArgs) {
+	const user = requireUser();
 	const organization = await organizationFromParams(params);
 
 	requirePermission(organization, "EDIT", user);

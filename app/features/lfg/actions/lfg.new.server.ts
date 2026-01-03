@@ -11,7 +11,7 @@ import * as LFGRepository from "../LFGRepository.server";
 import { LFG, TEAM_POST_TYPES, TIMEZONES } from "../lfg-constants";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema,
