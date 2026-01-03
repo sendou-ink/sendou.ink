@@ -20,6 +20,48 @@
 	gap: var(--s-2-5);
 }
 
+.messageInfo {
+	display: flex;
+	flex-direction: row;
+	gap: 0 var(--s-1-5);
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.avatarWrapper {
+	position: relative;
+	flex-shrink: 0;
+}
+
+.avatarWrapperStaff img {
+	border: 2px solid var(--color-text-accent);
+	border-radius: 50%;
+}
+
+.avatarBadge {
+	position: absolute;
+	top: 28px;
+	left: 50%;
+	transform: translateX(-50%);
+	background-color: var(--color-text-accent);
+	color: var(--color-text-inverse);
+	font-size: var(--fonts-xxxxs);
+	font-weight: var(--bold);
+	padding: 1px 4px;
+	border-radius: var(--rounded-full);
+	white-space: nowrap;
+}
+
+.pronounsTag {
+	background-color: var(--color-bg-higher);
+	color: var(--color-text-accent);
+	font-size: var(--fonts-xxxs);
+	font-weight: var(--semi-bold);
+	padding: 1px 5px;
+	border-radius: var(--rounded-full);
+	white-space: nowrap;
+}
+
 .messageUser {
 	font-weight: var(--semi-bold);
 	font-size: var(--fonts-sm);
@@ -31,9 +73,8 @@
 }
 
 .messageTime {
-	font-size: var(--fonts-xxs);
+	font-size: var(--fonts-xxxs);
 	color: var(--color-text-high);
-	margin-block-start: 3px;
 }
 
 .inputContainer {

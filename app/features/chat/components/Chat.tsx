@@ -223,18 +223,18 @@ function Message({
 		<li className={styles.message}>
 			{user ? (
 				<div
-					className={clsx("chat__avatar-wrapper", {
-						"chat__avatar-wrapper--staff": user.title,
+					className={clsx(styles.avatarWrapper, {
+						[styles.avatarWrapperStaff]: user.title,
 					})}
 				>
 					<Avatar user={user} size="xs" />
 					{user.title ? (
-						<span className="chat__avatar-badge">{user.title}</span>
+						<span className={styles.avatarBadge}>{user.title}</span>
 					) : null}
 				</div>
 			) : null}
 			<div>
-				<div className="chat__message__info">
+				<div className={styles.messageInfo}>
 					<div
 						className={styles.messageUser}
 						style={
@@ -246,7 +246,7 @@ function Message({
 						{user?.username ?? missingUserName}
 					</div>
 					{user?.pronouns ? (
-						<span className="chat__pronouns-tag">
+						<span className={styles.pronounsTag}>
 							{user.pronouns.subject}/{user.pronouns.object}
 						</span>
 					) : null}
