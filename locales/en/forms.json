@@ -43,5 +43,7 @@
 	"modes.RM": "Rainmaker",
 	"modes.CB": "Clam Blitz",
 	"errors.gearAllOrNone": "Fill all gear slots or leave all empty",
-	"labels.isEstablished": "Is Established Organization"
+	"labels.isEstablished": "Is Established Organization",
+	"labels.modNoteText": "Text",
+	"bottomTexts.modNote": "This note will be only visible to staff members"
 }

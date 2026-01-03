@@ -4,7 +4,9 @@ import {
 	checkboxGroup,
 	customJsonField,
 	idConstantOptional,
+	stringConstant,
 	textAreaOptional,
+	textAreaRequired,
 	textFieldRequired,
 	toggle,
 	weaponPool,
@@ -161,8 +163,12 @@ export const editHighlightsActionSchema = z.object({
 });
 
 export const addModNoteSchema = z.object({
-	_action: _action("ADD_MOD_NOTE"),
-	value: z.string().trim().min(1).max(USER.MOD_NOTE_MAX_LENGTH),
+	_action: stringConstant("ADD_MOD_NOTE"),
+	value: textAreaRequired({
+		label: "labels.modNoteText",
+		bottomText: "bottomTexts.modNote",
+		maxLength: USER.MOD_NOTE_MAX_LENGTH,
+	}),
 });
 
 const deleteModNoteSchema = z.object({

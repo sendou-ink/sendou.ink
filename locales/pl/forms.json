@@ -43,5 +43,7 @@
 	"modes.RM": "",
 	"modes.CB": "",
 	"errors.gearAllOrNone": "",
-	"labels.isEstablished": ""
+	"labels.isEstablished": "",
+	"labels.modNoteText": "",
+	"bottomTexts.modNote": ""
 }

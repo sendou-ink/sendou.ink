@@ -8,15 +8,20 @@ import styles from "./FormFieldWrapper.module.css";
 export function useTranslatedTexts({
 	label,
 	error,
+	bottomText,
 }: {
 	label?: string;
 	error?: string;
+	bottomText?: string;
 }) {
 	const { t } = useTranslation(["forms"]);
 
 	return {
 		translatedLabel: label?.includes(":") ? t(label as never) : label,
 		translatedError: error?.includes(":") ? t(error as never) : error,
+		translatedBottomText: bottomText?.includes(":")
+			? t(bottomText as never)
+			: bottomText,
 	};
 }
 
@@ -29,7 +34,10 @@ export function FormFieldMessages({
 	error?: string;
 	bottomText?: string;
 }) {
-	const { translatedError } = useTranslatedTexts({ error });
+	const { translatedError, translatedBottomText } = useTranslatedTexts({
+		error,
+		bottomText,
+	});
 
 	return (
 		<>
@@ -42,9 +50,9 @@ export function FormFieldMessages({
 					{translatedError}
 				</FormMessage>
 			) : null}
-			{bottomText ? (
+			{translatedBottomText ? (
 				<FormMessage type="info" spaced={false}>
-					{bottomText}
+					{translatedBottomText}
 				</FormMessage>
 			) : null}
 		</>

@@ -171,6 +171,20 @@ export function textAreaOptional(
 	);
 }
 
+export function textAreaRequired(
+	args: WithTypedTranslationKeys<
+		Omit<Extract<FormField, { type: "text-area" }>, "type" | "initialValue">
+	>,
+) {
+	return safeStringSchema({ max: args.maxLength }).register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "text-area",
+		initialValue: "",
+	});
+}
+
 export function toggle(
 	args: WithTypedTranslationKeys<
 		Omit<Extract<FormField, { type: "switch" }>, "type" | "initialValue">

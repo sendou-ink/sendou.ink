@@ -21,6 +21,7 @@ export {
 	stringConstant,
 	stringConstantOptional,
 	textAreaOptional,
+	textAreaRequired,
 	textFieldOptional,
 	textFieldRequired,
 	toggle,
