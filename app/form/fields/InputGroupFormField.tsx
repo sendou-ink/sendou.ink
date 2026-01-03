@@ -54,7 +54,7 @@ export function RadioGroupFormField<V extends string>({
 							value={item.value}
 							checked={value === item.value}
 							onChange={() => onChange(item.value)}
-							onBlur={onBlur}
+							onBlur={() => onBlur?.()}
 						/>
 						<label
 							htmlFor={`${id}-${item.value}`}

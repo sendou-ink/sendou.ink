@@ -38,7 +38,7 @@ export function InputFormField({
 					type="text"
 					value={value}
 					onChange={(e) => onChange(e.target.value)}
-					onBlur={onBlur}
+					onBlur={() => onBlur?.()}
 					maxLength={maxLength}
 					{...ariaAttributes({
 						id,

@@ -35,7 +35,7 @@ export function TextareaFormField({
 				id={id}
 				value={value}
 				onChange={(e) => onChange(e.target.value)}
-				onBlur={onBlur}
+				onBlur={() => onBlur?.()}
 				{...ariaAttributes({
 					id,
 					bottomText,

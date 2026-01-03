@@ -47,7 +47,7 @@ export function DatetimeFormField({
 				type="datetime-local"
 				value={inputValue}
 				onChange={handleChange}
-				onBlur={onBlur}
+				onBlur={() => onBlur?.()}
 				className="plain"
 				{...ariaAttributes({
 					id,
