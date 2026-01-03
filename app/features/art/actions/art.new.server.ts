@@ -20,7 +20,7 @@ import { NEW_ART_EXISTING_SEARCH_PARAM_KEY } from "../art-constants";
 import { editArtSchema, newArtSchema } from "../art-schemas.server";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser();
+	const user = requireUser();
 	requireRole(user, "ARTIST");
 
 	const searchParams = new URL(request.url).searchParams;

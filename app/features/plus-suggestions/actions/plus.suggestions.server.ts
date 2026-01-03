@@ -21,7 +21,7 @@ export const action: ActionFunction = async ({ request }) => {
 		request,
 		schema: suggestionActionSchema,
 	});
-	const user = await requireUser();
+	const user = requireUser();
 
 	const votingMonthYear = rangeToMonthYear(
 		badRequestIfFalsy(nextNonCompletedVoting(new Date())),

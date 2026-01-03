@@ -7,7 +7,7 @@ import { notFoundIfFalsy } from "~/utils/remix.server";
 import { convertSnowflakeToDate } from "~/utils/users";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const loggedInUser = await requireUser();
+	const loggedInUser = requireUser();
 
 	requireRole(loggedInUser, "STAFF");
 

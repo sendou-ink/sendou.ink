@@ -5,7 +5,7 @@ import * as NotificationRepository from "../NotificationRepository.server";
 import { markAsSeenActionSchema } from "../notifications-schemas";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUser();
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: markAsSeenActionSchema,

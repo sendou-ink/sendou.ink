@@ -21,7 +21,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		request,
 		schema: adminActionSchema,
 	});
-	const user = await requireUser();
+	const user = requireUser();
 
 	let message: string;
 	switch (data._action) {

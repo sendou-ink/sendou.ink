@@ -14,7 +14,7 @@ import { reportWinnersActionSchema } from "../calendar-schemas";
 import { canReportCalendarEventWinners } from "../calendar-utils";
 
 export const action: ActionFunction = async (args) => {
-	const user = await requireUser();
+	const user = requireUser();
 	const params = parseParams({
 		params: args.params,
 		schema: idObject,

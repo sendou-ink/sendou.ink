@@ -7,7 +7,7 @@ import { notFoundIfFalsy } from "~/utils/remix.server";
 import { userParamsSchema } from "../user-page-schemas";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const loggedInUser = await getUser();
+	const loggedInUser = getUser();
 
 	const { identifier } = userParamsSchema.parse(params);
 	const user = notFoundIfFalsy(

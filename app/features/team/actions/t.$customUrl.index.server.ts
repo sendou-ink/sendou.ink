@@ -14,7 +14,7 @@ import {
 import { isTeamMember, isTeamOwner, resolveNewOwner } from "../team-utils";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUser();
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: teamProfilePageActionSchema,

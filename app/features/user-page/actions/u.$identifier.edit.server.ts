@@ -22,7 +22,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	const { inGameNameText, inGameNameDiscriminator, ...data } = parsedInput.data;
 
-	const user = await requireUser();
+	const user = requireUser();
 	const inGameName =
 		inGameNameText && inGameNameDiscriminator
 			? `${inGameNameText}#${inGameNameDiscriminator}`

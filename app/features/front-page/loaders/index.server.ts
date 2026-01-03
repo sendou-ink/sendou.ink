@@ -10,7 +10,7 @@ import { discordAvatarUrl, teamPage, userPage } from "~/utils/urls";
 import * as ShowcaseTournaments from "../core/ShowcaseTournaments.server";
 
 export const loader = async () => {
-	const user = await getUser();
+	const user = getUser();
 
 	const [tournaments, changelog, leaderboards] = await Promise.all([
 		ShowcaseTournaments.frontPageTournamentsByUserId(user?.id ?? null),

@@ -6,7 +6,7 @@ import * as VodRepository from "../VodRepository.server";
 import { canEditVideo } from "../vods-utils";
 
 export const action = async ({ params }: ActionFunctionArgs) => {
-	const user = await requireUser();
+	const user = requireUser();
 
 	const vod = badRequestIfFalsy(
 		await VodRepository.findVodById(Number(params.id)),

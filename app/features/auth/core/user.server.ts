@@ -4,13 +4,13 @@ import { type AuthenticatedUser, getUserContext } from "./user-context.server";
 
 export type { AuthenticatedUser };
 
-export async function getUser(): Promise<AuthenticatedUser | undefined> {
+export function getUser(): AuthenticatedUser | undefined {
 	const context = getUserContext();
-	return context.getUserLazy();
+	return context.user;
 }
 
-export async function requireUser(): Promise<AuthenticatedUser> {
-	const user = await getUser();
+export function requireUser(): AuthenticatedUser {
+	const user = getUser();
 
 	if (!user) throw new Response(null, { status: 401 });
 

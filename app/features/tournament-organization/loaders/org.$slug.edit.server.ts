@@ -5,7 +5,7 @@ import { requirePermission } from "~/modules/permissions/guards.server";
 import { organizationFromParams } from "../tournament-organization-utils.server";
 
 export async function loader({ params }: LoaderFunctionArgs) {
-	const user = await requireUser();
+	const user = requireUser();
 	const organization = await organizationFromParams(params);
 
 	requirePermission(organization, "EDIT", user);

@@ -34,7 +34,7 @@ export type PlusVotingLoaderData =
 	  };
 
 export const loader: LoaderFunction = async () => {
-	const user = await getUser();
+	const user = getUser();
 
 	const now = new Date();
 	const nextVotingRange = nextNonCompletedVoting(now);

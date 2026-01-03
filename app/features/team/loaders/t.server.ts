@@ -4,7 +4,7 @@ import { getUser } from "~/features/auth/core/user.server";
 import * as TeamRepository from "../TeamRepository.server";
 
 export const loader = async () => {
-	const user = await getUser();
+	const user = getUser();
 
 	const unsortedTeams = await TeamRepository.findAllUndisbanded();
 

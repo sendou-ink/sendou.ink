@@ -65,11 +65,9 @@ export function wrappedAction<T extends z.ZodTypeAny>({
 			],
 		});
 
-		const userContext = {
-			getUserLazy: () => getUserFromRequest(request),
-		};
+		const userFromRequest = await getUserFromRequest(request);
 
-		return userAsyncLocalStorage.run(userContext, async () => {
+		return userAsyncLocalStorage.run({ user: userFromRequest }, async () => {
 			try {
 				const response = await action({
 					request,
@@ -116,11 +114,9 @@ export function wrappedLoader<T>({
 			],
 		});
 
-		const userContext = {
-			getUserLazy: () => getUserFromRequest(request),
-		};
+		const userFromRequest = await getUserFromRequest(request);
 
-		return userAsyncLocalStorage.run(userContext, async () => {
+		return userAsyncLocalStorage.run({ user: userFromRequest }, async () => {
 			try {
 				const data = await loader({
 					request,

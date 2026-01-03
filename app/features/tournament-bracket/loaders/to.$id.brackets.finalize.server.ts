@@ -22,7 +22,7 @@ import { idObject } from "~/utils/zod";
 export type FinalizeTournamentLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = await requireUser();
+	const user = requireUser();
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,

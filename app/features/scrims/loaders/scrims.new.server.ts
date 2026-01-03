@@ -6,7 +6,7 @@ import * as TeamRepository from "../../team/TeamRepository.server";
 export type ScrimsNewLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async () => {
-	const user = await requireUser();
+	const user = requireUser();
 
 	return {
 		teams: await TeamRepository.teamsByMemberUserId(user.id),

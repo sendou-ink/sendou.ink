@@ -6,7 +6,7 @@ import { userPage } from "~/utils/urls";
 import { userParamsSchema } from "../user-page-schemas";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = await requireUser();
+	const user = requireUser();
 	const { identifier } = userParamsSchema.parse(params);
 	const userToBeEdited = notFoundIfFalsy(
 		await UserRepository.findLayoutDataByIdentifier(identifier),

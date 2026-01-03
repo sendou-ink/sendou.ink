@@ -9,7 +9,7 @@ import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { qMatchPageParamsSchema } from "../q-match-schemas";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = await getUser();
+	const user = getUser();
 	const matchId = parseParams({
 		params,
 		schema: qMatchPageParamsSchema,

@@ -5,7 +5,7 @@ import { assertUnreachable } from "~/utils/types";
 import { settingsActionSchema } from "../q-settings-schemas.server";
 
 export const action = async ({ request }: { request: Request }) => {
-	const user = await requireUser();
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: settingsActionSchema,

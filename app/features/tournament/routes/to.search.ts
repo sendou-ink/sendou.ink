@@ -8,7 +8,7 @@ import { tournamentSearchSearchParamsSchema } from "../tournament-schemas.server
 export type TournamentSearchLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUser();
+	const user = getUser();
 	if (!user) {
 		return [];
 	}

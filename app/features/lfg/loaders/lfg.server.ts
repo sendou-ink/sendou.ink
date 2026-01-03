@@ -6,7 +6,7 @@ import type { Unpacked } from "~/utils/types";
 import * as LFGRepository from "../LFGRepository.server";
 
 export const loader = async () => {
-	const user = await getUser();
+	const user = getUser();
 	const posts = await LFGRepository.posts(user);
 
 	return {

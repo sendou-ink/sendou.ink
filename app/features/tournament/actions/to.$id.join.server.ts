@@ -31,7 +31,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		params,
 		schema: idObject,
 	});
-	const user = await requireUser();
+	const user = requireUser();
 	const url = new URL(request.url);
 	const inviteCode = url.searchParams.get("code");
 	const data = await parseRequestPayload({ request, schema: joinSchema });

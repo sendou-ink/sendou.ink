@@ -7,7 +7,7 @@ import { tournamentBracketsPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = await requireUser();
+	const user = requireUser();
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,

@@ -5,7 +5,7 @@ import type { SerializeFrom } from "~/utils/remix";
 export type TrustersLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async () => {
-	const { id: userId } = await requireUser();
+	const { id: userId } = requireUser();
 
 	return {
 		trusters: await SQGroupRepository.usersThatTrusted(userId),

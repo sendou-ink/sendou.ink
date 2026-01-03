@@ -7,7 +7,7 @@ import { idObject } from "~/utils/zod";
 import * as TournamentSubRepository from "../TournamentSubRepository.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = await getUser();
+	const user = getUser();
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,

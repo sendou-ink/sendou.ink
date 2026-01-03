@@ -7,7 +7,7 @@ import * as ImageRepository from "../ImageRepository.server";
 import { requestToImgType } from "../upload-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUser();
+	const user = requireUser();
 	const validatedType = requestToImgType(request);
 
 	if (!validatedType) {

@@ -11,7 +11,7 @@ import { streamsByTournamentId } from "../core/streams.server";
 export type TournamentLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = await getUser();
+	const user = getUser();
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,

@@ -11,7 +11,7 @@ import {
 import { assertUnreachable } from "~/utils/types";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser();
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: userArtPageActionSchema,

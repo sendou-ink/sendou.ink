@@ -23,7 +23,7 @@ import { SendouQError } from "../q-utils.server";
 // if there is a validation error the user saw stale data
 // and when we return null we just force a refresh
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser();
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: lookingSchema,

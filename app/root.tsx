@@ -86,7 +86,7 @@ export type RootLoaderData = SerializeFrom<typeof loader>;
 export type LoggedInUser = NonNullable<RootLoaderData["user"]>;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUser();
+	const user = getUser();
 	const locale = await i18next.getLocale(request);
 	const themeSession = await getThemeSession(request);
 

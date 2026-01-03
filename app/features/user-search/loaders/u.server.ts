@@ -16,7 +16,7 @@ const searchParamsSchema = z.object({
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
-		const user = await getUser();
+		const user = getUser();
 		if (!user) {
 			return null;
 		}

@@ -10,7 +10,7 @@ const newBuildLoaderParamsSchema = z.object({
 });
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUser();
+	const user = requireUser();
 	const url = new URL(request.url);
 
 	const params = newBuildLoaderParamsSchema.safeParse(

@@ -7,7 +7,7 @@ import { JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
 import { sqRedirectIfNeeded } from "../q-utils.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUser();
+	const user = getUser();
 
 	const code = new URL(request.url).searchParams.get(
 		JOIN_CODE_SEARCH_PARAM_KEY,

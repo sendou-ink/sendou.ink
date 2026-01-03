@@ -15,7 +15,7 @@ import { actualNumber, id } from "~/utils/zod";
 import { canDeleteCalendarEvent } from "../calendar-utils";
 
 export const action: ActionFunction = async ({ params }) => {
-	const user = await requireUser();
+	const user = requireUser();
 	const parsedParams = z
 		.object({ id: z.preprocess(actualNumber, id) })
 		.parse(params);

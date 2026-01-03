@@ -22,7 +22,7 @@ import { generateTimeOptions } from "../scrims-utils";
 import { usersListForPost } from "./scrims.new.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUser();
+	const user = requireUser();
 
 	const data = await parseRequestPayload({
 		request,

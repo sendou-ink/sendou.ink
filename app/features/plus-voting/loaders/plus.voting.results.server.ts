@@ -7,7 +7,7 @@ import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
 
 export const loader = async () => {
-	const user = await getUser();
+	const user = getUser();
 	const results = await PlusVotingRepository.resultsByMonthYear(
 		lastCompletedVoting(new Date()),
 	);

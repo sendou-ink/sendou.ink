@@ -15,7 +15,7 @@ import * as TournamentSubRepository from "../TournamentSubRepository.server";
 import { subSchema } from "../tournament-subs-schemas.server";
 
 export const action: ActionFunction = async ({ params, request }) => {
-	const user = await requireUser();
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: subSchema,

@@ -8,7 +8,7 @@ import * as AssociationRepository from "../AssociationRepository.server";
 export type AssociationsLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUser();
+	const user = requireUser();
 
 	const associations = (
 		await AssociationRepository.findByMemberUserId(user.id, {

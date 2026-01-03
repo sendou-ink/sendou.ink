@@ -11,7 +11,7 @@ export type AuthenticatedUser = NonNullable<
 >;
 
 interface UserContext {
-	getUserLazy: () => Promise<AuthenticatedUser | undefined>;
+	user: AuthenticatedUser | undefined;
 }
 
 export const userAsyncLocalStorage = new AsyncLocalStorage<UserContext>();

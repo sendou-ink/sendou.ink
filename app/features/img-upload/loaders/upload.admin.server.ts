@@ -3,7 +3,7 @@ import { requireRole } from "~/modules/permissions/guards.server";
 import * as ImageRepository from "../ImageRepository.server";
 
 export const loader = async () => {
-	const user = await requireUser();
+	const user = requireUser();
 	requireRole(user, "STAFF");
 
 	return {

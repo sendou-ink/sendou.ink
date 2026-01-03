@@ -14,7 +14,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 		params: args.params,
 		schema: idObject,
 	});
-	const user = await requireUser();
+	const user = requireUser();
 	const event = notFoundIfFalsy(await CalendarRepository.findById(params.id));
 
 	unauthorizedIfFalsy(

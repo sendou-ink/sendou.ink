@@ -50,7 +50,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		params,
 		schema: qMatchPageParamsSchema,
 	}).id;
-	const user = await requireUser();
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: matchSchema,

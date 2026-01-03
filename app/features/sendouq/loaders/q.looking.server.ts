@@ -8,7 +8,7 @@ import * as PrivateUserNoteRepository from "../PrivateUserNoteRepository.server"
 import { sqRedirectIfNeeded } from "../q-utils.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUser();
+	const user = requireUser();
 
 	const isPreview =
 		new URL(request.url).searchParams.get("preview") === "true" &&

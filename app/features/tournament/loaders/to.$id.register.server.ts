@@ -8,7 +8,7 @@ import { idObject } from "~/utils/zod";
 import { findOwnTournamentTeam } from "../queries/findOwnTournamentTeam.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = await getUser();
+	const user = getUser();
 	if (!user) return null;
 
 	const { id: tournamentId } = parseParams({

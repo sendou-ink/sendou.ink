@@ -3,7 +3,7 @@ import { SendouQ } from "../core/SendouQ.server";
 import { sqRedirectIfNeeded } from "../q-utils.server";
 
 export const loader = async () => {
-	const user = await requireUser();
+	const user = requireUser();
 
 	const ownGroup = SendouQ.findOwnGroup(user.id);
 

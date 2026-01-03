@@ -3,7 +3,7 @@ import * as ApiRepository from "../ApiRepository.server";
 import { checkUserHasApiAccess } from "../core/perms";
 
 export const loader = async () => {
-	const user = await requireUser();
+	const user = requireUser();
 
 	const hasApiAccess = await checkUserHasApiAccess(user);
 
