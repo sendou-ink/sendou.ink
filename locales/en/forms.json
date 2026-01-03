@@ -42,5 +42,6 @@
 	"modes.TC": "Tower Control",
 	"modes.RM": "Rainmaker",
 	"modes.CB": "Clam Blitz",
-	"errors.gearAllOrNone": "Fill all gear slots or leave all empty"
+	"errors.gearAllOrNone": "Fill all gear slots or leave all empty",
+	"labels.isEstablished": "Is Established Organization"
 }

@@ -44,6 +44,7 @@ interface SendouFormProps<T extends z.ZodRawShape> {
 	_action?: string;
 	submitButtonTestId?: string;
 	autoSubmit?: boolean;
+	className?: string;
 }
 
 export function SendouForm<T extends z.ZodRawShape>({
@@ -57,6 +58,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 	_action,
 	submitButtonTestId,
 	autoSubmit,
+	className,
 }: SendouFormProps<T>) {
 	const { t } = useTranslation(["forms"]);
 	const fetcher = useFetcher<{ fieldErrors?: Record<string, string> }>();
@@ -228,7 +230,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 			<form
 				method={method}
 				action={action}
-				className={styles.form}
+				className={className ?? styles.form}
 				onSubmit={handleSubmit}
 			>
 				{title ? <h2 className={styles.title}>{title}</h2> : null}

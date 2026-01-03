@@ -1,6 +1,7 @@
 import test, { expect } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { updateIsEstablishedSchema } from "~/features/tournament-organization/tournament-organization-schemas";
 import {
 	impersonate,
 	isNotVisible,
@@ -10,6 +11,7 @@ import {
 	submit,
 	waitForPOSTResponse,
 } from "~/utils/playwright";
+import { createFormHelpers } from "~/utils/playwright-form";
 import {
 	TOURNAMENT_NEW_PAGE,
 	tournamentOrganizationPage,
@@ -174,8 +176,12 @@ test.describe("Tournament Organization", () => {
 			url: "/org/sendouink",
 		});
 
+		const isEstablishedForm = createFormHelpers(
+			page,
+			updateIsEstablishedSchema,
+		);
 		await waitForPOSTResponse(page, () =>
-			page.getByTestId("is-established-switch").click(),
+			isEstablishedForm.check("isEstablished"),
 		);
 
 		await impersonate(page, ORG_ADMIN_ID);

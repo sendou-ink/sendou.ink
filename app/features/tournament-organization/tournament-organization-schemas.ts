@@ -2,7 +2,7 @@ import { isFuture } from "date-fns";
 import { z } from "zod";
 import { TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
 import { TOURNAMENT_ORGANIZATION } from "~/features/tournament-organization/tournament-organization-constants";
-import { textFieldRequired } from "~/form/fields";
+import { stringConstant, textFieldRequired, toggle } from "~/form/fields";
 import { dayMonthYearToDate } from "~/utils/dates";
 import { mySlugify } from "~/utils/urls";
 import {
@@ -127,13 +127,15 @@ const unbanUserActionSchema = z.object({
 	userId: id,
 });
 
-const updateIsEstablishedActionSchema = z.object({
-	_action: _action("UPDATE_IS_ESTABLISHED"),
-	isEstablished: z.boolean(),
+export const updateIsEstablishedSchema = z.object({
+	_action: stringConstant("UPDATE_IS_ESTABLISHED"),
+	isEstablished: toggle({
+		label: "labels.isEstablished",
+	}),
 });
 
 export const orgPageActionSchema = z.union([
 	banUserActionSchema,
 	unbanUserActionSchema,
-	updateIsEstablishedActionSchema,
+	updateIsEstablishedSchema,
 ]);
