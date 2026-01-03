@@ -22,7 +22,7 @@ import { MAX_UNVALIDATED_IMG_COUNT } from "../upload-constants";
 import { requestToImgType } from "../upload-utils";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUser();
+	const user = await requireUser(request);
 
 	const validatedType = requestToImgType(request);
 	errorToastIfFalsy(validatedType, "Invalid image type");

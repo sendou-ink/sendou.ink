@@ -13,7 +13,7 @@ import { preparingSchema } from "../q-schemas.server";
 export type SendouQPreparingAction = typeof action;
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUser();
+	const user = await requireUser(request);
 	const data = await parseRequestPayload({
 		request,
 		schema: preparingSchema,

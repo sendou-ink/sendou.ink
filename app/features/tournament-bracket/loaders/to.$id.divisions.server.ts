@@ -6,8 +6,8 @@ import { idObject } from "~/utils/zod";
 import type { Unwrapped } from "../../../utils/types";
 import { tournamentFromDB } from "../core/Tournament.server";
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = await getUser();
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+	const user = await getUser(request);
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,

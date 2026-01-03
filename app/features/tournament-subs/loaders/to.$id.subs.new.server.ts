@@ -7,8 +7,8 @@ import { tournamentSubsPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
 import * as TournamentSubRepository from "../TournamentSubRepository.server";
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = await requireUser();
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+	const user = await requireUser(request);
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,

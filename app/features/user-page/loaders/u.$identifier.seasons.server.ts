@@ -22,7 +22,7 @@ export type UserSeasonsPageLoaderData = NonNullable<
 >;
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const loggedInUser = await getUser();
+	const loggedInUser = await getUser(request);
 	const { identifier } = userParamsSchema.parse(params);
 	const parsedSearchParams = seasonsSearchParamsSchema.safeParse(
 		Object.fromEntries(new URL(request.url).searchParams),

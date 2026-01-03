@@ -21,7 +21,7 @@ import { frontPageSchema } from "../q-schemas.server";
 import { userCanJoinQueueAt } from "../q-utils";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser();
+	const user = await requireUser(request);
 	const data = await parseRequestPayload({
 		request,
 		schema: frontPageSchema,

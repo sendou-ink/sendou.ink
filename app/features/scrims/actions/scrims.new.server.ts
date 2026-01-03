@@ -28,7 +28,7 @@ import {
 import { serializeLutiDiv } from "../scrims-utils";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUser();
+	const user = await requireUser(request);
 	const data = await parseRequestPayload({
 		request,
 		schema: scrimsNewActionSchema,

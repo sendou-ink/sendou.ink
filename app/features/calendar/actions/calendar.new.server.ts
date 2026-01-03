@@ -31,7 +31,7 @@ import { canEditCalendarEvent, regClosesAtDate } from "../calendar-utils";
 import { findValidOrganizations } from "../loaders/calendar.new.server";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser();
+	const user = await requireUser(request);
 
 	const { avatarFileName, formData } = await uploadImageIfSubmitted({
 		request,

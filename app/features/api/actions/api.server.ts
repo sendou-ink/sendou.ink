@@ -16,7 +16,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		request,
 		schema: apiActionSchema,
 	});
-	const user = await requireUser();
+	const user = await requireUser(request);
 
 	const hasApiAccess = await checkUserHasApiAccess(user);
 	if (!hasApiAccess) {

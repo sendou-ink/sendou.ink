@@ -12,7 +12,7 @@ import * as ImageRepository from "../ImageRepository.server";
 import { validateImageSchema } from "../upload-schemas.server";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser();
+	const user = await requireUser(request);
 	requireRole(user, "STAFF");
 
 	const data = await parseRequestPayload({

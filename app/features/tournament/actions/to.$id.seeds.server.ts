@@ -20,7 +20,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		request,
 		schema: seedsActionSchema,
 	});
-	const user = await requireUser();
+	const user = await requireUser(request);
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,

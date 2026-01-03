@@ -10,10 +10,6 @@ import { db, sql } from "~/db/sql";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { SESSION_KEY } from "~/features/auth/core/authenticator.server";
 import { authSessionStorage } from "~/features/auth/core/session.server";
-import {
-	getUserFromRequest,
-	userAsyncLocalStorage,
-} from "~/features/auth/core/user-context.server";
 import { logger } from "./logger";
 
 export function arrayContainsSameItems<T>(arr1: T[], arr2: T[]) {
@@ -65,34 +61,28 @@ export function wrappedAction<T extends z.ZodTypeAny>({
 			],
 		});
 
-		const userContext = {
-			getUserLazy: () => getUserFromRequest(request),
-		};
+		try {
+			const response = await action({
+				request,
+				context: {},
+				params,
+				unstable_pattern: "",
+			});
 
-		return userAsyncLocalStorage.run(userContext, async () => {
-			try {
-				const response = await action({
-					request,
-					context: {} as any,
-					params,
-					unstable_pattern: "",
-				});
+			return response;
+		} catch (thrown) {
+			// we only log errors in vitest for failed tests so this is okay (more context)
+			logger.error("Error in wrappedAction:", thrown);
 
-				return response;
-			} catch (thrown) {
-				// we only log errors in vitest for failed tests so this is okay (more context)
-				logger.error("Error in wrappedAction:", thrown);
+			if (thrown instanceof Response) {
+				// it was a redirect
+				if (thrown.status === 302) return thrown;
 
-				if (thrown instanceof Response) {
-					// it was a redirect
-					if (thrown.status === 302) return thrown;
-
-					throw new Error(`Response thrown with status code: ${thrown.status}`);
-				}
-
-				throw thrown;
+				throw new Error(`Response thrown with status code: ${thrown.status}`);
 			}
-		});
+
+			throw thrown;
+		}
 	};
 }
 
@@ -116,28 +106,22 @@ export function wrappedLoader<T>({
 			],
 		});
 
-		const userContext = {
-			getUserLazy: () => getUserFromRequest(request),
-		};
+		try {
+			const data = await loader({
+				request,
+				params,
+				context: {},
+				unstable_pattern: "",
+			});
 
-		return userAsyncLocalStorage.run(userContext, async () => {
-			try {
-				const data = await loader({
-					request,
-					params,
-					context: {} as any,
-					unstable_pattern: "",
-				});
-
-				return data as T;
-			} catch (thrown) {
-				if (thrown instanceof Response) {
-					throw new Error(`Response thrown with status code: ${thrown.status}`);
-				}
-
-				throw thrown;
+			return data as T;
+		} catch (thrown) {
+			if (thrown instanceof Response) {
+				throw new Error(`Response thrown with status code: ${thrown.status}`);
 			}
-		});
+
+			throw thrown;
+		}
 	};
 }
 

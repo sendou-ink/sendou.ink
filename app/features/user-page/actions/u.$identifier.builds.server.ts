@@ -18,7 +18,7 @@ import {
 } from "~/utils/zod";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser();
+	const user = await requireUser(request);
 	const data = await parseRequestPayload({
 		request,
 		schema: buildsActionSchema,

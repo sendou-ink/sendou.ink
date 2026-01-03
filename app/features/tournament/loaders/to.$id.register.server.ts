@@ -7,8 +7,8 @@ import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
 import { findOwnTournamentTeam } from "../queries/findOwnTournamentTeam.server";
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = await getUser();
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+	const user = await getUser(request);
 	if (!user) return null;
 
 	const { id: tournamentId } = parseParams({

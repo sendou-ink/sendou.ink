@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { getUser } from "~/features/auth/core/user.server";
+import { getUserId } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseSearchParams } from "~/utils/remix.server";
@@ -8,7 +8,7 @@ import { tournamentSearchSearchParamsSchema } from "../tournament-schemas.server
 export type TournamentSearchLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUser();
+	const user = await getUserId(request);
 	if (!user) {
 		return [];
 	}

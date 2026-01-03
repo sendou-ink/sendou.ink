@@ -9,7 +9,7 @@ import { id } from "~/utils/zod";
 import * as LFGRepository from "../LFGRepository.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUser();
+	const user = await requireUser(request);
 
 	const userProfileData = await UserRepository.findProfileByIdentifier(
 		String(user.id),

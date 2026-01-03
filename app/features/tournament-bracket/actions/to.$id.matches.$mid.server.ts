@@ -50,7 +50,7 @@ import {
 } from "../tournament-bracket-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
-	const user = await requireUser();
+	const user = await requireUser(request);
 	const { mid: matchId, id: tournamentId } = parseParams({
 		params,
 		schema: matchPageParamsSchema,

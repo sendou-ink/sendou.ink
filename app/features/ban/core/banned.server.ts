@@ -3,22 +3,15 @@ import { databaseTimestampToDate } from "~/utils/dates";
 
 let bannedUsers = await AdminRepository.allBannedUsers();
 
-export function checkBanStatus(
-	banned: number | null | undefined,
-	now: Date = new Date(),
-): boolean {
-	if (!banned) return false;
-	if (banned === 1) return true;
-
-	const banExpiresAt = databaseTimestampToDate(banned);
-
-	return banExpiresAt > now;
-}
-
 export function userIsBanned(userId: number) {
 	const banStatus = bannedUsers.get(userId);
 
-	return checkBanStatus(banStatus?.banned);
+	if (!banStatus?.banned) return false;
+	if (banStatus.banned === 1) return true;
+
+	const banExpiresAt = databaseTimestampToDate(banStatus.banned);
+
+	return banExpiresAt > new Date();
 }
 
 export async function refreshBannedCache() {

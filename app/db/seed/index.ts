@@ -289,8 +289,6 @@ function wipeDB() {
 		"UserFriendCode",
 		"NotificationUser",
 		"Notification",
-		"BanLog",
-		"ModNote",
 		"User",
 		"PlusSuggestion",
 		"PlusVote",

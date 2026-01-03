@@ -19,7 +19,7 @@ import { orgPageActionSchema } from "../tournament-organization-schemas";
 import { organizationFromParams } from "../tournament-organization-utils.server";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-	const user = await requireUser();
+	const user = await requireUser(request);
 	const organization = await organizationFromParams(params);
 	const data = await parseRequestPayload({
 		request,

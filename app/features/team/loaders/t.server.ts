@@ -1,10 +1,11 @@
+import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import type { UserWithPlusTier } from "~/db/tables";
-import { getUser } from "~/features/auth/core/user.server";
+import { getUserId } from "~/features/auth/core/user.server";
 import * as TeamRepository from "../TeamRepository.server";
 
-export const loader = async () => {
-	const user = await getUser();
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+	const user = await getUserId(request);
 
 	const unsortedTeams = await TeamRepository.findAllUndisbanded();
 

@@ -4,7 +4,7 @@ import * as ArtRepository from "../ArtRepository.server";
 import { NEW_ART_EXISTING_SEARCH_PARAM_KEY } from "../art-constants";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUser();
+	const user = await requireUser(request);
 
 	const artIdRaw = new URL(request.url).searchParams.get(
 		NEW_ART_EXISTING_SEARCH_PARAM_KEY,

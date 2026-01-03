@@ -8,7 +8,7 @@ import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "../core/dev-controls";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
-		const user = await requireUser();
+		const user = await requireUser(request);
 		requireRole(user, "STAFF");
 	}
 

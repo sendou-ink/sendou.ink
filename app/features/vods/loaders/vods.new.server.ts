@@ -11,7 +11,7 @@ const newVodLoaderParamsSchema = z.object({
 });
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUser();
+	const user = await requireUser(request);
 
 	const url = new URL(request.url);
 	const params = newVodLoaderParamsSchema.safeParse(

@@ -11,7 +11,7 @@ import { userResultsPage } from "~/utils/urls";
 import { editHighlightsActionSchema } from "../user-page-schemas";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser();
+	const user = await requireUser(request);
 	const data = await parseRequestPayload({
 		request,
 		schema: editHighlightsActionSchema,

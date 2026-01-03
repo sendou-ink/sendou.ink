@@ -20,7 +20,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		request,
 		schema: followUpCommentActionSchema,
 	});
-	const user = await requireUser();
+	const user = await requireUser(request);
 
 	const votingMonthYear = rangeToMonthYear(
 		badRequestIfFalsy(nextNonCompletedVoting(new Date())),

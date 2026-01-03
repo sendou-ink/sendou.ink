@@ -16,7 +16,7 @@ import * as CalendarEvent from "../core/CalendarEvent";
 export type CalendarLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async (args: LoaderFunctionArgs) => {
-	const user = await getUser();
+	const user = await getUser(args.request);
 	const parsed = parseSafeSearchParams({
 		request: args.request,
 		schema: dayMonthYear,

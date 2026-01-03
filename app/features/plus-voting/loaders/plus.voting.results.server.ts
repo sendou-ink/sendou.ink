@@ -1,3 +1,4 @@
+import type { LoaderFunctionArgs } from "react-router";
 import type { UserWithPlusTier } from "~/db/tables";
 import { getUser } from "~/features/auth/core/user.server";
 import { lastCompletedVoting } from "~/features/plus-voting/core";
@@ -6,8 +7,8 @@ import { isSupporter } from "~/modules/permissions/utils";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
 
-export const loader = async () => {
-	const user = await getUser();
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+	const user = await getUser(request);
 	const results = await PlusVotingRepository.resultsByMonthYear(
 		lastCompletedVoting(new Date()),
 	);

@@ -28,7 +28,7 @@ import {
 } from "../queries/XPLeaderboard.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUser();
+	const user = await getUser(request);
 	const unvalidatedType = new URL(request.url).searchParams.get(
 		TYPE_SEARCH_PARAM_KEY,
 	);
