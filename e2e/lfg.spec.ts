@@ -1,5 +1,11 @@
-import test, { expect } from "@playwright/test";
-import { impersonate, navigate, seed, submit } from "~/utils/playwright";
+import {
+	expect,
+	impersonate,
+	navigate,
+	seed,
+	submit,
+	test,
+} from "~/utils/playwright";
 import { LFG_PAGE } from "~/utils/urls";
 
 test.describe("LFG", () => {

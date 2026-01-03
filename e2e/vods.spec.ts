@@ -1,5 +1,6 @@
-import test, { expect, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import {
+	expect,
 	impersonate,
 	isNotVisible,
 	navigate,
@@ -8,6 +9,7 @@ import {
 	selectUser,
 	selectWeapon,
 	submit,
+	test,
 } from "~/utils/playwright";
 import { newVodPage, VODS_PAGE, vodVideoPage } from "~/utils/urls";
 

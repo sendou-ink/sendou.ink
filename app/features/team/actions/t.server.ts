@@ -9,7 +9,7 @@ import { TEAM } from "../team-constants";
 import { createTeamSchemaServer } from "../team-schemas.server";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const result = await parseFormData({
 		request,
 		schema: createTeamSchemaServer,

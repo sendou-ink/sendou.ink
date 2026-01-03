@@ -1,13 +1,14 @@
-import test, { expect } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { scrimsNewFormSchema } from "~/features/scrims/scrims-schemas";
 import {
+	expect,
 	impersonate,
 	navigate,
 	seed,
 	selectUser,
 	submit,
+	test,
 } from "~/utils/playwright";
 import { createFormHelpers } from "~/utils/playwright-form";
 import { newScrimPostPage, scrimsPage } from "~/utils/urls";
@@ -57,8 +58,6 @@ test.describe("Scrims", () => {
 	test("requests an existing scrim post & cancels the request", async ({
 		page,
 	}) => {
-		const INITIAL_AVAILABLE_TO_REQUEST_COUNT = 15;
-
 		await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({
@@ -69,13 +68,16 @@ test.describe("Scrims", () => {
 		const requestScrimButtonLocator = page.getByTestId("request-scrim-button");
 
 		await page.getByTestId("available-scrims-tab").click();
+
+		await expect(requestScrimButtonLocator.first()).toBeVisible();
+
+		const initialCount = await requestScrimButtonLocator.count();
+
 		await requestScrimButtonLocator.first().click();
 
 		await submit(page);
 
-		await expect(requestScrimButtonLocator).toHaveCount(
-			INITIAL_AVAILABLE_TO_REQUEST_COUNT - 1,
-		);
+		await expect(requestScrimButtonLocator).toHaveCount(initialCount - 1);
 
 		const togglePendingRequestsButton = page.getByTestId(
 			"toggle-pending-requests-button",
@@ -90,9 +92,7 @@ test.describe("Scrims", () => {
 		});
 		await cancelButton.click();
 
-		await expect(requestScrimButtonLocator).toHaveCount(
-			INITIAL_AVAILABLE_TO_REQUEST_COUNT,
-		);
+		await expect(requestScrimButtonLocator).toHaveCount(initialCount);
 	});
 
 	test("accepts a request", async ({ page }) => {

@@ -1,9 +1,15 @@
-import test, { expect } from "@playwright/test";
 import {
 	clockFormatSchema,
 	disableBuildAbilitySortingSchema,
 } from "~/features/settings/settings-schemas";
-import { impersonate, navigate, seed } from "~/utils/playwright";
+import {
+	expect,
+	impersonate,
+	navigate,
+	seed,
+	test,
+	waitForPOSTResponse,
+} from "~/utils/playwright";
 import { createFormHelpers } from "~/utils/playwright-form";
 import { SETTINGS_PAGE } from "~/utils/urls";
 
@@ -29,6 +35,7 @@ test.describe("Settings", () => {
 
 		const form = createFormHelpers(page, disableBuildAbilitySortingSchema);
 		await form.check("newValue");
+		await waitForPOSTResponse(page, () => form.check("newValue"));
 
 		await navigate({
 			page,

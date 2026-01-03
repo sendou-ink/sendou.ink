@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
-import { requireUserId } from "~/features/auth/core/user.server";
+import { requireUser } from "~/features/auth/core/user.server";
 import {
 	validatedBuildFromSearchParams,
 	validatedWeaponIdFromSearchParams,
@@ -16,7 +16,7 @@ const newBuildLoaderParamsSchema = z.object({
 });
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUserId(request);
+	const user = requireUser();
 	const url = new URL(request.url);
 
 	const params = newBuildLoaderParamsSchema.safeParse(

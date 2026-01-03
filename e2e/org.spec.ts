@@ -1,14 +1,15 @@
-import test, { expect } from "@playwright/test";
-import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { NZAP_TEST_ID, ORG_ADMIN_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { updateIsEstablishedSchema } from "~/features/tournament-organization/tournament-organization-schemas";
 import {
+	expect,
 	impersonate,
 	isNotVisible,
 	navigate,
 	seed,
 	selectUser,
 	submit,
+	test,
 	waitForPOSTResponse,
 } from "~/utils/playwright";
 import { createFormHelpers } from "~/utils/playwright-form";
@@ -156,11 +157,9 @@ test.describe("Tournament Organization", () => {
 	test("allows member of established org to create tournament", async ({
 		page,
 	}) => {
-		const ORG_ADMIN_ID = 3; // 3 = org admin, but not site admin
-
 		await seed(page);
 
-		await impersonate(page, ORG_ADMIN_ID);
+		await impersonate(page, ORG_ADMIN_TEST_ID);
 		await navigate({
 			page,
 			url: TOURNAMENT_NEW_PAGE,
@@ -184,7 +183,7 @@ test.describe("Tournament Organization", () => {
 			isEstablishedForm.check("isEstablished"),
 		);
 
-		await impersonate(page, ORG_ADMIN_ID);
+		await impersonate(page, ORG_ADMIN_TEST_ID);
 		await navigate({
 			page,
 			url: TOURNAMENT_NEW_PAGE,

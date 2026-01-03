@@ -7,7 +7,7 @@ import { userBuildsPage } from "~/utils/urls";
 import { newBuildSchema } from "../user-page-schemas";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: newBuildSchema,

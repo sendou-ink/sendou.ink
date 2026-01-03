@@ -366,7 +366,12 @@ class SendouQClass {
 	): Omit<T, "inviteCode" | "chatCode" | "members"> & {
 		members: T["members"] | undefined;
 	} {
-		const baseGroup = R.omit(group, ["inviteCode", "chatCode", "members"]);
+		const {
+			inviteCode: _inviteCode,
+			chatCode: _chatCode,
+			members,
+			...baseGroup
+		} = group;
 
 		if (this.#groupIsFull(group)) {
 			return {
@@ -377,7 +382,7 @@ class SendouQClass {
 
 		return {
 			...baseGroup,
-			members: group.members,
+			members,
 		};
 	}
 
