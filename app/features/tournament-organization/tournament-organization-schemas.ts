@@ -2,6 +2,7 @@ import { isFuture } from "date-fns";
 import { z } from "zod";
 import { TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
 import { TOURNAMENT_ORGANIZATION } from "~/features/tournament-organization/tournament-organization-constants";
+import { textFieldRequired } from "~/form/fields";
 import { dayMonthYearToDate } from "~/utils/dates";
 import { mySlugify } from "~/utils/urls";
 import {
@@ -12,6 +13,18 @@ import {
 	safeNullableStringSchema,
 } from "~/utils/zod";
 
+export const newOrganizationSchema = z.object({
+	name: textFieldRequired({
+		label: "labels.name",
+		minLength: 2,
+		maxLength: 64,
+		validate: {
+			func: (val) => mySlugify(val).length > 0,
+			message: "forms:errors.noOnlySpecialCharacters",
+		},
+	}),
+});
+
 const nameSchema = z
 	.string()
 	.trim()
@@ -20,10 +33,6 @@ const nameSchema = z
 	.refine((val) => mySlugify(val).length >= 2, {
 		message: "Not enough non-special characters",
 	});
-
-export const newOrganizationSchema = z.object({
-	name: nameSchema,
-});
 
 export const organizationEditSchema = z.object({
 	name: nameSchema,
