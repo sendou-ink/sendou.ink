@@ -33,6 +33,7 @@ export async function findCurrentGroups() {
 		discordId: Tables["User"]["discordId"];
 		discordAvatar: Tables["User"]["discordAvatar"];
 		customUrl: Tables["User"]["customUrl"];
+		pronouns: Tables["User"]["pronouns"] | null;
 		mapModePreferences: Tables["User"]["mapModePreferences"];
 		noScreen: Tables["User"]["noScreen"];
 		languages: Tables["User"]["languages"];

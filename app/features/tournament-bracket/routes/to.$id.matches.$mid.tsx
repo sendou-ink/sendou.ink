@@ -147,11 +147,11 @@ function BeforeMatchChat() {
 				...data.match.players.map((p) => ({ ...p, title: undefined })),
 				...(tournament.ctx.organization?.members ?? []).map((m) => ({
 					...m,
-					title: m.role === "STREAMER" ? "Stream" : "TO",
+					title: m.role === "STREAMER" ? "Cast" : "TO",
 				})),
 				...tournament.ctx.staff.map((s) => ({
 					...s,
-					title: s.role === "STREAMER" ? "Stream" : "TO",
+					title: s.role === "STREAMER" ? "Cast" : "TO",
 				})),
 				{
 					...tournament.ctx.author,

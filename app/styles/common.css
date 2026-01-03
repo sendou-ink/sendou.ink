@@ -335,6 +335,10 @@ abbr[title] {
 	padding-block: var(--s-2-5);
 }
 
+.article img {
+	height: auto;
+}
+
 /* Hack to deal with Safari bug when the image is loading. See: https://stackoverflow.com/a/73466877 */
 @media not all and (min-resolution: 0.001dpcm) {
 	img[loading="lazy"] {

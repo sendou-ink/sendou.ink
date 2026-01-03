@@ -96,6 +96,7 @@ export const testTournament = ({
 				discordAvatar: null,
 				discordId: "123",
 				username: "test",
+				pronouns: null,
 				id: 1,
 			},
 			...ctx,

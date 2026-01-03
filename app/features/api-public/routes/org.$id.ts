@@ -47,6 +47,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 							"User.id",
 							"User.discordId",
 							"User.username",
+							"User.pronouns",
 							"TournamentOrganizationMember.role",
 							"TournamentOrganizationMember.roleDisplayName",
 						])
@@ -68,6 +69,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			userId: member.id,
 			discordId: member.discordId,
 			name: member.username,
+			pronouns: member.pronouns,
 			role: member.role,
 			roleDisplayName: member.roleDisplayName,
 		})),

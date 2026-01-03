@@ -27,6 +27,10 @@
 	flex: 1;
 }
 
+.seperator {
+	margin-left: var(--s-4);
+}
+
 .weaponPool {
 	width: 100%;
 }

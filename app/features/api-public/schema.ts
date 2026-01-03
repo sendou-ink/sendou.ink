@@ -37,6 +37,12 @@ export interface GetUserResponse {
 	badges: Array<Badge>;
 	/** Teams user is member of. The main team is always first in the array. */
 	teams: Array<GlobalTeamMembership>;
+	/**
+	 * User's pronouns.
+	 *
+	 * @example { "subject": "he", "object": "him" }
+	 */
+	pronouns: Pronouns | null;
 	peakXp: number | null;
 	/** Users current (or previous if it's off-season) ranked season (SendouQ & ranked tournaments) rank. Null if no rank for the season in question or the season does not have yet enough players on the leaderboard. */
 	currentRank: SeasonalRank | null;
@@ -226,6 +232,12 @@ export type GetTournamentTeamsResponse = Array<{
 		 */
 		inGameName: string | null;
 		/**
+		 * User's pronouns.
+		 *
+		 * @example { "subject": "he", "object": "him" }
+		 */
+		pronouns: Pronouns | null;
+		/**
 		 *  Switch friend code used for identification purposes.
 		 *
 		 * @example "1234-5678-9101"
@@ -365,6 +377,12 @@ interface TournamentOrganizationMember {
 	 * @example "79237403620945920"
 	 */
 	discordId: string;
+	/**
+	 * User's pronouns.
+	 *
+	 * @example { "subject": "he", "object": "him" }
+	 */
+	pronouns: Pronouns | null;
 	role: "ADMIN" | "MEMBER" | "ORGANIZER" | "STREAMER";
 	roleDisplayName: string | null;
 }
@@ -424,6 +442,14 @@ type RankTierName =
 	| "SILVER"
 	| "BRONZE"
 	| "IRON";
+
+type SubjectPronoun = "he" | "she" | "they" | "it" | "any";
+type ObjectPronoun = "him" | "her" | "them" | "its" | "all";
+
+export interface Pronouns {
+	subject: SubjectPronoun;
+	object: ObjectPronoun;
+}
 
 type Badge = {
 	/**
