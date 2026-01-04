@@ -24,11 +24,15 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	);
 
 	const friendCodes = await UserRepository.friendCodesByUserId(user.id);
+	const inGameNameHistory = await UserRepository.inGameNameHistoryByUserId(
+		user.id,
+	);
 
 	return {
 		...userData,
 		discordId: user.discordId,
 		discordAccountCreatedAt: convertSnowflakeToDate(user.discordId).getTime(),
 		friendCodes,
+		inGameNameHistory,
 	};
 };

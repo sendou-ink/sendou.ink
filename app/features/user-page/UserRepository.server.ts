@@ -1124,3 +1124,16 @@ export async function anyUserPrefersNoScreen(
 
 	return Boolean(result);
 }
+
+export function inGameNameHistoryByUserId(userId: number) {
+	return db
+		.selectFrom("UserInGameNameHistory")
+		.select([
+			"UserInGameNameHistory.id",
+			"UserInGameNameHistory.inGameName",
+			"UserInGameNameHistory.createdAt",
+		])
+		.where("UserInGameNameHistory.userId", "=", userId)
+		.orderBy("UserInGameNameHistory.createdAt", "desc")
+		.execute();
+}

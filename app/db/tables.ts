@@ -945,6 +945,13 @@ export interface UserFriendCode {
 	createdAt: GeneratedAlways<number>;
 }
 
+export interface UserInGameNameHistory {
+	id: GeneratedAlways<number>;
+	userId: number;
+	inGameName: string;
+	createdAt: GeneratedAlways<number>;
+}
+
 export interface ApiToken {
 	id: GeneratedAlways<number>;
 	userId: number;
@@ -1195,6 +1202,7 @@ export interface DB {
 	UserSubmittedImage: UserSubmittedImage;
 	UserWeapon: UserWeapon;
 	UserFriendCode: UserFriendCode;
+	UserInGameNameHistory: UserInGameNameHistory;
 	Video: Video;
 	VideoMatch: VideoMatch;
 	VideoMatchPlayer: VideoMatchPlayer;

@@ -32,6 +32,13 @@ export default function UserAdminPage() {
 
 			<div className="stack sm">
 				<Divider smallText className="font-bold">
+					In-game name history
+				</Divider>
+				<InGameNameHistory />
+			</div>
+
+			<div className="stack sm">
+				<Divider smallText className="font-bold">
 					Mod notes
 				</Divider>
 				<ModNotes />
@@ -266,6 +273,37 @@ function FriendCodes() {
 						})}
 					</p>
 					<p className="ml-2">Submitted by: {fc.submitterUsername}</p>
+				</div>
+			))}
+		</div>
+	);
+}
+
+function InGameNameHistory() {
+	const data = useLoaderData<typeof loader>();
+	const { formatDateTime } = useTimeFormat();
+
+	if (!data.inGameNameHistory || data.inGameNameHistory.length === 0) {
+		return (
+			<p className="text-center text-lighter italic">No in-game name history</p>
+		);
+	}
+
+	return (
+		<div className="stack lg">
+			{data.inGameNameHistory.map((ign, index) => (
+				<div key={ign.id}>
+					<p className="font-bold">{ign.inGameName}</p>
+					<p className="ml-2">
+						{index === 0 ? "Current" : "Past"} - Changed on{" "}
+						{formatDateTime(databaseTimestampToDate(ign.createdAt), {
+							year: "numeric",
+							month: "long",
+							day: "numeric",
+							hour: "2-digit",
+							minute: "2-digit",
+						})}
+					</p>
 				</div>
 			))}
 		</div>
