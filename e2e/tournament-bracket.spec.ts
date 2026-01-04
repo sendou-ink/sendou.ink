@@ -1096,6 +1096,9 @@ test.describe("Tournament bracket", () => {
 				await submit(page);
 
 				await submit(page, "undo-score-button");
+				await expect(
+					page.getByText("Please select the winner of this map"),
+				).toBeVisible();
 				await page.getByTestId("winner-radio-1").click();
 				await page.getByTestId("points-input-1").fill("100");
 				await submit(page, "report-score-button");
