@@ -21,11 +21,10 @@
 }
 
 .calendarDay {
-	width: var(--cell-size);
-	height: var(--cell-size);
+	aspect-ratio: 1;
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
-	background-color: var(--color-bg-high);
+	background-color: var(--bg-lighter);
 	padding: var(--s-1);
 	position: relative;
 	display: grid;
