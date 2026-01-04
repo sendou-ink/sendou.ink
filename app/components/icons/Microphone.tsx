@@ -7,6 +7,7 @@ export function MicrophoneIcon({ className }: { className?: string }) {
 			strokeWidth={1.5}
 			stroke="currentColor"
 			className={className}
+			data-testid="microphone-icon"
 		>
 			<path
 				strokeLinecap="round"
