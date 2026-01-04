@@ -164,5 +164,11 @@
 	"perInkTankGrid.header_other": "יריות של {{weapon}} לאחר ×{{count}} שימושים בסאב",
 	"bigBubblerExplanation": "",
 	"button.showChart": "",
-	"button.showConsumptionGrid": ""
+	"button.showConsumptionGrid": "",
+	"damageReceiver.suffix.armor": "",
+	"damageReceiver.suffix.shield": "",
+	"damageReceiver.suffix.weakPoint": "",
+	"damageReceiver.suffix.inhale": "",
+	"damageReceiver.suffix.canopy": "",
+	"damageReceiver.suffix.canopyLaunched": ""
 }

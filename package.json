@@ -21,11 +21,13 @@
 		"biome:fix": "npx @biomejs/biome check --write .",
 		"biome:fix:unsafe": "npx @biomejs/biome check --write --unsafe .",
 		"typecheck": "react-router typegen && tsc --noEmit",
-		"test:unit": "cross-env VITE_SITE_DOMAIN=http://localhost:5173 vitest --silent=passed-only run",
+		"test:unit:browser": "cross-env VITE_SITE_DOMAIN=http://localhost:5173 BROWSER_HEADLESS=true vitest --silent=passed-only run",
+		"test:browser:ui": "cross-env VITE_SITE_DOMAIN=http://localhost:5173 vitest --silent=passed-only --project browser",
+		"test:unit:browser:ui": "cross-env VITE_SITE_DOMAIN=http://localhost:5173 vitest --silent=passed-only",
 		"test:e2e": "npx playwright test",
 		"test:e2e:flaky-detect": "npx playwright test --repeat-each=10 --max-failures=1",
 		"test:e2e:generate-seeds": "cross-env DB_PATH=db-test.sqlite3 npx vite-node scripts/generate-e2e-seed-dbs.ts",
-		"checks": "npm run biome:fix && npm run test:unit && npm run check-translation-jsons && npm run typecheck && npm run knip",
+		"checks": "npm run biome:fix && npm run test:unit:browser && npm run check-translation-jsons && npm run typecheck && npm run knip",
 		"setup": "cross-env DB_PATH=db.sqlite3 vite-node ./scripts/setup.ts",
 		"i18n:sync": "i18next-locales-sync -e true -p en -s da de es-ES es-US fr-CA fr-EU he it ja ko nl pl pt-BR ru zh -l locales && npm run biome:fix",
 		"knip": "knip"
@@ -102,6 +104,8 @@
 		"@types/react": "^19.2.7",
 		"@types/react-dom": "^19.2.3",
 		"@types/web-push": "^3.6.4",
+		"@vitest/browser-playwright": "^4.0.16",
+		"@vitest/ui": "^4.0.16",
 		"babel-plugin-react-compiler": "^19.1.0-rc.2",
 		"cross-env": "^10.1.0",
 		"dotenv": "^17.2.3",
@@ -115,6 +119,7 @@
 		"vite-node": "^5.2.0",
 		"vite-plugin-babel": "^1.3.2",
 		"vite-tsconfig-paths": "^6.0.3",
-		"vitest": "^4.0.16"
+		"vitest": "^4.0.16",
+		"vitest-browser-react": "^2.0.2"
 	}
 }

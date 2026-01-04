@@ -1,8 +1,10 @@
 import clsx from "clsx";
 import React, { type JSX } from "react";
+import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import type { ShouldRevalidateFunction } from "react-router";
 import { Ability } from "~/components/Ability";
+import { SendouPopover } from "~/components/elements/Popover";
 import { Image, WeaponImage } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
@@ -46,7 +48,7 @@ export const CURRENT_PATCH = "10.1";
 export const shouldRevalidate: ShouldRevalidateFunction = () => false;
 
 export const handle: SendouRouteHandle = {
-	i18n: ["weapons", "analyzer", "builds"],
+	i18n: ["weapons", "analyzer", "builds", "game-misc"],
 	breadcrumb: () => ({
 		imgPath: navIconUrl("object-damage-calculator"),
 		href: OBJECT_DAMAGE_CALCULATOR_URL,
@@ -240,6 +242,70 @@ const damageReceiverAp: Partial<Record<DamageReceiver, JSX.Element>> = {
 	),
 };
 
+type ReceiverTranslation =
+	| { key: string }
+	| { weaponKey: string; suffixKey: string };
+
+const damageReceiverTranslations: Record<DamageReceiver, ReceiverTranslation> =
+	{
+		Chariot: { key: "weapons:SPECIAL_12" },
+		NiceBall_Armor: {
+			weaponKey: "weapons:SPECIAL_6",
+			suffixKey: "analyzer:damageReceiver.suffix.armor",
+		},
+		ShockSonar: { key: "weapons:SPECIAL_7" },
+		GreatBarrier_Barrier: {
+			weaponKey: "weapons:SPECIAL_2",
+			suffixKey: "analyzer:damageReceiver.suffix.shield",
+		},
+		GreatBarrier_WeakPoint: {
+			weaponKey: "weapons:SPECIAL_2",
+			suffixKey: "analyzer:damageReceiver.suffix.weakPoint",
+		},
+		BlowerInhale: {
+			weaponKey: "weapons:SPECIAL_8",
+			suffixKey: "analyzer:damageReceiver.suffix.inhale",
+		},
+		Decoy: { key: "weapons:SPECIAL_16" },
+		BulletPogo: { key: "weapons:SPECIAL_18" },
+		Gachihoko_Barrier: {
+			weaponKey: "game-misc:MODE_LONG_RM",
+			suffixKey: "analyzer:damageReceiver.suffix.shield",
+		},
+		Wsb_Flag: { key: "weapons:SUB_8" },
+		Wsb_Shield: { key: "weapons:SUB_4" },
+		Wsb_Sprinkler: { key: "weapons:SUB_3" },
+		Bomb_TorpedoBullet: { key: "weapons:SUB_13" },
+		BulletUmbrellaCanopyCompact: {
+			weaponKey: "weapons:MAIN_6020",
+			suffixKey: "analyzer:damageReceiver.suffix.canopy",
+		},
+		BulletUmbrellaCanopyNormal: {
+			weaponKey: "weapons:MAIN_6000",
+			suffixKey: "analyzer:damageReceiver.suffix.canopy",
+		},
+		BulletUmbrellaCanopyNormal_Launched: {
+			weaponKey: "weapons:MAIN_6000",
+			suffixKey: "analyzer:damageReceiver.suffix.canopyLaunched",
+		},
+		BulletUmbrellaCanopyWide: {
+			weaponKey: "weapons:MAIN_6010",
+			suffixKey: "analyzer:damageReceiver.suffix.canopy",
+		},
+		BulletUmbrellaCanopyWide_Launched: {
+			weaponKey: "weapons:MAIN_6010",
+			suffixKey: "analyzer:damageReceiver.suffix.canopyLaunched",
+		},
+		BulletShelterCanopyFocus: {
+			weaponKey: "weapons:MAIN_6030",
+			suffixKey: "analyzer:damageReceiver.suffix.canopy",
+		},
+		BulletShelterCanopyFocus_Launched: {
+			weaponKey: "weapons:MAIN_6030",
+			suffixKey: "analyzer:damageReceiver.suffix.canopyLaunched",
+		},
+	};
+
 function DamageReceiversGrid({
 	weapon,
 	damagesToReceivers,
@@ -253,7 +319,15 @@ function DamageReceiversGrid({
 	children: React.ReactNode;
 	abilityPoints: string;
 }): JSX.Element {
-	const { t } = useTranslation(["weapons", "analyzer", "common"]);
+	const { t } = useTranslation(["weapons", "analyzer", "common", "game-misc"]);
+
+	const translateReceiver = (receiver: DamageReceiver) => {
+		const config = damageReceiverTranslations[receiver];
+		if ("key" in config) {
+			return t(config.key as any);
+		}
+		return t(config.suffixKey as any, { weapon: t(config.weaponKey as any) });
+	};
 	return (
 		<div>
 			<div
@@ -326,7 +400,7 @@ function DamageReceiversGrid({
 						</div>
 					</div>
 				))}
-				{damagesToReceivers.map((damageToReceiver, i) => {
+				{damagesToReceivers.map((damageToReceiver) => {
 					return (
 						<React.Fragment key={damageToReceiver.receiver}>
 							<div className="object-damage__table-header">
@@ -337,14 +411,21 @@ function DamageReceiversGrid({
 												damageReceiverAp[damageToReceiver.receiver]}
 										</div>
 									</Label>
-									<Image
-										className="object-damage__receiver-image"
-										key={i}
-										alt=""
-										path={damageReceiverImages[damageToReceiver.receiver]}
-										width={40}
-										height={40}
-									/>
+									<SendouPopover
+										trigger={
+											<Button className="object-damage__receiver-button">
+												<Image
+													className="object-damage__receiver-image"
+													alt={translateReceiver(damageToReceiver.receiver)}
+													path={damageReceiverImages[damageToReceiver.receiver]}
+													width={40}
+													height={40}
+												/>
+											</Button>
+										}
+									>
+										{translateReceiver(damageToReceiver.receiver)}
+									</SendouPopover>
 								</div>
 								<div className="object-damage__hp">
 									<span data-testid={`hp-${damageToReceiver.receiver}`}>

@@ -93,8 +93,6 @@ function EventCalendarCell({
 				<img
 					className="org__calendar__day__logo"
 					src={events[0].logoUrl ?? fallbackLogoUrl}
-					width={32}
-					height={32}
 					alt={events[0].name}
 				/>
 			) : null}

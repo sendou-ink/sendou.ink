@@ -7,6 +7,7 @@ export function SpeakerIcon({ className }: { className?: string }) {
 			strokeWidth={1.5}
 			stroke="currentColor"
 			className={className}
+			data-testid="speaker-icon"
 		>
 			<path
 				strokeLinecap="round"

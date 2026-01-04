@@ -1,8 +1,8 @@
 import { type ChildProcess, execSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import type { FullConfig } from "@playwright/test";
+import { E2E_BASE_PORT } from "~/utils/playwright";
 
-const BASE_PORT = 6173;
 const WORKER_COUNT = Number(process.env.E2E_WORKERS) || 4;
 const DEBUG = process.env.E2E_DEBUG === "true";
 const SERVER_PROCESSES: ChildProcess[] = [];
@@ -52,7 +52,7 @@ async function globalSetup(_config: FullConfig) {
 		env: {
 			...process.env,
 			VITE_E2E_TEST_RUN: "true",
-			VITE_SITE_DOMAIN: `http://localhost:${BASE_PORT}`,
+			VITE_SITE_DOMAIN: `http://localhost:${E2E_BASE_PORT}`,
 		},
 	});
 
@@ -63,13 +63,13 @@ async function globalSetup(_config: FullConfig) {
 	// biome-ignore lint/suspicious/noConsole: CLI script output
 	console.log("Cleaning up any existing processes on e2e ports...");
 	for (let i = 0; i < WORKER_COUNT; i++) {
-		killProcessOnPort(BASE_PORT + i);
+		killProcessOnPort(E2E_BASE_PORT + i);
 	}
 	// Wait briefly for ports to be released
 	await new Promise((resolve) => setTimeout(resolve, 500));
 
 	for (let i = 0; i < WORKER_COUNT; i++) {
-		const port = BASE_PORT + i;
+		const port = E2E_BASE_PORT + i;
 		const dbPath = `db-test-e2e-${i}.sqlite3`;
 
 		// Ensure database exists with migrations
