@@ -75,13 +75,13 @@
 	margin-block-start: var(--s-0-5);
 }
 
-.object-damage__receiver-button {
+.receiverButton {
 	all: unset;
 	cursor: pointer;
 	border-radius: var(--rounded);
 }
 
-.object-damage__receiver-button:focus-visible {
+.receiverButton:focus-visible {
 	outline: 2px solid var(--theme);
 	outline-offset: 2px;
 }

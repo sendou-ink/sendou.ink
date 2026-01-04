@@ -406,9 +406,9 @@ function DamageReceiversGrid({
 									</Label>
 									<SendouPopover
 										trigger={
-											<Button className="object-damage__receiver-button">
+											<Button className={styles.receiverButton}>
 												<Image
-													className="object-damage__receiver-image"
+													className={styles.receiverImage}
 													alt={translateReceiver(damageToReceiver.receiver)}
 													path={damageReceiverImages[damageToReceiver.receiver]}
 													width={40}
