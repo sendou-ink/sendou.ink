@@ -17,4 +17,12 @@ test.describe("Public API", () => {
 			"Authorization",
 		);
 	});
+
+	test("GET request includes CORS headers in response", async ({ page }) => {
+		await seed(page);
+
+		const response = await page.request.fetch("/api/tournament/1");
+
+		expect(response.headers()["access-control-allow-origin"]).toBe("*");
+	});
 });

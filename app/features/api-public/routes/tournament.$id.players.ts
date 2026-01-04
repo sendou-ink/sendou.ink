@@ -1,13 +1,9 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { cors } from "remix-utils/cors";
 import { z } from "zod";
 import * as TournamentMatchRepository from "~/features/tournament-bracket/TournamentMatchRepository.server";
 import { parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
+import { requireBearerAuth } from "../api-public-utils.server";
 import type { GetTournamentPlayersResponse } from "../schema";
 
 const paramsSchema = z.object({
@@ -15,7 +11,6 @@ const paramsSchema = z.object({
 });
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
 	requireBearerAuth(request);
 
 	const { id } = parseParams({
@@ -26,5 +21,5 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const participants: GetTournamentPlayersResponse =
 		await TournamentMatchRepository.userParticipationByTournamentId(id);
 
-	return cors(request, Response.json(participants));
+	return Response.json(participants);
 };
