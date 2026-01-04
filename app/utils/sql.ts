@@ -1,5 +1,12 @@
-export function errorIsSqliteUniqueConstraintFailure(error: any) {
-	return error?.code === "SQLITE_CONSTRAINT_UNIQUE";
+export function errorIsSqliteUniqueConstraintFailure(
+	error: unknown,
+): error is { code: string } {
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		"code" in error &&
+		(error as { code: unknown }).code === "SQLITE_CONSTRAINT_UNIQUE"
+	);
 }
 
 export function errorIsSqliteForeignKeyConstraintFailure(
@@ -11,19 +18,21 @@ export function errorIsSqliteForeignKeyConstraintFailure(
 	);
 }
 
-export function parseDBJsonArray(value: any) {
-	const parsed = JSON.parse(value);
+export function parseDBJsonArray<T extends Record<string, unknown>>(
+	value: string,
+): T[] {
+	const parsed: T[] = JSON.parse(value);
 
 	// If the returned array of JSON objects from DB is empty
 	// it will be returned as object with all values being null
 	// this is a (hacky) workaround for that
-	return parsed.filter((item: any) =>
+	return parsed.filter((item) =>
 		Object.values(item).some((val) => val !== null),
 	);
 }
 
-export function parseDBArray(value: any) {
-	const parsed = JSON.parse(value);
+export function parseDBArray<T>(value: string): T[] {
+	const parsed: T[] = JSON.parse(value);
 
 	if (!parsed || (parsed.length === 1 && parsed[0] === null)) {
 		return [];

@@ -109,9 +109,14 @@ export function setHistoryByTeamId(
 	return rows.map((row) => {
 		return {
 			...row,
-			matches: parseDBArray(row.matches),
+			matches: parseDBArray<SetHistoryByTeamIdItem["matches"][number]>(
+				row.matches,
+			),
 			// TODO: there is probably a way to do this in SQL
-			players: R.uniqueBy(parseDBArray(row.players), (u) => u.id),
+			players: R.uniqueBy(
+				parseDBArray<SetHistoryByTeamIdItem["players"][number]>(row.players),
+				(u) => u.id,
+			),
 		};
 	});
 }

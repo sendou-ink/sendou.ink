@@ -14,13 +14,13 @@ export const cache = (global.__lruCache = global.__lruCache
 export const ttl = (ms: number) =>
 	process.env.DISABLE_CACHE === "true" ? 0 : ms;
 
-export function syncCached<T>(key: string, getFreshValue: () => T) {
+export function syncCached<T>(key: string, getFreshValue: () => T): T {
 	if (cache.has(key)) {
 		return cache.get(key) as T;
 	}
 
 	const value = getFreshValue();
-	cache.set(key, value as any);
+	cache.set(key, value as CacheEntry<unknown>);
 
 	return value;
 }

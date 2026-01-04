@@ -25,6 +25,6 @@ export type Unpacked<T> = T extends (infer U)[]
 
 export type Nullish<T> = T | null | undefined;
 
-export type Unwrapped<T extends (...args: any) => any> = Unpacked<
+export type Unwrapped<T extends (...args: never[]) => unknown> = Unpacked<
 	Awaited<ReturnType<T>>
 >;

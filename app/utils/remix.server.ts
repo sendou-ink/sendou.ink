@@ -195,7 +195,7 @@ function errorToastRedirect(message: string) {
 
 /** Asserts condition is truthy. Throws a redirect triggering an error toast with given message otherwise.  */
 export function errorToastIfFalsy(
-	condition: any,
+	condition: unknown,
 	message: string,
 ): asserts condition {
 	if (condition) return;

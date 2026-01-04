@@ -7,6 +7,8 @@ import { Theme, useTheme } from "~/features/theme/core/provider";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 
+type ChartDatum = { primary: Date; secondary: number };
+
 export default function Chart({
 	options,
 	containerClassName,
@@ -29,13 +31,13 @@ export default function Chart({
 	const primaryAxis = React.useMemo<
 		AxisOptions<(typeof options)[number]["data"][number]>
 	>(
-		// @ts-expect-error - some weirdness here but maybe not worth fixing as the whole library needs to be replaced (it is unmaintained/deprecated)
+		// @ts-expect-error - library has complex union types that don't match how it's used
 		() => ({
 			getValue: (datum) => datum.primary,
 			scaleType: xAxis,
 			shouldNice: false,
 			formatters: {
-				scale: (val: any) => {
+				scale: (val: Date | number) => {
 					if (val instanceof Date) {
 						return val.toLocaleDateString(i18n.language, {
 							day: "numeric",
@@ -43,7 +45,7 @@ export default function Chart({
 						});
 					}
 
-					return val;
+					return String(val);
 				},
 			},
 		}),
@@ -95,7 +97,7 @@ export default function Chart({
 	);
 }
 
-interface ChartTooltipProps extends TooltipRendererProps<any> {
+interface ChartTooltipProps extends TooltipRendererProps<ChartDatum> {
 	headerSuffix?: string;
 	valueSuffix?: string;
 }
