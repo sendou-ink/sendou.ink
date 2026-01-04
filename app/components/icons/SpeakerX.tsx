@@ -7,6 +7,7 @@ export function SpeakerXIcon({ className }: { className?: string }) {
 			strokeWidth={1.5}
 			stroke="currentColor"
 			className={className}
+			data-testid="speaker-x-icon"
 		>
 			<path
 				strokeLinecap="round"

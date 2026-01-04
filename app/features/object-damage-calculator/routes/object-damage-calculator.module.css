@@ -75,6 +75,17 @@
 	margin-block-start: var(--s-0-5);
 }
 
+.object-damage__receiver-button {
+	all: unset;
+	cursor: pointer;
+	border-radius: var(--rounded);
+}
+
+.object-damage__receiver-button:focus-visible {
+	outline: 2px solid var(--theme);
+	outline-offset: 2px;
+}
+
 .receiverImage {
 	padding: var(--s-2);
 	border-radius: var(--rounded);

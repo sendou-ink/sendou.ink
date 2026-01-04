@@ -8,8 +8,8 @@ import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.s
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { qMatchPageParamsSchema } from "../q-match-schemas";
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const user = await getUser(request);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const user = getUser();
 	const matchId = parseParams({
 		params,
 		schema: qMatchPageParamsSchema,

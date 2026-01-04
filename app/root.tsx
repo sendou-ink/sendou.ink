@@ -15,7 +15,6 @@ import {
 	Links,
 	Meta,
 	Outlet,
-	redirect,
 	Scripts,
 	ScrollRestoration,
 	type ShouldRevalidateFunction,
@@ -31,12 +30,13 @@ import { useChangeLanguage } from "remix-i18next/react";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import type { Route } from "./+types/root";
 import { Catcher } from "./components/Catcher";
 import { SendouToastRegion, toastQueue } from "./components/elements/Toast";
 import { Layout } from "./components/layout";
 import { Ramp } from "./components/ramp/Ramp";
 import { getUser } from "./features/auth/core/user.server";
-import { userIsBanned } from "./features/ban/core/banned.server";
+import { userMiddleware } from "./features/auth/core/user-middleware.server";
 import {
 	isTheme,
 	Theme,
@@ -51,7 +51,8 @@ import { i18nCookie, i18next } from "./modules/i18n/i18next.server";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { allI18nNamespaces } from "./utils/i18n";
 import { isRevalidation, metaTags, type SerializeFrom } from "./utils/remix";
-import { SUSPENDED_PAGE } from "./utils/urls";
+
+export const middleware: Route.MiddlewareFunction[] = [userMiddleware];
 
 import "~/styles/vars.css";
 import "~/styles/normalize.css";
@@ -84,18 +85,9 @@ export type RootLoaderData = SerializeFrom<typeof loader>;
 export type LoggedInUser = NonNullable<RootLoaderData["user"]>;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUser(request, false);
+	const user = getUser();
 	const locale = await i18next.getLocale(request);
 	const themeSession = await getThemeSession(request);
-
-	// avoid redirection loop
-	if (
-		user &&
-		userIsBanned(user?.id) &&
-		new URL(request.url).pathname !== SUSPENDED_PAGE
-	) {
-		return redirect(SUSPENDED_PAGE);
-	}
 
 	return data(
 		{

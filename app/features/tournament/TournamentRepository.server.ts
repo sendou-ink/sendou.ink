@@ -1069,6 +1069,31 @@ export function resetBracket(tournamentStageId: number) {
 	});
 }
 
+export function reopenTournament(tournamentId: number) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.deleteFrom("TournamentResult")
+			.where("tournamentId", "=", tournamentId)
+			.execute();
+
+		await trx
+			.updateTable("Tournament")
+			.set({ isFinalized: 0 })
+			.where("id", "=", tournamentId)
+			.execute();
+
+		await trx
+			.deleteFrom("Skill")
+			.where("tournamentId", "=", tournamentId)
+			.execute();
+
+		await trx
+			.deleteFrom("TournamentBadgeOwner")
+			.where("tournamentId", "=", tournamentId)
+			.execute();
+	});
+}
+
 export type TournamentRepositoryInsertableMatch = Omit<
 	Insertable<DB["TournamentMatch"]>,
 	"status" | "chatCode"

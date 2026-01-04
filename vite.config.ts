@@ -1,11 +1,15 @@
 import { reactRouter } from "@react-router/dev/vite";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import babel from "vite-plugin-babel";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { configDefaults } from "vitest/config";
 
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
+	const env = loadEnv(mode, process.cwd(), "");
 	return {
+		server: {
+			port: Number(env.PORT) || 5173,
+		},
 		ssr: {
 			noExternal: ["react-charts", "react-use"],
 		},
@@ -26,8 +30,24 @@ export default defineConfig(() => {
 			tsconfigPaths(),
 		],
 		test: {
-			exclude: [...configDefaults.exclude, "e2e/**"],
-			setupFiles: ["./app/test-setup.ts"],
+			projects: [
+				{
+					extends: true,
+					test: {
+						name: "unit",
+						include: ["**/*.test.{ts,tsx}"],
+						exclude: [
+							...configDefaults.exclude,
+							"e2e/**",
+							"**/*.browser.test.{ts,tsx}",
+						],
+						setupFiles: ["./app/test-setup.ts"],
+					},
+				},
+				{
+					extends: "./vitest.browser.config.ts",
+				},
+			],
 		},
 		build: {
 			// this is mostly done so that i18n jsons as defined in ./app/modules/i18n/loader.ts

@@ -158,5 +158,11 @@
 	"noDmgData": "이 무기에는 아직 대미지 정보가 없습니다. 다음에 다시 확인하세요!",
 	"bigBubblerExplanation": "",
 	"button.showChart": "",
-	"button.showConsumptionGrid": ""
+	"button.showConsumptionGrid": "",
+	"damageReceiver.suffix.armor": "",
+	"damageReceiver.suffix.shield": "",
+	"damageReceiver.suffix.weakPoint": "",
+	"damageReceiver.suffix.inhale": "",
+	"damageReceiver.suffix.canopy": "",
+	"damageReceiver.suffix.canopyLaunched": ""
 }

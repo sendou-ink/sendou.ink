@@ -94,8 +94,6 @@ function EventCalendarCell({
 				<img
 					className={styles.calendarDayLogo}
 					src={events[0].logoUrl ?? fallbackLogoUrl}
-					width={32}
-					height={32}
 					alt={events[0].name}
 				/>
 			) : null}

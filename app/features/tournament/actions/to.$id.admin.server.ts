@@ -1,5 +1,6 @@
 import type { ActionFunction } from "react-router";
 import * as R from "remeda";
+import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
@@ -34,7 +35,7 @@ import {
 } from "../tournament-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: adminActionSchema,
@@ -473,6 +474,22 @@ export const action: ActionFunction = async ({ request, params }) => {
 			});
 
 			message = "Tournament progression updated";
+			break;
+		}
+		case "REOPEN_TOURNAMENT": {
+			validateIsTournamentAdmin();
+			errorToastIfFalsy(
+				DANGEROUS_CAN_ACCESS_DEV_CONTROLS,
+				"Only available in development",
+			);
+			errorToastIfFalsy(
+				tournament.ctx.isFinalized,
+				"Tournament is not finalized",
+			);
+
+			await TournamentRepository.reopenTournament(tournamentId);
+
+			message = "Tournament reopened";
 			break;
 		}
 		default: {

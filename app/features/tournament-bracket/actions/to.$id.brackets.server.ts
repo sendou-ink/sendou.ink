@@ -34,7 +34,7 @@ import {
 } from "../tournament-bracket-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,

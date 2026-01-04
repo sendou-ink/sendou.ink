@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import Compressor from "compressorjs";
-import Markdown from "markdown-to-jsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Form, Link, useFetcher, useLoaderData } from "react-router";
@@ -29,6 +28,7 @@ import { UserIcon } from "~/components/icons/User";
 import { Label } from "~/components/Label";
 import { containerClassName } from "~/components/Main";
 import { MapPoolStages } from "~/components/MapPoolSelector";
+import { Markdown } from "~/components/Markdown";
 import { Section } from "~/components/Section";
 import { SubmitButton } from "~/components/SubmitButton";
 import TimePopover from "~/components/TimePopover";
@@ -218,9 +218,7 @@ function TournamentRegisterInfoTabs() {
 						) : null}
 
 						<div className={styles.infoDescription}>
-							<Markdown options={{ wrapper: React.Fragment }}>
-								{tournament.ctx.description ?? ""}
-							</Markdown>
+							<Markdown>{tournament.ctx.description ?? ""}</Markdown>
 						</div>
 						<TOPickedMapPoolInfo />
 						<TiebreakerMapPoolInfo />
@@ -230,9 +228,7 @@ function TournamentRegisterInfoTabs() {
 				{tournament.ctx.rules ? (
 					<SendouTabPanel id="rules">
 						<div className={styles.infoDescription}>
-							<Markdown options={{ wrapper: React.Fragment }}>
-								{tournament.ctx.rules ?? ""}
-							</Markdown>
+							<Markdown>{tournament.ctx.rules ?? ""}</Markdown>
 						</div>
 					</SendouTabPanel>
 				) : null}
