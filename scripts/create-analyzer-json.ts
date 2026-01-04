@@ -328,7 +328,11 @@ function parametersToMainWeaponResult(
 			params.WideSwingUnitGroupParam?.DamageParam?.Inside?.DamageMaxValue,
 			params.WideSwingUnitGroupParam?.DamageParam?.Outside?.DamageMaxValue,
 		),
-		CanopyHP: params.spl__BulletShelterCanopyParam?.CanopyHP,
+		CanopyHP:
+			params.spl__BulletShelterCanopyParam?.CanopyHP ??
+			(weapon.Id === 6000 || weaponId === 6001 || weaponId === 6005
+				? 5000
+				: undefined),
 		ChargeFrameFullCharge:
 			params.WeaponParam?.ChargeFrameFullCharge ??
 			params.spl__WeaponStringerParam?.ChargeParam?.ChargeFrameFullCharge,
