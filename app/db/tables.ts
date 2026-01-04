@@ -505,6 +505,7 @@ export interface PreparedMaps {
 export interface TournamentBadgeOwner {
 	badgeId: number;
 	userId: number;
+	tournamentId: number | null;
 }
 
 /** A group is a logical structure used to group multiple rounds together.
