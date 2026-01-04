@@ -30,8 +30,24 @@ export default defineConfig(({ mode }) => {
 			tsconfigPaths(),
 		],
 		test: {
-			exclude: [...configDefaults.exclude, "e2e/**"],
-			setupFiles: ["./app/test-setup.ts"],
+			projects: [
+				{
+					extends: true,
+					test: {
+						name: "unit",
+						include: ["**/*.test.{ts,tsx}"],
+						exclude: [
+							...configDefaults.exclude,
+							"e2e/**",
+							"**/*.browser.test.{ts,tsx}",
+						],
+						setupFiles: ["./app/test-setup.ts"],
+					},
+				},
+				{
+					extends: "./vitest.browser.config.ts",
+				},
+			],
 		},
 		build: {
 			// this is mostly done so that i18n jsons as defined in ./app/modules/i18n/loader.ts

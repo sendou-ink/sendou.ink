@@ -6,6 +6,7 @@ node_modules
 .react-router/
 .env
 translation-progress.md
+**/*/__screenshots__
 
 notes.md
 
