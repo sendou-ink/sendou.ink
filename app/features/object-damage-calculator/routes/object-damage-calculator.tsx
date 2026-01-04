@@ -400,7 +400,7 @@ function DamageReceiversGrid({
 						</div>
 					</div>
 				))}
-				{damagesToReceivers.map((damageToReceiver, i) => {
+				{damagesToReceivers.map((damageToReceiver) => {
 					return (
 						<React.Fragment key={damageToReceiver.receiver}>
 							<div className="object-damage__table-header">
