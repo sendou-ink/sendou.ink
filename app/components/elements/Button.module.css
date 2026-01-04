@@ -91,6 +91,7 @@
 }
 
 .minimalSuccess {
+	padding: 0;
 	border: none;
 	background-color: transparent;
 	color: var(--color-success);
@@ -111,6 +112,7 @@
 }
 
 .minimalDestructive {
+	padding: 0;
 	border: none;
 	background-color: transparent;
 	color: var(--color-error);
