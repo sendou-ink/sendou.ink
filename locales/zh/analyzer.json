@@ -158,5 +158,11 @@
 	"noDmgData": "目前没有该武器的伤害数据。请期待后续更新！",
 	"bigBubblerExplanation": "{{weapon}} 的持续时间也会一起增加。",
 	"button.showChart": "",
-	"button.showConsumptionGrid": ""
+	"button.showConsumptionGrid": "",
+	"damageReceiver.suffix.armor": "",
+	"damageReceiver.suffix.shield": "",
+	"damageReceiver.suffix.weakPoint": "",
+	"damageReceiver.suffix.inhale": "",
+	"damageReceiver.suffix.canopy": "",
+	"damageReceiver.suffix.canopyLaunched": ""
 }

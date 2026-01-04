@@ -158,5 +158,11 @@
 	"noDmgData": "このブキのダメージデータはまだわかっていません。もう少しお待ちください！",
 	"bigBubblerExplanation": "{{weapon}} 耐久値が上がるにつれて継続時間も増えます。",
 	"button.showChart": "表を表示",
-	"button.showConsumptionGrid": ""
+	"button.showConsumptionGrid": "",
+	"damageReceiver.suffix.armor": "",
+	"damageReceiver.suffix.shield": "",
+	"damageReceiver.suffix.weakPoint": "",
+	"damageReceiver.suffix.inhale": "",
+	"damageReceiver.suffix.canopy": "",
+	"damageReceiver.suffix.canopyLaunched": ""
 }
