@@ -745,6 +745,69 @@ test.describe("Tournament bracket", () => {
 		});
 	});
 
+	test("reopening round robin match does not lock already-unlocked matches (issue #2690)", async ({
+		page,
+	}) => {
+		const tournamentId = 3;
+
+		await seed(page);
+		await impersonate(page);
+
+		await navigate({
+			page,
+			url: tournamentBracketsPage({ tournamentId }),
+		});
+
+		await page.getByTestId("finalize-bracket-button").click();
+		await submit(page, "confirm-finalize-bracket-button");
+
+		// Use Group B which has 4 teams and 2 matches per round
+		// Group B Round 1: Match 7 (Whatcha Say vs Come Together), Match 8 (We Are Champions vs Please Mr Postman)
+		// Group B Round 2: Match 9 (Please Mr Postman vs Come Together), Match 10 (Whatcha Say vs We Are Champions)
+
+		// Complete R1 matches in group B (matches 7 and 8) to unlock R2 matches
+		await navigateToMatch(page, 7);
+		await reportResult({
+			page,
+			amountOfMapsToReport: 2,
+			sidesWithMoreThanFourPlayers: ["last"],
+			points: [100, 0],
+		});
+		await backToBracket(page);
+
+		await navigateToMatch(page, 8);
+		await reportResult({
+			page,
+			amountOfMapsToReport: 2,
+			sidesWithMoreThanFourPlayers: ["first", "last"],
+			points: [100, 0],
+		});
+		await backToBracket(page);
+
+		// Match 9 is R2 in group B - should now be unlocked since R1 is complete
+		// Start it but don't complete it
+		await navigateToMatch(page, 9);
+		await reportResult({
+			page,
+			amountOfMapsToReport: 1,
+			sidesWithMoreThanFourPlayers: ["last"],
+			points: [100, 0],
+		});
+		await backToBracket(page);
+
+		// Reopen match 7 (R1 match) - simulating a score misreport correction
+		await navigateToMatch(page, 7);
+		await submit(page, "reopen-match-button");
+		await backToBracket(page);
+
+		// Verify the R2 match that was already in progress is still playable
+		// Before the fix, this would become locked and unplayable
+		await navigateToMatch(page, 9);
+		await expect(page.getByText("1-0")).toBeVisible();
+		await page.getByTestId("actions-tab").click();
+		await expect(page.getByTestId("winner-radio-1")).toBeVisible();
+	});
+
 	test("locks/unlocks matches & sets match as casted", async ({ page }) => {
 		const tournamentId = 2;
 
