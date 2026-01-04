@@ -46,7 +46,6 @@ import { TrashIcon } from "~/components/icons/Trash";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
-import { Placeholder } from "~/components/Placeholder";
 import { Placement } from "~/components/Placement";
 import { RelativeTime } from "~/components/RelativeTime";
 import { Section } from "~/components/Section";
@@ -58,7 +57,7 @@ import { WeaponSelect } from "~/components/WeaponSelect";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import styles from "../components-showcase.module.css";
 
-const SECTIONS = [
+export const SECTIONS = [
 	{ title: "Buttons", id: "buttons", component: ButtonsSection },
 	{ title: "Alerts", id: "alerts", component: AlertsSection },
 	{ title: "Inputs", id: "inputs", component: InputsSection },
@@ -104,7 +103,7 @@ const SECTIONS = [
 	{ title: "Badges", id: "badges", component: BadgeSection },
 	{ title: "Game Selects", id: "game-selects", component: GameSelectSection },
 	{ title: "Miscellaneous", id: "miscellaneous", component: MiscSection },
-];
+] as const;
 
 export default function ComponentsShowcasePage() {
 	return (
@@ -1964,15 +1963,6 @@ function BadgeSection({ id }: { id: string }) {
 							isAnimated={false}
 							size={64}
 						/>
-						<Badge
-							badge={{
-								displayName: "Example Badge",
-								code: "sundae",
-								hue: null,
-							}}
-							isAnimated={true}
-							size={64}
-						/>
 					</div>
 				</ComponentRow>
 
@@ -2083,17 +2073,10 @@ function MiscSection({ id }: { id: string }) {
 					</Section>
 				</ComponentRow>
 
-				<ComponentRow label="Placeholder">
-					<div style={{ height: "100px", position: "relative" }}>
-						<Placeholder />
-					</div>
-				</ComponentRow>
-
 				<ComponentRow label="Progress Bar">
 					<div className="stack sm" style={{ width: "100%" }}>
 						<progress value={70} max={100} style={{ width: "100%" }} />
 						<progress value={30} max={100} style={{ width: "100%" }} />
-						<progress style={{ width: "100%" }} />
 					</div>
 				</ComponentRow>
 

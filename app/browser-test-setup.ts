@@ -9,6 +9,8 @@ import "~/styles/common.css";
 import "~/styles/utils.css";
 import "~/styles/flags.css";
 
+document.documentElement.classList.add("dark");
+
 i18next.use(initReactI18next).init({
 	...config,
 	lng: "en",
