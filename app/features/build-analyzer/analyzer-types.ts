@@ -14,12 +14,9 @@ type Overwrites = Record<
 	Partial<Record<"High" | "Mid" | "Low", number>>
 >;
 
-export interface MainWeaponParams {
-	subWeaponId: SubWeaponId;
-	specialWeaponId: SpecialWeaponId;
+export interface BaseWeaponStats {
 	/** Replacing default values of the ability json for this specific weapon */
 	overwrites?: Overwrites;
-	SpecialPoint: number;
 	/** Weapon's weight class. "Light/Heavy weapon" */
 	WeaponSpeedType?: "Slow" | "Fast";
 	/** Total frames it takes the weapon to shoot out three times */
@@ -105,6 +102,14 @@ export interface MainWeaponParams {
 	// SpeedInkConsumeMin_WeaponRollParam?: number;
 }
 
+export interface WeaponKit {
+	subWeaponId: SubWeaponId;
+	specialWeaponId: SpecialWeaponId;
+	SpecialPoint: number;
+}
+
+export type MainWeaponParams = BaseWeaponStats & WeaponKit;
+
 export interface DistanceDamage {
 	Damage: number;
 	Distance: number;
@@ -148,7 +153,8 @@ export type SpecialWeaponParams = SpecialWeaponParamsObject[SpecialWeaponId] & {
 };
 
 export type ParamsJson = {
-	mainWeapons: Record<MainWeaponId, MainWeaponParams>;
+	baseWeaponStats: Record<MainWeaponId, BaseWeaponStats>;
+	weaponKits: Record<MainWeaponId, WeaponKit>;
 	subWeapons: Record<SubWeaponId, SubWeaponParams>;
 	specialWeapons: SpecialWeaponParamsObject;
 };
