@@ -12,6 +12,8 @@
 		"scripts/**/*.{js,cjs,mjs,jsx,ts,cts,mts,tsx}",
 		"public/sw-2.js",
 		"ley.config.cjs",
-		"ley-driver.cjs"
+		"ley-driver.cjs",
+		"vitest.browser.config.ts",
+		"app/browser-test-setup.ts"
 	]
 }

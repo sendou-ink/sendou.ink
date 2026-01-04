@@ -32,7 +32,7 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
       - name: Unit tests
-        run: npm run test:unit
+        run: npm run test:unit:browser
       - name: Knip unused check
         run: npm run knip
       - name: Check translations jsons
