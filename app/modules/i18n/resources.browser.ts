@@ -6,6 +6,7 @@ import calendar from "../../../locales/en/calendar.json";
 import common from "../../../locales/en/common.json";
 import contributions from "../../../locales/en/contributions.json";
 import faq from "../../../locales/en/faq.json";
+import forms from "../../../locales/en/forms.json";
 import front from "../../../locales/en/front.json";
 import gameMisc from "../../../locales/en/game-misc.json";
 import gear from "../../../locales/en/gear.json";
@@ -30,6 +31,7 @@ export const resources = {
 		common,
 		contributions,
 		faq,
+		forms,
 		front,
 		"game-misc": gameMisc,
 		gear,
