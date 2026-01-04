@@ -1,11 +1,15 @@
 import { reactRouter } from "@react-router/dev/vite";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import babel from "vite-plugin-babel";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { configDefaults } from "vitest/config";
 
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
+	const env = loadEnv(mode, process.cwd(), "");
 	return {
+		server: {
+			port: Number(env.PORT) || 5173,
+		},
 		ssr: {
 			noExternal: ["react-charts", "react-use"],
 		},

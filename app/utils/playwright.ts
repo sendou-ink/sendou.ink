@@ -4,11 +4,13 @@ import {
 	type Locator,
 	type Page,
 } from "@playwright/test";
+import dotenv from "dotenv";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
 import { tournamentBracketsPage } from "./urls";
 
-const BASE_PORT = 6173;
+dotenv.config();
+export const E2E_BASE_PORT = Number(process.env.PORT || 5173) + 1000;
 
 type WorkerFixtures = {
 	workerPort: number;
@@ -19,7 +21,7 @@ export const test = base.extend<object, WorkerFixtures>({
 	workerPort: [
 		// biome-ignore lint/correctness/noEmptyPattern: Playwright requires object destructuring
 		async ({}, use, workerInfo) => {
-			const port = BASE_PORT + workerInfo.parallelIndex;
+			const port = E2E_BASE_PORT + workerInfo.parallelIndex;
 			await use(port);
 		},
 		{ scope: "worker" },
