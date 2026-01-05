@@ -357,6 +357,24 @@ input[type="color"]::-webkit-color-swatch {
 	border-radius: var(--rounded-xs);
 }
 
+input[type="file"] {
+	padding: 0;
+	cursor: pointer;
+	font-size: var(--fonts-sm);
+	line-height: var(--input-line-height);
+	color: var(--color-text-high);
+}
+
+input[type="file"]::file-selector-button {
+	height: 100%;
+	border: none;
+	background-color: var(--color-text-accent);
+	color: var(--color-text-inverse);
+	white-space: nowrap;
+	font-weight: var(--bold);
+	margin-right: var(--s-2);
+}
+
 td > input[type="checkbox"] {
 	vertical-align: middle;
 }
