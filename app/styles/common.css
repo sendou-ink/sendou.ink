@@ -211,10 +211,6 @@ input[type="radio"] {
 	}
 }
 
-[list]::-webkit-calendar-picker-indicator {
-	display: none !important;
-}
-
 label {
 	display: block;
 	font-size: var(--fonts-xs);
@@ -248,13 +244,9 @@ select {
 	box-sizing: border-box;
 	border: 2px solid var(--color-border);
 	border-radius: var(--rounded-sm);
-	background: var(--color-bg);
-	background-image: url('data:image/svg+xml;utf8,<svg width="17px" color="rgb(255 255 255 / 55%)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>');
-	background-position: center right 15px;
-	background-repeat: no-repeat;
+	background-color: var(--color-bg);
 	cursor: pointer;
 	padding: 0 var(--input-padding-inline);
-	padding-right: 2.25rem;
 	height: var(--input-height);
 	line-height: var(--input-line-height);
 	display: inline-flex;
@@ -321,8 +313,39 @@ select {
 	}
 }
 
-.light select {
-	background-image: url('data:image/svg+xml;utf8,<svg width="17px" color="rgb(0 0 0 / 55%)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>');
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="time"],
+input[type="week"],
+select {
+	background-position: center right var(--input-padding-inline);
+	background-size: var(--input-icon-width) auto;
+	background-repeat: no-repeat;
+}
+
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"] {
+	background-image: var(--input-icon-date);
+}
+
+input[type="time"] {
+	background-image: var(--input-icon-time);
+}
+
+select {
+	background-image: var(--input-icon-chevron);
+}
+
+[type="date"]::-webkit-calendar-picker-indicator,
+[type="datetime-local"]::-webkit-calendar-picker-indicator,
+[type="month"]::-webkit-calendar-picker-indicator,
+[type="time"]::-webkit-calendar-picker-indicator,
+[type="week"]::-webkit-calendar-picker-indicator {
+	width: var(--input-icon-width);
+	opacity: 0;
 }
 
 td > input[type="checkbox"] {
