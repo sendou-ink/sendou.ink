@@ -90,6 +90,9 @@ export function findByCustomUrl(
 					.select(({ eb: innerEb }) => [
 						...COMMON_USER_FIELDS,
 						"TeamMemberWithSecondary.role",
+						"TeamMemberWithSecondary.customRole",
+						"TeamMemberWithSecondary.roleType",
+						"TeamMemberWithSecondary.memberOrder",
 						"TeamMemberWithSecondary.isOwner",
 						"TeamMemberWithSecondary.isManager",
 						"TeamMemberWithSecondary.isMainTeam",
@@ -102,7 +105,8 @@ export function findByCustomUrl(
 								.whereRef("UserWeapon.userId", "=", "User.id"),
 						).as("weapons"),
 					])
-					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id"),
+					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id")
+					.orderBy("TeamMemberWithSecondary.memberOrder", "asc"),
 			).as("members"),
 		])
 		.$if(includeInviteCode, (qb) => qb.select("Team.inviteCode"))
@@ -234,7 +238,7 @@ export async function teamsByMemberUserId(
 				eb
 					.selectFrom("TeamMemberWithSecondary as m2")
 					.innerJoin("User", "User.id", "m2.userId")
-					.select([...COMMON_USER_FIELDS, "m2.role"])
+					.select([...COMMON_USER_FIELDS, "m2.role", "m2.roleType"])
 					.whereRef("TeamMemberWithSecondary.teamId", "=", "m2.teamId"),
 			).as("members"),
 		])

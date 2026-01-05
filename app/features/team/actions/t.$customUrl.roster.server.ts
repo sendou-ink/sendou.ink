@@ -1,4 +1,6 @@
 import type { ActionFunction } from "react-router";
+import { redirect } from "react-router";
+import type { MemberRole, MemberRoleType } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import {
 	errorToastIfFalsy,
@@ -6,6 +8,7 @@ import {
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
+import { teamPage } from "~/utils/urls";
 import * as TeamMemberRepository from "../TeamMemberRepository.server";
 import * as TeamRepository from "../TeamRepository.server";
 import { manageRosterSchema, teamParamsSchema } from "../team-schemas.server";
@@ -45,42 +48,27 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			break;
 		}
-		case "ADD_MANAGER": {
-			await TeamMemberRepository.update(
-				{ teamId: team.id, userId: data.userId },
-				{
-					isManager: 1,
-				},
-			);
+		case "BULK_UPDATE_ROSTER": {
+			// xxx: after proper zod types, simplify
+			const members = JSON.parse(data.members) as Array<{
+				userId: number;
+				role: MemberRole | "";
+				customRole: string;
+				roleType: MemberRoleType | "";
+				isManager: boolean;
+			}>;
 
-			break;
-		}
-		case "REMOVE_MANAGER": {
-			const member = team.members.find((m) => m.id === data.userId);
-			errorToastIfFalsy(member, "Member not found");
-			errorToastIfFalsy(
-				member.id !== user.id,
-				"Can't remove yourself as manager",
-			);
+			const membersForDb = members.map((m) => ({
+				userId: m.userId,
+				role: m.role || null,
+				customRole: m.customRole || null,
+				roleType: m.roleType || null,
+				isManager: m.isManager,
+			}));
 
-			await TeamMemberRepository.update(
-				{ teamId: team.id, userId: data.userId },
-				{
-					isManager: 0,
-				},
-			);
+			await TeamMemberRepository.bulkUpdateRoster(team.id, membersForDb);
 
-			break;
-		}
-		case "UPDATE_MEMBER_ROLE": {
-			await TeamMemberRepository.update(
-				{ teamId: team.id, userId: data.userId },
-				{
-					role: data.role || null,
-				},
-			);
-
-			break;
+			return redirect(teamPage(team.customUrl));
 		}
 		default: {
 			assertUnreachable(data);

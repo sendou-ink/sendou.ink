@@ -50,6 +50,8 @@ export interface Team {
 	tag: string | null;
 }
 
+export type MemberRoleType = "PLAYER" | "OTHER";
+
 export interface TeamMember {
 	createdAt: Generated<number>;
 	isOwner: Generated<number>;
@@ -59,6 +61,10 @@ export interface TeamMember {
 	teamId: number;
 	userId: number;
 	isMainTeam: DBBoolean;
+	memberOrder: number | null;
+	customRole: string | null;
+	/** If customRole is defined, this should be set explaining how the role should be classified */
+	roleType: MemberRoleType | null;
 }
 
 export interface Art {

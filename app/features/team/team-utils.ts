@@ -1,6 +1,6 @@
-import type { Tables } from "~/db/tables";
+import type { MemberRole, MemberRoleType, Tables } from "~/db/tables";
 import type * as TeamRepository from "./TeamRepository.server";
-import { TEAM } from "./team-constants";
+import { PLAYER_ROLES, TEAM } from "./team-constants";
 
 export function isTeamOwner({
 	team,
@@ -109,4 +109,15 @@ export function subsOfResult<T extends { id: number }>(
 	}, []);
 
 	return subs;
+}
+
+export function getMemberRoleType(member: {
+	role: MemberRole | null;
+	roleType: MemberRoleType | null;
+}): MemberRoleType | null {
+	if (member.roleType) return member.roleType;
+	if (!member.role) return null;
+	return PLAYER_ROLES.includes(member.role as (typeof PLAYER_ROLES)[number])
+		? "PLAYER"
+		: "OTHER";
 }

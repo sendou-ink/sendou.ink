@@ -292,22 +292,152 @@
 }
 
 .team__roster__members {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: var(--s-4);
-	place-items: center;
-	max-width: max-content;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	list-style: none;
+	padding: 0;
+	margin: 0;
 }
 
-.team__roster__members__member {
-	justify-self: flex-start;
+.team__roster__divider {
+	text-transform: uppercase;
+	font-size: var(--fonts-xs);
 	font-weight: var(--bold);
-	font-size: var(--fonts-sm);
 }
 
-.team__roster__separator {
-	grid-column: 1 / 3;
+.team__roster__card {
+	background-color: var(--bg-lighter);
+	border-radius: var(--rounded);
+	border: 1px solid var(--border);
+	transition:
+		opacity 0.2s,
+		box-shadow 0.2s;
+	overflow: hidden;
+}
+
+.team__roster__card:hover {
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.team__roster__card--dragging {
+	opacity: 0.5;
+}
+
+.team__roster__card--disabled {
+	opacity: 0.6;
+}
+
+.team__roster__card-header {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	padding: var(--s-3) var(--s-4);
+	background-color: var(--bg-lighter);
+	border-bottom: 1px solid var(--border);
+}
+
+.team__roster__member-name {
+	font-weight: var(--bold);
+	font-size: var(--fonts-md);
+}
+
+.team__roster__drag-handle {
+	cursor: grab;
+	user-select: none;
+	color: var(--text-lighter);
+	font-size: var(--fonts-lg);
+	padding: var(--s-1);
+	border-radius: var(--rounded-xs);
+	transition: background-color 0.15s;
+}
+
+.team__roster__drag-handle:hover {
+	background-color: var(--bg-lighter);
+}
+
+.team__roster__drag-handle:active {
+	cursor: grabbing;
+}
+
+.team__roster__card-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	padding: var(--s-4);
+}
+
+.team__roster__role-section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.team__roster__role-select {
 	width: 100%;
+	max-width: 200px;
+}
+
+.team__roster__custom-role {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.team__roster__custom-role-input {
+	width: 100%;
+	max-width: 160px;
+}
+
+.team__roster__role-type-select {
+	width: auto;
+}
+
+.team__roster__card-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-3);
+	padding-top: var(--s-2);
+	border-top: 1px solid var(--border);
+}
+
+@media screen and (min-width: 480px) {
+	.team__roster__card-body {
+		flex-direction: row;
+		align-items: flex-start;
+		justify-content: space-between;
+	}
+
+	.team__roster__card-actions {
+		padding-top: 0;
+		border-top: none;
+		flex-shrink: 0;
+	}
+}
+
+.team__roster__top-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-3);
+}
+
+.team__roster__invite-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.team__section-header {
+	font-size: var(--fonts-sm);
+	font-weight: var(--bold);
+	color: var(--text-lighter);
+	border-bottom: 1px solid var(--border-color);
+	padding-bottom: var(--s-1);
 }
 
 .team__invite-container {
@@ -354,14 +484,6 @@
 	}
 
 	.team__member-card__container {
-		display: none;
-	}
-
-	.team__roster__members {
-		grid-template-columns: 1fr 1fr max-content max-content;
-	}
-
-	.team__roster__separator {
 		display: none;
 	}
 

@@ -14,12 +14,14 @@ import { useUser } from "~/features/auth/core/user";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { editTeamPage, manageTeamRosterPage, userPage } from "~/utils/urls";
 import {
+	getMemberRoleType,
 	isTeamManager,
 	isTeamMember,
 	isTeamOwner,
 	resolveNewOwner,
 } from "../team-utils";
 import "../team.css";
+import { Divider } from "~/components/Divider";
 import type { TeamLoaderData } from "~/features/team/loaders/t.$customUrl.server";
 import invariant from "~/utils/invariant";
 import { action } from "../actions/t.$customUrl.index.server";
@@ -27,9 +29,17 @@ import type * as TeamRepository from "../TeamRepository.server";
 export { action };
 
 export default function TeamIndexPage() {
+	const { t } = useTranslation(["team"]);
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
 	const layoutData = parentRoute.data as TeamLoaderData;
+
+	const playerMembers = layoutData.team.members.filter(
+		(m) => getMemberRoleType(m) === "PLAYER" || getMemberRoleType(m) === null,
+	);
+	const staffMembers = layoutData.team.members.filter(
+		(m) => getMemberRoleType(m) === "OTHER",
+	);
 
 	return (
 		<div className="stack lg">
@@ -40,14 +50,36 @@ export default function TeamIndexPage() {
 			{layoutData.team.bio ? (
 				<article data-testid="team-bio">{layoutData.team.bio}</article>
 			) : null}
-			<div className="stack lg">
-				{layoutData.team.members.map((member, i) => (
-					<React.Fragment key={member.discordId}>
-						<MemberRow member={member} number={i} />
-						<MobileMemberCard member={member} />
-					</React.Fragment>
-				))}
-			</div>
+			{playerMembers.length > 0 ? (
+				<div className="stack lg mt-4">
+					{playerMembers.length > 0 && staffMembers.length > 0 ? (
+						<Divider smallText className="team__roster__divider">
+							Roster
+						</Divider>
+					) : null}
+					{playerMembers.map((member, i) => (
+						<React.Fragment key={member.discordId}>
+							<MemberRow member={member} number={i} />
+							<MobileMemberCard member={member} />
+						</React.Fragment>
+					))}
+				</div>
+			) : null}
+			{staffMembers.length > 0 ? (
+				<div className="stack lg">
+					{playerMembers.length > 0 && staffMembers.length > 0 ? (
+						<Divider smallText className="team__roster__divider">
+							{t("team:roster.sections.other")}
+						</Divider>
+					) : null}
+					{staffMembers.map((member, i) => (
+						<React.Fragment key={member.discordId}>
+							<MemberRow member={member} number={playerMembers.length + i} />
+							<MobileMemberCard member={member} />
+						</React.Fragment>
+					))}
+				</div>
+			) : null}
 		</div>
 	);
 }
@@ -173,18 +205,23 @@ function MemberRow({
 	number: number;
 }) {
 	const { t } = useTranslation(["team"]);
+	const displayRole = member.customRole
+		? member.customRole
+		: member.role
+			? t(`team:roles.${member.role}`)
+			: null;
 
 	return (
 		<div
 			className="team__member"
 			data-testid={member.isOwner ? `member-owner-${member.id}` : undefined}
 		>
-			{member.role ? (
+			{displayRole ? (
 				<span
 					className="team__member__role"
 					data-testid={`member-row-role-${number}`}
 				>
-					{t(`team:roles.${member.role}`)}
+					{displayRole}
 				</span>
 			) : null}
 			<div className="team__member__section">
@@ -219,6 +256,11 @@ function MobileMemberCard({
 	member: TeamRepository.findByCustomUrl["members"][number];
 }) {
 	const { t } = useTranslation(["team"]);
+	const displayRole = member.customRole
+		? member.customRole
+		: member.role
+			? t(`team:roles.${member.role}`)
+			: null;
 
 	return (
 		<div className="team__member-card__container">
@@ -241,10 +283,8 @@ function MobileMemberCard({
 					</div>
 				) : null}
 			</div>
-			{member.role ? (
-				<span className="team__member__role__mobile">
-					{t(`team:roles.${member.role}`)}
-				</span>
+			{displayRole ? (
+				<span className="team__member__role__mobile">{displayRole}</span>
 			) : null}
 		</div>
 	);

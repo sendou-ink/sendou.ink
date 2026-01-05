@@ -9,7 +9,7 @@ export const TEAM = {
 	MAX_TEAM_COUNT_PATRON: 5,
 };
 
-export const TEAM_MEMBER_ROLES = [
+export const PLAYER_ROLES = [
 	"CAPTAIN",
 	"CO_CAPTAIN",
 	"FRONTLINE",
@@ -19,9 +19,12 @@ export const TEAM_MEMBER_ROLES = [
 	"MIDLINE",
 	"BACKLINE",
 	"FLEX",
-	"SUB",
-	"COACH",
-	"CHEERLEADER",
 ] as const;
+
+export const OTHER_ROLES = ["SUB", "COACH", "CHEERLEADER"] as const;
+
+export const TEAM_MEMBER_ROLES = [...PLAYER_ROLES, ...OTHER_ROLES] as const;
+
+export const CUSTOM_ROLE_MAX_LENGTH = 32;
 
 export const TEAMS_PER_PAGE = 40;

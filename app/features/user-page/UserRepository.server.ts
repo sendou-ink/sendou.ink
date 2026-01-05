@@ -190,6 +190,7 @@ export async function findProfileByIdentifier(
 						"Team.id",
 						"TeamMemberWithSecondary.isMainTeam",
 						"TeamMemberWithSecondary.role as userTeamRole",
+						"TeamMemberWithSecondary.customRole as userTeamCustomRole",
 						concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 							"avatarUrl",
 						),

@@ -6,7 +6,7 @@ import {
 	id,
 	safeStringSchema,
 } from "~/utils/zod";
-import { TEAM, TEAM_MEMBER_ROLES } from "./team-constants";
+import { TEAM } from "./team-constants";
 
 export const teamParamsSchema = z.object({ customUrl: z.string() });
 
@@ -64,16 +64,7 @@ export const manageRosterSchema = z.union([
 		userId: id,
 	}),
 	z.object({
-		_action: _action("ADD_MANAGER"),
-		userId: id,
-	}),
-	z.object({
-		_action: _action("REMOVE_MANAGER"),
-		userId: id,
-	}),
-	z.object({
-		_action: _action("UPDATE_MEMBER_ROLE"),
-		userId: id,
-		role: z.union([z.enum(TEAM_MEMBER_ROLES), z.literal("")]),
+		_action: _action("BULK_UPDATE_ROSTER"),
+		members: z.string(), // xxx: zod bypassed, need safeJSONParse here
 	}),
 ]);

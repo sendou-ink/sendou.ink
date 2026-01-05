@@ -101,7 +101,11 @@ function TeamInfo() {
 				) : null}
 				<div>
 					{data.user.team.name}
-					{data.user.team.userTeamRole ? (
+					{data.user.team.userTeamCustomRole ? (
+						<div className="text-xxs text-lighter font-bold">
+							{data.user.team.userTeamCustomRole}
+						</div>
+					) : data.user.team.userTeamRole ? (
 						<div className="text-xxs text-lighter font-bold">
 							{t(`team:roles.${data.user.team.userTeamRole}`)}
 						</div>
@@ -158,7 +162,11 @@ function SecondaryTeamsPopover() {
 							) : null}
 							{team.name}
 						</Link>
-						{team.userTeamRole ? (
+						{team.userTeamCustomRole ? (
+							<div className="text-xxs text-lighter font-bold">
+								{team.userTeamCustomRole}
+							</div>
+						) : team.userTeamRole ? (
 							<div className="text-xxs text-lighter font-bold">
 								{t(`team:roles.${team.userTeamRole}`)}
 							</div>
