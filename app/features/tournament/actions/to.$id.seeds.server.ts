@@ -11,7 +11,7 @@ import {
 	successToast,
 } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
-import { updateTeamSeeds } from "../queries/updateTeamSeeds.server";
+import * as TournamentRepository from "../TournamentRepository.server";
 import * as TournamentTeamRepository from "../TournamentTeamRepository.server";
 import { seedsActionSchema } from "../tournament-schemas.server";
 
@@ -32,7 +32,21 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	switch (data._action) {
 		case "UPDATE_SEEDS": {
-			updateTeamSeeds({ tournamentId, teamIds: data.seeds });
+			const teamsWithMembers = tournament.ctx.teams
+				.filter((t) => data.seeds.includes(t.id))
+				.map((team) => ({
+					teamId: team.id,
+					members: team.members.map((m) => ({
+						userId: m.userId,
+						username: m.username,
+					})),
+				}));
+
+			await TournamentRepository.updateTeamSeeds({
+				tournamentId,
+				teamIds: data.seeds,
+				teamsWithMembers,
+			});
 			clearTournamentDataCache(tournamentId);
 			return successToast("Seeds saved successfully");
 		}

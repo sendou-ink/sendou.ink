@@ -493,6 +493,16 @@ export interface Tournament {
 	parentTournamentId: number | null;
 	/** Is the tournament finalized meaning all the matches are played and TO has locked it making it read-only */
 	isFinalized: Generated<DBBoolean>;
+	/** Snapshot of teams and rosters when seeds were last saved. Used to detect NEW teams/players. */
+	seedingSnapshot: JSONColumnTypeNullable<SeedingSnapshot>;
+}
+
+export interface SeedingSnapshot {
+	savedAt: number;
+	teams: Array<{
+		teamId: number;
+		members: Array<{ userId: number; username: string }>;
+	}>;
 }
 
 export interface PreparedMaps {

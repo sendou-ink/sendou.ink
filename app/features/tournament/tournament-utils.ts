@@ -262,6 +262,75 @@ export function normalizedTeamCount({
 	return teamsCount * minMembersPerTeam;
 }
 
+export type TeamForOrdering = {
+	id: number;
+	seed: number | null;
+	members: { length: number };
+	avgSeedingSkillOrdinal: number | null;
+	createdAt: number;
+	startingBracketIdx: number | null;
+};
+
+export function compareTeamsForOrdering(
+	a: TeamForOrdering,
+	b: TeamForOrdering,
+	minMembersPerTeam: number,
+): number {
+	if (a.startingBracketIdx !== b.startingBracketIdx) {
+		return (a.startingBracketIdx ?? 0) - (b.startingBracketIdx ?? 0);
+	}
+
+	const aIsFull = a.members.length >= minMembersPerTeam;
+	const bIsFull = b.members.length >= minMembersPerTeam;
+
+	if (aIsFull && !bIsFull) {
+		return -1;
+	}
+	if (!aIsFull && bIsFull) {
+		return 1;
+	}
+
+	if (a.seed !== null && b.seed !== null) {
+		return a.seed - b.seed;
+	}
+
+	if (
+		a.avgSeedingSkillOrdinal !== b.avgSeedingSkillOrdinal &&
+		a.avgSeedingSkillOrdinal !== null &&
+		b.avgSeedingSkillOrdinal !== null
+	) {
+		return b.avgSeedingSkillOrdinal - a.avgSeedingSkillOrdinal;
+	}
+
+	return a.createdAt - b.createdAt;
+}
+
+export function sortTeamsForSeeding<T extends TeamForOrdering>(
+	teams: T[],
+	minMembersPerTeam: number,
+): T[] {
+	return [...teams].sort((a, b) =>
+		compareTeamsForOrdering(a, b, minMembersPerTeam),
+	);
+}
+
+export function findTeamInsertPosition<T extends TeamForOrdering>(
+	existingOrder: number[],
+	newTeam: T,
+	teamMap: Map<number, T>,
+	minMembersPerTeam: number,
+): number {
+	for (let i = 0; i < existingOrder.length; i++) {
+		const existingTeam = teamMap.get(existingOrder[i]);
+		if (!existingTeam) continue;
+
+		if (compareTeamsForOrdering(newTeam, existingTeam, minMembersPerTeam) < 0) {
+			return i;
+		}
+	}
+	return existingOrder.length;
+}
+
 export function getBracketProgressionLabel(
 	startingBracketIdx: number,
 	progression: ParsedBracket[],

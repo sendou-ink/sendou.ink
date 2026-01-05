@@ -180,6 +180,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	userProfiles,
 	userMapModePreferences,
 	userQWeaponPool,
+	seedingSkills,
 	lastMonthsVoting,
 	syncPlusTiers,
 	lastMonthSuggestions,
@@ -298,6 +299,7 @@ function wipeDB() {
 		"TournamentBadgeOwner",
 		"BadgeManager",
 		"TournamentOrganization",
+		"SeedingSkill",
 	];
 
 	for (const table of tablesToDelete) {
@@ -542,6 +544,38 @@ async function userQWeaponPool() {
 			.set({ qWeaponPool: JSON.stringify(weaponPool) })
 			.where("User.id", "=", id)
 			.execute();
+	}
+}
+
+function seedingSkills() {
+	const users = sql.prepare('SELECT id FROM "User" LIMIT 500').all() as {
+		id: number;
+	}[];
+
+	for (const { id: userId } of users) {
+		if (faker.number.float() < 0.7) {
+			const mu = faker.number.float({ min: 22, max: 45 });
+			const sigma = faker.number.float({ min: 4, max: 8 });
+			const ordinal = mu - 3 * sigma;
+
+			sql
+				.prepare(
+					`INSERT INTO "SeedingSkill" ("userId", "type", "mu", "sigma", "ordinal") VALUES (?, 'RANKED', ?, ?, ?)`,
+				)
+				.run(userId, mu, sigma, ordinal);
+		}
+
+		if (faker.number.float() < 0.5) {
+			const mu = faker.number.float({ min: 22, max: 42 });
+			const sigma = faker.number.float({ min: 4, max: 8 });
+			const ordinal = mu - 3 * sigma;
+
+			sql
+				.prepare(
+					`INSERT INTO "SeedingSkill" ("userId", "type", "mu", "sigma", "ordinal") VALUES (?, 'UNRANKED', ?, ?, ?)`,
+				)
+				.run(userId, mu, sigma, ordinal);
+		}
 	}
 }
 
