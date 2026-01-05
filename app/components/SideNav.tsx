@@ -10,8 +10,8 @@ export function SideNav({
 	className?: string;
 }) {
 	return (
-		<nav className={clsx(styles.sideNav, "scrollbar", className)}>
-			{children}
+		<nav className={clsx(styles.sideNav, className)}>
+			<div className={clsx(styles.sideNavInner, "scrollbar")}>{children}</div>
 		</nav>
 	);
 }
