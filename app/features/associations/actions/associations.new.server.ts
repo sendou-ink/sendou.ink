@@ -12,7 +12,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		schema: createNewAssociationSchema,
 	});
 
-	// xxx: do in middleware or something
 	if (!result.success) {
 		return { fieldErrors: result.fieldErrors };
 	}

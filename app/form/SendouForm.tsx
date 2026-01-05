@@ -82,7 +82,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 	>({});
 	const [visibleServerErrors, setVisibleServerErrors] = React.useState<
 		Partial<Record<string, string>>
-	>({});
+	>(fetcher.data?.fieldErrors ?? {});
 	const [fallbackError, setFallbackError] = React.useState<string | null>(null);
 
 	const initialValues = buildInitialValues(schema, defaultValues);
@@ -94,6 +94,18 @@ export function SendouForm<T extends z.ZodRawShape>({
 		latestActionData.current = fetcher.data;
 		setVisibleServerErrors(fetcher.data?.fieldErrors ?? {});
 	}
+
+	React.useLayoutEffect(() => {
+		const serverFieldErrors = fetcher.data?.fieldErrors ?? {};
+		for (const [fieldName, errorMessage] of Object.entries(serverFieldErrors)) {
+			const errorElement = document.getElementById(errorMessageId(fieldName));
+			if (!errorElement) {
+				setFallbackError(`${t(errorMessage as never)} (${fieldName})`);
+				return;
+			}
+		}
+		setFallbackError(null);
+	}, [fetcher.data, t]);
 
 	const serverErrors = visibleServerErrors as Partial<
 		Record<keyof z.infer<z.ZodObject<T>>, string>
@@ -261,7 +273,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 					</div>
 				)}
 				{fallbackError ? (
-					<div className="mt-4 mx-auto">
+					<div className="mt-4 mx-auto" data-testid="fallback-form-error">
 						<FormMessage type="error">{fallbackError}</FormMessage>
 					</div>
 				) : null}

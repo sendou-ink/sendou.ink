@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { z } from "zod";
@@ -18,12 +18,16 @@ import {
 } from "./fields";
 import { SendouForm } from "./SendouForm";
 
+let mockFetcherData: { fieldErrors?: Record<string, string> } | undefined;
+
 vi.mock("react-router", async () => {
 	const actual = await vi.importActual("react-router");
 	return {
 		...actual,
 		useFetcher: () => ({
-			data: undefined,
+			get data() {
+				return mockFetcherData;
+			},
 			state: "idle",
 			submit: vi.fn(),
 		}),
@@ -68,6 +72,10 @@ function renderForm(
 }
 
 describe("SendouForm", () => {
+	beforeEach(() => {
+		mockFetcherData = undefined;
+	});
+
 	describe("basic form rendering", () => {
 		test("renders form with title", async () => {
 			const schema = z.object({
@@ -589,6 +597,43 @@ describe("SendouForm", () => {
 			await expect
 				.element(screen.getByLabelText("Clock format"))
 				.toHaveValue("auto");
+		});
+	});
+
+	describe("server error fallback", () => {
+		test("shows fallback error when server returns error for field without DOM element", async () => {
+			const schema = z.object({
+				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+			});
+
+			mockFetcherData = {
+				fieldErrors: { hiddenField: "forms:errors.required" },
+			};
+
+			const screen = await renderForm(schema, {
+				defaultValues: { name: "Test" },
+			});
+
+			await expect
+				.element(screen.getByText("This field is required (hiddenField)"))
+				.toBeVisible();
+		});
+
+		test("does not show fallback error when server error has corresponding DOM element", async () => {
+			const schema = z.object({
+				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+			});
+
+			mockFetcherData = {
+				fieldErrors: { name: "forms:errors.required" },
+			};
+
+			const screen = await renderForm(schema, {
+				defaultValues: { name: "Test" },
+			});
+
+			const fallbackError = screen.getByTestId("fallback-form-error");
+			await expect.element(fallbackError).not.toBeInTheDocument();
 		});
 	});
 });

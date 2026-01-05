@@ -252,7 +252,6 @@ const modeItems = [
 	{ label: "modes.CB" as const, value: "CB" as const },
 ];
 
-// xxx: validate buildToEditId
 export const newBuildBaseSchema = z.object({
 	buildToEditId: idConstantOptional(),
 	weapons: weaponPool({
@@ -294,12 +293,22 @@ export const newBuildBaseSchema = z.object({
 	}),
 });
 
+function validateGearAllOrNone(data: {
+	head: number | null;
+	clothes: number | null;
+	shoes: number | null;
+}) {
+	const gearFilled = [data.head, data.clothes, data.shoes].filter(
+		(g) => g !== null,
+	);
+	return gearFilled.length === 0 || gearFilled.length === 3;
+}
+export const gearAllOrNoneRefine = {
+	fn: validateGearAllOrNone,
+	opts: { message: "forms:errors.gearAllOrNone", path: ["head"] },
+};
+
 export const newBuildSchema = newBuildBaseSchema.refine(
-	(data) => {
-		const gearFilled = [data.head, data.clothes, data.shoes].filter(
-			(g) => g !== null,
-		);
-		return gearFilled.length === 0 || gearFilled.length === 3;
-	},
-	{ message: "forms:errors.gearAllOrNone", path: ["head"] },
+	gearAllOrNoneRefine.fn,
+	gearAllOrNoneRefine.opts,
 );

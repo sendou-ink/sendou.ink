@@ -210,6 +210,16 @@ export function deleteById(id: number) {
 	return db.deleteFrom("Build").where("id", "=", id).execute();
 }
 
+export async function ownerIdById(buildId: number) {
+	const result = await db
+		.selectFrom("Build")
+		.select("ownerId")
+		.where("id", "=", buildId)
+		.executeTakeFirstOrThrow();
+
+	return result.ownerId;
+}
+
 export async function abilityPointAverages(weaponSplId?: MainWeaponId | null) {
 	return db
 		.selectFrom("BuildAbility")

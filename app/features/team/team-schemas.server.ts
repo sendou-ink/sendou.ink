@@ -5,21 +5,18 @@ import * as TeamRepository from "./TeamRepository.server";
 import { TEAM, TEAM_MEMBER_ROLES } from "./team-constants";
 import { createTeamSchema } from "./team-schemas";
 
-// xxx: maybe some wrapper around this? for typesafe i18n keys etc.
-export const createTeamSchemaServer = createTeamSchema.superRefine(
-	async (data, ctx) => {
-		const teams = await TeamRepository.findAllUndisbanded();
-		const customUrl = mySlugify(data.name);
+export const createTeamSchemaServer = z.object({
+	...createTeamSchema.shape,
+	name: createTeamSchema.shape.name.refine(
+		async (name) => {
+			const teams = await TeamRepository.findAllUndisbanded();
+			const customUrl = mySlugify(name);
 
-		if (teams.some((team) => team.customUrl === customUrl)) {
-			ctx.addIssue({
-				code: "custom",
-				message: "forms:errors.duplicateName",
-				path: ["name"],
-			});
-		}
-	},
-);
+			return !teams.some((team) => team.customUrl === customUrl);
+		},
+		{ message: "forms:errors.duplicateName" },
+	),
+});
 
 export const teamParamsSchema = z.object({ customUrl: z.string() });
 

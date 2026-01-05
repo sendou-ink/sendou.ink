@@ -1,33 +1,40 @@
 import { type ActionFunction, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
+import { parseFormData } from "~/form/parse.server";
 import type { BuildAbilitiesTuple } from "~/modules/in-game-lists/types";
-import { parseRequestPayload } from "~/utils/remix.server";
 import { userBuildsPage } from "~/utils/urls";
-import { newBuildSchema } from "../user-page-schemas";
+import { newBuildSchemaServer } from "../user-page-schemas.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
-		schema: newBuildSchema,
+		schema: newBuildSchemaServer,
 	});
 
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
 	const commonArgs = {
-		title: data.title,
-		description: data.description,
-		abilities: data.abilities as BuildAbilitiesTuple,
-		headGearSplId: data.head,
-		clothesGearSplId: data.clothes,
-		shoesGearSplId: data.shoes,
-		modes: data.modes,
-		weaponSplIds: data.weapons.map((w) => w.id),
+		title: result.data.title,
+		description: result.data.description,
+		abilities: result.data.abilities as BuildAbilitiesTuple,
+		headGearSplId: result.data.head,
+		clothesGearSplId: result.data.clothes,
+		shoesGearSplId: result.data.shoes,
+		modes: result.data.modes,
+		weaponSplIds: result.data.weapons.map((w) => w.id),
 		ownerId: user.id,
-		private: data.private ? 1 : 0,
+		private: result.data.private ? 1 : 0,
 	};
 
-	if (data.buildToEditId) {
-		await BuildRepository.update({ id: data.buildToEditId, ...commonArgs });
+	if (result.data.buildToEditId) {
+		await BuildRepository.update({
+			id: result.data.buildToEditId,
+			...commonArgs,
+		});
 	} else {
 		await BuildRepository.create(commonArgs);
 	}

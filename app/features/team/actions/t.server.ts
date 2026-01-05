@@ -15,7 +15,6 @@ export const action: ActionFunction = async ({ request }) => {
 		schema: createTeamSchemaServer,
 	});
 
-	// xxx: should not have to be repeated
 	if (!result.success) {
 		return { fieldErrors: result.fieldErrors };
 	}
