@@ -7,7 +7,7 @@
 
 html {
 	color-scheme: light dark;
-	accent-color: var(--color-accent);
+	accent-color: var(--color-text-accent);
 	scrollbar-gutter: stable;
 }
 
@@ -349,7 +349,7 @@ select {
 }
 
 input[type="color"]::-webkit-color-swatch-wrapper {
-	padding: calc(var(--input-height) / 8);
+	padding: calc(var(--input-height) / 8) 0;
 }
 
 input[type="color"]::-webkit-color-swatch {
@@ -373,6 +373,49 @@ input[type="file"]::file-selector-button {
 	white-space: nowrap;
 	font-weight: var(--bold);
 	margin-right: var(--s-2);
+}
+
+input[type="range"] {
+	--track-color: var(--color-bg-high);
+	--thumb-color: var(--color-bg-higher);
+	border: none;
+	padding: 0;
+	appearance: none;
+	background: 0 0;
+	width: 100%;
+	height: var(--toggle-height-small);
+
+	&:focus {
+		outline: none;
+	}
+
+	&:focus-within {
+		--track-color: var(--color-bg-higher);
+		--thumb-color: var(--color-text-accent);
+	}
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+	width: 100%;
+	height: calc(var(--toggle-height-small) / 4);
+	background-color: var(--track-color);
+	border-radius: var(--rounded-full);
+	transition: 100ms background-color;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	width: var(--toggle-height-small);
+	height: var(--toggle-height-small);
+	margin-top: calc(
+		(calc(var(--toggle-height-small) / 4) - var(--toggle-height-small)) /
+		2
+	);
+	background-color: var(--thumb-color);
+	border: 2px solid var(--color-bg);
+	border-radius: var(--rounded-full);
+	cursor: pointer;
+	transition: 100ms background-color;
 }
 
 td > input[type="checkbox"] {
