@@ -348,6 +348,15 @@ select {
 	opacity: 0;
 }
 
+input[type="color"]::-webkit-color-swatch-wrapper {
+	padding: calc(var(--input-height) / 8);
+}
+
+input[type="color"]::-webkit-color-swatch {
+	border: 0;
+	border-radius: var(--rounded-xs);
+}
+
 td > input[type="checkbox"] {
 	vertical-align: middle;
 }
