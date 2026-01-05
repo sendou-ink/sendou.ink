@@ -1,5 +1,4 @@
 import { parseDate } from "@internationalized/date";
-import clsx from "clsx";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Ability } from "~/components/Ability";
@@ -49,6 +48,7 @@ import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
 import { RelativeTime } from "~/components/RelativeTime";
 import { Section } from "~/components/Section";
+import { SideNav, SideNavLink } from "~/components/SideNav";
 import { StageSelect } from "~/components/StageSelect";
 import { SubmitButton } from "~/components/SubmitButton";
 import { SubNav, SubNavLink } from "~/components/SubNav";
@@ -107,19 +107,16 @@ export const SECTIONS = [
 
 export default function ComponentsShowcasePage() {
 	return (
-		<>
-			<SideNav />
-			<Main className="stack lg">
-				<h1>Components</h1>
-				{SECTIONS.map(({ id, component: Component }) => (
-					<Component key={id} id={id} />
-				))}
-			</Main>
-		</>
+		<Main className="stack lg" sideNav={<ComponentsSideNav />}>
+			<h1>Components</h1>
+			{SECTIONS.map(({ id, component: Component }) => (
+				<Component key={id} id={id} />
+			))}
+		</Main>
 	);
 }
 
-function SideNav() {
+function ComponentsSideNav() {
 	const [activeSection, setActiveSection] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -167,19 +164,18 @@ function SideNav() {
 	};
 
 	return (
-		<nav className={clsx(styles.sideNav, "scrollbar")}>
+		<SideNav>
 			{SECTIONS.map(({ title, id }) => (
-				<a
+				<SideNavLink
 					key={id}
 					href={`#${id}`}
-					className={styles.sideNavLink}
 					onClick={(e) => handleClick(e, id)}
-					aria-current={activeSection === id ? "page" : undefined}
+					isActive={activeSection === id}
 				>
 					{title}
-				</a>
+				</SideNavLink>
 			))}
-		</nav>
+		</SideNav>
 	);
 }
 

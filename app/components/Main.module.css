@@ -3,6 +3,17 @@
 	flex-direction: row;
 }
 
+.containerWithSideNav {
+	display: flex;
+	flex-direction: row;
+	width: 100%;
+}
+
+.mainWrapper {
+	flex: 1;
+	min-width: 0;
+}
+
 .main {
 	padding-block: var(--s-4) var(--s-32);
 }

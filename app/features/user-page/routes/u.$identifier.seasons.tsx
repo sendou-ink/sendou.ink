@@ -30,6 +30,7 @@ import {
 	TierImage,
 	WeaponImage,
 } from "~/components/Image";
+import { mainStyles } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { TopTenPlayer } from "~/features/leaderboards/components/TopTenPlayer";
@@ -62,7 +63,6 @@ import {
 } from "../loaders/u.$identifier.seasons.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import styles from "../user-page.module.css";
-import { mainStyles } from "~/components/Main";
 export { loader };
 
 export const handle: SendouRouteHandle = {

@@ -11,6 +11,7 @@ export const Main = ({
 	halfWidth,
 	bigger,
 	style,
+	sideNav,
 }: {
 	children: React.ReactNode;
 	className?: string;
@@ -18,6 +19,7 @@ export const Main = ({
 	halfWidth?: boolean;
 	bigger?: boolean;
 	style?: React.CSSProperties;
+	sideNav?: React.ReactNode;
 }) => {
 	const error = useRouteError();
 	const isMinorSupporter = useHasRole("MINOR_SUPPORT");
@@ -26,32 +28,41 @@ export const Main = ({
 		!isMinorSupporter &&
 		!isRouteErrorResponse(error);
 
-	return (
-		<div className={styles.container}>
-			<main
-				className={
-					classNameOverwrite
-						? clsx(classNameOverwrite, {
+	const mainElement = (
+		<main
+			className={
+				classNameOverwrite
+					? clsx(classNameOverwrite, {
+							[styles.narrow]: halfWidth,
+							"pt-8-forced": showLeaderboard,
+						})
+					: clsx(
+							styles.main,
+							styles.normal,
+							{
 								[styles.narrow]: halfWidth,
+								[styles.wide]: bigger,
 								"pt-8-forced": showLeaderboard,
-							})
-						: clsx(
-								styles.main,
-								styles.normal,
-								{
-									[styles.narrow]: halfWidth,
-									[styles.wide]: bigger,
-									"pt-8-forced": showLeaderboard,
-								},
-								className,
-							)
-				}
-				style={style}
-			>
-				{children}
-			</main>
-		</div>
+							},
+							className,
+						)
+			}
+			style={style}
+		>
+			{children}
+		</main>
 	);
+
+	if (sideNav) {
+		return (
+			<div className={styles.containerWithSideNav}>
+				{sideNav}
+				<div className={styles.mainWrapper}>{mainElement}</div>
+			</div>
+		);
+	}
+
+	return <div className={styles.container}>{mainElement}</div>;
 };
 
 export { styles as mainStyles };

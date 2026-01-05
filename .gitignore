@@ -27,3 +27,4 @@ dump
 /playwright/.cache/
 
 notepad.txt
+.vitest-attachments/
