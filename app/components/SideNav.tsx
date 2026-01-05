@@ -36,11 +36,15 @@ export function SideNavLink({
 	href,
 	onClick,
 	isActive,
+	imageUrl,
+	subtitle,
 }: {
 	children: React.ReactNode;
 	href: string;
 	onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 	isActive?: boolean;
+	imageUrl?: string;
+	subtitle?: string;
 }) {
 	return (
 		<a
@@ -49,7 +53,15 @@ export function SideNavLink({
 			onClick={onClick}
 			aria-current={isActive ? "page" : undefined}
 		>
-			{children}
+			{imageUrl ? (
+				<img src={imageUrl} alt="" className={styles.sideNavLinkImage} />
+			) : null}
+			<div className={styles.sideNavLinkContent}>
+				<span className={styles.sideNavLinkTitle}>{children}</span>
+				{subtitle ? (
+					<span className={styles.sideNavLinkSubtitle}>{subtitle}</span>
+				) : null}
+			</div>
 		</a>
 	);
 }

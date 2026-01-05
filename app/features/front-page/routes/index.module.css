@@ -274,3 +274,9 @@
 	gap: var(--s-2);
 	flex-wrap: wrap;
 }
+
+.sideNavEmpty {
+	font-size: var(--fonts-xs);
+	color: var(--color-text-lighter);
+	padding: var(--s-1) var(--s-2);
+}

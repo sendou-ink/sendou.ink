@@ -48,26 +48,55 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function FrontPage() {
+	const { t } = useTranslation(["front"]);
+	const data = useLoaderData<typeof loader>();
+	const { formatTime } = useTimeFormat();
+
 	return (
 		<Main
 			className={styles.frontPageContainer}
 			sideNav={
 				<SideNav>
-					<SideNavHeader icon={<CalendarIcon />}>My Calendar</SideNavHeader>
+					<SideNavHeader icon={<CalendarIcon />}>
+						{t("front:sideNav.myCalendar")}
+					</SideNavHeader>
+					{data.tournaments.participatingFor.length > 0 ? (
+						data.tournaments.participatingFor
+							.filter((t) => !t.name.includes("Leagues"))
+							.map((tournament, index) => (
+								<SideNavLink
+									key={tournament.id}
+									href={tournament.url}
+									imageUrl={tournament.logoUrl ?? undefined}
+									subtitle={`${index < 3 ? "Today" : "Tomorrow"}, ${formatTime(
+										new Date(tournament.startTime),
+										{
+											hour: "numeric",
+											minute: "2-digit",
+										},
+									)}`}
+								>
+									{tournament.name}
+								</SideNavLink>
+							))
+					) : (
+						<div className={styles.sideNavEmpty}>
+							{t("front:sideNav.noEvents")}
+						</div>
+					)}
+
+					<SideNavHeader icon={<UsersIcon />}>
+						{t("front:sideNav.friends")}
+					</SideNavHeader>
 					<SideNavLink href="">Sendou</SideNavLink>
 					<SideNavLink href="">Sendou</SideNavLink>
 					<SideNavLink href="">Sendou</SideNavLink>
 					<SideNavLink href="">Sendou</SideNavLink>
 					<SideNavLink href="">Sendou</SideNavLink>
 
-					<SideNavHeader icon={<UsersIcon />}>Friends</SideNavHeader>
-					<SideNavLink href="">Sendou</SideNavLink>
-					<SideNavLink href="">Sendou</SideNavLink>
-					<SideNavLink href="">Sendou</SideNavLink>
-					<SideNavLink href="">Sendou</SideNavLink>
-					<SideNavLink href="">Sendou</SideNavLink>
-
-					<SideNavHeader icon={<TwitchIcon />}>Streams</SideNavHeader>
+					<SideNavHeader icon={<TwitchIcon />}>
+						{t("front:sideNav.streams")}
+					</SideNavHeader>
 					<SideNavLink href="">Sendou</SideNavLink>
 					<SideNavLink href="">Sendou</SideNavLink>
 					<SideNavLink href="">Sendou</SideNavLink>

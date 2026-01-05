@@ -57,9 +57,14 @@
 	transition:
 		background-color 0.15s,
 		color 0.15s;
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
 
 	&:hover {
-		color: var(--color-text);
+		&:not(:has(.sideNavLinkSubtitle)) {
+			color: var(--color-text);
+		}
 		background-color: var(--color-bg-higher);
 	}
 
@@ -68,4 +73,36 @@
 		background-color: var(--color-bg-higher);
 		font-weight: 600;
 	}
+}
+
+.sideNavLinkImage {
+	width: 32px;
+	height: 32px;
+	border-radius: var(--rounded-xs);
+	object-fit: cover;
+	flex-shrink: 0;
+}
+
+.sideNavLinkContent {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.sideNavLinkTitle {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+
+	&:has(+ .sideNavLinkSubtitle) {
+		color: var(--color-text);
+	}
+}
+
+.sideNavLinkSubtitle {
+	font-size: var(--fonts-xxs);
+	color: var(--color-text-lighter);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
