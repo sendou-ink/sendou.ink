@@ -418,6 +418,31 @@ input[type="range"]::-webkit-slider-thumb {
 	transition: 100ms background-color;
 }
 
+progress {
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	display: inline-block;
+	width: 100%;
+	height: var(--toggle-height-small);
+	overflow: hidden;
+	border: none;
+	border-radius: var(--rounded-full);
+	background-color: var(--color-bg-high);
+	color: var(--color-text-accent);
+	vertical-align: baseline;
+}
+
+progress::-webkit-progress-bar {
+	border-radius: var(--rounded-full);
+	background: 0 0;
+}
+
+progress[value]::-webkit-progress-value {
+	background-color: var(--color-text-accent);
+	transition: inline-size 0.2s ease;
+}
+
 td > input[type="checkbox"] {
 	vertical-align: middle;
 }
