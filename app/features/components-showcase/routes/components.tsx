@@ -48,7 +48,7 @@ import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
 import { RelativeTime } from "~/components/RelativeTime";
 import { Section } from "~/components/Section";
-import { SideNav, SideNavHeader, SideNavLink } from "~/components/SideNav";
+import { SideNav, SideNavLink } from "~/components/SideNav";
 import { StageSelect } from "~/components/StageSelect";
 import { SubmitButton } from "~/components/SubmitButton";
 import { SubNav, SubNavLink } from "~/components/SubNav";
@@ -105,22 +105,9 @@ export const SECTIONS = [
 	{ title: "Miscellaneous", id: "miscellaneous", component: MiscSection },
 ] as const;
 
-// xxx: with stack, bottom spacing off
-
 export default function ComponentsShowcasePage() {
 	return (
-		<Main
-			className="stack lg"
-			sideNav={[
-				<ComponentsSideNav key="1" />,
-				<SideNav key="2">
-					<SideNavHeader>Header here</SideNavHeader>
-					Hello world
-				</SideNav>,
-				<ComponentsSideNav key="3" />,
-			]}
-			// sideNav={<ComponentsSideNav />}
-		>
+		<Main className="stack lg" sideNav={<ComponentsSideNav />}>
 			<h1>Components</h1>
 			{SECTIONS.map(({ id, component: Component }) => (
 				<Component key={id} id={id} />

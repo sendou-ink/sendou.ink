@@ -16,9 +16,16 @@ export function SideNav({
 	);
 }
 
-export function SideNavHeader({ children }: { children: React.ReactNode }) {
+export function SideNavHeader({
+	children,
+	icon,
+}: {
+	children: React.ReactNode;
+	icon?: React.ReactNode;
+}) {
 	return (
 		<header className={styles.sideNavHeader}>
+			{icon ? <div className={styles.iconContainer}>{icon}</div> : null}
 			<h2>{children}</h2>
 		</header>
 	);

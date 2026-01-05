@@ -14,32 +14,16 @@
 	min-width: 0;
 }
 
-.sideNavStack {
-	--side-nav-count: 1;
-	display: flex;
-	flex-direction: column;
+.sideNavContainer {
 	position: sticky;
 	left: 0;
 	top: var(--sticky-top);
 	height: fit-content;
 	margin: var(--s-2-5);
-	gap: var(--s-2);
-
-	&:has(> :nth-child(2)) {
-		--side-nav-count: 2;
-	}
-
-	&:has(> :nth-child(3)) {
-		--side-nav-count: 3;
-	}
-
-	&:has(> :nth-child(4)) {
-		--side-nav-count: 4;
-	}
 }
 
 @media (max-width: 800px) {
-	.sideNavStack {
+	.sideNavContainer {
 		display: none;
 	}
 }

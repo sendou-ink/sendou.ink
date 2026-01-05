@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
-import { SendouButton } from "~/components/elements/Button";
 import {
 	SendouTab,
 	SendouTabList,
@@ -16,14 +15,14 @@ import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { BSKYLikeIcon } from "~/components/icons/BSKYLike";
 import { BSKYReplyIcon } from "~/components/icons/BSKYReply";
 import { BSKYRepostIcon } from "~/components/icons/BSKYRepost";
+import { CalendarIcon } from "~/components/icons/Calendar";
 import { ExternalIcon } from "~/components/icons/External";
 import { KeyIcon } from "~/components/icons/Key";
-import { LogOutIcon } from "~/components/icons/LogOut";
 import { SearchIcon } from "~/components/icons/Search";
+import { TwitchIcon } from "~/components/icons/Twitch";
 import { UsersIcon } from "~/components/icons/Users";
-import { navItems } from "~/components/layout/nav-items";
 import { Main } from "~/components/Main";
-import { useUser } from "~/features/auth/core/user";
+import { SideNav, SideNavHeader, SideNavLink } from "~/components/SideNav";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import { TournamentCard } from "~/features/calendar/components/TournamentCard";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
@@ -34,7 +33,6 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BLANK_IMAGE_URL,
 	CALENDAR_TOURNAMENTS_PAGE,
-	LOG_OUT_URL,
 	LUTI_PAGE,
 	leaderboardsPage,
 	navIconUrl,
@@ -51,55 +49,41 @@ export const handle: SendouRouteHandle = {
 
 export default function FrontPage() {
 	return (
-		<Main className={styles.frontPageContainer}>
+		<Main
+			className={styles.frontPageContainer}
+			sideNav={
+				<SideNav>
+					<SideNavHeader icon={<CalendarIcon />}>My Calendar</SideNavHeader>
+					<SideNavLink href="">Sendou</SideNavLink>
+					<SideNavLink href="">Sendou</SideNavLink>
+					<SideNavLink href="">Sendou</SideNavLink>
+					<SideNavLink href="">Sendou</SideNavLink>
+					<SideNavLink href="">Sendou</SideNavLink>
+
+					<SideNavHeader icon={<UsersIcon />}>Friends</SideNavHeader>
+					<SideNavLink href="">Sendou</SideNavLink>
+					<SideNavLink href="">Sendou</SideNavLink>
+					<SideNavLink href="">Sendou</SideNavLink>
+					<SideNavLink href="">Sendou</SideNavLink>
+					<SideNavLink href="">Sendou</SideNavLink>
+
+					<SideNavHeader icon={<TwitchIcon />}>Streams</SideNavHeader>
+					<SideNavLink href="">Sendou</SideNavLink>
+					<SideNavLink href="">Sendou</SideNavLink>
+					<SideNavLink href="">Sendou</SideNavLink>
+					<SideNavLink href="">Sendou</SideNavLink>
+					<SideNavLink href="">Sendou</SideNavLink>
+					<SideNavLink href="">Sendou</SideNavLink>
+				</SideNav>
+			}
+		>
 			<LeagueBanner />
-			<DesktopSideNav />
+			{/* <DesktopSideNav /> */}
 			<SeasonBanner />
 			<TournamentCards />
 			<ResultHighlights />
 			<ChangelogList />
 		</Main>
-	);
-}
-
-function DesktopSideNav() {
-	const user = useUser();
-	const { t } = useTranslation(["common"]);
-
-	return (
-		<nav className={clsx(styles.frontPageSideNav, "scrollbar")}>
-			{navItems.map((item) => {
-				return (
-					<Link
-						to={`/${item.url}`}
-						key={item.name}
-						prefetch={item.prefetch ? "render" : undefined}
-						className={styles.frontPageSideNavItem}
-					>
-						<Image
-							path={navIconUrl(item.name)}
-							height={20}
-							width={20}
-							alt={item.name}
-						/>
-						{<div>{t(`common:pages.${item.name}` as any)}</div>}
-					</Link>
-				);
-			})}
-			{user ? (
-				<form method="post" action={LOG_OUT_URL}>
-					<SendouButton
-						size="small"
-						variant="minimal"
-						icon={<LogOutIcon />}
-						type="submit"
-						className={styles.frontPageSideNavLogOut}
-					>
-						{t("common:header.logout")}
-					</SendouButton>
-				</form>
-			) : null}
-		</nav>
 	);
 }
 

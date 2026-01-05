@@ -19,7 +19,7 @@ export const Main = ({
 	halfWidth?: boolean;
 	bigger?: boolean;
 	style?: React.CSSProperties;
-	sideNav?: React.ReactNode | React.ReactNode[];
+	sideNav?: React.ReactNode;
 }) => {
 	const error = useRouteError();
 	const isMinorSupporter = useHasRole("MINOR_SUPPORT");
@@ -56,7 +56,7 @@ export const Main = ({
 	if (sideNav) {
 		return (
 			<div className={styles.containerWithSideNav}>
-				<div className={styles.sideNavStack}>{sideNav}</div>
+				<div className={styles.sideNavContainer}>{sideNav}</div>
 				<div className={styles.mainWrapper}>{mainElement}</div>
 			</div>
 		);

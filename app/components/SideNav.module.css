@@ -9,32 +9,43 @@
 }
 
 .sideNavInner {
-	--available-height: calc(100vh - var(--sticky-top) - var(--s-3-5));
-	--gap-space: calc((var(--side-nav-count, 1) - 1) * var(--s-2));
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-2);
 	padding: var(--s-1-5);
 	padding-block-end: var(--s-2);
 	overflow-y: auto;
-	max-height: calc(
-		(var(--available-height) - var(--gap-space)) /
-		var(--side-nav-count, 1)
-	);
+	max-height: calc(100vh - var(--sticky-top) - var(--s-3-5));
 	border-radius: calc(var(--rounded) - var(--s-1-5));
 }
 
 .sideNavHeader {
 	color: var(--color-text-high);
 	padding: var(--s-2-5) var(--s-2);
-	margin: calc(-1 * var(--s-1-5));
-	margin-block-end: 0;
+	margin-inline: calc(-1 * var(--s-1-5));
 	background-color: var(--color-border);
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.sideNavHeader:first-child {
+	margin-block-start: calc(-1 * var(--s-1-5));
 }
 
 .sideNavHeader h2 {
-	font-size: var(--fonts-xxs);
+	font-size: var(--fonts-xs);
 	font-weight: var(--bold);
+}
+
+.sideNavHeader svg {
+	width: 18px;
+}
+
+.iconContainer {
+	background-color: var(--color-bg-high);
+	border-radius: var(--rounded-sm);
+	padding: var(--s-1-5);
 }
 
 .sideNavLink {
