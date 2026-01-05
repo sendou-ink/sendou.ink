@@ -16,6 +16,14 @@ export function SideNav({
 	);
 }
 
+export function SideNavHeader({ children }: { children: React.ReactNode }) {
+	return (
+		<header className={styles.sideNavHeader}>
+			<h2>{children}</h2>
+		</header>
+	);
+}
+
 export function SideNavLink({
 	children,
 	href,

@@ -1,27 +1,40 @@
 .sideNav {
 	--side-nav-width: 200px;
 	background-color: var(--color-bg-high);
-	position: sticky;
-	left: 0;
-	top: var(--sticky-top);
-	height: fit-content;
 	min-width: var(--side-nav-width);
 	max-width: var(--side-nav-width);
 	border: 1.5px solid var(--color-border);
 	border-radius: var(--rounded);
-	margin: var(--s-2-5);
 	overflow: hidden;
 }
 
 .sideNavInner {
+	--available-height: calc(100vh - var(--sticky-top) - var(--s-3-5));
+	--gap-space: calc((var(--side-nav-count, 1) - 1) * var(--s-2));
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-2);
 	padding: var(--s-1-5);
 	padding-block-end: var(--s-2);
 	overflow-y: auto;
-	max-height: calc(100vh - var(--sticky-top) - var(--s-3-5));
+	max-height: calc(
+		(var(--available-height) - var(--gap-space)) /
+		var(--side-nav-count, 1)
+	);
 	border-radius: calc(var(--rounded) - var(--s-1-5));
+}
+
+.sideNavHeader {
+	color: var(--color-text-high);
+	padding: var(--s-2-5) var(--s-2);
+	margin: calc(-1 * var(--s-1-5));
+	margin-block-end: 0;
+	background-color: var(--color-border);
+}
+
+.sideNavHeader h2 {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--bold);
 }
 
 .sideNavLink {
@@ -43,11 +56,5 @@
 		color: var(--color-text);
 		background-color: var(--color-bg-higher);
 		font-weight: 600;
-	}
-}
-
-@media (max-width: 800px) {
-	.sideNav {
-		display: none;
 	}
 }
