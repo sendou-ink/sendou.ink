@@ -7,7 +7,7 @@
 
 html {
 	color-scheme: light dark;
-	accent-color: var(--color-accent);
+	accent-color: var(--color-text-accent);
 	scrollbar-gutter: stable;
 }
 
@@ -128,20 +128,6 @@ input[type="checkbox"] {
 	background-color: var(--color-bg);
 	border: 2px solid var(--color-border);
 
-	&::after {
-		content: "";
-		display: none;
-		width: 100%;
-		height: 100%;
-		font-size: 1rem;
-		line-height: 0.75;
-		background-color: var(--color-text-inverse);
-		border-width: 0 2px 2px 0;
-		margin: 0;
-		clip-path: polygon(20% 100%, 20% 80%, 50% 80%, 50% 0%, 70% 0%, 70% 100%);
-		rotate: 45deg;
-	}
-
 	&:focus-within {
 		outline: none;
 	}
@@ -151,13 +137,21 @@ input[type="checkbox"] {
 		outline-offset: 1px;
 	}
 
-	&:checked {
+	&:checked,
+	&:indeterminate {
 		border-color: var(--color-text-accent);
 		background-color: var(--color-text-accent);
+		background-repeat: no-repeat;
+		background-position: center;
+		background-size: var(--input-icon-width) auto;
+	}
 
-		&::after {
-			display: block;
-		}
+	&:checked {
+		background-image: var(--input-icon-checkbox);
+	}
+
+	&:indeterminate {
+		background-image: var(--input-icon-minus);
 	}
 
 	/* Hacky selector to remove the margin bottom from the container from Label.tsx */
@@ -211,10 +205,6 @@ input[type="radio"] {
 	}
 }
 
-[list]::-webkit-calendar-picker-indicator {
-	display: none !important;
-}
-
 label {
 	display: block;
 	font-size: var(--fonts-xs);
@@ -248,13 +238,9 @@ select {
 	box-sizing: border-box;
 	border: 2px solid var(--color-border);
 	border-radius: var(--rounded-sm);
-	background: var(--color-bg);
-	background-image: url('data:image/svg+xml;utf8,<svg width="17px" color="rgb(255 255 255 / 55%)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>');
-	background-position: center right 15px;
-	background-repeat: no-repeat;
+	background-color: var(--color-bg);
 	cursor: pointer;
 	padding: 0 var(--input-padding-inline);
-	padding-right: 2.25rem;
 	height: var(--input-height);
 	line-height: var(--input-line-height);
 	display: inline-flex;
@@ -321,8 +307,134 @@ select {
 	}
 }
 
-.light select {
-	background-image: url('data:image/svg+xml;utf8,<svg width="17px" color="rgb(0 0 0 / 55%)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>');
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="time"],
+input[type="week"],
+select {
+	background-position: center right var(--input-padding-inline);
+	background-size: var(--input-icon-width) auto;
+	background-repeat: no-repeat;
+}
+
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"] {
+	background-image: var(--input-icon-date);
+}
+
+input[type="time"] {
+	background-image: var(--input-icon-time);
+}
+
+select {
+	background-image: var(--input-icon-chevron);
+}
+
+[type="date"]::-webkit-calendar-picker-indicator,
+[type="datetime-local"]::-webkit-calendar-picker-indicator,
+[type="month"]::-webkit-calendar-picker-indicator,
+[type="time"]::-webkit-calendar-picker-indicator,
+[type="week"]::-webkit-calendar-picker-indicator {
+	width: var(--input-icon-width);
+	opacity: 0;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+	padding: calc(var(--input-height) / 8) 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+	border: 0;
+	border-radius: var(--rounded-xs);
+}
+
+input[type="file"] {
+	padding: 0;
+	cursor: pointer;
+	font-size: var(--fonts-sm);
+	line-height: var(--input-line-height);
+	color: var(--color-text-high);
+}
+
+input[type="file"]::file-selector-button {
+	height: 100%;
+	border: none;
+	background-color: var(--color-text-accent);
+	color: var(--color-text-inverse);
+	white-space: nowrap;
+	font-weight: var(--bold);
+	margin-right: var(--s-2);
+}
+
+input[type="range"] {
+	--track-color: var(--color-bg-high);
+	--thumb-color: var(--color-bg-higher);
+	border: none;
+	padding: 0;
+	appearance: none;
+	background: 0 0;
+	width: 100%;
+	height: var(--toggle-height-small);
+
+	&:focus {
+		outline: none;
+	}
+
+	&:focus-within {
+		--track-color: var(--color-bg-higher);
+		--thumb-color: var(--color-text-accent);
+	}
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+	width: 100%;
+	height: calc(var(--toggle-height-small) / 4);
+	background-color: var(--track-color);
+	border-radius: var(--rounded-full);
+	transition: 100ms background-color;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	width: var(--toggle-height-small);
+	height: var(--toggle-height-small);
+	margin-top: calc(
+		(calc(var(--toggle-height-small) / 4) - var(--toggle-height-small)) /
+		2
+	);
+	background-color: var(--thumb-color);
+	border: 2px solid var(--color-bg);
+	border-radius: var(--rounded-full);
+	cursor: pointer;
+	transition: 100ms background-color;
+}
+
+progress {
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	display: inline-block;
+	width: 100%;
+	height: var(--toggle-height-small);
+	overflow: hidden;
+	border: none;
+	border-radius: var(--rounded-full);
+	background-color: var(--color-bg-high);
+	color: var(--color-text-accent);
+	vertical-align: baseline;
+}
+
+progress::-webkit-progress-bar {
+	border-radius: var(--rounded-full);
+	background: 0 0;
+}
+
+progress[value]::-webkit-progress-value {
+	background-color: var(--color-text-accent);
+	transition: inline-size 0.2s ease;
 }
 
 td > input[type="checkbox"] {
