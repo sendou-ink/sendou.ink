@@ -50,7 +50,7 @@
 
 .sideNavLink {
 	font-size: var(--fonts-xs);
-	color: var(--color-text-high);
+	color: var(--color-text);
 	text-decoration: none;
 	padding: var(--s-1) var(--s-2);
 	border-radius: var(--rounded-xs);
@@ -87,6 +87,8 @@
 	display: flex;
 	flex-direction: column;
 	min-width: 0;
+	gap: var(--s-0-5);
+	width: 100%;
 }
 
 .sideNavLinkTitle {
@@ -99,10 +101,28 @@
 	}
 }
 
+.sideNavLinkSubtitleRow {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	color: var(--color-text-high);
+}
+
 .sideNavLinkSubtitle {
 	font-size: var(--fonts-xxs);
 	color: var(--color-text-lighter);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.sideNavLinkBadge {
+	margin-left: auto;
+	font-size: var(--fonts-xxxs);
+	font-weight: var(--semi-bold);
+	color: var(--color-accent-low);
+	background-color: var(--color-accent-high);
+	padding: 0 var(--s-1);
+	border-radius: var(--rounded-xs);
+	flex-shrink: 0;
 }

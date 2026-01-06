@@ -38,6 +38,7 @@ export function SideNavLink({
 	isActive,
 	imageUrl,
 	subtitle,
+	badge,
 }: {
 	children: React.ReactNode;
 	href: string;
@@ -45,6 +46,7 @@ export function SideNavLink({
 	isActive?: boolean;
 	imageUrl?: string;
 	subtitle?: string;
+	badge?: string;
 }) {
 	return (
 		<a
@@ -58,8 +60,15 @@ export function SideNavLink({
 			) : null}
 			<div className={styles.sideNavLinkContent}>
 				<span className={styles.sideNavLinkTitle}>{children}</span>
-				{subtitle ? (
-					<span className={styles.sideNavLinkSubtitle}>{subtitle}</span>
+				{subtitle || badge ? (
+					<div className={styles.sideNavLinkSubtitleRow}>
+						{subtitle ? (
+							<span className={styles.sideNavLinkSubtitle}>{subtitle}</span>
+						) : null}
+						{badge ? (
+							<span className={styles.sideNavLinkBadge}>{badge}</span>
+						) : null}
+					</div>
 				) : null}
 			</div>
 		</a>
