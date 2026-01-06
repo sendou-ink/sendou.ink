@@ -2,6 +2,7 @@ import clsx from "clsx";
 import generalI18next from "i18next";
 import NProgress from "nprogress";
 import * as React from "react";
+import { useEffect } from "react";
 import { I18nProvider, RouterProvider } from "react-aria-components";
 import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
@@ -283,6 +284,34 @@ export default function App() {
 	//
 	// Update 14.10.23: not sure if this still applies as the CatchBoundary is gone
 	const data = useLoaderData<RootLoaderData>();
+
+	// Move overflow:hidden from html to body to allow position: sticky and position: fixed
+	// elements to work properly when a React Aria Component disabled scrolling
+	useEffect(() => {
+		const htmlStyle = document.documentElement.style;
+		const bodyStyle = document.body.style;
+
+		const observer = new MutationObserver(() => {
+			if (htmlStyle.overflow === "hidden") {
+				htmlStyle.overflow = "";
+				bodyStyle.overflow = "hidden";
+				bodyStyle.scrollbarGutter = "stable";
+			} else if (
+				htmlStyle.overflow === "" &&
+				htmlStyle.scrollbarGutter !== "stable"
+			) {
+				bodyStyle.overflow = "";
+				bodyStyle.scrollbarGutter = "";
+			}
+		});
+
+		observer.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ["style"],
+		});
+
+		return () => observer.disconnect();
+	}, []);
 
 	return (
 		<ThemeProvider
