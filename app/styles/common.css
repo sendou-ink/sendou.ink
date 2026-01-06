@@ -367,15 +367,14 @@ input[type="file"] {
 	font-size: var(--fonts-sm);
 	line-height: var(--input-line-height);
 	color: var(--color-text-high);
+	overflow: hidden;
 }
 
 input[type="file"]::file-selector-button {
 	height: 100%;
 	border: none;
-	background-color: var(--color-text-accent);
-	color: var(--color-text-inverse);
+	background-color: var(--color-bg-higher);
 	white-space: nowrap;
-	font-weight: var(--bold);
 	margin-right: var(--s-2);
 }
 
