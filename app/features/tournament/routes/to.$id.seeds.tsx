@@ -304,6 +304,7 @@ function SeedingDraggable({
 					{...listeners}
 					disabled={disabled}
 					type="button"
+					data-testid={`${testId}-handle`}
 				>
 					☰
 				</button>
