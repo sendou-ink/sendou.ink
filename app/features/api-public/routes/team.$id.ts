@@ -1,14 +1,10 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { cors } from "remix-utils/cors";
 import { z } from "zod";
 import { db } from "~/db/sql";
 import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
+import { requireBearerAuth } from "../api-public-utils.server";
 import type { GetTeamResponse } from "../schema";
 
 const paramsSchema = z.object({
@@ -16,7 +12,6 @@ const paramsSchema = z.object({
 });
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
 	requireBearerAuth(request);
 
 	const { id: teamId } = parseParams({ params, schema: paramsSchema });
@@ -48,5 +43,5 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		teamPageUrl: `https://sendou.ink/t/${team.customUrl}`,
 	};
 
-	return await cors(request, Response.json(result));
+	return Response.json(result);
 };

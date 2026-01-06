@@ -1,6 +1,5 @@
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import type { LoaderFunctionArgs } from "react-router";
-import { cors } from "remix-utils/cors";
 import { z } from "zod";
 import { db } from "~/db/sql";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -11,10 +10,7 @@ import { i18next } from "~/modules/i18n/i18next.server";
 import { logger } from "~/utils/logger";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
+import { requireBearerAuth } from "../api-public-utils.server";
 import type { GetTournamentMatchResponse } from "../schema";
 
 const paramsSchema = z.object({
@@ -22,7 +18,6 @@ const paramsSchema = z.object({
 });
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
 	requireBearerAuth(request);
 
 	const t = await i18next.getFixedT("en", ["game-misc"]);
@@ -181,5 +176,5 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		roundName: roundNameWithoutMatchIdentifier ?? null,
 	};
 
-	return await cors(request, Response.json(result));
+	return Response.json(result);
 };

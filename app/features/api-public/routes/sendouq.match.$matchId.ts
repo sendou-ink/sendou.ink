@@ -1,14 +1,10 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { cors } from "remix-utils/cors";
 import { z } from "zod";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
+import { requireBearerAuth } from "../api-public-utils.server";
 import type { GetSendouqMatchResponse, MapListMap } from "../schema";
 
 const paramsSchema = z.object({
@@ -16,7 +12,6 @@ const paramsSchema = z.object({
 });
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
 	requireBearerAuth(request);
 
 	const { matchId } = parseParams({
@@ -84,5 +79,5 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		},
 	};
 
-	return await cors(request, Response.json(result));
+	return Response.json(result);
 };

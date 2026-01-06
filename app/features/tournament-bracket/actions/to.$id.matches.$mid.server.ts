@@ -34,7 +34,6 @@ import {
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
 import { insertTournamentMatchGameResult } from "../queries/insertTournamentMatchGameResult.server";
 import { insertTournamentMatchGameResultParticipant } from "../queries/insertTournamentMatchGameResultParticipant.server";
-import { resetMatchStatus } from "../queries/resetMatchStatus.server";
 import { updateMatchGameResultPoints } from "../queries/updateMatchGameResultPoints.server";
 import {
 	matchPageParamsSchema,
@@ -510,13 +509,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 				tournament.matchIdToBracketIdx(match.id)!,
 			)!.type;
 			sql.transaction(() => {
-				for (const match of followingMatches) {
-					// for other formats the database triggers handle the startedAt clearing. Status reset for those is managed by the brackets-manager
-					if (bracketFormat === "round_robin") {
-						resetMatchStatus(match.id);
-					} else {
-						// edge case but for round robin we can just leave the match as is, lock it then unlock later to continue where they left off (should not really ever happen)
-						deleteMatchPickBanEvents(match.id);
+				// edge case but for round robin we can just leave the match as is, lock it then unlock later to continue where they left off (should not really ever happen)
+				if (bracketFormat !== "round_robin") {
+					for (const followingMatch of followingMatches) {
+						deleteMatchPickBanEvents(followingMatch.id);
 					}
 				}
 
