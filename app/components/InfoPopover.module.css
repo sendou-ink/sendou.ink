@@ -5,8 +5,8 @@
 	color: var(--color-text);
 	font-size: var(--fonts-md);
 	padding: var(--s-0-5);
-	width: var(--input-height);
-	height: var(--input-height);
+	width: calc(var(--input-height) * 0.7);
+	height: calc(var(--input-height) * 0.7);
 	display: flex;
 	align-items: center;
 	justify-content: center;
