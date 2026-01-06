@@ -9,7 +9,7 @@ import {
 } from "~/features/tournament/tournament-constants";
 import {
 	modesIncluded,
-	sortTeamsForSeeding,
+	sortTeamsBySeeding,
 	tournamentIsRanked,
 } from "~/features/tournament/tournament-utils";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
@@ -56,7 +56,7 @@ export class Tournament {
 		const hasStarted = data.stage.length > 0;
 		const minMembersPerTeam = ctx.settings.minMembersPerTeam ?? 4;
 
-		const teamsInSeedOrder = sortTeamsForSeeding(ctx.teams, minMembersPerTeam);
+		const teamsInSeedOrder = sortTeamsBySeeding(ctx.teams, minMembersPerTeam);
 
 		this.simulateBrackets = simulateBrackets;
 		this.ctx = {

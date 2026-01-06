@@ -305,7 +305,7 @@ export function compareTeamsForOrdering(
 	return a.createdAt - b.createdAt;
 }
 
-export function sortTeamsForSeeding<T extends TeamForOrdering>(
+export function sortTeamsBySeeding<T extends TeamForOrdering>(
 	teams: T[],
 	minMembersPerTeam: number,
 ): T[] {

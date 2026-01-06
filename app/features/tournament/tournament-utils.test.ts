@@ -4,7 +4,7 @@ import {
 	compareTeamsForOrdering,
 	findTeamInsertPosition,
 	getBracketProgressionLabel,
-	sortTeamsForSeeding,
+	sortTeamsBySeeding,
 	type TeamForOrdering,
 } from "./tournament-utils";
 
@@ -168,7 +168,7 @@ describe("compareTeamsForOrdering", () => {
 	});
 });
 
-describe("sortTeamsForSeeding", () => {
+describe("sortTeamsBySeeding", () => {
 	it("sorts teams correctly with mixed properties", () => {
 		const teams = [
 			createTeam(1, { members: 3, avgSeedingSkillOrdinal: 500 }),
@@ -179,7 +179,7 @@ describe("sortTeamsForSeeding", () => {
 			createTeam(6, { members: 3 }),
 		];
 
-		const sorted = sortTeamsForSeeding(teams, MIN_MEMBERS);
+		const sorted = sortTeamsBySeeding(teams, MIN_MEMBERS);
 
 		expect(sorted.map((t) => t.id)).toEqual([5, 3, 4, 2, 1, 6]);
 	});
@@ -190,7 +190,7 @@ describe("sortTeamsForSeeding", () => {
 			createTeam(1, { avgSeedingSkillOrdinal: 200 }),
 		];
 
-		sortTeamsForSeeding(teams, MIN_MEMBERS);
+		sortTeamsBySeeding(teams, MIN_MEMBERS);
 
 		expect(teams[0].id).toBe(2);
 	});
@@ -291,7 +291,7 @@ describe("findTeamInsertPosition", () => {
 	});
 });
 
-describe("sortTeamsForSeeding with startingBracketIdx", () => {
+describe("sortTeamsBySeeding with startingBracketIdx", () => {
 	it("orders by startingBracketIdx first", () => {
 		const teams = [
 			createTeam(1, {
@@ -308,7 +308,7 @@ describe("sortTeamsForSeeding with startingBracketIdx", () => {
 			}),
 		];
 
-		const sorted = sortTeamsForSeeding(teams, MIN_MEMBERS);
+		const sorted = sortTeamsBySeeding(teams, MIN_MEMBERS);
 
 		expect(sorted.map((t) => t.id)).toEqual([3, 2, 1]);
 	});
@@ -320,7 +320,7 @@ describe("sortTeamsForSeeding with startingBracketIdx", () => {
 			createTeam(3, { avgSeedingSkillOrdinal: 500 }),
 		];
 
-		const sorted = sortTeamsForSeeding(teams, MIN_MEMBERS);
+		const sorted = sortTeamsBySeeding(teams, MIN_MEMBERS);
 
 		expect(sorted.map((t) => t.id)).toEqual([3, 2, 1]);
 	});
