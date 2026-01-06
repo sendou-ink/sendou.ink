@@ -6,7 +6,6 @@ node_modules
 .react-router/
 .env
 translation-progress.md
-**/*/__screenshots__
 
 notes.md
 
@@ -25,5 +24,6 @@ dump
 /test-results/
 /playwright-report/
 /playwright/.cache/
+/.vitest-attachments
 
 notepad.txt
