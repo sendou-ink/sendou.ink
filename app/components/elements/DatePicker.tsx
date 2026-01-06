@@ -12,6 +12,7 @@ import {
 } from "react-aria-components";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouCalendar } from "~/components/elements/Calendar";
+import { useIsMounted } from "~/hooks/useIsMounted";
 import {
 	type FormFieldSize,
 	formFieldSizeToClassName,
@@ -37,6 +38,22 @@ export function SendouDatePicker<T extends DateValue>({
 	isRequired,
 	...rest
 }: SendouDatePickerProps<T>) {
+	const isMounted = useIsMounted();
+
+	if (!isMounted) {
+		return (
+			<div>
+				<SendouLabel required={isRequired}>{label}</SendouLabel>
+				<input type="text" disabled />
+				<SendouBottomTexts
+					bottomText={bottomText}
+					errorText={errorText}
+					errorId={errorId}
+				/>
+			</div>
+		);
+	}
+
 	return (
 		<ReactAriaDatePicker
 			{...rest}

@@ -5,13 +5,13 @@ import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { parseFormData } from "~/form/parse.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import {
 	actionError,
 	errorToast,
 	errorToastIfFalsy,
-	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { scrimsPage } from "~/utils/urls";
@@ -30,10 +30,16 @@ import { serializeLutiDiv } from "../scrims-utils";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const user = requireUser();
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: scrimsNewFormSchema,
 	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
 
 	if (data.from.mode === "PICKUP") {
 		if (data.from.users.includes(user.id)) {

@@ -277,12 +277,14 @@ function TournamentSearchFormField() {
 	const error = serverErrors.mapsTournamentId ?? clientErrors.mapsTournamentId;
 
 	const prevMaps = React.useRef(maps);
-	if (prevMaps.current !== maps) {
-		prevMaps.current = maps;
-		if (maps !== "TOURNAMENT") {
-			setValue("mapsTournamentId", null);
+	React.useEffect(() => {
+		if (prevMaps.current !== maps) {
+			prevMaps.current = maps;
+			if (maps !== "TOURNAMENT") {
+				setValue("mapsTournamentId", null);
+			}
 		}
-	}
+	}, [maps, setValue]);
 
 	if (maps !== "TOURNAMENT") return null;
 
