@@ -41,6 +41,6 @@
 }
 
 .icon {
-	fill: var(--color-text);
+	fill: var(--color-text-high);
 	width: 17.5px;
 }
