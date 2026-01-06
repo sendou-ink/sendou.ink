@@ -342,6 +342,16 @@ select {
 	opacity: 0;
 }
 
+@-moz-document url-prefix() {
+	input[type="date"],
+	input[type="datetime-local"],
+	input[type="month"],
+	input[type="time"],
+	input[type="week"] {
+		background-image: none;
+	}
+}
+
 input[type="color"]::-webkit-color-swatch-wrapper {
 	padding: calc(var(--input-height) / 8) 0;
 }
