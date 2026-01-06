@@ -18,20 +18,21 @@ import { scrimsPage } from "~/utils/urls";
 import * as SQGroupRepository from "../../sendouq/SQGroupRepository.server";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
-import { SCRIM } from "../scrims-constants";
+import { LUTI_DIVS, SCRIM } from "../scrims-constants";
 import {
 	type fromSchema,
 	type newRequestSchema,
 	type RANGE_END_OPTIONS,
-	scrimsNewActionSchema,
+	scrimsNewFormSchema,
 } from "../scrims-schemas";
+import type { LutiDiv } from "../scrims-types";
 import { serializeLutiDiv } from "../scrims-utils";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
-		schema: scrimsNewActionSchema,
+		schema: scrimsNewFormSchema,
 	});
 
 	if (data.from.mode === "PICKUP") {
@@ -55,11 +56,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		? resolveRangeEndToDate(data.at, data.rangeEnd)
 		: null;
 
+	const resolvedDivs = data.divs ? resolveDivs(data.divs) : null;
+
 	await ScrimPostRepository.insert({
 		at: dateToDatabaseTimestamp(data.at),
 		rangeEnd: rangeEndDate ? dateToDatabaseTimestamp(rangeEndDate) : null,
-		maxDiv: data.divs ? serializeLutiDiv(data.divs.max!) : null,
-		minDiv: data.divs ? serializeLutiDiv(data.divs.min!) : null,
+		maxDiv: resolvedDivs?.[0] ? serializeLutiDiv(resolvedDivs[0]) : null,
+		minDiv: resolvedDivs?.[1] ? serializeLutiDiv(resolvedDivs[1]) : null,
 		text: data.postText,
 		managedByAnyone: data.managedByAnyone,
 		maps:
@@ -213,4 +216,19 @@ function resolveRangeEndToDate(
 			assertUnreachable(rangeEnd);
 		}
 	}
+}
+
+function resolveDivs(
+	divs: [LutiDiv | null, LutiDiv | null],
+): [LutiDiv | null, LutiDiv | null] {
+	const [max, min] = divs;
+	if (!max || !min) return divs;
+
+	const maxIndex = LUTI_DIVS.indexOf(max);
+	const minIndex = LUTI_DIVS.indexOf(min);
+
+	if (minIndex < maxIndex) {
+		return [min, max];
+	}
+	return divs;
 }

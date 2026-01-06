@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
 	customJsonField,
 	datetimeRequired,
+	dualSelectOptional,
 	idConstant,
 	select,
 	selectOptional,
@@ -146,120 +147,6 @@ export const RANGE_END_OPTIONS = [
 	"+3hours",
 ] as const;
 
-export const scrimsNewActionSchema = z
-	.object({
-		at: z.preprocess(
-			date,
-			z
-				.date()
-				.refine(
-					(date) => {
-						if (date < sub(new Date(), { days: 1 })) return false;
-
-						return true;
-					},
-					{
-						message: "errors.dateInPast",
-					},
-				)
-				.refine(
-					(date) => {
-						if (date > add(new Date(), { days: 15 })) return false;
-
-						return true;
-					},
-					{
-						message: "errors.dateTooFarInFuture",
-					},
-				),
-		),
-		rangeEnd: z
-			.preprocess(
-				(val) => (val === "" ? null : val),
-				z.enum(RANGE_END_OPTIONS).nullable(),
-			)
-			.catch(null),
-		baseVisibility: associationIdentifierSchema,
-		notFoundVisibility: z.object({
-			at: z
-				.preprocess(date, z.date())
-				.nullish()
-				.refine(
-					(date) => {
-						if (!date) return true;
-
-						if (date < sub(new Date(), { days: 1 })) return false;
-
-						return true;
-					},
-					{
-						message: "errors.dateInPast",
-					},
-				),
-			forAssociation: associationIdentifierSchema,
-		}),
-		divs: divsSchema.nullable(),
-		from: fromSchema,
-		postText: z.preprocess(
-			falsyToNull,
-			z.string().max(MAX_SCRIM_POST_TEXT_LENGTH).nullable(),
-		),
-		managedByAnyone: z.boolean(),
-		maps: z.enum(["NO_PREFERENCE", "SZ", "RANKED", "ALL", "TOURNAMENT"]),
-		mapsTournamentId: z.preprocess(falsyToNull, id.nullable()),
-	})
-	.superRefine((post, ctx) => {
-		if (post.maps === "TOURNAMENT" && !post.mapsTournamentId) {
-			ctx.addIssue({
-				path: ["mapsTournamentId"],
-				message: "errors.tournamentMustBeSelected",
-				code: z.ZodIssueCode.custom,
-			});
-		}
-
-		if (post.maps !== "TOURNAMENT" && post.mapsTournamentId) {
-			ctx.addIssue({
-				path: ["mapsTournamentId"],
-				message: "errors.tournamentOnlyWhenMapsIsTournament",
-				code: z.ZodIssueCode.custom,
-			});
-		}
-		if (
-			post.notFoundVisibility.at &&
-			post.notFoundVisibility.forAssociation === post.baseVisibility
-		) {
-			ctx.addIssue({
-				path: ["notFoundVisibility"],
-				message: "errors.visibilityMustBeDifferent",
-				code: z.ZodIssueCode.custom,
-			});
-		}
-
-		if (post.baseVisibility === "PUBLIC" && post.notFoundVisibility.at) {
-			ctx.addIssue({
-				path: ["notFoundVisibility"],
-				message: "errors.visibilityNotAllowedWhenPublic",
-				code: z.ZodIssueCode.custom,
-			});
-		}
-
-		if (post.notFoundVisibility.at && post.notFoundVisibility.at < post.at) {
-			ctx.addIssue({
-				path: ["notFoundVisibility", "at"],
-				message: "errors.dateBeforeScrimDate",
-				code: z.ZodIssueCode.custom,
-			});
-		}
-
-		if (post.notFoundVisibility.at && post.at < new Date()) {
-			ctx.addIssue({
-				path: ["notFoundVisibility"],
-				message: "errors.canNotSetIfLookingNow",
-				code: z.ZodIssueCode.custom,
-			});
-		}
-	});
-
 export const scrimRequestFormSchema = z.object({
 	_action: stringConstant("NEW_REQUEST"),
 	scrimPostId: idConstant(),
@@ -328,8 +215,25 @@ export const scrimsNewFormSchema = z
 				forAssociation: associationIdentifierSchema,
 			}),
 		),
-		// xxx: double select
-		divs: customJsonField({ initialValue: null }, divsSchema.nullable()),
+		divs: dualSelectOptional({
+			fields: [
+				{
+					label: "labels.scrimMaxDiv",
+					items: LUTI_DIVS.map((div) => ({ label: () => div, value: div })),
+				},
+				{
+					label: "labels.scrimMinDiv",
+					items: LUTI_DIVS.map((div) => ({ label: () => div, value: div })),
+				},
+			],
+			validate: {
+				func: ([max, min]) => {
+					if ((max && !min) || (!max && min)) return false;
+					return true;
+				},
+				message: "errors.divBothOrNeither",
+			},
+		}),
 		from: customJsonField({ initialValue: null }, fromSchema),
 		postText: textAreaOptional({
 			label: "labels.scrimText",

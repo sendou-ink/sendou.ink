@@ -32,6 +32,7 @@ export function DualSelectFormField<V extends string>({
 					value={value[0]}
 					onChange={(newValue) => onChange([newValue, value[1]])}
 					onBlur={onBlur}
+					clearable
 				/>
 				<SelectFormField
 					label={fields[1].label}
@@ -39,6 +40,7 @@ export function DualSelectFormField<V extends string>({
 					value={value[1]}
 					onChange={(newValue) => onChange([value[0], newValue])}
 					onBlur={onBlur}
+					clearable
 				/>
 			</div>
 			<FormFieldMessages name={name} error={error} bottomText={bottomText} />

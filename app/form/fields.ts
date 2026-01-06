@@ -1,6 +1,7 @@
 import * as R from "remeda";
 import { z } from "zod";
 import {
+	date,
 	falsyToNull,
 	id,
 	modeShort,
@@ -39,11 +40,11 @@ type WithTypedDualSelectFields<T, V extends string> = Omit<T, "fields"> & {
 	fields: [
 		{
 			label?: FormsTranslationKey;
-			items: Array<{ label: FormsTranslationKey; value: V }>;
+			items: Array<{ label: FormsTranslationKey | (() => string); value: V }>;
 		},
 		{
 			label?: FormsTranslationKey;
-			items: Array<{ label: FormsTranslationKey; value: V }>;
+			items: Array<{ label: FormsTranslationKey | (() => string); value: V }>;
 		},
 	];
 };
@@ -323,6 +324,7 @@ export function dualSelectOptional<V extends string>(
 			items: prefixItems(field.items),
 		})),
 		type: "dual-select",
+		initialValue: [null, null],
 		clearable: true,
 	});
 }
@@ -357,14 +359,18 @@ export function datetimeRequired(args: DateTimeArgs) {
 	const maxDate = args.max ?? new Date(Date.UTC(2030, 4, 28));
 
 	return z
-		.date({ message: "forms:errors.required" })
-		.min(
-			minDate,
-			args.minMessage ? { message: `forms:${args.minMessage}` } : undefined,
-		)
-		.max(
-			maxDate,
-			args.maxMessage ? { message: `forms:${args.maxMessage}` } : undefined,
+		.preprocess(
+			date,
+			z
+				.date({ message: "forms:errors.required" })
+				.min(
+					minDate,
+					args.minMessage ? { message: `forms:${args.minMessage}` } : undefined,
+				)
+				.max(
+					maxDate,
+					args.maxMessage ? { message: `forms:${args.maxMessage}` } : undefined,
+				),
 		)
 		.register(formRegistry, {
 			...args,
@@ -381,16 +387,20 @@ export function datetimeOptional(args: DateTimeArgs) {
 	const maxDate = args.max ?? new Date(Date.UTC(2030, 4, 28));
 
 	return z
-		.date()
-		.min(
-			minDate,
-			args.minMessage ? { message: `forms:${args.minMessage}` } : undefined,
+		.preprocess(
+			date,
+			z
+				.date()
+				.min(
+					minDate,
+					args.minMessage ? { message: `forms:${args.minMessage}` } : undefined,
+				)
+				.max(
+					maxDate,
+					args.maxMessage ? { message: `forms:${args.maxMessage}` } : undefined,
+				)
+				.optional(),
 		)
-		.max(
-			maxDate,
-			args.maxMessage ? { message: `forms:${args.maxMessage}` } : undefined,
-		)
-		.optional()
 		.register(formRegistry, {
 			...args,
 			label: prefixKey(args.label),

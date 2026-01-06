@@ -14,6 +14,7 @@ type SelectFormFieldProps<V extends string> = Omit<
 	onChange: (value: V | null) => void;
 	onSelect?: (value: V) => void;
 	onBlur?: () => void;
+	clearable?: boolean;
 };
 
 export function SelectFormField<V extends string>({
@@ -26,6 +27,7 @@ export function SelectFormField<V extends string>({
 	value,
 	onChange,
 	onSelect,
+	clearable,
 }: SelectFormFieldProps<V>) {
 	const { t, i18n } = useTranslation();
 	const id = React.useId();
@@ -69,6 +71,7 @@ export function SelectFormField<V extends string>({
 				onBlur={() => onBlur?.()}
 				{...ariaAttributes({ id, error, bottomText })}
 			>
+				{clearable ? <option value="">—</option> : null}
 				{itemsWithResolvedLabels.map((item) => (
 					<option key={item.value} value={item.value}>
 						{item.resolvedLabel}
