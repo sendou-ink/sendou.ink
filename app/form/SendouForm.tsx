@@ -8,7 +8,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { formRegistry } from "./fields";
 import styles from "./SendouForm.module.css";
 import type { FormField } from "./types";
-import { errorMessageId, validateField } from "./utils";
+import { errorMessageId, setNestedValue, validateField } from "./utils";
 
 type RequiredDefaultKeys<T extends z.ZodRawShape> = {
 	[K in keyof T & string]: T[K] extends { _requiresDefault: true } ? K : never;
@@ -51,6 +51,7 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	submitButtonTestId?: string;
 	autoSubmit?: boolean;
 	className?: string;
+	onApply?: (values: z.infer<z.ZodObject<T>>) => void;
 };
 
 type SendouFormProps<T extends z.ZodRawShape> = BaseFormProps<T> &
@@ -73,6 +74,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 	submitButtonTestId,
 	autoSubmit,
 	className,
+	onApply,
 }: SendouFormProps<T>) {
 	const { t } = useTranslation(["forms"]);
 	const fetcher = useFetcher<{ fieldErrors?: Record<string, string> }>();
@@ -123,7 +125,11 @@ export function SendouForm<T extends z.ZodRawShape>({
 	};
 
 	const setValue = (name: string, newValue: unknown) => {
-		setValues((prev) => ({ ...prev, [name]: newValue }));
+		if (name.includes(".")) {
+			setValues((prev) => setNestedValue(prev, name, newValue));
+		} else {
+			setValues((prev) => ({ ...prev, [name]: newValue }));
+		}
 	};
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -158,11 +164,15 @@ export function SendouForm<T extends z.ZodRawShape>({
 			return;
 		}
 
-		fetcher.submit(values as Record<string, string>, {
-			method,
-			action,
-			encType: "application/json",
-		});
+		if (onApply) {
+			onApply(values as z.infer<z.ZodObject<T>>);
+		} else {
+			fetcher.submit(values as Record<string, string>, {
+				method,
+				action,
+				encType: "application/json",
+			});
+		}
 	};
 
 	const revalidateAll = (updatedValues: Record<string, unknown>) => {

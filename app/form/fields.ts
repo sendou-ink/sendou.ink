@@ -8,6 +8,7 @@ import {
 	safeNullableStringSchema,
 	safeStringSchema,
 	stageId,
+	timeString,
 	weaponSplId,
 } from "~/utils/zod";
 import type {
@@ -579,4 +580,32 @@ export function array<S extends z.ZodType>(
 		type: "array",
 		initialValue: [],
 	});
+}
+
+type TimeRangeArgs = WithTypedTranslationKeys<
+	Omit<
+		Extract<FormField, { type: "time-range" }>,
+		"type" | "initialValue" | "startLabel" | "endLabel"
+	>
+> & {
+	startLabel?: FormsTranslationKey;
+	endLabel?: FormsTranslationKey;
+};
+
+export function timeRangeOptional(args: TimeRangeArgs) {
+	return z
+		.object({
+			start: timeString,
+			end: timeString,
+		})
+		.nullable()
+		.register(formRegistry, {
+			...args,
+			label: prefixKey(args.label),
+			bottomText: prefixKey(args.bottomText),
+			startLabel: prefixKey(args.startLabel),
+			endLabel: prefixKey(args.endLabel),
+			type: "time-range",
+			initialValue: null,
+		});
 }

@@ -79,5 +79,9 @@
 	"errors.visibilityMustBeDifferent": "",
 	"errors.visibilityNotAllowedWhenPublic": "",
 	"errors.dateBeforeScrimDate": "",
-	"errors.canNotSetIfLookingNow": ""
+	"errors.canNotSetIfLookingNow": "",
+	"labels.weekdayTimes": "",
+	"labels.weekendTimes": "",
+	"labels.start": "",
+	"labels.end": ""
 }

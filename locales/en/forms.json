@@ -79,5 +79,9 @@
 	"errors.visibilityMustBeDifferent": "Not found visibility must be different from base visibility",
 	"errors.visibilityNotAllowedWhenPublic": "Not found visibility can not be set if base visibility is public",
 	"errors.dateBeforeScrimDate": "Date can not be before the scrim date",
-	"errors.canNotSetIfLookingNow": "Can not be set if looking for scrim now"
+	"errors.canNotSetIfLookingNow": "Can not be set if looking for scrim now",
+	"labels.weekdayTimes": "Weekday times",
+	"labels.weekendTimes": "Weekend times",
+	"labels.start": "Start",
+	"labels.end": "End"
 }

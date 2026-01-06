@@ -119,6 +119,11 @@ export interface FormFieldArray<T extends string, S extends z.ZodType>
 	field: S;
 }
 
+interface FormFieldTimeRange<T extends string> extends FormFieldBase<T> {
+	startLabel?: string;
+	endLabel?: string;
+}
+
 export type FormField<V extends string = string> =
 	| FormFieldBase<"custom">
 	| FormFieldText<"text-field">
@@ -136,7 +141,8 @@ export type FormField<V extends string = string> =
 	| FormFieldImage<"image">
 	| FormFieldConstant<"string-constant">
 	| FormFieldConstant<"id-constant">
-	| FormFieldArray<"array", z.ZodType>;
+	| FormFieldArray<"array", z.ZodType>
+	| FormFieldTimeRange<"time-range">;
 
 export type FormFieldProps<T extends FormField["type"]> = Omit<
 	Extract<FormField, { type: T }>,

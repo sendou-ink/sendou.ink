@@ -14,6 +14,7 @@ import {
 	textAreaRequired,
 	textFieldOptional,
 	textFieldRequired,
+	timeRangeOptional,
 	toggle as toggleField,
 } from "./fields";
 import { SendouForm } from "./SendouForm";
@@ -634,6 +635,112 @@ describe("SendouForm", () => {
 
 			const fallbackError = screen.getByTestId("fallback-form-error");
 			await expect.element(fallbackError).not.toBeInTheDocument();
+		});
+	});
+
+	describe("time range field", () => {
+		test("renders two time inputs", async () => {
+			const schema = z.object({
+				times: timeRangeOptional({}),
+			});
+			const screen = await renderForm(schema);
+
+			const timeInputs =
+				screen.container.querySelectorAll('input[type="time"]');
+			expect(timeInputs.length).toBe(2);
+		});
+
+		test("initializes with default value", async () => {
+			const schema = z.object({
+				times: timeRangeOptional({}),
+			});
+
+			const screen = await renderForm(schema, {
+				defaultValues: { times: { start: "09:00", end: "17:00" } },
+			});
+
+			const timeInputs =
+				screen.container.querySelectorAll('input[type="time"]');
+			expect((timeInputs[0] as HTMLInputElement).value).toBe("09:00");
+			expect((timeInputs[1] as HTMLInputElement).value).toBe("17:00");
+		});
+
+		test("updating time input changes value", async () => {
+			const schema = z.object({
+				times: timeRangeOptional({}),
+			});
+
+			const screen = await renderForm(schema);
+
+			const timeInputs =
+				screen.container.querySelectorAll('input[type="time"]');
+			const startInput = timeInputs[0] as HTMLInputElement;
+
+			await userEvent.clear(startInput);
+			await userEvent.type(startInput, "10:30");
+
+			expect(startInput.value).toBe("10:30");
+		});
+	});
+
+	describe("onApply callback", () => {
+		test("calls onApply with form values instead of fetcher.submit", async () => {
+			const onApply = vi.fn();
+			const schema = z.object({
+				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+			});
+
+			const router = createMemoryRouter(
+				[
+					{
+						path: "/",
+						element: (
+							<SendouForm
+								schema={schema}
+								defaultValues={{ name: "Test Value" }}
+								onApply={onApply}
+							>
+								{({ names }) => <FormField name={names.name} />}
+							</SendouForm>
+						),
+					},
+				],
+				{ initialEntries: ["/"] },
+			);
+
+			const screen = await render(<RouterProvider router={router} />);
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply).toHaveBeenCalledWith({ name: "Test Value" });
+		});
+
+		test("does not call onApply when validation fails", async () => {
+			const onApply = vi.fn();
+			const schema = z.object({
+				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+			});
+
+			const router = createMemoryRouter(
+				[
+					{
+						path: "/",
+						element: (
+							<SendouForm schema={schema} onApply={onApply}>
+								{({ names }) => <FormField name={names.name} />}
+							</SendouForm>
+						),
+					},
+				],
+				{ initialEntries: ["/"] },
+			);
+
+			const screen = await render(<RouterProvider router={router} />);
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply).not.toHaveBeenCalled();
+			await expect
+				.element(screen.getByText("This field is required"))
+				.toBeVisible();
 		});
 	});
 });

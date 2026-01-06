@@ -19,13 +19,19 @@ import { MultiSelectFormField } from "./fields/MultiSelectFormField";
 import { SelectFormField } from "./fields/SelectFormField";
 import { SwitchFormField } from "./fields/SwitchFormField";
 import { TextareaFormField } from "./fields/TextareaFormField";
+import { TimeRangeFormField } from "./fields/TimeRangeFormField";
 import {
 	WeaponPoolFormField,
 	type WeaponPoolItem,
 } from "./fields/WeaponPoolFormField";
 import { useOptionalFormFieldContext } from "./SendouForm";
 import type { FormField as FormFieldType } from "./types";
-import { validateField } from "./utils";
+import {
+	getNestedSchema,
+	getNestedValue,
+	setNestedValue,
+	validateField,
+} from "./utils";
 
 interface FormFieldProps {
 	name: string;
@@ -51,7 +57,9 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 		}
 
 		const zodObject = context.schema;
-		const result = zodObject.shape[name];
+		const result = name.includes(".")
+			? getNestedSchema(zodObject, name)
+			: zodObject.shape[name];
 
 		if (!result) {
 			throw new Error(
@@ -72,7 +80,10 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 		return fieldWithLabel as FormFieldType;
 	}, [fieldSchema, name, label]);
 
-	const value = context?.values[name] ?? formField.initialValue;
+	const value =
+		(name.includes(".")
+			? getNestedValue(context?.values ?? {}, name)
+			: context?.values[name]) ?? formField.initialValue;
 
 	const serverError =
 		context?.serverErrors[name as keyof typeof context.serverErrors];
@@ -93,7 +104,9 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 	const handleChange = (newValue: unknown) => {
 		context?.setValue(name, newValue);
 		if (hasSubmitted && context) {
-			const updatedValues = { ...context.values, [name]: newValue };
+			const updatedValues = name.includes(".")
+				? setNestedValue(context.values, name, newValue)
+				: { ...context.values, [name]: newValue };
 			context.revalidateAll(updatedValues);
 		}
 		context?.onFieldChange?.(name, newValue);
@@ -198,6 +211,19 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 				{...formField}
 				value={value as Date | undefined}
 				onChange={handleChange as (v: Date | undefined) => void}
+			/>
+		);
+	}
+
+	if (formField.type === "time-range") {
+		return (
+			<TimeRangeFormField
+				{...commonProps}
+				{...formField}
+				value={value as { start: string; end: string } | null}
+				onChange={
+					handleChange as (v: { start: string; end: string } | null) => void
+				}
 			/>
 		);
 	}

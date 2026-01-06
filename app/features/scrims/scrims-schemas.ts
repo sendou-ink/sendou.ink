@@ -9,6 +9,7 @@ import {
 	selectOptional,
 	stringConstant,
 	textAreaOptional,
+	timeRangeOptional,
 	toggle,
 } from "~/form/fields";
 import {
@@ -117,6 +118,41 @@ export const scrimsFiltersSchema = z.object({
 	divs: divsSchema.nullable().catch(null),
 });
 
+const divsFormField = dualSelectOptional({
+	fields: [
+		{
+			label: "labels.scrimMaxDiv",
+			items: LUTI_DIVS.map((div) => ({ label: () => div, value: div })),
+		},
+		{
+			label: "labels.scrimMinDiv",
+			items: LUTI_DIVS.map((div) => ({ label: () => div, value: div })),
+		},
+	],
+	validate: {
+		func: ([max, min]) => {
+			if ((max && !min) || (!max && min)) return false;
+			return true;
+		},
+		// xxx: not translated and appearing a bit jankly
+		message: "errors.divBothOrNeither",
+	},
+});
+
+export const scrimsFiltersFormSchema = z.object({
+	weekdayTimes: timeRangeOptional({
+		label: "labels.weekdayTimes",
+		startLabel: "labels.start",
+		endLabel: "labels.end",
+	}),
+	weekendTimes: timeRangeOptional({
+		label: "labels.weekendTimes",
+		startLabel: "labels.start",
+		endLabel: "labels.end",
+	}),
+	divs: divsFormField,
+});
+
 export const scrimsFiltersSearchParamsObject = z.object({
 	filters: z
 		.preprocess(safeJSONParse, scrimsFiltersSchema)
@@ -215,25 +251,7 @@ export const scrimsNewFormSchema = z
 				forAssociation: associationIdentifierSchema,
 			}),
 		),
-		divs: dualSelectOptional({
-			fields: [
-				{
-					label: "labels.scrimMaxDiv",
-					items: LUTI_DIVS.map((div) => ({ label: () => div, value: div })),
-				},
-				{
-					label: "labels.scrimMinDiv",
-					items: LUTI_DIVS.map((div) => ({ label: () => div, value: div })),
-				},
-			],
-			validate: {
-				func: ([max, min]) => {
-					if ((max && !min) || (!max && min)) return false;
-					return true;
-				},
-				message: "errors.divBothOrNeither",
-			},
-		}),
+		divs: divsFormField,
 		from: customJsonField({ initialValue: null }, fromSchema),
 		postText: textAreaOptional({
 			label: "labels.scrimText",
