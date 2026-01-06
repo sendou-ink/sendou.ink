@@ -1383,13 +1383,15 @@ function calendarEventWithToToolsTeams(
         "name",
         "createdAt",
         "tournamentId",
-        "inviteCode"
+        "inviteCode",
+        "seed"
       ) values (
         $id,
         $name,
         $createdAt,
         $tournamentId,
-        $inviteCode
+        $inviteCode,
+        $seed
       )
       `,
 			)
@@ -1399,6 +1401,7 @@ function calendarEventWithToToolsTeams(
 				createdAt: dateToDatabaseTimestamp(new Date()),
 				tournamentId,
 				inviteCode: shortNanoid(),
+				seed: id,
 			});
 
 		// in PICNIC & PP Chimera is not checked in + in LUTI no check-ins at all
