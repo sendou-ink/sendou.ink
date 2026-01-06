@@ -132,8 +132,8 @@
 
 .newBadge {
 	flex-shrink: 0;
-	background-color: var(--theme-info);
-	color: white;
+	background-color: var(--theme-secondary);
+	color: var(--button-text);
 	font-size: var(--fonts-xxxxs);
 	font-weight: var(--bold);
 	padding: 1px 4px;
