@@ -244,16 +244,8 @@
 	flex: 1;
 }
 
-.duringMatchActionsCheckboxName:not(.disabled-opaque):not(
-		.presentational
-	):hover {
-	border-radius: var(--rounded);
-	cursor: pointer;
-	outline: 2px solid var(--color-accent-low);
-	outline-offset: 2px;
-}
-
-.duringMatchActionsCheckbox.duringMatchActionsCheckbox {
+.duringMatchActionsCheckbox:not(#_) {
+	background: none;
 	all: unset;
 	width: 40% !important;
 	height: 1.5rem !important;
@@ -265,6 +257,7 @@
 	font-size: var(--fonts-xxs);
 	font-weight: var(--bold);
 	letter-spacing: 0.4px;
+	z-index: 1;
 
 	&::after {
 		all: unset;
@@ -286,6 +279,22 @@
 			color: var(--color-text-inverse);
 			content: "Playing";
 		}
+	}
+
+	&:disabled {
+		pointer-events: none;
+		cursor: not-allowed;
+		opacity: 0.5;
+		outline: none;
+	}
+
+	&:focus-within {
+		outline: none;
+	}
+
+	&:focus-visible {
+		outline: var(--input-focus-ring);
+		outline-offset: 1px;
 	}
 }
 
