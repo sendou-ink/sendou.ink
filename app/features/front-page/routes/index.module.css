@@ -280,3 +280,732 @@
 	color: var(--color-text-lighter);
 	padding: var(--s-1) var(--s-2);
 }
+
+/* Social Feed Styles */
+.socialFeed {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.feedHeader {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.feedTitle {
+	font-size: var(--fonts-xl);
+	font-weight: var(--extra-bold);
+	margin: 0;
+}
+
+.feedFilters {
+	display: flex;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+}
+
+.filterBtn {
+	background-color: var(--color-bg-higher);
+	border: none;
+	border-radius: var(--rounded);
+	padding: var(--s-1-5) var(--s-3);
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	color: var(--color-text);
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+}
+
+.filterBtn:hover {
+	background-color: var(--color-border);
+}
+
+.filterBtnActive {
+	background-color: var(--color-accent);
+	color: var(--color-text-inverse);
+}
+
+.filterBtnActive:hover {
+	background-color: var(--color-accent);
+}
+
+.feedPosts {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.feedPost {
+	background-color: var(--color-bg-high);
+	border-radius: var(--rounded);
+	padding: var(--s-4);
+	border: 2px solid var(--color-border);
+}
+
+.postHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	margin-bottom: var(--s-3);
+}
+
+.postHeaderInfo {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.postUsername {
+	font-weight: var(--bold);
+	font-size: var(--fonts-sm);
+}
+
+.postTime {
+	font-size: var(--fonts-xxs);
+	color: var(--color-text-high);
+}
+
+.postBadge {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--bold);
+	padding: var(--s-1) var(--s-2);
+	border-radius: var(--rounded-xs);
+	text-transform: uppercase;
+}
+
+.badgeSendouq {
+	background-color: var(--color-accent-low);
+	color: var(--color-accent-high);
+}
+
+.badgeTournament {
+	background-color: var(--color-warning-low);
+	color: var(--color-warning-high);
+}
+
+.badgeBuild {
+	background-color: var(--color-success-low);
+	color: var(--color-success-high);
+}
+
+.badgeTeam {
+	background-color: var(--color-info-low);
+	color: var(--color-info-high);
+}
+
+.badgeLeaderboard {
+	background-color: oklch(30% 0.1 45);
+	color: oklch(85% 0.15 45);
+}
+
+.badgeVod {
+	background-color: oklch(30% 0.08 330);
+	color: oklch(85% 0.1 330);
+}
+
+.badgeLfg {
+	background-color: oklch(30% 0.1 180);
+	color: oklch(85% 0.12 180);
+}
+
+.badgeSignup {
+	background-color: var(--color-info-low);
+	color: var(--color-info-high);
+}
+
+.badgeArt {
+	background-color: oklch(30% 0.12 300);
+	color: oklch(85% 0.15 300);
+}
+
+.badgeReplay {
+	background-color: oklch(30% 0.1 220);
+	color: oklch(85% 0.12 220);
+}
+
+.postContent {
+	margin-top: var(--s-2);
+}
+
+/* SendouQ Match Post */
+.sendouqMatch {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.matchResult {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	padding: var(--s-2) var(--s-3);
+	border-radius: var(--rounded-sm);
+}
+
+.matchWin {
+	background-color: var(--color-success-low);
+}
+
+.matchLoss {
+	background-color: var(--color-error-low);
+}
+
+.matchResultText {
+	font-weight: var(--extra-bold);
+	font-size: var(--fonts-md);
+}
+
+.matchWin .matchResultText {
+	color: var(--color-success);
+}
+
+.matchLoss .matchResultText {
+	color: var(--color-error);
+}
+
+.matchScore {
+	font-weight: var(--bold);
+	font-size: var(--fonts-sm);
+}
+
+.matchDetails {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: var(--s-3);
+	flex-wrap: wrap;
+}
+
+.matchMapMode {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.matchStageImg {
+	width: 80px;
+	height: 45px;
+	border-radius: var(--rounded-xs);
+	object-fit: cover;
+}
+
+.matchMapInfo {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.matchStageName {
+	font-weight: var(--bold);
+	font-size: var(--fonts-sm);
+}
+
+.matchModeRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--fonts-xs);
+	color: var(--color-text-high);
+}
+
+.matchPower {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: var(--s-0-5);
+}
+
+.powerChange {
+	font-weight: var(--extra-bold);
+	font-size: var(--fonts-lg);
+}
+
+.powerUp {
+	color: var(--color-success);
+}
+
+.powerDown {
+	color: var(--color-error);
+}
+
+.newPower {
+	font-size: var(--fonts-xs);
+	color: var(--color-text-high);
+}
+
+.matchTeams {
+	display: flex;
+	gap: var(--s-6);
+	flex-wrap: wrap;
+}
+
+.matchTeam {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.teamLabel {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--semi-bold);
+	color: var(--color-text-high);
+	text-transform: uppercase;
+}
+
+.teamPlayers {
+	display: flex;
+	gap: var(--s-1);
+}
+
+/* Tournament Placement Post */
+.tournamentPlacement {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.placementHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.placementEmoji {
+	font-size: var(--fonts-xl);
+}
+
+.placementInfo {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.placementText {
+	font-weight: var(--extra-bold);
+	font-size: var(--fonts-lg);
+}
+
+.tournamentName {
+	font-size: var(--fonts-sm);
+	color: var(--color-text-high);
+}
+
+.placementTeam {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	background-color: var(--color-bg-higher);
+	padding: var(--s-2) var(--s-3);
+	border-radius: var(--rounded-sm);
+}
+
+.teamName {
+	font-weight: var(--bold);
+	font-size: var(--fonts-sm);
+}
+
+.placementTeammates {
+	display: flex;
+	gap: var(--s-1);
+}
+
+/* Build Shared Post */
+.buildShared {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.buildWeapon {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.weaponName {
+	font-weight: var(--bold);
+	font-size: var(--fonts-md);
+}
+
+.buildDescription {
+	margin: 0;
+	font-size: var(--fonts-sm);
+	color: var(--color-text);
+	line-height: 1.5;
+}
+
+.buildAbilities {
+	display: flex;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+}
+
+.abilityTag {
+	background-color: var(--color-bg-higher);
+	padding: var(--s-1) var(--s-2);
+	border-radius: var(--rounded-xs);
+	font-size: var(--fonts-xxs);
+	font-weight: var(--semi-bold);
+}
+
+.viewBuildLink {
+	font-size: var(--fonts-xs);
+	font-weight: var(--bold);
+	color: var(--color-text-accent);
+}
+
+/* Team Formed Post */
+.teamFormed {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.teamHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.teamFormedName {
+	font-weight: var(--extra-bold);
+	font-size: var(--fonts-lg);
+}
+
+.teamFormedLabel {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--bold);
+	background-color: var(--color-success-low);
+	color: var(--color-success);
+	padding: var(--s-0-5) var(--s-2);
+	border-radius: var(--rounded-xs);
+	text-transform: uppercase;
+}
+
+.teamMembers {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	gap: var(--s-2);
+}
+
+.teamMember {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	background-color: var(--color-bg-higher);
+	padding: var(--s-2);
+	border-radius: var(--rounded-sm);
+}
+
+.memberInfo {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.memberName {
+	font-weight: var(--semi-bold);
+	font-size: var(--fonts-xs);
+}
+
+.memberRole {
+	font-size: var(--fonts-xxs);
+	color: var(--color-text-high);
+}
+
+/* Leaderboard Climb Post */
+.leaderboardClimb {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.climbStats {
+	display: flex;
+	gap: var(--s-6);
+	flex-wrap: wrap;
+}
+
+.rankChange {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.rankLabel,
+.powerLabel {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--semi-bold);
+	color: var(--color-text-high);
+	text-transform: uppercase;
+}
+
+.rankNumbers {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.oldRank {
+	font-size: var(--fonts-md);
+	color: var(--color-text-high);
+	text-decoration: line-through;
+}
+
+.rankArrow {
+	color: var(--color-success);
+}
+
+.newRank {
+	font-weight: var(--extra-bold);
+	font-size: var(--fonts-lg);
+	color: var(--color-success);
+}
+
+.rankDiff {
+	font-size: var(--fonts-xs);
+	color: var(--color-success);
+	font-weight: var(--semi-bold);
+}
+
+.powerStat {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.powerValue {
+	font-weight: var(--extra-bold);
+	font-size: var(--fonts-lg);
+}
+
+.seasonInfo {
+	font-size: var(--fonts-xs);
+	color: var(--color-text-high);
+}
+
+/* VOD Review Post */
+.vodReview {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.vodHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.vodInfo {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.vodTournament {
+	font-weight: var(--bold);
+	font-size: var(--fonts-sm);
+}
+
+.vodMatch {
+	font-size: var(--fonts-xs);
+	color: var(--color-text-high);
+}
+
+.watchVodBtn {
+	background-color: var(--color-accent);
+	color: var(--color-text-inverse);
+	border: none;
+	border-radius: var(--rounded-sm);
+	padding: var(--s-2) var(--s-4);
+	font-size: var(--fonts-xs);
+	font-weight: var(--bold);
+	cursor: pointer;
+	width: fit-content;
+	transition: opacity 0.15s ease;
+}
+
+.watchVodBtn:hover {
+	opacity: 0.9;
+}
+
+/* LFG Post */
+.lfgPost {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.lfgText {
+	margin: 0;
+	font-size: var(--fonts-sm);
+	line-height: 1.5;
+}
+
+.lfgWeapons {
+	display: flex;
+	gap: var(--s-2);
+}
+
+.lfgAvailability {
+	display: flex;
+	gap: var(--s-2);
+	font-size: var(--fonts-xs);
+	color: var(--color-text-high);
+}
+
+.availLabel {
+	font-weight: var(--bold);
+}
+
+/* Tournament Signup Post */
+.tournamentSignup {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.signupInfo {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+	font-size: var(--fonts-sm);
+}
+
+.signupTeam {
+	font-weight: var(--bold);
+}
+
+.signupAction {
+	color: var(--color-text-high);
+}
+
+.signupTournament {
+	font-weight: var(--bold);
+	color: var(--color-text-accent);
+}
+
+.signupTime {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--fonts-xs);
+	color: var(--color-text-high);
+}
+
+.signupTime svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* Art Posted */
+.artPosted {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.artDescription {
+	margin: 0;
+	font-size: var(--fonts-sm);
+	line-height: 1.5;
+}
+
+.artImages {
+	display: flex;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+}
+
+.artImage {
+	width: 80px;
+	height: 80px;
+	border-radius: var(--rounded-sm);
+	object-fit: cover;
+}
+
+/* Replay Shared Post */
+.replayShared {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.replayCode {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	background-color: var(--color-bg-higher);
+	padding: var(--s-3);
+	border-radius: var(--rounded-sm);
+}
+
+.replayCodeLabel {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--semi-bold);
+	color: var(--color-text-high);
+	text-transform: uppercase;
+}
+
+.replayCodeValue {
+	font-family: monospace;
+	font-size: var(--fonts-lg);
+	font-weight: var(--extra-bold);
+	letter-spacing: 0.1em;
+}
+
+.replayDetails {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: var(--s-4);
+	flex-wrap: wrap;
+}
+
+.replayMapMode {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.replayStageImg {
+	width: 80px;
+	height: 45px;
+	border-radius: var(--rounded-xs);
+	object-fit: cover;
+}
+
+.replayMapInfo {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.replayStageName {
+	font-weight: var(--bold);
+	font-size: var(--fonts-sm);
+}
+
+.replayModeRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--fonts-xs);
+	color: var(--color-text-high);
+}
+
+.replayWeapon {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.replayWeaponName {
+	font-weight: var(--semi-bold);
+	font-size: var(--fonts-sm);
+}
