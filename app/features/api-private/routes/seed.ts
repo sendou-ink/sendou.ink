@@ -60,6 +60,9 @@ export const action: ActionFunction = async ({ request }) => {
 
 const REG_OPEN_TOURNAMENT_IDS = [1, 3];
 
+const SEED_REFERENCE_TIMESTAMP = 1767440151;
+
+// TODO: do this cleaner
 function adjustSeedDatesToCurrent(variation: SeedVariation) {
 	const halfAnHourFromNow = Math.floor((Date.now() + 1000 * 60 * 30) / 1000);
 	const oneHourAgo = Math.floor((Date.now() - 1000 * 60 * 60) / 1000);
@@ -88,6 +91,23 @@ function adjustSeedDatesToCurrent(variation: SeedVariation) {
 		.run(now, now);
 
 	sql.prepare(`UPDATE "GroupLike" SET createdAt = ?`).run(now);
+
+	const scrimTimeOffset = now - SEED_REFERENCE_TIMESTAMP;
+	sql
+		.prepare(
+			`UPDATE "ScrimPost" SET "at" = "at" + ?, "createdAt" = "createdAt" + ?`,
+		)
+		.run(scrimTimeOffset, scrimTimeOffset);
+	sql
+		.prepare(
+			`UPDATE "ScrimPost" SET "rangeEnd" = "rangeEnd" + ? WHERE "rangeEnd" IS NOT NULL`,
+		)
+		.run(scrimTimeOffset);
+	sql
+		.prepare(
+			`UPDATE "ScrimPostRequest" SET "at" = "at" + ? WHERE "at" IS NOT NULL`,
+		)
+		.run(scrimTimeOffset);
 }
 
 function restoreFromPreSeeded(sourcePath: string) {
