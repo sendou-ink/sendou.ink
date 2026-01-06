@@ -41,7 +41,6 @@ export function ScrimRequestModal({
 		<SendouDialog heading={t("scrims:requestModal.title")} onClose={close}>
 			<SendouForm
 				schema={scrimRequestFormSchema}
-				// xxx: default values as data.defaultValues?
 				defaultValues={{
 					scrimPostId: post.id,
 					from:
