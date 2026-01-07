@@ -751,6 +751,7 @@ function StartedMatchTabs({
 			<SendouTabs
 				selectedKey={selectedTabKey}
 				onSelectionChange={(key) => setSelectedTabKey(String(key))}
+				className={styles.matchTabs}
 			>
 				<SendouTabList>
 					{showChat && (
@@ -811,32 +812,8 @@ function StartedMatchTabs({
 	);
 }
 
-function ActionSectionWrapper({
-	children,
-	icon,
-	...rest
-}: {
-	children: React.ReactNode;
-	icon?: "warning" | "info" | "success" | "error";
-	"justify-center"?: boolean;
-}) {
-	// todo: flex-dir: column on mobile
-	const style = icon
-		? {
-				"--action-section-icon-color": `var(--theme-${icon})`,
-			}
-		: undefined;
-	return (
-		<section className={tournamentStyles.actionSection} style={style}>
-			<div
-				className={clsx({
-					"justify-center": rest["justify-center"],
-				})}
-			>
-				{children}
-			</div>
-		</section>
-	);
+function ActionSectionWrapper({ children }: { children: React.ReactNode }) {
+	return <div className={styles.actionSectionWrapper}>{children}</div>;
 }
 
 function ScreenBanIcons({ banned }: { banned: boolean }) {

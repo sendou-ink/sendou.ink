@@ -51,6 +51,10 @@
 	margin-inline-start: 8px;
 }
 
+.matchTabs {
+	padding-inline: var(--s-12);
+}
+
 .match {
 	width: var(--match-width);
 	min-height: var(--match-height);

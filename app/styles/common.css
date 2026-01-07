@@ -241,6 +241,11 @@ select {
 	background-color: var(--color-bg);
 	cursor: pointer;
 	padding: 0 var(--input-padding-inline);
+	padding-right: calc(
+		var(--input-icon-width) +
+		var(--input-padding-inline) +
+		var(--s-2)
+	);
 	height: var(--input-height);
 	line-height: var(--input-line-height);
 	display: inline-flex;
