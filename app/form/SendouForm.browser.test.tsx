@@ -1015,5 +1015,58 @@ describe("SendouForm", () => {
 
 			await expect.element(input).toHaveValue("New Name");
 		});
+
+		test("shows error on specific nested field within array item", async () => {
+			const schema = z.object({
+				series: array({
+					label: "labels.orgSeries",
+					min: 1,
+					max: 10,
+					field: fieldset({
+						fields: z.object({
+							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+							description: textAreaOptional({
+								label: "labels.description",
+								maxLength: 500,
+							}),
+						}),
+					}),
+				}),
+			});
+
+			const screen = await renderForm(schema, {
+				defaultValues: { series: [{ name: "", description: "some text" }] },
+			});
+
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			const nameInput = screen.getByLabelText("Name");
+			await expect.element(nameInput).toHaveAttribute("aria-invalid", "true");
+		});
+
+		test("shows 'This field is required' for empty required field in array fieldset", async () => {
+			const schema = z.object({
+				series: array({
+					label: "labels.orgSeries",
+					min: 1,
+					max: 10,
+					field: fieldset({
+						fields: z.object({
+							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+						}),
+					}),
+				}),
+			});
+
+			const screen = await renderForm(schema, {
+				defaultValues: { series: [{ name: "" }] },
+			});
+
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			await expect
+				.element(screen.getByText("This field is required"))
+				.toBeVisible();
+		});
 	});
 });

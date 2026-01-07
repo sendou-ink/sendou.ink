@@ -104,4 +104,23 @@ describe("getNestedSchema", () => {
 		const schema = z.object({ name: z.string() });
 		expect(getNestedSchema(schema, "name.invalid")).toBe(undefined);
 	});
+
+	test("returns schema for array element path", () => {
+		const schema = z.object({
+			items: z.array(z.object({ name: z.string() })),
+		});
+		const result = getNestedSchema(schema, "items[0].name");
+		expect(result).toBeInstanceOf(z.ZodString);
+	});
+
+	test("returns schema for array element path with min/max", () => {
+		const schema = z.object({
+			items: z
+				.array(z.object({ name: z.string() }))
+				.min(1)
+				.max(10),
+		});
+		const result = getNestedSchema(schema, "items[0].name");
+		expect(result).toBeInstanceOf(z.ZodString);
+	});
 });

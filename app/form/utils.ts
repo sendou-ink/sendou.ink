@@ -79,12 +79,23 @@ export function getNestedSchema(
 	schema: z.ZodObject<z.ZodRawShape>,
 	path: string,
 ): z.ZodType | undefined {
-	const parts = path.split(".");
+	const parts = parsePath(path);
 	let current: z.ZodType = schema;
 
 	for (const part of parts) {
 		const unwrapped = unwrapSchema(current);
-		if ("shape" in unwrapped && unwrapped.shape) {
+
+		if (typeof part === "number") {
+			const def = unwrapped._def as {
+				type?: string;
+				element?: z.ZodType;
+			};
+			if (def.type === "array" && def.element) {
+				current = def.element;
+			} else {
+				return undefined;
+			}
+		} else if ("shape" in unwrapped && unwrapped.shape) {
 			const nextSchema = (unwrapped.shape as Record<string, z.ZodType>)[part];
 			if (!nextSchema) return undefined;
 			current = nextSchema;

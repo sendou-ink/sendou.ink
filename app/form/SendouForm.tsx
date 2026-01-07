@@ -8,7 +8,12 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { formRegistry } from "./fields";
 import styles from "./SendouForm.module.css";
 import type { FormField } from "./types";
-import { errorMessageId, setNestedValue, validateField } from "./utils";
+import {
+	errorMessageId,
+	getNestedValue,
+	setNestedValue,
+	validateField,
+} from "./utils";
 
 type RequiredDefaultKeys<T extends z.ZodRawShape> = {
 	[K in keyof T & string]: T[K] extends { _requiresDefault: true } ? K : never;
@@ -149,9 +154,11 @@ export function SendouForm<T extends z.ZodRawShape>({
 		const fullValidation = schema.safeParse(values);
 		if (!fullValidation.success) {
 			for (const issue of fullValidation.error.issues) {
-				const fieldName = issue.path[0];
-				if (typeof fieldName === "string" && !newErrors[fieldName]) {
-					newErrors[fieldName] = issue.message;
+				const fieldName = buildFieldPath(issue.path);
+				if (fieldName && !newErrors[fieldName]) {
+					const value = getNestedValue(values, fieldName);
+					const properError = validateField(schema, fieldName, value);
+					newErrors[fieldName] = properError ?? issue.message;
 				}
 			}
 		}
@@ -188,9 +195,11 @@ export function SendouForm<T extends z.ZodRawShape>({
 		const fullValidation = schema.safeParse(updatedValues);
 		if (!fullValidation.success) {
 			for (const issue of fullValidation.error.issues) {
-				const fieldName = issue.path[0];
-				if (typeof fieldName === "string" && !newErrors[fieldName]) {
-					newErrors[fieldName] = issue.message;
+				const fieldName = buildFieldPath(issue.path);
+				if (fieldName && !newErrors[fieldName]) {
+					const value = getNestedValue(updatedValues, fieldName);
+					const properError = validateField(schema, fieldName, value);
+					newErrors[fieldName] = properError ?? issue.message;
 				}
 			}
 		}
@@ -290,6 +299,19 @@ export function SendouForm<T extends z.ZodRawShape>({
 			</form>
 		</FormContext.Provider>
 	);
+}
+
+function buildFieldPath(path: PropertyKey[]): string | null {
+	if (path.length === 0) return null;
+
+	return path
+		.map((segment, index) => {
+			if (typeof segment === "number") return `[${segment}]`;
+			if (typeof segment === "symbol") return null;
+			return index === 0 ? segment : `.${segment}`;
+		})
+		.filter((part) => part !== null)
+		.join("");
 }
 
 function buildInitialValues<T extends z.ZodRawShape>(
