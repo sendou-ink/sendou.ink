@@ -8,10 +8,17 @@
 }
 
 .avatarWrapper {
+	display: inline-flex;
 	flex-shrink: 0;
 	width: fit-content;
 	height: fit-content;
 	background-color: var(--color-bg-higher);
+	border-radius: 50%;
 	overflow: hidden;
+	line-height: 0;
+}
+
+.avatarWrapper img {
+	display: block;
 	border-radius: 50%;
 }

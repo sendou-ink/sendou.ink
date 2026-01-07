@@ -381,7 +381,9 @@ function RowContents({
 	return (
 		<>
 			<div>{seed}</div>
-			<div>{logoUrl ? <Avatar url={logoUrl} size="xxs" /> : null}</div>
+			<div>
+				<Avatar url={logoUrl} identiconInput={team.name} size="xxs" />
+			</div>
 			<div className={styles.seedsTeamName}>
 				{team.checkIns.length > 0 ? "✅ " : "❌ "} {team.name}
 			</div>

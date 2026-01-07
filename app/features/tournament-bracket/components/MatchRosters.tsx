@@ -47,7 +47,7 @@ export function MatchRosters({
 				<h2
 					className={clsx("text-sm", {
 						"text-lighter": !teamOne,
-						[styles.rostersSpacedHeader]: teamOneLogoSrc || teamTwoLogoSrc,
+						[styles.rostersSpacedHeader]: teamOne || teamTwo,
 					})}
 				>
 					{teamOne ? (
@@ -58,9 +58,11 @@ export function MatchRosters({
 							})}
 							className="text-main-forced font-bold stack horizontal xs items-center"
 						>
-							{teamOneLogoSrc ? (
-								<Avatar url={teamOneLogoSrc} size="sm" />
-							) : null}
+							<Avatar
+								url={teamOneLogoSrc}
+								identiconInput={teamOne.name}
+								size="sm"
+							/>
 							{teamOne.name}
 						</Link>
 					) : (
@@ -105,7 +107,7 @@ export function MatchRosters({
 				<h2
 					className={clsx("text-sm", {
 						"text-lighter": !teamTwo,
-						[styles.rostersSpacedHeader]: teamOneLogoSrc || teamTwoLogoSrc,
+						[styles.rostersSpacedHeader]: teamOne || teamTwo,
 					})}
 				>
 					{teamTwo ? (
@@ -116,9 +118,11 @@ export function MatchRosters({
 							})}
 							className="text-main-forced font-bold stack horizontal xs items-center"
 						>
-							{teamTwoLogoSrc ? (
-								<Avatar url={teamTwoLogoSrc} size="sm" />
-							) : null}
+							<Avatar
+								url={teamTwoLogoSrc}
+								identiconInput={teamTwo.name}
+								size="sm"
+							/>
 							{teamTwo.name}
 						</Link>
 					) : (

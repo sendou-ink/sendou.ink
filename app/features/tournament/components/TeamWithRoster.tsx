@@ -35,7 +35,7 @@ export function TeamWithRoster({
 			<div className={styles.teamWithRoster}>
 				<div className={styles.teamWithRosterName}>
 					<div className="stack horizontal sm justify-end items-end">
-						{teamLogoSrc ? <Avatar size="xxs" url={teamLogoSrc} /> : null}
+						<Avatar size="xxs" url={teamLogoSrc} identiconInput={team.name} />
 						{seed ? (
 							<div className={styles.teamWithRosterSeed}>#{seed}</div>
 						) : null}
