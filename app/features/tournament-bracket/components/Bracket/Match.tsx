@@ -22,6 +22,8 @@ import parentStyles from "../../tournament-bracket.module.css";
 import { matchEndedEarly } from "../../tournament-bracket-utils";
 import styles from "./bracket.module.css";
 
+type LineType = "none" | "straight" | "curve-up" | "curve-down";
+
 interface MatchProps {
 	match: Unpacked<TournamentData["data"]["match"]>;
 	isPreview?: boolean;
@@ -31,26 +33,39 @@ interface MatchProps {
 	showSimulation: boolean;
 	bracket: Bracket;
 	hideMatchTimer?: boolean;
+	lineType?: LineType;
+	lineVerticalExtend?: number;
 }
 
 export function Match(props: MatchProps) {
 	const isBye = !props.match.opponent1 || !props.match.opponent2;
 
 	if (isBye) {
-		return <div className={styles.matchBye} />;
+		return (
+			<div className={clsx(styles.matchBye, styles.matchWrapper)}>
+				<MatchLine
+					lineType={props.lineType}
+					verticalExtend={props.lineVerticalExtend}
+				/>
+			</div>
+		);
 	}
 
 	return (
-		<div className="relative">
+		<div className={styles.matchWrapper}>
 			<MatchHeader {...props} />
-			<MatchWrapper {...props}>
+			<MatchContent {...props}>
 				<MatchRow {...props} side={1} />
 				<div className={styles.matchSeparator} />
 				<MatchRow {...props} side={2} />
-			</MatchWrapper>
+			</MatchContent>
 			{!props.hideMatchTimer ? (
 				<MatchTimer match={props.match} bracket={props.bracket} />
 			) : null}
+			<MatchLine
+				lineType={props.lineType}
+				verticalExtend={props.lineVerticalExtend}
+			/>
 		</div>
 	);
 }
@@ -133,7 +148,7 @@ function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 	);
 }
 
-function MatchWrapper({
+function MatchContent({
 	match,
 	isPreview,
 	children,
@@ -214,8 +229,8 @@ function MatchRow({
 
 	const ownTeam = tournament.teamMemberOfByUser(user);
 
-	const logoSrc =
-		!simulated && team ? tournament.tournamentTeamLogoSrc(team) : null;
+	const logoSrc = team ? tournament.tournamentTeamLogoSrc(team) : null;
+	const showAvatar = !simulated && team;
 
 	const isBigSeedNumber = team?.seed && team.seed > 99;
 
@@ -233,7 +248,14 @@ function MatchRow({
 			>
 				{team?.seed}
 			</div>
-			{logoSrc ? <Avatar size="xxxs" url={logoSrc} className="mr-1" /> : null}
+			{showAvatar ? (
+				<Avatar
+					size="xxxs"
+					url={logoSrc}
+					identiconInput={team.name}
+					className="mr-1"
+				/>
+			) : null}
 			<div
 				className={clsx(styles.matchTeamName, {
 					"text-theme-secondary":
@@ -241,9 +263,9 @@ function MatchRow({
 					"text-lighter italic opaque": simulated,
 					[styles.matchTeamNameNarrow]:
 						// either but not both
-						(logoSrc || isBigSeedNumber) && !(logoSrc && isBigSeedNumber),
+						(showAvatar || isBigSeedNumber) && !(showAvatar && isBigSeedNumber),
 					// both
-					[styles.matchTeamNameNarrowest]: logoSrc && isBigSeedNumber,
+					[styles.matchTeamNameNarrowest]: showAvatar && isBigSeedNumber,
 					invisible: !team,
 				})}
 			>
@@ -364,6 +386,39 @@ function MatchTimer({ match, bracket }: Pick<MatchProps, "match" | "bracket">) {
 			<div className={styles.matchHeaderBox} style={{ color: statusColor }}>
 				{displayText}
 			</div>
+		</div>
+	);
+}
+
+interface MatchLineProps {
+	lineType?: LineType;
+	verticalExtend?: number;
+}
+
+function MatchLine({ lineType, verticalExtend }: MatchLineProps) {
+	if (!lineType || lineType === "none") return null;
+
+	const lineClass =
+		lineType === "straight"
+			? styles.matchLineStraight
+			: lineType === "curve-up"
+				? styles.matchLineCurveUp
+				: styles.matchLineCurveDown;
+
+	const style = verticalExtend
+		? ({
+				"--bracket-vertical-extend": `${verticalExtend}px`,
+			} as React.CSSProperties)
+		: undefined;
+
+	return (
+		<div className={clsx(styles.matchLineContainer, lineClass)} style={style}>
+			{lineType === "curve-down" ? (
+				<div className={styles.matchLineConnectorDown} style={style} />
+			) : null}
+			{lineType === "curve-up" ? (
+				<div className={styles.matchLineConnectorUp} style={style} />
+			) : null}
 		</div>
 	);
 }

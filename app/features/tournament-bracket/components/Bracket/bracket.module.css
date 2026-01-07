@@ -1,3 +1,4 @@
+/* --match-height and gap must match constants in Elimination.tsx */
 .bracket {
 	--match-width: 140px;
 	--match-height: 55px;
@@ -48,6 +49,10 @@
 	left: 0;
 	transform: translate(-100%, -50%);
 	margin-inline-start: 8px;
+}
+
+.matchTabs {
+	padding-inline: var(--s-12);
 }
 
 .match {
@@ -162,6 +167,82 @@ a.match:hover {
 .elimRoundColumn {
 	display: flex;
 	flex-direction: column;
+}
+
+.matchWrapper {
+	position: relative;
+	width: var(--match-width);
+	height: var(--match-height);
+}
+
+.matchLineContainer {
+	position: absolute;
+	top: 0;
+	left: 100%;
+	width: var(--line-width);
+	height: 100%;
+	pointer-events: none;
+}
+
+.matchLineStraight::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 0;
+	width: 100%;
+	height: 2px;
+	background: var(--color-border);
+	transform: translateY(-50%);
+}
+
+.matchLineCurveDown::before,
+.matchLineCurveUp::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 0;
+	width: 50%;
+	height: 2px;
+	background: var(--color-border);
+	transform: translateY(-50%);
+}
+
+.matchLineCurveDown::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: calc(50% - 1px);
+	width: 2px;
+	height: calc(50% + var(--bracket-vertical-extend, 50px));
+	background: var(--color-border);
+}
+
+.matchLineCurveUp::after {
+	content: "";
+	position: absolute;
+	bottom: 50%;
+	left: calc(50% - 1px);
+	width: 2px;
+	height: calc(50% + var(--bracket-vertical-extend, 50px));
+	background: var(--color-border);
+}
+
+.matchLineConnectorDown {
+	position: absolute;
+	top: calc(100% + var(--bracket-vertical-extend, 50px) - 1px);
+	left: calc(50% - 1px);
+	width: calc(50% + 1px);
+	height: 2px;
+	background: var(--color-border);
+}
+
+.matchLineConnectorUp {
+	position: absolute;
+	bottom: calc(100% + var(--bracket-vertical-extend, 50px) - 1px);
+	left: calc(50% - 1px);
+	width: calc(50% + 1px);
+	height: 2px;
+	background: var(--color-border);
 }
 
 .rrPlacementsTable {

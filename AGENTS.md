@@ -68,3 +68,8 @@
 ## Unit testing
 
 - library used for unit testing is Vitest
+- Vitest browser mode can be used to write tests for components
+
+## Testing in Chrome
+
+- some pages need authentication, you should impersonate "Sendou" user which can be done on the /admin page

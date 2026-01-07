@@ -1,4 +1,24 @@
-.avatar {
-	border-radius: 50%;
+.identicon {
+	filter: blur(99px);
+	transition: filter 0.3s;
+}
+
+.loaded {
+	filter: blur(0);
+}
+
+.avatarWrapper {
+	display: inline-flex;
+	flex-shrink: 0;
+	width: fit-content;
+	height: fit-content;
 	background-color: var(--color-bg-higher);
+	border-radius: 50%;
+	overflow: hidden;
+	line-height: 0;
+}
+
+.avatarWrapper img {
+	display: block;
+	border-radius: 50%;
 }

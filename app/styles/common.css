@@ -241,6 +241,11 @@ select {
 	background-color: var(--color-bg);
 	cursor: pointer;
 	padding: 0 var(--input-padding-inline);
+	padding-right: calc(
+		var(--input-icon-width) +
+		var(--input-padding-inline) +
+		var(--s-2)
+	);
 	height: var(--input-height);
 	line-height: var(--input-line-height);
 	display: inline-flex;
@@ -342,11 +347,36 @@ select {
 	opacity: 0;
 }
 
-input[type="color"]::-webkit-color-swatch-wrapper {
-	padding: calc(var(--input-height) / 8) 0;
+@-moz-document url-prefix() {
+	[type="date"],
+	[type="datetime-local"],
+	[type="month"],
+	[type="time"],
+	[type="week"] {
+		background-image: none !important;
+	}
+}
+
+@-moz-document url-prefix() {
+	input[type="date"],
+	input[type="datetime-local"],
+	input[type="month"],
+	input[type="time"],
+	input[type="week"] {
+		background-image: none;
+	}
+}
+
+input[type="color"] {
+	padding: calc(var(--input-height) / 8) var(--input-padding-inline);
 }
 
 input[type="color"]::-webkit-color-swatch {
+	border: 0;
+	border-radius: var(--rounded-xs);
+}
+
+input[type="color"]::-moz-color-swatch {
 	border: 0;
 	border-radius: var(--rounded-xs);
 }
@@ -357,21 +387,20 @@ input[type="file"] {
 	font-size: var(--fonts-sm);
 	line-height: var(--input-line-height);
 	color: var(--color-text-high);
+	overflow: hidden;
 }
 
 input[type="file"]::file-selector-button {
 	height: 100%;
 	border: none;
-	background-color: var(--color-text-accent);
-	color: var(--color-text-inverse);
+	background-color: var(--color-bg-higher);
 	white-space: nowrap;
-	font-weight: var(--bold);
 	margin-right: var(--s-2);
 }
 
 input[type="range"] {
-	--track-color: var(--color-bg-high);
-	--thumb-color: var(--color-bg-higher);
+	--track-color: var(--color-bg-higher);
+	--thumb-color: var(--color-text-high);
 	border: none;
 	padding: 0;
 	appearance: none;
@@ -397,8 +426,33 @@ input[type="range"]::-webkit-slider-runnable-track {
 	transition: 100ms background-color;
 }
 
+input[type="range"]::-moz-range-track {
+	width: 100%;
+	height: calc(var(--toggle-height-small) / 4);
+	background-color: var(--track-color);
+	border-radius: var(--rounded-full);
+	transition: 100ms background-color;
+}
+
 input[type="range"]::-webkit-slider-thumb {
 	-webkit-appearance: none;
+	appearance: none;
+	width: var(--toggle-height-small);
+	height: var(--toggle-height-small);
+	margin-top: calc(
+		(calc(var(--toggle-height-small) / 4) - var(--toggle-height-small)) /
+		2
+	);
+	background-color: var(--thumb-color);
+	border: 2px solid var(--color-bg);
+	border-radius: var(--rounded-full);
+	cursor: pointer;
+	transition: 100ms background-color;
+}
+
+input[type="range"]::-moz-range-thumb {
+	-webkit-appearance: none;
+	appearance: none;
 	width: var(--toggle-height-small);
 	height: var(--toggle-height-small);
 	margin-top: calc(
@@ -430,6 +484,10 @@ progress {
 progress::-webkit-progress-bar {
 	border-radius: var(--rounded-full);
 	background: 0 0;
+}
+
+progress::-moz-progress-bar {
+	background-color: var(--color-text-accent);
 }
 
 progress[value]::-webkit-progress-value {

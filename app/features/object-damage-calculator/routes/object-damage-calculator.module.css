@@ -82,8 +82,8 @@
 }
 
 .receiverButton:focus-visible {
-	outline: 2px solid var(--theme);
-	outline-offset: 2px;
+	outline: var(--input-focus-ring);
+	outline-offset: 1px;
 }
 
 .receiverImage {
