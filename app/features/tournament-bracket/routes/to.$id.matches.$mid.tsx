@@ -262,6 +262,27 @@ function MatchHeader() {
 							};
 							roundName = `${round.name}${specifier()}`;
 						}
+					} else if (bracket.type === "double_elimination_groups") {
+						const group = bracket.data.group.find(
+							(group) => group.id === match.group_id,
+						);
+						const round = bracket.data.round.find(
+							(round) => round.id === match.round_id,
+						);
+
+						const poolIdx = group?.number
+							? Math.floor((group.number - 1) / 3)
+							: 0;
+						const poolLetter = groupNumberToLetters(poolIdx + 1);
+						const subGroupType = group?.number
+							? (group.number - 1) % 3 === 0
+								? "WB"
+								: (group.number - 1) % 3 === 1
+									? "LB"
+									: "GF"
+							: "";
+
+						roundName = `Group ${poolLetter} ${subGroupType} ${round?.number ?? ""}.${match.number}`;
 					} else {
 						assertUnreachable(bracket.type);
 					}

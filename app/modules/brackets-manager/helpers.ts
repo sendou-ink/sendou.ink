@@ -339,8 +339,12 @@ export function ensureValidSize(
 	if (participantCount < 2)
 		throw Error("Impossible to create a stage with less than 2 participants.");
 
-	if (stageType === "round_robin") {
-		// Round robin supports any number of participants.
+	if (
+		stageType === "round_robin" ||
+		stageType === "double_elimination_groups"
+	) {
+		// Round robin and DE groups support any number of participants.
+		// For DE groups, each group's size will be validated individually.
 		return;
 	}
 
@@ -1186,7 +1190,9 @@ export function isSwiss(stage: Stage): boolean {
  * @param groupNumber Number of the group.
  */
 function isWinnerBracket(stageType: StageType, groupNumber: number): boolean {
-	return stageType === "double_elimination" && groupNumber === 1;
+	if (stageType === "double_elimination") return groupNumber === 1;
+	if (stageType === "double_elimination_groups") return groupNumber % 3 === 1;
+	return false;
 }
 
 /**
@@ -1196,7 +1202,9 @@ function isWinnerBracket(stageType: StageType, groupNumber: number): boolean {
  * @param groupNumber Number of the group.
  */
 function isLoserBracket(stageType: StageType, groupNumber: number): boolean {
-	return stageType === "double_elimination" && groupNumber === 2;
+	if (stageType === "double_elimination") return groupNumber === 2;
+	if (stageType === "double_elimination_groups") return groupNumber % 3 === 2;
+	return false;
 }
 
 /**
@@ -1206,10 +1214,10 @@ function isLoserBracket(stageType: StageType, groupNumber: number): boolean {
  * @param groupNumber Number of the group.
  */
 function isFinalGroup(stageType: StageType, groupNumber: number): boolean {
-	return (
-		(stageType === "single_elimination" && groupNumber === 2) ||
-		(stageType === "double_elimination" && groupNumber === 3)
-	);
+	if (stageType === "single_elimination") return groupNumber === 2;
+	if (stageType === "double_elimination") return groupNumber === 3;
+	if (stageType === "double_elimination_groups") return groupNumber % 3 === 0;
+	return false;
 }
 
 /**

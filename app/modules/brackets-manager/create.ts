@@ -82,6 +82,9 @@ export class Create {
 			case "double_elimination":
 				stage = this.doubleElimination();
 				break;
+			case "double_elimination_groups":
+				stage = this.doubleEliminationGroups();
+				break;
 			default:
 				throw Error("Unknown stage type.");
 		}
@@ -156,6 +159,190 @@ export class Create {
 		else this.createDoubleElimination(stage.id, ordered);
 
 		return stage;
+	}
+
+	/**
+	 * Creates a double elimination groups stage.
+	 *
+	 * Multiple groups where each group plays a double elimination bracket independently.
+	 */
+	private doubleEliminationGroups(): Stage {
+		const groups = this.getDoubleEliminationGroups();
+		const stage = this.createStage();
+
+		for (let i = 0; i < groups.length; i++) {
+			this.createDoubleEliminationGroup(stage.id, i, groups[i]);
+		}
+
+		return stage;
+	}
+
+	/**
+	 * Gets the groups for a double elimination groups stage.
+	 */
+	private getDoubleEliminationGroups(): ParticipantSlot[][] {
+		if (
+			this.stage.settings?.groupCount === undefined ||
+			!Number.isInteger(this.stage.settings.groupCount)
+		)
+			throw Error(
+				"You must specify a group count for double elimination groups stages.",
+			);
+
+		if (this.stage.settings.groupCount <= 0)
+			throw Error("You must provide a strictly positive group count.");
+
+		// DE groups needs two orderings: one for group distribution (index 0), one for within-group elimination (index 1)
+		if (
+			Array.isArray(this.stage.settings.seedOrdering) &&
+			this.stage.settings.seedOrdering.length !== 2
+		)
+			throw Error(
+				"You must specify two seed ordering methods for double elimination groups.",
+			);
+
+		const method = this.getRoundRobinOrdering();
+		const slots = this.getSlots();
+
+		// Pad slots to be divisible by groupCount for correct snake ordering
+		const groupCount = this.stage.settings.groupCount;
+		const paddedSlots: ParticipantSlot[] = [...slots];
+		while (paddedSlots.length % groupCount !== 0) {
+			paddedSlots.push(null);
+		}
+
+		const ordered = ordering[method](paddedSlots, groupCount);
+		const groups = helpers.makeGroups(ordered, groupCount);
+
+		return groups;
+	}
+
+	/**
+	 * Creates a double elimination bracket for a single group.
+	 *
+	 * @param stageId ID of the parent stage.
+	 * @param groupIndex Zero-based index of the group (0 for A, 1 for B, etc.).
+	 * @param slots A list of slots for this group.
+	 */
+	private createDoubleEliminationGroup(
+		stageId: number,
+		groupIndex: number,
+		slots: ParticipantSlot[],
+	): void {
+		const baseGroupNumber = groupIndex * 3;
+
+		const method = this.getDeGroupsEliminationOrdering();
+		const ordered = ordering[method](slots);
+
+		// Pad to next power of 2 for proper bracket creation
+		// Handle edge case where ordered.length is 0 or 1
+		const targetSize =
+			ordered.length <= 1 ? 2 : 2 ** Math.ceil(Math.log2(ordered.length));
+		const paddedSlots: ParticipantSlot[] = [...ordered];
+		while (paddedSlots.length < targetSize) {
+			paddedSlots.push(null);
+		}
+
+		const { losers: losersWb, winner: winnerWb } = this.createStandardBracket(
+			stageId,
+			baseGroupNumber + 1,
+			paddedSlots,
+		);
+
+		// For DE groups, we need at least 4 teams to have meaningful LB/GF
+		// (also required for proper round count calculations which use log2)
+		if (slots.length >= 4) {
+			const winnerLb = this.createGroupLowerBracket(
+				stageId,
+				baseGroupNumber + 2,
+				losersWb,
+				slots.length,
+			);
+			this.createGroupGrandFinal(
+				stageId,
+				baseGroupNumber + 3,
+				winnerWb,
+				winnerLb,
+			);
+		}
+	}
+
+	/**
+	 * Creates a lower bracket for a DE group with a specific participant count.
+	 *
+	 * @param stageId ID of the parent stage.
+	 * @param number Number in the stage.
+	 * @param losers One list of losers per upper bracket round.
+	 * @param participantCount Number of participants in this group.
+	 */
+	private createGroupLowerBracket(
+		stageId: number,
+		number: number,
+		losers: ParticipantSlot[][],
+		participantCount: number,
+	): ParticipantSlot {
+		const roundPairCount = helpers.getRoundPairCount(participantCount);
+
+		let losersId = 0;
+
+		const method = this.getMajorOrdering(participantCount);
+		const ordered = ordering[method](losers[losersId++]);
+
+		const groupId = this.insertGroup({
+			stage_id: stageId,
+			number,
+		});
+
+		if (groupId === -1) throw Error("Could not insert the group.");
+
+		let duels = helpers.makePairs(ordered);
+		let roundNumber = 1;
+
+		for (let i = 0; i < roundPairCount; i++) {
+			const matchCount = 2 ** (roundPairCount - i - 1);
+
+			// Major round.
+			duels = this.getCurrentDuels(duels, matchCount, true);
+			this.createRound(stageId, groupId, roundNumber++, matchCount, duels);
+
+			// Minor round.
+			const minorOrdering = this.getMinorOrdering(
+				participantCount,
+				i,
+				roundPairCount,
+			);
+			duels = this.getCurrentDuels(
+				duels,
+				matchCount,
+				false,
+				losers[losersId++],
+				minorOrdering,
+			);
+			this.createRound(stageId, groupId, roundNumber++, matchCount, duels);
+		}
+
+		return helpers.byeWinnerToGrandFinal(duels[0]);
+	}
+
+	/**
+	 * Creates a grand final for a group (single match, no bracket reset).
+	 *
+	 * @param stageId ID of the parent stage.
+	 * @param groupNumber Number in the stage.
+	 * @param winnerWb The winner of the winner bracket.
+	 * @param winnerLb The winner of the loser bracket.
+	 */
+	private createGroupGrandFinal(
+		stageId: number,
+		groupNumber: number,
+		winnerWb: ParticipantSlot,
+		winnerLb: ParticipantSlot,
+	): void {
+		const grandFinal = this.stage.settings?.grandFinal;
+		if (grandFinal === "none") return;
+
+		const finalDuels: Duel[] = [[winnerWb, winnerLb]];
+		this.createUniqueMatchBracket(stageId, groupNumber, finalDuels);
 	}
 
 	/**
@@ -692,6 +879,14 @@ export class Create {
 	 */
 	public getStandardBracketFirstRoundOrdering(): SeedOrdering {
 		return this.getOrdering(0, "elimination", "space_between");
+	}
+
+	/**
+	 * Returns the ordering method for the first round of DE groups (uses index 1 since index 0 is group distribution).
+	 * Uses natural ordering by default since seeding is already optimized at the group distribution level.
+	 */
+	private getDeGroupsEliminationOrdering(): SeedOrdering {
+		return this.getOrdering(1, "elimination", "natural");
 	}
 
 	/**

@@ -213,6 +213,11 @@ export function defaultBracketSettings(
 				groupCount: 1,
 			};
 		}
+		case "double_elimination_groups": {
+			return {
+				teamsPerGroup: 4,
+			};
+		}
 		default: {
 			assertUnreachable(type);
 		}

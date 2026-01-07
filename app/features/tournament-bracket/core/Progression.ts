@@ -88,11 +88,6 @@ export type ValidationError =
 			type: "NO_SE_SOURCE";
 			bracketIdx: number;
 	  }
-	// no DE positive placements (might change in the future)
-	| {
-			type: "NO_DE_POSITIVE";
-			bracketIdx: number;
-	  }
 	// Swiss bracket with early advance/elimination must have a destination bracket
 	| {
 			type: "SWISS_EARLY_ADVANCE_NO_DESTINATION";
@@ -258,14 +253,6 @@ export function bracketsToValidationError(
 		};
 	}
 
-	faultyBracketIdx = noDoubleEliminationPositive(brackets);
-	if (typeof faultyBracketIdx === "number") {
-		return {
-			type: "NO_DE_POSITIVE",
-			bracketIdx: faultyBracketIdx,
-		};
-	}
-
 	faultyBracketIdx = swissEarlyAdvanceWithoutDestination(brackets);
 	if (typeof faultyBracketIdx === "number") {
 		return {
@@ -367,6 +354,7 @@ function resolvesWinner(brackets: ParsedBracket[]) {
 
 	if (!finals) return false;
 	if (finals?.type === "round_robin") return false;
+	if (finals?.type === "double_elimination_groups") return false;
 	if (
 		finals.type === "swiss" &&
 		(finals.settings.groupCount ?? TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT) > 1
@@ -469,9 +457,18 @@ function tooManyPlacements(brackets: ParsedBracket[]) {
 	const roundRobins = brackets.flatMap((bracket, bracketIdx) =>
 		bracket.type === "round_robin" ? [bracketIdx] : [],
 	);
+	const deGroups = brackets.flatMap((bracket, bracketIdx) =>
+		bracket.type === "double_elimination_groups" ? [bracketIdx] : [],
+	);
 	// technically not correct but i guess not too common to have different round robins in the same bracket
-	const size = Math.min(
+	const rrSize = Math.min(
 		...roundRobins.map(
+			(bracketIdx) =>
+				brackets[bracketIdx].settings.teamsPerGroup ?? Number.POSITIVE_INFINITY,
+		),
+	);
+	const deGroupsSize = Math.min(
+		...deGroups.map(
 			(bracketIdx) =>
 				brackets[bracketIdx].settings.teamsPerGroup ?? Number.POSITIVE_INFINITY,
 		),
@@ -481,7 +478,13 @@ function tooManyPlacements(brackets: ParsedBracket[]) {
 		for (const source of bracket.sources ?? []) {
 			if (
 				roundRobins.includes(source.bracketIdx) &&
-				source.placements.some((placement) => placement > size)
+				source.placements.some((placement) => placement > rrSize)
+			) {
+				return bracketIdx;
+			}
+			if (
+				deGroups.includes(source.bracketIdx) &&
+				source.placements.some((placement) => placement > deGroupsSize)
 			) {
 				return bracketIdx;
 			}
@@ -507,7 +510,8 @@ function negativeProgression(brackets: ParsedBracket[]) {
 			const sourceBracket = brackets[source.bracketIdx];
 			if (
 				sourceBracket.type === "double_elimination" ||
-				sourceBracket.type === "single_elimination"
+				sourceBracket.type === "single_elimination" ||
+				sourceBracket.type === "double_elimination_groups"
 			) {
 				continue;
 			}
@@ -526,22 +530,6 @@ function noSingleEliminationAsSource(brackets: ParsedBracket[]) {
 		for (const source of bracket.sources ?? []) {
 			const sourceBracket = brackets[source.bracketIdx];
 			if (sourceBracket.type === "single_elimination") {
-				return bracketIdx;
-			}
-		}
-	}
-
-	return null;
-}
-
-function noDoubleEliminationPositive(brackets: ParsedBracket[]) {
-	for (const [bracketIdx, bracket] of brackets.entries()) {
-		for (const source of bracket.sources ?? []) {
-			const sourceBracket = brackets[source.bracketIdx];
-			if (
-				sourceBracket.type === "double_elimination" &&
-				source.placements.some((placement) => placement > 0)
-			) {
 				return bracketIdx;
 			}
 		}

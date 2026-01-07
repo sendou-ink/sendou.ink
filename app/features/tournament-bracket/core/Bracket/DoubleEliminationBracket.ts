@@ -221,8 +221,137 @@ export class DoubleEliminationBracket extends Bracket {
 		return true;
 	}
 
+	// xxx: unit test
 	source({ placements }: { placements: number[] }) {
 		invariant(placements.length > 0, "Empty placements not supported");
+
+		const hasPositive = placements.some((p) => p > 0);
+		const hasNegative = placements.some((p) => p < 0);
+
+		invariant(
+			!(hasPositive && hasNegative),
+			"Cannot mix positive and negative placements",
+		);
+
+		if (hasNegative) {
+			return this.sourceFromLosers(placements);
+		}
+
+		return this.sourceFromWinners(placements);
+	}
+
+	private sourceFromWinners(placements: number[]) {
+		const teams: number[] = [];
+		let relevantMatchesFinished = true;
+
+		const noLosersRounds = !this.data.group.find((g) => g.number === 2);
+		const grandFinalsNumber = noLosersRounds ? 1 : 3;
+		const grandFinalsGroupId = this.data.group.find(
+			(g) => g.number === grandFinalsNumber,
+		)?.id;
+
+		const winnersGroupId = this.data.group.find((g) => g.number === 1)?.id;
+		const losersGroupId = this.data.group.find((g) => g.number === 2)?.id;
+
+		if (grandFinalsGroupId) {
+			const gfMatches = this.data.match.filter(
+				(m) => m.group_id === grandFinalsGroupId,
+			);
+
+			if (gfMatches.length > 0) {
+				const gfMatch = gfMatches[0];
+				const gfResetMatch = gfMatches[1];
+
+				const gfFinished =
+					gfMatch.opponent1?.result === "win" ||
+					(gfResetMatch &&
+						(gfResetMatch.opponent1?.result === "win" ||
+							gfResetMatch.opponent2?.result === "win"));
+
+				if (placements.includes(1)) {
+					if (gfFinished) {
+						const finalMatch =
+							gfResetMatch?.opponent1?.result === "win" ||
+							gfResetMatch?.opponent2?.result === "win"
+								? gfResetMatch
+								: gfMatch;
+						const winnerId =
+							finalMatch.opponent1?.result === "win"
+								? finalMatch.opponent1.id
+								: finalMatch.opponent2?.id;
+						if (winnerId) teams.push(winnerId);
+					} else {
+						relevantMatchesFinished = false;
+					}
+				}
+
+				if (placements.includes(2)) {
+					if (gfFinished) {
+						const finalMatch =
+							gfResetMatch?.opponent1?.result === "win" ||
+							gfResetMatch?.opponent2?.result === "win"
+								? gfResetMatch
+								: gfMatch;
+						const loserId =
+							finalMatch.opponent1?.result === "win"
+								? finalMatch.opponent2?.id
+								: finalMatch.opponent1?.id;
+						if (loserId) teams.push(loserId);
+					} else {
+						relevantMatchesFinished = false;
+					}
+				}
+			}
+		} else {
+			if (placements.includes(1) && winnersGroupId) {
+				const wbMatches = this.data.match
+					.filter((m) => m.group_id === winnersGroupId)
+					.sort((a, b) => b.round_id - a.round_id);
+
+				if (wbMatches.length > 0) {
+					const finalMatch = wbMatches[0];
+					if (
+						finalMatch.opponent1?.result === "win" ||
+						finalMatch.opponent2?.result === "win"
+					) {
+						const winnerId =
+							finalMatch.opponent1?.result === "win"
+								? finalMatch.opponent1.id
+								: finalMatch.opponent2?.id;
+						if (winnerId) teams.push(winnerId);
+					} else {
+						relevantMatchesFinished = false;
+					}
+				}
+			}
+
+			if (placements.includes(2) && losersGroupId) {
+				const lbMatches = this.data.match
+					.filter((m) => m.group_id === losersGroupId)
+					.sort((a, b) => b.round_id - a.round_id);
+
+				if (lbMatches.length > 0) {
+					const finalMatch = lbMatches[0];
+					if (
+						finalMatch.opponent1?.result === "win" ||
+						finalMatch.opponent2?.result === "win"
+					) {
+						const winnerId =
+							finalMatch.opponent1?.result === "win"
+								? finalMatch.opponent1.id
+								: finalMatch.opponent2?.id;
+						if (winnerId) teams.push(winnerId);
+					} else {
+						relevantMatchesFinished = false;
+					}
+				}
+			}
+		}
+
+		return { relevantMatchesFinished, teams };
+	}
+
+	private sourceFromLosers(placements: number[]) {
 		const resolveLosersGroupId = (data: TournamentManagerDataSet) => {
 			const minGroupId = Math.min(...data.round.map((round) => round.group_id));
 
@@ -260,19 +389,11 @@ export class DoubleEliminationBracket extends Bracket {
 			return orderedRoundsIds.slice(0, amountOfRounds);
 		};
 
-		invariant(
-			placements.every((placement) => placement < 0),
-			"Positive placements in DE not implemented",
-		);
-
 		const losersGroupId = resolveLosersGroupId(this.data);
 		const sourceRoundsIds = placementsToRoundsIds(
 			this.data,
 			losersGroupId,
-		).sort(
-			// teams who made it further in the bracket get higher seed
-			(a, b) => b - a,
-		);
+		).sort((a, b) => b - a);
 
 		const teams: number[] = [];
 		let relevantMatchesFinished = true;
@@ -282,7 +403,6 @@ export class DoubleEliminationBracket extends Bracket {
 			);
 
 			for (const match of roundsMatches) {
-				// BYE
 				if (!match.opponent1 || !match.opponent2) {
 					continue;
 				}

@@ -214,6 +214,15 @@ export function BracketMapListDialog({
 				);
 		}
 
+		if (bracket.type === "double_elimination_groups") {
+			return Array.from(maps.keys()).map((roundId, i) => {
+				return {
+					id: roundId,
+					name: `Round ${i + 1}`,
+				};
+			});
+		}
+
 		assertUnreachable(bracket.type);
 	}, [bracketData, maps, bracket.type, thirdPlaceMatchLinked]);
 
@@ -740,6 +749,14 @@ function teamCountAdjustedBracketData({
 				nullFilledArray(
 					bracket.settings?.teamsPerGroup ??
 						TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP,
+				).map((_, i) => i + 1),
+			);
+		case "double_elimination_groups":
+			// ensure a full bracket gets generated even if registration is underway
+			return bracket.generateMatchesData(
+				nullFilledArray(
+					bracket.settings?.teamsPerGroup ??
+						TOURNAMENT.DE_GROUPS_DEFAULT_TEAM_COUNT_PER_GROUP,
 				).map((_, i) => i + 1),
 			);
 		case "single_elimination":

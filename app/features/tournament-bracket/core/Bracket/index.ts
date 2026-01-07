@@ -1,6 +1,7 @@
 import { assertUnreachable } from "~/utils/types";
 import type { CreateBracketArgs } from "./Bracket";
 import { DoubleEliminationBracket } from "./DoubleEliminationBracket";
+import { DoubleEliminationGroupsBracket } from "./DoubleEliminationGroupsBracket";
 import { RoundRobinBracket } from "./RoundRobinBracket";
 import { SingleEliminationBracket } from "./SingleEliminationBracket";
 import { SwissBracket } from "./SwissBracket";
@@ -10,7 +11,11 @@ export { Bracket } from "./Bracket";
 
 export function createBracket(
 	args: CreateBracketArgs,
-): SingleEliminationBracket | DoubleEliminationBracket | RoundRobinBracket {
+):
+	| SingleEliminationBracket
+	| DoubleEliminationBracket
+	| RoundRobinBracket
+	| DoubleEliminationGroupsBracket {
 	switch (args.type) {
 		case "single_elimination": {
 			return new SingleEliminationBracket(args);
@@ -23,6 +28,9 @@ export function createBracket(
 		}
 		case "swiss": {
 			return new SwissBracket(args);
+		}
+		case "double_elimination_groups": {
+			return new DoubleEliminationGroupsBracket(args);
 		}
 		default: {
 			assertUnreachable(args.type);

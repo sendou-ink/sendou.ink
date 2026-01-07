@@ -645,7 +645,7 @@ export interface TournamentRound {
 export interface TournamentStageSettings {
 	// SE
 	thirdPlaceMatch?: boolean;
-	// RR
+	// RR, DE_GROUPS
 	teamsPerGroup?: number;
 	// SWISS
 	groupCount?: number;
@@ -660,6 +660,7 @@ export const TOURNAMENT_STAGE_TYPES = [
 	"double_elimination",
 	"round_robin",
 	"swiss",
+	"double_elimination_groups",
 ] as const;
 
 /** A stage is an intermediate phase in a tournament. In essence a bracket. */

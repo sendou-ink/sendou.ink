@@ -1245,4 +1245,133 @@ test.describe("Tournament bracket", () => {
 		await expect(page.getByText("Match ended early")).toBeVisible();
 		await expect(page.getByText("dropped out of the tournament")).toBeVisible();
 	});
+
+	// DE groups with 16 teams = 4 groups of 4 → 1 team advances per group (grand finals played)
+	test("DE groups: 1 team advances per group (grand finals)", async ({
+		page,
+	}) => {
+		const tournamentId = 4;
+
+		await seed(page);
+		await impersonate(page);
+
+		await navigate({
+			page,
+			url: tournamentAdminPage(tournamentId),
+		});
+
+		// Edit tournament to use DE groups format
+		await page.getByTestId("edit-event-info-button").click();
+
+		// Delete all existing follow-up brackets
+		while ((await page.getByTestId("delete-bracket-button").count()) > 0) {
+			await page.getByTestId("delete-bracket-button").last().click();
+		}
+
+		// Change first bracket to DE groups
+		await page
+			.getByLabel("Format")
+			.first()
+			.selectOption("double_elimination_groups");
+
+		await submit(page);
+
+		// Go to brackets tab and finalize
+		await page.getByTestId("brackets-tab").click();
+		await page.getByTestId("finalize-bracket-button").click();
+		await submit(page, "confirm-finalize-bracket-button");
+
+		// Verify brackets viewer is visible with DE groups structure
+		await expect(page.getByTestId("brackets-viewer")).toBeVisible();
+
+		// Verify all 4 groups are displayed (16 teams = 4 groups of 4)
+		await expect(page.getByText("Group A")).toBeVisible();
+		await expect(page.getByText("Group B")).toBeVisible();
+		await expect(page.getByText("Group C")).toBeVisible();
+		await expect(page.getByText("Group D")).toBeVisible();
+
+		// All groups have 4 teams - should show WB, LB, and GF
+		// Count Grand Finals headers (should be 4 - one per group)
+		await expect(page.getByText("Grand Finals")).toHaveCount(4);
+
+		// Play a match in group A (WB R1 match)
+		await navigateToMatch(page, 1);
+		await reportResult({
+			page,
+			amountOfMapsToReport: 2,
+		});
+		await backToBracket(page);
+
+		// Play another WB R1 match in group A
+		await navigateToMatch(page, 2);
+		await reportResult({
+			page,
+			amountOfMapsToReport: 2,
+		});
+		await backToBracket(page);
+
+		// There should be a losers bracket match available now (match 3 in LB R1)
+		await expect(page.locator('[data-match-id="3"]')).toBeVisible();
+	});
+
+	// DE groups with 15 teams = mixed groups (some with 3 teams that have no GF)
+	test("DE groups: mixed group sizes (some without grand finals)", async ({
+		page,
+	}) => {
+		const tournamentId = 4;
+
+		await seed(page);
+		await impersonate(page);
+
+		// First check out 1 team so we have 15 teams
+		await navigate({
+			page,
+			url: tournamentAdminPage(tournamentId),
+		});
+		await page.getByLabel("Action").selectOption("CHECK_OUT");
+		await page.getByLabel("Team", { exact: true }).selectOption("316");
+		await submit(page);
+
+		// Edit tournament to use DE groups format
+		await page.getByTestId("edit-event-info-button").click();
+
+		// Delete all existing follow-up brackets
+		while ((await page.getByTestId("delete-bracket-button").count()) > 0) {
+			await page.getByTestId("delete-bracket-button").last().click();
+		}
+
+		// Change first bracket to DE groups
+		await page
+			.getByLabel("Format")
+			.first()
+			.selectOption("double_elimination_groups");
+
+		await submit(page);
+
+		// Go to brackets tab and finalize
+		await page.getByTestId("brackets-tab").click();
+		await page.getByTestId("finalize-bracket-button").click();
+		await submit(page, "confirm-finalize-bracket-button");
+
+		// Verify brackets viewer is visible
+		await expect(page.getByTestId("brackets-viewer")).toBeVisible();
+
+		// Verify all 4 groups are displayed
+		await expect(page.getByText("Group A")).toBeVisible();
+		await expect(page.getByText("Group B")).toBeVisible();
+		await expect(page.getByText("Group C")).toBeVisible();
+		await expect(page.getByText("Group D")).toBeVisible();
+
+		// With 15 teams in 4 groups: one group has 3 teams (no GF - 2 teams advance)
+		// Three groups have 4 teams (with GF - 1 team advances)
+		// So there should be 3 Grand Finals headers (not 4)
+		await expect(page.getByText("Grand Finals")).toHaveCount(3);
+
+		// Verify the bracket structure - Group D should only have WB (no LB/GF for 3-team groups)
+		// While Groups A, B, C should have the full WB, LB, GF structure
+		await expect(page.getByText("Group A")).toBeVisible();
+		await expect(page.getByText("Group B")).toBeVisible();
+		await expect(page.getByText("Group C")).toBeVisible();
+		await expect(page.getByText("Group D")).toBeVisible();
+	});
 });

@@ -2,6 +2,7 @@ import * as React from "react";
 import { useDraggable } from "react-use-draggable-scroll";
 import { useBracketExpanded } from "~/features/tournament/routes/to.$id";
 import type { Bracket as BracketType } from "../../core/Bracket";
+import { DoubleEliminationGroupsBracket } from "./DoubleEliminationGroups";
 import { EliminationBracketSide } from "./Elimination";
 import { RoundRobinBracket } from "./RoundRobin";
 import { SwissBracket } from "./Swiss";
@@ -39,6 +40,14 @@ export function Bracket({
 					bracket={bracket}
 					isExpanded={bracketExpanded}
 				/>
+			</BracketContainer>
+		);
+	}
+
+	if (bracket.type === "double_elimination_groups") {
+		return (
+			<BracketContainer>
+				<DoubleEliminationGroupsBracket bracket={bracket} />
 			</BracketContainer>
 		);
 	}

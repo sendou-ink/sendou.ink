@@ -9,7 +9,8 @@ export type StageType =
 	| "round_robin"
 	| "single_elimination"
 	| "double_elimination"
-	| "swiss";
+	| "swiss"
+	| "double_elimination_groups";
 
 /**
  * All the possible types of group in an elimination stage.

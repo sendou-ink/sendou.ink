@@ -508,8 +508,9 @@ describe("validatedSources - other rules", () => {
 		expect((error as any).bracketIdx).toEqual(1);
 	});
 
-	it("handles NO_DE_POSITIVE", () => {
-		const error = getValidatedBrackets([
+	it("allows positive placements from DE brackets", () => {
+		// This was previously NO_DE_POSITIVE error but is now allowed
+		const result = getValidatedBrackets([
 			{
 				settings: {},
 				type: "double_elimination",
@@ -524,10 +525,10 @@ describe("validatedSources - other rules", () => {
 					},
 				],
 			},
-		]) as Progression.ValidationError;
+		]);
 
-		expect(error.type).toBe("NO_DE_POSITIVE");
-		expect((error as any).bracketIdx).toEqual(1);
+		// Should be valid (return an array, not an error)
+		expect(Array.isArray(result)).toBe(true);
 	});
 
 	it("handles SWISS_EARLY_ADVANCE_NO_DESTINATION", () => {

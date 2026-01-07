@@ -104,16 +104,25 @@ export const ordering: OrderingMap = {
 
 		return result;
 	},
+	// xxx: if we really need to a new way to do seeding, maybe just create a new variation than to change this one
 	"groups.seed_optimized": <T>(array: T[], groupCount: number) => {
 		const groups = Array.from(Array(groupCount), (_): T[] => []);
 
-		for (let run = 0; run < array.length / groupCount; run++) {
+		for (let run = 0; run < Math.ceil(array.length / groupCount); run++) {
 			if (run % 2 === 0) {
-				for (let group = 0; group < groupCount; group++)
-					groups[group].push(array[run * groupCount + group]);
+				for (let group = 0; group < groupCount; group++) {
+					const idx = run * groupCount + group;
+					if (idx < array.length) {
+						groups[group].push(array[idx]);
+					}
+				}
 			} else {
-				for (let group = 0; group < groupCount; group++)
-					groups[groupCount - group - 1].push(array[run * groupCount + group]);
+				for (let group = 0; group < groupCount; group++) {
+					const idx = run * groupCount + group;
+					if (idx < array.length) {
+						groups[groupCount - group - 1].push(array[idx]);
+					}
+				}
 			}
 		}
 

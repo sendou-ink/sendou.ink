@@ -267,6 +267,9 @@ function TournamentFormatBracketSelector({
 					>
 						<option value="single_elimination">Single-elimination</option>
 						<option value="double_elimination">Double-elimination</option>
+						<option value="double_elimination_groups">
+							Double-elimination groups
+						</option>
 						<option value="round_robin">Round robin</option>
 						<option value="swiss">Swiss</option>
 					</select>
@@ -321,6 +324,34 @@ function TournamentFormatBracketSelector({
 							<option value="4">4</option>
 							<option value="5">5</option>
 							<option value="6">6</option>
+						</select>
+					</div>
+				) : null}
+
+				{bracket.type === "double_elimination_groups" ? (
+					<div>
+						<Label htmlFor="deGroupsTeamsPerGroup">Teams per group</Label>
+						<select
+							value={
+								bracket.settings.teamsPerGroup ??
+								TOURNAMENT.DE_GROUPS_DEFAULT_TEAM_COUNT_PER_GROUP
+							}
+							onChange={(e) =>
+								updateBracket({
+									settings: {
+										...bracket.settings,
+										teamsPerGroup: Number(e.target.value),
+									},
+								})
+							}
+							className="w-max"
+							name="deGroupsTeamsPerGroup"
+							id="deGroupsTeamsPerGroup"
+							disabled={bracket.disabled}
+						>
+							{/** xxx: Should be many more options than this */}
+							<option value="4">4</option>
+							<option value="8">8</option>
 						</select>
 					</div>
 				) : null}

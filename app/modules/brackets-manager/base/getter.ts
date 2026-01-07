@@ -362,6 +362,15 @@ export class BaseGetter {
 		roundNumber: number,
 		roundCount: number,
 	): (Match | null)[] {
+		if (stage.type === "double_elimination_groups") {
+			return this.getNextMatchesWBForPool(
+				match,
+				stage,
+				roundNumber,
+				roundCount,
+			);
+		}
+
 		const loserBracket = this.getLoserBracket(match.stage_id);
 		if (loserBracket === null)
 			// Only one match in the stage, there is no loser bracket.
@@ -397,6 +406,68 @@ export class BaseGetter {
 	}
 
 	/**
+	 * Gets the next matches for a WB match in a DE groups stage (pool-aware).
+	 *
+	 * @param match The current match.
+	 * @param stage The parent stage.
+	 * @param roundNumber The number of the current round.
+	 * @param roundCount Count of rounds.
+	 */
+	private getNextMatchesWBForPool(
+		match: Match,
+		stage: Stage,
+		roundNumber: number,
+		roundCount: number,
+	): (Match | null)[] {
+		const loserBracket = this.getLoserBracketForPool(match);
+		if (loserBracket === null) return [];
+
+		const lbRounds = this.storage.select("round", {
+			group_id: loserBracket.id,
+		});
+		if (!lbRounds || lbRounds.length === 0) {
+			return this.getNextMatchesUpperBracket(
+				match,
+				stage.type,
+				roundNumber,
+				roundCount,
+			);
+		}
+
+		const roundNumberLB = roundNumber > 1 ? (roundNumber - 1) * 2 : 1;
+		const actualMatchNumberLB =
+			roundNumberLB === 1 ? Math.ceil(match.number / 2) : match.number;
+
+		return [
+			...this.getNextMatchesUpperBracket(
+				match,
+				stage.type,
+				roundNumber,
+				roundCount,
+			),
+			this.findMatch(loserBracket.id, roundNumberLB, actualMatchNumberLB),
+		];
+	}
+
+	/**
+	 * Gets the loser bracket for the same pool as the given match.
+	 *
+	 * @param match A match in a DE groups stage.
+	 */
+	private getLoserBracketForPool(match: Match): Group | null {
+		const group = this.storage.select("group", match.group_id);
+		if (!group) return null;
+
+		const poolIndex = Math.floor((group.number - 1) / 3);
+		const lbGroupNumber = poolIndex * 3 + 2;
+
+		return this.storage.selectFirst("group", {
+			stage_id: match.stage_id,
+			number: lbGroupNumber,
+		});
+	}
+
+	/**
 	 * Gets the match(es) where the opponents of the current match of an upper bracket will go just after.
 	 *
 	 * @param match The current match.
@@ -420,6 +491,9 @@ export class BaseGetter {
 
 		if (stageType === "double_elimination" && roundNumber === roundCount)
 			return [this.getFirstMatchFinal(match, stageType)];
+
+		if (stageType === "double_elimination_groups" && roundNumber === roundCount)
+			return [this.getFirstMatchFinalForPool(match)];
 
 		return [this.getDiagonalMatch(match.group_id, roundNumber, match.number)];
 	}
@@ -466,7 +540,10 @@ export class BaseGetter {
 		roundCount: number,
 	): Match[] {
 		if (roundNumber === roundCount) {
-			const final = this.getFirstMatchFinal(match, stageType);
+			const final =
+				stageType === "double_elimination_groups"
+					? this.getFirstMatchFinalForPool(match)
+					: this.getFirstMatchFinal(match, stageType);
 			return final ? [final] : [];
 		}
 
@@ -487,6 +564,27 @@ export class BaseGetter {
 		if (finalGroupId === null) return null;
 
 		return this.findMatch(finalGroupId, 1, 1);
+	}
+
+	/**
+	 * Gets the first match of the final group for a DE groups pool.
+	 *
+	 * @param match The current match (must be in a WB or LB of a DE groups stage).
+	 */
+	private getFirstMatchFinalForPool(match: Match): Match | null {
+		const group = this.storage.select("group", match.group_id);
+		if (!group) return null;
+
+		const poolIndex = Math.floor((group.number - 1) / 3);
+		const gfGroupNumber = poolIndex * 3 + 3;
+
+		const gfGroup = this.storage.selectFirst("group", {
+			stage_id: match.stage_id,
+			number: gfGroupNumber,
+		});
+		if (!gfGroup) return null;
+
+		return this.findMatch(gfGroup.id, 1, 1);
 	}
 
 	/**

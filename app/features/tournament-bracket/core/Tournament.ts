@@ -572,6 +572,20 @@ export class Tournament {
 								},
 				};
 			}
+			case "double_elimination_groups": {
+				const teamsPerGroup =
+					selectedSettings?.teamsPerGroup ??
+					TOURNAMENT.DE_GROUPS_DEFAULT_TEAM_COUNT_PER_GROUP;
+
+				return {
+					groupCount: Math.ceil(participantsCount / teamsPerGroup),
+					// xxx: is this correct?
+					// Two orderings: first for group distribution, second for within-group DE bracket
+					// Using natural for within-group since seeding is already optimized at group distribution
+					seedOrdering: ["groups.seed_optimized", "natural"],
+					grandFinal: "simple",
+				};
+			}
 			default: {
 				assertUnreachable(type);
 			}
@@ -998,6 +1012,27 @@ export class Tournament {
 							};
 							roundName = `${round.name}${specifier()}`;
 						}
+					} else if (bracket.type === "double_elimination_groups") {
+						const group = bracket.data.group.find(
+							(group) => group.id === match.group_id,
+						);
+						const round = bracket.data.round.find(
+							(round) => round.id === match.round_id,
+						);
+
+						const poolIdx = group?.number
+							? Math.floor((group.number - 1) / 3)
+							: 0;
+						const poolLetter = groupNumberToLetters(poolIdx + 1);
+						const subGroupType = group?.number
+							? (group.number - 1) % 3 === 0
+								? "WB"
+								: (group.number - 1) % 3 === 1
+									? "LB"
+									: "GF"
+							: "";
+
+						roundName = `Group ${poolLetter} ${subGroupType} ${round?.number ?? ""}.${match.number}`;
 					} else {
 						assertUnreachable(bracket.type);
 					}

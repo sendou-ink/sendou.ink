@@ -117,6 +117,7 @@ export abstract class Bracket {
 		if (
 			this.type === "round_robin" ||
 			this.type === "swiss" ||
+			this.type === "double_elimination_groups" ||
 			this.preview ||
 			this.tournament.ctx.isFinalized
 		)
@@ -294,14 +295,16 @@ export abstract class Bracket {
 		const virtualTournamentId = 1;
 
 		if (teams.length >= TOURNAMENT.ENOUGH_TEAMS_TO_START) {
+			// xxx: might not be needed
+			const usesGroups =
+				this.type === "round_robin" ||
+				this.type === "double_elimination_groups";
+
 			manager.create({
 				tournamentId: virtualTournamentId,
 				name: "Virtual",
 				type: this.type,
-				seeding:
-					this.type === "round_robin"
-						? teams
-						: fillWithNullTillPowerOfTwo(teams),
+				seeding: usesGroups ? teams : fillWithNullTillPowerOfTwo(teams),
 				settings: this.tournament.bracketManagerSettings(
 					this.settings,
 					this.type,

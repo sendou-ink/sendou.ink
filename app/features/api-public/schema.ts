@@ -495,7 +495,12 @@ type TournamentMatchTeam = {
 };
 
 type TournamentBracket = {
-	type: "double_elimination" | "single_elimination" | "round_robin" | "swiss";
+	type:
+		| "double_elimination"
+		| "single_elimination"
+		| "round_robin"
+		| "swiss"
+		| "double_elimination_groups";
 	name: string;
 };
 
