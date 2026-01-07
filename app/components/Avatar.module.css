@@ -1,4 +1,15 @@
-.avatar {
+.identicon {
+	filter: blur(99px);
+	transition: filter 0.3s;
+}
+
+.loaded {
+	filter: blur(0);
+}
+
+.avatarWrapper {
+	display: inline-block;
 	border-radius: 50%;
 	background-color: var(--color-bg-higher);
+	overflow: hidden;
 }

@@ -1507,35 +1507,67 @@ function AvatarSection({ id }: { id: string }) {
 
 			<div className="stack md">
 				<ComponentRow label="Size xxxs">
-					<Avatar size="xxxs" alt="User avatar" />
+					<Avatar
+						user={{ discordId: "1", discordAvatar: null }}
+						size="xxxs"
+						alt="User avatar"
+					/>
 				</ComponentRow>
 
 				<ComponentRow label="Size xxxsm">
-					<Avatar size="xxxsm" alt="User avatar" />
+					<Avatar
+						user={{ discordId: "22", discordAvatar: null }}
+						size="xxxsm"
+						alt="User avatar"
+					/>
 				</ComponentRow>
 
 				<ComponentRow label="Size xxs">
-					<Avatar size="xxs" alt="User avatar" />
+					<Avatar
+						user={{ discordId: "333", discordAvatar: null }}
+						size="xxs"
+						alt="User avatar"
+					/>
 				</ComponentRow>
 
 				<ComponentRow label="Size xs">
-					<Avatar size="xs" alt="User avatar" />
+					<Avatar
+						user={{ discordId: "4444", discordAvatar: null }}
+						size="xs"
+						alt="User avatar"
+					/>
 				</ComponentRow>
 
 				<ComponentRow label="Size sm (default)">
-					<Avatar size="sm" alt="User avatar" />
+					<Avatar
+						user={{ discordId: "55555", discordAvatar: null }}
+						size="sm"
+						alt="User avatar"
+					/>
 				</ComponentRow>
 
 				<ComponentRow label="Size xsm">
-					<Avatar size="xsm" alt="User avatar" />
+					<Avatar
+						user={{ discordId: "123456", discordAvatar: null }}
+						size="xsm"
+						alt="User avatar"
+					/>
 				</ComponentRow>
 
 				<ComponentRow label="Size md">
-					<Avatar size="md" alt="User avatar" />
+					<Avatar
+						user={{ discordId: "313762200286396416", discordAvatar: null }}
+						size="md"
+						alt="User avatar"
+					/>
 				</ComponentRow>
 
 				<ComponentRow label="Size lg">
-					<Avatar size="lg" alt="User avatar" />
+					<Avatar
+						user={{ discordId: "79237403620945920", discordAvatar: null }}
+						size="lg"
+						alt="User avatar"
+					/>
 				</ComponentRow>
 			</div>
 		</Section>
