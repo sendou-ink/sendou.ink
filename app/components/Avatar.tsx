@@ -18,13 +18,15 @@ const dimensions = {
 export function Avatar({
 	user,
 	url,
+	identiconInput,
 	size = "sm",
 	className,
 	alt = "",
 	...rest
 }: {
 	user?: Pick<Tables["User"], "discordId" | "discordAvatar">;
-	url?: string;
+	url?: string | null;
+	identiconInput?: string;
 	className?: string;
 	alt?: string;
 	size: keyof typeof dimensions;
@@ -111,7 +113,14 @@ export function Avatar({
 		return canvas.toDataURL();
 	}
 
-	const isIdenticon = !url && (!user?.discordAvatar || isErrored);
+	const isIdenticon =
+		!url && (!user?.discordAvatar || isErrored || identiconInput);
+
+	const identiconSource = () => {
+		if (identiconInput) return identiconInput;
+		if (user) return user.discordId;
+		return "unknown";
+	};
 
 	const src = url
 		? url
@@ -122,17 +131,13 @@ export function Avatar({
 					size: size === "lg" ? "lg" : "sm",
 				})
 			: isClient
-				? generateIdenticon(
-						user ? user.discordId : "unknown",
-						dimensions[size],
-						7,
-					)
+				? generateIdenticon(identiconSource(), dimensions[size], 7)
 				: BLANK_IMAGE_URL;
 
 	return (
-		<div className={styles.avatarWrapper}>
+		<div className={clsx(styles.avatarWrapper, className)}>
 			<img
-				className={clsx(className, {
+				className={clsx({
 					[styles.identicon]: isIdenticon,
 					[styles.loaded]: loaded,
 				})}

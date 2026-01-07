@@ -229,8 +229,8 @@ function MatchRow({
 
 	const ownTeam = tournament.teamMemberOfByUser(user);
 
-	const logoSrc =
-		!simulated && team ? tournament.tournamentTeamLogoSrc(team) : null;
+	const logoSrc = team ? tournament.tournamentTeamLogoSrc(team) : null;
+	const showAvatar = !simulated && team;
 
 	const isBigSeedNumber = team?.seed && team.seed > 99;
 
@@ -248,7 +248,14 @@ function MatchRow({
 			>
 				{team?.seed}
 			</div>
-			{logoSrc ? <Avatar size="xxxs" url={logoSrc} className="mr-1" /> : null}
+			{showAvatar ? (
+				<Avatar
+					size="xxxs"
+					url={logoSrc}
+					identiconInput={team.name}
+					className="mr-1"
+				/>
+			) : null}
 			<div
 				className={clsx(styles.matchTeamName, {
 					"text-theme-secondary":
@@ -256,9 +263,9 @@ function MatchRow({
 					"text-lighter italic opaque": simulated,
 					[styles.matchTeamNameNarrow]:
 						// either but not both
-						(logoSrc || isBigSeedNumber) && !(logoSrc && isBigSeedNumber),
+						(showAvatar || isBigSeedNumber) && !(showAvatar && isBigSeedNumber),
 					// both
-					[styles.matchTeamNameNarrowest]: logoSrc && isBigSeedNumber,
+					[styles.matchTeamNameNarrowest]: showAvatar && isBigSeedNumber,
 					invisible: !team,
 				})}
 			>

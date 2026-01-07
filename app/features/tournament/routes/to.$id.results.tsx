@@ -139,7 +139,11 @@ function ResultsTable({ standings }: { standings: Standing[] }) {
 									className={styles.standingsTeamName}
 									data-testid="result-team-name"
 								>
-									{teamLogoSrc ? <Avatar size="xs" url={teamLogoSrc} /> : null}{" "}
+									<Avatar
+										size="xs"
+										url={teamLogoSrc}
+										identiconInput={standing.team.name}
+									/>{" "}
 									{standing.team.name}
 								</Link>
 							</td>
