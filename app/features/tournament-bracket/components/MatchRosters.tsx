@@ -5,8 +5,9 @@ import { useTournament } from "~/features/tournament/routes/to.$id";
 import { tournamentTeamPage, userPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 
-const INACTIVE_PLAYER_CSS =
-	"tournament__team-with-roster__member__inactive text-lighter-important";
+const INACTIVE_PLAYER_LINK_CSS = "text-lighter-important";
+const INACTIVE_PLAYER_NAME_CSS =
+	"tournament__team-with-roster__member__inactive";
 export function MatchRosters({
 	teams,
 }: {
@@ -72,21 +73,28 @@ export function MatchRosters({
 				{teamOnePlayers.length > 0 ? (
 					<ul className="stack xs mt-2">
 						{teamOnePlayers.map((p) => {
+							const isInactive =
+								teamOneParticipatedPlayers.length > 0 &&
+								teamOneParticipatedPlayers.every(
+									(participatedPlayer) => p.id !== participatedPlayer.id,
+								);
+
 							return (
 								<li key={p.id}>
 									<Link
 										to={userPage(p)}
 										className={clsx("stack horizontal sm items-center", {
-											[INACTIVE_PLAYER_CSS]:
-												teamOneParticipatedPlayers.length > 0 &&
-												teamOneParticipatedPlayers.every(
-													(participatedPlayer) =>
-														p.id !== participatedPlayer.id,
-												),
+											[INACTIVE_PLAYER_LINK_CSS]: isInactive,
 										})}
 									>
 										<Avatar user={p} size="xxs" />
-										{p.username}
+										<span
+											className={clsx({
+												[INACTIVE_PLAYER_NAME_CSS]: isInactive,
+											})}
+										>
+											{p.username}
+										</span>
 										{p.pronouns ? (
 											<span className="text-lighter ml-1 text-xxxs">
 												{p.pronouns.subject}/{p.pronouns.object}
@@ -131,21 +139,28 @@ export function MatchRosters({
 				{teamTwoPlayers.length > 0 ? (
 					<ul className="stack xs mt-2">
 						{teamTwoPlayers.map((p) => {
+							const isInactive =
+								teamTwoParticipatedPlayers.length > 0 &&
+								teamTwoParticipatedPlayers.every(
+									(participatedPlayer) => p.id !== participatedPlayer.id,
+								);
+
 							return (
 								<li key={p.id}>
 									<Link
 										to={userPage(p)}
 										className={clsx("stack horizontal sm items-center", {
-											[INACTIVE_PLAYER_CSS]:
-												teamTwoParticipatedPlayers.length > 0 &&
-												teamTwoParticipatedPlayers.every(
-													(participatedPlayer) =>
-														p.id !== participatedPlayer.id,
-												),
+											[INACTIVE_PLAYER_LINK_CSS]: isInactive,
 										})}
 									>
 										<Avatar user={p} size="xxs" />
-										{p.username}
+										<span
+											className={clsx({
+												[INACTIVE_PLAYER_NAME_CSS]: isInactive,
+											})}
+										>
+											{p.username}
+										</span>
 										{p.pronouns ? (
 											<span className="text-lighter ml-1 text-xxxs">
 												{p.pronouns.subject}/{p.pronouns.object}
