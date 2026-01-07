@@ -263,19 +263,39 @@ function ButtonsSection({ id }: { id: string }) {
 				<Divider smallText>Sizes</Divider>
 
 				<ComponentRow label="Miniscule">
-					<SendouButton size="miniscule">Miniscule</SendouButton>
+					<div className="stack horizontal sm">
+						<SendouButton size="miniscule">Miniscule</SendouButton>
+						<SendouButton size="miniscule" icon={<EditIcon />}>
+							With icon
+						</SendouButton>
+					</div>
 				</ComponentRow>
 
 				<ComponentRow label="Small">
-					<SendouButton size="small">Small</SendouButton>
+					<div className="stack horizontal sm">
+						<SendouButton size="small">Small</SendouButton>
+						<SendouButton size="small" icon={<EditIcon />}>
+							With icon
+						</SendouButton>
+					</div>
 				</ComponentRow>
 
 				<ComponentRow label="Medium (default)">
-					<SendouButton size="medium">Medium</SendouButton>
+					<div className="stack horizontal sm">
+						<SendouButton size="medium">Medium</SendouButton>
+						<SendouButton size="medium" icon={<EditIcon />}>
+							With icon
+						</SendouButton>
+					</div>
 				</ComponentRow>
 
 				<ComponentRow label="Big">
-					<SendouButton size="big">Big</SendouButton>
+					<div className="stack horizontal sm">
+						<SendouButton size="big">Big</SendouButton>
+						<SendouButton size="big" icon={<EditIcon />}>
+							With icon
+						</SendouButton>
+					</div>
 				</ComponentRow>
 
 				<Divider smallText>With Icons</Divider>

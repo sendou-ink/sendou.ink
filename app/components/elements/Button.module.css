@@ -140,3 +140,9 @@
 	max-width: 0.857rem;
 	margin-inline-end: var(--s-1);
 }
+
+.buttonIconBig {
+	min-width: 1.5rem;
+	max-width: 1.5rem;
+	margin-inline-end: var(--s-2);
+}

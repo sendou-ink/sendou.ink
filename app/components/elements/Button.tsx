@@ -165,5 +165,6 @@ function iconClassName(
 		[styles.lonely]: !children,
 		[styles.buttonIconSmall]: size === "small",
 		[styles.buttonIconMiniscule]: size === "miniscule",
+		[styles.buttonIconBig]: size === "big",
 	});
 }
