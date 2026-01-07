@@ -124,6 +124,19 @@ interface FormFieldTimeRange<T extends string> extends FormFieldBase<T> {
 	endLabel?: string;
 }
 
+export interface FormFieldFieldset<T extends string, S extends z.ZodRawShape>
+	extends FormFieldBase<T> {
+	fields: z.ZodObject<S>;
+}
+
+interface FormFieldUserSearch<T extends string> extends FormFieldBase<T> {
+	required: boolean;
+}
+
+interface FormFieldBadges<T extends string> extends FormFieldBase<T> {
+	maxCount?: number;
+}
+
 export type FormField<V extends string = string> =
 	| FormFieldBase<"custom">
 	| FormFieldText<"text-field">
@@ -142,7 +155,10 @@ export type FormField<V extends string = string> =
 	| FormFieldConstant<"string-constant">
 	| FormFieldConstant<"id-constant">
 	| FormFieldArray<"array", z.ZodType>
-	| FormFieldTimeRange<"time-range">;
+	| FormFieldTimeRange<"time-range">
+	| FormFieldFieldset<"fieldset", z.ZodRawShape>
+	| FormFieldUserSearch<"user-search">
+	| FormFieldBadges<"badges">;
 
 export type FormFieldProps<T extends FormField["type"]> = Omit<
 	Extract<FormField, { type: T }>,

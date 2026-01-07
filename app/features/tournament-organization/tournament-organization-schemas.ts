@@ -2,107 +2,95 @@ import { isFuture } from "date-fns";
 import { z } from "zod";
 import { TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
 import { TOURNAMENT_ORGANIZATION } from "~/features/tournament-organization/tournament-organization-constants";
-import { stringConstant, textFieldRequired, toggle } from "~/form/fields";
+import {
+	array,
+	badges,
+	fieldset,
+	select,
+	stringConstant,
+	textAreaOptional,
+	textFieldOptional,
+	textFieldRequired,
+	toggle,
+	userSearch,
+} from "~/form/fields";
 import { dayMonthYearToDate } from "~/utils/dates";
 import { mySlugify } from "~/utils/urls";
 import {
 	_action,
 	dayMonthYear,
-	falsyToNull,
 	id,
 	safeNullableStringSchema,
 } from "~/utils/zod";
 
-export const newOrganizationSchema = z.object({
-	name: textFieldRequired({
-		label: "labels.name",
-		minLength: 2,
-		maxLength: 64,
-		validate: {
-			func: (val) => mySlugify(val).length > 0,
-			message: "forms:errors.noOnlySpecialCharacters",
-		},
-	}),
+const orgNameField = textFieldRequired({
+	label: "labels.name",
+	minLength: 2,
+	maxLength: 64,
+	validate: {
+		func: (val) => mySlugify(val).length > 0,
+		message: "forms:errors.noOnlySpecialCharacters",
+	},
 });
 
-const nameSchema = z
-	.string()
-	.trim()
-	.min(2)
-	.max(64)
-	.refine((val) => mySlugify(val).length >= 2, {
-		message: "Not enough non-special characters",
-	});
+export const newOrganizationSchema = z.object({
+	name: orgNameField,
+});
 
-export const organizationEditSchema = z.object({
-	name: nameSchema,
-	description: z.preprocess(
-		falsyToNull,
-		z
-			.string()
-			.trim()
-			.max(TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH)
-			.nullable(),
-	),
-	members: z
-		.array(
-			z.object({
-				userId: z.number().int().positive(),
-				role: z.enum(TOURNAMENT_ORGANIZATION_ROLES),
-				roleDisplayName: z.preprocess(
-					falsyToNull,
-					z.string().trim().max(32).nullable(),
-				),
+export const organizationEditFormSchema = z.object({
+	name: orgNameField,
+	description: textAreaOptional({
+		label: "labels.description",
+		maxLength: TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH,
+	}),
+	members: array({
+		label: "labels.members",
+		bottomText: "bottomTexts.orgMembersInfo",
+		min: 0,
+		max: 32,
+		field: fieldset({
+			fields: z.object({
+				userId: userSearch({ label: "labels.orgMemberUser" }),
+				role: select({
+					label: "labels.orgMemberRole",
+					items: TOURNAMENT_ORGANIZATION_ROLES.map((role) => ({
+						value: role,
+						label: `options.orgRole.${role}` as const,
+					})),
+				}),
+				roleDisplayName: textFieldOptional({
+					label: "labels.orgMemberRoleDisplayName",
+					maxLength: 32,
+				}),
 			}),
-		)
-		.max(32)
-		.refine(
-			(arr) =>
-				arr.map((x) => x.userId).length ===
-				new Set(arr.map((x) => x.userId)).size,
-			{
-				message: "Same member listed twice",
-			},
-		),
-	socials: z
-		.array(
-			z.object({
-				value: z.string().trim().url().max(100).optional().or(z.literal("")),
+		}),
+	}),
+	socials: array({
+		label: "labels.orgSocialLinks",
+		min: 0,
+		max: 10,
+		field: textFieldRequired({ validate: "url", maxLength: 100 }),
+	}),
+	series: array({
+		label: "labels.orgSeries",
+		min: 0,
+		max: 10,
+		field: fieldset({
+			fields: z.object({
+				name: textFieldRequired({
+					label: "labels.orgSeriesName",
+					minLength: 1,
+					maxLength: 32,
+				}),
+				description: textAreaOptional({
+					label: "labels.description",
+					maxLength: TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH,
+				}),
+				showLeaderboard: toggle({ label: "labels.orgSeriesShowLeaderboard" }),
 			}),
-		)
-		.max(10)
-		.refine(
-			(arr) =>
-				arr.map((x) => x.value).length ===
-				new Set(arr.map((x) => x.value)).size,
-			{
-				message: "Duplicate social links",
-			},
-		),
-	series: z
-		.array(
-			z.object({
-				name: z.string().trim().min(1).max(32),
-				description: z.preprocess(
-					falsyToNull,
-					z
-						.string()
-						.trim()
-						.max(TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH)
-						.nullable(),
-				),
-				showLeaderboard: z.boolean(),
-			}),
-		)
-		.max(10)
-		.refine(
-			(arr) =>
-				arr.map((x) => x.name).length === new Set(arr.map((x) => x.name)).size,
-			{
-				message: "Duplicate series",
-			},
-		),
-	badges: z.array(id).max(50),
+		}),
+	}),
+	badges: badges({ label: "labels.orgBadges", maxCount: 50 }),
 });
 
 export const banUserActionSchema = z.object({

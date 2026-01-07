@@ -6,7 +6,9 @@ import { render } from "vitest-browser-react";
 import { z } from "zod";
 import { FormField } from "./FormField";
 import {
+	array,
 	checkboxGroup,
+	fieldset,
 	radioGroup,
 	select,
 	selectOptional,
@@ -741,6 +743,277 @@ describe("SendouForm", () => {
 			await expect
 				.element(screen.getByText("This field is required"))
 				.toBeVisible();
+		});
+	});
+
+	describe("fieldset field", () => {
+		test("renders fieldset with legend", async () => {
+			const schema = z.object({
+				member: fieldset({
+					label: "labels.member",
+					fields: z.object({
+						name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+					}),
+				}),
+			});
+
+			const screen = await renderForm(schema);
+
+			await expect.element(screen.getByText("Member")).toBeVisible();
+		});
+
+		test("renders nested fields inside fieldset", async () => {
+			const schema = z.object({
+				member: fieldset({
+					label: "labels.member",
+					fields: z.object({
+						name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+						bio: textAreaOptional({ label: "labels.bio", maxLength: 500 }),
+					}),
+				}),
+			});
+
+			const screen = await renderForm(schema);
+
+			await expect.element(screen.getByLabelText("Name")).toBeVisible();
+			await expect.element(screen.getByLabelText("Bio")).toBeVisible();
+		});
+
+		test("typing in nested field updates value", async () => {
+			const schema = z.object({
+				member: fieldset({
+					label: "labels.member",
+					fields: z.object({
+						name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+					}),
+				}),
+			});
+
+			const screen = await renderForm(schema);
+			const input = screen.getByLabelText("Name");
+
+			await userEvent.type(input.element(), "Test Name");
+
+			await expect.element(input).toHaveValue("Test Name");
+		});
+
+		test("initializes nested fields with default values", async () => {
+			const schema = z.object({
+				member: fieldset({
+					label: "labels.member",
+					fields: z.object({
+						name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+					}),
+				}),
+			});
+
+			const screen = await renderForm(schema, {
+				defaultValues: { member: { name: "Default Name" } },
+			});
+
+			await expect
+				.element(screen.getByLabelText("Name"))
+				.toHaveValue("Default Name");
+		});
+	});
+
+	describe("array field with primitive items", () => {
+		test("renders add button", async () => {
+			const schema = z.object({
+				urls: array({
+					label: "labels.urls",
+					min: 0,
+					max: 5,
+					field: textFieldRequired({ maxLength: 100 }),
+				}),
+			});
+
+			const screen = await renderForm(schema);
+
+			await expect
+				.element(screen.getByRole("button", { name: "Add" }))
+				.toBeVisible();
+		});
+
+		test("clicking add creates new item", async () => {
+			const schema = z.object({
+				urls: array({
+					label: "labels.urls",
+					min: 0,
+					max: 5,
+					field: textFieldRequired({ maxLength: 100 }),
+				}),
+			});
+
+			const screen = await renderForm(schema);
+
+			await screen.getByRole("button", { name: "Add" }).click();
+
+			const inputs = screen.container.querySelectorAll('input[type="text"]');
+			expect(inputs.length).toBe(1);
+		});
+
+		test("renders remove button for each item when above minimum", async () => {
+			const schema = z.object({
+				urls: array({
+					label: "labels.urls",
+					min: 0,
+					max: 5,
+					field: textFieldRequired({ maxLength: 100 }),
+				}),
+			});
+
+			const screen = await renderForm(schema, {
+				defaultValues: { urls: ["http://example.com"] },
+			});
+
+			const removeButtons = screen.container.querySelectorAll(
+				'button[aria-label="Remove item"]',
+			);
+			expect(removeButtons.length).toBe(1);
+		});
+
+		test("clicking remove deletes item", async () => {
+			const schema = z.object({
+				urls: array({
+					label: "labels.urls",
+					min: 0,
+					max: 5,
+					field: textFieldRequired({ maxLength: 100 }),
+				}),
+			});
+
+			const screen = await renderForm(schema, {
+				defaultValues: { urls: ["http://example.com", "http://test.com"] },
+			});
+
+			let inputs = screen.container.querySelectorAll('input[type="text"]');
+			expect(inputs.length).toBe(2);
+
+			const removeButtons = screen.container.querySelectorAll(
+				'button[aria-label="Remove item"]',
+			);
+			await userEvent.click(removeButtons[0]);
+
+			inputs = screen.container.querySelectorAll('input[type="text"]');
+			expect(inputs.length).toBe(1);
+		});
+
+		test("disables add button when max items reached", async () => {
+			const schema = z.object({
+				urls: array({
+					label: "labels.urls",
+					min: 0,
+					max: 2,
+					field: textFieldRequired({ maxLength: 100 }),
+				}),
+			});
+
+			const screen = await renderForm(schema, {
+				defaultValues: { urls: ["http://a.com", "http://b.com"] },
+			});
+
+			const addButton = screen.getByRole("button", { name: "Add" });
+			await expect.element(addButton).toBeDisabled();
+		});
+	});
+
+	describe("array field with fieldset items", () => {
+		test("renders array items as fieldsets", async () => {
+			const schema = z.object({
+				members: array({
+					label: "labels.members",
+					min: 0,
+					max: 10,
+					field: fieldset({
+						fields: z.object({
+							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+						}),
+					}),
+				}),
+			});
+
+			const screen = await renderForm(schema, {
+				defaultValues: { members: [{ name: "Alice" }] },
+			});
+
+			await expect.element(screen.getByText("#1")).toBeVisible();
+			await expect.element(screen.getByLabelText("Name")).toHaveValue("Alice");
+		});
+
+		test("add button creates new fieldset item", async () => {
+			const schema = z.object({
+				members: array({
+					label: "labels.members",
+					min: 0,
+					max: 10,
+					field: fieldset({
+						fields: z.object({
+							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+						}),
+					}),
+				}),
+			});
+
+			const screen = await renderForm(schema);
+
+			await screen.getByRole("button", { name: "Add" }).click();
+
+			await expect.element(screen.getByText("#1")).toBeVisible();
+		});
+
+		test("remove button removes fieldset item", async () => {
+			const schema = z.object({
+				members: array({
+					label: "labels.members",
+					min: 0,
+					max: 10,
+					field: fieldset({
+						fields: z.object({
+							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+						}),
+					}),
+				}),
+			});
+
+			const screen = await renderForm(schema, {
+				defaultValues: { members: [{ name: "Alice" }, { name: "Bob" }] },
+			});
+
+			const removeButtons = screen.container.querySelectorAll(
+				'button[aria-label="Remove item"]',
+			);
+			expect(removeButtons.length).toBe(2);
+
+			await userEvent.click(removeButtons[0]);
+
+			const inputs = screen.container.querySelectorAll('input[type="text"]');
+			expect(inputs.length).toBe(1);
+			expect((inputs[0] as HTMLInputElement).value).toBe("Bob");
+		});
+
+		test("typing in nested fieldset field updates value", async () => {
+			const schema = z.object({
+				members: array({
+					label: "labels.members",
+					min: 0,
+					max: 10,
+					field: fieldset({
+						fields: z.object({
+							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+						}),
+					}),
+				}),
+			});
+
+			const screen = await renderForm(schema, {
+				defaultValues: { members: [{ name: "" }] },
+			});
+
+			const input = screen.getByLabelText("Name");
+			await userEvent.type(input.element(), "New Name");
+
+			await expect.element(input).toHaveValue("New Name");
 		});
 	});
 });

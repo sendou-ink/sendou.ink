@@ -8,13 +8,31 @@ export function getNestedValue(
 	obj: Record<string, unknown>,
 	path: string,
 ): unknown {
-	const parts = path.split(".");
+	const parts = parsePath(path);
 	let current: unknown = obj;
 	for (const part of parts) {
 		if (current === null || current === undefined) return undefined;
-		current = (current as Record<string, unknown>)[part];
+		if (typeof part === "number") {
+			current = (current as unknown[])[part];
+		} else {
+			current = (current as Record<string, unknown>)[part];
+		}
 	}
 	return current;
+}
+
+function parsePath(path: string): (string | number)[] {
+	const parts: (string | number)[] = [];
+	const regex = /([^.[[\]]+)|\[(\d+)\]/g;
+	const matches = path.matchAll(regex);
+	for (const match of matches) {
+		if (match[1] !== undefined) {
+			parts.push(match[1]);
+		} else if (match[2] !== undefined) {
+			parts.push(Number(match[2]));
+		}
+	}
+	return parts;
 }
 
 export function setNestedValue(
@@ -22,15 +40,38 @@ export function setNestedValue(
 	path: string,
 	value: unknown,
 ): Record<string, unknown> {
-	const parts = path.split(".");
+	const parts = parsePath(path);
+	if (parts.length === 0) return obj;
 	if (parts.length === 1) {
-		return { ...obj, [path]: value };
+		const key = parts[0]!;
+		if (typeof key === "number") {
+			const arr = Array.isArray(obj) ? [...obj] : [];
+			arr[key] = value;
+			return arr as unknown as Record<string, unknown>;
+		}
+		return { ...obj, [key]: value };
 	}
+
 	const [head, ...tail] = parts;
-	const nested = (obj[head!] as Record<string, unknown>) ?? {};
+	const tailPath = tail
+		.map((p) => (typeof p === "number" ? `[${p}]` : p))
+		.join(".")
+		.replace(/\.\[/g, "[");
+
+	if (typeof head === "number") {
+		const arr = Array.isArray(obj) ? [...obj] : [];
+		arr[head] = setNestedValue(
+			(arr[head] as Record<string, unknown>) ?? {},
+			tailPath,
+			value,
+		);
+		return arr as unknown as Record<string, unknown>;
+	}
+
+	const nested = (obj[head] as Record<string, unknown>) ?? {};
 	return {
 		...obj,
-		[head!]: setNestedValue(nested, tail.join("."), value),
+		[head]: setNestedValue(nested, tailPath, value),
 	};
 }
 

@@ -8,6 +8,7 @@ import { formRegistry } from "./fields";
 import { ArrayFormField } from "./fields/ArrayFormField";
 import { DatetimeFormField } from "./fields/DatetimeFormField";
 import { DualSelectFormField } from "./fields/DualSelectFormField";
+import { FieldsetFormField } from "./fields/FieldsetFormField";
 import { ImageFormField } from "./fields/ImageFormField";
 import { InputFormField } from "./fields/InputFormField";
 import {
@@ -20,6 +21,7 @@ import { SelectFormField } from "./fields/SelectFormField";
 import { SwitchFormField } from "./fields/SwitchFormField";
 import { TextareaFormField } from "./fields/TextareaFormField";
 import { TimeRangeFormField } from "./fields/TimeRangeFormField";
+import { UserSearchFormField } from "./fields/UserSearchFormField";
 import {
 	WeaponPoolFormField,
 	type WeaponPoolItem,
@@ -285,16 +287,56 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 	}
 
 	if (formField.type === "array") {
+		const innerFieldMeta = formRegistry.get(formField.field) as
+			| FormFieldType
+			| undefined;
+		const isObjectArray = innerFieldMeta?.type === "fieldset";
+
 		return (
 			<ArrayFormField
 				{...commonProps}
 				{...formField}
 				value={value as unknown[]}
 				onChange={handleChange as (v: unknown[]) => void}
+				isObjectArray={isObjectArray}
 				renderItem={(idx, itemName) => (
 					<FormField key={idx} name={itemName} field={formField.field} />
 				)}
 			/>
+		);
+	}
+
+	if (formField.type === "fieldset") {
+		return <FieldsetFormField {...commonProps} {...formField} />;
+	}
+
+	if (formField.type === "user-search") {
+		return (
+			<UserSearchFormField
+				{...commonProps}
+				{...formField}
+				value={value as number | null}
+				onChange={handleChange as (v: number | null) => void}
+			/>
+		);
+	}
+
+	if (formField.type === "badges") {
+		// xxx: should not be a thing
+		if (!children) {
+			throw new Error(
+				"Badges form field requires children render function to pass options",
+			);
+		}
+		return (
+			<>
+				{children({
+					name,
+					error: displayedError,
+					value,
+					onChange: handleChange,
+				})}
+			</>
 		);
 	}
 

@@ -2,15 +2,20 @@ import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
-import { MinusIcon } from "~/components/icons/Minus";
+import { HamburgerIcon } from "~/components/icons/Hamburger";
 import { PlusIcon } from "~/components/icons/Plus";
+import { TrashIcon } from "~/components/icons/Trash";
 import type { FormFieldProps } from "../types";
+import styles from "./ArrayFormField.module.css";
+import { useTranslatedTexts } from "./FormFieldWrapper";
 
 type ArrayFormFieldProps = Omit<FormFieldProps<"array">, "field"> & {
 	name: string;
 	value: unknown[];
 	onChange: (value: unknown[]) => void;
 	renderItem: (index: number, name: string) => React.ReactNode;
+	isObjectArray?: boolean;
+	sortable?: boolean;
 };
 
 export function ArrayFormField({
@@ -23,64 +28,113 @@ export function ArrayFormField({
 	value,
 	onChange,
 	renderItem,
+	isObjectArray,
+	sortable,
 }: ArrayFormFieldProps) {
 	const { t } = useTranslation(["common"]);
+	const { translatedLabel, translatedBottomText, translatedError } =
+		useTranslatedTexts({ label, bottomText, error });
 
-	const count = Math.max(value.length, 1);
+	const count = value.length;
 
+	// xxx: this is probably not correct? instead should use the "initialValue" from the schema
 	const handleAdd = () => {
-		onChange([...value, undefined]);
+		onChange([...value, isObjectArray ? {} : undefined]);
 	};
 
-	const handleRemove = () => {
-		onChange(value.slice(0, -1));
+	const handleRemoveAt = (index: number) => {
+		onChange(value.filter((_, i) => i !== index));
 	};
 
 	return (
-		<fieldset
-			style={{
-				border: "var(--border-style)",
-				borderRadius: "var(--radius-field)",
-				backgroundColor: "var(--color-base-section)",
-			}}
-			className="stack md"
-		>
-			{label ? (
-				<legend
+		<div className="stack md">
+			{translatedLabel ? (
+				<div
 					style={{
 						fontSize: "var(--fonts-xs)",
 						fontWeight: "var(--semi-bold)",
 					}}
 				>
-					{label}
-				</legend>
+					{translatedLabel}
+				</div>
 			) : null}
-			{Array.from({ length: count }).map((_, idx) => (
-				<div key={idx}>{renderItem(idx, `${name}[${idx}]`)}</div>
-			))}
-			{error ? <FormMessage type="error">{error}</FormMessage> : null}
-			{bottomText && !error ? (
-				<FormMessage type="info">{bottomText}</FormMessage>
+			{Array.from({ length: count }).map((_, idx) =>
+				isObjectArray ? (
+					<ArrayItemFieldset
+						key={idx}
+						index={idx}
+						canRemove={count > min}
+						onRemove={() => handleRemoveAt(idx)}
+						sortable={sortable}
+					>
+						{renderItem(idx, `${name}[${idx}]`)}
+					</ArrayItemFieldset>
+				) : (
+					<div key={idx} className="stack horizontal sm items-center">
+						<div className={styles.itemInput}>
+							{renderItem(idx, `${name}[${idx}]`)}
+						</div>
+						{count > min ? (
+							<SendouButton
+								icon={<TrashIcon />}
+								aria-label="Remove item"
+								size="small"
+								variant="minimal-destructive"
+								onPress={() => handleRemoveAt(idx)}
+							/>
+						) : null}
+					</div>
+				),
+			)}
+			{translatedError ? (
+				<FormMessage type="error">{translatedError}</FormMessage>
 			) : null}
-			<div className="stack sm horizontal">
-				<SendouButton
-					size="small"
-					icon={<PlusIcon />}
-					onPress={handleAdd}
-					isDisabled={count >= max}
-				>
-					{t("common:actions.add")}
-				</SendouButton>
-				<SendouButton
-					size="small"
-					icon={<MinusIcon />}
-					variant="destructive"
-					onPress={handleRemove}
-					className={count <= min ? "invisible" : undefined}
-				>
-					{t("common:actions.remove")}
-				</SendouButton>
+			{translatedBottomText && !translatedError ? (
+				<FormMessage type="info">{translatedBottomText}</FormMessage>
+			) : null}
+			<SendouButton
+				size="small"
+				icon={<PlusIcon />}
+				onPress={handleAdd}
+				isDisabled={count >= max}
+				style={{ margin: "0 auto" }}
+			>
+				{t("common:actions.add")}
+			</SendouButton>
+		</div>
+	);
+}
+
+function ArrayItemFieldset({
+	index,
+	children,
+	canRemove,
+	onRemove,
+	sortable,
+}: {
+	index: number;
+	children: React.ReactNode;
+	canRemove: boolean;
+	onRemove: () => void;
+	sortable?: boolean;
+}) {
+	return (
+		<fieldset className={styles.card}>
+			<div className={styles.header}>
+				{/** xxx: use correct drag handle */}
+				{sortable ? <HamburgerIcon className={styles.dragHandle} /> : null}
+				<legend className={styles.headerLabel}>#{index + 1}</legend>
+				{canRemove ? (
+					<SendouButton
+						icon={<TrashIcon />}
+						aria-label="Remove item"
+						size="small"
+						variant="minimal-destructive"
+						onPress={onRemove}
+					/>
+				) : null}
 			</div>
+			<div className={styles.content}>{children}</div>
 		</fieldset>
 	);
 }

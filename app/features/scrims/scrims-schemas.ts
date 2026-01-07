@@ -218,7 +218,7 @@ const mapsItems = [
 export const scrimsNewFormSchema = z
 	.object({
 		at: datetimeRequired({
-			label: "labels.scrimStart",
+			label: "labels.start",
 			bottomText: "bottomTexts.scrimStart",
 			min: sub(new Date(), { days: 1 }),
 			max: add(new Date(), { days: 15 }),
@@ -254,7 +254,7 @@ export const scrimsNewFormSchema = z
 		divs: divsFormField,
 		from: customJsonField({ initialValue: null }, fromSchema),
 		postText: textAreaOptional({
-			label: "labels.scrimText",
+			label: "labels.text",
 			maxLength: MAX_SCRIM_POST_TEXT_LENGTH,
 		}),
 		managedByAnyone: toggle({

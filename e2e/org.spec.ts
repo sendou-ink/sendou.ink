@@ -57,8 +57,14 @@ test.describe("Tournament Organization", () => {
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url });
 		await editButtonLocator.click();
-		// Add member as admin - find the N-ZAP user's fieldset and change their role
-		const nzapFieldset = page.locator("fieldset").filter({ hasText: "N-ZAP" });
+		// xxx: hacky hack, should use the playwright form helpers
+		// Add member as admin - find the specific member fieldset containing N-ZAP
+		// The array field creates numbered fieldsets (#1, #2, #3) for each member
+		// Find the role select that belongs to the same fieldset as N-ZAP user select
+		// We need to find the innermost fieldset with N-ZAP button (class w-min)
+		const nzapFieldset = page.locator(
+			'fieldset.w-min:has(button:has-text("N-ZAP"))',
+		);
 		await nzapFieldset
 			.getByLabel("Role", { exact: true })
 			.selectOption("ADMIN");

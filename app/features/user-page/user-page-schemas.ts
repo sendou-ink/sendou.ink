@@ -175,7 +175,7 @@ export const editHighlightsActionSchema = z.object({
 export const addModNoteSchema = z.object({
 	_action: stringConstant("ADD_MOD_NOTE"),
 	value: textAreaRequired({
-		label: "labels.modNoteText",
+		label: "labels.text",
 		bottomText: "bottomTexts.modNote",
 		maxLength: USER.MOD_NOTE_MAX_LENGTH,
 	}),
@@ -279,7 +279,7 @@ export const newBuildBaseSchema = z.object({
 		maxLength: 50,
 	}),
 	description: textAreaOptional({
-		label: "labels.buildDescription",
+		label: "labels.description",
 		maxLength: 280,
 	}),
 	modes: checkboxGroup({

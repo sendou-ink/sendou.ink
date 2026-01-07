@@ -16,6 +16,7 @@ import type {
 	FormFieldArray,
 	FormFieldDatetime,
 	FormFieldDualSelect,
+	FormFieldFieldset,
 	FormFieldInputGroup,
 	FormFieldItems,
 	FormFieldSelect,
@@ -607,5 +608,73 @@ export function timeRangeOptional(args: TimeRangeArgs) {
 			endLabel: prefixKey(args.endLabel),
 			type: "time-range",
 			initialValue: null,
+		});
+}
+
+export function fieldset<S extends z.ZodRawShape>(
+	args: WithTypedTranslationKeys<
+		Omit<FormFieldFieldset<"fieldset", S>, "type" | "initialValue">
+	>,
+) {
+	// @ts-expect-error Complex generic type with registry
+	return args.fields.register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "fieldset",
+		initialValue: {},
+	});
+}
+
+export function userSearch(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "user-search" }>,
+			"type" | "initialValue" | "required"
+		>
+	>,
+) {
+	return id.register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "user-search",
+		initialValue: null,
+		required: true,
+	});
+}
+
+export function userSearchOptional(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "user-search" }>,
+			"type" | "initialValue" | "required"
+		>
+	>,
+) {
+	return id.optional().register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "user-search",
+		initialValue: null,
+		required: false,
+	});
+}
+
+export function badges(
+	args: WithTypedTranslationKeys<
+		Omit<Extract<FormField, { type: "badges" }>, "type" | "initialValue">
+	>,
+) {
+	return z
+		.array(id)
+		.max(args.maxCount ?? 50)
+		.register(formRegistry, {
+			...args,
+			label: prefixKey(args.label),
+			bottomText: prefixKey(args.bottomText),
+			type: "badges",
+			initialValue: [],
 		});
 }
