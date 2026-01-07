@@ -449,46 +449,6 @@
 	}
 }
 
-.bracketNav {
-	display: flex;
-	flex-wrap: wrap;
-}
-
-.bracketNavLink {
-	font-size: var(--fonts-xxs);
-	color: var(--color-text-high);
-	border-color: var(--color-bg-higher);
-	background-color: var(--color-bg);
-	border-radius: 0;
-}
-
-.bracketNavLinkBig {
-	font-size: var(--fonts-lg);
-}
-
-.bracketNavLink:active {
-	transform: translateY(0px);
-}
-
-.bracketNavLink:first-of-type {
-	border-start-start-radius: var(--rounded);
-	border-end-start-radius: var(--rounded);
-}
-
-.bracketNavLink:not(.bracketNavLink:first-of-type) {
-	margin-left: -2px;
-}
-
-.bracketNavLink:last-of-type {
-	border-start-end-radius: var(--rounded);
-	border-end-end-radius: var(--rounded);
-}
-
-.bracketNavLinkSelected {
-	color: var(--color-text);
-	background-color: var(--color-bg-high);
-}
-
 .quickAction {
 	font-size: var(--fonts-xs);
 	color: var(--color-text);
@@ -514,26 +474,6 @@
 .quickActionCheckmark {
 	width: 1rem;
 	color: var(--color-success);
-}
-
-.bracketNavChevron {
-	margin-inline-start: var(--s-2);
-	font-size: var(--fonts-xxxs);
-	margin-block-end: -2px;
-}
-
-.buttonRow {
-	display: none;
-}
-
-@media screen and (min-width: 600px) {
-	.menu {
-		display: none;
-	}
-
-	.buttonRow {
-		display: inherit;
-	}
 }
 
 .compactifyButton {
@@ -577,4 +517,14 @@
 
 .streamPopover {
 	width: 280px;
+}
+
+.actionSectionWrapper [class*="tabPanel"] {
+	background-color: var(--color-bg-high);
+	border-radius: 0 0 var(--rounded) var(--rounded);
+	padding: var(--s-4);
+}
+
+.actionSectionWrapper [class*="tabPanel"]:has([class*="chatContainer"]) {
+	padding: var(--s-1) var(--s-3-5);
 }
