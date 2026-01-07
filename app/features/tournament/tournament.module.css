@@ -257,7 +257,8 @@
 	height: 62px;
 	font-size: 32px;
 	border-radius: 100%;
-	border: 2px solid var(--color-accent-low);
+	border: 2px solid var(--color-text-accent);
+	color: var(--color-text-accent);
 	display: grid;
 	place-items: center;
 	margin: 0 auto;
