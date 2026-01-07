@@ -8,8 +8,10 @@
 }
 
 .avatarWrapper {
-	display: inline-block;
-	border-radius: 50%;
+	flex-shrink: 0;
+	width: fit-content;
+	height: fit-content;
 	background-color: var(--color-bg-higher);
 	overflow: hidden;
+	border-radius: 50%;
 }
