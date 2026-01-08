@@ -1,12 +1,11 @@
 .container {
 	width: 100%;
-	min-height: 100vh;
-	padding-top: 50px;
 }
 
 .header {
 	display: flex;
 	width: 100%;
+	height: var(--layout-nav-height);
 	align-items: center;
 	justify-content: space-between;
 	border-bottom: 1.5px solid var(--color-border);
@@ -14,9 +13,8 @@
 	backdrop-filter: var(--backdrop-filter);
 	background-color: transparent;
 	font-weight: bold;
-	padding-block: var(--s-2);
 	padding-inline: var(--s-4);
-	position: fixed;
+	position: sticky;
 	top: 0;
 	z-index: 10;
 }

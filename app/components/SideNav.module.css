@@ -1,11 +1,19 @@
 .sideNav {
-	--side-nav-width: 200px;
-	background-color: var(--color-bg-high);
-	min-width: var(--side-nav-width);
-	max-width: var(--side-nav-width);
-	border: 1.5px solid var(--color-border);
-	border-radius: var(--rounded);
+	background-color: var(--color-bg);
+	min-width: var(--layout-sidenav-width);
+	max-width: var(--layout-sidenav-width);
+	border-right: 1.5px solid var(--color-border);
 	overflow: hidden;
+	position: sticky;
+	top: 0;
+	left: 0;
+	height: fit-content;
+}
+
+.sideNavTop {
+	height: var(--layout-nav-height);
+	background-color: var(--color-bg);
+	border-bottom: 1.5px solid var(--color-border);
 }
 
 .sideNavInner {
@@ -15,15 +23,14 @@
 	padding: var(--s-1-5);
 	padding-block-end: var(--s-2);
 	overflow-y: auto;
-	max-height: calc(100vh - var(--sticky-top) - var(--s-3-5));
-	border-radius: calc(var(--rounded) - var(--s-1-5));
+	height: calc(100dvh - var(--layout-nav-height));
 }
 
 .sideNavHeader {
 	color: var(--color-text-high);
 	padding: var(--s-1-5) var(--s-2);
 	margin-inline: calc(-1 * var(--s-1-5));
-	background-color: var(--color-bg);
+	background-color: var(--color-bg-high);
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);

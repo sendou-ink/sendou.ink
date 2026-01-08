@@ -120,6 +120,9 @@ html {
 	--toggle-height-small: 1.25rem;
 
 	--input-icon-width: 18px;
+
+	--layout-nav-height: 55px;
+	--layout-sidenav-width: 250px;
 }
 
 html {

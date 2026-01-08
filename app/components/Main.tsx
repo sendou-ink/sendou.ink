@@ -11,7 +11,6 @@ export const Main = ({
 	halfWidth,
 	bigger,
 	style,
-	sideNav,
 }: {
 	children: React.ReactNode;
 	className?: string;
@@ -52,15 +51,6 @@ export const Main = ({
 			{children}
 		</main>
 	);
-
-	if (sideNav) {
-		return (
-			<div className={styles.containerWithSideNav}>
-				<div className={styles.sideNavContainer}>{sideNav}</div>
-				<div className={styles.mainWrapper}>{mainElement}</div>
-			</div>
-		);
-	}
 
 	return <div className={styles.container}>{mainElement}</div>;
 };

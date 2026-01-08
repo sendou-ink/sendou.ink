@@ -1,4 +1,5 @@
 .container {
+	min-height: calc(100dvh - var(--layout-nav-height));
 	display: flex;
 	flex-direction: row;
 }
@@ -12,20 +13,6 @@
 .mainWrapper {
 	flex: 1;
 	min-width: 0;
-}
-
-.sideNavContainer {
-	position: sticky;
-	left: 0;
-	top: var(--sticky-top);
-	height: fit-content;
-	margin: var(--s-2-5);
-}
-
-@media (max-width: 800px) {
-	.sideNavContainer {
-		display: none;
-	}
 }
 
 .main {

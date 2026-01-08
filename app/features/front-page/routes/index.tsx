@@ -1,14 +1,10 @@
 import { faker } from "@faker-js/faker";
 import clsx from "clsx";
-import { useTranslation } from "react-i18next";
-import { Link, useLoaderData } from "react-router";
+import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Image } from "~/components/Image";
 import { CalendarIcon } from "~/components/icons/Calendar";
-import { TwitchIcon } from "~/components/icons/Twitch";
-import { UsersIcon } from "~/components/icons/Users";
 import { Main } from "~/components/Main";
-import { SideNav, SideNavHeader, SideNavLink } from "~/components/SideNav";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BUILDS_PAGE,
@@ -552,148 +548,12 @@ function generateMockPosts(): FeedPost[] {
 
 const MOCK_POSTS = generateMockPosts();
 
-const MOCK_STREAMS = [
-	{
-		id: 3,
-		name: "Paddling Pool 252",
-		imageUrl: faker.image.avatar(),
-		subtitle: "Losers Finals",
-		badge: "LIVE",
-	},
-	{
-		id: 1,
-		name: "Splash Go!",
-		imageUrl:
-			"https://liquipedia.net/commons/images/7/73/Splash_Go_allmode.png",
-		subtitle: "Tomorrow, 9:00 AM",
-	},
-	{
-		id: 2,
-		name: "Area Cup",
-		imageUrl:
-			"https://pbs.twimg.com/profile_images/1830601967821017088/4SDZVKdj_400x400.jpg",
-		subtitle: "Saturday, 10 AM",
-	},
-];
-
-const MOCK_FRIENDS = [
-	{
-		id: 1,
-		name: faker.internet.username(),
-		avatarUrl: faker.image.avatar(),
-		subtitle: "SendouQ",
-		badge: "2/4",
-	},
-	{
-		id: 2,
-		name: faker.internet.username(),
-		avatarUrl: faker.image.avatar(),
-		subtitle: "Lobby",
-		badge: "2/8",
-	},
-	{
-		id: 3,
-		name: faker.internet.username(),
-		avatarUrl: faker.image.avatar(),
-		subtitle: "In The Zone 22",
-		badge: "3/4",
-	},
-	{
-		id: 4,
-		name: faker.internet.username(),
-		avatarUrl: faker.image.avatar(),
-		subtitle: "SendouQ",
-		badge: "1/4",
-	},
-	{
-		id: 5,
-		name: faker.internet.username(),
-		avatarUrl: faker.image.avatar(),
-		subtitle: "Lobby",
-		badge: "5/8",
-	},
-];
-
 export default function FrontPage() {
-	const { t } = useTranslation(["front"]);
-	const data = useLoaderData<typeof loader>();
-	const { formatTime } = useTimeFormat();
-
 	return (
-		<Main
-			className={styles.frontPageContainer}
-			sideNav={
-				<SideNav>
-					<SideNavHeader icon={<CalendarIcon />}>
-						{t("front:sideNav.myCalendar")}
-					</SideNavHeader>
-					{data.tournaments.participatingFor.length > 0 ? (
-						data.tournaments.participatingFor
-							.slice(0, 4)
-							.map((tournament, index) => (
-								<SideNavLink
-									key={tournament.id}
-									href={tournament.url}
-									imageUrl={tournament.logoUrl ?? undefined}
-									subtitle={`${index < 2 ? "Today" : "Tomorrow"}, ${formatTime(
-										new Date(tournament.startTime),
-										{
-											hour: "numeric",
-											minute: "2-digit",
-										},
-									)}`}
-								>
-									{tournament.name}
-								</SideNavLink>
-							))
-					) : (
-						<div className={styles.sideNavEmpty}>
-							{t("front:sideNav.noEvents")}
-						</div>
-					)}
-
-					<SideNavHeader icon={<UsersIcon />}>
-						{t("front:sideNav.friends")}
-					</SideNavHeader>
-					{MOCK_FRIENDS.map((friend) => (
-						<SideNavLink
-							key={friend.id}
-							href=""
-							imageUrl={friend.avatarUrl}
-							subtitle={friend.subtitle}
-							badge={friend.badge}
-						>
-							{friend.name}
-						</SideNavLink>
-					))}
-
-					<SideNavHeader icon={<TwitchIcon />}>
-						{t("front:sideNav.streams")}
-					</SideNavHeader>
-					{MOCK_STREAMS.map((stream) => (
-						<SideNavLink
-							key={stream.id}
-							href=""
-							imageUrl={stream.imageUrl}
-							subtitle={stream.subtitle}
-							badge={stream.badge}
-						>
-							{stream.name}
-						</SideNavLink>
-					))}
-				</SideNav>
-			}
-		>
+		<Main className={styles.frontPageContainer}>
 			<SocialFeed posts={MOCK_POSTS} />
 		</Main>
 	);
-}
-
-function useTimeFormat() {
-	const formatTime = (date: Date, options: Intl.DateTimeFormatOptions) => {
-		return date.toLocaleTimeString("en-US", options);
-	};
-	return { formatTime };
 }
 
 function SocialFeed({ posts }: { posts: FeedPost[] }) {
