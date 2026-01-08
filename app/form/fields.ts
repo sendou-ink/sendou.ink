@@ -678,3 +678,57 @@ export function badges(
 			initialValue: [],
 		});
 }
+
+export function stageSelect(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "stage-select" }>,
+			"type" | "initialValue" | "required"
+		>
+	>,
+) {
+	return stageId.register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "stage-select",
+		initialValue: 1,
+		required: true,
+	});
+}
+
+export function weaponSelect(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "weapon-select" }>,
+			"type" | "initialValue" | "required"
+		>
+	>,
+) {
+	return weaponSplId.register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "weapon-select",
+		initialValue: null,
+		required: true,
+	});
+}
+
+export function weaponSelectOptional(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "weapon-select" }>,
+			"type" | "initialValue" | "required"
+		>
+	>,
+) {
+	return weaponSplId.optional().register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "weapon-select",
+		initialValue: null,
+		required: false,
+	});
+}

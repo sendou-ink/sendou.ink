@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { FormField } from "~/form/FormField";
+import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
@@ -71,7 +71,10 @@ export function ScrimRequestModal({
 						) : null}
 						<Divider />
 						<FormField name={names.from}>
-							{(props) => <WithFormField usersTeams={data.teams} {...props} />}
+							{/** xxx: kinda weird we have to do this, any better way? (also fix every place where we type any with CustomFieldRenderProps or ArrayItemRenderContext) */}
+							{(props: CustomFieldRenderProps) => (
+								<WithFormField usersTeams={data.teams} {...props} />
+							)}
 						</FormField>
 						{post.rangeEnd ? (
 							<StartTimeFormField timeOptions={timeOptions} />

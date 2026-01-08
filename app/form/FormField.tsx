@@ -4,6 +4,7 @@ import type {
 	MapPoolObject,
 	ReadonlyMapPoolObject,
 } from "~/features/map-list-generator/core/map-pool-serializer/types";
+import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { formRegistry } from "./fields";
 import { ArrayFormField } from "./fields/ArrayFormField";
 import { DatetimeFormField } from "./fields/DatetimeFormField";
@@ -18,6 +19,7 @@ import {
 import { MapPoolFormField } from "./fields/MapPoolFormField";
 import { MultiSelectFormField } from "./fields/MultiSelectFormField";
 import { SelectFormField } from "./fields/SelectFormField";
+import { StageSelectFormField } from "./fields/StageSelectFormField";
 import { SwitchFormField } from "./fields/SwitchFormField";
 import { TextareaFormField } from "./fields/TextareaFormField";
 import { TimeRangeFormField } from "./fields/TimeRangeFormField";
@@ -26,8 +28,12 @@ import {
 	WeaponPoolFormField,
 	type WeaponPoolItem,
 } from "./fields/WeaponPoolFormField";
+import { WeaponSelectFormField } from "./fields/WeaponSelectFormField";
 import { useOptionalFormFieldContext } from "./SendouForm";
-import type { FormField as FormFieldType } from "./types";
+import type {
+	ArrayItemRenderContext,
+	FormField as FormFieldType,
+} from "./types";
 import {
 	getNestedSchema,
 	getNestedValue,
@@ -35,16 +41,20 @@ import {
 	validateField,
 } from "./utils";
 
+export type CustomFieldRenderProps = {
+	name: string;
+	error: string | undefined;
+	value: unknown;
+	onChange: (value: unknown) => void;
+};
+
 interface FormFieldProps {
 	name: string;
 	label?: string;
 	field?: z.ZodType;
-	children?: (props: {
-		name: string;
-		error: string | undefined;
-		value: unknown;
-		onChange: (value: unknown) => void;
-	}) => React.ReactNode;
+	children?:
+		| ((props: CustomFieldRenderProps) => React.ReactNode)
+		| ((props: ArrayItemRenderContext) => React.ReactNode);
 }
 
 export function FormField({ name, label, field, children }: FormFieldProps) {
@@ -258,7 +268,7 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 		}
 		return (
 			<>
-				{children({
+				{(children as (props: CustomFieldRenderProps) => React.ReactNode)({
 					name,
 					error: displayedError,
 					value,
@@ -291,6 +301,7 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 			| FormFieldType
 			| undefined;
 		const isObjectArray = innerFieldMeta?.type === "fieldset";
+		const hasCustomRender = typeof children === "function";
 
 		return (
 			<ArrayFormField
@@ -299,9 +310,38 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 				value={value as unknown[]}
 				onChange={handleChange as (v: unknown[]) => void}
 				isObjectArray={isObjectArray}
-				renderItem={(idx, itemName) => (
-					<FormField key={idx} name={itemName} field={formField.field} />
-				)}
+				renderItem={(idx, itemName) => {
+					if (hasCustomRender && isObjectArray) {
+						const arrayValue = value as Record<string, unknown>[];
+						const itemValues = arrayValue[idx] ?? {};
+
+						const setItemField = (fieldName: string, fieldValue: unknown) => {
+							const newArray = [...arrayValue];
+							newArray[idx] = { ...newArray[idx], [fieldName]: fieldValue };
+							handleChange(newArray);
+						};
+
+						const remove = () => {
+							handleChange(arrayValue.filter((_, i) => i !== idx));
+						};
+
+						return (
+							children as (props: ArrayItemRenderContext) => React.ReactNode
+						)({
+							index: idx,
+							itemName,
+							values: itemValues,
+							formValues: context?.values ?? {},
+							setItemField,
+							canRemove: arrayValue.length > formField.min,
+							remove,
+						});
+					}
+
+					return (
+						<FormField key={idx} name={itemName} field={formField.field} />
+					);
+				}}
 			/>
 		);
 	}
@@ -330,13 +370,35 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 		}
 		return (
 			<>
-				{children({
+				{(children as (props: CustomFieldRenderProps) => React.ReactNode)({
 					name,
 					error: displayedError,
 					value,
 					onChange: handleChange,
 				})}
 			</>
+		);
+	}
+
+	if (formField.type === "stage-select") {
+		return (
+			<StageSelectFormField
+				{...commonProps}
+				{...formField}
+				value={value as StageId | null}
+				onChange={handleChange as (v: StageId) => void}
+			/>
+		);
+	}
+
+	if (formField.type === "weapon-select") {
+		return (
+			<WeaponSelectFormField
+				{...commonProps}
+				{...formField}
+				value={value as MainWeaponId | null}
+				onChange={handleChange as (v: MainWeaponId | null) => void}
+			/>
 		);
 	}
 

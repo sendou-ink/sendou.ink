@@ -1,38 +1,29 @@
 import { type ActionFunction, redirect } from "react-router";
 import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
+import { parseFormData } from "~/form/parse.server";
 import { requireRole } from "~/modules/permissions/guards.server";
-import { notFoundIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { vodVideoPage } from "~/utils/urls";
 import * as VodRepository from "../VodRepository.server";
-import { videoInputSchema } from "../vods-schemas";
-import { canEditVideo } from "../vods-utils";
+import { vodFormSchemaServer } from "../vods-schemas.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
 	requireRole(user, "VIDEO_ADDER");
 
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
-		schema: videoInputSchema,
+		schema: vodFormSchemaServer,
 	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
 
 	let video: Tables["Video"];
 	if (data.vodToEditId) {
-		const vod = notFoundIfFalsy(
-			await VodRepository.findVodById(data.vodToEditId),
-		);
-
-		if (
-			!canEditVideo({
-				userId: user.id,
-				submitterUserId: vod.submitterUserId,
-				povUserId: typeof vod.pov === "string" ? undefined : vod.pov?.id,
-			})
-		) {
-			throw new Response("no permissions to edit this vod", { status: 401 });
-		}
-
 		video = await VodRepository.update({
 			...data.video,
 			submitterUserId: user.id,

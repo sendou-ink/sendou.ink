@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { AbilitiesSelector } from "~/components/AbilitiesSelector";
 import { GearSelect } from "~/components/GearSelect";
 import type { GearType } from "~/db/tables";
-import { FormField } from "~/form/FormField";
+import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
@@ -39,7 +39,7 @@ export function NewBuildForm({
 				<>
 					<FormField name={names.weapons} />
 					<FormField name={names.head}>
-						{(props) => (
+						{(props: CustomFieldRenderProps) => (
 							<GearFormField
 								type="HEAD"
 								gearIdToAbilities={gearIdToAbilities}
@@ -48,7 +48,7 @@ export function NewBuildForm({
 						)}
 					</FormField>
 					<FormField name={names.clothes}>
-						{(props) => (
+						{(props: CustomFieldRenderProps) => (
 							<GearFormField
 								type="CLOTHES"
 								gearIdToAbilities={gearIdToAbilities}
@@ -57,7 +57,7 @@ export function NewBuildForm({
 						)}
 					</FormField>
 					<FormField name={names.shoes}>
-						{(props) => (
+						{(props: CustomFieldRenderProps) => (
 							<GearFormField
 								type="SHOES"
 								gearIdToAbilities={gearIdToAbilities}
@@ -66,7 +66,9 @@ export function NewBuildForm({
 						)}
 					</FormField>
 					<FormField name={names.abilities}>
-						{(props) => <AbilitiesFormField {...props} />}
+						{(props: CustomFieldRenderProps) => (
+							<AbilitiesFormField {...props} />
+						)}
 					</FormField>
 					<FormField name={names.title} />
 					<FormField name={names.description} />

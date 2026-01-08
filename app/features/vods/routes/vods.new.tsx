@@ -1,48 +1,36 @@
 import { useEffect, useState } from "react";
-import {
-	Controller,
-	get,
-	useFieldArray,
-	useFormContext,
-	useWatch,
-} from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
-import type { z } from "zod";
 import { SendouButton } from "~/components/elements/Button";
 import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";
-import { AddFieldButton } from "~/components/form/AddFieldButton";
-import { InputGroupFormField } from "~/components/form/InputGroupFormField";
-import { RemoveFieldButton } from "~/components/form/RemoveFieldButton";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { StageSelect } from "~/components/StageSelect";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import { YouTubeEmbed } from "~/components/YouTubeEmbed";
-import type { Tables } from "~/db/tables";
 import { useRecentlyReportedWeapons } from "~/features/sendouq/q-hooks";
-import { modesShort } from "~/modules/in-game-lists/modes";
+import type { ArrayItemRenderContext, CustomFieldRenderProps } from "~/form";
+import { FormField } from "~/form/FormField";
+import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
+import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
+import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
+import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Alert } from "../../../components/Alert";
-import { DateFormField } from "../../../components/form/DateFormField";
-import { InputFormField } from "../../../components/form/InputFormField";
-import { SelectFormField } from "../../../components/form/SelectFormField";
-import { SendouForm } from "../../../components/form/SendouForm";
 import { action } from "../actions/vods.new.server";
 import { loader } from "../loaders/vods.new.server";
-import { videoMatchTypes } from "../vods-constants";
-import { videoInputSchema } from "../vods-schemas";
+import { vodFormBaseSchema } from "../vods-schemas";
 import { extractYoutubeIdFromVideoUrl } from "../vods-utils";
 import styles from "./vods.new.module.css";
+
 export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["vods", "calendar"],
 };
 
-export type VodFormFields = z.infer<typeof videoInputSchema>;
+// xxx: clean up a lot
 
 export default function NewVodPage() {
 	const isVideoAdder = useHasRole("VIDEO_ADDER");
@@ -58,43 +46,77 @@ export default function NewVodPage() {
 		);
 	}
 
+	const defaultValues = data.vodToEdit
+		? vodToEditToFormValues(data.vodToEdit)
+		: {
+				type: "TOURNAMENT" as const,
+				teamSize: "4" as const,
+				pov: { type: "USER" as const },
+				matches: [
+					{
+						mode: "SZ" as const,
+						stageId: 1 as StageId,
+						startsAt: "",
+						weapon: undefined as MainWeaponId | undefined,
+						weaponsTeamOne: [] as WeaponPoolItem[],
+						weaponsTeamTwo: [] as WeaponPoolItem[],
+					},
+				],
+			};
+
 	return (
 		<Main halfWidth className={styles.layout}>
 			<SendouForm
-				heading={
+				title={
 					data.vodToEdit
 						? t("vods:forms.title.edit")
 						: t("vods:forms.title.create")
 				}
-				schema={videoInputSchema}
-				defaultValues={
-					data.vodToEdit
-						? {
-								vodToEditId: data.vodToEdit.id,
-								video: data.vodToEdit,
-							}
-						: {
-								video: {
-									type: "TOURNAMENT",
-									teamSize: 4,
-									matches: [
-										{
-											mode: "SZ",
-											stageId: 1,
-											startsAt: "",
-											weapons: [],
-										},
-									],
-									pov: { type: "USER" } as VodFormFields["video"]["pov"],
-								},
-							}
-				}
+				schema={vodFormBaseSchema}
+				defaultValues={defaultValues}
 			>
 				<YouTubeEmbedWrapper onPlayerReady={setPlayer} />
-				<FormFields player={player} />
+				<VodFormFields player={player} />
 			</SendouForm>
 		</Main>
 	);
+}
+
+type VodToEdit = NonNullable<Awaited<ReturnType<typeof loader>>["vodToEdit"]>;
+
+function vodToEditToFormValues(vodToEdit: VodToEdit) {
+	const teamSize = vodToEdit.teamSize ?? 4;
+	const isCast = vodToEdit.type === "CAST";
+
+	return {
+		vodToEditId: vodToEdit.id,
+		youtubeUrl: vodToEdit.youtubeUrl,
+		title: vodToEdit.title,
+		date: new Date(
+			vodToEdit.date.year,
+			vodToEdit.date.month,
+			vodToEdit.date.day,
+		),
+		type: vodToEdit.type,
+		teamSize: String(teamSize) as "1" | "2" | "3" | "4",
+		pov: vodToEdit.pov,
+		matches: vodToEdit.matches.map((match: VodToEdit["matches"][number]) => ({
+			startsAt: match.startsAt,
+			mode: match.mode,
+			stageId: match.stageId as StageId,
+			weapon: isCast ? undefined : (match.weapons[0] ?? undefined),
+			weaponsTeamOne: isCast
+				? match.weapons
+						.slice(0, teamSize)
+						.map((id: MainWeaponId) => ({ id, isFavorite: false }))
+				: [],
+			weaponsTeamTwo: isCast
+				? match.weapons
+						.slice(teamSize)
+						.map((id: MainWeaponId) => ({ id, isFavorite: false }))
+				: [],
+		})),
+	};
 }
 
 function YouTubeEmbedWrapper({
@@ -102,9 +124,8 @@ function YouTubeEmbedWrapper({
 }: {
 	onPlayerReady: (player: YT.Player) => void;
 }) {
-	const youtubeUrl = useWatch<VodFormFields>({
-		name: "video.youtubeUrl",
-	}) as string | undefined;
+	const { values } = useFormFieldContext();
+	const youtubeUrl = values.youtubeUrl as string | undefined;
 
 	if (!youtubeUrl) return null;
 
@@ -118,116 +139,100 @@ function YouTubeEmbedWrapper({
 	);
 }
 
-function FormFields({ player }: { player: YT.Player | null }) {
-	const { t } = useTranslation(["vods"]);
-	const videoType = useWatch({
-		name: "video.type",
-	}) as VodFormFields["video"]["type"];
+function VodFormFields({ player }: { player: YT.Player | null }) {
+	const { values } = useFormFieldContext();
+	const videoType = values.type as string;
 
 	return (
 		<>
-			<InputFormField<VodFormFields>
-				label={t("vods:forms.title.youtubeUrl")}
-				name="video.youtubeUrl"
-				placeholder="https://www.youtube.com/watch?v=-dQ6JsVIKdY"
-				required
-				size="medium"
-			/>
-
-			<InputFormField<VodFormFields>
-				label={t("vods:forms.title.videoTitle")}
-				name="video.title"
-				placeholder="[SCL 47] (Grand Finals) Team Olive vs. Kraken Paradise"
-				required
-				size="medium"
-			/>
-
-			<DateFormField<VodFormFields>
-				label={t("vods:forms.title.videoDate")}
-				name="video.date"
-				required
-				size="extra-small"
-			/>
-
-			<SelectFormField<VodFormFields>
-				label={t("vods:forms.title.type")}
-				name="video.type"
-				values={videoMatchTypes.map((role) => ({
-					value: role,
-					label: t(`vods:type.${role}`),
-				}))}
-				required
-			/>
+			<FormField name="youtubeUrl" />
+			<FormField name="title" />
+			<FormField name="date" />
+			<FormField name="type" />
 
 			{videoType === "CAST" ? <TeamSizeField /> : <PovFormField />}
 
-			<MatchesFormfield videoType={videoType} player={player} />
+			<FormField name="matches">
+				{(ctx: ArrayItemRenderContext) => (
+					<MatchFieldsetContent
+						index={ctx.index}
+						itemName={ctx.itemName}
+						values={ctx.values as unknown as MatchFieldValues}
+						formValues={ctx.formValues}
+						setItemField={
+							ctx.setItemField as <K extends keyof MatchFieldValues>(
+								field: K,
+								value: MatchFieldValues[K],
+							) => void
+						}
+						canRemove={ctx.canRemove}
+						remove={ctx.remove}
+						player={player}
+						videoType={videoType}
+					/>
+				)}
+			</FormField>
 		</>
 	);
 }
 
 function TeamSizeField() {
-	const { t } = useTranslation(["vods"]);
-	const { setValue } = useFormContext<VodFormFields>();
-	const matches = useWatch<VodFormFields>({
-		name: "video.matches",
-	}) as VodFormFields["video"]["matches"];
+	const { values, setValue } = useFormFieldContext();
+	const matches = values.matches as Array<Record<string, unknown>>;
+
+	const handleTeamSizeChange = (newValue: string | null) => {
+		setValue("teamSize", newValue);
+
+		if (matches && Array.isArray(matches)) {
+			const clearedMatches = matches.map((match) => ({
+				...match,
+				weaponsTeamOne: [],
+				weaponsTeamTwo: [],
+			}));
+			setValue("matches", clearedMatches);
+		}
+	};
 
 	return (
-		<Controller
-			control={useFormContext<VodFormFields>().control}
-			name="video.teamSize"
-			render={({ field: { onChange, value } }) => {
-				return (
-					<div>
-						<Label required htmlFor="teamSize">
-							{t("vods:forms.title.teamSize")}
-						</Label>
-						<select
-							id="teamSize"
-							value={value ?? 4}
-							onChange={(e) => {
-								const newTeamSize = Number(e.target.value);
-								onChange(newTeamSize);
-
-								if (matches && Array.isArray(matches)) {
-									matches.forEach((_, idx) => {
-										setValue(`video.matches.${idx}.weapons`, []);
-									});
-								}
-							}}
-							required
-						>
-							<option value={1}>{t("vods:teamSize.1v1")}</option>
-							<option value={2}>{t("vods:teamSize.2v2")}</option>
-							<option value={3}>{t("vods:teamSize.3v3")}</option>
-							<option value={4}>{t("vods:teamSize.4v4")}</option>
-						</select>
-					</div>
-				);
-			}}
-		/>
+		<FormField name="teamSize">
+			{({ name, error, value }: CustomFieldRenderProps) => (
+				<FormFieldWrapper
+					id={name}
+					name={name}
+					label="forms:labels.vodTeamSize"
+					error={error}
+				>
+					<select
+						id={name}
+						name={name}
+						value={(value as string) ?? "4"}
+						onChange={(e) => handleTeamSizeChange(e.target.value)}
+					>
+						<option value="1">1v1</option>
+						<option value="2">2v2</option>
+						<option value="3">3v3</option>
+						<option value="4">4v4</option>
+					</select>
+				</FormFieldWrapper>
+			)}
+		</FormField>
 	);
 }
 
 function PovFormField() {
 	const { t } = useTranslation(["vods", "calendar"]);
-	const methods = useFormContext<VodFormFields>();
-
-	const povNameError = get(methods.formState.errors, "video.pov.name");
 
 	return (
-		<Controller
-			control={methods.control}
-			name="video.pov"
-			render={({
-				field: { onChange, onBlur, value },
-				fieldState: { error },
-			}) => {
-				// biome-ignore lint/complexity/noUselessFragments: Biome upgrade
-				if (!value) return <></>;
+		<FormField name="pov">
+			{({ name, error, value, onChange }: CustomFieldRenderProps) => {
+				const povValue = value as
+					| { type: "USER"; userId?: number }
+					| { type: "NAME"; name?: string }
+					| undefined;
 
-				const asPlainInput = value.type === "NAME";
+				if (!povValue) return null;
+
+				const asPlainInput = povValue.type === "NAME";
 
 				const toggleInputType = () => {
 					if (asPlainInput) {
@@ -238,34 +243,32 @@ function PovFormField() {
 				};
 
 				return (
-					<div>
+					<div className={styles.povField}>
 						{asPlainInput ? (
 							<>
-								<Label required htmlFor="pov">
+								<Label required htmlFor={name}>
 									{t("vods:forms.title.pov")}
 								</Label>
 								<input
-									id="pov"
-									value={value.name ?? ""}
+									id={name}
+									value={povValue.name ?? ""}
 									onChange={(e) => {
 										onChange({ type: "NAME", name: e.target.value });
 									}}
-									onBlur={onBlur}
 								/>
 							</>
 						) : (
 							<UserSearch
 								label={t("vods:forms.title.pov")}
 								isRequired
-								name="team-player"
-								initialUserId={value.userId}
+								name="pov-user"
+								initialUserId={povValue.userId}
 								onChange={(newUser) =>
 									onChange({
 										type: "USER",
 										userId: newUser?.id,
 									})
 								}
-								onBlur={onBlur}
 							/>
 						)}
 						<SendouButton
@@ -278,85 +281,40 @@ function PovFormField() {
 								? t("calendar:forms.team.player.addAsUser")
 								: t("calendar:forms.team.player.addAsText")}
 						</SendouButton>
-						{error && (
-							<FormMessage type="error">{error.message as string}</FormMessage>
-						)}
-						{povNameError && (
-							<FormMessage type="error">
-								{povNameError.message as string}
-							</FormMessage>
-						)}
+						{error ? <FormMessage type="error">{error}</FormMessage> : null}
 					</div>
 				);
 			}}
-		/>
+		</FormField>
 	);
 }
 
-function MatchesFormfield({
-	videoType,
-	player,
-}: {
-	videoType: Tables["Video"]["type"];
+interface MatchFieldValues {
+	startsAt: string;
+	mode: string;
+	stageId: StageId;
+	weapon: MainWeaponId | null;
+	weaponsTeamOne: WeaponPoolItem[];
+	weaponsTeamTwo: WeaponPoolItem[];
+}
+
+type MatchFieldsetContentProps = ArrayItemRenderContext<MatchFieldValues> & {
 	player: YT.Player | null;
-}) {
-	const {
-		formState: { errors },
-	} = useFormContext<VodFormFields>();
-	const { fields, append, remove } = useFieldArray<VodFormFields>({
-		name: "video.matches",
-	});
+	videoType: string;
+};
 
-	const rootError = errors.video?.matches?.root;
-
-	return (
-		<div>
-			<div className="stack md">
-				{fields.map((field, i) => {
-					return (
-						<MatchesFieldset
-							key={field.id}
-							idx={i}
-							remove={remove}
-							canRemove={fields.length > 1}
-							videoType={videoType}
-							player={player}
-						/>
-					);
-				})}
-				<AddFieldButton
-					onClick={() => {
-						append({
-							mode: "SZ",
-							stageId: 1,
-							startsAt: "",
-							weapons: [],
-						});
-					}}
-				/>
-				{rootError && (
-					<FormMessage type="error">{rootError.message as string}</FormMessage>
-				)}
-			</div>
-		</div>
-	);
-}
-
-function MatchesFieldset({
-	idx,
-	remove,
+function MatchFieldsetContent({
+	index,
+	itemName,
+	values: matchValues,
+	formValues,
+	setItemField,
 	canRemove,
-	videoType,
+	remove,
 	player,
-}: {
-	idx: number;
-	remove: (idx: number) => void;
-	canRemove: boolean;
-	videoType: Tables["Video"]["type"];
-	player: YT.Player | null;
-}) {
-	const { t } = useTranslation(["vods", "game-misc"]);
-	const { setValue } = useFormContext<VodFormFields>();
+	videoType,
+}: MatchFieldsetContentProps) {
+	const { t } = useTranslation(["vods"]);
 	const [currentTime, setCurrentTime] = useState<string>("");
 
 	useEffect(() => {
@@ -376,175 +334,199 @@ function MatchesFieldset({
 		return () => clearInterval(interval);
 	}, [player]);
 
-	return (
-		<div className="stack md">
-			<div className="stack horizontal sm">
-				<h2 className="text-md">{t("vods:gameCount", { count: idx + 1 })}</h2>
-				{canRemove ? <RemoveFieldButton onClick={() => remove(idx)} /> : null}
-			</div>
+	const allMatches = formValues.matches as MatchFieldValues[];
+	const previousWeapons = index > 0 ? allMatches[index - 1] : null;
 
-			<div>
-				<InputFormField<VodFormFields>
-					required
-					label={t("vods:forms.title.startTimestamp")}
-					name={`video.matches.${idx}.startsAt`}
-					placeholder="10:22"
-				/>
-				{currentTime ? (
+	return (
+		<>
+			<div className="stack horizontal sm items-center justify-between">
+				<div className="text-md font-semi-bold">
+					{t("vods:gameCount", { count: index + 1 })}
+				</div>
+				{canRemove ? (
 					<SendouButton
-						variant="minimal"
-						size="miniscule"
-						onPress={() =>
-							setValue(`video.matches.${idx}.startsAt`, currentTime)
-						}
-						className="mt-2"
+						size="small"
+						variant="minimal-destructive"
+						onPress={remove}
 					>
-						{t("vods:forms.action.setAsCurrent", { time: currentTime })}
+						{t("common:actions.remove")}
 					</SendouButton>
 				) : null}
 			</div>
 
-			<InputGroupFormField<VodFormFields>
-				type="radio"
-				label={t("vods:forms.title.mode")}
-				name={`video.matches.${idx}.mode`}
-				values={modesShort.map((mode) => ({
-					value: mode,
-					label: t(`game-misc:MODE_SHORT_${mode}`),
-				}))}
-				direction="horizontal"
-			/>
+			<div className="stack md mt-4">
+				<FormField name={`${itemName}.startsAt`}>
+					{(props: CustomFieldRenderProps) => (
+						<FormFieldWrapper
+							id={`matches-${index}-startsAt`}
+							name={`${itemName}.startsAt`}
+							label="forms:labels.vodStartTimestamp"
+							error={props.error}
+						>
+							<input
+								id={`matches-${index}-startsAt`}
+								value={matchValues.startsAt}
+								onChange={(e) => setItemField("startsAt", e.target.value)}
+								placeholder="10:22"
+							/>
+							{currentTime ? (
+								<SendouButton
+									variant="minimal"
+									size="miniscule"
+									onPress={() => setItemField("startsAt", currentTime)}
+									className="mt-2"
+								>
+									{t("vods:forms.action.setAsCurrent", { time: currentTime })}
+								</SendouButton>
+							) : null}
+						</FormFieldWrapper>
+					)}
+				</FormField>
 
-			<Controller
-				control={useFormContext<VodFormFields>().control}
-				name={`video.matches.${idx}.stageId`}
-				render={({ field: { onChange, value } }) => (
-					<StageSelect
-						isRequired
-						label={t("vods:forms.title.stage")}
-						value={value}
-						onChange={onChange}
-					/>
-				)}
-			/>
+				<FormField name={`${itemName}.mode`} />
 
-			<WeaponsField idx={idx} videoType={videoType} />
-		</div>
+				<FormField name={`${itemName}.stageId`} />
+
+				<WeaponsField
+					index={index}
+					matchValues={matchValues}
+					setItemField={setItemField}
+					videoType={videoType}
+					previousWeapons={previousWeapons}
+					formValues={formValues}
+				/>
+			</div>
+		</>
 	);
 }
 
 function WeaponsField({
-	idx,
+	index,
+	matchValues,
+	setItemField,
 	videoType,
+	previousWeapons,
+	formValues,
 }: {
-	idx: number;
-	videoType: Tables["Video"]["type"];
+	index: number;
+	matchValues: MatchFieldValues;
+	setItemField: <K extends keyof MatchFieldValues>(
+		field: K,
+		value: MatchFieldValues[K],
+	) => void;
+	videoType: string;
+	previousWeapons: MatchFieldValues | null;
+	formValues: Record<string, unknown>;
 }) {
-	const { t } = useTranslation(["vods"]);
-	const watchedTeamSize = useWatch<VodFormFields>({
-		name: "video.teamSize",
-	});
-	const teamSize = typeof watchedTeamSize === "number" ? watchedTeamSize : 4;
+	const { t } = useTranslation(["vods", "forms"]);
+	const teamSizeValue = formValues.teamSize as string | undefined;
+	const teamSize = teamSizeValue ? Number(teamSizeValue) : 4;
 	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
 		useRecentlyReportedWeapons();
-	const matches = useWatch<VodFormFields>({
-		name: "video.matches",
-	}) as VodFormFields["video"]["matches"];
+
+	const setWeapon = (value: MainWeaponId | null) => {
+		setItemField("weapon", value);
+		if (value) addRecentlyReportedWeapon(value);
+	};
+
+	const setTeamOneWeapon = (weaponIdx: number, value: MainWeaponId | null) => {
+		const currentPool = [...(matchValues.weaponsTeamOne || [])];
+		if (value) {
+			currentPool[weaponIdx] = { id: value, isFavorite: false };
+		} else {
+			currentPool.splice(weaponIdx, 1);
+		}
+		setItemField("weaponsTeamOne", currentPool);
+		if (value) addRecentlyReportedWeapon(value);
+	};
+
+	const setTeamTwoWeapon = (weaponIdx: number, value: MainWeaponId | null) => {
+		const currentPool = [...(matchValues.weaponsTeamTwo || [])];
+		if (value) {
+			currentPool[weaponIdx] = { id: value, isFavorite: false };
+		} else {
+			currentPool.splice(weaponIdx, 1);
+		}
+		setItemField("weaponsTeamTwo", currentPool);
+		if (value) addRecentlyReportedWeapon(value);
+	};
+
+	const copyFromPrevious = () => {
+		if (!previousWeapons) return;
+
+		if (videoType === "CAST") {
+			setItemField("weaponsTeamOne", [...previousWeapons.weaponsTeamOne]);
+			setItemField("weaponsTeamTwo", [...previousWeapons.weaponsTeamTwo]);
+		} else {
+			setItemField("weapon", previousWeapons.weapon);
+		}
+	};
+
+	const hasPreviousWeapons = previousWeapons
+		? videoType === "CAST"
+			? previousWeapons.weaponsTeamOne.length > 0 ||
+				previousWeapons.weaponsTeamTwo.length > 0
+			: previousWeapons.weapon !== null
+		: false;
 
 	return (
-		<Controller
-			control={useFormContext<VodFormFields>().control}
-			name={`video.matches.${idx}.weapons`}
-			render={({ field: { onChange, value } }) => {
-				const previousWeapons =
-					idx > 0 && matches?.[idx - 1]?.weapons
-						? matches[idx - 1].weapons
-						: null;
-				return (
-					<div>
-						{videoType === "CAST" ? (
-							<div>
-								<Label required>{t("vods:forms.title.weaponsTeamOne")}</Label>
-								<div className="stack sm">
-									{new Array(teamSize).fill(null).map((_, i) => {
-										return (
-											<WeaponSelect
-												key={i}
-												isRequired
-												testId={`player-${i}-weapon`}
-												value={value[i] ?? null}
-												quickSelectWeaponsIds={recentlyReportedWeapons}
-												onChange={(weaponId) => {
-													const weapons = [...value];
-													weapons[i] = weaponId;
-
-													onChange(weapons);
-													if (weaponId) {
-														addRecentlyReportedWeapon(weaponId);
-													}
-												}}
-											/>
-										);
-									})}
-								</div>
-								<div className="mt-4">
-									<Label required>{t("vods:forms.title.weaponsTeamTwo")}</Label>
-									<div className="stack sm">
-										{new Array(teamSize).fill(null).map((_, i) => {
-											const adjustedI = i + teamSize;
-											return (
-												<WeaponSelect
-													key={i}
-													isRequired
-													testId={`player-${adjustedI}-weapon`}
-													value={value[adjustedI] ?? null}
-													quickSelectWeaponsIds={recentlyReportedWeapons}
-													onChange={(weaponId) => {
-														const weapons = [...value];
-														weapons[adjustedI] = weaponId;
-
-														onChange(weapons);
-														if (weaponId) {
-															addRecentlyReportedWeapon(weaponId);
-														}
-													}}
-												/>
-											);
-										})}
-									</div>
-								</div>
-							</div>
-						) : (
+		<div>
+			{videoType === "CAST" ? (
+				<div>
+					<Label required>{t("forms:labels.vodWeaponsTeamOne")}</Label>
+					<div className="stack sm">
+						{new Array(teamSize).fill(null).map((_, i) => (
 							<WeaponSelect
-								label={t("vods:forms.title.weapon")}
+								key={i}
 								isRequired
-								testId={`match-${idx}-weapon`}
-								value={value[0] ?? null}
+								testId={`match-${index}-team1-weapon-${i}`}
+								value={
+									(matchValues.weaponsTeamOne[i]?.id as MainWeaponId) ?? null
+								}
 								quickSelectWeaponsIds={recentlyReportedWeapons}
-								onChange={(weaponId) => {
-									onChange([weaponId]);
-									if (weaponId) {
-										addRecentlyReportedWeapon(weaponId);
-									}
-								}}
+								onChange={(weaponId) => setTeamOneWeapon(i, weaponId)}
 							/>
-						)}
-						{previousWeapons && previousWeapons.length > 0 ? (
-							<SendouButton
-								variant="minimal"
-								size="miniscule"
-								onPress={() => {
-									onChange([...previousWeapons]);
-								}}
-								className="mt-2"
-							>
-								{t("vods:forms.action.copyFromPrevious")}
-							</SendouButton>
-						) : null}
+						))}
 					</div>
-				);
-			}}
-		/>
+					<div className="mt-4">
+						<Label required>{t("forms:labels.vodWeaponsTeamTwo")}</Label>
+						<div className="stack sm">
+							{new Array(teamSize).fill(null).map((_, i) => (
+								<WeaponSelect
+									key={i}
+									isRequired
+									testId={`match-${index}-team2-weapon-${i}`}
+									value={
+										(matchValues.weaponsTeamTwo[i]?.id as MainWeaponId) ?? null
+									}
+									quickSelectWeaponsIds={recentlyReportedWeapons}
+									onChange={(weaponId) => setTeamTwoWeapon(i, weaponId)}
+								/>
+							))}
+						</div>
+					</div>
+				</div>
+			) : (
+				<WeaponSelect
+					label={t("forms:labels.vodWeapon")}
+					isRequired
+					testId={`match-${index}-weapon`}
+					value={matchValues.weapon}
+					quickSelectWeaponsIds={recentlyReportedWeapons}
+					onChange={setWeapon}
+				/>
+			)}
+			{hasPreviousWeapons ? (
+				<SendouButton
+					variant="minimal"
+					size="miniscule"
+					onPress={copyFromPrevious}
+					className="mt-2"
+				>
+					{t("vods:forms.action.copyFromPrevious")}
+				</SendouButton>
+			) : null}
+		</div>
 	);
 }
 

@@ -22,3 +22,14 @@
 		width: 400px;
 	}
 }
+
+/** we should use existing fieldset styles */
+.matchFieldset {
+	border: 1px solid var(--bg-lighter);
+	border-radius: var(--rounded);
+	padding: var(--s-4);
+}
+
+.povField {
+	width: 100%;
+}

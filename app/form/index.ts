@@ -1,6 +1,6 @@
 // Form system exports
 
-export { FormField } from "./FormField";
+export { type CustomFieldRenderProps, FormField } from "./FormField";
 // Field builders
 export {
 	array,
@@ -51,6 +51,7 @@ export {
 } from "./SendouForm";
 // Types
 export type {
+	ArrayItemRenderContext,
 	FormField as FormFieldType,
 	FormFieldArray,
 	FormFieldDatetime,

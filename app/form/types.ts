@@ -137,6 +137,14 @@ interface FormFieldBadges<T extends string> extends FormFieldBase<T> {
 	maxCount?: number;
 }
 
+interface FormFieldStageSelect<T extends string> extends FormFieldBase<T> {
+	required: boolean;
+}
+
+interface FormFieldWeaponSelect<T extends string> extends FormFieldBase<T> {
+	required: boolean;
+}
+
 export type FormField<V extends string = string> =
 	| FormFieldBase<"custom">
 	| FormFieldText<"text-field">
@@ -158,7 +166,9 @@ export type FormField<V extends string = string> =
 	| FormFieldTimeRange<"time-range">
 	| FormFieldFieldset<"fieldset", z.ZodRawShape>
 	| FormFieldUserSearch<"user-search">
-	| FormFieldBadges<"badges">;
+	| FormFieldBadges<"badges">
+	| FormFieldStageSelect<"stage-select">
+	| FormFieldWeaponSelect<"weapon-select">;
 
 export type FormFieldProps<T extends FormField["type"]> = Omit<
 	Extract<FormField, { type: T }>,
@@ -168,3 +178,16 @@ export type FormFieldProps<T extends FormField["type"]> = Omit<
 	error?: string;
 	onBlur: (latestValue?: unknown) => void;
 };
+
+export interface ArrayItemRenderContext<
+	TItem = Record<string, unknown>,
+	TForm = Record<string, unknown>,
+> {
+	index: number;
+	itemName: string;
+	values: TItem;
+	formValues: TForm;
+	setItemField: <K extends keyof TItem>(field: K, value: TItem[K]) => void;
+	canRemove: boolean;
+	remove: () => void;
+}

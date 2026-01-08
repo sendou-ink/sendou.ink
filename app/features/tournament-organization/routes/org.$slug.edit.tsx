@@ -3,7 +3,7 @@ import { Link, useLoaderData } from "react-router";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { BadgesSelector } from "~/features/badges/components/BadgesSelector";
-import { FormField } from "~/form/FormField";
+import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import { uploadImagePage } from "~/utils/urls";
 import { action } from "../actions/org.$slug.edit.server";
@@ -55,7 +55,7 @@ export default function TournamentOrganizationEditPage() {
 				<FormField name="series" />
 				{/** xxx: this should not be needed (FormField to accept badgeOptions as arg) */}
 				<FormField name="badges">
-					{({ value, onChange }) => (
+					{({ value, onChange }: CustomFieldRenderProps) => (
 						<div>
 							<Label>{t("org:edit.form.badges.title")}</Label>
 							<BadgesSelector

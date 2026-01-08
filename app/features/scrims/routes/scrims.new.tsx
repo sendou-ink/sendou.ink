@@ -6,7 +6,7 @@ import type { z } from "zod";
 import { SendouDatePicker } from "~/components/elements/DatePicker";
 import { TournamentSearch } from "~/components/elements/TournamentSearch";
 import { Label } from "~/components/Label";
-import { FormField } from "~/form/FormField";
+import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { errorMessageId } from "~/form/utils";
@@ -66,14 +66,16 @@ export default function NewScrimPage() {
 				{({ names }) => (
 					<>
 						<FormField name={names.from}>
-							{(props) => <WithFormField usersTeams={data.teams} {...props} />}
+							{(props: CustomFieldRenderProps) => (
+								<WithFormField usersTeams={data.teams} {...props} />
+							)}
 						</FormField>
 
 						<FormField name={names.at} />
 						<FormField name={names.rangeEnd} />
 
 						<FormField name={names.baseVisibility}>
-							{(props) => (
+							{(props: CustomFieldRenderProps) => (
 								<BaseVisibilityFormField
 									associations={data.associations}
 									{...props}
