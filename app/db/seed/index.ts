@@ -176,6 +176,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	nzapUser,
 	users,
 	fixAdminId,
+	makeArtists,
 	adminUserWeaponPool,
 	userProfiles,
 	userMapModePreferences,
@@ -264,6 +265,8 @@ function wipeDB() {
 		"GroupMatchMap",
 		"GroupMatch",
 		"Group",
+		"TaggedArt",
+		"ArtTag",
 		"ArtUserMetadata",
 		"Art",
 		"UnvalidatedUserSubmittedImage",
@@ -345,6 +348,14 @@ function makeAdminVideoAdder() {
 function makeAdminTournamentOrganizer() {
 	sql
 		.prepare(`update "User" set "isTournamentOrganizer" = 1 where id = 1`)
+		.run();
+}
+
+function makeArtists() {
+	sql
+		.prepare(
+			`update "User" set "isArtist" = 1 where id in (${ADMIN_ID}, ${NZAP_TEST_ID})`,
+		)
 		.run();
 }
 
