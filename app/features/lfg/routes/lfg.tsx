@@ -1,11 +1,14 @@
 import { add, sub } from "date-fns";
-import React from "react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useFetcher, useLoaderData } from "react-router";
 import { AddNewButton } from "~/components/AddNewButton";
 import { Alert } from "~/components/Alert";
+import { SendouButton } from "~/components/elements/Button";
+import { FilterIcon } from "~/components/icons/Filter";
 import { Main } from "~/components/Main";
+import { SideNavPanel } from "~/components/SideNav";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useSearchParamStateEncoder } from "~/hooks/useSearchParamState";
@@ -15,17 +18,19 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
 import { LFG_PAGE, lfgNewPostPage, navIconUrl } from "~/utils/urls";
 import { action } from "../actions/lfg.server";
-import { LFGAddFilterButton } from "../components/LFGAddFilterButton";
-import { LFGFilters } from "../components/LFGFilters";
+import { LFGFiltersSideNav } from "../components/LFGFiltersSideNav";
 import { LFGPost } from "../components/LFGPost";
 import { filterPosts } from "../core/filtering";
 import { LFG } from "../lfg-constants";
 import {
-	filterToSmallStr,
-	type LFGFilter,
-	smallStrToFilter,
+	countActiveFilters,
+	DEFAULT_LFG_FILTERS,
+	decodeFiltersState,
+	encodeFiltersState,
+	type LFGFiltersState,
 } from "../lfg-types";
 import { loader } from "../loaders/lfg.server";
+import styles from "./lfg.module.css";
 export { loader, action };
 
 export const handle: SendouRouteHandle = {
@@ -54,33 +59,20 @@ export type TiersMap = ReturnType<typeof unserializeTiers>;
 const unserializeTiers = (data: SerializeFrom<typeof loader>) =>
 	new Map(data.tiersMap);
 
-function decodeURLQuery(queryString: string): LFGFilter[] {
-	if (queryString === "") {
-		return [];
-	}
-	return queryString
-		.split("-")
-		.map(smallStrToFilter)
-		.filter((x) => x !== null);
-}
-
-function encodeURLQuery(filters: LFGFilter[]): string {
-	return filters.map(filterToSmallStr).join("-");
-}
-
 export default function LFGPage() {
 	const { t } = useTranslation(["common", "lfg"]);
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
-	const [filterFromSearch, setTilterFromSearch] = useSearchParamStateEncoder({
-		defaultValue: [],
+	const [filterFromSearch, setFilterFromSearch] = useSearchParamStateEncoder({
+		defaultValue: DEFAULT_LFG_FILTERS,
 		name: "q",
-		revive: decodeURLQuery,
-		encode: encodeURLQuery,
+		revive: decodeFiltersState,
+		encode: encodeFiltersState,
 	});
-	const [filters, _setFilters] = React.useState<LFGFilter[]>(filterFromSearch);
-	const setFilters = (x: LFGFilter[]) => {
-		setTilterFromSearch(x);
+	const [filters, _setFilters] =
+		React.useState<LFGFiltersState>(filterFromSearch);
+	const setFilters = (x: LFGFiltersState) => {
+		setFilterFromSearch(x);
 		_setFilters(x);
 	};
 
@@ -101,28 +93,35 @@ export default function LFGPage() {
 		return true;
 	};
 
+	const activeFilterCount = countActiveFilters(filters);
+
 	return (
-		<Main className="stack xl">
+		<Main
+			className="stack xl"
+			sideNav={<LFGFiltersSideNav filters={filters} setFilters={setFilters} />}
+		>
 			<div className="stack sm horizontal justify-end">
-				<LFGAddFilterButton
-					addFilter={(newFilter) => setFilters([...filters, newFilter])}
-					filters={filters}
-				/>
+				<SideNavPanel
+					trigger={
+						<SendouButton
+							variant="outlined"
+							size="small"
+							icon={<FilterIcon />}
+							className={styles.mobileFilterButton}
+						>
+							{t("lfg:filters.button")}
+							{activeFilterCount > 0 ? ` (${activeFilterCount})` : null}
+						</SendouButton>
+					}
+				>
+					<LFGFiltersSideNav
+						filters={filters}
+						setFilters={setFilters}
+						showClose
+					/>
+				</SideNavPanel>
 				<AddNewButton navIcon="lfg" to={lfgNewPostPage()} />
 			</div>
-			<LFGFilters
-				filters={filters}
-				changeFilter={(newFilter) =>
-					setFilters(
-						filters.map((filter) =>
-							filter._tag === newFilter._tag ? newFilter : filter,
-						),
-					)
-				}
-				removeFilterByTag={(tag) =>
-					setFilters(filters.filter((filter) => filter._tag !== tag))
-				}
-			/>
 			{filteredPosts.map((post) => (
 				<div key={post.id} className="stack sm">
 					{showExpiryAlert(post) ? <PostExpiryAlert postId={post.id} /> : null}

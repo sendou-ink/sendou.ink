@@ -4,116 +4,129 @@ import {
 	mainWeaponIds,
 	weaponIdToBaseWeaponId,
 } from "~/modules/in-game-lists/weapon-ids";
-import { assertUnreachable } from "~/utils/types";
-import type { LFGFilter } from "../lfg-types";
+import type { LFGFiltersState } from "../lfg-types";
 import type { LFGLoaderData, LFGLoaderPost, TiersMap } from "../routes/lfg";
 import { hourDifferenceBetweenTimezones } from "./timezone";
 
 export function filterPosts(
 	posts: LFGLoaderData["posts"],
-	filters: LFGFilter[],
+	filters: LFGFiltersState,
 	tiersMap: TiersMap,
 ) {
 	return posts.filter((post) => {
-		for (const filter of filters) {
-			if (!filterMatchesPost(post, filter, tiersMap)) return false;
-		}
+		if (!matchesTypeFilter(post, filters.type)) return false;
+		if (!matchesWeaponFilter(post, filters.weapon)) return false;
+		if (!matchesTimezoneFilter(post, filters.timezone)) return false;
+		if (!matchesLanguageFilter(post, filters.language)) return false;
+		if (!matchesPlusTierFilter(post, filters.plusTier)) return false;
+		if (!matchesMinTierFilter(post, filters.minTier, tiersMap)) return false;
+		if (!matchesMaxTierFilter(post, filters.maxTier, tiersMap)) return false;
 
 		return true;
 	});
 }
 
-function filterMatchesPost(
+function matchesTypeFilter(post: LFGLoaderPost, type: LFGFiltersState["type"]) {
+	if (type === null) return true;
+	return post.type === type;
+}
+
+function matchesWeaponFilter(
 	post: LFGLoaderPost,
-	filter: LFGFilter,
+	weapon: LFGFiltersState["weapon"],
+) {
+	if (weapon.length === 0) return true;
+	if (post.type === "COACH_FOR_TEAM") return true;
+
+	const weaponIdsWithRelated = weapon.flatMap(weaponIdToRelated);
+
+	return checkMatchesSomeUserInPost(post, (user) =>
+		user.weaponPool.some(({ weaponSplId }) =>
+			weaponIdsWithRelated.includes(weaponSplId),
+		),
+	);
+}
+
+function matchesTimezoneFilter(
+	post: LFGLoaderPost,
+	timezone: LFGFiltersState["timezone"],
+) {
+	if (timezone === null) return true;
+
+	const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+	return (
+		Math.abs(hourDifferenceBetweenTimezones(post.timezone, userTimezone)) <=
+		timezone
+	);
+}
+
+function matchesLanguageFilter(
+	post: LFGLoaderPost,
+	language: LFGFiltersState["language"],
+) {
+	if (language === null) return true;
+	return !!post.languages?.includes(language);
+}
+
+function matchesPlusTierFilter(
+	post: LFGLoaderPost,
+	plusTier: LFGFiltersState["plusTier"],
+) {
+	if (plusTier === null) return true;
+
+	return checkMatchesSomeUserInPost(
+		post,
+		(user) => user.plusTier !== null && user.plusTier <= plusTier,
+	);
+}
+
+function matchesMinTierFilter(
+	post: LFGLoaderPost,
+	minTier: LFGFiltersState["minTier"],
 	tiersMap: TiersMap,
 ) {
-	if (post.type === "COACH_FOR_TEAM") {
-		// not visible in the UI
-		if (
-			filter._tag === "Weapon" ||
-			filter._tag === "MaxTier" ||
-			filter._tag === "MinTier"
-		) {
-			return false;
+	if (minTier === null) return true;
+	if (post.type === "COACH_FOR_TEAM") return true;
+
+	return checkMatchesSomeUserInPost(post, (user) => {
+		const tiers = tiersMap.get(user.id);
+		if (!tiers) return false;
+
+		if (tiers.latest && compareTwoTiers(tiers.latest.name, minTier) <= 0) {
+			return true;
 		}
-	}
 
-	switch (filter._tag) {
-		case "Weapon": {
-			if (filter.weaponSplIds.length === 0) return true;
-
-			const weaponIdsWithRelated =
-				filter.weaponSplIds.flatMap(weaponIdToRelated);
-
-			return checkMatchesSomeUserInPost(post, (user) =>
-				user.weaponPool.some(({ weaponSplId }) =>
-					weaponIdsWithRelated.includes(weaponSplId),
-				),
-			);
+		if (tiers.previous && compareTwoTiers(tiers.previous.name, minTier) <= 0) {
+			return true;
 		}
-		case "Type":
-			return post.type === filter.type;
-		case "Timezone": {
-			const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-			return (
-				Math.abs(hourDifferenceBetweenTimezones(post.timezone, userTimezone)) <=
-				filter.maxHourDifference
-			);
+		return false;
+	});
+}
+
+function matchesMaxTierFilter(
+	post: LFGLoaderPost,
+	maxTier: LFGFiltersState["maxTier"],
+	tiersMap: TiersMap,
+) {
+	if (maxTier === null) return true;
+	if (post.type === "COACH_FOR_TEAM") return true;
+
+	return checkMatchesSomeUserInPost(post, (user) => {
+		const tiers = tiersMap.get(user.id);
+		if (!tiers) return false;
+
+		if (tiers.latest && compareTwoTiers(tiers.latest.name, maxTier) >= 0) {
+			return true;
 		}
-		case "Language":
-			return !!post.languages?.includes(filter.language);
-		case "PlusTier":
-			return checkMatchesSomeUserInPost(
-				post,
-				(user) => user.plusTier && user.plusTier <= filter.tier,
-			);
-		case "MaxTier":
-			return checkMatchesSomeUserInPost(post, (user) => {
-				const tiers = tiersMap.get(user.id);
-				if (!tiers) return false;
 
-				if (
-					tiers.latest &&
-					compareTwoTiers(tiers.latest.name, filter.tier) >= 0
-				) {
-					return true;
-				}
+		if (tiers.previous && compareTwoTiers(tiers.previous.name, maxTier) >= 0) {
+			return true;
+		}
 
-				if (
-					tiers.previous &&
-					compareTwoTiers(tiers.previous.name, filter.tier) >= 0
-				) {
-					return true;
-				}
-
-				return false;
-			});
-		case "MinTier":
-			return checkMatchesSomeUserInPost(post, (user) => {
-				const tiers = tiersMap.get(user.id);
-				if (!tiers) return false;
-
-				if (
-					tiers.latest &&
-					compareTwoTiers(tiers.latest.name, filter.tier) <= 0
-				) {
-					return true;
-				}
-
-				if (
-					tiers.previous &&
-					compareTwoTiers(tiers.previous.name, filter.tier) <= 0
-				) {
-					return true;
-				}
-
-				return false;
-			});
-		default:
-			assertUnreachable(filter);
-	}
+		return false;
+	});
 }
 
 const checkMatchesSomeUserInPost = (

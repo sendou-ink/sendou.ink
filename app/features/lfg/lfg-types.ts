@@ -1,51 +1,26 @@
 import { LFG_TYPES, type LFGType } from "~/db/tables";
 import { languagesUnified } from "~/modules/i18n/config";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { assertUnreachable } from "~/utils/types";
 import { TIERS, type TierName } from "../mmr/mmr-constants";
 
-export type LFGFilter =
-	| WeaponFilter
-	| TypeFilter
-	| TimezoneFilter
-	| LanguageFilter
-	| PlusTierFilter
-	| MaxTierFilter
-	| MinTierFilter;
-
-type WeaponFilter = {
-	_tag: "Weapon";
-	weaponSplIds: MainWeaponId[];
+export type LFGFiltersState = {
+	weapon: MainWeaponId[];
+	type: LFGType | null;
+	timezone: number | null;
+	language: string | null;
+	plusTier: number | null;
+	minTier: TierName | null;
+	maxTier: TierName | null;
 };
 
-type TypeFilter = {
-	_tag: "Type";
-	type: LFGType;
-};
-
-type TimezoneFilter = {
-	_tag: "Timezone";
-	maxHourDifference: number;
-};
-
-type LanguageFilter = {
-	_tag: "Language";
-	language: string;
-};
-
-type PlusTierFilter = {
-	_tag: "PlusTier";
-	tier: number;
-};
-
-type MaxTierFilter = {
-	_tag: "MaxTier";
-	tier: TierName;
-};
-
-type MinTierFilter = {
-	_tag: "MinTier";
-	tier: TierName;
+export const DEFAULT_LFG_FILTERS: LFGFiltersState = {
+	weapon: [],
+	type: null,
+	timezone: null,
+	language: null,
+	plusTier: null,
+	minTier: null,
+	maxTier: null,
 };
 
 const typeToNum = new Map(LFG_TYPES.map((tier, index) => [tier, `${index}`]));
@@ -64,92 +39,111 @@ const numToTier = new Map(
 	Array.from(tierToNum).map(([tier, num]) => [`${num}`, tier]),
 );
 
-export function filterToSmallStr(filter: LFGFilter): string {
-	switch (filter._tag) {
-		case "Weapon": {
-			const weapons = filter.weaponSplIds.map((wid) => `${wid}`).join(",");
-			return `w.${weapons}`;
-		}
-		case "Type":
-			return `t.${typeToNum.get(filter.type)}`;
-		case "Timezone":
-			return `tz.${filter.maxHourDifference}`;
-		case "Language":
-			return `l.${filter.language}`;
-		case "PlusTier":
-			return `pt.${filter.tier}`;
-		case "MaxTier":
-			return `mx.${tierToNum.get(filter.tier)}`;
-		case "MinTier":
-			return `mn.${tierToNum.get(filter.tier)}`;
-		default:
-			assertUnreachable(filter);
+export function encodeFiltersState(filters: LFGFiltersState): string {
+	const parts: string[] = [];
+
+	if (filters.weapon.length > 0) {
+		parts.push(`w.${filters.weapon.join(",")}`);
 	}
+	if (filters.type !== null) {
+		parts.push(`t.${typeToNum.get(filters.type)}`);
+	}
+	if (filters.timezone !== null) {
+		parts.push(`tz.${filters.timezone}`);
+	}
+	if (filters.language !== null) {
+		parts.push(`l.${filters.language}`);
+	}
+	if (filters.plusTier !== null) {
+		parts.push(`pt.${filters.plusTier}`);
+	}
+	if (filters.minTier !== null) {
+		parts.push(`mn.${tierToNum.get(filters.minTier)}`);
+	}
+	if (filters.maxTier !== null) {
+		parts.push(`mx.${tierToNum.get(filters.maxTier)}`);
+	}
+
+	return parts.join("-");
 }
 
-export function smallStrToFilter(s: string): LFGFilter | null {
-	const [tag, val] = s.split(".");
-	if (!tag || !val) return null;
+export function countActiveFilters(filters: LFGFiltersState): number {
+	let count = 0;
+	if (filters.weapon.length > 0) count++;
+	if (filters.type !== null) count++;
+	if (filters.timezone !== null) count++;
+	if (filters.language !== null) count++;
+	if (filters.plusTier !== null) count++;
+	if (filters.minTier !== null) count++;
+	if (filters.maxTier !== null) count++;
+	return count;
+}
 
-	switch (tag) {
-		case "w": {
-			const weaponIds = val
-				.split(",")
-				.map((x) => Number.parseInt(x, 10) as MainWeaponId)
-				.filter((x) => x !== null && x !== undefined);
-			if (weaponIds.length === 0) return null;
-			return {
-				_tag: "Weapon",
-				weaponSplIds: weaponIds,
-			};
-		}
-		case "t": {
-			const filterType = numToType.get(val);
-			if (!filterType) return null;
-			return {
-				_tag: "Type",
-				type: filterType,
-			};
-		}
-		case "tz": {
-			const n = Number.parseInt(val, 10);
-			if (Number.isNaN(n)) return null;
-			return {
-				_tag: "Timezone",
-				maxHourDifference: n,
-			};
-		}
-		case "l": {
-			if (!languagesUnified.some((lang) => lang.code === val)) return null;
-			return {
-				_tag: "Language",
-				language: val,
-			};
-		}
-		case "pt": {
-			const n = Number.parseInt(val, 10);
-			if (Number.isNaN(n)) return null;
-			return {
-				_tag: "PlusTier",
-				tier: n,
-			};
-		}
-		case "mx": {
-			const tier = numToTier.get(val);
-			if (!tier) return null;
-			return {
-				_tag: "MaxTier",
-				tier: tier,
-			};
-		}
-		case "mn": {
-			const tier = numToTier.get(val);
-			if (!tier) return null;
-			return {
-				_tag: "MinTier",
-				tier: tier,
-			};
+export function decodeFiltersState(queryString: string): LFGFiltersState {
+	const result: LFGFiltersState = { ...DEFAULT_LFG_FILTERS };
+
+	if (queryString === "") {
+		return result;
+	}
+
+	for (const part of queryString.split("-")) {
+		const [tag, val] = part.split(".");
+		if (!tag || !val) continue;
+
+		switch (tag) {
+			case "w": {
+				const weaponIds = val
+					.split(",")
+					.map((x) => Number.parseInt(x, 10) as MainWeaponId)
+					.filter((x) => !Number.isNaN(x));
+				if (weaponIds.length > 0) {
+					result.weapon = weaponIds;
+				}
+				break;
+			}
+			case "t": {
+				const filterType = numToType.get(val);
+				if (filterType) {
+					result.type = filterType;
+				}
+				break;
+			}
+			case "tz": {
+				const n = Number.parseInt(val, 10);
+				if (!Number.isNaN(n)) {
+					result.timezone = n;
+				}
+				break;
+			}
+			case "l": {
+				if (languagesUnified.some((lang) => lang.code === val)) {
+					result.language = val;
+				}
+				break;
+			}
+			case "pt": {
+				const n = Number.parseInt(val, 10);
+				if (!Number.isNaN(n)) {
+					result.plusTier = n;
+				}
+				break;
+			}
+			case "mx": {
+				const tier = numToTier.get(val);
+				if (tier) {
+					result.maxTier = tier;
+				}
+				break;
+			}
+			case "mn": {
+				const tier = numToTier.get(val);
+				if (tier) {
+					result.minTier = tier;
+				}
+				break;
+			}
 		}
 	}
-	return null;
+
+	return result;
 }

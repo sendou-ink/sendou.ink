@@ -1,0 +1,16 @@
+.filterSection {
+	padding: var(--s-1) var(--s-2);
+	padding-block-end: var(--s-2-5);
+}
+
+.filterSection select,
+.filterSection input {
+	width: 100%;
+}
+
+.weaponBadges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1);
+	margin-top: var(--s-1);
+}

@@ -27,6 +27,13 @@
 	}
 }
 
+.selectValue {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+}
+
 .selectValue[data-placeholder] {
 	color: var(--color-text-high);
 }

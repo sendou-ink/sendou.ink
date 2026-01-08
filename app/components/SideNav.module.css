@@ -21,21 +21,30 @@
 
 .sideNavHeader {
 	color: var(--color-text-high);
-	padding: var(--s-2-5) var(--s-2);
+	padding: var(--s-1-5) var(--s-2);
 	margin-inline: calc(-1 * var(--s-1-5));
-	background-color: var(--color-border);
+	background-color: var(--color-bg);
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
+	border-color: var(--color-border);
+	border-top: 1.5px solid var(--color-border);
+	border-bottom: 1.5px solid var(--color-border);
 }
 
 .sideNavHeader:first-child {
 	margin-block-start: calc(-1 * var(--s-1-5));
+	border-top: none;
 }
 
 .sideNavHeader h2 {
 	font-size: var(--fonts-xs);
 	font-weight: var(--bold);
+}
+
+.sideNavHeaderClose {
+	margin-inline-start: auto;
+	margin-inline-end: var(--s-1);
 }
 
 .sideNavHeader svg {
@@ -125,4 +134,52 @@
 	padding: 0 var(--s-1);
 	border-radius: var(--rounded-xs);
 	flex-shrink: 0;
+}
+
+.sideNavPanelOverlay {
+	position: fixed;
+	inset: 0;
+	z-index: 10;
+	background-color: rgba(0, 0, 0, 0.25);
+	backdrop-filter: blur(10px);
+}
+
+.sideNavPanelOverlay[data-entering] {
+	animation: fade-in 200ms ease-out;
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.sideNavPanel {
+	position: fixed;
+	top: 50%;
+	left: 0;
+	transform: translateY(-50%);
+	max-height: 90vh;
+	overflow-y: auto;
+	border-radius: var(--rounded);
+}
+
+.sideNavPanel[data-entering] {
+	animation: slide-in-left 200ms ease-out;
+}
+
+@keyframes slide-in-left {
+	from {
+		transform: translateX(-100%) translateY(-50%);
+	}
+	to {
+		transform: translateX(0) translateY(-50%);
+	}
+}
+
+.sideNavPanelDialog {
+	outline: none;
 }
