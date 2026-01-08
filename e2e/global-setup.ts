@@ -6,9 +6,55 @@ import { E2E_BASE_PORT } from "~/utils/playwright";
 const WORKER_COUNT = Number(process.env.E2E_WORKERS) || 4;
 const DEBUG = process.env.E2E_DEBUG === "true";
 const SERVER_PROCESSES: ChildProcess[] = [];
+const MINIO_MARKER_FILE = ".e2e-minio-started";
 
 declare global {
 	var __E2E_SERVERS__: ChildProcess[];
+}
+
+async function waitForMinio(timeout = 60000): Promise<boolean> {
+	const start = Date.now();
+	while (Date.now() - start < timeout) {
+		try {
+			const response = await fetch("http://127.0.0.1:9000/minio/health/live");
+			if (response.ok) {
+				return true;
+			}
+		} catch {
+			// MinIO not ready yet
+		}
+		await new Promise((resolve) => setTimeout(resolve, 1000));
+	}
+	return false;
+}
+
+async function ensureMinioRunning(): Promise<boolean> {
+	// Check if MinIO is already running
+	try {
+		const response = await fetch("http://127.0.0.1:9000/minio/health/live");
+		if (response.ok) {
+			// biome-ignore lint/suspicious/noConsole: CLI script output
+			console.log("MinIO is already running");
+			return false;
+		}
+	} catch {
+		// MinIO not running, we need to start it
+	}
+
+	// biome-ignore lint/suspicious/noConsole: CLI script output
+	console.log("Starting MinIO...");
+	execSync("docker compose up -d minio", { stdio: "inherit" });
+
+	const isReady = await waitForMinio();
+	if (!isReady) {
+		throw new Error("MinIO failed to start within timeout");
+	}
+
+	// biome-ignore lint/suspicious/noConsole: CLI script output
+	console.log("MinIO is ready");
+
+	fs.writeFileSync(MINIO_MARKER_FILE, "");
+	return true;
 }
 
 function killProcessOnPort(port: number): void {
@@ -42,6 +88,9 @@ async function waitForServer(port: number, timeout = 120000): Promise<void> {
 async function globalSetup(_config: FullConfig) {
 	// biome-ignore lint/suspicious/noConsole: CLI script output
 	console.log(`\nStarting e2e test setup with ${WORKER_COUNT} workers...`);
+
+	// Start MinIO if not already running
+	await ensureMinioRunning();
 
 	// Build the app once with E2E test flag so VITE_E2E_TEST_RUN is embedded
 	// Use port 6173 as the base - tests will rewrite URLs as needed
@@ -92,6 +141,11 @@ async function globalSetup(_config: FullConfig) {
 				SESSION_SECRET: "secret",
 				VITE_SITE_DOMAIN: `http://localhost:${port}`,
 				VITE_E2E_TEST_RUN: "true",
+				STORAGE_END_POINT: "http://127.0.0.1:9000",
+				STORAGE_ACCESS_KEY: "minio-user",
+				STORAGE_SECRET: "minio-password",
+				STORAGE_REGION: "us-east-1",
+				STORAGE_BUCKET: "sendou",
 			},
 			detached: false,
 		});
