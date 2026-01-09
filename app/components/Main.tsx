@@ -27,7 +27,7 @@ export const Main = ({
 		!isMinorSupporter &&
 		!isRouteErrorResponse(error);
 
-	const mainElement = (
+	return (
 		<main
 			className={
 				classNameOverwrite
@@ -51,8 +51,6 @@ export const Main = ({
 			{children}
 		</main>
 	);
-
-	return <div className={styles.container}>{mainElement}</div>;
 };
 
 export { styles as mainStyles };
