@@ -101,6 +101,7 @@ export function AnythingAdder() {
 
 	return (
 		<SendouMenu
+			placement="bottom right"
 			trigger={
 				<SendouButton
 					size="small"

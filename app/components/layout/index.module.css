@@ -19,10 +19,6 @@
 	z-index: 10;
 }
 
-.itemSize {
-	--item-size: var(--input-height-small);
-}
-
 .siteTitle {
 	display: flex;
 	align-items: center;

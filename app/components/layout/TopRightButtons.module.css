@@ -8,8 +8,8 @@
 	display: grid;
 	place-items: center;
 	background-color: var(--color-bg);
-	width: var(--item-size);
-	height: var(--item-size);
+	width: var(--input-height-small);
+	height: var(--input-height-small);
 	padding: 0.25rem;
 	border: 2px solid var(--color-border);
 	border-radius: 50%;

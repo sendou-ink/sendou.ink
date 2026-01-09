@@ -5,6 +5,7 @@ import {
 	type MenuItemProps,
 	MenuTrigger,
 	Popover,
+	type PopoverProps,
 } from "react-aria-components";
 import { Image } from "../Image";
 import styles from "./Menu.module.css";
@@ -14,6 +15,8 @@ interface SendouMenuProps {
 	scrolling?: boolean;
 	opensLeft?: boolean;
 	children: React.ReactNode;
+	popoverClassName?: string;
+	placement?: PopoverProps["placement"];
 }
 
 export function SendouMenu({
@@ -21,17 +24,19 @@ export function SendouMenu({
 	trigger,
 	opensLeft,
 	scrolling,
+	placement
 }: SendouMenuProps) {
 	return (
 		<MenuTrigger>
 			{trigger}
 			<Popover
-				className={clsx(styles.itemsContainer, {
+				placement={placement}
+				className={clsx(styles.popover, "scrollbar", {
 					[styles.scrolling]: scrolling,
-					[styles.itemsContainerOpensLeft]: !opensLeft,
+					[styles.popoverOpensLeft]: !opensLeft,
 				})}
 			>
-				<Menu>{children}</Menu>
+				<Menu className={styles.itemsContainer}>{children}</Menu>
 			</Popover>
 		</MenuTrigger>
 	);
@@ -68,8 +73,8 @@ export function SendouMenuItem(props: SendouMenuItemProps) {
 					<Image
 						path={props.imagePath}
 						alt=""
-						width={24}
-						height={24}
+						width={20}
+						height={20}
 						className={styles.itemImg}
 					/>
 				) : null}

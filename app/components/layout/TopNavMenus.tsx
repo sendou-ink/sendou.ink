@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { useState } from "react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
@@ -120,7 +121,7 @@ function WeaponsMenu() {
 			trigger={
 				<Button className={styles.menuButton}>{t("front:nav.weapons")}</Button>
 			}
-			popoverClassName={styles.weaponsPopover}
+			popoverClassName={clsx(styles.weaponsPopover, "scrollbar")}
 			placement="bottom"
 			isOpen={isOpen}
 			onOpenChange={setIsOpen}

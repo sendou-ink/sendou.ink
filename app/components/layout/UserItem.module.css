@@ -8,14 +8,14 @@
 }
 
 .avatar {
-	width: var(--item-size);
-	height: var(--item-size);
+	width: var(--input-height-small);
+	height: var(--input-height-small);
 	color: transparent;
 }
 
 .logInButton {
 	display: flex;
-	height: var(--item-size);
+	height: var(--input-height-small);
 	align-items: center;
 	justify-content: center;
 	padding: 0.5rem;

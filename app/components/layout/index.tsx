@@ -221,7 +221,7 @@ export function Layout({
 				))}
 			</SideNav>
 			<div className={styles.container}>
-				<header className={clsx(styles.header, styles.itemSize)}>
+				<header className={styles.header}>
 					<TopNavMenus />
 					<TopRightButtons
 						showSupport={Boolean(

@@ -7,9 +7,10 @@
 .menuButton {
 	display: flex;
 	align-items: center;
-	padding: var(--s-1) var(--s-2);
+	padding: 0 var(--s-2);
+	height: var(--input-height-small);
 	border: none;
-	border-radius: var(--rounded-xs);
+	border-radius: var(--rounded-sm);
 	background: transparent;
 	color: var(--color-text);
 	font-size: var(--fonts-xs);
@@ -24,7 +25,6 @@
 }
 
 .menuPopover {
-	min-width: 10rem;
 	background-color: var(--color-bg-high);
 }
 
@@ -48,7 +48,8 @@
 		background-color 0.15s,
 		color 0.15s;
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-higher);
 	}
 }
@@ -58,15 +59,16 @@
 }
 
 .weaponsPopover {
-	max-width: 90vw;
+	max-width: 90dvw;
 	width: 680px;
 	background-color: var(--color-bg-high);
+	overflow-y: auto;
 }
 
 .weaponsContent {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
-	gap: var(--s-3);
+	gap: var(--s-8) var(--s-4);
 }
 
 .weaponCategory {

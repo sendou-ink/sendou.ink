@@ -2,19 +2,20 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
-	padding: var(--s-1) var(--s-3);
+	padding: 0 var(--s-3);
 	border: 1px solid var(--color-border);
-	border-radius: var(--rounded);
-	background-color: transparent;
-	color: var(--color-text-lighter);
+	border-radius: var(--rounded-sm);
+	background-color: var(--color-bg);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xs);
 	cursor: pointer;
 	min-width: 180px;
-	height: var(--item-size);
+	height: var(--input-height-small);
+	transition: background-color 0.15s;
 }
 
 .searchButton:hover {
-	background-color: var(--color-bg-higher);
+	background-color: var(--color-bg-high);
 }
 
 .searchButton:focus-visible {
@@ -36,7 +37,7 @@
 .searchKbd {
 	padding: 2px var(--s-1);
 	border: 1px solid var(--color-border);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--rounded-sm);
 	font-size: var(--fonts-xxs);
 	background-color: var(--color-bg-higher);
 	font-family: inherit;
