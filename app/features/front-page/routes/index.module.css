@@ -307,7 +307,7 @@
 }
 
 .filterBtn {
-	background-color: var(--color-bg-higher);
+	background-color: var(--color-bg-high);
 	border: none;
 	border-radius: var(--rounded);
 	padding: var(--s-1-5) var(--s-3);
@@ -318,17 +318,13 @@
 	transition: background-color 0.15s ease;
 }
 
-.filterBtn:hover {
+.filterBtn:hover:not(.filterBtnActive) {
 	background-color: var(--color-border);
 }
 
 .filterBtnActive {
-	background-color: var(--color-accent);
+	background-color: var(--color-text-accent);
 	color: var(--color-text-inverse);
-}
-
-.filterBtnActive:hover {
-	background-color: var(--color-accent);
 }
 
 .feedPosts {

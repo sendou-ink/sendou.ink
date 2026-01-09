@@ -6,12 +6,12 @@
 
 .leftColumn {
 	position: sticky;
-	top: 2rem;
+	top: calc(var(--layout-nav-height) + var(--s-8));
 	display: flex;
 	height: max-content;
 	flex-direction: column;
 	align-items: center;
-	gap: var(--s-8);
+	gap: var(--s-4);
 }
 
 .apCompare {

@@ -1,5 +1,4 @@
 .sideNav {
-	--layout-footer-height: 52px;
 	background-color: var(--color-bg);
 	min-width: var(--layout-sidenav-width);
 	max-width: var(--layout-sidenav-width);
@@ -31,11 +30,11 @@
 	padding: var(--s-1-5);
 	padding-block-end: var(--s-2);
 	overflow-y: auto;
-	height: calc(100dvh - var(--layout-nav-height) - var(--layout-footer-height));
+	height: calc(100dvh - (var(--layout-nav-height) * 2));
 }
 
 .sideNavFooter {
-	height: var(--layout-footer-height);
+	height: var(--layout-nav-height);
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
@@ -80,8 +79,8 @@
 	display: grid;
 	place-items: center;
 	background-color: transparent;
-	width: 32px;
-	height: 32px;
+	width: var(--input-height-small);
+	height: var(--input-height-small);
 	padding: 0;
 	border: none;
 	border-radius: var(--rounded-xs);
@@ -229,8 +228,8 @@
 	margin-left: auto;
 	font-size: var(--fonts-xxxs);
 	font-weight: var(--semi-bold);
-	color: var(--color-accent-low);
-	background-color: var(--color-accent-high);
+	color: var(--color-text-inverse);
+	background-color: var(--color-text-accent);
 	padding: 0 var(--s-1);
 	border-radius: var(--rounded-xs);
 	flex-shrink: 0;
