@@ -36,6 +36,29 @@ export function findAllUndisbanded() {
 		.execute();
 }
 
+export function searchByName({
+	query,
+	limit,
+}: {
+	query: string;
+	limit: number;
+}) {
+	return db
+		.selectFrom("Team")
+		.leftJoin("UserSubmittedImage", "UserSubmittedImage.id", "Team.avatarImgId")
+		.select(({ eb }) => [
+			"Team.customUrl",
+			"Team.name",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"avatarUrl",
+			),
+		])
+		.where("Team.name", "like", `%${query}%`)
+		.orderBy("Team.name", "asc")
+		.limit(limit)
+		.execute();
+}
+
 export function findAllMemberOfByUserId(userId: number) {
 	return db
 		.selectFrom("TeamMemberWithSecondary")

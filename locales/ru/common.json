@@ -331,5 +331,11 @@
 	"api.regenerate.confirm": "",
 	"api.generate": "",
 	"search": "",
-	"search.placeholder": ""
+	"search.placeholder": "",
+	"search.type.users": "",
+	"search.type.teams": "",
+	"search.type.organizations": "",
+	"search.type.tournaments": "",
+	"search.noResults": "",
+	"search.hint": ""
 }

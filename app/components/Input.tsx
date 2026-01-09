@@ -23,6 +23,7 @@ export function Input({
 	onChange,
 	disableAutoComplete = false,
 	readOnly,
+	ref,
 }: {
 	name?: string;
 	id?: string;
@@ -45,6 +46,7 @@ export function Input({
 	onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 	disableAutoComplete?: boolean;
 	readOnly?: boolean;
+	ref?: React.Ref<HTMLInputElement>;
 }) {
 	return (
 		<div
@@ -54,6 +56,7 @@ export function Input({
 		>
 			{leftAddon ? <div className={styles.addon}>{leftAddon}</div> : null}
 			<input
+				ref={ref}
 				className="in-container"
 				name={name}
 				id={id}

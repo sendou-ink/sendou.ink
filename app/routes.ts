@@ -39,6 +39,8 @@ export default [
 
 	route("/u", "features/user-search/routes/u.tsx"),
 
+	route("/search", "features/search/routes/search.ts"),
+
 	route("/u/:identifier", "features/user-page/routes/u.$identifier.tsx", [
 		index("features/user-page/routes/u.$identifier.index.tsx"),
 		route("art", "features/user-page/routes/u.$identifier.art.tsx"),

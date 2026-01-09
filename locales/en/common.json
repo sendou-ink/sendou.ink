@@ -328,5 +328,11 @@
 	"api.regenerate.confirm": "Confirm Regenerate",
 	"api.generate": "Generate Token",
 	"search": "Search",
-	"search.placeholder": "Search..."
+	"search.placeholder": "Search...",
+	"search.type.users": "Users",
+	"search.type.teams": "Teams",
+	"search.type.organizations": "Organizations",
+	"search.type.tournaments": "Tournaments",
+	"search.noResults": "No results found",
+	"search.hint": "Start typing to search"
 }

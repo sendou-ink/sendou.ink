@@ -84,7 +84,7 @@
 	padding: 0;
 	border: none;
 	border-radius: var(--rounded-xs);
-	color: var(--color-text-lighter);
+	color: var(--color-text-high);
 	cursor: pointer;
 }
 
@@ -218,7 +218,7 @@
 
 .sideNavLinkSubtitle {
 	font-size: var(--fonts-xxs);
-	color: var(--color-text-lighter);
+	color: var(--color-text-high);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;

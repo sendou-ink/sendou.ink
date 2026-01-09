@@ -98,32 +98,26 @@
 	outline: none;
 }
 
-.inputContainer {
-	display: flex;
-	align-items: center;
-	gap: var(--s-3);
+.input {
 	padding: var(--s-4);
+	border: none;
 	border-bottom: 1px solid var(--color-border);
+	border-radius: 0;
+	background: transparent;
+	font-size: var(--fonts-md);
+	color: var(--color-text);
+	height: auto;
+
+	& input::placeholder {
+		color: var(--color-text-high);
+	}
 }
 
 .inputIcon {
 	width: 20px;
 	height: 20px;
-	color: var(--color-text-lighter);
+	color: var(--color-text-high);
 	flex-shrink: 0;
-}
-
-.input {
-	flex-grow: 1;
-	border: none;
-	background: transparent;
-	font-size: var(--fonts-md);
-	color: var(--color-text);
-	outline: none;
-}
-
-.input::placeholder {
-	color: var(--color-text-lighter);
 }
 
 .listBox {
@@ -147,4 +141,86 @@
 
 .listBoxItem[data-selected] {
 	background-color: var(--color-accent-low);
+}
+
+.searchTypeContainer {
+	padding: var(--s-2) var(--s-4);
+	border-bottom: 1px solid var(--color-border);
+}
+
+.searchTypeRadioGroup {
+	display: flex;
+	gap: var(--s-2);
+}
+
+.searchTypeRadioWrapper {
+	outline: none;
+}
+
+.searchTypeRadio {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	padding: var(--s-1) var(--s-2);
+	border-radius: var(--rounded-sm);
+	font-size: var(--fonts-xs);
+	cursor: pointer;
+	border: 1px solid var(--color-border);
+	background-color: var(--color-bg);
+	transition:
+		background-color 0.15s,
+		border-color 0.15s;
+}
+
+.searchTypeRadioSelected {
+	background-color: var(--color-accent);
+	border-color: var(--color-accent);
+	color: var(--color-bg);
+}
+
+.searchTypeRadioHovered {
+	background-color: var(--color-bg-higher);
+}
+
+.searchTypeRadioFocusVisible {
+	outline: var(--input-focus-ring);
+	outline-offset: 1px;
+}
+
+.resultItem {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.resultTexts {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.resultName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.resultSecondary {
+	font-size: var(--fonts-xs);
+	color: var(--color-text-high);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.resultLogo {
+	border-radius: var(--rounded-xs);
+	object-fit: cover;
+}
+
+.emptyState {
+	padding: var(--s-8);
+	text-align: center;
+	color: var(--color-text-high);
+	font-size: var(--fonts-sm);
 }

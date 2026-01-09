@@ -277,7 +277,7 @@
 
 .sideNavEmpty {
 	font-size: var(--fonts-xs);
-	color: var(--color-text-lighter);
+	color: var(--color-text-high);
 	padding: var(--s-1) var(--s-2);
 }
 

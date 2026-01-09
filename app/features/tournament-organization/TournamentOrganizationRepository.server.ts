@@ -158,6 +158,34 @@ export function findByUserId(
 		.execute();
 }
 
+export function searchByName({
+	query,
+	limit,
+}: {
+	query: string;
+	limit: number;
+}) {
+	return db
+		.selectFrom("TournamentOrganization")
+		.leftJoin(
+			"UserSubmittedImage",
+			"UserSubmittedImage.id",
+			"TournamentOrganization.avatarImgId",
+		)
+		.select(({ eb }) => [
+			"TournamentOrganization.id",
+			"TournamentOrganization.name",
+			"TournamentOrganization.slug",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"avatarUrl",
+			),
+		])
+		.where("TournamentOrganization.name", "like", `%${query}%`)
+		.orderBy("TournamentOrganization.name", "asc")
+		.limit(limit)
+		.execute();
+}
+
 interface FindEventsByMonthArgs {
 	month: number;
 	year: number;

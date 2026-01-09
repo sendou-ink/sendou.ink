@@ -54,7 +54,7 @@
 
 .separator {
 	font-size: var(--fonts-xs);
-	color: var(--color-text-lighter);
+	color: var(--color-text-high);
 	font-weight: var(--bold);
 	opacity: 0.5;
 	animation: fadeIn 200ms ease-out 150ms both;
@@ -164,6 +164,6 @@
 
 .sideNavEmpty {
 	font-size: var(--fonts-xs);
-	color: var(--color-text-lighter);
+	color: var(--color-text-high);
 	padding: var(--s-1) var(--s-2);
 }

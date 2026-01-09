@@ -24,7 +24,7 @@ export function SendouMenu({
 	trigger,
 	opensLeft,
 	scrolling,
-	placement
+	placement,
 }: SendouMenuProps) {
 	return (
 		<MenuTrigger>
