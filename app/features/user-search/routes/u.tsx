@@ -41,6 +41,7 @@ export const meta: MetaFunction = (args) => {
 	});
 };
 
+// xxx: deprecate page
 export default function UserSearchPage() {
 	const { t } = useTranslation(["user"]);
 	const [searchParams, setSearchParams] = useSearchParams();
