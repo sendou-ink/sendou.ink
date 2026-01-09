@@ -18,6 +18,8 @@
 	"pages.support": "Support",
 	"pages.privacy": "Privacy Policy",
 	"pages.vods": "Videos",
+	"pages.popularBuilds": "Popular Builds",
+	"pages.abilityStats": "Ability Stats",
 	"pages.xsearch": "Top Search",
 	"pages.leaderboards": "Leaderboards",
 	"pages.links": "Links",
@@ -324,5 +326,7 @@
 	"api.regenerate.heading": "Regenerating will invalidate your current token. Any applications using the old token will stop working.",
 	"api.regenerate.button": "Regenerate token",
 	"api.regenerate.confirm": "Confirm Regenerate",
-	"api.generate": "Generate Token"
+	"api.generate": "Generate Token",
+	"search": "Search",
+	"search.placeholder": "Search..."
 }

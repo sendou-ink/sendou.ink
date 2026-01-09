@@ -1,4 +1,9 @@
 {
+	"nav.competition": "Competition",
+	"nav.tools": "Tools",
+	"nav.community": "Community",
+	"nav.more": "More",
+	"nav.weapons": "Weapons",
 	"sq.season": "Season {{nth}}",
 	"sq.prepare": "Prepare now!",
 	"sq.participate": "Participate now!",

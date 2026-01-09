@@ -1,8 +1,7 @@
 import clsx from "clsx";
 import * as React from "react";
-import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { useLocation, useMatches, useRevalidator } from "react-router";
+import { useMatches, useRevalidator } from "react-router";
 import {
 	NotificationItem,
 	NotificationItemDivider,
@@ -13,19 +12,16 @@ import type { RootLoaderData } from "~/root";
 import { NOTIFICATIONS_URL } from "~/utils/urls";
 import { useMarkNotificationsAsSeen } from "../../features/notifications/notifications-hooks";
 import { LinkButton, SendouButton } from "../elements/Button";
-import { SendouPopover } from "../elements/Popover";
 import { BellIcon } from "../icons/Bell";
 import { RefreshIcon } from "../icons/Refresh";
 
 import styles from "./NotificationPopover.module.css";
-import headerStyles from "./TopRightButtons.module.css";
 
 export type LoaderNotification = NonNullable<
 	RootLoaderData["notifications"]
 >[number];
 
-export function NotificationPopover() {
-	const location = useLocation();
+export function useNotifications() {
 	const [root] = useMatches();
 
 	const notifications = (root.data as RootLoaderData | undefined)
@@ -39,37 +35,17 @@ export function NotificationPopover() {
 		[notifications],
 	);
 
-	if (!notifications) {
-		return null;
-	}
-
-	return (
-		<div className={styles.container} key={location.pathname}>
-			{unseenIds.length > 0 ? <div className={styles.unseenDot} /> : null}
-			<SendouPopover
-				trigger={
-					<Button
-						className={headerStyles.button}
-						data-testid="notifications-button"
-					>
-						<BellIcon className={headerStyles.buttonIcon} />
-					</Button>
-				}
-				popoverClassName={clsx(styles.popoverContainer, {
-					[styles.noNotificationsContainer]:
-						!notifications || notifications.length === 0,
-				})}
-			>
-				<NotificationContent
-					notifications={notifications ?? []}
-					unseenIds={unseenIds}
-				/>
-			</SendouPopover>
-		</div>
-	);
+	return { notifications, unseenIds };
 }
 
-function NotificationContent({
+// xxx: probably makes no sense as a separate function
+export function notificationPopoverClassName(notificationsLength: number) {
+	return clsx(styles.popoverContainer, {
+		[styles.noNotificationsContainer]: notificationsLength === 0,
+	});
+}
+
+export function NotificationContent({
 	notifications,
 	unseenIds,
 }: {

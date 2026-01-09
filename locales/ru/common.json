@@ -18,6 +18,8 @@
 	"pages.support": "Поддержать",
 	"pages.privacy": "Политика конфиденциальности",
 	"pages.vods": "Видео",
+	"pages.popularBuilds": "",
+	"pages.abilityStats": "",
 	"pages.xsearch": "Топ по режиму",
 	"pages.leaderboards": "Таблицы лидеров",
 	"pages.links": "Ссылки",
@@ -327,5 +329,7 @@
 	"api.regenerate.heading": "",
 	"api.regenerate.button": "",
 	"api.regenerate.confirm": "",
-	"api.generate": ""
+	"api.generate": "",
+	"search": "",
+	"search.placeholder": ""
 }

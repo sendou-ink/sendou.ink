@@ -18,6 +18,8 @@
 	"pages.support": "Støt siden",
 	"pages.privacy": "Privatlivspolitik",
 	"pages.vods": "Videoer",
+	"pages.popularBuilds": "",
+	"pages.abilityStats": "",
 	"pages.xsearch": "X-kamp rangliste",
 	"pages.leaderboards": "Pointtavler",
 	"pages.links": "Link",
@@ -324,5 +326,7 @@
 	"api.regenerate.heading": "",
 	"api.regenerate.button": "",
 	"api.regenerate.confirm": "",
-	"api.generate": ""
+	"api.generate": "",
+	"search": "",
+	"search.placeholder": ""
 }

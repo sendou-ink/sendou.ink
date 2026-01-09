@@ -18,6 +18,8 @@
 	"pages.support": "赞助",
 	"pages.privacy": "隐私条款",
 	"pages.vods": "视频",
+	"pages.popularBuilds": "",
+	"pages.abilityStats": "",
 	"pages.xsearch": "X比赛排行榜",
 	"pages.leaderboards": "排行榜",
 	"pages.links": "链接",
@@ -320,5 +322,7 @@
 	"api.regenerate.heading": "",
 	"api.regenerate.button": "",
 	"api.regenerate.confirm": "",
-	"api.generate": ""
+	"api.generate": "",
+	"search": "",
+	"search.placeholder": ""
 }

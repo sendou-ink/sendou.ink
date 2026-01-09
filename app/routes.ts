@@ -160,6 +160,8 @@ export default [
 		]),
 	]),
 
+	route("/weapons/:slug", "features/weapons/routes/weapons.$slug.tsx"),
+
 	...prefix("/xsearch", [
 		index("features/top-search/routes/xsearch.tsx"),
 		route("/player/:id", "features/top-search/routes/xsearch.player.$id.tsx"),

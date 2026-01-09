@@ -1,3 +1,4 @@
+import cachified from "@epic-web/cachified";
 import clsx from "clsx";
 import generalI18next from "i18next";
 import NProgress from "nprogress";
@@ -28,9 +29,17 @@ import {
 } from "react-router";
 import { useDebounce } from "react-use";
 import { useChangeLanguage } from "remix-i18next/react";
+import type { Tables } from "~/db/tables";
+import * as Changelog from "~/features/front-page/core/Changelog.server";
+import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
+import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
+import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import { discordAvatarUrl, teamPage, userPage } from "~/utils/urls";
+import * as ShowcaseTournaments from "../app/features/front-page/core/ShowcaseTournaments.server";
 import type { Route } from "./+types/root";
 import { Catcher } from "./components/Catcher";
 import { SendouToastRegion, toastQueue } from "./components/elements/Toast";
@@ -52,15 +61,6 @@ import { i18nCookie, i18next } from "./modules/i18n/i18next.server";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { allI18nNamespaces } from "./utils/i18n";
 import { isRevalidation, metaTags, type SerializeFrom } from "./utils/remix";
-import cachified from "@epic-web/cachified";
-import type { Tables } from "~/db/tables";
-import * as Changelog from "~/features/front-page/core/Changelog.server";
-import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
-import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
-import * as Seasons from "~/features/mmr/core/Seasons";
-import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
-import { discordAvatarUrl, teamPage, userPage } from "~/utils/urls";
-import * as ShowcaseTournaments from "../app/features/front-page/core/ShowcaseTournaments.server";
 
 export const middleware: Route.MiddlewareFunction[] = [userMiddleware];
 
@@ -217,11 +217,9 @@ export const handle: SendouRouteHandle = {
 function Document({
 	children,
 	data,
-	isErrored = false,
 }: {
 	children: React.ReactNode;
 	data?: RootLoaderData;
-	isErrored?: boolean;
 }) {
 	const { htmlThemeClass } = useTheme();
 	const { i18n } = useTranslation();
@@ -267,9 +265,7 @@ function Document({
 						<I18nProvider locale={i18n.language}>
 							<SendouToastRegion />
 							<MyRamp data={data} />
-							<Layout data={data} isErrored={isErrored}>
-								{children}
-							</Layout>
+							<Layout data={data}>{children}</Layout>
 						</I18nProvider>
 					</RouterProvider>
 				</React.StrictMode>
@@ -417,7 +413,7 @@ export default function App() {
 export const ErrorBoundary = () => {
 	return (
 		<ThemeProvider themeSource="static" specifiedTheme={Theme.DARK}>
-			<Document isErrored>
+			<Document>
 				<Catcher />
 			</Document>
 		</ThemeProvider>

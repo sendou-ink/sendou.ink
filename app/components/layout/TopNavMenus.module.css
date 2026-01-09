@@ -1,0 +1,123 @@
+.container {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.menuButton {
+	display: flex;
+	align-items: center;
+	padding: var(--s-1) var(--s-2);
+	border: none;
+	border-radius: var(--rounded-xs);
+	background: transparent;
+	color: var(--color-text);
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.menuButton:focus-visible {
+	outline: var(--input-focus-ring);
+	outline-offset: 1px;
+}
+
+.menuPopover {
+	min-width: 10rem;
+	background-color: var(--color-bg-high);
+}
+
+.menuContent {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.menuItem {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-1-5) var(--s-2);
+	border-radius: var(--rounded-xs);
+	color: var(--color-text);
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	text-decoration: none;
+	transition:
+		background-color 0.15s,
+		color 0.15s;
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+}
+
+.menuItemIcon {
+	flex-shrink: 0;
+}
+
+.weaponsPopover {
+	max-width: 90vw;
+	width: 680px;
+	background-color: var(--color-bg-high);
+}
+
+.weaponsContent {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: var(--s-3);
+}
+
+.weaponCategory {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.weaponCategoryHeader {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--bold);
+	color: var(--color-text);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	padding-bottom: var(--s-0-5);
+	border-bottom: 1px solid var(--color-border-high);
+}
+
+.weaponGrid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-0-5);
+}
+
+.weaponLink {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--s-0-5);
+	border-radius: var(--rounded-xs);
+	transition:
+		background-color 0.15s,
+		color 0.15s;
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+}
+
+@media screen and (max-width: 900px) {
+	.container {
+		display: none;
+	}
+}
+
+@media screen and (max-width: 768px) {
+	.weaponsContent {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.weaponsPopover {
+		width: 450px;
+	}
+}

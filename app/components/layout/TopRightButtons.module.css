@@ -1,7 +1,7 @@
 .container {
 	display: flex;
 	gap: var(--s-3);
-	justify-self: flex-end;
+	margin-left: auto;
 }
 
 .button {

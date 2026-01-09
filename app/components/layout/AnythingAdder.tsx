@@ -1,4 +1,3 @@
-import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useUser } from "~/features/auth/core/user";
 import {
@@ -15,13 +14,13 @@ import {
 	TOURNAMENT_NEW_PAGE,
 	userNewBuildPage,
 } from "~/utils/urls";
+import { SendouButton } from "../elements/Button";
 import {
 	SendouMenu,
 	SendouMenuItem,
 	type SendouMenuItemProps,
 } from "../elements/Menu";
 import { PlusIcon } from "../icons/Plus";
-import styles from "./TopRightButtons.module.css";
 
 export function AnythingAdder() {
 	const { t } = useTranslation(["common"]);
@@ -103,12 +102,13 @@ export function AnythingAdder() {
 	return (
 		<SendouMenu
 			trigger={
-				<Button
-					className={styles.button}
+				<SendouButton
+					size="small"
+					icon={<PlusIcon />}
 					data-testid="anything-adder-menu-button"
 				>
-					<PlusIcon className={styles.buttonIcon} />
-				</Button>
+					{t("common:actions.addNew")}…
+				</SendouButton>
 			}
 		>
 			{items.map((item) => (

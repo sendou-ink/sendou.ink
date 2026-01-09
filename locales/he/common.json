@@ -18,6 +18,8 @@
 	"pages.support": "תמיכה",
 	"pages.privacy": "מדיניות הפרטיות",
 	"pages.vods": "סרטונים",
+	"pages.popularBuilds": "",
+	"pages.abilityStats": "",
 	"pages.xsearch": "חיפוש בטופ",
 	"pages.leaderboards": "לוח תוצאות",
 	"pages.links": "קישורים",
@@ -325,5 +327,7 @@
 	"api.regenerate.heading": "",
 	"api.regenerate.button": "",
 	"api.regenerate.confirm": "",
-	"api.generate": ""
+	"api.generate": "",
+	"search": "",
+	"search.placeholder": ""
 }

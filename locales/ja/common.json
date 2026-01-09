@@ -18,6 +18,8 @@
 	"pages.support": "サポート",
 	"pages.privacy": "プライバシーポリシー",
 	"pages.vods": "動画一覧",
+	"pages.popularBuilds": "",
+	"pages.abilityStats": "",
 	"pages.xsearch": "上位プレイヤー検索",
 	"pages.leaderboards": "スコアボード",
 	"pages.links": "リンク",
@@ -320,5 +322,7 @@
 	"api.regenerate.heading": "",
 	"api.regenerate.button": "",
 	"api.regenerate.confirm": "",
-	"api.generate": ""
+	"api.generate": "",
+	"search": "",
+	"search.placeholder": ""
 }

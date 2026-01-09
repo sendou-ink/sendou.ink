@@ -18,6 +18,8 @@
 	"pages.support": "후원",
 	"pages.privacy": "개인정보 보호 정책",
 	"pages.vods": "영상",
+	"pages.popularBuilds": "",
+	"pages.abilityStats": "",
 	"pages.xsearch": "랭킹 검색",
 	"pages.leaderboards": "랭킹표",
 	"pages.links": "외부 링크",
@@ -320,5 +322,7 @@
 	"api.regenerate.heading": "",
 	"api.regenerate.button": "",
 	"api.regenerate.confirm": "",
-	"api.generate": ""
+	"api.generate": "",
+	"search": "",
+	"search.placeholder": ""
 }

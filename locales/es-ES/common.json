@@ -18,6 +18,8 @@
 	"pages.support": "Apóyanos",
 	"pages.privacy": "Política de Privacidad",
 	"pages.vods": "Videos",
+	"pages.popularBuilds": "",
+	"pages.abilityStats": "",
 	"pages.xsearch": "Búsqueda X 500 mejores",
 	"pages.leaderboards": "Tablas de posición",
 	"pages.links": "Enlaces",
@@ -326,5 +328,7 @@
 	"api.regenerate.heading": "",
 	"api.regenerate.button": "",
 	"api.regenerate.confirm": "",
-	"api.generate": ""
+	"api.generate": "",
+	"search": "",
+	"search.placeholder": ""
 }

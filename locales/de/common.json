@@ -18,6 +18,8 @@
 	"pages.support": "Support",
 	"pages.privacy": "Datenschutzerklärung",
 	"pages.vods": "Videos",
+	"pages.popularBuilds": "",
+	"pages.abilityStats": "",
 	"pages.xsearch": "",
 	"pages.leaderboards": "",
 	"pages.links": "",
@@ -324,5 +326,7 @@
 	"api.regenerate.heading": "",
 	"api.regenerate.button": "",
 	"api.regenerate.confirm": "",
-	"api.generate": ""
+	"api.generate": "",
+	"search": "",
+	"search.placeholder": ""
 }

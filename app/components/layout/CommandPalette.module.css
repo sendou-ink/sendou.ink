@@ -1,0 +1,149 @@
+.searchButton {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-1) var(--s-3);
+	border: 1px solid var(--color-border);
+	border-radius: var(--rounded);
+	background-color: transparent;
+	color: var(--color-text-lighter);
+	font-size: var(--fonts-xs);
+	cursor: pointer;
+	min-width: 180px;
+	height: var(--item-size);
+}
+
+.searchButton:hover {
+	background-color: var(--color-bg-higher);
+}
+
+.searchButton:focus-visible {
+	outline: var(--input-focus-ring);
+	outline-offset: 1px;
+}
+
+.searchIcon {
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+}
+
+.searchPlaceholder {
+	flex-grow: 1;
+	text-align: left;
+}
+
+.searchKbd {
+	padding: 2px var(--s-1);
+	border: 1px solid var(--color-border);
+	border-radius: var(--rounded-xs);
+	font-size: var(--fonts-xxs);
+	background-color: var(--color-bg-higher);
+	font-family: inherit;
+}
+
+.overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	background-color: rgba(0, 0, 0, 0.25);
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	padding-top: 15vh;
+	backdrop-filter: blur(10px);
+}
+
+.overlay[data-entering] {
+	animation: fade-in 200ms ease-out;
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.modal {
+	width: 100%;
+	max-width: 32rem;
+	background-color: var(--color-bg);
+	border-radius: var(--rounded);
+	box-shadow:
+		0 10px 15px -3px rgba(0, 0, 0, 0.1),
+		0 4px 6px -2px rgba(0, 0, 0, 0.05);
+	overflow: hidden;
+}
+
+.modal[data-entering] {
+	animation: zoom-in-95 200ms ease-out;
+}
+
+@keyframes zoom-in-95 {
+	from {
+		opacity: 0;
+		transform: scale(0.95);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+.dialog {
+	outline: none;
+}
+
+.inputContainer {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	padding: var(--s-4);
+	border-bottom: 1px solid var(--color-border);
+}
+
+.inputIcon {
+	width: 20px;
+	height: 20px;
+	color: var(--color-text-lighter);
+	flex-shrink: 0;
+}
+
+.input {
+	flex-grow: 1;
+	border: none;
+	background: transparent;
+	font-size: var(--fonts-md);
+	color: var(--color-text);
+	outline: none;
+}
+
+.input::placeholder {
+	color: var(--color-text-lighter);
+}
+
+.listBox {
+	max-height: 300px;
+	overflow-y: auto;
+	padding: var(--s-2);
+	outline: none;
+}
+
+.listBoxItem {
+	padding: var(--s-2) var(--s-3);
+	border-radius: var(--rounded-xs);
+	cursor: pointer;
+	font-size: var(--fonts-sm);
+	outline: none;
+}
+
+.listBoxItem[data-focused] {
+	background-color: var(--color-bg-higher);
+}
+
+.listBoxItem[data-selected] {
+	background-color: var(--color-accent-low);
+}

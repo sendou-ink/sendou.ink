@@ -13,14 +13,27 @@ import styles from "./SideNav.module.css";
 export function SideNav({
 	children,
 	className,
+	footer,
+	top,
+	topCentered,
 }: {
 	children: React.ReactNode;
 	className?: string;
+	footer?: React.ReactNode;
+	top?: React.ReactNode;
+	topCentered?: boolean;
 }) {
 	return (
 		<nav className={clsx(styles.sideNav, className)}>
-			<div className={styles.sideNavTop} />
+			<div
+				className={clsx(styles.sideNavTop, {
+					[styles.sideNavTopCentered]: topCentered,
+				})}
+			>
+				{top}
+			</div>
 			<div className={clsx(styles.sideNavInner, "scrollbar")}>{children}</div>
+			{footer}
 		</nav>
 	);
 }
@@ -111,4 +124,8 @@ export function SideNavPanel({
 			</ModalOverlay>
 		</DialogTrigger>
 	);
+}
+
+export function SideNavFooter({ children }: { children: React.ReactNode }) {
+	return <div className={styles.sideNavFooter}>{children}</div>;
 }

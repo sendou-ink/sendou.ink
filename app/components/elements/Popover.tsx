@@ -36,12 +36,11 @@ export function SendouPopover({
 	isOpen?: boolean;
 }) {
 	return (
-		<DialogTrigger isOpen={isOpen}>
+		<DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
 			{trigger}
 			<Popover
 				className={clsx(styles.content, popoverClassName)}
 				placement={placement}
-				onOpenChange={onOpenChange}
 			>
 				<Dialog className={styles.dialog}>{children}</Dialog>
 			</Popover>

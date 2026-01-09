@@ -28,6 +28,7 @@
 		"test:e2e:flaky-detect": "npx playwright test --repeat-each=10 --max-failures=1",
 		"test:e2e:generate-seeds": "cross-env DB_PATH=db-test.sqlite3 npx vite-node scripts/generate-e2e-seed-dbs.ts",
 		"checks": "npm run biome:fix && npm run test:unit:browser && npm run check-translation-jsons && npm run typecheck && npm run knip",
+		"checks:no-unit-test": "npm run biome:fix && npm run check-translation-jsons && npm run typecheck && npm run knip",
 		"setup": "cross-env DB_PATH=db.sqlite3 vite-node ./scripts/setup.ts",
 		"i18n:sync": "i18next-locales-sync -e true -p en -s da de es-ES es-US fr-CA fr-EU he it ja ko nl pl pt-BR ru zh -l locales && npm run biome:fix",
 		"knip": "knip"

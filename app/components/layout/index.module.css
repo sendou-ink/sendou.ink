@@ -7,7 +7,7 @@
 	width: 100%;
 	height: var(--layout-nav-height);
 	align-items: center;
-	justify-content: space-between;
+	gap: var(--s-3);
 	border-bottom: 1.5px solid var(--color-border);
 	-webkit-backdrop-filter: var(--backdrop-filter);
 	backdrop-filter: var(--backdrop-filter);
@@ -23,59 +23,91 @@
 	--item-size: var(--input-height-small);
 }
 
-.breadcrumbContainer {
+.siteTitle {
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
+	height: 100%;
+	min-width: 0;
 }
 
-.breadcrumb {
-	overflow: hidden;
-	max-width: 350px;
+.siteLogo {
+	display: grid;
+	place-items: center;
+	width: 36px;
+	height: 36px;
+	background-color: var(--color-accent);
+	border-radius: var(--rounded-xs);
+	font-size: var(--fonts-lg);
+	font-weight: var(--bold);
 	color: var(--color-text);
-	font-size: var(--fonts-xs);
-	font-weight: 600;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	border-radius: 9999px;
-	height: var(--item-size);
-	display: inline-flex;
-	align-items: center;
-
-	img {
-		height: 100%;
-	}
-
-	&:focus-visible {
-		outline: var(--input-focus-ring);
-		outline-offset: 1px;
-		border-radius: 9999px;
-	}
+	text-decoration: none;
+	flex-shrink: 0;
+	transition: background-color 0.2s;
 }
 
-.breadcrumbImage {
-	min-width: var(--item-size);
+.siteLogo:hover {
+	background-color: var(--color-accent-high);
+	color: var(--color-text-inverse);
 }
 
-.logo {
-	overflow: initial;
-	padding: 0 var(--s-1);
-}
-
-.logo:focus-visible {
+.siteLogo:focus-visible {
 	outline: var(--input-focus-ring);
 	outline-offset: 1px;
-	border-radius: var(--rounded);
 }
 
-.breadcrumbSeparator {
-	font-size: 20px;
-	opacity: 0.4;
-	margin-inline-start: -1px;
+.separator {
+	font-size: var(--fonts-xs);
+	color: var(--color-text-lighter);
+	font-weight: var(--bold);
+	opacity: 0.5;
+	animation: fadeIn 200ms ease-out 150ms both;
 }
 
-.textMobileHidden {
-	display: inline;
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 0.5;
+	}
+}
+
+.pageIcon {
+	display: grid;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	padding: var(--s-0-5);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--rounded-xs);
+	flex-shrink: 0;
+	animation: fadeInFull 200ms ease-out 150ms both;
+}
+
+@keyframes fadeInFull {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.pageIcon img {
+	width: 16px;
+	height: 16px;
+}
+
+.pageName {
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	color: var(--color-text);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	margin-left: var(--s-1);
+	animation: fadeInFull 200ms ease-out 150ms both;
 }
 
 .hamburger.fab {
@@ -110,12 +142,32 @@
 	}
 }
 
-@media screen and (max-width: 640px) {
-	.textMobileHidden {
-		display: none;
-	}
+/** xxx: check styles here */
+.sideNavLoginButton {
+	width: 100%;
+	height: 36px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 2px solid var(--color-text-accent);
+	border-radius: var(--rounded);
+	background-color: transparent;
+	color: inherit;
+	cursor: pointer;
+	font-size: var(--fonts-xs);
+	font-weight: var(--bold);
+}
 
-	.breadcrumbContainer > a {
-		max-width: 90px;
-	}
+.sideNavLoginButton:hover {
+	background-color: var(--color-bg-higher);
+}
+
+.sideNavLoginButton:active {
+	transform: translateY(1px);
+}
+
+.sideNavEmpty {
+	font-size: var(--fonts-xs);
+	color: var(--color-text-lighter);
+	padding: var(--s-1) var(--s-2);
 }

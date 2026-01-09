@@ -1,20 +1,36 @@
 import { faker } from "@faker-js/faker";
 import clsx from "clsx";
 import * as React from "react";
+import { Button } from "react-aria-components";
+import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useMatches } from "react-router";
+import { useUser } from "~/features/auth/core/user";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
+import { SETTINGS_PAGE, userPage } from "~/utils/urls";
+import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";
+import { SendouPopover } from "../elements/Popover";
 import { Image } from "../Image";
+import { BellIcon } from "../icons/Bell";
 import { CalendarIcon } from "../icons/Calendar";
+import { GearIcon } from "../icons/Gear";
 import { HamburgerIcon } from "../icons/Hamburger";
 import { TwitchIcon } from "../icons/Twitch";
 import { UsersIcon } from "../icons/Users";
-import { SideNav, SideNavHeader, SideNavLink } from "../SideNav";
+import { SideNav, SideNavFooter, SideNavHeader, SideNavLink } from "../SideNav";
+import sideNavStyles from "../SideNav.module.css";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
+import { LogInButtonContainer } from "./LogInButtonContainer";
 import { NavDialog } from "./NavDialog";
+import {
+	NotificationContent,
+	notificationPopoverClassName,
+	useNotifications,
+} from "./NotificationPopover";
+import { TopNavMenus } from "./TopNavMenus";
 import { TopRightButtons } from "./TopRightButtons";
 
 function useTimeFormat() {
@@ -86,38 +102,36 @@ const MOCK_FRIENDS = [
 	},
 ];
 
-function useBreadcrumbs() {
+function useBreadcrumbData() {
 	const { t } = useTranslation();
 	const matches = useMatches();
 
-	return React.useMemo(() => {
-		const result: Array<Breadcrumb | Array<Breadcrumb>> = [];
+	const breadcrumbs: Breadcrumb[] = [];
 
-		for (const match of [...matches].reverse()) {
-			const handle = match.handle as SendouRouteHandle | undefined;
-			const resolvedBreadcrumb = handle?.breadcrumb?.({ match, t });
-
-			if (resolvedBreadcrumb) {
-				result.push(resolvedBreadcrumb);
-			}
+	for (const match of [...matches].reverse()) {
+		const handle = match.handle as SendouRouteHandle | undefined;
+		const resolved = handle?.breadcrumb?.({ match, t });
+		if (resolved) {
+			const items = Array.isArray(resolved) ? resolved : [resolved];
+			breadcrumbs.push(...items);
 		}
+	}
 
-		return result.flat();
-	}, [matches, t]);
+	return {
+		breadcrumbs,
+		currentPageText: breadcrumbs.at(-1)?.text,
+	};
 }
 
 export function Layout({
 	children,
 	data,
-	isErrored = false,
 }: {
 	children: React.ReactNode;
 	data?: RootLoaderData;
-	isErrored?: boolean;
 }) {
 	const [navDialogOpen, setNavDialogOpen] = React.useState(false);
 	const location = useLocation();
-	const breadcrumbs = useBreadcrumbs();
 
 	const { t } = useTranslation(["front"]);
 	const { formatTime } = useTimeFormat();
@@ -139,11 +153,19 @@ export function Layout({
 					onPress={() => setNavDialogOpen(true)}
 				/>
 			) : null}
-			<SideNav>
+			<SideNav
+				footer={
+					<SideNavFooter>
+						<SideNavUserPanel />
+					</SideNavFooter>
+				}
+				top={<SiteTitle />}
+				topCentered={isFrontPage}
+			>
 				<SideNavHeader icon={<CalendarIcon />}>
 					{t("front:sideNav.myCalendar")}
 				</SideNavHeader>
-				{data.tournaments.participatingFor.length > 0 ? (
+				{data && data.tournaments.participatingFor.length > 0 ? (
 					data.tournaments.participatingFor
 						.slice(0, 4)
 						.map((tournament, index) => (
@@ -200,24 +222,8 @@ export function Layout({
 			</SideNav>
 			<div className={styles.container}>
 				<header className={clsx(styles.header, styles.itemSize)}>
-					<div className={styles.breadcrumbContainer}>
-						<Link to="/" className={clsx(styles.breadcrumb, styles.logo)}>
-							sendou.ink
-						</Link>
-						{breadcrumbs.flatMap((breadcrumb) => {
-							return [
-								<span
-									key={`${breadcrumb.href}-sep`}
-									className={styles.breadcrumbSeparator}
-								>
-									»
-								</span>,
-								<BreadcrumbLink key={breadcrumb.href} data={breadcrumb} />,
-							];
-						})}
-					</div>
+					<TopNavMenus />
 					<TopRightButtons
-						isErrored={isErrored}
 						showSupport={Boolean(
 							data &&
 								!data?.user?.roles.includes("MINOR_SUPPORT") &&
@@ -234,50 +240,126 @@ export function Layout({
 	);
 }
 
-function BreadcrumbLink({ data }: { data: Breadcrumb }) {
-	if (data.type === "IMAGE") {
-		const imageIsWithExtension = data.imgPath.includes(".");
+function SiteTitle() {
+	const location = useLocation();
+	const { breadcrumbs, currentPageText } = useBreadcrumbData();
 
-		return (
-			<Link
-				to={data.href}
-				className={clsx(styles.breadcrumb, {
-					"stack horizontal sm items-center": data.text,
-				})}
-			>
-				{imageIsWithExtension ? (
-					<img
-						className={clsx(styles.breadcrumbImage, {
-							"rounded-full": data.rounded,
-						})}
-						alt=""
-						src={data.imgPath}
-						width={24}
-						height={24}
-					/>
-				) : (
-					<Image
-						className={clsx(styles.breadcrumbImage, {
-							"rounded-full": data.rounded,
-						})}
-						alt=""
-						path={data.imgPath}
-						width={24}
-						height={24}
-					/>
-				)}
-				<span className={styles.textMobileHidden}>{data.text}</span>
-			</Link>
-		);
-	}
+	const isFrontPage = location.pathname === "/";
+	const hasBreadcrumbs = breadcrumbs.length > 0;
 
 	return (
-		<Link to={data.href} className={styles.breadcrumb}>
-			{data.text}
-		</Link>
+		<Flipper flipKey={isFrontPage ? "front" : "other"}>
+			<div className={styles.siteTitle}>
+				<Flipped flipId="site-logo">
+					{/** xxx: placeholder logo */}
+					<Link to="/" className={styles.siteLogo}>
+						S
+					</Link>
+				</Flipped>
+
+				{hasBreadcrumbs ? (
+					<>
+						{breadcrumbs.map((crumb) => (
+							<React.Fragment key={crumb.href}>
+								<span className={styles.separator}>/</span>
+								<PageIcon crumb={crumb} />
+							</React.Fragment>
+						))}
+
+						{currentPageText ? (
+							<span className={styles.pageName}>{currentPageText}</span>
+						) : null}
+					</>
+				) : null}
+			</div>
+		</Flipper>
+	);
+}
+
+function PageIcon({ crumb }: { crumb: Breadcrumb }) {
+	if (crumb.type !== "IMAGE") {
+		return null;
+	}
+
+	const isExternal = crumb.imgPath.includes(".");
+
+	const iconClass = clsx(styles.pageIcon, {
+		"rounded-full": crumb.rounded,
+	});
+
+	return isExternal ? (
+		<img src={crumb.imgPath} alt="" className={iconClass} />
+	) : (
+		<Image
+			path={crumb.imgPath}
+			alt=""
+			className={iconClass}
+			width={20}
+			height={20}
+		/>
 	);
 }
 
 function MyRampUnit() {
 	return <div className="top-leaderboard" id="pw-leaderboard_atf" />;
+}
+
+function SideNavUserPanel() {
+	const { t } = useTranslation();
+	const user = useUser();
+	const { notifications, unseenIds } = useNotifications();
+
+	if (user) {
+		return (
+			<>
+				<Link to={userPage(user)} className={sideNavStyles.sideNavFooterUser}>
+					<Avatar user={user} size="xs" />
+					<span className={sideNavStyles.sideNavFooterUsername}>
+						{user.username}
+					</span>
+				</Link>
+				<div className={sideNavStyles.sideNavFooterActions}>
+					{notifications ? (
+						<div className={sideNavStyles.sideNavFooterNotification}>
+							{unseenIds.length > 0 ? (
+								<div className={sideNavStyles.sideNavFooterUnseenDot} />
+							) : null}
+							<SendouPopover
+								trigger={
+									<Button
+										className={sideNavStyles.sideNavFooterButton}
+										data-testid="notifications-button"
+									>
+										<BellIcon />
+									</Button>
+								}
+								popoverClassName={notificationPopoverClassName(
+									notifications.length,
+								)}
+							>
+								<NotificationContent
+									notifications={notifications}
+									unseenIds={unseenIds}
+								/>
+							</SendouPopover>
+						</div>
+					) : null}
+					<Link
+						to={SETTINGS_PAGE}
+						className={sideNavStyles.sideNavFooterButton}
+					>
+						<GearIcon />
+					</Link>
+				</div>
+			</>
+		);
+	}
+
+	return (
+		<LogInButtonContainer>
+			<button type="submit" className={styles.sideNavLoginButton}>
+				{t("header.login")}
+			</button>
+		</LogInButtonContainer>
+	);
 }
