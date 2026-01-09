@@ -494,7 +494,7 @@ function WeaponsField({
 											const adjustedI = i + teamSize;
 											return (
 												<WeaponSelect
-													key={i}
+													key={adjustedI}
 													isRequired
 													testId={`player-${adjustedI}-weapon`}
 													value={value[adjustedI] ?? null}
