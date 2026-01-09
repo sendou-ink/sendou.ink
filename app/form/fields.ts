@@ -162,6 +162,37 @@ function textFieldRefined<T extends z.ZodType<string | null>>(
 	return result as T;
 }
 
+export function numberFieldOptional(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "text-field" }>,
+			| "type"
+			| "initialValue"
+			| "required"
+			| "validate"
+			| "inputType"
+			| "maxLength"
+		>
+	> & { maxLength?: number },
+) {
+	return z.coerce
+		.number()
+		.int()
+		.nonnegative()
+		.optional()
+		.register(formRegistry, {
+			...args,
+			label: prefixKey(args.label),
+			bottomText: prefixKey(args.bottomText),
+			required: false,
+			type: "text-field",
+			inputType: "number",
+			initialValue: "",
+			// xxx: weird default?
+			maxLength: args.maxLength ?? 10,
+		});
+}
+
 export function textAreaOptional(
 	args: WithTypedTranslationKeys<
 		Omit<Extract<FormField, { type: "text-area" }>, "type" | "initialValue">

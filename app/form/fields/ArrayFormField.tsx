@@ -47,7 +47,7 @@ export function ArrayFormField({
 	};
 
 	return (
-		<div className="stack md">
+		<div className="stack md w-full">
 			{translatedLabel ? (
 				<div
 					style={{
@@ -70,7 +70,7 @@ export function ArrayFormField({
 						{renderItem(idx, `${name}[${idx}]`)}
 					</ArrayItemFieldset>
 				) : (
-					<div key={idx} className="stack horizontal sm items-center">
+					<div key={idx} className="stack horizontal sm items-center w-full">
 						<div className={styles.itemInput}>
 							{renderItem(idx, `${name}[${idx}]`)}
 						</div>

@@ -314,7 +314,7 @@ function MatchFieldsetContent({
 	player,
 	videoType,
 }: MatchFieldsetContentProps) {
-	const { t } = useTranslation(["vods"]);
+	const { t } = useTranslation(["vods", "common"]);
 	const [currentTime, setCurrentTime] = useState<string>("");
 
 	useEffect(() => {

@@ -17,6 +17,7 @@ export function InputFormField({
 	error,
 	onBlur,
 	required,
+	inputType = "text",
 	value,
 	onChange,
 }: InputFormFieldProps) {
@@ -35,7 +36,7 @@ export function InputFormField({
 				{leftAddon ? <span className="input-addon">{leftAddon}</span> : null}
 				<input
 					id={id}
-					type="text"
+					type={inputType}
 					value={value}
 					onChange={(e) => onChange(e.target.value)}
 					onBlur={() => onBlur?.()}

@@ -24,6 +24,7 @@ interface FormFieldText<T extends string> extends FormFieldBase<T> {
 	toLowerCase?: boolean;
 	leftAddon?: string;
 	required: boolean;
+	inputType?: "text" | "number";
 	regExp?: {
 		pattern: RegExp;
 		message: string;
