@@ -105,14 +105,22 @@ function restoreFromPreSeeded(sourcePath: string) {
 		for (const { name } of tables) {
 			sql.exec(`DELETE FROM main."${name}"`);
 
-			// Get non-generated columns for this table (table_xinfo includes hidden column info)
-			const columns = sql
+			// Get non-generated columns from main database
+			const mainColumns = sql
 				.prepare(`PRAGMA main.table_xinfo("${name}")`)
 				.all() as Array<{ name: string; hidden: number }>;
 
+			// Get columns from source database
+			const sourceColumns = sql
+				.prepare(`PRAGMA source.table_info("${name}")`)
+				.all() as Array<{ name: string }>;
+
+			const sourceColumnNames = new Set(sourceColumns.map((c) => c.name));
+
 			// hidden = 2 or 3 means virtual/stored generated column
-			const nonGeneratedCols = columns
-				.filter((c) => c.hidden === 0)
+			// Only include columns that exist in both databases
+			const nonGeneratedCols = mainColumns
+				.filter((c) => c.hidden === 0 && sourceColumnNames.has(c.name))
 				.map((c) => c.name);
 
 			if (nonGeneratedCols.length > 0) {

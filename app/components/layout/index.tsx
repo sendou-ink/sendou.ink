@@ -1,10 +1,12 @@
 import clsx from "clsx";
+import { isToday, isTomorrow } from "date-fns";
 import * as React from "react";
 import { Button } from "react-aria-components";
 import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
-import { Link, useLocation, useMatches } from "react-router";
+import { Link, useFetcher, useLocation, useMatches } from "react-router";
 import { useUser } from "~/features/auth/core/user";
+import type { loader as sidebarLoader } from "~/features/sidebar/routes/sidebar";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, SETTINGS_PAGE, userPage } from "~/utils/urls";
@@ -40,73 +42,52 @@ import { TopNavMenus } from "./TopNavMenus";
 import { TopRightButtons } from "./TopRightButtons";
 
 function useTimeFormat() {
+	const { i18n } = useTranslation();
+
 	const formatTime = (date: Date, options: Intl.DateTimeFormatOptions) => {
-		return date.toLocaleTimeString("en-US", options);
+		return date.toLocaleTimeString(i18n.language, options);
 	};
-	return { formatTime };
+
+	const formatRelativeDay = (daysFromToday: number) => {
+		const rtf = new Intl.RelativeTimeFormat(i18n.language, { numeric: "auto" });
+		const str = rtf.format(daysFromToday, "day");
+		return str.charAt(0).toUpperCase() + str.slice(1);
+	};
+
+	const formatRelativeDate = (timestamp: number) => {
+		const date = new Date(timestamp * 1000);
+		const timeStr = formatTime(date, { hour: "numeric", minute: "2-digit" });
+
+		if (isToday(date)) {
+			return `${formatRelativeDay(0)}, ${timeStr}`;
+		}
+		if (isTomorrow(date)) {
+			return `${formatRelativeDay(1)}, ${timeStr}`;
+		}
+
+		return date.toLocaleDateString(i18n.language, {
+			weekday: "short",
+			month: "short",
+			day: "numeric",
+			hour: "numeric",
+			minute: "2-digit",
+		});
+	};
+
+	return { formatTime, formatRelativeDate };
 }
 
-const MOCK_STREAMS = [
-	{
-		id: 3,
-		name: "Paddling Pool 252",
-		imageUrl: "https://i.pravatar.cc/150?u=stream1",
-		subtitle: "Losers Finals",
-		badge: "LIVE",
-	},
-	{
-		id: 1,
-		name: "Splash Go!",
-		imageUrl:
-			"https://liquipedia.net/commons/images/7/73/Splash_Go_allmode.png",
-		subtitle: "Tomorrow, 9:00 AM",
-	},
-	{
-		id: 2,
-		name: "Area Cup",
-		imageUrl:
-			"https://pbs.twimg.com/profile_images/1830601967821017088/4SDZVKdj_400x400.jpg",
-		subtitle: "Saturday, 10 AM",
-	},
-];
+function useSidebarData() {
+	const fetcher = useFetcher<typeof sidebarLoader>();
 
-const MOCK_FRIENDS = [
-	{
-		id: 1,
-		name: "Splat_Master",
-		avatarUrl: "https://i.pravatar.cc/150?u=friend1",
-		subtitle: "SendouQ",
-		badge: "2/4",
-	},
-	{
-		id: 2,
-		name: "InklingPro",
-		avatarUrl: "https://i.pravatar.cc/150?u=friend2",
-		subtitle: "Lobby",
-		badge: "2/8",
-	},
-	{
-		id: 3,
-		name: "OctoKing",
-		avatarUrl: "https://i.pravatar.cc/150?u=friend3",
-		subtitle: "In The Zone 22",
-		badge: "3/4",
-	},
-	{
-		id: 4,
-		name: "TurfWarrior",
-		avatarUrl: "https://i.pravatar.cc/150?u=friend4",
-		subtitle: "SendouQ",
-		badge: "1/4",
-	},
-	{
-		id: 5,
-		name: "RankedGrinder",
-		avatarUrl: "https://i.pravatar.cc/150?u=friend5",
-		subtitle: "Lobby",
-		badge: "5/8",
-	},
-];
+	React.useEffect(() => {
+		if (fetcher.state === "idle" && !fetcher.data) {
+			fetcher.load("/sidebar");
+		}
+	}, [fetcher]);
+
+	return fetcher.data;
+}
 
 function useBreadcrumbData() {
 	const { t } = useTranslation();
@@ -140,7 +121,13 @@ export function Layout({
 	const location = useLocation();
 
 	const { t } = useTranslation(["front"]);
-	const { formatTime } = useTimeFormat();
+	const { formatRelativeDate } = useTimeFormat();
+	const sidebarData = useSidebarData();
+
+	const tournaments = sidebarData?.tournaments ?? [];
+	const matchStatus = sidebarData?.matchStatus;
+	const friends = sidebarData?.friends ?? [];
+	const streams = sidebarData?.streams ?? [];
 
 	const isFrontPage = location.pathname === "/";
 
@@ -162,11 +149,15 @@ export function Layout({
 			<SideNav
 				footer={
 					<>
-						<SideNavGameStatus
-							iconUrl={navIconUrl("sendouq")}
-							text="Match #92432 started!"
-							href="/q/match/123"
-						/>
+						{matchStatus ? (
+							<SideNavGameStatus
+								iconUrl={navIconUrl("sendouq")}
+								text={t("front:sideNav.matchStarted", {
+									matchId: matchStatus.matchId,
+								})}
+								href={matchStatus.url}
+							/>
+						) : null}
 						<SideNavFooter>
 							<SideNavUserPanel />
 						</SideNavFooter>
@@ -178,25 +169,17 @@ export function Layout({
 				<SideNavHeader icon={<CalendarIcon />}>
 					{t("front:sideNav.myCalendar")}
 				</SideNavHeader>
-				{data && data.tournaments.participatingFor.length > 0 ? (
-					data.tournaments.participatingFor
-						.slice(0, 4)
-						.map((tournament, index) => (
-							<SideNavLink
-								key={tournament.id}
-								href={tournament.url}
-								imageUrl={tournament.logoUrl ?? undefined}
-								subtitle={`${index < 2 ? "Today" : "Tomorrow"}, ${formatTime(
-									new Date(tournament.startTime),
-									{
-										hour: "numeric",
-										minute: "2-digit",
-									},
-								)}`}
-							>
-								{tournament.name}
-							</SideNavLink>
-						))
+				{tournaments.length > 0 ? (
+					tournaments.map((tournament) => (
+						<SideNavLink
+							key={tournament.id}
+							to={tournament.url}
+							imageUrl={tournament.logoUrl ?? undefined}
+							subtitle={formatRelativeDate(tournament.startTime)}
+						>
+							{tournament.name}
+						</SideNavLink>
+					))
 				) : (
 					<div className={styles.sideNavEmpty}>
 						{t("front:sideNav.noEvents")}
@@ -206,10 +189,10 @@ export function Layout({
 				<SideNavHeader icon={<UsersIcon />}>
 					{t("front:sideNav.friends")}
 				</SideNavHeader>
-				{MOCK_FRIENDS.map((friend) => (
+				{friends.map((friend) => (
 					<SideNavLink
 						key={friend.id}
-						href=""
+						to=""
 						imageUrl={friend.avatarUrl}
 						subtitle={friend.subtitle}
 						badge={friend.badge}
@@ -221,10 +204,10 @@ export function Layout({
 				<SideNavHeader icon={<TwitchIcon />}>
 					{t("front:sideNav.streams")}
 				</SideNavHeader>
-				{MOCK_STREAMS.map((stream) => (
+				{streams.map((stream) => (
 					<SideNavLink
 						key={stream.id}
-						href=""
+						to=""
 						imageUrl={stream.imageUrl}
 						subtitle={stream.subtitle}
 						badge={stream.badge}

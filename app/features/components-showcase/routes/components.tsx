@@ -168,7 +168,7 @@ function ComponentsSideNav() {
 			{SECTIONS.map(({ title, id }) => (
 				<SideNavLink
 					key={id}
-					href={`#${id}`}
+					to={`#${id}`}
 					onClick={(e) => handleClick(e, id)}
 					isActive={activeSection === id}
 				>

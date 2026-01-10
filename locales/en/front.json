@@ -23,5 +23,6 @@
 	"sideNav.myCalendar": "My Calendar",
 	"sideNav.noEvents": "No upcoming events",
 	"sideNav.friends": "Friends",
-	"sideNav.streams": "Streams"
+	"sideNav.streams": "Streams",
+	"sideNav.matchStarted": "Match #{{matchId}} started!"
 }

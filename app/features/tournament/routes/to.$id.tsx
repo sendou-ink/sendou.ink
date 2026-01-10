@@ -19,7 +19,6 @@ import { removeMarkdown } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
 	tournamentDivisionsPage,
-	tournamentOrganizationPage,
 	tournamentPage,
 	tournamentRegisterPage,
 } from "~/utils/urls";
@@ -66,16 +65,6 @@ export const handle: SendouRouteHandle = {
 		if (!data) return [];
 
 		return [
-			data.tournament.ctx.organization?.avatarUrl
-				? {
-						imgPath: data.tournament.ctx.organization.avatarUrl,
-						href: tournamentOrganizationPage({
-							organizationSlug: data.tournament.ctx.organization.slug,
-						}),
-						type: "IMAGE" as const,
-						text: "",
-					}
-				: null,
 			{
 				imgPath: data.tournament.ctx.logoUrl,
 				href: tournamentPage(data.tournament.ctx.id),

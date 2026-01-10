@@ -1,0 +1,117 @@
+import type { LoaderFunctionArgs } from "react-router";
+import { getUser } from "~/features/auth/core/user.server";
+import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
+import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
+import { sendouQMatchPage } from "~/utils/urls";
+
+export const loader = async (_args: LoaderFunctionArgs) => {
+	const user = getUser();
+
+	if (!user) {
+		return {
+			tournaments: [] as Array<{
+				id: number;
+				name: string;
+				url: string;
+				logoUrl: string | null;
+				startTime: number;
+			}>,
+			matchStatus: null as { matchId: number; url: string } | null,
+			friends: getMockFriends(),
+			streams: getMockStreams(),
+		};
+	}
+
+	const [tournamentsData, ownGroup] = await Promise.all([
+		ShowcaseTournaments.frontPageTournamentsByUserId(user.id),
+		Promise.resolve(SendouQ.findOwnGroup(user.id)),
+	]);
+
+	return {
+		// xxx: cache the right shape
+		tournaments: [
+			...tournamentsData.participatingFor,
+			...tournamentsData.organizingFor,
+		]
+			.sort((a, b) => a.startTime - b.startTime)
+			.slice(0, 4)
+			.map((t) => ({
+				id: t.id,
+				name: t.name,
+				url: t.url,
+				logoUrl: t.logoUrl,
+				startTime: t.startTime,
+			})),
+		matchStatus: ownGroup?.matchId
+			? { matchId: ownGroup.matchId, url: sendouQMatchPage(ownGroup.matchId) }
+			: null,
+		friends: getMockFriends(),
+		streams: getMockStreams(),
+	};
+};
+
+function getMockFriends() {
+	return [
+		{
+			id: 1,
+			name: "Splat_Master",
+			avatarUrl: "https://i.pravatar.cc/150?u=friend1",
+			subtitle: "SendouQ",
+			badge: "2/4",
+		},
+		{
+			id: 2,
+			name: "InklingPro",
+			avatarUrl: "https://i.pravatar.cc/150?u=friend2",
+			subtitle: "Lobby",
+			badge: "2/8",
+		},
+		{
+			id: 3,
+			name: "OctoKing",
+			avatarUrl: "https://i.pravatar.cc/150?u=friend3",
+			subtitle: "In The Zone 22",
+			badge: "3/4",
+		},
+		{
+			id: 4,
+			name: "TurfWarrior",
+			avatarUrl: "https://i.pravatar.cc/150?u=friend4",
+			subtitle: "SendouQ",
+			badge: "1/4",
+		},
+		{
+			id: 5,
+			name: "RankedGrinder",
+			avatarUrl: "https://i.pravatar.cc/150?u=friend5",
+			subtitle: "Lobby",
+			badge: "5/8",
+		},
+	];
+}
+
+function getMockStreams() {
+	return [
+		{
+			id: 3,
+			name: "Paddling Pool 252",
+			imageUrl: "https://i.pravatar.cc/150?u=stream1",
+			subtitle: "Losers Finals",
+			badge: "LIVE",
+		},
+		{
+			id: 1,
+			name: "Splash Go!",
+			imageUrl:
+				"https://liquipedia.net/commons/images/7/73/Splash_Go_allmode.png",
+			subtitle: "Tomorrow, 9:00 AM",
+		},
+		{
+			id: 2,
+			name: "Area Cup",
+			imageUrl:
+				"https://pbs.twimg.com/profile_images/1830601967821017088/4SDZVKdj_400x400.jpg",
+			subtitle: "Saturday, 10 AM",
+		},
+	];
+}

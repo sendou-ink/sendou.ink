@@ -6,6 +6,7 @@ import {
 	Modal,
 	ModalOverlay,
 } from "react-aria-components";
+import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { CrossIcon } from "~/components/icons/Cross";
 import { Image } from "./Image";
@@ -66,7 +67,7 @@ export function SideNavHeader({
 
 export function SideNavLink({
 	children,
-	href,
+	to,
 	onClick,
 	isActive,
 	imageUrl,
@@ -74,7 +75,7 @@ export function SideNavLink({
 	badge,
 }: {
 	children: React.ReactNode;
-	href: string;
+	to: string;
 	onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 	isActive?: boolean;
 	imageUrl?: string;
@@ -82,8 +83,8 @@ export function SideNavLink({
 	badge?: string;
 }) {
 	return (
-		<a
-			href={href}
+		<Link
+			to={to}
 			className={styles.sideNavLink}
 			onClick={onClick}
 			aria-current={isActive ? "page" : undefined}
@@ -104,7 +105,7 @@ export function SideNavLink({
 					</div>
 				) : null}
 			</div>
-		</a>
+		</Link>
 	);
 }
 
@@ -141,11 +142,11 @@ export function SideNavGameStatus({
 	href: string;
 }) {
 	return (
-		<a href={href} className={styles.sideNavGameStatus}>
+		<Link to={href} className={styles.sideNavGameStatus}>
 			<div className={styles.sideNavGameStatusIcon}>
 				<Image path={iconUrl} alt="" />
 			</div>
 			<span>{text}</span>
-		</a>
+		</Link>
 	);
 }
