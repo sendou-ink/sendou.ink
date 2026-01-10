@@ -25,6 +25,10 @@ dump
 /playwright-report/
 /playwright/.cache/
 /.vitest-attachments
+.vitest-attachments/
+
+# Vitest auto-captured failure screenshots (numbered, without browser info)
+# Real baselines have pattern: *-chromium-darwin.png
+**/__screenshots__/**/*-[0-9].png
 
 notepad.txt
-.vitest-attachments/
