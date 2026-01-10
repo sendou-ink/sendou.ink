@@ -8,7 +8,6 @@
 }
 
 .avatarWrapper {
-	display: inline-flex;
 	flex-shrink: 0;
 	width: fit-content;
 	height: fit-content;
