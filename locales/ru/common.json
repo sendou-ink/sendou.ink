@@ -32,7 +32,7 @@
 	"pages.luti": "LUTI",
 	"header.profile": "Профиль",
 	"header.logout": "Выйти",
-	"header.login": "Войти",
+	"header.login.discord": "",
 	"header.language": "Язык",
 	"header.loggedInAs": "Вы вошли как {{userName}}",
 	"header.theme": "Тема",

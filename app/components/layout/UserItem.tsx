@@ -34,7 +34,7 @@ export function UserItem({ className }: { className?: string }) {
 	return (
 		<LogInButtonContainer>
 			<button type="submit" className={styles.logInButton}>
-				<LogInIcon /> {t("header.login")}
+				<LogInIcon /> {t("header.login.discord")}
 			</button>
 		</LogInButtonContainer>
 	);

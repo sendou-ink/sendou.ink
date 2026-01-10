@@ -32,7 +32,7 @@
 	"pages.luti": "",
 	"header.profile": "个人资料",
 	"header.logout": "登出",
-	"header.login": "登录",
+	"header.login.discord": "",
 	"header.language": "语言",
 	"header.loggedInAs": "以 {{userName}} 登录",
 	"header.theme": "主题",

@@ -32,7 +32,7 @@
 	"pages.luti": "",
 	"header.profile": "Perfil",
 	"header.logout": "Sair",
-	"header.login": "Login",
+	"header.login.discord": "",
 	"header.language": "Idioma",
 	"header.loggedInAs": "Logado como {{userName}}",
 	"header.theme": "Tema",

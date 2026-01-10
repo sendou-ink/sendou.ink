@@ -17,6 +17,7 @@ import { BellIcon } from "../icons/Bell";
 import { CalendarIcon } from "../icons/Calendar";
 import { GearIcon } from "../icons/Gear";
 import { HamburgerIcon } from "../icons/Hamburger";
+import { LogInIcon } from "../icons/LogIn";
 import { TwitchIcon } from "../icons/Twitch";
 import { UsersIcon } from "../icons/Users";
 import { SideNav, SideNavFooter, SideNavHeader, SideNavLink } from "../SideNav";
@@ -358,9 +359,9 @@ function SideNavUserPanel() {
 
 	return (
 		<LogInButtonContainer>
-			<button type="submit" className={styles.sideNavLoginButton}>
-				{t("header.login")}
-			</button>
+			<SendouButton type="submit" size="small" icon={<LogInIcon />}>
+				{t("header.login.discord")}
+			</SendouButton>
 		</LogInButtonContainer>
 	);
 }

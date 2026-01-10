@@ -32,7 +32,7 @@
 	"pages.luti": "",
 	"header.profile": "프로필",
 	"header.logout": "로그아웃",
-	"header.login": "로그인",
+	"header.login.discord": "",
 	"header.language": "언어",
 	"header.loggedInAs": "{{userName}}로 로그인됨",
 	"header.theme": "테마",

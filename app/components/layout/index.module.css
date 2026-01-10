@@ -138,30 +138,6 @@
 	}
 }
 
-/** xxx: check styles here */
-.sideNavLoginButton {
-	width: 100%;
-	height: 36px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	border: 2px solid var(--color-text-accent);
-	border-radius: var(--rounded);
-	background-color: transparent;
-	color: inherit;
-	cursor: pointer;
-	font-size: var(--fonts-xs);
-	font-weight: var(--bold);
-}
-
-.sideNavLoginButton:hover {
-	background-color: var(--color-bg-higher);
-}
-
-.sideNavLoginButton:active {
-	transform: translateY(1px);
-}
-
 .sideNavEmpty {
 	font-size: var(--fonts-xs);
 	color: var(--color-text-high);

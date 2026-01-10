@@ -32,7 +32,7 @@
 	"pages.luti": "",
 	"header.profile": "プロファイル",
 	"header.logout": "ログアウト",
-	"header.login": "ログイン",
+	"header.login.discord": "",
 	"header.language": "言語",
 	"header.loggedInAs": "{{userName}} でログインしています",
 	"header.theme": "テーマ",

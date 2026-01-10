@@ -32,7 +32,7 @@
 	"pages.luti": "",
 	"header.profile": "Profil",
 	"header.logout": "Log ud",
-	"header.login": "Log ind",
+	"header.login.discord": "",
 	"header.language": "Sprog",
 	"header.loggedInAs": "Du er logget ind som {{userName}}",
 	"header.theme": "Tema",

@@ -112,7 +112,7 @@ function LogInButton({ close }: { close: () => void }) {
 					<Image path={navIconUrl("log_in")} height={48} width={48} alt="" />
 				</button>
 			</LogInButtonContainer>
-			{t("common:header.login")}
+			{t("common:header.login.discord")}
 		</div>
 	);
 }

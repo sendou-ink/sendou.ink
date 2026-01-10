@@ -32,7 +32,7 @@
 	"pages.luti": "",
 	"header.profile": "Perfil",
 	"header.logout": "Cerrar sesión",
-	"header.login": "Iniciar sesión",
+	"header.login.discord": "",
 	"header.language": "Idioma",
 	"header.loggedInAs": "Ingresado como {{userName}}",
 	"header.theme": "Tema",

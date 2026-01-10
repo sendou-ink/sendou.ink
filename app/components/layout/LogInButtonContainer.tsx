@@ -18,7 +18,11 @@ export function LogInButtonContainer({
 
 	return (
 		<>
-			<form action={LOG_IN_URL} method="post">
+			<form
+				action={LOG_IN_URL}
+				method="post"
+				className="w-full stack items-center"
+			>
 				{children}
 			</form>
 			{authError != null &&

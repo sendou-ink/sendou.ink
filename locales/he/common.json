@@ -32,7 +32,7 @@
 	"pages.luti": "",
 	"header.profile": "פרופיל",
 	"header.logout": "התנתקות",
-	"header.login": "התחברות",
+	"header.login.discord": "",
 	"header.language": "שפה",
 	"header.loggedInAs": "הנכם מחוברים בתור {{userName}}",
 	"header.theme": "נושא",
