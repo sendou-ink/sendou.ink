@@ -2,7 +2,6 @@ import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
-import { HamburgerIcon } from "~/components/icons/Hamburger";
 import { PlusIcon } from "~/components/icons/Plus";
 import { TrashIcon } from "~/components/icons/Trash";
 import type { FormFieldProps } from "../types";
@@ -121,8 +120,7 @@ function ArrayItemFieldset({
 	return (
 		<fieldset className={styles.card}>
 			<div className={styles.header}>
-				{/** xxx: use correct drag handle */}
-				{sortable ? <HamburgerIcon className={styles.dragHandle} /> : null}
+				{sortable ? <span className={styles.dragHandle}>☰</span> : null}
 				<legend className={styles.headerLabel}>#{index + 1}</legend>
 				{canRemove ? (
 					<SendouButton
