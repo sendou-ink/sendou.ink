@@ -9,6 +9,7 @@ import {
 } from "react-router";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
+import { LogOutIcon } from "~/components/icons/LogOut";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
@@ -16,7 +17,7 @@ import { Theme, useTheme } from "~/features/theme/core/provider";
 import { languages } from "~/modules/i18n/config";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { navIconUrl, SETTINGS_PAGE } from "~/utils/urls";
+import { LOG_OUT_URL, navIconUrl, SETTINGS_PAGE } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
 import { action } from "../actions/settings.server";
@@ -78,6 +79,16 @@ export default function SettingsPage() {
 								bottomText={t("common:settings.UPDATE_NO_SCREEN.bottomText")}
 							/>
 						</div>
+						<form method="post" action={LOG_OUT_URL} className="mt-6">
+							<SendouButton
+								size="small"
+								variant="outlined"
+								icon={<LogOutIcon />}
+								type="submit"
+							>
+								{t("common:header.logout")}
+							</SendouButton>
+						</form>
 					</>
 				) : null}
 			</div>
