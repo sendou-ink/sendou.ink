@@ -8,9 +8,11 @@ import styles from "./TopRightButtons.module.css";
 
 export function TopRightButtons({
 	showSupport,
+	showSearch,
 	openNavDialog: _openNavDialog,
 }: {
 	showSupport: boolean;
+	showSearch: boolean;
 	openNavDialog: () => void;
 }) {
 	const { t } = useTranslation(["common"]);
@@ -27,7 +29,7 @@ export function TopRightButtons({
 					{t("common:pages.support")}
 				</LinkButton>
 			) : null}
-			<CommandPalette />
+			{showSearch ? <CommandPalette /> : null}
 			<AnythingAdder />
 			{/** xxx: delete this? */}
 			{/* <button

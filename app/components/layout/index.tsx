@@ -229,6 +229,7 @@ export function Layout({
 								!data?.user?.roles.includes("MINOR_SUPPORT") &&
 								isFrontPage,
 						)}
+						showSearch={Boolean(data?.user)}
 						openNavDialog={() => setNavDialogOpen(true)}
 					/>
 				</header>
