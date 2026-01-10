@@ -120,7 +120,7 @@ export async function expectIsHydrated(page: Page) {
 
 export function seed(page: Page, variation?: SeedVariation) {
 	return page.request.post("/seed", {
-		form: { variation: variation ?? "DEFAULT" },
+		form: { variation: variation ?? "DEFAULT", source: "e2e" },
 	});
 }
 

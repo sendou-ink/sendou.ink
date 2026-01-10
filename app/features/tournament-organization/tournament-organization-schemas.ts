@@ -1,10 +1,10 @@
-import { isFuture } from "date-fns";
 import { z } from "zod";
 import { TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
 import { TOURNAMENT_ORGANIZATION } from "~/features/tournament-organization/tournament-organization-constants";
 import {
 	array,
 	badges,
+	datetimeOptional,
 	fieldset,
 	select,
 	stringConstant,
@@ -14,14 +14,8 @@ import {
 	toggle,
 	userSearch,
 } from "~/form/fields";
-import { dayMonthYearToDate } from "~/utils/dates";
 import { mySlugify } from "~/utils/urls";
-import {
-	_action,
-	dayMonthYear,
-	id,
-	safeNullableStringSchema,
-} from "~/utils/zod";
+import { _action, id } from "~/utils/zod";
 
 const orgNameField = textFieldRequired({
 	label: "labels.name",
@@ -94,20 +88,19 @@ export const organizationEditFormSchema = z.object({
 });
 
 export const banUserActionSchema = z.object({
-	_action: _action("BAN_USER"),
-	userId: id,
-	privateNote: safeNullableStringSchema({
-		max: TOURNAMENT_ORGANIZATION.BAN_REASON_MAX_LENGTH,
+	_action: stringConstant("BAN_USER"),
+	userId: userSearch({ label: "labels.banUserPlayer" }),
+	privateNote: textAreaOptional({
+		label: "labels.banUserNote",
+		bottomText: "bottomTexts.banUserNoteHelp",
+		maxLength: TOURNAMENT_ORGANIZATION.BAN_REASON_MAX_LENGTH,
 	}),
-	expiresAt: dayMonthYear.nullish().refine(
-		(data) => {
-			if (!data) return true;
-			return isFuture(dayMonthYearToDate(data));
-		},
-		{
-			message: "Date must be in the future",
-		},
-	),
+	expiresAt: datetimeOptional({
+		label: "labels.banUserExpiresAt",
+		bottomText: "bottomTexts.banUserExpiresAtHelp",
+		min: new Date(),
+		minMessage: "errors.dateInPast",
+	}),
 });
 
 const unbanUserActionSchema = z.object({

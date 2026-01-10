@@ -9,6 +9,7 @@ import {
 	selectOptional,
 	stringConstant,
 	textAreaOptional,
+	textAreaRequired,
 	timeRangeOptional,
 	toggle,
 } from "~/form/fields";
@@ -73,7 +74,11 @@ const cancelRequestSchema = z.object({
 });
 
 export const cancelScrimSchema = z.object({
-	reason: z.string().trim().min(1).max(SCRIM.CANCEL_REASON_MAX_LENGTH),
+	reason: textAreaRequired({
+		label: "labels.scrimCancelReason",
+		bottomText: "bottomTexts.scrimCancelReasonHelp",
+		maxLength: SCRIM.CANCEL_REASON_MAX_LENGTH,
+	}),
 });
 
 const timeRangeSchema = z.object({

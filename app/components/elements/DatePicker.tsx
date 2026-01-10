@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import {
 	Button,
 	DateInput,
@@ -13,10 +12,6 @@ import {
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouCalendar } from "~/components/elements/Calendar";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import {
-	type FormFieldSize,
-	formFieldSizeToClassName,
-} from "../form/form-utils";
 import { CalendarIcon } from "../icons/Calendar";
 import { SendouLabel } from "./Label";
 
@@ -26,7 +21,6 @@ interface SendouDatePickerProps<T extends DateValue>
 	bottomText?: string;
 	errorText?: string;
 	errorId?: string;
-	size?: FormFieldSize;
 }
 
 export function SendouDatePicker<T extends DateValue>({
@@ -34,7 +28,6 @@ export function SendouDatePicker<T extends DateValue>({
 	errorText,
 	errorId,
 	bottomText,
-	size,
 	isRequired,
 	...rest
 }: SendouDatePickerProps<T>) {
@@ -62,9 +55,7 @@ export function SendouDatePicker<T extends DateValue>({
 			isInvalid={!!errorText}
 		>
 			<SendouLabel required={isRequired}>{label}</SendouLabel>
-			<Group
-				className={clsx("react-aria-Group", formFieldSizeToClassName(size))}
-			>
+			<Group className="react-aria-Group">
 				<DateInput>{(segment) => <DateSegment segment={segment} />}</DateInput>
 				<Button data-testid="open-calendar-button">
 					<CalendarIcon />

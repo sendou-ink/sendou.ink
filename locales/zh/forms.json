@@ -155,5 +155,12 @@
 	"options.tag.S1": "",
 	"options.tag.S2": "",
 	"options.tag.SR": "",
-	"options.tag.CARDS": ""
+	"options.tag.CARDS": "",
+	"labels.banUserPlayer": "",
+	"labels.banUserNote": "",
+	"bottomTexts.banUserNoteHelp": "",
+	"labels.banUserExpiresAt": "",
+	"bottomTexts.banUserExpiresAtHelp": "",
+	"labels.scrimCancelReason": "",
+	"bottomTexts.scrimCancelReasonHelp": ""
 }

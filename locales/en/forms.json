@@ -155,5 +155,12 @@
 	"options.tag.S1": "Splatoon 1",
 	"options.tag.S2": "Splatoon 2",
 	"options.tag.SR": "Salmon Run",
-	"options.tag.CARDS": "Tableturf Battle"
+	"options.tag.CARDS": "Tableturf Battle",
+	"labels.banUserPlayer": "Player",
+	"labels.banUserNote": "Private note",
+	"bottomTexts.banUserNoteHelp": "This note is only visible to organization admins.",
+	"labels.banUserExpiresAt": "Ban expiration date",
+	"bottomTexts.banUserExpiresAtHelp": "Leave empty for a permanent ban",
+	"labels.scrimCancelReason": "Reason for cancellation",
+	"bottomTexts.scrimCancelReasonHelp": "Explain why you are cancelling the scrim. This will be visible to the other team."
 }

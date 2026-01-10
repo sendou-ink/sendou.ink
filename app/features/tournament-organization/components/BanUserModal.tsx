@@ -1,18 +1,12 @@
 import { useTranslation } from "react-i18next";
-import type { z } from "zod";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { DateFormField } from "~/components/form/DateFormField";
-import { SendouForm } from "~/components/form/SendouForm";
-import { TextAreaFormField } from "~/components/form/TextAreaFormField";
-import { UserSearchFormField } from "~/components/form/UserSearchFormField";
-import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
+import { FormField } from "~/form/FormField";
+import { SendouForm } from "~/form/SendouForm";
 import { banUserActionSchema } from "../tournament-organization-schemas";
 
-type FormFields = z.infer<typeof banUserActionSchema>;
-
 export function BanUserModal() {
-	const { t } = useTranslation(["org", "common"]);
+	const { t } = useTranslation(["org"]);
 
 	return (
 		<SendouDialog
@@ -24,32 +18,10 @@ export function BanUserModal() {
 			}
 			showCloseButton
 		>
-			<SendouForm
-				schema={banUserActionSchema}
-				defaultValues={{
-					_action: "BAN_USER",
-					userId: undefined,
-					privateNote: null,
-					expiresAt: null,
-				}}
-			>
-				<UserSearchFormField<FormFields>
-					label={t("org:banned.banModal.player")}
-					name="userId"
-				/>
-
-				<TextAreaFormField<FormFields>
-					label={t("org:banned.banModal.note")}
-					name="privateNote"
-					maxLength={TOURNAMENT_ORGANIZATION.BAN_REASON_MAX_LENGTH}
-					bottomText={t("org:banned.banModal.noteHelp")}
-				/>
-
-				<DateFormField<FormFields>
-					label={t("org:banned.banModal.expiresAt")}
-					name="expiresAt"
-					bottomText={t("org:banned.banModal.expiresAtHelp")}
-				/>
+			<SendouForm schema={banUserActionSchema}>
+				<FormField name="userId" />
+				<FormField name="privateNote" />
+				<FormField name="expiresAt" />
 			</SendouForm>
 		</SendouDialog>
 	);
