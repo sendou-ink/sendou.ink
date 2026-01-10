@@ -47,8 +47,9 @@ div {
 	box-shadow: none !important;
 }
 
-/* Hacky selector to hide navbar if the planner is present */
-header:has(+ .planner) {
+/* Hacky selector to hide sidebar and top nav */
+body:has(.planner) nav,
+body:has(.planner) header {
 	display: none !important;
 }
 
