@@ -6,6 +6,7 @@
 	font-size: var(--fonts-sm);
 	font-weight: var(--semi-bold);
 	white-space: pre-wrap;
+	background-color: var(--color-bg);
 }
 
 .dialog {
