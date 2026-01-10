@@ -70,15 +70,11 @@
 }
 
 .pageIcon {
-	display: grid;
-	place-items: center;
 	width: 28px;
 	height: 28px;
-	padding: var(--s-0-5);
-	background-color: var(--color-bg-higher);
-	border-radius: var(--rounded-xs);
 	flex-shrink: 0;
 	animation: fadeInFull 200ms ease-out 150ms both;
+	object-fit: cover;
 }
 
 @keyframes fadeInFull {
@@ -90,11 +86,6 @@
 	}
 }
 
-.pageIcon img {
-	width: 16px;
-	height: 16px;
-}
-
 .pageName {
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
@@ -102,7 +93,6 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	margin-left: var(--s-1);
 	animation: fadeInFull 200ms ease-out 150ms both;
 }
 

@@ -75,7 +75,6 @@ export const handle: SendouRouteHandle = {
 						}),
 						type: "IMAGE",
 						text: data.organization.name,
-						rounded: true,
 					}
 				: {
 						type: "TEXT",

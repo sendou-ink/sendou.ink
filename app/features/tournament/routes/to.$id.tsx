@@ -74,7 +74,6 @@ export const handle: SendouRouteHandle = {
 						}),
 						type: "IMAGE" as const,
 						text: "",
-						rounded: true,
 					}
 				: null,
 			{
@@ -82,7 +81,6 @@ export const handle: SendouRouteHandle = {
 				href: tournamentPage(data.tournament.ctx.id),
 				type: "IMAGE" as const,
 				text: data.tournament.ctx.name,
-				rounded: true,
 			},
 		].filter((crumb) => crumb !== null);
 	},

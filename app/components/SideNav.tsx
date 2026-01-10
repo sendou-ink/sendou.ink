@@ -23,7 +23,6 @@ export function SideNav({
 	top?: React.ReactNode;
 	topCentered?: boolean;
 }) {
-	// xxx: looks funny on tournament page (very small border around the logo)
 	return (
 		<nav className={clsx(styles.sideNav, className)}>
 			<div

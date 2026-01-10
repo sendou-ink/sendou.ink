@@ -283,10 +283,7 @@ function PageIcon({ crumb }: { crumb: Breadcrumb }) {
 	}
 
 	const isExternal = crumb.imgPath.includes(".");
-
-	const iconClass = clsx(styles.pageIcon, {
-		"rounded-full": crumb.rounded,
-	});
+	const iconClass = clsx(styles.pageIcon, "rounded");
 
 	return isExternal ? (
 		<img src={crumb.imgPath} alt="" className={iconClass} />
