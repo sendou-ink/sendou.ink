@@ -24,5 +24,11 @@
 	"sideNav.noEvents": "No upcoming events",
 	"sideNav.friends": "Friends",
 	"sideNav.streams": "Streams",
-	"sideNav.matchStarted": "Match #{{matchId}} started!"
+	"sideNav.matchStarted": "Match #{{matchId}} started!",
+	"mobileNav.menu": "Menu",
+	"mobileNav.friends": "Friends",
+	"mobileNav.you": "You",
+	"mobileNav.login": "Login",
+	"mobileNav.match": "Match",
+	"mobileNav.queue": "Queue"
 }

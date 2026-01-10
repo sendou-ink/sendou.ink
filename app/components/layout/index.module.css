@@ -96,31 +96,6 @@
 	animation: fadeInFull 200ms ease-out 150ms both;
 }
 
-.hamburger.fab {
-	display: grid;
-	position: fixed;
-	right: var(--input-height-large);
-	bottom: var(--input-height-large);
-	border-radius: 100%;
-	width: var(--input-height-large);
-	height: var(--input-height-large);
-	backdrop-filter: var(--backdrop-filter);
-	background-color: transparent;
-	border-color: var(--color-text-accent);
-}
-
-.hamburger.fab svg {
-	min-width: 2.25rem;
-	max-width: 2.25rem;
-	stroke-width: 2px;
-}
-
-@media screen and (min-width: 600px) {
-	.hamburger.fab {
-		display: none;
-	}
-}
-
 @media screen and (display-mode: standalone) {
 	.header {
 		align-items: flex-end;
@@ -132,4 +107,24 @@
 	font-size: var(--fonts-xs);
 	color: var(--color-text-high);
 	padding: var(--s-1) var(--s-2);
+}
+
+.mobileLogo {
+	display: none;
+}
+
+@media screen and (max-width: 599px) {
+	.mobileLogo {
+		display: grid;
+		place-items: center;
+		width: 36px;
+		height: 36px;
+		background-color: var(--color-accent);
+		border-radius: var(--rounded-xs);
+		font-size: var(--fonts-lg);
+		font-weight: var(--bold);
+		color: var(--color-text);
+		text-decoration: none;
+		flex-shrink: 0;
+	}
 }

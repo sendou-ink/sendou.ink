@@ -1,21 +1,25 @@
 import { useTranslation } from "react-i18next";
 import { SUPPORT_PAGE } from "~/utils/urls";
-import { LinkButton } from "../elements/Button";
+import { LinkButton, SendouButton } from "../elements/Button";
 import { HeartIcon } from "../icons/Heart";
+import { LogInIcon } from "../icons/LogIn";
 import { AnythingAdder } from "./AnythingAdder";
 import { CommandPalette } from "./CommandPalette";
+import { LogInButtonContainer } from "./LogInButtonContainer";
 import styles from "./TopRightButtons.module.css";
 
 export function TopRightButtons({
 	showSupport,
 	showSearch,
+	isLoggedIn,
 	openNavDialog: _openNavDialog,
 }: {
 	showSupport: boolean;
 	showSearch: boolean;
+	isLoggedIn: boolean;
 	openNavDialog: () => void;
 }) {
-	const { t } = useTranslation(["common"]);
+	const { t } = useTranslation(["common", "front"]);
 
 	return (
 		<div className={styles.container}>
@@ -29,17 +33,18 @@ export function TopRightButtons({
 					{t("common:pages.support")}
 				</LinkButton>
 			) : null}
-			{showSearch ? <CommandPalette /> : null}
-			<AnythingAdder />
-			{/** xxx: delete this? */}
-			{/* <button
-				aria-label="Open navigation"
-				onClick={openNavDialog}
-				className={styles.button}
-				type="button"
-			>
-				<HamburgerIcon className={styles.buttonIcon} />
-			</button> */}
+			{isLoggedIn ? (
+				<>
+					{showSearch ? <CommandPalette /> : null}
+					<AnythingAdder />
+				</>
+			) : (
+				<LogInButtonContainer>
+					<SendouButton type="submit" size="small" icon={<LogInIcon />}>
+						{t("front:mobileNav.login")}
+					</SendouButton>
+				</LogInButtonContainer>
+			)}
 		</div>
 	);
 }

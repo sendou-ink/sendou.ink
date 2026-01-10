@@ -4,6 +4,7 @@ import { Avatar } from "~/components/Avatar";
 import { Image } from "~/components/Image";
 import { CalendarIcon } from "~/components/icons/Calendar";
 import { Main } from "~/components/Main";
+import { useIsMounted } from "~/hooks/useIsMounted";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BUILDS_PAGE,
@@ -701,7 +702,8 @@ function SocialFeed({ posts }: { posts: FeedPost[] }) {
 }
 
 function FeedPostCard({ post }: { post: FeedPost }) {
-	const timeAgo = formatTimeAgo(post.timestamp);
+	const isMounted = useIsMounted();
+	const timeAgo = isMounted ? formatTimeAgo(post.timestamp) : "";
 
 	return (
 		<article className={styles.feedPost}>

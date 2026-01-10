@@ -320,3 +320,9 @@
 .sideNavPanelDialog {
 	outline: none;
 }
+
+@media screen and (max-width: 599px) {
+	.sideNav {
+		display: none;
+	}
+}

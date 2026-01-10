@@ -224,3 +224,9 @@
 	color: var(--color-text-high);
 	font-size: var(--fonts-sm);
 }
+
+@media screen and (max-width: 599px) {
+	.searchKbd {
+		display: none;
+	}
+}

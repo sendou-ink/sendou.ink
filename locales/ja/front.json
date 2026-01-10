@@ -24,5 +24,11 @@
 	"sideNav.noEvents": "",
 	"sideNav.friends": "",
 	"sideNav.streams": "",
-	"sideNav.matchStarted": ""
+	"sideNav.matchStarted": "",
+	"mobileNav.menu": "",
+	"mobileNav.friends": "",
+	"mobileNav.you": "",
+	"mobileNav.login": "",
+	"mobileNav.match": "",
+	"mobileNav.queue": ""
 }

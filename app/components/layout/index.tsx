@@ -17,10 +17,10 @@ import { Image } from "../Image";
 import { BellIcon } from "../icons/Bell";
 import { CalendarIcon } from "../icons/Calendar";
 import { GearIcon } from "../icons/Gear";
-import { HamburgerIcon } from "../icons/Hamburger";
 import { LogInIcon } from "../icons/LogIn";
 import { TwitchIcon } from "../icons/Twitch";
 import { UsersIcon } from "../icons/Users";
+import { MobileNav } from "../MobileNav";
 import {
 	SideNav,
 	SideNavFooter,
@@ -138,14 +138,6 @@ export function Layout({
 	return (
 		<>
 			<NavDialog isOpen={navDialogOpen} close={() => setNavDialogOpen(false)} />
-			{isFrontPage ? (
-				<SendouButton
-					icon={<HamburgerIcon />}
-					className={clsx(styles.hamburger, styles.fab)}
-					variant="outlined"
-					onPress={() => setNavDialogOpen(true)}
-				/>
-			) : null}
 			<SideNav
 				footer={
 					<>
@@ -216,8 +208,10 @@ export function Layout({
 					</SideNavLink>
 				))}
 			</SideNav>
+			<MobileNav sidebarData={sidebarData} />
 			<div className={styles.container}>
 				<header className={styles.header}>
+					<MobileLogo />
 					<TopNavMenus />
 					<TopRightButtons
 						showSupport={Boolean(
@@ -226,6 +220,7 @@ export function Layout({
 								isFrontPage,
 						)}
 						showSearch={Boolean(data?.user)}
+						isLoggedIn={Boolean(data?.user)}
 						openNavDialog={() => setNavDialogOpen(true)}
 					/>
 				</header>
@@ -270,6 +265,14 @@ function SiteTitle() {
 				) : null}
 			</div>
 		</Flipper>
+	);
+}
+
+function MobileLogo() {
+	return (
+		<Link to="/" className={styles.mobileLogo}>
+			S
+		</Link>
 	);
 }
 
