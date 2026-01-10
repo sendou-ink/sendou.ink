@@ -1,4 +1,3 @@
-import { faker } from "@faker-js/faker";
 import clsx from "clsx";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
@@ -19,8 +18,6 @@ export { loader };
 export const handle: SendouRouteHandle = {
 	i18n: ["front"],
 };
-
-faker.seed(123);
 
 const WEAPON_NAMES: Record<number, string> = {
 	0: "Sploosh-o-matic",
@@ -122,12 +119,28 @@ const MODE_NAMES: Record<string, string> = {
 	CB: "Clam Blitz",
 };
 
-const MOCK_USERS = Array.from({ length: 20 }, (_, i) => ({
-	id: i + 1,
-	username: faker.internet.username(),
-	avatarUrl: faker.image.avatar(),
-	discordTag: faker.internet.username(),
-}));
+const MOCK_USERS = [
+	{ id: 1, username: "InkMaster", avatarUrl: "https://i.pravatar.cc/150?u=user1", discordTag: "inkmaster" },
+	{ id: 2, username: "SplatKing", avatarUrl: "https://i.pravatar.cc/150?u=user2", discordTag: "splatking" },
+	{ id: 3, username: "OctoQueen", avatarUrl: "https://i.pravatar.cc/150?u=user3", discordTag: "octoqueen" },
+	{ id: 4, username: "TurfPro", avatarUrl: "https://i.pravatar.cc/150?u=user4", discordTag: "turfpro" },
+	{ id: 5, username: "ChargerMain", avatarUrl: "https://i.pravatar.cc/150?u=user5", discordTag: "chargermain" },
+	{ id: 6, username: "BrushRush", avatarUrl: "https://i.pravatar.cc/150?u=user6", discordTag: "brushrush" },
+	{ id: 7, username: "SlosherPro", avatarUrl: "https://i.pravatar.cc/150?u=user7", discordTag: "slosherpro" },
+	{ id: 8, username: "DualiesDuo", avatarUrl: "https://i.pravatar.cc/150?u=user8", discordTag: "dualiesduo" },
+	{ id: 9, username: "BrellaShield", avatarUrl: "https://i.pravatar.cc/150?u=user9", discordTag: "brellashield" },
+	{ id: 10, username: "StringerAce", avatarUrl: "https://i.pravatar.cc/150?u=user10", discordTag: "stringerace" },
+	{ id: 11, username: "SplatanaSlash", avatarUrl: "https://i.pravatar.cc/150?u=user11", discordTag: "splatanaslash" },
+	{ id: 12, username: "RollerCrush", avatarUrl: "https://i.pravatar.cc/150?u=user12", discordTag: "rollercrush" },
+	{ id: 13, username: "BlasterBoom", avatarUrl: "https://i.pravatar.cc/150?u=user13", discordTag: "blasterboom" },
+	{ id: 14, username: "SplatlingSpray", avatarUrl: "https://i.pravatar.cc/150?u=user14", discordTag: "splatlingspray" },
+	{ id: 15, username: "SquifferQuick", avatarUrl: "https://i.pravatar.cc/150?u=user15", discordTag: "squifferquick" },
+	{ id: 16, username: "NautFlex", avatarUrl: "https://i.pravatar.cc/150?u=user16", discordTag: "nautflex" },
+	{ id: 17, username: "TetraTop", avatarUrl: "https://i.pravatar.cc/150?u=user17", discordTag: "tetratop" },
+	{ id: 18, username: "ReefLuxer", avatarUrl: "https://i.pravatar.cc/150?u=user18", discordTag: "reefluxer" },
+	{ id: 19, username: "GooTubeGuru", avatarUrl: "https://i.pravatar.cc/150?u=user19", discordTag: "gootubeguru" },
+	{ id: 20, username: "BamboozleKing", avatarUrl: "https://i.pravatar.cc/150?u=user20", discordTag: "bamboozleking" },
+];
 
 type FeedPostType =
 	| "art_posted"
@@ -239,7 +252,6 @@ type FeedPostContent =
 	| ReplaySharedContent;
 
 function generateMockPosts(): FeedPost[] {
-	faker.seed(456);
 	const posts: FeedPost[] = [];
 
 	posts.push({
@@ -265,9 +277,9 @@ function generateMockPosts(): FeedPost[] {
 			type: "art_posted",
 			description: "Posted new art",
 			images: [
-				faker.image.urlPicsumPhotos({ width: 200, height: 200 }),
-				faker.image.urlPicsumPhotos({ width: 200, height: 200 }),
-				faker.image.urlPicsumPhotos({ width: 200, height: 200 }),
+				"https://picsum.photos/seed/art1/200/200",
+				"https://picsum.photos/seed/art2/200/200",
+				"https://picsum.photos/seed/art3/200/200",
 			],
 		},
 	});

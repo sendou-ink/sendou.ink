@@ -1,4 +1,3 @@
-import { faker } from "@faker-js/faker";
 import clsx from "clsx";
 import * as React from "react";
 import { Button } from "react-aria-components";
@@ -45,7 +44,7 @@ const MOCK_STREAMS = [
 	{
 		id: 3,
 		name: "Paddling Pool 252",
-		imageUrl: faker.image.avatar(),
+		imageUrl: "https://i.pravatar.cc/150?u=stream1",
 		subtitle: "Losers Finals",
 		badge: "LIVE",
 	},
@@ -68,36 +67,36 @@ const MOCK_STREAMS = [
 const MOCK_FRIENDS = [
 	{
 		id: 1,
-		name: faker.internet.username(),
-		avatarUrl: faker.image.avatar(),
+		name: "Splat_Master",
+		avatarUrl: "https://i.pravatar.cc/150?u=friend1",
 		subtitle: "SendouQ",
 		badge: "2/4",
 	},
 	{
 		id: 2,
-		name: faker.internet.username(),
-		avatarUrl: faker.image.avatar(),
+		name: "InklingPro",
+		avatarUrl: "https://i.pravatar.cc/150?u=friend2",
 		subtitle: "Lobby",
 		badge: "2/8",
 	},
 	{
 		id: 3,
-		name: faker.internet.username(),
-		avatarUrl: faker.image.avatar(),
+		name: "OctoKing",
+		avatarUrl: "https://i.pravatar.cc/150?u=friend3",
 		subtitle: "In The Zone 22",
 		badge: "3/4",
 	},
 	{
 		id: 4,
-		name: faker.internet.username(),
-		avatarUrl: faker.image.avatar(),
+		name: "TurfWarrior",
+		avatarUrl: "https://i.pravatar.cc/150?u=friend4",
 		subtitle: "SendouQ",
 		badge: "1/4",
 	},
 	{
 		id: 5,
-		name: faker.internet.username(),
-		avatarUrl: faker.image.avatar(),
+		name: "RankedGrinder",
+		avatarUrl: "https://i.pravatar.cc/150?u=friend5",
 		subtitle: "Lobby",
 		badge: "5/8",
 	},
