@@ -10,7 +10,7 @@
 }
 
 .main {
-	padding-block: var(--s-8) var(--s-32);
+	padding-block: var(--s-3) var(--s-32);
 	min-height: calc(100dvh - var(--layout-nav-height));
 }
 
