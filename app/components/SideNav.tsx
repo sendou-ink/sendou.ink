@@ -8,6 +8,7 @@ import {
 } from "react-aria-components";
 import { SendouButton } from "~/components/elements/Button";
 import { CrossIcon } from "~/components/icons/Cross";
+import { Image } from "./Image";
 import styles from "./SideNav.module.css";
 
 export function SideNav({
@@ -128,4 +129,23 @@ export function SideNavPanel({
 
 export function SideNavFooter({ children }: { children: React.ReactNode }) {
 	return <div className={styles.sideNavFooter}>{children}</div>;
+}
+
+export function SideNavGameStatus({
+	iconUrl,
+	text,
+	href,
+}: {
+	iconUrl: string;
+	text: string;
+	href: string;
+}) {
+	return (
+		<a href={href} className={styles.sideNavGameStatus}>
+			<div className={styles.sideNavGameStatusIcon}>
+				<Image path={iconUrl} alt="" />
+			</div>
+			<span>{text}</span>
+		</a>
+	);
 }

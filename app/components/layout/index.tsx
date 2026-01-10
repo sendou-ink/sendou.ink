@@ -7,7 +7,7 @@ import { Link, useLocation, useMatches } from "react-router";
 import { useUser } from "~/features/auth/core/user";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
-import { SETTINGS_PAGE, userPage } from "~/utils/urls";
+import { navIconUrl, SETTINGS_PAGE, userPage } from "~/utils/urls";
 import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
@@ -19,7 +19,13 @@ import { HamburgerIcon } from "../icons/Hamburger";
 import { LogInIcon } from "../icons/LogIn";
 import { TwitchIcon } from "../icons/Twitch";
 import { UsersIcon } from "../icons/Users";
-import { SideNav, SideNavFooter, SideNavHeader, SideNavLink } from "../SideNav";
+import {
+	SideNav,
+	SideNavFooter,
+	SideNavGameStatus,
+	SideNavHeader,
+	SideNavLink,
+} from "../SideNav";
 import sideNavStyles from "../SideNav.module.css";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
@@ -155,9 +161,16 @@ export function Layout({
 			) : null}
 			<SideNav
 				footer={
-					<SideNavFooter>
-						<SideNavUserPanel />
-					</SideNavFooter>
+					<>
+						<SideNavGameStatus
+							iconUrl={navIconUrl("sendouq")}
+							text="Match #92432 started!"
+							href="/q/match/123"
+						/>
+						<SideNavFooter>
+							<SideNavUserPanel />
+						</SideNavFooter>
+					</>
 				}
 				top={<SiteTitle />}
 				topCentered={isFrontPage}
