@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { ChevronsUpDown, Search, X } from "lucide-react";
 import * as React from "react";
 import {
 	Autocomplete,
@@ -18,11 +19,8 @@ import { useFetcher } from "react-router";
 import { useDebounce } from "react-use";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouLabel } from "~/components/elements/Label";
-import { ChevronUpDownIcon } from "~/components/icons/ChevronUpDown";
-import { CrossIcon } from "~/components/icons/Cross";
 import type { UserSearchLoaderData } from "~/features/user-search/loaders/u.server";
 import { Avatar } from "../Avatar";
-import { SearchIcon } from "../icons/Search";
 
 import selectStyles from "./Select.module.css";
 import userSearchStyles from "./UserSearch.module.css";
@@ -91,7 +89,7 @@ export const UserSearch = React.forwardRef(function UserSearch<
 			<Button className={selectStyles.button} ref={ref}>
 				<SelectValue className={userSearchStyles.selectValue} />
 				<span aria-hidden="true">
-					<ChevronUpDownIcon className={selectStyles.icon} />
+					<ChevronsUpDown className={selectStyles.icon} />
 				</span>
 			</Button>
 			<SendouBottomTexts bottomText={bottomText} errorText={errorText} />
@@ -105,13 +103,13 @@ export const UserSearch = React.forwardRef(function UserSearch<
 						autoFocus
 						className={selectStyles.searchField}
 					>
-						<SearchIcon aria-hidden className={selectStyles.smallIcon} />
+						<Search aria-hidden className={selectStyles.icon} />
 						<Input
 							className={selectStyles.searchInput}
 							data-testid="user-search-input"
 						/>
 						<Button className={selectStyles.searchClearButton}>
-							<CrossIcon className={selectStyles.smallIcon} />
+							<X className={selectStyles.icon} />
 						</Button>
 					</SearchField>
 					<ListBox

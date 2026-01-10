@@ -1,12 +1,11 @@
 import clsx from "clsx";
+import { Trophy, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Flag } from "~/components/Flag";
 import { Image, ModeImage } from "~/components/Image";
-import { TrophyIcon } from "~/components/icons/Trophy";
-import { UsersIcon } from "~/components/icons/Users";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
@@ -116,7 +115,7 @@ export function TournamentCard({
 				>
 					{tournament.isRanked ? (
 						<div className={clsx(styles.pill, styles.pillRanked)}>
-							<TrophyIcon title="Ranked (impacts this seasons SP)" />
+							<Trophy />
 						</div>
 					) : null}
 					{isCalendar && tournament.badges && tournament.badges.length > 0 ? (
@@ -124,7 +123,7 @@ export function TournamentCard({
 					) : null}
 					{isHostedOnSendouInk ? (
 						<div className={styles.teamCount}>
-							<UsersIcon /> {tournament.teamsCount}
+							<Users /> {tournament.teamsCount}
 						</div>
 					) : null}
 				</div>

@@ -1,10 +1,10 @@
 import clsx from "clsx";
+import { Check } from "lucide-react";
 import * as React from "react";
 import type { MetaFunction } from "react-router";
 import { Form, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { RelativeTime } from "~/components/RelativeTime";
 import styles from "~/features/plus-suggestions/plus.module.css";
 import { usePlusVoting } from "~/features/plus-voting/core";
@@ -56,7 +56,7 @@ function VotingTimingInfo(
 		<div className="stack md">
 			{data.voted ? (
 				<div className={styles.votingAlert}>
-					<CheckmarkIcon /> You have voted
+					<Check /> You have voted
 				</div>
 			) : null}
 			<div className="text-sm text-center">

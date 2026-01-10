@@ -1,6 +1,6 @@
 import clsx from "clsx";
+import { Link } from "lucide-react";
 import { BskyIcon } from "~/components/icons/Bsky";
-import { LinkIcon } from "~/components/icons/Link";
 import { TwitchIcon } from "~/components/icons/Twitch";
 import { YouTubeIcon } from "~/components/icons/YouTube";
 import styles from "../tournament-organization.module.css";
@@ -54,7 +54,7 @@ function SocialLinkIcon({ url }: { url: string }) {
 		return <BskyIcon />;
 	}
 
-	return <LinkIcon />;
+	return <Link />;
 }
 
 const urlToLinkType = (url: string) => {

@@ -232,10 +232,6 @@
 	color: var(--color-text-high);
 }
 
-.sectionIcon {
-	width: 2rem;
-}
-
 .rosterGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, 110px);

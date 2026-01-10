@@ -1,10 +1,10 @@
+import { Trash } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Form, Link, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { WeaponImage } from "~/components/Image";
-import { TrashIcon } from "~/components/icons/Trash";
 import { Label } from "~/components/Label";
 import { RequiredHiddenInput } from "~/components/RequiredHiddenInput";
 import { SubmitButton } from "~/components/SubmitButton";
@@ -278,7 +278,7 @@ function WeaponPoolSelect({
 									/>
 								</div>
 								<SendouButton
-									icon={<TrashIcon />}
+									icon={<Trash />}
 									variant="minimal-destructive"
 									aria-label="Delete weapon"
 									onPress={() =>

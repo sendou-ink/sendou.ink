@@ -1,11 +1,10 @@
+import { ChevronLeft, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useLoaderData } from "react-router";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { WeaponImage } from "~/components/Image";
-import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
-import { CrossIcon } from "~/components/icons/Cross";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
@@ -41,7 +40,7 @@ export default function LFGNewPostPage() {
 		return (
 			<Main halfWidth className="stack items-center">
 				<h2 className="text-lg mb-4">{t("lfg:new.noMorePosts")}</h2>
-				<LinkButton to={LFG_PAGE} icon={<ArrowLeftIcon />}>
+				<LinkButton to={LFG_PAGE} icon={<ChevronLeft />}>
 					{t("common:actions.goBack")}
 				</LinkButton>
 			</Main>
@@ -257,7 +256,7 @@ function Languages() {
 						<div key={code} className="stack horizontal items-center sm">
 							<span>{name}</span>
 							<SendouButton
-								icon={<CrossIcon />}
+								icon={<X />}
 								variant="minimal-destructive"
 								onPress={() => {
 									const newLanguages = value.filter(

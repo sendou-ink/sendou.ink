@@ -1,3 +1,4 @@
+import { Link as LinkIcon, Lock, SquarePen, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link, useFetcher, useLoaderData, useSearchParams } from "react-router";
@@ -12,10 +13,6 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { Image } from "~/components/Image";
-import { EditIcon } from "~/components/icons/Edit";
-import { LinkIcon } from "~/components/icons/Link";
-import { LockIcon } from "~/components/icons/Lock";
-import { UsersIcon } from "~/components/icons/Users";
 import { Main } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
@@ -121,7 +118,7 @@ function LogoHeader() {
 					<div className="stack items-start">
 						<LinkButton
 							to={tournamentOrganizationEditPage(data.organization.slug)}
-							icon={<EditIcon />}
+							icon={<SquarePen />}
 							size="small"
 							variant="outlined"
 							testId="edit-org-button"
@@ -185,7 +182,7 @@ function InfoTabs() {
 					<SendouTab id="socials" isDisabled={!hasSocials} icon={<LinkIcon />}>
 						{t("org:edit.form.socialLinks.title")}
 					</SendouTab>
-					<SendouTab id="members" icon={<UsersIcon />}>
+					<SendouTab id="members" icon={<Users />}>
 						{t("org:edit.form.members.title")}
 					</SendouTab>
 					<SendouTab
@@ -198,7 +195,7 @@ function InfoTabs() {
 					{canBanPlayers && data.bannedUsers ? (
 						<SendouTab
 							id="banned-users"
-							icon={<LockIcon />}
+							icon={<Lock />}
 							data-testid="banned-users-tab"
 						>
 							{t("org:banned.title")}

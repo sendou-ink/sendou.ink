@@ -1,4 +1,5 @@
 import { add, sub } from "date-fns";
+import { Funnel } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
@@ -6,7 +7,6 @@ import { useFetcher, useLoaderData } from "react-router";
 import { AddNewButton } from "~/components/AddNewButton";
 import { Alert } from "~/components/Alert";
 import { SendouButton } from "~/components/elements/Button";
-import { FilterIcon } from "~/components/icons/Filter";
 import { Main } from "~/components/Main";
 import { SideNavPanel } from "~/components/SideNav";
 import { SubmitButton } from "~/components/SubmitButton";
@@ -106,7 +106,7 @@ export default function LFGPage() {
 						<SendouButton
 							variant="outlined"
 							size="small"
-							icon={<FilterIcon />}
+							icon={<Funnel />}
 							className={styles.mobileFilterButton}
 						>
 							{t("lfg:filters.button")}

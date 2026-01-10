@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
@@ -10,7 +11,6 @@ import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Input } from "~/components/Input";
-import { TrashIcon } from "~/components/icons/Trash";
 import { Label } from "~/components/Label";
 import { containerClassName } from "~/components/Main";
 import { Redirect } from "~/components/Redirect";
@@ -518,7 +518,7 @@ function RemoveStaffButton({
 				size="small"
 				data-testid="remove-staff-button"
 			>
-				<TrashIcon className="small-icon" />
+				<Trash className="small-icon" />
 			</SendouButton>
 		</FormWithConfirm>
 	);

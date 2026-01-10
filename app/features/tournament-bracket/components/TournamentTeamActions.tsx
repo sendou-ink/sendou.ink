@@ -1,10 +1,10 @@
 import clsx from "clsx";
 import { sub } from "date-fns";
+import { Check } from "lucide-react";
 import * as React from "react";
 import { useFetcher } from "react-router";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { soundEnabled, soundVolume } from "~/features/chat/chat-utils";
@@ -152,7 +152,7 @@ export function TournamentTeamActions() {
 	if (status.type === "WAITING_FOR_BRACKET") {
 		return (
 			<Container spaced>
-				<CheckmarkIcon className={styles.quickActionCheckmark} />{" "}
+				<Check className={styles.quickActionCheckmark} />{" "}
 				<div>
 					Checked in, waiting on bracket
 					<Dots />

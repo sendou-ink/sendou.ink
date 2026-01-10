@@ -1,8 +1,8 @@
 import clsx from "clsx";
+import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
 import type { SerializeFrom } from "~/utils/remix";
-import { UsersIcon } from "../../../components/icons/Users";
 import { tournamentBracketsPage } from "../../../utils/urls";
 
 import { loader } from "../loaders/to.$id.divisions.server";
@@ -48,7 +48,7 @@ function DivisionLink({
 		>
 			{shortName}
 			<div className="tournament__div__participant-counts">
-				<UsersIcon />{" "}
+				<Users />{" "}
 				{t("calendar:count.teams", {
 					count: div.teamsCount,
 				})}

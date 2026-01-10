@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { X } from "lucide-react";
 import type * as React from "react";
 import {
 	Dialog,
@@ -8,7 +9,6 @@ import {
 } from "react-aria-components";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
-import { CrossIcon } from "~/components/icons/Cross";
 import { Image } from "./Image";
 import styles from "./SideNav.module.css";
 
@@ -55,7 +55,7 @@ export function SideNavHeader({
 			<h2>{children}</h2>
 			{showClose ? (
 				<SendouButton
-					icon={<CrossIcon />}
+					icon={<X />}
 					variant="minimal"
 					slot="close"
 					className={styles.sideNavHeaderClose}

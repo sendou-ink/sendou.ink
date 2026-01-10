@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { format, sub } from "date-fns";
+import { ChevronsUpDown, Search, X } from "lucide-react";
 import * as React from "react";
 import {
 	Autocomplete,
@@ -19,11 +20,8 @@ import { useFetcher } from "react-router";
 import { useDebounce } from "react-use";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouLabel } from "~/components/elements/Label";
-import { ChevronUpDownIcon } from "~/components/icons/ChevronUpDown";
-import { CrossIcon } from "~/components/icons/Cross";
 import type { TournamentSearchLoaderData } from "~/features/tournament/routes/to.search";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { SearchIcon } from "../icons/Search";
 
 import selectStyles from "./Select.module.css";
 import tournamentSearchStyles from "./TournamentSearch.module.css";
@@ -102,7 +100,7 @@ export const TournamentSearch = React.forwardRef(function TournamentSearch<
 			<Button className={selectStyles.button} ref={ref}>
 				<SelectValue className={tournamentSearchStyles.selectValue} />
 				<span aria-hidden="true">
-					<ChevronUpDownIcon className={selectStyles.icon} />
+					<ChevronsUpDown className={selectStyles.icon} />
 				</span>
 			</Button>
 			<SendouBottomTexts bottomText={bottomText} errorText={errorText} />
@@ -118,13 +116,13 @@ export const TournamentSearch = React.forwardRef(function TournamentSearch<
 						autoFocus
 						className={selectStyles.searchField}
 					>
-						<SearchIcon aria-hidden className={selectStyles.smallIcon} />
+						<Search aria-hidden className={selectStyles.icon} />
 						<Input
 							className={selectStyles.searchInput}
 							data-testid="tournament-search-input"
 						/>
 						<Button className={selectStyles.searchClearButton}>
-							<CrossIcon className={selectStyles.smallIcon} />
+							<X className={selectStyles.icon} />
 						</Button>
 					</SearchField>
 					<ListBox

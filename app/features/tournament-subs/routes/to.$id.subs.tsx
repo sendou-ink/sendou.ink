@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Mic, Trash } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
@@ -8,8 +9,6 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { Flag } from "~/components/Flag";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { WeaponImage } from "~/components/Image";
-import { MicrophoneIcon } from "~/components/icons/Microphone";
-import { TrashIcon } from "~/components/icons/Trash";
 import { Redirect } from "~/components/Redirect";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
@@ -83,7 +82,7 @@ function SubInfoSection({
 
 	const infos = [
 		<div key="vc" className={styles.sectionInfoVc}>
-			<MicrophoneIcon
+			<Mic
 				className={
 					sub.canVc === 1
 						? "text-success"
@@ -185,7 +184,7 @@ function SubInfoSection({
 							variant="minimal-destructive"
 							size="small"
 							type="submit"
-							icon={<TrashIcon />}
+							icon={<Trash />}
 						>
 							{t("common:actions.delete")}
 						</SendouButton>

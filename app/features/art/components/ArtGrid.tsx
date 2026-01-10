@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { SquarePen, Trash, Unlink, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
@@ -6,10 +7,6 @@ import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { CrossIcon } from "~/components/icons/Cross";
-import { EditIcon } from "~/components/icons/Edit";
-import { TrashIcon } from "~/components/icons/Trash";
-import { UnlinkIcon } from "~/components/icons/Unlink";
 import { Pagination } from "~/components/Pagination";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { usePagination } from "~/hooks/usePagination";
@@ -148,7 +145,7 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 				variant="destructive"
 				className="mx-auto mt-6"
 				onPress={close}
-				icon={<CrossIcon />}
+				icon={<X />}
 			>
 				Close
 			</SendouButton>
@@ -198,7 +195,7 @@ function ImagePreview({
 						to={newArtPage(art.id)}
 						size="small"
 						variant="outlined"
-						icon={<EditIcon />}
+						icon={<SquarePen />}
 					>
 						{t("common:actions.edit")}
 					</LinkButton>
@@ -209,11 +206,7 @@ function ImagePreview({
 							["_action", "DELETE_ART"],
 						]}
 					>
-						<SendouButton
-							icon={<TrashIcon />}
-							variant="destructive"
-							size="small"
-						/>
+						<SendouButton icon={<Trash />} variant="destructive" size="small" />
 					</FormWithConfirm>
 				</div>
 			</div>
@@ -267,7 +260,7 @@ function ImagePreview({
 							submitButtonText={t("common:actions.remove")}
 						>
 							<SendouButton
-								icon={<UnlinkIcon />}
+								icon={<Unlink />}
 								variant="destructive"
 								size="small"
 							/>

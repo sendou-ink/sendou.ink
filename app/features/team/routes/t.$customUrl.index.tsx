@@ -1,3 +1,4 @@
+import { SquarePen, Star, Users } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useMatches } from "react-router";
@@ -5,9 +6,6 @@ import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { WeaponImage } from "~/components/Image";
-import { EditIcon } from "~/components/icons/Edit";
-import { StarIcon } from "~/components/icons/Star";
-import { UsersIcon } from "~/components/icons/Users";
 import { Placement } from "~/components/Placement";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
@@ -103,7 +101,7 @@ function ActionButtons() {
 					to={manageTeamRosterPage(team.customUrl)}
 					variant="outlined"
 					prefetch="intent"
-					icon={<UsersIcon />}
+					icon={<Users />}
 					testId="manage-roster-button"
 				>
 					{t("team:actionButtons.manageRoster")}
@@ -115,7 +113,7 @@ function ActionButtons() {
 					to={editTeamPage(team.customUrl)}
 					variant="outlined"
 					prefetch="intent"
-					icon={<EditIcon />}
+					icon={<SquarePen />}
 					testId="edit-team-button"
 				>
 					{t("team:actionButtons.editTeam")}
@@ -135,7 +133,7 @@ function ChangeMainTeamButton() {
 				_action="MAKE_MAIN_TEAM"
 				size="small"
 				variant="outlined"
-				icon={<StarIcon />}
+				icon={<Star />}
 				testId="make-main-team-button"
 			>
 				{t("team:actionButtons.makeMainTeam")}

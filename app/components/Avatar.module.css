@@ -15,7 +15,6 @@
 	background-color: var(--color-bg-higher);
 	border-radius: 50%;
 	overflow: hidden;
-	line-height: 0;
 }
 
 .avatarWrapper img {

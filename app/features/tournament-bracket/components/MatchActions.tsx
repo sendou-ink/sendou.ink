@@ -1,7 +1,7 @@
+import { SquarePen } from "lucide-react";
 import * as React from "react";
 import { Form, useFetcher, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
-import { EditIcon } from "~/components/icons/Edit";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
@@ -400,7 +400,7 @@ function EditScoreForm({
 	return (
 		<div className="mt-6">
 			<SendouButton
-				icon={<EditIcon />}
+				icon={<SquarePen />}
 				variant="outlined"
 				size="small"
 				className="mx-auto"

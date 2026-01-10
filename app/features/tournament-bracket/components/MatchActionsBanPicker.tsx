@@ -1,11 +1,10 @@
 import clsx from "clsx";
+import { Check, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
 import { ModeImage, StageImage } from "~/components/Image";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
-import { CrossIcon } from "~/components/icons/Cross";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { TournamentRoundMaps } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
@@ -212,13 +211,13 @@ function MapButton({
 				data-testid={!disabled && onClick ? "pick-ban-button" : undefined}
 			/>
 			{selected ? (
-				<CheckmarkIcon
+				<Check
 					className="map-pool-picker__map-button__icon"
 					onClick={onClick}
 				/>
 			) : null}
 			{disabled ? (
-				<CrossIcon className="map-pool-picker__map-button__icon map-pool-picker__map-button__icon__error" />
+				<X className="map-pool-picker__map-button__icon map-pool-picker__map-button__icon__error" />
 			) : null}
 			{number ? (
 				<span className="map-pool-picker__map-button__number">{number}</span>

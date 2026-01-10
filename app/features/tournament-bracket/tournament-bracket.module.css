@@ -472,7 +472,6 @@
 }
 
 .quickActionCheckmark {
-	width: 1rem;
 	color: var(--color-success);
 }
 
@@ -482,11 +481,6 @@
 	border-color: var(--color-bg-higher);
 	background-color: var(--color-bg);
 	border-radius: var(--rounded);
-}
-
-.compactifyButton svg {
-	min-width: 0.85rem;
-	max-width: 0.85rem;
 }
 
 .castInfoContainer {

@@ -1,9 +1,9 @@
 import type { TFunction } from "i18next";
+import { Map as MapIcon } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { MapIcon } from "~/components/icons/Map";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { nullFilledArray } from "~/utils/arrays";
 import type { SerializeFrom } from "~/utils/remix";

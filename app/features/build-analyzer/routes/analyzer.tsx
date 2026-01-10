@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { FlaskConical } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
@@ -15,7 +16,6 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { Image } from "~/components/Image";
-import { BeakerIcon } from "~/components/icons/Beaker";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { Table } from "~/components/Table";
@@ -984,8 +984,6 @@ interface StatChartProps {
 }
 
 function StatChartPopover(props: StatChartProps) {
-	const { t } = useTranslation(["analyzer"]);
-
 	return (
 		<SendouPopover
 			popoverClassName={styles.statPopover}
@@ -994,12 +992,7 @@ function StatChartPopover(props: StatChartProps) {
 					className={props.simple ? undefined : styles.statPopoverTrigger}
 					variant="minimal"
 					size="small"
-					icon={
-						<BeakerIcon
-							className={styles.statPopoverTriggerIcon}
-							title={t("analyzer:button.showChart")}
-						/>
-					}
+					icon={<FlaskConical className={styles.statPopoverTriggerIcon} />}
 				/>
 			}
 		>

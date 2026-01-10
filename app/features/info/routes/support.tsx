@@ -1,9 +1,9 @@
+import { Check } from "lucide-react";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Badge } from "~/components/Badge";
 import { LinkButton } from "~/components/elements/Button";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { Main } from "~/components/Main";
 import { metaTags } from "~/utils/remix";
 import {
@@ -188,9 +188,7 @@ function SupportTable() {
 							) : null}
 						</div>
 						<div>
-							{perk.tier === 1 ? (
-								<CheckmarkIcon className={styles.checkmark} />
-							) : null}
+							{perk.tier === 1 ? <Check className={styles.checkmark} /> : null}
 						</div>
 						{perk.name === "badge" ? (
 							<div>
@@ -202,9 +200,7 @@ function SupportTable() {
 							</div>
 						) : (
 							<div>
-								{perk.tier <= 2 ? (
-									<CheckmarkIcon className={styles.checkmark} />
-								) : null}
+								{perk.tier <= 2 ? <Check className={styles.checkmark} /> : null}
 							</div>
 						)}
 						{perk.name === "badge" ? (
@@ -220,9 +216,7 @@ function SupportTable() {
 							</div>
 						) : (
 							<div>
-								{perk.tier <= 3 ? (
-									<CheckmarkIcon className={styles.checkmark} />
-								) : null}
+								{perk.tier <= 3 ? <Check className={styles.checkmark} /> : null}
 							</div>
 						)}
 					</React.Fragment>

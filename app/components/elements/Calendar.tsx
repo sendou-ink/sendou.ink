@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
 	Button,
 	Calendar,
@@ -11,8 +12,6 @@ import {
 	type DateValue,
 	Heading,
 } from "react-aria-components";
-import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
-import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import styles from "./Calendar.module.css";
 
 export interface SendouCalendarProps<T extends DateValue>
@@ -28,11 +27,11 @@ export function SendouCalendar<T extends DateValue>({
 		<Calendar className={clsx(className, styles.root)} {...rest}>
 			<header className={styles.header}>
 				<Button slot="previous" className={styles.navButton}>
-					<ArrowLeftIcon className={styles.navIcon} />
+					<ChevronLeft className={styles.navIcon} />
 				</Button>
 				<Heading className={styles.heading} />
 				<Button slot="next" className={styles.navButton}>
-					<ArrowRightIcon className={styles.navIcon} />
+					<ChevronRight className={styles.navIcon} />
 				</Button>
 			</header>
 			<CalendarGrid className={styles.grid}>

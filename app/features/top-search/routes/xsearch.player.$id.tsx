@@ -1,9 +1,9 @@
+import { Unlink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { UnlinkIcon } from "~/components/icons/Unlink";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
@@ -105,7 +105,7 @@ function UnlinkFormWithButton() {
 			submitButtonText={t("common:xsearch.unlink.action.short")}
 		>
 			<SendouButton
-				icon={<UnlinkIcon />}
+				icon={<Unlink />}
 				variant="destructive"
 				size="miniscule"
 				className="mt-2 self-start"

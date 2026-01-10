@@ -1,13 +1,13 @@
+import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "../elements/Button";
-import { PlusIcon } from "../icons/Plus";
 
 export function AddFieldButton({ onClick }: { onClick: () => void }) {
 	const { t } = useTranslation(["common"]);
 
 	return (
 		<SendouButton
-			icon={<PlusIcon />}
+			icon={<Plus />}
 			aria-label="Add form field"
 			size="small"
 			variant="minimal"

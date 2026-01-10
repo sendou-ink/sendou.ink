@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Trash } from "lucide-react";
 import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
 import { Link, Outlet, useLoaderData, useSearchParams } from "react-router";
 import { Alert } from "~/components/Alert";
@@ -6,7 +7,6 @@ import { Avatar } from "~/components/Avatar";
 import { Catcher } from "~/components/Catcher";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { TrashIcon } from "~/components/icons/Trash";
 import { RelativeTime } from "~/components/RelativeTime";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
@@ -326,7 +326,7 @@ function CommentDeleteButton({
 		>
 			<SendouButton
 				className={styles.deleteButton}
-				icon={<TrashIcon />}
+				icon={<Trash />}
 				variant="minimal-destructive"
 				aria-label="Delete comment"
 			/>

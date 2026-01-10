@@ -1,3 +1,4 @@
+import { RefreshCcw } from "lucide-react";
 import * as React from "react";
 import {
 	isRouteErrorResponse,
@@ -13,7 +14,6 @@ import {
 } from "~/utils/urls";
 import { SendouButton } from "./elements/Button";
 import { Image } from "./Image";
-import { RefreshArrowsIcon } from "./icons/RefreshArrows";
 import { Main } from "./Main";
 
 export function Catcher() {
@@ -160,7 +160,7 @@ function RefreshPageButton() {
 	return (
 		<SendouButton
 			onPress={() => window.location.reload()}
-			icon={<RefreshArrowsIcon />}
+			icon={<RefreshCcw />}
 		>
 			Refresh page
 		</SendouButton>

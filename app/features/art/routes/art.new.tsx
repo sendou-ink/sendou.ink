@@ -1,4 +1,5 @@
 import Compressor from "compressorjs";
+import { X } from "lucide-react";
 import { nanoid } from "nanoid";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -9,7 +10,6 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";
-import { CrossIcon } from "~/components/icons/Cross";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { useHasRole } from "~/modules/permissions/hooks";
@@ -289,7 +289,7 @@ function Tags() {
 						<div key={t.name} className="stack horizontal">
 							{t.name}{" "}
 							<SendouButton
-								icon={<CrossIcon />}
+								icon={<X />}
 								size="small"
 								variant="minimal-destructive"
 								className="art__delete-tag-button"
@@ -353,7 +353,7 @@ function LinkedUsers() {
 										setUsers(users.filter((u) => u.inputId !== inputId));
 									}
 								}}
-								icon={<CrossIcon />}
+								icon={<X />}
 							/>
 						) : null}
 					</div>

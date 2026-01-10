@@ -1,3 +1,4 @@
+import { Search } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
@@ -7,7 +8,6 @@ import { Alert } from "~/components/Alert";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { FormErrors } from "~/components/FormErrors";
 import { Input } from "~/components/Input";
-import { SearchIcon } from "~/components/icons/Search";
 import { Main } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
 import { SubmitButton } from "~/components/SubmitButton";
@@ -101,7 +101,7 @@ export default function TeamSearchPage() {
 			<div className="stack sm horizontal justify-between">
 				<Input
 					className={styles.searchInput}
-					icon={<SearchIcon className={styles.searchIcon} />}
+					icon={<Search className={styles.searchIcon} />}
 					value={inputValue}
 					onChange={(e) => setInputValue(e.target.value)}
 					placeholder={t("team:teamSearch.placeholder")}

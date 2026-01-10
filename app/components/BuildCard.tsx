@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Lock, MessageCircleMore, SquarePen, Trash } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import type { GearType, Tables, UserWithPlusTier } from "~/db/tables";
@@ -30,10 +31,6 @@ import { LinkButton, SendouButton } from "./elements/Button";
 import { SendouPopover } from "./elements/Popover";
 import { FormWithConfirm } from "./FormWithConfirm";
 import { Image } from "./Image";
-import { EditIcon } from "./icons/Edit";
-import { LockIcon } from "./icons/Lock";
-import { SpeechBubbleIcon } from "./icons/SpeechBubble";
-import { TrashIcon } from "./icons/Trash";
 
 interface BuildProps {
 	build: Pick<
@@ -122,8 +119,7 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 					<div className="stack horizontal sm">
 						{build.private ? (
 							<div className={styles.privateText}>
-								<LockIcon className={styles.privateIcon} />{" "}
-								{t("common:build.private")}
+								<Lock /> {t("common:build.private")}
 							</div>
 						) : null}
 						<time
@@ -188,8 +184,9 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 					<SendouPopover
 						trigger={
 							<SendouButton
+								size="small"
 								variant="minimal"
-								icon={<SpeechBubbleIcon />}
+								icon={<MessageCircleMore />}
 								className={styles.smallText}
 							/>
 						}
@@ -206,7 +203,7 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 							to={`new?buildId=${id}&userId=${user!.id}`}
 							testId="edit-build"
 						>
-							<EditIcon className={styles.icon} />
+							<SquarePen className={styles.icon} />
 						</LinkButton>
 						<FormWithConfirm
 							dialogHeading={t("builds:deleteConfirm", { title })}
@@ -216,7 +213,8 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 							]}
 						>
 							<SendouButton
-								icon={<TrashIcon className={styles.icon} />}
+								size="small"
+								icon={<Trash className={styles.icon} />}
 								className={styles.smallText}
 								variant="minimal-destructive"
 								type="submit"

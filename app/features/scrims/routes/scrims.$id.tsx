@@ -10,8 +10,6 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { SendouForm } from "~/components/form/SendouForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { Image } from "~/components/Image";
-import { AlertIcon } from "~/components/icons/Alert";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import TimePopover from "~/components/TimePopover";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { SCRIM } from "~/features/scrims/scrims-constants";
@@ -41,6 +39,8 @@ import { loader } from "../loaders/scrims.$id.server";
 import type { ScrimPost, ScrimPost as ScrimPostType } from "../scrims-types";
 import styles from "./scrims.$id.module.css";
 export { loader, action };
+
+import { Check, OctagonAlert } from "lucide-react";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["scrims", "q"],
@@ -240,11 +240,7 @@ function ScreenBanIndicator() {
 									alt={t(`weapons:SPECIAL_${SPLATTERCOLOR_SCREEN_ID}`)}
 								/>
 								<div className={styles.screenBanIconOverlay}>
-									{data.anyUserPrefersNoScreen ? (
-										<AlertIcon />
-									) : (
-										<CheckmarkIcon />
-									)}
+									{data.anyUserPrefersNoScreen ? <OctagonAlert /> : <Check />}
 								</div>
 							</div>
 						</SendouButton>

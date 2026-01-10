@@ -1,11 +1,9 @@
+import { ChartColumnBig, Flame, FlaskConical } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
 import { WeaponImage } from "~/components/Image";
-import { BeakerFilledIcon } from "~/components/icons/BeakerFilled";
-import { ChartBarIcon } from "~/components/icons/ChartBar";
-import { FireIcon } from "~/components/icons/Fire";
 import { YouTubeIcon } from "~/components/icons/YouTube";
 import { Main } from "~/components/Main";
 import type { SerializeFrom } from "~/utils/remix";
@@ -60,21 +58,21 @@ export default function WeaponPage() {
 				<LinkButton
 					to={weaponBuildPage(data.slug)}
 					variant="outlined"
-					icon={<BeakerFilledIcon />}
+					icon={<FlaskConical />}
 				>
 					{t("common:pages.builds")}
 				</LinkButton>
 				<LinkButton
 					to={weaponBuildPopularPage(data.slug)}
 					variant="outlined"
-					icon={<FireIcon />}
+					icon={<Flame />}
 				>
 					{t("common:pages.popularBuilds")}
 				</LinkButton>
 				<LinkButton
 					to={weaponBuildStatsPage(data.slug)}
 					variant="outlined"
-					icon={<ChartBarIcon />}
+					icon={<ChartColumnBig />}
 				>
 					{t("common:pages.abilityStats")}
 				</LinkButton>

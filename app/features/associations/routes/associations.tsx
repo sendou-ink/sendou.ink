@@ -1,3 +1,4 @@
+import { Check, Clipboard, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Outlet, useFetcher, useLoaderData } from "react-router";
@@ -6,9 +7,6 @@ import { AddNewButton } from "~/components/AddNewButton";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
-import { ClipboardIcon } from "~/components/icons/Clipboard";
-import { TrashIcon } from "~/components/icons/Trash";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
@@ -110,7 +108,7 @@ function Association({
 						]}
 					>
 						<SendouButton
-							icon={<TrashIcon className="small-icon" />}
+							icon={<Trash className="small-icon" />}
 							className="small-text"
 							variant="minimal-destructive"
 							type="submit"
@@ -199,7 +197,7 @@ function AssociationInviteCodeActions({
 				<SendouButton
 					variant={copySuccess ? "outlined-success" : "outlined"}
 					onPress={() => copyToClipboard(inviteLink)}
-					icon={copySuccess ? <CheckmarkIcon /> : <ClipboardIcon />}
+					icon={copySuccess ? <Check /> : <Clipboard />}
 					aria-label="Copy to clipboard"
 				/>
 			</div>
@@ -253,7 +251,7 @@ function AssociationMember({
 					]}
 				>
 					<SendouButton
-						icon={<TrashIcon className="small-icon" />}
+						icon={<Trash className="small-icon" />}
 						className="small-text"
 						variant="minimal-destructive"
 						size="small"

@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Search } from "lucide-react";
 import * as React from "react";
 import {
 	Dialog,
@@ -16,7 +17,6 @@ import { useDebounce } from "react-use";
 import { Avatar } from "~/components/Avatar";
 import { Image } from "~/components/Image";
 import { Input } from "~/components/Input";
-import { SearchIcon } from "~/components/icons/Search";
 import type { SearchLoaderData } from "~/features/search/routes/search";
 import {
 	navIconUrl,
@@ -85,7 +85,7 @@ export function CommandPalette() {
 				className={styles.searchButton}
 				onClick={() => setIsOpen(true)}
 			>
-				<SearchIcon className={styles.searchIcon} />
+				<Search className={styles.searchIcon} />
 				<span className={styles.searchPlaceholder}>{t("common:search")}</span>
 				<kbd className={styles.searchKbd}>{isMac ? "Cmd+K" : "Ctrl+K"}</kbd>
 			</button>
@@ -165,7 +165,7 @@ function CommandPaletteContent({ onClose }: { onClose: () => void }) {
 				placeholder={t("common:search.placeholder")}
 				value={query}
 				onChange={(e) => setQuery(e.target.value)}
-				icon={<SearchIcon className={styles.inputIcon} />}
+				icon={<Search className={styles.inputIcon} />}
 			/>
 			{/* biome-ignore lint/a11y/noStaticElementInteractions: keydown handler redirects Enter to input */}
 			<div

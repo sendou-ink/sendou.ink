@@ -1,5 +1,5 @@
+import { User } from "lucide-react";
 import { Avatar } from "~/components/Avatar";
-import { UserIcon } from "~/components/icons/User";
 import { twitchThumbnailUrlToSrc } from "~/modules/twitch/utils";
 import type { SerializeFrom } from "~/utils/remix";
 import { twitchUrl } from "~/utils/urls";
@@ -49,7 +49,7 @@ export function TournamentStream({
 					</div>
 				)}
 				<div className={styles.streamViewerCount}>
-					<UserIcon />
+					<User />
 					{stream.viewerCount}
 				</div>
 			</div>

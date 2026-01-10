@@ -1,4 +1,5 @@
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { Funnel } from "lucide-react";
 import * as React from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -6,7 +7,6 @@ import { useFetcher, useSearchParams } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { InputFormField } from "~/components/form/InputFormField";
-import { FilterFilledIcon } from "~/components/icons/FilterFilled";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import type { ScrimFilters } from "~/features/scrims/scrims-types";
@@ -22,7 +22,7 @@ export function ScrimFiltersDialog({ filters }: { filters: ScrimFilters }) {
 			<SendouButton
 				variant="outlined"
 				size="small"
-				icon={<FilterFilledIcon />}
+				icon={<Funnel />}
 				onPress={() => setIsOpen(true)}
 				data-testid="filter-scrims-button"
 			>

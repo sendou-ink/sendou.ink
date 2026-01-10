@@ -1,10 +1,10 @@
+import { Trash } from "lucide-react";
 import * as React from "react";
 import { Form, useMatches, useOutletContext } from "react-router";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { UserSearch } from "~/components/elements/UserSearch";
-import { TrashIcon } from "~/components/icons/Trash";
 import type { Tables } from "~/db/tables";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { action } from "../actions/badges.$id.edit.server";
@@ -75,7 +75,7 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 						<li key={manager.id}>
 							{manager.username}
 							<SendouButton
-								icon={<TrashIcon />}
+								icon={<Trash />}
 								variant="minimal-destructive"
 								aria-label="Delete badge manager"
 								onPress={() =>

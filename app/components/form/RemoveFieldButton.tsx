@@ -1,10 +1,10 @@
+import { Trash } from "lucide-react";
 import { SendouButton } from "../elements/Button";
-import { TrashIcon } from "../icons/Trash";
 
 export function RemoveFieldButton({ onClick }: { onClick: () => void }) {
 	return (
 		<SendouButton
-			icon={<TrashIcon />}
+			icon={<Trash />}
 			aria-label="Remove form field"
 			size="small"
 			variant="minimal-destructive"

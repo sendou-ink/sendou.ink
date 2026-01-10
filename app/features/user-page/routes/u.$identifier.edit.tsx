@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Star, Trash } from "lucide-react";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Form, Link, useLoaderData, useMatches } from "react-router";
@@ -10,9 +11,6 @@ import { FormErrors } from "~/components/FormErrors";
 import { FormMessage } from "~/components/FormMessage";
 import { WeaponImage } from "~/components/Image";
 import { Input } from "~/components/Input";
-import { StarIcon } from "~/components/icons/Star";
-import { StarFilledIcon } from "~/components/icons/StarFilled";
-import { TrashIcon } from "~/components/icons/Trash";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
 import { WeaponSelect } from "~/components/WeaponSelect";
@@ -366,7 +364,11 @@ function WeaponPoolSelect() {
 							</div>
 							<div className="stack sm horizontal items-center justify-center">
 								<SendouButton
-									icon={weapon.isFavorite ? <StarFilledIcon /> : <StarIcon />}
+									icon={
+										<Star
+											className={weapon.isFavorite ? editStyles.starFilled : ""}
+										/>
+									}
 									variant="minimal"
 									aria-label="Favorite weapon"
 									onPress={() =>
@@ -383,7 +385,7 @@ function WeaponPoolSelect() {
 									}
 								/>
 								<SendouButton
-									icon={<TrashIcon />}
+									icon={<Trash />}
 									variant="minimal-destructive"
 									aria-label="Delete weapon"
 									onPress={() =>

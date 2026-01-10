@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import Compressor from "compressorjs";
+import { Trash, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
@@ -13,8 +14,6 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
-import { CrossIcon } from "~/components/icons/Cross";
-import { TrashIcon } from "~/components/icons/Trash";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { MapPoolSelector } from "~/components/MapPoolSelector";
@@ -531,7 +530,7 @@ function DatesInput({ allowMultiDate }: { allowMultiDate?: boolean }) {
 											aria-controls={`date-input-${key}`}
 											aria-label={t("common:actions.remove")}
 											aria-describedby={`date-input-${key}-label`}
-											icon={<CrossIcon title={t("common:actions.remove")} />}
+											icon={<X />}
 											variant="minimal-destructive"
 										/>
 									)}
@@ -692,7 +691,7 @@ function BadgesAdder() {
 							<SendouButton
 								className="ml-auto"
 								onPress={() => handleBadgeDelete(badge.id)}
-								icon={<TrashIcon />}
+								icon={<Trash />}
 								variant="minimal-destructive"
 								aria-label="Remove badge"
 							/>

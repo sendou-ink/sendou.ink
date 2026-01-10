@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { differenceInMinutes } from "date-fns";
 import type { TFunction } from "i18next";
+import { Check, MousePointerClick, X } from "lucide-react";
 import type { JSX } from "react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -14,9 +15,6 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { Image } from "~/components/Image";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
-import { CrossIcon } from "~/components/icons/Cross";
-import { PickIcon } from "~/components/icons/Pick";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
@@ -557,7 +555,7 @@ function ModeProgressIndicator({
 					if (!map?.mode) {
 						return (
 							<div key={i} className={styles.modeProgressImage}>
-								<PickIcon />
+								<MousePointerClick />
 							</div>
 						);
 					}
@@ -826,7 +824,7 @@ function ScreenBanIcons({ banned }: { banned: boolean }) {
 			})}
 			data-testid={`screen-${banned ? "banned" : "allowed"}`}
 		>
-			{banned ? <CrossIcon /> : <CheckmarkIcon />}
+			{banned ? <X /> : <Check />}
 			<Image
 				path={specialWeaponImageUrl(SPLATTERCOLOR_SCREEN_ID)}
 				width={24}

@@ -1,8 +1,8 @@
 import clsx from "clsx";
+import { X } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
-import { CrossIcon } from "~/components/icons/Cross";
 import type { CalendarEventTag } from "~/db/tables";
 import { tags as allTags } from "../calendar-constants";
 import styles from "./Tags.module.css";
@@ -42,7 +42,7 @@ export function Tags({
 							<SendouButton
 								onPress={() => onDelete(tag)}
 								className={styles.tagDeleteButton}
-								icon={<CrossIcon />}
+								icon={<X />}
 								variant="minimal"
 								aria-label="Remove date"
 								size="small"

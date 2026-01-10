@@ -1,4 +1,5 @@
 import { parseDate } from "@internationalized/date";
+import { Check, Plus, Search, SquarePen, Trash } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Ability } from "~/components/Ability";
@@ -37,11 +38,6 @@ import {
 } from "~/components/Image";
 import { InfoPopover } from "~/components/InfoPopover";
 import { Input } from "~/components/Input";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
-import { EditIcon } from "~/components/icons/Edit";
-import { PlusIcon } from "~/components/icons/Plus";
-import { SearchIcon } from "~/components/icons/Search";
-import { TrashIcon } from "~/components/icons/Trash";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
@@ -261,7 +257,7 @@ function ButtonsSection({ id }: { id: string }) {
 				<ComponentRow label="Miniscule">
 					<div className="stack horizontal sm">
 						<SendouButton size="miniscule">Miniscule</SendouButton>
-						<SendouButton size="miniscule" icon={<EditIcon />}>
+						<SendouButton size="miniscule" icon={<SquarePen />}>
 							With icon
 						</SendouButton>
 					</div>
@@ -270,7 +266,7 @@ function ButtonsSection({ id }: { id: string }) {
 				<ComponentRow label="Small">
 					<div className="stack horizontal sm">
 						<SendouButton size="small">Small</SendouButton>
-						<SendouButton size="small" icon={<EditIcon />}>
+						<SendouButton size="small" icon={<SquarePen />}>
 							With icon
 						</SendouButton>
 					</div>
@@ -279,7 +275,7 @@ function ButtonsSection({ id }: { id: string }) {
 				<ComponentRow label="Medium (default)">
 					<div className="stack horizontal sm">
 						<SendouButton size="medium">Medium</SendouButton>
-						<SendouButton size="medium" icon={<EditIcon />}>
+						<SendouButton size="medium" icon={<SquarePen />}>
 							With icon
 						</SendouButton>
 					</div>
@@ -288,7 +284,7 @@ function ButtonsSection({ id }: { id: string }) {
 				<ComponentRow label="Big">
 					<div className="stack horizontal sm">
 						<SendouButton size="big">Big</SendouButton>
-						<SendouButton size="big" icon={<EditIcon />}>
+						<SendouButton size="big" icon={<SquarePen />}>
 							With icon
 						</SendouButton>
 					</div>
@@ -297,15 +293,15 @@ function ButtonsSection({ id }: { id: string }) {
 				<Divider smallText>With Icons</Divider>
 
 				<ComponentRow label="Icon + Text">
-					<SendouButton icon={<PlusIcon />}>Add Item</SendouButton>
+					<SendouButton icon={<Plus />}>Add Item</SendouButton>
 				</ComponentRow>
 
 				<ComponentRow label="Icon Only">
-					<SendouButton icon={<EditIcon />} />
+					<SendouButton icon={<SquarePen />} />
 				</ComponentRow>
 
 				<ComponentRow label="Destructive with Icon">
-					<SendouButton variant="destructive" icon={<TrashIcon />}>
+					<SendouButton variant="destructive" icon={<Trash />}>
 						Delete
 					</SendouButton>
 				</ComponentRow>
@@ -390,7 +386,7 @@ function InputsSection({ id }: { id: string }) {
 
 				<ComponentRow label="With Icon">
 					<Input
-						icon={<SearchIcon />}
+						icon={<Search />}
 						placeholder="Search..."
 						aria-label="Search"
 					/>
@@ -1115,13 +1111,13 @@ function TabsSection({ id }: { id: string }) {
 				<ComponentRow label="With Icons">
 					<SendouTabs>
 						<SendouTabList>
-							<SendouTab id="search" icon={<SearchIcon />}>
+							<SendouTab id="search" icon={<Search />}>
 								Search
 							</SendouTab>
-							<SendouTab id="edit" icon={<EditIcon />}>
+							<SendouTab id="edit" icon={<SquarePen />}>
 								Edit
 							</SendouTab>
-							<SendouTab id="check" icon={<CheckmarkIcon />}>
+							<SendouTab id="check" icon={<Check />}>
 								Review
 							</SendouTab>
 						</SendouTabList>
@@ -1248,13 +1244,13 @@ function MenuSection({ id }: { id: string }) {
 
 				<ComponentRow label="With Icons">
 					<SendouMenu trigger={<SendouButton>Menu with Icons</SendouButton>}>
-						<SendouMenuItem icon={<EditIcon />} onAction={() => {}}>
+						<SendouMenuItem icon={<SquarePen />} onAction={() => {}}>
 							Edit
 						</SendouMenuItem>
-						<SendouMenuItem icon={<PlusIcon />} onAction={() => {}}>
+						<SendouMenuItem icon={<Plus />} onAction={() => {}}>
 							Add New
 						</SendouMenuItem>
-						<SendouMenuItem icon={<TrashIcon />} onAction={() => {}}>
+						<SendouMenuItem icon={<Trash />} onAction={() => {}}>
 							Delete
 						</SendouMenuItem>
 					</SendouMenu>
@@ -1422,11 +1418,11 @@ function TableSection({ id }: { id: string }) {
 								<td>$19.99</td>
 								<td>
 									<div className="stack horizontal xs">
-										<SendouButton size="miniscule" icon={<EditIcon />} />
+										<SendouButton size="miniscule" icon={<SquarePen />} />
 										<SendouButton
 											size="miniscule"
 											variant="destructive"
-											icon={<TrashIcon />}
+											icon={<Trash />}
 										/>
 									</div>
 								</td>
@@ -1436,11 +1432,11 @@ function TableSection({ id }: { id: string }) {
 								<td>$29.99</td>
 								<td>
 									<div className="stack horizontal xs">
-										<SendouButton size="miniscule" icon={<EditIcon />} />
+										<SendouButton size="miniscule" icon={<SquarePen />} />
 										<SendouButton
 											size="miniscule"
 											variant="destructive"
-											icon={<TrashIcon />}
+											icon={<Trash />}
 										/>
 									</div>
 								</td>

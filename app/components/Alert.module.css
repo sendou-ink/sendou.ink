@@ -16,41 +16,24 @@
 
 	& > svg {
 		height: 1.75rem;
-		fill: var(--color-info);
 	}
 }
 
 .tiny {
 	font-size: var(--fonts-xs);
-
-	& > svg {
-		height: 1.25rem;
-	}
 }
 
 .warning {
 	background-color: var(--color-warning-low);
 	color: var(--color-warning-high);
-
-	& > svg {
-		fill: var(--color-warning);
-	}
 }
 
 .error {
 	background-color: var(--color-error-low);
 	color: var(--color-error-high);
-
-	& > svg {
-		fill: var(--color-error);
-	}
 }
 
 .success {
 	background-color: var(--color-success-low);
 	color: var(--color-success-high);
-
-	& > svg {
-		fill: var(--color-success);
-	}
 }

@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { X } from "lucide-react";
 import type { ModalOverlayProps } from "react-aria-components";
 import {
 	Dialog,
@@ -9,7 +10,6 @@ import {
 } from "react-aria-components";
 import { useNavigate } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
-import { CrossIcon } from "~/components/icons/Cross";
 import styles from "./Dialog.module.css";
 
 interface SendouDialogProps extends ModalOverlayProps {
@@ -129,7 +129,7 @@ function DialogModal({
 							) : null}
 							{showCloseButton ? (
 								<SendouButton
-									icon={<CrossIcon />}
+									icon={<X />}
 									variant="minimal-destructive"
 									className="ml-auto"
 									slot="close"

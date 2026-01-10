@@ -1,4 +1,5 @@
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { Funnel } from "lucide-react";
 import * as React from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -9,7 +10,6 @@ import { InputFormField } from "~/components/form/InputFormField";
 import { InputGroupFormField } from "~/components/form/InputGroupFormField";
 import { TextArrayFormField } from "~/components/form/TextArrayFormField";
 import { ToggleFormField } from "~/components/form/ToggleFormField";
-import { FilterFilledIcon } from "~/components/icons/FilterFilled";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { CalendarEventTag } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
@@ -25,7 +25,7 @@ export function FiltersDialog({ filters }: { filters: CalendarFilters }) {
 		<>
 			<SendouButton
 				size="small"
-				icon={<FilterFilledIcon />}
+				icon={<Funnel />}
 				onPress={() => setIsOpen(true)}
 				data-testid="filter-events-button"
 			>

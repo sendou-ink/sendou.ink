@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Check, Clipboard } from "lucide-react";
 import * as React from "react";
 import { useRef, useState } from "react";
 import { Dialog, Popover } from "react-aria-components";
@@ -7,8 +8,6 @@ import { useCopyToClipboard } from "react-use";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { SendouButton } from "./elements/Button";
 import popoverStyles from "./elements/Popover.module.css";
-import { CheckmarkIcon } from "./icons/Checkmark";
-import { ClipboardIcon } from "./icons/Clipboard";
 import styles from "./TimePopover.module.css";
 
 export default function TimePopover({
@@ -85,7 +84,7 @@ export default function TimePopover({
 							size="miniscule"
 							variant="minimal"
 							onPress={() => copyToClipboard(`<t:${time.valueOf() / 1000}:F>`)}
-							icon={copySuccess ? <CheckmarkIcon /> : <ClipboardIcon />}
+							icon={copySuccess ? <Check /> : <Clipboard />}
 						>
 							{t("common:actions.copyTimestampForDiscord")}
 						</SendouButton>

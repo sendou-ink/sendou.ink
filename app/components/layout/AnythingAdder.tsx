@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useUser } from "~/features/auth/core/user";
 import {
@@ -20,7 +21,6 @@ import {
 	SendouMenuItem,
 	type SendouMenuItemProps,
 } from "../elements/Menu";
-import { PlusIcon } from "../icons/Plus";
 
 export function AnythingAdder() {
 	const { t } = useTranslation(["common"]);
@@ -105,7 +105,7 @@ export function AnythingAdder() {
 			trigger={
 				<SendouButton
 					size="small"
-					icon={<PlusIcon />}
+					icon={<Plus />}
 					data-testid="anything-adder-menu-button"
 				>
 					{t("common:actions.addNew")}…

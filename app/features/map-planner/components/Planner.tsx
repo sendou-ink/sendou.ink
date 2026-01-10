@@ -21,9 +21,9 @@ import {
 	Tldraw,
 } from "@tldraw/tldraw";
 import clsx from "clsx";
+import { LogOut } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { LogOutIcon } from "~/components/icons/LogOut";
 import { useTheme } from "~/features/theme/core/provider";
 import type { LanguageCode } from "~/modules/i18n/config";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -536,7 +536,7 @@ function StageBackgroundSelector({
 			>
 				{t("common:actions.setBg")}
 			</SendouButton>
-			<LinkButton to="/" icon={<LogOutIcon />} variant="outlined" />
+			<LinkButton to="/" icon={<LogOut />} variant="outlined" />
 		</div>
 	);
 }

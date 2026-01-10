@@ -1,9 +1,9 @@
+import { User } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { TierImage, WeaponImage } from "~/components/Image";
-import { UserIcon } from "~/components/icons/User";
 import { Main } from "~/components/Main";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -109,7 +109,7 @@ export default function SendouQStreamsPage() {
 									/>
 								</div>
 								<div className={styles.viewerCount}>
-									<UserIcon />
+									<User />
 									{streamedMatch.stream.viewerCount}
 								</div>
 							</div>

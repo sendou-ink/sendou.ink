@@ -1,4 +1,12 @@
 import clsx from "clsx";
+import {
+	Calendar,
+	ChevronLeft,
+	ChevronRight,
+	Eye,
+	EyeOff,
+	Link as LinkIcon,
+} from "lucide-react";
 import type * as React from "react";
 import type { DateValue } from "react-aria-components";
 import { useTranslation } from "react-i18next";
@@ -12,12 +20,6 @@ import {
 } from "~/components/elements/Button";
 import { SendouCalendar } from "~/components/elements/Calendar";
 import { SendouPopover } from "~/components/elements/Popover";
-import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
-import { ArrowRightIcon } from "~/components/icons/ArrowRight";
-import { CalendarIcon } from "~/components/icons/Calendar";
-import { EyeIcon } from "~/components/icons/Eye";
-import { EyeSlashIcon } from "~/components/icons/EyeSlash";
-import { LinkIcon } from "~/components/icons/Link";
 import { Main } from "~/components/Main";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
@@ -74,14 +76,14 @@ export default function CalendarPage() {
 			<div className={styles.buttonsContainer}>
 				<div className={styles.navigateButtonsContainer}>
 					<NavigateButton
-						icon={<ArrowLeftIcon />}
+						icon={<ChevronLeft />}
 						daysInterval={previous}
 						filters={data.filters}
 					>
 						{t("common:actions.previous")}
 					</NavigateButton>
 					<NavigateButton
-						icon={<ArrowRightIcon />}
+						icon={<ChevronRight />}
 						daysInterval={next}
 						filters={data.filters}
 					>
@@ -200,10 +202,7 @@ function CalendarDatePicker({
 	return (
 		<SendouPopover
 			trigger={
-				<SendouButton
-					className={styles.navigateButton}
-					icon={<CalendarIcon />}
-				/>
+				<SendouButton className={styles.navigateButton} icon={<Calendar />} />
 			}
 		>
 			<SendouCalendar
@@ -312,7 +311,7 @@ function ClockHeader({
 				</span>
 				{hiddenEventsCount > 0 ? (
 					<SendouButton
-						icon={hiddenShown ? <EyeIcon /> : <EyeSlashIcon />}
+						icon={hiddenShown ? <Eye /> : <EyeOff />}
 						onPress={onToggleHidden}
 						variant="minimal"
 						className={styles.hiddenEventsButton}

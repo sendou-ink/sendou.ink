@@ -1,3 +1,4 @@
+import { LogOut, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -7,8 +8,6 @@ import { LOG_OUT_URL, navIconUrl, userPage } from "~/utils/urls";
 import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";
 import { Image } from "../Image";
-import { CrossIcon } from "../icons/Cross";
-import { LogOutIcon } from "../icons/LogOut";
 import { LogInButtonContainer } from "./LogInButtonContainer";
 import styles from "./NavDialog.module.css";
 
@@ -34,7 +33,7 @@ export function NavDialog({
 			isFullScreen
 		>
 			<SendouButton
-				icon={<CrossIcon />}
+				icon={<X />}
 				variant="minimal-destructive"
 				className={styles.closeButton}
 				onPress={close}
@@ -68,7 +67,7 @@ export function NavDialog({
 						<SendouButton
 							size="small"
 							variant="outlined"
-							icon={<LogOutIcon />}
+							icon={<LogOut />}
 							type="submit"
 						>
 							{t("common:header.logout")}

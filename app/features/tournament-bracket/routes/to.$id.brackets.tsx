@@ -1,4 +1,5 @@
 import { sub } from "date-fns";
+import { Check, Eye, EyeOff, Map as MapIcon } from "lucide-react";
 import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
@@ -14,10 +15,6 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
-import { EyeIcon } from "~/components/icons/Eye";
-import { EyeSlashIcon } from "~/components/icons/EyeSlash";
-import { MapIcon } from "~/components/icons/Map";
 import { useUser } from "~/features/auth/core/user";
 import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
@@ -321,12 +318,7 @@ function MapPreparer({
 				/>
 			) : null}
 			<div className="stack sm horizontal ml-auto">
-				{hasPreparedMaps ? (
-					<CheckmarkIcon
-						className="fill-success w-6"
-						testId="prepared-maps-check-icon"
-					/>
-				) : null}
+				{hasPreparedMaps ? <Check className="color-success w-6" /> : null}
 				<SendouButton
 					size="small"
 					variant="outlined"
@@ -509,7 +501,7 @@ function CompactifyButton() {
 				setBracketExpanded(!bracketExpanded);
 			}}
 			className={styles.compactifyButton}
-			icon={bracketExpanded ? <EyeSlashIcon /> : <EyeIcon />}
+			icon={bracketExpanded ? <EyeOff /> : <Eye />}
 		>
 			{bracketExpanded ? "Compactify" : "Show all"}
 		</SendouButton>

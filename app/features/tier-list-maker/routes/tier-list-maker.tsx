@@ -10,6 +10,7 @@ import {
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { snapdom } from "@zumer/snapdom";
 import clsx from "clsx";
+import { HardDriveDownload, Plus, RefreshCcw } from "lucide-react";
 import { useRef } from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -25,9 +26,6 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { ModeImage } from "~/components/Image";
-import { DownloadIcon } from "~/components/icons/Download";
-import { PlusIcon } from "~/components/icons/Plus";
-import { RefreshIcon } from "~/components/icons/Refresh";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { useUser } from "~/features/auth/core/user";
@@ -142,17 +140,13 @@ function TierListMakerContent() {
 		<Main bigger className={clsx(styles.container, "stack lg")}>
 			<div className={styles.header}>
 				<div className="stack horizontal md">
-					<SendouButton
-						onPress={handleAddTier}
-						size="small"
-						icon={<PlusIcon />}
-					>
+					<SendouButton onPress={handleAddTier} size="small" icon={<Plus />}>
 						{t("tier-list-maker:addTier")}
 					</SendouButton>
 					<SendouButton
 						onPress={handleDownload}
 						size="small"
-						icon={<DownloadIcon />}
+						icon={<HardDriveDownload />}
 					>
 						{t("tier-list-maker:download")}
 					</SendouButton>
@@ -317,7 +311,7 @@ function ResetPopover({ handleReset }: { handleReset: () => void }) {
 			trigger={
 				<SendouButton
 					size="small"
-					icon={<RefreshIcon />}
+					icon={<RefreshCcw />}
 					variant="minimal-destructive"
 				>
 					{t("common:actions.reset")}

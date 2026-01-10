@@ -1,8 +1,7 @@
+import { Lock, LockOpen } from "lucide-react";
 import type { JSX } from "react";
 import { useFetcher } from "react-router";
 import { InfoPopover } from "~/components/InfoPopover";
-import { LockIcon } from "~/components/icons/Lock";
-import { UnlockIcon } from "~/components/icons/Unlock";
 import { SubmitButton } from "~/components/SubmitButton";
 import { TournamentMatchStatus } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
@@ -49,7 +48,7 @@ export function CastInfo({
 			<CastInfoWrapper
 				submitButtonText="Lock to be casted"
 				_action="LOCK"
-				icon={<LockIcon />}
+				icon={<Lock />}
 				infoText={lockingInfo}
 			/>
 		);
@@ -62,7 +61,7 @@ export function CastInfo({
 			<CastInfoWrapper
 				submitButtonText="Unlock"
 				_action="UNLOCK"
-				icon={<UnlockIcon />}
+				icon={<LockOpen />}
 				infoText={lockingInfo}
 			/>
 		);

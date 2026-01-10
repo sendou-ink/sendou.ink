@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { SquarePen, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
@@ -6,8 +7,6 @@ import { useLoaderData } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, WeaponImage } from "~/components/Image";
-import { EditIcon } from "~/components/icons/Edit";
-import { TrashIcon } from "~/components/icons/Trash";
 import { Main } from "~/components/Main";
 import { YouTubeEmbed } from "~/components/YouTubeEmbed";
 import { useUser } from "~/features/auth/core/user";
@@ -119,7 +118,7 @@ export default function VodPage() {
 								to={newVodPage(data.vod.id)}
 								size="small"
 								testId="edit-vod-button"
-								icon={<EditIcon />}
+								icon={<SquarePen />}
 							>
 								{t("common:actions.edit")}
 							</LinkButton>
@@ -132,7 +131,7 @@ export default function VodPage() {
 									variant="minimal-destructive"
 									size="small"
 									type="submit"
-									icon={<TrashIcon />}
+									icon={<Trash />}
 								>
 									{t("common:actions.delete")}
 								</SendouButton>

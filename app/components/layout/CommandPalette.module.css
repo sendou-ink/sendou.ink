@@ -114,8 +114,6 @@
 }
 
 .inputIcon {
-	width: 20px;
-	height: 20px;
 	color: var(--color-text-high);
 	flex-shrink: 0;
 }

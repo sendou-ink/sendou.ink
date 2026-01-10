@@ -42,14 +42,12 @@
 .icon {
 	min-width: 18px;
 	max-width: 18px;
-	stroke-width: 2.5px;
 	color: var(--color-text-high);
 }
 
 .smallIcon {
 	min-width: 16px;
 	max-width: 16px;
-	stroke-width: 2px;
 	color: var(--color-text-high);
 }
 

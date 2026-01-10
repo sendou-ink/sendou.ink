@@ -35,6 +35,10 @@
 	width: 100%;
 }
 
+.starFilled {
+	fill: var(--color-text-accent);
+}
+
 .bioContainer {
 	width: 100%;
 }

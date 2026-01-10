@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import type { SqlBool } from "kysely";
+import { Mic, PenSquare, Star, Trash, Volume2, VolumeX } from "lucide-react";
 import * as React from "react";
 import { Flipped } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
@@ -9,13 +10,6 @@ import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
-import { EditIcon } from "~/components/icons/Edit";
-import { MicrophoneIcon } from "~/components/icons/Microphone";
-import { SpeakerIcon } from "~/components/icons/Speaker";
-import { SpeakerXIcon } from "~/components/icons/SpeakerX";
-import { StarIcon } from "~/components/icons/Star";
-import { StarFilledIcon } from "~/components/icons/StarFilled";
-import { TrashIcon } from "~/components/icons/Trash";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { ParsedMemento } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
@@ -388,7 +382,7 @@ function GroupMember({
 					{showAddNote ? (
 						<LinkButton
 							to={`?note=${member.id}`}
-							icon={<EditIcon />}
+							icon={<PenSquare />}
 							className={clsx(styles.addNoteButton, {
 								[styles.addNoteButtonEdit]: member.privateNote,
 							})}
@@ -551,7 +545,7 @@ function DeletePrivateNoteForm({
 			]}
 		>
 			<SubmitButton variant="minimal-destructive" size="small" type="submit">
-				<TrashIcon className="small-icon" />
+				<Trash className="small-icon" />
 			</SubmitButton>
 		</FormWithConfirm>
 	);
@@ -646,7 +640,6 @@ function MemberRoleManager({
 	const loggedInUser = useUser();
 	const fetcher = useFetcher();
 	const { t } = useTranslation(["q"]);
-	const Icon = member.role === "OWNER" ? StarFilledIcon : StarIcon;
 
 	if (displayOnly && member.role !== "OWNER") return null;
 
@@ -656,8 +649,9 @@ function MemberRoleManager({
 				<SendouButton
 					variant="minimal"
 					icon={
-						<Icon
+						<Star
 							className={clsx(styles.star, {
+								[styles.starFilled]: member.role === "OWNER",
 								[styles.starInactive]: member.role === "REGULAR",
 							})}
 						/>
@@ -781,11 +775,7 @@ function VoiceChatInfo({
 	if (!member.languages || !member.vc) return null;
 
 	const Icon =
-		member.vc === "YES"
-			? MicrophoneIcon
-			: member.vc === "LISTEN_ONLY"
-				? SpeakerIcon
-				: SpeakerXIcon;
+		member.vc === "YES" ? Mic : member.vc === "LISTEN_ONLY" ? Volume2 : VolumeX;
 
 	const color = () => {
 		const languagesMatch =

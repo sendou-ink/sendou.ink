@@ -1,3 +1,13 @@
+import {
+	Map as MapIcon,
+	Mic,
+	Puzzle,
+	Star,
+	Trash,
+	Users,
+	Volume2,
+	X,
+} from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
@@ -9,15 +19,6 @@ import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { ModeImage, WeaponImage } from "~/components/Image";
-import { CrossIcon } from "~/components/icons/Cross";
-import { MapIcon } from "~/components/icons/Map";
-import { MicrophoneFilledIcon } from "~/components/icons/MicrophoneFilled";
-import { PuzzleIcon } from "~/components/icons/Puzzle";
-import { SpeakerFilledIcon } from "~/components/icons/SpeakerFilled";
-import { StarIcon } from "~/components/icons/Star";
-import { StarFilledIcon } from "~/components/icons/StarFilled";
-import { TrashIcon } from "~/components/icons/Trash";
-import { UsersIcon } from "~/components/icons/Users";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { WeaponSelect } from "~/components/WeaponSelect";
@@ -259,8 +260,7 @@ function VoiceChat() {
 		<details>
 			<summary className={styles.summary}>
 				<div>
-					<span>{t("q:settings.voiceChat.header")}</span>{" "}
-					<MicrophoneFilledIcon />
+					<span>{t("q:settings.voiceChat.header")}</span> <Mic />
 				</div>
 			</summary>
 			<fetcher.Form method="post" className="mb-4 ml-2-5 stack sm">
@@ -361,7 +361,7 @@ function Languages() {
 						<div key={code} className="stack horizontal items-center sm">
 							{name}{" "}
 							<SendouButton
-								icon={<CrossIcon />}
+								icon={<X />}
 								variant="minimal-destructive"
 								onPress={() => {
 									const newLanguages = value.filter(
@@ -390,7 +390,7 @@ function WeaponPool() {
 		<details>
 			<summary className={styles.summary}>
 				<div>
-					<span>{t("q:settings.weaponPool.header")}</span> <PuzzleIcon />
+					<span>{t("q:settings.weaponPool.header")}</span> <Puzzle />
 				</div>
 			</summary>
 			<fetcher.Form method="post" className="mb-4 stack items-center">
@@ -435,7 +435,11 @@ function WeaponPool() {
 								</div>
 								<div className="stack sm horizontal items-center justify-center">
 									<SendouButton
-										icon={weapon.isFavorite ? <StarFilledIcon /> : <StarIcon />}
+										icon={
+											<Star
+												className={weapon.isFavorite ? styles.starFilled : ""}
+											/>
+										}
 										variant="minimal"
 										aria-label="Favorite weapon"
 										onPress={() =>
@@ -452,7 +456,7 @@ function WeaponPool() {
 										}
 									/>
 									<SendouButton
-										icon={<TrashIcon />}
+										icon={<Trash />}
 										variant="minimal-destructive"
 										aria-label="Delete weapon"
 										onPress={() =>
@@ -493,7 +497,7 @@ function Sounds() {
 		<details>
 			<summary className={styles.summary}>
 				<div>
-					<span>{t("q:settings.sounds.header")}</span> <SpeakerFilledIcon />
+					<span>{t("q:settings.sounds.header")}</span> <Volume2 />
 				</div>
 			</summary>
 			<div className="mb-4">
@@ -591,7 +595,7 @@ function SoundSlider() {
 
 	return (
 		<div className="stack horizontal xs items-center ml-2-5">
-			<SpeakerFilledIcon className={styles.volumeSliderIcon} />
+			<Volume2 className={styles.volumeSliderIcon} />
 			<input
 				className={styles.volumeSliderInput}
 				type="range"
@@ -611,7 +615,7 @@ function TrustedUsers() {
 	return (
 		<details>
 			<summary className={styles.summary}>
-				<span>{t("q:settings.trusted.header")}</span> <UsersIcon />
+				<span>{t("q:settings.trusted.header")}</span> <Users />
 			</summary>
 			<div className="mb-4">
 				{data.trusted.length > 0 ? (
@@ -642,7 +646,7 @@ function TrustedUsers() {
 											size="small"
 											type="submit"
 										>
-											<TrashIcon className="small-icon" />
+											<Trash className="small-icon" />
 										</SendouButton>
 									</FormWithConfirm>
 								</div>

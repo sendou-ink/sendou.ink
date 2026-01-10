@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Bell, RefreshCcw } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useMatches, useRevalidator } from "react-router";
@@ -12,8 +13,6 @@ import type { RootLoaderData } from "~/root";
 import { NOTIFICATIONS_URL } from "~/utils/urls";
 import { useMarkNotificationsAsSeen } from "../../features/notifications/notifications-hooks";
 import { LinkButton, SendouButton } from "../elements/Button";
-import { BellIcon } from "../icons/Bell";
-import { RefreshIcon } from "../icons/Refresh";
 
 import styles from "./NotificationPopover.module.css";
 
@@ -61,10 +60,10 @@ export function NotificationContent({
 		<>
 			<div className={styles.topContainer}>
 				<h2 className={styles.header}>
-					<BellIcon /> {t("common:notifications.title")}
+					<Bell /> {t("common:notifications.title")}
 				</h2>
 				<SendouButton
-					icon={<RefreshIcon />}
+					icon={<RefreshCcw />}
 					variant="minimal"
 					className={styles.refreshButton}
 					onPress={revalidate}

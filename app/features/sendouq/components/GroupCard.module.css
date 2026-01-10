@@ -134,14 +134,16 @@
 
 .vcIcon {
 	height: 15px;
-	stroke-width: 2;
 }
 
 .star {
 	min-width: 18px;
 	max-width: 18px;
 	color: var(--color-text-accent);
-	stroke-width: 2;
+}
+
+.starFilled {
+	fill: var(--color-text-accent);
 }
 
 .starInactive {

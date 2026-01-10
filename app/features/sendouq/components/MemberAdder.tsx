@@ -1,11 +1,9 @@
+import { Check, Clipboard, Plus } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { useCopyToClipboard } from "react-use";
 import { SendouButton } from "~/components/elements/Button";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
-import { ClipboardIcon } from "~/components/icons/Clipboard";
-import { PlusIcon } from "~/components/icons/Plus";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useTrusted } from "~/hooks/swr";
 import {
@@ -55,7 +53,7 @@ export function MemberAdder({
 					<SendouButton
 						variant={copySuccess ? "outlined-success" : "outlined"}
 						onPress={() => copyToClipboard(inviteLink)}
-						icon={copySuccess ? <CheckmarkIcon /> : <ClipboardIcon />}
+						icon={copySuccess ? <Check /> : <Clipboard />}
 						aria-label="Copy to clipboard"
 					/>
 				</div>
@@ -71,7 +69,7 @@ export function MemberAdder({
 						variant="outlined"
 						_action="ADD_TRUSTED"
 						isDisabled={!truster}
-						icon={<PlusIcon />}
+						icon={<Plus />}
 					/>
 				</div>
 			</fetcher.Form>

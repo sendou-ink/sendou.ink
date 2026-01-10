@@ -78,21 +78,8 @@
 
 .closeButton svg {
 	width: 1rem;
-	fill: var(--color-text);
 }
 
 .alertIcon {
 	width: 1.25rem;
-}
-
-.errorToast .alertIcon {
-	fill: var(--color-error);
-}
-
-.infoToast .alertIcon {
-	fill: var(--color-info);
-}
-
-.successToast .alertIcon {
-	fill: var(--color-success);
 }

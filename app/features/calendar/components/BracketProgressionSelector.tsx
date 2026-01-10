@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import { nanoid } from "nanoid";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -6,7 +7,6 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
-import { PlusIcon } from "~/components/icons/Plus";
 import { Label } from "~/components/Label";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
@@ -133,7 +133,7 @@ export function BracketProgressionSelector({
 				))}
 			</div>
 			<SendouButton
-				icon={<PlusIcon />}
+				icon={<Plus />}
 				size="small"
 				variant="outlined"
 				onPress={handleAddBracket}

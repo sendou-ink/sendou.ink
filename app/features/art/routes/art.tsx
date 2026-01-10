@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
@@ -12,7 +13,6 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
-import { CrossIcon } from "~/components/icons/Cross";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -132,7 +132,7 @@ export default function ArtPage() {
 					<SendouButton
 						size="small"
 						variant="minimal-destructive"
-						icon={<CrossIcon />}
+						icon={<X />}
 						onPress={() => {
 							setSearchParams((prev) => {
 								prev.delete(FILTERED_TAG_KEY_SEARCH_PARAM_KEY);

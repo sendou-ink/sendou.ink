@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { SquarePen, Trash } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher } from "react-router";
@@ -8,8 +9,6 @@ import { SendouButton } from "~/components/elements/Button";
 import { Flag } from "~/components/Flag";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, TierImage, WeaponImage } from "~/components/Image";
-import { EditIcon } from "~/components/icons/Edit";
-import { TrashIcon } from "~/components/icons/Trash";
 import { useUser } from "~/features/auth/core/user";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
@@ -442,7 +441,7 @@ function PostEditButton({ id }: { id: number }) {
 
 	return (
 		<Link className={styles.editButton} to={lfgNewPostPage(id)}>
-			<EditIcon />
+			<SquarePen />
 			{t("common:actions.edit")}
 		</Link>
 	);
@@ -466,7 +465,7 @@ function PostDeleteButton({ id, type }: { id: number; type: Post["type"] }) {
 				variant="minimal-destructive"
 				size="small"
 				type="submit"
-				icon={<TrashIcon className="small-icon" />}
+				icon={<Trash />}
 			>
 				{t("common:actions.delete")}
 			</SendouButton>

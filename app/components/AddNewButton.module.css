@@ -18,7 +18,6 @@
 .iconsContainer > svg {
 	width: calc(var(--input-height-small) / 2);
 	color: var(--color-text-accent);
-	stroke-width: 4px;
 }
 
 .iconsContainer > picture {

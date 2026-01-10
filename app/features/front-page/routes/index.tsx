@@ -1,8 +1,8 @@
 import clsx from "clsx";
+import { Calendar } from "lucide-react";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Image } from "~/components/Image";
-import { CalendarIcon } from "~/components/icons/Calendar";
 import { Main } from "~/components/Main";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -1114,7 +1114,7 @@ function TournamentSignupPost({
 				</span>
 			</div>
 			<div className={styles.signupTime}>
-				<CalendarIcon />
+				<Calendar />
 				<span>{content.startTime}</span>
 			</div>
 		</div>

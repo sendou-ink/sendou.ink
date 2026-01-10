@@ -18,6 +18,7 @@
 	border: 2px solid var(--color-border);
 	display: flex;
 	align-items: center;
+	gap: var(--s-2);
 	font-weight: var(--bold);
 	border-radius: var(--rounded-sm);
 	padding: var(--s-1) var(--s-2);
@@ -47,7 +48,6 @@
 	max-width: 1.75rem;
 	min-width: 1.75rem;
 	max-height: 1.75rem;
-	stroke-width: 2px;
 }
 
 .navigateArrowButton svg {
@@ -104,7 +104,6 @@
 .hiddenEventsButton svg {
 	width: 1rem;
 	height: 1rem;
-	stroke-width: 2px;
 }
 
 .calendar {

@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { ArrowLeft, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
@@ -12,8 +13,6 @@ import { split, startsWith } from "~/utils/strings";
 import { assertType } from "~/utils/types";
 import { modeImageUrl, stageImageUrl } from "~/utils/urls";
 import { SendouButton } from "./elements/Button";
-import { ArrowLongLeftIcon } from "./icons/ArrowLongLeft";
-import { CrossIcon } from "./icons/Cross";
 
 import styles from "./MapPoolSelector.module.css";
 
@@ -284,7 +283,7 @@ export function MapPoolStages({
 									<SendouButton
 										key="clear"
 										onPress={() => handleStageClear(stageId)}
-										icon={<CrossIcon title={t("common:actions.remove")} />}
+										icon={<X />}
 										variant="minimal"
 										aria-label={t("common:actions.remove")}
 										size="small"
@@ -293,11 +292,7 @@ export function MapPoolStages({
 									<SendouButton
 										key="select-all"
 										onPress={() => handleStageAdd(stageId)}
-										icon={
-											<ArrowLongLeftIcon
-												title={t("common:actions.selectAll")}
-											/>
-										}
+										icon={<ArrowLeft />}
 										variant="minimal"
 										aria-label={t("common:actions.selectAll")}
 										size="small"

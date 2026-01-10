@@ -1,3 +1,4 @@
+import { Eye, RefreshCcw } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
@@ -5,8 +6,6 @@ import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
 import { SendouButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { EyeIcon } from "~/components/icons/Eye";
-import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { metaTags } from "~/utils/remix";
@@ -52,7 +51,7 @@ export default function ApiPage() {
 						<CopyToClipboardPopover
 							url={data.apiToken}
 							trigger={
-								<SendouButton icon={<EyeIcon />}>
+								<SendouButton icon={<Eye />}>
 									{t("common:api.revealButton")}
 								</SendouButton>
 							}
@@ -67,7 +66,7 @@ export default function ApiPage() {
 						<SendouButton
 							className="mx-auto"
 							variant="outlined"
-							icon={<RefreshArrowsIcon />}
+							icon={<RefreshCcw />}
 						>
 							{t("common:api.regenerate.button")}
 						</SendouButton>

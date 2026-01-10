@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Check, CircleAlert } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useDebounce } from "react-use";
@@ -6,8 +7,6 @@ import { CUSTOM_CSS_VAR_COLORS } from "~/features/user-page/user-page-constants"
 import styles from "./CustomizedColorsInput.module.css";
 import { SendouButton } from "./elements/Button";
 import { InfoPopover } from "./InfoPopover";
-import { AlertIcon } from "./icons/Alert";
-import { CheckmarkIcon } from "./icons/Checkmark";
 import { Label } from "./Label";
 
 type CustomColorsRecord = Partial<
@@ -165,11 +164,7 @@ export function CustomizedColorsInput({
 												: styles.success,
 										)}
 									>
-										{contrast.contrast.AA.failed ? (
-											<AlertIcon />
-										) : (
-											<CheckmarkIcon />
-										)}
+										{contrast.contrast.AA.failed ? <CircleAlert /> : <Check />}
 										{contrast.contrast.AA.ratio}
 									</td>
 									<td
@@ -180,11 +175,7 @@ export function CustomizedColorsInput({
 												: styles.success,
 										)}
 									>
-										{contrast.contrast.AAA.failed ? (
-											<AlertIcon />
-										) : (
-											<CheckmarkIcon />
-										)}
+										{contrast.contrast.AAA.failed ? <CircleAlert /> : <Check />}
 										{contrast.contrast.AAA.ratio}
 									</td>
 								</tr>

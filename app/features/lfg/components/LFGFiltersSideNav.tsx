@@ -1,8 +1,8 @@
+import { Funnel } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
 import { SendouButton } from "~/components/elements/Button";
 import { WeaponImage } from "~/components/Image";
-import { FilterIcon } from "~/components/icons/Filter";
 import { Label } from "~/components/Label";
 import { SideNav, SideNavHeader } from "~/components/SideNav";
 import { WeaponSelect } from "~/components/WeaponSelect";
@@ -28,7 +28,7 @@ export function LFGFiltersSideNav({
 
 	return (
 		<SideNav>
-			<SideNavHeader icon={<FilterIcon />} showClose={showClose}>
+			<SideNavHeader icon={<Funnel />} showClose={showClose}>
 				{t("lfg:filters.header")}
 			</SideNavHeader>
 

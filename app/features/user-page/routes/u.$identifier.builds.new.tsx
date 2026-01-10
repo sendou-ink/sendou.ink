@@ -1,3 +1,4 @@
+import { Plus, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Form, useLoaderData, useMatches, useSearchParams } from "react-router";
@@ -7,8 +8,6 @@ import { SendouButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { GearSelect } from "~/components/GearSelect";
 import { Image } from "~/components/Image";
-import { CrossIcon } from "~/components/icons/Cross";
-import { PlusIcon } from "~/components/icons/Plus";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { RequiredHiddenInput } from "~/components/RequiredHiddenInput";
@@ -231,7 +230,7 @@ function WeaponsSelector() {
 										size="small"
 										isDisabled={weapons.length === BUILD.MAX_WEAPONS_COUNT}
 										onPress={() => setWeapons((weapons) => [...weapons, null])}
-										icon={<PlusIcon />}
+										icon={<Plus />}
 										data-testid="add-weapon-button"
 									/>
 									{weapons.length > 1 && (
@@ -245,7 +244,7 @@ function WeaponsSelector() {
 												})
 											}
 											variant="destructive"
-											icon={<CrossIcon />}
+											icon={<X />}
 										/>
 									)}
 								</>

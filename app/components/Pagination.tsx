@@ -1,7 +1,6 @@
 import clsx from "clsx";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SendouButton } from "~/components/elements/Button";
-import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
-import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { nullFilledArray } from "~/utils/arrays";
 import styles from "./Pagination.module.css";
 
@@ -21,7 +20,7 @@ export function Pagination({
 	return (
 		<div className={styles.container}>
 			<SendouButton
-				icon={<ArrowLeftIcon />}
+				icon={<ChevronLeft />}
 				variant="outlined"
 				className="fix-rtl"
 				isDisabled={currentPage === 1}
@@ -44,7 +43,7 @@ export function Pagination({
 				{currentPage}/{pagesCount}
 			</div>
 			<SendouButton
-				icon={<ArrowRightIcon />}
+				icon={<ChevronRight />}
 				variant="outlined"
 				className="fix-rtl"
 				isDisabled={currentPage === pagesCount}

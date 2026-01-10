@@ -90,20 +90,20 @@
 	text-decoration: underline;
 }
 
-.fill-success {
-	fill: var(--color-success);
+.color-success {
+	color: var(--color-success);
 }
 
-.fill-warning {
-	fill: var(--color-warning);
+.color-warning {
+	color: var(--color-warning);
 }
 
-.fill-error {
-	fill: var(--color-error);
+.color-error {
+	color: var(--color-error);
 }
 
-.fill-info {
-	fill: var(--color-info);
+.color-info {
+	color: var(--color-info);
 }
 
 .bg {

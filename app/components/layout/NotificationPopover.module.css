@@ -35,10 +35,6 @@
 	margin-inline-end: var(--s-1);
 }
 
-.refreshButton svg {
-	stroke-width: 10px;
-}
-
 .noNotifications {
 	display: grid;
 	place-items: center;

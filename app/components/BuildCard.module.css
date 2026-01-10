@@ -22,7 +22,6 @@
 .privateIcon {
 	width: 16px;
 	margin-block-end: var(--s-1);
-	stroke-width: 2px;
 }
 
 .title {

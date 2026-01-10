@@ -1,3 +1,4 @@
+import { Search } from "lucide-react";
 import * as React from "react";
 import type { MetaFunction } from "react-router";
 import {
@@ -21,7 +22,6 @@ import {
 import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
-import { SearchIcon } from "~/components/icons/Search";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { SEED_VARIATIONS } from "~/features/api-private/constants";
@@ -84,7 +84,7 @@ function FriendCodeLookUp() {
 				/>
 				<SubmitButton
 					state={fetcher.state}
-					icon={<SearchIcon />}
+					icon={<Search />}
 					onPress={() => setSearchParams({ friendCode })}
 				>
 					Search

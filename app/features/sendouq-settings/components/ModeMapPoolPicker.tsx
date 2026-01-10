@@ -1,9 +1,9 @@
 import clsx from "clsx";
+import { Check } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Divider } from "~/components/Divider";
 import { ModeImage } from "~/components/Image";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { nullFilledArray } from "~/utils/arrays";
@@ -118,7 +118,7 @@ function MapSlot({ number, picked }: { number: number; picked: boolean }) {
 				[styles.slotPicked]: picked,
 			})}
 		>
-			{picked ? <CheckmarkIcon className={styles.slotIcon} /> : number}
+			{picked ? <Check className={styles.slotIcon} /> : number}
 		</div>
 	);
 }
@@ -156,7 +156,7 @@ function MapButton({
 				data-testid={testId}
 			/>
 			{selected ? (
-				<CheckmarkIcon className={styles.mapButtonIcon} onClick={onClick} />
+				<Check className={styles.mapButtonIcon} onClick={onClick} />
 			) : null}
 			{tiebreaker ? (
 				<div className={clsx(styles.mapButtonText, "text-info")}>Tiebreak</div>

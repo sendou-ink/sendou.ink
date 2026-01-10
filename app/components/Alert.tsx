@@ -1,10 +1,8 @@
 import clsx from "clsx";
+import { Check, CircleAlert, OctagonAlert, TriangleAlert } from "lucide-react";
 import type * as React from "react";
 import { assertUnreachable } from "~/utils/types";
 import styles from "./Alert.module.css";
-import { AlertIcon } from "./icons/Alert";
-import { CheckmarkIcon } from "./icons/Checkmark";
-import { ErrorIcon } from "./icons/Error";
 
 export type AlertVariation = "INFO" | "WARNING" | "ERROR" | "SUCCESS";
 
@@ -39,13 +37,13 @@ export function Alert({
 function Icon({ variation }: { variation: AlertVariation }) {
 	switch (variation) {
 		case "INFO":
-			return <AlertIcon />;
+			return <CircleAlert />;
 		case "WARNING":
-			return <AlertIcon />;
+			return <TriangleAlert />;
 		case "ERROR":
-			return <ErrorIcon />;
+			return <OctagonAlert />;
 		case "SUCCESS":
-			return <CheckmarkIcon />;
+			return <Check />;
 		default:
 			assertUnreachable(variation);
 	}

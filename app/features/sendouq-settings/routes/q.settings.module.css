@@ -25,6 +25,10 @@
 	height: 50px;
 }
 
+.starFilled {
+	fill: var(--color-text-accent);
+}
+
 .volumeSliderIcon {
 	width: 16px;
 	height: 16px;

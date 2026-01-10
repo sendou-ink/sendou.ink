@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { ChevronsUpDown, Search, X } from "lucide-react";
 import * as React from "react";
 import type {
 	AutocompleteProps,
@@ -26,10 +27,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouButton } from "~/components/elements/Button";
-import { ChevronUpDownIcon } from "~/components/icons/ChevronUpDown";
 import { Image } from "../Image";
-import { CrossIcon } from "../icons/Cross";
-import { SearchIcon } from "../icons/Search";
 import styles from "./Select.module.css";
 
 export interface SendouSelectProps<T extends object>
@@ -105,7 +103,7 @@ export function SendouSelect<T extends object>({
 			<Button className={styles.button}>
 				<SelectValue className={styles.selectValue} />
 				<span aria-hidden="true">
-					<ChevronUpDownIcon className={styles.icon} />
+					<ChevronsUpDown className={styles.icon} />
 				</span>
 			</Button>
 			{clearable ? <SelectClearButton /> : null}
@@ -122,13 +120,13 @@ export function SendouSelect<T extends object>({
 							autoFocus
 							className={styles.searchField}
 						>
-							<SearchIcon aria-hidden className={styles.smallIcon} />
+							<Search aria-hidden className={styles.icon} />
 							<Input
 								placeholder={search.placeholder}
 								className={clsx(styles.searchInput, "in-container")}
 							/>
 							<Button className={styles.searchClearButton}>
-								<CrossIcon className={styles.smallIcon} />
+								<X className={styles.icon} />
 							</Button>
 						</SearchField>
 					) : null}
@@ -203,7 +201,7 @@ function SelectClearButton() {
 			slot={null}
 			variant="minimal-destructive"
 			size="miniscule"
-			icon={<CrossIcon />}
+			icon={<X />}
 			onPress={() => state?.setSelectedKey(null)}
 			className={styles.clearButton}
 		>

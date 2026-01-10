@@ -1,4 +1,14 @@
 import clsx from "clsx";
+import {
+	Bell,
+	Calendar,
+	LogIn,
+	Menu,
+	Settings,
+	User,
+	Users,
+	X,
+} from "lucide-react";
 import * as React from "react";
 import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { useTranslation } from "react-i18next";
@@ -9,15 +19,7 @@ import { navIconUrl, SETTINGS_PAGE, userPage } from "~/utils/urls";
 import { Avatar } from "./Avatar";
 import { SendouButton } from "./elements/Button";
 import { Image } from "./Image";
-import { BellIcon } from "./icons/Bell";
-import { CalendarIcon } from "./icons/Calendar";
-import { CrossIcon } from "./icons/Cross";
-import { GearIcon } from "./icons/Gear";
-import { HamburgerIcon } from "./icons/Hamburger";
-import { LogInIcon } from "./icons/LogIn";
 import { TwitchIcon } from "./icons/Twitch";
-import { UserIcon } from "./icons/User";
-import { UsersIcon } from "./icons/Users";
 import { LogInButtonContainer } from "./layout/LogInButtonContainer";
 import {
 	NotificationContent,
@@ -93,7 +95,7 @@ function MobileTabBar({
 	return (
 		<nav className={styles.tabBar}>
 			<MobileTab
-				icon={<HamburgerIcon />}
+				icon={<Menu />}
 				label={t("front:mobileNav.menu")}
 				isActive={activePanel === "menu"}
 				onPress={() => onTabPress("menu")}
@@ -102,19 +104,19 @@ function MobileTabBar({
 			{isLoggedIn ? (
 				<>
 					<MobileTab
-						icon={<UsersIcon />}
+						icon={<Users />}
 						label={t("front:mobileNav.friends")}
 						isActive={activePanel === "friends"}
 						onPress={() => onTabPress("friends")}
 					/>
 					<MobileTab
-						icon={<CalendarIcon />}
+						icon={<Calendar />}
 						label={t("common:pages.calendar")}
 						isActive={activePanel === "tourneys"}
 						onPress={() => onTabPress("tourneys")}
 					/>
 					<MobileTab
-						icon={<UserIcon />}
+						icon={<User />}
 						label={t("front:mobileNav.you")}
 						isActive={activePanel === "you"}
 						onPress={() => onTabPress("you")}
@@ -124,7 +126,7 @@ function MobileTabBar({
 				<LogInButtonContainer>
 					<button type="submit" className={styles.tab}>
 						<span className={styles.tabIcon}>
-							<LogInIcon />
+							<LogIn />
 						</span>
 						<span>{t("front:mobileNav.login")}</span>
 					</button>
@@ -182,11 +184,7 @@ function MobilePanel({
 				<Dialog className={styles.panelDialog}>
 					<header className={styles.panelHeader}>
 						<h2 className={styles.panelTitle}>{title}</h2>
-						<SendouButton
-							icon={<CrossIcon />}
-							variant="minimal"
-							onPress={onClose}
-						/>
+						<SendouButton icon={<X />} variant="minimal" onPress={onClose} />
 					</header>
 					<div className={styles.panelContent}>{children}</div>
 				</Dialog>
@@ -210,11 +208,7 @@ function MenuOverlay({
 				<Dialog className={styles.panelDialog}>
 					<header className={styles.menuHeader}>
 						<h2 className={styles.menuTitle}>{t("front:mobileNav.menu")}</h2>
-						<SendouButton
-							icon={<CrossIcon />}
-							variant="minimal"
-							onPress={onClose}
-						/>
+						<SendouButton icon={<X />} variant="minimal" onPress={onClose} />
 					</header>
 
 					<section className={styles.streamsSection}>
@@ -359,7 +353,7 @@ function YouPanel({ onClose }: { onClose: () => void }) {
 			{notifications ? (
 				<section className={styles.notificationsSection}>
 					<h3 className={styles.notificationsHeader}>
-						<BellIcon />
+						<Bell />
 						<span>{t("common:notifications.title")}</span>
 						{unseenIds.length > 0 ? (
 							<span className={styles.unseenBadge}>{unseenIds.length}</span>
@@ -379,7 +373,7 @@ function YouPanel({ onClose }: { onClose: () => void }) {
 						className={styles.youPanelAction}
 						onClick={onClose}
 					>
-						<GearIcon />
+						<Settings />
 						<span>{t("common:pages.settings")}</span>
 					</Link>
 				</li>

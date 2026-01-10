@@ -1,3 +1,4 @@
+import { Calendar } from "lucide-react";
 import {
 	Button,
 	DateInput,
@@ -11,7 +12,6 @@ import {
 } from "react-aria-components";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouCalendar } from "~/components/elements/Calendar";
-import { CalendarIcon } from "../icons/Calendar";
 import styles from "./DatePicker.module.css";
 import { SendouLabel } from "./Label";
 
@@ -43,7 +43,7 @@ export function SendouDatePicker<T extends DateValue>({
 					)}
 				</DateInput>
 				<Button data-testid="open-calendar-button" className={styles.button}>
-					<CalendarIcon className={styles.icon} />
+					<Calendar className={styles.icon} />
 				</Button>
 			</Group>
 			<SendouBottomTexts bottomText={bottomText} errorText={errorText} />

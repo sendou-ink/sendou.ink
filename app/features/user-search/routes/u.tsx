@@ -1,3 +1,4 @@
+import { Search } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
@@ -7,7 +8,6 @@ import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { Input } from "~/components/Input";
 import { DiscordIcon } from "~/components/icons/Discord";
-import { SearchIcon } from "~/components/icons/Search";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
 import { metaTags } from "~/utils/remix";
@@ -81,7 +81,7 @@ export default function UserSearchPage() {
 		<Main className={styles.searchContainer}>
 			<Input
 				className={styles.searchInput}
-				icon={<SearchIcon className={styles.searchIcon} />}
+				icon={<Search className={styles.searchIcon} />}
 				value={inputValue}
 				onChange={(e) => setInputValue(e.target.value)}
 			/>

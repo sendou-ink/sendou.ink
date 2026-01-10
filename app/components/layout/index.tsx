@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { isToday, isTomorrow } from "date-fns";
+import { Bell, Calendar, LogIn, Settings, Users } from "lucide-react";
 import * as React from "react";
 import { Button } from "react-aria-components";
 import { Flipped, Flipper } from "react-flip-toolkit";
@@ -14,12 +15,7 @@ import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
 import { Image } from "../Image";
-import { BellIcon } from "../icons/Bell";
-import { CalendarIcon } from "../icons/Calendar";
-import { GearIcon } from "../icons/Gear";
-import { LogInIcon } from "../icons/LogIn";
 import { TwitchIcon } from "../icons/Twitch";
-import { UsersIcon } from "../icons/Users";
 import { MobileNav } from "../MobileNav";
 import {
 	SideNav,
@@ -158,7 +154,7 @@ export function Layout({
 				top={<SiteTitle />}
 				topCentered={isFrontPage}
 			>
-				<SideNavHeader icon={<CalendarIcon />}>
+				<SideNavHeader icon={<Calendar />}>
 					{t("front:sideNav.myCalendar")}
 				</SideNavHeader>
 				{tournaments.length > 0 ? (
@@ -178,7 +174,7 @@ export function Layout({
 					</div>
 				)}
 
-				<SideNavHeader icon={<UsersIcon />}>
+				<SideNavHeader icon={<Users />}>
 					{t("front:sideNav.friends")}
 				</SideNavHeader>
 				{friends.map((friend) => (
@@ -327,7 +323,7 @@ function SideNavUserPanel() {
 										className={sideNavStyles.sideNavFooterButton}
 										data-testid="notifications-button"
 									>
-										<BellIcon />
+										<Bell />
 									</Button>
 								}
 								popoverClassName={notificationPopoverClassName(
@@ -345,7 +341,7 @@ function SideNavUserPanel() {
 						to={SETTINGS_PAGE}
 						className={sideNavStyles.sideNavFooterButton}
 					>
-						<GearIcon />
+						<Settings />
 					</Link>
 				</div>
 			</>
@@ -354,7 +350,7 @@ function SideNavUserPanel() {
 
 	return (
 		<LogInButtonContainer>
-			<SendouButton type="submit" size="small" icon={<LogInIcon />}>
+			<SendouButton type="submit" size="small" icon={<LogIn />}>
 				{t("header.login.discord")}
 			</SendouButton>
 		</LogInButtonContainer>

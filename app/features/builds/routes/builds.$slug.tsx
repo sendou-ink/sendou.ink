@@ -1,3 +1,11 @@
+import {
+	Calendar,
+	ChartColumnBig,
+	Flame,
+	FlaskConical,
+	Funnel,
+	Map as MapIcon,
+} from "lucide-react";
 import { nanoid } from "nanoid";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -11,12 +19,6 @@ import * as R from "remeda";
 import { BuildCard } from "~/components/BuildCard";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
-import { BeakerFilledIcon } from "~/components/icons/BeakerFilled";
-import { CalendarIcon } from "~/components/icons/Calendar";
-import { ChartBarIcon } from "~/components/icons/ChartBar";
-import { FilterIcon } from "~/components/icons/Filter";
-import { FireIcon } from "~/components/icons/Fire";
-import { MapIcon } from "~/components/icons/Map";
 import { Main } from "~/components/Main";
 import { safeJSONParse } from "~/utils/json";
 import { isRevalidation, metaTags, type SerializeFrom } from "~/utils/remix";
@@ -280,7 +282,7 @@ export default function WeaponsBuildsPage() {
 						<SendouButton
 							variant="outlined"
 							size="small"
-							icon={<FilterIcon />}
+							icon={<Funnel />}
 							isDisabled={filters.length >= MAX_BUILD_FILTERS}
 							data-testid="add-filter-button"
 						>
@@ -289,7 +291,7 @@ export default function WeaponsBuildsPage() {
 					}
 				>
 					<SendouMenuItem
-						icon={<BeakerFilledIcon />}
+						icon={<FlaskConical />}
 						isDisabled={filters.length >= MAX_BUILD_FILTERS}
 						onAction={() => handleFilterAdd("ability")}
 						data-testid="menu-item-ability"
@@ -304,7 +306,7 @@ export default function WeaponsBuildsPage() {
 						{t("builds:filters.type.mode")}
 					</SendouMenuItem>
 					<SendouMenuItem
-						icon={<CalendarIcon />}
+						icon={<Calendar />}
 						isDisabled={filters.some((filter) => filter.type === "date")}
 						onAction={() => handleFilterAdd("date")}
 						data-testid="menu-item-date"
@@ -316,7 +318,7 @@ export default function WeaponsBuildsPage() {
 					<LinkButton
 						to={weaponBuildStatsPage(data.slug)}
 						variant="outlined"
-						icon={<ChartBarIcon />}
+						icon={<ChartColumnBig />}
 						size="small"
 					>
 						{t("builds:linkButton.abilityStats")}
@@ -324,7 +326,7 @@ export default function WeaponsBuildsPage() {
 					<LinkButton
 						to={weaponBuildPopularPage(data.slug)}
 						variant="outlined"
-						icon={<FireIcon />}
+						icon={<Flame />}
 						size="small"
 					>
 						{t("builds:linkButton.popularBuilds")}

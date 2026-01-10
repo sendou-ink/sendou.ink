@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import { useLoaderData } from "react-router";
 import type { z } from "zod";
 import { Divider } from "~/components/Divider";
@@ -6,7 +7,6 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { SendouForm } from "~/components/form/SendouForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
-import { PlusIcon } from "~/components/icons/Plus";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
 import { USER } from "~/features/user-page/user-page-constants";
@@ -164,7 +164,7 @@ function NewModNoteDialog() {
 			heading="Adding a new mod note"
 			showCloseButton
 			trigger={
-				<SendouButton icon={<PlusIcon />} className="ml-auto mt-6">
+				<SendouButton icon={<Plus />} className="ml-auto mt-6">
 					New note
 				</SendouButton>
 			}

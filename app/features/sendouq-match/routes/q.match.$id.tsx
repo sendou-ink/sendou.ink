@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Archive, RefreshCcw, Scale, Users } from "lucide-react";
 import * as React from "react";
 import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
@@ -24,11 +25,7 @@ import {
 } from "~/components/elements/Tabs";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, ModeImage, StageImage, WeaponImage } from "~/components/Image";
-import { ArchiveBoxIcon } from "~/components/icons/ArchiveBox";
 import { DiscordIcon } from "~/components/icons/Discord";
-import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
-import { ScaleIcon } from "~/components/icons/Scale";
-import { UsersIcon } from "~/components/icons/Users";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { SubmitButton } from "~/components/SubmitButton";
@@ -393,7 +390,7 @@ function AfterMatchActions({
 				<input type="hidden" name="previousGroupId" value={ownGroupId} />
 				{showLookAgain ? (
 					<SubmitButton
-						icon={<RefreshArrowsIcon />}
+						icon={<RefreshCcw />}
 						state={lookAgainFetcher.state}
 						_action="LOOK_AGAIN"
 					>
@@ -402,7 +399,7 @@ function AfterMatchActions({
 				) : null}
 				{showWeaponsFormButton ? (
 					<SendouButton
-						icon={<ArchiveBoxIcon />}
+						icon={<Archive />}
 						onPress={() => setShowWeaponsForm(!showWeaponsForm)}
 						variant={showWeaponsForm ? "destructive" : undefined}
 					>
@@ -776,7 +773,7 @@ function BottomSection({
 			to={SENDOUQ_RULES_PAGE}
 			variant="outlined"
 			size="small"
-			icon={<ScaleIcon />}
+			icon={<Scale />}
 		>
 			{t("q:front.nav.rules.title")}
 		</LinkButton>
@@ -1362,7 +1359,7 @@ function MapListMapPickInfo({
 
 		return (
 			<div className="stack horizontal xs items-center">
-				<UsersIcon className="w-4" />
+				<Users className="w-4" />
 				<span>
 					{t("tournament:pickInfo.votes", {
 						count: playerCount,

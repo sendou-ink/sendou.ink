@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import Compressor from "compressorjs";
+import { AlertCircle, Check, Clock, Trash, User, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Form, Link, useFetcher, useLoaderData } from "react-router";
@@ -19,12 +20,7 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { FriendCodeInput } from "~/components/FriendCodeInput";
 import { Image, ModeImage } from "~/components/Image";
 import { Input } from "~/components/Input";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
-import { ClockIcon } from "~/components/icons/Clock";
-import { CrossIcon } from "~/components/icons/Cross";
 import { DiscordIcon } from "~/components/icons/Discord";
-import { TrashIcon } from "~/components/icons/Trash";
-import { UserIcon } from "~/components/icons/User";
 import { Label } from "~/components/Label";
 import { containerClassName } from "~/components/Main";
 import { MapPoolStages } from "~/components/MapPoolSelector";
@@ -56,7 +52,6 @@ import {
 	userEditProfilePage,
 	userPage,
 } from "~/utils/urls";
-import { AlertIcon } from "../../../components/icons/Alert";
 import { action } from "../actions/to.$id.register.server";
 import type { TournamentRegisterPageLoader } from "../loaders/to.$id.register.server";
 import { loader } from "../loaders/to.$id.register.server";
@@ -107,7 +102,7 @@ export default function TournamentRegisterPage() {
 								to={userPage(tournament.ctx.author)}
 								className="stack horizontal xs items-center text-lighter"
 							>
-								<UserIcon className={styles.infoIcon} />{" "}
+								<User className={styles.infoIcon} />{" "}
 								{tournament.ctx.author.username}
 							</Link>
 						)}
@@ -115,7 +110,7 @@ export default function TournamentRegisterPage() {
 					{!tournament.isLeagueSignup ? (
 						<div className={clsx(styles.by, "mt-2")}>
 							<div className="stack horizontal xs items-center">
-								<ClockIcon className={styles.infoIcon} />{" "}
+								<Clock className={styles.infoIcon} />{" "}
 								{isMounted ? (
 									<TimePopover
 										time={tournament.ctx.startTime}
@@ -438,7 +433,7 @@ function RegistrationProgress({
 			</h3>
 			<section className={clsx(styles.section, "stack md")}>
 				<div className="stack horizontal lg justify-center text-sm font-semi-bold">
-					{steps.map((step, i) => {
+					{steps.map((step) => {
 						return (
 							<div
 								key={step.name}
@@ -446,18 +441,15 @@ function RegistrationProgress({
 							>
 								{step.name}
 								{step.status === "completed" ? (
-									<CheckmarkIcon
-										className={clsx(styles.sectionIcon, "fill-success")}
-										testId={`checkmark-icon-num-${i + 1}`}
+									<Check
+										className={clsx(styles.sectionIcon, "color-success")}
 									/>
 								) : step.status === "notice" ? (
-									<AlertIcon
-										className={clsx(styles.sectionIcon, "fill-info p-1")}
+									<AlertCircle
+										className={clsx(styles.sectionIcon, "color-info")}
 									/>
 								) : (
-									<CrossIcon
-										className={clsx(styles.sectionIcon, "fill-error")}
-									/>
+									<X className={clsx(styles.sectionIcon, "color-error")} />
 								)}
 							</div>
 						);
@@ -780,7 +772,7 @@ function TeamInfo({
 													size="small"
 													type="submit"
 												>
-													<TrashIcon className="small-icon" />
+													<Trash className="small-icon" />
 												</SendouButton>
 											</FormWithConfirm>
 										) : null}

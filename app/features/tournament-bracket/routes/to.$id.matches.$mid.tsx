@@ -1,8 +1,8 @@
 import clsx from "clsx";
+import { ArrowLeft } from "lucide-react";
 import * as React from "react";
 import { Form, useLoaderData, useRevalidator } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
-import { ArrowLongLeftIcon } from "~/components/icons/ArrowLongLeft";
 import { containerClassName } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
@@ -94,7 +94,7 @@ export default function TournamentMatchPage() {
 						variant="outlined"
 						size="small"
 						className="w-max"
-						icon={<ArrowLongLeftIcon />}
+						icon={<ArrowLeft />}
 						testId="back-to-bracket-button"
 					>
 						Back to bracket

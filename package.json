@@ -65,6 +65,7 @@
 		"jsoncrush": "^1.1.8",
 		"kysely": "^0.28.9",
 		"lru-cache": "^11.2.4",
+		"lucide-react": "^0.562.0",
 		"markdown-to-jsx": "^9.5.0",
 		"nanoid": "^5.1.6",
 		"neverthrow": "^8.2.0",

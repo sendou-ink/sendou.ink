@@ -1,3 +1,4 @@
+import { ArrowDownNarrowWide, Lock, LockOpen, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData, useMatches } from "react-router";
@@ -8,10 +9,6 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { FormMessage } from "~/components/FormMessage";
 import { Image, WeaponImage } from "~/components/Image";
-import { LockIcon } from "~/components/icons/Lock";
-import { SortIcon } from "~/components/icons/Sort";
-import { TrashIcon } from "~/components/icons/Trash";
-import { UnlockIcon } from "~/components/icons/Unlock";
 import { SubmitButton } from "~/components/SubmitButton";
 import { BUILD_SORT_IDENTIFIERS, type BuildSort } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
@@ -88,7 +85,7 @@ export default function UserBuildsPage() {
 						onPress={() => setChangingSorting(true)}
 						size="small"
 						variant="outlined"
-						icon={<SortIcon />}
+						icon={<ArrowDownNarrowWide />}
 						data-testid="change-sorting-button"
 					>
 						{t("user:builds.sorting.changeButton")}
@@ -154,7 +151,7 @@ function BuildsFilters({
 						variant={weaponFilter === "PUBLIC" ? undefined : "outlined"}
 						size="small"
 						className={userStyles.buildFilterButton}
-						icon={<UnlockIcon />}
+						icon={<LockOpen />}
 					>
 						{t("builds:stats.public")} ({publicBuildsCount})
 					</SendouButton>
@@ -163,7 +160,7 @@ function BuildsFilters({
 						variant={weaponFilter === "PRIVATE" ? undefined : "outlined"}
 						size="small"
 						className={userStyles.buildFilterButton}
-						icon={<LockIcon />}
+						icon={<Lock />}
 					>
 						{t("builds:stats.private")} ({privateBuildsCount})
 					</SendouButton>
@@ -259,14 +256,18 @@ function ChangeSortingDialog({ close }: { close: () => void }) {
 							}
 
 							return (
-								<div key={i} className="stack horizontal justify-between">
+								<div
+									key={i}
+									className="stack horizontal justify-between items-center"
+								>
 									<div className="font-bold">
 										{i + 1}) {t(`user:builds.sorting.${sort!}`)}
 									</div>
 									{(isLast && !canAddMoreSorting) ||
 									(canAddMoreSorting && isSecondToLast) ? (
 										<SendouButton
-											icon={<TrashIcon />}
+											size="small"
+											icon={<Trash />}
 											variant="minimal-destructive"
 											onPress={deleteLastSorting}
 										/>

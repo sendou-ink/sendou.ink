@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Check, CircleAlert, OctagonAlert, X } from "lucide-react";
 import {
 	Text,
 	UNSTABLE_Toast as Toast,
@@ -8,9 +9,6 @@ import {
 } from "react-aria-components";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { AlertIcon } from "../icons/Alert";
-import { CheckmarkIcon } from "../icons/Checkmark";
-import { CrossIcon } from "../icons/Cross";
 import { SendouButton } from "./Button";
 import styles from "./Toast.module.css";
 
@@ -49,14 +47,16 @@ export function SendouToastRegion() {
 					<ToastContent>
 						<div className={styles.topRow}>
 							{toast.content.variant === "success" ? (
-								<CheckmarkIcon className={styles.alertIcon} />
+								<Check className={styles.alertIcon} />
+							) : toast.content.variant === "error" ? (
+								<OctagonAlert className={styles.alertIcon} />
 							) : (
-								<AlertIcon className={styles.alertIcon} />
+								<CircleAlert className={styles.alertIcon} />
 							)}
 							{t(`common:toasts.${toast.content.variant}`)}
 							<SendouButton
 								variant="minimal-destructive"
-								icon={<CrossIcon />}
+								icon={<X />}
 								className={styles.closeButton}
 								slot="close"
 								size="small"

@@ -1,8 +1,7 @@
+import { Heart, LogIn } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SUPPORT_PAGE } from "~/utils/urls";
 import { LinkButton, SendouButton } from "../elements/Button";
-import { HeartIcon } from "../icons/Heart";
-import { LogInIcon } from "../icons/LogIn";
 import { AnythingAdder } from "./AnythingAdder";
 import { CommandPalette } from "./CommandPalette";
 import { LogInButtonContainer } from "./LogInButtonContainer";
@@ -27,7 +26,7 @@ export function TopRightButtons({
 				<LinkButton
 					to={SUPPORT_PAGE}
 					size="small"
-					icon={<HeartIcon />}
+					icon={<Heart />}
 					variant="outlined"
 				>
 					{t("common:pages.support")}
@@ -40,7 +39,7 @@ export function TopRightButtons({
 				</>
 			) : (
 				<LogInButtonContainer>
-					<SendouButton type="submit" size="small" icon={<LogInIcon />}>
+					<SendouButton type="submit" size="small" icon={<LogIn />}>
 						{t("front:mobileNav.login")}
 					</SendouButton>
 				</LogInButtonContainer>

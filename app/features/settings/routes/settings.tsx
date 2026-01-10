@@ -1,3 +1,4 @@
+import { LogOut } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
@@ -9,7 +10,6 @@ import {
 } from "react-router";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
-import { LogOutIcon } from "~/components/icons/LogOut";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
@@ -83,7 +83,7 @@ export default function SettingsPage() {
 							<SendouButton
 								size="small"
 								variant="outlined"
-								icon={<LogOutIcon />}
+								icon={<LogOut />}
 								type="submit"
 							>
 								{t("common:header.logout")}
