@@ -32,6 +32,7 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	min-width: 0;
+	color: var(--color-text);
 }
 
 .selectValue[data-placeholder] {
@@ -150,6 +151,13 @@
 .select {
 	width: 100%;
 	position: relative;
+}
+
+.label {
+	font-size: var(--fonts-xs);
+	font-weight: var(--bold);
+	margin-block-end: var(--label-margin);
+	display: block;
 }
 
 .clearButton {

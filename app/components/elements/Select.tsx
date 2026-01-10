@@ -101,7 +101,7 @@ export function SendouSelect<T extends object>({
 			className={clsx(className, styles.select)}
 			onOpenChange={handleOpenChange}
 		>
-			{label ? <Label>{label}</Label> : null}
+			{label ? <Label className={styles.label}>{label}</Label> : null}
 			<Button className={styles.button}>
 				<SelectValue className={styles.selectValue} />
 				<span aria-hidden="true">
