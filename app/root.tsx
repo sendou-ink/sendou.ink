@@ -211,7 +211,7 @@ function cachedLeaderboards(): Promise<{
 }
 
 export const handle: SendouRouteHandle = {
-	i18n: ["common", "game-misc", "weapons"],
+	i18n: ["common", "game-misc", "weapons", "front"],
 };
 
 function Document({
