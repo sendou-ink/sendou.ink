@@ -21,6 +21,10 @@
 
 .tiny {
 	font-size: var(--fonts-xs);
+
+	& > svg {
+		height: 1.25rem;
+	}
 }
 
 .warning {
