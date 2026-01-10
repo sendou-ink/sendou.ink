@@ -56,7 +56,6 @@ function getInitialSearchType(): SearchType {
 	return "users";
 }
 
-// xxx: background flashes when we search
 export function CommandPalette() {
 	const { t } = useTranslation(["common"]);
 	const [isOpen, setIsOpen] = React.useState(false);
@@ -212,13 +211,13 @@ function CommandPaletteContent({ onClose }: { onClose: () => void }) {
 				selectionMode="single"
 				onAction={handleSelect}
 				renderEmptyState={() =>
-					hasQuery && !isLoading ? (
+					hasQuery ? (
 						<div className={styles.emptyState}>
 							{t("common:search.noResults")}
 						</div>
-					) : !hasQuery ? (
+					) : (
 						<div className={styles.emptyState}>{t("common:search.hint")}</div>
-					) : null
+					)
 				}
 			>
 				{results.map((result) => (
