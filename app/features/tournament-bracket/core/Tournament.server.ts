@@ -4,6 +4,7 @@ import { isAdmin } from "~/modules/permissions/utils";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import type { Unwrapped } from "~/utils/types";
 import { getServerTournamentManager } from "./brackets-manager/manager.server";
+import { RunningTournaments } from "./RunningTournaments.server";
 import { Tournament } from "./Tournament";
 
 const manager = getServerTournamentManager();
@@ -81,7 +82,10 @@ export async function tournamentFromDB(args: {
 }) {
 	const data = notFoundIfFalsy(await tournamentData(args));
 
-	return new Tournament({ ...data, simulateBrackets: false });
+	const tournament = new Tournament({ ...data, simulateBrackets: false });
+	syncTournamentToRegistry(tournament);
+
+	return tournament;
 }
 
 export async function tournamentFromDBCached(args: {
@@ -90,7 +94,10 @@ export async function tournamentFromDBCached(args: {
 }) {
 	const data = notFoundIfFalsy(await tournamentDataCached(args));
 
-	return new Tournament({ ...data, simulateBrackets: false });
+	const tournament = new Tournament({ ...data, simulateBrackets: false });
+	syncTournamentToRegistry(tournament);
+
+	return tournament;
 }
 
 // caching promise ensures that if many requests are made for the same tournament
@@ -121,4 +128,14 @@ export function clearTournamentDataCache(tournamentId: number) {
 
 export function clearAllTournamentDataCache() {
 	tournamentDataCache.clear();
+}
+
+function syncTournamentToRegistry(tournament: Tournament) {
+	const isRunning = tournament.hasStarted && !tournament.everyBracketOver;
+
+	if (isRunning) {
+		RunningTournaments.add(tournament);
+	} else {
+		RunningTournaments.remove(tournament.ctx.id);
+	}
 }
