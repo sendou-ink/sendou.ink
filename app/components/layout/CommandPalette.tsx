@@ -57,10 +57,27 @@ function getInitialSearchType(): SearchType {
 }
 
 // xxx: background flashes when we search
-// xxx: right now Ctrl+K does nothing (also should say Cmd+K on Mac)
 export function CommandPalette() {
 	const { t } = useTranslation(["common"]);
 	const [isOpen, setIsOpen] = React.useState(false);
+	const [isMac, setIsMac] = React.useState(false);
+
+	React.useEffect(() => {
+		setIsMac(/Mac|iPhone|iPad|iPod/.test(navigator.userAgent));
+	}, []);
+
+	React.useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			const modifierKey = isMac ? e.metaKey : e.ctrlKey;
+			if (modifierKey && e.key === "k") {
+				e.preventDefault();
+				setIsOpen(true);
+			}
+		};
+
+		document.addEventListener("keydown", handleKeyDown);
+		return () => document.removeEventListener("keydown", handleKeyDown);
+	}, [isMac]);
 
 	return (
 		<DialogTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
@@ -71,7 +88,7 @@ export function CommandPalette() {
 			>
 				<SearchIcon className={styles.searchIcon} />
 				<span className={styles.searchPlaceholder}>{t("common:search")}</span>
-				<kbd className={styles.searchKbd}>Ctrl+K</kbd>
+				<kbd className={styles.searchKbd}>{isMac ? "Cmd+K" : "Ctrl+K"}</kbd>
 			</button>
 			<ModalOverlay className={styles.overlay}>
 				<Modal className={styles.modal}>
