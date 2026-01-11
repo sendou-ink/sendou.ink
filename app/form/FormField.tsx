@@ -92,8 +92,9 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 		return fieldWithLabel as FormFieldType;
 	}, [fieldSchema, name, label]);
 
+	const isNestedPath = name.includes(".") || name.includes("[");
 	const value =
-		(name.includes(".")
+		(isNestedPath
 			? getNestedValue(context?.values ?? {}, name)
 			: context?.values[name]) ?? formField.initialValue;
 
@@ -116,7 +117,7 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 	const handleChange = (newValue: unknown) => {
 		context?.setValue(name, newValue);
 		if (hasSubmitted && context) {
-			const updatedValues = name.includes(".")
+			const updatedValues = isNestedPath
 				? setNestedValue(context.values, name, newValue)
 				: { ...context.values, [name]: newValue };
 			context.revalidateAll(updatedValues);
@@ -302,6 +303,10 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 			| undefined;
 		const isObjectArray = innerFieldMeta?.type === "fieldset";
 		const hasCustomRender = typeof children === "function";
+		const itemInitialValue =
+			isObjectArray && innerFieldMeta
+				? computeFieldsetInitialValue(innerFieldMeta)
+				: innerFieldMeta?.initialValue;
 
 		return (
 			<ArrayFormField
@@ -310,6 +315,7 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 				value={value as unknown[]}
 				onChange={handleChange as (v: unknown[]) => void}
 				isObjectArray={isObjectArray}
+				itemInitialValue={itemInitialValue}
 				renderItem={(idx, itemName) => {
 					if (hasCustomRender && isObjectArray) {
 						const arrayValue = value as Record<string, unknown>[];
@@ -404,4 +410,24 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 	return (
 		<div>Unsupported form field type: {(formField as FormFieldType).type}</div>
 	);
+}
+
+function computeFieldsetInitialValue(
+	fieldsetMeta: FormFieldType,
+): Record<string, unknown> {
+	if (fieldsetMeta.type !== "fieldset") return {};
+
+	const shape = fieldsetMeta.fields.shape as Record<string, z.ZodType>;
+	const result: Record<string, unknown> = {};
+
+	for (const [key, fieldSchema] of Object.entries(shape)) {
+		const fieldMeta = formRegistry.get(fieldSchema) as
+			| FormFieldType
+			| undefined;
+		if (fieldMeta) {
+			result[key] = fieldMeta.initialValue;
+		}
+	}
+
+	return result;
 }

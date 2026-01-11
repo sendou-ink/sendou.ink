@@ -15,6 +15,7 @@ type ArrayFormFieldProps = Omit<FormFieldProps<"array">, "field"> & {
 	renderItem: (index: number, name: string) => React.ReactNode;
 	isObjectArray?: boolean;
 	sortable?: boolean;
+	itemInitialValue?: unknown;
 };
 
 export function ArrayFormField({
@@ -29,6 +30,7 @@ export function ArrayFormField({
 	renderItem,
 	isObjectArray,
 	sortable,
+	itemInitialValue,
 }: ArrayFormFieldProps) {
 	const { t } = useTranslation(["common"]);
 	const { translatedLabel, translatedBottomText, translatedError } =
@@ -37,7 +39,13 @@ export function ArrayFormField({
 	const count = value.length;
 
 	const handleAdd = () => {
-		onChange([...value, isObjectArray ? {} : undefined]);
+		const newItemValue =
+			itemInitialValue !== undefined
+				? itemInitialValue
+				: isObjectArray
+					? {}
+					: undefined;
+		onChange([...value, newItemValue]);
 	};
 
 	const handleRemoveAt = (index: number) => {
