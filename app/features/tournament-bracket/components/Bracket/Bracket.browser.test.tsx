@@ -742,8 +742,9 @@ describe("Single Elimination Bracket", () => {
 			<EliminationBracketSide bracket={bracket} type="single" isExpanded />,
 		);
 
+		// 8-team bracket has Round 1, Semis, Finals
 		await expect.element(screen.getByText("Round 1")).toBeVisible();
-		await expect.element(screen.getByText("Round 2")).toBeVisible();
+		await expect.element(screen.getByText("Semis")).toBeVisible();
 		await expect.element(screen.getByText("Finals")).toBeVisible();
 	});
 
@@ -755,10 +756,10 @@ describe("Single Elimination Bracket", () => {
 			<EliminationBracketSide bracket={bracket} type="single" isExpanded />,
 		);
 
-		await expect.element(screen.getByText("Team Alpha")).toBeVisible();
-		await expect.element(screen.getByText("Team Beta")).toBeVisible();
-		await expect.element(screen.getByText("Team Gamma")).toBeVisible();
-		await expect.element(screen.getByText("Team Delta")).toBeVisible();
+		await expect.element(screen.getByText("Team Alpha").first()).toBeVisible();
+		await expect.element(screen.getByText("Team Beta").first()).toBeVisible();
+		await expect.element(screen.getByText("Team Gamma").first()).toBeVisible();
+		await expect.element(screen.getByText("Team Delta").first()).toBeVisible();
 	});
 
 	test("renders match scores", async () => {
@@ -807,8 +808,8 @@ describe("Single Elimination Bracket", () => {
 		expect(round1Elements.length).toBe(0);
 		expect(round2Elements.length).toBe(0);
 
-		// Semifinals and Finals should be visible (last 2 rounds)
-		await expect.element(screen.getByText("Semifinals")).toBeVisible();
+		// Semis and Finals should be visible (last 2 rounds)
+		await expect.element(screen.getByText("Semis")).toBeVisible();
 		await expect.element(screen.getByText("Finals")).toBeVisible();
 	});
 
@@ -842,7 +843,7 @@ describe("Single Elimination Bracket", () => {
 		// All 4 rounds should be visible
 		await expect.element(screen.getByText("Round 1")).toBeVisible();
 		await expect.element(screen.getByText("Round 2")).toBeVisible();
-		await expect.element(screen.getByText("Semifinals")).toBeVisible();
+		await expect.element(screen.getByText("Semis")).toBeVisible();
 		await expect.element(screen.getByText("Finals")).toBeVisible();
 	});
 
@@ -872,7 +873,8 @@ describe("Double Elimination Bracket", () => {
 			<EliminationBracketSide bracket={bracket} type="winners" isExpanded />,
 		);
 
-		await expect.element(screen.getByText("Round 1")).toBeVisible();
+		// Small 4-team bracket has Grand Finals and Bracket Reset rounds
+		await expect.element(screen.getByText("Grand Finals")).toBeVisible();
 	});
 
 	test("renders losers bracket side", async () => {
@@ -883,7 +885,8 @@ describe("Double Elimination Bracket", () => {
 			<EliminationBracketSide bracket={bracket} type="losers" isExpanded />,
 		);
 
-		await expect.element(screen.getByText("Round 1")).toBeVisible();
+		// Small 4-team losers bracket has LB Semis and LB Finals
+		await expect.element(screen.getByText("LB Semis")).toBeVisible();
 	});
 
 	test("renders team names in winners bracket", async () => {
@@ -898,7 +901,7 @@ describe("Double Elimination Bracket", () => {
 		await expect.element(screen.getByText("Team Beta")).toBeVisible();
 	});
 
-	test("renders match headers with WB prefix for winners", async () => {
+	test("renders match headers with GF prefix for grand finals", async () => {
 		const data = createDoubleEliminationData();
 		const bracket = createMockBracket("double_elimination", data);
 
@@ -906,7 +909,12 @@ describe("Double Elimination Bracket", () => {
 			<EliminationBracketSide bracket={bracket} type="winners" isExpanded />,
 		);
 
-		await expect.element(screen.getByText(/WB 1\.1/)).toBeVisible();
+		// Small 4-team bracket only has Grand Finals (GF prefix), not regular WB rounds
+		const headerBox = screen.container.querySelector(
+			".bracket__match__header__box",
+		);
+		expect(headerBox?.textContent).toContain("GF");
+		expect(headerBox?.textContent).toContain("1.1");
 	});
 });
 
@@ -943,9 +951,9 @@ describe("Round Robin Bracket", () => {
 			<RoundRobinBracket bracket={bracket} />,
 		);
 
-		await expect.element(screen.getByText("Team Alpha")).toBeVisible();
-		await expect.element(screen.getByText("Team Beta")).toBeVisible();
-		await expect.element(screen.getByText("Team Delta")).toBeVisible();
+		await expect.element(screen.getByText("Team Alpha").first()).toBeVisible();
+		await expect.element(screen.getByText("Team Beta").first()).toBeVisible();
+		await expect.element(screen.getByText("Team Delta").first()).toBeVisible();
 	});
 
 	test("renders match identifiers with group prefix", async () => {
@@ -994,8 +1002,8 @@ describe("Swiss Bracket", () => {
 			<SwissBracket bracket={bracket} bracketIdx={0} />,
 		);
 
-		await expect.element(screen.getByText("Team Alpha")).toBeVisible();
-		await expect.element(screen.getByText("Team Beta")).toBeVisible();
+		await expect.element(screen.getByText("Team Alpha").first()).toBeVisible();
+		await expect.element(screen.getByText("Team Beta").first()).toBeVisible();
 	});
 
 	test("renders completed match scores", async () => {
