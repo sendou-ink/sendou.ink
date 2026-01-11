@@ -1,8 +1,8 @@
 html {
-	--accent-hue: 355;
-	--accent-chroma: 0.24;
-	--base-hue: 255;
-	--base-chroma: 0.016;
+	--base-c: 0.012;
+	--base-h: 260;
+	--acc-c: 0.24;
+	--acc-h: 270;
 }
 
 /* 'low' and 'high' do not indicate lightness */
@@ -12,18 +12,18 @@ html {
 /* they mostly exist as a base for other vars like --color-text and --color-bg  */
 
 html.dark {
-	--color-base-0: oklch(100% 0.00011 271.152);
-	--color-base-1: oklch(94.873% 0.00589 264.66);
-	--color-base-2: oklch(81.397% 0.00741 268.575);
-	--color-base-3: oklch(63.785% 0.01681 273.715);
-	--color-base-4: oklch(46.004% 0.01551 266.588);
-	--color-base-5: oklch(34.138% 0.01632 270.912);
-	--color-base-6: oklch(27.313% 0.01549 269.123);
-	--color-base-7: oklch(20.97% 0.00805 274.53);
+	--color-base-0: oklch(100% calc(var(--base-c) * 0.01) var(--base-h));
+	--color-base-1: oklch(94.873% calc(var(--base-c) * 0.49) var(--base-h));
+	--color-base-2: oklch(81.397% calc(var(--base-c) * 0.62) var(--base-h));
+	--color-base-3: oklch(63.785% calc(var(--base-c) * 1.4) var(--base-h));
+	--color-base-4: oklch(46.004% calc(var(--base-c) * 1.29) var(--base-h));
+	--color-base-5: oklch(34.138% calc(var(--base-c) * 1.36) var(--base-h));
+	--color-base-6: oklch(27.313% calc(var(--base-c) * 1.29) var(--base-h));
+	--color-base-7: oklch(20.97% calc(var(--base-c) * 0.67) var(--base-h));
 
-	--color-accent-low: oklch(25.912% 0.09109 269.441);
-	--color-accent: oklch(52.262% 0.26613 268.94);
-	--color-accent-high: oklch(83.419% 0.082 269.322);
+	--color-accent-low: oklch(25.912% calc(var(--acc-c) * 0.38) var(--acc-h));
+	--color-accent: oklch(52.262% calc(var(--acc-c) * 1.11) var(--acc-h));
+	--color-accent-high: oklch(83.419% calc(var(--acc-c) * 0.34) var(--acc-h));
 
 	--color-text-accent: var(--color-accent-high);
 
@@ -51,18 +51,18 @@ html.dark {
 }
 
 html.light {
-	--color-base-0: oklch(20.97% 0.00805 274.53);
-	--color-base-1: oklch(27.313% 0.01549 269.123);
-	--color-base-2: oklch(34.138% 0.01632 270.912);
-	--color-base-3: oklch(46.004% 0.01551 266.588);
-	--color-base-4: oklch(63.785% 0.01681 273.715);
-	--color-base-5: oklch(85.397% 0.00741 268.575);
-	--color-base-6: oklch(94.873% 0.00589 264.66);
-	--color-base-7: oklch(100% 0.00011 271.152);
+	--color-base-0: oklch(20.97% calc(var(--base-c) * 0.67) var(--base-h));
+	--color-base-1: oklch(27.313% calc(var(--base-c) * 1.29) var(--base-h));
+	--color-base-2: oklch(34.138% calc(var(--base-c) * 1.36) var(--base-h));
+	--color-base-3: oklch(46.004% calc(var(--base-c) * 1.29) var(--base-h));
+	--color-base-4: oklch(63.785% calc(var(--base-c) * 1.4) var(--base-h));
+	--color-base-5: oklch(85.397% calc(var(--base-c) * 0.62) var(--base-h));
+	--color-base-6: oklch(94.873% calc(var(--base-c) * 0.49) var(--base-h));
+	--color-base-7: oklch(100% calc(var(--base-c) * 0.01) var(--base-h));
 
-	--color-accent-low: oklch(87.817% 0.05924 269.365);
-	--color-accent: oklch(52.919% 0.26185 268.998);
-	--color-accent-high: oklch(31.777% 0.13425 268.754);
+	--color-accent-low: oklch(87.817% calc(var(--acc-c) * 0.25) var(--acc-h));
+	--color-accent: oklch(52.919% calc(var(--acc-c) * 1.09) var(--acc-h));
+	--color-accent-high: oklch(31.777% calc(var(--acc-c) * 0.56) var(--acc-h));
 
 	--color-text-accent: var(--color-accent);
 

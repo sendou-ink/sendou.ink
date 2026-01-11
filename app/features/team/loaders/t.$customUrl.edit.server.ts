@@ -17,5 +17,5 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		throw redirect(teamPage(customUrl));
 	}
 
-	return { team, css: team.css };
+	return { team, customTheme: team.customTheme };
 };

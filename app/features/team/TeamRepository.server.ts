@@ -1,7 +1,7 @@
 import type { Insertable, Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type { DB, Tables } from "~/db/tables";
+import type { CustomTheme, DB, Tables } from "~/db/tables";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { subsOfResult } from "~/features/team/team-utils";
 import { databaseTimestampNow } from "~/utils/dates";
@@ -103,7 +103,7 @@ export function findByCustomUrl(
 			"Team.bio",
 			"Team.tag",
 			"Team.customUrl",
-			"Team.css",
+			"Team.customTheme",
 			concatUserSubmittedImagePrefix(eb.ref("AvatarImage.url")).as("avatarUrl"),
 			concatUserSubmittedImagePrefix(eb.ref("BannerImage.url")).as("bannerUrl"),
 			jsonArrayFrom(
@@ -301,11 +301,11 @@ export async function update({
 	bio,
 	bsky,
 	tag,
-	css,
+	customTheme,
 }: Pick<
 	Insertable<Tables["Team"]>,
 	"id" | "name" | "customUrl" | "bio" | "bsky" | "tag"
-> & { css: string | null }) {
+> & { customTheme: CustomTheme | null }) {
 	return db
 		.updateTable("AllTeam")
 		.set({
@@ -314,7 +314,7 @@ export async function update({
 			bio,
 			bsky,
 			tag,
-			css,
+			customTheme: customTheme ? JSON.stringify(customTheme) : null,
 		})
 		.where("id", "=", id)
 		.returningAll()

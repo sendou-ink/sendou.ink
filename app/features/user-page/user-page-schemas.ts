@@ -6,7 +6,6 @@ import {
 	_action,
 	actualNumber,
 	checkboxValueToDbBoolean,
-	customCssVarObject,
 	dbBoolean,
 	emptyArrayToNull,
 	falsyToNull,
@@ -105,7 +104,6 @@ export const userEditActionSchema = z
 				.refine((val) => /^[0-9a-z]{4,5}$/.test(val))
 				.nullable(),
 		),
-		css: customCssVarObject,
 		weapons: z.preprocess(
 			safeJSONParse,
 			z

@@ -37,7 +37,12 @@ describe("team page editing", () => {
 	it("adds valid custom css vars", async () => {
 		const response = await editTeamProfileAction(
 			{
-				css: JSON.stringify({ bg: "#fff" }),
+				customTheme: {
+					"--base-c": 210,
+					"--base-h": 50,
+					"--acc-c": 160,
+					"--acc-h": 80,
+				},
 				...DEFAULT_FIELDS,
 			},
 			{ user: "regular", params: { customUrl: "team-1" } },
@@ -49,7 +54,7 @@ describe("team page editing", () => {
 	it("prevents adding custom css var of unknown property", async () => {
 		const response = await editTeamProfileAction(
 			{
-				css: JSON.stringify({
+				customTheme: Object.assign({
 					"backdrop-filter": "#fff",
 				}),
 				...DEFAULT_FIELDS,
@@ -63,8 +68,8 @@ describe("team page editing", () => {
 	it("prevents adding custom css var of unknown value", async () => {
 		const response = await editTeamProfileAction(
 			{
-				css: JSON.stringify({
-					bg: "url(https://sendou.ink/u?q=1&_data=features%2Fuser-search%2Froutes%2Fu)",
+				customTheme: Object.assign({
+					"--base-c": "not-a-number",
 				}),
 				...DEFAULT_FIELDS,
 			},

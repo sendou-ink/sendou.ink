@@ -29,7 +29,7 @@ import {
 } from "react-router";
 import { useDebounce } from "react-use";
 import { useChangeLanguage } from "remix-i18next/react";
-import type { Tables } from "~/db/tables";
+import type { CustomTheme, Tables } from "~/db/tables";
 import * as Changelog from "~/features/front-page/core/Changelog.server";
 import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
@@ -55,7 +55,7 @@ import {
 	ThemeProvider,
 	useTheme,
 } from "./features/theme/core/provider";
-import { getThemeSession } from "./features/theme/core/session.server";
+import { getThemeSession } from "./features/theme/core/theme-session.server";
 import { useIsMounted } from "./hooks/useIsMounted";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
 import { i18nCookie, i18next } from "./modules/i18n/i18next.server";
@@ -138,6 +138,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 						roles: user.roles,
 					}
 				: undefined,
+			customTheme: user?.customTheme,
 			notifications: user
 				? await NotificationRepository.findByUserId(user.id, {
 						limit: NOTIFICATIONS.PEEK_COUNT,
@@ -228,18 +229,19 @@ function Document({
 	const { i18n } = useTranslation();
 	const navigate = useNavigate();
 	const locale = data?.locale ?? DEFAULT_LANGUAGE;
+	const customThemeStyle = useCustomThemeVars();
 
 	useChangeLanguage(locale);
 	usePreloadTranslation();
 	useLoadingIndicator();
 	useTriggerToasts();
-	const customizedCSSVars = useCustomizedCSSVars();
 
 	return (
 		<html
 			lang={locale}
 			dir={i18n.dir()}
 			className={clsx(htmlThemeClass, "scrollbar")}
+			style={customThemeStyle}
 		>
 			<head>
 				<meta charSet="utf-8" />
@@ -261,7 +263,7 @@ function Document({
 				<PWALinks />
 				<Fonts />
 			</head>
-			<body style={customizedCSSVars}>
+			<body>
 				{IS_E2E_TEST_RUN && <HydrationTestIndicator />}
 				<React.StrictMode>
 					<RouterProvider navigate={navigate} useHref={useHref}>
@@ -336,34 +338,29 @@ function usePreloadTranslation() {
 	}, []);
 }
 
-const CUSTOMIZED_CSS_VARS_NAME = "css";
-
-function useCustomizedCSSVars() {
-	const matches = useMatches();
-
-	for (const match of matches) {
-		if ((match.data as any)?.[CUSTOMIZED_CSS_VARS_NAME]) {
-			return Object.fromEntries(
-				Object.entries(
-					(match.data as any)[CUSTOMIZED_CSS_VARS_NAME] as Record<
-						string,
-						string
-					>,
-				).map(([key, value]) => [
-					`--${key}`,
-					`var(--preview-${key}, ${value})`,
-				]),
-			) as React.CSSProperties;
-		}
-	}
-
-	return;
-}
-
 declare module "react-aria-components" {
 	interface RouterConfig {
 		routerOptions: NavigateOptions;
 	}
+}
+
+function useCustomThemeVars(): React.CSSProperties | undefined {
+	const matches = useMatches();
+	let styles: React.CSSProperties | undefined;
+
+	for (const match of matches) {
+		const data = match.data as { customTheme?: CustomTheme } | undefined;
+
+		if (data?.customTheme) {
+			const styleObj: Record<string, number> = {};
+			for (const [key, value] of Object.entries(data.customTheme)) {
+				styleObj[key] = value;
+			}
+			styles = styleObj as React.CSSProperties;
+		}
+	}
+
+	return styles;
 }
 
 export default function App() {

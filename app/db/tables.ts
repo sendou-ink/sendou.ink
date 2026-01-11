@@ -34,13 +34,22 @@ export type MemberRole = (typeof TEAM_MEMBER_ROLES)[number];
 /** In SQLite booleans are presented as 0 (false) and 1 (true) */
 export type DBBoolean = number;
 
+export const CUSTOM_THEME_VARS = [
+	"--base-c",
+	"--base-h",
+	"--acc-c",
+	"--acc-h",
+] as const;
+export type CustomThemeVar = (typeof CUSTOM_THEME_VARS)[number];
+export type CustomTheme = Record<CustomThemeVar, number>;
+
 export interface Team {
 	avatarImgId: number | null;
 	bannerImgId: number | null;
 	bio: string | null;
 	createdAt: Generated<number>;
-	css: JSONColumnTypeNullable<Record<string, string>>;
 	customUrl: string;
+	customTheme: JSONColumnTypeNullable<CustomTheme>;
 	deletedAt: number | null;
 	id: GeneratedAlways<number>;
 	inviteCode: string;
@@ -871,7 +880,7 @@ export interface User {
 	commissionsOpenedAt: number | null;
 	commissionText: string | null;
 	country: string | null;
-	css: JSONColumnTypeNullable<Record<string, string>>;
+	customTheme: JSONColumnTypeNullable<CustomTheme>;
 	customUrl: string | null;
 	discordAvatar: string | null;
 	discordId: string;

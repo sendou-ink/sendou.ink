@@ -138,7 +138,7 @@
 
 @keyframes pulse {
 	from {
-		box-shadow: 0 0 0 0 var(--color-text-accent);
+		box-shadow: 0 0 0 0 inherit;
 	}
 	70% {
 		box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);

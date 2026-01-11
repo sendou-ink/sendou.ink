@@ -2,7 +2,6 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Form, Link, useLoaderData } from "react-router";
-import { CustomizedColorsInput } from "~/components/CustomizedColorsInput";
 import { SendouButton } from "~/components/elements/Button";
 import { FormErrors } from "~/components/FormErrors";
 import { FormMessage } from "~/components/FormMessage";
@@ -19,7 +18,7 @@ import { action } from "../actions/t.$customUrl.edit.server";
 import { loader } from "../loaders/t.$customUrl.edit.server";
 import styles from "../team.module.css";
 import { TEAM } from "../team-constants";
-import { canAddCustomizedColors, isTeamOwner } from "../team-utils";
+import { isTeamOwner } from "../team-utils";
 export { action, loader };
 
 export const meta: MetaFunction = (args) => {
@@ -32,7 +31,7 @@ export const meta: MetaFunction = (args) => {
 export default function EditTeamPage() {
 	const { t } = useTranslation(["common", "team"]);
 	const user = useUser();
-	const { team, css } = useLoaderData<typeof loader>();
+	const { team, customTheme } = useLoaderData<typeof loader>();
 
 	return (
 		<Main className="stack lg">
@@ -55,9 +54,6 @@ export default function EditTeamPage() {
 				<Form method="post" className="stack md items-start">
 					<ImageUploadLinks />
 					<ImageRemoveButtons />
-					{canAddCustomizedColors(team) ? (
-						<CustomizedColorsInput initialColors={css} />
-					) : null}
 					<NameInput />
 					<TagInput />
 					<BlueskyInput />

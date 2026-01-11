@@ -1,11 +1,6 @@
 import { z } from "zod";
-import {
-	_action,
-	customCssVarObject,
-	falsyToNull,
-	id,
-	safeStringSchema,
-} from "~/utils/zod";
+import type { CustomThemeVar } from "~/db/tables";
+import { _action, falsyToNull, id, safeStringSchema } from "~/utils/zod";
 import { TEAM, TEAM_MEMBER_ROLES } from "./team-constants";
 
 export const teamParamsSchema = z.object({ customUrl: z.string() });
@@ -51,7 +46,14 @@ export const editTeamSchema = z.union([
 			falsyToNull,
 			z.string().max(TEAM.TAG_MAX_LENGTH).nullable(),
 		),
-		css: customCssVarObject,
+		customTheme: z
+			.object({
+				"--base-h": z.number().min(0).max(360),
+				"--base-c": z.number().min(0).max(0.1),
+				"--acc-h": z.number().min(0).max(360),
+				"--acc-c": z.number().min(0).max(0.3),
+			} satisfies Record<CustomThemeVar, z.ZodNumber>)
+			.nullable(),
 	}),
 ]);
 

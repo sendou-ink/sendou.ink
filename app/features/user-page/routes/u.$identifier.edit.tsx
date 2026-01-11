@@ -3,7 +3,6 @@ import { Star, Trash } from "lucide-react";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Form, Link, useLoaderData, useMatches } from "react-router";
-import { CustomizedColorsInput } from "~/components/CustomizedColorsInput";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { SendouSwitch } from "~/components/elements/Switch";
@@ -39,16 +38,11 @@ export default function UserEditPage() {
 	invariant(parentRoute);
 	const layoutData = parentRoute.data as UserPageLoaderData;
 	const data = useLoaderData<typeof loader>();
-
-	const isSupporter = useHasRole("SUPPORTER");
 	const isArtist = useHasRole("ARTIST");
 
 	return (
 		<div className={mainStyles.narrow}>
 			<Form className={editStyles.container} method="post">
-				{isSupporter ? (
-					<CustomizedColorsInput initialColors={layoutData.css} />
-				) : null}
 				<CustomNameInput />
 				<CustomUrlInput parentRouteData={layoutData} />
 				<InGameNameInputs />

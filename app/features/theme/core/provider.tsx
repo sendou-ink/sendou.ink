@@ -1,10 +1,9 @@
 import {
 	createContext,
 	type ReactNode,
-	useCallback,
 	useContext,
-	useEffect,
 	useState,
+	useSyncExternalStore,
 } from "react";
 import { useFetcher } from "react-router";
 
@@ -16,24 +15,33 @@ type Theme = (typeof Theme)[keyof typeof Theme];
 const themes = Object.values(Theme);
 
 type ThemeContextType = {
-	/** The CSS class to attach to the `html` tag */
-	htmlThemeClass: Theme | "";
-	/** The color scheme to be defined in the meta tag */
+	htmlThemeClass: Theme;
 	metaColorScheme: "light dark" | "dark light";
-	/**
-	 * The Theme setting of the user, as displayed in the theme switcher.
-	 * `null` means there is no theme switcher (static theme on error pages).
-	 */
 	userTheme: Theme | "auto" | null;
-	/** Persists a new `userTheme` setting */
 	setUserTheme: (newTheme: Theme | "auto") => void;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const prefersLightMQ = "(prefers-color-scheme: light)";
-const getPreferredTheme = () =>
-	window.matchMedia(prefersLightMQ).matches ? Theme.LIGHT : Theme.DARK;
+const PREFERS_LIGHT_MQ = "(prefers-color-scheme: light)";
+
+function getSystemTheme() {
+	return window.matchMedia(PREFERS_LIGHT_MQ).matches ? Theme.LIGHT : Theme.DARK;
+}
+
+function subscribeToSystemTheme(callback: () => void) {
+	const mediaQuery = window.matchMedia(PREFERS_LIGHT_MQ);
+	mediaQuery.addEventListener("change", callback);
+	return () => mediaQuery.removeEventListener("change", callback);
+}
+
+function useSystemTheme() {
+	return useSyncExternalStore(
+		subscribeToSystemTheme,
+		getSystemTheme,
+		() => Theme.DARK,
+	);
+}
 
 type ThemeProviderProps = {
 	children: ReactNode;
@@ -41,83 +49,44 @@ type ThemeProviderProps = {
 	themeSource: "user-preference" | "static";
 };
 
+function colorScheme(theme: Theme) {
+	return theme === Theme.LIGHT ? "light dark" : "dark light";
+}
+
 function ThemeProvider({
 	children,
 	specifiedTheme,
 	themeSource,
 }: ThemeProviderProps) {
-	const [[theme, isAutoDetected], setThemeState] = useState<
-		[Theme, false] | [Theme | null, true]
-	>(() => {
-		if (themeSource === "static") {
-			return [specifiedTheme ?? Theme.DARK, false];
-		}
-
-		if (specifiedTheme) {
-			return [specifiedTheme, false];
-		}
-
-		/* 
-      If we don't know a preferred user theme, we have to auto-detect it.
-      Since the server has no way of doing auto-detection, it returns null,
-      leading to the `html` class and `color-scheme` values being set to a
-      default.
-      
-      Then, on the client, the `clientThemeCode` will run, correcting those 
-      defaults with the determined correct value.
-      Which means, when we later render this component again, hydration will
-      succeed. Because the output of `getPreferredTheme()` is (very likely) the
-      same that the `clientThemeCode` determined and added to the html element
-      shortly before.
-    */
-
-		return [typeof document === "undefined" ? null : getPreferredTheme(), true];
-	});
-
-	const persistThemeFetcher = useFetcher();
-	const persistTheme = persistThemeFetcher.submit;
-
-	// biome-ignore lint/correctness/useExhaustiveDependencies: biome migration
-	const setUserTheme = useCallback(
-		(newTheme: Theme | "auto") => {
-			setThemeState(
-				newTheme === "auto" ? [getPreferredTheme(), true] : [newTheme, false],
-			);
-			persistTheme(
-				{ theme: newTheme },
-				{
-					action: "theme",
-					method: "post",
-				},
-			);
-		},
-		[setThemeState, persistTheme],
+	const isStatic = themeSource === "static";
+	const [userPreference, setUserPreference] = useState<Theme | "auto">(
+		isStatic ? (specifiedTheme ?? Theme.DARK) : (specifiedTheme ?? "auto"),
 	);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: biome migration
-	useEffect(() => {
-		if (!isAutoDetected) {
-			return;
-		}
+	const systemTheme = useSystemTheme();
+	const persistThemeFetcher = useFetcher();
 
-		const mediaQuery = window.matchMedia(prefersLightMQ);
-		const handleChange = () => {
-			setThemeState([mediaQuery.matches ? Theme.LIGHT : Theme.DARK, true]);
-		};
-		mediaQuery.addEventListener("change", handleChange);
-		return () => mediaQuery.removeEventListener("change", handleChange);
-	}, [isAutoDetected]);
+	const resolvedTheme = isStatic
+		? (specifiedTheme ?? Theme.DARK)
+		: userPreference === "auto"
+			? systemTheme
+			: userPreference;
+
+	const handleSetUserTheme = (newTheme: Theme | "auto") => {
+		setUserPreference(newTheme);
+		persistThemeFetcher.submit(
+			{ theme: newTheme },
+			{ action: "theme", method: "post" },
+		);
+	};
 
 	return (
 		<ThemeContext.Provider
 			value={{
-				// Gets corrected by clientThemeCode if set to "" during SSR
-				htmlThemeClass: theme ?? "",
-				// Gets corrected by clientThemeCode if set to wrong value during SSR
-				metaColorScheme: theme === Theme.LIGHT ? "light dark" : "dark light",
-				userTheme:
-					themeSource === "static" ? null : isAutoDetected ? "auto" : theme,
-				setUserTheme,
+				htmlThemeClass: resolvedTheme,
+				metaColorScheme: colorScheme(resolvedTheme),
+				userTheme: isStatic ? null : userPreference,
+				setUserTheme: handleSetUserTheme,
 			}}
 		>
 			{children}
@@ -125,34 +94,19 @@ function ThemeProvider({
 	);
 }
 
-// this is how I make certain we avoid a flash of the wrong theme. If you select
-// a theme, then I'll know what you want in the future and you'll not see this
-// script anymore.
-const clientThemeCode = `
+const CLIENT_THEME_SCRIPT = `
 ;(() => {
-  const theme = window.matchMedia(${JSON.stringify(prefersLightMQ)}).matches
+  const theme = window.matchMedia(${JSON.stringify(PREFERS_LIGHT_MQ)}).matches
     ? 'light'
     : 'dark';
   const cl = document.documentElement.classList;
   const themeAlreadyApplied = cl.contains('light') || cl.contains('dark');
-  if (themeAlreadyApplied) {
-    console.warn(
-      "Script is running but theme is already applied",
-    );
-  } else {
+  if (!themeAlreadyApplied) {
     cl.add(theme);
   }
   const meta = document.querySelector('meta[name=color-scheme]');
   if (meta) {
-    if (theme === 'dark') {
-      meta.content = 'dark light';
-    } else if (theme === 'light') {
-      meta.content = 'light dark';
-    }
-  } else {
-    console.warn(
-      "No meta tag",
-    );
+    meta.content = theme === 'dark' ? 'dark light' : 'light dark';
   }
 })();
 `;
@@ -163,25 +117,13 @@ function ThemeHead() {
 
 	return (
 		<>
-			{/*
-        On the server, "theme" might be `null`, so clientThemeCode ensures that
-        this is correct before hydration.
-      */}
 			<meta name="color-scheme" content={metaColorScheme} />
-			{/*
-        If we know what the theme is from user preference, then we don't need 
-        to do fancy tricks prior to hydration to make things match.
-      */}
-			{initialUserTheme === "auto" && (
+			{initialUserTheme === "auto" ? (
 				<script
-					// NOTE: we cannot use type="module" because that automatically makes
-					// the script "defer". That doesn't work for us because we need
-					// this script to run synchronously before the rest of the document
-					// is finished loading.
 					// biome-ignore lint/security/noDangerouslySetInnerHtml: trusted source
-					dangerouslySetInnerHTML={{ __html: clientThemeCode }}
+					dangerouslySetInnerHTML={{ __html: CLIENT_THEME_SCRIPT }}
 				/>
-			)}
+			) : null}
 		</>
 	);
 }

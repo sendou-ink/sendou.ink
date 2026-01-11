@@ -24,7 +24,7 @@ export type CommonUser = Pick<
 
 const userChatNameColorRaw = sql<
 	string | null
->`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."css" ->> 'chat', null)`;
+>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme" ->> 'chat', null)`;
 
 export const userChatNameColor = userChatNameColorRaw.as("chatNameColor");
 

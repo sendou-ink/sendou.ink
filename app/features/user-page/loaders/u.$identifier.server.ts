@@ -19,8 +19,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	return {
 		user: {
 			...user,
-			css: undefined,
 		},
-		css: user.css,
+		customTheme: user.customTheme,
 	};
 };
