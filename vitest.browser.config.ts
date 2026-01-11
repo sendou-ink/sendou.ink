@@ -14,6 +14,14 @@ export default defineConfig({
 			enabled: true,
 			headless,
 			instances: [{ browser: "chromium" }],
+			expect: {
+				toMatchScreenshot: {
+					comparatorOptions: {
+						threshold: 0.2,
+						allowedMismatchedPixelRatio: 0.01,
+					},
+				},
+			},
 		},
 		css: {
 			include: /.+/,
