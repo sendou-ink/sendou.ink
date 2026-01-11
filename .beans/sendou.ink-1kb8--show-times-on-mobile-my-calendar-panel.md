@@ -3,8 +3,11 @@
 title: Show times on mobile My Calendar panel
 status: todo
 type: task
+priority: normal
+tags:
+    - my-calendar-epic
 created_at: 2026-01-11T09:48:18Z
-updated_at: 2026-01-11T09:48:18Z
+updated_at: 2026-01-11T11:45:42Z
 parent: sendou.ink-6eko
 ---
 
