@@ -5,7 +5,9 @@ status: in-progress
 type: epic
 priority: normal
 created_at: 2026-01-11T08:58:29Z
-updated_at: 2026-01-11T09:19:14Z
+updated_at: 2026-01-11T09:34:23Z
+blocking:
+    - sendou.ink-1l22
 ---
 
 ## Why
