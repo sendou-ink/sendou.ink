@@ -1,23 +1,23 @@
 ---
 # sendou.ink-kw6u
-title: Show scrims in My calendar
+title: Show scrims in Events
 status: todo
 type: task
 priority: normal
 tags:
-    - my-calendar-epic
+    - my-events-epic
 created_at: 2026-01-11T09:44:26Z
-updated_at: 2026-01-11T11:45:42Z
+updated_at: 2026-01-11T12:51:46Z
 parent: sendou.ink-6eko
 ---
 
 ## Summary
 
-Display scrims (both scheduled and looking-for-match) in the sidebar's "My calendar" section.
+Display scrims (both scheduled and looking-for-match) in the sidebar's "Events" section.
 
 ## Details
 
-The My calendar section currently shows tournament calendar entries. It should also include:
+The Events section currently shows tournament calendar entries. It should also include:
 
 1. **Scheduled scrims** - Scrims where the user's team has a confirmed match scheduled
 2. **Looking-for-match scrims** - Active scrim postings where user's team is still searching for opponents
@@ -27,6 +27,6 @@ This gives competitive players visibility into their upcoming scrim commitments 
 ## Checklist
 
 - [ ] Identify where scrim data is fetched/stored
-- [ ] Add scrim entries to My calendar data source
+- [ ] Add scrim entries to Events data source
 - [ ] Distinguish between scheduled vs looking-for-match scrims visually
 - [ ] Test with various scrim states

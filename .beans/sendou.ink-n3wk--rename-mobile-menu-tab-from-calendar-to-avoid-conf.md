@@ -1,10 +1,11 @@
 ---
 # sendou.ink-n3wk
 title: Rename mobile menu tab from Calendar to avoid confusion
-status: todo
+status: completed
 type: bug
+priority: normal
 created_at: 2026-01-11T09:38:36Z
-updated_at: 2026-01-11T09:38:36Z
+updated_at: 2026-01-11T12:48:03Z
 parent: sendou.ink-6eko
 ---
 

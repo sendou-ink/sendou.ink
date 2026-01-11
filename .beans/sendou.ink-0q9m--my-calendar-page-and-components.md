@@ -1,21 +1,22 @@
 ---
 # sendou.ink-0q9m
-title: My calendar page and components
+title: My Events page and components
 status: todo
 type: task
+priority: normal
 created_at: 2026-01-11T11:45:35Z
-updated_at: 2026-01-11T11:45:35Z
+updated_at: 2026-01-11T12:50:56Z
 parent: sendou.ink-om3i
 ---
 
 ## Summary
 
-Build the `/my-calendar` page with list view and event card components.
+Build the `/my-events` page with list view and event card components.
 
 ## Details
 
 **Page requirements:**
-- Route: `/my-calendar`
+- Route: `/my-events`
 - Login required (redirect if not authenticated)
 - List view grouped by day (chronological)
 - Empty state with links to /calendar and /scrims
@@ -28,7 +29,7 @@ Build the `/my-calendar` page with list view and event card components.
 - Click navigates directly to tournament/scrim page
 
 **Component sharing:**
-- Build components that can be reused by sidebar My Calendar section
+- Build components that can be reused by sidebar Events section
 - Handle both tournament and scrim event types
 
 ## Checklist

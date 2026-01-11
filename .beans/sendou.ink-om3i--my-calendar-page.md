@@ -1,16 +1,16 @@
 ---
 # sendou.ink-om3i
-title: My calendar page
+title: My Events page
 status: todo
 type: epic
 priority: normal
 created_at: 2026-01-11T09:45:51Z
-updated_at: 2026-01-11T10:37:00Z
+updated_at: 2026-01-11T12:50:40Z
 ---
 
 ## Summary
 
-A dedicated page (`/my-calendar`) for viewing the user's personal calendar with all their upcoming commitments in one centralized view.
+A dedicated page (`/my-events`) for viewing the user's personal events with all their upcoming commitments in one centralized view.
 
 ## Why
 
@@ -44,7 +44,7 @@ Users struggle to see all their commitments (tournaments, scrims) in one place. 
 
 **Interaction:** Clicking an event navigates directly to the tournament/scrim page
 
-**URL:** `/my-calendar` (login required)
+**URL:** `/my-events` (login required)
 
 **Empty state:** Simple message ("No upcoming events") with links to /calendar and /scrims
 
@@ -52,7 +52,7 @@ Users struggle to see all their commitments (tournaments, scrims) in one place. 
 
 ## Technical Notes
 
-- Share components and data fetching logic with sidebar "My Calendar" section
+- Share components and data fetching logic with sidebar "Events" section
 - Related tasks: `sendou.ink-kw6u` (scrims in sidebar), `sendou.ink-1kb8` (times on mobile panel)
 
 ## Navigation

@@ -117,7 +117,7 @@ function MobileTabBar({
 					/>
 					<MobileTab
 						icon={<Calendar />}
-						label={t("common:pages.calendar")}
+						label={t("front:sideNav.myCalendar")}
 						isActive={activePanel === "tourneys"}
 						onPress={() => onTabPress("tourneys")}
 					/>
