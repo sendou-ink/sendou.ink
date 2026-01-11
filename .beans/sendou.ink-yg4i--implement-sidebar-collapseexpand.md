@@ -1,11 +1,14 @@
 ---
 # sendou.ink-yg4i
 title: Implement sidebar collapse/expand
-status: todo
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-11T09:28:55Z
-updated_at: 2026-01-11T09:28:55Z
+updated_at: 2026-01-11T12:31:36Z
 parent: sendou.ink-6eko
+blocking:
+    - sendou.ink-wn2f
 ---
 
 ## Feature
