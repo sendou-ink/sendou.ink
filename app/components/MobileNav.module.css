@@ -340,37 +340,6 @@
 	color: var(--color-text-high);
 }
 
-.notificationsSection {
-	padding: var(--s-2);
-	border-bottom: 1.5px solid var(--color-border);
-}
-
-.notificationsHeader {
-	margin: 0;
-	display: flex;
-	align-items: center;
-	gap: var(--s-2);
-	padding: var(--s-2);
-	font-size: var(--fonts-sm);
-	font-weight: var(--bold);
-	color: var(--color-text);
-}
-
-.notificationsHeader svg {
-	width: 18px;
-	height: 18px;
-}
-
-.unseenBadge {
-	background-color: var(--color-accent);
-	color: var(--color-text-inverse);
-	font-size: var(--fonts-xxxs);
-	font-weight: var(--bold);
-	padding: var(--s-0-5) var(--s-1);
-	border-radius: var(--rounded-xs);
-	margin-left: auto;
-}
-
 .tournamentMatchIcon {
 	border-radius: 50%;
 	object-fit: cover;

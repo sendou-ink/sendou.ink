@@ -1,10 +1,11 @@
 ---
 # sendou.ink-bti2
 title: Fix duplicate Notifications header in mobile user tab
-status: todo
+status: completed
 type: bug
+priority: normal
 created_at: 2026-01-11T09:39:53Z
-updated_at: 2026-01-11T09:39:53Z
+updated_at: 2026-01-11T13:02:44Z
 parent: sendou.ink-6eko
 ---
 

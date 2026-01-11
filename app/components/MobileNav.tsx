@@ -1,14 +1,5 @@
 import clsx from "clsx";
-import {
-	Bell,
-	Calendar,
-	LogIn,
-	Menu,
-	Settings,
-	User,
-	Users,
-	X,
-} from "lucide-react";
+import { Calendar, LogIn, Menu, Settings, User, Users, X } from "lucide-react";
 import * as React from "react";
 import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { useTranslation } from "react-i18next";
@@ -372,19 +363,10 @@ function YouPanel({ onClose }: { onClose: () => void }) {
 			</Link>
 
 			{notifications ? (
-				<section className={styles.notificationsSection}>
-					<h3 className={styles.notificationsHeader}>
-						<Bell />
-						<span>{t("common:notifications.title")}</span>
-						{unseenIds.length > 0 ? (
-							<span className={styles.unseenBadge}>{unseenIds.length}</span>
-						) : null}
-					</h3>
-					<NotificationContent
-						notifications={notifications}
-						unseenIds={unseenIds}
-					/>
-				</section>
+				<NotificationContent
+					notifications={notifications}
+					unseenIds={unseenIds}
+				/>
 			) : null}
 
 			<ul className={styles.youPanelActions}>
