@@ -48,7 +48,6 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-// xxx: deprecate page
 export default function TeamSearchPage() {
 	const { t, i18n } = useTranslation(["team"]);
 	const [inputValue, setInputValue] = React.useState("");

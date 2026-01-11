@@ -41,7 +41,6 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 	const tournamentMatchStatus = resolveTournamentMatchStatus(user.id);
 
 	return {
-		// xxx: cache the right shape
 		tournaments: [
 			...tournamentsData.participatingFor,
 			...tournamentsData.organizingFor,

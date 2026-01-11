@@ -256,7 +256,6 @@ function SiteTitle() {
 		<Flipper flipKey={isFrontPage ? "front" : "other"}>
 			<div className={styles.siteTitle}>
 				<Flipped flipId="site-logo">
-					{/** xxx: placeholder logo */}
 					<Link to="/" className={styles.siteLogo}>
 						S
 					</Link>

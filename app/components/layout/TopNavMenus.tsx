@@ -10,8 +10,6 @@ import { SendouPopover } from "../elements/Popover";
 import { Image, WeaponImage } from "../Image";
 import styles from "./TopNavMenus.module.css";
 
-// xxx: placeholder categories
-// xxx: make it so that you can view menu with one click, click -> move cursor to another menu item should show the items of that menu
 const NAV_CATEGORIES = [
 	{
 		name: "competition",

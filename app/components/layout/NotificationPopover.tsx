@@ -37,7 +37,6 @@ export function useNotifications() {
 	return { notifications, unseenIds };
 }
 
-// xxx: probably makes no sense as a separate function
 export function notificationPopoverClassName(notificationsLength: number) {
 	return clsx(styles.popoverContainer, {
 		[styles.noNotificationsContainer]: notificationsLength === 0,

@@ -32,7 +32,6 @@ import { SideNavLink } from "./SideNav";
 type SidebarData = Awaited<ReturnType<typeof sidebarLoader>> | undefined;
 type PanelType = "closed" | "menu" | "friends" | "tourneys" | "you";
 
-// xxx: seems to lack padding on Android
 export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 	const [activePanel, setActivePanel] = React.useState<PanelType>("closed");
 	const user = useUser();

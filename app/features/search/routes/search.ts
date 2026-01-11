@@ -83,7 +83,6 @@ async function searchByType({
 			}));
 		}
 		case "tournaments": {
-			// xxx: this needs more fancy logic like if i search for "In The Zone", it should show the newest in the zone first
 			const tournaments = await TournamentRepository.searchByName({
 				query,
 				limit,

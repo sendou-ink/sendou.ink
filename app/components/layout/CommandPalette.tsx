@@ -39,7 +39,7 @@ const STORAGE_KEY = "command-palette-search-type";
 const SEARCH_TYPE_ICONS: Record<SearchType, string> = {
 	users: "u",
 	teams: "t",
-	organizations: "associations", // xxx: something correct here
+	organizations: "associations",
 	tournaments: "calendar",
 };
 
@@ -148,7 +148,6 @@ function CommandPaletteContent({ onClose }: { onClose: () => void }) {
 		setSearchType(value as SearchType);
 	};
 
-	// xxx: not working
 	const handleRadioGroupKeyDown = (e: React.KeyboardEvent) => {
 		if (e.key === "Enter") {
 			e.preventDefault();
