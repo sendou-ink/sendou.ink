@@ -18,15 +18,21 @@ export function SideNav({
 	footer,
 	top,
 	topCentered,
+	collapsed,
 }: {
 	children: React.ReactNode;
 	className?: string;
 	footer?: React.ReactNode;
 	top?: React.ReactNode;
 	topCentered?: boolean;
+	collapsed?: boolean;
 }) {
 	return (
-		<nav className={clsx(styles.sideNav, className)}>
+		<nav
+			className={clsx(styles.sideNav, className, {
+				[styles.sideNavCollapsed]: collapsed,
+			})}
+		>
 			<div
 				className={clsx(styles.sideNavTop, {
 					[styles.sideNavTopCentered]: topCentered,

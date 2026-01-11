@@ -12,6 +12,10 @@
 	flex-direction: column;
 }
 
+.sideNavCollapsed {
+	display: none;
+}
+
 .sideNavTop {
 	height: var(--layout-nav-height);
 	background-color: var(--color-bg);

@@ -1,6 +1,13 @@
 import clsx from "clsx";
 import { isToday, isTomorrow } from "date-fns";
-import { Bell, Calendar, LogIn, Settings, Users } from "lucide-react";
+import {
+	Bell,
+	Calendar,
+	LogIn,
+	PanelLeft,
+	Settings,
+	Users,
+} from "lucide-react";
 import * as React from "react";
 import { Button } from "react-aria-components";
 import { Flipped, Flipper } from "react-flip-toolkit";
@@ -114,6 +121,7 @@ export function Layout({
 	data?: RootLoaderData;
 }) {
 	const [navDialogOpen, setNavDialogOpen] = React.useState(false);
+	const [sideNavCollapsed, setSideNavCollapsed] = React.useState(false);
 	const location = useLocation();
 
 	const { t } = useTranslation(["front"]);
@@ -136,6 +144,7 @@ export function Layout({
 		<>
 			<NavDialog isOpen={navDialogOpen} close={() => setNavDialogOpen(false)} />
 			<SideNav
+				collapsed={sideNavCollapsed}
 				footer={
 					<>
 						{matchStatus ? (
@@ -225,6 +234,9 @@ export function Layout({
 			<div className={styles.container}>
 				<header className={styles.header}>
 					<MobileLogo />
+					<SideNavCollapseButton
+						onToggle={() => setSideNavCollapsed(!sideNavCollapsed)}
+					/>
 					<TopNavMenus />
 					<TopRightButtons
 						showSupport={Boolean(
@@ -285,6 +297,19 @@ function MobileLogo() {
 		<Link to="/" className={styles.mobileLogo}>
 			S
 		</Link>
+	);
+}
+
+function SideNavCollapseButton({ onToggle }: { onToggle: () => void }) {
+	return (
+		<SendouButton
+			className={styles.sideNavCollapseButton}
+			variant="minimal"
+			size="small"
+			shape="square"
+			icon={<PanelLeft />}
+			onPress={onToggle}
+		/>
 	);
 }
 

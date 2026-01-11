@@ -110,6 +110,22 @@
 	padding: var(--s-1) var(--s-2);
 }
 
+.sideNavCollapseButton {
+	display: none;
+
+	& svg {
+		color: var(--color-text);
+		min-width: 20px;
+		max-width: 20px;
+	}
+}
+
+@media screen and (min-width: 600px) {
+	.sideNavCollapseButton {
+		display: flex;
+	}
+}
+
 .mobileLogo {
 	display: none;
 }
