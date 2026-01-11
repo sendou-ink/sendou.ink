@@ -130,6 +130,7 @@ function DialogModal({
 							{showCloseButton ? (
 								<SendouButton
 									icon={<X />}
+									shape="circle"
 									variant="minimal-destructive"
 									className="ml-auto"
 									slot="close"

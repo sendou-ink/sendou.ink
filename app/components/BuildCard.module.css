@@ -63,6 +63,11 @@
 	padding: var(--s-0-5);
 	border-radius: 50%;
 	background-color: var(--color-bg);
+
+	&:focus-within {
+		outline: var(--input-focus-ring);
+		outline-offset: 1px;
+	}
 }
 
 .top500 {
@@ -112,12 +117,7 @@
 	height: 100%;
 	align-items: flex-end;
 	justify-content: center;
-	gap: var(--s-4);
-}
-
-.icon {
-	width: 1.2rem;
-	height: 1.2rem;
+	gap: var(--s-2);
 }
 
 .smallText {

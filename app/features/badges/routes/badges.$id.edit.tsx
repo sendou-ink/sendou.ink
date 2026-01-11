@@ -75,6 +75,8 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 						<li key={manager.id}>
 							{manager.username}
 							<SendouButton
+								shape="circle"
+								size="small"
 								icon={<Trash />}
 								variant="minimal-destructive"
 								aria-label="Delete badge manager"

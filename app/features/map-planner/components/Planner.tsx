@@ -536,7 +536,7 @@ function StageBackgroundSelector({
 			>
 				{t("common:actions.setBg")}
 			</SendouButton>
-			<LinkButton to="/" icon={<LogOut />} variant="outlined" />
+			<LinkButton to="/" icon={<LogOut />} variant="outlined" shape="square" />
 		</div>
 	);
 }

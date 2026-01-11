@@ -290,6 +290,34 @@ function ButtonsSection({ id }: { id: string }) {
 					</div>
 				</ComponentRow>
 
+				<Divider smallText>Shapes</Divider>
+
+				<ComponentRow label="Circle">
+					<div className="stack horizontal sm items-center">
+						<SendouButton shape="circle" size="big" icon={<SquarePen />} />
+						<SendouButton shape="circle" icon={<SquarePen />} />
+						<SendouButton shape="circle" size="small" icon={<SquarePen />} />
+						<SendouButton
+							shape="circle"
+							size="miniscule"
+							icon={<SquarePen />}
+						/>
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Square">
+					<div className="stack horizontal sm items-center">
+						<SendouButton shape="square" size="big" icon={<SquarePen />} />
+						<SendouButton shape="square" icon={<SquarePen />} />
+						<SendouButton shape="square" size="small" icon={<SquarePen />} />
+						<SendouButton
+							shape="square"
+							size="miniscule"
+							icon={<SquarePen />}
+						/>
+					</div>
+				</ComponentRow>
+
 				<Divider smallText>With Icons</Divider>
 
 				<ComponentRow label="Icon + Text">

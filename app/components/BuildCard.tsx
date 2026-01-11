@@ -116,10 +116,10 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 							<div>•</div>
 						</>
 					) : null}
-					<div className="stack horizontal sm">
+					<div className="stack horizontal sm items-center">
 						{build.private ? (
 							<div className={styles.privateText}>
-								<Lock /> {t("common:build.private")}
+								<Lock size={16} /> {t("common:build.private")}
 							</div>
 						) : null}
 						<time
@@ -168,22 +168,27 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 				/>
 			</div>
 			<div className={styles.bottomRow}>
-				<Link
+				<LinkButton
 					to={analyzerPage({
 						weaponId: weapons[0].weaponSplId,
 						abilities: abilities.flat(),
 					})}
+					shape="circle"
+					variant="minimal"
+					size="small"
 				>
 					<Image
+						size={24}
 						alt={t("common:pages.analyzer")}
 						className={styles.icon}
 						path={navIconUrl("analyzer")}
 					/>
-				</Link>
+				</LinkButton>
 				{description ? (
 					<SendouPopover
 						trigger={
 							<SendouButton
+								shape="circle"
 								size="small"
 								variant="minimal"
 								icon={<MessageCircleMore />}
@@ -197,14 +202,14 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 				{canEdit && (
 					<>
 						<LinkButton
+							shape="circle"
 							className={styles.smallText}
 							variant="minimal"
 							size="small"
 							to={`new?buildId=${id}&userId=${user!.id}`}
 							testId="edit-build"
-						>
-							<SquarePen className={styles.icon} />
-						</LinkButton>
+							icon={<SquarePen />}
+						/>
 						<FormWithConfirm
 							dialogHeading={t("builds:deleteConfirm", { title })}
 							fields={[
@@ -213,8 +218,9 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 							]}
 						>
 							<SendouButton
+								shape="circle"
 								size="small"
-								icon={<Trash className={styles.icon} />}
+								icon={<Trash />}
 								className={styles.smallText}
 								variant="minimal-destructive"
 								type="submit"

@@ -51,6 +51,7 @@ export function MemberAdder({
 				<div className="stack horizontal sm items-center">
 					<input type="text" value={inviteLink} readOnly id="invite" />
 					<SendouButton
+						shape="square"
 						variant={copySuccess ? "outlined-success" : "outlined"}
 						onPress={() => copyToClipboard(inviteLink)}
 						icon={copySuccess ? <Check /> : <Clipboard />}
@@ -66,6 +67,7 @@ export function MemberAdder({
 						groupMemberIds={groupMemberIds}
 					/>
 					<SubmitButton
+						shape="square"
 						variant="outlined"
 						_action="ADD_TRUSTED"
 						isDisabled={!truster}

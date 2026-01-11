@@ -989,10 +989,10 @@ function StatChartPopover(props: StatChartProps) {
 			popoverClassName={styles.statPopover}
 			trigger={
 				<SendouButton
-					className={props.simple ? undefined : styles.statPopoverTrigger}
+					shape="circle"
 					variant="minimal"
 					size="small"
-					icon={<FlaskConical className={styles.statPopoverTriggerIcon} />}
+					icon={<FlaskConical />}
 				/>
 			}
 		>

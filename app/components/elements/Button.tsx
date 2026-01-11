@@ -25,6 +25,7 @@ export interface SendouButtonProps
 	className?: string;
 	variant?: ButtonVariant;
 	size?: "miniscule" | "small" | "medium" | "big";
+	shape?: "circle" | "square";
 	icon?: JSX.Element;
 	children?: React.ReactNode;
 }
@@ -33,6 +34,7 @@ export function SendouButton({
 	children,
 	variant,
 	size,
+	shape,
 	className,
 	icon,
 	...rest
@@ -40,7 +42,7 @@ export function SendouButton({
 	return (
 		<ReactAriaButton
 			{...rest}
-			className={buttonClassName({ className, variant, size })}
+			className={buttonClassName({ className, variant, size, shape })}
 		>
 			{icon &&
 				React.cloneElement(icon, {
@@ -59,6 +61,7 @@ export interface LinkButtonProps {
 	className?: string;
 	variant?: SendouButtonProps["variant"];
 	size?: SendouButtonProps["size"];
+	shape?: SendouButtonProps["shape"];
 	icon?: JSX.Element;
 	children?: React.ReactNode;
 	onClick?: React.MouseEventHandler<HTMLAnchorElement>;
@@ -73,6 +76,7 @@ export function LinkButton({
 	className,
 	variant,
 	size,
+	shape,
 	icon,
 	children,
 	onClick,
@@ -81,7 +85,7 @@ export function LinkButton({
 	if (isExternal) {
 		return (
 			<a
-				className={buttonClassName({ className, variant, size })}
+				className={buttonClassName({ className, variant, size, shape })}
 				href={to as string}
 				target="_blank"
 				rel="noreferrer"
@@ -99,7 +103,7 @@ export function LinkButton({
 
 	return (
 		<Link
-			className={buttonClassName({ className, variant, size })}
+			className={buttonClassName({ className, variant, size, shape })}
 			to={to}
 			data-testid={testId}
 			prefetch={prefetch}
@@ -118,7 +122,8 @@ function buttonClassName({
 	className,
 	variant,
 	size,
-}: Pick<SendouButtonProps, "className" | "variant" | "size">) {
+	shape,
+}: Pick<SendouButtonProps, "className" | "variant" | "size" | "shape">) {
 	const variantToClassname = (variant: ButtonVariant) => {
 		switch (variant) {
 			case "primary":
@@ -152,6 +157,10 @@ function buttonClassName({
 			[styles.small]: size === "small",
 			[styles.big]: size === "big",
 			[styles.miniscule]: size === "miniscule",
+		},
+		{
+			[styles.circle]: shape === "circle",
+			[styles.square]: shape === "square",
 		},
 	);
 }
