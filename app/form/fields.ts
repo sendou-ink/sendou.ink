@@ -38,7 +38,10 @@ type WithTypedItemLabels<T, V extends string> = Omit<T, "items"> & {
 	items: Array<{ label: FormsTranslationKey | (() => string); value: V }>;
 };
 
-type WithTypedDualSelectFields<T, V extends string> = Omit<T, "fields"> & {
+type WithTypedDualSelectFields<T, V extends string> = Omit<
+	T,
+	"fields" | "validate"
+> & {
 	fields: [
 		{
 			label?: FormsTranslationKey;
@@ -49,6 +52,10 @@ type WithTypedDualSelectFields<T, V extends string> = Omit<T, "fields"> & {
 			items: Array<{ label: FormsTranslationKey | (() => string); value: V }>;
 		},
 	];
+	validate?: {
+		func: (value: [V | null, V | null]) => boolean;
+		message: FormsTranslationKey;
+	};
 };
 
 function prefixKey(key: FormsTranslationKey | undefined): string | undefined {
@@ -341,7 +348,7 @@ export function dualSelectOptional<V extends string>(
 				const [first, second] = val;
 				return args.validate!.func([first, second]);
 			},
-			{ message: args.validate!.message },
+			{ message: `forms:${args.validate!.message}` },
 		);
 	}
 
