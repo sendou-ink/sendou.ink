@@ -1,10 +1,11 @@
 ---
 # sendou.ink-2-hit1
 title: Restyle TimeRangeFormField to inline layout
-status: todo
+status: scrapped
 type: task
+priority: normal
 created_at: 2026-01-11T08:31:33Z
-updated_at: 2026-01-11T08:31:33Z
+updated_at: 2026-01-11T18:26:53Z
 ---
 
 Change TimeRangeFormField from labeled sections to inline layout: 'from [input] to [input]'
