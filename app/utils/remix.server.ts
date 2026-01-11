@@ -72,22 +72,16 @@ export function parseSafeSearchParams<T extends z.ZodTypeAny>({
 export async function parseRequestPayload<T extends z.ZodTypeAny>({
 	request,
 	schema,
-	parseAsync,
 }: {
 	request: Request;
 	schema: T;
-	parseAsync?: boolean;
 }): Promise<z.infer<T>> {
 	const formDataObj =
 		request.headers.get("Content-Type") === "application/json"
 			? await request.json()
 			: formDataToObject(await request.formData());
 	try {
-		const parsed = parseAsync
-			? await schema.parseAsync(formDataObj)
-			: schema.parse(formDataObj);
-
-		return parsed;
+		return await schema.parseAsync(formDataObj);
 	} catch (e) {
 		logger.error("Error parsing request payload", e);
 
@@ -99,19 +93,13 @@ export async function parseRequestPayload<T extends z.ZodTypeAny>({
 export async function parseFormData<T extends z.ZodTypeAny>({
 	formData,
 	schema,
-	parseAsync,
 }: {
 	formData: FormData;
 	schema: T;
-	parseAsync?: boolean;
 }): Promise<z.infer<T>> {
 	const formDataObj = formDataToObject(formData);
 	try {
-		const parsed = parseAsync
-			? await schema.parseAsync(formDataObj)
-			: schema.parse(formDataObj);
-
-		return parsed;
+		return await schema.parseAsync(formDataObj);
 	} catch (e) {
 		logger.error("Error parsing form data", e);
 
