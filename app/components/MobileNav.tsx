@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { isToday, isTomorrow } from "date-fns";
 import { Calendar, LogIn, Menu, Settings, User, Users, X } from "lucide-react";
 import * as React from "react";
 import { Dialog, Modal, ModalOverlay } from "react-aria-components";
@@ -318,21 +319,82 @@ function TourneysPanel({
 	tournaments: NonNullable<SidebarData>["tournaments"];
 	onClose: () => void;
 }) {
-	const { t } = useTranslation(["front"]);
+	const { t, i18n } = useTranslation(["front"]);
+
+	const formatDayHeader = (date: Date) => {
+		if (isToday(date)) {
+			const rtf = new Intl.RelativeTimeFormat(i18n.language, {
+				numeric: "auto",
+			});
+			const str = rtf.format(0, "day");
+			return str.charAt(0).toUpperCase() + str.slice(1);
+		}
+		if (isTomorrow(date)) {
+			const rtf = new Intl.RelativeTimeFormat(i18n.language, {
+				numeric: "auto",
+			});
+			const str = rtf.format(1, "day");
+			return str.charAt(0).toUpperCase() + str.slice(1);
+		}
+		return date.toLocaleDateString(i18n.language, {
+			weekday: "long",
+			month: "short",
+			day: "numeric",
+		});
+	};
+
+	const formatTime = (date: Date) => {
+		return date.toLocaleTimeString(i18n.language, {
+			hour: "numeric",
+			minute: "2-digit",
+		});
+	};
+
+	const getDayKey = (timestamp: number) => {
+		const date = new Date(timestamp * 1000);
+		return date.toDateString();
+	};
+
+	const groupedTournaments = tournaments.reduce(
+		(acc, tournament) => {
+			const key = getDayKey(tournament.startTime);
+			if (!acc[key]) {
+				acc[key] = [];
+			}
+			acc[key].push(tournament);
+			return acc;
+		},
+		{} as Record<string, typeof tournaments>,
+	);
+
+	const dayKeys = Object.keys(groupedTournaments);
 
 	return (
 		<MobilePanel title={t("front:sideNav.myCalendar")} onClose={onClose}>
 			{tournaments.length > 0 ? (
-				tournaments.map((tournament) => (
-					<SideNavLink
-						key={tournament.id}
-						to={tournament.url}
-						imageUrl={tournament.logoUrl ?? undefined}
-						onClick={onClose}
-					>
-						{tournament.name}
-					</SideNavLink>
-				))
+				dayKeys.map((dayKey) => {
+					const dayTournaments = groupedTournaments[dayKey];
+					const firstDate = new Date(dayTournaments[0].startTime * 1000);
+
+					return (
+						<div key={dayKey}>
+							<div className={styles.dayHeader}>
+								{formatDayHeader(firstDate)}
+							</div>
+							{dayTournaments.map((tournament) => (
+								<SideNavLink
+									key={tournament.id}
+									to={tournament.url}
+									imageUrl={tournament.logoUrl ?? undefined}
+									subtitle={formatTime(new Date(tournament.startTime * 1000))}
+									onClick={onClose}
+								>
+									{tournament.name}
+								</SideNavLink>
+							))}
+						</div>
+					);
+				})
 			) : (
 				<div className="text-lighter text-sm p-2">
 					{t("front:sideNav.noEvents")}

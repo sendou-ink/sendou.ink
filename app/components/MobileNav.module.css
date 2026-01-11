@@ -340,3 +340,12 @@
 	border-radius: 50%;
 	object-fit: cover;
 }
+
+.dayHeader {
+	padding: var(--s-2) var(--s-2) var(--s-1);
+	font-size: var(--fonts-xxs);
+	font-weight: var(--bold);
+	color: var(--color-text-high);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}

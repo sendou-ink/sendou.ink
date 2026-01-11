@@ -1,13 +1,13 @@
 ---
 # sendou.ink-1kb8
 title: Show times on mobile Events panel
-status: todo
+status: completed
 type: task
 priority: normal
 tags:
     - my-events-epic
 created_at: 2026-01-11T09:48:18Z
-updated_at: 2026-01-11T12:51:46Z
+updated_at: 2026-01-11T13:24:31Z
 parent: sendou.ink-6eko
 ---
 
@@ -37,7 +37,7 @@ Tomorrow
 
 ## Checklist
 
-- [ ] Add day header groupings (Today, Tomorrow, weekday names, or dates)
-- [ ] Show event start time next to each entry
-- [ ] Ensure times display in user's local timezone
-- [ ] Test with events spanning multiple days
+- [x] Add day header groupings (Today, Tomorrow, weekday names, or dates)
+- [x] Show event start time next to each entry
+- [x] Ensure times display in user's local timezone
+- [x] Test with events spanning multiple days
