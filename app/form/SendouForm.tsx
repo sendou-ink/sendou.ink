@@ -130,7 +130,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 	};
 
 	const setValue = (name: string, newValue: unknown) => {
-		if (name.includes(".")) {
+		if (name.includes(".") || name.includes("[")) {
 			setValues((prev) => setNestedValue(prev, name, newValue));
 		} else {
 			setValues((prev) => ({ ...prev, [name]: newValue }));
