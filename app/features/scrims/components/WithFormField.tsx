@@ -5,7 +5,11 @@ import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";
 import { useUser } from "~/features/auth/core/user";
 import { SCRIM } from "~/features/scrims/scrims-constants";
-import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
+import {
+	FormFieldWrapper,
+	useTranslatedTexts,
+} from "~/form/fields/FormFieldWrapper";
+import { errorMessageId } from "~/form/utils";
 import { nullFilledArray } from "~/utils/arrays";
 import type { CommonUser } from "~/utils/kysely.server";
 import type { fromSchema } from "../scrims-schemas";
@@ -34,6 +38,7 @@ export function WithFormField({
 	const { t } = useTranslation(["scrims"]);
 	const user = useUser();
 	const id = React.useId();
+	const { translatedError } = useTranslatedTexts({ error });
 
 	const fromValue = value as FromValue | null;
 
@@ -96,8 +101,10 @@ export function WithFormField({
 							label={t("scrims:forms.with.user", { nth: i + 2 })}
 						/>
 					))}
-					{error ? (
-						<FormMessage type="error">{error}</FormMessage>
+					{translatedError ? (
+						<FormMessage type="error" id={errorMessageId(name)}>
+							{translatedError}
+						</FormMessage>
 					) : (
 						<FormMessage type="info">
 							{t("scrims:forms.with.explanation")}
