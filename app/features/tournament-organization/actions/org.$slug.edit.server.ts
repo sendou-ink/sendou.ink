@@ -30,7 +30,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	requirePermission(organization, "EDIT", user);
 
-	// xxx: should be done in the schema
 	if (
 		!data.members.some(
 			(member) => member.userId === user.id && member.role === "ADMIN",

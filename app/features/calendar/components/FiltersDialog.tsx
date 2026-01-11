@@ -67,7 +67,6 @@ function FiltersForm({
 		closeDialog();
 	};
 
-	// xxx: or via normal form?
 	const handleApplyAndPersist = (values: FormValues) => {
 		const calendarFilters = values as unknown as CalendarFilters;
 		applyFilters(calendarFilters);

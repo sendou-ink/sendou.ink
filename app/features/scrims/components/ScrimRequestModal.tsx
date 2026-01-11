@@ -71,7 +71,6 @@ export function ScrimRequestModal({
 						) : null}
 						<Divider />
 						<FormField name={names.from}>
-							{/** xxx: kinda weird we have to do this, any better way? (also fix every place where we type any with CustomFieldRenderProps or ArrayItemRenderContext) */}
 							{(props: CustomFieldRenderProps) => (
 								<WithFormField usersTeams={data.teams} {...props} />
 							)}
@@ -87,7 +86,6 @@ export function ScrimRequestModal({
 	);
 }
 
-// xxx: how could we have standard SelectFormField but dynamic values?
 function StartTimeFormField({
 	timeOptions,
 }: {

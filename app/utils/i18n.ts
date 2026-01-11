@@ -2,8 +2,6 @@ import type { Namespace } from "~/modules/i18n/resources.server";
 import { logger } from "./logger";
 import { assertType } from "./types";
 
-// xxx: migrate over reused keys from already translated files
-
 // note: cannot get from resources.server.ts directly, because that is a server-only file
 const ALL_NAMESPACES = [
 	"common",

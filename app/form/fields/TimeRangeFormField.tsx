@@ -14,7 +14,6 @@ type TimeRangeFormFieldProps = Omit<FormFieldProps<"time-range">, "onBlur"> & {
 	onBlur?: () => void;
 };
 
-// xxx: instead of labels just have in line "from" and "to" so "from + input + to + input"
 export function TimeRangeFormField({
 	name,
 	label,

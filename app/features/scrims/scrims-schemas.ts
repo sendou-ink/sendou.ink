@@ -31,18 +31,15 @@ const deletePostSchema = z.object({
 	scrimPostId: id,
 });
 
-// xxx: some shared form component to get many users..? or just array of UserFormField
 const fromUsers = z.preprocess(
 	filterOutNullishMembers,
 	z
 		.array(id)
 		.min(3, {
-			// xxx: translation not working
 			message: "forms:errors.minUsersExcludingYourself",
 		})
 		.max(SCRIM.MAX_PICKUP_SIZE_EXCLUDING_OWNER)
 		.refine(noDuplicates, {
-			// xxx: translation not working
 			message: "forms:errors.usersMustBeUnique",
 		}),
 );
@@ -139,7 +136,6 @@ const divsFormField = dualSelectOptional({
 			if ((max && !min) || (!max && min)) return false;
 			return true;
 		},
-		// xxx: not translated and appearing a bit jankly
 		message: "errors.divBothOrNeither",
 	},
 });

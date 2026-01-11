@@ -36,7 +36,6 @@ export function ArrayFormField({
 
 	const count = value.length;
 
-	// xxx: this is probably not correct? instead should use the "initialValue" from the schema
 	const handleAdd = () => {
 		onChange([...value, isObjectArray ? {} : undefined]);
 	};

@@ -47,7 +47,6 @@ import {
 
 export const userParamsSchema = z.object({ identifier: z.string() });
 
-// xxx: e2e test problem, check if we want to have the refine Seasons here: season: xxx....refine((nth) => !nth || Seasons.allStarted(new Date()).includes(nth))
 export const seasonsSearchParamsSchema = z.object({
 	page: z.coerce.number().optional(),
 	info: z.enum(["weapons", "stages", "mates", "enemies"]).optional(),
@@ -222,7 +221,6 @@ const shoesGearIdSchema = z
 			shoesGearIds.includes(val as (typeof shoesGearIds)[number]),
 	);
 
-// xxx: Invalid input -> This is required
 const abilitiesSchema = z.tuple([
 	z.tuple([
 		headMainSlotAbility,

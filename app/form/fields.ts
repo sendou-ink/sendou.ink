@@ -64,7 +64,6 @@ function prefixItems<V extends string>(
 	}));
 }
 
-// xxx: better name... it's not really json
 export function customJsonField<T extends z.ZodType>(
 	args: Omit<Extract<FormField, { type: "custom" }>, "type">,
 	schema: T,
@@ -188,7 +187,6 @@ export function numberFieldOptional(
 			type: "text-field",
 			inputType: "number",
 			initialValue: "",
-			// xxx: weird default?
 			maxLength: args.maxLength ?? 10,
 		});
 }

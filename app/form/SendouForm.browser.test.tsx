@@ -270,7 +270,6 @@ describe("SendouForm", () => {
 				.toBeVisible();
 		});
 
-		// xxx: what about checking the value counter
 	});
 
 	describe("select field", () => {

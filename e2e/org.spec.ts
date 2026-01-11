@@ -57,7 +57,6 @@ test.describe("Tournament Organization", () => {
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url });
 		await editButtonLocator.click();
-		// xxx: hacky hack, should use the playwright form helpers
 		// Add member as admin - find the specific member fieldset containing N-ZAP
 		// The array field creates numbered fieldsets (#1, #2, #3) for each member
 		// Find the role select that belongs to the same fieldset as N-ZAP user select

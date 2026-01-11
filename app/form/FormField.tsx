@@ -362,7 +362,6 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 	}
 
 	if (formField.type === "badges") {
-		// xxx: should not be a thing
 		if (!children) {
 			throw new Error(
 				"Badges form field requires children render function to pass options",

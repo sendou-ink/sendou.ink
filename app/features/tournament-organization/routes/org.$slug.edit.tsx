@@ -53,7 +53,6 @@ export default function TournamentOrganizationEditPage() {
 				<FormField name="members" />
 				<FormField name="socials" />
 				<FormField name="series" />
-				{/** xxx: this should not be needed (FormField to accept badgeOptions as arg) */}
 				<FormField name="badges">
 					{({ value, onChange }: CustomFieldRenderProps) => (
 						<div>

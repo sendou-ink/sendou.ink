@@ -5,7 +5,6 @@ import { Label } from "~/components/Label";
 import { errorMessageId } from "../utils";
 import styles from "./FormFieldWrapper.module.css";
 
-// xxx: ensure used everywhere
 export function useTranslatedTexts({
 	label,
 	error,

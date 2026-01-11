@@ -95,7 +95,6 @@ function FiltersForm({
 		const scrimFilters = formValuesToFilters(values);
 		applyFilters(scrimFilters);
 
-		// xxx: this should be part of the SendouForm
 		fetcher.submit(
 			{
 				_action: "PERSIST_SCRIM_FILTERS",
@@ -135,7 +134,6 @@ function FiltersForm({
 	);
 }
 
-// xxx: this button is off, maybe as part of the form really?
 function ApplyAndPersistButton({
 	onApplyAndPersist,
 	fetcher,

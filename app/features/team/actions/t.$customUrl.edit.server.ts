@@ -48,7 +48,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 			await TeamRepository.removeTeamImage(team.id, "banner");
 			throw redirect(teamPage(team.customUrl));
 		}
-		// xxx: errors to schema
 		case "EDIT": {
 			const newCustomUrl = mySlugify(data.name);
 

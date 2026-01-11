@@ -11,7 +11,6 @@ export const createTeamSchema = z.object({
 		validate: {
 			func: (teamName) =>
 				mySlugify(teamName).length > 0 && mySlugify(teamName) !== "new",
-			// xxx: i18n
 			message: "forms:errors.noOnlySpecialCharacters",
 		},
 	}),

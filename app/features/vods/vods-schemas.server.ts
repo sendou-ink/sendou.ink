@@ -34,7 +34,6 @@ function transformPov(
 	return undefined;
 }
 
-// xxx: looks off we do a full mapping like this here
 export const vodFormSchemaServer = vodFormBaseSchema
 	.transform((data) => {
 		const teamSize = data.teamSize ? Number(data.teamSize) : 4;

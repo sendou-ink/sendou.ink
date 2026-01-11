@@ -153,7 +153,6 @@ export const calendarFiltersFormSchema = z
 			min: 0,
 			max: 10,
 		}),
-		// xxx: not working
 		authorIdsExcluded: array({
 			label: "labels.authorIdsExcluded",
 			field: userSearchOptional({}),

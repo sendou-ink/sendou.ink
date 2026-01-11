@@ -83,7 +83,6 @@ export async function parseRequestPayload<T extends z.ZodTypeAny>({
 			? await request.json()
 			: formDataToObject(await request.formData());
 	try {
-		// xxx: we could probably retire the flag and always parseAsync
 		const parsed = parseAsync
 			? await schema.parseAsync(formDataObj)
 			: schema.parse(formDataObj);

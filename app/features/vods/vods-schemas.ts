@@ -103,7 +103,6 @@ const povSchema = z.union([
 	}),
 ]);
 
-// xxx: maybe we should have a form field helper for modes
 const modeItems = modesShort.map((mode) => ({
 	label: `modes.${mode}` as const,
 	value: mode,

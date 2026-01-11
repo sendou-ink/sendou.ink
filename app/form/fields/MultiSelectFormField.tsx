@@ -82,7 +82,6 @@ export function MultiSelectFormField<V extends string>({
 						{itemsPicked.map((item, idx) => (
 							<li
 								key={item.value}
-								// xxx: use CSS
 								style={{
 									listStyle: "none",
 									fontSize: "var(--fonts-xs)",
