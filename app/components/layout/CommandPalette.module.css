@@ -148,6 +148,7 @@
 
 .searchTypeRadioGroup {
 	display: flex;
+	flex-wrap: wrap;
 	gap: var(--s-2);
 }
 
@@ -168,6 +169,11 @@
 	transition:
 		background-color 0.15s,
 		border-color 0.15s;
+
+	& picture,
+	& img {
+		flex-shrink: 0;
+	}
 }
 
 .searchTypeRadioSelected {
