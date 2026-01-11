@@ -546,6 +546,160 @@ function createSwissData(): TournamentManagerDataSet {
 	};
 }
 
+function createLargeSingleEliminationData(options?: {
+	ongoingRoundIdx?: number;
+}): TournamentManagerDataSet {
+	const { ongoingRoundIdx } = options ?? {};
+
+	return {
+		stage: [
+			{
+				id: 1,
+				name: "Main Bracket",
+				number: 1,
+				type: "single_elimination",
+				tournament_id: 1,
+				settings: { size: 16 },
+			},
+		],
+		group: [{ id: 1, number: 1, stage_id: 1 }],
+		round: [
+			{
+				id: 1,
+				group_id: 1,
+				number: 1,
+				stage_id: 1,
+				maps: { count: 3, type: "BEST_OF", pickBan: null },
+			},
+			{
+				id: 2,
+				group_id: 1,
+				number: 2,
+				stage_id: 1,
+				maps: { count: 3, type: "BEST_OF", pickBan: null },
+			},
+			{
+				id: 3,
+				group_id: 1,
+				number: 3,
+				stage_id: 1,
+				maps: { count: 3, type: "BEST_OF", pickBan: null },
+			},
+			{
+				id: 4,
+				group_id: 1,
+				number: 4,
+				stage_id: 1,
+				maps: { count: 5, type: "BEST_OF", pickBan: null },
+			},
+		],
+		match: [
+			// Round 1 - 8 matches (all completed unless ongoingRoundIdx === 0)
+			{
+				id: 1,
+				number: 1,
+				stage_id: 1,
+				group_id: 1,
+				round_id: 1,
+				status: ongoingRoundIdx === 0 ? 3 : 2,
+				opponent1:
+					ongoingRoundIdx === 0
+						? { id: 1, score: 1 }
+						: { id: 1, score: 2, result: "win" },
+				opponent2:
+					ongoingRoundIdx === 0
+						? { id: 8, score: 1 }
+						: { id: 8, score: 0, result: "loss" },
+			},
+			{
+				id: 2,
+				number: 2,
+				stage_id: 1,
+				group_id: 1,
+				round_id: 1,
+				status: 2,
+				opponent1: { id: 2, score: 2, result: "win" },
+				opponent2: { id: 7, score: 0, result: "loss" },
+			},
+			{
+				id: 3,
+				number: 3,
+				stage_id: 1,
+				group_id: 1,
+				round_id: 1,
+				status: 2,
+				opponent1: { id: 3, score: 2, result: "win" },
+				opponent2: { id: 6, score: 1, result: "loss" },
+			},
+			{
+				id: 4,
+				number: 4,
+				stage_id: 1,
+				group_id: 1,
+				round_id: 1,
+				status: 2,
+				opponent1: { id: 4, score: 2, result: "win" },
+				opponent2: { id: 5, score: 0, result: "loss" },
+			},
+			// Round 2 - 4 matches (all completed unless ongoingRoundIdx === 1)
+			{
+				id: 5,
+				number: 1,
+				stage_id: 1,
+				group_id: 1,
+				round_id: 2,
+				status: ongoingRoundIdx === 1 ? 3 : 2,
+				opponent1:
+					ongoingRoundIdx === 1
+						? { id: 1, score: 1 }
+						: { id: 1, score: 2, result: "win" },
+				opponent2:
+					ongoingRoundIdx === 1
+						? { id: 2, score: 1 }
+						: { id: 2, score: 1, result: "loss" },
+			},
+			{
+				id: 6,
+				number: 2,
+				stage_id: 1,
+				group_id: 1,
+				round_id: 2,
+				status: 2,
+				opponent1: { id: 3, score: 1, result: "loss" },
+				opponent2: { id: 4, score: 2, result: "win" },
+			},
+			// Round 3 - Semifinals (completed unless ongoingRoundIdx === 2)
+			{
+				id: 7,
+				number: 1,
+				stage_id: 1,
+				group_id: 1,
+				round_id: 3,
+				status: ongoingRoundIdx === 2 ? 3 : 2,
+				opponent1:
+					ongoingRoundIdx === 2
+						? { id: 1, score: 1 }
+						: { id: 1, score: 2, result: "win" },
+				opponent2:
+					ongoingRoundIdx === 2
+						? { id: 4, score: 1 }
+						: { id: 4, score: 0, result: "loss" },
+			},
+			// Round 4 - Finals (ongoing by default)
+			{
+				id: 8,
+				number: 1,
+				stage_id: 1,
+				group_id: 1,
+				round_id: 4,
+				status: 4,
+				opponent1: { id: 1 },
+				opponent2: { id: 4 },
+			},
+		],
+	};
+}
+
 function createMockBracket(
 	type: "single_elimination" | "double_elimination" | "round_robin" | "swiss",
 	data: TournamentManagerDataSet,
@@ -629,6 +783,83 @@ describe("Single Elimination Bracket", () => {
 
 		await expect.element(screen.getByText("1.1")).toBeVisible();
 		await expect.element(screen.getByText("1.2")).toBeVisible();
+	});
+
+	test("hides early completed rounds when isExpanded is false", async () => {
+		const data = createLargeSingleEliminationData();
+		const bracket = createMockBracket("single_elimination", data);
+
+		const screen = await renderWithRouter(
+			<EliminationBracketSide
+				bracket={bracket}
+				type="single"
+				isExpanded={false}
+			/>,
+		);
+
+		// Round 1 and Round 2 should be hidden (completed, not in last 2)
+		const round1Elements = screen.container.querySelectorAll(
+			'[data-round-id="1"]',
+		);
+		const round2Elements = screen.container.querySelectorAll(
+			'[data-round-id="2"]',
+		);
+		expect(round1Elements.length).toBe(0);
+		expect(round2Elements.length).toBe(0);
+
+		// Semifinals and Finals should be visible (last 2 rounds)
+		await expect.element(screen.getByText("Semifinals")).toBeVisible();
+		await expect.element(screen.getByText("Finals")).toBeVisible();
+	});
+
+	test("always shows at least last 2 rounds when isExpanded is false", async () => {
+		const data = createLargeSingleEliminationData();
+		const bracket = createMockBracket("single_elimination", data);
+
+		const screen = await renderWithRouter(
+			<EliminationBracketSide
+				bracket={bracket}
+				type="single"
+				isExpanded={false}
+			/>,
+		);
+
+		// Should show exactly 2 round columns (Semifinals and Finals)
+		const roundColumns = screen.container.querySelectorAll(
+			".elim-bracket__round-column",
+		);
+		expect(roundColumns.length).toBe(2);
+	});
+
+	test("shows all rounds when isExpanded is true", async () => {
+		const data = createLargeSingleEliminationData();
+		const bracket = createMockBracket("single_elimination", data);
+
+		const screen = await renderWithRouter(
+			<EliminationBracketSide bracket={bracket} type="single" isExpanded />,
+		);
+
+		// All 4 rounds should be visible
+		await expect.element(screen.getByText("Round 1")).toBeVisible();
+		await expect.element(screen.getByText("Round 2")).toBeVisible();
+		await expect.element(screen.getByText("Semifinals")).toBeVisible();
+		await expect.element(screen.getByText("Finals")).toBeVisible();
+	});
+
+	test("shows early round with ongoing match even when isExpanded is false", async () => {
+		const data = createLargeSingleEliminationData({ ongoingRoundIdx: 0 });
+		const bracket = createMockBracket("single_elimination", data);
+
+		const screen = await renderWithRouter(
+			<EliminationBracketSide
+				bracket={bracket}
+				type="single"
+				isExpanded={false}
+			/>,
+		);
+
+		// Round 1 should be visible because it has an ongoing match
+		await expect.element(screen.getByText("Round 1")).toBeVisible();
 	});
 });
 
