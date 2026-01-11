@@ -38,6 +38,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 	const user = useUser();
 
 	const hasActiveMatch = Boolean(sidebarData?.matchStatus);
+	const hasTournamentMatch = Boolean(sidebarData?.tournamentMatchStatus);
 
 	const closePanel = () => setActivePanel("closed");
 
@@ -72,6 +73,8 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 				isLoggedIn={Boolean(user)}
 				hasActiveMatch={hasActiveMatch}
 				matchUrl={sidebarData?.matchStatus?.url}
+				hasTournamentMatch={hasTournamentMatch}
+				tournamentMatchStatus={sidebarData?.tournamentMatchStatus}
 			/>
 		</div>
 	);
@@ -83,12 +86,16 @@ function MobileTabBar({
 	isLoggedIn,
 	hasActiveMatch,
 	matchUrl,
+	hasTournamentMatch,
+	tournamentMatchStatus,
 }: {
 	activePanel: PanelType;
 	onTabPress: (panel: PanelType) => void;
 	isLoggedIn: boolean;
 	hasActiveMatch: boolean;
 	matchUrl?: string;
+	hasTournamentMatch: boolean;
+	tournamentMatchStatus?: NonNullable<SidebarData>["tournamentMatchStatus"];
 }) {
 	const { t } = useTranslation(["front", "common"]);
 
@@ -137,6 +144,21 @@ function MobileTabBar({
 				<Link to={matchUrl} className={styles.tab}>
 					<span className={styles.tabIcon}>
 						<Image path={navIconUrl("sendouq")} alt="" width={24} height={24} />
+					</span>
+					<span>{t("front:mobileNav.match")}</span>
+				</Link>
+			) : hasTournamentMatch && tournamentMatchStatus ? (
+				<Link to={tournamentMatchStatus.url} className={styles.tab}>
+					<span className={styles.tabIcon}>
+						{tournamentMatchStatus.logoUrl ? (
+							<img
+								src={tournamentMatchStatus.logoUrl}
+								alt=""
+								width={24}
+								height={24}
+								className={styles.tournamentMatchIcon}
+							/>
+						) : null}
 					</span>
 					<span>{t("front:mobileNav.match")}</span>
 				</Link>

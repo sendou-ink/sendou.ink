@@ -177,6 +177,15 @@
 	height: 24px;
 }
 
+.sideNavGameStatusIconImg img {
+	width: 28px;
+	height: 28px;
+}
+
+.sideNavGameStatusImage {
+	border-radius: 100%;
+}
+
 .sideNavHeader {
 	color: var(--color-text-high);
 	padding: var(--s-1-5) var(--s-2);

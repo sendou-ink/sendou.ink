@@ -777,6 +777,13 @@ function VoiceChatInfo({
 	const Icon =
 		member.vc === "YES" ? Mic : member.vc === "LISTEN_ONLY" ? Volume2 : VolumeX;
 
+	const iconTestId =
+		member.vc === "YES"
+			? "microphone-icon"
+			: member.vc === "LISTEN_ONLY"
+				? "speaker-icon"
+				: "speaker-x-icon";
+
 	const color = () => {
 		const languagesMatch =
 			// small hack to show green for yourself always to avoid confusion
@@ -808,7 +815,12 @@ function VoiceChatInfo({
 				<SendouButton
 					variant="minimal"
 					size="miniscule"
-					icon={<Icon className={clsx(styles.vcIcon, color())} />}
+					icon={
+						<Icon
+							className={clsx(styles.vcIcon, color())}
+							data-testid={iconTestId}
+						/>
+					}
 				/>
 			}
 		>

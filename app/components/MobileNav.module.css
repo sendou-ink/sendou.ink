@@ -370,3 +370,8 @@
 	border-radius: var(--rounded-xs);
 	margin-left: auto;
 }
+
+.tournamentMatchIcon {
+	border-radius: 50%;
+	object-fit: cover;
+}

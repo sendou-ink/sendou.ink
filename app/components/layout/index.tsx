@@ -122,6 +122,7 @@ export function Layout({
 
 	const tournaments = sidebarData?.tournaments ?? [];
 	const matchStatus = sidebarData?.matchStatus;
+	const tournamentMatchStatus = sidebarData?.tournamentMatchStatus;
 	const friends = sidebarData?.friends ?? [];
 	const streams = sidebarData?.streams ?? [];
 
@@ -144,6 +145,22 @@ export function Layout({
 									matchId: matchStatus.matchId,
 								})}
 								href={matchStatus.url}
+							/>
+						) : tournamentMatchStatus ? (
+							<SideNavGameStatus
+								imageUrl={tournamentMatchStatus.logoUrl ?? undefined}
+								text={
+									tournamentMatchStatus.text === "CHECKIN"
+										? t("front:sideNav.tournamentCheckin")
+										: tournamentMatchStatus.text === "WAITING"
+											? t("front:sideNav.tournamentWaiting")
+											: tournamentMatchStatus.text === "MATCH"
+												? t("front:sideNav.tournamentMatchReady", {
+														roundName: tournamentMatchStatus.roundName,
+													})
+												: tournamentMatchStatus.text
+								}
+								href={tournamentMatchStatus.url}
 							/>
 						) : null}
 						<SideNavFooter>

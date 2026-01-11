@@ -134,17 +134,33 @@ export function SideNavFooter({ children }: { children: React.ReactNode }) {
 
 export function SideNavGameStatus({
 	iconUrl,
+	imageUrl,
 	text,
 	href,
 }: {
-	iconUrl: string;
+	iconUrl?: string;
+	imageUrl?: string;
 	text: string;
 	href: string;
 }) {
 	return (
 		<Link to={href} className={styles.sideNavGameStatus}>
-			<div className={styles.sideNavGameStatusIcon}>
-				<Image path={iconUrl} alt="" />
+			<div
+				className={
+					imageUrl
+						? styles.sideNavGameStatusIconImg
+						: styles.sideNavGameStatusIcon
+				}
+			>
+				{iconUrl ? (
+					<Image path={iconUrl} alt="" />
+				) : imageUrl ? (
+					<img
+						src={imageUrl}
+						alt=""
+						className={styles.sideNavGameStatusImage}
+					/>
+				) : null}
 			</div>
 			<span>{text}</span>
 		</Link>

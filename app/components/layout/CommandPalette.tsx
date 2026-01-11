@@ -134,7 +134,6 @@ function CommandPaletteContent({ onClose }: { onClose: () => void }) {
 	);
 
 	const results = fetcher.data?.results ?? [];
-	const isLoading = fetcher.state === "loading";
 	const hasQuery = query.length > 0;
 
 	const handleSelect = (key: React.Key) => {
