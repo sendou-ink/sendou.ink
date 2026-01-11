@@ -5,7 +5,9 @@ status: todo
 type: epic
 priority: normal
 created_at: 2026-01-11T09:45:51Z
-updated_at: 2026-01-11T12:50:40Z
+updated_at: 2026-01-11T12:55:40Z
+blocking:
+    - sendou.ink-u4ag
 ---
 
 ## Summary
