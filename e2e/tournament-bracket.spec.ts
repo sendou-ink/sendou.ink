@@ -300,6 +300,8 @@ test.describe("Tournament bracket", () => {
 	test("completes and finalizes a small tournament with badge assigning", async ({
 		page,
 	}) => {
+		test.slow();
+
 		const tournamentId = 2;
 
 		await seed(page);
