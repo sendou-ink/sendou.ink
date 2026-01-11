@@ -1,10 +1,11 @@
 ---
 # sendou.ink-1qfh
 title: Fix notification button and indicator dot overlay
-status: todo
+status: scrapped
 type: bug
+priority: normal
 created_at: 2026-01-11T09:37:03Z
-updated_at: 2026-01-11T09:37:03Z
+updated_at: 2026-01-11T12:53:25Z
 parent: sendou.ink-6eko
 ---
 
