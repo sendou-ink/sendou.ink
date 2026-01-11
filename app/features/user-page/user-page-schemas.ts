@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { OBJECT_PRONOUNS, SUBJECT_PRONOUNS } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-constants";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import {
 	checkboxGroup,
 	customField,
@@ -50,7 +51,10 @@ export const userParamsSchema = z.object({ identifier: z.string() });
 export const seasonsSearchParamsSchema = z.object({
 	page: z.coerce.number().optional(),
 	info: z.enum(["weapons", "stages", "mates", "enemies"]).optional(),
-	season: z.coerce.number().optional(),
+	season: z.coerce
+		.number()
+		.optional()
+		.refine((nth) => !nth || Seasons.allStarted(new Date()).includes(nth)),
 });
 
 export const userEditActionSchema = z
