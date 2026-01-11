@@ -315,7 +315,9 @@ function SideNavUserPanel() {
 					{notifications ? (
 						<div className={sideNavStyles.sideNavFooterNotification}>
 							{unseenIds.length > 0 ? (
-								<div className={sideNavStyles.sideNavFooterUnseenDot} />
+								<div className={sideNavStyles.sideNavFooterUnseenDot}>
+									<div className={sideNavStyles.sideNavFooterUnseenDotPulse} />
+								</div>
 							) : null}
 							<SendouPopover
 								trigger={

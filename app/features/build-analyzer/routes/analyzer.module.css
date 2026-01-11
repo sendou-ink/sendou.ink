@@ -6,7 +6,7 @@
 
 .leftColumn {
 	position: sticky;
-	top: calc(var(--layout-nav-height) + var(--s-8));
+	top: calc(var(--layout-nav-height) + var(--s-3));
 	display: flex;
 	height: max-content;
 	flex-direction: column;
