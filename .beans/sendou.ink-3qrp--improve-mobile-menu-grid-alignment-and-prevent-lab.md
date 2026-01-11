@@ -1,10 +1,11 @@
 ---
 # sendou.ink-3qrp
 title: Improve mobile menu grid alignment and prevent label wrapping
-status: todo
+status: completed
 type: bug
+priority: normal
 created_at: 2026-01-11T09:42:29Z
-updated_at: 2026-01-11T09:42:29Z
+updated_at: 2026-01-11T18:31:05Z
 parent: sendou.ink-6eko
 ---
 

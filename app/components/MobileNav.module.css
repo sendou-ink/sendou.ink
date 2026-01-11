@@ -257,9 +257,8 @@
 .navGrid {
 	list-style: none;
 	margin: 0;
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: center;
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
 	gap: var(--s-3);
 	padding: var(--s-4);
 }
@@ -273,7 +272,6 @@
 	color: var(--color-text);
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
-	width: 80px;
 	text-align: center;
 }
 
