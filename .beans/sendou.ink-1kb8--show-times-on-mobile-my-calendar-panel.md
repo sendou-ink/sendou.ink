@@ -1,19 +1,19 @@
 ---
 # sendou.ink-1kb8
-title: Show times on mobile My Calendar panel
+title: Show times on mobile Events panel
 status: todo
 type: task
 priority: normal
 tags:
-    - my-calendar-epic
+    - my-events-epic
 created_at: 2026-01-11T09:48:18Z
-updated_at: 2026-01-11T11:45:42Z
+updated_at: 2026-01-11T12:51:46Z
 parent: sendou.ink-6eko
 ---
 
 ## Summary
 
-The mobile My Calendar panel currently only shows tournament names without any time information. Add day headers and event times to help players know when things are happening.
+The mobile Events panel currently only shows tournament names without any time information. Add day headers and event times to help players know when things are happening.
 
 ## Current state
 

@@ -36,11 +36,8 @@ import { Footer } from "./Footer";
 import styles from "./index.module.css";
 import { LogInButtonContainer } from "./LogInButtonContainer";
 import { NavDialog } from "./NavDialog";
-import {
-	NotificationContent,
-	notificationPopoverClassName,
-	useNotifications,
-} from "./NotificationPopover";
+import { NotificationContent, useNotifications } from "./NotificationPopover";
+import notificationPopoverStyles from "./NotificationPopover.module.css";
 import { TopNavMenus } from "./TopNavMenus";
 import { TopRightButtons } from "./TopRightButtons";
 
@@ -386,8 +383,12 @@ function SideNavUserPanel() {
 										<Bell />
 									</Button>
 								}
-								popoverClassName={notificationPopoverClassName(
-									notifications.length,
+								popoverClassName={clsx(
+									notificationPopoverStyles.popoverContainer,
+									{
+										[notificationPopoverStyles.noNotificationsContainer]:
+											notifications.length === 0,
+									},
 								)}
 							>
 								<NotificationContent

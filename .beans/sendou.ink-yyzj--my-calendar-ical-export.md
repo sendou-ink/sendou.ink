@@ -1,16 +1,17 @@
 ---
 # sendou.ink-yyzj
-title: My calendar iCal export
+title: My Events iCal export
 status: todo
 type: task
+priority: normal
 created_at: 2026-01-11T11:45:35Z
-updated_at: 2026-01-11T11:45:35Z
+updated_at: 2026-01-11T12:51:39Z
 parent: sendou.ink-om3i
 ---
 
 ## Summary
 
-Add .ics file export for the user's personal calendar, allowing subscription in external calendar apps.
+Add .ics file export for the user's personal events, allowing subscription in external calendar apps.
 
 ## Details
 
@@ -28,8 +29,8 @@ Add .ics file export for the user's personal calendar, allowing subscription in 
 ## Checklist
 
 - [ ] Research existing /calendar iCal implementation
-- [ ] Create endpoint for personal calendar .ics
+- [ ] Create endpoint for personal events .ics
 - [ ] Generate iCal events from user's tournaments
 - [ ] Generate iCal events from user's scrims
-- [ ] Add subscription URL/button to My Calendar page
+- [ ] Add subscription URL/button to My Events page
 - [ ] Test subscription in external calendar app

@@ -1,16 +1,17 @@
 ---
 # sendou.ink-d6vh
-title: My calendar data layer
+title: My Events data layer
 status: todo
 type: task
+priority: normal
 created_at: 2026-01-11T11:45:35Z
-updated_at: 2026-01-11T11:45:35Z
+updated_at: 2026-01-11T12:51:07Z
 parent: sendou.ink-om3i
 ---
 
 ## Summary
 
-Create the data fetching layer for the My Calendar page that combines tournaments and scrims into a unified event list.
+Create the data fetching layer for the My Events page that combines tournaments and scrims into a unified event list.
 
 ## Details
 
@@ -28,7 +29,7 @@ Create the data fetching layer for the My Calendar page that combines tournament
 
 ## Technical approach
 
-- Create loader at `/my-calendar` route
+- Create loader at `/my-events` route
 - Repository functions to fetch user tournaments and scrims
 - Merge and sort by start time
 - Design data structure that works for both page and sidebar (shared)
