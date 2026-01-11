@@ -38,8 +38,7 @@ export const action: ActionFunction = async ({ request }) => {
 		`db-seed-${variationName}.sqlite3`,
 	);
 
-	const usePreSeeded =
-		source === "e2e" && fs.existsSync(preSeededDbPath);
+	const usePreSeeded = source === "e2e" && fs.existsSync(preSeededDbPath);
 
 	if (usePreSeeded) {
 		restoreFromPreSeeded(preSeededDbPath);

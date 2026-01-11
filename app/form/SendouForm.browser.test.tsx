@@ -269,7 +269,6 @@ describe("SendouForm", () => {
 				.element(screen.getByText("This field is required"))
 				.toBeVisible();
 		});
-
 	});
 
 	describe("select field", () => {

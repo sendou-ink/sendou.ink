@@ -152,7 +152,7 @@ describe("NewBuildForm", () => {
 			await screen.getByRole("button", { name: "Submit" }).click();
 
 			const abilitiesError = screen.container.querySelector("#abilities-error");
-			expect(abilitiesError?.textContent).toBe("Invalid input");
+			expect(abilitiesError?.textContent).toBe("This field is required");
 		});
 
 		test("no abilities error when all abilities are set", async () => {
