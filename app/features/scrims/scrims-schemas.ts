@@ -114,7 +114,7 @@ export const divsSchema = z
 		return divs;
 	});
 
-export const scrimsFiltersSchema = z.object({
+const scrimsFiltersSchema = z.object({
 	weekdayTimes: timeRangeSchema.nullable().catch(null),
 	weekendTimes: timeRangeSchema.nullable().catch(null),
 	divs: divsSchema.nullable().catch(null),
@@ -173,7 +173,7 @@ export const scrimsActionSchema = z.union([
 	persistScrimFiltersSchema,
 ]);
 
-export const MAX_SCRIM_POST_TEXT_LENGTH = 500;
+const MAX_SCRIM_POST_TEXT_LENGTH = 500;
 
 export const RANGE_END_OPTIONS = [
 	"+30min",

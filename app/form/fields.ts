@@ -4,7 +4,6 @@ import {
 	date,
 	falsyToNull,
 	id,
-	modeShort,
 	safeNullableStringSchema,
 	safeStringSchema,
 	stageId,
@@ -296,33 +295,6 @@ export function select<V extends string>(
 	});
 }
 
-export function multiSelectOptional<V extends string>(
-	args: WithTypedTranslationKeys<
-		WithTypedItemLabels<
-			Omit<
-				FormFieldSelect<"multi-select", V>,
-				"type" | "initialValue" | "clearable"
-			>,
-			V
-		>
-	>,
-) {
-	return z
-		.array(itemsSchema(args.items))
-		.min(1)
-		.refine((val) => !val || val.length === R.unique(val).length)
-		.optional()
-		.register(formRegistry, {
-			...args,
-			label: prefixKey(args.label),
-			bottomText: prefixKey(args.bottomText),
-			items: prefixItems(args.items),
-			type: "multi-select",
-			initialValue: [],
-			clearable: true,
-		});
-}
-
 export function dualSelectOptional<V extends string>(
 	args: WithTypedTranslationKeys<
 		WithTypedDualSelectFields<
@@ -496,90 +468,12 @@ export function weaponPool(
 		});
 }
 
-export function mapPool(
-	args: WithTypedTranslationKeys<
-		Omit<Extract<FormField, { type: "map-pool" }>, "type" | "initialValue">
-	>,
-) {
-	return partialMapPoolSchema(args)
-		.refine(
-			(mapPoolData) => {
-				if (!args.minCount) return true;
-				if (!args.modes) return true;
-
-				for (const mode of args.modes) {
-					const modePool = (
-						mapPoolData as Record<string, number[] | undefined>
-					)[mode];
-					if (!modePool?.length || modePool.length < args.minCount) {
-						return false;
-					}
-				}
-				return true;
-			},
-			{
-				message: `Every mode should contain at least the minimum amount of maps (${args.minCount})`,
-			},
-		)
-		.register(formRegistry, {
-			...args,
-			label: prefixKey(args.label),
-			bottomText: prefixKey(args.bottomText),
-			type: "map-pool",
-			initialValue: {},
-		});
-}
-
-function partialMapPoolSchema({
-	maxCount,
-	minCount,
-}: {
-	maxCount?: number;
-	minCount?: number;
-} = {}) {
-	return z.record(
-		modeShort,
-		z
-			.array(stageId)
-			.refine((items) => new Set(items).size === items.length)
-			.min(minCount ?? 0)
-			.max(maxCount ?? 100),
-	);
-}
-
-export function imageOptional(
-	args: WithTypedTranslationKeys<
-		Omit<Extract<FormField, { type: "image" }>, "type" | "initialValue">
-	>,
-) {
-	return z
-		.union([z.string(), z.instanceof(File)])
-		.optional()
-		.register(formRegistry, {
-			...args,
-			label: prefixKey(args.label),
-			type: "image",
-			initialValue: null,
-		});
-}
-
 export function stringConstant<T extends string>(value: T) {
 	// @ts-expect-error Complex generic type with registry
 	return z.literal(value).register(formRegistry, {
 		type: "string-constant",
 		initialValue: value,
 		value,
-	});
-}
-
-export function stringConstantOptional<T extends string>(value?: T) {
-	const schema = value
-		? z.literal(value).optional()
-		: z.string().max(100).optional();
-	return schema.register(formRegistry, {
-		type: "string-constant",
-		initialValue: value ?? null,
-		value: value ?? null,
 	});
 }
 
@@ -729,24 +623,6 @@ export function stageSelect(
 		bottomText: prefixKey(args.bottomText),
 		type: "stage-select",
 		initialValue: 1,
-		required: true,
-	});
-}
-
-export function weaponSelect(
-	args: WithTypedTranslationKeys<
-		Omit<
-			Extract<FormField, { type: "weapon-select" }>,
-			"type" | "initialValue" | "required"
-		>
-	>,
-) {
-	return weaponSplId.register(formRegistry, {
-		...args,
-		label: prefixKey(args.label),
-		bottomText: prefixKey(args.bottomText),
-		type: "weapon-select",
-		initialValue: null,
 		required: true,
 	});
 }

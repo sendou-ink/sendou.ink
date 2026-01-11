@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-export function infoMessageId(fieldId: string) {
+function infoMessageId(fieldId: string) {
 	return `${fieldId}-info`;
 }
 

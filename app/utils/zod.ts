@@ -126,11 +126,6 @@ export const subWeaponId = numericEnum(subWeaponIds);
 
 export const specialWeaponId = numericEnum(specialWeaponIds);
 
-export const qWeapon = z.object({
-	weaponSplId,
-	isFavorite: z.union([z.literal(0), z.literal(1)]),
-});
-
 export const modeShort = z.enum(["TW", "SZ", "TC", "RM", "CB"]);
 export const modeShortWithSpecial = z.enum([
 	"TW",
