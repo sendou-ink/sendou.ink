@@ -3,7 +3,7 @@ import { OBJECT_PRONOUNS, SUBJECT_PRONOUNS } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-constants";
 import {
 	checkboxGroup,
-	customJsonField,
+	customField,
 	idConstantOptional,
 	stringConstant,
 	textAreaOptional,
@@ -259,10 +259,10 @@ export const newBuildBaseSchema = z.object({
 		disableSorting: true,
 		disableFavorites: true,
 	}),
-	head: customJsonField({ initialValue: null }, headGearIdSchema),
-	clothes: customJsonField({ initialValue: null }, clothesGearIdSchema),
-	shoes: customJsonField({ initialValue: null }, shoesGearIdSchema),
-	abilities: customJsonField(
+	head: customField({ initialValue: null }, headGearIdSchema),
+	clothes: customField({ initialValue: null }, clothesGearIdSchema),
+	shoes: customField({ initialValue: null }, shoesGearIdSchema),
+	abilities: customField(
 		{
 			initialValue: [
 				["UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"],

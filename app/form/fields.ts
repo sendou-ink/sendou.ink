@@ -64,7 +64,7 @@ function prefixItems<V extends string>(
 	}));
 }
 
-export function customJsonField<T extends z.ZodType>(
+export function customField<T extends z.ZodType>(
 	args: Omit<Extract<FormField, { type: "custom" }>, "type">,
 	schema: T,
 ) {

@@ -1,7 +1,7 @@
 import { add, sub } from "date-fns";
 import { z } from "zod";
 import {
-	customJsonField,
+	customField,
 	datetimeRequired,
 	dualSelectOptional,
 	idConstant,
@@ -187,12 +187,12 @@ export const RANGE_END_OPTIONS = [
 export const scrimRequestFormSchema = z.object({
 	_action: stringConstant("NEW_REQUEST"),
 	scrimPostId: idConstant(),
-	from: customJsonField({ initialValue: null }, fromSchema),
+	from: customField({ initialValue: null }, fromSchema),
 	message: textAreaOptional({
 		label: "labels.scrimRequestMessage",
 		maxLength: SCRIM.REQUEST_MESSAGE_MAX_LENGTH,
 	}),
-	at: customJsonField(
+	at: customField(
 		{ initialValue: null },
 		z.preprocess(date, z.date()).nullish(),
 	),
@@ -231,11 +231,11 @@ export const scrimsNewFormSchema = z
 			bottomText: "bottomTexts.scrimStartFlexibility",
 			items: [...rangeEndItems],
 		}),
-		baseVisibility: customJsonField(
+		baseVisibility: customField(
 			{ initialValue: "PUBLIC" },
 			associationIdentifierSchema,
 		),
-		notFoundVisibility: customJsonField(
+		notFoundVisibility: customField(
 			{ initialValue: { at: null, forAssociation: "PUBLIC" } },
 			z.object({
 				at: z
@@ -253,7 +253,7 @@ export const scrimsNewFormSchema = z
 			}),
 		),
 		divs: divsFormField,
-		from: customJsonField({ initialValue: null }, fromSchema),
+		from: customField({ initialValue: null }, fromSchema),
 		postText: textAreaOptional({
 			label: "labels.text",
 			maxLength: MAX_SCRIM_POST_TEXT_LENGTH,
@@ -266,7 +266,7 @@ export const scrimsNewFormSchema = z
 			label: "labels.scrimMaps",
 			items: [...mapsItems],
 		}),
-		mapsTournamentId: customJsonField(
+		mapsTournamentId: customField(
 			{ initialValue: null },
 			z.preprocess(falsyToNull, id.nullable()),
 		),

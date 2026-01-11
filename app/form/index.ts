@@ -5,7 +5,7 @@ export { type CustomFieldRenderProps, FormField } from "./FormField";
 export {
 	array,
 	checkboxGroup,
-	customJsonField,
+	customField,
 	datetimeOptional,
 	datetimeRequired,
 	dualSelectOptional,

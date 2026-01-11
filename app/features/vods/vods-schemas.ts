@@ -2,7 +2,7 @@ import { add } from "date-fns";
 import { z } from "zod";
 import {
 	array,
-	customJsonField,
+	customField,
 	datetimeRequired,
 	fieldset,
 	idConstantOptional,
@@ -172,7 +172,7 @@ export const vodFormBaseSchema = z.object({
 			{ label: () => "4v4", value: "4" },
 		],
 	}),
-	pov: customJsonField(
+	pov: customField(
 		{ initialValue: { type: "USER" as const } },
 		povSchema.optional(),
 	),
