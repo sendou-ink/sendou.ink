@@ -39,7 +39,7 @@ const STORAGE_KEY = "command-palette-search-type";
 const SEARCH_TYPE_ICONS: Record<SearchType, string> = {
 	users: "u",
 	teams: "t",
-	organizations: "associations",
+	organizations: "medal",
 	tournaments: "calendar",
 };
 
