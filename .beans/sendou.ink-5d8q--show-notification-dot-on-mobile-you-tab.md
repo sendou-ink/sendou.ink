@@ -1,10 +1,11 @@
 ---
 # sendou.ink-5d8q
 title: Show notification dot on mobile You tab
-status: todo
+status: completed
 type: bug
+priority: normal
 created_at: 2026-01-11T13:06:55Z
-updated_at: 2026-01-11T13:06:55Z
+updated_at: 2026-01-11T19:13:22Z
 parent: 6eko
 ---
 

@@ -29,9 +29,11 @@ type PanelType = "closed" | "menu" | "friends" | "tourneys" | "you";
 export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 	const [activePanel, setActivePanel] = React.useState<PanelType>("closed");
 	const user = useUser();
+	const { unseenIds } = useNotifications();
 
 	const hasActiveMatch = Boolean(sidebarData?.matchStatus);
 	const hasTournamentMatch = Boolean(sidebarData?.tournamentMatchStatus);
+	const hasUnseenNotifications = unseenIds.length > 0;
 
 	const closePanel = () => setActivePanel("closed");
 
@@ -68,6 +70,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 				matchUrl={sidebarData?.matchStatus?.url}
 				hasTournamentMatch={hasTournamentMatch}
 				tournamentMatchStatus={sidebarData?.tournamentMatchStatus}
+				hasUnseenNotifications={hasUnseenNotifications}
 			/>
 		</div>
 	);
@@ -81,6 +84,7 @@ function MobileTabBar({
 	matchUrl,
 	hasTournamentMatch,
 	tournamentMatchStatus,
+	hasUnseenNotifications,
 }: {
 	activePanel: PanelType;
 	onTabPress: (panel: PanelType) => void;
@@ -89,6 +93,7 @@ function MobileTabBar({
 	matchUrl?: string;
 	hasTournamentMatch: boolean;
 	tournamentMatchStatus?: NonNullable<SidebarData>["tournamentMatchStatus"];
+	hasUnseenNotifications: boolean;
 }) {
 	const { t } = useTranslation(["front", "common"]);
 
@@ -120,6 +125,7 @@ function MobileTabBar({
 						label={t("front:mobileNav.you")}
 						isActive={activePanel === "you"}
 						onPress={() => onTabPress("you")}
+						showNotificationDot={hasUnseenNotifications}
 					/>
 				</>
 			) : (
@@ -165,11 +171,13 @@ function MobileTab({
 	label,
 	isActive,
 	onPress,
+	showNotificationDot,
 }: {
 	icon: React.ReactNode;
 	label: string;
 	isActive: boolean;
 	onPress: () => void;
+	showNotificationDot?: boolean;
 }) {
 	return (
 		<button
@@ -178,7 +186,14 @@ function MobileTab({
 			data-active={isActive}
 			onClick={onPress}
 		>
-			<span className={styles.tabIcon}>{icon}</span>
+			<span className={styles.tabIcon}>
+				{icon}
+				{showNotificationDot ? (
+					<span className={styles.notificationDot}>
+						<span className={styles.notificationDotPulse} />
+					</span>
+				) : null}
+			</span>
 			<span>{label}</span>
 		</button>
 	);
