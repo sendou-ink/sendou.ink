@@ -1,10 +1,11 @@
 ---
 # sendou.ink-36pm
 title: Add weapon mega menu to mobile design
-status: todo
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-11T09:31:09Z
-updated_at: 2026-01-11T09:31:09Z
+updated_at: 2026-01-11T18:58:39Z
 parent: sendou.ink-6eko
 ---
 

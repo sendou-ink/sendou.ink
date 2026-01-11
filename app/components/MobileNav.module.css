@@ -347,3 +347,60 @@
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 }
+
+.weaponsDivider {
+	height: 1.5px;
+	background-color: var(--color-border);
+	margin: var(--s-2) var(--s-4);
+}
+
+.weaponsSection {
+	padding: var(--s-2) var(--s-4) var(--s-4);
+}
+
+.weaponsSectionTitle {
+	font-size: var(--fonts-sm);
+	font-weight: var(--bold);
+	color: var(--color-text);
+	margin: 0 0 var(--s-3);
+}
+
+.weaponsContent {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: var(--s-6) var(--s-4);
+}
+
+.weaponCategory {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.weaponCategoryHeader {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--bold);
+	color: var(--color-text);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	padding-bottom: var(--s-0-5);
+	border-bottom: 1px solid var(--color-border);
+}
+
+.weaponGrid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-0-5);
+}
+
+.weaponLink {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--s-0-5);
+	border-radius: var(--rounded-xs);
+}
+
+.weaponLink:active {
+	background-color: var(--color-bg-higher);
+}

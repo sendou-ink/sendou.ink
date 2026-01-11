@@ -4,13 +4,15 @@ import { Calendar, LogIn, Menu, Settings, User, Users, X } from "lucide-react";
 import * as React from "react";
 import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { href, Link } from "react-router";
 import { useUser } from "~/features/auth/core/user";
 import type { loader as sidebarLoader } from "~/features/sidebar/routes/sidebar";
-import { navIconUrl, SETTINGS_PAGE, userPage } from "~/utils/urls";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
+import { mySlugify, navIconUrl, SETTINGS_PAGE, userPage } from "~/utils/urls";
 import { Avatar } from "./Avatar";
 import { SendouButton } from "./elements/Button";
-import { Image } from "./Image";
+import { Image, WeaponImage } from "./Image";
 import { TwitchIcon } from "./icons/Twitch";
 import { LogInButtonContainer } from "./layout/LogInButtonContainer";
 import {
@@ -213,7 +215,11 @@ function MenuOverlay({
 	streams: NonNullable<SidebarData>["streams"];
 	onClose: () => void;
 }) {
-	const { t } = useTranslation(["front", "common"]);
+	const { t } = useTranslation(["front", "common", "weapons"]);
+
+	const weaponIdToSlug = (weaponId: MainWeaponId) => {
+		return mySlugify(t(`weapons:MAIN_${weaponId}`, { lng: "en" }));
+	};
 
 	return (
 		<ModalOverlay className={styles.panelOverlay} isOpen isDismissable={false}>
@@ -280,6 +286,42 @@ function MenuOverlay({
 							))}
 						</ul>
 					</nav>
+
+					<div className={styles.weaponsDivider} />
+
+					<section className={styles.weaponsSection}>
+						<h3 className={styles.weaponsSectionTitle}>
+							{t("front:nav.weapons")}
+						</h3>
+						<div className={styles.weaponsContent}>
+							{weaponCategories.map((category) => (
+								<div key={category.name} className={styles.weaponCategory}>
+									<div className={styles.weaponCategoryHeader}>
+										{category.name}
+									</div>
+									<div className={styles.weaponGrid}>
+										{category.weaponIds.map((weaponId) => (
+											<Link
+												key={weaponId}
+												to={href("/weapons/:slug", {
+													slug: weaponIdToSlug(weaponId),
+												})}
+												className={styles.weaponLink}
+												title={t(`weapons:MAIN_${weaponId}`)}
+												onClick={onClose}
+											>
+												<WeaponImage
+													weaponSplId={weaponId as MainWeaponId}
+													variant="build"
+													size={32}
+												/>
+											</Link>
+										))}
+									</div>
+								</div>
+							))}
+						</div>
+					</section>
 				</Dialog>
 			</Modal>
 		</ModalOverlay>
