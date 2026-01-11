@@ -47,6 +47,7 @@ import { Layout } from "./components/layout";
 import { Ramp } from "./components/ramp/Ramp";
 import { getUser } from "./features/auth/core/user.server";
 import { userMiddleware } from "./features/auth/core/user-middleware.server";
+import { getSidenavSession } from "./features/layout/core/sidenav-session.server";
 import {
 	isTheme,
 	Theme,
@@ -98,6 +99,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = getUser();
 	const locale = await i18next.getLocale(request);
 	const themeSession = await getThemeSession(request);
+	const sidenavSession = await getSidenavSession(request);
 
 	const [tournaments, changelog, leaderboards] = await Promise.all([
 		ShowcaseTournaments.frontPageTournamentsByUserId(user?.id ?? null),
@@ -120,6 +122,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			leaderboards,
 			locale,
 			theme: themeSession.getTheme(),
+			sidenavCollapsed: sidenavSession.getCollapsed(),
 			user: user
 				? {
 						username: user.username,

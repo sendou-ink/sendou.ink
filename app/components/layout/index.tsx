@@ -113,6 +113,21 @@ function useBreadcrumbData() {
 	};
 }
 
+function useSideNavCollapsed(initialCollapsed: boolean) {
+	const [collapsed, setCollapsed] = React.useState(initialCollapsed);
+	const fetcher = useFetcher();
+
+	const setCollapsedAndPersist = (value: boolean) => {
+		setCollapsed(value);
+		fetcher.submit(
+			{ collapsed: String(value) },
+			{ method: "POST", action: "/sidenav" },
+		);
+	};
+
+	return [collapsed, setCollapsedAndPersist] as const;
+}
+
 export function Layout({
 	children,
 	data,
@@ -121,7 +136,9 @@ export function Layout({
 	data?: RootLoaderData;
 }) {
 	const [navDialogOpen, setNavDialogOpen] = React.useState(false);
-	const [sideNavCollapsed, setSideNavCollapsed] = React.useState(false);
+	const [sideNavCollapsed, setSideNavCollapsed] = useSideNavCollapsed(
+		data?.sidenavCollapsed ?? false,
+	);
 	const location = useLocation();
 
 	const { t } = useTranslation(["front"]);
