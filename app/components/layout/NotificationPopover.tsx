@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { Bell, RefreshCcw } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -35,12 +34,6 @@ export function useNotifications() {
 	);
 
 	return { notifications, unseenIds };
-}
-
-export function notificationPopoverClassName(notificationsLength: number) {
-	return clsx(styles.popoverContainer, {
-		[styles.noNotificationsContainer]: notificationsLength === 0,
-	});
 }
 
 export function NotificationContent({
