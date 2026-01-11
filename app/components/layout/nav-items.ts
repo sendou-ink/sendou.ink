@@ -67,11 +67,6 @@ export const navItems = [
 		prefetch: false,
 	},
 	{
-		name: "u",
-		url: "u",
-		prefetch: false,
-	},
-	{
 		name: "xsearch",
 		url: "xsearch",
 		prefetch: false,

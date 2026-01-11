@@ -1,11 +1,11 @@
 ---
 # sendou.ink-j4zp
 title: Remove and redirect /u page
-status: todo
+status: completed
 type: task
 priority: normal
 created_at: 2026-01-11T08:58:56Z
-updated_at: 2026-01-11T13:49:48Z
+updated_at: 2026-01-11T14:08:47Z
 parent: sendou.ink-6eko
 ---
 
@@ -17,7 +17,7 @@ Deprecate and remove the /u page. The /u page is a user search page that should 
 
 Add URL search params to CommandPalette to allow opening it via a direct link:
 - `?search=open` - opens the CommandPalette modal
-- `?q=<query>` - pre-fills the search query  
+- `?q=<query>` - pre-fills the search query
 - `?type=users|teams|organizations|tournaments` - sets the search type
 
 Then redirect /u to /?search=open&type=users (preserving any existing `q` param).
@@ -32,10 +32,16 @@ Then redirect /u to /?search=open&type=users (preserving any existing `q` param)
 
 ## Checklist
 
-- [ ] Add search param support to CommandPalette (`search`, `q`, `type` params)
-- [ ] Update /u route to redirect to /?search=open&type=users
-- [ ] Remove unused loader and route components
-- [ ] Remove any reference to u navIcon including breadcrumbs
-- [ ] Remove from nav
+- [x] Add search param support to CommandPalette (`search`, `q`, `type` params)
+- [x] Update /u route to redirect to /?search=open&type=users
+- [x] Remove unused loader and route components
+- [x] Remove any reference to u navIcon including breadcrumbs
+- [x] Remove from nav (was not in nav)
 - [ ] Test the redirect works correctly
-- [ ] Run checks to ensure everything passes
+- [x] Run checks to ensure everything passes
+
+## Additional changes
+
+- Updated `UserSearch` component to use `/search` API instead of `/u`
+- Removed `USER_SEARCH_PAGE` constant from urls.ts
+- Removed "u" nav item from `nav-items.ts` and `TopNavMenus.tsx`

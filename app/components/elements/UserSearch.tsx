@@ -19,13 +19,16 @@ import { useFetcher } from "react-router";
 import { useDebounce } from "react-use";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouLabel } from "~/components/elements/Label";
-import type { UserSearchLoaderData } from "~/features/user-search/loaders/u.server";
+import type { SearchLoaderData } from "~/features/search/routes/search";
 import { Avatar } from "../Avatar";
 
 import selectStyles from "./Select.module.css";
 import userSearchStyles from "./UserSearch.module.css";
 
-type UserSearchUserItem = NonNullable<UserSearchLoaderData>["users"][number];
+type UserResult = Extract<
+	NonNullable<SearchLoaderData>["results"][number],
+	{ type: "user" }
+>;
 
 interface UserSearchProps<T extends object>
 	extends Omit<SelectProps<T>, "children" | "onChange"> {
@@ -34,7 +37,7 @@ interface UserSearchProps<T extends object>
 	bottomText?: string;
 	errorText?: string;
 	initialUserId?: number;
-	onChange?: (user: UserSearchUserItem | null) => void;
+	onChange?: (user: UserResult | null) => void;
 }
 
 export const UserSearch = React.forwardRef(function UserSearch<
@@ -59,7 +62,7 @@ export const UserSearch = React.forwardRef(function UserSearch<
 
 	const onSelectionChange = (userId: number) => {
 		setSelectedKey(userId);
-		onChange?.(items.find((user) => user.id === userId) as UserSearchUserItem);
+		onChange?.(items.find((user) => user.id === userId) as UserResult);
 	};
 
 	// clear if selected user is not in the new filtered items
@@ -116,7 +119,7 @@ export const UserSearch = React.forwardRef(function UserSearch<
 						items={[initialUser, ...items].filter((user) => user !== undefined)}
 						className={selectStyles.listBox}
 					>
-						{(item) => <UserItem item={item as UserSearchUserItem} />}
+						{(item) => <UserItem item={item as UserResult} />}
 					</ListBox>
 				</Autocomplete>
 			</Popover>
@@ -128,7 +131,7 @@ function UserItem({
 	item,
 }: {
 	item:
-		| UserSearchUserItem
+		| UserResult
 		| {
 				id: "NO_RESULTS";
 		  }
@@ -176,7 +179,7 @@ function UserItem({
 	return (
 		<ListBoxItem
 			id={item.id}
-			textValue={item.username}
+			textValue={item.name}
 			className={({ isFocused, isSelected }) =>
 				clsx(userSearchStyles.item, {
 					[selectStyles.itemFocused]: isFocused,
@@ -187,7 +190,7 @@ function UserItem({
 		>
 			<Avatar user={item} size="xxs" />
 			<div className={userSearchStyles.itemTextsContainer}>
-				{item.username}
+				{item.name}
 				{additionalText() ? (
 					<div className={userSearchStyles.itemAdditionalText}>
 						{additionalText()}
@@ -204,8 +207,8 @@ function useUserSearch(
 ) {
 	const [filterText, setFilterText] = React.useState("");
 
-	const queryFetcher = useFetcher<UserSearchLoaderData>();
-	const initialUserFetcher = useFetcher<UserSearchLoaderData>();
+	const queryFetcher = useFetcher<SearchLoaderData>();
+	const initialUserFetcher = useFetcher<SearchLoaderData>();
 
 	React.useEffect(() => {
 		if (
@@ -215,7 +218,7 @@ function useUserSearch(
 		) {
 			return;
 		}
-		initialUserFetcher.load(`/u?q=${initialUserId}`);
+		initialUserFetcher.load(`/search?q=${initialUserId}&type=users&limit=1`);
 	}, [initialUserId, initialUserFetcher]);
 
 	React.useEffect(() => {
@@ -227,7 +230,7 @@ function useUserSearch(
 	useDebounce(
 		() => {
 			if (!filterText) return;
-			queryFetcher.load(`/u?q=${filterText}&limit=6`);
+			queryFetcher.load(`/search?q=${filterText}&type=users&limit=6`);
 			setSelectedKey(null);
 		},
 		500,
@@ -237,21 +240,26 @@ function useUserSearch(
 	const items = () => {
 		// data fetched for the query user has currently typed
 		if (queryFetcher.data && queryFetcher.data.query === filterText) {
-			if (queryFetcher.data.users.length === 0) {
-				return [{ id: "NO_RESULTS" }];
+			const userResults = queryFetcher.data.results.filter(
+				(r): r is UserResult => r.type === "user",
+			);
+			if (userResults.length === 0) {
+				return [{ id: "NO_RESULTS" as const }];
 			}
-			return queryFetcher.data.users;
+			return userResults;
 		}
 
-		return [{ id: "PLACEHOLDER" }];
+		return [{ id: "PLACEHOLDER" as const }];
 	};
 
-	const initialUser = initialUserFetcher.data?.users[0];
+	const initialUserResult = initialUserFetcher.data?.results.find(
+		(r): r is UserResult => r.type === "user",
+	);
 
 	return {
 		filterText,
 		setFilterText,
 		items: items(),
-		initialUser,
+		initialUser: initialUserResult,
 	};
 }

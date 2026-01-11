@@ -89,7 +89,6 @@ export const SUPPORT_PAGE = "/support";
 export const CONTRIBUTIONS_PAGE = "/contributions";
 export const BADGES_PAGE = "/badges";
 export const BUILDS_PAGE = "/builds";
-export const USER_SEARCH_PAGE = "/u";
 export const TEAM_SEARCH_PAGE = "/t";
 export const NEW_TEAM_PAGE = "/t?new=true";
 export const CALENDAR_PAGE = "/calendar";

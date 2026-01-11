@@ -8,8 +8,6 @@ import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
-	navIconUrl,
-	USER_SEARCH_PAGE,
 	userAdminPage,
 	userArtPage,
 	userBuildsPage,
@@ -45,18 +43,11 @@ export const handle: SendouRouteHandle = {
 
 		if (!data) return [];
 
-		return [
-			{
-				imgPath: navIconUrl("u"),
-				href: USER_SEARCH_PAGE,
-				type: "IMAGE",
-			},
-			{
-				text: data.user.username,
-				href: userPage(data.user),
-				type: "TEXT",
-			},
-		];
+		return {
+			text: data.user.username,
+			href: userPage(data.user),
+			type: "TEXT",
+		};
 	},
 };
 

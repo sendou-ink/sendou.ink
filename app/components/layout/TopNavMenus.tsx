@@ -35,7 +35,6 @@ const NAV_CATEGORIES = [
 		name: "community",
 		items: [
 			{ name: "badges", url: "badges" },
-			{ name: "u", url: "u" },
 			{ name: "t", url: "t" },
 			{ name: "vods", url: "vods" },
 			{ name: "art", url: "art" },

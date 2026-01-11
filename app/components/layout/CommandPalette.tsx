@@ -12,7 +12,7 @@ import {
 	RadioGroup,
 } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { useFetcher, useNavigate } from "react-router";
+import { useFetcher, useNavigate, useSearchParams } from "react-router";
 import { useDebounce } from "react-use";
 import { Avatar } from "~/components/Avatar";
 import { Image } from "~/components/Image";
@@ -58,8 +58,24 @@ function getInitialSearchType(): SearchType {
 
 export function CommandPalette() {
 	const { t } = useTranslation(["common"]);
-	const [isOpen, setIsOpen] = React.useState(false);
+	// TODO: use zod validated search params
+	const [searchParams, setSearchParams] = useSearchParams();
 	const [isMac, setIsMac] = React.useState(false);
+
+	const searchParamOpen = searchParams.get("search") === "open";
+	const searchParamType = searchParams.get("type");
+	const initialSearchType =
+		searchParamType && SEARCH_TYPES.includes(searchParamType as SearchType)
+			? (searchParamType as SearchType)
+			: null;
+
+	const [isOpen, setIsOpen] = React.useState(searchParamOpen);
+
+	React.useEffect(() => {
+		if (searchParamOpen && !isOpen) {
+			setIsOpen(true);
+		}
+	}, [searchParamOpen, isOpen]);
 
 	React.useEffect(() => {
 		setIsMac(/Mac|iPhone|iPad|iPod/.test(navigator.userAgent));
@@ -78,8 +94,18 @@ export function CommandPalette() {
 		return () => document.removeEventListener("keydown", handleKeyDown);
 	}, [isMac]);
 
+	const handleOpenChange = (open: boolean) => {
+		setIsOpen(open);
+		if (!open && (searchParamOpen || searchParamType)) {
+			const newParams = new URLSearchParams(searchParams);
+			newParams.delete("search");
+			newParams.delete("type");
+			setSearchParams(newParams, { replace: true });
+		}
+	};
+
 	return (
-		<DialogTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
+		<DialogTrigger isOpen={isOpen} onOpenChange={handleOpenChange}>
 			<button
 				type="button"
 				className={styles.searchButton}
@@ -92,7 +118,10 @@ export function CommandPalette() {
 			<ModalOverlay className={styles.overlay}>
 				<Modal className={styles.modal}>
 					<Dialog className={styles.dialog} aria-label={t("common:search")}>
-						<CommandPaletteContent onClose={() => setIsOpen(false)} />
+						<CommandPaletteContent
+							onClose={() => handleOpenChange(false)}
+							initialSearchType={initialSearchType}
+						/>
 					</Dialog>
 				</Modal>
 			</ModalOverlay>
@@ -100,12 +129,19 @@ export function CommandPalette() {
 	);
 }
 
-function CommandPaletteContent({ onClose }: { onClose: () => void }) {
+function CommandPaletteContent({
+	onClose,
+	initialSearchType,
+}: {
+	onClose: () => void;
+	initialSearchType: SearchType | null;
+}) {
 	const { t } = useTranslation(["common"]);
 	const navigate = useNavigate();
 	const [query, setQuery] = React.useState("");
-	const [searchType, setSearchType] =
-		React.useState<SearchType>(getInitialSearchType);
+	const [searchType, setSearchType] = React.useState<SearchType>(
+		initialSearchType ?? getInitialSearchType(),
+	);
 	const inputRef = React.useRef<HTMLInputElement>(null);
 
 	const fetcher = useFetcher<SearchLoaderData>();

@@ -58,6 +58,7 @@ async function searchByType({
 				discordId: u.discordId,
 				discordAvatar: u.discordAvatar,
 				customUrl: u.customUrl,
+				plusTier: u.plusTier,
 			}));
 		}
 		case "teams": {
