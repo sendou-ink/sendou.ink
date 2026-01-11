@@ -353,14 +353,24 @@ function YouPanel({ onClose }: { onClose: () => void }) {
 
 	return (
 		<MobilePanel title={t("front:mobileNav.you")} onClose={onClose}>
-			<Link
-				to={userPage(user)}
-				className={styles.youPanelUser}
-				onClick={onClose}
-			>
-				<Avatar user={user} size="sm" />
-				<span className={styles.youPanelUsername}>{user.username}</span>
-			</Link>
+			<div className={styles.youPanelUserRow}>
+				<Link
+					to={userPage(user)}
+					className={styles.youPanelUser}
+					onClick={onClose}
+				>
+					<Avatar user={user} size="sm" />
+					<span className={styles.youPanelUsername}>{user.username}</span>
+				</Link>
+				<Link
+					to={SETTINGS_PAGE}
+					className={styles.youPanelSettingsButton}
+					onClick={onClose}
+					aria-label={t("common:pages.settings")}
+				>
+					<Settings />
+				</Link>
+			</div>
 
 			{notifications ? (
 				<NotificationContent
@@ -368,19 +378,6 @@ function YouPanel({ onClose }: { onClose: () => void }) {
 					unseenIds={unseenIds}
 				/>
 			) : null}
-
-			<ul className={styles.youPanelActions}>
-				<li>
-					<Link
-						to={SETTINGS_PAGE}
-						className={styles.youPanelAction}
-						onClick={onClose}
-					>
-						<Settings />
-						<span>{t("common:pages.settings")}</span>
-					</Link>
-				</li>
-			</ul>
 		</MobilePanel>
 	);
 }

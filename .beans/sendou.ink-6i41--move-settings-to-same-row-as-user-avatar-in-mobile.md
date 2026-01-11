@@ -1,10 +1,11 @@
 ---
 # sendou.ink-6i41
 title: Move Settings to same row as user avatar in mobile user tab
-status: todo
+status: completed
 type: bug
+priority: normal
 created_at: 2026-01-11T09:40:48Z
-updated_at: 2026-01-11T09:40:48Z
+updated_at: 2026-01-11T13:11:56Z
 parent: sendou.ink-6eko
 ---
 

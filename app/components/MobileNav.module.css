@@ -290,11 +290,18 @@
 	place-items: center;
 }
 
+.youPanelUserRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--s-1) var(--s-2);
+}
+
 .youPanelUser {
 	display: flex;
 	align-items: center;
 	gap: var(--s-3);
-	padding: var(--s-3);
+	padding: var(--s-2);
 	text-decoration: none;
 	color: var(--color-text);
 	border-radius: var(--rounded-xs);
@@ -309,35 +316,24 @@
 	font-weight: var(--bold);
 }
 
-.youPanelActions {
-	list-style: none;
-	margin: 0;
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-1);
-	padding: var(--s-2);
-}
-
-.youPanelAction {
+.youPanelSettingsButton {
 	display: flex;
 	align-items: center;
-	gap: var(--s-2);
-	padding: var(--s-2) var(--s-3);
+	justify-content: center;
+	padding: var(--s-2);
 	text-decoration: none;
-	color: var(--color-text);
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
+	color: var(--color-text-high);
 	border-radius: var(--rounded-xs);
 }
 
-.youPanelAction:hover {
+.youPanelSettingsButton:hover {
 	background-color: var(--color-bg-higher);
+	color: var(--color-text);
 }
 
-.youPanelAction svg {
+.youPanelSettingsButton svg {
 	width: 20px;
 	height: 20px;
-	color: var(--color-text-high);
 }
 
 .tournamentMatchIcon {
