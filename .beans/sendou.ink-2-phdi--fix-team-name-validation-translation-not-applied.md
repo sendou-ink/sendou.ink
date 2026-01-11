@@ -1,10 +1,11 @@
 ---
 # sendou.ink-2-phdi
 title: Fix team name validation translation not applied
-status: todo
+status: completed
 type: bug
+priority: normal
 created_at: 2026-01-11T08:47:55Z
-updated_at: 2026-01-11T08:47:55Z
+updated_at: 2026-01-11T09:19:09Z
 ---
 
 The team name validation message 'forms:errors.noOnlySpecialCharacters' is not being translated.
