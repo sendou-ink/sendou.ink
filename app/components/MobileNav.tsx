@@ -495,6 +495,7 @@ function YouPanel({ onClose }: { onClose: () => void }) {
 				<NotificationContent
 					notifications={notifications}
 					unseenIds={unseenIds}
+					onClose={onClose}
 				/>
 			) : null}
 		</MobilePanel>

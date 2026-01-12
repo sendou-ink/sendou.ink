@@ -39,9 +39,11 @@ export function useNotifications() {
 export function NotificationContent({
 	notifications,
 	unseenIds,
+	onClose,
 }: {
 	notifications: LoaderNotification[];
 	unseenIds: number[];
+	onClose?: () => void;
 }) {
 	const { t } = useTranslation(["common"]);
 	const { revalidate, state } = useRevalidator();
@@ -81,13 +83,13 @@ export function NotificationContent({
 				</NotificationsList>
 			)}
 			{notifications.length === NOTIFICATIONS.PEEK_COUNT ? (
-				<NotificationsFooter />
+				<NotificationsFooter onClose={onClose} />
 			) : null}
 		</>
 	);
 }
 
-function NotificationsFooter() {
+function NotificationsFooter({ onClose }: { onClose?: () => void }) {
 	const { t } = useTranslation(["common"]);
 
 	return (
@@ -99,6 +101,7 @@ function NotificationsFooter() {
 				to={NOTIFICATIONS_URL}
 				className="mt-1-5"
 				testId="notifications-see-all-button"
+				onClick={onClose}
 			>
 				{t("common:notifications.seeAll")}
 			</LinkButton>

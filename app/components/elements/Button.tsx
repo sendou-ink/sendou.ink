@@ -108,6 +108,7 @@ export function LinkButton({
 			data-testid={testId}
 			prefetch={prefetch}
 			preventScrollReset={preventScrollReset}
+			onClick={onClick}
 		>
 			{icon &&
 				React.cloneElement(icon, {
