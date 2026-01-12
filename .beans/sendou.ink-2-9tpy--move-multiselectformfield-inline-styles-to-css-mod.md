@@ -1,10 +1,11 @@
 ---
 # sendou.ink-2-9tpy
 title: Move MultiSelectFormField inline styles to CSS module
-status: todo
+status: scrapped
 type: task
+priority: normal
 created_at: 2026-01-11T08:31:33Z
-updated_at: 2026-01-11T08:31:33Z
+updated_at: 2026-01-12T17:53:09Z
 ---
 
 Move inline styles from MultiSelectFormField to CSS module.
@@ -13,6 +14,6 @@ Move inline styles from MultiSelectFormField to CSS module.
 Located at app/form/fields/MultiSelectFormField.tsx:85
 
 ## Checklist
-- [ ] Create or update MultiSelectFormField.module.css
-- [ ] Move inline styles to CSS classes
-- [ ] Update component to use CSS module classes
+- [x] Create or update MultiSelectFormField.module.css
+- [x] Move inline styles to CSS classes
+- [x] Update component to use CSS module classes

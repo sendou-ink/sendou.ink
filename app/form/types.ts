@@ -152,7 +152,6 @@ export type FormField<V extends string = string> =
 	| FormFieldTextarea<"text-area">
 	| FormFieldBase<"switch">
 	| FormFieldSelect<"select", V>
-	| FormFieldSelect<"multi-select", V>
 	| FormFieldDualSelect<"dual-select", V>
 	| FormFieldInputGroup<"radio-group", V>
 	| FormFieldInputGroup<"checkbox-group", V>

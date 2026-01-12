@@ -18,7 +18,6 @@ import {
 	RadioGroupFormField,
 } from "./fields/InputGroupFormField";
 import { MapPoolFormField } from "./fields/MapPoolFormField";
-import { MultiSelectFormField } from "./fields/MultiSelectFormField";
 import { SelectFormField } from "./fields/SelectFormField";
 import { StageSelectFormField } from "./fields/StageSelectFormField";
 import { SwitchFormField } from "./fields/SwitchFormField";
@@ -190,17 +189,6 @@ export function FormField({
 				{...formField}
 				value={value as [string | null, string | null]}
 				onChange={handleChange as (v: [string | null, string | null]) => void}
-			/>
-		);
-	}
-
-	if (formField.type === "multi-select") {
-		return (
-			<MultiSelectFormField
-				{...commonProps}
-				{...formField}
-				value={value as string[]}
-				onChange={handleChange as (v: string[]) => void}
 			/>
 		);
 	}
