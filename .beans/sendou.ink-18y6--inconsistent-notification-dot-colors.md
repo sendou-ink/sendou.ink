@@ -1,10 +1,11 @@
 ---
 # sendou.ink-18y6
 title: Inconsistent notification dot colors
-status: todo
+status: completed
 type: bug
+priority: normal
 created_at: 2026-01-11T19:22:01Z
-updated_at: 2026-01-11T19:22:01Z
+updated_at: 2026-01-12T16:04:11Z
 parent: sendou.ink-6eko
 ---
 
