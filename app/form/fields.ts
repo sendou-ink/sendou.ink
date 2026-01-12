@@ -11,6 +11,8 @@ import {
 	weaponSplId,
 } from "~/utils/zod";
 import type {
+	BadgeOption,
+	FieldWithOptions,
 	FormField,
 	FormFieldArray,
 	FormFieldDatetime,
@@ -606,7 +608,7 @@ export function badges(
 			bottomText: prefixKey(args.bottomText),
 			type: "badges",
 			initialValue: [],
-		});
+		}) as z.ZodArray<typeof id> & FieldWithOptions<BadgeOption[]>;
 }
 
 export function stageSelect(

@@ -7,6 +7,7 @@ import type {
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { formRegistry } from "./fields";
 import { ArrayFormField } from "./fields/ArrayFormField";
+import { BadgesFormField } from "./fields/BadgesFormField";
 import { DatetimeFormField } from "./fields/DatetimeFormField";
 import { DualSelectFormField } from "./fields/DualSelectFormField";
 import { FieldsetFormField } from "./fields/FieldsetFormField";
@@ -32,6 +33,7 @@ import { WeaponSelectFormField } from "./fields/WeaponSelectFormField";
 import { useOptionalFormFieldContext } from "./SendouForm";
 import type {
 	ArrayItemRenderContext,
+	BadgeOption,
 	FormField as FormFieldType,
 } from "./types";
 import {
@@ -55,9 +57,17 @@ interface FormFieldProps {
 	children?:
 		| ((props: CustomFieldRenderProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
+	/** Field-specific options. For badges: BadgeOption[] */
+	options?: unknown;
 }
 
-export function FormField({ name, label, field, children }: FormFieldProps) {
+export function FormField({
+	name,
+	label,
+	field,
+	children,
+	options,
+}: FormFieldProps) {
 	const context = useOptionalFormFieldContext();
 
 	const fieldSchema = React.useMemo(() => {
@@ -368,20 +378,17 @@ export function FormField({ name, label, field, children }: FormFieldProps) {
 	}
 
 	if (formField.type === "badges") {
-		if (!children) {
-			throw new Error(
-				"Badges form field requires children render function to pass options",
-			);
+		if (!options) {
+			throw new Error("Badges form field requires options prop");
 		}
 		return (
-			<>
-				{(children as (props: CustomFieldRenderProps) => React.ReactNode)({
-					name,
-					error: displayedError,
-					value,
-					onChange: handleChange,
-				})}
-			</>
+			<BadgesFormField
+				{...commonProps}
+				{...formField}
+				value={value as number[]}
+				onChange={handleChange as (v: number[]) => void}
+				options={options as BadgeOption[]}
+			/>
 		);
 	}
 

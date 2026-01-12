@@ -192,3 +192,31 @@ export interface ArrayItemRenderContext<
 	canRemove: boolean;
 	remove: () => void;
 }
+
+export type BadgeOption = {
+	id: number;
+	displayName: string;
+	code: string;
+	hue: number | null;
+};
+
+/** Brand type to encode required options directly in Zod schema types */
+export type FieldWithOptions<TOptions> = { _requiredOptions: TOptions };
+
+/** Props for a typed FormField based on field name and schema */
+export type TypedFormFieldProps<
+	TSchema extends z.ZodRawShape,
+	TName extends keyof TSchema & string,
+> = {
+	name: TName;
+	label?: string;
+} & (TSchema[TName] extends FieldWithOptions<infer TOptions>
+	? { options: TOptions }
+	: { options?: never });
+
+/** Typed FormField component type for a specific schema */
+export type TypedFormFieldComponent<TSchema extends z.ZodRawShape> = <
+	TName extends keyof TSchema & string,
+>(
+	props: TypedFormFieldProps<TSchema, TName>,
+) => React.ReactNode;

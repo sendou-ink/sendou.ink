@@ -5,9 +5,10 @@ import { useFetcher } from "react-router";
 import type { z } from "zod";
 import { FormMessage } from "~/components/FormMessage";
 import { SubmitButton } from "~/components/SubmitButton";
+import { FormField as FormFieldComponent } from "./FormField";
 import { formRegistry } from "./fields";
 import styles from "./SendouForm.module.css";
-import type { FormField } from "./types";
+import type { FormField, TypedFormFieldComponent } from "./types";
 import {
 	errorMessageId,
 	getNestedValue,
@@ -43,6 +44,7 @@ type FormNames<T extends z.ZodRawShape> = {
 
 export interface FormRenderProps<T extends z.ZodRawShape> {
 	names: FormNames<T>;
+	FormField: TypedFormFieldComponent<T>;
 }
 
 type BaseFormProps<T extends z.ZodRawShape> = {
@@ -268,7 +270,12 @@ export function SendouForm<T extends z.ZodRawShape>({
 	) as FormNames<T>;
 
 	const resolvedChildren =
-		typeof children === "function" ? children({ names }) : children;
+		typeof children === "function"
+			? children({
+					names,
+					FormField: FormFieldComponent as TypedFormFieldComponent<T>,
+				})
+			: children;
 
 	return (
 		<FormContext.Provider value={contextValue as FormContextValue}>

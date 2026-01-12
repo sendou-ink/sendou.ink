@@ -1,9 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
-import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { BadgesSelector } from "~/features/badges/components/BadgesSelector";
-import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import { uploadImagePage } from "~/utils/urls";
 import { action } from "../actions/org.$slug.edit.server";
@@ -38,33 +35,26 @@ export default function TournamentOrganizationEditPage() {
 					badges: data.organization.badges.map((badge) => badge.id),
 				}}
 			>
-				<Link
-					to={uploadImagePage({
-						type: "org-pfp",
-						slug: data.organization.slug,
-					})}
-					className="text-sm font-bold"
-				>
-					{t("org:edit.form.uploadLogo")}
-				</Link>
+				{({ FormField }) => (
+					<>
+						<Link
+							to={uploadImagePage({
+								type: "org-pfp",
+								slug: data.organization.slug,
+							})}
+							className="text-sm font-bold"
+						>
+							{t("org:edit.form.uploadLogo")}
+						</Link>
 
-				<FormField name="name" />
-				<FormField name="description" />
-				<FormField name="members" />
-				<FormField name="socials" />
-				<FormField name="series" />
-				<FormField name="badges">
-					{({ value, onChange }: CustomFieldRenderProps) => (
-						<div>
-							<Label>{t("org:edit.form.badges.title")}</Label>
-							<BadgesSelector
-								options={data.badgeOptions}
-								selectedBadges={value as number[]}
-								onChange={onChange as (v: number[]) => void}
-							/>
-						</div>
-					)}
-				</FormField>
+						<FormField name="name" />
+						<FormField name="description" />
+						<FormField name="members" />
+						<FormField name="socials" />
+						<FormField name="series" />
+						<FormField name="badges" options={data.badgeOptions} />
+					</>
+				)}
 			</SendouForm>
 		</Main>
 	);
