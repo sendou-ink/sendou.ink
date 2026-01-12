@@ -30,6 +30,7 @@ import { SendouPopover } from "../../../components/elements/Popover";
 import { action } from "../actions/settings.server";
 import { loader } from "../loaders/settings.server";
 import styles from "./settings.module.css";
+import "./settings.global.css";
 export { loader, action };
 
 export const handle: SendouRouteHandle = {
@@ -167,14 +168,21 @@ function ThemeSelector() {
 	const { t } = useTranslation(["common"]);
 	const { userTheme, setUserTheme } = useTheme();
 
+	const onChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+		if (!document.startViewTransition) {
+			setUserTheme(event.target.value as Theme);
+			return;
+		}
+
+		document.startViewTransition(() =>
+			setUserTheme(event.target.value as Theme),
+		);
+	};
+
 	return (
 		<div>
 			<Label htmlFor="theme">{t("common:header.theme")}</Label>
-			<select
-				id="theme"
-				defaultValue={userTheme ?? "auto"}
-				onChange={(e) => setUserTheme(e.target.value as Theme)}
-			>
+			<select id="theme" defaultValue={userTheme ?? "auto"} onChange={onChange}>
 				{(["auto", Theme.DARK, Theme.LIGHT] as const).map((theme) => {
 					return (
 						<option key={theme} value={theme}>

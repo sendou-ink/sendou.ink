@@ -1,0 +1,20 @@
+::view-transition-old(root),
+.dark::view-transition-old(root) {
+	animation: none;
+	animation-fill-mode: both;
+	z-index: -1;
+}
+
+::view-transition-new(root) {
+	mask: url("./wave.svg") no-repeat;
+	mask-position: 50% 200%;
+	mask-size: max(100vw, 200vh);
+	animation: sweep 1.5s;
+	animation-fill-mode: both;
+}
+
+@keyframes sweep {
+	to {
+		mask-position: 50% 0%;
+	}
+}
