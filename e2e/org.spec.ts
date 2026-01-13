@@ -1,13 +1,16 @@
 import { NZAP_TEST_ID, ORG_ADMIN_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { updateIsEstablishedSchema } from "~/features/tournament-organization/tournament-organization-schemas";
+import {
+	banUserActionSchema,
+	newOrganizationSchema,
+	updateIsEstablishedSchema,
+} from "~/features/tournament-organization/tournament-organization-schemas";
 import {
 	expect,
 	impersonate,
 	isNotVisible,
 	navigate,
 	seed,
-	selectUser,
 	submit,
 	test,
 	waitForPOSTResponse,
@@ -32,7 +35,8 @@ test.describe("Tournament Organization", () => {
 		await page.getByTestId("anything-adder-menu-button").click();
 		await page.getByTestId("menu-item-organization").click();
 
-		await page.getByLabel("Name").fill("Test Organization");
+		const form = createFormHelpers(page, newOrganizationSchema);
+		await form.fill("name", "Test Organization");
 		await submit(page);
 
 		await expect(page.getByTestId("edit-org-button")).toBeVisible();
@@ -107,13 +111,9 @@ test.describe("Tournament Organization", () => {
 		// Go to banned users section and add NZAP to ban list
 		await bannedUsersTab.click();
 		await page.getByText("New ban", { exact: true }).click();
-		await selectUser({
-			page,
-			userName: "N-ZAP",
-			labelName: "Player",
-			exact: true,
-		});
-		await page.getByLabel("Private note").fill("Test reason");
+		const banForm = createFormHelpers(page, banUserActionSchema);
+		await banForm.selectUser("userId", "N-ZAP");
+		await banForm.fill("privateNote", "Test reason");
 		await submit(page);
 		// The added ban should be visible in the table
 		await expect(page.getByRole("table")).toContainText("Test reason");

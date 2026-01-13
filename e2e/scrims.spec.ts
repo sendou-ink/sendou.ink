@@ -25,6 +25,8 @@ test.describe("Scrims", () => {
 		await page.getByTestId("anything-adder-menu-button").click();
 		await page.getByTestId("menu-item-scrimPost").click();
 
+		const form = createFormHelpers(page, scrimsNewFormSchema);
+
 		await page.getByLabel("With").selectOption("PICKUP");
 		await selectUser({
 			labelName: "User 2",
@@ -41,9 +43,10 @@ test.describe("Scrims", () => {
 			page,
 			userName: "de",
 		});
-
 		await page.getByLabel("Visibility").selectOption("2");
-		await page.getByLabel("Text").fill("Test scrim");
+
+		// Schema-defined field - use form helper
+		await form.fill("postText", "Test scrim");
 
 		await submit(page);
 

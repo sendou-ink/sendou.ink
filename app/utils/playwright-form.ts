@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import type { z } from "zod";
 import { formRegistry } from "~/form/fields";
 import type { FormField } from "~/form/types";
@@ -59,6 +59,7 @@ type FormFieldHelpers<T extends z.ZodRawShape> = {
 	uncheck: (name: CheckableKeys<T>) => Promise<void>;
 	checkItems: (name: keyof Inferred<T>, itemValues: string[]) => Promise<void>;
 	select: (name: SelectableKeys<T>, optionText: string) => Promise<void>;
+	selectUser: (name: keyof Inferred<T>, userName: string) => Promise<void>;
 	selectWeapons: (
 		name: keyof Inferred<T>,
 		weaponNames: string[],
@@ -186,6 +187,19 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 			}
 		},
 
+		async selectUser(name, userName) {
+			const label = getLabel(String(name));
+			const comboboxButton = page.getByLabel(label, { exact: true });
+			const searchInput = page.getByTestId("user-search-input");
+			const option = page.getByTestId("user-search-item").first();
+
+			await expect(comboboxButton).not.toBeDisabled();
+			await comboboxButton.click();
+			await searchInput.fill(userName);
+			await expect(option).toBeVisible();
+			await page.keyboard.press("Enter");
+		},
+
 		async selectWeapons(_name, weaponNames) {
 			for (const weaponName of weaponNames) {
 				await page.getByTestId("weapon-select").click();
@@ -201,24 +215,23 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 			const label = getLabel(String(name));
 			const hours = date.getHours();
 
-			const selectSpinbutton = async (spinName: string, value: string) => {
-				const locator = page.getByRole("spinbutton", {
-					name: new RegExp(`^${spinName}, ${label}`),
-				});
-				await locator.click();
-				await locator.clear();
-				await locator.fill(value);
+			const fillSpinbutton = async (spinName: string, value: string) => {
+				await page
+					.getByRole("spinbutton", {
+						name: new RegExp(`^${spinName}, ${label}`),
+					})
+					.fill(value);
 			};
 
-			await selectSpinbutton("year", date.getFullYear().toString());
-			await selectSpinbutton("month", (date.getMonth() + 1).toString());
-			await selectSpinbutton("day", date.getDate().toString());
-			await selectSpinbutton("hour", String(hours % 12 || 12));
-			await selectSpinbutton(
+			await fillSpinbutton("year", date.getFullYear().toString());
+			await fillSpinbutton("month", (date.getMonth() + 1).toString());
+			await fillSpinbutton("day", date.getDate().toString());
+			await fillSpinbutton("hour", String(hours % 12 || 12));
+			await fillSpinbutton(
 				"minute",
 				date.getMinutes().toString().padStart(2, "0"),
 			);
-			await selectSpinbutton("AM/PM", hours >= 12 ? "PM" : "AM");
+			await fillSpinbutton("AM/PM", hours >= 12 ? "PM" : "AM");
 		},
 
 		async submit() {
