@@ -138,6 +138,10 @@ interface FormFieldBadges<T extends string> extends FormFieldBase<T> {
 	maxCount?: number;
 }
 
+interface FormFieldSelectDynamic<T extends string> extends FormFieldBase<T> {
+	clearable: boolean;
+}
+
 interface FormFieldStageSelect<T extends string> extends FormFieldBase<T> {
 	required: boolean;
 }
@@ -152,6 +156,7 @@ export type FormField<V extends string = string> =
 	| FormFieldTextarea<"text-area">
 	| FormFieldBase<"switch">
 	| FormFieldSelect<"select", V>
+	| FormFieldSelectDynamic<"select-dynamic">
 	| FormFieldDualSelect<"dual-select", V>
 	| FormFieldInputGroup<"radio-group", V>
 	| FormFieldInputGroup<"checkbox-group", V>
@@ -197,6 +202,11 @@ export type BadgeOption = {
 	displayName: string;
 	code: string;
 	hue: number | null;
+};
+
+export type SelectOption = {
+	value: string;
+	label: string;
 };
 
 /** Brand type to encode required options directly in Zod schema types */

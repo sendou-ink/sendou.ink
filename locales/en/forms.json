@@ -66,6 +66,8 @@
 	"options.scrimMaps.allModes": "All modes",
 	"options.scrimMaps.tournament": "Tournament...",
 	"labels.scrimRequestMessage": "Message",
+	"labels.scrimRequestStartTime": "Start time",
+	"bottomTexts.scrimRequestStartTime": "Select a time within the post's time range",
 	"errors.dateInPast": "Date can not be in the past",
 	"errors.dateTooFarInFuture": "Date can not be more than 2 weeks in the future",
 	"errors.minUsersExcludingYourself": "Must have at least {{min}} users excluding yourself",

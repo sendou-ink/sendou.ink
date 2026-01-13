@@ -6,6 +6,7 @@ import {
 	dualSelectOptional,
 	idConstant,
 	select,
+	selectDynamicOptional,
 	selectOptional,
 	stringConstant,
 	textAreaOptional,
@@ -192,10 +193,10 @@ export const scrimRequestFormSchema = z.object({
 		label: "labels.scrimRequestMessage",
 		maxLength: SCRIM.REQUEST_MESSAGE_MAX_LENGTH,
 	}),
-	at: customField(
-		{ initialValue: null },
-		z.preprocess(date, z.date()).nullish(),
-	),
+	at: selectDynamicOptional({
+		label: "labels.scrimRequestStartTime",
+		bottomText: "bottomTexts.scrimRequestStartTime",
+	}),
 });
 
 const rangeEndItems = [

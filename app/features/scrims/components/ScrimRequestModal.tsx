@@ -1,11 +1,9 @@
-import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
-import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
-import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
+import { SendouForm } from "~/form/SendouForm";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { nullFilledArray } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -32,7 +30,7 @@ export function ScrimRequestModal({
 				databaseTimestampToDate(post.at),
 				databaseTimestampToDate(post.rangeEnd),
 			).map((timestamp) => ({
-				value: timestamp,
+				value: String(timestamp),
 				label: formatTime(new Date(timestamp)),
 			}))
 		: [];
@@ -53,10 +51,7 @@ export function ScrimRequestModal({
 									) as unknown as number[],
 								},
 					message: "",
-					at:
-						post.rangeEnd && timeOptions[0]
-							? new Date(timeOptions[0].value)
-							: null,
+					at: post.rangeEnd && timeOptions[0] ? timeOptions[0].value : null,
 				}}
 			>
 				{({ names }) => (
@@ -76,46 +71,12 @@ export function ScrimRequestModal({
 							)}
 						</FormField>
 						{post.rangeEnd ? (
-							<StartTimeFormField timeOptions={timeOptions} />
+							<FormField name={names.at} options={timeOptions} />
 						) : null}
 						<FormField name={names.message} />
 					</>
 				)}
 			</SendouForm>
 		</SendouDialog>
-	);
-}
-
-function StartTimeFormField({
-	timeOptions,
-}: {
-	timeOptions: Array<{ value: number; label: string }>;
-}) {
-	const { t } = useTranslation(["scrims"]);
-	const { values, setValue } = useFormFieldContext();
-	const currentValue = values.at as number | null;
-	const id = React.useId();
-
-	return (
-		<FormFieldWrapper
-			id={id}
-			name="at"
-			label={t("scrims:requestModal.at.label")}
-			bottomText={t("scrims:requestModal.at.explanation")}
-		>
-			<select
-				id={id}
-				value={currentValue ?? ""}
-				onChange={(e) =>
-					setValue("at", e.target.value ? Number(e.target.value) : null)
-				}
-			>
-				{timeOptions.map((option) => (
-					<option key={option.value} value={option.value}>
-						{option.label}
-					</option>
-				))}
-			</select>
-		</FormFieldWrapper>
 	);
 }

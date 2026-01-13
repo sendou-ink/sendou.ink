@@ -66,6 +66,8 @@
 	"options.scrimMaps.allModes": "",
 	"options.scrimMaps.tournament": "",
 	"labels.scrimRequestMessage": "",
+	"labels.scrimRequestStartTime": "",
+	"bottomTexts.scrimRequestStartTime": "",
 	"errors.dateInPast": "",
 	"errors.dateTooFarInFuture": "",
 	"errors.minUsersExcludingYourself": "",

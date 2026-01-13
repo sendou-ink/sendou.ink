@@ -1,11 +1,11 @@
 ---
 # sendou.ink-2-ud9g
 title: Allow passing dynamic select options to FormField
-status: todo
+status: completed
 type: feature
 priority: normal
 created_at: 2026-01-11T08:47:56Z
-updated_at: 2026-01-12T15:00:59Z
+updated_at: 2026-01-13T06:35:46Z
 parent: plyj
 ---
 
@@ -48,9 +48,11 @@ const schema = z.object({
 4. The type system will automatically enforce options requirement via `TypedFormFieldProps`
 
 ## Checklist
-- [ ] Design API for dynamic vs static select options
-- [ ] Brand selectDynamic() with `FieldWithOptions<SelectOption[]>`
-- [ ] Update SelectFormField to accept runtime options
-- [ ] Update StartTimeFormField in scrims to use standard FormField
+- [x] Design API for dynamic vs static select options
+- [x] Brand selectDynamic() with `FieldWithOptions<SelectOption[]>`
+- [x] Update SelectFormField to accept runtime options
+- [x] Update StartTimeFormField in scrims to use standard FormField
+
+## Follow-up (optional)
 - [ ] Add type tests to verify compile-time enforcement
 - [ ] Document usage for dynamic select options

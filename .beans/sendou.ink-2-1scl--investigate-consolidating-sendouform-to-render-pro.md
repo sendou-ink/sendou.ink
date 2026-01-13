@@ -27,6 +27,11 @@ Currently both patterns work:
 1. **Render props**: `{({ FormField }) => ...}` - provides type-safe FormField
 2. **Direct children**: `<FormField name="..." />` - imports FormField directly
 
+## Mandatory Migrations
+Some forms MUST use render props to get type safety for `options` prop:
+
+- **ScrimRequestModal** - uses `selectDynamicOptional` for `at` field which requires `options={timeOptions}`. Without render props, there's no type safety enforcing that `options` is provided.
+
 ## Questions to Answer
 - [ ] How many SendouForm usages exist in the codebase?
 - [ ] How many use render props vs direct children?

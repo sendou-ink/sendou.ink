@@ -34,6 +34,7 @@ import type {
 	ArrayItemRenderContext,
 	BadgeOption,
 	FormField as FormFieldType,
+	SelectOption,
 } from "./types";
 import {
 	getNestedSchema,
@@ -56,7 +57,7 @@ interface FormFieldProps {
 	children?:
 		| ((props: CustomFieldRenderProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
-	/** Field-specific options. For badges: BadgeOption[] */
+	/** Field-specific options */
 	options?: unknown;
 }
 
@@ -176,6 +177,25 @@ export function FormField({
 			<SelectFormField
 				{...commonProps}
 				{...formField}
+				value={value as string | null}
+				onChange={handleChange as (v: string | null) => void}
+			/>
+		);
+	}
+
+	if (formField.type === "select-dynamic") {
+		if (!options) {
+			throw new Error("Dynamic select form field requires options prop");
+		}
+		const selectOptions = options as SelectOption[];
+		return (
+			<SelectFormField
+				{...commonProps}
+				{...formField}
+				items={selectOptions.map((opt) => ({
+					value: opt.value,
+					label: opt.label,
+				}))}
 				value={value as string | null}
 				onChange={handleChange as (v: string | null) => void}
 			/>

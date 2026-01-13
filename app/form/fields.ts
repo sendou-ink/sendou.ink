@@ -22,6 +22,7 @@ import type {
 	FormFieldItems,
 	FormFieldSelect,
 	FormsTranslationKey,
+	SelectOption,
 } from "./types";
 
 export const formRegistry = z.registry<FormField>();
@@ -295,6 +296,45 @@ export function select<V extends string>(
 		initialValue: args.items[0].value,
 		clearable: false,
 	});
+}
+
+export function selectDynamic(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "select-dynamic" }>,
+			"type" | "initialValue" | "clearable"
+		>
+	>,
+) {
+	return z.string().register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "select-dynamic",
+		initialValue: "",
+		clearable: false,
+	}) as z.ZodString & FieldWithOptions<SelectOption[]>;
+}
+
+export function selectDynamicOptional(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "select-dynamic" }>,
+			"type" | "initialValue" | "clearable"
+		>
+	>,
+) {
+	return z
+		.preprocess(falsyToNull, z.string().nullable())
+		.register(formRegistry, {
+			...args,
+			label: prefixKey(args.label),
+			bottomText: prefixKey(args.bottomText),
+			type: "select-dynamic",
+			initialValue: null,
+			clearable: true,
+		}) as unknown as z.ZodType<string | null> &
+		FieldWithOptions<SelectOption[]>;
 }
 
 export function dualSelectOptional<V extends string>(
