@@ -75,7 +75,7 @@
 }
 
 .text-theme-secondary {
-	color: var(--color-text-accent);
+	color: var(--color-text-second);
 }
 
 .text-uppercase {
