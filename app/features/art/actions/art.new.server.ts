@@ -86,7 +86,11 @@ export const action: ActionFunction = async ({ request }) => {
 			return null;
 		};
 
-		const formData = await parseMultipartFormData(request, uploadHandler);
+		const formData = await parseMultipartFormData(
+			request,
+			{ maxFileSize: 5 * 1024 * 1024 },
+			uploadHandler,
+		);
 		const imgSrc = formData.get("img") as string | null;
 		invariant(imgSrc);
 
