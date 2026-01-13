@@ -8,16 +8,12 @@ import {
 	useNavigate,
 	useSearchParams,
 } from "react-router";
+import { CustomThemeSelector } from "~/components/CustomThemeSelector";
 import { Divider } from "~/components/Divider";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import {
-	CUSTOM_THEME_VARS,
-	type CustomTheme,
-	type CustomThemeVar,
-} from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { Theme, useTheme } from "~/features/theme/core/provider";
 import { languages } from "~/modules/i18n/config";
@@ -25,12 +21,13 @@ import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { LOG_OUT_URL, navIconUrl, SETTINGS_PAGE } from "~/utils/urls";
-import { LinkButton, SendouButton } from "../../../components/elements/Button";
+import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
 import { action } from "../actions/settings.server";
 import { loader } from "../loaders/settings.server";
 import styles from "./settings.module.css";
 import "./settings.global.css";
+import type { ThemeInput } from "~/utils/oklch-gamut";
 export { loader, action };
 
 export const handle: SendouRouteHandle = {
@@ -195,131 +192,22 @@ function ThemeSelector() {
 	);
 }
 
-const COLOR_SLIDERS = [
-	{
-		id: "base-hue",
-		cssVar: "--base-h",
-		defaultValue: 260,
-		min: 0,
-		max: 360,
-		step: 1,
-		labelKey: "baseHue",
-		isHue: true,
-	},
-	{
-		id: "base-chroma",
-		cssVar: "--base-c",
-		defaultValue: 0.012,
-		min: 0,
-		max: 0.1,
-		step: 0.001,
-		labelKey: "baseChroma",
-		isHue: false,
-	},
-	{
-		id: "accent-hue",
-		cssVar: "--acc-h",
-		defaultValue: 270,
-		min: 0,
-		max: 360,
-		step: 1,
-		labelKey: "accentHue",
-		isHue: true,
-	},
-	{
-		id: "accent-chroma",
-		cssVar: "--acc-c",
-		defaultValue: 0.24,
-		min: 0,
-		max: 0.3,
-		step: 0.01,
-		labelKey: "accentChroma",
-		isHue: false,
-	},
-] as const;
-
-function useCssVariableState(cssVar: string, defaultValue: number) {
-	const [value, setValue] = React.useState(() => {
-		if (typeof window === "undefined") return defaultValue;
-		return Number(
-			getComputedStyle(document.documentElement)
-				.getPropertyValue(cssVar)
-				.trim() || defaultValue,
-		);
-	});
-
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const newValue = Number(e.target.value);
-		setValue(newValue);
-		document.documentElement.style.setProperty(cssVar, String(newValue));
-	};
-
-	return [value, handleChange] as const;
-}
-
-function ColorSlider({
-	id,
-	cssVar,
-	defaultValue,
-	min,
-	max,
-	step,
-	label,
-	isHue,
-}: {
-	id: string;
-	cssVar: string;
-	defaultValue: number;
-	min: number;
-	max: number;
-	step: number;
-	label: string;
-	isHue: boolean;
-}) {
-	const [value, handleChange] = useCssVariableState(cssVar, defaultValue);
-
-	return (
-		<div className={styles.colorSlider}>
-			<Label htmlFor={id}>{label}</Label>
-			<input
-				id={id}
-				type="range"
-				min={min}
-				max={max}
-				step={step}
-				value={value}
-				onChange={handleChange}
-				className={isHue ? styles.hueSlider : undefined}
-			/>
-		</div>
-	);
-}
-
 function CustomColorSelector() {
-	const { t } = useTranslation(["common"]);
+	const data = useLoaderData<typeof loader>();
 	const isSupporter = useHasRole("SUPPORTER");
 	const fetcher = useFetcher();
 
-	const handleSave = () => {
-		const computedStyle = getComputedStyle(document.documentElement);
-
-		const themeValues = CUSTOM_THEME_VARS.reduce((acc, varDef) => {
-			acc[varDef] = Number(computedStyle.getPropertyValue(varDef).trim());
-
-			return acc;
-		}, {} as CustomTheme);
-
+	const handleSave = (themeInput: ThemeInput) => {
 		fetcher.submit(
-			{ _action: "UPDATE_CUSTOM_THEME", newValue: themeValues },
+			{
+				_action: "UPDATE_CUSTOM_THEME",
+				newValue: themeInput,
+			} as unknown as Parameters<typeof fetcher.submit>[0],
 			{ method: "post", encType: "application/json" },
 		);
 	};
 
 	const handleReset = () => {
-		CUSTOM_THEME_VARS.forEach((varDef: CustomThemeVar) => {
-			document.documentElement.style.removeProperty(varDef);
-		});
-
 		fetcher.submit(
 			{ _action: "UPDATE_CUSTOM_THEME", newValue: null },
 			{ method: "post", encType: "application/json" },
@@ -327,56 +215,12 @@ function CustomColorSelector() {
 	};
 
 	return (
-		<div className={styles.customColorSelector}>
-			<div
-				className={
-					isSupporter
-						? styles.customColorSelectorSupporter
-						: styles.customColorSelectorNoSupporter
-				}
-			>
-				<div className={styles.customColorSelectorInfo}>
-					<p>{t("common:settings.customTheme.patreonText")}</p>
-					<LinkButton
-						to="https://www.patreon.com/sendou"
-						isExternal
-						size="small"
-					>
-						{t("common:settings.customTheme.joinPatreon")}
-					</LinkButton>
-				</div>
-			</div>
-			<div className={styles.colorSliders}>
-				{COLOR_SLIDERS.map((slider) => (
-					<ColorSlider
-						key={slider.id}
-						id={slider.id}
-						cssVar={slider.cssVar}
-						defaultValue={slider.defaultValue}
-						min={slider.min}
-						max={slider.max}
-						step={slider.step}
-						label={t(`common:settings.customTheme.${slider.labelKey}`)}
-						isHue={slider.isHue}
-					/>
-				))}
-			</div>
-			<div className={styles.customColorSelectorActions}>
-				<SendouButton
-					isDisabled={!isSupporter || fetcher.state !== "idle"}
-					onPress={handleSave}
-				>
-					{t("common:actions.save")}
-				</SendouButton>
-				<SendouButton
-					isDisabled={!isSupporter || fetcher.state !== "idle"}
-					variant="destructive"
-					onPress={handleReset}
-				>
-					{t("common:actions.reset")}
-				</SendouButton>
-			</div>
-		</div>
+		<CustomThemeSelector
+			initialTheme={data.customTheme}
+			isSupporter={isSupporter}
+			onSave={handleSave}
+			onReset={handleReset}
+		/>
 	);
 }
 

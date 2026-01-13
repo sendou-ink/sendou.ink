@@ -35,6 +35,36 @@ export const dbBoolean = z.coerce.number().min(0).max(1).int();
 const hexCodeRegex = /^#(?:[0-9a-fA-F]{3}){1,2}[0-9]{0,2}$/; // https://stackoverflow.com/a/1636354
 export const hexCode = z.string().regex(hexCodeRegex);
 
+export const THEME_INPUT_LIMITS = {
+	BASE_HUE_MIN: 0,
+	BASE_HUE_MAX: 360,
+	BASE_CHROMA_MIN: 0,
+	BASE_CHROMA_MAX: 0.1,
+	ACCENT_HUE_MIN: 0,
+	ACCENT_HUE_MAX: 360,
+	ACCENT_CHROMA_MIN: 0,
+	ACCENT_CHROMA_MAX: 0.3,
+} as const;
+
+export const themeInputSchema = z.object({
+	baseHue: z
+		.number()
+		.min(THEME_INPUT_LIMITS.BASE_HUE_MIN)
+		.max(THEME_INPUT_LIMITS.BASE_HUE_MAX),
+	baseChroma: z
+		.number()
+		.min(THEME_INPUT_LIMITS.BASE_CHROMA_MIN)
+		.max(THEME_INPUT_LIMITS.BASE_CHROMA_MAX),
+	accentHue: z
+		.number()
+		.min(THEME_INPUT_LIMITS.ACCENT_HUE_MIN)
+		.max(THEME_INPUT_LIMITS.ACCENT_HUE_MAX),
+	accentChroma: z
+		.number()
+		.min(THEME_INPUT_LIMITS.ACCENT_CHROMA_MIN)
+		.max(THEME_INPUT_LIMITS.ACCENT_CHROMA_MAX),
+});
+
 const timeStringRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 export const timeString = z.string().regex(timeStringRegex);
 

@@ -1,8 +1,20 @@
 html {
-	--base-c: 0.012;
 	--base-h: 260;
-	--acc-c: 0.24;
+	--base-c-0: 0.00012;
+	--base-c-1: 0.00588;
+	--base-c-2: 0.00744;
+	--base-c-3: 0.0168;
+	--base-c-4: 0.01548;
+	--base-c-5: 0.01632;
+	--base-c-6: 0.01548;
+	--base-c-7: 0.00804;
 	--acc-h: 270;
+	--acc-c-0: 0.0912;
+	--acc-c-1: 0.2664;
+	--acc-c-2: 0.0816;
+	--acc-c-3: 0.06;
+	--acc-c-4: 0.2616;
+	--acc-c-5: 0.1344;
 }
 
 /* 'low' and 'high' do not indicate lightness */
@@ -11,19 +23,21 @@ html {
 /* --color-base-x should rarely be consumed directly */
 /* they mostly exist as a base for other vars like --color-text and --color-bg  */
 
-html.dark {
-	--color-base-0: oklch(100% calc(var(--base-c) * 0.01) var(--base-h));
-	--color-base-1: oklch(94.873% calc(var(--base-c) * 0.49) var(--base-h));
-	--color-base-2: oklch(81.397% calc(var(--base-c) * 0.62) var(--base-h));
-	--color-base-3: oklch(63.785% calc(var(--base-c) * 1.4) var(--base-h));
-	--color-base-4: oklch(46.004% calc(var(--base-c) * 1.29) var(--base-h));
-	--color-base-5: oklch(34.138% calc(var(--base-c) * 1.36) var(--base-h));
-	--color-base-6: oklch(27.313% calc(var(--base-c) * 1.29) var(--base-h));
-	--color-base-7: oklch(20.97% calc(var(--base-c) * 0.67) var(--base-h));
+/* Any changes here NEED to be reflected in oklch-gamut.ts as well. */
 
-	--color-accent-low: oklch(25.912% calc(var(--acc-c) * 0.38) var(--acc-h));
-	--color-accent: oklch(52.262% calc(var(--acc-c) * 1.11) var(--acc-h));
-	--color-accent-high: oklch(83.419% calc(var(--acc-c) * 0.34) var(--acc-h));
+html.dark {
+	--color-base-0: oklch(100% var(--base-c-0) var(--base-h));
+	--color-base-1: oklch(94.873% var(--base-c-1) var(--base-h));
+	--color-base-2: oklch(81.397% var(--base-c-2) var(--base-h));
+	--color-base-3: oklch(63.785% var(--base-c-3) var(--base-h));
+	--color-base-4: oklch(46.004% var(--base-c-4) var(--base-h));
+	--color-base-5: oklch(34.138% var(--base-c-5) var(--base-h));
+	--color-base-6: oklch(27.313% var(--base-c-6) var(--base-h));
+	--color-base-7: oklch(20.97% var(--base-c-7) var(--base-h));
+
+	--color-accent-low: oklch(25.912% var(--acc-c-0) var(--acc-h));
+	--color-accent: oklch(52.262% var(--acc-c-1) var(--acc-h));
+	--color-accent-high: oklch(83.419% var(--acc-c-2) var(--acc-h));
 
 	--color-second-low: oklch(from var(--color-accent-low) l c calc(h + 180));
 	--color-second: oklch(from var(--color-accent) l c calc(h + 180));
@@ -56,18 +70,18 @@ html.dark {
 }
 
 html.light {
-	--color-base-0: oklch(20.97% calc(var(--base-c) * 0.67) var(--base-h));
-	--color-base-1: oklch(27.313% calc(var(--base-c) * 1.29) var(--base-h));
-	--color-base-2: oklch(34.138% calc(var(--base-c) * 1.36) var(--base-h));
-	--color-base-3: oklch(46.004% calc(var(--base-c) * 1.29) var(--base-h));
-	--color-base-4: oklch(63.785% calc(var(--base-c) * 1.4) var(--base-h));
-	--color-base-5: oklch(85.397% calc(var(--base-c) * 0.62) var(--base-h));
-	--color-base-6: oklch(94.873% calc(var(--base-c) * 0.49) var(--base-h));
-	--color-base-7: oklch(100% calc(var(--base-c) * 0.01) var(--base-h));
+	--color-base-0: oklch(20.97% var(--base-c-7) var(--base-h));
+	--color-base-1: oklch(27.313% var(--base-c-6) var(--base-h));
+	--color-base-2: oklch(34.138% var(--base-c-5) var(--base-h));
+	--color-base-3: oklch(46.004% var(--base-c-4) var(--base-h));
+	--color-base-4: oklch(63.785% var(--base-c-3) var(--base-h));
+	--color-base-5: oklch(81.397% var(--base-c-2) var(--base-h));
+	--color-base-6: oklch(94.873% var(--base-c-1) var(--base-h));
+	--color-base-7: oklch(100% var(--base-c-0) var(--base-h));
 
-	--color-accent-low: oklch(87.817% calc(var(--acc-c) * 0.25) var(--acc-h));
-	--color-accent: oklch(52.919% calc(var(--acc-c) * 1.09) var(--acc-h));
-	--color-accent-high: oklch(31.777% calc(var(--acc-c) * 0.56) var(--acc-h));
+	--color-accent-low: oklch(87.817% var(--acc-c-3) var(--acc-h));
+	--color-accent: oklch(52.919% var(--acc-c-4) var(--acc-h));
+	--color-accent-high: oklch(31.777% var(--acc-c-5) var(--acc-h));
 
 	--color-second-low: oklch(from var(--color-accent-low) l c calc(h + 180));
 	--color-second: oklch(from var(--color-accent) l c calc(h + 180));

@@ -1,0 +1,82 @@
+.customThemeSelector {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+	padding: var(--s-4);
+	border: 2px solid var(--color-border);
+	border-radius: var(--rounded-sm);
+	background-color: var(--color-bg-medium);
+	position: relative;
+	overflow: hidden;
+}
+
+.customThemeSelectorSupporter {
+	display: none;
+}
+
+.customThemeSelectorNoSupporter {
+	position: absolute;
+	inset: 0;
+	z-index: 10;
+	backdrop-filter: blur(3px);
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.customThemeSelectorInfo {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin-bottom: var(--s-4);
+	text-align: center;
+	background-color: var(--color-bg);
+	padding: var(--s-2) var(--s-4);
+	border-block: 2px solid var(--color-border);
+}
+
+.customThemeSelectorActions {
+	display: grid;
+	gap: var(--s-2);
+	grid-template-columns: 1fr auto;
+}
+
+.colorSliders {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.colorSlider {
+	display: grid;
+	grid-template-columns: 40% auto;
+	grid-template-rows: auto auto;
+	gap: var(--s-1) var(--s-2);
+	align-items: center;
+}
+
+.hueSlider::-webkit-slider-runnable-track {
+	background: linear-gradient(
+		to right,
+		oklch(65% 0.15 0),
+		oklch(65% 0.15 60),
+		oklch(65% 0.15 120),
+		oklch(65% 0.15 180),
+		oklch(65% 0.15 240),
+		oklch(65% 0.15 300),
+		oklch(65% 0.15 360)
+	) !important;
+}
+
+.hueSlider::-moz-range-track {
+	background: linear-gradient(
+		to right,
+		oklch(65% 0.15 0),
+		oklch(65% 0.15 60),
+		oklch(65% 0.15 120),
+		oklch(65% 0.15 180),
+		oklch(65% 0.15 240),
+		oklch(65% 0.15 300),
+		oklch(65% 0.15 360)
+	) !important;
+}

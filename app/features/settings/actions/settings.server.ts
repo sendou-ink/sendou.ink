@@ -3,6 +3,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isSupporter } from "~/modules/permissions/utils";
+import { clampThemeToGamut } from "~/utils/oklch-gamut";
 import {
 	errorToast,
 	parseRequestPayload,
@@ -23,7 +24,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			if (!isSupporter(user)) {
 				throw errorToast("Custom themes are for supporters only");
 			}
-			await UserRepository.updateCustomTheme(user.id, data.newValue);
+
+			const clampedTheme = data.newValue
+				? clampThemeToGamut(data.newValue)
+				: null;
+
+			await UserRepository.updateCustomTheme(user.id, clampedTheme);
 			break;
 		}
 		case "UPDATE_DISABLE_BUILD_ABILITY_SORTING": {

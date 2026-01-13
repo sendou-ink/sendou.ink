@@ -1,6 +1,7 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import { clampThemeToGamut } from "~/utils/oklch-gamut";
 import {
 	errorToastIfFalsy,
 	notFoundIfFalsy,
@@ -10,7 +11,11 @@ import { assertUnreachable } from "~/utils/types";
 import { mySlugify, TEAM_SEARCH_PAGE, teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
 import { editTeamSchema, teamParamsSchema } from "../team-schemas.server";
-import { isTeamManager, isTeamOwner } from "../team-utils";
+import {
+	canAddCustomizedColors,
+	isTeamManager,
+	isTeamOwner,
+} from "../team-utils";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
@@ -64,10 +69,16 @@ export const action: ActionFunction = async ({ request, params }) => {
 				};
 			}
 
+			const customTheme =
+				canAddCustomizedColors(team) && data.customTheme
+					? clampThemeToGamut(data.customTheme)
+					: null;
+
 			const editedTeam = await TeamRepository.update({
 				id: team.id,
 				customUrl: newCustomUrl,
 				...data,
+				customTheme,
 			});
 
 			throw redirect(teamPage(editedTeam.customUrl));

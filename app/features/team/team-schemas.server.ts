@@ -1,6 +1,11 @@
 import { z } from "zod";
-import type { CustomThemeVar } from "~/db/tables";
-import { _action, falsyToNull, id, safeStringSchema } from "~/utils/zod";
+import {
+	_action,
+	falsyToNull,
+	id,
+	safeStringSchema,
+	themeInputSchema,
+} from "~/utils/zod";
 import { TEAM, TEAM_MEMBER_ROLES } from "./team-constants";
 
 export const teamParamsSchema = z.object({ customUrl: z.string() });
@@ -48,14 +53,7 @@ export const editTeamSchema = z.union([
 		),
 		customTheme: z.preprocess(
 			(val) => (!val || val === "null" ? null : val),
-			z
-				.object({
-					"--base-h": z.number().min(0).max(360),
-					"--base-c": z.number().min(0).max(0.1),
-					"--acc-h": z.number().min(0).max(360),
-					"--acc-c": z.number().min(0).max(0.3),
-				} satisfies Record<CustomThemeVar, z.ZodNumber>)
-				.nullable(),
+			themeInputSchema.nullable(),
 		),
 	}),
 ]);
