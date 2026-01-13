@@ -25,7 +25,12 @@ html.dark {
 	--color-accent: oklch(52.262% calc(var(--acc-c) * 1.11) var(--acc-h));
 	--color-accent-high: oklch(83.419% calc(var(--acc-c) * 0.34) var(--acc-h));
 
+	--color-second-low: oklch(from var(--color-accent-low) l c calc(h + 180));
+	--color-second: oklch(from var(--color-accent) l c calc(h + 180));
+	--color-second-high: oklch(from var(--color-accent-high) l c calc(h + 180));
+
 	--color-text-accent: var(--color-accent-high);
+	--color-text-second: var(--color-second-high);
 
 	--color-info-low: oklch(26% 0.09 275);
 	--color-info: oklch(52% 0.27 275);
@@ -64,7 +69,12 @@ html.light {
 	--color-accent: oklch(52.919% calc(var(--acc-c) * 1.09) var(--acc-h));
 	--color-accent-high: oklch(31.777% calc(var(--acc-c) * 0.56) var(--acc-h));
 
+	--color-second-low: oklch(from var(--color-accent-low) l c calc(h + 180));
+	--color-second: oklch(from var(--color-accent) l c calc(h + 180));
+	--color-second-high: oklch(from var(--color-accent-high) l c calc(h + 180));
+
 	--color-text-accent: var(--color-accent);
+	--color-text-second: var(--color-second);
 
 	--color-info-low: oklch(87.897% 0.0555 279.573);
 	--color-info: oklch(53.03% 0.24331 270.147);
