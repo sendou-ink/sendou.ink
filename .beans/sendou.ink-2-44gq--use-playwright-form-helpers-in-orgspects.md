@@ -1,10 +1,11 @@
 ---
 # sendou.ink-2-44gq
 title: Use playwright form helpers in org.spec.ts
-status: todo
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-11T08:47:57Z
-updated_at: 2026-01-11T08:47:57Z
+updated_at: 2026-01-13T18:53:39Z
 ---
 
 Replace hacky manual locators with proper playwright form helpers from playwright-form.ts.
