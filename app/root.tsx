@@ -37,6 +37,7 @@ import { Ramp } from "./components/ramp/Ramp";
 import { apiCorsMiddleware } from "./features/api-public/api-cors-middleware.server";
 import { getUser } from "./features/auth/core/user.server";
 import { userMiddleware } from "./features/auth/core/user-middleware.server";
+import { sessionIdMiddleware } from "./features/session-id/session-id-middleware.server";
 import {
 	isTheme,
 	Theme,
@@ -53,6 +54,7 @@ import { allI18nNamespaces } from "./utils/i18n";
 import { isRevalidation, metaTags, type SerializeFrom } from "./utils/remix";
 
 export const middleware: Route.MiddlewareFunction[] = [
+	sessionIdMiddleware,
 	apiCorsMiddleware,
 	userMiddleware,
 ];
