@@ -226,7 +226,7 @@ function maximum_chroma_for_lh(L: number, h: number): number {
 // These are the lightness values used in vars.css
 // Any changes here NEED to be reflected in vars.css as well.
 
-const BASE_LIGHTNESS_VALUES = [
+export const BASE_LIGHTNESS_VALUES = [
 	1.0, // --base-c-0
 	0.94873, // --base-c-1
 	0.81397, // --base-c-2
@@ -237,7 +237,7 @@ const BASE_LIGHTNESS_VALUES = [
 	0.2097, // --base-c-7
 ] as const;
 
-const ACCENT_LIGHTNESS_VALUES = [
+export const ACCENT_LIGHTNESS_VALUES = [
 	0.25912, // --acc-c-0: dark mode low
 	0.52262, // --acc-c-1: dark mode mid
 	0.83419, // --acc-c-2: dark mode high
@@ -246,7 +246,7 @@ const ACCENT_LIGHTNESS_VALUES = [
 	0.31777, // --acc-c-5: light mode high
 ] as const;
 
-const BASE_CHROMA_MULTIPLIERS = [
+export const BASE_CHROMA_MULTIPLIERS = [
 	0.01, // --base-c-0
 	0.49, // --base-c-1
 	0.62, // --base-c-2
@@ -257,7 +257,7 @@ const BASE_CHROMA_MULTIPLIERS = [
 	0.67, // --base-c-7
 ] as const;
 
-const ACCENT_CHROMA_MULTIPLIERS = [
+export const ACCENT_CHROMA_MULTIPLIERS = [
 	0.38, // --acc-c-0
 	1.11, // --acc-c-1
 	0.34, // --acc-c-2
@@ -311,10 +311,3 @@ export function clampThemeToGamut(input: ThemeInput): CustomTheme {
 		"--acc-c-5": clampedAccentChromas[5],
 	};
 }
-
-export {
-	BASE_LIGHTNESS_VALUES,
-	ACCENT_LIGHTNESS_VALUES,
-	BASE_CHROMA_MULTIPLIERS,
-	ACCENT_CHROMA_MULTIPLIERS,
-};
