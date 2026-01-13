@@ -283,6 +283,10 @@
 		"displayName": "Not Enough Liter",
 		"authorDiscordId": "352207524390240257"
 	},
+	"cyndaquil": {
+		"displayName": "Typh's Birthday Bonanza",
+		"authorDiscordId": "751912670403362836"
+	},
 	"daytonaspeedweeks1st": {
 		"displayName": "Just Daytona 1-5",
 		"authorDiscordId": "528851510222782474"
@@ -438,6 +442,14 @@
 	"girlsbandcryawa": {
 		"displayName": "Togenashi Togeari Subaru Bracket",
 		"authorDiscordId": "309327923129745409"
+	},
+	"gladiatorgold": {
+		"displayName": "Survival of the S+ Gladiator (Again)",
+		"authorDiscordId": "751912670403362836"
+	},
+	"gladiatorsilver": {
+		"displayName": "Survival of the S+ Gladiator",
+		"authorDiscordId": "751912670403362836"
 	},
 	"glaze": {
 		"displayName": "THE GLAZE GAUNTLET",
