@@ -31,9 +31,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	);
 
 	return {
-		defaultValues: buildToEdit
-			? resolveDefaultValues(url.searchParams, buildToEdit)
-			: null,
+		defaultValues: resolveDefaultValues(url.searchParams, buildToEdit),
 		gearIdToAbilities: resolveGearIdToAbilities(),
 	};
 
@@ -55,25 +53,33 @@ type NewBuildDefaultValues = Partial<z.infer<typeof newBuildBaseSchema>>;
 
 function resolveDefaultValues(
 	searchParams: URLSearchParams,
-	buildToEdit: Awaited<ReturnType<typeof BuildRepository.allByUserId>>[number],
-): NewBuildDefaultValues {
+	buildToEdit:
+		| Awaited<ReturnType<typeof BuildRepository.allByUserId>>[number]
+		| undefined,
+): NewBuildDefaultValues | null {
 	const weapons = resolveDefaultWeapons();
 	const abilities =
 		buildToEdit?.abilities ?? validatedBuildFromSearchParams(searchParams);
 
+	if (!buildToEdit && weapons.length === 0 && !abilities) {
+		return null;
+	}
+
 	return {
-		buildToEditId: buildToEdit.id,
+		buildToEditId: buildToEdit?.id,
 		weapons,
-		head: buildToEdit.headGearSplId === -1 ? null : buildToEdit.headGearSplId,
+		head: buildToEdit?.headGearSplId === -1 ? null : buildToEdit?.headGearSplId,
 		clothes:
-			buildToEdit.clothesGearSplId === -1 ? null : buildToEdit.clothesGearSplId,
+			buildToEdit?.clothesGearSplId === -1
+				? null
+				: buildToEdit?.clothesGearSplId,
 		shoes:
-			buildToEdit.shoesGearSplId === -1 ? null : buildToEdit.shoesGearSplId,
+			buildToEdit?.shoesGearSplId === -1 ? null : buildToEdit?.shoesGearSplId,
 		abilities,
-		title: buildToEdit.title,
-		description: buildToEdit.description,
-		modes: buildToEdit.modes ?? [],
-		private: Boolean(buildToEdit.private),
+		title: buildToEdit?.title,
+		description: buildToEdit?.description,
+		modes: buildToEdit?.modes ?? [],
+		private: Boolean(buildToEdit?.private),
 	};
 
 	function resolveDefaultWeapons(): WeaponPoolItem[] {

@@ -71,9 +71,7 @@ test.describe("Settings", () => {
 		});
 
 		const form = createFormHelpers(page, clockFormatSchema);
-		await form.select("newValue", "24h");
-
-		await expect(page.getByText("Settings updated")).toBeVisible();
+		await waitForPOSTResponse(page, () => form.select("newValue", "24h"));
 
 		await navigate({
 			page,

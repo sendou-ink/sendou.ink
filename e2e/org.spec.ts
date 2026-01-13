@@ -64,10 +64,7 @@ test.describe("Tournament Organization", () => {
 		// Add member as admin - find the specific member fieldset containing N-ZAP
 		// The array field creates numbered fieldsets (#1, #2, #3) for each member
 		// Find the role select that belongs to the same fieldset as N-ZAP user select
-		// We need to find the innermost fieldset with N-ZAP button (class w-min)
-		const nzapFieldset = page.locator(
-			'fieldset.w-min:has(button:has-text("N-ZAP"))',
-		);
+		const nzapFieldset = page.locator('fieldset:has(button:has-text("N-ZAP"))');
 		await nzapFieldset
 			.getByLabel("Role", { exact: true })
 			.selectOption("ADMIN");
@@ -111,9 +108,26 @@ test.describe("Tournament Organization", () => {
 		// Go to banned users section and add NZAP to ban list
 		await bannedUsersTab.click();
 		await page.getByText("New ban", { exact: true }).click();
+		// Wait for the dialog to be visible
+		const dialog = page.getByRole("dialog");
+		await expect(dialog).toBeVisible();
+		// Find and click the UserSearch combobox (React Aria Select renders as combobox)
+		const userSearchCombobox = dialog.getByRole("button").filter({
+			has: page.locator('[class*="selectValue"]'),
+		});
+		await userSearchCombobox.click();
+		// Wait for the popover to open and fill search
+		await expect(page.getByTestId("user-search-input")).toBeVisible();
+		await page.getByTestId("user-search-input").fill("N-ZAP");
+		await expect(page.getByTestId("user-search-item").first()).toBeVisible();
+		await page.keyboard.press("Enter");
+		// Fill the note and set expiration date
 		const banForm = createFormHelpers(page, banUserActionSchema);
-		await banForm.selectUser("userId", "N-ZAP");
 		await banForm.fill("privateNote", "Test reason");
+		// Set a future expiration date to avoid validation issues
+		const futureDate = new Date();
+		futureDate.setMonth(futureDate.getMonth() + 1);
+		await banForm.setDateTime("expiresAt", futureDate);
 		await submit(page);
 		// The added ban should be visible in the table
 		await expect(page.getByRole("table")).toContainText("Test reason");
