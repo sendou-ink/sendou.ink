@@ -9,6 +9,17 @@ export default defineConfig({
 	define: {
 		"process.env.NODE_ENV": JSON.stringify("test"),
 	},
+	optimizeDeps: {
+		include: [
+			"react",
+			"react/jsx-runtime",
+			"react/jsx-dev-runtime",
+			"react-dom",
+			"react-dom/client",
+			"react-router",
+			"react-use-draggable-scroll",
+		],
+	},
 	test: {
 		name: "browser",
 		include: ["**/*.browser.test.{ts,tsx}"],

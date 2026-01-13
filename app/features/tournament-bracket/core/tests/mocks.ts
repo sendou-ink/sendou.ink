@@ -1451,6 +1451,7 @@ export const PADDLING_POOL_257 = () =>
 				],
 				lockedMatches: [],
 			},
+			seedingSnapshot: null,
 			mapPickingStyle: "AUTO_ALL",
 			name: "Paddling Pool 257",
 			description:
@@ -7429,6 +7430,7 @@ export const PADDLING_POOL_255 = () =>
 				],
 				lockedMatches: [],
 			},
+			seedingSnapshot: null,
 			mapPickingStyle: "AUTO_ALL",
 			name: "Paddling Pool 255",
 			description: null,
@@ -13715,6 +13717,7 @@ export const IN_THE_ZONE_32 = ({
 			discordUrl: null,
 			castTwitchAccounts: ["dappleproductions", "kyochandxd"],
 			castedMatchesInfo: null,
+			seedingSnapshot: null,
 			mapPickingStyle: "AUTO_SZ",
 			name: "In The Zone 32",
 			description: "Part of sendou.ink ranked season 2",

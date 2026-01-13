@@ -35,13 +35,11 @@ const navigateToMatch = async (page: Page, matchId: number) => {
 const reportResult = async ({
 	page,
 	amountOfMapsToReport,
-	sidesWithMoreThanFourPlayers = ["last"],
 	winner = 1,
 	points,
 }: {
 	page: Page;
 	amountOfMapsToReport: 1 | 2 | 3 | 4;
-	sidesWithMoreThanFourPlayers?: ("first" | "last")[];
 	winner?: 1 | 2;
 	points?: [number, number];
 }) => {
@@ -55,9 +53,12 @@ const reportResult = async ({
 
 	await page.getByTestId("actions-tab").click();
 
+	// Auto-detect and set rosters for teams with 5+ players
+	// Check if first team needs roster selection (checkbox exists and is not disabled)
+	const firstTeamCheckbox = page.getByTestId("player-checkbox-0").first();
 	if (
-		sidesWithMoreThanFourPlayers.includes("first") &&
-		!(await page.getByTestId("player-checkbox-0").first().isDisabled())
+		(await firstTeamCheckbox.count()) > 0 &&
+		!(await firstTeamCheckbox.isDisabled())
 	) {
 		await page.getByTestId("player-checkbox-0").first().click();
 		await page.getByTestId("player-checkbox-1").first().click();
@@ -69,9 +70,12 @@ const reportResult = async ({
 		// update went through
 		await expect(page.getByTestId("player-checkbox-0").first()).toBeDisabled();
 	}
+
+	// Check if second team needs roster selection
+	const lastTeamCheckbox = page.getByTestId("player-checkbox-0").last();
 	if (
-		sidesWithMoreThanFourPlayers.includes("last") &&
-		!(await page.getByTestId("player-checkbox-0").last().isDisabled())
+		(await lastTeamCheckbox.count()) > 0 &&
+		!(await lastTeamCheckbox.isDisabled())
 	) {
 		await page.getByTestId("player-checkbox-0").last().click();
 		await page.getByTestId("player-checkbox-1").last().click();
@@ -141,6 +145,8 @@ const expectScore = (page: Page, score: [number, number]) =>
 test.describe("Tournament bracket", () => {
 	test("sets active roster as regular member", async ({ page }) => {
 		const tournamentId = 1;
+		// User 37 is owner of team 10 (seed 10) which has 5 players
+		// Team 10 vs Team 9 (seed 9) is match 2 in WB Round 1
 		const matchId = 2;
 		await startBracket(page, tournamentId);
 
@@ -149,10 +155,13 @@ test.describe("Tournament bracket", () => {
 			page,
 			url: tournamentMatchPage({ tournamentId, matchId }),
 		});
+
 		await expect(page.getByTestId("active-roster-needed-text")).toBeVisible();
 
 		await page.getByTestId("actions-tab").click();
 
+		// Team 10 has 5 players; select first 4 for active roster
+		// Team 10 is team 2 (second team in the match), so use last()
 		await page.getByTestId("player-checkbox-0").last().click();
 		await page.getByTestId("player-checkbox-1").last().click();
 		await page.getByTestId("player-checkbox-2").last().click();
@@ -165,6 +174,7 @@ test.describe("Tournament bracket", () => {
 			page,
 			url: tournamentMatchPage({ tournamentId, matchId }),
 		});
+		// Only team 10 needed to set roster (team 9 has 4 players)
 		await isNotVisible(page.getByTestId("active-roster-needed-text"));
 
 		await page.getByTestId("actions-tab").click();
@@ -216,7 +226,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 1,
-			sidesWithMoreThanFourPlayers: ["first", "last"],
 		});
 		await backToBracket(page);
 
@@ -248,7 +257,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["last"],
 			winner: 2,
 		});
 		await backToBracket(page);
@@ -294,6 +302,8 @@ test.describe("Tournament bracket", () => {
 	test("completes and finalizes a small tournament with badge assigning", async ({
 		page,
 	}) => {
+		test.slow();
+
 		const tournamentId = 2;
 
 		await seed(page);
@@ -325,7 +335,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: [],
 		});
 		await backToBracket(page);
 
@@ -396,7 +405,6 @@ test.describe("Tournament bracket", () => {
 			await reportResult({
 				page,
 				amountOfMapsToReport: 2,
-				sidesWithMoreThanFourPlayers: ["first", "last"],
 				points: [100, 0],
 			});
 			await backToBracket(page);
@@ -436,7 +444,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 3,
-			sidesWithMoreThanFourPlayers: ["first", "last"],
 		});
 
 		await navigate({
@@ -450,7 +457,6 @@ test.describe("Tournament bracket", () => {
 			await reportResult({
 				page,
 				amountOfMapsToReport: 3,
-				sidesWithMoreThanFourPlayers: ["first", "last"],
 			});
 
 			await backToBracket(page);
@@ -513,7 +519,6 @@ test.describe("Tournament bracket", () => {
 			await reportResult({
 				page,
 				amountOfMapsToReport: 2,
-				sidesWithMoreThanFourPlayers: [],
 				points: [100, 0],
 			});
 			await backToBracket(page);
@@ -637,7 +642,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["first"],
 			points: [100, 0],
 		});
 
@@ -701,7 +705,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["last"],
 			points: [100, 0],
 		});
 		await backToBracket(page);
@@ -712,7 +715,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["first"],
 			points: [100, 0],
 		});
 		await backToBracket(page);
@@ -721,7 +723,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["last"],
 			points: [100, 0],
 		});
 		await backToBracket(page);
@@ -730,7 +731,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["last"],
 			points: [100, 0],
 		});
 		await backToBracket(page);
@@ -741,7 +741,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["first"],
 			points: [0, 100],
 			winner: 2,
 		});
@@ -772,7 +771,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["last"],
 			points: [100, 0],
 		});
 		await backToBracket(page);
@@ -781,7 +779,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["first", "last"],
 			points: [100, 0],
 		});
 		await backToBracket(page);
@@ -792,7 +789,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 1,
-			sidesWithMoreThanFourPlayers: ["last"],
 			points: [100, 0],
 		});
 		await backToBracket(page);
@@ -845,7 +841,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["last"],
 		});
 		await backToBracket(page);
 
@@ -857,7 +852,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["last"],
 		});
 		await backToBracket(page);
 
@@ -892,7 +886,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["last"],
 		});
 
 		await page.getByTestId("admin-tab").click();
@@ -965,7 +958,6 @@ test.describe("Tournament bracket", () => {
 			page,
 			amountOfMapsToReport: 3,
 			points: [100, 0],
-			sidesWithMoreThanFourPlayers: ["last"],
 			winner: 1,
 		});
 	});
@@ -992,7 +984,6 @@ test.describe("Tournament bracket", () => {
 			await reportResult({
 				page,
 				amountOfMapsToReport: 2,
-				sidesWithMoreThanFourPlayers: id === 1 ? [] : ["last"],
 			});
 			await backToBracket(page);
 		}

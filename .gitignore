@@ -25,5 +25,6 @@ dump
 /test-results/
 /playwright-report/
 /playwright/.cache/
+.e2e-minio-started
 
 notepad.txt

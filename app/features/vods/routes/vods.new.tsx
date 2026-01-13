@@ -493,7 +493,7 @@ function WeaponsField({
 						<div className="stack sm">
 							{new Array(teamSize).fill(null).map((_, i) => (
 								<WeaponSelect
-									key={i}
+									key={i + 4}
 									isRequired
 									testId={`match-${index}-team2-weapon-${i}`}
 									value={

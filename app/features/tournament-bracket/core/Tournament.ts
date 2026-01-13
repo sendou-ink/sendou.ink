@@ -9,6 +9,7 @@ import {
 } from "~/features/tournament/tournament-constants";
 import {
 	modesIncluded,
+	sortTeamsBySeeding,
 	tournamentIsRanked,
 } from "~/features/tournament/tournament-utils";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
@@ -53,30 +54,10 @@ export class Tournament {
 		simulateBrackets?: boolean;
 	}) {
 		const hasStarted = data.stage.length > 0;
+		const minMembersPerTeam = ctx.settings.minMembersPerTeam ?? 4;
 
-		const teamsInSeedOrder = ctx.teams.sort((a, b) => {
-			if (a.startingBracketIdx !== b.startingBracketIdx) {
-				return (a.startingBracketIdx ?? 0) - (b.startingBracketIdx ?? 0);
-			}
+		const teamsInSeedOrder = sortTeamsBySeeding(ctx.teams, minMembersPerTeam);
 
-			if (a.seed && b.seed) {
-				return a.seed - b.seed;
-			}
-
-			if (a.seed && !b.seed) {
-				return -1;
-			}
-
-			if (!a.seed && b.seed) {
-				return 1;
-			}
-
-			return this.compareUnseededTeams(
-				a,
-				b,
-				ctx.settings.minMembersPerTeam ?? 4,
-			);
-		});
 		this.simulateBrackets = simulateBrackets;
 		this.ctx = {
 			...ctx,
@@ -88,37 +69,6 @@ export class Tournament {
 		};
 
 		this.initBrackets(data);
-	}
-
-	private compareUnseededTeams(
-		a: TournamentData["ctx"]["teams"][number],
-		b: TournamentData["ctx"]["teams"][number],
-		minMembersPerTeam: number,
-	) {
-		const aIsFull = a.members.length >= minMembersPerTeam;
-		const bIsFull = b.members.length >= minMembersPerTeam;
-
-		if (aIsFull && !bIsFull) {
-			return -1;
-		}
-
-		if (!aIsFull && bIsFull) {
-			return 1;
-		}
-
-		if (a.avgSeedingSkillOrdinal && b.avgSeedingSkillOrdinal) {
-			return b.avgSeedingSkillOrdinal - a.avgSeedingSkillOrdinal;
-		}
-
-		if (a.avgSeedingSkillOrdinal && !b.avgSeedingSkillOrdinal) {
-			return -1;
-		}
-
-		if (!a.avgSeedingSkillOrdinal && b.avgSeedingSkillOrdinal) {
-			return 1;
-		}
-
-		return a.createdAt - b.createdAt;
 	}
 
 	private initBrackets(data: TournamentManagerDataSet) {
