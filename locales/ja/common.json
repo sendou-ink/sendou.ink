@@ -309,6 +309,15 @@
 	"settings.notifications.browserNotSupported": "",
 	"settings.notifications.permissionDenied": "",
 	"settings.clockFormat": "",
+	"settings.theme": "",
+	"settings.locales": "",
+	"settings.preferences": "",
+	"settings.customTheme.baseHue": "",
+	"settings.customTheme.baseChroma": "",
+	"settings.customTheme.accentHue": "",
+	"settings.customTheme.accentChroma": "",
+	"settings.customTheme.patreonText": "",
+	"settings.customTheme.joinPatreon": "",
 	"clockFormat.auto": "",
 	"clockFormat.24h": "",
 	"clockFormat.12h": "",
@@ -330,5 +339,7 @@
 	"search.type.organizations": "",
 	"search.type.tournaments": "",
 	"search.noResults": "",
-	"search.hint": ""
+	"search.hint": "",
+	"dataCredit.lean": "",
+	"header.parameter": ""
 }

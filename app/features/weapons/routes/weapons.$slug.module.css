@@ -16,3 +16,8 @@
 	gap: var(--s-2);
 	justify-content: center;
 }
+
+.dataCredit {
+	font-size: var(--fonts-xxs);
+	color: var(--color-text-high);
+}

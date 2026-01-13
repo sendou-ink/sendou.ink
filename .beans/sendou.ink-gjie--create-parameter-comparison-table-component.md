@@ -1,10 +1,11 @@
 ---
 # sendou.ink-gjie
 title: Create parameter comparison table component
-status: todo
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-11T12:22:15Z
-updated_at: 2026-01-11T12:22:15Z
+updated_at: 2026-01-13T12:21:54Z
 parent: sendou.ink-0ze4
 ---
 

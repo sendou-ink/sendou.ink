@@ -343,5 +343,7 @@
 	"search.type.organizations": "Organizations",
 	"search.type.tournaments": "Tournaments",
 	"search.noResults": "No results found",
-	"search.hint": "Start typing to search"
+	"search.hint": "Start typing to search",
+	"dataCredit.lean": "Data credit: Lean",
+	"header.parameter": "Parameter"
 }

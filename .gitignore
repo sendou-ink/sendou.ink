@@ -20,7 +20,7 @@ dump
 /scripts/output/*
 !/scripts/output/.gitkeep
 
-/scripts/dicts/**/*.json
+/scripts/dicts/**/*
 /test-results/
 /playwright-report/
 /playwright/.cache/

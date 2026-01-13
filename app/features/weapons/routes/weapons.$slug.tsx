@@ -16,6 +16,7 @@ import {
 	weaponBuildPopularPage,
 	weaponBuildStatsPage,
 } from "~/utils/urls";
+import { WeaponParamsTable } from "../components/WeaponParamsTable";
 import { loader } from "../loaders/weapons.$slug.server";
 
 export { loader };
@@ -51,7 +52,7 @@ export default function WeaponPage() {
 	const { t } = useTranslation(["common", "weapons"]);
 
 	return (
-		<Main className={styles.container}>
+		<Main className={styles.container} bigger>
 			<WeaponImage weaponSplId={data.weaponId} variant="build" size={128} />
 			<h1 className={styles.weaponName}>{data.weaponName}</h1>
 			<div className={styles.links}>
@@ -84,7 +85,20 @@ export default function WeaponPage() {
 					{t("common:pages.vods")}
 				</LinkButton>
 			</div>
-			<div>Just a placeholder, this page also would contain params etc.</div>
+			<WeaponParamsTable
+				currentWeaponId={data.weaponId}
+				categoryWeaponIds={data.categoryWeaponIds}
+				weaponParams={data.weaponParams}
+				versions={data.versions}
+			/>
+			<a
+				href="https://leanny.github.io/"
+				target="_blank"
+				rel="noopener noreferrer"
+				className={styles.dataCredit}
+			>
+				{t("common:dataCredit.lean")}
+			</a>
 		</Main>
 	);
 }

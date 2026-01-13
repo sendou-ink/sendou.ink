@@ -31,7 +31,7 @@ export const meta: MetaFunction = (args) => {
 export default function EditTeamPage() {
 	const { t } = useTranslation(["common", "team"]);
 	const user = useUser();
-	const { team, customTheme } = useLoaderData<typeof loader>();
+	const { team } = useLoaderData<typeof loader>();
 
 	return (
 		<Main className="stack lg">

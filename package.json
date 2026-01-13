@@ -31,7 +31,8 @@
 		"checks:no-unit-test": "npm run biome:fix && npm run check-translation-jsons && npm run typecheck && npm run knip",
 		"setup": "cross-env DB_PATH=db.sqlite3 vite-node ./scripts/setup.ts",
 		"i18n:sync": "i18next-locales-sync -e true -p en -s da de es-ES es-US fr-CA fr-EU he it ja ko nl pl pt-BR ru zh -l locales && npm run biome:fix",
-		"knip": "knip"
+		"knip": "knip",
+		"sync-weapon-params": "tsx scripts/sync-weapon-params.ts"
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.962.0",
