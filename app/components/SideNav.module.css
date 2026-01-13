@@ -305,6 +305,11 @@
 	padding: 0 var(--s-1);
 	border-radius: var(--rounded-xs);
 	flex-shrink: 0;
+	text-transform: uppercase;
+}
+
+.sideNavLinkBadgeWarning {
+	background-color: var(--color-second-high);
 }
 
 .sideNavPanelOverlay {

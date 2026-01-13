@@ -79,6 +79,7 @@ export function SideNavLink({
 	imageUrl,
 	subtitle,
 	badge,
+	badgeVariant,
 }: {
 	children: React.ReactNode;
 	to: string;
@@ -87,6 +88,7 @@ export function SideNavLink({
 	imageUrl?: string;
 	subtitle?: string;
 	badge?: string;
+	badgeVariant?: "default" | "warning";
 }) {
 	return (
 		<Link
@@ -106,7 +108,13 @@ export function SideNavLink({
 							<span className={styles.sideNavLinkSubtitle}>{subtitle}</span>
 						) : null}
 						{badge ? (
-							<span className={styles.sideNavLinkBadge}>{badge}</span>
+							<span
+								className={clsx(styles.sideNavLinkBadge, {
+									[styles.sideNavLinkBadgeWarning]: badgeVariant === "warning",
+								})}
+							>
+								{badge}
+							</span>
 						) : null}
 					</div>
 				) : null}

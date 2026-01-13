@@ -1,26 +1,34 @@
-import type { LoaderFunctionArgs } from "react-router";
+import { href, type LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
+import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
 import {
+	navIconUrl,
 	sendouQMatchPage,
 	tournamentBracketsPage,
 	tournamentMatchPage,
 } from "~/utils/urls";
+
+export type SidebarEvent = {
+	id: number;
+	name: string;
+	url: string;
+	logoUrl: string | null;
+	startTime: number;
+	type: "tournament" | "scrim";
+	scrimStatus?: "booked" | "looking";
+};
+
+const MAX_EVENTS_VISIBLE = 8;
 
 export const loader = async (_args: LoaderFunctionArgs) => {
 	const user = getUser();
 
 	if (!user) {
 		return {
-			tournaments: [] as Array<{
-				id: number;
-				name: string;
-				url: string;
-				logoUrl: string | null;
-				startTime: number;
-			}>,
+			events: [] as SidebarEvent[],
 			matchStatus: null as { matchId: number; url: string } | null,
 			tournamentMatchStatus: null as {
 				url: string;
@@ -33,27 +41,52 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 		};
 	}
 
-	const [tournamentsData, ownGroup] = await Promise.all([
+	const [tournamentsData, scrimsData, ownGroup] = await Promise.all([
 		ShowcaseTournaments.frontPageTournamentsByUserId(user.id),
+		ScrimPostRepository.findUserScrims(user.id),
 		Promise.resolve(SendouQ.findOwnGroup(user.id)),
 	]);
 
 	const tournamentMatchStatus = resolveTournamentMatchStatus(user.id);
 
+	const seenTournamentIds = new Set<number>();
+	const tournamentEvents: SidebarEvent[] = [
+		...tournamentsData.participatingFor,
+		...tournamentsData.organizingFor,
+	]
+		.filter((t) => {
+			if (seenTournamentIds.has(t.id)) return false;
+			seenTournamentIds.add(t.id);
+			return true;
+		})
+		.map((t) => ({
+			id: t.id,
+			name: t.name,
+			url: t.url,
+			logoUrl: t.logoUrl,
+			startTime: t.startTime,
+			type: "tournament" as const,
+		}));
+
+	const scrimsIconUrl = `${navIconUrl("scrims")}.png`;
+	const scrimEvents: SidebarEvent[] = scrimsData.map((s) => ({
+		id: s.id,
+		name: s.opponentName ?? "Scrim",
+		url: s.isAccepted
+			? href("/scrims/:id", { id: String(s.id) })
+			: href("/scrims"),
+		logoUrl: s.opponentAvatarUrl ?? scrimsIconUrl,
+		startTime: s.at,
+		type: "scrim" as const,
+		scrimStatus: s.isAccepted ? ("booked" as const) : ("looking" as const),
+	}));
+
+	const events = [...tournamentEvents, ...scrimEvents]
+		.sort((a, b) => a.startTime - b.startTime)
+		.slice(0, MAX_EVENTS_VISIBLE);
+
 	return {
-		tournaments: [
-			...tournamentsData.participatingFor,
-			...tournamentsData.organizingFor,
-		]
-			.sort((a, b) => a.startTime - b.startTime)
-			.slice(0, 4)
-			.map((t) => ({
-				id: t.id,
-				name: t.name,
-				url: t.url,
-				logoUrl: t.logoUrl,
-				startTime: t.startTime,
-			})),
+		events,
 		matchStatus: ownGroup?.matchId
 			? { matchId: ownGroup.matchId, url: sendouQMatchPage(ownGroup.matchId) }
 			: null,

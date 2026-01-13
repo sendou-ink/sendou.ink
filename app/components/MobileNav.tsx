@@ -55,7 +55,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 
 			{activePanel === "tourneys" ? (
 				<TourneysPanel
-					tournaments={sidebarData?.tournaments ?? []}
+					events={sidebarData?.events ?? []}
 					onClose={closePanel}
 				/>
 			) : null}
@@ -370,10 +370,10 @@ function FriendsPanel({
 }
 
 function TourneysPanel({
-	tournaments,
+	events,
 	onClose,
 }: {
-	tournaments: NonNullable<SidebarData>["tournaments"];
+	events: NonNullable<SidebarData>["events"];
 	onClose: () => void;
 }) {
 	const { t, i18n } = useTranslation(["front"]);
@@ -412,41 +412,53 @@ function TourneysPanel({
 		return date.toDateString();
 	};
 
-	const groupedTournaments = tournaments.reduce(
-		(acc, tournament) => {
-			const key = getDayKey(tournament.startTime);
+	const groupedEvents = events.reduce<Record<string, typeof events>>(
+		(acc, event) => {
+			const key = getDayKey(event.startTime);
 			if (!acc[key]) {
 				acc[key] = [];
 			}
-			acc[key].push(tournament);
+			acc[key].push(event);
 			return acc;
 		},
-		{} as Record<string, typeof tournaments>,
+		{},
 	);
 
-	const dayKeys = Object.keys(groupedTournaments);
+	const dayKeys = Object.keys(groupedEvents);
 
 	return (
 		<MobilePanel title={t("front:sideNav.myCalendar")} onClose={onClose}>
-			{tournaments.length > 0 ? (
+			{events.length > 0 ? (
 				dayKeys.map((dayKey) => {
-					const dayTournaments = groupedTournaments[dayKey];
-					const firstDate = new Date(dayTournaments[0].startTime * 1000);
+					const dayEvents = groupedEvents[dayKey];
+					const firstDate = new Date(dayEvents[0].startTime * 1000);
 
 					return (
 						<div key={dayKey}>
 							<div className={styles.dayHeader}>
 								{formatDayHeader(firstDate)}
 							</div>
-							{dayTournaments.map((tournament) => (
+							{dayEvents.map((event) => (
 								<SideNavLink
-									key={tournament.id}
-									to={tournament.url}
-									imageUrl={tournament.logoUrl ?? undefined}
-									subtitle={formatTime(new Date(tournament.startTime * 1000))}
+									key={`${event.type}-${event.id}`}
+									to={event.url}
+									imageUrl={event.logoUrl ?? undefined}
+									subtitle={formatTime(new Date(event.startTime * 1000))}
+									badge={
+										event.scrimStatus === "booked"
+											? t("front:sideNav.scrimBooked")
+											: event.scrimStatus === "looking"
+												? t("front:sideNav.scrimLooking")
+												: undefined
+									}
+									badgeVariant={
+										event.scrimStatus === "looking" ? "warning" : undefined
+									}
 									onClick={onClose}
 								>
-									{tournament.name}
+									{event.scrimStatus === "booked"
+										? t("front:sideNav.scrimVs", { opponent: event.name })
+										: event.name}
 								</SideNavLink>
 							))}
 						</div>

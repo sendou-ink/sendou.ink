@@ -142,7 +142,7 @@ export function Layout({
 	const { formatRelativeDate } = useTimeFormat();
 	const sidebarData = useSidebarData();
 
-	const tournaments = sidebarData?.tournaments ?? [];
+	const events = sidebarData?.events ?? [];
 	const matchStatus = sidebarData?.matchStatus;
 	const tournamentMatchStatus = sidebarData?.tournamentMatchStatus;
 	const friends = sidebarData?.friends ?? [];
@@ -197,15 +197,27 @@ export function Layout({
 				<SideNavHeader icon={<Calendar />}>
 					{t("front:sideNav.myCalendar")}
 				</SideNavHeader>
-				{tournaments.length > 0 ? (
-					tournaments.map((tournament) => (
+				{events.length > 0 ? (
+					events.map((event) => (
 						<SideNavLink
-							key={tournament.id}
-							to={tournament.url}
-							imageUrl={tournament.logoUrl ?? undefined}
-							subtitle={formatRelativeDate(tournament.startTime)}
+							key={`${event.type}-${event.id}`}
+							to={event.url}
+							imageUrl={event.logoUrl ?? undefined}
+							subtitle={formatRelativeDate(event.startTime)}
+							badge={
+								event.scrimStatus === "booked"
+									? t("front:sideNav.scrimBooked")
+									: event.scrimStatus === "looking"
+										? t("front:sideNav.scrimLooking")
+										: undefined
+							}
+							badgeVariant={
+								event.scrimStatus === "looking" ? "warning" : undefined
+							}
 						>
-							{tournament.name}
+							{event.scrimStatus === "booked"
+								? t("front:sideNav.scrimVs", { opponent: event.name })
+								: event.name}
 						</SideNavLink>
 					))
 				) : (

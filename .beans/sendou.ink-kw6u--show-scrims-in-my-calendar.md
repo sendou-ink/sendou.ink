@@ -1,13 +1,13 @@
 ---
 # sendou.ink-kw6u
 title: Show scrims in Events
-status: todo
+status: completed
 type: task
 priority: normal
 tags:
     - my-events-epic
 created_at: 2026-01-11T09:44:26Z
-updated_at: 2026-01-11T12:51:46Z
+updated_at: 2026-01-13T16:21:09Z
 parent: sendou.ink-6eko
 ---
 
@@ -26,7 +26,11 @@ This gives competitive players visibility into their upcoming scrim commitments 
 
 ## Checklist
 
-- [ ] Identify where scrim data is fetched/stored
-- [ ] Add scrim entries to Events data source
-- [ ] Distinguish between scheduled vs looking-for-match scrims visually
-- [ ] Test with various scrim states
+- [x] Identify where scrim data is fetched/stored
+- [x] Add `findUserScrims` repository function
+- [x] Update sidebar loader to fetch and merge scrims
+- [x] Update Layout component to render scrims with badges
+- [x] Add badge variant to SideNav component
+- [x] Add CSS for "looking" badge variant
+- [x] Add translation keys
+- [x] Test with various scrim states
