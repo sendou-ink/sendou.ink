@@ -7,7 +7,7 @@ interface SessionIdContext {
 export const sessionIdAsyncLocalStorage =
 	new AsyncLocalStorage<SessionIdContext>();
 
-export function getSessionId(): string | undefined {
+function getSessionId(): string | undefined {
 	return sessionIdAsyncLocalStorage.getStore()?.sessionId;
 }
 
