@@ -46,14 +46,17 @@ export const editTeamSchema = z.union([
 			falsyToNull,
 			z.string().max(TEAM.TAG_MAX_LENGTH).nullable(),
 		),
-		customTheme: z
-			.object({
-				"--base-h": z.number().min(0).max(360),
-				"--base-c": z.number().min(0).max(0.1),
-				"--acc-h": z.number().min(0).max(360),
-				"--acc-c": z.number().min(0).max(0.3),
-			} satisfies Record<CustomThemeVar, z.ZodNumber>)
-			.nullable(),
+		customTheme: z.preprocess(
+			(val) => (!val || val === "null" ? null : val),
+			z
+				.object({
+					"--base-h": z.number().min(0).max(360),
+					"--base-c": z.number().min(0).max(0.1),
+					"--acc-h": z.number().min(0).max(360),
+					"--acc-c": z.number().min(0).max(0.3),
+				} satisfies Record<CustomThemeVar, z.ZodNumber>)
+				.nullable(),
+		),
 	}),
 ]);
 

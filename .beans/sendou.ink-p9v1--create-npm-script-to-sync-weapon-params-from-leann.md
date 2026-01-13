@@ -1,10 +1,11 @@
 ---
 # sendou.ink-p9v1
 title: Create npm script to sync weapon params from Leanny/splat3
-status: todo
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-11T12:22:15Z
-updated_at: 2026-01-11T12:22:15Z
+updated_at: 2026-01-13T12:04:46Z
 parent: sendou.ink-0ze4
 ---
 
