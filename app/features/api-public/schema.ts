@@ -121,6 +121,7 @@ export interface GetSendouqMatchResponse {
 }
 
 type SendouqMatchTeam = {
+	id: number;
 	score: number;
 	players: Array<SendouqMatchPlayer>;
 };

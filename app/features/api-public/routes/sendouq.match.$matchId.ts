@@ -64,6 +64,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			points: null,
 		})),
 		teamAlpha: {
+			id: match.groupAlpha.id,
 			score: score[0],
 			players: match.groupAlpha.members.map((member) => ({
 				userId: member.id,
@@ -71,6 +72,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			})),
 		},
 		teamBravo: {
+			id: match.groupBravo.id,
 			score: score[1],
 			players: match.groupBravo.members.map((member) => ({
 				userId: member.id,
