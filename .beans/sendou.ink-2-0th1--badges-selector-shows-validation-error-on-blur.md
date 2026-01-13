@@ -1,10 +1,11 @@
 ---
 # sendou.ink-2-0th1
 title: Badges selector shows validation error on blur
-status: todo
+status: completed
 type: bug
+priority: normal
 created_at: 2026-01-12T16:30:20Z
-updated_at: 2026-01-12T16:30:20Z
+updated_at: 2026-01-13T06:03:50Z
 ---
 
 ## Description

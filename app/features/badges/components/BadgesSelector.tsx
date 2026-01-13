@@ -47,7 +47,7 @@ export function BadgesSelector({
 			)}
 			{showSelect ? (
 				<select
-					onBlur={onBlur}
+					onBlur={() => onBlur?.()}
 					onChange={(e) =>
 						onChange([...selectedBadges, Number(e.target.value)])
 					}
