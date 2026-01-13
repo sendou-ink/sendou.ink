@@ -21,6 +21,7 @@ export function Input({
 	value,
 	placeholder,
 	onChange,
+	onKeyDown,
 	disableAutoComplete = false,
 	readOnly,
 	ref,
@@ -44,6 +45,7 @@ export function Input({
 	value?: string;
 	placeholder?: string;
 	onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+	onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 	disableAutoComplete?: boolean;
 	readOnly?: boolean;
 	ref?: React.Ref<HTMLInputElement>;
@@ -70,6 +72,7 @@ export function Input({
 				data-testid={testId}
 				value={value}
 				onChange={onChange}
+				onKeyDown={onKeyDown}
 				aria-label={ariaLabel}
 				required={required}
 				placeholder={placeholder}

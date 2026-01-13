@@ -143,6 +143,7 @@ function CommandPaletteContent({
 		initialSearchType ?? getInitialSearchType(),
 	);
 	const inputRef = React.useRef<HTMLInputElement>(null);
+	const listBoxRef = React.useRef<HTMLDivElement>(null);
 
 	const fetcher = useFetcher<SearchLoaderData>();
 
@@ -184,10 +185,10 @@ function CommandPaletteContent({
 		setSearchType(value as SearchType);
 	};
 
-	const handleRadioGroupKeyDown = (e: React.KeyboardEvent) => {
-		if (e.key === "Enter") {
+	const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		if (e.key === "ArrowDown" && results.length > 0) {
 			e.preventDefault();
-			inputRef.current?.focus();
+			listBoxRef.current?.focus();
 		}
 	};
 
@@ -199,13 +200,10 @@ function CommandPaletteContent({
 				placeholder={t("common:search.placeholder")}
 				value={query}
 				onChange={(e) => setQuery(e.target.value)}
+				onKeyDown={handleInputKeyDown}
 				icon={<Search className={styles.inputIcon} />}
 			/>
-			{/* biome-ignore lint/a11y/noStaticElementInteractions: keydown handler redirects Enter to input */}
-			<div
-				className={styles.searchTypeContainer}
-				onKeyDown={handleRadioGroupKeyDown}
-			>
+			<div className={styles.searchTypeContainer}>
 				<RadioGroup
 					value={searchType}
 					onChange={handleSearchTypeChange}
@@ -240,6 +238,7 @@ function CommandPaletteContent({
 				</RadioGroup>
 			</div>
 			<ListBox
+				ref={listBoxRef}
 				className={styles.listBox}
 				aria-label={t("common:search")}
 				selectionMode="single"
