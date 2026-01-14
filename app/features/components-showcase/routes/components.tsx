@@ -597,7 +597,6 @@ function SelectSection({ id }: { id: string }) {
 
 function SwitchSection({ id }: { id: string }) {
 	const [isOn, setIsOn] = useState(false);
-	const [isSmallOn, setIsSmallOn] = useState(true);
 
 	return (
 		<Section>
@@ -607,16 +606,6 @@ function SwitchSection({ id }: { id: string }) {
 				<ComponentRow label="Medium (default)">
 					<SendouSwitch isSelected={isOn} onChange={setIsOn}>
 						Toggle me
-					</SendouSwitch>
-				</ComponentRow>
-
-				<ComponentRow label="Small">
-					<SendouSwitch
-						size="small"
-						isSelected={isSmallOn}
-						onChange={setIsSmallOn}
-					>
-						Small switch
 					</SendouSwitch>
 				</ComponentRow>
 

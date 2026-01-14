@@ -138,11 +138,7 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 		<div className={styles.mapListCreator}>
 			<div className={styles.toggleContainer}>
 				<Label>{t("common:maps.halfSz")}</Label>
-				<SendouSwitch
-					isSelected={szEveryOther}
-					onChange={setSzEveryOther}
-					size="small"
-				/>
+				<SendouSwitch isSelected={szEveryOther} onChange={setSzEveryOther} />
 			</div>
 			<SendouButton onPress={handleCreateMaplist} isDisabled={disabled}>
 				{t("common:maps.createMapList")}

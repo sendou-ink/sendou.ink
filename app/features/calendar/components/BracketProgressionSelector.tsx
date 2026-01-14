@@ -475,7 +475,6 @@ function TournamentFormatBracketSelector({
 						<div className="stack sm horizontal mt-1 mb-2">
 							<SendouSwitch
 								id={createId("follow-up-bracket")}
-								size="small"
 								isSelected={Boolean(bracket.sources)}
 								onChange={(isSelected) =>
 									updateBracket({

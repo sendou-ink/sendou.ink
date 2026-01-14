@@ -1314,7 +1314,6 @@ function EffectsSelector({
 											? handleAddEffect(effect.type)
 											: handleRemoveEffect(effect.type)
 									}
-									size="small"
 								/>
 							)}
 						</div>

@@ -195,14 +195,12 @@ function TierListMakerContent() {
 						<SendouSwitch
 							isSelected={canAddDuplicates}
 							onChange={setCanAddDuplicates}
-							size="small"
 						>
 							{t("tier-list-maker:allowDuplicates")}
 						</SendouSwitch>
 						<SendouSwitch
 							isSelected={showTierHeaders}
 							onChange={setShowTierHeaders}
-							size="small"
 						>
 							{t("tier-list-maker:showTierHeaders")}
 						</SendouSwitch>

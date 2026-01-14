@@ -1,5 +1,5 @@
 .root {
-	--height: var(--toggle-height);
+	--height: var(--toggle-height-small);
 
 	cursor: pointer;
 	display: grid;
@@ -11,10 +11,6 @@
 	font-size: var(--fonts-xs);
 	font-weight: var(--bold);
 	margin-block-end: 0;
-}
-
-.small {
-	--height: var(--toggle-height-small);
 }
 
 .indicator {

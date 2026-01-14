@@ -818,7 +818,6 @@ function RankedToggle() {
 			<SendouSwitch
 				name="isRanked"
 				id={id}
-				size="small"
 				isSelected={isRanked}
 				onChange={setIsRanked}
 			/>
@@ -847,7 +846,6 @@ function EnableNoScreenToggle() {
 			<SendouSwitch
 				name="enableNoScreenToggle"
 				id={id}
-				size="small"
 				isSelected={enableNoScreen}
 				onChange={setEnableNoScreen}
 			/>
@@ -873,7 +871,6 @@ function EnableSubsToggle() {
 			<SendouSwitch
 				name="enableSubs"
 				id={id}
-				size="small"
 				isSelected={enableSubs}
 				onChange={setEnableSubs}
 			/>
@@ -900,7 +897,6 @@ function AutonomousSubsToggle() {
 			<SendouSwitch
 				name="autonomousSubs"
 				id={id}
-				size="small"
 				isSelected={autonomousSubs}
 				onChange={setAutonomousSubs}
 			/>
@@ -927,7 +923,6 @@ function RequireIGNToggle() {
 			<SendouSwitch
 				name="requireInGameNames"
 				id={id}
-				size="small"
 				isSelected={requireIGNs}
 				onChange={setRequireIGNs}
 			/>
@@ -957,7 +952,6 @@ function InvitationalToggle({
 			<SendouSwitch
 				name="isInvitational"
 				id={id}
-				size="small"
 				isSelected={isInvitational}
 				onChange={setIsInvitational}
 			/>
@@ -984,7 +978,6 @@ function TestToggle() {
 			<SendouSwitch
 				name="isTest"
 				id={id}
-				size="small"
 				isSelected={isTest}
 				onChange={setIsTest}
 			/>
