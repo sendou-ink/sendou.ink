@@ -3,7 +3,7 @@
 	flex-direction: column;
 	align-items: center;
 	border-radius: var(--rounded);
-	background-color: var(--bg-badge);
+	background-color: var(--color-bg-badge);
 	color: var(--color-text-high);
 	gap: var(--s-6);
 	padding-block: var(--s-2);

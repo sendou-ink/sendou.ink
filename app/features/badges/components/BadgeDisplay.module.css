@@ -6,7 +6,7 @@
 	align-items: center;
 	padding: var(--s-2);
 	border-radius: var(--rounded);
-	background-color: var(--bg-badge);
+	background-color: var(--color-bg-badge);
 	margin-inline: auto;
 }
 

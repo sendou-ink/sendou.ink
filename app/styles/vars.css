@@ -121,8 +121,8 @@ html {
 	--color-bg: var(--color-base-7);
 	--color-bg-high: var(--color-base-6);
 	--color-bg-higher: var(--color-base-5);
-	--bg-ability: oklch(11.736% 0.00867 215.976);
-	--bg-badge: oklch(0% 0 0);
+	--color-bg-ability: oklch(11.736% 0.00867 215.976);
+	--color-bg-badge: oklch(0% 0 0);
 
 	--color-border: var(--color-base-5);
 	--color-border-high: var(--color-base-4);

@@ -10,7 +10,7 @@
 	width: max-content;
 	padding: var(--s-2);
 	border-radius: var(--rounded);
-	background-color: var(--bg-badge);
+	background-color: var(--color-bg-badge);
 	font-size: var(--fonts-sm);
 	font-weight: var(--semi-bold);
 }

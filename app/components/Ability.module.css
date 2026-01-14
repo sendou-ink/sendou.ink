@@ -6,7 +6,7 @@
 	border-radius: 50%;
 	border-right: 0;
 	border-bottom: 0;
-	background: var(--bg-ability);
+	background: var(--color-bg-ability);
 	background-size: 100%;
 	transform: scale(1);
 	transition: all 0.1s ease;
@@ -14,7 +14,7 @@
 }
 
 .isDragTarget {
-	background: var(--bg-ability);
+	background: var(--color-bg-ability);
 	transform: scale(1.15);
 }
 
