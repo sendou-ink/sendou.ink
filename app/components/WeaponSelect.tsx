@@ -103,8 +103,6 @@ export function WeaponSelect<
 			search={{
 				placeholder: t("common:forms.weaponSearch.search.placeholder"),
 			}}
-			className={styles.selectWidthWider}
-			popoverClassName={styles.selectWidthWider}
 			searchInputValue={filterValue}
 			onSearchInputChange={setFilterValue}
 			selectedKey={isControlled ? keyify(value) : undefined}

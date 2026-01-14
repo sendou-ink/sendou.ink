@@ -196,13 +196,7 @@ html {
 	--s-40: 10rem;
 	--s-48: 12rem;
 
-	--input-width-extra-small: 10rem;
-	--input-width-small: 12rem;
-	--input-width-medium: 18rem;
-
 	--label-margin: var(--s-1);
-	--select-width: 225px;
-	--sticky-top: 60px;
 }
 
 /* xs: "(min-width: 480px)",

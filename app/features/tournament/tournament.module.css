@@ -5,7 +5,7 @@
 }
 
 .chatContainer {
-	top: var(--sticky-top);
+	top: calc(var(--layout-nav-height) + var(--s-3));
 	position: sticky;
 	width: 100%;
 }

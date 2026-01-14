@@ -48,8 +48,6 @@ export function StageSelect<Clearable extends boolean | undefined = undefined>({
 			search={{
 				placeholder: t("common:forms.stageSearch.search.placeholder"),
 			}}
-			className={styles.selectWidthWider}
-			popoverClassName={styles.selectWidthWider}
 			selectedKey={isControlled ? value : undefined}
 			defaultSelectedKey={isControlled ? undefined : (initialValue as Key)}
 			onSelectionChange={handleOnChange}

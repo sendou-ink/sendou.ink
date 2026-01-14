@@ -47,8 +47,6 @@ export function GearSelect<Clearable extends boolean | undefined = undefined>({
 			search={{
 				placeholder: t("common:forms.gearSearch.search.placeholder"),
 			}}
-			className={styles.selectWidthWider}
-			popoverClassName={styles.selectWidthWider}
 			selectedKey={value}
 			defaultSelectedKey={initialValue}
 			onSelectionChange={(value) => onChange?.(value as any)}

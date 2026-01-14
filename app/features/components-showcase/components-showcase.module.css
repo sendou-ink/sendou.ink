@@ -2,7 +2,6 @@
 	font-size: var(--fonts-xl);
 	border-bottom: 2px solid var(--color-bg-high);
 	margin-bottom: var(--s-4);
-	scroll-margin-top: var(--sticky-top);
 }
 
 .componentRow {
