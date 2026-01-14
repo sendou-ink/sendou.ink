@@ -236,6 +236,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	variation === "NO_SCRIMS" ? undefined : scrimPostRequests,
 	associations,
 	notifications,
+	friendships,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -292,6 +293,8 @@ function wipeDB() {
 		"Notification",
 		"BanLog",
 		"ModNote",
+		"Friendship",
+		"FriendRequest",
 		"User",
 		"PlusSuggestion",
 		"PlusVote",
@@ -2699,4 +2702,56 @@ async function organization() {
 		series: [],
 		badges: [],
 	});
+}
+
+const SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS = [150, 151, 152, 153];
+const SENDOU_FRIEND_IDS_AS_TOURNAMENT_SUBS = [100, 101, 102, 103];
+
+async function friendships() {
+	const allFriendIds = [
+		...SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS,
+		...SENDOU_FRIEND_IDS_AS_TOURNAMENT_SUBS,
+	];
+
+	for (const friendId of allFriendIds) {
+		const userOneId = Math.min(ADMIN_ID, friendId);
+		const userTwoId = Math.max(ADMIN_ID, friendId);
+
+		sql
+			.prepare(
+				/* sql */ `
+				insert into "Friendship" ("userOneId", "userTwoId")
+				values (@userOneId, @userTwoId)
+			`,
+			)
+			.run({ userOneId, userTwoId });
+	}
+
+	for (const friendId of SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS) {
+		const group = await SQGroupRepository.createGroup({
+			status: "ACTIVE",
+			userId: friendId,
+		});
+
+		const additionalMemberCount = faker.helpers.arrayElement([0, 1, 2]);
+		const additionalMembers = [200, 201, 202, 203, 204, 205].slice(
+			0,
+			additionalMemberCount,
+		);
+
+		for (const memberId of additionalMembers) {
+			sql
+				.prepare(
+					/* sql */ `
+					insert into "GroupMember" ("groupId", "userId", "role")
+					values (@groupId, @userId, @role)
+				`,
+				)
+				.run({
+					groupId: group.id,
+					userId: memberId + (friendId - 150) * 10,
+					role: "REGULAR",
+				});
+		}
+	}
 }
