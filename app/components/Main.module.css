@@ -10,27 +10,27 @@
 }
 
 .main {
-	padding-block: var(--s-3) var(--s-32);
+	padding: var(--layout-main-padding);
+	margin-bottom: var(--s-32);
 	min-height: calc(100dvh - var(--layout-nav-height));
 }
 
 .normal {
 	width: 100%;
 	max-width: 48rem;
-	margin: 0 auto;
-	padding-inline: var(--s-3);
+	margin-inline: auto;
 }
 
 .narrow {
 	width: 100%;
 	max-width: 24rem;
-	margin: 0 auto;
+	margin-inline: auto;
 }
 
 .wide {
 	width: 100%;
 	max-width: 72rem;
-	margin: 0 auto;
+	margin-inline: auto;
 }
 
 @media screen and (display-mode: standalone) {

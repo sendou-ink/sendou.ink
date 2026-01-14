@@ -145,6 +145,11 @@ html {
 
 	--layout-nav-height: 55px;
 	--layout-sidenav-width: 250px;
+	--layout-main-padding: var(--s-4);
+	--layout-sticky-top: calc(
+		var(--layout-nav-height) +
+		var(--layout-main-padding)
+	);
 }
 
 html {
