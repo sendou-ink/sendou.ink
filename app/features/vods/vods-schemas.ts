@@ -6,7 +6,6 @@ import {
 	datetimeRequired,
 	fieldset,
 	idConstantOptional,
-	radioGroup,
 	select,
 	selectOptional,
 	stageSelect,
@@ -14,7 +13,7 @@ import {
 	weaponPool,
 	weaponSelectOptional,
 } from "~/form/fields";
-import { modesShort } from "~/modules/in-game-lists/modes";
+import { modeRadioGroup } from "~/form/presets";
 import {
 	dayMonthYear,
 	id,
@@ -103,11 +102,6 @@ const povSchema = z.union([
 	}),
 ]);
 
-const modeItems = modesShort.map((mode) => ({
-	label: `modes.${mode}` as const,
-	value: mode,
-}));
-
 const matchFieldsetSchema = z.object({
 	startsAt: textFieldRequired({
 		label: "labels.vodStartTimestamp",
@@ -117,10 +111,7 @@ const matchFieldsetSchema = z.object({
 			message: "Invalid time format. Use HH:MM:SS or MM:SS",
 		},
 	}),
-	mode: radioGroup({
-		label: "labels.vodMode",
-		items: modeItems,
-	}),
+	mode: modeRadioGroup({ label: "labels.vodMode" }),
 	stageId: stageSelect({ label: "labels.vodStage" }),
 	weapon: weaponSelectOptional({ label: "labels.vodWeapon" }),
 	weaponsTeamOne: weaponPool({

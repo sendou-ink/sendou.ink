@@ -1,10 +1,11 @@
 ---
 # sendou.ink-2-1421
 title: Add mode select form field helper
-status: todo
+status: completed
 type: feature
+priority: normal
 created_at: 2026-01-11T08:47:55Z
-updated_at: 2026-01-11T08:47:55Z
+updated_at: 2026-01-14T07:25:11Z
 ---
 
 Create a form field helper for game mode selection similar to other field helpers.
