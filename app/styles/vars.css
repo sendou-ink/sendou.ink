@@ -8,6 +8,7 @@ html {
 	--base-c-5: 0.01632;
 	--base-c-6: 0.01548;
 	--base-c-7: 0.00804;
+
 	--acc-h: 270;
 	--acc-c-0: 0.0912;
 	--acc-c-1: 0.2664;
@@ -127,8 +128,6 @@ html {
 	--color-border: var(--color-base-5);
 	--color-border-high: var(--color-base-4);
 	--border-style: 2px solid var(--color-border);
-
-	--backdrop-filter: blur(10px) brightness(95%);
 
 	--input-height-smaller: 1.25rem;
 	--input-height-small: 2rem;

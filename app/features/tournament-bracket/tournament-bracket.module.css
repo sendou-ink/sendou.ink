@@ -74,7 +74,7 @@
 	display: flex;
 	justify-content: space-between;
 	padding: var(--s-2);
-	backdrop-filter: var(--backdrop-filter);
+	backdrop-filter: blur(10px) brightness(95%);
 	background: rgb(0 0 0 / 40%);
 	border-start-end-radius: var(--rounded);
 	border-start-start-radius: var(--rounded);
