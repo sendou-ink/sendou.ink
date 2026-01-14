@@ -36,7 +36,6 @@
 
 .searchKbd {
 	padding: 2px var(--s-1);
-	border: 1px solid var(--color-border);
 	border-radius: var(--rounded-sm);
 	font-size: var(--fonts-xxs);
 	background-color: var(--color-bg-higher);

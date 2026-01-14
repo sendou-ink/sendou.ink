@@ -24,7 +24,7 @@
 
 .abilityButton {
 	padding: var(--s-0-5);
-	border: 2px solid var(--color-bg-high);
+	border: var(--border-style);
 	border-radius: 50%;
 	background-color: var(--color-bg-ability);
 }

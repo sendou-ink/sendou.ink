@@ -32,7 +32,7 @@
 }
 
 .avatarWrapperStaff img {
-	border: 2px solid var(--color-text-accent);
+	border: var(--border-style-accent);
 	border-radius: 50%;
 }
 
@@ -92,7 +92,7 @@
 
 .roomButton {
 	border: 0;
-	border-bottom: 2px solid var(--color-border);
+	border-bottom: var(--border-style);
 	background-color: transparent;
 	color: var(--color-text-high);
 	border-radius: var(--rounded) var(--rounded) 0 0;

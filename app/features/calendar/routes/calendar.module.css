@@ -15,7 +15,7 @@
 .navigateButton {
 	all: unset;
 	background-color: var(--color-bg-higher);
-	border: 2px solid var(--color-border);
+	border: var(--border-style);
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
@@ -27,7 +27,7 @@
 }
 
 .navigateButton:focus-visible {
-	outline: 2px solid var(--color-text-accent);
+	outline: var(--input-focus-ring);
 }
 
 @media screen and (min-width: 600px) {
@@ -62,7 +62,7 @@
 }
 
 .dayHeader {
-	border: 2px solid var(--color-border);
+	border: var(--border-style);
 	border-radius: var(--rounded-sm);
 	background-color: var(--color-bg-high);
 	padding: var(--s-2);
@@ -73,7 +73,7 @@
 
 .dayHeaderToday {
 	background-color: var(--color-bg-higher);
-	border: 2px solid var(--color-border-high);
+	border: var(--border-style-high);
 }
 
 .dayHeaderWeekday {

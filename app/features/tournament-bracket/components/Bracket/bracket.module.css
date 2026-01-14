@@ -15,7 +15,7 @@
 	max-height: min(1000px, 70vh);
 	-ms-overflow-style: none;
 	scrollbar-width: none;
-	border: 2px solid var(--color-border);
+	border: var(--border-style);
 	border-radius: var(--rounded-sm);
 	overflow: scroll;
 	user-select: none;

@@ -1,7 +1,7 @@
 .group {
 	height: var(--input-height);
 	padding: 0 var(--input-padding-inline);
-	border: 2px solid var(--color-border);
+	border: var(--border-style);
 	border-radius: var(--rounded-sm);
 	background-color: var(--color-bg);
 	outline: none;
@@ -15,7 +15,7 @@
 
 .root[data-open] .group {
 	border-color: transparent;
-	outline: 2px solid var(--color-text-accent);
+	outline: var(--input-focus-ring);
 }
 
 .dateInput {

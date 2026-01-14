@@ -6,7 +6,7 @@
 	display: flex;
 	align-items: center;
 	padding: var(--s-2);
-	border: 2px solid var(--color-border);
+	border: var(--border-style);
 	border-top: transparent;
 	border-radius: 0 0 var(--rounded) var(--rounded);
 	background-color: var(--color-bg);
@@ -53,7 +53,7 @@
 	top: 15%;
 	width: 150px;
 	max-height: 85vh;
-	border: 2px solid var(--color-border);
+	border: var(--border-style);
 	border-left: transparent;
 	border-radius: 0 var(--rounded) var(--rounded) 0;
 	background: var(--color-bg);

@@ -3,7 +3,7 @@
 	font-size: var(--fonts-sm);
 	outline: none;
 	line-height: var(--input-line-height);
-	border: 2px solid var(--color-border);
+	border: var(--border-style);
 	border-radius: var(--rounded-sm);
 	background-color: var(--color-bg);
 	height: var(--input-height);

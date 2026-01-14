@@ -80,7 +80,7 @@ textarea:not([name="text"]) {
 	min-height: 5rem;
 	padding: var(--input-padding-block) var(--input-padding-inline);
 	line-height: var(--input-line-height);
-	border: 2px solid var(--color-border);
+	border: var(--border-style);
 	border-radius: var(--rounded-sm);
 	background-color: var(--color-bg);
 	outline: none;
@@ -95,7 +95,7 @@ textarea:not([name="text"]) {
 input:not(.in-container) {
 	width: 100%;
 	box-sizing: border-box;
-	border: 2px solid var(--color-border);
+	border: var(--border-style);
 	border-radius: var(--rounded-sm);
 	background: var(--color-bg);
 	padding: 0 var(--input-padding-inline);
@@ -128,7 +128,7 @@ input[type="checkbox"] {
 	height: var(--selector-height);
 	border-radius: 5px;
 	background-color: var(--color-bg);
-	border: 2px solid var(--color-border);
+	border: var(--border-style);
 
 	&:focus-within {
 		outline: none;
@@ -169,7 +169,7 @@ input[type="radio"] {
 	width: var(--selector-height);
 	height: var(--selector-height);
 	background-color: var(--color-bg);
-	border: 2px solid var(--color-border);
+	border: var(--border-style);
 	border-radius: 999999px;
 	padding: 0;
 
@@ -238,7 +238,7 @@ select {
 	all: unset;
 	width: 100%;
 	box-sizing: border-box;
-	border: 2px solid var(--color-border);
+	border: var(--border-style);
 	border-radius: var(--rounded-sm);
 	background-color: var(--color-bg);
 	cursor: pointer;
@@ -280,7 +280,7 @@ select {
 		}
 
 		background-color: var(--color-bg);
-		border: 2px solid var(--color-border);
+		border: var(--border-style);
 		border-radius: var(--rounded-sm);
 		padding: var(--s-1);
 		margin: 0.5rem;

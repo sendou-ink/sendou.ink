@@ -17,7 +17,7 @@
 	width: calc(var(--height) * 1.75);
 	height: var(--height);
 	background: var(--color-bg);
-	border: 2px solid var(--color-border);
+	border: var(--border-style);
 	border-radius: 99999px;
 
 	&:before {
@@ -44,7 +44,7 @@
 }
 
 .root[data-focus-visible] .indicator {
-	outline: 2px solid var(--color-accent-high);
+	outline: var(--input-focus-ring);
 	outline-offset: 1px;
 }
 

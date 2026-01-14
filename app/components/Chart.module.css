@@ -6,7 +6,7 @@
 }
 
 .tooltip {
-	border: 1.75px solid var(--color-border);
+	border: var(--border-style);
 	border-radius: var(--rounded);
 	background-color: var(--color-bg);
 	padding: var(--s-1) var(--s-2);

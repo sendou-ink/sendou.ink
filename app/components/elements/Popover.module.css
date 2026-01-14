@@ -1,7 +1,7 @@
 .content {
 	max-width: 20rem;
 	padding: var(--s-2);
-	border: 2px solid var(--color-border);
+	border: var(--border-style);
 	border-radius: var(--rounded);
 	font-size: var(--fonts-sm);
 	font-weight: var(--semi-bold);

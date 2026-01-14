@@ -3,7 +3,7 @@
 	width: auto;
 	align-items: center;
 	justify-content: center;
-	border: 2px solid var(--color-text-accent);
+	border: var(--border-style-accent);
 	border-radius: var(--rounded-sm);
 	appearance: none;
 	background: var(--color-text-accent);
@@ -98,7 +98,7 @@
 }
 
 .minimal[data-focus-visible] {
-	outline: 2px solid var(--color-text-accent);
+	outline: var(--input-focus-ring);
 }
 
 .minimalSuccess {

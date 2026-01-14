@@ -336,7 +336,7 @@
 	background-color: var(--color-bg-high);
 	border-radius: var(--rounded);
 	padding: var(--s-4);
-	border: 2px solid var(--color-border);
+	border: var(--border-style);
 }
 
 .postHeader {

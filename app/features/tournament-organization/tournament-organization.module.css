@@ -60,7 +60,7 @@
 	aspect-ratio: 1;
 	max-width: 28px;
 	max-height: 28px;
-	border: 2px solid var(--color-border);
+	border: var(--border-style);
 	display: grid;
 	place-items: center;
 	font-size: var(--fonts-md);
@@ -97,7 +97,7 @@
 	font-size: var(--fonts-md);
 	font-weight: var(--bold);
 	color: var(--color-text-high);
-	border-bottom: 2px solid var(--color-border);
+	border-bottom: var(--border-style);
 	width: 100%;
 	padding-block: var(--s-1);
 }

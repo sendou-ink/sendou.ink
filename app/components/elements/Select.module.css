@@ -1,7 +1,7 @@
 .button {
 	height: var(--input-height);
 	padding: 0 var(--input-padding-inline);
-	border: 2px solid var(--color-border);
+	border: var(--border-style);
 	border-radius: var(--rounded-sm);
 	background-color: var(--color-bg);
 	outline: none;
@@ -54,7 +54,7 @@
 .popover {
 	padding: var(--s-1);
 	width: var(--trigger-width);
-	border: 2px solid var(--color-border);
+	border: var(--border-style);
 	border-radius: var(--rounded);
 	background-color: var(--color-bg);
 	outline: none;
@@ -97,7 +97,7 @@
 	display: flex;
 	gap: var(--s-2);
 
-	border-bottom: 2px solid var(--color-border);
+	border-bottom: var(--border-style);
 	border-radius: var(--rounded-sm) var(--rounded-sm) 0 0;
 	accent-color: var(--color-accent);
 	background-color: var(--color-bg);

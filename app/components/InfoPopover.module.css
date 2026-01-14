@@ -1,5 +1,5 @@
 .trigger {
-	border: 2px solid var(--color-bg-higher);
+	border: var(--border-style-high);
 	border-radius: 100%;
 	background-color: transparent;
 	color: var(--color-text);

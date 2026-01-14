@@ -128,6 +128,8 @@ html {
 	--color-border: var(--color-base-5);
 	--color-border-high: var(--color-base-4);
 	--border-style: 2px solid var(--color-border);
+	--border-style-high: 2px solid var(--color-border-high);
+	--border-style-accent: 2px solid var(--color-text-accent);
 
 	--input-height-smaller: 1.25rem;
 	--input-height-small: 2rem;
@@ -136,7 +138,7 @@ html {
 	--input-padding-block: 0.5rem;
 	--input-padding-inline: 1rem;
 	--input-line-height: 1.2rem;
-	--input-focus-ring: 2px solid var(--color-text-accent);
+	--input-focus-ring: var(--border-style-accent);
 	--input-focus-ring-error: 2px solid var(--color-error);
 
 	--selector-height: 1.25rem;
