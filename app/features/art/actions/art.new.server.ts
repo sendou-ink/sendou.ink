@@ -88,6 +88,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 		const formData = await parseMultipartFormData(
 			request,
+			// 5MB
 			{ maxFileSize: 5 * 1024 * 1024 },
 			uploadHandler,
 		);
