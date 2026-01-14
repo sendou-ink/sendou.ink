@@ -133,6 +133,7 @@
 	"actions.next": "",
 	"actions.previous": "",
 	"actions.back": "",
+	"actions.viewAll": "",
 	"noResults": "",
 	"maps.createMapList": "Créer une liste de stages",
 	"maps.halfSz": "50% DdZ",
@@ -347,5 +348,6 @@
 	"search.noResults": "",
 	"search.hint": "",
 	"dataCredit.lean": "",
-	"header.parameter": ""
+	"header.parameter": "",
+	"weaponArt.title": ""
 }

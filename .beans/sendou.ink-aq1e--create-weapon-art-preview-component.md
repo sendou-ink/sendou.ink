@@ -1,10 +1,11 @@
 ---
 # sendou.ink-aq1e
 title: Create weapon art preview component
-status: todo
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-11T12:22:54Z
-updated_at: 2026-01-11T12:22:54Z
+updated_at: 2026-01-14T13:48:27Z
 parent: sendou.ink-0ze4
 ---
 

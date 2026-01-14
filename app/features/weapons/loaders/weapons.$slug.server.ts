@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
+import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { i18next } from "~/modules/i18n/i18next.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
@@ -10,6 +11,8 @@ import { mySlugify } from "~/utils/urls";
 import { getCategoryWeaponIds, parseWeaponParams } from "../core/weapon-params";
 import weaponParamsData from "../data/weapon-params.json";
 import type { ParsedWeaponParams } from "../weapon-params-types";
+
+const WEAPON_ART_LIMIT = 5;
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const t = await i18next.getFixedT(request, ["weapons"], {
@@ -44,6 +47,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		}
 	}
 
+	const artPieces = await ArtRepository.findShowcaseArtsByTagName(
+		slug,
+		WEAPON_ART_LIMIT,
+	);
+
 	return {
 		weaponId,
 		weaponName,
@@ -51,5 +59,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		categoryWeaponIds,
 		weaponParams,
 		versions: weaponParamsData.metadata.versions,
+		artPieces,
 	};
 };

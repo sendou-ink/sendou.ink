@@ -133,6 +133,7 @@
 	"actions.next": "",
 	"actions.previous": "",
 	"actions.back": "",
+	"actions.viewAll": "",
 	"noResults": "Нет результатов",
 	"maps.createMapList": "Создать список карт",
 	"maps.halfSz": "50% Зон",
@@ -348,5 +349,6 @@
 	"search.noResults": "",
 	"search.hint": "",
 	"dataCredit.lean": "",
-	"header.parameter": ""
+	"header.parameter": "",
+	"weaponArt.title": ""
 }

@@ -171,6 +171,77 @@ export async function findAllTags() {
 	return db.selectFrom("ArtTag").select(["id", "name"]).execute();
 }
 
+export async function findShowcaseArtsByTagName(
+	tagName: string,
+	limit?: number,
+): Promise<ListedArt[]> {
+	const tagNameVariations = [
+		tagName,
+		tagName.replace(/-/g, " "),
+		tagName.replace(/-/g, "_"),
+	];
+
+	const tags = await db
+		.selectFrom("ArtTag")
+		.select("id")
+		.where("name", "in", tagNameVariations)
+		.execute();
+
+	if (tags.length === 0) return [];
+
+	const tagIds = tags.map((t) => t.id);
+
+	const arts = await db
+		.selectFrom("TaggedArt")
+		.innerJoin("Art", "Art.id", "TaggedArt.artId")
+		.innerJoin("User", "User.id", "Art.authorId")
+		.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
+		.select((eb) => [
+			"Art.id",
+			"Art.createdAt",
+			"Art.isShowcase",
+			"User.id as userId",
+			"User.discordId",
+			"User.username",
+			"User.discordAvatar",
+			"User.commissionsOpen",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"url",
+			),
+		])
+		.where("TaggedArt.tagId", "in", tagIds)
+		.orderBy("Art.isShowcase", "desc")
+		.orderBy("Art.createdAt", "desc")
+		.execute();
+
+	const encounteredUserIds = new Set<number>();
+
+	const result = arts
+		.filter((row) => {
+			if (encounteredUserIds.has(row.userId)) {
+				return false;
+			}
+
+			encounteredUserIds.add(row.userId);
+
+			return true;
+		})
+		.map((a) => ({
+			id: a.id,
+			createdAt: a.createdAt,
+			url: a.url,
+			isShowcase: Boolean(a.isShowcase),
+			author: {
+				commissionsOpen: a.commissionsOpen,
+				discordAvatar: a.discordAvatar,
+				discordId: a.discordId,
+				username: a.username,
+			},
+		}));
+
+	return limit ? result.slice(0, limit) : result;
+}
+
 export async function findArtsByUserId(
 	userId: number,
 	{ includeAuthored = true, includeTagged = true } = {},

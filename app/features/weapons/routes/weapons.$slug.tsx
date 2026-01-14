@@ -16,6 +16,7 @@ import {
 	weaponBuildPopularPage,
 	weaponBuildStatsPage,
 } from "~/utils/urls";
+import { WeaponArtPreview } from "../components/WeaponArtPreview";
 import { WeaponParamsTable } from "../components/WeaponParamsTable";
 import { loader } from "../loaders/weapons.$slug.server";
 
@@ -85,6 +86,7 @@ export default function WeaponPage() {
 					{t("common:pages.vods")}
 				</LinkButton>
 			</div>
+			<WeaponArtPreview artPieces={data.artPieces} weaponSlug={data.slug} />
 			<WeaponParamsTable
 				currentWeaponId={data.weaponId}
 				categoryWeaponIds={data.categoryWeaponIds}

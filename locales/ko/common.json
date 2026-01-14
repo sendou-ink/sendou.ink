@@ -133,6 +133,7 @@
 	"actions.next": "",
 	"actions.previous": "",
 	"actions.back": "",
+	"actions.viewAll": "",
 	"noResults": "",
 	"maps.createMapList": "맵 목록 생성",
 	"maps.halfSz": "에어리어 50%",
@@ -341,5 +342,6 @@
 	"search.noResults": "",
 	"search.hint": "",
 	"dataCredit.lean": "",
-	"header.parameter": ""
+	"header.parameter": "",
+	"weaponArt.title": ""
 }
