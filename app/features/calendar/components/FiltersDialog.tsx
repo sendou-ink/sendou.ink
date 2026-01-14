@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useFetcher, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import type { z } from "zod";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -52,27 +52,12 @@ function FiltersForm({
 }) {
 	const user = useUser();
 	const { t } = useTranslation(["calendar"]);
-	const fetcher = useFetcher();
 	const [, setSearchParams] = useSearchParams();
 
-	const applyFilters = (newFilters: CalendarFilters) => {
-		setSearchParams((prev) => {
-			prev.set("filters", JSON.stringify(newFilters));
-			return prev;
-		});
-	};
-
 	const handleApply = (values: FormValues) => {
-		applyFilters(values as unknown as CalendarFilters);
-		closeDialog();
-	};
-
-	const handleApplyAndPersist = (values: FormValues) => {
-		const calendarFilters = values as unknown as CalendarFilters;
-		applyFilters(calendarFilters);
-		fetcher.submit(calendarFilters as Parameters<typeof fetcher.submit>[0], {
-			method: "post",
-			encType: "application/json",
+		setSearchParams((prev) => {
+			prev.set("filters", JSON.stringify(values));
+			return prev;
 		});
 		closeDialog();
 	};
@@ -84,6 +69,7 @@ function FiltersForm({
 			onApply={handleApply}
 			submitButtonText={t("calendar:filter.apply")}
 			className="stack md-plus items-start"
+			secondarySubmit={user ? <ApplyAndPersistButton /> : null}
 		>
 			{({ names }) => (
 				<>
@@ -100,42 +86,23 @@ function FiltersForm({
 					<FormField name={names.orgsIncluded} />
 					<FormField name={names.orgsExcluded} />
 					<FormField name={names.authorIdsExcluded} />
-					{user ? (
-						<ApplyAndPersistButton
-							onApplyAndPersist={handleApplyAndPersist}
-							fetcher={fetcher}
-						/>
-					) : null}
 				</>
 			)}
 		</SendouForm>
 	);
 }
 
-function ApplyAndPersistButton({
-	onApplyAndPersist,
-	fetcher,
-}: {
-	onApplyAndPersist: (values: FormValues) => void;
-	fetcher: ReturnType<typeof useFetcher>;
-}) {
+function ApplyAndPersistButton() {
 	const { t } = useTranslation(["calendar"]);
-	const context = useFormFieldContext();
-
-	const handlePress = () => {
-		const values = context.values as FormValues;
-		onApplyAndPersist(values);
-	};
+	const { values, submitToServer, fetcherState } = useFormFieldContext();
 
 	return (
-		<div className="w-full flex justify-center">
-			<SendouButton
-				variant="outlined"
-				onPress={handlePress}
-				isDisabled={fetcher.state === "submitting"}
-			>
-				{t("calendar:filter.applyAndDefault")}
-			</SendouButton>
-		</div>
+		<SendouButton
+			variant="outlined"
+			onPress={() => submitToServer(values as CalendarFilters)}
+			isDisabled={fetcherState !== "idle"}
+		>
+			{t("calendar:filter.applyAndDefault")}
+		</SendouButton>
 	);
 }

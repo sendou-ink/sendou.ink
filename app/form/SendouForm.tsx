@@ -34,6 +34,8 @@ export interface FormContextValue<T extends z.ZodRawShape = z.ZodRawShape> {
 	values: Record<string, unknown>;
 	setValue: (name: string, value: unknown) => void;
 	revalidateAll: (updatedValues: Record<string, unknown>) => void;
+	submitToServer: (values: Record<string, unknown>) => void;
+	fetcherState: "idle" | "loading" | "submitting";
 }
 
 const FormContext = React.createContext<FormContextValue | null>(null);
@@ -59,6 +61,7 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	autoSubmit?: boolean;
 	className?: string;
 	onApply?: (values: z.infer<z.ZodObject<T>>) => void;
+	secondarySubmit?: React.ReactNode;
 };
 
 type SendouFormProps<T extends z.ZodRawShape> = BaseFormProps<T> &
@@ -82,6 +85,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 	autoSubmit,
 	className,
 	onApply,
+	secondarySubmit,
 }: SendouFormProps<T>) {
 	const { t } = useTranslation(["forms"]);
 	const fetcher = useFetcher<{ fieldErrors?: Record<string, string> }>();
@@ -139,8 +143,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 		}
 	};
 
-	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
+	const validateAndPrepare = (): boolean => {
 		setHasSubmitted(true);
 		setVisibleServerErrors({});
 
@@ -170,8 +173,15 @@ export function SendouForm<T extends z.ZodRawShape>({
 				setClientErrors(newErrors);
 			});
 			scrollToFirstError(newErrors);
-			return;
+			return false;
 		}
+
+		return true;
+	};
+
+	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		if (!validateAndPrepare()) return;
 
 		if (onApply) {
 			onApply(values as z.infer<z.ZodObject<T>>);
@@ -234,6 +244,20 @@ export function SendouForm<T extends z.ZodRawShape>({
 			}
 		: undefined;
 
+	const submitToServer = (valuesToSubmit: Record<string, unknown>) => {
+		if (!validateAndPrepare()) return;
+
+		if (onApply) {
+			onApply(values as z.infer<z.ZodObject<T>>);
+		}
+
+		fetcher.submit(valuesToSubmit as Record<string, string>, {
+			method,
+			action,
+			encType: "application/json",
+		});
+	};
+
 	const contextValue: FormContextValue<T> = {
 		schema,
 		defaultValues,
@@ -245,6 +269,8 @@ export function SendouForm<T extends z.ZodRawShape>({
 		revalidateAll,
 		values,
 		setValue,
+		submitToServer,
+		fetcherState: fetcher.state,
 	};
 
 	function scrollToFirstError(errors: Record<string, string>) {
@@ -288,7 +314,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 				{title ? <h2 className={styles.title}>{title}</h2> : null}
 				{resolvedChildren}
 				{autoSubmit ? null : (
-					<div className="mt-4 stack mx-auto justify-center">
+					<div className="mt-4 stack horizontal md mx-auto justify-center">
 						<SubmitButton
 							_action={_action}
 							testId={submitButtonTestId}
@@ -296,6 +322,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 						>
 							{submitButtonText ?? t("submit")}
 						</SubmitButton>
+						{secondarySubmit}
 					</div>
 				)}
 				{fallbackError ? (

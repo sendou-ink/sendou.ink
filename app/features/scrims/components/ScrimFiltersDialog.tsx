@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useFetcher, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import type { z } from "zod";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -74,38 +74,15 @@ function FiltersForm({
 }) {
 	const user = useUser();
 	const { t } = useTranslation(["scrims"]);
-	const fetcher = useFetcher();
 	const [, setSearchParams] = useSearchParams();
 
 	const defaultValues = filtersToFormValues(filters);
 
-	const applyFilters = (scrimFilters: ScrimFilters) => {
+	const handleApply = (values: FormValues) => {
 		setSearchParams((prev) => {
-			prev.set("filters", JSON.stringify(scrimFilters));
+			prev.set("filters", JSON.stringify(formValuesToFilters(values)));
 			return prev;
 		});
-	};
-
-	const handleApply = (values: FormValues) => {
-		applyFilters(formValuesToFilters(values));
-		closeDialog();
-	};
-
-	const handleApplyAndPersist = (values: FormValues) => {
-		const scrimFilters = formValuesToFilters(values);
-		applyFilters(scrimFilters);
-
-		fetcher.submit(
-			{
-				_action: "PERSIST_SCRIM_FILTERS",
-				filters: scrimFilters,
-			} as unknown as Parameters<typeof fetcher.submit>[0],
-			{
-				method: "post",
-				encType: "application/json",
-			},
-		);
-
 		closeDialog();
 	};
 
@@ -116,48 +93,37 @@ function FiltersForm({
 			onApply={handleApply}
 			submitButtonText={t("scrims:filters.apply")}
 			className="stack md-plus items-start"
+			secondarySubmit={user ? <ApplyAndPersistButton /> : null}
 		>
 			{({ names }) => (
 				<>
 					<FormField name={names.weekdayTimes} />
 					<FormField name={names.weekendTimes} />
 					<FormField name={names.divs} />
-					{user ? (
-						<ApplyAndPersistButton
-							onApplyAndPersist={handleApplyAndPersist}
-							fetcher={fetcher}
-						/>
-					) : null}
 				</>
 			)}
 		</SendouForm>
 	);
 }
 
-function ApplyAndPersistButton({
-	onApplyAndPersist,
-	fetcher,
-}: {
-	onApplyAndPersist: (values: FormValues) => void;
-	fetcher: ReturnType<typeof useFetcher>;
-}) {
+function ApplyAndPersistButton() {
 	const { t } = useTranslation(["scrims"]);
-	const context = useFormFieldContext();
+	const { values, submitToServer, fetcherState } = useFormFieldContext();
 
 	const handlePress = () => {
-		const values = context.values as FormValues;
-		onApplyAndPersist(values);
+		submitToServer({
+			_action: "PERSIST_SCRIM_FILTERS",
+			filters: formValuesToFilters(values as FormValues),
+		});
 	};
 
 	return (
-		<div className="w-full flex justify-center">
-			<SendouButton
-				variant="outlined"
-				onPress={handlePress}
-				isDisabled={fetcher.state === "submitting"}
-			>
-				{t("scrims:filters.applyAndDefault")}
-			</SendouButton>
-		</div>
+		<SendouButton
+			variant="outlined"
+			onPress={handlePress}
+			isDisabled={fetcherState !== "idle"}
+		>
+			{t("scrims:filters.applyAndDefault")}
+		</SendouButton>
 	);
 }
