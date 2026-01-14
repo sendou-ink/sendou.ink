@@ -463,6 +463,63 @@ export function datetimeOptional(args: DateTimeArgs) {
 		});
 }
 
+export function dateRequired(args: DateTimeArgs) {
+	const minDate = args.min ?? new Date(Date.UTC(2015, 4, 28));
+	const maxDate = args.max ?? new Date(Date.UTC(2030, 4, 28));
+
+	return z
+		.preprocess(
+			date,
+			z
+				.date({ message: "forms:errors.required" })
+				.min(
+					minDate,
+					args.minMessage ? { message: `forms:${args.minMessage}` } : undefined,
+				)
+				.max(
+					maxDate,
+					args.maxMessage ? { message: `forms:${args.maxMessage}` } : undefined,
+				),
+		)
+		.register(formRegistry, {
+			...args,
+			label: prefixKey(args.label),
+			bottomText: prefixKey(args.bottomText),
+			type: "date",
+			initialValue: null,
+			required: true,
+		});
+}
+
+export function dateOptional(args: DateTimeArgs) {
+	const minDate = args.min ?? new Date(Date.UTC(2015, 4, 28));
+	const maxDate = args.max ?? new Date(Date.UTC(2030, 4, 28));
+
+	return z
+		.preprocess(
+			date,
+			z
+				.date()
+				.min(
+					minDate,
+					args.minMessage ? { message: `forms:${args.minMessage}` } : undefined,
+				)
+				.max(
+					maxDate,
+					args.maxMessage ? { message: `forms:${args.maxMessage}` } : undefined,
+				)
+				.optional(),
+		)
+		.register(formRegistry, {
+			...args,
+			label: prefixKey(args.label),
+			bottomText: prefixKey(args.bottomText),
+			type: "date",
+			initialValue: null,
+			required: false,
+		});
+}
+
 export function checkboxGroup<V extends string>(
 	args: WithTypedTranslationKeys<
 		WithTypedItemLabels<

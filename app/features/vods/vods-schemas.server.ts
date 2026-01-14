@@ -8,7 +8,7 @@ import { canEditVideo } from "./vods-utils";
 function dateToDayMonthYear(date: Date) {
 	return {
 		day: date.getDate(),
-		month: date.getMonth() + 1,
+		month: date.getMonth(),
 		year: date.getFullYear(),
 	};
 }

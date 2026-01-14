@@ -161,6 +161,7 @@ export type FormField<V extends string = string> =
 	| FormFieldInputGroup<"radio-group", V>
 	| FormFieldInputGroup<"checkbox-group", V>
 	| FormFieldDatetime<"datetime">
+	| FormFieldDatetime<"date">
 	| FormFieldWeaponPool<"weapon-pool">
 	| FormFieldMapPool<"map-pool">
 	| FormFieldBase<"theme">

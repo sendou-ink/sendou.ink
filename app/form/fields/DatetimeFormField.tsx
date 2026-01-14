@@ -1,13 +1,17 @@
-import type { CalendarDateTime } from "@internationalized/date";
+import type { CalendarDate, CalendarDateTime } from "@internationalized/date";
 import { SendouDatePicker } from "~/components/elements/DatePicker";
-import { dateToDateValue } from "~/utils/dates";
+import { dateToCalendarDate, dateToDateValue } from "~/utils/dates";
 import type { FormFieldProps } from "../types";
 import { errorMessageId } from "../utils";
 import { FormFieldWrapper, useTranslatedTexts } from "./FormFieldWrapper";
 
-type DatetimeFormFieldProps = FormFieldProps<"datetime"> & {
+type DatetimeFormFieldProps = Omit<
+	FormFieldProps<"datetime">,
+	"min" | "max"
+> & {
 	value: Date | undefined;
 	onChange: (value: Date | undefined) => void;
+	granularity?: "day" | "minute";
 };
 
 export function DatetimeFormField({
@@ -19,15 +23,27 @@ export function DatetimeFormField({
 	onBlur,
 	value,
 	onChange,
+	granularity = "minute",
 }: DatetimeFormFieldProps) {
 	const { translatedLabel, translatedError, translatedBottomText } =
 		useTranslatedTexts({ label, error, bottomText });
 
-	const handleChange = (val: CalendarDateTime | null) => {
+	const handleChange = (val: CalendarDateTime | CalendarDate | null) => {
 		if (val) {
-			onChange(
-				new Date(val.year, val.month - 1, val.day, val.hour, val.minute),
-			);
+			if (granularity === "day") {
+				onChange(new Date(val.year, val.month - 1, val.day));
+			} else {
+				const dateTimeVal = val as CalendarDateTime;
+				onChange(
+					new Date(
+						dateTimeVal.year,
+						dateTimeVal.month - 1,
+						dateTimeVal.day,
+						dateTimeVal.hour,
+						dateTimeVal.minute,
+					),
+				);
+			}
 		} else {
 			onChange(undefined);
 		}
@@ -37,12 +53,18 @@ export function DatetimeFormField({
 		<FormFieldWrapper id={name} name={name}>
 			<SendouDatePicker
 				label={translatedLabel ?? ""}
-				granularity="minute"
+				granularity={granularity}
 				errorText={translatedError}
 				errorId={errorMessageId(name)}
 				bottomText={translatedBottomText}
 				isRequired={required}
-				value={value ? dateToDateValue(value) : null}
+				value={
+					value
+						? granularity === "day"
+							? dateToCalendarDate(value)
+							: dateToDateValue(value)
+						: null
+				}
 				onChange={handleChange}
 				onBlur={() => onBlur?.()}
 			/>

@@ -235,11 +235,12 @@ export function FormField({
 		);
 	}
 
-	if (formField.type === "datetime") {
+	if (formField.type === "datetime" || formField.type === "date") {
 		return (
 			<DatetimeFormField
 				{...commonProps}
 				{...formField}
+				granularity={formField.type === "date" ? "day" : "minute"}
 				value={value as Date | undefined}
 				onChange={handleChange as (v: Date | undefined) => void}
 			/>

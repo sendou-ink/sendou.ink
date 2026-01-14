@@ -3,7 +3,7 @@ import { z } from "zod";
 import {
 	array,
 	customField,
-	datetimeRequired,
+	dateRequired,
 	fieldset,
 	idConstantOptional,
 	select,
@@ -142,7 +142,7 @@ export const vodFormBaseSchema = z.object({
 		label: "labels.vodTitle",
 		maxLength: 100,
 	}),
-	date: datetimeRequired({
+	date: dateRequired({
 		label: "labels.vodDate",
 		max: add(new Date(), { days: 1 }),
 		maxMessage: "errors.dateMustNotBeFuture",
