@@ -85,6 +85,8 @@ export default [
 		"features/object-damage-calculator/routes/object-damage-calculator.tsx",
 	),
 
+	route("/comp-analyzer", "features/comp-analyzer/routes/comp-analyzer.tsx"),
+
 	route("/to/search", "features/tournament/routes/to.search.ts"),
 	route("/to/:id", "features/tournament/routes/to.$id.tsx", [
 		index("features/tournament/routes/to.$id.index.ts"),

@@ -1,0 +1,255 @@
+.comp-analyzer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+	padding-block: var(--s-4);
+}
+
+.comp-analyzer__title {
+	text-align: center;
+	font-size: var(--fonts-xl);
+	font-weight: var(--bold);
+	margin-bottom: var(--s-2);
+}
+
+.comp-analyzer__slots-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-6);
+	padding: var(--s-6);
+	background-color: var(--bg-lighter);
+	border-radius: var(--rounded);
+}
+
+.comp-analyzer__slots {
+	display: flex;
+	justify-content: center;
+	gap: var(--s-4);
+	flex-wrap: wrap;
+}
+
+.comp-analyzer__slot {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: 90px;
+	height: 110px;
+	border: 2px solid var(--border-color);
+	border-radius: var(--rounded-sm);
+	background-color: var(--bg-darker);
+	gap: var(--s-2);
+	padding: var(--s-2);
+	transition: border-color 0.15s ease;
+}
+
+.comp-analyzer__slot:hover {
+	border-color: var(--theme);
+}
+
+.comp-analyzer__slot-remove {
+	position: absolute;
+	top: -10px;
+	right: -10px;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	border: 2px solid var(--bg-darker);
+	background-color: var(--theme-secondary);
+	color: white;
+	font-size: 16px;
+	font-weight: var(--bold);
+	line-height: 1;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition:
+		transform 0.1s ease,
+		background-color 0.1s ease;
+	z-index: 1;
+}
+
+.comp-analyzer__slot-remove:hover {
+	background-color: var(--theme-secondary-lighter);
+	transform: scale(1.1);
+}
+
+.comp-analyzer__slot-icons {
+	display: flex;
+	gap: var(--s-2);
+	padding-top: var(--s-1);
+}
+
+.comp-analyzer__slot-empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+}
+
+.comp-analyzer__slot-number {
+	font-size: var(--fonts-xl);
+	font-weight: var(--bold);
+	color: var(--text-lighter);
+	opacity: 0.5;
+}
+
+.comp-analyzer__picker {
+	display: flex;
+	justify-content: center;
+	width: 100%;
+	max-width: 320px;
+}
+
+.comp-analyzer__combos {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.comp-analyzer__combos-header {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-3);
+	padding-bottom: var(--s-2);
+	border-bottom: 1px solid var(--border-color);
+}
+
+.comp-analyzer__combos-title {
+	font-size: var(--fonts-lg);
+	font-weight: var(--semi-bold);
+	margin: 0;
+}
+
+.comp-analyzer__combos-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	max-width: 700px;
+	margin: 0 auto;
+	width: 100%;
+}
+
+.damage-combo-bar {
+	display: flex;
+	align-items: center;
+	gap: var(--s-4);
+	padding: var(--s-2);
+	background-color: var(--bg-lighter);
+	border-radius: var(--rounded-sm);
+	transition: background-color 0.1s ease;
+}
+
+.damage-combo-bar:hover {
+	background-color: var(--bg-darker-very-transparent);
+}
+
+.damage-combo-bar__segments {
+	position: relative;
+	flex: 1;
+	display: flex;
+	height: 36px;
+	border-radius: var(--rounded-xs);
+	overflow: hidden;
+	background-color: var(--bg-darker);
+	box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.damage-combo-bar__threshold {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 2px;
+	background: repeating-linear-gradient(
+		to bottom,
+		rgba(0, 0, 0, 0.3) 0px,
+		rgba(0, 0, 0, 0.3) 3px,
+		transparent 3px,
+		transparent 6px
+	);
+	pointer-events: none;
+	z-index: 1;
+}
+
+.damage-combo-bar__segment {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-1);
+	min-width: 70px;
+	color: var(--button-text);
+	font-size: var(--fonts-xs);
+	font-weight: var(--bold);
+	padding-inline: var(--s-2);
+	overflow: hidden;
+}
+
+.damage-combo-bar__segment img {
+	flex-shrink: 0;
+}
+
+.damage-combo-bar__segment-text {
+	white-space: nowrap;
+	font-size: var(--fonts-sm);
+}
+
+.damage-combo-bar__segment-label {
+	white-space: nowrap;
+	font-size: var(--fonts-xxs);
+	opacity: 0.85;
+	font-weight: var(--semi-bold);
+}
+
+.damage-combo-bar__info {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	min-width: 70px;
+	flex-shrink: 0;
+}
+
+.damage-combo-bar__total {
+	font-weight: var(--bold);
+	font-size: var(--fonts-md);
+	color: var(--text-main);
+}
+
+.damage-combo-bar__hits {
+	font-size: var(--fonts-xs);
+	color: var(--text-lighter);
+}
+
+.comp-analyzer__no-combos {
+	text-align: center;
+	color: var(--text-lighter);
+	font-size: var(--fonts-sm);
+	padding: var(--s-8);
+}
+
+@media (max-width: 600px) {
+	.comp-analyzer__slots {
+		gap: var(--s-2);
+	}
+
+	.comp-analyzer__slot {
+		width: 75px;
+		height: 95px;
+	}
+
+	.damage-combo-bar {
+		flex-direction: column;
+		align-items: stretch;
+		gap: var(--s-2);
+	}
+
+	.damage-combo-bar__info {
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+	}
+}
