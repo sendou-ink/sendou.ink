@@ -124,8 +124,8 @@ input[type="checkbox"] {
 	appearance: none;
 	cursor: pointer;
 	padding: 0;
-	width: var(--toggle-height-small);
-	height: var(--toggle-height-small);
+	width: var(--selector-height);
+	height: var(--selector-height);
 	border-radius: 5px;
 	background-color: var(--color-bg);
 	border: 2px solid var(--color-border);
@@ -166,8 +166,8 @@ input[type="radio"] {
 	appearance: none;
 	cursor: pointer;
 	vertical-align: middle;
-	width: var(--toggle-height-small);
-	height: var(--toggle-height-small);
+	width: var(--selector-height);
+	height: var(--selector-height);
 	background-color: var(--color-bg);
 	border: 2px solid var(--color-border);
 	border-radius: 999999px;
@@ -408,7 +408,7 @@ input[type="range"] {
 	appearance: none;
 	background: 0 0;
 	width: 100%;
-	height: var(--toggle-height-small);
+	height: var(--selector-height);
 
 	&:focus {
 		outline: none;
@@ -422,7 +422,7 @@ input[type="range"] {
 
 input[type="range"]::-webkit-slider-runnable-track {
 	width: 100%;
-	height: calc(var(--toggle-height-small) / 4);
+	height: calc(var(--selector-height) / 4);
 	background-color: var(--track-color);
 	border-radius: var(--rounded-full);
 	transition: 100ms background-color;
@@ -430,7 +430,7 @@ input[type="range"]::-webkit-slider-runnable-track {
 
 input[type="range"]::-moz-range-track {
 	width: 100%;
-	height: calc(var(--toggle-height-small) / 4);
+	height: calc(var(--selector-height) / 4);
 	background-color: var(--track-color);
 	border-radius: var(--rounded-full);
 	transition: 100ms background-color;
@@ -439,10 +439,10 @@ input[type="range"]::-moz-range-track {
 input[type="range"]::-webkit-slider-thumb {
 	-webkit-appearance: none;
 	appearance: none;
-	width: var(--toggle-height-small);
-	height: var(--toggle-height-small);
+	width: var(--selector-height);
+	height: var(--selector-height);
 	margin-top: calc(
-		(calc(var(--toggle-height-small) / 4) - var(--toggle-height-small)) /
+		(calc(var(--selector-height) / 4) - var(--selector-height)) /
 		2
 	);
 	background-color: var(--thumb-color);
@@ -455,10 +455,10 @@ input[type="range"]::-webkit-slider-thumb {
 input[type="range"]::-moz-range-thumb {
 	-webkit-appearance: none;
 	appearance: none;
-	width: var(--toggle-height-small);
-	height: var(--toggle-height-small);
+	width: var(--selector-height);
+	height: var(--selector-height);
 	margin-top: calc(
-		(calc(var(--toggle-height-small) / 4) - var(--toggle-height-small)) /
+		(calc(var(--selector-height) / 4) - var(--selector-height)) /
 		2
 	);
 	background-color: var(--thumb-color);
@@ -474,7 +474,7 @@ progress {
 	appearance: none;
 	display: inline-block;
 	width: 100%;
-	height: var(--toggle-height-small);
+	height: var(--selector-height);
 	overflow: hidden;
 	border: none;
 	border-radius: var(--rounded-full);

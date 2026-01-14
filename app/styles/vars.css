@@ -140,7 +140,7 @@ html {
 	--input-focus-ring: 2px solid var(--color-text-accent);
 	--input-focus-ring-error: 2px solid var(--color-error);
 
-	--toggle-height-small: 1.25rem;
+	--selector-height: 1.25rem;
 
 	--input-icon-width: 18px;
 
