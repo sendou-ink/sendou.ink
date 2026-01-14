@@ -1,7 +1,7 @@
 ---
 # sendou.ink-2-r8gb
 title: Require explicit maxLength for number fields
-status: todo
+status: scrapped
 type: task
 created_at: 2026-01-11T08:31:34Z
 updated_at: 2026-01-11T08:31:34Z
