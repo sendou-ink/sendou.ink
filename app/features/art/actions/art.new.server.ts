@@ -1,5 +1,4 @@
 import type { FileUpload } from "@remix-run/form-data-parser";
-import { parseFormData as parseMultipartFormData } from "@remix-run/form-data-parser";
 import { nanoid } from "nanoid";
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
@@ -14,6 +13,7 @@ import {
 	errorToastIfFalsy,
 	parseFormData,
 	parseRequestPayload,
+	safeParseMultipartFormData,
 } from "~/utils/remix.server";
 import { userArtPage } from "~/utils/urls";
 import { NEW_ART_EXISTING_SEARCH_PARAM_KEY } from "../art-constants";
@@ -86,7 +86,7 @@ export const action: ActionFunction = async ({ request }) => {
 			return null;
 		};
 
-		const formData = await parseMultipartFormData(
+		const formData = await safeParseMultipartFormData(
 			request,
 			// 5MB
 			{ maxFileSize: 5 * 1024 * 1024 },
