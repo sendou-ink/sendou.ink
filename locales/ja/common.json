@@ -133,6 +133,7 @@
 	"actions.next": "",
 	"actions.previous": "",
 	"actions.back": "",
+	"actions.viewAll": "",
 	"noResults": "",
 	"maps.createMapList": "ステージ一覧を作る",
 	"maps.halfSz": "ガチエリア (2ヶ所)",
@@ -341,5 +342,6 @@
 	"search.noResults": "",
 	"search.hint": "",
 	"dataCredit.lean": "",
-	"header.parameter": ""
+	"header.parameter": "",
+	"weaponArt.title": ""
 }

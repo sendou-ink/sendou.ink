@@ -133,6 +133,7 @@
 	"actions.next": "",
 	"actions.previous": "",
 	"actions.back": "",
+	"actions.viewAll": "",
 	"noResults": "",
 	"maps.createMapList": "创建地图列表",
 	"maps.halfSz": "50%为真格区域",
@@ -341,5 +342,6 @@
 	"search.noResults": "",
 	"search.hint": "",
 	"dataCredit.lean": "",
-	"header.parameter": ""
+	"header.parameter": "",
+	"weaponArt.title": ""
 }

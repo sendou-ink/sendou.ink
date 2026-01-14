@@ -133,6 +133,7 @@
 	"actions.next": "Next",
 	"actions.previous": "Previous",
 	"actions.back": "Back",
+	"actions.viewAll": "View all",
 	"noResults": "No results",
 	"maps.createMapList": "Create map list",
 	"maps.halfSz": "50% SZ",
@@ -345,5 +346,6 @@
 	"search.noResults": "No results found",
 	"search.hint": "Start typing to search",
 	"dataCredit.lean": "Data credit: Lean",
-	"header.parameter": "Parameter"
+	"header.parameter": "Parameter",
+	"weaponArt.title": "Community Art"
 }
