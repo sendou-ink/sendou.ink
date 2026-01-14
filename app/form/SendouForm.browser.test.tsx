@@ -243,6 +243,57 @@ describe("SendouForm", () => {
 			expect(textarea).not.toBeNull();
 		});
 
+		test("displays value counter showing current/max characters", async () => {
+			const schema = z.object({
+				bio: textAreaOptional({ label: "labels.bio", maxLength: 100 }),
+			});
+
+			const screen = await renderForm(schema);
+
+			await expect.element(screen.getByText("0/100")).toBeVisible();
+		});
+
+		test("value counter updates as user types", async () => {
+			const schema = z.object({
+				bio: textAreaOptional({ label: "labels.bio", maxLength: 100 }),
+			});
+
+			const screen = await renderForm(schema);
+			const textarea = screen.getByLabelText("Bio");
+
+			await expect.element(screen.getByText("0/100")).toBeVisible();
+
+			await userEvent.type(textarea.element(), "Hello");
+
+			await expect.element(screen.getByText("5/100")).toBeVisible();
+		});
+
+		test("value counter shows warning style near max length", async () => {
+			const schema = z.object({
+				bio: textAreaOptional({ label: "labels.bio", maxLength: 10 }),
+			});
+
+			const screen = await renderForm(schema, {
+				defaultValues: { bio: "123456789" },
+			});
+
+			const counter = screen.container.querySelector(".label__value");
+			expect(counter?.classList.contains("warning")).toBe(true);
+		});
+
+		test("value counter shows error style when over max length", async () => {
+			const schema = z.object({
+				bio: textAreaOptional({ label: "labels.bio", maxLength: 5 }),
+			});
+
+			const screen = await renderForm(schema, {
+				defaultValues: { bio: "123456" },
+			});
+
+			const counter = screen.container.querySelector(".label__value");
+			expect(counter?.classList.contains("error")).toBe(true);
+		});
+
 		test("typing updates value", async () => {
 			const schema = z.object({
 				bio: textAreaOptional({ label: "labels.bio", maxLength: 500 }),
