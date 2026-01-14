@@ -799,6 +799,22 @@ export interface TrustRelationship {
 	lastUsedAt: number;
 }
 
+/** Mutual friendship between two users. Invariant: userOneId < userTwoId. */
+export interface Friendship {
+	id: GeneratedAlways<number>;
+	userOneId: number;
+	userTwoId: number;
+	createdAt: Generated<number>;
+}
+
+/** Pending friend request from one user to another. */
+export interface FriendRequest {
+	id: GeneratedAlways<number>;
+	senderId: number;
+	receiverId: number;
+	createdAt: Generated<number>;
+}
+
 export interface UnvalidatedUserSubmittedImage {
 	id: GeneratedAlways<number>;
 	submitterUserId: number;
@@ -1209,6 +1225,8 @@ export interface DB {
 	TournamentBracketProgressionOverride: TournamentBracketProgressionOverride;
 	TournamentOrganizationBannedUser: TournamentOrganizationBannedUser;
 	TrustRelationship: TrustRelationship;
+	Friendship: Friendship;
+	FriendRequest: FriendRequest;
 	UnvalidatedUserSubmittedImage: UnvalidatedUserSubmittedImage;
 	UnvalidatedVideo: UnvalidatedVideo;
 	User: User;

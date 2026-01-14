@@ -1,11 +1,11 @@
 ---
 # sendou.ink-0uyd
 title: Database schema for friends system
-status: todo
+status: completed
 type: task
 priority: normal
 created_at: 2026-01-13T09:31:56Z
-updated_at: 2026-01-13T09:32:10Z
+updated_at: 2026-01-14T19:14:51Z
 parent: sendou.ink-255r
 blocking:
     - sendou.ink-iulp
@@ -49,7 +49,7 @@ We also need to add support for invites in SQ without the user being in the queu
 
 ## Checklist
 
-- [ ] Create migration file
-- [ ] Add tables to `app/db/tables.ts`
-- [ ] Run migration and verify schema
-- [ ] Add to test database
+- [x] Create migration file
+- [x] Add tables to `app/db/tables.ts`
+- [x] Run migration and verify schema
+- [x] Add to test database
