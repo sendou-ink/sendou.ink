@@ -97,13 +97,13 @@
 	display: flex;
 	gap: var(--s-2);
 
-	border-bottom: var(--border-style);
-	border-radius: var(--rounded-sm) var(--rounded-sm) 0 0;
+	border-bottom: 1px solid var(--color-border);
+	border-radius: 0;
 	accent-color: var(--color-accent);
-	background-color: var(--color-bg);
 	color: var(--color-text);
 	outline: none;
-	padding: var(--s-2) var(--s-1-5) calc(var(--s-1) + var(--s-2)) var(--s-1-5);
+	padding: var(--s-1-5) var(--s-1-5) calc(var(--s-0-5) + var(--s-2))
+		var(--s-1-5);
 	margin-block-end: var(--s-1-5);
 }
 

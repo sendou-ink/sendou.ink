@@ -1,7 +1,7 @@
 ---
 # sendou.ink-wp5x
 title: User search has nested input borders
-status: todo
+status: completed
 type: bug
 created_at: 2026-01-11T13:54:26Z
 updated_at: 2026-01-11T13:54:26Z
