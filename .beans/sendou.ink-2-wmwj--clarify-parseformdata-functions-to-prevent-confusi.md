@@ -1,10 +1,11 @@
 ---
 # sendou.ink-2-wmwj
 title: Clarify parseFormData functions to prevent confusion
-status: todo
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-11T08:31:34Z
-updated_at: 2026-01-11T08:31:34Z
+updated_at: 2026-01-15T19:16:39Z
 ---
 
 There are two parseFormData functions - one in parse.server.ts and one in remix.server.ts. Need to ensure they cannot be mixed up or combine them to prevent mistakes.
