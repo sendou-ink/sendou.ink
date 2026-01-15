@@ -298,24 +298,6 @@ export function select<V extends string>(
 	});
 }
 
-export function selectDynamic(
-	args: WithTypedTranslationKeys<
-		Omit<
-			Extract<FormField, { type: "select-dynamic" }>,
-			"type" | "initialValue" | "clearable"
-		>
-	>,
-) {
-	return z.string().register(formRegistry, {
-		...args,
-		label: prefixKey(args.label),
-		bottomText: prefixKey(args.bottomText),
-		type: "select-dynamic",
-		initialValue: "",
-		clearable: false,
-	}) as z.ZodString & FieldWithOptions<SelectOption[]>;
-}
-
 export function selectDynamicOptional(
 	args: WithTypedTranslationKeys<
 		Omit<
@@ -488,35 +470,6 @@ export function dateRequired(args: DateTimeArgs) {
 			type: "date",
 			initialValue: null,
 			required: true,
-		});
-}
-
-export function dateOptional(args: DateTimeArgs) {
-	const minDate = args.min ?? new Date(Date.UTC(2015, 4, 28));
-	const maxDate = args.max ?? new Date(Date.UTC(2030, 4, 28));
-
-	return z
-		.preprocess(
-			date,
-			z
-				.date()
-				.min(
-					minDate,
-					args.minMessage ? { message: `forms:${args.minMessage}` } : undefined,
-				)
-				.max(
-					maxDate,
-					args.maxMessage ? { message: `forms:${args.maxMessage}` } : undefined,
-				)
-				.optional(),
-		)
-		.register(formRegistry, {
-			...args,
-			label: prefixKey(args.label),
-			bottomText: prefixKey(args.bottomText),
-			type: "date",
-			initialValue: null,
-			required: false,
 		});
 }
 
