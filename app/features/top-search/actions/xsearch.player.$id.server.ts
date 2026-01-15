@@ -11,8 +11,8 @@ import {
 import { idObject } from "~/utils/zod";
 import * as XRankPlacementRepository from "../XRankPlacementRepository.server";
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
-	const user = await requireUser(request);
+export const action = async ({ params }: ActionFunctionArgs) => {
+	const user = requireUser();
 	const { id } = parseParams({
 		params,
 		schema: idObject,

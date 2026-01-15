@@ -4,5 +4,6 @@ export const NZAP_TEST_DISCORD_ID = "455039198672453645";
 export const NZAP_TEST_AVATAR = "f809176af93132c3db5f0a5019e96339"; // https://cdn.discordapp.com/avatars/455039198672453645/f809176af93132c3db5f0a5019e96339.webp?size=160
 export const NZAP_TEST_ID = 2;
 export const REGULAR_USER_TEST_ID = 2;
+export const ORG_ADMIN_TEST_ID = 3;
 
 export const AMOUNT_OF_CALENDAR_EVENTS = 200;

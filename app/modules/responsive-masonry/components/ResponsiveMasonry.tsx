@@ -24,7 +24,7 @@ const MasonryResponsive = ({
 	return (
 		<div>
 			{React.Children.map(children, (child, index) =>
-				React.cloneElement(child as React.ReactElement, {
+				React.cloneElement(child as React.ReactElement<any>, {
 					key: index,
 					columnsCount,
 				}),

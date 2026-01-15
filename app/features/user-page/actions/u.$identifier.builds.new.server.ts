@@ -32,7 +32,7 @@ import {
 } from "~/utils/zod";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: newBuildActionSchema,

@@ -300,6 +300,8 @@ export const tournamentEditPage = (eventId: number) =>
 export const calendarReportWinnersPage = (eventId: number) =>
 	`/calendar/${eventId}/report-winners`;
 export const tournamentPage = (tournamentId: number) => `/to/${tournamentId}`;
+export const tournamentTeamsPage = (tournamentId: number) =>
+	`/to/${tournamentId}/teams`;
 export const tournamentTeamPage = ({
 	tournamentId,
 	tournamentTeamId,

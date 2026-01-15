@@ -1,51 +1,16 @@
-import { redirect } from "react-router";
-import type { Tables } from "~/db/tables";
-import { userIsBanned } from "~/features/ban/core/banned.server";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { SUSPENDED_PAGE } from "~/utils/urls";
-import { IMPERSONATED_SESSION_KEY, SESSION_KEY } from "./authenticator.server";
+import { IMPERSONATED_SESSION_KEY } from "./authenticator.server";
 import { authSessionStorage } from "./session.server";
+import { type AuthenticatedUser, getUserContext } from "./user-context.server";
 
-export type AuthenticatedUser = NonNullable<
-	Awaited<ReturnType<typeof getUser>>
->;
+export type { AuthenticatedUser };
 
-export async function getUserId(
-	request: Request,
-	redirectIfBanned = true,
-): Promise<Pick<Tables["User"], "id"> | undefined> {
-	const session = await authSessionStorage.getSession(
-		request.headers.get("Cookie"),
-	);
-
-	const userId =
-		session.get(IMPERSONATED_SESSION_KEY) ?? session.get(SESSION_KEY);
-
-	if (!userId) return;
-
-	if (userIsBanned(userId) && redirectIfBanned) throw redirect(SUSPENDED_PAGE);
-
-	return { id: userId };
+export function getUser(): AuthenticatedUser | undefined {
+	const context = getUserContext();
+	return context.user;
 }
 
-export async function getUser(request: Request, redirectIfBanned = true) {
-	const userId = (await getUserId(request, redirectIfBanned))?.id;
-
-	if (!userId) return;
-
-	return UserRepository.findLeanById(userId);
-}
-
-export async function requireUserId(request: Request) {
-	const user = await getUserId(request);
-
-	if (!user) throw new Response(null, { status: 401 });
-
-	return user;
-}
-
-export async function requireUser(request: Request) {
-	const user = await getUser(request);
+export function requireUser(): AuthenticatedUser {
+	const user = getUser();
 
 	if (!user) throw new Response(null, { status: 401 });
 

@@ -6911,6 +6911,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			],
 			lockedMatches: [],
 		},
+		seedingSnapshot: null,
 		mapPickingStyle: "TO",
 		rules:
 			"# Important Notices\n\nEach team's captain must be in the Inking Performance Labs Discord. Before registering, join the discord here, and then get the Low Ink role using the Channels & Roles feature.\n\nRegistration for Low Ink closes 17 hours prior to the event starting which is 8 PM ET (day before) (5 PM PT (day before), 1 AM GMT/UTC (day of), 2 AM CET (day of)).\n\nBy registering for the tournament, you agree to and consent to follow all rules in Low Ink, and promise to read all announcements leading up to the event. In compliance with Nintendo tournament guidelines, you also consent that by registering for this tournament, Inkling Performance Labs may use videos, still images, etc. of me and my teammates' gameplay from Inkling Performance Labs events for monetization.\n\nNintendo is not a sponsor of or affiliated with this tournament.\nTerms for participating in and viewing Community Tournaments using Nintendo Games can be found at the following URL: https://en-americas-support.nintendo.com/app/answers/detail/a_id/63454\n\n# Full Rules\n\nLow Ink's full ruleset (which is too large to include here) can be found in our [rules document](https://docs.google.com/document/d/1sMUOeRe8isLuu4Koco_qRvwMa2oV1_1LQZ0Vt3_IBt4/pub). **By registering, you and your team agree to follow all rules in the rules document.**",
@@ -6929,6 +6930,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					role: "ORGANIZER",
 					id: 405,
 					username: "ely",
+					pronouns: null,
 					discordId: "260999523806085120",
 					discordAvatar: "4f15f20946fbd992ee9d694a539e6317",
 					customUrl: "elemental",
@@ -6939,6 +6941,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					role: "ADMIN",
 					id: 622,
 					username: ".jpg",
+					pronouns: null,
 					discordId: "201922904781357057",
 					discordAvatar: "7fa46b7dc27fa589d3d278ba4b60224f",
 					customUrl: "dotjpg",
@@ -6949,6 +6952,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					role: "ADMIN",
 					id: 680,
 					username: "inkfarer",
+					pronouns: null,
 					discordId: "87494390724964352",
 					discordAvatar: "3b82ee3101ba39120b6a65c042a04a37",
 					customUrl: "inkfarer",
@@ -6959,6 +6963,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					role: "ADMIN",
 					id: 936,
 					username: "Raze",
+					pronouns: null,
 					discordId: "119620026767507456",
 					discordAvatar: "aa1ff5b8eefd5a26657c411138a160b8",
 					customUrl: null,
@@ -6969,6 +6974,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					role: "ADMIN",
 					id: 1402,
 					username: "grace",
+					pronouns: null,
 					discordId: "216335108037148673",
 					discordAvatar: "458f1e233a3b590a62f6b867b95a6241",
 					customUrl: "grace",
@@ -6979,6 +6985,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					role: "ORGANIZER",
 					id: 1755,
 					username: "BrushStrokes",
+					pronouns: null,
 					discordId: "200777324520538113",
 					discordAvatar: "a_d71ac2f474ce422ce711e8e74d657b2f",
 					customUrl: "brushstrokes",
@@ -6989,6 +6996,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					role: "ORGANIZER",
 					id: 2908,
 					username: "KitsuneKeira",
+					pronouns: null,
 					discordId: "112254088992792576",
 					discordAvatar: "711e8d48f316687faa4fdb41ab9298f0",
 					customUrl: "kitsunekeira",
@@ -6999,6 +7007,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					role: "ADMIN",
 					id: 3742,
 					username: "Thoma",
+					pronouns: null,
 					discordId: "124007565758693376",
 					discordAvatar: "ca9e37c9b31dfa39f88b2a2da2d4af21",
 					customUrl: "thoma",
@@ -7009,6 +7018,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					role: "ADMIN",
 					id: 3806,
 					username: "vlee",
+					pronouns: null,
 					discordId: "113026708071821312",
 					discordAvatar: "4b3f0da55a834acc0beb258edd9c7e34",
 					customUrl: null,
@@ -7019,6 +7029,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					role: "ADMIN",
 					id: 4941,
 					username: "HoeenHero",
+					pronouns: null,
 					discordId: "236292964052107264",
 					discordAvatar: "c95b9a8cfb9164f3a66267a5e8cfe8b1",
 					customUrl: "hoeenhero",
@@ -7029,6 +7040,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					role: "ORGANIZER",
 					id: 5036,
 					username: "toastγ",
+					pronouns: null,
 					discordId: "248232091005747201",
 					discordAvatar: "40a21a204f8fae6ae2e7e8c5de70de83",
 					customUrl: "toasty",
@@ -7039,6 +7051,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					role: "ADMIN",
 					id: 8098,
 					username: "Popgun",
+					pronouns: null,
 					discordId: "442431978269310987",
 					discordAvatar: "e0fd0fed98a4d3c3bfd56332678d4e6c",
 					customUrl: "popgun",
@@ -7049,6 +7062,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					role: "ORGANIZER",
 					id: 8750,
 					username: "LiberoWolf",
+					pronouns: null,
 					discordId: "273188925189914628",
 					discordAvatar: "c62afa020e24ead92cc043ffa809ffdc",
 					customUrl: "liberowolf",
@@ -7059,6 +7073,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					role: "ADMIN",
 					id: 9222,
 					username: "Jardonian",
+					pronouns: null,
 					discordId: "298241282550267906",
 					discordAvatar: "f69bb5af745eca4e9b7f55504c641f78",
 					customUrl: "jardonian",
@@ -7069,6 +7084,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					role: "ORGANIZER",
 					id: 9719,
 					username: "Scepidilionz",
+					pronouns: null,
 					discordId: "184478601171828737",
 					discordAvatar: "75dedb3527b73d9571151f0a00d1c365",
 					customUrl: "scepidilionz",
@@ -7079,6 +7095,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					role: "ORGANIZER",
 					id: 18720,
 					username: "Tulip",
+					pronouns: null,
 					discordId: "103988435785650176",
 					discordAvatar: "df9936bea9dcbd250daf8e2ef2d7c04a",
 					customUrl: "tulip",
@@ -7090,6 +7107,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 		author: {
 			id: 4941,
 			username: "HoeenHero",
+			pronouns: null,
 			discordId: "236292964052107264",
 			discordAvatar: "c95b9a8cfb9164f3a66267a5e8cfe8b1",
 			customUrl: "hoeenhero",
@@ -7099,6 +7117,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			{
 				id: 405,
 				username: "ely",
+				pronouns: null,
 				discordId: "260999523806085120",
 				discordAvatar: "4f15f20946fbd992ee9d694a539e6317",
 				customUrl: "elemental",
@@ -7108,6 +7127,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			{
 				id: 446,
 				username: "pock",
+				pronouns: null,
 				discordId: "176095582534762496",
 				discordAvatar: "89e15b6e74f5abdef1183c9416434dde",
 				customUrl: "pock",
@@ -7117,6 +7137,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			{
 				id: 680,
 				username: "inkfarer",
+				pronouns: null,
 				discordId: "87494390724964352",
 				discordAvatar: "3b82ee3101ba39120b6a65c042a04a37",
 				customUrl: "inkfarer",
@@ -7126,6 +7147,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			{
 				id: 787,
 				username: "IV Shads",
+				pronouns: null,
 				discordId: "334504066405367808",
 				discordAvatar: "0d31f0d52ebfeaa0216fcacb86eb140a",
 				customUrl: "shads",
@@ -7135,6 +7157,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			{
 				id: 2908,
 				username: "KitsuneKeira",
+				pronouns: null,
 				discordId: "112254088992792576",
 				discordAvatar: "711e8d48f316687faa4fdb41ab9298f0",
 				customUrl: "kitsunekeira",
@@ -7144,6 +7167,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			{
 				id: 2963,
 				username: "Lepus",
+				pronouns: null,
 				discordId: "412316772637736981",
 				discordAvatar: "1408d204fa8a128efd2d2625476468c2",
 				customUrl: null,
@@ -7153,6 +7177,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			{
 				id: 5877,
 				username: "Koreki",
+				pronouns: null,
 				discordId: "578038263433134080",
 				discordAvatar: "f552df977e0165e7fb93d1ce2a7512d4",
 				customUrl: "bars",
@@ -7162,6 +7187,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			{
 				id: 6766,
 				username: "Bowen",
+				pronouns: null,
 				discordId: "230161540299489280",
 				discordAvatar: "a_3ca2a0737b2c1e2b5e82ddc98fe79c8b",
 				customUrl: "bowen",
@@ -7171,6 +7197,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			{
 				id: 7400,
 				username: "Toes",
+				pronouns: null,
 				discordId: "678892046534311936",
 				discordAvatar: "11490e6c0ace327ebc32a117b9e0510c",
 				customUrl: "toes",
@@ -7180,6 +7207,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			{
 				id: 8277,
 				username: "Neato",
+				pronouns: null,
 				discordId: "512418782933811221",
 				discordAvatar: "c3afd465b53dedbb97fb9dd504d01305",
 				customUrl: "neato",
@@ -7189,6 +7217,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			{
 				id: 22026,
 				username: "strings 🎻",
+				pronouns: null,
 				discordId: "182994907907096585",
 				discordAvatar: "31da63dcb6dd1dbe4c3f135c105f07e7",
 				customUrl: "strings",
@@ -7198,6 +7227,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			{
 				id: 23094,
 				username: "みちさん",
+				pronouns: null,
 				discordId: "725416982681223259",
 				discordAvatar: "cb9bf51b05f22c763a2b4812bdd574cc",
 				customUrl: "michi",
@@ -7207,6 +7237,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			{
 				id: 29467,
 				username: "glumbaron",
+				pronouns: null,
 				discordId: "367803257717784599",
 				discordAvatar: "b8ad30de9487a9699093b728098e01d0",
 				customUrl: "glumbaron",
@@ -7216,6 +7247,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			{
 				id: 29775,
 				username: "Lemon7890",
+				pronouns: null,
 				discordId: "1058063829973618698",
 				discordAvatar: "dc110c2d77ea84e470c87a18ac0b7e5d",
 				customUrl: "lemon7890",
@@ -7225,6 +7257,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			{
 				id: 30996,
 				username: "eemee",
+				pronouns: null,
 				discordId: "1132918323697418310",
 				discordAvatar: "48089383c5d666ae7ef8417d205bfa1f",
 				customUrl: "eemeee",
@@ -7234,6 +7267,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			{
 				id: 31736,
 				username: "vheavy ☃",
+				pronouns: null,
 				discordId: "689577992430944281",
 				discordAvatar: "911c0ac66f9489406ea4ae970e7ed5b0",
 				customUrl: "pin-eye",
@@ -7268,6 +7302,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733157607,
 						inGameName: "Zyler òへó#1344",
+						plusTier: null,
 					},
 					{
 						userId: 27529,
@@ -7280,6 +7315,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733157609,
 						inGameName: "Axo òへó#2731",
+						plusTier: null,
 					},
 					{
 						userId: 25875,
@@ -7292,6 +7328,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733157610,
 						inGameName: "Kiko òへó#2701",
+						plusTier: null,
 					},
 					{
 						userId: 21063,
@@ -7304,6 +7341,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733157611,
 						inGameName: "koooo òへó#2940",
+						plusTier: null,
 					},
 					{
 						userId: 31597,
@@ -7316,6 +7354,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733157612,
 						inGameName: "Tetra òへó#1074",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -7357,6 +7396,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733157629,
 						inGameName: "JŁΞ nomad#1998",
+						plusTier: null,
 					},
 					{
 						userId: 27260,
@@ -7369,6 +7409,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733157711,
 						inGameName: "JŁΞ Kσru#2146",
+						plusTier: null,
 					},
 					{
 						userId: 42704,
@@ -7381,6 +7422,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733157712,
 						inGameName: "ROARRRRRRR#1111",
+						plusTier: null,
 					},
 					{
 						userId: 6211,
@@ -7393,6 +7435,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733157713,
 						inGameName: "JŁ≡ Nobe_1#1045",
+						plusTier: null,
 					},
 					{
 						userId: 9379,
@@ -7405,6 +7448,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733157714,
 						inGameName: "JŁΞ SHeLi#2425",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -7446,6 +7490,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733161494,
 						inGameName: "「F」Mik#3010",
+						plusTier: null,
 					},
 					{
 						userId: 31195,
@@ -7458,6 +7503,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733161497,
 						inGameName: "「F」Cotni#3521",
+						plusTier: null,
 					},
 					{
 						userId: 31395,
@@ -7470,6 +7516,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733161500,
 						inGameName: "In 「F」iniTy#1007",
+						plusTier: null,
 					},
 					{
 						userId: 41682,
@@ -7482,6 +7529,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733161502,
 						inGameName: "「F」Slush#9876",
+						plusTier: null,
 					},
 					{
 						userId: 26103,
@@ -7494,6 +7542,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733161505,
 						inGameName: "「F」sawyer #7539",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -7535,6 +7584,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733166918,
 						inGameName: "⦾яStαrιiτε#3209",
+						plusTier: null,
 					},
 					{
 						userId: 44033,
@@ -7547,6 +7597,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733166921,
 						inGameName: "⦾я .0#2825",
+						plusTier: null,
 					},
 					{
 						userId: 19717,
@@ -7559,6 +7610,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733166925,
 						inGameName: "⦾я Neo✩#3314",
+						plusTier: null,
 					},
 					{
 						userId: 9404,
@@ -7571,6 +7623,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733166928,
 						inGameName: "⦾я Organic#2160",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -7612,6 +7665,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733166213,
 						inGameName: "TheChosen1#2899",
+						plusTier: null,
 					},
 					{
 						userId: 29267,
@@ -7624,6 +7678,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733178388,
 						inGameName: "Silverlime#4895",
+						plusTier: null,
 					},
 					{
 						userId: 25591,
@@ -7636,6 +7691,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733426117,
 						inGameName: "Dev#7857",
+						plusTier: null,
 					},
 					{
 						userId: 36962,
@@ -7648,6 +7704,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733458896,
 						inGameName: "PencilGlzr#8668",
+						plusTier: null,
 					},
 					{
 						userId: 37749,
@@ -7660,6 +7717,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734193950,
 						inGameName: "кя lyric!#2989",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -7696,6 +7754,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733189945,
 						inGameName: "«я.peachz♪#1561",
+						plusTier: null,
 					},
 					{
 						userId: 34355,
@@ -7708,6 +7767,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733189950,
 						inGameName: "«я.Omega#1182",
+						plusTier: null,
 					},
 					{
 						userId: 2319,
@@ -7720,6 +7780,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733189952,
 						inGameName: "《Я.ttrarat#2320",
+						plusTier: null,
 					},
 					{
 						userId: 39480,
@@ -7732,6 +7793,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733189954,
 						inGameName: "«я.Reze★#3081",
+						plusTier: null,
 					},
 					{
 						userId: 7430,
@@ -7744,6 +7806,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733189965,
 						inGameName: "«я.zedro#2287",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -7785,6 +7848,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733244862,
 						inGameName: "½ Jxvito★#2083",
+						plusTier: null,
 					},
 					{
 						userId: 31524,
@@ -7797,6 +7861,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733244865,
 						inGameName: "½ chaervee#2718",
+						plusTier: null,
 					},
 					{
 						userId: 35674,
@@ -7809,6 +7874,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733244867,
 						inGameName: "½ kosame#2647",
+						plusTier: null,
 					},
 					{
 						userId: 7126,
@@ -7821,6 +7887,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733244868,
 						inGameName: "½ YAGI#2632",
+						plusTier: null,
 					},
 					{
 						userId: 26285,
@@ -7833,6 +7900,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734054948,
 						inGameName: "≣↑Lefish☆#3115",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -7874,6 +7942,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733282085,
 						inGameName: "o7 PieMan#9992",
+						plusTier: null,
 					},
 					{
 						userId: 5708,
@@ -7886,6 +7955,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733282088,
 						inGameName: "o7 Halø#2414",
+						plusTier: null,
 					},
 					{
 						userId: 1661,
@@ -7898,6 +7968,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733282090,
 						inGameName: "o7 Tau#3126",
+						plusTier: null,
 					},
 					{
 						userId: 27292,
@@ -7910,6 +7981,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733282091,
 						inGameName: "o7 Warrior #4277",
+						plusTier: null,
 					},
 					{
 						userId: 21588,
@@ -7922,6 +7994,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733282092,
 						inGameName: "o7 Brandon#1002",
+						plusTier: null,
 					},
 					{
 						userId: 6309,
@@ -7934,6 +8007,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733282098,
 						inGameName: "Nathan#3382",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -7975,6 +8049,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733291438,
 						inGameName: "★Alohα★#1372",
+						plusTier: null,
 					},
 					{
 						userId: 23974,
@@ -7987,6 +8062,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733291442,
 						inGameName: "↑Lex↑#2224",
+						plusTier: null,
 					},
 					{
 						userId: 24459,
@@ -7999,6 +8075,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733291444,
 						inGameName: "Gogeta SSB#1514",
+						plusTier: null,
 					},
 					{
 						userId: 40851,
@@ -8011,6 +8088,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733291446,
 						inGameName: "zoeee♪#5119",
+						plusTier: null,
 					},
 					{
 						userId: 18090,
@@ -8023,6 +8101,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733783382,
 						inGameName: "oomf#2618",
+						plusTier: null,
 					},
 					{
 						userId: 42350,
@@ -8035,6 +8114,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734131443,
 						inGameName: "Kp Mario#3126",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -8076,6 +8156,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733439755,
 						inGameName: "{ミ} Reyn#3321",
+						plusTier: null,
 					},
 					{
 						userId: 37000,
@@ -8088,6 +8169,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733439758,
 						inGameName: "{ミ} Bobong#1958",
+						plusTier: null,
 					},
 					{
 						userId: 37835,
@@ -8100,6 +8182,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733439760,
 						inGameName: "{ミ} Kody#7210",
+						plusTier: null,
 					},
 					{
 						userId: 26807,
@@ -8112,6 +8195,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733439761,
 						inGameName: "{ミ} Lumi#8318",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -8153,6 +8237,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733485884,
 						inGameName: "LosTheresa#3238",
+						plusTier: null,
 					},
 					{
 						userId: 30686,
@@ -8165,6 +8250,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733485886,
 						inGameName: "Los Equals#2851",
+						plusTier: null,
 					},
 					{
 						userId: 22396,
@@ -8177,6 +8263,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733485888,
 						inGameName: "Los Hammy#4656",
+						plusTier: null,
 					},
 					{
 						userId: 1961,
@@ -8189,6 +8276,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733485889,
 						inGameName: "Los SeaSlug#2211",
+						plusTier: null,
 					},
 					{
 						userId: 46305,
@@ -8201,6 +8289,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733961214,
 						inGameName: "Dr.Meowser#8095",
+						plusTier: null,
 					},
 					{
 						userId: 18698,
@@ -8213,6 +8302,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733961708,
 						inGameName: "Ameowzing☆#1396",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -8254,6 +8344,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733937993,
 						inGameName: "☆§ darkz!#1022",
+						plusTier: null,
 					},
 					{
 						userId: 30411,
@@ -8266,6 +8357,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733938000,
 						inGameName: "☆§ Ace!#1627",
+						plusTier: null,
 					},
 					{
 						userId: 24275,
@@ -8278,6 +8370,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733938003,
 						inGameName: "☆§ Googol! #7149",
+						plusTier: null,
 					},
 					{
 						userId: 30263,
@@ -8290,6 +8383,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733938006,
 						inGameName: "Rowieeeeee#3332",
+						plusTier: null,
 					},
 					{
 						userId: 5861,
@@ -8302,6 +8396,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733938008,
 						inGameName: "☆§ Solar!#1396",
+						plusTier: null,
 					},
 					{
 						userId: 30870,
@@ -8314,6 +8409,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734118113,
 						inGameName: "QC. Phrog#1240",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -8355,6 +8451,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733166818,
 						inGameName: "Sylyx#1095",
+						plusTier: null,
 					},
 					{
 						userId: 38046,
@@ -8367,6 +8464,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733166823,
 						inGameName: "Brownies!!#2517",
+						plusTier: null,
 					},
 					{
 						userId: 42638,
@@ -8379,6 +8477,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733166825,
 						inGameName: "Rosa_#1667",
+						plusTier: null,
 					},
 					{
 						userId: 34589,
@@ -8391,6 +8490,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733166826,
 						inGameName: "SειëηΣ?#6908",
+						plusTier: null,
 					},
 					{
 						userId: 44378,
@@ -8403,6 +8503,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733594006,
 						inGameName: "Mirage#2515",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -8444,6 +8545,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733167616,
 						inGameName: "<C Miki#2991",
+						plusTier: null,
 					},
 					{
 						userId: 45102,
@@ -8456,6 +8558,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733167619,
 						inGameName: "<C Hoshi#2402",
+						plusTier: null,
 					},
 					{
 						userId: 3362,
@@ -8468,6 +8571,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733167620,
 						inGameName: "<C yu#1572",
+						plusTier: null,
 					},
 					{
 						userId: 41739,
@@ -8480,6 +8584,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733167621,
 						inGameName: "<C zolty#9491",
+						plusTier: null,
 					},
 					{
 						userId: 26711,
@@ -8492,6 +8597,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734026204,
 						inGameName: "nene#1459",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -8533,6 +8639,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733201503,
 						inGameName: "SplaTea TV#9482",
+						plusTier: null,
 					},
 					{
 						userId: 35282,
@@ -8545,6 +8652,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733201506,
 						inGameName: "Apisto#9327",
+						plusTier: null,
 					},
 					{
 						userId: 20774,
@@ -8557,6 +8665,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733201506,
 						inGameName: "βαjα#1704",
+						plusTier: null,
 					},
 					{
 						userId: 33373,
@@ -8569,6 +8678,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733201507,
 						inGameName: "Comrade#1334",
+						plusTier: null,
 					},
 					{
 						userId: 42703,
@@ -8581,6 +8691,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733201508,
 						inGameName: "gameing#2389",
+						plusTier: null,
 					},
 					{
 						userId: 31556,
@@ -8593,6 +8704,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733201509,
 						inGameName: "Klem'ntine#3028",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -8634,6 +8746,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733218069,
 						inGameName: "Lutzi#9570",
+						plusTier: null,
 					},
 					{
 						userId: 7690,
@@ -8646,6 +8759,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733218071,
 						inGameName: "Low#7104",
+						plusTier: null,
 					},
 					{
 						userId: 7959,
@@ -8658,6 +8772,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733218072,
 						inGameName: "Sual#1049",
+						plusTier: null,
 					},
 					{
 						userId: 26509,
@@ -8670,6 +8785,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733218073,
 						inGameName: "Vi#1325",
+						plusTier: null,
 					},
 					{
 						userId: 7102,
@@ -8682,6 +8798,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733916151,
 						inGameName: "Jødek#3186",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -8723,6 +8840,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733319202,
 						inGameName: "ƒ²←Tbob#2063",
+						plusTier: null,
 					},
 					{
 						userId: 21685,
@@ -8735,6 +8853,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733319223,
 						inGameName: "ƒ²←Toad#2397",
+						plusTier: null,
 					},
 					{
 						userId: 34842,
@@ -8747,6 +8866,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733319226,
 						inGameName: "f²←Glitchy#2181",
+						plusTier: null,
 					},
 					{
 						userId: 10714,
@@ -8759,6 +8879,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733319227,
 						inGameName: "ƒ²←Golonka#7170",
+						plusTier: null,
 					},
 					{
 						userId: 10028,
@@ -8771,6 +8892,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733319230,
 						inGameName: "ƒ²←kcatt#3290",
+						plusTier: null,
 					},
 					{
 						userId: 8840,
@@ -8783,6 +8905,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733319232,
 						inGameName: "ƒ²←Shii#2267",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -8824,6 +8947,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733471556,
 						inGameName: "USS Moody#5225",
+						plusTier: null,
 					},
 					{
 						userId: 36007,
@@ -8836,6 +8960,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733948167,
 						inGameName: "アリッサ#5565",
+						plusTier: null,
 					},
 					{
 						userId: 38896,
@@ -8848,6 +8973,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733948266,
 						inGameName: "Cringe#5602",
+						plusTier: null,
 					},
 					{
 						userId: 30204,
@@ -8860,6 +8986,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733950474,
 						inGameName: "m#31926",
+						plusTier: null,
 					},
 					{
 						userId: 41285,
@@ -8872,6 +8999,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733951107,
 						inGameName: "◯=ブライセソ=◯#5387",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -8913,6 +9041,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733501938,
 						inGameName: "ミゼリ エース★#1349",
+						plusTier: null,
 					},
 					{
 						userId: 43073,
@@ -8925,6 +9054,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733501942,
 						inGameName: "ミゼリ Cronix#2518",
+						plusTier: null,
 					},
 					{
 						userId: 30495,
@@ -8937,6 +9067,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733501944,
 						inGameName: "ミゼリ。Mεgυ°✩#2219",
+						plusTier: null,
 					},
 					{
 						userId: 30488,
@@ -8949,6 +9080,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733501946,
 						inGameName: "ミゼリ Sk#5210",
+						plusTier: null,
 					},
 					{
 						userId: 45295,
@@ -8961,6 +9093,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733517920,
 						inGameName: "ミゼリ V-Trux#1581",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -9002,6 +9135,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733622364,
 						inGameName: "σ*°yoshido#3235",
+						plusTier: null,
 					},
 					{
 						userId: 30612,
@@ -9014,6 +9148,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733622368,
 						inGameName: "σ*°Crazy!?#2260",
+						plusTier: null,
 					},
 					{
 						userId: 13671,
@@ -9026,6 +9161,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733622369,
 						inGameName: "σ*°Nutella#7762",
+						plusTier: null,
 					},
 					{
 						userId: 36898,
@@ -9038,6 +9174,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733622371,
 						inGameName: "σ*°Town#1561",
+						plusTier: null,
 					},
 				],
 				checkIns: [],
@@ -9073,6 +9210,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733635706,
 						inGameName: "DΔ Ark#1872",
+						plusTier: null,
 					},
 					{
 						userId: 30466,
@@ -9085,6 +9223,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733635709,
 						inGameName: "♭ born#9799",
+						plusTier: null,
 					},
 					{
 						userId: 26162,
@@ -9097,6 +9236,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733635711,
 						inGameName: "e#5440",
+						plusTier: null,
 					},
 					{
 						userId: 24013,
@@ -9109,6 +9249,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733635715,
 						inGameName: "[R]yo!#9363",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -9150,6 +9291,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733671856,
 						inGameName: "nerfkuro#1333",
+						plusTier: null,
 					},
 					{
 						userId: 29433,
@@ -9162,6 +9304,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733674190,
 						inGameName: "Bandito#4064",
+						plusTier: null,
 					},
 					{
 						userId: 21181,
@@ -9174,6 +9317,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733689602,
 						inGameName: "▼hαeωon<3▼#2645",
+						plusTier: null,
 					},
 					{
 						userId: 32002,
@@ -9186,6 +9330,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734136081,
 						inGameName: "◎ 'Anon'#1493",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -9222,6 +9367,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733810204,
 						inGameName: "Goat Child#2734",
+						plusTier: null,
 					},
 					{
 						userId: 5906,
@@ -9234,6 +9380,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733810212,
 						inGameName: "Blaster#8303",
+						plusTier: null,
 					},
 					{
 						userId: 17352,
@@ -9246,6 +9393,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733810376,
 						inGameName: "h* Frosty!#3019",
+						plusTier: null,
 					},
 					{
 						userId: 22403,
@@ -9258,6 +9406,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733822106,
 						inGameName: "ΞOceanOpal#9923",
+						plusTier: null,
 					},
 					{
 						userId: 33954,
@@ -9270,6 +9419,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733865466,
 						inGameName: "Nerdy♪Adam#1169",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -9306,6 +9456,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733889961,
 						inGameName: "arkham#4865",
+						plusTier: null,
 					},
 					{
 						userId: 32107,
@@ -9318,6 +9469,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733890089,
 						inGameName: "【Hayley】#7816",
+						plusTier: null,
 					},
 					{
 						userId: 33402,
@@ -9330,6 +9482,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733947966,
 						inGameName: "*~*flyNn#2174",
+						plusTier: null,
 					},
 					{
 						userId: 30619,
@@ -9342,6 +9495,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733962086,
 						inGameName: "Vhappy#1640",
+						plusTier: null,
 					},
 					{
 						userId: 35133,
@@ -9354,6 +9508,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733962703,
 						inGameName: "<chippy>#1225",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -9390,6 +9545,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733892132,
 						inGameName: "TIF Kale#1773",
+						plusTier: null,
 					},
 					{
 						userId: 8993,
@@ -9402,6 +9558,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733892135,
 						inGameName: "amisyka#3037",
+						plusTier: null,
 					},
 					{
 						userId: 8395,
@@ -9414,6 +9571,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733892138,
 						inGameName: "TIF J+αm#1827",
+						plusTier: null,
 					},
 					{
 						userId: 3566,
@@ -9426,6 +9584,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733892143,
 						inGameName: "⇛Pampers✰#1671",
+						plusTier: null,
 					},
 					{
 						userId: 46637,
@@ -9438,6 +9597,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734198005,
 						inGameName: ".leaflet.#1292",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -9479,6 +9639,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734035170,
 						inGameName: "\tƒ(01)Avīci#3228",
+						plusTier: null,
 					},
 					{
 						userId: 31143,
@@ -9491,6 +9652,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734035173,
 						inGameName: "ƒMαrιιτιmε#6053",
+						plusTier: null,
 					},
 					{
 						userId: 10670,
@@ -9503,6 +9665,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734035178,
 						inGameName: "ƒallHole#8602",
+						plusTier: null,
 					},
 					{
 						userId: 5261,
@@ -9515,6 +9678,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734035182,
 						inGameName: "ƒ¿¡Koda!?#1726",
+						plusTier: null,
 					},
 					{
 						userId: 22577,
@@ -9527,6 +9691,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734136323,
 						inGameName: "ghostreni#2563",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -9568,6 +9733,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734107844,
 						inGameName: "Eon#2450",
+						plusTier: null,
 					},
 					{
 						userId: 14309,
@@ -9580,6 +9746,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734130617,
 						inGameName: "Goxu#6562",
+						plusTier: null,
 					},
 					{
 						userId: 23164,
@@ -9592,6 +9759,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734131862,
 						inGameName: "fish#3039",
+						plusTier: null,
 					},
 					{
 						userId: 17310,
@@ -9604,6 +9772,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734150871,
 						inGameName: "Θ© OhkoXar#1431",
+						plusTier: null,
 					},
 					{
 						userId: 2199,
@@ -9616,6 +9785,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734216771,
 						inGameName: "Nof24#1856",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -9657,6 +9827,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734132225,
 						inGameName: "ΞTessaract#7242",
+						plusTier: null,
 					},
 					{
 						userId: 16387,
@@ -9669,6 +9840,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734132269,
 						inGameName: "Bubble.mp4#3578",
+						plusTier: null,
 					},
 					{
 						userId: 31154,
@@ -9681,6 +9853,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734132358,
 						inGameName: "Renzo™#3392",
+						plusTier: null,
 					},
 					{
 						userId: 6051,
@@ -9693,6 +9866,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734132433,
 						inGameName: "ACECT.mp4#2681",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -9729,6 +9903,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733194304,
 						inGameName: "LN TheGish#6533",
+						plusTier: null,
 					},
 					{
 						userId: 29011,
@@ -9741,6 +9916,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733194307,
 						inGameName: "ln Arsynn#5022",
+						plusTier: null,
 					},
 					{
 						userId: 23082,
@@ -9753,6 +9929,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733194308,
 						inGameName: "ln Blubrry#2022",
+						plusTier: null,
 					},
 					{
 						userId: 21549,
@@ -9765,6 +9942,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733194314,
 						inGameName: "LN✰Melo#1231",
+						plusTier: null,
 					},
 					{
 						userId: 45036,
@@ -9777,6 +9955,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733605136,
 						inGameName: "LN Frankie #1631",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -9818,6 +9997,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733195091,
 						inGameName: "R↑ Static#1144",
+						plusTier: null,
 					},
 					{
 						userId: 26820,
@@ -9830,6 +10010,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733195093,
 						inGameName: "R↑ Steorra#1628",
+						plusTier: null,
 					},
 					{
 						userId: 3513,
@@ -9842,6 +10023,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733195093,
 						inGameName: "R↑ Zebra#1631",
+						plusTier: null,
 					},
 					{
 						userId: 10297,
@@ -9854,6 +10036,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733195094,
 						inGameName: "YRN#1115",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -9895,6 +10078,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733364647,
 						inGameName: "<↑ Espi!#2714",
+						plusTier: null,
 					},
 					{
 						userId: 8953,
@@ -9907,6 +10091,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733364648,
 						inGameName: "<↑ h#2774",
+						plusTier: null,
 					},
 					{
 						userId: 27747,
@@ -9919,6 +10104,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733364650,
 						inGameName: "<↑ Kattail#2820",
+						plusTier: null,
 					},
 					{
 						userId: 31150,
@@ -9931,6 +10117,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733364733,
 						inGameName: "<↑ DemoLaw#3133",
+						plusTier: null,
 					},
 					{
 						userId: 35354,
@@ -9943,6 +10130,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733702069,
 						inGameName: "<↑ ™toma#2584",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -9984,6 +10172,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733374295,
 						inGameName: "εᴠₒ Sniper#5010",
+						plusTier: null,
 					},
 					{
 						userId: 38686,
@@ -9996,6 +10185,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733374297,
 						inGameName: "εᴠₒGalaxyK#2711",
+						plusTier: null,
 					},
 					{
 						userId: 12005,
@@ -10008,6 +10198,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733374299,
 						inGameName: "εᴠₒWaffle#3295",
+						plusTier: null,
 					},
 					{
 						userId: 31295,
@@ -10020,6 +10211,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733697589,
 						inGameName: "εᴠ Velvet#6554",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -10061,6 +10253,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733433864,
 						inGameName: "〒 Polon™#1827",
+						plusTier: null,
 					},
 					{
 						userId: 40636,
@@ -10073,6 +10266,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733433867,
 						inGameName: "〒 999.Revo#1281",
+						plusTier: null,
 					},
 					{
 						userId: 44489,
@@ -10085,6 +10279,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733433868,
 						inGameName: "Fischi.jr☆TSA#1331",
+						plusTier: null,
 					},
 					{
 						userId: 34314,
@@ -10097,6 +10292,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733433870,
 						inGameName: "〒 Gabbro#1991",
+						plusTier: null,
 					},
 					{
 						userId: 28247,
@@ -10109,6 +10305,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733433871,
 						inGameName: "〒 №POGnatr#2144",
+						plusTier: null,
 					},
 					{
 						userId: 41628,
@@ -10121,6 +10318,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733438268,
 						inGameName: "〒$illyCat.#1689",
+						plusTier: null,
 					},
 				],
 				checkIns: [],
@@ -10156,6 +10354,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733513814,
 						inGameName: "ヨ。Illusion#3461",
+						plusTier: null,
 					},
 					{
 						userId: 26321,
@@ -10168,6 +10367,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733513817,
 						inGameName: "ヨ。Ella :3#1250",
+						plusTier: null,
 					},
 					{
 						userId: 22324,
@@ -10180,6 +10380,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733513820,
 						inGameName: "ヨ。Swaashy#6189",
+						plusTier: null,
 					},
 					{
 						userId: 11088,
@@ -10192,6 +10393,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733513821,
 						inGameName: "ヨ。twinbe#6647",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -10233,6 +10435,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733602400,
 						inGameName: "T☆squishy#1382",
+						plusTier: null,
 					},
 					{
 						userId: 20419,
@@ -10245,6 +10448,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733602403,
 						inGameName: "combo#2339",
+						plusTier: null,
 					},
 					{
 						userId: 4248,
@@ -10257,6 +10461,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733602406,
 						inGameName: "T☆κοiκοi!#2065",
+						plusTier: null,
 					},
 					{
 						userId: 10826,
@@ -10269,6 +10474,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733602409,
 						inGameName: "Tachi Ko#2736",
+						plusTier: null,
 					},
 					{
 						userId: 28504,
@@ -10281,6 +10487,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734030318,
 						inGameName: "T☆Drewski#1157",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -10322,6 +10529,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733753214,
 						inGameName: "404 アキラ!#2667",
+						plusTier: null,
 					},
 					{
 						userId: 28446,
@@ -10334,6 +10542,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733753221,
 						inGameName: "404 PGP¹º²#2268",
+						plusTier: null,
 					},
 					{
 						userId: 30728,
@@ -10346,6 +10555,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733753226,
 						inGameName: "404 snip#2287",
+						plusTier: null,
 					},
 					{
 						userId: 32158,
@@ -10358,6 +10568,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733753244,
 						inGameName: "404 Floke#1914",
+						plusTier: null,
 					},
 					{
 						userId: 34634,
@@ -10370,6 +10581,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733854036,
 						inGameName: "404 Stick#3636",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -10411,6 +10623,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733914001,
 						inGameName: "メи Rεиzø#1066",
+						plusTier: null,
 					},
 					{
 						userId: 31189,
@@ -10423,6 +10636,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733914005,
 						inGameName: "Fx>>Saturn#1259",
+						plusTier: null,
 					},
 					{
 						userId: 10190,
@@ -10435,6 +10649,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733914010,
 						inGameName: "メи J-SON#1634",
+						plusTier: null,
 					},
 					{
 						userId: 37959,
@@ -10447,6 +10662,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733914024,
 						inGameName: "Ж «Лили» Ж#1963",
+						plusTier: null,
 					},
 					{
 						userId: 40304,
@@ -10459,6 +10675,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733914036,
 						inGameName: "Ж Ryro Ж#3336",
+						plusTier: null,
 					},
 					{
 						userId: 35922,
@@ -10471,6 +10688,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733914100,
 						inGameName: "Rocko_spl#1058",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -10512,6 +10730,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733966548,
 						inGameName: "[BW] Tommy #2195",
+						plusTier: null,
 					},
 					{
 						userId: 35617,
@@ -10524,6 +10743,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733966558,
 						inGameName: "[BW] Nep#6339",
+						plusTier: null,
 					},
 					{
 						userId: 37669,
@@ -10536,6 +10756,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733966563,
 						inGameName: "[BW]☆⌢NB⌢☆#1633",
+						plusTier: null,
 					},
 					{
 						userId: 37436,
@@ -10548,6 +10769,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733966565,
 						inGameName: "Reg112#1956",
+						plusTier: null,
 					},
 					{
 						userId: 35811,
@@ -10560,6 +10782,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733970531,
 						inGameName: "Parxe [BW]#2048",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -10601,6 +10824,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734032213,
 						inGameName: "τァ Jupex#9503",
+						plusTier: null,
 					},
 					{
 						userId: 1925,
@@ -10613,6 +10837,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734032217,
 						inGameName: "τァ Luigeon#2301",
+						plusTier: null,
 					},
 					{
 						userId: 11391,
@@ -10625,6 +10850,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734032220,
 						inGameName: "τァ Italics#3341",
+						plusTier: null,
 					},
 					{
 						userId: 27355,
@@ -10637,6 +10863,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734032222,
 						inGameName: "τァ Plαnσ#1055",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -10678,6 +10905,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734106606,
 						inGameName: "アこ•ζκγ˜#1943",
+						plusTier: null,
 					},
 					{
 						userId: 43269,
@@ -10690,6 +10918,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734106608,
 						inGameName: "-2#1564",
+						plusTier: null,
 					},
 					{
 						userId: 37173,
@@ -10702,6 +10931,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734106610,
 						inGameName: "アこ•Elias#2365",
+						plusTier: null,
 					},
 					{
 						userId: 34448,
@@ -10714,6 +10944,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734194642,
 						inGameName: "V³Aпgel»#2225",
+						plusTier: null,
 					},
 					{
 						userId: 16054,
@@ -10726,6 +10957,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734199465,
 						inGameName: "Autumnal!?#1691",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -10767,6 +10999,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734116765,
 						inGameName: "Puddleduck#9028",
+						plusTier: null,
 					},
 					{
 						userId: 10378,
@@ -10779,6 +11012,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734116829,
 						inGameName: "ctrlaltdog#3572",
+						plusTier: null,
 					},
 					{
 						userId: 46771,
@@ -10791,6 +11025,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734117640,
 						inGameName: "Polaris#6130",
+						plusTier: null,
 					},
 					{
 						userId: 5350,
@@ -10803,6 +11038,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734129026,
 						inGameName: "RKO*Bomb#2206",
+						plusTier: null,
 					},
 					{
 						userId: 12609,
@@ -10815,6 +11051,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734134255,
 						inGameName: "revlushaun#3043",
+						plusTier: null,
 					},
 					{
 						userId: 26044,
@@ -10827,6 +11064,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734134731,
 						inGameName: "zamuraı#9996",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -10868,6 +11106,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734125312,
 						inGameName: "KUST#2446",
+						plusTier: null,
 					},
 					{
 						userId: 43060,
@@ -10880,6 +11119,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734125320,
 						inGameName: "☆Tuna#9794",
+						plusTier: null,
 					},
 					{
 						userId: 22622,
@@ -10892,6 +11132,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734125324,
 						inGameName: "Heartble#4140",
+						plusTier: null,
 					},
 					{
 						userId: 22968,
@@ -10904,6 +11145,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734125402,
 						inGameName: "grubhub#8941",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -10945,6 +11187,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734134382,
 						inGameName: "S1MPLE#1222",
+						plusTier: null,
 					},
 					{
 						userId: 42164,
@@ -10957,6 +11200,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734134394,
 						inGameName: "✩Bubu✩#3042",
+						plusTier: null,
 					},
 					{
 						userId: 25689,
@@ -10969,6 +11213,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734134419,
 						inGameName: "モウセンゴケ#3613",
+						plusTier: null,
 					},
 					{
 						userId: 43524,
@@ -10981,6 +11226,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734135118,
 						inGameName: "「łw」JΔRΞD#2421",
+						plusTier: null,
 					},
 					{
 						userId: 26758,
@@ -10993,6 +11239,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734267010,
 						inGameName: "Lianzi#3090",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -11029,6 +11276,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733156802,
 						inGameName: "Thoma...#7962",
+						plusTier: null,
 					},
 					{
 						userId: 9112,
@@ -11041,6 +11289,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733156805,
 						inGameName: "Albedo...#3246",
+						plusTier: null,
 					},
 					{
 						userId: 3738,
@@ -11053,6 +11302,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733156806,
 						inGameName: "Firecorgi…#2846",
+						plusTier: null,
 					},
 					{
 						userId: 7434,
@@ -11065,6 +11315,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733156808,
 						inGameName: "droproller#6887",
+						plusTier: null,
 					},
 					{
 						userId: 9036,
@@ -11077,6 +11328,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733156810,
 						inGameName: "sulli...#2942",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -11118,6 +11370,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733157391,
 						inGameName: "wobblynuts#2103",
+						plusTier: null,
 					},
 					{
 						userId: 38204,
@@ -11130,6 +11383,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733157395,
 						inGameName: "ima div5?!#1610",
+						plusTier: null,
 					},
 					{
 						userId: 35506,
@@ -11142,6 +11396,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733157398,
 						inGameName: "ヨ。Goro.UA#1965",
+						plusTier: null,
 					},
 					{
 						userId: 3741,
@@ -11154,6 +11409,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733157407,
 						inGameName: "Sun#2327",
+						plusTier: null,
 					},
 					{
 						userId: 31728,
@@ -11166,6 +11422,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733157410,
 						inGameName: "‘×‘)Srblue#2726",
+						plusTier: null,
 					},
 					{
 						userId: 8080,
@@ -11178,6 +11435,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733865047,
 						inGameName: "M■OmaZen#2168",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -11219,6 +11477,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733162274,
 						inGameName: "¡ κrακhεαδ#6781",
+						plusTier: null,
 					},
 					{
 						userId: 42975,
@@ -11231,6 +11490,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733162328,
 						inGameName: "¡ Tangy#2745",
+						plusTier: null,
 					},
 					{
 						userId: 20319,
@@ -11243,6 +11503,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733167848,
 						inGameName: "*Starcole#1814",
+						plusTier: null,
 					},
 					{
 						userId: 28054,
@@ -11255,6 +11516,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733594188,
 						inGameName: "¡ C-53#1362",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -11296,6 +11558,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733367806,
 						inGameName: "pen°®»#2456",
+						plusTier: null,
 					},
 					{
 						userId: 46586,
@@ -11308,6 +11571,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733718486,
 						inGameName: "ring°®»#3381",
+						plusTier: null,
 					},
 					{
 						userId: 33790,
@@ -11320,6 +11584,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734040847,
 						inGameName: "★AkiSweeti#3326",
+						plusTier: null,
 					},
 					{
 						userId: 18632,
@@ -11332,6 +11597,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734116368,
 						inGameName: "hina°®»#3244",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -11373,6 +11639,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733456080,
 						inGameName: "SBz☆ Peace#2232",
+						plusTier: null,
 					},
 					{
 						userId: 10386,
@@ -11385,6 +11652,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733456082,
 						inGameName: "S☆Damage#8219",
+						plusTier: null,
 					},
 					{
 						userId: 22942,
@@ -11397,6 +11665,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733456084,
 						inGameName: "SBz☆Mikey#3048",
+						plusTier: null,
 					},
 					{
 						userId: 33369,
@@ -11409,6 +11678,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733456085,
 						inGameName: "SBz☆surimi#6144",
+						plusTier: null,
 					},
 					{
 						userId: 29617,
@@ -11421,6 +11691,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733456249,
 						inGameName: "SBz☆ Matt#3415",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -11462,6 +11733,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733579092,
 						inGameName: "∴イルカ∵#2729",
+						plusTier: null,
 					},
 					{
 						userId: 14170,
@@ -11474,6 +11746,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733579098,
 						inGameName: "∴ナナ∵#1150",
+						plusTier: null,
 					},
 					{
 						userId: 25419,
@@ -11486,6 +11759,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733579112,
 						inGameName: "∴ShiroZVM∵#1929",
+						plusTier: null,
 					},
 					{
 						userId: 14413,
@@ -11498,6 +11772,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733608177,
 						inGameName: "becky#3225",
+						plusTier: null,
 					},
 				],
 				checkIns: [],
@@ -11533,6 +11808,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733769667,
 						inGameName: "8𝄞Rosellei#9315",
+						plusTier: null,
 					},
 					{
 						userId: 38022,
@@ -11545,6 +11821,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733769672,
 						inGameName: "8♪Lightboy#3126",
+						plusTier: null,
 					},
 					{
 						userId: 41269,
@@ -11557,6 +11834,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733769675,
 						inGameName: "「sneakee」#4337",
+						plusTier: null,
 					},
 					{
 						userId: 7935,
@@ -11569,6 +11847,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733786868,
 						inGameName: "samy☆#1800",
+						plusTier: null,
 					},
 					{
 						userId: 43856,
@@ -11581,6 +11860,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733787437,
 						inGameName: "CiaB∞♪#1282",
+						plusTier: null,
 					},
 					{
 						userId: 43551,
@@ -11593,6 +11873,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733871853,
 						inGameName: "8🎵Mr.pig #3891",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -11634,6 +11915,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733794148,
 						inGameName: "⁀Juancho、#7824",
+						plusTier: null,
 					},
 					{
 						userId: 27036,
@@ -11646,6 +11928,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733794151,
 						inGameName: "⁀Ace Astro#2380",
+						plusTier: null,
 					},
 					{
 						userId: 22820,
@@ -11658,6 +11941,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733794153,
 						inGameName: "⌒jay、#2743",
+						plusTier: null,
 					},
 					{
 						userId: 28021,
@@ -11670,6 +11954,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733794154,
 						inGameName: "⁀rascal､#1280",
+						plusTier: null,
 					},
 					{
 						userId: 1890,
@@ -11682,6 +11967,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733794165,
 						inGameName: "StarShower#1551",
+						plusTier: null,
 					},
 					{
 						userId: 29636,
@@ -11694,6 +11980,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733794167,
 						inGameName: "⁀Terra､#1345",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -11735,6 +12022,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733820540,
 						inGameName: "χ。 Yuyu#2869",
+						plusTier: null,
 					},
 					{
 						userId: 21989,
@@ -11747,6 +12035,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733820548,
 						inGameName: "K#1858a",
+						plusTier: null,
 					},
 					{
 						userId: 25242,
@@ -11759,6 +12048,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733820554,
 						inGameName: "Sigma727#2127",
+						plusTier: null,
 					},
 					{
 						userId: 43081,
@@ -11771,6 +12061,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734119153,
 						inGameName: "f(x)Eli#1434",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -11807,6 +12098,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733825084,
 						inGameName: "240 ˚ Roxy #2267",
+						plusTier: null,
 					},
 					{
 						userId: 24252,
@@ -11819,6 +12111,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733825092,
 						inGameName: "puddi#1261",
+						plusTier: null,
 					},
 					{
 						userId: 32444,
@@ -11831,6 +12124,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733825098,
 						inGameName: "320°nelus#2340",
+						plusTier: null,
 					},
 					{
 						userId: 36113,
@@ -11843,6 +12137,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733825102,
 						inGameName: "106*Nova#6620",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -11884,6 +12179,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733865890,
 						inGameName: "★ŁPρīᴋα₵нʊ#4923",
+						plusTier: null,
 					},
 					{
 						userId: 27828,
@@ -11896,6 +12192,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733865934,
 						inGameName: "mş◇Nao◇#1197",
+						plusTier: null,
 					},
 					{
 						userId: 41975,
@@ -11908,6 +12205,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733866368,
 						inGameName: "mş◇noswet#3230",
+						plusTier: null,
 					},
 					{
 						userId: 28938,
@@ -11920,6 +12218,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733866415,
 						inGameName: "mş◇Femboy#2761",
+						plusTier: null,
 					},
 					{
 						userId: 8587,
@@ -11932,6 +12231,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734198266,
 						inGameName: "ミ》Vγτãłîç#3075",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -11973,6 +12273,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733873149,
 						inGameName: "⁰³ Smolie#2959",
+						plusTier: null,
 					},
 					{
 						userId: 7115,
@@ -11985,6 +12286,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733873154,
 						inGameName: "°³Xyюfonia#2523",
+						plusTier: null,
 					},
 					{
 						userId: 29674,
@@ -11997,6 +12299,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733873160,
 						inGameName: "°³Crescent#2342",
+						plusTier: null,
 					},
 					{
 						userId: 39569,
@@ -12009,6 +12312,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733873164,
 						inGameName: "°³ Joryu#2761",
+						plusTier: null,
 					},
 					{
 						userId: 30031,
@@ -12021,6 +12325,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734059096,
 						inGameName: "°³Hudsonic#1758",
+						plusTier: null,
 					},
 					{
 						userId: 28866,
@@ -12033,6 +12338,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734059098,
 						inGameName: "heathcliff#2173",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -12074,6 +12380,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733875608,
 						inGameName: "ЯГ DHVF#2103",
+						plusTier: null,
 					},
 					{
 						userId: 33824,
@@ -12086,6 +12393,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733875614,
 						inGameName: "ЯГdemONdaz#1133",
+						plusTier: null,
 					},
 					{
 						userId: 35608,
@@ -12098,6 +12406,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733875621,
 						inGameName: "ЯГ^catboy^#2774",
+						plusTier: null,
 					},
 					{
 						userId: 22677,
@@ -12110,6 +12419,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733875625,
 						inGameName: "ЯГ Enoki#6301",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -12151,6 +12461,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733888417,
 						inGameName: "C ☆VOID#1573",
+						plusTier: null,
 					},
 					{
 						userId: 30030,
@@ -12163,6 +12474,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733888595,
 						inGameName: "Blixout #2868",
+						plusTier: null,
 					},
 					{
 						userId: 21454,
@@ -12175,6 +12487,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733924130,
 						inGameName: "C☆Mizuyu#1106",
+						plusTier: null,
 					},
 					{
 						userId: 42483,
@@ -12187,6 +12500,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733932409,
 						inGameName: "C☆ ᗴnzo#2034",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -12223,6 +12537,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734008857,
 						inGameName: "ØĐ Tipo#2728",
+						plusTier: null,
 					},
 					{
 						userId: 37341,
@@ -12235,6 +12550,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734008860,
 						inGameName: "ØÐ Bees#7729",
+						plusTier: null,
 					},
 					{
 						userId: 22699,
@@ -12247,6 +12563,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734008861,
 						inGameName: "ØÐ Giraffe#1937",
+						plusTier: null,
 					},
 					{
 						userId: 28145,
@@ -12259,6 +12576,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734008862,
 						inGameName: "ØĐ Madman#1438",
+						plusTier: null,
 					},
 					{
 						userId: 39363,
@@ -12271,6 +12589,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734008862,
 						inGameName: "SMGalactic#2705",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -12312,6 +12631,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734018352,
 						inGameName: ">つ Gray#2584",
+						plusTier: null,
 					},
 					{
 						userId: 20990,
@@ -12324,6 +12644,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734018468,
 						inGameName: "peepeepoop#1111",
+						plusTier: null,
 					},
 					{
 						userId: 22469,
@@ -12336,6 +12657,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734018744,
 						inGameName: ">つ ari#6831",
+						plusTier: null,
 					},
 					{
 						userId: 41594,
@@ -12348,6 +12670,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734018745,
 						inGameName: "Aris!#3219",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -12389,6 +12712,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734019701,
 						inGameName: "1κ DERLEON#2716",
+						plusTier: null,
 					},
 					{
 						userId: 35421,
@@ -12401,6 +12725,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734019708,
 						inGameName: "∴FATcat∵#9026",
+						plusTier: null,
 					},
 					{
 						userId: 33524,
@@ -12413,6 +12738,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734019712,
 						inGameName: "∴Wunini∵#3998",
+						plusTier: null,
 					},
 					{
 						userId: 22500,
@@ -12425,6 +12751,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734021864,
 						inGameName: "N#2648",
+						plusTier: null,
 					},
 					{
 						userId: 42081,
@@ -12437,6 +12764,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734105680,
 						inGameName: "∴JuliDuli∵#1274",
+						plusTier: null,
 					},
 					{
 						userId: 20063,
@@ -12449,6 +12777,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734105830,
 						inGameName: "moo Froody#2483",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -12485,6 +12814,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734023441,
 						inGameName: "κs/Milk#1291",
+						plusTier: null,
 					},
 					{
 						userId: 2898,
@@ -12497,6 +12827,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734023445,
 						inGameName: "κs/Camo#7584",
+						plusTier: null,
 					},
 					{
 						userId: 25763,
@@ -12509,6 +12840,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734023449,
 						inGameName: "κs/mart#8857",
+						plusTier: null,
 					},
 					{
 						userId: 3466,
@@ -12521,6 +12853,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734023452,
 						inGameName: "κs/Nova#1858",
+						plusTier: null,
 					},
 					{
 						userId: 34662,
@@ -12533,6 +12866,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734023471,
 						inGameName: "ks×Arlo#3183",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -12574,6 +12908,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734099744,
 						inGameName: "DblCookies#1157",
+						plusTier: null,
 					},
 					{
 						userId: 7461,
@@ -12586,6 +12921,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734099747,
 						inGameName: "FFA Asri#1196",
+						plusTier: null,
 					},
 					{
 						userId: 39098,
@@ -12598,6 +12934,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734099748,
 						inGameName: "MLG VESNA#1357",
+						plusTier: null,
 					},
 					{
 						userId: 22624,
@@ -12610,6 +12947,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734099751,
 						inGameName: "Хлебушек#2205",
+						plusTier: null,
 					},
 					{
 						userId: 28137,
@@ -12622,6 +12960,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734099753,
 						inGameName: "⭐Pitoy#1990",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -12663,6 +13002,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734109256,
 						inGameName: "Mαrc ★#2004",
+						plusTier: null,
 					},
 					{
 						userId: 29661,
@@ -12675,6 +13015,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734109262,
 						inGameName: "Oydα!★#2446",
+						plusTier: null,
 					},
 					{
 						userId: 10333,
@@ -12687,6 +13028,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734109264,
 						inGameName: "Shogunyan★#1907",
+						plusTier: null,
 					},
 					{
 						userId: 35067,
@@ -12699,6 +13041,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734115341,
 						inGameName: "メи αlεχvιç#9786",
+						plusTier: null,
 					},
 					{
 						userId: 31655,
@@ -12711,6 +13054,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734118067,
 						inGameName: "α▽Nite! ツ#1126",
+						plusTier: null,
 					},
 					{
 						userId: 40743,
@@ -12723,6 +13067,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734118251,
 						inGameName: "Bkl#3359",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -12759,6 +13104,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734125682,
 						inGameName: "zм Painter#1599",
+						plusTier: null,
 					},
 					{
 						userId: 32430,
@@ -12771,6 +13117,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734125687,
 						inGameName: "zм fan★アハト#9121",
+						plusTier: null,
 					},
 					{
 						userId: 26701,
@@ -12783,6 +13130,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734125692,
 						inGameName: "zм★Cinna#3115",
+						plusTier: null,
 					},
 					{
 						userId: 30584,
@@ -12795,6 +13143,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734125694,
 						inGameName: "zм eggs♪#2417",
+						plusTier: null,
 					},
 					{
 						userId: 24290,
@@ -12807,6 +13156,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734125695,
 						inGameName: "zмKensa™#3419",
+						plusTier: null,
 					},
 					{
 						userId: 36575,
@@ -12819,6 +13169,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734125696,
 						inGameName: "zм lumi★#2628",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -12860,6 +13211,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733515005,
 						inGameName: "[L]ucky☆#2554",
+						plusTier: null,
 					},
 					{
 						userId: 36921,
@@ -12872,6 +13224,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733515009,
 						inGameName: "melon musk#2999",
+						plusTier: null,
 					},
 					{
 						userId: 37563,
@@ -12884,6 +13237,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733515013,
 						inGameName: "Oβιiνiση★※#9105",
+						plusTier: null,
 					},
 					{
 						userId: 37665,
@@ -12896,6 +13250,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733515016,
 						inGameName: "SteveRoger#6300",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -12937,6 +13292,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733521735,
 						inGameName: "ζ☆Pre#2676",
+						plusTier: null,
 					},
 					{
 						userId: 38912,
@@ -12949,6 +13305,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733521737,
 						inGameName: "cyanide☆#1025",
+						plusTier: null,
 					},
 					{
 						userId: 23357,
@@ -12961,6 +13318,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733521742,
 						inGameName: "ζ☆Shiber#1520",
+						plusTier: null,
 					},
 					{
 						userId: 36853,
@@ -12973,6 +13331,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733521744,
 						inGameName: "ζ☆Turtle#3399",
+						plusTier: null,
 					},
 					{
 						userId: 42599,
@@ -12985,6 +13344,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734062084,
 						inGameName: "し-Scruffy#2981",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -13026,6 +13386,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733525617,
 						inGameName: "«!» Silver#3048",
+						plusTier: null,
 					},
 					{
 						userId: 21818,
@@ -13038,6 +13399,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733525636,
 						inGameName: "«!» jamer#2432",
+						plusTier: null,
 					},
 					{
 						userId: 22991,
@@ -13050,6 +13412,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733525638,
 						inGameName: "«!» oxii#1863",
+						plusTier: null,
 					},
 					{
 						userId: 2266,
@@ -13062,6 +13425,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733550589,
 						inGameName: "«!» Show-#3347",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -13103,6 +13467,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733847805,
 						inGameName: "|+| Gyrum?#1429",
+						plusTier: null,
 					},
 					{
 						userId: 32015,
@@ -13115,6 +13480,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733847808,
 						inGameName: "|+| goldie#1823",
+						plusTier: null,
 					},
 					{
 						userId: 30663,
@@ -13127,6 +13493,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733847813,
 						inGameName: "l+lRegret#9365",
+						plusTier: null,
 					},
 					{
 						userId: 45778,
@@ -13139,6 +13506,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733847820,
 						inGameName: "|+| KO#7634",
+						plusTier: null,
 					},
 					{
 						userId: 32970,
@@ -13151,6 +13519,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733847825,
 						inGameName: "hi lol#1052",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -13192,6 +13561,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733858126,
 						inGameName: "☐ JoshI#3168",
+						plusTier: null,
 					},
 					{
 						userId: 35567,
@@ -13204,6 +13574,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733858131,
 						inGameName: "☐ Koyomi#8668",
+						plusTier: null,
 					},
 					{
 						userId: 41108,
@@ -13216,6 +13587,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733858133,
 						inGameName: "☐ √VVu#1515",
+						plusTier: null,
 					},
 					{
 						userId: 34545,
@@ -13228,6 +13600,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733858134,
 						inGameName: "☐ Womkel#1682",
+						plusTier: null,
 					},
 					{
 						userId: 26564,
@@ -13240,6 +13613,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733858136,
 						inGameName: "☐Jelly...#3387",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -13281,6 +13655,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733966096,
 						inGameName: "§ LimnL#1167",
+						plusTier: null,
 					},
 					{
 						userId: 25741,
@@ -13293,6 +13668,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733966173,
 						inGameName: "Toast!#9282",
+						plusTier: null,
 					},
 					{
 						userId: 42874,
@@ -13305,6 +13681,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733966255,
 						inGameName: "QS§ shade#8976",
+						plusTier: null,
 					},
 					{
 						userId: 39470,
@@ -13317,6 +13694,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733995042,
 						inGameName: "Vi♪#2860",
+						plusTier: null,
 					},
 					{
 						userId: 32878,
@@ -13329,6 +13707,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734008017,
 						inGameName: "§ rzor#3175",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -13370,6 +13749,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734021147,
 						inGameName: "⊂²⊃Lynx#2645",
+						plusTier: null,
 					},
 					{
 						userId: 45174,
@@ -13382,6 +13762,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734021215,
 						inGameName: "⊂²⊃Bisc#2044",
+						plusTier: null,
 					},
 					{
 						userId: 10222,
@@ -13394,6 +13775,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734021280,
 						inGameName: "⊂²⊃Despair#2742",
+						plusTier: null,
 					},
 					{
 						userId: 6976,
@@ -13406,6 +13788,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734031699,
 						inGameName: "⊂²⊃Camexrn#9414",
+						plusTier: null,
 					},
 					{
 						userId: 46504,
@@ -13418,6 +13801,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734032940,
 						inGameName: "⊂²⊃ J#1795",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -13459,6 +13843,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734040772,
 						inGameName: "$2 kαye#1141",
+						plusTier: null,
 					},
 					{
 						userId: 43753,
@@ -13471,6 +13856,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734040792,
 						inGameName: "$2 Henk#3060",
+						plusTier: null,
 					},
 					{
 						userId: 45806,
@@ -13483,6 +13869,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734040795,
 						inGameName: "Bodi#1083",
+						plusTier: null,
 					},
 					{
 						userId: 46648,
@@ -13495,6 +13882,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734041012,
 						inGameName: "$2 Boros#1605",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -13536,6 +13924,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734033803,
 						inGameName: "CH◆tariq#2613",
+						plusTier: null,
 					},
 					{
 						userId: 44328,
@@ -13548,6 +13937,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734033808,
 						inGameName: "CH✦(Splat)#1396",
+						plusTier: null,
 					},
 					{
 						userId: 12235,
@@ -13560,6 +13950,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734033810,
 						inGameName: "★W⦶⦶b⦵⦵b★#1331",
+						plusTier: null,
 					},
 					{
 						userId: 29531,
@@ -13572,6 +13963,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734124051,
 						inGameName: "とづ 8#1129",
+						plusTier: null,
 					},
 					{
 						userId: 30044,
@@ -13584,6 +13976,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734198626,
 						inGameName: "Addy!#2572",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -13625,6 +14018,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734099612,
 						inGameName: "nx★Juan★#2469",
+						plusTier: null,
 					},
 					{
 						userId: 37641,
@@ -13637,6 +14031,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734105791,
 						inGameName: "Veater_27#7110",
+						plusTier: null,
 					},
 					{
 						userId: 33913,
@@ -13649,6 +14044,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734106106,
 						inGameName: "Pablitodmd#1039",
+						plusTier: null,
 					},
 					{
 						userId: 42597,
@@ -13661,6 +14057,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734130054,
 						inGameName: "marco#8993",
+						plusTier: null,
 					},
 					{
 						userId: 24572,
@@ -13673,6 +14070,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734130213,
 						inGameName: "kira#1088",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -13709,6 +14107,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734113463,
 						inGameName: "DumbKnight#2534",
+						plusTier: null,
 					},
 					{
 						userId: 33276,
@@ -13721,6 +14120,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734119726,
 						inGameName: "Bronze!#5994",
+						plusTier: null,
 					},
 					{
 						userId: 41038,
@@ -13733,6 +14133,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734119729,
 						inGameName: "SnC Jammy#1610",
+						plusTier: null,
 					},
 					{
 						userId: 11198,
@@ -13745,6 +14146,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734119850,
 						inGameName: "Tomatty#1655",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -13786,6 +14188,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734118202,
 						inGameName: "AI thds#1117",
+						plusTier: null,
 					},
 					{
 						userId: 14927,
@@ -13798,6 +14201,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734118214,
 						inGameName: "AI Alphi#3562",
+						plusTier: null,
 					},
 					{
 						userId: 1236,
@@ -13810,6 +14214,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734118218,
 						inGameName: "Melvo#8510",
+						plusTier: null,
 					},
 					{
 						userId: 27069,
@@ -13822,6 +14227,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734118221,
 						inGameName: "Wither :3#1655",
+						plusTier: null,
 					},
 				],
 				checkIns: [],
@@ -13857,6 +14263,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734134334,
 						inGameName: "6pk hype#2205",
+						plusTier: null,
 					},
 					{
 						userId: 25952,
@@ -13869,6 +14276,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734134336,
 						inGameName: "6pk coneco#3350",
+						plusTier: null,
 					},
 					{
 						userId: 27611,
@@ -13881,6 +14289,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734134344,
 						inGameName: "6pk vowels#1832",
+						plusTier: null,
 					},
 					{
 						userId: 11186,
@@ -13893,6 +14302,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734134349,
 						inGameName: "6pSomesing#8428",
+						plusTier: null,
 					},
 					{
 						userId: 23481,
@@ -13905,6 +14315,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734136034,
 						inGameName: "Squidoku#3096",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -13946,6 +14357,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733169181,
 						inGameName: "SR★MB20YT#1798",
+						plusTier: null,
 					},
 					{
 						userId: 38610,
@@ -13958,6 +14370,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733169320,
 						inGameName: "SR★Phil#1761",
+						plusTier: null,
 					},
 					{
 						userId: 40713,
@@ -13970,6 +14383,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733169508,
 						inGameName: "SR★Loha#3062",
+						plusTier: null,
 					},
 					{
 						userId: 40766,
@@ -13982,6 +14396,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733191023,
 						inGameName: "SR★Goggles#9276",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -14023,6 +14438,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733247691,
 						inGameName: "Yolo#4117",
+						plusTier: null,
 					},
 					{
 						userId: 46538,
@@ -14035,6 +14451,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733248120,
 						inGameName: "REDACTED™#2445",
+						plusTier: null,
 					},
 					{
 						userId: 46523,
@@ -14047,6 +14464,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733254364,
 						inGameName: "яєαℓм#2823",
+						plusTier: null,
 					},
 					{
 						userId: 46501,
@@ -14059,6 +14477,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733255832,
 						inGameName: "ira#5400",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -14100,6 +14519,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733452618,
 						inGameName: "lavie♪#1025",
+						plusTier: null,
 					},
 					{
 						userId: 17049,
@@ -14112,6 +14532,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733452664,
 						inGameName: "♪Sunshine♪#1855",
+						plusTier: null,
 					},
 					{
 						userId: 36888,
@@ -14124,6 +14545,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733452675,
 						inGameName: "LoftKnight#2145",
+						plusTier: null,
 					},
 					{
 						userId: 46546,
@@ -14136,6 +14558,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733727932,
 						inGameName: "Squiggly#1806",
+						plusTier: null,
 					},
 					{
 						userId: 42172,
@@ -14148,6 +14571,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733782852,
 						inGameName: "Verchi#2950",
+						plusTier: null,
 					},
 				],
 				checkIns: [],
@@ -14178,6 +14602,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733481710,
 						inGameName: "★*мvstang#2813",
+						plusTier: null,
 					},
 					{
 						userId: 40912,
@@ -14190,6 +14615,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733481731,
 						inGameName: "★*Neven#5092",
+						plusTier: null,
 					},
 					{
 						userId: 30455,
@@ -14202,6 +14628,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733481736,
 						inGameName: "★*Miles#2639",
+						plusTier: null,
 					},
 					{
 						userId: 27649,
@@ -14214,6 +14641,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733481739,
 						inGameName: "★*Pulfis#2895",
+						plusTier: null,
 					},
 					{
 						userId: 43703,
@@ -14226,6 +14654,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733502639,
 						inGameName: "Φ; Spud ★#3135",
+						plusTier: null,
 					},
 				],
 				checkIns: [],
@@ -14261,6 +14690,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733508949,
 						inGameName: "skgrizz#8819",
+						plusTier: null,
 					},
 					{
 						userId: 46451,
@@ -14273,6 +14703,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733525710,
 						inGameName: "Pestilence#4777",
+						plusTier: null,
 					},
 					{
 						userId: 44412,
@@ -14285,6 +14716,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733527279,
 						inGameName: "folly#5759",
+						plusTier: null,
 					},
 					{
 						userId: 45194,
@@ -14297,6 +14729,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733528514,
 						inGameName: "Crumbs#1223",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -14338,6 +14771,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733611261,
 						inGameName: "lepton#2586",
+						plusTier: null,
 					},
 					{
 						userId: 21755,
@@ -14350,6 +14784,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733801424,
 						inGameName: "borbo =3#1160",
+						plusTier: null,
 					},
 					{
 						userId: 27984,
@@ -14362,6 +14797,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733805620,
 						inGameName: "Orange_ =3#1571",
+						plusTier: null,
 					},
 					{
 						userId: 27990,
@@ -14374,6 +14810,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733806448,
 						inGameName: "chip =3#3160",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -14410,6 +14847,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733841846,
 						inGameName: "★S→MILENKO#1628",
+						plusTier: null,
 					},
 					{
 						userId: 41943,
@@ -14422,6 +14860,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733841861,
 						inGameName: "Ashes360#2691",
+						plusTier: null,
 					},
 					{
 						userId: 45290,
@@ -14434,6 +14873,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733841865,
 						inGameName: "Charli#3401",
+						plusTier: null,
 					},
 					{
 						userId: 46394,
@@ -14446,6 +14886,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733841867,
 						inGameName: "Leshy#7700",
+						plusTier: null,
 					},
 					{
 						userId: 46400,
@@ -14458,6 +14899,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733841868,
 						inGameName: "⭐S->Salvo#2510",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -14499,6 +14941,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1733878153,
 						inGameName: "chicken#3343",
+						plusTier: null,
 					},
 					{
 						userId: 38960,
@@ -14511,6 +14954,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733878225,
 						inGameName: "caustic#7812",
+						plusTier: null,
 					},
 					{
 						userId: 32199,
@@ -14523,6 +14967,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1733931535,
 						inGameName: "Ducky/DC#9919",
+						plusTier: null,
 					},
 					{
 						userId: 40126,
@@ -14535,6 +14980,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734124484,
 						inGameName: "[∞B]Mochi#4755",
+						plusTier: null,
 					},
 				],
 				checkIns: [
@@ -14576,6 +15022,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 1,
 						createdAt: 1734135144,
 						inGameName: "Perijove#1632",
+						plusTier: null,
 					},
 					{
 						userId: 44866,
@@ -14588,6 +15035,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734135149,
 						inGameName: "Dr. Ness#3373",
+						plusTier: null,
 					},
 					{
 						userId: 44642,
@@ -14600,6 +15048,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734135638,
 						inGameName: "Endee#4738",
+						plusTier: null,
 					},
 					{
 						userId: 45391,
@@ -14612,6 +15061,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						isOwner: 0,
 						createdAt: 1734136833,
 						inGameName: "Cledesol#0674",
+						plusTier: null,
 					},
 				],
 				checkIns: [

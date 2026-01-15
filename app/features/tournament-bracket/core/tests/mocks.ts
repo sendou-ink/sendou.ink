@@ -1451,6 +1451,7 @@ export const PADDLING_POOL_257 = () =>
 				],
 				lockedMatches: [],
 			},
+			seedingSnapshot: null,
 			mapPickingStyle: "AUTO_ALL",
 			name: "Paddling Pool 257",
 			description:
@@ -1462,6 +1463,7 @@ export const PADDLING_POOL_257 = () =>
 			author: {
 				id: 860,
 				username: "공주 Alice",
+				pronouns: null,
 				discordId: "163771047068303360",
 				discordAvatar: "b33d8f230218d6a92705a63fdf803851",
 				customUrl: "alicetheto",
@@ -1471,6 +1473,7 @@ export const PADDLING_POOL_257 = () =>
 				{
 					id: 1536,
 					username: "Pinky",
+					pronouns: null,
 					discordId: "178489224192851969",
 					discordAvatar: "8b8c1d85cc525ea366f3ce2a6a594c05",
 					customUrl: "pinky",
@@ -1480,6 +1483,7 @@ export const PADDLING_POOL_257 = () =>
 				{
 					id: 1662,
 					username: "Andromeda",
+					pronouns: null,
 					discordId: "275213752025088000",
 					discordAvatar: "25bf68c5aa4e622ceb5a241c34841c6d",
 					customUrl: null,
@@ -1489,6 +1493,7 @@ export const PADDLING_POOL_257 = () =>
 				{
 					id: 6648,
 					username: "Hαzε",
+					pronouns: null,
 					discordId: "195618756800675841",
 					discordAvatar: "a_03ec4bbcb2a4ab000237c9f3e9e71508",
 					customUrl: "sdomi19",
@@ -1498,6 +1503,7 @@ export const PADDLING_POOL_257 = () =>
 				{
 					id: 12717,
 					username: "Browni",
+					pronouns: null,
 					discordId: "413759870333091884",
 					discordAvatar: "a_b55f70ada809a600e73c5088b910e659",
 					customUrl: "brufnie",
@@ -7424,6 +7430,7 @@ export const PADDLING_POOL_255 = () =>
 				],
 				lockedMatches: [],
 			},
+			seedingSnapshot: null,
 			mapPickingStyle: "AUTO_ALL",
 			name: "Paddling Pool 255",
 			description: null,
@@ -7434,6 +7441,7 @@ export const PADDLING_POOL_255 = () =>
 			author: {
 				id: 860,
 				username: "공주 Alice",
+				pronouns: null,
 				discordId: "163771047068303360",
 				discordAvatar: "b33d8f230218d6a92705a63fdf803851",
 				customUrl: "alicetheto",
@@ -7443,6 +7451,7 @@ export const PADDLING_POOL_255 = () =>
 				{
 					id: 1536,
 					username: "Pinky",
+					pronouns: null,
 					discordId: "178489224192851969",
 					discordAvatar: "8b8c1d85cc525ea366f3ce2a6a594c05",
 					customUrl: "pinky",
@@ -7452,6 +7461,7 @@ export const PADDLING_POOL_255 = () =>
 				{
 					id: 1662,
 					username: "Andromeda",
+					pronouns: null,
 					discordId: "275213752025088000",
 					discordAvatar: "25bf68c5aa4e622ceb5a241c34841c6d",
 					customUrl: null,
@@ -7461,6 +7471,7 @@ export const PADDLING_POOL_255 = () =>
 				{
 					id: 6648,
 					username: "Hαzε",
+					pronouns: null,
 					discordId: "195618756800675841",
 					discordAvatar: "a_03ec4bbcb2a4ab000237c9f3e9e71508",
 					customUrl: "sdomi19",
@@ -7470,6 +7481,7 @@ export const PADDLING_POOL_255 = () =>
 				{
 					id: 12717,
 					username: "Browni",
+					pronouns: null,
 					discordId: "413759870333091884",
 					discordAvatar: "a_b55f70ada809a600e73c5088b910e659",
 					customUrl: "brufnie",
@@ -13705,6 +13717,7 @@ export const IN_THE_ZONE_32 = ({
 			discordUrl: null,
 			castTwitchAccounts: ["dappleproductions", "kyochandxd"],
 			castedMatchesInfo: null,
+			seedingSnapshot: null,
 			mapPickingStyle: "AUTO_SZ",
 			name: "In The Zone 32",
 			description: "Part of sendou.ink ranked season 2",
@@ -13715,6 +13728,7 @@ export const IN_THE_ZONE_32 = ({
 			author: {
 				id: 274,
 				username: "Sendou",
+				pronouns: null,
 				discordId: "79237403620945920",
 				discordAvatar: "6fc41a44b069a0d2152ac06d1e496c6c",
 				customUrl: "sendou",
@@ -13724,6 +13738,7 @@ export const IN_THE_ZONE_32 = ({
 				{
 					id: 860,
 					username: "공주 Alice",
+					pronouns: null,
 					discordId: "163771047068303360",
 					discordAvatar: "b33d8f230218d6a92705a63fdf803851",
 					customUrl: "alicetheto",
@@ -13733,6 +13748,7 @@ export const IN_THE_ZONE_32 = ({
 				{
 					id: 12717,
 					username: "Browni",
+					pronouns: null,
 					discordId: "413759870333091884",
 					discordAvatar: "a_b55f70ada809a600e73c5088b910e659",
 					customUrl: "brufnie",

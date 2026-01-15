@@ -167,6 +167,7 @@ export async function findProfileByIdentifier(
 			"User.favoriteBadgeIds",
 			"User.patronTier",
 			"PlusTier.tier as plusTier",
+			"User.pronouns",
 			jsonArrayFrom(
 				eb
 					.selectFrom("UserWeapon")
@@ -453,6 +454,7 @@ export async function findChatUsersByUserIds(userIds: number[]) {
 			"User.discordId",
 			"User.discordAvatar",
 			"User.username",
+			"User.pronouns",
 			userChatNameColor,
 		])
 		.where("User.id", "in", userIds)
@@ -895,6 +897,7 @@ type UpdateProfileArgs = Pick<
 	| "customName"
 	| "motionSens"
 	| "stickSens"
+	| "pronouns"
 	| "inGameName"
 	| "battlefy"
 	| "css"
@@ -936,6 +939,7 @@ export function updateProfile(args: UpdateProfileArgs) {
 				customName: args.customName,
 				motionSens: args.motionSens,
 				stickSens: args.stickSens,
+				pronouns: args.pronouns,
 				inGameName: args.inGameName,
 				css: args.css,
 				battlefy: args.battlefy,

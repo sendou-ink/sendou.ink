@@ -1,5 +1,5 @@
-import { expect, type Locator, type Page, test } from "@playwright/test";
-import { navigate } from "~/utils/playwright";
+import type { Locator, Page } from "@playwright/test";
+import { expect, navigate, test } from "~/utils/playwright";
 import { TIER_LIST_MAKER_URL } from "~/utils/urls";
 
 test.describe("Tier List Maker", () => {

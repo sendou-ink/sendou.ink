@@ -1,18 +1,14 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { cors } from "remix-utils/cors";
 import { z } from "zod/v4";
 import { identifierToUserIdQuery } from "~/features/user-page/UserRepository.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import { handleOptionsRequest } from "../api-public-utils.server";
 import type { GetUserIdsResponse } from "../schema";
 
 const paramsSchema = z.object({
 	identifier: z.string(),
 });
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
-
+export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { identifier } = parseParams({ params, schema: paramsSchema });
 
 	const user = notFoundIfFalsy(
@@ -27,5 +23,5 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		customUrl: user.customUrl,
 	};
 
-	return await cors(request, Response.json(result));
+	return Response.json(result);
 };

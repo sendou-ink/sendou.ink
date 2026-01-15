@@ -12,15 +12,18 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import type {
+	BaseWeaponStats,
 	MainWeaponParams,
 	ParamsJson,
 	SubWeaponParams,
+	WeaponKit,
 } from "~/features/build-analyzer/analyzer-types";
 import {
 	type SpecialWeaponId,
 	SQUID_BEAKON_ID,
 	type SubWeaponId,
 	subWeaponIds,
+	weaponIdToBaseWeaponId,
 } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -44,13 +47,20 @@ type SubWeapon = (typeof subWeapons)[number];
 type SpecialWeapon = (typeof specialWeapons)[number];
 type TranslationArray = Array<{ language: string; key: string; value: string }>;
 
+const KIT_PROPERTIES = [
+	"SpecialPoint",
+	"subWeaponId",
+	"specialWeaponId",
+] as const;
+
 async function main() {
-	const mainWeaponsResult: Record<number, MainWeaponParams> = {};
+	const allMainWeaponParams: Record<number, MainWeaponParams> = {};
 	const subWeaponsResult: Record<number, SubWeaponParams> = {};
 	const specialWeaponsResult: any = {};
 	const translations: TranslationArray = [];
 
 	const langDicts = await loadLangDicts();
+	const hasLangDicts = langDicts.length > 0;
 
 	for (const weapon of weapons) {
 		if (mainWeaponShouldBeSkipped(weapon)) continue;
@@ -60,16 +70,21 @@ async function main() {
 			parametersToMainWeaponResult(weapon, rawParams),
 		);
 
-		translationsToArray({
-			arr: translations,
-			internalName: weapon.__RowId,
-			weaponId: weapon.Id,
-			type: "Main",
-			translations: langDicts,
-		});
+		if (hasLangDicts) {
+			translationsToArray({
+				arr: translations,
+				internalName: weapon.__RowId,
+				weaponId: weapon.Id,
+				type: "Main",
+				translations: langDicts,
+			});
+		}
 
-		mainWeaponsResult[weapon.Id] = params;
+		allMainWeaponParams[weapon.Id] = params;
 	}
+
+	const { baseWeaponStats, weaponKits } =
+		splitIntoBaseStatsAndKits(allMainWeaponParams);
 
 	for (const subWeapon of subWeapons) {
 		if (subWeaponShouldBeSkipped(subWeapon)) continue;
@@ -77,13 +92,15 @@ async function main() {
 		const rawParams = loadWeaponParamsObject(subWeapon);
 		const params = parametersToSubWeaponResult(subWeapon, rawParams);
 
-		translationsToArray({
-			arr: translations,
-			internalName: subWeapon.__RowId,
-			weaponId: subWeapon.Id,
-			type: "Sub",
-			translations: langDicts,
-		});
+		if (hasLangDicts) {
+			translationsToArray({
+				arr: translations,
+				internalName: subWeapon.__RowId,
+				weaponId: subWeapon.Id,
+				type: "Sub",
+				translations: langDicts,
+			});
+		}
 
 		subWeaponsResult[subWeapon.Id] = params;
 	}
@@ -94,30 +111,107 @@ async function main() {
 		const rawParams = loadWeaponParamsObject(specialWeapon);
 		const params = parametersToSpecialWeaponResult(rawParams);
 
-		translationsToArray({
-			arr: translations,
-			internalName: specialWeapon.__RowId,
-			weaponId: specialWeapon.Id,
-			type: "Special",
-			translations: langDicts,
-		});
+		if (hasLangDicts) {
+			translationsToArray({
+				arr: translations,
+				internalName: specialWeapon.__RowId,
+				weaponId: specialWeapon.Id,
+				type: "Special",
+				translations: langDicts,
+			});
+		}
 
 		specialWeaponsResult[specialWeapon.Id] = params;
 	}
 
 	const toFile: ParamsJson = {
-		mainWeapons: mainWeaponsResult,
+		baseWeaponStats,
+		weaponKits,
 		subWeapons: subWeaponsResult,
 		specialWeapons: specialWeaponsResult,
 	};
 
+	const weaponParamsTs = `export const weaponParams = ${JSON.stringify(toFile, null, "\t")} as const;\n`;
+
 	fs.writeFileSync(
-		path.join(__dirname, "output", "params.json"),
-		`${JSON.stringify(toFile, null, 2)}\n`,
+		path.join(
+			__dirname,
+			"..",
+			"app",
+			"features",
+			"build-analyzer",
+			"core",
+			"weapon-params.ts",
+		),
+		weaponParamsTs,
 	);
 
-	writeTranslationsJsons(translations);
-	logWeaponIds(mainWeaponsResult);
+	if (hasLangDicts) {
+		writeTranslationsJsons(translations);
+	}
+	logWeaponIds(weaponKits);
+}
+
+function splitIntoBaseStatsAndKits(
+	allParams: Record<number, MainWeaponParams>,
+): {
+	baseWeaponStats: Record<number, BaseWeaponStats>;
+	weaponKits: Record<number, WeaponKit>;
+} {
+	const weaponGroups: Record<
+		number,
+		Array<{ id: number; params: MainWeaponParams }>
+	> = {};
+
+	for (const [idStr, params] of Object.entries(allParams)) {
+		const id = Number(idStr);
+		const baseId = weaponIdToBaseWeaponId(id);
+		if (!weaponGroups[baseId]) weaponGroups[baseId] = [];
+		weaponGroups[baseId].push({ id, params });
+	}
+
+	const baseWeaponStats: Record<number, BaseWeaponStats> = {};
+	const weaponKits: Record<number, WeaponKit> = {};
+
+	for (const [baseIdStr, variants] of Object.entries(weaponGroups)) {
+		const baseId = Number(baseIdStr);
+		const firstVariant = variants[0].params;
+
+		const nonKitProps = Object.keys(firstVariant).filter(
+			(k) => !KIT_PROPERTIES.includes(k as (typeof KIT_PROPERTIES)[number]),
+		) as Array<keyof MainWeaponParams>;
+
+		const sharedProps: Partial<MainWeaponParams> = {};
+		for (const prop of nonKitProps) {
+			const firstVal = JSON.stringify(firstVariant[prop]);
+			const allSame = variants.every(
+				(v) => JSON.stringify(v.params[prop]) === firstVal,
+			);
+			if (allSame && firstVariant[prop] !== undefined) {
+				(sharedProps as any)[prop] = firstVariant[prop];
+			}
+		}
+
+		baseWeaponStats[baseId] = sharedProps as BaseWeaponStats;
+
+		for (const variant of variants) {
+			const kit: WeaponKit = {
+				SpecialPoint: variant.params.SpecialPoint,
+				subWeaponId: variant.params.subWeaponId,
+				specialWeaponId: variant.params.specialWeaponId,
+			};
+
+			for (const prop of nonKitProps) {
+				if (!(prop in sharedProps) && variant.params[prop] !== undefined) {
+					(kit as any)[prop] = variant.params[prop];
+				}
+			}
+
+			weaponKits[variant.id] = kit;
+		}
+	}
+
+	return { baseWeaponStats, weaponKits };
 }
 
 function parametersToMainWeaponResult(
@@ -167,7 +261,8 @@ function parametersToMainWeaponResult(
 	const BlastParam_DistanceDamage = () => {
 		// REEF-LUX has distance damage listed in params
 		// but actually doesn't deal it in game
-		if (weapon.Id === 7020) return undefined;
+		if (weapon.Id === 7020 || weapon.Id === 7021 || weapon.Id === 7022)
+			return undefined;
 
 		return (
 			params.BlastParam?.DistanceDamage ??
@@ -199,7 +294,8 @@ function parametersToMainWeaponResult(
 	};
 
 	const slosherDirectDamageSecondary = () => {
-		const isDreadWringer = weapon.Id === 3050 || weapon.Id === 3051;
+		const isDreadWringer =
+			weapon.Id === 3050 || weapon.Id === 3051 || weapon.Id === 3052;
 		if (!isDreadWringer) return;
 
 		const DamageParam_Secondary_ValueDirectMax =
@@ -217,7 +313,7 @@ function parametersToMainWeaponResult(
 		params.WeaponKeepChargeParam?.KeepChargeFullFrame ??
 		params.spl__WeaponStringerParam?.ChargeKeepParam?.KeepChargeFullFrame;
 
-	const isSloshingMachine = weapon.Id === 3020;
+	const isSloshingMachine = weapon.Id === 3020 || weapon.Id === 3021;
 
 	const DamageParam_SplatanaHorizontalDirect =
 		params.BulletSaberHorizontalParam?.DamageParam?.HitDamage +
@@ -328,7 +424,11 @@ function parametersToMainWeaponResult(
 			params.WideSwingUnitGroupParam?.DamageParam?.Inside?.DamageMaxValue,
 			params.WideSwingUnitGroupParam?.DamageParam?.Outside?.DamageMaxValue,
 		),
-		CanopyHP: params.spl__BulletShelterCanopyParam?.CanopyHP,
+		CanopyHP:
+			params.spl__BulletShelterCanopyParam?.CanopyHP ??
+			(weapon.Id === 6000 || weapon.Id === 6001 || weapon.Id === 6005
+				? 5000
+				: undefined),
 		ChargeFrameFullCharge:
 			params.WeaponParam?.ChargeFrameFullCharge ??
 			params.spl__WeaponStringerParam?.ChargeParam?.ChargeFrameFullCharge,
@@ -886,7 +986,7 @@ function writeTranslationsJsons(arr: TranslationArray) {
 	}
 }
 
-function logWeaponIds(weapons: Record<number, MainWeaponParams>) {
+function logWeaponIds(weapons: Record<number, WeaponKit>) {
 	logger.info(JSON.stringify(Object.keys(weapons).map(Number)));
 }
 

@@ -11,7 +11,7 @@ import { tournamentBracketsPage } from "~/utils/urls";
 import { canEditCalendarEvent } from "../calendar-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	requireRole(user, "CALENDAR_EVENT_ADDER");
 
 	const url = new URL(request.url);

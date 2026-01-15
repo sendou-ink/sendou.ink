@@ -291,6 +291,50 @@ export function privatelyCachedJson<T>(dataValue: T) {
 	});
 }
 
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+
+type FileUploadHandler = (
+	fileUpload: FileUpload,
+) => Promise<string | null | undefined>;
+type ParseFormDataOptions = { maxFileSize?: number };
+
+export function safeParseMultipartFormData(
+	request: Request,
+	uploadHandler?: FileUploadHandler,
+): Promise<FormData>;
+export function safeParseMultipartFormData(
+	request: Request,
+	options?: ParseFormDataOptions,
+	uploadHandler?: FileUploadHandler,
+): Promise<FormData>;
+export async function safeParseMultipartFormData(
+	request: Request,
+	optionsOrHandler?: ParseFormDataOptions | FileUploadHandler,
+	uploadHandler?: FileUploadHandler,
+): Promise<FormData> {
+	try {
+		if (typeof optionsOrHandler === "function") {
+			return await parseMultipartFormData(request, optionsOrHandler);
+		}
+		return await parseMultipartFormData(
+			request,
+			optionsOrHandler,
+			uploadHandler,
+		);
+	} catch (err) {
+		if (
+			err instanceof Error &&
+			err.cause instanceof Error &&
+			err.cause.name === "MaxFileSizeExceededError"
+		) {
+			throw errorToastRedirect(
+				`File size exceeds maximum allowed size of ${MAX_FILE_SIZE_BYTES / 1024 / 1024}MB`,
+			);
+		}
+		throw err;
+	}
+}
+
 export async function uploadImageIfSubmitted({
 	request,
 	fileNamePrefix,
@@ -318,7 +362,7 @@ export async function uploadImageIfSubmitted({
 	let formData: FormData;
 
 	try {
-		formData = await parseMultipartFormData(request, uploadHandler);
+		formData = await safeParseMultipartFormData(request, uploadHandler);
 		const imgSrc = formData.get("img") as string | null;
 		if (!imgSrc) {
 			throw new TypeError("No image submitted");

@@ -1,13 +1,9 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { cors } from "remix-utils/cors";
 import { z } from "zod";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import { parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
+import { requireBearerAuth } from "../api-public-utils.server";
 import type { GetUsersActiveSendouqMatchResponse } from "../schema";
 
 const paramsSchema = z.object({
@@ -15,7 +11,6 @@ const paramsSchema = z.object({
 });
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
 	requireBearerAuth(request);
 
 	const { userId } = parseParams({
@@ -29,5 +24,5 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		matchId: current?.matchId ?? null,
 	};
 
-	return await cors(request, Response.json(result));
+	return Response.json(result);
 };

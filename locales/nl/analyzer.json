@@ -162,5 +162,11 @@
 	"perInkTankGrid.header_other": "",
 	"bigBubblerExplanation": "",
 	"button.showChart": "",
-	"button.showConsumptionGrid": ""
+	"button.showConsumptionGrid": "",
+	"damageReceiver.suffix.armor": "",
+	"damageReceiver.suffix.shield": "",
+	"damageReceiver.suffix.weakPoint": "",
+	"damageReceiver.suffix.inhale": "",
+	"damageReceiver.suffix.canopy": "",
+	"damageReceiver.suffix.canopyLaunched": ""
 }

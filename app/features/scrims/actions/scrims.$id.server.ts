@@ -21,7 +21,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const { id } = parseParams({ params, schema: idObject });
 	const post = notFoundIfFalsy(await ScrimPostRepository.findById(id));
 
-	const user = await requireUser(request);
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: cancelScrimSchema,

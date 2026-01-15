@@ -173,4 +173,7 @@ export const adminActionSchema = z.union([
 		_action: _action("UPDATE_TOURNAMENT_PROGRESSION"),
 		bracketProgression: bracketProgressionSchema,
 	}),
+	z.object({
+		_action: _action("REOPEN_TOURNAMENT"),
+	}),
 ]);

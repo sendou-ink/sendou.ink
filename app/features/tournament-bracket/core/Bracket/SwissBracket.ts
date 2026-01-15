@@ -204,26 +204,24 @@ export class SwissBracket extends Bracket {
 				if (!winner || !loser) continue;
 
 				invariant(
-					typeof winner.id === "number" &&
-						typeof loser.id === "number" &&
-						typeof winner.score === "number" &&
-						typeof loser.score === "number",
-					"RoundRobinBracket.standings: winner or loser id not found",
+					typeof winner.id === "number" && typeof loser.id === "number",
+					"SwissBracket.standings: winner or loser id not found",
 				);
 
+				// note: score might be missing in the case the set was ended early
 				updateTeam({
 					teamId: winner.id,
 					setWins: 1,
 					setLosses: 0,
-					mapWins: winner.score,
-					mapLosses: loser.score,
+					mapWins: winner.score ?? 0,
+					mapLosses: loser.score ?? 0,
 				});
 				updateTeam({
 					teamId: loser.id,
 					setWins: 0,
 					setLosses: 1,
-					mapWins: loser.score,
-					mapLosses: winner.score,
+					mapWins: loser.score ?? 0,
+					mapLosses: winner.score ?? 0,
 				});
 			}
 

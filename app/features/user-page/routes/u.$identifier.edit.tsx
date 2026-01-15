@@ -16,7 +16,7 @@ import { TrashIcon } from "~/components/icons/Trash";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
 import { WeaponSelect } from "~/components/WeaponSelect";
-import type { Tables } from "~/db/tables";
+import { OBJECT_PRONOUNS, SUBJECT_PRONOUNS, type Tables } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-constants";
 import { BadgesSelector } from "~/features/badges/components/BadgesSelector";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -53,6 +53,7 @@ export default function UserEditPage() {
 				<CustomUrlInput parentRouteData={layoutData} />
 				<InGameNameInputs />
 				<SensSelects />
+				<PronounsSelect />
 				<BattlefyInput />
 				<CountrySelect />
 				<FavBadgeSelect />
@@ -206,6 +207,52 @@ function SensSelects() {
 					))}
 				</select>
 			</div>
+		</div>
+	);
+}
+
+function PronounsSelect() {
+	const { t } = useTranslation(["user"]);
+	const data = useLoaderData<typeof loader>();
+
+	return (
+		<div>
+			<div className="stack horizontal md">
+				<div>
+					<Label htmlFor="subjectPronoun">{t("user:pronoun")}</Label>
+					<select
+						id="subjectPronoun"
+						name="subjectPronoun"
+						defaultValue={data.user.pronouns?.subject ?? undefined}
+						className={styles.sensSelect}
+					>
+						<option value="">{"-"}</option>
+						{SUBJECT_PRONOUNS.map((pronoun) => (
+							<option key={pronoun} value={pronoun}>
+								{pronoun}
+							</option>
+						))}
+					</select>
+					<span className={styles.seperator}>/</span>
+				</div>
+				<div>
+					<Label htmlFor="objectPronoun">{t("user:pronoun")}</Label>
+					<select
+						id="objectPronoun"
+						name="objectPronoun"
+						defaultValue={data.user.pronouns?.object ?? undefined}
+						className={styles.sensSelect}
+					>
+						<option value="">{"-"}</option>
+						{OBJECT_PRONOUNS.map((pronoun) => (
+							<option key={pronoun} value={pronoun}>
+								{pronoun}
+							</option>
+						))}
+					</select>
+				</div>
+			</div>
+			<FormMessage type="info">{t("user:pronounsInfo")}</FormMessage>
 		</div>
 	);
 }

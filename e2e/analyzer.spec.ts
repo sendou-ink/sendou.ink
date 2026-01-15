@@ -1,10 +1,11 @@
-import { expect, test } from "@playwright/test";
 import {
+	expect,
 	impersonate,
 	isNotVisible,
 	navigate,
 	seed,
 	selectWeapon,
+	test,
 } from "~/utils/playwright";
 import { ANALYZER_URL } from "~/utils/urls";
 

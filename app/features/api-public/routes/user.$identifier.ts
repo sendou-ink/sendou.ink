@@ -1,6 +1,5 @@
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import type { LoaderFunctionArgs } from "react-router";
-import { cors } from "remix-utils/cors";
 import { z } from "zod";
 import { db } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -8,10 +7,7 @@ import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { safeNumberParse } from "~/utils/number";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
+import { requireBearerAuth } from "../api-public-utils.server";
 import type { GetUserResponse } from "../schema";
 
 const paramsSchema = z.object({
@@ -19,7 +15,6 @@ const paramsSchema = z.object({
 });
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
 	requireBearerAuth(request);
 
 	const t = await i18next.getFixedT("en", ["weapons"]);
@@ -39,6 +34,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 				"User.customUrl",
 				"User.discordId",
 				"User.discordAvatar",
+				"User.pronouns",
 				"PlusTier.tier",
 				jsonArrayFrom(
 					eb
@@ -107,6 +103,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			: null,
 		url: `https://sendou.ink/u/${user.customUrl ?? user.discordId}`,
 		country: user.country,
+		pronouns: user.pronouns,
 		plusServerTier: user.tier as GetUserResponse["plusServerTier"],
 		socials: {
 			twitch: user.twitch,
@@ -144,5 +141,5 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		})),
 	};
 
-	return await cors(request, Response.json(result));
+	return Response.json(result);
 };

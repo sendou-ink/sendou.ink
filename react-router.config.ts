@@ -5,4 +5,7 @@ export default {
 	// also lazy loading causes more load on the server
 	// this matches old Remix v2 behavior
 	routeDiscovery: { mode: "initial" },
+	future: {
+		v8_middleware: true,
+	},
 } satisfies Config;

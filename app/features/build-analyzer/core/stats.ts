@@ -45,6 +45,7 @@ import {
 	abilityPointsToEffects,
 	abilityValues,
 	apFromMap,
+	mainWeaponParams as getMainWeaponParams,
 	hasEffect,
 	hpDivided,
 	weaponIdToMultiShotCount,
@@ -62,8 +63,7 @@ export function buildStats({
 	mainOnlyAbilities?: Array<Ability>;
 	hasTacticooler: boolean;
 }): AnalyzedBuild {
-	const mainWeaponParams = weaponParams().mainWeapons[weaponSplId];
-	invariant(mainWeaponParams, `Weapon with splId ${weaponSplId} not found`);
+	const mainWeaponParams = getMainWeaponParams(weaponSplId);
 
 	const subWeaponParams =
 		weaponParams().subWeapons[mainWeaponParams.subWeaponId];
@@ -72,8 +72,9 @@ export function buildStats({
 		`Sub weapon with splId ${mainWeaponParams.subWeaponId} not found`,
 	);
 
-	const specialWeaponParams =
-		weaponParams().specialWeapons[mainWeaponParams.specialWeaponId];
+	const specialWeaponParams = weaponParams().specialWeapons[
+		mainWeaponParams.specialWeaponId
+	] as SpecialWeaponParams;
 	invariant(
 		specialWeaponParams,
 		`Special weapon with splId ${mainWeaponParams.specialWeaponId} not found`,

@@ -12,7 +12,7 @@ import { organizationFromParams } from "../tournament-organization-utils.server"
 export type OrganizationPageLoaderData = SerializeFrom<typeof loader>;
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
-	const user = await getUser(request);
+	const user = getUser();
 	const {
 		month = new Date().getMonth(),
 		year = new Date().getFullYear(),

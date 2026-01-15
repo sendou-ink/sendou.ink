@@ -1,5 +1,4 @@
 import type { FileUpload } from "@remix-run/form-data-parser";
-import { parseFormData } from "@remix-run/form-data-parser";
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { z } from "zod";
@@ -14,6 +13,7 @@ import {
 	badRequestIfFalsy,
 	errorToastIfFalsy,
 	parseSearchParams,
+	safeParseMultipartFormData,
 } from "~/utils/remix.server";
 import { teamPage, tournamentOrganizationPage } from "~/utils/urls";
 import * as ImageRepository from "../ImageRepository.server";
@@ -22,7 +22,7 @@ import { MAX_UNVALIDATED_IMG_COUNT } from "../upload-constants";
 import { requestToImgType } from "../upload-utils";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 
 	const validatedType = requestToImgType(request);
 	errorToastIfFalsy(validatedType, "Invalid image type");
@@ -57,7 +57,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		return null;
 	};
 
-	const formData = await parseFormData(request, uploadHandler);
+	const formData = await safeParseMultipartFormData(request, uploadHandler);
 	const imgSrc = formData.get("img") as string | null;
 	invariant(imgSrc);
 

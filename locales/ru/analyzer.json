@@ -166,5 +166,11 @@
 	"perInkTankGrid.header_other": "{{weapon}} выстрелов после ×{{count}} использования запасного оружия",
 	"bigBubblerExplanation": "{{weapon}}: увиличивается как прочность, так и длительность",
 	"button.showChart": "Показать диаграмму",
-	"button.showConsumptionGrid": "Показать сетку потребления"
+	"button.showConsumptionGrid": "Показать сетку потребления",
+	"damageReceiver.suffix.armor": "",
+	"damageReceiver.suffix.shield": "",
+	"damageReceiver.suffix.weakPoint": "",
+	"damageReceiver.suffix.inhale": "",
+	"damageReceiver.suffix.canopy": "",
+	"damageReceiver.suffix.canopyLaunched": ""
 }

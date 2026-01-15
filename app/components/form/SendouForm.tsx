@@ -27,7 +27,7 @@ export function SendouForm<T extends z.ZodTypeAny>({
 	const { t } = useTranslation(["common"]);
 	const fetcher = useFetcher<any>();
 	const methods = useForm({
-		resolver: standardSchemaResolver(schema),
+		resolver: standardSchemaResolver(schema as any),
 		defaultValues,
 	});
 

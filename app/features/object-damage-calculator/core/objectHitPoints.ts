@@ -8,8 +8,11 @@ import {
 	specialFieldHp,
 	subStats,
 } from "~/features/build-analyzer/core/stats";
-import { hpDivided } from "~/features/build-analyzer/core/utils";
-import { weaponParams } from "~/features/build-analyzer/core/weapon-params";
+import {
+	hpDivided,
+	mainWeaponParams,
+	weaponParams,
+} from "~/features/build-analyzer/core/utils";
 import {
 	BIG_BUBBLER_ID,
 	CRAB_TANK_ID,
@@ -30,19 +33,21 @@ const SUPER_CHUMP_HP = 60;
 const TRIPLE_SPLASHDOWN_HP = 100;
 
 export const objectHitPoints = (abilityPoints: AbilityPoints): HitPoints => {
+	const params = weaponParams();
+
 	const Wsb_Shield = subStats({
 		abilityPoints,
-		subWeaponParams: weaponParams.subWeapons[SPLASH_WALL_ID] as SubWeaponParams,
+		subWeaponParams: params.subWeapons[SPLASH_WALL_ID] as SubWeaponParams,
 	}).subHp?.value;
 	const GreatBarrier_Barrier = specialFieldHp({
 		abilityPoints,
-		specialWeaponParams: weaponParams.specialWeapons[
+		specialWeaponParams: params.specialWeapons[
 			BIG_BUBBLER_ID
 		] as SpecialWeaponParams,
 	})?.value;
 	const GreatBarrier_WeakPoint = specialDeviceHp({
 		abilityPoints,
-		specialWeaponParams: weaponParams.specialWeapons[
+		specialWeaponParams: params.specialWeapons[
 			BIG_BUBBLER_ID
 		] as SpecialWeaponParams,
 	})?.value;
@@ -53,25 +58,19 @@ export const objectHitPoints = (abilityPoints: AbilityPoints): HitPoints => {
 
 	return {
 		BulletUmbrellaCanopyNormal: SPLAT_BRELLA_SHIELD_HP,
-		BulletUmbrellaCanopyWide: hpDivided(
-			weaponParams.mainWeapons[6010].CanopyHP,
-		),
-		BulletUmbrellaCanopyCompact: hpDivided(
-			weaponParams.mainWeapons[6020].CanopyHP,
-		),
-		BulletShelterCanopyFocus: hpDivided(
-			weaponParams.mainWeapons[6030].CanopyHP,
-		),
+		BulletUmbrellaCanopyWide: hpDivided(mainWeaponParams(6010).CanopyHP!),
+		BulletUmbrellaCanopyCompact: hpDivided(mainWeaponParams(6020).CanopyHP!),
+		BulletShelterCanopyFocus: hpDivided(mainWeaponParams(6030).CanopyHP!),
 		BulletUmbrellaCanopyNormal_Launched: SPLAT_BRELLA_SHIELD_HP * 2,
 		BulletUmbrellaCanopyWide_Launched: hpDivided(
-			weaponParams.mainWeapons[6010].CanopyHP * (10 / 6),
+			mainWeaponParams(6010).CanopyHP! * (10 / 6),
 		),
 		BulletShelterCanopyFocus_Launched: hpDivided(
-			weaponParams.mainWeapons[6030].CanopyHP * (10 / 6),
+			mainWeaponParams(6030).CanopyHP! * (10 / 6),
 		),
 		Wsb_Shield,
 		Bomb_TorpedoBullet: TORPEDO_HP,
-		Chariot: hpDivided(weaponParams.specialWeapons[CRAB_TANK_ID].ArmorHP),
+		Chariot: hpDivided(params.specialWeapons[CRAB_TANK_ID].ArmorHP),
 		Gachihoko_Barrier: RAINMAKER_HP,
 		GreatBarrier_Barrier,
 		GreatBarrier_WeakPoint,

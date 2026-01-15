@@ -493,6 +493,16 @@ export interface Tournament {
 	parentTournamentId: number | null;
 	/** Is the tournament finalized meaning all the matches are played and TO has locked it making it read-only */
 	isFinalized: Generated<DBBoolean>;
+	/** Snapshot of teams and rosters when seeds were last saved. Used to detect NEW teams/players. */
+	seedingSnapshot: JSONColumnTypeNullable<SeedingSnapshot>;
+}
+
+export interface SeedingSnapshot {
+	savedAt: number;
+	teams: Array<{
+		teamId: number;
+		members: Array<{ userId: number; username: string }>;
+	}>;
 }
 
 export interface PreparedMaps {
@@ -505,6 +515,7 @@ export interface PreparedMaps {
 export interface TournamentBadgeOwner {
 	badgeId: number;
 	userId: number;
+	tournamentId: number | null;
 }
 
 /** A group is a logical structure used to group multiple rounds together.
@@ -846,6 +857,21 @@ export interface UserPreferences {
 	clockFormat?: "24h" | "12h" | "auto";
 }
 
+export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;
+export const OBJECT_PRONOUNS = [
+	"him",
+	"her",
+	"them",
+	"its",
+	"all",
+	...SUBJECT_PRONOUNS,
+] as const;
+
+export type Pronouns = {
+	subject: (typeof SUBJECT_PRONOUNS)[number];
+	object: (typeof OBJECT_PRONOUNS)[number];
+};
+
 export interface User {
 	/** 1 = permabanned, timestamp = ban active till then */
 	banned: Generated<number | null>;
@@ -874,6 +900,7 @@ export interface User {
 	isApiAccesser: Generated<DBBoolean | null>;
 	languages: string | null;
 	motionSens: number | null;
+	pronouns: JSONColumnTypeNullable<Pronouns>;
 	patronSince: number | null;
 	patronTier: number | null;
 	patronTill: number | null;

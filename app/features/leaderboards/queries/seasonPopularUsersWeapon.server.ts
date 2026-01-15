@@ -12,16 +12,15 @@ const stm = sql.prepare(/* sql */ `
       "ReportedWeapon"."weaponSplId",
       count(*) as "count"
     from "ReportedWeapon"
-    left join "GroupMatchMap" on "ReportedWeapon"."groupMatchMapId" = "GroupMatchMap"."id"
-    left join "GroupMatch" on "GroupMatchMap"."matchId" = "GroupMatch"."id"
+    inner join "GroupMatchMap" on "ReportedWeapon"."groupMatchMapId" = "GroupMatchMap"."id"
+    inner join "GroupMatch" on "GroupMatchMap"."matchId" = "GroupMatch"."id"
     where "GroupMatch"."createdAt" between @starts and @ends
     group by "ReportedWeapon"."userId", "ReportedWeapon"."weaponSplId"
-    order by "count" desc
   )
   select
     "q1"."userId",
     "q1"."weaponSplId",
-    "q1"."count"
+    max("q1"."count") as "count"
   from "q1"
   group by "q1"."userId"
 `);

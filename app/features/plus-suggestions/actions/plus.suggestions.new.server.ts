@@ -23,7 +23,7 @@ import {
 } from "../plus-suggestions-utils";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 
 	const data = await parseRequestPayload({
 		request,

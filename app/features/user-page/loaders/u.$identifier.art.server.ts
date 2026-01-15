@@ -1,13 +1,13 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as ArtRepository from "~/features/art/ArtRepository.server";
-import { getUserId } from "~/features/auth/core/user.server";
+import { getUser } from "~/features/auth/core/user.server";
 import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import { userParamsSchema } from "../user-page-schemas";
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const loggedInUser = await getUserId(request);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const loggedInUser = getUser();
 
 	const { identifier } = userParamsSchema.parse(params);
 	const user = notFoundIfFalsy(

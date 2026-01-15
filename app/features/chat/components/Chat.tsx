@@ -214,9 +214,20 @@ function Message({
 }) {
 	return (
 		<li className="chat__message">
-			{user ? <Avatar user={user} size="xs" /> : null}
+			{user ? (
+				<div
+					className={clsx("chat__avatar-wrapper", {
+						"chat__avatar-wrapper--staff": user.title,
+					})}
+				>
+					<Avatar user={user} size="xs" />
+					{user.title ? (
+						<span className="chat__avatar-badge">{user.title}</span>
+					) : null}
+				</div>
+			) : null}
 			<div>
-				<div className="stack horizontal sm items-center">
+				<div className="chat__message__info">
 					<div
 						className="chat__message__user"
 						style={
@@ -227,10 +238,10 @@ function Message({
 					>
 						{user?.username ?? missingUserName}
 					</div>
-					{user?.title ? (
-						<div className="text-xs text-theme-secondary font-semi-bold">
-							{user.title}
-						</div>
+					{user?.pronouns ? (
+						<span className="chat__pronouns-tag">
+							{user.pronouns.subject}/{user.pronouns.object}
+						</span>
 					) : null}
 					{!message.pending ? (
 						<MessageTimestamp timestamp={message.timestamp} />

@@ -9,10 +9,7 @@ import type {
 	MainWeaponId,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import {
-	weaponIdHasAlts,
-	weaponIdToArrayWithAlts,
-} from "~/modules/in-game-lists/weapon-ids";
+import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { sortAbilities } from "./core/ability-sorting.server";
@@ -252,8 +249,80 @@ export async function allByWeaponId(
 	options: { limit: number; sortAbilities?: boolean },
 ) {
 	const { limit, sortAbilities: shouldSortAbilities = false } = options;
+	const weaponIds = weaponIdToArrayWithAlts(weaponId);
 
-	let query = db
+	let rows: Awaited<ReturnType<typeof buildsByWeaponIdQuery>>;
+
+	if (weaponIds.length === 1) {
+		rows = await buildsByWeaponIdQuery(weaponIds[0], limit);
+	} else {
+		// For weapons with alts, run separate queries and merge.
+		// This allows each query to use the covering index for ordering,
+		// which is ~6x faster than using IN with multiple values.
+		const allResults = await Promise.all(
+			weaponIds.map((id) => buildsByWeaponIdQuery(id, limit)),
+		);
+
+		const seenBuildIds = new Set<number>();
+		type BuildRow = Awaited<ReturnType<typeof buildsByWeaponIdQuery>>[number];
+		const merged: BuildRow[] = [];
+
+		// Merge results maintaining sort order (tier asc, isTop500 desc, updatedAt desc)
+		// Since each query returns sorted results, we can interleave them
+		const pointers = allResults.map(() => 0);
+
+		while (merged.length < limit) {
+			let bestIdx = -1;
+			let bestRow: BuildRow | null = null;
+
+			for (let i = 0; i < allResults.length; i++) {
+				while (
+					pointers[i] < allResults[i].length &&
+					seenBuildIds.has(allResults[i][pointers[i]].id)
+				) {
+					pointers[i]++;
+				}
+
+				if (pointers[i] >= allResults[i].length) continue;
+
+				const row = allResults[i][pointers[i]];
+
+				if (
+					!bestRow ||
+					row.bwTier < bestRow.bwTier ||
+					(row.bwTier === bestRow.bwTier &&
+						row.bwIsTop500 > bestRow.bwIsTop500) ||
+					(row.bwTier === bestRow.bwTier &&
+						row.bwIsTop500 === bestRow.bwIsTop500 &&
+						row.bwUpdatedAt > bestRow.bwUpdatedAt)
+				) {
+					bestIdx = i;
+					bestRow = row;
+				}
+			}
+
+			if (bestIdx === -1 || !bestRow) break;
+
+			seenBuildIds.add(bestRow.id);
+			merged.push(bestRow);
+			pointers[bestIdx]++;
+		}
+
+		rows = merged;
+	}
+
+	return rows.map((row) => {
+		const abilities = dbAbilitiesToArrayOfArrays(row.abilities);
+
+		return {
+			...row,
+			abilities: shouldSortAbilities ? sortAbilities(abilities) : abilities,
+		};
+	});
+}
+
+function buildsByWeaponIdQuery(weaponSplId: MainWeaponId, limit: number) {
+	return db
 		.selectFrom("BuildWeapon")
 		.innerJoin("Build", "Build.id", "BuildWeapon.buildId")
 		.leftJoin("PlusTier", "PlusTier.userId", "Build.ownerId")
@@ -268,6 +337,9 @@ export async function allByWeaponId(
 			"Build.updatedAt",
 			"Build.private",
 			"PlusTier.tier as plusTier",
+			"BuildWeapon.tier as bwTier",
+			"BuildWeapon.isTop500 as bwIsTop500",
+			"BuildWeapon.updatedAt as bwUpdatedAt",
 			withAbilities(eb),
 			jsonArrayFrom(
 				eb
@@ -284,26 +356,12 @@ export async function allByWeaponId(
 			).as("owner"),
 		])
 		.where("Build.private", "=", 0)
-		.where("BuildWeapon.weaponSplId", "in", weaponIdToArrayWithAlts(weaponId))
+		.where("BuildWeapon.weaponSplId", "=", weaponSplId)
 		.orderBy("BuildWeapon.tier", "asc")
 		.orderBy("BuildWeapon.isTop500", "desc")
 		.orderBy("BuildWeapon.updatedAt", "desc")
-		.limit(limit);
-
-	if (weaponIdHasAlts(weaponId)) {
-		query = query.groupBy("BuildWeapon.buildId");
-	}
-
-	const rows = await query.execute();
-
-	return rows.map((row) => {
-		const abilities = dbAbilitiesToArrayOfArrays(row.abilities);
-
-		return {
-			...row,
-			abilities: shouldSortAbilities ? sortAbilities(abilities) : abilities,
-		};
-	});
+		.limit(limit)
+		.execute();
 }
 
 function withAbilities(eb: ExpressionBuilder<DB, "Build">) {

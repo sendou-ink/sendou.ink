@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { db } from "~/db/sql";
+import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import { dbInsertUsers, dbReset } from "~/utils/Test";
 import * as SQGroupRepository from "../SQGroupRepository.server";
@@ -359,6 +360,10 @@ describe("SendouQ", () => {
 		});
 
 		describe("tier sorting", () => {
+			beforeEach(() => {
+				refreshUserSkills(1);
+			});
+
 			test("sorts full groups by tier when viewer has a tier", async () => {
 				await insertSkill(1, 1000);
 				await insertSkill(2, 500);
@@ -624,8 +629,8 @@ describe("SendouQ", () => {
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
-				const replayGroup = groups.find((g) => g.members === undefined);
-				expect(replayGroup?.isReplay).toBe(true);
+				const fullGroups = groups.filter((g) => g.members === undefined);
+				expect(fullGroups.some((g) => g.isReplay)).toBe(true);
 			});
 
 			test("does not mark as replay when less than 3 members overlap", async () => {

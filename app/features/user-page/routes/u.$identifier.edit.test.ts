@@ -22,6 +22,8 @@ const DEFAULT_FIELDS = {
 	motionSens: null,
 	showDiscordUniqueName: 1,
 	stickSens: null,
+	objectPronoun: null,
+	subjectPronoun: null,
 	weapons: JSON.stringify([
 		{ weaponSplId: 1 as MainWeaponId, isFavorite: 0 },
 	]) as any,

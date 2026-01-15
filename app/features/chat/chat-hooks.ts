@@ -14,7 +14,7 @@ const THRESHOLD = 100;
 
 export function useChatAutoScroll(
 	messages: ChatMessage[],
-	ref: React.RefObject<HTMLOListElement>,
+	ref: React.RefObject<HTMLOListElement | null>,
 ) {
 	const user = useUser();
 	const [firstLoadHandled, setFirstLoadHandled] = React.useState(false);
@@ -94,7 +94,7 @@ export function useChat({
 	connected?: boolean;
 }) {
 	const { revalidate } = useRevalidator();
-	const shouldRevalidate = React.useRef<boolean>();
+	const shouldRevalidate = React.useRef<boolean>(undefined);
 	const user = useUser();
 
 	const [messages, setMessages] = React.useState<ChatMessage[]>([]);
@@ -106,7 +106,7 @@ export function useChat({
 		rooms[0]?.code,
 	);
 
-	const ws = React.useRef<WebSocket>();
+	const ws = React.useRef<WebSocket>(undefined);
 	const lastSeenMessagesByRoomId = React.useRef<Map<string, string>>(new Map());
 
 	// same principal as here behind separating it into a ref: https://overreacted.io/making-setinterval-declarative-with-react-hooks/

@@ -10,6 +10,7 @@ import {
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { SubNav, SubNavLink } from "~/components/SubNav";
+import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { useUser } from "~/features/auth/core/user";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -213,11 +214,13 @@ export function TournamentLayout() {
 					!tournament.isLeagueSignup && (
 						<SubNavLink to="seeds">{t("tournament:tabs.seeds")}</SubNavLink>
 					)}
-				{tournament.isOrganizer(user) && !tournament.ctx.isFinalized && (
-					<SubNavLink to="admin" data-testid="admin-tab">
-						{t("tournament:tabs.admin")}
-					</SubNavLink>
-				)}
+				{tournament.isOrganizer(user) &&
+					(!tournament.ctx.isFinalized ||
+						DANGEROUS_CAN_ACCESS_DEV_CONTROLS) && (
+						<SubNavLink to="admin" data-testid="admin-tab">
+							{t("tournament:tabs.admin")}
+						</SubNavLink>
+					)}
 			</SubNav>
 			<TournamentContext.Provider value={tournament}>
 				<Outlet
