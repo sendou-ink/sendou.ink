@@ -80,6 +80,8 @@ export default [
 
 	route("/analyzer", "features/build-analyzer/routes/analyzer.tsx"),
 
+	route("/comp-analyzer", "features/comp-analyzer/routes/comp-analyzer.tsx"),
+
 	route(
 		"/object-damage-calculator",
 		"features/object-damage-calculator/routes/object-damage-calculator.tsx",
