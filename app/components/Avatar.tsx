@@ -8,6 +8,7 @@ const dimensions = {
 	xxxs: 16,
 	xxxsm: 20,
 	xxs: 24,
+	xxsm: 32,
 	xs: 36,
 	sm: 44,
 	xsm: 62,

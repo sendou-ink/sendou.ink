@@ -1,14 +1,17 @@
 import { href, type LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
+import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
+import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
 import {
 	navIconUrl,
 	sendouQMatchPage,
 	tournamentBracketsPage,
 	tournamentMatchPage,
+	userPage,
 } from "~/utils/urls";
 
 export type SidebarEvent = {
@@ -36,15 +39,16 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 				roundName?: string;
 				logoUrl: string | null;
 			} | null,
-			friends: getMockFriends(),
+			friends: [] as ReturnType<typeof resolveFriends>,
 			streams: getMockStreams(),
 		};
 	}
 
-	const [tournamentsData, scrimsData, ownGroup] = await Promise.all([
+	const ownGroup = SendouQ.findOwnGroup(user.id);
+	const [tournamentsData, scrimsData, friendsWithActivity] = await Promise.all([
 		ShowcaseTournaments.frontPageTournamentsByUserId(user.id),
 		ScrimPostRepository.findUserScrims(user.id),
-		Promise.resolve(SendouQ.findOwnGroup(user.id)),
+		FriendRepository.findByUserIdWithActivity(user.id),
 	]);
 
 	const tournamentMatchStatus = resolveTournamentMatchStatus(user.id);
@@ -85,13 +89,15 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 		.sort((a, b) => a.startTime - b.startTime)
 		.slice(0, MAX_EVENTS_VISIBLE);
 
+	const friends = resolveFriends(friendsWithActivity);
+
 	return {
 		events,
 		matchStatus: ownGroup?.matchId
 			? { matchId: ownGroup.matchId, url: sendouQMatchPage(ownGroup.matchId) }
 			: null,
 		tournamentMatchStatus,
-		friends: getMockFriends(),
+		friends,
 		streams: getMockStreams(),
 	};
 };
@@ -144,44 +150,75 @@ function resolveTournamentMatchStatus(userId: number) {
 	return null;
 }
 
-function getMockFriends() {
-	return [
-		{
-			id: 1,
-			name: "Splat_Master",
-			avatarUrl: "https://i.pravatar.cc/150?u=friend1",
-			subtitle: "SendouQ",
-			badge: "2/4",
-		},
-		{
-			id: 2,
-			name: "InklingPro",
-			avatarUrl: "https://i.pravatar.cc/150?u=friend2",
-			subtitle: "Lobby",
-			badge: "2/8",
-		},
-		{
-			id: 3,
-			name: "OctoKing",
-			avatarUrl: "https://i.pravatar.cc/150?u=friend3",
-			subtitle: "In The Zone 22",
-			badge: "3/4",
-		},
-		{
-			id: 4,
-			name: "TurfWarrior",
-			avatarUrl: "https://i.pravatar.cc/150?u=friend4",
-			subtitle: "SendouQ",
-			badge: "1/4",
-		},
-		{
-			id: 5,
-			name: "RankedGrinder",
-			avatarUrl: "https://i.pravatar.cc/150?u=friend5",
-			subtitle: "Lobby",
-			badge: "5/8",
-		},
-	];
+type FriendWithActivity = Awaited<
+	ReturnType<typeof FriendRepository.findByUserIdWithActivity>
+>[number];
+
+const MAX_FRIENDS_VISIBLE = 4;
+const SENDOUQ_QUOTA = 2;
+const TOURNAMENT_SUB_QUOTA = 2;
+
+function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
+	type SidebarFriend = {
+		id: number;
+		name: string;
+		discordId: string;
+		discordAvatar: string | null;
+		url: string;
+		subtitle: string;
+		badge: string;
+	};
+
+	const sendouqFriends: SidebarFriend[] = [];
+	const tournamentSubFriends: SidebarFriend[] = [];
+
+	for (const friend of friendsWithActivity) {
+		const ownGroup = SendouQ.findOwnGroup(friend.id);
+
+		const url = userPage({
+			discordId: friend.discordId,
+			customUrl: friend.customUrl,
+		});
+
+		if (ownGroup && ownGroup.members.length < FULL_GROUP_SIZE) {
+			sendouqFriends.push({
+				id: friend.id,
+				name: friend.username,
+				discordId: friend.discordId,
+				discordAvatar: friend.discordAvatar,
+				url,
+				subtitle: "SendouQ",
+				badge: `${ownGroup.members.length}/${FULL_GROUP_SIZE}`,
+			});
+		} else if (friend.tournamentName) {
+			// this is temporary, will be replaced with "SQified tournament team creator"
+			tournamentSubFriends.push({
+				id: friend.id,
+				name: friend.username,
+				discordId: friend.discordId,
+				discordAvatar: friend.discordAvatar,
+				url,
+				subtitle: friend.tournamentName,
+				badge: `1/${FULL_GROUP_SIZE}`,
+			});
+		}
+	}
+
+	const result: SidebarFriend[] = [];
+
+	const sendouqToShow = sendouqFriends.slice(0, SENDOUQ_QUOTA);
+	const tournamentToShow = tournamentSubFriends.slice(0, TOURNAMENT_SUB_QUOTA);
+
+	result.push(...sendouqToShow, ...tournamentToShow);
+
+	const remaining = MAX_FRIENDS_VISIBLE - result.length;
+	if (remaining > 0) {
+		const extraSendouq = sendouqFriends.slice(SENDOUQ_QUOTA);
+		const extraTournament = tournamentSubFriends.slice(TOURNAMENT_SUB_QUOTA);
+		result.push(...[...extraSendouq, ...extraTournament].slice(0, remaining));
+	}
+
+	return result;
 }
 
 function getMockStreams() {

@@ -1,10 +1,11 @@
 ---
 # sendou.ink-xsyy
 title: Sidebar friends section with real data
-status: todo
+status: in-progress
 type: task
+priority: normal
 created_at: 2026-01-13T09:32:29Z
-updated_at: 2026-01-13T09:32:29Z
+updated_at: 2026-01-16T08:04:13Z
 parent: sendou.ink-255r
 ---
 
@@ -42,9 +43,9 @@ No grouping by relationship type in sidebar (mixed list with priority ordering).
 
 ## Checklist
 
-- [ ] Update sidebar loader to fetch real connections
-- [ ] Implement priority sorting logic
-- [ ] Quota system for activity types
-- [ ] Update SideNavFriendItem component with real data
+- [x] Update sidebar loader to fetch real connections
+- [x] Implement basic priority sorting (SendouQ first, then tournament subs)
+- [x] Update SideNavFriendItem component with real data (URLs, avatars)
+- [ ] Full priority sorting logic with quota system
 - [ ] "See all" link to /friends page
 - [ ] Handle empty state (no friends yet)

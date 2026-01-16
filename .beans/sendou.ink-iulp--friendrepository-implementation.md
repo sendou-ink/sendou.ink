@@ -1,11 +1,11 @@
 ---
 # sendou.ink-iulp
 title: FriendRepository implementation
-status: todo
+status: in-progress
 type: task
 priority: normal
 created_at: 2026-01-13T09:32:05Z
-updated_at: 2026-01-13T09:32:10Z
+updated_at: 2026-01-16T07:59:43Z
 parent: sendou.ink-255r
 ---
 
@@ -37,8 +37,8 @@ Create repository for friend-related database operations.
 
 ## Checklist
 
-- [ ] Create FriendRepository.server.ts
+- [x] Create FriendRepository.server.ts
+- [x] Implement `findByUserIdWithActivity(userId)` for sidebar
 - [ ] Implement friendship CRUD
 - [ ] Implement friend request operations
-- [ ] Implement connections aggregation query
 - [ ] Unit tests for repository functions

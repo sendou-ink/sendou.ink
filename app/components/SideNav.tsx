@@ -9,6 +9,8 @@ import {
 } from "react-aria-components";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
+import type { Tables } from "~/db/tables";
+import { Avatar } from "./Avatar";
 import { Image } from "./Image";
 import styles from "./SideNav.module.css";
 
@@ -77,6 +79,7 @@ export function SideNavLink({
 	onClick,
 	isActive,
 	imageUrl,
+	user,
 	subtitle,
 	badge,
 	badgeVariant,
@@ -86,6 +89,7 @@ export function SideNavLink({
 	onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 	isActive?: boolean;
 	imageUrl?: string;
+	user?: Pick<Tables["User"], "discordId" | "discordAvatar">;
 	subtitle?: string;
 	badge?: string;
 	badgeVariant?: "default" | "warning";
@@ -97,7 +101,9 @@ export function SideNavLink({
 			onClick={onClick}
 			aria-current={isActive ? "page" : undefined}
 		>
-			{imageUrl ? (
+			{user ? (
+				<Avatar user={user} size="xxsm" />
+			) : imageUrl ? (
 				<img src={imageUrl} alt="" className={styles.sideNavLinkImage} />
 			) : null}
 			<div className={styles.sideNavLinkContent}>

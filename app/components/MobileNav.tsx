@@ -357,8 +357,11 @@ function FriendsPanel({
 			{friends.map((friend) => (
 				<SideNavLink
 					key={friend.id}
-					to=""
-					imageUrl={friend.avatarUrl}
+					to={friend.url}
+					user={{
+						discordId: friend.discordId,
+						discordAvatar: friend.discordAvatar,
+					}}
 					subtitle={friend.subtitle}
 					badge={friend.badge}
 				>

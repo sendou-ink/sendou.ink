@@ -66,7 +66,6 @@ function useTimeFormat() {
 		}
 
 		return date.toLocaleDateString(i18n.language, {
-			weekday: "short",
 			month: "short",
 			day: "numeric",
 			hour: "numeric",
@@ -232,8 +231,11 @@ export function Layout({
 				{friends.map((friend) => (
 					<SideNavLink
 						key={friend.id}
-						to=""
-						imageUrl={friend.avatarUrl}
+						to={friend.url}
+						user={{
+							discordId: friend.discordId,
+							discordAvatar: friend.discordAvatar,
+						}}
 						subtitle={friend.subtitle}
 						badge={friend.badge}
 					>
