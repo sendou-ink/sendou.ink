@@ -168,5 +168,14 @@
 	"damageReceiver.suffix.weakPoint": "{{weapon}} Weak Point",
 	"damageReceiver.suffix.inhale": "{{weapon}} Inhale",
 	"damageReceiver.suffix.canopy": "{{weapon}} Canopy",
-	"damageReceiver.suffix.canopyLaunched": "{{weapon}} Canopy (launched)"
+	"damageReceiver.suffix.canopyLaunched": "{{weapon}} Canopy (launched)",
+	"comp.groupBy": "Group by",
+	"comp.groupBy.category": "Weapon type",
+	"comp.groupBy.sub": "Sub weapon",
+	"comp.groupBy.special": "Special weapon",
+	"comp.selectWeapons": "Select up to {{max}} weapons",
+	"comp.removeWeapon": "Remove weapon",
+	"comp.pickWeapon": "Pick a weapon",
+	"comp.showWeaponGrid": "Show weapon selector",
+	"comp.hideWeaponGrid": "Hide weapon selector"
 }

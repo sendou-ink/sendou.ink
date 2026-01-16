@@ -1,10 +1,11 @@
 ---
 # sendou.ink-t5nv
 title: Implement weapon selector component
-status: todo
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-15T19:18:04Z
-updated_at: 2026-01-15T19:18:04Z
+updated_at: 2026-01-16T08:08:40Z
 parent: sendou.ink-knt5
 ---
 
@@ -12,13 +13,13 @@ parent: sendou.ink-knt5
 Create the weapon selection UI that allows users to pick up to 4 weapons with categorization options.
 
 ## Tasks
-- [ ] Create `WeaponSelector.tsx` component
-- [ ] Implement categorized weapon grid display
-- [ ] Add categorization toggle: by weapon category / by sub weapon / by special weapon
-- [ ] Show selected weapons with main/sub/special icons
-- [ ] Add X button to remove selected weapons
-- [ ] Limit selection to 4 weapons maximum
-- [ ] Store selection in URL search params for shareability
+- [x] Create `WeaponSelector.tsx` component
+- [x] Implement categorized weapon grid display
+- [x] Add categorization toggle: by weapon category / by sub weapon / by special weapon
+- [x] Show selected weapons with main/sub/special icons
+- [x] Add X button to remove selected weapons
+- [x] Limit selection to 4 weapons maximum
+- [x] Store selection in URL search params for shareability
 
 ## UI Details
 - Weapon grid organized by selected categorization

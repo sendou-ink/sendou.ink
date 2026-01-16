@@ -1,10 +1,16 @@
+import { useState } from "react";
 import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { COMP_ANALYZER_URL, navIconUrl } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
+import { MAX_WEAPONS } from "../comp-analyzer-constants";
+import { useCategorization, useSelectedWeapons } from "../comp-analyzer-hooks";
+import { SelectedWeapons } from "../components/SelectedWeapons";
+import { WeaponGrid } from "../components/WeaponGrid";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -38,5 +44,43 @@ export default function CompAnalyzerShell() {
 }
 
 function CompAnalyzerPage() {
-	return <Main>hello world</Main>;
+	const [selectedWeaponIds, setSelectedWeaponIds] = useSelectedWeapons();
+	const [categorization, setCategorization] = useCategorization();
+	const [isGridCollapsed, setIsGridCollapsed] = useState(
+		selectedWeaponIds.length >= MAX_WEAPONS,
+	);
+
+	const handleWeaponClick = (weaponId: MainWeaponId) => {
+		if (selectedWeaponIds.length >= MAX_WEAPONS) {
+			return;
+		}
+
+		const newSelectedWeapons = [...selectedWeaponIds, weaponId];
+		setSelectedWeaponIds(newSelectedWeapons);
+
+		if (newSelectedWeapons.length >= MAX_WEAPONS) {
+			setIsGridCollapsed(true);
+		}
+	};
+
+	const handleRemoveWeapon = (index: number) => {
+		setSelectedWeaponIds(selectedWeaponIds.filter((_, i) => i !== index));
+	};
+
+	return (
+		<Main className="stack lg">
+			<SelectedWeapons
+				selectedWeaponIds={selectedWeaponIds}
+				onRemove={handleRemoveWeapon}
+			/>
+			<WeaponGrid
+				selectedWeaponIds={selectedWeaponIds}
+				onWeaponClick={handleWeaponClick}
+				categorization={categorization}
+				onCategorizationChange={setCategorization}
+				isCollapsed={isGridCollapsed}
+				onToggleCollapse={() => setIsGridCollapsed(!isGridCollapsed)}
+			/>
+		</Main>
+	);
 }

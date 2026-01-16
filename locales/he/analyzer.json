@@ -170,5 +170,14 @@
 	"damageReceiver.suffix.weakPoint": "",
 	"damageReceiver.suffix.inhale": "",
 	"damageReceiver.suffix.canopy": "",
-	"damageReceiver.suffix.canopyLaunched": ""
+	"damageReceiver.suffix.canopyLaunched": "",
+	"comp.groupBy": "",
+	"comp.groupBy.category": "",
+	"comp.groupBy.sub": "",
+	"comp.groupBy.special": "",
+	"comp.selectWeapons": "",
+	"comp.removeWeapon": "",
+	"comp.pickWeapon": "",
+	"comp.showWeaponGrid": "",
+	"comp.hideWeaponGrid": ""
 }
