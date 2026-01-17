@@ -1,10 +1,11 @@
 ---
 # sendou.ink-2-i2so
 title: Improve CustomFieldRenderProps typing for type safety
-status: todo
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-11T08:47:56Z
-updated_at: 2026-01-11T08:47:56Z
+updated_at: 2026-01-17T13:09:26Z
 ---
 
 Investigate why we need to explicitly type props as CustomFieldRenderProps and find a more typesafe way for custom form fields.
