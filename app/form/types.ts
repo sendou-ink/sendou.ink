@@ -213,8 +213,19 @@ export type SelectOption = {
 /** Brand type to encode required options directly in Zod schema types */
 export type FieldWithOptions<TOptions> = { _requiredOptions: TOptions };
 
-/** Custom render props for FormField children */
-export type FormFieldChildrenProps = {
+/**
+ * Custom render props for FormField children.
+ * Generic type parameter allows for type-safe value handling when the type is known.
+ */
+export type CustomFieldRenderProps<TValue = unknown> = {
+	name: string;
+	error: string | undefined;
+	value: TValue;
+	onChange: (value: TValue) => void;
+};
+
+/** Non-generic version for internal use to avoid excessive type instantiation */
+type FormFieldChildrenProps = {
 	name: string;
 	error: string | undefined;
 	value: unknown;

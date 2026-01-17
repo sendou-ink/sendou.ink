@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
 import { SendouDialog } from "~/components/elements/Dialog";
-import type { CustomFieldRenderProps } from "~/form/FormField";
+import type { CustomFieldRenderProps } from "~/form";
 import { SendouForm } from "~/form/SendouForm";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { nullFilledArray } from "~/utils/arrays";

@@ -27,6 +27,7 @@ import { useOptionalFormFieldContext } from "./SendouForm";
 import type {
 	ArrayItemRenderContext,
 	BadgeOption,
+	CustomFieldRenderProps,
 	FormField as FormFieldType,
 	SelectOption,
 } from "./types";
@@ -37,12 +38,7 @@ import {
 	validateField,
 } from "./utils";
 
-export type CustomFieldRenderProps = {
-	name: string;
-	error: string | undefined;
-	value: unknown;
-	onChange: (value: unknown) => void;
-};
+export type { CustomFieldRenderProps };
 
 interface FormFieldProps {
 	name: string;
@@ -289,6 +285,7 @@ export function FormField({
 	}
 
 	if (formField.type === "array") {
+		// @ts-expect-error Type instantiation is excessively deep and possibly infinite
 		const innerFieldMeta = formRegistry.get(formField.field) as
 			| FormFieldType
 			| undefined;

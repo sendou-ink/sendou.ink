@@ -6,7 +6,7 @@ import type { z } from "zod";
 import { SendouDatePicker } from "~/components/elements/DatePicker";
 import { TournamentSearch } from "~/components/elements/TournamentSearch";
 import { Label } from "~/components/Label";
-import type { CustomFieldRenderProps } from "~/form/FormField";
+import type { CustomFieldRenderProps } from "~/form";
 import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { errorMessageId } from "~/form/utils";
