@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { AbilitiesSelector } from "~/components/AbilitiesSelector";
 import { GearSelect } from "~/components/GearSelect";
 import type { GearType } from "~/db/tables";
-import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
+import type { CustomFieldRenderProps } from "~/form/FormField";
 import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
@@ -35,10 +35,10 @@ export function NewBuildForm({
 				isEditing ? "builds:forms.title.edit" : "builds:forms.title.new",
 			)}
 		>
-			{({ names }) => (
+			{({ FormField }) => (
 				<>
-					<FormField name={names.weapons} />
-					<FormField name={names.head}>
+					<FormField name="weapons" />
+					<FormField name="head">
 						{(props: CustomFieldRenderProps) => (
 							<GearFormField
 								type="HEAD"
@@ -47,7 +47,7 @@ export function NewBuildForm({
 							/>
 						)}
 					</FormField>
-					<FormField name={names.clothes}>
+					<FormField name="clothes">
 						{(props: CustomFieldRenderProps) => (
 							<GearFormField
 								type="CLOTHES"
@@ -56,7 +56,7 @@ export function NewBuildForm({
 							/>
 						)}
 					</FormField>
-					<FormField name={names.shoes}>
+					<FormField name="shoes">
 						{(props: CustomFieldRenderProps) => (
 							<GearFormField
 								type="SHOES"
@@ -65,15 +65,15 @@ export function NewBuildForm({
 							/>
 						)}
 					</FormField>
-					<FormField name={names.abilities}>
+					<FormField name="abilities">
 						{(props: CustomFieldRenderProps) => (
 							<AbilitiesFormField {...props} />
 						)}
 					</FormField>
-					<FormField name={names.title} />
-					<FormField name={names.description} />
-					<FormField name={names.modes} />
-					<FormField name={names.private} />
+					<FormField name="title" />
+					<FormField name="description" />
+					<FormField name="modes" />
+					<FormField name="private" />
 				</>
 			)}
 		</SendouForm>

@@ -10,7 +10,7 @@ import { SearchIcon } from "~/components/icons/Search";
 import { Main } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
 import { useUser } from "~/features/auth/core/user";
-import { FormField, SendouForm } from "~/form";
+import { SendouForm } from "~/form";
 import { usePagination } from "~/hooks/usePagination";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
@@ -197,7 +197,7 @@ function NewTeamDialog() {
 			onCloseTo={TEAM_SEARCH_PAGE}
 		>
 			<SendouForm schema={createTeamSchema}>
-				{({ names }) => <FormField name={names.name} />}
+				{({ FormField }) => <FormField name="name" />}
 			</SendouForm>
 		</SendouDialog>
 	);

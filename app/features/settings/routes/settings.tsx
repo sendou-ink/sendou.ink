@@ -7,7 +7,6 @@ import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
 import { Theme, useTheme } from "~/features/theme/core/provider";
-import { FormField } from "~/form/FormField";
 import { SelectFormField } from "~/form/fields/SelectFormField";
 import { SendouForm } from "~/form/SendouForm";
 import { languages } from "~/modules/i18n/config";
@@ -53,7 +52,7 @@ export default function SettingsPage() {
 						}}
 						autoSubmit
 					>
-						{({ names }) => <FormField name={names.newValue} />}
+						{({ FormField }) => <FormField name="newValue" />}
 					</SendouForm>
 				) : null}
 				{user ? (
@@ -68,7 +67,7 @@ export default function SettingsPage() {
 								}}
 								autoSubmit
 							>
-								{({ names }) => <FormField name={names.newValue} />}
+								{({ FormField }) => <FormField name="newValue" />}
 							</SendouForm>
 							<SendouForm
 								schema={disallowScrimPickupsFromUntrustedSchema}
@@ -78,7 +77,7 @@ export default function SettingsPage() {
 								}}
 								autoSubmit
 							>
-								{({ names }) => <FormField name={names.newValue} />}
+								{({ FormField }) => <FormField name="newValue" />}
 							</SendouForm>
 							<SendouForm
 								schema={updateNoScreenSchema}
@@ -87,7 +86,7 @@ export default function SettingsPage() {
 								}}
 								autoSubmit
 							>
-								{({ names }) => <FormField name={names.newValue} />}
+								{({ FormField }) => <FormField name="newValue" />}
 							</SendouForm>
 						</div>
 					</>

@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { FormField } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import { banUserActionSchema } from "../tournament-organization-schemas";
 
@@ -19,9 +18,13 @@ export function BanUserModal() {
 			showCloseButton
 		>
 			<SendouForm schema={banUserActionSchema}>
-				<FormField name="userId" />
-				<FormField name="privateNote" />
-				<FormField name="expiresAt" />
+				{({ FormField }) => (
+					<>
+						<FormField name="userId" />
+						<FormField name="privateNote" />
+						<FormField name="expiresAt" />
+					</>
+				)}
 			</SendouForm>
 		</SendouDialog>
 	);

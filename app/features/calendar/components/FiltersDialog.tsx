@@ -8,7 +8,6 @@ import { FilterFilledIcon } from "~/components/icons/FilterFilled";
 import { useUser } from "~/features/auth/core/user";
 import { calendarFiltersFormSchema } from "~/features/calendar/calendar-schemas";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
-import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 
 type FormValues = z.infer<typeof calendarFiltersFormSchema>;
@@ -71,21 +70,21 @@ function FiltersForm({
 			className="stack md-plus items-start"
 			secondarySubmit={user ? <ApplyAndPersistButton /> : null}
 		>
-			{({ names }) => (
+			{({ FormField }) => (
 				<>
-					<FormField name={names.modes} />
-					<FormField name={names.modesExact} />
-					<FormField name={names.games} />
-					<FormField name={names.preferredVersus} />
-					<FormField name={names.preferredStartTime} />
-					<FormField name={names.tagsIncluded} />
-					<FormField name={names.tagsExcluded} />
-					<FormField name={names.isSendou} />
-					<FormField name={names.isRanked} />
-					<FormField name={names.minTeamCount} />
-					<FormField name={names.orgsIncluded} />
-					<FormField name={names.orgsExcluded} />
-					<FormField name={names.authorIdsExcluded} />
+					<FormField name="modes" />
+					<FormField name="modesExact" />
+					<FormField name="games" />
+					<FormField name="preferredVersus" />
+					<FormField name="preferredStartTime" />
+					<FormField name="tagsIncluded" />
+					<FormField name="tagsExcluded" />
+					<FormField name="isSendou" />
+					<FormField name="isRanked" />
+					<FormField name="minTeamCount" />
+					<FormField name="orgsIncluded" />
+					<FormField name="orgsExcluded" />
+					<FormField name="authorIdsExcluded" />
 				</>
 			)}
 		</SendouForm>

@@ -20,7 +20,6 @@ import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { BannedUsersList } from "~/features/tournament-organization/components/BannedPlayersList";
-import { FormField } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
@@ -159,7 +158,7 @@ function AdminControls() {
 				}}
 				autoSubmit
 			>
-				{({ names }) => <FormField name={names.isEstablished} />}
+				{({ FormField }) => <FormField name="isEstablished" />}
 			</SendouForm>
 		</div>
 	);

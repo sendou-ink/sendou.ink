@@ -7,7 +7,6 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import { FilterFilledIcon } from "~/components/icons/FilterFilled";
 import { useUser } from "~/features/auth/core/user";
 import type { ScrimFilters } from "~/features/scrims/scrims-types";
-import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { scrimsFiltersFormSchema } from "../scrims-schemas";
 import type { LutiDiv } from "../scrims-types";
@@ -95,11 +94,11 @@ function FiltersForm({
 			className="stack md-plus items-start"
 			secondarySubmit={user ? <ApplyAndPersistButton /> : null}
 		>
-			{({ names }) => (
+			{({ FormField }) => (
 				<>
-					<FormField name={names.weekdayTimes} />
-					<FormField name={names.weekendTimes} />
-					<FormField name={names.divs} />
+					<FormField name="weekdayTimes" />
+					<FormField name="weekendTimes" />
+					<FormField name="divs" />
 				</>
 			)}
 		</SendouForm>

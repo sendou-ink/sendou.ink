@@ -22,7 +22,6 @@ import {
 	soundVolume,
 } from "~/features/chat/chat-utils";
 import { updateNoScreenSchema } from "~/features/settings/settings-schemas";
-import { FormField } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -269,10 +268,10 @@ function VoiceChat() {
 						languages: data.settings.languages ?? [],
 					}}
 				>
-					{({ names }) => (
+					{({ FormField }) => (
 						<>
-							<FormField name={names.vc} />
-							<FormField name={names.languages} />
+							<FormField name="vc" />
+							<FormField name="languages" />
 						</>
 					)}
 				</SendouForm>
@@ -304,7 +303,7 @@ function WeaponPool() {
 						weaponPool: defaultWeaponPool,
 					}}
 				>
-					{({ names }) => <FormField name={names.weaponPool} />}
+					{({ FormField }) => <FormField name="weaponPool" />}
 				</SendouForm>
 			</div>
 		</details>
@@ -520,7 +519,7 @@ function Misc() {
 					action={SETTINGS_PAGE}
 					autoSubmit
 				>
-					{({ names }) => <FormField name={names.newValue} />}
+					{({ FormField }) => <FormField name="newValue" />}
 				</SendouForm>
 			</div>
 		</details>

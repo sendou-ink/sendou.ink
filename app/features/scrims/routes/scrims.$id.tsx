@@ -13,7 +13,6 @@ import TimePopover from "~/components/TimePopover";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { cancelScrimSchema } from "~/features/scrims/scrims-schemas";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
-import { FormField } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { useHasPermission } from "~/modules/permissions/hooks";
@@ -121,7 +120,7 @@ function CancelScrimForm() {
 			schema={cancelScrimSchema}
 			submitButtonTestId="cancel-scrim-submit"
 		>
-			<FormField name="reason" />
+			{({ FormField }) => <FormField name="reason" />}
 		</SendouForm>
 	);
 }

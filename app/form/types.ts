@@ -213,6 +213,14 @@ export type SelectOption = {
 /** Brand type to encode required options directly in Zod schema types */
 export type FieldWithOptions<TOptions> = { _requiredOptions: TOptions };
 
+/** Custom render props for FormField children */
+export type FormFieldChildrenProps = {
+	name: string;
+	error: string | undefined;
+	value: unknown;
+	onChange: (value: unknown) => void;
+};
+
 /** Props for a typed FormField based on field name and schema */
 export type TypedFormFieldProps<
 	TSchema extends z.ZodRawShape,
@@ -220,13 +228,30 @@ export type TypedFormFieldProps<
 > = {
 	name: TName;
 	label?: string;
+	children?:
+		| ((props: FormFieldChildrenProps) => React.ReactNode)
+		| ((props: ArrayItemRenderContext) => React.ReactNode);
 } & (TSchema[TName] extends FieldWithOptions<infer TOptions>
 	? { options: TOptions }
 	: { options?: never });
 
+/** Nested path pattern for array/object traversal */
+type NestedPath = `${string}.${string}` | `${string}[${string}`;
+
+/** Props for FormField with flexible (string) name - used for nested paths like `${itemName}.field` */
+export type FlexibleFormFieldProps = {
+	name: NestedPath;
+	label?: string;
+	children?:
+		| ((props: FormFieldChildrenProps) => React.ReactNode)
+		| ((props: ArrayItemRenderContext) => React.ReactNode);
+	options?: unknown;
+};
+
 /** Typed FormField component type for a specific schema */
-export type TypedFormFieldComponent<TSchema extends z.ZodRawShape> = <
-	TName extends keyof TSchema & string,
->(
-	props: TypedFormFieldProps<TSchema, TName>,
-) => React.ReactNode;
+export type TypedFormFieldComponent<TSchema extends z.ZodRawShape> = {
+	<TName extends keyof TSchema & string>(
+		props: TypedFormFieldProps<TSchema, TName>,
+	): React.ReactNode;
+	(props: FlexibleFormFieldProps): React.ReactNode;
+};

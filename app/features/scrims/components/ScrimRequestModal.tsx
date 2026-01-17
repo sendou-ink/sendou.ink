@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
+import type { CustomFieldRenderProps } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { nullFilledArray } from "~/utils/arrays";
@@ -54,7 +54,7 @@ export function ScrimRequestModal({
 					at: post.rangeEnd && timeOptions[0] ? timeOptions[0].value : null,
 				}}
 			>
-				{({ names }) => (
+				{({ FormField }) => (
 					<>
 						<div className="font-semi-bold text-lighter italic">
 							{new Intl.ListFormat(i18n.language).format(
@@ -65,15 +65,15 @@ export function ScrimRequestModal({
 							<div className="text-sm text-lighter italic">{post.text}</div>
 						) : null}
 						<Divider />
-						<FormField name={names.from}>
+						<FormField name="from">
 							{(props: CustomFieldRenderProps) => (
 								<WithFormField usersTeams={data.teams} {...props} />
 							)}
 						</FormField>
 						{post.rangeEnd ? (
-							<FormField name={names.at} options={timeOptions} />
+							<FormField name="at" options={timeOptions} />
 						) : null}
-						<FormField name={names.message} />
+						<FormField name="message" />
 					</>
 				)}
 			</SendouForm>

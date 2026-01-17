@@ -10,9 +10,9 @@ import { WeaponSelect } from "~/components/WeaponSelect";
 import { YouTubeEmbed } from "~/components/YouTubeEmbed";
 import { useRecentlyReportedWeapons } from "~/features/sendouq/q-hooks";
 import type { ArrayItemRenderContext, CustomFieldRenderProps } from "~/form";
-import { FormField } from "~/form/FormField";
 import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
+import type { FormRenderProps } from "~/form/SendouForm";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
@@ -75,8 +75,12 @@ export default function NewVodPage() {
 				schema={vodFormBaseSchema}
 				defaultValues={defaultValues}
 			>
-				<YouTubeEmbedWrapper onPlayerReady={setPlayer} />
-				<VodFormFields player={player} />
+				{({ FormField }) => (
+					<>
+						<YouTubeEmbedWrapper onPlayerReady={setPlayer} />
+						<VodFormFields player={player} FormField={FormField} />
+					</>
+				)}
 			</SendouForm>
 		</Main>
 	);
@@ -139,7 +143,17 @@ function YouTubeEmbedWrapper({
 	);
 }
 
-function VodFormFields({ player }: { player: YT.Player | null }) {
+type VodFormFieldComponent = FormRenderProps<
+	typeof vodFormBaseSchema.shape
+>["FormField"];
+
+function VodFormFields({
+	player,
+	FormField,
+}: {
+	player: YT.Player | null;
+	FormField: VodFormFieldComponent;
+}) {
 	const { values } = useFormFieldContext();
 	const videoType = values.type as string;
 
@@ -150,7 +164,11 @@ function VodFormFields({ player }: { player: YT.Player | null }) {
 			<FormField name="date" />
 			<FormField name="type" />
 
-			{videoType === "CAST" ? <TeamSizeField /> : <PovFormField />}
+			{videoType === "CAST" ? (
+				<TeamSizeField FormField={FormField} />
+			) : (
+				<PovFormField FormField={FormField} />
+			)}
 
 			<FormField name="matches">
 				{(ctx: ArrayItemRenderContext) => (
@@ -169,6 +187,7 @@ function VodFormFields({ player }: { player: YT.Player | null }) {
 						remove={ctx.remove}
 						player={player}
 						videoType={videoType}
+						FormField={FormField}
 					/>
 				)}
 			</FormField>
@@ -176,7 +195,7 @@ function VodFormFields({ player }: { player: YT.Player | null }) {
 	);
 }
 
-function TeamSizeField() {
+function TeamSizeField({ FormField }: { FormField: VodFormFieldComponent }) {
 	const { values, setValue } = useFormFieldContext();
 	const matches = values.matches as Array<Record<string, unknown>>;
 
@@ -219,7 +238,7 @@ function TeamSizeField() {
 	);
 }
 
-function PovFormField() {
+function PovFormField({ FormField }: { FormField: VodFormFieldComponent }) {
 	const { t } = useTranslation(["vods", "calendar"]);
 
 	return (
@@ -301,6 +320,7 @@ interface MatchFieldValues {
 type MatchFieldsetContentProps = ArrayItemRenderContext<MatchFieldValues> & {
 	player: YT.Player | null;
 	videoType: string;
+	FormField: VodFormFieldComponent;
 };
 
 function MatchFieldsetContent({
@@ -313,6 +333,7 @@ function MatchFieldsetContent({
 	remove,
 	player,
 	videoType,
+	FormField,
 }: MatchFieldsetContentProps) {
 	const { t } = useTranslation(["vods", "common"]);
 	const [currentTime, setCurrentTime] = useState<string>("");

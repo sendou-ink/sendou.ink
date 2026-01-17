@@ -7,7 +7,7 @@ import { PlusIcon } from "~/components/icons/Plus";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
 import { addModNoteSchema } from "~/features/user-page/user-page-schemas";
-import { FormField, SendouForm } from "~/form";
+import { SendouForm } from "~/form";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { action } from "../actions/u.$identifier.admin.server";
@@ -165,7 +165,7 @@ function NewModNoteDialog() {
 			}
 		>
 			<SendouForm schema={addModNoteSchema}>
-				<FormField name="value" />
+				{({ FormField }) => <FormField name="value" />}
 			</SendouForm>
 		</SendouDialog>
 	);

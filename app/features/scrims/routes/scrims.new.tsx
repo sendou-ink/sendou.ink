@@ -6,7 +6,7 @@ import type { z } from "zod";
 import { SendouDatePicker } from "~/components/elements/DatePicker";
 import { TournamentSearch } from "~/components/elements/TournamentSearch";
 import { Label } from "~/components/Label";
-import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
+import type { CustomFieldRenderProps } from "~/form/FormField";
 import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { errorMessageId } from "~/form/utils";
@@ -63,18 +63,18 @@ export default function NewScrimPage() {
 					mapsTournamentId: null,
 				}}
 			>
-				{({ names }) => (
+				{({ FormField }) => (
 					<>
-						<FormField name={names.from}>
+						<FormField name="from">
 							{(props: CustomFieldRenderProps) => (
 								<WithFormField usersTeams={data.teams} {...props} />
 							)}
 						</FormField>
 
-						<FormField name={names.at} />
-						<FormField name={names.rangeEnd} />
+						<FormField name="at" />
+						<FormField name="rangeEnd" />
 
-						<FormField name={names.baseVisibility}>
+						<FormField name="baseVisibility">
 							{(props: CustomFieldRenderProps) => (
 								<BaseVisibilityFormField
 									associations={data.associations}
@@ -85,15 +85,15 @@ export default function NewScrimPage() {
 
 						<NotFoundVisibilityFormField associations={data.associations} />
 
-						<FormField name={names.divs} />
+						<FormField name="divs" />
 
-						<FormField name={names.maps} />
+						<FormField name="maps" />
 
 						<TournamentSearchFormField />
 
-						<FormField name={names.postText} />
+						<FormField name="postText" />
 
-						<FormField name={names.managedByAnyone} />
+						<FormField name="managedByAnyone" />
 					</>
 				)}
 			</SendouForm>

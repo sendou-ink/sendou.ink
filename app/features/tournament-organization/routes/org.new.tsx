@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Alert } from "~/components/Alert";
 import { Main } from "~/components/Main";
-import { FormField } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { action } from "../actions/org.new.server";
@@ -23,7 +22,7 @@ export default function NewOrganizationPage() {
 	return (
 		<Main halfWidth>
 			<SendouForm title={t("org:new.heading")} schema={newOrganizationSchema}>
-				{({ names }) => <FormField name={names.name} />}
+				{({ FormField }) => <FormField name="name" />}
 			</SendouForm>
 		</Main>
 	);
