@@ -185,5 +185,6 @@
 	"comp.hits_one": "",
 	"comp.hits_few": "",
 	"comp.hits_many": "",
-	"comp.hits_other": ""
+	"comp.hits_other": "",
+	"comp.enemyRes": ""
 }

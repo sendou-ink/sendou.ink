@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Image, WeaponImage } from "~/components/Image";
+import { MAX_AP } from "~/features/build-analyzer/analyzer-constants";
 import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
 import type {
 	MainWeaponId,
@@ -11,6 +12,7 @@ import { specialWeaponImageUrl, subWeaponImageUrl } from "~/utils/urls";
 import type { DamageCombo, DamageSegment } from "../comp-analyzer-types";
 import {
 	calculateDamageCombos,
+	calculateInkTimeToKill,
 	type ExcludedDamageKey,
 } from "../core/damage-combinations";
 import styles from "./DamageComboBar.module.css";
@@ -32,10 +34,15 @@ const LETHAL_DAMAGE = 100;
 
 interface DamageComboBarProps {
 	combo: DamageCombo;
+	inkTimeFrames: number | null;
 	onToggleFilter: (key: ExcludedDamageKey) => void;
 }
 
-function DamageComboBar({ combo, onToggleFilter }: DamageComboBarProps) {
+function DamageComboBar({
+	combo,
+	inkTimeFrames,
+	onToggleFilter,
+}: DamageComboBarProps) {
 	const { t } = useTranslation(["analyzer", "weapons"]);
 
 	const thresholdPosition = (LETHAL_DAMAGE / combo.totalDamage) * 100;
@@ -64,6 +71,9 @@ function DamageComboBar({ combo, onToggleFilter }: DamageComboBarProps) {
 					{combo.totalDamage.toFixed(1)}
 				</span>
 				<span className={styles.hitCount}>
+					{inkTimeFrames ? (
+						<span className={styles.inkTime}>{inkTimeFrames}f + </span>
+					) : null}
 					{t("analyzer:comp.hits", { count: combo.hitCount })}
 				</span>
 			</div>
@@ -202,9 +212,12 @@ interface DamageComboListProps {
 }
 
 export function DamageComboList({ weaponIds }: DamageComboListProps) {
+	const { t } = useTranslation(["analyzer"]);
 	const [excludedKeys, setExcludedKeys] = useState<ExcludedDamageKey[]>([]);
+	const [targetResAp, setTargetResAp] = useState(0);
 
 	const combos = calculateDamageCombos(weaponIds, excludedKeys);
+	const hasSubLethalCombos = combos.some((combo) => combo.totalDamage < 100);
 
 	if (weaponIds.length < 2) {
 		return null;
@@ -225,6 +238,22 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 
 	return (
 		<div className={styles.comboList}>
+			{hasSubLethalCombos ? (
+				<div className={styles.resSliderRow}>
+					<label className={styles.resSliderLabel}>
+						{t("analyzer:comp.enemyRes")}
+					</label>
+					<input
+						type="range"
+						min={0}
+						max={MAX_AP}
+						value={targetResAp}
+						onChange={(e) => setTargetResAp(Number(e.target.value))}
+						className={styles.resSlider}
+					/>
+					<span className={styles.resSliderValue}>{targetResAp} AP</span>
+				</div>
+			) : null}
 			{excludedKeys.length > 0 ? (
 				<div className={styles.filteredItemsRow}>
 					{excludedKeys.map((key) => (
@@ -236,13 +265,23 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 					))}
 				</div>
 			) : null}
-			{combos.map((combo, index) => (
-				<DamageComboBar
-					key={index}
-					combo={combo}
-					onToggleFilter={handleToggleFilter}
-				/>
-			))}
+			{combos.map((combo, index) => {
+				const inkTimeFrames = calculateInkTimeToKill(
+					combo.totalDamage,
+					targetResAp,
+				);
+				if (combo.totalDamage < 100 && inkTimeFrames === null) {
+					return null;
+				}
+				return (
+					<DamageComboBar
+						key={index}
+						combo={combo}
+						inkTimeFrames={inkTimeFrames}
+						onToggleFilter={handleToggleFilter}
+					/>
+				);
+			})}
 		</div>
 	);
 }

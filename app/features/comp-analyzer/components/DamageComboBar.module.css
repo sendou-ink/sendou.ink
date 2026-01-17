@@ -145,3 +145,36 @@
 .filteredItem:hover {
 	background: var(--bg-lightest);
 }
+
+.resSliderRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	padding-bottom: var(--s-3);
+	border-bottom: 1px solid var(--border-color);
+	margin-bottom: var(--s-1);
+}
+
+.resSliderLabel {
+	font-size: var(--fonts-sm);
+	color: var(--text-lighter);
+	white-space: nowrap;
+}
+
+.resSlider {
+	flex: 1;
+	max-width: 200px;
+	cursor: pointer;
+}
+
+.resSliderValue {
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+	min-width: 50px;
+}
+
+.inkTime {
+	font-size: var(--fonts-sm);
+	color: var(--theme-secondary);
+	font-weight: var(--semi-bold);
+}

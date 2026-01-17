@@ -182,5 +182,6 @@
 	"comp.hideWeaponGrid": "",
 	"comp.hits_one": "",
 	"comp.hits_two": "",
-	"comp.hits_other": ""
+	"comp.hits_other": "",
+	"comp.enemyRes": ""
 }

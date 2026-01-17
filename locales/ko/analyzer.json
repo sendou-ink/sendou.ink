@@ -173,5 +173,6 @@
 	"comp.removeWeapon": "",
 	"comp.pickWeapon": "",
 	"comp.showWeaponGrid": "",
-	"comp.hideWeaponGrid": ""
+	"comp.hideWeaponGrid": "",
+	"comp.enemyRes": ""
 }

@@ -1,5 +1,8 @@
 import { damageTypeToWeaponType } from "~/features/build-analyzer/analyzer-constants";
-import type { DamageType } from "~/features/build-analyzer/analyzer-types";
+import type {
+	AbilityPoints,
+	DamageType,
+} from "~/features/build-analyzer/analyzer-types";
 import { buildStats } from "~/features/build-analyzer/core/stats";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
@@ -246,6 +249,49 @@ function filterAndSortCombos(combos: DamageCombo[]): DamageCombo[] {
 	});
 
 	return filtered.slice(0, MAX_COMBOS_DISPLAYED);
+}
+
+const SPLASH_O_MATIC_ID = 20;
+
+/**
+ * Calculates the number of frames needed for enemy ink damage to finish off
+ * a target after dealing a certain amount of combo damage.
+ *
+ * @param comboDamage - The damage dealt by the combo
+ * @param targetResAp - The target's Ink Resistance Up ability points (0-57)
+ * @returns The number of frames needed, or null if the combo is already lethal
+ *          or ink damage cannot finish the kill (remaining damage exceeds ink damage limit)
+ */
+export function calculateInkTimeToKill(
+	comboDamage: number,
+	targetResAp: number,
+): number | null {
+	if (comboDamage >= 100) {
+		return null;
+	}
+
+	const remainingDamage = 100 - comboDamage;
+
+	const abilityPoints: AbilityPoints = new Map([["RES", targetResAp]]);
+	const stats = buildStats({
+		weaponSplId: SPLASH_O_MATIC_ID,
+		abilityPoints,
+		hasTacticooler: false,
+	});
+
+	const damagePerSecond = stats.stats.damageTakenInEnemyInkPerSecond.value;
+	const damageLimit = stats.stats.enemyInkDamageLimit.value;
+	const gracePeriodFrames =
+		stats.stats.framesBeforeTakingDamageInEnemyInk.value;
+
+	if (remainingDamage > damageLimit) {
+		return null;
+	}
+
+	const damageFrames = remainingDamage / (damagePerSecond / 60);
+	const totalFrames = gracePeriodFrames + damageFrames;
+
+	return Math.ceil(totalFrames);
 }
 
 // TBD: Advanced filtering options

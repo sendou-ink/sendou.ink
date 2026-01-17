@@ -7,6 +7,7 @@ import {
 } from "../comp-analyzer-constants";
 import {
 	calculateDamageCombos,
+	calculateInkTimeToKill,
 	extractDamageSources,
 } from "./damage-combinations";
 
@@ -250,5 +251,61 @@ describe("calculateDamageCombos - edge cases", () => {
 				expect(segment.count).toBeLessThanOrEqual(2);
 			}
 		}
+	});
+});
+
+describe("calculateInkTimeToKill", () => {
+	test("returns null for combos that are already lethal (>= 100 damage)", () => {
+		const result = calculateInkTimeToKill(100, 0);
+		expect(result).toBeNull();
+	});
+
+	test("returns null for combos above 100 damage", () => {
+		const result = calculateInkTimeToKill(150, 0);
+		expect(result).toBeNull();
+	});
+
+	test("calculates short ink time for 99 damage combo with 0 RES", () => {
+		const result = calculateInkTimeToKill(99, 0);
+
+		expect(result).not.toBeNull();
+		expect(result).toBeGreaterThan(0);
+		expect(result).toBeLessThan(30);
+	});
+
+	test("calculates longer ink time for 80 damage combo with 0 RES", () => {
+		const result = calculateInkTimeToKill(80, 0);
+
+		expect(result).not.toBeNull();
+		expect(result).toBeGreaterThan(60);
+	});
+
+	test("returns null when remaining damage exceeds ink damage limit with high RES", () => {
+		const result = calculateInkTimeToKill(60, 57);
+
+		expect(result).toBeNull();
+	});
+
+	test("higher RES increases ink time", () => {
+		const resultNoRes = calculateInkTimeToKill(90, 0);
+		const resultMaxRes = calculateInkTimeToKill(90, 57);
+
+		expect(resultNoRes).not.toBeNull();
+		expect(resultMaxRes).not.toBeNull();
+		expect(resultMaxRes!).toBeGreaterThan(resultNoRes!);
+	});
+
+	test("handles boundary case at 0 AP", () => {
+		const result = calculateInkTimeToKill(80, 0);
+
+		expect(result).not.toBeNull();
+		expect(result).toBeGreaterThan(0);
+	});
+
+	test("handles boundary case at 57 AP", () => {
+		const result = calculateInkTimeToKill(90, 57);
+
+		expect(result).not.toBeNull();
+		expect(result).toBeGreaterThan(0);
 	});
 });
