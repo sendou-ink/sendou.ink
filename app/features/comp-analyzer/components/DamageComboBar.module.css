@@ -58,12 +58,12 @@
 }
 
 .damageValue {
-	font-size: var(--fonts-lg);
+	font-size: var(--fonts-sm);
 	font-weight: var(--bold);
 }
 
 .damageType {
-	font-size: var(--fonts-sm);
+	font-size: var(--fonts-xxs);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
