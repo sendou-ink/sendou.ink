@@ -25,7 +25,7 @@
 	align-items: center;
 	justify-content: center;
 	gap: var(--s-1);
-	min-width: 0;
+	min-width: 25%;
 	padding: 0 var(--s-2);
 	color: var(--black-text);
 	font-weight: var(--semi-bold);
