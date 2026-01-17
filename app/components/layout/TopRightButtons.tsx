@@ -33,10 +33,16 @@ export function TopRightButtons({
 				</LinkButton>
 			) : null}
 			{isLoggedIn ? (
-				<>
-					{showSearch ? <CommandPalette /> : null}
-					<AnythingAdder />
-				</>
+				<div className={styles.searchAndAddContainer}>
+					{showSearch ? (
+						<div className={styles.searchWrapper}>
+							<CommandPalette />
+						</div>
+					) : null}
+					<div className={styles.addNewWrapper}>
+						<AnythingAdder />
+					</div>
+				</div>
 			) : (
 				<LogInButtonContainer>
 					<SendouButton type="submit" size="small" icon={<LogIn />}>

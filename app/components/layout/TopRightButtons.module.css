@@ -4,6 +4,23 @@
 	margin-left: auto;
 }
 
+.searchAndAddContainer {
+	display: grid;
+	grid-template-columns: 2fr 1fr;
+	gap: var(--s-3);
+}
+
+.searchWrapper > button,
+.addNewWrapper > button {
+	width: 100%;
+}
+
+@media screen and (max-width: 1000px) {
+	.searchAndAddContainer {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
 .button {
 	display: grid;
 	place-items: center;
