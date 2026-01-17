@@ -1,10 +1,11 @@
 ---
 # sendou.ink-2-yszw
 title: Move team edit validation from action to schema
-status: todo
+status: scrapped
 type: task
+priority: normal
 created_at: 2026-01-11T08:47:55Z
-updated_at: 2026-01-11T08:47:55Z
+updated_at: 2026-01-17T06:17:46Z
 ---
 
 Team edit validation (special characters check, duplicate name check) should be in the schema rather than in the action.
