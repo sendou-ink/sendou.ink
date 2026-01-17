@@ -54,8 +54,7 @@
 			rgba(255, 255, 255, 0),
 			rgba(255, 255, 255, 0),
 			rgba(0, 0, 0, 0.6)
-		),
-		var(--team-banner-img);
+		), var(--team-banner-img);
 	background-size: cover;
 	width: 100%;
 	aspect-ratio: 2 / 1;
