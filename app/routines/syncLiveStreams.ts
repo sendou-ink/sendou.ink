@@ -1,6 +1,7 @@
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { getStreams } from "~/modules/twitch";
+import { hasTwitchEnvVars } from "~/modules/twitch/utils";
 import { Routine } from "./routine.server";
 
 export const SyncLiveStreamsRoutine = new Routine({
@@ -9,6 +10,8 @@ export const SyncLiveStreamsRoutine = new Routine({
 });
 
 async function syncLiveStreams() {
+	if (!hasTwitchEnvVars()) return;
+
 	const streams = await getStreams();
 
 	if (streams.length === 0) {
