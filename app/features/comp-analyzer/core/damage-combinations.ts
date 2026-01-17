@@ -66,26 +66,50 @@ export function extractDamageSources(
 	});
 }
 
+export interface ExcludedDamageKey {
+	weaponId: MainWeaponId;
+	weaponType: "main" | "sub" | "special";
+	damageType: DamageType;
+}
+
 export function calculateDamageCombos(
 	weaponIds: MainWeaponId[],
+	excludedKeys: ExcludedDamageKey[] = [],
 ): DamageCombo[] {
 	if (weaponIds.length < 2) {
 		return [];
 	}
 
+	const excludedSet = new Set(
+		excludedKeys.map((k) => `${k.weaponId}-${k.weaponType}-${k.damageType}`),
+	);
+
 	const sources = extractDamageSources(weaponIds);
-	const damageOptions = flattenToOptions(sources);
+	const damageOptions = flattenToOptions(sources, excludedSet);
 	const combos = generateCombinations(damageOptions);
 	const filtered = filterAndSortCombos(combos);
 
 	return filtered;
 }
 
-function flattenToOptions(sources: WeaponDamageSource[]): DamageOption[] {
+function flattenToOptions(
+	sources: WeaponDamageSource[],
+	excludedSet: Set<string>,
+): DamageOption[] {
 	const options: DamageOption[] = [];
 
 	for (const source of sources) {
 		for (const damage of source.damages) {
+			const weaponType = damage.weaponType.toLowerCase() as
+				| "main"
+				| "sub"
+				| "special";
+			const key = `${source.weaponId}-${weaponType}-${damage.type}`;
+
+			if (excludedSet.has(key)) {
+				continue;
+			}
+
 			options.push({
 				weaponSlot: source.weaponSlot,
 				weaponId: source.weaponId,

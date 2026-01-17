@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Image, WeaponImage } from "~/components/Image";
 import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
@@ -8,16 +9,33 @@ import type {
 } from "~/modules/in-game-lists/types";
 import { specialWeaponImageUrl, subWeaponImageUrl } from "~/utils/urls";
 import type { DamageCombo, DamageSegment } from "../comp-analyzer-types";
+import {
+	calculateDamageCombos,
+	type ExcludedDamageKey,
+} from "../core/damage-combinations";
 import styles from "./DamageComboBar.module.css";
+
+function filterKeyToString(key: ExcludedDamageKey): string {
+	return `${key.weaponId}-${key.weaponType}-${key.damageType}`;
+}
+
+function weaponTypeFromSegment(
+	segment: DamageSegment,
+): "main" | "sub" | "special" {
+	if (segment.isSubWeapon) return "sub";
+	if (segment.isSpecialWeapon) return "special";
+	return "main";
+}
 
 const SLOT_COLORS = ["yellow", "pink", "green", "blue"] as const;
 const LETHAL_DAMAGE = 100;
 
 interface DamageComboBarProps {
 	combo: DamageCombo;
+	onToggleFilter: (key: ExcludedDamageKey) => void;
 }
 
-function DamageComboBar({ combo }: DamageComboBarProps) {
+function DamageComboBar({ combo, onToggleFilter }: DamageComboBarProps) {
 	const { t } = useTranslation(["analyzer", "weapons"]);
 
 	const thresholdPosition = (LETHAL_DAMAGE / combo.totalDamage) * 100;
@@ -31,6 +49,7 @@ function DamageComboBar({ combo }: DamageComboBarProps) {
 						segment={segment}
 						totalDamage={combo.totalDamage}
 						damageTypeLabel={t(`analyzer:damage.${segment.damageType}` as any)}
+						onToggleFilter={onToggleFilter}
 					/>
 				))}
 				{thresholdPosition < 100 ? (
@@ -56,17 +75,27 @@ interface SegmentBarProps {
 	segment: DamageSegment;
 	totalDamage: number;
 	damageTypeLabel: string;
+	onToggleFilter: (key: ExcludedDamageKey) => void;
 }
 
 function SegmentBar({
 	segment,
 	totalDamage,
 	damageTypeLabel,
+	onToggleFilter,
 }: SegmentBarProps) {
 	const segmentDamage = segment.damageValue * segment.count;
 	const widthPercent = (segmentDamage / totalDamage) * 100;
 	const slotColor = SLOT_COLORS[segment.weaponSlot] ?? "yellow";
 	const params = mainWeaponParams(segment.weaponId);
+
+	const handleFilterClick = () => {
+		onToggleFilter({
+			weaponId: segment.weaponId,
+			weaponType: weaponTypeFromSegment(segment),
+			damageType: segment.damageType,
+		});
+	};
 
 	return (
 		<div
@@ -83,7 +112,13 @@ function SegmentBar({
 				/>
 				<span className={styles.damageValue}>{segment.damageValue}</span>
 			</div>
-			<span className={styles.damageTypeLabel}>{damageTypeLabel}</span>
+			<button
+				type="button"
+				className={styles.damageTypeLabel}
+				onClick={handleFilterClick}
+			>
+				{damageTypeLabel}
+			</button>
 		</div>
 	);
 }
@@ -135,19 +170,78 @@ function WeaponIcon({
 	);
 }
 
-interface DamageComboListProps {
-	combos: DamageCombo[];
+interface FilteredItemProps {
+	filterKey: ExcludedDamageKey;
+	onRestore: (key: ExcludedDamageKey) => void;
 }
 
-export function DamageComboList({ combos }: DamageComboListProps) {
-	if (combos.length === 0) {
+function FilteredItem({ filterKey, onRestore }: FilteredItemProps) {
+	const { t } = useTranslation(["analyzer", "weapons"]);
+	const params = mainWeaponParams(filterKey.weaponId);
+
+	return (
+		<button
+			type="button"
+			className={styles.filteredItem}
+			onClick={() => onRestore(filterKey)}
+		>
+			<WeaponIcon
+				weaponId={filterKey.weaponId}
+				isSubWeapon={filterKey.weaponType === "sub"}
+				isSpecialWeapon={filterKey.weaponType === "special"}
+				subWeaponId={params.subWeaponId}
+				specialWeaponId={params.specialWeaponId}
+			/>
+			<span>{t(`analyzer:damage.${filterKey.damageType}` as any)}</span>
+		</button>
+	);
+}
+
+interface DamageComboListProps {
+	weaponIds: MainWeaponId[];
+}
+
+export function DamageComboList({ weaponIds }: DamageComboListProps) {
+	const [excludedKeys, setExcludedKeys] = useState<ExcludedDamageKey[]>([]);
+
+	const combos = calculateDamageCombos(weaponIds, excludedKeys);
+
+	if (weaponIds.length < 2) {
 		return null;
 	}
 
+	const handleToggleFilter = (key: ExcludedDamageKey) => {
+		const keyString = filterKeyToString(key);
+		const exists = excludedKeys.some((k) => filterKeyToString(k) === keyString);
+
+		if (exists) {
+			setExcludedKeys(
+				excludedKeys.filter((k) => filterKeyToString(k) !== keyString),
+			);
+		} else {
+			setExcludedKeys([...excludedKeys, key]);
+		}
+	};
+
 	return (
 		<div className={styles.comboList}>
+			{excludedKeys.length > 0 ? (
+				<div className={styles.filteredItemsRow}>
+					{excludedKeys.map((key) => (
+						<FilteredItem
+							key={filterKeyToString(key)}
+							filterKey={key}
+							onRestore={handleToggleFilter}
+						/>
+					))}
+				</div>
+			) : null}
 			{combos.map((combo, index) => (
-				<DamageComboBar key={index} combo={combo} />
+				<DamageComboBar
+					key={index}
+					combo={combo}
+					onToggleFilter={handleToggleFilter}
+				/>
 			))}
 		</div>
 	);
