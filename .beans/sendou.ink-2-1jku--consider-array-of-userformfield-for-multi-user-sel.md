@@ -1,10 +1,11 @@
 ---
 # sendou.ink-2-1jku
 title: Consider array of UserFormField for multi-user selection in scrims
-status: todo
+status: scrapped
 type: task
+priority: normal
 created_at: 2026-01-11T08:47:56Z
-updated_at: 2026-01-11T08:47:56Z
+updated_at: 2026-01-17T13:23:33Z
 ---
 
 Evaluate using array + UserFormField for selecting multiple users in scrims rather than a custom solution.
