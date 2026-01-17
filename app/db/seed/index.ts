@@ -1,5 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { add, sub } from "date-fns";
+import { nanoid } from "nanoid";
 import * as R from "remeda";
 import { db, sql } from "~/db/sql";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
@@ -238,6 +239,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	variation === "NO_SCRIMS" ? undefined : scrimPostRequests,
 	associations,
 	notifications,
+	liveStreams,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -303,6 +305,7 @@ function wipeDB() {
 		"BadgeManager",
 		"TournamentOrganization",
 		"SeedingSkill",
+		"LiveStream",
 	];
 
 	for (const table of tablesToDelete) {
@@ -2748,4 +2751,45 @@ async function organization() {
 		series: [],
 		badges: [],
 	});
+}
+
+function liveStreams() {
+	const userIds = userIdsInAscendingOrderById();
+
+	const streamingUserIds = [
+		...userIds.slice(3, 20),
+		...userIds.slice(40, 50),
+		...userIds.slice(100, 110),
+	];
+
+	const shuffledStreamers = faker.helpers.shuffle(streamingUserIds);
+	const selectedStreamers = shuffledStreamers.slice(0, 20);
+
+	for (const [i, userId] of selectedStreamers.entries()) {
+		const viewerCount = faker.helpers.weightedArrayElement([
+			{ value: faker.number.int({ min: 5, max: 30 }), weight: 5 },
+			{ value: faker.number.int({ min: 31, max: 100 }), weight: 3 },
+			{ value: faker.number.int({ min: 101, max: 500 }), weight: 2 },
+			{ value: faker.number.int({ min: 501, max: 2000 }), weight: 1 },
+		]);
+
+		const thumbnailUrl = faker.image.urlPicsumPhotos({
+			width: 320,
+			height: 180,
+		});
+
+		sql
+			.prepare(
+				`
+			insert into "LiveStream" ("userId", "url", "viewerCount", "thumbnailUrl")
+			values ($userId, $url, $viewerCount, $thumbnailUrl)
+			`,
+			)
+			.run({
+				userId,
+				url: `https://twitch.tv/fake_${nanoid()}`,
+				viewerCount,
+				thumbnailUrl,
+			});
+	}
 }
