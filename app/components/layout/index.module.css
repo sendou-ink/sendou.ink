@@ -110,7 +110,8 @@
 	padding: var(--s-1) var(--s-2);
 }
 
-.sideNavCollapseButton {
+/* Doubled selector increases specificity to beat Button.module.css's display: flex */
+.sideNavCollapseButton.sideNavCollapseButton {
 	display: none;
 
 	& svg {
@@ -121,7 +122,7 @@
 }
 
 @media screen and (min-width: 600px) {
-	.sideNavCollapseButton {
+	.sideNavCollapseButton.sideNavCollapseButton {
 		display: flex;
 	}
 }
