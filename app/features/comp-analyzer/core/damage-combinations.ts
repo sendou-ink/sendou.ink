@@ -105,6 +105,7 @@ interface PartialCombo {
 	hitCount: number;
 	usedSlots: Set<number>;
 	typeCountMap: Map<DamageType, number>;
+	slotDamageType: Map<number, DamageType>;
 }
 
 function generateCombinations(options: DamageOption[]): DamageCombo[] {
@@ -116,6 +117,7 @@ function generateCombinations(options: DamageOption[]): DamageCombo[] {
 		hitCount: 0,
 		usedSlots: new Set(),
 		typeCountMap: new Map(),
+		slotDamageType: new Map(),
 	};
 
 	backtrack(options, 0, initialState, results);
@@ -162,6 +164,11 @@ function backtrack(
 			continue;
 		}
 
+		const existingTypeForSlot = current.slotDamageType.get(option.weaponSlot);
+		if (existingTypeForSlot && existingTypeForSlot !== option.damageType) {
+			continue;
+		}
+
 		for (
 			let count = 1;
 			count <= Math.min(2, MAX_REPEATS_PER_DAMAGE_TYPE - currentTypeCount);
@@ -183,12 +190,16 @@ function backtrack(
 			const newTypeCountMap = new Map(current.typeCountMap);
 			newTypeCountMap.set(option.damageType, currentTypeCount + count);
 
+			const newSlotDamageType = new Map(current.slotDamageType);
+			newSlotDamageType.set(option.weaponSlot, option.damageType);
+
 			const newState: PartialCombo = {
 				segments: [...current.segments, segment],
 				totalDamage: current.totalDamage + option.damageValue * count,
 				hitCount: current.hitCount + count,
 				usedSlots: newUsedSlots,
 				typeCountMap: newTypeCountMap,
+				slotDamageType: newSlotDamageType,
 			};
 
 			backtrack(options, i + 1, newState, results);
@@ -204,7 +215,10 @@ function filterAndSortCombos(combos: DamageCombo[]): DamageCombo[] {
 	filtered.sort((a, b) => {
 		const aDistTo100 = Math.abs(a.totalDamage - 100);
 		const bDistTo100 = Math.abs(b.totalDamage - 100);
-		return aDistTo100 - bDistTo100;
+		if (aDistTo100 !== bDistTo100) {
+			return aDistTo100 - bDistTo100;
+		}
+		return a.hitCount - b.hitCount;
 	});
 
 	return filtered.slice(0, MAX_COMBOS_DISPLAYED);
