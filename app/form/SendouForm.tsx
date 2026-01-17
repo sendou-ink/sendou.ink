@@ -25,7 +25,7 @@ type HasRequiredDefaults<T extends z.ZodRawShape> =
 
 export interface FormContextValue<T extends z.ZodRawShape = z.ZodRawShape> {
 	schema: z.ZodObject<T>;
-	defaultValues?: Partial<z.infer<z.ZodObject<T>>> | null;
+	defaultValues?: Partial<z.input<z.ZodObject<T>>> | null;
 	serverErrors: Partial<Record<keyof z.infer<z.ZodObject<T>>, string>>;
 	clientErrors: Partial<Record<string, string>>;
 	hasSubmitted: boolean;
@@ -67,10 +67,10 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 type SendouFormProps<T extends z.ZodRawShape> = BaseFormProps<T> &
 	(HasRequiredDefaults<T> extends true
 		? {
-				defaultValues: Partial<z.infer<z.ZodObject<T>>> &
+				defaultValues: Partial<z.input<z.ZodObject<T>>> &
 					Record<RequiredDefaultKeys<T>, unknown>;
 			}
-		: { defaultValues?: Partial<z.infer<z.ZodObject<T>>> | null });
+		: { defaultValues?: Partial<z.input<z.ZodObject<T>>> | null });
 
 export function SendouForm<T extends z.ZodRawShape>({
 	children,
@@ -350,7 +350,7 @@ function buildFieldPath(path: PropertyKey[]): string | null {
 
 function buildInitialValues<T extends z.ZodRawShape>(
 	schema: z.ZodObject<T>,
-	defaultValues?: Partial<z.infer<z.ZodObject<T>>> | null,
+	defaultValues?: Partial<z.input<z.ZodObject<T>>> | null,
 ): Record<string, unknown> {
 	const result: Record<string, unknown> = {};
 

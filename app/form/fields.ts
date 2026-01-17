@@ -445,7 +445,7 @@ export function datetimeOptional(args: DateTimeArgs) {
 		});
 }
 
-export function dateRequired(args: DateTimeArgs) {
+export function dayMonthYearRequired(args: DateTimeArgs) {
 	const minDate = args.min ?? new Date(Date.UTC(2015, 4, 28));
 	const maxDate = args.max ?? new Date(Date.UTC(2030, 4, 28));
 
@@ -463,6 +463,11 @@ export function dateRequired(args: DateTimeArgs) {
 					args.maxMessage ? { message: `forms:${args.maxMessage}` } : undefined,
 				),
 		)
+		.transform((d) => ({
+			day: d.getDate(),
+			month: d.getMonth(),
+			year: d.getFullYear(),
+		}))
 		.register(formRegistry, {
 			...args,
 			label: prefixKey(args.label),
