@@ -1,9 +1,5 @@
 import * as React from "react";
 import type { z } from "zod";
-import type {
-	MapPoolObject,
-	ReadonlyMapPoolObject,
-} from "~/features/map-list-generator/core/map-pool-serializer/types";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { formRegistry } from "./fields";
 import { ArrayFormField } from "./fields/ArrayFormField";
@@ -11,13 +7,11 @@ import { BadgesFormField } from "./fields/BadgesFormField";
 import { DatetimeFormField } from "./fields/DatetimeFormField";
 import { DualSelectFormField } from "./fields/DualSelectFormField";
 import { FieldsetFormField } from "./fields/FieldsetFormField";
-import { ImageFormField } from "./fields/ImageFormField";
 import { InputFormField } from "./fields/InputFormField";
 import {
 	CheckboxGroupFormField,
 	RadioGroupFormField,
 } from "./fields/InputGroupFormField";
-import { MapPoolFormField } from "./fields/MapPoolFormField";
 import { SelectFormField } from "./fields/SelectFormField";
 import { StageSelectFormField } from "./fields/StageSelectFormField";
 import { SwitchFormField } from "./fields/SwitchFormField";
@@ -271,17 +265,6 @@ export function FormField({
 		);
 	}
 
-	if (formField.type === "map-pool") {
-		return (
-			<MapPoolFormField
-				{...commonProps}
-				{...formField}
-				value={value as MapPoolObject}
-				onChange={handleChange as (v: ReadonlyMapPoolObject) => void}
-			/>
-		);
-	}
-
 	if (formField.type === "custom") {
 		if (!children) {
 			throw new Error("Custom form field requires children render function");
@@ -295,17 +278,6 @@ export function FormField({
 					onChange: handleChange,
 				})}
 			</>
-		);
-	}
-
-	if (formField.type === "image") {
-		return (
-			<ImageFormField
-				{...commonProps}
-				{...formField}
-				value={value as File | string | null}
-				onChange={handleChange as (v: File | string | null) => void}
-			/>
 		);
 	}
 

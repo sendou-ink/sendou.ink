@@ -19,10 +19,7 @@ export function WeaponSelectFormField({
 	onChange,
 	onBlur,
 }: WeaponSelectFormFieldProps) {
-	const { translatedLabel, translatedError } = useTranslatedTexts({
-		label,
-		error,
-	});
+	const { translatedLabel } = useTranslatedTexts({ label });
 
 	return (
 		<div className={styles.root}>
@@ -36,11 +33,7 @@ export function WeaponSelectFormField({
 				isRequired={required}
 				clearable={!required}
 			/>
-			<FormFieldMessages
-				name={name}
-				error={translatedError}
-				bottomText={bottomText}
-			/>
+			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 		</div>
 	);
 }

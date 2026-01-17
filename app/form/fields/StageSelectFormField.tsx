@@ -19,10 +19,7 @@ export function StageSelectFormField({
 	onChange,
 	onBlur,
 }: StageSelectFormFieldProps) {
-	const { translatedLabel, translatedError } = useTranslatedTexts({
-		label,
-		error,
-	});
+	const { translatedLabel } = useTranslatedTexts({ label });
 
 	return (
 		<div className={styles.root}>
@@ -35,11 +32,7 @@ export function StageSelectFormField({
 				}}
 				isRequired={required}
 			/>
-			<FormFieldMessages
-				name={name}
-				error={translatedError}
-				bottomText={bottomText}
-			/>
+			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 		</div>
 	);
 }

@@ -1,8 +1,7 @@
 import * as React from "react";
-import { useTranslation } from "react-i18next";
 import { SendouSwitch } from "~/components/elements/Switch";
 import type { FormFieldProps } from "../types";
-import { FormFieldMessages } from "./FormFieldWrapper";
+import { FormFieldMessages, useTranslatedTexts } from "./FormFieldWrapper";
 
 type SwitchFormFieldProps = Omit<FormFieldProps<"switch">, "onBlur"> & {
 	checked: boolean;
@@ -19,14 +18,8 @@ export function SwitchFormField({
 	onChange,
 	isDisabled,
 }: SwitchFormFieldProps) {
-	const { t } = useTranslation();
 	const id = React.useId();
-
-	const translatedLabel = label?.includes(":") ? t(label as never) : label;
-	const translatedError = error?.includes(":") ? t(error as never) : error;
-	const translatedBottomText = bottomText?.includes(":")
-		? t(bottomText as never)
-		: bottomText;
+	const { translatedLabel } = useTranslatedTexts({ label });
 
 	return (
 		<div className="stack xs">
@@ -40,11 +33,7 @@ export function SwitchFormField({
 					{translatedLabel}
 				</SendouSwitch>
 			</div>
-			<FormFieldMessages
-				name={name}
-				error={translatedError}
-				bottomText={translatedBottomText}
-			/>
+			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 		</div>
 	);
 }
