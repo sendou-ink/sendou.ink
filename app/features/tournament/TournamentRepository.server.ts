@@ -177,6 +177,7 @@ export async function findById(id: number) {
 										),
 								)
 								.leftJoin("PlusTier", "PlusTier.userId", "User.id")
+								.leftJoin("LiveStream", "LiveStream.userId", "User.id")
 								.select([
 									"User.id as userId",
 									"User.username",
@@ -193,6 +194,9 @@ export async function findById(id: number) {
                     "TournamentTeamMember"."inGameName",
                     "User"."inGameName"
                   )`.as("inGameName"),
+									"LiveStream.twitch as streamTwitch",
+									"LiveStream.viewerCount as streamViewerCount",
+									"LiveStream.thumbnailUrl as streamThumbnailUrl",
 								])
 								.whereRef(
 									"TournamentTeamMember.tournamentTeamId",
@@ -293,6 +297,21 @@ export async function findById(id: number) {
 
 	if (!result) return null;
 
+	// xxx: this could probably just be a sub query
+	const castTwitchAccounts = result.castTwitchAccounts ?? [];
+	const castStreams =
+		castTwitchAccounts.length > 0
+			? await db
+					.selectFrom("LiveStream")
+					.select(["twitch", "viewerCount", "thumbnailUrl"])
+					.where(
+						"twitch",
+						"in",
+						castTwitchAccounts.map((t) => t.toLowerCase()),
+					)
+					.execute()
+			: [];
+
 	return {
 		...result,
 		// TODO: types broke with dependency update somehow
@@ -310,6 +329,7 @@ export async function findById(id: number) {
 			),
 		})),
 		participatedUsers: result.participatedUsers.map((user) => user.userId),
+		castStreams,
 	};
 }
 

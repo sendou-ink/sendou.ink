@@ -2765,7 +2765,7 @@ function liveStreams() {
 	const shuffledStreamers = faker.helpers.shuffle(streamingUserIds);
 	const selectedStreamers = shuffledStreamers.slice(0, 20);
 
-	for (const [i, userId] of selectedStreamers.entries()) {
+	for (const userId of selectedStreamers) {
 		const viewerCount = faker.helpers.weightedArrayElement([
 			{ value: faker.number.int({ min: 5, max: 30 }), weight: 5 },
 			{ value: faker.number.int({ min: 31, max: 100 }), weight: 3 },
@@ -2778,18 +2778,19 @@ function liveStreams() {
 			height: 180,
 		});
 
+		const twitch = `fake_${nanoid()}`;
 		sql
 			.prepare(
 				`
-			insert into "LiveStream" ("userId", "url", "viewerCount", "thumbnailUrl")
-			values ($userId, $url, $viewerCount, $thumbnailUrl)
+			insert into "LiveStream" ("userId", "viewerCount", "thumbnailUrl", "twitch")
+			values ($userId, $viewerCount, $thumbnailUrl, $twitch)
 			`,
 			)
 			.run({
 				userId,
-				url: `https://twitch.tv/fake_${nanoid()}`,
 				viewerCount,
 				thumbnailUrl,
+				twitch,
 			});
 	}
 }

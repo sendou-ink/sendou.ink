@@ -2,10 +2,10 @@ import type { LoaderFunctionArgs } from "react-router";
 import { tournamentData } from "~/features/tournament-bracket/core/Tournament.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
-import { streamsByTournamentId } from "../core/streams.server";
 
 export type TournamentStreamsLoader = typeof loader;
 
+// xxx: deprecate loader
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id: tournamentId } = parseParams({
 		params,
@@ -13,7 +13,27 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	});
 	const tournament = notFoundIfFalsy(await tournamentData({ tournamentId }));
 
-	return {
-		streams: await streamsByTournamentId(tournament.ctx),
-	};
+	const memberStreams = tournament.ctx.teams
+		.filter((team) => team.checkIns.length > 0)
+		.flatMap((team) => team.members)
+		.filter((member) => member.streamTwitch)
+		.map((member) => ({
+			thumbnailUrl: member.streamThumbnailUrl!,
+			twitchUserName: member.streamTwitch!,
+			viewerCount: member.streamViewerCount!,
+			userId: member.userId,
+		}));
+
+	const castStreams = tournament.ctx.castStreams.map((stream) => ({
+		thumbnailUrl: stream.thumbnailUrl,
+		twitchUserName: stream.twitch!,
+		viewerCount: stream.viewerCount,
+		userId: null as number | null,
+	}));
+
+	const streams = [...memberStreams, ...castStreams].sort(
+		(a, b) => b.viewerCount - a.viewerCount,
+	);
+
+	return { streams };
 };

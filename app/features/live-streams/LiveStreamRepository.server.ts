@@ -19,7 +19,7 @@ export function findAllWithUserInfo() {
 		.selectFrom("LiveStream")
 		.innerJoin("User", "LiveStream.userId", "User.id")
 		.select([
-			"LiveStream.url",
+			"LiveStream.twitch",
 			"LiveStream.viewerCount",
 			"LiveStream.thumbnailUrl",
 			"User.id as userId",

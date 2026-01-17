@@ -965,9 +965,9 @@ export interface ApiToken {
 export interface LiveStream {
 	id: GeneratedAlways<number>;
 	userId: number;
-	url: string;
 	viewerCount: number;
 	thumbnailUrl: string;
+	twitch: string | null;
 }
 
 export interface BanLog {

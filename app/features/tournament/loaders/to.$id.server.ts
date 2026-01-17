@@ -6,7 +6,6 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
-import { streamsByTournamentId } from "../core/streams.server";
 
 export type TournamentLoaderData = SerializeFrom<typeof loader>;
 
@@ -19,10 +18,19 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const tournament = await tournamentDataCached({ tournamentId, user });
 
-	const streams =
+	const memberStreams =
 		tournament.data.stage.length > 0 && !tournament.ctx.isFinalized
-			? await streamsByTournamentId(tournament.ctx)
+			? tournament.ctx.teams
+					.filter((team) => team.checkIns.length > 0)
+					.flatMap((team) => team.members)
+					.filter((member) => member.streamTwitch)
+					.map((member) => member.userId)
 			: [];
+
+	const castStreamsCount =
+		tournament.data.stage.length > 0 && !tournament.ctx.isFinalized
+			? tournament.ctx.castStreams.length
+			: 0;
 
 	const tournamentStartedInTheLastMonth =
 		databaseTimestampToDate(tournament.ctx.startTime) >
@@ -48,8 +56,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	return {
 		tournament,
-		streamingParticipants: streams.flatMap((s) => (s.userId ? [s.userId] : [])),
-		streamsCount: streams.length,
+		// xxx: move to client
+		streamingParticipants: memberStreams,
+		// xxx: move to client
+		streamsCount: memberStreams.length + castStreamsCount,
 		friendCodes: showFriendCodes
 			? await TournamentRepository.friendCodesByTournamentId(tournamentId)
 			: undefined,

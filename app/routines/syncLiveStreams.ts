@@ -34,9 +34,9 @@ async function syncLiveStreams() {
 		.filter((stream) => twitchToUserId.has(stream.twitchUserName))
 		.map((stream) => ({
 			userId: twitchToUserId.get(stream.twitchUserName)!,
-			url: `https://twitch.tv/${stream.twitchUserName}`,
 			viewerCount: stream.viewerCount,
 			thumbnailUrl: stream.thumbnailUrl,
+			twitch: stream.twitchUserName,
 		}));
 
 	await LiveStreamRepository.replaceAll(liveStreams);
