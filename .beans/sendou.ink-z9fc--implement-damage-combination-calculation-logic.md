@@ -1,10 +1,11 @@
 ---
 # sendou.ink-z9fc
 title: Implement damage combination calculation logic
-status: todo
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-15T19:18:15Z
-updated_at: 2026-01-15T19:18:15Z
+updated_at: 2026-01-17T06:05:03Z
 parent: sendou.ink-knt5
 ---
 
@@ -12,17 +13,17 @@ parent: sendou.ink-knt5
 Create the core algorithm that calculates all valid damage combinations from selected weapons.
 
 ## Tasks
-- [ ] Create `core/damage-combinations.ts` with main calculation functions
-- [ ] Extract damage values from Build Analyzer's weapon data
-- [ ] Generate combinations across main/sub/special weapons
-- [ ] Implement combination rules:
+- [x] Create `core/damage-combinations.ts` with main calculation functions
+- [x] Extract damage values from Build Analyzer's weapon data
+- [x] Generate combinations across main/sub/special weapons
+- [x] Implement combination rules:
   - Up to 3 different damage types per combo
   - Max 2 repeats of same damage type
   - Exclude single-weapon-only combinations
-- [ ] Filter to combos that deal 80+ damage
-- [ ] Sort by lowest damage first (most efficient)
-- [ ] Apply hard cap of 50 results
-- [ ] Add TBD placeholder for advanced filtering algorithm
+- [x] Filter to combos that deal 80+ damage
+- [x] Sort by closest to 100 (lethal threshold, most efficient kills)
+- [x] Apply hard cap of 50 results
+- [x] Add TBD placeholder for advanced filtering algorithm
 
 ## Data Sources
 - Use Build Analyzer's `buildStats` function for weapon damage data
@@ -47,8 +48,8 @@ interface DamageCombo {
 ```
 
 ## Acceptance Criteria
-- Correctly generates all valid 2-3 hit combinations
-- Respects repeat limit (max 2 of same damage type)
-- Excludes single-weapon combos
-- Results sorted by efficiency (lowest damage first)
-- Capped at 50 results
+- [x] Correctly generates all valid 2-3 hit combinations
+- [x] Respects repeat limit (max 2 of same damage type)
+- [x] Excludes single-weapon combos
+- [x] Results sorted by efficiency (closest to 100 damage first)
+- [x] Capped at 50 results
