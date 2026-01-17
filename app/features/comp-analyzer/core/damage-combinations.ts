@@ -3,7 +3,11 @@ import type {
 	AbilityPoints,
 	DamageType,
 } from "~/features/build-analyzer/analyzer-types";
-import { buildStats } from "~/features/build-analyzer/core/stats";
+import {
+	buildStats,
+	subWeaponDamageValue,
+} from "~/features/build-analyzer/core/stats";
+import { weaponParams } from "~/features/build-analyzer/core/utils";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	COMBO_DAMAGE_THRESHOLD,
@@ -27,6 +31,7 @@ interface DamageOption {
 
 export function extractDamageSources(
 	weaponIds: MainWeaponId[],
+	targetSubDefenseAp = 0,
 ): WeaponDamageSource[] {
 	return weaponIds.map((weaponId, slot) => {
 		const stats = buildStats({ weaponSplId: weaponId, hasTacticooler: false });
@@ -45,9 +50,19 @@ export function extractDamageSources(
 
 		for (const subDamage of stats.stats.subWeaponDefenseDamages) {
 			if (subDamage.subWeaponId === stats.weapon.subWeaponSplId) {
+				const params = weaponParams();
+				const reducedValue =
+					targetSubDefenseAp === 0
+						? subDamage.baseValue
+						: subWeaponDamageValue({
+								baseValue: subDamage.baseValue,
+								subWeaponId: subDamage.subWeaponId,
+								abilityPoints: targetSubDefenseAp,
+								params: params.subWeapons[subDamage.subWeaponId],
+							});
 				damages.push({
 					type: subDamage.type,
-					value: subDamage.baseValue,
+					value: reducedValue,
 					weaponType: "SUB",
 				});
 			}
@@ -78,6 +93,7 @@ export interface ExcludedDamageKey {
 export function calculateDamageCombos(
 	weaponIds: MainWeaponId[],
 	excludedKeys: ExcludedDamageKey[] = [],
+	targetSubDefenseAp = 0,
 ): DamageCombo[] {
 	if (weaponIds.length < 2) {
 		return [];
@@ -87,7 +103,7 @@ export function calculateDamageCombos(
 		excludedKeys.map((k) => `${k.weaponId}-${k.weaponType}-${k.damageType}`),
 	);
 
-	const sources = extractDamageSources(weaponIds);
+	const sources = extractDamageSources(weaponIds, targetSubDefenseAp);
 	const damageOptions = flattenToOptions(sources, excludedSet);
 	const combos = generateCombinations(damageOptions);
 	const filtered = filterAndSortCombos(combos);

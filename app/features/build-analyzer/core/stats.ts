@@ -727,7 +727,7 @@ function subWeaponIdToEffectKey(
 	}
 }
 
-function subWeaponDamageValue({
+export function subWeaponDamageValue({
 	baseValue,
 	subWeaponId,
 	abilityPoints,

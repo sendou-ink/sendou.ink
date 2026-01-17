@@ -124,7 +124,7 @@
 	flex-wrap: wrap;
 	gap: var(--s-2);
 	padding-bottom: var(--s-2);
-	border-bottom: 1px solid var(--border-color);
+	border-bottom: 1px solid var(--border);
 	margin-bottom: var(--s-1);
 }
 
@@ -134,7 +134,7 @@
 	gap: var(--s-1);
 	padding: var(--s-1) var(--s-2);
 	background: var(--bg-lighter);
-	border: 1px solid var(--border-color);
+	border: 1px solid var(--border);
 	border-radius: var(--rounded-sm);
 	font-size: var(--fonts-xs);
 	color: var(--text-lighter);
@@ -146,13 +146,24 @@
 	background: var(--bg-lightest);
 }
 
-.resSliderRow {
-	display: flex;
+.slidersContainer {
+	display: grid;
+	grid-template-columns: auto auto 1fr auto;
+	gap: var(--s-2) var(--s-2);
 	align-items: center;
-	gap: var(--s-3);
 	padding-bottom: var(--s-3);
-	border-bottom: 1px solid var(--border-color);
+	border-bottom: 1px solid var(--border);
 	margin-bottom: var(--s-1);
+}
+
+@media (max-width: 640px) {
+	.slidersContainer {
+		grid-template-columns: auto 1fr auto;
+	}
+
+	.resSliderLabel {
+		grid-column: 1 / -1;
+	}
 }
 
 .resSliderLabel {
@@ -162,15 +173,13 @@
 }
 
 .resSlider {
-	flex: 1;
-	max-width: 200px;
+	min-width: 100%;
 	cursor: pointer;
 }
 
 .resSliderValue {
 	font-size: var(--fonts-sm);
 	font-weight: var(--semi-bold);
-	min-width: 50px;
 }
 
 .inkTime {

@@ -8,7 +8,11 @@ import type {
 	SpecialWeaponId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
-import { specialWeaponImageUrl, subWeaponImageUrl } from "~/utils/urls";
+import {
+	abilityImageUrl,
+	specialWeaponImageUrl,
+	subWeaponImageUrl,
+} from "~/utils/urls";
 import type { DamageCombo, DamageSegment } from "../comp-analyzer-types";
 import {
 	calculateDamageCombos,
@@ -215,9 +219,13 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 	const { t } = useTranslation(["analyzer"]);
 	const [excludedKeys, setExcludedKeys] = useState<ExcludedDamageKey[]>([]);
 	const [targetResAp, setTargetResAp] = useState(0);
+	const [targetSubDefenseAp, setTargetSubDefenseAp] = useState(0);
 
-	const combos = calculateDamageCombos(weaponIds, excludedKeys);
-	const hasSubLethalCombos = combos.some((combo) => combo.totalDamage < 100);
+	const combos = calculateDamageCombos(
+		weaponIds,
+		excludedKeys,
+		targetSubDefenseAp,
+	);
 
 	if (weaponIds.length < 2) {
 		return null;
@@ -238,22 +246,34 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 
 	return (
 		<div className={styles.comboList}>
-			{hasSubLethalCombos ? (
-				<div className={styles.resSliderRow}>
-					<label className={styles.resSliderLabel}>
-						{t("analyzer:comp.enemyRes")}
-					</label>
-					<input
-						type="range"
-						min={0}
-						max={MAX_AP}
-						value={targetResAp}
-						onChange={(e) => setTargetResAp(Number(e.target.value))}
-						className={styles.resSlider}
-					/>
-					<span className={styles.resSliderValue}>{targetResAp} AP</span>
-				</div>
-			) : null}
+			<div className={styles.slidersContainer}>
+				<Image path={abilityImageUrl("SRU")} alt="" size={24} />
+				<label className={styles.resSliderLabel}>
+					{t("analyzer:comp.enemySubDef")}
+				</label>
+				<input
+					type="range"
+					min={0}
+					max={MAX_AP}
+					value={targetSubDefenseAp}
+					onChange={(e) => setTargetSubDefenseAp(Number(e.target.value))}
+					className={styles.resSlider}
+				/>
+				<span className={styles.resSliderValue}>{targetSubDefenseAp} AP</span>
+				<Image path={abilityImageUrl("RES")} alt="" size={24} />
+				<label className={styles.resSliderLabel}>
+					{t("analyzer:comp.enemyRes")}
+				</label>
+				<input
+					type="range"
+					min={0}
+					max={MAX_AP}
+					value={targetResAp}
+					onChange={(e) => setTargetResAp(Number(e.target.value))}
+					className={styles.resSlider}
+				/>
+				<span className={styles.resSliderValue}>{targetResAp} AP</span>
+			</div>
 			{excludedKeys.length > 0 ? (
 				<div className={styles.filteredItemsRow}>
 					{excludedKeys.map((key) => (
