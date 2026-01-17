@@ -24,12 +24,13 @@ function DamageComboBar({ combo }: DamageComboBarProps) {
 
 	return (
 		<div className={styles.comboRow}>
-			<div className={styles.barContainer}>
+			<div className={styles.barSection}>
 				{combo.segments.map((segment, index) => (
 					<SegmentBar
 						key={index}
 						segment={segment}
 						totalDamage={combo.totalDamage}
+						damageTypeLabel={t(`analyzer:damage.${segment.damageType}` as any)}
 					/>
 				))}
 				{thresholdPosition < 100 ? (
@@ -54,11 +55,14 @@ function DamageComboBar({ combo }: DamageComboBarProps) {
 interface SegmentBarProps {
 	segment: DamageSegment;
 	totalDamage: number;
+	damageTypeLabel: string;
 }
 
-function SegmentBar({ segment, totalDamage }: SegmentBarProps) {
-	const { t } = useTranslation(["analyzer", "weapons"]);
-
+function SegmentBar({
+	segment,
+	totalDamage,
+	damageTypeLabel,
+}: SegmentBarProps) {
 	const segmentDamage = segment.damageValue * segment.count;
 	const widthPercent = (segmentDamage / totalDamage) * 100;
 	const slotColor = SLOT_COLORS[segment.weaponSlot] ?? "yellow";
@@ -66,21 +70,20 @@ function SegmentBar({ segment, totalDamage }: SegmentBarProps) {
 
 	return (
 		<div
-			className={styles.segment}
+			className={styles.segmentWrapper}
 			style={{ width: `${widthPercent}%` }}
-			data-slot-color={slotColor}
 		>
-			<WeaponIcon
-				weaponId={segment.weaponId}
-				isSubWeapon={segment.isSubWeapon}
-				isSpecialWeapon={segment.isSpecialWeapon}
-				subWeaponId={params.subWeaponId}
-				specialWeaponId={params.specialWeaponId}
-			/>
-			<span className={styles.damageValue}>{segment.damageValue}</span>
-			<span className={styles.damageType}>
-				{t(`analyzer:damage.${segment.damageType}` as any)}
-			</span>
+			<div className={styles.segment} data-slot-color={slotColor}>
+				<WeaponIcon
+					weaponId={segment.weaponId}
+					isSubWeapon={segment.isSubWeapon}
+					isSpecialWeapon={segment.isSpecialWeapon}
+					subWeaponId={params.subWeaponId}
+					specialWeaponId={params.specialWeaponId}
+				/>
+				<span className={styles.damageValue}>{segment.damageValue}</span>
+			</div>
+			<span className={styles.damageTypeLabel}>{damageTypeLabel}</span>
 		</div>
 	);
 }
@@ -105,7 +108,7 @@ function WeaponIcon({
 			<Image
 				path={subWeaponImageUrl(subWeaponId)}
 				alt=""
-				size={20}
+				size={18}
 				className={styles.subSpecialWeaponIcon}
 			/>
 		);
@@ -116,7 +119,7 @@ function WeaponIcon({
 			<Image
 				path={specialWeaponImageUrl(specialWeaponId)}
 				alt=""
-				size={20}
+				size={18}
 				className={styles.subSpecialWeaponIcon}
 			/>
 		);
@@ -126,7 +129,7 @@ function WeaponIcon({
 		<WeaponImage
 			weaponSplId={weaponId}
 			variant="build"
-			size={20}
+			size={24}
 			className={styles.weaponIcon}
 		/>
 	);

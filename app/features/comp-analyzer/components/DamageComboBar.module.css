@@ -10,14 +10,19 @@
 	gap: var(--s-4);
 }
 
-.barContainer {
+.barSection {
 	position: relative;
 	display: flex;
 	flex: 1;
-	height: 48px;
 	background-color: var(--bg-lightest);
 	border-radius: var(--rounded-xs);
 	overflow: hidden;
+}
+
+.segmentWrapper {
+	display: flex;
+	flex-direction: column;
+	min-width: fit-content;
 }
 
 .segment {
@@ -25,10 +30,25 @@
 	align-items: center;
 	justify-content: center;
 	gap: var(--s-1);
-	min-width: 25%;
+	height: 36px;
 	padding: 0 var(--s-2);
 	color: var(--black-text);
 	font-weight: var(--semi-bold);
+}
+
+.damageTypeLabel {
+	font-size: var(--fonts-xxxs);
+	color: var(--text-lighter);
+	text-align: center;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	padding: var(--s-0-5) var(--s-0-5);
+}
+
+.damageValue {
+	font-size: var(--fonts-sm);
+	font-weight: var(--bold);
 }
 
 .segment[data-slot-color="yellow"] {
@@ -48,25 +68,13 @@
 }
 
 .weaponIcon {
-	min-width: 32px;
-	min-height: 32px;
+	min-width: 24px;
+	min-height: 24px;
 }
 
 .subSpecialWeaponIcon {
-	min-width: 20px;
-	min-height: 20px;
-}
-
-.damageValue {
-	font-size: var(--fonts-sm);
-	font-weight: var(--bold);
-}
-
-.damageType {
-	font-size: var(--fonts-xxs);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	min-width: 18px;
+	min-height: 18px;
 }
 
 .thresholdLine {
