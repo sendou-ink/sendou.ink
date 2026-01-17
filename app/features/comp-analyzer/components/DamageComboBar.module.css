@@ -1,0 +1,104 @@
+.comboList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.comboRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-4);
+}
+
+.barContainer {
+	position: relative;
+	display: flex;
+	flex: 1;
+	height: 48px;
+	background-color: var(--bg-lightest);
+	border-radius: var(--rounded-xs);
+	overflow: hidden;
+}
+
+.segment {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-1);
+	min-width: 0;
+	padding: 0 var(--s-2);
+	color: var(--black-text);
+	font-weight: var(--semi-bold);
+}
+
+.segment[data-slot-color="yellow"] {
+	background-color: #f5d742;
+}
+
+.segment[data-slot-color="pink"] {
+	background-color: #f5b8d0;
+}
+
+.segment[data-slot-color="green"] {
+	background-color: #90e8a8;
+}
+
+.segment[data-slot-color="blue"] {
+	background-color: #8cd4f5;
+}
+
+.weaponIcon {
+	min-width: 32px;
+	min-height: 32px;
+}
+
+.subSpecialWeaponIcon {
+	min-width: 20px;
+	min-height: 20px;
+}
+
+.damageValue {
+	font-size: var(--fonts-lg);
+	font-weight: var(--bold);
+}
+
+.damageType {
+	font-size: var(--fonts-sm);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.thresholdLine {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 2px;
+	background-image: repeating-linear-gradient(
+		to bottom,
+		rgb(80 80 100) 0,
+		rgb(80 80 100) 5px,
+		transparent 5px,
+		transparent 10px
+	);
+	pointer-events: none;
+	z-index: 1;
+}
+
+.totalSection {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	min-width: 60px;
+	flex-shrink: 0;
+}
+
+.totalDamage {
+	font-size: var(--fonts-xl);
+	font-weight: var(--bold);
+}
+
+.hitCount {
+	font-size: var(--fonts-sm);
+	color: var(--text-lighter);
+}

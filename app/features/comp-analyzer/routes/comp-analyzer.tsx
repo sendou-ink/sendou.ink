@@ -9,8 +9,10 @@ import { COMP_ANALYZER_URL, navIconUrl } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
 import { MAX_WEAPONS } from "../comp-analyzer-constants";
 import { useCategorization, useSelectedWeapons } from "../comp-analyzer-hooks";
+import { DamageComboList } from "../components/DamageComboBar";
 import { SelectedWeapons } from "../components/SelectedWeapons";
 import { WeaponGrid } from "../components/WeaponGrid";
+import { calculateDamageCombos } from "../core/damage-combinations";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -67,6 +69,8 @@ function CompAnalyzerPage() {
 		setSelectedWeaponIds(selectedWeaponIds.filter((_, i) => i !== index));
 	};
 
+	const damageCombos = calculateDamageCombos(selectedWeaponIds);
+
 	return (
 		<Main className="stack lg">
 			<SelectedWeapons
@@ -81,6 +85,7 @@ function CompAnalyzerPage() {
 				isCollapsed={isGridCollapsed}
 				onToggleCollapse={() => setIsGridCollapsed(!isGridCollapsed)}
 			/>
+			<DamageComboList combos={damageCombos} />
 		</Main>
 	);
 }

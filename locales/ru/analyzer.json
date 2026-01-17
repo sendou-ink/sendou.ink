@@ -181,5 +181,9 @@
 	"comp.removeWeapon": "",
 	"comp.pickWeapon": "",
 	"comp.showWeaponGrid": "",
-	"comp.hideWeaponGrid": ""
+	"comp.hideWeaponGrid": "",
+	"comp.hits_one": "",
+	"comp.hits_few": "",
+	"comp.hits_many": "",
+	"comp.hits_other": ""
 }

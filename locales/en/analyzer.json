@@ -177,5 +177,7 @@
 	"comp.removeWeapon": "Remove weapon",
 	"comp.pickWeapon": "Pick a weapon",
 	"comp.showWeaponGrid": "Show weapon selector",
-	"comp.hideWeaponGrid": "Hide weapon selector"
+	"comp.hideWeaponGrid": "Hide weapon selector",
+	"comp.hits_one": "{{count}} hit",
+	"comp.hits_other": "{{count}} hits"
 }
