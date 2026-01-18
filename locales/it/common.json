@@ -317,6 +317,7 @@
 	"clockFormat.12h": "",
 	"badges.selector.none": "Nessuna medaglia selezionata",
 	"badges.selector.select": "Seleziona medaglia da aggiungere",
+	"badges.selector.noneAvailable": "",
 	"api.title": "",
 	"api.description": "",
 	"api.noAccess": "",

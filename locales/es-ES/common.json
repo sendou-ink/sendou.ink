@@ -317,6 +317,7 @@
 	"clockFormat.12h": "",
 	"badges.selector.none": "Ninguna insignia seleccionada",
 	"badges.selector.select": "Seleccionar insignia añadir",
+	"badges.selector.noneAvailable": "",
 	"api.title": "",
 	"api.description": "",
 	"api.noAccess": "",

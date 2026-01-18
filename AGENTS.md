@@ -13,7 +13,7 @@
 - `npm run test:unit:browser` runs all unit tests and browser tests
 - `npm run test:e2e` runs all e2e tests
 - `npm run test:e2e:flaky-detect` runs all e2e tests and repeats each 10 times
-- `npm run i18n:sync` syncs translation jsons with English and should always be run after adding new text to an English translation file 
+- `npm run i18n:sync` syncs translation jsons with English 
 
 ## Typescript
 
@@ -68,3 +68,15 @@
 ## Unit testing
 
 - library used for unit testing is Vitest
+- Vitest browser mode can be used to write tests for components
+
+## Testing in Chrome
+
+- some pages need authentication, you should impersonate "Sendou" user which can be done on the /admin page
+
+## i18n
+
+- by default everything should be translated via i18next
+- some a11y labels or text that should not normally be encountered by user (example given, error message by server) can be english
+- before adding a new translation, check that one doesn't already exist you can reuse (particularly in the common.json)
+- add only English translation and use `npm run i18n:sync` to initialize other jsons with empty string ready for translators

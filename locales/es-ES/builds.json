@@ -1,5 +1,7 @@
 {
 	"addBuild": "Añadir build",
+	"forms.title.new": "",
+	"forms.title.edit": "",
 	"reachBuildMaxCount": "Tienes la cantidad máxima de builds.",
 	"noBuilds": "Aún no hay builds. ¡Agrega tu primer build!",
 	"buildCard.info": "Info",
@@ -10,8 +12,8 @@
 	"forms.gear.HEAD": "Accesorios",
 	"forms.gear.CLOTHES": "Ropa",
 	"forms.gear.SHOES": "Calzado",
+	"forms.abilities": "",
 	"forms.private.info": "Builds privados son visibles solo para tí.",
-	"forms.noGear.info": "",
 	"deleteConfirm": "¿Borrar build '{{title}}'?",
 	"stats.count.title": "Estadísticas de {{count}} builds para {{weapon}}",
 	"stats.ap.title": "Promedios de puntos de potenciadores",

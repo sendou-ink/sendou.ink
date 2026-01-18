@@ -1,0 +1,14 @@
+.root {
+	width: 100%;
+	--select-width: 100%;
+	--input-width: 100%;
+}
+
+.root input,
+.root textarea,
+.root select,
+.root .react-aria-Group,
+.root .react-aria-Select button,
+.root .react-aria-DatePicker {
+	width: 100%;
+}

@@ -41,6 +41,7 @@
 	"forms.info.name": "Обратите внимание, что если вы измените название команды, то кто-то другой может забрать себе URL и название для своей команды",
 	"forms.info.tag": "",
 	"forms.errors.duplicateName": "Уже существует команда с таким названием",
+	"forms.errors.noOnlySpecialCharacters": "",
 	"roster.teamFull": "Команда заполнена",
 	"roster.inviteLink.header": "Поделитесь ссылкой на приглашение, чтобы добавить участников",
 	"roster.members.header": "Участники",

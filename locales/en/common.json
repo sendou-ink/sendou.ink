@@ -315,6 +315,7 @@
 	"clockFormat.12h": "12-hour (AM/PM)",
 	"badges.selector.none": "No badges selected",
 	"badges.selector.select": "Select badge to add",
+	"badges.selector.noneAvailable": "No badges available. Organization members must be badge managers to add badges.",
 	"api.title": "API Access",
 	"api.description": "Generate an API token to access the sendou.ink API. See the <1>API documentation</1> for available endpoints, usage examples and guidelines to follow.",
 	"api.noAccess": "You do not have access to the API. Access is granted to supporters (Supporter tier or higher) and admins, organizers, or streamers of established tournament organizations.",

@@ -318,6 +318,7 @@
 	"clockFormat.12h": "",
 	"badges.selector.none": "Награды не выбраны",
 	"badges.selector.select": "Выберите награды для добавления",
+	"badges.selector.noneAvailable": "",
 	"api.title": "",
 	"api.description": "",
 	"api.noAccess": "",
