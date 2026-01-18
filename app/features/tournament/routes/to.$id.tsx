@@ -200,7 +200,7 @@ export function TournamentLayout() {
 				{tournament.hasStarted && !tournament.everyBracketOver ? (
 					<SubNavLink to="streams">
 						{t("tournament:tabs.streams", {
-							count: data.streamsCount,
+							count: tournament.streams.length,
 						})}
 					</SubNavLink>
 				) : null}
@@ -229,7 +229,6 @@ export function TournamentLayout() {
 							tournament,
 							bracketExpanded,
 							setBracketExpanded,
-							streamingParticipants: data.streamingParticipants,
 							friendCodes: data.friendCodes,
 							preparedMaps: data.preparedMaps,
 						} satisfies TournamentContext
@@ -243,7 +242,6 @@ export function TournamentLayout() {
 type TournamentContext = {
 	tournament: Tournament;
 	bracketExpanded: boolean;
-	streamingParticipants: number[];
 	setBracketExpanded: (expanded: boolean) => void;
 	friendCode?: string;
 	friendCodes?: SerializeFrom<typeof loader>["friendCodes"];
@@ -259,10 +257,6 @@ export function useBracketExpanded() {
 		useOutletContext<TournamentContext>();
 
 	return { bracketExpanded, setBracketExpanded };
-}
-
-export function useStreamingParticipants() {
-	return useOutletContext<TournamentContext>().streamingParticipants;
 }
 
 export function useTournamentFriendCodes() {

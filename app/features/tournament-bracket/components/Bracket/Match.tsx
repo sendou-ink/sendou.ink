@@ -7,10 +7,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { useUser } from "~/features/auth/core/user";
 import { TournamentStream } from "~/features/tournament/components/TournamentStream";
-import {
-	useStreamingParticipants,
-	useTournament,
-} from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/routes/to.$id";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { Unpacked } from "~/utils/types";
 import { tournamentMatchPage, tournamentStreamsPage } from "~/utils/urls";
@@ -54,7 +51,7 @@ export function Match(props: MatchProps) {
 
 function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 	const tournament = useTournament();
-	const streamingParticipants = useStreamingParticipants();
+	const streamingParticipants = tournament.streamingParticipantIds ?? [];
 
 	const prefix = () => {
 		if (type === "winners") return "WB ";

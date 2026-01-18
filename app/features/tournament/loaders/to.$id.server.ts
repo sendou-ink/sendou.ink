@@ -18,20 +18,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const tournament = await tournamentDataCached({ tournamentId, user });
 
-	const memberStreams =
-		tournament.data.stage.length > 0 && !tournament.ctx.isFinalized
-			? tournament.ctx.teams
-					.filter((team) => team.checkIns.length > 0)
-					.flatMap((team) => team.members)
-					.filter((member) => member.streamTwitch)
-					.map((member) => member.userId)
-			: [];
-
-	const castStreamsCount =
-		tournament.data.stage.length > 0 && !tournament.ctx.isFinalized
-			? tournament.ctx.castStreams.length
-			: 0;
-
 	const tournamentStartedInTheLastMonth =
 		databaseTimestampToDate(tournament.ctx.startTime) >
 		new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -56,10 +42,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	return {
 		tournament,
-		// xxx: move to client
-		streamingParticipants: memberStreams,
-		// xxx: move to client
-		streamsCount: memberStreams.length + castStreamsCount,
 		friendCodes: showFriendCodes
 			? await TournamentRepository.friendCodesByTournamentId(tournamentId)
 			: undefined,

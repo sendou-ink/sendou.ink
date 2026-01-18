@@ -1406,4 +1406,9 @@ export class Tournament {
 			(a, b) => b.viewerCount - a.viewerCount,
 		);
 	}
+
+	get streamingParticipantIds(): number[] {
+		if (!this.hasStarted || this.everyBracketOver) return [];
+		return this.streams.filter((s) => s.userId !== null).map((s) => s.userId!);
+	}
 }
