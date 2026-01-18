@@ -79,6 +79,7 @@
 	"errors.visibilityNotAllowedWhenPublic": "",
 	"errors.dateBeforeScrimDate": "",
 	"errors.canNotSetIfLookingNow": "",
+	"errors.maxAssociationsReached": "",
 	"labels.weekdayTimes": "",
 	"labels.weekendTimes": "",
 	"labels.start": "",
