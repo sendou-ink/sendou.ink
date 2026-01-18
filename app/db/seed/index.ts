@@ -2778,7 +2778,7 @@ function liveStreams() {
 			height: 180,
 		});
 
-		const twitch = `fake_${nanoid()}`;
+		const twitch = `fake_${nanoid()}`.toLowerCase();
 		sql
 			.prepare(
 				`

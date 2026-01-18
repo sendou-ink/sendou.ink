@@ -290,27 +290,24 @@ export async function findById(id: number) {
 					.groupBy("TournamentMatchGameResultParticipant.userId")
 					.where("TournamentStage.tournamentId", "=", id),
 			).as("participatedUsers"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("LiveStream")
+					.select([
+						"LiveStream.twitch",
+						"LiveStream.viewerCount",
+						"LiveStream.thumbnailUrl",
+					])
+					.where(
+						sql<boolean>`"LiveStream"."twitch" IN (SELECT value FROM json_each("Tournament"."castTwitchAccounts"))`,
+					),
+			).as("castStreams"),
 		])
 		.where("Tournament.id", "=", id)
 		.$narrowType<{ author: NotNull }>()
 		.executeTakeFirst();
 
 	if (!result) return null;
-
-	// xxx: this could probably just be a sub query
-	const castTwitchAccounts = result.castTwitchAccounts ?? [];
-	const castStreams =
-		castTwitchAccounts.length > 0
-			? await db
-					.selectFrom("LiveStream")
-					.select(["twitch", "viewerCount", "thumbnailUrl"])
-					.where(
-						"twitch",
-						"in",
-						castTwitchAccounts.map((t) => t.toLowerCase()),
-					)
-					.execute()
-			: [];
 
 	return {
 		...result,
@@ -329,7 +326,6 @@ export async function findById(id: number) {
 			),
 		})),
 		participatedUsers: result.participatedUsers.map((user) => user.userId),
-		castStreams,
 	};
 }
 
