@@ -728,8 +728,7 @@ describe("SendouForm", () => {
 				screen.container.querySelectorAll('input[type="time"]');
 			const startInput = timeInputs[0] as HTMLInputElement;
 
-			await userEvent.clear(startInput);
-			await userEvent.type(startInput, "10:30");
+			await userEvent.fill(startInput, "10:30");
 
 			expect(startInput.value).toBe("10:30");
 		});
