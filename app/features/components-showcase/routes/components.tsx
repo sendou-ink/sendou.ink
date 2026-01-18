@@ -47,8 +47,11 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { Table } from "~/components/Table";
 import { WeaponSelect } from "~/components/WeaponSelect";
+import type { CustomFieldRenderProps } from "~/form/FormField";
+import { SendouForm } from "~/form/SendouForm";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import styles from "../components-showcase.module.css";
+import { formFieldsShowcaseSchema } from "../form-examples-schema";
 
 export const SECTIONS = [
 	{ title: "Buttons", id: "buttons", component: ButtonsSection },
@@ -90,6 +93,7 @@ export const SECTIONS = [
 	{ title: "Placements", id: "placements", component: PlacementSection },
 	{ title: "Badges", id: "badges", component: BadgeSection },
 	{ title: "Game Selects", id: "game-selects", component: GameSelectSection },
+	{ title: "Form Fields", id: "form-fields", component: FormFieldsSection },
 	{ title: "Miscellaneous", id: "miscellaneous", component: MiscSection },
 ] as const;
 
@@ -2035,6 +2039,151 @@ function GameSelectSection({ id }: { id: string }) {
 					<WeaponSelect label="Required Weapon" isRequired />
 				</ComponentRow>
 			</div>
+		</Section>
+	);
+}
+
+const DYNAMIC_SELECT_OPTIONS = [
+	{ value: "1", label: "Tournament A" },
+	{ value: "2", label: "Tournament B" },
+	{ value: "3", label: "Tournament C" },
+];
+
+function FormFieldsSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Form Fields</SectionTitle>
+			<p className="mb-4" style={{ fontSize: "var(--fonts-sm)", opacity: 0.8 }}>
+				Schema-based form fields using SendouForm. Each field type is defined
+				with Zod schemas that generate both UI and validation.
+			</p>
+
+			<SendouForm schema={formFieldsShowcaseSchema} autoSubmit>
+				{({ FormField }) => (
+					<div className="stack lg">
+						<Divider smallText>Text Fields</Divider>
+
+						<ComponentRow label="textFieldRequired">
+							<FormField name="requiredText" />
+						</ComponentRow>
+
+						<ComponentRow label="textFieldOptional">
+							<FormField name="optionalText" />
+						</ComponentRow>
+
+						<ComponentRow label="numberFieldOptional">
+							<FormField name="optionalNumber" />
+						</ComponentRow>
+
+						<Divider smallText>Text Areas</Divider>
+
+						<ComponentRow label="textAreaRequired">
+							<FormField name="requiredTextArea" />
+						</ComponentRow>
+
+						<ComponentRow label="textAreaOptional">
+							<FormField name="optionalTextArea" />
+						</ComponentRow>
+
+						<Divider smallText>Toggle (Switch)</Divider>
+
+						<ComponentRow label="toggle">
+							<div className="stack sm">
+								<FormField name="isPublic" />
+								<FormField name="enableNotifications" />
+							</div>
+						</ComponentRow>
+
+						<Divider smallText>Select Fields</Divider>
+
+						<ComponentRow label="select (required)">
+							<FormField name="requiredSelect" />
+						</ComponentRow>
+
+						<ComponentRow label="selectOptional (clearable)">
+							<FormField name="optionalSelect" />
+						</ComponentRow>
+
+						<ComponentRow label="selectDynamicOptional">
+							<FormField
+								name="dynamicSelect"
+								options={DYNAMIC_SELECT_OPTIONS}
+							/>
+						</ComponentRow>
+
+						<ComponentRow label="dualSelectOptional">
+							<FormField name="divisionRange" />
+						</ComponentRow>
+
+						<Divider smallText>Radio & Checkbox Groups</Divider>
+
+						<ComponentRow label="radioGroup">
+							<FormField name="matchType" />
+						</ComponentRow>
+
+						<ComponentRow label="checkboxGroup">
+							<FormField name="selectedModes" />
+						</ComponentRow>
+
+						<Divider smallText>Date & Time</Divider>
+
+						<ComponentRow label="datetimeRequired">
+							<FormField name="requiredDatetime" />
+						</ComponentRow>
+
+						<ComponentRow label="datetimeOptional">
+							<FormField name="optionalDatetime" />
+						</ComponentRow>
+
+						<ComponentRow label="dayMonthYearRequired">
+							<FormField name="birthDate" />
+						</ComponentRow>
+
+						<ComponentRow label="timeRangeOptional">
+							<FormField name="availableTime" />
+						</ComponentRow>
+
+						<Divider smallText>Game-specific Fields</Divider>
+
+						<ComponentRow label="weaponPool">
+							<FormField name="weapons" />
+						</ComponentRow>
+
+						<ComponentRow label="stageSelect">
+							<FormField name="stage" />
+						</ComponentRow>
+
+						<ComponentRow label="weaponSelectOptional">
+							<FormField name="weapon" />
+						</ComponentRow>
+
+						<ComponentRow label="userSearchOptional">
+							<FormField name="user" />
+						</ComponentRow>
+
+						<Divider smallText>Custom Field</Divider>
+
+						<ComponentRow label="customField">
+							<FormField name="customValue">
+								{(props: CustomFieldRenderProps) => (
+									<div className="stack sm">
+										<Label htmlFor="custom-input">Custom Field</Label>
+										<Input
+											id="custom-input"
+											value={(props.value as string) ?? ""}
+											onChange={(e) => props.onChange(e.target.value)}
+											aria-invalid={Boolean(props.error)}
+										/>
+										{props.error ? (
+											<FormMessage type="error">{props.error}</FormMessage>
+										) : null}
+									</div>
+								)}
+							</FormField>
+						</ComponentRow>
+					</div>
+				)}
+			</SendouForm>
 		</Section>
 	);
 }
