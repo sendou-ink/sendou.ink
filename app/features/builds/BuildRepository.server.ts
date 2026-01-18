@@ -9,10 +9,7 @@ import type {
 	MainWeaponId,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import {
-	weaponIdHasAlts,
-	weaponIdToArrayWithAlts,
-} from "~/modules/in-game-lists/weapon-ids";
+import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
 import { LimitReachedError } from "~/utils/errors";
 import invariant from "~/utils/invariant";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";

@@ -77,7 +77,6 @@
 		"react-dom": "^19.2.3",
 		"react-error-boundary": "^6.1.0",
 		"react-flip-toolkit": "7.2.4",
-		"react-hook-form": "^7.71.1",
 		"react-i18next": "^16.5.3",
 		"react-router": "^7.12.0",
 		"react-use": "^17.6.0",
