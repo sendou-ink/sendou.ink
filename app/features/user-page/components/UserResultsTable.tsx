@@ -15,6 +15,10 @@ import {
 	userPage,
 } from "~/utils/urls";
 import type { UserResultsLoaderData } from "../loaders/u.$identifier.results.server";
+import {
+	HIGHLIGHT_CHECKBOX_NAME,
+	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
+} from "../user-page-constants";
 import styles from "../user-page.module.css";
 import { ParticipationPill } from "./ParticipationPill";
 
@@ -23,9 +27,6 @@ export type UserResultsTableProps = {
 	id: string;
 	hasHighlightCheckboxes?: boolean;
 };
-
-export const HIGHLIGHT_CHECKBOX_NAME = "highlightTeamIds";
-export const HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME = "highlightTournamentTeamIds";
 
 export function UserResultsTable({
 	results,

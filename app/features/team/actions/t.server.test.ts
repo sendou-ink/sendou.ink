@@ -1,15 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-	assertResponseErrored,
-	dbInsertUsers,
-	dbReset,
-	wrappedAction,
-} from "~/utils/Test";
+import { dbInsertUsers, dbReset, wrappedAction } from "~/utils/Test";
 import { action as teamIndexPageAction } from "../actions/t.server";
-import type { createTeamSchema } from "../team-schemas.server";
+import type { createTeamSchema } from "../team-schemas";
 
 const action = wrappedAction<typeof createTeamSchema>({
 	action: teamIndexPageAction,
+	isJsonSubmission: true,
 });
 
 describe("team creation", () => {
@@ -24,12 +20,12 @@ describe("team creation", () => {
 		await action({ name: "Team 1" }, { user: "regular" });
 		const res = await action({ name: "Team 1" }, { user: "regular" });
 
-		expect(res.errors[0]).toBe("forms.errors.duplicateName");
+		expect(res.fieldErrors.name).toBe("forms:errors.duplicateName");
 	});
 
 	it("prevents creating a team whose name is only special characters", async () => {
-		const response = await action({ name: "𝓢𝓲𝓵" }, { user: "regular" });
+		const res = await action({ name: "𝓢𝓲𝓵" }, { user: "regular" });
 
-		assertResponseErrored(response);
+		expect(res.fieldErrors.name).toBe("forms:errors.noOnlySpecialCharacters");
 	});
 });

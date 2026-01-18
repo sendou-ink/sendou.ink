@@ -179,7 +179,7 @@ function Match({
 				width={120}
 				className="rounded"
 			/>
-			{weapon ? (
+			{typeof weapon === "number" ? (
 				<WeaponImage
 					weaponSplId={weapon}
 					variant="badge"

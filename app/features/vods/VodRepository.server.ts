@@ -86,7 +86,7 @@ export async function findVods({
 			query = query.where("VideoMatch.stageId", "=", stageId);
 		}
 	}
-	if (weapon) {
+	if (typeof weapon === "number") {
 		query = query.where(
 			"VideoMatchPlayer.weaponSplId",
 			"in",

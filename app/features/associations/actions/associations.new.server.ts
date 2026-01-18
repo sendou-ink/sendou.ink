@@ -1,36 +1,33 @@
 import { type ActionFunctionArgs, redirect } from "react-router";
-import { ASSOCIATION } from "~/features/associations/associations-constants";
 import { createNewAssociationSchema } from "~/features/associations/associations-schemas";
 import { requireUser } from "~/features/auth/core/user.server";
-import { actionError, parseRequestPayload } from "~/utils/remix.server";
+import { parseFormData } from "~/form/parse.server";
+import { LimitReachedError } from "~/utils/errors";
 import { associationsPage } from "~/utils/urls";
 import * as AssociationRepository from "../AssociationRepository.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const user = requireUser();
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: createNewAssociationSchema,
 	});
 
-	const associationCount = (
-		await AssociationRepository.findByMemberUserId(user.id)
-	).actual;
-	const maxAssociationCount = user.roles.includes("SUPPORTER")
-		? ASSOCIATION.MAX_COUNT_SUPPORTER
-		: ASSOCIATION.MAX_COUNT_REGULAR_USER;
-
-	if (associationCount.length >= maxAssociationCount) {
-		return actionError<typeof createNewAssociationSchema>({
-			msg: `Regular users can only be a member of ${maxAssociationCount} associations (supporters ${ASSOCIATION.MAX_COUNT_SUPPORTER})`,
-			field: "name",
-		});
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
 	}
 
-	await AssociationRepository.insert({
-		name: data.name,
-		userId: user.id,
-	});
+	try {
+		await AssociationRepository.insert({
+			name: result.data.name,
+			userId: user.id,
+		});
+	} catch (error) {
+		if (error instanceof LimitReachedError) {
+			return { fieldErrors: { name: "forms:errors.maxAssociationsReached" } };
+		}
+		throw error;
+	}
 
 	return redirect(associationsPage());
 };

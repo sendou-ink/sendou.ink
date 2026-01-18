@@ -11,3 +11,7 @@
 	font-size: var(--fonts-xs);
 	margin-block-start: var(--label-margin);
 }
+
+.noMargin {
+	margin-block-start: 0;
+}

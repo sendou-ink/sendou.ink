@@ -1,17 +1,13 @@
 import clsx from "clsx";
 import { differenceInMinutes } from "date-fns";
 import * as React from "react";
-import { Link, useFetcher } from "react-router";
+import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { useUser } from "~/features/auth/core/user";
 import { TournamentStream } from "~/features/tournament/components/TournamentStream";
-import type { TournamentStreamsLoader } from "~/features/tournament/loaders/to.$id.streams.server";
-import {
-	useStreamingParticipants,
-	useTournament,
-} from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/routes/to.$id";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { Unpacked } from "~/utils/types";
 import { tournamentMatchPage, tournamentStreamsPage } from "~/utils/urls";
@@ -72,7 +68,7 @@ export function Match(props: MatchProps) {
 
 function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 	const tournament = useTournament();
-	const streamingParticipants = useStreamingParticipants();
+	const streamingParticipants = tournament.streamingParticipantIds ?? [];
 
 	const prefix = () => {
 		if (type === "winners") return "WB ";
@@ -278,21 +274,10 @@ function MatchRow({
 
 function MatchStreams({ match }: Pick<MatchProps, "match">) {
 	const tournament = useTournament();
-	const fetcher = useFetcher<TournamentStreamsLoader>();
 
-	React.useEffect(() => {
-		if (fetcher.state !== "idle" || fetcher.data) return;
-		fetcher.load(`/to/${tournament.ctx.id}/streams`);
-	}, [fetcher, tournament.ctx.id]);
-
-	if (!fetcher.data || !match.opponent1?.id || !match.opponent2?.id)
-		return (
-			<div
-				className={clsx("text-lighter text-center", parentStyles.streamPopover)}
-			>
-				Loading streams...
-			</div>
-		);
+	if (!match.opponent1?.id || !match.opponent2?.id) {
+		return null;
+	}
 
 	const castingAccount = tournament.ctx.castedMatchesInfo?.castedMatches.find(
 		(cm) => cm.matchId === match.id,
@@ -302,13 +287,13 @@ function MatchStreams({ match }: Pick<MatchProps, "match">) {
 		(teamId) => tournament.teamById(teamId)?.members.map((m) => m.userId) ?? [],
 	);
 
-	const streamsOfThisMatch = fetcher.data.streams.filter(
+	const streamsOfThisMatch = tournament.streams.filter(
 		(stream) =>
 			(stream.userId && matchParticipants.includes(stream.userId)) ||
 			stream.twitchUserName === castingAccount,
 	);
 
-	if (streamsOfThisMatch.length === 0)
+	if (streamsOfThisMatch.length === 0) {
 		return (
 			<div className={parentStyles.streamPopover}>
 				After all there seems to be no streams of this match. Check the{" "}
@@ -316,10 +301,12 @@ function MatchStreams({ match }: Pick<MatchProps, "match">) {
 				for all the available streams.
 			</div>
 		);
+	}
 
 	return (
 		<div
 			className={clsx("stack md justify-center", parentStyles.streamPopover)}
+			data-testid="stream-popover"
 		>
 			{streamsOfThisMatch.map((stream) => (
 				<TournamentStream

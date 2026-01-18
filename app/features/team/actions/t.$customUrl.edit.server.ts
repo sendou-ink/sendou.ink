@@ -55,18 +55,19 @@ export const action: ActionFunction = async ({ request, params }) => {
 		}
 		case "EDIT": {
 			const newCustomUrl = mySlugify(data.name);
-			const existingTeam = await TeamRepository.findByCustomUrl(newCustomUrl);
 
 			errorToastIfFalsy(
 				newCustomUrl.length > 0,
 				"Team name can't be only special characters",
 			);
 
-			// can't take someone else's custom url
-			if (existingTeam && existingTeam.id !== team.id) {
-				return {
-					errors: ["forms.errors.duplicateName"],
-				};
+			const teams = await TeamRepository.findAllUndisbanded();
+			const duplicateTeam = teams.find(
+				(t) => t.customUrl === newCustomUrl && t.customUrl !== team.customUrl,
+			);
+
+			if (duplicateTeam) {
+				return { errors: ["forms:errors.duplicateName"] };
 			}
 
 			const customTheme =
@@ -74,14 +75,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 					? clampThemeToGamut(data.customTheme)
 					: null;
 
-			const editedTeam = await TeamRepository.update({
+			const updatedTeam = await TeamRepository.update({
 				id: team.id,
-				customUrl: newCustomUrl,
 				...data,
 				customTheme,
 			});
 
-			throw redirect(teamPage(editedTeam.customUrl));
+			throw redirect(teamPage(updatedTeam.customUrl));
 		}
 		default: {
 			assertUnreachable(data);

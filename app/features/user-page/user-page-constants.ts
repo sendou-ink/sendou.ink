@@ -1,3 +1,6 @@
+export const HIGHLIGHT_CHECKBOX_NAME = "highlightTeamIds";
+export const HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME = "highlightTournamentTeamIds";
+
 export const USER = {
 	BIO_MAX_LENGTH: 2000,
 	CUSTOM_URL_MAX_LENGTH: 32,

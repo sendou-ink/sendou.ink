@@ -324,6 +324,7 @@
 	"clockFormat.12h": "",
 	"badges.selector.none": "没有选择任何徽章",
 	"badges.selector.select": "选择徽章并添加",
+	"badges.selector.noneAvailable": "",
 	"api.title": "",
 	"api.description": "",
 	"api.noAccess": "",

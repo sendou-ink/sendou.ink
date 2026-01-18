@@ -34,13 +34,6 @@ export const action = async ({ request }: { request: Request }) => {
 			});
 			break;
 		}
-		case "UPDATE_NO_SCREEN": {
-			await QSettingsRepository.updateNoScreen({
-				userId: user.id,
-				noScreen: Number(data.noScreen),
-			});
-			break;
-		}
 		case "REMOVE_TRUST": {
 			await QSettingsRepository.deleteTrustedUser({
 				trustGiverUserId: user.id,

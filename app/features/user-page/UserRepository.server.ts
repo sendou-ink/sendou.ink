@@ -1134,3 +1134,13 @@ export async function anyUserPrefersNoScreen(
 
 	return Boolean(result);
 }
+
+export function findIdsByTwitchUsernames(twitchUsernames: string[]) {
+	if (twitchUsernames.length === 0) return [];
+
+	return db
+		.selectFrom("User")
+		.select(["User.id", "User.twitch"])
+		.where("User.twitch", "in", twitchUsernames)
+		.execute();
+}

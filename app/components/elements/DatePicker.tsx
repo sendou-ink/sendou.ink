@@ -12,6 +12,7 @@ import {
 } from "react-aria-components";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouCalendar } from "~/components/elements/Calendar";
+import { useIsMounted } from "~/hooks/useIsMounted";
 import styles from "./DatePicker.module.css";
 import { SendouLabel } from "./Label";
 
@@ -20,15 +21,33 @@ interface SendouDatePickerProps<T extends DateValue>
 	label: string;
 	bottomText?: string;
 	errorText?: string;
+	errorId?: string;
 }
 
 export function SendouDatePicker<T extends DateValue>({
 	label,
 	errorText,
+	errorId,
 	bottomText,
 	isRequired,
 	...rest
 }: SendouDatePickerProps<T>) {
+	const isMounted = useIsMounted();
+
+	if (!isMounted) {
+		return (
+			<div>
+				<SendouLabel required={isRequired}>{label}</SendouLabel>
+				<input type="text" disabled />
+				<SendouBottomTexts
+					bottomText={bottomText}
+					errorText={errorText}
+					errorId={errorId}
+				/>
+			</div>
+		);
+	}
+
 	return (
 		<ReactAriaDatePicker
 			{...rest}
@@ -46,7 +65,11 @@ export function SendouDatePicker<T extends DateValue>({
 					<Calendar className={styles.icon} />
 				</Button>
 			</Group>
-			<SendouBottomTexts bottomText={bottomText} errorText={errorText} />
+			<SendouBottomTexts
+				bottomText={bottomText}
+				errorText={errorText}
+				errorId={errorId}
+			/>
 			<Popover>
 				<Dialog>
 					<SendouCalendar />

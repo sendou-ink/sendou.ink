@@ -329,6 +329,7 @@
 	"clockFormat.12h": "",
 	"badges.selector.none": "",
 	"badges.selector.select": "",
+	"badges.selector.noneAvailable": "",
 	"api.title": "",
 	"api.description": "",
 	"api.noAccess": "",

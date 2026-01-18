@@ -2,19 +2,16 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
-import type { z } from "zod";
 import { Alert } from "~/components/Alert";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
-import { SendouForm } from "~/components/form/SendouForm";
-import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { Image } from "~/components/Image";
 import TimePopover from "~/components/TimePopover";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import { SCRIM } from "~/features/scrims/scrims-constants";
 import { cancelScrimSchema } from "~/features/scrims/scrims-schemas";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { SendouForm } from "~/form/SendouForm";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import type { SerializeFrom } from "~/utils/remix";
@@ -118,23 +115,13 @@ export default function ScrimPage() {
 	);
 }
 
-type FormFields = z.infer<typeof cancelScrimSchema>;
-
 function CancelScrimForm() {
-	const { t } = useTranslation(["scrims"]);
-
 	return (
 		<SendouForm
 			schema={cancelScrimSchema}
-			defaultValues={{ reason: "" }}
 			submitButtonTestId="cancel-scrim-submit"
 		>
-			<TextAreaFormField<FormFields>
-				name="reason"
-				label={t("cancelModal.scrim.reasonLabel")}
-				maxLength={SCRIM.CANCEL_REASON_MAX_LENGTH}
-				bottomText={t("scrims:cancelModal.scrim.reasonExplanation")}
-			/>
+			{({ FormField }) => <FormField name="reason" />}
 		</SendouForm>
 	);
 }

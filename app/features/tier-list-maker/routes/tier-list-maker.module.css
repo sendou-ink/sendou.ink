@@ -67,6 +67,7 @@
 	font-weight: var(--bold);
 	color: var(--color-text-high);
 	text-transform: lowercase;
+	white-space: nowrap;
 }
 
 .authorInfo {
@@ -79,4 +80,5 @@
 	font-weight: var(--bold);
 	font-size: var(--fonts-xs);
 	color: var(--color-text);
+	white-space: nowrap;
 }

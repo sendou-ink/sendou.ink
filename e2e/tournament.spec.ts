@@ -255,7 +255,7 @@ test.describe("Tournament", () => {
 			url: `${tournamentPage(1)}/seeds`,
 		});
 
-		await page.getByTestId("seed-team-1").hover();
+		await page.getByTestId("seed-team-1-handle").hover();
 		await page.mouse.down();
 		// i think the drag & drop library might actually be a bit buggy
 		// so we have to do it in steps like this to allow for testing

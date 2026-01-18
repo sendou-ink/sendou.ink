@@ -1,16 +1,13 @@
 import { Plus } from "lucide-react";
 import { useLoaderData } from "react-router";
-import type { z } from "zod";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { SendouForm } from "~/components/form/SendouForm";
-import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
-import { USER } from "~/features/user-page/user-page-constants";
 import { addModNoteSchema } from "~/features/user-page/user-page-schemas";
+import { SendouForm } from "~/form";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { action } from "../actions/u.$identifier.admin.server";
@@ -156,8 +153,6 @@ function ModNotes() {
 	);
 }
 
-type FormFields = z.infer<typeof addModNoteSchema>;
-
 function NewModNoteDialog() {
 	return (
 		<SendouDialog
@@ -169,19 +164,8 @@ function NewModNoteDialog() {
 				</SendouButton>
 			}
 		>
-			<SendouForm
-				schema={addModNoteSchema}
-				defaultValues={{
-					value: "",
-					_action: "ADD_MOD_NOTE",
-				}}
-			>
-				<TextAreaFormField<FormFields>
-					name="value"
-					label="Text"
-					maxLength={USER.MOD_NOTE_MAX_LENGTH}
-					bottomText="This note will be only visible to staff members."
-				/>
+			<SendouForm schema={addModNoteSchema}>
+				{({ FormField }) => <FormField name="value" />}
 			</SendouForm>
 		</SendouDialog>
 	);

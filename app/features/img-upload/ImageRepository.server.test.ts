@@ -31,14 +31,12 @@ const createImage = async ({
 
 const createTeam = async (ownerUserId: number) => {
 	teamCounter++;
-	const customUrl = `team-${teamCounter}`;
-	await TeamRepository.create({
+	const createdTeam = await TeamRepository.create({
 		name: `Team ${teamCounter}`,
-		customUrl,
 		ownerUserId,
 		isMainTeam: true,
 	});
-	const team = await TeamRepository.findByCustomUrl(customUrl);
+	const team = await TeamRepository.findByCustomUrl(createdTeam.customUrl);
 	if (!team) throw new Error("Team not found after creation");
 	return team;
 };

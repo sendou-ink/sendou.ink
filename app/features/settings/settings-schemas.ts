@@ -1,27 +1,45 @@
 import { z } from "zod";
-import { _action, themeInputSchema } from "~/utils/zod";
+import { select, stringConstant, toggle } from "~/form/fields";
 
-export { themeInputSchema };
+export const clockFormatSchema = z.object({
+	_action: stringConstant("UPDATE_CLOCK_FORMAT"),
+	newValue: select({
+		label: "labels.clockFormat",
+		items: [
+			{ value: "auto", label: "options.clockFormat.auto" },
+			{ value: "24h", label: "options.clockFormat.24h" },
+			{ value: "12h", label: "options.clockFormat.12h" },
+		],
+	}),
+});
+
+export const disableBuildAbilitySortingSchema = z.object({
+	_action: stringConstant("UPDATE_DISABLE_BUILD_ABILITY_SORTING"),
+	newValue: toggle({
+		label: "labels.disableBuildAbilitySorting",
+		bottomText: "bottomTexts.disableBuildAbilitySorting",
+	}),
+});
+
+export const disallowScrimPickupsFromUntrustedSchema = z.object({
+	_action: stringConstant("DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED"),
+	newValue: toggle({
+		label: "labels.disallowScrimPickupsFromUntrusted",
+		bottomText: "bottomTexts.disallowScrimPickupsFromUntrusted",
+	}),
+});
+
+export const updateNoScreenSchema = z.object({
+	_action: stringConstant("UPDATE_NO_SCREEN"),
+	newValue: toggle({
+		label: "labels.noScreen",
+		bottomText: "bottomTexts.noScreen",
+	}),
+});
 
 export const settingsEditSchema = z.union([
-	z.object({
-		_action: _action("UPDATE_CUSTOM_THEME"),
-		newValue: themeInputSchema.nullable(),
-	}),
-	z.object({
-		_action: _action("UPDATE_DISABLE_BUILD_ABILITY_SORTING"),
-		newValue: z.boolean(),
-	}),
-	z.object({
-		_action: _action("DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED"),
-		newValue: z.boolean(),
-	}),
-	z.object({
-		_action: _action("UPDATE_NO_SCREEN"),
-		newValue: z.boolean(),
-	}),
-	z.object({
-		_action: _action("UPDATE_CLOCK_FORMAT"),
-		newValue: z.enum(["auto", "24h", "12h"]),
-	}),
+	disableBuildAbilitySortingSchema,
+	disallowScrimPickupsFromUntrustedSchema,
+	updateNoScreenSchema,
+	clockFormatSchema,
 ]);

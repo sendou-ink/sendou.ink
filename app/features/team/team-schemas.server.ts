@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { mySlugify } from "~/utils/urls";
 import {
 	_action,
 	falsyToNull,
@@ -6,16 +7,24 @@ import {
 	safeStringSchema,
 	themeInputSchema,
 } from "~/utils/zod";
+import * as TeamRepository from "./TeamRepository.server";
 import { TEAM, TEAM_MEMBER_ROLES } from "./team-constants";
+import { createTeamSchema } from "./team-schemas";
+
+export const createTeamSchemaServer = z.object({
+	...createTeamSchema.shape,
+	name: createTeamSchema.shape.name.refine(
+		async (name) => {
+			const teams = await TeamRepository.findAllUndisbanded();
+			const customUrl = mySlugify(name);
+
+			return !teams.some((team) => team.customUrl === customUrl);
+		},
+		{ message: "forms:errors.duplicateName" },
+	),
+});
 
 export const teamParamsSchema = z.object({ customUrl: z.string() });
-
-export const createTeamSchema = z.object({
-	name: safeStringSchema({
-		min: TEAM.NAME_MIN_LENGTH,
-		max: TEAM.NAME_MAX_LENGTH,
-	}),
-});
 
 export const teamProfilePageActionSchema = z.union([
 	z.object({

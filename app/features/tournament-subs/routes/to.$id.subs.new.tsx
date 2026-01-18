@@ -32,10 +32,12 @@ export default function NewTournamentSubPage() {
 	const data = useLoaderData<typeof loader>();
 
 	const [bestWeapons, setBestWeapons] = React.useState<MainWeaponId[]>(
-		data.sub?.bestWeapons ?? data.userDefaults?.bestWeapons ?? [],
+		data.sub ? data.sub.bestWeapons : (data.userDefaults?.bestWeapons ?? []),
 	);
 	const [okWeapons, setOkWeapons] = React.useState<MainWeaponId[]>(
-		data.sub?.okWeapons ?? data.userDefaults?.okWeapons ?? [],
+		data.sub
+			? (data.sub.okWeapons ?? [])
+			: (data.userDefaults?.okWeapons ?? []),
 	);
 
 	return (

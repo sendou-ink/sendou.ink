@@ -1,28 +1,49 @@
 import { z } from "zod";
 import { OBJECT_PRONOUNS, SUBJECT_PRONOUNS } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-constants";
+import * as Seasons from "~/features/mmr/core/Seasons";
+import {
+	checkboxGroup,
+	customField,
+	idConstantOptional,
+	stringConstant,
+	textAreaOptional,
+	textAreaRequired,
+	textFieldRequired,
+	toggle,
+	weaponPool,
+} from "~/form/fields";
+import {
+	clothesGearIds,
+	headGearIds,
+	shoesGearIds,
+} from "~/modules/in-game-lists/gear-ids";
 import { isCustomUrl } from "~/utils/urls";
 import {
 	_action,
 	actualNumber,
 	checkboxValueToDbBoolean,
+	clothesMainSlotAbility,
 	dbBoolean,
 	emptyArrayToNull,
 	falsyToNull,
+	headMainSlotAbility,
 	id,
 	nullLiteraltoNull,
 	processMany,
 	safeJSONParse,
 	safeNullableStringSchema,
+	shoesMainSlotAbility,
+	stackableAbility,
 	undefinedToNull,
 	weaponSplId,
 } from "~/utils/zod";
-import * as Seasons from "../mmr/core/Seasons";
 import {
+	COUNTRY_CODES,
 	HIGHLIGHT_CHECKBOX_NAME,
 	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
-} from "./components/UserResultsTable";
-import { COUNTRY_CODES, USER } from "./user-page-constants";
+	USER,
+} from "./user-page-constants";
 
 export const userParamsSchema = z.object({ identifier: z.string() });
 
@@ -153,8 +174,12 @@ export const editHighlightsActionSchema = z.object({
 });
 
 export const addModNoteSchema = z.object({
-	_action: _action("ADD_MOD_NOTE"),
-	value: z.string().trim().min(1).max(USER.MOD_NOTE_MAX_LENGTH),
+	_action: stringConstant("ADD_MOD_NOTE"),
+	value: textAreaRequired({
+		label: "labels.text",
+		bottomText: "bottomTexts.modNote",
+		maxLength: USER.MOD_NOTE_MAX_LENGTH,
+	}),
 });
 
 const deleteModNoteSchema = z.object({
@@ -171,3 +196,118 @@ export const userResultsPageSearchParamsSchema = z.object({
 	all: z.stringbool().catch(false),
 	page: z.coerce.number().min(1).max(1_000).catch(1),
 });
+
+const headGearIdSchema = z
+	.number()
+	.nullable()
+	.refine(
+		(val) =>
+			val === null || headGearIds.includes(val as (typeof headGearIds)[number]),
+	);
+
+const clothesGearIdSchema = z
+	.number()
+	.nullable()
+	.refine(
+		(val) =>
+			val === null ||
+			clothesGearIds.includes(val as (typeof clothesGearIds)[number]),
+	);
+
+const shoesGearIdSchema = z
+	.number()
+	.nullable()
+	.refine(
+		(val) =>
+			val === null ||
+			shoesGearIds.includes(val as (typeof shoesGearIds)[number]),
+	);
+
+const abilitiesSchema = z.tuple([
+	z.tuple([
+		headMainSlotAbility,
+		stackableAbility,
+		stackableAbility,
+		stackableAbility,
+	]),
+	z.tuple([
+		clothesMainSlotAbility,
+		stackableAbility,
+		stackableAbility,
+		stackableAbility,
+	]),
+	z.tuple([
+		shoesMainSlotAbility,
+		stackableAbility,
+		stackableAbility,
+		stackableAbility,
+	]),
+]);
+
+const modeItems = [
+	{ label: "modes.TW" as const, value: "TW" as const },
+	{ label: "modes.SZ" as const, value: "SZ" as const },
+	{ label: "modes.TC" as const, value: "TC" as const },
+	{ label: "modes.RM" as const, value: "RM" as const },
+	{ label: "modes.CB" as const, value: "CB" as const },
+];
+
+export const newBuildBaseSchema = z.object({
+	buildToEditId: idConstantOptional(),
+	weapons: weaponPool({
+		label: "labels.buildWeapons",
+		minCount: 1,
+		maxCount: 5,
+		disableSorting: true,
+		disableFavorites: true,
+	}),
+	head: customField({ initialValue: null }, headGearIdSchema),
+	clothes: customField({ initialValue: null }, clothesGearIdSchema),
+	shoes: customField({ initialValue: null }, shoesGearIdSchema),
+	abilities: customField(
+		{
+			initialValue: [
+				["UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"],
+				["UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"],
+				["UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"],
+			],
+		},
+		abilitiesSchema,
+	),
+	title: textFieldRequired({
+		label: "labels.buildTitle",
+		maxLength: 50,
+	}),
+	description: textAreaOptional({
+		label: "labels.description",
+		maxLength: 280,
+	}),
+	modes: checkboxGroup({
+		label: "labels.buildModes",
+		items: modeItems,
+	}),
+	private: toggle({
+		label: "labels.buildPrivate",
+		bottomText: "bottomTexts.buildPrivate",
+	}),
+});
+
+function validateGearAllOrNone(data: {
+	head: number | null;
+	clothes: number | null;
+	shoes: number | null;
+}) {
+	const gearFilled = [data.head, data.clothes, data.shoes].filter(
+		(g) => g !== null,
+	);
+	return gearFilled.length === 0 || gearFilled.length === 3;
+}
+export const gearAllOrNoneRefine = {
+	fn: validateGearAllOrNone,
+	opts: { message: "forms:errors.gearAllOrNone", path: ["head"] },
+};
+
+export const newBuildSchema = newBuildBaseSchema.refine(
+	gearAllOrNoneRefine.fn,
+	gearAllOrNoneRefine.opts,
+);

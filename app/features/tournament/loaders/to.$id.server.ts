@@ -3,12 +3,20 @@ import { getUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { databaseTimestampToDate } from "~/utils/dates";
-import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
-import { streamsByTournamentId } from "../core/streams.server";
 
-export type TournamentLoaderData = SerializeFrom<typeof loader>;
+export type TournamentLoaderData = {
+	tournament: Awaited<ReturnType<typeof tournamentDataCached>>;
+	streamingParticipants: number[];
+	streamsCount: number;
+	friendCodes:
+		| Awaited<ReturnType<typeof TournamentRepository.friendCodesByTournamentId>>
+		| undefined;
+	preparedMaps:
+		| Awaited<ReturnType<typeof TournamentRepository.findPreparedMapsById>>
+		| undefined;
+};
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const user = getUser();
@@ -18,11 +26,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	});
 
 	const tournament = await tournamentDataCached({ tournamentId, user });
-
-	const streams =
-		tournament.data.stage.length > 0 && !tournament.ctx.isFinalized
-			? await streamsByTournamentId(tournament.ctx)
-			: [];
 
 	const tournamentStartedInTheLastMonth =
 		databaseTimestampToDate(tournament.ctx.startTime) >
@@ -46,10 +49,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		);
 	const showFriendCodes = tournamentStartedInTheLastMonth && isTournamentAdmin;
 
-	return {
+	// skip expensive rr7 data serialization (hot path loader)
+	return JSON.stringify({
 		tournament,
-		streamingParticipants: streams.flatMap((s) => (s.userId ? [s.userId] : [])),
-		streamsCount: streams.length,
 		friendCodes: showFriendCodes
 			? await TournamentRepository.friendCodesByTournamentId(tournamentId)
 			: undefined,
@@ -57,5 +59,5 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			isTournamentOrganizer && !tournament.ctx.isFinalized
 				? await TournamentRepository.findPreparedMapsById(tournamentId)
 				: undefined,
-	};
+	});
 };

@@ -1,36 +1,33 @@
+import type { CalendarDateTime } from "@internationalized/date";
 import * as React from "react";
-import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import type { z } from "zod";
+import { SendouDatePicker } from "~/components/elements/DatePicker";
 import { TournamentSearch } from "~/components/elements/TournamentSearch";
-import { DateFormField } from "~/components/form/DateFormField";
-import { SelectFormField } from "~/components/form/SelectFormField";
-import { SendouForm } from "~/components/form/SendouForm";
-import { TextAreaFormField } from "~/components/form/TextAreaFormField";
-import { ToggleFormField } from "~/components/form/ToggleFormField";
 import { Label } from "~/components/Label";
+import type { CustomFieldRenderProps } from "~/form";
+import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
+import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
+import { errorMessageId } from "~/form/utils";
 import { nullFilledArray } from "~/utils/arrays";
+import { dateToDateValue } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FormMessage } from "../../../components/FormMessage";
 import { Main } from "../../../components/Main";
 import { action } from "../actions/scrims.new.server";
-import { LutiDivsFormField } from "../components/LutiDivsFormField";
 import { WithFormField } from "../components/WithFormField";
 import { loader, type ScrimsNewLoaderData } from "../loaders/scrims.new.server";
 import { SCRIM } from "../scrims-constants";
-import {
-	MAX_SCRIM_POST_TEXT_LENGTH,
-	RANGE_END_OPTIONS,
-	scrimsNewActionSchema,
-} from "../scrims-schemas";
+import { scrimsNewFormSchema } from "../scrims-schemas";
+import styles from "./scrims.new.module.css";
 export { loader, action };
 
 export const handle: SendouRouteHandle = {
 	i18n: "scrims",
 };
 
-type FormFields = z.infer<typeof scrimsNewActionSchema>;
+type FormFields = z.infer<typeof scrimsNewFormSchema>;
 
 const DEFAULT_NOT_FOUND_VISIBILITY = {
 	at: null,
@@ -44,13 +41,12 @@ export default function NewScrimPage() {
 	return (
 		<Main>
 			<SendouForm
-				schema={scrimsNewActionSchema}
-				heading={t("scrims:forms.title")}
+				schema={scrimsNewFormSchema}
+				title={t("scrims:forms.title")}
 				defaultValues={{
 					postText: "",
 					at: new Date(),
 					rangeEnd: null,
-					divs: null,
 					baseVisibility: "PUBLIC",
 					notFoundVisibility: DEFAULT_NOT_FOUND_VISIBILITY,
 					from:
@@ -67,64 +63,39 @@ export default function NewScrimPage() {
 					mapsTournamentId: null,
 				}}
 			>
-				<WithFormField usersTeams={data.teams} />
+				{({ FormField }) => (
+					<>
+						<FormField name="from">
+							{(props: CustomFieldRenderProps) => (
+								<WithFormField usersTeams={data.teams} {...props} />
+							)}
+						</FormField>
 
-				<DateFormField<FormFields>
-					label={t("scrims:forms.when.title")}
-					name="at"
-					bottomText={t("scrims:forms.when.explanation")}
-					granularity="minute"
-				/>
-				<SelectFormField<FormFields>
-					label={t("scrims:forms.rangeEnd.title")}
-					name="rangeEnd"
-					bottomText={t("scrims:forms.rangeEnd.explanation")}
-					values={[
-						{
-							value: "",
-							label: t("scrims:forms.rangeEnd.notFlexible"),
-						},
-						...RANGE_END_OPTIONS.map((option) => ({
-							value: option,
-							label: t(`scrims:forms.rangeEnd.${option}`),
-						})),
-					]}
-				/>
+						<FormField name="at" />
+						<FormField name="rangeEnd" />
 
-				<BaseVisibilityFormField associations={data.associations} />
+						<FormField name="baseVisibility">
+							{(props: CustomFieldRenderProps) => (
+								<BaseVisibilityFormField
+									associations={data.associations}
+									{...props}
+								/>
+							)}
+						</FormField>
 
-				<NotFoundVisibilityFormField associations={data.associations} />
+						<NotFoundVisibilityFormField associations={data.associations} />
 
-				<LutiDivsFormField />
+						<FormField name="divs" />
 
-				<SelectFormField<FormFields>
-					label={t("scrims:forms.maps.title")}
-					name="maps"
-					values={[
-						{
-							value: "NO_PREFERENCE",
-							label: t("scrims:forms.maps.noPreference"),
-						},
-						{ value: "SZ", label: t("scrims:forms.maps.szOnly") },
-						{ value: "RANKED", label: t("scrims:forms.maps.rankedOnly") },
-						{ value: "ALL", label: t("scrims:forms.maps.allModes") },
-						{ value: "TOURNAMENT", label: t("scrims:forms.maps.tournament") },
-					]}
-				/>
+						<FormField name="maps" />
 
-				<TournamentSearchFormField />
+						<TournamentSearchFormField />
 
-				<TextAreaFormField<FormFields>
-					label={t("scrims:forms.text.title")}
-					name="postText"
-					maxLength={MAX_SCRIM_POST_TEXT_LENGTH}
-				/>
+						<FormField name="postText" />
 
-				<ToggleFormField<FormFields>
-					label={t("scrims:forms.managedByAnyone.title")}
-					name="managedByAnyone"
-					bottomText={t("scrims:forms.managedByAnyone.explanation")}
-				/>
+						<FormField name="managedByAnyone" />
+					</>
+				)}
 			</SendouForm>
 		</Main>
 	);
@@ -132,20 +103,30 @@ export default function NewScrimPage() {
 
 function BaseVisibilityFormField({
 	associations,
+	name,
+	value,
+	onChange,
+	error,
 }: {
 	associations: ScrimsNewLoaderData["associations"];
+	name: string;
+	value: unknown;
+	onChange: (value: unknown) => void;
+	error: string | undefined;
 }) {
 	const { t } = useTranslation(["scrims"]);
-	const methods = useFormContext<FormFields>();
-
-	const error = methods.formState.errors.baseVisibility;
+	const id = React.useId();
 
 	const noAssociations =
 		associations.virtual.length === 0 && associations.actual.length === 0;
 
 	return (
-		<div>
-			<Label htmlFor="visibility">{t("scrims:forms.visibility.title")}</Label>
+		<FormFieldWrapper
+			id={id}
+			name={name}
+			label={t("scrims:forms.visibility.title")}
+			error={error}
+		>
 			{noAssociations ? (
 				<FormMessage type="info">
 					{t("scrims:forms.visibility.noneAvailable")}
@@ -153,15 +134,12 @@ function BaseVisibilityFormField({
 			) : (
 				<AssociationSelect
 					associations={associations}
-					id="visibility"
-					{...methods.register("baseVisibility")}
+					id={id}
+					value={String(value)}
+					onChange={(e) => onChange(e.target.value)}
 				/>
 			)}
-
-			{error && (
-				<FormMessage type="error">{error.message as string}</FormMessage>
-			)}
-		</div>
+		</FormFieldWrapper>
 	);
 }
 
@@ -170,68 +148,112 @@ function NotFoundVisibilityFormField({
 }: {
 	associations: ScrimsNewLoaderData["associations"];
 }) {
-	const { t } = useTranslation(["scrims"]);
-	const baseVisibility = useWatch<FormFields>({
-		name: "baseVisibility",
-	});
-	const date = useWatch<FormFields>({ name: "notFoundVisibility.at" }) ?? "";
-	const methods = useFormContext<FormFields>();
+	const { t } = useTranslation(["scrims", "forms"]);
+	const { values, setValue, clientErrors, serverErrors } =
+		useFormFieldContext();
+	const baseVisibility = values.baseVisibility as string;
+	const notFoundVisibility =
+		values.notFoundVisibility as FormFields["notFoundVisibility"];
 
-	React.useEffect(() => {
+	const prevBaseVisibility = React.useRef(baseVisibility);
+	if (prevBaseVisibility.current !== baseVisibility) {
+		prevBaseVisibility.current = baseVisibility;
 		if (baseVisibility === "PUBLIC") {
-			methods.setValue("notFoundVisibility", DEFAULT_NOT_FOUND_VISIBILITY);
+			setValue("notFoundVisibility", DEFAULT_NOT_FOUND_VISIBILITY);
 		}
-	}, [baseVisibility, methods.setValue]);
+	}
 
-	const error = methods.formState.errors.notFoundVisibility;
+	const error =
+		serverErrors.notFoundVisibility ?? clientErrors.notFoundVisibility;
 
 	const noAssociations =
 		associations.virtual.length === 0 && associations.actual.length === 0;
 
 	if (noAssociations || baseVisibility === "PUBLIC") return null;
 
+	const handleDateChange = (val: CalendarDateTime | null) => {
+		if (val) {
+			const date = new Date(
+				val.year,
+				val.month - 1,
+				val.day,
+				val.hour,
+				val.minute,
+			);
+			setValue("notFoundVisibility", {
+				...notFoundVisibility,
+				at: date,
+			});
+		} else {
+			setValue("notFoundVisibility", {
+				...notFoundVisibility,
+				at: null,
+			});
+		}
+	};
+
+	const handleAssociationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+		setValue("notFoundVisibility", {
+			...notFoundVisibility,
+			forAssociation: e.target.value,
+		});
+	};
+
+	const dateValue = notFoundVisibility.at
+		? dateToDateValue(new Date(notFoundVisibility.at))
+		: null;
+
 	return (
 		<div>
 			<div className="stack horizontal sm">
-				<DateFormField<FormFields>
-					label={t("scrims:forms.notFoundVisibility.title")}
-					name="notFoundVisibility.at"
-					granularity="minute"
-				/>
-				{date ? (
-					<div>
+				<div className={styles.datePickerFullWidth}>
+					<SendouDatePicker
+						label={t("scrims:forms.notFoundVisibility.title")}
+						granularity="minute"
+						errorText={error ? t(`forms:${error}` as never) : undefined}
+						errorId={errorMessageId("notFoundVisibility")}
+						value={dateValue}
+						onChange={handleDateChange}
+						bottomText={
+							notFoundVisibility.at
+								? undefined
+								: t("scrims:forms.notFoundVisibility.explanation")
+						}
+					/>
+				</div>
+				{notFoundVisibility.at ? (
+					<div className="w-full">
 						<Label htmlFor="not-found-visibility">
 							{t("scrims:forms.visibility.title")}
 						</Label>
 						<AssociationSelect
 							associations={associations}
 							id="not-found-visibility"
-							{...methods.register("notFoundVisibility.forAssociation")}
+							value={String(notFoundVisibility.forAssociation)}
+							onChange={handleAssociationChange}
 						/>
 					</div>
 				) : null}
 			</div>
-			{error ? (
-				<FormMessage type="error">{error.message as string}</FormMessage>
-			) : (
-				<FormMessage type="info">
-					{t("scrims:forms.notFoundVisibility.explanation")}
-				</FormMessage>
-			)}
 		</div>
 	);
 }
 
-const AssociationSelect = React.forwardRef<
-	HTMLSelectElement,
-	{
-		associations: ScrimsNewLoaderData["associations"];
-	} & React.SelectHTMLAttributes<HTMLSelectElement>
->(({ associations, ...rest }, ref) => {
+function AssociationSelect({
+	associations,
+	id,
+	value,
+	onChange,
+}: {
+	associations: ScrimsNewLoaderData["associations"];
+	id: string;
+	value: string;
+	onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+}) {
 	const { t } = useTranslation(["scrims"]);
 
 	return (
-		<select ref={ref} {...rest}>
+		<select id={id} className="w-full" value={value} onChange={onChange}>
 			<option value="PUBLIC">{t("scrims:forms.visibility.public")}</option>
 			{associations.virtual.map((association) => (
 				<option key={association} value={association}>
@@ -245,40 +267,42 @@ const AssociationSelect = React.forwardRef<
 			))}
 		</select>
 	);
-});
+}
 
 function TournamentSearchFormField() {
 	const { t } = useTranslation(["scrims"]);
-	const methods = useFormContext<FormFields>();
-	const maps = useWatch<FormFields>({ name: "maps" });
+	const { values, setValue, clientErrors, serverErrors } =
+		useFormFieldContext();
+	const maps = values.maps as string;
+	const mapsTournamentId = values.mapsTournamentId as number | null;
 
-	const error = methods.formState.errors.mapsTournamentId;
+	const error = serverErrors.mapsTournamentId ?? clientErrors.mapsTournamentId;
 
+	const prevMaps = React.useRef(maps);
 	React.useEffect(() => {
-		if (maps !== "TOURNAMENT") {
-			methods.setValue("mapsTournamentId", null);
+		if (prevMaps.current !== maps) {
+			prevMaps.current = maps;
+			if (maps !== "TOURNAMENT") {
+				setValue("mapsTournamentId", null);
+			}
 		}
-	}, [maps, methods]);
+	}, [maps, setValue]);
 
 	if (maps !== "TOURNAMENT") return null;
 
 	return (
-		<div>
-			<Controller
-				control={methods.control}
-				name="mapsTournamentId"
-				render={({ field: { onChange, value } }) => (
-					<TournamentSearch
-						label={t("scrims:forms.mapsTournament.title")}
-						initialTournamentId={value ?? undefined}
-						onChange={(tournament) => onChange(tournament?.id)}
-					/>
-				)}
+		<FormFieldWrapper
+			id="mapsTournamentId"
+			name="mapsTournamentId"
+			error={error}
+		>
+			<TournamentSearch
+				label={t("scrims:forms.mapsTournament.title")}
+				initialTournamentId={mapsTournamentId ?? undefined}
+				onChange={(tournament) =>
+					setValue("mapsTournamentId", tournament?.id ?? null)
+				}
 			/>
-
-			{error ? (
-				<FormMessage type="error">{error.message as string}</FormMessage>
-			) : null}
-		</div>
+		</FormFieldWrapper>
 	);
 }

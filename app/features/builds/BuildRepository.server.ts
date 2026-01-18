@@ -9,12 +9,11 @@ import type {
 	MainWeaponId,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import {
-	weaponIdHasAlts,
-	weaponIdToArrayWithAlts,
-} from "~/modules/in-game-lists/weapon-ids";
+import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
+import { LimitReachedError } from "~/utils/errors";
 import invariant from "~/utils/invariant";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { BUILD } from "./builds-constants";
 import { sortAbilities } from "./core/ability-sorting.server";
 
 export async function allByUserId(
@@ -94,9 +93,9 @@ interface CreateArgs {
 	title: TablesInsertable["Build"]["title"];
 	description: TablesInsertable["Build"]["description"];
 	modes: Array<ModeShort> | null;
-	headGearSplId: TablesInsertable["Build"]["headGearSplId"];
-	clothesGearSplId: TablesInsertable["Build"]["clothesGearSplId"];
-	shoesGearSplId: TablesInsertable["Build"]["shoesGearSplId"];
+	headGearSplId: number | null;
+	clothesGearSplId: number | null;
+	shoesGearSplId: number | null;
 	weaponSplIds: Array<BuildWeapon["weaponSplId"]>;
 	abilities: BuildAbilitiesTuple;
 	private: TablesInsertable["Build"]["private"];
@@ -123,9 +122,9 @@ async function createInTrx({
 								.sort((a, b) => modesShort.indexOf(a) - modesShort.indexOf(b)),
 						)
 					: null,
-			headGearSplId: args.headGearSplId,
-			clothesGearSplId: args.clothesGearSplId,
-			shoesGearSplId: args.shoesGearSplId,
+			headGearSplId: args.headGearSplId ?? -1,
+			clothesGearSplId: args.clothesGearSplId ?? -1,
+			shoesGearSplId: args.shoesGearSplId ?? -1,
 			private: args.private,
 		})
 		.returningAll()
@@ -182,7 +181,19 @@ async function createInTrx({
 }
 
 export async function create(args: CreateArgs) {
-	return db.transaction().execute(async (trx) => createInTrx({ args, trx }));
+	return db.transaction().execute(async (trx) => {
+		await createInTrx({ args, trx });
+
+		const { count } = await trx
+			.selectFrom("Build")
+			.select((eb) => eb.fn.countAll<number>().as("count"))
+			.where("ownerId", "=", args.ownerId)
+			.executeTakeFirstOrThrow();
+
+		if (count > BUILD.MAX_COUNT) {
+			throw new LimitReachedError("Max amount of builds reached");
+		}
+	});
 }
 
 export async function update(args: CreateArgs & { id: number }) {
@@ -194,6 +205,16 @@ export async function update(args: CreateArgs & { id: number }) {
 
 export function deleteById(id: number) {
 	return db.deleteFrom("Build").where("id", "=", id).execute();
+}
+
+export async function ownerIdById(buildId: number) {
+	const result = await db
+		.selectFrom("Build")
+		.select("ownerId")
+		.where("id", "=", buildId)
+		.executeTakeFirstOrThrow();
+
+	return result.ownerId;
 }
 
 export async function abilityPointAverages(weaponSplId?: MainWeaponId | null) {
@@ -252,8 +273,80 @@ export async function allByWeaponId(
 	options: { limit: number; sortAbilities?: boolean },
 ) {
 	const { limit, sortAbilities: shouldSortAbilities = false } = options;
+	const weaponIds = weaponIdToArrayWithAlts(weaponId);
 
-	let query = db
+	let rows: Awaited<ReturnType<typeof buildsByWeaponIdQuery>>;
+
+	if (weaponIds.length === 1) {
+		rows = await buildsByWeaponIdQuery(weaponIds[0], limit);
+	} else {
+		// For weapons with alts, run separate queries and merge.
+		// This allows each query to use the covering index for ordering,
+		// which is ~6x faster than using IN with multiple values.
+		const allResults = await Promise.all(
+			weaponIds.map((id) => buildsByWeaponIdQuery(id, limit)),
+		);
+
+		const seenBuildIds = new Set<number>();
+		type BuildRow = Awaited<ReturnType<typeof buildsByWeaponIdQuery>>[number];
+		const merged: BuildRow[] = [];
+
+		// Merge results maintaining sort order (tier asc, isTop500 desc, updatedAt desc)
+		// Since each query returns sorted results, we can interleave them
+		const pointers = allResults.map(() => 0);
+
+		while (merged.length < limit) {
+			let bestIdx = -1;
+			let bestRow: BuildRow | null = null;
+
+			for (let i = 0; i < allResults.length; i++) {
+				while (
+					pointers[i] < allResults[i].length &&
+					seenBuildIds.has(allResults[i][pointers[i]].id)
+				) {
+					pointers[i]++;
+				}
+
+				if (pointers[i] >= allResults[i].length) continue;
+
+				const row = allResults[i][pointers[i]];
+
+				if (
+					!bestRow ||
+					row.bwTier < bestRow.bwTier ||
+					(row.bwTier === bestRow.bwTier &&
+						row.bwIsTop500 > bestRow.bwIsTop500) ||
+					(row.bwTier === bestRow.bwTier &&
+						row.bwIsTop500 === bestRow.bwIsTop500 &&
+						row.bwUpdatedAt > bestRow.bwUpdatedAt)
+				) {
+					bestIdx = i;
+					bestRow = row;
+				}
+			}
+
+			if (bestIdx === -1 || !bestRow) break;
+
+			seenBuildIds.add(bestRow.id);
+			merged.push(bestRow);
+			pointers[bestIdx]++;
+		}
+
+		rows = merged;
+	}
+
+	return rows.map((row) => {
+		const abilities = dbAbilitiesToArrayOfArrays(row.abilities);
+
+		return {
+			...row,
+			abilities: shouldSortAbilities ? sortAbilities(abilities) : abilities,
+		};
+	});
+}
+
+function buildsByWeaponIdQuery(weaponSplId: MainWeaponId, limit: number) {
+	return db
 		.selectFrom("BuildWeapon")
 		.innerJoin("Build", "Build.id", "BuildWeapon.buildId")
 		.leftJoin("PlusTier", "PlusTier.userId", "Build.ownerId")
@@ -268,6 +361,9 @@ export async function allByWeaponId(
 			"Build.updatedAt",
 			"Build.private",
 			"PlusTier.tier as plusTier",
+			"BuildWeapon.tier as bwTier",
+			"BuildWeapon.isTop500 as bwIsTop500",
+			"BuildWeapon.updatedAt as bwUpdatedAt",
 			withAbilities(eb),
 			jsonArrayFrom(
 				eb
@@ -284,26 +380,12 @@ export async function allByWeaponId(
 			).as("owner"),
 		])
 		.where("Build.private", "=", 0)
-		.where("BuildWeapon.weaponSplId", "in", weaponIdToArrayWithAlts(weaponId))
+		.where("BuildWeapon.weaponSplId", "=", weaponSplId)
 		.orderBy("BuildWeapon.tier", "asc")
 		.orderBy("BuildWeapon.isTop500", "desc")
 		.orderBy("BuildWeapon.updatedAt", "desc")
-		.limit(limit);
-
-	if (weaponIdHasAlts(weaponId)) {
-		query = query.groupBy("BuildWeapon.buildId");
-	}
-
-	const rows = await query.execute();
-
-	return rows.map((row) => {
-		const abilities = dbAbilitiesToArrayOfArrays(row.abilities);
-
-		return {
-			...row,
-			abilities: shouldSortAbilities ? sortAbilities(abilities) : abilities,
-		};
-	});
+		.limit(limit)
+		.execute();
 }
 
 function withAbilities(eb: ExpressionBuilder<DB, "Build">) {

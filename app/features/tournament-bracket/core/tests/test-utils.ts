@@ -77,6 +77,7 @@ export const testTournament = ({
 			tieBreakerMapPool: [],
 			toSetMapPool: [],
 			participatedUsers: [],
+			castStreams: [],
 			mapPickingStyle: "AUTO_SZ",
 			settings: {
 				bracketProgression: [
@@ -89,6 +90,7 @@ export const testTournament = ({
 				],
 			},
 			castedMatchesInfo: null,
+			seedingSnapshot: null,
 			teams: nTeams(participant.length, Math.min(...participant)),
 			author: {
 				chatNameColor: null,

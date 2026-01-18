@@ -317,6 +317,7 @@ function FancyStageBanner({
 	};
 
 	const inBanPhase =
+		!data.matchIsOver &&
 		data.match.roundMaps?.pickBan === "BAN_2" &&
 		data.mapList &&
 		data.mapList.filter((m) => m.bannedByTournamentTeamId).length < 2;

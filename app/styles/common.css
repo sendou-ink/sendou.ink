@@ -540,6 +540,267 @@ abbr[title] {
 	display: none !important;
 }
 
+.alert.warning > svg {
+	fill: var(--theme-warning);
+}
+
+.alert.error > svg {
+	fill: var(--theme-error);
+}
+
+.alert.success > svg {
+	fill: var(--theme-success);
+}
+
+.form-errors {
+	font-size: var(--fonts-sm);
+}
+
+.form-errors > h4 {
+	color: var(--theme-error);
+}
+
+.section > div {
+	padding: var(--s-2);
+	border-radius: var(--rounded);
+	background-color: var(--bg-darker);
+}
+
+.section > h2 {
+	color: var(--text-lighter);
+	font-size: var(--fonts-md);
+}
+
+.stack {
+	display: flex;
+	flex-direction: column;
+}
+
+.stack.xxxs {
+	gap: var(--s-0-5);
+}
+
+.stack.xxs {
+	gap: var(--s-1);
+}
+
+.stack.xs {
+	gap: var(--s-1-5);
+}
+
+.stack.sm {
+	gap: var(--s-2);
+}
+
+.stack.sm-column {
+	column-gap: var(--s-2);
+}
+
+.stack.sm-plus {
+	gap: var(--s-3);
+}
+
+.stack.md {
+	gap: var(--s-4);
+}
+
+.stack.md-plus {
+	gap: var(--s-6);
+}
+
+.stack.lg {
+	gap: var(--s-8);
+}
+
+.stack.xs-row {
+	row-gap: var(--s-1-5);
+}
+
+.stack.lg-row {
+	row-gap: var(--s-8);
+}
+
+.stack.xl {
+	gap: var(--s-12);
+}
+
+.stack.xxl {
+	gap: var(--s-16);
+}
+
+.stack.horizontal {
+	flex-direction: row;
+}
+
+.flex-same-size {
+	flex: 1 1 0px;
+}
+
+.lock-scroll {
+	overflow: hidden;
+	height: unset;
+}
+
+.small-icon {
+	width: 1.2rem;
+	height: 1.2rem;
+}
+
+/* https://stackoverflow.com/questions/50917016/make-a-hidden-field-required/50917245#comment117565184_50917245 */
+.hidden-input-with-validation {
+	position: absolute;
+	width: 0;
+	height: 0;
+	border: none;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.label__container {
+	display: flex;
+	align-items: flex-end;
+	gap: var(--s-2);
+	margin-block-end: var(--label-margin);
+}
+
+.label__container > label {
+	margin: 0;
+}
+
+.label__value {
+	color: var(--text-lighter);
+	font-size: var(--fonts-xxs);
+	margin-block-start: -5px;
+}
+
+.label__value.warning {
+	color: var(--theme-warning);
+}
+
+.label__value.error {
+	color: var(--theme-error);
+}
+
+.error-message {
+	display: block;
+	color: var(--theme-error);
+	font-size: var(--fonts-xs);
+	margin-block-start: var(--label-margin);
+}
+
+.info-message {
+	display: block;
+	color: var(--text-lighter);
+	font-size: var(--fonts-xs);
+	margin-block-start: var(--label-margin);
+}
+
+.no-margin {
+	margin: 0;
+}
+
+.small-icon {
+	width: 1.2rem;
+	height: 1.2rem;
+}
+
+.small-text {
+	font-size: var(--fonts-xxs) !important;
+}
+
+.colors__summary {
+	padding: var(--s-2) var(--s-3);
+	border: 2px solid var(--border);
+	border-radius: var(--rounded-sm);
+	background-color: var(--bg-input);
+	font-weight: var(--bold);
+	font-size: var(--fonts-xs);
+
+	& div {
+		display: inline-flex;
+	}
+
+	& svg {
+		width: 24px;
+		color: var(--theme);
+		position: absolute;
+		right: 20px;
+		top: 14px;
+	}
+
+	& + div {
+		margin-block-start: var(--s-4);
+	}
+}
+
+.colors__container {
+	width: 100%;
+	font-size: var(--fonts-sm);
+	font-weight: var(--bold);
+	padding: var(--s-3);
+	border: 2px solid var(--border);
+	border-radius: var(--rounded-sm);
+	background-color: var(--bg-input);
+	margin-bottom: var(--s-3);
+	overflow-x: auto;
+}
+
+.colors__grid {
+	display: grid;
+	justify-content: space-between;
+	grid-template-columns: repeat(3, max-content);
+	gap: var(--s-3);
+}
+
+.colors__table {
+	width: 100%;
+	border-spacing: 0;
+	text-indent: 0;
+	text-align: left;
+	font-size: var(--fonts-xs);
+
+	& svg {
+		width: 1rem;
+		height: 1rem;
+		display: inline;
+		vertical-align: sub;
+		margin-right: 2px;
+	}
+
+	& td {
+		padding-block: var(--s-2);
+	}
+
+	& tr:last-child td {
+		border-bottom: none;
+		padding-bottom: 0;
+	}
+}
+
+.colors__contrast {
+	text-wrap-mode: nowrap;
+
+	&.fail {
+		color: var(--theme-error);
+	}
+
+	&.success {
+		color: var(--theme-success);
+	}
+}
+
+.playwire__img {
+	display: block;
+	width: 200px;
+	margin-right: auto;
+	margin-left: auto;
+}
+
+.playwire__text {
+	font-size: var(--fonts-sm);
+	text-align: center;
+}
+
 .top-leaderboard {
 	min-height: 130px;
 	margin: 10px 0;

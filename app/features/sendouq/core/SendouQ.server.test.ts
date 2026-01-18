@@ -629,8 +629,8 @@ describe("SendouQ", () => {
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
-				const replayGroup = groups.find((g) => g.members === undefined);
-				expect(replayGroup?.isReplay).toBe(true);
+				const fullGroups = groups.filter((g) => g.members === undefined);
+				expect(fullGroups.some((g) => g.isReplay)).toBe(true);
 			});
 
 			test("does not mark as replay when less than 3 members overlap", async () => {

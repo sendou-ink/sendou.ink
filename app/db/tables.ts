@@ -514,6 +514,16 @@ export interface Tournament {
 	parentTournamentId: number | null;
 	/** Is the tournament finalized meaning all the matches are played and TO has locked it making it read-only */
 	isFinalized: Generated<DBBoolean>;
+	/** Snapshot of teams and rosters when seeds were last saved. Used to detect NEW teams/players. */
+	seedingSnapshot: JSONColumnTypeNullable<SeedingSnapshot>;
+}
+
+export interface SeedingSnapshot {
+	savedAt: number;
+	teams: Array<{
+		teamId: number;
+		members: Array<{ userId: number; username: string }>;
+	}>;
 }
 
 export interface PreparedMaps {
@@ -989,6 +999,14 @@ export interface ApiToken {
 	createdAt: GeneratedAlways<number>;
 }
 
+export interface LiveStream {
+	id: GeneratedAlways<number>;
+	userId: number | null;
+	viewerCount: number;
+	thumbnailUrl: string;
+	twitch: string | null;
+}
+
 export interface BanLog {
 	id: GeneratedAlways<number>;
 	userId: number;
@@ -1163,6 +1181,7 @@ export interface DB {
 	AllTeamMember: TeamMember;
 	ApiToken: ApiToken;
 	Art: Art;
+	LiveStream: LiveStream;
 	ArtTag: ArtTag;
 	ArtUserMetadata: ArtUserMetadata;
 	TaggedArt: TaggedArt;

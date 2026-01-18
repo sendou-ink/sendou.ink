@@ -330,6 +330,7 @@
 	"clockFormat.12h": "",
 	"badges.selector.none": "Aucun badges est sélectionné",
 	"badges.selector.select": "Selectionner un badge pour l'ajouter",
+	"badges.selector.noneAvailable": "",
 	"api.title": "",
 	"api.description": "",
 	"api.noAccess": "",

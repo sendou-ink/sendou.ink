@@ -3,6 +3,7 @@ import {
 	DndContext,
 	DragOverlay,
 	PointerSensor,
+	TouchSensor,
 	useDraggable,
 	useSensor,
 	useSensors,
@@ -64,7 +65,15 @@ export default function Planner() {
 		previewPath: string;
 	} | null>(null);
 
-	const sensors = useSensors(useSensor(PointerSensor));
+	const sensors = useSensors(
+		useSensor(PointerSensor),
+		useSensor(TouchSensor, {
+			activationConstraint: {
+				delay: 200,
+				tolerance: 5,
+			},
+		}),
+	);
 
 	const handleMount = React.useCallback(
 		(mountedEditor: Editor) => {

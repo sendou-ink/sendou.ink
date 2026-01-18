@@ -72,21 +72,22 @@ export function MatchRosters({
 				{teamOnePlayers.length > 0 ? (
 					<ul className="stack xs mt-2">
 						{teamOnePlayers.map((p) => {
+							const isInactive =
+								teamOneParticipatedPlayers.length > 0 &&
+								teamOneParticipatedPlayers.every(
+									(participatedPlayer) => p.id !== participatedPlayer.id,
+								);
+
 							return (
 								<li key={p.id}>
 									<Link
 										to={userPage(p)}
 										className={clsx("stack horizontal sm items-center", {
-											[styles.inactivePlayer]:
-												teamOneParticipatedPlayers.length > 0 &&
-												teamOneParticipatedPlayers.every(
-													(participatedPlayer) =>
-														p.id !== participatedPlayer.id,
-												),
+											[styles.inactivePlayer]: isInactive,
 										})}
 									>
 										<Avatar user={p} size="xxs" />
-										{p.username}
+										<span>{p.username}</span>
 										{p.pronouns ? (
 											<span className="text-lighter ml-1 text-xxxs">
 												{p.pronouns.subject}/{p.pronouns.object}
@@ -132,21 +133,22 @@ export function MatchRosters({
 				{teamTwoPlayers.length > 0 ? (
 					<ul className="stack xs mt-2">
 						{teamTwoPlayers.map((p) => {
+							const isInactive =
+								teamTwoParticipatedPlayers.length > 0 &&
+								teamTwoParticipatedPlayers.every(
+									(participatedPlayer) => p.id !== participatedPlayer.id,
+								);
+
 							return (
 								<li key={p.id}>
 									<Link
 										to={userPage(p)}
 										className={clsx("stack horizontal sm items-center", {
-											[styles.inactivePlayer]:
-												teamTwoParticipatedPlayers.length > 0 &&
-												teamTwoParticipatedPlayers.every(
-													(participatedPlayer) =>
-														p.id !== participatedPlayer.id,
-												),
+											[styles.inactivePlayer]: isInactive,
 										})}
 									>
 										<Avatar user={p} size="xxs" />
-										{p.username}
+										<span>{p.username}</span>
 										{p.pronouns ? (
 											<span className="text-lighter ml-1 text-xxxs">
 												{p.pronouns.subject}/{p.pronouns.object}

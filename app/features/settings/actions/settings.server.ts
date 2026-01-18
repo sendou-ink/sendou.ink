@@ -7,7 +7,6 @@ import { clampThemeToGamut } from "~/utils/oklch-gamut";
 import {
 	errorToast,
 	parseRequestPayload,
-	successToast,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { settingsEditSchema } from "../settings-schemas";
@@ -62,5 +61,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		}
 	}
 
-	return successToast("Settings updated");
+	// TODO: removed temporarily, restore when we have better toasts
+	// (current problem is that when you update no screen from /q/settings, you get redirected to /settings)
+	// return successToast("Settings updated");
 };
