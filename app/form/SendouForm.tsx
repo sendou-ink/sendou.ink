@@ -1,7 +1,7 @@
 import * as React from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { useFetcher } from "react-router";
+import { useFetcher, useLocation } from "react-router";
 import type { z } from "zod";
 import { FormMessage } from "~/components/FormMessage";
 import { SubmitButton } from "~/components/SubmitButton";
@@ -101,6 +101,23 @@ export function SendouForm<T extends z.ZodRawShape>({
 	const initialValues = buildInitialValues(schema, defaultValues);
 	const [values, setValues] =
 		React.useState<Record<string, unknown>>(initialValues);
+
+	const location = useLocation();
+	const locationKey = `${location.pathname}${location.search}`;
+	const previousLocationKey = React.useRef(locationKey);
+
+	// Reset form when URL changes (handles edit → new transitions)
+	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally reset on URL change only, using current schema/defaultValues from closure
+	React.useEffect(() => {
+		if (previousLocationKey.current === locationKey) return;
+		previousLocationKey.current = locationKey;
+
+		const newInitialValues = buildInitialValues(schema, defaultValues);
+		setValues(newInitialValues);
+		setClientErrors({});
+		setHasSubmitted(false);
+		setFallbackError(null);
+	}, [locationKey]);
 
 	const latestActionData = React.useRef(fetcher.data);
 	if (fetcher.data !== latestActionData.current) {
@@ -312,7 +329,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 				onSubmit={handleSubmit}
 			>
 				{title ? <h2 className={styles.title}>{title}</h2> : null}
-				{resolvedChildren}
+				<React.Fragment key={locationKey}>{resolvedChildren}</React.Fragment>
 				{autoSubmit ? null : (
 					<div className="mt-4 stack horizontal md mx-auto justify-center">
 						<SubmitButton
