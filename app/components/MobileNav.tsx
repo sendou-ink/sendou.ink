@@ -238,7 +238,7 @@ function MenuOverlay({
 
 	return (
 		<ModalOverlay className={styles.panelOverlay} isOpen isDismissable={false}>
-			<Modal className={styles.menuOverlay}>
+			<Modal className={clsx(styles.menuOverlay, "scrollbar")}>
 				<Dialog className={styles.panelDialog}>
 					<header className={styles.menuHeader}>
 						<h2 className={styles.menuTitle}>{t("front:mobileNav.menu")}</h2>
