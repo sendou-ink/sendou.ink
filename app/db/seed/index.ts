@@ -2756,14 +2756,39 @@ async function organization() {
 function liveStreams() {
 	const userIds = userIdsInAscendingOrderById();
 
+	// Add deterministic streams for E2E testing
+	// Users 6 and 7 are in ITZ tournament team 102
+	const deterministicStreams = [
+		{ userId: 6, viewerCount: 150, twitch: "test_player_stream_1" },
+		{ userId: 7, viewerCount: 75, twitch: "test_player_stream_2" },
+		// Cast-only stream (user 100 is not in ITZ tournament teams)
+		{ userId: 100, viewerCount: 500, twitch: "test_cast_stream" },
+	];
+
+	for (const stream of deterministicStreams) {
+		sql
+			.prepare(
+				`
+			insert into "LiveStream" ("userId", "viewerCount", "thumbnailUrl", "twitch")
+			values ($userId, $viewerCount, $thumbnailUrl, $twitch)
+			`,
+			)
+			.run({
+				userId: stream.userId,
+				viewerCount: stream.viewerCount,
+				thumbnailUrl: "https://picsum.photos/320/180",
+				twitch: stream.twitch,
+			});
+	}
+
 	const streamingUserIds = [
 		...userIds.slice(3, 20),
 		...userIds.slice(40, 50),
 		...userIds.slice(100, 110),
-	];
+	].filter((id) => !deterministicStreams.some((s) => s.userId === id));
 
 	const shuffledStreamers = faker.helpers.shuffle(streamingUserIds);
-	const selectedStreamers = shuffledStreamers.slice(0, 20);
+	const selectedStreamers = shuffledStreamers.slice(0, 17);
 
 	for (const userId of selectedStreamers) {
 		const viewerCount = faker.helpers.weightedArrayElement([

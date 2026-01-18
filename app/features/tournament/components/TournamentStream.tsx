@@ -19,7 +19,11 @@ export function TournamentStream({
 	const user = team?.members.find((m) => m.userId === stream.userId);
 
 	return (
-		<div key={stream.userId} className="stack sm">
+		<div
+			key={stream.userId}
+			className="stack sm"
+			data-testid="tournament-stream"
+		>
 			{withThumbnail ? (
 				<a
 					href={twitchUrl(stream.twitchUserName)}

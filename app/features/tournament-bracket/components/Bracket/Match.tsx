@@ -270,7 +270,10 @@ function MatchStreams({ match }: Pick<MatchProps, "match">) {
 	}
 
 	return (
-		<div className="stack md justify-center tournament-bracket__stream-popover">
+		<div
+			className="stack md justify-center tournament-bracket__stream-popover"
+			data-testid="stream-popover"
+		>
 			{streamsOfThisMatch.map((stream) => (
 				<TournamentStream
 					key={stream.twitchUserName}
