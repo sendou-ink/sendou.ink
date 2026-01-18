@@ -412,6 +412,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734656039,
 						inGameName: "Plussy#1291",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 2899,
@@ -425,6 +428,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734656044,
 						inGameName: "CHIMERA#1263",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 6114,
@@ -438,6 +444,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734656047,
 						inGameName: "CountMeOut#1985",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 33963,
@@ -451,6 +460,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734664082,
 						inGameName: "BIDOOFGMAX#8251",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 30176,
@@ -464,6 +476,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734674285,
 						inGameName: "Bugha 33#1316",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 				],
 				checkIns: [
@@ -506,6 +521,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734423187,
 						inGameName: "☆ SD-J ☆#2947",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 21689,
@@ -519,6 +537,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734424893,
 						inGameName: "parasyka#2169",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 3147,
@@ -532,6 +553,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734426984,
 						inGameName: "cookie♪#1006",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 2072,
@@ -545,6 +569,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734426986,
 						inGameName: null,
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 				],
 				checkIns: [
@@ -582,6 +609,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734660846,
 						inGameName: "Telethia#6611",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 13370,
@@ -595,6 +625,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734660856,
 						inGameName: "Puma#2209",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 45,
@@ -608,6 +641,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734660882,
 						inGameName: "ShockWavee#3003",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 1843,
@@ -621,6 +657,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734663143,
 						inGameName: null,
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 				],
 				checkIns: [
@@ -658,6 +697,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734683349,
 						inGameName: "mitsi#2589",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 13590,
@@ -671,6 +713,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734683352,
 						inGameName: "☆ SD-N ☆#2936",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 10757,
@@ -684,6 +729,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734683356,
 						inGameName: "Wilds ♪#6274",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 33047,
@@ -697,6 +745,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734683966,
 						inGameName: "2F Law#1355",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 41024,
@@ -710,6 +761,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734685180,
 						inGameName: "His Silly#2385",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 				],
 				checkIns: [
@@ -752,6 +806,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734608907,
 						inGameName: "H! Veems#3106",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 29665,
@@ -765,6 +822,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734608923,
 						inGameName: "H!PwPwPew#2889",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 46006,
@@ -778,6 +838,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734608925,
 						inGameName: "H!Ozzysqid#2558",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 33483,
@@ -791,6 +854,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734608931,
 						inGameName: "DrkXWolf17#3326",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 11780,
@@ -804,6 +870,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734659216,
 						inGameName: "Slanted#1646",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 37901,
@@ -817,6 +886,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734684084,
 						inGameName: null,
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 				],
 				checkIns: [
@@ -854,6 +926,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734397954,
 						inGameName: "Albonchap#9998",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 43662,
@@ -867,6 +942,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734397970,
 						inGameName: "FoolLime#1864",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 33491,
@@ -880,6 +958,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734397973,
 						inGameName: "snowy#2709",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 46467,
@@ -893,6 +974,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734398287,
 						inGameName: "Veryneggy#1494",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 46813,
@@ -906,6 +990,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734398628,
 						inGameName: "Mikil#2961",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 				],
 				checkIns: [
@@ -948,6 +1035,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734598652,
 						inGameName: "ЯR Dit-toe#3315",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 33611,
@@ -961,6 +1051,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734598655,
 						inGameName: "ЯR Samkat #3138",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 31148,
@@ -974,6 +1067,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734598656,
 						inGameName: "ЯR smart!!#1424",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 					{
 						userId: 33578,
@@ -987,6 +1083,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						createdAt: 1734612388,
 						inGameName: "Mat#1561",
 						plusTier: null,
+						streamTwitch: null,
+						streamViewerCount: null,
+						streamThumbnailUrl: null,
 					},
 				],
 				checkIns: [
@@ -1105,5 +1204,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 			17855, 21689, 26992, 30176, 31148, 33047, 33491, 33578, 33611, 37632,
 			37901, 43518, 43662, 45879, 46006, 46467, 46813,
 		],
+		castStreams: [],
 	},
 });

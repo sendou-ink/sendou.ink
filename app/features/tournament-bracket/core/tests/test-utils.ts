@@ -77,6 +77,7 @@ export const testTournament = ({
 			tieBreakerMapPool: [],
 			toSetMapPool: [],
 			participatedUsers: [],
+			castStreams: [],
 			mapPickingStyle: "AUTO_SZ",
 			settings: {
 				bracketProgression: [

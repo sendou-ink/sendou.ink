@@ -5,7 +5,6 @@ import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournam
 import { databaseTimestampToDate } from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
-import { streamsByTournamentId } from "../core/streams.server";
 
 export type TournamentLoaderData = {
 	tournament: Awaited<ReturnType<typeof tournamentDataCached>>;
@@ -27,11 +26,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	});
 
 	const tournament = await tournamentDataCached({ tournamentId, user });
-
-	const streams =
-		tournament.data.stage.length > 0 && !tournament.ctx.isFinalized
-			? await streamsByTournamentId(tournament.ctx)
-			: [];
 
 	const tournamentStartedInTheLastMonth =
 		databaseTimestampToDate(tournament.ctx.startTime) >
@@ -58,8 +52,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	// skip expensive rr7 data serialization (hot path loader)
 	return JSON.stringify({
 		tournament,
-		streamingParticipants: streams.flatMap((s) => (s.userId ? [s.userId] : [])),
-		streamsCount: streams.length,
 		friendCodes: showFriendCodes
 			? await TournamentRepository.friendCodesByTournamentId(tournamentId)
 			: undefined,
