@@ -445,7 +445,7 @@ function WeaponsField({
 
 	const setWeapon = (value: MainWeaponId | null) => {
 		setItemField("weapon", value);
-		if (value) addRecentlyReportedWeapon(value);
+		if (typeof value === "number") addRecentlyReportedWeapon(value);
 	};
 
 	const setTeamWeapon = (
@@ -454,13 +454,13 @@ function WeaponsField({
 		value: MainWeaponId | null,
 	) => {
 		const currentPool = [...(matchValues[team] || [])];
-		if (value) {
+		if (typeof value === "number") {
 			currentPool[weaponIdx] = { id: value, isFavorite: false };
 		} else {
 			currentPool.splice(weaponIdx, 1);
 		}
 		setItemField(team, currentPool);
-		if (value) addRecentlyReportedWeapon(value);
+		if (typeof value === "number") addRecentlyReportedWeapon(value);
 	};
 
 	const copyFromPrevious = () => {

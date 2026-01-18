@@ -504,7 +504,7 @@ export function weaponPool(
 		Omit<Extract<FormField, { type: "weapon-pool" }>, "type" | "initialValue">
 	>,
 ) {
-	return z
+	let schema = z
 		.array(
 			z.object({
 				id: weaponSplId,
@@ -512,15 +512,21 @@ export function weaponPool(
 			}),
 		)
 		.min(args.minCount ?? 0)
-		.max(args.maxCount)
-		.refine((val) => val.length === R.uniqueBy(val, (item) => item.id).length)
-		.register(formRegistry, {
-			...args,
-			label: prefixKey(args.label),
-			bottomText: prefixKey(args.bottomText),
-			type: "weapon-pool",
-			initialValue: [],
-		});
+		.max(args.maxCount);
+
+	if (!args.allowDuplicates) {
+		schema = schema.refine(
+			(val) => val.length === R.uniqueBy(val, (item) => item.id).length,
+		);
+	}
+
+	return schema.register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "weapon-pool",
+		initialValue: [],
+	});
 }
 
 export function stringConstant<T extends string>(value: T) {

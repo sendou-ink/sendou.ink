@@ -126,12 +126,14 @@ const matchFieldsetSchema = z.object({
 		maxCount: 4,
 		disableSorting: true,
 		disableFavorites: true,
+		allowDuplicates: true,
 	}),
 	weaponsTeamTwo: weaponPool({
 		label: "labels.vodWeaponsTeamTwo",
 		maxCount: 4,
 		disableSorting: true,
 		disableFavorites: true,
+		allowDuplicates: true,
 	}),
 });
 

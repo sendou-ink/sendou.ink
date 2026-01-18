@@ -68,7 +68,7 @@ function transformFormDataToVideo(data: VodFormData): VideoBeingAdded {
 							...weaponPoolToIds(match.weaponsTeamOne ?? []),
 							...weaponPoolToIds(match.weaponsTeamTwo ?? []),
 						]
-					: match.weapon
+					: typeof match.weapon === "number"
 						? [match.weapon as MainWeaponId]
 						: [],
 		})),

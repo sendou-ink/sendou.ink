@@ -99,6 +99,8 @@ interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
 	disableSorting?: boolean;
 	/** Can user favorite weapons in the pool? If disabled, all weapons have isFavorite: false */
 	disableFavorites?: boolean;
+	/** Allow duplicate weapon IDs in the pool */
+	allowDuplicates?: boolean;
 }
 
 interface FormFieldMapPool<T extends string> extends FormFieldBase<T> {
