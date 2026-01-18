@@ -6,13 +6,14 @@
 }
 
 .header {
+	--header-border-radius: calc(var(--rounded-xs) - 2px);
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
 	padding: var(--s-2) var(--s-3);
-	background-color: var(--color-bg-high);
+	background-color: var(--color-bg-higher);
 	border-bottom: var(--border-style);
-	border-radius: var(--rounded-xs) var(--rounded-xs) 0 0;
+	border-radius: var(--header-border-radius) var(--header-border-radius) 0 0;
 }
 
 .dragHandle {
