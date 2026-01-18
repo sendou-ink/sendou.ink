@@ -40,7 +40,6 @@ export const organizationEditFormSchema = z.object({
 	members: array({
 		label: "labels.members",
 		bottomText: "bottomTexts.orgMembersInfo",
-		min: 0,
 		max: 32,
 		field: fieldset({
 			fields: z.object({
@@ -61,13 +60,11 @@ export const organizationEditFormSchema = z.object({
 	}),
 	socials: array({
 		label: "labels.orgSocialLinks",
-		min: 0,
 		max: 10,
 		field: textFieldRequired({ validate: "url", maxLength: 100 }),
 	}),
 	series: array({
 		label: "labels.orgSeries",
-		min: 0,
 		max: 10,
 		field: fieldset({
 			fields: z.object({

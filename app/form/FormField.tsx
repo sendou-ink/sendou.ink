@@ -327,7 +327,7 @@ export function FormField({
 							values: itemValues,
 							formValues: context?.values ?? {},
 							setItemField,
-							canRemove: arrayValue.length > formField.min,
+							canRemove: arrayValue.length > (formField.min ?? 0),
 							remove,
 						});
 					}

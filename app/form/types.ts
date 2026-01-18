@@ -115,7 +115,7 @@ interface FormFieldImage<T extends string>
 
 export interface FormFieldArray<T extends string, S extends z.ZodType>
 	extends FormFieldBase<T> {
-	min: number;
+	min?: number;
 	max: number;
 	field: S;
 }

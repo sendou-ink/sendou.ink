@@ -129,12 +129,10 @@ export const calendarFiltersFormSchema = z
 		tagsIncluded: checkboxGroup({
 			label: "labels.tagsIncluded",
 			items: tagItems,
-			minLength: 0,
 		}),
 		tagsExcluded: checkboxGroup({
 			label: "labels.tagsExcluded",
 			items: tagItems,
-			minLength: 0,
 		}),
 		isSendou: toggle({ label: "labels.onlySendouEvents" }),
 		isRanked: toggle({ label: "labels.onlyRankedEvents" }),
@@ -144,19 +142,16 @@ export const calendarFiltersFormSchema = z
 		orgsIncluded: array({
 			label: "labels.orgsIncluded",
 			field: textFieldOptional({ maxLength: 100 }),
-			min: 0,
 			max: 10,
 		}),
 		orgsExcluded: array({
 			label: "labels.orgsExcluded",
 			field: textFieldOptional({ maxLength: 100 }),
-			min: 0,
 			max: 10,
 		}),
 		authorIdsExcluded: array({
 			label: "labels.authorIdsExcluded",
 			field: userSearchOptional({}),
-			min: 0,
 			max: 10,
 		}),
 	})

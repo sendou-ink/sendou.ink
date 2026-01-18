@@ -488,9 +488,7 @@ export function checkboxGroup<V extends string>(
 ) {
 	return z
 		.array(itemsSchema(args.items))
-		.min(args.minLength ?? 1, {
-			message: "At least one option must be selected",
-		})
+		.min(args.minLength ?? 0)
 		.register(formRegistry, {
 			...args,
 			label: prefixKey(args.label),
@@ -559,7 +557,10 @@ export function array<S extends z.ZodType>(
 		Omit<FormFieldArray<"array", S>, "type" | "initialValue">
 	>,
 ) {
-	const schema = z.array(args.field).min(args.min).max(args.max);
+	const schema = z
+		.array(args.field)
+		.min(args.min ?? 0)
+		.max(args.max);
 	// @ts-expect-error Complex generic type with registry
 	return schema.register(formRegistry, {
 		...args,

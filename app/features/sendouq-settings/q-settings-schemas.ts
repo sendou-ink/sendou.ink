@@ -34,6 +34,5 @@ export const updateVoiceChatSchema = z.object({
 	languages: checkboxGroup({
 		label: "labels.languages",
 		items: LANGUAGE_OPTIONS,
-		minLength: 0,
 	}),
 });

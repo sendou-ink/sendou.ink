@@ -579,6 +579,7 @@ describe("SendouForm", () => {
 						{ label: "modes.TW", value: "TW" },
 						{ label: "modes.SZ", value: "SZ" },
 					],
+					minLength: 1,
 				}),
 			});
 

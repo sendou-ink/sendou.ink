@@ -23,7 +23,7 @@ export function ArrayFormField({
 	name,
 	bottomText,
 	error,
-	min,
+	min = 0,
 	max,
 	value,
 	onChange,

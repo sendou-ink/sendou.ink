@@ -287,7 +287,6 @@ export const newBuildBaseSchema = z.object({
 	modes: checkboxGroup({
 		label: "labels.buildModes",
 		items: modeItems,
-		minLength: 0,
 	}),
 	private: toggle({
 		label: "labels.buildPrivate",
