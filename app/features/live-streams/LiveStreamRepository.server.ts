@@ -12,22 +12,3 @@ export function replaceAll(
 		}
 	});
 }
-
-/** @lintignore */
-export function findAllWithUserInfo() {
-	return db
-		.selectFrom("LiveStream")
-		.innerJoin("User", "LiveStream.userId", "User.id")
-		.select([
-			"LiveStream.twitch",
-			"LiveStream.viewerCount",
-			"LiveStream.thumbnailUrl",
-			"User.id as userId",
-			"User.username",
-			"User.discordId",
-			"User.discordAvatar",
-			"User.customUrl",
-		])
-		.orderBy("LiveStream.viewerCount", "desc")
-		.execute();
-}
