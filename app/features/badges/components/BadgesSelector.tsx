@@ -46,23 +46,29 @@ export function BadgesSelector({
 				</div>
 			)}
 			{showSelect ? (
-				<select
-					onBlur={() => onBlur?.()}
-					onChange={(e) =>
-						onChange([...selectedBadges, Number(e.target.value)])
-					}
-					disabled={Boolean(maxCount && selectedBadges.length >= maxCount)}
-					data-testid="badges-selector"
-				>
-					<option>{t("common:badges.selector.select")}</option>
-					{options
-						.filter((badge) => !selectedBadges.includes(badge.id))
-						.map((badge) => (
-							<option key={badge.id} value={badge.id}>
-								{badge.displayName}
-							</option>
-						))}
-				</select>
+				options.length === 0 ? (
+					<div className="text-warning text-xs">
+						{t("common:badges.selector.noneAvailable")}
+					</div>
+				) : (
+					<select
+						onBlur={() => onBlur?.()}
+						onChange={(e) =>
+							onChange([...selectedBadges, Number(e.target.value)])
+						}
+						disabled={Boolean(maxCount && selectedBadges.length >= maxCount)}
+						data-testid="badges-selector"
+					>
+						<option>{t("common:badges.selector.select")}</option>
+						{options
+							.filter((badge) => !selectedBadges.includes(badge.id))
+							.map((badge) => (
+								<option key={badge.id} value={badge.id}>
+									{badge.displayName}
+								</option>
+							))}
+					</select>
+				)
 			) : null}
 		</div>
 	);
