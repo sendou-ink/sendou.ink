@@ -12,8 +12,6 @@ import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 
 export { action, loader };
 
-import { mainStyles } from "~/components/Main";
-
 export const handle: SendouRouteHandle = {
 	i18n: ["weapons", "builds", "gear"],
 };

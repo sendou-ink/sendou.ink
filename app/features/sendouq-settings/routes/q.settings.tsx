@@ -2,11 +2,9 @@ import {
 	Map as MapIcon,
 	Mic,
 	Puzzle,
-	Star,
 	Trash,
 	Users,
 	Volume2,
-	X,
 } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";

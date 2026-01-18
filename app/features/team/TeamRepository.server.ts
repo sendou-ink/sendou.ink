@@ -306,10 +306,9 @@ export async function update({
 	bsky,
 	tag,
 	customTheme,
-}: Pick<
-	Insertable<Tables["Team"]>,
-	"id" | "name" | "bio" | "bsky" | "tag"
-> & { customTheme: CustomTheme | null }) {
+}: Pick<Insertable<Tables["Team"]>, "id" | "name" | "bio" | "bsky" | "tag"> & {
+	customTheme: CustomTheme | null;
+}) {
 	const customUrl = mySlugify(name);
 
 	const team = await db

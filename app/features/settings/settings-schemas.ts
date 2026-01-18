@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { select, stringConstant, toggle } from "~/form/fields";
+import { customField, select, stringConstant, toggle } from "~/form/fields";
+import { themeInputSchema } from "~/utils/zod";
+
+export const customThemeSchema = z.object({
+	_action: stringConstant("UPDATE_CUSTOM_THEME"),
+	newValue: customField({ initialValue: null }, themeInputSchema.nullable()),
+});
 
 export const clockFormatSchema = z.object({
 	_action: stringConstant("UPDATE_CLOCK_FORMAT"),
@@ -38,6 +44,7 @@ export const updateNoScreenSchema = z.object({
 });
 
 export const settingsEditSchema = z.union([
+	customThemeSchema,
 	disableBuildAbilitySortingSchema,
 	disallowScrimPickupsFromUntrustedSchema,
 	updateNoScreenSchema,

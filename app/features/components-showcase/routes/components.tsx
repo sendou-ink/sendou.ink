@@ -1,7 +1,6 @@
 import { parseDate } from "@internationalized/date";
 import { Check, Plus, Search, SquarePen, Trash } from "lucide-react";
 import { useEffect, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
 import { Ability } from "~/components/Ability";
 import { AddNewButton } from "~/components/AddNewButton";
 import { Alert } from "~/components/Alert";
@@ -26,8 +25,6 @@ import {
 import { toastQueue } from "~/components/elements/Toast";
 import { Flag } from "~/components/Flag";
 import { FormMessage } from "~/components/FormMessage";
-import { InputFormField } from "~/components/form/InputFormField";
-import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import {
 	ModeImage,
 	SpecialWeaponImage,
@@ -83,11 +80,6 @@ export const SECTIONS = [
 	},
 	{ title: "Sub Navigation", id: "sub-navigation", component: SubNavSection },
 	{ title: "Date Pickers", id: "date-pickers", component: DatePickerSection },
-	{
-		title: "Form Components",
-		id: "form-components",
-		component: FormComponentsSection,
-	},
 	{
 		title: "Splatoon Images",
 		id: "splatoon-images",
@@ -1707,77 +1699,6 @@ function DatePickerSection({ id }: { id: string }) {
 						onChange={handleDatePickerChange}
 						isRequired
 					/>
-				</ComponentRow>
-			</div>
-		</Section>
-	);
-}
-
-function FormComponentsSection({ id }: { id: string }) {
-	const methods = useForm();
-
-	return (
-		<Section>
-			<SectionTitle id={id}>Form Components</SectionTitle>
-
-			<div className="stack md">
-				<ComponentRow label="InputFormField">
-					<FormProvider {...methods}>
-						<form>
-							<InputFormField label="Username" name="username" required />
-						</form>
-					</FormProvider>
-				</ComponentRow>
-
-				<ComponentRow label="InputFormField with Placeholder">
-					<FormProvider {...methods}>
-						<form>
-							<InputFormField
-								label="Email"
-								name="email"
-								type="email"
-								placeholder="user@example.com"
-							/>
-						</form>
-					</FormProvider>
-				</ComponentRow>
-
-				<ComponentRow label="InputFormField with Bottom Text">
-					<FormProvider {...methods}>
-						<form>
-							<InputFormField
-								label="Website"
-								name="website"
-								type="url"
-								bottomText="Enter your personal or company website"
-							/>
-						</form>
-					</FormProvider>
-				</ComponentRow>
-
-				<ComponentRow label="TextAreaFormField">
-					<FormProvider {...methods}>
-						<form>
-							<TextAreaFormField
-								label="Description"
-								name="description"
-								maxLength={500}
-							/>
-						</form>
-					</FormProvider>
-				</ComponentRow>
-
-				<ComponentRow label="TextAreaFormField with Bottom Text">
-					<FormProvider {...methods}>
-						<form>
-							<TextAreaFormField
-								label="Bio"
-								name="bio"
-								maxLength={200}
-								bottomText="Tell us about yourself"
-							/>
-						</form>
-					</FormProvider>
 				</ComponentRow>
 			</div>
 		</Section>

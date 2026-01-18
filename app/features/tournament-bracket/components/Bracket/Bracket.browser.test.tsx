@@ -1,14 +1,13 @@
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
+import styles from "~/features/tournament-bracket/components/Bracket/bracket.module.css";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { EliminationBracketSide } from "./Elimination";
 import { Bracket } from "./index";
 import { RoundRobinBracket } from "./RoundRobin";
 import { SwissBracket } from "./Swiss";
-import "~/features/tournament-bracket/components/Bracket/bracket.css";
-import "~/features/tournament-bracket/tournament-bracket.css";
 
 const mockTournament = {
 	ctx: {
@@ -770,7 +769,7 @@ describe("Single Elimination Bracket", () => {
 			<EliminationBracketSide bracket={bracket} type="single" isExpanded />,
 		);
 
-		const scores = screen.container.querySelectorAll(".bracket__match__score");
+		const scores = screen.container.querySelectorAll(`.${styles.matchScore}`);
 		expect(scores.length).toBeGreaterThan(0);
 	});
 
@@ -827,7 +826,7 @@ describe("Single Elimination Bracket", () => {
 
 		// Should show exactly 2 round columns (Semifinals and Finals)
 		const roundColumns = screen.container.querySelectorAll(
-			".elim-bracket__round-column",
+			`.${styles.elimRoundColumn}`,
 		);
 		expect(roundColumns.length).toBe(2);
 	});
@@ -911,7 +910,7 @@ describe("Double Elimination Bracket", () => {
 
 		// Small 4-team bracket only has Grand Finals (GF prefix), not regular WB rounds
 		const headerBox = screen.container.querySelector(
-			".bracket__match__header__box",
+			`.${styles.matchHeaderBox}`,
 		);
 		expect(headerBox?.textContent).toContain("GF");
 		expect(headerBox?.textContent).toContain("1.1");
@@ -976,7 +975,9 @@ describe("Round Robin Bracket", () => {
 			<RoundRobinBracket bracket={bracket} />,
 		);
 
-		const tables = screen.container.querySelectorAll(".rr__placements-table");
+		const tables = screen.container.querySelectorAll(
+			`.${styles.rrPlacementsTable}`,
+		);
 		expect(tables.length).toBe(2);
 	});
 });
@@ -1014,7 +1015,7 @@ describe("Swiss Bracket", () => {
 			<SwissBracket bracket={bracket} bracketIdx={0} />,
 		);
 
-		const scores = screen.container.querySelectorAll(".bracket__match__score");
+		const scores = screen.container.querySelectorAll(`.${styles.matchScore}`);
 		expect(scores.length).toBeGreaterThan(0);
 	});
 
@@ -1026,7 +1027,9 @@ describe("Swiss Bracket", () => {
 			<SwissBracket bracket={bracket} bracketIdx={0} />,
 		);
 
-		const table = screen.container.querySelector(".rr__placements-table");
+		const table = screen.container.querySelector(
+			`.${styles.rrPlacementsTable}`,
+		);
 		expect(table).not.toBeNull();
 	});
 

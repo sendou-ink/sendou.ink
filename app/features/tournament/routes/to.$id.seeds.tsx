@@ -35,7 +35,6 @@ import { navIconUrl, userResultsPage } from "~/utils/urls";
 import { ordinalToRoundedSp } from "../../mmr/mmr-utils";
 import { action } from "../actions/to.$id.seeds.server";
 import { loader } from "../loaders/to.$id.seeds.server";
-import styles from "../tournament.module.css";
 import { useTournament } from "./to.$id";
 import styles from "./to.$id.seeds.module.css";
 export { loader, action };

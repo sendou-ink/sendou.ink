@@ -15,11 +15,11 @@ import {
 	userPage,
 } from "~/utils/urls";
 import type { UserResultsLoaderData } from "../loaders/u.$identifier.results.server";
+import styles from "../user-page.module.css";
 import {
 	HIGHLIGHT_CHECKBOX_NAME,
 	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
 } from "../user-page-constants";
-import styles from "../user-page.module.css";
 import { ParticipationPill } from "./ParticipationPill";
 
 export type UserResultsTableProps = {

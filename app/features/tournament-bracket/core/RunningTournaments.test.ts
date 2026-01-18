@@ -10,9 +10,13 @@ const createMember = (userId: number) => ({
 	customUrl: null,
 	country: null,
 	twitch: null,
+	plusTier: null,
 	createdAt: 0,
 	isOwner: 0,
 	inGameName: null,
+	streamTwitch: null,
+	streamViewerCount: null,
+	streamThumbnailUrl: null,
 });
 
 const createTestTournament = (

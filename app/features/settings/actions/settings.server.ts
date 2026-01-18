@@ -4,10 +4,7 @@ import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepos
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isSupporter } from "~/modules/permissions/utils";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
-import {
-	errorToast,
-	parseRequestPayload,
-} from "~/utils/remix.server";
+import { errorToast, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { settingsEditSchema } from "../settings-schemas";
 

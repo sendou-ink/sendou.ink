@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { z } from "zod";
+import labelStyles from "~/components/Label.module.css";
 import { FormField } from "./FormField";
 import {
 	array,
@@ -277,8 +278,8 @@ describe("SendouForm", () => {
 				defaultValues: { bio: "123456789" },
 			});
 
-			const counter = screen.container.querySelector(".label__value");
-			expect(counter?.classList.contains("warning")).toBe(true);
+			const counter = screen.container.querySelector(`.${labelStyles.value}`);
+			expect(counter?.classList.contains(labelStyles.valueWarning)).toBe(true);
 		});
 
 		test("value counter shows error style when over max length", async () => {
@@ -290,8 +291,8 @@ describe("SendouForm", () => {
 				defaultValues: { bio: "123456" },
 			});
 
-			const counter = screen.container.querySelector(".label__value");
-			expect(counter?.classList.contains("error")).toBe(true);
+			const counter = screen.container.querySelector(`.${labelStyles.value}`);
+			expect(counter?.classList.contains(labelStyles.valueError)).toBe(true);
 		});
 
 		test("typing updates value", async () => {
