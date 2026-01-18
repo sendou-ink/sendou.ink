@@ -4,7 +4,7 @@ export function up(db) {
 			/*sql*/ `
       create table "LiveStream" (
         "id" integer primary key,
-        "userId" integer not null unique,
+        "userId" integer unique,
         "viewerCount" integer not null,
         "thumbnailUrl" text not null,
         "twitch" text,

@@ -30,14 +30,12 @@ async function syncLiveStreams() {
 		}
 	}
 
-	const liveStreams = streams
-		.filter((stream) => twitchToUserId.has(stream.twitchUserName))
-		.map((stream) => ({
-			userId: twitchToUserId.get(stream.twitchUserName)!,
-			viewerCount: stream.viewerCount,
-			thumbnailUrl: stream.thumbnailUrl,
-			twitch: stream.twitchUserName,
-		}));
+	const liveStreams = streams.map((stream) => ({
+		userId: twitchToUserId.get(stream.twitchUserName) ?? null,
+		viewerCount: stream.viewerCount,
+		thumbnailUrl: stream.thumbnailUrl,
+		twitch: stream.twitchUserName,
+	}));
 
 	await LiveStreamRepository.replaceAll(liveStreams);
 }
