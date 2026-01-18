@@ -114,6 +114,7 @@
 	"labels.vodWeaponsTeamTwo": "武器编成（队伍2）",
 	"labels.vodMatches": "",
 	"errors.dateMustNotBeFuture": "",
+	"errors.dateTooOld": "",
 	"vodTypes.TOURNAMENT": "大会（玩家视角）",
 	"vodTypes.CAST": "大会（观战视角）",
 	"vodTypes.SCRIM": "对抗战",

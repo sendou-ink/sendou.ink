@@ -114,6 +114,7 @@
 	"labels.vodWeaponsTeamTwo": "נשקים (צוות 2)",
 	"labels.vodMatches": "",
 	"errors.dateMustNotBeFuture": "",
+	"errors.dateTooOld": "",
 	"vodTypes.TOURNAMENT": "טורניר (נקודת מבט)",
 	"vodTypes.CAST": "טורניר (קאסט)",
 	"vodTypes.SCRIM": "משחק ידידות",

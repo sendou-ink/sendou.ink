@@ -114,6 +114,7 @@
 	"labels.vodWeaponsTeamTwo": "Våben (Hold 2)",
 	"labels.vodMatches": "",
 	"errors.dateMustNotBeFuture": "",
+	"errors.dateTooOld": "",
 	"vodTypes.TOURNAMENT": "Turnering (Synsvinkel)",
 	"vodTypes.CAST": "Turnering (Kommentator)",
 	"vodTypes.SCRIM": "Testkamp",

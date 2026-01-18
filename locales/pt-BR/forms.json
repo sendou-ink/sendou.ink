@@ -114,6 +114,7 @@
 	"labels.vodWeaponsTeamTwo": "Armas (Time 2)",
 	"labels.vodMatches": "",
 	"errors.dateMustNotBeFuture": "",
+	"errors.dateTooOld": "",
 	"vodTypes.TOURNAMENT": "Torneio (PoV)",
 	"vodTypes.CAST": "Torneio (Elenco)",
 	"vodTypes.SCRIM": "Scrim",

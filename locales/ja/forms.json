@@ -114,6 +114,7 @@
 	"labels.vodWeaponsTeamTwo": "ブキ (チーム 2)",
 	"labels.vodMatches": "",
 	"errors.dateMustNotBeFuture": "",
+	"errors.dateTooOld": "",
 	"vodTypes.TOURNAMENT": "トーナメント (PoV)",
 	"vodTypes.CAST": "トーナメント (Cast)",
 	"vodTypes.SCRIM": "対抗戦",

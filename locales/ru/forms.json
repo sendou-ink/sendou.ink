@@ -114,6 +114,7 @@
 	"labels.vodWeaponsTeamTwo": "Оружие (Команда 2)",
 	"labels.vodMatches": "",
 	"errors.dateMustNotBeFuture": "",
+	"errors.dateTooOld": "",
 	"vodTypes.TOURNAMENT": "Турнир (PoV)",
 	"vodTypes.CAST": "Турнир (Трансляция)",
 	"vodTypes.SCRIM": "Скрим",

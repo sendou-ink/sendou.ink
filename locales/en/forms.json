@@ -114,6 +114,7 @@
 	"labels.vodWeaponsTeamTwo": "Weapons (Team 2)",
 	"labels.vodMatches": "Games",
 	"errors.dateMustNotBeFuture": "Date must not be in the future",
+	"errors.dateTooOld": "Date must be after Splatoon 1 release (May 28, 2015)",
 	"vodTypes.TOURNAMENT": "Tournament (PoV)",
 	"vodTypes.CAST": "Tournament (Cast)",
 	"vodTypes.SCRIM": "Scrim",

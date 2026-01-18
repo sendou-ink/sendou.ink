@@ -114,6 +114,7 @@
 	"labels.vodWeaponsTeamTwo": "",
 	"labels.vodMatches": "",
 	"errors.dateMustNotBeFuture": "",
+	"errors.dateTooOld": "",
 	"vodTypes.TOURNAMENT": "",
 	"vodTypes.CAST": "",
 	"vodTypes.SCRIM": "",

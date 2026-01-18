@@ -114,6 +114,7 @@
 	"labels.vodWeaponsTeamTwo": "Armas (Equipo 2)",
 	"labels.vodMatches": "",
 	"errors.dateMustNotBeFuture": "",
+	"errors.dateTooOld": "",
 	"vodTypes.TOURNAMENT": "Torneo (punto de vista)",
 	"vodTypes.CAST": "Torneo (comentarista)",
 	"vodTypes.SCRIM": "Práctica",

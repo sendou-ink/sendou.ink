@@ -114,6 +114,7 @@
 	"labels.vodWeaponsTeamTwo": "Armi (Squadra 2)",
 	"labels.vodMatches": "",
 	"errors.dateMustNotBeFuture": "",
+	"errors.dateTooOld": "",
 	"vodTypes.TOURNAMENT": "Torneo (PoV)",
 	"vodTypes.CAST": "Torneo (Cast)",
 	"vodTypes.SCRIM": "Scrim",

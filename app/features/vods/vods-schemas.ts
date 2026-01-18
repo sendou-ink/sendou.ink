@@ -155,6 +155,7 @@ export const vodFormBaseSchema = z.object({
 		label: "labels.vodDate",
 		max: add(new Date(), { days: 1 }),
 		maxMessage: "errors.dateMustNotBeFuture",
+		minMessage: "errors.dateTooOld",
 	}),
 	type: select({
 		label: "labels.vodType",

@@ -114,6 +114,7 @@
 	"labels.vodWeaponsTeamTwo": "Waffem (Team 2)",
 	"labels.vodMatches": "",
 	"errors.dateMustNotBeFuture": "",
+	"errors.dateTooOld": "",
 	"vodTypes.TOURNAMENT": "Turnier (PoV)",
 	"vodTypes.CAST": "Turnier (Ausrichter)",
 	"vodTypes.SCRIM": "Scrim",
