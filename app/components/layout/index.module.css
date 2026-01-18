@@ -10,9 +10,7 @@
 	align-items: center;
 	gap: var(--s-3);
 	border-bottom: 1.5px solid var(--color-border);
-	-webkit-backdrop-filter: blur(10px) brightness(95%);
-	backdrop-filter: blur(10px) brightness(95%);
-	background-color: transparent;
+	background-color: var(--color-bg);
 	font-weight: bold;
 	padding-inline: var(--s-4);
 	position: sticky;

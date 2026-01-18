@@ -124,6 +124,50 @@ function useSideNavCollapsed(initialCollapsed: boolean) {
 	return [collapsed, setCollapsedAndPersist] as const;
 }
 
+function useNavOffset() {
+	const [navOffset, setNavOffset] = React.useState(0);
+	const lastScrollY = React.useRef(0);
+
+	const MOBILE_BREAKPOINT = 600;
+	const NAV_HEIGHT = 55;
+
+	React.useEffect(() => {
+		const handleScroll = () => {
+			if (window.innerWidth >= MOBILE_BREAKPOINT) {
+				setNavOffset(0);
+				lastScrollY.current = window.scrollY;
+				return;
+			}
+
+			const currentScrollY = window.scrollY;
+			const scrollDelta = currentScrollY - lastScrollY.current;
+
+			setNavOffset((prevOffset) => {
+				const newOffset = prevOffset - scrollDelta;
+				return Math.max(-NAV_HEIGHT, Math.min(0, newOffset));
+			});
+
+			lastScrollY.current = currentScrollY;
+		};
+
+		const handleResize = () => {
+			if (window.innerWidth >= MOBILE_BREAKPOINT) {
+				setNavOffset(0);
+			}
+		};
+
+		window.addEventListener("scroll", handleScroll, { passive: true });
+		window.addEventListener("resize", handleResize);
+
+		return () => {
+			window.removeEventListener("scroll", handleScroll);
+			window.removeEventListener("resize", handleResize);
+		};
+	}, []);
+
+	return navOffset;
+}
+
 export function Layout({
 	children,
 	data,
@@ -135,11 +179,12 @@ export function Layout({
 	const [sideNavCollapsed, setSideNavCollapsed] = useSideNavCollapsed(
 		data?.sidenavCollapsed ?? false,
 	);
-	const location = useLocation();
 
 	const { t } = useTranslation(["front"]);
 	const { formatRelativeDate } = useTimeFormat();
+	const location = useLocation();
 	const sidebarData = useSidebarData();
+	const navOffset = useNavOffset();
 
 	const events = sidebarData?.events ?? [];
 	const matchStatus = sidebarData?.matchStatus;
@@ -153,6 +198,7 @@ export function Layout({
 		import.meta.env.VITE_PLAYWIRE_PUBLISHER_ID &&
 		!data?.user?.roles.includes("MINOR_SUPPORT") &&
 		!location.pathname.includes("plans");
+
 	return (
 		<>
 			<NavDialog isOpen={navDialogOpen} close={() => setNavDialogOpen(false)} />
@@ -260,7 +306,12 @@ export function Layout({
 			</SideNav>
 			<MobileNav sidebarData={sidebarData} />
 			<div className={styles.container}>
-				<header className={styles.header}>
+				<header
+					className={styles.header}
+					style={{
+						transform: `translateY(${navOffset}px)`,
+					}}
+				>
 					<MobileLogo />
 					<SideNavCollapseButton
 						onToggle={() => setSideNavCollapsed(!sideNavCollapsed)}

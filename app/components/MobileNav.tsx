@@ -242,7 +242,12 @@ function MenuOverlay({
 				<Dialog className={styles.panelDialog}>
 					<header className={styles.menuHeader}>
 						<h2 className={styles.menuTitle}>{t("front:mobileNav.menu")}</h2>
-						<SendouButton icon={<X />} variant="minimal" onPress={onClose} />
+						<SendouButton
+							icon={<X />}
+							variant="minimal"
+							shape="circle"
+							onPress={onClose}
+						/>
 					</header>
 
 					<section className={styles.streamsSection}>
