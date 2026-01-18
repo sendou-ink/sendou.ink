@@ -25,7 +25,7 @@
 
 /** we should use existing fieldset styles */
 .matchFieldset {
-	border: 1px solid var(--bg-lighter);
+	border: 1px solid var(--color-border);
 	border-radius: var(--rounded);
 	padding: var(--s-4);
 }

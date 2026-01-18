@@ -22,8 +22,8 @@
 	align-items: center;
 	padding: var(--s-2) var(--s-3);
 	border-radius: var(--rounded);
-	border: 1px solid var(--border);
-	background-color: var(--bg-lighter);
+	border: 1px solid var(--color-border);
+	background-color: var(--color-bg-high);
 	column-gap: var(--s-2);
 	row-gap: var(--s-2);
 	font-size: var(--fonts-xs);
@@ -82,7 +82,7 @@
 	background: none;
 	border: none;
 	font-size: var(--fonts-lg);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	padding: var(--s-1);
 	touch-action: none;
 	user-select: none;
@@ -90,7 +90,7 @@
 }
 
 .dragHandle:hover {
-	color: var(--text);
+	color: var(--color-text);
 }
 
 .dragHandle:active:not(:disabled) {
@@ -107,13 +107,14 @@
 	text-align: center;
 	padding: var(--s-0-5);
 	border-radius: var(--rounded-sm);
-	border: 1px solid var(--border);
-	background-color: var(--bg-input);
+	border: 1px solid var(--color-border);
+	background-color: var(--color-bg);
+	color: var(--color-text);
 	font-size: var(--fonts-xs);
 }
 
 .seedInput:focus {
-	outline: 2px solid var(--theme);
+	outline: var(--input-focus-ring);
 	outline-offset: 1px;
 }
 
@@ -132,8 +133,8 @@
 
 .newBadge {
 	flex-shrink: 0;
-	background-color: var(--theme-secondary);
-	color: var(--button-text);
+	background-color: var(--color-second);
+	color: var(--color-text-inverse);
 	font-size: var(--fonts-xxxxs);
 	font-weight: var(--bold);
 	padding: 1px 4px;
@@ -151,7 +152,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
-	background-color: var(--bg-darker);
+	background-color: var(--color-bg-higher);
 	border-radius: var(--rounded);
 	padding: var(--s-0-5) var(--s-2);
 	font-weight: var(--semi-bold);
@@ -162,8 +163,8 @@
 }
 
 .playerNewBadge {
-	background-color: var(--theme-secondary);
-	color: var(--button-text);
+	background-color: var(--color-second);
+	color: var(--color-text-inverse);
 	font-size: var(--fonts-xxxxs);
 	font-weight: var(--bold);
 	padding: 1px 3px;
@@ -178,12 +179,12 @@
 	justify-content: center;
 	gap: 2px;
 	font-size: var(--fonts-xxxs);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .playerRemoved {
 	text-decoration: line-through;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	opacity: 0.6;
 }
 
@@ -192,7 +193,7 @@
 }
 
 .outOfOrder {
-	color: var(--theme-warning);
+	color: var(--color-warning);
 }
 
 .form {
@@ -207,10 +208,12 @@
 }
 
 .overlay {
-	background-color: var(--bg-lighter-solid);
-	border: 1px solid var(--border);
+	background-color: var(--color-bg-high);
+	border: 1px solid var(--color-border);
 	border-radius: var(--rounded);
 	padding: var(--s-2) var(--s-3);
-	box-shadow: var(--shadow-md);
+	box-shadow:
+		0 4px 6px -1px rgb(0 0 0 / 0.1),
+		0 2px 4px -2px rgb(0 0 0 / 0.1);
 	opacity: 0.8;
 }

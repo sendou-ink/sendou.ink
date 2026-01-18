@@ -10,7 +10,7 @@
 	align-items: center;
 	gap: var(--s-2);
 	padding: var(--s-2) var(--s-3);
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	border-bottom: var(--border-style);
 	border-radius: var(--rounded-xs) var(--rounded-xs) 0 0;
 }
@@ -19,7 +19,7 @@
 	width: var(--s-5);
 	height: var(--s-5);
 	cursor: grab;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .headerLabel {
