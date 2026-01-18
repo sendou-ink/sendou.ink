@@ -30,8 +30,6 @@ export const handle: SendouRouteHandle = {
 	i18n: ["vods", "calendar"],
 };
 
-// xxx: clean up a lot
-
 export default function NewVodPage() {
 	const isVideoAdder = useHasRole("VIDEO_ADDER");
 	const data = useLoaderData<typeof loader>();
@@ -450,25 +448,18 @@ function WeaponsField({
 		if (value) addRecentlyReportedWeapon(value);
 	};
 
-	const setTeamOneWeapon = (weaponIdx: number, value: MainWeaponId | null) => {
-		const currentPool = [...(matchValues.weaponsTeamOne || [])];
+	const setTeamWeapon = (
+		team: "weaponsTeamOne" | "weaponsTeamTwo",
+		weaponIdx: number,
+		value: MainWeaponId | null,
+	) => {
+		const currentPool = [...(matchValues[team] || [])];
 		if (value) {
 			currentPool[weaponIdx] = { id: value, isFavorite: false };
 		} else {
 			currentPool.splice(weaponIdx, 1);
 		}
-		setItemField("weaponsTeamOne", currentPool);
-		if (value) addRecentlyReportedWeapon(value);
-	};
-
-	const setTeamTwoWeapon = (weaponIdx: number, value: MainWeaponId | null) => {
-		const currentPool = [...(matchValues.weaponsTeamTwo || [])];
-		if (value) {
-			currentPool[weaponIdx] = { id: value, isFavorite: false };
-		} else {
-			currentPool.splice(weaponIdx, 1);
-		}
-		setItemField("weaponsTeamTwo", currentPool);
+		setItemField(team, currentPool);
 		if (value) addRecentlyReportedWeapon(value);
 	};
 
@@ -494,38 +485,29 @@ function WeaponsField({
 		<div>
 			{videoType === "CAST" ? (
 				<div>
-					<Label required>{t("forms:labels.vodWeaponsTeamOne")}</Label>
-					<div className="stack sm">
-						{new Array(teamSize).fill(null).map((_, i) => (
-							<WeaponSelect
-								key={i}
-								isRequired
-								testId={`match-${index}-team1-weapon-${i}`}
-								value={
-									(matchValues.weaponsTeamOne[i]?.id as MainWeaponId) ?? null
-								}
-								quickSelectWeaponsIds={recentlyReportedWeapons}
-								onChange={(weaponId) => setTeamOneWeapon(i, weaponId)}
-							/>
-						))}
-					</div>
-					<div className="mt-4">
-						<Label required>{t("forms:labels.vodWeaponsTeamTwo")}</Label>
-						<div className="stack sm">
-							{new Array(teamSize).fill(null).map((_, i) => (
-								<WeaponSelect
-									key={i + 4}
-									isRequired
-									testId={`match-${index}-team2-weapon-${i}`}
-									value={
-										(matchValues.weaponsTeamTwo[i]?.id as MainWeaponId) ?? null
-									}
-									quickSelectWeaponsIds={recentlyReportedWeapons}
-									onChange={(weaponId) => setTeamTwoWeapon(i, weaponId)}
-								/>
-							))}
-						</div>
-					</div>
+					<TeamWeaponSelects
+						label={t("forms:labels.vodWeaponsTeamOne")}
+						teamSize={teamSize}
+						matchIndex={index}
+						teamNumber={1}
+						weapons={matchValues.weaponsTeamOne}
+						quickSelectWeaponsIds={recentlyReportedWeapons}
+						onChange={(weaponIdx, weaponId) =>
+							setTeamWeapon("weaponsTeamOne", weaponIdx, weaponId)
+						}
+					/>
+					<TeamWeaponSelects
+						label={t("forms:labels.vodWeaponsTeamTwo")}
+						teamSize={teamSize}
+						matchIndex={index}
+						teamNumber={2}
+						weapons={matchValues.weaponsTeamTwo}
+						quickSelectWeaponsIds={recentlyReportedWeapons}
+						onChange={(weaponIdx, weaponId) =>
+							setTeamWeapon("weaponsTeamTwo", weaponIdx, weaponId)
+						}
+						className="mt-4"
+					/>
 				</div>
 			) : (
 				<WeaponSelect
@@ -547,6 +529,44 @@ function WeaponsField({
 					{t("vods:forms.action.copyFromPrevious")}
 				</SendouButton>
 			) : null}
+		</div>
+	);
+}
+
+function TeamWeaponSelects({
+	label,
+	teamSize,
+	matchIndex,
+	teamNumber,
+	weapons,
+	quickSelectWeaponsIds,
+	onChange,
+	className,
+}: {
+	label: string;
+	teamSize: number;
+	matchIndex: number;
+	teamNumber: 1 | 2;
+	weapons: WeaponPoolItem[];
+	quickSelectWeaponsIds: MainWeaponId[];
+	onChange: (weaponIdx: number, weaponId: MainWeaponId | null) => void;
+	className?: string;
+}) {
+	return (
+		<div className={className}>
+			<Label required>{label}</Label>
+			<div className="stack sm">
+				{new Array(teamSize).fill(null).map((_, i) => (
+					<WeaponSelect
+						key={i}
+						isRequired
+						testId={`match-${matchIndex}-team${teamNumber}-weapon-${i}`}
+						value={(weapons[i]?.id as MainWeaponId) ?? null}
+						quickSelectWeaponsIds={quickSelectWeaponsIds}
+						onChange={(weaponId) => onChange(i, weaponId)}
+					/>
+				))}
+			</div>
 		</div>
 	);
 }
