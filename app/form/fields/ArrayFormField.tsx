@@ -55,14 +55,7 @@ export function ArrayFormField({
 	return (
 		<div className="stack md w-full">
 			{translatedLabel ? (
-				<div
-					style={{
-						fontSize: "var(--fonts-xs)",
-						fontWeight: "var(--semi-bold)",
-					}}
-				>
-					{translatedLabel}
-				</div>
+				<div className="text-xs font-semi-bold">{translatedLabel}</div>
 			) : null}
 			{Array.from({ length: count }).map((_, idx) =>
 				isObjectArray ? (
@@ -103,7 +96,7 @@ export function ArrayFormField({
 				icon={<PlusIcon />}
 				onPress={handleAdd}
 				isDisabled={count >= max}
-				style={{ margin: "0 auto" }}
+				className="m-0-auto"
 			>
 				{t("common:actions.add")}
 			</SendouButton>

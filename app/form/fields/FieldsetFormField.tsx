@@ -26,14 +26,7 @@ export function FieldsetFormField<S extends z.ZodRawShape>({
 	return (
 		<div className="stack md">
 			{translatedLabel ? (
-				<div
-					style={{
-						fontSize: "var(--fonts-xs)",
-						fontWeight: "var(--semi-bold)",
-					}}
-				>
-					{translatedLabel}
-				</div>
+				<div className="text-xs font-semi-bold">{translatedLabel}</div>
 			) : null}
 			{fieldNames.map((fieldName) => (
 				<FormField
