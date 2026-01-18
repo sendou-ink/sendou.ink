@@ -276,7 +276,7 @@ export const scrimsNewFormSchema = z
 		if (post.maps === "TOURNAMENT" && !post.mapsTournamentId) {
 			ctx.addIssue({
 				path: ["mapsTournamentId"],
-				message: "errors.tournamentMustBeSelected",
+				message: "forms:errors.tournamentMustBeSelected",
 				code: z.ZodIssueCode.custom,
 			});
 		}
@@ -284,7 +284,7 @@ export const scrimsNewFormSchema = z
 		if (post.maps !== "TOURNAMENT" && post.mapsTournamentId) {
 			ctx.addIssue({
 				path: ["mapsTournamentId"],
-				message: "errors.tournamentOnlyWhenMapsIsTournament",
+				message: "forms:errors.tournamentOnlyWhenMapsIsTournament",
 				code: z.ZodIssueCode.custom,
 			});
 		}
@@ -295,7 +295,7 @@ export const scrimsNewFormSchema = z
 		) {
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
-				message: "errors.visibilityMustBeDifferent",
+				message: "forms:errors.visibilityMustBeDifferent",
 				code: z.ZodIssueCode.custom,
 			});
 		}
@@ -303,7 +303,7 @@ export const scrimsNewFormSchema = z
 		if (post.baseVisibility === "PUBLIC" && post.notFoundVisibility.at) {
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
-				message: "errors.visibilityNotAllowedWhenPublic",
+				message: "forms:errors.visibilityNotAllowedWhenPublic",
 				code: z.ZodIssueCode.custom,
 			});
 		}
@@ -311,7 +311,7 @@ export const scrimsNewFormSchema = z
 		if (post.notFoundVisibility.at && post.notFoundVisibility.at > post.at) {
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
-				message: "errors.dateAfterScrimDate",
+				message: "forms:errors.dateAfterScrimDate",
 				code: z.ZodIssueCode.custom,
 			});
 		}
@@ -319,7 +319,7 @@ export const scrimsNewFormSchema = z
 		if (post.notFoundVisibility.at && post.at < new Date()) {
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
-				message: "errors.canNotSetIfLookingNow",
+				message: "forms:errors.canNotSetIfLookingNow",
 				code: z.ZodIssueCode.custom,
 			});
 		}

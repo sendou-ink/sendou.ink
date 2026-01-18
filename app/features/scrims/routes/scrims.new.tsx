@@ -291,7 +291,11 @@ function TournamentSearchFormField() {
 	if (maps !== "TOURNAMENT") return null;
 
 	return (
-		<FormFieldWrapper id="mapsTournamentId" name="mapsTournamentId">
+		<FormFieldWrapper
+			id="mapsTournamentId"
+			name="mapsTournamentId"
+			error={error}
+		>
 			<TournamentSearch
 				label={t("scrims:forms.mapsTournament.title")}
 				initialTournamentId={mapsTournamentId ?? undefined}
@@ -299,7 +303,6 @@ function TournamentSearchFormField() {
 					setValue("mapsTournamentId", tournament?.id ?? null)
 				}
 			/>
-			{error ? <FormMessage type="error">{error}</FormMessage> : null}
 		</FormFieldWrapper>
 	);
 }
