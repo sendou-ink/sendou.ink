@@ -1,10 +1,14 @@
 import type { z } from "zod";
-import { formDataToObject } from "~/utils/remix.server";
 
 export type ParseResult<T> =
 	| { success: true; data: T }
 	| { success: false; fieldErrors: Record<string, string> };
 
+/**
+ * Parses JSON request body against a Zod schema.
+ * Returns parsed data on success, or field-level errors on validation failure.
+ * Intended for use with SendouForm which always submits JSON.
+ */
 export async function parseFormData<T extends z.ZodTypeAny>({
 	request,
 	schema,
@@ -12,12 +16,9 @@ export async function parseFormData<T extends z.ZodTypeAny>({
 	request: Request;
 	schema: T;
 }): Promise<ParseResult<z.infer<T>>> {
-	const formDataObj =
-		request.headers.get("Content-Type") === "application/json"
-			? await request.json()
-			: formDataToObject(await request.formData());
+	const json = await request.json();
 
-	const result = await schema.safeParseAsync(formDataObj);
+	const result = await schema.safeParseAsync(json);
 
 	if (result.success) {
 		return { success: true, data: result.data };
