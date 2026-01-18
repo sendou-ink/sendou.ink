@@ -429,6 +429,7 @@ export interface SplatoonPlayer {
 	id: GeneratedAlways<number>;
 	splId: string;
 	userId: number | null;
+	/** Players best XP across both divisions. Denormalized for performance. */
 	peakXp: number | null;
 }
 
