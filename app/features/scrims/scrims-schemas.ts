@@ -308,10 +308,10 @@ export const scrimsNewFormSchema = z
 			});
 		}
 
-		if (post.notFoundVisibility.at && post.notFoundVisibility.at < post.at) {
+		if (post.notFoundVisibility.at && post.notFoundVisibility.at > post.at) {
 			ctx.addIssue({
-				path: ["notFoundVisibility", "at"],
-				message: "errors.dateBeforeScrimDate",
+				path: ["notFoundVisibility"],
+				message: "errors.dateAfterScrimDate",
 				code: z.ZodIssueCode.custom,
 			});
 		}

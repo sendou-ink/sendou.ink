@@ -77,7 +77,7 @@
 	"errors.tournamentOnlyWhenMapsIsTournament": "Tournament should only be selected when maps is tournament",
 	"errors.visibilityMustBeDifferent": "Not found visibility must be different from base visibility",
 	"errors.visibilityNotAllowedWhenPublic": "Not found visibility can not be set if base visibility is public",
-	"errors.dateBeforeScrimDate": "Date can not be before the scrim date",
+	"errors.dateAfterScrimDate": "Date can not be after the scrim date",
 	"errors.canNotSetIfLookingNow": "Can not be set if looking for scrim now",
 	"errors.maxAssociationsReached": "You have reached the maximum number of associations",
 	"labels.weekdayTimes": "Weekday times",

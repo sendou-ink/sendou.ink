@@ -77,7 +77,7 @@
 	"errors.tournamentOnlyWhenMapsIsTournament": "",
 	"errors.visibilityMustBeDifferent": "",
 	"errors.visibilityNotAllowedWhenPublic": "",
-	"errors.dateBeforeScrimDate": "",
+	"errors.dateAfterScrimDate": "",
 	"errors.canNotSetIfLookingNow": "",
 	"errors.maxAssociationsReached": "",
 	"labels.weekdayTimes": "",
