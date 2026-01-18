@@ -962,6 +962,14 @@ export interface ApiToken {
 	createdAt: GeneratedAlways<number>;
 }
 
+export interface LiveStream {
+	id: GeneratedAlways<number>;
+	userId: number | null;
+	viewerCount: number;
+	thumbnailUrl: string;
+	twitch: string | null;
+}
+
 export interface BanLog {
 	id: GeneratedAlways<number>;
 	userId: number;
@@ -1136,6 +1144,7 @@ export interface DB {
 	AllTeamMember: TeamMember;
 	ApiToken: ApiToken;
 	Art: Art;
+	LiveStream: LiveStream;
 	ArtTag: ArtTag;
 	ArtUserMetadata: ArtUserMetadata;
 	TaggedArt: TaggedArt;
