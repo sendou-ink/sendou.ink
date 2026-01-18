@@ -429,6 +429,7 @@ export interface SplatoonPlayer {
 	id: GeneratedAlways<number>;
 	splId: string;
 	userId: number | null;
+	peakXp: number | null;
 }
 
 export interface TaggedArt {
