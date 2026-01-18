@@ -12,10 +12,12 @@ import type { editTeamSchema } from "../team-schemas.server";
 
 const createTeamAction = wrappedAction<typeof createTeamSchema>({
 	action: teamIndexPageAction,
+	isJsonSubmission: true,
 });
 
 const editTeamAction = wrappedAction<typeof editTeamSchema>({
 	action: _editTeamAction,
+	isJsonSubmission: true,
 });
 
 const DEFAULT_FIELDS = {

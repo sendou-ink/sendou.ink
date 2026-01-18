@@ -28,12 +28,15 @@ const loadUserTeamLoader = wrappedLoader<
 
 const createTeamAction = wrappedAction<typeof createTeamSchema>({
 	action: teamIndexPageAction,
+	isJsonSubmission: true,
 });
 const teamPageAction = wrappedAction<typeof teamProfilePageActionSchema>({
 	action: _teamPageAction,
+	isJsonSubmission: true,
 });
 const editTeamAction = wrappedAction<typeof editTeamSchema>({
 	action: _editTeamAction,
+	isJsonSubmission: true,
 });
 
 async function loadTeams() {

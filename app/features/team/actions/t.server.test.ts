@@ -5,6 +5,7 @@ import type { createTeamSchema } from "../team-schemas";
 
 const action = wrappedAction<typeof createTeamSchema>({
 	action: teamIndexPageAction,
+	isJsonSubmission: true,
 });
 
 describe("team creation", () => {

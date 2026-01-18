@@ -158,7 +158,7 @@ export async function safeParseRequestFormData<T extends z.ZodTypeAny>({
 	};
 }
 
-export function formDataToObject(formData: FormData) {
+function formDataToObject(formData: FormData) {
 	const result: Record<string, string | string[]> = {};
 
 	for (const [key, value] of formData.entries()) {
