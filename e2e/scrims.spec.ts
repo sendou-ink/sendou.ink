@@ -229,7 +229,7 @@ test.describe("Scrims", () => {
 			page.getByText("Ready to scrim! Let's do this."),
 		).toBeVisible();
 
-		await page.getByText("Confirm for 6:30 PM").click();
+		await page.getByTestId("confirm-modal-trigger-button").click();
 		await submit(page, "confirm-button");
 
 		await page.getByTestId("booked-scrims-tab").click();

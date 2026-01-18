@@ -65,6 +65,7 @@ type FormFieldHelpers<T extends z.ZodRawShape> = {
 		weaponNames: string[],
 	) => Promise<void>;
 	setDateTime: (name: keyof Inferred<T>, date: Date) => Promise<void>;
+	setDate: (name: keyof Inferred<T>, date: Date) => Promise<void>;
 	submit: () => Promise<void>;
 	getLabel: <K extends keyof Inferred<T>>(name: K) => string;
 	getItemLabel: (name: keyof Inferred<T>, itemValue: string) => string;
@@ -232,6 +233,22 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 				date.getMinutes().toString().padStart(2, "0"),
 			);
 			await fillSpinbutton("AM/PM", hours >= 12 ? "PM" : "AM");
+		},
+
+		async setDate(name, date) {
+			const label = getLabel(String(name));
+
+			const fillSpinbutton = async (spinName: string, value: string) => {
+				await page
+					.getByRole("spinbutton", {
+						name: new RegExp(`^${spinName}, ${label}`),
+					})
+					.fill(value);
+			};
+
+			await fillSpinbutton("year", date.getFullYear().toString());
+			await fillSpinbutton("month", (date.getMonth() + 1).toString());
+			await fillSpinbutton("day", date.getDate().toString());
 		},
 
 		async submit() {

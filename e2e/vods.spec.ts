@@ -35,7 +35,7 @@ test.describe("VoDs page", () => {
 			"title",
 			"ITZXI Finals - Team Olive vs. Astral [CAMO TENTA PoV]",
 		);
-		await form.setDateTime("date", VIDEO_DATE);
+		await form.setDate("date", VIDEO_DATE);
 		await form.select("type", "SCRIM");
 
 		await selectUser({
@@ -91,7 +91,7 @@ test.describe("VoDs page", () => {
 			"title",
 			"BIG ! vs Starburst - Splatoon 3 Grand Finals - The Big House 10",
 		);
-		await form.setDateTime("date", VIDEO_DATE);
+		await form.setDate("date", VIDEO_DATE);
 		await form.select("type", "CAST");
 
 		await page.keyboard.press("Enter");
