@@ -108,3 +108,8 @@ if (!global.appStartSignal && process.env.NODE_ENV === "production") {
 process.on("unhandledRejection", (reason: string, p: Promise<any>) => {
 	logger.error("Unhandled Rejection at:", p, "reason:", reason);
 });
+
+// wrapper so we get request id shown in the server logs
+export function handleError(error: unknown) {
+	logger.error(error);
+}
