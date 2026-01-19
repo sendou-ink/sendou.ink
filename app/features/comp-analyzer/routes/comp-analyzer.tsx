@@ -27,7 +27,7 @@ export const meta: MetaFunction = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["weapons", "analyzer"],
 	breadcrumb: () => ({
-		imgPath: navIconUrl("analyzer"),
+		imgPath: navIconUrl("comp-analyzer"),
 		href: COMP_ANALYZER_URL,
 		type: "IMAGE",
 	}),
