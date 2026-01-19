@@ -182,5 +182,20 @@
 	"comp.hits_other": "{{count}} hits",
 	"comp.enemyRes": "Enemy Ink Resistance Up",
 	"comp.enemySubDef": "Enemy Sub Defense Up",
-	"comp.weaponRanges": "Weapon Ranges"
+	"comp.weaponRanges": "Weapon Ranges",
+	"comp.subRoles": "Sub weapon roles",
+	"comp.specialRoles": "Special weapon roles",
+	"comp.subCategory.LETHAL": "One-hit",
+	"comp.subCategory.CHIP": "Chip",
+	"comp.subCategory.SEEKING": "Seeking",
+	"comp.subCategory.AREA_DENIAL": "Area Denial",
+	"comp.subCategory.MOBILITY": "Mobility",
+	"comp.subCategory.TRACKING": "Tracking",
+	"comp.subCategory.TURF": "Turf",
+	"comp.specialCategory.MELEE": "Melee",
+	"comp.specialCategory.RANGED_BURST": "Ranged Burst",
+	"comp.specialCategory.GLOBAL_TRACKING": "Global Tracking",
+	"comp.specialCategory.AREA_CONTROL": "Area Control",
+	"comp.specialCategory.TEAM_SHIELD": "Team Shield",
+	"comp.specialCategory.TEAM_BUFF": "Team Buff"
 }

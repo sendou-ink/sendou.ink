@@ -12,6 +12,7 @@ import { useCategorization, useSelectedWeapons } from "../comp-analyzer-hooks";
 import { DamageComboList } from "../components/DamageComboBar";
 import { RangeVisualization } from "../components/RangeVisualization";
 import { SelectedWeapons } from "../components/SelectedWeapons";
+import { WeaponCategories } from "../components/WeaponCategories";
 import { WeaponGrid } from "../components/WeaponGrid";
 
 export const meta: MetaFunction = (args) => {
@@ -75,6 +76,7 @@ function CompAnalyzerPage() {
 				selectedWeaponIds={selectedWeaponIds}
 				onRemove={handleRemoveWeapon}
 			/>
+			<WeaponCategories selectedWeaponIds={selectedWeaponIds} />
 			<WeaponGrid
 				selectedWeaponIds={selectedWeaponIds}
 				onWeaponClick={handleWeaponClick}

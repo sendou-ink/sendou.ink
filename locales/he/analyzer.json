@@ -185,5 +185,20 @@
 	"comp.hits_other": "",
 	"comp.enemyRes": "",
 	"comp.enemySubDef": "",
-	"comp.weaponRanges": ""
+	"comp.weaponRanges": "",
+	"comp.subRoles": "",
+	"comp.specialRoles": "",
+	"comp.subCategory.LETHAL": "",
+	"comp.subCategory.CHIP": "",
+	"comp.subCategory.SEEKING": "",
+	"comp.subCategory.AREA_DENIAL": "",
+	"comp.subCategory.MOBILITY": "",
+	"comp.subCategory.TRACKING": "",
+	"comp.subCategory.TURF": "",
+	"comp.specialCategory.MELEE": "",
+	"comp.specialCategory.RANGED_BURST": "",
+	"comp.specialCategory.GLOBAL_TRACKING": "",
+	"comp.specialCategory.AREA_CONTROL": "",
+	"comp.specialCategory.TEAM_SHIELD": "",
+	"comp.specialCategory.TEAM_BUFF": ""
 }
