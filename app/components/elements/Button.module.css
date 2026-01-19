@@ -12,7 +12,7 @@
 	font-size: var(--fonts-sm);
 	font-weight: var(--bold);
 	line-height: var(--field-line-height);
-	padding: 0 var(--field-padding-inline);
+	padding: 0 var(--field-padding);
 	user-select: none;
 	outline-color: var(--color-text-accent);
 	height: var(--field-height);

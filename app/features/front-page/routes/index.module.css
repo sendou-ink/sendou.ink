@@ -152,7 +152,7 @@
 	background-color: var(--color-text-accent);
 	border-radius: var(--radius-box);
 	width: max-content;
-	padding: 0 var(--field-padding-inline);
+	padding: 0 var(--field-padding);
 	font-size: var(--fonts-xs);
 	color: var(--color-text-inverse);
 	display: flex;

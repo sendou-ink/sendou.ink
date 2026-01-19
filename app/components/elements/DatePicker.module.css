@@ -1,6 +1,6 @@
 .group {
 	height: var(--field-height);
-	padding: 0 var(--field-padding-inline);
+	padding: 0 var(--field-padding);
 	border: var(--border-style);
 	border-radius: var(--radius-field);
 	background-color: var(--color-bg);

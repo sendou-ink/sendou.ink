@@ -28,7 +28,7 @@
 
 	input {
 		border-radius: var(--radius-field);
-		padding: 0 var(--field-padding-inline);
+		padding: 0 var(--field-padding);
 		outline: none;
 		width: 100%;
 		background-color: inherit;

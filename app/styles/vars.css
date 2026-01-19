@@ -144,7 +144,7 @@ html {
 	--field-height-small: 2rem;
 	--field-height: 2.5rem;
 	--field-height-large: 3rem;
-	--field-padding-inline: 1rem;
+	--field-padding: 1rem;
 	--field-line-height: 1.2rem;
 	--field-focus-ring: 2px solid var(--color-text-accent);
 	--field-focus-ring-error: 2px solid var(--color-error);
