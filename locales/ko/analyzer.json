@@ -175,5 +175,6 @@
 	"comp.showWeaponGrid": "",
 	"comp.hideWeaponGrid": "",
 	"comp.enemyRes": "",
-	"comp.enemySubDef": ""
+	"comp.enemySubDef": "",
+	"comp.weaponRanges": ""
 }

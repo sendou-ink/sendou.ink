@@ -187,5 +187,6 @@
 	"comp.hits_many": "",
 	"comp.hits_other": "",
 	"comp.enemyRes": "",
-	"comp.enemySubDef": ""
+	"comp.enemySubDef": "",
+	"comp.weaponRanges": ""
 }

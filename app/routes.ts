@@ -12,6 +12,10 @@ const devOnlyRoutes =
 					"/admin/generate-images",
 					"features/admin/routes/generate-images.tsx",
 				),
+				route(
+					"/comp-analyzer/all-ranges",
+					"features/comp-analyzer/routes/comp-analyzer.all-ranges.tsx",
+				),
 			] satisfies RouteConfig)
 		: [];
 

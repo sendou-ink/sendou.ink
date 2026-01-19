@@ -10,6 +10,7 @@ import { metaTags } from "../../../utils/remix";
 import { MAX_WEAPONS } from "../comp-analyzer-constants";
 import { useCategorization, useSelectedWeapons } from "../comp-analyzer-hooks";
 import { DamageComboList } from "../components/DamageComboBar";
+import { RangeVisualization } from "../components/RangeVisualization";
 import { SelectedWeapons } from "../components/SelectedWeapons";
 import { WeaponGrid } from "../components/WeaponGrid";
 
@@ -82,6 +83,7 @@ function CompAnalyzerPage() {
 				isCollapsed={isGridCollapsed}
 				onToggleCollapse={() => setIsGridCollapsed(!isGridCollapsed)}
 			/>
+			<RangeVisualization weaponIds={selectedWeaponIds} />
 			<DamageComboList weaponIds={selectedWeaponIds} />
 		</Main>
 	);
