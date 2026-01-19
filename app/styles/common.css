@@ -78,7 +78,7 @@ a {
 textarea:not([name="text"]) {
 	width: 100%;
 	min-height: 8rem;
-	padding: var(--field-padding-block) var(--field-padding-inline);
+	padding: var(--field-padding-inline);
 	line-height: var(--field-line-height);
 	border: var(--border-style);
 	border-radius: var(--radius-field);

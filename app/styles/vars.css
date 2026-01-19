@@ -16,6 +16,13 @@ html {
 	--acc-c-3: 0.06;
 	--acc-c-4: 0.2616;
 	--acc-c-5: 0.1344;
+
+	--radius-box: 12px;
+	--radius-field: 8px;
+	--radius-selector: 8px;
+	--radius-full: 99999px;
+
+	--border-width: 2px;
 }
 
 /* 'low' and 'high' do not indicate lightness */
@@ -129,7 +136,6 @@ html {
 
 	--color-border: var(--color-base-5);
 	--color-border-high: var(--color-base-4);
-	--border-width: 2px;
 	--border-style: var(--border-width) solid var(--color-border);
 	--border-style-high: var(--border-width) solid var(--color-border-high);
 	--border-style-accent: var(--border-width) solid var(--color-text-accent);
@@ -138,7 +144,6 @@ html {
 	--field-height-small: 2rem;
 	--field-height: 2.5rem;
 	--field-height-large: 3rem;
-	--field-padding-block: 0.5rem;
 	--field-padding-inline: 1rem;
 	--field-line-height: 1.2rem;
 	--field-focus-ring: 2px solid var(--color-text-accent);
@@ -146,11 +151,6 @@ html {
 	--field-icon-width: 18px;
 
 	--selector-height: 1.25rem;
-
-	--radius-box: 12px;
-	--radius-field: 8px;
-	--radius-selector: 8px;
-	--radius-full: 99999px;
 
 	--layout-nav-height: 55px;
 	--layout-sidenav-width: 250px;
