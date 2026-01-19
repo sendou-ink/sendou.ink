@@ -19,26 +19,29 @@
 	background: var(--color-bg);
 	border: var(--border-style);
 	border-radius: calc(var(--radius-selector) * 2);
+	padding: 2px;
+	display: inline-grid;
+	justify-items: center;
+	grid-template-columns: 0fr 1fr 1fr;
+	transition: grid-template-columns 200ms;
 
 	&:before {
 		content: "";
-		display: block;
-		margin: 2px;
-		width: calc(var(--height) - 8px);
-		height: calc(var(--height) - 8px);
+		height: 100%;
 		aspect-ratio: 1 / 1;
 		background: var(--color-border);
 		border-radius: var(--radius-selector);
-		transition: transform 200ms;
+		grid-row-start: 1;
+		grid-column-start: 2;
 	}
 }
 
 .root[data-selected] .indicator {
 	background: var(--color-text-accent);
 	border-color: var(--color-text-accent);
+	grid-template-columns: 1fr 1fr 0fr;
 
 	&:before {
-		transform: translateX(calc(var(--height) * 0.75));
 		background: var(--color-text-inverse);
 	}
 }

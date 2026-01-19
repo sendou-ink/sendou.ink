@@ -129,9 +129,10 @@ html {
 
 	--color-border: var(--color-base-5);
 	--color-border-high: var(--color-base-4);
-	--border-style: 2px solid var(--color-border);
-	--border-style-high: 2px solid var(--color-border-high);
-	--border-style-accent: 2px solid var(--color-text-accent);
+	--border-width: 2px;
+	--border-style: var(--border-width) solid var(--color-border);
+	--border-style-high: var(--border-width) solid var(--color-border-high);
+	--border-style-accent: var(--border-width) solid var(--color-text-accent);
 
 	--field-height-smaller: 1.25rem;
 	--field-height-small: 2rem;
@@ -140,7 +141,7 @@ html {
 	--field-padding-block: 0.5rem;
 	--field-padding-inline: 1rem;
 	--field-line-height: 1.2rem;
-	--field-focus-ring: var(--border-style-accent);
+	--field-focus-ring: 2px solid var(--color-text-accent);
 	--field-focus-ring-error: 2px solid var(--color-error);
 	--field-icon-width: 18px;
 

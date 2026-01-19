@@ -21,8 +21,7 @@
 
 .button[data-focus-visible],
 .button:focus-visible {
-	outline-style: solid;
-	outline-width: 2px;
+	outline: var(--field-focus-ring);
 	outline-offset: 1px;
 }
 

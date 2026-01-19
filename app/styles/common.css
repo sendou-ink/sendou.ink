@@ -77,7 +77,7 @@ a {
 /* :not([name="text"]) workaround not to select textarea on map planner  */
 textarea:not([name="text"]) {
 	width: 100%;
-	min-height: 5rem;
+	min-height: 8rem;
 	padding: var(--field-padding-block) var(--field-padding-inline);
 	line-height: var(--field-line-height);
 	border: var(--border-style);

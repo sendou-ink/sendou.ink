@@ -2058,7 +2058,11 @@ function FormFieldsSection({ id }: { id: string }) {
 				with Zod schemas that generate both UI and validation.
 			</p>
 
-			<SendouForm schema={formFieldsShowcaseSchema} autoSubmit>
+			<SendouForm
+				schema={formFieldsShowcaseSchema}
+				autoSubmit
+				className="w-full"
+			>
 				{({ FormField }) => (
 					<div className="stack lg">
 						<Divider smallText>Text Fields</Divider>

@@ -34,6 +34,7 @@
 }
 
 .button {
+	padding: 0;
 	margin-inline-start: auto;
 	background-color: transparent;
 	border: none;
@@ -41,6 +42,7 @@
 }
 
 .icon {
-	fill: var(--color-text-high);
-	width: 17.5px;
+	color: var(--color-text-high);
+	width: var(--field-icon-width);
+	height: var(--field-icon-width);
 }
