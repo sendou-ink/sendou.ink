@@ -15,7 +15,7 @@
 
 .root[data-open] .group {
 	border-color: transparent;
-	outline: var(--field-focus-ring);
+	outline: var(--focus-ring);
 }
 
 .dateInput {
@@ -43,6 +43,6 @@
 
 .icon {
 	color: var(--color-text-high);
-	width: var(--field-icon-width);
-	height: var(--field-icon-width);
+	width: var(--field-size-icon);
+	height: var(--field-size-icon);
 }

@@ -114,7 +114,7 @@
 }
 
 .seedInput:focus {
-	outline: var(--field-focus-ring);
+	outline: var(--focus-ring);
 	outline-offset: 1px;
 }
 

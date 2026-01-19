@@ -1,3 +1,4 @@
+/* All the tokens for custom themes */
 html {
 	--base-h: 260;
 	--base-c-0: 0.00012;
@@ -23,6 +24,11 @@ html {
 	--radius-full: 99999px;
 
 	--border-width: 2px;
+
+	/* Ommited from being overridden when viewing a page that loads a custom theme */
+	--size-field: 0.25rem;
+	--size-selector: 0.25rem;
+	--size-spacing: 0.25rem;
 }
 
 /* 'low' and 'high' do not indicate lightness */
@@ -140,17 +146,21 @@ html {
 	--border-style-high: var(--border-width) solid var(--color-border-high);
 	--border-style-accent: var(--border-width) solid var(--color-text-accent);
 
-	--field-size-smaller: 1.25rem;
-	--field-size-small: 2rem;
-	--field-size: 2.5rem;
-	--field-size-large: 3rem;
+	--focus-ring: 2px solid var(--color-text-accent);
+	--focus-ring-error: 2px solid var(--color-error);
+
+	--field-size-xs: calc(var(--size-field) * 6);
+	--field-size-sm: calc(var(--size-field) * 8);
+	--field-size: calc(var(--size-field) * 10);
+	--field-size-lg: calc(var(--size-field) * 12);
+	--field-size-icon: 18px;
 	--field-padding: 1rem;
 	--field-line-height: 1.2rem;
-	--field-focus-ring: 2px solid var(--color-text-accent);
-	--field-focus-ring-error: 2px solid var(--color-error);
-	--field-icon-width: 18px;
 
-	--selector-height: 1.25rem;
+	--selector-size-xs: calc(var(--size-selector) * 3);
+	--selector-size-sm: calc(var(--size-selector) * 4);
+	--selector-size: calc(var(--size-selector) * 5);
+	--selector-size-lg: calc(var(--size-selector) * 6);
 
 	--layout-nav-height: 55px;
 	--layout-sidenav-width: 250px;

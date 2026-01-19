@@ -17,12 +17,12 @@
 	}
 
 	&:has(input:user-invalid) {
-		outline: var(--field-focus-ring-error);
+		outline: var(--focus-ring-error);
 		outline-offset: 1px;
 	}
 
 	&:focus-within {
-		outline: var(--field-focus-ring);
+		outline: var(--focus-ring);
 		outline-offset: 1px;
 	}
 

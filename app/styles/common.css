@@ -69,7 +69,7 @@ a {
 	border-radius: 5px;
 
 	&:focus-visible {
-		outline: var(--field-focus-ring);
+		outline: var(--focus-ring);
 		outline-offset: 1px;
 	}
 }
@@ -87,7 +87,7 @@ textarea:not([name="text"]) {
 	resize: vertical;
 
 	&:focus-within {
-		outline: var(--field-focus-ring);
+		outline: var(--focus-ring);
 		outline-offset: 1px;
 	}
 }
@@ -115,7 +115,7 @@ input:not(.in-container) {
 	}
 
 	&:focus-within {
-		outline: var(--field-focus-ring);
+		outline: var(--focus-ring);
 		outline-offset: 1px;
 	}
 }
@@ -124,8 +124,8 @@ input[type="checkbox"] {
 	appearance: none;
 	cursor: pointer;
 	padding: 0;
-	width: var(--selector-height);
-	height: var(--selector-height);
+	width: var(--selector-size);
+	height: var(--selector-size);
 	border-radius: var(--radius-selector);
 	background-color: var(--color-bg);
 	border: var(--border-style);
@@ -135,7 +135,7 @@ input[type="checkbox"] {
 	}
 
 	&:focus-visible {
-		outline: var(--field-focus-ring);
+		outline: var(--focus-ring);
 		outline-offset: 1px;
 	}
 
@@ -145,7 +145,7 @@ input[type="checkbox"] {
 		background-color: var(--color-text-accent);
 		background-repeat: no-repeat;
 		background-position: center;
-		background-size: var(--field-icon-width) auto;
+		background-size: var(--field-size-icon) auto;
 	}
 
 	&:checked {
@@ -166,8 +166,8 @@ input[type="radio"] {
 	appearance: none;
 	cursor: pointer;
 	vertical-align: middle;
-	width: var(--selector-height);
-	height: var(--selector-height);
+	width: var(--selector-size);
+	height: var(--selector-size);
 	background-color: var(--color-bg);
 	border: var(--border-style);
 	border-radius: var(--radius-full);
@@ -178,7 +178,7 @@ input[type="radio"] {
 	}
 
 	&:focus-visible {
-		outline: var(--field-focus-ring);
+		outline: var(--focus-ring);
 		outline-offset: 1px;
 	}
 
@@ -244,7 +244,7 @@ select {
 	cursor: pointer;
 	padding: 0 var(--field-padding);
 	padding-right: calc(
-		var(--field-icon-width) +
+		var(--field-size-icon) +
 		var(--field-padding) +
 		var(--s-2)
 	);
@@ -269,7 +269,7 @@ select {
 	}
 
 	&:focus-within {
-		outline: var(--field-focus-ring);
+		outline: var(--focus-ring);
 		outline-offset: 1px;
 	}
 
@@ -321,7 +321,7 @@ input[type="time"],
 input[type="week"],
 select {
 	background-position: center right var(--field-padding);
-	background-size: var(--field-icon-width) auto;
+	background-size: var(--field-size-icon) auto;
 	background-repeat: no-repeat;
 }
 
@@ -345,7 +345,7 @@ select {
 [type="month"]::-webkit-calendar-picker-indicator,
 [type="time"]::-webkit-calendar-picker-indicator,
 [type="week"]::-webkit-calendar-picker-indicator {
-	width: var(--field-icon-width);
+	width: var(--field-size-icon);
 	opacity: 0;
 }
 
@@ -408,7 +408,7 @@ input[type="range"] {
 	appearance: none;
 	background: 0 0;
 	width: 100%;
-	height: var(--selector-height);
+	height: var(--selector-size);
 
 	&:focus {
 		outline: none;
@@ -422,7 +422,7 @@ input[type="range"] {
 
 input[type="range"]::-webkit-slider-runnable-track {
 	width: 100%;
-	height: calc(var(--selector-height) / 4);
+	height: calc(var(--selector-size) / 4);
 	background-color: var(--track-color);
 	border-radius: var(--radius-full);
 	transition: 100ms background-color;
@@ -430,7 +430,7 @@ input[type="range"]::-webkit-slider-runnable-track {
 
 input[type="range"]::-moz-range-track {
 	width: 100%;
-	height: calc(var(--selector-height) / 4);
+	height: calc(var(--selector-size) / 4);
 	background-color: var(--track-color);
 	border-radius: var(--radius-full);
 	transition: 100ms background-color;
@@ -439,12 +439,9 @@ input[type="range"]::-moz-range-track {
 input[type="range"]::-webkit-slider-thumb {
 	-webkit-appearance: none;
 	appearance: none;
-	width: var(--selector-height);
-	height: var(--selector-height);
-	margin-top: calc(
-		(calc(var(--selector-height) / 4) - var(--selector-height)) /
-		2
-	);
+	width: var(--selector-size);
+	height: var(--selector-size);
+	margin-top: calc((calc(var(--selector-size) / 4) - var(--selector-size)) / 2);
 	background-color: var(--thumb-color);
 	border: 2px solid var(--color-bg);
 	border-radius: var(--radius-full);
@@ -455,12 +452,9 @@ input[type="range"]::-webkit-slider-thumb {
 input[type="range"]::-moz-range-thumb {
 	-webkit-appearance: none;
 	appearance: none;
-	width: var(--selector-height);
-	height: var(--selector-height);
-	margin-top: calc(
-		(calc(var(--selector-height) / 4) - var(--selector-height)) /
-		2
-	);
+	width: var(--selector-size);
+	height: var(--selector-size);
+	margin-top: calc((calc(var(--selector-size) / 4) - var(--selector-size)) / 2);
 	background-color: var(--thumb-color);
 	border: 2px solid var(--color-bg);
 	border-radius: var(--radius-full);
@@ -474,7 +468,7 @@ progress {
 	appearance: none;
 	display: inline-block;
 	width: 100%;
-	height: var(--selector-height);
+	height: var(--selector-size);
 	overflow: hidden;
 	border: none;
 	border-radius: var(--radius-full);

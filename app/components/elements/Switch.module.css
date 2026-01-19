@@ -1,5 +1,5 @@
 .root {
-	--height: var(--selector-height);
+	--height: var(--selector-size);
 
 	cursor: pointer;
 	display: grid;
@@ -47,7 +47,7 @@
 }
 
 .root[data-focus-visible] .indicator {
-	outline: var(--field-focus-ring);
+	outline: var(--focus-ring);
 	outline-offset: 1px;
 }
 

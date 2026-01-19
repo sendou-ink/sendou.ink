@@ -88,8 +88,8 @@
 	display: grid;
 	place-items: center;
 	background-color: transparent;
-	width: var(--field-size-small);
-	height: var(--field-size-small);
+	width: var(--field-size-sm);
+	height: var(--field-size-sm);
 	padding: 0;
 	border: none;
 	border-radius: var(--radius-field);
@@ -103,7 +103,7 @@
 }
 
 .sideNavFooterButton:focus-visible {
-	outline: var(--field-focus-ring);
+	outline: var(--focus-ring);
 	outline-offset: -2px;
 }
 

@@ -65,7 +65,7 @@
 	background-color: var(--color-bg);
 
 	&:focus-within {
-		outline: var(--field-focus-ring);
+		outline: var(--focus-ring);
 		outline-offset: 1px;
 	}
 }

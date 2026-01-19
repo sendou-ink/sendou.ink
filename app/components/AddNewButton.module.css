@@ -1,6 +1,6 @@
 .addNewButton {
 	padding: 0;
-	height: var(--field-size-small);
+	height: var(--field-size-sm);
 	overflow: hidden;
 	width: max-content;
 }
@@ -16,7 +16,7 @@
 }
 
 .iconsContainer > svg {
-	width: calc(var(--field-size-small) / 2);
+	width: calc(var(--field-size-sm) / 2);
 	color: var(--color-text-accent);
 }
 

@@ -21,7 +21,8 @@
 
 .button[data-focus-visible],
 .button:focus-visible {
-	outline: var(--field-focus-ring);
+	outline-style: solid;
+	outline-width: 2px;
 	outline-offset: 1px;
 }
 
@@ -58,23 +59,17 @@
 
 .small {
 	font-size: var(--fonts-xs);
-	padding-block: var(--s-1);
-	padding-inline: var(--s-2);
-	height: var(--field-size-small);
+	height: var(--field-size-sm);
 }
 
 .miniscule {
 	font-size: var(--fonts-xxs);
-	padding-block: var(--s-1);
-	padding-inline: var(--s-2);
-	height: var(--field-size-smaller);
+	height: var(--field-size-xs);
 }
 
 .big {
 	font-size: var(--fonts-md);
-	padding-block: var(--s-2-5);
-	padding-inline: var(--s-6);
-	height: var(--field-size-large);
+	height: var(--field-size-lg);
 }
 
 .square {
@@ -97,7 +92,7 @@
 }
 
 .minimal[data-focus-visible] {
-	outline: var(--field-focus-ring);
+	outline: var(--focus-ring);
 }
 
 .minimalSuccess {

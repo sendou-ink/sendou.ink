@@ -88,7 +88,7 @@
 	padding: 0 var(--s-1);
 
 	&:focus-visible {
-		outline: var(--field-focus-ring);
+		outline: var(--focus-ring);
 		outline-offset: 1px;
 	}
 }
@@ -158,7 +158,7 @@
 	display: flex;
 	gap: var(--s-2);
 	align-items: center;
-	height: var(--field-size-small);
+	height: var(--field-size-sm);
 
 	&:hover svg,
 	&:focus-visible svg {
@@ -166,7 +166,7 @@
 	}
 
 	&:focus-visible {
-		outline: var(--field-focus-ring);
+		outline: var(--focus-ring);
 		outline-offset: 1px;
 	}
 }
@@ -207,7 +207,7 @@
 	margin-top: calc((var(--s-2) * 2) + var(--s-2));
 
 	&:focus-visible {
-		outline: var(--field-focus-ring);
+		outline: var(--focus-ring);
 		outline-offset: 1px;
 	}
 }

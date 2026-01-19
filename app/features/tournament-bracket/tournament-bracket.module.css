@@ -122,8 +122,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: var(--field-size-smaller);
-	height: var(--field-size-smaller);
+	width: var(--field-size-xs);
+	height: var(--field-size-xs);
 	border-radius: 50%;
 	font-weight: bold;
 	font-size: var(--fonts-sm);
@@ -293,7 +293,7 @@
 	}
 
 	&:focus-visible {
-		outline: var(--field-focus-ring);
+		outline: var(--focus-ring);
 		outline-offset: 1px;
 	}
 }

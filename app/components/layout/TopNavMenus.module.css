@@ -8,7 +8,7 @@
 	display: flex;
 	align-items: center;
 	padding: 0 var(--s-2);
-	height: var(--field-size-small);
+	height: var(--field-size-sm);
 	border: none;
 	border-radius: var(--radius-field);
 	background: transparent;
@@ -20,7 +20,7 @@
 }
 
 .menuButton:focus-visible {
-	outline: var(--field-focus-ring);
+	outline: var(--focus-ring);
 	outline-offset: 1px;
 }
 

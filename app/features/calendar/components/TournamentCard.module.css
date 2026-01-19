@@ -96,7 +96,7 @@
 	padding: 0 var(--s-1-5);
 	display: flex;
 	gap: var(--s-1);
-	height: var(--field-size-smaller);
+	height: var(--field-size-xs);
 	align-items: center;
 }
 

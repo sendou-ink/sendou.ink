@@ -4,18 +4,18 @@
 }
 
 .userItem:focus-visible {
-	outline: var(--field-focus-ring);
+	outline: var(--focus-ring);
 }
 
 .avatar {
-	width: var(--field-size-small);
-	height: var(--field-size-small);
+	width: var(--field-size-sm);
+	height: var(--field-size-sm);
 	color: transparent;
 }
 
 .logInButton {
 	display: flex;
-	height: var(--field-size-small);
+	height: var(--field-size-sm);
 	align-items: center;
 	justify-content: center;
 	padding: 0.5rem;

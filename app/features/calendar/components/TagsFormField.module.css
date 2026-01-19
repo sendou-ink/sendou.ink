@@ -17,7 +17,7 @@
 	display: grid;
 	place-items: center;
 	min-width: max-content;
-	height: var(--field-size-small);
+	height: var(--field-size-sm);
 }
 
 .tag[data-selected] {

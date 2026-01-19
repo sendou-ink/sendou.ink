@@ -12,13 +12,13 @@
 	justify-content: center;
 
 	&:focus-visible {
-		outline: var(--field-focus-ring);
+		outline: var(--focus-ring);
 		outline-offset: 1px;
 	}
 }
 
 .triggerTiny {
-	width: var(--field-size-smaller);
-	height: var(--field-size-smaller);
+	width: var(--field-size-xs);
+	height: var(--field-size-xs);
 	font-size: var(--fonts-xs);
 }
