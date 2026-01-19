@@ -1,48 +1,40 @@
 import { nanoid } from "nanoid";
 import { db } from "~/db/sql";
+import type { ApiTokenType } from "~/db/tables";
 
 const API_TOKEN_LENGTH = 20;
 
-/**
- * Finds an API token for the given user ID.
- * @returns API token record if found, undefined otherwise
- */
-export function findTokenByUserId(userId: number) {
+export function findTokenByUserId(userId: number, type: ApiTokenType) {
 	return db
 		.selectFrom("ApiToken")
 		.selectAll()
 		.where("userId", "=", userId)
+		.where("type", "=", type)
 		.executeTakeFirst();
 }
 
-/**
- * Generates a new API token for the given user.
- * Deletes any existing token for the user before creating a new one.
- * @returns Object containing the newly generated token
- */
-export function generateToken(userId: number) {
+export function generateToken(userId: number, type: ApiTokenType) {
 	const token = nanoid(API_TOKEN_LENGTH);
 
 	return db.transaction().execute(async (trx) => {
-		await trx.deleteFrom("ApiToken").where("userId", "=", userId).execute();
+		await trx
+			.deleteFrom("ApiToken")
+			.where("userId", "=", userId)
+			.where("type", "=", type)
+			.execute();
 
 		return trx
 			.insertInto("ApiToken")
 			.values({
 				userId,
 				token,
+				type,
 			})
 			.returning("token")
 			.executeTakeFirstOrThrow();
 	});
 }
 
-/**
- * Retrieves all valid API tokens from users with API access.
- * Includes tokens from users with the isApiAccesser flag enabled (includes supporters tier 2+),
- * or users who are ADMIN, ORGANIZER, or STREAMER members of established tournament organizations.
- * @returns Array of valid API token strings
- */
 export async function allApiTokens() {
 	const tokens = await db
 		.selectFrom("ApiToken")
@@ -57,7 +49,7 @@ export async function allApiTokens() {
 			"TournamentOrganization.id",
 			"TournamentOrganizationMember.organizationId",
 		)
-		.select("ApiToken.token")
+		.select(["ApiToken.token", "ApiToken.type"])
 		// NOTE: permissions logic also exists in checkUserHasApiAccess function
 		.where((eb) =>
 			eb.or([
@@ -77,5 +69,5 @@ export async function allApiTokens() {
 		.groupBy("ApiToken.token")
 		.execute();
 
-	return tokens.map((row) => row.token);
+	return tokens.map((row) => ({ token: row.token, type: row.type }));
 }
