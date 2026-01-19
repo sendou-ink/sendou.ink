@@ -302,7 +302,7 @@ export function compareTeamsForOrdering(
 		return b.avgSeedingSkillOrdinal - a.avgSeedingSkillOrdinal;
 	}
 
-	return a.createdAt - b.createdAt;
+	return a.createdAt !== b.createdAt ? a.createdAt - b.createdAt : a.id - b.id;
 }
 
 export function sortTeamsBySeeding<T extends TeamForOrdering>(

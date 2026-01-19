@@ -60,10 +60,6 @@ export const PATCHES = [
 ];
 
 export const BUILD = {
-	TITLE_MIN_LENGTH: 1,
-	TITLE_MAX_LENGTH: 50,
-	DESCRIPTION_MAX_LENGTH: 280,
-	MAX_WEAPONS_COUNT: 5,
 	MAX_COUNT: 250,
 } as const;
 

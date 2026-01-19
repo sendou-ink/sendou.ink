@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { vodFormBaseSchema } from "~/features/vods/vods-schemas";
 import {
 	expect,
 	impersonate,
@@ -11,15 +11,10 @@ import {
 	submit,
 	test,
 } from "~/utils/playwright";
+import { createFormHelpers } from "~/utils/playwright-form";
 import { newVodPage, VODS_PAGE, vodVideoPage } from "~/utils/urls";
 
-const chooseVideoDate = async (page: Page) => {
-	await page
-		.getByRole("spinbutton", { name: "year, Video date *" })
-		.fill("2024");
-	await page.getByRole("spinbutton", { name: "month, Video date *" }).fill("5");
-	await page.getByRole("spinbutton", { name: "day, Video date *" }).fill("15");
-};
+const VIDEO_DATE = new Date(2024, 4, 15, 12, 0); // May 15, 2024 at 12:00
 
 test.describe("VoDs page", () => {
 	test("adds video (pov)", async ({ page }) => {
@@ -30,17 +25,18 @@ test.describe("VoDs page", () => {
 			url: newVodPage(),
 		});
 
-		await page
-			.getByLabel("YouTube URL")
-			.fill("https://www.youtube.com/watch?v=o7kWlMZP3lM");
+		const form = createFormHelpers(page, vodFormBaseSchema);
 
-		await page
-			.getByLabel("Video title")
-			.fill("ITZXI Finals - Team Olive vs. Astral [CAMO TENTA PoV]");
-
-		await chooseVideoDate(page);
-
-		await page.getByLabel("Type").selectOption("SCRIM");
+		await form.fill(
+			"youtubeUrl",
+			"https://www.youtube.com/watch?v=o7kWlMZP3lM",
+		);
+		await form.fill(
+			"title",
+			"ITZXI Finals - Team Olive vs. Astral [CAMO TENTA PoV]",
+		);
+		await form.setDate("date", VIDEO_DATE);
+		await form.select("type", "SCRIM");
 
 		await selectUser({
 			labelName: "Player (Pov)",
@@ -49,7 +45,7 @@ test.describe("VoDs page", () => {
 		});
 
 		await page.getByLabel("Start timestamp").fill("0:20");
-		await page.getByRole("radio", { name: "TC" }).click();
+		await page.getByRole("radio", { name: "Tower Control" }).click();
 		await selectStage({ page, name: "Hammerhead Bridge", nth: 0 });
 		await selectWeapon({
 			name: "Zink Mini Splatling",
@@ -57,10 +53,10 @@ test.describe("VoDs page", () => {
 			testId: "match-0-weapon",
 		});
 
-		await page.getByTestId("add-field-button").click();
+		await page.getByRole("button", { name: "Add", exact: true }).click();
 
 		await page.getByLabel("Start timestamp").last().fill("5:55");
-		await page.getByRole("radio", { name: "RM" }).last().click();
+		await page.getByRole("radio", { name: "Rainmaker" }).last().click();
 		await selectStage({ page, name: "Museum d'Alfonsino", nth: 1 });
 		await selectWeapon({
 			name: "Tenta Brella",
@@ -85,29 +81,39 @@ test.describe("VoDs page", () => {
 			url: newVodPage(),
 		});
 
-		await page
-			.getByLabel("YouTube URL")
-			.fill("https://www.youtube.com/watch?v=QFk1Gf91SwI");
+		const form = createFormHelpers(page, vodFormBaseSchema);
 
-		await page
-			.getByLabel("Video title")
-			.fill("BIG ! vs Starburst - Splatoon 3 Grand Finals - The Big House 10");
-
-		await chooseVideoDate(page);
-
-		await page.getByLabel("Type").selectOption("CAST");
+		await form.fill(
+			"youtubeUrl",
+			"https://www.youtube.com/watch?v=QFk1Gf91SwI",
+		);
+		await form.fill(
+			"title",
+			"BIG ! vs Starburst - Splatoon 3 Grand Finals - The Big House 10",
+		);
+		await form.setDate("date", VIDEO_DATE);
+		await form.select("type", "CAST");
 
 		await page.keyboard.press("Enter");
 
 		await page.getByLabel("Start timestamp").fill("0:25");
-		await page.getByRole("radio", { name: "CB" }).click();
+		await page.getByRole("radio", { name: "Clam Blitz" }).click();
 		await selectStage({ page, name: "MakoMart" });
 
-		for (let i = 0; i < 8; i++) {
+		// Fill team 1 weapons (Luna Blaster x4)
+		for (let i = 0; i < 4; i++) {
 			await selectWeapon({
-				name: i < 4 ? "Luna Blaster" : "Tenta Brella",
+				name: "Luna Blaster",
 				page,
-				testId: `player-${i}-weapon`,
+				testId: `match-0-team1-weapon-${i}`,
+			});
+		}
+		// Fill team 2 weapons (Tenta Brella x4)
+		for (let i = 0; i < 4; i++) {
+			await selectWeapon({
+				name: "Tenta Brella",
+				page,
+				testId: `match-0-team2-weapon-${i}`,
 			});
 		}
 

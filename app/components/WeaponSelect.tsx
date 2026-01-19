@@ -46,6 +46,8 @@ interface WeaponSelectProps<
 	isRequired?: boolean;
 	/** If set, selection of weapons that user sees when search input is empty allowing for quick select for e.g. previous selections */
 	quickSelectWeaponsIds?: Array<MainWeaponId>;
+	isDisabled?: boolean;
+	placeholder?: string;
 }
 
 export function WeaponSelect<
@@ -62,11 +64,20 @@ export function WeaponSelect<
 	testId = "weapon-select",
 	isRequired,
 	quickSelectWeaponsIds,
+	isDisabled,
+	placeholder,
 }: WeaponSelectProps<Clearable, IncludeSubSpecial>) {
 	const { t } = useTranslation(["common"]);
+	const selectedWeaponId: MainWeaponId | null =
+		typeof value === "number"
+			? (value as MainWeaponId)
+			: value && typeof value === "object" && value.type === "MAIN"
+				? (value.id as MainWeaponId)
+				: null;
 	const { items, filterValue, setFilterValue } = useWeaponItems({
 		includeSubSpecial,
 		quickSelectWeaponsIds,
+		selectedWeaponId,
 	});
 	const filter = useWeaponFilter();
 
@@ -97,9 +108,10 @@ export function WeaponSelect<
 			aria-label={
 				!label ? t("common:forms.weaponSearch.placeholder") : undefined
 			}
+			isDisabled={isDisabled}
 			items={items}
 			label={label}
-			placeholder={t("common:forms.weaponSearch.placeholder")}
+			placeholder={placeholder ?? t("common:forms.weaponSearch.placeholder")}
 			search={{
 				placeholder: t("common:forms.weaponSearch.search.placeholder"),
 			}}
@@ -217,9 +229,11 @@ function useWeaponFilter() {
 function useWeaponItems({
 	includeSubSpecial,
 	quickSelectWeaponsIds,
+	selectedWeaponId,
 }: {
 	includeSubSpecial: boolean | undefined;
 	quickSelectWeaponsIds?: Array<MainWeaponId>;
+	selectedWeaponId?: MainWeaponId | null;
 }) {
 	const items = useAllWeaponCategories(includeSubSpecial);
 	const [filterValue, setFilterValue] = React.useState("");
@@ -229,6 +243,11 @@ function useWeaponItems({
 		filterValue === "" && quickSelectWeaponsIds?.length;
 
 	if (showQuickSelectWeapons) {
+		const weaponIdsToInclude = new Set(quickSelectWeaponsIds);
+		if (typeof selectedWeaponId === "number") {
+			weaponIdsToInclude.add(selectedWeaponId);
+		}
+
 		const quickSelectCategory = {
 			idx: 0,
 			key: "quick-select" as const,
@@ -240,7 +259,7 @@ function useWeaponItems({
 						.filter((val) => val !== null),
 				)
 				.filter((item) =>
-					quickSelectWeaponsIds.includes(item.weapon.id as MainWeaponId),
+					weaponIdsToInclude.has(item.weapon.id as MainWeaponId),
 				)
 				.sort((a, b) => {
 					const aIdx = quickSelectWeaponsIds.indexOf(

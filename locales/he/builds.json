@@ -1,5 +1,7 @@
 {
 	"addBuild": "הוספת ערכה",
+	"forms.title.new": "",
+	"forms.title.edit": "",
 	"reachBuildMaxCount": "הגעת לכמות ערכות מקסימלית.",
 	"noBuilds": "אין ערכות עדיין. יש להוסיף את הערכה הראשונה.",
 	"buildCard.info": "מידע",
@@ -10,8 +12,8 @@
 	"forms.gear.HEAD": "ציוד (ראש)",
 	"forms.gear.CLOTHES": "ציוד (לבוש)",
 	"forms.gear.SHOES": "ציוד (נעליים)",
+	"forms.abilities": "",
 	"forms.private.info": "ערכות פרטיות חשופות רק לך",
-	"forms.noGear.info": "",
 	"deleteConfirm": "למחיקת ערכה '{{title}}'?",
 	"stats.count.title": "נתונים סטטיסטיים מ-{{count}} ערכות של {{weapon}}",
 	"stats.ap.title": "ממוצעי נקודות יכולת",

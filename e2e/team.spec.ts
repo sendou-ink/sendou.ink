@@ -1,5 +1,6 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import { createTeamSchema } from "~/features/team/team-schemas";
 import {
 	expect,
 	impersonate,
@@ -10,6 +11,7 @@ import {
 	submit,
 	test,
 } from "~/utils/playwright";
+import { createFormHelpers } from "~/utils/playwright-form";
 import {
 	editTeamPage,
 	TEAM_SEARCH_PAGE,
@@ -46,8 +48,10 @@ test.describe("Team search page", () => {
 		await page.getByTestId("menu-item-team").click();
 
 		await expect(page).toHaveURL(/new=true/);
-		await page.getByTestId("new-team-name-input").fill("Chimera");
-		await submit(page);
+
+		const form = createFormHelpers(page, createTeamSchema);
+		await form.fill("name", "Chimera");
+		await form.submit();
 
 		await expect(page).toHaveURL(/chimera/);
 	});

@@ -250,7 +250,8 @@ export async function findById(id: number) {
 					])
 					.where("TournamentTeam.tournamentId", "=", id)
 					.orderBy("TournamentTeam.seed", "asc")
-					.orderBy("TournamentTeam.createdAt", "asc"),
+					.orderBy("TournamentTeam.createdAt", "asc")
+					.orderBy("TournamentTeam.id", "asc"),
 			).as("teams"),
 			jsonArrayFrom(
 				eb

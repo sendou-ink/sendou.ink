@@ -41,6 +41,7 @@
 	"forms.info.name": "",
 	"forms.info.tag": "",
 	"forms.errors.duplicateName": "",
+	"forms.errors.noOnlySpecialCharacters": "",
 	"roster.teamFull": "",
 	"roster.inviteLink.header": "",
 	"roster.members.header": "",

@@ -9,13 +9,13 @@ import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import { cache } from "~/utils/cache.server";
-import { logger } from "~/utils/logger";
 import { parseRequestPayload } from "~/utils/remix.server";
 
 const E2E_SEEDS_DIR = "e2e/seeds";
 
 const seedSchema = z.object({
 	variation: z.enum(SEED_VARIATIONS).nullish(),
+	source: z.enum(["e2e"]).nullish(),
 });
 
 export type SeedVariation = NonNullable<
@@ -27,7 +27,7 @@ export const action: ActionFunction = async ({ request }) => {
 		throw new Response(null, { status: 400 });
 	}
 
-	const { variation } = await parseRequestPayload({
+	const { variation, source } = await parseRequestPayload({
 		request,
 		schema: seedSchema,
 	});
@@ -38,16 +38,14 @@ export const action: ActionFunction = async ({ request }) => {
 		`db-seed-${variationName}.sqlite3`,
 	);
 
-	if (!fs.existsSync(preSeededDbPath)) {
-		// Fall back to slow seed if pre-seeded db doesn't exist
-		logger.warn(
-			`Pre-seeded database not found for variation "${variationName}", falling back to seeding via code.`,
-		);
-		const { seed } = await import("~/db/seed");
-		await seed(variation);
-	} else {
+	const usePreSeeded = source === "e2e" && fs.existsSync(preSeededDbPath);
+
+	if (usePreSeeded) {
 		restoreFromPreSeeded(preSeededDbPath);
 		adjustSeedDatesToCurrent(variationName);
+	} else {
+		const { seed } = await import("~/db/seed");
+		await seed(variation);
 	}
 
 	clearAllTournamentDataCache();
