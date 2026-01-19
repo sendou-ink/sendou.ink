@@ -50,11 +50,12 @@ export function RangeVisualization({ weaponIds }: RangeVisualizationProps) {
 	const maxY = Math.max(...allYValues, 2);
 
 	return (
-		<div className={styles.container}>
+		<div className={styles.container} data-testid="range-visualization">
 			<button
 				type="button"
 				className={styles.header}
 				onClick={() => setIsCollapsed(!isCollapsed)}
+				data-testid="range-toggle"
 			>
 				<span className={styles.headerTitle}>
 					{t("analyzer:comp.weaponRanges")}

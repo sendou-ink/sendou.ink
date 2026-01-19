@@ -246,11 +246,12 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 	};
 
 	return (
-		<div className={styles.container}>
+		<div className={styles.container} data-testid="damage-combo-list">
 			<button
 				type="button"
 				className={styles.header}
 				onClick={() => setIsCollapsed(!isCollapsed)}
+				data-testid="damage-combo-toggle"
 			>
 				<span className={styles.headerTitle}>
 					{t("analyzer:comp.damageCombos")}

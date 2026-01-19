@@ -26,7 +26,7 @@ export function SelectedWeapons({
 	});
 
 	return (
-		<div className={styles.selectedWeapons}>
+		<div className={styles.selectedWeapons} data-testid="selected-weapons">
 			{slots.map((weaponId, index) => {
 				if (weaponId === null) {
 					return (
@@ -47,7 +47,11 @@ export function SelectedWeapons({
 				const params = mainWeaponParams(weaponId);
 
 				return (
-					<div key={index} className={styles.selectedWeaponRow}>
+					<div
+						key={index}
+						className={styles.selectedWeaponRow}
+						data-testid={`selected-weapon-${index}`}
+					>
 						<div className={styles.weaponImageContainer}>
 							<WeaponImage weaponSplId={weaponId} variant="build" size={48} />
 						</div>
@@ -60,6 +64,7 @@ export function SelectedWeapons({
 								className={styles.removeButton}
 								onClick={() => onRemove(index)}
 								aria-label={t("analyzer:comp.removeWeapon")}
+								data-testid={`remove-weapon-${index}`}
 							>
 								&times;
 							</button>

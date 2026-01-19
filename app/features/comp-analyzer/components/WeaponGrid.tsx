@@ -41,11 +41,12 @@ export function WeaponGrid({
 	const groupedWeapons = groupWeaponsByType(categorization);
 
 	return (
-		<div className={styles.container}>
+		<div className={styles.container} data-testid="weapon-grid">
 			<button
 				type="button"
 				className={styles.collapseToggle}
 				onClick={onToggleCollapse}
+				data-testid="weapon-grid-toggle"
 			>
 				<span
 					className={`${styles.collapseArrow} ${isCollapsed ? styles.collapseArrowCollapsed : ""}`}
@@ -63,7 +64,10 @@ export function WeaponGrid({
 				<>
 					<div>
 						<Label>{t("analyzer:comp.groupBy")}</Label>
-						<div className={styles.categorizationToggle}>
+						<div
+							className={styles.categorizationToggle}
+							data-testid="categorization-toggle"
+						>
 							<label className="stack horizontal sm items-center">
 								<input
 									type="radio"
@@ -71,6 +75,7 @@ export function WeaponGrid({
 									value="category"
 									checked={categorization === "category"}
 									onChange={() => onCategorizationChange("category")}
+									data-testid="categorization-category"
 								/>
 								<span>{t("analyzer:comp.groupBy.category")}</span>
 							</label>
@@ -81,6 +86,7 @@ export function WeaponGrid({
 									value="sub"
 									checked={categorization === "sub"}
 									onChange={() => onCategorizationChange("sub")}
+									data-testid="categorization-sub"
 								/>
 								<span>{t("analyzer:comp.groupBy.sub")}</span>
 							</label>
@@ -91,6 +97,7 @@ export function WeaponGrid({
 									value="special"
 									checked={categorization === "special"}
 									onChange={() => onCategorizationChange("special")}
+									data-testid="categorization-special"
 								/>
 								<span>{t("analyzer:comp.groupBy.special")}</span>
 							</label>
@@ -124,6 +131,7 @@ export function WeaponGrid({
 												onClick={() => onWeaponClick(weaponId)}
 												disabled={isDisabled}
 												title={t(`weapons:MAIN_${weaponId}`)}
+												data-testid={`weapon-button-${weaponId}`}
 											>
 												<WeaponImage
 													weaponSplId={weaponId}
