@@ -4,6 +4,7 @@ import type { ApiTokenType } from "~/db/tables";
 
 const API_TOKEN_LENGTH = 20;
 
+/** Finds an API token for the given user ID and type. */
 export function findTokenByUserId(userId: number, type: ApiTokenType) {
 	return db
 		.selectFrom("ApiToken")
@@ -13,6 +14,7 @@ export function findTokenByUserId(userId: number, type: ApiTokenType) {
 		.executeTakeFirst();
 }
 
+/** Generates a new API token for the given user. Deletes any existing token of the same type before creating a new one. */
 export function generateToken(userId: number, type: ApiTokenType) {
 	const token = nanoid(API_TOKEN_LENGTH);
 
@@ -35,6 +37,7 @@ export function generateToken(userId: number, type: ApiTokenType) {
 	});
 }
 
+/** Retrieves all valid API tokens and their types from users with API access. */
 export async function allApiTokens() {
 	const tokens = await db
 		.selectFrom("ApiToken")
