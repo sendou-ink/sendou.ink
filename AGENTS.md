@@ -82,6 +82,10 @@
 - before adding a new translation, check that one doesn't already exist you can reuse (particularly in the common.json)
 - add only English translation and use `npm run i18n:sync` to initialize other jsons with empty string ready for translators
 
+## Commit messages
+
+- do not mention claude or claude code
+
 ## Pull request
 
 - use the template `/github/pull_request_template.md`
