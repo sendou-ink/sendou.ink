@@ -33,7 +33,7 @@
 	aspect-ratio: 1 / 1;
 	background: none;
 	border: none;
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	color: var(--color-text-high);
 	font-size: var(--fonts-xxxs);
 	font-weight: var(--semi-bold);
@@ -125,7 +125,7 @@
 	right: 0;
 	height: 85vh;
 	background-color: var(--color-bg);
-	border-radius: var(--rounded) var(--rounded) 0 0;
+	border-radius: var(--radius-box) var(--radius-box) 0 0;
 	overflow-y: auto;
 	display: flex;
 	flex-direction: column;
@@ -241,7 +241,7 @@
 	align-items: center;
 	gap: var(--s-2);
 	padding: var(--s-1) var(--s-2);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 }
 
 .streamItem:hover {
@@ -251,7 +251,7 @@
 .streamItemImage {
 	width: 32px;
 	height: 32px;
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	object-fit: cover;
 	flex-shrink: 0;
 }
@@ -292,7 +292,7 @@
 	color: var(--color-text-inverse);
 	background-color: var(--color-text-accent);
 	padding: 0 var(--s-1);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	flex-shrink: 0;
 }
 
@@ -324,7 +324,7 @@
 .navItemImage {
 	width: 48px;
 	height: 48px;
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	background-color: var(--color-bg-higher);
 	display: grid;
 	place-items: center;
@@ -344,7 +344,7 @@
 	padding: var(--s-2);
 	text-decoration: none;
 	color: var(--color-text);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 }
 
 .youPanelUser:hover {
@@ -363,7 +363,7 @@
 	padding: var(--s-2);
 	text-decoration: none;
 	color: var(--color-text-high);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 }
 
 .youPanelSettingsButton:hover {
@@ -440,7 +440,7 @@
 	align-items: center;
 	justify-content: center;
 	padding: var(--s-0-5);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 }
 
 .weaponLink:active {

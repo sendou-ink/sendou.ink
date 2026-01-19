@@ -23,7 +23,7 @@
 
 .frontPageLink {
 	background-color: var(--color-bg-high);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	padding: var(--s-2);
 	font-size: var(--fonts-sm);
 	color: var(--color-text);

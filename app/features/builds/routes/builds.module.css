@@ -2,7 +2,7 @@
 	height: 20px;
 	margin: auto 0;
 	width: 4px;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-higher);
 }
 
@@ -10,7 +10,7 @@
 	display: flex;
 	flex-direction: column;
 	padding: var(--s-3);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	font-size: var(--fonts-sm);
 	font-weight: 600;
@@ -39,6 +39,6 @@
 }
 
 .categoryWeaponImg {
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg);
 }

@@ -16,7 +16,7 @@
 		"weapon-top-text weapon-top-images"
 		"weapon-bottom-text weapon-bottom-images"
 		"message message";
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	padding: var(--s-4);
 	column-gap: var(--s-2-5);

@@ -127,7 +127,7 @@
 	min-width: 16px;
 	height: 16px;
 	padding-inline: var(--s-0-5);
-	border-radius: var(--rounded-full);
+	border-radius: var(--radius-full);
 	background-color: var(--color-accent-low);
 	color: var(--color-accent);
 	font-size: var(--fonts-xxxs);

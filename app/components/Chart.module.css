@@ -2,12 +2,12 @@
 	height: var(--chart-height, 175px);
 	width: var(--chart-width);
 	background-color: var(--chart-bg, var(--color-bg-high));
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 }
 
 .tooltip {
 	border: var(--border-style);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg);
 	padding: var(--s-1) var(--s-2);
 	font-weight: var(--semi-bold);

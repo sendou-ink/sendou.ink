@@ -18,5 +18,5 @@ export const imgTypeToDimensions: Record<
 export const imgTypeToStyle: Record<ImageUploadType, React.CSSProperties> = {
 	"team-pfp": { borderRadius: "100%", width: "144px", height: "144px" },
 	"org-pfp": { borderRadius: "100%", width: "144px", height: "144px" },
-	"team-banner": { borderRadius: "var(--rounded)", width: "100%" },
+	"team-banner": { borderRadius: "var(--radius-box)", width: "100%" },
 };

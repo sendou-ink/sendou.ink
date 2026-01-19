@@ -39,7 +39,7 @@
 
 .calendarDayLogo {
 	position: absolute;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	top: 50%;
 	left: 50%;
 	transform: translate(-15%, -20%);
@@ -51,7 +51,7 @@
 
 .calendarDayManyEvents {
 	position: absolute;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	top: 50%;
 	left: 50%;
 	transform: translate(-15%, -20%);
@@ -179,7 +179,7 @@
 	background-color: var(--color-bg-higher);
 	display: grid;
 	place-items: center;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding: var(--s-2);
 }
 

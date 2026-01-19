@@ -13,7 +13,7 @@
 	font-size: var(--fonts-lg);
 	font-weight: var(--bold);
 	color: var(--color-text);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	cursor: pointer;
 	transition: opacity 0.2s;
 	border: none;
@@ -49,7 +49,7 @@
 	padding: var(--s-2);
 	background: var(--color-bg-high);
 	border: 2px dashed transparent;
-	border-radius: var(--rounded-sm) 0 0 var(--rounded-sm);
+	border-radius: var(--radius-field) 0 0 var(--radius-field);
 	align-items: center;
 	align-content: center;
 	transition: all 0.2s;
@@ -96,11 +96,11 @@
 }
 
 .arrowButtonUpper {
-	border-radius: 0 var(--rounded-sm) 0 0;
+	border-radius: 0 var(--radius-field) 0 0;
 }
 
 .arrowButtonLower {
-	border-radius: 0 0 var(--rounded-sm) 0;
+	border-radius: 0 0 var(--radius-field) 0;
 }
 
 .arrowButton:hover:not(:disabled) {

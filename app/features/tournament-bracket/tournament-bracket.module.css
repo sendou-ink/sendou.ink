@@ -14,7 +14,7 @@
 .miniAlert {
 	background-color: var(--color-info-low);
 	font-size: var(--fonts-xxs);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding: var(--s-1) var(--s-2);
 }
 
@@ -25,8 +25,8 @@
 	justify-content: center;
 	margin-bottom: var(--s-3);
 	background: var(--color-bg-high);
-	border-end-end-radius: var(--rounded);
-	border-end-start-radius: var(--rounded);
+	border-end-end-radius: var(--radius-box);
+	border-end-start-radius: var(--radius-box);
 	color: var(--tournaments-text);
 	column-gap: var(--s-8);
 	font-size: var(--fonts-xsm);
@@ -41,8 +41,8 @@
 	width: 100%;
 	height: 10rem;
 	background-color: var(--color-bg-high);
-	border-start-end-radius: var(--rounded);
-	border-start-start-radius: var(--rounded);
+	border-start-end-radius: var(--radius-box);
+	border-start-start-radius: var(--radius-box);
 	grid-area: img;
 	display: grid;
 	place-items: center;
@@ -51,7 +51,7 @@
 }
 
 .lockedBannerLonely {
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 }
 
 .stageBanner {
@@ -62,8 +62,8 @@
 	justify-content: space-between;
 	background-image: var(--_tournament-bg-url);
 	background-position: center;
-	border-start-end-radius: var(--rounded);
-	border-start-start-radius: var(--rounded);
+	border-start-end-radius: var(--radius-box);
+	border-start-start-radius: var(--radius-box);
 	grid-area: img;
 	background-repeat: no-repeat;
 	background-size: cover;
@@ -76,8 +76,8 @@
 	padding: var(--s-2);
 	backdrop-filter: blur(10px) brightness(95%);
 	background: rgb(0 0 0 / 40%);
-	border-start-end-radius: var(--rounded);
-	border-start-start-radius: var(--rounded);
+	border-start-end-radius: var(--radius-box);
+	border-start-start-radius: var(--radius-box);
 	font-size: var(--fonts-xs);
 	color: #fff;
 }
@@ -251,8 +251,8 @@
 	height: 1.5rem !important;
 	appearance: none;
 	background-color: var(--color-bg-higher);
-	border-end-start-radius: var(--rounded);
-	border-start-start-radius: var(--rounded);
+	border-end-start-radius: var(--radius-box);
+	border-start-start-radius: var(--radius-box);
 	cursor: pointer;
 	font-size: var(--fonts-xxs);
 	font-weight: var(--bold);
@@ -306,8 +306,8 @@
 	justify-content: center;
 	margin: 0;
 	background-color: var(--color-bg);
-	border-end-end-radius: var(--rounded);
-	border-start-end-radius: var(--rounded);
+	border-end-end-radius: var(--radius-box);
+	border-start-end-radius: var(--radius-box);
 	overflow-x: hidden;
 	text-overflow: ellipsis;
 	user-select: none;
@@ -453,7 +453,7 @@
 	font-size: var(--fonts-xs);
 	color: var(--color-text);
 	background-color: var(--color-bg);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	border: 2px solid var(--color-bg-higher);
 	padding-block: var(--s-1-5);
 	padding-inline: var(--s-2-5);
@@ -480,13 +480,13 @@
 	color: var(--color-text-high);
 	border-color: var(--color-bg-higher);
 	background-color: var(--color-bg);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 }
 
 .castInfoContainer {
 	display: flex;
 	gap: var(--s-2);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	width: max-content;
 }
@@ -495,7 +495,7 @@
 	padding: var(--s-2) var(--s-3-5);
 	text-transform: uppercase;
 	background-color: var(--color-bg-higher);
-	border-radius: var(--rounded) 0 0 var(--rounded);
+	border-radius: var(--radius-box) 0 0 var(--radius-box);
 	font-weight: var(--bold);
 	color: var(--color-text-high);
 	display: grid;
@@ -515,7 +515,7 @@
 
 .actionSectionWrapper [class*="tabPanel"] {
 	background-color: var(--color-bg-high);
-	border-radius: 0 0 var(--rounded) var(--rounded);
+	border-radius: 0 0 var(--radius-box) var(--radius-box);
 	padding: var(--s-4);
 }
 

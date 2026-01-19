@@ -85,7 +85,7 @@
 .pill {
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-selector);
 	background-color: var(--color-bg-higher);
 	padding: var(--s-0-5) var(--s-2);
 	display: flex;
@@ -102,7 +102,7 @@
 .editButton {
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-selector);
 	background-color: var(--color-bg-higher);
 	padding: var(--s-0-5) var(--s-2);
 	color: var(--color-text);
@@ -127,9 +127,9 @@
 }
 
 .tierPillStart {
-	border-radius: 0 var(--rounded) var(--rounded) 0;
+	border-radius: 0 var(--radius-box) var(--radius-box) 0;
 }
 
 .tierPillEnd {
-	border-radius: var(--rounded) 0 0 var(--rounded);
+	border-radius: var(--radius-box) 0 0 var(--radius-box);
 }

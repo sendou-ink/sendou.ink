@@ -2,7 +2,7 @@
 	max-width: 20rem;
 	padding: var(--s-2);
 	border: 2px solid var(--border);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--bg-darker);
 	font-size: var(--fonts-sm);
 	font-weight: var(--semi-bold);
@@ -23,7 +23,7 @@
 .react-aria-DatePicker .react-aria-Group {
 	display: flex;
 	border: 2px solid var(--border);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	accent-color: var(--theme-secondary);
 	background-color: var(--bg-input);
 	color: var(--text);
@@ -64,7 +64,7 @@
 
 .react-aria-Calendar {
 	background-color: var(--bg-lighter-solid);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding: var(--s-4);
 	border: var(--border-style);
 }
@@ -114,7 +114,7 @@
 	padding: var(--s-1-5);
 	width: 35px;
 	height: 35px;
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	outline-color: var(--theme);
 }
 

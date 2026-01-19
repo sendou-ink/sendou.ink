@@ -4,7 +4,7 @@
 	gap: var(--s-2);
 	padding: 0 var(--s-3);
 	border: 1px solid var(--color-border);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	background-color: var(--color-bg);
 	color: var(--color-text-high);
 	font-size: var(--fonts-xs);
@@ -35,7 +35,7 @@
 
 .searchKbd {
 	padding: 2px var(--s-1);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	font-size: var(--fonts-xxs);
 	background-color: var(--color-bg-higher);
 	font-family: inherit;
@@ -70,7 +70,7 @@
 	width: 100%;
 	max-width: 32rem;
 	background-color: var(--color-bg);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	box-shadow:
 		0 10px 15px -3px rgba(0, 0, 0, 0.1),
 		0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -125,7 +125,7 @@
 
 .listBoxItem {
 	padding: var(--s-2) var(--s-3);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	cursor: pointer;
 	font-size: var(--fonts-sm);
 	outline: none;
@@ -159,7 +159,7 @@
 	align-items: center;
 	gap: var(--s-1);
 	padding: var(--s-1) var(--s-2);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	font-size: var(--fonts-xs);
 	cursor: pointer;
 	border: 1px solid var(--color-border);
@@ -216,7 +216,7 @@
 }
 
 .resultLogo {
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	object-fit: cover;
 }
 

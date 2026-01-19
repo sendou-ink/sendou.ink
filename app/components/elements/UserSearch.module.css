@@ -2,7 +2,7 @@
 	font-size: var(--fonts-xsm);
 	font-weight: var(--semi-bold);
 	padding: var(--s-1-5);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	height: 33px;
 	white-space: nowrap;
 	text-overflow: ellipsis;

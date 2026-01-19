@@ -9,7 +9,7 @@
 
 .dialogTag {
 	background-color: #fff;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	color: #000;
 	font-size: var(--fonts-xxs);
 	padding-inline: var(--s-1);

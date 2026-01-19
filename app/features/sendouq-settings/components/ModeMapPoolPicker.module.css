@@ -8,7 +8,7 @@
 	display: grid;
 	place-items: center;
 	color: var(--color-text-high);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	font-weight: var(--bold);
 	width: 24px;
 	height: 24px;
@@ -34,7 +34,7 @@
 	transition:
 		filter,
 		opacity 0.2s;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 }
 
 @keyframes wiggle {

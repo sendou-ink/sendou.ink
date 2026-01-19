@@ -14,7 +14,7 @@
 	gap: var(--s-3);
 	padding: var(--s-2) var(--s-3);
 	border: 1px solid var(--color-border);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	transition: opacity 0.2s;
 }

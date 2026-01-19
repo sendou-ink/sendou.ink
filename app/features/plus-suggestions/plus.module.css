@@ -112,7 +112,7 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-success-high);
 	color: var(--color-text);
 	font-size: var(--fonts-sm);

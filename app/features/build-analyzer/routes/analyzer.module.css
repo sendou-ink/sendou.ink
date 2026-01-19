@@ -52,7 +52,7 @@
 
 .apSummary {
 	width: 100%;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
@@ -64,7 +64,7 @@
 	display: flex;
 	width: 100%;
 	align-items: center;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-accent-low);
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
@@ -80,7 +80,7 @@
 }
 
 .summary {
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	font-size: var(--fonts-md);
 	font-weight: var(--bold);
@@ -99,7 +99,7 @@
 	gap: var(--s-2);
 	align-items: center;
 	background-color: var(--color-bg);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-field);
 	padding: var(--s-1) var(--s-3);
 	margin-inline-start: auto;
 	position: absolute;
@@ -132,7 +132,7 @@
 	flex-direction: column;
 	justify-content: space-between;
 	padding: var(--s-2);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	gap: var(--s-4);
 }
@@ -205,7 +205,7 @@
 .tableContainer {
 	width: 100%;
 	padding: var(--s-3);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	margin-block-start: var(--s-4);
 	padding-block: var(--s-2);
@@ -234,7 +234,7 @@
 }
 
 .patch {
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-accent-low);
 	color: var(--color-accent-high);
 	font-size: var(--fonts-xxxs);

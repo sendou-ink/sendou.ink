@@ -20,7 +20,7 @@
 	align-items: center;
 	gap: var(--s-2);
 	font-weight: var(--bold);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	padding: var(--s-1) var(--s-2);
 	font-size: var(--fonts-xs);
 	flex: 1 1 0;
@@ -63,7 +63,7 @@
 
 .dayHeader {
 	border: var(--border-style);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	padding: var(--s-2);
 	text-align: center;
@@ -98,7 +98,7 @@
 	width: 100%;
 	height: 3px;
 	background-color: var(--color-bg-high);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 }
 
 .hiddenEventsButton svg {

@@ -5,7 +5,7 @@
 	min-height: 12rem;
 	align-items: center;
 	padding: var(--s-2);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-badge);
 	margin-inline: auto;
 }

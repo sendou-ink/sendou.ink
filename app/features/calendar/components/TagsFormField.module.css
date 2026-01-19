@@ -11,7 +11,7 @@
 .tag {
 	cursor: pointer;
 	border: 2px solid var(--tag-color);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	font-size: var(--fonts-sm);
 	font-weight: var(--semi-bold);
 	display: grid;

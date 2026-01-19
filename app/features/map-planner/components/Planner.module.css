@@ -8,7 +8,7 @@
 	padding: var(--s-2);
 	border: var(--border-style);
 	border-top: transparent;
-	border-radius: 0 0 var(--rounded) var(--rounded);
+	border-radius: 0 0 var(--radius-box) var(--radius-box);
 	background-color: var(--color-bg);
 	gap: var(--s-2);
 	transform: translate(-50%, 0);
@@ -55,7 +55,7 @@
 	max-height: 85vh;
 	border: var(--border-style);
 	border-left: transparent;
-	border-radius: 0 var(--rounded) var(--rounded) 0;
+	border-radius: 0 var(--radius-box) var(--radius-box) 0;
 	background: var(--color-bg);
 	gap: 2px;
 	overflow-y: auto;
@@ -112,7 +112,7 @@
 	justify-content: center;
 	padding: var(--s-0-5);
 	border: none;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background: transparent;
 	cursor: grab;
 	touch-action: none;

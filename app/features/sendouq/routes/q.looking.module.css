@@ -36,5 +36,5 @@
 	padding: 2px;
 	background-color: var(--color-bg-high);
 	margin: 5px;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 }

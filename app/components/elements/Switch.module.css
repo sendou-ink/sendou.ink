@@ -18,7 +18,7 @@
 	height: var(--height);
 	background: var(--color-bg);
 	border: var(--border-style);
-	border-radius: 99999px;
+	border-radius: calc(var(--radius-selector) * 2);
 
 	&:before {
 		content: "";
@@ -28,7 +28,7 @@
 		height: calc(var(--height) - 8px);
 		aspect-ratio: 1 / 1;
 		background: var(--color-border);
-		border-radius: 50%;
+		border-radius: var(--radius-selector);
 		transition: transform 200ms;
 	}
 }

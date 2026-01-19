@@ -71,7 +71,7 @@
 .roundControlsDivider {
 	width: 3px;
 	height: 2rem;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-higher);
 	margin-inline: var(--s-1);
 }
@@ -124,7 +124,7 @@
 .patternCode {
 	background-color: var(--color-bg-higher);
 	padding: 2px 6px;
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
 	display: inline-block;

@@ -1,12 +1,12 @@
 .card {
 	border: var(--border-style);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	margin: 0;
 	padding: 0;
 }
 
 .header {
-	--header-border-radius: calc(var(--rounded-xs) - 2px);
+	--header-border-radius: calc(var(--radius-field) - 2px);
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);

@@ -32,7 +32,7 @@
 	font-size: var(--fonts-xs);
 	color: var(--color-accent);
 	padding: var(--s-0-5) var(--s-1);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	margin-left: var(--s-2);
 	font-weight: var(--bold);
 }
@@ -62,7 +62,7 @@
 	display: grid;
 	grid-template-areas: "flags ." "avatar name";
 	padding: var(--s-5);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 }
 
 .bannerPlaceholder {
@@ -150,7 +150,7 @@
 	background-color: var(--color-accent-low);
 	color: var(--color-accent);
 	padding: var(--s-1) var(--s-1-5);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 }
 
 .bannerTagDesktop {
@@ -181,7 +181,7 @@
 	background-color: var(--color-bg-higher);
 	max-width: 32rem;
 	margin: 0 auto;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding: var(--s-1) var(--s-4);
 	font-weight: var(--bold);
 	font-size: var(--fonts-sm);
@@ -211,7 +211,7 @@
 
 .memberSection {
 	background-color: var(--color-bg-high);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding: var(--s-2) var(--s-4);
 	font-size: var(--fonts-xl);
 	font-weight: var(--bold);
@@ -263,7 +263,7 @@
 	gap: var(--s-2);
 	padding: var(--s-3);
 	background-color: var(--color-bg-high);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	font-size: var(--fonts-lg);
 	font-weight: var(--bold);
 }

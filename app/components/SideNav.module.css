@@ -60,7 +60,7 @@
 	text-decoration: none;
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	padding: var(--s-1);
 	margin-left: calc(-1 * var(--s-1));
 	flex: 1;
@@ -92,7 +92,7 @@
 	height: var(--field-height-small);
 	padding: 0;
 	border: none;
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	color: var(--color-text-high);
 	cursor: pointer;
 }
@@ -224,7 +224,7 @@
 
 .iconContainer {
 	background-color: var(--color-bg-high);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	padding: var(--s-1-5);
 }
 
@@ -233,7 +233,7 @@
 	color: var(--color-text);
 	text-decoration: none;
 	padding: var(--s-1) var(--s-2);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	transition:
 		background-color 0.15s,
 		color 0.15s;
@@ -258,7 +258,7 @@
 .sideNavLinkImage {
 	width: 32px;
 	height: 32px;
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	object-fit: cover;
 	flex-shrink: 0;
 }
@@ -303,7 +303,7 @@
 	color: var(--color-text-inverse);
 	background-color: var(--color-text-accent);
 	padding: 0 var(--s-1);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-selector);
 	flex-shrink: 0;
 	text-transform: uppercase;
 }
@@ -340,7 +340,7 @@
 	transform: translateY(-50%);
 	max-height: 90vh;
 	overflow-y: auto;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 }
 
 .sideNavPanel[data-entering] {

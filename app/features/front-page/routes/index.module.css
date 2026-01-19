@@ -13,7 +13,7 @@
 
 .frontPageSideNav picture {
 	background-color: var(--color-bg-high);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding: var(--s-1);
 }
 
@@ -41,7 +41,7 @@
 
 .frontPageSideNavLogOut svg {
 	background-color: var(--color-bg-higher);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	min-width: 28px;
 	margin-inline-end: 0 !important;
 	padding: var(--s-1-5);
@@ -72,7 +72,7 @@
 
 .changeLogImg {
 	max-height: 300px;
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 }
 
 .changeLogIconButton {
@@ -117,7 +117,7 @@
 		var(--l),
 		var(--color-bg)
 	);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding: var(--s-2) var(--s-3);
 	line-height: 1.35;
 	position: relative;
@@ -150,7 +150,7 @@
 
 .seasonBannerLink {
 	background-color: var(--color-text-accent);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	width: max-content;
 	padding: 0 var(--field-padding-inline);
 	font-size: var(--fonts-xs);
@@ -192,7 +192,7 @@
 .tournamentCardsViewAllCard {
 	background-color: var(--color-bg-high);
 	height: var(--card-height);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	display: grid;
 	place-items: center;
 	padding: var(--s-2);
@@ -235,7 +235,7 @@
 	min-width: var(--card-width);
 	max-width: var(--card-width);
 	background-color: var(--color-bg-higher);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-2);
@@ -255,7 +255,7 @@
 	font-size: var(--fonts-xxs);
 	color: var(--color-text);
 	background-color: var(--color-bg-higher);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	width: max-content;
 	padding-inline: var(--s-2);
 	display: flex;
@@ -266,7 +266,7 @@
 .lutiBanner {
 	background-color: #4874a0;
 	color: #fff;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding: var(--s-2);
 	justify-content: center;
 	display: flex;
@@ -308,7 +308,7 @@
 .filterBtn {
 	background-color: var(--color-bg-high);
 	border: none;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding: var(--s-1-5) var(--s-3);
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
@@ -334,7 +334,7 @@
 
 .feedPost {
 	background-color: var(--color-bg-high);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding: var(--s-4);
 	border: var(--border-style);
 }
@@ -367,7 +367,7 @@
 	font-size: var(--fonts-xxs);
 	font-weight: var(--bold);
 	padding: var(--s-1) var(--s-2);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	text-transform: uppercase;
 }
 
@@ -437,7 +437,7 @@
 	align-items: center;
 	gap: var(--s-3);
 	padding: var(--s-2) var(--s-3);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 }
 
 .matchWin {
@@ -483,7 +483,7 @@
 .matchStageImg {
 	width: 80px;
 	height: 45px;
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	object-fit: cover;
 }
 
@@ -594,7 +594,7 @@
 	justify-content: space-between;
 	background-color: var(--color-bg-higher);
 	padding: var(--s-2) var(--s-3);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 }
 
 .teamName {
@@ -641,7 +641,7 @@
 .abilityTag {
 	background-color: var(--color-bg-higher);
 	padding: var(--s-1) var(--s-2);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
 }
@@ -676,7 +676,7 @@
 	background-color: var(--color-success-low);
 	color: var(--color-success);
 	padding: var(--s-0-5) var(--s-2);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	text-transform: uppercase;
 }
 
@@ -692,7 +692,7 @@
 	gap: var(--s-2);
 	background-color: var(--color-bg-higher);
 	padding: var(--s-2);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 }
 
 .memberInfo {
@@ -815,7 +815,7 @@
 	background-color: var(--color-accent);
 	color: var(--color-text-inverse);
 	border: none;
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	padding: var(--s-2) var(--s-4);
 	font-size: var(--fonts-xs);
 	font-weight: var(--bold);
@@ -920,7 +920,7 @@
 .artImage {
 	width: 80px;
 	height: 80px;
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	object-fit: cover;
 }
 
@@ -937,7 +937,7 @@
 	gap: var(--s-1);
 	background-color: var(--color-bg-higher);
 	padding: var(--s-3);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 }
 
 .replayCodeLabel {
@@ -971,7 +971,7 @@
 .replayStageImg {
 	width: 80px;
 	height: 45px;
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	object-fit: cover;
 }
 

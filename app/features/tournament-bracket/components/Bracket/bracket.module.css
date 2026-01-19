@@ -16,7 +16,7 @@
 	-ms-overflow-style: none;
 	scrollbar-width: none;
 	border: var(--border-style);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	overflow: scroll;
 	user-select: none;
 }
@@ -32,7 +32,7 @@
 .matchHeaderBox {
 	background-color: var(--color-bg-higher);
 	padding: var(--s-0-5) var(--s-1);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	font-size: var(--fonts-xxxs) !important;
 	font-weight: var(--semi-bold);
 	color: var(--color-text);
@@ -59,7 +59,7 @@
 	width: var(--match-width);
 	min-height: var(--match-height);
 	max-height: var(--match-height);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	background-color: var(--color-bg-high);
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
@@ -74,7 +74,7 @@
 
 a.match:hover {
 	background-color: var(--color-bg-high);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 }
 
 .matchSeparator {
@@ -152,7 +152,7 @@ a.match:hover {
 	font-weight: var(--semi-bold);
 	padding-block: var(--s-2);
 	width: var(--match-width);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 }
 
 .elimRoundHeaderInfos {

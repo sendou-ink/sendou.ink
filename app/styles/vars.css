@@ -146,6 +146,11 @@ html {
 
 	--selector-height: 1.25rem;
 
+	--radius-box: 12px;
+	--radius-field: 8px;
+	--radius-selector: 8px;
+	--radius-full: 99999px;
+
 	--layout-nav-height: 55px;
 	--layout-sidenav-width: 250px;
 	--layout-main-padding: var(--s-4);
@@ -156,11 +161,6 @@ html {
 }
 
 html {
-	--rounded: 16px;
-	--rounded-full: 200px;
-	--rounded-xs: 8px;
-	--rounded-sm: 10px;
-
 	--fonts-xl: 1.5rem;
 	--fonts-lg: 1.2rem;
 	--fonts-md: 1rem;

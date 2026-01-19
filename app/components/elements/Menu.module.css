@@ -1,5 +1,5 @@
 .popover {
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	border: var(--border-style);
 	width: max-content;
@@ -35,7 +35,7 @@
 	color: var(--color-text);
 	white-space: nowrap;
 	gap: var(--s-2);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	padding: var(--s-1-5) var(--s-2-5);
 	background-color: var(--color-bg-high);
 	width: 100%;

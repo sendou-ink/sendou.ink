@@ -1,6 +1,6 @@
 .root {
 	background-color: var(--color-bg);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding: var(--s-4);
 	border: var(--border-style);
 	max-width: fit-content;
@@ -51,7 +51,7 @@
 	padding: var(--s-1-5);
 	width: 35px;
 	height: 35px;
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	outline-color: var(--color-accent);
 
 	&:focus-visible {

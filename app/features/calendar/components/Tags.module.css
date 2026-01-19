@@ -24,7 +24,7 @@
 .tags > li {
 	display: flex;
 	align-items: center;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding-inline: var(--s-1-5);
 	min-height: 20px;
 }

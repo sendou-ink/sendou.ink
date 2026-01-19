@@ -1,6 +1,6 @@
 .ownScores {
 	padding: var(--s-2);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	margin: 0 auto;
 	background-color: var(--color-bg-high);
 	font-size: var(--fonts-sm);
@@ -52,7 +52,7 @@
 }
 
 .userStatus {
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-accent);
 	color: var(--color-text-inverse);
 	font-size: var(--fonts-xs);

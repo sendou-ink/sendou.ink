@@ -27,7 +27,7 @@
 .link {
 	width: 100%;
 	padding: var(--s-1) var(--s-4);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	cursor: pointer;
 	font-size: var(--fonts-xs);
@@ -48,7 +48,7 @@
 .borderGuy {
 	width: 78%;
 	height: 3px;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-higher);
 	visibility: hidden;
 }

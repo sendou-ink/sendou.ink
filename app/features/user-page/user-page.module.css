@@ -104,7 +104,7 @@
 
 .extraInfo {
 	padding: var(--s-1) var(--s-1-5);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	font-size: var(--fonts-xxs);
 	display: flex;
@@ -208,7 +208,7 @@
 	display: flex;
 	flex-wrap: wrap;
 	padding: var(--s-4);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	margin: 0 auto;
 	background-color: var(--color-bg-high);
 	color: var(--color-text);
@@ -306,7 +306,7 @@
 
 .seasonMatch {
 	background-color: var(--color-bg-high);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding: var(--s-2) var(--s-2-5);
 	color: var(--color-text);
 	transition: ease-in 0.2s background-color;
@@ -316,11 +316,11 @@
 }
 
 .seasonMatchWithSubSection {
-	border-radius: var(--rounded) var(--rounded) 0 0;
+	border-radius: var(--radius-box) var(--radius-box) 0 0;
 }
 
 .seasonMatchSubSection {
-	border-radius: 0 0 var(--rounded) var(--rounded);
+	border-radius: 0 0 var(--radius-box) var(--radius-box);
 	background-color: var(--color-bg-high);
 	font-size: var(--fonts-xs);
 	text-align: center;
@@ -373,7 +373,7 @@
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
 	border: 3px solid var(--color-accent);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	color: var(--color-text);
 	border-color: var(--color-error);
 }
@@ -385,13 +385,13 @@
 .seasonInfoContainer {
 	background-color: var(--color-bg-high);
 	padding: var(--s-2-5) var(--s-2);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 }
 
 .seasonWinrate {
 	background-color: var(--color-bg-high);
 	padding: var(--s-0-5) var(--s-2);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
 }

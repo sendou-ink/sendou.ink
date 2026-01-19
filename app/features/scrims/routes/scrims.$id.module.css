@@ -11,7 +11,7 @@
 }
 
 .groupCard {
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	padding: var(--s-2-5);
 	display: flex;
@@ -24,7 +24,7 @@
 	gap: var(--s-2);
 	align-items: center;
 	background-color: var(--color-bg);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	font-size: var(--fonts-xsm);
 	font-weight: var(--semi-bold);
 	padding-inline-end: var(--s-2-5);
@@ -46,7 +46,7 @@
 }
 
 .chatContainer {
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	padding: var(--s-2-5);
 }

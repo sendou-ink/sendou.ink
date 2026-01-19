@@ -10,7 +10,7 @@
 
 .toast {
 	background: var(--color-info-low);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding: var(--s-1-5) var(--s-3);
 	align-items: center;
 	justify-content: center;

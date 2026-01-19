@@ -21,7 +21,7 @@
 	width: 100%;
 	align-items: center;
 	padding: var(--s-2) var(--s-3);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	border: 1px solid var(--color-border);
 	background-color: var(--color-bg-high);
 	column-gap: var(--s-2);
@@ -106,7 +106,7 @@
 	--field-width: 3rem;
 	text-align: center;
 	padding: var(--s-0-5);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	border: 1px solid var(--color-border);
 	background-color: var(--color-bg);
 	color: var(--color-text);
@@ -138,7 +138,7 @@
 	font-size: var(--fonts-xxxxs);
 	font-weight: var(--bold);
 	padding: 1px 4px;
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	text-transform: uppercase;
 }
 
@@ -153,7 +153,7 @@
 	align-items: center;
 	gap: var(--s-1);
 	background-color: var(--color-bg-higher);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding: var(--s-0-5) var(--s-2);
 	font-weight: var(--semi-bold);
 }
@@ -168,7 +168,7 @@
 	font-size: var(--fonts-xxxxs);
 	font-weight: var(--bold);
 	padding: 1px 3px;
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	text-transform: uppercase;
 	margin-left: var(--s-1);
 }
@@ -210,7 +210,7 @@
 .overlay {
 	background-color: var(--color-bg-high);
 	border: 1px solid var(--color-border);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding: var(--s-2) var(--s-3);
 	box-shadow:
 		0 4px 6px -1px rgb(0 0 0 / 0.1),

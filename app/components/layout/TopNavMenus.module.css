@@ -10,7 +10,7 @@
 	padding: 0 var(--s-2);
 	height: var(--field-height-small);
 	border: none;
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	background: transparent;
 	color: var(--color-text);
 	font-size: var(--fonts-xs);
@@ -39,7 +39,7 @@
 	align-items: center;
 	gap: var(--s-2);
 	padding: var(--s-1-5) var(--s-2);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	color: var(--color-text);
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
@@ -98,7 +98,7 @@
 	align-items: center;
 	justify-content: center;
 	padding: var(--s-0-5);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-field);
 	transition:
 		background-color 0.15s,
 		color 0.15s;

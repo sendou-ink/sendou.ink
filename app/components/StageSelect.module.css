@@ -5,7 +5,7 @@
 }
 
 .stageImg {
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 }
 
 .stageLabel {

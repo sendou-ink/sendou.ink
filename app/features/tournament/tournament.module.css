@@ -1,6 +1,6 @@
 .actionSection {
 	padding: var(--s-0-5) var(--s-6) var(--s-6) var(--s-6);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 }
 
@@ -62,7 +62,7 @@
 .teamWithRosterMapPool {
 	display: grid;
 	grid-template-columns: max-content max-content max-content max-content;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	border: var(--border-style-accent);
 	width: max-content;
 	margin: 0 auto;
@@ -116,7 +116,7 @@
 	font-weight: var(--semi-bold);
 	width: 12px;
 	height: 12px;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	font-size: var(--fonts-xxxxs);
 	display: grid;
 	place-items: center;
@@ -150,7 +150,7 @@
 	font-size: var(--fonts-xxs);
 	font-weight: var(--bold);
 	padding: var(--s-0-5) var(--s-2);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	place-items: center;
 	width: max-content;
 	display: flex;
@@ -289,7 +289,7 @@
 	width: 100%;
 	align-items: center;
 	padding: var(--s-1-5) var(--s-3);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	column-gap: var(--s-1);
 	font-size: var(--fonts-xs);
 	grid-template-columns: 1.5rem 2rem 8rem 3rem 1fr;
@@ -324,7 +324,7 @@
 	grid-template-columns: max-content max-content;
 	grid-column-gap: var(--s-2-5);
 	background-color: var(--color-bg-high);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding: var(--s-1) var(--s-3);
 	place-items: center;
 }
@@ -360,7 +360,7 @@
 }
 
 .teamStats {
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding: var(--s-4);
 	display: grid;
 	grid-template-columns: 1fr 1fr;
@@ -400,7 +400,7 @@
 @media screen and (min-width: 640px) {
 	.section {
 		margin: 0;
-		border-radius: var(--rounded);
+		border-radius: var(--radius-box);
 	}
 
 	.teamStats {
@@ -421,7 +421,7 @@
 	flex-direction: column;
 	gap: var(--s-2-5);
 	background-color: var(--color-bg-high);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	padding: var(--s-3) var(--s-6);
 }
 
@@ -536,7 +536,7 @@
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
 	border: 3px solid var(--color-accent);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	color: var(--color-text);
 }
 
@@ -560,5 +560,5 @@
 .standingsDivider {
 	width: 5px;
 	background-color: var(--color-accent-low);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 }

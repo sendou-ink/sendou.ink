@@ -1,7 +1,7 @@
 .section {
 	& > div {
 		padding: var(--s-2);
-		border-radius: var(--rounded);
+		border-radius: var(--radius-box);
 		background-color: var(--color-bg);
 	}
 

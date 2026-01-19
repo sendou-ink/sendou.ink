@@ -29,7 +29,7 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: var(--s-4);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-higher);
 	cursor: pointer;
 	font-size: var(--fonts-lg);

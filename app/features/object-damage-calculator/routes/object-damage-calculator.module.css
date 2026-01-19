@@ -47,7 +47,7 @@
 .tableHeader {
 	align-items: center;
 	background-color: var(--color-bg-higher);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	display: flex;
 	flex-direction: column;
 	font-size: var(--fonts-xs);
@@ -78,7 +78,7 @@
 .receiverButton {
 	all: unset;
 	cursor: pointer;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 }
 
 .receiverButton:focus-visible {
@@ -88,7 +88,7 @@
 
 .receiverImage {
 	padding: var(--s-2);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg);
 }
 
@@ -97,7 +97,7 @@
 	width: 100%;
 	height: 100%;
 	padding: var(--s-2);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
@@ -133,7 +133,7 @@
 }
 
 .patch {
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-accent-low);
 	color: var(--color-accent-high);
 	font-size: var(--fonts-xxxs);

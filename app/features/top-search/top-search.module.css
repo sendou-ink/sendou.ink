@@ -41,15 +41,15 @@ a.tableRow:hover {
 }
 
 .tableRow:first-of-type {
-	border-radius: var(--rounded) var(--rounded) 0 0;
+	border-radius: var(--radius-box) var(--radius-box) 0 0;
 }
 
 .tableRow:last-of-type {
-	border-radius: 0 0 var(--rounded) var(--rounded);
+	border-radius: 0 0 var(--radius-box) var(--radius-box);
 }
 
 .tableRow:only-child {
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 }
 
 .tableRowQualification {

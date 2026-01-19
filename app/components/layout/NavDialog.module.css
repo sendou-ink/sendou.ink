@@ -62,7 +62,7 @@
 	display: grid;
 	width: 75px;
 	height: 75px;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	color: var(--color-text);
 	place-items: center;

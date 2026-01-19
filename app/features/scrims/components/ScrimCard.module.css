@@ -1,6 +1,6 @@
 .card {
 	border: var(--border-style);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	overflow: hidden;
 	background-color: var(--color-bg);
 	display: flex;

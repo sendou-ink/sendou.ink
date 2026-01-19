@@ -127,11 +127,11 @@
 }
 
 .rounded {
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 }
 
 .rounded-sm {
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 }
 
 .rounded-full {
@@ -532,7 +532,7 @@
 
 	&::-webkit-scrollbar-thumb {
 		background-color: var(--color-base-4);
-		border-radius: 99999px;
+		border-radius: var(--radius-full);
 		border: 4px solid transparent;
 		background-clip: content-box;
 	}
@@ -619,7 +619,7 @@
 }
 
 .summary {
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg);
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);

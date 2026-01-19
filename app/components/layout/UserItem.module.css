@@ -21,7 +21,7 @@
 	padding: 0.5rem;
 	border: 2px solid;
 	border-color: var(--color-text-accent);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: transparent;
 	color: inherit;
 	cursor: pointer;

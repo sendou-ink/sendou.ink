@@ -9,7 +9,7 @@
 .badges {
 	width: max-content;
 	padding: var(--s-2);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-badge);
 	font-size: var(--fonts-sm);
 	font-weight: var(--semi-bold);

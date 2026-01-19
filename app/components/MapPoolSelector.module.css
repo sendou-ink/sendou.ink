@@ -23,7 +23,7 @@
 	flex-grow: 1;
 	align-items: center;
 	justify-content: space-between;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
@@ -39,7 +39,7 @@
 }
 
 .stageImage {
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 }
 
 .modeButtonsContainer {
@@ -52,7 +52,7 @@
 .modeButton {
 	padding: var(--s-1);
 	border: var(--border-style);
-	border-radius: var(--rounded-full);
+	border-radius: var(--radius-full);
 	background-color: var(--color-bg);
 	color: var(--color-accent);
 	opacity: 1 !important;

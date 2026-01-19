@@ -2,7 +2,7 @@
 	max-width: 20rem;
 	padding: var(--s-2);
 	border: var(--border-style);
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	font-size: var(--fonts-sm);
 	font-weight: var(--semi-bold);
 	white-space: pre-wrap;
