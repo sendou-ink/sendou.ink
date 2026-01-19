@@ -99,7 +99,7 @@ input:not(.in-container) {
 	border-radius: var(--radius-field);
 	background: var(--color-bg);
 	padding: 0 var(--field-padding);
-	height: var(--field-height);
+	height: var(--field-size);
 	line-height: var(--field-line-height);
 	outline: none;
 
@@ -248,7 +248,7 @@ select {
 		var(--field-padding) +
 		var(--s-2)
 	);
-	height: var(--field-height);
+	height: var(--field-size);
 	line-height: var(--field-line-height);
 	display: inline-flex;
 	align-items: center;
@@ -370,7 +370,7 @@ select {
 }
 
 input[type="color"] {
-	padding: calc(var(--field-height) / 8) var(--field-padding);
+	padding: calc(var(--field-size) / 8) var(--field-padding);
 }
 
 input[type="color"]::-webkit-color-swatch {

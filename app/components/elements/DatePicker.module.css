@@ -1,5 +1,5 @@
 .group {
-	height: var(--field-height);
+	height: var(--field-size);
 	padding: 0 var(--field-padding);
 	border: var(--border-style);
 	border-radius: var(--radius-field);

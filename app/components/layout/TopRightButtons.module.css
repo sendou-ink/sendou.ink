@@ -25,8 +25,8 @@
 	display: grid;
 	place-items: center;
 	background-color: var(--color-bg);
-	width: var(--field-height-small);
-	height: var(--field-height-small);
+	width: var(--field-size-small);
+	height: var(--field-size-small);
 	padding: 0.25rem;
 	border: var(--border-style);
 	border-radius: 50%;

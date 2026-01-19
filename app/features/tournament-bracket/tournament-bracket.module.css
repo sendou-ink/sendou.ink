@@ -122,8 +122,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: var(--field-height-smaller);
-	height: var(--field-height-smaller);
+	width: var(--field-size-smaller);
+	height: var(--field-size-smaller);
 	border-radius: 50%;
 	font-weight: bold;
 	font-size: var(--fonts-sm);

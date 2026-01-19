@@ -6,12 +6,12 @@
 	border: var(--border-style);
 	border-radius: var(--radius-field);
 	background-color: var(--color-bg);
-	height: var(--field-height);
+	height: var(--field-size);
 	width: 100%;
 
 	& svg {
 		color: var(--color-text-high);
-		height: calc(var(--field-height) / 2);
+		height: calc(var(--field-size) / 2);
 		margin: auto;
 		margin-right: 15px;
 	}

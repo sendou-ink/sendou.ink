@@ -88,8 +88,8 @@
 	display: grid;
 	place-items: center;
 	background-color: transparent;
-	width: var(--field-height-small);
-	height: var(--field-height-small);
+	width: var(--field-size-small);
+	height: var(--field-size-small);
 	padding: 0;
 	border: none;
 	border-radius: var(--radius-field);

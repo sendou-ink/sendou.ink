@@ -15,7 +15,7 @@
 	padding: 0 var(--field-padding);
 	user-select: none;
 	outline-color: var(--color-text-accent);
-	height: var(--field-height);
+	height: var(--field-size);
 	white-space: nowrap;
 }
 
@@ -60,21 +60,21 @@
 	font-size: var(--fonts-xs);
 	padding-block: var(--s-1);
 	padding-inline: var(--s-2);
-	height: var(--field-height-small);
+	height: var(--field-size-small);
 }
 
 .miniscule {
 	font-size: var(--fonts-xxs);
 	padding-block: var(--s-1);
 	padding-inline: var(--s-2);
-	height: var(--field-height-smaller);
+	height: var(--field-size-smaller);
 }
 
 .big {
 	font-size: var(--fonts-md);
 	padding-block: var(--s-2-5);
 	padding-inline: var(--s-6);
-	height: var(--field-height-large);
+	height: var(--field-size-large);
 }
 
 .square {
