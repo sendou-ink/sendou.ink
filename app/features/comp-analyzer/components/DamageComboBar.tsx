@@ -220,6 +220,7 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 	const [excludedKeys, setExcludedKeys] = useState<ExcludedDamageKey[]>([]);
 	const [targetResAp, setTargetResAp] = useState(0);
 	const [targetSubDefenseAp, setTargetSubDefenseAp] = useState(0);
+	const [isCollapsed, setIsCollapsed] = useState(false);
 
 	const combos = calculateDamageCombos(
 		weaponIds,
@@ -245,63 +246,79 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 	};
 
 	return (
-		<div className={styles.comboList}>
-			<div className={styles.slidersContainer}>
-				<Image path={abilityImageUrl("SRU")} alt="" size={24} />
-				<label className={styles.resSliderLabel}>
-					{t("analyzer:comp.enemySubDef")}
-				</label>
-				<input
-					type="range"
-					min={0}
-					max={MAX_AP}
-					value={targetSubDefenseAp}
-					onChange={(e) => setTargetSubDefenseAp(Number(e.target.value))}
-					className={styles.resSlider}
-				/>
-				<span className={styles.resSliderValue}>{targetSubDefenseAp} AP</span>
-				<Image path={abilityImageUrl("RES")} alt="" size={24} />
-				<label className={styles.resSliderLabel}>
-					{t("analyzer:comp.enemyRes")}
-				</label>
-				<input
-					type="range"
-					min={0}
-					max={MAX_AP}
-					value={targetResAp}
-					onChange={(e) => setTargetResAp(Number(e.target.value))}
-					className={styles.resSlider}
-				/>
-				<span className={styles.resSliderValue}>{targetResAp} AP</span>
-			</div>
-			{excludedKeys.length > 0 ? (
-				<div className={styles.filteredItemsRow}>
-					{excludedKeys.map((key) => (
-						<FilteredItem
-							key={filterKeyToString(key)}
-							filterKey={key}
-							onRestore={handleToggleFilter}
+		<div className={styles.container}>
+			<button
+				type="button"
+				className={styles.header}
+				onClick={() => setIsCollapsed(!isCollapsed)}
+			>
+				<span className={styles.headerTitle}>
+					{t("analyzer:comp.damageCombos")}
+				</span>
+				<span className={styles.collapseIcon}>{isCollapsed ? "+" : "-"}</span>
+			</button>
+			{isCollapsed ? null : (
+				<div className={styles.content}>
+					<div className={styles.slidersContainer}>
+						<Image path={abilityImageUrl("SRU")} alt="" size={24} />
+						<label className={styles.resSliderLabel}>
+							{t("analyzer:comp.enemySubDef")}
+						</label>
+						<input
+							type="range"
+							min={0}
+							max={MAX_AP}
+							value={targetSubDefenseAp}
+							onChange={(e) => setTargetSubDefenseAp(Number(e.target.value))}
+							className={styles.resSlider}
 						/>
-					))}
+						<span className={styles.resSliderValue}>
+							{targetSubDefenseAp} AP
+						</span>
+						<Image path={abilityImageUrl("RES")} alt="" size={24} />
+						<label className={styles.resSliderLabel}>
+							{t("analyzer:comp.enemyRes")}
+						</label>
+						<input
+							type="range"
+							min={0}
+							max={MAX_AP}
+							value={targetResAp}
+							onChange={(e) => setTargetResAp(Number(e.target.value))}
+							className={styles.resSlider}
+						/>
+						<span className={styles.resSliderValue}>{targetResAp} AP</span>
+					</div>
+					{excludedKeys.length > 0 ? (
+						<div className={styles.filteredItemsRow}>
+							{excludedKeys.map((key) => (
+								<FilteredItem
+									key={filterKeyToString(key)}
+									filterKey={key}
+									onRestore={handleToggleFilter}
+								/>
+							))}
+						</div>
+					) : null}
+					{combos.map((combo, index) => {
+						const inkTimeFrames = calculateInkTimeToKill(
+							combo.totalDamage,
+							targetResAp,
+						);
+						if (combo.totalDamage < 100 && inkTimeFrames === null) {
+							return null;
+						}
+						return (
+							<DamageComboBar
+								key={index}
+								combo={combo}
+								inkTimeFrames={inkTimeFrames}
+								onToggleFilter={handleToggleFilter}
+							/>
+						);
+					})}
 				</div>
-			) : null}
-			{combos.map((combo, index) => {
-				const inkTimeFrames = calculateInkTimeToKill(
-					combo.totalDamage,
-					targetResAp,
-				);
-				if (combo.totalDamage < 100 && inkTimeFrames === null) {
-					return null;
-				}
-				return (
-					<DamageComboBar
-						key={index}
-						combo={combo}
-						inkTimeFrames={inkTimeFrames}
-						onToggleFilter={handleToggleFilter}
-					/>
-				);
-			})}
+			)}
 		</div>
 	);
 }

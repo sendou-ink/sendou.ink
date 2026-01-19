@@ -1,7 +1,48 @@
-.comboList {
+.container {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--border);
+	border-radius: var(--rounded-sm);
+	background: var(--bg);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--s-2) var(--s-3);
+	background: var(--bg-lighter);
+	border: none;
+	border-radius: var(--rounded-sm);
+	cursor: pointer;
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+	color: var(--text);
+	width: 100%;
+	text-align: left;
+}
+
+.header:hover {
+	background: var(--bg-lightest);
+}
+
+.headerTitle {
+	flex: 1;
+}
+
+.collapseIcon {
+	font-size: var(--fonts-lg);
+	font-weight: var(--bold);
+	color: var(--text-lighter);
+	width: 20px;
+	text-align: center;
+}
+
+.content {
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-3);
+	padding: var(--s-3);
 }
 
 .comboRow {

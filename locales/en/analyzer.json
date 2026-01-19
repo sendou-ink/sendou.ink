@@ -183,6 +183,7 @@
 	"comp.enemyRes": "Enemy Ink Resistance Up",
 	"comp.enemySubDef": "Enemy Sub Defense Up",
 	"comp.weaponRanges": "Weapon Ranges",
+	"comp.damageCombos": "Damage Combos",
 	"comp.subRoles": "Sub weapon roles",
 	"comp.specialRoles": "Special weapon roles",
 	"comp.subCategory.LETHAL": "One-hit",
