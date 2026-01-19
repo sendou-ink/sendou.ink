@@ -1,6 +1,6 @@
 .group {
-	height: var(--input-height);
-	padding: 0 var(--input-padding-inline);
+	height: var(--field-height);
+	padding: 0 var(--field-padding-inline);
 	border: var(--border-style);
 	border-radius: var(--rounded-sm);
 	background-color: var(--color-bg);
@@ -15,7 +15,7 @@
 
 .root[data-open] .group {
 	border-color: transparent;
-	outline: var(--input-focus-ring);
+	outline: var(--field-focus-ring);
 }
 
 .dateInput {

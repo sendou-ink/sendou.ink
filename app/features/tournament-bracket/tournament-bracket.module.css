@@ -122,8 +122,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: var(--input-height-smaller);
-	height: var(--input-height-smaller);
+	width: var(--field-height-smaller);
+	height: var(--field-height-smaller);
 	border-radius: 50%;
 	font-weight: bold;
 	font-size: var(--fonts-sm);
@@ -293,7 +293,7 @@
 	}
 
 	&:focus-visible {
-		outline: var(--input-focus-ring);
+		outline: var(--field-focus-ring);
 		outline-offset: 1px;
 	}
 }
@@ -438,7 +438,7 @@
 }
 
 .pointsInput {
-	--input-width: 4.5rem;
+	--field-width: 4.5rem;
 	padding: var(--s-3-5) var(--s-2) !important;
 	font-size: var(--fonts-sm);
 }

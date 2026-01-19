@@ -42,7 +42,7 @@
 	transition: color 0.15s;
 
 	&:focus-visible {
-		outline: var(--input-focus-ring);
+		outline: var(--field-focus-ring);
 		outline-offset: -1px;
 	}
 }

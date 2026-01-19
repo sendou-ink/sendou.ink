@@ -11,11 +11,11 @@
 	cursor: pointer;
 	font-size: var(--fonts-sm);
 	font-weight: var(--bold);
-	line-height: var(--input-line-height);
-	padding: 0 var(--input-padding-inline);
+	line-height: var(--field-line-height);
+	padding: 0 var(--field-padding-inline);
 	user-select: none;
 	outline-color: var(--color-text-accent);
-	height: var(--input-height);
+	height: var(--field-height);
 	white-space: nowrap;
 }
 
@@ -61,21 +61,21 @@
 	font-size: var(--fonts-xs);
 	padding-block: var(--s-1);
 	padding-inline: var(--s-2);
-	height: var(--input-height-small);
+	height: var(--field-height-small);
 }
 
 .miniscule {
 	font-size: var(--fonts-xxs);
 	padding-block: var(--s-1);
 	padding-inline: var(--s-2);
-	height: var(--input-height-smaller);
+	height: var(--field-height-smaller);
 }
 
 .big {
 	font-size: var(--fonts-md);
 	padding-block: var(--s-2-5);
 	padding-inline: var(--s-6);
-	height: var(--input-height-large);
+	height: var(--field-height-large);
 }
 
 .square {
@@ -98,7 +98,7 @@
 }
 
 .minimal[data-focus-visible] {
-	outline: var(--input-focus-ring);
+	outline: var(--field-focus-ring);
 }
 
 .minimalSuccess {

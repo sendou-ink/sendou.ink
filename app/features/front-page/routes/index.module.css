@@ -88,7 +88,7 @@
 	padding: 0 var(--s-1);
 
 	&:focus-visible {
-		outline: var(--input-focus-ring);
+		outline: var(--field-focus-ring);
 		outline-offset: 1px;
 	}
 }
@@ -152,13 +152,13 @@
 	background-color: var(--color-text-accent);
 	border-radius: var(--rounded);
 	width: max-content;
-	padding: 0 var(--input-padding-inline);
+	padding: 0 var(--field-padding-inline);
 	font-size: var(--fonts-xs);
 	color: var(--color-text-inverse);
 	display: flex;
 	gap: var(--s-2);
 	align-items: center;
-	height: var(--input-height-small);
+	height: var(--field-height-small);
 
 	&:hover svg,
 	&:focus-visible svg {
@@ -166,7 +166,7 @@
 	}
 
 	&:focus-visible {
-		outline: var(--input-focus-ring);
+		outline: var(--field-focus-ring);
 		outline-offset: 1px;
 	}
 }
@@ -207,7 +207,7 @@
 	margin-top: calc((var(--s-2) * 2) + var(--s-2));
 
 	&:focus-visible {
-		outline: var(--input-focus-ring);
+		outline: var(--field-focus-ring);
 		outline-offset: 1px;
 	}
 }

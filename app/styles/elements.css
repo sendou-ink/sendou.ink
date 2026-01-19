@@ -31,7 +31,7 @@
 	outline: none;
 	height: 1rem;
 	padding: var(--s-4) var(--s-3);
-	width: var(--input-width, var(--input-width-medium));
+	width: var(--field-width, var(--field-width-medium));
 }
 
 .react-aria-DatePicker[data-open] .react-aria-Group {
@@ -58,7 +58,7 @@
 }
 
 .react-aria-DatePicker svg {
-	fill: var(--input-icon);
+	fill: var(--field-icon);
 	width: 17.5px;
 }
 

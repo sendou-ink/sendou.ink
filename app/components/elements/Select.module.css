@@ -1,6 +1,6 @@
 .button {
-	height: var(--input-height);
-	padding: 0 var(--input-padding-inline);
+	height: var(--field-height);
+	padding: 0 var(--field-padding-inline);
 	border: var(--border-style);
 	border-radius: var(--rounded-sm);
 	background-color: var(--color-bg);
@@ -15,7 +15,7 @@
 
 	&[data-focus-visible],
 	&[aria-expanded="true"] {
-		outline: var(--input-focus-ring);
+		outline: var(--field-focus-ring);
 		outline-offset: 1px;
 	}
 

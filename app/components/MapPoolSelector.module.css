@@ -59,7 +59,7 @@
 	outline: initial;
 
 	&:focus-visible {
-		outline: var(--input-focus-ring);
+		outline: var(--field-focus-ring);
 		outline-offset: 1px;
 	}
 }

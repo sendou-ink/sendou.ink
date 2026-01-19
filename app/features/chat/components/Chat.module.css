@@ -78,7 +78,7 @@
 .inputContainer {
 	margin-top: auto;
 	position: relative;
-	--input-width: 100%;
+	--field-width: 100%;
 }
 
 .messageContents {

@@ -103,7 +103,7 @@
 }
 
 .seedInput {
-	--input-width: 3rem;
+	--field-width: 3rem;
 	text-align: center;
 	padding: var(--s-0-5);
 	border-radius: var(--rounded-sm);
@@ -114,7 +114,7 @@
 }
 
 .seedInput:focus {
-	outline: var(--input-focus-ring);
+	outline: var(--field-focus-ring);
 	outline-offset: 1px;
 }
 

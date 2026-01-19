@@ -27,7 +27,7 @@
 	border-radius: 100%;
 
 	&:focus-visible {
-		outline: var(--input-focus-ring);
+		outline: var(--field-focus-ring);
 		outline-offset: 1px;
 	}
 }
@@ -55,7 +55,7 @@
 	outline-color: var(--color-accent);
 
 	&:focus-visible {
-		outline: var(--input-focus-ring);
+		outline: var(--field-focus-ring);
 		outline-offset: 1px;
 	}
 }

@@ -25,8 +25,8 @@
 	display: grid;
 	place-items: center;
 	background-color: var(--color-bg);
-	width: var(--input-height-small);
-	height: var(--input-height-small);
+	width: var(--field-height-small);
+	height: var(--field-height-small);
 	padding: 0.25rem;
 	border: var(--border-style);
 	border-radius: 50%;
@@ -35,7 +35,7 @@
 }
 
 .button:focus-visible {
-	outline: var(--input-focus-ring);
+	outline: var(--field-focus-ring);
 	outline-offset: 1px;
 }
 

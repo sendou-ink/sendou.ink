@@ -44,7 +44,7 @@
 }
 
 .root[data-focus-visible] .indicator {
-	outline: var(--input-focus-ring);
+	outline: var(--field-focus-ring);
 	outline-offset: 1px;
 }
 

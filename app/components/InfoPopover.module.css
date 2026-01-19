@@ -5,20 +5,20 @@
 	color: var(--color-text);
 	font-size: var(--fonts-md);
 	padding: var(--s-0-5);
-	width: calc(var(--input-height) * 0.7);
-	height: calc(var(--input-height) * 0.7);
+	width: calc(var(--field-height) * 0.7);
+	height: calc(var(--field-height) * 0.7);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 
 	&:focus-visible {
-		outline: var(--input-focus-ring);
+		outline: var(--field-focus-ring);
 		outline-offset: 1px;
 	}
 }
 
 .triggerTiny {
-	width: var(--input-height-smaller);
-	height: var(--input-height-smaller);
+	width: var(--field-height-smaller);
+	height: var(--field-height-smaller);
 	font-size: var(--fonts-xs);
 }

@@ -1,7 +1,7 @@
 .root {
 	width: 100%;
 	--select-width: 100%;
-	--input-width: 100%;
+	--field-width: 100%;
 }
 
 .root input:not([type="radio"], [type="checkbox"]),

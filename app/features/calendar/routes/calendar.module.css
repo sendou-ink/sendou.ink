@@ -27,7 +27,7 @@
 }
 
 .navigateButton:focus-visible {
-	outline: var(--input-focus-ring);
+	outline: var(--field-focus-ring);
 }
 
 @media screen and (min-width: 600px) {

@@ -69,7 +69,7 @@ a {
 	border-radius: 5px;
 
 	&:focus-visible {
-		outline: var(--input-focus-ring);
+		outline: var(--field-focus-ring);
 		outline-offset: 1px;
 	}
 }
@@ -78,8 +78,8 @@ a {
 textarea:not([name="text"]) {
 	width: 100%;
 	min-height: 5rem;
-	padding: var(--input-padding-block) var(--input-padding-inline);
-	line-height: var(--input-line-height);
+	padding: var(--field-padding-block) var(--field-padding-inline);
+	line-height: var(--field-line-height);
 	border: var(--border-style);
 	border-radius: var(--rounded-sm);
 	background-color: var(--color-bg);
@@ -87,7 +87,7 @@ textarea:not([name="text"]) {
 	resize: vertical;
 
 	&:focus-within {
-		outline: var(--input-focus-ring);
+		outline: var(--field-focus-ring);
 		outline-offset: 1px;
 	}
 }
@@ -98,9 +98,9 @@ input:not(.in-container) {
 	border: var(--border-style);
 	border-radius: var(--rounded-sm);
 	background: var(--color-bg);
-	padding: 0 var(--input-padding-inline);
-	height: var(--input-height);
-	line-height: var(--input-line-height);
+	padding: 0 var(--field-padding-inline);
+	height: var(--field-height);
+	line-height: var(--field-line-height);
 	outline: none;
 
 	&::placeholder {
@@ -115,7 +115,7 @@ input:not(.in-container) {
 	}
 
 	&:focus-within {
-		outline: var(--input-focus-ring);
+		outline: var(--field-focus-ring);
 		outline-offset: 1px;
 	}
 }
@@ -135,7 +135,7 @@ input[type="checkbox"] {
 	}
 
 	&:focus-visible {
-		outline: var(--input-focus-ring);
+		outline: var(--field-focus-ring);
 		outline-offset: 1px;
 	}
 
@@ -145,15 +145,15 @@ input[type="checkbox"] {
 		background-color: var(--color-text-accent);
 		background-repeat: no-repeat;
 		background-position: center;
-		background-size: var(--input-icon-width) auto;
+		background-size: var(--field-icon-width) auto;
 	}
 
 	&:checked {
-		background-image: var(--input-icon-checkbox);
+		background-image: var(--field-icon-checkbox);
 	}
 
 	&:indeterminate {
-		background-image: var(--input-icon-minus);
+		background-image: var(--field-icon-minus);
 	}
 
 	/* Hacky selector to remove the margin bottom from the container from Label.tsx */
@@ -178,7 +178,7 @@ input[type="radio"] {
 	}
 
 	&:focus-visible {
-		outline: var(--input-focus-ring);
+		outline: var(--field-focus-ring);
 		outline-offset: 1px;
 	}
 
@@ -242,14 +242,14 @@ select {
 	border-radius: var(--rounded-sm);
 	background-color: var(--color-bg);
 	cursor: pointer;
-	padding: 0 var(--input-padding-inline);
+	padding: 0 var(--field-padding-inline);
 	padding-right: calc(
-		var(--input-icon-width) +
-		var(--input-padding-inline) +
+		var(--field-icon-width) +
+		var(--field-padding-inline) +
 		var(--s-2)
 	);
-	height: var(--input-height);
-	line-height: var(--input-line-height);
+	height: var(--field-height);
+	line-height: var(--field-line-height);
 	display: inline-flex;
 	align-items: center;
 	text-overflow: ellipsis;
@@ -269,7 +269,7 @@ select {
 	}
 
 	&:focus-within {
-		outline: var(--input-focus-ring);
+		outline: var(--field-focus-ring);
 		outline-offset: 1px;
 	}
 
@@ -320,8 +320,8 @@ input[type="month"],
 input[type="time"],
 input[type="week"],
 select {
-	background-position: center right var(--input-padding-inline);
-	background-size: var(--input-icon-width) auto;
+	background-position: center right var(--field-padding-inline);
+	background-size: var(--field-icon-width) auto;
 	background-repeat: no-repeat;
 }
 
@@ -329,15 +329,15 @@ input[type="date"],
 input[type="datetime-local"],
 input[type="month"],
 input[type="week"] {
-	background-image: var(--input-icon-date);
+	background-image: var(--field-icon-date);
 }
 
 input[type="time"] {
-	background-image: var(--input-icon-time);
+	background-image: var(--field-icon-time);
 }
 
 select {
-	background-image: var(--input-icon-chevron);
+	background-image: var(--field-icon-chevron);
 }
 
 [type="date"]::-webkit-calendar-picker-indicator,
@@ -345,7 +345,7 @@ select {
 [type="month"]::-webkit-calendar-picker-indicator,
 [type="time"]::-webkit-calendar-picker-indicator,
 [type="week"]::-webkit-calendar-picker-indicator {
-	width: var(--input-icon-width);
+	width: var(--field-icon-width);
 	opacity: 0;
 }
 
@@ -370,7 +370,7 @@ select {
 }
 
 input[type="color"] {
-	padding: calc(var(--input-height) / 8) var(--input-padding-inline);
+	padding: calc(var(--field-height) / 8) var(--field-padding-inline);
 }
 
 input[type="color"]::-webkit-color-swatch {
@@ -387,7 +387,7 @@ input[type="file"] {
 	padding: 0;
 	cursor: pointer;
 	font-size: var(--fonts-sm);
-	line-height: var(--input-line-height);
+	line-height: var(--field-line-height);
 	color: var(--color-text-high);
 	overflow: hidden;
 }

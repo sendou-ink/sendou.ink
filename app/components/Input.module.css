@@ -2,33 +2,33 @@
 	display: flex;
 	font-size: var(--fonts-sm);
 	outline: none;
-	line-height: var(--input-line-height);
+	line-height: var(--field-line-height);
 	border: var(--border-style);
 	border-radius: var(--rounded-sm);
 	background-color: var(--color-bg);
-	height: var(--input-height);
+	height: var(--field-height);
 	width: 100%;
 
 	& svg {
 		color: var(--color-text-high);
-		height: calc(var(--input-height) / 2);
+		height: calc(var(--field-height) / 2);
 		margin: auto;
 		margin-right: 15px;
 	}
 
 	&:has(input:user-invalid) {
-		outline: var(--input-focus-ring-error);
+		outline: var(--field-focus-ring-error);
 		outline-offset: 1px;
 	}
 
 	&:focus-within {
-		outline: var(--input-focus-ring);
+		outline: var(--field-focus-ring);
 		outline-offset: 1px;
 	}
 
 	input {
 		border-radius: var(--rounded-sm);
-		padding: 0 var(--input-padding-inline);
+		padding: 0 var(--field-padding-inline);
 		outline: none;
 		width: 100%;
 		background-color: inherit;
