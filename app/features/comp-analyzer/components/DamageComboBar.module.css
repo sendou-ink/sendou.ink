@@ -100,6 +100,13 @@
 	font-weight: var(--bold);
 }
 
+.hitMultiplier {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--semi-bold);
+	opacity: 0.8;
+	margin-left: var(--s-0-5);
+}
+
 .segment[data-slot-color="yellow"] {
 	background-color: #f5d742;
 }

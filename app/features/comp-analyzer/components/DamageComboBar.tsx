@@ -133,7 +133,12 @@ function SegmentBar({
 					subWeaponId={params.subWeaponId}
 					specialWeaponId={params.specialWeaponId}
 				/>
-				<span className={styles.damageValue}>{segment.damageValue}</span>
+				<span className={styles.damageValue}>
+					{segment.damageValue}
+					{segment.count > 1 ? (
+						<span className={styles.hitMultiplier}>×{segment.count}</span>
+					) : null}
+				</span>
 			</div>
 			<button
 				type="button"
