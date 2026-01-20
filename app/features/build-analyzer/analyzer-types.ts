@@ -120,8 +120,10 @@ export interface BaseWeaponStats {
 	Range_BrakeGravity?: number;
 	/** Frames in brake phase (typically 4) */
 	Range_BrakeToFreeStateFrame?: number;
-	/** Max frames before projectile disappears (Splatanas only) */
+	/** Max frames (Splatanas) or max bounces (Bloblobber) before projectile stops */
 	Range_BurstFrame?: number;
+	/** Speed multiplier after bouncing (Bloblobber only) */
+	Range_BounceAfterMaxSpeed?: number;
 
 	// Range parameters for chargers (direct distance values)
 	/** Charger full charge range */

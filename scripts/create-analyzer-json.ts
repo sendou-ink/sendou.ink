@@ -265,6 +265,7 @@ function extractRangeParams(weapon: MainWeapon, params: any) {
 			units?.[0],
 		);
 		const moveParam = unitForRange?.MoveParam;
+		const isBloblobber = weapon.Id === 3030 || weapon.Id === 3031;
 		return {
 			Range_SpawnSpeed: unitForRange?.SpawnSpeedGround,
 			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
@@ -274,6 +275,8 @@ function extractRangeParams(weapon: MainWeapon, params: any) {
 			Range_BrakeGravity: moveParam?.BrakeGravity,
 			Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
 			Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
+			Range_BounceAfterMaxSpeed: isBloblobber ? 0.6 : undefined,
+			Range_BurstFrame: isBloblobber ? 3 : undefined,
 		};
 	}
 

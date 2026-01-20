@@ -12,6 +12,7 @@ interface TrajectoryParams {
 	brakeGravity: number;
 	brakeToFreeFrame: number;
 	burstFrame?: number;
+	bounceAfterMaxSpeed?: number;
 }
 
 export interface TrajectoryPoint {
@@ -49,6 +50,11 @@ function calculateGroundRange(trajectory: TrajectoryPoint[]): number {
 	return lastPoint?.z ?? 0;
 }
 
+function calculateBouncingRange(trajectory: TrajectoryPoint[]): number {
+	const lastPoint = trajectory[trajectory.length - 1];
+	return lastPoint?.z ?? 0;
+}
+
 function simulateTrajectoryPoints(params: TrajectoryParams): TrajectoryPoint[] {
 	const {
 		spawnSpeed,
@@ -60,15 +66,21 @@ function simulateTrajectoryPoints(params: TrajectoryParams): TrajectoryPoint[] {
 		brakeGravity,
 		brakeToFreeFrame,
 		burstFrame,
+		bounceAfterMaxSpeed,
 	} = params;
 
-	const maxFrames = burstFrame ?? 300;
+	const isBouncing = bounceAfterMaxSpeed !== undefined;
+	const maxBounces =
+		isBouncing && burstFrame !== undefined ? burstFrame : undefined;
+	const maxFrames = isBouncing ? 300 : (burstFrame ?? 300);
+
 	const points: TrajectoryPoint[] = [];
 	let z = 0;
 	let y = PLAYER_HEIGHT;
 	let vz = spawnSpeed;
 	let vy = 0;
 	let frame = 0;
+	let bounceCount = 0;
 
 	points.push({ z, y });
 
@@ -89,17 +101,52 @@ function simulateTrajectoryPoints(params: TrajectoryParams): TrajectoryPoint[] {
 		frame++;
 
 		if (y < 0) {
-			return points;
+			if (isBouncing) {
+				bounceCount++;
+				if (maxBounces !== undefined && bounceCount >= maxBounces) {
+					return points;
+				}
+				y = Math.abs(y);
+				vy = Math.abs(vy);
+				vz *= bounceAfterMaxSpeed;
+			} else {
+				return points;
+			}
 		}
 	}
 
-	while (frame < maxFrames && y >= 0) {
+	while (frame < maxFrames) {
 		vz *= 1 - freeAirResist;
 		vy -= freeGravity;
 		z += vz;
 		y += vy;
+
+		if (y < 0) {
+			if (isBouncing) {
+				bounceCount++;
+				if (maxBounces !== undefined && bounceCount >= maxBounces) {
+					points.push({ z, y: 0 });
+					return points;
+				}
+				y = Math.abs(y);
+				vy = Math.abs(vy);
+				vz *= bounceAfterMaxSpeed;
+			} else {
+				points.push({ z, y });
+				return points;
+			}
+		}
+
 		points.push({ z, y });
 		frame++;
+
+		if (!isBouncing && y < 0) {
+			return points;
+		}
+
+		if (vz < 0.01) {
+			return points;
+		}
 	}
 
 	return points;
@@ -149,10 +196,14 @@ function getWeaponRange(weaponId: MainWeaponId): WeaponRangeResult {
 		brakeToFreeFrame:
 			params.Range_BrakeToFreeStateFrame ?? DEFAULT_BRAKE_TO_FREE_FRAME,
 		burstFrame: params.Range_BurstFrame,
+		bounceAfterMaxSpeed: params.Range_BounceAfterMaxSpeed,
 	};
 
 	const trajectory = simulateTrajectoryPoints(trajectoryParams);
-	const range = calculateGroundRange(trajectory);
+	const range =
+		params.Range_BounceAfterMaxSpeed !== undefined
+			? calculateBouncingRange(trajectory)
+			: calculateGroundRange(trajectory);
 
 	return {
 		range,

@@ -688,6 +688,8 @@ export const weaponParams = {
 			Range_BrakeGravity: 0.01,
 			Range_BrakeToFreeStateFrame: 1,
 			Range_ZRate: 0.5,
+			Range_BounceAfterMaxSpeed: 0.6,
+			Range_BurstFrame: 3,
 			MoveSpeed: 0.05,
 			DamageParam_ValueDirect: 300,
 			InkRecoverStop: 40,
