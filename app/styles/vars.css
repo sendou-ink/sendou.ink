@@ -1,7 +1,8 @@
 /*
-All the tokens set by custom themes
+All the tokens that can be set by custom themes 
+and their default values are defined here
 
-These should not be consumed directly, only used as a base for other vars
+These should not be consumed directly, only used as a base for other vars!
 */
 html {
 	--_base-h: 260;
