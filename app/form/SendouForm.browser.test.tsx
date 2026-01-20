@@ -1117,5 +1117,34 @@ describe("SendouForm", () => {
 				.element(screen.getByText("This field is required"))
 				.toBeVisible();
 		});
+
+		test("setItemField batches multiple field updates correctly", async () => {
+			const schema = z.object({
+				members: array({
+					label: "labels.members",
+					min: 1,
+					max: 10,
+					field: fieldset({
+						fields: z.object({
+							name: textFieldOptional({ label: "labels.name", maxLength: 100 }),
+							bio: textFieldOptional({ label: "labels.bio", maxLength: 100 }),
+						}),
+					}),
+				}),
+			});
+
+			const screen = await renderForm(schema, {
+				defaultValues: { members: [{ name: "", bio: "" }] },
+			});
+
+			const inputA = screen.getByLabelText("Name");
+			const inputB = screen.getByLabelText("Bio");
+
+			await userEvent.type(inputA.element(), "Value A");
+			await userEvent.type(inputB.element(), "Value B");
+
+			await expect.element(inputA).toHaveValue("Value A");
+			await expect.element(inputB).toHaveValue("Value B");
+		});
 	});
 });
