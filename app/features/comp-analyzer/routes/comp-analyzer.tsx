@@ -54,7 +54,10 @@ function CompAnalyzerPage() {
 	);
 
 	const handleWeaponClick = (weaponId: MainWeaponId) => {
-		if (selectedWeaponIds.length >= MAX_WEAPONS) {
+		if (
+			selectedWeaponIds.length >= MAX_WEAPONS ||
+			selectedWeaponIds.includes(weaponId)
+		) {
 			return;
 		}
 

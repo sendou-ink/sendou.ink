@@ -240,13 +240,7 @@ function extractRangeParams(weapon: MainWeapon, params: any) {
 	const isBrella = category === "BRELLAS";
 	const isSlosher = category === "SLOSHERS";
 
-	if (
-		category &&
-		WEAPON_CATEGORIES_WITHOUT_RANGE.includes(
-			category as (typeof WEAPON_CATEGORIES_WITHOUT_RANGE)[number],
-		) &&
-		!isBrella
-	) {
+	if (category && !isBrella) {
 		return {};
 	}
 

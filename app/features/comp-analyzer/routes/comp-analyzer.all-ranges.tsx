@@ -11,8 +11,11 @@ export default function AllRangesPage() {
 		<Main className="stack lg">
 			<h1>All Weapon Ranges (Dev)</h1>
 			{weaponCategories.map((category) => {
-				const baseWeaponIds = category.weaponIds.filter(
-					(id) => weaponIdToType(id as MainWeaponId) === "BASE",
+				const baseWeaponIds: MainWeaponId[] = category.weaponIds.flatMap(
+					(id): MainWeaponId[] => {
+						const weaponId = id as MainWeaponId;
+						return weaponIdToType(weaponId) === "BASE" ? [weaponId] : [];
+					},
 				);
 
 				if (baseWeaponIds.length === 0) {
@@ -24,9 +27,7 @@ export default function AllRangesPage() {
 						<h2 style={{ textTransform: "capitalize" }}>
 							{category.name.toLowerCase()}
 						</h2>
-						<RangeVisualization
-							weaponIds={baseWeaponIds as unknown as MainWeaponId[]}
-						/>
+						<RangeVisualization weaponIds={baseWeaponIds} />
 					</section>
 				);
 			})}

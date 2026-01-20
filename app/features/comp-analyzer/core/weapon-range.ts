@@ -27,7 +27,7 @@ const DEFAULT_FREE_AIR_RESIST = 0;
 
 function getWeaponCategoryName(weaponId: MainWeaponId): string | undefined {
 	for (const category of weaponCategories) {
-		if (category.weaponIds.includes(weaponId as never)) {
+		if (category.weaponIds.some((id) => id === weaponId)) {
 			return category.name;
 		}
 	}
@@ -172,10 +172,7 @@ export function getWeaponsWithRange(
 		.filter((w) => w.rangeType !== "unsupported");
 }
 
-export const BENCHMARK_WEAPON_IDS: MainWeaponId[] = [
-	40 as MainWeaponId,
-	2070 as MainWeaponId,
-];
+export const BENCHMARK_WEAPON_IDS = [40, 2070] satisfies MainWeaponId[];
 
 export interface BenchmarkTrajectory {
 	id: MainWeaponId;
