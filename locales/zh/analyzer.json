@@ -100,6 +100,8 @@
 	"damage.DIRECT": "直击",
 	"damage.DIRECT_MIN": "直击 (最小值)",
 	"damage.DIRECT_MAX": "直击 (最大值)",
+	"damage.DIRECT_SECONDARY_MIN": "",
+	"damage.DIRECT_SECONDARY_MAX": "",
 	"damage.FULL_CHARGE": "完全蓄力攻击",
 	"damage.MAX_CHARGE": "最大不完全蓄力伤害",
 	"damage.TAP_SHOT": "普通攻击",

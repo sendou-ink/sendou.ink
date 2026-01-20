@@ -103,6 +103,8 @@
 	"damage.DIRECT": "ישיר",
 	"damage.DIRECT_MIN": "ישיר (מינימום)",
 	"damage.DIRECT_MAX": "ישיר (מקסימום)",
+	"damage.DIRECT_SECONDARY_MIN": "",
+	"damage.DIRECT_SECONDARY_MAX": "",
 	"damage.FULL_CHARGE": "יריה טעונה במלואה",
 	"damage.MAX_CHARGE": "טעינה חלקית מקסימלית",
 	"damage.TAP_SHOT": "יריה בודדת",

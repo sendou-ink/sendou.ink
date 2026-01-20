@@ -102,6 +102,8 @@
 	"damage.DIRECT": "Direct",
 	"damage.DIRECT_MIN": "Direct (Minimum)",
 	"damage.DIRECT_MAX": "Direct (Maximum)",
+	"damage.DIRECT_SECONDARY_MIN": "Direct secondary (Minimum)",
+	"damage.DIRECT_SECONDARY_MAX": "Direct secondary (Maximum)",
 	"damage.FULL_CHARGE": "Fully charged shot",
 	"damage.MAX_CHARGE": "Maximum partial charge",
 	"damage.TAP_SHOT": "Tap shot",

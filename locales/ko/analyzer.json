@@ -100,6 +100,8 @@
 	"damage.DIRECT": "직격",
 	"damage.DIRECT_MIN": "직격 (최소)",
 	"damage.DIRECT_MAX": "직격 (최대)",
+	"damage.DIRECT_SECONDARY_MIN": "",
+	"damage.DIRECT_SECONDARY_MAX": "",
 	"damage.FULL_CHARGE": "풀 충전 샷",
 	"damage.MAX_CHARGE": "최대 반충전",
 	"damage.TAP_SHOT": "단타",

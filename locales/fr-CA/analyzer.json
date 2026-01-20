@@ -103,6 +103,8 @@
 	"damage.DIRECT": "Direct",
 	"damage.DIRECT_MIN": "Direct (Minimum)",
 	"damage.DIRECT_MAX": "Direct (Maximum)",
+	"damage.DIRECT_SECONDARY_MIN": "",
+	"damage.DIRECT_SECONDARY_MAX": "",
 	"damage.FULL_CHARGE": "Charge complète",
 	"damage.MAX_CHARGE": "Charge partielle maximale",
 	"damage.TAP_SHOT": "Charge minimale",

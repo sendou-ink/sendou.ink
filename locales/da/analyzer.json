@@ -102,6 +102,8 @@
 	"damage.DIRECT": "Fuldtræffer",
 	"damage.DIRECT_MIN": "Fuldtræffer (Minimum)",
 	"damage.DIRECT_MAX": "Fuldtræffer (Maksimum)",
+	"damage.DIRECT_SECONDARY_MIN": "",
+	"damage.DIRECT_SECONDARY_MAX": "",
 	"damage.FULL_CHARGE": "Fuldopladt skud",
 	"damage.MAX_CHARGE": "Maksimal skade fra en delvis opladning",
 	"damage.TAP_SHOT": "Uopladt skud",

@@ -104,6 +104,8 @@
 	"damage.DIRECT": "Прямое попадание",
 	"damage.DIRECT_MIN": "Прямое попадание (Минимум)",
 	"damage.DIRECT_MAX": "Прямое попадание (Максимум)",
+	"damage.DIRECT_SECONDARY_MIN": "",
+	"damage.DIRECT_SECONDARY_MAX": "",
 	"damage.FULL_CHARGE": "Полностью заряженный выстрел",
 	"damage.MAX_CHARGE": "Максимальный частичный заряд",
 	"damage.TAP_SHOT": "Тап шот",

@@ -103,6 +103,8 @@
 	"damage.DIRECT": "Direto",
 	"damage.DIRECT_MIN": "Direto (Mínimo)",
 	"damage.DIRECT_MAX": "Direto (Máximo)",
+	"damage.DIRECT_SECONDARY_MIN": "",
+	"damage.DIRECT_SECONDARY_MAX": "",
 	"damage.FULL_CHARGE": "Tiro completamente carregado",
 	"damage.MAX_CHARGE": "Carga parcial máxima",
 	"damage.TAP_SHOT": "Tiro de toque",

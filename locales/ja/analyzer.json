@@ -100,6 +100,8 @@
 	"damage.DIRECT": "直撃",
 	"damage.DIRECT_MIN": "直撃 (最小)",
 	"damage.DIRECT_MAX": "直撃 (最大)",
+	"damage.DIRECT_SECONDARY_MIN": "",
+	"damage.DIRECT_SECONDARY_MAX": "",
 	"damage.FULL_CHARGE": "フルチャージ射撃",
 	"damage.MAX_CHARGE": "最大半チャージ",
 	"damage.TAP_SHOT": "チャージ無し射撃",
