@@ -50,20 +50,31 @@ function DamageComboBar({
 	const { t } = useTranslation(["analyzer", "weapons"]);
 
 	const thresholdPosition = (LETHAL_DAMAGE / combo.totalDamage) * 100;
+	const inkDamage = inkTimeFrames ? LETHAL_DAMAGE - combo.totalDamage : 0;
+	const totalWithInk = inkTimeFrames
+		? LETHAL_DAMAGE
+		: Math.max(combo.totalDamage, LETHAL_DAMAGE);
 
 	return (
 		<div className={styles.comboRow}>
 			<div className={styles.barSection}>
+				{inkTimeFrames ? (
+					<InkTimeSegment
+						inkDamage={inkDamage}
+						totalDamage={totalWithInk}
+						inkTimeFrames={inkTimeFrames}
+					/>
+				) : null}
 				{combo.segments.map((segment, index) => (
 					<SegmentBar
 						key={index}
 						segment={segment}
-						totalDamage={combo.totalDamage}
+						totalDamage={totalWithInk}
 						damageTypeLabel={t(`analyzer:damage.${segment.damageType}` as any)}
 						onToggleFilter={onToggleFilter}
 					/>
 				))}
-				{thresholdPosition < 100 ? (
+				{thresholdPosition < 100 && !inkTimeFrames ? (
 					<div
 						className={styles.thresholdLine}
 						style={{ left: `${thresholdPosition}%` }}
@@ -75,9 +86,6 @@ function DamageComboBar({
 					{combo.totalDamage.toFixed(1)}
 				</span>
 				<span className={styles.hitCount}>
-					{inkTimeFrames ? (
-						<span className={styles.inkTime}>{inkTimeFrames}f + </span>
-					) : null}
 					{t("analyzer:comp.hits", { count: combo.hitCount })}
 				</span>
 			</div>
@@ -133,6 +141,33 @@ function SegmentBar({
 			>
 				{damageTypeLabel}
 			</button>
+		</div>
+	);
+}
+
+interface InkTimeSegmentProps {
+	inkDamage: number;
+	totalDamage: number;
+	inkTimeFrames: number;
+}
+
+function InkTimeSegment({
+	inkDamage,
+	totalDamage,
+	inkTimeFrames,
+}: InkTimeSegmentProps) {
+	const widthPercent = (inkDamage / totalDamage) * 100;
+
+	return (
+		<div
+			className={styles.segmentWrapper}
+			style={{ width: `${widthPercent}%` }}
+		>
+			<div className={styles.inkTimeSegment}>
+				<Image path={abilityImageUrl("RES")} alt="" size={18} />
+				<span className={styles.inkTimeDamage}>{inkDamage.toFixed(1)}</span>
+			</div>
+			<div className={styles.inkTimeLabel}>{inkTimeFrames}f</div>
 		</div>
 	);
 }

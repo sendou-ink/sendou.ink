@@ -268,3 +268,37 @@
 	color: var(--theme-secondary);
 	font-weight: var(--semi-bold);
 }
+
+.inkTimeSegment {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-1);
+	height: 36px;
+	padding: 0 var(--s-2);
+	background: repeating-linear-gradient(
+		-45deg,
+		var(--bg-lighter) 0,
+		var(--bg-lighter) 4px,
+		var(--bg-lightest) 4px,
+		var(--bg-lightest) 8px
+	);
+	color: var(--text);
+	font-weight: var(--semi-bold);
+	min-width: fit-content;
+}
+
+.inkTimeDamage {
+	font-size: var(--fonts-sm);
+	font-weight: var(--bold);
+	color: var(--text);
+}
+
+.inkTimeLabel {
+	font-size: var(--fonts-xxs);
+	color: var(--theme-secondary);
+	text-align: center;
+	white-space: nowrap;
+	padding: var(--s-0-5) var(--s-0-5);
+	font-weight: var(--semi-bold);
+}
