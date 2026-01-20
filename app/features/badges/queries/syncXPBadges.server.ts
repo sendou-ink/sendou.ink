@@ -17,12 +17,11 @@ const deleteBadgeOwnerStm = sql.prepare(/* sql */ `
 const userTopXPowersStm = sql.prepare(/* sql */ `
   select
     "SplatoonPlayer"."userId",
-    max("XRankPlacement"."power") as "xPower"
+    "SplatoonPlayer"."peakXp" as "xPower"
   from
     "SplatoonPlayer"
-  left join "XRankPlacement" on "XRankPlacement"."playerId" = "SplatoonPlayer"."id"
   where "SplatoonPlayer"."userId" is not null
-  group by "SplatoonPlayer"."userId"
+    and "SplatoonPlayer"."peakXp" is not null
 `);
 
 const addXPBadgeStm = sql.prepare(/* sql */ `

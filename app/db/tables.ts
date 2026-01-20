@@ -429,6 +429,8 @@ export interface SplatoonPlayer {
 	id: GeneratedAlways<number>;
 	splId: string;
 	userId: number | null;
+	/** Players best XP across both divisions. Denormalized for performance. */
+	peakXp: number | null;
 }
 
 export interface TaggedArt {
@@ -962,6 +964,14 @@ export interface ApiToken {
 	createdAt: GeneratedAlways<number>;
 }
 
+export interface LiveStream {
+	id: GeneratedAlways<number>;
+	userId: number | null;
+	viewerCount: number;
+	thumbnailUrl: string;
+	twitch: string | null;
+}
+
 export interface BanLog {
 	id: GeneratedAlways<number>;
 	userId: number;
@@ -1136,6 +1146,7 @@ export interface DB {
 	AllTeamMember: TeamMember;
 	ApiToken: ApiToken;
 	Art: Art;
+	LiveStream: LiveStream;
 	ArtTag: ArtTag;
 	ArtUserMetadata: ArtUserMetadata;
 	TaggedArt: TaggedArt;

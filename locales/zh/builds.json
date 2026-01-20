@@ -1,5 +1,7 @@
 {
 	"addBuild": "添加配装",
+	"forms.title.new": "",
+	"forms.title.edit": "",
 	"reachBuildMaxCount": "您的配装数量已到达上限",
 	"noBuilds": "您还没有添加配装，现在开始吧！",
 	"buildCard.info": "详情",
@@ -10,8 +12,8 @@
 	"forms.gear.HEAD": "头部装备",
 	"forms.gear.CLOTHES": "服装",
 	"forms.gear.SHOES": "鞋子",
+	"forms.abilities": "",
 	"forms.private.info": "私人配装仅对您可见",
-	"forms.noGear.info": "您必须填满所有能力槽。",
 	"deleteConfirm": "删除配装'{{title}}'？",
 	"stats.count.title": "{{count}} 件 {{weapon}} 配装的数据",
 	"stats.ap.title": "平均技能点数",

@@ -1,5 +1,7 @@
 {
 	"addBuild": "Ajouter un set",
+	"forms.title.new": "",
+	"forms.title.edit": "",
 	"reachBuildMaxCount": "Vous avez atteint la limite de set.",
 	"noBuilds": "Pas de sets disponibles. N'hésitez pas à en créer un !",
 	"buildCard.info": "Info",
@@ -10,8 +12,8 @@
 	"forms.gear.HEAD": "Accessoires",
 	"forms.gear.CLOTHES": "Vêtements",
 	"forms.gear.SHOES": "Chaussures",
+	"forms.abilities": "",
 	"forms.private.info": "Les sets privées ne sont visible que par vous.",
-	"forms.noGear.info": "",
 	"deleteConfirm": "Supprimer le set '{{title}}' ?",
 	"stats.count.title": "Statistiques de {{count}} sets pour {{weapon}}",
 	"stats.ap.title": "Moyenne des Points de Compétences",

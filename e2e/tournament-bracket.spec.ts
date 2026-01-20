@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
+import { updateNoScreenSchema } from "~/features/settings/settings-schemas";
 import {
 	expect,
 	impersonate,
@@ -12,6 +13,7 @@ import {
 	submit,
 	test,
 } from "~/utils/playwright";
+import { createFormHelpers } from "~/utils/playwright-form";
 import {
 	NOTIFICATIONS_URL,
 	SETTINGS_PAGE,
@@ -914,7 +916,8 @@ test.describe("Tournament bracket", () => {
 			url: SETTINGS_PAGE,
 		});
 
-		await page.getByTestId("UPDATE_NO_SCREEN-switch").click();
+		const form = createFormHelpers(page, updateNoScreenSchema);
+		await form.check("newValue");
 
 		await navigate({
 			page,

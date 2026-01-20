@@ -41,6 +41,7 @@
 	"forms.info.name": "Lembre-se que se você mudar o nome do seu time, alguém pode resgatar o nome e o URL para o time dele(a)",
 	"forms.info.tag": "",
 	"forms.errors.duplicateName": "Já existe um time com esse nome",
+	"forms.errors.noOnlySpecialCharacters": "",
 	"roster.teamFull": "O time está cheio",
 	"roster.inviteLink.header": "Compartilhe o link de convite para adicionar membros",
 	"roster.members.header": "Membros",
