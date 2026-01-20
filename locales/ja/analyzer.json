@@ -194,5 +194,7 @@
 	"comp.specialCategory.GLOBAL_TRACKING": "",
 	"comp.specialCategory.AREA_CONTROL": "",
 	"comp.specialCategory.TEAM_SHIELD": "",
-	"comp.specialCategory.TEAM_BUFF": ""
+	"comp.specialCategory.TEAM_BUFF": "",
+	"comp.removeAll": "",
+	"comp.addAll": ""
 }

@@ -200,5 +200,7 @@
 	"comp.specialCategory.GLOBAL_TRACKING": "Global Tracking",
 	"comp.specialCategory.AREA_CONTROL": "Area Control",
 	"comp.specialCategory.TEAM_SHIELD": "Team Shield",
-	"comp.specialCategory.TEAM_BUFF": "Team Buff"
+	"comp.specialCategory.TEAM_BUFF": "Team Buff",
+	"comp.removeAll": "Remove all",
+	"comp.addAll": "Add all"
 }

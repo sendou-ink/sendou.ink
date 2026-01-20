@@ -90,6 +90,38 @@ export interface ExcludedDamageKey {
 	damageType: DamageType;
 }
 
+export function getAllDamageKeys(
+	weaponIds: MainWeaponId[],
+	targetSubDefenseAp = 0,
+): ExcludedDamageKey[] {
+	const sources = extractDamageSources(weaponIds, targetSubDefenseAp);
+	const seen = new Set<string>();
+	const keys: ExcludedDamageKey[] = [];
+
+	for (const source of sources) {
+		for (const damage of source.damages) {
+			const weaponType = damage.weaponType.toLowerCase() as
+				| "main"
+				| "sub"
+				| "special";
+			const keyString = `${source.weaponId}-${weaponType}-${damage.type}`;
+
+			if (seen.has(keyString)) {
+				continue;
+			}
+			seen.add(keyString);
+
+			keys.push({
+				weaponId: source.weaponId,
+				weaponType,
+				damageType: damage.type,
+			});
+		}
+	}
+
+	return keys;
+}
+
 export function calculateDamageCombos(
 	weaponIds: MainWeaponId[],
 	excludedKeys: ExcludedDamageKey[] = [],

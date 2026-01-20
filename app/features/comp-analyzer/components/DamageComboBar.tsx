@@ -19,6 +19,7 @@ import {
 	calculateDamageCombos,
 	calculateInkTimeToKill,
 	type ExcludedDamageKey,
+	getAllDamageKeys,
 } from "../core/damage-combinations";
 import styles from "./DamageComboBar.module.css";
 
@@ -273,6 +274,8 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 		return null;
 	}
 
+	const allDamageKeys = getAllDamageKeys(weaponIds, targetSubDefenseAp);
+
 	const handleToggleFilter = (key: ExcludedDamageKey) => {
 		const keyString = filterKeyToString(key);
 		const exists = excludedKeys.some((k) => filterKeyToString(k) === keyString);
@@ -284,6 +287,14 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 		} else {
 			setExcludedKeys([...excludedKeys, key]);
 		}
+	};
+
+	const handleRemoveAll = () => {
+		setExcludedKeys(allDamageKeys);
+	};
+
+	const handleClearAll = () => {
+		setExcludedKeys([]);
 	};
 
 	return (
@@ -330,6 +341,24 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 							className={styles.resSlider}
 						/>
 						<span className={styles.resSliderValue}>{targetResAp} AP</span>
+					</div>
+					<div className={styles.filterControlsRow}>
+						<button
+							type="button"
+							className={styles.filterControlButton}
+							onClick={handleRemoveAll}
+							disabled={excludedKeys.length === allDamageKeys.length}
+						>
+							{t("analyzer:comp.removeAll")}
+						</button>
+						<button
+							type="button"
+							className={styles.filterControlButton}
+							onClick={handleClearAll}
+							disabled={excludedKeys.length === 0}
+						>
+							{t("analyzer:comp.addAll")}
+						</button>
 					</div>
 					{excludedKeys.length > 0 ? (
 						<div className={styles.filteredItemsRow}>

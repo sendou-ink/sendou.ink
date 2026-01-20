@@ -167,6 +167,34 @@
 	color: var(--text-lighter);
 }
 
+.filterControlsRow {
+	display: flex;
+	gap: var(--s-2);
+	padding-block-end: var(--s-2);
+	border-block-end: 1px solid var(--border);
+	margin-block-end: var(--s-1);
+}
+
+.filterControlButton {
+	padding: var(--s-1) var(--s-2);
+	background: var(--bg-lighter);
+	border: 1px solid var(--border);
+	border-radius: var(--rounded-sm);
+	font-size: var(--fonts-xs);
+	color: var(--text);
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+}
+
+.filterControlButton:hover:not(:disabled) {
+	background: var(--bg-lightest);
+}
+
+.filterControlButton:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
 .filteredItemsRow {
 	display: flex;
 	flex-wrap: wrap;
