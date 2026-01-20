@@ -134,6 +134,7 @@
 	"damage.SPECIAL_TICK": "틱",
 	"damage.TURRET_MIN": "구르기 (최소)",
 	"damage.TURRET_MAX": "구르기 (최대)",
+	"damage.COMBO": "",
 	"suffix.seconds": "s",
 	"suffix.hp": "hp",
 	"suffix.specialPointsShort": "p",

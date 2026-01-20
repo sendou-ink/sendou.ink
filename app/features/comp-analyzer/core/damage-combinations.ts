@@ -14,6 +14,7 @@ import {
 	MAX_COMBOS_DISPLAYED,
 	MAX_DAMAGE_TYPES_PER_COMBO,
 	MAX_REPEATS_PER_DAMAGE_TYPE,
+	VIRTUAL_DAMAGE_COMBOS,
 } from "../comp-analyzer-constants";
 import type {
 	DamageCombo,
@@ -74,6 +75,24 @@ export function extractDamageSources(
 				value: specialDamage.value,
 				weaponType: "SPECIAL",
 			});
+		}
+
+		const virtualCombos = VIRTUAL_DAMAGE_COMBOS[weaponId];
+		if (virtualCombos) {
+			for (const combo of virtualCombos) {
+				const combinedValue = combo.damageTypes.reduce((sum, type) => {
+					const damage = damages.find((d) => d.type === type);
+					return sum + (damage?.value ?? 0);
+				}, 0);
+
+				if (combinedValue > 0) {
+					damages.push({
+						type: combo.virtualType,
+						value: combinedValue,
+						weaponType: "MAIN",
+					});
+				}
+			}
 		}
 
 		return {

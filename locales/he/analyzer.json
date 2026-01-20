@@ -137,6 +137,7 @@
 	"damage.SPECIAL_TICK": "Tick",
 	"damage.TURRET_MIN": "נייח (מינימום)",
 	"damage.TURRET_MAX": "נייח (מקסימום)",
+	"damage.COMBO": "",
 	"suffix.seconds": "ש",
 	"suffix.hp": "hp",
 	"suffix.specialPointsShort": "p",

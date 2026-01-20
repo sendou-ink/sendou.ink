@@ -138,6 +138,7 @@
 	"damage.SPECIAL_TICK": "Тик",
 	"damage.TURRET_MIN": "Турель (Минимум)",
 	"damage.TURRET_MAX": "Турель (Максимум)",
+	"damage.COMBO": "",
 	"suffix.seconds": "сек",
 	"suffix.hp": "hp",
 	"suffix.specialPointsShort": "очк.",

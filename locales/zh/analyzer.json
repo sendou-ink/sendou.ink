@@ -134,6 +134,7 @@
 	"damage.SPECIAL_TICK": "雨滴",
 	"damage.TURRET_MIN": "双枪合一 (最小值)",
 	"damage.TURRET_MAX": "双枪合一 (最大值)",
+	"damage.COMBO": "",
 	"suffix.seconds": "秒",
 	"suffix.hp": "hp",
 	"suffix.specialPointsShort": "p",

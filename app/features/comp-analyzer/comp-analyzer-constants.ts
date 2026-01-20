@@ -1,4 +1,6 @@
+import type { DamageType } from "~/features/build-analyzer/analyzer-types";
 import type {
+	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
@@ -76,3 +78,21 @@ export const SPECIAL_CATEGORY_ORDER = [
 
 export type SubWeaponCategory = (typeof SUB_CATEGORY_ORDER)[number];
 export type SpecialWeaponCategory = (typeof SPECIAL_CATEGORY_ORDER)[number];
+
+interface VirtualDamageCombo {
+	damageTypes: DamageType[];
+	virtualType: DamageType;
+}
+
+const EXPLOSHER_ID = 3040 as MainWeaponId;
+
+export const VIRTUAL_DAMAGE_COMBOS: Partial<
+	Record<MainWeaponId, VirtualDamageCombo[]>
+> = {
+	[EXPLOSHER_ID]: [
+		{
+			damageTypes: ["DIRECT", "DISTANCE"],
+			virtualType: "COMBO",
+		},
+	],
+};

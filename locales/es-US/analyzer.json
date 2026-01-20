@@ -137,6 +137,7 @@
 	"damage.SPECIAL_TICK": "Por tiempo",
 	"damage.TURRET_MIN": "Tras rodar (mínimo)",
 	"damage.TURRET_MAX": "Tras rodar (máximo)",
+	"damage.COMBO": "",
 	"suffix.seconds": "s",
 	"suffix.hp": "hp",
 	"suffix.specialPointsShort": "p",

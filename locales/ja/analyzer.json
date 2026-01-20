@@ -134,6 +134,7 @@
 	"damage.SPECIAL_TICK": "ティックあたり",
 	"damage.TURRET_MIN": "スライド (最小)",
 	"damage.TURRET_MAX": "スライド (最大)",
+	"damage.COMBO": "",
 	"suffix.seconds": "秒",
 	"suffix.hp": "ダメージ",
 	"suffix.specialPointsShort": "ポイント",

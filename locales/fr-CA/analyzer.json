@@ -137,6 +137,7 @@
 	"damage.SPECIAL_TICK": "Dégâts sur la durée",
 	"damage.TURRET_MIN": "Combiné (Minimum)",
 	"damage.TURRET_MAX": "Combiné (Maximum)",
+	"damage.COMBO": "",
 	"suffix.seconds": "s",
 	"suffix.hp": "pv",
 	"suffix.specialPointsShort": "p",

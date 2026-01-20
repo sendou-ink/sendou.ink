@@ -16,6 +16,7 @@ const SPLAT_ROLLER_ID = 1010;
 const SPLAT_CHARGER_ID = 2010;
 const AEROSPRAY_MG_ID = 30;
 const SPLATTERSHOT_JR_ID = 10;
+const EXPLOSHER_ID = 3040;
 
 describe("extractDamageSources", () => {
 	test("extracts main weapon damages", () => {
@@ -307,5 +308,35 @@ describe("calculateInkTimeToKill", () => {
 
 		expect(result).not.toBeNull();
 		expect(result).toBeGreaterThan(0);
+	});
+});
+
+describe("virtual damage combos", () => {
+	test("Explosher has COMBO damage type combining DIRECT and DISTANCE", () => {
+		const sources = extractDamageSources([EXPLOSHER_ID]);
+		const damages = sources[0].damages;
+
+		const comboDamage = damages.find((d) => d.type === "COMBO");
+		expect(comboDamage).toBeDefined();
+		expect(comboDamage?.weaponType).toBe("MAIN");
+
+		const directDamage = damages.find((d) => d.type === "DIRECT");
+		const distanceDamage = damages.find((d) => d.type === "DISTANCE");
+
+		expect(directDamage).toBeDefined();
+		expect(distanceDamage).toBeDefined();
+
+		const expectedComboValue =
+			(directDamage?.value ?? 0) + (distanceDamage?.value ?? 0);
+		expect(comboDamage?.value).toBeCloseTo(expectedComboValue, 1);
+	});
+
+	test("COMBO damage appears in damage combos", () => {
+		const combos = calculateDamageCombos([EXPLOSHER_ID, SPLATTERSHOT_ID]);
+
+		const comboWithComboType = combos.find((c) =>
+			c.segments.some((s) => s.damageType === "COMBO"),
+		);
+		expect(comboWithComboType).toBeDefined();
 	});
 });

@@ -136,6 +136,7 @@
 	"damage.SPECIAL_TICK": "Løbende",
 	"damage.TURRET_MIN": "Stationær skydning (Minimum)",
 	"damage.TURRET_MAX": "Stationær skydning (Maximum)",
+	"damage.COMBO": "",
 	"suffix.seconds": "s",
 	"suffix.hp": "HP",
 	"suffix.specialPointsShort": "p",

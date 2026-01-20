@@ -138,6 +138,7 @@
 	"damage.SPECIAL_TICK": "",
 	"damage.TURRET_MIN": "",
 	"damage.TURRET_MAX": "",
+	"damage.COMBO": "",
 	"suffix.seconds": "s",
 	"suffix.hp": "hp",
 	"suffix.specialPointsShort": "pkt",
