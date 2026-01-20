@@ -55,10 +55,23 @@ const TOP_TEAMS_COUNT = 8;
 const MIN_TEAMS_FOR_TIERING = 8;
 
 /**
- * Whether to apply a size bonus for larger tournaments.
- * Set to 0 to disable, or a value like 0.05 to add 5% per 10 teams above minimum.
+ * Size bonus configuration.
+ * The bonus scales inversely with skill level - X-tier gets no bonus,
+ * lower tiers get increasingly more bonus for larger tournaments.
+ *
+ * NO_BONUS_ABOVE: Score threshold above which no size bonus applies (X-tier)
+ * MAX_BONUS_PER_10_TEAMS: Maximum bonus per 10 teams above minimum (applied at score 0)
+ *
+ * The bonus scales linearly: at NO_BONUS_ABOVE, multiplier is 0.
+ * As score decreases toward 0, multiplier approaches MAX_BONUS_PER_10_TEAMS.
+ *
+ * Formula: bonus = scaleFactor * MAX_BONUS * (teamsAboveMin / 10)
+ *   where scaleFactor = max(0, (NO_BONUS_ABOVE - rawScore) / NO_BONUS_ABOVE)
  */
-const SIZE_BONUS_PER_10_TEAMS = 0;
+const SIZE_BONUS = {
+	NO_BONUS_ABOVE: 32, // X-tier threshold - no bonus at this level
+	MAX_BONUS_PER_10_TEAMS: 1.5, // Max points added per 10 extra teams (at score ~0)
+};
 
 /**
  * Filter to only include tournaments after this date (ISO string).
@@ -94,10 +107,17 @@ function calculateTier(score: number | null): Tier | "UNTIERED" {
 }
 
 function calculateAdjustedScore(rawScore: number, teamCount: number): number {
-	if (SIZE_BONUS_PER_10_TEAMS === 0) return rawScore;
+	if (SIZE_BONUS.MAX_BONUS_PER_10_TEAMS === 0) return rawScore;
+
+	// Scale factor: 0 at NO_BONUS_ABOVE, approaches 1 as score approaches 0
+	const scaleFactor = Math.max(
+		0,
+		(SIZE_BONUS.NO_BONUS_ABOVE - rawScore) / SIZE_BONUS.NO_BONUS_ABOVE,
+	);
 
 	const teamsAboveMin = Math.max(0, teamCount - MIN_TEAMS_FOR_TIERING);
-	const bonus = (teamsAboveMin / 10) * SIZE_BONUS_PER_10_TEAMS * rawScore;
+	const bonus = scaleFactor * SIZE_BONUS.MAX_BONUS_PER_10_TEAMS * (teamsAboveMin / 10);
+
 	return rawScore + bonus;
 }
 
@@ -286,7 +306,18 @@ function printThresholds() {
 	}
 	console.log(`\nTop teams considered: ${TOP_TEAMS_COUNT}`);
 	console.log(`Min teams for tiering: ${MIN_TEAMS_FOR_TIERING}`);
-	console.log(`Size bonus per 10 teams: ${SIZE_BONUS_PER_10_TEAMS * 100}%`);
+	console.log(`\nSize bonus (scales inversely with skill):`);
+	console.log(`  No bonus above score: ${SIZE_BONUS.NO_BONUS_ABOVE}`);
+	console.log(`  Max bonus per 10 teams: ${SIZE_BONUS.MAX_BONUS_PER_10_TEAMS} points`);
+
+	// Show example bonus calculations
+	console.log(`\nExample bonuses for 50-team tournament:`);
+	const exampleTeams = 50;
+	for (const rawScore of [32, 28, 24, 20, 15, 10, 5, 0]) {
+		const adjusted = calculateAdjustedScore(rawScore, exampleTeams);
+		const bonus = adjusted - rawScore;
+		console.log(`  Raw ${rawScore.toString().padStart(2)} -> ${adjusted.toFixed(2)} (+${bonus.toFixed(2)})`);
+	}
 }
 
 // ============================================================================
@@ -310,6 +341,31 @@ function main() {
 	printBottomOfTier(tournaments, "S+", 5);
 
 	printTopTournaments(tournaments, "S", 10);
+
+	// Show tournaments promoted by size bonus
+	console.log("\n" + "=".repeat(60));
+	console.log("TOURNAMENTS PROMOTED BY SIZE BONUS");
+	console.log("=".repeat(60));
+	const promoted = tournaments
+		.filter((t) => t.tier !== "UNTIERED" && t.top8AvgOrdinal !== null)
+		.filter((t) => {
+			const rawTier = calculateTier(t.top8AvgOrdinal);
+			return rawTier !== t.tier;
+		})
+		.sort((a, b) => (b.adjustedScore ?? 0) - (a.adjustedScore ?? 0))
+		.slice(0, 20);
+
+	if (promoted.length === 0) {
+		console.log("No tournaments were promoted by size bonus.");
+	} else {
+		for (const t of promoted) {
+			const rawTier = calculateTier(t.top8AvgOrdinal);
+			const bonus = (t.adjustedScore ?? 0) - (t.top8AvgOrdinal ?? 0);
+			console.log(
+				`${rawTier.toString().padEnd(3)} -> ${t.tier.padEnd(3)} | ${t.name.substring(0, 35).padEnd(35)} | ${t.teamCount} teams | +${bonus.toFixed(2)}`,
+			);
+		}
+	}
 
 	// Recent tournaments analysis
 	console.log("\n" + "=".repeat(60));
