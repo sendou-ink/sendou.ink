@@ -634,7 +634,7 @@ export const weaponParams = {
 			InkConsumeMinCharge: 0.0197,
 		},
 		"3000": {
-			Range_SpawnSpeed: 1.22,
+			Range_SpawnSpeed: 1.7609,
 			Range_GoStraightStateEndMaxSpeed: 10,
 			Range_GoStraightToBrakeStateFrame: 2,
 			Range_FreeGravity: 0.05,

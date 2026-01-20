@@ -218,6 +218,7 @@ function getWeaponCategoryName(weaponId: number): string | undefined {
 	for (const category of [
 		{ name: "SHOOTERS", range: [0, 199] },
 		{ name: "BLASTERS", range: [200, 299] },
+		{ name: "SHOOTERS", range: [300, 499] },
 		{ name: "ROLLERS", range: [1000, 1099] },
 		{ name: "BRUSHES", range: [1100, 1199] },
 		{ name: "CHARGERS", range: [2000, 2099] },
@@ -240,7 +241,7 @@ function extractRangeParams(weapon: MainWeapon, params: any) {
 	const isBrella = category === "BRELLAS";
 	const isSlosher = category === "SLOSHERS";
 
-	if (category && !isBrella) {
+	if (!category) {
 		return {};
 	}
 
@@ -256,7 +257,13 @@ function extractRangeParams(weapon: MainWeapon, params: any) {
 
 	if (isSlosher) {
 		const units = params.UnitGroupParam?.Unit;
-		const unitForRange = units?.[0];
+		const unitForRange = units?.reduce(
+			(best: any, unit: any) =>
+				(unit?.SpawnSpeedGround ?? 0) > (best?.SpawnSpeedGround ?? 0)
+					? unit
+					: best,
+			units?.[0],
+		);
 		const moveParam = unitForRange?.MoveParam;
 		return {
 			Range_SpawnSpeed: unitForRange?.SpawnSpeedGround,

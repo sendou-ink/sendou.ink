@@ -36,6 +36,19 @@ function getWeaponCategoryName(weaponId: MainWeaponId): string | undefined {
 
 const PLAYER_HEIGHT = 1.0;
 
+function calculateGroundRange(trajectory: TrajectoryPoint[]): number {
+	for (let i = 1; i < trajectory.length; i++) {
+		const point = trajectory[i];
+		const prevPoint = trajectory[i - 1];
+		if (point.y < 0 && prevPoint.y >= 0) {
+			const t = prevPoint.y / (prevPoint.y - point.y);
+			return prevPoint.z + t * (point.z - prevPoint.z);
+		}
+	}
+	const lastPoint = trajectory[trajectory.length - 1];
+	return lastPoint?.z ?? 0;
+}
+
 function simulateTrajectoryPoints(params: TrajectoryParams): TrajectoryPoint[] {
 	const {
 		spawnSpeed,
@@ -139,8 +152,7 @@ function getWeaponRange(weaponId: MainWeaponId): WeaponRangeResult {
 	};
 
 	const trajectory = simulateTrajectoryPoints(trajectoryParams);
-	const lastPoint = trajectory[trajectory.length - 1];
-	const range = lastPoint?.z ?? 0;
+	const range = calculateGroundRange(trajectory);
 
 	return {
 		range,
