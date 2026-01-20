@@ -70,6 +70,9 @@ function CompAnalyzerPage() {
 	};
 
 	const handleRemoveWeapon = (index: number) => {
+		if (selectedWeaponIds.length >= MAX_WEAPONS) {
+			setIsGridCollapsed(false);
+		}
 		setSelectedWeaponIds(selectedWeaponIds.filter((_, i) => i !== index));
 	};
 
