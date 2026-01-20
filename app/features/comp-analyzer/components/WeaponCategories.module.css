@@ -2,6 +2,7 @@
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--s-4);
+	max-width: 100%;
 }
 
 .categorySection {
@@ -9,6 +10,7 @@
 	flex-direction: column;
 	gap: var(--s-1);
 	margin: 0 auto;
+	max-width: 100%;
 }
 
 .categoryLabel {
@@ -23,7 +25,9 @@
 	background-color: var(--bg-lightest);
 	border: 2px solid var(--border);
 	border-radius: var(--rounded-full);
-	overflow: hidden;
+	overflow-x: auto;
+	overflow-y: hidden;
+	max-width: 100%;
 }
 
 .categoryItem {
@@ -33,8 +37,7 @@
 	gap: var(--s-1);
 	padding: var(--s-1) var(--s-4);
 	border-left: 1.5px solid var(--border);
-	flex: 1 1 0;
-	min-width: 0;
+	flex-shrink: 0;
 }
 
 .categoryItem[data-first="true"] {
