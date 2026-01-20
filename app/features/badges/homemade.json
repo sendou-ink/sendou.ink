@@ -1414,5 +1414,14 @@
 	"zekkocup": {
 		"displayName": "Zekko Cup",
 		"authorDiscordId": "1320944066002681876"
+	},
+	"sscake": {
+		"displayName": "Cake Clash CROWNED!",
+		"authorDiscordId": "1170249805373657093"
+	},
+	"sscakeno": {
+		"displayName": "Cake Clash",
+		"authorDiscordId": "1170249805373657093"
 	}
+
 }
