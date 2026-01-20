@@ -1,5 +1,5 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import type { ActionFunctionArgs } from "react-router";
+import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -22,7 +22,7 @@ import { generateTimeOptions } from "../scrims-utils";
 import { usersListForPost } from "./scrims.new.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 
 	const data = await parseRequestPayload({
 		request,

@@ -1,11 +1,6 @@
-import type { MetaFunction } from "@remix-run/node";
-import {
-	Outlet,
-	useLoaderData,
-	useLocation,
-	useMatches,
-} from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { Outlet, useLoaderData, useLocation, useMatches } from "react-router";
 import { Main } from "~/components/Main";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { useUser } from "~/features/auth/core/user";

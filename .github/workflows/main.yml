@@ -27,12 +27,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Playwright browsers
+        run: npx playwright install chromium
+
       - name: Formatter/Linter
         run: npm run biome:check
       - name: Typecheck
         run: npm run typecheck
       - name: Unit tests
-        run: npm run test:unit
+        run: npm run test:unit:browser
       - name: Knip unused check
         run: npm run knip
       - name: Check translations jsons

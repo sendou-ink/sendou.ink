@@ -1,5 +1,5 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { z } from "zod/v4";
+import type { ActionFunctionArgs } from "react-router";
+import { z } from "zod";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
@@ -21,7 +21,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		request,
 		schema: adminActionSchema,
 	});
-	const user = await requireUser(request);
+	const user = requireUser();
 
 	let message: string;
 	switch (data._action) {

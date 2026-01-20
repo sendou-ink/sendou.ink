@@ -430,6 +430,8 @@ export interface SplatoonPlayer {
 	id: GeneratedAlways<number>;
 	splId: string;
 	userId: number | null;
+	/** Players best XP across both divisions. Denormalized for performance. */
+	peakXp: number | null;
 }
 
 export interface TaggedArt {
@@ -494,6 +496,16 @@ export interface Tournament {
 	parentTournamentId: number | null;
 	/** Is the tournament finalized meaning all the matches are played and TO has locked it making it read-only */
 	isFinalized: Generated<DBBoolean>;
+	/** Snapshot of teams and rosters when seeds were last saved. Used to detect NEW teams/players. */
+	seedingSnapshot: JSONColumnTypeNullable<SeedingSnapshot>;
+}
+
+export interface SeedingSnapshot {
+	savedAt: number;
+	teams: Array<{
+		teamId: number;
+		members: Array<{ userId: number; username: string }>;
+	}>;
 }
 
 export interface PreparedMaps {
@@ -506,6 +518,7 @@ export interface PreparedMaps {
 export interface TournamentBadgeOwner {
 	badgeId: number;
 	userId: number;
+	tournamentId: number | null;
 }
 
 /** A group is a logical structure used to group multiple rounds together.
@@ -848,11 +861,18 @@ export interface UserPreferences {
 }
 
 export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;
-export const OBJECT_PRONOUNS = ["him", "her", "them", "its", "all"] as const;
+export const OBJECT_PRONOUNS = [
+	"him",
+	"her",
+	"them",
+	"its",
+	"all",
+	...SUBJECT_PRONOUNS,
+] as const;
 
-export type PRONOUNS = {
-	subject: typeof SUBJECT_PRONOUNS;
-	object: typeof OBJECT_PRONOUNS;
+export type Pronouns = {
+	subject: (typeof SUBJECT_PRONOUNS)[number];
+	object: (typeof OBJECT_PRONOUNS)[number];
 };
 
 export interface User {
@@ -883,7 +903,7 @@ export interface User {
 	isApiAccesser: Generated<DBBoolean | null>;
 	languages: string | null;
 	motionSens: number | null;
-	pronouns: JSONColumnTypeNullable<PRONOUNS>;
+	pronouns: JSONColumnTypeNullable<Pronouns>;
 	patronSince: number | null;
 	patronTier: number | null;
 	patronTill: number | null;
@@ -949,6 +969,14 @@ export interface ApiToken {
 	userId: number;
 	token: string;
 	createdAt: GeneratedAlways<number>;
+}
+
+export interface LiveStream {
+	id: GeneratedAlways<number>;
+	userId: number | null;
+	viewerCount: number;
+	thumbnailUrl: string;
+	twitch: string | null;
 }
 
 export interface BanLog {
@@ -1125,6 +1153,7 @@ export interface DB {
 	AllTeamMember: TeamMember;
 	ApiToken: ApiToken;
 	Art: Art;
+	LiveStream: LiveStream;
 	ArtTag: ArtTag;
 	ArtUserMetadata: ArtUserMetadata;
 	TaggedArt: TaggedArt;

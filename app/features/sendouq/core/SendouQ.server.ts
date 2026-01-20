@@ -239,6 +239,7 @@ class SendouQClass {
 	) {
 		const usersTier = this.#getUserTier(userId);
 		return this.groups
+			.filter((group) => this.#isSuitableLookingGroup({ group }))
 			.map(this.#getAddMemberPrivateNoteMapper(notes))
 			.sort(this.#getSkillAndNoteSortComparator(usersTier))
 			.map((group) => this.#addPreviewTierRange(group))
@@ -269,18 +270,14 @@ class SendouQClass {
 						? [1, 2]
 						: [1, 2, 3];
 
-		const staleThreshold = sub(new Date(), { seconds: SECONDS_TILL_STALE });
 		return this.groups
-			.filter((group) => {
-				const groupLastAction = databaseTimestampToDate(group.latestActionAt);
-				return (
-					group.status === "ACTIVE" &&
-					!group.matchId &&
-					group.id !== ownGroup.id &&
-					currentMemberCountOptions.includes(group.members.length) &&
-					groupLastAction >= staleThreshold
-				);
-			})
+			.filter((group) =>
+				this.#isSuitableLookingGroup({
+					group,
+					ownGroupId: ownGroup.id,
+					currentMemberCountOptions,
+				}),
+			)
 			.map(this.#getGroupReplayMapper(userId))
 			.map(this.#getAddTierRangeMapper(ownGroup.tier))
 			.map(this.#getAddMemberPrivateNoteMapper(notes))
@@ -369,7 +366,12 @@ class SendouQClass {
 	): Omit<T, "inviteCode" | "chatCode" | "members"> & {
 		members: T["members"] | undefined;
 	} {
-		const baseGroup = R.omit(group, ["inviteCode", "chatCode", "members"]);
+		const {
+			inviteCode: _inviteCode,
+			chatCode: _chatCode,
+			members,
+			...baseGroup
+		} = group;
 
 		if (this.#groupIsFull(group)) {
 			return {
@@ -380,7 +382,7 @@ class SendouQClass {
 
 		return {
 			...baseGroup,
-			members: group.members,
+			members,
 		};
 	}
 
@@ -537,6 +539,30 @@ class SendouQClass {
 				(i) => i.neededOrdinal && averageOrdinal > i.neededOrdinal,
 			) ?? { isPlus: false, name: "IRON" }
 		);
+	}
+
+	#isSuitableLookingGroup({
+		group,
+		ownGroupId,
+		currentMemberCountOptions,
+	}: {
+		group: SendouQClass["groups"][number];
+		ownGroupId?: number;
+		currentMemberCountOptions?: number[];
+	}) {
+		if (group.status !== "ACTIVE") return false;
+		if (group.matchId) return false;
+		if (group.id === ownGroupId) return false;
+		if (
+			currentMemberCountOptions &&
+			!currentMemberCountOptions.includes(group.members.length)
+		) {
+			return false;
+		}
+
+		const staleThreshold = sub(new Date(), { seconds: SECONDS_TILL_STALE });
+		const groupLastAction = databaseTimestampToDate(group.latestActionAt);
+		return groupLastAction >= staleThreshold;
 	}
 }
 

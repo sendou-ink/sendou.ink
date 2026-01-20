@@ -1,4 +1,4 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from "react-router";
 import { notify } from "~/features/notifications/core/notify.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import {
@@ -21,7 +21,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const { id } = parseParams({ params, schema: idObject });
 	const post = notFoundIfFalsy(await ScrimPostRepository.findById(id));
 
-	const user = await requireUser(request);
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: cancelScrimSchema,

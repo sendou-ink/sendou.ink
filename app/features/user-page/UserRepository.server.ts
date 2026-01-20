@@ -29,7 +29,7 @@ import { findWidgetById } from "./core/widgets/portfolio";
 import { WIDGET_LOADERS } from "./core/widgets/portfolio-loaders.server";
 import type { LoadedWidget } from "./core/widgets/types";
 
-const identifierToUserIdQuery = (identifier: string) =>
+export const identifierToUserIdQuery = (identifier: string) =>
 	db
 		.selectFrom("User")
 		.select("User.id")
@@ -540,6 +540,7 @@ export async function findChatUsersByUserIds(userIds: number[]) {
 			"User.discordId",
 			"User.discordAvatar",
 			"User.username",
+			"User.pronouns",
 			userChatNameColor,
 		])
 		.where("User.id", "in", userIds)
@@ -1293,4 +1294,14 @@ export async function socialLinksByUserId(userId: number) {
 	}
 
 	return links;
+}
+
+export function findIdsByTwitchUsernames(twitchUsernames: string[]) {
+	if (twitchUsernames.length === 0) return [];
+
+	return db
+		.selectFrom("User")
+		.select(["User.id", "User.twitch"])
+		.where("User.twitch", "in", twitchUsernames)
+		.execute();
 }

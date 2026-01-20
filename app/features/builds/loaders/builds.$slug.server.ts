@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { weaponIdToType } from "~/modules/in-game-lists/weapon-ids";
@@ -15,7 +15,7 @@ import { buildFiltersSearchParams } from "../builds-schemas.server";
 import { filterBuilds } from "../core/filter.server";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const user = await getUser(request);
+	const user = getUser();
 	const t = await i18next.getFixedT(request, ["weapons", "common"], {
 		lng: "en",
 	});

@@ -1,5 +1,5 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
 import { isFuture } from "date-fns";
+import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import {
 	requirePermission,
@@ -8,7 +8,6 @@ import {
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
-	dayMonthYearToDate,
 } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import { errorToast, parseRequestPayload } from "~/utils/remix.server";
@@ -19,7 +18,7 @@ import { orgPageActionSchema } from "../tournament-organization-schemas";
 import { organizationFromParams } from "../tournament-organization-utils.server";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const organization = await organizationFromParams(params);
 	const data = await parseRequestPayload({
 		request,
@@ -52,7 +51,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				userId: data.userId,
 				privateNote: data.privateNote,
 				expiresAt: data.expiresAt
-					? dateToDatabaseTimestamp(dayMonthYearToDate(data.expiresAt))
+					? dateToDatabaseTimestamp(data.expiresAt)
 					: null,
 			});
 

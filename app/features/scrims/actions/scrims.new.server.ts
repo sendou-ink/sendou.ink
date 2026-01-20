@@ -1,38 +1,45 @@
-import { type ActionFunctionArgs, redirect } from "@remix-run/node";
 import { add } from "date-fns";
-import type { z } from "zod/v4";
+import { type ActionFunctionArgs, redirect } from "react-router";
+import type { z } from "zod";
 import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { parseFormData } from "~/form/parse.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import {
 	actionError,
 	errorToast,
 	errorToastIfFalsy,
-	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { scrimsPage } from "~/utils/urls";
 import * as SQGroupRepository from "../../sendouq/SQGroupRepository.server";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
-import { SCRIM } from "../scrims-constants";
+import { LUTI_DIVS, SCRIM } from "../scrims-constants";
 import {
 	type fromSchema,
 	type newRequestSchema,
 	type RANGE_END_OPTIONS,
-	scrimsNewActionSchema,
+	scrimsNewFormSchema,
 } from "../scrims-schemas";
+import type { LutiDiv } from "../scrims-types";
 import { serializeLutiDiv } from "../scrims-utils";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUser(request);
-	const data = await parseRequestPayload({
+	const user = requireUser();
+	const result = await parseFormData({
 		request,
-		schema: scrimsNewActionSchema,
+		schema: scrimsNewFormSchema,
 	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
 
 	if (data.from.mode === "PICKUP") {
 		if (data.from.users.includes(user.id)) {
@@ -55,11 +62,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		? resolveRangeEndToDate(data.at, data.rangeEnd)
 		: null;
 
+	const resolvedDivs = data.divs ? resolveDivs(data.divs) : null;
+
 	await ScrimPostRepository.insert({
 		at: dateToDatabaseTimestamp(data.at),
 		rangeEnd: rangeEndDate ? dateToDatabaseTimestamp(rangeEndDate) : null,
-		maxDiv: data.divs ? serializeLutiDiv(data.divs.max!) : null,
-		minDiv: data.divs ? serializeLutiDiv(data.divs.min!) : null,
+		maxDiv: resolvedDivs?.[0] ? serializeLutiDiv(resolvedDivs[0]) : null,
+		minDiv: resolvedDivs?.[1] ? serializeLutiDiv(resolvedDivs[1]) : null,
 		text: data.postText,
 		managedByAnyone: data.managedByAnyone,
 		maps:
@@ -213,4 +222,19 @@ function resolveRangeEndToDate(
 			assertUnreachable(rangeEnd);
 		}
 	}
+}
+
+function resolveDivs(
+	divs: [LutiDiv | null, LutiDiv | null],
+): [LutiDiv | null, LutiDiv | null] {
+	const [max, min] = divs;
+	if (!max || !min) return divs;
+
+	const maxIndex = LUTI_DIVS.indexOf(max);
+	const minIndex = LUTI_DIVS.indexOf(min);
+
+	if (minIndex < maxIndex) {
+		return [min, max];
+	}
+	return divs;
 }

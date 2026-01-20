@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
@@ -6,8 +6,8 @@ import { logger } from "~/utils/logger";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import { convertSnowflakeToDate } from "~/utils/users";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const loggedInUser = await requireUser(request);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const loggedInUser = requireUser();
 
 	requireRole(loggedInUser, "STAFF");
 

@@ -1,7 +1,7 @@
-import type { ActionFunction, LoaderFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
 import { isbot } from "isbot";
-import { z } from "zod/v4";
+import type { ActionFunction, LoaderFunction } from "react-router";
+import { redirect } from "react-router";
+import { z } from "zod";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
@@ -21,7 +21,7 @@ import {
 	SESSION_KEY,
 } from "./authenticator.server";
 import { authSessionStorage } from "./session.server";
-import { getUserId, requireUser } from "./user.server";
+import { getUser, requireUser } from "./user.server";
 
 export const callbackLoader: LoaderFunction = async ({ request }) => {
 	const url = new URL(request.url);
@@ -76,7 +76,7 @@ export const logInAction: ActionFunction = async ({ request }) => {
 
 export const impersonateAction: ActionFunction = async ({ request }) => {
 	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
-		const user = await requireUser(request);
+		const user = requireUser();
 		requireRole(user, "ADMIN");
 	}
 
@@ -163,7 +163,7 @@ export const logInViaLinkLoader: LoaderFunction = async ({ request }) => {
 		request,
 		schema: logInViaLinkActionSchema,
 	});
-	const user = await getUserId(request);
+	const user = getUser();
 
 	if (user) {
 		throw redirect("/");

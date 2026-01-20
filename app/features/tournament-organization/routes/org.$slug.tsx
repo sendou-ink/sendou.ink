@@ -1,15 +1,9 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import {
-	Link,
-	useFetcher,
-	useLoaderData,
-	useSearchParams,
-} from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { Link, useLoaderData, useSearchParams } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { LinkButton } from "~/components/elements/Button";
-import { SendouSwitch } from "~/components/elements/Switch";
 import {
 	SendouTab,
 	SendouTabList,
@@ -26,10 +20,11 @@ import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { BannedUsersList } from "~/features/tournament-organization/components/BannedPlayersList";
+import { SendouForm } from "~/form/SendouForm";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
-import { metaTags } from "~/utils/remix";
+import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BLANK_IMAGE_URL,
@@ -45,6 +40,7 @@ import { EventCalendar } from "../components/EventCalendar";
 import { SocialLinksList } from "../components/SocialLinksList";
 import { loader } from "../loaders/org.$slug.server";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "../tournament-organization-constants";
+import { updateIsEstablishedSchema } from "../tournament-organization-schemas";
 export { action, loader };
 
 import "../tournament-organization.css";
@@ -147,31 +143,23 @@ function LogoHeader() {
 
 function AdminControls() {
 	const data = useLoaderData<typeof loader>();
-	const fetcher = useFetcher();
 	const isAdmin = useHasRole("ADMIN");
 
 	if (!isAdmin) return null;
 
-	const onChange = (isSelected: boolean) => {
-		fetcher.submit(
-			{ _action: "UPDATE_IS_ESTABLISHED", isEstablished: isSelected },
-			{ method: "post", encType: "application/json" },
-		);
-	};
-
 	return (
 		<div className="stack sm">
 			<div className="text-sm font-semi-bold">Admin Controls</div>
-			<div>
-				<SendouSwitch
-					defaultSelected={Boolean(data.organization.isEstablished)}
-					onChange={onChange}
-					isDisabled={fetcher.state !== "idle"}
-					data-testid="is-established-switch"
-				>
-					Is Established Organization
-				</SendouSwitch>
-			</div>
+			<SendouForm
+				className=""
+				schema={updateIsEstablishedSchema}
+				defaultValues={{
+					isEstablished: Boolean(data.organization.isEstablished),
+				}}
+				autoSubmit
+			>
+				{({ FormField }) => <FormField name="isEstablished" />}
+			</SendouForm>
 		</div>
 	);
 }

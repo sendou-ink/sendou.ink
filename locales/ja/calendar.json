@@ -71,7 +71,6 @@
 	"filter.orgsIncluded": "",
 	"filter.orgsExcluded": "",
 	"filter.authorIdsExcluded": "",
-	"filter.authorIdsExcludedBottom": "",
 	"filter.apply": "",
 	"filter.applyAndDefault": ""
 }

@@ -1,14 +1,17 @@
-import { expect, test } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import { createTeamSchema } from "~/features/team/team-schemas";
 import {
+	expect,
 	impersonate,
 	isNotVisible,
 	modalClickConfirmButton,
 	navigate,
 	seed,
 	submit,
+	test,
 } from "~/utils/playwright";
+import { createFormHelpers } from "~/utils/playwright-form";
 import {
 	editTeamPage,
 	TEAM_SEARCH_PAGE,
@@ -45,8 +48,10 @@ test.describe("Team search page", () => {
 		await page.getByTestId("menu-item-team").click();
 
 		await expect(page).toHaveURL(/new=true/);
-		await page.getByTestId("new-team-name-input").fill("Chimera");
-		await submit(page);
+
+		const form = createFormHelpers(page, createTeamSchema);
+		await form.fill("name", "Chimera");
+		await form.submit();
 
 		await expect(page).toHaveURL(/chimera/);
 	});
@@ -58,7 +63,7 @@ test.describe("Team search page", () => {
 
 		await page.getByTestId("edit-team-button").click();
 		await page.getByLabel("Tag").fill("AR");
-		await page.getByTestId("edit-team-submit-button").click();
+		await submit(page, "edit-team-submit-button");
 
 		await navigate({ page, url: TEAM_SEARCH_PAGE });
 
@@ -88,7 +93,7 @@ test.describe("Team page", () => {
 		await page.getByTestId("bio-textarea").clear();
 		await page.getByTestId("bio-textarea").fill("shorter bio");
 
-		await page.getByTestId("edit-team-submit-button").click();
+		await submit(page, "edit-team-submit-button");
 
 		await expect(page).toHaveURL(/better-alliance-rogue/);
 		await page.getByText("shorter bio").isVisible();
@@ -145,7 +150,7 @@ test.describe("Team page", () => {
 
 		const oldInviteLink = await page.getByTestId("invite-link").innerText();
 
-		await page.getByTestId("reset-invite-link-button").click();
+		await submit(page, "reset-invite-link-button");
 
 		await expect(page.getByTestId("invite-link")).not.toHaveText(oldInviteLink);
 		const newInviteLink = await page.getByTestId("invite-link").innerText();
@@ -211,7 +216,7 @@ test.describe("Team page", () => {
 
 		await page.getByTestId("bio-textarea").clear();
 		await page.getByTestId("bio-textarea").fill("from editor");
-		await page.getByTestId("edit-team-submit-button").click();
+		await submit(page, "edit-team-submit-button");
 
 		await expect(page).toHaveURL(/alliance-rogue/);
 		await page.getByText("from editor").isVisible();

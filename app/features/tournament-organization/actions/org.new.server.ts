@@ -1,4 +1,4 @@
-import { type ActionFunction, redirect } from "@remix-run/node";
+import { type ActionFunction, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
@@ -8,7 +8,7 @@ import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
 import { newOrganizationSchema } from "../tournament-organization-schemas";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	requireRole(user, "TOURNAMENT_ADDER");
 
 	const data = await parseRequestPayload({

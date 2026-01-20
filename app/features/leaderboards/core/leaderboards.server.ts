@@ -1,7 +1,7 @@
 import { cachified } from "@epic-web/cachified";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-constants";
-import { freshUserSkills, userSkills } from "~/features/mmr/tiered.server";
+import { freshUserSkills } from "~/features/mmr/tiered.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
@@ -42,7 +42,10 @@ export async function cachedFullUserLeaderboard(season: number) {
 	});
 }
 
-function addTiers(entries: UserSPLeaderboardItem[], season: number) {
+function addTiers<T extends UserSPLeaderboardItem>(
+	entries: T[],
+	season: number,
+) {
 	const tiers = freshUserSkills(season);
 
 	const encounteredTiers = new Set<string>();
@@ -141,7 +144,7 @@ export function ownEntryPeek({
 	userId,
 	season,
 }: {
-	leaderboard: UserSPLeaderboardItem[];
+	leaderboard: UserLeaderboardWithAdditionsItem[];
 	userId: number;
 	season: number;
 }) {
@@ -154,7 +157,7 @@ export function ownEntryPeek({
 
 	const withTier = addTiers([found], season)[0];
 
-	const { intervals } = userSkills(season);
+	const { intervals } = freshUserSkills(season);
 
 	const currentTierIndex = intervals.findIndex(
 		(interval) =>

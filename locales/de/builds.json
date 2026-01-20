@@ -1,5 +1,7 @@
 {
 	"addBuild": "Ausrüstung hinzufügen",
+	"forms.title.new": "",
+	"forms.title.edit": "",
 	"reachBuildMaxCount": "",
 	"noBuilds": "Bisher keine Ausrüstung. Füge deine erste hinzu!",
 	"buildCard.info": "Info",
@@ -10,8 +12,8 @@
 	"forms.gear.HEAD": "Ausrüstung (Kopf)",
 	"forms.gear.CLOTHES": "Ausrüstung (Kleidung)",
 	"forms.gear.SHOES": "Ausrüstung (Schuhe)",
+	"forms.abilities": "",
 	"forms.private.info": "",
-	"forms.noGear.info": "",
 	"deleteConfirm": "Ausrüstung '{{title}}' löschen?",
 	"stats.count.title": "",
 	"stats.ap.title": "",

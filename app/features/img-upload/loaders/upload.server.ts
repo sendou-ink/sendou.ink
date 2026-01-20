@@ -1,5 +1,5 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
+import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { isTeamManager } from "~/features/team/team-utils";
@@ -7,7 +7,7 @@ import * as ImageRepository from "../ImageRepository.server";
 import { requestToImgType } from "../upload-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const validatedType = requestToImgType(request);
 
 	if (!validatedType) {

@@ -1,4 +1,4 @@
-import { type LoaderFunctionArgs, redirect } from "@remix-run/node";
+import { type LoaderFunctionArgs, redirect } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { parseParams } from "~/utils/remix.server";
@@ -6,8 +6,8 @@ import { tournamentRegisterPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
 import * as TournamentSubRepository from "../TournamentSubRepository.server";
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const user = await getUser(request);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const user = getUser();
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,

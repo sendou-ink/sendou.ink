@@ -1,14 +1,16 @@
-import test, { expect } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { scrimsNewFormSchema } from "~/features/scrims/scrims-schemas";
 import {
+	expect,
 	impersonate,
 	navigate,
 	seed,
 	selectUser,
-	setDateTime,
 	submit,
+	test,
 } from "~/utils/playwright";
+import { createFormHelpers } from "~/utils/playwright-form";
 import { newScrimPostPage, scrimsPage } from "~/utils/urls";
 
 test.describe("Scrims", () => {
@@ -22,6 +24,8 @@ test.describe("Scrims", () => {
 
 		await page.getByTestId("anything-adder-menu-button").click();
 		await page.getByTestId("menu-item-scrimPost").click();
+
+		const form = createFormHelpers(page, scrimsNewFormSchema);
 
 		await page.getByLabel("With").selectOption("PICKUP");
 		await selectUser({
@@ -39,16 +43,17 @@ test.describe("Scrims", () => {
 			page,
 			userName: "de",
 		});
-
 		await page.getByLabel("Visibility").selectOption("2");
-		await page.getByLabel("Text").fill("Test scrim");
+
+		// Schema-defined field - use form helper
+		await form.fill("postText", "Test scrim");
 
 		await submit(page);
 
 		await expect(page.getByTestId("limited-visibility-popover")).toBeVisible();
 
 		await page.getByRole("button", { name: "Delete" }).first().click();
-		await page.getByTestId("confirm-button").click();
+		await submit(page, "confirm-button");
 
 		await expect(page.getByRole("button", { name: "Delete" })).toHaveCount(1);
 	});
@@ -56,8 +61,6 @@ test.describe("Scrims", () => {
 	test("requests an existing scrim post & cancels the request", async ({
 		page,
 	}) => {
-		const INITIAL_AVAILABLE_TO_REQUEST_COUNT = 15;
-
 		await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({
@@ -68,13 +71,16 @@ test.describe("Scrims", () => {
 		const requestScrimButtonLocator = page.getByTestId("request-scrim-button");
 
 		await page.getByTestId("available-scrims-tab").click();
+
+		await expect(requestScrimButtonLocator.first()).toBeVisible();
+
+		const initialCount = await requestScrimButtonLocator.count();
+
 		await requestScrimButtonLocator.first().click();
 
 		await submit(page);
 
-		await expect(requestScrimButtonLocator).toHaveCount(
-			INITIAL_AVAILABLE_TO_REQUEST_COUNT - 1,
-		);
+		await expect(requestScrimButtonLocator).toHaveCount(initialCount - 1);
 
 		const togglePendingRequestsButton = page.getByTestId(
 			"toggle-pending-requests-button",
@@ -89,9 +95,7 @@ test.describe("Scrims", () => {
 		});
 		await cancelButton.click();
 
-		await expect(requestScrimButtonLocator).toHaveCount(
-			INITIAL_AVAILABLE_TO_REQUEST_COUNT,
-		);
+		await expect(requestScrimButtonLocator).toHaveCount(initialCount);
 	});
 
 	test("accepts a request", async ({ page }) => {
@@ -103,7 +107,7 @@ test.describe("Scrims", () => {
 		});
 
 		await page.getByTestId("confirm-modal-trigger-button").first().click();
-		await page.getByTestId("confirm-button").click();
+		await submit(page, "confirm-button");
 
 		await page.getByTestId("booked-scrims-tab").click();
 
@@ -126,7 +130,7 @@ test.describe("Scrims", () => {
 
 		// Accept the first available scrim request to make it possible to access the scrim details page
 		await page.getByTestId("confirm-modal-trigger-button").first().click();
-		await page.getByTestId("confirm-button").click();
+		await submit(page, "confirm-button");
 
 		await page.getByTestId("booked-scrims-tab").click();
 
@@ -135,7 +139,7 @@ test.describe("Scrims", () => {
 		// Cancel the scrim
 		await page.getByRole("button", { name: "Cancel" }).click();
 		await page.getByLabel("Reason").fill("Oops something came up");
-		await page.getByTestId("cancel-scrim-submit").click();
+		await submit(page, "cancel-scrim-submit");
 
 		// Go back to the scrims page and check if the scrim is marked as canceled
 		await navigate({
@@ -155,24 +159,25 @@ test.describe("Scrims", () => {
 			url: newScrimPostPage(),
 		});
 
+		const form = createFormHelpers(page, scrimsNewFormSchema);
+
 		const tomorrowDate = new Date();
 		tomorrowDate.setDate(tomorrowDate.getDate() + 1);
 		tomorrowDate.setHours(18, 0, 0, 0);
 
-		await setDateTime({ page, date: tomorrowDate, label: "Start" });
+		await form.setDateTime("at", tomorrowDate);
 
-		await page.getByLabel("Start time flexibility").selectOption("+2hours");
+		await form.select("rangeEnd", "+2hours");
 
-		await page.getByLabel("Maps").selectOption("TOURNAMENT");
+		await form.select("maps", "TOURNAMENT");
 
-		const tournamentButton = page.getByLabel("Tournament");
 		const tournamentSearchInput = page.getByTestId("tournament-search-input");
 		const tournamentSearchItem = page.getByTestId("tournament-search-item");
 
-		await tournamentButton.click();
+		await page.getByRole("button", { name: /Tournament search/i }).click();
 		await tournamentSearchInput.fill("Swim or Sink");
 		await expect(tournamentSearchItem.first()).toBeVisible();
-		await page.keyboard.press("Enter");
+		await tournamentSearchItem.first().click();
 
 		await submit(page);
 
@@ -224,8 +229,8 @@ test.describe("Scrims", () => {
 			page.getByText("Ready to scrim! Let's do this."),
 		).toBeVisible();
 
-		await page.getByText("Confirm for 6:30 PM").click();
-		await page.getByTestId("confirm-button").click();
+		await page.getByTestId("confirm-modal-trigger-button").click();
+		await submit(page, "confirm-button");
 
 		await page.getByTestId("booked-scrims-tab").click();
 		await page.getByRole("link", { name: "Contact" }).click();

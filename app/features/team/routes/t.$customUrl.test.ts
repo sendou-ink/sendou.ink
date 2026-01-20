@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import { db } from "~/db/sql";
+import type { SerializeFrom } from "~/utils/remix";
 import {
 	assertResponseErrored,
 	dbInsertUsers,
@@ -11,20 +12,23 @@ import { action as _teamPageAction } from "../actions/t.$customUrl.index.server"
 import { action as teamIndexPageAction } from "../actions/t.server";
 import { action as _editTeamAction } from "../routes/t.$customUrl.edit";
 import * as TeamRepository from "../TeamRepository.server";
+import type { createTeamSchema } from "../team-schemas";
 import type {
-	createTeamSchema,
 	editTeamSchema,
 	teamProfilePageActionSchema,
 } from "../team-schemas.server";
 
 const createTeamAction = wrappedAction<typeof createTeamSchema>({
 	action: teamIndexPageAction,
+	isJsonSubmission: true,
 });
 const teamPageAction = wrappedAction<typeof teamProfilePageActionSchema>({
 	action: _teamPageAction,
+	isJsonSubmission: true,
 });
 const editTeamAction = wrappedAction<typeof editTeamSchema>({
 	action: _editTeamAction,
+	isJsonSubmission: true,
 });
 
 async function loadTeams() {

@@ -1,5 +1,5 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { z } from "zod/v4";
+import type { LoaderFunctionArgs } from "react-router";
+import { z } from "zod";
 import { getUser } from "~/features/auth/core/user.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseSafeSearchParams } from "~/utils/remix.server";
@@ -12,7 +12,7 @@ import { organizationFromParams } from "../tournament-organization-utils.server"
 export type OrganizationPageLoaderData = SerializeFrom<typeof loader>;
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
-	const user = await getUser(request);
+	const user = getUser();
 	const {
 		month = new Date().getMonth(),
 		year = new Date().getFullYear(),

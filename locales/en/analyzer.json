@@ -162,5 +162,11 @@
 	"perInkTankGrid.header_other": "{{weapon}} shots after ×{{count}} sub weapons used",
 	"bigBubblerExplanation": "{{weapon}} duration is also increased as the durability increases",
 	"button.showChart": "Show chart",
-	"button.showConsumptionGrid": "Show consumption grid"
+	"button.showConsumptionGrid": "Show consumption grid",
+	"damageReceiver.suffix.armor": "{{weapon}} Armor",
+	"damageReceiver.suffix.shield": "{{weapon}} Shield",
+	"damageReceiver.suffix.weakPoint": "{{weapon}} Weak Point",
+	"damageReceiver.suffix.inhale": "{{weapon}} Inhale",
+	"damageReceiver.suffix.canopy": "{{weapon}} Canopy",
+	"damageReceiver.suffix.canopyLaunched": "{{weapon}} Canopy (launched)"
 }

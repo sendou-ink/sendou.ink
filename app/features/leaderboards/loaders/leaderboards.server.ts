@@ -1,5 +1,5 @@
 import { cachified } from "@epic-web/cachified";
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -28,7 +28,7 @@ import {
 } from "../queries/XPLeaderboard.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUser(request);
+	const user = getUser();
 	const unvalidatedType = new URL(request.url).searchParams.get(
 		TYPE_SEARCH_PARAM_KEY,
 	);

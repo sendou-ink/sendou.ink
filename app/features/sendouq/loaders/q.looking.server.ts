@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
@@ -8,7 +8,7 @@ import * as PrivateUserNoteRepository from "../PrivateUserNoteRepository.server"
 import { sqRedirectIfNeeded } from "../q-utils.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 
 	const isPreview =
 		new URL(request.url).searchParams.get("preview") === "true" &&
@@ -19,10 +19,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		SendouQ.usersInQueue,
 	);
 
-	const groups = isPreview
-		? SendouQ.previewGroups(user.id, privateNotes)
-		: SendouQ.lookingGroups(user.id, privateNotes);
 	const ownGroup = SendouQ.findOwnGroup(user.id);
+	const groups =
+		isPreview && !ownGroup
+			? SendouQ.previewGroups(user.id, privateNotes)
+			: SendouQ.lookingGroups(user.id, privateNotes);
 
 	if (!isPreview) {
 		sqRedirectIfNeeded({

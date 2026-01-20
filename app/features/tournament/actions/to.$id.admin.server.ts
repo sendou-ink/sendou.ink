@@ -1,9 +1,12 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
+import * as R from "remeda";
+import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import { getServerTournamentManager } from "~/features/tournament-bracket/core/brackets-manager/manager.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	clearTournamentDataCache,
@@ -26,10 +29,13 @@ import { deleteTeam } from "../queries/deleteTeam.server";
 import { joinTeam, leaveTeam } from "../queries/joinLeaveTeam.server";
 import * as TournamentRepository from "../TournamentRepository.server";
 import { adminActionSchema } from "../tournament-schemas.server";
-import { inGameNameIfNeeded } from "../tournament-utils.server";
+import {
+	endDroppedTeamMatches,
+	inGameNameIfNeeded,
+} from "../tournament-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: adminActionSchema,
@@ -355,6 +361,30 @@ export const action: ActionFunction = async ({ request, params }) => {
 		}
 		case "DROP_TEAM_OUT": {
 			validateIsTournamentOrganizer();
+			const droppingTeam = tournament.teamById(data.teamId);
+			errorToastIfFalsy(droppingTeam, "Invalid team id");
+
+			// Set active roster only for teams with subs (can't infer which players played)
+			// Teams without subs have their roster trivially inferred in summarizer
+			const hasSubs =
+				droppingTeam.members.length > tournament.minMembersPerTeam;
+			if (hasSubs && !droppingTeam.activeRosterUserIds) {
+				const randomRoster = R.sample(
+					droppingTeam.members.map((m) => m.userId),
+					tournament.minMembersPerTeam,
+				);
+				await TournamentTeamRepository.setActiveRoster({
+					teamId: data.teamId,
+					activeRosterUserIds: randomRoster,
+				});
+			}
+
+			endDroppedTeamMatches({
+				tournament,
+				manager: getServerTournamentManager(),
+				droppedTeamId: data.teamId,
+			});
+
 			await TournamentRepository.dropTeamOut({
 				tournamentTeamId: data.teamId,
 				previewBracketIdxs: tournament.brackets.flatMap((b, idx) =>
@@ -444,6 +474,22 @@ export const action: ActionFunction = async ({ request, params }) => {
 			});
 
 			message = "Tournament progression updated";
+			break;
+		}
+		case "REOPEN_TOURNAMENT": {
+			validateIsTournamentAdmin();
+			errorToastIfFalsy(
+				DANGEROUS_CAN_ACCESS_DEV_CONTROLS,
+				"Only available in development",
+			);
+			errorToastIfFalsy(
+				tournament.ctx.isFinalized,
+				"Tournament is not finalized",
+			);
+
+			await TournamentRepository.reopenTournament(tournamentId);
+
+			message = "Tournament reopened";
 			break;
 		}
 		default: {

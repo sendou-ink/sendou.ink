@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 import {
 	_action,
 	checkboxValueToBoolean,
@@ -172,5 +172,8 @@ export const adminActionSchema = z.union([
 	z.object({
 		_action: _action("UPDATE_TOURNAMENT_PROGRESSION"),
 		bracketProgression: bracketProgressionSchema,
+	}),
+	z.object({
+		_action: _action("REOPEN_TOURNAMENT"),
 	}),
 ]);

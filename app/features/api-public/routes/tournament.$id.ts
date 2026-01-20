@@ -1,15 +1,11 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
-import { cors } from "remix-utils/cors";
-import { z } from "zod/v4";
+import type { LoaderFunctionArgs } from "react-router";
+import { z } from "zod";
 import { db } from "~/db/sql";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
+import { requireBearerAuth } from "../api-public-utils.server";
 import type { GetTournamentResponse } from "../schema";
 
 const paramsSchema = z.object({
@@ -17,7 +13,6 @@ const paramsSchema = z.object({
 });
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
 	requireBearerAuth(request);
 
 	const { id } = parseParams({ params, schema: paramsSchema });
@@ -84,5 +79,5 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		isFinalized: Boolean(tournament.isFinalized),
 	};
 
-	return await cors(request, json(result));
+	return Response.json(result);
 };

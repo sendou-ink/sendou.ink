@@ -1,10 +1,11 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import { sql } from "~/db/sql";
 import { TournamentMatchStatus } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.server";
 import * as TournamentMatchRepository from "~/features/tournament-bracket/TournamentMatchRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -33,7 +34,6 @@ import {
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
 import { insertTournamentMatchGameResult } from "../queries/insertTournamentMatchGameResult.server";
 import { insertTournamentMatchGameResultParticipant } from "../queries/insertTournamentMatchGameResultParticipant.server";
-import { resetMatchStatus } from "../queries/resetMatchStatus.server";
 import { updateMatchGameResultPoints } from "../queries/updateMatchGameResultPoints.server";
 import {
 	matchPageParamsSchema,
@@ -49,7 +49,7 @@ import {
 } from "../tournament-bracket-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const { mid: matchId, id: tournamentId } = parseParams({
 		params,
 		schema: matchPageParamsSchema,
@@ -220,6 +220,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 						userId,
 						tournamentTeamId: match.opponentTwo!.id!,
 					});
+				}
+
+				if (setOver) {
+					endDroppedTeamMatches({ tournament, manager });
 				}
 			})();
 
@@ -505,13 +509,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 				tournament.matchIdToBracketIdx(match.id)!,
 			)!.type;
 			sql.transaction(() => {
-				for (const match of followingMatches) {
-					// for other formats the database triggers handle the startedAt clearing. Status reset for those is managed by the brackets-manager
-					if (bracketFormat === "round_robin") {
-						resetMatchStatus(match.id);
-					} else {
-						// edge case but for round robin we can just leave the match as is, lock it then unlock later to continue where they left off (should not really ever happen)
-						deleteMatchPickBanEvents(match.id);
+				// edge case but for round robin we can just leave the match as is, lock it then unlock later to continue where they left off (should not really ever happen)
+				if (bracketFormat !== "round_robin") {
+					for (const followingMatch of followingMatches) {
+						deleteMatchPickBanEvents(followingMatch.id);
 					}
 				}
 

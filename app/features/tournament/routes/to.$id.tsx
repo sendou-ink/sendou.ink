@@ -1,15 +1,16 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
+import * as React from "react";
+import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
 import {
 	Outlet,
 	type ShouldRevalidateFunction,
 	useLoaderData,
 	useOutletContext,
-} from "@remix-run/react";
-import * as React from "react";
-import { useTranslation } from "react-i18next";
+} from "react-router";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { SubNav, SubNavLink } from "~/components/SubNav";
+import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { useUser } from "~/features/auth/core/user";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -42,9 +43,11 @@ export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 };
 
 export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader>;
+	const rawData = args.data as string | undefined;
 
-	if (!data) return [];
+	if (!rawData) return [];
+
+	const data = JSON.parse(rawData) as TournamentLoaderData;
 
 	return metaTags({
 		title: data.tournament.ctx.name,
@@ -63,9 +66,11 @@ export const meta: MetaFunction = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["tournament", "calendar"],
 	breadcrumb: ({ match }) => {
-		const data = match.data as TournamentLoaderData | undefined;
+		const rawData = match.data as string | undefined;
 
-		if (!data) return [];
+		if (!rawData) return [];
+
+		const data = JSON.parse(rawData) as TournamentLoaderData;
 
 		return [
 			data.tournament.ctx.organization?.logoUrl
@@ -111,7 +116,8 @@ export default function TournamentLayoutShell() {
 export function TournamentLayout() {
 	const { t } = useTranslation(["tournament"]);
 	const user = useUser();
-	const data = useLoaderData<typeof loader>();
+	const rawData = useLoaderData<typeof loader>();
+	const data = JSON.parse(rawData) as TournamentLoaderData;
 	const tournament = React.useMemo(
 		() => new Tournament(data.tournament),
 		[data],
@@ -199,7 +205,7 @@ export function TournamentLayout() {
 				{tournament.hasStarted && !tournament.everyBracketOver ? (
 					<SubNavLink to="streams">
 						{t("tournament:tabs.streams", {
-							count: data.streamsCount,
+							count: tournament.streams.length,
 						})}
 					</SubNavLink>
 				) : null}
@@ -213,11 +219,13 @@ export function TournamentLayout() {
 					!tournament.isLeagueSignup && (
 						<SubNavLink to="seeds">{t("tournament:tabs.seeds")}</SubNavLink>
 					)}
-				{tournament.isOrganizer(user) && !tournament.ctx.isFinalized && (
-					<SubNavLink to="admin" data-testid="admin-tab">
-						{t("tournament:tabs.admin")}
-					</SubNavLink>
-				)}
+				{tournament.isOrganizer(user) &&
+					(!tournament.ctx.isFinalized ||
+						DANGEROUS_CAN_ACCESS_DEV_CONTROLS) && (
+						<SubNavLink to="admin" data-testid="admin-tab">
+							{t("tournament:tabs.admin")}
+						</SubNavLink>
+					)}
 			</SubNav>
 			<TournamentContext.Provider value={tournament}>
 				<Outlet
@@ -226,7 +234,6 @@ export function TournamentLayout() {
 							tournament,
 							bracketExpanded,
 							setBracketExpanded,
-							streamingParticipants: data.streamingParticipants,
 							friendCodes: data.friendCodes,
 							preparedMaps: data.preparedMaps,
 						} satisfies TournamentContext
@@ -240,11 +247,10 @@ export function TournamentLayout() {
 type TournamentContext = {
 	tournament: Tournament;
 	bracketExpanded: boolean;
-	streamingParticipants: number[];
 	setBracketExpanded: (expanded: boolean) => void;
 	friendCode?: string;
-	friendCodes?: SerializeFrom<typeof loader>["friendCodes"];
-	preparedMaps: SerializeFrom<typeof loader>["preparedMaps"];
+	friendCodes?: TournamentLoaderData["friendCodes"];
+	preparedMaps: TournamentLoaderData["preparedMaps"];
 };
 
 export function useTournament() {
@@ -256,10 +262,6 @@ export function useBracketExpanded() {
 		useOutletContext<TournamentContext>();
 
 	return { bracketExpanded, setBracketExpanded };
-}
-
-export function useStreamingParticipants() {
-	return useOutletContext<TournamentContext>().streamingParticipants;
 }
 
 export function useTournamentFriendCodes() {

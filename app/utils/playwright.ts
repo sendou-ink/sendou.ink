@@ -1,7 +1,43 @@
-import { expect, type Locator, type Page } from "@playwright/test";
+import {
+	test as base,
+	expect,
+	type Locator,
+	type Page,
+} from "@playwright/test";
+import dotenv from "dotenv";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
 import { tournamentBracketsPage } from "./urls";
+
+dotenv.config();
+export const E2E_BASE_PORT = Number(process.env.PORT || 5173) + 1000;
+
+type WorkerFixtures = {
+	workerPort: number;
+	workerBaseURL: string;
+};
+
+export const test = base.extend<object, WorkerFixtures>({
+	workerPort: [
+		// biome-ignore lint/correctness/noEmptyPattern: Playwright requires object destructuring
+		async ({}, use, workerInfo) => {
+			const port = E2E_BASE_PORT + workerInfo.parallelIndex;
+			await use(port);
+		},
+		{ scope: "worker" },
+	],
+	workerBaseURL: [
+		async ({ workerPort }, use) => {
+			await use(`http://localhost:${workerPort}`);
+		},
+		{ scope: "worker" },
+	],
+	baseURL: async ({ workerBaseURL }, use) => {
+		await use(workerBaseURL);
+	},
+});
+
+export { expect };
 
 export async function selectWeapon({
 	page,
@@ -65,7 +101,15 @@ export async function selectUser({
 
 /** page.goto that waits for the page to be hydrated before proceeding */
 export async function navigate({ page, url }: { page: Page; url: string }) {
-	await page.goto(url);
+	// Rewrite absolute URLs with localhost to use the worker's baseURL
+	// This handles invite links and other URLs embedded with VITE_SITE_DOMAIN
+	let targetUrl = url;
+	if (url.startsWith("http://localhost:")) {
+		const urlObj = new URL(url);
+		// Extract just the path and search params, let Playwright use the correct baseURL
+		targetUrl = urlObj.pathname + urlObj.search;
+	}
+	await page.goto(targetUrl);
 	await expectIsHydrated(page);
 }
 
@@ -76,7 +120,7 @@ export async function expectIsHydrated(page: Page) {
 
 export function seed(page: Page, variation?: SeedVariation) {
 	return page.request.post("/seed", {
-		form: { variation: variation ?? "DEFAULT" },
+		form: { variation: variation ?? "DEFAULT", source: "e2e" },
 	});
 }
 
@@ -85,10 +129,16 @@ export function impersonate(page: Page, userId = ADMIN_ID) {
 }
 
 export async function submit(page: Page, testId?: string) {
+	return waitForPOSTResponse(page, async () => {
+		await page.getByTestId(testId ?? "submit-button").click();
+	});
+}
+
+export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 	const responsePromise = page.waitForResponse(
 		(res) => res.request().method() === "POST",
 	);
-	await page.getByTestId(testId ?? "submit-button").click();
+	await cb();
 	await responsePromise;
 }
 
@@ -97,14 +147,7 @@ export function isNotVisible(locator: Locator) {
 }
 
 export function modalClickConfirmButton(page: Page) {
-	return page.getByTestId("confirm-button").click();
-}
-
-export async function fetchSendouInk<T>(url: string) {
-	const res = await fetch(`http://localhost:6173${url}`);
-	if (!res.ok) throw new Error("Response not successful");
-
-	return res.json() as T;
+	return submit(page, "confirm-button");
 }
 
 export const startBracket = async (page: Page, tournamentId = 2) => {
@@ -117,72 +160,5 @@ export const startBracket = async (page: Page, tournamentId = 2) => {
 	});
 
 	await page.getByTestId("finalize-bracket-button").click();
-	await page.getByTestId("confirm-finalize-bracket-button").click();
+	await submit(page, "confirm-finalize-bracket-button");
 };
-
-/** Sets a date using the `<SendouDatePicker />` component */
-export async function setDateTime({
-	page,
-	date,
-	label,
-}: {
-	page: Page;
-	date: Date;
-	label: string;
-}) {
-	const hours = date.getHours();
-
-	await selectSpinbuttonValue({
-		page,
-		name: `year, ${label}`,
-		value: date.getFullYear().toString(),
-	});
-
-	await selectSpinbuttonValue({
-		page,
-		name: `month, ${label}`,
-		value: (date.getMonth() + 1).toString(),
-	});
-
-	await selectSpinbuttonValue({
-		page,
-		name: `day, ${label}`,
-		value: date.getDate().toString(),
-	});
-
-	await selectSpinbuttonValue({
-		page,
-		name: `hour, ${label}`,
-		value: String(hours % 12 || 12),
-	});
-
-	await selectSpinbuttonValue({
-		page,
-		name: `minute, ${label}`,
-		value: date.getMinutes().toString().padStart(2, "0"),
-	});
-
-	await selectSpinbuttonValue({
-		page,
-		name: `AM/PM, ${label}`,
-		value: hours >= 12 ? "PM" : "AM",
-	});
-}
-
-async function selectSpinbuttonValue({
-	page,
-	name,
-	value,
-}: {
-	page: Page;
-	name: string;
-	value: string;
-}) {
-	const locator = page.getByRole("spinbutton", {
-		name,
-		exact: true,
-	});
-	await locator.click();
-	await locator.clear();
-	await locator.fill(value);
-}

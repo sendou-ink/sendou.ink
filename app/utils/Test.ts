@@ -1,12 +1,19 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import type { Params } from "@remix-run/react";
+import type {
+	ActionFunctionArgs,
+	LoaderFunctionArgs,
+	Params,
+} from "react-router";
 import { expect } from "vitest";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import { db, sql } from "~/db/sql";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { SESSION_KEY } from "~/features/auth/core/authenticator.server";
 import { authSessionStorage } from "~/features/auth/core/session.server";
+import {
+	getUserFromRequest,
+	userAsyncLocalStorage,
+} from "~/features/auth/core/user-context.server";
 import { logger } from "./logger";
 
 export function arrayContainsSameItems<T>(arr1: T[], arr2: T[]) {
@@ -58,27 +65,32 @@ export function wrappedAction<T extends z.ZodTypeAny>({
 			],
 		});
 
-		try {
-			const response = await action({
-				request,
-				context: {},
-				params,
-			});
+		const userFromRequest = await getUserFromRequest(request);
 
-			return response;
-		} catch (thrown) {
-			// we only log errors in vitest for failed tests so this is okay (more context)
-			logger.error("Error in wrappedAction:", thrown);
+		return userAsyncLocalStorage.run({ user: userFromRequest }, async () => {
+			try {
+				const response = await action({
+					request,
+					context: {} as any,
+					params,
+					unstable_pattern: "",
+				});
 
-			if (thrown instanceof Response) {
-				// it was a redirect
-				if (thrown.status === 302) return thrown;
+				return response;
+			} catch (thrown) {
+				// we only log errors in vitest for failed tests so this is okay (more context)
+				logger.error("Error in wrappedAction:", thrown);
 
-				throw new Error(`Response thrown with status code: ${thrown.status}`);
+				if (thrown instanceof Response) {
+					// it was a redirect
+					if (thrown.status === 302) return thrown;
+
+					throw new Error(`Response thrown with status code: ${thrown.status}`);
+				}
+
+				throw thrown;
 			}
-
-			throw thrown;
-		}
+		});
 	};
 }
 
@@ -102,21 +114,26 @@ export function wrappedLoader<T>({
 			],
 		});
 
-		try {
-			const data = await loader({
-				request,
-				params,
-				context: {},
-			});
+		const userFromRequest = await getUserFromRequest(request);
 
-			return data as T;
-		} catch (thrown) {
-			if (thrown instanceof Response) {
-				throw new Error(`Response thrown with status code: ${thrown.status}`);
+		return userAsyncLocalStorage.run({ user: userFromRequest }, async () => {
+			try {
+				const data = await loader({
+					request,
+					params,
+					context: {} as any,
+					unstable_pattern: "",
+				});
+
+				return data as T;
+			} catch (thrown) {
+				if (thrown instanceof Response) {
+					throw new Error(`Response thrown with status code: ${thrown.status}`);
+				}
+
+				throw thrown;
 			}
-
-			throw thrown;
-		}
+		});
 	};
 }
 

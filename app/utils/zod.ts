@@ -1,5 +1,5 @@
-import type { ZodType } from "zod/v4";
-import { z } from "zod/v4";
+import type { ZodType } from "zod";
+import { z } from "zod";
 import { CUSTOM_CSS_VAR_COLORS } from "~/features/user-page/user-page-constants";
 import {
 	abilities,
@@ -43,22 +43,32 @@ const abilityNameToType = (val: string) =>
 	abilities.find((ability) => ability.name === val)?.type;
 export const headMainSlotAbility = z
 	.string()
-	.refine((val) =>
-		["STACKABLE", "HEAD_MAIN_ONLY"].includes(abilityNameToType(val) as any),
+	.refine(
+		(val) =>
+			["STACKABLE", "HEAD_MAIN_ONLY"].includes(abilityNameToType(val) as any),
+		{ message: "forms:errors.required" },
 	);
 export const clothesMainSlotAbility = z
 	.string()
-	.refine((val) =>
-		["STACKABLE", "CLOTHES_MAIN_ONLY"].includes(abilityNameToType(val) as any),
+	.refine(
+		(val) =>
+			["STACKABLE", "CLOTHES_MAIN_ONLY"].includes(
+				abilityNameToType(val) as any,
+			),
+		{ message: "forms:errors.required" },
 	);
 export const shoesMainSlotAbility = z
 	.string()
-	.refine((val) =>
-		["STACKABLE", "SHOES_MAIN_ONLY"].includes(abilityNameToType(val) as any),
+	.refine(
+		(val) =>
+			["STACKABLE", "SHOES_MAIN_ONLY"].includes(abilityNameToType(val) as any),
+		{ message: "forms:errors.required" },
 	);
 export const stackableAbility = z
 	.string()
-	.refine((val) => abilityNameToType(val) === "STACKABLE");
+	.refine((val) => abilityNameToType(val) === "STACKABLE", {
+		message: "forms:errors.required",
+	});
 
 export const normalizeFriendCode = (value: string) => {
 	const onlyNumbers = value.replace(/\D/g, "");
@@ -115,11 +125,6 @@ export const weaponSplId = z.preprocess(
 export const subWeaponId = numericEnum(subWeaponIds);
 
 export const specialWeaponId = numericEnum(specialWeaponIds);
-
-export const qWeapon = z.object({
-	weaponSplId,
-	isFavorite: z.union([z.literal(0), z.literal(1)]),
-});
 
 export const modeShort = z.enum(["TW", "SZ", "TC", "RM", "CB"]);
 export const modeShortWithSpecial = z.enum([

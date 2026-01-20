@@ -1,6 +1,6 @@
-import type { ActionFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
-import { z } from "zod/v4";
+import type { ActionFunction } from "react-router";
+import { redirect } from "react-router";
+import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import {
@@ -21,7 +21,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		schema: editBadgeActionSchema,
 	});
 	const badgeId = z.preprocess(actualNumber, z.number()).parse(params.id);
-	const user = await requireUser(request);
+	const user = requireUser();
 
 	const badge = notFoundIfFalsy(await BadgeRepository.findById(badgeId));
 

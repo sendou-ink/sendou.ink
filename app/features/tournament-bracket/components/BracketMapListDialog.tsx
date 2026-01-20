@@ -1,7 +1,7 @@
-import { type FetcherWithComponents, Link, useFetcher } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { type FetcherWithComponents, Link, useFetcher } from "react-router";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { ModeImage, StageImage } from "~/components/Image";
 import { InfoPopover } from "~/components/InfoPopover";

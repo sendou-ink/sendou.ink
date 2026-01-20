@@ -1,5 +1,5 @@
-import { type ActionFunction, redirect } from "@remix-run/node";
-import { z } from "zod/v4";
+import { type ActionFunction, redirect } from "react-router";
+import { z } from "zod";
 import { BUILD_SORT_IDENTIFIERS } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
@@ -18,7 +18,7 @@ import {
 } from "~/utils/zod";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: buildsActionSchema,

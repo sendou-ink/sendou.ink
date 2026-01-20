@@ -1,0 +1,216 @@
+.teamsList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	padding-left: 0;
+}
+
+.headerRow {
+	display: none;
+	width: 100%;
+	align-items: center;
+	padding: var(--s-1-5) var(--s-3);
+	column-gap: var(--s-2);
+	font-size: var(--fonts-xs);
+	font-weight: var(--bold);
+	grid-template-columns: 2.5rem 2.25rem 2rem 1fr 3rem 1fr;
+}
+
+.teamCard {
+	display: grid;
+	width: 100%;
+	align-items: center;
+	padding: var(--s-2) var(--s-3);
+	border-radius: var(--rounded);
+	border: 1px solid var(--border);
+	background-color: var(--bg-lighter);
+	column-gap: var(--s-2);
+	row-gap: var(--s-2);
+	font-size: var(--fonts-xs);
+	grid-template-columns: 2rem 2.25rem 2rem 1fr 3rem;
+	grid-template-areas:
+		"handle seed logo name sp"
+		"players players players players players";
+	list-style: none;
+}
+
+.handleArea {
+	grid-area: handle;
+}
+
+.seedArea {
+	grid-area: seed;
+}
+
+.logoArea {
+	grid-area: logo;
+}
+
+.nameArea {
+	grid-area: name;
+}
+
+.spArea {
+	grid-area: sp;
+}
+
+.playersArea {
+	grid-area: players;
+}
+
+@media screen and (min-width: 640px) {
+	.headerRow {
+		display: grid;
+	}
+
+	.teamCard {
+		grid-template-columns: 2.5rem 2.25rem 2rem 1fr 3rem 1fr;
+		grid-template-areas: "handle seed logo name sp players";
+		row-gap: 0;
+	}
+}
+
+.teamCardDragging {
+	opacity: 0.5;
+}
+
+.dragHandle {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: grab;
+	background: none;
+	border: none;
+	font-size: var(--fonts-lg);
+	color: var(--text-lighter);
+	padding: var(--s-1);
+	touch-action: none;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.dragHandle:hover {
+	color: var(--text);
+}
+
+.dragHandle:active:not(:disabled) {
+	cursor: grabbing;
+}
+
+.dragHandle:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
+.seedInput {
+	--input-width: 3rem;
+	text-align: center;
+	padding: var(--s-0-5);
+	border-radius: var(--rounded-sm);
+	border: 1px solid var(--border);
+	background-color: var(--bg-input);
+	font-size: var(--fonts-xs);
+}
+
+.seedInput:focus {
+	outline: 2px solid var(--theme);
+	outline-offset: 1px;
+}
+
+.teamNameContainer {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.teamName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.newBadge {
+	flex-shrink: 0;
+	background-color: var(--theme-secondary);
+	color: var(--button-text);
+	font-size: var(--fonts-xxxxs);
+	font-weight: var(--bold);
+	padding: 1px 4px;
+	border-radius: var(--rounded-xs);
+	text-transform: uppercase;
+}
+
+.playersList {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1);
+}
+
+.playerBadge {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	background-color: var(--bg-darker);
+	border-radius: var(--rounded);
+	padding: var(--s-0-5) var(--s-2);
+	font-weight: var(--semi-bold);
+}
+
+.playerNew {
+	position: relative;
+}
+
+.playerNewBadge {
+	background-color: var(--theme-secondary);
+	color: var(--button-text);
+	font-size: var(--fonts-xxxxs);
+	font-weight: var(--bold);
+	padding: 1px 3px;
+	border-radius: var(--rounded-xs);
+	text-transform: uppercase;
+	margin-left: var(--s-1);
+}
+
+.plusTier {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	font-size: var(--fonts-xxxs);
+	color: var(--text-lighter);
+}
+
+.playerRemoved {
+	text-decoration: line-through;
+	color: var(--text-lighter);
+	opacity: 0.6;
+}
+
+.spValue {
+	font-variant-numeric: tabular-nums;
+}
+
+.outOfOrder {
+	color: var(--theme-warning);
+}
+
+.form {
+	width: 100%;
+	display: flex;
+	align-items: center;
+}
+
+.orderButton {
+	margin-block-start: var(--s-2);
+	margin-inline-end: auto;
+}
+
+.overlay {
+	background-color: var(--bg-lighter-solid);
+	border: 1px solid var(--border);
+	border-radius: var(--rounded);
+	padding: var(--s-2) var(--s-3);
+	box-shadow: var(--shadow-md);
+	opacity: 0.8;
+}

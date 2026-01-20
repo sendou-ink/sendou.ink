@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import {
@@ -21,7 +21,7 @@ export const action: ActionFunction = async ({ request }) => {
 		request,
 		schema: suggestionActionSchema,
 	});
-	const user = await requireUser(request);
+	const user = requireUser();
 
 	const votingMonthYear = rangeToMonthYear(
 		badRequestIfFalsy(nextNonCompletedVoting(new Date())),

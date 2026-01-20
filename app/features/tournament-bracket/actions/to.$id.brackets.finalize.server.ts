@@ -1,5 +1,5 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { requireUserId } from "~/features/auth/core/user.server";
+import type { ActionFunctionArgs } from "react-router";
+import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -41,7 +41,7 @@ import { tournamentBracketsPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-	const user = await requireUserId(request);
+	const user = requireUser();
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,

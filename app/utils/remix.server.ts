@@ -1,17 +1,13 @@
-import {
-	unstable_composeUploadHandlers as composeUploadHandlers,
-	unstable_createMemoryUploadHandler as createMemoryUploadHandler,
-	json,
-	unstable_parseMultipartFormData as parseMultipartFormData,
-	redirect,
-} from "@remix-run/node";
-import type { Params, UIMatch } from "@remix-run/react";
+import type { FileUpload } from "@remix-run/form-data-parser";
+import { parseFormData as parseMultipartFormData } from "@remix-run/form-data-parser";
 import type { Namespace, TFunction } from "i18next";
 import { nanoid } from "nanoid";
 import type { Ok, Result } from "neverthrow";
-import type { z } from "zod/v4";
+import type { Params, UIMatch } from "react-router";
+import { data, redirect } from "react-router";
+import type { z } from "zod";
 import type { navItems } from "~/components/layout/nav-items";
-import { s3UploadHandler } from "~/features/img-upload/s3.server";
+import { uploadStreamToS3 } from "~/features/img-upload/s3.server";
 import invariant from "./invariant";
 import { logger } from "./logger";
 
@@ -72,26 +68,24 @@ export function parseSafeSearchParams<T extends z.ZodTypeAny>({
 	return schema.safeParse(Object.fromEntries(url.searchParams));
 }
 
-/** Parse formData of a request with the given schema. Throws HTTP 400 response if fails. */
+/**
+ * @deprecated - for new form code use SendouForm and /app/form/parse.server.ts
+ *
+ * Parse formData of a request with the given schema. Throws HTTP 400 response if fails.
+ * */
 export async function parseRequestPayload<T extends z.ZodTypeAny>({
 	request,
 	schema,
-	parseAsync,
 }: {
 	request: Request;
 	schema: T;
-	parseAsync?: boolean;
 }): Promise<z.infer<T>> {
 	const formDataObj =
 		request.headers.get("Content-Type") === "application/json"
 			? await request.json()
 			: formDataToObject(await request.formData());
 	try {
-		const parsed = parseAsync
-			? await schema.parseAsync(formDataObj)
-			: schema.parse(formDataObj);
-
-		return parsed;
+		return await schema.parseAsync(formDataObj);
 	} catch (e) {
 		logger.error("Error parsing request payload", e);
 
@@ -99,23 +93,21 @@ export async function parseRequestPayload<T extends z.ZodTypeAny>({
 	}
 }
 
-/** Parse formData with the given schema. Throws a request to show an error toast if it fails. */
+/**
+ * @deprecated - for new form code use SendouForm and /app/form/parse.server.ts
+ *
+ * Parse formData with the given schema. Throws a request to show an error toast if it fails.
+ */
 export async function parseFormData<T extends z.ZodTypeAny>({
 	formData,
 	schema,
-	parseAsync,
 }: {
 	formData: FormData;
 	schema: T;
-	parseAsync?: boolean;
 }): Promise<z.infer<T>> {
 	const formDataObj = formDataToObject(formData);
 	try {
-		const parsed = parseAsync
-			? await schema.parseAsync(formDataObj)
-			: schema.parse(formDataObj);
-
-		return parsed;
+		return await schema.parseAsync(formDataObj);
 	} catch (e) {
 		logger.error("Error parsing form data", e);
 
@@ -289,10 +281,54 @@ export type SendouRouteHandle = {
  * To be used when the response is different for each user. This is especially useful when the response
  * is prefetched on link hover.
  */
-export function privatelyCachedJson<T>(data: T) {
-	return json(data, {
+export function privatelyCachedJson<T>(dataValue: T) {
+	return data(dataValue, {
 		headers: { "Cache-Control": "private, max-age=5" },
 	});
+}
+
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+
+type FileUploadHandler = (
+	fileUpload: FileUpload,
+) => Promise<string | null | undefined>;
+type ParseFormDataOptions = { maxFileSize?: number };
+
+export function safeParseMultipartFormData(
+	request: Request,
+	uploadHandler?: FileUploadHandler,
+): Promise<FormData>;
+export function safeParseMultipartFormData(
+	request: Request,
+	options?: ParseFormDataOptions,
+	uploadHandler?: FileUploadHandler,
+): Promise<FormData>;
+export async function safeParseMultipartFormData(
+	request: Request,
+	optionsOrHandler?: ParseFormDataOptions | FileUploadHandler,
+	uploadHandler?: FileUploadHandler,
+): Promise<FormData> {
+	try {
+		if (typeof optionsOrHandler === "function") {
+			return await parseMultipartFormData(request, optionsOrHandler);
+		}
+		return await parseMultipartFormData(
+			request,
+			optionsOrHandler,
+			uploadHandler,
+		);
+	} catch (err) {
+		if (
+			err instanceof Error &&
+			err.cause instanceof Error &&
+			err.cause.name === "MaxFileSizeExceededError"
+		) {
+			throw errorToastRedirect(
+				`File size exceeds maximum allowed size of ${MAX_FILE_SIZE_BYTES / 1024 / 1024}MB`,
+			);
+		}
+		throw err;
+	}
 }
 
 export async function uploadImageIfSubmitted({
@@ -302,15 +338,31 @@ export async function uploadImageIfSubmitted({
 	request: Request;
 	fileNamePrefix: string;
 }) {
-	const uploadHandler = composeUploadHandlers(
-		s3UploadHandler(`${fileNamePrefix}-${nanoid()}-${Date.now()}`),
-		createMemoryUploadHandler(),
-	);
+	const preDecidedFilename = `${fileNamePrefix}-${nanoid()}-${Date.now()}`;
+
+	const uploadHandler = async (fileUpload: FileUpload) => {
+		if (fileUpload.fieldName === "img") {
+			const [, ending] = fileUpload.name.split(".");
+			invariant(ending);
+			const newFilename = `${preDecidedFilename}.${ending}`;
+
+			const uploadedFileLocation = await uploadStreamToS3(
+				fileUpload.stream(),
+				newFilename,
+			);
+			return uploadedFileLocation;
+		}
+		return null;
+	};
+
+	let formData: FormData;
 
 	try {
-		const formData = await parseMultipartFormData(request, uploadHandler);
+		formData = await safeParseMultipartFormData(request, uploadHandler);
 		const imgSrc = formData.get("img") as string | null;
-		invariant(imgSrc);
+		if (!imgSrc) {
+			throw new TypeError("No image submitted");
+		}
 
 		const urlParts = imgSrc.split("/");
 		const fileName = urlParts[urlParts.length - 1];
@@ -325,7 +377,8 @@ export async function uploadImageIfSubmitted({
 		if (err instanceof TypeError) {
 			return {
 				avatarFileName: undefined,
-				formData: await request.formData(),
+				// @ts-expect-error: TODO: jank but temporary jank. Later lets refactor to a more general and robust way of sending images
+				formData,
 			};
 		}
 

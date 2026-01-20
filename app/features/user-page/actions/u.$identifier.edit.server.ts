@@ -1,5 +1,5 @@
-import { type ActionFunction, redirect } from "@remix-run/node";
-import { requireUserId } from "~/features/auth/core/user.server";
+import { type ActionFunction, redirect } from "react-router";
+import { requireUser } from "~/features/auth/core/user.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -22,10 +22,18 @@ export const action: ActionFunction = async ({ request }) => {
 
 	const { inGameNameText, inGameNameDiscriminator, ...data } = parsedInput.data;
 
-	const user = await requireUserId(request);
+	const user = requireUser();
 	const inGameName =
 		inGameNameText && inGameNameDiscriminator
 			? `${inGameNameText}#${inGameNameDiscriminator}`
+			: null;
+
+	const pronouns =
+		data.subjectPronoun && data.objectPronoun
+			? JSON.stringify({
+					subject: data.subjectPronoun,
+					object: data.objectPronoun,
+				})
 			: null;
 
 	try {

@@ -1,5 +1,5 @@
-import type { ActionFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
+import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import {
 	errorToastIfFalsy,
@@ -13,7 +13,7 @@ import { editTeamSchema, teamParamsSchema } from "../team-schemas.server";
 import { isTeamManager, isTeamOwner } from "../team-utils";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const { customUrl } = teamParamsSchema.parse(params);
 
 	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
@@ -50,27 +50,27 @@ export const action: ActionFunction = async ({ request, params }) => {
 		}
 		case "EDIT": {
 			const newCustomUrl = mySlugify(data.name);
-			const existingTeam = await TeamRepository.findByCustomUrl(newCustomUrl);
 
 			errorToastIfFalsy(
 				newCustomUrl.length > 0,
 				"Team name can't be only special characters",
 			);
 
-			// can't take someone else's custom url
-			if (existingTeam && existingTeam.id !== team.id) {
-				return {
-					errors: ["forms.errors.duplicateName"],
-				};
+			const teams = await TeamRepository.findAllUndisbanded();
+			const duplicateTeam = teams.find(
+				(t) => t.customUrl === newCustomUrl && t.customUrl !== team.customUrl,
+			);
+
+			if (duplicateTeam) {
+				return { errors: ["forms:errors.duplicateName"] };
 			}
 
-			const editedTeam = await TeamRepository.update({
+			const updatedTeam = await TeamRepository.update({
 				id: team.id,
-				customUrl: newCustomUrl,
 				...data,
 			});
 
-			throw redirect(teamPage(editedTeam.customUrl));
+			throw redirect(teamPage(updatedTeam.customUrl));
 		}
 		default: {
 			assertUnreachable(data);

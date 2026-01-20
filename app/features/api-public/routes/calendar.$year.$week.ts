@@ -1,6 +1,5 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { cors } from "remix-utils/cors";
-import { z } from "zod/v4";
+import type { LoaderFunctionArgs } from "react-router";
+import { z } from "zod";
 import { db } from "~/db/sql";
 import {
 	databaseTimestampToDate,
@@ -8,10 +7,7 @@ import {
 	weekNumberToDate,
 } from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
+import { requireBearerAuth } from "../api-public-utils.server";
 import type { GetCalendarWeekResponse } from "../schema";
 
 const paramsSchema = z.object({
@@ -20,7 +16,6 @@ const paramsSchema = z.object({
 });
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
 	requireBearerAuth(request);
 
 	const { week, year } = parseParams({ params, schema: paramsSchema });
@@ -39,7 +34,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			: null,
 	}));
 
-	return await cors(request, json(result));
+	return Response.json(result);
 };
 
 function fetchEventsOfWeek(args: { week: number; year: number }) {

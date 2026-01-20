@@ -1,4 +1,4 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from "react-router";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -12,7 +12,7 @@ import {
 import { assertUnreachable } from "~/utils/types";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-	const loggedInUser = await requireUser(request);
+	const loggedInUser = requireUser();
 
 	requireRole(loggedInUser, "STAFF");
 

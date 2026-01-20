@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import * as XRankPlacementRepository from "../XRankPlacementRepository.server";

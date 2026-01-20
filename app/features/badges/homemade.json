@@ -283,6 +283,10 @@
 		"displayName": "Not Enough Liter",
 		"authorDiscordId": "352207524390240257"
 	},
+	"cyndaquil": {
+		"displayName": "Typh's Birthday Bonanza",
+		"authorDiscordId": "751912670403362836"
+	},
 	"daytonaspeedweeks1st": {
 		"displayName": "Just Daytona 1-5",
 		"authorDiscordId": "528851510222782474"
@@ -400,7 +404,7 @@
 		"authorDiscordId": "354880982890971136"
 	},
 	"full-auto": {
-		"displayName": "Full Auto",
+		"displayName": "Barrel Spinner [Special]",
 		"authorDiscordId": "534502084134043648"
 	},
 	"fullwipe": {
@@ -438,6 +442,14 @@
 	"girlsbandcryawa": {
 		"displayName": "Togenashi Togeari Subaru Bracket",
 		"authorDiscordId": "309327923129745409"
+	},
+	"gladiatorgold": {
+		"displayName": "Survival of the S+ Gladiator (Again)",
+		"authorDiscordId": "751912670403362836"
+	},
+	"gladiatorsilver": {
+		"displayName": "Survival of the S+ Gladiator",
+		"authorDiscordId": "751912670403362836"
 	},
 	"glaze": {
 		"displayName": "THE GLAZE GAUNTLET",
@@ -508,7 +520,7 @@
 		"authorDiscordId": "354880982890971136"
 	},
 	"ink-torrent": {
-		"displayName": "Ink Torrent",
+		"displayName": "Barrel Spinner",
 		"authorDiscordId": "534502084134043648"
 	},
 	"inkpractice": {
@@ -953,6 +965,10 @@
 	},
 	"rpdeco": {
 		"displayName": "Rapid Rushdown",
+		"authorDiscordId": "528851510222782474"
+	},
+	"runspeed": {
+		"displayName": "Run Speed Up",
 		"authorDiscordId": "528851510222782474"
 	},
 	"s50badge": {

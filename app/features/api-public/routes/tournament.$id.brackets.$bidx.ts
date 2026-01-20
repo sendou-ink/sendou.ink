@@ -1,14 +1,10 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { cors } from "remix-utils/cors";
-import { z } from "zod/v4";
+import type { LoaderFunctionArgs } from "react-router";
+import { z } from "zod";
 import type { Bracket } from "~/features/tournament-bracket/core/Bracket";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
+import { requireBearerAuth } from "../api-public-utils.server";
 import type { GetTournamentBracketResponse } from "../schema";
 
 const paramsSchema = z.object({
@@ -17,7 +13,6 @@ const paramsSchema = z.object({
 });
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
 	requireBearerAuth(request);
 
 	const { id, bidx } = parseParams({ params, schema: paramsSchema });
@@ -51,7 +46,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		},
 	};
 
-	return await cors(request, json(result));
+	return Response.json(result);
 };
 
 function teams(bracket: Bracket) {

@@ -12,7 +12,7 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--s-1-5);
-	min-width: var(--select-width);
+	width: var(--select-width);
 
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
@@ -50,8 +50,7 @@
 
 .popover {
 	padding: var(--s-1);
-	min-width: var(--select-width);
-	max-width: var(--select-width);
+	width: var(--trigger-width);
 	border: 2px solid var(--border);
 	border-radius: var(--rounded);
 	background-color: var(--bg-darker);
@@ -96,6 +95,7 @@
 }
 
 .searchField {
+	position: relative;
 	display: flex;
 	gap: var(--s-2);
 
@@ -126,8 +126,14 @@
 }
 
 .searchClearButton {
+	position: absolute;
+	right: var(--s-2);
+	top: 50%;
+	transform: translateY(-50%);
 	background-color: transparent;
 	border: none;
+	padding: 0;
+	cursor: pointer;
 }
 
 [data-empty] .searchClearButton {

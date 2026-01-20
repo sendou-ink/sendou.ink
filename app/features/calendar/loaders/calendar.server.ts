@@ -1,5 +1,5 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
 import { add, sub } from "date-fns";
+import type { LoaderFunctionArgs } from "react-router";
 import type { UserPreferences } from "~/db/tables";
 import { getUser } from "~/features/auth/core/user.server";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
@@ -16,7 +16,7 @@ import * as CalendarEvent from "../core/CalendarEvent";
 export type CalendarLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async (args: LoaderFunctionArgs) => {
-	const user = await getUser(args.request);
+	const user = getUser();
 	const parsed = parseSafeSearchParams({
 		request: args.request,
 		schema: dayMonthYear,

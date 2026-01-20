@@ -1,10 +1,10 @@
-import type { SerializeFrom } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import { differenceInMinutes } from "date-fns";
 import type { TFunction } from "i18next";
+import type { JSX } from "react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { Form, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import {
@@ -31,6 +31,7 @@ import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { nullFilledArray } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
+import type { SerializeFrom } from "~/utils/remix";
 import type { Unpacked } from "~/utils/types";
 import {
 	modeImageUrl,
@@ -312,6 +313,7 @@ function FancyStageBanner({
 	};
 
 	const inBanPhase =
+		!data.matchIsOver &&
 		data.match.roundMaps?.pickBan === "BAN_2" &&
 		data.mapList &&
 		data.mapList.filter((m) => m.bannedByTournamentTeamId).length < 2;
@@ -661,11 +663,11 @@ function StartedMatchTabs({
 				...data.match.players.map((p) => ({ ...p, title: undefined })),
 				...(tournament.ctx.organization?.members ?? []).map((m) => ({
 					...m,
-					title: m.role === "STREAMER" ? "Stream" : "TO",
+					title: m.role === "STREAMER" ? "Cast" : "TO",
 				})),
 				...tournament.ctx.staff.map((s) => ({
 					...s,
-					title: s.role === "STREAMER" ? "Stream" : "TO",
+					title: s.role === "STREAMER" ? "Cast" : "TO",
 				})),
 				{
 					...tournament.ctx.author,

@@ -1,5 +1,19 @@
 import { add, sub } from "date-fns";
-import { z } from "zod/v4";
+import { z } from "zod";
+import {
+	customField,
+	datetimeRequired,
+	dualSelectOptional,
+	idConstant,
+	select,
+	selectDynamicOptional,
+	selectOptional,
+	stringConstant,
+	textAreaOptional,
+	textAreaRequired,
+	timeRangeOptional,
+	toggle,
+} from "~/form/fields";
 import {
 	_action,
 	date,
@@ -23,11 +37,11 @@ const fromUsers = z.preprocess(
 	z
 		.array(id)
 		.min(3, {
-			message: "Must have at least 3 users excluding yourself",
+			message: "forms:errors.minUsersExcludingYourself",
 		})
 		.max(SCRIM.MAX_PICKUP_SIZE_EXCLUDING_OWNER)
 		.refine(noDuplicates, {
-			message: "Users must be unique",
+			message: "forms:errors.usersMustBeUnique",
 		}),
 );
 
@@ -58,7 +72,11 @@ const cancelRequestSchema = z.object({
 });
 
 export const cancelScrimSchema = z.object({
-	reason: z.string().trim().min(1).max(SCRIM.CANCEL_REASON_MAX_LENGTH),
+	reason: textAreaRequired({
+		label: "labels.scrimCancelReason",
+		bottomText: "bottomTexts.scrimCancelReasonHelp",
+		maxLength: SCRIM.CANCEL_REASON_MAX_LENGTH,
+	}),
 });
 
 const timeRangeSchema = z.object({
@@ -81,7 +99,7 @@ export const divsSchema = z
 			return true;
 		},
 		{
-			message: "Both min and max div must be set or neither",
+			message: "forms:errors.divBothOrNeither",
 		},
 	)
 	.transform((divs) => {
@@ -97,10 +115,44 @@ export const divsSchema = z
 		return divs;
 	});
 
-export const scrimsFiltersSchema = z.object({
+const scrimsFiltersSchema = z.object({
 	weekdayTimes: timeRangeSchema.nullable().catch(null),
 	weekendTimes: timeRangeSchema.nullable().catch(null),
 	divs: divsSchema.nullable().catch(null),
+});
+
+const divsFormField = dualSelectOptional({
+	fields: [
+		{
+			label: "labels.scrimMaxDiv",
+			items: LUTI_DIVS.map((div) => ({ label: () => div, value: div })),
+		},
+		{
+			label: "labels.scrimMinDiv",
+			items: LUTI_DIVS.map((div) => ({ label: () => div, value: div })),
+		},
+	],
+	validate: {
+		func: ([max, min]) => {
+			if ((max && !min) || (!max && min)) return false;
+			return true;
+		},
+		message: "errors.divBothOrNeither",
+	},
+});
+
+export const scrimsFiltersFormSchema = z.object({
+	weekdayTimes: timeRangeOptional({
+		label: "labels.weekdayTimes",
+		startLabel: "labels.start",
+		endLabel: "labels.end",
+	}),
+	weekendTimes: timeRangeOptional({
+		label: "labels.weekendTimes",
+		startLabel: "labels.start",
+		endLabel: "labels.end",
+	}),
+	divs: divsFormField,
 });
 
 export const scrimsFiltersSearchParamsObject = z.object({
@@ -122,7 +174,7 @@ export const scrimsActionSchema = z.union([
 	persistScrimFiltersSchema,
 ]);
 
-export const MAX_SCRIM_POST_TEXT_LENGTH = 500;
+const MAX_SCRIM_POST_TEXT_LENGTH = 500;
 
 export const RANGE_END_OPTIONS = [
 	"+30min",
@@ -133,73 +185,98 @@ export const RANGE_END_OPTIONS = [
 	"+3hours",
 ] as const;
 
-export const scrimsNewActionSchema = z
+export const scrimRequestFormSchema = z.object({
+	_action: stringConstant("NEW_REQUEST"),
+	scrimPostId: idConstant(),
+	from: customField({ initialValue: null }, fromSchema),
+	message: textAreaOptional({
+		label: "labels.scrimRequestMessage",
+		maxLength: SCRIM.REQUEST_MESSAGE_MAX_LENGTH,
+	}),
+	at: selectDynamicOptional({
+		label: "labels.scrimRequestStartTime",
+		bottomText: "bottomTexts.scrimRequestStartTime",
+	}),
+});
+
+const rangeEndItems = [
+	{ label: "options.scrimFlexibility.notFlexible" as const, value: "" },
+	{ label: "options.scrimFlexibility.+30min" as const, value: "+30min" },
+	{ label: "options.scrimFlexibility.+1hour" as const, value: "+1hour" },
+	{ label: "options.scrimFlexibility.+1.5hours" as const, value: "+1.5hours" },
+	{ label: "options.scrimFlexibility.+2hours" as const, value: "+2hours" },
+	{ label: "options.scrimFlexibility.+2.5hours" as const, value: "+2.5hours" },
+	{ label: "options.scrimFlexibility.+3hours" as const, value: "+3hours" },
+] as const;
+
+const mapsItems = [
+	{ label: "options.scrimMaps.noPreference" as const, value: "NO_PREFERENCE" },
+	{ label: "options.scrimMaps.szOnly" as const, value: "SZ" },
+	{ label: "options.scrimMaps.rankedOnly" as const, value: "RANKED" },
+	{ label: "options.scrimMaps.allModes" as const, value: "ALL" },
+	{ label: "options.scrimMaps.tournament" as const, value: "TOURNAMENT" },
+] as const;
+
+export const scrimsNewFormSchema = z
 	.object({
-		at: z.preprocess(
-			date,
-			z
-				.date()
-				.refine(
-					(date) => {
-						if (date < sub(new Date(), { days: 1 })) return false;
-
-						return true;
-					},
-					{
-						message: "Date can not be in the past",
-					},
-				)
-				.refine(
-					(date) => {
-						if (date > add(new Date(), { days: 15 })) return false;
-
-						return true;
-					},
-					{
-						message: "Date can not be more than 2 weeks in the future",
-					},
-				),
-		),
-		rangeEnd: z
-			.preprocess(
-				(val) => (val === "" ? null : val),
-				z.enum(RANGE_END_OPTIONS).nullable(),
-			)
-			.catch(null),
-		baseVisibility: associationIdentifierSchema,
-		notFoundVisibility: z.object({
-			at: z
-				.preprocess(date, z.date())
-				.nullish()
-				.refine(
-					(date) => {
-						if (!date) return true;
-
-						if (date < sub(new Date(), { days: 1 })) return false;
-
-						return true;
-					},
-					{
-						message: "Date can not be in the past",
-					},
-				),
-			forAssociation: associationIdentifierSchema,
+		at: datetimeRequired({
+			label: "labels.start",
+			bottomText: "bottomTexts.scrimStart",
+			min: sub(new Date(), { days: 1 }),
+			max: add(new Date(), { days: 15 }),
+			minMessage: "errors.dateInPast",
+			maxMessage: "errors.dateTooFarInFuture",
 		}),
-		divs: divsSchema.nullable(),
-		from: fromSchema,
-		postText: z.preprocess(
-			falsyToNull,
-			z.string().max(MAX_SCRIM_POST_TEXT_LENGTH).nullable(),
+		rangeEnd: selectOptional({
+			label: "labels.scrimStartFlexibility",
+			bottomText: "bottomTexts.scrimStartFlexibility",
+			items: [...rangeEndItems],
+		}),
+		baseVisibility: customField(
+			{ initialValue: "PUBLIC" },
+			associationIdentifierSchema,
 		),
-		managedByAnyone: z.boolean(),
-		maps: z.enum(["NO_PREFERENCE", "SZ", "RANKED", "ALL", "TOURNAMENT"]),
-		mapsTournamentId: z.preprocess(falsyToNull, id.nullable()),
+		notFoundVisibility: customField(
+			{ initialValue: { at: null, forAssociation: "PUBLIC" } },
+			z.object({
+				at: z
+					.preprocess(date, z.date())
+					.nullish()
+					.refine(
+						(date) => {
+							if (!date) return true;
+							if (date < sub(new Date(), { days: 1 })) return false;
+							return true;
+						},
+						{ message: "errors.dateInPast" },
+					),
+				forAssociation: associationIdentifierSchema,
+			}),
+		),
+		divs: divsFormField,
+		from: customField({ initialValue: null }, fromSchema),
+		postText: textAreaOptional({
+			label: "labels.text",
+			maxLength: MAX_SCRIM_POST_TEXT_LENGTH,
+		}),
+		managedByAnyone: toggle({
+			label: "labels.scrimManagedByAnyone",
+			bottomText: "bottomTexts.scrimManagedByAnyone",
+		}),
+		maps: select({
+			label: "labels.scrimMaps",
+			items: [...mapsItems],
+		}),
+		mapsTournamentId: customField(
+			{ initialValue: null },
+			z.preprocess(falsyToNull, id.nullable()),
+		),
 	})
 	.superRefine((post, ctx) => {
 		if (post.maps === "TOURNAMENT" && !post.mapsTournamentId) {
 			ctx.addIssue({
 				path: ["mapsTournamentId"],
-				message: "Tournament must be selected when maps is tournament",
+				message: "forms:errors.tournamentMustBeSelected",
 				code: z.ZodIssueCode.custom,
 			});
 		}
@@ -207,17 +284,18 @@ export const scrimsNewActionSchema = z
 		if (post.maps !== "TOURNAMENT" && post.mapsTournamentId) {
 			ctx.addIssue({
 				path: ["mapsTournamentId"],
-				message: "Tournament should only be selected when maps is tournament",
+				message: "forms:errors.tournamentOnlyWhenMapsIsTournament",
 				code: z.ZodIssueCode.custom,
 			});
 		}
+
 		if (
 			post.notFoundVisibility.at &&
 			post.notFoundVisibility.forAssociation === post.baseVisibility
 		) {
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
-				message: "Not found visibility must be different from base visibility",
+				message: "forms:errors.visibilityMustBeDifferent",
 				code: z.ZodIssueCode.custom,
 			});
 		}
@@ -225,16 +303,15 @@ export const scrimsNewActionSchema = z
 		if (post.baseVisibility === "PUBLIC" && post.notFoundVisibility.at) {
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
-				message:
-					"Not found visibility can not be set if base visibility is public",
+				message: "forms:errors.visibilityNotAllowedWhenPublic",
 				code: z.ZodIssueCode.custom,
 			});
 		}
 
-		if (post.notFoundVisibility.at && post.notFoundVisibility.at < post.at) {
+		if (post.notFoundVisibility.at && post.notFoundVisibility.at > post.at) {
 			ctx.addIssue({
-				path: ["notFoundVisibility", "at"],
-				message: "Date can not be before the scrim date",
+				path: ["notFoundVisibility"],
+				message: "forms:errors.dateAfterScrimDate",
 				code: z.ZodIssueCode.custom,
 			});
 		}
@@ -242,7 +319,7 @@ export const scrimsNewActionSchema = z
 		if (post.notFoundVisibility.at && post.at < new Date()) {
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
-				message: "Can not be set if looking for scrim now",
+				message: "forms:errors.canNotSetIfLookingNow",
 				code: z.ZodIssueCode.custom,
 			});
 		}

@@ -1,4 +1,4 @@
-import { type ActionFunction, redirect } from "@remix-run/node";
+import { type ActionFunction, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import {
 	clearTournamentDataCache,
@@ -15,7 +15,7 @@ import * as TournamentSubRepository from "../TournamentSubRepository.server";
 import { subSchema } from "../tournament-subs-schemas.server";
 
 export const action: ActionFunction = async ({ params, request }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: subSchema,

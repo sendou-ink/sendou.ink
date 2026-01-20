@@ -1,8 +1,10 @@
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
 import type { GearType } from "~/db/tables";
 import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
-import { impersonate, navigate, seed, selectWeapon } from "~/utils/playwright";
+import { newBuildBaseSchema } from "~/features/user-page/user-page-schemas";
+import { expect, impersonate, navigate, seed, test } from "~/utils/playwright";
+import { createFormHelpers } from "~/utils/playwright-form";
 import { BUILDS_PAGE, userBuildsPage, userNewBuildPage } from "~/utils/urls";
 
 test.describe("Builds", () => {
@@ -14,17 +16,9 @@ test.describe("Builds", () => {
 			url: userNewBuildPage({ discordId: NZAP_TEST_DISCORD_ID }),
 		});
 
-		await selectWeapon({
-			testId: "weapon-0",
-			name: "Tenta Brella",
-			page,
-		});
-		await page.getByTestId("add-weapon-button").click();
-		await selectWeapon({
-			testId: "weapon-1",
-			name: "Splat Brella",
-			page,
-		});
+		const form = createFormHelpers(page, newBuildBaseSchema);
+
+		await form.selectWeapons("weapons", ["Tenta Brella", "Splat Brella"]);
 
 		await selectGear({
 			type: "HEAD",
@@ -46,11 +40,11 @@ test.describe("Builds", () => {
 			await page.getByTestId("ISM-ability-button").click();
 		}
 
-		await page.getByLabel("Title").fill("Test Build");
-		await page.getByLabel("Description").fill("Test Description");
-		await page.getByTestId("SZ-checkbox").click();
+		await form.fill("title", "Test Build");
+		await form.fill("description", "Test Description");
+		await form.checkItems("modes", ["TC"]);
 
-		await page.getByTestId("submit-button").click();
+		await form.submit();
 
 		await expect(page.getByTestId("change-sorting-button")).toBeVisible();
 
@@ -77,9 +71,10 @@ test.describe("Builds", () => {
 
 		await page.getByTestId("edit-build").first().click();
 
-		await page.getByLabel("Private").click();
+		const form = createFormHelpers(page, newBuildBaseSchema);
+		await form.check("private");
 
-		await page.getByTestId("submit-button").click();
+		await form.submit();
 
 		await expect(page.getByTestId("user-builds-tab")).toContainText(
 			"Builds (50)",

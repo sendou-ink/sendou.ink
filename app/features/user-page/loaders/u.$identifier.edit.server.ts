@@ -1,12 +1,12 @@
-import { type LoaderFunctionArgs, redirect } from "@remix-run/node";
-import { requireUserId } from "~/features/auth/core/user.server";
+import { type LoaderFunctionArgs, redirect } from "react-router";
+import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import { userPage } from "~/utils/urls";
 import { userParamsSchema } from "../user-page-schemas";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const user = await requireUserId(request);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const user = requireUser();
 	const { identifier } = userParamsSchema.parse(params);
 	const userToBeEdited = notFoundIfFalsy(
 		await UserRepository.findLayoutDataByIdentifier(identifier),

@@ -3,7 +3,7 @@ import {
 	prefix,
 	type RouteConfig,
 	route,
-} from "@remix-run/route-config";
+} from "@react-router/dev/routes";
 
 const devOnlyRoutes =
 	process.env.NODE_ENV === "development"
@@ -256,6 +256,10 @@ export default [
 		route(
 			"/user/:identifier",
 			"features/api-public/routes/user.$identifier.ts",
+		),
+		route(
+			"/user/:identifier/ids",
+			"features/api-public/routes/user.$identifier.ids.ts",
 		),
 		route(
 			"/calendar/:year/:week",

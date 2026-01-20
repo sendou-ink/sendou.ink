@@ -9,9 +9,9 @@ import {
 } from "~/utils/Test";
 import { action } from "../actions/scrims.new.server";
 import { loader } from "../loaders/scrims.server";
-import type { scrimsNewActionSchema } from "../scrims-schemas";
+import type { scrimsNewFormSchema } from "../scrims-schemas";
 
-const newScrimAction = wrappedAction<typeof scrimsNewActionSchema>({
+const newScrimAction = wrappedAction<typeof scrimsNewFormSchema>({
 	action,
 	isJsonSubmission: true,
 });
@@ -24,7 +24,7 @@ const defaultNewScrimPostArgs: Parameters<typeof newScrimAction>[0] = {
 	at: new Date(),
 	rangeEnd: null,
 	baseVisibility: "PUBLIC",
-	divs: { min: null, max: null },
+	divs: [null, null],
 	from: {
 		mode: "PICKUP",
 		users: [1, 3, 4],

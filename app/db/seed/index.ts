@@ -1,5 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { add, sub } from "date-fns";
+import { nanoid } from "nanoid";
 import * as R from "remeda";
 import { db, sql } from "~/db/sql";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
@@ -86,6 +87,7 @@ import {
 	NZAP_TEST_AVATAR,
 	NZAP_TEST_DISCORD_ID,
 	NZAP_TEST_ID,
+	ORG_ADMIN_TEST_ID,
 } from "./constants";
 import placements from "./placements.json";
 
@@ -175,11 +177,13 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	nzapUser,
 	users,
 	fixAdminId,
+	makeArtists,
 	adminUserWeaponPool,
 	adminUserWidgets,
 	userProfiles,
 	userMapModePreferences,
 	userQWeaponPool,
+	seedingSkills,
 	lastMonthsVoting,
 	syncPlusTiers,
 	lastMonthSuggestions,
@@ -236,6 +240,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	variation === "NO_SCRIMS" ? undefined : scrimPostRequests,
 	associations,
 	notifications,
+	liveStreams,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -263,6 +268,8 @@ function wipeDB() {
 		"GroupMatchMap",
 		"GroupMatch",
 		"Group",
+		"TaggedArt",
+		"ArtTag",
 		"ArtUserMetadata",
 		"Art",
 		"UnvalidatedUserSubmittedImage",
@@ -290,12 +297,16 @@ function wipeDB() {
 		"UserFriendCode",
 		"NotificationUser",
 		"Notification",
+		"BanLog",
+		"ModNote",
 		"User",
 		"PlusSuggestion",
 		"PlusVote",
 		"TournamentBadgeOwner",
 		"BadgeManager",
 		"TournamentOrganization",
+		"SeedingSkill",
+		"LiveStream",
 	];
 
 	for (const table of tablesToDelete) {
@@ -341,6 +352,14 @@ function makeAdminVideoAdder() {
 function makeAdminTournamentOrganizer() {
 	sql
 		.prepare(`update "User" set "isTournamentOrganizer" = 1 where id = 1`)
+		.run();
+}
+
+function makeArtists() {
+	sql
+		.prepare(
+			`update "User" set "isArtist" = 1 where id in (${ADMIN_ID}, ${NZAP_TEST_ID})`,
+		)
 		.run();
 }
 
@@ -567,6 +586,38 @@ async function userQWeaponPool() {
 	}
 }
 
+function seedingSkills() {
+	const users = sql.prepare('SELECT id FROM "User" LIMIT 500').all() as {
+		id: number;
+	}[];
+
+	for (const { id: userId } of users) {
+		if (faker.number.float() < 0.7) {
+			const mu = faker.number.float({ min: 22, max: 45 });
+			const sigma = faker.number.float({ min: 4, max: 8 });
+			const ordinal = mu - 3 * sigma;
+
+			sql
+				.prepare(
+					`INSERT INTO "SeedingSkill" ("userId", "type", "mu", "sigma", "ordinal") VALUES (?, 'RANKED', ?, ?, ?)`,
+				)
+				.run(userId, mu, sigma, ordinal);
+		}
+
+		if (faker.number.float() < 0.5) {
+			const mu = faker.number.float({ min: 22, max: 42 });
+			const sigma = faker.number.float({ min: 4, max: 8 });
+			const ordinal = mu - 3 * sigma;
+
+			sql
+				.prepare(
+					`INSERT INTO "SeedingSkill" ("userId", "type", "mu", "sigma", "ordinal") VALUES (?, 'UNRANKED', ?, ?, ?)`,
+				)
+				.run(userId, mu, sigma, ordinal);
+		}
+	}
+}
+
 function fakeUser(usedNames: Set<string>) {
 	return () => ({
 		discordAvatar: null,
@@ -762,7 +813,10 @@ function patrons() {
 			.all() as any[]
 	)
 		.map((u) => u.id)
-		.filter((id) => id !== NZAP_TEST_ID && id !== ADMIN_ID) as number[];
+		.filter(
+			(id) =>
+				id !== NZAP_TEST_ID && id !== ADMIN_ID && id !== ORG_ADMIN_TEST_ID,
+		) as number[];
 
 	const givePatronStm = sql.prepare(
 		`update user set "patronTier" = $patronTier, "patronSince" = $patronSince where id = $id`,
@@ -1368,13 +1422,15 @@ function calendarEventWithToToolsTeams(
         "name",
         "createdAt",
         "tournamentId",
-        "inviteCode"
+        "inviteCode",
+        "seed"
       ) values (
         $id,
         $name,
         $createdAt,
         $tournamentId,
-        $inviteCode
+        $inviteCode,
+        $seed
       )
       `,
 			)
@@ -1384,6 +1440,7 @@ function calendarEventWithToToolsTeams(
 				createdAt: dateToDatabaseTimestamp(new Date()),
 				tournamentId,
 				inviteCode: shortNanoid(),
+				seed: id,
 			});
 
 		// in PICNIC & PP Chimera is not checked in + in LUTI no check-ins at all
@@ -2711,7 +2768,7 @@ async function organization() {
 				roleDisplayName: null,
 			},
 			{
-				userId: 3,
+				userId: ORG_ADMIN_TEST_ID,
 				role: "ADMIN",
 				roleDisplayName: null,
 			},
@@ -2719,4 +2776,71 @@ async function organization() {
 		series: [],
 		badges: [],
 	});
+}
+
+function liveStreams() {
+	const userIds = userIdsInAscendingOrderById();
+
+	// Add deterministic streams for E2E testing
+	// Users 6 and 7 are in ITZ tournament team 102
+	const deterministicStreams = [
+		{ userId: 6, viewerCount: 150, twitch: "test_player_stream_1" },
+		{ userId: 7, viewerCount: 75, twitch: "test_player_stream_2" },
+		// Cast-only stream (user 100 is not in ITZ tournament teams)
+		{ userId: 100, viewerCount: 500, twitch: "test_cast_stream" },
+	];
+
+	for (const stream of deterministicStreams) {
+		sql
+			.prepare(
+				`
+			insert into "LiveStream" ("userId", "viewerCount", "thumbnailUrl", "twitch")
+			values ($userId, $viewerCount, $thumbnailUrl, $twitch)
+			`,
+			)
+			.run({
+				userId: stream.userId,
+				viewerCount: stream.viewerCount,
+				thumbnailUrl: "https://picsum.photos/320/180",
+				twitch: stream.twitch,
+			});
+	}
+
+	const streamingUserIds = [
+		...userIds.slice(3, 20),
+		...userIds.slice(40, 50),
+		...userIds.slice(100, 110),
+	].filter((id) => !deterministicStreams.some((s) => s.userId === id));
+
+	const shuffledStreamers = faker.helpers.shuffle(streamingUserIds);
+	const selectedStreamers = shuffledStreamers.slice(0, 17);
+
+	for (const userId of selectedStreamers) {
+		const viewerCount = faker.helpers.weightedArrayElement([
+			{ value: faker.number.int({ min: 5, max: 30 }), weight: 5 },
+			{ value: faker.number.int({ min: 31, max: 100 }), weight: 3 },
+			{ value: faker.number.int({ min: 101, max: 500 }), weight: 2 },
+			{ value: faker.number.int({ min: 501, max: 2000 }), weight: 1 },
+		]);
+
+		const thumbnailUrl = faker.image.urlPicsumPhotos({
+			width: 320,
+			height: 180,
+		});
+
+		const twitch = `fake_${nanoid()}`.toLowerCase();
+		sql
+			.prepare(
+				`
+			insert into "LiveStream" ("userId", "viewerCount", "thumbnailUrl", "twitch")
+			values ($userId, $viewerCount, $thumbnailUrl, $twitch)
+			`,
+			)
+			.run({
+				userId,
+				viewerCount,
+				thumbnailUrl,
+				twitch,
+			});
+	}
 }

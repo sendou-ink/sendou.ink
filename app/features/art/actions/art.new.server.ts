@@ -1,14 +1,10 @@
-import type { ActionFunction } from "@remix-run/node";
-import {
-	unstable_composeUploadHandlers as composeUploadHandlers,
-	unstable_createMemoryUploadHandler as createMemoryUploadHandler,
-	unstable_parseMultipartFormData as parseMultipartFormData,
-	redirect,
-} from "@remix-run/node";
+import type { FileUpload } from "@remix-run/form-data-parser";
 import { nanoid } from "nanoid";
+import type { ActionFunction } from "react-router";
+import { redirect } from "react-router";
 import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
-import { s3UploadHandler } from "~/features/img-upload/s3.server";
+import { uploadStreamToS3 } from "~/features/img-upload/s3.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -17,13 +13,14 @@ import {
 	errorToastIfFalsy,
 	parseFormData,
 	parseRequestPayload,
+	safeParseMultipartFormData,
 } from "~/utils/remix.server";
 import { userArtPage } from "~/utils/urls";
 import { NEW_ART_EXISTING_SEARCH_PARAM_KEY } from "../art-constants";
 import { editArtSchema, newArtSchema } from "../art-schemas.server";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	requireRole(user, "ARTIST");
 
 	const searchParams = new URL(request.url).searchParams;
@@ -69,11 +66,32 @@ export const action: ActionFunction = async ({ request }) => {
 			},
 		});
 	} else {
-		const uploadHandler = composeUploadHandlers(
-			s3UploadHandler(`art-${nanoid()}-${Date.now()}`),
-			createMemoryUploadHandler(),
+		const preDecidedFilename = `art-${nanoid()}-${Date.now()}`;
+
+		const uploadHandler = async (fileUpload: FileUpload) => {
+			if (
+				fileUpload.fieldName === "img" ||
+				fileUpload.fieldName === "smallImg"
+			) {
+				const [, ending] = fileUpload.name.split(".");
+				invariant(ending);
+				const newFilename = `${preDecidedFilename}${fileUpload.fieldName === "smallImg" ? "-small" : ""}.${ending}`;
+
+				const uploadedFileLocation = await uploadStreamToS3(
+					fileUpload.stream(),
+					newFilename,
+				);
+				return uploadedFileLocation;
+			}
+			return null;
+		};
+
+		const formData = await safeParseMultipartFormData(
+			request,
+			// 5MB
+			{ maxFileSize: 5 * 1024 * 1024 },
+			uploadHandler,
 		);
-		const formData = await parseMultipartFormData(request, uploadHandler);
 		const imgSrc = formData.get("img") as string | null;
 		invariant(imgSrc);
 

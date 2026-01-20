@@ -1,11 +1,10 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
 import * as R from "remeda";
 import type { UserWithPlusTier } from "~/db/tables";
-import { getUserId } from "~/features/auth/core/user.server";
+import { getUser } from "~/features/auth/core/user.server";
 import * as TeamRepository from "../TeamRepository.server";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUserId(request);
+export const loader = async () => {
+	const user = getUser();
 
 	const unsortedTeams = await TeamRepository.findAllUndisbanded();
 

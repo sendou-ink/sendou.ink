@@ -1,9 +1,9 @@
 .org__calendar {
 	display: grid;
-	grid-template-columns: repeat(7, max-content);
+	grid-template-columns: repeat(7, minmax(0, 55px));
 	gap: var(--s-2);
-	--cell-size: 55px;
-	overflow-x: auto;
+	width: max-content;
+	max-width: 100%;
 }
 
 .org__calendar__container {
@@ -12,6 +12,7 @@
 	gap: var(--s-2);
 	height: max-content;
 	overflow-x: visible;
+	max-width: 100%;
 }
 
 .org__calendar__day-header {
@@ -20,12 +21,11 @@
 }
 
 .org__calendar__day {
-	width: var(--cell-size);
-	height: var(--cell-size);
+	aspect-ratio: 1;
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
 	background-color: var(--bg-lighter);
-	padding: var(--s-1) var(--s-2);
+	padding: var(--s-1);
 	position: relative;
 	display: grid;
 	place-items: center;
@@ -40,17 +40,26 @@
 .org__calendar__day__logo {
 	position: absolute;
 	border-radius: var(--rounded);
-	top: 18px;
-	left: 18px;
+	top: 50%;
+	left: 50%;
+	transform: translate(-15%, -20%);
+	width: 48%;
+	height: auto;
+	max-width: 28px;
+	max-height: 28px;
 }
 
 .org__calendar__day__many-events {
 	position: absolute;
 	border-radius: var(--rounded);
-	top: 18px;
-	left: 18px;
-	width: 32px;
-	height: 32px;
+	top: 50%;
+	left: 50%;
+	transform: translate(-15%, -20%);
+	width: 48%;
+	height: auto;
+	aspect-ratio: 1;
+	max-width: 28px;
+	max-height: 28px;
 	border: 2px solid var(--border);
 	display: grid;
 	place-items: center;
@@ -97,6 +106,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-16);
+	align-items: center;
 }
 
 @media screen and (min-width: 768px) {
@@ -104,6 +114,7 @@
 		flex-direction: row;
 		gap: var(--s-8);
 		overflow-x: initial;
+		align-items: flex-start;
 	}
 
 	.org__calendar__container {

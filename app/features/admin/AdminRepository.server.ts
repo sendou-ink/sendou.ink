@@ -86,6 +86,11 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 			.where("submitterUserId", "=", args.newUserId)
 			.set({ submitterUserId: args.oldUserId })
 			.execute();
+		await trx
+			.updateTable("ModNote")
+			.where("userId", "=", args.newUserId)
+			.set({ userId: args.oldUserId })
+			.execute();
 
 		// special case: delete same team membership to avoid unique constraint violation
 		await trx

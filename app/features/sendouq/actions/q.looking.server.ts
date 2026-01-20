@@ -1,5 +1,5 @@
-import type { ActionFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
+import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -16,13 +16,14 @@ import { groupAfterMorph } from "../core/groups";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import * as PrivateUserNoteRepository from "../PrivateUserNoteRepository.server";
 import { lookingSchema } from "../q-schemas.server";
+import { resolveFutureMatchModes } from "../q-utils";
 import { SendouQError } from "../q-utils.server";
 
 // this function doesn't throw normally because we are assuming
 // if there is a validation error the user saw stale data
 // and when we return null we just force a refresh
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: lookingSchema,
@@ -137,36 +138,38 @@ export const action: ActionFunction = async ({ request }) => {
 
 				break;
 			}
-			case "MATCH_UP_RECHALLENGE":
 			case "MATCH_UP": {
 				if (!isGroupManager()) return null;
 
-				const ourGroup = SendouQ.findOwnGroup(user.id);
+				const ownGroup = SendouQ.findOwnGroup(user.id);
 				const theirGroup = SendouQ.findUncensoredGroupById(data.targetGroupId);
-				if (!ourGroup || !theirGroup) return null;
+				if (!ownGroup || !theirGroup) return null;
 
-				const ourGroupPreferences =
-					await SQGroupRepository.mapModePreferencesByGroupId(ourGroup.id);
+				const ownGroupPreferences =
+					await SQGroupRepository.mapModePreferencesByGroupId(ownGroup.id);
 				const theirGroupPreferences =
 					await SQGroupRepository.mapModePreferencesByGroupId(theirGroup.id);
+
+				const modesIncluded = resolveFutureMatchModes(ownGroup, theirGroup);
+
 				const mapList = await matchMapList(
 					{
-						id: ourGroup.id,
-						preferences: ourGroupPreferences,
+						id: ownGroup.id,
+						preferences: ownGroupPreferences,
 					},
 					{
 						id: theirGroup.id,
 						preferences: theirGroupPreferences,
-						ignoreModePreferences: data._action === "MATCH_UP_RECHALLENGE",
 					},
+					modesIncluded,
 				);
 
 				const createdMatch = await SQMatchRepository.create({
-					alphaGroupId: ourGroup.id,
+					alphaGroupId: ownGroup.id,
 					bravoGroupId: theirGroup.id,
 					mapList,
 					memento: createMatchMemento({
-						own: { group: ourGroup, preferences: ourGroupPreferences },
+						own: { group: ownGroup, preferences: ownGroupPreferences },
 						their: { group: theirGroup, preferences: theirGroupPreferences },
 						mapList,
 					}),
@@ -174,10 +177,10 @@ export const action: ActionFunction = async ({ request }) => {
 
 				await refreshSendouQInstance();
 
-				if (ourGroup.chatCode && theirGroup.chatCode) {
+				if (ownGroup.chatCode && theirGroup.chatCode) {
 					ChatSystemMessage.send([
 						{
-							room: ourGroup.chatCode,
+							room: ownGroup.chatCode,
 							type: "MATCH_STARTED",
 							revalidateOnly: true,
 						},
@@ -191,7 +194,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 				notify({
 					userIds: [
-						...ourGroup.members.map((m) => m.id),
+						...ownGroup.members.map((m) => m.id),
 						...theirGroup.members.map((m) => m.id),
 					],
 					defaultSeenUserIds: [user.id],

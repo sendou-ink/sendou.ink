@@ -1,11 +1,11 @@
+import clsx from "clsx";
+import { useTranslation } from "react-i18next";
 import {
 	Link,
 	useLoaderData,
 	useMatches,
 	useOutletContext,
-} from "@remix-run/react";
-import clsx from "clsx";
-import { useTranslation } from "react-i18next";
+} from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -363,6 +363,14 @@ function ExtraInfos() {
 						<DiscordIcon />
 					</span>{" "}
 					{data.user.discordUniqueName}
+				</div>
+			)}
+			{data.user.pronouns && (
+				<div className="u__extra-info">
+					<span className="u__extra-info__heading">
+						{t("user:usesPronouns")}
+					</span>{" "}
+					{data.user.pronouns.subject}/{data.user.pronouns.object}
 				</div>
 			)}
 			{data.user.inGameName && (

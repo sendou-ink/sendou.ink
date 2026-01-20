@@ -28,7 +28,7 @@ type WeightsMap = Map<string, number>;
 async function calculateMapWeights(
 	groupOnePreferences: UserMapModePreferences[],
 	groupTwoPreferences: UserMapModePreferences[],
-	modesIncluded: ModeShort[],
+	modesIncluded: readonly ModeShort[],
 ): Promise<WeightsMap> {
 	const teamOneVotes: WeightsMap = new Map();
 	const teamTwoVotes: WeightsMap = new Map();
@@ -130,7 +130,7 @@ async function applyDefaultWeights(
 }
 
 function countVotesForTeam(
-	modesIncluded: ModeShort[],
+	modesIncluded: readonly ModeShort[],
 	preferences: UserMapModePreferences[],
 	votesMap: WeightsMap,
 ) {
@@ -160,23 +160,13 @@ export async function matchMapList(
 	groupOne: {
 		preferences: { userId: number; preferences: UserMapModePreferences }[];
 		id: number;
-		ignoreModePreferences?: boolean;
 	},
 	groupTwo: {
 		preferences: { userId: number; preferences: UserMapModePreferences }[];
 		id: number;
-		ignoreModePreferences?: boolean;
 	},
+	modesIncluded: readonly ModeShort[],
 ): Promise<TournamentMapListMap[]> {
-	const modesIncluded = mapModePreferencesToModeList(
-		groupOne.ignoreModePreferences
-			? []
-			: groupOne.preferences.map(({ preferences }) => preferences.modes),
-		groupTwo.ignoreModePreferences
-			? []
-			: groupTwo.preferences.map(({ preferences }) => preferences.modes),
-	);
-
 	const weights = await calculateMapWeights(
 		groupOne.preferences.map((p) => p.preferences),
 		groupTwo.preferences.map((p) => p.preferences),

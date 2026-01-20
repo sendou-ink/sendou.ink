@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import { sql } from "~/db/sql";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
@@ -18,7 +18,6 @@ import {
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "~/utils/zod";
 import type { PreparedMaps } from "../../../db/tables";
-import { updateTeamSeeds } from "../../tournament/queries/updateTeamSeeds.server";
 import { getServerTournamentManager } from "../core/brackets-manager/manager.server";
 import { roundMapsFromInput } from "../core/mapList.server";
 import * as Swiss from "../core/Swiss";
@@ -34,7 +33,7 @@ import {
 } from "../tournament-bracket-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,
@@ -113,18 +112,25 @@ export const action: ActionFunction = async ({ params, request }) => {
 						bracket,
 					}),
 				);
-
-				// ensures autoseeding is disabled
-				const isAllSeedsPersisted = tournament.ctx.teams.every(
-					(team) => typeof team.seed === "number",
-				);
-				if (!isAllSeedsPersisted) {
-					updateTeamSeeds({
-						tournamentId: tournament.ctx.id,
-						teamIds: tournament.ctx.teams.map((team) => team.id),
-					});
-				}
 			})();
+
+			// ensures autoseeding is disabled
+			const isAllSeedsPersisted = tournament.ctx.teams.every(
+				(team) => typeof team.seed === "number",
+			);
+			if (!isAllSeedsPersisted) {
+				await TournamentRepository.updateTeamSeeds({
+					tournamentId: tournament.ctx.id,
+					teamIds: tournament.ctx.teams.map((team) => team.id),
+					teamsWithMembers: tournament.ctx.teams.map((team) => ({
+						teamId: team.id,
+						members: team.members.map((m) => ({
+							userId: m.userId,
+							username: m.username,
+						})),
+					})),
+				});
+			}
 
 			if (!tournament.isTest) {
 				notify({

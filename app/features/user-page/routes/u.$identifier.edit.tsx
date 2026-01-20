@@ -1,7 +1,7 @@
-import { Form, Link, useLoaderData, useMatches } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { Form, Link, useLoaderData, useMatches } from "react-router";
 import { CustomizedColorsInput } from "~/components/CustomizedColorsInput";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
@@ -216,40 +216,43 @@ function PronounsSelect() {
 	const data = useLoaderData<typeof loader>();
 
 	return (
-		<div className="stack horizontal md">
-			<div>
-				<Label htmlFor="subjectPronoun">{t("user:pronoun")}</Label>
-				<select
-					id="subjectPronoun"
-					name="subjectPronoun"
-					defaultValue={data.user.pronouns?.subject ?? undefined}
-					className={styles.sensSelect}
-				>
-					<option value="">{"-"}</option>
-					{SUBJECT_PRONOUNS.map((pronoun) => (
-						<option key={pronoun} value={pronoun}>
-							{pronoun}
-						</option>
-					))}
-				</select>
-				<span className={styles.seperator}>/</span>
+		<div>
+			<div className="stack horizontal md">
+				<div>
+					<Label htmlFor="subjectPronoun">{t("user:pronoun")}</Label>
+					<select
+						id="subjectPronoun"
+						name="subjectPronoun"
+						defaultValue={data.user.pronouns?.subject ?? undefined}
+						className={styles.sensSelect}
+					>
+						<option value="">{"-"}</option>
+						{SUBJECT_PRONOUNS.map((pronoun) => (
+							<option key={pronoun} value={pronoun}>
+								{pronoun}
+							</option>
+						))}
+					</select>
+					<span className={styles.seperator}>/</span>
+				</div>
+				<div>
+					<Label htmlFor="objectPronoun">{t("user:pronoun")}</Label>
+					<select
+						id="objectPronoun"
+						name="objectPronoun"
+						defaultValue={data.user.pronouns?.object ?? undefined}
+						className={styles.sensSelect}
+					>
+						<option value="">{"-"}</option>
+						{OBJECT_PRONOUNS.map((pronoun) => (
+							<option key={pronoun} value={pronoun}>
+								{pronoun}
+							</option>
+						))}
+					</select>
+				</div>
 			</div>
-			<div>
-				<Label htmlFor="objectPronoun">{t("user:pronoun")}</Label>
-				<select
-					id="objectPronoun"
-					name="objectPronoun"
-					defaultValue={data.user.pronouns?.object ?? undefined}
-					className={styles.sensSelect}
-				>
-					<option value="">{"-"}</option>
-					{OBJECT_PRONOUNS.map((pronoun) => (
-						<option key={pronoun} value={pronoun}>
-							{pronoun}
-						</option>
-					))}
-				</select>
-			</div>
+			<FormMessage type="info">{t("user:pronounsInfo")}</FormMessage>
 		</div>
 	);
 }
