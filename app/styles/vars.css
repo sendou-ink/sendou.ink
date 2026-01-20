@@ -1,57 +1,64 @@
-/* All the tokens for custom themes */
+/*
+All the tokens set by custom themes
+
+These should not be consumed directly, only used as a base for other vars
+*/
 html {
-	--base-h: 260;
-	--base-c-0: 0.00012;
-	--base-c-1: 0.00588;
-	--base-c-2: 0.00744;
-	--base-c-3: 0.0168;
-	--base-c-4: 0.01548;
-	--base-c-5: 0.01632;
-	--base-c-6: 0.01548;
-	--base-c-7: 0.00804;
+	--_base-h: 260;
+	--_base-c-0: 0.00012;
+	--_base-c-1: 0.00588;
+	--_base-c-2: 0.00744;
+	--_base-c-3: 0.0168;
+	--_base-c-4: 0.01548;
+	--_base-c-5: 0.01632;
+	--_base-c-6: 0.01548;
+	--_base-c-7: 0.00804;
 
-	--acc-h: 270;
-	--acc-c-0: 0.0912;
-	--acc-c-1: 0.2664;
-	--acc-c-2: 0.0816;
-	--acc-c-3: 0.06;
-	--acc-c-4: 0.2616;
-	--acc-c-5: 0.1344;
+	--_acc-h: 270;
+	--_acc-c-0: 0.0912;
+	--_acc-c-1: 0.2664;
+	--_acc-c-2: 0.0816;
+	--_acc-c-3: 0.06;
+	--_acc-c-4: 0.2616;
+	--_acc-c-5: 0.1344;
 
-	--radius-box: 12px;
-	--radius-field: 8px;
-	--radius-selector: 8px;
-	--radius-full: 99999px;
+	--_radius-box: 3;
+	--_radius-field: 2;
+	--_radius-selector: 2;
 
-	--border-width: 2px;
+	--_border-width: 2;
 
-	/* Ommited from being overridden when viewing a page that loads a custom theme */
-	--size-field: 0.25rem;
-	--size-selector: 0.25rem;
-	--size-spacing: 0.25rem;
+	/* 
+	Ommited from being overridden when viewing a page that loads a custom theme
+	to prevent accessibility issues and layout shifts
+	*/
+	--_size-field: 1;
+	--_size-selector: 1;
+	--_size-spacing: 1;
 }
 
-/* 'low' and 'high' do not indicate lightness */
-/* this is important because dark goes from light to dark, and light goes from dark to light */
+/* 
+'low' and 'high' do not indicate lightness!
+This is important because dark goes from light to dark, and light goes from dark to light
 
-/* --color-base-x should rarely be consumed directly */
-/* they mostly exist as a base for other vars like --color-text and --color-bg  */
+--color-base-x should rarely be consumed directly
+they mostly exist as a base for other vars like --color-text and --color-bg
 
-/* Any changes here NEED to be reflected in oklch-gamut.ts as well. */
-
+Any changes here NEED to be reflected in oklch-gamut.ts as well
+*/
 html.dark {
-	--color-base-0: oklch(100% var(--base-c-0) var(--base-h));
-	--color-base-1: oklch(94.873% var(--base-c-1) var(--base-h));
-	--color-base-2: oklch(81.397% var(--base-c-2) var(--base-h));
-	--color-base-3: oklch(63.785% var(--base-c-3) var(--base-h));
-	--color-base-4: oklch(46.004% var(--base-c-4) var(--base-h));
-	--color-base-5: oklch(34.138% var(--base-c-5) var(--base-h));
-	--color-base-6: oklch(27.313% var(--base-c-6) var(--base-h));
-	--color-base-7: oklch(20.97% var(--base-c-7) var(--base-h));
+	--color-base-0: oklch(100% var(--_base-c-0) var(--_base-h));
+	--color-base-1: oklch(94.873% var(--_base-c-1) var(--_base-h));
+	--color-base-2: oklch(81.397% var(--_base-c-2) var(--_base-h));
+	--color-base-3: oklch(63.785% var(--_base-c-3) var(--_base-h));
+	--color-base-4: oklch(46.004% var(--_base-c-4) var(--_base-h));
+	--color-base-5: oklch(34.138% var(--_base-c-5) var(--_base-h));
+	--color-base-6: oklch(27.313% var(--_base-c-6) var(--_base-h));
+	--color-base-7: oklch(20.97% var(--_base-c-7) var(--_base-h));
 
-	--color-accent-low: oklch(25.912% var(--acc-c-0) var(--acc-h));
-	--color-accent: oklch(52.262% var(--acc-c-1) var(--acc-h));
-	--color-accent-high: oklch(83.419% var(--acc-c-2) var(--acc-h));
+	--color-accent-low: oklch(25.912% var(--_acc-c-0) var(--_acc-h));
+	--color-accent: oklch(52.262% var(--_acc-c-1) var(--_acc-h));
+	--color-accent-high: oklch(83.419% var(--_acc-c-2) var(--_acc-h));
 
 	--color-second-low: oklch(from var(--color-accent-low) l c calc(h + 180));
 	--color-second: oklch(from var(--color-accent) l c calc(h + 180));
@@ -84,18 +91,18 @@ html.dark {
 }
 
 html.light {
-	--color-base-0: oklch(20.97% var(--base-c-7) var(--base-h));
-	--color-base-1: oklch(27.313% var(--base-c-6) var(--base-h));
-	--color-base-2: oklch(34.138% var(--base-c-5) var(--base-h));
-	--color-base-3: oklch(46.004% var(--base-c-4) var(--base-h));
-	--color-base-4: oklch(63.785% var(--base-c-3) var(--base-h));
-	--color-base-5: oklch(81.397% var(--base-c-2) var(--base-h));
-	--color-base-6: oklch(94.873% var(--base-c-1) var(--base-h));
-	--color-base-7: oklch(100% var(--base-c-0) var(--base-h));
+	--color-base-0: oklch(20.97% var(--_base-c-7) var(--_base-h));
+	--color-base-1: oklch(27.313% var(--_base-c-6) var(--_base-h));
+	--color-base-2: oklch(34.138% var(--_base-c-5) var(--_base-h));
+	--color-base-3: oklch(46.004% var(--_base-c-4) var(--_base-h));
+	--color-base-4: oklch(63.785% var(--_base-c-3) var(--_base-h));
+	--color-base-5: oklch(81.397% var(--_base-c-2) var(--_base-h));
+	--color-base-6: oklch(94.873% var(--_base-c-1) var(--_base-h));
+	--color-base-7: oklch(100% var(--_base-c-0) var(--_base-h));
 
-	--color-accent-low: oklch(87.817% var(--acc-c-3) var(--acc-h));
-	--color-accent: oklch(52.919% var(--acc-c-4) var(--acc-h));
-	--color-accent-high: oklch(31.777% var(--acc-c-5) var(--acc-h));
+	--color-accent-low: oklch(87.817% var(--_acc-c-3) var(--_acc-h));
+	--color-accent: oklch(52.919% var(--_acc-c-4) var(--_acc-h));
+	--color-accent-high: oklch(31.777% var(--_acc-c-5) var(--_acc-h));
 
 	--color-second-low: oklch(from var(--color-accent-low) l c calc(h + 180));
 	--color-second: oklch(from var(--color-accent) l c calc(h + 180));
@@ -127,8 +134,9 @@ html.light {
 	--field-icon-time: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(90, 90, 90)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpolyline points='12 6 12 12 16 14'%3E%3C/polyline%3E%3C/svg%3E");
 }
 
-/* These are the vars you mainly care about */
-
+/* 
+These are the vars you mainly want to use
+*/
 html {
 	--color-text: var(--color-base-0);
 	--color-text-high: var(--color-base-3);
@@ -142,6 +150,7 @@ html {
 
 	--color-border: var(--color-base-5);
 	--color-border-high: var(--color-base-4);
+	--border-width: calc(var(--_border-width) * 1px);
 	--border-style: var(--border-width) solid var(--color-border);
 	--border-style-high: var(--border-width) solid var(--color-border-high);
 	--border-style-accent: var(--border-width) solid var(--color-text-accent);
@@ -149,19 +158,16 @@ html {
 	--focus-ring: 2px solid var(--color-text-accent);
 	--focus-ring-error: 2px solid var(--color-error);
 
-	--field-size-xs: calc(var(--size-field) * 6);
-	--field-size-sm: calc(var(--size-field) * 8);
-	--field-size: calc(var(--size-field) * 10);
-	--field-size-lg: calc(var(--size-field) * 12);
-	--field-size-icon: 18px;
-	--field-padding: 1rem;
-	--field-line-height: 1.2rem;
+	/*
+	Tokens used to define layout dimensions
 
-	--selector-size-xs: calc(var(--size-selector) * 3);
-	--selector-size-sm: calc(var(--size-selector) * 4);
-	--selector-size: calc(var(--size-selector) * 5);
-	--selector-size-lg: calc(var(--size-selector) * 6);
+	--layout-sticky-top can be used by any element with position: sticky
+	that sticks relative to the document scroll to ensure 
+	a smooth transition between sticking and un-sticking
 
+	Elements with position: sticky that do not stick relative
+	to the document scroll do not need to use this var
+	*/
 	--layout-nav-height: 55px;
 	--layout-sidenav-width: 250px;
 	--layout-main-padding: var(--s-4);
@@ -169,6 +175,35 @@ html {
 		var(--layout-nav-height) +
 		var(--layout-main-padding)
 	);
+
+	/* 
+	Boxes are elements that contain other elements, like cards, containers, and modals
+	but can also be top level elements in a visual hierarchy
+
+	Fields are interactive elements like buttons, inputs, and selects
+	but also any child of a box that is interactable or contains content
+
+	Selectors are elements like checkboxes, radio buttons, and toggles
+	but can also be any small element like bages, tags, and pills
+	that are complementary to fields
+	*/
+	--field-size-xs: calc(var(--_size-field) * 6 * 0.25rem);
+	--field-size-sm: calc(var(--_size-field) * 8 * 0.25rem);
+	--field-size: calc(var(--_size-field) * 10 * 0.25rem);
+	--field-size-lg: calc(var(--_size-field) * 12 * 0.25rem);
+	--field-size-icon: 18px;
+	--field-padding: 1rem;
+	--field-line-height: 1.2rem;
+
+	--selector-size-xs: calc(var(--_size-selector) * 3 * 0.25rem);
+	--selector-size-sm: calc(var(--_size-selector) * 4 * 0.25rem);
+	--selector-size: calc(var(--_size-selector) * 5 * 0.25rem);
+	--selector-size-lg: calc(var(--_size-selector) * 6 * 0.25rem);
+
+	--radius-box: calc(var(--_radius-box) * 4px);
+	--radius-field: calc(var(--_radius-field) * 4px);
+	--radius-selector: calc(var(--_radius-selector) * 4px);
+	--radius-full: 99999px;
 }
 
 html {
