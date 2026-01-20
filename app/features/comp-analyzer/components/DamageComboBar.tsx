@@ -13,6 +13,7 @@ import {
 	specialWeaponImageUrl,
 	subWeaponImageUrl,
 } from "~/utils/urls";
+import { useTargetResAp, useTargetSubDefenseAp } from "../comp-analyzer-hooks";
 import type { DamageCombo, DamageSegment } from "../comp-analyzer-types";
 import {
 	calculateDamageCombos,
@@ -253,8 +254,8 @@ interface DamageComboListProps {
 export function DamageComboList({ weaponIds }: DamageComboListProps) {
 	const { t } = useTranslation(["analyzer"]);
 	const [excludedKeys, setExcludedKeys] = useState<ExcludedDamageKey[]>([]);
-	const [targetResAp, setTargetResAp] = useState(0);
-	const [targetSubDefenseAp, setTargetSubDefenseAp] = useState(0);
+	const [targetResAp, setTargetResAp] = useTargetResAp();
+	const [targetSubDefenseAp, setTargetSubDefenseAp] = useTargetSubDefenseAp();
 	const [isCollapsed, setIsCollapsed] = useState(false);
 
 	const combos = calculateDamageCombos(
