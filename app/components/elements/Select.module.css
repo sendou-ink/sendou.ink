@@ -69,8 +69,8 @@
 }
 
 .item {
-	font-size: var(--fonts-xsm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 	padding: var(--s-1-5);
 	border-radius: var(--radius-field);
 	white-space: nowrap;
@@ -89,7 +89,7 @@
 
 .itemSelected {
 	color: var(--color-text-accent);
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 }
 
 .searchField {
@@ -109,8 +109,8 @@
 
 .searchInput {
 	all: unset;
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	letter-spacing: 0.5px;
 	flex: 1;
 }
@@ -139,8 +139,8 @@
 }
 
 .noResults {
-	font-size: var(--fonts-md);
-	font-weight: var(--bold);
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
 	text-align: center;
 	padding-block: var(--s-8);
 	color: var(--color-text-high);
@@ -152,8 +152,8 @@
 }
 
 .label {
-	font-size: var(--fonts-xs);
-	font-weight: var(--bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
 	margin-block-end: var(--label-margin);
 	display: block;
 }
@@ -168,10 +168,10 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
-	font-weight: bold;
+	font-weight: var(--weight-extra);
 	color: var(--color-text-high);
 	text-transform: uppercase;
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	padding-block-start: var(--s-2-5);
 	padding-block-end: var(--s-1);
 	padding-inline: var(--s-1-5);

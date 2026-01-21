@@ -18,7 +18,7 @@
 	display: grid;
 	grid-template-columns: 1fr max-content max-content max-content 1fr;
 	gap: var(--s-2);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	align-items: center;
 }
 
@@ -47,15 +47,15 @@
 }
 
 .ldeIntensitySelect {
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 }
 
 .apSummary {
 	width: 100%;
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	padding-block: var(--s-1);
 	padding-inline: var(--s-2);
 }
@@ -66,8 +66,8 @@
 	align-items: center;
 	border-radius: var(--radius-box);
 	background-color: var(--color-accent-low);
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	gap: var(--s-2);
 	padding-block: var(--s-1);
 	padding-inline: var(--s-2);
@@ -75,15 +75,15 @@
 
 .apText {
 	color: var(--color-text-high);
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 }
 
 .summary {
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
-	font-size: var(--fonts-md);
-	font-weight: var(--bold);
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
 	padding-block: var(--s-2);
 	padding-inline: var(--s-3);
 	position: relative;
@@ -95,7 +95,7 @@
 
 .weaponInfoBadge {
 	display: inline-flex;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	gap: var(--s-2);
 	align-items: center;
 	background-color: var(--color-bg);
@@ -150,7 +150,7 @@
 }
 
 .statCardTitle {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	line-height: 1.35;
 	text-align: center;
 	word-break: break-word;
@@ -170,8 +170,8 @@
 	border: none;
 	background-color: transparent;
 	color: var(--color-accent);
-	font-size: var(--fonts-md);
-	font-weight: var(--bold);
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
 	outline: initial;
 }
 
@@ -191,15 +191,15 @@
 
 .statCardValueTitle {
 	color: var(--color-text-high);
-	font-size: var(--fonts-xxs);
-	font-weight: 400;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-body);
 	letter-spacing: 0.5px;
 	text-transform: uppercase;
 }
 
 .statCardValueNumber {
-	font-size: var(--fonts-md);
-	font-weight: var(--bold);
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
 }
 
 .tableContainer {
@@ -213,19 +213,19 @@
 
 .shotsToSplat {
 	color: var(--color-text-high);
-	font-size: var(--fonts-xxxs);
+	font-size: var(--font-2xs);
 	margin-inline-start: var(--s-4);
 }
 
 .consumptionTableExplanation {
 	margin-top: var(--s-2);
 	color: var(--color-text-high);
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 }
 
 .statCategoryExplanation {
 	color: var(--color-text-high);
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	margin-block-start: var(--s-3);
 }
 
@@ -237,8 +237,8 @@
 	border-radius: var(--radius-box);
 	background-color: var(--color-accent-low);
 	color: var(--color-accent-high);
-	font-size: var(--fonts-xxxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	padding-block: var(--s-0-5);
 	padding-inline: var(--s-2);
 }
@@ -289,19 +289,19 @@
 .inkGridAp {
 	display: grid;
 	place-items: center;
-	font-weight: var(--semi-bold);
-	font-size: var(--fonts-xs);
+	font-weight: var(--weight-semi);
+	font-size: var(--font-xs);
 }
 
 .inkGridApFocused {
 	color: var(--color-accent);
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	text-decoration: underline;
 }
 
 .inkGridCell {
 	width: 25px;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	display: grid;
 	place-items: center;
 	background-color: var(--cell-color);

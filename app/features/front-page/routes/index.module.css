@@ -20,8 +20,8 @@
 .frontPageSideNavItem {
 	display: flex;
 	color: var(--color-text);
-	font-size: var(--fonts-xs);
-	font-weight: var(--bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
 	gap: var(--s-1-5);
 	align-items: center;
 }
@@ -32,8 +32,8 @@
 
 .frontPageSideNavLogOut {
 	display: flex;
-	font-size: var(--fonts-xs);
-	font-weight: var(--bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
 	gap: var(--s-1-5);
 	align-items: center;
 	color: var(--color-text-high) !important;
@@ -81,8 +81,8 @@
 	gap: var(--s-1-5);
 	justify-content: center;
 	align-items: center;
-	font-weight: var(--bold);
-	font-size: var(--fonts-xs);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-xs);
 	border-radius: 10px;
 	color: var(--color-text-high);
 	padding: 0 var(--s-1);
@@ -132,13 +132,13 @@
 }
 
 .seasonBannerHeader {
-	font-size: var(--fonts-xl);
-	font-weight: var(--bold);
+	font-size: var(--font-xl);
+	font-weight: var(--weight-bold);
 }
 
 .seasonBannerDates {
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 }
 
 .seasonBannerImg {
@@ -153,7 +153,7 @@
 	border-radius: var(--radius-box);
 	width: max-content;
 	padding: 0 var(--field-padding);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: var(--color-text-inverse);
 	display: flex;
 	gap: var(--s-2);
@@ -196,8 +196,8 @@
 	display: grid;
 	place-items: center;
 	padding: var(--s-2);
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	text-align: center;
 	color: var(--color-text);
 	transition: background-color 0.2s ease-out;
@@ -223,7 +223,7 @@
 }
 
 .resultHighlightsTitle {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 }
 
 .resultHighlightsTitleTournaments {
@@ -243,8 +243,8 @@
 }
 
 .leaderboardName {
-	font-size: var(--fonts-sm);
-	font-weight: var(--bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
 	white-space: nowrap;
 	max-width: 140px;
 	text-overflow: ellipsis;
@@ -252,7 +252,7 @@
 }
 
 .leaderboardViewAll {
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	color: var(--color-text);
 	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-box);
@@ -275,7 +275,7 @@
 }
 
 .sideNavEmpty {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: var(--color-text-high);
 	padding: var(--s-1) var(--s-2);
 }
@@ -294,8 +294,8 @@
 }
 
 .feedTitle {
-	font-size: var(--fonts-xl);
-	font-weight: var(--extra-bold);
+	font-size: var(--font-xl);
+	font-weight: var(--weight-extra);
 	margin: 0;
 }
 
@@ -310,8 +310,8 @@
 	border: none;
 	border-radius: var(--radius-box);
 	padding: var(--s-1-5) var(--s-3);
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	color: var(--color-text);
 	cursor: pointer;
 	transition: background-color 0.15s ease;
@@ -354,18 +354,18 @@
 }
 
 .postUsername {
-	font-weight: var(--bold);
-	font-size: var(--fonts-sm);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-sm);
 }
 
 .postTime {
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 }
 
 .postBadge {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	padding: var(--s-1) var(--s-2);
 	border-radius: var(--radius-field);
 	text-transform: uppercase;
@@ -449,8 +449,8 @@
 }
 
 .matchResultText {
-	font-weight: var(--extra-bold);
-	font-size: var(--fonts-md);
+	font-weight: var(--weight-extra);
+	font-size: var(--font-md);
 }
 
 .matchWin .matchResultText {
@@ -462,8 +462,8 @@
 }
 
 .matchScore {
-	font-weight: var(--bold);
-	font-size: var(--fonts-sm);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-sm);
 }
 
 .matchDetails {
@@ -494,15 +494,15 @@
 }
 
 .matchStageName {
-	font-weight: var(--bold);
-	font-size: var(--fonts-sm);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-sm);
 }
 
 .matchModeRow {
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: var(--color-text-high);
 }
 
@@ -514,8 +514,8 @@
 }
 
 .powerChange {
-	font-weight: var(--extra-bold);
-	font-size: var(--fonts-lg);
+	font-weight: var(--weight-extra);
+	font-size: var(--font-lg);
 }
 
 .powerUp {
@@ -527,7 +527,7 @@
 }
 
 .newPower {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: var(--color-text-high);
 }
 
@@ -544,8 +544,8 @@
 }
 
 .teamLabel {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
 	text-transform: uppercase;
 }
@@ -569,7 +569,7 @@
 }
 
 .placementEmoji {
-	font-size: var(--fonts-xl);
+	font-size: var(--font-xl);
 }
 
 .placementInfo {
@@ -579,12 +579,12 @@
 }
 
 .placementText {
-	font-weight: var(--extra-bold);
-	font-size: var(--fonts-lg);
+	font-weight: var(--weight-extra);
+	font-size: var(--font-lg);
 }
 
 .tournamentName {
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	color: var(--color-text-high);
 }
 
@@ -598,8 +598,8 @@
 }
 
 .teamName {
-	font-weight: var(--bold);
-	font-size: var(--fonts-sm);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-sm);
 }
 
 .placementTeammates {
@@ -621,15 +621,14 @@
 }
 
 .weaponName {
-	font-weight: var(--bold);
-	font-size: var(--fonts-md);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-md);
 }
 
 .buildDescription {
 	margin: 0;
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	color: var(--color-text);
-	line-height: 1.5;
 }
 
 .buildAbilities {
@@ -642,13 +641,13 @@
 	background-color: var(--color-bg-higher);
 	padding: var(--s-1) var(--s-2);
 	border-radius: var(--radius-field);
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 }
 
 .viewBuildLink {
-	font-size: var(--fonts-xs);
-	font-weight: var(--bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
 	color: var(--color-text-accent);
 }
 
@@ -666,13 +665,13 @@
 }
 
 .teamFormedName {
-	font-weight: var(--extra-bold);
-	font-size: var(--fonts-lg);
+	font-weight: var(--weight-extra);
+	font-size: var(--font-lg);
 }
 
 .teamFormedLabel {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	background-color: var(--color-success-low);
 	color: var(--color-success);
 	padding: var(--s-0-5) var(--s-2);
@@ -702,12 +701,12 @@
 }
 
 .memberName {
-	font-weight: var(--semi-bold);
-	font-size: var(--fonts-xs);
+	font-weight: var(--weight-semi);
+	font-size: var(--font-xs);
 }
 
 .memberRole {
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 }
 
@@ -732,8 +731,8 @@
 
 .rankLabel,
 .powerLabel {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
 	text-transform: uppercase;
 }
@@ -745,7 +744,7 @@
 }
 
 .oldRank {
-	font-size: var(--fonts-md);
+	font-size: var(--font-md);
 	color: var(--color-text-high);
 	text-decoration: line-through;
 }
@@ -755,15 +754,15 @@
 }
 
 .newRank {
-	font-weight: var(--extra-bold);
-	font-size: var(--fonts-lg);
+	font-weight: var(--weight-extra);
+	font-size: var(--font-lg);
 	color: var(--color-success);
 }
 
 .rankDiff {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: var(--color-success);
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 }
 
 .powerStat {
@@ -773,12 +772,12 @@
 }
 
 .powerValue {
-	font-weight: var(--extra-bold);
-	font-size: var(--fonts-lg);
+	font-weight: var(--weight-extra);
+	font-size: var(--font-lg);
 }
 
 .seasonInfo {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: var(--color-text-high);
 }
 
@@ -802,12 +801,12 @@
 }
 
 .vodTournament {
-	font-weight: var(--bold);
-	font-size: var(--fonts-sm);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-sm);
 }
 
 .vodMatch {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: var(--color-text-high);
 }
 
@@ -817,8 +816,8 @@
 	border: none;
 	border-radius: var(--radius-field);
 	padding: var(--s-2) var(--s-4);
-	font-size: var(--fonts-xs);
-	font-weight: var(--bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
 	cursor: pointer;
 	width: fit-content;
 	transition: opacity 0.15s ease;
@@ -837,8 +836,7 @@
 
 .lfgText {
 	margin: 0;
-	font-size: var(--fonts-sm);
-	line-height: 1.5;
+	font-size: var(--font-sm);
 }
 
 .lfgWeapons {
@@ -849,12 +847,12 @@
 .lfgAvailability {
 	display: flex;
 	gap: var(--s-2);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: var(--color-text-high);
 }
 
 .availLabel {
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 }
 
 /* Tournament Signup Post */
@@ -869,11 +867,11 @@
 	align-items: center;
 	gap: var(--s-2);
 	flex-wrap: wrap;
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 }
 
 .signupTeam {
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 }
 
 .signupAction {
@@ -881,7 +879,7 @@
 }
 
 .signupTournament {
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	color: var(--color-text-accent);
 }
 
@@ -889,7 +887,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: var(--color-text-high);
 }
 
@@ -907,8 +905,7 @@
 
 .artDescription {
 	margin: 0;
-	font-size: var(--fonts-sm);
-	line-height: 1.5;
+	font-size: var(--font-sm);
 }
 
 .artImages {
@@ -941,16 +938,16 @@
 }
 
 .replayCodeLabel {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
 	text-transform: uppercase;
 }
 
 .replayCodeValue {
 	font-family: monospace;
-	font-size: var(--fonts-lg);
-	font-weight: var(--extra-bold);
+	font-size: var(--font-lg);
+	font-weight: var(--weight-extra);
 	letter-spacing: 0.1em;
 }
 
@@ -982,15 +979,15 @@
 }
 
 .replayStageName {
-	font-weight: var(--bold);
-	font-size: var(--fonts-sm);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-sm);
 }
 
 .replayModeRow {
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: var(--color-text-high);
 }
 
@@ -1001,6 +998,6 @@
 }
 
 .replayWeaponName {
-	font-weight: var(--semi-bold);
-	font-size: var(--fonts-sm);
+	font-weight: var(--weight-semi);
+	font-size: var(--font-sm);
 }

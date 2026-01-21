@@ -5,7 +5,7 @@
 .times {
 	display: grid;
 	column-gap: var(--s-1-5);
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	grid-template-columns: max-content 1fr;
 }
 
@@ -27,7 +27,7 @@
 	width: max-content;
 	align-items: center;
 	margin: 0 auto;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	gap: var(--s-1-5);
 }
 
@@ -35,7 +35,7 @@
 	display: flex;
 	align-items: center;
 	color: var(--color-text-high);
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	gap: var(--s-1);
 }
 
@@ -56,5 +56,5 @@
 
 .resultsParticipantCount {
 	color: var(--color-text-high);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 }

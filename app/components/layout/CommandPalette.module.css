@@ -7,7 +7,7 @@
 	border-radius: var(--radius-field);
 	background-color: var(--color-bg);
 	color: var(--color-text-high);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	cursor: pointer;
 	height: var(--field-size-sm);
 	transition: background-color 0.15s;
@@ -36,7 +36,7 @@
 .searchKbd {
 	padding: 2px var(--s-1);
 	border-radius: var(--radius-field);
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	background-color: var(--color-bg-higher);
 	font-family: inherit;
 }
@@ -102,7 +102,7 @@
 	border-bottom: 1px solid var(--color-border);
 	border-radius: 0;
 	background: transparent;
-	font-size: var(--fonts-md);
+	font-size: var(--font-md);
 	color: var(--color-text);
 	height: auto;
 
@@ -127,7 +127,7 @@
 	padding: var(--s-2) var(--s-3);
 	border-radius: var(--radius-field);
 	cursor: pointer;
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	outline: none;
 }
 
@@ -160,7 +160,7 @@
 	gap: var(--s-1);
 	padding: var(--s-1) var(--s-2);
 	border-radius: var(--radius-field);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	cursor: pointer;
 	border: 1px solid var(--color-border);
 	background-color: var(--color-bg);
@@ -208,7 +208,7 @@
 }
 
 .resultSecondary {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: var(--color-text-high);
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -224,7 +224,7 @@
 	padding: var(--s-8);
 	text-align: center;
 	color: var(--color-text-high);
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 }
 
 @media screen and (max-width: 1000px) {

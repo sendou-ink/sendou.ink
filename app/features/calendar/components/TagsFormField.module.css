@@ -12,8 +12,8 @@
 	cursor: pointer;
 	border: 2px solid var(--tag-color);
 	border-radius: var(--radius-field);
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 	display: grid;
 	place-items: center;
 	min-width: max-content;

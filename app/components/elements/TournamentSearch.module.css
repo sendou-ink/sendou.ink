@@ -1,6 +1,6 @@
 .item {
-	font-size: var(--fonts-xsm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 	padding: var(--s-1-5);
 	border-radius: var(--radius-field);
 	height: 33px;
@@ -44,8 +44,8 @@ button:disabled .selectValue {
 }
 
 .placeholder {
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
 	text-align: center;
 	display: grid;
@@ -55,7 +55,7 @@ button:disabled .selectValue {
 }
 
 .itemAdditionalText {
-	font-size: var(--fonts-xxsm);
+	font-size: var(--font-xs);
 	color: var(--color-text-high);
 }
 

@@ -11,7 +11,7 @@
 
 .value {
 	color: var(--color-text-high);
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	margin-block-start: -5px;
 }
 

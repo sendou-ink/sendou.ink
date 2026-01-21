@@ -3,8 +3,8 @@
 	padding: var(--s-2);
 	border: var(--border-style);
 	border-radius: var(--radius-box);
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 	white-space: pre-wrap;
 	background-color: var(--color-bg);
 }

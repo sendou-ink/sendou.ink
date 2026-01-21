@@ -13,8 +13,8 @@
 	border-radius: var(--radius-field);
 	background: transparent;
 	color: var(--color-text);
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	cursor: pointer;
 	white-space: nowrap;
 }
@@ -41,8 +41,8 @@
 	padding: var(--s-1-5) var(--s-2);
 	border-radius: var(--radius-field);
 	color: var(--color-text);
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	text-decoration: none;
 	transition:
 		background-color 0.15s,
@@ -78,8 +78,8 @@
 }
 
 .weaponCategoryHeader {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	color: var(--color-text);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;

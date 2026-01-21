@@ -43,8 +43,8 @@
 	transform: translateX(-50%);
 	background-color: var(--color-text-accent);
 	color: var(--color-text-inverse);
-	font-size: var(--fonts-xxxxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	padding: 1px 4px;
 	border-radius: var(--radius-full);
 	white-space: nowrap;
@@ -53,16 +53,16 @@
 .pronounsTag {
 	background-color: var(--color-bg-higher);
 	color: var(--color-text-accent);
-	font-size: var(--fonts-xxxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	padding: 1px 5px;
 	border-radius: var(--radius-full);
 	white-space: nowrap;
 }
 
 .messageUser {
-	font-weight: var(--semi-bold);
-	font-size: var(--fonts-sm);
+	font-weight: var(--weight-semi);
+	font-size: var(--font-sm);
 	color: var(--chat-user-color);
 	max-width: 110px;
 	overflow: hidden;
@@ -71,7 +71,7 @@
 }
 
 .messageTime {
-	font-size: var(--fonts-xxxs);
+	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 }
 
@@ -82,7 +82,7 @@
 }
 
 .messageContents {
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	word-break: break-word;
 }
 
@@ -98,14 +98,14 @@
 	border-radius: var(--radius-box) var(--radius-box) 0 0;
 	padding: var(--s-1) var(--s-1);
 	border-color: var(--color-bg-high);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	padding-block: var(--s-1);
 	padding-inline: var(--s-2);
 	display: flex;
 	width: auto;
 	align-items: center;
 	justify-content: center;
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	flex: 1 1 0px;
 }
 
@@ -116,7 +116,7 @@
 
 .roomButtonUnseen {
 	color: var(--color-accent);
-	text-shadow: var(--fonts-xxxs);
+	text-shadow: var(--font-2xs);
 	margin-inline-start: var(--s-1);
 	width: 25px;
 	text-align: left;
@@ -131,8 +131,8 @@
 
 .unseenMessages {
 	position: absolute;
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	border-radius: var(--radius-field);
 	background-color: var(--color-bg-higher);
 	border: none;

@@ -34,7 +34,7 @@
 
 .sectionInfo {
 	grid-area: info;
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	gap: var(--s-2);
 	color: var(--color-text-high);
 	display: flex;
@@ -55,14 +55,14 @@
 
 .sectionMessage {
 	grid-area: message;
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	padding-block-start: var(--s-4);
 	white-space: pre-wrap;
 }
 
 .sectionWeaponText {
-	font-weight: var(--semi-bold);
-	font-size: var(--fonts-xs);
+	font-weight: var(--weight-semi);
+	font-size: var(--font-xs);
 	align-self: center;
 }
 

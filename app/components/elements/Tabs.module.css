@@ -50,7 +50,7 @@
 .tabButton {
 	background-color: transparent;
 	border: none;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	border-radius: 0;
 	border-bottom: 2px solid transparent;
 	color: var(--color-text-high);

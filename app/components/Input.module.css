@@ -1,8 +1,7 @@
 .container {
 	display: flex;
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	outline: none;
-	line-height: var(--field-line-height);
 	border: var(--border-style);
 	border-radius: var(--radius-field);
 	background-color: var(--color-bg);
@@ -53,8 +52,8 @@
 	border-radius: var(--radius-field) 0 0 var(--radius-field);
 	background-color: var(--color-bg-high);
 	color: var(--color-text-high);
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	padding-inline: var(--s-2);
 	place-items: center;
 	white-space: nowrap;

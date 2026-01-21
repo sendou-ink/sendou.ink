@@ -2,7 +2,7 @@
 	display: grid;
 	grid-template-columns: 1fr 1fr 1fr 1fr;
 	place-items: center;
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	row-gap: var(--s-2);
 }
 
@@ -18,7 +18,7 @@
 	border: none;
 	background-color: transparent;
 	color: var(--color-text-accent);
-	font-size: var(--fonts-md);
-	font-weight: var(--bold);
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
 	outline: initial;
 }

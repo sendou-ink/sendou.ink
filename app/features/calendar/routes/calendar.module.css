@@ -19,10 +19,10 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	border-radius: var(--radius-field);
 	padding: var(--s-1) var(--s-2);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	flex: 1 1 0;
 }
 
@@ -67,8 +67,8 @@
 	background-color: var(--color-bg-high);
 	padding: var(--s-2);
 	text-align: center;
-	font-size: var(--fonts-md);
-	font-weight: var(--bold);
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
 }
 
 .dayHeaderToday {
@@ -77,8 +77,8 @@
 }
 
 .dayHeaderWeekday {
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
 }
 
@@ -90,8 +90,8 @@
 }
 
 .clockHeader {
-	font-weight: var(--semi-bold);
-	font-size: var(--fonts-sm);
+	font-weight: var(--weight-semi);
+	font-size: var(--font-sm);
 }
 
 .clockHeaderDivider {

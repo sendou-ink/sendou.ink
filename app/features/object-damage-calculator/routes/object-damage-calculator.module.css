@@ -40,8 +40,8 @@
 }
 
 .hp {
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 }
 
 .tableHeader {
@@ -50,8 +50,8 @@
 	border-radius: var(--radius-box);
 	display: flex;
 	flex-direction: column;
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	gap: var(--s-1);
 	height: 100%;
 	left: 0;
@@ -71,7 +71,7 @@
 
 .distance {
 	color: var(--color-text-high);
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	margin-block-start: var(--s-0-5);
 }
 
@@ -99,8 +99,8 @@
 	padding: var(--s-2);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	place-items: center;
 }
 
@@ -113,14 +113,14 @@
 
 .abbr {
 	color: var(--color-text-high);
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	text-decoration: none;
 }
 
 .multiplier {
 	color: var(--color-text-accent);
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	letter-spacing: 0.5px;
 	margin-block-start: var(--s-2);
 }
@@ -136,8 +136,8 @@
 	border-radius: var(--radius-box);
 	background-color: var(--color-accent-low);
 	color: var(--color-accent-high);
-	font-size: var(--fonts-xxxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	padding-block: var(--s-0-5);
 	padding-inline: var(--s-2);
 }

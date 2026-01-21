@@ -15,7 +15,7 @@ body {
 	width: 100%;
 	min-height: 100vh;
 	display: flex;
-	line-height: 1.5;
+	line-height: var(--line-height);
 	overflow-x: hidden;
 	color: var(--color-text);
 	background-color: var(--color-bg);
@@ -64,7 +64,6 @@ details summary {
 
 a {
 	color: var(--color-text-accent);
-	font-weight: var(--semi-bold);
 	text-decoration: none;
 	border-radius: 5px;
 
@@ -79,10 +78,10 @@ textarea:not([name="text"]) {
 	width: 100%;
 	min-height: 8rem;
 	padding: var(--field-padding);
-	line-height: var(--field-line-height);
 	border: var(--border-style);
 	border-radius: var(--radius-field);
 	background-color: var(--color-bg);
+	font-size: var(--font-sm);
 	outline: none;
 	resize: vertical;
 
@@ -100,7 +99,7 @@ input:not(.in-container) {
 	background: var(--color-bg);
 	padding: 0 var(--field-padding);
 	height: var(--field-size);
-	line-height: var(--field-line-height);
+	font-size: var(--font-sm);
 	outline: none;
 
 	&::placeholder {
@@ -126,7 +125,7 @@ input[type="checkbox"] {
 	padding: 0;
 	width: var(--selector-size);
 	height: var(--selector-size);
-	border-radius: var(--radius-selector);
+	border-radius: calc(var(--radius-selector) / 2);
 	background-color: var(--color-bg);
 	border: var(--border-style);
 
@@ -209,8 +208,8 @@ input[type="radio"] {
 
 label {
 	display: block;
-	font-size: var(--fonts-xs);
-	font-weight: var(--bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
 	margin-block-end: var(--label-margin);
 }
 
@@ -218,7 +217,7 @@ fieldset {
 	border: none;
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	padding-block-end: var(--s-3);
 	padding-inline: var(--s-3);
 }
@@ -226,8 +225,8 @@ fieldset {
 legend {
 	border-radius: var(--radius-field);
 	background-color: transparent;
-	font-size: var(--fonts-xs);
-	font-weight: var(--bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
 }
 
 article {
@@ -249,7 +248,7 @@ select {
 		var(--s-2)
 	);
 	height: var(--field-size);
-	line-height: var(--field-line-height);
+	font-size: var(--font-sm);
 	display: inline-flex;
 	align-items: center;
 	text-overflow: ellipsis;
@@ -297,8 +296,8 @@ select {
 		background-color: var(--color-bg);
 		color: var(--color-text);
 		border-radius: var(--radius-field);
-		font-size: var(--fonts-xsm);
-		font-weight: var(--semi-bold);
+		font-size: var(--font-sm);
+		font-weight: var(--weight-semi);
 		padding: var(--s-1-5);
 		white-space: nowrap;
 		text-overflow: ellipsis;
@@ -386,8 +385,7 @@ input[type="color"]::-moz-color-swatch {
 input[type="file"] {
 	padding: 0;
 	cursor: pointer;
-	font-size: var(--fonts-sm);
-	line-height: var(--field-line-height);
+	font-size: var(--font-sm);
 	color: var(--color-text-high);
 	overflow: hidden;
 }
@@ -547,7 +545,7 @@ abbr[title] {
 }
 
 .form-errors {
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 }
 
 .form-errors > h4 {
@@ -562,7 +560,7 @@ abbr[title] {
 
 .section > h2 {
 	color: var(--text-lighter);
-	font-size: var(--fonts-md);
+	font-size: var(--font-md);
 }
 
 .stack {
@@ -663,7 +661,7 @@ abbr[title] {
 
 .label__value {
 	color: var(--text-lighter);
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	margin-block-start: -5px;
 }
 
@@ -678,14 +676,14 @@ abbr[title] {
 .error-message {
 	display: block;
 	color: var(--theme-error);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	margin-block-start: var(--label-margin);
 }
 
 .info-message {
 	display: block;
 	color: var(--text-lighter);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	margin-block-start: var(--label-margin);
 }
 
@@ -699,7 +697,7 @@ abbr[title] {
 }
 
 .small-text {
-	font-size: var(--fonts-xxs) !important;
+	font-size: var(--font-2xs) !important;
 }
 
 .colors__summary {
@@ -707,8 +705,8 @@ abbr[title] {
 	border: 2px solid var(--border);
 	border-radius: var(--radius-field);
 	background-color: var(--bg-input);
-	font-weight: var(--bold);
-	font-size: var(--fonts-xs);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-xs);
 
 	& div {
 		display: inline-flex;
@@ -729,8 +727,8 @@ abbr[title] {
 
 .colors__container {
 	width: 100%;
-	font-size: var(--fonts-sm);
-	font-weight: var(--bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
 	padding: var(--s-3);
 	border: 2px solid var(--border);
 	border-radius: var(--radius-field);
@@ -751,7 +749,7 @@ abbr[title] {
 	border-spacing: 0;
 	text-indent: 0;
 	text-align: left;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 
 	& svg {
 		width: 1rem;
@@ -791,7 +789,7 @@ abbr[title] {
 }
 
 .playwire__text {
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	text-align: center;
 }
 

@@ -15,7 +15,7 @@
 .privateText {
 	display: flex;
 	justify-content: center;
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	gap: var(--s-1);
 }
 
@@ -27,9 +27,9 @@
 .title {
 	overflow: hidden;
 	height: 2.5rem;
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	line-height: 1.25;
-	word-wrap: break-all;
+	word-wrap: break-word;
 }
 
 .topRow {
@@ -39,7 +39,7 @@
 
 .dateAuthorRow {
 	display: flex;
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	gap: var(--s-1);
 }
 
@@ -79,8 +79,8 @@
 .weaponText {
 	padding-left: var(--s-1);
 	color: var(--color-text-high);
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 }
 
 .weapons {
@@ -121,5 +121,5 @@
 }
 
 .smallText {
-	font-size: var(--fonts-xxs) !important;
+	font-size: var(--font-2xs) !important;
 }

@@ -1,12 +1,12 @@
 .stagePopoverButton {
 	background-color: transparent;
 	color: var(--color-text-high);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	padding: 0;
 	border: none;
 	text-decoration: underline;
 	text-decoration-style: dotted;
-	font-weight: var(--body);
+	font-weight: var(--weight-body);
 	height: 19.8281px;
 }
 
@@ -66,7 +66,7 @@
 	row-gap: var(--s-2);
 	column-gap: var(--s-2-5);
 	align-items: center;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 }
 
 .poolPassContainer {
@@ -94,13 +94,13 @@
 .infoHeader {
 	text-transform: uppercase;
 	color: var(--color-text-high);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	line-height: 1.1;
 }
 
 .infoValue {
-	font-size: var(--fonts-xl);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xl);
+	font-weight: var(--weight-semi);
 	letter-spacing: 1px;
 }
 

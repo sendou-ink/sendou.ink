@@ -37,7 +37,7 @@
 .outlineToggleButton {
 	background-color: var(--color-bg-high);
 	color: var(--color-text);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	padding: var(--s-2);
 	width: 140px;
 }
@@ -67,8 +67,8 @@
 
 .weaponsSummary {
 	background-color: var(--color-bg-high);
-	font-size: var(--fonts-sm);
-	font-weight: var(--bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
 	padding: var(--s-2);
 	display: flex;
 	align-items: center;

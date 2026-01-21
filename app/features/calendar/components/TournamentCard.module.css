@@ -41,7 +41,7 @@
 .org {
 	display: flex;
 	gap: var(--s-1);
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 }
 
@@ -53,16 +53,16 @@
 }
 
 .time {
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
 	display: block;
 }
 
 .name {
 	text-align: center;
-	font-weight: var(--semi-bold);
-	font-size: var(--fonts-sm);
+	font-weight: var(--weight-semi);
+	font-size: var(--font-sm);
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	max-width: 225px;
@@ -70,8 +70,8 @@
 }
 
 .teamCount {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-selector);
 	width: max-content;
@@ -114,8 +114,8 @@
 }
 
 .pill {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	border-radius: var(--radius-selector);
 	padding: var(--s-0-5) var(--s-1-5);
 	display: grid;

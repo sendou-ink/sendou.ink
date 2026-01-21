@@ -11,7 +11,7 @@
 	gap: var(--s-3);
 	border-bottom: 1.5px solid var(--color-border);
 	background-color: var(--color-bg);
-	font-weight: bold;
+	font-weight: var(--weight-extra);
 	padding-inline: var(--s-4);
 	position: sticky;
 	top: 0;
@@ -33,8 +33,8 @@
 	height: 36px;
 	background-color: var(--color-accent);
 	border-radius: var(--radius-field);
-	font-size: var(--fonts-lg);
-	font-weight: var(--bold);
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
 	color: var(--color-text);
 	text-decoration: none;
 	flex-shrink: 0;
@@ -52,9 +52,9 @@
 }
 
 .separator {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: var(--color-text-high);
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	opacity: 0.5;
 	animation: fadeIn 200ms ease-out 150ms both;
 }
@@ -86,8 +86,8 @@
 }
 
 .pageName {
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	color: var(--color-text);
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -103,7 +103,7 @@
 }
 
 .sideNavEmpty {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: var(--color-text-high);
 	padding: var(--s-1) var(--s-2);
 }
@@ -137,8 +137,8 @@
 		height: 36px;
 		background-color: var(--color-accent);
 		border-radius: var(--radius-field);
-		font-size: var(--fonts-lg);
-		font-weight: var(--bold);
+		font-size: var(--font-lg);
+		font-weight: var(--weight-bold);
 		color: var(--color-text);
 		text-decoration: none;
 		flex-shrink: 0;

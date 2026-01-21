@@ -11,14 +11,14 @@
 }
 
 .title {
-	font-size: var(--fonts-md);
-	font-weight: 600;
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
 	margin: 0;
 }
 
 .viewAll {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	color: var(--color-text-accent);
 }
 
@@ -98,14 +98,14 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 }
 
 .author {
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 }
 
 .authorName {

@@ -32,8 +32,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 	cursor: pointer;
 	transition: background-color 0.2s ease;
 }
@@ -89,8 +89,8 @@
 .mapSelectContainer {
 	display: flex;
 	gap: var(--s-2);
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 	align-items: center;
 	position: relative;
 	flex: 1;
@@ -125,8 +125,8 @@
 	background-color: var(--color-bg-higher);
 	padding: 2px 6px;
 	border-radius: var(--radius-field);
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	display: inline-block;
 	min-width: 4.5rem;
 	text-align: center;
@@ -136,7 +136,7 @@
 	display: flex;
 	gap: var(--s-2);
 	align-items: baseline;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	margin-block: var(--s-2);
 }
 

@@ -27,7 +27,7 @@
 	cursor: grab;
 	user-select: none;
 	color: var(--color-text-high);
-	font-size: var(--fonts-md);
+	font-size: var(--font-md);
 	touch-action: none;
 	background: none;
 	border: none;
@@ -41,9 +41,9 @@
 
 .weaponName {
 	text-transform: uppercase;
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	flex: 1;
 	min-width: 0;
 	overflow: hidden;

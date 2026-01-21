@@ -11,8 +11,8 @@
 	align-items: center;
 	padding: var(--s-1-5) var(--s-3);
 	column-gap: var(--s-2);
-	font-size: var(--fonts-xs);
-	font-weight: var(--bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
 	grid-template-columns: 2.5rem 2.25rem 2rem 1fr 3rem 1fr;
 }
 
@@ -26,7 +26,7 @@
 	background-color: var(--color-bg-high);
 	column-gap: var(--s-2);
 	row-gap: var(--s-2);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	grid-template-columns: 2rem 2.25rem 2rem 1fr 3rem;
 	grid-template-areas:
 		"handle seed logo name sp"
@@ -81,7 +81,7 @@
 	cursor: grab;
 	background: none;
 	border: none;
-	font-size: var(--fonts-lg);
+	font-size: var(--font-lg);
 	color: var(--color-text-high);
 	padding: var(--s-1);
 	touch-action: none;
@@ -110,7 +110,7 @@
 	border: 1px solid var(--color-border);
 	background-color: var(--color-bg);
 	color: var(--color-text);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 }
 
 .seedInput:focus {
@@ -135,8 +135,8 @@
 	flex-shrink: 0;
 	background-color: var(--color-second);
 	color: var(--color-text-inverse);
-	font-size: var(--fonts-xxxxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	padding: 1px 4px;
 	border-radius: var(--radius-field);
 	text-transform: uppercase;
@@ -155,7 +155,7 @@
 	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-box);
 	padding: var(--s-0-5) var(--s-2);
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 }
 
 .playerNew {
@@ -165,8 +165,8 @@
 .playerNewBadge {
 	background-color: var(--color-second);
 	color: var(--color-text-inverse);
-	font-size: var(--fonts-xxxxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	padding: 1px 3px;
 	border-radius: var(--radius-field);
 	text-transform: uppercase;
@@ -178,7 +178,7 @@
 	align-items: center;
 	justify-content: center;
 	gap: 2px;
-	font-size: var(--fonts-xxxs);
+	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 }
 

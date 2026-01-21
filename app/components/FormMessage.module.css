@@ -1,14 +1,14 @@
 .error {
 	display: block;
 	color: var(--color-error);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	margin-block-start: var(--label-margin);
 }
 
 .info {
 	display: block;
 	color: var(--color-text-high);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	margin-block-start: var(--label-margin);
 }
 

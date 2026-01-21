@@ -2,8 +2,8 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-0-5);
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 }
 
 .tableRank {
@@ -53,8 +53,8 @@ a.tableRow:hover {
 }
 
 .tableRowQualification {
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	justify-content: center;
 	background-color: var(--color-bg-higher);
 	display: flex;
@@ -73,8 +73,8 @@ a.tableRow:hover {
 }
 
 .time {
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
 }
 

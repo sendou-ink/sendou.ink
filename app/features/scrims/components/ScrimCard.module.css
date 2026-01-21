@@ -22,7 +22,7 @@
 .teamName {
 	flex: 1;
 	font-size: var(--text-lg);
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	margin: 0;
 	display: flex;
 	flex-direction: column;
@@ -31,8 +31,8 @@
 }
 
 .pickupLabel {
-	font-size: var(--fonts-xxxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	text-transform: uppercase;
 	color: var(--color-text-high);
 }
@@ -66,23 +66,22 @@
 .infoLabel {
 	text-transform: uppercase;
 	color: var(--color-text-high);
-	font-weight: var(--bold);
-	font-size: var(--fonts-xxs);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-2xs);
 }
 
 .infoValue {
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 }
 
 .textContent {
 	padding-inline: var(--s-4);
 	padding-bottom: var(--s-3);
-	font-size: var(--fonts-sm);
-	line-height: 1.4;
+	font-size: var(--font-sm);
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-0-5);
@@ -93,8 +92,8 @@
 	border: none;
 	color: var(--color-text-accent);
 	cursor: pointer;
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	padding: 0;
 	text-align: left;
 	text-decoration: underline;
@@ -142,7 +141,7 @@
 
 .canceledLabel {
 	color: var(--color-error);
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	text-transform: uppercase;
 }

@@ -11,7 +11,7 @@
 .linkList {
 	display: flex;
 	justify-content: space-evenly;
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 }
 
 .socials {
@@ -32,7 +32,7 @@
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-higher);
 	cursor: pointer;
-	font-size: var(--fonts-lg);
+	font-size: var(--font-lg);
 }
 
 .socialIcon {
@@ -49,15 +49,15 @@
 }
 
 .socialHeader > p {
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 }
 
 .patronTitle {
 	display: flex;
 	align-items: flex-end;
 	justify-content: center;
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 	gap: var(--s-2);
 }
 
@@ -68,7 +68,7 @@
 	justify-content: center;
 	padding: 0;
 	margin: 0 auto;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	gap: var(--s-1);
 	list-style: none;
 	margin-block-start: var(--s-2);
@@ -86,7 +86,7 @@
 	display: flex;
 	flex-direction: column;
 	color: var(--color-text-high);
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	text-align: center;
 }
 

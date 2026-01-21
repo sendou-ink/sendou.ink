@@ -8,8 +8,8 @@
 	gap: 0.571rem;
 	color: var(--text-color);
 	forced-color-adjust: none;
-	font-size: var(--fonts-xs);
-	font-weight: var(--bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
 	margin-block-end: 0;
 }
 

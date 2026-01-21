@@ -24,7 +24,7 @@
 .header {
 	display: flex;
 	align-items: center;
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	padding-inline: var(--s-1);
 	padding-bottom: var(--s-1);
 	gap: var(--s-1);
@@ -38,7 +38,7 @@
 .noNotifications {
 	display: grid;
 	place-items: center;
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
 	margin-block-start: 65px;
 }

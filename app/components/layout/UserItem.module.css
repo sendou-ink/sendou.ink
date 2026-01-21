@@ -25,8 +25,8 @@
 	background-color: transparent;
 	color: inherit;
 	cursor: pointer;
-	font-size: var(--fonts-xs);
-	font-weight: var(--bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
 	gap: var(--s-2);
 	text-decoration: none;
 }

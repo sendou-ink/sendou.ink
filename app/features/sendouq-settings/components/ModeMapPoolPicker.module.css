@@ -4,12 +4,12 @@
 }
 
 .slot {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	display: grid;
 	place-items: center;
 	color: var(--color-text-high);
 	border-radius: var(--radius-field);
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	width: 24px;
 	height: 24px;
 	border: 2px dotted var(--color-bg-higher);
@@ -81,14 +81,14 @@
 	position: absolute;
 	top: 14px;
 	text-transform: uppercase;
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	cursor: not-allowed;
 }
 
 .mapButtonLabel {
-	font-size: var(--fonts-xxxxs);
+	font-size: var(--font-2xs);
 	color: var(--color-text-high);
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 }
 
 .divider::before,
@@ -97,8 +97,8 @@
 }
 
 .divider {
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	text-transform: uppercase;
 	display: flex;
 	gap: var(--s-2);

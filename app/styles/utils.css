@@ -1,29 +1,29 @@
 .text-xl {
-	font-size: var(--fonts-xl);
+	font-size: var(--font-xl);
 }
 
 .text-lg {
-	font-size: var(--fonts-lg);
+	font-size: var(--font-lg);
 }
 
 .text-sm {
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 }
 
 .text-md {
-	font-size: var(--fonts-md);
+	font-size: var(--font-md);
 }
 
 .text-xs {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 }
 
 .text-xxs {
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 }
 
 .text-xxxs {
-	font-size: var(--fonts-xxxs);
+	font-size: var(--font-2xs);
 }
 
 .text-center {
@@ -139,15 +139,15 @@
 }
 
 .font-body {
-	font-weight: var(--body);
+	font-weight: var(--weight-body);
 }
 
 .font-semi-bold {
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 }
 
 .font-bold {
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 }
 
 .h-full {
@@ -491,14 +491,6 @@
 	cursor: pointer;
 }
 
-.line-height-tight {
-	line-height: 1.3;
-}
-
-.line-height-very-tight {
-	line-height: 1.1;
-}
-
 .opaque {
 	opacity: 0.6;
 }
@@ -609,7 +601,7 @@
 }
 
 .small-text {
-	font-size: var(--fonts-xxs) !important;
+	font-size: var(--font-2xs) !important;
 }
 
 .dotted {
@@ -621,8 +613,8 @@
 .summary {
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg);
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	padding-block: var(--s-1);
 	padding-inline: var(--s-2);
 }

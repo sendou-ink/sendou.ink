@@ -15,10 +15,9 @@
 	align-items: center;
 	text-align: center;
 	flex-direction: column;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	line-height: 1.3;
-	font-weight: var(--semi-bold);
-	flex-grow: 1;
+	font-weight: var(--weight-semi);
 	width: max-content;
 	gap: var(--s-1);
 }

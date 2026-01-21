@@ -21,8 +21,8 @@
 
 .header {
 	text-align: center;
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	text-transform: uppercase;
 	color: var(--color-text-accent);
 	display: flex;

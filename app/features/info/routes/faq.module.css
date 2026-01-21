@@ -2,8 +2,8 @@
 	padding: var(--s-3);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
-	font-size: var(--fonts-lg);
-	font-weight: var(--bold);
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
 }
 
 .details {

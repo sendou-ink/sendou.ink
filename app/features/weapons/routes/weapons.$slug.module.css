@@ -18,6 +18,6 @@
 }
 
 .dataCredit {
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 }

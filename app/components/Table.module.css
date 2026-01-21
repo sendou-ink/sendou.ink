@@ -8,12 +8,12 @@
 	width: 100%;
 	border-collapse: separate;
 	border-spacing: 0;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	text-align: left;
 	border-color: var(--color-border);
 
 	& > thead {
-		font-size: var(--fonts-xxs);
+		font-size: var(--font-2xs);
 	}
 
 	& tbody tr:hover {

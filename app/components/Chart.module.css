@@ -10,8 +10,8 @@
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg);
 	padding: var(--s-1) var(--s-2);
-	font-weight: var(--semi-bold);
-	font-size: var(--fonts-sm);
+	font-weight: var(--weight-semi);
+	font-size: var(--font-sm);
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-1);

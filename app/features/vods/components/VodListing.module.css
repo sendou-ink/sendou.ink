@@ -17,8 +17,8 @@
 }
 
 .castText {
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
 }
 
@@ -27,8 +27,8 @@
 	border-radius: 100%;
 	display: grid;
 	place-items: center;
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	width: 38px;
 	height: 38px;
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 }

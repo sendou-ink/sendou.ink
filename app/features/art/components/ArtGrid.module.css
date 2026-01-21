@@ -11,7 +11,7 @@
 	background-color: #fff;
 	border-radius: var(--radius-box);
 	color: #000;
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	padding-inline: var(--s-1);
 	margin-block: var(--s-1) var(--s-0-5);
 }
@@ -21,7 +21,7 @@
 }
 
 .dialogDescription {
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	text-align: center;
 	color: #fff;
 }

@@ -52,8 +52,8 @@
 }
 
 .gameMarkerText {
-	font-size: var(--fonts-xxxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	white-space: nowrap;
 }
 

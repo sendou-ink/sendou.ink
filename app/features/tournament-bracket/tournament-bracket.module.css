@@ -1,5 +1,5 @@
 .finalize {
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	margin-block-end: var(--s-4);
 	display: flex;
 	gap: var(--s-1);
@@ -7,13 +7,9 @@
 	justify-content: center;
 }
 
-.startBracketAlert {
-	line-height: 1.4;
-}
-
 .miniAlert {
 	background-color: var(--color-info-low);
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	border-radius: var(--radius-box);
 	padding: var(--s-1) var(--s-2);
 }
@@ -29,12 +25,12 @@
 	border-end-start-radius: var(--radius-box);
 	color: var(--tournaments-text);
 	column-gap: var(--s-8);
-	font-size: var(--fonts-xsm);
+	font-size: var(--font-sm);
 	letter-spacing: 0.3px;
 }
 
 .infosValue > button {
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 }
 
 .lockedBanner {
@@ -78,7 +74,7 @@
 	background: rgb(0 0 0 / 40%);
 	border-start-end-radius: var(--radius-box);
 	border-start-start-radius: var(--radius-box);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: #fff;
 }
 
@@ -125,8 +121,8 @@
 	width: var(--field-size-xs);
 	height: var(--field-size-xs);
 	border-radius: 50%;
-	font-weight: bold;
-	font-size: var(--fonts-sm);
+	font-weight: var(--weight-extra);
+	font-size: var(--font-sm);
 }
 
 .deadlineIndicatorWarning {
@@ -198,7 +194,7 @@
 	display: flex;
 	align-items: center;
 	text-align: center;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 }
 
 .duringMatchActionsRosters {
@@ -254,8 +250,8 @@
 	border-end-start-radius: var(--radius-box);
 	border-start-start-radius: var(--radius-box);
 	cursor: pointer;
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	letter-spacing: 0.4px;
 	z-index: 1;
 
@@ -324,21 +320,21 @@
 }
 
 .duringMatchActionsSeed {
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	color: var(--color-text-accent);
 }
 
 .duringMatchActionsTeamName {
 	color: var(--color-text);
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 }
 
 .rosters {
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--s-8);
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	flex-direction: column;
 }
 
@@ -440,7 +436,7 @@
 .pointsInput {
 	--field-width: 4.5rem;
 	padding: var(--s-3-5) var(--s-2) !important;
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 }
 
 @media screen and (min-width: 480px) {
@@ -450,14 +446,14 @@
 }
 
 .quickAction {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: var(--color-text);
 	background-color: var(--color-bg);
 	border-radius: var(--radius-box);
 	border: 2px solid var(--color-bg-higher);
 	padding-block: var(--s-1-5);
 	padding-inline: var(--s-2-5);
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	align-items: center;
 }
 
@@ -476,7 +472,7 @@
 }
 
 .compactifyButton {
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 	border-color: var(--color-bg-higher);
 	background-color: var(--color-bg);
@@ -496,7 +492,7 @@
 	text-transform: uppercase;
 	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-box) 0 0 var(--radius-box);
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	color: var(--color-text-high);
 	display: grid;
 	place-items: center;

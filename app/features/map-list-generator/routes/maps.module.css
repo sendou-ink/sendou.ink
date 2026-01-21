@@ -7,7 +7,7 @@
 }
 
 .tournamentMapListLink {
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	text-align: center;
 }
 
@@ -29,13 +29,13 @@
 }
 
 .mapList {
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	margin-block-start: var(--s-4);
 }
 
 .modeAbbr {
 	color: var(--color-text-high);
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	text-decoration: none;
 }

@@ -37,8 +37,8 @@
 	text-overflow: ellipsis;
 	overflow: hidden;
 	white-space: nowrap;
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	color: var(--color-text);
 }
 
@@ -83,8 +83,8 @@
 }
 
 .pill {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	border-radius: var(--radius-selector);
 	background-color: var(--color-bg-higher);
 	padding: var(--s-0-5) var(--s-2);
@@ -100,8 +100,8 @@
 }
 
 .editButton {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	border-radius: var(--radius-selector);
 	background-color: var(--color-bg-higher);
 	padding: var(--s-0-5) var(--s-2);

@@ -26,8 +26,8 @@
 	align-items: center;
 	background-color: var(--color-bg);
 	border-radius: var(--radius-field);
-	font-size: var(--fonts-xsm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 	padding-inline-end: var(--s-2-5);
 }
 
@@ -36,7 +36,7 @@
 	text-overflow: ellipsis;
 	overflow: hidden;
 	max-width: 7.5rem;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: var(--color-text);
 }
 
@@ -65,7 +65,7 @@
 }
 
 .extraInfo {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	background-color: var(--color-bg);
 	border-radius: var(--radius-selector);
 	padding: 0 var(--s-1-5);
@@ -73,7 +73,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	height: 24px;
 
 	& img {
@@ -83,7 +83,7 @@
 }
 
 .extraInfoButton {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	background-color: var(--color-bg);
 	border-radius: var(--radius-box);
 	padding: var(--s-0-5) var(--s-1-5);
@@ -91,7 +91,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	color: var(--color-text);
 	border: none;
 	height: 24px;
@@ -101,8 +101,8 @@
 	border: none;
 	padding: 0 var(--s-1-5);
 	color: var(--color-text-accent);
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	background-color: var(--color-bg);
 	white-space: nowrap;
 	height: 100%;
@@ -154,8 +154,8 @@
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg);
 	padding: var(--s-0-5) var(--s-2-5);
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	bottom: -36px;
 	left: 50%;
 	transform: translate(-50%, -50%);
@@ -164,11 +164,11 @@
 .popoverButton {
 	background-color: transparent;
 	color: var(--color-text-high);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	padding: 0;
 	border: none;
 	text-decoration: underline;
 	text-decoration-style: dotted;
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	height: 19.8281px;
 }

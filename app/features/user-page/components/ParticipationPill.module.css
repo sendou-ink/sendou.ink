@@ -6,8 +6,8 @@
 }
 
 .text {
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	text-align: center;
 }
 

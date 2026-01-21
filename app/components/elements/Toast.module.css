@@ -14,8 +14,8 @@
 	padding: var(--s-1-5) var(--s-3);
 	align-items: center;
 	justify-content: center;
-	font-size: var(--fonts-xsm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 	gap: var(--s-1);
 	border: 2px solid var(--color-info);
 	width: 250px;
@@ -47,7 +47,7 @@
 	display: flex;
 	text-transform: uppercase;
 	color: var(--color-info-high);
-	font-size: var(--fonts-xxsm);
+	font-size: var(--font-xs);
 	gap: var(--s-2);
 	align-items: center;
 	margin-block-end: var(--s-1-5);

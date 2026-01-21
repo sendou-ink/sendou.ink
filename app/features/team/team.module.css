@@ -1,6 +1,6 @@
 .searchInput {
 	height: 40px !important;
-	font-size: var(--fonts-lg);
+	font-size: var(--font-lg);
 	max-width: 240px;
 }
 
@@ -18,23 +18,23 @@
 }
 
 .searchTeamName {
-	font-size: var(--fonts-xl);
-	font-weight: var(--bold);
+	font-size: var(--font-xl);
+	font-weight: var(--weight-bold);
 	word-break: break-word;
 }
 
 .searchTeamMembers {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: var(--color-text-high);
 }
 
 .searchTeamTag {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: var(--color-accent);
 	padding: var(--s-0-5) var(--s-1);
 	border-radius: var(--radius-field);
 	margin-left: var(--s-2);
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 }
 
 .searchTeamAvatarPlaceholder {
@@ -42,7 +42,7 @@
 	min-width: 64px;
 	display: grid;
 	place-items: center;
-	font-size: var(--fonts-xl);
+	font-size: var(--font-xl);
 	border-radius: 100%;
 	background-color: var(--color-bg-high);
 }
@@ -83,7 +83,7 @@
 	justify-self: flex-end;
 	font-size: 36px;
 	line-height: 1;
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	color: #fff;
 	display: none;
 	align-items: center;
@@ -132,11 +132,10 @@
 
 .mobileNameCountry {
 	display: flex;
-	font-size: var(--fonts-xl);
+	font-size: var(--font-xl);
 	align-items: center;
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	flex-direction: column;
-	line-height: 1.5;
 }
 
 .mobileTeamName {
@@ -146,7 +145,7 @@
 }
 
 .bannerTag {
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	background-color: var(--color-accent-low);
 	color: var(--color-accent);
 	padding: var(--s-1) var(--s-1-5);
@@ -161,7 +160,7 @@
 }
 
 .bannerTagMobile {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	padding: var(--s-0-5) var(--s-1);
 	margin-block: var(--s-1);
 }
@@ -183,8 +182,8 @@
 	margin: 0 auto;
 	border-radius: var(--radius-box);
 	padding: var(--s-1) var(--s-4);
-	font-weight: var(--bold);
-	font-size: var(--fonts-sm);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-sm);
 	display: flex;
 	justify-content: space-between;
 	width: min(100%, 48rem);
@@ -213,8 +212,8 @@
 	background-color: var(--color-bg-high);
 	border-radius: var(--radius-box);
 	padding: var(--s-2) var(--s-4);
-	font-size: var(--fonts-xl);
-	font-weight: var(--bold);
+	font-size: var(--font-xl);
+	font-weight: var(--weight-bold);
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -226,7 +225,7 @@
 	align-items: center;
 	gap: var(--s-4);
 	color: var(--color-text);
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 }
 
 .memberAvatar {
@@ -237,15 +236,15 @@
 
 .memberRole {
 	margin-left: auto;
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	color: var(--color-text-high);
 	margin-inline-end: var(--s-2-5);
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 }
 
 .memberRoleMobile {
 	color: var(--color-text-high);
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 }
 
 .memberCardContainer {
@@ -264,13 +263,13 @@
 	padding: var(--s-3);
 	background-color: var(--color-bg-high);
 	border-radius: var(--radius-box);
-	font-size: var(--fonts-lg);
-	font-weight: var(--bold);
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
 }
 
 .memberCardName {
 	color: var(--color-text);
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	margin-block-start: var(--s-2);
 }
 
@@ -284,8 +283,8 @@
 
 .rosterMember {
 	justify-self: flex-start;
-	font-weight: var(--bold);
-	font-size: var(--fonts-sm);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-sm);
 }
 
 .rosterSeparator {
@@ -305,7 +304,7 @@
 	display: flex;
 	gap: var(--s-8);
 	padding-left: var(--s-4);
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 }
 
 @media screen and (min-width: 640px) {

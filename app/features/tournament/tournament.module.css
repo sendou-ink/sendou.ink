@@ -26,7 +26,7 @@
 
 .teamWithRosterName {
 	flex: 1;
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	padding-inline-end: var(--s-4);
 	text-align: right;
 }
@@ -36,8 +36,8 @@
 	flex: 1;
 	flex-direction: column;
 	border-inline-start: var(--border-style-accent);
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	gap: var(--s-2);
 	padding-inline-start: var(--s-4);
 	padding-block: var(--s-3);
@@ -76,17 +76,17 @@
 .teamWithRosterMapPoolModeInfo {
 	background-color: var(--color-bg-high);
 	display: flex;
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	justify-content: center;
 	align-items: center;
 	gap: var(--s-1);
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	padding-block: var(--s-0-5);
 }
 
 .teamWithRosterSeed {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
 }
 
@@ -113,11 +113,11 @@
 	position: absolute;
 	background-color: var(--color-text-accent);
 	color: var(--color-text-inverse);
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	width: 12px;
 	height: 12px;
 	border-radius: var(--radius-box);
-	font-size: var(--fonts-xxxxs);
+	font-size: var(--font-2xs);
 	display: grid;
 	place-items: center;
 	top: 14px;
@@ -141,14 +141,14 @@
 }
 
 .title {
-	font-size: var(--fonts-xl);
-	font-weight: var(--bold);
+	font-size: var(--font-xl);
+	font-weight: var(--weight-bold);
 }
 
 .badge {
 	text-transform: uppercase;
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	padding: var(--s-0-5) var(--s-2);
 	border-radius: var(--radius-box);
 	place-items: center;
@@ -182,7 +182,6 @@
 
 .infoDescription > :is(h1, h2, h3, h4, h5, h6) {
 	margin-block-end: var(--s-6);
-	line-height: 1.4;
 }
 
 .infoDescription > :is(h2, h3, h4, h5, h6) {
@@ -190,15 +189,15 @@
 }
 
 .infoDescription > h1 {
-	font-size: var(--fonts-xl);
+	font-size: var(--font-xl);
 }
 
 .infoDescription > :is(h2, h3, h4, h5, h6) {
-	font-size: var(--fonts-lg);
+	font-size: var(--font-lg);
 }
 
 .infoDescription > :is(h3, h4, h5, h6) {
-	font-size: var(--fonts-md);
+	font-size: var(--font-md);
 }
 
 .infoDescription > ul:has(+ p) {
@@ -207,12 +206,12 @@
 
 .by {
 	color: var(--color-text-high);
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 }
 
 .sectionHeader {
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 }
 
 .section {
@@ -226,8 +225,8 @@
 }
 
 .sectionWarning {
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	text-align: center;
 	color: var(--color-text-high);
 }
@@ -291,7 +290,7 @@
 	padding: var(--s-1-5) var(--s-3);
 	border-radius: var(--radius-box);
 	column-gap: var(--s-1);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	grid-template-columns: 1.5rem 2rem 8rem 3rem 1fr;
 	list-style: none;
 	row-gap: var(--s-1-5);
@@ -310,7 +309,7 @@
 }
 
 .seedsTeamsContainerHeader {
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 }
 
 .seedsTeamName {
@@ -335,19 +334,19 @@
 
 .seedsTeamMemberName {
 	grid-column: 1 / span 2;
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 }
 
 .streamUserContainer {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	display: flex;
 	gap: var(--s-2);
 	align-items: center;
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 }
 
 .streamViewerCount {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	display: flex;
 	gap: var(--s-2);
 	align-items: center;
@@ -373,28 +372,28 @@
 	grid-template-columns: 1fr;
 	grid-template-rows: 1fr 2fr 1fr;
 	place-items: center;
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	text-align: center;
 }
 
 .teamStatTitle {
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	color: var(--color-text-high);
 }
 
 .teamStatMain {
-	font-size: var(--fonts-xl);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xl);
+	font-weight: var(--weight-semi);
 }
 
 .teamStatMain sup {
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 }
 
 .teamStatSub {
 	color: var(--color-text-high);
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 }
 
 @media screen and (min-width: 640px) {
@@ -442,14 +441,14 @@
 }
 
 .teamSetScore {
-	font-size: var(--fonts-xl);
-	font-weight: var(--bold);
+	font-size: var(--font-xl);
+	font-weight: var(--weight-bold);
 	white-space: nowrap;
 }
 
 .teamSetRoundName {
-	font-size: var(--fonts-lg);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-lg);
+	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
 	margin-block-end: 2px;
 }
@@ -470,8 +469,8 @@
 	flex-direction: column;
 	gap: var(--s-2);
 	align-items: center;
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	color: var(--color-text);
 }
 
@@ -485,16 +484,16 @@
 
 .teamSetOpponentVs {
 	grid-area: vs;
-	font-size: var(--fonts-xl);
-	font-weight: var(--bold);
+	font-size: var(--font-xl);
+	font-weight: var(--weight-bold);
 	color: var(--color-text-high);
 	align-self: center;
 }
 
 .teamSetOpponentTeam {
 	grid-area: team;
-	font-size: var(--fonts-lg);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-lg);
+	font-weight: var(--weight-semi);
 	color: var(--color-text);
 }
 
@@ -509,7 +508,7 @@
 	color: var(--color-text);
 	display: flex;
 	gap: var(--s-1);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	align-items: center;
 }
 
@@ -518,7 +517,7 @@
 	width: 100%;
 	align-items: center;
 	color: var(--color-accent);
-	font-size: var(--fonts-lg);
+	font-size: var(--font-lg);
 }
 
 .overlapDivider::before,
@@ -533,8 +532,8 @@
 	height: 28px;
 	display: grid;
 	place-items: center;
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	border: 3px solid var(--color-accent);
 	border-radius: var(--radius-field);
 	color: var(--color-text);

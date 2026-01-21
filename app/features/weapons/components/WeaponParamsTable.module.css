@@ -10,7 +10,7 @@
 	width: 100%;
 	border-collapse: separate;
 	border-spacing: 0;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	text-align: left;
 }
 
@@ -59,7 +59,7 @@
 }
 
 .weaponName {
-	font-size: var(--fonts-xxxs);
+	font-size: var(--font-2xs);
 	max-width: 80px;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -72,8 +72,8 @@
 
 .categoryHeader {
 	background-color: var(--color-bg-high);
-	font-weight: var(--bold);
-	font-size: var(--fonts-xxs);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-2xs);
 	letter-spacing: 0.5px;
 	padding: var(--s-1-5) var(--s-2);
 }
@@ -82,7 +82,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	min-width: 180px;
 }
 
@@ -105,7 +105,7 @@
 }
 
 .paramCell {
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	vertical-align: top;
 	min-width: 90px;
 }
@@ -130,8 +130,8 @@
 	border-radius: var(--radius-full);
 	background-color: var(--color-accent-low);
 	color: var(--color-accent);
-	font-size: var(--fonts-xxxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 }
 
 .noValue {
@@ -143,7 +143,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-0-5);
-	font-size: var(--fonts-xxxs);
+	font-size: var(--font-2xs);
 	border-top: 1px solid var(--color-border);
 	padding-top: var(--s-1);
 }
@@ -161,5 +161,5 @@
 .historyValue {
 	font-variant-numeric: tabular-nums;
 	color: var(--color-accent);
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 }

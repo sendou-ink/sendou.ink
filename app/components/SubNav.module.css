@@ -30,13 +30,13 @@
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	cursor: pointer;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	text-align: center;
 	white-space: nowrap;
 }
 
 .linkSecondary {
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	padding: var(--s-0-5) var(--s-2);
 	background-color: var(--color-bg-high);
 }

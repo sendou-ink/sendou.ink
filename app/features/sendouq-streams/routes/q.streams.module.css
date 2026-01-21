@@ -1,14 +1,14 @@
 .userContainer {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	display: flex;
 	gap: var(--s-2);
 	align-items: center;
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	color: var(--text);
 }
 
 .viewerCount {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	display: flex;
 	gap: var(--s-2);
 	align-items: center;

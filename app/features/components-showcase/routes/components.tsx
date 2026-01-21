@@ -2053,7 +2053,7 @@ function FormFieldsSection({ id }: { id: string }) {
 	return (
 		<Section>
 			<SectionTitle id={id}>Form Fields</SectionTitle>
-			<p className="mb-4" style={{ fontSize: "var(--fonts-sm)", opacity: 0.8 }}>
+			<p className="mb-4" style={{ fontSize: "var(--font-sm)", opacity: 0.8 }}>
 				Schema-based form fields using SendouForm. Each field type is defined
 				with Zod schemas that generate both UI and validation.
 			</p>

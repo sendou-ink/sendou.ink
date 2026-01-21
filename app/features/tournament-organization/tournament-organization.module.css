@@ -16,14 +16,14 @@
 }
 
 .calendarDayHeader {
-	font-size: var(--fonts-md);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-md);
+	font-weight: var(--weight-semi);
 }
 
 .calendarDay {
 	aspect-ratio: 1;
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	background-color: var(--bg-lighter);
 	padding: var(--s-1);
 	position: relative;
@@ -63,13 +63,13 @@
 	border: var(--border-style);
 	display: grid;
 	place-items: center;
-	font-size: var(--fonts-md);
+	font-size: var(--font-md);
 	background-color: var(--color-bg-higher);
 }
 
 .calendarDayToday {
 	color: var(--color-accent);
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 }
 
 .calendarDayPrevious {
@@ -81,21 +81,21 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--s-2);
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 }
 
 .calendarMonthSelector a {
-	font-size: var(--fonts-xl);
+	font-size: var(--font-xl);
 }
 
 .calendarMonthSelector > div {
-	font-size: var(--fonts-lg);
+	font-size: var(--font-lg);
 	margin-block-start: var(--s-1);
 }
 
 .sectionDivider {
-	font-size: var(--fonts-md);
-	font-weight: var(--bold);
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
 	color: var(--color-text-high);
 	border-bottom: var(--border-style);
 	width: 100%;
@@ -127,7 +127,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	color: var(--color-text);
 	width: max-content;
 }
@@ -139,7 +139,7 @@
 .eventInfoTime {
 	display: block;
 	color: var(--color-text-high);
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 }
 
 .leaderboardList {
@@ -149,8 +149,8 @@
 }
 
 .leaderboardList li::marker {
-	font-size: var(--fonts-lg);
-	font-weight: var(--bold);
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
 	color: var(--color-accent);
 	padding-inline-end: var(--s-2);
 }
@@ -163,7 +163,7 @@
 }
 
 .socialLink {
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	color: var(--text-main);
 	display: flex;
 	gap: var(--s-2);

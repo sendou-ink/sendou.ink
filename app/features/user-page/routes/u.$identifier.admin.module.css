@@ -1,5 +1,5 @@
 .dl dt {
-	font-weight: bold;
+	font-weight: var(--weight-extra);
 }
 
 .dl dt:not(:first-child) {

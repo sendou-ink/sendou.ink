@@ -58,8 +58,8 @@
 	gap: var(--s-2);
 	color: var(--color-text);
 	text-decoration: none;
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	border-radius: var(--radius-field);
 	padding: var(--s-1);
 	margin-left: calc(-1 * var(--s-1));
@@ -156,8 +156,8 @@
 	text-decoration: none;
 	color: var(--color-text);
 	border-top: 1.5px solid var(--color-border);
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	flex-shrink: 0;
 	border-radius: 0;
 }
@@ -209,8 +209,8 @@
 }
 
 .sideNavHeader h2 {
-	font-size: var(--fonts-xs);
-	font-weight: var(--bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
 }
 
 .sideNavHeaderClose {
@@ -229,7 +229,7 @@
 }
 
 .sideNavLink {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	color: var(--color-text);
 	text-decoration: none;
 	padding: var(--s-1) var(--s-2);
@@ -251,7 +251,7 @@
 	&[aria-current="page"] {
 		color: var(--color-text);
 		background-color: var(--color-bg-higher);
-		font-weight: 600;
+		font-weight: var(--weight-bold);
 	}
 }
 
@@ -289,7 +289,7 @@
 }
 
 .sideNavLinkSubtitle {
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -298,8 +298,8 @@
 
 .sideNavLinkBadge {
 	margin-left: auto;
-	font-size: var(--fonts-xxxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	color: var(--color-text-inverse);
 	background-color: var(--color-text-accent);
 	padding: 0 var(--s-1);

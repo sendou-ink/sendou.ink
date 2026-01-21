@@ -9,9 +9,8 @@
 	background: var(--color-text-accent);
 	color: var(--color-text-inverse);
 	cursor: pointer;
-	font-size: var(--fonts-sm);
-	font-weight: var(--bold);
-	line-height: var(--field-line-height);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
 	padding: 0 var(--field-padding);
 	user-select: none;
 	outline-color: var(--color-text-accent);
@@ -58,17 +57,17 @@
 }
 
 .small {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	height: var(--field-size-sm);
 }
 
 .miniscule {
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	height: var(--field-size-xs);
 }
 
 .big {
-	font-size: var(--fonts-md);
+	font-size: var(--font-md);
 	height: var(--field-size-lg);
 }
 

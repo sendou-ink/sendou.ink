@@ -18,7 +18,7 @@
 
 .team {
 	display: flex;
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	color: var(--color-text);
 	gap: var(--s-1-5);
 	grid-area: team;
@@ -106,7 +106,7 @@
 	padding: var(--s-1) var(--s-1-5);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
@@ -114,7 +114,7 @@
 
 .extraInfoHeading {
 	color: var(--color-text-accent);
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 }
 
 .resultsTableWrapper {
@@ -159,15 +159,15 @@
 	display: flex;
 	align-items: center;
 	color: var(--color-text);
-	font-weight: var(--body);
+	font-weight: var(--weight-body);
 	gap: var(--s-4);
 	line-height: 1.2rem;
 }
 
 .searchIgn {
 	color: var(--color-text-high);
-	font-size: var(--fonts-sm);
-	font-weight: var(--body);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-body);
 }
 
 .searchUsers > li {
@@ -177,7 +177,7 @@
 .searchInput {
 	height: 40px !important;
 	margin: 0 auto;
-	font-size: var(--fonts-lg);
+	font-size: var(--font-lg);
 }
 
 .searchIcon {
@@ -188,7 +188,7 @@
 
 .searchInfo {
 	color: var(--color-text-high);
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	text-align: center;
 }
 
@@ -224,8 +224,8 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	gap: var(--s-1-5);
 }
 
@@ -235,7 +235,7 @@
 	}
 
 	.placementsMode {
-		font-size: var(--fonts-sm);
+		font-size: var(--font-sm);
 	}
 }
 
@@ -246,9 +246,9 @@
 .seasonWeaponContainer {
 	display: flex;
 	align-items: center;
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	flex-direction: column;
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	position: relative;
 	width: 60px;
 }
@@ -296,12 +296,12 @@
 
 .seasonPlayerName {
 	width: 64px;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	text-align: center;
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 }
 
 .seasonMatch {
@@ -322,9 +322,9 @@
 .seasonMatchSubSection {
 	border-radius: 0 0 var(--radius-box) var(--radius-box);
 	background-color: var(--color-bg-high);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	text-align: center;
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	display: flex;
 	gap: var(--s-1);
 	justify-content: center;
@@ -338,7 +338,7 @@
 .seasonMatchUser {
 	display: flex;
 	flex-direction: column;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	width: 65px;
 	align-items: center;
 }
@@ -351,8 +351,8 @@
 }
 
 .seasonMatchScore {
-	font-size: var(--fonts-xl);
-	font-weight: var(--bold);
+	font-size: var(--font-xl);
+	font-weight: var(--weight-bold);
 	margin-inline: auto;
 }
 
@@ -370,8 +370,8 @@
 	height: 28px;
 	display: grid;
 	place-items: center;
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	border: 3px solid var(--color-accent);
 	border-radius: var(--radius-field);
 	color: var(--color-text);
@@ -392,8 +392,8 @@
 	background-color: var(--color-bg-high);
 	padding: var(--s-0-5) var(--s-2);
 	border-radius: var(--radius-box);
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 }
 
 .seasonWeaponUsageContainer {
@@ -421,9 +421,9 @@
 
 .seasonTentative {
 	text-transform: uppercase;
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	margin-top: -8px;
 	display: flex;
 	gap: var(--s-1);

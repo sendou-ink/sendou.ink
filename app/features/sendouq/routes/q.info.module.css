@@ -2,17 +2,17 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-4);
-	font-size: var(--fonts-md);
+	font-size: var(--font-md);
 }
 
 .container h2 {
-	font-size: var(--fonts-lg);
+	font-size: var(--font-lg);
 	margin-block-end: var(--s-2);
 	color: var(--color-text-accent);
 }
 
 .container h3 {
-	font-size: var(--fonts-md);
+	font-size: var(--font-md);
 	margin-block-end: var(--s-3);
 }
 
@@ -26,8 +26,8 @@
 
 .tableOfContents li {
 	list-style: none;
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 }
 
 .tableOfContents li:has(button) {
@@ -36,5 +36,5 @@
 
 .tableOfContents li:not(:has(button)) {
 	margin-inline-start: var(--s-2);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 }

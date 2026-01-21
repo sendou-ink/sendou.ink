@@ -3,7 +3,7 @@
 	border-radius: 100%;
 	background-color: transparent;
 	color: var(--color-text);
-	font-size: var(--fonts-md);
+	font-size: var(--font-md);
 	padding: var(--s-0-5);
 	width: calc(var(--field-size) * 0.7);
 	height: calc(var(--field-size) * 0.7);
@@ -20,5 +20,5 @@
 .triggerTiny {
 	width: var(--field-size-xs);
 	height: var(--field-size-xs);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 }

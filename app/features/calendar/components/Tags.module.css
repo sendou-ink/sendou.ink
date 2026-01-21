@@ -3,14 +3,14 @@
 	max-width: var(--tags-max-width, 18rem);
 	flex-wrap: wrap;
 	padding: 0;
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	gap: var(--s-1);
 	list-style: none;
 }
 
 .small {
-	font-size: var(--fonts-xxxs);
+	font-size: var(--font-2xs);
 
 	& > li {
 		padding: 0 var(--s-1);

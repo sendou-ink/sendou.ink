@@ -34,8 +34,8 @@
 .titleInput {
 	width: 100%;
 	padding: 0 var(--s-2) var(--s-2) var(--s-2);
-	font-size: var(--fonts-lg);
-	font-weight: 600;
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
 	text-align: center;
 	background: transparent;
 	border: none;
@@ -63,8 +63,8 @@
 }
 
 .authorBy {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	color: var(--color-text-high);
 	text-transform: lowercase;
 	white-space: nowrap;
@@ -77,8 +77,8 @@
 }
 
 .authorUsername {
-	font-weight: var(--bold);
-	font-size: var(--fonts-xs);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-xs);
 	color: var(--color-text);
 	white-space: nowrap;
 }

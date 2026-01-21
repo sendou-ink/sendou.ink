@@ -1,5 +1,5 @@
 .container {
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 
 	& > h4 {
 		color: var(--color-error);

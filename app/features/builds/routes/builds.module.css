@@ -12,8 +12,8 @@
 	padding: var(--s-3);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
-	font-size: var(--fonts-sm);
-	font-weight: 600;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
 	gap: var(--s-4);
 }
 
@@ -33,8 +33,8 @@
 	display: flex;
 	align-items: center;
 	color: var(--color-text);
-	font-size: var(--fonts-xs);
-	font-weight: var(--body);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-body);
 	gap: var(--s-1);
 }
 

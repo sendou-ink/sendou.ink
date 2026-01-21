@@ -22,19 +22,19 @@
 	display: flex;
 	justify-content: space-between;
 	color: var(--color-text-high);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	padding-inline: var(--s-1);
 }
 
 .explanation {
 	color: var(--color-text-accent);
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	text-align: center;
 }
 
 .managers {
 	color: var(--color-text-high);
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	text-align: center;
 }
 
@@ -48,7 +48,7 @@
 	flex-wrap: wrap;
 	justify-content: center;
 	padding: 0;
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	gap: var(--s-1-5);
 }
 
@@ -62,7 +62,7 @@
 
 .count {
 	color: var(--color-accent-high);
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 }
 
 .editUsersList > li {
@@ -76,8 +76,8 @@
 	display: flex;
 	flex-direction: column;
 	padding: 0;
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	gap: var(--s-2);
 	padding-block-end: var(--s-2-5);
 }
@@ -87,12 +87,12 @@
 }
 
 .editSmallHeader {
-	font-size: var(--fonts-md);
+	font-size: var(--font-md);
 }
 
 .editDifferences {
 	padding: 0;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	list-style: none;
 }
 
@@ -104,5 +104,5 @@
 .searchInput {
 	height: 40px !important;
 	margin: 0 auto;
-	font-size: var(--fonts-lg);
+	font-size: var(--font-lg);
 }

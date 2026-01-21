@@ -33,8 +33,8 @@
 	background-color: var(--color-bg-higher);
 	padding: var(--s-0-5) var(--s-1);
 	border-radius: var(--radius-field);
-	font-size: var(--fonts-xxxs) !important;
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs) !important;
+	font-weight: var(--weight-semi);
 	color: var(--color-text);
 	border: 0;
 }
@@ -61,8 +61,8 @@
 	max-height: var(--match-height);
 	border-radius: var(--radius-field);
 	background-color: var(--color-bg-high);
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	padding: 0 var(--s-2);
 	display: flex;
 	flex-direction: column;
@@ -148,8 +148,8 @@ a.match:hover {
 .elimRoundHeader {
 	text-align: center;
 	background-color: var(--color-bg-higher);
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	padding-block: var(--s-2);
 	width: var(--match-width);
 	border-radius: var(--radius-field);
@@ -159,9 +159,9 @@ a.match:hover {
 	width: var(--match-width);
 	display: flex;
 	justify-content: space-between;
-	font-size: var(--fonts-xxs);
+	font-size: var(--font-2xs);
 	color: var(--color-text-high);
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 }
 
 .elimRoundColumn {
@@ -246,8 +246,8 @@ a.match:hover {
 }
 
 .rrPlacementsTable {
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	min-width: max-content;
 	overflow-x: auto;
 	max-width: 600px;
@@ -299,8 +299,8 @@ a.match:hover {
 }
 
 .standingsDividerText {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 	white-space: nowrap;
 }
 
