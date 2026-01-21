@@ -32,8 +32,6 @@ import {
 import { BracketProgressionSelector } from "../../calendar/components/BracketProgressionSelector";
 import { useTournament } from "./to.$id";
 
-import styles from "./to.$id.admin.module.css";
-
 export { action } from "../actions/to.$id.admin.server";
 
 export default function TournamentAdminPage() {
@@ -328,7 +326,7 @@ function TeamActions() {
 					</div>
 				) : null}
 				{selectedAction.inputs.includes("USER") ? (
-					<div className={styles.userSearchContainer}>
+					<div>
 						<UserSearch name="userId" label="User" />
 					</div>
 				) : null}
@@ -440,7 +438,7 @@ function StaffAdder() {
 	return (
 		<fetcher.Form method="post" className="stack sm">
 			<div className="stack horizontal sm flex-wrap items-start">
-				<div className={styles.userSearchContainer}>
+				<div>
 					<UserSearch name="userId" label="New staffer" isRequired />
 				</div>
 				<div className="stack horizontal sm items-end">

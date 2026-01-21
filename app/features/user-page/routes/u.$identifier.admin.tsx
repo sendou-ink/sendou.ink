@@ -12,7 +12,6 @@ import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { action } from "../actions/u.$identifier.admin.server";
 import { loader } from "../loaders/u.$identifier.admin.server";
-import styles from "./u.$identifier.admin.module.css";
 export { loader, action };
 
 export default function UserAdminPage() {
@@ -49,7 +48,7 @@ function AccountInfos() {
 	const { formatDateTime } = useTimeFormat();
 
 	return (
-		<dl className={styles.dl}>
+		<dl>
 			<dt>User account created at</dt>
 			<dd>
 				{data.createdAt
