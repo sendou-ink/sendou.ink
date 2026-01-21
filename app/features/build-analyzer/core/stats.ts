@@ -548,7 +548,7 @@ function specialWeaponDamages(
 			id: nanoid(),
 			distance: 0,
 			value: R.sum(cannonDamages.map((v) => v.value)),
-			type: "SPECIAL_CANNON",
+			type: "COMBO",
 		});
 	}
 
