@@ -28,14 +28,6 @@ export const action: ActionFunction = async ({ request }) => {
 			? `${inGameNameText}#${inGameNameDiscriminator}`
 			: null;
 
-	const pronouns =
-		data.subjectPronoun && data.objectPronoun
-			? JSON.stringify({
-					subject: data.subjectPronoun,
-					object: data.objectPronoun,
-				})
-			: null;
-
 	try {
 		const pronouns =
 			data.subjectPronoun && data.objectPronoun

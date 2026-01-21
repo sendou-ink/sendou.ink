@@ -13,9 +13,9 @@ import {
 	useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Form, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Form, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { MainSlotIcon } from "~/components/icons/MainSlot";
 import { SideSlotIcon } from "~/components/icons/SideSlot";

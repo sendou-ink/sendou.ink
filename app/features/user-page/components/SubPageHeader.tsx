@@ -1,4 +1,4 @@
-import { Link } from "@remix-run/react";
+import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
 import type { Tables } from "~/db/tables";

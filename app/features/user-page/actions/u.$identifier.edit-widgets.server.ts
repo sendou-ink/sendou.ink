@@ -1,5 +1,4 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import type { StoredWidget } from "~/features/user-page/core/widgets/types";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -7,8 +6,8 @@ import { widgetsEditSchema } from "~/features/user-page/user-page-schemas";
 import { parseRequestPayload } from "~/utils/remix.server";
 import { userPage } from "~/utils/urls";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUser(request);
+export const action = async ({ request }: { request: Request }) => {
+	const user = requireUser();
 
 	const payload = await parseRequestPayload({
 		request,
