@@ -7,8 +7,8 @@ import {
 	Modal,
 	ModalOverlay,
 } from "react-aria-components";
-import * as R from "remeda";
 import { useNavigate } from "react-router";
+import * as R from "remeda";
 import { SendouButton } from "~/components/elements/Button";
 import { CrossIcon } from "~/components/icons/Cross";
 import styles from "./Dialog.module.css";

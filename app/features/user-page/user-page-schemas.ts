@@ -39,13 +39,13 @@ import {
 	undefinedToNull,
 	weaponSplId,
 } from "~/utils/zod";
+import { allWidgetsFlat } from "./core/widgets/portfolio";
 import {
 	COUNTRY_CODES,
 	HIGHLIGHT_CHECKBOX_NAME,
 	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
 	USER,
 } from "./user-page-constants";
-import { allWidgetsFlat } from "./core/widgets/portfolio";
 
 export const userParamsSchema = z.object({ identifier: z.string() });
 
