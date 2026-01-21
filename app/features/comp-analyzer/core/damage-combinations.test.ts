@@ -172,34 +172,13 @@ describe("calculateDamageCombos - threshold filtering", () => {
 });
 
 describe("calculateDamageCombos - one-shot exclusion", () => {
-	test("excludes combos where main/special hit one-shots without sub", () => {
+	test("excludes all combos containing a 100+ damage hit", () => {
 		const combos = calculateDamageCombos([SPLAT_CHARGER_ID, SPLATTERSHOT_ID]);
 
 		for (const combo of combos) {
-			const hasNoSubWeapon = combo.segments.every((s) => !s.isSubWeapon);
 			const hasOneShot = combo.segments.some((s) => s.damageValue >= 100);
-
-			const isInvalidCombo = hasNoSubWeapon && hasOneShot;
-			expect(isInvalidCombo).toBe(false);
+			expect(hasOneShot).toBe(false);
 		}
-	});
-
-	test("keeps combos with 100+ damage when sub weapon is present", () => {
-		const combos = calculateDamageCombos([SPLAT_CHARGER_ID, SPLATTERSHOT_ID]);
-
-		const comboWithSubAndOneShot = combos.find((combo) => {
-			const hasSub = combo.segments.some((s) => s.isSubWeapon);
-			const hasOneShot = combo.segments.some((s) => s.damageValue >= 100);
-			return hasSub && hasOneShot;
-		});
-
-		expect(comboWithSubAndOneShot).toBeDefined();
-		expect(comboWithSubAndOneShot!.segments.some((s) => s.isSubWeapon)).toBe(
-			true,
-		);
-		expect(
-			comboWithSubAndOneShot!.segments.some((s) => s.damageValue >= 100),
-		).toBe(true);
 	});
 });
 
