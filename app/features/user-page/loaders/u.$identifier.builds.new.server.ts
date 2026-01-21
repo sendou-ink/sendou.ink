@@ -77,7 +77,7 @@ function resolveDefaultValues(
 			buildToEdit?.shoesGearSplId === -1 ? null : buildToEdit?.shoesGearSplId,
 		abilities,
 		title: buildToEdit?.title,
-		description: buildToEdit?.description,
+		description: buildToEdit?.description ?? null,
 		modes: buildToEdit?.modes ?? [],
 		private: Boolean(buildToEdit?.private),
 	};
