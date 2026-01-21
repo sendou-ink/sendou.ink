@@ -2551,7 +2551,7 @@ export const weaponParams = {
 			BulletDamageMax: 320,
 			CannonDamage: [
 				{
-					Damage: 600,
+					Damage: 500,
 					Distance: 1,
 				},
 				{

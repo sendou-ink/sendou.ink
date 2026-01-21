@@ -797,7 +797,7 @@ function parametersToSpecialWeaponResult(params: any) {
 
 		return [
 			{
-				Damage: 600,
+				Damage: 500,
 				Distance: 1,
 			},
 			...params.CannonParam.BlastParam.DistanceDamage,
