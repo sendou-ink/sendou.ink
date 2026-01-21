@@ -173,6 +173,21 @@ html {
 
 	--line-height: 1.4;
 
+	--s-0-5: 0.125rem;
+	--s-1: 0.25rem;
+	--s-1-5: 0.375rem;
+	--s-2: 0.5rem;
+	--s-3: 0.75rem;
+	--s-4: 1rem;
+	--s-5: 1.25rem;
+	--s-6: 1.5rem;
+	--s-8: 2rem;
+	--s-10: 2.5rem;
+	--s-12: 3rem;
+	--s-16: 4rem;
+	--s-24: 6rem;
+	--s-32: 8rem;
+
 	/*
 	Tokens used to define layout dimensions
 
@@ -209,10 +224,10 @@ html {
 	--field-size-icon: 18px;
 	--field-padding: 1rem;
 
-	--selector-size-xs: calc(var(--_size-selector) * 3 * 0.25rem);
-	--selector-size-sm: calc(var(--_size-selector) * 4 * 0.25rem);
-	--selector-size: calc(var(--_size-selector) * 5 * 0.25rem);
-	--selector-size-lg: calc(var(--_size-selector) * 6 * 0.25rem);
+	--selector-size-xs: calc(var(--_size-selector) * 4 * 0.25rem);
+	--selector-size-sm: calc(var(--_size-selector) * 5 * 0.25rem);
+	--selector-size: calc(var(--_size-selector) * 6 * 0.25rem);
+	--selector-size-lg: calc(var(--_size-selector) * 7 * 0.25rem);
 
 	--radius-box: calc(var(--_radius-box) * 4px);
 	--radius-field: calc(var(--_radius-field) * 4px);
@@ -221,31 +236,6 @@ html {
 }
 
 html {
-	--s-0-5: 0.125rem;
-	--s-1: 0.25rem;
-	--s-1-5: 0.375rem;
-	--s-2: 0.5rem;
-	--s-2-5: 0.625rem;
-	--s-3: 0.75rem;
-	--s-3-5: 0.875rem;
-	--s-4: 1rem;
-	--s-5: 1.25rem;
-	--s-6: 1.5rem;
-	--s-7: 1.75rem;
-	--s-8: 2rem;
-	--s-9: 2.25rem;
-	--s-10: 2.5rem;
-	--s-11: 2.75rem;
-	--s-12: 3rem;
-	--s-14: 3.5rem;
-	--s-16: 4rem;
-	--s-20: 5rem;
-	--s-24: 6rem;
-	--s-28: 7rem;
-	--s-32: 8rem;
-	--s-40: 10rem;
-	--s-48: 12rem;
-
 	--label-margin: var(--s-1);
 }
 

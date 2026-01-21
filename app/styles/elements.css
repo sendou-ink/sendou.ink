@@ -150,7 +150,7 @@
 }
 
 .react-aria-Switch .indicator {
-	width: var(--s-11);
+	width: var(--s-10);
 	height: var(--s-6);
 	background: var(--theme-transparent);
 	border-radius: 1.143rem;

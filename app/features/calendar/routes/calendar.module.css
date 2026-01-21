@@ -57,7 +57,7 @@
 .columnsContainer {
 	display: grid;
 	grid-template-columns: repeat(var(--columns-count), 225px);
-	gap: var(--s-14);
+	gap: var(--s-12);
 	overflow-x: auto;
 }
 

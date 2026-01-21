@@ -1,7 +1,7 @@
 .header {
 	display: flex;
 	align-items: center;
-	gap: var(--s-2-5);
+	gap: var(--s-3);
 }
 
 .header svg {

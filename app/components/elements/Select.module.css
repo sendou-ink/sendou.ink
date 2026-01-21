@@ -28,6 +28,7 @@
 }
 
 .selectValue {
+	font-size: var(--font-sm);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -109,7 +110,7 @@
 
 .searchInput {
 	all: unset;
-	font-size: var(--font-2xs);
+	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	letter-spacing: 0.5px;
 	flex: 1;
@@ -172,7 +173,7 @@
 	color: var(--color-text-high);
 	text-transform: uppercase;
 	font-size: var(--font-2xs);
-	padding-block-start: var(--s-2-5);
+	padding-block-start: var(--s-3);
 	padding-block-end: var(--s-1);
 	padding-inline: var(--s-1-5);
 	white-space: nowrap;

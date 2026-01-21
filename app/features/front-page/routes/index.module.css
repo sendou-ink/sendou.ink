@@ -7,7 +7,7 @@
 	gap: var(--s-3);
 	overflow-y: auto;
 	height: 100vh;
-	padding-block-end: var(--s-48);
+	padding-block-end: var(--s-32);
 	padding-inline-end: var(--s-4);
 }
 

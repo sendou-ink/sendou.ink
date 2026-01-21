@@ -15,7 +15,7 @@
 }
 
 .selectContainer > label {
-	margin-left: var(--s-2-5);
+	margin-left: var(--s-3);
 }
 
 .teamWithRoster {
@@ -321,7 +321,7 @@
 .seedsTeamMember {
 	display: grid;
 	grid-template-columns: max-content max-content;
-	grid-column-gap: var(--s-2-5);
+	grid-column-gap: var(--s-3);
 	background-color: var(--color-bg-high);
 	border-radius: var(--radius-box);
 	padding: var(--s-1) var(--s-3);
@@ -418,7 +418,7 @@
 .teamSet {
 	display: flex;
 	flex-direction: column;
-	gap: var(--s-2-5);
+	gap: var(--s-3);
 	background-color: var(--color-bg-high);
 	border-radius: var(--radius-box);
 	padding: var(--s-3) var(--s-6);

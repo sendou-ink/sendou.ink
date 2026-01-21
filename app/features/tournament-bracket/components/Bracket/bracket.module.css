@@ -135,7 +135,7 @@ a.match:hover {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-around;
-	gap: var(--s-7);
+	gap: var(--s-6);
 	margin-top: var(--s-6);
 	flex: 1;
 	overflow: visible;

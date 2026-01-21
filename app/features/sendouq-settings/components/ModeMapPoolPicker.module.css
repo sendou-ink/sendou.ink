@@ -18,6 +18,7 @@
 .slotIcon {
 	color: var(--color-success);
 	width: 16px;
+	height: 16px;
 }
 
 .slotPicked {
@@ -72,8 +73,9 @@
 .mapButtonIcon {
 	position: absolute;
 	top: 2px;
-	fill: var(--color-success);
+	color: var(--color-success);
 	width: 48px;
+	height: 48px;
 	cursor: pointer;
 }
 

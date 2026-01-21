@@ -25,7 +25,7 @@
 	}
 
 	& > tbody > tr > td {
-		padding: var(--s-2) var(--s-2-5);
+		padding: var(--s-2) var(--s-3);
 	}
 
 	& tr:first-child td {

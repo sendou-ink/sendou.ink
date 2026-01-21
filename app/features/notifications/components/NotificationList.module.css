@@ -1,16 +1,16 @@
 .itemDivider {
-	margin-inline: var(--s-2-5);
+	margin-inline: var(--s-3);
 	border-width: 0.5px;
 	border-color: var(--color-bg-high);
 }
 
 .item {
-	padding: var(--s-1) var(--s-2-5);
+	padding: var(--s-1) var(--s-3);
 	display: grid;
 	grid-template-areas: "image header" "image timestamp";
 	grid-template-columns: 30px 1fr;
 	column-gap: var(--s-2);
-	padding-block: var(--s-2-5);
+	padding-block: var(--s-3);
 	color: var(--color-text);
 }
 

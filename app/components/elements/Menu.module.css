@@ -36,7 +36,7 @@
 	white-space: nowrap;
 	gap: var(--s-2);
 	border-radius: var(--radius-field);
-	padding: var(--s-1-5) var(--s-2-5);
+	padding: var(--s-1-5) var(--s-3);
 	background-color: var(--color-bg-high);
 	width: 100%;
 	border: 0;

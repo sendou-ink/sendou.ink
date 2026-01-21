@@ -74,9 +74,11 @@
 	font-weight: var(--weight-bold);
 	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-selector);
+	height: var(--field-size-xs);
 	width: max-content;
-	padding: var(--s-0-5) var(--s-1-5);
+	padding: 0 var(--s-1-5);
 	display: flex;
+	align-items: center;
 	gap: var(--s-1);
 }
 
@@ -117,7 +119,8 @@
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 	border-radius: var(--radius-selector);
-	padding: var(--s-0-5) var(--s-1-5);
+	height: var(--field-size-xs);
+	padding: 0 var(--s-1-5);
 	display: grid;
 	place-items: center;
 }
@@ -157,5 +160,5 @@
 .badgePill {
 	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-selector);
-	padding: var(--s-0-5) var(--s-1-5);
+	padding: 0 var(--s-1-5);
 }

@@ -5,8 +5,8 @@
 	color: var(--color-text);
 	font-size: var(--font-md);
 	padding: var(--s-0-5);
-	width: calc(var(--field-size) * 0.7);
-	height: calc(var(--field-size) * 0.7);
+	width: var(--selector-size);
+	height: var(--selector-size);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -18,7 +18,7 @@
 }
 
 .triggerTiny {
-	width: var(--field-size-xs);
-	height: var(--field-size-xs);
+	width: var(--selector-size-sm);
+	height: var(--selector-size-sm);
 	font-size: var(--font-xs);
 }

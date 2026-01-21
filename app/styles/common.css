@@ -506,7 +506,7 @@ abbr[title] {
 }
 
 .article > p {
-	padding-block: var(--s-2-5);
+	padding-block: var(--s-3);
 }
 
 .article img {

@@ -1,7 +1,7 @@
 .footer {
 	display: flex;
 	flex-direction: column;
-	padding: var(--s-2-5);
+	padding: var(--s-3);
 	background-color: var(--color-bg-high);
 	gap: var(--s-6);
 	margin-block-start: auto;

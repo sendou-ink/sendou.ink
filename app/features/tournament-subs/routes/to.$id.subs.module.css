@@ -19,7 +19,7 @@
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	padding: var(--s-4);
-	column-gap: var(--s-2-5);
+	column-gap: var(--s-3);
 }
 
 .sectionAvatar {

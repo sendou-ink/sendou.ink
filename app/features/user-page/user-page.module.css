@@ -7,7 +7,7 @@
 .avatarContainer {
 	display: grid;
 	justify-content: center;
-	column-gap: var(--s-2-5);
+	column-gap: var(--s-3);
 	grid-template-areas: "avatar name" "avatar team" "avatar ." "avatar ." "socials .";
 }
 
@@ -31,7 +31,7 @@
 	align-items: center;
 	grid-area: name;
 	overflow-wrap: anywhere;
-	gap: var(--s-2-5);
+	gap: var(--s-3);
 }
 
 .socials {
@@ -39,7 +39,7 @@
 	justify-content: center;
 	gap: var(--s-1-5);
 	grid-area: socials;
-	padding-block-start: var(--s-2-5);
+	padding-block-start: var(--s-3);
 }
 
 .socialLink {
@@ -98,7 +98,7 @@
 	display: flex;
 	max-width: 24rem;
 	flex-wrap: wrap;
-	gap: var(--s-2-5);
+	gap: var(--s-3);
 	margin-inline: auto;
 }
 
@@ -307,7 +307,7 @@
 .seasonMatch {
 	background-color: var(--color-bg-high);
 	border-radius: var(--radius-box);
-	padding: var(--s-2) var(--s-2-5);
+	padding: var(--s-2) var(--s-3);
 	color: var(--color-text);
 	transition: ease-in 0.2s background-color;
 	display: flex;
@@ -384,7 +384,7 @@
 
 .seasonInfoContainer {
 	background-color: var(--color-bg-high);
-	padding: var(--s-2-5) var(--s-2);
+	padding: var(--s-3) var(--s-2);
 	border-radius: var(--radius-box);
 }
 
@@ -407,7 +407,7 @@
 .seasonWeaponUsageWeaponsContainer {
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--s-2-5);
+	gap: var(--s-3);
 	justify-content: center;
 	max-height: 300px;
 	overflow-y: auto;

@@ -79,7 +79,7 @@
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	gap: var(--s-2);
-	padding-block-end: var(--s-2-5);
+	padding-block-end: var(--s-3);
 }
 
 .editNumberInput {

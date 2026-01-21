@@ -233,7 +233,6 @@ function MapPicker() {
 							_action="UPDATE_MAP_MODE_PREFERENCES"
 							state={fetcher.state}
 							className="mx-auto"
-							size="big"
 						>
 							{t("common:actions.save")}
 						</SubmitButton>

@@ -62,9 +62,9 @@
 }
 
 .starIconOutlined {
-	color: var(--color-second);
+	color: var(--color-text-accent);
 }
 
 .starIconFilled {
-	fill: var(--color-second);
+	fill: var(--color-text-accent);
 }

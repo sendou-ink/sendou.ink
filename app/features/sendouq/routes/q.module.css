@@ -30,7 +30,7 @@
 	font-weight: var(--weight-bold);
 	display: flex;
 	align-items: center;
-	gap: var(--s-2-5);
+	gap: var(--s-3);
 	transition: background-color 0.2s;
 }
 

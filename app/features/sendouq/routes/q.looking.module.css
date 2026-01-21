@@ -6,7 +6,7 @@
 	display: grid;
 	justify-content: center;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: var(--s-7);
+	gap: var(--s-6);
 }
 
 .containerMobile {

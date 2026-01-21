@@ -48,7 +48,7 @@
 .pagination {
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--s-2-5);
+	gap: var(--s-3);
 	justify-content: center;
 	align-items: center;
 	max-width: 20rem;

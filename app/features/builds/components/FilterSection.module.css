@@ -1,7 +1,7 @@
 .filter {
 	display: flex;
 	flex-direction: column;
-	padding: var(--s-2-5);
+	padding: var(--s-3);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	gap: var(--s-2);

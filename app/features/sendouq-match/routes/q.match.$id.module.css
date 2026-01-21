@@ -64,7 +64,7 @@
 	display: grid;
 	grid-template-columns: max-content 1fr;
 	row-gap: var(--s-2);
-	column-gap: var(--s-2-5);
+	column-gap: var(--s-3);
 	align-items: center;
 	font-size: var(--font-xs);
 }
