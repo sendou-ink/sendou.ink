@@ -302,9 +302,17 @@ function backtrack(
 }
 
 function filterAndSortCombos(combos: DamageCombo[]): DamageCombo[] {
-	const filtered = combos.filter(
-		(combo) => combo.totalDamage >= COMBO_DAMAGE_THRESHOLD,
-	);
+	const filtered = combos.filter((combo) => {
+		if (combo.totalDamage < COMBO_DAMAGE_THRESHOLD) {
+			return false;
+		}
+
+		if (hasOneShotWithoutSub(combo)) {
+			return false;
+		}
+
+		return true;
+	});
 
 	filtered.sort((a, b) => {
 		const aDistTo100 = Math.abs(a.totalDamage - 100);
@@ -316,6 +324,12 @@ function filterAndSortCombos(combos: DamageCombo[]): DamageCombo[] {
 	});
 
 	return filtered.slice(0, MAX_COMBOS_DISPLAYED);
+}
+
+function hasOneShotWithoutSub(combo: DamageCombo): boolean {
+	const hasNoSubWeapon = combo.segments.every((s) => !s.isSubWeapon);
+	const hasOneShot = combo.segments.some((s) => s.damageValue >= 100);
+	return hasNoSubWeapon && hasOneShot;
 }
 
 const SPLASH_O_MATIC_ID = 20;
