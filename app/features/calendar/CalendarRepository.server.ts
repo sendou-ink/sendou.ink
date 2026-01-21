@@ -171,6 +171,7 @@ function findAllBetweenTwoTimestampsQuery({
 			"Tournament.id as tournamentId",
 			"Tournament.settings as tournamentSettings",
 			"Tournament.mapPickingStyle",
+			"Tournament.tier",
 			"CalendarEvent.name",
 			"CalendarEvent.tags",
 			"CalendarEventDate.startTime",
@@ -261,6 +262,7 @@ function findAllBetweenTwoTimestampsMapped(
 							isTest: row.tournamentSettings.isTest ?? false,
 						})
 					: null,
+				tier: row.tier ?? null,
 			};
 		},
 	);

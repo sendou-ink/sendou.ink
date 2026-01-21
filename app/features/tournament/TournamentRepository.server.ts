@@ -464,6 +464,7 @@ export function forShowcase() {
 		.select((eb) => [
 			"Tournament.id",
 			"Tournament.settings",
+			"Tournament.tier",
 			"CalendarEvent.authorId",
 			"CalendarEvent.name",
 			"CalendarEventDate.startTime",

@@ -8,6 +8,7 @@ import { Image, ModeImage } from "~/components/Image";
 import { TrophyIcon } from "~/components/icons/Trophy";
 import { UsersIcon } from "~/components/icons/Users";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
+import { tierNumberToName } from "~/features/tournament/core/tiering";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -16,6 +17,7 @@ import type { CalendarEvent, ShowcaseCalendarEvent } from "../calendar-types";
 import { Tags } from "./Tags";
 import styles from "./TournamentCard.module.css";
 
+// xxx: getting a lot of stuff under the card, redesign?
 export function TournamentCard({
 	tournament,
 	className,
@@ -119,6 +121,7 @@ export function TournamentCard({
 							<TrophyIcon title="Ranked (impacts this seasons SP)" />
 						</div>
 					) : null}
+					{tournament.tier ? <TierPill tier={tournament.tier} /> : null}
 					{isCalendar && tournament.badges && tournament.badges.length > 0 ? (
 						<BadgePrizesPill badges={tournament.badges} />
 					) : null}
@@ -216,5 +219,31 @@ function BadgePrizesPill({
 				className={styles.badgeDisplay}
 			/>
 		</SendouPopover>
+	);
+}
+
+const TIER_STYLE_CLASS: Record<number, string> = {
+	1: styles.tierX,
+	2: styles.tierSPlus,
+	3: styles.tierS,
+	4: styles.tierAPlus,
+	5: styles.tierA,
+	6: styles.tierBPlus,
+	7: styles.tierB,
+	8: styles.tierCPlus,
+	9: styles.tierC,
+};
+
+function TierPill({ tier }: { tier: number }) {
+	const tierName = tierNumberToName(tier);
+	const tierClass = TIER_STYLE_CLASS[tier] ?? "";
+
+	return (
+		<div
+			className={clsx(styles.pill, styles.pillTier, tierClass)}
+			title={`${tierName}-tier tournament`}
+		>
+			{tierName}
+		</div>
 	);
 }

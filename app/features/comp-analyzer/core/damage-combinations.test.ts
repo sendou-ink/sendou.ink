@@ -194,9 +194,9 @@ describe("calculateDamageCombos - one-shot exclusion", () => {
 		});
 
 		expect(comboWithSubAndOneShot).toBeDefined();
-		expect(
-			comboWithSubAndOneShot!.segments.some((s) => s.isSubWeapon),
-		).toBe(true);
+		expect(comboWithSubAndOneShot!.segments.some((s) => s.isSubWeapon)).toBe(
+			true,
+		);
 		expect(
 			comboWithSubAndOneShot!.segments.some((s) => s.damageValue >= 100),
 		).toBe(true);

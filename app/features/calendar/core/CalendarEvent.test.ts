@@ -12,6 +12,7 @@ function makeEvent(
 		at: Date.now(),
 		id: 1,
 		isRanked: null,
+		tier: null,
 		tags: [],
 		modes: ["SZ"],
 		teamsCount: 2,

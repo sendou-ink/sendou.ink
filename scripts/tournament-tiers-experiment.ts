@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 /**
  * Tournament Tiering Experiment Script
  *
@@ -116,7 +117,8 @@ function calculateAdjustedScore(rawScore: number, teamCount: number): number {
 	);
 
 	const teamsAboveMin = Math.max(0, teamCount - MIN_TEAMS_FOR_TIERING);
-	const bonus = scaleFactor * SIZE_BONUS.MAX_BONUS_PER_10_TEAMS * (teamsAboveMin / 10);
+	const bonus =
+		scaleFactor * SIZE_BONUS.MAX_BONUS_PER_10_TEAMS * (teamsAboveMin / 10);
 
 	return rawScore + bonus;
 }
@@ -220,22 +222,21 @@ function printDistribution(tournaments: TournamentData[]) {
 	}
 
 	const total = tournaments.length;
-	const tiered = total - distribution["UNTIERED"];
+	const tiered = total - distribution.UNTIERED;
 
-	console.log("\n" + "=".repeat(60));
+	console.log(`\n${"=".repeat(60)}`);
 	console.log("TIER DISTRIBUTION");
 	console.log("=".repeat(60));
 	console.log(`Total tournaments: ${total}`);
 	console.log(`Tiered (${MIN_TEAMS_FOR_TIERING}+ teams): ${tiered}`);
 	console.log(
-		`Untiered (< ${MIN_TEAMS_FOR_TIERING} teams): ${distribution["UNTIERED"]}`,
+		`Untiered (< ${MIN_TEAMS_FOR_TIERING} teams): ${distribution.UNTIERED}`,
 	);
 	console.log("-".repeat(60));
 
 	for (const tier of tiers) {
 		if (tier === "UNTIERED") continue;
 		const count = distribution[tier];
-		const pctOfTotal = ((count / total) * 100).toFixed(1);
 		const pctOfTiered = tiered > 0 ? ((count / tiered) * 100).toFixed(1) : "0";
 		const bar = "█".repeat(Math.round(count / 20));
 		console.log(
@@ -259,7 +260,7 @@ function printTopTournaments(
 		.sort((a, b) => (b.adjustedScore ?? 0) - (a.adjustedScore ?? 0))
 		.slice(0, limit);
 
-	console.log("\n" + "=".repeat(60));
+	console.log(`\n${"=".repeat(60)}`);
 	console.log(`TOP ${limit} ${tier}-TIER TOURNAMENTS`);
 	console.log("=".repeat(60));
 
@@ -281,7 +282,7 @@ function printBottomOfTier(
 		.sort((a, b) => (a.adjustedScore ?? 0) - (b.adjustedScore ?? 0))
 		.slice(0, limit);
 
-	console.log("\n" + "-".repeat(60));
+	console.log(`\n${"-".repeat(60)}`);
 	console.log(`BOTTOM ${limit} OF ${tier}-TIER (borderline)`);
 	console.log("-".repeat(60));
 
@@ -294,11 +295,11 @@ function printBottomOfTier(
 }
 
 function printThresholds() {
-	console.log("\n" + "=".repeat(60));
+	console.log(`\n${"=".repeat(60)}`);
 	console.log("CURRENT THRESHOLDS");
 	console.log("=".repeat(60));
 	for (const [tier, threshold] of Object.entries(THRESHOLDS)) {
-		if (threshold === -Infinity) {
+		if (threshold === Number.NEGATIVE_INFINITY) {
 			console.log(`${tier}: < ${THRESHOLDS["C+"]}`);
 		} else {
 			console.log(`${tier}: >= ${threshold}`);
@@ -306,17 +307,21 @@ function printThresholds() {
 	}
 	console.log(`\nTop teams considered: ${TOP_TEAMS_COUNT}`);
 	console.log(`Min teams for tiering: ${MIN_TEAMS_FOR_TIERING}`);
-	console.log(`\nSize bonus (scales inversely with skill):`);
+	console.log("\nSize bonus (scales inversely with skill):");
 	console.log(`  No bonus above score: ${SIZE_BONUS.NO_BONUS_ABOVE}`);
-	console.log(`  Max bonus per 10 teams: ${SIZE_BONUS.MAX_BONUS_PER_10_TEAMS} points`);
+	console.log(
+		`  Max bonus per 10 teams: ${SIZE_BONUS.MAX_BONUS_PER_10_TEAMS} points`,
+	);
 
 	// Show example bonus calculations
-	console.log(`\nExample bonuses for 50-team tournament:`);
+	console.log("\nExample bonuses for 50-team tournament:");
 	const exampleTeams = 50;
 	for (const rawScore of [32, 28, 24, 20, 15, 10, 5, 0]) {
 		const adjusted = calculateAdjustedScore(rawScore, exampleTeams);
 		const bonus = adjusted - rawScore;
-		console.log(`  Raw ${rawScore.toString().padStart(2)} -> ${adjusted.toFixed(2)} (+${bonus.toFixed(2)})`);
+		console.log(
+			`  Raw ${rawScore.toString().padStart(2)} -> ${adjusted.toFixed(2)} (+${bonus.toFixed(2)})`,
+		);
 	}
 }
 
@@ -343,7 +348,7 @@ function main() {
 	printTopTournaments(tournaments, "S", 10);
 
 	// Show tournaments promoted by size bonus
-	console.log("\n" + "=".repeat(60));
+	console.log(`\n${"=".repeat(60)}`);
 	console.log("TOURNAMENTS PROMOTED BY SIZE BONUS");
 	console.log("=".repeat(60));
 	const promoted = tournaments
@@ -368,7 +373,7 @@ function main() {
 	}
 
 	// Recent tournaments analysis
-	console.log("\n" + "=".repeat(60));
+	console.log(`\n${"=".repeat(60)}`);
 	console.log("RECENT TOURNAMENTS (last 30 tiered)");
 	console.log("=".repeat(60));
 	tournaments
@@ -384,7 +389,7 @@ function main() {
 		});
 
 	// Full CSV dump ordered by score
-	console.log("\n" + "=".repeat(60));
+	console.log(`\n${"=".repeat(60)}`);
 	console.log("FULL CSV DUMP (ordered by score descending)");
 	console.log("=".repeat(60));
 	console.log("name,score,tier");

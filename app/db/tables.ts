@@ -497,6 +497,8 @@ export interface Tournament {
 	isFinalized: Generated<DBBoolean>;
 	/** Snapshot of teams and rosters when seeds were last saved. Used to detect NEW teams/players. */
 	seedingSnapshot: JSONColumnTypeNullable<SeedingSnapshot>;
+	/** Tournament tier based on top teams' skill. 1=X, 2=S+, 3=S, 4=A+, 5=A, 6=B+, 7=B, 8=C+, 9=C */
+	tier: number | null;
 }
 
 export interface SeedingSnapshot {

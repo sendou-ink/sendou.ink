@@ -297,6 +297,7 @@ function mapTournamentFromDB(
 			minMembersPerTeam: tournament.settings.minMembersPerTeam ?? 4,
 			isTest: tournament.settings.isTest ?? false,
 		}),
+		tier: tournament.tier ?? null,
 		hidden: Boolean(tournament.hidden),
 		modes: null, // no need to show modes for front page, maybe could in the future?
 		firstPlacer:
