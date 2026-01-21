@@ -46,7 +46,18 @@ html {
 This is important because dark goes from light to dark, and light goes from dark to light
 
 --color-base-x should rarely be consumed directly
-they mostly exist as a base for other vars like --color-text and --color-bg
+They mostly exist as a base for other vars like --color-text and --color-bg
+
+--color-text-accent and --color-text-second can be used as a background
+or highlight color that maintains a high contrast ratio in both light and dark modes
+If used as a background color, --color-text-inverse should be used as the text color
+
+Preffer using --color-x-high for info, success, warning, and error texts
+It is recommended to use --color-x-low as background colors to ensure a high contrast ratio
+You can use --color-x for things like borders and icons
+
+Field icons are defined for both dark and light mode because SVGs
+cannot use currentColor inside data URLs
 
 Any changes here NEED to be reflected in oklch-gamut.ts as well
 */
