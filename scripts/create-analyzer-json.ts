@@ -214,6 +214,162 @@ function splitIntoBaseStatsAndKits(
 	return { baseWeaponStats, weaponKits };
 }
 
+function getWeaponCategoryName(weaponId: number): string | undefined {
+	for (const category of [
+		{ name: "SHOOTERS", range: [0, 199] },
+		{ name: "BLASTERS", range: [200, 299] },
+		{ name: "SHOOTERS", range: [300, 499] },
+		{ name: "ROLLERS", range: [1000, 1099] },
+		{ name: "BRUSHES", range: [1100, 1199] },
+		{ name: "CHARGERS", range: [2000, 2099] },
+		{ name: "SLOSHERS", range: [3000, 3099] },
+		{ name: "SPLATLINGS", range: [4000, 4099] },
+		{ name: "DUALIES", range: [5000, 5099] },
+		{ name: "BRELLAS", range: [6000, 6099] },
+		{ name: "STRINGERS", range: [7000, 7099] },
+		{ name: "SPLATANAS", range: [8000, 8099] },
+	]) {
+		if (weaponId >= category.range[0] && weaponId <= category.range[1]) {
+			return category.name;
+		}
+	}
+	return undefined;
+}
+
+function extractRangeParams(weapon: MainWeapon, params: any) {
+	const category = getWeaponCategoryName(weapon.Id);
+	const isBrella = category === "BRELLAS";
+	const isSlosher = category === "SLOSHERS";
+
+	if (!category) {
+		return {};
+	}
+
+	const isCharger = params.MoveParam?.$type === "spl__BulletChargerMoveParam";
+
+	if (isCharger) {
+		return {
+			DistanceFullCharge: params.MoveParam?.DistanceFullCharge,
+			DistanceMaxCharge: params.MoveParam?.DistanceMaxCharge,
+			DistanceMinCharge: params.MoveParam?.DistanceMinCharge,
+		};
+	}
+
+	if (isSlosher) {
+		const units = params.UnitGroupParam?.Unit;
+		const unitForRange = units?.reduce(
+			(best: any, unit: any) =>
+				(unit?.SpawnSpeedGround ?? 0) > (best?.SpawnSpeedGround ?? 0)
+					? unit
+					: best,
+			units?.[0],
+		);
+		const moveParam = unitForRange?.MoveParam;
+		const isBloblobber = weapon.Id === 3030 || weapon.Id === 3031;
+		return {
+			Range_SpawnSpeed: unitForRange?.SpawnSpeedGround,
+			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
+			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+			Range_FreeGravity: moveParam?.FreeGravity,
+			Range_BrakeAirResist: moveParam?.BrakeAirResist,
+			Range_BrakeGravity: moveParam?.BrakeGravity,
+			Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
+			Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
+			Range_BounceAfterMaxSpeed: isBloblobber ? 0.6 : undefined,
+			Range_BurstFrame: isBloblobber ? 3 : undefined,
+		};
+	}
+
+	const isRoller = category === "ROLLERS";
+	if (isRoller) {
+		const unit = params.VerticalSwingUnitGroupParam?.Unit?.[0];
+		const moveParam = unit?.UnitParam?.MoveParam;
+		return {
+			Range_SpawnSpeed: unit?.SpawnSpeedBase,
+			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+			Range_FreeGravity: moveParam?.FreeGravity,
+			Range_FreeAirResist: moveParam?.FreeAirResist,
+			Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
+		};
+	}
+
+	const isBrush = category === "BRUSHES";
+	if (isBrush) {
+		const unit = params.SwingUnitGroupParam?.Unit?.[0];
+		const moveParam = unit?.UnitParam?.MoveParam;
+		return {
+			Range_SpawnSpeed: unit?.SpawnSpeedBase,
+			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+			Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
+		};
+	}
+
+	const isSplatana = category === "SPLATANAS";
+	if (isSplatana) {
+		const bulletParam = params.BulletSaberVerticalParam;
+		const moveParam = bulletParam?.MoveParam;
+		return {
+			Range_SpawnSpeed: moveParam?.SpawnSpeed,
+			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
+			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+			Range_FreeGravity: moveParam?.FreeGravity,
+			Range_BrakeAirResist: moveParam?.BrakeAirResist,
+			Range_BrakeGravity: moveParam?.BrakeGravity,
+			Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
+			Range_BurstFrame: bulletParam?.BurstParam?.BurstFrame,
+		};
+	}
+
+	const isStringer = category === "STRINGERS";
+	if (isStringer) {
+		const bulletParam = params.spl__BulletStringerParam;
+		const moveParam = bulletParam?.MoveParam;
+		const isReefLux =
+			weapon.Id === 7020 || weapon.Id === 7021 || weapon.Id === 7022;
+		const blastRadius = isReefLux
+			? undefined
+			: bulletParam?.DetonationParam?.BlastParam?.DistanceDamage?.[0]?.Distance;
+		return {
+			Range_SpawnSpeed: moveParam?.SpawnSpeedMax,
+			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
+			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+			Range_FreeGravity: moveParam?.FreeGravity,
+			Range_BrakeAirResist: moveParam?.BrakeAirResist,
+			Range_BrakeGravity: moveParam?.BrakeGravity,
+			Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
+			BlastRadius: blastRadius,
+		};
+	}
+
+	const isSplatling = category === "SPLATLINGS";
+	if (isSplatling) {
+		const moveParam = params.MoveParam;
+		return {
+			Range_SpawnSpeed: moveParam?.SpawnSpeedFirstLastAndSecond,
+			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
+			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+		};
+	}
+
+	const isBlaster = params.BlastParam?.DistanceDamage !== undefined;
+	const blastRadius = isBlaster
+		? params.BlastParam?.DistanceDamage?.[1]?.Distance
+		: undefined;
+
+	const moveParam = isBrella
+		? params.spl__BulletShelterShotgunParam?.GroupParams?.[0]?.MoveParam
+		: params.MoveParam;
+
+	return {
+		Range_SpawnSpeed: moveParam?.SpawnSpeed,
+		Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
+		Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+		Range_FreeGravity: moveParam?.FreeGravity,
+		Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
+		BlastRadius: blastRadius,
+	};
+}
+
 function parametersToMainWeaponResult(
 	weapon: MainWeapon,
 	params: any,
@@ -345,11 +501,14 @@ function parametersToMainWeaponResult(
 		return Math.max(valueOne, valueTwo);
 	};
 
+	const rangeParams = extractRangeParams(weapon, params);
+
 	return {
 		SpecialPoint: weapon.SpecialPoint,
 		subWeaponId: resolveSubWeaponId(weapon),
 		specialWeaponId: resolveSpecialWeaponId(weapon),
 		overwrites: resolveOverwrites(params),
+		...rangeParams,
 		TripleShotSpanFrame: params.WeaponParam?.TripleShotSpanFrame,
 		WeaponSpeedType:
 			params.MainWeaponSetting?.WeaponSpeedType === "Mid"

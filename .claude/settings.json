@@ -1,12 +1,4 @@
 {
-	"hooks": {
-		"SessionStart": [
-			{ "hooks": [{ "type": "command", "command": "beans prime" }] }
-		],
-		"PreCompact": [
-			{ "hooks": [{ "type": "command", "command": "beans prime" }] }
-		]
-	},
 	"enabledPlugins": {
 		"code-review@claude-plugins-official": true
 	}

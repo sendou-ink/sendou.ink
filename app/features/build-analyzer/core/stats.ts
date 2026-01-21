@@ -446,6 +446,8 @@ const damageTypeToParamsKey: Record<
 	SPECIAL_BUMP: "BumpDamage",
 	SPECIAL_JUMP: "JumpDamage",
 	SPECIAL_TICK: "TickDamage",
+	// Virtual damage type for comp-analyzer, calculated from other damages
+	COMBO: [],
 };
 
 function damages(args: StatFunctionInput): AnalyzedBuild["stats"]["damages"] {
@@ -727,7 +729,7 @@ function subWeaponIdToEffectKey(
 	}
 }
 
-function subWeaponDamageValue({
+export function subWeaponDamageValue({
 	baseValue,
 	subWeaponId,
 	abilityPoints,

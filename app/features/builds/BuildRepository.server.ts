@@ -1,5 +1,5 @@
 import type { ExpressionBuilder, Transaction } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
+import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { BuildWeapon, DB, Tables, TablesInsertable } from "~/db/tables";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -12,7 +12,7 @@ import type {
 import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
 import { LimitReachedError } from "~/utils/errors";
 import invariant from "~/utils/invariant";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { commonUserJsonObject } from "~/utils/kysely.server";
 import { BUILD } from "./builds-constants";
 import { sortAbilities } from "./core/ability-sorting.server";
 
@@ -349,6 +349,7 @@ function buildsByWeaponIdQuery(weaponSplId: MainWeaponId, limit: number) {
 	return db
 		.selectFrom("BuildWeapon")
 		.innerJoin("Build", "Build.id", "BuildWeapon.buildId")
+		.innerJoin("User", "User.id", "Build.ownerId")
 		.leftJoin("PlusTier", "PlusTier.userId", "Build.ownerId")
 		.select(({ eb }) => [
 			"Build.id",
@@ -372,12 +373,7 @@ function buildsByWeaponIdQuery(weaponSplId: MainWeaponId, limit: number) {
 					.orderBy("BuildWeaponInner.weaponSplId", "asc")
 					.whereRef("BuildWeaponInner.buildId", "=", "Build.id"),
 			).as("weapons"),
-			jsonObjectFrom(
-				eb
-					.selectFrom("User")
-					.select([...COMMON_USER_FIELDS])
-					.whereRef("User.id", "=", "Build.ownerId"),
-			).as("owner"),
+			commonUserJsonObject(eb).as("owner"),
 		])
 		.where("Build.private", "=", 0)
 		.where("BuildWeapon.weaponSplId", "=", weaponSplId)

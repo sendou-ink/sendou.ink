@@ -4,7 +4,7 @@ import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { FormField } from "~/form/FormField";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
-import { SendouForm } from "~/form/SendouForm";
+import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -214,6 +214,84 @@ describe("VodForm", () => {
 
 			const addButton = screen.getByRole("button", { name: "Add" });
 			await expect.element(addButton).toBeDisabled();
+		});
+	});
+
+	describe("setItemField batching", () => {
+		test("updating multiple fields on same array item preserves all updates", async () => {
+			let setItemFieldRef: ((field: string, value: unknown) => void) | null =
+				null;
+
+			function CaptureSetItemField() {
+				const { values, setValueFromPrev } = useFormFieldContext();
+				const matches = values.matches as Array<Record<string, unknown>>;
+
+				setItemFieldRef = (field: string, value: unknown) => {
+					setValueFromPrev("matches", (prev) => {
+						const currentArray = (prev ?? []) as Record<string, unknown>[];
+						const newArray = [...currentArray];
+						newArray[0] = { ...currentArray[0], [field]: value };
+						return newArray;
+					});
+				};
+
+				return (
+					<div data-testid="values">
+						{JSON.stringify({
+							weaponsTeamOne: matches[0]?.weaponsTeamOne,
+							weaponsTeamTwo: matches[0]?.weaponsTeamTwo,
+						})}
+					</div>
+				);
+			}
+
+			const router = createMemoryRouter(
+				[
+					{
+						path: "/",
+						element: (
+							<SendouForm
+								title="Test VOD Form"
+								schema={vodFormBaseSchema}
+								defaultValues={createDefaultValues({
+									matches: [
+										{
+											weaponsTeamOne: [],
+											weaponsTeamTwo: [],
+										},
+									],
+								})}
+							>
+								{() => <CaptureSetItemField />}
+							</SendouForm>
+						),
+					},
+				],
+				{ initialEntries: ["/"] },
+			);
+
+			const screen = await render(<RouterProvider router={router} />);
+
+			const teamOneWeapons = [
+				{ id: 0 as MainWeaponId, isFavorite: false },
+				{ id: 10 as MainWeaponId, isFavorite: false },
+			];
+			const teamTwoWeapons = [
+				{ id: 20 as MainWeaponId, isFavorite: false },
+				{ id: 30 as MainWeaponId, isFavorite: false },
+			];
+
+			setItemFieldRef!("weaponsTeamOne", teamOneWeapons);
+			setItemFieldRef!("weaponsTeamTwo", teamTwoWeapons);
+
+			await new Promise((resolve) => setTimeout(resolve, 50));
+
+			const valuesEl = screen.getByTestId("values");
+			const valuesText = valuesEl.element().textContent ?? "";
+			const parsedValues = JSON.parse(valuesText);
+
+			expect(parsedValues.weaponsTeamOne).toEqual(teamOneWeapons);
+			expect(parsedValues.weaponsTeamTwo).toEqual(teamTwoWeapons);
 		});
 	});
 });
