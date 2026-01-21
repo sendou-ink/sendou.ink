@@ -343,9 +343,12 @@ function extractRangeParams(weapon: MainWeapon, params: any) {
 
 	const isSplatling = category === "SPLATLINGS";
 	if (isSplatling) {
-		const moveParam = params.MoveParam;
+		const isBallpoint = weapon.Id === 4030 || weapon.Id === 4031;
+		const moveParam = isBallpoint ? params.VariableMoveParam : params.MoveParam;
 		return {
-			Range_SpawnSpeed: moveParam?.SpawnSpeedFirstLastAndSecond,
+			Range_SpawnSpeed: isBallpoint
+				? moveParam?.SpawnSpeed
+				: moveParam?.SpawnSpeedFirstLastAndSecond,
 			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
 			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
 		};
