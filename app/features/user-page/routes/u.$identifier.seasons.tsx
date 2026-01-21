@@ -199,8 +199,6 @@ function SeasonHeader({
 				selectedKey={seasonViewed}
 				onSelectionChange={(seasonNth) => navigate(`?season=${seasonNth}`)}
 				items={options}
-				className={styles.seasonSelect}
-				popoverClassName={styles.seasonSelect}
 			>
 				{({ year, items, key }) => (
 					<SendouSelectItemSection heading={year} key={key}>

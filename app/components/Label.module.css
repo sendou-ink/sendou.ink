@@ -4,6 +4,10 @@
 	gap: var(--s-2);
 	margin-block-end: var(--label-margin);
 
+	.mb-0 {
+		margin-block-end: 0;
+	}
+
 	& > label {
 		margin: 0;
 	}

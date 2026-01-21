@@ -29,7 +29,6 @@
 }
 
 .selectValue {
-	max-width: calc(var(--select-width) - 55px);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;

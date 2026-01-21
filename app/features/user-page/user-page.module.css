@@ -239,10 +239,6 @@
 	}
 }
 
-.seasonSelect {
-	--select-width: 125px;
-}
-
 .seasonWeaponContainer {
 	display: flex;
 	align-items: center;
