@@ -288,6 +288,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 	ctx: {
 		id: 891,
 		eventId: 2698,
+		tier: null,
+		tentativeTier: null,
 		discordUrl: "https://discord.gg/A6NW3VCHRh",
 		tags: "REGION,SZ",
 		settings: {

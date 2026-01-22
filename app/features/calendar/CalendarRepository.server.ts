@@ -17,6 +17,7 @@ import type {
 } from "~/db/tables";
 import { EXCLUDED_TAGS } from "~/features/calendar/calendar-constants";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import {
 	databaseTimestampNow,
 	databaseTimestampToDate,
@@ -168,6 +169,7 @@ function findAllBetweenTwoTimestampsQuery({
 		.select((eb) => [
 			"CalendarEvent.id as eventId",
 			"CalendarEvent.authorId",
+			"CalendarEvent.organizationId",
 			"Tournament.id as tournamentId",
 			"Tournament.settings as tournamentSettings",
 			"Tournament.mapPickingStyle",
@@ -228,6 +230,13 @@ function findAllBetweenTwoTimestampsMapped(
 				? (row.tags.split(",") as CalendarEvent["tags"])
 				: [];
 
+			const tentativeTier =
+				row.tier === null &&
+				row.organizationId !== null &&
+				row.tournamentId !== null
+					? getTentativeTier(row.organizationId, row.name)
+					: null;
+
 			return {
 				at: databaseTimestampToJavascriptTimestamp(row.startTime),
 				type: "calendar",
@@ -263,6 +272,7 @@ function findAllBetweenTwoTimestampsMapped(
 						})
 					: null,
 				tier: row.tier ?? null,
+				tentativeTier,
 			};
 		},
 	);

@@ -17,6 +17,7 @@ export const TIER_THRESHOLDS = {
 
 export const TOP_TEAMS_COUNT = 8;
 export const MIN_TEAMS_FOR_TIERING = 8;
+export const TIER_HISTORY_LENGTH = 5;
 
 const SIZE_BONUS = {
 	NO_BONUS_ABOVE: 32,
@@ -117,4 +118,31 @@ export function calculateTournamentTierFromTeams(
 	const tierNumber = calculateTierNumber(adjustedScore);
 
 	return { tierNumber, rawScore, adjustedScore };
+}
+
+export function calculateTentativeTier(
+	tierHistory: TournamentTierNumber[],
+): TournamentTierNumber | null {
+	if (tierHistory.length === 0) return null;
+
+	const sorted = [...tierHistory].sort((a, b) => a - b);
+	const mid = Math.floor(sorted.length / 2);
+
+	if (sorted.length % 2 === 0) {
+		return Math.ceil(
+			(sorted[mid - 1] + sorted[mid]) / 2,
+		) as TournamentTierNumber;
+	}
+	return sorted[mid];
+}
+
+export function updateTierHistory(
+	currentHistory: TournamentTierNumber[] | null,
+	newTier: TournamentTierNumber,
+): TournamentTierNumber[] {
+	const history = currentHistory ?? [];
+	const updated = [...history, newTier];
+	return updated.length > TIER_HISTORY_LENGTH
+		? updated.slice(-TIER_HISTORY_LENGTH)
+		: updated;
 }

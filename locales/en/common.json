@@ -328,5 +328,7 @@
 	"api.regenerate.heading": "Regenerating will invalidate your current token. Any applications using the old token will stop working.",
 	"api.regenerate.button": "Regenerate token",
 	"api.regenerate.confirm": "Confirm Regenerate",
-	"api.generate": "Generate Token"
+	"api.generate": "Generate Token",
+	"tier.tentative": "Tentative {{tierName}}-tier (based on series history)",
+	"tier.confirmed": "{{tierName}}-tier tournament"
 }

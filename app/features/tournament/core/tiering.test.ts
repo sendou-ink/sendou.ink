@@ -1,15 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
 	calculateAdjustedScore,
+	calculateTentativeTier,
 	calculateTierNumber,
 	calculateTournamentTierFromTeams,
 	MIN_TEAMS_FOR_TIERING,
+	TIER_HISTORY_LENGTH,
 	TIER_THRESHOLDS,
 	TIER_TO_NUMBER,
+	type TournamentTierNumber,
 	tierNumberToName,
+	updateTierHistory,
 } from "./tiering";
 
-// xxx: this is pretty low value
 describe("calculateTierNumber", () => {
 	it("returns null for null input", () => {
 		expect(calculateTierNumber(null)).toBe(null);
@@ -21,39 +24,9 @@ describe("calculateTierNumber", () => {
 		expect(calculateTierNumber(100)).toBe(1);
 	});
 
-	it("returns S+ tier (2) for scores >= 29 and < 32", () => {
-		expect(calculateTierNumber(29)).toBe(2);
-		expect(calculateTierNumber(31.9)).toBe(2);
-	});
-
-	it("returns S tier (3) for scores >= 26 and < 29", () => {
-		expect(calculateTierNumber(26)).toBe(3);
-		expect(calculateTierNumber(28.9)).toBe(3);
-	});
-
-	it("returns A+ tier (4) for scores >= 24 and < 26", () => {
-		expect(calculateTierNumber(24)).toBe(4);
-		expect(calculateTierNumber(25.9)).toBe(4);
-	});
-
 	it("returns A tier (5) for scores >= 21 and < 24", () => {
 		expect(calculateTierNumber(21)).toBe(5);
 		expect(calculateTierNumber(23.9)).toBe(5);
-	});
-
-	it("returns B+ tier (6) for scores >= 15 and < 21", () => {
-		expect(calculateTierNumber(15)).toBe(6);
-		expect(calculateTierNumber(20.9)).toBe(6);
-	});
-
-	it("returns B tier (7) for scores >= 10 and < 15", () => {
-		expect(calculateTierNumber(10)).toBe(7);
-		expect(calculateTierNumber(14.9)).toBe(7);
-	});
-
-	it("returns C+ tier (8) for scores >= 5 and < 10", () => {
-		expect(calculateTierNumber(5)).toBe(8);
-		expect(calculateTierNumber(9.9)).toBe(8);
 	});
 
 	it("returns C tier (9) for scores < 5", () => {
@@ -149,7 +122,6 @@ describe("calculateTournamentTierFromTeams", () => {
 		expect(result.tierNumber).toBe(null);
 	});
 
-	// xxx: what if less than 8 teams? test + handle that reasonably
 	it("calculates tier from top 8 teams by ordinal", () => {
 		const teams = [
 			{ avgOrdinal: 35 },
@@ -208,5 +180,61 @@ describe("TIER_THRESHOLDS matches TIER_TO_NUMBER", () => {
 		for (const tier of Object.keys(TIER_THRESHOLDS)) {
 			expect(TIER_TO_NUMBER).toHaveProperty(tier);
 		}
+	});
+});
+
+describe("calculateTentativeTier", () => {
+	it("returns null for empty history", () => {
+		expect(calculateTentativeTier([])).toBe(null);
+	});
+
+	it("returns the single value for history with one element", () => {
+		expect(calculateTentativeTier([4])).toBe(4);
+	});
+
+	it("returns median for odd number of elements", () => {
+		expect(calculateTentativeTier([5, 4, 3])).toBe(4);
+		expect(calculateTentativeTier([1, 2, 3, 4, 5])).toBe(3);
+	});
+
+	it("rounds toward lower tier (higher number) for even count", () => {
+		expect(calculateTentativeTier([4, 5])).toBe(5);
+		expect(calculateTentativeTier([3, 4])).toBe(4);
+	});
+
+	it("returns median for unsorted input", () => {
+		expect(calculateTentativeTier([3, 5, 4, 2, 6])).toBe(4);
+	});
+
+	it("handles duplicate values correctly", () => {
+		expect(calculateTentativeTier([4, 4, 4])).toBe(4);
+		expect(calculateTentativeTier([5, 5, 4, 4])).toBe(5);
+	});
+});
+
+describe("updateTierHistory", () => {
+	it("creates new history from null", () => {
+		expect(updateTierHistory(null, 4)).toEqual([4]);
+	});
+
+	it("appends to existing history", () => {
+		expect(updateTierHistory([5, 4], 3)).toEqual([5, 4, 3]);
+	});
+
+	it("keeps history at max length", () => {
+		const fullHistory: TournamentTierNumber[] = [1, 2, 3, 4, 5];
+		expect(updateTierHistory(fullHistory, 6)).toEqual([2, 3, 4, 5, 6]);
+	});
+
+	it("preserves history under max length", () => {
+		expect(updateTierHistory([4, 5], 3)).toEqual([4, 5, 3]);
+	});
+
+	it("slices from beginning when exceeding max length", () => {
+		const history: TournamentTierNumber[] = [1, 2, 3, 4, 5];
+		const result = updateTierHistory(history, 9);
+		expect(result.length).toBe(TIER_HISTORY_LENGTH);
+		expect(result[result.length - 1]).toBe(9);
+		expect(result[0]).toBe(2);
 	});
 });

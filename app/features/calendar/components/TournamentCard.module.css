@@ -57,16 +57,27 @@
 	font-weight: var(--semi-bold);
 	color: var(--text-lighter);
 	display: block;
+	text-align: center;
+}
+
+.nameRow {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: var(--s-2);
 }
 
 .name {
-	text-align: center;
 	font-weight: var(--semi-bold);
 	font-size: var(--fonts-sm);
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	max-width: 225px;
 	overflow: hidden;
+}
+
+.nameWithTier {
+	max-width: 165px;
 }
 
 .teamCount {
@@ -163,55 +174,4 @@
 	background-color: var(--bg-lightest);
 	border-radius: var(--rounded-sm);
 	padding: var(--s-0-5) var(--s-1-5);
-}
-
-.pillTier {
-	font-size: var(--fonts-xxs);
-	min-width: 24px;
-	text-align: center;
-}
-
-.tierX {
-	background-color: hsl(45, 100%, 30%);
-	color: hsl(45, 100%, 90%);
-}
-
-.tierSPlus {
-	background-color: hsl(280, 60%, 35%);
-	color: hsl(280, 80%, 90%);
-}
-
-.tierS {
-	background-color: hsl(280, 50%, 40%);
-	color: hsl(280, 70%, 92%);
-}
-
-.tierAPlus {
-	background-color: hsl(210, 60%, 35%);
-	color: hsl(210, 80%, 90%);
-}
-
-.tierA {
-	background-color: hsl(210, 50%, 40%);
-	color: hsl(210, 70%, 92%);
-}
-
-.tierBPlus {
-	background-color: hsl(140, 45%, 32%);
-	color: hsl(140, 60%, 90%);
-}
-
-.tierB {
-	background-color: hsl(140, 35%, 38%);
-	color: hsl(140, 50%, 92%);
-}
-
-.tierCPlus {
-	background-color: hsl(0, 0%, 35%);
-	color: hsl(0, 0%, 90%);
-}
-
-.tierC {
-	background-color: hsl(0, 0%, 40%);
-	color: hsl(0, 0%, 92%);
 }

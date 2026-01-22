@@ -3,6 +3,10 @@ import { sql } from "~/db/sql";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import {
+	calculateTournamentTierFromTeams,
+	MIN_TEAMS_FOR_TIERING,
+} from "~/features/tournament/core/tiering";
 import { createSwissBracketInTransaction } from "~/features/tournament/queries/createSwissBracketInTransaction.server";
 import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -130,6 +134,24 @@ export const action: ActionFunction = async ({ params, request }) => {
 						})),
 					})),
 				});
+			}
+
+			if (data.bracketIdx === 0 && seeding.length >= MIN_TEAMS_FOR_TIERING) {
+				const checkedInTeams = tournament.ctx.teams
+					.filter((team) => seeding.includes(team.id))
+					.map((team) => ({ avgOrdinal: team.avgSeedingSkillOrdinal }));
+
+				const { tierNumber } = calculateTournamentTierFromTeams(
+					checkedInTeams,
+					seeding.length,
+				);
+
+				if (tierNumber !== null) {
+					await TournamentRepository.updateTournamentTier({
+						tournamentId: tournament.ctx.id,
+						tier: tierNumber,
+					});
+				}
 			}
 
 			if (!tournament.isTest) {

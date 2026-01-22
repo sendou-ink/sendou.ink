@@ -8,6 +8,7 @@ import { SEED_VARIATIONS } from "~/features/api-private/constants";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
+import { refreshTentativeTiersCache } from "~/features/tournament-organization/core/tentativeTiers.server";
 import { cache } from "~/utils/cache.server";
 import { parseRequestPayload } from "~/utils/remix.server";
 
@@ -52,6 +53,7 @@ export const action: ActionFunction = async ({ request }) => {
 	cache.clear();
 	await refreshBannedCache();
 	await refreshSendouQInstance();
+	await refreshTentativeTiersCache();
 
 	return Response.json(null);
 };

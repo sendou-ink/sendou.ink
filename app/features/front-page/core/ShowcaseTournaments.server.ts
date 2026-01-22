@@ -5,6 +5,7 @@ import {
 	getBracketProgressionLabel,
 	tournamentIsRanked,
 } from "~/features/tournament/tournament-utils";
+import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import {
 	databaseTimestampToDate,
@@ -169,7 +170,6 @@ async function cachedTournaments() {
 		ttl: ttl(IN_MILLISECONDS.TWO_HOURS),
 		async getFreshValue() {
 			const tournaments = await TournamentRepository.forShowcase();
-
 			const mapped = tournaments.map(mapTournamentFromDB);
 
 			return deleteExtraResults(mapped);
@@ -276,6 +276,13 @@ function mapTournamentFromDB(
 ): ShowcaseCalendarEvent {
 	const highestDivWinners = resolveHighestDivisionWinners(tournament);
 
+	const tentativeTier =
+		tournament.tier === null &&
+		tournament.organizationId !== null &&
+		!tournament.firstPlacers.length
+			? getTentativeTier(tournament.organizationId, tournament.name)
+			: null;
+
 	return {
 		type: "showcase",
 		url: tournamentPage(tournament.id),
@@ -298,8 +305,9 @@ function mapTournamentFromDB(
 			isTest: tournament.settings.isTest ?? false,
 		}),
 		tier: tournament.tier ?? null,
+		tentativeTier,
 		hidden: Boolean(tournament.hidden),
-		modes: null, // no need to show modes for front page, maybe could in the future?
+		modes: null,
 		firstPlacer:
 			highestDivWinners.length > 0
 				? {

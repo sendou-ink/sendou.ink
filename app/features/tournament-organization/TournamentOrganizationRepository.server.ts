@@ -4,6 +4,10 @@ import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import {
+	type TournamentTierNumber,
+	updateTierHistory,
+} from "~/features/tournament/core/tiering";
+import {
 	databaseTimestampNow,
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -92,6 +96,7 @@ export async function findBySlug(slug: string) {
 						"TournamentOrganizationSeries.substringMatches",
 						"TournamentOrganizationSeries.showLeaderboard",
 						"TournamentOrganizationSeries.description",
+						"TournamentOrganizationSeries.tierHistory",
 					])
 					.whereRef(
 						"TournamentOrganizationSeries.organizationId",
@@ -551,5 +556,45 @@ export function updateIsEstablished(
 		.updateTable("TournamentOrganization")
 		.set({ isEstablished: Number(isEstablished) })
 		.where("id", "=", organizationId)
+		.execute();
+}
+
+export function findAllSeriesWithTierHistory() {
+	return db
+		.selectFrom("TournamentOrganizationSeries")
+		.select(["organizationId", "substringMatches", "tierHistory"])
+		.execute();
+}
+
+export async function updateSeriesTierHistory({
+	organizationId,
+	eventName,
+	newTier,
+}: {
+	organizationId: number;
+	eventName: string;
+	newTier: TournamentTierNumber;
+}) {
+	const series = await db
+		.selectFrom("TournamentOrganizationSeries")
+		.select(["id", "substringMatches", "tierHistory"])
+		.where("organizationId", "=", organizationId)
+		.execute();
+
+	const eventNameLower = eventName.toLowerCase();
+	const matchingSeries = series.find((s) =>
+		s.substringMatches.some((match) =>
+			eventNameLower.includes(match.toLowerCase()),
+		),
+	);
+
+	if (!matchingSeries) return;
+
+	const newTierHistory = updateTierHistory(matchingSeries.tierHistory, newTier);
+
+	await db
+		.updateTable("TournamentOrganizationSeries")
+		.set({ tierHistory: JSON.stringify(newTierHistory) })
+		.where("id", "=", matchingSeries.id)
 		.execute();
 }

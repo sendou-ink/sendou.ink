@@ -7,8 +7,8 @@ import { Flag } from "~/components/Flag";
 import { Image, ModeImage } from "~/components/Image";
 import { TrophyIcon } from "~/components/icons/Trophy";
 import { UsersIcon } from "~/components/icons/Users";
+import { TierPill } from "~/components/TierPill";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
-import { tierNumberToName } from "~/features/tournament/core/tiering";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -17,7 +17,6 @@ import type { CalendarEvent, ShowcaseCalendarEvent } from "../calendar-types";
 import { Tags } from "./Tags";
 import styles from "./TournamentCard.module.css";
 
-// xxx: getting a lot of stuff under the card, redesign?
 export function TournamentCard({
 	tournament,
 	className,
@@ -81,25 +80,37 @@ export function TournamentCard({
 					) : null}
 				</div>
 				<div
-					className={clsx(styles.name, {
+					className={clsx(styles.nameRow, {
 						"mt-3": !isHostedOnSendouInk,
 						"mt-1": isHostedOnSendouInk,
 					})}
 				>
-					{tournament.name}{" "}
-					{isShowcase ? (
-						<time
-							className={clsx(styles.time, {
-								invisible: !isMounted,
-							})}
-							dateTime={databaseTimestampToDate(
-								tournament.startTime,
-							).toISOString()}
-						>
-							{time()}
-						</time>
+					<div
+						className={clsx(styles.name, {
+							[styles.nameWithTier]:
+								tournament.tier || tournament.tentativeTier,
+						})}
+					>
+						{tournament.name}
+					</div>
+					{tournament.tier ? (
+						<TierPill tier={tournament.tier} />
+					) : tournament.tentativeTier ? (
+						<TierPill tier={tournament.tentativeTier} isTentative />
 					) : null}
 				</div>
+				{isShowcase ? (
+					<time
+						className={clsx(styles.time, {
+							invisible: !isMounted,
+						})}
+						dateTime={databaseTimestampToDate(
+							tournament.startTime,
+						).toISOString()}
+					>
+						{time()}
+					</time>
+				) : null}
 				{isCalendar ? (
 					<div className="stack sm items-center my-2">
 						<Tags tags={tournament.tags} small centered />
@@ -121,7 +132,6 @@ export function TournamentCard({
 							<TrophyIcon title="Ranked (impacts this seasons SP)" />
 						</div>
 					) : null}
-					{tournament.tier ? <TierPill tier={tournament.tier} /> : null}
 					{isCalendar && tournament.badges && tournament.badges.length > 0 ? (
 						<BadgePrizesPill badges={tournament.badges} />
 					) : null}
@@ -219,31 +229,5 @@ function BadgePrizesPill({
 				className={styles.badgeDisplay}
 			/>
 		</SendouPopover>
-	);
-}
-
-const TIER_STYLE_CLASS: Record<number, string> = {
-	1: styles.tierX,
-	2: styles.tierSPlus,
-	3: styles.tierS,
-	4: styles.tierAPlus,
-	5: styles.tierA,
-	6: styles.tierBPlus,
-	7: styles.tierB,
-	8: styles.tierCPlus,
-	9: styles.tierC,
-};
-
-function TierPill({ tier }: { tier: number }) {
-	const tierName = tierNumberToName(tier);
-	const tierClass = TIER_STYLE_CLASS[tier] ?? "";
-
-	return (
-		<div
-			className={clsx(styles.pill, styles.pillTier, tierClass)}
-			title={`${tierName}-tier tournament`}
-		>
-			{tierName}
-		</div>
 	);
 }

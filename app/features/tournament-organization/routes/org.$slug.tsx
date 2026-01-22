@@ -18,6 +18,7 @@ import { UsersIcon } from "~/components/icons/Users";
 import { Main } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
+import { TierPill } from "~/components/TierPill";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { BannedUsersList } from "~/features/tournament-organization/components/BannedPlayersList";
 import { SendouForm } from "~/form/SendouForm";
@@ -329,7 +330,12 @@ function SeriesHeader({
 					/>
 				) : null}
 				<div>
-					<h2 className="text-lg">{series.name}</h2>
+					<div className="stack horizontal sm items-center">
+						<h2 className="text-lg">{series.name}</h2>
+						{series.tentativeTier ? (
+							<TierPill tier={series.tentativeTier} />
+						) : null}
+					</div>
 					{series.established ? (
 						<div className="text-lighter text-italic text-xs">
 							{t("org:events.established.short")}{" "}

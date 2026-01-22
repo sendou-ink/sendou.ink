@@ -14,6 +14,8 @@ interface CommonEvent {
 	isRanked: boolean | null;
 	/** Tournament tier (1=X, 2=S+, 3=S, 4=A+, 5=A, 6=B+, 7=B, 8=C+, 9=C). Null if not tiered. */
 	tier: number | null;
+	/** Tentative tier prediction based on series history. Displayed with ~ prefix. */
+	tentativeTier: number | null;
 	modes: Array<ModeShortWithSpecial> | null;
 	organization: {
 		name: string;

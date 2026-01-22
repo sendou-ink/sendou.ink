@@ -13,6 +13,7 @@ function makeEvent(
 		id: 1,
 		isRanked: null,
 		tier: null,
+		tentativeTier: null,
 		tags: [],
 		modes: ["SZ"],
 		teamsCount: 2,
