@@ -1,17 +1,13 @@
 .controls {
 	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
+	flex-direction: column;
+	gap: var(--s-2);
 }
 
 .selects {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--s-5);
-}
-
-.selectsWeapon {
-	width: 16rem;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--s-4);
 }
 
 .ability {
@@ -78,7 +74,9 @@
 .receiverButton {
 	all: unset;
 	cursor: pointer;
-	border-radius: var(--radius-box);
+	border-radius: var(--radius-field);
+	width: var(--field-size);
+	height: var(--field-size);
 }
 
 .receiverButton:focus-visible {
@@ -133,11 +131,13 @@
 }
 
 .patch {
-	border-radius: var(--radius-box);
+	border-radius: var(--radius-selector);
 	background-color: var(--color-accent-low);
 	color: var(--color-accent-high);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
-	padding-block: var(--s-0-5);
 	padding-inline: var(--s-2);
+	height: var(--selector-size-sm);
+	display: flex;
+	align-items: center;
 }

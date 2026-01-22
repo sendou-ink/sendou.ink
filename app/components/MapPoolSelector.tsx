@@ -103,12 +103,10 @@ export function MapPoolSelector({
 			)}
 			<div className="stack md">
 				{allowBulkEdit && (
-					<div className={styles.templateSelection}>
-						<MapPoolTemplateSelect
-							value={template}
-							handleChange={handleTemplateChange}
-						/>
-					</div>
+					<MapPoolTemplateSelect
+						value={template}
+						handleChange={handleTemplateChange}
+					/>
 				)}
 				{info}
 				<MapPoolStages
@@ -281,6 +279,7 @@ export function MapPoolStages({
 								allowBulkEdit &&
 								(mapPool.hasStage(stageId) ? (
 									<SendouButton
+										shape="circle"
 										key="clear"
 										onPress={() => handleStageClear(stageId)}
 										icon={<X />}
@@ -290,6 +289,7 @@ export function MapPoolStages({
 									/>
 								) : (
 									<SendouButton
+										shape="circle"
 										key="select-all"
 										onPress={() => handleStageAdd(stageId)}
 										icon={<ArrowLeft />}

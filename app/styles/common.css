@@ -65,7 +65,7 @@ details summary {
 a {
 	color: var(--color-text-accent);
 	text-decoration: none;
-	border-radius: 5px;
+	border-radius: var(--radius-field);
 
 	&:focus-visible {
 		outline: var(--focus-ring);
@@ -123,8 +123,8 @@ input[type="checkbox"] {
 	appearance: none;
 	cursor: pointer;
 	padding: 0;
-	width: var(--selector-size);
-	height: var(--selector-size);
+	width: var(--selector-size-sm);
+	height: var(--selector-size-sm);
 	border-radius: calc(var(--radius-selector) / 2);
 	background-color: var(--color-bg);
 	border: var(--border-style);
@@ -165,8 +165,8 @@ input[type="radio"] {
 	appearance: none;
 	cursor: pointer;
 	vertical-align: middle;
-	width: var(--selector-size);
-	height: var(--selector-size);
+	width: var(--selector-size-sm);
+	height: var(--selector-size-sm);
 	background-color: var(--color-bg);
 	border: var(--border-style);
 	border-radius: var(--radius-full);

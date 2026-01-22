@@ -1,5 +1,5 @@
 .root {
-	--height: var(--selector-size);
+	--height: var(--selector-size-sm);
 
 	cursor: pointer;
 	display: grid;

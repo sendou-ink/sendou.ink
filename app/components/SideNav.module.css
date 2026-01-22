@@ -297,6 +297,8 @@
 }
 
 .sideNavLinkBadge {
+	display: flex;
+	align-items: center;
 	margin-left: auto;
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
@@ -304,12 +306,14 @@
 	background-color: var(--color-text-accent);
 	padding: 0 var(--s-1);
 	border-radius: var(--radius-selector);
+	height: var(--selector-size-xs);
+	text-align: center;
 	flex-shrink: 0;
 	text-transform: uppercase;
 }
 
 .sideNavLinkBadgeWarning {
-	background-color: var(--color-second-high);
+	background-color: var(--color-text-second);
 }
 
 .sideNavPanelOverlay {

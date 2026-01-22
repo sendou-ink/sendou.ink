@@ -74,7 +74,7 @@
 	font-weight: var(--weight-bold);
 	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-selector);
-	height: var(--field-size-xs);
+	height: var(--selector-size);
 	width: max-content;
 	padding: 0 var(--s-1-5);
 	display: flex;
@@ -98,7 +98,7 @@
 	padding: 0 var(--s-1-5);
 	display: flex;
 	gap: var(--s-1);
-	height: var(--field-size-xs);
+	height: var(--selector-size);
 	align-items: center;
 }
 
@@ -119,7 +119,7 @@
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 	border-radius: var(--radius-selector);
-	height: var(--field-size-xs);
+	height: var(--selector-size);
 	padding: 0 var(--s-1-5);
 	display: grid;
 	place-items: center;
@@ -161,4 +161,5 @@
 	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-selector);
 	padding: 0 var(--s-1-5);
+	height: var(--selector-size);
 }

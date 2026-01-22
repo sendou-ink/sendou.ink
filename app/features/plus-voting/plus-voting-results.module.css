@@ -21,13 +21,13 @@
 .tierHeader {
 	display: flex;
 	flex-direction: row;
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 }
 
 .tierHeader::before,
 .tierHeader::after {
 	flex: 1 1;
-	border-bottom: 3px solid var(--color-accent-low);
+	border-bottom: 3px solid var(--color-bg-high);
 	margin: auto;
 	content: "";
 }
@@ -52,8 +52,9 @@
 }
 
 .userStatus {
-	border-radius: var(--radius-box);
-	background-color: var(--color-accent);
+	border-radius: var(--radius-selector);
+	height: var(--selector-size-sm);
+	background-color: var(--color-text-accent);
 	color: var(--color-text-inverse);
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
@@ -62,14 +63,12 @@
 
 .userStatusFailed {
 	background-color: var(--color-error);
-	color: var(--color-text);
 }
 
 .suggestionS {
-	border-radius: 50%;
+	border-radius: var(--radius-full);
 	background-color: var(--color-bg);
 	color: var(--color-text);
-	font-weight: var(--weight-bold);
 	margin-inline-end: var(--s-1);
 	padding-inline: var(--s-1);
 }

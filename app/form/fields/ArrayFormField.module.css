@@ -1,6 +1,6 @@
 .card {
 	border: var(--border-style);
-	border-radius: var(--radius-field);
+	border-radius: var(--radius-box);
 	margin: 0;
 	padding: 0;
 }

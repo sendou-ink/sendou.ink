@@ -113,15 +113,14 @@
 	position: absolute;
 	background-color: var(--color-text-accent);
 	color: var(--color-text-inverse);
-	font-weight: var(--weight-semi);
-	width: 12px;
-	height: 12px;
-	border-radius: var(--radius-box);
+	width: 14px;
+	height: 14px;
+	border-radius: var(--radius-full);
 	font-size: var(--font-2xs);
 	display: grid;
 	place-items: center;
-	top: 14px;
-	left: 15px;
+	top: 12px;
+	left: 12px;
 	z-index: 1;
 }
 
@@ -149,8 +148,9 @@
 	text-transform: uppercase;
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
-	padding: var(--s-0-5) var(--s-2);
-	border-radius: var(--radius-box);
+	padding: 0 var(--s-2);
+	border-radius: var(--radius-selector);
+	height: var(--selector-size-sm);
 	place-items: center;
 	width: max-content;
 	display: flex;

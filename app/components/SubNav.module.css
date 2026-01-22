@@ -26,8 +26,12 @@
 
 .link {
 	width: 100%;
-	padding: var(--s-1) var(--s-4);
-	border-radius: var(--radius-box);
+	padding: 0 var(--s-4);
+	height: var(--field-size-sm);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: var(--radius-field);
 	background-color: var(--color-bg-high);
 	cursor: pointer;
 	font-size: var(--font-xs);
