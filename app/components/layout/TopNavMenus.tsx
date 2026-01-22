@@ -25,6 +25,7 @@ const NAV_CATEGORIES = [
 		name: "tools",
 		items: [
 			{ name: "analyzer", url: "analyzer" },
+			{ name: "comp-analyzer", url: "comp-analyzer" },
 			{ name: "builds", url: "builds" },
 			{ name: "object-damage-calculator", url: "object-damage-calculator" },
 			{ name: "plans", url: "plans" },
