@@ -215,8 +215,8 @@ export function Widget({
 					<WeaponPool
 						weapons={
 							widget.data.weapons as Array<{
-								weaponSplId: MainWeaponId;
-								isFavorite: number;
+								id: MainWeaponId;
+								isFavorite: boolean;
 							}>
 						}
 					/>
@@ -599,16 +599,16 @@ function Builds({
 function WeaponPool({
 	weapons,
 }: {
-	weapons: Array<{ weaponSplId: MainWeaponId; isFavorite: number }>;
+	weapons: Array<{ id: MainWeaponId; isFavorite: boolean }>;
 }) {
 	return (
 		<div className="stack horizontal sm justify-center flex-wrap">
 			{weapons.map((weapon) => {
 				return (
-					<div key={weapon.weaponSplId} className="u__weapon">
+					<div key={weapon.id} className="u__weapon">
 						<WeaponImage
-							weaponSplId={weapon.weaponSplId}
-							variant={weapon.isFavorite === 1 ? "badge-5-star" : "badge"}
+							weaponSplId={weapon.id}
+							variant={weapon.isFavorite ? "badge-5-star" : "badge"}
 							width={38}
 							height={38}
 						/>

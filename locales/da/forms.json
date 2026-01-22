@@ -166,5 +166,19 @@
 	"labels.banUserExpiresAt": "",
 	"bottomTexts.banUserExpiresAtHelp": "",
 	"labels.scrimCancelReason": "",
-	"bottomTexts.scrimCancelReasonHelp": ""
+	"bottomTexts.scrimCancelReasonHelp": "",
+	"bottomTexts.bioMarkdown": "",
+	"labels.division": "",
+	"options.division.both": "",
+	"options.division.tentatek": "",
+	"options.division.takoroka": "",
+	"labels.timezone": "",
+	"labels.favoriteStage": "",
+	"labels.peakXp": "",
+	"labels.weapon": "",
+	"labels.artSource": "",
+	"options.artSource.ALL": "",
+	"options.artSource.MADE-BY": "",
+	"options.artSource.MADE-OF": "",
+	"labels.tierListUrl": ""
 }

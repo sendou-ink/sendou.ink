@@ -2,8 +2,10 @@ import { z } from "zod/v4";
 import { ART_SOURCES } from "~/features/art/art-types";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import { dbBoolean, weaponSplId } from "~/utils/zod";
+import { weaponSplId } from "~/utils/zod";
 import { USER } from "../../user-page-constants";
+
+// xxx: dont redefine schemas here, reuse (or move the contents of widget-form-schemas.ts here)
 
 const BIO_WIDGET_SETTINGS_SCHEMA = z.object({
 	bio: z.string().min(1).max(USER.BIO_MAX_LENGTH),
@@ -29,8 +31,8 @@ const WEAPON_POOL_WIDGET_SETTINGS_SCHEMA = z.object({
 	weapons: z
 		.array(
 			z.object({
-				weaponSplId,
-				isFavorite: dbBoolean,
+				id: weaponSplId,
+				isFavorite: z.boolean(),
 			}),
 		)
 		.max(USER.WEAPON_POOL_MAX_SIZE),

@@ -1,34 +1,23 @@
-import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import clsx from "clsx";
-import { useEffect, useRef } from "react";
-import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { SendouButton } from "~/components/elements/Button";
-import { InputFormField } from "~/components/form/InputFormField";
-import { SelectFormField } from "~/components/form/SelectFormField";
-import { TextAreaFormField } from "~/components/form/TextAreaFormField";
-import { TextArrayFormField } from "~/components/form/TextArrayFormField";
-import { WeaponImage } from "~/components/Image";
-import { StarIcon } from "~/components/icons/Star";
-import { StarFilledIcon } from "~/components/icons/StarFilled";
-import { TrashIcon } from "~/components/icons/Trash";
-import { StageSelect } from "~/components/StageSelect";
-import { WeaponSelect } from "~/components/WeaponSelect";
 import type { Tables } from "~/db/tables";
-import { TIMEZONES } from "~/features/lfg/lfg-constants";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { type allWidgetsFlat, findWidgetById } from "../core/widgets/portfolio";
+import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
+import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
+import {
+	CONTROLLERS,
+	getWidgetFormSchema,
+	TIMEZONE_OPTIONS,
+} from "../core/widgets/widget-form-schemas";
 import styles from "../routes/u.$identifier.module.css";
-import { USER } from "../user-page-constants";
 
 export function WidgetSettingsForm({
 	widget,
 	onSettingsChange,
 }: {
 	widget: Tables["UserWidget"]["widget"];
-	onSettingsChange: (widgetId: string, settings: any) => void;
+	onSettingsChange: (widgetId: string, settings: unknown) => void;
 }) {
-	const schema = getWidgetSchema(widget.id);
+	const schema = getWidgetFormSchema(widget.id);
 
 	if (!schema) {
 		return null;
@@ -49,329 +38,93 @@ function WidgetSettingsFormInner({
 	onSettingsChange,
 }: {
 	widget: Tables["UserWidget"]["widget"];
-	schema: WidgetWithSettings["schema"];
-	onSettingsChange: (widgetId: string, settings: any) => void;
+	schema: ReturnType<typeof getWidgetFormSchema>;
+	onSettingsChange: (widgetId: string, settings: unknown) => void;
 }) {
-	const { t } = useTranslation(["user"]);
-	const methods = useForm({
-		resolver: standardSchemaResolver(schema),
-		defaultValues: (widget.settings ?? {}) as any,
-		mode: "onChange",
-	});
+	if (!schema) return null;
 
-	const values = useWatch({ control: methods.control });
-
-	// xxx: something better than refs here? (not even working - error is not cleared)
-	const isFirstRender = useRef(true);
-	const onSettingsChangeRef = useRef(onSettingsChange);
-	const widgetIdRef = useRef(widget.id);
-
-	onSettingsChangeRef.current = onSettingsChange;
-	widgetIdRef.current = widget.id;
-
-	useEffect(() => {
-		if (isFirstRender.current) {
-			isFirstRender.current = false;
-			return;
-		}
-
-		if (Object.keys(values).length > 0) {
-			onSettingsChangeRef.current(widgetIdRef.current, values);
-		}
-	}, [values]);
-
-	const formFields = (() => {
-		switch (widget.id) {
-			case "bio":
-				return (
-					<TextAreaFormField
-						label={t("widgets.forms.bio")}
-						name="bio"
-						maxLength={USER.BIO_MAX_LENGTH}
-					/>
-				);
-			case "bio-md":
-				return (
-					<TextAreaFormField
-						label={t("widgets.forms.bio")}
-						name="bio"
-						bottomText={t("widgets.forms.bio.markdownSupport")}
-						maxLength={USER.BIO_MD_MAX_LENGTH}
-					/>
-				);
-			case "x-rank-peaks":
-				return (
-					<SelectFormField
-						label={t("widgets.forms.division")}
-						name="division"
-						size="small"
-						values={[
-							{ value: "both", label: t("widgets.forms.division.both") },
-							{
-								value: "tentatek",
-								label: t("widgets.forms.division.tentatek"),
-							},
-							{
-								value: "takoroka",
-								label: t("widgets.forms.division.takoroka"),
-							},
-						]}
-					/>
-				);
-			case "timezone":
-				return (
-					<SelectFormField
-						label={t("widgets.forms.timezone")}
-						name="timezone"
-						size="medium"
-						values={TIMEZONES.map((tz) => ({ value: tz, label: tz }))}
-					/>
-				);
-			case "favorite-stage":
-				return (
-					<StageSelect
-						label={t("widgets.forms.favoriteStage")}
-						value={methods.watch("stageId")}
-						onChange={(stageId) => methods.setValue("stageId", stageId)}
-					/>
-				);
-			case "peak-xp-unverified":
-				return (
-					<div className="stack md">
-						<InputFormField
-							label={t("widgets.forms.peakXp")}
-							name="peakXp"
-							type="number"
-							size="extra-small"
-						/>
-						<SelectFormField
-							label={t("widgets.forms.division")}
-							name="division"
-							size="small"
-							values={[
-								{
-									value: "tentatek",
-									label: "Tentatek",
-								},
-								{
-									value: "takoroka",
-									label: "Takoroka",
-								},
-							]}
-						/>
-					</div>
-				);
-			case "peak-xp-weapon":
-				return (
-					<WeaponSelect
-						label={t("widgets.forms.weapon")}
-						value={methods.watch("weaponSplId")}
-						onChange={(weaponSplId) =>
-							methods.setValue("weaponSplId", weaponSplId)
-						}
-					/>
-				);
-			case "weapon-pool":
-				return (
-					<WeaponPoolField
-						weapons={methods.watch("weapons")}
-						onChange={(weapons) => methods.setValue("weapons", weapons)}
-					/>
-				);
-			case "sens":
-				return (
-					<SensFields
-						controller={methods.watch("controller")}
-						motionSens={methods.watch("motionSens")}
-						stickSens={methods.watch("stickSens")}
-						onControllerChange={(controller) =>
-							methods.setValue("controller", controller)
-						}
-						onMotionSensChange={(sens) => methods.setValue("motionSens", sens)}
-						onStickSensChange={(sens) => methods.setValue("stickSens", sens)}
-					/>
-				);
-			case "art":
-				return (
-					<SelectFormField
-						label={t("widgets.forms.source")}
-						name="source"
-						size="small"
-						values={[
-							{ value: "ALL", label: t("widgets.forms.source.ALL") },
-							{ value: "MADE-BY", label: t("widgets.forms.source.MADE-BY") },
-							{ value: "MADE-OF", label: t("widgets.forms.source.MADE-OF") },
-						]}
-					/>
-				);
-			case "links":
-				return (
-					<TextArrayFormField
-						label={t("widgets.forms.links")}
-						name="links"
-						format="plain"
-					/>
-				);
-			case "tier-list":
-				return (
-					<TierListField
-						searchParams={methods.watch("searchParams")}
-						onChange={(searchParams) =>
-							methods.setValue("searchParams", searchParams)
-						}
-					/>
-				);
-			default:
-				return null;
-		}
-	})();
-
-	return <FormProvider {...methods}>{formFields}</FormProvider>;
-}
-
-type WidgetWithSettings = Extract<
-	ReturnType<typeof allWidgetsFlat>[number],
-	{ schema: unknown }
->;
-
-function getWidgetSchema(widgetId: string) {
-	const widget = findWidgetById(widgetId);
-	if (widget && "schema" in widget) {
-		return widget.schema;
-	}
-	return null;
-}
-
-function WeaponPoolField({
-	weapons,
-	onChange,
-}: {
-	weapons: Array<{ weaponSplId: MainWeaponId; isFavorite: number }>;
-	onChange: (
-		weapons: Array<{ weaponSplId: MainWeaponId; isFavorite: number }>,
-	) => void;
-}) {
-	const { t } = useTranslation(["user"]);
-	const latestWeapon = weapons[weapons.length - 1];
-
-	return (
-		<div className={clsx("stack md", styles.weaponPool)}>
-			{weapons.length < USER.WEAPON_POOL_MAX_SIZE ? (
-				<WeaponSelect
-					label={t("user:weaponPool")}
-					onChange={(weaponSplId) => {
-						onChange([
-							...weapons,
-							{
-								weaponSplId,
-								isFavorite: 0,
-							},
-						]);
-					}}
-					disabledWeaponIds={weapons.map((w) => w.weaponSplId)}
-					// empty on selection
-					key={latestWeapon?.weaponSplId ?? "empty"}
-				/>
-			) : (
-				<span className="text-xs text-warning">
-					{t("user:forms.errors.maxWeapons")}
-				</span>
-			)}
-			<div className="stack horizontal sm justify-center">
-				{weapons.map((weapon) => {
-					return (
-						<div key={weapon.weaponSplId} className="stack xs">
-							<div className="u__weapon">
-								<WeaponImage
-									weaponSplId={weapon.weaponSplId}
-									variant={weapon.isFavorite === 1 ? "badge-5-star" : "badge"}
-									width={38}
-									height={38}
-								/>
-							</div>
-							<div className="stack sm horizontal items-center justify-center">
-								<SendouButton
-									icon={
-										weapon.isFavorite === 1 ? <StarFilledIcon /> : <StarIcon />
-									}
-									variant="minimal"
-									aria-label="Favorite weapon"
-									onPress={() =>
-										onChange(
-											weapons.map((w) =>
-												w.weaponSplId === weapon.weaponSplId
-													? {
-															...weapon,
-															isFavorite: weapon.isFavorite === 1 ? 0 : 1,
-														}
-													: w,
-											),
-										)
-									}
-								/>
-								<SendouButton
-									icon={<TrashIcon />}
-									variant="minimal-destructive"
-									aria-label="Delete weapon"
-									onPress={() =>
-										onChange(
-											weapons.filter(
-												(w) => w.weaponSplId !== weapon.weaponSplId,
-											),
-										)
-									}
-									size="small"
-								/>
-							</div>
-						</div>
-					);
-				})}
-			</div>
-		</div>
-	);
-}
-
-function TierListField({
-	searchParams,
-	onChange,
-}: {
-	searchParams: string;
-	onChange: (searchParams: string) => void;
-}) {
-	const { t } = useTranslation(["user"]);
-
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const value = e.target.value;
-
-		if (value.includes("/tier-list-maker")) {
-			try {
-				const url = new URL(value, "https://sendou.ink");
-				const extractedSearchParams = url.search.substring(1);
-				onChange(extractedSearchParams);
-				return;
-			} catch {
-				// not a valid URL, just use the value as-is
-			}
-		}
-
-		onChange(value);
+	const handleApply = (values: unknown) => {
+		onSettingsChange(widget.id, values);
 	};
 
-	return (
-		<div>
-			<label htmlFor="tier-list-searchParams">
-				{t("widgets.forms.tierListUrl")}
-			</label>
-			<div className="input-container">
-				<div className="input-addon">/tier-list-maker?</div>
-				<input
-					id="tier-list-searchParams"
-					value={searchParams ?? ""}
-					onChange={handleChange}
-				/>
-			</div>
-		</div>
+	const defaultValues = transformSettingsForForm(
+		widget.id,
+		widget.settings ?? {},
 	);
+
+	return (
+		<SendouForm
+			schema={schema}
+			defaultValues={defaultValues}
+			autoApply
+			onApply={handleApply}
+			className="stack md"
+		>
+			<WidgetFormFields widgetId={widget.id} />
+		</SendouForm>
+	);
+}
+
+function WidgetFormFields({ widgetId }: { widgetId: string }) {
+	switch (widgetId) {
+		case "bio":
+		case "bio-md":
+			return <FormField name="bio" />;
+		case "x-rank-peaks":
+			return <FormField name="division" />;
+		case "timezone":
+			return <FormField name="timezone" options={TIMEZONE_OPTIONS} />;
+		case "favorite-stage":
+			return <FormField name="stageId" />;
+		case "peak-xp-unverified":
+			return (
+				<div className="stack md">
+					<FormField name="peakXp" />
+					<FormField name="division" />
+				</div>
+			);
+		case "peak-xp-weapon":
+			return <FormField name="weaponSplId" />;
+		case "weapon-pool":
+			return <FormField name="weapons" />;
+		case "sens":
+			return <SensFields />;
+		case "art":
+			return <FormField name="source" />;
+		case "links":
+			return <FormField name="links" />;
+		case "tier-list":
+			return (
+				<FormField name="searchParams">
+					{(props: CustomFieldRenderProps) => (
+						<TierListField {...(props as CustomFieldRenderProps<string>)} />
+					)}
+				</FormField>
+			);
+		default:
+			return null;
+	}
+}
+
+function transformSettingsForForm(
+	widgetId: string,
+	settings: Record<string, unknown>,
+): Record<string, unknown> {
+	if (widgetId === "weapon-pool" && settings.weapons) {
+		const weapons = settings.weapons as Array<{
+			weaponSplId?: number;
+			id?: number;
+			isFavorite: number | boolean;
+		}>;
+		return {
+			...settings,
+			weapons: weapons.map((w) => ({
+				id: w.id ?? w.weaponSplId,
+				isFavorite: w.isFavorite === 1 || w.isFavorite === true,
+			})),
+		};
+	}
+	return settings;
 }
 
 const SENS_OPTIONS = [
@@ -379,29 +132,34 @@ const SENS_OPTIONS = [
 	40, 45, 50,
 ];
 
-const CONTROLLERS = ["s1-pro-con", "s2-pro-con", "grip", "handheld"] as const;
-
-function SensFields({
-	controller,
-	motionSens,
-	stickSens,
-	onControllerChange,
-	onMotionSensChange,
-	onStickSensChange,
-}: {
-	controller: "s1-pro-con" | "s2-pro-con" | "grip" | "handheld";
-	motionSens: number | null;
-	stickSens: number | null;
-	onControllerChange: (
-		controller: "s1-pro-con" | "s2-pro-con" | "grip" | "handheld",
-	) => void;
-	onMotionSensChange: (sens: number | null) => void;
-	onStickSensChange: (sens: number | null) => void;
-}) {
+function SensFields() {
 	const { t } = useTranslation(["user"]);
+	const { values, setValue, onFieldChange } = useFormFieldContext();
+
+	const controller =
+		(values.controller as (typeof CONTROLLERS)[number]) ?? "s2-pro-con";
+	const motionSens = (values.motionSens as number | null) ?? null;
+	const stickSens = (values.stickSens as number | null) ?? null;
 
 	const rawSensToString = (sens: number) =>
 		`${sens > 0 ? "+" : ""}${sens / 10}`;
+
+	const handleControllerChange = (
+		newController: (typeof CONTROLLERS)[number],
+	) => {
+		setValue("controller", newController);
+		onFieldChange?.("controller", newController);
+	};
+
+	const handleMotionSensChange = (sens: number | null) => {
+		setValue("motionSens", sens);
+		onFieldChange?.("motionSens", sens);
+	};
+
+	const handleStickSensChange = (sens: number | null) => {
+		setValue("stickSens", sens);
+		onFieldChange?.("stickSens", sens);
+	};
 
 	return (
 		<div className="stack md">
@@ -411,15 +169,11 @@ function SensFields({
 					id="controller"
 					value={controller}
 					onChange={(e) =>
-						onControllerChange(
-							e.target.value as
-								| "s1-pro-con"
-								| "s2-pro-con"
-								| "grip"
-								| "handheld",
+						handleControllerChange(
+							e.target.value as (typeof CONTROLLERS)[number],
 						)
 					}
-					className={styles.sensSelect}
+					className={clsx(styles.sensSelect)}
 				>
 					{CONTROLLERS.map((ctrl) => (
 						<option key={ctrl} value={ctrl}>
@@ -436,11 +190,11 @@ function SensFields({
 						id="motionSens"
 						value={motionSens ?? ""}
 						onChange={(e) =>
-							onMotionSensChange(
+							handleMotionSensChange(
 								e.target.value === "" ? null : Number(e.target.value),
 							)
 						}
-						className={styles.sensSelect}
+						className={clsx(styles.sensSelect)}
 					>
 						<option value="">{"-"}</option>
 						{SENS_OPTIONS.map((sens) => (
@@ -457,11 +211,11 @@ function SensFields({
 						id="stickSens"
 						value={stickSens ?? ""}
 						onChange={(e) =>
-							onStickSensChange(
+							handleStickSensChange(
 								e.target.value === "" ? null : Number(e.target.value),
 							)
 						}
-						className={styles.sensSelect}
+						className={clsx(styles.sensSelect)}
 					>
 						<option value="">{"-"}</option>
 						{SENS_OPTIONS.map((sens) => (
@@ -471,6 +225,43 @@ function SensFields({
 						))}
 					</select>
 				</div>
+			</div>
+		</div>
+	);
+}
+
+function TierListField({ value, onChange }: CustomFieldRenderProps<string>) {
+	const { t } = useTranslation(["user"]);
+
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const inputValue = e.target.value;
+
+		if (inputValue.includes("/tier-list-maker")) {
+			try {
+				const url = new URL(inputValue, "https://sendou.ink");
+				const extractedSearchParams = url.search.substring(1);
+				onChange(extractedSearchParams);
+				return;
+			} catch {
+				// not a valid URL, just use the value as-is
+			}
+		}
+
+		onChange(inputValue);
+	};
+
+	return (
+		<div>
+			<label htmlFor="tier-list-searchParams">
+				{t("widgets.forms.tierListUrl")}
+			</label>
+			<div className="input-container">
+				<div className="input-addon">/tier-list-maker?</div>
+				<input
+					id="tier-list-searchParams"
+					value={value ?? ""}
+					onChange={handleChange}
+				/>
 			</div>
 		</div>
 	);
