@@ -36,22 +36,22 @@ export type MemberRole = (typeof TEAM_MEMBER_ROLES)[number];
 export type DBBoolean = number;
 
 export const CUSTOM_THEME_VARS = [
-	"--base-h",
-	"--base-c-0",
-	"--base-c-1",
-	"--base-c-2",
-	"--base-c-3",
-	"--base-c-4",
-	"--base-c-5",
-	"--base-c-6",
-	"--base-c-7",
-	"--acc-h",
-	"--acc-c-0",
-	"--acc-c-1",
-	"--acc-c-2",
-	"--acc-c-3",
-	"--acc-c-4",
-	"--acc-c-5",
+	"--_base-h",
+	"--_base-c-0",
+	"--_base-c-1",
+	"--_base-c-2",
+	"--_base-c-3",
+	"--_base-c-4",
+	"--_base-c-5",
+	"--_base-c-6",
+	"--_base-c-7",
+	"--_acc-h",
+	"--_acc-c-0",
+	"--_acc-c-1",
+	"--_acc-c-2",
+	"--_acc-c-3",
+	"--_acc-c-4",
+	"--_acc-c-5",
 ] as const;
 export type CustomThemeVar = (typeof CUSTOM_THEME_VARS)[number];
 export type CustomTheme = Record<CustomThemeVar, number>;
