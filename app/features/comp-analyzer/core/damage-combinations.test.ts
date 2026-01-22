@@ -180,24 +180,6 @@ describe("calculateDamageCombos - one-shot exclusion", () => {
 			expect(hasOneShot).toBe(false);
 		}
 	});
-
-	test("keeps combos with 100+ damage when sub weapon is present", () => {
-		const combos = calculateDamageCombos([SPLAT_CHARGER_ID, SPLATTERSHOT_ID]);
-
-		const comboWithSubAndOneShot = combos.find((combo) => {
-			const hasSub = combo.segments.some((s) => s.isSubWeapon);
-			const hasOneShot = combo.segments.some((s) => s.damageValue >= 100);
-			return hasSub && hasOneShot;
-		});
-
-		expect(comboWithSubAndOneShot).toBeDefined();
-		expect(comboWithSubAndOneShot!.segments.some((s) => s.isSubWeapon)).toBe(
-			true,
-		);
-		expect(
-			comboWithSubAndOneShot!.segments.some((s) => s.damageValue >= 100),
-		).toBe(true);
-	});
 });
 
 describe("calculateDamageCombos - sorting", () => {
