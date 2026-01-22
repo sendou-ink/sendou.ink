@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { type CalendarEventTag, TOURNAMENT_STAGE_TYPES } from "~/db/tables";
-import { tierNumberToName } from "~/features/tournament/core/tiering";
+import {
+	TIER_NUMBERS,
+	tierNumberToName,
+} from "~/features/tournament/core/tiering";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as Swiss from "~/features/tournament-bracket/core/Swiss";
@@ -44,7 +47,6 @@ const modeArr = z
 	.min(1)
 	.max(modesShortWithSpecial.length);
 
-const TIER_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 const tierItems = TIER_NUMBERS.map((tier) => ({
 	label: () => tierNumberToName(tier),
 	value: String(tier),
