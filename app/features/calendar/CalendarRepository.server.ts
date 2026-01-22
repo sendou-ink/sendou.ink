@@ -1,3 +1,4 @@
+import { sub, subDays } from "date-fns";
 import type {
 	Expression,
 	ExpressionBuilder,
@@ -230,10 +231,13 @@ function findAllBetweenTwoTimestampsMapped(
 				? (row.tags.split(",") as CalendarEvent["tags"])
 				: [];
 
+			const isPastEvent =
+				databaseTimestampToDate(row.startTime) < sub(new Date(), { days: 1 });
 			const tentativeTier =
 				row.tier === null &&
 				row.organizationId !== null &&
-				row.tournamentId !== null
+				row.tournamentId !== null &&
+				!isPastEvent
 					? getTentativeTier(row.organizationId, row.name)
 					: null;
 
