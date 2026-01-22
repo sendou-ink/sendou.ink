@@ -512,6 +512,7 @@ const baseTournamentResultsQuery = (userId: number) =>
 			"CalendarEvent.tournamentId",
 			"TournamentResult.tournamentId",
 		)
+		.innerJoin("Tournament", "Tournament.id", "TournamentResult.tournamentId")
 		.where("TournamentResult.userId", "=", userId);
 
 export function findResultsByUserId(
@@ -539,6 +540,7 @@ export function findResultsByUserId(
 				sql`1`,
 				sql`0`,
 			]).as("isHighlight"),
+			sql<number | null>`null`.as("tier"),
 			withMaxEventStartTime(eb),
 			jsonArrayFrom(
 				eb
@@ -573,6 +575,7 @@ export function findResultsByUserId(
 			"TournamentTeam.id as teamId",
 			"TournamentTeam.name as teamName",
 			"TournamentResult.isHighlight",
+			"Tournament.tier",
 			withMaxEventStartTime(eb),
 			jsonArrayFrom(
 				eb

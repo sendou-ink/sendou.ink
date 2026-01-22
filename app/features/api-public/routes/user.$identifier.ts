@@ -24,6 +24,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		await db
 			.selectFrom("User")
 			.leftJoin("PlusTier", "PlusTier.userId", "User.id")
+			.leftJoin("SplatoonPlayer", "SplatoonPlayer.userId", "User.id")
 			.select(({ eb }) => [
 				"User.id",
 				"User.country",
@@ -55,17 +56,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 						.groupBy(["BadgeOwner.badgeId", "BadgeOwner.userId"])
 						.whereRef("BadgeOwner.userId", "=", "User.id"),
 				).as("badges"),
-				jsonArrayFrom(
-					eb
-						.selectFrom("SplatoonPlayer")
-						.innerJoin(
-							"XRankPlacement",
-							"XRankPlacement.playerId",
-							"SplatoonPlayer.id",
-						)
-						.select(["XRankPlacement.power"])
-						.whereRef("SplatoonPlayer.userId", "=", "User.id"),
-				).as("xRankPlacements"),
+				"SplatoonPlayer.peakXp",
 				jsonArrayFrom(
 					eb
 						.selectFrom("TeamMemberWithSecondary")
@@ -117,13 +108,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					tier: skill.tier,
 				}
 			: null,
-		peakXp:
-			user.xRankPlacements.length > 0
-				? user.xRankPlacements.reduce((acc, cur) => {
-						if (!cur.power) return acc;
-						return Math.max(acc, cur.power);
-					}, 0)
-				: null,
+		peakXp: user.peakXp,
 		weaponPool: user.weapons.map((weapon) => ({
 			id: weapon.weaponSplId,
 			name: t(`weapons:MAIN_${weapon.weaponSplId}`),

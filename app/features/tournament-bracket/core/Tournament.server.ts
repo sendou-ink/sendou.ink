@@ -1,4 +1,5 @@
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import { isAdmin } from "~/modules/permissions/utils";
 import { notFoundIfFalsy } from "~/utils/remix.server";
@@ -55,10 +56,16 @@ function dataMapped({
 		isAdmin(user);
 	const revealInfo = tournamentHasStarted || isOrganizer;
 
+	const tentativeTier =
+		!ctx.tier && ctx.organization?.id
+			? getTentativeTier(ctx.organization.id, ctx.name)
+			: null;
+
 	return {
 		data,
 		ctx: {
 			...ctx,
+			tentativeTier,
 			teams: ctx.teams.map((team) => {
 				const isOwnTeam = team.members.some(
 					(member) => member.userId === user?.id,

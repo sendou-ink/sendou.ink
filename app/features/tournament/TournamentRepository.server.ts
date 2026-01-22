@@ -22,6 +22,7 @@ import {
 	userChatNameColor,
 } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
+import type { TournamentTierNumber } from "./core/tiering";
 
 export type FindById = NonNullable<Unwrapped<typeof findById>>;
 export async function findById(id: number) {
@@ -51,6 +52,7 @@ export async function findById(id: number) {
 			"Tournament.mapPickingStyle",
 			"Tournament.rules",
 			"Tournament.parentTournamentId",
+			"Tournament.tier",
 			"CalendarEvent.name",
 			"CalendarEvent.description",
 			"CalendarEventDate.startTime",
@@ -186,7 +188,7 @@ export async function findById(id: number) {
 									"User.customUrl",
 									"User.country",
 									"User.twitch",
-									"SeedingSkill.ordinal",
+									"SeedingSkill.mu as ordinal",
 									"PlusTier.tier as plusTier",
 									"TournamentTeamMember.isOwner",
 									"TournamentTeamMember.createdAt",
@@ -250,7 +252,8 @@ export async function findById(id: number) {
 					])
 					.where("TournamentTeam.tournamentId", "=", id)
 					.orderBy("TournamentTeam.seed", "asc")
-					.orderBy("TournamentTeam.createdAt", "asc"),
+					.orderBy("TournamentTeam.createdAt", "asc")
+					.orderBy("TournamentTeam.id", "asc"),
 			).as("teams"),
 			jsonArrayFrom(
 				eb
@@ -463,8 +466,10 @@ export function forShowcase() {
 		.select((eb) => [
 			"Tournament.id",
 			"Tournament.settings",
+			"Tournament.tier",
 			"CalendarEvent.authorId",
 			"CalendarEvent.name",
+			"CalendarEvent.organizationId",
 			"CalendarEventDate.startTime",
 			"CalendarEvent.hidden",
 			eb
@@ -1232,4 +1237,18 @@ export function updateTeamSeeds({
 			.where("id", "=", tournamentId)
 			.execute();
 	});
+}
+
+export function updateTournamentTier({
+	tournamentId,
+	tier,
+}: {
+	tournamentId: number;
+	tier: TournamentTierNumber;
+}) {
+	return db
+		.updateTable("Tournament")
+		.set({ tier })
+		.where("id", "=", tournamentId)
+		.execute();
 }

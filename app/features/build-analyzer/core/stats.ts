@@ -446,6 +446,8 @@ const damageTypeToParamsKey: Record<
 	SPECIAL_BUMP: "BumpDamage",
 	SPECIAL_JUMP: "JumpDamage",
 	SPECIAL_TICK: "TickDamage",
+	// Virtual damage type for comp-analyzer, calculated from other damages
+	COMBO: [],
 };
 
 function damages(args: StatFunctionInput): AnalyzedBuild["stats"]["damages"] {
@@ -546,7 +548,7 @@ function specialWeaponDamages(
 			id: nanoid(),
 			distance: 0,
 			value: R.sum(cannonDamages.map((v) => v.value)),
-			type: "SPECIAL_CANNON",
+			type: "COMBO",
 		});
 	}
 
@@ -727,7 +729,7 @@ function subWeaponIdToEffectKey(
 	}
 }
 
-function subWeaponDamageValue({
+export function subWeaponDamageValue({
 	baseValue,
 	subWeaponId,
 	abilityPoints,

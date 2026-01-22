@@ -9,6 +9,7 @@
 	"pages.faq": "Perguntas Frequentes",
 	"pages.builds": "Builds",
 	"pages.analyzer": "Analisador de Builds",
+	"pages.comp-analyzer": "",
 	"pages.maps": "Listas de Mapas",
 	"pages.plans": "Planejador",
 	"pages.object-damage-calculator": "Calculadora de Dano",
@@ -304,6 +305,9 @@
 	"chat.systemMsg.userLeft": "{{name}} deixou o grupo",
 	"chat.newMessages": "",
 	"fc.title": "Código de amigo",
+	"fc.helpText": "",
+	"fc.whereToFind": "",
+	"fc.onceSetStaffOnly": "",
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.label": "",
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText": "",
 	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.label": "",
@@ -350,5 +354,7 @@
 	"search.hint": "",
 	"dataCredit.lean": "",
 	"header.parameter": "",
-	"weaponArt.title": ""
+	"weaponArt.title": "",
+	"tier.tentative": "",
+	"tier.confirmed": ""
 }

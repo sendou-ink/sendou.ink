@@ -6,6 +6,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
+import { TierPill } from "~/components/TierPill";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import {
@@ -118,6 +119,7 @@ export function UserResultsTable({
 											>
 												{result.eventName}
 											</Link>
+											{result.tier ? <TierPill tier={result.tier} /> : null}
 											{result.div ? (
 												<span className="text-lighter">({result.div})</span>
 											) : null}

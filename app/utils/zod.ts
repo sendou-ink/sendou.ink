@@ -221,7 +221,7 @@ export const safeNullableStringSchema = ({
 	max: number;
 }) =>
 	z.preprocess(
-		actuallyNonEmptyStringOrNull,
+		processMany(undefinedToNull, actuallyNonEmptyStringOrNull),
 		z
 			.string()
 			.min(min ?? 0)

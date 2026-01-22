@@ -120,6 +120,7 @@ export default function ContributionsPage() {
 				<li>TORIPNG - {t("contributions:toripng")}</li>
 				<li>uberu - {t("contributions:uberu")}</li>
 				<li>yaga - {t("contributions:yaga")}</li>
+				<li>Centritide - {t("contributions:centritide")}</li>
 				<li>Antariska, yaga & harryXYZ - {t("contributions:antariska")}</li>
 				<li>
 					<a href={SPLATOON_3_INK} target="_blank" rel="noreferrer">

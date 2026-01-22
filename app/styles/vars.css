@@ -32,7 +32,7 @@ html {
 
 	--_border-width: 2;
 
-	/* 
+	/*
 	Ommited from being overridden when viewing a page that loads a custom theme
 	to prevent accessibility issues and layout shifts
 	*/
@@ -41,7 +41,7 @@ html {
 	--_size-spacing: 1;
 }
 
-/* 
+/*
 'low' and 'high' do not indicate lightness!
 This is important because dark goes from light to dark, and light goes from dark to light
 
@@ -149,7 +149,7 @@ html.light {
 	--field-icon-time: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(90, 90, 90)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpolyline points='12 6 12 12 16 14'%3E%3C/polyline%3E%3C/svg%3E");
 }
 
-/* 
+/*
 These are the vars you mainly want to use
 */
 html {
@@ -187,7 +187,7 @@ html {
 
 	--line-height: 1.4;
 
-	/* 
+	/*
 	Tokens used for spacings
 	*/
 	--s-0-5: 0.125rem;

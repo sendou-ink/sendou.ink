@@ -9,6 +9,7 @@
 	"pages.faq": "FAQ",
 	"pages.builds": "ギア構成",
 	"pages.analyzer": "ギア構成分析",
+	"pages.comp-analyzer": "",
 	"pages.maps": "ステージ一覧",
 	"pages.plans": "戦略プランナー",
 	"pages.object-damage-calculator": "オブジェクトダメージ計算",
@@ -298,6 +299,9 @@
 	"chat.systemMsg.userLeft": "{{name}} がグループから出ました",
 	"chat.newMessages": "新着メッセージ",
 	"fc.title": "フレンドコード",
+	"fc.helpText": "",
+	"fc.whereToFind": "",
+	"fc.onceSetStaffOnly": "",
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.label": "",
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText": "",
 	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.label": "",
@@ -344,5 +348,7 @@
 	"search.hint": "",
 	"dataCredit.lean": "",
 	"header.parameter": "",
-	"weaponArt.title": ""
+	"weaponArt.title": "",
+	"tier.tentative": "",
+	"tier.confirmed": ""
 }

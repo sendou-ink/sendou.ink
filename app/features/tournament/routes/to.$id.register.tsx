@@ -27,6 +27,7 @@ import { MapPoolStages } from "~/components/MapPoolSelector";
 import { Markdown } from "~/components/Markdown";
 import { Section } from "~/components/Section";
 import { SubmitButton } from "~/components/SubmitButton";
+import { TierPill } from "~/components/TierPill";
 import TimePopover from "~/components/TimePopover";
 import { useUser } from "~/features/auth/core/user";
 import { imgTypeToDimensions } from "~/features/img-upload/upload-constants";
@@ -135,6 +136,11 @@ export default function TournamentRegisterPage() {
 								Unranked
 							</div>
 						)}
+						{tournament.ctx.tier ? (
+							<TierPill tier={tournament.ctx.tier} />
+						) : tournament.ctx.tentativeTier && !tournament.hasStarted ? (
+							<TierPill tier={tournament.ctx.tentativeTier} isTentative />
+						) : null}
 						<div className={clsx(styles.badge, styles.badgeModes)}>
 							{tournament.modesIncluded.map((mode) => (
 								<ModeImage key={mode} mode={mode} size={16} />

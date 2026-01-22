@@ -16,6 +16,10 @@ const devOnlyRoutes =
 					"/components",
 					"features/components-showcase/routes/components.tsx",
 				),
+				route(
+					"/comp-analyzer/all-ranges",
+					"features/comp-analyzer/routes/comp-analyzer.all-ranges.tsx",
+				),
 			] satisfies RouteConfig)
 		: [];
 
@@ -88,6 +92,8 @@ export default [
 	route("/plans", "features/map-planner/routes/plans.tsx"),
 
 	route("/analyzer", "features/build-analyzer/routes/analyzer.tsx"),
+
+	route("/comp-analyzer", "features/comp-analyzer/routes/comp-analyzer.tsx"),
 
 	route(
 		"/object-damage-calculator",

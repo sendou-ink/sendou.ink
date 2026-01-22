@@ -2750,9 +2750,23 @@ async function organization() {
 				roleDisplayName: null,
 			},
 		],
-		series: [],
+		series: [
+			{
+				name: "PICNIC",
+				description: "PICNIC tournament series",
+				showLeaderboard: false,
+			},
+		],
 		badges: [],
 	});
+
+	sql
+		.prepare(
+			`UPDATE "TournamentOrganizationSeries"
+			SET "tierHistory" = '[3, 4, 3]'
+			WHERE "organizationId" = 1 AND "name" = 'PICNIC'`,
+		)
+		.run();
 }
 
 const SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS = [150, 151, 152, 153];

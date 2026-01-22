@@ -57,6 +57,14 @@
 	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
 	display: block;
+	text-align: center;
+}
+
+.nameRow {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: var(--s-2);
 }
 
 .name {
@@ -67,6 +75,10 @@
 	text-overflow: ellipsis;
 	max-width: 225px;
 	overflow: hidden;
+}
+
+.nameWithTier {
+	max-width: 165px;
 }
 
 .teamCount {

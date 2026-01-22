@@ -9,6 +9,7 @@
 	"pages.faq": "FAQ",
 	"pages.builds": "빌드",
 	"pages.analyzer": "빌드 분석기",
+	"pages.comp-analyzer": "",
 	"pages.maps": "맵 목록",
 	"pages.plans": "계획표",
 	"pages.object-damage-calculator": "대미지 계산기",
@@ -298,6 +299,9 @@
 	"chat.systemMsg.userLeft": "",
 	"chat.newMessages": "",
 	"fc.title": "",
+	"fc.helpText": "",
+	"fc.whereToFind": "",
+	"fc.onceSetStaffOnly": "",
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.label": "",
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText": "",
 	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.label": "",
@@ -344,5 +348,7 @@
 	"search.hint": "",
 	"dataCredit.lean": "",
 	"header.parameter": "",
-	"weaponArt.title": ""
+	"weaponArt.title": "",
+	"tier.tentative": "",
+	"tier.confirmed": ""
 }
