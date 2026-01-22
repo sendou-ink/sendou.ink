@@ -264,17 +264,21 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 	const [targetSubDefenseAp, setTargetSubDefenseAp] = useTargetSubDefenseAp();
 	const [isCollapsed, setIsCollapsed] = useState(false);
 
+	const allDamageKeys = getAllDamageKeys(weaponIds, targetSubDefenseAp);
+	const allDamageKeyStrings = new Set(allDamageKeys.map(filterKeyToString));
+	const validExcludedKeys = excludedKeys.filter((key) =>
+		allDamageKeyStrings.has(filterKeyToString(key)),
+	);
+
 	const combos = calculateDamageCombos(
 		weaponIds,
-		excludedKeys,
+		validExcludedKeys,
 		targetSubDefenseAp,
 	);
 
 	if (weaponIds.length < 2) {
 		return null;
 	}
-
-	const allDamageKeys = getAllDamageKeys(weaponIds, targetSubDefenseAp);
 
 	const handleToggleFilter = (key: ExcludedDamageKey) => {
 		const keyString = filterKeyToString(key);
@@ -347,7 +351,7 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 							type="button"
 							className={styles.filterControlButton}
 							onClick={handleRemoveAll}
-							disabled={excludedKeys.length === allDamageKeys.length}
+							disabled={validExcludedKeys.length === allDamageKeys.length}
 						>
 							{t("analyzer:comp.removeAll")}
 						</button>
@@ -355,14 +359,14 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 							type="button"
 							className={styles.filterControlButton}
 							onClick={handleClearAll}
-							disabled={excludedKeys.length === 0}
+							disabled={validExcludedKeys.length === 0}
 						>
 							{t("analyzer:comp.addAll")}
 						</button>
 					</div>
-					{excludedKeys.length > 0 ? (
+					{validExcludedKeys.length > 0 ? (
 						<div className={styles.filteredItemsRow}>
-							{excludedKeys.map((key) => (
+							{validExcludedKeys.map((key) => (
 								<FilteredItem
 									key={filterKeyToString(key)}
 									filterKey={key}

@@ -307,7 +307,7 @@ function filterAndSortCombos(combos: DamageCombo[]): DamageCombo[] {
 			return false;
 		}
 
-		if (hasOneShotWithoutSub(combo)) {
+		if (hasOneShot(combo)) {
 			return false;
 		}
 
@@ -326,10 +326,8 @@ function filterAndSortCombos(combos: DamageCombo[]): DamageCombo[] {
 	return filtered.slice(0, MAX_COMBOS_DISPLAYED);
 }
 
-function hasOneShotWithoutSub(combo: DamageCombo): boolean {
-	const hasNoSubWeapon = combo.segments.every((s) => !s.isSubWeapon);
-	const hasOneShot = combo.segments.some((s) => s.damageValue >= 100);
-	return hasNoSubWeapon && hasOneShot;
+function hasOneShot(combo: DamageCombo): boolean {
+	return combo.segments.some((s) => s.damageValue >= 100);
 }
 
 const SPLASH_O_MATIC_ID = 20;

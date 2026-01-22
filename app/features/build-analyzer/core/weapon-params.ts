@@ -808,8 +808,8 @@ export const weaponParams = {
 					Mid: 1.125,
 				},
 			},
-			Range_SpawnSpeed: 1.1,
-			Range_GoStraightStateEndMaxSpeed: 1.027,
+			Range_SpawnSpeed: 2.21915,
+			Range_GoStraightStateEndMaxSpeed: 10,
 			Range_GoStraightToBrakeStateFrame: 8,
 			MoveSpeed: 0.086,
 			MoveSpeed_Charge: 0.086,
@@ -2551,7 +2551,7 @@ export const weaponParams = {
 			BulletDamageMax: 320,
 			CannonDamage: [
 				{
-					Damage: 600,
+					Damage: 500,
 					Distance: 1,
 				},
 				{
