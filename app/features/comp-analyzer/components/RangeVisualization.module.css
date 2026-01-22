@@ -1,9 +1,9 @@
 .container {
 	display: flex;
 	flex-direction: column;
-	border: 1px solid var(--border);
-	border-radius: var(--rounded-sm);
-	background: var(--bg);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-field);
+	background: var(--color-bg);
 }
 
 .header {
@@ -11,19 +11,19 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: var(--s-2) var(--s-3);
-	background: var(--bg-lighter);
+	background: var(--color-bg-higher);
 	border: none;
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	cursor: pointer;
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
-	color: var(--text);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
 	width: 100%;
 	text-align: left;
 }
 
 .header:hover {
-	background: var(--bg-lightest);
+	background: var(--color-bg-high);
 }
 
 .headerTitle {
@@ -31,9 +31,9 @@
 }
 
 .collapseIcon {
-	font-size: var(--fonts-lg);
-	font-weight: var(--bold);
-	color: var(--text-lighter);
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-high);
 	width: 20px;
 	text-align: center;
 }
@@ -47,15 +47,15 @@
 	gap: var(--s-4);
 	margin-bottom: var(--s-3);
 	padding-bottom: var(--s-2);
-	border-bottom: 1px solid var(--border);
+	border-bottom: 1px solid var(--color-border);
 }
 
 .legendItem {
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
-	font-size: var(--fonts-xs);
-	color: var(--text-lighter);
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
 }
 
 .legendLine {
@@ -99,9 +99,9 @@
 }
 
 .weaponLegendRange {
-	font-size: var(--fonts-xs);
-	color: var(--text-lighter);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	font-weight: var(--weight-semi);
 }
 
 .chart {

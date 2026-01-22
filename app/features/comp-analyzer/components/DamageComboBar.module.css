@@ -1,9 +1,9 @@
 .container {
 	display: flex;
 	flex-direction: column;
-	border: 1px solid var(--border);
-	border-radius: var(--rounded-sm);
-	background: var(--bg);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-field);
+	background: var(--color-bg);
 }
 
 .header {
@@ -11,19 +11,19 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: var(--s-2) var(--s-3);
-	background: var(--bg-lighter);
+	background: var(--color-bg-higher);
 	border: none;
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	cursor: pointer;
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
-	color: var(--text);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
 	width: 100%;
 	text-align: left;
 }
 
 .header:hover {
-	background: var(--bg-lightest);
+	background: var(--color-bg-high);
 }
 
 .headerTitle {
@@ -31,9 +31,9 @@
 }
 
 .collapseIcon {
-	font-size: var(--fonts-lg);
-	font-weight: var(--bold);
-	color: var(--text-lighter);
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-high);
 	width: 20px;
 	text-align: center;
 }
@@ -55,8 +55,8 @@
 	position: relative;
 	display: flex;
 	flex: 1;
-	background-color: var(--bg-lightest);
-	border-radius: var(--rounded-xs);
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-selector);
 	overflow: hidden;
 }
 
@@ -73,13 +73,13 @@
 	gap: var(--s-1);
 	height: 36px;
 	padding: 0 var(--s-2);
-	color: var(--black-text);
-	font-weight: var(--semi-bold);
+	color: var(--color-text-inverse);
+	font-weight: var(--weight-semi);
 }
 
 .damageTypeLabel {
-	font-size: var(--fonts-xxxs);
-	color: var(--text-lighter);
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
 	text-align: center;
 	white-space: nowrap;
 	overflow: hidden;
@@ -87,7 +87,7 @@
 	padding: var(--s-0-5) var(--s-0-5);
 	background: none;
 	border: 1px solid transparent;
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-selector);
 	cursor: pointer;
 }
 
@@ -96,13 +96,13 @@
 }
 
 .damageValue {
-	font-size: var(--fonts-sm);
-	font-weight: var(--bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
 }
 
 .hitMultiplier {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	opacity: 0.8;
 	margin-left: var(--s-0-5);
 }
@@ -158,36 +158,36 @@
 }
 
 .totalDamage {
-	font-size: var(--fonts-xl);
-	font-weight: var(--bold);
+	font-size: var(--font-xl);
+	font-weight: var(--weight-bold);
 }
 
 .hitCount {
-	font-size: var(--fonts-sm);
-	color: var(--text-lighter);
+	font-size: var(--font-sm);
+	color: var(--color-text-high);
 }
 
 .filterControlsRow {
 	display: flex;
 	gap: var(--s-2);
 	padding-block-end: var(--s-2);
-	border-block-end: 1px solid var(--border);
+	border-block-end: 1px solid var(--color-border);
 	margin-block-end: var(--s-1);
 }
 
 .filterControlButton {
 	padding: var(--s-1) var(--s-2);
-	background: var(--bg-lighter);
-	border: 1px solid var(--border);
-	border-radius: var(--rounded-sm);
-	font-size: var(--fonts-xs);
-	color: var(--text);
+	background: var(--color-bg-higher);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-field);
+	font-size: var(--font-xs);
+	color: var(--color-text);
 	cursor: pointer;
 	transition: background-color 0.15s ease;
 }
 
 .filterControlButton:hover:not(:disabled) {
-	background: var(--bg-lightest);
+	background: var(--color-bg-high);
 }
 
 .filterControlButton:disabled {
@@ -200,7 +200,7 @@
 	flex-wrap: wrap;
 	gap: var(--s-2);
 	padding-bottom: var(--s-2);
-	border-bottom: 1px solid var(--border);
+	border-bottom: 1px solid var(--color-border);
 	margin-bottom: var(--s-1);
 }
 
@@ -209,17 +209,17 @@
 	align-items: center;
 	gap: var(--s-1);
 	padding: var(--s-1) var(--s-2);
-	background: var(--bg-lighter);
-	border: 1px solid var(--border);
-	border-radius: var(--rounded-sm);
-	font-size: var(--fonts-xs);
-	color: var(--text-lighter);
+	background: var(--color-bg-higher);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-field);
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
 	cursor: pointer;
 	transition: background-color 0.15s ease;
 }
 
 .filteredItem:hover {
-	background: var(--bg-lightest);
+	background: var(--color-bg-high);
 }
 
 .slidersContainer {
@@ -228,7 +228,7 @@
 	gap: var(--s-2) var(--s-2);
 	align-items: center;
 	padding-bottom: var(--s-3);
-	border-bottom: 1px solid var(--border);
+	border-bottom: 1px solid var(--color-border);
 	margin-bottom: var(--s-1);
 }
 
@@ -283,8 +283,8 @@
 }
 
 .resSliderLabel {
-	font-size: var(--fonts-sm);
-	color: var(--text-lighter);
+	font-size: var(--font-sm);
+	color: var(--color-text-high);
 	white-space: nowrap;
 }
 
@@ -294,14 +294,14 @@
 }
 
 .resSliderValue {
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 }
 
 .inkTime {
-	font-size: var(--fonts-sm);
-	color: var(--theme-secondary);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	color: var(--color-text-second);
+	font-weight: var(--weight-semi);
 }
 
 .inkTimeSegment {
@@ -313,27 +313,27 @@
 	padding: 0 var(--s-2);
 	background: repeating-linear-gradient(
 		-45deg,
-		var(--bg-lighter) 0,
-		var(--bg-lighter) 4px,
-		var(--bg-lightest) 4px,
-		var(--bg-lightest) 8px
+		var(--color-bg-higher) 0,
+		var(--color-bg-higher) 4px,
+		var(--color-bg-high) 4px,
+		var(--color-bg-high) 8px
 	);
-	color: var(--text);
-	font-weight: var(--semi-bold);
+	color: var(--color-text);
+	font-weight: var(--weight-semi);
 	min-width: fit-content;
 }
 
 .inkTimeDamage {
-	font-size: var(--fonts-sm);
-	font-weight: var(--bold);
-	color: var(--text);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+	color: var(--color-text);
 }
 
 .inkTimeLabel {
-	font-size: var(--fonts-xxs);
-	color: var(--theme-secondary);
+	font-size: var(--font-2xs);
+	color: var(--color-text-second);
 	text-align: center;
 	white-space: nowrap;
 	padding: var(--s-0-5) var(--s-0-5);
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 }

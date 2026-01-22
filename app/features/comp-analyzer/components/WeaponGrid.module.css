@@ -11,8 +11,8 @@
 	background-color: transparent;
 	border: none;
 	cursor: pointer;
-	font-weight: var(--semi-bold);
-	color: var(--text);
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
 }
 
 .collapseArrow {
@@ -58,12 +58,12 @@
 	align-items: center;
 	gap: var(--s-2);
 	padding-bottom: var(--s-1);
-	border-bottom: 3px solid var(--border);
+	border-bottom: 3px solid var(--color-border);
 }
 
 .categoryName {
-	font-weight: var(--semi-bold);
-	font-size: var(--fonts-sm);
+	font-weight: var(--weight-semi);
+	font-size: var(--font-sm);
 	text-transform: capitalize;
 }
 
@@ -78,15 +78,15 @@
 	align-items: center;
 	justify-content: center;
 	padding: var(--s-1);
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-higher);
 	border: 2px solid transparent;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 	cursor: pointer;
 	transition: border-color 0.1s;
 }
 
 .weaponButton:hover {
-	border-color: var(--theme);
+	border-color: var(--color-text-accent);
 }
 
 .weaponButton:disabled {
@@ -99,6 +99,6 @@
 }
 
 .weaponButtonSelected {
-	background-color: var(--bg-lightest);
-	border: 2px solid var(--border);
+	background-color: var(--color-bg-high);
+	border: 2px solid var(--color-border);
 }
