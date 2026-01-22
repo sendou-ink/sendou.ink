@@ -1,11 +1,13 @@
 import { z } from "zod";
 import { type CalendarEventTag, TOURNAMENT_STAGE_TYPES } from "~/db/tables";
+import { tierNumberToName } from "~/features/tournament/core/tiering";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as Swiss from "~/features/tournament-bracket/core/Swiss";
 import {
 	array,
 	checkboxGroup,
+	dualSelectOptional,
 	numberFieldOptional,
 	radioGroup,
 	textFieldOptional,
@@ -42,6 +44,12 @@ const modeArr = z
 	.min(1)
 	.max(modesShortWithSpecial.length);
 
+const TIER_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
+const tierItems = TIER_NUMBERS.map((tier) => ({
+	label: () => tierNumberToName(tier),
+	value: String(tier),
+}));
+
 export const calendarFiltersSearchParamsSchema = z.object({
 	preferredStartTime: preferredStartTime.catch("ANY"),
 	tagsIncluded: z.array(calendarEventTagSchema).catch([]),
@@ -56,6 +64,12 @@ export const calendarFiltersSearchParamsSchema = z.object({
 	modes: modeArr.catch([...modesShortWithSpecial]),
 	modesExact: z.boolean().catch(false),
 	minTeamCount: z.coerce.number().int().nonnegative().catch(0),
+	tiers: z
+		.tuple([
+			z.coerce.number().int().min(1).max(9).nullable(),
+			z.coerce.number().int().min(1).max(9).nullable(),
+		])
+		.catch([null, null]),
 });
 
 const TAGS_TO_OMIT: CalendarEventTag[] = [
@@ -138,6 +152,18 @@ export const calendarFiltersFormSchema = z
 		isRanked: toggle({ label: "labels.onlyRankedEvents" }),
 		minTeamCount: numberFieldOptional({
 			label: "labels.minTeamCount",
+		}),
+		tiers: dualSelectOptional({
+			fields: [
+				{
+					label: "labels.maxTier",
+					items: tierItems,
+				},
+				{
+					label: "labels.minTier",
+					items: tierItems,
+				},
+			],
 		}),
 		orgsIncluded: array({
 			label: "labels.orgsIncluded",
