@@ -82,7 +82,7 @@ export default function ObjectDamagePage() {
 		<Main className="stack lg">
 			<div className={styles.controls}>
 				<div className={styles.selects}>
-					<div className={styles.selectsWeapon}>
+					<div>
 						<Label htmlFor="weapon">{t("analyzer:labels.weapon")}</Label>
 						<WeaponSelect
 							includeSubSpecial

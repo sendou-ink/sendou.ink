@@ -16,7 +16,7 @@
 	-ms-overflow-style: none;
 	scrollbar-width: none;
 	border: var(--border-style);
-	border-radius: var(--radius-field);
+	border-radius: var(--radius-box);
 	overflow: scroll;
 	user-select: none;
 }
@@ -26,13 +26,16 @@
 	display: flex;
 	justify-content: space-between;
 	width: var(--match-width);
-	margin-block-start: -16px;
+	margin-block-start: calc(var(--selector-size-xs) * -1);
 }
 
 .matchHeaderBox {
 	background-color: var(--color-bg-higher);
-	padding: var(--s-0-5) var(--s-1);
-	border-radius: var(--radius-field);
+	padding: 0 var(--s-1);
+	height: var(--selector-size-xs);
+	display: flex;
+	align-items: center;
+	border-radius: var(--radius-selector);
 	font-size: var(--font-2xs) !important;
 	font-weight: var(--weight-semi);
 	color: var(--color-text);
@@ -135,7 +138,7 @@ a.match:hover {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-around;
-	gap: var(--s-6);
+	gap: var(--s-8);
 	margin-top: var(--s-6);
 	flex: 1;
 	overflow: visible;
@@ -152,7 +155,7 @@ a.match:hover {
 	font-weight: var(--weight-semi);
 	padding-block: var(--s-2);
 	width: var(--match-width);
-	border-radius: var(--radius-field);
+	border-radius: var(--radius-box);
 }
 
 .elimRoundHeaderInfos {

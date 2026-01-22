@@ -27,7 +27,7 @@
 	column-gap: var(--s-2);
 	row-gap: var(--s-2);
 	font-size: var(--font-xs);
-	grid-template-columns: 2rem 2.25rem 2rem 1fr 3rem;
+	grid-template-columns: 2rem 3.5rem 2rem 1fr 3rem;
 	grid-template-areas:
 		"handle seed logo name sp"
 		"players players players players players";
@@ -64,7 +64,7 @@
 	}
 
 	.teamCard {
-		grid-template-columns: 2.5rem 2.25rem 2rem 1fr 3rem 1fr;
+		grid-template-columns: 2.5rem 3.5rem 2rem 1fr 3rem 1fr;
 		grid-template-areas: "handle seed logo name sp players";
 		row-gap: 0;
 	}
@@ -152,8 +152,9 @@
 	align-items: center;
 	gap: var(--s-1);
 	background-color: var(--color-bg-higher);
-	border-radius: var(--radius-box);
-	padding: var(--s-0-5) var(--s-2);
+	border-radius: var(--radius-selector);
+	padding: 0 var(--s-2);
+	height: var(--selector-size-sm);
 	font-weight: var(--weight-semi);
 }
 

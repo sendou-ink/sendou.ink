@@ -123,6 +123,7 @@ function ArrayItemFieldset({
 				<legend className={styles.headerLabel}>#{index + 1}</legend>
 				{canRemove ? (
 					<SendouButton
+						shape="circle"
 						icon={<Trash />}
 						aria-label="Remove item"
 						size="small"

@@ -15,6 +15,6 @@
 }
 
 .bar {
-	background-color: var(--color-accent);
+	background-color: var(--color-text-accent);
 	height: 100%;
 }

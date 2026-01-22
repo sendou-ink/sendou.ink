@@ -108,6 +108,7 @@ function Association({
 						]}
 					>
 						<SendouButton
+							shape="square"
 							icon={<Trash className="small-icon" />}
 							className="small-text"
 							variant="minimal-destructive"
@@ -195,6 +196,7 @@ function AssociationInviteCodeActions({
 			<div className="stack horizontal sm items-center">
 				<input type="text" value={inviteLink} readOnly id={id} />
 				<SendouButton
+					shape="square"
 					variant={copySuccess ? "outlined-success" : "outlined"}
 					onPress={() => copyToClipboard(inviteLink)}
 					icon={copySuccess ? <Check /> : <Clipboard />}
@@ -251,6 +253,7 @@ function AssociationMember({
 					]}
 				>
 					<SendouButton
+						shape="square"
 						icon={<Trash className="small-icon" />}
 						className="small-text"
 						variant="minimal-destructive"

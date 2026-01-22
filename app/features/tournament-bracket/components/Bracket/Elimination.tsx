@@ -14,7 +14,7 @@ interface EliminationBracketSideProps {
 
 // these values must match --match-height and gap in bracket.module.css
 const MATCH_HEIGHT = 55;
-const GAP = 28;
+const GAP = 32;
 const MATCH_SPACING = MATCH_HEIGHT + GAP;
 
 export function EliminationBracketSide(props: EliminationBracketSideProps) {

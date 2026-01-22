@@ -68,7 +68,7 @@ function UserLFGPost({ post, tiersMap }: { post: Post; tiersMap: TiersMap }) {
 				/>
 			</div>
 			<div>
-				<div className="stack horizontal justify-between">
+				<div className="stack horizontal justify-between items-center">
 					<PostTextTypeHeader type={post.type} />
 					{post.author.id === user?.id || isAdmin ? (
 						<PostDeleteButton id={post.id} type={post.type} />

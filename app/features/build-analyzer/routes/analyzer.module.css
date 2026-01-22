@@ -234,13 +234,15 @@
 }
 
 .patch {
-	border-radius: var(--radius-box);
+	border-radius: var(--radius-selector);
 	background-color: var(--color-accent-low);
 	color: var(--color-accent-high);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
-	padding-block: var(--s-0-5);
 	padding-inline: var(--s-2);
+	height: var(--selector-size-sm);
+	display: flex;
+	align-items: center;
 }
 
 @media screen and (max-width: 640px) {

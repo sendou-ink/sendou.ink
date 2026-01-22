@@ -52,8 +52,9 @@ They mostly exist as a base for other vars like --color-text and --color-bg
 or highlight color that maintains a high contrast ratio in both light and dark modes
 If used as a background color, --color-text-inverse should be used as the text color
 
-Preffer using --color-x-high for info, success, warning, and error texts
-It is recommended to use --color-x-low as background colors to ensure a high contrast ratio
+Info, success, warning, and error colors:
+Preffer using --color-x-high for text
+It is recommended to use --color-x-low as the background to ensure a high contrast ratio
 You can use --color-x for things like borders and icons
 
 Field icons are defined for both dark and light mode because SVGs
@@ -185,7 +186,7 @@ html {
 	--weight-semi: 500;
 	--weight-body: 400;
 
-	--line-height: 1.4;
+	--line-height: 1.5;
 
 	/*
 	Tokens used for spacings
