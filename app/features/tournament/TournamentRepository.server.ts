@@ -188,7 +188,7 @@ export async function findById(id: number) {
 									"User.customUrl",
 									"User.country",
 									"User.twitch",
-									"SeedingSkill.mu as ordinal",
+									"SeedingSkill.ordinal",
 									"PlusTier.tier as plusTier",
 									"TournamentTeamMember.isOwner",
 									"TournamentTeamMember.createdAt",
