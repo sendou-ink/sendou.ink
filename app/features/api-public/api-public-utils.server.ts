@@ -33,16 +33,3 @@ export function requireBearerAuth(req: Request) {
 		throw new Response("Invalid token", { status: 401 });
 	}
 }
-
-export function requireWriteAuth(req: Request) {
-	const token = extractToken(req);
-	const tokenType = apiTokens.get(token);
-
-	if (!tokenType) {
-		throw new Response("Invalid token", { status: 401 });
-	}
-
-	if (tokenType !== "write") {
-		throw new Response("Write access required", { status: 403 });
-	}
-}
