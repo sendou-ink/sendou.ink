@@ -19,7 +19,7 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 	test("both functions grant access for isApiAccesser flag", async () => {
 		await AdminRepository.makeApiAccesserByUserId(1);
 
-		await ApiRepository.generateToken(1);
+		await ApiRepository.generateToken(1, "read");
 		const tokens = await ApiRepository.allApiTokens();
 
 		const user = await UserRepository.findLeanById(1);
@@ -32,7 +32,7 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 	test("both functions grant access for isTournamentOrganizer flag", async () => {
 		await AdminRepository.makeTournamentOrganizerByUserId(1);
 
-		await ApiRepository.generateToken(1);
+		await ApiRepository.generateToken(1, "read");
 		const tokens = await ApiRepository.allApiTokens();
 
 		const user = await UserRepository.findLeanById(1);
@@ -50,7 +50,7 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 			patronTill: add(new Date(), { months: 3 }),
 		});
 
-		await ApiRepository.generateToken(1);
+		await ApiRepository.generateToken(1, "read");
 		const tokens = await ApiRepository.allApiTokens();
 
 		const user = await UserRepository.findLeanById(1);
@@ -68,7 +68,7 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 			patronTill: add(new Date(), { months: 3 }),
 		});
 
-		await ApiRepository.generateToken(1);
+		await ApiRepository.generateToken(1, "read");
 		const tokens = await ApiRepository.allApiTokens();
 
 		const user = await UserRepository.findLeanById(1);
@@ -101,7 +101,7 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 				badges: [],
 			});
 
-			await ApiRepository.generateToken(userId);
+			await ApiRepository.generateToken(userId, "read");
 			const tokens = await ApiRepository.allApiTokens();
 
 			const user = await UserRepository.findLeanById(userId);
@@ -131,7 +131,7 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 			badges: [],
 		});
 
-		await ApiRepository.generateToken(2);
+		await ApiRepository.generateToken(2, "read");
 		const tokens = await ApiRepository.allApiTokens();
 
 		const user = await UserRepository.findLeanById(2);
@@ -158,7 +158,7 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 			badges: [],
 		});
 
-		await ApiRepository.generateToken(2);
+		await ApiRepository.generateToken(2, "read");
 		const tokens = await ApiRepository.allApiTokens();
 
 		const user = await UserRepository.findLeanById(2);
