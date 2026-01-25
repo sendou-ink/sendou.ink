@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { ORG_ADMIN_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { expect, impersonate, navigate, seed, test } from "~/utils/playwright";
 import { tournamentTeamPage } from "~/utils/urls";
@@ -15,11 +16,9 @@ async function generateWriteToken(page: Page): Promise<string> {
 	await page.waitForURL("/api");
 
 	// Reveal and get the write token
-	await page
-		.getByRole("button", { name: /reveal/i })
-		.nth(1)
-		.click();
-	const token = await page.locator("input[readonly]").nth(1).inputValue();
+	// After generating only the write token, there's just one reveal button (for write)
+	await page.getByRole("button", { name: /reveal/i }).click();
+	const token = await page.locator("input[readonly]").inputValue();
 
 	return token;
 }
@@ -221,5 +220,30 @@ test.describe("Public API - Write endpoints", () => {
 		expect(response.status()).toBe(403);
 		const data = await response.json();
 		expect(data.error).toBe("Write token required");
+	});
+
+	test("returns 400 when user is not tournament organizer", async ({
+		page,
+	}) => {
+		await seed(page);
+		await impersonate(page, ORG_ADMIN_TEST_ID);
+
+		const token = await generateWriteToken(page);
+
+		const response = await page.request.fetch(
+			`/api/tournament/${ITZ_TOURNAMENT_ID}/teams/${ITZ_TEAM_ID}/add-member`,
+			{
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				data: { userId: USER_NOT_ON_ITZ_TEAM },
+			},
+		);
+
+		expect(response.status()).toBe(400);
+		const data = await response.json();
+		expect(data.error).toBe("Unauthorized");
 	});
 });

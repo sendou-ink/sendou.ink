@@ -809,6 +809,12 @@ function patrons() {
 		patronSince: dateToDatabaseTimestamp(faker.date.past()),
 		patronTier: 2,
 	});
+
+	givePatronStm.run({
+		id: ORG_ADMIN_TEST_ID,
+		patronSince: dateToDatabaseTimestamp(faker.date.past()),
+		patronTier: 2,
+	});
 }
 
 function userIdsInRandomOrder(specialLast = false) {
@@ -2763,6 +2769,14 @@ async function organization() {
 			`UPDATE "TournamentOrganizationSeries"
 			SET "tierHistory" = '[3, 4, 3]'
 			WHERE "organizationId" = 1 AND "name" = 'PICNIC'`,
+		)
+		.run();
+
+	sql
+		.prepare(
+			`UPDATE "TournamentOrganization"
+			SET "isEstablished" = 1
+			WHERE "id" = 1`,
 		)
 		.run();
 }
