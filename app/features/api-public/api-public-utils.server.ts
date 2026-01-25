@@ -24,18 +24,3 @@ export function getTokenInfo(token: string): CachedToken | undefined {
 export async function refreshApiTokensCache() {
 	apiTokens = await loadApiTokensCache();
 }
-
-function extractToken(req: Request) {
-	const authHeader = req.headers.get("Authorization");
-	if (!authHeader) {
-		throw new Response("Missing Authorization header", { status: 401 });
-	}
-	return authHeader.replace("Bearer ", "");
-}
-
-export function requireBearerAuth(req: Request) {
-	const token = extractToken(req);
-	if (!apiTokens.has(token)) {
-		throw new Response("Invalid token", { status: 401 });
-	}
-}
