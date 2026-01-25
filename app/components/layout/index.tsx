@@ -238,20 +238,12 @@ export function Layout({
 							to={event.url}
 							imageUrl={event.logoUrl ?? undefined}
 							subtitle={formatRelativeDate(event.startTime)}
-							badge={
-								event.scrimStatus === "booked"
-									? t("front:sideNav.scrimBooked")
-									: event.scrimStatus === "looking"
-										? t("front:sideNav.scrimLooking")
-										: undefined
-							}
-							badgeVariant={
-								event.scrimStatus === "looking" ? "warning" : undefined
-							}
 						>
 							{event.scrimStatus === "booked"
 								? t("front:sideNav.scrimVs", { opponent: event.name })
-								: event.name}
+								: event.scrimStatus === "looking"
+									? t("front:sideNav.lookingForScrim")
+									: event.name}
 						</SideNavLink>
 					))
 				) : (

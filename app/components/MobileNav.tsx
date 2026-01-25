@@ -450,21 +450,13 @@ function TourneysPanel({
 									to={event.url}
 									imageUrl={event.logoUrl ?? undefined}
 									subtitle={formatTime(new Date(event.startTime * 1000))}
-									badge={
-										event.scrimStatus === "booked"
-											? t("front:sideNav.scrimBooked")
-											: event.scrimStatus === "looking"
-												? t("front:sideNav.scrimLooking")
-												: undefined
-									}
-									badgeVariant={
-										event.scrimStatus === "looking" ? "warning" : undefined
-									}
 									onClick={onClose}
 								>
 									{event.scrimStatus === "booked"
 										? t("front:sideNav.scrimVs", { opponent: event.name })
-										: event.name}
+										: event.scrimStatus === "looking"
+											? t("front:sideNav.lookingForScrim")
+											: event.name}
 								</SideNavLink>
 							))}
 						</div>
