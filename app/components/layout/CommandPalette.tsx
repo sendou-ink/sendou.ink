@@ -23,10 +23,19 @@ import {
 	teamPage,
 	tournamentOrganizationPage,
 	userPage,
+	weaponCategoryUrl,
 } from "~/utils/urls";
 import styles from "./CommandPalette.module.css";
+import {
+	filterWeaponResults,
+	getWeaponDestinationUrl,
+	type SelectedWeapon,
+	WeaponDestinationMenu,
+	WeaponResultsList,
+} from "./WeaponSearch";
 
 const SEARCH_TYPES = [
+	"weapons",
 	"users",
 	"teams",
 	"organizations",
@@ -36,15 +45,21 @@ type SearchType = (typeof SEARCH_TYPES)[number];
 
 const STORAGE_KEY = "command-palette-search-type";
 
-const SEARCH_TYPE_ICONS: Record<SearchType, string> = {
-	users: "u",
-	teams: "t",
-	organizations: "medal",
-	tournaments: "calendar",
-};
+function searchTypeIconPath(type: SearchType): string {
+	if (type === "weapons") {
+		return weaponCategoryUrl("SHOOTERS");
+	}
+	const navIcons: Record<Exclude<SearchType, "weapons">, string> = {
+		users: "u",
+		teams: "t",
+		organizations: "medal",
+		tournaments: "calendar",
+	};
+	return navIconUrl(navIcons[type]);
+}
 
 function getInitialSearchType(): SearchType {
-	if (typeof window === "undefined") return "users";
+	if (typeof window === "undefined") return "weapons";
 	try {
 		const stored = localStorage.getItem(STORAGE_KEY);
 		if (stored && SEARCH_TYPES.includes(stored as SearchType)) {
@@ -53,7 +68,7 @@ function getInitialSearchType(): SearchType {
 	} catch {
 		// localStorage may be unavailable
 	}
-	return "users";
+	return "weapons";
 }
 
 export function CommandPalette() {
@@ -136,12 +151,14 @@ function CommandPaletteContent({
 	onClose: () => void;
 	initialSearchType: SearchType | null;
 }) {
-	const { t } = useTranslation(["common"]);
+	const { t } = useTranslation(["common", "weapons"]);
 	const navigate = useNavigate();
 	const [query, setQuery] = React.useState("");
 	const [searchType, setSearchType] = React.useState<SearchType>(
 		initialSearchType ?? getInitialSearchType(),
 	);
+	const [selectedWeapon, setSelectedWeapon] =
+		React.useState<SelectedWeapon | null>(null);
 	const inputRef = React.useRef<HTMLInputElement>(null);
 	const listBoxRef = React.useRef<HTMLDivElement>(null);
 
@@ -161,6 +178,7 @@ function CommandPaletteContent({
 
 	useDebounce(
 		() => {
+			if (searchType === "weapons") return;
 			if (!query) return;
 			fetcher.load(
 				`/search?q=${encodeURIComponent(query)}&type=${searchType}&limit=10`,
@@ -173,7 +191,19 @@ function CommandPaletteContent({
 	const results = fetcher.data?.results ?? [];
 	const hasQuery = query.length > 0;
 
+	const weaponResults =
+		searchType === "weapons" ? filterWeaponResults(query, t) : [];
+
 	const handleSelect = (key: React.Key) => {
+		if (searchType === "weapons") {
+			const weapon = weaponResults.find((w) => `weapon-${w.id}` === key);
+			if (weapon) {
+				setSelectedWeapon(weapon);
+				setQuery("");
+			}
+			return;
+		}
+
 		const result = results.find((r) => getResultKey(r) === key);
 		if (result) {
 			navigate(getResultHref(result));
@@ -183,14 +213,41 @@ function CommandPaletteContent({
 
 	const handleSearchTypeChange = (value: string) => {
 		setSearchType(value as SearchType);
+		setSelectedWeapon(null);
 	};
 
 	const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === "ArrowDown" && results.length > 0) {
+		const currentResults = searchType === "weapons" ? weaponResults : results;
+		if (e.key === "ArrowDown" && currentResults.length > 0) {
 			e.preventDefault();
 			listBoxRef.current?.focus();
 		}
 	};
+
+	const handleDestinationSelect = (key: React.Key) => {
+		if (!selectedWeapon) return;
+
+		const url = getWeaponDestinationUrl(key as string, selectedWeapon);
+		if (url) {
+			navigate(url);
+			onClose();
+		}
+	};
+
+	const handleBackToWeaponSearch = () => {
+		setSelectedWeapon(null);
+	};
+
+	if (searchType === "weapons" && selectedWeapon) {
+		return (
+			<WeaponDestinationMenu
+				selectedWeapon={selectedWeapon}
+				onBack={handleBackToWeaponSearch}
+				onSelect={handleDestinationSelect}
+				listBoxRef={listBoxRef}
+			/>
+		);
+	}
 
 	return (
 		<>
@@ -225,11 +282,7 @@ function CommandPaletteContent({
 										[styles.searchTypeRadioFocusVisible]: isFocusVisible,
 									})}
 								>
-									<Image
-										path={navIconUrl(SEARCH_TYPE_ICONS[type])}
-										size={18}
-										alt=""
-									/>
+									<Image path={searchTypeIconPath(type)} size={18} alt="" />
 									{t(`common:search.type.${type}`)}
 								</span>
 							)}
@@ -237,32 +290,41 @@ function CommandPaletteContent({
 					))}
 				</RadioGroup>
 			</div>
-			<ListBox
-				ref={listBoxRef}
-				className={styles.listBox}
-				aria-label={t("common:search")}
-				selectionMode="single"
-				onAction={handleSelect}
-				renderEmptyState={() =>
-					hasQuery ? (
-						<div className={styles.emptyState}>
-							{t("common:search.noResults")}
-						</div>
-					) : (
-						<div className={styles.emptyState}>{t("common:search.hint")}</div>
-					)
-				}
-			>
-				{results.map((result) => (
-					<ListBoxItem
-						key={getResultKey(result)}
-						id={getResultKey(result)}
-						className={styles.listBoxItem}
-					>
-						<ResultItem result={result} />
-					</ListBoxItem>
-				))}
-			</ListBox>
+			{searchType === "weapons" ? (
+				<WeaponResultsList
+					weaponResults={weaponResults}
+					onSelect={handleSelect}
+					hasQuery={hasQuery}
+					listBoxRef={listBoxRef}
+				/>
+			) : (
+				<ListBox
+					ref={listBoxRef}
+					className={styles.listBox}
+					aria-label={t("common:search")}
+					selectionMode="single"
+					onAction={handleSelect}
+					renderEmptyState={() =>
+						hasQuery ? (
+							<div className={styles.emptyState}>
+								{t("common:search.noResults")}
+							</div>
+						) : (
+							<div className={styles.emptyState}>{t("common:search.hint")}</div>
+						)
+					}
+				>
+					{results.map((result) => (
+						<ListBoxItem
+							key={getResultKey(result)}
+							id={getResultKey(result)}
+							className={styles.listBoxItem}
+						>
+							<ResultItem result={result} />
+						</ListBoxItem>
+					))}
+				</ListBox>
+			)}
 		</>
 	);
 }

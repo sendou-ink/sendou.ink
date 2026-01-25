@@ -348,6 +348,7 @@
 	"search.type.teams": "Teams",
 	"search.type.organizations": "Organizations",
 	"search.type.tournaments": "Tournaments",
+	"search.type.weapons": "Weapons",
 	"search.noResults": "No results found",
 	"search.hint": "Start typing to search",
 	"dataCredit.lean": "Data credit: Lean",
