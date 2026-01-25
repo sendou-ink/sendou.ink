@@ -32,6 +32,17 @@ import {
 } from "~/utils/urls";
 import styles from "./CommandPalette.module.css";
 
+const WEAPON_DESTINATIONS = [
+	"builds",
+	"popular",
+	"stats",
+	"analyzer",
+	"vods",
+	"art",
+	"lfg",
+] as const;
+export type WeaponDestination = (typeof WEAPON_DESTINATIONS)[number];
+
 export interface SelectedWeapon {
 	id: MainWeaponId;
 	name: string;
@@ -70,10 +81,10 @@ export function filterWeaponResults(
 }
 
 export function getWeaponDestinationUrl(
-	key: string,
+	key: WeaponDestination,
 	weapon: SelectedWeapon,
-): string | null {
-	const destinations: Record<string, string> = {
+): string {
+	const destinations: Record<WeaponDestination, string> = {
 		builds: weaponBuildPage(weapon.slug),
 		popular: weaponBuildPopularPage(weapon.slug),
 		stats: weaponBuildStatsPage(weapon.slug),
@@ -83,7 +94,7 @@ export function getWeaponDestinationUrl(
 		lfg: `${LFG_PAGE}?weapon=${weapon.id}`,
 	};
 
-	return destinations[key] ?? null;
+	return destinations[key];
 }
 
 export function WeaponDestinationMenu({
@@ -95,12 +106,20 @@ export function WeaponDestinationMenu({
 	selectedWeapon: SelectedWeapon;
 	onBack: () => void;
 	onSelect: (key: React.Key) => void;
-	listBoxRef: React.RefObject<HTMLDivElement | null>;
+	listBoxRef: React.RefObject<HTMLDivElement>;
 }) {
 	const { t } = useTranslation(["common"]);
 
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === "Escape") {
+			e.stopPropagation();
+			onBack();
+		}
+	};
+
 	return (
-		<>
+		// biome-ignore lint/a11y/noStaticElementInteractions: keyboard navigation for Escape to go back
+		<div onKeyDown={handleKeyDown}>
 			<div className={styles.weaponDestinationHeader}>
 				<button
 					type="button"
@@ -118,7 +137,7 @@ export function WeaponDestinationMenu({
 				className={styles.listBox}
 				aria-label={selectedWeapon.name}
 				onAction={onSelect}
-				autoFocus
+				autoFocus="first"
 			>
 				<ListBoxItem id="builds" className={styles.listBoxItem}>
 					<div className={styles.resultItem}>
@@ -171,22 +190,28 @@ export function WeaponDestinationMenu({
 					</div>
 				</ListBoxItem>
 			</ListBox>
-		</>
+		</div>
 	);
 }
 
 export function WeaponResultsList({
 	weaponResults,
+	recentWeapons,
 	onSelect,
 	hasQuery,
 	listBoxRef,
 }: {
 	weaponResults: SelectedWeapon[];
+	recentWeapons: SelectedWeapon[];
 	onSelect: (key: React.Key) => void;
 	hasQuery: boolean;
 	listBoxRef: React.RefObject<HTMLDivElement | null>;
 }) {
 	const { t } = useTranslation(["common"]);
+
+	const displayedWeapons = hasQuery ? weaponResults : recentWeapons;
+	const showNoResults = hasQuery && weaponResults.length === 0;
+	const showHint = !hasQuery && recentWeapons.length === 0;
 
 	return (
 		<ListBox
@@ -196,16 +221,16 @@ export function WeaponResultsList({
 			selectionMode="single"
 			onAction={onSelect}
 			renderEmptyState={() =>
-				hasQuery ? (
+				showNoResults ? (
 					<div className={styles.emptyState}>
 						{t("common:search.noResults")}
 					</div>
-				) : (
+				) : showHint ? (
 					<div className={styles.emptyState}>{t("common:search.hint")}</div>
-				)
+				) : null
 			}
 		>
-			{weaponResults.map((weapon) => (
+			{displayedWeapons.map((weapon) => (
 				<ListBoxItem
 					key={`weapon-${weapon.id}`}
 					id={`weapon-${weapon.id}`}
@@ -219,4 +244,34 @@ export function WeaponResultsList({
 			))}
 		</ListBox>
 	);
+}
+
+const RECENT_WEAPONS_KEY = "command-palette-recent-weapons";
+const MAX_RECENT_WEAPONS = 5;
+
+export function getRecentWeapons(): MainWeaponId[] {
+	if (typeof window === "undefined") return [];
+	try {
+		const stored = localStorage.getItem(RECENT_WEAPONS_KEY);
+		if (!stored) return [];
+		const parsed = JSON.parse(stored);
+		if (!Array.isArray(parsed)) return [];
+		return parsed.filter(
+			(id): id is MainWeaponId =>
+				typeof id === "number" && mainWeaponIds.includes(id as MainWeaponId),
+		);
+	} catch {
+		return [];
+	}
+}
+
+export function saveRecentWeapon(weaponId: MainWeaponId): void {
+	try {
+		const recent = getRecentWeapons();
+		const filtered = recent.filter((id) => id !== weaponId);
+		const updated = [weaponId, ...filtered].slice(0, MAX_RECENT_WEAPONS);
+		localStorage.setItem(RECENT_WEAPONS_KEY, JSON.stringify(updated));
+	} catch {
+		// localStorage may be unavailable
+	}
 }

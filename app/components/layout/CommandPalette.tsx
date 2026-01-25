@@ -19,6 +19,7 @@ import { Image } from "~/components/Image";
 import { Input } from "~/components/Input";
 import type { SearchLoaderData } from "~/features/search/routes/search";
 import {
+	mySlugify,
 	navIconUrl,
 	teamPage,
 	tournamentOrganizationPage,
@@ -28,8 +29,11 @@ import {
 import styles from "./CommandPalette.module.css";
 import {
 	filterWeaponResults,
+	getRecentWeapons,
 	getWeaponDestinationUrl,
 	type SelectedWeapon,
+	saveRecentWeapon,
+	type WeaponDestination,
 	WeaponDestinationMenu,
 	WeaponResultsList,
 } from "./WeaponSearch";
@@ -165,8 +169,10 @@ function CommandPaletteContent({
 	const fetcher = useFetcher<SearchLoaderData>();
 
 	React.useEffect(() => {
-		inputRef.current?.focus();
-	}, []);
+		if (!selectedWeapon) {
+			inputRef.current?.focus();
+		}
+	}, [selectedWeapon]);
 
 	React.useEffect(() => {
 		try {
@@ -194,9 +200,19 @@ function CommandPaletteContent({
 	const weaponResults =
 		searchType === "weapons" ? filterWeaponResults(query, t) : [];
 
+	const recentWeapons: SelectedWeapon[] =
+		searchType === "weapons"
+			? getRecentWeapons().map((id) => {
+					const name = t(`weapons:MAIN_${id}`);
+					return { id, name, slug: mySlugify(name) };
+				})
+			: [];
+
 	const handleSelect = (key: React.Key) => {
 		if (searchType === "weapons") {
-			const weapon = weaponResults.find((w) => `weapon-${w.id}` === key);
+			const weapon =
+				weaponResults.find((w) => `weapon-${w.id}` === key) ??
+				recentWeapons.find((w) => `weapon-${w.id}` === key);
 			if (weapon) {
 				setSelectedWeapon(weapon);
 				setQuery("");
@@ -227,11 +243,13 @@ function CommandPaletteContent({
 	const handleDestinationSelect = (key: React.Key) => {
 		if (!selectedWeapon) return;
 
-		const url = getWeaponDestinationUrl(key as string, selectedWeapon);
-		if (url) {
-			navigate(url);
-			onClose();
-		}
+		const url = getWeaponDestinationUrl(
+			key as WeaponDestination,
+			selectedWeapon,
+		);
+		saveRecentWeapon(selectedWeapon.id);
+		navigate(url);
+		onClose();
 	};
 
 	const handleBackToWeaponSearch = () => {
@@ -293,6 +311,7 @@ function CommandPaletteContent({
 			{searchType === "weapons" ? (
 				<WeaponResultsList
 					weaponResults={weaponResults}
+					recentWeapons={recentWeapons}
 					onSelect={handleSelect}
 					hasQuery={hasQuery}
 					listBoxRef={listBoxRef}
