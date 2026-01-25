@@ -171,6 +171,28 @@ test.describe("Tournament Organization", () => {
 		await page.getByRole("button", { name: "Save" }).click();
 
 		await expect(page.getByText("Teams (1)")).toBeVisible();
+
+		// 5. As admin, ban user again but with permanent ban this time
+		await impersonate(page, ADMIN_ID);
+		await navigate({ page, url });
+		await bannedUsersTab.click();
+		await page.getByText("New ban", { exact: true }).click();
+		const dialog2 = page.getByRole("dialog");
+		await expect(dialog2).toBeVisible();
+		const userSearchCombobox2 = dialog2.getByRole("button").filter({
+			has: page.locator('[class*="selectValue"]'),
+		});
+		await userSearchCombobox2.click();
+		await expect(page.getByTestId("user-search-input")).toBeVisible();
+		await page.getByTestId("user-search-input").fill("N-ZAP");
+		await expect(page.getByTestId("user-search-item").first()).toBeVisible();
+		await page.keyboard.press("Enter");
+		const banForm2 = createFormHelpers(page, banUserActionSchema);
+		await banForm2.fill("privateNote", "Does not expire");
+		// Don't set expiresAt - leave empty for permanent ban
+		await submit(page);
+		// Verify "Permanent" appears in the table
+		await expect(page.getByRole("table")).toContainText("Permanent");
 	});
 
 	test("allows member of established org to create tournament", async ({
