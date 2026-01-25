@@ -3,6 +3,6 @@ import { apiCorsMiddleware } from "../api-cors-middleware.server";
 import type { Route } from "./+types/api.layout";
 
 export const middleware: Route.MiddlewareFunction[] = [
-	apiAuthMiddleware,
 	apiCorsMiddleware,
+	apiAuthMiddleware,
 ];
