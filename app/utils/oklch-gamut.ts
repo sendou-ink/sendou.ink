@@ -292,6 +292,17 @@ export function clampThemeToGamut(input: ThemeInput): CustomTheme {
 		},
 	);
 
+	const secondaryHue = (input.accentHue + 180) % 360;
+	const secondaryHueRadians = secondaryHue * (Math.PI / 180);
+
+	const clampedSecondaryChromas = ACCENT_LIGHTNESS_VALUES.map(
+		(lightness, index) => {
+			const desiredChroma =
+				input.accentChroma * ACCENT_CHROMA_MULTIPLIERS[index];
+			return clampChromaForColor(lightness, desiredChroma, secondaryHueRadians);
+		},
+	);
+
 	return {
 		"--_base-h": input.baseHue,
 		"--_base-c-0": clampedBaseChromas[0],
@@ -309,5 +320,12 @@ export function clampThemeToGamut(input: ThemeInput): CustomTheme {
 		"--_acc-c-3": clampedAccentChromas[3],
 		"--_acc-c-4": clampedAccentChromas[4],
 		"--_acc-c-5": clampedAccentChromas[5],
+		"--_second-h": secondaryHue,
+		"--_second-c-0": clampedSecondaryChromas[0],
+		"--_second-c-1": clampedSecondaryChromas[1],
+		"--_second-c-2": clampedSecondaryChromas[2],
+		"--_second-c-3": clampedSecondaryChromas[3],
+		"--_second-c-4": clampedSecondaryChromas[4],
+		"--_second-c-5": clampedSecondaryChromas[5],
 	};
 }

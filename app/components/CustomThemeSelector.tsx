@@ -68,13 +68,13 @@ export function themeInputFromCustomTheme(
 	customTheme: CustomTheme,
 ): ThemeInput {
 	return {
-		baseHue: customTheme["--base-h"] ?? DEFAULT_THEME_INPUT.baseHue,
+		baseHue: customTheme["--_base-h"] ?? DEFAULT_THEME_INPUT.baseHue,
 		baseChroma:
-			(customTheme["--base-c-1"] ?? 0) / BASE_CHROMA_MULTIPLIERS[1] ||
+			(customTheme["--_base-c-1"] ?? 0) / BASE_CHROMA_MULTIPLIERS[1] ||
 			DEFAULT_THEME_INPUT.baseChroma,
-		accentHue: customTheme["--acc-h"] ?? DEFAULT_THEME_INPUT.accentHue,
+		accentHue: customTheme["--_acc-h"] ?? DEFAULT_THEME_INPUT.accentHue,
 		accentChroma:
-			(customTheme["--acc-c-1"] ?? 0) / ACCENT_CHROMA_MULTIPLIERS[1] ||
+			(customTheme["--_acc-c-1"] ?? 0) / ACCENT_CHROMA_MULTIPLIERS[1] ||
 			DEFAULT_THEME_INPUT.accentChroma,
 	};
 }

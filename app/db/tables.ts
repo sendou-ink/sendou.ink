@@ -52,6 +52,13 @@ export const CUSTOM_THEME_VARS = [
 	"--_acc-c-3",
 	"--_acc-c-4",
 	"--_acc-c-5",
+	"--_second-h",
+	"--_second-c-0",
+	"--_second-c-1",
+	"--_second-c-2",
+	"--_second-c-3",
+	"--_second-c-4",
+	"--_second-c-5",
 ] as const;
 export type CustomThemeVar = (typeof CUSTOM_THEME_VARS)[number];
 export type CustomTheme = Record<CustomThemeVar, number>;

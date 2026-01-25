@@ -26,6 +26,14 @@ html {
 	--_acc-c-4: 0.2616;
 	--_acc-c-5: 0.1344;
 
+	--_second-h: 90;
+	--_second-c-0: 0.05295305624247283;
+	--_second-c-1: 0.10680119733498437;
+	--_second-c-2: 0.0816;
+	--_second-c-3: 0.06;
+	--_second-c-4: 0.10814382461004245;
+	--_second-c-5: 0.06493861022758024;
+
 	--_radius-box: 3;
 	--_radius-field: 2;
 	--_radius-selector: 2;
@@ -76,9 +84,15 @@ html.dark {
 	--color-accent: oklch(52.262% var(--_acc-c-1) var(--_acc-h));
 	--color-accent-high: oklch(83.419% var(--_acc-c-2) var(--_acc-h));
 
-	--color-second-low: oklch(from var(--color-accent-low) l c calc(h + 180));
-	--color-second: oklch(from var(--color-accent) l c calc(h + 180));
-	--color-second-high: oklch(from var(--color-accent-high) l c calc(h + 180));
+	--color-second-low: oklch(
+		from var(--color-accent-low) l var(--_second-c-0) var(--_second-h)
+	);
+	--color-second: oklch(
+		from var(--color-accent) l var(--_second-c-1) var(--_second-h)
+	);
+	--color-second-high: oklch(
+		from var(--color-accent-high) l var(--_second-c-2) var(--_second-h)
+	);
 
 	--color-text-accent: var(--color-accent-high);
 	--color-text-second: var(--color-second-high);
@@ -120,9 +134,15 @@ html.light {
 	--color-accent: oklch(52.919% var(--_acc-c-4) var(--_acc-h));
 	--color-accent-high: oklch(31.777% var(--_acc-c-5) var(--_acc-h));
 
-	--color-second-low: oklch(from var(--color-accent-low) l c calc(h + 180));
-	--color-second: oklch(from var(--color-accent) l c calc(h + 180));
-	--color-second-high: oklch(from var(--color-accent-high) l c calc(h + 180));
+	--color-second-low: oklch(
+		from var(--color-accent-low) l var(--_second-c-0) var(--_second-h)
+	);
+	--color-second: oklch(
+		from var(--color-accent) l var(--_second-c-1) var(--_second-h)
+	);
+	--color-second-high: oklch(
+		from var(--color-accent-high) l var(--_second-c-2) var(--_second-h)
+	);
 
 	--color-text-accent: var(--color-accent);
 	--color-text-second: var(--color-second);
