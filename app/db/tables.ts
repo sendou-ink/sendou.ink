@@ -59,6 +59,13 @@ export const CUSTOM_THEME_VARS = [
 	"--_second-c-3",
 	"--_second-c-4",
 	"--_second-c-5",
+	"--_radius-box",
+	"--_radius-field",
+	"--_radius-selector",
+	"--_border-width",
+	"--_size-field",
+	"--_size-selector",
+	"--_size-spacing",
 ] as const;
 export type CustomThemeVar = (typeof CUSTOM_THEME_VARS)[number];
 export type CustomTheme = Record<CustomThemeVar, number>;

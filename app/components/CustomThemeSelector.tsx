@@ -13,6 +13,7 @@ import {
 } from "~/utils/oklch-gamut";
 import { THEME_INPUT_LIMITS } from "~/utils/zod";
 import styles from "./CustomThemeSelector.module.css";
+import { Divider } from "./Divider";
 import { LinkButton, SendouButton } from "./elements/Button";
 import { Label } from "./Label";
 
@@ -55,13 +56,89 @@ const COLOR_SLIDERS = [
 	},
 ] as const;
 
-type ThemeInputKey = (typeof COLOR_SLIDERS)[number]["inputKey"];
+const RADIUS_SLIDERS = [
+	{
+		id: "radius-box",
+		inputKey: "radiusBox",
+		min: THEME_INPUT_LIMITS.RADIUS_MIN,
+		max: THEME_INPUT_LIMITS.RADIUS_MAX,
+		step: THEME_INPUT_LIMITS.RADIUS_STEP,
+		labelKey: "boxes",
+	},
+	{
+		id: "radius-field",
+		inputKey: "radiusField",
+		min: THEME_INPUT_LIMITS.RADIUS_MIN,
+		max: THEME_INPUT_LIMITS.RADIUS_MAX,
+		step: THEME_INPUT_LIMITS.RADIUS_STEP,
+		labelKey: "fields",
+	},
+	{
+		id: "radius-selector",
+		inputKey: "radiusSelector",
+		min: THEME_INPUT_LIMITS.RADIUS_MIN,
+		max: THEME_INPUT_LIMITS.RADIUS_MAX,
+		step: THEME_INPUT_LIMITS.RADIUS_STEP,
+		labelKey: "selectors",
+	},
+] as const;
+
+const BORDER_SLIDERS = [
+	{
+		id: "border-width",
+		inputKey: "borderWidth",
+		min: THEME_INPUT_LIMITS.BORDER_WIDTH_MIN,
+		max: THEME_INPUT_LIMITS.BORDER_WIDTH_MAX,
+		step: THEME_INPUT_LIMITS.BORDER_WIDTH_STEP,
+		labelKey: "borderWidth",
+	},
+] as const;
+
+const SIZE_SLIDERS = [
+	{
+		id: "size-field",
+		inputKey: "sizeField",
+		min: THEME_INPUT_LIMITS.SIZE_MIN,
+		max: THEME_INPUT_LIMITS.SIZE_MAX,
+		step: THEME_INPUT_LIMITS.SIZE_STEP,
+		labelKey: "fields",
+	},
+	{
+		id: "size-selector",
+		inputKey: "sizeSelector",
+		min: THEME_INPUT_LIMITS.SIZE_MIN,
+		max: THEME_INPUT_LIMITS.SIZE_MAX,
+		step: THEME_INPUT_LIMITS.SIZE_STEP,
+		labelKey: "selectors",
+	},
+	{
+		id: "size-spacing",
+		inputKey: "sizeSpacing",
+		min: THEME_INPUT_LIMITS.SIZE_MIN,
+		max: THEME_INPUT_LIMITS.SIZE_MAX,
+		step: THEME_INPUT_LIMITS.SIZE_STEP,
+		labelKey: "spacings",
+	},
+] as const;
+
+type ThemeInputKey =
+	| (typeof COLOR_SLIDERS)[number]["inputKey"]
+	| (typeof RADIUS_SLIDERS)[number]["inputKey"]
+	| (typeof BORDER_SLIDERS)[number]["inputKey"]
+	| (typeof SIZE_SLIDERS)[number]["inputKey"];
 
 export const DEFAULT_THEME_INPUT: ThemeInput = {
 	baseHue: 260,
 	baseChroma: 0.012,
 	accentHue: 270,
 	accentChroma: 0.24,
+	radiusBox: 3,
+	radiusField: 2,
+	radiusSelector: 2,
+	borderWidth: 2,
+	sizeField: 1,
+	sizeSelector: 1,
+	sizeSpacing: 1,
 };
 
 export function themeInputFromCustomTheme(
@@ -76,6 +153,18 @@ export function themeInputFromCustomTheme(
 		accentChroma:
 			(customTheme["--_acc-c-1"] ?? 0) / ACCENT_CHROMA_MULTIPLIERS[1] ||
 			DEFAULT_THEME_INPUT.accentChroma,
+		radiusBox: customTheme["--_radius-box"] ?? DEFAULT_THEME_INPUT.radiusBox,
+		radiusField:
+			customTheme["--_radius-field"] ?? DEFAULT_THEME_INPUT.radiusField,
+		radiusSelector:
+			customTheme["--_radius-selector"] ?? DEFAULT_THEME_INPUT.radiusSelector,
+		borderWidth:
+			customTheme["--_border-width"] ?? DEFAULT_THEME_INPUT.borderWidth,
+		sizeField: customTheme["--_size-field"] ?? DEFAULT_THEME_INPUT.sizeField,
+		sizeSelector:
+			customTheme["--_size-selector"] ?? DEFAULT_THEME_INPUT.sizeSelector,
+		sizeSpacing:
+			customTheme["--_size-spacing"] ?? DEFAULT_THEME_INPUT.sizeSpacing,
 	};
 }
 
@@ -87,7 +176,7 @@ function applyThemeInput(input: ThemeInput) {
 	}
 }
 
-function ColorSlider({
+function ThemeSlider({
 	id,
 	inputKey,
 	min,
@@ -104,12 +193,12 @@ function ColorSlider({
 	max: number;
 	step: number;
 	label: string;
-	isHue: boolean;
+	isHue?: boolean;
 	value: number;
 	onChange: (inputKey: ThemeInputKey, value: number) => void;
 }) {
 	return (
-		<div className={styles.colorSlider}>
+		<div className={styles.themeSliderRow}>
 			<Label htmlFor={id}>{label}</Label>
 			<input
 				id={id}
@@ -187,9 +276,10 @@ export function CustomThemeSelector({
 					</div>
 				</div>
 			)}
-			<div className={styles.colorSliders}>
+			<Divider smallText>{t("common:settings.customTheme.colors")}</Divider>
+			<div className={styles.themeSliders}>
 				{COLOR_SLIDERS.map((slider) => (
-					<ColorSlider
+					<ThemeSlider
 						key={slider.id}
 						id={slider.id}
 						inputKey={slider.inputKey}
@@ -198,6 +288,54 @@ export function CustomThemeSelector({
 						step={slider.step}
 						label={t(`common:settings.customTheme.${slider.labelKey}`)}
 						isHue={slider.isHue}
+						value={themeInput[slider.inputKey]}
+						onChange={handleSliderChange}
+					/>
+				))}
+			</div>
+			<Divider smallText>{t("common:settings.customTheme.radius")}</Divider>
+			<div className={styles.themeSliders}>
+				{RADIUS_SLIDERS.map((slider) => (
+					<ThemeSlider
+						key={slider.id}
+						id={slider.id}
+						inputKey={slider.inputKey}
+						min={slider.min}
+						max={slider.max}
+						step={slider.step}
+						label={t(`common:settings.customTheme.${slider.labelKey}`)}
+						value={themeInput[slider.inputKey]}
+						onChange={handleSliderChange}
+					/>
+				))}
+			</div>
+			<Divider smallText>{t("common:settings.customTheme.sizes")}</Divider>
+			<div className={styles.themeSliders}>
+				{SIZE_SLIDERS.map((slider) => (
+					<ThemeSlider
+						key={slider.id}
+						id={slider.id}
+						inputKey={slider.inputKey}
+						min={slider.min}
+						max={slider.max}
+						step={slider.step}
+						label={t(`common:settings.customTheme.${slider.labelKey}`)}
+						value={themeInput[slider.inputKey]}
+						onChange={handleSliderChange}
+					/>
+				))}
+			</div>
+			<Divider smallText>{t("common:settings.customTheme.borders")}</Divider>
+			<div className={styles.themeSliders}>
+				{BORDER_SLIDERS.map((slider) => (
+					<ThemeSlider
+						key={slider.id}
+						id={slider.id}
+						inputKey={slider.inputKey}
+						min={slider.min}
+						max={slider.max}
+						step={slider.step}
+						label={t(`common:settings.customTheme.${slider.labelKey}`)}
 						value={themeInput[slider.inputKey]}
 						onChange={handleSliderChange}
 					/>
