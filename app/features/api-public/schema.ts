@@ -501,3 +501,10 @@ type TournamentBracket = {
 };
 
 type TournamentBracketData = ValueToArray<DataTypes>;
+
+/** POST /api/tournament/{id}/teams/{teamId}/add-member */
+/** POST /api/tournament/{id}/teams/{teamId}/remove-member */
+
+export interface TournamentTeamMemberBody {
+	userId: number;
+}

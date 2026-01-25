@@ -2,8 +2,6 @@ import { err, ok } from "neverthrow";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 
-// xxx: validateIsTournamentOrganizer here also or where?
-
 export function validateAddMember({
 	tournament,
 	teamId,
