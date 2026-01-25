@@ -260,7 +260,7 @@ html {
 	--field-size: calc(var(--_size-field) * 10 * 0.25rem);
 	--field-size-lg: calc(var(--_size-field) * 12 * 0.25rem);
 	--field-size-icon: 18px;
-	--field-padding: 1rem;
+	--field-padding: 0.6rem;
 
 	--selector-size-xs: calc(var(--_size-selector) * 4 * 0.25rem);
 	--selector-size-sm: calc(var(--_size-selector) * 5 * 0.25rem);
