@@ -1,6 +1,7 @@
 import { add } from "date-fns";
 import { OAuth2Strategy } from "remix-auth-oauth2";
 import { z } from "zod";
+import * as AdminNotifications from "~/features/admin/core/admin-notifications.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -44,6 +45,9 @@ export const DiscordStrategy = () => {
 			}).getTime();
 			logger.warn(
 				`Discord API rate limited, cooldown for ${retryAfterSeconds}s${body.success ? "" : " (failed to parse retry_after)"}`,
+			);
+			AdminNotifications.send(
+				`Discord API rate limited, cooldown for ${retryAfterSeconds}s`,
 			);
 		}
 
