@@ -810,11 +810,11 @@ function patrons() {
 		patronTier: 2,
 	});
 
-	givePatronStm.run({
-		id: ORG_ADMIN_TEST_ID,
-		patronSince: dateToDatabaseTimestamp(faker.date.past()),
-		patronTier: 2,
-	});
+	// Give ORG_ADMIN_TEST_ID API access without patron status
+	// so they don't get TOURNAMENT_ADDER role
+	sql
+		.prepare(`update user set "isApiAccesser" = 1 where id = ?`)
+		.run(ORG_ADMIN_TEST_ID);
 }
 
 function userIdsInRandomOrder(specialLast = false) {
@@ -2769,14 +2769,6 @@ async function organization() {
 			`UPDATE "TournamentOrganizationSeries"
 			SET "tierHistory" = '[3, 4, 3]'
 			WHERE "organizationId" = 1 AND "name" = 'PICNIC'`,
-		)
-		.run();
-
-	sql
-		.prepare(
-			`UPDATE "TournamentOrganization"
-			SET "isEstablished" = 1
-			WHERE "id" = 1`,
 		)
 		.run();
 }
