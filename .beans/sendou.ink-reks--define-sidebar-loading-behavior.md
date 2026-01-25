@@ -1,10 +1,11 @@
 ---
 # sendou.ink-reks
 title: Define sidebar loading behavior
-status: todo
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-11T09:27:48Z
-updated_at: 2026-01-11T09:27:48Z
+updated_at: 2026-01-25T12:08:55Z
 parent: sendou.ink-6eko
 ---
 

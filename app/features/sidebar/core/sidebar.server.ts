@@ -1,5 +1,4 @@
-import { href, type LoaderFunctionArgs } from "react-router";
-import { getUser } from "~/features/auth/core/user.server";
+import { href } from "react-router";
 import { getLiveTournamentStreams } from "~/features/core/streams/streams.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
@@ -25,12 +24,23 @@ export type SidebarEvent = {
 	scrimStatus?: "booked" | "looking";
 };
 
+export type SidebarFriend = {
+	id: number;
+	name: string;
+	discordId: string;
+	discordAvatar: string | null;
+	url: string;
+	subtitle: string;
+	badge: string;
+};
+
 const MAX_EVENTS_VISIBLE = 8;
+const MAX_FRIENDS_VISIBLE = 4;
+const SENDOUQ_QUOTA = 2;
+const TOURNAMENT_SUB_QUOTA = 2;
 
-export const loader = async (_args: LoaderFunctionArgs) => {
-	const user = getUser();
-
-	if (!user) {
+export async function resolveSidebarData(userId: number | null) {
+	if (!userId) {
 		return {
 			events: [] as SidebarEvent[],
 			matchStatus: null as { matchId: number; url: string } | null,
@@ -40,19 +50,19 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 				roundName?: string;
 				logoUrl: string | null;
 			} | null,
-			friends: [] as ReturnType<typeof resolveFriends>,
+			friends: [] as SidebarFriend[],
 			streams: await getLiveTournamentStreams(),
 		};
 	}
 
-	const ownGroup = SendouQ.findOwnGroup(user.id);
+	const ownGroup = SendouQ.findOwnGroup(userId);
 	const [tournamentsData, scrimsData, friendsWithActivity] = await Promise.all([
-		ShowcaseTournaments.frontPageTournamentsByUserId(user.id),
-		ScrimPostRepository.findUserScrims(user.id),
-		FriendRepository.findByUserIdWithActivity(user.id),
+		ShowcaseTournaments.frontPageTournamentsByUserId(userId),
+		ScrimPostRepository.findUserScrims(userId),
+		FriendRepository.findByUserIdWithActivity(userId),
 	]);
 
-	const tournamentMatchStatus = resolveTournamentMatchStatus(user.id);
+	const tournamentMatchStatus = resolveTournamentMatchStatus(userId);
 
 	const seenTournamentIds = new Set<number>();
 	const tournamentEvents: SidebarEvent[] = [
@@ -101,7 +111,7 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 		friends,
 		streams: await getLiveTournamentStreams(),
 	};
-};
+}
 
 function resolveTournamentMatchStatus(userId: number) {
 	const tournament = RunningTournaments.getUserTournament(userId);
@@ -155,21 +165,7 @@ type FriendWithActivity = Awaited<
 	ReturnType<typeof FriendRepository.findByUserIdWithActivity>
 >[number];
 
-const MAX_FRIENDS_VISIBLE = 4;
-const SENDOUQ_QUOTA = 2;
-const TOURNAMENT_SUB_QUOTA = 2;
-
 function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
-	type SidebarFriend = {
-		id: number;
-		name: string;
-		discordId: string;
-		discordAvatar: string | null;
-		url: string;
-		subtitle: string;
-		badge: string;
-	};
-
 	const sendouqFriends: SidebarFriend[] = [];
 	const tournamentSubFriends: SidebarFriend[] = [];
 

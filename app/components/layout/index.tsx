@@ -14,7 +14,6 @@ import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useLocation, useMatches } from "react-router";
 import { useUser } from "~/features/auth/core/user";
-import type { loader as sidebarLoader } from "~/features/sidebar/routes/sidebar";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
@@ -75,18 +74,6 @@ function useTimeFormat() {
 	};
 
 	return { formatTime, formatRelativeDate };
-}
-
-function useSidebarData() {
-	const fetcher = useFetcher<typeof sidebarLoader>();
-
-	React.useEffect(() => {
-		if (fetcher.state === "idle" && !fetcher.data) {
-			fetcher.load("/sidebar");
-		}
-	}, [fetcher]);
-
-	return fetcher.data;
 }
 
 function useBreadcrumbData() {
@@ -184,10 +171,10 @@ export function Layout({
 	const { t } = useTranslation(["front"]);
 	const { formatRelativeDate } = useTimeFormat();
 	const location = useLocation();
-	const sidebarData = useSidebarData();
 	const navOffset = useNavOffset();
 	const isMounted = useIsMounted();
 
+	const sidebarData = data?.sidebar;
 	const events = sidebarData?.events ?? [];
 	const matchStatus = sidebarData?.matchStatus;
 	const tournamentMatchStatus = sidebarData?.tournamentMatchStatus;
@@ -308,7 +295,7 @@ export function Layout({
 					</SideNavLink>
 				))}
 			</SideNav>
-			<MobileNav sidebarData={sidebarData} />
+			<MobileNav sidebarData={data?.sidebar} />
 			<div className={styles.container}>
 				<header
 					className={styles.header}

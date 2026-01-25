@@ -6,10 +6,9 @@ import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { href, Link } from "react-router";
 import { useUser } from "~/features/auth/core/user";
-import type { loader as sidebarLoader } from "~/features/sidebar/routes/sidebar";
-import { useIsMounted } from "~/hooks/useIsMounted";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
+import type { RootLoaderData } from "~/root";
 import { mySlugify, navIconUrl, SETTINGS_PAGE, userPage } from "~/utils/urls";
 import { Avatar } from "./Avatar";
 import { SendouButton } from "./elements/Button";
@@ -24,7 +23,7 @@ import { navItems } from "./layout/nav-items";
 import styles from "./MobileNav.module.css";
 import { SideNavLink } from "./SideNav";
 
-type SidebarData = Awaited<ReturnType<typeof sidebarLoader>> | undefined;
+type SidebarData = RootLoaderData["sidebar"] | undefined;
 type PanelType = "closed" | "menu" | "friends" | "tourneys" | "you";
 
 export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {

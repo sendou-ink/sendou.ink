@@ -27,7 +27,6 @@ export default [
 	index("features/front-page/routes/index.tsx"),
 	route("/patrons-list", "features/front-page/routes/patrons-list.ts"),
 
-	route("/sidebar", "features/sidebar/routes/sidebar.ts"),
 	route("/sidenav", "features/layout/routes/sidenav.ts"),
 
 	route("/notifications", "features/notifications/routes/notifications.tsx"),

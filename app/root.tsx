@@ -36,6 +36,7 @@ import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepos
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
+import { resolveSidebarData } from "~/features/sidebar/core/sidebar.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { discordAvatarUrl, teamPage, userPage } from "~/utils/urls";
@@ -107,19 +108,22 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const themeSession = await getThemeSession(request);
 	const sidenavSession = await getSidenavSession(request);
 
-	const [tournaments, changelog, leaderboards] = await Promise.all([
-		ShowcaseTournaments.frontPageTournamentsByUserId(user?.id ?? null),
-		cachified({
-			key: "front-changelog",
-			cache,
-			ttl: ttl(IN_MILLISECONDS.ONE_HOUR),
-			staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
-			async getFreshValue() {
-				return Changelog.get();
-			},
-		}),
-		cachedLeaderboards(),
-	]);
+	const [tournaments, changelog, leaderboards, sidebarData] = await Promise.all(
+		[
+			ShowcaseTournaments.frontPageTournamentsByUserId(user?.id ?? null),
+			cachified({
+				key: "front-changelog",
+				cache,
+				ttl: ttl(IN_MILLISECONDS.ONE_HOUR),
+				staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
+				async getFreshValue() {
+					return Changelog.get();
+				},
+			}),
+			cachedLeaderboards(),
+			resolveSidebarData(user?.id ?? null),
+		],
+	);
 
 	return data(
 		{
@@ -150,6 +154,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 						limit: NOTIFICATIONS.PEEK_COUNT,
 					})
 				: undefined,
+			sidebar: sidebarData,
 		},
 		{
 			headers: { "Set-Cookie": await i18nCookie.serialize(locale) },
