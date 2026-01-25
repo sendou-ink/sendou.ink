@@ -809,6 +809,12 @@ function patrons() {
 		patronSince: dateToDatabaseTimestamp(faker.date.past()),
 		patronTier: 2,
 	});
+
+	// Give ORG_ADMIN_TEST_ID API access without patron status
+	// so they don't get TOURNAMENT_ADDER role
+	sql
+		.prepare(`update user set "isApiAccesser" = 1 where id = ?`)
+		.run(ORG_ADMIN_TEST_ID);
 }
 
 function userIdsInRandomOrder(specialLast = false) {

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { sql } from "~/db/sql";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { SEED_VARIATIONS } from "~/features/api-private/constants";
+import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
@@ -54,6 +55,7 @@ export const action: ActionFunction = async ({ request }) => {
 	await refreshBannedCache();
 	await refreshSendouQInstance();
 	await refreshTentativeTiersCache();
+	await refreshApiTokensCache();
 
 	return Response.json(null);
 };
