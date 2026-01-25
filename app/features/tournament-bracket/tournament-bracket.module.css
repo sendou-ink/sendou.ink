@@ -240,6 +240,15 @@
 	flex: 1;
 }
 
+.duringMatchActionsCheckboxName:not(:global(.disabled-opaque)):not(
+		:global(.presentational)
+	):hover {
+	border-radius: var(--radius-box);
+	cursor: pointer;
+	outline: 2px solid var(--color-accent-high);
+	outline-offset: 2px;
+}
+
 .duringMatchActionsCheckbox:not(#_) {
 	background: none;
 	all: unset;
