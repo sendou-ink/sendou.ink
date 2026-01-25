@@ -2,7 +2,6 @@ import type { ActionFunction } from "react-router";
 import * as R from "remeda";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { requireUser } from "~/features/auth/core/user.server";
-import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -17,6 +16,7 @@ import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
 	badRequestIfFalsy,
+	errorToastIfErr,
 	errorToastIfFalsy,
 	parseParams,
 	parseRequestPayload,
@@ -24,6 +24,10 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "../../../utils/zod";
+import {
+	validateAddMember,
+	validateRemoveMember,
+} from "../core/tournament-team-member-validation.server";
 import { changeTeamOwner } from "../queries/changeTeamOwner.server";
 import { deleteTeam } from "../queries/deleteTeam.server";
 import { joinTeam, leaveTeam } from "../queries/joinLeaveTeam.server";
@@ -175,24 +179,15 @@ export const action: ActionFunction = async ({ request, params }) => {
 		}
 		case "REMOVE_MEMBER": {
 			validateIsTournamentOrganizer();
-			const team = tournament.teamById(data.teamId);
-			errorToastIfFalsy(team, "Invalid team id");
-			errorToastIfFalsy(
-				team.checkIns.length === 0 ||
-					team.members.length > tournament.minMembersPerTeam,
-				"Can't remove last member from checked in team",
-			);
-			errorToastIfFalsy(
-				!team.members.find((m) => m.userId === data.memberId)?.isOwner,
-				"Cannot remove team owner",
-			);
-			errorToastIfFalsy(
-				!tournament.hasStarted ||
-					!tournament
-						.participatedPlayersByTeamId(data.teamId)
-						.some((p) => p.userId === data.memberId),
-				"Cannot remove player that has participated in the tournament",
-			);
+
+			const validation = validateRemoveMember({
+				tournament,
+				teamId: data.teamId,
+				memberId: data.memberId,
+			});
+			errorToastIfErr(validation);
+
+			const { team } = validation.value;
 
 			if (team.activeRosterUserIds?.includes(data.memberId)) {
 				await TournamentTeamRepository.setActiveRoster({
@@ -217,31 +212,20 @@ export const action: ActionFunction = async ({ request, params }) => {
 		}
 		case "ADD_MEMBER": {
 			validateIsTournamentOrganizer();
-			const team = tournament.teamById(data.teamId);
-			errorToastIfFalsy(team, "Invalid team id");
 
-			const previousTeam = tournament.teamMemberOfByUser({ id: data.userId });
+			const validation = validateAddMember({
+				tournament,
+				teamId: data.teamId,
+				userId: data.userId,
+			});
+			errorToastIfErr(validation);
 
-			errorToastIfFalsy(
-				!previousTeam?.id || previousTeam.id !== team.id,
-				"User is already in this team",
-			);
-
-			errorToastIfFalsy(
-				tournament.hasStarted || !previousTeam,
-				"User is already in a team",
-			);
-
-			errorToastIfFalsy(
-				!userIsBanned(data.userId),
-				"User trying to be added currently has an active ban from sendou.ink",
-			);
+			const { team, previousTeam } = validation.value;
 
 			joinTeam({
 				userId: data.userId,
 				newTeamId: team.id,
 				previousTeamId: previousTeam?.id,
-				// this team is not checked in & tournament started, so we can simply delete it
 				whatToDoWithPreviousTeam:
 					previousTeam &&
 					previousTeam.checkIns.length === 0 &&
