@@ -222,7 +222,7 @@ test.describe("Public API - Write endpoints", () => {
 		expect(data.error).toBe("Write token required");
 	});
 
-	test("returns 400 when user is not tournament organizer", async ({
+	test("returns 400 when user is not the organizer of this tournament", async ({
 		page,
 	}) => {
 		await seed(page);
