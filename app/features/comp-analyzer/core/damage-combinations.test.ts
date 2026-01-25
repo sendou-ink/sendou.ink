@@ -171,6 +171,17 @@ describe("calculateDamageCombos - threshold filtering", () => {
 	});
 });
 
+describe("calculateDamageCombos - one-shot exclusion", () => {
+	test("excludes all combos containing a 100+ damage hit", () => {
+		const combos = calculateDamageCombos([SPLAT_CHARGER_ID, SPLATTERSHOT_ID]);
+
+		for (const combo of combos) {
+			const hasOneShot = combo.segments.some((s) => s.damageValue >= 100);
+			expect(hasOneShot).toBe(false);
+		}
+	});
+});
+
 describe("calculateDamageCombos - sorting", () => {
 	test("sorts results by totalDamage closest to 100 (lethal threshold)", () => {
 		const combos = calculateDamageCombos([

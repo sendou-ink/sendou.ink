@@ -164,7 +164,19 @@ export function safeJSONParse(value: unknown): unknown {
 	}
 }
 
-const EMPTY_CHARACTERS = ["\u200B", "\u200C", "\u200D", "\u200E", "\u200F", "󠀠"];
+const EMPTY_CHARACTERS = [
+	"\u200B",
+	"\u200C",
+	"\u200D",
+	"\u200E",
+	"\u200F",
+	"󠀠",
+	"\u3164",
+	"\u115F",
+	"\u1160",
+	"\uFEFF",
+	"\u2060",
+];
 const EMPTY_CHARACTERS_REGEX = new RegExp(EMPTY_CHARACTERS.join("|"), "g");
 
 const zalgoRe = /%CC%/g;
@@ -192,7 +204,7 @@ export const safeNullableStringSchema = ({
 	max: number;
 }) =>
 	z.preprocess(
-		actuallyNonEmptyStringOrNull,
+		processMany(undefinedToNull, actuallyNonEmptyStringOrNull),
 		z
 			.string()
 			.min(min ?? 0)

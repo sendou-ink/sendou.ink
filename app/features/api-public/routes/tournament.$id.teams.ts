@@ -10,16 +10,13 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
 import { parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
-import { requireBearerAuth } from "../api-public-utils.server";
 import type { GetTournamentTeamsResponse } from "../schema";
 
 const paramsSchema = z.object({
 	id,
 });
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	requireBearerAuth(request);
-
+export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const t = await i18next.getFixedT("en", ["game-misc"]);
 	const { id } = parseParams({
 		params,
@@ -89,8 +86,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 						"TournamentTeamMember.inGameName",
 						"TournamentTeamMember.isOwner",
 						"TournamentTeamMember.createdAt",
-						"RankedSeedingSkill.mu as rankedOrdinal",
-						"UnrankedSeedingSkill.mu as unrankedOrdinal",
+						"RankedSeedingSkill.ordinal as rankedOrdinal",
+						"UnrankedSeedingSkill.ordinal as unrankedOrdinal",
 					])
 					.whereRef(
 						"TournamentTeamMember.tournamentTeamId",

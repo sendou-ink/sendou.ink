@@ -389,8 +389,9 @@ function buildInitialValues<T extends z.ZodRawShape>(
 			| FormField
 			| undefined;
 
-		if (defaultValues && key in defaultValues) {
-			result[key] = defaultValues[key as keyof typeof defaultValues];
+		const defaultValue = defaultValues?.[key as keyof typeof defaultValues];
+		if (defaultValue !== undefined) {
+			result[key] = defaultValue;
 		} else if (formField) {
 			result[key] = formField.initialValue;
 		}
