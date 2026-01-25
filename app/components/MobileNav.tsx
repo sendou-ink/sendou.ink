@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { href, Link } from "react-router";
 import { useUser } from "~/features/auth/core/user";
 import type { loader as sidebarLoader } from "~/features/sidebar/routes/sidebar";
+import { useIsMounted } from "~/hooks/useIsMounted";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
 import { mySlugify, navIconUrl, SETTINGS_PAGE, userPage } from "~/utils/urls";
@@ -271,10 +272,8 @@ function MenuOverlay({
 													{stream.subtitle}
 												</span>
 											) : null}
-											{stream.badge ? (
-												<span className={styles.streamItemBadge}>
-													{stream.badge}
-												</span>
+											{stream.startsAt < Date.now() ? (
+												<span className={styles.streamItemBadge}>LIVE</span>
 											) : null}
 										</div>
 									</div>

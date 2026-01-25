@@ -1,3 +1,4 @@
+import { clearLiveStreamsCache } from "~/features/core/streams/streams.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
@@ -139,10 +140,31 @@ export function clearAllTournamentDataCache() {
 
 function syncTournamentToRegistry(tournament: Tournament) {
 	const isRunning = tournament.hasStarted && !tournament.everyBracketOver;
+	const wasInRegistry = RunningTournaments.has(tournament.ctx.id);
 
 	if (isRunning) {
 		RunningTournaments.add(tournament);
+		if (!wasInRegistry) {
+			clearLiveStreamsCache();
+		}
 	} else {
+		if (wasInRegistry) {
+			clearLiveStreamsCache();
+		}
 		RunningTournaments.remove(tournament.ctx.id);
 	}
 }
+
+async function primeRunningTournamentsCache() {
+	const tournamentIds = await TournamentRepository.findRunningTournamentIds();
+
+	for (const tournamentId of tournamentIds) {
+		const data = await tournamentData({ user: undefined, tournamentId });
+		if (!data) continue;
+
+		const tournament = new Tournament({ ...data, simulateBrackets: false });
+		syncTournamentToRegistry(tournament);
+	}
+}
+
+await primeRunningTournamentsCache();

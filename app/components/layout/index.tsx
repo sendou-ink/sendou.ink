@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useLocation, useMatches } from "react-router";
 import { useUser } from "~/features/auth/core/user";
 import type { loader as sidebarLoader } from "~/features/sidebar/routes/sidebar";
+import { useIsMounted } from "~/hooks/useIsMounted";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, SETTINGS_PAGE, userPage } from "~/utils/urls";
@@ -185,6 +186,7 @@ export function Layout({
 	const location = useLocation();
 	const sidebarData = useSidebarData();
 	const navOffset = useNavOffset();
+	const isMounted = useIsMounted();
 
 	const events = sidebarData?.events ?? [];
 	const matchStatus = sidebarData?.matchStatus;
@@ -295,10 +297,12 @@ export function Layout({
 				{streams.map((stream) => (
 					<SideNavLink
 						key={stream.id}
-						to=""
+						to={stream.url}
 						imageUrl={stream.imageUrl}
 						subtitle={stream.subtitle}
-						badge={stream.badge}
+						badge={
+							isMounted && stream.startsAt < Date.now() ? "LIVE" : undefined
+						}
 					>
 						{stream.name}
 					</SideNavLink>

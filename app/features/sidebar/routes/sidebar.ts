@@ -1,5 +1,6 @@
 import { href, type LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
+import { getLiveTournamentStreams } from "~/features/core/streams/streams.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
@@ -40,7 +41,7 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 				logoUrl: string | null;
 			} | null,
 			friends: [] as ReturnType<typeof resolveFriends>,
-			streams: getMockStreams(),
+			streams: await getLiveTournamentStreams(),
 		};
 	}
 
@@ -98,7 +99,7 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 			: null,
 		tournamentMatchStatus,
 		friends,
-		streams: getMockStreams(),
+		streams: await getLiveTournamentStreams(),
 	};
 };
 
@@ -219,30 +220,4 @@ function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
 	}
 
 	return result;
-}
-
-function getMockStreams() {
-	return [
-		{
-			id: 3,
-			name: "Paddling Pool 252",
-			imageUrl: "https://i.pravatar.cc/150?u=stream1",
-			subtitle: "Losers Finals",
-			badge: "LIVE",
-		},
-		{
-			id: 1,
-			name: "Splash Go!",
-			imageUrl:
-				"https://liquipedia.net/commons/images/7/73/Splash_Go_allmode.png",
-			subtitle: "Tomorrow, 9:00 AM",
-		},
-		{
-			id: 2,
-			name: "Area Cup",
-			imageUrl:
-				"https://pbs.twimg.com/profile_images/1830601967821017088/4SDZVKdj_400x400.jpg",
-			subtitle: "Saturday, 10 AM",
-		},
-	];
 }

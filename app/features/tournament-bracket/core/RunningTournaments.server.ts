@@ -34,6 +34,10 @@ class RunningTournamentsRegistry {
 		return this.tournaments.get(tournamentId);
 	}
 
+	get all() {
+		return Array.from(this.tournaments.values());
+	}
+
 	has(tournamentId: number) {
 		return this.tournaments.has(tournamentId);
 	}
