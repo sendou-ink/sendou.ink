@@ -364,9 +364,13 @@ function useCustomThemeVars(): React.CSSProperties | undefined {
 
 		if (data?.customTheme) {
 			const styleObj: Record<string, number> = {};
+
 			for (const [key, value] of Object.entries(data.customTheme)) {
+				// Skips size variables for themes that arent the user's own
+				if (match.id !== "root" && key.includes("--_size")) continue;
 				styleObj[key] = value;
 			}
+
 			styles = styleObj as React.CSSProperties;
 		}
 	}
