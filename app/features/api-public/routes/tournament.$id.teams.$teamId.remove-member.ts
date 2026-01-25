@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import { z } from "zod";
 import { action as adminAction } from "~/features/tournament/actions/to.$id.admin.server";
+import { parseBody, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import { wrapActionForApi } from "../api-action-wrapper.server";
 
@@ -14,8 +15,14 @@ const bodySchema = z.object({
 });
 
 export const action = async (args: ActionFunctionArgs) => {
-	const { id: tournamentId, teamId } = paramsSchema.parse(args.params);
-	const { userId } = bodySchema.parse(await args.request.json());
+	const { id: tournamentId, teamId } = parseParams({
+		params: args.params,
+		schema: paramsSchema,
+	});
+	const { userId } = await parseBody({
+		request: args.request,
+		schema: bodySchema,
+	});
 
 	const internalRequest = new Request(args.request.url, {
 		method: "POST",
