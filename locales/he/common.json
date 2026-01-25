@@ -9,6 +9,7 @@
 	"pages.faq": "שאלות ותשובות",
 	"pages.builds": "ערכות",
 	"pages.analyzer": "מנתח ערכות",
+	"pages.comp-analyzer": "",
 	"pages.maps": "רשימת מפות",
 	"pages.plans": "מתכנן",
 	"pages.object-damage-calculator": "חישוב נזק",
@@ -331,5 +332,7 @@
 	"api.regenerate.heading": "",
 	"api.regenerate.button": "",
 	"api.regenerate.confirm": "",
-	"api.generate": ""
+	"api.generate": "",
+	"tier.tentative": "",
+	"tier.confirmed": ""
 }

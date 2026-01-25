@@ -4,7 +4,7 @@
 	--input-width: 100%;
 }
 
-.root input,
+.root input:not([type="checkbox"]):not([type="radio"]),
 .root textarea,
 .root select,
 .root .react-aria-Group,

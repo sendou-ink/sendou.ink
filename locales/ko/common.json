@@ -9,6 +9,7 @@
 	"pages.faq": "FAQ",
 	"pages.builds": "빌드",
 	"pages.analyzer": "빌드 분석기",
+	"pages.comp-analyzer": "",
 	"pages.maps": "맵 목록",
 	"pages.plans": "계획표",
 	"pages.object-damage-calculator": "대미지 계산기",
@@ -326,5 +327,7 @@
 	"api.regenerate.heading": "",
 	"api.regenerate.button": "",
 	"api.regenerate.confirm": "",
-	"api.generate": ""
+	"api.generate": "",
+	"tier.tentative": "",
+	"tier.confirmed": ""
 }

@@ -144,6 +144,7 @@ const damageTypePriorityList = [
 	"SPECIAL_TICK",
 	"SECONDARY_MODE_MAX",
 	"SECONDARY_MODE_MIN",
+	"COMBO",
 ] as const;
 assertType<
 	(typeof damageTypePriorityList)[number],

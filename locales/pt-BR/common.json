@@ -9,6 +9,7 @@
 	"pages.faq": "Perguntas Frequentes",
 	"pages.builds": "Builds",
 	"pages.analyzer": "Analisador de Builds",
+	"pages.comp-analyzer": "",
 	"pages.maps": "Listas de Mapas",
 	"pages.plans": "Planejador",
 	"pages.object-damage-calculator": "Calculadora de Dano",
@@ -332,5 +333,7 @@
 	"api.regenerate.heading": "",
 	"api.regenerate.button": "",
 	"api.regenerate.confirm": "",
-	"api.generate": ""
+	"api.generate": "",
+	"tier.tentative": "",
+	"tier.confirmed": ""
 }

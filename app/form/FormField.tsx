@@ -310,9 +310,15 @@ export function FormField({
 						const itemValues = arrayValue[idx] ?? {};
 
 						const setItemField = (fieldName: string, fieldValue: unknown) => {
-							const newArray = [...arrayValue];
-							newArray[idx] = { ...newArray[idx], [fieldName]: fieldValue };
-							handleChange(newArray);
+							context?.setValueFromPrev(name, (prev) => {
+								const currentArray = (prev ?? []) as Record<string, unknown>[];
+								const newArray = [...currentArray];
+								newArray[idx] = {
+									...currentArray[idx],
+									[fieldName]: fieldValue,
+								};
+								return newArray;
+							});
 						};
 
 						const remove = () => {

@@ -9,6 +9,7 @@
 	"pages.faq": "FAQ",
 	"pages.builds": "Uitrusting",
 	"pages.analyzer": "Uitrusting Bestuderen",
+	"pages.comp-analyzer": "",
 	"pages.maps": "Levellijsten",
 	"pages.plans": "",
 	"pages.object-damage-calculator": "",
@@ -330,5 +331,7 @@
 	"api.regenerate.heading": "",
 	"api.regenerate.button": "",
 	"api.regenerate.confirm": "",
-	"api.generate": ""
+	"api.generate": "",
+	"tier.tentative": "",
+	"tier.confirmed": ""
 }

@@ -28,6 +28,8 @@ import {
 	type TournamentBadgeReceivers,
 } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import { validateBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { refreshTentativeTiersCache } from "~/features/tournament-organization/core/tentativeTiers.server";
+import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -106,6 +108,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		finalizeTournament(tournamentId);
 	}
 
+	await updateSeriesTierHistory(tournament);
+
 	if (tournament.ranked) {
 		try {
 			refreshUserSkills(season!);
@@ -175,5 +179,27 @@ async function notifyBadgeReceivers(badgeReceivers: TournamentBadgeReceivers) {
 		}
 	} catch (error) {
 		logger.error("Error notifying badge receivers", error);
+	}
+}
+
+async function updateSeriesTierHistory(tournament: Tournament) {
+	const organizationId = tournament.ctx.organization?.id;
+	if (!organizationId) return;
+
+	const tier = tournament.ctx.tier;
+	if (tier === null) return;
+
+	try {
+		await TournamentOrganizationRepository.updateSeriesTierHistory({
+			organizationId,
+			eventName: tournament.ctx.name,
+			newTier: tier,
+		});
+		await refreshTentativeTiersCache();
+		logger.info(
+			`Updated series tier history for tournament ${tournament.ctx.id} with tier ${tier}`,
+		);
+	} catch (error) {
+		logger.error("Error updating series tier history", error);
 	}
 }

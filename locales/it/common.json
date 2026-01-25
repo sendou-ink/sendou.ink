@@ -9,6 +9,7 @@
 	"pages.faq": "FAQ",
 	"pages.builds": "Database Build",
 	"pages.analyzer": "Analisi Build",
+	"pages.comp-analyzer": "",
 	"pages.maps": "Liste Scenari",
 	"pages.plans": "Pianificatore",
 	"pages.object-damage-calculator": "Calcolatrice Danno",
@@ -332,5 +333,7 @@
 	"api.regenerate.heading": "",
 	"api.regenerate.button": "",
 	"api.regenerate.confirm": "",
-	"api.generate": ""
+	"api.generate": "",
+	"tier.tentative": "",
+	"tier.confirmed": ""
 }

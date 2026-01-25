@@ -9,6 +9,7 @@
 	"pages.faq": "FAQ",
 	"pages.builds": "ギア構成",
 	"pages.analyzer": "ギア構成分析",
+	"pages.comp-analyzer": "",
 	"pages.maps": "ステージ一覧",
 	"pages.plans": "戦略プランナー",
 	"pages.object-damage-calculator": "オブジェクトダメージ計算",
@@ -326,5 +327,7 @@
 	"api.regenerate.heading": "",
 	"api.regenerate.button": "",
 	"api.regenerate.confirm": "",
-	"api.generate": ""
+	"api.generate": "",
+	"tier.tentative": "",
+	"tier.confirmed": ""
 }
