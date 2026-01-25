@@ -34,7 +34,6 @@ import { Catcher } from "./components/Catcher";
 import { SendouToastRegion, toastQueue } from "./components/elements/Toast";
 import { Layout } from "./components/layout";
 import { Ramp } from "./components/ramp/Ramp";
-import { apiCorsMiddleware } from "./features/api-public/api-cors-middleware.server";
 import { getUser } from "./features/auth/core/user.server";
 import { userMiddleware } from "./features/auth/core/user-middleware.server";
 import { sessionIdMiddleware } from "./features/session-id/session-id-middleware.server";
@@ -55,7 +54,6 @@ import { isRevalidation, metaTags, type SerializeFrom } from "./utils/remix";
 
 export const middleware: Route.MiddlewareFunction[] = [
 	sessionIdMiddleware,
-	apiCorsMiddleware,
 	userMiddleware,
 ];
 
