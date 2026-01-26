@@ -15,7 +15,9 @@ import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useLocation, useMatches } from "react-router";
 import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import type { LanguageCode } from "~/modules/i18n/config";
 import type { RootLoaderData } from "~/root";
+import { databaseTimestampToDate, formatDistanceToNow } from "~/utils/dates";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, SETTINGS_PAGE, userPage } from "~/utils/urls";
 import { Avatar } from "../Avatar";
@@ -168,7 +170,7 @@ export function Layout({
 		data?.sidenavCollapsed ?? false,
 	);
 
-	const { t } = useTranslation(["front"]);
+	const { t, i18n } = useTranslation(["front"]);
 	const { formatRelativeDate } = useTimeFormat();
 	const location = useLocation();
 	const navOffset = useNavOffset();
@@ -273,19 +275,33 @@ export function Layout({
 				<SideNavHeader icon={<TwitchIcon />}>
 					{t("front:sideNav.streams")}
 				</SideNavHeader>
-				{streams.map((stream) => (
-					<SideNavLink
-						key={stream.id}
-						to={stream.url}
-						imageUrl={stream.imageUrl}
-						subtitle={stream.subtitle}
-						badge={
-							isMounted && stream.startsAt < Date.now() ? "LIVE" : undefined
-						}
-					>
-						{stream.name}
-					</SideNavLink>
-				))}
+				{streams.map((stream) => {
+					const startsAtDate = databaseTimestampToDate(stream.startsAt);
+
+					return (
+						<SideNavLink
+							key={stream.id}
+							to={stream.url}
+							imageUrl={stream.imageUrl}
+							overlayIconUrl={stream.overlayIconUrl}
+							subtitle={
+								isMounted
+									? formatDistanceToNow(startsAtDate, {
+											addSuffix: true,
+											language: i18n.language as LanguageCode,
+										})
+									: ""
+							}
+							badge={
+								isMounted && startsAtDate.getTime() < Date.now()
+									? "LIVE"
+									: undefined
+							}
+						>
+							{stream.name}
+						</SideNavLink>
+					);
+				})}
 			</SideNav>
 			<MobileNav sidebarData={data?.sidebar} />
 			<div className={styles.container}>

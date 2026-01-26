@@ -19,9 +19,13 @@ export function activeMatchPlayers() {
 			),
 		)
 		.innerJoin("GroupMember", "GroupMember.groupId", "Group.id")
+		.innerJoin("LiveStream", "LiveStream.userId", "GroupMember.userId")
 		.select(({ eb }) => [
 			"GroupMatch.id as groupMatchId",
 			"GroupMatch.createdAt as groupMatchCreatedAt",
+			"LiveStream.twitch as streamTwitch",
+			"LiveStream.viewerCount as streamViewerCount",
+			"LiveStream.thumbnailUrl as streamThumbnailUrl",
 			jsonObjectFrom(
 				eb
 					.selectFrom("User")

@@ -255,12 +255,28 @@
 	}
 }
 
+.sideNavLinkImageContainer {
+	position: relative;
+	flex-shrink: 0;
+}
+
 .sideNavLinkImage {
 	width: 32px;
 	height: 32px;
 	border-radius: var(--radius-field);
 	object-fit: cover;
 	flex-shrink: 0;
+}
+
+.sideNavLinkOverlayIcon {
+	position: absolute;
+	bottom: -2px;
+	right: -2px;
+	width: 16px;
+	height: 16px;
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg);
+	padding: 2px;
 }
 
 .sideNavLinkContent {
