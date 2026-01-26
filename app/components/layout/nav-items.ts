@@ -92,11 +92,6 @@ export const navItems = [
 		prefetch: false,
 	},
 	{
-		name: "t",
-		url: "t",
-		prefetch: false,
-	},
-	{
 		name: "tier-list-maker",
 		url: "tier-list-maker",
 		prefetch: false,

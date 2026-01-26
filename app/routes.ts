@@ -147,6 +147,7 @@ export default [
 	route("/support", "features/info/routes/support.tsx"),
 
 	route("/t", "features/team/routes/t.tsx"),
+	route("/t/new", "features/team/routes/t.new.tsx"),
 	route("/t/:customUrl", "features/team/routes/t.$customUrl.tsx", [
 		index("features/team/routes/t.$customUrl.index.tsx"),
 		route("edit", "features/team/routes/t.$customUrl.edit.tsx"),

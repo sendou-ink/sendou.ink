@@ -106,7 +106,7 @@ export function WeaponDestinationMenu({
 	selectedWeapon: SelectedWeapon;
 	onBack: () => void;
 	onSelect: (key: React.Key) => void;
-	listBoxRef: React.RefObject<HTMLDivElement>;
+	listBoxRef: React.RefObject<HTMLDivElement | null>;
 }) {
 	const { t } = useTranslation(["common"]);
 

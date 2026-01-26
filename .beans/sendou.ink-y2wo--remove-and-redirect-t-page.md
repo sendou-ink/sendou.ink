@@ -1,7 +1,7 @@
 ---
 # sendou.ink-y2wo
 title: Remove and redirect /t page
-status: todo
+status: completed
 type: task
 created_at: 2026-01-11T08:58:56Z
 updated_at: 2026-01-11T08:58:56Z

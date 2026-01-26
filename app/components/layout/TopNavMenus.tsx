@@ -26,7 +26,6 @@ const NAV_CATEGORIES = [
 		items: [
 			{ name: "analyzer", url: "analyzer" },
 			{ name: "comp-analyzer", url: "comp-analyzer" },
-			{ name: "builds", url: "builds" },
 			{ name: "object-damage-calculator", url: "object-damage-calculator" },
 			{ name: "plans", url: "plans" },
 			{ name: "tier-list-maker", url: "tier-list-maker" },
@@ -35,8 +34,8 @@ const NAV_CATEGORIES = [
 	{
 		name: "community",
 		items: [
+			{ name: "builds", url: "builds" },
 			{ name: "badges", url: "badges" },
-			{ name: "t", url: "t" },
 			{ name: "vods", url: "vods" },
 			{ name: "art", url: "art" },
 			{ name: "articles", url: "a" },
