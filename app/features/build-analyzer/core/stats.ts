@@ -620,7 +620,7 @@ function subWeaponDefenseDamages(
 								R.sum(arrayValues.map((v) => v.value)),
 								1,
 							),
-							type,
+							type: "BOMB_DIRECT",
 						});
 					}
 
