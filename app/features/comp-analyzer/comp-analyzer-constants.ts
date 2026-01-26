@@ -15,6 +15,8 @@ export const MAX_COMBOS_DISPLAYED = 50;
 
 export const COMBO_DAMAGE_THRESHOLD = 80;
 
+export const LETHAL_DAMAGE = 100;
+
 export const SUB_WEAPON_CATEGORIES: Record<SubWeaponId, SubWeaponCategory> = {
 	0: "LETHAL", // Splat Bomb
 	1: "LETHAL", // Suction Bomb

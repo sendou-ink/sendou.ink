@@ -13,6 +13,7 @@ import {
 	specialWeaponImageUrl,
 	subWeaponImageUrl,
 } from "~/utils/urls";
+import { LETHAL_DAMAGE } from "../comp-analyzer-constants";
 import { useTargetResAp, useTargetSubDefenseAp } from "../comp-analyzer-hooks";
 import type { DamageCombo, DamageSegment } from "../comp-analyzer-types";
 import {
@@ -36,7 +37,6 @@ function weaponTypeFromSegment(
 }
 
 const SLOT_COLORS = ["yellow", "pink", "green", "blue"] as const;
-const LETHAL_DAMAGE = 100;
 
 interface DamageComboBarProps {
 	combo: DamageCombo;
