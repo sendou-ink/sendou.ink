@@ -2,6 +2,8 @@ import { userAsyncLocalStorage } from "~/features/auth/core/user-context.server"
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { getTokenInfo } from "./api-public-utils.server";
 
+const USER_IDS_PATTERN = /^\/api\/user\/[^/]+\/ids$/;
+
 type MiddlewareArgs = {
 	request: Request;
 	context: unknown;
@@ -18,8 +20,18 @@ function extractToken(req: Request): string | null {
 	return authHeader.replace("Bearer ", "");
 }
 
+function isPublicRoute(request: Request): boolean {
+	if (request.method !== "GET") return false;
+	const url = new URL(request.url);
+	return USER_IDS_PATTERN.test(url.pathname);
+}
+
 export const apiAuthMiddleware: MiddlewareFn = async ({ request }, next) => {
 	if (request.method === "OPTIONS") {
+		return next();
+	}
+
+	if (isPublicRoute(request)) {
 		return next();
 	}
 
