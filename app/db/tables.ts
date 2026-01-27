@@ -692,6 +692,31 @@ export interface TournamentSub {
 	visibility: "+1" | "+2" | "+3" | "ALL";
 }
 
+export interface TournamentLFGGroup {
+	id: GeneratedAlways<number>;
+	tournamentId: number;
+	tournamentTeamId: number | null;
+	visibility: JSONColumnTypeNullable<AssociationVisibility>;
+	chatCode: string;
+	createdAt: Generated<number>;
+}
+
+export interface TournamentLFGGroupMember {
+	groupId: number;
+	tournamentId: number;
+	userId: number;
+	role: "OWNER" | "MANAGER" | "REGULAR";
+	note: string | null;
+	isStayAsSub: Generated<DBBoolean>;
+	createdAt: Generated<number>;
+}
+
+export interface TournamentLFGLike {
+	likerGroupId: number;
+	targetGroupId: number;
+	createdAt: Generated<number>;
+}
+
 export interface TournamentStaff {
 	tournamentId: number;
 	userId: number;
@@ -1198,6 +1223,9 @@ export interface DB {
 	Tournament: Tournament;
 	TournamentStaff: TournamentStaff;
 	TournamentGroup: TournamentGroup;
+	TournamentLFGGroup: TournamentLFGGroup;
+	TournamentLFGGroupMember: TournamentLFGGroupMember;
+	TournamentLFGLike: TournamentLFGLike;
 	TournamentMatch: TournamentMatch;
 	TournamentMatchPickBanEvent: TournamentMatchPickBanEvent;
 	TournamentMatchGameResult: TournamentMatchGameResult;
