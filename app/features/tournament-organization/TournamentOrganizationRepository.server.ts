@@ -416,6 +416,16 @@ export function update({
 			)
 			.execute();
 
+		const existingSeries = await trx
+			.selectFrom("TournamentOrganizationSeries")
+			.select(["name", "tierHistory"])
+			.where("organizationId", "=", id)
+			.execute();
+
+		const tierHistoryByName = new Map(
+			existingSeries.map((s) => [s.name.toLowerCase(), s.tierHistory]),
+		);
+
 		await trx
 			.deleteFrom("TournamentOrganizationSeries")
 			.where("organizationId", "=", id)
@@ -431,6 +441,9 @@ export function update({
 						description: s.description,
 						substringMatches: JSON.stringify([s.name.toLowerCase()]),
 						showLeaderboard: Number(s.showLeaderboard),
+						tierHistory: tierHistoryByName.get(s.name.toLowerCase())
+							? JSON.stringify(tierHistoryByName.get(s.name.toLowerCase()))
+							: null,
 					})),
 				)
 				.execute();

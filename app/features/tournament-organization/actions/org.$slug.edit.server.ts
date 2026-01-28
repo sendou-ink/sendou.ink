@@ -2,6 +2,7 @@ import { type ActionFunctionArgs, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
+import { refreshTentativeTiersCache } from "~/features/tournament-organization/core/tentativeTiers.server";
 import { parseFormData } from "~/form/parse.server";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
@@ -63,6 +64,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	)) {
 		clearTournamentDataCache(tournament.id);
 	}
+
+	// 3) refresh tentative tiers cache (in case series were added/removed/renamed)
+	await refreshTentativeTiersCache();
 
 	return redirect(
 		tournamentOrganizationPage({ organizationSlug: newOrganization.slug }),
