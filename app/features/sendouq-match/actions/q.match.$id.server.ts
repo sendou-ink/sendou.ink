@@ -1,6 +1,5 @@
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
-import { sql } from "~/db/sql";
 import type { ReportedWeapon } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
@@ -13,6 +12,7 @@ import {
 } from "~/features/sendouq/core/SendouQ.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
+import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.server";
 import invariant from "~/utils/invariant";
@@ -25,25 +25,8 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_PREPARING_PAGE, sendouQMatchPage } from "~/utils/urls";
-import { compareMatchToReportedScores } from "../core/match.server";
 import { mergeReportedWeapons } from "../core/reported-weapons.server";
-import { calculateMatchSkills } from "../core/skills.server";
-import {
-	summarizeMaps,
-	summarizePlayerResults,
-} from "../core/summarizer.server";
 import { matchSchema, qMatchPageParamsSchema } from "../q-match-schemas";
-import { winnersArrayToWinner } from "../q-match-utils";
-import { addDummySkill } from "../queries/addDummySkill.server";
-import { addMapResults } from "../queries/addMapResults.server";
-import { addPlayerResults } from "../queries/addPlayerResults.server";
-import { addReportedWeapons } from "../queries/addReportedWeapons.server";
-import { addSkills } from "../queries/addSkills.server";
-import { deleteReporterWeaponsByMatchId } from "../queries/deleteReportedWeaponsByMatchId.server";
-import { findMatchById } from "../queries/findMatchById.server";
-import { reportedWeaponsByMatchId } from "../queries/reportedWeaponsByMatchId.server";
-import { reportScore } from "../queries/reportScore.server";
-import { setGroupAsInactive } from "../queries/setGroupAsInactive.server";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const matchId = parseParams({
@@ -58,9 +41,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	switch (data._action) {
 		case "REPORT_SCORE": {
-			const reportWeapons = () => {
-				const oldReportedWeapons = reportedWeaponsByMatchId(matchId) ?? [];
+			const unmappedMatch = notFoundIfFalsy(
+				await SQMatchRepository.findById(matchId),
+			);
+			const match = SendouQ.mapMatch(unmappedMatch, user);
 
+			if (match.isLocked) {
+				const oldReportedWeapons =
+					(await ReportedWeaponRepository.findByMatchId(matchId)) ?? [];
 				const mergedWeapons = mergeReportedWeapons({
 					oldWeapons: oldReportedWeapons,
 					newWeapons: data.weapons as (ReportedWeapon & {
@@ -69,19 +57,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					})[],
 					newReportedMapsCount: data.winners.length,
 				});
-
-				sql.transaction(() => {
-					deleteReporterWeaponsByMatchId(matchId);
-					addReportedWeapons(mergedWeapons);
-				})();
-			};
-
-			const unmappedMatch = notFoundIfFalsy(
-				await SQMatchRepository.findById(matchId),
-			);
-			const match = SendouQ.mapMatch(unmappedMatch, user);
-			if (match.isLocked) {
-				reportWeapons();
+				await ReportedWeaponRepository.replaceByMatchId(matchId, mergedWeapons);
 				return null;
 			}
 
@@ -89,6 +65,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				!data.adminReport || user.roles.includes("STAFF"),
 				"Only mods can report scores as admin",
 			);
+
 			const members = [
 				...match.groupAlpha.members.map((m) => ({
 					...m,
@@ -99,147 +76,105 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					groupId: match.groupBravo.id,
 				})),
 			];
-
-			const groupMemberOfId = members.find((m) => m.id === user.id)?.groupId;
 			invariant(
-				groupMemberOfId || data.adminReport,
+				members.some((m) => m.id === user.id) || data.adminReport,
 				"User is not a member of any group",
 			);
 
-			const winner = winnersArrayToWinner(data.winners);
-			const winnerGroupId =
-				winner === "ALPHA" ? match.groupAlpha.id : match.groupBravo.id;
-			const loserGroupId =
-				winner === "ALPHA" ? match.groupBravo.id : match.groupAlpha.id;
+			if (data.adminReport) {
+				await SQMatchRepository.adminReport({
+					matchId,
+					reportedByUserId: user.id,
+					winners: data.winners,
+				});
 
-			// when admin reports match gets locked right away
-			const compared = data.adminReport
-				? "SAME"
-				: compareMatchToReportedScores({
-						match,
-						winners: data.winners,
-						newReporterGroupId: groupMemberOfId!,
-						previousReporterGroupId: match.reportedByUserId
-							? members.find((m) => m.id === match.reportedByUserId)!.groupId
-							: undefined,
+				await refreshSendouQInstance();
+
+				if (match.chatCode) {
+					ChatSystemMessage.send({
+						room: match.chatCode,
+						type: "SCORE_CONFIRMED",
+						context: { name: user.username },
 					});
+				}
 
-			// same group reporting same score, probably by mistake
-			if (compared === "DUPLICATE") {
-				reportWeapons();
-				return null;
+				break;
 			}
 
 			const matchIsBeingCanceled = data.winners.length === 0;
 
-			const { newSkills, differences } =
-				compared === "SAME" && !matchIsBeingCanceled
-					? calculateMatchSkills({
-							groupMatchId: match.id,
-							winner: (match.groupAlpha.id === winnerGroupId
-								? match.groupAlpha
-								: match.groupBravo
-							).members.map((m) => m.id),
-							loser: (match.groupAlpha.id === loserGroupId
-								? match.groupAlpha
-								: match.groupBravo
-							).members.map((m) => m.id),
-							winnerGroupId,
-							loserGroupId,
-						})
-					: { newSkills: null, differences: null };
+			if (matchIsBeingCanceled) {
+				const result = await SQMatchRepository.cancelMatch({
+					matchId,
+					reportedByUserId: user.id,
+				});
 
-			const shouldLockMatchWithoutChangingRecords =
-				compared === "SAME" && matchIsBeingCanceled;
+				if (result.shouldRefreshCaches) {
+					try {
+						refreshUserSkills(Seasons.currentOrPrevious()!.nth);
+					} catch (error) {
+						logger.warn("Error refreshing user skills", error);
+					}
+					refreshStreamsCache();
+				}
 
-			let clearCaches = false;
-			sql.transaction(() => {
-				if (
-					compared === "FIX_PREVIOUS" ||
-					compared === "FIRST_REPORT" ||
-					data.adminReport
-				) {
-					reportScore({
-						matchId,
-						reportedByUserId: user.id,
-						winners: data.winners,
+				if (result.status === "CANT_CANCEL") {
+					return { error: "cant-cancel" as const };
+				}
+
+				await refreshSendouQInstance();
+
+				if (match.chatCode) {
+					const type: NonNullable<ChatMessage["type"]> =
+						result.status === "CANCEL_CONFIRMED"
+							? "CANCEL_CONFIRMED"
+							: "CANCEL_REPORTED";
+
+					ChatSystemMessage.send({
+						room: match.chatCode,
+						type,
+						context: { name: user.username },
 					});
 				}
-				// own group gets set inactive
-				if (groupMemberOfId) setGroupAsInactive(groupMemberOfId);
-				// skills & map/player results only update after both teams have reported
-				if (newSkills) {
-					addMapResults(
-						summarizeMaps({ match, members, winners: data.winners }),
-					);
-					addPlayerResults(
-						summarizePlayerResults({ match, members, winners: data.winners }),
-					);
-					addSkills({
-						skills: newSkills,
-						differences,
-						groupMatchId: match.id,
-						oldMatchMemento: match.memento,
-					});
-					clearCaches = true;
-				}
-				if (shouldLockMatchWithoutChangingRecords) {
-					addDummySkill(match.id);
-					clearCaches = true;
-				}
-				// fix edge case where they 1) report score 2) report weapons 3) report score again, but with different amount of maps played
-				if (compared === "FIX_PREVIOUS") {
-					deleteReporterWeaponsByMatchId(matchId);
-				}
-				// admin reporting, just set both groups inactive
-				if (data.adminReport) {
-					setGroupAsInactive(match.groupAlpha.id);
-					setGroupAsInactive(match.groupBravo.id);
-				}
-			})();
 
-			if (clearCaches) {
-				// this is kind of useless to do when admin reports since skills don't change
-				// but it's not the most common case so it's ok
+				break;
+			}
+
+			const result = await SQMatchRepository.reportScore({
+				matchId,
+				reportedByUserId: user.id,
+				winners: data.winners,
+				weapons: data.weapons as (ReportedWeapon & {
+					mapIndex: number;
+					groupMatchMapId: number;
+				})[],
+			});
+
+			if (result.shouldRefreshCaches) {
 				try {
 					refreshUserSkills(Seasons.currentOrPrevious()!.nth);
 				} catch (error) {
 					logger.warn("Error refreshing user skills", error);
 				}
-
 				refreshStreamsCache();
 			}
 
-			if (compared === "DIFFERENT") {
-				return {
-					error: matchIsBeingCanceled
-						? ("cant-cancel" as const)
-						: ("different" as const),
-				};
+			if (result.status === "DIFFERENT") {
+				return { error: "different" as const };
 			}
 
-			// in a different transaction but it's okay
-			reportWeapons();
+			if (result.status !== "DUPLICATE") {
+				await refreshSendouQInstance();
+			}
 
-			await refreshSendouQInstance();
-
-			if (match.chatCode) {
-				const type = (): NonNullable<ChatMessage["type"]> => {
-					if (compared === "SAME") {
-						return matchIsBeingCanceled
-							? "CANCEL_CONFIRMED"
-							: "SCORE_CONFIRMED";
-					}
-
-					return matchIsBeingCanceled ? "CANCEL_REPORTED" : "SCORE_REPORTED";
-				};
+			if (match.chatCode && result.status !== "DUPLICATE") {
+				const type: NonNullable<ChatMessage["type"]> =
+					result.status === "CONFIRMED" ? "SCORE_CONFIRMED" : "SCORE_REPORTED";
 
 				ChatSystemMessage.send({
 					room: match.chatCode,
-					type: type(),
-					context: {
-						name: user.username,
-					},
+					type,
+					context: { name: user.username },
 				});
 			}
 
@@ -282,10 +217,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			throw redirect(SENDOUQ_PREPARING_PAGE);
 		}
 		case "REPORT_WEAPONS": {
-			const match = notFoundIfFalsy(findMatchById(matchId));
+			const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
 			errorToastIfFalsy(match.reportedAt, "Match has not been reported yet");
 
-			const oldReportedWeapons = reportedWeaponsByMatchId(matchId) ?? [];
+			const oldReportedWeapons =
+				(await ReportedWeaponRepository.findByMatchId(matchId)) ?? [];
 
 			const mergedWeapons = mergeReportedWeapons({
 				oldWeapons: oldReportedWeapons,
@@ -295,10 +231,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				})[],
 			});
 
-			sql.transaction(() => {
-				deleteReporterWeaponsByMatchId(matchId);
-				addReportedWeapons(mergedWeapons);
-			})();
+			await ReportedWeaponRepository.replaceByMatchId(matchId, mergedWeapons);
 
 			break;
 		}
