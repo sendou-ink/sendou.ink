@@ -118,11 +118,11 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: var(--field-size-xs);
-	height: var(--field-size-xs);
+	width: var(--selector-size-sm);
+	height: var(--selector-size-sm);
 	border-radius: 50%;
 	font-weight: var(--weight-extra);
-	font-size: var(--font-sm);
+	font-size: var(--font-xs);
 }
 
 .deadlineIndicatorWarning {

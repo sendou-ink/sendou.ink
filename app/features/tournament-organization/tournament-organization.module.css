@@ -24,7 +24,7 @@
 	aspect-ratio: 1;
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	padding: var(--s-1);
 	position: relative;
 	display: grid;

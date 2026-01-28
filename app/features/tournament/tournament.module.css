@@ -26,6 +26,7 @@
 
 .teamWithRosterName {
 	flex: 1;
+	min-width: 0;
 	font-weight: var(--weight-bold);
 	padding-inline-end: var(--s-4);
 	text-align: right;
@@ -34,6 +35,7 @@
 .teamWithRosterMembers {
 	display: flex;
 	flex: 1;
+	min-width: 0;
 	flex-direction: column;
 	border-inline-start: var(--border-style-accent);
 	font-size: var(--font-xs);
@@ -46,7 +48,7 @@
 .teamWithRosterMember {
 	display: grid;
 	gap: var(--s-1-5);
-	grid-template-columns: max-content max-content 1fr;
+	grid-template-columns: max-content minmax(0, 1fr);
 }
 
 .teamWithRosterMemberInactive {
@@ -104,23 +106,23 @@
 	color: var(--color-text);
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	max-width: 150px;
-	display: flex;
-	align-items: center;
+	display: block;
 }
 
 .teamMemberNameRole {
 	position: absolute;
 	background-color: var(--color-text-accent);
 	color: var(--color-text-inverse);
-	width: 14px;
-	height: 14px;
+	width: 12px;
+	height: 12px;
 	border-radius: var(--radius-full);
-	font-size: var(--font-2xs);
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-bold);
+	line-height: 1;
 	display: grid;
 	place-items: center;
-	top: 12px;
-	left: 12px;
+	top: 14px;
+	left: 14px;
 	z-index: 1;
 }
 
