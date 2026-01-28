@@ -29,13 +29,10 @@ import {
 	summarizeMaps,
 	summarizePlayerResults,
 } from "~/features/sendouq-match/core/summarizer.server";
+import * as PlayerStatRepository from "~/features/sendouq-match/PlayerStatRepository.server";
 import { winnersArrayToWinner } from "~/features/sendouq-match/q-match-utils";
-import { addMapResults } from "~/features/sendouq-match/queries/addMapResults.server";
-import { addPlayerResults } from "~/features/sendouq-match/queries/addPlayerResults.server";
-import { addReportedWeapons } from "~/features/sendouq-match/queries/addReportedWeapons.server";
-import { addSkills } from "~/features/sendouq-match/queries/addSkills.server";
-import { reportScore } from "~/features/sendouq-match/queries/reportScore.server";
-import { setGroupAsInactive } from "~/features/sendouq-match/queries/setGroupAsInactive.server";
+import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
+import * as SkillRepository from "~/features/sendouq-match/SkillRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
@@ -2340,28 +2337,28 @@ async function playedMatches() {
 				groupId: match.bravoGroupId,
 			})),
 		];
-		sql.transaction(() => {
-			reportScore({
-				matchId: match.id,
-				reportedByUserId:
-					faker.number.float(1) > 0.5
-						? groupAlphaMembers[0]
-						: groupBravoMembers[0],
-				winners,
-			});
-			addSkills({
-				skills: newSkills,
-				differences,
-				groupMatchId: match.id,
-				oldMatchMemento: { users: {}, groups: {}, pools: [] },
-			});
-			setGroupAsInactive(groupAlpha);
-			setGroupAsInactive(groupBravo);
-			addMapResults(summarizeMaps({ match: finishedMatch, members, winners }));
-			addPlayerResults(
-				summarizePlayerResults({ match: finishedMatch, members, winners }),
-			);
-		})();
+		await SQMatchRepository.updateScore({
+			matchId: match.id,
+			reportedByUserId:
+				faker.number.float(1) > 0.5
+					? groupAlphaMembers[0]
+					: groupBravoMembers[0],
+			winners,
+		});
+		await SkillRepository.createMatchSkills({
+			skills: newSkills,
+			differences,
+			groupMatchId: match.id,
+			oldMatchMemento: { users: {}, groups: {}, pools: [] },
+		});
+		await SQGroupRepository.setAsInactive(groupAlpha);
+		await SQGroupRepository.setAsInactive(groupBravo);
+		await PlayerStatRepository.upsertMapResults(
+			summarizeMaps({ match: finishedMatch, members, winners }),
+		);
+		await PlayerStatRepository.upsertPlayerResults(
+			summarizePlayerResults({ match: finishedMatch, members, winners }),
+		);
 
 		// -> add weapons for 90% of matches
 		if (faker.number.float(1) > 0.9) continue;
@@ -2370,7 +2367,7 @@ async function playedMatches() {
 			finishedMatch.mapList.map((m) => ({ map: m, user: u })),
 		);
 
-		addReportedWeapons(
+		await ReportedWeaponRepository.createMany(
 			mapsWithUsers.map((mu) => {
 				const weapon = () => {
 					if (faker.number.float(1) < 0.9) return defaultWeapons[mu.user];
