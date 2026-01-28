@@ -1158,6 +1158,19 @@ function TabsSection({ id }: { id: string }) {
 						<SendouTabPanel id="rejected">No rejected items.</SendouTabPanel>
 					</SendouTabs>
 				</ComponentRow>
+
+				<ComponentRow label="Full Width">
+					<SendouTabs>
+						<SendouTabList fullWidth>
+							<SendouTab id="build1">Build 1</SendouTab>
+							<SendouTab id="build2">Build 2</SendouTab>
+							<SendouTab id="compare">Compare</SendouTab>
+						</SendouTabList>
+						<SendouTabPanel id="build1">Build 1 content.</SendouTabPanel>
+						<SendouTabPanel id="build2">Build 2 content.</SendouTabPanel>
+						<SendouTabPanel id="compare">Comparison content.</SendouTabPanel>
+					</SendouTabs>
+				</ComponentRow>
 			</div>
 		</Section>
 	);

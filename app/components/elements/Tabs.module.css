@@ -10,6 +10,16 @@
 	min-width: fit-content;
 }
 
+.fullWidth {
+	width: 100%;
+	min-width: 100%;
+}
+
+.fullWidth .tabContainer {
+	flex: 1;
+	min-width: 0;
+}
+
 .tabList svg {
 	--icon-size: 16px;
 	min-width: var(--icon-size);

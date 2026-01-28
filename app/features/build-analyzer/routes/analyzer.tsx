@@ -273,7 +273,7 @@ function BuildAnalyzerPage() {
 								}}
 								className={styles.subNav}
 							>
-								<SendouTabList>
+								<SendouTabList fullWidth>
 									<SendouTab id="build-1" data-testid="build1-tab">
 										{t("analyzer:build1")}
 									</SendouTab>

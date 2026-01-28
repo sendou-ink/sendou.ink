@@ -87,10 +87,13 @@ export function SendouTab({ icon, children, number, ...rest }: SendouTabProps) {
 
 interface SendouTabListProps<T extends object> extends TabListProps<T> {
 	sticky?: boolean;
+	/** Should tabs take 100% width with equal distribution? */
+	fullWidth?: boolean;
 }
 
 export function SendouTabList<T extends object>({
 	sticky,
+	fullWidth,
 	...rest
 }: SendouTabListProps<T>) {
 	return (
@@ -100,6 +103,7 @@ export function SendouTabList<T extends object>({
 					// invisible: cantSwitchTabs && !disappearing,
 					// hidden: cantSwitchTabs && disappearing,
 					[styles.sticky]: sticky,
+					[styles.fullWidth]: fullWidth,
 				})}
 				{...rest}
 			/>
