@@ -22,6 +22,7 @@ import {
 } from "~/utils/urls";
 import { InfoPopover } from "../../../components/InfoPopover";
 import { TopTenPlayer } from "../components/TopTenPlayer";
+import type { XPLeaderboardItem } from "../LeaderboardRepository.server";
 import {
 	LEADERBOARD_TYPES,
 	SEASON_SEARCH_PARAM_KEY,
@@ -29,7 +30,6 @@ import {
 } from "../leaderboards-constants";
 import { seasonHasTopTen } from "../leaderboards-utils";
 import { loader } from "../loaders/leaderboards.server";
-import type { XPLeaderboardItem } from "../queries/XPLeaderboard.server";
 export { loader };
 
 import styles from "../../top-search/top-search.module.css";

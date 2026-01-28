@@ -322,6 +322,51 @@ describe("calculateInkTimeToKill", () => {
 	});
 });
 
+describe("calculateDamageCombos - excessive combo filtering", () => {
+	test("filters out excessive combos (200+ damage where removing any hit still kills)", () => {
+		const combos = calculateDamageCombos(
+			[SPLATTERSHOT_ID, SPLAT_ROLLER_ID, SPLAT_CHARGER_ID, AEROSPRAY_MG_ID],
+			[],
+			0,
+			1000,
+		);
+
+		const hasExcessiveCombo = combos.some((combo) => {
+			const flatDamages = combo.segments.flatMap((s) =>
+				Array(s.count).fill(s.damageValue),
+			);
+			for (const damage of flatDamages) {
+				const reducedDamage = combo.totalDamage - damage;
+				if (reducedDamage >= 100) {
+					return true;
+				}
+			}
+			return false;
+		});
+
+		expect(hasExcessiveCombo).toBe(false);
+	});
+
+	test("allows combos where removing any hit drops below lethal threshold", () => {
+		const combos = calculateDamageCombos(
+			[SPLATTERSHOT_ID, SPLAT_ROLLER_ID],
+			[],
+			0,
+			1000,
+		);
+
+		for (const combo of combos) {
+			const flatDamages = combo.segments.flatMap((s) =>
+				Array(s.count).fill(s.damageValue),
+			);
+			const allHitsNecessary = flatDamages.every(
+				(damage) => combo.totalDamage - damage < 100,
+			);
+			expect(allHitsNecessary).toBe(true);
+		}
+	});
+});
+
 describe("virtual damage combos", () => {
 	test("Explosher has COMBO damage type combining DIRECT and DISTANCE", () => {
 		const sources = extractDamageSources([EXPLOSHER_ID]);

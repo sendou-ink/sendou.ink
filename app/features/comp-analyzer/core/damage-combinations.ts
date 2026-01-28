@@ -11,6 +11,7 @@ import { weaponParams } from "~/features/build-analyzer/core/utils";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	COMBO_DAMAGE_THRESHOLD,
+	LETHAL_DAMAGE,
 	MAX_COMBOS_DISPLAYED,
 	MAX_DAMAGE_TYPES_PER_COMBO,
 	MAX_REPEATS_PER_DAMAGE_TYPE,
@@ -145,6 +146,7 @@ export function calculateDamageCombos(
 	weaponIds: MainWeaponId[],
 	excludedKeys: ExcludedDamageKey[] = [],
 	targetSubDefenseAp = 0,
+	maxCombosDisplayed = MAX_COMBOS_DISPLAYED,
 ): DamageCombo[] {
 	if (weaponIds.length < 2) {
 		return [];
@@ -157,7 +159,7 @@ export function calculateDamageCombos(
 	const sources = extractDamageSources(weaponIds, targetSubDefenseAp);
 	const damageOptions = flattenToOptions(sources, excludedSet);
 	const combos = generateCombinations(damageOptions);
-	const filtered = filterAndSortCombos(combos);
+	const filtered = filterAndSortCombos(combos, maxCombosDisplayed);
 
 	return filtered;
 }
@@ -301,13 +303,20 @@ function backtrack(
 	}
 }
 
-function filterAndSortCombos(combos: DamageCombo[]): DamageCombo[] {
+function filterAndSortCombos(
+	combos: DamageCombo[],
+	maxCombosDisplayed: number,
+): DamageCombo[] {
 	const filtered = combos.filter((combo) => {
 		if (combo.totalDamage < COMBO_DAMAGE_THRESHOLD) {
 			return false;
 		}
 
 		if (hasOneShot(combo)) {
+			return false;
+		}
+
+		if (isExcessiveCombo(combo)) {
 			return false;
 		}
 
@@ -323,11 +332,29 @@ function filterAndSortCombos(combos: DamageCombo[]): DamageCombo[] {
 		return a.hitCount - b.hitCount;
 	});
 
-	return filtered.slice(0, MAX_COMBOS_DISPLAYED);
+	return filtered.slice(0, maxCombosDisplayed);
 }
 
 function hasOneShot(combo: DamageCombo): boolean {
-	return combo.segments.some((s) => s.damageValue >= 100);
+	return combo.segments.some((s) => s.damageValue >= LETHAL_DAMAGE);
+}
+
+function isExcessiveCombo(combo: DamageCombo): boolean {
+	const flatDamages = combo.segments.flatMap((s) =>
+		Array(s.count).fill(s.damageValue),
+	);
+	const totalDamage = combo.totalDamage;
+
+	for (let i = 0; i < flatDamages.length; i++) {
+		const damage = flatDamages[i];
+
+		const reducedDamage = totalDamage - damage;
+		if (reducedDamage >= LETHAL_DAMAGE) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 const SPLASH_O_MATIC_ID = 20;

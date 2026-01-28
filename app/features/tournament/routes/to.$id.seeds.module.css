@@ -13,7 +13,7 @@
 	column-gap: var(--s-2);
 	font-size: var(--font-xs);
 	font-weight: var(--weight-bold);
-	grid-template-columns: 2.5rem 2.25rem 2rem 1fr 3rem 1fr;
+	grid-template-columns: 2.5rem 3.5rem 2rem 1fr 3rem 1fr;
 }
 
 .teamCard {
@@ -48,6 +48,8 @@
 
 .nameArea {
 	grid-area: name;
+	min-width: 0;
+	overflow: hidden;
 }
 
 .spArea {
@@ -122,6 +124,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
+	min-width: 0;
 }
 
 .teamName {

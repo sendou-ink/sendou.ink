@@ -5,16 +5,13 @@ import { db } from "~/db/sql";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
-import { requireBearerAuth } from "../api-public-utils.server";
 import type { GetTournamentResponse } from "../schema";
 
 const paramsSchema = z.object({
 	id,
 });
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	requireBearerAuth(request);
-
+export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id } = parseParams({ params, schema: paramsSchema });
 
 	const tournament = notFoundIfFalsy(

@@ -1,5 +1,6 @@
 import {
 	index,
+	layout,
 	prefix,
 	type RouteConfig,
 	route,
@@ -264,54 +265,64 @@ export default [
 	route("/seed", "features/api-private/routes/seed.ts"),
 	route("/users", "features/api-private/routes/users.ts"),
 
-	...prefix("/api", [
-		route(
-			"/user/:identifier",
-			"features/api-public/routes/user.$identifier.ts",
-		),
-		route(
-			"/user/:identifier/ids",
-			"features/api-public/routes/user.$identifier.ids.ts",
-		),
-		route(
-			"/calendar/:year/:week",
-			"features/api-public/routes/calendar.$year.$week.ts",
-		),
-		route(
-			"/sendouq/active-match/:userId",
-			"features/api-public/routes/sendouq.active-match.$userId.ts",
-		),
-		route(
-			"/sendouq/match/:matchId",
-			"features/api-public/routes/sendouq.match.$matchId.ts",
-		),
-		route("/tournament/:id", "features/api-public/routes/tournament.$id.ts"),
-		route(
-			"/tournament/:id/teams",
-			"features/api-public/routes/tournament.$id.teams.ts",
-		),
-		route(
-			"/tournament/:id/players",
-			"features/api-public/routes/tournament.$id.players.ts",
-		),
-		route(
-			"/tournament/:id/casted",
-			"features/api-public/routes/tournament.$id.casted.ts",
-		),
-		route(
-			"/tournament/:id/brackets/:bidx",
-			"features/api-public/routes/tournament.$id.brackets.$bidx.ts",
-		),
-		route(
-			"/tournament/:id/brackets/:bidx/standings",
-			"features/api-public/routes/tournament.$id.brackets.$bidx.standings.ts",
-		),
-		route(
-			"/tournament-match/:id",
-			"features/api-public/routes/tournament-match.$id.ts",
-		),
-		route("/org/:id", "features/api-public/routes/org.$id.ts"),
-		route("/team/:id", "features/api-public/routes/team.$id.ts"),
+	layout("features/api-public/routes/api.layout.tsx", [
+		...prefix("/api", [
+			route(
+				"/user/:identifier",
+				"features/api-public/routes/user.$identifier.ts",
+			),
+			route(
+				"/user/:identifier/ids",
+				"features/api-public/routes/user.$identifier.ids.ts",
+			),
+			route(
+				"/calendar/:year/:week",
+				"features/api-public/routes/calendar.$year.$week.ts",
+			),
+			route(
+				"/sendouq/active-match/:userId",
+				"features/api-public/routes/sendouq.active-match.$userId.ts",
+			),
+			route(
+				"/sendouq/match/:matchId",
+				"features/api-public/routes/sendouq.match.$matchId.ts",
+			),
+			route("/tournament/:id", "features/api-public/routes/tournament.$id.ts"),
+			route(
+				"/tournament/:id/teams",
+				"features/api-public/routes/tournament.$id.teams.ts",
+			),
+			route(
+				"/tournament/:id/players",
+				"features/api-public/routes/tournament.$id.players.ts",
+			),
+			route(
+				"/tournament/:id/casted",
+				"features/api-public/routes/tournament.$id.casted.ts",
+			),
+			route(
+				"/tournament/:id/brackets/:bidx",
+				"features/api-public/routes/tournament.$id.brackets.$bidx.ts",
+			),
+			route(
+				"/tournament/:id/brackets/:bidx/standings",
+				"features/api-public/routes/tournament.$id.brackets.$bidx.standings.ts",
+			),
+			route(
+				"/tournament-match/:id",
+				"features/api-public/routes/tournament-match.$id.ts",
+			),
+			route("/org/:id", "features/api-public/routes/org.$id.ts"),
+			route("/team/:id", "features/api-public/routes/team.$id.ts"),
+			route(
+				"/tournament/:id/teams/:teamId/add-member",
+				"features/api-public/routes/tournament.$id.teams.$teamId.add-member.ts",
+			),
+			route(
+				"/tournament/:id/teams/:teamId/remove-member",
+				"features/api-public/routes/tournament.$id.teams.$teamId.remove-member.ts",
+			),
+		]),
 	]),
 
 	route("/short/:customUrl", "features/user-page/routes/short.$customUrl.ts"),

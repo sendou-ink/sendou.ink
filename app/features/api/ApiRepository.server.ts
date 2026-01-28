@@ -52,7 +52,7 @@ export async function allApiTokens() {
 			"TournamentOrganization.id",
 			"TournamentOrganizationMember.organizationId",
 		)
-		.select(["ApiToken.token", "ApiToken.type"])
+		.select(["ApiToken.token", "ApiToken.type", "ApiToken.userId"])
 		// NOTE: permissions logic also exists in checkUserHasApiAccess function
 		.where((eb) =>
 			eb.or([
@@ -72,5 +72,9 @@ export async function allApiTokens() {
 		.groupBy("ApiToken.token")
 		.execute();
 
-	return tokens.map((row) => ({ token: row.token, type: row.type }));
+	return tokens.map((row) => ({
+		token: row.token,
+		type: row.type,
+		userId: row.userId,
+	}));
 }

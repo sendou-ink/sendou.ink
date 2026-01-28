@@ -433,7 +433,7 @@ export function datetimeOptional(args: DateTimeArgs) {
 					maxDate,
 					args.maxMessage ? { message: `forms:${args.maxMessage}` } : undefined,
 				)
-				.optional(),
+				.nullish(),
 		)
 		.register(formRegistry, {
 			...args,

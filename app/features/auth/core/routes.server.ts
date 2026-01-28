@@ -12,9 +12,7 @@ import {
 	parseSearchParams,
 } from "~/utils/remix.server";
 import { ADMIN_PAGE, authErrorUrl } from "~/utils/urls";
-import { createLogInLink } from "../queries/createLogInLink.server";
-import { deleteLogInLinkByCode } from "../queries/deleteLogInLinkByCode.server";
-import { userIdByLogInLinkCode } from "../queries/userIdByLogInLinkCode.server";
+import * as LogInLinkRepository from "../LogInLinkRepository.server";
 import {
 	authenticator,
 	IMPERSONATED_SESSION_KEY,
@@ -141,7 +139,7 @@ export const createLogInLinkAction: ActionFunction = async ({ request }) => {
 
 	if (data.updateOnly === "true") return null;
 
-	const createdLink = createLogInLink(user.id);
+	const createdLink = await LogInLinkRepository.create(user.id);
 
 	return {
 		code: createdLink.code,
@@ -169,10 +167,11 @@ export const logInViaLinkLoader: LoaderFunction = async ({ request }) => {
 		throw redirect("/");
 	}
 
-	const userId = userIdByLogInLinkCode(data.code);
-	if (!userId) {
+	const result = await LogInLinkRepository.findValidByCode(data.code);
+	if (!result) {
 		throw new Response("Invalid log in link", { status: 400 });
 	}
+	const userId = result.userId;
 
 	const session = await authSessionStorage.getSession(
 		request.headers.get("Cookie"),
@@ -180,7 +179,7 @@ export const logInViaLinkLoader: LoaderFunction = async ({ request }) => {
 
 	session.set(SESSION_KEY, userId);
 
-	deleteLogInLinkByCode(data.code);
+	await LogInLinkRepository.del(data.code);
 
 	throw redirect("/", {
 		headers: { "Set-Cookie": await authSessionStorage.commitSession(session) },

@@ -77,5 +77,30 @@ export const LEAGUES =
 							},
 						],
 					},
+					{
+						tournamentId: 3192,
+						weeks: [
+							{
+								weekNumber: 9,
+								year: 2026,
+							},
+							{
+								weekNumber: 10,
+								year: 2026,
+							},
+							{
+								weekNumber: 11,
+								year: 2026,
+							},
+							{
+								weekNumber: 12,
+								year: 2026,
+							},
+							{
+								weekNumber: 13,
+								year: 2026,
+							},
+						],
+					},
 				],
 			};
