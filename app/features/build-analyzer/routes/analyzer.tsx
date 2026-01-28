@@ -7,7 +7,7 @@ import { Link } from "react-router";
 import * as R from "remeda";
 import { AbilitiesSelector } from "~/components/AbilitiesSelector";
 import { Ability } from "~/components/Ability";
-import Chart from "~/components/Chart";
+import { Chart } from "~/components/Chart";
 import { SendouSwitch } from "~/components/elements/Switch";
 import {
 	SendouTab,
@@ -986,7 +986,6 @@ interface StatChartProps {
 function StatChartPopover(props: StatChartProps) {
 	return (
 		<SendouPopover
-			popoverClassName={styles.statPopover}
 			trigger={
 				<SendouButton
 					shape="circle"
@@ -1012,37 +1011,40 @@ function StatChart({
 	const { t } = useTranslation(["analyzer"]);
 
 	const distanceLabel = t("analyzer:damage.header.distance");
-	const chartOptions = React.useMemo(() => {
+	const chartResult = React.useMemo(() => {
 		const stackableAbility = modifiedBy.find(isStackableAbility)!;
 		const mainOnlyAbility = modifiedBy.find(isMainOnlyAbility);
 
-		return statKey
-			? statKeyGraphOptions({
-					stackableAbility,
-					mainOnlyAbility,
-					statKey,
-					mainWeaponId,
-				})
-			: typeof subWeaponId === "number"
-				? subDefenseGraphOptions({
-						subWeaponId,
-						distanceLabel,
-					})
-				: [];
+		if (statKey) {
+			return statKeyGraphOptions({
+				stackableAbility,
+				mainOnlyAbility,
+				statKey,
+				mainWeaponId,
+			});
+		}
+
+		if (typeof subWeaponId === "number") {
+			return subDefenseGraphOptions({
+				subWeaponId,
+				distanceLabel,
+			});
+		}
+
+		return null;
 	}, [statKey, modifiedBy, mainWeaponId, subWeaponId, distanceLabel]);
 
-	// prevent crash but this should not happen
-	if (chartOptions.length === 0) {
+	if (!chartResult) {
 		logger.error("no chart options");
 		return null;
 	}
 
 	return (
 		<Chart
-			options={chartOptions as any}
-			headerSuffix={t("analyzer:abilityPoints.short")}
+			data={chartResult.data}
+			lines={chartResult.lines}
+			xAxisKey="ap"
 			valueSuffix={valueSuffix}
-			xAxis="linear"
 		/>
 	);
 }
@@ -1067,15 +1069,20 @@ function statKeyGraphOptions({
 		}),
 	);
 
-	const result = [
+	const lines = [
 		{
+			dataKey: "base",
 			label: <Ability ability={stackableAbility} size="TINY" />,
-			data: analyzedBuilds.map((a, i) => ({
-				primary: i,
-				secondary: (a.stats[statKey] as Stat).value,
-			})),
 		},
 	];
+
+	const data = analyzedBuilds.map((a, i) => {
+		const point: Record<string, number> = {
+			ap: i,
+			base: (a.stats[statKey] as Stat).value,
+		};
+		return point;
+	});
 
 	if (mainOnlyAbility) {
 		const mainOnlyAbilityAnalyzedBuilds = nullFilledArray(MAX_AP + 1).map(
@@ -1088,21 +1095,24 @@ function statKeyGraphOptions({
 				}),
 		);
 
-		result.push({
+		lines.push({
+			dataKey: "withMainOnly",
 			label: (
 				<div className="stack horizontal">
 					<Ability ability={stackableAbility} size="TINY" />
 					<Ability ability={mainOnlyAbility} size="TINY" />
 				</div>
 			),
-			data: mainOnlyAbilityAnalyzedBuilds.map((a, i) => ({
-				primary: i,
-				secondary: (a.stats[statKey] as Stat).value,
-			})),
 		});
+
+		for (let i = 0; i < data.length; i++) {
+			data[i].withMainOnly = (
+				mainOnlyAbilityAnalyzedBuilds[i].stats[statKey] as Stat
+			).value;
+		}
 	}
 
-	return result;
+	return { data, lines };
 }
 
 const damageToKey = (damage: SubWeaponDamage) => {
@@ -1135,26 +1145,31 @@ function subDefenseGraphOptions({
 			.map((d) => damageToKey(d)),
 	);
 
-	const result = [];
+	const lines: Array<{ dataKey: string; label: string }> = [];
+	const data: Array<Record<string, number>> = analyzedBuilds.map((_, i) => ({
+		ap: i,
+	}));
 
 	for (const key of distanceKeys) {
 		const distance = key.split(",")[0];
+		const dataKey = `dist_${key.replace(/,/g, "_")}`;
 
-		result.push({
+		lines.push({
+			dataKey,
 			label: `${distanceLabel}: ${distance}`,
-			data: analyzedBuilds.map((a, i) => ({
-				primary: i,
-				secondary:
-					a.stats.subWeaponDefenseDamages.find(
-						(d) =>
-							(d as SubWeaponDamage).subWeaponId === subWeaponId &&
-							damageToKey(d) === key,
-					)?.value ?? 0,
-			})),
 		});
+
+		for (let i = 0; i < analyzedBuilds.length; i++) {
+			data[i][dataKey] =
+				analyzedBuilds[i].stats.subWeaponDefenseDamages.find(
+					(d) =>
+						(d as SubWeaponDamage).subWeaponId === subWeaponId &&
+						damageToKey(d) === key,
+				)?.value ?? 0;
+		}
 	}
 
-	return result;
+	return { data, lines };
 }
 
 function APCompare({

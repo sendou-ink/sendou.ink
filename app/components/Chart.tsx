@@ -1,153 +1,136 @@
-import clsx from "clsx";
-import * as React from "react";
-import { type AxisOptions, Chart as ReactChart } from "react-charts";
-import type { TooltipRendererProps } from "react-charts/types/components/TooltipRenderer";
 import { useTranslation } from "react-i18next";
-import { Theme, useTheme } from "~/features/theme/core/provider";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import {
+	Line,
+	LineChart,
+	ResponsiveContainer,
+	Tooltip,
+	XAxis,
+	YAxis,
+} from "recharts";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import styles from "./Chart.module.css";
 
-export default function Chart({
-	options,
-	containerClassName,
-	headerSuffix,
-	valueSuffix,
-	xAxis,
-}: {
-	options: [
-		{ label: string; data: Array<{ primary: Date; secondary: number }> },
-	];
-	containerClassName?: string;
-	headerSuffix?: string;
+interface ChartLine {
+	dataKey: string;
+	label: React.ReactNode;
+}
+
+interface ChartProps {
+	data: Array<Record<string, number | Date>>;
+	lines: ChartLine[];
+	xAxisKey?: string;
 	valueSuffix?: string;
-	xAxis: "linear" | "localTime";
-}) {
+}
+
+interface ChartTooltipProps {
+	active?: boolean;
+	payload?: Array<{
+		value?: number;
+		stroke?: string;
+		dataKey?: string;
+	}>;
+	label?: string | number | Date;
+	lines: ChartLine[];
+	valueSuffix?: string;
+}
+
+const LINE_COLORS = [
+	"var(--color-info)",
+	"var(--color-warning)",
+	"var(--color-error)",
+];
+
+export function Chart({
+	data,
+	lines,
+	xAxisKey = "x",
+	valueSuffix,
+}: ChartProps) {
 	const { i18n } = useTranslation();
-	const theme = useTheme();
-	const isMounted = useIsMounted();
 
-	const primaryAxis = React.useMemo<
-		AxisOptions<(typeof options)[number]["data"][number]>
-	>(
-		// @ts-expect-error - some weirdness here but maybe not worth fixing as the whole library needs to be replaced (it is unmaintained/deprecated)
-		() => ({
-			getValue: (datum) => datum.primary,
-			scaleType: xAxis,
-			shouldNice: false,
-			formatters: {
-				scale: (val: any) => {
-					if (val instanceof Date) {
-						return val.toLocaleDateString(i18n.language, {
-							day: "numeric",
-							month: "numeric",
-						});
-					}
+	const formatXAxis = (value: number | Date) => {
+		if (value instanceof Date) {
+			return value.toLocaleDateString(i18n.language, {
+				day: "numeric",
+				month: "numeric",
+			});
+		}
 
-					return val;
-				},
-			},
-		}),
-		[i18n.language, xAxis],
-	);
+		return String(value);
+	};
 
-	const secondaryAxes = React.useMemo<
-		AxisOptions<(typeof options)[number]["data"][number]>[]
-	>(
-		() => [
-			{
-				getValue: (datum) => datum.secondary,
-			},
-		],
-		[],
-	);
-
-	if (!isMounted) {
-		return <div className={clsx(styles.container, containerClassName)} />;
+	if (data.length === 0) {
+		return <div className={styles.container} />;
 	}
 
 	return (
-		<div className={clsx(styles.container, containerClassName)}>
-			<ReactChart
-				options={{
-					data: options,
-					tooltip: {
-						render: (props) => (
-							<ChartTooltip
-								{...props}
-								headerSuffix={headerSuffix}
-								valueSuffix={valueSuffix}
-							/>
-						),
-					},
-					primaryCursor: false,
-					secondaryCursor: false,
-					primaryAxis,
-					secondaryAxes,
-					dark: theme.htmlThemeClass === Theme.DARK,
-					defaultColors: [
-						"var(--color-text-accent)",
-						"var(--color-accent)",
-						"var(--color-info)",
-					],
-				}}
-			/>
+		<div className={styles.container}>
+			<ResponsiveContainer>
+				<LineChart data={data}>
+					<XAxis dataKey={xAxisKey} tickFormatter={formatXAxis} />
+					<YAxis />
+					<Tooltip
+						content={<ChartTooltip lines={lines} valueSuffix={valueSuffix} />}
+					/>
+					{lines.map((line, index) => (
+						<Line
+							key={line.dataKey}
+							type="monotone"
+							dataKey={line.dataKey}
+							stroke={LINE_COLORS[index % LINE_COLORS.length]}
+							strokeWidth={2}
+							dot={false}
+						/>
+					))}
+				</LineChart>
+			</ResponsiveContainer>
 		</div>
 	);
 }
 
-interface ChartTooltipProps extends TooltipRendererProps<any> {
-	headerSuffix?: string;
-	valueSuffix?: string;
-}
-
 function ChartTooltip({
-	focusedDatum,
-	headerSuffix = "",
+	active,
+	payload,
+	label,
+	lines,
 	valueSuffix = "",
 }: ChartTooltipProps) {
 	const { formatDate } = useTimeFormat();
-	const dataPoints = focusedDatum?.interactiveGroup ?? [];
 
-	const header = () => {
-		const primaryValue = dataPoints[0]?.primaryValue;
-		if (!primaryValue) return null;
+	if (!active || !payload || payload.length === 0) {
+		return null;
+	}
 
-		if (primaryValue instanceof Date) {
-			return formatDate(primaryValue, {
+	const formatHeader = () => {
+		if (label instanceof Date) {
+			return formatDate(label, {
 				weekday: "short",
 				day: "numeric",
 				month: "long",
 			});
 		}
 
-		return primaryValue;
+		return label;
 	};
 
 	return (
 		<div className={styles.tooltip}>
-			<h3 className="text-center text-md">
-				{header()}
-				{headerSuffix}
-			</h3>
-			{dataPoints.map((dataPoint, index) => {
-				const color = dataPoint.style?.fill ?? "var(--color-accent)";
+			<h3 className="text-center text-md">{formatHeader()}</h3>
+			{payload.map((entry, index) => {
+				const color = entry.stroke ?? LINE_COLORS[index % LINE_COLORS.length];
+				const line = lines.find((l) => l.dataKey === entry.dataKey);
 
 				return (
-					<div key={index} className="stack horizontal items-center sm">
+					<div key={entry.dataKey} className="stack horizontal items-center sm">
 						<div
-							className={clsx(styles.dot, {
-								[styles.dotFocused]:
-									focusedDatum?.seriesId === dataPoint.seriesId,
-							})}
+							className={styles.dot}
 							style={{
-								"--dot-color": color,
-								"--dot-color-outline": color.replace(")", "-transparent)"),
+								backgroundColor: color,
 							}}
 						/>
-						<div>{dataPoint.originalSeries.label}</div>
+						<div>{line?.label}</div>
 						<div className={styles.tooltipValue}>
-							{dataPoint.secondaryValue}
+							{entry.value}
 							{valueSuffix}
 						</div>
 					</div>

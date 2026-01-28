@@ -9,7 +9,7 @@ import {
 	useSearchParams,
 } from "react-router";
 import { Avatar } from "~/components/Avatar";
-import Chart from "~/components/Chart";
+import { Chart } from "~/components/Chart";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -372,21 +372,18 @@ function PowerChart({
 }: {
 	skills: UserSeasonsPageLoaderData["skills"];
 }) {
-	const chartOptions = React.useMemo(() => {
-		return [
-			{
-				label: "SP",
-				data: skills.map((s) => {
-					return {
-						primary: new Date(s.date),
-						secondary: ordinalToSp(s.ordinal),
-					};
-				}),
-			},
-		];
-	}, [skills]);
+	const chartData = skills.map((s) => ({
+		date: new Date(s.date),
+		sp: ordinalToSp(s.ordinal),
+	}));
 
-	return <Chart options={chartOptions as any} xAxis="localTime" />;
+	return (
+		<Chart
+			data={chartData}
+			lines={[{ dataKey: "sp", label: "SP" }]}
+			xAxisKey="date"
+		/>
+	);
 }
 
 const MIN_DEGREE = 5;

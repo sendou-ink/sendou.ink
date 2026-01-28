@@ -1,16 +1,18 @@
 .container {
-	height: var(--chart-height, 175px);
-	width: var(--chart-width);
-	background-color: var(--chart-bg, var(--color-bg-high));
+	font-size: var(--font-xs);
+	width: 100%;
+	height: 100%;
+	aspect-ratio: 16 / 9;
+	background-color: var(--color-bg-high);
 	border-radius: var(--radius-box);
+	padding: var(--s-4);
 }
 
 .tooltip {
 	border: var(--border-style);
-	border-radius: var(--radius-box);
+	border-radius: var(--radius-field);
 	background-color: var(--color-bg);
 	padding: var(--s-1) var(--s-2);
-	font-weight: var(--weight-semi);
 	font-size: var(--font-sm);
 	display: flex;
 	flex-direction: column;
@@ -19,16 +21,10 @@
 
 .tooltipValue {
 	margin-inline-start: auto;
-	min-width: 40px;
 }
 
 .dot {
-	background-color: var(--dot-color);
-	border-radius: 100%;
+	border-radius: var(--radius-full);
 	width: 12px;
 	height: 12px;
-}
-
-.dotFocused {
-	outline: 3px solid var(--dot-color-outline);
 }

@@ -6,6 +6,7 @@ import { AddNewButton } from "~/components/AddNewButton";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { Badge } from "~/components/Badge";
+import { Chart } from "~/components/Chart";
 import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -98,9 +99,22 @@ export const SECTIONS = [
 ] as const;
 
 export default function ComponentsShowcasePage() {
+	const chartData = [
+		{ x: new Date(2024, 0, 1), value1: 10, value2: 20 },
+		{ x: new Date(2024, 0, 2), value1: 15, value2: 25 },
+		{ x: new Date(2024, 0, 3), value1: 12, value2: 22 },
+		{ x: new Date(2024, 0, 4), value1: 18, value2: 28 },
+	];
 	return (
 		<Main className="stack lg" sideNav={<ComponentsSideNav />}>
 			<h1>Components</h1>
+			<Chart
+				data={chartData}
+				lines={[
+					{ dataKey: "value1", label: "Value 1" },
+					{ dataKey: "value2", label: "Value 2" },
+				]}
+			/>
 			{SECTIONS.map(({ id, component: Component }) => (
 				<Component key={id} id={id} />
 			))}

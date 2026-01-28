@@ -255,22 +255,6 @@
 	}
 }
 
-.statPopover {
-	min-width: 360px;
-
-	--chart-bg: transparent;
-	--chart-height: 250px;
-	--chart-width: 340px;
-}
-
-@media screen and (min-width: 700px) {
-	.statPopover {
-		min-width: calc(360px * 1.75);
-		--chart-height: calc(250px * 1.75);
-		--chart-width: calc(340px * 1.75);
-	}
-}
-
 .inkGridContainer {
 	overflow: auto;
 	min-width: min(100vw, 1100px);
