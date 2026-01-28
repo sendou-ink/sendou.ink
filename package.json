@@ -35,8 +35,8 @@
 		"sync-weapon-params": "tsx scripts/sync-weapon-params.ts"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.971.0",
-		"@aws-sdk/lib-storage": "^3.971.0",
+		"@aws-sdk/client-s3": "^3.974.0",
+		"@aws-sdk/lib-storage": "^3.974.0",
 		"@date-fns/tz": "^1.4.1",
 		"@dnd-kit/core": "^6.3.1",
 		"@dnd-kit/modifiers": "^9.0.0",
@@ -49,7 +49,7 @@
 		"@react-router/serve": "^7.12.0",
 		"@remix-run/form-data-parser": "^0.14.0",
 		"@tldraw/tldraw": "^3.12.1",
-		"@zumer/snapdom": "^2.0.1",
+		"@zumer/snapdom": "^2.0.2",
 		"aws-sdk": "^2.1693.0",
 		"better-sqlite3": "^12.6.2",
 		"clsx": "^2.1.1",
@@ -57,7 +57,7 @@
 		"date-fns": "^4.1.0",
 		"edmonds-blossom-fixed": "^1.0.1",
 		"gray-matter": "^4.0.3",
-		"i18next": "^25.7.4",
+		"i18next": "^25.8.0",
 		"i18next-browser-languagedetector": "^8.2.0",
 		"i18next-http-backend": "^3.0.2",
 		"ics": "^3.8.1",
@@ -66,7 +66,7 @@
 		"kysely": "^0.28.10",
 		"lru-cache": "^11.2.4",
 		"lucide-react": "^0.562.0",
-		"markdown-to-jsx": "^9.6.0",
+		"markdown-to-jsx": "^9.6.1",
 		"nanoid": "^5.1.6",
 		"neverthrow": "^8.2.0",
 		"node-cron": "4.2.1",
@@ -91,20 +91,20 @@
 		"slugify": "^1.6.6",
 		"swr": "^2.3.8",
 		"web-push": "^3.6.7",
-		"zod": "^4.3.5"
+		"zod": "^4.3.6"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.11",
 		"@playwright/test": "^1.57.0",
 		"@react-router/dev": "^7.12.0",
 		"@types/better-sqlite3": "^7.6.13",
-		"@types/node": "^25.0.9",
+		"@types/node": "^25.0.10",
 		"@types/node-cron": "^3.0.11",
 		"@types/nprogress": "^0.2.3",
-		"@types/react": "^19.2.8",
+		"@types/react": "^19.2.9",
 		"@types/react-dom": "^19.2.3",
 		"@types/web-push": "^3.6.4",
-		"@vitest/browser-playwright": "^4.0.17",
+		"@vitest/browser-playwright": "^4.0.18",
 		"@vitest/ui": "^4.0.16",
 		"babel-plugin-react-compiler": "^19.1.0-rc.2",
 		"cross-env": "^10.1.0",
@@ -120,6 +120,6 @@
 		"vite-plugin-babel": "^1.4.1",
 		"vite-tsconfig-paths": "^6.0.4",
 		"vitest": "^4.0.16",
-		"vitest-browser-react": "^2.0.2"
+		"vitest-browser-react": "^2.0.4"
 	}
 }

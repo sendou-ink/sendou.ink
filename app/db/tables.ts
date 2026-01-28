@@ -1012,10 +1012,13 @@ export interface UserFriendCode {
 	createdAt: GeneratedAlways<number>;
 }
 
+export type ApiTokenType = "read" | "write";
+
 export interface ApiToken {
 	id: GeneratedAlways<number>;
 	userId: number;
 	token: string;
+	type: Generated<ApiTokenType>;
 	createdAt: GeneratedAlways<number>;
 }
 

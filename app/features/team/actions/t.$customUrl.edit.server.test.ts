@@ -5,7 +5,7 @@ import {
 	dbReset,
 	wrappedAction,
 } from "~/utils/Test";
-import { action as teamIndexPageAction } from "../actions/t.server";
+import { action as teamIndexPageAction } from "../actions/t.new.server";
 import type { createTeamSchema } from "../team-schemas";
 import type { editTeamSchema } from "../team-schemas.server";
 import { action as _editTeamProfileAction } from "./t.$customUrl.edit.server";

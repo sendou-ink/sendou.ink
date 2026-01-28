@@ -4,6 +4,7 @@ import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTo
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { Status } from "~/modules/brackets-model";
 import { cache, ttl } from "~/utils/cache.server";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { tournamentStreamsPage } from "~/utils/urls";
 
 const FIVE_MINUTES = 5 * 60 * 1000;
@@ -17,6 +18,7 @@ export type SidebarStream = {
 	id: number;
 	name: string;
 	imageUrl: string;
+	overlayIconUrl?: string;
 	url: string;
 	subtitle: string;
 	startsAt: number;
@@ -38,7 +40,7 @@ export function getLiveTournamentStreams(): Promise<SidebarStream[]> {
 					imageUrl: tournament.ctx.logoUrl,
 					url: tournamentStreamsPage(tournament.ctx.id),
 					subtitle: deriveCurrentRound(tournament),
-					startsAt: tournament.ctx.startTime.getTime(),
+					startsAt: dateToDatabaseTimestamp(tournament.ctx.startTime),
 					tier: tournament.ctx.tier,
 				});
 			}

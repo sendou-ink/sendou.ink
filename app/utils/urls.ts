@@ -90,7 +90,7 @@ export const CONTRIBUTIONS_PAGE = "/contributions";
 export const BADGES_PAGE = "/badges";
 export const BUILDS_PAGE = "/builds";
 export const TEAM_SEARCH_PAGE = "/t";
-export const NEW_TEAM_PAGE = "/t?new=true";
+export const NEW_TEAM_PAGE = "/t/new";
 export const CALENDAR_PAGE = "/calendar";
 export const CALENDAR_NEW_PAGE = "/calendar/new";
 export const TOURNAMENT_NEW_PAGE = "/calendar/new?tournament=true";

@@ -10,14 +10,19 @@ export const loader = async () => {
 	if (!hasApiAccess) {
 		return {
 			hasAccess: false,
-			apiToken: null,
+			readToken: null,
+			writeToken: null,
 		};
 	}
 
-	const apiToken = await ApiRepository.findTokenByUserId(user.id);
+	const [readToken, writeToken] = await Promise.all([
+		ApiRepository.findTokenByUserId(user.id, "read"),
+		ApiRepository.findTokenByUserId(user.id, "write"),
+	]);
 
 	return {
 		hasAccess: true,
-		apiToken: apiToken?.token ?? null,
+		readToken: readToken?.token ?? null,
+		writeToken: writeToken?.token ?? null,
 	};
 };

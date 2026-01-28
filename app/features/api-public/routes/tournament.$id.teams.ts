@@ -89,8 +89,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 						"TournamentTeamMember.inGameName",
 						"TournamentTeamMember.isOwner",
 						"TournamentTeamMember.createdAt",
-						"RankedSeedingSkill.mu as rankedOrdinal",
-						"UnrankedSeedingSkill.mu as unrankedOrdinal",
+						"RankedSeedingSkill.ordinal as rankedOrdinal",
+						"UnrankedSeedingSkill.ordinal as unrankedOrdinal",
 					])
 					.whereRef(
 						"TournamentTeamMember.tournamentTeamId",

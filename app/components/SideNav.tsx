@@ -79,6 +79,7 @@ export function SideNavLink({
 	onClick,
 	isActive,
 	imageUrl,
+	overlayIconUrl,
 	user,
 	subtitle,
 	badge,
@@ -89,6 +90,7 @@ export function SideNavLink({
 	onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 	isActive?: boolean;
 	imageUrl?: string;
+	overlayIconUrl?: string;
 	user?: Pick<Tables["User"], "discordId" | "discordAvatar">;
 	subtitle?: string;
 	badge?: string;
@@ -104,7 +106,16 @@ export function SideNavLink({
 			{user ? (
 				<Avatar user={user} size="xxsm" />
 			) : imageUrl ? (
-				<img src={imageUrl} alt="" className={styles.sideNavLinkImage} />
+				<div className={styles.sideNavLinkImageContainer}>
+					<img src={imageUrl} alt="" className={styles.sideNavLinkImage} />
+					{overlayIconUrl ? (
+						<img
+							src={overlayIconUrl}
+							alt=""
+							className={styles.sideNavLinkOverlayIcon}
+						/>
+					) : null}
+				</div>
 			) : null}
 			<div className={styles.sideNavLinkContent}>
 				<span className={styles.sideNavLinkTitle}>{children}</span>

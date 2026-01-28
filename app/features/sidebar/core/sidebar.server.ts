@@ -1,10 +1,14 @@
 import { href } from "react-router";
-import { getLiveTournamentStreams } from "~/features/core/streams/streams.server";
+import {
+	getLiveTournamentStreams,
+	type SidebarStream,
+} from "~/features/core/streams/streams.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
+import { getSendouQSidebarStreams } from "~/features/sendouq-streams/core/streams.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
 import {
 	navIconUrl,
@@ -51,7 +55,7 @@ export async function resolveSidebarData(userId: number | null) {
 				logoUrl: string | null;
 			} | null,
 			friends: [] as SidebarFriend[],
-			streams: await getLiveTournamentStreams(),
+			streams: await combinedStreams(),
 		};
 	}
 
@@ -109,8 +113,17 @@ export async function resolveSidebarData(userId: number | null) {
 			: null,
 		tournamentMatchStatus,
 		friends,
-		streams: await getLiveTournamentStreams(),
+		streams: await combinedStreams(),
 	};
+}
+
+async function combinedStreams(): Promise<SidebarStream[]> {
+	const [tournamentStreams, sendouQStreams] = await Promise.all([
+		getLiveTournamentStreams(),
+		getSendouQSidebarStreams(),
+	]);
+
+	return [...tournamentStreams, ...sendouQStreams];
 }
 
 function resolveTournamentMatchStatus(userId: number) {
