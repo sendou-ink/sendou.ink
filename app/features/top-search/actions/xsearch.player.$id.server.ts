@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import { syncXPBadges } from "~/features/badges/queries/syncXPBadges.server";
+import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import { logger } from "~/utils/logger";
 import {
 	errorToastIfFalsy,
@@ -35,7 +35,7 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 
 	await XRankPlacementRepository.unlinkPlayerByUserId(user.id);
 
-	syncXPBadges();
+	await BadgeRepository.syncXPBadges();
 
 	return successToast("Unlink successful");
 };
