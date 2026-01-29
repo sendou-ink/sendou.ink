@@ -999,10 +999,13 @@ function superJumpTimeGroundFrames(
 	};
 }
 
+const STEALTH_JUMP_EXTRA_FRAMES = 60;
 function superJumpTimeTotal(
 	args: StatFunctionInput,
 ): AnalyzedBuild["stats"]["superJumpTimeTotal"] {
 	const SUPER_JUMP_TIME_TOTAL_ABILITY = "QSJ";
+	const hasStealthJump = args.mainOnlyAbilities.includes("SJ");
+	const stealthJumpExtraFrames = hasStealthJump ? STEALTH_JUMP_EXTRA_FRAMES : 0;
 
 	const charge = abilityPointsToEffects({
 		abilityPoints: apFromMap({
@@ -1025,8 +1028,12 @@ function superJumpTimeTotal(
 		baseValue: framesToSeconds(
 			Math.ceil(charge.baseEffect) + Math.ceil(move.baseEffect),
 		),
-		value: framesToSeconds(Math.ceil(charge.effect) + Math.ceil(move.effect)),
-		modifiedBy: SUPER_JUMP_TIME_TOTAL_ABILITY,
+		value: framesToSeconds(
+			Math.ceil(charge.effect) +
+				Math.ceil(move.effect) +
+				stealthJumpExtraFrames,
+		),
+		modifiedBy: [SUPER_JUMP_TIME_TOTAL_ABILITY, "SJ"],
 	};
 }
 
