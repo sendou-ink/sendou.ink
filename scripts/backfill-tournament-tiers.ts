@@ -99,6 +99,7 @@ function getTournamentsWithOrg(): TournamentWithOrg[] {
 		INNER JOIN CalendarEvent ce ON ce.tournamentId = t.id
 		INNER JOIN CalendarEventDate ced ON ced.eventId = ce.id
 		WHERE t.isFinalized = 1
+		AND ce.hidden = 0
 		ORDER BY ced.startTime ASC
 	`;
 	return sql.prepare(query).all() as TournamentWithOrg[];
