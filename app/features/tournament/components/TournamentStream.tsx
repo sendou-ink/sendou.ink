@@ -1,16 +1,15 @@
 import { Avatar } from "~/components/Avatar";
 import { UserIcon } from "~/components/icons/User";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { twitchThumbnailUrlToSrc } from "~/modules/twitch/utils";
-import type { SerializeFrom } from "~/utils/remix";
 import { twitchUrl } from "~/utils/urls";
-import type { TournamentStreamsLoader } from "../loaders/to.$id.streams.server";
 import { useTournament } from "../routes/to.$id";
 
 export function TournamentStream({
 	stream,
 	withThumbnail = true,
 }: {
-	stream: SerializeFrom<TournamentStreamsLoader>["streams"][number];
+	stream: Tournament["streams"][number];
 	withThumbnail?: boolean;
 }) {
 	const tournament = useTournament();
@@ -20,7 +19,11 @@ export function TournamentStream({
 	const user = team?.members.find((m) => m.userId === stream.userId);
 
 	return (
-		<div key={stream.userId} className="stack sm">
+		<div
+			key={stream.userId}
+			className="stack sm"
+			data-testid="tournament-stream"
+		>
 			{withThumbnail ? (
 				<a
 					href={twitchUrl(stream.twitchUserName)}

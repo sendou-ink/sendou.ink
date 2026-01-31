@@ -2,7 +2,6 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { weaponIdToType } from "~/modules/in-game-lists/weapon-ids";
-import { logger } from "~/utils/logger";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { mySlugify } from "~/utils/urls";
 import * as BuildRepository from "../BuildRepository.server";
@@ -35,27 +34,17 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 	const slug = mySlugify(t(`weapons:MAIN_${weaponId}`, { lng: "en" }));
 
-	const rawFilters = url.searchParams.get(FILTER_SEARCH_PARAM_KEY);
-	const filters = buildFiltersSearchParams.safeParse(rawFilters ?? "[]");
-	const hasActiveFilters =
-		filters.success && filters.data && filters.data.length > 0;
+	const filters = resolveFilters(url.searchParams.get(FILTER_SEARCH_PARAM_KEY));
 
 	const builds = await BuildRepository.allByWeaponId(weaponId, {
-		limit: hasActiveFilters ? BUILDS_PAGE_MAX_BUILDS : limit + 1,
+		limit: filters ? BUILDS_PAGE_MAX_BUILDS : limit + 1,
 		sortAbilities: !user?.preferences?.disableBuildAbilitySorting,
 	});
 
-	if (!filters.success) {
-		logger.error(
-			"Invalid filters",
-			JSON.stringify(filters.error.issues, null, 2),
-		);
-	}
-
-	const filteredBuilds = hasActiveFilters
+	const filteredBuilds = filters
 		? filterBuilds({
 				builds,
-				filters: filters.data!,
+				filters,
 				count: limit + 1,
 			})
 		: builds;
@@ -76,6 +65,18 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		limit,
 		hasMoreBuilds,
 		slug,
-		filters: filters.success ? filters.data : [],
+		filters: filters ?? [],
 	};
 };
+
+function resolveFilters(rawFilters: string | null) {
+	if (!rawFilters) return null;
+
+	const filters = buildFiltersSearchParams.safeParse(rawFilters);
+	const hasActiveFilters =
+		filters.success && filters.data && filters.data.length > 0;
+
+	if (!hasActiveFilters) return null;
+
+	return filters.data;
+}

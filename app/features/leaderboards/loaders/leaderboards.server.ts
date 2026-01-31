@@ -21,11 +21,6 @@ import {
 	TYPE_SEARCH_PARAM_KEY,
 	WEAPON_LEADERBOARD_MAX_SIZE,
 } from "../leaderboards-constants";
-import {
-	allXPLeaderboard,
-	modeXPLeaderboard,
-	weaponXPLeaderboard,
-} from "../queries/XPLeaderboard.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = getUser();
@@ -79,6 +74,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	const showOwnEntryPeek = fullUserLeaderboard && !isWeaponLeaderboard && user;
 
+	const xpLeaderboard =
+		type === "XP-ALL"
+			? await LeaderboardRepository.allXPLeaderboard()
+			: type.startsWith("XP-MODE")
+				? await LeaderboardRepository.modeXPLeaderboard(
+						type.split("-")[2] as RankedModeShort,
+					)
+				: type.startsWith("XP-WEAPON")
+					? await LeaderboardRepository.weaponXPLeaderboard(
+							Number(type.split("-")[2]) as MainWeaponId,
+						)
+					: null;
+
 	return {
 		userLeaderboard: filteredLeaderboard ?? userLeaderboard,
 		ownEntryPeek: showOwnEntryPeek
@@ -89,14 +97,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				})
 			: null,
 		teamLeaderboard,
-		xpLeaderboard:
-			type === "XP-ALL"
-				? allXPLeaderboard()
-				: type.startsWith("XP-MODE")
-					? modeXPLeaderboard(type.split("-")[2] as RankedModeShort)
-					: type.startsWith("XP-WEAPON")
-						? weaponXPLeaderboard(Number(type.split("-")[2]) as MainWeaponId)
-						: null,
+		xpLeaderboard,
 		season,
 	};
 };

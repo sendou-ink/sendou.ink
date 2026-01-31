@@ -1,18 +1,25 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
-import { mySlugify, teamPage } from "~/utils/urls";
+import { parseFormData } from "~/form/parse.server";
+import { errorToastIfFalsy } from "~/utils/remix.server";
+import { teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
 import { TEAM } from "../team-constants";
-import { createTeamSchema } from "../team-schemas.server";
+import { createTeamSchemaServer } from "../team-schemas.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
-		schema: createTeamSchema,
+		schema: createTeamSchemaServer,
 	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
 
 	const teams = await TeamRepository.findAllUndisbanded();
 
@@ -28,26 +35,11 @@ export const action: ActionFunction = async ({ request }) => {
 		"Already in max amount of teams",
 	);
 
-	// two teams can't have same customUrl
-	const customUrl = mySlugify(data.name);
-
-	errorToastIfFalsy(
-		customUrl.length > 0,
-		"Team name can't be only special characters",
-	);
-
-	if (teams.some((team) => team.customUrl === customUrl)) {
-		return {
-			errors: ["forms.errors.duplicateName"],
-		};
-	}
-
-	await TeamRepository.create({
+	const team = await TeamRepository.create({
 		ownerUserId: user.id,
 		name: data.name,
-		customUrl,
 		isMainTeam: currentTeamCount === 0,
 	});
 
-	throw redirect(teamPage(customUrl));
+	throw redirect(teamPage(team.customUrl));
 };

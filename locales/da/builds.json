@@ -1,5 +1,7 @@
 {
 	"addBuild": "Lav et udrustningssæt",
+	"forms.title.new": "",
+	"forms.title.edit": "",
 	"reachBuildMaxCount": "Du har nået grænsen for, hvor mange sæt du kan lave.",
 	"noBuilds": "Her er ingen sæt. Lav dit første sæt!",
 	"buildCard.info": "Info",
@@ -10,8 +12,8 @@
 	"forms.gear.HEAD": "Udstyr (hovedbeklædning)",
 	"forms.gear.CLOTHES": "Udstyr (tøj)",
 	"forms.gear.SHOES": "Udstyr (sko)",
+	"forms.abilities": "",
 	"forms.private.info": "Private udrustningssæt er kun synlige for dig",
-	"forms.noGear.info": "",
 	"deleteConfirm": "Vil du slette sættet '{{title}}'?",
 	"stats.count.title": "Gennemsnit fra {{count}} {{weapon}}-sæt",
 	"stats.ap.title": "Egenskabspointssnit",

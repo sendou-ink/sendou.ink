@@ -6,6 +6,10 @@ export const FILTER_SEARCH_PARAM_KEY = "f";
 
 export const PATCHES = [
 	{
+		patch: "11.0.0",
+		date: "2026-01-29",
+	},
+	{
 		patch: "10.1.0",
 		date: "2025-09-03",
 	},
@@ -13,10 +17,10 @@ export const PATCHES = [
 		patch: "10.0.0",
 		date: "2025-06-12",
 	},
-	{
-		patch: "9.3.0",
-		date: "2025-03-13",
-	},
+	// {
+	// 	patch: "9.3.0",
+	// 	date: "2025-03-13",
+	// },
 	// {
 	// 	patch: "9.2.0",
 	// 	date: "2024-11-20",
@@ -60,10 +64,6 @@ export const PATCHES = [
 ];
 
 export const BUILD = {
-	TITLE_MIN_LENGTH: 1,
-	TITLE_MAX_LENGTH: 50,
-	DESCRIPTION_MAX_LENGTH: 280,
-	MAX_WEAPONS_COUNT: 5,
 	MAX_COUNT: 250,
 } as const;
 

@@ -1,5 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { add, sub } from "date-fns";
+import { nanoid } from "nanoid";
 import * as R from "remeda";
 import { db, sql } from "~/db/sql";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
@@ -238,6 +239,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	variation === "NO_SCRIMS" ? undefined : scrimPostRequests,
 	associations,
 	notifications,
+	liveStreams,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -303,6 +305,7 @@ function wipeDB() {
 		"BadgeManager",
 		"TournamentOrganization",
 		"SeedingSkill",
+		"LiveStream",
 	];
 
 	for (const table of tablesToDelete) {
@@ -806,6 +809,12 @@ function patrons() {
 		patronSince: dateToDatabaseTimestamp(faker.date.past()),
 		patronTier: 2,
 	});
+
+	// Give ORG_ADMIN_TEST_ID API access without patron status
+	// so they don't get TOURNAMENT_ADDER role
+	sql
+		.prepare(`update user set "isApiAccesser" = 1 where id = ?`)
+		.run(ORG_ADMIN_TEST_ID);
 }
 
 function userIdsInRandomOrder(specialLast = false) {
@@ -2745,7 +2754,88 @@ async function organization() {
 				roleDisplayName: null,
 			},
 		],
-		series: [],
+		series: [
+			{
+				name: "PICNIC",
+				description: "PICNIC tournament series",
+				showLeaderboard: false,
+			},
+		],
 		badges: [],
 	});
+
+	sql
+		.prepare(
+			`UPDATE "TournamentOrganizationSeries"
+			SET "tierHistory" = '[3, 4, 3]'
+			WHERE "organizationId" = 1 AND "name" = 'PICNIC'`,
+		)
+		.run();
+}
+
+function liveStreams() {
+	const userIds = userIdsInAscendingOrderById();
+
+	// Add deterministic streams for E2E testing
+	// Users 6 and 7 are in ITZ tournament team 102
+	const deterministicStreams = [
+		{ userId: 6, viewerCount: 150, twitch: "test_player_stream_1" },
+		{ userId: 7, viewerCount: 75, twitch: "test_player_stream_2" },
+		// Cast-only stream (user 100 is not in ITZ tournament teams)
+		{ userId: 100, viewerCount: 500, twitch: "test_cast_stream" },
+	];
+
+	for (const stream of deterministicStreams) {
+		sql
+			.prepare(
+				`
+			insert into "LiveStream" ("userId", "viewerCount", "thumbnailUrl", "twitch")
+			values ($userId, $viewerCount, $thumbnailUrl, $twitch)
+			`,
+			)
+			.run({
+				userId: stream.userId,
+				viewerCount: stream.viewerCount,
+				thumbnailUrl: "https://picsum.photos/320/180",
+				twitch: stream.twitch,
+			});
+	}
+
+	const streamingUserIds = [
+		...userIds.slice(3, 20),
+		...userIds.slice(40, 50),
+		...userIds.slice(100, 110),
+	].filter((id) => !deterministicStreams.some((s) => s.userId === id));
+
+	const shuffledStreamers = faker.helpers.shuffle(streamingUserIds);
+	const selectedStreamers = shuffledStreamers.slice(0, 17);
+
+	for (const userId of selectedStreamers) {
+		const viewerCount = faker.helpers.weightedArrayElement([
+			{ value: faker.number.int({ min: 5, max: 30 }), weight: 5 },
+			{ value: faker.number.int({ min: 31, max: 100 }), weight: 3 },
+			{ value: faker.number.int({ min: 101, max: 500 }), weight: 2 },
+			{ value: faker.number.int({ min: 501, max: 2000 }), weight: 1 },
+		]);
+
+		const thumbnailUrl = faker.image.urlPicsumPhotos({
+			width: 320,
+			height: 180,
+		});
+
+		const twitch = `fake_${nanoid()}`.toLowerCase();
+		sql
+			.prepare(
+				`
+			insert into "LiveStream" ("userId", "viewerCount", "thumbnailUrl", "twitch")
+			values ($userId, $viewerCount, $thumbnailUrl, $twitch)
+			`,
+			)
+			.run({
+				userId,
+				viewerCount,
+				thumbnailUrl,
+				twitch,
+			});
+	}
 }

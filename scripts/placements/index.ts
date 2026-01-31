@@ -2,8 +2,9 @@ import "dotenv/config";
 
 import { sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
-import { syncXPBadges } from "~/features/badges/queries/syncXPBadges.server";
+import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
+import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
@@ -53,7 +54,8 @@ async function main() {
 	}
 
 	addPlacements(placements);
-	syncXPBadges();
+	await XRankPlacementRepository.refreshAllPeakXp();
+	await BadgeRepository.syncXPBadges();
 	await BuildRepository.recalculateAllTop500();
 	logger.info(`done reading in ${placements.length} placements`);
 }

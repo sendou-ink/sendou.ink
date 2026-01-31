@@ -4,16 +4,13 @@ import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.s
 import { i18next } from "~/modules/i18n/i18next.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
-import { requireBearerAuth } from "../api-public-utils.server";
 import type { GetSendouqMatchResponse, MapListMap } from "../schema";
 
 const paramsSchema = z.object({
 	matchId: id,
 });
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	requireBearerAuth(request);
-
+export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { matchId } = parseParams({
 		params,
 		schema: paramsSchema,

@@ -45,12 +45,55 @@ export default function ApiPage() {
 				<div>
 					<FormMessage type="info">{t("common:api.noAccess")}</FormMessage>
 				</div>
-			) : data.apiToken ? (
+			) : (
+				<div className="stack lg">
+					<TokenSection
+						token={data.readToken}
+						tokenType="read"
+						generateAction="GENERATE_READ"
+					/>
+					<TokenSection
+						token={data.writeToken}
+						tokenType="write"
+						generateAction="GENERATE_WRITE"
+					/>
+				</div>
+			)}
+		</Main>
+	);
+}
+
+function TokenSection({
+	token,
+	tokenType,
+	generateAction,
+}: {
+	token: string | null;
+	tokenType: "read" | "write";
+	generateAction: string;
+}) {
+	const { t } = useTranslation(["common"]);
+
+	const isWriteToken = tokenType === "write";
+	const labelKey = isWriteToken
+		? "common:api.writeTokenLabel"
+		: "common:api.readTokenLabel";
+	const descriptionKey = isWriteToken
+		? "common:api.writeTokenDescription"
+		: "common:api.readTokenDescription";
+
+	return (
+		<div className="stack md">
+			<div>
+				<h2 className="text-md">{t(labelKey)}</h2>
+				<p className="text-xs text-lighter">{t(descriptionKey)}</p>
+			</div>
+
+			{token ? (
 				<div className="stack md">
 					<div>
-						<label>{t("common:api.tokenLabel")}</label>
 						<CopyToClipboardPopover
-							url={data.apiToken}
+							url={token}
 							trigger={
 								<SendouButton icon={<EyeIcon />}>
 									{t("common:api.revealButton")}
@@ -62,12 +105,12 @@ export default function ApiPage() {
 					<FormWithConfirm
 						dialogHeading={t("common:api.regenerate.heading")}
 						submitButtonText={t("common:api.regenerate.confirm")}
-						fields={[["_action", "GENERATE"]]}
+						fields={[["_action", generateAction]]}
 					>
 						<SendouButton
-							className="mx-auto"
 							variant="outlined"
 							icon={<RefreshArrowsIcon />}
+							className="mr-auto"
 						>
 							{t("common:api.regenerate.button")}
 						</SendouButton>
@@ -75,11 +118,11 @@ export default function ApiPage() {
 				</div>
 			) : (
 				<form method="post">
-					<SubmitButton _action="GENERATE">
+					<SubmitButton _action={generateAction}>
 						{t("common:api.generate")}
 					</SubmitButton>
 				</form>
 			)}
-		</Main>
+		</div>
 	);
 }

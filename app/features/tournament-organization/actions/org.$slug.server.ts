@@ -8,7 +8,6 @@ import {
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
-	dayMonthYearToDate,
 } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import { errorToast, parseRequestPayload } from "~/utils/remix.server";
@@ -52,7 +51,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				userId: data.userId,
 				privateNote: data.privateNote,
 				expiresAt: data.expiresAt
-					? dateToDatabaseTimestamp(dayMonthYearToDate(data.expiresAt))
+					? dateToDatabaseTimestamp(data.expiresAt)
 					: null,
 			});
 

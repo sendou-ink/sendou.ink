@@ -41,6 +41,7 @@
 	"forms.info.name": "请注意，如果您更改了队名，那么其他人便可以使用之前的队名和URL了。",
 	"forms.info.tag": "",
 	"forms.errors.duplicateName": "该队名已被使用",
+	"forms.errors.noOnlySpecialCharacters": "",
 	"roster.teamFull": "成员已满",
 	"roster.inviteLink.header": "分享邀请链接来添加成员",
 	"roster.members.header": "成员",

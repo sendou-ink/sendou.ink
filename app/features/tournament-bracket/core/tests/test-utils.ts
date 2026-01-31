@@ -63,6 +63,8 @@ export const testTournament = ({
 			tags: null,
 			description: null,
 			organization: null,
+			tier: null,
+			tentativeTier: null,
 			parentTournamentId: null,
 			rules: null,
 			logoUrl: "/test.png",
@@ -77,6 +79,7 @@ export const testTournament = ({
 			tieBreakerMapPool: [],
 			toSetMapPool: [],
 			participatedUsers: [],
+			castStreams: [],
 			mapPickingStyle: "AUTO_SZ",
 			settings: {
 				bracketProgression: [

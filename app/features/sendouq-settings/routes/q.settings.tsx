@@ -5,38 +5,34 @@ import type { MetaFunction } from "react-router";
 import { useFetcher, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
-import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { ModeImage, WeaponImage } from "~/components/Image";
-import { CrossIcon } from "~/components/icons/Cross";
+import { ModeImage } from "~/components/Image";
 import { MapIcon } from "~/components/icons/Map";
 import { MicrophoneFilledIcon } from "~/components/icons/MicrophoneFilled";
 import { PuzzleIcon } from "~/components/icons/Puzzle";
 import { SpeakerFilledIcon } from "~/components/icons/SpeakerFilled";
-import { StarIcon } from "~/components/icons/Star";
-import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { TrashIcon } from "~/components/icons/Trash";
 import { UsersIcon } from "~/components/icons/Users";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
-import { WeaponSelect } from "~/components/WeaponSelect";
-import type { Preference, Tables, UserMapModePreferences } from "~/db/tables";
+import type { Preference, UserMapModePreferences } from "~/db/tables";
 import {
 	soundCodeToLocalStorageKey,
 	soundVolume,
 } from "~/features/chat/chat-utils";
+import { updateNoScreenSchema } from "~/features/settings/settings-schemas";
+import { SendouForm } from "~/form/SendouForm";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import { languagesUnified } from "~/modules/i18n/config";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
 import {
 	navIconUrl,
 	SENDOUQ_PAGE,
 	SENDOUQ_SETTINGS_PAGE,
+	SETTINGS_PAGE,
 	soundPath,
 } from "~/utils/urls";
 import { action } from "../actions/q.settings.server";
@@ -44,10 +40,11 @@ import { BANNED_MAPS } from "../banned-maps";
 import { ModeMapPoolPicker } from "../components/ModeMapPoolPicker";
 import { PreferenceRadioGroup } from "../components/PreferenceRadioGroup";
 import { loader } from "../loaders/q.settings.server";
+import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "../q-settings-constants";
 import {
-	AMOUNT_OF_MAPS_IN_POOL_PER_MODE,
-	SENDOUQ_WEAPON_POOL_MAX_SIZE,
-} from "../q-settings-constants";
+	updateVoiceChatSchema,
+	updateWeaponPoolSchema,
+} from "../q-settings-schemas";
 export { loader, action };
 
 import "../q-settings.css";
@@ -252,8 +249,8 @@ function MapPicker() {
 }
 
 function VoiceChat() {
-	const { t } = useTranslation(["common", "q"]);
-	const fetcher = useFetcher();
+	const { t } = useTranslation(["q"]);
+	const data = useLoaderData<typeof loader>();
 
 	return (
 		<details>
@@ -263,128 +260,34 @@ function VoiceChat() {
 					<MicrophoneFilledIcon />
 				</div>
 			</summary>
-			<fetcher.Form method="post" className="mb-4 ml-2-5 stack sm">
-				<VoiceChatAbility />
-				<Languages />
-				<div>
-					<SubmitButton
-						size="big"
-						className="mt-2 mx-auto"
-						_action="UPDATE_VC"
-						state={fetcher.state}
-					>
-						{t("common:actions.save")}
-					</SubmitButton>
-				</div>
-			</fetcher.Form>
+			<div className="mb-4 ml-2-5">
+				<SendouForm
+					schema={updateVoiceChatSchema}
+					defaultValues={{
+						vc: data.settings.vc,
+						languages: data.settings.languages ?? [],
+					}}
+				>
+					{({ FormField }) => (
+						<>
+							<FormField name="vc" />
+							<FormField name="languages" />
+						</>
+					)}
+				</SendouForm>
+			</div>
 		</details>
 	);
 }
 
-function VoiceChatAbility() {
-	const { t } = useTranslation(["q"]);
-	const data = useLoaderData<typeof loader>();
-
-	const label = (vc: Tables["User"]["vc"]) => {
-		switch (vc) {
-			case "YES":
-				return t("q:settings.voiceChat.canVC.yes");
-			case "NO":
-				return t("q:settings.voiceChat.canVC.no");
-			case "LISTEN_ONLY":
-				return t("q:settings.voiceChat.canVC.listenOnly");
-			default:
-				assertUnreachable(vc);
-		}
-	};
-
-	return (
-		<div className="stack">
-			<label>{t("q:settings.voiceChat.canVC.header")}</label>
-			{(["YES", "NO", "LISTEN_ONLY"] as const).map((option) => {
-				return (
-					<div key={option} className="stack sm horizontal items-center">
-						<input
-							type="radio"
-							name="vc"
-							id={option}
-							value={option}
-							required
-							defaultChecked={data.settings.vc === option}
-						/>
-						<label htmlFor={option} className="mb-0 text-main-forced">
-							{label(option)}
-						</label>
-					</div>
-				);
-			})}
-		</div>
-	);
-}
-
-function Languages() {
-	const { t } = useTranslation(["q"]);
-	const data = useLoaderData<typeof loader>();
-	const [value, setValue] = React.useState(data.settings.languages ?? []);
-
-	return (
-		<div className="stack">
-			<input type="hidden" name="languages" value={JSON.stringify(value)} />
-			<label>{t("q:settings.voiceChat.languages.header")}</label>
-			<select
-				className="w-max"
-				onChange={(e) => {
-					const newLanguages = [...value, e.target.value].sort((a, b) =>
-						a.localeCompare(b),
-					);
-					setValue(newLanguages);
-				}}
-			>
-				<option value="">
-					{t("q:settings.voiceChat.languages.placeholder")}
-				</option>
-				{languagesUnified
-					.filter((lang) => !value.includes(lang.code))
-					.map((option) => {
-						return (
-							<option key={option.code} value={option.code}>
-								{option.name}
-							</option>
-						);
-					})}
-			</select>
-			<div className="mt-2">
-				{value.map((code) => {
-					const name = languagesUnified.find((l) => l.code === code)?.name;
-
-					return (
-						<div key={code} className="stack horizontal items-center sm">
-							{name}{" "}
-							<SendouButton
-								icon={<CrossIcon />}
-								variant="minimal-destructive"
-								onPress={() => {
-									const newLanguages = value.filter(
-										(codeInArr) => codeInArr !== code,
-									);
-									setValue(newLanguages);
-								}}
-							/>
-						</div>
-					);
-				})}
-			</div>
-		</div>
-	);
-}
-
 function WeaponPool() {
-	const { t } = useTranslation(["common", "q"]);
+	const { t } = useTranslation(["q"]);
 	const data = useLoaderData<typeof loader>();
-	const [weapons, setWeapons] = React.useState(data.settings.qWeaponPool ?? []);
-	const fetcher = useFetcher();
 
-	const latestWeapon = weapons[weapons.length - 1]?.weaponSplId ?? null;
+	const defaultWeaponPool = (data.settings.qWeaponPool ?? []).map((w) => ({
+		id: w.weaponSplId,
+		isFavorite: Boolean(w.isFavorite),
+	}));
 
 	return (
 		<details>
@@ -393,94 +296,16 @@ function WeaponPool() {
 					<span>{t("q:settings.weaponPool.header")}</span> <PuzzleIcon />
 				</div>
 			</summary>
-			<fetcher.Form method="post" className="mb-4 stack items-center">
-				<input
-					type="hidden"
-					name="weaponPool"
-					value={JSON.stringify(weapons)}
-				/>
-				<div className="q-settings__weapon-pool-select-container">
-					{weapons.length < SENDOUQ_WEAPON_POOL_MAX_SIZE ? (
-						<WeaponSelect
-							onChange={(weaponSplId) => {
-								setWeapons([
-									...weapons,
-									{
-										weaponSplId,
-										isFavorite: 0,
-									},
-								]);
-							}}
-							// empty on selection
-							key={latestWeapon ?? "empty"}
-							disabledWeaponIds={weapons.map((w) => w.weaponSplId)}
-						/>
-					) : (
-						<span className="text-xs text-info">
-							{t("q:settings.weaponPool.full")}
-						</span>
-					)}
-				</div>
-				<div className="stack horizontal md justify-center">
-					{weapons.map((weapon) => {
-						return (
-							<div key={weapon.weaponSplId} className="stack xs">
-								<div>
-									<WeaponImage
-										weaponSplId={weapon.weaponSplId}
-										variant={weapon.isFavorite ? "badge-5-star" : "badge"}
-										width={38}
-										height={38}
-									/>
-								</div>
-								<div className="stack sm horizontal items-center justify-center">
-									<SendouButton
-										icon={weapon.isFavorite ? <StarFilledIcon /> : <StarIcon />}
-										variant="minimal"
-										aria-label="Favorite weapon"
-										onPress={() =>
-											setWeapons(
-												weapons.map((w) =>
-													w.weaponSplId === weapon.weaponSplId
-														? {
-																...weapon,
-																isFavorite: weapon.isFavorite === 1 ? 0 : 1,
-															}
-														: w,
-												),
-											)
-										}
-									/>
-									<SendouButton
-										icon={<TrashIcon />}
-										variant="minimal-destructive"
-										aria-label="Delete weapon"
-										onPress={() =>
-											setWeapons(
-												weapons.filter(
-													(w) => w.weaponSplId !== weapon.weaponSplId,
-												),
-											)
-										}
-										data-testid={`delete-weapon-${weapon.weaponSplId}`}
-										size="small"
-									/>
-								</div>
-							</div>
-						);
-					})}
-				</div>
-				<div className="mt-6">
-					<SubmitButton
-						size="big"
-						className="mx-auto"
-						_action="UPDATE_SENDOUQ_WEAPON_POOL"
-						state={fetcher.state}
-					>
-						{t("common:actions.save")}
-					</SubmitButton>
-				</div>
-			</fetcher.Form>
+			<div className="mb-4">
+				<SendouForm
+					schema={updateWeaponPoolSchema}
+					defaultValues={{
+						weaponPool: defaultWeaponPool,
+					}}
+				>
+					{({ FormField }) => <FormField name="weaponPool" />}
+				</SendouForm>
+			</div>
 		</details>
 	);
 }
@@ -678,40 +503,25 @@ function TrustedUsers() {
 
 function Misc() {
 	const data = useLoaderData<typeof loader>();
-	const [checked, setChecked] = React.useState(Boolean(data.settings.noScreen));
-	const { t } = useTranslation(["common", "q", "weapons"]);
-	const fetcher = useFetcher();
+	const { t } = useTranslation(["q"]);
 
 	return (
 		<details>
 			<summary className="q-settings__summary">
 				<div>{t("q:settings.misc.header")}</div>
 			</summary>
-			<fetcher.Form method="post" className="mb-4 ml-2-5 stack sm">
-				<div className="stack horizontal xs items-center">
-					<SendouSwitch
-						isSelected={checked}
-						onChange={setChecked}
-						id="noScreen"
-						name="noScreen"
-					/>
-					<label className="mb-0" htmlFor="noScreen">
-						{t("q:settings.avoid.label", {
-							special: t("weapons:SPECIAL_19"),
-						})}
-					</label>
-				</div>
-				<div className="mt-6">
-					<SubmitButton
-						size="big"
-						className="mx-auto"
-						_action="UPDATE_NO_SCREEN"
-						state={fetcher.state}
-					>
-						{t("common:actions.save")}
-					</SubmitButton>
-				</div>
-			</fetcher.Form>
+			<div className="mb-4 ml-2-5">
+				<SendouForm
+					schema={updateNoScreenSchema}
+					defaultValues={{
+						newValue: Boolean(data.settings.noScreen),
+					}}
+					action={SETTINGS_PAGE}
+					autoSubmit
+				>
+					{({ FormField }) => <FormField name="newValue" />}
+				</SendouForm>
+			</div>
 		</details>
 	);
 }

@@ -1382,4 +1382,33 @@ export class Tournament {
 				staff.id === user.id && ["ORGANIZER", "STREAMER"].includes(staff.role),
 		);
 	}
+
+	get streams() {
+		const memberStreams = this.ctx.teams
+			.filter((team) => team.checkIns.length > 0)
+			.flatMap((team) => team.members)
+			.filter((member) => member.streamTwitch)
+			.map((member) => ({
+				thumbnailUrl: member.streamThumbnailUrl!,
+				twitchUserName: member.streamTwitch!,
+				viewerCount: member.streamViewerCount!,
+				userId: member.userId,
+			}));
+
+		const castStreams = this.ctx.castStreams.map((stream) => ({
+			thumbnailUrl: stream.thumbnailUrl,
+			twitchUserName: stream.twitch!,
+			viewerCount: stream.viewerCount,
+			userId: null as number | null,
+		}));
+
+		return [...memberStreams, ...castStreams].sort(
+			(a, b) => b.viewerCount - a.viewerCount,
+		);
+	}
+
+	get streamingParticipantIds(): number[] {
+		if (!this.hasStarted || this.everyBracketOver) return [];
+		return this.streams.filter((s) => s.userId !== null).map((s) => s.userId!);
+	}
 }

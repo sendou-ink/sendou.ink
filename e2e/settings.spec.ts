@@ -1,4 +1,8 @@
 import {
+	clockFormatSchema,
+	disableBuildAbilitySortingSchema,
+} from "~/features/settings/settings-schemas";
+import {
 	expect,
 	impersonate,
 	navigate,
@@ -6,6 +10,7 @@ import {
 	test,
 	waitForPOSTResponse,
 } from "~/utils/playwright";
+import { createFormHelpers } from "~/utils/playwright-form";
 import { SETTINGS_PAGE } from "~/utils/urls";
 
 test.describe("Settings", () => {
@@ -28,9 +33,9 @@ test.describe("Settings", () => {
 			url: SETTINGS_PAGE,
 		});
 
-		await waitForPOSTResponse(page, () =>
-			page.getByTestId("UPDATE_DISABLE_BUILD_ABILITY_SORTING-switch").click(),
-		);
+		const form = createFormHelpers(page, disableBuildAbilitySortingSchema);
+		await form.check("newValue");
+		await waitForPOSTResponse(page, () => form.check("newValue"));
 
 		await navigate({
 			page,
@@ -65,10 +70,8 @@ test.describe("Settings", () => {
 			url: SETTINGS_PAGE,
 		});
 
-		const clockFormatSelect = page.locator("#clock-format");
-		await clockFormatSelect.selectOption("24h");
-
-		await expect(page.getByText("Settings updated")).toBeVisible();
+		const form = createFormHelpers(page, clockFormatSchema);
+		await waitForPOSTResponse(page, () => form.select("newValue", "24h"));
 
 		await navigate({
 			page,

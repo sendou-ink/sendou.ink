@@ -11,6 +11,7 @@ const ALL_NAMESPACES = [
 	"calendar",
 	"contributions",
 	"faq",
+	"forms",
 	"game-misc",
 	"gear",
 	"user",

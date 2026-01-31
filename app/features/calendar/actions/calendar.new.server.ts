@@ -40,7 +40,6 @@ export const action: ActionFunction = async ({ request }) => {
 	const data = await parseFormData({
 		formData,
 		schema: newCalendarEventActionSchema,
-		parseAsync: true,
 	});
 
 	const isEditing = Boolean(data.eventToEditId);

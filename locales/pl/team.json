@@ -41,6 +41,7 @@
 	"forms.info.name": "Uwaga: Jeśli zmienisz imię drużyny, ktoś inny może użyć twoje stare imię i URL",
 	"forms.info.tag": "",
 	"forms.errors.duplicateName": "Istnieje już drużyna o tym imieniu",
+	"forms.errors.noOnlySpecialCharacters": "",
 	"roster.teamFull": "Drużyna jest pełna",
 	"roster.inviteLink.header": "Udostępnij link by dodać członków",
 	"roster.members.header": "Członkowie",

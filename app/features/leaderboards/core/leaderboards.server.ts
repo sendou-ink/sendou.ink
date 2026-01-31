@@ -1,4 +1,9 @@
 import { cachified } from "@epic-web/cachified";
+import type {
+	SeasonPopularUsersWeapon,
+	UserSPLeaderboardItem,
+} from "~/features/leaderboards/LeaderboardRepository.server";
+import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-constants";
 import { freshUserSkills } from "~/features/mmr/tiered.server";
@@ -9,10 +14,6 @@ import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import type { Unwrapped } from "~/utils/types";
 import { DEFAULT_LEADERBOARD_MAX_SIZE } from "../leaderboards-constants";
 import { seasonHasTopTen } from "../leaderboards-utils";
-import type { SeasonPopularUsersWeapon } from "../queries/seasonPopularUsersWeapon.server";
-import { seasonPopularUsersWeapon } from "../queries/seasonPopularUsersWeapon.server";
-import type { UserSPLeaderboardItem } from "../queries/userSPLeaderboard.server";
-import { userSPLeaderboard } from "../queries/userSPLeaderboard.server";
 
 export type UserLeaderboardWithAdditionsItem = Unwrapped<
 	typeof cachedFullUserLeaderboard
@@ -23,7 +24,7 @@ export async function cachedFullUserLeaderboard(season: number) {
 		cache,
 		ttl: ttl(IN_MILLISECONDS.HALF_HOUR),
 		async getFreshValue() {
-			const leaderboard = userSPLeaderboard(season);
+			const leaderboard = await LeaderboardRepository.userSPLeaderboard(season);
 			const withTiers = addTiers(leaderboard, season);
 
 			const shouldAddPendingPlusTier =
@@ -37,7 +38,10 @@ export async function cachedFullUserLeaderboard(season: number) {
 					)
 				: withTiers;
 
-			return addWeapons(withPendingPlusTiers, seasonPopularUsersWeapon(season));
+			return addWeapons(
+				withPendingPlusTiers,
+				await LeaderboardRepository.seasonPopularUsersWeapon(season),
+			);
 		},
 	});
 }

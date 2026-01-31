@@ -4,7 +4,6 @@ import type { Bracket } from "~/features/tournament-bracket/core/Bracket";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
-import { requireBearerAuth } from "../api-public-utils.server";
 import type { GetTournamentBracketResponse } from "../schema";
 
 const paramsSchema = z.object({
@@ -12,9 +11,7 @@ const paramsSchema = z.object({
 	bidx: z.coerce.number().int(),
 });
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	requireBearerAuth(request);
-
+export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id, bidx } = parseParams({ params, schema: paramsSchema });
 
 	const tournament = await tournamentFromDB({

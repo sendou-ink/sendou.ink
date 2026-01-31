@@ -12,6 +12,7 @@ import {
 	concatUserSubmittedImagePrefix,
 	tournamentLogoOrNull,
 } from "~/utils/kysely.server";
+import { mySlugify } from "~/utils/urls";
 
 export function findAllUndisbanded() {
 	return db
@@ -243,20 +244,22 @@ export async function teamsByMemberUserId(
 }
 
 export async function create(
-	args: Pick<Insertable<Tables["Team"]>, "name" | "customUrl"> & {
+	args: Pick<Insertable<Tables["Team"]>, "name"> & {
 		ownerUserId: number;
 		isMainTeam: boolean;
 	},
 ) {
+	const customUrl = mySlugify(args.name);
+
 	return db.transaction().execute(async (trx) => {
 		const team = await trx
 			.insertInto("AllTeam")
 			.values({
 				name: args.name,
-				customUrl: args.customUrl,
+				customUrl,
 				inviteCode: shortNanoid(),
 			})
-			.returning("id")
+			.returning(["id", "customUrl"])
 			.executeTakeFirstOrThrow();
 
 		await trx
@@ -268,22 +271,24 @@ export async function create(
 				isMainTeam: Number(args.isMainTeam),
 			})
 			.execute();
+
+		return team;
 	});
 }
 
 export async function update({
 	id,
 	name,
-	customUrl,
 	bio,
 	bsky,
 	tag,
 	css,
-}: Pick<
-	Insertable<Tables["Team"]>,
-	"id" | "name" | "customUrl" | "bio" | "bsky" | "tag"
-> & { css: string | null }) {
-	return db
+}: Pick<Insertable<Tables["Team"]>, "id" | "name" | "bio" | "bsky" | "tag"> & {
+	css: string | null;
+}) {
+	const customUrl = mySlugify(name);
+
+	const team = await db
 		.updateTable("AllTeam")
 		.set({
 			name,
@@ -296,6 +301,8 @@ export async function update({
 		.where("id", "=", id)
 		.returningAll()
 		.executeTakeFirstOrThrow();
+
+	return team;
 }
 
 export function switchMainTeam({

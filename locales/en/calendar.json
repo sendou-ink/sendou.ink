@@ -75,7 +75,6 @@
 	"filter.orgsIncluded": "Visible organizations",
 	"filter.orgsExcluded": "Hidden organizations",
 	"filter.authorIdsExcluded": "Authors excluded",
-	"filter.authorIdsExcludedBottom": "You can find a user's id on their profile page",
 	"filter.apply": "Apply",
 	"filter.applyAndDefault": "Apply & make default"
 }

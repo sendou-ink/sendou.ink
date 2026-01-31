@@ -129,7 +129,9 @@ export function resolveAllUniqueDamageTypes({
 				? analyzed.stats.specialWeaponDamages.map((d) => d.type)
 				: analyzed.stats.damages.map((d) => d.type);
 
-	return R.unique(damageTypes).filter((dmg) => !dmg.includes("SECONDARY"));
+	return R.unique(damageTypes).filter(
+		(dmg) => !dmg.includes("SECONDARY") && dmg !== "COMBO",
+	);
 }
 
 function resolveFilteredDamages({

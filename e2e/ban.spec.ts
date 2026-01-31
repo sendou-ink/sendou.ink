@@ -19,9 +19,7 @@ async function banUser(
 		.locator("form")
 		.filter({ has: page.locator("h2", { hasText: /^Ban user$/ }) });
 
-	const comboboxButton = banForm.getByRole("button", {
-		name: "User search User",
-	});
+	const comboboxButton = banForm.getByLabel("User");
 	await expect(comboboxButton).not.toBeDisabled();
 	await comboboxButton.click();
 
@@ -51,9 +49,7 @@ async function unbanUser(page: Page) {
 		.locator("form")
 		.filter({ has: page.locator("h2", { hasText: /^Unban user$/ }) });
 
-	const comboboxButton = unbanForm.getByRole("button", {
-		name: "User search User",
-	});
+	const comboboxButton = unbanForm.getByLabel("User");
 	await expect(comboboxButton).not.toBeDisabled();
 	await comboboxButton.click();
 

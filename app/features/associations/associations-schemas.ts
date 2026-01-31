@@ -1,9 +1,13 @@
 import { z } from "zod";
-import { _action, id, inviteCode, safeStringSchema } from "~/utils/zod";
+import { textFieldRequired } from "~/form/fields";
+import { _action, id, inviteCode } from "~/utils/zod";
 import { ASSOCIATION } from "./associations-constants";
 
 export const createNewAssociationSchema = z.object({
-	name: safeStringSchema({ max: 100 }),
+	name: textFieldRequired({
+		label: "labels.name",
+		maxLength: 100,
+	}),
 });
 
 const removeMemberSchema = z.object({

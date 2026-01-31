@@ -446,6 +446,8 @@ const damageTypeToParamsKey: Record<
 	SPECIAL_BUMP: "BumpDamage",
 	SPECIAL_JUMP: "JumpDamage",
 	SPECIAL_TICK: "TickDamage",
+	// Virtual damage type for comp-analyzer, calculated from other damages
+	COMBO: [],
 };
 
 function damages(args: StatFunctionInput): AnalyzedBuild["stats"]["damages"] {
@@ -546,7 +548,7 @@ function specialWeaponDamages(
 			id: nanoid(),
 			distance: 0,
 			value: R.sum(cannonDamages.map((v) => v.value)),
-			type: "SPECIAL_CANNON",
+			type: "COMBO",
 		});
 	}
 
@@ -618,7 +620,7 @@ function subWeaponDefenseDamages(
 								R.sum(arrayValues.map((v) => v.value)),
 								1,
 							),
-							type,
+							type: "BOMB_DIRECT",
 						});
 					}
 
@@ -727,7 +729,7 @@ function subWeaponIdToEffectKey(
 	}
 }
 
-function subWeaponDamageValue({
+export function subWeaponDamageValue({
 	baseValue,
 	subWeaponId,
 	abilityPoints,
@@ -997,10 +999,13 @@ function superJumpTimeGroundFrames(
 	};
 }
 
+const STEALTH_JUMP_EXTRA_FRAMES = 60;
 function superJumpTimeTotal(
 	args: StatFunctionInput,
 ): AnalyzedBuild["stats"]["superJumpTimeTotal"] {
 	const SUPER_JUMP_TIME_TOTAL_ABILITY = "QSJ";
+	const hasStealthJump = args.mainOnlyAbilities.includes("SJ");
+	const stealthJumpExtraFrames = hasStealthJump ? STEALTH_JUMP_EXTRA_FRAMES : 0;
 
 	const charge = abilityPointsToEffects({
 		abilityPoints: apFromMap({
@@ -1023,8 +1028,12 @@ function superJumpTimeTotal(
 		baseValue: framesToSeconds(
 			Math.ceil(charge.baseEffect) + Math.ceil(move.baseEffect),
 		),
-		value: framesToSeconds(Math.ceil(charge.effect) + Math.ceil(move.effect)),
-		modifiedBy: SUPER_JUMP_TIME_TOTAL_ABILITY,
+		value: framesToSeconds(
+			Math.ceil(charge.effect) +
+				Math.ceil(move.effect) +
+				stealthJumpExtraFrames,
+		),
+		modifiedBy: [SUPER_JUMP_TIME_TOTAL_ABILITY, "SJ"],
 	};
 }
 

@@ -1,8 +1,12 @@
+import { add } from "date-fns";
 import { OAuth2Strategy } from "remix-auth-oauth2";
 import { z } from "zod";
+import * as AdminNotifications from "~/features/admin/core/admin-notifications.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
+
+let discordApiCooldownUntil: number | null = null;
 
 const partialDiscordUserSchema = z.object({
 	avatar: z.string().nullish(),
@@ -25,11 +29,28 @@ const discordUserDetailsSchema = z.tuple([
 	partialDiscordUserSchema,
 	partialDiscordConnectionsSchema,
 ]);
+const discordRateLimitSchema = z.object({
+	retry_after: z.number(),
+});
 
 export const DiscordStrategy = () => {
 	const envVars = authEnvVars();
 
-	const jsonIfOk = (res: Response) => {
+	const jsonIfOk = async (res: Response) => {
+		if (res.status === 429) {
+			const body = discordRateLimitSchema.safeParse(await res.clone().json());
+			const retryAfterSeconds = body.success ? body.data.retry_after : 60;
+			discordApiCooldownUntil = add(new Date(), {
+				seconds: retryAfterSeconds,
+			}).getTime();
+			logger.warn(
+				`Discord API rate limited, cooldown for ${retryAfterSeconds}s${body.success ? "" : " (failed to parse retry_after)"}`,
+			);
+			AdminNotifications.send(
+				`Discord API rate limited, cooldown for ${retryAfterSeconds}s`,
+			);
+		}
+
 		if (!res.ok) {
 			throw new Error(
 				`Auth related call failed with status code ${res.status}`,
@@ -40,6 +61,10 @@ export const DiscordStrategy = () => {
 	};
 
 	const fetchProfileViaDiscordApi = (token: string) => {
+		if (discordApiCooldownUntil && Date.now() < discordApiCooldownUntil) {
+			throw new Error("Discord API is rate limited");
+		}
+
 		const authHeader: [string, string] = ["Authorization", `Bearer ${token}`];
 
 		return Promise.all([

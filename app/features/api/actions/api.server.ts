@@ -3,12 +3,11 @@ import { z } from "zod";
 import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { parseRequestPayload, successToast } from "~/utils/remix.server";
-import { _action } from "~/utils/zod";
 import * as ApiRepository from "../ApiRepository.server";
 import { checkUserHasApiAccess } from "../core/perms";
 
 const apiActionSchema = z.object({
-	_action: _action("GENERATE"),
+	_action: z.enum(["GENERATE_READ", "GENERATE_WRITE"]),
 });
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -24,12 +23,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	}
 
 	switch (data._action) {
-		case "GENERATE": {
-			await ApiRepository.generateToken(user.id);
-
+		case "GENERATE_READ": {
+			await ApiRepository.generateToken(user.id, "read");
 			await refreshApiTokensCache();
-
-			successToast("API token generated successfully");
+			successToast("Read token generated successfully");
+			break;
+		}
+		case "GENERATE_WRITE": {
+			await ApiRepository.generateToken(user.id, "write");
+			await refreshApiTokensCache();
+			successToast("Write token generated successfully");
 			break;
 		}
 		default: {

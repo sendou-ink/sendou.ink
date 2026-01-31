@@ -22,6 +22,7 @@ import {
 	userChatNameColor,
 } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
+import type { TournamentTierNumber } from "./core/tiering";
 
 export type FindById = NonNullable<Unwrapped<typeof findById>>;
 export async function findById(id: number) {
@@ -51,6 +52,7 @@ export async function findById(id: number) {
 			"Tournament.mapPickingStyle",
 			"Tournament.rules",
 			"Tournament.parentTournamentId",
+			"Tournament.tier",
 			"CalendarEvent.name",
 			"CalendarEvent.description",
 			"CalendarEventDate.startTime",
@@ -177,6 +179,7 @@ export async function findById(id: number) {
 										),
 								)
 								.leftJoin("PlusTier", "PlusTier.userId", "User.id")
+								.leftJoin("LiveStream", "LiveStream.userId", "User.id")
 								.select([
 									"User.id as userId",
 									"User.username",
@@ -193,6 +196,9 @@ export async function findById(id: number) {
                     "TournamentTeamMember"."inGameName",
                     "User"."inGameName"
                   )`.as("inGameName"),
+									"LiveStream.twitch as streamTwitch",
+									"LiveStream.viewerCount as streamViewerCount",
+									"LiveStream.thumbnailUrl as streamThumbnailUrl",
 								])
 								.whereRef(
 									"TournamentTeamMember.tournamentTeamId",
@@ -246,7 +252,8 @@ export async function findById(id: number) {
 					])
 					.where("TournamentTeam.tournamentId", "=", id)
 					.orderBy("TournamentTeam.seed", "asc")
-					.orderBy("TournamentTeam.createdAt", "asc"),
+					.orderBy("TournamentTeam.createdAt", "asc")
+					.orderBy("TournamentTeam.id", "asc"),
 			).as("teams"),
 			jsonArrayFrom(
 				eb
@@ -286,6 +293,18 @@ export async function findById(id: number) {
 					.groupBy("TournamentMatchGameResultParticipant.userId")
 					.where("TournamentStage.tournamentId", "=", id),
 			).as("participatedUsers"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("LiveStream")
+					.select([
+						"LiveStream.twitch",
+						"LiveStream.viewerCount",
+						"LiveStream.thumbnailUrl",
+					])
+					.where(
+						sql<boolean>`"LiveStream"."twitch" IN (SELECT value FROM json_each("Tournament"."castTwitchAccounts"))`,
+					),
+			).as("castStreams"),
 		])
 		.where("Tournament.id", "=", id)
 		.$narrowType<{ author: NotNull }>()
@@ -447,8 +466,10 @@ export function forShowcase() {
 		.select((eb) => [
 			"Tournament.id",
 			"Tournament.settings",
+			"Tournament.tier",
 			"CalendarEvent.authorId",
 			"CalendarEvent.name",
+			"CalendarEvent.organizationId",
 			"CalendarEventDate.startTime",
 			"CalendarEvent.hidden",
 			eb
@@ -1216,4 +1237,18 @@ export function updateTeamSeeds({
 			.where("id", "=", tournamentId)
 			.execute();
 	});
+}
+
+export function updateTournamentTier({
+	tournamentId,
+	tier,
+}: {
+	tournamentId: number;
+	tier: TournamentTierNumber;
+}) {
+	return db
+		.updateTable("Tournament")
+		.set({ tier })
+		.where("id", "=", tournamentId)
+		.execute();
 }

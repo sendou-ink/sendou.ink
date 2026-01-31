@@ -6,6 +6,7 @@ import calendarDa from "../../../locales/da/calendar.json";
 import commonDa from "../../../locales/da/common.json";
 import contributionsDa from "../../../locales/da/contributions.json";
 import faqDa from "../../../locales/da/faq.json";
+import formsDa from "../../../locales/da/forms.json";
 import frontDa from "../../../locales/da/front.json";
 import gameMiscDa from "../../../locales/da/game-misc.json";
 import gearDa from "../../../locales/da/gear.json";
@@ -27,6 +28,7 @@ import calendarDe from "../../../locales/de/calendar.json";
 import commonDe from "../../../locales/de/common.json";
 import contributionsDe from "../../../locales/de/contributions.json";
 import faqDe from "../../../locales/de/faq.json";
+import formsDe from "../../../locales/de/forms.json";
 import frontDe from "../../../locales/de/front.json";
 import gameMiscDe from "../../../locales/de/game-misc.json";
 import gearDe from "../../../locales/de/gear.json";
@@ -48,6 +50,7 @@ import calendar from "../../../locales/en/calendar.json";
 import common from "../../../locales/en/common.json";
 import contributions from "../../../locales/en/contributions.json";
 import faq from "../../../locales/en/faq.json";
+import forms from "../../../locales/en/forms.json";
 import front from "../../../locales/en/front.json";
 import gameMisc from "../../../locales/en/game-misc.json";
 import gear from "../../../locales/en/gear.json";
@@ -69,6 +72,7 @@ import calendarEsEs from "../../../locales/es-ES/calendar.json";
 import commonEsEs from "../../../locales/es-ES/common.json";
 import contributionsEsEs from "../../../locales/es-ES/contributions.json";
 import faqEsEs from "../../../locales/es-ES/faq.json";
+import formsEsEs from "../../../locales/es-ES/forms.json";
 import frontEsEs from "../../../locales/es-ES/front.json";
 import gameMiscEsEs from "../../../locales/es-ES/game-misc.json";
 import gearEsEs from "../../../locales/es-ES/gear.json";
@@ -90,6 +94,7 @@ import calendarEsUs from "../../../locales/es-US/calendar.json";
 import commonEsUs from "../../../locales/es-US/common.json";
 import contributionsEsUs from "../../../locales/es-US/contributions.json";
 import faqEsUs from "../../../locales/es-US/faq.json";
+import formsEsUs from "../../../locales/es-US/forms.json";
 import frontEsUs from "../../../locales/es-US/front.json";
 import gameMiscEsUs from "../../../locales/es-US/game-misc.json";
 import gearEsUs from "../../../locales/es-US/gear.json";
@@ -111,6 +116,7 @@ import calendarFrCa from "../../../locales/fr-CA/calendar.json";
 import commonFrCa from "../../../locales/fr-CA/common.json";
 import contributionsFrCa from "../../../locales/fr-CA/contributions.json";
 import faqFrCa from "../../../locales/fr-CA/faq.json";
+import formsFrCa from "../../../locales/fr-CA/forms.json";
 import frontFrCa from "../../../locales/fr-CA/front.json";
 import gameMiscFrCa from "../../../locales/fr-CA/game-misc.json";
 import gearFrCa from "../../../locales/fr-CA/gear.json";
@@ -132,6 +138,7 @@ import calendarFrEu from "../../../locales/fr-EU/calendar.json";
 import commonFrEu from "../../../locales/fr-EU/common.json";
 import contributionsFrEu from "../../../locales/fr-EU/contributions.json";
 import faqFrEu from "../../../locales/fr-EU/faq.json";
+import formsFrEu from "../../../locales/fr-EU/forms.json";
 import frontFrEu from "../../../locales/fr-EU/front.json";
 import gameMiscFrEu from "../../../locales/fr-EU/game-misc.json";
 import gearFrEu from "../../../locales/fr-EU/gear.json";
@@ -153,6 +160,7 @@ import calendarHe from "../../../locales/he/calendar.json";
 import commonHe from "../../../locales/he/common.json";
 import contributionsHe from "../../../locales/he/contributions.json";
 import faqHe from "../../../locales/he/faq.json";
+import formsHe from "../../../locales/he/forms.json";
 import frontHe from "../../../locales/he/front.json";
 import gameMiscHe from "../../../locales/he/game-misc.json";
 import gearHe from "../../../locales/he/gear.json";
@@ -174,6 +182,7 @@ import calendarIt from "../../../locales/it/calendar.json";
 import commonIt from "../../../locales/it/common.json";
 import contributionsIt from "../../../locales/it/contributions.json";
 import faqIt from "../../../locales/it/faq.json";
+import formsIt from "../../../locales/it/forms.json";
 import frontIt from "../../../locales/it/front.json";
 import gameMiscIt from "../../../locales/it/game-misc.json";
 import gearIt from "../../../locales/it/gear.json";
@@ -195,6 +204,7 @@ import calendarJa from "../../../locales/ja/calendar.json";
 import commonJa from "../../../locales/ja/common.json";
 import contributionsJa from "../../../locales/ja/contributions.json";
 import faqJa from "../../../locales/ja/faq.json";
+import formsJa from "../../../locales/ja/forms.json";
 import frontJa from "../../../locales/ja/front.json";
 import gameMiscJa from "../../../locales/ja/game-misc.json";
 import gearJa from "../../../locales/ja/gear.json";
@@ -216,6 +226,7 @@ import calendarKo from "../../../locales/ko/calendar.json";
 import commonKo from "../../../locales/ko/common.json";
 import contributionsKo from "../../../locales/ko/contributions.json";
 import faqKo from "../../../locales/ko/faq.json";
+import formsKo from "../../../locales/ko/forms.json";
 import frontKo from "../../../locales/ko/front.json";
 import gameMiscKo from "../../../locales/ko/game-misc.json";
 import gearKo from "../../../locales/ko/gear.json";
@@ -237,6 +248,7 @@ import calendarNl from "../../../locales/nl/calendar.json";
 import commonNl from "../../../locales/nl/common.json";
 import contributionsNl from "../../../locales/nl/contributions.json";
 import faqNl from "../../../locales/nl/faq.json";
+import formsNl from "../../../locales/nl/forms.json";
 import frontNl from "../../../locales/nl/front.json";
 import gameMiscNl from "../../../locales/nl/game-misc.json";
 import gearNl from "../../../locales/nl/gear.json";
@@ -258,6 +270,7 @@ import calendarPl from "../../../locales/pl/calendar.json";
 import commonPl from "../../../locales/pl/common.json";
 import contributionsPl from "../../../locales/pl/contributions.json";
 import faqPl from "../../../locales/pl/faq.json";
+import formsPl from "../../../locales/pl/forms.json";
 import frontPl from "../../../locales/pl/front.json";
 import gameMiscPl from "../../../locales/pl/game-misc.json";
 import gearPl from "../../../locales/pl/gear.json";
@@ -279,6 +292,7 @@ import calendarPtBr from "../../../locales/pt-BR/calendar.json";
 import commonPtBr from "../../../locales/pt-BR/common.json";
 import contributionsPtBr from "../../../locales/pt-BR/contributions.json";
 import faqPtBr from "../../../locales/pt-BR/faq.json";
+import formsPtBr from "../../../locales/pt-BR/forms.json";
 import frontPtBr from "../../../locales/pt-BR/front.json";
 import gameMiscPtBr from "../../../locales/pt-BR/game-misc.json";
 import gearPtBr from "../../../locales/pt-BR/gear.json";
@@ -300,6 +314,7 @@ import calendarRu from "../../../locales/ru/calendar.json";
 import commonRu from "../../../locales/ru/common.json";
 import contributionsRu from "../../../locales/ru/contributions.json";
 import faqRu from "../../../locales/ru/faq.json";
+import formsRu from "../../../locales/ru/forms.json";
 import frontRu from "../../../locales/ru/front.json";
 import gameMiscRu from "../../../locales/ru/game-misc.json";
 import gearRu from "../../../locales/ru/gear.json";
@@ -321,6 +336,7 @@ import calendarZh from "../../../locales/zh/calendar.json";
 import commonZh from "../../../locales/zh/common.json";
 import contributionsZh from "../../../locales/zh/contributions.json";
 import faqZh from "../../../locales/zh/faq.json";
+import formsZh from "../../../locales/zh/forms.json";
 import frontZh from "../../../locales/zh/front.json";
 import gameMiscZh from "../../../locales/zh/game-misc.json";
 import gearZh from "../../../locales/zh/gear.json";
@@ -339,6 +355,7 @@ export const resources = {
 	"es-US": {
 		gear: gearEsUs,
 		faq: faqEsUs,
+		forms: formsEsUs,
 		weapons: weaponsEsUs,
 		scrims: scrimsEsUs,
 		common: commonEsUs,
@@ -362,6 +379,7 @@ export const resources = {
 	en: {
 		gear: gear,
 		faq: faq,
+		forms: forms,
 		weapons: weapons,
 		scrims: scrimsEn,
 		common: common,
@@ -385,6 +403,7 @@ export const resources = {
 	ko: {
 		gear: gearKo,
 		faq: faqKo,
+		forms: formsKo,
 		weapons: weaponsKo,
 		scrims: scrimsKo,
 		common: commonKo,
@@ -408,6 +427,7 @@ export const resources = {
 	de: {
 		gear: gearDe,
 		faq: faqDe,
+		forms: formsDe,
 		weapons: weaponsDe,
 		scrims: scrimsDe,
 		common: commonDe,
@@ -431,6 +451,7 @@ export const resources = {
 	nl: {
 		gear: gearNl,
 		faq: faqNl,
+		forms: formsNl,
 		weapons: weaponsNl,
 		scrims: scrimsNl,
 		common: commonNl,
@@ -454,6 +475,7 @@ export const resources = {
 	"pt-BR": {
 		gear: gearPtBr,
 		faq: faqPtBr,
+		forms: formsPtBr,
 		weapons: weaponsPtBr,
 		scrims: scrimsPtBr,
 		common: commonPtBr,
@@ -477,6 +499,7 @@ export const resources = {
 	zh: {
 		gear: gearZh,
 		faq: faqZh,
+		forms: formsZh,
 		weapons: weaponsZh,
 		scrims: scrimsZh,
 		common: commonZh,
@@ -500,6 +523,7 @@ export const resources = {
 	"fr-CA": {
 		gear: gearFrCa,
 		faq: faqFrCa,
+		forms: formsFrCa,
 		weapons: weaponsFrCa,
 		scrims: scrimsFrCa,
 		common: commonFrCa,
@@ -523,6 +547,7 @@ export const resources = {
 	ru: {
 		gear: gearRu,
 		faq: faqRu,
+		forms: formsRu,
 		weapons: weaponsRu,
 		scrims: scrimsRu,
 		common: commonRu,
@@ -546,6 +571,7 @@ export const resources = {
 	it: {
 		gear: gearIt,
 		faq: faqIt,
+		forms: formsIt,
 		weapons: weaponsIt,
 		scrims: scrimsIt,
 		common: commonIt,
@@ -569,6 +595,7 @@ export const resources = {
 	ja: {
 		gear: gearJa,
 		faq: faqJa,
+		forms: formsJa,
 		weapons: weaponsJa,
 		scrims: scrimsJa,
 		common: commonJa,
@@ -592,6 +619,7 @@ export const resources = {
 	da: {
 		gear: gearDa,
 		faq: faqDa,
+		forms: formsDa,
 		weapons: weaponsDa,
 		scrims: scrimsDa,
 		common: commonDa,
@@ -615,6 +643,7 @@ export const resources = {
 	"es-ES": {
 		gear: gearEsEs,
 		faq: faqEsEs,
+		forms: formsEsEs,
 		weapons: weaponsEsEs,
 		scrims: scrimsEsEs,
 		common: commonEsEs,
@@ -638,6 +667,7 @@ export const resources = {
 	he: {
 		gear: gearHe,
 		faq: faqHe,
+		forms: formsHe,
 		weapons: weaponsHe,
 		scrims: scrimsHe,
 		common: commonHe,
@@ -661,6 +691,7 @@ export const resources = {
 	"fr-EU": {
 		gear: gearFrEu,
 		faq: faqFrEu,
+		forms: formsFrEu,
 		weapons: weaponsFrEu,
 		scrims: scrimsFrEu,
 		common: commonFrEu,
@@ -684,6 +715,7 @@ export const resources = {
 	pl: {
 		gear: gearPl,
 		faq: faqPl,
+		forms: formsPl,
 		weapons: weaponsPl,
 		scrims: scrimsPl,
 		common: commonPl,

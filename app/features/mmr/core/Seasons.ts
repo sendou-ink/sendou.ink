@@ -19,8 +19,10 @@ export const list =
 	!process.env.NODE_ENV ||
 	IS_E2E_TEST_RUN ||
 	// this gets checked when the project is running
+	// import.meta.env is undefined when Playwright bundles test code
 	(process.env.NODE_ENV === "development" &&
-		import.meta.env.VITE_PROD_MODE !== "true")
+		(typeof import.meta.env === "undefined" ||
+			import.meta.env.VITE_PROD_MODE !== "true"))
 		? ([
 				{
 					nth: 0,

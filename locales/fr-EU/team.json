@@ -41,6 +41,7 @@
 	"forms.info.name": "Veuillez noter que si vous changer le nom de l'équipe, quelqu'un d'autre pourra s'emparer de l'ancien nom et URL",
 	"forms.info.tag": "",
 	"forms.errors.duplicateName": "Il y a déjà une équipe avec ce nom",
+	"forms.errors.noOnlySpecialCharacters": "",
 	"roster.teamFull": "L'équipe est complète",
 	"roster.inviteLink.header": "Partager le lien d'invitation pour ajouter des membres",
 	"roster.members.header": "Membres",

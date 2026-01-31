@@ -1,5 +1,7 @@
 {
 	"addBuild": "Dodaj budowę",
+	"forms.title.new": "",
+	"forms.title.edit": "",
 	"reachBuildMaxCount": "",
 	"noBuilds": "Brak budów. Dodaj swoją pierwszą!",
 	"buildCard.info": "Info",
@@ -10,8 +12,8 @@
 	"forms.gear.HEAD": "Sprzęt (głowa)",
 	"forms.gear.CLOTHES": "Sprzęt (ubranie)",
 	"forms.gear.SHOES": "Sprzęt (buty)",
+	"forms.abilities": "",
 	"forms.private.info": "",
-	"forms.noGear.info": "",
 	"deleteConfirm": "Usuń budowę '{{title}}'?",
 	"stats.count.title": "",
 	"stats.ap.title": "",

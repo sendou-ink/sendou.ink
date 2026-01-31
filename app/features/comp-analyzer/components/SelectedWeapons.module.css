@@ -1,0 +1,122 @@
+.selectedWeapons {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.selectedWeaponRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.weaponImageContainer {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 56px;
+	height: 56px;
+	background-color: var(--bg-lightest);
+	border: 2px solid var(--border);
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.weaponImageContainerEmpty {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 56px;
+	height: 56px;
+	background-color: var(--bg-lighter);
+	border: 2px dashed var(--border);
+	border-radius: 50%;
+	flex-shrink: 0;
+	opacity: 0.6;
+}
+
+.weaponNamePill {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-2) var(--s-3);
+	padding-left: var(--s-5);
+	background-color: var(--bg-lightest);
+	border: 2px solid var(--border);
+	border-radius: var(--rounded-full);
+	flex: 1;
+	min-width: 0;
+}
+
+.weaponName {
+	flex: 1;
+	font-weight: var(--semi-bold);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.weaponNamePillEmpty {
+	display: flex;
+	align-items: center;
+	padding: var(--s-2) var(--s-3);
+	padding-left: var(--s-5);
+	background-color: var(--bg-lighter);
+	border: 2px dashed var(--border);
+	border-radius: var(--rounded-full);
+	flex: 1;
+	min-width: 0;
+	opacity: 0.6;
+}
+
+.weaponNameEmpty {
+	flex: 1;
+	font-weight: var(--semi-bold);
+	font-style: italic;
+	color: var(--text-lighter);
+}
+
+.removeButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 18px;
+	font-weight: bold;
+	line-height: 1;
+	color: var(--text-lighter);
+	flex-shrink: 0;
+}
+
+.removeButton:hover {
+	color: var(--theme-error);
+}
+
+.subSpecialContainer {
+	display: flex;
+	gap: var(--s-2);
+	flex-shrink: 0;
+}
+
+.subSpecialContainerSpacer {
+	width: 89px;
+}
+
+.kitIcon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	background-color: var(--bg-lightest);
+	border: 2px solid var(--border);
+	border-radius: 50%;
+}

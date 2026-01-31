@@ -10,19 +10,12 @@ type MiddlewareFn = (
 
 const CORS_HEADERS = {
 	"Access-Control-Allow-Origin": "*",
-	"Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+	"Access-Control-Allow-Methods": "GET, HEAD, POST, OPTIONS",
 	"Access-Control-Allow-Headers": "Content-Type, Authorization",
 	"Access-Control-Max-Age": "86400",
 };
 
 export const apiCorsMiddleware: MiddlewareFn = async ({ request }, next) => {
-	const url = new URL(request.url);
-	const isApiRoute = url.pathname.startsWith("/api/");
-
-	if (!isApiRoute) {
-		return next();
-	}
-
 	if (request.method === "OPTIONS") {
 		return new Response(null, {
 			status: 204,

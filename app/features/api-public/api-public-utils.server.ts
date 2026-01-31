@@ -1,24 +1,26 @@
+import type { ApiTokenType } from "~/db/tables";
 import * as ApiRepository from "~/features/api/ApiRepository.server";
 
+type CachedToken = { type: ApiTokenType; userId: number };
+
 async function loadApiTokensCache() {
-	const envTokens = process.env.PUBLIC_API_TOKENS?.split(",") ?? [];
 	const dbTokens = await ApiRepository.allApiTokens();
-	return new Set([...envTokens, ...dbTokens]);
+
+	const tokenMap = new Map<string, CachedToken>();
+
+	for (const { token, type, userId } of dbTokens) {
+		tokenMap.set(token, { type, userId });
+	}
+
+	return tokenMap;
 }
 
-let apiTokens = await loadApiTokensCache();
+let apiTokens: Map<string, CachedToken> = await loadApiTokensCache();
+
+export function getTokenInfo(token: string): CachedToken | undefined {
+	return apiTokens.get(token);
+}
 
 export async function refreshApiTokensCache() {
 	apiTokens = await loadApiTokensCache();
-}
-
-export function requireBearerAuth(req: Request) {
-	const authHeader = req.headers.get("Authorization");
-	if (!authHeader) {
-		throw new Response("Missing Authorization header", { status: 401 });
-	}
-	const token = authHeader.replace("Bearer ", "");
-	if (!apiTokens.has(token)) {
-		throw new Response("Invalid token", { status: 401 });
-	}
 }

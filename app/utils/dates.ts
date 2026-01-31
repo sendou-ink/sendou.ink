@@ -1,4 +1,8 @@
-import { CalendarDateTime, parseDate } from "@internationalized/date";
+import {
+	CalendarDate,
+	CalendarDateTime,
+	parseDate,
+} from "@internationalized/date";
 import type { Locale } from "date-fns";
 import { formatDistanceToNow as dateFnsFormatDistanceToNow } from "date-fns";
 import { da } from "date-fns/locale/da";
@@ -86,6 +90,17 @@ export function dateToDateValue(date: Date) {
 		date.getHours(),
 		date.getMinutes(),
 		date.getSeconds(),
+	);
+}
+
+/**
+ * Converts a JavaScript Date object into a CalendarDate object (used by react-aria-components for date-only pickers).
+ */
+export function dateToCalendarDate(date: Date) {
+	return new CalendarDate(
+		date.getFullYear(),
+		date.getMonth() + 1,
+		date.getDate(),
 	);
 }
 

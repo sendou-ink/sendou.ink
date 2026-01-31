@@ -309,13 +309,11 @@ describe("Account migration", () => {
 
 	it("two accounts with teams results in an error", async () => {
 		await TeamRepository.create({
-			customUrl: "team-1",
 			name: "Team 1",
 			ownerUserId: 1,
 			isMainTeam: true,
 		});
 		await TeamRepository.create({
-			customUrl: "team-2",
 			name: "Team 2",
 			ownerUserId: 2,
 			isMainTeam: true,
@@ -335,7 +333,6 @@ describe("Account migration", () => {
 
 	it("deletes past team membership status of the new user", async () => {
 		await TeamRepository.create({
-			customUrl: "team-1",
 			name: "Team 1",
 			ownerUserId: 2,
 			isMainTeam: true,
@@ -354,7 +351,6 @@ describe("Account migration", () => {
 
 	it("handles old user member of the same team as new user (old user has left the team, new user current)", async () => {
 		await TeamRepository.create({
-			customUrl: "team-1",
 			name: "Team 1",
 			ownerUserId: 2,
 			isMainTeam: true,

@@ -7,6 +7,7 @@ import { Flag } from "~/components/Flag";
 import { Image, ModeImage } from "~/components/Image";
 import { TrophyIcon } from "~/components/icons/Trophy";
 import { UsersIcon } from "~/components/icons/Users";
+import { TierPill } from "~/components/TierPill";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
@@ -79,25 +80,37 @@ export function TournamentCard({
 					) : null}
 				</div>
 				<div
-					className={clsx(styles.name, {
+					className={clsx(styles.nameRow, {
 						"mt-3": !isHostedOnSendouInk,
 						"mt-1": isHostedOnSendouInk,
 					})}
 				>
-					{tournament.name}{" "}
-					{isShowcase ? (
-						<time
-							className={clsx(styles.time, {
-								invisible: !isMounted,
-							})}
-							dateTime={databaseTimestampToDate(
-								tournament.startTime,
-							).toISOString()}
-						>
-							{time()}
-						</time>
+					<div
+						className={clsx(styles.name, {
+							[styles.nameWithTier]:
+								tournament.tier || tournament.tentativeTier,
+						})}
+					>
+						{tournament.name}
+					</div>
+					{tournament.tier ? (
+						<TierPill tier={tournament.tier} />
+					) : tournament.tentativeTier ? (
+						<TierPill tier={tournament.tentativeTier} isTentative />
 					) : null}
 				</div>
+				{isShowcase ? (
+					<time
+						className={clsx(styles.time, {
+							invisible: !isMounted,
+						})}
+						dateTime={databaseTimestampToDate(
+							tournament.startTime,
+						).toISOString()}
+					>
+						{time()}
+					</time>
+				) : null}
 				{isCalendar ? (
 					<div className="stack sm items-center my-2">
 						<Tags tags={tournament.tags} small centered />

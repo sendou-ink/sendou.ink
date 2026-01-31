@@ -493,7 +493,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				invariant(scoreOne !== scoreTwo, "Scores are equal");
 				invariant(lastResult, "Last result is missing");
 
-				if (scoreOne > scoreTwo) {
+				if (lastResult.winnerTeamId === match.opponentOne?.id) {
 					scores[0]--;
 				} else {
 					scores[1]--;

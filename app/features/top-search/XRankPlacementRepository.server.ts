@@ -67,3 +67,15 @@ export async function monthYears() {
 export type FindPlacement = InferResult<
 	ReturnType<typeof xRankPlacementsQueryBase>
 >[number];
+
+export async function refreshAllPeakXp() {
+	await db
+		.updateTable("SplatoonPlayer")
+		.set((eb) => ({
+			peakXp: eb
+				.selectFrom("XRankPlacement")
+				.select((eb) => eb.fn.max("XRankPlacement.power").as("peakXp"))
+				.whereRef("XRankPlacement.playerId", "=", "SplatoonPlayer.id"),
+		}))
+		.execute();
+}

@@ -45,6 +45,7 @@ export const DAMAGE_TYPE = [
 	"SPECIAL_TICK",
 	"SECONDARY_MODE_MAX",
 	"SECONDARY_MODE_MIN",
+	"COMBO",
 ] as const;
 
 export const damageTypeToWeaponType: Record<
@@ -93,6 +94,7 @@ export const damageTypeToWeaponType: Record<
 	SPECIAL_BUMP: "SPECIAL",
 	SPECIAL_JUMP: "SPECIAL",
 	SPECIAL_TICK: "SPECIAL",
+	COMBO: "MAIN",
 };
 
 export const RAINMAKER_SPEED_PENALTY_MODIFIER = 0.8;
