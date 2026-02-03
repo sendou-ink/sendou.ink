@@ -82,6 +82,7 @@ function FiltersForm({
 					<FormField name="isSendou" />
 					<FormField name="isRanked" />
 					<FormField name="minTeamCount" />
+					<FormField name="tiers" />
 					<FormField name="orgsIncluded" />
 					<FormField name="orgsExcluded" />
 					<FormField name="authorIdsExcluded" />
