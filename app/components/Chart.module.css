@@ -1,11 +1,29 @@
 .container {
-	font-size: var(--font-xs);
+	font-size: var(--font-2xs);
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-box);
+	height: 100%;
+	width: 100%;
+}
+
+.chart {
 	width: 100%;
 	height: 100%;
 	aspect-ratio: 16 / 9;
-	background-color: var(--color-bg-high);
-	border-radius: var(--radius-box);
-	padding: var(--s-4);
+	padding: var(--s-2);
+
+	> svg {
+		opacity: 1;
+		transition: opacity 0.2s ease-in-out;
+
+		@starting-style {
+			opacity: 0;
+		}
+	}
+
+	& *:focus {
+		outline: none;
+	}
 }
 
 .tooltip {
@@ -24,7 +42,7 @@
 }
 
 .dot {
-	border-radius: var(--radius-full);
+	border-radius: var(--radius-selector);
 	width: 12px;
 	height: 12px;
 }

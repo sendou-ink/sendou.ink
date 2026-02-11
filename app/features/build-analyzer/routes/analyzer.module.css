@@ -175,6 +175,22 @@
 	outline: initial;
 }
 
+.statChartPopover {
+	height: min(100%, 400px);
+	width: 700px;
+	max-width: 700px;
+
+	@media (max-width: 700px) {
+		width: 95vw;
+		max-width: 95vw;
+	}
+}
+
+.statChartChartContainer {
+	background-color: transparent;
+	margin: calc(var(--s-2) * -1);
+}
+
 .statCardValues {
 	display: flex;
 	justify-content: space-evenly;

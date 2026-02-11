@@ -1,8 +1,9 @@
+import { clsx } from "clsx";
 import { useTranslation } from "react-i18next";
 import {
+	CartesianGrid,
 	Line,
 	LineChart,
-	ResponsiveContainer,
 	Tooltip,
 	XAxis,
 	YAxis,
@@ -20,6 +21,8 @@ interface ChartProps {
 	lines: ChartLine[];
 	xAxisKey?: string;
 	valueSuffix?: string;
+	headerSuffix?: string;
+	containerClassName?: string;
 }
 
 interface ChartTooltipProps {
@@ -32,19 +35,18 @@ interface ChartTooltipProps {
 	label?: string | number | Date;
 	lines: ChartLine[];
 	valueSuffix?: string;
+	headerSuffix?: string;
 }
 
-const LINE_COLORS = [
-	"var(--color-info)",
-	"var(--color-warning)",
-	"var(--color-error)",
-];
+const LINE_COLORS = ["var(--color-text-accent)", "var(--color-text-second)"];
 
 export function Chart({
 	data,
 	lines,
 	xAxisKey = "x",
 	valueSuffix,
+	headerSuffix,
+	containerClassName,
 }: ChartProps) {
 	const { i18n } = useTranslation();
 
@@ -59,31 +61,60 @@ export function Chart({
 		return String(value);
 	};
 
-	if (data.length === 0) {
-		return <div className={styles.container} />;
-	}
-
 	return (
-		<div className={styles.container}>
-			<ResponsiveContainer>
-				<LineChart data={data}>
-					<XAxis dataKey={xAxisKey} tickFormatter={formatXAxis} />
-					<YAxis />
-					<Tooltip
-						content={<ChartTooltip lines={lines} valueSuffix={valueSuffix} />}
-					/>
-					{lines.map((line, index) => (
-						<Line
-							key={line.dataKey}
-							type="monotone"
-							dataKey={line.dataKey}
-							stroke={LINE_COLORS[index % LINE_COLORS.length]}
-							strokeWidth={2}
-							dot={false}
+		<div className={clsx(styles.container, containerClassName)}>
+			<LineChart data={data} responsive className={styles.chart}>
+				<XAxis
+					interval={3}
+					height={24}
+					dataKey={xAxisKey}
+					tickMargin={8}
+					tickFormatter={formatXAxis}
+					padding={{ left: 0, right: 10 }}
+					tick={{ fill: "oklab(from var(--color-text) l a b / 0.5)" }}
+					stroke="oklab(from var(--color-text) l a b / 0.25)"
+				/>
+				<YAxis
+					width="auto"
+					tickMargin={8}
+					minTickGap={12}
+					padding={{ top: 10, bottom: 0 }}
+					domain={["auto", "auto"]}
+					tick={{ fill: "oklab(from var(--color-text) l a b / 0.5)" }}
+					stroke="oklab(from var(--color-text) l a b / 0.25)"
+				/>
+				<Tooltip
+					content={
+						<ChartTooltip
+							lines={lines}
+							valueSuffix={valueSuffix}
+							headerSuffix={headerSuffix}
 						/>
-					))}
-				</LineChart>
-			</ResponsiveContainer>
+					}
+					cursor={false}
+				/>
+				<CartesianGrid
+					syncWithTicks={true}
+					stroke="oklab(from var(--color-text) l a b / 0.05)"
+				/>
+				{lines.map((line, index) => (
+					<Line
+						animationDuration={500}
+						key={line.dataKey}
+						type="monotone"
+						dataKey={line.dataKey}
+						stroke={LINE_COLORS[index % LINE_COLORS.length]}
+						strokeWidth={2}
+						dot={false}
+						activeDot={{
+							r: 6,
+							strokeWidth: 2,
+							stroke: "var(--color-bg)",
+							fill: LINE_COLORS[index % LINE_COLORS.length],
+						}}
+					/>
+				))}
+			</LineChart>
 		</div>
 	);
 }
@@ -94,6 +125,7 @@ function ChartTooltip({
 	label,
 	lines,
 	valueSuffix = "",
+	headerSuffix = "",
 }: ChartTooltipProps) {
 	const { formatDate } = useTimeFormat();
 
@@ -110,18 +142,21 @@ function ChartTooltip({
 			});
 		}
 
-		return label;
+		return label + headerSuffix;
 	};
 
 	return (
 		<div className={styles.tooltip}>
-			<h3 className="text-center text-md">{formatHeader()}</h3>
+			<h3 className="text-center text-sm">{formatHeader()}</h3>
 			{payload.map((entry, index) => {
 				const color = entry.stroke ?? LINE_COLORS[index % LINE_COLORS.length];
 				const line = lines.find((l) => l.dataKey === entry.dataKey);
 
 				return (
-					<div key={entry.dataKey} className="stack horizontal items-center sm">
+					<div
+						key={entry.dataKey}
+						className="stack horizontal items-center sm text-xs"
+					>
 						<div
 							className={styles.dot}
 							style={{

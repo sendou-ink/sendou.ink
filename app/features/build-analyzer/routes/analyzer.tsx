@@ -986,6 +986,7 @@ interface StatChartProps {
 function StatChartPopover(props: StatChartProps) {
 	return (
 		<SendouPopover
+			popoverClassName={styles.statChartPopover}
 			trigger={
 				<SendouButton
 					shape="circle"
@@ -1045,6 +1046,8 @@ function StatChart({
 			lines={chartResult.lines}
 			xAxisKey="ap"
 			valueSuffix={valueSuffix}
+			headerSuffix={t("analyzer:abilityPoints.short")}
+			containerClassName={styles.statChartChartContainer}
 		/>
 	);
 }
