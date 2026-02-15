@@ -69,6 +69,8 @@
 	"labels.scrimRequestStartTime": "",
 	"bottomTexts.scrimRequestStartTime": "",
 	"errors.dateInPast": "",
+	"errors.dateTooEarly": "",
+	"errors.dateTooLate": "",
 	"errors.dateTooFarInFuture": "",
 	"errors.minUsersExcludingYourself": "",
 	"errors.usersMustBeUnique": "",
