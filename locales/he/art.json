@@ -1,5 +1,6 @@
 {
 	"pendingApproval_one": "יש לכם תמונה {{count}} שממתינה לאישור מנחה",
+	"pendingApproval_two": "",
 	"pendingApproval_other": "יש לכם {{count}} תמונות שממתינות לאישור מנחה",
 	"madeBy": "מאת",
 	"radios.all": "הכל",

@@ -95,7 +95,7 @@ export const banUserActionSchema = z.object({
 	expiresAt: datetimeOptional({
 		label: "labels.banUserExpiresAt",
 		bottomText: "bottomTexts.banUserExpiresAtHelp",
-		min: new Date(),
+		min: () => new Date(),
 		minMessage: "errors.dateInPast",
 	}),
 });

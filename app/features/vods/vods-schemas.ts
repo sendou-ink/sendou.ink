@@ -153,7 +153,7 @@ export const vodFormBaseSchema = z.object({
 	}),
 	date: dayMonthYearRequired({
 		label: "labels.vodDate",
-		max: add(new Date(), { days: 1 }),
+		max: () => add(new Date(), { days: 1 }),
 		maxMessage: "errors.dateMustNotBeFuture",
 		minMessage: "errors.dateTooOld",
 	}),
