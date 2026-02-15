@@ -9,6 +9,7 @@
 	"pages.faq": "FAQ",
 	"pages.builds": "Sæt",
 	"pages.analyzer": "Sætanalysator",
+	"pages.comp-analyzer": "",
 	"pages.maps": "Banelister",
 	"pages.plans": "Planlægger",
 	"pages.object-damage-calculator": "Beregn Objektstade",
@@ -324,10 +325,15 @@
 	"api.title": "",
 	"api.description": "",
 	"api.noAccess": "",
-	"api.tokenLabel": "",
+	"api.readTokenLabel": "",
+	"api.readTokenDescription": "",
+	"api.writeTokenLabel": "",
+	"api.writeTokenDescription": "",
 	"api.revealButton": "",
 	"api.regenerate.heading": "",
 	"api.regenerate.button": "",
 	"api.regenerate.confirm": "",
-	"api.generate": ""
+	"api.generate": "",
+	"tier.tentative": "",
+	"tier.confirmed": ""
 }

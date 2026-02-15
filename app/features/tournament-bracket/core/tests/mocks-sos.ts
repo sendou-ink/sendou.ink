@@ -1934,6 +1934,8 @@ export const SWIM_OR_SINK_167 = (
 	ctx: {
 		id: 672,
 		parentTournamentId: null,
+		tier: null,
+		tentativeTier: null,
 		eventId: 2425,
 		discordUrl: "https://discord.gg/F7RaNUR",
 		tags: null,

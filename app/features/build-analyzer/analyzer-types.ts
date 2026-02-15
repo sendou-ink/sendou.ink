@@ -100,6 +100,42 @@ export interface BaseWeaponStats {
 	//InkConsumeMidCharge_ChargeParam?: number;
 	// SpeedInkConsumeMax_WeaponRollParam?: number;
 	// SpeedInkConsumeMin_WeaponRollParam?: number;
+
+	// Range parameters for shooters/blasters/sloshers/splatlings/dualies
+	/** Initial bullet velocity */
+	Range_SpawnSpeed?: number;
+	/** Velocity cap after straight phase */
+	Range_GoStraightStateEndMaxSpeed?: number;
+	/** Frames in straight phase */
+	Range_GoStraightToBrakeStateFrame?: number;
+	/** Gravity constant (typically 0.016) */
+	Range_FreeGravity?: number;
+	/** Air resistance during free phase (rollers only, typically 0.1) */
+	Range_FreeAirResist?: number;
+	/** Velocity multiplier (typically 2.0) */
+	Range_ZRate?: number;
+	/** Air resistance during brake phase (typically 0.36) */
+	Range_BrakeAirResist?: number;
+	/** Gravity during brake phase (typically 0.07) */
+	Range_BrakeGravity?: number;
+	/** Frames in brake phase (typically 4) */
+	Range_BrakeToFreeStateFrame?: number;
+	/** Max frames (Splatanas) or max bounces (Bloblobber) before projectile stops */
+	Range_BurstFrame?: number;
+	/** Speed multiplier after bouncing (Bloblobber only) */
+	Range_BounceAfterMaxSpeed?: number;
+
+	// Range parameters for chargers (direct distance values)
+	/** Charger full charge range */
+	DistanceFullCharge?: number;
+	/** Charger max charge range */
+	DistanceMaxCharge?: number;
+	/** Charger min charge range */
+	DistanceMinCharge?: number;
+
+	// Blaster specific
+	/** Blaster explosion radius */
+	BlastRadius?: number;
 }
 
 export interface WeaponKit {

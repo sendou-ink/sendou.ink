@@ -22,6 +22,11 @@ export const navItems = [
 		prefetch: true,
 	},
 	{
+		name: "comp-analyzer",
+		url: "comp-analyzer",
+		prefetch: true,
+	},
+	{
 		name: "builds",
 		url: "builds",
 		prefetch: true,

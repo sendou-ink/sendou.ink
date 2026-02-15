@@ -7,16 +7,13 @@ import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { safeNumberParse } from "~/utils/number";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import { requireBearerAuth } from "../api-public-utils.server";
 import type { GetUserResponse } from "../schema";
 
 const paramsSchema = z.object({
 	identifier: z.string(),
 });
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	requireBearerAuth(request);
-
+export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const t = await i18next.getFixedT("en", ["weapons"]);
 	const { identifier } = parseParams({ params, schema: paramsSchema });
 

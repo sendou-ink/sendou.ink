@@ -13,7 +13,7 @@
 	column-gap: var(--s-2);
 	font-size: var(--fonts-xs);
 	font-weight: var(--bold);
-	grid-template-columns: 2.5rem 2.25rem 2rem 1fr 3rem 1fr;
+	grid-template-columns: 2.5rem 3.5rem 2rem 1fr 3rem 1fr;
 }
 
 .teamCard {
@@ -27,7 +27,7 @@
 	column-gap: var(--s-2);
 	row-gap: var(--s-2);
 	font-size: var(--fonts-xs);
-	grid-template-columns: 2rem 2.25rem 2rem 1fr 3rem;
+	grid-template-columns: 2rem 3.5rem 2rem 1fr 3rem;
 	grid-template-areas:
 		"handle seed logo name sp"
 		"players players players players players";
@@ -48,6 +48,8 @@
 
 .nameArea {
 	grid-area: name;
+	min-width: 0;
+	overflow: hidden;
 }
 
 .spArea {
@@ -64,7 +66,7 @@
 	}
 
 	.teamCard {
-		grid-template-columns: 2.5rem 2.25rem 2rem 1fr 3rem 1fr;
+		grid-template-columns: 2.5rem 3.5rem 2rem 1fr 3rem 1fr;
 		grid-template-areas: "handle seed logo name sp players";
 		row-gap: 0;
 	}
@@ -122,6 +124,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
+	min-width: 0;
 }
 
 .teamName {

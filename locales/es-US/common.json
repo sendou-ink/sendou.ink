@@ -9,6 +9,7 @@
 	"pages.faq": "Preguntas comunes",
 	"pages.builds": "Builds",
 	"pages.analyzer": "Analizador de builds",
+	"pages.comp-analyzer": "",
 	"pages.maps": "Listas de escenarios",
 	"pages.plans": "Planeador",
 	"pages.object-damage-calculator": "Calcula daño",
@@ -326,10 +327,15 @@
 	"api.title": "",
 	"api.description": "",
 	"api.noAccess": "",
-	"api.tokenLabel": "",
+	"api.readTokenLabel": "",
+	"api.readTokenDescription": "",
+	"api.writeTokenLabel": "",
+	"api.writeTokenDescription": "",
 	"api.revealButton": "",
 	"api.regenerate.heading": "",
 	"api.regenerate.button": "",
 	"api.regenerate.confirm": "",
-	"api.generate": ""
+	"api.generate": "",
+	"tier.tentative": "",
+	"tier.confirmed": ""
 }

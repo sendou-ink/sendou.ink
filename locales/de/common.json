@@ -9,6 +9,7 @@
 	"pages.faq": "FAQ",
 	"pages.builds": "Ausrüstungen",
 	"pages.analyzer": "Ausrüstungs-Analyse",
+	"pages.comp-analyzer": "",
 	"pages.maps": "Arenen-Listen",
 	"pages.plans": "Planer",
 	"pages.object-damage-calculator": "Objekt-Schaden-Rechner",
@@ -324,10 +325,15 @@
 	"api.title": "",
 	"api.description": "",
 	"api.noAccess": "",
-	"api.tokenLabel": "",
+	"api.readTokenLabel": "",
+	"api.readTokenDescription": "",
+	"api.writeTokenLabel": "",
+	"api.writeTokenDescription": "",
 	"api.revealButton": "",
 	"api.regenerate.heading": "",
 	"api.regenerate.button": "",
 	"api.regenerate.confirm": "",
-	"api.generate": ""
+	"api.generate": "",
+	"tier.tentative": "",
+	"tier.confirmed": ""
 }

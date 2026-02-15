@@ -33,6 +33,7 @@ export interface FormContextValue<T extends z.ZodRawShape = z.ZodRawShape> {
 	onFieldChange?: (name: string, newValue: unknown) => void;
 	values: Record<string, unknown>;
 	setValue: (name: string, value: unknown) => void;
+	setValueFromPrev: (name: string, updater: (prev: unknown) => unknown) => void;
 	revalidateAll: (updatedValues: Record<string, unknown>) => void;
 	submitToServer: (values: Record<string, unknown>) => void;
 	fetcherState: "idle" | "loading" | "submitting";
@@ -160,6 +161,17 @@ export function SendouForm<T extends z.ZodRawShape>({
 		} else {
 			setValues((prev) => ({ ...prev, [name]: newValue }));
 		}
+	};
+
+	const setValueFromPrev = (
+		name: string,
+		updater: (prev: unknown) => unknown,
+	) => {
+		setValues((prevValues) => {
+			const prevValue = prevValues[name];
+			const newValue = updater(prevValue);
+			return { ...prevValues, [name]: newValue };
+		});
 	};
 
 	const validateAndPrepare = (): boolean => {
@@ -293,6 +305,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 		revalidateAll,
 		values,
 		setValue,
+		setValueFromPrev,
 		submitToServer,
 		fetcherState: fetcher.state,
 	};
@@ -383,8 +396,9 @@ function buildInitialValues<T extends z.ZodRawShape>(
 			| FormField
 			| undefined;
 
-		if (defaultValues && key in defaultValues) {
-			result[key] = defaultValues[key as keyof typeof defaultValues];
+		const defaultValue = defaultValues?.[key as keyof typeof defaultValues];
+		if (defaultValue !== undefined) {
+			result[key] = defaultValue;
 		} else if (formField) {
 			result[key] = formField.initialValue;
 		}

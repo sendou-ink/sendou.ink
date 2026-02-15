@@ -13,6 +13,7 @@ import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
 import type { ScrimFilters } from "~/features/scrims/scrims-types";
 import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
+import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { StoredWidget } from "~/features/user-page/core/widgets/types";
@@ -498,6 +499,8 @@ export interface Tournament {
 	isFinalized: Generated<DBBoolean>;
 	/** Snapshot of teams and rosters when seeds were last saved. Used to detect NEW teams/players. */
 	seedingSnapshot: JSONColumnTypeNullable<SeedingSnapshot>;
+	/** Tournament tier based on top teams' skill. 1=X, 2=S+, 3=S, 4=A+, 5=A, 6=B+, 7=B, 8=C+, 9=C */
+	tier: TournamentTierNumber | null;
 }
 
 export interface SeedingSnapshot {
@@ -767,6 +770,7 @@ export interface TournamentOrganizationSeries {
 	description: string | null;
 	substringMatches: JSONColumnType<string[]>;
 	showLeaderboard: Generated<number>;
+	tierHistory: JSONColumnTypeNullable<TournamentTierNumber[]>;
 }
 
 export interface TournamentBracketProgressionOverride {
@@ -963,11 +967,13 @@ export interface UserWidget {
 	index: number;
 	widget: JSONColumnType<StoredWidget>;
 }
+export type ApiTokenType = "read" | "write";
 
 export interface ApiToken {
 	id: GeneratedAlways<number>;
 	userId: number;
 	token: string;
+	type: Generated<ApiTokenType>;
 	createdAt: GeneratedAlways<number>;
 }
 

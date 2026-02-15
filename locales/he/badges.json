@@ -7,8 +7,8 @@
 	"tournament_other": "מוענק עבור ניצחון {{tournament}} (×{{count}})",
 	"forYourEvent": "תג לאירוע שלכם?",
 	"managedBy": "מנוהל על ידי <0></0>",
-	"madeBy": "",
-	"own.divider": "",
-	"other.divider": "",
-	"noBadgesFound": ""
+	"madeBy": "הוכן על ידי <0></0>",
+	"own.divider": "תגים מנוהלים",
+	"other.divider": "תגים אחרים",
+	"noBadgesFound": "אין תגים התואמים את החיפוש שלך"
 }

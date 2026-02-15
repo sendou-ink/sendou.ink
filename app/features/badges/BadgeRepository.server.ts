@@ -1,8 +1,11 @@
-import type { ExpressionBuilder } from "kysely";
+import type { ExpressionBuilder, NotNull } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
+import invariant from "~/utils/invariant";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { SPLATOON_3_XP_BADGE_VALUES } from "./badges-constants";
+import { findSplatoon3XpBadgeValue } from "./badges-utils";
 
 const addPermissions = <T extends { managers: { userId: number }[] }>(
 	row: T,
@@ -181,6 +184,49 @@ export function replaceOwners({
 						userId,
 					})),
 				)
+				.execute();
+		}
+	});
+}
+
+export async function syncXPBadges() {
+	return db.transaction().execute(async (trx) => {
+		for (const value of SPLATOON_3_XP_BADGE_VALUES) {
+			const badge = await trx
+				.selectFrom("Badge")
+				.select("id")
+				.where("code", "=", String(value))
+				.executeTakeFirst();
+
+			invariant(badge, `Badge ${value} not found`);
+
+			await trx
+				.deleteFrom("TournamentBadgeOwner")
+				.where("badgeId", "=", badge.id)
+				.execute();
+		}
+
+		const userTopXPowers = await trx
+			.selectFrom("SplatoonPlayer")
+			.select(["userId", "peakXp"])
+			.where("userId", "is not", null)
+			.where("peakXp", "is not", null)
+			.$narrowType<{ userId: NotNull; peakXp: NotNull }>()
+			.execute();
+
+		for (const { userId, peakXp } of userTopXPowers) {
+			const badgeValue = findSplatoon3XpBadgeValue(peakXp!);
+			if (!badgeValue) continue;
+
+			await trx
+				.insertInto("TournamentBadgeOwner")
+				.values((eb) => ({
+					badgeId: eb
+						.selectFrom("Badge")
+						.select("id")
+						.where("code", "=", String(badgeValue)),
+					userId,
+				}))
 				.execute();
 		}
 	});
