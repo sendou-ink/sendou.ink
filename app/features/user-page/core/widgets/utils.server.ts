@@ -1,4 +1,4 @@
-import { userSPLeaderboard } from "~/features/leaderboards/queries/userSPLeaderboard.server";
+import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 
 type LeaderboardTopData = {
@@ -14,7 +14,7 @@ const sqLeaderboardTopCache = new Map<
 	}
 >();
 
-export function cachedUserSQLeaderboardTopData() {
+export async function cachedUserSQLeaderboardTopData() {
 	if (sqLeaderboardTopCache.size > 0) {
 		return sqLeaderboardTopCache;
 	}
@@ -22,7 +22,7 @@ export function cachedUserSQLeaderboardTopData() {
 	const allSeasons = Seasons.allFinished();
 
 	for (const season of allSeasons) {
-		const leaderboard = userSPLeaderboard(season);
+		const leaderboard = await LeaderboardRepository.userSPLeaderboard(season);
 
 		for (const entry of leaderboard) {
 			const userId = entry.id;

@@ -2,10 +2,6 @@ import * as ArtRepository from "~/features/art/ArtRepository.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
-import {
-	allXPLeaderboard,
-	weaponXPLeaderboard,
-} from "~/features/leaderboards/queries/XPLeaderboard.server";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
@@ -64,7 +60,7 @@ export const WIDGET_LOADERS = {
 		return peakData;
 	},
 	"top-10-seasons": async (userId: number) => {
-		const cache = cachedUserSQLeaderboardTopData();
+		const cache = await cachedUserSQLeaderboardTopData();
 		const userData = cache.get(userId);
 
 		if (!userData || userData.TOP_10.times === 0) {
@@ -74,7 +70,7 @@ export const WIDGET_LOADERS = {
 		return userData.TOP_10;
 	},
 	"top-100-seasons": async (userId: number) => {
-		const cache = cachedUserSQLeaderboardTopData();
+		const cache = await cachedUserSQLeaderboardTopData();
 		const userData = cache.get(userId);
 
 		if (!userData || userData.TOP_100.times === 0) {
@@ -99,7 +95,9 @@ export const WIDGET_LOADERS = {
 		const leaderboardEntry =
 			// optimize, only check leaderboard if peak placement is high enough
 			peakPlacement.power >= 3318.9
-				? allXPLeaderboard().find((entry) => entry.id === userId)
+				? (await LeaderboardRepository.allXPLeaderboard()).find(
+						(entry) => entry.id === userId,
+					)
 				: null;
 
 		return {
@@ -126,7 +124,9 @@ export const WIDGET_LOADERS = {
 
 		const peakPlacement = placements[0];
 
-		const leaderboard = weaponXPLeaderboard(settings.weaponSplId);
+		const leaderboard = await LeaderboardRepository.weaponXPLeaderboard(
+			settings.weaponSplId,
+		);
 		const leaderboardPosition = leaderboard.findIndex(
 			(entry) => entry.id === userId,
 		);
