@@ -376,7 +376,7 @@ function adminUserWeaponPool() {
 	}
 }
 
-export async function adminUserWidgets() {
+async function adminUserWidgets() {
 	await UserRepository.upsertWidgets(ADMIN_ID, [
 		{
 			id: "bio",
