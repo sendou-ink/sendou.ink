@@ -39,7 +39,7 @@ import {
 	undefinedToNull,
 	weaponSplId,
 } from "~/utils/zod";
-import { allWidgetsFlat } from "./core/widgets/portfolio";
+import { allWidgetsFlat, findWidgetById } from "./core/widgets/portfolio";
 import {
 	COUNTRY_CODES,
 	HIGHLIGHT_CHECKBOX_NAME,
@@ -220,7 +220,21 @@ export const widgetsEditSchema = z.object({
 		safeJSONParse,
 		z
 			.array(widgetSettingsSchema)
-			.max(9), // 5 main + 4 side
+			.max(USER.MAX_MAIN_WIDGETS + USER.MAX_SIDE_WIDGETS)
+			.refine((widgets) => {
+				let mainCount = 0;
+				let sideCount = 0;
+				for (const w of widgets) {
+					const def = findWidgetById(w.id);
+					if (!def) return false;
+					if (def.slot === "main") mainCount++;
+					else sideCount++;
+				}
+				return (
+					mainCount <= USER.MAX_MAIN_WIDGETS &&
+					sideCount <= USER.MAX_SIDE_WIDGETS
+				);
+			}),
 	),
 });
 
