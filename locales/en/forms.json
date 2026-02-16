@@ -168,5 +168,19 @@
 	"labels.banUserExpiresAt": "Ban expiration date",
 	"bottomTexts.banUserExpiresAtHelp": "Leave empty for a permanent ban",
 	"labels.scrimCancelReason": "Reason for cancellation",
-	"bottomTexts.scrimCancelReasonHelp": "Explain why you are cancelling the scrim. This will be visible to the other team."
+	"bottomTexts.scrimCancelReasonHelp": "Explain why you are cancelling the scrim. This will be visible to the other team.",
+	"bottomTexts.bioMarkdown": "Supports Markdown",
+	"labels.division": "Division",
+	"options.division.both": "Both divisions",
+	"options.division.tentatek": "Tentatek only",
+	"options.division.takoroka": "Takoroka only",
+	"labels.timezone": "Timezone",
+	"labels.favoriteStage": "Favorite Stage",
+	"labels.peakXp": "Peak XP",
+	"labels.weapon": "Weapon",
+	"labels.artSource": "Art source",
+	"options.artSource.ALL": "All",
+	"options.artSource.MADE-BY": "Made by me",
+	"options.artSource.MADE-OF": "Made of me",
+	"labels.tierListUrl": "Tier List URL"
 }

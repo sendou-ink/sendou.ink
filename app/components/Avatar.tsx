@@ -11,6 +11,7 @@ const dimensions = {
 	sm: 44,
 	xsm: 62,
 	md: 81,
+	xmd: 94,
 	lg: 125,
 } as const;
 
@@ -43,7 +44,7 @@ export function Avatar({
 			? discordAvatarUrl({
 					discordAvatar: user.discordAvatar,
 					discordId: user.discordId,
-					size: size === "lg" ? "lg" : "sm",
+					size: size === "lg" || size === "xmd" ? "lg" : "sm",
 				})
 			: BLANK_IMAGE_URL); // avoid broken image placeholder
 

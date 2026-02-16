@@ -1,18 +1,28 @@
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
-import { Link, useLoaderData, useMatches } from "react-router";
+import {
+	href,
+	Link,
+	useLoaderData,
+	useMatches,
+	useOutletContext,
+} from "react-router";
 import { Avatar } from "~/components/Avatar";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Flag } from "~/components/Flag";
 import { Image, WeaponImage } from "~/components/Image";
 import { BattlefyIcon } from "~/components/icons/Battlefy";
 import { BskyIcon } from "~/components/icons/Bsky";
 import { DiscordIcon } from "~/components/icons/Discord";
+import { EditIcon } from "~/components/icons/Edit";
+import { PuzzleIcon } from "~/components/icons/Puzzle";
 import { TwitchIcon } from "~/components/icons/Twitch";
 import { YouTubeIcon } from "~/components/icons/YouTube";
+import { useUser } from "~/features/auth/core/user";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { modesShort } from "~/modules/in-game-lists/modes";
+import { countryCodeToTranslatedName } from "~/utils/i18n";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { rawSensToString } from "~/utils/strings";
@@ -24,19 +34,132 @@ import {
 	teamPage,
 	topSearchPlayerPage,
 } from "~/utils/urls";
+import type { UserPageNavItem } from "../components/UserPageIconNav";
+import { UserPageIconNav } from "../components/UserPageIconNav";
+import { Widget } from "../components/Widget";
 import { loader } from "../loaders/u.$identifier.index.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import styles from "./u.$identifier.module.css";
 export { loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["badges", "team"],
+	i18n: ["badges", "team", "org", "vods", "lfg", "builds", "weapons", "gear"],
 };
 
 export default function UserInfoPage() {
 	const data = useLoaderData<typeof loader>();
+
+	if (data.type === "new") {
+		return <NewUserInfoPage />;
+	}
+	return <OldUserInfoPage />;
+}
+
+function NewUserInfoPage() {
+	const { t, i18n } = useTranslation(["user"]);
+	const data = useLoaderData<typeof loader>();
+	const user = useUser();
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
 	const layoutData = parentRoute.data as UserPageLoaderData;
+	const { navItems } = useOutletContext<{ navItems: UserPageNavItem[] }>();
+
+	if (data.type !== "new") {
+		throw new Error("Expected new user data");
+	}
+
+	const mainWidgets = data.widgets.filter((w) => w.slot === "main");
+	const sideWidgets = data.widgets.filter((w) => w.slot === "side");
+
+	const isOwnPage = layoutData.user.id === user?.id;
+
+	return (
+		<div className={styles.container}>
+			<div className={styles.header}>
+				<Avatar user={layoutData.user} size="xmd" />
+				<div className={styles.userInfo}>
+					<div className={styles.nameGroup}>
+						<h1 className={styles.username}>{layoutData.user.username}</h1>
+						<ProfileSubtitle
+							inGameName={layoutData.user.inGameName}
+							pronouns={layoutData.user.pronouns}
+							country={layoutData.user.country}
+							language={i18n.language}
+						/>
+					</div>
+				</div>
+				<div className={styles.desktopIconNav}>
+					<UserPageIconNav items={navItems} />
+				</div>
+				{isOwnPage ? (
+					<div className={styles.editButtons}>
+						<LinkButton
+							to={href("/u/:identifier/edit-widgets", {
+								identifier:
+									layoutData.user.customUrl ?? layoutData.user.discordId,
+							})}
+							variant="outlined"
+							size="small"
+							icon={<PuzzleIcon />}
+						>
+							{t("user:widgets.edit")}
+						</LinkButton>
+						<LinkButton
+							to={href("/u/:identifier/edit", {
+								identifier:
+									layoutData.user.customUrl ?? layoutData.user.discordId,
+							})}
+							variant="outlined"
+							size="small"
+							icon={<EditIcon />}
+						>
+							{t("user:widgets.editProfile")}
+						</LinkButton>
+					</div>
+				) : null}
+			</div>
+
+			<div className={styles.mobileIconNav}>
+				<UserPageIconNav items={navItems} />
+			</div>
+
+			<div className={styles.sideCarousel}>
+				{sideWidgets.map((widget) => (
+					<Widget key={widget.id} widget={widget} user={layoutData.user} />
+				))}
+			</div>
+
+			<div className={styles.mainStack}>
+				{mainWidgets.map((widget) => (
+					<Widget key={widget.id} widget={widget} user={layoutData.user} />
+				))}
+			</div>
+
+			<div className={styles.grid}>
+				<div className={styles.main}>
+					{mainWidgets.map((widget) => (
+						<Widget key={widget.id} widget={widget} user={layoutData.user} />
+					))}
+				</div>
+				<div className={styles.side}>
+					{sideWidgets.map((widget) => (
+						<Widget key={widget.id} widget={widget} user={layoutData.user} />
+					))}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+export function OldUserInfoPage() {
+	const data = useLoaderData<typeof loader>();
+	const [, parentRoute] = useMatches();
+	invariant(parentRoute);
+	const layoutData = parentRoute.data as UserPageLoaderData;
+
+	if (data.type !== "old") {
+		throw new Error("Expected old user data");
+	}
 
 	return (
 		<div className="u__container">
@@ -81,6 +204,10 @@ function TeamInfo() {
 	const { t } = useTranslation(["team"]);
 	const data = useLoaderData<typeof loader>();
 
+	if (data.type !== "old") {
+		throw new Error("Expected old user data");
+	}
+
 	if (!data.user.team) return null;
 
 	return (
@@ -117,6 +244,10 @@ function SecondaryTeamsPopover() {
 	const { t } = useTranslation(["team"]);
 
 	const data = useLoaderData<typeof loader>();
+
+	if (data.type !== "old") {
+		throw new Error("Expected old user data");
+	}
 
 	if (data.user.secondaryTeams.length === 0) return null;
 
@@ -231,6 +362,10 @@ function ExtraInfos() {
 	const { t } = useTranslation(["user"]);
 	const data = useLoaderData<typeof loader>();
 
+	if (data.type !== "old") {
+		throw new Error("Expected old user data");
+	}
+
 	const motionSensText =
 		typeof data.user.motionSens === "number"
 			? `${t("user:motion")} ${rawSensToString(data.user.motionSens)}`
@@ -294,6 +429,10 @@ function ExtraInfos() {
 function WeaponPool() {
 	const data = useLoaderData<typeof loader>();
 
+	if (data.type !== "old") {
+		throw new Error("Expected old user data");
+	}
+
 	if (data.user.weapons.length === 0) return null;
 
 	return (
@@ -315,8 +454,56 @@ function WeaponPool() {
 	);
 }
 
+function ProfileSubtitle({
+	inGameName,
+	pronouns,
+	country,
+	language,
+}: {
+	inGameName: string | null;
+	pronouns: { subject: string; object: string } | null;
+	country: string | null;
+	language: string;
+}) {
+	const parts: React.ReactNode[] = [];
+
+	if (inGameName) {
+		parts.push(inGameName);
+	}
+
+	if (pronouns) {
+		parts.push(`${pronouns.subject}/${pronouns.object}`);
+	}
+
+	if (country) {
+		parts.push(
+			<span key="country" className="stack horizontal xs items-center">
+				<Flag countryCode={country} tiny />
+				{countryCodeToTranslatedName({ countryCode: country, language })}
+			</span>,
+		);
+	}
+
+	if (parts.length === 0) return null;
+
+	return (
+		<div className={styles.subtitle}>
+			{parts.map((part, i) => (
+				<span key={i} className="stack horizontal xs items-center">
+					{i > 0 ? <span>·</span> : null}
+					{part}
+				</span>
+			))}
+		</div>
+	);
+}
+
 function TopPlacements() {
 	const data = useLoaderData<typeof loader>();
+
+	if (data.type !== "old") {
+		throw new Error("Expected old user data");
+	}
 
 	if (data.user.topPlacements.length === 0) return null;
 
