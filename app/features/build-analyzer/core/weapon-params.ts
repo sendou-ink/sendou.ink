@@ -335,7 +335,7 @@ export const weaponParams = {
 			Jump_DegSwerve: 8,
 			Stand_DegSwerve: 0,
 			InkRecoverStop: 50,
-			InkConsume: 0.08,
+			InkConsume: 0.0912,
 		},
 		"260": {
 			overwrites: {
