@@ -260,6 +260,7 @@
 	"support.perk.joinMoreAssociations": "Возможность присоединиться к до 6 ассоциаций",
 	"support.perk.useBotToLogIn": "Лог-ин через Discord бот",
 	"support.perk.useBotToLogIn.extra": "Возможность запрость лог-ин ссылку от бота Lohi как альтернатива обычному лог-ину",
+	"support.perk.earlyAccess": "",
 	"custom.colors.title": "Пользовательские цвета",
 	"custom.colors.bg": "Фон",
 	"custom.colors.bg-darker": "Фон темнее",
