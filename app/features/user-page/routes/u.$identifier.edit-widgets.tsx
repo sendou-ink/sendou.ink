@@ -17,12 +17,15 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Form, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
+import { Input } from "~/components/Input";
 import { MainSlotIcon } from "~/components/icons/MainSlot";
+import { SearchIcon } from "~/components/icons/Search";
 import { SideSlotIcon } from "~/components/icons/SideSlot";
 import { Placeholder } from "~/components/Placeholder";
 import type { Tables } from "~/db/tables";
 import {
 	ALL_WIDGETS,
+	defaultStoredWidget,
 	findWidgetById,
 } from "~/features/user-page/core/widgets/portfolio";
 import { USER } from "~/features/user-page/user-page-constants";
@@ -90,29 +93,7 @@ export default function EditWidgetsPage() {
 
 		if (currentCount >= maxCount) return;
 
-		let newWidget: Tables["UserWidget"]["widget"];
-		// xxx: something better here
-		if (widgetId === "bio") {
-			newWidget = { id: "bio", settings: { bio: "" } };
-		} else if (widgetId === "weapon-pool") {
-			newWidget = { id: "weapon-pool", settings: { weapons: [] } };
-		} else if (widgetId === "peak-xp-unverified") {
-			newWidget = {
-				id: "peak-xp-unverified",
-				settings: { peakXp: 2000, division: "tentatek" },
-			};
-		} else if (widgetId === "sens") {
-			newWidget = {
-				id: "sens",
-				settings: {
-					controller: "s1-pro-con",
-					motionSens: null,
-					stickSens: null,
-				},
-			};
-		} else {
-			newWidget = { id: widgetId as any };
-		}
+		const newWidget = defaultStoredWidget(widgetId);
 
 		setSelectedWidgets([...selectedWidgets, newWidget]);
 
@@ -208,68 +189,92 @@ function AvailableWidgetsList({
 	onAddWidget,
 }: AvailableWidgetsListProps) {
 	const { t } = useTranslation(["user"]);
+	const [searchValue, setSearchValue] = useState("");
 
 	const widgetsByCategory = ALL_WIDGETS;
 	const categoryKeys = (
 		Object.keys(widgetsByCategory) as Array<keyof typeof widgetsByCategory>
 	).sort((a, b) => a.localeCompare(b));
 
+	const searchLower = searchValue.toLowerCase();
+
 	return (
 		<div>
-			{categoryKeys.map((category) => (
-				<div key={category} className={styles.categoryGroup}>
-					<div className={styles.categoryTitle}>
-						{t(`user:widgets.category.${category}`)}
-					</div>
-					{widgetsByCategory[category]!.map((widget) => {
-						const isSelected = selectedWidgets.some((w) => w.id === widget.id);
-						const currentCount =
-							widget.slot === "main" ? mainWidgets.length : sideWidgets.length;
-						const maxCount =
-							widget.slot === "main"
-								? USER.MAX_MAIN_WIDGETS
-								: USER.MAX_SIDE_WIDGETS;
-						const isMaxReached = currentCount >= maxCount;
+			<Input
+				className={styles.searchInput}
+				icon={<SearchIcon className={styles.searchIcon} />}
+				value={searchValue}
+				onChange={(e) => setSearchValue(e.target.value)}
+				placeholder={t("user:widgets.search")}
+			/>
+			{categoryKeys.map((category) => {
+				const filteredWidgets = widgetsByCategory[category]!.filter((widget) =>
+					(t(`user:widget.${widget.id}` as const) as string)
+						.toLowerCase()
+						.includes(searchLower),
+				);
 
-						return (
-							<div key={widget.id} className={styles.widgetCard}>
-								<div className={styles.widgetHeader}>
-									<span className={styles.widgetName}>
-										{t(`user:widget.${widget.id}` as const)}
-									</span>
-									<SendouButton
-										size="miniscule"
-										variant="outlined"
-										onPress={() => onAddWidget(widget.id)}
-										isDisabled={isSelected || isMaxReached}
-									>
-										{t("user:widgets.add")}
-									</SendouButton>
-								</div>
-								<div className={styles.widgetFooter}>
-									<div className={styles.widgetSlot}>
-										{widget.slot === "main" ? (
-											<>
-												<MainSlotIcon size={16} />
-												<span>{t("user:widgets.main")}</span>
-											</>
-										) : (
-											<>
-												<SideSlotIcon size={16} />
-												<span>{t("user:widgets.side")}</span>
-											</>
-										)}
+				if (filteredWidgets.length === 0) return null;
+
+				return (
+					<div key={category} className={styles.categoryGroup}>
+						<div className={styles.categoryTitle}>
+							{t(`user:widgets.category.${category}`)}
+						</div>
+						{filteredWidgets.map((widget) => {
+							const isSelected = selectedWidgets.some(
+								(w) => w.id === widget.id,
+							);
+							const currentCount =
+								widget.slot === "main"
+									? mainWidgets.length
+									: sideWidgets.length;
+							const maxCount =
+								widget.slot === "main"
+									? USER.MAX_MAIN_WIDGETS
+									: USER.MAX_SIDE_WIDGETS;
+							const isMaxReached = currentCount >= maxCount;
+
+							return (
+								<div key={widget.id} className={styles.widgetCard}>
+									<div className={styles.widgetHeader}>
+										<span className={styles.widgetName}>
+											{t(`user:widget.${widget.id}` as const)}
+										</span>
+										<SendouButton
+											size="miniscule"
+											variant="outlined"
+											onPress={() => onAddWidget(widget.id)}
+											isDisabled={isSelected || isMaxReached}
+										>
+											{t("user:widgets.add")}
+										</SendouButton>
 									</div>
-									<div className="text-xs font-bold">{"//"}</div>
-									<div className={styles.widgetDescription}>
-										{t(`user:widgets.description.${widget.id}` as const)}
+									<div className={styles.widgetFooter}>
+										<div className={styles.widgetSlot}>
+											{widget.slot === "main" ? (
+												<>
+													<MainSlotIcon size={16} />
+													<span>{t("user:widgets.main")}</span>
+												</>
+											) : (
+												<>
+													<SideSlotIcon size={16} />
+													<span>{t("user:widgets.side")}</span>
+												</>
+											)}
+										</div>
+										<div className="text-xs font-bold">{"//"}</div>
+										<div className={styles.widgetDescription}>
+											{t(`user:widgets.description.${widget.id}` as const)}
+										</div>
 									</div>
 								</div>
-							</div>
-						);
-					})}
-				</div>
-			))}
+							);
+						})}
+					</div>
+				);
+			})}
 		</div>
 	);
 }

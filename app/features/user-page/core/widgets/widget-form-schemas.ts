@@ -4,26 +4,26 @@ import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import {
 	array,
 	customField,
-	numberFieldOptional,
+	numberField,
 	select,
-	selectDynamicOptional,
+	selectDynamic,
 	stageSelect,
 	textAreaRequired,
 	textFieldRequired,
 	weaponPool,
-	weaponSelectOptional,
+	weaponSelect,
 } from "~/form/fields";
 import type { SelectOption } from "~/form/types";
 import { USER } from "../../user-page-constants";
 
-const bioSchema = z.object({
+export const bioSchema = z.object({
 	bio: textAreaRequired({
 		label: "labels.bio",
 		maxLength: USER.BIO_MAX_LENGTH,
 	}),
 });
 
-const bioMdSchema = z.object({
+export const bioMdSchema = z.object({
 	bio: textAreaRequired({
 		label: "labels.bio",
 		bottomText: "bottomTexts.bioMarkdown" as never,
@@ -31,7 +31,7 @@ const bioMdSchema = z.object({
 	}),
 });
 
-const xRankPeaksSchema = z.object({
+export const xRankPeaksSchema = z.object({
 	division: select({
 		label: "labels.division" as never,
 		items: [
@@ -42,8 +42,8 @@ const xRankPeaksSchema = z.object({
 	}),
 });
 
-const timezoneSchema = z.object({
-	timezone: selectDynamicOptional({
+export const timezoneSchema = z.object({
+	timezone: selectDynamic({
 		label: "labels.timezone" as never,
 	}),
 });
@@ -53,14 +53,14 @@ export const TIMEZONE_OPTIONS: SelectOption[] = TIMEZONES.map((tz) => ({
 	label: tz,
 }));
 
-const favoriteStageSchema = z.object({
+export const favoriteStageSchema = z.object({
 	stageId: stageSelect({
 		label: "labels.favoriteStage" as never,
 	}),
 });
 
-const peakXpUnverifiedSchema = z.object({
-	peakXp: numberFieldOptional({
+export const peakXpUnverifiedSchema = z.object({
+	peakXp: numberField({
 		label: "labels.peakXp" as never,
 		minLength: 4,
 		maxLength: 4,
@@ -74,13 +74,13 @@ const peakXpUnverifiedSchema = z.object({
 	}),
 });
 
-const peakXpWeaponSchema = z.object({
-	weaponSplId: weaponSelectOptional({
+export const peakXpWeaponSchema = z.object({
+	weaponSplId: weaponSelect({
 		label: "labels.weapon" as never,
 	}),
 });
 
-const weaponPoolSchema = z.object({
+export const weaponPoolSchema = z.object({
 	weapons: weaponPool({
 		label: "labels.weaponPool",
 		maxCount: USER.WEAPON_POOL_MAX_SIZE,
@@ -94,13 +94,13 @@ export const CONTROLLERS = [
 	"handheld",
 ] as const;
 
-const sensSchema = z.object({
+export const sensSchema = z.object({
 	controller: customField({ initialValue: "s2-pro-con" }, z.enum(CONTROLLERS)),
 	motionSens: customField({ initialValue: null }, z.number().nullable()),
 	stickSens: customField({ initialValue: null }, z.number().nullable()),
 });
 
-const artSchema = z.object({
+export const artSchema = z.object({
 	source: select({
 		label: "labels.artSource" as never,
 		items: ART_SOURCES.map((source) => ({
@@ -110,7 +110,7 @@ const artSchema = z.object({
 	}),
 });
 
-const linksSchema = z.object({
+export const linksSchema = z.object({
 	links: array({
 		label: "labels.urls",
 		max: 10,
@@ -121,7 +121,7 @@ const linksSchema = z.object({
 	}),
 });
 
-const tierListSchema = z.object({
+export const tierListSchema = z.object({
 	searchParams: textFieldRequired({
 		label: "labels.tierListUrl" as never,
 		leftAddon: "/tier-list-maker?",

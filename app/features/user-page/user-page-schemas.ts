@@ -148,6 +148,7 @@ export const userEditActionSchema = z
 				.nullish(),
 		),
 		showDiscordUniqueName: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
+		newProfileEnabled: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
 		commissionsOpen: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
 		commissionText: z.preprocess(
 			falsyToNull,

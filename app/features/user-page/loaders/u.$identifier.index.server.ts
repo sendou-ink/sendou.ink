@@ -3,7 +3,7 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const widgetsEnabled = await UserRepository.widgetsEnabledByUserId(
+	const widgetsEnabled = await UserRepository.widgetsEnabledByIdentifier(
 		params.identifier!,
 	);
 

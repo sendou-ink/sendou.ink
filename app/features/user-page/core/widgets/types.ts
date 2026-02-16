@@ -1,4 +1,4 @@
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import type { allWidgetsFlat } from "./portfolio";
 import type { WIDGET_LOADERS } from "./portfolio-loaders.server";
 

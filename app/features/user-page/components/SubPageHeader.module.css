@@ -4,7 +4,6 @@
 	justify-content: space-between;
 	gap: var(--s-4);
 	padding-block: var(--s-4);
-	margin-block-end: var(--s-4);
 	flex-wrap: wrap;
 }
 

@@ -21,6 +21,7 @@ const DEFAULT_FIELDS = {
 	inGameNameText: null,
 	motionSens: null,
 	showDiscordUniqueName: 1,
+	newProfileEnabled: 0,
 	stickSens: null,
 	subjectPronoun: null,
 	objectPronoun: null,

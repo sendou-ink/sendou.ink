@@ -1,24 +1,28 @@
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import {
+	href,
 	Link,
 	useLoaderData,
 	useMatches,
 	useOutletContext,
 } from "react-router";
 import { Avatar } from "~/components/Avatar";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Flag } from "~/components/Flag";
 import { Image, WeaponImage } from "~/components/Image";
 import { BattlefyIcon } from "~/components/icons/Battlefy";
 import { BskyIcon } from "~/components/icons/Bsky";
 import { DiscordIcon } from "~/components/icons/Discord";
+import { EditIcon } from "~/components/icons/Edit";
+import { PuzzleIcon } from "~/components/icons/Puzzle";
 import { TwitchIcon } from "~/components/icons/Twitch";
 import { YouTubeIcon } from "~/components/icons/YouTube";
 import { useUser } from "~/features/auth/core/user";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { modesShort } from "~/modules/in-game-lists/modes";
+import { countryCodeToTranslatedName } from "~/utils/i18n";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { rawSensToString } from "~/utils/strings";
@@ -52,7 +56,7 @@ export default function UserInfoPage() {
 }
 
 function NewUserInfoPage() {
-	const { t } = useTranslation(["user"]);
+	const { t, i18n } = useTranslation(["user"]);
 	const data = useLoaderData<typeof loader>();
 	const user = useUser();
 	const [, parentRoute] = useMatches();
@@ -74,18 +78,45 @@ function NewUserInfoPage() {
 			<div className={styles.header}>
 				<Avatar user={layoutData.user} size="xmd" />
 				<div className={styles.userInfo}>
-					<h1 className={styles.username}>{layoutData.user.username}</h1>
-					{isOwnPage ? (
-						<Link to={`/u/${layoutData.user.customUrl}/edit-widgets`}>
-							<SendouButton variant="outlined" size="small">
-								{t("user:widgets.edit")}
-							</SendouButton>
-						</Link>
-					) : null}
+					<div className={styles.nameGroup}>
+						<h1 className={styles.username}>{layoutData.user.username}</h1>
+						<ProfileSubtitle
+							inGameName={layoutData.user.inGameName}
+							pronouns={layoutData.user.pronouns}
+							country={layoutData.user.country}
+							language={i18n.language}
+						/>
+					</div>
 				</div>
 				<div className={styles.desktopIconNav}>
 					<UserPageIconNav items={navItems} />
 				</div>
+				{isOwnPage ? (
+					<div className={styles.editButtons}>
+						<LinkButton
+							to={href("/u/:identifier/edit-widgets", {
+								identifier:
+									layoutData.user.customUrl ?? layoutData.user.discordId,
+							})}
+							variant="outlined"
+							size="small"
+							icon={<PuzzleIcon />}
+						>
+							{t("user:widgets.edit")}
+						</LinkButton>
+						<LinkButton
+							to={href("/u/:identifier/edit", {
+								identifier:
+									layoutData.user.customUrl ?? layoutData.user.discordId,
+							})}
+							variant="outlined"
+							size="small"
+							icon={<EditIcon />}
+						>
+							{t("user:widgets.editProfile")}
+						</LinkButton>
+					</div>
+				) : null}
 			</div>
 
 			<div className={styles.mobileIconNav}>
@@ -419,6 +450,50 @@ function WeaponPool() {
 					</div>
 				);
 			})}
+		</div>
+	);
+}
+
+function ProfileSubtitle({
+	inGameName,
+	pronouns,
+	country,
+	language,
+}: {
+	inGameName: string | null;
+	pronouns: { subject: string; object: string } | null;
+	country: string | null;
+	language: string;
+}) {
+	const parts: React.ReactNode[] = [];
+
+	if (inGameName) {
+		parts.push(inGameName);
+	}
+
+	if (pronouns) {
+		parts.push(`${pronouns.subject}/${pronouns.object}`);
+	}
+
+	if (country) {
+		parts.push(
+			<span key="country" className="stack horizontal xs items-center">
+				<Flag countryCode={country} tiny />
+				{countryCodeToTranslatedName({ countryCode: country, language })}
+			</span>,
+		);
+	}
+
+	if (parts.length === 0) return null;
+
+	return (
+		<div className={styles.subtitle}>
+			{parts.map((part, i) => (
+				<span key={i} className="stack horizontal xs items-center">
+					{i > 0 ? <span>·</span> : null}
+					{part}
+				</span>
+			))}
 		</div>
 	);
 }

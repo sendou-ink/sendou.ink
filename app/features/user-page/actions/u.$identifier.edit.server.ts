@@ -20,7 +20,12 @@ export const action: ActionFunction = async ({ request }) => {
 		};
 	}
 
-	const { inGameNameText, inGameNameDiscriminator, ...data } = parsedInput.data;
+	const {
+		inGameNameText,
+		inGameNameDiscriminator,
+		newProfileEnabled,
+		...data
+	} = parsedInput.data;
 
 	const user = requireUser();
 	const inGameName =
@@ -42,6 +47,10 @@ export const action: ActionFunction = async ({ request }) => {
 			pronouns,
 			inGameName,
 			userId: user.id,
+		});
+
+		await UserRepository.updatePreferences(user.id, {
+			newProfileEnabled: Boolean(newProfileEnabled),
 		});
 
 		// TODO: to transaction

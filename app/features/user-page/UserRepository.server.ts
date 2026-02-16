@@ -83,6 +83,9 @@ export function findLayoutDataByIdentifier(
 	return identifierToUserIdQuery(identifier)
 		.select((eb) => [
 			...COMMON_USER_FIELDS,
+			"User.pronouns",
+			"User.country",
+			"User.inGameName",
 			"User.commissionText",
 			"User.commissionsOpen",
 			sql<Record<
@@ -267,10 +270,25 @@ export async function findProfileByIdentifier(
 	};
 }
 
-export async function widgetsEnabledByUserId(
-	_identifier: string,
-): Promise<boolean> {
-	return Promise.resolve(true);
+export async function widgetsEnabledByIdentifier(identifier: string) {
+	const row = await identifierToUserIdQuery(identifier)
+		.select(["User.preferences", "User.patronTier"])
+		.executeTakeFirst();
+
+	if (!row) return false;
+	if (!isSupporter(row)) return false;
+
+	return row?.preferences?.newProfileEnabled === true;
+}
+
+export async function preferencesByUserId(userId: number) {
+	const row = await db
+		.selectFrom("User")
+		.select("User.preferences")
+		.where("User.id", "=", userId)
+		.executeTakeFirst();
+
+	return row?.preferences ?? null;
 }
 
 export async function upsertWidgets(

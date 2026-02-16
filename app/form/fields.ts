@@ -170,6 +170,35 @@ function textFieldRefined<T extends z.ZodType<string | null>>(
 	return result as T;
 }
 
+export function numberField(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "text-field" }>,
+			| "type"
+			| "initialValue"
+			| "required"
+			| "validate"
+			| "inputType"
+			| "maxLength"
+		>
+	> & { maxLength?: number },
+) {
+	return z.coerce
+		.number()
+		.int()
+		.nonnegative()
+		.register(formRegistry, {
+			...args,
+			label: prefixKey(args.label),
+			bottomText: prefixKey(args.bottomText),
+			required: true,
+			type: "text-field",
+			inputType: "number",
+			initialValue: "",
+			maxLength: args.maxLength ?? 10,
+		});
+}
+
 export function numberFieldOptional(
 	args: WithTypedTranslationKeys<
 		Omit<
@@ -296,6 +325,24 @@ export function select<V extends string>(
 		initialValue: args.items[0].value,
 		clearable: false,
 	});
+}
+
+export function selectDynamic(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "select-dynamic" }>,
+			"type" | "initialValue" | "clearable"
+		>
+	>,
+) {
+	return z.string().register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "select-dynamic",
+		initialValue: null,
+		clearable: false,
+	}) as unknown as z.ZodType<string> & FieldWithOptions<SelectOption[]>;
 }
 
 export function selectDynamicOptional(
@@ -681,6 +728,24 @@ export function stageSelect(
 		bottomText: prefixKey(args.bottomText),
 		type: "stage-select",
 		initialValue: 1,
+		required: true,
+	});
+}
+
+export function weaponSelect(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "weapon-select" }>,
+			"type" | "initialValue" | "required"
+		>
+	>,
+) {
+	return weaponSplId.register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "weapon-select",
+		initialValue: null,
 		required: true,
 	});
 }

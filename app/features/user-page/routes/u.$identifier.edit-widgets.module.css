@@ -56,6 +56,16 @@
 	font-weight: 600;
 }
 
+.searchInput {
+	height: 40px !important;
+}
+
+.searchIcon {
+	height: 20px;
+	margin: auto;
+	margin-right: 10px;
+}
+
 .categoryGroup {
 	display: flex;
 	flex-direction: column;

@@ -1,265 +1,136 @@
-import { z } from "zod/v4";
-import { ART_SOURCES } from "~/features/art/art-types";
-import { TIMEZONES } from "~/features/lfg/lfg-constants";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import { weaponSplId } from "~/utils/zod";
-import { USER } from "../../user-page-constants";
-
-// xxx: dont redefine schemas here, reuse (or move the contents of widget-form-schemas.ts here)
-
-const BIO_WIDGET_SETTINGS_SCHEMA = z.object({
-	bio: z.string().min(1).max(USER.BIO_MAX_LENGTH),
-});
-
-const BIO_MD_WIDGET_SETTINGS_SCHEMA = z.object({
-	bio: z.string().min(1).max(USER.BIO_MD_MAX_LENGTH),
-});
-
-const X_RANK_PEAKS_WIDGET_SETTINGS_SCHEMA = z.object({
-	division: z.enum(["both", "tentatek", "takoroka"]),
-});
-
-const TIMEZONE_WIDGET_SETTINGS_SCHEMA = z.object({
-	timezone: z.string().refine((val) => TIMEZONES.includes(val)),
-});
-
-const FAVORITE_STAGE_WIDGET_SETTINGS_SCHEMA = z.object({
-	stageId: z.number().refine((val) => stageIds.includes(val as any)),
-});
-
-const WEAPON_POOL_WIDGET_SETTINGS_SCHEMA = z.object({
-	weapons: z
-		.array(
-			z.object({
-				id: weaponSplId,
-				isFavorite: z.boolean(),
-			}),
-		)
-		.max(USER.WEAPON_POOL_MAX_SIZE),
-});
-
-const PEAK_XP_WEAPON_WIDGET_SETTINGS_SCHEMA = z.object({
-	weaponSplId,
-});
-
-const PEAK_XP_UNVERIFIED_WIDGET_SETTINGS_SCHEMA = z.object({
-	peakXp: z.number().min(1500).max(6000),
-	division: z.enum(["tentatek", "takoroka"]),
-});
-
-const SENS_WIDGET_SETTINGS_SCHEMA = z.object({
-	controller: z.enum(["s1-pro-con", "s2-pro-con", "grip", "handheld"]),
-	motionSens: z.number().nullable(),
-	stickSens: z.number().nullable(),
-});
-
-const ART_WIDGET_SETTINGS_SCHEMA = z.object({
-	source: z.enum(ART_SOURCES),
-});
-
-const LINKS_WIDGET_SETTINGS_SCHEMA = z.object({
-	links: z
-		.array(z.string().trim().url().max(150))
-		.max(10)
-		.refine((arr) => arr.length === new Set(arr).size, {
-			message: "Duplicate links",
-		}),
-});
-
-const TIER_LIST_WIDGET_SETTINGS_SCHEMA = z.object({
-	searchParams: z.string().trim().min(1).max(500),
-});
+import type { z } from "zod";
+import type { StoredWidget } from "./types";
+import {
+	artSchema,
+	bioMdSchema,
+	bioSchema,
+	favoriteStageSchema,
+	linksSchema,
+	peakXpUnverifiedSchema,
+	peakXpWeaponSchema,
+	sensSchema,
+	tierListSchema,
+	timezoneSchema,
+	weaponPoolSchema,
+	xRankPeaksSchema,
+} from "./widget-form-schemas";
 
 export const ALL_WIDGETS = {
 	misc: [
-		{
+		defineWidget({
 			id: "bio",
 			slot: "main",
-			schema: BIO_WIDGET_SETTINGS_SCHEMA,
-		},
-		{
+			schema: bioSchema,
+			defaultSettings: { bio: "" },
+		}),
+		defineWidget({
 			id: "bio-md",
 			slot: "main",
-			schema: BIO_MD_WIDGET_SETTINGS_SCHEMA,
-		},
-		{
-			id: "organizations",
-			slot: "side",
-		},
-		{
-			id: "patron-since",
-			slot: "side",
-		},
-		{
+			schema: bioMdSchema,
+			defaultSettings: { bio: "" },
+		}),
+		defineWidget({ id: "organizations", slot: "side" }),
+		defineWidget({ id: "patron-since", slot: "side" }),
+		defineWidget({
 			id: "timezone",
 			slot: "side",
-			schema: TIMEZONE_WIDGET_SETTINGS_SCHEMA,
-		},
-		{
+			schema: timezoneSchema,
+			defaultSettings: { timezone: "" },
+		}),
+		defineWidget({
 			id: "favorite-stage",
 			slot: "side",
-			schema: FAVORITE_STAGE_WIDGET_SETTINGS_SCHEMA,
-		},
-		{
+			schema: favoriteStageSchema,
+			defaultSettings: { stageId: 1 },
+		}),
+		defineWidget({
 			id: "weapon-pool",
 			slot: "main",
-			schema: WEAPON_POOL_WIDGET_SETTINGS_SCHEMA,
-		},
-		{
-			id: "lfg-posts",
-			slot: "main",
-		},
-		{
+			schema: weaponPoolSchema,
+			defaultSettings: { weapons: [] },
+		}),
+		defineWidget({ id: "lfg-posts", slot: "main" }),
+		defineWidget({
 			id: "sens",
 			slot: "side",
-			schema: SENS_WIDGET_SETTINGS_SCHEMA,
-		},
-		{
-			id: "commissions",
-			slot: "side",
-		},
-		{
-			id: "social-links",
-			slot: "side",
-		},
-		{
+			schema: sensSchema,
+			defaultSettings: {
+				controller: "s1-pro-con",
+				motionSens: null,
+				stickSens: null,
+			},
+		}),
+		defineWidget({ id: "commissions", slot: "side" }),
+		defineWidget({ id: "social-links", slot: "side" }),
+		defineWidget({
 			id: "links",
 			slot: "side",
-			schema: LINKS_WIDGET_SETTINGS_SCHEMA,
-		},
-		{
+			schema: linksSchema,
+			defaultSettings: { links: [] },
+		}),
+		defineWidget({
 			id: "tier-list",
 			slot: "side",
-			schema: TIER_LIST_WIDGET_SETTINGS_SCHEMA,
-		},
+			schema: tierListSchema,
+			defaultSettings: { searchParams: "" },
+		}),
 	],
 	badges: [
-		{
-			id: "badges-owned",
-			slot: "main",
-		},
-		{
-			id: "badges-authored",
-			slot: "main",
-		},
+		defineWidget({ id: "badges-owned", slot: "main" }),
+		defineWidget({ id: "badges-authored", slot: "main" }),
 	],
-	teams: [
-		{
-			id: "teams",
-			slot: "side",
-		},
-	],
+	teams: [defineWidget({ id: "teams", slot: "side" })],
 	sendouq: [
-		{
-			id: "peak-sp",
-			slot: "side",
-		},
-		{
-			id: "top-10-seasons",
-			slot: "side",
-		},
-		{
-			id: "top-100-seasons",
-			slot: "side",
-		},
+		defineWidget({ id: "peak-sp", slot: "side" }),
+		defineWidget({ id: "top-10-seasons", slot: "side" }),
+		defineWidget({ id: "top-100-seasons", slot: "side" }),
 	],
 	xrank: [
-		{
-			id: "peak-xp",
-			slot: "side",
-		},
-		{
+		defineWidget({ id: "peak-xp", slot: "side" }),
+		defineWidget({
 			id: "peak-xp-unverified",
 			slot: "side",
-			schema: PEAK_XP_UNVERIFIED_WIDGET_SETTINGS_SCHEMA,
-		},
-		{
+			schema: peakXpUnverifiedSchema,
+			defaultSettings: { peakXp: 2000, division: "tentatek" },
+		}),
+		defineWidget({
 			id: "peak-xp-weapon",
 			slot: "side",
-			schema: PEAK_XP_WEAPON_WIDGET_SETTINGS_SCHEMA,
-		},
-		{
+			schema: peakXpWeaponSchema,
+			defaultSettings: { weaponSplId: 0 },
+		}),
+		defineWidget({
 			id: "x-rank-peaks",
 			slot: "main",
-			schema: X_RANK_PEAKS_WIDGET_SETTINGS_SCHEMA,
-		},
-		{
-			id: "top-500-weapons",
-			slot: "side",
-		},
-		{
-			id: "top-500-weapons-shooters",
-			slot: "side",
-		},
-		{
-			id: "top-500-weapons-blasters",
-			slot: "side",
-		},
-		{
-			id: "top-500-weapons-rollers",
-			slot: "side",
-		},
-		{
-			id: "top-500-weapons-brushes",
-			slot: "side",
-		},
-		{
-			id: "top-500-weapons-chargers",
-			slot: "side",
-		},
-		{
-			id: "top-500-weapons-sloshers",
-			slot: "side",
-		},
-		{
-			id: "top-500-weapons-splatlings",
-			slot: "side",
-		},
-		{
-			id: "top-500-weapons-dualies",
-			slot: "side",
-		},
-		{
-			id: "top-500-weapons-brellas",
-			slot: "side",
-		},
-		{
-			id: "top-500-weapons-stringers",
-			slot: "side",
-		},
-		{
-			id: "top-500-weapons-splatanas",
-			slot: "side",
-		},
+			schema: xRankPeaksSchema,
+			defaultSettings: { division: "both" },
+		}),
+		defineWidget({ id: "top-500-weapons", slot: "side" }),
+		defineWidget({ id: "top-500-weapons-shooters", slot: "side" }),
+		defineWidget({ id: "top-500-weapons-blasters", slot: "side" }),
+		defineWidget({ id: "top-500-weapons-rollers", slot: "side" }),
+		defineWidget({ id: "top-500-weapons-brushes", slot: "side" }),
+		defineWidget({ id: "top-500-weapons-chargers", slot: "side" }),
+		defineWidget({ id: "top-500-weapons-sloshers", slot: "side" }),
+		defineWidget({ id: "top-500-weapons-splatlings", slot: "side" }),
+		defineWidget({ id: "top-500-weapons-dualies", slot: "side" }),
+		defineWidget({ id: "top-500-weapons-brellas", slot: "side" }),
+		defineWidget({ id: "top-500-weapons-stringers", slot: "side" }),
+		defineWidget({ id: "top-500-weapons-splatanas", slot: "side" }),
 	],
 	tournaments: [
-		{
-			id: "highlighted-results",
-			slot: "side",
-		},
-		{
-			id: "placement-results",
-			slot: "side",
-		},
+		defineWidget({ id: "highlighted-results", slot: "side" }),
+		defineWidget({ id: "placement-results", slot: "side" }),
 	],
-	vods: [
-		{
-			id: "videos",
-			slot: "main",
-		},
-	],
-	builds: [
-		{
-			id: "builds",
-			slot: "main",
-		},
-	],
+	vods: [defineWidget({ id: "videos", slot: "main" })],
+	builds: [defineWidget({ id: "builds", slot: "main" })],
 	art: [
-		{
+		defineWidget({
 			id: "art",
 			slot: "main",
-			schema: ART_WIDGET_SETTINGS_SCHEMA,
-		},
+			schema: artSchema,
+			defaultSettings: { source: "ALL" },
+		}),
 	],
 } as const;
 
@@ -269,4 +140,34 @@ export function allWidgetsFlat() {
 
 export function findWidgetById(widgetId: string) {
 	return allWidgetsFlat().find((w) => w.id === widgetId);
+}
+
+function defineWidget<
+	const Id extends string,
+	const Slot extends "main" | "side",
+	S extends z.ZodObject<z.ZodRawShape>,
+>(def: {
+	id: Id;
+	slot: Slot;
+	schema: S;
+	defaultSettings: z.infer<S>;
+}): typeof def;
+
+function defineWidget<
+	const Id extends string,
+	const Slot extends "main" | "side",
+>(def: { id: Id; slot: Slot; schema?: never }): typeof def;
+function defineWidget(def: Record<string, unknown>) {
+	return def;
+}
+
+export function defaultStoredWidget(widgetId: string): StoredWidget {
+	const widget = findWidgetById(widgetId);
+	if (!widget) throw new Error(`Unknown widget: ${widgetId}`);
+
+	if ("defaultSettings" in widget) {
+		return { id: widget.id, settings: widget.defaultSettings } as StoredWidget;
+	}
+
+	return { id: widget.id } as StoredWidget;
 }

@@ -16,13 +16,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		),
 	);
 
+	const widgetsEnabled = await UserRepository.widgetsEnabledByIdentifier(
+		params.identifier!,
+	);
+
 	return {
 		user: {
 			...user,
 			css: undefined,
 		},
 		css: user.css,
-		// xxx: resolve real
-		type: "new" as const,
+		type: widgetsEnabled ? ("new" as const) : ("old" as const),
 	};
 };

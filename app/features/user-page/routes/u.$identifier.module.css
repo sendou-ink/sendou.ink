@@ -11,9 +11,7 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	column-gap: var(--s-4);
-	row-gap: var(--s-2);
-	padding-block: var(--s-4);
+	gap: var(--s-4);
 }
 
 .userInfo {
@@ -27,6 +25,26 @@
 	font-size: var(--fonts-xl);
 	font-weight: var(--bold);
 	margin: 0;
+}
+
+.subtitle {
+	font-size: var(--fonts-xxs);
+	color: var(--text-lighter);
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.nameGroup {
+	display: flex;
+	flex-direction: column;
+	line-height: 1.25;
+	align-items: center;
+}
+
+.editButtons {
+	display: flex;
+	gap: var(--s-2);
 }
 
 .mobileIconNav {
@@ -64,15 +82,14 @@
 @media screen and (min-width: 768px) {
 	.header {
 		flex-direction: row;
+		flex-wrap: wrap;
 		justify-content: flex-start;
 		align-items: center;
 		padding-block: var(--s-6);
 	}
 
-	.userInfo {
-		flex-direction: row;
-		align-items: center;
-		gap: var(--s-3);
+	.nameGroup {
+		align-items: flex-start;
 	}
 
 	.desktopIconNav {
