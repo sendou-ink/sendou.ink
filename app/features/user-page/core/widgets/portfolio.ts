@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import type { StoredWidget } from "./types";
 import {
 	artSchema,
@@ -35,7 +36,7 @@ export const ALL_WIDGETS = {
 			id: "timezone",
 			slot: "side",
 			schema: timezoneSchema,
-			defaultSettings: { timezone: "" },
+			defaultSettings: { timezone: TIMEZONES[0] },
 		}),
 		defineWidget({
 			id: "favorite-stage",
@@ -56,8 +57,8 @@ export const ALL_WIDGETS = {
 			schema: sensSchema,
 			defaultSettings: {
 				controller: "s1-pro-con",
-				motionSens: null,
-				stickSens: null,
+				motionSens: 0,
+				stickSens: 0,
 			},
 		}),
 		defineWidget({ id: "commissions", slot: "side" }),

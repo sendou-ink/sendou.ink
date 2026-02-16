@@ -5,16 +5,32 @@ import * as React from "react";
 const DANGEROUS_HTML_TAGS_REGEX =
 	/<(style|iframe|script|title|textarea|xmp|noembed|noframes|plaintext)[\s\S]*?<\/\1>|<(style|iframe|script|title|textarea|xmp|noembed|noframes|plaintext)[^>]*\/>/gi;
 
-// note: this is not handled by markdown-to-jsx currently
-const INLINE_STYLE_REGEX = /\s*style\s*=\s*(?:"[^"]*"|'[^']*')/gi;
+const CSS_URL_REGEX = /url\s*\([^)]*\)/gi;
 
 export function Markdown({ children }: { children: string }) {
 	const sanitized = children
 		.replace(DANGEROUS_HTML_TAGS_REGEX, "")
-		.replace(INLINE_STYLE_REGEX, "");
+		.replace(/style\s*=\s*("[^"]*"|'[^']*')/gi, (_match, value) => {
+			const sanitized = value.replace(CSS_URL_REGEX, "");
+			return `style=${sanitized}`;
+		});
 
 	return (
-		<MarkdownToJsx options={{ wrapper: React.Fragment }}>
+		<MarkdownToJsx
+			options={{
+				wrapper: React.Fragment,
+				overrides: {
+					br: { component: () => <br /> },
+					hr: { component: () => <hr /> },
+					img: {
+						component: (props: React.ComponentProps<"img">) => (
+							// biome-ignore lint/a11y/useAltText: parsed markdown, so we can't guarantee alt text is present
+							<img {...props} />
+						),
+					},
+				},
+			}}
+		>
 			{sanitized}
 		</MarkdownToJsx>
 	);

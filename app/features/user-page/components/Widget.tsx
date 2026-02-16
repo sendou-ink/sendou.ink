@@ -1,5 +1,4 @@
 import clsx from "clsx";
-import Markdown from "markdown-to-jsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
@@ -12,6 +11,7 @@ import { DiscordIcon } from "~/components/icons/Discord";
 import { LinkIcon } from "~/components/icons/Link";
 import { TwitchIcon } from "~/components/icons/Twitch";
 import { YouTubeIcon } from "~/components/icons/YouTube";
+import { Markdown } from "~/components/Markdown";
 import { Placement } from "~/components/Placement";
 import type { Tables } from "~/db/tables";
 import { previewUrl } from "~/features/art/art-utils";
@@ -63,9 +63,7 @@ export function Widget({
 			case "bio-md":
 				return (
 					<article>
-						<Markdown options={{ wrapper: React.Fragment }}>
-							{widget.data.bio}
-						</Markdown>
+						<Markdown>{widget.data.bio}</Markdown>
 					</article>
 				);
 			case "badges-owned":
@@ -663,13 +661,17 @@ function SensWidget({
 					<div className="stack xs items-center">
 						<div className="text-xs text-lighter">{t("user:motionSens")}</div>
 						<div className={styles.widgetValueMain}>
-							{data.motionSens ? rawSensToString(data.motionSens) : "-"}
+							{typeof data.motionSens === "number"
+								? rawSensToString(data.motionSens)
+								: "-"}
 						</div>
 					</div>
 					<div className="stack xs items-center">
 						<div className="text-xs text-lighter">{t("user:stickSens")}</div>
 						<div className={styles.widgetValueMain}>
-							{data.stickSens ? rawSensToString(data.stickSens) : "-"}
+							{typeof data.stickSens === "number"
+								? rawSensToString(data.stickSens)
+								: "-"}
 						</div>
 					</div>
 				</div>
