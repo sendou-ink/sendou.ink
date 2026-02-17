@@ -25,6 +25,7 @@ import { logger } from "~/utils/logger";
 import { safeNumberParse } from "~/utils/number";
 import { bskyUrl, twitchUrl, youtubeUrl } from "~/utils/urls";
 import type { ChatUser } from "../chat/chat-types";
+import { sortBadgesByFavorites } from "./core/badge-sorting.server";
 import { findWidgetById } from "./core/widgets/portfolio";
 import { WIDGET_LOADERS } from "./core/widgets/portfolio-loaders.server";
 import type { LoadedWidget } from "./core/widgets/types";
@@ -242,27 +243,12 @@ export async function findProfileByIdentifier(
 		return null;
 	}
 
-	const favoriteBadgeIds = favoriteBadgesOwnedAndSupporterStatusAdjusted(row);
-
 	return {
 		...row,
 		team: row.teams.find((t) => t.isMainTeam),
 		secondaryTeams: row.teams.filter((t) => !t.isMainTeam),
 		teams: undefined,
-		favoriteBadgeIds,
-		badges: row.badges.sort((a, b) => {
-			const aIdx = favoriteBadgeIds?.indexOf(a.id) ?? -1;
-			const bIdx = favoriteBadgeIds?.indexOf(b.id) ?? -1;
-
-			if (aIdx !== bIdx) {
-				if (aIdx === -1) return 1;
-				if (bIdx === -1) return -1;
-
-				return aIdx - bIdx;
-			}
-
-			return b.id - a.id;
-		}),
+		...sortBadgesByFavorites(row),
 		discordUniqueName:
 			forceShowDiscordUniqueName || row.showDiscordUniqueName
 				? row.discordUniqueName
@@ -364,33 +350,6 @@ export async function widgetsByUserId(
 	);
 
 	return loadedWidgets.filter((w) => w !== null);
-}
-
-function favoriteBadgesOwnedAndSupporterStatusAdjusted(row: {
-	favoriteBadgeIds: number[] | null;
-	badges: Array<{
-		id: number;
-	}>;
-	patronTier: number | null;
-}) {
-	// filter out favorite badges no longer owner of
-	let favoriteBadgeIds =
-		row.favoriteBadgeIds?.filter((badgeId) =>
-			row.badges.some((badge) => badge.id === badgeId),
-		) ?? null;
-
-	if (favoriteBadgeIds?.length === 0) {
-		favoriteBadgeIds = null;
-	}
-
-	// non-supporters can only have one favorite badge, handle losing supporter status
-	favoriteBadgeIds = isSupporter(row)
-		? favoriteBadgeIds
-		: favoriteBadgeIds
-			? [favoriteBadgeIds[0]]
-			: null;
-
-	return favoriteBadgeIds;
 }
 
 export function findByCustomUrl(customUrl: string) {

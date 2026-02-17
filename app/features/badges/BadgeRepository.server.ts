@@ -2,6 +2,7 @@ import type { ExpressionBuilder, NotNull } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
+import { sortBadgesByFavorites } from "~/features/user-page/core/badge-sorting.server";
 import invariant from "~/utils/invariant";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { SPLATOON_3_XP_BADGE_VALUES } from "./badges-constants";
@@ -110,20 +111,35 @@ export function findManagedByUserId(userId: number) {
 		.execute();
 }
 
-export function findByOwnerUserId(userId: number) {
-	return db
+export async function findByOwnerUserId(userId: number) {
+	const rows = await db
 		.selectFrom("BadgeOwner")
 		.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
+		.innerJoin("User", "User.id", "BadgeOwner.userId")
 		.select(({ fn }) => [
 			fn.count<number>("BadgeOwner.badgeId").as("count"),
 			"Badge.id",
 			"Badge.displayName",
 			"Badge.code",
 			"Badge.hue",
+			"User.favoriteBadgeIds",
+			"User.patronTier",
 		])
 		.where("BadgeOwner.userId", "=", userId)
 		.groupBy(["BadgeOwner.badgeId", "BadgeOwner.userId"])
 		.execute();
+
+	if (rows.length === 0) return [];
+
+	const { favoriteBadgeIds, patronTier } = rows[0];
+
+	return sortBadgesByFavorites({
+		favoriteBadgeIds,
+		badges: rows.map(
+			({ favoriteBadgeIds: _, patronTier: __, ...badge }) => badge,
+		),
+		patronTier,
+	}).badges;
 }
 
 export function findByAuthorUserId(userId: number) {
