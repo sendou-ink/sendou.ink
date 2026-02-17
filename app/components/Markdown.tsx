@@ -23,7 +23,12 @@ export function Markdown({ children }: { children: string }) {
 					br: { component: () => <br /> },
 					hr: { component: () => <hr /> },
 					img: {
-						component: (props: React.ComponentProps<"img">) => (
+						component: ({
+							children: _,
+							...props
+						}: React.ComponentProps<"img"> & {
+							children?: React.ReactNode;
+						}) => (
 							// biome-ignore lint/a11y/useAltText: parsed markdown, so we can't guarantee alt text is present
 							<img {...props} />
 						),
