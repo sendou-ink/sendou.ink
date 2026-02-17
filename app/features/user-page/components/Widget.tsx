@@ -70,6 +70,8 @@ export function Widget({
 				return <BadgeDisplay badges={widget.data} />;
 			case "badges-authored":
 				return <BadgeDisplay badges={widget.data} />;
+			case "badges-managed":
+				return <BadgeDisplay badges={widget.data} />;
 			case "teams":
 				return (
 					<Memberships
