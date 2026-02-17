@@ -618,6 +618,13 @@ export function updateIsEstablished(
 		.execute();
 }
 
+export function deleteById(organizationId: number) {
+	return db
+		.deleteFrom("TournamentOrganization")
+		.where("id", "=", organizationId)
+		.execute();
+}
+
 export function findAllSeriesWithTierHistory() {
 	return db
 		.selectFrom("TournamentOrganizationSeries")

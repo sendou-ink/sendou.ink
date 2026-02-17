@@ -3,13 +3,14 @@ import type { MetaFunction } from "react-router";
 import { Link, useLoaderData, useSearchParams } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
-import { LinkButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import {
 	SendouTab,
 	SendouTabList,
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image } from "~/components/Image";
 import { EditIcon } from "~/components/icons/Edit";
 import { LinkIcon } from "~/components/icons/Link";
@@ -97,7 +98,6 @@ export default function TournamentOrganizationPage() {
 	return (
 		<Main className="stack lg">
 			<LogoHeader />
-			<AdminControls />
 			<InfoTabs />
 			{data.organization.series.length > 0 ? (
 				<SeriesSelector series={data.organization.series} />
@@ -142,32 +142,10 @@ function LogoHeader() {
 	);
 }
 
-function AdminControls() {
-	const data = useLoaderData<typeof loader>();
-	const isAdmin = useHasRole("ADMIN");
-
-	if (!isAdmin) return null;
-
-	return (
-		<div className="stack sm">
-			<div className="text-sm font-semi-bold">Admin Controls</div>
-			<SendouForm
-				className=""
-				schema={updateIsEstablishedSchema}
-				defaultValues={{
-					isEstablished: Boolean(data.organization.isEstablished),
-				}}
-				autoSubmit
-			>
-				{({ FormField }) => <FormField name="isEstablished" />}
-			</SendouForm>
-		</div>
-	);
-}
-
 function InfoTabs() {
 	const { t } = useTranslation(["org"]);
 	const data = useLoaderData<typeof loader>();
+	const isAdmin = useHasRole("ADMIN");
 	const canBanPlayers = useHasPermission(data.organization, "BAN");
 
 	const hasSocials =
@@ -200,6 +178,11 @@ function InfoTabs() {
 							{t("org:banned.title")}
 						</SendouTab>
 					) : null}
+					{isAdmin ? (
+						<SendouTab id="admin" icon={<LockIcon />}>
+							Admin
+						</SendouTab>
+					) : null}
 				</SendouTabList>
 				<SendouTabPanel id="socials">
 					<SocialLinksList links={data.organization.socials ?? []} />
@@ -215,7 +198,39 @@ function InfoTabs() {
 						<BannedUsersList bannedUsers={data.bannedUsers} />
 					</SendouTabPanel>
 				) : null}
+				{isAdmin ? (
+					<SendouTabPanel id="admin">
+						<AdminControls />
+					</SendouTabPanel>
+				) : null}
 			</SendouTabs>
+		</div>
+	);
+}
+
+function AdminControls() {
+	const data = useLoaderData<typeof loader>();
+
+	return (
+		<div className="stack sm">
+			<SendouForm
+				className=""
+				schema={updateIsEstablishedSchema}
+				defaultValues={{
+					isEstablished: Boolean(data.organization.isEstablished),
+				}}
+				autoSubmit
+			>
+				{({ FormField }) => <FormField name="isEstablished" />}
+			</SendouForm>
+			<FormWithConfirm
+				dialogHeading={`Delete organization "${data.organization.name}"?`}
+				fields={[["_action", "DELETE_ORGANIZATION"]]}
+			>
+				<SendouButton variant="minimal-destructive">
+					Delete organization
+				</SendouButton>
+			</FormWithConfirm>
 		</div>
 	);
 }
