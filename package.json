@@ -33,8 +33,8 @@
 		"knip": "knip"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.990.0",
-		"@aws-sdk/lib-storage": "^3.990.0",
+		"@aws-sdk/client-s3": "^3.991.0",
+		"@aws-sdk/lib-storage": "^3.991.0",
 		"@date-fns/tz": "^1.4.1",
 		"@dnd-kit/core": "^6.3.1",
 		"@dnd-kit/modifiers": "^9.0.0",
