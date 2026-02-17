@@ -340,34 +340,44 @@ export function SendouForm<T extends z.ZodRawShape>({
 				})
 			: children;
 
+	const formContent = (
+		<>
+			{title ? <h2 className={styles.title}>{title}</h2> : null}
+			<React.Fragment key={locationKey}>{resolvedChildren}</React.Fragment>
+			{autoSubmit || autoApply ? null : (
+				<div className="mt-4 stack horizontal md mx-auto justify-center">
+					<SubmitButton
+						_action={_action}
+						testId={submitButtonTestId}
+						state={fetcher.state}
+					>
+						{submitButtonText ?? t("submit")}
+					</SubmitButton>
+					{secondarySubmit}
+				</div>
+			)}
+			{fallbackError ? (
+				<div className="mt-4 mx-auto" data-testid="fallback-form-error">
+					<FormMessage type="error">{fallbackError}</FormMessage>
+				</div>
+			) : null}
+		</>
+	);
+
 	return (
 		<FormContext.Provider value={contextValue as FormContextValue}>
-			<form
-				method={method}
-				action={action}
-				className={className ?? styles.form}
-				onSubmit={handleSubmit}
-			>
-				{title ? <h2 className={styles.title}>{title}</h2> : null}
-				<React.Fragment key={locationKey}>{resolvedChildren}</React.Fragment>
-				{autoSubmit || autoApply ? null : (
-					<div className="mt-4 stack horizontal md mx-auto justify-center">
-						<SubmitButton
-							_action={_action}
-							testId={submitButtonTestId}
-							state={fetcher.state}
-						>
-							{submitButtonText ?? t("submit")}
-						</SubmitButton>
-						{secondarySubmit}
-					</div>
-				)}
-				{fallbackError ? (
-					<div className="mt-4 mx-auto" data-testid="fallback-form-error">
-						<FormMessage type="error">{fallbackError}</FormMessage>
-					</div>
-				) : null}
-			</form>
+			{autoApply && onApply ? (
+				<div className={className ?? styles.form}>{formContent}</div>
+			) : (
+				<form
+					method={method}
+					action={action}
+					className={className ?? styles.form}
+					onSubmit={handleSubmit}
+				>
+					{formContent}
+				</form>
+			)}
 		</FormContext.Provider>
 	);
 }

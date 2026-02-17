@@ -538,10 +538,10 @@ function TimezoneWidget({ timezone }: { timezone: string }) {
 
 	return (
 		<div className="stack sm items-center">
-			<div className={styles.widgetValueMain}>
+			<div className={styles.widgetValueMain} suppressHydrationWarning>
 				{formatter.format(currentTime)}
 			</div>
-			<div className={styles.widgetValueFooter}>
+			<div className={styles.widgetValueFooter} suppressHydrationWarning>
 				{dateFormatter.format(currentTime)}
 			</div>
 		</div>
