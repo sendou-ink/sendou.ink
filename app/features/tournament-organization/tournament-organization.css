@@ -164,6 +164,7 @@
 
 .org__social-link {
 	font-size: var(--fonts-sm);
+	color: var(--text-main);
 	display: flex;
 	gap: var(--s-2);
 	align-items: center;

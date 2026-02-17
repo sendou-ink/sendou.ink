@@ -55,6 +55,7 @@
 	max-height: var(--match-height);
 	border-radius: var(--rounded-sm);
 	background-color: var(--bg-light-variation);
+	color: var(--text-main);
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
 	padding: 0 var(--s-2);
