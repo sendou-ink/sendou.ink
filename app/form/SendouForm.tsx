@@ -130,14 +130,27 @@ export function SendouForm<T extends z.ZodRawShape>({
 
 	React.useLayoutEffect(() => {
 		const serverFieldErrors = fetcher.data?.fieldErrors ?? {};
-		for (const [fieldName, errorMessage] of Object.entries(serverFieldErrors)) {
+		const errorEntries = Object.entries(serverFieldErrors);
+		if (errorEntries.length === 0) {
+			setFallbackError(null);
+			return;
+		}
+
+		for (const [fieldName, errorMessage] of errorEntries) {
 			const errorElement = document.getElementById(errorMessageId(fieldName));
 			if (!errorElement) {
 				setFallbackError(`${t(errorMessage as never)} (${fieldName})`);
 				return;
 			}
 		}
+
 		setFallbackError(null);
+
+		const firstErrorField = errorEntries[0][0];
+		const firstErrorElement = document.getElementById(
+			errorMessageId(firstErrorField),
+		);
+		firstErrorElement?.scrollIntoView({ behavior: "smooth", block: "center" });
 	}, [fetcher.data, t]);
 
 	const serverErrors = visibleServerErrors as Partial<
