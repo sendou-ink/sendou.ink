@@ -33,8 +33,8 @@
 		"knip": "knip"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.990.0",
-		"@aws-sdk/lib-storage": "^3.990.0",
+		"@aws-sdk/client-s3": "^3.992.0",
+		"@aws-sdk/lib-storage": "^3.992.0",
 		"@date-fns/tz": "^1.4.1",
 		"@dnd-kit/core": "^6.3.1",
 		"@dnd-kit/modifiers": "^9.0.0",
@@ -109,7 +109,7 @@
 		"i18next-locales-sync": "^2.1.1",
 		"knip": "^5.83.1",
 		"ley": "^0.8.1",
-		"sql-formatter": "^15.7.1",
+		"sql-formatter": "^15.7.2",
 		"tsx": "^4.21.0",
 		"typescript": "^5.9.3",
 		"vite": "^7.3.1",
