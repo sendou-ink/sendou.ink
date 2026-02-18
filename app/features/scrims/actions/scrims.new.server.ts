@@ -8,11 +8,7 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormData } from "~/form/parse.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-import {
-	actionError,
-	errorToast,
-	errorToastIfFalsy,
-} from "~/utils/remix.server";
+import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { scrimsPage } from "~/utils/urls";
 import * as SQGroupRepository from "../../sendouq/SQGroupRepository.server";
@@ -21,7 +17,6 @@ import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { LUTI_DIVS, SCRIM } from "../scrims-constants";
 import {
 	type fromSchema,
-	type newRequestSchema,
 	type RANGE_END_OPTIONS,
 	scrimsNewFormSchema,
 } from "../scrims-schemas";
@@ -43,18 +38,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	if (data.from.mode === "PICKUP") {
 		if (data.from.users.includes(user.id)) {
-			return actionError<typeof newRequestSchema>({
-				msg: "Don't add yourself to the pickup member list",
-				field: "from.root",
-			});
+			return {
+				fieldErrors: { from: "Don't add yourself to the pickup member list" },
+			};
 		}
 
 		const pickupUserError = await validatePickup(data.from.users, user.id);
 		if (pickupUserError) {
-			return actionError<typeof newRequestSchema>({
-				msg: pickupUserError.error,
-				field: "from.root",
-			});
+			return { fieldErrors: { from: pickupUserError.error } };
 		}
 	}
 
