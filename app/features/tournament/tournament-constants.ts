@@ -1,5 +1,7 @@
+import { TEAM } from "../team/team-constants";
+
 export const TOURNAMENT = {
-	TEAM_NAME_MAX_LENGTH: 32,
+	TEAM_NAME_MAX_LENGTH: TEAM.NAME_MAX_LENGTH,
 	COUNTERPICK_MAPS_PER_MODE: 2,
 	COUNTERPICK_MAX_STAGE_REPEAT: 2,
 	COUNTERPICK_ONE_MODE_TOURNAMENT_MAPS_PER_MODE: 6,
@@ -74,6 +76,31 @@ export const LEAGUES =
 							{
 								weekNumber: 14,
 								year: 2025,
+							},
+						],
+					},
+					{
+						tournamentId: 3192,
+						weeks: [
+							{
+								weekNumber: 9,
+								year: 2026,
+							},
+							{
+								weekNumber: 10,
+								year: 2026,
+							},
+							{
+								weekNumber: 11,
+								year: 2026,
+							},
+							{
+								weekNumber: 12,
+								year: 2026,
+							},
+							{
+								weekNumber: 13,
+								year: 2026,
 							},
 						],
 					},

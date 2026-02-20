@@ -179,6 +179,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	fixAdminId,
 	makeArtists,
 	adminUserWeaponPool,
+	adminUserWidgets,
 	userProfiles,
 	userMapModePreferences,
 	userQWeaponPool,
@@ -373,6 +374,30 @@ function adminUserWeaponPool() {
 			)
 			.run({ userId: ADMIN_ID, weaponSplId, order: i + 1 });
 	}
+}
+
+async function adminUserWidgets() {
+	await UserRepository.upsertWidgets(ADMIN_ID, [
+		{
+			id: "bio",
+			settings: { bio: "" },
+		},
+		{
+			id: "badges-owned",
+		},
+		{
+			id: "teams",
+		},
+		{
+			id: "organizations",
+		},
+		{
+			id: "peak-sp",
+		},
+		{
+			id: "peak-xp",
+		},
+	]);
 }
 
 function nzapUser() {

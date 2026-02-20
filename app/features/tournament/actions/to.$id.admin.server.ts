@@ -13,6 +13,7 @@ import {
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { deleteSub } from "~/features/tournament-subs/queries/deleteSub.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -63,6 +64,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 			errorToastIfFalsy(
 				!tournament.teamMemberOfByUser({ id: data.userId }),
 				"User already on a team",
+			);
+			errorToastIfFalsy(
+				(await UserRepository.findLeanById(data.userId))?.friendCode,
+				"User has no friend code set",
 			);
 
 			await TournamentTeamRepository.create({
@@ -235,6 +240,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 			errorToastIfFalsy(
 				!userIsBanned(data.userId),
 				"User trying to be added currently has an active ban from sendou.ink",
+			);
+
+			errorToastIfFalsy(
+				(await UserRepository.findLeanById(data.userId))?.friendCode,
+				"User has no friend code set",
 			);
 
 			joinTeam({

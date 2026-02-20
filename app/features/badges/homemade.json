@@ -75,6 +75,10 @@
 		"displayName": "Barnacle Bash",
 		"authorDiscordId": "181270348262539265"
 	},
+	"bcoboon": {
+		"displayName": "Barracuda Boon",
+		"authorDiscordId": "338103199900893184"
+	},
 	"beach223": {
 		"displayName": "Summer Days",
 		"authorDiscordId": "1170249805373657093"
@@ -213,6 +217,10 @@
 	},
 	"chishoals": {
 		"displayName": "Chi-Shoals",
+		"authorDiscordId": "528851510222782474"
+	},
+	"classascen": {
+		"displayName": "Class Ascendency",
 		"authorDiscordId": "528851510222782474"
 	},
 	"climbspire": {
@@ -931,6 +939,10 @@
 		"displayName": "The REC Center",
 		"authorDiscordId": "1320944066002681876"
 	},
+	"redcrimsonbucket": {
+		"displayName": "Crimson Bucket",
+		"authorDiscordId": "338806780446638082"
+	},
 	"remix": {
 		"displayName": "Remix Rumble",
 		"authorDiscordId": "528851510222782474"
@@ -1059,6 +1071,18 @@
 		"displayName": "Shrimp of the Day",
 		"authorDiscordId": "309327923129745409"
 	},
+	"shs01": {
+		"displayName": "Sweetheart Splats",
+		"authorDiscordId": "707620991500550235"
+	},
+	"shs02": {
+		"displayName": "Sweetheart Splats 2nd place",
+		"authorDiscordId": "707620991500550235"
+	},
+	"shs03": {
+		"displayName": "Sweetheart Splats 3rd place",
+		"authorDiscordId": "707620991500550235"
+	},
 	"shscap": {
 		"displayName": "Sheep Happens (Skill Capped)",
 		"authorDiscordId": "758345384585592902"
@@ -1066,6 +1090,10 @@
 	"silverstars": {
 		"displayName": "Leblanc Hideout Beta Bracket",
 		"authorDiscordId": "338806780446638082"
+	},
+	"skycat": {
+		"displayName": "Skycat Achievements",
+		"authorDiscordId": "776557393848434718"
 	},
 	"slyeion": {
 		"displayName": "Sylveon",
@@ -1354,6 +1382,10 @@
 	"urchincup": {
 		"displayName": "Urchin-Cup",
 		"authorDiscordId": "338806780446638082"
+	},
+	"valentines2v2tuesdays": {
+		"displayName": "Valentines 2v2 TUESDAYS",
+		"authorDiscordId": "754368445910614046"
 	},
 	"vchargersplash": {
 		"displayName": "Charger Assault",

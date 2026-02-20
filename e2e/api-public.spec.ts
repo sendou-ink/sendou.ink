@@ -49,6 +49,19 @@ test.describe("Public API", () => {
 		expect(response.headers()["access-control-allow-origin"]).toBe("*");
 	});
 
+	test("GET user IDs endpoint works without authentication", async ({
+		page,
+	}) => {
+		await seed(page);
+
+		const response = await page.request.fetch(`/api/user/${ADMIN_ID}/ids`);
+
+		expect(response.status()).toBe(200);
+		const data = await response.json();
+		expect(data.id).toBe(ADMIN_ID);
+		expect(data.discordId).toBeTruthy();
+	});
+
 	test("creates read API token and calls public endpoint", async ({ page }) => {
 		await seed(page);
 		await impersonate(page);

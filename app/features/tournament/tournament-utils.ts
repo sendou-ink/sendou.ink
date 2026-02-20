@@ -280,6 +280,10 @@ export function compareTeamsForOrdering(
 		return (a.startingBracketIdx ?? 0) - (b.startingBracketIdx ?? 0);
 	}
 
+	if (a.seed !== null && b.seed !== null) {
+		return a.seed - b.seed;
+	}
+
 	const aIsFull = a.members.length >= minMembersPerTeam;
 	const bIsFull = b.members.length >= minMembersPerTeam;
 
@@ -288,10 +292,6 @@ export function compareTeamsForOrdering(
 	}
 	if (!aIsFull && bIsFull) {
 		return 1;
-	}
-
-	if (a.seed !== null && b.seed !== null) {
-		return a.seed - b.seed;
 	}
 
 	if (

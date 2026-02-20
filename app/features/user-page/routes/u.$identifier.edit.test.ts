@@ -21,9 +21,10 @@ const DEFAULT_FIELDS = {
 	inGameNameText: null,
 	motionSens: null,
 	showDiscordUniqueName: 1,
+	newProfileEnabled: 0,
 	stickSens: null,
-	objectPronoun: null,
 	subjectPronoun: null,
+	objectPronoun: null,
 	weapons: JSON.stringify([
 		{ weaponSplId: 1 as MainWeaponId, isFavorite: 0 },
 	]) as any,

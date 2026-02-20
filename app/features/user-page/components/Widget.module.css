@@ -1,0 +1,312 @@
+.widget {
+	background-color: var(--bg);
+	border-radius: var(--rounded);
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding-block: var(--s-2);
+	border-bottom: 2px solid var(--bg-lightest);
+}
+
+.headerText {
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin: 0;
+	color: var(--text-lighter);
+}
+
+.headerLink {
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--theme);
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	padding-block: var(--s-4);
+}
+
+.memberships {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.membership {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2-5);
+	color: var(--text);
+	margin-block-end: var(--s-1);
+	border-radius: var(--rounded-sm);
+	transition: background-color 0.2s;
+}
+
+.membershipInfo {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.membershipName {
+	font-weight: var(--semi-bold);
+}
+
+.membershipRole {
+	font-size: var(--fonts-xxs);
+	color: var(--text-lighter);
+}
+
+.peakValue {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.widgetValueMain {
+	font-size: var(--fonts-xl);
+	font-weight: var(--semi-bold);
+	color: var(--text);
+}
+
+.widgetValueFooter {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--semi-bold);
+	color: var(--text-lighter);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.highlightedResults {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.result {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2-5);
+}
+
+.resultPlacement {
+	flex-shrink: 0;
+}
+
+.resultInfo {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+	flex: 1;
+	line-height: 1.25;
+}
+
+.resultName {
+	font-weight: var(--semi-bold);
+}
+
+.tournamentName {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	max-width: 100%;
+	overflow: hidden;
+}
+
+.tournamentName a {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+	max-width: 175px;
+}
+
+.resultDate {
+	font-size: var(--fonts-xxs);
+	color: var(--text-lighter);
+}
+
+.videos {
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.weaponGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+	gap: var(--s-2);
+	justify-items: center;
+}
+
+.weaponCount {
+	margin-top: var(--s-3);
+	text-align: center;
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	color: var(--text-lighter);
+}
+
+.weaponCountComplete {
+	color: var(--theme-success);
+}
+
+.lfgPosts {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.lfgPost {
+	color: var(--text);
+	font-size: var(--fonts-sm);
+	border-radius: var(--rounded-sm);
+	padding: var(--s-2);
+	transition: background-color 0.2s;
+	background-color: var(--bg-lighter);
+}
+
+.lfgPost:hover {
+	background-color: var(--bg-lightest);
+}
+
+.xRankPeaks {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-3);
+	justify-content: center;
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+}
+
+.xRankPeakMode {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.xRankPeakModeIconWrapper {
+	position: relative;
+	width: 24px;
+	height: 24px;
+}
+
+.xRankPeakDivision {
+	position: absolute;
+	bottom: -2px;
+	right: -2px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--bg-lightest);
+	border-radius: 50%;
+	padding: 1px;
+}
+
+.placementResults {
+	display: flex;
+	gap: var(--s-4);
+	justify-content: center;
+	align-items: center;
+}
+
+.placementResult {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+}
+
+.builds {
+	display: flex;
+	gap: var(--s-3);
+	overflow-x: auto;
+	padding-block: var(--s-2);
+}
+
+.artGrid {
+	display: flex;
+	gap: var(--s-3);
+	overflow-x: auto;
+	padding-block: var(--s-2);
+}
+
+.artThumbnail {
+	height: 300px;
+	object-fit: contain;
+	flex-shrink: 0;
+}
+
+.socialLinks {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.socialLink {
+	font-size: var(--fonts-sm);
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+	word-break: break-all;
+	overflow-wrap: break-word;
+}
+
+.socialLink svg {
+	width: 18px;
+}
+
+.socialLinkIconContainer {
+	background-color: var(--bg-lightest);
+	display: grid;
+	place-items: center;
+	border-radius: var(--rounded);
+	padding: var(--s-2);
+	flex-shrink: 0;
+}
+
+.socialLinkIconContainer svg {
+	width: 18px;
+	height: 18px;
+	fill: var(--text);
+}
+
+.socialLinkIconContainer.twitch svg {
+	fill: #9146ff;
+}
+
+.socialLinkIconContainer.youtube svg {
+	fill: #f00;
+}
+
+.socialLinkIconContainer.bsky path {
+	fill: #1285fe;
+}
+
+.socialLinkIconContainer.discord svg {
+	fill: #5865f2;
+}
+
+.socialLinksIcons {
+	display: flex;
+	gap: var(--s-2);
+	justify-content: center;
+	flex-wrap: wrap;
+}

@@ -9,6 +9,8 @@ updates:
         update-types:
           - "minor"
           - "patch"
+        exclude-patterns:
+          - "@biomejs/*"
     ignore:
       - dependency-name: "tldraw"
       - dependency-name: "@tldraw/*"
