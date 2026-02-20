@@ -73,8 +73,6 @@ export default function TournamentRegisterPage() {
 	const isMounted = useIsMounted();
 	const tournament = useTournament();
 
-	const startsAtEvenHour = tournament.ctx.startTime.getMinutes() === 0;
-
 	return (
 		<div className={clsx("stack lg", containerClassName("normal"))}>
 			<div className="tournament__logo-container">
@@ -120,7 +118,7 @@ export default function TournamentRegisterPage() {
 									<TimePopover
 										time={tournament.ctx.startTime}
 										options={{
-											minute: startsAtEvenHour ? undefined : "numeric",
+											minute: "numeric",
 											hour: "numeric",
 											day: "numeric",
 											month: "long",
