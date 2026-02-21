@@ -33,10 +33,7 @@ export const lookingSchema = z.union([
 		value: z.preprocess(
 			falsyToNull,
 			// xxx: use SendouForm style? (but would need SQ to be migrated too)
-			z
-				.string()
-				.max(TOURNAMENT_LFG.PUBLIC_NOTE_MAX_LENGTH)
-				.nullable(),
+			z.string().max(TOURNAMENT_LFG.PUBLIC_NOTE_MAX_LENGTH).nullable(),
 		),
 	}),
 	z.object({

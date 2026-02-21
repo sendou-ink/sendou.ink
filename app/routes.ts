@@ -108,6 +108,8 @@ export default [
 		route("results", "features/tournament/routes/to.$id.results.tsx"),
 		route("streams", "features/tournament/routes/to.$id.streams.tsx"),
 
+		route("looking", "features/tournament-lfg/routes/to.$id.looking.tsx"),
+
 		route("subs", "features/tournament-subs/routes/to.$id.subs.tsx"),
 		route("subs/new", "features/tournament-subs/routes/to.$id.subs.new.tsx"),
 
