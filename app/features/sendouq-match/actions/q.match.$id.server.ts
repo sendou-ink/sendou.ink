@@ -133,6 +133,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					return { error: "cant-cancel" as const };
 				}
 
+				if (result.status === "DUPLICATE") {
+					break;
+				}
+
 				await refreshSendouQInstance();
 
 				if (match.chatCode) {

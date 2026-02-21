@@ -577,7 +577,8 @@ export type ReportScoreResult =
 export type CancelMatchResult =
 	| { status: "CANCEL_REPORTED"; shouldRefreshCaches: false }
 	| { status: "CANCEL_CONFIRMED"; shouldRefreshCaches: true }
-	| { status: "CANT_CANCEL"; shouldRefreshCaches: false };
+	| { status: "CANT_CANCEL"; shouldRefreshCaches: false }
+	| { status: "DUPLICATE"; shouldRefreshCaches: false };
 
 type WeaponInput = {
 	groupMatchMapId: number;
@@ -794,7 +795,7 @@ export async function cancelMatch({
 	});
 
 	if (compared === "DUPLICATE") {
-		return { status: "CANCEL_REPORTED", shouldRefreshCaches: false };
+		return { status: "DUPLICATE", shouldRefreshCaches: false };
 	}
 
 	if (compared === "DIFFERENT") {
