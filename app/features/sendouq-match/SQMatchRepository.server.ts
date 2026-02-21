@@ -681,7 +681,11 @@ export async function reportScore({
 		newWeapons: weapons,
 		newReportedMapsCount: winners.length,
 	});
-	const weaponsForDb = mergedWeapons.map(({ mapIndex: _, ...rest }) => rest);
+	const weaponsForDb = mergedWeapons.map((w) => ({
+		groupMatchMapId: w.groupMatchMapId,
+		userId: w.userId,
+		weaponSplId: w.weaponSplId,
+	}));
 
 	if (compared === "DUPLICATE") {
 		await ReportedWeaponRepository.replaceByMatchId(matchId, weaponsForDb);
@@ -805,7 +809,10 @@ export async function cancelMatch({
 		return { status: "CANCEL_REPORTED", shouldRefreshCaches: false };
 	}
 
-	await lockMatchWithoutSkillChange(match.id);
+	await db.transaction().execute(async (trx) => {
+		await SQGroupRepository.setAsInactive(reporterGroupId, trx);
+		await lockMatchWithoutSkillChange(match.id, trx);
+	});
 	return { status: "CANCEL_CONFIRMED", shouldRefreshCaches: true };
 }
 

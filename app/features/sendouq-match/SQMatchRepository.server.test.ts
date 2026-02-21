@@ -423,6 +423,11 @@ describe("cancelMatch", () => {
 		expect(result.status).toBe("CANCEL_CONFIRMED");
 		expect(result.shouldRefreshCaches).toBe(true);
 
+		const alphaGroup = await fetchGroup(alphaGroupId);
+		const bravoGroup = await fetchGroup(bravoGroupId);
+		expect(alphaGroup?.status).toBe("INACTIVE");
+		expect(bravoGroup?.status).toBe("INACTIVE");
+
 		const skills = await fetchSkills(match.id);
 		expect(skills).toHaveLength(1);
 		expect(skills[0].season).toBe(-1);

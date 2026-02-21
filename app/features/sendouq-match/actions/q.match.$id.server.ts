@@ -51,13 +51,17 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					(await ReportedWeaponRepository.findByMatchId(matchId)) ?? [];
 				const mergedWeapons = mergeReportedWeapons({
 					oldWeapons: oldReportedWeapons,
-					newWeapons: data.weapons as (ReportedWeapon & {
-						mapIndex: number;
-						groupMatchMapId: number;
-					})[],
+					newWeapons: data.weapons,
 					newReportedMapsCount: data.winners.length,
 				});
-				await ReportedWeaponRepository.replaceByMatchId(matchId, mergedWeapons);
+				await ReportedWeaponRepository.replaceByMatchId(
+					matchId,
+					mergedWeapons.map((w) => ({
+						groupMatchMapId: w.groupMatchMapId,
+						userId: w.userId,
+						weaponSplId: w.weaponSplId,
+					})),
+				);
 				return null;
 			}
 
@@ -87,6 +91,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					reportedByUserId: user.id,
 					winners: data.winners,
 				});
+
+				try {
+					refreshUserSkills(Seasons.currentOrPrevious()!.nth);
+				} catch (error) {
+					logger.warn("Error refreshing user skills", error);
+				}
+				refreshStreamsCache();
 
 				await refreshSendouQInstance();
 
@@ -231,7 +242,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				})[],
 			});
 
-			await ReportedWeaponRepository.replaceByMatchId(matchId, mergedWeapons);
+			await ReportedWeaponRepository.replaceByMatchId(
+				matchId,
+				mergedWeapons.map((w) => ({
+					groupMatchMapId: w.groupMatchMapId,
+					userId: w.userId,
+					weaponSplId: w.weaponSplId,
+				})),
+			);
 
 			break;
 		}
