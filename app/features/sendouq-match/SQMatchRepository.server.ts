@@ -759,9 +759,7 @@ export async function reportScore({
 			},
 			trx,
 		);
-		if (weaponsForDb.length > 0) {
-			await ReportedWeaponRepository.createMany(weaponsForDb, trx);
-		}
+		await ReportedWeaponRepository.replaceByMatchId(matchId, weaponsForDb, trx);
 	});
 
 	return { status: "CONFIRMED", shouldRefreshCaches: true };
