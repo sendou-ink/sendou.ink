@@ -442,6 +442,8 @@ const damageTypeToParamsKey: Record<
 	SPECIAL_THROW_DIRECT: "ThrowDirectDamage",
 	SPECIAL_BULLET_MAX: "BulletDamageMax",
 	SPECIAL_BULLET_MIN: "BulletDamageMin",
+	SPECIAL_SPLASH_MAX: "SplashDamageMax",
+	SPECIAL_SPLASH_MIN: "SplashDamageMin",
 	SPECIAL_CANNON: "CannonDamage",
 	SPECIAL_BUMP: "BumpDamage",
 	SPECIAL_JUMP: "JumpDamage",

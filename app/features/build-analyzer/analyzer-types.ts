@@ -182,6 +182,8 @@ export type SpecialWeaponParams = SpecialWeaponParamsObject[SpecialWeaponId] & {
 	ThrowDirectDamage?: number;
 	BulletDamageMin?: number;
 	BulletDamageMax?: number;
+	SplashDamageMax?: Array<DistanceDamage>;
+	SplashDamageMin?: Array<DistanceDamage>;
 	CannonDamage?: Array<DistanceDamage>;
 	BumpDamage?: number;
 	JumpDamage?: number;

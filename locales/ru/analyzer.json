@@ -132,6 +132,8 @@
 	"damage.SPECIAL_SWING": "Взмах",
 	"damage.SPECIAL_BULLET_MIN": "Пуля (Минимум)",
 	"damage.SPECIAL_BULLET_MAX": "Пуля (Максимум)",
+	"damage.SPECIAL_SPLASH_MAX": "",
+	"damage.SPECIAL_SPLASH_MIN": "",
 	"damage.SPECIAL_CANNON": "Пушка",
 	"damage.SPECIAL_BUMP": "Толчок",
 	"damage.SPECIAL_JUMP": "Прыжок",

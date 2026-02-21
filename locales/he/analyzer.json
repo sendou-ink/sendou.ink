@@ -131,6 +131,8 @@
 	"damage.SPECIAL_SWING": "הנפה",
 	"damage.SPECIAL_BULLET_MIN": "קליע (מינימום)",
 	"damage.SPECIAL_BULLET_MAX": "קליע (מקסימום)",
+	"damage.SPECIAL_SPLASH_MAX": "",
+	"damage.SPECIAL_SPLASH_MIN": "",
 	"damage.SPECIAL_CANNON": "תותח",
 	"damage.SPECIAL_BUMP": "מכה",
 	"damage.SPECIAL_JUMP": "קפיצה",

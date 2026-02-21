@@ -130,6 +130,8 @@
 	"damage.SPECIAL_SWING": "",
 	"damage.SPECIAL_BULLET_MIN": "",
 	"damage.SPECIAL_BULLET_MAX": "",
+	"damage.SPECIAL_SPLASH_MAX": "",
+	"damage.SPECIAL_SPLASH_MIN": "",
 	"damage.SPECIAL_CANNON": "",
 	"damage.SPECIAL_BUMP": "",
 	"damage.SPECIAL_JUMP": "",

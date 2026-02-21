@@ -111,6 +111,21 @@ async function main() {
 		const rawParams = loadWeaponParamsObject(specialWeapon);
 		const params = parametersToSpecialWeaponResult(rawParams);
 
+		// Super Chumps has two distinct splash damage values (near/far)
+		// that should be labeled separately in the analyzer
+		const SUPER_CHUMP_SPECIAL_ID = 16;
+		if (
+			specialWeapon.Id === SUPER_CHUMP_SPECIAL_ID &&
+			params.DistanceDamage?.length === 2
+		) {
+			const sorted = [...params.DistanceDamage].sort(
+				(a: any, b: any) => b.Damage - a.Damage,
+			);
+			params.SplashDamageMax = [sorted[0]];
+			params.SplashDamageMin = [sorted[1]];
+			params.DistanceDamage = undefined;
+		}
+
 		if (hasLangDicts) {
 			translationsToArray({
 				arr: translations,

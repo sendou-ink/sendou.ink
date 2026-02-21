@@ -131,6 +131,8 @@
 	"damage.SPECIAL_SWING": "Martilleo",
 	"damage.SPECIAL_BULLET_MIN": "Bala (mínimo)",
 	"damage.SPECIAL_BULLET_MAX": "Mala (máximo)",
+	"damage.SPECIAL_SPLASH_MAX": "",
+	"damage.SPECIAL_SPLASH_MIN": "",
 	"damage.SPECIAL_CANNON": "Cañón",
 	"damage.SPECIAL_BUMP": "Golpe",
 	"damage.SPECIAL_JUMP": "Salto",

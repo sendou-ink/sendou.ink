@@ -128,6 +128,8 @@
 	"damage.SPECIAL_SWING": "挥动",
 	"damage.SPECIAL_BULLET_MIN": "子弹 (最小值)",
 	"damage.SPECIAL_BULLET_MAX": "子弹 (最大值)",
+	"damage.SPECIAL_SPLASH_MAX": "",
+	"damage.SPECIAL_SPLASH_MIN": "",
 	"damage.SPECIAL_CANNON": "炮击",
 	"damage.SPECIAL_BUMP": "撞击",
 	"damage.SPECIAL_JUMP": "跳跃",

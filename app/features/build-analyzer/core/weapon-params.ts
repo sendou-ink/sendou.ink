@@ -2632,11 +2632,13 @@ export const weaponParams = {
 					Mid: 1.1,
 				},
 			},
-			DistanceDamage: [
+			SplashDamageMax: [
 				{
 					Damage: 700,
 					Distance: 3.6,
 				},
+			],
+			SplashDamageMin: [
 				{
 					Damage: 350,
 					Distance: 6,

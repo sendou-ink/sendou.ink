@@ -131,6 +131,8 @@
 	"damage.SPECIAL_SWING": "Tamponnage",
 	"damage.SPECIAL_BULLET_MIN": "Mitrailleuse (Minimum)",
 	"damage.SPECIAL_BULLET_MAX": "Mitrailleuse (Maximum)",
+	"damage.SPECIAL_SPLASH_MAX": "",
+	"damage.SPECIAL_SPLASH_MIN": "",
 	"damage.SPECIAL_CANNON": "Canon",
 	"damage.SPECIAL_BUMP": "Collision",
 	"damage.SPECIAL_JUMP": "Saut",
