@@ -695,3 +695,11 @@ export function setPreparingGroupAsActive(groupId: number) {
 		.where("status", "=", "PREPARING")
 		.execute();
 }
+
+export function setAsInactive(groupId: number, trx?: Transaction<DB>) {
+	return (trx ?? db)
+		.updateTable("Group")
+		.set({ status: "INACTIVE" })
+		.where("id", "=", groupId)
+		.execute();
+}
