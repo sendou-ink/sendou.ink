@@ -40,6 +40,9 @@
 	"banned.banModal.noteHelp": "This note is only visible to organization admins.",
 	"banned.banModal.expiresAt": "Ban expiration date",
 	"banned.banModal.expiresAtHelp": "Leave empty for a permanent ban",
+	"leave.action": "Leave",
+	"leave.confirm": "Are you sure you want to leave {{organizationName}}?",
+	"leave.soleAdmin": "You are the only admin of this organization. Add another admin first or ask a site administrator to delete it.",
 	"new.heading": "New Organization",
 	"new.noPermissions": "No permissions to add organizations. Organizations can be created by users with tournament adder permissions."
 }

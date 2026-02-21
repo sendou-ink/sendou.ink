@@ -10,7 +10,11 @@ import {
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
 import { logger } from "~/utils/logger";
-import { errorToast, parseRequestPayload } from "~/utils/remix.server";
+import {
+	errorToast,
+	errorToastIfFalsy,
+	parseRequestPayload,
+} from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
@@ -85,6 +89,28 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			logger.info(
 				`Organization isEstablished updated: organization=${organization.name} (${organization.id}), isEstablished=${data.isEstablished}, updated by userId=${user.id}`,
+			);
+
+			break;
+		}
+		case "LEAVE_ORGANIZATION": {
+			const member = organization.members.find((m) => m.id === user.id);
+			errorToastIfFalsy(member, "You are not a member of this organization");
+
+			const adminCount = organization.members.filter(
+				(m) => m.role === "ADMIN",
+			).length;
+			if (member.role === "ADMIN" && adminCount === 1) {
+				errorToast("Cannot leave as the sole admin of the organization");
+			}
+
+			await TournamentOrganizationRepository.removeMember({
+				organizationId: organization.id,
+				userId: user.id,
+			});
+
+			logger.info(
+				`User left organization: organization=${organization.name} (${organization.id}), userId=${user.id}`,
 			);
 
 			break;

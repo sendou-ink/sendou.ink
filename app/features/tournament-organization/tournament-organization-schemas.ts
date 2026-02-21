@@ -116,9 +116,14 @@ const deleteOrganizationActionSchema = z.object({
 	_action: _action("DELETE_ORGANIZATION"),
 });
 
+const leaveOrganizationActionSchema = z.object({
+	_action: _action("LEAVE_ORGANIZATION"),
+});
+
 export const orgPageActionSchema = z.union([
 	banUserActionSchema,
 	unbanUserActionSchema,
 	updateIsEstablishedSchema,
 	deleteOrganizationActionSchema,
+	leaveOrganizationActionSchema,
 ]);
