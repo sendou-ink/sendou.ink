@@ -806,6 +806,9 @@ export async function cancelMatch({
 		await db.transaction().execute(async (trx) => {
 			await updateScore({ matchId, reportedByUserId, winners: [] }, trx);
 			await SQGroupRepository.setAsInactive(reporterGroupId, trx);
+			if (compared === "FIX_PREVIOUS") {
+				await ReportedWeaponRepository.replaceByMatchId(matchId, [], trx);
+			}
 		});
 		return { status: "CANCEL_REPORTED", shouldRefreshCaches: false };
 	}
