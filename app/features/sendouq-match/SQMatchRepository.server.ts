@@ -694,6 +694,7 @@ export async function reportScore({
 	}
 
 	if (compared === "DIFFERENT") {
+		await SQGroupRepository.setAsInactive(reporterGroupId);
 		return { status: "DIFFERENT", shouldRefreshCaches: false };
 	}
 
@@ -797,6 +798,7 @@ export async function cancelMatch({
 	}
 
 	if (compared === "DIFFERENT") {
+		await SQGroupRepository.setAsInactive(reporterGroupId);
 		return { status: "CANT_CANCEL", shouldRefreshCaches: false };
 	}
 
