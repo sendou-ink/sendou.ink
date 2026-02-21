@@ -45,6 +45,7 @@
 .editButtons {
 	display: flex;
 	gap: var(--s-2);
+	margin: 0 auto;
 }
 
 .mobileIconNav {
@@ -85,7 +86,7 @@
 		flex-wrap: wrap;
 		justify-content: flex-start;
 		align-items: center;
-		padding-block: var(--s-6);
+		padding-block-start: var(--s-6);
 	}
 
 	.nameGroup {
@@ -107,6 +108,10 @@
 
 	.sideCarousel {
 		display: none;
+	}
+
+	.editButtons {
+		margin: initial;
 	}
 
 	.grid {

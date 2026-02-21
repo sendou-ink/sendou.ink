@@ -91,33 +91,33 @@ function NewUserInfoPage() {
 				<div className={styles.desktopIconNav}>
 					<UserPageIconNav items={navItems} />
 				</div>
-				{isOwnPage ? (
-					<div className={styles.editButtons}>
-						<LinkButton
-							to={href("/u/:identifier/edit-widgets", {
-								identifier:
-									layoutData.user.customUrl ?? layoutData.user.discordId,
-							})}
-							variant="outlined"
-							size="small"
-							icon={<PuzzleIcon />}
-						>
-							{t("user:widgets.edit")}
-						</LinkButton>
-						<LinkButton
-							to={href("/u/:identifier/edit", {
-								identifier:
-									layoutData.user.customUrl ?? layoutData.user.discordId,
-							})}
-							variant="outlined"
-							size="small"
-							icon={<EditIcon />}
-						>
-							{t("user:widgets.editProfile")}
-						</LinkButton>
-					</div>
-				) : null}
 			</div>
+			{isOwnPage ? (
+				<div className={styles.editButtons}>
+					<LinkButton
+						to={href("/u/:identifier/edit-widgets", {
+							identifier:
+								layoutData.user.customUrl ?? layoutData.user.discordId,
+						})}
+						variant="outlined"
+						size="small"
+						icon={<PuzzleIcon />}
+					>
+						{t("user:widgets.edit")}
+					</LinkButton>
+					<LinkButton
+						to={href("/u/:identifier/edit", {
+							identifier:
+								layoutData.user.customUrl ?? layoutData.user.discordId,
+						})}
+						variant="outlined"
+						size="small"
+						icon={<EditIcon />}
+					>
+						{t("user:widgets.editProfile")}
+					</LinkButton>
+				</div>
+			) : null}
 
 			<div className={styles.mobileIconNav}>
 				<UserPageIconNav items={navItems} />
