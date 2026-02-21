@@ -736,6 +736,7 @@ export async function reportScore({
 	});
 
 	await db.transaction().execute(async (trx) => {
+		await SQGroupRepository.setAsInactive(reporterGroupId, trx);
 		await PlayerStatRepository.upsertMapResults(
 			summarizeMaps({ match, members, winners }),
 			trx,
