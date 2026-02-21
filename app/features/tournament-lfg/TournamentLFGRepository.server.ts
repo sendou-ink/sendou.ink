@@ -46,6 +46,7 @@ type TournamentLFGMemberObject = {
 	customUrl: Tables["User"]["customUrl"];
 	languages: Tables["User"]["languages"];
 	vc: Tables["User"]["vc"];
+	pronouns: Tables["User"]["pronouns"];
 	role: Tables["TournamentLFGGroupMember"]["role"];
 	note: Tables["TournamentLFGGroupMember"]["note"];
 	isStayAsSub: Tables["TournamentLFGGroupMember"]["isStayAsSub"];
@@ -79,6 +80,7 @@ export async function findGroupsByTournamentId(tournamentId: number) {
 						customUrl: eb.ref("User.customUrl"),
 						languages: eb.ref("User.languages"),
 						vc: eb.ref("User.vc"),
+						pronouns: eb.ref("User.pronouns"),
 						role: eb.ref("TournamentLFGGroupMember.role"),
 						note: eb.ref("TournamentLFGGroupMember.note"),
 						isStayAsSub: eb.ref("TournamentLFGGroupMember.isStayAsSub"),

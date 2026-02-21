@@ -109,6 +109,7 @@
 	"looking.groups.adder.select": "",
 	"looking.groups.editNote": "メモを編集する",
 	"looking.groups.addNote": "メモを追加する",
+	"looking.groups.stayAsSub": "",
 	"looking.replay": "リプレイ",
 	"looking.teamSP": "チーム SP",
 	"looking.teamSP.calculated": "チーム SP を計算しました。",

@@ -109,6 +109,7 @@
 	"looking.groups.adder.select": "Seleziona utente...",
 	"looking.groups.editNote": "Modifica nota",
 	"looking.groups.addNote": "Aggiungi nota",
+	"looking.groups.stayAsSub": "",
 	"looking.replay": "Replay",
 	"looking.teamSP": "SP del team",
 	"looking.teamSP.calculated": "SP del team calcolato",

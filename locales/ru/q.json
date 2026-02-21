@@ -109,6 +109,7 @@
 	"looking.groups.adder.select": "Выбрать пользователя...",
 	"looking.groups.editNote": "Изменить заметку",
 	"looking.groups.addNote": "Добавить заметку",
+	"looking.groups.stayAsSub": "",
 	"looking.replay": "Повтор",
 	"looking.teamSP": "Командое SP",
 	"looking.teamSP.calculated": "Командое SP рассчитано",
