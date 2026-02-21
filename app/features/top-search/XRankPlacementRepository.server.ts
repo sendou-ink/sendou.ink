@@ -1,6 +1,9 @@
 import type { InferResult } from "kysely";
+import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 
 export function unlinkPlayerByUserId(userId: number) {
 	return db
@@ -54,6 +57,26 @@ export async function findPlacementsByPlayerId(
 	return result.length ? result : null;
 }
 
+export async function findPlacementsByUserId(
+	userId: Tables["User"]["id"],
+	options?: { limit?: number; weaponId?: MainWeaponId },
+) {
+	let query = xRankPlacementsQueryBase()
+		.where("SplatoonPlayer.userId", "=", userId)
+		.orderBy("XRankPlacement.power", "desc");
+
+	if (options?.weaponId) {
+		query = query.where("XRankPlacement.weaponSplId", "=", options.weaponId);
+	}
+
+	if (options?.limit) {
+		query = query.limit(options.limit);
+	}
+
+	const result = await query.execute();
+	return result.length ? result : null;
+}
+
 export async function monthYears() {
 	return await db
 		.selectFrom("XRankPlacement")
@@ -62,6 +85,44 @@ export async function monthYears() {
 		.orderBy("year", "desc")
 		.orderBy("month", "desc")
 		.execute();
+}
+
+export async function findPeaksByUserId(
+	userId: Tables["User"]["id"],
+	division?: "both" | "tentatek" | "takoroka",
+) {
+	let innerQuery = db
+		.selectFrom("XRankPlacement")
+		.innerJoin("SplatoonPlayer", "XRankPlacement.playerId", "SplatoonPlayer.id")
+		.where("SplatoonPlayer.userId", "=", userId)
+		.select([
+			"XRankPlacement.mode",
+			"XRankPlacement.rank",
+			"XRankPlacement.power",
+			"XRankPlacement.region",
+			"XRankPlacement.playerId",
+			sql<number>`ROW_NUMBER() OVER (PARTITION BY "XRankPlacement"."mode" ORDER BY "XRankPlacement"."power" DESC)`.as(
+				"rn",
+			),
+		]);
+
+	if (division === "tentatek") {
+		innerQuery = innerQuery.where("XRankPlacement.region", "=", "WEST");
+	} else if (division === "takoroka") {
+		innerQuery = innerQuery.where("XRankPlacement.region", "=", "JPN");
+	}
+
+	const rows = await db
+		.selectFrom(innerQuery.as("ranked"))
+		.selectAll()
+		.where("rn", "=", 1)
+		.execute();
+
+	const peaksByMode = new Map(rows.map((row) => [row.mode, row]));
+
+	return modesShort
+		.map((mode) => peaksByMode.get(mode))
+		.filter((p): p is NonNullable<typeof p> => p !== undefined);
 }
 
 export type FindPlacement = InferResult<

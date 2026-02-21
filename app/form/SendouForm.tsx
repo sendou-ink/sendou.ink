@@ -60,6 +60,7 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	_action?: string;
 	submitButtonTestId?: string;
 	autoSubmit?: boolean;
+	autoApply?: boolean;
 	className?: string;
 	onApply?: (values: z.infer<z.ZodObject<T>>) => void;
 	secondarySubmit?: React.ReactNode;
@@ -84,6 +85,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 	_action,
 	submitButtonTestId,
 	autoSubmit,
+	autoApply,
 	className,
 	onApply,
 	secondarySubmit,
@@ -128,14 +130,27 @@ export function SendouForm<T extends z.ZodRawShape>({
 
 	React.useLayoutEffect(() => {
 		const serverFieldErrors = fetcher.data?.fieldErrors ?? {};
-		for (const [fieldName, errorMessage] of Object.entries(serverFieldErrors)) {
+		const errorEntries = Object.entries(serverFieldErrors);
+		if (errorEntries.length === 0) {
+			setFallbackError(null);
+			return;
+		}
+
+		for (const [fieldName, errorMessage] of errorEntries) {
 			const errorElement = document.getElementById(errorMessageId(fieldName));
 			if (!errorElement) {
 				setFallbackError(`${t(errorMessage as never)} (${fieldName})`);
 				return;
 			}
 		}
+
 		setFallbackError(null);
+
+		const firstErrorField = errorEntries[0][0];
+		const firstErrorElement = document.getElementById(
+			errorMessageId(firstErrorField),
+		);
+		firstErrorElement?.scrollIntoView({ behavior: "smooth", block: "center" });
 	}, [fetcher.data, t]);
 
 	const serverErrors = visibleServerErrors as Partial<
@@ -248,30 +263,35 @@ export function SendouForm<T extends z.ZodRawShape>({
 		setClientErrors(newErrors);
 	};
 
-	const onFieldChange = autoSubmit
-		? (changedName: string, changedValue: unknown) => {
-				const updatedValues = { ...values, [changedName]: changedValue };
+	const onFieldChange =
+		autoSubmit || autoApply
+			? (changedName: string, changedValue: unknown) => {
+					const updatedValues = { ...values, [changedName]: changedValue };
 
-				const newErrors: Record<string, string> = {};
-				for (const key of Object.keys(schema.shape)) {
-					const error = validateField(schema, key, updatedValues[key]);
-					if (error) {
-						newErrors[key] = error;
+					const newErrors: Record<string, string> = {};
+					for (const key of Object.keys(schema.shape)) {
+						const error = validateField(schema, key, updatedValues[key]);
+						if (error) {
+							newErrors[key] = error;
+						}
+					}
+
+					if (Object.keys(newErrors).length > 0) {
+						setClientErrors(newErrors);
+						return;
+					}
+
+					if (autoApply && onApply) {
+						onApply(updatedValues as z.infer<z.ZodObject<T>>);
+					} else if (autoSubmit) {
+						fetcher.submit(updatedValues as Record<string, string>, {
+							method,
+							action,
+							encType: "application/json",
+						});
 					}
 				}
-
-				if (Object.keys(newErrors).length > 0) {
-					setClientErrors(newErrors);
-					return;
-				}
-
-				fetcher.submit(updatedValues as Record<string, string>, {
-					method,
-					action,
-					encType: "application/json",
-				});
-			}
-		: undefined;
+			: undefined;
 
 	const submitToServer = (valuesToSubmit: Record<string, unknown>) => {
 		if (!validateAndPrepare()) return;
@@ -333,34 +353,44 @@ export function SendouForm<T extends z.ZodRawShape>({
 				})
 			: children;
 
+	const formContent = (
+		<>
+			{title ? <h2 className={styles.title}>{title}</h2> : null}
+			<React.Fragment key={locationKey}>{resolvedChildren}</React.Fragment>
+			{autoSubmit || autoApply ? null : (
+				<div className="mt-4 stack horizontal md mx-auto justify-center">
+					<SubmitButton
+						_action={_action}
+						testId={submitButtonTestId}
+						state={fetcher.state}
+					>
+						{submitButtonText ?? t("submit")}
+					</SubmitButton>
+					{secondarySubmit}
+				</div>
+			)}
+			{fallbackError ? (
+				<div className="mt-4 mx-auto" data-testid="fallback-form-error">
+					<FormMessage type="error">{fallbackError}</FormMessage>
+				</div>
+			) : null}
+		</>
+	);
+
 	return (
 		<FormContext.Provider value={contextValue as FormContextValue}>
-			<form
-				method={method}
-				action={action}
-				className={className ?? styles.form}
-				onSubmit={handleSubmit}
-			>
-				{title ? <h2 className={styles.title}>{title}</h2> : null}
-				<React.Fragment key={locationKey}>{resolvedChildren}</React.Fragment>
-				{autoSubmit ? null : (
-					<div className="mt-4 stack horizontal md mx-auto justify-center">
-						<SubmitButton
-							_action={_action}
-							testId={submitButtonTestId}
-							state={fetcher.state}
-						>
-							{submitButtonText ?? t("submit")}
-						</SubmitButton>
-						{secondarySubmit}
-					</div>
-				)}
-				{fallbackError ? (
-					<div className="mt-4 mx-auto" data-testid="fallback-form-error">
-						<FormMessage type="error">{fallbackError}</FormMessage>
-					</div>
-				) : null}
-			</form>
+			{autoApply && onApply ? (
+				<div className={className ?? styles.form}>{formContent}</div>
+			) : (
+				<form
+					method={method}
+					action={action}
+					className={className ?? styles.form}
+					onSubmit={handleSubmit}
+				>
+					{formContent}
+				</form>
+			)}
 		</FormContext.Provider>
 	);
 }

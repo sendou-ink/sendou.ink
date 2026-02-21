@@ -4,6 +4,7 @@ import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import {
+	TIER_HISTORY_LENGTH,
 	type TournamentTierNumber,
 	updateTierHistory,
 } from "~/features/tournament/core/tiering";
@@ -150,10 +151,21 @@ export function findByUserId(
 			"TournamentOrganization.id",
 			"TournamentOrganizationMember.organizationId",
 		)
-		.select([
+		.leftJoin(
+			"UserSubmittedImage",
+			"UserSubmittedImage.id",
+			"TournamentOrganization.avatarImgId",
+		)
+		.select(({ eb }) => [
 			"TournamentOrganization.id",
 			"TournamentOrganization.name",
+			"TournamentOrganization.slug",
 			"TournamentOrganization.isEstablished",
+			"TournamentOrganizationMember.role",
+			"TournamentOrganizationMember.roleDisplayName",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"logoUrl",
+			),
 		])
 		.where("TournamentOrganizationMember.userId", "=", userId)
 		.$if(roles.length > 0, (qb) =>
@@ -422,7 +434,7 @@ export function update({
 			.execute();
 
 		if (series.length > 0) {
-			await trx
+			const insertedSeries = await trx
 				.insertInto("TournamentOrganizationSeries")
 				.values(
 					series.map((s) => ({
@@ -433,7 +445,54 @@ export function update({
 						showLeaderboard: Number(s.showLeaderboard),
 					})),
 				)
+				.returning(["id", "substringMatches"])
 				.execute();
+
+			const finalizedTournaments = await trx
+				.selectFrom("Tournament")
+				.innerJoin(
+					"CalendarEvent",
+					"CalendarEvent.tournamentId",
+					"Tournament.id",
+				)
+				.innerJoin(
+					"CalendarEventDate",
+					"CalendarEventDate.eventId",
+					"CalendarEvent.id",
+				)
+				.select([
+					"Tournament.id as tournamentId",
+					"CalendarEvent.name",
+					"Tournament.tier",
+					"CalendarEventDate.startTime",
+				])
+				.where("Tournament.isFinalized", "=", 1)
+				.where("CalendarEvent.organizationId", "=", id)
+				.where("CalendarEvent.hidden", "=", 0)
+				.orderBy("CalendarEventDate.startTime", "asc")
+				.execute();
+
+			for (const s of insertedSeries) {
+				const matchingTiers = finalizedTournaments
+					.filter((t) => {
+						const eventNameLower = t.name.toLowerCase();
+						return s.substringMatches.some((match) =>
+							eventNameLower.includes(match.toLowerCase()),
+						);
+					})
+					.filter((t) => t.tier !== null)
+					.map((t) => t.tier);
+
+				if (matchingTiers.length === 0) continue;
+
+				const tierHistory = matchingTiers.slice(-TIER_HISTORY_LENGTH);
+
+				await trx
+					.updateTable("TournamentOrganizationSeries")
+					.set({ tierHistory: JSON.stringify(tierHistory) })
+					.where("id", "=", s.id)
+					.execute();
+			}
 		}
 
 		await trx
@@ -555,6 +614,13 @@ export function updateIsEstablished(
 	return db
 		.updateTable("TournamentOrganization")
 		.set({ isEstablished: Number(isEstablished) })
+		.where("id", "=", organizationId)
+		.execute();
+}
+
+export function deleteById(organizationId: number) {
+	return db
+		.deleteFrom("TournamentOrganization")
 		.where("id", "=", organizationId)
 		.execute();
 }

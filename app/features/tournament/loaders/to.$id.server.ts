@@ -47,6 +47,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		tournament.ctx.organization?.members.some(
 			(m) => m.userId === user?.id && m.role === "ORGANIZER",
 		);
+	if (tournament.ctx.settings.isDraft && !isTournamentOrganizer) {
+		throw new Response(null, { status: 404 });
+	}
+
 	const showFriendCodes = tournamentStartedInTheLastMonth && isTournamentAdmin;
 
 	// skip expensive rr7 data serialization (hot path loader)

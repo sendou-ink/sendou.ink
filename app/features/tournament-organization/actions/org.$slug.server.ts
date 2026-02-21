@@ -1,5 +1,5 @@
 import { isFuture } from "date-fns";
-import type { ActionFunctionArgs } from "react-router";
+import { type ActionFunctionArgs, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import {
 	requirePermission,
@@ -88,6 +88,17 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			);
 
 			break;
+		}
+		case "DELETE_ORGANIZATION": {
+			requireRole(user, "ADMIN");
+
+			await TournamentOrganizationRepository.deleteById(organization.id);
+
+			logger.info(
+				`Organization deleted: organization=${organization.name} (${organization.id}), deleted by userId=${user.id}`,
+			);
+
+			throw redirect("/");
 		}
 		default: {
 			assertUnreachable(data);

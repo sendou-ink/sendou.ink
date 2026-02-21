@@ -59,6 +59,11 @@ const PERKS = [
 	},
 	{
 		tier: 2,
+		name: "earlyAccess",
+		extraInfo: false,
+	},
+	{
+		tier: 2,
 		name: "previewQ",
 		extraInfo: false,
 	},
