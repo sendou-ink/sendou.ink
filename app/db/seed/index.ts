@@ -42,6 +42,7 @@ import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepos
 import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/sendouq-settings/q-settings-constants";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
@@ -223,6 +224,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	calendarEventWithToToolsLUTI,
 	calendarEventWithToToolsTeamsLUTI,
 	tournamentSubs,
+	variation === "NO_TOURNAMENT_TEAMS" ? undefined : tournamentLfgGroups,
 	adminBuilds,
 	manySplattershotBuilds,
 	detailedTeam(variation),
@@ -280,6 +282,9 @@ function wipeDB() {
 		"MapPoolMap",
 		"TournamentMatchGameResult",
 		"TournamentTeamCheckIn",
+		"TournamentLFGLike",
+		"TournamentLFGGroupMember",
+		"TournamentLFGGroup",
 		"TournamentTeam",
 		"TournamentStage",
 		"TournamentResult",
@@ -1631,6 +1636,136 @@ function tournamentSubs() {
 	}
 
 	return null;
+}
+
+async function tournamentLfgGroups() {
+	const availableUsers = userIdsInAscendingOrderById().slice(300);
+
+	const tournaments = [
+		{ tournamentId: 1, teamId: 1 },
+		{ tournamentId: 2, teamId: 116 },
+		{ tournamentId: 3, teamId: 201 },
+	];
+
+	const insertMember = sql.prepare(
+		/* sql */ `INSERT INTO "TournamentLFGGroupMember" ("groupId", "tournamentId", "userId", "role") VALUES (@groupId, @tournamentId, @userId, @role)`,
+	);
+	const updateNote = sql.prepare(
+		/* sql */ `UPDATE "TournamentLFGGroupMember" SET "note" = @note WHERE "groupId" = @groupId AND "userId" = @userId`,
+	);
+	const insertLike = sql.prepare(
+		/* sql */ `INSERT INTO "TournamentLFGLike" ("likerGroupId", "targetGroupId") VALUES (@likerGroupId, @targetGroupId)`,
+	);
+
+	let userIndex = 0;
+	for (const { tournamentId, teamId } of tournaments) {
+		const teamOwner = (
+			sql
+				.prepare(
+					/* sql */ `SELECT "userId" FROM "TournamentTeamMember" WHERE "tournamentTeamId" = @teamId AND "isOwner" = 1`,
+				)
+				.get({ teamId }) as { userId: number }
+		).userId;
+
+		const users = availableUsers.slice(userIndex, userIndex + 12);
+		userIndex += 12;
+
+		// Group 1: solo, has note, isStayAsSub=1
+		const group1 = await TournamentLFGRepository.createGroup({
+			tournamentId,
+			userId: users[0],
+			isStayAsSub: true,
+		});
+		updateNote.run({
+			note: "Looking for a team, can play any role",
+			groupId: group1.id,
+			userId: users[0],
+		});
+
+		// Group 2: duo, one member has note
+		const group2 = await TournamentLFGRepository.createGroup({
+			tournamentId,
+			userId: users[1],
+		});
+		insertMember.run({
+			groupId: group2.id,
+			tournamentId,
+			userId: users[2],
+			role: "REGULAR",
+		});
+		updateNote.run({
+			note: "Prefer backline weapons",
+			groupId: group2.id,
+			userId: users[2],
+		});
+
+		// Group 3: trio
+		const group3 = await TournamentLFGRepository.createGroup({
+			tournamentId,
+			userId: users[3],
+		});
+		for (const userId of [users[4], users[5]]) {
+			insertMember.run({
+				groupId: group3.id,
+				tournamentId,
+				userId,
+				role: "REGULAR",
+			});
+		}
+
+		// Group 4: full (4 members)
+		const group4 = await TournamentLFGRepository.createGroup({
+			tournamentId,
+			userId: users[6],
+		});
+		for (const userId of [users[7], users[8], users[9]]) {
+			insertMember.run({
+				groupId: group4.id,
+				tournamentId,
+				userId,
+				role: "REGULAR",
+			});
+		}
+
+		// Group 5: solo
+		const group5 = await TournamentLFGRepository.createGroup({
+			tournamentId,
+			userId: users[10],
+		});
+
+		// Group 6: duo linked to existing team
+		const group6 = await TournamentLFGRepository.createGroup({
+			tournamentId,
+			userId: teamOwner,
+		});
+		sql
+			.prepare(
+				/* sql */ `UPDATE "TournamentLFGGroup" SET "tournamentTeamId" = @teamId WHERE "id" = @groupId`,
+			)
+			.run({ teamId, groupId: group6.id });
+		insertMember.run({
+			groupId: group6.id,
+			tournamentId,
+			userId: users[11],
+			role: "REGULAR",
+		});
+
+		// Group 1 -> Group 2 (one-way like)
+		insertLike.run({
+			likerGroupId: group1.id,
+			targetGroupId: group2.id,
+		});
+		// Group 2 -> Group 1 (mutual — tests invitation UI)
+		insertLike.run({
+			likerGroupId: group2.id,
+			targetGroupId: group1.id,
+		});
+		// Group 3 -> Group 5 (one-way like)
+		insertLike.run({
+			likerGroupId: group3.id,
+			targetGroupId: group5.id,
+		});
+	}
 }
 
 const randomAbility = (legalTypes: AbilityType[]) => {
