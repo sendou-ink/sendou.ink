@@ -271,7 +271,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 			});
 
-			if (!tournament.isTest) {
+			if (!tournament.isTest && !tournament.isDraft) {
 				notify({
 					userIds: [data.userId],
 					notification: {

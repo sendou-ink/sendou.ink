@@ -78,5 +78,8 @@
 	"filter.orgsExcluded": "ארגונים מוסתרים",
 	"filter.authorIdsExcluded": "מחברים לא נכללו",
 	"filter.apply": "החל",
-	"filter.applyAndDefault": "החל והפוך לברירת מחדל"
+	"filter.applyAndDefault": "החל והפוך לברירת מחדל",
+	"forms.draft": "",
+	"forms.draftInfo": "",
+	"forms.draftBracketStartBlocked": ""
 }
