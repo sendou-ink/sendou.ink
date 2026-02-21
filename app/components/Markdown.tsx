@@ -3,7 +3,7 @@ import * as React from "react";
 
 // note: markdown-to-jsx also handles these, this is just to prevent them from appearing as plain text
 const DANGEROUS_HTML_TAGS_REGEX =
-	/<(style|iframe|script|title|textarea|xmp|noembed|noframes|plaintext)[\s\S]*?<\/\1>|<(style|iframe|script|title|textarea|xmp|noembed|noframes|plaintext)[^>]*\/>/gi;
+	/<(style|link|head|iframe|script|title|textarea|xmp|noembed|noframes|plaintext)[\s\S]*?<\/\1>|<(style|link|head|iframe|script|title|textarea|xmp|noembed|noframes|plaintext)[^>]*\/>/gi;
 
 const CSS_URL_REGEX = /url\s*\([^)]*\)/gi;
 
