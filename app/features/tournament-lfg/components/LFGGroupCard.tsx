@@ -46,7 +46,6 @@ export type LFGGroup = {
 
 // xxx: show team name
 // xxx: "cancel" & "save" buttons off
-// xxx: no need to show the "Sub" in GroupCard
 export function LFGGroupCard({
 	group,
 	action,
@@ -105,7 +104,6 @@ function LFGGroupMemberRow({
 	showActions: boolean;
 	isOwnGroup: boolean;
 }) {
-	const { t } = useTranslation(["q"]);
 	const user = useUser();
 
 	return (
@@ -139,11 +137,6 @@ function LFGGroupMemberRow({
 						<div className={styles.extraInfo}>
 							<Image path={navIconUrl("plus")} width={20} height={20} alt="" />
 							{member.plusTier}
-						</div>
-					) : null}
-					{member.isStayAsSub ? (
-						<div className={styles.stayAsSub}>
-							{t("q:looking.groups.stayAsSub")}
 						</div>
 					) : null}
 				</div>

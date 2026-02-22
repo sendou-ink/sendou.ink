@@ -81,11 +81,3 @@
 .starInactive {
 	color: var(--text-lighter);
 }
-
-.stayAsSub {
-	font-size: var(--fonts-xxs);
-	background-color: var(--bg-darker);
-	border-radius: var(--rounded);
-	padding: var(--s-0-5) var(--s-1-5);
-	font-weight: var(--semi-bold);
-}
