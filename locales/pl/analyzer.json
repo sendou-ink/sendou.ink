@@ -30,6 +30,7 @@
 	"stat.quickRespawnTimeSplattedByRP": "Czas szybkiego respawnu (Respawn Punisher)",
 	"stat.superJumpTimeGround": "Wrażliwe klatki Super Jump'u",
 	"stat.superJumpTimeTotal": "Czas Super Jump'u (maks.)",
+	"stat.superJumpTimeTotal.stealthJumpExplanation": "",
 	"stat.jumpShotSpread": "Rozprzestrzenianie strzałów w stopniach (w powietrzu)",
 	"stat.groundShotSpread": "Rozprzestrzenianie strzałów w stopniach (uziemiony)",
 	"stat.shotAutofireSpreadGround": "",

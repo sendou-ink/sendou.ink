@@ -30,6 +30,7 @@
 	"stat.quickRespawnTimeSplattedByRP": "Tilbagekomsttid når man bliver uskadeliggjort af en RP-bruger",
 	"stat.superJumpTimeGround": "Superspringets sårbarbedstidsrum (i Billeder/Frames)",
 	"stat.superJumpTimeTotal": "Superspringets samlede varighed",
+	"stat.superJumpTimeTotal.stealthJumpExplanation": "",
 	"stat.jumpShotSpread": "Skudspredning ved spring (i grader)",
 	"stat.groundShotSpread": "Skudspredning på jorden (i grader)",
 	"stat.shotAutofireSpreadGround": "Sekundær tilstands skudspredning (på jorden)",

@@ -30,6 +30,7 @@
 	"stat.quickRespawnTimeSplattedByRP": "Dauer schneller Rückkehr wenn erledigt durch Spieler mit Heimsuchung-Effekt",
 	"stat.superJumpTimeGround": "Supersprung ungeschützte Frames",
 	"stat.superJumpTimeTotal": "Supersprung Dauer (Total)",
+	"stat.superJumpTimeTotal.stealthJumpExplanation": "",
 	"stat.jumpShotSpread": "Schussstreuung in Grad (springend)",
 	"stat.groundShotSpread": "Schussstreuung in Grad (stehend)",
 	"stat.shotAutofireSpreadGround": "",

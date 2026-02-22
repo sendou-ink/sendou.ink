@@ -30,6 +30,7 @@
 	"stat.quickRespawnTimeSplattedByRP": "Délai de réapparition (liquidé par RP)",
 	"stat.superJumpTimeGround": "Frames vulnérables du super saut",
 	"stat.superJumpTimeTotal": "Temps du super saut (total)",
+	"stat.superJumpTimeTotal.stealthJumpExplanation": "",
 	"stat.jumpShotSpread": "Degrés de dispersion des tirs (saut)",
 	"stat.groundShotSpread": "Degrés de dispersion des tirs (sol)",
 	"stat.shotAutofireSpreadGround": "Degrés de dispersion mode auto (sol)",
