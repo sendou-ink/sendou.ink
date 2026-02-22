@@ -95,12 +95,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				ourGroup: {
 					id: ownGroup.id,
 					tournamentTeamId: ownGroup.tournamentTeamId,
+					teamName: null,
+					teamAvatarUrl: null,
 					members: [],
 					usersRole: null,
 				},
 				theirGroup: {
 					id: theirGroup.id,
 					tournamentTeamId: theirGroup.tournamentTeamId,
+					teamName: null,
+					teamAvatarUrl: null,
 					members: [],
 					usersRole: null,
 				},

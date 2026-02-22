@@ -4,7 +4,10 @@ import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
-import { userChatNameColorForJson } from "~/utils/kysely.server";
+import {
+	concatUserSubmittedImagePrefix,
+	userChatNameColorForJson,
+} from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 
 type CreateGroupArgs = {
@@ -65,11 +68,25 @@ export async function findGroupsByTournamentId(tournamentId: number) {
 		)
 		.innerJoin("User", "User.id", "TournamentLFGGroupMember.userId")
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
+		.leftJoin(
+			"TournamentTeam",
+			"TournamentTeam.id",
+			"TournamentLFGGroup.tournamentTeamId",
+		)
+		.leftJoin(
+			"UserSubmittedImage",
+			"UserSubmittedImage.id",
+			"TournamentTeam.avatarImgId",
+		)
 		.select(({ fn, eb }) => [
 			"TournamentLFGGroup.id",
 			"TournamentLFGGroup.chatCode",
 			"TournamentLFGGroup.tournamentTeamId",
 			"TournamentLFGGroup.visibility",
+			"TournamentTeam.name as teamName",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"teamAvatarUrl",
+			),
 			fn
 				.agg("json_group_array", [
 					jsonBuildObject({

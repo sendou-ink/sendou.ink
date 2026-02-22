@@ -20,6 +20,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		return {
 			id: group.id,
 			tournamentTeamId: group.tournamentTeamId,
+			teamName: group.teamName ?? null,
+			teamAvatarUrl: group.teamAvatarUrl ?? null,
 			members,
 			usersRole: members.find((m) => m.id === user?.id)?.role ?? null,
 		};

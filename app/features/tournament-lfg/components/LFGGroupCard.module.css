@@ -81,3 +81,14 @@
 .starInactive {
 	color: var(--text-lighter);
 }
+
+.teamHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.teamName {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--semi-bold);
+}

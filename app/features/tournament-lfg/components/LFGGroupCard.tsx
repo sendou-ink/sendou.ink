@@ -3,6 +3,7 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher } from "react-router";
 import { Avatar } from "~/components/Avatar";
+import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Image, WeaponImage } from "~/components/Image";
@@ -40,11 +41,12 @@ export type LFGGroupMember = {
 export type LFGGroup = {
 	id: number;
 	tournamentTeamId: number | null;
+	teamName: string | null;
+	teamAvatarUrl: string | null;
 	members: LFGGroupMember[];
 	usersRole: "OWNER" | "MANAGER" | "REGULAR" | null;
 };
 
-// xxx: show team name
 // xxx: "cancel" & "save" buttons off
 export function LFGGroupCard({
 	group,
@@ -63,6 +65,22 @@ export function LFGGroupCard({
 
 	return (
 		<section className={styles.group}>
+			{/* {group.teamName ? (
+				<div className={styles.teamHeader}>
+					{group.teamAvatarUrl ? (
+						<Avatar size="xxs" url={group.teamAvatarUrl} />
+					) : null}
+					<div className={styles.teamName}>{group.teamName}</div>
+				</div>
+			) : null} */}
+			{group.teamName ? (
+				<Divider smallText className={styles.teamHeader}>
+					{group.teamAvatarUrl ? (
+						<Avatar size="xxs" url={group.teamAvatarUrl} />
+					) : null}
+					<div className={styles.teamName}>{group.teamName}</div>
+				</Divider>
+			) : null}
 			<div className="stack md">
 				{group.members.map((member) => (
 					<LFGGroupMemberRow
