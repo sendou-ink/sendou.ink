@@ -234,6 +234,7 @@ describe("morphGroups", () => {
 			survivingGroupId: group1.id,
 			otherGroupId: group2.id,
 			maxGroupSize: 4,
+			tournamentId: tournament.id,
 		});
 
 		const groups = await TournamentLFGRepository.findGroupsByTournamentId(
@@ -255,6 +256,7 @@ describe("morphGroups", () => {
 			survivingGroupId: group1.id,
 			otherGroupId: group2.id,
 			maxGroupSize: 4,
+			tournamentId: tournament.id,
 		});
 
 		const groups = await TournamentLFGRepository.findGroupsByTournamentId(
@@ -276,6 +278,7 @@ describe("morphGroups", () => {
 				survivingGroupId: group1.id,
 				otherGroupId: group2.id,
 				maxGroupSize: 1,
+				tournamentId: tournament.id,
 			}),
 		).rejects.toThrow("Group has too many members after merge");
 	});
@@ -299,6 +302,7 @@ describe("morphGroups", () => {
 			survivingGroupId: group1.id,
 			otherGroupId: group2.id,
 			maxGroupSize: 4,
+			tournamentId: tournament.id,
 		});
 
 		const likes = await TournamentLFGRepository.allLikesByGroupId(group1.id);

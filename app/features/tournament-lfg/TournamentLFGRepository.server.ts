@@ -118,12 +118,38 @@ export function morphGroups({
 	survivingGroupId,
 	otherGroupId,
 	maxGroupSize,
+	tournamentId,
 }: {
 	survivingGroupId: number;
 	otherGroupId: number;
 	maxGroupSize: number;
+	tournamentId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
+		const survivingGroup = await trx
+			.selectFrom("TournamentLFGGroup")
+			.select("tournamentTeamId")
+			.where("id", "=", survivingGroupId)
+			.executeTakeFirstOrThrow();
+
+		if (!survivingGroup.tournamentTeamId) {
+			const createdTeam = await trx
+				.insertInto("TournamentTeam")
+				.values({
+					tournamentId,
+					name: `LFG Team ${shortNanoid()}`,
+					inviteCode: "",
+				})
+				.returning("id")
+				.executeTakeFirstOrThrow();
+
+			await trx
+				.updateTable("TournamentLFGGroup")
+				.set({ tournamentTeamId: createdTeam.id })
+				.where("id", "=", survivingGroupId)
+				.execute();
+		}
+
 		await trx
 			.updateTable("TournamentLFGGroup")
 			.set({ chatCode: shortNanoid() })

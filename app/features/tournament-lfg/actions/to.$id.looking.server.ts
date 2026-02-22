@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
-import { db } from "~/db/sql";
 import { requireUser } from "~/features/auth/core/user.server";
+import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	errorToastIfFalsy,
 	parseParams,
@@ -110,49 +110,18 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				},
 			});
 
-			const survivingGroup = surviving === ownGroup.id ? ownGroup : theirGroup;
 			const otherGroup = surviving === ownGroup.id ? theirGroup : ownGroup;
 
-			if (!survivingGroup.tournamentTeamId) {
-				const ownerMember = survivingGroup.members.find(
-					(m) => m.role === "OWNER",
-				);
-				// xxx: lets autogenerate some other kind of name
-				const teamName = `${ownerMember?.username ?? "Team"}'s Team`;
-
-				// xxx: why do we have db code outside of repositories
-				const createdTeam = await db
-					.insertInto("TournamentTeam")
-					.values({
-						tournamentId,
-						name: teamName,
-						inviteCode: "",
-					})
-					.returning("id")
-					.executeTakeFirstOrThrow();
-
-				await db
-					.updateTable("TournamentLFGGroup")
-					.set({ tournamentTeamId: createdTeam.id })
-					.where("id", "=", survivingGroup.id)
-					.execute();
-			}
-
-			const tournamentSettings = await db
-				.selectFrom("Tournament")
-				.select("settings")
-				.where("id", "=", tournamentId)
-				.executeTakeFirstOrThrow();
-
-			const settings = tournamentSettings.settings;
-			const minMembers = settings.minMembersPerTeam ?? 4;
-			const maxGroupSize =
-				minMembers !== 4 ? minMembers : (settings.maxMembersPerTeam ?? 6);
+			const tournament = await tournamentFromDBCached({
+				tournamentId,
+				user,
+			});
 
 			await TournamentLFGRepository.morphGroups({
 				survivingGroupId: surviving,
 				otherGroupId: otherGroup.id,
-				maxGroupSize,
+				maxGroupSize: tournament.maxMembersPerTeam,
+				tournamentId,
 			});
 
 			break;
