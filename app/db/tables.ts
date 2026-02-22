@@ -16,6 +16,7 @@ import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
+import type { StoredWidget } from "~/features/user-page/core/widgets/types";
 import type { ParticipantResult } from "~/modules/brackets-model";
 import type {
 	Ability,
@@ -509,6 +510,7 @@ export interface TournamentSettings {
 	/** Maximum number of team members that can be registered (only applies to 4v4 tournaments) */
 	maxMembersPerTeam?: number;
 	isTest?: boolean;
+	isDraft?: boolean;
 }
 
 export interface CastedMatchesInfo {
@@ -912,6 +914,8 @@ export interface UserPreferences {
 	 * "12h" = 12 hour format (e.g. 2:00 PM)
 	 * */
 	clockFormat?: "24h" | "12h" | "auto";
+	/** Is the new widget based user page enabled? (Supporter early preview) */
+	newProfileEnabled?: boolean;
 }
 
 export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;
@@ -1012,6 +1016,11 @@ export interface UserFriendCode {
 	createdAt: GeneratedAlways<number>;
 }
 
+export interface UserWidget {
+	userId: number;
+	index: number;
+	widget: JSONColumnType<StoredWidget>;
+}
 export type ApiTokenType = "read" | "write";
 
 export interface ApiToken {
@@ -1276,6 +1285,7 @@ export interface DB {
 	UserSubmittedImage: UserSubmittedImage;
 	UserWeapon: UserWeapon;
 	UserFriendCode: UserFriendCode;
+	UserWidget: UserWidget;
 	Video: Video;
 	VideoMatch: VideoMatch;
 	VideoMatchPlayer: VideoMatchPlayer;

@@ -108,7 +108,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		finalizeTournament(tournamentId);
 	}
 
-	await updateSeriesTierHistory(tournament);
+	if (!tournament.isTest) {
+		await updateSeriesTierHistory(tournament);
+	}
 
 	if (tournament.ranked) {
 		try {

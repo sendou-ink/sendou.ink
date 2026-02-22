@@ -130,6 +130,8 @@
 	"damage.SPECIAL_SWING": "Swing",
 	"damage.SPECIAL_BULLET_MIN": "Bullet (Minimum)",
 	"damage.SPECIAL_BULLET_MAX": "Bullet (Maximum)",
+	"damage.SPECIAL_SPLASH_MAX": "Splash (Maximum)",
+	"damage.SPECIAL_SPLASH_MIN": "Splash (Minimum)",
 	"damage.SPECIAL_CANNON": "Cannon",
 	"damage.SPECIAL_BUMP": "Bump",
 	"damage.SPECIAL_JUMP": "Jump",

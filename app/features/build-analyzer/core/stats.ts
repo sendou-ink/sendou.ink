@@ -442,6 +442,8 @@ const damageTypeToParamsKey: Record<
 	SPECIAL_THROW_DIRECT: "ThrowDirectDamage",
 	SPECIAL_BULLET_MAX: "BulletDamageMax",
 	SPECIAL_BULLET_MIN: "BulletDamageMin",
+	SPECIAL_SPLASH_MAX: "SplashDamageMax",
+	SPECIAL_SPLASH_MIN: "SplashDamageMin",
 	SPECIAL_CANNON: "CannonDamage",
 	SPECIAL_BUMP: "BumpDamage",
 	SPECIAL_JUMP: "JumpDamage",
@@ -999,10 +1001,13 @@ function superJumpTimeGroundFrames(
 	};
 }
 
+const STEALTH_JUMP_EXTRA_FRAMES = 60;
 function superJumpTimeTotal(
 	args: StatFunctionInput,
 ): AnalyzedBuild["stats"]["superJumpTimeTotal"] {
 	const SUPER_JUMP_TIME_TOTAL_ABILITY = "QSJ";
+	const hasStealthJump = args.mainOnlyAbilities.includes("SJ");
+	const stealthJumpExtraFrames = hasStealthJump ? STEALTH_JUMP_EXTRA_FRAMES : 0;
 
 	const charge = abilityPointsToEffects({
 		abilityPoints: apFromMap({
@@ -1025,8 +1030,12 @@ function superJumpTimeTotal(
 		baseValue: framesToSeconds(
 			Math.ceil(charge.baseEffect) + Math.ceil(move.baseEffect),
 		),
-		value: framesToSeconds(Math.ceil(charge.effect) + Math.ceil(move.effect)),
-		modifiedBy: SUPER_JUMP_TIME_TOTAL_ABILITY,
+		value: framesToSeconds(
+			Math.ceil(charge.effect) +
+				Math.ceil(move.effect) +
+				stealthJumpExtraFrames,
+		),
+		modifiedBy: [SUPER_JUMP_TIME_TOTAL_ABILITY, "SJ"],
 	};
 }
 

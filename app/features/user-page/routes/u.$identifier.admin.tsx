@@ -1,22 +1,33 @@
 import { Plus } from "lucide-react";
-import { useLoaderData } from "react-router";
+import { useLoaderData, useMatches } from "react-router";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
 import { addModNoteSchema } from "~/features/user-page/user-page-schemas";
 import { SendouForm } from "~/form";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
+import invariant from "~/utils/invariant";
+import { userPage } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.admin.server";
+import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.admin.server";
+import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 export { loader, action };
 
 export default function UserAdminPage() {
+	const [, parentRoute] = useMatches();
+	invariant(parentRoute);
+	const layoutData = parentRoute.data as UserPageLoaderData;
+
 	return (
-		<Main className="stack xl">
+		<div className="stack xl">
+			<SubPageHeader
+				user={layoutData.user}
+				backTo={userPage(layoutData.user)}
+			/>
 			<AccountInfos />
 
 			<div className="stack sm">
@@ -39,7 +50,7 @@ export default function UserAdminPage() {
 				</Divider>
 				<BanLog />
 			</div>
-		</Main>
+		</div>
 	);
 }
 

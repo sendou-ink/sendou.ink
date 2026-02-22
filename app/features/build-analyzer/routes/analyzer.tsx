@@ -89,7 +89,7 @@ import {
 } from "../core/utils";
 import styles from "./analyzer.module.css";
 
-export const CURRENT_PATCH = "10.1";
+export const CURRENT_PATCH = "11.0.1";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -1275,6 +1275,8 @@ function EffectsSelector({
 						<div>
 							{isAbility(effect.type) ? (
 								<Ability ability={effect.type} size="SUB" />
+							) : effect.type === "AURA" ? (
+								<span className="text-xs font-bold">AURA</span>
 							) : (
 								<Image
 									path={specialWeaponImageUrl(15)}

@@ -38,6 +38,7 @@ import {
 	undefinedToNull,
 	weaponSplId,
 } from "~/utils/zod";
+import { allWidgetsFlat, findWidgetById } from "./core/widgets/portfolio";
 import {
 	COUNTRY_CODES,
 	HIGHLIGHT_CHECKBOX_NAME,
@@ -145,6 +146,7 @@ export const userEditActionSchema = z
 				.nullish(),
 		),
 		showDiscordUniqueName: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
+		newProfileEnabled: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
 		commissionsOpen: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
 		commissionText: z.preprocess(
 			falsyToNull,
@@ -195,6 +197,43 @@ export const adminTabActionSchema = z.union([
 export const userResultsPageSearchParamsSchema = z.object({
 	all: z.stringbool().catch(false),
 	page: z.coerce.number().min(1).max(1_000).catch(1),
+});
+
+const widgetSettingsSchemas = allWidgetsFlat().map((widget) => {
+	if ("schema" in widget) {
+		return z.object({
+			id: z.literal(widget.id),
+			settings: widget.schema,
+		});
+	}
+	return z.object({
+		id: z.literal(widget.id),
+	});
+});
+
+const widgetSettingsSchema = z.union(widgetSettingsSchemas);
+
+export const widgetsEditSchema = z.object({
+	widgets: z.preprocess(
+		safeJSONParse,
+		z
+			.array(widgetSettingsSchema)
+			.max(USER.MAX_MAIN_WIDGETS + USER.MAX_SIDE_WIDGETS)
+			.refine((widgets) => {
+				let mainCount = 0;
+				let sideCount = 0;
+				for (const w of widgets) {
+					const def = findWidgetById(w.id);
+					if (!def) return false;
+					if (def.slot === "main") mainCount++;
+					else sideCount++;
+				}
+				return (
+					mainCount <= USER.MAX_MAIN_WIDGETS &&
+					sideCount <= USER.MAX_SIDE_WIDGETS
+				);
+			}),
+	),
 });
 
 const headGearIdSchema = z

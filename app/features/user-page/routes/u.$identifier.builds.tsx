@@ -16,8 +16,9 @@ import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { userNewBuildPage, weaponCategoryUrl } from "~/utils/urls";
+import { userNewBuildPage, userPage, weaponCategoryUrl } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.builds.server";
+import { SubPageHeader } from "../components/SubPageHeader";
 import {
 	loader,
 	type UserBuildsPageData,
@@ -79,20 +80,22 @@ export default function UserBuildsPage() {
 			{changingSorting ? (
 				<ChangeSortingDialog close={closeSortingDialog} />
 			) : null}
-			{isOwnPage && (
-				<div className="stack sm horizontal items-center justify-end">
-					<SendouButton
-						onPress={() => setChangingSorting(true)}
-						size="small"
-						variant="outlined"
-						icon={<ArrowDownNarrowWide />}
-						data-testid="change-sorting-button"
-					>
-						{t("user:builds.sorting.changeButton")}
-					</SendouButton>
-					<AddNewButton navIcon="builds" to={userNewBuildPage(user)} />
-				</div>
-			)}
+			<SubPageHeader user={layoutData.user} backTo={userPage(layoutData.user)}>
+				{isOwnPage ? (
+					<>
+						<SendouButton
+							onPress={() => setChangingSorting(true)}
+							size="small"
+							variant="outlined"
+							icon={<ArrowDownNarrowWide />}
+							data-testid="change-sorting-button"
+						>
+							{t("user:builds.sorting.changeButton")}
+						</SendouButton>
+						<AddNewButton navIcon="builds" to={userNewBuildPage(user)} />
+					</>
+				) : null}
+			</SubPageHeader>
 			<BuildsFilters
 				weaponFilter={weaponFilter}
 				setWeaponFilter={setWeaponFilter}

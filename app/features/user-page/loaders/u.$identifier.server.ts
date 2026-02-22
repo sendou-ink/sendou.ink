@@ -16,10 +16,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		),
 	);
 
+	const widgetsEnabled = await UserRepository.widgetsEnabledByIdentifier(
+		params.identifier!,
+	);
+
 	return {
 		user: {
 			...user,
 		},
 		customTheme: user.customTheme,
+		css: user.css,
+		type: widgetsEnabled ? ("new" as const) : ("old" as const),
 	};
 };

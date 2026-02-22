@@ -77,6 +77,8 @@ export const bskyUrl = (accountName: string) =>
 	`https://bsky.app/profile/${accountName}`;
 export const twitchUrl = (accountName: string) =>
 	`https://twitch.tv/${accountName}`;
+export const youtubeUrl = (channelId: string) =>
+	`https://youtube.com/channel/${channelId}`;
 
 export const LOG_IN_URL = "/auth";
 export const LOG_OUT_URL = "/auth/logout";
@@ -495,6 +497,8 @@ export const stageImageUrl = (stageId: StageId) =>
 	`/static-assets/img/stages/${stageId}`;
 export const tierImageUrl = (tier: TierName | "CALCULATING") =>
 	`/static-assets/img/tiers/${tier.toLowerCase()}`;
+export const controllerImageUrl = (controller: string) =>
+	`/static-assets/img/controllers/${controller}.avif`;
 export const preferenceEmojiUrl = (preference?: Preference) => {
 	const emoji =
 		preference === "PREFER"

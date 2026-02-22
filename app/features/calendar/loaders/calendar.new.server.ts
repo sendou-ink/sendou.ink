@@ -118,10 +118,15 @@ export async function findValidOrganizations(
 	});
 
 	if (isTournamentAdder) {
-		return ["NO_ORG", ...orgs.map((org) => R.omit(org, ["isEstablished"]))];
+		return [
+			"NO_ORG",
+			...orgs.map((org) =>
+				R.omit(org, ["isEstablished", "role", "roleDisplayName"]),
+			),
+		];
 	}
 
 	return orgs
 		.filter((org) => org.isEstablished)
-		.map((org) => R.omit(org, ["isEstablished"]));
+		.map((org) => R.omit(org, ["isEstablished", "role", "roleDisplayName"]));
 }

@@ -73,7 +73,7 @@ export async function findById(id: number) {
 						"TournamentOrganization.slug",
 						concatUserSubmittedImagePrefix(
 							innerEb.ref("UserSubmittedImage.url"),
-						).as("avatarUrl"),
+						).as("logoUrl"),
 						jsonArrayFrom(
 							innerEb
 								.selectFrom("TournamentOrganizationMember")

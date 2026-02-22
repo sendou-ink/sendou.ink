@@ -72,6 +72,7 @@ export const newCalendarEventActionSchema = z
 		toToolsMode: z.enum(["ALL", "TO", "SZ", "TC", "RM", "CB"]).optional(),
 		isRanked: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
 		isTest: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
+		isDraft: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
 		regClosesAt: z.enum(REG_CLOSES_AT_OPTIONS).nullish(),
 		enableNoScreenToggle: z.preprocess(
 			checkboxValueToBoolean,

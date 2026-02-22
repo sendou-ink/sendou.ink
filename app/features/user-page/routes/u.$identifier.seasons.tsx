@@ -55,8 +55,10 @@ import {
 	sendouQMatchPage,
 	TIERS_PAGE,
 	tournamentTeamPage,
+	userPage,
 	userSeasonsPage,
 } from "~/utils/urls";
+import { SubPageHeader } from "../components/SubPageHeader";
 import {
 	loader,
 	type UserSeasonsPageLoaderData,
@@ -73,11 +75,20 @@ const DAYS_WITH_SKILL_NEEDED_TO_SHOW_POWER_CHART = 2;
 export default function UserSeasonsPage() {
 	const { t } = useTranslation(["user"]);
 	const data = useLoaderData<typeof loader>();
+	const [, parentRoute] = useMatches();
+	invariant(parentRoute);
+	const layoutData = parentRoute.data as UserPageLoaderData;
 
 	if (!data) {
 		return (
-			<div className="text-lg text-lighter font-semi-bold text-center mt-2">
-				{t("user:seasons.noSeasons")}
+			<div>
+				<SubPageHeader
+					user={layoutData.user}
+					backTo={userPage(layoutData.user)}
+				/>
+				<div className="text-lg text-lighter font-semi-bold text-center mt-2">
+					{t("user:seasons.noSeasons")}
+				</div>
 			</div>
 		);
 	}
@@ -85,6 +96,10 @@ export default function UserSeasonsPage() {
 	if (data.results.value.length === 0) {
 		return (
 			<div className={clsx(mainStyles.narrow, "stack lg")}>
+				<SubPageHeader
+					user={layoutData.user}
+					backTo={userPage(layoutData.user)}
+				/>
 				<SeasonHeader
 					seasonViewed={data.season}
 					seasonsParticipatedIn={data.seasonsParticipatedIn}
@@ -101,6 +116,10 @@ export default function UserSeasonsPage() {
 
 	return (
 		<div className={clsx(mainStyles.narrow, "stack lg")}>
+			<SubPageHeader
+				user={layoutData.user}
+				backTo={userPage(layoutData.user)}
+			/>
 			<SeasonHeader
 				seasonViewed={data.season}
 				seasonsParticipatedIn={data.seasonsParticipatedIn}

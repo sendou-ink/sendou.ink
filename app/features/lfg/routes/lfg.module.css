@@ -7,3 +7,7 @@
 		display: flex;
 	}
 }
+
+.post {
+	scroll-margin-top: 6rem;
+}

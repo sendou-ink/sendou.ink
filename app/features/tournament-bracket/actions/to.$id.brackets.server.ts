@@ -51,6 +51,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 	switch (data._action) {
 		case "START_BRACKET": {
 			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			errorToastIfFalsy(
+				!tournament.isDraft,
+				"Tournament must be opened before starting a bracket",
+			);
 
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			invariant(bracket, "Bracket not found");
@@ -154,7 +158,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				}
 			}
 
-			if (!tournament.isTest) {
+			if (!tournament.isTest && !tournament.isDraft) {
 				notify({
 					userIds: seeding.flatMap((tournamentTeamId) =>
 						tournament.teamById(tournamentTeamId)!.members.map((m) => m.userId),

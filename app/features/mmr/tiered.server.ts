@@ -9,7 +9,7 @@ import {
 	type TierName,
 	USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN,
 } from "./mmr-constants";
-import { orderedMMRBySeason } from "./queries/orderedMMRBySeason.server";
+import { orderedUserMMRBySeason } from "./queries/orderedMMRBySeason.server";
 
 export interface TieredSkill {
 	ordinal: number;
@@ -25,10 +25,7 @@ export function freshUserSkills(season: number): {
 	intervals: SkillTierInterval[];
 	isAccurateTiers: boolean;
 } {
-	const points = orderedMMRBySeason({
-		season,
-		type: "user",
-	});
+	const points = orderedUserMMRBySeason(season);
 
 	const { intervals, isAccurateTiers } = skillTierIntervals(points, "user");
 

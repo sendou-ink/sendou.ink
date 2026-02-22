@@ -28,7 +28,7 @@ export default function TimePopover({
 	className?: string;
 	footerText?: string;
 }) {
-	const { formatDateTime, formatTime } = useTimeFormat();
+	const { formatDateTimeSmartMinutes, formatTime } = useTimeFormat();
 
 	const [open, setOpen] = useState(false);
 
@@ -63,7 +63,7 @@ export default function TimePopover({
 					setOpen(true);
 				}}
 			>
-				{formatDateTime(time, options)}
+				{formatDateTimeSmartMinutes(time, options)}
 			</button>
 			<Popover
 				isOpen={open}

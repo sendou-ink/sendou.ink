@@ -128,6 +128,8 @@
 	"damage.SPECIAL_SWING": "휘두르기",
 	"damage.SPECIAL_BULLET_MIN": "연사 (최소)",
 	"damage.SPECIAL_BULLET_MAX": "연사 (최대)",
+	"damage.SPECIAL_SPLASH_MAX": "",
+	"damage.SPECIAL_SPLASH_MIN": "",
 	"damage.SPECIAL_CANNON": "대포",
 	"damage.SPECIAL_BUMP": "충돌",
 	"damage.SPECIAL_JUMP": "점프",

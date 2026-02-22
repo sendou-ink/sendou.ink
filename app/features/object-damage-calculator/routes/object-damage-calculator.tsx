@@ -42,7 +42,7 @@ import { useObjectDamage } from "../calculator-hooks";
 import type { DamageReceiver } from "../calculator-types";
 import styles from "./object-damage-calculator.module.css";
 
-export const CURRENT_PATCH = "10.1";
+export const CURRENT_PATCH = "11.0.1";
 
 export const shouldRevalidate: ShouldRevalidateFunction = () => false;
 

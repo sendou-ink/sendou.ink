@@ -172,18 +172,18 @@ export const weaponParams = {
 			Range_GoStraightToBrakeStateFrame: 7,
 			Range_FreeGravity: 0.016,
 			Range_ZRate: 2,
-			BlastRadius: 3.8,
+			BlastRadius: 4,
 			WeaponSpeedType: "Fast",
 			MoveSpeed: 0.05,
 			DamageParam_ValueDirect: 1250,
 			BlastParam_DistanceDamage: [
 				{
 					Damage: 700,
-					Distance: 1.6,
+					Distance: 1.8,
 				},
 				{
 					Damage: 500,
-					Distance: 3.8,
+					Distance: 4,
 				},
 			],
 			Jump_DegSwerve: 6,
@@ -202,17 +202,17 @@ export const weaponParams = {
 			Range_GoStraightToBrakeStateFrame: 9,
 			Range_FreeGravity: 0.016,
 			Range_ZRate: 2,
-			BlastRadius: 3.3,
+			BlastRadius: 3.47,
 			MoveSpeed: 0.045,
 			DamageParam_ValueDirect: 1250,
 			BlastParam_DistanceDamage: [
 				{
 					Damage: 700,
-					Distance: 0.94,
+					Distance: 1.11,
 				},
 				{
 					Damage: 500,
-					Distance: 3.3,
+					Distance: 3.47,
 				},
 			],
 			Jump_DegSwerve: 10,
@@ -231,17 +231,17 @@ export const weaponParams = {
 			Range_GoStraightToBrakeStateFrame: 11,
 			Range_FreeGravity: 0.016,
 			Range_ZRate: 2,
-			BlastRadius: 3.3,
+			BlastRadius: 3.37,
 			MoveSpeed: 0.04,
 			DamageParam_ValueDirect: 1250,
 			BlastParam_DistanceDamage: [
 				{
 					Damage: 700,
-					Distance: 0.94,
+					Distance: 1.01,
 				},
 				{
 					Damage: 500,
-					Distance: 3.3,
+					Distance: 3.37,
 				},
 			],
 			Jump_DegSwerve: 8,
@@ -260,18 +260,18 @@ export const weaponParams = {
 			Range_GoStraightToBrakeStateFrame: 8,
 			Range_FreeGravity: 0.016,
 			Range_ZRate: 2,
-			BlastRadius: 4,
+			BlastRadius: 4.17,
 			WeaponSpeedType: "Fast",
 			MoveSpeed: 0.068,
 			DamageParam_ValueDirect: 600,
 			BlastParam_DistanceDamage: [
 				{
 					Damage: 300,
-					Distance: 1,
+					Distance: 1.17,
 				},
 				{
 					Damage: 300,
-					Distance: 4,
+					Distance: 4.17,
 				},
 			],
 			Jump_DegSwerve: 8,
@@ -290,17 +290,17 @@ export const weaponParams = {
 			Range_GoStraightToBrakeStateFrame: 11,
 			Range_FreeGravity: 0.016,
 			Range_ZRate: 2,
-			BlastRadius: 3.3,
+			BlastRadius: 3.37,
 			MoveSpeed: 0.055,
 			DamageParam_ValueDirect: 850,
 			BlastParam_DistanceDamage: [
 				{
 					Damage: 350,
-					Distance: 0.94,
+					Distance: 1.01,
 				},
 				{
 					Damage: 350,
-					Distance: 3.3,
+					Distance: 3.37,
 				},
 			],
 			Jump_DegSwerve: 8,
@@ -319,23 +319,23 @@ export const weaponParams = {
 			Range_GoStraightToBrakeStateFrame: 11,
 			Range_FreeGravity: 0.016,
 			Range_ZRate: 2,
-			BlastRadius: 3.3,
+			BlastRadius: 3.35,
 			MoveSpeed: 0.05,
 			DamageParam_ValueDirect: 850,
 			BlastParam_DistanceDamage: [
 				{
 					Damage: 350,
-					Distance: 0.94,
+					Distance: 0.99,
 				},
 				{
 					Damage: 350,
-					Distance: 3.3,
+					Distance: 3.35,
 				},
 			],
 			Jump_DegSwerve: 8,
 			Stand_DegSwerve: 0,
 			InkRecoverStop: 50,
-			InkConsume: 0.08,
+			InkConsume: 0.0912,
 		},
 		"260": {
 			overwrites: {
@@ -348,17 +348,17 @@ export const weaponParams = {
 			Range_GoStraightToBrakeStateFrame: 7,
 			Range_FreeGravity: 0.016,
 			Range_ZRate: 2,
-			BlastRadius: 2,
+			BlastRadius: 2.07,
 			MoveSpeed: 0.04,
 			DamageParam_ValueDirect: 1250,
 			BlastParam_DistanceDamage: [
 				{
 					Damage: 700,
-					Distance: 1,
+					Distance: 1.07,
 				},
 				{
 					Damage: 500,
-					Distance: 2,
+					Distance: 2.07,
 				},
 			],
 			Jump_DegSwerve: 8,
@@ -367,9 +367,9 @@ export const weaponParams = {
 			InkConsume: 0.095,
 		},
 		"300": {
-			Range_SpawnSpeed: 2.75,
-			Range_GoStraightStateEndMaxSpeed: 1.568,
-			Range_GoStraightToBrakeStateFrame: 4,
+			Range_SpawnSpeed: 3.413,
+			Range_GoStraightStateEndMaxSpeed: 1.946,
+			Range_GoStraightToBrakeStateFrame: 3,
 			Range_ZRate: 2,
 			TripleShotSpanFrame: 8,
 			MoveSpeed: 0.08,
@@ -393,8 +393,8 @@ export const weaponParams = {
 			Range_ZRate: 2,
 			TripleShotSpanFrame: 20,
 			MoveSpeed: 0.06,
-			DamageParam_ValueMax: 440,
-			DamageParam_ValueMin: 220,
+			DamageParam_ValueMax: 450,
+			DamageParam_ValueMin: 225,
 			Jump_DegSwerve: 1,
 			Stand_DegSwerve: 1,
 			InkRecoverStop: 25,
@@ -462,7 +462,7 @@ export const weaponParams = {
 			VerticalSwingUnitGroupParam_DamageParam_DamageMaxValue: 1800,
 			WideSwingUnitGroupParam_DamageParam_DamageMinValue: 400,
 			WideSwingUnitGroupParam_DamageParam_DamageMaxValue: 1800,
-			InkConsume_WeaponSwingParam: 0.18,
+			InkConsume_WeaponSwingParam: 0.21,
 		},
 		"1030": {
 			Range_SpawnSpeed: 1.7026,
@@ -710,7 +710,7 @@ export const weaponParams = {
 			BlastParam_DistanceDamage: [
 				{
 					Damage: 350,
-					Distance: 2.8,
+					Distance: 2.87,
 				},
 			],
 			InkRecoverStop: 70,
@@ -926,9 +926,9 @@ export const weaponParams = {
 			InkConsume_SideStepParam: 0.08,
 		},
 		"5040": {
-			Range_SpawnSpeed: 2.21,
-			Range_GoStraightStateEndMaxSpeed: 2.205,
-			Range_GoStraightToBrakeStateFrame: 4,
+			Range_SpawnSpeed: 2.637,
+			Range_GoStraightStateEndMaxSpeed: 2.631,
+			Range_GoStraightToBrakeStateFrame: 3,
 			Range_FreeGravity: 0.016,
 			Range_ZRate: 2,
 			MoveSpeed: 0.072,
@@ -964,7 +964,7 @@ export const weaponParams = {
 			DamageParam_ValueMax: 810,
 			CanopyHP: 5000,
 			InkConsumeUmbrella_WeaponShelterCanopyParam: 0.3,
-			InkConsume_WeaponShelterShotgunParam: 0.055,
+			InkConsume_WeaponShelterShotgunParam: 0.05,
 		},
 		"6010": {
 			overwrites: {
@@ -1014,14 +1014,14 @@ export const weaponParams = {
 			Range_BrakeAirResist: 0.1,
 			Range_BrakeGravity: 0.04,
 			Range_BrakeToFreeStateFrame: 1,
-			BlastRadius: 2,
+			BlastRadius: 2.05,
 			MoveSpeedFullCharge: 0.068,
 			DamageParam_ValueMax: 350,
 			DamageParam_ValueMin: 300,
 			BlastParam_DistanceDamage: [
 				{
 					Damage: 300,
-					Distance: 2,
+					Distance: 2.05,
 				},
 			],
 			ChargeFrameFullCharge: 72,
@@ -1051,7 +1051,7 @@ export const weaponParams = {
 			Range_BrakeAirResist: 0.1,
 			Range_BrakeGravity: 0.04,
 			Range_BrakeToFreeStateFrame: 1,
-			BlastRadius: 2,
+			BlastRadius: 2.05,
 			WeaponSpeedType: "Slow",
 			MoveSpeedFullCharge: 0.04,
 			DamageParam_ValueMax: 350,
@@ -1059,7 +1059,7 @@ export const weaponParams = {
 			BlastParam_DistanceDamage: [
 				{
 					Damage: 300,
-					Distance: 2,
+					Distance: 2.05,
 				},
 			],
 			ChargeFrameFullCharge: 80,
@@ -1217,7 +1217,7 @@ export const weaponParams = {
 			specialWeaponId: 16,
 		},
 		"70": {
-			SpecialPoint: 180,
+			SpecialPoint: 190,
 			subWeaponId: 12,
 			specialWeaponId: 12,
 		},
@@ -1352,7 +1352,7 @@ export const weaponParams = {
 			specialWeaponId: 13,
 		},
 		"261": {
-			SpecialPoint: 200,
+			SpecialPoint: 210,
 			subWeaponId: 2,
 			specialWeaponId: 6,
 		},
@@ -1517,7 +1517,7 @@ export const weaponParams = {
 			specialWeaponId: 2,
 		},
 		"2001": {
-			SpecialPoint: 200,
+			SpecialPoint: 190,
 			subWeaponId: 7,
 			specialWeaponId: 3,
 		},
@@ -1527,7 +1527,7 @@ export const weaponParams = {
 			specialWeaponId: 8,
 		},
 		"2011": {
-			SpecialPoint: 210,
+			SpecialPoint: 200,
 			subWeaponId: 4,
 			specialWeaponId: 14,
 		},
@@ -1547,7 +1547,7 @@ export const weaponParams = {
 			specialWeaponId: 8,
 		},
 		"2021": {
-			SpecialPoint: 210,
+			SpecialPoint: 200,
 			subWeaponId: 4,
 			specialWeaponId: 14,
 		},
@@ -1627,7 +1627,7 @@ export const weaponParams = {
 			specialWeaponId: 10,
 		},
 		"3011": {
-			SpecialPoint: 210,
+			SpecialPoint: 200,
 			subWeaponId: 5,
 			specialWeaponId: 15,
 		},
@@ -1637,7 +1637,7 @@ export const weaponParams = {
 			specialWeaponId: 19,
 		},
 		"3020": {
-			SpecialPoint: 220,
+			SpecialPoint: 210,
 			subWeaponId: 5,
 			specialWeaponId: 6,
 		},
@@ -1682,7 +1682,7 @@ export const weaponParams = {
 			specialWeaponId: 12,
 		},
 		"4000": {
-			SpecialPoint: 190,
+			SpecialPoint: 200,
 			subWeaponId: 2,
 			specialWeaponId: 11,
 		},
@@ -2569,9 +2569,9 @@ export const weaponParams = {
 					Mid: 1.1,
 				},
 				PaintRadius: {
-					High: 10.889999999999999,
-					Mid: 9.982,
-					Low: 9.075,
+					High: 10.212,
+					Mid: 9.36,
+					Low: 8.51,
 				},
 				SplashAroundVelocityMin: {
 					High: 0.7,
@@ -2587,7 +2587,7 @@ export const weaponParams = {
 			DistanceDamage: [
 				{
 					Damage: 2200,
-					Distance: 7.5,
+					Distance: 9,
 				},
 				{
 					Damage: 700,
@@ -2632,11 +2632,13 @@ export const weaponParams = {
 					Mid: 1.1,
 				},
 			},
-			DistanceDamage: [
+			SplashDamageMax: [
 				{
 					Damage: 700,
 					Distance: 3.6,
 				},
+			],
+			SplashDamageMin: [
 				{
 					Damage: 350,
 					Distance: 6,

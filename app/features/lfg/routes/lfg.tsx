@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { add, sub } from "date-fns";
 import { Funnel } from "lucide-react";
 import * as React from "react";
@@ -123,7 +124,11 @@ export default function LFGPage() {
 				<AddNewButton navIcon="lfg" to={lfgNewPostPage()} />
 			</div>
 			{filteredPosts.map((post) => (
-				<div key={post.id} className="stack sm">
+				<div
+					key={post.id}
+					id={String(post.id)}
+					className={clsx("stack sm", styles.post)}
+				>
 					{showExpiryAlert(post) ? <PostExpiryAlert postId={post.id} /> : null}
 					<LFGPost post={post} tiersMap={tiersMap} />
 				</div>

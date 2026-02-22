@@ -52,6 +52,10 @@ export default [
 		index("features/user-page/routes/u.$identifier.index.tsx"),
 		route("art", "features/user-page/routes/u.$identifier.art.tsx"),
 		route("edit", "features/user-page/routes/u.$identifier.edit.tsx"),
+		route(
+			"edit-widgets",
+			"features/user-page/routes/u.$identifier.edit-widgets.tsx",
+		),
 		route("seasons", "features/user-page/routes/u.$identifier.seasons.tsx"),
 		route("vods", "features/user-page/routes/u.$identifier.vods.tsx"),
 		route("builds", "features/user-page/routes/u.$identifier.builds.tsx"),

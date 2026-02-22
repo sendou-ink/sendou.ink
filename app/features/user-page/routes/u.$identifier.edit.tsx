@@ -69,6 +69,7 @@ export default function UserEditPage() {
 						<input type="hidden" name="commissionText" value="" />
 					</>
 				)}
+				<NewProfileToggle />
 				<FormMessage type="info">
 					<Trans i18nKey={"user:discordExplanation"} t={t}>
 						Username, profile picture, YouTube, Bluesky and Twitch accounts come
@@ -468,6 +469,32 @@ function FavBadgeSelect() {
 					</div>
 				) : null}
 			</BadgesSelector>
+		</div>
+	);
+}
+
+function NewProfileToggle() {
+	const { t } = useTranslation(["user"]);
+	const data = useLoaderData<typeof loader>();
+	const isSupporter = useHasRole("SUPPORTER");
+	const [checked, setChecked] = React.useState(
+		isSupporter && data.newProfileEnabled,
+	);
+
+	return (
+		<div>
+			<label htmlFor="newProfileEnabled">
+				{t("user:forms.newProfileEnabled")}
+			</label>
+			<SendouSwitch
+				isSelected={checked}
+				onChange={setChecked}
+				name="newProfileEnabled"
+				isDisabled={!isSupporter}
+			/>
+			<FormMessage type="info">
+				{t("user:forms.newProfileEnabled.info")}
+			</FormMessage>
 		</div>
 	);
 }
