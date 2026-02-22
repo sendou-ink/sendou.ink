@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Pencil as EditIcon, Puzzle as PuzzleIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
 	href,
@@ -15,8 +16,6 @@ import { Image, WeaponImage } from "~/components/Image";
 import { BattlefyIcon } from "~/components/icons/Battlefy";
 import { BskyIcon } from "~/components/icons/Bsky";
 import { DiscordIcon } from "~/components/icons/Discord";
-import { EditIcon } from "~/components/icons/Edit";
-import { PuzzleIcon } from "~/components/icons/Puzzle";
 import { TwitchIcon } from "~/components/icons/Twitch";
 import { YouTubeIcon } from "~/components/icons/YouTube";
 import { useUser } from "~/features/auth/core/user";
@@ -39,8 +38,8 @@ import { UserPageIconNav } from "../components/UserPageIconNav";
 import { Widget } from "../components/Widget";
 import { loader } from "../loaders/u.$identifier.index.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
-import newStyles from "./u.$identifier.module.css";
 import styles from "../user-page.module.css";
+import newStyles from "./u.$identifier.module.css";
 export { loader };
 
 export const handle: SendouRouteHandle = {

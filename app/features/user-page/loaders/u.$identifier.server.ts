@@ -25,7 +25,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			...user,
 		},
 		customTheme: user.customTheme,
-		css: user.css,
 		type: widgetsEnabled ? ("new" as const) : ("old" as const),
 	};
 };

@@ -1006,7 +1006,6 @@ function DraftToggle() {
 			<SendouSwitch
 				name="isDraft"
 				id={id}
-				size="small"
 				isSelected={isDraft}
 				onChange={setIsDraft}
 			/>
