@@ -308,6 +308,14 @@ export default [
 			route("/org/:id", "features/api-public/routes/org.$id.ts"),
 			route("/team/:id", "features/api-public/routes/team.$id.ts"),
 			route(
+				"/tournament/:id/seeds",
+				"features/api-public/routes/tournament.$id.seeds.ts",
+			),
+			route(
+				"/tournament/:id/starting-brackets",
+				"features/api-public/routes/tournament.$id.starting-brackets.ts",
+			),
+			route(
 				"/tournament/:id/teams/:teamId/add-member",
 				"features/api-public/routes/tournament.$id.teams.$teamId.add-member.ts",
 			),
