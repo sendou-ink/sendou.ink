@@ -22,14 +22,14 @@
 }
 
 .username {
-	font-size: var(--fonts-xl);
-	font-weight: var(--bold);
+	font-size: var(--font-xl);
+	font-weight: var(--weight-bold);
 	margin: 0;
 }
 
 .subtitle {
-	font-size: var(--fonts-xxs);
-	color: var(--text-lighter);
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);

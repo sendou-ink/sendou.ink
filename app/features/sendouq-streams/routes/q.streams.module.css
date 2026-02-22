@@ -4,7 +4,7 @@
 	gap: var(--s-2);
 	align-items: center;
 	font-weight: var(--weight-semi);
-	color: var(--text);
+	color: var(--color-text);
 }
 
 .viewerCount {

@@ -21,7 +21,7 @@
 
 .teamName {
 	flex: 1;
-	font-size: var(--text-lg);
+	font-size: var(--font-lg);
 	font-weight: var(--weight-semi);
 	margin: 0;
 	display: flex;

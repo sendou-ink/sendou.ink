@@ -16,26 +16,26 @@
 	justify-content: center;
 	width: 42px;
 	height: 42px;
-	background-color: var(--bg);
-	border: 2px solid var(--bg-lightest);
-	border-radius: var(--rounded);
-	color: var(--text);
+	background-color: var(--color-bg);
+	border: 2px solid var(--color-bg-higher);
+	border-radius: var(--radius-box);
+	color: var(--color-text);
 	transition: all 0.2s;
 	cursor: pointer;
 }
 
 .iconNavItem:hover {
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 }
 
 .iconNavItem:focus-visible {
-	outline: 2px solid var(--theme-secondary);
+	outline: 2px solid var(--color-text-second);
 	outline-offset: 2px;
 }
 
 .iconNavItem.active {
-	border-color: var(--theme-secondary);
-	background-color: var(--bg-lightest);
+	border-color: var(--color-text-second);
+	background-color: var(--color-bg-higher);
 }
 
 @media screen and (min-width: 768px) {

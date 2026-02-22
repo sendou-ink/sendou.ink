@@ -16,8 +16,8 @@
 }
 
 .header h1 {
-	font-size: var(--text-xl);
-	font-weight: 600;
+	font-size: var(--font-xl);
+	font-weight: var(--weight-bold);
 }
 
 .actions {
@@ -52,8 +52,8 @@
 
 .available h2,
 .selected h2 {
-	font-size: var(--text-lg);
-	font-weight: 600;
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
 }
 
 .searchInput {
@@ -73,9 +73,9 @@
 }
 
 .categoryTitle {
-	font-size: var(--fonts-sm);
-	font-weight: 600;
-	color: var(--text-lighter);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-high);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 	margin-top: var(--s-4);
@@ -86,9 +86,9 @@
 	flex-direction: column;
 	gap: var(--s-1-5);
 	padding: var(--s-3);
-	border: 1px solid var(--border);
-	border-radius: var(--rounded);
-	background-color: var(--bg-lighter);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
 }
 
 .widgetHeader {
@@ -107,7 +107,7 @@
 
 .widgetName {
 	font-weight: 500;
-	font-size: var(--text-sm);
+	font-size: var(--font-sm);
 }
 
 .widgetFooter {
@@ -120,14 +120,14 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
-	font-size: var(--fonts-xs);
-	color: var(--text-lighter);
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
 	flex-shrink: 0;
 }
 
 .widgetDescription {
-	font-size: var(--fonts-xs);
-	color: var(--text-lighter);
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
 }
 
 .slotSection {
@@ -140,14 +140,14 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	font-size: var(--text-sm);
-	font-weight: 600;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
 }
 
 .slotCount {
-	font-size: var(--fonts-xxs);
-	color: var(--text-lighter);
-	font-weight: var(--bold);
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	font-weight: var(--weight-bold);
 }
 
 .widgetList {
@@ -162,17 +162,17 @@
 	flex-direction: column;
 	gap: var(--s-2);
 	padding: var(--s-3);
-	border: 1px solid var(--border);
-	border-radius: var(--rounded);
-	background-color: var(--bg-lighter);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
 	transition: opacity 0.2s;
 }
 
 .widgetSettings {
 	padding: var(--s-3);
 	margin-top: var(--s-1);
-	background-color: var(--bg-darker);
-	border-radius: var(--rounded);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-box);
 }
 
 .draggableWidget .widgetName {
@@ -197,8 +197,8 @@
 .empty {
 	padding: var(--s-4);
 	text-align: center;
-	color: var(--text-lighter);
-	font-size: var(--text-sm);
-	border: 1px dashed var(--border);
-	border-radius: var(--rounded);
+	color: var(--color-text-high);
+	font-size: var(--font-sm);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
 }

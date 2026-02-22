@@ -27,9 +27,9 @@
 	width: 36px;
 	height: 36px;
 	border-radius: 100%;
-	background-color: var(--bg);
-	border: 2px solid var(--bg-lightest);
-	color: var(--text);
+	background-color: var(--color-bg);
+	border: 2px solid var(--color-bg-higher);
+	color: var(--color-text);
 	transition: all 0.2s;
 }
 
@@ -38,7 +38,7 @@
 }
 
 .backButton:hover {
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 }
 
 .backIcon {
@@ -58,6 +58,6 @@
 }
 
 .username {
-	font-weight: var(--semi-bold);
-	font-size: var(--fonts-sm);
+	font-weight: var(--weight-semi);
+	font-size: var(--font-sm);
 }
