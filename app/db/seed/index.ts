@@ -1656,6 +1656,48 @@ async function tournamentLfgGroups() {
 	const insertLike = sql.prepare(
 		/* sql */ `INSERT INTO "TournamentLFGLike" ("likerGroupId", "targetGroupId") VALUES (@likerGroupId, @targetGroupId)`,
 	);
+	const insertTeam = sql.prepare(
+		/* sql */ `INSERT INTO "TournamentTeam" ("name", "createdAt", "tournamentId", "inviteCode") VALUES (@name, @createdAt, @tournamentId, @inviteCode)`,
+	);
+	const insertTeamMember = sql.prepare(
+		/* sql */ `INSERT INTO "TournamentTeamMember" ("tournamentTeamId", "userId", "isOwner", "createdAt") VALUES (@tournamentTeamId, @userId, @isOwner, @createdAt)`,
+	);
+	const updateGroupTeamId = sql.prepare(
+		/* sql */ `UPDATE "TournamentLFGGroup" SET "tournamentTeamId" = @teamId WHERE "id" = @groupId`,
+	);
+
+	const createTeamForGroup = (
+		groupId: number,
+		tournamentId: number,
+		ownerUserId: number,
+		memberUserIds: number[],
+	) => {
+		const now = dateToDatabaseTimestamp(new Date());
+		const { lastInsertRowid } = insertTeam.run({
+			name: validTournamentTeamName(),
+			createdAt: now,
+			tournamentId,
+			inviteCode: shortNanoid(),
+		});
+		const teamId = Number(lastInsertRowid);
+
+		insertTeamMember.run({
+			tournamentTeamId: teamId,
+			userId: ownerUserId,
+			isOwner: 1,
+			createdAt: now,
+		});
+		for (const userId of memberUserIds) {
+			insertTeamMember.run({
+				tournamentTeamId: teamId,
+				userId,
+				isOwner: 0,
+				createdAt: now,
+			});
+		}
+
+		updateGroupTeamId.run({ teamId, groupId });
+	};
 
 	let userIndex = 0;
 	for (const { tournamentId, teamId } of tournaments) {
@@ -1698,6 +1740,7 @@ async function tournamentLfgGroups() {
 			groupId: group2.id,
 			userId: users[2],
 		});
+		createTeamForGroup(group2.id, tournamentId, users[1], [users[2]]);
 
 		// Group 3: trio
 		const group3 = await TournamentLFGRepository.createGroup({
@@ -1712,6 +1755,7 @@ async function tournamentLfgGroups() {
 				role: "REGULAR",
 			});
 		}
+		createTeamForGroup(group3.id, tournamentId, users[3], [users[4], users[5]]);
 
 		// Group 4: full (4 members)
 		const group4 = await TournamentLFGRepository.createGroup({
@@ -1726,6 +1770,11 @@ async function tournamentLfgGroups() {
 				role: "REGULAR",
 			});
 		}
+		createTeamForGroup(group4.id, tournamentId, users[6], [
+			users[7],
+			users[8],
+			users[9],
+		]);
 
 		// Group 5: solo
 		const group5 = await TournamentLFGRepository.createGroup({
@@ -1738,11 +1787,7 @@ async function tournamentLfgGroups() {
 			tournamentId,
 			userId: teamOwner,
 		});
-		sql
-			.prepare(
-				/* sql */ `UPDATE "TournamentLFGGroup" SET "tournamentTeamId" = @teamId WHERE "id" = @groupId`,
-			)
-			.run({ teamId, groupId: group6.id });
+		updateGroupTeamId.run({ teamId, groupId: group6.id });
 		insertMember.run({
 			groupId: group6.id,
 			tournamentId,
