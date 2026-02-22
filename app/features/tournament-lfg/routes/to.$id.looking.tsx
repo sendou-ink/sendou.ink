@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import * as React from "react";
+import type * as React from "react";
 import { Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
@@ -13,12 +13,14 @@ import {
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Placeholder } from "~/components/Placeholder";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouForm } from "~/form/SendouForm";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useWindowSize } from "~/hooks/useWindowSize";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { LFGGroupCard } from "../components/LFGGroupCard";
 import type { loader } from "../loaders/to.$id.looking.server";
+import { joinQueueFormSchema } from "../tournament-lfg-schemas";
 
 export { action } from "../actions/to.$id.looking.server";
 export { loader } from "../loaders/to.$id.looking.server";
@@ -26,7 +28,7 @@ export { loader } from "../loaders/to.$id.looking.server";
 import styles from "./to.$id.looking.module.css";
 
 export const handle: SendouRouteHandle = {
-	i18n: ["q", "tournament"],
+	i18n: ["q", "tournament", "forms"],
 };
 
 export default function TournamentLFGShell() {
@@ -82,6 +84,13 @@ function Groups() {
 		</div>
 	);
 
+	const hasOwnSection = data.ownGroup ?? data.ownTeam;
+	const ownTabMemberCount = data.ownGroup
+		? data.ownGroup.members.length
+		: data.ownTeam
+			? data.ownTeam.members.length
+			: 0;
+
 	const ownGroupElement = data.ownGroup ? (
 		<div className="stack md">
 			<LFGGroupCard group={data.ownGroup} ownGroup={data.ownGroup} />
@@ -91,6 +100,14 @@ function Groups() {
 			{!isMobile ? invitedGroupsDesktop : null}
 		</div>
 	) : null;
+
+	const leftColumnContent = data.ownGroup ? (
+		ownGroupElement
+	) : data.ownTeam ? (
+		<TeamQueueSection />
+	) : (
+		<JoinQueueForm />
+	);
 
 	return (
 		<Flipper flipKey={flipKey}>
@@ -103,13 +120,13 @@ function Groups() {
 					<div>
 						<SendouTabs>
 							<SendouTabList>
-								{data.ownGroup ? (
-									<SendouTab id="own" number={data.ownGroup.members.length}>
+								{hasOwnSection ? (
+									<SendouTab id="own" number={ownTabMemberCount}>
 										{t("q:looking.columns.myGroup")}
 									</SendouTab>
 								) : null}
 							</SendouTabList>
-							<SendouTabPanel id="own">{ownGroupElement}</SendouTabPanel>
+							<SendouTabPanel id="own">{leftColumnContent}</SendouTabPanel>
 						</SendouTabs>
 					</div>
 				) : null}
@@ -127,8 +144,8 @@ function Groups() {
 									{t("q:looking.columns.invitations")}
 								</SendouTab>
 							) : null}
-							{isMobile && data.ownGroup ? (
-								<SendouTab id="own" number={data.ownGroup.members.length}>
+							{isMobile ? (
+								<SendouTab id="own" number={ownTabMemberCount}>
 									{t("q:looking.columns.myGroup")}
 								</SendouTab>
 							) : null}
@@ -136,7 +153,6 @@ function Groups() {
 						<SendouTabPanel id="groups">
 							<div className="stack sm">
 								<ColumnHeader>{t("q:looking.columns.available")}</ColumnHeader>
-								{!data.ownGroup ? <JoinQueueForm /> : null}
 								{(isMobile
 									? data.groups.filter(
 											(group) =>
@@ -161,7 +177,6 @@ function Groups() {
 						</SendouTabPanel>
 						<SendouTabPanel id="received">
 							<div className="stack sm">
-								{!data.ownGroup ? <JoinQueueForm /> : null}
 								{groupsReceivedLikesFrom.map((group) => (
 									<LFGGroupCard
 										key={group.id}
@@ -172,13 +187,12 @@ function Groups() {
 								))}
 							</div>
 						</SendouTabPanel>
-						<SendouTabPanel id="own">{ownGroupElement}</SendouTabPanel>
+						<SendouTabPanel id="own">{leftColumnContent}</SendouTabPanel>
 					</SendouTabs>
 				</div>
 				{!isMobile ? (
 					<div className="stack sm">
 						<ColumnHeader>{t("q:looking.columns.invitations")}</ColumnHeader>
-						{!data.ownGroup ? <JoinQueueForm /> : null}
 						{groupsReceivedLikesFrom.map((group) => (
 							<LFGGroupCard
 								key={group.id}
@@ -206,28 +220,37 @@ function ColumnHeader({ children }: { children: React.ReactNode }) {
 
 function JoinQueueForm() {
 	const { t } = useTranslation(["q"]);
-	const fetcher = useFetcher();
-	const [stayAsSub, setStayAsSub] = React.useState(false);
 
 	return (
-		<fetcher.Form method="post" className="stack sm items-center">
-			<label className="stack horizontal xs items-center text-xs">
-				<input
-					type="checkbox"
-					name="stayAsSub"
-					checked={stayAsSub}
-					onChange={(e) => setStayAsSub(e.target.checked)}
-				/>
-				{t("q:looking.groups.stayAsSub")}
-			</label>
-			<SubmitButton
-				_action="JOIN_QUEUE"
-				state={fetcher.state}
-				variant="outlined"
-			>
-				{t("q:looking.joinQPrompt")}
-			</SubmitButton>
-		</fetcher.Form>
+		<SendouForm
+			schema={joinQueueFormSchema}
+			submitButtonText={t("q:looking.joinQPrompt")}
+		>
+			{({ FormField }) => <FormField name="stayAsSub" />}
+		</SendouForm>
+	);
+}
+
+function TeamQueueSection() {
+	const { t } = useTranslation(["q"]);
+	const data = useLoaderData<typeof loader>();
+	const fetcher = useFetcher();
+
+	if (!data.ownTeam) return null;
+
+	return (
+		<div className="stack md">
+			<LFGGroupCard group={data.ownTeam} />
+			<fetcher.Form method="post" className="stack items-center">
+				<SubmitButton
+					_action="JOIN_QUEUE"
+					state={fetcher.state}
+					variant="outlined"
+				>
+					{t("q:looking.joinQPrompt")}
+				</SubmitButton>
+			</fetcher.Form>
+		</div>
 	);
 }
 

@@ -182,5 +182,7 @@
 	"options.artSource.ALL": "",
 	"options.artSource.MADE-BY": "",
 	"options.artSource.MADE-OF": "",
-	"labels.tierListUrl": ""
+	"labels.tierListUrl": "",
+	"labels.stayAsSub": "",
+	"bottomTexts.stayAsSub": ""
 }

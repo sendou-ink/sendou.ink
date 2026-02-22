@@ -702,6 +702,7 @@ export interface TournamentLFGGroup {
 	createdAt: Generated<number>;
 }
 
+// xxx: duplicate state with tournament team member... keeping these up to date might be annoying
 export interface TournamentLFGGroupMember {
 	groupId: number;
 	tournamentId: number;

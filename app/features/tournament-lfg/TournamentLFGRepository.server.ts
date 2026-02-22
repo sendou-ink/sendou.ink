@@ -10,6 +10,39 @@ import {
 } from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 
+type CreateGroupFromTeamArgs = {
+	tournamentId: number;
+	tournamentTeamId: number;
+	members: Array<{ userId: number; isOwner: boolean }>;
+};
+export function createGroupFromTeam(args: CreateGroupFromTeamArgs) {
+	return db.transaction().execute(async (trx) => {
+		const createdGroup = await trx
+			.insertInto("TournamentLFGGroup")
+			.values({
+				tournamentId: args.tournamentId,
+				tournamentTeamId: args.tournamentTeamId,
+				chatCode: shortNanoid(),
+			})
+			.returning("id")
+			.executeTakeFirstOrThrow();
+
+		for (const member of args.members) {
+			await trx
+				.insertInto("TournamentLFGGroupMember")
+				.values({
+					groupId: createdGroup.id,
+					tournamentId: args.tournamentId,
+					userId: member.userId,
+					role: member.isOwner ? "OWNER" : "REGULAR",
+				})
+				.execute();
+		}
+
+		return createdGroup;
+	});
+}
+
 type CreateGroupArgs = {
 	tournamentId: number;
 	userId: number;

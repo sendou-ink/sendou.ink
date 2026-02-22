@@ -39,15 +39,43 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	switch (data._action) {
 		case "JOIN_QUEUE": {
-			// xxx: handle already in a team
 			const existingGroup = await findOwnGroup();
 			if (existingGroup) return null;
 
-			await TournamentLFGRepository.createGroup({
+			const tournament = await tournamentFromDBCached({
 				tournamentId,
-				userId: user.id,
-				isStayAsSub: data.stayAsSub ?? false,
+				user,
 			});
+			const team = tournament.teamMemberOfByUser(user);
+
+			if (team) {
+				const groups =
+					await TournamentLFGRepository.findGroupsByTournamentId(tournamentId);
+				const teamAlreadyLinked = groups.some(
+					(g) => g.tournamentTeamId === team.id,
+				);
+				if (teamAlreadyLinked) return null;
+
+				const memberAlreadyInGroup = team.members.some((m) =>
+					groups.some((g) => g.members.some((gm) => gm.id === m.userId)),
+				);
+				if (memberAlreadyInGroup) return null;
+
+				await TournamentLFGRepository.createGroupFromTeam({
+					tournamentId,
+					tournamentTeamId: team.id,
+					members: team.members.map((m) => ({
+						userId: m.userId,
+						isOwner: Boolean(m.isOwner),
+					})),
+				});
+			} else {
+				await TournamentLFGRepository.createGroup({
+					tournamentId,
+					userId: user.id,
+					isStayAsSub: data.stayAsSub ?? false,
+				});
+			}
 
 			break;
 		}

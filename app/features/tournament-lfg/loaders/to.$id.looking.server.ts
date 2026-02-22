@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import type { Pronouns } from "~/db/tables";
 import { getUser } from "~/features/auth/core/user.server";
+import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
@@ -36,14 +37,74 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		? await TournamentLFGRepository.allLikesByGroupId(ownGroup.id)
 		: { given: [], received: [] };
 
+	const ownTeam = await resolveOwnTeam({
+		user,
+		tournamentId,
+		ownGroup,
+		groups,
+	});
+
 	return {
 		groups: otherGroups,
 		ownGroup,
+		ownTeam,
 		likes,
 		lastUpdated: Date.now(),
 		tournamentId,
 	};
 };
+
+async function resolveOwnTeam({
+	user,
+	tournamentId,
+	ownGroup,
+	groups,
+}: {
+	user: ReturnType<typeof getUser>;
+	tournamentId: number;
+	ownGroup: LFGGroup | null;
+	groups: LFGGroup[];
+}): Promise<LFGGroup | null> {
+	if (!user) return null;
+	if (ownGroup) return null;
+
+	const tournament = await tournamentFromDBCached({
+		tournamentId,
+		user,
+	});
+
+	const team = tournament.teamMemberOfByUser(user);
+	if (!team) return null;
+
+	const teamAlreadyLinked = groups.some((g) => g.tournamentTeamId === team.id);
+	if (teamAlreadyLinked) return null;
+
+	const members: LFGGroupMember[] = team.members.map((m) => ({
+		id: m.userId,
+		username: m.username,
+		discordId: m.discordId,
+		discordAvatar: m.discordAvatar,
+		customUrl: m.customUrl,
+		languages: [],
+		vc: null,
+		pronouns: null,
+		role: m.isOwner ? "OWNER" : "REGULAR",
+		note: null,
+		isStayAsSub: false,
+		weapons: null,
+		chatNameColor: null,
+		plusTier: m.plusTier,
+	}));
+
+	return {
+		id: -1,
+		tournamentTeamId: team.id,
+		teamName: team.name,
+		teamAvatarUrl: team.pickupAvatarUrl,
+		members,
+		usersRole: members.find((m) => m.id === user.id)?.role ?? null,
+	};
+}
 
 function transformMembers(
 	rawMembers: Awaited<

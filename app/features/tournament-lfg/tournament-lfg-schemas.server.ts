@@ -1,13 +1,10 @@
 import { z } from "zod";
 import { _action, checkboxValueToBoolean, falsyToNull, id } from "~/utils/zod";
 import { TOURNAMENT_LFG } from "./tournament-lfg-constants";
+import { joinQueueFormSchema } from "./tournament-lfg-schemas";
 
 export const lookingSchema = z.union([
-	z.object({
-		_action: _action("JOIN_QUEUE"),
-		// xxx: use SendouForm style
-		stayAsSub: z.preprocess(checkboxValueToBoolean, z.boolean().optional()),
-	}),
+	joinQueueFormSchema,
 	z.object({
 		_action: _action("LIKE"),
 		targetGroupId: id,
