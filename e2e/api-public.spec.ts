@@ -235,6 +235,53 @@ test.describe("Public API - Write endpoints", () => {
 		expect(data.error).toBe("Write token required");
 	});
 
+	test("updates tournament seeds via API", async ({ page }) => {
+		await seed(page);
+		await impersonate(page, ADMIN_ID);
+
+		const token = await generateWriteToken(page);
+
+		const teamsResponse = await page.request.fetch(
+			`/api/tournament/${ITZ_TOURNAMENT_ID}/teams`,
+			{
+				headers: { Authorization: `Bearer ${token}` },
+			},
+		);
+		expect(teamsResponse.status()).toBe(200);
+		const teams = await teamsResponse.json();
+		const tournamentTeamIds = teams.map((t: { id: number }) => t.id);
+		const reversedSeeds = [...tournamentTeamIds].reverse();
+
+		const response = await page.request.fetch(
+			`/api/tournament/${ITZ_TOURNAMENT_ID}/seeds`,
+			{
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				data: { tournamentTeamIds: reversedSeeds },
+			},
+		);
+
+		expect(response.status()).toBe(200);
+
+		const updatedTeamsResponse = await page.request.fetch(
+			`/api/tournament/${ITZ_TOURNAMENT_ID}/teams`,
+			{
+				headers: { Authorization: `Bearer ${token}` },
+			},
+		);
+		const updatedTeams = await updatedTeamsResponse.json();
+
+		for (let i = 0; i < reversedSeeds.length; i++) {
+			const team = updatedTeams.find(
+				(t: { id: number }) => t.id === reversedSeeds[i],
+			);
+			expect(team.seed).toBe(i + 1);
+		}
+	});
+
 	test("returns 400 when user is not the organizer of this tournament", async ({
 		page,
 	}) => {

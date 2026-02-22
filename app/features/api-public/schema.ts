@@ -502,8 +502,15 @@ type TournamentBracket = {
 
 type TournamentBracketData = ValueToArray<DataTypes>;
 
-/** POST /api/tournament/{id}/teams/{teamId}/add-member */
-/** POST /api/tournament/{id}/teams/{teamId}/remove-member */
+/** POST /api/tournament/{id}/seeds */
+
+/** @lintignore */
+export interface TournamentSeedsBody {
+	tournamentTeamIds: number[];
+}
+
+/** POST /api/tournament/{id}/teams/{tournamentTeamId}/add-member */
+/** POST /api/tournament/{id}/teams/{tournamentTeamId}/remove-member */
 
 /** @lintignore */
 export interface TournamentTeamMemberBody {
