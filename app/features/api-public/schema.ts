@@ -509,6 +509,16 @@ export interface TournamentSeedsBody {
 	tournamentTeamIds: number[];
 }
 
+/** POST /api/tournament/{id}/starting-brackets */
+
+/** @lintignore */
+export interface TournamentStartingBracketsBody {
+	startingBrackets: Array<{
+		tournamentTeamId: number;
+		startingBracketIdx: number;
+	}>;
+}
+
 /** POST /api/tournament/{id}/teams/{tournamentTeamId}/add-member */
 /** POST /api/tournament/{id}/teams/{tournamentTeamId}/remove-member */
 

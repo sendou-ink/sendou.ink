@@ -282,6 +282,41 @@ test.describe("Public API - Write endpoints", () => {
 		}
 	});
 
+	test("updates tournament starting brackets via API", async ({ page }) => {
+		await seed(page);
+		await impersonate(page, ADMIN_ID);
+
+		const token = await generateWriteToken(page);
+
+		const teamsResponse = await page.request.fetch(
+			`/api/tournament/${ITZ_TOURNAMENT_ID}/teams`,
+			{
+				headers: { Authorization: `Bearer ${token}` },
+			},
+		);
+		expect(teamsResponse.status()).toBe(200);
+		const teams = await teamsResponse.json();
+		const firstTeamId = teams[0].id;
+
+		const response = await page.request.fetch(
+			`/api/tournament/${ITZ_TOURNAMENT_ID}/starting-brackets`,
+			{
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				data: {
+					startingBrackets: [
+						{ tournamentTeamId: firstTeamId, startingBracketIdx: 0 },
+					],
+				},
+			},
+		);
+
+		expect(response.status()).toBe(200);
+	});
+
 	test("returns 400 when user is not the organizer of this tournament", async ({
 		page,
 	}) => {
