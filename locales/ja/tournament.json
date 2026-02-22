@@ -8,6 +8,7 @@
 	"tabs.results": "結果",
 	"tabs.streams": "配信 ({{count}})",
 	"tabs.subs": "サブ ({{count}})",
+	"tabs.looking": "",
 	"pre.steps.header": "トーナメント参加のために下記を入力してください",
 	"pre.steps.name": "チーム名",
 	"pre.steps.roster": "全プレイヤー",

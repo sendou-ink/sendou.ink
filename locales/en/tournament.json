@@ -8,6 +8,7 @@
 	"tabs.results": "Results",
 	"tabs.streams": "Streams ({{count}})",
 	"tabs.subs": "Subs ({{count}})",
+	"tabs.looking": "LFG",
 	"pre.steps.header": "Complete these steps to play",
 	"pre.steps.name": "Team name",
 	"pre.steps.roster": "Full roster",

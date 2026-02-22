@@ -197,11 +197,17 @@ export function TournamentLayout() {
 				>
 					{t("tournament:tabs.teams", { count: tournament.ctx.teams.length })}
 				</SubNavLink>
-				{!tournament.everyBracketOver && tournament.subsFeatureEnabled && (
-					<SubNavLink to="subs" end={false}>
-						{t("tournament:tabs.subs", { count: subsCount() })}
-					</SubNavLink>
-				)}
+				{!tournament.hasStarted && !tournament.isInvitational ? (
+					<SubNavLink to="looking">{t("tournament:tabs.looking")}</SubNavLink>
+				) : null}
+				{/** xxx: do we still have a separate subs tab or just reuse /looking? */}
+				{tournament.hasStarted &&
+					!tournament.everyBracketOver &&
+					tournament.subsFeatureEnabled && (
+						<SubNavLink to="subs" end={false}>
+							{t("tournament:tabs.subs", { count: subsCount() })}
+						</SubNavLink>
+					)}
 				{tournament.hasStarted && !tournament.everyBracketOver ? (
 					<SubNavLink to="streams">
 						{t("tournament:tabs.streams", {

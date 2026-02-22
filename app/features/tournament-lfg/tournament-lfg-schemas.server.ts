@@ -40,4 +40,7 @@ export const lookingSchema = z.union([
 		_action: _action("UPDATE_STAY_AS_SUB"),
 		value: z.preprocess(checkboxValueToBoolean, z.boolean()),
 	}),
+	z.object({
+		_action: _action("LEAVE_GROUP"),
+	}),
 ]);

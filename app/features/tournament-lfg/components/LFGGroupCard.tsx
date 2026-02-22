@@ -44,6 +44,9 @@ export type LFGGroup = {
 	usersRole: "OWNER" | "MANAGER" | "REGULAR" | null;
 };
 
+// xxx: show team name
+// xxx: "cancel" & "save" buttons off
+// xxx: no need to show the "Sub" in GroupCard
 export function LFGGroupCard({
 	group,
 	action,

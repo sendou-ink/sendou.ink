@@ -8,6 +8,7 @@
 	"tabs.results": "Resultats",
 	"tabs.streams": "Diffusions ({{count}})",
 	"tabs.subs": "Remplaçants ({{count}})",
+	"tabs.looking": "",
 	"pre.steps.header": "Complétez ces étapes pour jouer",
 	"pre.steps.name": "Nom de l'équipe",
 	"pre.steps.roster": "Participants",

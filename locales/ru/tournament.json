@@ -8,6 +8,7 @@
 	"tabs.results": "Результаты",
 	"tabs.streams": "Трансляции: ({{count}})",
 	"tabs.subs": "Запасные: ({{count}})",
+	"tabs.looking": "",
 	"pre.steps.header": "Завершите следующие шаги, чтобы закончить регистрацию",
 	"pre.steps.name": "Имя команды",
 	"pre.steps.roster": "Полный состав",

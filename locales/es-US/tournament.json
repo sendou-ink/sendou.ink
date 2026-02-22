@@ -8,6 +8,7 @@
 	"tabs.results": "",
 	"tabs.streams": "Streams ({{count}})",
 	"tabs.subs": "Subs ({{count}})",
+	"tabs.looking": "",
 	"pre.steps.header": "Completa estos pasos para jugar",
 	"pre.steps.name": "Nombre de equipo",
 	"pre.steps.roster": "Equipo lleno",

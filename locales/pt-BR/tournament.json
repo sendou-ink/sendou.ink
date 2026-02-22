@@ -8,6 +8,7 @@
 	"tabs.results": "",
 	"tabs.streams": "Transmissões ({{count}})",
 	"tabs.subs": "Inscritos ({{count}})",
+	"tabs.looking": "",
 	"pre.steps.header": "Complete esses passos para jogar",
 	"pre.steps.name": "Nome do time",
 	"pre.steps.roster": "Lista de membros completa",
