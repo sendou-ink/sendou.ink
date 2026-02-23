@@ -73,7 +73,7 @@ async function main() {
 			discordInviteCode:
 				tournament.ctx.discordUrl?.replace("https://discord.gg/", "") ?? null,
 			mapPickingStyle: tournament.ctx.mapPickingStyle,
-			name: `${tournament.ctx.name} - Division ${div}`,
+			name: `${tournament.ctx.name} - ${div.startsWith("Division") ? div : `Division ${div}`}`,
 			organizationId: tournament.ctx.organization?.id ?? null,
 			rules: tournament.ctx.rules,
 			startTimes: [dateToDatabaseTimestamp(tournament.ctx.startTime)],
@@ -134,9 +134,9 @@ type ParsedTeam = ReturnType<typeof parseCsv>[number];
 
 function parseCsv(csv: string) {
 	const lines = csv.trim().split("\n");
-	const headers = lines[0].split(",");
+	const headers = splitCsvRow(lines[0]).map((h) => h.trim());
 	const rows = lines.slice(1).map((line) => {
-		const row = line.split(",");
+		const row = splitCsvRow(line);
 		return headers.reduce(
 			(acc, header, i) => {
 				acc[header] = row[i];
@@ -177,6 +177,39 @@ function validateDivs(teams: ParsedTeam[]) {
 			`Division ${div} has ${count} teams, expected at least ${MIN_TEAMS_COUNT_PER_DIV}`,
 		);
 	}
+}
+
+function splitCsvRow(line: string) {
+	const fields: string[] = [];
+	let current = "";
+	let inQuotes = false;
+
+	for (let i = 0; i < line.length; i++) {
+		const char = line[i];
+
+		if (inQuotes) {
+			if (char === '"') {
+				if (line[i + 1] === '"') {
+					current += '"';
+					i++;
+				} else {
+					inQuotes = false;
+				}
+			} else {
+				current += char;
+			}
+		} else if (char === '"') {
+			inQuotes = true;
+		} else if (char === ",") {
+			fields.push(current);
+			current = "";
+		} else {
+			current += char;
+		}
+	}
+
+	fields.push(current);
+	return fields;
 }
 
 main();
