@@ -18,9 +18,8 @@ export function UserSearchFormField({
 	onChange,
 	onBlur,
 }: UserSearchFormFieldProps) {
-	const { translatedLabel, translatedError } = useTranslatedTexts({
+	const { translatedLabel } = useTranslatedTexts({
 		label,
-		error,
 	});
 
 	return (
@@ -31,9 +30,8 @@ export function UserSearchFormField({
 				onBlur={() => onBlur?.()}
 				label={translatedLabel}
 				isRequired={required}
-				errorText={translatedError}
 			/>
-			<FormFieldMessages name={name} bottomText={bottomText} />
+			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 		</div>
 	);
 }

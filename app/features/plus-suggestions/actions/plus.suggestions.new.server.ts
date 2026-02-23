@@ -1,5 +1,4 @@
-import type { ActionFunction } from "react-router";
-import { redirect } from "react-router";
+import { type ActionFunctionArgs, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
@@ -8,32 +7,39 @@ import {
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { parseFormData } from "~/form/parse.server";
 import {
 	badRequestIfFalsy,
 	errorToastIfFalsy,
-	parseRequestPayload,
 	unauthorizedIfFalsy,
 } from "~/utils/remix.server";
 import { plusSuggestionPage } from "~/utils/urls";
-import { firstCommentActionSchema } from "../plus-suggestions-schemas";
-import {
-	canSuggestNewUser,
-	playerAlreadyMember,
-	playerAlreadySuggested,
-} from "../plus-suggestions-utils";
+import { newSuggestionFormSchemaServer } from "../plus-suggestions-schemas.server";
+import { canSuggestNewUser } from "../plus-suggestions-utils";
 
-export const action: ActionFunction = async ({ request }) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
 	const user = requireUser();
 
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
-		schema: firstCommentActionSchema,
+		schema: newSuggestionFormSchemaServer,
 	});
 
-	unauthorizedIfFalsy(user.plusTier && user.plusTier <= data.tier);
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const tier = [1, 2, 3].find(
+		(t) =>
+			(user.plusTier ?? Number.MAX_SAFE_INTEGER) <= t &&
+			t === Number(result.data.tier),
+	);
+	errorToastIfFalsy(tier, "Invalid tier selected");
+
+	unauthorizedIfFalsy(user.plusTier && user.plusTier <= tier);
 
 	const suggested = badRequestIfFalsy(
-		await UserRepository.findLeanById(data.userId),
+		await UserRepository.findLeanById(result.data.userId),
 	);
 
 	const votingMonthYear = rangeToMonthYear(
@@ -41,20 +47,6 @@ export const action: ActionFunction = async ({ request }) => {
 	);
 	const suggestions =
 		await PlusSuggestionRepository.findAllByMonth(votingMonthYear);
-
-	errorToastIfFalsy(
-		!playerAlreadySuggested({
-			suggestions,
-			suggested,
-			targetPlusTier: data.tier,
-		}),
-		"This user has already been suggested",
-	);
-
-	errorToastIfFalsy(
-		!playerAlreadyMember({ suggested, targetPlusTier: data.tier }),
-		"This user is already a member of this tier",
-	);
 
 	errorToastIfFalsy(
 		canSuggestNewUser({
@@ -67,8 +59,8 @@ export const action: ActionFunction = async ({ request }) => {
 	await PlusSuggestionRepository.create({
 		authorId: user.id,
 		suggestedId: suggested.id,
-		tier: data.tier,
-		text: data.comment,
+		tier,
+		text: result.data.comment,
 		...votingMonthYear,
 	});
 
@@ -77,10 +69,10 @@ export const action: ActionFunction = async ({ request }) => {
 		notification: {
 			type: "PLUS_SUGGESTION_ADDED",
 			meta: {
-				tier: data.tier,
+				tier,
 			},
 		},
 	});
 
-	throw redirect(plusSuggestionPage({ tier: data.tier }));
+	throw redirect(plusSuggestionPage({ tier }));
 };
