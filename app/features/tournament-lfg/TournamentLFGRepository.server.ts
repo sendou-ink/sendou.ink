@@ -9,68 +9,48 @@ import {
 	userChatNameColorForJson,
 } from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
+import { randomTeamName } from "~/utils/team-name";
 
-type CreateGroupFromTeamArgs = {
-	tournamentId: number;
-	tournamentTeamId: number;
-	members: Array<{ userId: number; isOwner: boolean }>;
-};
-export function createGroupFromTeam(args: CreateGroupFromTeamArgs) {
-	return db.transaction().execute(async (trx) => {
-		const createdGroup = await trx
-			.insertInto("TournamentLFGGroup")
-			.values({
-				tournamentId: args.tournamentId,
-				tournamentTeamId: args.tournamentTeamId,
-				chatCode: shortNanoid(),
-			})
-			.returning("id")
-			.executeTakeFirstOrThrow();
-
-		for (const member of args.members) {
-			await trx
-				.insertInto("TournamentLFGGroupMember")
-				.values({
-					groupId: createdGroup.id,
-					tournamentId: args.tournamentId,
-					userId: member.userId,
-					role: member.isOwner ? "OWNER" : "REGULAR",
-				})
-				.execute();
-		}
-
-		return createdGroup;
-	});
+export function startLooking(teamId: number) {
+	return db
+		.updateTable("TournamentTeam")
+		.set({ isLooking: 1, chatCode: shortNanoid() })
+		.where("id", "=", teamId)
+		.execute();
 }
 
-type CreateGroupArgs = {
+type CreatePlaceholderTeamArgs = {
 	tournamentId: number;
 	userId: number;
 	isStayAsSub?: boolean;
 };
-export function createGroup(args: CreateGroupArgs) {
+export function createPlaceholderTeam(args: CreatePlaceholderTeamArgs) {
 	return db.transaction().execute(async (trx) => {
-		const createdGroup = await trx
-			.insertInto("TournamentLFGGroup")
+		const createdTeam = await trx
+			.insertInto("TournamentTeam")
 			.values({
 				tournamentId: args.tournamentId,
+				name: randomTeamName(),
+				inviteCode: shortNanoid(),
+				isPlaceholder: 1,
+				isLooking: 1,
 				chatCode: shortNanoid(),
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
 
 		await trx
-			.insertInto("TournamentLFGGroupMember")
+			.insertInto("TournamentTeamMember")
 			.values({
-				groupId: createdGroup.id,
-				tournamentId: args.tournamentId,
+				tournamentTeamId: createdTeam.id,
 				userId: args.userId,
+				isOwner: 1,
 				role: "OWNER",
 				isStayAsSub: args.isStayAsSub ? 1 : 0,
 			})
 			.execute();
 
-		return createdGroup;
+		return createdTeam;
 	});
 }
 
@@ -83,39 +63,34 @@ type TournamentLFGMemberObject = {
 	languages: Tables["User"]["languages"];
 	vc: Tables["User"]["vc"];
 	pronouns: Tables["User"]["pronouns"];
-	role: Tables["TournamentLFGGroupMember"]["role"];
-	note: Tables["TournamentLFGGroupMember"]["note"];
-	isStayAsSub: Tables["TournamentLFGGroupMember"]["isStayAsSub"];
+	role: Tables["TournamentTeamMember"]["role"];
+	isStayAsSub: Tables["TournamentTeamMember"]["isStayAsSub"];
 	weapons: Tables["User"]["qWeaponPool"];
 	chatNameColor: string | null;
 	plusTier: Tables["PlusTier"]["tier"] | null;
 };
 
-export async function findGroupsByTournamentId(tournamentId: number) {
+export async function findLookingTeamsByTournamentId(tournamentId: number) {
 	return db
-		.selectFrom("TournamentLFGGroup")
+		.selectFrom("TournamentTeam")
 		.innerJoin(
-			"TournamentLFGGroupMember",
-			"TournamentLFGGroupMember.groupId",
-			"TournamentLFGGroup.id",
-		)
-		.innerJoin("User", "User.id", "TournamentLFGGroupMember.userId")
-		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
-		.leftJoin(
-			"TournamentTeam",
+			"TournamentTeamMember",
+			"TournamentTeamMember.tournamentTeamId",
 			"TournamentTeam.id",
-			"TournamentLFGGroup.tournamentTeamId",
 		)
+		.innerJoin("User", "User.id", "TournamentTeamMember.userId")
+		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.leftJoin(
 			"UserSubmittedImage",
 			"UserSubmittedImage.id",
 			"TournamentTeam.avatarImgId",
 		)
 		.select(({ fn, eb }) => [
-			"TournamentLFGGroup.id",
-			"TournamentLFGGroup.chatCode",
-			"TournamentLFGGroup.tournamentTeamId",
-			"TournamentLFGGroup.visibility",
+			"TournamentTeam.id",
+			"TournamentTeam.chatCode",
+			"TournamentTeam.isPlaceholder",
+			"TournamentTeam.lfgVisibility as visibility",
+			"TournamentTeam.lfgNote as note",
 			"TournamentTeam.name as teamName",
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"teamAvatarUrl",
@@ -131,9 +106,8 @@ export async function findGroupsByTournamentId(tournamentId: number) {
 						languages: eb.ref("User.languages"),
 						vc: eb.ref("User.vc"),
 						pronouns: eb.ref("User.pronouns"),
-						role: eb.ref("TournamentLFGGroupMember.role"),
-						note: eb.ref("TournamentLFGGroupMember.note"),
-						isStayAsSub: eb.ref("TournamentLFGGroupMember.isStayAsSub"),
+						role: eb.ref("TournamentTeamMember.role"),
+						isStayAsSub: eb.ref("TournamentTeamMember.isStayAsSub"),
 						weapons: eb.ref("User.qWeaponPool"),
 						chatNameColor: userChatNameColorForJson,
 						plusTier: eb.ref("PlusTier.tier"),
@@ -142,101 +116,74 @@ export async function findGroupsByTournamentId(tournamentId: number) {
 				.$castTo<TournamentLFGMemberObject[]>()
 				.as("members"),
 		])
-		.where("TournamentLFGGroup.tournamentId", "=", tournamentId)
-		.groupBy("TournamentLFGGroup.id")
+		.where("TournamentTeam.tournamentId", "=", tournamentId)
+		.where("TournamentTeam.isLooking", "=", 1)
+		.groupBy("TournamentTeam.id")
 		.execute();
 }
 
-export function morphGroups({
-	survivingGroupId,
-	otherGroupId,
+// xxx: ensure that the team size does not exceed the max, also filter out in frontend
+export function mergeTeams({
+	survivingTeamId,
+	otherTeamId,
 	maxGroupSize,
-	tournamentId,
 }: {
-	survivingGroupId: number;
-	otherGroupId: number;
+	survivingTeamId: number;
+	otherTeamId: number;
 	maxGroupSize: number;
-	tournamentId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
-		const survivingGroup = await trx
-			.selectFrom("TournamentLFGGroup")
-			.select("tournamentTeamId")
-			.where("id", "=", survivingGroupId)
-			.executeTakeFirstOrThrow();
-
-		if (!survivingGroup.tournamentTeamId) {
-			const createdTeam = await trx
-				.insertInto("TournamentTeam")
-				.values({
-					tournamentId,
-					name: `LFG Team ${shortNanoid()}`,
-					inviteCode: "",
-				})
-				.returning("id")
-				.executeTakeFirstOrThrow();
-
-			await trx
-				.updateTable("TournamentLFGGroup")
-				.set({ tournamentTeamId: createdTeam.id })
-				.where("id", "=", survivingGroupId)
-				.execute();
-		}
-
 		await trx
-			.updateTable("TournamentLFGGroup")
+			.updateTable("TournamentTeam")
 			.set({ chatCode: shortNanoid() })
-			.where("TournamentLFGGroup.id", "=", survivingGroupId)
+			.where("TournamentTeam.id", "=", survivingTeamId)
 			.execute();
 
-		const otherGroupMembers = await trx
-			.selectFrom("TournamentLFGGroupMember")
-			.select([
-				"TournamentLFGGroupMember.userId",
-				"TournamentLFGGroupMember.role",
-			])
-			.where("TournamentLFGGroupMember.groupId", "=", otherGroupId)
+		const otherMembers = await trx
+			.selectFrom("TournamentTeamMember")
+			.select(["TournamentTeamMember.userId", "TournamentTeamMember.role"])
+			.where("TournamentTeamMember.tournamentTeamId", "=", otherTeamId)
 			.execute();
 
-		for (const member of otherGroupMembers) {
+		for (const member of otherMembers) {
 			await trx
-				.updateTable("TournamentLFGGroupMember")
+				.updateTable("TournamentTeamMember")
 				.set({
 					role: member.role === "OWNER" ? "MANAGER" : member.role,
-					groupId: survivingGroupId,
+					tournamentTeamId: survivingTeamId,
 				})
-				.where("TournamentLFGGroupMember.groupId", "=", otherGroupId)
-				.where("TournamentLFGGroupMember.userId", "=", member.userId)
+				.where("TournamentTeamMember.tournamentTeamId", "=", otherTeamId)
+				.where("TournamentTeamMember.userId", "=", member.userId)
 				.execute();
 		}
 
-		await deleteLikesByGroupId(survivingGroupId, trx);
+		await deleteLikesByTeamId(survivingTeamId, trx);
 
 		await trx
-			.deleteFrom("TournamentLFGGroup")
-			.where("TournamentLFGGroup.id", "=", otherGroupId)
+			.deleteFrom("TournamentTeam")
+			.where("TournamentTeam.id", "=", otherTeamId)
 			.execute();
 
 		invariant(
-			await isGroupCorrect(survivingGroupId, trx, maxGroupSize),
+			await isTeamCorrect(survivingTeamId, trx, maxGroupSize),
 			"Group has too many members after merge",
 		);
 	});
 }
 
 export async function addLike({
-	likerGroupId,
-	targetGroupId,
+	likerTeamId,
+	targetTeamId,
 }: {
-	likerGroupId: number;
-	targetGroupId: number;
+	likerTeamId: number;
+	targetTeamId: number;
 }) {
 	try {
 		await db
 			.insertInto("TournamentLFGLike")
-			.values({ likerGroupId, targetGroupId })
+			.values({ likerTeamId, targetTeamId })
 			.onConflict((oc) =>
-				oc.columns(["likerGroupId", "targetGroupId"]).doNothing(),
+				oc.columns(["likerTeamId", "targetTeamId"]).doNothing(),
 			)
 			.execute();
 	} catch (error) {
@@ -248,100 +195,94 @@ export async function addLike({
 }
 
 export function deleteLike({
-	likerGroupId,
-	targetGroupId,
+	likerTeamId,
+	targetTeamId,
 }: {
-	likerGroupId: number;
-	targetGroupId: number;
+	likerTeamId: number;
+	targetTeamId: number;
 }) {
 	return db
 		.deleteFrom("TournamentLFGLike")
-		.where("likerGroupId", "=", likerGroupId)
-		.where("targetGroupId", "=", targetGroupId)
+		.where("likerTeamId", "=", likerTeamId)
+		.where("targetTeamId", "=", targetTeamId)
 		.execute();
 }
 
-export async function allLikesByGroupId(groupId: number) {
+export async function allLikesByTeamId(teamId: number) {
 	const rows = await db
 		.selectFrom("TournamentLFGLike")
-		.select([
-			"TournamentLFGLike.likerGroupId",
-			"TournamentLFGLike.targetGroupId",
-		])
+		.select(["TournamentLFGLike.likerTeamId", "TournamentLFGLike.targetTeamId"])
 		.where((eb) =>
 			eb.or([
-				eb("TournamentLFGLike.likerGroupId", "=", groupId),
-				eb("TournamentLFGLike.targetGroupId", "=", groupId),
+				eb("TournamentLFGLike.likerTeamId", "=", teamId),
+				eb("TournamentLFGLike.targetTeamId", "=", teamId),
 			]),
 		)
 		.execute();
 
 	return {
 		given: rows
-			.filter((row) => row.likerGroupId === groupId)
-			.map((row) => ({ groupId: row.targetGroupId })),
+			.filter((row) => row.likerTeamId === teamId)
+			.map((row) => ({ teamId: row.targetTeamId })),
 		received: rows
-			.filter((row) => row.targetGroupId === groupId)
-			.map((row) => ({ groupId: row.likerGroupId })),
+			.filter((row) => row.targetTeamId === teamId)
+			.map((row) => ({ teamId: row.likerTeamId })),
 	};
 }
 
-export function updateMemberNote({
-	groupId,
-	userId,
+export function updateTeamNote({
+	teamId,
 	value,
 }: {
-	groupId: number;
-	userId: number;
+	teamId: number;
 	value: string | null;
 }) {
 	return db
-		.updateTable("TournamentLFGGroupMember")
-		.set({ note: value })
-		.where("groupId", "=", groupId)
-		.where("userId", "=", userId)
+		.updateTable("TournamentTeam")
+		.set({ lfgNote: value })
+		.where("id", "=", teamId)
 		.execute();
 }
 
 export function updateMemberRole({
 	userId,
-	groupId,
+	teamId,
 	role,
 }: {
 	userId: number;
-	groupId: number;
-	role: Tables["TournamentLFGGroupMember"]["role"];
+	teamId: number;
+	role: Tables["TournamentTeamMember"]["role"];
 }) {
 	if (role === "OWNER") {
 		throw new Error("Can't set role to OWNER with this function");
 	}
 
 	return db
-		.updateTable("TournamentLFGGroupMember")
+		.updateTable("TournamentTeamMember")
 		.set({ role })
 		.where("userId", "=", userId)
-		.where("groupId", "=", groupId)
+		.where("tournamentTeamId", "=", teamId)
 		.execute();
 }
 
 export function updateStayAsSub({
-	groupId,
+	teamId,
 	userId,
 	value,
 }: {
-	groupId: number;
+	teamId: number;
 	userId: number;
 	value: boolean;
 }) {
 	return db
-		.updateTable("TournamentLFGGroupMember")
+		.updateTable("TournamentTeamMember")
 		.set({ isStayAsSub: value ? 1 : 0 })
-		.where("groupId", "=", groupId)
+		.where("tournamentTeamId", "=", teamId)
 		.where("userId", "=", userId)
 		.execute();
 }
 
-export function leaveGroup({
+export function leaveLfg({
 	userId,
 	tournamentId,
 }: {
@@ -349,90 +290,106 @@ export function leaveGroup({
 	tournamentId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
-		const userGroup = await trx
-			.selectFrom("TournamentLFGGroupMember")
+		const userTeam = await trx
+			.selectFrom("TournamentTeamMember")
+			.innerJoin(
+				"TournamentTeam",
+				"TournamentTeam.id",
+				"TournamentTeamMember.tournamentTeamId",
+			)
 			.select([
-				"TournamentLFGGroupMember.groupId",
-				"TournamentLFGGroupMember.role",
+				"TournamentTeamMember.tournamentTeamId",
+				"TournamentTeamMember.role",
+				"TournamentTeam.isPlaceholder",
 			])
-			.where("TournamentLFGGroupMember.userId", "=", userId)
-			.where("TournamentLFGGroupMember.tournamentId", "=", tournamentId)
+			.where("TournamentTeamMember.userId", "=", userId)
+			.where("TournamentTeam.tournamentId", "=", tournamentId)
+			.where("TournamentTeam.isLooking", "=", 1)
 			.executeTakeFirstOrThrow();
 
-		await trx
-			.deleteFrom("TournamentLFGGroupMember")
-			.where("userId", "=", userId)
-			.where("groupId", "=", userGroup.groupId)
-			.execute();
-
-		const remainingMembers = await trx
-			.selectFrom("TournamentLFGGroupMember")
-			.select(["userId", "role"])
-			.where("groupId", "=", userGroup.groupId)
-			.execute();
-
-		if (remainingMembers.length === 0) {
+		if (!userTeam.isPlaceholder) {
 			await trx
-				.deleteFrom("TournamentLFGGroup")
-				.where("id", "=", userGroup.groupId)
+				.updateTable("TournamentTeam")
+				.set({ isLooking: 0 })
+				.where("id", "=", userTeam.tournamentTeamId)
 				.execute();
 			return;
 		}
 
-		if (userGroup.role === "OWNER") {
+		// xxx: or just call TournamentTeam.unregister?
+		// xxx: also leaving team should not be possible via this so remove that code
+		await trx
+			.deleteFrom("TournamentTeamMember")
+			.where("userId", "=", userId)
+			.where("tournamentTeamId", "=", userTeam.tournamentTeamId)
+			.execute();
+
+		const remainingMembers = await trx
+			.selectFrom("TournamentTeamMember")
+			.select(["userId", "role"])
+			.where("tournamentTeamId", "=", userTeam.tournamentTeamId)
+			.execute();
+
+		if (remainingMembers.length === 0) {
+			await trx
+				.deleteFrom("TournamentTeam")
+				.where("id", "=", userTeam.tournamentTeamId)
+				.execute();
+			return;
+		}
+
+		if (userTeam.role === "OWNER") {
 			const newOwner =
 				remainingMembers.find((m) => m.role === "MANAGER") ??
 				remainingMembers[0];
 
 			await trx
-				.updateTable("TournamentLFGGroupMember")
+				.updateTable("TournamentTeamMember")
 				.set({ role: "OWNER" })
 				.where("userId", "=", newOwner.userId)
-				.where("groupId", "=", userGroup.groupId)
+				.where("tournamentTeamId", "=", userTeam.tournamentTeamId)
 				.execute();
 		}
 	});
 }
 
-export function cleanupForTournamentStart(tournamentId: number) {
-	return db
-		.deleteFrom("TournamentLFGGroup")
-		.where("TournamentLFGGroup.tournamentId", "=", tournamentId)
-		.execute();
-}
-
 export async function getSubsForTournament(tournamentId: number) {
 	const rows = await db
-		.selectFrom("TournamentLFGGroupMember")
-		.select("TournamentLFGGroupMember.userId")
-		.where("TournamentLFGGroupMember.tournamentId", "=", tournamentId)
-		.where("TournamentLFGGroupMember.isStayAsSub", "=", 1)
+		.selectFrom("TournamentTeamMember")
+		.innerJoin(
+			"TournamentTeam",
+			"TournamentTeam.id",
+			"TournamentTeamMember.tournamentTeamId",
+		)
+		.select("TournamentTeamMember.userId")
+		.where("TournamentTeam.tournamentId", "=", tournamentId)
+		.where("TournamentTeamMember.isStayAsSub", "=", 1)
 		.execute();
 
 	return rows.map((row) => row.userId);
 }
 
-function deleteLikesByGroupId(groupId: number, trx: Transaction<DB>) {
+function deleteLikesByTeamId(teamId: number, trx: Transaction<DB>) {
 	return trx
 		.deleteFrom("TournamentLFGLike")
 		.where((eb) =>
 			eb.or([
-				eb("TournamentLFGLike.likerGroupId", "=", groupId),
-				eb("TournamentLFGLike.targetGroupId", "=", groupId),
+				eb("TournamentLFGLike.likerTeamId", "=", teamId),
+				eb("TournamentLFGLike.targetTeamId", "=", teamId),
 			]),
 		)
 		.execute();
 }
 
-async function isGroupCorrect(
-	groupId: number,
+async function isTeamCorrect(
+	teamId: number,
 	trx: Transaction<DB>,
 	maxGroupSize: number,
 ): Promise<boolean> {
 	const members = await trx
-		.selectFrom("TournamentLFGGroupMember")
-		.select("TournamentLFGGroupMember.userId")
-		.where("TournamentLFGGroupMember.groupId", "=", groupId)
+		.selectFrom("TournamentTeamMember")
+		.select("TournamentTeamMember.userId")
+		.where("TournamentTeamMember.tournamentTeamId", "=", teamId)
 		.execute();
 
 	return members.length <= maxGroupSize;

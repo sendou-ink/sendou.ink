@@ -7,15 +7,15 @@ export const lookingSchema = z.union([
 	joinQueueFormSchema,
 	z.object({
 		_action: _action("LIKE"),
-		targetGroupId: id,
+		targetTeamId: id,
 	}),
 	z.object({
 		_action: _action("UNLIKE"),
-		targetGroupId: id,
+		targetTeamId: id,
 	}),
 	z.object({
 		_action: _action("ACCEPT"),
-		targetGroupId: id,
+		targetTeamId: id,
 	}),
 	z.object({
 		_action: _action("GIVE_MANAGER"),

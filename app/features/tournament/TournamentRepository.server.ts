@@ -251,6 +251,7 @@ export async function findById(id: number) {
 						).as("team"),
 					])
 					.where("TournamentTeam.tournamentId", "=", id)
+					.where("TournamentTeam.isPlaceholder", "=", 0)
 					.orderBy("TournamentTeam.seed", "asc")
 					.orderBy("TournamentTeam.createdAt", "asc")
 					.orderBy("TournamentTeam.id", "asc"),
@@ -484,6 +485,7 @@ export function forShowcase() {
 						),
 				)
 				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+				.where("TournamentTeam.isPlaceholder", "=", 0)
 				.where((eb) =>
 					eb.or([
 						eb("TournamentTeamCheckIn.checkedInAt", "is not", null),

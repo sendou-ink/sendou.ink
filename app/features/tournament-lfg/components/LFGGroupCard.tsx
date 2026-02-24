@@ -31,7 +31,6 @@ export type LFGGroupMember = {
 	vc: "YES" | "NO" | "LISTEN_ONLY" | null;
 	pronouns: Pronouns | null;
 	role: "OWNER" | "MANAGER" | "REGULAR";
-	note: string | null;
 	isStayAsSub: boolean;
 	weapons: Array<{ weaponSplId: MainWeaponId; isFavorite: boolean }> | null;
 	chatNameColor: string | null;
@@ -40,13 +39,15 @@ export type LFGGroupMember = {
 
 export type LFGGroup = {
 	id: number;
-	tournamentTeamId: number | null;
+	isPlaceholder: boolean;
 	teamName: string | null;
 	teamAvatarUrl: string | null;
+	note: string | null;
 	members: LFGGroupMember[];
 	usersRole: "OWNER" | "MANAGER" | "REGULAR" | null;
 };
 
+// xxx: make sure we don't show team name if isPlaceholder
 // xxx: "cancel" & "save" buttons off
 export function LFGGroupCard({
 	group,
@@ -65,14 +66,6 @@ export function LFGGroupCard({
 
 	return (
 		<section className={styles.group}>
-			{/* {group.teamName ? (
-				<div className={styles.teamHeader}>
-					{group.teamAvatarUrl ? (
-						<Avatar size="xxs" url={group.teamAvatarUrl} />
-					) : null}
-					<div className={styles.teamName}>{group.teamName}</div>
-				</div>
-			) : null} */}
 			{group.teamName ? (
 				<Divider smallText className={styles.teamHeader}>
 					{group.teamAvatarUrl ? (
@@ -91,10 +84,13 @@ export function LFGGroupCard({
 					/>
 				))}
 			</div>
+			{isOwnGroup ? (
+				<LFGTeamNote note={group.note} editable={group.usersRole === "OWNER"} />
+			) : null}
 			{action &&
 			(ownGroup?.usersRole === "OWNER" || ownGroup?.usersRole === "MANAGER") ? (
 				<fetcher.Form className="stack items-center" method="post">
-					<input type="hidden" name="targetGroupId" value={group.id} />
+					<input type="hidden" name="targetTeamId" value={group.id} />
 					<SubmitButton
 						size="small"
 						variant={action === "UNLIKE" ? "destructive" : "outlined"}
@@ -116,14 +112,11 @@ export function LFGGroupCard({
 function LFGGroupMemberRow({
 	member,
 	showActions,
-	isOwnGroup,
 }: {
 	member: LFGGroupMember;
 	showActions: boolean;
 	isOwnGroup: boolean;
 }) {
-	const user = useUser();
-
 	return (
 		<div className="stack xxs">
 			<div className={styles.member}>
@@ -171,14 +164,11 @@ function LFGGroupMemberRow({
 					</div>
 				) : null}
 			</div>
-			{isOwnGroup ? (
-				<LFGMemberNote note={member.note} editable={user?.id === member.id} />
-			) : null}
 		</div>
 	);
 }
 
-function LFGMemberNote({
+function LFGTeamNote({
 	note,
 	editable,
 }: {

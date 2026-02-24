@@ -10,7 +10,7 @@ import { assertUnreachable } from "~/utils/types";
 import { idObject } from "~/utils/zod";
 import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
 import { lookingSchema } from "../tournament-lfg-schemas.server";
-import { survivingGroupId } from "../tournament-lfg-utils";
+import { survivingTeamId } from "../tournament-lfg-utils";
 
 // xxx: prevent actions in certain cases? like when tournament has started
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -23,7 +23,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	const findOwnGroup = async () => {
 		const groups =
-			await TournamentLFGRepository.findGroupsByTournamentId(tournamentId);
+			await TournamentLFGRepository.findLookingTeamsByTournamentId(
+				tournamentId,
+			);
 		return groups.find((g) => g.members.some((m) => m.id === user.id));
 	};
 
@@ -49,28 +51,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			const team = tournament.teamMemberOfByUser(user);
 
 			if (team) {
-				const groups =
-					await TournamentLFGRepository.findGroupsByTournamentId(tournamentId);
-				const teamAlreadyLinked = groups.some(
-					(g) => g.tournamentTeamId === team.id,
-				);
-				if (teamAlreadyLinked) return null;
-
-				const memberAlreadyInGroup = team.members.some((m) =>
-					groups.some((g) => g.members.some((gm) => gm.id === m.userId)),
-				);
-				if (memberAlreadyInGroup) return null;
-
-				await TournamentLFGRepository.createGroupFromTeam({
-					tournamentId,
-					tournamentTeamId: team.id,
-					members: team.members.map((m) => ({
-						userId: m.userId,
-						isOwner: Boolean(m.isOwner),
-					})),
-				});
+				await TournamentLFGRepository.startLooking(team.id);
 			} else {
-				await TournamentLFGRepository.createGroup({
+				await TournamentLFGRepository.createPlaceholderTeam({
 					tournamentId,
 					userId: user.id,
 					isStayAsSub: data.stayAsSub ?? false,
@@ -84,8 +67,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			if (!ownGroup || !isGroupManager(ownGroup)) return null;
 
 			await TournamentLFGRepository.addLike({
-				likerGroupId: ownGroup.id,
-				targetGroupId: data.targetGroupId,
+				likerTeamId: ownGroup.id,
+				targetTeamId: data.targetTeamId,
 			});
 
 			break;
@@ -95,44 +78,48 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			if (!ownGroup || !isGroupManager(ownGroup)) return null;
 
 			await TournamentLFGRepository.deleteLike({
-				likerGroupId: ownGroup.id,
-				targetGroupId: data.targetGroupId,
+				likerTeamId: ownGroup.id,
+				targetTeamId: data.targetTeamId,
 			});
 
 			break;
 		}
 		case "ACCEPT": {
 			const groups =
-				await TournamentLFGRepository.findGroupsByTournamentId(tournamentId);
+				await TournamentLFGRepository.findLookingTeamsByTournamentId(
+					tournamentId,
+				);
 			const ownGroup = groups.find((g) =>
 				g.members.some((m) => m.id === user.id),
 			);
 			if (!ownGroup || !isGroupManager(ownGroup)) return null;
 
-			const theirGroup = groups.find((g) => g.id === data.targetGroupId);
+			const theirGroup = groups.find((g) => g.id === data.targetTeamId);
 			if (!theirGroup) return null;
 
-			const theirLikes = await TournamentLFGRepository.allLikesByGroupId(
-				data.targetGroupId,
+			const theirLikes = await TournamentLFGRepository.allLikesByTeamId(
+				data.targetTeamId,
 			);
-			if (!theirLikes.given.some((like) => like.groupId === ownGroup.id)) {
+			if (!theirLikes.given.some((like) => like.teamId === ownGroup.id)) {
 				return null;
 			}
 
-			const surviving = survivingGroupId({
+			const surviving = survivingTeamId({
 				ourGroup: {
 					id: ownGroup.id,
-					tournamentTeamId: ownGroup.tournamentTeamId,
+					isPlaceholder: Boolean(ownGroup.isPlaceholder),
 					teamName: null,
 					teamAvatarUrl: null,
+					note: null,
 					members: [],
 					usersRole: null,
 				},
 				theirGroup: {
 					id: theirGroup.id,
-					tournamentTeamId: theirGroup.tournamentTeamId,
+					isPlaceholder: Boolean(theirGroup.isPlaceholder),
 					teamName: null,
 					teamAvatarUrl: null,
+					note: null,
 					members: [],
 					usersRole: null,
 				},
@@ -145,11 +132,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				user,
 			});
 
-			await TournamentLFGRepository.morphGroups({
-				survivingGroupId: surviving,
-				otherGroupId: otherGroup.id,
+			await TournamentLFGRepository.mergeTeams({
+				survivingTeamId: surviving,
+				otherTeamId: otherGroup.id,
 				maxGroupSize: tournament.maxMembersPerTeam,
-				tournamentId,
 			});
 
 			break;
@@ -159,7 +145,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			errorToastIfFalsy(ownGroup && isGroupOwner(ownGroup), "Not owner");
 
 			await TournamentLFGRepository.updateMemberRole({
-				groupId: ownGroup!.id,
+				teamId: ownGroup!.id,
 				userId: data.userId,
 				role: "MANAGER",
 			});
@@ -171,7 +157,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			errorToastIfFalsy(ownGroup && isGroupOwner(ownGroup), "Not owner");
 
 			await TournamentLFGRepository.updateMemberRole({
-				groupId: ownGroup!.id,
+				teamId: ownGroup!.id,
 				userId: data.userId,
 				role: "REGULAR",
 			});
@@ -182,9 +168,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			const ownGroup = await findOwnGroup();
 			if (!ownGroup) return null;
 
-			await TournamentLFGRepository.updateMemberNote({
-				groupId: ownGroup.id,
-				userId: user.id,
+			await TournamentLFGRepository.updateTeamNote({
+				teamId: ownGroup.id,
 				value: data.value,
 			});
 
@@ -195,7 +180,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			if (!ownGroup) return null;
 
 			await TournamentLFGRepository.updateStayAsSub({
-				groupId: ownGroup.id,
+				teamId: ownGroup.id,
 				userId: user.id,
 				value: data.value,
 			});
@@ -203,7 +188,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "LEAVE_GROUP": {
-			await TournamentLFGRepository.leaveGroup({
+			await TournamentLFGRepository.leaveLfg({
 				userId: user.id,
 				tournamentId,
 			});

@@ -58,17 +58,17 @@ function Groups() {
 
 	const neutralGroups = data.groups.filter(
 		(group) =>
-			!data.likes.given.some((like) => like.groupId === group.id) &&
-			!data.likes.received.some((like) => like.groupId === group.id),
+			!data.likes.given.some((like) => like.teamId === group.id) &&
+			!data.likes.received.some((like) => like.teamId === group.id),
 	);
 	const likedGroups = data.groups.filter((group) =>
-		data.likes.given.some((like) => like.groupId === group.id),
+		data.likes.given.some((like) => like.teamId === group.id),
 	);
 	const groupsReceivedLikesFrom = data.groups.filter((group) =>
-		data.likes.received.some((like) => like.groupId === group.id),
+		data.likes.received.some((like) => like.teamId === group.id),
 	);
 
-	const flipKey = `${neutralGroups.map((g) => `${g.id}-${isMobile ? true : data.likes.given.some((l) => l.groupId === g.id)}`).join(":")}:${groupsReceivedLikesFrom.map((g) => g.id).join(":")}`;
+	const flipKey = `${neutralGroups.map((g) => `${g.id}-${isMobile ? true : data.likes.given.some((l) => l.teamId === g.id)}`).join(":")}:${groupsReceivedLikesFrom.map((g) => g.id).join(":")}`;
 
 	const invitedGroupsDesktop = (
 		<div className="stack sm">
@@ -157,7 +157,7 @@ function Groups() {
 									? data.groups.filter(
 											(group) =>
 												!data.likes.received.some(
-													(like) => like.groupId === group.id,
+													(like) => like.teamId === group.id,
 												),
 										)
 									: neutralGroups
@@ -166,7 +166,7 @@ function Groups() {
 										key={group.id}
 										group={group}
 										action={
-											data.likes.given.some((like) => like.groupId === group.id)
+											data.likes.given.some((like) => like.teamId === group.id)
 												? "UNLIKE"
 												: "LIKE"
 										}

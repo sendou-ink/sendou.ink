@@ -13,16 +13,17 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id: tournamentId } = parseParams({ params, schema: idObject });
 
 	const rawGroups =
-		await TournamentLFGRepository.findGroupsByTournamentId(tournamentId);
+		await TournamentLFGRepository.findLookingTeamsByTournamentId(tournamentId);
 
 	const groups: LFGGroup[] = rawGroups.map((group) => {
 		const members = transformMembers(group.members);
 
 		return {
 			id: group.id,
-			tournamentTeamId: group.tournamentTeamId,
+			isPlaceholder: Boolean(group.isPlaceholder),
 			teamName: group.teamName ?? null,
 			teamAvatarUrl: group.teamAvatarUrl ?? null,
+			note: group.note ?? null,
 			members,
 			usersRole: members.find((m) => m.id === user?.id)?.role ?? null,
 		};
@@ -34,14 +35,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const otherGroups = groups.filter((g) => g.id !== ownGroup?.id);
 
 	const likes = ownGroup
-		? await TournamentLFGRepository.allLikesByGroupId(ownGroup.id)
+		? await TournamentLFGRepository.allLikesByTeamId(ownGroup.id)
 		: { given: [], received: [] };
 
 	const ownTeam = await resolveOwnTeam({
 		user,
 		tournamentId,
 		ownGroup,
-		groups,
 	});
 
 	return {
@@ -58,12 +58,10 @@ async function resolveOwnTeam({
 	user,
 	tournamentId,
 	ownGroup,
-	groups,
 }: {
 	user: ReturnType<typeof getUser>;
 	tournamentId: number;
 	ownGroup: LFGGroup | null;
-	groups: LFGGroup[];
 }): Promise<LFGGroup | null> {
 	if (!user) return null;
 	if (ownGroup) return null;
@@ -76,9 +74,6 @@ async function resolveOwnTeam({
 	const team = tournament.teamMemberOfByUser(user);
 	if (!team) return null;
 
-	const teamAlreadyLinked = groups.some((g) => g.tournamentTeamId === team.id);
-	if (teamAlreadyLinked) return null;
-
 	const members: LFGGroupMember[] = team.members.map((m) => ({
 		id: m.userId,
 		username: m.username,
@@ -89,7 +84,6 @@ async function resolveOwnTeam({
 		vc: null,
 		pronouns: null,
 		role: m.isOwner ? "OWNER" : "REGULAR",
-		note: null,
 		isStayAsSub: false,
 		weapons: null,
 		chatNameColor: null,
@@ -97,10 +91,11 @@ async function resolveOwnTeam({
 	}));
 
 	return {
-		id: -1,
-		tournamentTeamId: team.id,
+		id: team.id,
+		isPlaceholder: false,
 		teamName: team.name,
 		teamAvatarUrl: team.pickupAvatarUrl,
+		note: null,
 		members,
 		usersRole: members.find((m) => m.id === user.id)?.role ?? null,
 	};
@@ -108,7 +103,7 @@ async function resolveOwnTeam({
 
 function transformMembers(
 	rawMembers: Awaited<
-		ReturnType<typeof TournamentLFGRepository.findGroupsByTournamentId>
+		ReturnType<typeof TournamentLFGRepository.findLookingTeamsByTournamentId>
 	>[number]["members"],
 ): LFGGroupMember[] {
 	return rawMembers.map((m) => {
@@ -130,7 +125,6 @@ function transformMembers(
 			vc: m.vc,
 			pronouns,
 			role: m.role,
-			note: m.note,
 			isStayAsSub: m.isStayAsSub === 1,
 			weapons,
 			chatNameColor: m.chatNameColor,

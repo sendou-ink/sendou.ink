@@ -1,20 +1,16 @@
 import type { LFGGroup } from "./components/LFGGroupCard";
 
-export function findOwnGroup(groups: LFGGroup[], userId: number) {
-	return groups.find((g) => g.members.some((m) => m.id === userId)) ?? null;
-}
-
-export function survivingGroupId({
+export function survivingTeamId({
 	ourGroup,
 	theirGroup,
 }: {
 	ourGroup: LFGGroup;
 	theirGroup: LFGGroup;
 }) {
-	if (ourGroup.tournamentTeamId && !theirGroup.tournamentTeamId) {
+	if (!ourGroup.isPlaceholder && theirGroup.isPlaceholder) {
 		return ourGroup.id;
 	}
-	if (!ourGroup.tournamentTeamId && theirGroup.tournamentTeamId) {
+	if (ourGroup.isPlaceholder && !theirGroup.isPlaceholder) {
 		return theirGroup.id;
 	}
 

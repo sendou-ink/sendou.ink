@@ -1,3 +1,5 @@
+// xxx: update tournament lfg stuff etc.
+
 Note: some simple features omitted with only a few relations and no special notes
 
 See `tables.ts` for some more documentation on column-level.

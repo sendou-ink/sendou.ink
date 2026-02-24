@@ -1,69 +1,51 @@
 export function up(db) {
 	db.transaction(() => {
 		db.prepare(
-			/*sql*/ `
-      create table "TournamentLFGGroup" (
-        "id" integer primary key,
-        "tournamentId" integer not null,
-        "tournamentTeamId" integer,
-        "visibility" text,
-        "chatCode" text not null,
-        "createdAt" integer default (strftime('%s', 'now')) not null,
-        foreign key ("tournamentId") references "Tournament"("id") on delete cascade,
-        foreign key ("tournamentTeamId") references "TournamentTeam"("id") on delete cascade
-      ) strict
-    `,
+			/*sql*/ `alter table "TournamentTeam" add column "isLooking" integer not null default 0`,
+		).run();
+		// xxx: index on isLooking too to get efficient queries? problem -> we query tournamentTeamMember.userId (different table)
+		db.prepare(
+			/*sql*/ `alter table "TournamentTeam" add column "isPlaceholder" integer not null default 0`,
+		).run();
+		db.prepare(
+			/*sql*/ `alter table "TournamentTeam" add column "lfgVisibility" text`,
+		).run();
+		db.prepare(
+			/*sql*/ `alter table "TournamentTeam" add column "lfgNote" text`,
+		).run();
+		db.prepare(
+			/*sql*/ `alter table "TournamentTeam" add column "chatCode" text`,
 		).run();
 
 		db.prepare(
-			/*sql*/ `create index tournament_lfg_group_tournament_id on "TournamentLFGGroup"("tournamentId")`,
+			/*sql*/ `alter table "TournamentTeamMember" add column "role" text not null default 'REGULAR'`,
 		).run();
 		db.prepare(
-			/*sql*/ `create index tournament_lfg_group_tournament_team_id on "TournamentLFGGroup"("tournamentTeamId")`,
-		).run();
-
-		db.prepare(
-			/*sql*/ `
-      create table "TournamentLFGGroupMember" (
-        "groupId" integer not null,
-        "tournamentId" integer not null,
-        "userId" integer not null,
-        "role" text not null,
-        "note" text,
-        "isStayAsSub" integer default 0 not null,
-        "createdAt" integer default (strftime('%s', 'now')) not null,
-        foreign key ("groupId") references "TournamentLFGGroup"("id") on delete cascade,
-        foreign key ("userId") references "User"("id") on delete cascade,
-        unique("tournamentId", "userId") on conflict rollback
-      ) strict
-    `,
+			/*sql*/ `alter table "TournamentTeamMember" add column "isStayAsSub" integer not null default 0`,
 		).run();
 
 		db.prepare(
-			/*sql*/ `create index tournament_lfg_group_member_group_id on "TournamentLFGGroupMember"("groupId")`,
-		).run();
-		db.prepare(
-			/*sql*/ `create index tournament_lfg_group_member_user_id on "TournamentLFGGroupMember"("userId")`,
+			/*sql*/ `update "TournamentTeamMember" set "role" = 'OWNER' where "isOwner" = 1`,
 		).run();
 
 		db.prepare(
 			/*sql*/ `
       create table "TournamentLFGLike" (
-        "likerGroupId" integer not null,
-        "targetGroupId" integer not null,
+        "likerTeamId" integer not null,
+        "targetTeamId" integer not null,
         "createdAt" integer default (strftime('%s', 'now')) not null,
-        foreign key ("likerGroupId") references "TournamentLFGGroup"("id") on delete cascade,
-        foreign key ("targetGroupId") references "TournamentLFGGroup"("id") on delete cascade,
-        unique("likerGroupId", "targetGroupId") on conflict rollback
+        foreign key ("likerTeamId") references "TournamentTeam"("id") on delete cascade,
+        foreign key ("targetTeamId") references "TournamentTeam"("id") on delete cascade,
+        unique("likerTeamId", "targetTeamId") on conflict rollback
       ) strict
     `,
 		).run();
 
 		db.prepare(
-			/*sql*/ `create index tournament_lfg_like_liker_group_id on "TournamentLFGLike"("likerGroupId")`,
+			/*sql*/ `create index tournament_lfg_like_liker_team_id on "TournamentLFGLike"("likerTeamId")`,
 		).run();
 		db.prepare(
-			/*sql*/ `create index tournament_lfg_like_target_group_id on "TournamentLFGLike"("targetGroupId")`,
+			/*sql*/ `create index tournament_lfg_like_target_team_id on "TournamentLFGLike"("targetTeamId")`,
 		).run();
 	})();
 }

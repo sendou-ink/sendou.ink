@@ -69,6 +69,8 @@ import {
 import { useTournament } from "./to.$id";
 export { loader, action };
 
+// xxx: handle placeholder team made
+// xxx: allow promoting members to managers
 export default function TournamentRegisterPage() {
 	const isMounted = useIsMounted();
 	const tournament = useTournament();

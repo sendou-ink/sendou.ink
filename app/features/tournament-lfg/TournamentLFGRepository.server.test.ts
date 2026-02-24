@@ -13,10 +13,10 @@ const createTournament = () =>
 		.returning("id")
 		.executeTakeFirstOrThrow();
 
-const createGroup = (tournamentId: number, userId: number) =>
-	TournamentLFGRepository.createGroup({ tournamentId, userId });
+const createPlaceholder = (tournamentId: number, userId: number) =>
+	TournamentLFGRepository.createPlaceholderTeam({ tournamentId, userId });
 
-describe("createGroup", () => {
+describe("createPlaceholderTeam", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(2);
 	});
@@ -25,23 +25,23 @@ describe("createGroup", () => {
 		dbReset();
 	});
 
-	test("creates a group with owner member", async () => {
+	test("creates a placeholder team with owner member", async () => {
 		const tournament = await createTournament();
-		const group = await createGroup(tournament.id, 1);
+		const team = await createPlaceholder(tournament.id, 1);
 
-		const groups = await TournamentLFGRepository.findGroupsByTournamentId(
+		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
 		);
 
 		expect(groups).toHaveLength(1);
-		expect(groups[0].id).toBe(group.id);
+		expect(groups[0].id).toBe(team.id);
 	});
 
 	test("owner has OWNER role", async () => {
 		const tournament = await createTournament();
-		await createGroup(tournament.id, 1);
+		await createPlaceholder(tournament.id, 1);
 
-		const groups = await TournamentLFGRepository.findGroupsByTournamentId(
+		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
 		);
 		const members = groups[0].members;
@@ -50,7 +50,7 @@ describe("createGroup", () => {
 	});
 });
 
-describe("findGroupsByTournamentId", () => {
+describe("findLookingTeamsByTournamentId", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(3);
 	});
@@ -59,22 +59,22 @@ describe("findGroupsByTournamentId", () => {
 		dbReset();
 	});
 
-	test("returns groups for given tournament", async () => {
+	test("returns looking teams for given tournament", async () => {
 		const tournament = await createTournament();
-		await createGroup(tournament.id, 1);
-		await createGroup(tournament.id, 2);
+		await createPlaceholder(tournament.id, 1);
+		await createPlaceholder(tournament.id, 2);
 
-		const groups = await TournamentLFGRepository.findGroupsByTournamentId(
+		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
 		);
 
 		expect(groups).toHaveLength(2);
 	});
 
-	test("returns empty array when no groups exist", async () => {
+	test("returns empty array when no looking teams exist", async () => {
 		const tournament = await createTournament();
 
-		const groups = await TournamentLFGRepository.findGroupsByTournamentId(
+		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
 		);
 
@@ -83,9 +83,9 @@ describe("findGroupsByTournamentId", () => {
 
 	test("returns groups with member data", async () => {
 		const tournament = await createTournament();
-		await createGroup(tournament.id, 1);
+		await createPlaceholder(tournament.id, 1);
 
-		const groups = await TournamentLFGRepository.findGroupsByTournamentId(
+		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
 		);
 		const members = groups[0].members;
@@ -95,13 +95,13 @@ describe("findGroupsByTournamentId", () => {
 		expect(members[0].role).toBe("OWNER");
 	});
 
-	test("does not return groups from other tournaments", async () => {
+	test("does not return teams from other tournaments", async () => {
 		const tournament1 = await createTournament();
 		const tournament2 = await createTournament();
-		await createGroup(tournament1.id, 1);
-		await createGroup(tournament2.id, 2);
+		await createPlaceholder(tournament1.id, 1);
+		await createPlaceholder(tournament2.id, 2);
 
-		const groups = await TournamentLFGRepository.findGroupsByTournamentId(
+		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament1.id,
 		);
 
@@ -118,62 +118,62 @@ describe("addLike / deleteLike", () => {
 		dbReset();
 	});
 
-	test("adds a like between two groups", async () => {
+	test("adds a like between two teams", async () => {
 		const tournament = await createTournament();
-		const group1 = await createGroup(tournament.id, 1);
-		const group2 = await createGroup(tournament.id, 2);
+		const team1 = await createPlaceholder(tournament.id, 1);
+		const team2 = await createPlaceholder(tournament.id, 2);
 
 		await TournamentLFGRepository.addLike({
-			likerGroupId: group1.id,
-			targetGroupId: group2.id,
+			likerTeamId: team1.id,
+			targetTeamId: team2.id,
 		});
 
-		const likes = await TournamentLFGRepository.allLikesByGroupId(group1.id);
+		const likes = await TournamentLFGRepository.allLikesByTeamId(team1.id);
 
 		expect(likes.given).toHaveLength(1);
-		expect(likes.given[0].groupId).toBe(group2.id);
+		expect(likes.given[0].teamId).toBe(team2.id);
 	});
 
 	test("duplicate like does not throw", async () => {
 		const tournament = await createTournament();
-		const group1 = await createGroup(tournament.id, 1);
-		const group2 = await createGroup(tournament.id, 2);
+		const team1 = await createPlaceholder(tournament.id, 1);
+		const team2 = await createPlaceholder(tournament.id, 2);
 
 		await TournamentLFGRepository.addLike({
-			likerGroupId: group1.id,
-			targetGroupId: group2.id,
+			likerTeamId: team1.id,
+			targetTeamId: team2.id,
 		});
 		await TournamentLFGRepository.addLike({
-			likerGroupId: group1.id,
-			targetGroupId: group2.id,
+			likerTeamId: team1.id,
+			targetTeamId: team2.id,
 		});
 
-		const likes = await TournamentLFGRepository.allLikesByGroupId(group1.id);
+		const likes = await TournamentLFGRepository.allLikesByTeamId(team1.id);
 
 		expect(likes.given).toHaveLength(1);
 	});
 
 	test("deleteLike removes the like", async () => {
 		const tournament = await createTournament();
-		const group1 = await createGroup(tournament.id, 1);
-		const group2 = await createGroup(tournament.id, 2);
+		const team1 = await createPlaceholder(tournament.id, 1);
+		const team2 = await createPlaceholder(tournament.id, 2);
 
 		await TournamentLFGRepository.addLike({
-			likerGroupId: group1.id,
-			targetGroupId: group2.id,
+			likerTeamId: team1.id,
+			targetTeamId: team2.id,
 		});
 		await TournamentLFGRepository.deleteLike({
-			likerGroupId: group1.id,
-			targetGroupId: group2.id,
+			likerTeamId: team1.id,
+			targetTeamId: team2.id,
 		});
 
-		const likes = await TournamentLFGRepository.allLikesByGroupId(group1.id);
+		const likes = await TournamentLFGRepository.allLikesByTeamId(team1.id);
 
 		expect(likes.given).toHaveLength(0);
 	});
 });
 
-describe("allLikesByGroupId", () => {
+describe("allLikesByTeamId", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(3);
 	});
@@ -184,39 +184,39 @@ describe("allLikesByGroupId", () => {
 
 	test("separates likes into given and received", async () => {
 		const tournament = await createTournament();
-		const group1 = await createGroup(tournament.id, 1);
-		const group2 = await createGroup(tournament.id, 2);
-		const group3 = await createGroup(tournament.id, 3);
+		const team1 = await createPlaceholder(tournament.id, 1);
+		const team2 = await createPlaceholder(tournament.id, 2);
+		const team3 = await createPlaceholder(tournament.id, 3);
 
 		await TournamentLFGRepository.addLike({
-			likerGroupId: group1.id,
-			targetGroupId: group2.id,
+			likerTeamId: team1.id,
+			targetTeamId: team2.id,
 		});
 		await TournamentLFGRepository.addLike({
-			likerGroupId: group3.id,
-			targetGroupId: group1.id,
+			likerTeamId: team3.id,
+			targetTeamId: team1.id,
 		});
 
-		const likes = await TournamentLFGRepository.allLikesByGroupId(group1.id);
+		const likes = await TournamentLFGRepository.allLikesByTeamId(team1.id);
 
 		expect(likes.given).toHaveLength(1);
-		expect(likes.given[0].groupId).toBe(group2.id);
+		expect(likes.given[0].teamId).toBe(team2.id);
 		expect(likes.received).toHaveLength(1);
-		expect(likes.received[0].groupId).toBe(group3.id);
+		expect(likes.received[0].teamId).toBe(team3.id);
 	});
 
 	test("returns empty given/received when no likes", async () => {
 		const tournament = await createTournament();
-		const group = await createGroup(tournament.id, 1);
+		const team = await createPlaceholder(tournament.id, 1);
 
-		const likes = await TournamentLFGRepository.allLikesByGroupId(group.id);
+		const likes = await TournamentLFGRepository.allLikesByTeamId(team.id);
 
 		expect(likes.given).toHaveLength(0);
 		expect(likes.received).toHaveLength(0);
 	});
 });
 
-describe("morphGroups", () => {
+describe("mergeTeams", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(5);
 	});
@@ -225,41 +225,39 @@ describe("morphGroups", () => {
 		dbReset();
 	});
 
-	test("merges two groups, other group is deleted", async () => {
+	test("merges two teams, other team is deleted", async () => {
 		const tournament = await createTournament();
-		const group1 = await createGroup(tournament.id, 1);
-		const group2 = await createGroup(tournament.id, 2);
+		const team1 = await createPlaceholder(tournament.id, 1);
+		const team2 = await createPlaceholder(tournament.id, 2);
 
-		await TournamentLFGRepository.morphGroups({
-			survivingGroupId: group1.id,
-			otherGroupId: group2.id,
+		await TournamentLFGRepository.mergeTeams({
+			survivingTeamId: team1.id,
+			otherTeamId: team2.id,
 			maxGroupSize: 4,
-			tournamentId: tournament.id,
 		});
 
-		const groups = await TournamentLFGRepository.findGroupsByTournamentId(
+		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
 		);
 
 		expect(groups).toHaveLength(1);
-		expect(groups[0].id).toBe(group1.id);
+		expect(groups[0].id).toBe(team1.id);
 		const members = groups[0].members;
 		expect(members).toHaveLength(2);
 	});
 
-	test("demotes other group's OWNER to MANAGER", async () => {
+	test("demotes other team's OWNER to MANAGER", async () => {
 		const tournament = await createTournament();
-		const group1 = await createGroup(tournament.id, 1);
-		const group2 = await createGroup(tournament.id, 2);
+		const team1 = await createPlaceholder(tournament.id, 1);
+		const team2 = await createPlaceholder(tournament.id, 2);
 
-		await TournamentLFGRepository.morphGroups({
-			survivingGroupId: group1.id,
-			otherGroupId: group2.id,
+		await TournamentLFGRepository.mergeTeams({
+			survivingTeamId: team1.id,
+			otherTeamId: team2.id,
 			maxGroupSize: 4,
-			tournamentId: tournament.id,
 		});
 
-		const groups = await TournamentLFGRepository.findGroupsByTournamentId(
+		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
 		);
 		const members = groups[0].members;
@@ -270,49 +268,47 @@ describe("morphGroups", () => {
 
 	test("throws when merged size exceeds maxGroupSize", async () => {
 		const tournament = await createTournament();
-		const group1 = await createGroup(tournament.id, 1);
-		const group2 = await createGroup(tournament.id, 2);
+		const team1 = await createPlaceholder(tournament.id, 1);
+		const team2 = await createPlaceholder(tournament.id, 2);
 
 		await expect(
-			TournamentLFGRepository.morphGroups({
-				survivingGroupId: group1.id,
-				otherGroupId: group2.id,
+			TournamentLFGRepository.mergeTeams({
+				survivingTeamId: team1.id,
+				otherTeamId: team2.id,
 				maxGroupSize: 1,
-				tournamentId: tournament.id,
 			}),
 		).rejects.toThrow("Group has too many members after merge");
 	});
 
-	test("clears likes on surviving group after merge", async () => {
+	test("clears likes on surviving team after merge", async () => {
 		const tournament = await createTournament();
-		const group1 = await createGroup(tournament.id, 1);
-		const group2 = await createGroup(tournament.id, 2);
-		const group3 = await createGroup(tournament.id, 3);
+		const team1 = await createPlaceholder(tournament.id, 1);
+		const team2 = await createPlaceholder(tournament.id, 2);
+		const team3 = await createPlaceholder(tournament.id, 3);
 
 		await TournamentLFGRepository.addLike({
-			likerGroupId: group1.id,
-			targetGroupId: group3.id,
+			likerTeamId: team1.id,
+			targetTeamId: team3.id,
 		});
 		await TournamentLFGRepository.addLike({
-			likerGroupId: group3.id,
-			targetGroupId: group1.id,
+			likerTeamId: team3.id,
+			targetTeamId: team1.id,
 		});
 
-		await TournamentLFGRepository.morphGroups({
-			survivingGroupId: group1.id,
-			otherGroupId: group2.id,
+		await TournamentLFGRepository.mergeTeams({
+			survivingTeamId: team1.id,
+			otherTeamId: team2.id,
 			maxGroupSize: 4,
-			tournamentId: tournament.id,
 		});
 
-		const likes = await TournamentLFGRepository.allLikesByGroupId(group1.id);
+		const likes = await TournamentLFGRepository.allLikesByTeamId(team1.id);
 
 		expect(likes.given).toHaveLength(0);
 		expect(likes.received).toHaveLength(0);
 	});
 });
 
-describe("updateMemberNote", () => {
+describe("updateTeamNote", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(1);
 	});
@@ -321,33 +317,29 @@ describe("updateMemberNote", () => {
 		dbReset();
 	});
 
-	test("sets and clears a member note", async () => {
+	test("sets and clears a team note", async () => {
 		const tournament = await createTournament();
-		const group = await createGroup(tournament.id, 1);
+		const team = await createPlaceholder(tournament.id, 1);
 
-		await TournamentLFGRepository.updateMemberNote({
-			groupId: group.id,
-			userId: 1,
+		await TournamentLFGRepository.updateTeamNote({
+			teamId: team.id,
 			value: "Looking for support",
 		});
 
-		let groups = await TournamentLFGRepository.findGroupsByTournamentId(
+		let groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
 		);
-		let members = groups[0].members;
-		expect(members[0].note).toBe("Looking for support");
+		expect(groups[0].note).toBe("Looking for support");
 
-		await TournamentLFGRepository.updateMemberNote({
-			groupId: group.id,
-			userId: 1,
+		await TournamentLFGRepository.updateTeamNote({
+			teamId: team.id,
 			value: null,
 		});
 
-		groups = await TournamentLFGRepository.findGroupsByTournamentId(
+		groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
 		);
-		members = groups[0].members;
-		expect(members[0].note).toBeNull();
+		expect(groups[0].note).toBeNull();
 	});
 });
 
@@ -362,25 +354,25 @@ describe("updateMemberRole", () => {
 
 	test("changes role from REGULAR to MANAGER", async () => {
 		const tournament = await createTournament();
-		const group = await createGroup(tournament.id, 1);
+		const team = await createPlaceholder(tournament.id, 1);
 
 		await db
-			.insertInto("TournamentLFGGroupMember")
+			.insertInto("TournamentTeamMember")
 			.values({
-				groupId: group.id,
-				tournamentId: tournament.id,
+				tournamentTeamId: team.id,
 				userId: 2,
+				isOwner: 0,
 				role: "REGULAR",
 			})
 			.execute();
 
 		await TournamentLFGRepository.updateMemberRole({
 			userId: 2,
-			groupId: group.id,
+			teamId: team.id,
 			role: "MANAGER",
 		});
 
-		const groups = await TournamentLFGRepository.findGroupsByTournamentId(
+		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
 		);
 		const members = groups[0].members;
@@ -393,7 +385,7 @@ describe("updateMemberRole", () => {
 		expect(() =>
 			TournamentLFGRepository.updateMemberRole({
 				userId: 1,
-				groupId: 1,
+				teamId: 1,
 				role: "OWNER",
 			}),
 		).toThrow("Can't set role to OWNER with this function");
@@ -411,10 +403,10 @@ describe("updateStayAsSub", () => {
 
 	test("toggles isStayAsSub on/off", async () => {
 		const tournament = await createTournament();
-		const group = await createGroup(tournament.id, 1);
+		const team = await createPlaceholder(tournament.id, 1);
 
 		await TournamentLFGRepository.updateStayAsSub({
-			groupId: group.id,
+			teamId: team.id,
 			userId: 1,
 			value: true,
 		});
@@ -425,7 +417,7 @@ describe("updateStayAsSub", () => {
 		expect(subs).toContain(1);
 
 		await TournamentLFGRepository.updateStayAsSub({
-			groupId: group.id,
+			teamId: team.id,
 			userId: 1,
 			value: false,
 		});
@@ -435,7 +427,7 @@ describe("updateStayAsSub", () => {
 	});
 });
 
-describe("leaveGroup", () => {
+describe("leaveLfg", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(3);
 	});
@@ -444,26 +436,26 @@ describe("leaveGroup", () => {
 		dbReset();
 	});
 
-	test("removes member from group", async () => {
+	test("removes member from placeholder team", async () => {
 		const tournament = await createTournament();
-		const group = await createGroup(tournament.id, 1);
+		const team = await createPlaceholder(tournament.id, 1);
 
 		await db
-			.insertInto("TournamentLFGGroupMember")
+			.insertInto("TournamentTeamMember")
 			.values({
-				groupId: group.id,
-				tournamentId: tournament.id,
+				tournamentTeamId: team.id,
 				userId: 2,
+				isOwner: 0,
 				role: "REGULAR",
 			})
 			.execute();
 
-		await TournamentLFGRepository.leaveGroup({
+		await TournamentLFGRepository.leaveLfg({
 			userId: 2,
 			tournamentId: tournament.id,
 		});
 
-		const groups = await TournamentLFGRepository.findGroupsByTournamentId(
+		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
 		);
 		const members = groups[0].members;
@@ -472,52 +464,52 @@ describe("leaveGroup", () => {
 		expect(members[0].id).toBe(1);
 	});
 
-	test("deletes group when last member leaves", async () => {
+	test("deletes placeholder team when last member leaves", async () => {
 		const tournament = await createTournament();
-		await createGroup(tournament.id, 1);
+		await createPlaceholder(tournament.id, 1);
 
-		await TournamentLFGRepository.leaveGroup({
+		await TournamentLFGRepository.leaveLfg({
 			userId: 1,
 			tournamentId: tournament.id,
 		});
 
-		const groups = await TournamentLFGRepository.findGroupsByTournamentId(
+		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
 		);
 
 		expect(groups).toHaveLength(0);
 	});
 
-	test("promotes MANAGER to OWNER when owner leaves", async () => {
+	test("promotes MANAGER to OWNER when owner leaves placeholder", async () => {
 		const tournament = await createTournament();
-		const group = await createGroup(tournament.id, 1);
+		const team = await createPlaceholder(tournament.id, 1);
 
 		await db
-			.insertInto("TournamentLFGGroupMember")
+			.insertInto("TournamentTeamMember")
 			.values({
-				groupId: group.id,
-				tournamentId: tournament.id,
+				tournamentTeamId: team.id,
 				userId: 2,
+				isOwner: 0,
 				role: "MANAGER",
 			})
 			.execute();
 
 		await db
-			.insertInto("TournamentLFGGroupMember")
+			.insertInto("TournamentTeamMember")
 			.values({
-				groupId: group.id,
-				tournamentId: tournament.id,
+				tournamentTeamId: team.id,
 				userId: 3,
+				isOwner: 0,
 				role: "REGULAR",
 			})
 			.execute();
 
-		await TournamentLFGRepository.leaveGroup({
+		await TournamentLFGRepository.leaveLfg({
 			userId: 1,
 			tournamentId: tournament.id,
 		});
 
-		const groups = await TournamentLFGRepository.findGroupsByTournamentId(
+		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
 		);
 		const members = groups[0].members;
@@ -526,31 +518,50 @@ describe("leaveGroup", () => {
 		expect(newOwner?.role).toBe("OWNER");
 	});
 
-	test("promotes first member to OWNER when owner leaves and no manager exists", async () => {
+	test("sets isLooking=0 for non-placeholder team", async () => {
 		const tournament = await createTournament();
-		const group = await createGroup(tournament.id, 1);
+
+		const team = await db
+			.insertInto("TournamentTeam")
+			.values({
+				tournamentId: tournament.id,
+				name: "Real Team",
+				inviteCode: "abc",
+				isLooking: 1,
+				isPlaceholder: 0,
+				chatCode: "chat123",
+			})
+			.returning("id")
+			.executeTakeFirstOrThrow();
 
 		await db
-			.insertInto("TournamentLFGGroupMember")
+			.insertInto("TournamentTeamMember")
 			.values({
-				groupId: group.id,
-				tournamentId: tournament.id,
-				userId: 2,
-				role: "REGULAR",
+				tournamentTeamId: team.id,
+				userId: 1,
+				isOwner: 1,
+				role: "OWNER",
 			})
 			.execute();
 
-		await TournamentLFGRepository.leaveGroup({
+		await TournamentLFGRepository.leaveLfg({
 			userId: 1,
 			tournamentId: tournament.id,
 		});
 
-		const groups = await TournamentLFGRepository.findGroupsByTournamentId(
+		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
 		);
-		const members = groups[0].members;
 
-		expect(members[0].role).toBe("OWNER");
+		expect(groups).toHaveLength(0);
+
+		const teamRow = await db
+			.selectFrom("TournamentTeam")
+			.select("isLooking")
+			.where("id", "=", team.id)
+			.executeTakeFirstOrThrow();
+
+		expect(teamRow.isLooking).toBe(0);
 	});
 });
 
@@ -565,12 +576,12 @@ describe("getSubsForTournament", () => {
 
 	test("returns userIds with isStayAsSub", async () => {
 		const tournament = await createTournament();
-		await TournamentLFGRepository.createGroup({
+		await TournamentLFGRepository.createPlaceholderTeam({
 			tournamentId: tournament.id,
 			userId: 1,
 			isStayAsSub: true,
 		});
-		await createGroup(tournament.id, 2);
+		await createPlaceholder(tournament.id, 2);
 
 		const subs = await TournamentLFGRepository.getSubsForTournament(
 			tournament.id,
@@ -581,55 +592,12 @@ describe("getSubsForTournament", () => {
 
 	test("returns empty when nobody opted in", async () => {
 		const tournament = await createTournament();
-		await createGroup(tournament.id, 1);
+		await createPlaceholder(tournament.id, 1);
 
 		const subs = await TournamentLFGRepository.getSubsForTournament(
 			tournament.id,
 		);
 
 		expect(subs).toHaveLength(0);
-	});
-});
-
-describe("cleanupForTournamentStart", () => {
-	beforeEach(async () => {
-		await dbInsertUsers(2);
-	});
-
-	afterEach(() => {
-		dbReset();
-	});
-
-	test("deletes all groups for a tournament", async () => {
-		const tournament = await createTournament();
-		await createGroup(tournament.id, 1);
-		await createGroup(tournament.id, 2);
-
-		await TournamentLFGRepository.cleanupForTournamentStart(tournament.id);
-
-		const groups = await TournamentLFGRepository.findGroupsByTournamentId(
-			tournament.id,
-		);
-
-		expect(groups).toHaveLength(0);
-	});
-
-	test("does not affect groups from other tournaments", async () => {
-		const tournament1 = await createTournament();
-		const tournament2 = await createTournament();
-		await createGroup(tournament1.id, 1);
-		await createGroup(tournament2.id, 2);
-
-		await TournamentLFGRepository.cleanupForTournamentStart(tournament1.id);
-
-		const groups1 = await TournamentLFGRepository.findGroupsByTournamentId(
-			tournament1.id,
-		);
-		const groups2 = await TournamentLFGRepository.findGroupsByTournamentId(
-			tournament2.id,
-		);
-
-		expect(groups1).toHaveLength(0);
-		expect(groups2).toHaveLength(1);
 	});
 });

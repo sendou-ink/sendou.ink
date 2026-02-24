@@ -693,29 +693,9 @@ export interface TournamentSub {
 	visibility: "+1" | "+2" | "+3" | "ALL";
 }
 
-export interface TournamentLFGGroup {
-	id: GeneratedAlways<number>;
-	tournamentId: number;
-	tournamentTeamId: number | null;
-	visibility: JSONColumnTypeNullable<AssociationVisibility>;
-	chatCode: string;
-	createdAt: Generated<number>;
-}
-
-// xxx: duplicate state with tournament team member... keeping these up to date might be annoying
-export interface TournamentLFGGroupMember {
-	groupId: number;
-	tournamentId: number;
-	userId: number;
-	role: "OWNER" | "MANAGER" | "REGULAR";
-	note: string | null;
-	isStayAsSub: Generated<DBBoolean>;
-	createdAt: Generated<number>;
-}
-
 export interface TournamentLFGLike {
-	likerGroupId: number;
-	targetGroupId: number;
+	likerTeamId: number;
+	targetTeamId: number;
 	createdAt: Generated<number>;
 }
 
@@ -739,6 +719,12 @@ export interface TournamentTeam {
 	tournamentId: number;
 	teamId: number | null;
 	avatarImgId: number | null;
+	isLooking: Generated<DBBoolean>;
+	isPlaceholder: Generated<DBBoolean>;
+	lfgVisibility: JSONColumnTypeNullable<AssociationVisibility>;
+	lfgNote: string | null;
+	// xxx: do we provide chat at this point? if not then remove
+	chatCode: string | null;
 }
 
 export interface TournamentTeamCheckIn {
@@ -756,6 +742,8 @@ export interface TournamentTeamMember {
 	inGameName: string | null;
 	tournamentTeamId: number;
 	userId: number;
+	role: Generated<"OWNER" | "MANAGER" | "REGULAR">;
+	isStayAsSub: Generated<DBBoolean>;
 }
 
 export interface TournamentOrganization {
@@ -1232,8 +1220,6 @@ export interface DB {
 	Tournament: Tournament;
 	TournamentStaff: TournamentStaff;
 	TournamentGroup: TournamentGroup;
-	TournamentLFGGroup: TournamentLFGGroup;
-	TournamentLFGGroupMember: TournamentLFGGroupMember;
 	TournamentLFGLike: TournamentLFGLike;
 	TournamentMatch: TournamentMatch;
 	TournamentMatchPickBanEvent: TournamentMatchPickBanEvent;
