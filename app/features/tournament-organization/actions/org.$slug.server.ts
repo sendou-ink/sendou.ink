@@ -31,7 +31,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	switch (data._action) {
 		case "BAN_USER": {
-			requirePermission(organization, "BAN", user);
+			requirePermission(organization, "BAN");
 
 			const allBannedUsers =
 				await TournamentOrganizationRepository.allBannedUsersByOrganizationId(
@@ -66,7 +66,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UNBAN_USER": {
-			requirePermission(organization, "BAN", user);
+			requirePermission(organization, "BAN");
 
 			await TournamentOrganizationRepository.unbanUser({
 				organizationId: organization.id,
@@ -80,7 +80,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UPDATE_IS_ESTABLISHED": {
-			requireRole(user, "ADMIN");
+			requireRole("ADMIN");
 
 			await TournamentOrganizationRepository.updateIsEstablished(
 				organization.id,
@@ -116,7 +116,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "DELETE_ORGANIZATION": {
-			requireRole(user, "ADMIN");
+			requireRole("ADMIN");
 
 			await TournamentOrganizationRepository.deleteById(organization.id);
 

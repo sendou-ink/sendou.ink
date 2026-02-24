@@ -28,7 +28,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	const organization = await organizationFromParams(params);
 
-	requirePermission(organization, "EDIT", user);
+	requirePermission(organization, "EDIT");
 
 	if (
 		!data.members.some(

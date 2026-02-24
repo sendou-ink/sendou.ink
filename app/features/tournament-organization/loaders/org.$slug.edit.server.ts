@@ -1,14 +1,12 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { organizationFromParams } from "../tournament-organization-utils.server";
 
 export async function loader({ params }: LoaderFunctionArgs) {
-	const user = requireUser();
 	const organization = await organizationFromParams(params);
 
-	requirePermission(organization, "EDIT", user);
+	requirePermission(organization, "EDIT");
 
 	const badgeOptions = async () => {
 		const result = await BadgeRepository.findByManagersList(

@@ -9,7 +9,7 @@ import { newOrganizationSchema } from "../tournament-organization-schemas";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
-	requireRole(user, "TOURNAMENT_ADDER");
+	requireRole("TOURNAMENT_ADDER");
 
 	const data = await parseRequestPayload({
 		request,
