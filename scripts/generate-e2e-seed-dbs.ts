@@ -7,9 +7,19 @@ import { SEED_VARIATIONS } from "../app/features/api-private/constants";
 const E2E_SEEDS_DIR = "e2e/seeds";
 const BASE_TEST_DB = "db-test.sqlite3";
 
+const E2E_WORKER_DB_PATTERN = /^db-test-e2e-\d+\.sqlite3$/;
+
 async function generatePreSeededDatabases() {
 	// biome-ignore lint/suspicious/noConsole: CLI script output
 	console.log("Generating pre-seeded databases for e2e tests...\n");
+
+	for (const file of fs.readdirSync(".")) {
+		if (E2E_WORKER_DB_PATTERN.test(file)) {
+			fs.unlinkSync(file);
+			// biome-ignore lint/suspicious/noConsole: CLI script output
+			console.log(`Deleted stale worker db: ${file}`);
+		}
+	}
 
 	if (!fs.existsSync(E2E_SEEDS_DIR)) {
 		fs.mkdirSync(E2E_SEEDS_DIR, { recursive: true });

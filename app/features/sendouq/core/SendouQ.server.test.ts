@@ -821,6 +821,7 @@ describe("SendouQ", () => {
 
 		describe("skill-based sorting", () => {
 			beforeEach(async () => {
+				refreshUserSkills(1);
 				await dbInsertUsers(10);
 			});
 

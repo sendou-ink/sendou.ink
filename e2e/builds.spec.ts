@@ -127,6 +127,7 @@ test.describe("Builds", () => {
 		await page.getByLabel("Tower Control").click();
 		await expect(page.getByTestId("build-mode-TC")).toHaveCount(24);
 		await page.getByTestId("delete-filter-button").click();
+		await expect(page.getByTestId("build-card").first()).toBeVisible();
 
 		//
 		// date filter
