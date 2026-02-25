@@ -13,6 +13,7 @@ import {
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Placeholder } from "~/components/Placeholder";
 import { SubmitButton } from "~/components/SubmitButton";
+import { useTournament } from "~/features/tournament/routes/to.$id";
 import { SendouForm } from "~/form/SendouForm";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -52,19 +53,28 @@ function TournamentLFGPage() {
 function Groups() {
 	const { t } = useTranslation(["q"]);
 	const data = useLoaderData<typeof loader>();
+	const tournament = useTournament();
 	const { width } = useWindowSize();
 
 	const isMobile = width < 750;
 
-	const neutralGroups = data.groups.filter(
+	const ownMemberCount =
+		data.ownGroup?.members.length ?? data.ownTeam?.members.length ?? 0;
+	const availableSlots = tournament.maxMembersPerTeam - ownMemberCount;
+
+	const compatibleGroups = data.groups.filter(
+		(group) => group.members.length <= availableSlots,
+	);
+
+	const neutralGroups = compatibleGroups.filter(
 		(group) =>
 			!data.likes.given.some((like) => like.teamId === group.id) &&
 			!data.likes.received.some((like) => like.teamId === group.id),
 	);
-	const likedGroups = data.groups.filter((group) =>
+	const likedGroups = compatibleGroups.filter((group) =>
 		data.likes.given.some((like) => like.teamId === group.id),
 	);
-	const groupsReceivedLikesFrom = data.groups.filter((group) =>
+	const groupsReceivedLikesFrom = compatibleGroups.filter((group) =>
 		data.likes.received.some((like) => like.teamId === group.id),
 	);
 
@@ -84,7 +94,6 @@ function Groups() {
 		</div>
 	);
 
-	const hasOwnSection = data.ownGroup ?? data.ownTeam;
 	const ownTabMemberCount = data.ownGroup
 		? data.ownGroup.members.length
 		: data.ownTeam
@@ -120,11 +129,9 @@ function Groups() {
 					<div>
 						<SendouTabs>
 							<SendouTabList>
-								{hasOwnSection ? (
-									<SendouTab id="own" number={ownTabMemberCount}>
-										{t("q:looking.columns.myGroup")}
-									</SendouTab>
-								) : null}
+								<SendouTab id="own" number={ownTabMemberCount}>
+									{t("q:looking.columns.myGroup")}
+								</SendouTab>
 							</SendouTabList>
 							<SendouTabPanel id="own">{leftColumnContent}</SendouTabPanel>
 						</SendouTabs>
@@ -154,7 +161,7 @@ function Groups() {
 							<div className="stack sm">
 								<ColumnHeader>{t("q:looking.columns.available")}</ColumnHeader>
 								{(isMobile
-									? data.groups.filter(
+									? compatibleGroups.filter(
 											(group) =>
 												!data.likes.received.some(
 													(like) => like.teamId === group.id,
@@ -224,7 +231,7 @@ function JoinQueueForm() {
 	return (
 		<SendouForm
 			schema={joinQueueFormSchema}
-			submitButtonText={t("q:looking.joinQPrompt")}
+			submitButtonText={t("q:looking.joinQPromptTeam")}
 		>
 			{({ FormField }) => <FormField name="stayAsSub" />}
 		</SendouForm>
@@ -234,22 +241,28 @@ function JoinQueueForm() {
 function TeamQueueSection() {
 	const { t } = useTranslation(["q"]);
 	const data = useLoaderData<typeof loader>();
+	const tournament = useTournament();
 	const fetcher = useFetcher();
 
 	if (!data.ownTeam) return null;
 
+	const isAtMaxMembers =
+		data.ownTeam.members.length >= tournament.maxMembersPerTeam;
+
 	return (
 		<div className="stack md">
 			<LFGGroupCard group={data.ownTeam} />
-			<fetcher.Form method="post" className="stack items-center">
-				<SubmitButton
-					_action="JOIN_QUEUE"
-					state={fetcher.state}
-					variant="outlined"
-				>
-					{t("q:looking.joinQPrompt")}
-				</SubmitButton>
-			</fetcher.Form>
+			{!isAtMaxMembers ? (
+				<fetcher.Form method="post" className="stack items-center">
+					<SubmitButton
+						_action="JOIN_QUEUE"
+						state={fetcher.state}
+						variant="outlined"
+					>
+						{t("q:looking.joinQPromptMembers")}
+					</SubmitButton>
+				</fetcher.Form>
+			) : null}
 		</div>
 	);
 }
@@ -266,7 +279,7 @@ function LFGGroupLeaver({ type }: { type: "LEAVE_GROUP" | "LEAVE_Q" }) {
 				submitButtonText="Leave"
 			>
 				<SendouButton variant="minimal-destructive" size="small">
-					{t("q:looking.groups.actions.leaveGroup")}
+					{t("q:looking.groups.actions.stopLooking")}
 				</SendouButton>
 			</FormWithConfirm>
 		);

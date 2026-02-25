@@ -41,7 +41,6 @@ import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
 import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/sendouq-settings/q-settings-constants";
 import { joinTeam } from "~/features/tournament/queries/joinLeaveTeam.server";
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
@@ -75,6 +74,7 @@ import {
 } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
+import { randomTeamName } from "~/utils/team-name";
 import { mySlugify } from "~/utils/urls";
 import {
 	getArtFilename,
@@ -898,9 +898,7 @@ function calendarEvents() {
 			)
 			.run({
 				id,
-				name: `${R.capitalize(faker.word.adjective())} ${R.capitalize(
-					faker.word.noun(),
-				)}`,
+				name: randomTeamName(),
 				description: faker.lorem.paragraph(),
 				discordInviteCode: faker.lorem.word(),
 				bracketUrl: faker.internet.url(),
@@ -1016,7 +1014,7 @@ async function calendarEventResults() {
 				.fill(null)
 				.map((_, i) => ({
 					placement: i + 1,
-					teamName: R.capitalize(faker.word.noun()),
+					teamName: randomTeamName(),
 					players: new Array(
 						faker.helpers.arrayElement([1, 2, 3, 4, 4, 4, 4, 4, 5, 6]),
 					)
@@ -1378,12 +1376,7 @@ function calendarEventWithToToolsToSetMapPool() {
 	}
 }
 
-const validTournamentTeamName = () => {
-	while (true) {
-		const name = faker.music.songName();
-		if (name.length <= TOURNAMENT.TEAM_NAME_MAX_LENGTH) return name;
-	}
-};
+const validTournamentTeamName = () => randomTeamName();
 
 const availableStages: StageId[] = [1, 2, 3, 4, 6, 7, 8, 10, 11];
 const availablePairs = rankedModesShort
@@ -1492,12 +1485,14 @@ function calendarEventWithToToolsTeams(
         "tournamentTeamId",
         "userId",
         "isOwner",
-        "createdAt"
+        "createdAt",
+        "role"
       ) values (
         $tournamentTeamId,
         $userId,
         $isOwner,
-        $createdAt
+        $createdAt,
+        $role
       )
       `,
 				)
@@ -1506,6 +1501,7 @@ function calendarEventWithToToolsTeams(
 					userId,
 					isOwner: i === 0 ? 1 : 0,
 					createdAt: dateToDatabaseTimestamp(yesterday),
+					role: i === 0 ? "OWNER" : "REGULAR",
 				});
 		}
 
@@ -1950,12 +1946,7 @@ function otherTeams() {
 	);
 
 	for (let i = 3; i < 50; i++) {
-		const teamName =
-			i === 3
-				? "Team Olive"
-				: `${R.capitalize(faker.word.adjective())} ${R.capitalize(
-						faker.word.noun(),
-					)}`;
+		const teamName = i === 3 ? "Team Olive" : randomTeamName();
 		const teamCustomUrl = mySlugify(teamName);
 
 		sql

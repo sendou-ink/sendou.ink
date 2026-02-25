@@ -51,6 +51,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			const team = tournament.teamMemberOfByUser(user);
 
 			if (team) {
+				errorToastIfFalsy(
+					team.members.length < tournament.maxMembersPerTeam,
+					"Team is already at max capacity",
+				);
 				await TournamentLFGRepository.startLooking(team.id);
 			} else {
 				await TournamentLFGRepository.createPlaceholderTeam({

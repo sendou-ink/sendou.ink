@@ -149,6 +149,7 @@ export function create({
 				tournamentTeamId: tournamentTeam.id,
 				userId,
 				isOwner: 1,
+				role: "OWNER",
 				inGameName: ownerInGameName,
 			})
 			.execute();

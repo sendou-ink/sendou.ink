@@ -164,10 +164,20 @@ export function mergeTeams({
 			.where("TournamentTeam.id", "=", otherTeamId)
 			.execute();
 
+		const memberCount = await getMemberCount(survivingTeamId, trx);
+
 		invariant(
-			await isTeamCorrect(survivingTeamId, trx, maxGroupSize),
+			memberCount <= maxGroupSize,
 			"Group has too many members after merge",
 		);
+
+		if (memberCount >= maxGroupSize) {
+			await trx
+				.updateTable("TournamentTeam")
+				.set({ isLooking: 0 })
+				.where("id", "=", survivingTeamId)
+				.execute();
+		}
 	});
 }
 
@@ -313,6 +323,11 @@ export function leaveLfg({
 				.set({ isLooking: 0 })
 				.where("id", "=", userTeam.tournamentTeamId)
 				.execute();
+			await trx
+				.updateTable("TournamentTeamMember")
+				.set({ isStayAsSub: 0 })
+				.where("tournamentTeamId", "=", userTeam.tournamentTeamId)
+				.execute();
 			return;
 		}
 
@@ -381,16 +396,15 @@ function deleteLikesByTeamId(teamId: number, trx: Transaction<DB>) {
 		.execute();
 }
 
-async function isTeamCorrect(
+async function getMemberCount(
 	teamId: number,
 	trx: Transaction<DB>,
-	maxGroupSize: number,
-): Promise<boolean> {
+): Promise<number> {
 	const members = await trx
 		.selectFrom("TournamentTeamMember")
 		.select("TournamentTeamMember.userId")
 		.where("TournamentTeamMember.tournamentTeamId", "=", teamId)
 		.execute();
 
-	return members.length <= maxGroupSize;
+	return members.length;
 }

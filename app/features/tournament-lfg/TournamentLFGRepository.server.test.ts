@@ -280,6 +280,24 @@ describe("mergeTeams", () => {
 		).rejects.toThrow("Group has too many members after merge");
 	});
 
+	test("stops looking when merged team reaches max capacity", async () => {
+		const tournament = await createTournament();
+		const team1 = await createPlaceholder(tournament.id, 1);
+		const team2 = await createPlaceholder(tournament.id, 2);
+
+		await TournamentLFGRepository.mergeTeams({
+			survivingTeamId: team1.id,
+			otherTeamId: team2.id,
+			maxGroupSize: 2,
+		});
+
+		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
+			tournament.id,
+		);
+
+		expect(groups).toHaveLength(0);
+	});
+
 	test("clears likes on surviving team after merge", async () => {
 		const tournament = await createTournament();
 		const team1 = await createPlaceholder(tournament.id, 1);
