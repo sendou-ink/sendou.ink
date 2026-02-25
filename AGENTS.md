@@ -58,13 +58,6 @@
 - `db-test.sqlite3` is the unit test database (should be blank sans migrations ran)
 - `db-prod.sqlite3` is a copy of the production environment db which can be freely experimented with
 
-## E2E testing
-
-- library used for E2E testing is Playwright
-- `page.goto` is forbidden, use the `navigate` function to do a page navigation
-- to submit a form you use the `submit` function
-- `page.waitForTimeout` should be avoided 
-
 ## Unit testing
 
 - library used for unit testing is Vitest
