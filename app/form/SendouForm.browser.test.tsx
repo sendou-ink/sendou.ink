@@ -18,8 +18,9 @@ import {
 	textFieldRequired,
 	timeRangeOptional,
 	toggle as toggleField,
+	userSearch,
 } from "./fields";
-import { SendouForm } from "./SendouForm";
+import { SendouForm, useFormFieldContext } from "./SendouForm";
 
 let mockFetcherData: { fieldErrors?: Record<string, string> } | undefined;
 
@@ -33,6 +34,7 @@ vi.mock("react-router", async () => {
 			},
 			state: "idle",
 			submit: vi.fn(),
+			load: vi.fn(),
 		}),
 	};
 });
@@ -1145,6 +1147,91 @@ describe("SendouForm", () => {
 
 			await expect.element(inputA).toHaveValue("Value A");
 			await expect.element(inputB).toHaveValue("Value B");
+		});
+	});
+
+	describe("array field item removal preserves remaining items", () => {
+		test("removing a middle member preserves userSearch values of members below", async () => {
+			let latestValues: Record<string, unknown> = {};
+
+			function ValueCapture() {
+				const ctx = useFormFieldContext();
+				latestValues = ctx.values;
+				return null;
+			}
+
+			const schema = z.object({
+				members: array({
+					label: "labels.members",
+					max: 10,
+					field: fieldset({
+						fields: z.object({
+							userId: userSearch({ label: "labels.orgMemberUser" }),
+							role: select({
+								label: "labels.orgMemberRole",
+								items: [
+									{ label: "options.orgRole.ADMIN", value: "ADMIN" },
+									{ label: "options.orgRole.MEMBER", value: "MEMBER" },
+								],
+							}),
+						}),
+					}),
+				}),
+			});
+
+			const defaultValues = {
+				members: [
+					{ userId: 10, role: "ADMIN" },
+					{ userId: 20, role: "MEMBER" },
+					{ userId: 30, role: "MEMBER" },
+					{ userId: 40, role: "MEMBER" },
+					{ userId: 50, role: "MEMBER" },
+				],
+			};
+
+			const router = createMemoryRouter(
+				[
+					{
+						path: "/",
+						element: (
+							<SendouForm schema={schema} defaultValues={defaultValues}>
+								{({ names }) => (
+									<>
+										<FormField name={names.members} />
+										<ValueCapture />
+									</>
+								)}
+							</SendouForm>
+						),
+					},
+				],
+				{ initialEntries: ["/"] },
+			);
+
+			const screen = await render(<RouterProvider router={router} />);
+
+			// Verify initial state - 5 members rendered
+			const removeButtons = screen.container.querySelectorAll(
+				'button[aria-label="Remove item"]',
+			);
+			expect(removeButtons.length).toBe(5);
+
+			// Remove the 3rd member (index 2, userId: 30)
+			await userEvent.click(removeButtons[2]);
+
+			// Wait for React effects to settle
+			await new Promise((resolve) => setTimeout(resolve, 200));
+
+			const members = latestValues.members as Array<{
+				userId: number | null;
+				role: string;
+			}>;
+			expect(members).toHaveLength(4);
+			expect(members[0].userId).toBe(10);
+			expect(members[1].userId).toBe(20);
+			// Bug: UserSearch cleanup effect clears userId for shifted items
+			expect(members[2].userId).toBe(40);
+			expect(members[3].userId).toBe(50);
 		});
 	});
 });
