@@ -21,10 +21,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	switch (data._action) {
 		case "REMOVE_MEMBER": {
-			await validateHasManagePermissions({
-				user,
-				associationId: data.associationId,
-			});
+			await validateHasManagePermissions(data.associationId);
 
 			errorToastIfFalsy(
 				data.userId !== user.id,
@@ -39,20 +36,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "DELETE_ASSOCIATION": {
-			await validateHasManagePermissions({
-				user,
-				associationId: data.associationId,
-			});
+			await validateHasManagePermissions(data.associationId);
 
 			await AssociationRepository.del(data.associationId);
 
 			break;
 		}
 		case "REFRESH_INVITE_CODE": {
-			await validateHasManagePermissions({
-				user,
-				associationId: data.associationId,
-			});
+			await validateHasManagePermissions(data.associationId);
 
 			await AssociationRepository.refreshInviteCode(data.associationId);
 
@@ -118,16 +109,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	return null;
 };
 
-async function validateHasManagePermissions({
-	user,
-	associationId,
-}: {
-	user: { id: number };
-	associationId: number;
-}) {
+async function validateHasManagePermissions(associationId: number) {
 	const association = badRequestIfFalsy(
 		await AssociationRepository.findById(associationId, { withMembers: true }),
 	);
 
-	requirePermission(association, "MANAGE", user);
+	requirePermission(association, "MANAGE");
 }

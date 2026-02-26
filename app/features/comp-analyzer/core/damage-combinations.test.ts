@@ -367,6 +367,42 @@ describe("calculateDamageCombos - excessive combo filtering", () => {
 	});
 });
 
+const TRI_SLOSHER_ID = 3010;
+const INKBRUSH_ID = 1100;
+const GOLD_DYNAMO_ROLLER_ID = 1021;
+const RAPID_BLASTER_PRO_WNT_R_ID = 252;
+
+describe("calculateDamageCombos - deduplication", () => {
+	test("no duplicate combos with bug report weapons", () => {
+		const combos = calculateDamageCombos(
+			[
+				TRI_SLOSHER_ID,
+				INKBRUSH_ID,
+				GOLD_DYNAMO_ROLLER_ID,
+				RAPID_BLASTER_PRO_WNT_R_ID,
+			],
+			[],
+			0,
+			1000,
+		);
+
+		const canonicalKeys = combos.map((combo) => {
+			const grouped = new Map<string, number>();
+			for (const segment of combo.segments) {
+				const key = `${segment.damageType}:${segment.damageValue}`;
+				grouped.set(key, (grouped.get(key) ?? 0) + segment.count);
+			}
+			return [...grouped.entries()]
+				.sort(([a], [b]) => a.localeCompare(b))
+				.map(([key, count]) => `${key}:${count}`)
+				.join("|");
+		});
+
+		const uniqueKeys = new Set(canonicalKeys);
+		expect(uniqueKeys.size).toBe(canonicalKeys.length);
+	});
+});
+
 describe("virtual damage combos", () => {
 	test("Explosher has COMBO damage type combining DIRECT and DISTANCE", () => {
 		const sources = extractDamageSources([EXPLOSHER_ID]);

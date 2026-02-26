@@ -303,6 +303,62 @@ function backtrack(
 	}
 }
 
+function normalizeCombo(combo: DamageCombo): DamageCombo {
+	const grouped = new Map<
+		string,
+		{ segment: DamageSegment; totalCount: number }
+	>();
+
+	for (const segment of combo.segments) {
+		const key = `${segment.damageType}:${segment.damageValue}`;
+		const existing = grouped.get(key);
+		if (existing) {
+			existing.totalCount += segment.count;
+		} else {
+			grouped.set(key, { segment, totalCount: segment.count });
+		}
+	}
+
+	const segments: DamageSegment[] = [];
+	for (const { segment, totalCount } of grouped.values()) {
+		segments.push({ ...segment, count: totalCount });
+	}
+
+	segments.sort((a, b) => {
+		const typeCompare = a.damageType.localeCompare(b.damageType);
+		if (typeCompare !== 0) return typeCompare;
+		return a.damageValue - b.damageValue;
+	});
+
+	return {
+		segments,
+		totalDamage: combo.totalDamage,
+		hitCount: combo.hitCount,
+	};
+}
+
+function comboKey(normalized: DamageCombo): string {
+	return normalized.segments
+		.map((s) => `${s.damageType}:${s.damageValue}:${s.count}`)
+		.join("|");
+}
+
+function deduplicateCombos(combos: DamageCombo[]): DamageCombo[] {
+	const seen = new Map<string, DamageCombo>();
+
+	for (const combo of combos) {
+		const normalized = normalizeCombo(combo);
+		const key = comboKey(normalized);
+		const existing = seen.get(key);
+
+		if (!existing || combo.segments.length < existing.segments.length) {
+			seen.set(key, combo);
+		}
+	}
+
+	return [...seen.values()];
+}
+
 function filterAndSortCombos(
 	combos: DamageCombo[],
 	maxCombosDisplayed: number,
@@ -323,7 +379,9 @@ function filterAndSortCombos(
 		return true;
 	});
 
-	filtered.sort((a, b) => {
+	const deduplicated = deduplicateCombos(filtered);
+
+	deduplicated.sort((a, b) => {
 		const aDistTo100 = Math.abs(a.totalDamage - 100);
 		const bDistTo100 = Math.abs(b.totalDamage - 100);
 		if (aDistTo100 !== bDistTo100) {
@@ -332,7 +390,7 @@ function filterAndSortCombos(
 		return a.hitCount - b.hitCount;
 	});
 
-	return filtered.slice(0, maxCombosDisplayed);
+	return deduplicated.slice(0, maxCombosDisplayed);
 }
 
 function hasOneShot(combo: DamageCombo): boolean {

@@ -44,6 +44,10 @@ export default [
 		index("features/user-page/routes/u.$identifier.index.tsx"),
 		route("art", "features/user-page/routes/u.$identifier.art.tsx"),
 		route("edit", "features/user-page/routes/u.$identifier.edit.tsx"),
+		route(
+			"edit-widgets",
+			"features/user-page/routes/u.$identifier.edit-widgets.tsx",
+		),
 		route("seasons", "features/user-page/routes/u.$identifier.seasons.tsx"),
 		route("vods", "features/user-page/routes/u.$identifier.vods.tsx"),
 		route("builds", "features/user-page/routes/u.$identifier.builds.tsx"),
@@ -303,6 +307,14 @@ export default [
 			),
 			route("/org/:id", "features/api-public/routes/org.$id.ts"),
 			route("/team/:id", "features/api-public/routes/team.$id.ts"),
+			route(
+				"/tournament/:id/seeds",
+				"features/api-public/routes/tournament.$id.seeds.ts",
+			),
+			route(
+				"/tournament/:id/starting-brackets",
+				"features/api-public/routes/tournament.$id.starting-brackets.ts",
+			),
 			route(
 				"/tournament/:id/teams/:teamId/add-member",
 				"features/api-public/routes/tournament.$id.teams.$teamId.add-member.ts",

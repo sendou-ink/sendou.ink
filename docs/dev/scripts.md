@@ -71,5 +71,7 @@ Note: This is only useful if you have access to a production running on Render.c
 1. Access the "Shell" tab
 2. `cd /var/data`
 3. `cp db.sqlite3 db-copy.sqlite3`
-4. `wormhole send db-copy.sqlite3`
+3. `gzip db-copy.sqlite3`
+4. `wormhole send db-copy.sqlite3.gz`
 5. On the receiving computer use the command shown.
+6. `gunzip db-copy.sqlite3.gz`

@@ -73,9 +73,9 @@ export const handle: SendouRouteHandle = {
 		const data = JSON.parse(rawData) as TournamentLoaderData;
 
 		return [
-			data.tournament.ctx.organization?.avatarUrl
+			data.tournament.ctx.organization?.logoUrl
 				? {
-						imgPath: data.tournament.ctx.organization.avatarUrl,
+						imgPath: data.tournament.ctx.organization.logoUrl,
 						href: tournamentOrganizationPage({
 							organizationSlug: data.tournament.ctx.organization.slug,
 						}),

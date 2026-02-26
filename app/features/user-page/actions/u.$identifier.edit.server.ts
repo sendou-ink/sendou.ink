@@ -20,7 +20,12 @@ export const action: ActionFunction = async ({ request }) => {
 		};
 	}
 
-	const { inGameNameText, inGameNameDiscriminator, ...data } = parsedInput.data;
+	const {
+		inGameNameText,
+		inGameNameDiscriminator,
+		newProfileEnabled,
+		...data
+	} = parsedInput.data;
 
 	const user = requireUser();
 	const inGameName =
@@ -28,20 +33,24 @@ export const action: ActionFunction = async ({ request }) => {
 			? `${inGameNameText}#${inGameNameDiscriminator}`
 			: null;
 
-	const pronouns =
-		data.subjectPronoun && data.objectPronoun
-			? JSON.stringify({
-					subject: data.subjectPronoun,
-					object: data.objectPronoun,
-				})
-			: null;
-
 	try {
+		const pronouns =
+			data.subjectPronoun && data.objectPronoun
+				? JSON.stringify({
+						subject: data.subjectPronoun,
+						object: data.objectPronoun,
+					})
+				: null;
+
 		const editedUser = await UserRepository.updateProfile({
 			...data,
 			pronouns,
 			inGameName,
 			userId: user.id,
+		});
+
+		await UserRepository.updatePreferences(user.id, {
+			newProfileEnabled: Boolean(newProfileEnabled),
 		});
 
 		// TODO: to transaction

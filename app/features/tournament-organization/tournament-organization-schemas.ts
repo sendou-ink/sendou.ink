@@ -95,7 +95,7 @@ export const banUserActionSchema = z.object({
 	expiresAt: datetimeOptional({
 		label: "labels.banUserExpiresAt",
 		bottomText: "bottomTexts.banUserExpiresAtHelp",
-		min: new Date(),
+		min: () => new Date(),
 		minMessage: "errors.dateInPast",
 	}),
 });
@@ -112,8 +112,18 @@ export const updateIsEstablishedSchema = z.object({
 	}),
 });
 
+const deleteOrganizationActionSchema = z.object({
+	_action: _action("DELETE_ORGANIZATION"),
+});
+
+const leaveOrganizationActionSchema = z.object({
+	_action: _action("LEAVE_ORGANIZATION"),
+});
+
 export const orgPageActionSchema = z.union([
 	banUserActionSchema,
 	unbanUserActionSchema,
 	updateIsEstablishedSchema,
+	deleteOrganizationActionSchema,
+	leaveOrganizationActionSchema,
 ]);

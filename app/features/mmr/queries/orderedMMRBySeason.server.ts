@@ -21,36 +21,8 @@ const userStm = sql.prepare(/* sql */ `
     "Skill"."ordinal" desc
 `);
 
-const teamStm = sql.prepare(/* sql */ `
-  select
-    "Skill"."ordinal",
-    "Skill"."matchesCount",
-    "Skill"."identifier"
-  from
-    "Skill"
-  inner join (
-    select "identifier", max("id") as "maxId"
-    from "Skill"
-    where "Skill"."season" = @season
-    group by "identifier"
-  ) "Latest" on "Skill"."identifier" = "Latest"."identifier" and "Skill"."id" = "Latest"."maxId"
-  where
-    "Skill"."season" = @season
-    and "Skill"."identifier" is not null
-  order by
-    "Skill"."ordinal" desc
-`);
-
-export function orderedMMRBySeason({
-	season,
-	type,
-}: {
-	season: number;
-	type: "team" | "user";
-}) {
-	const stm = type === "team" ? teamStm : userStm;
-
-	return stm.all({ season }) as Array<
-		Pick<Tables["Skill"], "ordinal" | "matchesCount" | "userId" | "identifier">
+export function orderedUserMMRBySeason(season: number) {
+	return userStm.all({ season }) as Array<
+		Pick<Tables["Skill"], "ordinal" | "matchesCount" | "userId">
 	>;
 }

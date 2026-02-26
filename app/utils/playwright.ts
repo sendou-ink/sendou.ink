@@ -10,7 +10,7 @@ import type { SeedVariation } from "~/features/api-private/routes/seed";
 import { tournamentBracketsPage } from "./urls";
 
 dotenv.config();
-export const E2E_BASE_PORT = Number(process.env.PORT || 5173) + 1000;
+export const E2E_BASE_PORT = Number(process.env.PORT || 5173) + 500;
 
 type WorkerFixtures = {
 	workerPort: number;

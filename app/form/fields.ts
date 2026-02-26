@@ -170,6 +170,35 @@ function textFieldRefined<T extends z.ZodType<string | null>>(
 	return result as T;
 }
 
+export function numberField(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "text-field" }>,
+			| "type"
+			| "initialValue"
+			| "required"
+			| "validate"
+			| "inputType"
+			| "maxLength"
+		>
+	> & { maxLength?: number },
+) {
+	return z.coerce
+		.number()
+		.int()
+		.nonnegative()
+		.register(formRegistry, {
+			...args,
+			label: prefixKey(args.label),
+			bottomText: prefixKey(args.bottomText),
+			required: true,
+			type: "text-field",
+			inputType: "number",
+			initialValue: "",
+			maxLength: args.maxLength ?? 10,
+		});
+}
+
 export function numberFieldOptional(
 	args: WithTypedTranslationKeys<
 		Omit<
@@ -298,6 +327,24 @@ export function select<V extends string>(
 	});
 }
 
+export function selectDynamic(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "select-dynamic" }>,
+			"type" | "initialValue" | "clearable"
+		>
+	>,
+) {
+	return z.string().register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "select-dynamic",
+		initialValue: null,
+		clearable: false,
+	}) as unknown as z.ZodType<string> & FieldWithOptions<SelectOption[]>;
+}
+
 export function selectDynamicOptional(
 	args: WithTypedTranslationKeys<
 		Omit<
@@ -389,22 +436,20 @@ type DateTimeArgs = WithTypedTranslationKeys<
 };
 
 export function datetimeRequired(args: DateTimeArgs) {
-	const minDate = args.min ?? new Date(Date.UTC(2015, 4, 28));
-	const maxDate = args.max ?? new Date(Date.UTC(2030, 4, 28));
+	const resolveMin = args.min ?? (() => new Date(Date.UTC(2015, 4, 28)));
+	const resolveMax = args.max ?? (() => new Date(Date.UTC(2030, 4, 28)));
 
 	return z
 		.preprocess(
 			date,
 			z
 				.date({ message: "forms:errors.required" })
-				.min(
-					minDate,
-					args.minMessage ? { message: `forms:${args.minMessage}` } : undefined,
-				)
-				.max(
-					maxDate,
-					args.maxMessage ? { message: `forms:${args.maxMessage}` } : undefined,
-				),
+				.refine((d) => d >= resolveMin(), {
+					message: `forms:${args.minMessage ?? "errors.dateTooEarly"}`,
+				})
+				.refine((d) => d <= resolveMax(), {
+					message: `forms:${args.maxMessage ?? "errors.dateTooLate"}`,
+				}),
 		)
 		.register(formRegistry, {
 			...args,
@@ -417,22 +462,20 @@ export function datetimeRequired(args: DateTimeArgs) {
 }
 
 export function datetimeOptional(args: DateTimeArgs) {
-	const minDate = args.min ?? new Date(Date.UTC(2015, 4, 28));
-	const maxDate = args.max ?? new Date(Date.UTC(2030, 4, 28));
+	const resolveMin = args.min ?? (() => new Date(Date.UTC(2015, 4, 28)));
+	const resolveMax = args.max ?? (() => new Date(Date.UTC(2030, 4, 28)));
 
 	return z
 		.preprocess(
 			date,
 			z
 				.date()
-				.min(
-					minDate,
-					args.minMessage ? { message: `forms:${args.minMessage}` } : undefined,
-				)
-				.max(
-					maxDate,
-					args.maxMessage ? { message: `forms:${args.maxMessage}` } : undefined,
-				)
+				.refine((d) => d >= resolveMin(), {
+					message: `forms:${args.minMessage ?? "errors.dateTooEarly"}`,
+				})
+				.refine((d) => d <= resolveMax(), {
+					message: `forms:${args.maxMessage ?? "errors.dateTooLate"}`,
+				})
 				.nullish(),
 		)
 		.register(formRegistry, {
@@ -446,22 +489,20 @@ export function datetimeOptional(args: DateTimeArgs) {
 }
 
 export function dayMonthYearRequired(args: DateTimeArgs) {
-	const minDate = args.min ?? new Date(Date.UTC(2015, 4, 28));
-	const maxDate = args.max ?? new Date(Date.UTC(2030, 4, 28));
+	const resolveMin = args.min ?? (() => new Date(Date.UTC(2015, 4, 28)));
+	const resolveMax = args.max ?? (() => new Date(Date.UTC(2030, 4, 28)));
 
 	return z
 		.preprocess(
 			date,
 			z
 				.date({ message: "forms:errors.required" })
-				.min(
-					minDate,
-					args.minMessage ? { message: `forms:${args.minMessage}` } : undefined,
-				)
-				.max(
-					maxDate,
-					args.maxMessage ? { message: `forms:${args.maxMessage}` } : undefined,
-				),
+				.refine((d) => d >= resolveMin(), {
+					message: `forms:${args.minMessage ?? "errors.dateTooEarly"}`,
+				})
+				.refine((d) => d <= resolveMax(), {
+					message: `forms:${args.maxMessage ?? "errors.dateTooLate"}`,
+				}),
 		)
 		.transform((d) => ({
 			day: d.getDate(),
@@ -687,6 +728,24 @@ export function stageSelect(
 		bottomText: prefixKey(args.bottomText),
 		type: "stage-select",
 		initialValue: 1,
+		required: true,
+	});
+}
+
+export function weaponSelect(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "weapon-select" }>,
+			"type" | "initialValue" | "required"
+		>
+	>,
+) {
+	return weaponSplId.register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "weapon-select",
+		initialValue: null,
 		required: true,
 	});
 }

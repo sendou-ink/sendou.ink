@@ -216,6 +216,8 @@ test.describe("Tournament Organization", () => {
 			url: "/org/sendouink",
 		});
 
+		await page.getByRole("tab", { name: "Admin" }).click();
+
 		const isEstablishedForm = createFormHelpers(
 			page,
 			updateIsEstablishedSchema,

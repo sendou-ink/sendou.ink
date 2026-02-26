@@ -14,7 +14,7 @@ import { assertUnreachable } from "~/utils/types";
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const loggedInUser = requireUser();
 
-	requireRole(loggedInUser, "STAFF");
+	requireRole("STAFF");
 
 	const data = await parseRequestPayload({
 		request,

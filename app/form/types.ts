@@ -87,8 +87,8 @@ export interface FormFieldInputGroup<T extends string, V extends string>
 }
 
 export interface FormFieldDatetime<T extends string> extends FormFieldBase<T> {
-	min?: Date;
-	max?: Date;
+	min?: () => Date;
+	max?: () => Date;
 	required: boolean;
 }
 

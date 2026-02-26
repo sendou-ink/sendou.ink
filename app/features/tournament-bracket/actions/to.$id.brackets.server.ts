@@ -24,6 +24,7 @@ import { idObject } from "~/utils/zod";
 import type { PreparedMaps } from "../../../db/tables";
 import { getServerTournamentManager } from "../core/brackets-manager/manager.server";
 import { roundMapsFromInput } from "../core/mapList.server";
+import * as PreparedMapsUtils from "../core/PreparedMaps";
 import * as Swiss from "../core/Swiss";
 import type { Tournament } from "../core/Tournament";
 import {
@@ -51,6 +52,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 	switch (data._action) {
 		case "START_BRACKET": {
 			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			errorToastIfFalsy(
+				!tournament.isDraft,
+				"Tournament must be opened before starting a bracket",
+			);
 
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			invariant(bracket, "Bracket not found");
@@ -118,6 +123,27 @@ export const action: ActionFunction = async ({ params, request }) => {
 				);
 			})();
 
+			// persist maps as prepared even if they weren't initially so sibling brackets can reuse them
+			const existingPreparedMaps =
+				await TournamentRepository.findPreparedMapsById(tournamentId);
+			if (!existingPreparedMaps?.[data.bracketIdx]) {
+				await TournamentRepository.upsertPreparedMaps({
+					bracketIdx: data.bracketIdx,
+					tournamentId,
+					maps: {
+						maps,
+						authorId: user.id,
+						eliminationTeamCount:
+							bracket.type === "single_elimination" ||
+							bracket.type === "double_elimination"
+								? PreparedMapsUtils.eliminationTeamCountOptions(
+										seeding.length,
+									)[0].max
+								: undefined,
+					},
+				});
+			}
+
 			// ensures autoseeding is disabled
 			const isAllSeedsPersisted = tournament.ctx.teams.every(
 				(team) => typeof team.seed === "number",
@@ -154,7 +180,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				}
 			}
 
-			if (!tournament.isTest) {
+			if (!tournament.isTest && !tournament.isDraft) {
 				notify({
 					userIds: seeding.flatMap((tournamentTeamId) =>
 						tournament.teamById(tournamentTeamId)!.members.map((m) => m.userId),

@@ -13,7 +13,7 @@ import type { VideoBeingAdded } from "../vods-types";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
-	requireRole(user, "VIDEO_ADDER");
+	requireRole("VIDEO_ADDER");
 
 	const result = await parseFormData({
 		request,

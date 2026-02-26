@@ -335,7 +335,7 @@ export const weaponParams = {
 			Jump_DegSwerve: 8,
 			Stand_DegSwerve: 0,
 			InkRecoverStop: 50,
-			InkConsume: 0.08,
+			InkConsume: 0.0912,
 		},
 		"260": {
 			overwrites: {
@@ -2632,11 +2632,13 @@ export const weaponParams = {
 					Mid: 1.1,
 				},
 			},
-			DistanceDamage: [
+			SplashDamageMax: [
 				{
 					Damage: 700,
 					Distance: 3.6,
 				},
+			],
+			SplashDamageMin: [
 				{
 					Damage: 350,
 					Distance: 6,

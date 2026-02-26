@@ -20,9 +20,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		true,
 	))!;
 
+	const preferences = await UserRepository.preferencesByUserId(user.id);
+
 	return {
 		user: userProfile,
 		favoriteBadgeIds: userProfile.favoriteBadgeIds,
 		discordUniqueName: userProfile.discordUniqueName,
+		newProfileEnabled: preferences?.newProfileEnabled ?? false,
 	};
 };

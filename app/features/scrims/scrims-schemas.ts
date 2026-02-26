@@ -222,8 +222,8 @@ export const scrimsNewFormSchema = z
 		at: datetimeRequired({
 			label: "labels.start",
 			bottomText: "bottomTexts.scrimStart",
-			min: sub(new Date(), { days: 1 }),
-			max: add(new Date(), { days: 15 }),
+			min: () => sub(new Date(), { days: 1 }),
+			max: () => add(new Date(), { days: 15 }),
 			minMessage: "errors.dateInPast",
 			maxMessage: "errors.dateTooFarInFuture",
 		}),

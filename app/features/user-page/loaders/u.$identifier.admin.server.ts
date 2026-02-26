@@ -9,7 +9,7 @@ import { convertSnowflakeToDate } from "~/utils/users";
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const loggedInUser = requireUser();
 
-	requireRole(loggedInUser, "STAFF");
+	requireRole("STAFF");
 
 	const user = notFoundIfFalsy(
 		await UserRepository.findLayoutDataByIdentifier(params.identifier!),
