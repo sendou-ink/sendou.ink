@@ -43,7 +43,17 @@ import styles from "./u.$identifier.module.css";
 export { loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["badges", "team", "org", "vods", "lfg", "builds", "weapons", "gear"],
+	i18n: [
+		"badges",
+		"team",
+		"org",
+		"vods",
+		"lfg",
+		"builds",
+		"weapons",
+		"gear",
+		"game-badges",
+	],
 };
 
 export default function UserInfoPage() {
@@ -83,6 +93,7 @@ function NewUserInfoPage() {
 						<ProfileSubtitle
 							inGameName={layoutData.user.inGameName}
 							pronouns={layoutData.user.pronouns}
+							plusTier={layoutData.user.plusTier}
 							country={layoutData.user.country}
 							language={i18n.language}
 						/>
@@ -457,11 +468,13 @@ function WeaponPool() {
 function ProfileSubtitle({
 	inGameName,
 	pronouns,
+	plusTier,
 	country,
 	language,
 }: {
 	inGameName: string | null;
 	pronouns: { subject: string; object: string } | null;
+	plusTier: number | null;
 	country: string | null;
 	language: string;
 }) {
@@ -469,6 +482,10 @@ function ProfileSubtitle({
 
 	if (inGameName) {
 		parts.push(inGameName);
+	}
+
+	if (plusTier) {
+		parts.push(`+${plusTier}`);
 	}
 
 	if (pronouns) {

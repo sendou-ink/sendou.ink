@@ -53,7 +53,6 @@ export const action: ActionFunction = async ({ request }) => {
 		});
 	} else if (!isEditing) {
 		requireRole(
-			user,
 			isAddingTournament ? "TOURNAMENT_ADDER" : "CALENDAR_EVENT_ADDER",
 		);
 	}

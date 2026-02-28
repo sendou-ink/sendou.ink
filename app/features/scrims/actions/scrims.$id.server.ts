@@ -27,7 +27,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		schema: cancelScrimSchema,
 	});
 
-	requirePermission(post, "CANCEL", user);
+	requirePermission(post, "CANCEL");
 
 	if (databaseTimestampToDate(Scrim.getStartTime(post)) < new Date()) {
 		errorToast("Cannot cancel a scrim that was already scheduled to start");

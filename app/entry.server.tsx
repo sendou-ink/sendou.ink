@@ -41,6 +41,7 @@ export default async function handleRequest(
 			lng, // The locale we detected above
 			ns, // The namespaces the routes about to render wants to use
 			resources,
+			showSupportNotice: false,
 		});
 
 	return new Promise((resolve, reject) => {

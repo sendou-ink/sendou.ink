@@ -52,6 +52,8 @@ export function findAllMemberOfByUserId(userId: number) {
 			),
 		])
 		.where("TeamMemberWithSecondary.userId", "=", userId)
+		.orderBy("TeamMemberWithSecondary.isMainTeam", "desc")
+		.orderBy("Team.name", "asc")
 		.execute();
 }
 

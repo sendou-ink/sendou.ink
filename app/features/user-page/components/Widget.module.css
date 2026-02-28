@@ -310,3 +310,20 @@
 	justify-content: center;
 	flex-wrap: wrap;
 }
+
+.gameBadgeGrid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-2);
+	justify-content: center;
+}
+
+.gameBadgeButton {
+	padding: 0;
+}
+
+.gameBadgeImage {
+	width: 48px;
+	height: 48px;
+	object-fit: contain;
+}
