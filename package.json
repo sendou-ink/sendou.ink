@@ -34,8 +34,8 @@
 		"knip": "knip"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.996.0",
-		"@aws-sdk/lib-storage": "^3.996.0",
+		"@aws-sdk/client-s3": "^3.999.0",
+		"@aws-sdk/lib-storage": "^3.999.0",
 		"@date-fns/tz": "^1.4.1",
 		"@dnd-kit/core": "^6.3.1",
 		"@dnd-kit/modifiers": "^9.0.0",
@@ -96,7 +96,7 @@
 		"@playwright/test": "^1.58.2",
 		"@react-router/dev": "^7.13.1",
 		"@types/better-sqlite3": "^7.6.13",
-		"@types/node": "^25.3.0",
+		"@types/node": "^25.3.2",
 		"@types/node-cron": "^3.0.11",
 		"@types/nprogress": "^0.2.3",
 		"@types/react": "^19.2.14",
