@@ -18,6 +18,7 @@ import { previewUrl } from "~/features/art/art-utils";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { VodListing } from "~/features/vods/components/VodListing";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
+import type { GameBadgeId } from "~/modules/in-game-lists/game-badge-ids";
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -859,17 +860,33 @@ function TierListWidget({ searchParams }: { searchParams: string }) {
 }
 
 function GameBadgesDisplay({ badgeIds }: { badgeIds: string[] }) {
+	const { t } = useTranslation(["game-badges"]);
+
 	return (
 		<div className={styles.gameBadgeGrid}>
-			{badgeIds.map((id) => (
-				<img
-					key={id}
-					src={gameBadgeUrl(id)}
-					alt=""
-					className={styles.gameBadgeImage}
-					loading="lazy"
-				/>
-			))}
+			{badgeIds.map((id) => {
+				const badgeId = id as GameBadgeId;
+				return (
+					<SendouPopover
+						key={id}
+						trigger={
+							<SendouButton
+								variant="minimal"
+								className={styles.gameBadgeButton}
+							>
+								<img
+									src={gameBadgeUrl(id)}
+									alt={t(`game-badges:${badgeId}`)}
+									className={styles.gameBadgeImage}
+									loading="lazy"
+								/>
+							</SendouButton>
+						}
+					>
+						{t(`game-badges:${badgeId}`)}
+					</SendouPopover>
+				);
+			})}
 		</div>
 	);
 }

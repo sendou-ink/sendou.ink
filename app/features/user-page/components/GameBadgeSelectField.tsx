@@ -1,30 +1,32 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { CustomFieldRenderProps } from "~/form/FormField";
+import {
+	GAME_BADGE_IDS,
+	type GameBadgeId,
+} from "~/modules/in-game-lists/game-badge-ids";
 import { gameBadgeUrl } from "~/utils/urls";
-import gameBadgeNames from "../../../../locales/en/game-badges.json";
 import styles from "./GameBadgeSelectField.module.css";
 
 const MIN_SEARCH_LENGTH = 2;
-
-const BADGE_ENTRIES = Object.entries(gameBadgeNames as Record<string, string>);
 
 export function GameBadgeSelectField({
 	value,
 	onChange,
 	maxCount,
 }: CustomFieldRenderProps<string[]> & { maxCount: number }) {
-	const { t } = useTranslation(["user"]);
+	const { t } = useTranslation(["user", "game-badges"]);
 	const [search, setSearch] = useState("");
 
 	const selectedIds = value ?? [];
 
 	const filteredBadges =
 		search.length >= MIN_SEARCH_LENGTH
-			? BADGE_ENTRIES.filter(
-					([id, name]) =>
-						name.toLowerCase().includes(search.toLowerCase()) &&
-						!selectedIds.includes(id),
+			? GAME_BADGE_IDS.filter(
+					(id) =>
+						t(`game-badges:${id}`)
+							.toLowerCase()
+							.includes(search.toLowerCase()) && !selectedIds.includes(id),
 				)
 			: [];
 
@@ -43,21 +45,24 @@ export function GameBadgeSelectField({
 			<div>
 				<label>{t("user:widgets.forms.gameBadges")}</label>
 				<div className={styles.selectedBadges}>
-					{selectedIds.map((id) => (
-						<button
-							key={id}
-							type="button"
-							className={styles.badgeButton}
-							onClick={() => handleRemove(id)}
-							title={(gameBadgeNames as Record<string, string>)[id]}
-						>
-							<img
-								src={gameBadgeUrl(id)}
-								alt={(gameBadgeNames as Record<string, string>)[id] ?? id}
-								className={styles.badgeImage}
-							/>
-						</button>
-					))}
+					{selectedIds.map((id) => {
+						const badgeId = id as GameBadgeId;
+						return (
+							<button
+								key={id}
+								type="button"
+								className={styles.badgeButton}
+								onClick={() => handleRemove(id)}
+								title={t(`game-badges:${badgeId}`)}
+							>
+								<img
+									src={gameBadgeUrl(id)}
+									alt={t(`game-badges:${badgeId}`)}
+									className={styles.badgeImage}
+								/>
+							</button>
+						);
+					})}
 					<span className={styles.count}>
 						{selectedIds.length}/{maxCount}
 					</span>
@@ -74,17 +79,17 @@ export function GameBadgeSelectField({
 
 			{filteredBadges.length > 0 ? (
 				<div className={styles.resultsGrid}>
-					{filteredBadges.map(([id, name]) => (
+					{filteredBadges.map((id) => (
 						<button
 							key={id}
 							type="button"
 							className={styles.badgeButton}
 							onClick={() => handleAdd(id)}
-							title={name}
+							title={t(`game-badges:${id}`)}
 						>
 							<img
 								src={gameBadgeUrl(id)}
-								alt={name}
+								alt={t(`game-badges:${id}`)}
 								className={styles.badgeImage}
 							/>
 						</button>

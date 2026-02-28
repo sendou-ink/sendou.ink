@@ -318,6 +318,10 @@
 	justify-content: center;
 }
 
+.gameBadgeButton {
+	padding: 0;
+}
+
 .gameBadgeImage {
 	width: 48px;
 	height: 48px;
