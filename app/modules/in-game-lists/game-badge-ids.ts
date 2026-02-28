@@ -1489,8 +1489,6 @@ export const GAME_BADGE_IDS = [
 	"WinCount_WeaponSp_SpFirework_Lv00",
 	"WinCount_WeaponSp_SpFirework_Lv01",
 	"WinCount_WeaponSp_SpFirework_Lv02",
-	"WinCount_WeaponSp_SpGachihoko_Lv00",
-	"WinCount_WeaponSp_SpGachihoko_Lv01",
 	"WinCount_WeaponSp_SpGreatBarrier_Lv00",
 	"WinCount_WeaponSp_SpGreatBarrier_Lv01",
 	"WinCount_WeaponSp_SpGreatBarrier_Lv02",
