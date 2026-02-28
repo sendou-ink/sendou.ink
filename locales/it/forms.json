@@ -90,7 +90,7 @@
 	"labels.members": "",
 	"labels.urls": "",
 	"labels.description": "Descrizione",
-	"labels.orgMemberUser": "Utente",
+	"labels.user": "Utente",
 	"labels.orgMemberRole": "Ruolo",
 	"labels.orgMemberRoleDisplayName": "Nome visualizzato ruolo",
 	"labels.orgSocialLinks": "Link per social",
@@ -182,5 +182,10 @@
 	"options.artSource.ALL": "",
 	"options.artSource.MADE-BY": "",
 	"options.artSource.MADE-OF": "",
-	"labels.tierListUrl": ""
+	"labels.tierListUrl": "",
+	"labels.plusTier": "",
+	"labels.comment": "",
+	"errors.plusAlreadySuggested": "",
+	"errors.plusAlreadyMember": "",
+	"errors.plusCannotSuggest": ""
 }

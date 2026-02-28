@@ -69,9 +69,9 @@ export function parseSafeSearchParams<T extends z.ZodTypeAny>({
 }
 
 /**
- * @deprecated - for new form code use SendouForm and /app/form/parse.server.ts
- *
  * Parse formData of a request with the given schema. Throws HTTP 400 response if fails.
+ *
+ * When using SendouForm, use parseFormData from /app/form/parse.server.ts instead.
  * */
 export async function parseRequestPayload<T extends z.ZodTypeAny>({
 	request,
@@ -94,7 +94,7 @@ export async function parseRequestPayload<T extends z.ZodTypeAny>({
 }
 
 /**
- * @deprecated - for new form code use SendouForm and /app/form/parse.server.ts
+ * @deprecated - use parseFormData from /app/form/parse.server.ts (with SendouForm) or parseRequestPayload (without SendouForm)
  *
  * Parse formData with the given schema. Throws a request to show an error toast if it fails.
  */

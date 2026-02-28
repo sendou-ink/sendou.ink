@@ -90,7 +90,7 @@
 	"labels.members": "",
 	"labels.urls": "",
 	"labels.description": "简介",
-	"labels.orgMemberUser": "用户",
+	"labels.user": "用户",
 	"labels.orgMemberRole": "身份",
 	"labels.orgMemberRoleDisplayName": "身份显示名字",
 	"labels.orgSocialLinks": "社交账号",
@@ -182,5 +182,10 @@
 	"options.artSource.ALL": "",
 	"options.artSource.MADE-BY": "",
 	"options.artSource.MADE-OF": "",
-	"labels.tierListUrl": ""
+	"labels.tierListUrl": "",
+	"labels.plusTier": "",
+	"labels.comment": "",
+	"errors.plusAlreadySuggested": "",
+	"errors.plusAlreadyMember": "",
+	"errors.plusCannotSuggest": ""
 }
