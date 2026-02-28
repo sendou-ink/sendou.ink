@@ -6,6 +6,8 @@ import {
 	bioMdSchema,
 	bioSchema,
 	favoriteStageSchema,
+	gameBadgesSchema,
+	gameBadgesSmallSchema,
 	linksSchema,
 	peakXpUnverifiedSchema,
 	peakXpWeaponSchema,
@@ -132,6 +134,20 @@ export const ALL_WIDGETS = {
 			slot: "main",
 			schema: artSchema,
 			defaultSettings: { source: "ALL" },
+		}),
+	],
+	"game-badges": [
+		defineWidget({
+			id: "game-badges",
+			slot: "main",
+			schema: gameBadgesSchema,
+			defaultSettings: { badgeIds: [] },
+		}),
+		defineWidget({
+			id: "game-badges-small",
+			slot: "side",
+			schema: gameBadgesSmallSchema,
+			defaultSettings: { badgeIds: [] },
 		}),
 	],
 } as const;

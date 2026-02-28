@@ -14,6 +14,7 @@ import {
 	weaponSelect,
 } from "~/form/fields";
 import type { SelectOption } from "~/form/types";
+import { GAME_BADGE_IDS } from "~/modules/in-game-lists/game-badge-ids";
 import { USER } from "../../user-page-constants";
 
 export const bioSchema = z.object({
@@ -129,6 +130,24 @@ export const tierListSchema = z.object({
 	}),
 });
 
+const gameBadgeId = z
+	.string()
+	.refine((val) => (GAME_BADGE_IDS as readonly string[]).includes(val));
+
+export const gameBadgesSchema = z.object({
+	badgeIds: customField(
+		{ initialValue: [] },
+		z.array(gameBadgeId).max(USER.GAME_BADGES_MAX),
+	),
+});
+
+export const gameBadgesSmallSchema = z.object({
+	badgeIds: customField(
+		{ initialValue: [] },
+		z.array(gameBadgeId).max(USER.GAME_BADGES_SMALL_MAX),
+	),
+});
+
 const WIDGET_FORM_SCHEMAS: Record<string, z.ZodObject<z.ZodRawShape>> = {
 	bio: bioSchema,
 	"bio-md": bioMdSchema,
@@ -142,6 +161,8 @@ const WIDGET_FORM_SCHEMAS: Record<string, z.ZodObject<z.ZodRawShape>> = {
 	art: artSchema,
 	links: linksSchema,
 	"tier-list": tierListSchema,
+	"game-badges": gameBadgesSchema,
+	"game-badges-small": gameBadgesSmallSchema,
 };
 
 export function getWidgetFormSchema(widgetId: string) {

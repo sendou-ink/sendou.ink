@@ -30,6 +30,7 @@ import {
 	brandImageUrl,
 	calendarEventPage,
 	controllerImageUrl,
+	gameBadgeUrl,
 	LEADERBOARDS_PAGE,
 	LFG_PAGE,
 	modeImageUrl,
@@ -237,6 +238,11 @@ export function Widget({
 				);
 			case "tier-list":
 				return <TierListWidget searchParams={widget.data.searchParams} />;
+			case "game-badges":
+			case "game-badges-small":
+				return widget.data.length === 0 ? null : (
+					<GameBadgesDisplay badgeIds={widget.data} />
+				);
 			default:
 				assertUnreachable(widget);
 		}
@@ -848,6 +854,22 @@ function TierListWidget({ searchParams }: { searchParams: string }) {
 				</div>
 				{title ? title : t("user:widget.tier-list.untitled")}
 			</Link>
+		</div>
+	);
+}
+
+function GameBadgesDisplay({ badgeIds }: { badgeIds: string[] }) {
+	return (
+		<div className={styles.gameBadgeGrid}>
+			{badgeIds.map((id) => (
+				<img
+					key={id}
+					src={gameBadgeUrl(id)}
+					alt=""
+					className={styles.gameBadgeImage}
+					loading="lazy"
+				/>
+			))}
 		</div>
 	);
 }
