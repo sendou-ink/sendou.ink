@@ -9,6 +9,8 @@ import {
 	TIMEZONE_OPTIONS,
 } from "../core/widgets/widget-form-schemas";
 import styles from "../routes/u.$identifier.module.css";
+import { USER } from "../user-page-constants";
+import { GameBadgeSelectField } from "./GameBadgeSelectField";
 
 export function WidgetSettingsForm({
 	widget,
@@ -98,6 +100,28 @@ function WidgetFormFields({ widgetId }: { widgetId: string }) {
 				<FormField name="searchParams">
 					{(props: CustomFieldRenderProps) => (
 						<TierListField {...(props as CustomFieldRenderProps<string>)} />
+					)}
+				</FormField>
+			);
+		case "game-badges":
+			return (
+				<FormField name="badgeIds">
+					{(props: CustomFieldRenderProps) => (
+						<GameBadgeSelectField
+							{...(props as CustomFieldRenderProps<string[]>)}
+							maxCount={USER.GAME_BADGES_MAX}
+						/>
+					)}
+				</FormField>
+			);
+		case "game-badges-small":
+			return (
+				<FormField name="badgeIds">
+					{(props: CustomFieldRenderProps) => (
+						<GameBadgeSelectField
+							{...(props as CustomFieldRenderProps<string[]>)}
+							maxCount={USER.GAME_BADGES_SMALL_MAX}
+						/>
 					)}
 				</FormField>
 			);
