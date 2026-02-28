@@ -14,6 +14,7 @@ import {
 	unauthorizedIfFalsy,
 } from "~/utils/remix.server";
 import { plusSuggestionPage } from "~/utils/urls";
+import { PLUS_TIERS } from "../plus-suggestions-constants";
 import { newSuggestionFormSchemaServer } from "../plus-suggestions-schemas.server";
 import { canSuggestNewUser } from "../plus-suggestions-utils";
 
@@ -29,7 +30,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		return { fieldErrors: result.fieldErrors };
 	}
 
-	const tier = [1, 2, 3].find(
+	const tier = PLUS_TIERS.find(
 		(t) =>
 			(user.plusTier ?? Number.MAX_SAFE_INTEGER) <= t &&
 			t === Number(result.data.tier),
