@@ -132,6 +132,8 @@
 	"labels.onlySendouEvents": "Only events hosted on sendou.ink",
 	"labels.onlyRankedEvents": "Only ranked events",
 	"labels.minTeamCount": "Minimum team count",
+	"labels.maxTier": "Max tier",
+	"labels.minTier": "Min tier",
 	"labels.orgsIncluded": "Visible organizations",
 	"labels.orgsExcluded": "Hidden organizations",
 	"labels.authorIdsExcluded": "Authors excluded",

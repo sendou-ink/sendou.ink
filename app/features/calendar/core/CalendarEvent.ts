@@ -23,6 +23,7 @@ const FILTERS_KEYS = [
 	"modesExact",
 	"minTeamCount",
 	"preferredVersus",
+	"tiers",
 ] as const;
 
 assertType<(typeof FILTERS_KEYS)[number], keyof CalendarFilters>();
@@ -46,6 +47,7 @@ export function defaultFilters(): CalendarFilters {
 		orgsExcluded: [],
 		authorIdsExcluded: [],
 		minTeamCount: 0,
+		tiers: [null, null],
 	};
 }
 
@@ -291,6 +293,26 @@ function matchesFilter(
 			}
 
 			return !authorIds.some((id) => event.authorId === id);
+		}
+		case "tiers": {
+			const [maxTier, minTier] = filters[key];
+			if (maxTier === null && minTier === null) {
+				return true;
+			}
+
+			const eventTier = event.tier ?? event.tentativeTier;
+			if (eventTier === null) {
+				return false;
+			}
+
+			if (maxTier !== null && eventTier < maxTier) {
+				return false;
+			}
+			if (minTier !== null && eventTier > minTier) {
+				return false;
+			}
+
+			return true;
 		}
 	}
 }
