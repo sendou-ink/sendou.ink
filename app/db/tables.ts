@@ -742,6 +742,8 @@ export interface TournamentTeamMember {
 	userId: number;
 	role: Generated<"OWNER" | "MANAGER" | "REGULAR">;
 	isStayAsSub: Generated<DBBoolean>;
+	// denormalized from TournamentTeam.isLooking
+	isLooking: Generated<DBBoolean>;
 }
 
 export interface TournamentOrganization {
