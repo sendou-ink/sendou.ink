@@ -32,7 +32,7 @@ export function InputFormField({
 			error={error}
 			bottomText={bottomText}
 		>
-			<div className={leftAddon ? "input-with-addon" : undefined}>
+			<div className={leftAddon ? "input-container" : undefined}>
 				{leftAddon ? <span className="input-addon">{leftAddon}</span> : null}
 				<input
 					id={id}

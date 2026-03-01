@@ -415,6 +415,7 @@ function buildInitialValues<T extends z.ZodRawShape>(
 	const result: Record<string, unknown> = {};
 
 	for (const [key, fieldSchema] of Object.entries(schema.shape)) {
+		// @ts-expect-error Type instantiation is excessively deep with complex schemas
 		const formField = formRegistry.get(fieldSchema as z.ZodType) as
 			| FormField
 			| undefined;

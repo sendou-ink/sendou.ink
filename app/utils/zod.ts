@@ -245,7 +245,7 @@ export function nullLiteraltoNull(value: unknown): unknown {
 	return value;
 }
 
-export function undefinedToNull(value: unknown): unknown {
+function undefinedToNull(value: unknown): unknown {
 	if (value === undefined) return null;
 
 	return value;

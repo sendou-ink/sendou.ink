@@ -3,12 +3,16 @@ import { OBJECT_PRONOUNS, SUBJECT_PRONOUNS } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-constants";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import {
+	badges,
 	checkboxGroup,
 	customField,
+	dualSelectOptional,
 	idConstantOptional,
+	selectDynamicOptional,
 	stringConstant,
 	textAreaOptional,
 	textAreaRequired,
+	textFieldOptional,
 	textFieldRequired,
 	toggle,
 	weaponPool,
@@ -18,30 +22,20 @@ import {
 	headGearIds,
 	shoesGearIds,
 } from "~/modules/in-game-lists/gear-ids";
+import { rawSensToString } from "~/utils/strings";
 import { isCustomUrl } from "~/utils/urls";
 import {
 	_action,
-	actualNumber,
-	checkboxValueToDbBoolean,
 	clothesMainSlotAbility,
-	customCssVarObject,
-	dbBoolean,
-	emptyArrayToNull,
-	falsyToNull,
 	headMainSlotAbility,
 	id,
-	nullLiteraltoNull,
-	processMany,
 	safeJSONParse,
-	safeNullableStringSchema,
 	shoesMainSlotAbility,
 	stackableAbility,
-	undefinedToNull,
-	weaponSplId,
 } from "~/utils/zod";
 import { allWidgetsFlat, findWidgetById } from "./core/widgets/portfolio";
 import {
-	COUNTRY_CODES,
+	CUSTOM_CSS_VAR_COLORS,
 	HIGHLIGHT_CHECKBOX_NAME,
 	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
 	USER,
@@ -58,115 +52,121 @@ export const seasonsSearchParamsSchema = z.object({
 		.refine((nth) => !nth || Seasons.allStarted(new Date()).includes(nth)),
 });
 
-export const userEditActionSchema = z
-	.object({
-		country: z.preprocess(
-			falsyToNull,
-			z
-				.string()
-				.refine((val) => !val || COUNTRY_CODES.includes(val as any))
-				.nullable(),
-		),
-		bio: z.preprocess(
-			falsyToNull,
-			z.string().max(USER.BIO_MAX_LENGTH).nullable(),
-		),
-		customUrl: z.preprocess(
-			falsyToNull,
-			z
-				.string()
-				.max(USER.CUSTOM_URL_MAX_LENGTH)
-				.refine((val) => val === null || isCustomUrl(val), {
-					message: "forms.errors.invalidCustomUrl.numbers",
-				})
-				.refine((val) => val === null || /^[a-zA-Z0-9-_]+$/.test(val), {
-					message: "forms.errors.invalidCustomUrl.strangeCharacter",
-				})
-				.transform((val) => val?.toLowerCase())
-				.nullable(),
-		),
-		customName: safeNullableStringSchema({ max: USER.CUSTOM_NAME_MAX_LENGTH }),
-		battlefy: z.preprocess(
-			falsyToNull,
-			z.string().max(USER.BATTLEFY_MAX_LENGTH).nullable(),
-		),
-		stickSens: z.preprocess(
-			processMany(actualNumber, undefinedToNull),
-			z
-				.number()
-				.min(-50)
-				.max(50)
-				.refine((val) => val % 5 === 0)
-				.nullable(),
-		),
-		motionSens: z.preprocess(
-			processMany(actualNumber, undefinedToNull),
-			z
-				.number()
-				.min(-50)
-				.max(50)
-				.refine((val) => val % 5 === 0)
-				.nullable(),
-		),
-		subjectPronoun: z.preprocess(
-			processMany(nullLiteraltoNull, falsyToNull),
-			z.enum(SUBJECT_PRONOUNS).nullable(),
-		),
-		objectPronoun: z.preprocess(
-			processMany(nullLiteraltoNull, falsyToNull),
-			z.enum(OBJECT_PRONOUNS).nullable(),
-		),
-		inGameNameText: z.preprocess(
-			falsyToNull,
-			z.string().max(USER.IN_GAME_NAME_TEXT_MAX_LENGTH).nullable(),
-		),
-		inGameNameDiscriminator: z.preprocess(
-			falsyToNull,
-			z
-				.string()
-				.refine((val) => /^[0-9a-z]{4,5}$/.test(val))
-				.nullable(),
-		),
-		css: customCssVarObject,
-		weapons: z.preprocess(
-			safeJSONParse,
-			z
-				.array(
-					z.object({
-						weaponSplId,
-						isFavorite: dbBoolean,
-					}),
-				)
-				.max(USER.WEAPON_POOL_MAX_SIZE),
-		),
-		favoriteBadgeIds: z.preprocess(
-			processMany(safeJSONParse, emptyArrayToNull),
-			z
-				.array(id)
-				.min(1)
-				.max(BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1)
-				.nullish(),
-		),
-		showDiscordUniqueName: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
-		newProfileEnabled: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
-		commissionsOpen: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
-		commissionText: z.preprocess(
-			falsyToNull,
-			z.string().max(USER.COMMISSION_TEXT_MAX_LENGTH).nullable(),
-		),
-	})
+const cssObjectSchema = z
+	.record(z.string(), z.string())
+	.nullable()
 	.refine(
 		(val) => {
-			if (val.motionSens !== null && val.stickSens === null) {
-				return false;
+			if (!val) return true;
+			for (const [key, value] of Object.entries(val)) {
+				if (!CUSTOM_CSS_VAR_COLORS.includes(key as never)) return false;
+				if (!/^#(?:[0-9a-fA-F]{3}){1,2}[0-9]{0,2}$/.test(value)) return false;
 			}
-
 			return true;
 		},
-		{
-			message: "forms.errors.invalidSens",
-		},
+		{ message: "Invalid custom CSS colors" },
 	);
+
+const SENS_ITEMS = [
+	-50, -45, -40, -35, -30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 35,
+	40, 45, 50,
+].map((val) => ({
+	label: () => rawSensToString(val),
+	value: String(val),
+}));
+
+export const userEditProfileBaseSchema = z.object({
+	css: customField({ initialValue: null }, cssObjectSchema),
+	customName: textFieldOptional({
+		label: "labels.profileCustomName",
+		bottomText: "bottomTexts.profileCustomName",
+		maxLength: USER.CUSTOM_NAME_MAX_LENGTH,
+	}),
+	customUrl: textFieldOptional({
+		label: "labels.profileCustomUrl",
+		bottomText: "bottomTexts.profileCustomUrl",
+		leftAddon: "https://sendou.ink/u/",
+		maxLength: USER.CUSTOM_URL_MAX_LENGTH,
+		toLowerCase: true,
+		regExp: {
+			pattern: /^[a-zA-Z0-9-_]+$/,
+			message: "forms:errors.profileCustomUrlStrangeChar",
+		},
+		validate: {
+			func: isCustomUrl,
+			message: "forms:errors.profileCustomUrlNumbers",
+		},
+	}),
+	inGameName: textFieldOptional({
+		label: "labels.profileInGameName",
+		bottomText: "bottomTexts.profileInGameName",
+		maxLength: 26,
+		regExp: {
+			pattern: /^.{1,10}#[0-9a-z]{4,5}$/,
+			message: "forms:errors.profileInGameName",
+		},
+	}),
+	sensitivity: dualSelectOptional({
+		bottomText: "bottomTexts.profileSensBothOrNeither",
+		fields: [
+			{ label: "labels.profileMotionSens", items: SENS_ITEMS },
+			{ label: "labels.profileStickSens", items: SENS_ITEMS },
+		],
+		validate: {
+			func: ([motion, stick]) => {
+				if (motion === null && stick === null) return true;
+				if (motion !== null && stick !== null) return true;
+				return false;
+			},
+			message: "errors.profileSensBothOrNeither",
+		},
+	}),
+	pronouns: customField(
+		{ initialValue: { subject: null, object: null } },
+		z.object({
+			subject: z.enum(SUBJECT_PRONOUNS).nullable(),
+			object: z.enum(OBJECT_PRONOUNS).nullable(),
+		}),
+	),
+	battlefy: textFieldOptional({
+		label: "labels.profileBattlefy",
+		bottomText: "bottomTexts.profileBattlefy",
+		leftAddon: "https://battlefy.com/users/",
+		maxLength: USER.BATTLEFY_MAX_LENGTH,
+	}),
+	country: selectDynamicOptional({
+		label: "labels.profileCountry",
+	}),
+	favoriteBadgeIds: badges({
+		label: "labels.profileFavoriteBadges",
+		maxCount: BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1,
+	}),
+	weapons: weaponPool({
+		label: "labels.weaponPool",
+		maxCount: USER.WEAPON_POOL_MAX_SIZE,
+	}),
+	bio: textAreaOptional({
+		label: "labels.bio",
+		maxLength: USER.BIO_MAX_LENGTH,
+	}),
+	showDiscordUniqueName: toggle({
+		label: "labels.profileShowDiscordUniqueName",
+		bottomText: "bottomTexts.profileShowDiscordUniqueName",
+	}),
+	commissionsOpen: toggle({
+		label: "labels.profileCommissionsOpen",
+		bottomText: "bottomTexts.profileCommissionsOpen",
+	}),
+	commissionText: textAreaOptional({
+		label: "labels.profileCommissionText",
+		bottomText: "bottomTexts.profileCommissionText",
+		maxLength: USER.COMMISSION_TEXT_MAX_LENGTH,
+	}),
+	newProfileEnabled: toggle({
+		label: "labels.profileNewProfileEnabled",
+		bottomText: "bottomTexts.profileNewProfileEnabled",
+	}),
+});
 
 export const editHighlightsActionSchema = z.object({
 	[HIGHLIGHT_CHECKBOX_NAME]: z.optional(
