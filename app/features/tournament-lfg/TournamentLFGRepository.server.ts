@@ -315,7 +315,9 @@ export function leaveLfg({
 			.where("TournamentTeamMember.userId", "=", userId)
 			.where("TournamentTeam.tournamentId", "=", tournamentId)
 			.where("TournamentTeam.isLooking", "=", 1)
-			.executeTakeFirstOrThrow();
+			.executeTakeFirst();
+
+		if (!userTeam) return;
 
 		if (!userTeam.isPlaceholder) {
 			await trx
