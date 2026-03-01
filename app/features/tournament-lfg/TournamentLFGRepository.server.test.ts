@@ -547,7 +547,6 @@ describe("leaveLfg", () => {
 				inviteCode: "abc",
 				isLooking: 1,
 				isPlaceholder: 0,
-				chatCode: "chat123",
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();

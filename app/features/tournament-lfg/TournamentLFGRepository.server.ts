@@ -14,7 +14,7 @@ import { randomTeamName } from "~/utils/team-name";
 export function startLooking(teamId: number) {
 	return db
 		.updateTable("TournamentTeam")
-		.set({ isLooking: 1, chatCode: shortNanoid() })
+		.set({ isLooking: 1 })
 		.where("id", "=", teamId)
 		.execute();
 }
@@ -34,7 +34,6 @@ export function createPlaceholderTeam(args: CreatePlaceholderTeamArgs) {
 				inviteCode: shortNanoid(),
 				isPlaceholder: 1,
 				isLooking: 1,
-				chatCode: shortNanoid(),
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
@@ -87,7 +86,6 @@ export async function findLookingTeamsByTournamentId(tournamentId: number) {
 		)
 		.select(({ fn, eb }) => [
 			"TournamentTeam.id",
-			"TournamentTeam.chatCode",
 			"TournamentTeam.isPlaceholder",
 			"TournamentTeam.lfgVisibility as visibility",
 			"TournamentTeam.lfgNote as note",
@@ -133,12 +131,6 @@ export function mergeTeams({
 	maxGroupSize: number;
 }) {
 	return db.transaction().execute(async (trx) => {
-		await trx
-			.updateTable("TournamentTeam")
-			.set({ chatCode: shortNanoid() })
-			.where("TournamentTeam.id", "=", survivingTeamId)
-			.execute();
-
 		const otherMembers = await trx
 			.selectFrom("TournamentTeamMember")
 			.select(["TournamentTeamMember.userId", "TournamentTeamMember.role"])

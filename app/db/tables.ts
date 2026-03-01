@@ -723,8 +723,6 @@ export interface TournamentTeam {
 	isPlaceholder: Generated<DBBoolean>;
 	lfgVisibility: JSONColumnTypeNullable<AssociationVisibility>;
 	lfgNote: string | null;
-	// xxx: do we provide chat at this point? if not then remove
-	chatCode: string | null;
 }
 
 export interface TournamentTeamCheckIn {
