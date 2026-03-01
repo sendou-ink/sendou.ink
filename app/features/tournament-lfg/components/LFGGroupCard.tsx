@@ -47,7 +47,6 @@ export type LFGGroup = {
 	usersRole: "OWNER" | "MANAGER" | "REGULAR" | null;
 };
 
-// xxx: make sure we don't show team name if isPlaceholder
 // xxx: "cancel" & "save" buttons off
 export function LFGGroupCard({
 	group,

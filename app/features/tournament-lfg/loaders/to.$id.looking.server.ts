@@ -21,8 +21,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		return {
 			id: group.id,
 			isPlaceholder: Boolean(group.isPlaceholder),
-			teamName: group.teamName ?? null,
-			teamAvatarUrl: group.teamAvatarUrl ?? null,
+			teamName: group.isPlaceholder ? null : (group.teamName ?? null),
+			teamAvatarUrl: group.isPlaceholder ? null : (group.teamAvatarUrl ?? null),
 			note: group.note ?? null,
 			members,
 			usersRole: members.find((m) => m.id === user?.id)?.role ?? null,

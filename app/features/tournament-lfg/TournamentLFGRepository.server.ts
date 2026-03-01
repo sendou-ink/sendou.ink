@@ -163,13 +163,14 @@ export function mergeTeams({
 			"Group has too many members after merge",
 		);
 
-		if (memberCount >= maxGroupSize) {
-			await trx
-				.updateTable("TournamentTeam")
-				.set({ isLooking: 0 })
-				.where("id", "=", survivingTeamId)
-				.execute();
-		}
+		await trx
+			.updateTable("TournamentTeam")
+			.set({
+				isLooking: memberCount >= maxGroupSize ? 0 : undefined,
+				isPlaceholder: 0,
+			})
+			.where("id", "=", survivingTeamId)
+			.execute();
 	});
 }
 
