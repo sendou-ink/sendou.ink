@@ -40,7 +40,6 @@ import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.s
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
 import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/sendouq-settings/q-settings-constants";
-import { joinTeam } from "~/features/tournament/queries/joinLeaveTeam.server";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
@@ -1636,16 +1635,14 @@ function tournamentSubs() {
 async function tournamentLfgGroups() {
 	const availableUsers = userIdsInAscendingOrderById().slice(300);
 
-	const tournaments = [
-		{ tournamentId: 1, teamId: 1 },
-		{ tournamentId: 2, teamId: 116 },
-		{ tournamentId: 3, teamId: 201 },
-	];
+	const MAX_GROUP_SIZE = 6;
+
+	const tournaments = [1, 2, 3];
 
 	let userIndex = 0;
-	for (const { tournamentId, teamId } of tournaments) {
-		const users = availableUsers.slice(userIndex, userIndex + 12);
-		userIndex += 12;
+	for (const tournamentId of tournaments) {
+		const users = availableUsers.slice(userIndex, userIndex + 8);
+		userIndex += 8;
 
 		// Group 1: solo placeholder, has note, isStayAsSub=1
 		const { id: team1Id } = await TournamentLFGRepository.createPlaceholderTeam(
@@ -1660,81 +1657,62 @@ async function tournamentLfgGroups() {
 			value: "Looking for a team, can play any role",
 		});
 
-		// Group 2: duo placeholder
+		// Group 2: solo placeholder
 		const { id: team2Id } = await TournamentLFGRepository.createPlaceholderTeam(
 			{
 				tournamentId,
 				userId: users[1],
 			},
 		);
-		joinTeam({
-			newTeamId: team2Id,
-			userId: users[2],
-			inGameName: null,
-			tournamentId,
-		});
 
-		// Group 3: trio placeholder
+		// Group 3: solo placeholder
 		const { id: team3Id } = await TournamentLFGRepository.createPlaceholderTeam(
+			{
+				tournamentId,
+				userId: users[2],
+			},
+		);
+
+		// Group 4: solo placeholder
+		const { id: team4Id } = await TournamentLFGRepository.createPlaceholderTeam(
 			{
 				tournamentId,
 				userId: users[3],
 			},
 		);
-		joinTeam({
-			newTeamId: team3Id,
-			userId: users[4],
-			inGameName: null,
-			tournamentId,
-		});
-		joinTeam({
-			newTeamId: team3Id,
-			userId: users[5],
-			inGameName: null,
-			tournamentId,
+
+		// Group 5: 2-member group (merged from two placeholders)
+		const { id: mergeTarget1 } =
+			await TournamentLFGRepository.createPlaceholderTeam({
+				tournamentId,
+				userId: users[4],
+			});
+		const { id: mergeSource1 } =
+			await TournamentLFGRepository.createPlaceholderTeam({
+				tournamentId,
+				userId: users[5],
+			});
+		await TournamentLFGRepository.mergeTeams({
+			survivingTeamId: mergeTarget1,
+			otherTeamId: mergeSource1,
+			maxGroupSize: MAX_GROUP_SIZE,
 		});
 
-		// Group 4: full (4 members) placeholder
-		const { id: team4Id } = await TournamentLFGRepository.createPlaceholderTeam(
-			{
+		// Group 6: 2-member group (merged from two placeholders)
+		const { id: mergeTarget2 } =
+			await TournamentLFGRepository.createPlaceholderTeam({
 				tournamentId,
 				userId: users[6],
-			},
-		);
-		joinTeam({
-			newTeamId: team4Id,
-			userId: users[7],
-			inGameName: null,
-			tournamentId,
-		});
-		joinTeam({
-			newTeamId: team4Id,
-			userId: users[8],
-			inGameName: null,
-			tournamentId,
-		});
-		joinTeam({
-			newTeamId: team4Id,
-			userId: users[9],
-			inGameName: null,
-			tournamentId,
-		});
-
-		// Group 5: solo placeholder
-		const { id: team5Id } = await TournamentLFGRepository.createPlaceholderTeam(
-			{
+			});
+		const { id: mergeSource2 } =
+			await TournamentLFGRepository.createPlaceholderTeam({
 				tournamentId,
-				userId: users[10],
-			},
-		);
-
-		// Group 6: existing team set to looking
-		await TournamentLFGRepository.startLooking(teamId);
-		joinTeam({
-			newTeamId: teamId,
-			userId: users[11],
-			inGameName: null,
-			tournamentId,
+				userId: users[7],
+			});
+		await TournamentLFGRepository.mergeTeams({
+			survivingTeamId: mergeTarget2,
+			otherTeamId: mergeSource2,
+			maxGroupSize: MAX_GROUP_SIZE,
 		});
 
 		// Team 1 -> Team 2 (one-way like)
@@ -1747,10 +1725,10 @@ async function tournamentLfgGroups() {
 			likerTeamId: team2Id,
 			targetTeamId: team1Id,
 		});
-		// Team 3 -> Team 5 (one-way like)
+		// Team 3 -> Team 4 (one-way like)
 		await TournamentLFGRepository.addLike({
 			likerTeamId: team3Id,
-			targetTeamId: team5Id,
+			targetTeamId: team4Id,
 		});
 	}
 }
