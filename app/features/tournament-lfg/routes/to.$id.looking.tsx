@@ -1,8 +1,9 @@
 import clsx from "clsx";
-import type * as React from "react";
+import * as React from "react";
 import { Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
-import { useFetcher, useLoaderData } from "react-router";
+import { Link, useFetcher, useLoaderData } from "react-router";
+import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import {
 	SendouTab,
@@ -11,25 +12,34 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
+import { WeaponImage } from "~/components/Image";
+import { MicrophoneIcon } from "~/components/icons/Microphone";
+import { TrashIcon } from "~/components/icons/Trash";
 import { Placeholder } from "~/components/Placeholder";
 import { SubmitButton } from "~/components/SubmitButton";
+import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { SendouForm } from "~/form/SendouForm";
-import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useWindowSize } from "~/hooks/useWindowSize";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import { userPage } from "~/utils/urls";
 import { LFGGroupCard } from "../components/LFGGroupCard";
-import type { loader } from "../loaders/to.$id.looking.server";
+import {
+	type LookingLoaderData,
+	loader,
+	type SubEntry,
+} from "../loaders/to.$id.looking.server";
+import { TOURNAMENT_LFG } from "../tournament-lfg-constants";
 import { joinQueueFormSchema } from "../tournament-lfg-schemas";
 
 export { action } from "../actions/to.$id.looking.server";
-export { loader } from "../loaders/to.$id.looking.server";
+export { loader };
 
 import styles from "./to.$id.looking.module.css";
 
 export const handle: SendouRouteHandle = {
-	i18n: ["q", "tournament", "forms"],
+	i18n: ["q", "tournament", "forms", "common"],
 };
 
 export default function TournamentLFGShell() {
@@ -45,14 +55,19 @@ export default function TournamentLFGShell() {
 // xxx: can we reuse the column layout with sendouq?
 function TournamentLFGPage() {
 	const data = useLoaderData<typeof loader>();
-	useAutoRefresh(data.lastUpdated);
+	if (data.mode === "subs") {
+		return <SubsView data={data} />;
+	}
 
-	return <Groups />;
+	return <GroupsView data={data} />;
 }
 
-function Groups() {
+function GroupsView({
+	data,
+}: {
+	data: Extract<LookingLoaderData, { mode: "looking" }>;
+}) {
 	const { t } = useTranslation(["q"]);
-	const data = useLoaderData<typeof loader>();
 	const tournament = useTournament();
 	const { width } = useWindowSize();
 
@@ -215,6 +230,178 @@ function Groups() {
 	);
 }
 
+function SubsView({
+	data,
+}: {
+	data: Extract<LookingLoaderData, { mode: "subs" }>;
+}) {
+	const user = useUser();
+	const tournament = useTournament();
+
+	const isOnTeam = Boolean(tournament.teamMemberOfByUser(user));
+
+	return (
+		<div className={styles.subsContainer}>
+			{tournament.canAddNewSubPost &&
+			!data.hasOwnSubPost &&
+			user &&
+			!isOnTeam ? (
+				<AddSubForm />
+			) : null}
+			{data.subs.map((sub) => (
+				<SubCard key={sub.userId} sub={sub} />
+			))}
+		</div>
+	);
+}
+
+// xxx: use SendouForm
+function AddSubForm() {
+	const { t } = useTranslation(["tournament", "common"]);
+	const fetcher = useFetcher();
+	const [showForm, setShowForm] = React.useState(false);
+
+	if (!showForm) {
+		return (
+			<div className="stack items-end">
+				<SendouButton size="small" onPress={() => setShowForm(true)}>
+					{t("tournament:subs.addPost")}
+				</SendouButton>
+			</div>
+		);
+	}
+
+	return (
+		<fetcher.Form method="post" className="stack sm">
+			<textarea
+				name="message"
+				maxLength={TOURNAMENT_LFG.PUBLIC_NOTE_MAX_LENGTH}
+				placeholder={t("tournament:subs.message.header")}
+				className={styles.subsTextarea}
+				rows={3}
+			/>
+			<div className="stack horizontal sm justify-end">
+				<SendouButton
+					size="small"
+					variant="minimal"
+					onPress={() => setShowForm(false)}
+				>
+					{t("common:actions.cancel")}
+				</SendouButton>
+				<SubmitButton _action="ADD_SUB" state={fetcher.state} size="small">
+					{t("common:actions.save")}
+				</SubmitButton>
+			</div>
+		</fetcher.Form>
+	);
+}
+
+function SubCard({ sub }: { sub: SubEntry }) {
+	const { t } = useTranslation(["common", "tournament"]);
+	const user = useUser();
+	const tournament = useTournament();
+
+	const infos = [
+		<div key="vc" className={styles.subsInfoVc}>
+			<MicrophoneIcon
+				className={
+					sub.vc === "YES"
+						? "text-success"
+						: sub.vc === "LISTEN_ONLY"
+							? "text-warning"
+							: "text-error"
+				}
+			/>
+			{sub.vc === "YES"
+				? t("tournament:subs.canVC")
+				: sub.vc === "LISTEN_ONLY"
+					? t("tournament:subs.listenOnlyVC")
+					: t("tournament:subs.noVC")}
+		</div>,
+	];
+	if (sub.plusTier) {
+		infos.push(
+			<React.Fragment key="dot-1">{"\u00B7"}</React.Fragment>,
+			<div key="plus">+{sub.plusTier}</div>,
+		);
+	}
+	if (sub.languages.length > 0) {
+		infos.push(
+			<React.Fragment key="dot-2">{"\u00B7"}</React.Fragment>,
+			<div key="languages">
+				{sub.languages.map((lang) => lang.toUpperCase()).join(" / ")}
+			</div>,
+		);
+	}
+
+	return (
+		<div>
+			<section className={styles.subsSection}>
+				<Avatar user={sub} size="sm" className={styles.subsSectionAvatar} />
+				<Link to={userPage(sub)} className={styles.subsSectionName}>
+					{sub.username}
+				</Link>
+				<div className={styles.subsSectionSpacer} />
+				<div className={styles.subsSectionInfo}>{infos}</div>
+				{sub.weapons ? (
+					<>
+						<div
+							className={clsx(
+								styles.subsSectionWeaponTopText,
+								styles.subsSectionWeaponText,
+							)}
+						>
+							{t("tournament:subs.prefersToPlay")}
+						</div>
+						<div
+							className={clsx(
+								styles.subsSectionWeaponTopImages,
+								styles.subsSectionWeaponImages,
+							)}
+						>
+							{sub.weapons.map((wpn) => (
+								<WeaponImage
+									key={wpn.weaponSplId}
+									weaponSplId={wpn.weaponSplId}
+									size={32}
+									variant="badge"
+								/>
+							))}
+						</div>
+					</>
+				) : null}
+				{sub.message ? (
+					<div className={styles.subsSectionMessage}>{sub.message}</div>
+				) : null}
+			</section>
+			{user?.id === sub.userId || tournament.isOrganizer(user) ? (
+				<div className="stack mt-1 items-end">
+					<FormWithConfirm
+						dialogHeading={
+							user?.id === sub.userId
+								? "Delete your sub post?"
+								: `Delete sub post by ${sub.username}?`
+						}
+						fields={[
+							["_action", "DELETE_SUB"],
+							["userId", sub.userId],
+						]}
+					>
+						<SendouButton
+							variant="minimal-destructive"
+							size="small"
+							type="submit"
+							icon={<TrashIcon />}
+						>
+							{t("common:actions.delete")}
+						</SendouButton>
+					</FormWithConfirm>
+				</div>
+			) : null}
+		</div>
+	);
+}
+
 function ColumnHeader({ children }: { children: React.ReactNode }) {
 	const { width } = useWindowSize();
 
@@ -240,7 +427,10 @@ function JoinQueueForm() {
 
 function TeamQueueSection() {
 	const { t } = useTranslation(["q"]);
-	const data = useLoaderData<typeof loader>();
+	const data = useLoaderData<typeof loader>() as Extract<
+		LookingLoaderData,
+		{ mode: "looking" }
+	>;
 	const tournament = useTournament();
 	const fetcher = useFetcher();
 

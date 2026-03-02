@@ -111,7 +111,6 @@ export default [
 		route("looking", "features/tournament-lfg/routes/to.$id.looking.tsx"),
 
 		route("subs", "features/tournament-subs/routes/to.$id.subs.tsx"),
-		route("subs/new", "features/tournament-subs/routes/to.$id.subs.new.tsx"),
 
 		route(
 			"divisions",

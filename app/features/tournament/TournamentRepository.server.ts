@@ -122,13 +122,20 @@ export async function findById(id: number) {
 			).as("staff"),
 			jsonArrayFrom(
 				eb
-					.selectFrom("TournamentSub")
+					.selectFrom("TournamentTeamMember")
+					.innerJoin(
+						"TournamentTeam",
+						"TournamentTeam.id",
+						"TournamentTeamMember.tournamentTeamId",
+					)
 					.select(({ fn }) => [
-						"TournamentSub.visibility",
+						sql<string>`'ALL'`.as("visibility"),
 						fn.countAll<number>().as("count"),
 					])
-					.where("TournamentSub.tournamentId", "=", id)
-					.groupBy("TournamentSub.visibility"),
+					.where("TournamentTeam.tournamentId", "=", id)
+					// xxx: this is not correct
+					.where("TournamentTeam.isPlaceholder", "=", 1)
+					.where("TournamentTeamMember.isStayAsSub", "=", 1),
 			).as("subCounts"),
 			jsonArrayFrom(
 				eb

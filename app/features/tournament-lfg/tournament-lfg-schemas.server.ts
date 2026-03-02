@@ -40,4 +40,12 @@ export const lookingSchema = z.union([
 	z.object({
 		_action: _action("LEAVE_GROUP"),
 	}),
+	z.object({
+		_action: _action("ADD_SUB"),
+		message: z.string().max(TOURNAMENT_LFG.PUBLIC_NOTE_MAX_LENGTH).optional(),
+	}),
+	z.object({
+		_action: _action("DELETE_SUB"),
+		userId: id,
+	}),
 ]);

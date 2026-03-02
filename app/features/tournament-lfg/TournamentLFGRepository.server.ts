@@ -11,6 +11,8 @@ import {
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { randomTeamName } from "~/utils/team-name";
 
+// xxx: handle visibility like scrim post
+
 export function startLooking(teamId: number) {
 	return db
 		.updateTable("TournamentTeam")
@@ -23,6 +25,7 @@ type CreatePlaceholderTeamArgs = {
 	tournamentId: number;
 	userId: number;
 	isStayAsSub?: boolean;
+	lfgNote?: string;
 };
 export function createPlaceholderTeam(args: CreatePlaceholderTeamArgs) {
 	return db.transaction().execute(async (trx) => {
@@ -34,6 +37,7 @@ export function createPlaceholderTeam(args: CreatePlaceholderTeamArgs) {
 				inviteCode: shortNanoid(),
 				isPlaceholder: 1,
 				isLooking: 1,
+				lfgNote: args.lfgNote ?? null,
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
@@ -62,6 +66,7 @@ type TournamentLFGMemberObject = {
 	languages: Tables["User"]["languages"];
 	vc: Tables["User"]["vc"];
 	pronouns: Tables["User"]["pronouns"];
+	country: Tables["User"]["country"];
 	role: Tables["TournamentTeamMember"]["role"];
 	isStayAsSub: Tables["TournamentTeamMember"]["isStayAsSub"];
 	weapons: Tables["User"]["qWeaponPool"];
@@ -104,6 +109,8 @@ export async function findLookingTeamsByTournamentId(tournamentId: number) {
 						languages: eb.ref("User.languages"),
 						vc: eb.ref("User.vc"),
 						pronouns: eb.ref("User.pronouns"),
+						// xxx: is it better to show country rather than languages?
+						country: eb.ref("User.country"),
 						role: eb.ref("TournamentTeamMember.role"),
 						isStayAsSub: eb.ref("TournamentTeamMember.isStayAsSub"),
 						weapons: eb.ref("User.qWeaponPool"),
@@ -118,6 +125,52 @@ export async function findLookingTeamsByTournamentId(tournamentId: number) {
 		.where("TournamentTeam.isLooking", "=", 1)
 		.groupBy("TournamentTeam.id")
 		.execute();
+}
+
+export async function findSubGroups(tournamentId: number) {
+	const rows = await db
+		.selectFrom("TournamentTeam")
+		.innerJoin(
+			"TournamentTeamMember",
+			"TournamentTeamMember.tournamentTeamId",
+			"TournamentTeam.id",
+		)
+		.innerJoin("User", "User.id", "TournamentTeamMember.userId")
+		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
+		.select(({ fn, eb }) => [
+			"TournamentTeam.id",
+			"TournamentTeam.lfgNote as message",
+			fn
+				.agg("json_group_array", [
+					jsonBuildObject({
+						id: eb.ref("User.id"),
+						username: eb.ref("User.username"),
+						discordId: eb.ref("User.discordId"),
+						discordAvatar: eb.ref("User.discordAvatar"),
+						customUrl: eb.ref("User.customUrl"),
+						languages: eb.ref("User.languages"),
+						vc: eb.ref("User.vc"),
+						pronouns: eb.ref("User.pronouns"),
+						country: eb.ref("User.country"),
+						role: eb.ref("TournamentTeamMember.role"),
+						isStayAsSub: eb.ref("TournamentTeamMember.isStayAsSub"),
+						weapons: eb.ref("User.qWeaponPool"),
+						chatNameColor: userChatNameColorForJson,
+						plusTier: eb.ref("PlusTier.tier"),
+					}),
+				])
+				.$castTo<TournamentLFGMemberObject[]>()
+				.as("members"),
+		])
+		// xxx: is this correct?
+		.where("TournamentTeam.tournamentId", "=", tournamentId)
+		.where("TournamentTeam.isPlaceholder", "=", 1)
+		.where("TournamentTeamMember.isStayAsSub", "=", 1)
+		.groupBy("TournamentTeam.id")
+		.having(({ fn }) => fn.countAll<number>(), "=", 1)
+		.execute();
+
+	return rows;
 }
 
 // xxx: ensure that the team size does not exceed the max, also filter out in frontend

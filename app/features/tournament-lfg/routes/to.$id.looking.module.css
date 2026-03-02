@@ -34,3 +34,110 @@
 	margin: 5px;
 	border-radius: var(--rounded);
 }
+
+.subsContainer {
+	max-width: 52rem;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-8);
+	margin-inline: auto;
+}
+
+.subsTextarea {
+	width: 100%;
+	resize: vertical;
+}
+
+.subsSection {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	grid-template-areas:
+		"avatar name"
+		"avatar info"
+		"spacer spacer"
+		"weapon-top-text weapon-top-images"
+		"message message";
+	border-radius: var(--rounded);
+	background-color: var(--bg-lighter);
+	padding: var(--s-4);
+	column-gap: var(--s-2-5);
+	border: var(--border-style);
+}
+
+.subsSectionAvatar {
+	grid-area: avatar;
+	align-self: center;
+}
+
+.subsSectionName {
+	grid-area: name;
+	align-self: flex-end;
+}
+
+.subsSectionInfo {
+	grid-area: info;
+	font-size: var(--fonts-sm);
+	gap: var(--s-2);
+	color: var(--text-lighter);
+	display: flex;
+	height: 32px;
+	white-space: nowrap;
+	align-items: center;
+}
+
+.subsInfoVc {
+	display: flex;
+	align-items: center;
+	gap: var(--s-0-5);
+}
+
+.subsInfoVc > svg {
+	width: 18px;
+}
+
+.subsSectionMessage {
+	grid-area: message;
+	font-size: var(--fonts-sm);
+	padding-block-start: var(--s-4);
+	white-space: pre-wrap;
+}
+
+.subsSectionWeaponText {
+	font-weight: var(--semi-bold);
+	font-size: var(--fonts-xs);
+	align-self: center;
+}
+
+.subsSectionWeaponTopText {
+	grid-area: weapon-top-text;
+}
+
+.subsSectionWeaponImages {
+	display: flex;
+	gap: var(--s-1);
+	width: 11rem;
+	align-items: center;
+}
+
+.subsSectionWeaponTopImages {
+	grid-area: weapon-top-images;
+}
+
+.subsSectionSpacer {
+	grid-area: spacer;
+	height: 18px;
+}
+
+@media screen and (min-width: 640px) {
+	.subsSection {
+		grid-template-columns: max-content 1fr max-content max-content;
+		grid-template-areas:
+			"avatar name weapon-top-text weapon-top-images"
+			"avatar info . ."
+			"message message message message";
+	}
+
+	.subsSectionSpacer {
+		display: none;
+	}
+}

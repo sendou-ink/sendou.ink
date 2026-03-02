@@ -13,6 +13,9 @@ import { lookingSchema } from "../tournament-lfg-schemas.server";
 import { survivingTeamId } from "../tournament-lfg-utils";
 
 // xxx: prevent actions in certain cases? like when tournament has started
+// xxx: add `requireNotBannedByOrganization` & other checks from deleted to.$id.subs.new.tsx route
+// xxx: add `clearTournamentDataCache`
+
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const user = requireUser();
 	const { id: tournamentId } = parseParams({ params, schema: idObject });
@@ -194,6 +197,52 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		case "LEAVE_GROUP": {
 			await TournamentLFGRepository.leaveLfg({
 				userId: user.id,
+				tournamentId,
+			});
+
+			break;
+		}
+		case "ADD_SUB": {
+			const tournament = await tournamentFromDBCached({
+				tournamentId,
+				user,
+			});
+			errorToastIfFalsy(
+				tournament.canAddNewSubPost,
+				"Cannot add sub post at this time",
+			);
+
+			const team = tournament.teamMemberOfByUser(user);
+			errorToastIfFalsy(!team, "Already on a team");
+
+			const existingSubGroups =
+				await TournamentLFGRepository.findSubGroups(tournamentId);
+			const hasExistingSubPost = existingSubGroups.some((g) =>
+				g.members.some((m) => m.id === user.id),
+			);
+			errorToastIfFalsy(!hasExistingSubPost, "Already have a sub post");
+
+			await TournamentLFGRepository.createPlaceholderTeam({
+				tournamentId,
+				userId: user.id,
+				isStayAsSub: true,
+				lfgNote: data.message,
+			});
+
+			break;
+		}
+		case "DELETE_SUB": {
+			const tournament = await tournamentFromDBCached({
+				tournamentId,
+				user,
+			});
+			errorToastIfFalsy(
+				user.id === data.userId || tournament.isOrganizer(user),
+				"You can only delete your own sub post",
+			);
+
+			await TournamentLFGRepository.leaveLfg({
+				userId: data.userId,
 				tournamentId,
 			});
 

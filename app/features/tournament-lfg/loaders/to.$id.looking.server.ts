@@ -3,15 +3,42 @@ import type { Pronouns } from "~/db/tables";
 import { getUser } from "~/features/auth/core/user.server";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
 import type { LFGGroup, LFGGroupMember } from "../components/LFGGroupCard";
 import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
 
+export type SubEntry = Extract<
+	LookingLoaderData,
+	{ mode: "subs" }
+>["subs"][number];
+
+export type LookingLoaderData = SerializeFrom<typeof loader>;
+
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const user = getUser();
 	const { id: tournamentId } = parseParams({ params, schema: idObject });
 
+	const tournament = await tournamentFromDBCached({
+		tournamentId,
+		user,
+	});
+
+	if (tournament.registrationOpen) {
+		return lookingMode({ tournamentId, user });
+	}
+
+	return subsMode({ tournamentId, user });
+};
+
+async function lookingMode({
+	tournamentId,
+	user,
+}: {
+	tournamentId: number;
+	user: ReturnType<typeof getUser>;
+}) {
 	const rawGroups =
 		await TournamentLFGRepository.findLookingTeamsByTournamentId(tournamentId);
 
@@ -45,14 +72,56 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	});
 
 	return {
+		mode: "looking" as const,
 		groups: otherGroups,
 		ownGroup,
 		ownTeam,
 		likes,
-		lastUpdated: Date.now(),
 		tournamentId,
 	};
-};
+}
+
+async function subsMode({
+	tournamentId,
+	user,
+}: {
+	tournamentId: number;
+	user: ReturnType<typeof getUser>;
+}) {
+	const rawSubGroups =
+		await TournamentLFGRepository.findSubGroups(tournamentId);
+
+	const subs = rawSubGroups.map((group) => {
+		const member = group.members[0];
+		const weapons = parseWeapons(member.weapons);
+
+		const languages =
+			typeof member.languages === "string"
+				? member.languages.split(",").filter(Boolean)
+				: [];
+
+		return {
+			teamId: group.id,
+			userId: member.id,
+			username: member.username,
+			discordId: member.discordId,
+			discordAvatar: member.discordAvatar,
+			customUrl: member.customUrl,
+			vc: member.vc,
+			languages,
+			plusTier: member.plusTier,
+			weapons,
+			message: group.message ?? null,
+		};
+	});
+
+	return {
+		mode: "subs" as const,
+		subs,
+		hasOwnSubPost: subs.some((sub) => sub.userId === user?.id),
+		tournamentId,
+	};
+}
 
 async function resolveOwnTeam({
 	user,
