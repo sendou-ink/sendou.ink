@@ -2,6 +2,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { Link, useLoaderData, useMatches } from "react-router";
 import { CustomizedColorsInput } from "~/components/CustomizedColorsInput";
 import { FormMessage } from "~/components/FormMessage";
+import { BADGE } from "~/features/badges/badges-constants";
 import type { CustomFieldRenderProps } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -85,7 +86,13 @@ export default function UserEditPage() {
 						<FormField name="battlefy" />
 						<FormField name="country" options={countryOptions} />
 						{data.user.badges.length >= 2 ? (
-							<FormField name="favoriteBadgeIds" options={badgeOptions} />
+							<FormField
+								name="favoriteBadgeIds"
+								options={badgeOptions}
+								maxCount={
+									isSupporter ? BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1 : 1
+								}
+							/>
 						) : null}
 						<FormField name="weapons" />
 						<FormField name="bio" />

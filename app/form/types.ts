@@ -244,6 +244,7 @@ export type TypedFormFieldProps<
 	name: TName;
 	label?: string;
 	disabled?: boolean;
+	maxCount?: number;
 	children?:
 		| ((props: FormFieldChildrenProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
@@ -259,6 +260,7 @@ export type FlexibleFormFieldProps = {
 	name: NestedPath;
 	label?: string;
 	disabled?: boolean;
+	maxCount?: number;
 	children?:
 		| ((props: FormFieldChildrenProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);

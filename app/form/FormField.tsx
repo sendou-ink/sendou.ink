@@ -44,6 +44,7 @@ interface FormFieldProps {
 	name: string;
 	label?: string;
 	disabled?: boolean;
+	maxCount?: number;
 	field?: z.ZodType;
 	children?:
 		| ((props: CustomFieldRenderProps) => React.ReactNode)
@@ -56,6 +57,7 @@ export function FormField({
 	name,
 	label,
 	disabled,
+	maxCount,
 	field,
 	children,
 	options,
@@ -376,6 +378,7 @@ export function FormField({
 				value={value as number[]}
 				onChange={handleChange as (v: number[]) => void}
 				options={options as BadgeOption[]}
+				{...(maxCount !== undefined ? { maxCount } : {})}
 			/>
 		);
 	}
