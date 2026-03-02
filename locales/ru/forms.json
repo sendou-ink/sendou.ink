@@ -208,7 +208,6 @@
 	"bottomTexts.profileCommissionsOpen": "",
 	"bottomTexts.profileCommissionText": "Цена, слоты и другая информация о ваших коммишенах",
 	"bottomTexts.profileNewProfileEnabled": "",
-	"bottomTexts.profileSensBothOrNeither": "",
 	"errors.profileCustomUrlStrangeChar": "Пользовательский URL не может содержать особые символы",
 	"errors.profileCustomUrlNumbers": "Пользовательский URL не может содержать только цифры",
 	"errors.profileCustomUrlDuplicate": "Кто-то уже использует этот пользовательский URL",

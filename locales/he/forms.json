@@ -208,7 +208,6 @@
 	"bottomTexts.profileCommissionsOpen": "",
 	"bottomTexts.profileCommissionText": "מחיר, כמות בקשות או מידע אחר שקשור לבקשות אלכם",
 	"bottomTexts.profileNewProfileEnabled": "",
-	"bottomTexts.profileSensBothOrNeither": "",
 	"errors.profileCustomUrlStrangeChar": "כתובת URL מותאמת אישית לא יכולה להכיל תווים מיוחדים",
 	"errors.profileCustomUrlNumbers": "כתובת URL מותאמת אישית לא יכולה להכיל רק מספרים",
 	"errors.profileCustomUrlDuplicate": "מישהו כבר משתמש בכתובת URL המותאמת אישית הזו",

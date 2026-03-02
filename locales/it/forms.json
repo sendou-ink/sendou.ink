@@ -208,7 +208,6 @@
 	"bottomTexts.profileCommissionsOpen": "",
 	"bottomTexts.profileCommissionText": "Prezzo, posti liberi o altre info relative al commissionarti",
 	"bottomTexts.profileNewProfileEnabled": "",
-	"bottomTexts.profileSensBothOrNeither": "",
 	"errors.profileCustomUrlStrangeChar": "L'URL personalizzato non può contenere caratteri speciali",
 	"errors.profileCustomUrlNumbers": "L'URL personalizzato non può contenere solo numeri",
 	"errors.profileCustomUrlDuplicate": "L'URL personalizzato è già in uso da un altro utente",

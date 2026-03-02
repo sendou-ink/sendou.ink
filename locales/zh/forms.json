@@ -208,7 +208,6 @@
 	"bottomTexts.profileCommissionsOpen": "",
 	"bottomTexts.profileCommissionText": "你的价格、档期或者其他委托相关的信息",
 	"bottomTexts.profileNewProfileEnabled": "",
-	"bottomTexts.profileSensBothOrNeither": "",
 	"errors.profileCustomUrlStrangeChar": "自定义URL不能包含特殊符号",
 	"errors.profileCustomUrlNumbers": "自定义URL不能只包含数字",
 	"errors.profileCustomUrlDuplicate": "这个自定义URL已被使用",

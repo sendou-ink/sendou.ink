@@ -208,7 +208,6 @@
 	"bottomTexts.profileCommissionsOpen": "",
 	"bottomTexts.profileCommissionText": "Pris, åbne pladser eller andre relevante informationer der er relateret til at afgive en bestilling til dig.",
 	"bottomTexts.profileNewProfileEnabled": "",
-	"bottomTexts.profileSensBothOrNeither": "",
 	"errors.profileCustomUrlStrangeChar": "Brugerdefineret URL må ikke indeholde specialtegn (Gælder også æ, ø og å)",
 	"errors.profileCustomUrlNumbers": "Brugerdefineret URL må ikke kun indeholde numre",
 	"errors.profileCustomUrlDuplicate": "Brugerdefineret URL er allerede i brug",

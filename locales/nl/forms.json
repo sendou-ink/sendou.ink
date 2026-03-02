@@ -208,7 +208,6 @@
 	"bottomTexts.profileCommissionsOpen": "",
 	"bottomTexts.profileCommissionText": "",
 	"bottomTexts.profileNewProfileEnabled": "",
-	"bottomTexts.profileSensBothOrNeither": "",
 	"errors.profileCustomUrlStrangeChar": "Een eigen URL mag geen speciale karakters bevatten",
 	"errors.profileCustomUrlNumbers": "Een eigen URL kan niet alleen uit nummers bestaan",
 	"errors.profileCustomUrlDuplicate": "Deze URL is al in gebruik",

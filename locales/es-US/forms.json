@@ -208,7 +208,6 @@
 	"bottomTexts.profileCommissionsOpen": "",
 	"bottomTexts.profileCommissionText": "Precio, espacios abiertos, o cualquier otra información sobre tus comiciones.",
 	"bottomTexts.profileNewProfileEnabled": "",
-	"bottomTexts.profileSensBothOrNeither": "",
 	"errors.profileCustomUrlStrangeChar": "Enlace personalizado no puede contener caracteres especiales",
 	"errors.profileCustomUrlNumbers": "Enlace personalizado no puede ser solo numeros",
 	"errors.profileCustomUrlDuplicate": "Alguien ya tiene ese enlace personalizado",

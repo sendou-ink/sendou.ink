@@ -101,23 +101,21 @@ export const userEditProfileBaseSchema = z.object({
 	inGameName: textFieldOptional({
 		label: "labels.profileInGameName",
 		bottomText: "bottomTexts.profileInGameName",
-		maxLength: 26,
+		maxLength: 10 + 1 + 5, // 10 for name, 1 for #, 5 for discriminator
 		regExp: {
 			pattern: IN_GAME_NAME_REGEXP,
 			message: "forms:errors.profileInGameName",
 		},
 	}),
 	sensitivity: dualSelectOptional({
-		bottomText: "bottomTexts.profileSensBothOrNeither",
 		fields: [
 			{ label: "labels.profileMotionSens", items: SENS_ITEMS },
 			{ label: "labels.profileStickSens", items: SENS_ITEMS },
 		],
 		validate: {
 			func: ([motion, stick]) => {
-				if (motion === null && stick === null) return true;
-				if (motion !== null && stick !== null) return true;
-				return false;
+				if (motion !== null && stick === null) return false;
+				return true;
 			},
 			message: "errors.profileSensBothOrNeither",
 		},

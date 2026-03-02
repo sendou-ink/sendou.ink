@@ -208,7 +208,6 @@
 	"bottomTexts.profileCommissionsOpen": "",
 	"bottomTexts.profileCommissionText": "Prix, disponibilités et tout autres info nécéssaires",
 	"bottomTexts.profileNewProfileEnabled": "",
-	"bottomTexts.profileSensBothOrNeither": "",
 	"errors.profileCustomUrlStrangeChar": "Votre URL personnalisée ne peut pas contenir de caractères spéciaux",
 	"errors.profileCustomUrlNumbers": "Votre URL personnalisée ne peut pas contenir que des nombres",
 	"errors.profileCustomUrlDuplicate": "Cette URL a déjà été choisie par quelqu'un",

@@ -208,7 +208,6 @@
 	"bottomTexts.profileCommissionsOpen": "",
 	"bottomTexts.profileCommissionText": "",
 	"bottomTexts.profileNewProfileEnabled": "",
-	"bottomTexts.profileSensBothOrNeither": "",
 	"errors.profileCustomUrlStrangeChar": "Benutzerdefinierte URL kann nicht aus speziellen Zeichen bestehen",
 	"errors.profileCustomUrlNumbers": "Benutzerdefinierte URL kann nicht nur aus Zahlen bestehen",
 	"errors.profileCustomUrlDuplicate": "Diese Benutzerdefinierte URL wird bereits verwendet",

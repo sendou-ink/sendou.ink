@@ -208,7 +208,6 @@
 	"bottomTexts.profileCommissionsOpen": "",
 	"bottomTexts.profileCommissionText": "Preço, vagas abertas ou qualquer outra informação relacionada ao processo de fazer um pedido para você.",
 	"bottomTexts.profileNewProfileEnabled": "",
-	"bottomTexts.profileSensBothOrNeither": "",
 	"errors.profileCustomUrlStrangeChar": "URL personalizado não pode conter caracteres especiais",
 	"errors.profileCustomUrlNumbers": "URL personalizado não pode conter apenas números",
 	"errors.profileCustomUrlDuplicate": "Alguém já está usando esse URL personalizado",

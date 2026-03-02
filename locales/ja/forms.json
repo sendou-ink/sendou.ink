@@ -208,7 +208,6 @@
 	"bottomTexts.profileCommissionsOpen": "",
 	"bottomTexts.profileCommissionText": "価格、受付数、その他依頼に関する情報",
 	"bottomTexts.profileNewProfileEnabled": "",
-	"bottomTexts.profileSensBothOrNeither": "",
 	"errors.profileCustomUrlStrangeChar": "カスタム URL は特殊文字を含めることはできません",
 	"errors.profileCustomUrlNumbers": "カスタム URL は数字のみで作成することはできません",
 	"errors.profileCustomUrlDuplicate": "このカスタム URL はすでに使用されています",
