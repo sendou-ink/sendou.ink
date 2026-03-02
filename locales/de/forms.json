@@ -213,5 +213,8 @@
 	"errors.profileCustomUrlNumbers": "Benutzerdefinierte URL kann nicht nur aus Zahlen bestehen",
 	"errors.profileCustomUrlDuplicate": "Diese Benutzerdefinierte URL wird bereits verwendet",
 	"errors.profileSensBothOrNeither": "Empfindlichkeit der Bewegungssteuerung kann nur festgelegt werden, wenn Empfindlichkeit R-Stick festgelegt ist",
-	"errors.profileInGameName": ""
+	"errors.profileInGameName": "",
+	"labels.pronoun": "",
+	"bottomTexts.profilePronouns": "",
+	"errors.profilePronounsBothOrNeither": ""
 }

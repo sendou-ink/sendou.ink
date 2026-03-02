@@ -213,5 +213,8 @@
 	"errors.profileCustomUrlNumbers": "自定义URL不能只包含数字",
 	"errors.profileCustomUrlDuplicate": "这个自定义URL已被使用",
 	"errors.profileSensBothOrNeither": "设置体感感度前请先设置摇杆感度",
-	"errors.profileInGameName": ""
+	"errors.profileInGameName": "",
+	"labels.pronoun": "",
+	"bottomTexts.profilePronouns": "",
+	"errors.profilePronounsBothOrNeither": ""
 }

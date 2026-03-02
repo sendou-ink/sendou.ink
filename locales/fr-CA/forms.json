@@ -213,5 +213,8 @@
 	"errors.profileCustomUrlNumbers": "Votre URL personnalisée ne peut pas contenir que des nombres",
 	"errors.profileCustomUrlDuplicate": "Cette URL a déjà été choisie par quelqu'un",
 	"errors.profileSensBothOrNeither": "La sensibilité du gyroscope ne peut pas être choisie si la sensibilité du stick droit ne l'est pas",
-	"errors.profileInGameName": ""
+	"errors.profileInGameName": "",
+	"labels.pronoun": "",
+	"bottomTexts.profilePronouns": "",
+	"errors.profilePronounsBothOrNeither": ""
 }

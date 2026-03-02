@@ -213,5 +213,8 @@
 	"errors.profileCustomUrlNumbers": "L'URL personalizzato non può contenere solo numeri",
 	"errors.profileCustomUrlDuplicate": "L'URL personalizzato è già in uso da un altro utente",
 	"errors.profileSensBothOrNeither": "La sensibilità del giroscopio non può essere impostata se non hai impostato la sensibilità del joystick destro",
-	"errors.profileInGameName": ""
+	"errors.profileInGameName": "",
+	"labels.pronoun": "",
+	"bottomTexts.profilePronouns": "",
+	"errors.profilePronounsBothOrNeither": ""
 }

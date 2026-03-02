@@ -60,6 +60,7 @@ export interface FormFieldSelect<T extends string, V extends string>
 	extends FormFieldBase<T> {
 	items: FormFieldItems<V>;
 	clearable: boolean;
+	searchable?: boolean;
 }
 
 type FormFieldDualSelectField<T extends string, V extends string> = Omit<
@@ -142,6 +143,7 @@ interface FormFieldBadges<T extends string> extends FormFieldBase<T> {
 
 interface FormFieldSelectDynamic<T extends string> extends FormFieldBase<T> {
 	clearable: boolean;
+	searchable?: boolean;
 }
 
 interface FormFieldStageSelect<T extends string> extends FormFieldBase<T> {
@@ -241,6 +243,7 @@ export type TypedFormFieldProps<
 > = {
 	name: TName;
 	label?: string;
+	disabled?: boolean;
 	children?:
 		| ((props: FormFieldChildrenProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
@@ -255,6 +258,7 @@ type NestedPath = `${string}.${string}` | `${string}[${string}`;
 export type FlexibleFormFieldProps = {
 	name: NestedPath;
 	label?: string;
+	disabled?: boolean;
 	children?:
 		| ((props: FormFieldChildrenProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);

@@ -213,5 +213,8 @@
 	"errors.profileCustomUrlNumbers": "URL personalizado não pode conter apenas números",
 	"errors.profileCustomUrlDuplicate": "Alguém já está usando esse URL personalizado",
 	"errors.profileSensBothOrNeither": "A sensibilidade de Movimento não pode ser definida se a sensibilidade do Analógico Direito não está",
-	"errors.profileInGameName": ""
+	"errors.profileInGameName": "",
+	"labels.pronoun": "",
+	"bottomTexts.profilePronouns": "",
+	"errors.profilePronounsBothOrNeither": ""
 }

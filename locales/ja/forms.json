@@ -213,5 +213,8 @@
 	"errors.profileCustomUrlNumbers": "カスタム URL は数字のみで作成することはできません",
 	"errors.profileCustomUrlDuplicate": "このカスタム URL はすでに使用されています",
 	"errors.profileSensBothOrNeither": "右スティックの感度が設定されていない場合、感度を設定することはできません",
-	"errors.profileInGameName": ""
+	"errors.profileInGameName": "",
+	"labels.pronoun": "",
+	"bottomTexts.profilePronouns": "",
+	"errors.profilePronounsBothOrNeither": ""
 }

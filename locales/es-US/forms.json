@@ -213,5 +213,8 @@
 	"errors.profileCustomUrlNumbers": "Enlace personalizado no puede ser solo numeros",
 	"errors.profileCustomUrlDuplicate": "Alguien ya tiene ese enlace personalizado",
 	"errors.profileSensBothOrNeither": "Sens de giroscopio no se poner sin la sens de palanca",
-	"errors.profileInGameName": ""
+	"errors.profileInGameName": "",
+	"labels.pronoun": "",
+	"bottomTexts.profilePronouns": "",
+	"errors.profilePronounsBothOrNeither": ""
 }

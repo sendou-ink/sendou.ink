@@ -2,7 +2,6 @@ import { Trans, useTranslation } from "react-i18next";
 import { Link, useLoaderData, useMatches } from "react-router";
 import { CustomizedColorsInput } from "~/components/CustomizedColorsInput";
 import { FormMessage } from "~/components/FormMessage";
-import { OBJECT_PRONOUNS, SUBJECT_PRONOUNS } from "~/db/tables";
 import type { CustomFieldRenderProps } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -17,8 +16,6 @@ import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import { COUNTRY_CODES } from "../user-page-constants";
 import { userEditProfileBaseSchema } from "../user-page-schemas";
 export { loader, action };
-
-import styles from "~/styles/u.$identifier.module.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["user"],
@@ -49,7 +46,7 @@ export default function UserEditPage() {
 		customUrl: layoutData.user.customUrl ?? "",
 		inGameName: data.user.inGameName ?? "",
 		sensitivity: sensDefaultValue(data.user.motionSens, data.user.stickSens),
-		pronouns: data.user.pronouns ?? { subject: null, object: null },
+		pronouns: pronounsDefaultValue(data.user.pronouns),
 		battlefy: data.user.battlefy ?? "",
 		country: data.user.country ?? null,
 		favoriteBadgeIds: data.favoriteBadgeIds ?? [],
@@ -84,25 +81,7 @@ export default function UserEditPage() {
 						<FormField name="customUrl" />
 						<FormField name="inGameName" />
 						<FormField name="sensitivity" />
-						<FormField name="pronouns">
-							{(props: CustomFieldRenderProps) => {
-								const pronouns = (props.value as {
-									subject: string | null;
-									object: string | null;
-								}) ?? { subject: null, object: null };
-								return (
-									<PronounsCustomField
-										pronouns={pronouns}
-										onChange={
-											props.onChange as (value: {
-												subject: string | null;
-												object: string | null;
-											}) => void
-										}
-									/>
-								);
-							}}
-						</FormField>
+						<FormField name="pronouns" />
 						<FormField name="battlefy" />
 						<FormField name="country" options={countryOptions} />
 						{data.user.badges.length >= 2 ? (
@@ -119,7 +98,7 @@ export default function UserEditPage() {
 								<FormField name="commissionText" />
 							</>
 						) : null}
-						<FormField name="newProfileEnabled" />
+						<FormField name="newProfileEnabled" disabled={!isSupporter} />
 						<FormMessage type="info">
 							<Trans i18nKey={"user:discordExplanation"} t={t}>
 								Username, profile picture, YouTube, Bluesky and Twitch accounts
@@ -167,64 +146,11 @@ function CssCustomField({
 	);
 }
 
-// xxx: alignment off
-function PronounsCustomField({
-	pronouns,
-	onChange,
-}: {
-	pronouns: { subject: string | null; object: string | null };
-	onChange: (value: { subject: string | null; object: string | null }) => void;
-}) {
-	const { t } = useTranslation(["user"]);
-
-	return (
-		<div>
-			<div className="stack horizontal md">
-				<div>
-					<label htmlFor="subjectPronoun">{t("user:pronoun")}</label>
-					<select
-						id="subjectPronoun"
-						value={pronouns.subject ?? ""}
-						onChange={(e) =>
-							onChange({
-								...pronouns,
-								subject: e.target.value || null,
-							})
-						}
-					>
-						<option value="">{"-"}</option>
-						{SUBJECT_PRONOUNS.map((pronoun) => (
-							<option key={pronoun} value={pronoun}>
-								{pronoun}
-							</option>
-						))}
-					</select>
-					<span className={styles.seperator}>/</span>
-				</div>
-				<div>
-					<label htmlFor="objectPronoun">{t("user:pronoun")}</label>
-					<select
-						id="objectPronoun"
-						value={pronouns.object ?? ""}
-						onChange={(e) =>
-							onChange({
-								...pronouns,
-								object: e.target.value || null,
-							})
-						}
-					>
-						<option value="">{"-"}</option>
-						{OBJECT_PRONOUNS.map((pronoun) => (
-							<option key={pronoun} value={pronoun}>
-								{pronoun}
-							</option>
-						))}
-					</select>
-				</div>
-			</div>
-			<FormMessage type="info">{t("user:pronounsInfo")}</FormMessage>
-		</div>
-	);
+function pronounsDefaultValue(
+	pronouns: { subject: string; object: string } | null,
+): [string | null, string | null] {
+	if (!pronouns) return [null, null];
+	return [pronouns.subject, pronouns.object];
 }
 
 function sensDefaultValue(

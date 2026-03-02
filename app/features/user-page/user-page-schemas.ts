@@ -38,6 +38,7 @@ import {
 	CUSTOM_CSS_VAR_COLORS,
 	HIGHLIGHT_CHECKBOX_NAME,
 	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
+	IN_GAME_NAME_REGEXP,
 	USER,
 } from "./user-page-constants";
 
@@ -102,7 +103,7 @@ export const userEditProfileBaseSchema = z.object({
 		bottomText: "bottomTexts.profileInGameName",
 		maxLength: 26,
 		regExp: {
-			pattern: /^.{1,10}#[0-9a-z]{4,5}$/,
+			pattern: IN_GAME_NAME_REGEXP,
 			message: "forms:errors.profileInGameName",
 		},
 	}),
@@ -121,13 +122,27 @@ export const userEditProfileBaseSchema = z.object({
 			message: "errors.profileSensBothOrNeither",
 		},
 	}),
-	pronouns: customField(
-		{ initialValue: { subject: null, object: null } },
-		z.object({
-			subject: z.enum(SUBJECT_PRONOUNS).nullable(),
-			object: z.enum(OBJECT_PRONOUNS).nullable(),
-		}),
-	),
+	pronouns: dualSelectOptional({
+		bottomText: "bottomTexts.profilePronouns",
+		fields: [
+			{
+				label: "labels.pronoun",
+				items: SUBJECT_PRONOUNS.map((p) => ({ label: () => p, value: p })),
+			},
+			{
+				label: "labels.pronoun",
+				items: OBJECT_PRONOUNS.map((p) => ({ label: () => p, value: p })),
+			},
+		],
+		validate: {
+			func: ([subject, object]) => {
+				if (subject === null && object === null) return true;
+				if (subject !== null && object !== null) return true;
+				return false;
+			},
+			message: "errors.profilePronounsBothOrNeither",
+		},
+	}),
 	battlefy: textFieldOptional({
 		label: "labels.profileBattlefy",
 		bottomText: "bottomTexts.profileBattlefy",
@@ -136,6 +151,7 @@ export const userEditProfileBaseSchema = z.object({
 	}),
 	country: selectDynamicOptional({
 		label: "labels.profileCountry",
+		searchable: true,
 	}),
 	favoriteBadgeIds: badges({
 		label: "labels.profileFavoriteBadges",

@@ -213,5 +213,8 @@
 	"errors.profileCustomUrlNumbers": "Niestandardowe URL nie może zawierać tylko liczby",
 	"errors.profileCustomUrlDuplicate": "Te niestandardowe URl jest już przez kogoś zajęte",
 	"errors.profileSensBothOrNeither": "Motion sens nie może być ustawione jeśli R-stick sens nie jest",
-	"errors.profileInGameName": ""
+	"errors.profileInGameName": "",
+	"labels.pronoun": "",
+	"bottomTexts.profilePronouns": "",
+	"errors.profilePronounsBothOrNeither": ""
 }

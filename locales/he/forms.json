@@ -213,5 +213,8 @@
 	"errors.profileCustomUrlNumbers": "כתובת URL מותאמת אישית לא יכולה להכיל רק מספרים",
 	"errors.profileCustomUrlDuplicate": "מישהו כבר משתמש בכתובת URL המותאמת אישית הזו",
 	"errors.profileSensBothOrNeither": "לא ניתן להגדיר את רגישות התנועה אם רגישות הסטיק לא מוגדרת",
-	"errors.profileInGameName": ""
+	"errors.profileInGameName": "",
+	"labels.pronoun": "",
+	"bottomTexts.profilePronouns": "",
+	"errors.profilePronounsBothOrNeither": ""
 }

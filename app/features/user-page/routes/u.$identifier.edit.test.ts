@@ -20,7 +20,7 @@ const DEFAULT_FIELDS = {
 	favoriteBadgeIds: [],
 	inGameName: null,
 	sensitivity: [null, null] as [null, null],
-	pronouns: { subject: null, object: null },
+	pronouns: [null, null] as [null, null],
 	weapons: [{ id: 1 as MainWeaponId, isFavorite: false }],
 	showDiscordUniqueName: true,
 	newProfileEnabled: false,

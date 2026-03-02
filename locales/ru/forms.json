@@ -213,5 +213,8 @@
 	"errors.profileCustomUrlNumbers": "Пользовательский URL не может содержать только цифры",
 	"errors.profileCustomUrlDuplicate": "Кто-то уже использует этот пользовательский URL",
 	"errors.profileSensBothOrNeither": "Чувствительность наклона не может быть указана, если не указана чувствительность стика",
-	"errors.profileInGameName": ""
+	"errors.profileInGameName": "",
+	"labels.pronoun": "",
+	"bottomTexts.profilePronouns": "",
+	"errors.profilePronounsBothOrNeither": ""
 }

@@ -43,6 +43,7 @@ export type { CustomFieldRenderProps };
 interface FormFieldProps {
 	name: string;
 	label?: string;
+	disabled?: boolean;
 	field?: z.ZodType;
 	children?:
 		| ((props: CustomFieldRenderProps) => React.ReactNode)
@@ -54,6 +55,7 @@ interface FormFieldProps {
 export function FormField({
 	name,
 	label,
+	disabled,
 	field,
 	children,
 	options,
@@ -134,6 +136,7 @@ export function FormField({
 			<InputFormField
 				{...commonProps}
 				{...formField}
+				disabled={disabled}
 				value={value as string}
 				onChange={handleChange as (v: string) => void}
 			/>
@@ -145,6 +148,7 @@ export function FormField({
 			<SwitchFormField
 				{...commonProps}
 				{...formField}
+				isDisabled={disabled}
 				checked={value as boolean}
 				onChange={handleChange as (v: boolean) => void}
 			/>
@@ -156,6 +160,7 @@ export function FormField({
 			<TextareaFormField
 				{...commonProps}
 				{...formField}
+				disabled={disabled}
 				value={value as string}
 				onChange={handleChange as (v: string) => void}
 			/>

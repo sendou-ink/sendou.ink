@@ -213,5 +213,8 @@
 	"errors.profileCustomUrlNumbers": "Een eigen URL kan niet alleen uit nummers bestaan",
 	"errors.profileCustomUrlDuplicate": "Deze URL is al in gebruik",
 	"errors.profileSensBothOrNeither": "Bewegingsgevoeligheid kan niet worden ingesteld als er niets voor de R-stick ingevoerd is",
-	"errors.profileInGameName": ""
+	"errors.profileInGameName": "",
+	"labels.pronoun": "",
+	"bottomTexts.profilePronouns": "",
+	"errors.profilePronounsBothOrNeither": ""
 }

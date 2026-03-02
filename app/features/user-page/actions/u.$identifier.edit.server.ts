@@ -22,9 +22,10 @@ export const action: ActionFunction = async ({ request }) => {
 
 	const inGameName = data.inGameName || null;
 
+	const [subjectPronoun, objectPronoun] = data.pronouns ?? [null, null];
 	const pronouns =
-		data.pronouns?.subject && data.pronouns?.object
-			? JSON.stringify(data.pronouns)
+		subjectPronoun && objectPronoun
+			? JSON.stringify({ subject: subjectPronoun, object: objectPronoun })
 			: null;
 
 	const [motionSens, stickSens] = data.sensitivity ?? [null, null];

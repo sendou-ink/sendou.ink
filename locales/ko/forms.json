@@ -213,5 +213,8 @@
 	"errors.profileCustomUrlNumbers": "",
 	"errors.profileCustomUrlDuplicate": "",
 	"errors.profileSensBothOrNeither": "",
-	"errors.profileInGameName": ""
+	"errors.profileInGameName": "",
+	"labels.pronoun": "",
+	"bottomTexts.profilePronouns": "",
+	"errors.profilePronounsBothOrNeither": ""
 }

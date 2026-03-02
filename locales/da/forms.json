@@ -213,5 +213,8 @@
 	"errors.profileCustomUrlNumbers": "Brugerdefineret URL må ikke kun indeholde numre",
 	"errors.profileCustomUrlDuplicate": "Brugerdefineret URL er allerede i brug",
 	"errors.profileSensBothOrNeither": "Bevægelsesfølsomhed kan ikke indstilles før at Styrepindsfølsomheden er indstillet",
-	"errors.profileInGameName": ""
+	"errors.profileInGameName": "",
+	"labels.pronoun": "",
+	"bottomTexts.profilePronouns": "",
+	"errors.profilePronounsBothOrNeither": ""
 }

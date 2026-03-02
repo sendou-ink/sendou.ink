@@ -202,7 +202,7 @@
 	"labels.profileNewProfileEnabled": "New profile page",
 	"bottomTexts.profileCustomName": "If empty, your Discord display name is shown",
 	"bottomTexts.profileCustomUrl": "Only letters, numbers, hyphens and underscores. Cannot be only numbers.",
-	"bottomTexts.profileInGameName": "Format: Name#disc (e.g. Player#a1b2)",
+	"bottomTexts.profileInGameName": "Format: Name#disc (e.g. Player#1234)",
 	"bottomTexts.profileBattlefy": "Used for seeding and verification in some tournaments",
 	"bottomTexts.profileShowDiscordUniqueName": "Show your Discord username publicly on your profile",
 	"bottomTexts.profileCommissionsOpen": "Commissions automatically close after one month",
@@ -213,5 +213,8 @@
 	"errors.profileCustomUrlNumbers": "Custom URL can't only contain numbers",
 	"errors.profileCustomUrlDuplicate": "Someone is already using this custom URL",
 	"errors.profileSensBothOrNeither": "Both motion and stick sensitivity must be set or neither",
-	"errors.profileInGameName": "Must match format: Name#disc (1-20 chars, #, 4-5 alphanumeric)"
+	"errors.profileInGameName": "Must match format: Name#disc (1-10 characters, #, 4-5 alphanumeric)",
+	"labels.pronoun": "Pronoun",
+	"bottomTexts.profilePronouns": "This setting is optional! Your pronouns will be displayed on your profile, tournament rosters, SendouQ groups, and text channels.",
+	"errors.profilePronounsBothOrNeither": "Select both pronouns or neither"
 }

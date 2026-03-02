@@ -213,5 +213,8 @@
 	"errors.profileCustomUrlNumbers": "Enlace personalizado no puede ser solo numeros",
 	"errors.profileCustomUrlDuplicate": "Alguien ya tiene ese enlace personalizado",
 	"errors.profileSensBothOrNeither": "Motion sens can't be set if R-stick sens isn't",
-	"errors.profileInGameName": ""
+	"errors.profileInGameName": "",
+	"labels.pronoun": "",
+	"bottomTexts.profilePronouns": "",
+	"errors.profilePronounsBothOrNeither": ""
 }
