@@ -27,7 +27,7 @@
 	"stat.squidFormInkRecoverySeconds": "Tiempo de recuperar completo el tanque de tinta (forma calamar)",
 	"stat.humanoidFormInkRecoverySeconds": "Tiempo de recuperar completo el tanque de tinta (forma humana)",
 	"stat.quickRespawnTime": "Tiempo de regeneración rápida",
-	"stat.quickRespawnTimeSplattedByRP": "Tiempo de regeneracion rápida (al ser reventado por jugador con Castigo Póstumo)",
+	"stat.quickRespawnTimeSplattedByRP": "Tiempo de regeneración rápida (al ser reventado por jugador con Castigo Póstumo)",
 	"stat.superJumpTimeGround": "Fotogramas vulnerables de supersalto",
 	"stat.superJumpTimeTotal": "Tiempo de supersalto (total)",
 	"stat.superJumpTimeTotal.stealthJumpExplanation": "El tiempo mostrado es el máximo. La penalización real depende de la distancia del salto.",
