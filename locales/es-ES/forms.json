@@ -1,7 +1,7 @@
 {
 	"submit": "Finalizar",
 	"labels.name": "Nombre",
-	"labels.bio": "Bio",
+	"labels.bio": "Biografía",
 	"labels.tag": "Etiqueta",
 	"labels.teamBsky": "Bluesky del equipo",
 	"labels.clockFormat": "Formato de hora",
@@ -90,7 +90,7 @@
 	"labels.members": "Miembros",
 	"labels.urls": "URLs",
 	"labels.description": "Descripción",
-	"labels.orgMemberUser": "Usuario",
+	"labels.user": "Usuario",
 	"labels.orgMemberRole": "Rol",
 	"labels.orgMemberRoleDisplayName": "Nombre del rol",
 	"labels.orgSocialLinks": "Enlaces sociales",

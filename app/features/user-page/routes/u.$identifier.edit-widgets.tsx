@@ -274,7 +274,10 @@ function AvailableWidgetsList({
 										</div>
 										<div className="text-xs font-bold">{"//"}</div>
 										<div className={styles.widgetDescription}>
-											{t(`user:widgets.description.${widget.id}` as const)}
+											{t(
+												`user:widgets.description.${widget.id}` as const,
+												widgetDescriptionParams(widget.id),
+											)}
 										</div>
 									</div>
 								</div>
@@ -450,4 +453,13 @@ function DraggableWidgetItem({
 			) : null}
 		</div>
 	);
+}
+
+const WIDGET_DESCRIPTION_PARAMS: Record<string, Record<string, unknown>> = {
+	"game-badges": { max: USER.GAME_BADGES_MAX },
+	"game-badges-small": { max: USER.GAME_BADGES_SMALL_MAX },
+};
+
+function widgetDescriptionParams(widgetId: string) {
+	return WIDGET_DESCRIPTION_PARAMS[widgetId];
 }

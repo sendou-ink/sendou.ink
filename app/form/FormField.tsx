@@ -43,6 +43,8 @@ export type { CustomFieldRenderProps };
 interface FormFieldProps {
 	name: string;
 	label?: string;
+	disabled?: boolean;
+	maxCount?: number;
 	field?: z.ZodType;
 	children?:
 		| ((props: CustomFieldRenderProps) => React.ReactNode)
@@ -54,6 +56,8 @@ interface FormFieldProps {
 export function FormField({
 	name,
 	label,
+	disabled,
+	maxCount,
 	field,
 	children,
 	options,
@@ -134,6 +138,7 @@ export function FormField({
 			<InputFormField
 				{...commonProps}
 				{...formField}
+				disabled={disabled}
 				value={value as string}
 				onChange={handleChange as (v: string) => void}
 			/>
@@ -145,6 +150,7 @@ export function FormField({
 			<SwitchFormField
 				{...commonProps}
 				{...formField}
+				isDisabled={disabled}
 				checked={value as boolean}
 				onChange={handleChange as (v: boolean) => void}
 			/>
@@ -156,6 +162,7 @@ export function FormField({
 			<TextareaFormField
 				{...commonProps}
 				{...formField}
+				disabled={disabled}
 				value={value as string}
 				onChange={handleChange as (v: string) => void}
 			/>
@@ -285,7 +292,6 @@ export function FormField({
 	}
 
 	if (formField.type === "array") {
-		// @ts-expect-error Type instantiation is excessively deep and possibly infinite
 		const innerFieldMeta = formRegistry.get(formField.field) as
 			| FormFieldType
 			| undefined;
@@ -372,6 +378,7 @@ export function FormField({
 				value={value as number[]}
 				onChange={handleChange as (v: number[]) => void}
 				options={options as BadgeOption[]}
+				{...(maxCount !== undefined ? { maxCount } : {})}
 			/>
 		);
 	}

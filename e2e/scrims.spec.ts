@@ -45,7 +45,6 @@ test.describe("Scrims", () => {
 		});
 		await page.getByLabel("Visibility").selectOption("2");
 
-		// Schema-defined field - use form helper
 		await form.fill("postText", "Test scrim");
 
 		await submit(page);
