@@ -526,3 +526,11 @@ export interface TournamentStartingBracketsBody {
 export interface TournamentTeamMemberBody {
 	userId: number;
 }
+
+/** POST /api/tournament/{id}/teams/{tournamentTeamId}/update-member-ign */
+
+/** @lintignore */
+export interface TournamentUpdateMemberIgnBody {
+	userId: number;
+	inGameName: string;
+}
