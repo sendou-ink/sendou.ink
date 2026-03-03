@@ -149,7 +149,7 @@
 	"forms.showDiscordUniqueName.info": "¿Mostrar tu nombre de Discord ({{discordUniqueName}}) publicamente?",
 	"forms.commissionsOpen": "Comisiones abiertas",
 	"forms.commissionsOpen.info": "Las comisiones se cierran automáticamente y deben volver a activarse al cabo de un mes para evitar que los anuncios queden obsoletos.",	"forms.commissionText": "Info de comisiones",
-	"forms.commissionText.info": "Precio, espacios abiertos, o cualquier otra información sobre tus comiciones.",
+	"forms.commissionText.info": "Precio, espacios abiertos, o cualquier otra información sobre tus comisiones.",
 	"forms.customName.info": "Si se deja en blanco, se utilizará tu nombre de Discord: \"{{discordName}}\"",
 	"forms.country.search.placeholder": "Buscar países",
 	"forms.favoriteBadges.nonSupporter": "Hazte mecenas para elegir qué insignias aparecen en la primera página y en qué orden",

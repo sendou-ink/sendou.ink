@@ -26,7 +26,7 @@
 	"pre.info.unregister.confirm": "¿Cancelar registro del torneo y borrar info del equipo?",
 	"pre.info.noHost": "Mi equipo prefiere no ser a cargo de salas",
 	"pre.roster.header": "Llenar equipo",
-	"pre.roster.footer": "Se requieren al menos {{atLeastCount}} miembros para participar. Cantidad máxima son {{maxCount}}",
+	"pre.roster.footer": "Se requieren al menos {{atLeastCount}} miembros para participar. La cantidad máxima es {{maxCount}}",
 	"pre.roster.footer.noSubs": "El formato es {{format}}. No se permiten subs.",
 	"pre.roster.addTrusted.header": "Agregar personas con quienes has jugado",
 	"pre.roster.delete.button": "Borrar miembro",
