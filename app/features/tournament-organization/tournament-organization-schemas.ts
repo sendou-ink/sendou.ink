@@ -43,7 +43,7 @@ export const organizationEditFormSchema = z.object({
 		max: 32,
 		field: fieldset({
 			fields: z.object({
-				userId: userSearch({ label: "labels.orgMemberUser" }),
+				userId: userSearch({ label: "labels.user" }),
 				role: select({
 					label: "labels.orgMemberRole",
 					items: TOURNAMENT_ORGANIZATION_ROLES.map((role) => ({

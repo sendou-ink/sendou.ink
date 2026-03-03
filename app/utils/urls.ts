@@ -454,6 +454,8 @@ export const badgeUrl = ({
 	code: Tables["Badge"]["code"];
 	extension?: "gif";
 }) => `/static-assets/badges/${code}${extension ? `.${extension}` : ""}`;
+export const gameBadgeUrl = (id: string) =>
+	`/static-assets/img/badges/${id}.avif`;
 export const articlePreviewUrl = (slug: string) =>
 	`/static-assets/img/article-previews/${slug}.png`;
 

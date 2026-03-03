@@ -4,6 +4,7 @@ import { ariaAttributes } from "../utils";
 import { FormFieldWrapper } from "./FormFieldWrapper";
 
 type InputFormFieldProps = FormFieldProps<"text-field"> & {
+	disabled?: boolean;
 	value: string;
 	onChange: (value: string) => void;
 };
@@ -18,6 +19,7 @@ export function InputFormField({
 	onBlur,
 	required,
 	inputType = "text",
+	disabled,
 	value,
 	onChange,
 }: InputFormFieldProps) {
@@ -32,7 +34,7 @@ export function InputFormField({
 			error={error}
 			bottomText={bottomText}
 		>
-			<div className={leftAddon ? "input-with-addon" : undefined}>
+			<div className={leftAddon ? "input-container" : undefined}>
 				{leftAddon ? <span className="input-addon">{leftAddon}</span> : null}
 				<input
 					id={id}
@@ -41,6 +43,7 @@ export function InputFormField({
 					onChange={(e) => onChange(e.target.value)}
 					onBlur={() => onBlur?.()}
 					maxLength={maxLength}
+					disabled={disabled}
 					{...ariaAttributes({
 						id,
 						bottomText,
