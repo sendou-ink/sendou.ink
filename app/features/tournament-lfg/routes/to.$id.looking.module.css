@@ -43,11 +43,6 @@
 	margin-inline: auto;
 }
 
-.subsTextarea {
-	width: 100%;
-	resize: vertical;
-}
-
 .subsSection {
 	display: grid;
 	grid-template-columns: max-content 1fr;

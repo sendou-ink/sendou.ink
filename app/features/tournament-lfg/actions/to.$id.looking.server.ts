@@ -221,7 +221,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				tournamentId,
 				userId: user.id,
 				isStayAsSub: true,
-				lfgNote: data.message,
+				lfgNote: data.message ?? undefined,
 			});
 
 			break;

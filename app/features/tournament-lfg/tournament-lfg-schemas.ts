@@ -1,28 +1,32 @@
 import { z } from "zod";
 import { stringConstant, textAreaOptional, toggle } from "~/form/fields";
 import { _action, id } from "~/utils/zod";
-import { TOURNAMENT_LFG } from "./tournament-lfg-constants";
 
-const lfgNoteField = textAreaOptional({
+const noteFieldSchema = textAreaOptional({
 	label: "labels.note",
-	maxLength: TOURNAMENT_LFG.PUBLIC_NOTE_MAX_LENGTH,
+	maxLength: 160,
 });
 
-const lfgStayAsSubField = toggle({
+export const addSubFormSchema = z.object({
+	_action: stringConstant("ADD_SUB"),
+	message: noteFieldSchema,
+});
+
+const stayAsSubFieldSchema = toggle({
 	label: "labels.stayAsSub",
 	bottomText: "bottomTexts.stayAsSub",
 });
 
 export const joinQueueFormSchema = z.object({
 	_action: stringConstant("JOIN_QUEUE"),
-	note: lfgNoteField,
-	stayAsSub: lfgStayAsSubField,
+	note: noteFieldSchema,
+	stayAsSub: stayAsSubFieldSchema,
 });
 
 export const updateGroupFormSchema = z.object({
 	_action: stringConstant("UPDATE_GROUP"),
-	note: lfgNoteField,
-	stayAsSub: lfgStayAsSubField,
+	note: noteFieldSchema,
+	stayAsSub: stayAsSubFieldSchema,
 });
 
 export const lookingSchema = z.union([
@@ -51,10 +55,7 @@ export const lookingSchema = z.union([
 	z.object({
 		_action: _action("LEAVE_GROUP"),
 	}),
-	z.object({
-		_action: _action("ADD_SUB"),
-		message: z.string().max(TOURNAMENT_LFG.PUBLIC_NOTE_MAX_LENGTH).optional(),
-	}),
+	addSubFormSchema,
 	z.object({
 		_action: _action("DELETE_SUB"),
 		userId: id,

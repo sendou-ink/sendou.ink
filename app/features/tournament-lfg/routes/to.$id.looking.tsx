@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouDialog } from "~/components/elements/Dialog";
 import {
 	SendouTab,
 	SendouTabList,
@@ -30,8 +31,10 @@ import {
 	loader,
 	type SubEntry,
 } from "../loaders/to.$id.looking.server";
-import { TOURNAMENT_LFG } from "../tournament-lfg-constants";
-import { joinQueueFormSchema } from "../tournament-lfg-schemas";
+import {
+	addSubFormSchema,
+	joinQueueFormSchema,
+} from "../tournament-lfg-schemas";
 
 export { action } from "../actions/to.$id.looking.server";
 export { loader };
@@ -255,44 +258,25 @@ function SubsView({
 	);
 }
 
-// xxx: use SendouForm
 function AddSubForm() {
-	const { t } = useTranslation(["tournament", "common"]);
-	const fetcher = useFetcher();
-	const [showForm, setShowForm] = React.useState(false);
-
-	if (!showForm) {
-		return (
-			<div className="stack items-end">
-				<SendouButton size="small" onPress={() => setShowForm(true)}>
-					{t("tournament:subs.addPost")}
-				</SendouButton>
-			</div>
-		);
-	}
+	const { t } = useTranslation(["tournament"]);
 
 	return (
-		<fetcher.Form method="post" className="stack sm">
-			<textarea
-				name="message"
-				maxLength={TOURNAMENT_LFG.PUBLIC_NOTE_MAX_LENGTH}
-				placeholder={t("tournament:subs.message.header")}
-				className={styles.subsTextarea}
-				rows={3}
-			/>
-			<div className="stack horizontal sm justify-end">
-				<SendouButton
-					size="small"
-					variant="minimal"
-					onPress={() => setShowForm(false)}
-				>
-					{t("common:actions.cancel")}
-				</SendouButton>
-				<SubmitButton _action="ADD_SUB" state={fetcher.state} size="small">
-					{t("common:actions.save")}
-				</SubmitButton>
-			</div>
-		</fetcher.Form>
+		<div className="stack items-end">
+			<SendouDialog
+				heading={t("tournament:subs.addPost")}
+				showCloseButton
+				trigger={
+					<SendouButton size="small">
+						{t("tournament:subs.addPost")}
+					</SendouButton>
+				}
+			>
+				<SendouForm schema={addSubFormSchema}>
+					{({ FormField }) => <FormField name="message" />}
+				</SendouForm>
+			</SendouDialog>
+		</div>
 	);
 }
 
