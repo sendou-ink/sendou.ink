@@ -8,6 +8,7 @@ import contributions from "../../../locales/en/contributions.json";
 import faq from "../../../locales/en/faq.json";
 import forms from "../../../locales/en/forms.json";
 import front from "../../../locales/en/front.json";
+import gameBadges from "../../../locales/en/game-badges.json";
 import gameMisc from "../../../locales/en/game-misc.json";
 import gear from "../../../locales/en/gear.json";
 import lfg from "../../../locales/en/lfg.json";
@@ -33,6 +34,7 @@ export const resources = {
 		faq,
 		forms,
 		front,
+		"game-badges": gameBadges,
 		"game-misc": gameMisc,
 		gear,
 		lfg,

@@ -1,14 +1,13 @@
-import { Form, useMatches, useParams } from "react-router";
-import { SendouButton } from "~/components/elements/Button";
+import { useMatches, useParams } from "react-router";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { Redirect } from "~/components/Redirect";
 import { useUser } from "~/features/auth/core/user";
+import { SendouForm } from "~/form/SendouForm";
 import { plusSuggestionPage } from "~/utils/urls";
 import { action } from "../actions/plus.suggestions.comment.$tier.$userId.server";
-import { PLUS_SUGGESTION } from "../plus-suggestions-constants";
+import { followUpCommentFormSchema } from "../plus-suggestions-schemas";
 import { canAddCommentToSuggestionFE } from "../plus-suggestions-utils";
 import type { PlusSuggestionsLoaderData } from "./plus.suggestions";
-import { CommentTextarea } from "./plus.suggestions.new";
 export { action };
 
 export default function PlusCommentModalPage() {
@@ -18,11 +17,11 @@ export default function PlusCommentModalPage() {
 	const data = matches.at(-2)!.data as PlusSuggestionsLoaderData;
 
 	const targetUserId = Number(params.userId);
-	const tierSuggestedTo = String(params.tier);
+	const tierSuggestedTo = Number(params.tier);
 
 	const userBeingCommented = data.suggestions.find(
 		(suggestion) =>
-			suggestion.tier === Number(tierSuggestedTo) &&
+			suggestion.tier === tierSuggestedTo &&
 			suggestion.suggested.id === targetUserId,
 	);
 
@@ -33,7 +32,7 @@ export default function PlusCommentModalPage() {
 			user,
 			suggestions: data.suggestions,
 			suggested: { id: targetUserId },
-			targetPlusTier: Number(tierSuggestedTo),
+			targetPlusTier: tierSuggestedTo,
 		})
 	) {
 		return <Redirect to={plusSuggestionPage()} />;
@@ -44,14 +43,12 @@ export default function PlusCommentModalPage() {
 			heading={`${userBeingCommented.suggested.username}'s +${tierSuggestedTo} suggestion`}
 			onCloseTo={plusSuggestionPage()}
 		>
-			<Form method="post" className="stack md">
-				<input type="hidden" name="tier" value={tierSuggestedTo} />
-				<input type="hidden" name="suggestedId" value={targetUserId} />
-				<CommentTextarea maxLength={PLUS_SUGGESTION.COMMENT_MAX_LENGTH} />
-				<div>
-					<SendouButton type="submit">Submit</SendouButton>
-				</div>
-			</Form>
+			<SendouForm
+				schema={followUpCommentFormSchema}
+				defaultValues={{ tier: tierSuggestedTo, suggestedId: targetUserId }}
+			>
+				{({ FormField }) => <FormField name="comment" />}
+			</SendouForm>
 		</SendouDialog>
 	);
 }

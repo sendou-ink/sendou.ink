@@ -90,7 +90,7 @@
 	"labels.members": "Members",
 	"labels.urls": "URLs",
 	"labels.description": "Description",
-	"labels.orgMemberUser": "User",
+	"labels.user": "User",
 	"labels.orgMemberRole": "Role",
 	"labels.orgMemberRoleDisplayName": "Role display name",
 	"labels.orgSocialLinks": "Social links",
@@ -182,5 +182,10 @@
 	"options.artSource.ALL": "All",
 	"options.artSource.MADE-BY": "Made by me",
 	"options.artSource.MADE-OF": "Made of me",
-	"labels.tierListUrl": "Tier List URL"
+	"labels.tierListUrl": "Tier List URL",
+	"labels.plusTier": "Tier",
+	"labels.comment": "Comment",
+	"errors.plusAlreadySuggested": "This user has already been suggested",
+	"errors.plusAlreadyMember": "This user is already a member of this tier",
+	"errors.plusCannotSuggest": "Can't make a suggestion right now"
 }

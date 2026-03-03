@@ -90,7 +90,7 @@
 	"labels.members": "",
 	"labels.urls": "",
 	"labels.description": "Описание",
-	"labels.orgMemberUser": "Пользователь",
+	"labels.user": "Пользователь",
 	"labels.orgMemberRole": "Роль",
 	"labels.orgMemberRoleDisplayName": "Отображаемое название роли",
 	"labels.orgSocialLinks": "Соц. ссылки",
@@ -182,5 +182,10 @@
 	"options.artSource.ALL": "",
 	"options.artSource.MADE-BY": "",
 	"options.artSource.MADE-OF": "",
-	"labels.tierListUrl": ""
+	"labels.tierListUrl": "",
+	"labels.plusTier": "",
+	"labels.comment": "",
+	"errors.plusAlreadySuggested": "",
+	"errors.plusAlreadyMember": "",
+	"errors.plusCannotSuggest": ""
 }

@@ -259,14 +259,6 @@ export function actualNumber(value: unknown) {
 	return Number.isNaN(parsed) ? undefined : parsed;
 }
 
-export function trimmedString(value: unknown) {
-	if (typeof value !== "string") {
-		throw new Error("Expected string value");
-	}
-
-	return value.trim();
-}
-
 export function date(value: unknown) {
 	if (typeof value === "string" || typeof value === "number") {
 		const valueAsNumber = Number(value);

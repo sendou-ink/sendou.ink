@@ -18,6 +18,7 @@ import { previewUrl } from "~/features/art/art-utils";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { VodListing } from "~/features/vods/components/VodListing";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
+import type { GameBadgeId } from "~/modules/in-game-lists/game-badge-ids";
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -30,6 +31,7 @@ import {
 	brandImageUrl,
 	calendarEventPage,
 	controllerImageUrl,
+	gameBadgeUrl,
 	LEADERBOARDS_PAGE,
 	LFG_PAGE,
 	modeImageUrl,
@@ -237,6 +239,11 @@ export function Widget({
 				);
 			case "tier-list":
 				return <TierListWidget searchParams={widget.data.searchParams} />;
+			case "game-badges":
+			case "game-badges-small":
+				return widget.data.length === 0 ? null : (
+					<GameBadgesDisplay badgeIds={widget.data} />
+				);
 			default:
 				assertUnreachable(widget);
 		}
@@ -848,6 +855,38 @@ function TierListWidget({ searchParams }: { searchParams: string }) {
 				</div>
 				{title ? title : t("user:widget.tier-list.untitled")}
 			</Link>
+		</div>
+	);
+}
+
+function GameBadgesDisplay({ badgeIds }: { badgeIds: string[] }) {
+	const { t } = useTranslation(["game-badges"]);
+
+	return (
+		<div className={styles.gameBadgeGrid}>
+			{badgeIds.map((id) => {
+				const badgeId = id as GameBadgeId;
+				return (
+					<SendouPopover
+						key={id}
+						trigger={
+							<SendouButton
+								variant="minimal"
+								className={styles.gameBadgeButton}
+							>
+								<img
+									src={gameBadgeUrl(id)}
+									alt={t(`game-badges:${badgeId}`)}
+									className={styles.gameBadgeImage}
+									loading="lazy"
+								/>
+							</SendouButton>
+						}
+					>
+						{t(`game-badges:${badgeId}`)}
+					</SendouPopover>
+				);
+			})}
 		</div>
 	);
 }

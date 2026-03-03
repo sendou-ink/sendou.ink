@@ -22,6 +22,7 @@ dump
 !/scripts/output/.gitkeep
 
 /scripts/dicts/**/*.json
+/scripts/badge
 /test-results/
 /playwright-report/
 /playwright/.cache/

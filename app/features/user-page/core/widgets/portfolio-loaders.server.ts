@@ -280,6 +280,18 @@ export const WIDGET_LOADERS = {
 	links: async (_userId: number, settings: ExtractWidgetSettings<"links">) => {
 		return settings.links;
 	},
+	"game-badges": async (
+		_userId: number,
+		settings: ExtractWidgetSettings<"game-badges">,
+	) => {
+		return settings.badgeIds;
+	},
+	"game-badges-small": async (
+		_userId: number,
+		settings: ExtractWidgetSettings<"game-badges-small">,
+	) => {
+		return settings.badgeIds;
+	},
 };
 
 async function getTop500WeaponsByCategory(

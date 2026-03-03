@@ -40,7 +40,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["user", "badges"],
+	i18n: ["user", "badges", "game-badges"],
 	breadcrumb: ({ match }) => {
 		const data = match.data as UserPageLoaderData | undefined;
 
