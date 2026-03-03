@@ -115,5 +115,6 @@ export function concatUserSubmittedImagePrefix<T extends string | null>(
 	]);
 }
 
-export type JSONColumnTypeNullable<SelectType extends object | null> =
-	ColumnType<SelectType | null, string | null, string | null>;
+export type JSONColumnTypeNullable<
+	SelectType extends object | string | number | null,
+> = ColumnType<SelectType | null, string | null, string | null>;

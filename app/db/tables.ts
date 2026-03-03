@@ -6,6 +6,7 @@ import type {
 	Selectable,
 	Updateable,
 } from "kysely";
+import type { AssociationIdentifier } from "~/features/associations/associations-constants";
 import type { AssociationVisibility } from "~/features/associations/associations-types";
 import type { tags } from "~/features/calendar/calendar-constants";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
@@ -721,7 +722,7 @@ export interface TournamentTeam {
 	avatarImgId: number | null;
 	isLooking: Generated<DBBoolean>;
 	isPlaceholder: Generated<DBBoolean>;
-	lfgVisibility: JSONColumnTypeNullable<AssociationVisibility>;
+	lfgVisibility: JSONColumnTypeNullable<AssociationIdentifier>;
 	lfgNote: string | null;
 }
 

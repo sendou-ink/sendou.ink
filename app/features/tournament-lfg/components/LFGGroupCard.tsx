@@ -15,10 +15,11 @@ import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { Pronouns } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
+import { SendouForm } from "~/form/SendouForm";
 import { languagesUnified } from "~/modules/i18n/config";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { navIconUrl, userPage } from "~/utils/urls";
-import { TOURNAMENT_LFG } from "../tournament-lfg-constants";
+import { updateGroupFormSchema } from "../tournament-lfg-schemas";
 import styles from "./LFGGroupCard.module.css";
 
 export type LFGGroupMember = {
@@ -47,7 +48,6 @@ export type LFGGroup = {
 	usersRole: "OWNER" | "MANAGER" | "REGULAR" | null;
 };
 
-// xxx: "cancel" & "save" buttons off
 export function LFGGroupCard({
 	group,
 	action,
@@ -59,9 +59,14 @@ export function LFGGroupCard({
 }) {
 	const { t } = useTranslation(["common", "q"]);
 	const fetcher = useFetcher();
+	const user = useUser();
 
 	const isOwnGroup = group.id === ownGroup?.id;
 	const showActions = isOwnGroup && group.usersRole === "OWNER";
+
+	const currentMember = user
+		? group.members.find((m) => m.id === user.id)
+		: undefined;
 
 	return (
 		<section className={styles.group}>
@@ -84,7 +89,11 @@ export function LFGGroupCard({
 				))}
 			</div>
 			{isOwnGroup ? (
-				<LFGTeamNote note={group.note} editable={group.usersRole === "OWNER"} />
+				<LFGTeamNote
+					note={group.note}
+					editable={group.usersRole === "OWNER"}
+					isStayAsSub={currentMember?.isStayAsSub ?? false}
+				/>
 			) : null}
 			{action &&
 			(ownGroup?.usersRole === "OWNER" || ownGroup?.usersRole === "MANAGER") ? (
@@ -170,20 +179,29 @@ function LFGGroupMemberRow({
 function LFGTeamNote({
 	note,
 	editable,
+	isStayAsSub,
 }: {
 	note: string | null;
 	editable: boolean;
+	isStayAsSub: boolean;
 }) {
 	const { t } = useTranslation(["common", "q"]);
 	const [editing, setEditing] = React.useState(false);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies(note): when note updates exit editing mode
+	// biome-ignore lint/correctness/useExhaustiveDependencies(isStayAsSub): when isStayAsSub updates exit editing mode
 	React.useEffect(() => {
 		setEditing(false);
-	}, [note]);
+	}, [note, isStayAsSub]);
 
 	if (editing) {
-		return <LFGAddNoteForm note={note} stopEditing={() => setEditing(false)} />;
+		return (
+			<LFGEditGroupForm
+				note={note}
+				isStayAsSub={isStayAsSub}
+				stopEditing={() => setEditing(false)}
+			/>
+		);
 	}
 
 	if (note) {
@@ -217,38 +235,23 @@ function LFGTeamNote({
 	);
 }
 
-function LFGAddNoteForm({
+function LFGEditGroupForm({
 	note,
+	isStayAsSub,
 	stopEditing,
 }: {
 	note: string | null;
+	isStayAsSub: boolean;
 	stopEditing: () => void;
 }) {
-	const fetcher = useFetcher();
-	const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 	const { t } = useTranslation(["common"]);
-	const [value, setValue] = React.useState(note ?? "");
-
-	const newValueLegal = value.length <= TOURNAMENT_LFG.PUBLIC_NOTE_MAX_LENGTH;
-
-	React.useEffect(() => {
-		if (!textareaRef.current) return;
-		textareaRef.current.focus();
-		textareaRef.current.selectionStart = textareaRef.current.selectionEnd =
-			textareaRef.current.value.length;
-	}, []);
 
 	return (
-		<fetcher.Form method="post">
-			<textarea
-				value={value}
-				onChange={(e) => setValue(e.target.value)}
-				rows={2}
-				className={`${styles.noteTextarea} mt-1`}
-				name="value"
-				ref={textareaRef}
-			/>
-			<div className="stack horizontal justify-between">
+		<SendouForm
+			schema={updateGroupFormSchema}
+			defaultValues={{ note: note ?? undefined, stayAsSub: isStayAsSub }}
+			submitButtonText={t("common:actions.save")}
+			secondarySubmit={
 				<SendouButton
 					variant="minimal-destructive"
 					size="miniscule"
@@ -256,21 +259,15 @@ function LFGAddNoteForm({
 				>
 					{t("common:actions.cancel")}
 				</SendouButton>
-				{newValueLegal ? (
-					<SubmitButton
-						_action="UPDATE_NOTE"
-						variant="minimal"
-						size="miniscule"
-					>
-						{t("common:actions.save")}
-					</SubmitButton>
-				) : (
-					<span className="text-warning text-xxs font-semi-bold">
-						{value.length}/{TOURNAMENT_LFG.PUBLIC_NOTE_MAX_LENGTH}
-					</span>
-				)}
-			</div>
-		</fetcher.Form>
+			}
+		>
+			{({ FormField }) => (
+				<>
+					<FormField name="note" />
+					<FormField name="stayAsSub" />
+				</>
+			)}
+		</SendouForm>
 	);
 }
 

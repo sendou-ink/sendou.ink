@@ -120,6 +120,7 @@
 	"looking.rankCalculating": "Менее чем {{count}} матчей сыграно. Ранг ещё рассчитывается...",
 	"looking.allTiers": "Все ранги",
 	"looking.joinQPrompt": "Присоединитесь к очереди, чтобы найти группу",
+	"looking.joinQPromptTeam": "",
 	"looking.joinQPromptMembers": "",
 	"looking.range.or": "или",
 	"looking.range.or.explanation": "",

@@ -120,6 +120,7 @@
 	"looking.rankCalculating": "遊んだセットが{{count}}個以下です。ランクはまだ計算中です...",
 	"looking.allTiers": "全てのティア",
 	"looking.joinQPrompt": "グループを見つけるには列に入ってください",
+	"looking.joinQPromptTeam": "",
 	"looking.joinQPromptMembers": "",
 	"looking.range.or": "か",
 	"looking.range.or.explanation": "",

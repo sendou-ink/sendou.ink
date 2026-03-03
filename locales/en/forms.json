@@ -183,6 +183,7 @@
 	"options.artSource.MADE-BY": "Made by me",
 	"options.artSource.MADE-OF": "Made of me",
 	"labels.tierListUrl": "Tier List URL",
+	"labels.note": "Note",
 	"labels.stayAsSub": "Stay as sub",
 	"bottomTexts.stayAsSub": "If you don't find a full team before registration ends, you will stay as a solo sub for the duration of the tournament"
 }

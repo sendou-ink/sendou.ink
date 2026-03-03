@@ -120,6 +120,7 @@
 	"looking.rankCalculating": "Menos de {{count}} sets jugados. Rango aún se está calculando...",
 	"looking.allTiers": "Todos los niveles",
 	"looking.joinQPrompt": "Únete a la fila para encontrar un grupo",
+	"looking.joinQPromptTeam": "",
 	"looking.joinQPromptMembers": "",
 	"looking.range.or": "o",
 	"looking.range.or.explanation": "",

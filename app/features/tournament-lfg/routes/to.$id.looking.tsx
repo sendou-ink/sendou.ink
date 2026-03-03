@@ -420,7 +420,12 @@ function JoinQueueForm() {
 			schema={joinQueueFormSchema}
 			submitButtonText={t("q:looking.joinQPromptTeam")}
 		>
-			{({ FormField }) => <FormField name="stayAsSub" />}
+			{({ FormField }) => (
+				<>
+					<FormField name="note" />
+					<FormField name="stayAsSub" />
+				</>
+			)}
 		</SendouForm>
 	);
 }

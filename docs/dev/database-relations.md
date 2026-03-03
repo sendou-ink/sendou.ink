@@ -1,5 +1,3 @@
-// xxx: update tournament lfg stuff etc.
-
 Note: some simple features omitted with only a few relations and no special notes
 
 See `tables.ts` for some more documentation on column-level.
@@ -176,6 +174,31 @@ erDiagram
 ## Tournaments
 
 The database structure is mimicking the `brackets-manager.js` library. See this issue for a schema: [https://github.com/Drarig29/brackets-manager.js/issues/111#issuecomment-997417423](https://github.com/Drarig29/brackets-manager.js/issues/111#issuecomment-997417423)
+
+## Tournament Teams
+
+```mermaid
+erDiagram
+    Tournament ||--o{ TournamentTeam : has
+    TournamentTeam ||--|{ TournamentTeamMember : has
+    User ||--o{ TournamentTeamMember : member_of
+    TournamentTeam }o--o| AllTeam : team
+```
+
+### Notes
+
+- `isPlaceholder` - temporary team created automatically when an unregistered user joins the LFG queue
+- `isLooking` - team is visible in the LFG page
+- `teamId` - optional link to a sendou.ink team (for avatar/name)
+
+#### Placeholder team lifecycle
+
+- Unregistered user joins LFG -> placeholder team created (`isPlaceholder: 1`)
+- Registered user joins LFG -> existing team reused, only `isLooking` flag toggled
+- Placeholder user registers for tournament -> placeholder team deleted, new regular team created
+- Placeholder + placeholder merge -> surviving team set to `isPlaceholder: 0`
+- Placeholder + registered team merge -> registered team always survives
+- On merge, each member's `isStayAsSub` preference is preserved
 
 ## Tournament organizations
 

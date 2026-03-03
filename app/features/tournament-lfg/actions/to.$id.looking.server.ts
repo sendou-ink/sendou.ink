@@ -9,7 +9,7 @@ import {
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "~/utils/zod";
 import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
-import { lookingSchema } from "../tournament-lfg-schemas.server";
+import { lookingSchema } from "../tournament-lfg-schemas";
 import { survivingTeamId } from "../tournament-lfg-utils";
 
 // xxx: prevent actions in certain cases? like when tournament has started
@@ -64,6 +64,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					tournamentId,
 					userId: user.id,
 					isStayAsSub: data.stayAsSub ?? false,
+					lfgNote: data.note ?? undefined,
 				});
 			}
 
@@ -171,25 +172,19 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			break;
 		}
-		case "UPDATE_NOTE": {
+		case "UPDATE_GROUP": {
 			const ownGroup = await findOwnGroup();
 			if (!ownGroup) return null;
 
 			await TournamentLFGRepository.updateTeamNote({
 				teamId: ownGroup.id,
-				value: data.value,
+				value: data.note ?? null,
 			});
-
-			break;
-		}
-		case "UPDATE_STAY_AS_SUB": {
-			const ownGroup = await findOwnGroup();
-			if (!ownGroup) return null;
 
 			await TournamentLFGRepository.updateStayAsSub({
 				teamId: ownGroup.id,
 				userId: user.id,
-				value: data.value,
+				value: data.stayAsSub ?? false,
 			});
 
 			break;

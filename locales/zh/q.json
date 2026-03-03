@@ -120,6 +120,7 @@
 	"looking.rankCalculating": "对战数少于 {{count}} 场。段位定分中...",
 	"looking.allTiers": "所有段位",
 	"looking.joinQPrompt": "参加匹配以寻找小队",
+	"looking.joinQPromptTeam": "",
 	"looking.joinQPromptMembers": "",
 	"looking.range.or": "或",
 	"looking.range.or.explanation": "",
