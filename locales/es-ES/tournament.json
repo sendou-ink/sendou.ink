@@ -152,5 +152,4 @@
 	"progression.error.NO_SE_SOURCE": "La eliminación simple no es un cuadro de origen válido",
 	"progression.error.NO_DE_POSITIVE": "La eliminación doble no es válida para progresión positiva",
 	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "El cuadro suizo con avance/eliminación anticipada debe llevar a otro cuadro"
-
 }
