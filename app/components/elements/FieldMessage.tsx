@@ -1,4 +1,5 @@
 import { Text } from "react-aria-components";
+import styles from "../FormMessage.module.css";
 
 export function SendouFieldMessage({
 	children,
@@ -6,7 +7,7 @@ export function SendouFieldMessage({
 	children: React.ReactNode;
 }) {
 	return (
-		<Text slot="description" className="info-message">
+		<Text slot="description" className={styles.info}>
 			{children}
 		</Text>
 	);
