@@ -331,6 +331,22 @@ export async function update({
 	return team;
 }
 
+export async function updateCustomTheme({
+	id,
+	customTheme,
+}: {
+	id: number;
+	customTheme: CustomTheme | null;
+}) {
+	await db
+		.updateTable("AllTeam")
+		.set({
+			customTheme: customTheme ? JSON.stringify(customTheme) : null,
+		})
+		.where("id", "=", id)
+		.execute();
+}
+
 export function switchMainTeam({
 	userId,
 	teamId,

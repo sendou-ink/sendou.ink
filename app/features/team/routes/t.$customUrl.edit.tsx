@@ -1,7 +1,9 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Form, Link, useLoaderData } from "react-router";
+import { Form, Link, useFetcher, useLoaderData } from "react-router";
+import { CustomThemeSelector } from "~/components/CustomThemeSelector";
+import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { FormErrors } from "~/components/FormErrors";
 import { FormMessage } from "~/components/FormMessage";
@@ -12,6 +14,7 @@ import { Main, mainStyles } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { TeamGoBackButton } from "~/features/team/components/TeamGoBackButton";
+import type { ThemeInput } from "~/utils/oklch-gamut";
 import { metaTags } from "~/utils/remix";
 import { uploadImagePage } from "~/utils/urls";
 import { action } from "../actions/t.$customUrl.edit.server";
@@ -31,7 +34,7 @@ export const meta: MetaFunction = (args) => {
 export default function EditTeamPage() {
 	const { t } = useTranslation(["common", "team"]);
 	const user = useUser();
-	const { team } = useLoaderData<typeof loader>();
+	const { team, canAddCustomizedColors } = useLoaderData<typeof loader>();
 
 	return (
 		<Main className="stack lg">
@@ -67,6 +70,14 @@ export default function EditTeamPage() {
 					</SubmitButton>
 					<FormErrors namespace="team" />
 				</Form>
+				{canAddCustomizedColors ? (
+					<>
+						<Divider className={styles.formDivider} smallText>
+							{t("team:forms.customTheme.header")}
+						</Divider>
+						<TeamCustomThemeSelector />
+					</>
+				) : null}
 			</div>
 		</Main>
 	);
@@ -233,5 +244,38 @@ function BioTextarea() {
 				data-testid="bio-textarea"
 			/>
 		</div>
+	);
+}
+
+function TeamCustomThemeSelector() {
+	const { customTheme, canAddCustomizedColors } =
+		useLoaderData<typeof loader>();
+	const fetcher = useFetcher();
+
+	const handleSave = (themeInput: ThemeInput) => {
+		fetcher.submit(
+			{
+				_action: "UPDATE_CUSTOM_THEME",
+				newValue: themeInput,
+			} as unknown as Parameters<typeof fetcher.submit>[0],
+			{ method: "post", encType: "application/json" },
+		);
+	};
+
+	const handleReset = () => {
+		fetcher.submit(
+			{ _action: "UPDATE_CUSTOM_THEME", newValue: null },
+			{ method: "post", encType: "application/json" },
+		);
+	};
+
+	return (
+		<CustomThemeSelector
+			initialTheme={customTheme}
+			isSupporter={canAddCustomizedColors}
+			isPersonalTheme={false}
+			onSave={handleSave}
+			onReset={handleReset}
+		/>
 	);
 }

@@ -250,7 +250,7 @@ function Document({
 			lang={locale}
 			dir={i18n.dir()}
 			className={clsx(htmlThemeClass, "scrollbar")}
-			style={customThemeStyle}
+			style={Object.fromEntries(customThemeStyle)}
 		>
 			<head>
 				<meta charSet="utf-8" />
@@ -353,23 +353,25 @@ declare module "react-aria-components" {
 	}
 }
 
-function useCustomThemeVars(): React.CSSProperties | undefined {
+function useCustomThemeVars() {
 	const matches = useMatches();
-	let styles: React.CSSProperties | undefined;
+	const styles: Map<string, number> = new Map();
 
 	for (const match of matches) {
 		const data = match.data as { customTheme?: CustomTheme } | undefined;
 
 		if (data?.customTheme) {
-			const styleObj: Record<string, number> = {};
-
 			for (const [key, value] of Object.entries(data.customTheme)) {
-				// Skips size variables for themes that arent the user's own
-				if (match.id !== "root" && key.includes("--_size")) continue;
-				styleObj[key] = value;
-			}
+				// Skips size and border variables for themes that arent the user's own
+				if (
+					match.id !== "root" &&
+					(key.includes("--_size") || key.includes("--_border"))
+				)
+					continue;
+				if (value === null) continue;
 
-			styles = styleObj as React.CSSProperties;
+				styles.set(key, value);
+			}
 		}
 	}
 

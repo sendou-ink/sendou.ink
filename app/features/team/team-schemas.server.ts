@@ -40,6 +40,13 @@ const deleteActionsSchema = z.object({
 export const editTeamSchema = z.union([
 	deleteActionsSchema,
 	z.object({
+		_action: _action("UPDATE_CUSTOM_THEME"),
+		newValue: z.preprocess(
+			(val) => (!val || val === "null" ? null : val),
+			themeInputSchema.nullable(),
+		),
+	}),
+	z.object({
 		_action: _action("EDIT"),
 		name: z.string().min(TEAM.NAME_MIN_LENGTH).max(TEAM.NAME_MAX_LENGTH),
 		bio: z.preprocess(

@@ -41,6 +41,23 @@ export const action: ActionFunction = async ({ request, params }) => {
 	}
 
 	switch (data._action) {
+		case "UPDATE_CUSTOM_THEME": {
+			errorToastIfFalsy(
+				canAddCustomizedColors(team),
+				"Team does not have custom theme access",
+			);
+
+			const customTheme = data.newValue
+				? clampThemeToGamut(data.newValue)
+				: null;
+
+			await TeamRepository.updateCustomTheme({
+				id: team.id,
+				customTheme,
+			});
+
+			return { ok: true };
+		}
 		case "DELETE_TEAM": {
 			await TeamRepository.del(team.id);
 			throw redirect(TEAM_SEARCH_PAGE);
