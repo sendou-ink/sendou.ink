@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { SUPPORT_PAGE } from "~/utils/urls";
 import { LinkButton, SendouButton } from "../elements/Button";
 import { AnythingAdder } from "./AnythingAdder";
-import { CommandPalette } from "./CommandPalette";
+import { GlobalSearch } from "./GlobalSearch";
 import { LogInButtonContainer } from "./LogInButtonContainer";
 import styles from "./TopRightButtons.module.css";
 
@@ -36,7 +36,7 @@ export function TopRightButtons({
 				<div className={styles.searchAndAddContainer}>
 					{showSearch ? (
 						<div className={styles.searchWrapper}>
-							<CommandPalette />
+							<GlobalSearch />
 						</div>
 					) : null}
 					<div className={styles.addNewWrapper}>

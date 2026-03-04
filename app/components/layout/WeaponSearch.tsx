@@ -30,7 +30,7 @@ import {
 	weaponBuildPopularPage,
 	weaponBuildStatsPage,
 } from "~/utils/urls";
-import styles from "./CommandPalette.module.css";
+import styles from "./GlobalSearch.module.css";
 
 const WEAPON_DESTINATIONS = [
 	"builds",

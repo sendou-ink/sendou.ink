@@ -26,7 +26,7 @@ import {
 	userPage,
 	weaponCategoryUrl,
 } from "~/utils/urls";
-import styles from "./CommandPalette.module.css";
+import styles from "./GlobalSearch.module.css";
 import {
 	filterWeaponResults,
 	getRecentWeapons,
@@ -47,7 +47,7 @@ const SEARCH_TYPES = [
 ] as const;
 type SearchType = (typeof SEARCH_TYPES)[number];
 
-const STORAGE_KEY = "command-palette-search-type";
+const STORAGE_KEY = "global-search-search-type";
 
 function searchTypeIconPath(type: SearchType): string {
 	if (type === "weapons") {
@@ -75,7 +75,7 @@ function getInitialSearchType(): SearchType {
 	return "weapons";
 }
 
-export function CommandPalette() {
+export function GlobalSearch() {
 	const { t } = useTranslation(["common"]);
 	// TODO: use zod validated search params
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -137,7 +137,7 @@ export function CommandPalette() {
 			<ModalOverlay className={styles.overlay}>
 				<Modal className={styles.modal}>
 					<Dialog className={styles.dialog} aria-label={t("common:search")}>
-						<CommandPaletteContent
+						<GlobalSearchContent
 							onClose={() => handleOpenChange(false)}
 							initialSearchType={initialSearchType}
 						/>
@@ -148,7 +148,7 @@ export function CommandPalette() {
 	);
 }
 
-function CommandPaletteContent({
+function GlobalSearchContent({
 	onClose,
 	initialSearchType,
 }: {
