@@ -408,8 +408,8 @@ function ExtraInfos() {
 				</div>
 			)}
 			{data.user.pronouns && (
-				<div className="u__extra-info">
-					<span className="u__extra-info__heading">
+				<div className={styles.extraInfo}>
+					<span className={styles.extraInfoHeading}>
 						{t("user:usesPronouns")}
 					</span>{" "}
 					{data.user.pronouns.subject}/{data.user.pronouns.object}
