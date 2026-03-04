@@ -57,7 +57,7 @@
 
 .actions {
 	display: flex;
-	gap: var(--s-1);
+	gap: var(--s-2);
 	flex-shrink: 0;
 }
 
