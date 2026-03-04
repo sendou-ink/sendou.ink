@@ -22,13 +22,13 @@ export type CommonUser = Pick<
 	"id" | "username" | "discordId" | "discordAvatar" | "customUrl"
 >;
 
-const userChatNameColorRaw = sql<
+const userChatNameHueRaw = sql<
 	string | null
->`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme" ->> 'chat', null)`;
+>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme" ->> '--_chat-h', null)`;
 
-export const userChatNameColor = userChatNameColorRaw.as("chatNameColor");
+export const userChatNameHue = userChatNameHueRaw.as("chatNameHue");
 
-export const userChatNameColorForJson = userChatNameColorRaw;
+export const userChatNameHueForJson = userChatNameHueRaw;
 
 export function commonUserJsonObject(eb: ExpressionBuilder<Tables, "User">) {
 	return jsonBuildObject({

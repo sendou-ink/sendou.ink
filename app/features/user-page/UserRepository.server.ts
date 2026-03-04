@@ -20,7 +20,7 @@ import {
 	COMMON_USER_FIELDS,
 	concatUserSubmittedImagePrefix,
 	tournamentLogoOrNull,
-	userChatNameColor,
+	userChatNameHue,
 } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 import { safeNumberParse } from "~/utils/number";
@@ -522,7 +522,7 @@ export async function findChatUsersByUserIds(userIds: number[]) {
 			"User.discordAvatar",
 			"User.username",
 			"User.pronouns",
-			userChatNameColor,
+			userChatNameHue,
 		])
 		.where("User.id", "in", userIds)
 		.execute();

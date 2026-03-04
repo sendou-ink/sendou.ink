@@ -31,7 +31,7 @@ const stm = sql.prepare(/* sql */ `
         "User"."customUrl",
         'discordAvatar',
         "User"."discordAvatar",
-        'chatNameColor', IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme" ->> 'chat', null),
+        'chatNameHue', IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme" ->> '--_chat-h', null),
         'pronouns', json("User"."pronouns")
       )
     ) as "players"
@@ -85,7 +85,7 @@ export const findMatchById = (id: number) => {
 				discordId: Tables["User"]["discordId"];
 				customUrl: Tables["User"]["customUrl"];
 				discordAvatar: Tables["User"]["discordAvatar"];
-				chatNameColor: string | null;
+				chatNameHue: string | null;
 				pronouns: Tables["User"]["pronouns"];
 			}>
 		).filter((player) => player.id),

@@ -238,9 +238,7 @@ function Message({
 					<div
 						className={styles.messageUser}
 						style={
-							user?.chatNameColor
-								? { "--chat-user-color": user.chatNameColor }
-								: undefined
+							user?.chatNameHue ? { "--chat-hue": user.chatNameHue } : undefined
 						}
 					>
 						{user?.username ?? missingUserName}

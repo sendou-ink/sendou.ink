@@ -327,6 +327,7 @@ export function clampThemeToGamut(input: ThemeInput): CustomTheme {
 		"--_second-c-3": clampedSecondaryChromas[3],
 		"--_second-c-4": clampedSecondaryChromas[4],
 		"--_second-c-5": clampedSecondaryChromas[5],
+		"--_chat-h": input.chatHue,
 		"--_radius-box": input.radiusBox,
 		"--_radius-field": input.radiusField,
 		"--_radius-selector": input.radiusSelector,

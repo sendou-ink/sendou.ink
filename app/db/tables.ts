@@ -60,6 +60,7 @@ export const CUSTOM_THEME_VARS = [
 	"--_second-c-3",
 	"--_second-c-4",
 	"--_second-c-5",
+	"--_chat-h",
 	"--_radius-box",
 	"--_radius-field",
 	"--_radius-selector",

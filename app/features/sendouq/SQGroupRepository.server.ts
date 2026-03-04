@@ -8,7 +8,7 @@ import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
 	COMMON_USER_FIELDS,
-	userChatNameColorForJson,
+	userChatNameHueForJson,
 } from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { userIsBanned } from "../ban/core/banned.server";
@@ -41,7 +41,7 @@ export async function findCurrentGroups() {
 		role: Tables["GroupMember"]["role"];
 		note: Tables["GroupMember"]["note"];
 		weapons: Tables["User"]["qWeaponPool"];
-		chatNameColor: string | null;
+		chatNameHue: string | null;
 		plusTier: Tables["PlusTier"]["tier"] | null;
 	};
 
@@ -83,7 +83,7 @@ export async function findCurrentGroups() {
 						languages: eb.ref("User.languages"),
 						plusTier: eb.ref("PlusTier.tier"),
 						vc: eb.ref("User.vc"),
-						chatNameColor: userChatNameColorForJson,
+						chatNameHue: userChatNameHueForJson,
 					}),
 				])
 				.$castTo<SendouQMemberObject[]>()

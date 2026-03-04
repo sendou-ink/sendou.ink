@@ -54,6 +54,15 @@ const COLOR_SLIDERS = [
 		labelKey: "accentChroma",
 		isHue: false,
 	},
+	{
+		id: "chat-hue",
+		inputKey: "chatHue",
+		min: THEME_INPUT_LIMITS.BASE_HUE_MIN,
+		max: THEME_INPUT_LIMITS.BASE_HUE_MAX,
+		step: 1,
+		labelKey: "chatHue",
+		isHue: true,
+	},
 ] as const;
 
 const RADIUS_SLIDERS = [
@@ -132,6 +141,7 @@ export const DEFAULT_THEME_INPUT: ThemeInput = {
 	baseChroma: 0.012,
 	accentHue: 270,
 	accentChroma: 0.24,
+	chatHue: 0,
 	radiusBox: 3,
 	radiusField: 2,
 	radiusSelector: 2,
@@ -153,6 +163,7 @@ export function themeInputFromCustomTheme(
 		accentChroma:
 			(customTheme["--_acc-c-1"] ?? 0) / ACCENT_CHROMA_MULTIPLIERS[1] ||
 			DEFAULT_THEME_INPUT.accentChroma,
+		chatHue: customTheme["--_chat-h"] ?? DEFAULT_THEME_INPUT.chatHue,
 		radiusBox: customTheme["--_radius-box"] ?? DEFAULT_THEME_INPUT.radiusBox,
 		radiusField:
 			customTheme["--_radius-field"] ?? DEFAULT_THEME_INPUT.radiusField,
