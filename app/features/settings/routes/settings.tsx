@@ -222,6 +222,7 @@ function CustomColorSelector() {
 
 	return (
 		<CustomThemeSelector
+			isPersonalTheme
 			initialTheme={data.customTheme}
 			isSupporter={isSupporter}
 			onSave={handleSave}

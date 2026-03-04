@@ -221,12 +221,14 @@ function ThemeSlider({
 export function CustomThemeSelector({
 	initialTheme,
 	isSupporter,
+	isPersonalTheme,
 	onSave,
 	onReset,
 	hidePatreonInfo,
 }: {
 	initialTheme: CustomTheme | null | undefined;
 	isSupporter: boolean;
+	isPersonalTheme: boolean;
 	onSave: (themeInput: ThemeInput) => void;
 	onReset: () => void;
 	hidePatreonInfo?: boolean;
@@ -307,15 +309,17 @@ export function CustomThemeSelector({
 						onChange={handleSliderChange}
 					/>
 				))}
-				<div className="mt-2">
-					<SendouSwitch
-						isSelected={chatHueEnabled}
-						onChange={handleChatHueToggle}
-					>
-						{t("common:settings.customTheme.chatHueToggle")}
-					</SendouSwitch>
-				</div>
-				{chatHueEnabled ? (
+				{isPersonalTheme ? (
+					<div className="mt-2">
+						<SendouSwitch
+							isSelected={chatHueEnabled}
+							onChange={handleChatHueToggle}
+						>
+							{t("common:settings.customTheme.chatHueToggle")}
+						</SendouSwitch>
+					</div>
+				) : null}
+				{chatHueEnabled && isPersonalTheme ? (
 					<div className={styles.chatColorPreview}>
 						<ThemeSlider
 							id="chat-hue"
@@ -347,38 +351,44 @@ export function CustomThemeSelector({
 					/>
 				))}
 			</div>
-			<Divider smallText>{t("common:settings.customTheme.sizes")}</Divider>
-			<div className={styles.themeSliders}>
-				{SIZE_SLIDERS.map((slider) => (
-					<ThemeSlider
-						key={slider.id}
-						id={slider.id}
-						inputKey={slider.inputKey}
-						min={slider.min}
-						max={slider.max}
-						step={slider.step}
-						label={t(`common:settings.customTheme.${slider.labelKey}`)}
-						value={themeInput[slider.inputKey]}
-						onChange={handleSliderChange}
-					/>
-				))}
-			</div>
-			<Divider smallText>{t("common:settings.customTheme.borders")}</Divider>
-			<div className={styles.themeSliders}>
-				{BORDER_SLIDERS.map((slider) => (
-					<ThemeSlider
-						key={slider.id}
-						id={slider.id}
-						inputKey={slider.inputKey}
-						min={slider.min}
-						max={slider.max}
-						step={slider.step}
-						label={t(`common:settings.customTheme.${slider.labelKey}`)}
-						value={themeInput[slider.inputKey]}
-						onChange={handleSliderChange}
-					/>
-				))}
-			</div>
+			{isPersonalTheme ? (
+				<>
+					<Divider smallText>{t("common:settings.customTheme.sizes")}</Divider>
+					<div className={styles.themeSliders}>
+						{SIZE_SLIDERS.map((slider) => (
+							<ThemeSlider
+								key={slider.id}
+								id={slider.id}
+								inputKey={slider.inputKey}
+								min={slider.min}
+								max={slider.max}
+								step={slider.step}
+								label={t(`common:settings.customTheme.${slider.labelKey}`)}
+								value={themeInput[slider.inputKey]}
+								onChange={handleSliderChange}
+							/>
+						))}
+					</div>
+					<Divider smallText>
+						{t("common:settings.customTheme.borders")}
+					</Divider>
+					<div className={styles.themeSliders}>
+						{BORDER_SLIDERS.map((slider) => (
+							<ThemeSlider
+								key={slider.id}
+								id={slider.id}
+								inputKey={slider.inputKey}
+								min={slider.min}
+								max={slider.max}
+								step={slider.step}
+								label={t(`common:settings.customTheme.${slider.labelKey}`)}
+								value={themeInput[slider.inputKey]}
+								onChange={handleSliderChange}
+							/>
+						))}
+					</div>
+				</>
+			) : null}
 			<div className={styles.customThemeSelectorActions}>
 				<SendouButton isDisabled={!isSupporter} onPress={handleSave}>
 					{t("common:actions.save")}
