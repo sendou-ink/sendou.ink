@@ -23,7 +23,7 @@
 }
 
 .segment:not([data-type="literal"]) {
-	padding: 0 var(--s-1);
+	padding: 0 var(--s-0-5);
 	border-radius: 5px;
 }
 
