@@ -92,6 +92,42 @@ textarea:not([name="text"]) {
 	}
 }
 
+.input-container {
+	display: flex;
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg);
+	height: var(--field-size);
+	font-size: var(--font-sm);
+	outline: none;
+}
+
+.input-container:focus-within {
+	outline: var(--focus-ring);
+	outline-offset: 1px;
+}
+
+.in-container {
+	width: 100%;
+	padding: 0 var(--field-padding);
+	border: none;
+	background: transparent;
+	margin: auto 0;
+	outline: none;
+}
+
+.input-addon {
+	--addon-radius: calc(var(--radius-field) - 2px);
+	display: grid;
+	border-radius: var(--addon-radius) 0 0 var(--addon-radius);
+	background-color: var(--color-bg-high);
+	color: var(--color-text-high);
+	font-size: var(--font-sm);
+	padding-inline: var(--field-padding);
+	place-items: center;
+	white-space: nowrap;
+}
+
 input:not(.in-container) {
 	width: 100%;
 	box-sizing: border-box;
