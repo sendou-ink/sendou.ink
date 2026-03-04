@@ -27,18 +27,29 @@
 }
 
 .siteLogo {
-	display: grid;
-	place-items: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
 	width: 36px;
 	height: 36px;
 	background-color: var(--color-accent);
 	border-radius: var(--radius-field);
-	font-size: var(--font-lg);
 	font-weight: var(--weight-bold);
 	color: var(--color-text);
 	text-decoration: none;
 	flex-shrink: 0;
 	transition: background-color 0.2s;
+	line-height: 1;
+	gap: 1px;
+}
+
+.siteLogoS {
+	font-size: var(--font-sm);
+}
+
+.siteLogoInk {
+	font-size: 10px;
 }
 
 .siteLogo:hover {
@@ -131,16 +142,19 @@
 
 @media screen and (max-width: 599px) {
 	.mobileLogo {
-		display: grid;
-		place-items: center;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
 		width: 36px;
 		height: 36px;
 		background-color: var(--color-accent);
 		border-radius: var(--radius-field);
-		font-size: var(--font-lg);
 		font-weight: var(--weight-bold);
 		color: var(--color-text);
 		text-decoration: none;
 		flex-shrink: 0;
+		line-height: 1;
+		gap: 1px;
 	}
 }

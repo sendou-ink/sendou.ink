@@ -347,7 +347,7 @@ function SiteTitle() {
 			<div className={styles.siteTitle}>
 				<Flipped flipId="site-logo">
 					<Link to="/" className={styles.siteLogo}>
-						S
+						<SiteLogoContent />
 					</Link>
 				</Flipped>
 
@@ -370,10 +370,19 @@ function SiteTitle() {
 	);
 }
 
+function SiteLogoContent() {
+	return (
+		<>
+			<span className={styles.siteLogoS}>S</span>
+			<span className={styles.siteLogoInk}>ink</span>
+		</>
+	);
+}
+
 function MobileLogo() {
 	return (
 		<Link to="/" className={styles.mobileLogo}>
-			S
+			<SiteLogoContent />
 		</Link>
 	);
 }
