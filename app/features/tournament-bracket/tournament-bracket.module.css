@@ -526,3 +526,38 @@
 .actionSectionWrapper [class*="tabPanel"]:has([class*="chatContainer"]) {
 	padding: var(--s-1) var(--s-4);
 }
+
+.bracketNavLink {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	border-color: var(--color-bg-higher);
+	background-color: var(--color-bg);
+	border-radius: 0;
+}
+
+.bracketNavLinkBig {
+	font-size: var(--font-lg);
+}
+
+.bracketNavLink:active {
+	transform: translateY(0px);
+}
+
+.bracketNavLink:first-of-type {
+	border-start-start-radius: var(--radius-box);
+	border-end-start-radius: var(--radius-box);
+}
+
+.bracketNavLink:not(.bracketNavLink:first-of-type) {
+	margin-left: -2px;
+}
+
+.bracketNavLink:last-of-type {
+	border-start-end-radius: var(--radius-box);
+	border-end-end-radius: var(--radius-box);
+}
+
+.bracketNavLinkSelected {
+	color: var(--color-text);
+	background-color: var(--color-bg-high);
+}
