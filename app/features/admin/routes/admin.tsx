@@ -172,16 +172,20 @@ function MigrateUser() {
 		<fetcher.Form className="stack md" method="post">
 			<h2>Migrate user data</h2>
 			<div className="stack horizontal md">
-				<UserSearch
-					label="Old user"
-					name="old-user"
-					onChange={(newUser) => setOldUserId(newUser?.id)}
-				/>
-				<UserSearch
-					label="New user"
-					name="new-user"
-					onChange={(newUser) => setNewUserId(newUser?.id)}
-				/>
+				<div className="flex-same-size">
+					<UserSearch
+						label="Old user"
+						name="old-user"
+						onChange={(newUser) => setOldUserId(newUser?.id)}
+					/>
+				</div>
+				<div className="flex-same-size">
+					<UserSearch
+						label="New user"
+						name="new-user"
+						onChange={(newUser) => setNewUserId(newUser?.id)}
+					/>
+				</div>
 			</div>
 			<div className="stack horizontal md">
 				<SubmitButton
@@ -207,8 +211,10 @@ function LinkPlayer() {
 		<fetcher.Form className="stack md" method="post">
 			<h2>Link player</h2>
 			<div className="stack horizontal md">
-				<UserSearch label="User" name="user" />
-				<div>
+				<div className="flex-same-size">
+					<UserSearch label="User" name="user" />
+				</div>
+				<div className="flex-same-size">
 					<label>Player ID</label>
 					<input type="number" name="playerId" />
 				</div>
@@ -302,8 +308,10 @@ function UpdateFriendCode() {
 		<fetcher.Form className="stack md" method="post">
 			<h2>Update friend code</h2>
 			<div className="stack horizontal md">
-				<UserSearch label="User" name="user" />
-				<div>
+				<div className="flex-same-size">
+					<UserSearch label="User" name="user" />
+				</div>
+				<div className="flex-same-size">
 					<label htmlFor={id}>Friend code</label>
 					<Input
 						leftAddon="SW-"
@@ -334,9 +342,11 @@ function ForcePatron() {
 		<fetcher.Form className="stack md" method="post">
 			<h2>Force patron</h2>
 			<div className="stack horizontal md">
-				<UserSearch label="User" name="user" />
+				<div className="flex-same-size">
+					<UserSearch label="User" name="user" />
+				</div>
 
-				<div>
+				<div className="flex-same-size">
 					<label>Tier</label>
 					<select name="patronTier">
 						<option value="1">Support</option>
@@ -345,7 +355,7 @@ function ForcePatron() {
 					</select>
 				</div>
 
-				<div>
+				<div className="flex-same-size">
 					<label>Patron till</label>
 					<input name="patronTill" type="date" />
 				</div>
@@ -370,14 +380,16 @@ function BanUser() {
 		<fetcher.Form className="stack md" method="post">
 			<h2 className="text-warning">Ban user</h2>
 			<div className="stack horizontal md">
-				<UserSearch label="User" name="user" />
+				<div className="flex-same-size">
+					<UserSearch label="User" name="user" />
+				</div>
 
-				<div>
+				<div className="flex-same-size">
 					<label>Banned till</label>
 					<input name="duration" type="datetime-local" />
 				</div>
 
-				<div>
+				<div className="flex-same-size">
 					<label>Reason</label>
 					<input name="reason" type="text" />
 				</div>
