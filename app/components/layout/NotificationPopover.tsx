@@ -99,7 +99,6 @@ function NotificationsFooter({ onClose }: { onClose?: () => void }) {
 				variant="minimal"
 				size="small"
 				to={NOTIFICATIONS_URL}
-				className="mt-1-5"
 				testId="notifications-see-all-button"
 				onClick={onClose}
 			>
