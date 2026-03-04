@@ -81,7 +81,8 @@ export const themeInputSchema = z.object({
 	chatHue: z
 		.number()
 		.min(THEME_INPUT_LIMITS.BASE_HUE_MIN)
-		.max(THEME_INPUT_LIMITS.BASE_HUE_MAX),
+		.max(THEME_INPUT_LIMITS.BASE_HUE_MAX)
+		.nullable(),
 	radiusBox: z
 		.number()
 		.int()

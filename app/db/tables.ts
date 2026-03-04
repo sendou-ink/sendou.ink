@@ -70,7 +70,9 @@ export const CUSTOM_THEME_VARS = [
 	"--_size-spacing",
 ] as const;
 export type CustomThemeVar = (typeof CUSTOM_THEME_VARS)[number];
-export type CustomTheme = Record<CustomThemeVar, number>;
+export type CustomTheme = Omit<Record<CustomThemeVar, number>, "--_chat-h"> & {
+	"--_chat-h": number | null;
+};
 
 export interface Team {
 	avatarImgId: number | null;

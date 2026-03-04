@@ -332,6 +332,7 @@
 	"settings.customTheme.baseChroma": "Base chroma",
 	"settings.customTheme.accentHue": "Accent hue",
 	"settings.customTheme.accentChroma": "Accent chroma",
+	"settings.customTheme.chatHueToggle": "Use custom chat name color",
 	"settings.customTheme.chatHue": "Chat name color",
 	"settings.customTheme.boxes": "Boxes",
 	"settings.customTheme.fields": "Fields",

@@ -15,6 +15,7 @@ import { THEME_INPUT_LIMITS } from "~/utils/zod";
 import styles from "./CustomThemeSelector.module.css";
 import { Divider } from "./Divider";
 import { LinkButton, SendouButton } from "./elements/Button";
+import { SendouSwitch } from "./elements/Switch";
 import { Label } from "./Label";
 
 const COLOR_SLIDERS = [
@@ -53,15 +54,6 @@ const COLOR_SLIDERS = [
 		step: 0.01,
 		labelKey: "accentChroma",
 		isHue: false,
-	},
-	{
-		id: "chat-hue",
-		inputKey: "chatHue",
-		min: THEME_INPUT_LIMITS.BASE_HUE_MIN,
-		max: THEME_INPUT_LIMITS.BASE_HUE_MAX,
-		step: 1,
-		labelKey: "chatHue",
-		isHue: true,
 	},
 ] as const;
 
@@ -134,14 +126,15 @@ type ThemeInputKey =
 	| (typeof COLOR_SLIDERS)[number]["inputKey"]
 	| (typeof RADIUS_SLIDERS)[number]["inputKey"]
 	| (typeof BORDER_SLIDERS)[number]["inputKey"]
-	| (typeof SIZE_SLIDERS)[number]["inputKey"];
+	| (typeof SIZE_SLIDERS)[number]["inputKey"]
+	| "chatHue";
 
 export const DEFAULT_THEME_INPUT: ThemeInput = {
 	baseHue: 260,
 	baseChroma: 0.012,
 	accentHue: 270,
 	accentChroma: 0.24,
-	chatHue: 0,
+	chatHue: null,
 	radiusBox: 3,
 	radiusField: 2,
 	radiusSelector: 2,
@@ -163,7 +156,7 @@ export function themeInputFromCustomTheme(
 		accentChroma:
 			(customTheme["--_acc-c-1"] ?? 0) / ACCENT_CHROMA_MULTIPLIERS[1] ||
 			DEFAULT_THEME_INPUT.accentChroma,
-		chatHue: customTheme["--_chat-h"] ?? DEFAULT_THEME_INPUT.chatHue,
+		chatHue: customTheme["--_chat-h"],
 		radiusBox: customTheme["--_radius-box"] ?? DEFAULT_THEME_INPUT.radiusBox,
 		radiusField:
 			customTheme["--_radius-field"] ?? DEFAULT_THEME_INPUT.radiusField,
@@ -253,6 +246,17 @@ export function CustomThemeSelector({
 		applyThemeInput(updatedInput);
 	};
 
+	const chatHueEnabled = themeInput.chatHue !== null;
+
+	const handleChatHueToggle = (isSelected: boolean) => {
+		const updatedInput = {
+			...themeInput,
+			chatHue: isSelected ? 0 : null,
+		};
+		setThemeInput(updatedInput);
+		applyThemeInput(updatedInput);
+	};
+
 	const handleSave = () => {
 		onSave(themeInput);
 	};
@@ -303,6 +307,29 @@ export function CustomThemeSelector({
 						onChange={handleSliderChange}
 					/>
 				))}
+				<div className="mt-2">
+					<SendouSwitch
+						isSelected={chatHueEnabled}
+						onChange={handleChatHueToggle}
+					>
+						{t("common:settings.customTheme.chatHueToggle")}
+					</SendouSwitch>
+				</div>
+				{chatHueEnabled ? (
+					<div className={styles.chatColorPreview}>
+						<ThemeSlider
+							id="chat-hue"
+							inputKey="chatHue"
+							min={THEME_INPUT_LIMITS.BASE_HUE_MIN}
+							max={THEME_INPUT_LIMITS.BASE_HUE_MAX}
+							step={1}
+							label={t("common:settings.customTheme.chatHue")}
+							isHue
+							value={themeInput.chatHue ?? 0}
+							onChange={handleSliderChange}
+						/>
+					</div>
+				) : null}
 			</div>
 			<Divider smallText>{t("common:settings.customTheme.radius")}</Divider>
 			<div className={styles.themeSliders}>

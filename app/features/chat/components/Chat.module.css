@@ -63,7 +63,7 @@
 .messageUser {
 	font-weight: var(--weight-semi);
 	font-size: var(--font-sm);
-	color: oklch(from var(--color-accent) l c var(--chat-hue));
+	color: oklch(from var(--color-text-accent) l c var(--chat-hue));
 	max-width: 110px;
 	overflow: hidden;
 	text-overflow: ellipsis;

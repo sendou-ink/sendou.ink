@@ -80,3 +80,7 @@
 		oklch(65% 0.15 360)
 	) !important;
 }
+
+.chatColorPreview {
+	color: oklch(from var(--color-text-accent) l c var(--_chat-h));
+}
