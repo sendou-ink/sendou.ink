@@ -68,7 +68,7 @@
 }
 
 .calendarDayToday {
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 	font-weight: var(--weight-bold);
 }
 
