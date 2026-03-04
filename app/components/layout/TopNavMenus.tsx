@@ -1,13 +1,10 @@
-import clsx from "clsx";
 import { useState } from "react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { href, Link } from "react-router";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
-import { mySlugify, navIconUrl } from "~/utils/urls";
+import { Link } from "react-router";
+import { navIconUrl } from "~/utils/urls";
 import { SendouPopover } from "../elements/Popover";
-import { Image, WeaponImage } from "../Image";
+import { Image } from "../Image";
 import styles from "./TopNavMenus.module.css";
 
 const NAV_CATEGORIES = [
@@ -58,7 +55,6 @@ export function TopNavMenus() {
 			{NAV_CATEGORIES.map((category) => (
 				<CategoryMenu key={category.name} category={category} />
 			))}
-			<WeaponsMenu />
 		</nav>
 	);
 }
@@ -99,54 +95,6 @@ function CategoryMenu({
 						/>
 						{t(`common:pages.${item.name}`)}
 					</Link>
-				))}
-			</div>
-		</SendouPopover>
-	);
-}
-
-function WeaponsMenu() {
-	const { t } = useTranslation(["front", "weapons"]);
-	const [isOpen, setIsOpen] = useState(false);
-
-	const weaponIdToSlug = (weaponId: MainWeaponId) => {
-		return mySlugify(t(`weapons:MAIN_${weaponId}`, { lng: "en" }));
-	};
-
-	return (
-		<SendouPopover
-			trigger={
-				<Button className={styles.menuButton}>{t("front:nav.weapons")}</Button>
-			}
-			popoverClassName={clsx(styles.weaponsPopover, "scrollbar")}
-			placement="bottom"
-			isOpen={isOpen}
-			onOpenChange={setIsOpen}
-		>
-			<div className={styles.weaponsContent}>
-				{weaponCategories.map((category) => (
-					<div key={category.name} className={styles.weaponCategory}>
-						<div className={styles.weaponCategoryHeader}>{category.name}</div>
-						<div className={styles.weaponGrid}>
-							{category.weaponIds.map((weaponId) => (
-								<Link
-									key={weaponId}
-									to={href("/weapons/:slug", {
-										slug: weaponIdToSlug(weaponId),
-									})}
-									className={styles.weaponLink}
-									title={t(`weapons:MAIN_${weaponId}`)}
-									onClick={() => setIsOpen(false)}
-								>
-									<WeaponImage
-										weaponSplId={weaponId as MainWeaponId}
-										variant="build"
-										size={32}
-									/>
-								</Link>
-							))}
-						</div>
-					</div>
 				))}
 			</div>
 		</SendouPopover>

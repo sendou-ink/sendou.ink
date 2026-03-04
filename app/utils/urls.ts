@@ -269,10 +269,6 @@ export const weaponBuildStatsPage = (weaponSlug: string) =>
 export const weaponBuildPopularPage = (weaponSlug: string) =>
 	`${weaponBuildPage(weaponSlug)}/popular`;
 
-export const WEAPONS_PAGE = "/weapons";
-export const weaponPage = (weaponSlug: string) =>
-	`${WEAPONS_PAGE}/${weaponSlug}`;
-
 export const calendarPage = (args?: {
 	filters?: CalendarFilters;
 	dayMonthYear?: DayMonthYear;

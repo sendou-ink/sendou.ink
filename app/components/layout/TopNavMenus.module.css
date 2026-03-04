@@ -58,68 +58,8 @@
 	flex-shrink: 0;
 }
 
-.weaponsPopover {
-	max-width: 90dvw;
-	width: 680px;
-	background-color: var(--color-bg-high);
-	overflow-y: auto;
-}
-
-.weaponsContent {
-	display: grid;
-	grid-template-columns: repeat(3, 1fr);
-	gap: var(--s-8) var(--s-4);
-}
-
-.weaponCategory {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-1);
-}
-
-.weaponCategoryHeader {
-	font-size: var(--font-2xs);
-	font-weight: var(--weight-bold);
-	color: var(--color-text);
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-	padding-bottom: var(--s-0-5);
-	border-bottom: 1px solid var(--color-border-high);
-}
-
-.weaponGrid {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--s-0-5);
-}
-
-.weaponLink {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: var(--s-0-5);
-	border-radius: var(--radius-field);
-	transition:
-		background-color 0.15s,
-		color 0.15s;
-
-	&:hover {
-		background-color: var(--color-bg-higher);
-	}
-}
-
 @media screen and (max-width: 1000px) {
 	.container {
 		display: none;
-	}
-}
-
-@media screen and (max-width: 768px) {
-	.weaponsContent {
-		grid-template-columns: repeat(2, 1fr);
-	}
-
-	.weaponsPopover {
-		width: 450px;
 	}
 }
