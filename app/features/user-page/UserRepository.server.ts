@@ -83,11 +83,13 @@ export function findLayoutDataByIdentifier(
 	loggedInUserId?: number,
 ) {
 	return identifierToUserIdQuery(identifier)
+		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.select((eb) => [
 			...COMMON_USER_FIELDS,
 			"User.pronouns",
 			"User.country",
 			"User.inGameName",
+			"PlusTier.tier as plusTier",
 			"User.commissionText",
 			"User.commissionsOpen",
 			sql<Record<

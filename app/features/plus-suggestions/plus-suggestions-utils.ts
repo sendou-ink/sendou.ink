@@ -88,7 +88,7 @@ function alreadyCommentedByUser({
 	);
 }
 
-export function playerAlreadySuggested({
+function playerAlreadySuggested({
 	suggestions,
 	suggested,
 	targetPlusTier,
@@ -152,16 +152,6 @@ export function canSuggestNewUser({
 
 function isPlusServerMember(user?: Pick<UserWithPlusTier, "plusTier">) {
 	return Boolean(user?.plusTier);
-}
-
-export function playerAlreadyMember({
-	suggested,
-	targetPlusTier,
-}: {
-	suggested: Pick<UserWithPlusTier, "id" | "plusTier">;
-	targetPlusTier: NonNullable<UserWithPlusTier["plusTier"]>;
-}) {
-	return suggested.plusTier && suggested.plusTier <= targetPlusTier;
 }
 
 function hasUserSuggestedThisMonth({

@@ -30,6 +30,7 @@
 	"stat.quickRespawnTimeSplattedByRP": "復活短縮時間 (復活ペナルティアップ付きのプレイヤーにやられた場合)",
 	"stat.superJumpTimeGround": "スーパージャンプの硬直フレーム数",
 	"stat.superJumpTimeTotal": "スーパージャンプにかかる時間(合計)",
+	"stat.superJumpTimeTotal.stealthJumpExplanation": "",
 	"stat.jumpShotSpread": "インクのブレの角度(ジャンプ撃ち)",
 	"stat.groundShotSpread": "インクのブレの角度(立ち撃ち)",
 	"stat.shotAutofireSpreadGround": "長押し時のブレの角度(立ち撃ち)",

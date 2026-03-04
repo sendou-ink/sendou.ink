@@ -14,7 +14,11 @@ export const USER = {
 	MOD_NOTE_MAX_LENGTH: 2000,
 	MAX_MAIN_WIDGETS: 5,
 	MAX_SIDE_WIDGETS: 7,
+	GAME_BADGES_MAX: 8,
+	GAME_BADGES_SMALL_MAX: 4,
 };
+
+export const IN_GAME_NAME_REGEXP = /^.{1,10}#[0-9a-z]{4,5}$/;
 
 export const MATCHES_PER_SEASONS_PAGE = 8;
 export const RESULTS_PER_PAGE = 25;

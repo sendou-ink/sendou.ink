@@ -30,6 +30,7 @@
 	"stat.quickRespawnTimeSplattedByRP": "复活时间（被死惩使用者击杀）",
 	"stat.superJumpTimeGround": "超级跳前摇时间",
 	"stat.superJumpTimeTotal": "超级跳时间 (总和)",
+	"stat.superJumpTimeTotal.stealthJumpExplanation": "",
 	"stat.jumpShotSpread": "射击乱数角度 (跳跃)",
 	"stat.groundShotSpread": "射击乱数角度 (地面)",
 	"stat.shotAutofireSpreadGround": "第二射击模式乱数 (地面)",

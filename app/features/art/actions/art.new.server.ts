@@ -21,7 +21,7 @@ import { editArtSchema, newArtSchema } from "../art-schemas.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
-	requireRole(user, "ARTIST");
+	requireRole("ARTIST");
 
 	const searchParams = new URL(request.url).searchParams;
 	const artIdRaw = searchParams.get(NEW_ART_EXISTING_SEARCH_PARAM_KEY);

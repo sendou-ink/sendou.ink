@@ -12,7 +12,7 @@ import { canEditCalendarEvent } from "../calendar-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = requireUser();
-	requireRole(user, "CALENDAR_EVENT_ADDER");
+	requireRole("CALENDAR_EVENT_ADDER");
 
 	const url = new URL(request.url);
 

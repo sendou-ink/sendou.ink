@@ -30,7 +30,7 @@ export function Markdown({ children }: { children: string }) {
 							children?: React.ReactNode;
 						}) => (
 							// biome-ignore lint/a11y/useAltText: parsed markdown, so we can't guarantee alt text is present
-							<img {...props} />
+							<img {...props} referrerPolicy="no-referrer" />
 						),
 					},
 				},

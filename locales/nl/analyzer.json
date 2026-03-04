@@ -30,6 +30,7 @@
 	"stat.quickRespawnTimeSplattedByRP": "",
 	"stat.superJumpTimeGround": "Turbosprong kwetsbaarheid frames",
 	"stat.superJumpTimeTotal": "Turbosprong tijd (totaal)",
+	"stat.superJumpTimeTotal.stealthJumpExplanation": "",
 	"stat.jumpShotSpread": "Kogel spreiding in graden (in de lucht)",
 	"stat.groundShotSpread": "Kogel spreiding in graden (op de grond)",
 	"stat.shotAutofireSpreadGround": "",

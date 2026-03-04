@@ -30,6 +30,7 @@
 	"stat.quickRespawnTimeSplattedByRP": "부활 시간 단축 (페널티 유저에게 쓰러졌을 때)",
 	"stat.superJumpTimeGround": "슈퍼 점프 선딜 프레임",
 	"stat.superJumpTimeTotal": "총 슈퍼 점프 시간",
+	"stat.superJumpTimeTotal.stealthJumpExplanation": "",
 	"stat.jumpShotSpread": "탄퍼짐 각도 (점프)",
 	"stat.groundShotSpread": "탄퍼짐 각도 (지상)",
 	"stat.shotAutofireSpreadGround": "보조 모드 탄퍼짐 (지상)",

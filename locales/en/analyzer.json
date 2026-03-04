@@ -30,6 +30,7 @@
 	"stat.quickRespawnTimeSplattedByRP": "Quick Respawn time (splatted by RP user)",
 	"stat.superJumpTimeGround": "Super jump vulnerable frames",
 	"stat.superJumpTimeTotal": "Super jump time (total)",
+	"stat.superJumpTimeTotal.stealthJumpExplanation": "The time shown is the maximum. The actual penalty depends on how far the jump travels.",
 	"stat.jumpShotSpread": "Shot spread in degrees (jumping)",
 	"stat.groundShotSpread": "Shot spread in degrees (ground)",
 	"stat.shotAutofireSpreadGround": "Secondary mode spread (ground)",

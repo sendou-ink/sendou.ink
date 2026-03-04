@@ -150,6 +150,7 @@ function BuildAnalyzerPage() {
 	};
 
 	const objectShredderSelected = build[2][0] === "OS" || build2[2][0] === "OS";
+	const stealthJumpSelected = build[2][0] === "SJ" || build2[2][0] === "SJ";
 
 	const context = {
 		isComparing: !buildIsEmpty(build) && !buildIsEmpty(build2),
@@ -933,6 +934,11 @@ function BuildAnalyzerPage() {
 							stat={statKeyToTuple("superJumpTimeTotal")}
 							title={t("analyzer:stat.superJumpTimeTotal")}
 							suffix={t("analyzer:suffix.seconds")}
+							popoverInfo={
+								stealthJumpSelected
+									? t("analyzer:stat.superJumpTimeTotal.stealthJumpExplanation")
+									: undefined
+							}
 						/>
 					</StatCategory>
 					{objectShredderSelected && (

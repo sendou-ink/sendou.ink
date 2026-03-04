@@ -30,6 +30,7 @@
 	"stat.quickRespawnTimeSplattedByRP": "Tempo per respawnare con \"Il tempo è colore\" (splattato da utente Castigo)",
 	"stat.superJumpTimeGround": "Fotogrammi di vulnerabilità durante un super salto",
 	"stat.superJumpTimeTotal": "Tempo totale super salto",
+	"stat.superJumpTimeTotal.stealthJumpExplanation": "",
 	"stat.jumpShotSpread": "Diffusione a caso proiettili (saltando)",
 	"stat.groundShotSpread": "Diffusione a caso proiettili (a terra)",
 	"stat.shotAutofireSpreadGround": "Diffusione a caso proiettili modalità secondaria (ground)",

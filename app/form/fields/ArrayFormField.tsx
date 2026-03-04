@@ -38,17 +38,29 @@ export function ArrayFormField({
 	const count = value.length;
 
 	const handleAdd = () => {
-		const newItemValue =
+		const baseValue =
 			itemInitialValue !== undefined
 				? itemInitialValue
 				: isObjectArray
 					? {}
 					: undefined;
+		const newItemValue =
+			typeof baseValue === "object" && baseValue !== null
+				? {
+						...(baseValue as Record<string, unknown>),
+						_key: crypto.randomUUID(),
+					}
+				: baseValue;
 		onChange([...value, newItemValue]);
 	};
 
 	const handleRemoveAt = (index: number) => {
 		onChange(value.filter((_, i) => i !== index));
+	};
+
+	const itemKey = (idx: number) => {
+		if (!isObjectArray) return idx;
+		return ((value[idx] as Record<string, unknown>)?._key as string) ?? idx;
 	};
 
 	return (
@@ -59,7 +71,7 @@ export function ArrayFormField({
 			{Array.from({ length: count }).map((_, idx) =>
 				isObjectArray ? (
 					<ArrayItemFieldset
-						key={idx}
+						key={itemKey(idx)}
 						index={idx}
 						canRemove={count > min}
 						onRemove={() => handleRemoveAt(idx)}
@@ -68,7 +80,10 @@ export function ArrayFormField({
 						{renderItem(idx, `${name}[${idx}]`)}
 					</ArrayItemFieldset>
 				) : (
-					<div key={idx} className="stack horizontal sm items-center w-full">
+					<div
+						key={itemKey(idx)}
+						className="stack horizontal sm items-center w-full"
+					>
 						<div className={styles.itemInput}>
 							{renderItem(idx, `${name}[${idx}]`)}
 						</div>

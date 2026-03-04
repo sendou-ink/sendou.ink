@@ -30,6 +30,7 @@
 	"stat.quickRespawnTimeSplattedByRP": "Tempo de Quick Respawn (eliminado(a) por usuário de RP)",
 	"stat.superJumpTimeGround": "Quadros vulneráveis antes do Super Jump",
 	"stat.superJumpTimeTotal": "Tempo de Super Jump (total)",
+	"stat.superJumpTimeTotal.stealthJumpExplanation": "",
 	"stat.jumpShotSpread": "Propagação dos tiros em graus (pulando)",
 	"stat.groundShotSpread": "Propagação dos tiros em graus (no chão)",
 	"stat.shotAutofireSpreadGround": "Propagação do modo secundário (no chão)",

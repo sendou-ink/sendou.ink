@@ -30,6 +30,7 @@
 	"stat.quickRespawnTimeSplattedByRP": "Время ускоренного воскрешения (плюхнут игроком с Карой)",
 	"stat.superJumpTimeGround": "Период уязвимости суперпрыжка (в кадрах)",
 	"stat.superJumpTimeTotal": "Общая длительность суперпрыжка",
+	"stat.superJumpTimeTotal.stealthJumpExplanation": "",
 	"stat.jumpShotSpread": "Разброс выстрелов в градусах (в прыжке)",
 	"stat.groundShotSpread": "Разброс выстрелов в градусах (на земле)",
 	"stat.shotAutofireSpreadGround": "Разброс выстрелов вторичного режима (на земле)",

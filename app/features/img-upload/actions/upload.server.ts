@@ -33,7 +33,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			: undefined;
 	const organization =
 		validatedType === "org-pfp"
-			? await requireEditableOrganization({ user, request })
+			? await requireEditableOrganization(request)
 			: undefined;
 
 	errorToastIfFalsy(
@@ -115,13 +115,7 @@ async function validatedTeam({
 	return team;
 }
 
-async function requireEditableOrganization({
-	user,
-	request,
-}: {
-	user: { id: number };
-	request: Request;
-}) {
+async function requireEditableOrganization(request: Request) {
 	const { slug } = parseSearchParams({
 		request,
 		schema: z.object({ slug: z.string() }),
@@ -130,7 +124,7 @@ async function requireEditableOrganization({
 		await TournamentOrganizationRepository.findBySlug(slug),
 	);
 
-	requirePermission(organization, "EDIT", user);
+	requirePermission(organization, "EDIT");
 
 	return organization;
 }

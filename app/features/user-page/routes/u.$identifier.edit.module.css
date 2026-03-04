@@ -6,29 +6,9 @@
 	gap: var(--s-6);
 }
 
-.inGameNameHashtag {
-	font-size: var(--font-lg);
-}
-
-.inGameNameDiscriminator {
-	min-width: 5rem;
-	flex: 1;
-}
-
-.sensContainer {
-	width: 100%;
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: var(--s-4);
-}
-
 .sensSelect {
 	min-width: 100%;
 	flex: 1;
-}
-
-.seperator {
-	margin-left: var(--s-4);
 }
 
 .weaponPool {
@@ -37,12 +17,4 @@
 
 .starFilled {
 	fill: var(--color-text-accent);
-}
-
-.bioContainer {
-	width: 100%;
-}
-
-.bioContainer > textarea {
-	width: 100%;
 }

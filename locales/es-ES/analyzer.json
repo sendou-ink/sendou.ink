@@ -30,6 +30,7 @@
 	"stat.quickRespawnTimeSplattedByRP": "Tiempo de regeneracion rápida (al ser reventado por jugador con Castigo Póstumo)",
 	"stat.superJumpTimeGround": "Fotogramas vulnerables de supersalto",
 	"stat.superJumpTimeTotal": "Tiempo de supersalto (total)",
+	"stat.superJumpTimeTotal.stealthJumpExplanation": "",
 	"stat.jumpShotSpread": "Dispersión de disparos en grados (saltando)",
 	"stat.groundShotSpread": "Dispersión de disparos en grados (parado)",
 	"stat.shotAutofireSpreadGround": "Modo de disparo secundario (parado)",
