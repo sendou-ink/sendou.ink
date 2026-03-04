@@ -77,6 +77,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 				seeding.length,
 			);
 
+			if (tournament.isLeagueDivision && bracket.type === "round_robin") {
+				settings.skipRoundRobinLocking = true;
+			}
+
 			const maps = settings.consolationFinal
 				? adjustLinkedRounds({
 						maps: data.maps,

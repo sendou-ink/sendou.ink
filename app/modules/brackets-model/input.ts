@@ -121,4 +121,10 @@ export interface StageSettings {
 		groupCount: number;
 		roundCount: number;
 	};
+
+	/**
+	 * If true, round-robin matches in rounds > 1 won't be locked.
+	 * Used for league divisions where rounds are independent weeks.
+	 */
+	skipRoundRobinLocking?: boolean;
 }

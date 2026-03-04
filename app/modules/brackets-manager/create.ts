@@ -419,7 +419,12 @@ export class Create {
 
 		// In round-robin, only the first round is ready to play at the beginning.
 		// other matches have teams set but they are busy playing the first round.
-		if (this.stage.type === "round_robin" && roundNumber > 1) {
+		// For league divisions, all rounds are independent (weekly matches) so locking is skipped.
+		if (
+			this.stage.type === "round_robin" &&
+			roundNumber > 1 &&
+			!this.stage.settings?.skipRoundRobinLocking
+		) {
 			status = Status.Locked;
 		}
 
