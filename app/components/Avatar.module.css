@@ -12,11 +12,10 @@
 	width: fit-content;
 	height: fit-content;
 	background-color: var(--color-bg-higher);
-	border-radius: 50%;
+	border-radius: var(--radius-field);
 	overflow: hidden;
 }
 
 .avatarWrapper img {
 	display: block;
-	border-radius: 50%;
 }

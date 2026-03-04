@@ -145,7 +145,7 @@ function InfoText() {
 		return (
 			<fetcher.Form
 				method="post"
-				className="text-xs text-lighter ml-auto text-warning stack horizontal sm"
+				className="text-xs text-lighter ml-auto text-warning stack horizontal sm items-center"
 			>
 				{t("q:looking.inactiveGroup.soon")}{" "}
 				<SubmitButton
