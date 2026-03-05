@@ -12,6 +12,7 @@ import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as Swiss from "~/features/tournament-bracket/core/Swiss";
 import { defaultBracketSettings } from "../../tournament/tournament-utils";
+import styles from "./BracketProgressionSelector.module.css";
 
 const defaultBracket = (): Progression.InputBracket => ({
 	id: nanoid(),
@@ -189,7 +190,7 @@ function TournamentFormatBracketSelector({
 	return (
 		<div className="stack horizontal md items-center">
 			<div>
-				<div className="format-selector__count">Bracket #{count}</div>
+				<div className={styles.count}>Bracket #{count}</div>
 				{onDelete ? (
 					<SendouButton
 						size="small"
@@ -202,7 +203,7 @@ function TournamentFormatBracketSelector({
 					</SendouButton>
 				) : null}
 			</div>
-			<div className="format-selector__divider" />
+			<div className={styles.divider} />
 			<div className="stack md items-start">
 				<div>
 					<Label htmlFor={createId("name")}>Bracket's name</Label>

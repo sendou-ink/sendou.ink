@@ -1,11 +1,3 @@
-.container {
-	max-width: 38rem;
-}
-
-.select {
-	max-width: 16rem;
-}
-
 .badges {
 	width: max-content;
 	padding: var(--s-2);

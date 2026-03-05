@@ -83,7 +83,7 @@ export default function CalendarNewEventPage() {
 
 	if (!data.eventToEdit && !isCalendarEventAdder) {
 		return (
-			<Main className="stack items-center">
+			<Main halfWidth className="stack items-center">
 				<Alert variation="WARNING">
 					You can't add a new event at this time (Discord account too young)
 				</Alert>
@@ -97,7 +97,7 @@ export default function CalendarNewEventPage() {
 		data.organizations.length === 0
 	) {
 		return (
-			<Main className="stack items-center">
+			<Main halfWidth className="stack items-center">
 				<Alert variation="WARNING">
 					No permissions to add tournaments. Tournaments are in beta, accessible
 					by Patreon supporters and established TO&apos;s. See{" "}
@@ -108,7 +108,7 @@ export default function CalendarNewEventPage() {
 	}
 
 	return (
-		<Main className={styles.container}>
+		<Main halfWidth>
 			<div className="stack md">
 				<div className="stack horizontal md items-center">
 					<h1 className="text-lg">
@@ -145,7 +145,6 @@ function TemplateTournamentForm() {
 			<div>
 				<Form className="stack horizontal sm flex-wrap">
 					<select
-						className="w-max"
 						name="copyEventId"
 						onChange={(event) => {
 							setEventId(event.target.value);
@@ -217,7 +216,7 @@ function EventForm() {
 	};
 
 	return (
-		<Form className="stack md items-start" ref={ref}>
+		<Form className="stack md" ref={ref}>
 			{eventToEdit && (
 				<input type="hidden" name="eventToEditId" value={eventToEdit.eventId} />
 			)}
@@ -268,7 +267,7 @@ function EventForm() {
 			)}
 			{data.isAddingTournament ? (
 				<div className="stack md w-full">
-					<Divider>Tournament format</Divider>
+					<Divider smallText>Tournament format</Divider>
 					<BracketProgressionSelector
 						initialBrackets={
 							baseEvent?.tournament?.ctx.settings.bracketProgression
@@ -482,7 +481,7 @@ function DatesInput({ allowMultiDate }: { allowMultiDate?: boolean }) {
 		});
 
 	return (
-		<div className="stack md items-start">
+		<div className="stack md">
 			<fieldset>
 				<legend>
 					{t("calendar:forms.dates")} <span className="text-error">*</span>
@@ -576,7 +575,7 @@ function DiscordLinkInput() {
 	const [value, setValue] = React.useState(baseEvent?.discordInviteCode ?? "");
 
 	return (
-		<div className="stack items-start">
+		<div className="stack">
 			<Label htmlFor="discordInviteCode">{t("forms.discordInvite")}</Label>
 			<Input
 				name="discordInviteCode"
@@ -610,7 +609,6 @@ function TagsAdder() {
 				<label htmlFor={id}>{t("calendar:forms.tags")}</label>
 				<select
 					id={id}
-					className={styles.select}
 					onChange={(e) =>
 						setTags([...tags, e.target.value as CalendarEventTag])
 					}
@@ -665,7 +663,6 @@ function BadgesAdder() {
 				<label htmlFor={id}>{t("forms.badges")}</label>
 				<select
 					id={id}
-					className={styles.select}
 					onChange={(e) => {
 						setBadges([
 							...badges,
@@ -813,9 +810,7 @@ function RankedToggle() {
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				Ranked
-			</label>
+			<label htmlFor={id}>Ranked</label>
 			<SendouSwitch
 				name="isRanked"
 				id={id}
@@ -841,9 +836,7 @@ function EnableNoScreenToggle() {
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				Splattercolor Screen toggle
-			</label>
+			<label htmlFor={id}>Splattercolor Screen toggle</label>
 			<SendouSwitch
 				name="enableNoScreenToggle"
 				id={id}
@@ -866,9 +859,7 @@ function EnableSubsToggle() {
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				Subs tab
-			</label>
+			<label htmlFor={id}>Subs tab</label>
 			<SendouSwitch
 				name="enableSubs"
 				id={id}
@@ -892,9 +883,7 @@ function AutonomousSubsToggle() {
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				Autonomous subs
-			</label>
+			<label htmlFor={id}>Autonomous subs</label>
 			<SendouSwitch
 				name="autonomousSubs"
 				id={id}
@@ -918,9 +907,7 @@ function RequireIGNToggle() {
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				Require in-game names
-			</label>
+			<label htmlFor={id}>Require in-game names</label>
 			<SendouSwitch
 				name="requireInGameNames"
 				id={id}
@@ -947,9 +934,7 @@ function InvitationalToggle({
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				Invitational
-			</label>
+			<label htmlFor={id}>Invitational</label>
 			<SendouSwitch
 				name="isInvitational"
 				id={id}
@@ -973,9 +958,7 @@ function TestToggle() {
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				Test
-			</label>
+			<label htmlFor={id}>Test</label>
 			<SendouSwitch
 				name="isTest"
 				id={id}
@@ -1000,9 +983,7 @@ function DraftToggle() {
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				{t("calendar:forms.draft")}
-			</label>
+			<label htmlFor={id}>{t("calendar:forms.draft")}</label>
 			<SendouSwitch
 				name="isDraft"
 				id={id}
@@ -1032,14 +1013,11 @@ function RegClosesAtSelect() {
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				Registration closes at
-			</label>
+			<label htmlFor={id}>Registration closes at</label>
 			<select
 				name="regClosesAt"
 				value={regClosesAt}
 				onChange={(e) => setRegClosesAt(e.target.value as RegClosesAtOption)}
-				className="w-max"
 			>
 				{REG_CLOSES_AT_OPTIONS.map((option) => (
 					<option key={option} value={option}>
@@ -1091,7 +1069,7 @@ function TournamentMapPickingStyleSelect() {
 	}
 
 	return (
-		<div className="stack md w-full items-start">
+		<div className="stack md w-full">
 			<Divider>Tournament maps</Divider>
 			<div>
 				<label htmlFor={id}>Map picking style</label>
@@ -1243,7 +1221,7 @@ function MapPoolValidationStatusMessage({
 
 	return (
 		<div>
-			<Alert alertClassName="w-max" variation={alertVariation} tiny>
+			<Alert variation={alertVariation} tiny>
 				{t(`common:maps.validation.${status}`)}
 			</Alert>
 		</div>
@@ -1260,9 +1238,7 @@ function MemberCountSelect() {
 	return (
 		<>
 			<div>
-				<label htmlFor={id} className="w-max">
-					Players count
-				</label>
+				<label htmlFor={id}>Players count</label>
 				<select
 					id={id}
 					name="minMembersPerTeam"
@@ -1288,9 +1264,7 @@ function MaxTeamMemberCountInput() {
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				Max team size
-			</label>
+			<label htmlFor={id}>Max team size</label>
 			<input
 				type="number"
 				id={id}
