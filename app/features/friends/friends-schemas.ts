@@ -16,3 +16,13 @@ export const deleteFriendSchema = z.object({
 	_action: _action("DELETE_FRIEND"),
 	friendshipId: id,
 });
+
+export const acceptFriendRequestSchema = z.object({
+	_action: _action("ACCEPT_REQUEST"),
+	friendRequestId: id,
+});
+
+export const declineFriendRequestSchema = z.object({
+	_action: _action("DECLINE_REQUEST"),
+	friendRequestId: id,
+});

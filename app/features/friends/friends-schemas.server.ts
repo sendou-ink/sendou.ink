@@ -2,7 +2,9 @@ import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as FriendRepository from "./FriendRepository.server";
 import {
+	acceptFriendRequestSchema,
 	cancelFriendRequestSchema,
+	declineFriendRequestSchema,
 	deleteFriendSchema,
 	sendFriendRequestBaseSchema,
 } from "./friends-schemas";
@@ -50,4 +52,6 @@ export const friendsActionSchema = z.union([
 	sendFriendRequestSchemaServer,
 	cancelFriendRequestSchema,
 	deleteFriendSchema,
+	acceptFriendRequestSchema,
+	declineFriendRequestSchema,
 ]);

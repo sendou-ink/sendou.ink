@@ -24,6 +24,7 @@ export default function FriendsPage() {
 		<Main halfWidth>
 			<div className="stack lg">
 				<SendFriendRequestSection />
+				{data.incomingRequests.length > 0 ? <IncomingRequestsSection /> : null}
 				{data.pendingRequests.length > 0 ? <PendingRequestsSection /> : null}
 				<FriendsListSection />
 			</div>
@@ -43,6 +44,57 @@ function SendFriendRequestSection() {
 			>
 				{({ FormField }) => <FormField name="userId" />}
 			</SendouForm>
+		</section>
+	);
+}
+
+function IncomingRequestsSection() {
+	const { t } = useTranslation(["common", "friends"]);
+	const data = useLoaderData<FriendsLoaderData>();
+
+	return (
+		<section>
+			<h2 className="text-lg">{t("friends:incomingRequests.title")}</h2>
+			<div className="stack sm">
+				{data.incomingRequests.map((request) => (
+					<div key={request.id} className={styles.pendingRow}>
+						<div className={styles.pendingUser}>
+							<Avatar
+								user={{
+									discordId: request.sender.discordId,
+									discordAvatar: request.sender.discordAvatar,
+								}}
+								size="xs"
+							/>
+							<span>{request.sender.username}</span>
+						</div>
+						<div className="stack horizontal sm">
+							<Form method="post">
+								<input type="hidden" name="_action" value="ACCEPT_REQUEST" />
+								<input
+									type="hidden"
+									name="friendRequestId"
+									value={request.id}
+								/>
+								<SubmitButton variant="outlined" size="miniscule">
+									{t("common:actions.accept")}
+								</SubmitButton>
+							</Form>
+							<Form method="post">
+								<input type="hidden" name="_action" value="DECLINE_REQUEST" />
+								<input
+									type="hidden"
+									name="friendRequestId"
+									value={request.id}
+								/>
+								<SubmitButton variant="minimal-destructive" size="miniscule">
+									{t("common:actions.decline")}
+								</SubmitButton>
+							</Form>
+						</div>
+					</div>
+				))}
+			</div>
 		</section>
 	);
 }

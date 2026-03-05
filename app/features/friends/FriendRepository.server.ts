@@ -141,6 +141,78 @@ export async function deleteFriendship({
 		.execute();
 }
 
+export async function findPendingReceivedRequests(receiverId: number) {
+	return db
+		.selectFrom("FriendRequest")
+		.innerJoin("User", "User.id", "FriendRequest.senderId")
+		.select([
+			"FriendRequest.id",
+			"FriendRequest.createdAt",
+			"User.id as senderId",
+			"User.username as senderUsername",
+			"User.discordId as senderDiscordId",
+			"User.discordAvatar as senderDiscordAvatar",
+			"User.customUrl as senderCustomUrl",
+		])
+		.where("FriendRequest.receiverId", "=", receiverId)
+		.orderBy("FriendRequest.createdAt", "desc")
+		.execute();
+}
+
+export async function insertFriendship({
+	userOneId,
+	userTwoId,
+	friendRequestId,
+}: {
+	userOneId: number;
+	userTwoId: number;
+	friendRequestId: number;
+}) {
+	const minId = Math.min(userOneId, userTwoId);
+	const maxId = Math.max(userOneId, userTwoId);
+
+	await db.transaction().execute(async (trx) => {
+		await trx
+			.insertInto("Friendship")
+			.values({ userOneId: minId, userTwoId: maxId })
+			.execute();
+
+		await trx
+			.deleteFrom("FriendRequest")
+			.where("FriendRequest.id", "=", friendRequestId)
+			.execute();
+	});
+}
+
+export async function findFriendRequestByIdAndReceiver({
+	id,
+	receiverId,
+}: {
+	id: number;
+	receiverId: number;
+}) {
+	return db
+		.selectFrom("FriendRequest")
+		.select("FriendRequest.senderId")
+		.where("FriendRequest.id", "=", id)
+		.where("FriendRequest.receiverId", "=", receiverId)
+		.executeTakeFirst();
+}
+
+export async function deleteFriendRequestByReceiver({
+	id,
+	receiverId,
+}: {
+	id: number;
+	receiverId: number;
+}) {
+	return db
+		.deleteFrom("FriendRequest")
+		.where("FriendRequest.id", "=", id)
+		.where("FriendRequest.receiverId", "=", receiverId)
+		.execute();
+}
+
 export async function findFriendship({
 	userOneId,
 	userTwoId,

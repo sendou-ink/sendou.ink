@@ -9,10 +9,12 @@ export type FriendsLoaderData = typeof loader;
 export const loader = async () => {
 	const user = requireUser();
 
-	const [friendsWithActivity, pendingRequests] = await Promise.all([
-		FriendRepository.findByUserIdWithActivity(user.id),
-		FriendRepository.findPendingSentRequests(user.id),
-	]);
+	const [friendsWithActivity, pendingRequests, incomingRequests] =
+		await Promise.all([
+			FriendRepository.findByUserIdWithActivity(user.id),
+			FriendRepository.findPendingSentRequests(user.id),
+			FriendRepository.findPendingReceivedRequests(user.id),
+		]);
 
 	// xxx: why is this needed? shouldn't the query be doing this already?
 	const uniqueFriends = R.uniqueBy(friendsWithActivity, (f) => f.id);
@@ -47,6 +49,19 @@ export const loader = async () => {
 
 	return {
 		friends,
+		incomingRequests: incomingRequests.map((req) => ({
+			id: req.id,
+			sender: {
+				id: req.senderId,
+				username: req.senderUsername,
+				discordId: req.senderDiscordId,
+				discordAvatar: req.senderDiscordAvatar,
+				url: userPage({
+					discordId: req.senderDiscordId,
+					customUrl: req.senderCustomUrl,
+				}),
+			},
+		})),
 		pendingRequests: pendingRequests.map((req) => ({
 			id: req.id,
 			createdAt: req.createdAt,
