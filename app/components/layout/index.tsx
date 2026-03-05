@@ -3,6 +3,7 @@ import { isToday, isTomorrow } from "date-fns";
 import {
 	Bell,
 	Calendar,
+	ChevronRight,
 	LogIn,
 	PanelLeft,
 	Settings,
@@ -262,7 +263,12 @@ export function Layout({
 
 				<SideNavHeader
 					icon={<Users />}
-					action={<Link to={FRIENDS_PAGE}>{t("common:actions.viewAll")}</Link>}
+					action={
+					<Link to={FRIENDS_PAGE} className={styles.viewAllLink}>
+						{t("common:actions.viewAll")}
+						<ChevronRight size={14} />
+					</Link>
+				}
 				>
 					{t("front:sideNav.friends")}
 				</SideNavHeader>

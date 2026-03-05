@@ -122,6 +122,16 @@
 	padding: var(--s-1) var(--s-2);
 }
 
+.viewAllLink {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+
+	& svg {
+		stroke-width: 3;
+	}
+}
+
 /* Doubled selector increases specificity to beat Button.module.css's display: flex */
 .sideNavCollapseButton.sideNavCollapseButton {
 	display: none;
