@@ -42,6 +42,8 @@ export default [
 
 	route("/settings", "features/settings/routes/settings.tsx"),
 
+	route("/friends", "features/friends/routes/friends.tsx"),
+
 	route("/suspended", "features/ban/routes/suspended.tsx"),
 
 	route("/u", "features/user-search/routes/u.tsx"),
@@ -202,7 +204,7 @@ export default [
 	]),
 	route("/play", "features/sendouq/routes/play.ts"),
 
-	route("/trusters", "features/sendouq/routes/trusters.ts"),
+	route("/friends-for-adding", "features/sendouq/routes/friends-for-adding.ts"),
 
 	route("/weapon-usage", "features/sendouq/routes/weapon-usage.ts"),
 

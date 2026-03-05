@@ -42,6 +42,7 @@
 	"forms.info.tag": "",
 	"forms.errors.duplicateName": "Holdnavnet er taget af et andet hold",
 	"forms.errors.noOnlySpecialCharacters": "",
+	"forms.customTheme.header": "",
 	"roster.teamFull": "Holdet kan ikke få flere medlemmer",
 	"roster.inviteLink.header": "Del invitationslinket for at tilføje medlemmer",
 	"roster.members.header": "Medlemmer",

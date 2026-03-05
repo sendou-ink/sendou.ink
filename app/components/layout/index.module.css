@@ -28,10 +28,10 @@
 
 .siteLogo {
 	display: flex;
-	flex-direction: column;
+	flex-direction: row;
 	align-items: center;
 	justify-content: center;
-	width: 36px;
+	width: 40px;
 	height: 36px;
 	background-color: var(--color-accent);
 	border-radius: var(--radius-field);
@@ -41,15 +41,18 @@
 	flex-shrink: 0;
 	transition: background-color 0.2s;
 	line-height: 1;
-	gap: 1px;
 }
 
 .siteLogoS {
-	font-size: var(--font-sm);
+	font-size: 15px;
+	position: relative;
+	top: -4px;
 }
 
 .siteLogoInk {
-	font-size: 10px;
+	font-size: 12px;
+	position: relative;
+	top: 5px;
 }
 
 .siteLogo:hover {
@@ -143,10 +146,10 @@
 @media screen and (max-width: 599px) {
 	.mobileLogo {
 		display: flex;
-		flex-direction: column;
+		flex-direction: row;
 		align-items: center;
 		justify-content: center;
-		width: 36px;
+		width: 40px;
 		height: 36px;
 		background-color: var(--color-accent);
 		border-radius: var(--radius-field);
@@ -155,6 +158,5 @@
 		text-decoration: none;
 		flex-shrink: 0;
 		line-height: 1;
-		gap: 1px;
 	}
 }

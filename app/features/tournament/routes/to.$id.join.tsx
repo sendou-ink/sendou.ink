@@ -1,4 +1,3 @@
-import React from "react";
 import { useTranslation } from "react-i18next";
 import { Form, useLoaderData } from "react-router";
 import { Alert } from "~/components/Alert";
@@ -18,13 +17,11 @@ export { action, loader };
 
 export default function JoinTeamPage() {
 	const { t } = useTranslation(["tournament", "common"]);
-	const id = React.useId();
 	const user = useUser();
 	const tournament = useTournament();
 	const data = useLoaderData<typeof loader>();
 
 	const teamToJoin = data.teamId ? tournament.teamById(data.teamId) : undefined;
-	const captain = teamToJoin?.members.find((member) => member.isOwner);
 	const validationStatus = validateCanJoinTeam({
 		inviteCode: data.inviteCode,
 		teamToJoin,
@@ -92,13 +89,8 @@ export default function JoinTeamPage() {
 								Save friend code before joining the team
 							</div>
 						) : (
-							<div className="text-lighter text-sm stack horizontal sm items-center">
-								<input id={id} type="checkbox" name="trust" />{" "}
-								<label htmlFor={id} className="mb-0">
-									{t("tournament:join.giveTrust", {
-										name: captain ? captain.username : "",
-									})}
-								</label>
+							<div className="text-lighter text-sm">
+								{t("tournament:join.friendSuggestion")}
 							</div>
 						)}
 					</div>

@@ -63,6 +63,10 @@
 	color: var(--color-text-accent);
 }
 
+.itemDestructive {
+	color: var(--color-error);
+}
+
 .itemIcon {
 	width: 18px;
 }
@@ -70,4 +74,11 @@
 .itemImg {
 	min-width: 20px;
 	min-height: 20px;
+}
+
+.menuHeader {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	padding: var(--s-1) var(--s-3);
+	font-weight: var(--weight-semi);
 }

@@ -41,7 +41,7 @@ import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
 import { RelativeTime } from "~/components/RelativeTime";
 import { Section } from "~/components/Section";
-import { SideNav, SideNavLink } from "~/components/SideNav";
+import { ListLink, SideNav } from "~/components/SideNav";
 import { StageSelect } from "~/components/StageSelect";
 import { SubmitButton } from "~/components/SubmitButton";
 import { SubNav, SubNavLink } from "~/components/SubNav";
@@ -158,14 +158,14 @@ function ComponentsSideNav() {
 	return (
 		<SideNav>
 			{SECTIONS.map(({ title, id }) => (
-				<SideNavLink
+				<ListLink
 					key={id}
 					to={`#${id}`}
 					onClick={(e) => handleClick(e, id)}
 					isActive={activeSection === id}
 				>
 					{title}
-				</SideNavLink>
+				</ListLink>
 			))}
 		</SideNav>
 	);

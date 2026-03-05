@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { X } from "lucide-react";
 import type * as React from "react";
 import {
+	Button,
 	Dialog,
 	DialogTrigger,
 	Modal,
@@ -52,15 +53,20 @@ export function SideNavHeader({
 	children,
 	icon,
 	showClose,
+	action,
 }: {
 	children: React.ReactNode;
 	icon?: React.ReactNode;
 	showClose?: boolean;
+	action?: React.ReactNode;
 }) {
 	return (
 		<header className={styles.sideNavHeader}>
 			{icon ? <div className={styles.iconContainer}>{icon}</div> : null}
 			<h2>{children}</h2>
+			{action ? (
+				<span className={styles.sideNavHeaderAction}>{action}</span>
+			) : null}
 			{showClose ? (
 				<SendouButton
 					icon={<X />}
@@ -73,7 +79,7 @@ export function SideNavHeader({
 	);
 }
 
-export function SideNavLink({
+export function ListLink({
 	children,
 	to,
 	onClick,
@@ -92,42 +98,42 @@ export function SideNavLink({
 	imageUrl?: string;
 	overlayIconUrl?: string;
 	user?: Pick<Tables["User"], "discordId" | "discordAvatar">;
-	subtitle?: string;
-	badge?: string;
+	subtitle?: string | null;
+	badge?: string | null;
 	badgeVariant?: "default" | "warning";
 }) {
 	return (
 		<Link
 			to={to}
-			className={styles.sideNavLink}
+			className={styles.listLink}
 			onClick={onClick}
 			aria-current={isActive ? "page" : undefined}
 		>
 			{user ? (
 				<Avatar user={user} size="xxsm" />
 			) : imageUrl ? (
-				<div className={styles.sideNavLinkImageContainer}>
-					<img src={imageUrl} alt="" className={styles.sideNavLinkImage} />
+				<div className={styles.listLinkImageContainer}>
+					<img src={imageUrl} alt="" className={styles.listLinkImage} />
 					{overlayIconUrl ? (
 						<img
 							src={overlayIconUrl}
 							alt=""
-							className={styles.sideNavLinkOverlayIcon}
+							className={styles.listLinkOverlayIcon}
 						/>
 					) : null}
 				</div>
 			) : null}
-			<div className={styles.sideNavLinkContent}>
-				<span className={styles.sideNavLinkTitle}>{children}</span>
+			<div className={styles.listLinkContent}>
+				<span className={styles.listLinkTitle}>{children}</span>
 				{subtitle || badge ? (
-					<div className={styles.sideNavLinkSubtitleRow}>
+					<div className={styles.listLinkSubtitleRow}>
 						{subtitle ? (
-							<span className={styles.sideNavLinkSubtitle}>{subtitle}</span>
+							<span className={styles.listLinkSubtitle}>{subtitle}</span>
 						) : null}
 						{badge ? (
 							<span
-								className={clsx(styles.sideNavLinkBadge, {
-									[styles.sideNavLinkBadgeWarning]: badgeVariant === "warning",
+								className={clsx(styles.listLinkBadge, {
+									[styles.listLinkBadgeWarning]: badgeVariant === "warning",
 								})}
 							>
 								{badge}
@@ -137,6 +143,45 @@ export function SideNavLink({
 				) : null}
 			</div>
 		</Link>
+	);
+}
+
+export function ListButton({
+	children,
+	user,
+	subtitle,
+	badge,
+	badgeVariant,
+}: {
+	children: React.ReactNode;
+	user?: Pick<Tables["User"], "discordId" | "discordAvatar">;
+	subtitle?: string | null;
+	badge?: string | null;
+	badgeVariant?: "default" | "warning";
+}) {
+	return (
+		<Button className={styles.listButton}>
+			{user ? <Avatar user={user} size="xxsm" /> : null}
+			<div className={styles.listLinkContent}>
+				<span className={styles.listLinkTitle}>{children}</span>
+				{subtitle || badge ? (
+					<div className={styles.listLinkSubtitleRow}>
+						{subtitle ? (
+							<span className={styles.listLinkSubtitle}>{subtitle}</span>
+						) : null}
+						{badge ? (
+							<span
+								className={clsx(styles.listLinkBadge, {
+									[styles.listLinkBadgeWarning]: badgeVariant === "warning",
+								})}
+							>
+								{badge}
+							</span>
+						) : null}
+					</div>
+				) : null}
+			</div>
+		</Button>
 	);
 }
 

@@ -381,6 +381,20 @@
 	object-fit: cover;
 }
 
+.panelSectionLink {
+	display: block;
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	text-decoration: none;
+	padding: var(--s-3) var(--s-2);
+	text-align: center;
+}
+
+.panelSectionLink:hover {
+	color: var(--color-text);
+	text-decoration: underline;
+}
+
 .dayHeader {
 	padding: var(--s-2) var(--s-2) var(--s-1);
 	font-size: var(--font-2xs);

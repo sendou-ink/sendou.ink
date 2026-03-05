@@ -19,7 +19,6 @@ import type * as Seasons from "~/features/mmr/core/Seasons";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useHasRole } from "~/modules/permissions/hooks";
-import invariant from "~/utils/invariant";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -256,9 +255,6 @@ function JoinTeamDialog({
 	const { t, i18n } = useTranslation(["q"]);
 	const fetcher = useFetcher();
 
-	const owner = members.find((m) => m.role === "OWNER");
-	invariant(owner, "Owner not found");
-
 	return (
 		<SendouDialog
 			isOpen={open}
@@ -278,17 +274,8 @@ function JoinTeamDialog({
 				<SubmitButton _action="JOIN_TEAM" state={fetcher.state}>
 					{t("q:front.join.joinAction")}
 				</SubmitButton>
-				<SubmitButton
-					_action="JOIN_TEAM_WITH_TRUST"
-					state={fetcher.state}
-					variant="outlined"
-				>
-					{t("q:front.join.joinWithTrustAction", {
-						inviterName: owner.username,
-					})}
-				</SubmitButton>
 				<FormMessage type="info">
-					{t("q:front.join.joinWithTrustAction.explanation")}
+					{t("q:front.join.friendSuggestion")}
 				</FormMessage>
 			</fetcher.Form>
 		</SendouDialog>

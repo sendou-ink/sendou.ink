@@ -14,12 +14,18 @@ import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useLocation, useMatches } from "react-router";
 import { useUser } from "~/features/auth/core/user";
+import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import type { LanguageCode } from "~/modules/i18n/config";
 import type { RootLoaderData } from "~/root";
 import { databaseTimestampToDate, formatDistanceToNow } from "~/utils/dates";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
-import { navIconUrl, SETTINGS_PAGE, userPage } from "~/utils/urls";
+import {
+	FRIENDS_PAGE,
+	navIconUrl,
+	SETTINGS_PAGE,
+	userPage,
+} from "~/utils/urls";
 import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
@@ -27,11 +33,11 @@ import { Image } from "../Image";
 import { TwitchIcon } from "../icons/Twitch";
 import { MobileNav } from "../MobileNav";
 import {
+	ListLink,
 	SideNav,
 	SideNavFooter,
 	SideNavGameStatus,
 	SideNavHeader,
-	SideNavLink,
 } from "../SideNav";
 import sideNavStyles from "../SideNav.module.css";
 import { Footer } from "./Footer";
@@ -170,7 +176,7 @@ export function Layout({
 		data?.sidenavCollapsed ?? false,
 	);
 
-	const { t, i18n } = useTranslation(["front"]);
+	const { t, i18n } = useTranslation(["front", "common"]);
 	const { formatRelativeDate } = useTimeFormat();
 	const location = useLocation();
 	const navOffset = useNavOffset();
@@ -235,7 +241,7 @@ export function Layout({
 				</SideNavHeader>
 				{events.length > 0 ? (
 					events.map((event) => (
-						<SideNavLink
+						<ListLink
 							key={`${event.type}-${event.id}`}
 							to={event.url}
 							imageUrl={event.logoUrl ?? undefined}
@@ -246,7 +252,7 @@ export function Layout({
 								: event.scrimStatus === "looking"
 									? t("front:sideNav.lookingForScrim")
 									: event.name}
-						</SideNavLink>
+						</ListLink>
 					))
 				) : (
 					<div className={styles.sideNavEmpty}>
@@ -254,22 +260,14 @@ export function Layout({
 					</div>
 				)}
 
-				<SideNavHeader icon={<Users />}>
+				<SideNavHeader
+					icon={<Users />}
+					action={<Link to={FRIENDS_PAGE}>{t("common:actions.viewAll")}</Link>}
+				>
 					{t("front:sideNav.friends")}
 				</SideNavHeader>
 				{friends.map((friend) => (
-					<SideNavLink
-						key={friend.id}
-						to={friend.url}
-						user={{
-							discordId: friend.discordId,
-							discordAvatar: friend.discordAvatar,
-						}}
-						subtitle={friend.subtitle}
-						badge={friend.badge}
-					>
-						{friend.name}
-					</SideNavLink>
+					<FriendMenu key={friend.id} {...friend} />
 				))}
 
 				<SideNavHeader icon={<TwitchIcon />}>
@@ -279,7 +277,7 @@ export function Layout({
 					const startsAtDate = databaseTimestampToDate(stream.startsAt);
 
 					return (
-						<SideNavLink
+						<ListLink
 							key={stream.id}
 							to={stream.url}
 							imageUrl={stream.imageUrl}
@@ -299,7 +297,7 @@ export function Layout({
 							}
 						>
 							{stream.name}
-						</SideNavLink>
+						</ListLink>
 					);
 				})}
 			</SideNav>

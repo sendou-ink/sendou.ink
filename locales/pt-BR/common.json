@@ -334,6 +334,8 @@
 	"settings.customTheme.baseChroma": "",
 	"settings.customTheme.accentHue": "",
 	"settings.customTheme.accentChroma": "",
+	"settings.customTheme.chatHueToggle": "",
+	"settings.customTheme.chatHue": "",
 	"settings.customTheme.boxes": "",
 	"settings.customTheme.fields": "",
 	"settings.customTheme.selectors": "",

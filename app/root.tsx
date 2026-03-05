@@ -135,7 +135,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["common", "forms", "game-misc", "weapons", "front"],
+	i18n: ["common", "forms", "game-misc", "weapons", "front", "friends"],
 };
 
 function Document({

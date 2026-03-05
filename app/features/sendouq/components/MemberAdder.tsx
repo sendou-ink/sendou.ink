@@ -5,7 +5,7 @@ import { useFetcher } from "react-router";
 import { useCopyToClipboard } from "react-use";
 import { SendouButton } from "~/components/elements/Button";
 import { SubmitButton } from "~/components/SubmitButton";
-import { useTrusted } from "~/hooks/swr";
+import { useFriendsForAdding } from "~/hooks/swr";
 import {
 	SENDOU_INK_BASE_URL,
 	SENDOUQ_PREPARING_PAGE,
@@ -21,7 +21,7 @@ export function MemberAdder({
 	groupMemberIds: number[];
 }) {
 	const { t } = useTranslation(["q"]);
-	const [truster, setTruster] = React.useState<number>();
+	const [friend, setFriend] = React.useState<number>();
 	const fetcher = useFetcher<SendouQPreparingAction>();
 	const inviteLink = `${SENDOU_INK_BASE_URL}${sendouQInviteLink(inviteCode)}`;
 	const [state, copyToClipboard] = useCopyToClipboard();
@@ -32,7 +32,7 @@ export function MemberAdder({
 	const groupMembersJoined = groupMemberIds.join(",");
 	// biome-ignore lint/correctness/useExhaustiveDependencies: biome migration
 	React.useEffect(() => {
-		setTruster(undefined);
+		setFriend(undefined);
 	}, [groupMembersJoined]);
 
 	React.useEffect(() => {
@@ -62,15 +62,15 @@ export function MemberAdder({
 			<fetcher.Form method="post" action={SENDOUQ_PREPARING_PAGE}>
 				<label htmlFor="players">{t("q:looking.groups.adder.quickAdd")}</label>
 				<div className="stack horizontal sm items-center">
-					<TrusterDropdown
-						setTruster={setTruster}
+					<FriendDropdown
+						setFriend={setFriend}
 						groupMemberIds={groupMemberIds}
 					/>
 					<SubmitButton
 						shape="square"
 						variant="outlined"
-						_action="ADD_TRUSTED"
-						isDisabled={!truster}
+						_action="ADD_FRIEND"
+						isDisabled={!friend}
 						icon={<Plus />}
 					/>
 				</div>
@@ -84,25 +84,25 @@ export function MemberAdder({
 	);
 }
 
-function TrusterDropdown({
-	setTruster,
+function FriendDropdown({
+	setFriend,
 	groupMemberIds,
 }: {
-	setTruster: (id: number | undefined) => void;
+	setFriend: (id: number | undefined) => void;
 	groupMemberIds: number[];
 }) {
 	const { t } = useTranslation(["q"]);
-	const { trusters, teams } = useTrusted();
+	const { friends, teams } = useFriendsForAdding();
 
-	if (!trusters || trusters.length === 0) {
+	if (!friends || friends.length === 0) {
 		return <select name="id" id="players" disabled />;
 	}
 
-	const trustersNotInGroup = trusters.filter(
-		(truster) => !groupMemberIds.includes(truster.id),
+	const friendsNotInGroup = friends.filter(
+		(friend) => !groupMemberIds.includes(friend.id),
 	);
 
-	const othersOptions = trustersNotInGroup
+	const othersOptions = friendsNotInGroup
 		.filter((player) => !player.teamId)
 		.map((player) => {
 			return (
@@ -117,14 +117,14 @@ function TrusterDropdown({
 			name="id"
 			id="players"
 			onChange={(e) =>
-				setTruster(e.target.value ? Number(e.target.value) : undefined)
+				setFriend(e.target.value ? Number(e.target.value) : undefined)
 			}
 		>
 			<option value="">{t("q:looking.groups.adder.select")}</option>
 			{teams?.map((team) => {
 				return (
 					<optgroup label={team.name} key={team.id}>
-						{trustersNotInGroup
+						{friendsNotInGroup
 							.filter((player) => player.teamId === team.id)
 							.map((player) => {
 								return (

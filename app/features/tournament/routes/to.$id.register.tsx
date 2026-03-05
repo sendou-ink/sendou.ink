@@ -943,7 +943,7 @@ function FillRoster({
 		(ownTeamCheckedIn && ownTeamMembers.length > tournament.minMembersPerTeam);
 
 	const playersAvailableToDirectlyAdd = (() => {
-		return (data!.trusterPlayers?.trusters ?? []).filter((user) => {
+		return (data!.friendPlayers?.friends ?? []).filter((user) => {
 			const isNotInTeam = tournament.ctx.teams.every((team) =>
 				team.members.every((member) => member.userId !== user.id),
 			);
@@ -968,7 +968,7 @@ function FillRoster({
 					<>
 						<DirectlyAddPlayerSelect
 							players={playersAvailableToDirectlyAdd}
-							teams={data!.trusterPlayers?.teams ?? []}
+							teams={data!.friendPlayers?.teams ?? []}
 						/>
 						<Divider className="text-uppercase">{t("common:or")}</Divider>
 					</>
@@ -1089,7 +1089,7 @@ function DirectlyAddPlayerSelect({
 		<fetcher.Form method="post" className="stack horizontal sm items-end">
 			<div>
 				<Label htmlFor={id}>
-					{t("tournament:pre.roster.addTrusted.header")}
+					{t("tournament:pre.roster.addFriend.header")}
 				</Label>
 				<select id={id} name="userId">
 					{teams.map((team) => {

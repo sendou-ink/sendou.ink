@@ -4,10 +4,10 @@ import {
 	type SidebarStream,
 } from "~/features/core/streams/streams.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
+import { resolveFriendActivity } from "~/features/friends/friends-utils.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
-import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import { getSendouQSidebarStreams } from "~/features/sendouq-streams/core/streams.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
 import {
@@ -36,6 +36,7 @@ export type SidebarFriend = {
 	url: string;
 	subtitle: string;
 	badge: string;
+	tournamentId: number | null;
 };
 
 const MAX_EVENTS_VISIBLE = 8;
@@ -183,34 +184,31 @@ function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
 	const tournamentSubFriends: SidebarFriend[] = [];
 
 	for (const friend of friendsWithActivity) {
-		const ownGroup = SendouQ.findOwnGroup(friend.id);
+		const activity = resolveFriendActivity(friend.id, friend.tournamentName);
+
+		if (!activity.subtitle) continue;
 
 		const url = userPage({
 			discordId: friend.discordId,
 			customUrl: friend.customUrl,
 		});
 
-		if (ownGroup && ownGroup.members.length < FULL_GROUP_SIZE) {
-			sendouqFriends.push({
-				id: friend.id,
-				name: friend.username,
-				discordId: friend.discordId,
-				discordAvatar: friend.discordAvatar,
-				url,
-				subtitle: "SendouQ",
-				badge: `${ownGroup.members.length}/${FULL_GROUP_SIZE}`,
-			});
-		} else if (friend.tournamentName) {
+		const sidebarFriend: SidebarFriend = {
+			id: friend.id,
+			name: friend.username,
+			discordId: friend.discordId,
+			discordAvatar: friend.discordAvatar,
+			url,
+			subtitle: activity.subtitle,
+			badge: activity.badge ?? "",
+			tournamentId: friend.tournamentId,
+		};
+
+		if (activity.subtitle === "SendouQ") {
+			sendouqFriends.push(sidebarFriend);
+		} else {
 			// this is temporary, will be replaced with "SQified tournament team creator"
-			tournamentSubFriends.push({
-				id: friend.id,
-				name: friend.username,
-				discordId: friend.discordId,
-				discordAvatar: friend.discordAvatar,
-				url,
-				subtitle: friend.tournamentName,
-				badge: `1/${FULL_GROUP_SIZE}`,
-			});
+			tournamentSubFriends.push(sidebarFriend);
 		}
 	}
 

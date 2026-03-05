@@ -7,7 +7,12 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { useUser } from "~/features/auth/core/user";
 import type { RootLoaderData } from "~/root";
-import { navIconUrl, SETTINGS_PAGE, userPage } from "~/utils/urls";
+import {
+	FRIENDS_PAGE,
+	navIconUrl,
+	SETTINGS_PAGE,
+	userPage,
+} from "~/utils/urls";
 import { Avatar } from "./Avatar";
 import { SendouButton } from "./elements/Button";
 import { Image } from "./Image";
@@ -19,7 +24,7 @@ import {
 } from "./layout/NotificationPopover";
 import { navItems } from "./layout/nav-items";
 import styles from "./MobileNav.module.css";
-import { SideNavLink } from "./SideNav";
+import { ListLink } from "./SideNav";
 
 type SidebarData = RootLoaderData["sidebar"] | undefined;
 type PanelType = "closed" | "menu" | "friends" | "tourneys" | "you";
@@ -311,12 +316,12 @@ function FriendsPanel({
 	friends: NonNullable<SidebarData>["friends"];
 	onClose: () => void;
 }) {
-	const { t } = useTranslation(["front"]);
+	const { t } = useTranslation(["front", "common"]);
 
 	return (
 		<MobilePanel title={t("front:sideNav.friends")} onClose={onClose}>
 			{friends.map((friend) => (
-				<SideNavLink
+				<ListLink
 					key={friend.id}
 					to={friend.url}
 					user={{
@@ -327,8 +332,15 @@ function FriendsPanel({
 					badge={friend.badge}
 				>
 					{friend.name}
-				</SideNavLink>
+				</ListLink>
 			))}
+			<Link
+				to={FRIENDS_PAGE}
+				className={styles.panelSectionLink}
+				onClick={onClose}
+			>
+				{t("common:actions.viewAll")}
+			</Link>
 		</MobilePanel>
 	);
 }
@@ -403,7 +415,7 @@ function TourneysPanel({
 								{formatDayHeader(firstDate)}
 							</div>
 							{dayEvents.map((event) => (
-								<SideNavLink
+								<ListLink
 									key={`${event.type}-${event.id}`}
 									to={event.url}
 									imageUrl={event.logoUrl ?? undefined}
@@ -415,7 +427,7 @@ function TourneysPanel({
 										: event.scrimStatus === "looking"
 											? t("front:sideNav.lookingForScrim")
 											: event.name}
-								</SideNavLink>
+								</ListLink>
 							))}
 						</div>
 					);

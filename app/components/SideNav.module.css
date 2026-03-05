@@ -213,6 +213,22 @@
 	font-weight: var(--weight-bold);
 }
 
+.sideNavHeaderAction {
+	margin-inline-start: auto;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-normal);
+}
+
+.sideNavHeaderAction a {
+	color: var(--color-text-high);
+	text-decoration: none;
+}
+
+.sideNavHeaderAction a:hover {
+	color: var(--color-text);
+	text-decoration: underline;
+}
+
 .sideNavHeaderClose {
 	margin-inline-start: auto;
 	margin-inline-end: var(--s-1);
@@ -228,7 +244,7 @@
 	padding: var(--s-1-5);
 }
 
-.sideNavLink {
+.listLink {
 	font-size: var(--font-xs);
 	color: var(--color-text);
 	text-decoration: none;
@@ -242,7 +258,7 @@
 	gap: var(--s-2);
 
 	&:hover {
-		&:not(:has(.sideNavLinkSubtitle)) {
+		&:not(:has(.listLinkSubtitle)) {
 			color: var(--color-text);
 		}
 		background-color: var(--color-bg-higher);
@@ -255,12 +271,21 @@
 	}
 }
 
-.sideNavLinkImageContainer {
+.listButton {
+	composes: listLink;
+	background: none;
+	border: none;
+	cursor: pointer;
+	text-align: left;
+	width: 100%;
+}
+
+.listLinkImageContainer {
 	position: relative;
 	flex-shrink: 0;
 }
 
-.sideNavLinkImage {
+.listLinkImage {
 	width: 32px;
 	height: 32px;
 	border-radius: var(--radius-field);
@@ -268,7 +293,7 @@
 	flex-shrink: 0;
 }
 
-.sideNavLinkOverlayIcon {
+.listLinkOverlayIcon {
 	position: absolute;
 	bottom: -2px;
 	right: -2px;
@@ -279,7 +304,7 @@
 	padding: 2px;
 }
 
-.sideNavLinkContent {
+.listLinkContent {
 	display: flex;
 	flex-direction: column;
 	min-width: 0;
@@ -287,24 +312,24 @@
 	width: 100%;
 }
 
-.sideNavLinkTitle {
+.listLinkTitle {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 
-	&:has(+ .sideNavLinkSubtitle) {
+	&:has(+ .listLinkSubtitle) {
 		color: var(--color-text);
 	}
 }
 
-.sideNavLinkSubtitleRow {
+.listLinkSubtitleRow {
 	display: flex;
 	align-items: center;
 	width: 100%;
 	color: var(--color-text-high);
 }
 
-.sideNavLinkSubtitle {
+.listLinkSubtitle {
 	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 	overflow: hidden;
@@ -312,7 +337,7 @@
 	white-space: nowrap;
 }
 
-.sideNavLinkBadge {
+.listLinkBadge {
 	display: flex;
 	align-items: center;
 	margin-left: auto;
@@ -328,7 +353,7 @@
 	text-transform: uppercase;
 }
 
-.sideNavLinkBadgeWarning {
+.listLinkBadgeWarning {
 	background-color: var(--color-text-second);
 }
 

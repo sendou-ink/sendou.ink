@@ -1,11 +1,13 @@
 import clsx from "clsx";
 import {
+	Header,
 	Menu,
 	MenuItem,
 	type MenuItemProps,
 	MenuTrigger,
 	Popover,
 	type PopoverProps,
+	Section,
 } from "react-aria-components";
 import { Image } from "../Image";
 import styles from "./Menu.module.css";
@@ -46,6 +48,24 @@ export interface SendouMenuItemProps extends MenuItemProps {
 	icon?: React.ReactNode;
 	imagePath?: string;
 	isActive?: boolean;
+	isDestructive?: boolean;
+}
+
+export function SendouMenuSection({
+	children,
+	headerText,
+}: {
+	children: React.ReactNode;
+	headerText?: string;
+}) {
+	return (
+		<Section>
+			{headerText ? (
+				<Header className={styles.menuHeader}>{headerText}</Header>
+			) : null}
+			{children}
+		</Section>
+	);
 }
 
 export function SendouMenuItem(props: SendouMenuItemProps) {
@@ -61,6 +81,7 @@ export function SendouMenuItem(props: SendouMenuItemProps) {
 					[styles.itemSelected]: isSelected,
 					[styles.itemDisabled]: isDisabled,
 					[styles.itemActive]: props.isActive,
+					[styles.itemDestructive]: props.isDestructive,
 				})
 			}
 		>

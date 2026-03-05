@@ -36,5 +36,17 @@ export function up(db) {
 		db.prepare(
 			`create index friend_request_receiver_id on "FriendRequest"("receiverId")`,
 		).run();
+
+		db.prepare(
+			/* sql */ `
+      INSERT INTO "Friendship" ("userOneId", "userTwoId")
+      SELECT t1."trustGiverUserId", t1."trustReceiverUserId"
+      FROM "TrustRelationship" t1
+      INNER JOIN "TrustRelationship" t2
+        ON t1."trustGiverUserId" = t2."trustReceiverUserId"
+        AND t1."trustReceiverUserId" = t2."trustGiverUserId"
+      WHERE t1."trustGiverUserId" < t1."trustReceiverUserId"
+      ON CONFLICT DO NOTHING`,
+		).run();
 	})();
 }
