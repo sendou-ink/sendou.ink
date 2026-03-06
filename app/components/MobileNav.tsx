@@ -6,6 +6,7 @@ import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { useUser } from "~/features/auth/core/user";
+import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import type { RootLoaderData } from "~/root";
 import {
 	FRIENDS_PAGE,
@@ -254,28 +255,36 @@ function MenuOverlay({
 							<TwitchIcon />
 							<h3>{t("front:sideNav.streams")}</h3>
 						</header>
+						{streams.length === 0 ? (
+							<div className={styles.sideNavEmpty}>
+								{t("front:sideNav.noStreams")}
+							</div>
+						) : null}
 						<ul className={styles.streamsList}>
 							{streams.map((stream) => (
-								<li key={stream.id} className={styles.streamItem}>
-									<img
-										src={stream.imageUrl}
-										alt=""
-										className={styles.streamItemImage}
-									/>
-									<div className={styles.streamItemContent}>
-										<span className={styles.streamItemName}>{stream.name}</span>
-										<div className={styles.streamItemMeta}>
-											{stream.subtitle ? (
-												<span className={styles.streamItemSubtitle}>
-													{stream.subtitle}
-												</span>
-											) : null}
-											{stream.startsAt < Date.now() ? (
-												<span className={styles.streamItemBadge}>LIVE</span>
-											) : null}
-										</div>
-									</div>
-								</li>
+								<ListLink
+									key={stream.id}
+									to={stream.url}
+									imageUrl={stream.imageUrl}
+									overlayIconUrl={stream.overlayIconUrl}
+									subtitle={
+										stream.peakXp ? (
+											<span className={styles.streamXpSubtitle}>
+												<Image
+													path={navIconUrl("xsearch")}
+													alt=""
+													className={styles.streamXpIcon}
+												/>
+												{stream.peakXp}
+											</span>
+										) : (
+											stream.subtitle
+										)
+									}
+									onClick={onClose}
+								>
+									{stream.name}
+								</ListLink>
 							))}
 						</ul>
 					</section>
@@ -317,23 +326,21 @@ function FriendsPanel({
 	onClose: () => void;
 }) {
 	const { t } = useTranslation(["front", "common"]);
+	const user = useUser();
 
 	return (
 		<MobilePanel title={t("front:sideNav.friends")} onClose={onClose}>
-			{friends.map((friend) => (
-				<ListLink
-					key={friend.id}
-					to={friend.url}
-					user={{
-						discordId: friend.discordId,
-						discordAvatar: friend.discordAvatar,
-					}}
-					subtitle={friend.subtitle}
-					badge={friend.badge}
-				>
-					{friend.name}
-				</ListLink>
-			))}
+			{friends.length > 0 ? (
+				friends.map((friend) => (
+					<FriendMenu key={friend.id} {...friend} onNavigate={onClose} />
+				))
+			) : (
+				<div className="text-lighter text-sm p-2">
+					{user
+						? t("front:sideNav.friends.noFriends")
+						: t("front:sideNav.friends.notLoggedIn")}
+				</div>
+			)}
 			<Link
 				to={FRIENDS_PAGE}
 				className={styles.panelSectionLink}

@@ -11,7 +11,7 @@ import {
 } from "~/components/elements/Menu";
 import { ListButton } from "~/components/SideNav";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { SENDOUQ_LOOKING_PAGE, tournamentPage } from "~/utils/urls";
+import { SENDOUQ_LOOKING_PAGE, tournamentSubsPage } from "~/utils/urls";
 
 export function FriendMenu({
 	discordId,
@@ -23,6 +23,7 @@ export function FriendMenu({
 	tournamentId,
 	friendshipId,
 	friendshipCreatedAt,
+	onNavigate,
 }: {
 	discordId: string;
 	discordAvatar: string | null;
@@ -33,6 +34,7 @@ export function FriendMenu({
 	tournamentId: number | null;
 	friendshipId?: number;
 	friendshipCreatedAt?: number | null;
+	onNavigate?: () => void;
 }) {
 	const { t } = useTranslation(["common", "friends"]);
 	const fetcher = useFetcher();
@@ -60,11 +62,15 @@ export function FriendMenu({
 				}
 			>
 				<SendouMenuSection headerText={friendSinceText ?? undefined}>
-					<SendouMenuItem href={url} icon={<User />}>
+					<SendouMenuItem href={url} icon={<User />} onAction={onNavigate}>
 						{t("friends:friendsList.viewUserPage")}
 					</SendouMenuItem>
 					{activityHref ? (
-						<SendouMenuItem href={activityHref.url} icon={<Swords />}>
+						<SendouMenuItem
+							href={activityHref.url}
+							icon={<Swords />}
+							onAction={onNavigate}
+						>
 							{activityHref.isSendouQ
 								? t("friends:friendsList.joinSendouQ")
 								: t("friends:friendsList.viewTournament")}
@@ -127,7 +133,7 @@ function resolveActivityHref(friend: {
 	}
 
 	if (friend.tournamentId) {
-		return { url: tournamentPage(friend.tournamentId), isSendouQ: false };
+		return { url: tournamentSubsPage(friend.tournamentId), isSendouQ: false };
 	}
 
 	return null;

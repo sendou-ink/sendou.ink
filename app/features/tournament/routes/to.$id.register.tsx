@@ -355,7 +355,9 @@ function RegistrationForms() {
 			{ownTeam ? (
 				<>
 					<FillRoster ownTeam={ownTeam} ownTeamCheckedIn={ownTeamCheckedIn} />
-					{tournament.teamsPrePickMaps ? <CounterPickMapPoolPicker /> : null}
+					{tournament.teamsPrePickMaps ? (
+						<CounterPickMapPoolPicker key={tournament.ctx.id} />
+					) : null}
 				</>
 			) : null}
 		</div>

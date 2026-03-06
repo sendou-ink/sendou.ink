@@ -98,7 +98,7 @@ export function ListLink({
 	imageUrl?: string;
 	overlayIconUrl?: string;
 	user?: Pick<Tables["User"], "discordId" | "discordAvatar">;
-	subtitle?: string | null;
+	subtitle?: React.ReactNode;
 	badge?: string | null;
 	badgeVariant?: "default" | "warning";
 }) {

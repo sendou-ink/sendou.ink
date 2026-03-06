@@ -1,3 +1,6 @@
+import clsx from "clsx";
+import { useState } from "react";
+import { Radio, RadioGroup } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Form, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
@@ -16,6 +19,8 @@ export { loader } from "../loaders/friends.server";
 export const handle: SendouRouteHandle = {
 	i18n: ["friends"],
 };
+
+type ViewFilter = "friends" | "team" | "all";
 
 export default function FriendsPage() {
 	const data = useLoaderData<FriendsLoaderData>();
@@ -136,19 +141,75 @@ function PendingRequestsSection() {
 function FriendsListSection() {
 	const { t } = useTranslation(["common", "friends"]);
 	const data = useLoaderData<FriendsLoaderData>();
+	const [filter, setFilter] = useState<ViewFilter>("friends");
+
+	const viewLabels: Record<ViewFilter, string> = {
+		friends: t("friends:view.friends"),
+		team: t("friends:view.teamMembers"),
+		all: t("friends:view.all"),
+	};
+
+	const shownItems = resolveShownItems(filter, data);
+	const emptyKey =
+		filter === "team"
+			? "friends:teamMembers.empty"
+			: "friends:friendsList.empty";
 
 	return (
 		<section>
-			<h2 className="text-lg">{t("friends:friendsList.title")}</h2>
-			{data.friends.length === 0 ? (
-				<p className="text-lighter text-sm">{t("friends:friendsList.empty")}</p>
+			<div className={styles.friendsListHeader}>
+				<h2 className="text-lg">{t("friends:friendsList.title")}</h2>
+				<RadioGroup
+					value={filter}
+					onChange={(v) => setFilter(v as ViewFilter)}
+					aria-label={t("friends:view.label")}
+					orientation="horizontal"
+					className="stack horizontal xs"
+				>
+					{(["friends", "team", "all"] as const).map((value) => (
+						<Radio key={value} value={value}>
+							{({ isSelected }) => (
+								<span
+									className={clsx(styles.filterRadio, {
+										[styles.filterRadioSelected]: isSelected,
+									})}
+								>
+									{viewLabels[value]}
+								</span>
+							)}
+						</Radio>
+					))}
+				</RadioGroup>
+			</div>
+			{shownItems.length === 0 ? (
+				<p className="text-lighter text-sm">{t(emptyKey)}</p>
 			) : (
 				<div className="stack xs">
-					{data.friends.map((friend) => (
-						<FriendMenu key={friend.id} name={friend.username} {...friend} />
+					{shownItems.map((item) => (
+						<FriendMenu key={item.id} name={item.username} {...item} />
 					))}
 				</div>
 			)}
 		</section>
 	);
+}
+
+function resolveShownItems(
+	filter: ViewFilter,
+	data: Awaited<ReturnType<FriendsLoaderData>>,
+) {
+	if (filter === "friends") return data.friends;
+	if (filter === "team") return data.teamMembers;
+
+	const friendIds = new Set(data.friends.map((f) => f.id));
+	const combined = [
+		...data.friends,
+		...data.teamMembers.filter((tm) => !friendIds.has(tm.id)),
+	];
+
+	return combined.sort((a, b) => {
+		const aActive = a.subtitle ? 1 : 0;
+		const bActive = b.subtitle ? 1 : 0;
+		return bActive - aActive;
+	});
 }

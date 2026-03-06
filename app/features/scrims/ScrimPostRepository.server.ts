@@ -417,39 +417,59 @@ export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
 	const rows = await baseFindQuery
 		.where("ScrimPost.canceledAt", "is", null)
 		.where("ScrimPost.at", ">=", now)
+		.where((eb) =>
+			eb.or([
+				eb.exists(
+					eb
+						.selectFrom("ScrimPostUser")
+						.select("ScrimPostUser.scrimPostId")
+						.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id")
+						.where("ScrimPostUser.userId", "=", userId),
+				),
+				eb.exists(
+					eb
+						.selectFrom("ScrimPostRequest")
+						.innerJoin(
+							"ScrimPostRequestUser",
+							"ScrimPostRequestUser.scrimPostRequestId",
+							"ScrimPostRequest.id",
+						)
+						.select("ScrimPostRequest.scrimPostId")
+						.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
+						.where("ScrimPostRequestUser.userId", "=", userId),
+				),
+			]),
+		)
 		.orderBy("ScrimPost.at", "asc")
 		.execute();
 
-	return rows
-		.map(mapDBRowToScrimPost)
-		.filter((post) => Scrim.isParticipating(post, userId))
-		.map((post) => {
-			const isAccepted = Scrim.isAccepted(post);
+	return rows.map(mapDBRowToScrimPost).map((post) => {
+		const isAccepted = Scrim.isAccepted(post);
 
-			if (!isAccepted) {
-				return {
-					id: post.id,
-					at: post.at,
-					opponentName: null,
-					opponentAvatarUrl: null,
-					isAccepted: false,
-				};
-			}
-
-			const userIsInPost = post.users.some((u) => u.id === userId);
-			const opponent = userIsInPost
-				? post.requests[0]
-				: { team: post.team, users: post.users };
-			const opponentTeam = opponent?.team;
-			const opponentOwner = opponent?.users.find((u) => u.isOwner);
-
+		if (!isAccepted) {
 			return {
 				id: post.id,
 				at: post.at,
-				opponentName: opponentTeam?.name ?? null,
-				opponentAvatarUrl:
-					opponentTeam?.avatarUrl ?? opponentOwner?.discordAvatar ?? null,
-				isAccepted: true,
+				opponentName: null,
+				opponentAvatarUrl: null,
+				isAccepted: false,
 			};
-		});
+		}
+
+		const userIsInPost = post.users.some((u) => u.id === userId);
+		const opponent = userIsInPost
+			? post.requests[0]
+			: { team: post.team, users: post.users };
+		const opponentTeam = opponent?.team;
+		const opponentOwner = opponent?.users.find((u) => u.isOwner);
+
+		return {
+			id: post.id,
+			at: post.at,
+			opponentName: opponentTeam?.name ?? null,
+			opponentAvatarUrl:
+				opponentTeam?.avatarUrl ?? opponentOwner?.discordAvatar ?? null,
+			isAccepted: true,
+		};
+	});
 }

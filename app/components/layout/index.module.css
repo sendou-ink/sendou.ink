@@ -3,6 +3,17 @@
 	min-width: 0;
 }
 
+.streamXpSubtitle {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.streamXpIcon {
+	width: 14px;
+	height: 14px;
+}
+
 .header {
 	display: flex;
 	width: 100%;
@@ -33,10 +44,10 @@
 	justify-content: center;
 	width: 40px;
 	height: 36px;
-	background-color: var(--color-accent);
+	background-color: var(--color-text-accent);
 	border-radius: var(--radius-field);
 	font-weight: var(--weight-bold);
-	color: var(--color-text);
+	color: var(--color-text-inverse);
 	text-decoration: none;
 	flex-shrink: 0;
 	transition: background-color 0.2s;
@@ -53,11 +64,6 @@
 	font-size: 12px;
 	position: relative;
 	top: 5px;
-}
-
-.siteLogo:hover {
-	background-color: var(--color-accent-high);
-	color: var(--color-text-inverse);
 }
 
 .siteLogo:focus-visible {
@@ -117,9 +123,11 @@
 }
 
 .sideNavEmpty {
-	font-size: var(--font-xs);
+	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 	padding: var(--s-1) var(--s-2);
+	margin: 0 auto;
+	font-style: italic;
 }
 
 .viewAllLink {
@@ -146,6 +154,18 @@
 @media screen and (min-width: 600px) {
 	.sideNavCollapseButton.sideNavCollapseButton {
 		display: flex;
+	}
+}
+
+.headerCollapsedBreadcrumbs {
+	display: none;
+	min-width: 0;
+}
+
+@media screen and (min-width: 600px) {
+	.headerCollapsedBreadcrumbs {
+		display: flex;
+		min-width: 0;
 	}
 }
 

@@ -86,7 +86,7 @@
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
 	border-radius: var(--radius-selector);
-	background-color: var(--color-bg-higher);
+	background-color: var(--color-bg-high);
 	padding: 0 var(--s-2);
 	height: var(--selector-size-sm);
 	display: flex;

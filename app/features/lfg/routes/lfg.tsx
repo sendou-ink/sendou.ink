@@ -96,6 +96,7 @@ export default function LFGPage() {
 
 	const activeFilterCount = countActiveFilters(filters);
 
+	// xxx: undo changes that introduce the panel here
 	return (
 		<Main
 			className="stack xl"

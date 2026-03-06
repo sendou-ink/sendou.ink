@@ -21,7 +21,6 @@ import {
 } from "~/modules/in-game-lists/weapon-ids";
 import {
 	ANALYZER_URL,
-	artPage,
 	LFG_PAGE,
 	mainWeaponImageUrl,
 	mySlugify,
@@ -90,7 +89,7 @@ export function getWeaponDestinationUrl(
 		stats: weaponBuildStatsPage(weapon.slug),
 		analyzer: `${ANALYZER_URL}?weapon=${weapon.id}`,
 		vods: `${VODS_PAGE}?weapon=${weapon.id}`,
-		art: artPage(weapon.slug),
+		art: `/art?tab=showcase&tag=${encodeURIComponent(weapon.name.toLowerCase())}`,
 		lfg: `${LFG_PAGE}?weapon=${weapon.id}`,
 	};
 

@@ -1,22 +1,32 @@
+import { cachified } from "@epic-web/cachified";
 import { href } from "react-router";
+import * as R from "remeda";
+import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import {
+	COMBINED_STREAMS_KEY,
 	getLiveTournamentStreams,
 	type SidebarStream,
 } from "~/features/core/streams/streams.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import { resolveFriendActivity } from "~/features/friends/friends-utils.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
+import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import { getSendouQSidebarStreams } from "~/features/sendouq-streams/core/streams.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
+import { cache, ttl } from "~/utils/cache.server";
 import {
+	BLANK_IMAGE_URL,
+	discordAvatarUrl,
 	navIconUrl,
 	sendouQMatchPage,
 	tournamentBracketsPage,
 	tournamentMatchPage,
+	twitchUrl,
 	userPage,
 } from "~/utils/urls";
+import * as StreamRanking from "./StreamRanking";
 
 export type SidebarEvent = {
 	id: number;
@@ -39,15 +49,18 @@ export type SidebarFriend = {
 	tournamentId: number | null;
 };
 
-const MAX_EVENTS_VISIBLE = 8;
+const MAX_EVENTS_VISIBLE = 5;
 const MAX_FRIENDS_VISIBLE = 4;
+const MAX_STREAMS_VISIBLE = 5;
 const SENDOUQ_QUOTA = 2;
 const TOURNAMENT_SUB_QUOTA = 2;
 
 export async function resolveSidebarData(userId: number | null) {
 	if (!userId) {
+		const tournamentsData =
+			await ShowcaseTournaments.frontPageTournamentsByUserId(null);
 		return {
-			events: [] as SidebarEvent[],
+			events: showcaseEventsToSidebarEvents(tournamentsData.showcase),
 			matchStatus: null as { matchId: number; url: string } | null,
 			tournamentMatchStatus: null as {
 				url: string;
@@ -56,7 +69,7 @@ export async function resolveSidebarData(userId: number | null) {
 				logoUrl: string | null;
 			} | null,
 			friends: [] as SidebarFriend[],
-			streams: await combinedStreams(),
+			streams: await combinedStreamsCached(),
 		};
 	}
 
@@ -101,9 +114,14 @@ export async function resolveSidebarData(userId: number | null) {
 		scrimStatus: s.isAccepted ? ("booked" as const) : ("looking" as const),
 	}));
 
-	const events = [...tournamentEvents, ...scrimEvents]
-		.sort((a, b) => a.startTime - b.startTime)
-		.slice(0, MAX_EVENTS_VISIBLE);
+	const personalEvents = [...tournamentEvents, ...scrimEvents].sort(
+		(a, b) => a.startTime - b.startTime,
+	);
+	const events = (
+		personalEvents.length > 0
+			? personalEvents
+			: showcaseEventsToSidebarEvents(tournamentsData.showcase)
+	).slice(0, MAX_EVENTS_VISIBLE);
 
 	const friends = resolveFriends(friendsWithActivity);
 
@@ -114,17 +132,91 @@ export async function resolveSidebarData(userId: number | null) {
 			: null,
 		tournamentMatchStatus,
 		friends,
-		streams: await combinedStreams(),
+		streams: await combinedStreamsCached(),
 	};
 }
 
+function combinedStreamsCached(): Promise<SidebarStream[]> {
+	return cachified({
+		key: COMBINED_STREAMS_KEY,
+		cache,
+		ttl: ttl(10 * 60 * 1000),
+		async getFreshValue() {
+			return combinedStreams();
+		},
+	});
+}
+
 async function combinedStreams(): Promise<SidebarStream[]> {
-	const [tournamentStreams, sendouQStreams] = await Promise.all([
-		getLiveTournamentStreams(),
+	const tournamentStreams = getLiveTournamentStreams();
+	const [sendouQEntries, xRankRows] = await Promise.all([
 		getSendouQSidebarStreams(),
+		LiveStreamRepository.findXRankStreams(),
 	]);
 
-	return [...tournamentStreams, ...sendouQStreams];
+	const seenUsernames = new Set(
+		sendouQEntries.flatMap((e) =>
+			e.twitchUsernames.map((t) => t.toLowerCase()),
+		),
+	);
+
+	const ranked: { stream: SidebarStream; score: number }[] = [];
+
+	for (const stream of tournamentStreams) {
+		ranked.push({
+			stream,
+			score: StreamRanking.tournamentTierToScore(stream.tier),
+		});
+	}
+
+	for (const { sidebarStream, tier } of sendouQEntries) {
+		const score = tier ? StreamRanking.sendouQTierToScore(tier) : 9;
+		ranked.push({ stream: sidebarStream, score });
+	}
+
+	const xRankByUser = new Map<number, (typeof xRankRows)[number]>();
+	for (const row of xRankRows) {
+		const existing = xRankByUser.get(row.id);
+		if (!existing || (row.peakXp ?? 0) > (existing.peakXp ?? 0)) {
+			xRankByUser.set(row.id, row);
+		}
+	}
+
+	for (const row of xRankByUser.values()) {
+		if (
+			row.twitchUsername &&
+			seenUsernames.has(row.twitchUsername.toLowerCase())
+		) {
+			continue;
+		}
+
+		const score = StreamRanking.xpToScore(row.peakXp ?? 0);
+		if (score === null) continue;
+
+		ranked.push({
+			stream: {
+				id: row.id,
+				name: row.username,
+				imageUrl: row.discordAvatar
+					? discordAvatarUrl({
+							discordId: row.discordId,
+							discordAvatar: row.discordAvatar,
+							size: "sm",
+						})
+					: BLANK_IMAGE_URL,
+				url: row.twitchUsername
+					? twitchUrl(row.twitchUsername)
+					: userPage({ discordId: row.discordId, customUrl: row.customUrl }),
+				subtitle: "",
+				startsAt: Math.floor(Date.now() / 1000),
+				tier: null,
+				peakXp: row.peakXp ?? undefined,
+			},
+			score,
+		});
+	}
+
+	return StreamRanking.rank(ranked, MAX_STREAMS_VISIBLE);
 }
 
 function resolveTournamentMatchStatus(userId: number) {
@@ -180,29 +272,27 @@ type FriendWithActivity = Awaited<
 >[number];
 
 function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
+	const unique = R.uniqueBy(friendsWithActivity, (f) => f.id);
+	const friendRows = unique.filter((f) => f.friendshipId !== null);
+	const teamMemberRows = unique.filter((f) => f.friendshipId === null);
+
 	const sendouqFriends: SidebarFriend[] = [];
 	const tournamentSubFriends: SidebarFriend[] = [];
+	const inactiveFriends: FriendWithActivity[] = [];
 
-	for (const friend of friendsWithActivity) {
+	for (const friend of friendRows) {
 		const activity = resolveFriendActivity(friend.id, friend.tournamentName);
 
-		if (!activity.subtitle) continue;
+		if (!activity.subtitle) {
+			inactiveFriends.push(friend);
+			continue;
+		}
 
-		const url = userPage({
-			discordId: friend.discordId,
-			customUrl: friend.customUrl,
-		});
-
-		const sidebarFriend: SidebarFriend = {
-			id: friend.id,
-			name: friend.username,
-			discordId: friend.discordId,
-			discordAvatar: friend.discordAvatar,
-			url,
-			subtitle: activity.subtitle,
-			badge: activity.badge ?? "",
-			tournamentId: friend.tournamentId,
-		};
+		const sidebarFriend = rowToSidebarFriend(
+			friend,
+			activity.subtitle,
+			activity.badge ?? "",
+		);
 
 		if (activity.subtitle === "SendouQ") {
 			sendouqFriends.push(sidebarFriend);
@@ -226,5 +316,70 @@ function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
 		result.push(...[...extraSendouq, ...extraTournament].slice(0, remaining));
 	}
 
+	if (result.length < MAX_FRIENDS_VISIBLE) {
+		const shownIds = new Set(result.map((f) => f.id));
+		const inactiveTeamMembers: FriendWithActivity[] = [];
+
+		for (const tm of teamMemberRows) {
+			if (result.length >= MAX_FRIENDS_VISIBLE) break;
+			if (shownIds.has(tm.id)) continue;
+
+			const activity = resolveFriendActivity(tm.id, tm.tournamentName);
+			if (!activity.subtitle) {
+				inactiveTeamMembers.push(tm);
+				continue;
+			}
+
+			result.push(
+				rowToSidebarFriend(tm, activity.subtitle, activity.badge ?? ""),
+			);
+			shownIds.add(tm.id);
+		}
+
+		for (const friend of inactiveFriends) {
+			if (result.length >= MAX_FRIENDS_VISIBLE) break;
+			if (shownIds.has(friend.id)) continue;
+
+			result.push(rowToSidebarFriend(friend, "", ""));
+			shownIds.add(friend.id);
+		}
+
+		for (const tm of inactiveTeamMembers) {
+			if (result.length >= MAX_FRIENDS_VISIBLE) break;
+
+			result.push(rowToSidebarFriend(tm, "", ""));
+		}
+	}
+
 	return result;
+}
+
+function showcaseEventsToSidebarEvents(
+	events: ShowcaseCalendarEvent[],
+): SidebarEvent[] {
+	return events.map((e) => ({
+		id: e.id,
+		name: e.name,
+		url: e.url,
+		logoUrl: e.logoUrl,
+		startTime: e.startTime,
+		type: "tournament" as const,
+	}));
+}
+
+function rowToSidebarFriend(
+	row: FriendWithActivity,
+	subtitle: string,
+	badge: string,
+): SidebarFriend {
+	return {
+		id: row.id,
+		name: row.username,
+		discordId: row.discordId,
+		discordAvatar: row.discordAvatar,
+		url: userPage({ discordId: row.discordId, customUrl: row.customUrl }),
+		subtitle,
+		badge,
+		tournamentId: row.tournamentId,
+	};
 }

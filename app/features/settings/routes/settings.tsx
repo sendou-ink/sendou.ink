@@ -53,7 +53,21 @@ export default function SettingsPage() {
 	return (
 		<Main halfWidth>
 			<div className="stack md">
-				<h2 className="text-lg">{t("common:pages.settings")}</h2>
+				<div className="stack horizontal justify-between">
+					<h2 className="text-lg">{t("common:pages.settings")}</h2>
+					{user ? (
+						<form method="post" action={LOG_OUT_URL}>
+							<SendouButton
+								size="small"
+								variant="outlined"
+								icon={<LogOut />}
+								type="submit"
+							>
+								{t("common:header.logout")}
+							</SendouButton>
+						</form>
+					) : null}
+				</div>
 				<Divider className={styles.divider} smallText>
 					{t("common:settings.locales")}
 				</Divider>
@@ -69,11 +83,6 @@ export default function SettingsPage() {
 						{({ FormField }) => <FormField name="newValue" />}
 					</SendouForm>
 				) : null}
-				<Divider className={styles.divider} smallText>
-					{t("common:settings.theme")}
-				</Divider>
-				<ThemeSelector />
-				<CustomColorSelector />
 				{user ? (
 					<>
 						<Divider className={styles.divider} smallText>
@@ -111,18 +120,13 @@ export default function SettingsPage() {
 								{({ FormField }) => <FormField name="newValue" />}
 							</SendouForm>
 						</div>
-						<form method="post" action={LOG_OUT_URL} className="mt-6">
-							<SendouButton
-								size="small"
-								variant="outlined"
-								icon={<LogOut />}
-								type="submit"
-							>
-								{t("common:header.logout")}
-							</SendouButton>
-						</form>
 					</>
 				) : null}
+				<Divider className={styles.divider} smallText>
+					{t("common:settings.theme")}
+				</Divider>
+				<ThemeSelector />
+				<CustomColorSelector />
 			</div>
 		</Main>
 	);

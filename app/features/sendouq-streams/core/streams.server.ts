@@ -1,6 +1,9 @@
 import cachified from "@epic-web/cachified";
 import * as R from "remeda";
-import type { SidebarStream } from "~/features/core/streams/streams.server";
+import {
+	COMBINED_STREAMS_KEY,
+	type SidebarStream,
+} from "~/features/core/streams/streams.server";
 import {
 	cachedFullUserLeaderboard,
 	type UserLeaderboardWithAdditionsItem,
@@ -60,6 +63,7 @@ export function cachedStreams() {
 
 export function refreshStreamsCache() {
 	cache.delete(SENDOUQ_STREAMS_KEY);
+	cache.delete(COMBINED_STREAMS_KEY);
 	void cachedStreams().catch((err) =>
 		logger.error(`Failed to refresh cache: ${err}`),
 	);
@@ -101,12 +105,20 @@ function streamedMatches({
 	});
 }
 
-export async function getSendouQSidebarStreams(): Promise<SidebarStream[]> {
+export type SendouQSidebarEntry = {
+	sidebarStream: SidebarStream;
+	tier: { name: TierName; isPlus: boolean } | null;
+	twitchUsernames: string[];
+};
+
+export async function getSendouQSidebarStreams(): Promise<
+	SendouQSidebarEntry[]
+> {
 	const streams = await cachedStreams();
 
 	const matchIdToStream = R.groupBy(streams, (s) => s.match.id);
 
-	const sidebarStreams: SidebarStream[] = [];
+	const entries: SendouQSidebarEntry[] = [];
 
 	for (const [matchIdStr, matchStreams] of Object.entries(matchIdToStream)) {
 		const matchId = Number(matchIdStr);
@@ -115,25 +127,35 @@ export async function getSendouQSidebarStreams(): Promise<SidebarStream[]> {
 		const matchGroups = SendouQ.groups.filter((g) => g.matchId === matchId);
 		const averageTier = calculateAverageTierForMatch(matchGroups);
 
-		sidebarStreams.push({
-			id: -matchId,
-			name: `Match #${matchId}`,
-			imageUrl: averageTier
-				? `${tierImageUrl(averageTier.name)}.png`
-				: `${navIconUrl("sendouq")}.png`,
-			overlayIconUrl: averageTier ? `${navIconUrl("sendouq")}.png` : undefined,
-			url: SENDOUQ_STREAMS_PAGE,
-			subtitle: averageTier
-				? `${averageTier.name}${averageTier.isPlus ? "+" : ""}`
-				: "",
-			startsAt: firstStream.match.createdAt,
-			tier: null,
+		const twitchUsernames = matchStreams
+			.map((s) => s.stream.twitchUserName)
+			.filter((t): t is string => t !== null);
+
+		entries.push({
+			sidebarStream: {
+				id: -matchId,
+				name: `Match #${matchId}`,
+				imageUrl: averageTier
+					? `${tierImageUrl(averageTier.name)}.png`
+					: `${navIconUrl("sendouq")}.png`,
+				overlayIconUrl: averageTier
+					? `${navIconUrl("sendouq")}.png`
+					: undefined,
+				url: SENDOUQ_STREAMS_PAGE,
+				subtitle: averageTier
+					? `${averageTier.name}${averageTier.isPlus ? "+" : ""}`
+					: "",
+				startsAt: firstStream.match.createdAt,
+				tier: null,
+			},
+			tier: averageTier,
+			twitchUsernames,
 		});
 	}
 
-	return sidebarStreams.sort((a, b) => {
-		const aTierIndex = getTierIndexFromSubtitle(a.subtitle);
-		const bTierIndex = getTierIndexFromSubtitle(b.subtitle);
+	return entries.sort((a, b) => {
+		const aTierIndex = getTierIndexFromSubtitle(a.sidebarStream.subtitle);
+		const bTierIndex = getTierIndexFromSubtitle(b.sidebarStream.subtitle);
 		return aTierIndex - bTierIndex;
 	});
 }

@@ -16,28 +16,29 @@ export const loader = async () => {
 			FriendRepository.findPendingReceivedRequests(user.id),
 		]);
 
-	// xxx: why is this needed? shouldn't the query be doing this already?
-	const uniqueFriends = R.uniqueBy(friendsWithActivity, (f) => f.id);
+	const unique = R.uniqueBy(friendsWithActivity, (f) => f.id);
 
-	const friends = uniqueFriends.map((friend) => {
-		const activity = resolveFriendActivity(friend.id, friend.tournamentName);
+	const friends = unique
+		.filter((f) => f.friendshipId !== null)
+		.map((friend) => {
+			const activity = resolveFriendActivity(friend.id, friend.tournamentName);
 
-		return {
-			id: friend.id,
-			friendshipId: friend.friendshipId,
-			username: friend.username,
-			discordId: friend.discordId,
-			discordAvatar: friend.discordAvatar,
-			url: userPage({
+			return {
+				id: friend.id,
+				friendshipId: friend.friendshipId as number,
+				username: friend.username,
 				discordId: friend.discordId,
-				customUrl: friend.customUrl,
-			}),
-			subtitle: activity.subtitle,
-			badge: activity.badge,
-			tournamentId: friend.tournamentId,
-			friendshipCreatedAt: friend.friendshipCreatedAt,
-		};
-	});
+				discordAvatar: friend.discordAvatar,
+				url: userPage({
+					discordId: friend.discordId,
+					customUrl: friend.customUrl,
+				}),
+				subtitle: activity.subtitle,
+				badge: activity.badge,
+				tournamentId: friend.tournamentId,
+				friendshipCreatedAt: friend.friendshipCreatedAt,
+			};
+		});
 
 	friends.sort((a, b) => {
 		const aActive = a.subtitle ? 1 : 0;
@@ -47,8 +48,35 @@ export const loader = async () => {
 		return (b.friendshipCreatedAt ?? 0) - (a.friendshipCreatedAt ?? 0);
 	});
 
+	const teamMembers = unique
+		.filter((f) => f.friendshipId === null)
+		.map((tm) => {
+			const activity = resolveFriendActivity(tm.id, tm.tournamentName);
+
+			return {
+				id: tm.id,
+				username: tm.username,
+				discordId: tm.discordId,
+				discordAvatar: tm.discordAvatar,
+				url: userPage({
+					discordId: tm.discordId,
+					customUrl: tm.customUrl,
+				}),
+				subtitle: activity.subtitle,
+				badge: activity.badge,
+				tournamentId: tm.tournamentId,
+			};
+		});
+
+	teamMembers.sort((a, b) => {
+		const aActive = a.subtitle ? 1 : 0;
+		const bActive = b.subtitle ? 1 : 0;
+		return bActive - aActive;
+	});
+
 	return {
 		friends,
+		teamMembers,
 		incomingRequests: incomingRequests.map((req) => ({
 			id: req.id,
 			sender: {

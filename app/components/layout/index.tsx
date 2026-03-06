@@ -183,6 +183,7 @@ export function Layout({
 	const navOffset = useNavOffset();
 	const isMounted = useIsMounted();
 
+	const user = useUser();
 	const sidebarData = data?.sidebar;
 	const events = sidebarData?.events ?? [];
 	const matchStatus = sidebarData?.matchStatus;
@@ -264,21 +265,34 @@ export function Layout({
 				<SideNavHeader
 					icon={<Users />}
 					action={
-						<Link to={FRIENDS_PAGE} className={styles.viewAllLink}>
-							{t("common:actions.viewAll")}
-							<ChevronRight size={14} />
-						</Link>
+						user ? (
+							<Link to={FRIENDS_PAGE} className={styles.viewAllLink}>
+								{t("common:actions.viewAll")}
+								<ChevronRight size={14} />
+							</Link>
+						) : null
 					}
 				>
 					{t("front:sideNav.friends")}
 				</SideNavHeader>
-				{friends.map((friend) => (
-					<FriendMenu key={friend.id} {...friend} />
-				))}
+				{friends.length > 0 ? (
+					friends.map((friend) => <FriendMenu key={friend.id} {...friend} />)
+				) : (
+					<div className={styles.sideNavEmpty}>
+						{user
+							? t("front:sideNav.friends.noFriends")
+							: t("front:sideNav.friends.notLoggedIn")}
+					</div>
+				)}
 
 				<SideNavHeader icon={<TwitchIcon />}>
 					{t("front:sideNav.streams")}
 				</SideNavHeader>
+				{streams.length === 0 ? (
+					<div className={styles.sideNavEmpty}>
+						{t("front:sideNav.noStreams")}
+					</div>
+				) : null}
 				{streams.map((stream) => {
 					const startsAtDate = databaseTimestampToDate(stream.startsAt);
 
@@ -289,12 +303,25 @@ export function Layout({
 							imageUrl={stream.imageUrl}
 							overlayIconUrl={stream.overlayIconUrl}
 							subtitle={
-								isMounted
-									? formatDistanceToNow(startsAtDate, {
-											addSuffix: true,
-											language: i18n.language as LanguageCode,
-										})
-									: ""
+								stream.peakXp ? (
+									<span className={styles.streamXpSubtitle}>
+										<img
+											src={`${navIconUrl("xsearch")}.png`}
+											alt=""
+											className={styles.streamXpIcon}
+										/>
+										{stream.peakXp}
+									</span>
+								) : stream.subtitle ? (
+									stream.subtitle
+								) : isMounted ? (
+									formatDistanceToNow(startsAtDate, {
+										addSuffix: true,
+										language: i18n.language as LanguageCode,
+									})
+								) : (
+									""
+								)
 							}
 							badge={
 								isMounted && startsAtDate.getTime() < Date.now()
@@ -316,6 +343,11 @@ export function Layout({
 					}}
 				>
 					<MobileLogo />
+					{sideNavCollapsed ? (
+						<div className={styles.headerCollapsedBreadcrumbs}>
+							<SiteTitle />
+						</div>
+					) : null}
 					<SideNavCollapseButton
 						onToggle={() => setSideNavCollapsed(!sideNavCollapsed)}
 					/>
@@ -487,10 +519,17 @@ function SideNavUserPanel() {
 	}
 
 	return (
-		<LogInButtonContainer>
-			<SendouButton type="submit" size="small" icon={<LogIn />}>
-				{t("header.login.discord")}
-			</SendouButton>
-		</LogInButtonContainer>
+		<>
+			<LogInButtonContainer>
+				<SendouButton type="submit" size="small" icon={<LogIn />}>
+					{t("header.login.discord")}
+				</SendouButton>
+			</LogInButtonContainer>
+			<div className={sideNavStyles.sideNavFooterActions}>
+				<Link to={SETTINGS_PAGE} className={sideNavStyles.sideNavFooterButton}>
+					<Settings />
+				</Link>
+			</div>
+		</>
 	);
 }

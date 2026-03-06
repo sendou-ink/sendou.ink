@@ -10,5 +10,10 @@
 	"friendsList.viewTournament": "View tournament",
 	"friendsList.joinSendouQ": "Join SendouQ",
 	"friendsList.deleteFriend": "Delete friend",
-	"friendsList.deleteConfirm": "Delete {{name}} as a friend?"
+	"friendsList.deleteConfirm": "Delete {{name}} as a friend?",
+	"view.label": "View filter",
+	"view.friends": "Friends",
+	"view.teamMembers": "Team members",
+	"view.all": "All",
+	"teamMembers.empty": "No team members yet"
 }

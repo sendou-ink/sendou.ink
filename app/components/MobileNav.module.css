@@ -3,7 +3,7 @@
 	bottom: 0;
 	left: 0;
 	right: 0;
-	z-index: 10;
+	z-index: 50;
 }
 
 @media screen and (min-width: 600px) {
@@ -61,6 +61,14 @@
 .tabIcon svg {
 	width: 24px;
 	height: 24px;
+}
+
+.sideNavEmpty {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	padding: var(--s-1) var(--s-2);
+	text-align: center;
+	font-style: italic;
 }
 
 .notificationDot {
@@ -236,66 +244,6 @@
 	margin: 0;
 }
 
-.streamItem {
-	display: flex;
-	align-items: center;
-	gap: var(--s-2);
-	padding: var(--s-1) var(--s-2);
-	border-radius: var(--radius-field);
-}
-
-.streamItem:hover {
-	background-color: var(--color-bg-higher);
-}
-
-.streamItemImage {
-	width: 32px;
-	height: 32px;
-	border-radius: var(--radius-field);
-	object-fit: cover;
-	flex-shrink: 0;
-}
-
-.streamItemContent {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-0-5);
-	min-width: 0;
-	flex: 1;
-}
-
-.streamItemName {
-	font-size: var(--font-xs);
-	color: var(--color-text);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.streamItemMeta {
-	display: flex;
-	align-items: center;
-	gap: var(--s-2);
-}
-
-.streamItemSubtitle {
-	font-size: var(--font-2xs);
-	color: var(--color-text-high);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.streamItemBadge {
-	font-size: var(--font-2xs);
-	font-weight: var(--weight-semi);
-	color: var(--color-text-inverse);
-	background-color: var(--color-text-accent);
-	padding: 0 var(--s-1);
-	border-radius: var(--radius-field);
-	flex-shrink: 0;
-}
-
 .navGrid {
 	list-style: none;
 	margin: 0;
@@ -402,4 +350,15 @@
 	color: var(--color-text-high);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
+}
+
+.streamXpSubtitle {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.streamXpIcon {
+	width: 14px;
+	height: 14px;
 }

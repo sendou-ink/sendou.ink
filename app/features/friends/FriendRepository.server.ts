@@ -1,55 +1,97 @@
 import { db } from "~/db/sql";
 
 export async function findByUserIdWithActivity(userId: number) {
-	const rows = await db
-		.selectFrom("Friendship")
-		.innerJoin("User", (join) =>
-			join.on((eb) =>
+	const [friendRows, teamMemberRows] = await Promise.all([
+		db
+			.selectFrom("Friendship")
+			.innerJoin("User", (join) =>
+				join.on((eb) =>
+					eb.or([
+						eb.and([
+							eb("Friendship.userOneId", "=", userId),
+							eb("User.id", "=", eb.ref("Friendship.userTwoId")),
+						]),
+						eb.and([
+							eb("Friendship.userTwoId", "=", userId),
+							eb("User.id", "=", eb.ref("Friendship.userOneId")),
+						]),
+					]),
+				),
+			)
+			.leftJoin("TournamentSub", "TournamentSub.userId", "User.id")
+			.leftJoin(
+				"CalendarEvent",
+				"CalendarEvent.tournamentId",
+				"TournamentSub.tournamentId",
+			)
+			.leftJoin(
+				"CalendarEventDate",
+				"CalendarEventDate.eventId",
+				"CalendarEvent.id",
+			)
+			.select([
+				"Friendship.id as friendshipId",
+				"User.id",
+				"User.username",
+				"User.discordId",
+				"User.discordAvatar",
+				"User.customUrl",
+				"CalendarEvent.name as tournamentName",
+				"TournamentSub.tournamentId",
+				"CalendarEventDate.startTime as tournamentStartTime",
+				"Friendship.createdAt as friendshipCreatedAt",
+			])
+			.where((eb) =>
 				eb.or([
-					eb.and([
-						eb("Friendship.userOneId", "=", userId),
-						eb("User.id", "=", eb.ref("Friendship.userTwoId")),
-					]),
-					eb.and([
-						eb("Friendship.userTwoId", "=", userId),
-						eb("User.id", "=", eb.ref("Friendship.userOneId")),
-					]),
+					eb("Friendship.userOneId", "=", userId),
+					eb("Friendship.userTwoId", "=", userId),
 				]),
-			),
-		)
-		.leftJoin("TournamentSub", "TournamentSub.userId", "User.id")
-		.leftJoin(
-			"CalendarEvent",
-			"CalendarEvent.tournamentId",
-			"TournamentSub.tournamentId",
-		)
-		.leftJoin(
-			"CalendarEventDate",
-			"CalendarEventDate.eventId",
-			"CalendarEvent.id",
-		)
-		.select([
-			"Friendship.id as friendshipId",
-			"User.id",
-			"User.username",
-			"User.discordId",
-			"User.discordAvatar",
-			"User.customUrl",
-			"CalendarEvent.name as tournamentName",
-			"TournamentSub.tournamentId",
-			"CalendarEventDate.startTime as tournamentStartTime",
-			"Friendship.createdAt as friendshipCreatedAt",
-		])
-		.where((eb) =>
-			eb.or([
-				eb("Friendship.userOneId", "=", userId),
-				eb("Friendship.userTwoId", "=", userId),
-			]),
-		)
-		.orderBy("Friendship.createdAt", "desc")
-		.execute();
+			)
+			.orderBy("Friendship.createdAt", "desc")
+			.execute(),
+		db
+			.selectFrom("TeamMemberWithSecondary as myMembership")
+			.innerJoin("TeamMemberWithSecondary as otherMembership", (join) =>
+				join
+					.onRef("otherMembership.teamId", "=", "myMembership.teamId")
+					.on("otherMembership.userId", "!=", userId),
+			)
+			.innerJoin("User", "User.id", "otherMembership.userId")
+			.leftJoin("TournamentSub", "TournamentSub.userId", "User.id")
+			.leftJoin(
+				"CalendarEvent",
+				"CalendarEvent.tournamentId",
+				"TournamentSub.tournamentId",
+			)
+			.leftJoin(
+				"CalendarEventDate",
+				"CalendarEventDate.eventId",
+				"CalendarEvent.id",
+			)
+			.select([
+				"User.id",
+				"User.username",
+				"User.discordId",
+				"User.discordAvatar",
+				"User.customUrl",
+				"CalendarEvent.name as tournamentName",
+				"TournamentSub.tournamentId",
+				"CalendarEventDate.startTime as tournamentStartTime",
+			])
+			.where("myMembership.userId", "=", userId)
+			.where("myMembership.leftAt", "is", null)
+			.where("otherMembership.leftAt", "is", null)
+			.execute(),
+	]);
 
-	return rows;
+	return [
+		...friendRows,
+		...teamMemberRows.map((row) => ({
+			...row,
+			friendshipId: null as number | null,
+			friendshipCreatedAt: null as number | null,
+		})),
+	];
 }
 
 export async function findPendingSentRequests(senderId: number) {

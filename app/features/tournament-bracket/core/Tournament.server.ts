@@ -1,4 +1,4 @@
-import { clearLiveStreamsCache } from "~/features/core/streams/streams.server";
+import { clearCombinedStreamsCache } from "~/features/core/streams/streams.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
@@ -102,10 +102,7 @@ export async function tournamentFromDBCached(args: {
 }) {
 	const data = notFoundIfFalsy(await tournamentDataCached(args));
 
-	const tournament = new Tournament({ ...data, simulateBrackets: false });
-	syncTournamentToRegistry(tournament);
-
-	return tournament;
+	return new Tournament({ ...data, simulateBrackets: false });
 }
 
 // caching promise ensures that if many requests are made for the same tournament
@@ -145,11 +142,11 @@ function syncTournamentToRegistry(tournament: Tournament) {
 	if (isRunning) {
 		RunningTournaments.add(tournament);
 		if (!wasInRegistry) {
-			clearLiveStreamsCache();
+			clearCombinedStreamsCache();
 		}
 	} else {
 		if (wasInRegistry) {
-			clearLiveStreamsCache();
+			clearCombinedStreamsCache();
 		}
 		RunningTournaments.remove(tournament.ctx.id);
 	}

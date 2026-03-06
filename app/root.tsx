@@ -24,6 +24,7 @@ import {
 	useMatches,
 	useNavigate,
 	useNavigation,
+	useRevalidator,
 	useSearchParams,
 } from "react-router";
 import { useDebounce } from "react-use";
@@ -155,6 +156,7 @@ function Document({
 	usePreloadTranslation();
 	useLoadingIndicator();
 	useTriggerToasts();
+	useSidebarRevalidation();
 
 	return (
 		<html
@@ -250,6 +252,34 @@ function useLoadingIndicator() {
 		250,
 		[transition.state],
 	);
+}
+
+function useSidebarRevalidation() {
+	const revalidator = useRevalidator();
+
+	useEffect(() => {
+		const TEN_MINUTES = 10 * 60 * 1000;
+
+		const revalidate = () => {
+			if (revalidator.state === "idle") {
+				revalidator.revalidate();
+			}
+		};
+
+		const handleVisibilityChange = () => {
+			if (document.visibilityState === "visible") {
+				revalidate();
+			}
+		};
+
+		document.addEventListener("visibilitychange", handleVisibilityChange);
+		const interval = setInterval(revalidate, TEN_MINUTES);
+
+		return () => {
+			document.removeEventListener("visibilitychange", handleVisibilityChange);
+			clearInterval(interval);
+		};
+	}, [revalidator]);
 }
 
 function usePreloadTranslation() {

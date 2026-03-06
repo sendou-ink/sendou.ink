@@ -38,6 +38,10 @@ export function up(db) {
 		).run();
 
 		db.prepare(
+			`create index all_team_member_user_id on "AllTeamMember"("userId")`,
+		).run();
+
+		db.prepare(
 			/* sql */ `
       INSERT INTO "Friendship" ("userOneId", "userTwoId")
       SELECT t1."trustGiverUserId", t1."trustReceiverUserId"

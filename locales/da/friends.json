@@ -10,5 +10,10 @@
 	"friendsList.viewTournament": "",
 	"friendsList.joinSendouQ": "",
 	"friendsList.deleteFriend": "",
-	"friendsList.deleteConfirm": ""
+	"friendsList.deleteConfirm": "",
+	"view.label": "",
+	"view.friends": "",
+	"view.teamMembers": "",
+	"view.all": "",
+	"teamMembers.empty": ""
 }
