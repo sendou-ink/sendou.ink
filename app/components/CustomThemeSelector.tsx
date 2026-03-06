@@ -190,11 +190,11 @@ export function themeInputFromCustomTheme(
 	return {
 		baseHue: customTheme["--_base-h"] ?? DEFAULT_THEME_INPUT.baseHue,
 		baseChroma:
-			(customTheme["--_base-c-1"] ?? 0) / BASE_CHROMA_MULTIPLIERS[1] ||
+			(customTheme["--_base-c-2"] ?? 0) / BASE_CHROMA_MULTIPLIERS[2] ||
 			DEFAULT_THEME_INPUT.baseChroma,
 		accentHue: customTheme["--_acc-h"] ?? DEFAULT_THEME_INPUT.accentHue,
 		accentChroma:
-			(customTheme["--_acc-c-1"] ?? 0) / ACCENT_CHROMA_MULTIPLIERS[1] ||
+			(customTheme["--_acc-c-2"] ?? 0) / ACCENT_CHROMA_MULTIPLIERS[2] ||
 			DEFAULT_THEME_INPUT.accentChroma,
 		chatHue: customTheme["--_chat-h"],
 		radiusBox: customTheme["--_radius-box"] ?? DEFAULT_THEME_INPUT.radiusBox,
