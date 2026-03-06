@@ -150,7 +150,7 @@ input:not(.in-container) {
 		outline: none;
 	}
 
-	&:focus-within {
+	&:focus-within:not(:read-only) {
 		outline: var(--focus-ring);
 		outline-offset: 1px;
 	}

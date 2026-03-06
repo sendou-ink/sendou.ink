@@ -1,5 +1,7 @@
+import { Check, Clipboard, PencilLine } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { useCopyToClipboard } from "react-use";
 import {
 	CUSTOM_THEME_VARS,
 	type CustomTheme,
@@ -11,7 +13,7 @@ import {
 	clampThemeToGamut,
 	type ThemeInput,
 } from "~/utils/oklch-gamut";
-import { THEME_INPUT_LIMITS } from "~/utils/zod";
+import { THEME_INPUT_LIMITS, themeInputSchema } from "~/utils/zod";
 import styles from "./CustomThemeSelector.module.css";
 import { Divider } from "./Divider";
 import { LinkButton, SendouButton } from "./elements/Button";
@@ -128,6 +130,44 @@ type ThemeInputKey =
 	| (typeof BORDER_SLIDERS)[number]["inputKey"]
 	| (typeof SIZE_SLIDERS)[number]["inputKey"]
 	| "chatHue";
+
+const THEME_STRING_KEYS: readonly ThemeInputKey[] = [
+	...COLOR_SLIDERS.map((s) => s.inputKey),
+	...RADIUS_SLIDERS.map((s) => s.inputKey),
+	...BORDER_SLIDERS.map((s) => s.inputKey),
+	...SIZE_SLIDERS.map((s) => s.inputKey),
+	"chatHue",
+];
+
+function themeInputToString(input: ThemeInput): string {
+	return THEME_STRING_KEYS.map((key) => {
+		const value = input[key];
+		return value === null ? "_" : String(value);
+	}).join(";");
+}
+
+function themeInputFromString(str: string): ThemeInput | null {
+	const parts = str.split(";");
+	if (parts.length !== THEME_STRING_KEYS.length) return null;
+
+	const raw: Record<string, number | null> = {};
+	for (let i = 0; i < THEME_STRING_KEYS.length; i++) {
+		const key = THEME_STRING_KEYS[i];
+		const part = parts[i].trim();
+
+		if (key === "chatHue" && part === "_") {
+			raw[key] = null;
+			continue;
+		}
+
+		const num = Number(part);
+		if (Number.isNaN(num)) return null;
+		raw[key] = num;
+	}
+
+	const parsed = themeInputSchema.safeParse(raw);
+	return parsed.success ? parsed.data : null;
+}
 
 export const DEFAULT_THEME_INPUT: ThemeInput = {
 	baseHue: 260,
@@ -389,6 +429,14 @@ export function CustomThemeSelector({
 					</div>
 				</>
 			) : null}
+			<Divider />
+			<ThemeShareInput
+				themeInput={themeInput}
+				onImport={(imported) => {
+					setThemeInput(imported);
+					applyThemeInput(imported);
+				}}
+			/>
 			<div className={styles.customThemeSelectorActions}>
 				<SendouButton isDisabled={!isSupporter} onPress={handleSave}>
 					{t("common:actions.save")}
@@ -400,6 +448,60 @@ export function CustomThemeSelector({
 				>
 					{t("common:actions.reset")}
 				</SendouButton>
+			</div>
+		</div>
+	);
+}
+
+function ThemeShareInput({
+	themeInput,
+	onImport,
+}: {
+	themeInput: ThemeInput;
+	onImport: (input: ThemeInput) => void;
+}) {
+	const { t } = useTranslation(["common"]);
+	const [state, copyToClipboard] = useCopyToClipboard();
+	const [copySuccess, setCopySuccess] = React.useState(false);
+
+	const themeString = themeInputToString(themeInput);
+
+	React.useEffect(() => {
+		if (!state.value) return;
+
+		setCopySuccess(true);
+		const timeout = setTimeout(() => setCopySuccess(false), 2000);
+
+		return () => clearTimeout(timeout);
+	}, [state]);
+
+	const handlePaste = async () => {
+		const text = await navigator.clipboard.readText();
+		const parsed = themeInputFromString(text);
+		if (parsed) onImport(parsed);
+	};
+
+	return (
+		<div className={styles.themeShare}>
+			<Label htmlFor="theme-input">
+				{t("common:settings.customTheme.shareCode")}
+			</Label>
+			<div className={styles.themeShareActions}>
+				<input id="theme-input" type="text" value={themeString} readOnly />
+				<SendouButton
+					shape="square"
+					variant="outlined"
+					icon={copySuccess ? <Check /> : <Clipboard />}
+					onPress={() => copyToClipboard(themeString)}
+					aria-label={t("common:settings.customTheme.copy")}
+				/>
+				<SendouButton
+					shape="square"
+					variant="outlined"
+					icon={<PencilLine />}
+					onPress={handlePaste}
+					aria-label={t("common:settings.customTheme.paste")}
+				/>
 			</div>
 		</div>
 	);

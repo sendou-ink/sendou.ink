@@ -84,3 +84,20 @@
 .chatColorPreview {
 	color: oklch(from var(--color-text-accent) l c var(--_chat-h));
 }
+
+.themeShare {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.themeShareActions {
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+}
+
+.themeShareInput input {
+	flex: 1;
+	min-width: 0;
+}
