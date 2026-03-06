@@ -14,5 +14,5 @@
 .avatarPreview {
 	width: 124px;
 	height: 124px;
-	border-radius: 100%;
+	border-radius: var(--radius-avatar);
 }

@@ -28,7 +28,7 @@
 .imageContainer {
 	place-self: center;
 	grid-area: image;
-	border-radius: 100%;
+	border-radius: var(--radius-avatar);
 	width: 30px;
 	height: 30px;
 	background-color: var(--color-bg-high);
@@ -48,7 +48,7 @@
 .itemImage {
 	width: 30px;
 	height: 30px;
-	border-radius: 100%;
+	border-radius: var(--radius-avatar);
 }
 
 .itemHeader {

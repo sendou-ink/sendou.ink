@@ -133,7 +133,7 @@
 }
 
 .eventInfo img {
-	border-radius: 100%;
+	border-radius: var(--radius-avatar);
 }
 
 .eventInfoTime {

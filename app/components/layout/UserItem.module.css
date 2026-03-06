@@ -1,6 +1,6 @@
 .userItem {
 	outline-offset: 1px;
-	border-radius: 100%;
+	border-radius: var(--radius-avatar);
 }
 
 .userItem:focus-visible {

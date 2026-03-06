@@ -47,7 +47,7 @@
 }
 
 .avatar {
-	border-radius: 50%;
+	border-radius: var(--radius-avatar);
 }
 
 .userInfo {

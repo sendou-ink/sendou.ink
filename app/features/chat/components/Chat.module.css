@@ -33,7 +33,7 @@
 
 .avatarWrapperStaff img {
 	border: var(--border-style-accent);
-	border-radius: 50%;
+	border-radius: var(--radius-avatar);
 }
 
 .avatarBadge {

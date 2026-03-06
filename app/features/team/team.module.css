@@ -43,7 +43,7 @@
 	display: grid;
 	place-items: center;
 	font-size: var(--font-xl);
-	border-radius: 100%;
+	border-radius: var(--radius-avatar);
 	background-color: var(--color-bg-high);
 }
 
@@ -120,7 +120,7 @@
 .bannerAvatar > div {
 	padding: var(--s-2);
 	background-color: var(--color-bg);
-	border-radius: 100%;
+	border-radius: var(--radius-avatar);
 	display: grid;
 	place-items: center;
 	width: 7rem;
@@ -166,7 +166,7 @@
 }
 
 .bannerAvatar img {
-	border-radius: 100%;
+	border-radius: var(--radius-avatar);
 }
 
 .actionButtons {
@@ -231,7 +231,7 @@
 .memberAvatar {
 	background-color: var(--color-bg);
 	padding: var(--s-2);
-	border-radius: 100%;
+	border-radius: var(--radius-avatar);
 }
 
 .memberRole {

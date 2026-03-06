@@ -279,6 +279,7 @@ html {
 	--radius-field: calc(var(--_radius-field) * 4px);
 	--radius-selector: calc(var(--_radius-selector) * 4px);
 	--radius-full: 99999px;
+	--radius-avatar: var(--radius-full);
 
 	--label-margin: var(--s-1);
 }

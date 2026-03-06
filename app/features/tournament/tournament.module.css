@@ -137,7 +137,7 @@
 }
 
 .logo {
-	border-radius: 100%;
+	border-radius: var(--radius-avatar);
 	min-width: 124px;
 }
 

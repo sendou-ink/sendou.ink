@@ -12,7 +12,7 @@
 	width: fit-content;
 	height: fit-content;
 	background-color: var(--color-bg-higher);
-	border-radius: var(--radius-field);
+	border-radius: var(--radius-avatar);
 	overflow: hidden;
 }
 

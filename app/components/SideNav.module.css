@@ -187,7 +187,7 @@
 }
 
 .sideNavGameStatusImage {
-	border-radius: 100%;
+	border-radius: var(--radius-avatar);
 }
 
 .sideNavHeader {
@@ -288,7 +288,7 @@
 .listLinkImage {
 	width: 32px;
 	height: 32px;
-	border-radius: var(--radius-field);
+	border-radius: var(--radius-avatar);
 	object-fit: cover;
 	flex-shrink: 0;
 }
