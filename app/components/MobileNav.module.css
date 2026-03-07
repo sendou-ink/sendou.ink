@@ -347,13 +347,3 @@
 	letter-spacing: 0.05em;
 }
 
-.streamXpSubtitle {
-	display: flex;
-	align-items: center;
-	gap: 2px;
-}
-
-.streamXpIcon {
-	width: 14px;
-	height: 14px;
-}
