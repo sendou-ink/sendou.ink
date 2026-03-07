@@ -111,6 +111,7 @@
 	display: flex;
 	gap: var(--s-2);
 	height: 100%;
+	padding: var(--s-2);
 }
 
 .tournamentCardsViewAllCard {
@@ -137,6 +138,7 @@
 .resultHighlights {
 	display: flex;
 	gap: var(--s-2);
+	padding: var(--s-2);
 }
 
 .resultHighlightsTitle {
