@@ -164,7 +164,8 @@
 }
 
 /* Doubled selector increases specificity to beat Button.module.css's display: flex */
-.sideNavCollapseButton.sideNavCollapseButton {
+.sideNavCollapseButton.sideNavCollapseButton,
+.sideNavModalTrigger.sideNavModalTrigger {
 	display: none;
 
 	& svg {
@@ -172,12 +173,47 @@
 		min-width: 20px;
 		max-width: 20px;
 	}
+
+	&.sideNavCollapseButton {
+		@media screen and (min-width: 1000px) {
+			display: flex;
+		}
+	}
+
+	&.sideNavModalTrigger {
+		@media screen and (min-width: 600px) and (max-width: 999px) {
+			display: flex;
+		}
+	}
 }
 
-@media screen and (min-width: 600px) {
-	.sideNavCollapseButton.sideNavCollapseButton {
-		display: flex;
-	}
+.sideNavModalOverlay {
+	position: fixed;
+	inset: 0;
+	top: var(--layout-nav-height);
+	background-color: rgba(0, 0, 0, 0.4);
+	backdrop-filter: blur(4px);
+	z-index: 20;
+}
+
+.sideNavModal {
+	height: 100%;
+	width: var(--layout-sidenav-width);
+	border-right: 1.5px solid var(--color-border);
+}
+
+.sideNavModalDialog {
+	outline: none;
+	height: 100%;
+}
+
+.sideNavInModal {
+	display: flex;
+	position: static;
+	height: 100%;
+	min-width: unset;
+	max-width: unset;
+	border-right: none;
 }
 
 .mobileLogo {

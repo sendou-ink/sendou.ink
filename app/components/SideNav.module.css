@@ -11,7 +11,7 @@
 	display: none;
 	flex-direction: column;
 
-	@media screen and (min-width: 600px) {
+	@media screen and (min-width: 1000px) {
 		display: flex;
 	}
 }

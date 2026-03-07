@@ -10,7 +10,13 @@ import {
 	Users,
 } from "lucide-react";
 import * as React from "react";
-import { Button } from "react-aria-components";
+import {
+	Button,
+	Dialog,
+	DialogTrigger,
+	Modal,
+	ModalOverlay,
+} from "react-aria-components";
 import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useLocation, useMatches } from "react-router";
@@ -170,12 +176,24 @@ export function Layout({
 	const [sideNavCollapsed, setSideNavCollapsed] = useSideNavCollapsed(
 		data?.sidenavCollapsed ?? false,
 	);
+	const [sideNavModalOpen, setSideNavModalOpen] = React.useState(false);
 
 	const { t, i18n } = useTranslation(["front", "common"]);
 	const { formatRelativeDate } = useTimeFormat();
 	const location = useLocation();
 	const navOffset = useNavOffset();
 	const isMounted = useIsMounted();
+
+	React.useEffect(() => {
+		const handleResize = () => {
+			if (window.innerWidth < 600 || window.innerWidth >= 1000) {
+				setSideNavModalOpen(false);
+			}
+		};
+
+		window.addEventListener("resize", handleResize);
+		return () => window.removeEventListener("resize", handleResize);
+	}, []);
 
 	const user = useUser();
 	const sidebarData = data?.sidebar;
@@ -190,128 +208,133 @@ export function Layout({
 		!data?.user?.roles.includes("MINOR_SUPPORT") &&
 		!location.pathname.includes("plans");
 
+	const sideNavFooterContent = (
+		<SideNavFooter>
+			<SideNavUserPanel />
+		</SideNavFooter>
+	);
+
+	const sideNavChildren = (
+		<>
+			<SideNavHeader icon={<Calendar />}>
+				{t("front:sideNav.myCalendar")}
+			</SideNavHeader>
+			{events.length > 0 ? (
+				events.map((event) => (
+					<ListLink
+						key={`${event.type}-${event.id}`}
+						to={event.url}
+						imageUrl={event.logoUrl ?? undefined}
+						subtitle={formatRelativeDate(event.startTime)}
+					>
+						{event.scrimStatus === "booked"
+							? t("front:sideNav.scrimVs", { opponent: event.name })
+							: event.scrimStatus === "looking"
+								? t("front:sideNav.lookingForScrim")
+								: event.name}
+					</ListLink>
+				))
+			) : (
+				<div className={styles.sideNavEmpty}>{t("front:sideNav.noEvents")}</div>
+			)}
+
+			<SideNavHeader
+				icon={<Users />}
+				action={
+					user ? (
+						<Link to={FRIENDS_PAGE} className={styles.viewAllLink}>
+							{t("common:actions.viewAll")}
+							<ChevronRight size={14} />
+						</Link>
+					) : null
+				}
+			>
+				{t("front:sideNav.friends")}
+			</SideNavHeader>
+			{friends.length > 0 ? (
+				friends.map((friend) => <FriendMenu key={friend.id} {...friend} />)
+			) : (
+				<div className={styles.sideNavEmpty}>
+					{user
+						? t("front:sideNav.friends.noFriends")
+						: t("front:sideNav.friends.notLoggedIn")}
+				</div>
+			)}
+
+			<SideNavHeader icon={<TwitchIcon />}>
+				{t("front:sideNav.streams")}
+			</SideNavHeader>
+			{streams.length === 0 ? (
+				<div className={styles.sideNavEmpty}>
+					{t("front:sideNav.noStreams")}
+				</div>
+			) : null}
+			{streams.map((stream, i) => {
+				const startsAtDate = databaseTimestampToDate(stream.startsAt);
+				const isUpcoming = startsAtDate.getTime() > Date.now();
+				const prevStream = streams.at(i - 1);
+				const prevIsLive =
+					prevStream &&
+					databaseTimestampToDate(prevStream.startsAt).getTime() <= Date.now();
+				const showUpcomingDivider = isMounted && isUpcoming && prevIsLive;
+
+				return (
+					<React.Fragment key={stream.id}>
+						{showUpcomingDivider ? (
+							<div className={styles.streamUpcomingDivider}>
+								{t("front:sideNav.streams.upcoming")}
+							</div>
+						) : null}
+						<ListLink
+							to={stream.url}
+							imageUrl={stream.imageUrl}
+							overlayIconUrl={stream.overlayIconUrl}
+							subtitle={
+								stream.peakXp ? (
+									<span className={styles.streamXpSubtitle}>
+										<img
+											src={`${navIconUrl("xsearch")}.png`}
+											alt=""
+											className={styles.streamXpIcon}
+										/>
+										{stream.peakXp}
+									</span>
+								) : stream.subtitle ? (
+									stream.subtitle
+								) : isMounted ? (
+									isUpcoming ? (
+										formatRelativeDate(stream.startsAt)
+									) : (
+										formatDistanceToNow(startsAtDate, {
+											addSuffix: true,
+											language: i18n.language as LanguageCode,
+										})
+									)
+								) : (
+									""
+								)
+							}
+							badge={
+								isMounted && !isUpcoming ? "LIVE" : streamTierBadge(stream)
+							}
+						>
+							{stream.name}
+						</ListLink>
+					</React.Fragment>
+				);
+			})}
+		</>
+	);
+
 	return (
 		<>
 			<SideNav
 				collapsed={sideNavCollapsed}
-				footer={
-					<SideNavFooter>
-						<SideNavUserPanel />
-					</SideNavFooter>
-				}
+				footer={sideNavFooterContent}
 				top={<SiteTitle />}
 				topCentered={isFrontPage}
 			>
-				<SideNavHeader icon={<Calendar />}>
-					{t("front:sideNav.myCalendar")}
-				</SideNavHeader>
-				{events.length > 0 ? (
-					events.map((event) => (
-						<ListLink
-							key={`${event.type}-${event.id}`}
-							to={event.url}
-							imageUrl={event.logoUrl ?? undefined}
-							subtitle={formatRelativeDate(event.startTime)}
-						>
-							{event.scrimStatus === "booked"
-								? t("front:sideNav.scrimVs", { opponent: event.name })
-								: event.scrimStatus === "looking"
-									? t("front:sideNav.lookingForScrim")
-									: event.name}
-						</ListLink>
-					))
-				) : (
-					<div className={styles.sideNavEmpty}>
-						{t("front:sideNav.noEvents")}
-					</div>
-				)}
-
-				<SideNavHeader
-					icon={<Users />}
-					action={
-						user ? (
-							<Link to={FRIENDS_PAGE} className={styles.viewAllLink}>
-								{t("common:actions.viewAll")}
-								<ChevronRight size={14} />
-							</Link>
-						) : null
-					}
-				>
-					{t("front:sideNav.friends")}
-				</SideNavHeader>
-				{friends.length > 0 ? (
-					friends.map((friend) => <FriendMenu key={friend.id} {...friend} />)
-				) : (
-					<div className={styles.sideNavEmpty}>
-						{user
-							? t("front:sideNav.friends.noFriends")
-							: t("front:sideNav.friends.notLoggedIn")}
-					</div>
-				)}
-
-				<SideNavHeader icon={<TwitchIcon />}>
-					{t("front:sideNav.streams")}
-				</SideNavHeader>
-				{streams.length === 0 ? (
-					<div className={styles.sideNavEmpty}>
-						{t("front:sideNav.noStreams")}
-					</div>
-				) : null}
-				{streams.map((stream, i) => {
-					const startsAtDate = databaseTimestampToDate(stream.startsAt);
-					const isUpcoming = startsAtDate.getTime() > Date.now();
-					const prevStream = streams.at(i - 1);
-					const prevIsLive =
-						prevStream &&
-						databaseTimestampToDate(prevStream.startsAt).getTime() <=
-							Date.now();
-					const showUpcomingDivider = isMounted && isUpcoming && prevIsLive;
-
-					return (
-						<React.Fragment key={stream.id}>
-							{showUpcomingDivider ? (
-								<div className={styles.streamUpcomingDivider}>
-									{t("front:sideNav.streams.upcoming")}
-								</div>
-							) : null}
-							<ListLink
-								to={stream.url}
-								imageUrl={stream.imageUrl}
-								overlayIconUrl={stream.overlayIconUrl}
-								subtitle={
-									stream.peakXp ? (
-										<span className={styles.streamXpSubtitle}>
-											<img
-												src={`${navIconUrl("xsearch")}.png`}
-												alt=""
-												className={styles.streamXpIcon}
-											/>
-											{stream.peakXp}
-										</span>
-									) : stream.subtitle ? (
-										stream.subtitle
-									) : isMounted ? (
-										isUpcoming ? (
-											formatRelativeDate(stream.startsAt)
-										) : (
-											formatDistanceToNow(startsAtDate, {
-												addSuffix: true,
-												language: i18n.language as LanguageCode,
-											})
-										)
-									) : (
-										""
-									)
-								}
-								badge={
-									isMounted && !isUpcoming ? "LIVE" : streamTierBadge(stream)
-								}
-							>
-								{stream.name}
-							</ListLink>
-						</React.Fragment>
-					);
-				})}
+				{sideNavChildren}
 			</SideNav>
 			<MobileNav sidebarData={data?.sidebar} />
 			<div className={styles.container}>
@@ -324,8 +347,30 @@ export function Layout({
 					<Link to="/" className={clsx(styles.siteLogo, styles.mobileLogo)}>
 						<SiteLogoContent />
 					</Link>
+					<DialogTrigger
+						key={location.pathname}
+						isOpen={sideNavModalOpen}
+						onOpenChange={setSideNavModalOpen}
+					>
+						<SideNavCollapseButton className={styles.sideNavModalTrigger} />
+						<ModalOverlay className={styles.sideNavModalOverlay} isDismissable>
+							<Modal className={styles.sideNavModal}>
+								<Dialog className={styles.sideNavModalDialog}>
+									<SideNav
+										className={styles.sideNavInModal}
+										footer={sideNavFooterContent}
+										top={<SiteTitle />}
+										topCentered={isFrontPage}
+									>
+										{sideNavChildren}
+									</SideNav>
+								</Dialog>
+							</Modal>
+						</ModalOverlay>
+					</DialogTrigger>
 					<SideNavCollapseButton
 						onToggle={() => setSideNavCollapsed(!sideNavCollapsed)}
+						className={styles.sideNavCollapseButton}
 					/>
 					<TopNavMenus />
 					<TopRightButtons
@@ -390,10 +435,16 @@ function SiteLogoContent() {
 	);
 }
 
-function SideNavCollapseButton({ onToggle }: { onToggle: () => void }) {
+function SideNavCollapseButton({
+	onToggle,
+	className,
+}: {
+	onToggle?: () => void;
+	className?: string;
+}) {
 	return (
 		<SendouButton
-			className={styles.sideNavCollapseButton}
+			className={className}
 			variant="minimal"
 			size="small"
 			shape="square"
