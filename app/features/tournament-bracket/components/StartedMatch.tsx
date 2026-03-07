@@ -586,6 +586,7 @@ function ModeProgressIndicator({
 											height={20}
 											width={20}
 											alt={t(`game-misc:MODE_LONG_${map.mode}`)}
+											testId="mode-progress-banned"
 										/>
 									</SendouButton>
 								}

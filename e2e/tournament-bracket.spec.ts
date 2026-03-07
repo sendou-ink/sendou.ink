@@ -354,7 +354,7 @@ test.describe("Tournament bracket", () => {
 			url: userResultsPage({ discordId: ADMIN_DISCORD_ID }),
 		});
 
-		await expect(page.getByText("In The Zone 22")).toBeVisible();
+		await expect(page.getByTestId("tournament-name-cell").getByText("In The Zone 22")).toBeVisible();
 
 		await navigate({
 			page,
@@ -417,7 +417,7 @@ test.describe("Tournament bracket", () => {
 			url: tournamentBracketsPage({ tournamentId }),
 		});
 
-		await page.getByRole("button", { name: "Underground" }).click();
+		await page.getByRole("tab", { name: "Underground" }).click();
 		await submit(page, "check-in-bracket-button");
 
 		await impersonate(page);
@@ -524,10 +524,10 @@ test.describe("Tournament bracket", () => {
 			await backToBracket(page);
 		}
 
-		await page.getByRole("button", { name: "Hammerhead" }).click();
+		await page.getByRole("tab", { name: "Hammerhead" }).click();
 		await isNotVisible(page.getByTestId("brackets-viewer"));
 
-		await page.getByRole("button", { name: "Mako" }).click();
+		await page.getByRole("tab", { name: "Mako" }).click();
 		await expect(page.getByTestId("brackets-viewer")).toBeVisible();
 
 		await page.getByTestId("finalize-bracket-button").click();
@@ -615,7 +615,7 @@ test.describe("Tournament bracket", () => {
 			"Hammerhead",
 			"Mako",
 		]) {
-			await page.getByRole("button", { name: bracketName }).click();
+			await page.getByRole("tab", { name: bracketName }).click();
 			await page.getByTestId("finalize-bracket-button").click();
 			await submit(page, "confirm-finalize-bracket-button");
 		}
@@ -1029,7 +1029,7 @@ test.describe("Tournament bracket", () => {
 			url: tournamentBracketsPage({ tournamentId }),
 		});
 
-		await page.getByRole("button", { name: "Great White" }).click();
+		await page.getByRole("tab", { name: "Great White" }).click();
 
 		await page.getByTestId("prepare-maps-button").click();
 
@@ -1042,22 +1042,22 @@ test.describe("Tournament bracket", () => {
 			url: tournamentBracketsPage({ tournamentId }),
 		});
 
-		await page.getByRole("button", { name: "Great White" }).click();
+		await page.getByRole("tab", { name: "Great White" }).click();
 
 		await expect(page.getByTestId("prepared-maps-check-icon")).toBeVisible();
 
 		// we did not prepare maps for group stage
-		await page.getByRole("button", { name: "Groups stage" }).click();
+		await page.getByRole("tab", { name: "Groups stage" }).click();
 
 		await isNotVisible(page.getByTestId("prepared-maps-check-icon"));
 
 		// should reuse prepared maps from Great White
-		await page.getByRole("button", { name: "Hammerhead" }).click();
+		await page.getByRole("tab", { name: "Hammerhead" }).click();
 
 		await expect(page.getByTestId("prepared-maps-check-icon")).toBeVisible();
 
 		// finally, test third place match linking
-		await page.getByRole("button", { name: "Great White" }).click();
+		await page.getByRole("tab", { name: "Great White" }).click();
 
 		await page.getByTestId("prepare-maps-button").click();
 
@@ -1072,7 +1072,7 @@ test.describe("Tournament bracket", () => {
 			url: tournamentBracketsPage({ tournamentId }),
 		});
 
-		await page.getByRole("button", { name: "Great White" }).click();
+		await page.getByRole("tab", { name: "Great White" }).click();
 
 		await page.getByTestId("prepare-maps-button").click();
 
@@ -1117,7 +1117,7 @@ test.describe("Tournament bracket", () => {
 				}
 
 				await expect(
-					page.locator(".tournament-bracket__mode-progress__image__banned"),
+					page.getByTestId("mode-progress-banned"),
 				).toHaveCount(2);
 			}
 
