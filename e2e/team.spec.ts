@@ -25,17 +25,13 @@ test.describe("Team search page", () => {
 		await impersonate(page);
 		await navigate({ page, url: TEAM_SEARCH_PAGE });
 
-		const searchInput = page.getByTestId("team-search-input");
-		const firstTeamName = page.getByTestId("team-0");
-		const secondTeamName = page.getByTestId("team-1");
-
-		await expect(firstTeamName).toHaveText("Alliance Rogue");
-		await expect(secondTeamName).toBeVisible();
-
+		const searchInput = page.getByTestId("global-search-input");
 		await searchInput.fill("Alliance Rogue");
-		await expect(secondTeamName).not.toBeVisible();
 
-		await firstTeamName.click();
+		const firstResult = page.getByTestId("search-result-0");
+		await expect(firstResult).toContainText("Alliance Rogue");
+
+		await firstResult.click();
 		await expect(page).toHaveURL(/alliance-rogue/);
 	});
 
@@ -47,7 +43,7 @@ test.describe("Team search page", () => {
 		await page.getByTestId("anything-adder-menu-button").click();
 		await page.getByTestId("menu-item-team").click();
 
-		await expect(page).toHaveURL(/new=true/);
+		await expect(page).toHaveURL(/t\/new/);
 
 		const form = createFormHelpers(page, createTeamSchema);
 		await form.fill("name", "Chimera");
@@ -67,12 +63,11 @@ test.describe("Team search page", () => {
 
 		await navigate({ page, url: TEAM_SEARCH_PAGE });
 
-		const searchInput = page.getByTestId("team-search-input");
-		await searchInput.fill("ar");
+		const searchInput = page.getByTestId("global-search-input");
+		await searchInput.fill("Alliance Rogue");
 
-		const firstTeamName = page.getByTestId("team-0");
-		await expect(firstTeamName).toContainText("Alliance Rogue");
-		await expect(firstTeamName).toContainText("AR");
+		const firstResult = page.getByTestId("search-result-0");
+		await expect(firstResult).toContainText("Alliance Rogue");
 	});
 });
 
@@ -129,16 +124,13 @@ test.describe("Team page", () => {
 		await seed(page);
 		await impersonate(page, ADMIN_ID);
 
-		await navigate({ page, url: TEAM_SEARCH_PAGE });
-		const firstTeamName = page.getByTestId("team-0");
-		await firstTeamName.click();
+		await navigate({ page, url: teamPage("alliance-rogue") });
 
 		await page.getByTestId("edit-team-button").click();
 		await page.getByTestId("delete-team-button").click();
 		await modalClickConfirmButton(page);
 
-		await expect(page).toHaveURL(TEAM_SEARCH_PAGE);
-		await expect(page.getByTestId("team-0")).not.toHaveText("Alliance Rogue");
+		await expect(page).not.toHaveURL(/alliance-rogue/);
 	});
 
 	test("resets invite code, joins team, leaves, rejoins", async ({ page }) => {

@@ -439,7 +439,7 @@ function RegistrationProgress({
 			</h3>
 			<section className={clsx(styles.section, "stack md")}>
 				<div className="stack horizontal lg justify-center text-sm font-semi-bold">
-					{steps.map((step) => {
+					{steps.map((step, i) => {
 						return (
 							<div
 								key={step.name}
@@ -449,6 +449,7 @@ function RegistrationProgress({
 								{step.status === "completed" ? (
 									<Check
 										className={clsx(styles.sectionIcon, "color-success")}
+										data-testid={`checkmark-icon-num-${i + 1}`}
 									/>
 								) : step.status === "notice" ? (
 									<AlertCircle

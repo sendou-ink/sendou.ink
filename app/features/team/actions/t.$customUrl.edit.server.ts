@@ -8,7 +8,7 @@ import {
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { mySlugify, TEAM_SEARCH_PAGE, teamPage } from "~/utils/urls";
+import { mySlugify, teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
 import { editTeamSchema, teamParamsSchema } from "../team-schemas.server";
 import {
@@ -60,7 +60,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		}
 		case "DELETE_TEAM": {
 			await TeamRepository.del(team.id);
-			throw redirect(TEAM_SEARCH_PAGE);
+			throw redirect("/");
 		}
 		case "DELETE_AVATAR": {
 			await TeamRepository.removeTeamImage(team.id, "avatar");
