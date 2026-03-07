@@ -60,7 +60,7 @@
 }
 
 .siteLogoS {
-	font-size: 15px;
+	font-size: 14px;
 	position: relative;
 	top: -4px;
 }
@@ -68,7 +68,7 @@
 .siteLogoInk {
 	font-size: 12px;
 	position: relative;
-	top: 5px;
+	bottom: -4px;
 }
 
 .siteLogo:focus-visible {

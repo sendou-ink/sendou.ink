@@ -18,7 +18,6 @@ export const Main = ({
 	halfWidth?: boolean;
 	bigger?: boolean;
 	style?: React.CSSProperties;
-	sideNav?: React.ReactNode;
 }) => {
 	const error = useRouteError();
 	const isMinorSupporter = useHasRole("MINOR_SUPPORT");
