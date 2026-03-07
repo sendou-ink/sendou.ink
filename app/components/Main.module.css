@@ -21,9 +21,3 @@
 	max-width: 72rem;
 	margin-inline: auto;
 }
-
-@media screen and (display-mode: standalone) {
-	.main {
-		padding-block-start: env(safe-area-inset-top);
-	}
-}

@@ -34,6 +34,7 @@ import {
 import { navItems } from "./layout/nav-items";
 import styles from "./MobileNav.module.css";
 import { ListLink } from "./SideNav";
+import { StreamListItems } from "./StreamListItems";
 
 type SidebarData = RootLoaderData["sidebar"] | undefined;
 type PanelType = "closed" | "menu" | "friends" | "tourneys" | "you";
@@ -44,6 +45,8 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 	const { unseenIds } = useNotifications();
 
 	const hasUnseenNotifications = unseenIds.length > 0;
+	const hasFriendInSendouQ =
+		sidebarData?.friends.some((f) => f.subtitle === "SendouQ") ?? false;
 
 	const closePanel = () => setActivePanel("closed");
 
@@ -77,6 +80,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 				onTabPress={setActivePanel}
 				isLoggedIn={Boolean(user)}
 				hasUnseenNotifications={hasUnseenNotifications}
+				hasFriendInSendouQ={hasFriendInSendouQ}
 			/>
 		</div>
 	);
@@ -87,11 +91,13 @@ function MobileTabBar({
 	onTabPress,
 	isLoggedIn,
 	hasUnseenNotifications,
+	hasFriendInSendouQ,
 }: {
 	activePanel: PanelType;
 	onTabPress: (panel: PanelType) => void;
 	isLoggedIn: boolean;
 	hasUnseenNotifications: boolean;
+	hasFriendInSendouQ: boolean;
 }) {
 	const { t } = useTranslation(["front", "common"]);
 
@@ -111,6 +117,7 @@ function MobileTabBar({
 						label={t("front:mobileNav.friends")}
 						isActive={activePanel === "friends"}
 						onPress={() => onTabPress("friends")}
+						showNotificationDot={hasFriendInSendouQ}
 					/>
 					<MobileTab
 						icon={<Calendar />}
@@ -260,31 +267,7 @@ function MenuOverlay({
 							</div>
 						) : null}
 						<ul className={styles.streamsList}>
-							{streams.map((stream) => (
-								<ListLink
-									key={stream.id}
-									to={stream.url}
-									imageUrl={stream.imageUrl}
-									overlayIconUrl={stream.overlayIconUrl}
-									subtitle={
-										stream.peakXp ? (
-											<span className={styles.streamXpSubtitle}>
-												<Image
-													path={navIconUrl("xsearch")}
-													alt=""
-													className={styles.streamXpIcon}
-												/>
-												{stream.peakXp}
-											</span>
-										) : (
-											stream.subtitle
-										)
-									}
-									onClick={onClose}
-								>
-									{stream.name}
-								</ListLink>
-							))}
+							<StreamListItems streams={streams} onClick={onClose} />
 						</ul>
 					</section>
 				</Dialog>

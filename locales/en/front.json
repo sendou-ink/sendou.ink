@@ -1,8 +1,7 @@
 {
-	"nav.competition": "Competition",
+	"nav.play": "Play",
 	"nav.tools": "Tools",
 	"nav.community": "Community",
-	"nav.more": "More",
 	"nav.weapons": "Weapons",
 	"sq.season": "Season {{nth}}",
 	"sq.prepare": "Prepare now!",

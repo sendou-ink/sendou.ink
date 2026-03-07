@@ -9,13 +9,13 @@ import styles from "./TopNavMenus.module.css";
 
 const NAV_CATEGORIES = [
 	{
-		name: "competition",
+		name: "play",
 		items: [
 			{ name: "sendouq", url: "q" },
 			{ name: "scrims", url: "scrims" },
 			{ name: "lfg", url: "lfg" },
 			{ name: "calendar", url: "calendar" },
-			{ name: "plus", url: "plus/suggestions" },
+			{ name: "leaderboards", url: "leaderboards" },
 		],
 	},
 	{
@@ -25,26 +25,21 @@ const NAV_CATEGORIES = [
 			{ name: "comp-analyzer", url: "comp-analyzer" },
 			{ name: "object-damage-calculator", url: "object-damage-calculator" },
 			{ name: "plans", url: "plans" },
+			{ name: "maps", url: "maps" },
 			{ name: "tier-list-maker", url: "tier-list-maker" },
+			{ name: "xsearch", url: "xsearch" },
 		],
 	},
 	{
 		name: "community",
 		items: [
 			{ name: "builds", url: "builds" },
-			{ name: "badges", url: "badges" },
-			{ name: "vods", url: "vods" },
 			{ name: "art", url: "art" },
 			{ name: "articles", url: "a" },
-		],
-	},
-	{
-		name: "more",
-		items: [
-			{ name: "leaderboards", url: "leaderboards" },
-			{ name: "xsearch", url: "xsearch" },
-			{ name: "maps", url: "maps" },
+			{ name: "vods", url: "vods" },
+			{ name: "badges", url: "badges" },
 			{ name: "links", url: "links" },
+			{ name: "plus", url: "plus/suggestions" },
 		],
 	},
 ] as const;

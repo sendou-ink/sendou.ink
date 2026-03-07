@@ -22,19 +22,10 @@ import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useLocation, useMatches } from "react-router";
 import { useUser } from "~/features/auth/core/user";
-import type { SidebarStream } from "~/features/core/streams/streams.server";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
-import { useIsMounted } from "~/hooks/useIsMounted";
-import type { LanguageCode } from "~/modules/i18n/config";
 import type { RootLoaderData } from "~/root";
-import { databaseTimestampToDate, formatDistanceToNow } from "~/utils/dates";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
-import {
-	FRIENDS_PAGE,
-	navIconUrl,
-	SETTINGS_PAGE,
-	userPage,
-} from "~/utils/urls";
+import { FRIENDS_PAGE, SETTINGS_PAGE, userPage } from "~/utils/urls";
 import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
@@ -42,7 +33,7 @@ import { Image } from "../Image";
 import { MobileNav } from "../MobileNav";
 import { ListLink, SideNav, SideNavFooter, SideNavHeader } from "../SideNav";
 import sideNavStyles from "../SideNav.module.css";
-import { TierPill } from "../TierPill";
+import { StreamListItems } from "../StreamListItems";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
 import { LogInButtonContainer } from "./LogInButtonContainer";
@@ -122,12 +113,12 @@ function useSideNavCollapsed(initialCollapsed: boolean) {
 	return [collapsed, setCollapsedAndPersist] as const;
 }
 
-function useNavOffset() {
+function useNavOffset(headerRef: React.RefObject<HTMLElement | null>) {
 	const [navOffset, setNavOffset] = React.useState(0);
 	const lastScrollY = React.useRef(0);
 
 	const MOBILE_BREAKPOINT = 600;
-	const NAV_HEIGHT = 55;
+	const NAV_HEIGHT_FALLBACK = 55;
 
 	React.useEffect(() => {
 		const handleScroll = () => {
@@ -137,12 +128,13 @@ function useNavOffset() {
 				return;
 			}
 
+			const navHeight = headerRef.current?.offsetHeight ?? NAV_HEIGHT_FALLBACK;
 			const currentScrollY = window.scrollY;
 			const scrollDelta = currentScrollY - lastScrollY.current;
 
 			setNavOffset((prevOffset) => {
 				const newOffset = prevOffset - scrollDelta;
-				return Math.max(-NAV_HEIGHT, Math.min(0, newOffset));
+				return Math.max(-navHeight, Math.min(0, newOffset));
 			});
 
 			lastScrollY.current = currentScrollY;
@@ -161,7 +153,7 @@ function useNavOffset() {
 			window.removeEventListener("scroll", handleScroll);
 			window.removeEventListener("resize", handleResize);
 		};
-	}, []);
+	}, [headerRef]);
 
 	return navOffset;
 }
@@ -178,11 +170,11 @@ export function Layout({
 	);
 	const [sideNavModalOpen, setSideNavModalOpen] = React.useState(false);
 
-	const { t, i18n } = useTranslation(["front", "common"]);
+	const { t } = useTranslation(["front", "common"]);
 	const { formatRelativeDate } = useTimeFormat();
 	const location = useLocation();
-	const navOffset = useNavOffset();
-	const isMounted = useIsMounted();
+	const headerRef = React.useRef<HTMLElement>(null);
+	const navOffset = useNavOffset(headerRef);
 
 	React.useEffect(() => {
 		const handleResize = () => {
@@ -267,60 +259,7 @@ export function Layout({
 					{t("front:sideNav.noStreams")}
 				</div>
 			) : null}
-			{streams.map((stream, i) => {
-				const startsAtDate = databaseTimestampToDate(stream.startsAt);
-				const isUpcoming = startsAtDate.getTime() > Date.now();
-				const prevStream = streams.at(i - 1);
-				const prevIsLive =
-					prevStream &&
-					databaseTimestampToDate(prevStream.startsAt).getTime() <= Date.now();
-				const showUpcomingDivider = isMounted && isUpcoming && prevIsLive;
-
-				return (
-					<React.Fragment key={stream.id}>
-						{showUpcomingDivider ? (
-							<div className={styles.streamUpcomingDivider}>
-								{t("front:sideNav.streams.upcoming")}
-							</div>
-						) : null}
-						<ListLink
-							to={stream.url}
-							imageUrl={stream.imageUrl}
-							overlayIconUrl={stream.overlayIconUrl}
-							subtitle={
-								stream.peakXp ? (
-									<span className={styles.streamXpSubtitle}>
-										<img
-											src={`${navIconUrl("xsearch")}.png`}
-											alt=""
-											className={styles.streamXpIcon}
-										/>
-										{stream.peakXp}
-									</span>
-								) : stream.subtitle ? (
-									stream.subtitle
-								) : isMounted ? (
-									isUpcoming ? (
-										formatRelativeDate(stream.startsAt)
-									) : (
-										formatDistanceToNow(startsAtDate, {
-											addSuffix: true,
-											language: i18n.language as LanguageCode,
-										})
-									)
-								) : (
-									""
-								)
-							}
-							badge={
-								isMounted && !isUpcoming ? "LIVE" : streamTierBadge(stream)
-							}
-						>
-							{stream.name}
-						</ListLink>
-					</React.Fragment>
-				);
-			})}
+			<StreamListItems streams={streams} />
 		</>
 	);
 
@@ -337,6 +276,7 @@ export function Layout({
 			<MobileNav sidebarData={data?.sidebar} />
 			<div className={styles.container}>
 				<header
+					ref={headerRef}
 					className={styles.header}
 					style={{
 						transform: `translateY(${navOffset}px)`,
@@ -547,19 +487,5 @@ function SideNavUserPanel() {
 				</Link>
 			</div>
 		</>
-	);
-}
-
-function streamTierBadge(stream: SidebarStream): React.ReactNode {
-	const tier = stream.tier ?? stream.tentativeTier;
-	if (!tier) return undefined;
-
-	return (
-		<div className={styles.streamTierBadge}>
-			<TierPill
-				tier={tier}
-				isTentative={!stream.tier && !!stream.tentativeTier}
-			/>
-		</div>
 	);
 }

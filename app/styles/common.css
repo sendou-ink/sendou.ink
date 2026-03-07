@@ -12,6 +12,15 @@ html {
 	scroll-padding-top: var(--layout-nav-height);
 }
 
+@media screen and (display-mode: standalone) {
+	html {
+		scroll-padding-top: calc(
+			var(--layout-nav-height) +
+			env(safe-area-inset-top)
+		);
+	}
+}
+
 body {
 	width: 100%;
 	min-height: 100vh;

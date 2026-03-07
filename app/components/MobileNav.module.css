@@ -23,6 +23,12 @@
 	padding-bottom: env(safe-area-inset-bottom);
 }
 
+@media screen and (display-mode: standalone) {
+	.tabBar {
+		height: calc(var(--layout-nav-height) + env(safe-area-inset-bottom));
+	}
+}
+
 .tab {
 	display: flex;
 	flex-direction: column;
@@ -347,15 +353,4 @@
 	color: var(--color-text-high);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
-}
-
-.streamXpSubtitle {
-	display: flex;
-	align-items: center;
-	gap: 2px;
-}
-
-.streamXpIcon {
-	width: 14px;
-	height: 14px;
 }
