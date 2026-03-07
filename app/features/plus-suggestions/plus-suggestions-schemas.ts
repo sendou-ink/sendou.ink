@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
 	idConstant,
 	selectDynamic,
+	stringConstant,
 	textAreaRequired,
 	userSearch,
 } from "~/form/fields";
@@ -17,16 +18,25 @@ export const followUpCommentFormSchema = z.object({
 	}),
 });
 
+const suggestionTextFormFieldSchema = textAreaRequired({
+	label: "labels.comment",
+	maxLength: 500,
+});
+
 export const newSuggestionFormSchema = z.object({
 	tier: selectDynamic({ label: "labels.plusTier" }),
 	userId: userSearch({ label: "labels.user" }),
-	comment: textAreaRequired({
-		label: "labels.comment",
-		maxLength: 500,
-	}),
+	comment: suggestionTextFormFieldSchema,
+});
+
+export const editSuggestionFormSchema = z.object({
+	_action: stringConstant("EDIT_SUGGESTION"),
+	suggestionId: idConstant(),
+	comment: suggestionTextFormFieldSchema,
 });
 
 export const suggestionActionSchema = z.union([
+	editSuggestionFormSchema,
 	z.object({
 		_action: _action("DELETE_COMMENT"),
 		suggestionId: z.preprocess(actualNumber, z.number()),
