@@ -47,6 +47,15 @@ p {
 	overflow-wrap: anywhere;
 }
 
+h1,
+h2,
+h3 {
+	text-wrap: balance;
+}
+p {
+	text-wrap: pretty;
+}
+
 img,
 svg,
 canvas,
