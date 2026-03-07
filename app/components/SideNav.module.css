@@ -223,7 +223,7 @@
 		&:not(:has(.listLinkSubtitle)) {
 			color: var(--color-text);
 		}
-		background-color: var(--color-bg-higher);
+		background-color: var(--color-bg-high);
 	}
 
 	&[aria-current="page"] {
