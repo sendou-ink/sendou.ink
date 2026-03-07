@@ -90,7 +90,7 @@ export function getWeaponDestinationUrl(
 		analyzer: `${ANALYZER_URL}?weapon=${weapon.id}`,
 		vods: `${VODS_PAGE}?weapon=${weapon.id}`,
 		art: `/art?tab=showcase&tag=${encodeURIComponent(weapon.name.toLowerCase())}`,
-		lfg: `${LFG_PAGE}?weapon=${weapon.id}`,
+		lfg: `${LFG_PAGE}?q=w.${weapon.id}`,
 	};
 
 	return destinations[key];
