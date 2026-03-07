@@ -19,7 +19,7 @@
 	width: 100%;
 	height: var(--layout-nav-height);
 	align-items: center;
-	gap: var(--s-3);
+	gap: var(--s-2);
 	border-bottom: 1.5px solid var(--color-border);
 	background-color: var(--color-bg);
 	font-weight: var(--weight-extra);
@@ -170,11 +170,9 @@
 }
 
 .mobileLogo {
-	display: none;
-}
+	display: flex;
 
-@media screen and (max-width: 599px) {
-	.mobileLogo {
-		display: flex;
+	@media screen and (min-width: 600px) {
+		display: none;
 	}
 }

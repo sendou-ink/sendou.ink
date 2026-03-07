@@ -7,7 +7,7 @@
 .searchAndAddContainer {
 	display: grid;
 	grid-template-columns: 2fr 1fr;
-	gap: var(--s-3);
+	gap: var(--s-2);
 }
 
 .searchWrapper > button,

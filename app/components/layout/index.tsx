@@ -38,7 +38,6 @@ import sideNavStyles from "../SideNav.module.css";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
 import { LogInButtonContainer } from "./LogInButtonContainer";
-import { NavDialog } from "./NavDialog";
 import { NotificationContent, useNotifications } from "./NotificationPopover";
 import notificationPopoverStyles from "./NotificationPopover.module.css";
 import { TopNavMenus } from "./TopNavMenus";
@@ -166,7 +165,6 @@ export function Layout({
 	children: React.ReactNode;
 	data?: RootLoaderData;
 }) {
-	const [navDialogOpen, setNavDialogOpen] = React.useState(false);
 	const [sideNavCollapsed, setSideNavCollapsed] = useSideNavCollapsed(
 		data?.sidenavCollapsed ?? false,
 	);
@@ -192,7 +190,6 @@ export function Layout({
 
 	return (
 		<>
-			<NavDialog isOpen={navDialogOpen} close={() => setNavDialogOpen(false)} />
 			<SideNav
 				collapsed={sideNavCollapsed}
 				footer={
@@ -310,11 +307,6 @@ export function Layout({
 					<Link to="/" className={clsx(styles.siteLogo, styles.mobileLogo)}>
 						<SiteLogoContent />
 					</Link>
-					{sideNavCollapsed ? (
-						<div className={styles.headerCollapsedBreadcrumbs}>
-							<SiteTitle />
-						</div>
-					) : null}
 					<SideNavCollapseButton
 						onToggle={() => setSideNavCollapsed(!sideNavCollapsed)}
 					/>
@@ -327,7 +319,6 @@ export function Layout({
 						)}
 						showSearch={Boolean(data?.user)}
 						isLoggedIn={Boolean(data?.user)}
-						openNavDialog={() => setNavDialogOpen(true)}
 					/>
 				</header>
 				{showLeaderboard ? <MyRampUnit /> : null}

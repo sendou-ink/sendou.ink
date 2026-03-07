@@ -1,7 +1,10 @@
 .container {
-	display: flex;
+	display: none;
 	align-items: center;
-	gap: var(--s-1);
+
+	@media screen and (min-width: 600px) {
+		display: flex;
+	}
 }
 
 .menuButton {
@@ -56,10 +59,4 @@
 
 .menuItemIcon {
 	flex-shrink: 0;
-}
-
-@media screen and (max-width: 1000px) {
-	.container {
-		display: none;
-	}
 }

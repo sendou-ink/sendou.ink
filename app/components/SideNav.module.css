@@ -8,8 +8,12 @@
 	top: 0;
 	left: 0;
 	height: 100dvh;
-	display: flex;
+	display: none;
 	flex-direction: column;
+
+	@media screen and (min-width: 600px) {
+		display: flex;
+	}
 }
 
 .sideNavCollapsed {
@@ -313,10 +317,4 @@
 
 .listLinkBadgeWarning {
 	background-color: var(--color-text-second);
-}
-
-@media screen and (max-width: 599px) {
-	.sideNav {
-		display: none;
-	}
 }

@@ -11,12 +11,10 @@ export function TopRightButtons({
 	showSupport,
 	showSearch,
 	isLoggedIn,
-	openNavDialog: _openNavDialog,
 }: {
 	showSupport: boolean;
 	showSearch: boolean;
 	isLoggedIn: boolean;
-	openNavDialog: () => void;
 }) {
 	const { t } = useTranslation(["common", "front"]);
 

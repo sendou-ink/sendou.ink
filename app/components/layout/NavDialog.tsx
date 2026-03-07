@@ -11,6 +11,7 @@ import { Image } from "../Image";
 import { LogInButtonContainer } from "./LogInButtonContainer";
 import styles from "./NavDialog.module.css";
 
+// xxx: deprecate?
 export function NavDialog({
 	isOpen,
 	close,
