@@ -7,6 +7,7 @@ import {
 	LogIn,
 	PanelLeft,
 	Settings,
+	Tv,
 	Users,
 } from "lucide-react";
 import * as React from "react";
@@ -38,7 +39,6 @@ import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
 import { Image } from "../Image";
-import { TwitchIcon } from "../icons/Twitch";
 import { MobileNav } from "../MobileNav";
 import { ListLink, SideNav, SideNavFooter, SideNavHeader } from "../SideNav";
 import sideNavStyles from "../SideNav.module.css";
@@ -261,9 +261,7 @@ export function Layout({
 				</div>
 			)}
 
-			<SideNavHeader icon={<TwitchIcon />}>
-				{t("front:sideNav.streams")}
-			</SideNavHeader>
+			<SideNavHeader icon={<Tv />}>{t("front:sideNav.streams")}</SideNavHeader>
 			{streams.length === 0 ? (
 				<div className={styles.sideNavEmpty}>
 					{t("front:sideNav.noStreams")}

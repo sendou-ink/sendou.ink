@@ -343,7 +343,12 @@ function MapPreparer({
 				/>
 			) : null}
 			<div className="stack sm horizontal ml-auto">
-				{hasPreparedMaps ? <Check className="color-success w-6" data-testid="prepared-maps-check-icon" /> : null}
+				{hasPreparedMaps ? (
+					<Check
+						className="color-success w-6"
+						data-testid="prepared-maps-check-icon"
+					/>
+				) : null}
 				<SendouButton
 					size="small"
 					variant="outlined"

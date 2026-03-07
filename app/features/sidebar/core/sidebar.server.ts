@@ -203,7 +203,9 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 	}
 
 	const nowTimestamp = dateToDatabaseTimestamp(new Date());
-	const threeDaysFromNow = dateToDatabaseTimestamp(addDays(new Date(), UPCOMING_TOURNAMENT_WINDOW_DAYS));
+	const threeDaysFromNow = dateToDatabaseTimestamp(
+		addDays(new Date(), UPCOMING_TOURNAMENT_WINDOW_DAYS),
+	);
 	for (const event of upcomingTournaments) {
 		const effectiveTier = event.tier ?? event.tentativeTier;
 		if (effectiveTier === null) continue;

@@ -257,11 +257,6 @@
 	font-weight: var(--weight-semi);
 }
 
-.destinationIcon {
-	width: 20px;
-	height: 20px;
-}
-
 @media screen and (max-width: 1000px) {
 	.searchKbd {
 		display: none;

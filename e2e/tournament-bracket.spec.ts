@@ -354,7 +354,9 @@ test.describe("Tournament bracket", () => {
 			url: userResultsPage({ discordId: ADMIN_DISCORD_ID }),
 		});
 
-		await expect(page.getByTestId("tournament-name-cell").getByText("In The Zone 22")).toBeVisible();
+		await expect(
+			page.getByTestId("tournament-name-cell").getByText("In The Zone 22"),
+		).toBeVisible();
 
 		await navigate({
 			page,
@@ -1116,9 +1118,7 @@ test.describe("Tournament bracket", () => {
 					await submit(page);
 				}
 
-				await expect(
-					page.getByTestId("mode-progress-banned"),
-				).toHaveCount(2);
+				await expect(page.getByTestId("mode-progress-banned")).toHaveCount(2);
 			}
 
 			await impersonate(page, teamOneCaptainId);

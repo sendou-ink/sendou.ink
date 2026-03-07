@@ -1,6 +1,15 @@
 import clsx from "clsx";
 import { isToday, isTomorrow } from "date-fns";
-import { Calendar, LogIn, Menu, Settings, User, Users, X } from "lucide-react";
+import {
+	Calendar,
+	LogIn,
+	Menu,
+	Settings,
+	Tv,
+	User,
+	Users,
+	X,
+} from "lucide-react";
 import * as React from "react";
 import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { useTranslation } from "react-i18next";
@@ -17,7 +26,6 @@ import {
 import { Avatar } from "./Avatar";
 import { SendouButton } from "./elements/Button";
 import { Image } from "./Image";
-import { TwitchIcon } from "./icons/Twitch";
 import { LogInButtonContainer } from "./layout/LogInButtonContainer";
 import {
 	NotificationContent,
@@ -214,7 +222,7 @@ function MenuOverlay({
 
 					<section className={styles.streamsSection}>
 						<header className={styles.streamsSectionHeader}>
-							<TwitchIcon />
+							<Tv />
 							<h3>{t("front:sideNav.streams")}</h3>
 						</header>
 						{streams.length === 0 ? (

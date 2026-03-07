@@ -7,12 +7,12 @@ import {
 	FlaskConical,
 	ImageIcon,
 	Users,
+	Videotape,
 } from "lucide-react";
 import type * as React from "react";
 import { ListBox, ListBoxItem } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
-import { YouTubeIcon } from "~/components/icons/YouTube";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { filterWeapon } from "~/modules/in-game-lists/utils";
 import {
@@ -172,7 +172,7 @@ export function WeaponDestinationMenu({
 				</ListBoxItem>
 				<ListBoxItem id="vods" className={styles.listBoxItem}>
 					<div className={styles.resultItem}>
-						<YouTubeIcon className={styles.destinationIcon} />
+						<Videotape size={20} />
 						<span className={styles.resultName}>{t("common:pages.vods")}</span>
 					</div>
 				</ListBoxItem>
