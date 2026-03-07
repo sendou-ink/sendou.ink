@@ -255,7 +255,7 @@
 }
 
 .backButton:hover {
-	background-color: var(--color-bg-higher);
+	background-color: var(--color-bg-high);
 }
 
 .selectedWeaponName {
