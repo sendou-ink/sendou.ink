@@ -19,11 +19,6 @@
 	gap: var(--s-1);
 }
 
-.privateIcon {
-	width: 16px;
-	margin-block-end: var(--s-1);
-}
-
 .title {
 	overflow: hidden;
 	height: 2.5rem;

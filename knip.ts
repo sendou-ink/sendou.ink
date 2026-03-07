@@ -4,18 +4,16 @@ const config = {
 		type: true,
 	},
 	tags: ["-lintignore"],
-	ignoreDependencies: [
-		"react-compiler-runtime",
-		"react-router-dom",
-		"babel-plugin-react-compiler",
-	],
+	ignoreDependencies: ["babel-plugin-react-compiler"],
 	entry: [
-		"app/routes.ts",
 		"app/features/*/routes/**/*.{ts,tsx}",
 		"migrations/**/*.js",
 		"scripts/**/*.{js,cjs,mjs,jsx,ts,cts,mts,tsx}",
 		"public/sw-2.js",
 		"ley.config.cjs",
+		"ley-driver.cjs",
+		"vitest.browser.config.ts",
+		"app/browser-test-setup.ts",
 	],
 	compilers: {
 		css: (text: string, path: string) => {

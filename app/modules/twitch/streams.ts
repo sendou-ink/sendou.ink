@@ -2,7 +2,6 @@ import { cachified } from "@epic-web/cachified";
 import { cache } from "~/utils/cache.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
-import type { Unpacked } from "~/utils/types";
 import { type RawStream, type StreamsResponse, streamsSchema } from "./schemas";
 import { getToken, purgeCachedToken } from "./token";
 import { getTwitchEnvVars } from "./utils";
@@ -92,8 +91,6 @@ export async function getStreams() {
 		return [];
 	}
 }
-
-export type MappedStream = Unpacked<ReturnType<typeof mapRawStream>>;
 
 function mapRawStream(stream: RawStream) {
 	return {

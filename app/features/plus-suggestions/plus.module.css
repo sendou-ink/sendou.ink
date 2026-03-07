@@ -72,15 +72,6 @@
 	display: inline;
 }
 
-.modalSelect {
-	max-width: 6rem;
-}
-
-.modalTextarea {
-	width: 100% !important;
-	resize: none;
-}
-
 .votingContainer {
 	max-width: 32rem;
 	margin-inline: auto;

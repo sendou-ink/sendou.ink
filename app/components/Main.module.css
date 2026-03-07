@@ -1,14 +1,3 @@
-.containerWithSideNav {
-	display: flex;
-	flex-direction: row;
-	width: 100%;
-}
-
-.mainWrapper {
-	flex: 1;
-	min-width: 0;
-}
-
 .main {
 	padding: var(--layout-main-padding);
 	margin-bottom: var(--s-32);

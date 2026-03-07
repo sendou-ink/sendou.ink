@@ -2,7 +2,7 @@ import { z } from "zod";
 import { customField, select, stringConstant, toggle } from "~/form/fields";
 import { themeInputSchema } from "~/utils/zod";
 
-export const customThemeSchema = z.object({
+const customThemeSchema = z.object({
 	_action: stringConstant("UPDATE_CUSTOM_THEME"),
 	newValue: customField({ initialValue: null }, themeInputSchema.nullable()),
 });

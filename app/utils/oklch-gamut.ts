@@ -226,7 +226,7 @@ function maximum_chroma_for_lh(L: number, h: number): number {
 // These are the lightness values used in vars.css
 // Any changes here NEED to be reflected in vars.css as well.
 
-export const BASE_LIGHTNESS_VALUES = [
+const BASE_LIGHTNESS_VALUES = [
 	1.0, // --base-c-0
 	0.94873, // --base-c-1
 	0.81397, // --base-c-2
@@ -237,7 +237,7 @@ export const BASE_LIGHTNESS_VALUES = [
 	0.2097, // --base-c-7
 ] as const;
 
-export const ACCENT_LIGHTNESS_VALUES = [
+const ACCENT_LIGHTNESS_VALUES = [
 	0.25912, // --acc-c-0: dark mode low
 	0.52262, // --acc-c-1: dark mode mid
 	0.83419, // --acc-c-2: dark mode high

@@ -90,22 +90,6 @@
 	right: 0;
 }
 
-.zoomQuickActions {
-	position: absolute;
-	z-index: 10;
-	display: block;
-}
-
-.zoomMenu {
-	position: absolute;
-	right: 0;
-}
-
-.quickActions {
-	display: flex;
-	right: 0;
-}
-
 .draggableButton {
 	display: inline-flex;
 	align-items: center;

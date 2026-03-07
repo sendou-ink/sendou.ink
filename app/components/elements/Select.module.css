@@ -46,12 +46,6 @@
 	color: var(--color-text-high);
 }
 
-.smallIcon {
-	min-width: 16px;
-	max-width: 16px;
-	color: var(--color-text-high);
-}
-
 .popover {
 	padding: var(--s-1);
 	width: var(--trigger-width);

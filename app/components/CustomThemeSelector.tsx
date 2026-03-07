@@ -169,7 +169,7 @@ function themeInputFromString(str: string): ThemeInput | null {
 	return parsed.success ? parsed.data : null;
 }
 
-export const DEFAULT_THEME_INPUT: ThemeInput = {
+const DEFAULT_THEME_INPUT: ThemeInput = {
 	baseHue: 268,
 	baseChroma: 0.076,
 	accentHue: 360,
@@ -184,9 +184,7 @@ export const DEFAULT_THEME_INPUT: ThemeInput = {
 	sizeSpacing: 1,
 };
 
-export function themeInputFromCustomTheme(
-	customTheme: CustomTheme,
-): ThemeInput {
+function themeInputFromCustomTheme(customTheme: CustomTheme): ThemeInput {
 	return {
 		baseHue: customTheme["--_base-h"] ?? DEFAULT_THEME_INPUT.baseHue,
 		baseChroma:

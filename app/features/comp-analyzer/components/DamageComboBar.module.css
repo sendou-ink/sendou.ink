@@ -297,13 +297,6 @@
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
 }
-
-.inkTime {
-	font-size: var(--font-sm);
-	color: var(--color-text-second);
-	font-weight: var(--weight-semi);
-}
-
 .inkTimeSegment {
 	display: flex;
 	align-items: center;

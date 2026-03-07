@@ -20,31 +20,3 @@
 		grid-template-columns: 1fr 1fr;
 	}
 }
-
-.button {
-	display: grid;
-	place-items: center;
-	background-color: var(--color-bg);
-	width: var(--field-size-sm);
-	height: var(--field-size-sm);
-	padding: 0.25rem;
-	border: var(--border-style);
-	border-radius: 50%;
-	color: inherit;
-	cursor: pointer;
-}
-
-.button:focus-visible {
-	outline: var(--focus-ring);
-	outline-offset: 1px;
-}
-
-.buttonIcon {
-	width: 1.15rem;
-}
-
-@media screen and (max-width: 640px) {
-	.container > .userItem {
-		display: none;
-	}
-}

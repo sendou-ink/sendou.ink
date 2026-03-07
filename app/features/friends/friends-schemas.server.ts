@@ -9,8 +9,8 @@ import {
 	sendFriendRequestBaseSchema,
 } from "./friends-schemas";
 
-export const sendFriendRequestSchemaServer =
-	sendFriendRequestBaseSchema.superRefine(async (data, ctx) => {
+const sendFriendRequestSchemaServer = sendFriendRequestBaseSchema.superRefine(
+	async (data, ctx) => {
 		const user = requireUser();
 
 		if (data.userId === user.id) {
@@ -46,7 +46,8 @@ export const sendFriendRequestSchemaServer =
 				path: ["userId"],
 			});
 		}
-	});
+	},
+);
 
 export const friendsActionSchema = z.union([
 	sendFriendRequestSchemaServer,
