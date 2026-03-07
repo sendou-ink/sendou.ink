@@ -45,6 +45,8 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 	const { unseenIds } = useNotifications();
 
 	const hasUnseenNotifications = unseenIds.length > 0;
+	const hasFriendInSendouQ =
+		sidebarData?.friends.some((f) => f.subtitle === "SendouQ") ?? false;
 
 	const closePanel = () => setActivePanel("closed");
 
@@ -78,6 +80,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 				onTabPress={setActivePanel}
 				isLoggedIn={Boolean(user)}
 				hasUnseenNotifications={hasUnseenNotifications}
+				hasFriendInSendouQ={hasFriendInSendouQ}
 			/>
 		</div>
 	);
@@ -88,11 +91,13 @@ function MobileTabBar({
 	onTabPress,
 	isLoggedIn,
 	hasUnseenNotifications,
+	hasFriendInSendouQ,
 }: {
 	activePanel: PanelType;
 	onTabPress: (panel: PanelType) => void;
 	isLoggedIn: boolean;
 	hasUnseenNotifications: boolean;
+	hasFriendInSendouQ: boolean;
 }) {
 	const { t } = useTranslation(["front", "common"]);
 
@@ -112,6 +117,7 @@ function MobileTabBar({
 						label={t("front:mobileNav.friends")}
 						isActive={activePanel === "friends"}
 						onPress={() => onTabPress("friends")}
+						showNotificationDot={hasFriendInSendouQ}
 					/>
 					<MobileTab
 						icon={<Calendar />}
