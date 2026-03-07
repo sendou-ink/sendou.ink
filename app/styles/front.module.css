@@ -53,7 +53,7 @@
 	line-height: 1.35;
 	position: relative;
 	color: var(--color-text);
-	border: 2.5px solid var(--color-bg-higher);
+	border: var(--border-style-high);
 	transition: --l 0.2s ease-out;
 	margin-block-start: var(--s-4);
 }
@@ -128,7 +128,8 @@
 	transition: 0.2s ease-out;
 	min-width: 90px;
 	max-width: 90px;
-	border: 2.5px solid var(--color-bg-higher);
+	border: var(--border-style);
+	margin-top: var(--s-2);
 }
 
 .tournamentCardsViewAllCard:hover {
