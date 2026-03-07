@@ -134,7 +134,7 @@ export function GlobalSearch() {
 				<span className={styles.searchPlaceholder}>{t("common:search")}</span>
 				<kbd className={styles.searchKbd}>{isMac ? "Cmd+K" : "Ctrl+K"}</kbd>
 			</button>
-			<ModalOverlay className={styles.overlay}>
+			<ModalOverlay className={styles.overlay} isDismissable>
 				<Modal className={styles.modal}>
 					<Dialog className={styles.dialog} aria-label={t("common:search")}>
 						<GlobalSearchContent
@@ -319,7 +319,7 @@ function GlobalSearchContent({
 			) : (
 				<ListBox
 					ref={listBoxRef}
-					className={styles.listBox}
+					className={clsx(styles.listBox, "scrollbar")}
 					aria-label={t("common:search")}
 					selectionMode="single"
 					onAction={handleSelect}

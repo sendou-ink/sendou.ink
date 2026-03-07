@@ -1,3 +1,4 @@
+import { clsx } from "clsx";
 import type { TFunction } from "i18next";
 import {
 	Calculator,
@@ -215,7 +216,7 @@ export function WeaponResultsList({
 	return (
 		<ListBox
 			ref={listBoxRef}
-			className={styles.listBox}
+			className={clsx(styles.listBox, "scrollbar")}
 			aria-label={t("common:search")}
 			selectionMode="single"
 			onAction={onSelect}
