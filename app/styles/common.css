@@ -568,3 +568,25 @@ abbr[title] {
 #nprogress .peg {
 	display: none !important;
 }
+
+.top-leaderboard {
+	min-height: 130px;
+	margin: 10px 0;
+}
+
+@media screen and (min-width: 601px) {
+	.top-leaderboard {
+		min-height: 120px;
+	}
+}
+
+.top-leaderboard iframe {
+	margin: 0 auto;
+}
+
+@media screen and (max-width: 599px) {
+	#pw-oop-bottom_rail {
+		/* note actually the bottom nav is 55px */
+		bottom: 49px !important;
+	}
+}
