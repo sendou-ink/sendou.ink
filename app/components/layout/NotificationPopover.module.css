@@ -16,8 +16,14 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding-inline: var(--s-3);
-	padding-block: var(--s-1);
+	padding: var(--s-1) var(--s-2);
+
+	& svg {
+		min-width: 18px;
+		min-height: 18px;
+		max-width: 18px;
+		max-height: 18px;
+	}
 }
 
 .header {
@@ -25,11 +31,6 @@
 	align-items: center;
 	font-size: var(--font-sm);
 	gap: var(--s-1);
-}
-
-.refreshButton svg {
-	width: 14px;
-	height: 14px;
 }
 
 .noNotifications {

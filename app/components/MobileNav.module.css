@@ -217,7 +217,7 @@
 
 .streamsSection {
 	padding: var(--s-1-5);
-	border-bottom: 1.5px solid var(--color-border);
+	border-top: 1.5px solid var(--color-border);
 }
 
 .streamsList {
@@ -280,9 +280,9 @@
 }
 
 .youPanelUserRow {
-	display: flex;
+	display: grid;
+	grid-template-columns: 1fr auto;
 	align-items: center;
-	justify-content: space-between;
 	padding: var(--s-1) var(--s-2);
 }
 
@@ -297,7 +297,7 @@
 }
 
 .youPanelUser:hover {
-	background-color: var(--color-bg-higher);
+	background-color: var(--color-bg-high);
 }
 
 .youPanelUsername {
@@ -309,14 +309,15 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: var(--s-2);
 	text-decoration: none;
 	color: var(--color-text-high);
 	border-radius: var(--radius-field);
+	height: var(--field-size);
+	aspect-ratio: 1 / 1;
 }
 
 .youPanelSettingsButton:hover {
-	background-color: var(--color-bg-higher);
+	background-color: var(--color-bg-high);
 	color: var(--color-text);
 }
 

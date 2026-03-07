@@ -188,7 +188,12 @@ function MobilePanel({
 				<Dialog className={styles.panelDialog}>
 					<header className={styles.panelHeader}>
 						<h2 className={styles.panelTitle}>{title}</h2>
-						<SendouButton icon={<X />} variant="minimal" onPress={onClose} />
+						<SendouButton
+							icon={<X />}
+							variant="minimal"
+							shape="circle"
+							onPress={onClose}
+						/>
 					</header>
 					<div className={styles.panelContent}>{children}</div>
 				</Dialog>
@@ -219,6 +224,30 @@ function MenuOverlay({
 							onPress={onClose}
 						/>
 					</header>
+
+					<nav aria-label={t("front:mobileNav.menu")}>
+						<ul className={styles.navGrid}>
+							{navItems.map((item) => (
+								<li key={item.name}>
+									<Link
+										to={`/${item.url}`}
+										className={styles.navItem}
+										onClick={onClose}
+									>
+										<div className={styles.navItemImage}>
+											<Image
+												path={navIconUrl(item.name)}
+												height={32}
+												width={32}
+												alt=""
+											/>
+										</div>
+										<span>{t(`common:pages.${item.name}` as any)}</span>
+									</Link>
+								</li>
+							))}
+						</ul>
+					</nav>
 
 					<section className={styles.streamsSection}>
 						<header className={styles.streamsSectionHeader}>
@@ -258,30 +287,6 @@ function MenuOverlay({
 							))}
 						</ul>
 					</section>
-
-					<nav aria-label={t("front:mobileNav.menu")}>
-						<ul className={styles.navGrid}>
-							{navItems.map((item) => (
-								<li key={item.name}>
-									<Link
-										to={`/${item.url}`}
-										className={styles.navItem}
-										onClick={onClose}
-									>
-										<div className={styles.navItemImage}>
-											<Image
-												path={navIconUrl(item.name)}
-												height={32}
-												width={32}
-												alt=""
-											/>
-										</div>
-										<span>{t(`common:pages.${item.name}` as any)}</span>
-									</Link>
-								</li>
-							))}
-						</ul>
-					</nav>
 				</Dialog>
 			</Modal>
 		</ModalOverlay>

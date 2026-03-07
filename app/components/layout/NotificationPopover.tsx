@@ -58,8 +58,8 @@ export function NotificationContent({
 				</h2>
 				<SendouButton
 					icon={<RefreshCcw />}
+					shape="circle"
 					variant="minimal"
-					className={styles.refreshButton}
 					onPress={revalidate}
 					isDisabled={state !== "idle"}
 				/>
