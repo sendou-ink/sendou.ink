@@ -47,6 +47,17 @@ export const meta: MetaFunction = (args) => {
 };
 
 export default function AdminPage() {
+	const isStaff = useHasRole("STAFF");
+
+	// is dev user or is someone impersonating another user (allow them to stop)
+	if (!isStaff) {
+		return (
+			<Main>
+				<Impersonate />
+			</Main>
+		);
+	}
+
 	return (
 		<Main>
 			<SendouTabs>
@@ -109,12 +120,15 @@ function FriendCodeLookUp() {
 function AdminActions() {
 	const isStaff = useHasRole("STAFF");
 	const isAdmin = useHasRole("ADMIN");
+	const isDev = useHasRole("DEV");
 
 	return (
 		<div className="stack lg">
 			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS ? <Seed /> : null}
 			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS ? <TestAdminNotification /> : null}
-			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS || isAdmin ? <Impersonate /> : null}
+			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS || isAdmin || isDev ? (
+				<Impersonate />
+			) : null}
 
 			{isStaff ? <LinkPlayer /> : null}
 			{isStaff ? <GiveArtist /> : null}
