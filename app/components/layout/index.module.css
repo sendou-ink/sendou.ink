@@ -207,7 +207,7 @@
 	height: 100%;
 }
 
-.sideNavInModal {
+.sideNavInModal.sideNavInModal {
 	display: flex;
 	position: static;
 	height: 100%;
