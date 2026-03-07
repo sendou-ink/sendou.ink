@@ -12,17 +12,12 @@ import { resolveFriendActivity } from "~/features/friends/friends-utils.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
-import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import { getSendouQSidebarStreams } from "~/features/sendouq-streams/core/streams.server";
-import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
 import { cache, ttl } from "~/utils/cache.server";
 import {
 	BLANK_IMAGE_URL,
 	discordAvatarUrl,
 	navIconUrl,
-	sendouQMatchPage,
-	tournamentBracketsPage,
-	tournamentMatchPage,
 	twitchUrl,
 	userPage,
 } from "~/utils/urls";
@@ -61,26 +56,16 @@ export async function resolveSidebarData(userId: number | null) {
 			await ShowcaseTournaments.frontPageTournamentsByUserId(null);
 		return {
 			events: showcaseEventsToSidebarEvents(tournamentsData.showcase),
-			matchStatus: null as { matchId: number; url: string } | null,
-			tournamentMatchStatus: null as {
-				url: string;
-				text: string;
-				roundName?: string;
-				logoUrl: string | null;
-			} | null,
 			friends: [] as SidebarFriend[],
 			streams: await combinedStreamsCached(),
 		};
 	}
 
-	const ownGroup = SendouQ.findOwnGroup(userId);
 	const [tournamentsData, scrimsData, friendsWithActivity] = await Promise.all([
 		ShowcaseTournaments.frontPageTournamentsByUserId(userId),
 		ScrimPostRepository.findUserScrims(userId),
 		FriendRepository.findByUserIdWithActivity(userId),
 	]);
-
-	const tournamentMatchStatus = resolveTournamentMatchStatus(userId);
 
 	const seenTournamentIds = new Set<number>();
 	const tournamentEvents: SidebarEvent[] = [
@@ -127,10 +112,6 @@ export async function resolveSidebarData(userId: number | null) {
 
 	return {
 		events,
-		matchStatus: ownGroup?.matchId
-			? { matchId: ownGroup.matchId, url: sendouQMatchPage(ownGroup.matchId) }
-			: null,
-		tournamentMatchStatus,
 		friends,
 		streams: await combinedStreamsCached(),
 	};
@@ -217,54 +198,6 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 	}
 
 	return StreamRanking.rank(ranked, MAX_STREAMS_VISIBLE);
-}
-
-function resolveTournamentMatchStatus(userId: number) {
-	const tournament = RunningTournaments.getUserTournament(userId);
-	if (!tournament) return null;
-
-	const status = tournament.teamMemberOfProgressStatus({ id: userId });
-	if (!status) return null;
-
-	const tournamentId = tournament.ctx.id;
-	const logoUrl = tournament.ctx.logoUrl;
-
-	if (status.type === "MATCH") {
-		const roundInfo = tournament.matchContextNamesById(status.matchId);
-		const roundNameWithoutNumbers = (roundInfo?.roundName ?? "Match").replace(
-			/\.\d+$/,
-			"",
-		);
-		return {
-			url: tournamentMatchPage({ tournamentId, matchId: status.matchId }),
-			text: "MATCH",
-			roundName: roundNameWithoutNumbers,
-			logoUrl,
-		};
-	}
-
-	if (status.type === "CHECKIN") {
-		return {
-			url: tournamentBracketsPage({ tournamentId }),
-			text: "CHECKIN",
-			logoUrl,
-		};
-	}
-
-	if (
-		status.type === "WAITING_FOR_MATCH" ||
-		status.type === "WAITING_FOR_CAST" ||
-		status.type === "WAITING_FOR_ROUND" ||
-		status.type === "WAITING_FOR_BRACKET"
-	) {
-		return {
-			url: tournamentBracketsPage({ tournamentId }),
-			text: "WAITING",
-			logoUrl,
-		};
-	}
-
-	return null;
 }
 
 type FriendWithActivity = Awaited<

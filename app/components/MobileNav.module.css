@@ -324,11 +324,6 @@
 	height: 20px;
 }
 
-.tournamentMatchIcon {
-	border-radius: var(--radius-avatar);
-	object-fit: cover;
-}
-
 .panelSectionLink {
 	display: block;
 	font-size: var(--font-2xs);

@@ -35,8 +35,6 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 	const user = useUser();
 	const { unseenIds } = useNotifications();
 
-	const hasActiveMatch = Boolean(sidebarData?.matchStatus);
-	const hasTournamentMatch = Boolean(sidebarData?.tournamentMatchStatus);
 	const hasUnseenNotifications = unseenIds.length > 0;
 
 	const closePanel = () => setActivePanel("closed");
@@ -70,10 +68,6 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 				activePanel={activePanel}
 				onTabPress={setActivePanel}
 				isLoggedIn={Boolean(user)}
-				hasActiveMatch={hasActiveMatch}
-				matchUrl={sidebarData?.matchStatus?.url}
-				hasTournamentMatch={hasTournamentMatch}
-				tournamentMatchStatus={sidebarData?.tournamentMatchStatus}
 				hasUnseenNotifications={hasUnseenNotifications}
 			/>
 		</div>
@@ -84,19 +78,11 @@ function MobileTabBar({
 	activePanel,
 	onTabPress,
 	isLoggedIn,
-	hasActiveMatch,
-	matchUrl,
-	hasTournamentMatch,
-	tournamentMatchStatus,
 	hasUnseenNotifications,
 }: {
 	activePanel: PanelType;
 	onTabPress: (panel: PanelType) => void;
 	isLoggedIn: boolean;
-	hasActiveMatch: boolean;
-	matchUrl?: string;
-	hasTournamentMatch: boolean;
-	tournamentMatchStatus?: NonNullable<SidebarData>["tournamentMatchStatus"];
 	hasUnseenNotifications: boolean;
 }) {
 	const { t } = useTranslation(["front", "common"]);
@@ -142,30 +128,6 @@ function MobileTabBar({
 					</button>
 				</LogInButtonContainer>
 			)}
-
-			{hasActiveMatch && matchUrl ? (
-				<Link to={matchUrl} className={styles.tab}>
-					<span className={styles.tabIcon}>
-						<Image path={navIconUrl("sendouq")} alt="" width={24} height={24} />
-					</span>
-					<span>{t("front:mobileNav.match")}</span>
-				</Link>
-			) : hasTournamentMatch && tournamentMatchStatus ? (
-				<Link to={tournamentMatchStatus.url} className={styles.tab}>
-					<span className={styles.tabIcon}>
-						{tournamentMatchStatus.logoUrl ? (
-							<img
-								src={tournamentMatchStatus.logoUrl}
-								alt=""
-								width={24}
-								height={24}
-								className={styles.tournamentMatchIcon}
-							/>
-						) : null}
-					</span>
-					<span>{t("front:mobileNav.match")}</span>
-				</Link>
-			) : null}
 		</nav>
 	);
 }

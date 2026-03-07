@@ -33,13 +33,7 @@ import { SendouPopover } from "../elements/Popover";
 import { Image } from "../Image";
 import { TwitchIcon } from "../icons/Twitch";
 import { MobileNav } from "../MobileNav";
-import {
-	ListLink,
-	SideNav,
-	SideNavFooter,
-	SideNavGameStatus,
-	SideNavHeader,
-} from "../SideNav";
+import { ListLink, SideNav, SideNavFooter, SideNavHeader } from "../SideNav";
 import sideNavStyles from "../SideNav.module.css";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
@@ -186,8 +180,6 @@ export function Layout({
 	const user = useUser();
 	const sidebarData = data?.sidebar;
 	const events = sidebarData?.events ?? [];
-	const matchStatus = sidebarData?.matchStatus;
-	const tournamentMatchStatus = sidebarData?.tournamentMatchStatus;
 	const friends = sidebarData?.friends ?? [];
 	const streams = sidebarData?.streams ?? [];
 
@@ -204,36 +196,9 @@ export function Layout({
 			<SideNav
 				collapsed={sideNavCollapsed}
 				footer={
-					<>
-						{matchStatus ? (
-							<SideNavGameStatus
-								iconUrl={navIconUrl("sendouq")}
-								text={t("front:sideNav.matchStarted", {
-									matchId: matchStatus.matchId,
-								})}
-								href={matchStatus.url}
-							/>
-						) : tournamentMatchStatus ? (
-							<SideNavGameStatus
-								imageUrl={tournamentMatchStatus.logoUrl ?? undefined}
-								text={
-									tournamentMatchStatus.text === "CHECKIN"
-										? t("front:sideNav.tournamentCheckin")
-										: tournamentMatchStatus.text === "WAITING"
-											? t("front:sideNav.tournamentWaiting")
-											: tournamentMatchStatus.text === "MATCH"
-												? t("front:sideNav.tournamentMatchReady", {
-														roundName: tournamentMatchStatus.roundName,
-													})
-												: tournamentMatchStatus.text
-								}
-								href={tournamentMatchStatus.url}
-							/>
-						) : null}
-						<SideNavFooter>
-							<SideNavUserPanel />
-						</SideNavFooter>
-					</>
+					<SideNavFooter>
+						<SideNavUserPanel />
+					</SideNavFooter>
 				}
 				top={<SiteTitle />}
 				topCentered={isFrontPage}

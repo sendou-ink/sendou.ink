@@ -148,48 +148,6 @@
 	}
 }
 
-.sideNavGameStatus {
-	display: flex;
-	align-items: center;
-	gap: var(--s-2);
-	padding: var(--s-1-5) var(--s-3);
-	text-decoration: none;
-	color: var(--color-text);
-	border-top: 1.5px solid var(--color-border);
-	font-size: var(--font-xs);
-	font-weight: var(--weight-semi);
-	flex-shrink: 0;
-	border-radius: 0;
-}
-
-.sideNavGameStatus:hover {
-	background-color: var(--color-bg-higher);
-}
-
-.sideNavGameStatusIcon {
-	width: 32px;
-	height: 32px;
-	border-radius: 50%;
-	background-color: var(--color-bg-higher);
-	display: grid;
-	place-items: center;
-	flex-shrink: 0;
-}
-
-.sideNavGameStatusIcon img {
-	width: 24px;
-	height: 24px;
-}
-
-.sideNavGameStatusIconImg img {
-	width: 28px;
-	height: 28px;
-}
-
-.sideNavGameStatusImage {
-	border-radius: var(--radius-avatar);
-}
-
 .sideNavHeader {
 	color: var(--color-text-high);
 	padding: var(--s-1-5) var(--s-2);

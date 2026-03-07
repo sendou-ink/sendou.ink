@@ -27,16 +27,11 @@
 	"sideNav.friends.notLoggedIn": "Log in to follow your friends' activity",
 	"sideNav.friends.noFriends": "Add friends to see their activity here",
 	"sideNav.streams": "Streams",
-	"sideNav.matchStarted": "Match #{{matchId}} started!",
-	"sideNav.tournamentCheckin": "Check-in now",
-	"sideNav.tournamentWaiting": "Waiting for match",
-	"sideNav.tournamentMatchReady": "{{roundName}} ready",
 	"sideNav.scrimVs": "vs. {{opponent}}",
 	"sideNav.lookingForScrim": "Looking for scrim",
 	"mobileNav.menu": "Menu",
 	"mobileNav.friends": "Friends",
 	"mobileNav.you": "You",
 	"mobileNav.login": "Login",
-	"mobileNav.match": "Match",
 	"mobileNav.queue": "Queue"
 }

@@ -6,7 +6,6 @@ import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import type { Tables } from "~/db/tables";
 import { Avatar } from "./Avatar";
-import { Image } from "./Image";
 import styles from "./SideNav.module.css";
 
 export function SideNav({
@@ -181,39 +180,4 @@ export function ListButton({
 
 export function SideNavFooter({ children }: { children: React.ReactNode }) {
 	return <div className={styles.sideNavFooter}>{children}</div>;
-}
-
-export function SideNavGameStatus({
-	iconUrl,
-	imageUrl,
-	text,
-	href,
-}: {
-	iconUrl?: string;
-	imageUrl?: string;
-	text: string;
-	href: string;
-}) {
-	return (
-		<Link to={href} className={styles.sideNavGameStatus}>
-			<div
-				className={
-					imageUrl
-						? styles.sideNavGameStatusIconImg
-						: styles.sideNavGameStatusIcon
-				}
-			>
-				{iconUrl ? (
-					<Image path={iconUrl} alt="" />
-				) : imageUrl ? (
-					<img
-						src={imageUrl}
-						alt=""
-						className={styles.sideNavGameStatusImage}
-					/>
-				) : null}
-			</div>
-			<span>{text}</span>
-		</Link>
-	);
 }
