@@ -357,54 +357,6 @@
 	background-color: var(--color-text-second);
 }
 
-.sideNavPanelOverlay {
-	position: fixed;
-	inset: 0;
-	z-index: 10;
-	background-color: rgba(0, 0, 0, 0.25);
-	backdrop-filter: blur(10px);
-}
-
-.sideNavPanelOverlay[data-entering] {
-	animation: fade-in 200ms ease-out;
-}
-
-@keyframes fade-in {
-	from {
-		opacity: 0;
-	}
-	to {
-		opacity: 1;
-	}
-}
-
-.sideNavPanel {
-	position: fixed;
-	top: 50%;
-	left: 0;
-	transform: translateY(-50%);
-	max-height: 90vh;
-	overflow-y: auto;
-	border-radius: var(--radius-box);
-}
-
-.sideNavPanel[data-entering] {
-	animation: slide-in-left 200ms ease-out;
-}
-
-@keyframes slide-in-left {
-	from {
-		transform: translateX(-100%) translateY(-50%);
-	}
-	to {
-		transform: translateX(0) translateY(-50%);
-	}
-}
-
-.sideNavPanelDialog {
-	outline: none;
-}
-
 @media screen and (max-width: 599px) {
 	.sideNav {
 		display: none;

@@ -1,13 +1,7 @@
 import clsx from "clsx";
 import { X } from "lucide-react";
 import type * as React from "react";
-import {
-	Button,
-	Dialog,
-	DialogTrigger,
-	Modal,
-	ModalOverlay,
-} from "react-aria-components";
+import { Button } from "react-aria-components";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import type { Tables } from "~/db/tables";
@@ -182,25 +176,6 @@ export function ListButton({
 				) : null}
 			</div>
 		</Button>
-	);
-}
-
-export function SideNavPanel({
-	children,
-	trigger,
-}: {
-	children: React.ReactNode;
-	trigger: React.ReactNode;
-}) {
-	return (
-		<DialogTrigger>
-			{trigger}
-			<ModalOverlay className={styles.sideNavPanelOverlay} isDismissable>
-				<Modal className={clsx(styles.sideNavPanel, "scrollbar")}>
-					<Dialog className={styles.sideNavPanelDialog}>{children}</Dialog>
-				</Modal>
-			</ModalOverlay>
-		</DialogTrigger>
 	);
 }
 

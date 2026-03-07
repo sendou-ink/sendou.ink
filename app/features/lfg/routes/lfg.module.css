@@ -1,13 +1,3 @@
-.mobileFilterButton {
-	display: none;
-}
-
-@media (max-width: 800px) {
-	.mobileFilterButton {
-		display: flex;
-	}
-}
-
 .post {
 	scroll-margin-top: 6rem;
 }
