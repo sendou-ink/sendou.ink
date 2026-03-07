@@ -7,7 +7,6 @@ import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	ARTICLES_MAIN_PAGE,
-	articlePage,
 	articlePreviewUrl,
 	navIconUrl,
 } from "~/utils/urls";
@@ -27,11 +26,6 @@ export const handle: SendouRouteHandle = {
 				imgPath: navIconUrl("articles"),
 				href: ARTICLES_MAIN_PAGE,
 				type: "IMAGE",
-			},
-			{
-				text: data.title,
-				href: articlePage(data.slug),
-				type: "TEXT",
 			},
 		];
 	},
@@ -64,7 +58,9 @@ export default function ArticlePage() {
 				<div className="text-sm text-lighter">
 					by <Author /> • <time>{data.dateString}</time>
 				</div>
-				<Markdown>{contentWithoutLeadingTitle(data.content, data.title)}</Markdown>
+				<Markdown>
+					{contentWithoutLeadingTitle(data.content, data.title)}
+				</Markdown>
 			</article>
 		</Main>
 	);
@@ -81,9 +77,13 @@ function normalizeText(text: string) {
 function contentWithoutLeadingTitle(content: string, title: string) {
 	const trimmed = content.trimStart();
 	const firstLineEnd = trimmed.indexOf("\n");
-	const firstLine = firstLineEnd === -1 ? trimmed : trimmed.slice(0, firstLineEnd);
+	const firstLine =
+		firstLineEnd === -1 ? trimmed : trimmed.slice(0, firstLineEnd);
 
-	if (firstLine.startsWith("# ") && normalizeText(firstLine.slice(2)) === normalizeText(title)) {
+	if (
+		firstLine.startsWith("# ") &&
+		normalizeText(firstLine.slice(2)) === normalizeText(title)
+	) {
 		return trimmed.slice(firstLine.length).trimStart();
 	}
 

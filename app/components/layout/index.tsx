@@ -337,7 +337,10 @@ function SiteTitle() {
 	const hasBreadcrumbs = breadcrumbs.length > 0;
 
 	return (
-		<Flipper flipKey={isFrontPage ? "front" : "other"}>
+		<Flipper
+			flipKey={isFrontPage ? "front" : "other"}
+			className={styles.siteTitleFlipper}
+		>
 			<div className={styles.siteTitle}>
 				<Flipped flipId="site-logo">
 					<Link to="/" className={styles.siteLogo}>

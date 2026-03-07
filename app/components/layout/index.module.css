@@ -18,12 +18,18 @@
 	z-index: 10;
 }
 
+.siteTitleFlipper {
+	min-width: 0;
+	overflow: hidden;
+}
+
 .siteTitle {
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
 	height: 100%;
 	min-width: 0;
+	overflow: hidden;
 }
 
 .siteLogo {
@@ -101,6 +107,7 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	min-width: 0;
 	animation: fadeInFull 200ms ease-out 150ms both;
 }
 

@@ -8,6 +8,7 @@ import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
+	discordAvatarUrl,
 	userAdminPage,
 	userArtPage,
 	userBuildsPage,
@@ -44,10 +45,23 @@ export const handle: SendouRouteHandle = {
 
 		if (!data) return [];
 
+		if (!data.user.discordAvatar) {
+			return {
+				text: data.user.username,
+				href: userPage(data.user),
+				type: "TEXT",
+			};
+		}
+
 		return {
-			text: data.user.username,
+			imgPath: discordAvatarUrl({
+				discordId: data.user.discordId,
+				discordAvatar: data.user.discordAvatar,
+				size: "sm",
+			}),
 			href: userPage(data.user),
-			type: "TEXT",
+			type: "IMAGE",
+			text: data.user.username,
 		};
 	},
 };

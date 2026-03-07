@@ -19,7 +19,6 @@ import { removeMarkdown } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
 	tournamentDivisionsPage,
-	tournamentOrganizationPage,
 	tournamentPage,
 	tournamentRegisterPage,
 } from "~/utils/urls";
@@ -70,24 +69,13 @@ export const handle: SendouRouteHandle = {
 		const data = JSON.parse(rawData) as TournamentLoaderData;
 
 		return [
-			data.tournament.ctx.organization?.logoUrl
-				? {
-						imgPath: data.tournament.ctx.organization.logoUrl,
-						href: tournamentOrganizationPage({
-							organizationSlug: data.tournament.ctx.organization.slug,
-						}),
-						type: "IMAGE" as const,
-						text: "",
-						rounded: true,
-					}
-				: null,
 			{
 				imgPath: data.tournament.ctx.logoUrl,
 				href: tournamentPage(data.tournament.ctx.id),
 				type: "IMAGE" as const,
 				text: data.tournament.ctx.name,
 			},
-		].filter((crumb) => crumb !== null);
+		];
 	},
 };
 
