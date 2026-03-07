@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
+import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { getUser } from "~/features/auth/core/user.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -13,9 +14,11 @@ import type { SearchType } from "../search-types";
 export type SearchLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = getUser();
-	if (!user) {
-		return null;
+	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
+		const user = getUser();
+		if (!user) {
+			return null;
+		}
 	}
 
 	const {
