@@ -176,17 +176,5 @@
 @media screen and (max-width: 599px) {
 	.mobileLogo {
 		display: flex;
-		flex-direction: row;
-		align-items: center;
-		justify-content: center;
-		width: 40px;
-		height: 36px;
-		background-color: var(--color-accent);
-		border-radius: var(--radius-field);
-		font-weight: var(--weight-bold);
-		color: var(--color-text);
-		text-decoration: none;
-		flex-shrink: 0;
-		line-height: 1;
 	}
 }

@@ -342,7 +342,9 @@ export function Layout({
 						transform: `translateY(${navOffset}px)`,
 					}}
 				>
-					<MobileLogo />
+					<Link to="/" className={clsx(styles.siteLogo, styles.mobileLogo)}>
+						<SiteLogoContent />
+					</Link>
 					{sideNavCollapsed ? (
 						<div className={styles.headerCollapsedBreadcrumbs}>
 							<SiteTitle />
@@ -412,14 +414,6 @@ function SiteLogoContent() {
 			<span className={styles.siteLogoS}>S</span>
 			<span className={styles.siteLogoInk}>ink</span>
 		</>
-	);
-}
-
-function MobileLogo() {
-	return (
-		<Link to="/" className={styles.mobileLogo}>
-			<SiteLogoContent />
-		</Link>
 	);
 }
 
