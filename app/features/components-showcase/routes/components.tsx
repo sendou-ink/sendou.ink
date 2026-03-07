@@ -1,6 +1,6 @@
 import { parseDate } from "@internationalized/date";
 import { Check, Plus, Search, SquarePen, Trash } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Ability } from "~/components/Ability";
 import { AddNewButton } from "~/components/AddNewButton";
 import { Alert } from "~/components/Alert";
@@ -41,7 +41,6 @@ import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
 import { RelativeTime } from "~/components/RelativeTime";
 import { Section } from "~/components/Section";
-import { ListLink, SideNav } from "~/components/SideNav";
 import { StageSelect } from "~/components/StageSelect";
 import { SubmitButton } from "~/components/SubmitButton";
 import { SubNav, SubNavLink } from "~/components/SubNav";
@@ -99,75 +98,12 @@ export const SECTIONS = [
 
 export default function ComponentsShowcasePage() {
 	return (
-		<Main className="stack lg" sideNav={<ComponentsSideNav />}>
+		<Main className="stack lg">
 			<h1>Components</h1>
 			{SECTIONS.map(({ id, component: Component }) => (
 				<Component key={id} id={id} />
 			))}
 		</Main>
-	);
-}
-
-function ComponentsSideNav() {
-	const [activeSection, setActiveSection] = useState<string | null>(null);
-
-	useEffect(() => {
-		const sectionIds = SECTIONS.map((s) => s.id);
-		const elements = sectionIds
-			.map((id) => document.getElementById(id))
-			.filter(Boolean) as HTMLElement[];
-
-		const observer = new IntersectionObserver(
-			(entries) => {
-				const visibleEntries = entries.filter((entry) => entry.isIntersecting);
-
-				if (visibleEntries.length > 0) {
-					const topMostEntry = visibleEntries.reduce((prev, curr) =>
-						prev.boundingClientRect.top < curr.boundingClientRect.top
-							? prev
-							: curr,
-					);
-
-					setActiveSection(topMostEntry.target.id);
-				}
-			},
-			{ rootMargin: "-10% 0px -80% 0px", threshold: 0 },
-		);
-
-		for (const element of elements) {
-			observer.observe(element);
-		}
-
-		return () => observer.disconnect();
-	}, []);
-
-	const handleClick = (
-		event: React.MouseEvent<HTMLAnchorElement>,
-		id: string,
-	) => {
-		event.preventDefault();
-		const element = document.getElementById(id);
-
-		if (element) {
-			element.scrollIntoView({ behavior: "instant" });
-			window.history.replaceState(null, "", `#${id}`);
-			setActiveSection(id);
-		}
-	};
-
-	return (
-		<SideNav>
-			{SECTIONS.map(({ title, id }) => (
-				<ListLink
-					key={id}
-					to={`#${id}`}
-					onClick={(e) => handleClick(e, id)}
-					isActive={activeSection === id}
-				>
-					{title}
-				</ListLink>
-			))}
-		</SideNav>
 	);
 }
 
