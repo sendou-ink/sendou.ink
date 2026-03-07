@@ -113,12 +113,12 @@ function useSideNavCollapsed(initialCollapsed: boolean) {
 	return [collapsed, setCollapsedAndPersist] as const;
 }
 
-function useNavOffset() {
+function useNavOffset(headerRef: React.RefObject<HTMLElement | null>) {
 	const [navOffset, setNavOffset] = React.useState(0);
 	const lastScrollY = React.useRef(0);
 
 	const MOBILE_BREAKPOINT = 600;
-	const NAV_HEIGHT = 55;
+	const NAV_HEIGHT_FALLBACK = 55;
 
 	React.useEffect(() => {
 		const handleScroll = () => {
@@ -128,12 +128,13 @@ function useNavOffset() {
 				return;
 			}
 
+			const navHeight = headerRef.current?.offsetHeight ?? NAV_HEIGHT_FALLBACK;
 			const currentScrollY = window.scrollY;
 			const scrollDelta = currentScrollY - lastScrollY.current;
 
 			setNavOffset((prevOffset) => {
 				const newOffset = prevOffset - scrollDelta;
-				return Math.max(-NAV_HEIGHT, Math.min(0, newOffset));
+				return Math.max(-navHeight, Math.min(0, newOffset));
 			});
 
 			lastScrollY.current = currentScrollY;
@@ -152,7 +153,7 @@ function useNavOffset() {
 			window.removeEventListener("scroll", handleScroll);
 			window.removeEventListener("resize", handleResize);
 		};
-	}, []);
+	}, [headerRef]);
 
 	return navOffset;
 }
@@ -172,7 +173,8 @@ export function Layout({
 	const { t } = useTranslation(["front", "common"]);
 	const { formatRelativeDate } = useTimeFormat();
 	const location = useLocation();
-	const navOffset = useNavOffset();
+	const headerRef = React.useRef<HTMLElement>(null);
+	const navOffset = useNavOffset(headerRef);
 
 	React.useEffect(() => {
 		const handleResize = () => {
@@ -274,6 +276,7 @@ export function Layout({
 			<MobileNav sidebarData={data?.sidebar} />
 			<div className={styles.container}>
 				<header
+					ref={headerRef}
 					className={styles.header}
 					style={{
 						transform: `translateY(${navOffset}px)`,

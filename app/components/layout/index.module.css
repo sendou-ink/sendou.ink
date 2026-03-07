@@ -108,6 +108,12 @@
 	.header {
 		align-items: flex-end;
 		padding-top: calc(var(--s-2) + env(safe-area-inset-top));
+		padding-bottom: var(--s-2);
+		height: calc(var(--layout-nav-height) + env(safe-area-inset-top));
+	}
+
+	.sideNavModalOverlay {
+		top: calc(var(--layout-nav-height) + env(safe-area-inset-top));
 	}
 }
 

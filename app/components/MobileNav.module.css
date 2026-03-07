@@ -23,6 +23,12 @@
 	padding-bottom: env(safe-area-inset-bottom);
 }
 
+@media screen and (display-mode: standalone) {
+	.tabBar {
+		height: calc(var(--layout-nav-height) + env(safe-area-inset-bottom));
+	}
+}
+
 .tab {
 	display: flex;
 	flex-direction: column;
