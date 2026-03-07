@@ -72,6 +72,16 @@
 	display: inline;
 }
 
+.plus__edit-button {
+	display: inline;
+}
+
+.plus__edited-indicator {
+	color: var(--text-lighter);
+	font-size: var(--fonts-xxs);
+	font-style: italic;
+}
+
 .plus__modal-select {
 	max-width: 6rem;
 }
