@@ -27,6 +27,7 @@
 	"sideNav.friends.notLoggedIn": "Log in to follow your friends' activity",
 	"sideNav.friends.noFriends": "Add friends to see their activity here",
 	"sideNav.streams": "Streams",
+	"sideNav.streams.upcoming": "Upcoming",
 	"sideNav.scrimVs": "vs. {{opponent}}",
 	"sideNav.lookingForScrim": "Looking for scrim",
 	"mobileNav.menu": "Menu",

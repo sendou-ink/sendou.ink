@@ -92,7 +92,7 @@ export function ListLink({
 	overlayIconUrl?: string;
 	user?: Pick<Tables["User"], "discordId" | "discordAvatar">;
 	subtitle?: React.ReactNode;
-	badge?: string | null;
+	badge?: React.ReactNode;
 	badgeVariant?: "default" | "warning";
 }) {
 	return (
@@ -123,7 +123,7 @@ export function ListLink({
 						{subtitle ? (
 							<span className={styles.listLinkSubtitle}>{subtitle}</span>
 						) : null}
-						{badge ? (
+						{typeof badge === "string" ? (
 							<span
 								className={clsx(styles.listLinkBadge, {
 									[styles.listLinkBadgeWarning]: badgeVariant === "warning",
@@ -131,7 +131,9 @@ export function ListLink({
 							>
 								{badge}
 							</span>
-						) : null}
+						) : (
+							badge
+						)}
 					</div>
 				) : null}
 			</div>

@@ -15,6 +15,7 @@ import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useLocation, useMatches } from "react-router";
 import { useUser } from "~/features/auth/core/user";
+import type { SidebarStream } from "~/features/core/streams/streams.server";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import type { LanguageCode } from "~/modules/i18n/config";
@@ -35,6 +36,7 @@ import { TwitchIcon } from "../icons/Twitch";
 import { MobileNav } from "../MobileNav";
 import { ListLink, SideNav, SideNavFooter, SideNavHeader } from "../SideNav";
 import sideNavStyles from "../SideNav.module.css";
+import { TierPill } from "../TierPill";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
 import { LogInButtonContainer } from "./LogInButtonContainer";
@@ -255,44 +257,59 @@ export function Layout({
 						{t("front:sideNav.noStreams")}
 					</div>
 				) : null}
-				{streams.map((stream) => {
+				{streams.map((stream, i) => {
 					const startsAtDate = databaseTimestampToDate(stream.startsAt);
+					const isUpcoming = startsAtDate.getTime() > Date.now();
+					const prevStream = streams.at(i - 1);
+					const prevIsLive =
+						prevStream &&
+						databaseTimestampToDate(prevStream.startsAt).getTime() <=
+							Date.now();
+					const showUpcomingDivider = isMounted && isUpcoming && prevIsLive;
 
 					return (
-						<ListLink
-							key={stream.id}
-							to={stream.url}
-							imageUrl={stream.imageUrl}
-							overlayIconUrl={stream.overlayIconUrl}
-							subtitle={
-								stream.peakXp ? (
-									<span className={styles.streamXpSubtitle}>
-										<img
-											src={`${navIconUrl("xsearch")}.png`}
-											alt=""
-											className={styles.streamXpIcon}
-										/>
-										{stream.peakXp}
-									</span>
-								) : stream.subtitle ? (
-									stream.subtitle
-								) : isMounted ? (
-									formatDistanceToNow(startsAtDate, {
-										addSuffix: true,
-										language: i18n.language as LanguageCode,
-									})
-								) : (
-									""
-								)
-							}
-							badge={
-								isMounted && startsAtDate.getTime() < Date.now()
-									? "LIVE"
-									: undefined
-							}
-						>
-							{stream.name}
-						</ListLink>
+						<React.Fragment key={stream.id}>
+							{showUpcomingDivider ? (
+								<div className={styles.streamUpcomingDivider}>
+									{t("front:sideNav.streams.upcoming")}
+								</div>
+							) : null}
+							<ListLink
+								to={stream.url}
+								imageUrl={stream.imageUrl}
+								overlayIconUrl={stream.overlayIconUrl}
+								subtitle={
+									stream.peakXp ? (
+										<span className={styles.streamXpSubtitle}>
+											<img
+												src={`${navIconUrl("xsearch")}.png`}
+												alt=""
+												className={styles.streamXpIcon}
+											/>
+											{stream.peakXp}
+										</span>
+									) : stream.subtitle ? (
+										stream.subtitle
+									) : isMounted ? (
+										isUpcoming ? (
+											formatRelativeDate(stream.startsAt)
+										) : (
+											formatDistanceToNow(startsAtDate, {
+												addSuffix: true,
+												language: i18n.language as LanguageCode,
+											})
+										)
+									) : (
+										""
+									)
+								}
+								badge={
+									isMounted && !isUpcoming ? "LIVE" : streamTierBadge(stream)
+								}
+							>
+								{stream.name}
+							</ListLink>
+						</React.Fragment>
 					);
 				})}
 			</SideNav>
@@ -481,5 +498,19 @@ function SideNavUserPanel() {
 				</Link>
 			</div>
 		</>
+	);
+}
+
+function streamTierBadge(stream: SidebarStream): React.ReactNode {
+	const tier = stream.tier ?? stream.tentativeTier;
+	if (!tier) return undefined;
+
+	return (
+		<div className={styles.streamTierBadge}>
+			<TierPill
+				tier={tier}
+				isTentative={!stream.tier && !!stream.tentativeTier}
+			/>
+		</div>
 	);
 }

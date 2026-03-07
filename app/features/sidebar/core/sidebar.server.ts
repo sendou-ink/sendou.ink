@@ -1,4 +1,5 @@
 import { cachified } from "@epic-web/cachified";
+import { addDays } from "date-fns";
 import { href } from "react-router";
 import * as R from "remeda";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
@@ -13,7 +14,9 @@ import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournam
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import { getSendouQSidebarStreams } from "~/features/sendouq-streams/core/streams.server";
+import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import { cache, ttl } from "~/utils/cache.server";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
 	BLANK_IMAGE_URL,
 	discordAvatarUrl,
@@ -47,6 +50,7 @@ export type SidebarFriend = {
 const MAX_EVENTS_VISIBLE = 5;
 const MAX_FRIENDS_VISIBLE = 4;
 const MAX_STREAMS_VISIBLE = 5;
+const UPCOMING_TOURNAMENT_WINDOW_DAYS = 3;
 const SENDOUQ_QUOTA = 2;
 const TOURNAMENT_SUB_QUOTA = 2;
 
@@ -130,9 +134,10 @@ function combinedStreamsCached(): Promise<SidebarStream[]> {
 
 async function combinedStreams(): Promise<SidebarStream[]> {
 	const tournamentStreams = getLiveTournamentStreams();
-	const [sendouQEntries, xRankRows] = await Promise.all([
+	const [sendouQEntries, xRankRows, upcomingTournaments] = await Promise.all([
 		getSendouQSidebarStreams(),
 		LiveStreamRepository.findXRankStreams(),
+		ShowcaseTournaments.upcomingTournaments(),
 	]);
 
 	const seenUsernames = new Set(
@@ -176,7 +181,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 
 		ranked.push({
 			stream: {
-				id: row.id,
+				id: `xrank-${row.id}`,
 				name: row.username,
 				imageUrl: row.discordAvatar
 					? discordAvatarUrl({
@@ -194,6 +199,30 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 				peakXp: row.peakXp ?? undefined,
 			},
 			score,
+		});
+	}
+
+	const nowTimestamp = dateToDatabaseTimestamp(new Date());
+	const threeDaysFromNow = dateToDatabaseTimestamp(addDays(new Date(), UPCOMING_TOURNAMENT_WINDOW_DAYS));
+	for (const event of upcomingTournaments) {
+		const effectiveTier = event.tier ?? event.tentativeTier;
+		if (effectiveTier === null) continue;
+		if (event.startTime < nowTimestamp) continue;
+		if (event.startTime > threeDaysFromNow) continue;
+		if (event.hidden) continue;
+
+		ranked.push({
+			stream: {
+				id: `upcoming-${event.id}`,
+				name: event.name,
+				imageUrl: event.logoUrl ?? BLANK_IMAGE_URL,
+				url: event.url,
+				subtitle: "",
+				startsAt: event.startTime,
+				tier: (event.tier as TournamentTierNumber) ?? null,
+				tentativeTier: event.tentativeTier ?? undefined,
+			},
+			score: StreamRanking.upcomingTournamentTierToScore(effectiveTier),
 		});
 	}
 

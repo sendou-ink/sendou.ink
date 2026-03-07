@@ -133,7 +133,7 @@ export async function getSendouQSidebarStreams(): Promise<
 
 		entries.push({
 			sidebarStream: {
-				id: -matchId,
+				id: `sendouq-${matchId}`,
 				name: `Match #${matchId}`,
 				imageUrl: averageTier
 					? `${tierImageUrl(averageTier.name)}.png`

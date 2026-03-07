@@ -14,6 +14,11 @@
 	height: 14px;
 }
 
+.streamTierBadge {
+	margin-left: auto;
+	flex-shrink: 0;
+}
+
 .header {
 	display: flex;
 	width: 100%;
@@ -128,6 +133,24 @@
 	padding: var(--s-1) var(--s-2);
 	margin: 0 auto;
 	font-style: italic;
+}
+
+.streamUpcomingDivider {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-1) var(--s-2);
+	font-size: var(--font-3xs);
+	color: var(--color-text-high);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.streamUpcomingDivider::before,
+.streamUpcomingDivider::after {
+	content: "";
+	flex: 1;
+	border-top: 1px solid var(--color-border);
 }
 
 .viewAllLink {

@@ -8,16 +8,31 @@ export function rank(
 	streams: RankedStream[],
 	maxStreams: number,
 ): SidebarStream[] {
-	return streams
+	const now = Math.floor(Date.now() / 1000);
+
+	const selected = streams
 		.sort((a, b) => a.score - b.score || a.stream.startsAt - b.stream.startsAt)
-		.slice(0, maxStreams)
-		.map((rs) => rs.stream);
+		.slice(0, maxStreams);
+
+	const live = selected
+		.filter((rs) => rs.stream.startsAt <= now)
+		.sort((a, b) => a.score - b.score);
+
+	const upcoming = selected
+		.filter((rs) => rs.stream.startsAt > now)
+		.sort((a, b) => a.stream.startsAt - b.stream.startsAt);
+
+	return [...live, ...upcoming].map((rs) => rs.stream);
 }
 
 export function tournamentTierToScore(
 	tier: TournamentTierNumber | null,
 ): number {
 	return tier ?? 9;
+}
+
+export function upcomingTournamentTierToScore(tier: number): number {
+	return Math.min(9, tier + 4);
 }
 
 export function sendouQTierToScore(tier: {

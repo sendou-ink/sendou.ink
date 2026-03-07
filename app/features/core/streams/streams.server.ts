@@ -13,7 +13,7 @@ export function clearCombinedStreamsCache() {
 }
 
 export type SidebarStream = {
-	id: number;
+	id: string;
 	name: string;
 	imageUrl: string;
 	overlayIconUrl?: string;
@@ -21,6 +21,7 @@ export type SidebarStream = {
 	subtitle: string;
 	startsAt: number;
 	tier: TournamentTierNumber | null;
+	tentativeTier?: number;
 	peakXp?: number;
 	twitchUsername?: string;
 };
@@ -30,7 +31,7 @@ export function getLiveTournamentStreams(): SidebarStream[] {
 
 	for (const tournament of RunningTournaments.all) {
 		streams.push({
-			id: tournament.ctx.id,
+			id: `tournament-${tournament.ctx.id}`,
 			name: tournament.ctx.name,
 			imageUrl: tournament.ctx.logoUrl,
 			url: tournamentStreamsPage(tournament.ctx.id),
