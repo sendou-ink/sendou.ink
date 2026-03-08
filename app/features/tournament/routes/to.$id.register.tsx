@@ -1046,7 +1046,7 @@ function FillRoster({
 				) : null}
 			</section>
 			{tournament.ctx.settings.requireInGameNames ? (
-				<div className={clsx(styles.sectionWarning, "text-warning-important")}>
+				<div className={clsx(styles.sectionWarning, "text-warning")}>
 					Note that you are expected to use the in-game names as listed above.
 					Playing in the event with a different name or using the alias feature
 					might result in disqualification.

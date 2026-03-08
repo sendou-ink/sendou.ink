@@ -139,7 +139,7 @@ export function WeaponSelect<
 									? specialWeaponImageUrl(TRIZOOKA_ID)
 									: weaponCategoryUrl(name)
 					}
-					className={idx === 0 ? "pt-0-5-forced" : undefined}
+					className={idx === 0 ? "pt-0-5" : undefined}
 					key={key}
 				>
 					{weapons.map(({ weapon, name }) => (
