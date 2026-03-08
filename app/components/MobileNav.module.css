@@ -299,24 +299,24 @@
 }
 
 .panelSectionLink {
-	display: block;
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	width: fit-content;
+	margin: var(--s-4) auto;
 	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 	text-decoration: none;
-	padding: var(--s-3) var(--s-2);
-	text-align: center;
+	padding: var(--s-1) var(--s-3);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-field);
+
+	& svg {
+		stroke-width: 3;
+	}
 }
 
 .panelSectionLink:hover {
 	color: var(--color-text);
-	text-decoration: underline;
-}
-
-.dayHeader {
-	padding: var(--s-2) var(--s-2) var(--s-1);
-	font-size: var(--font-2xs);
-	font-weight: var(--weight-bold);
-	color: var(--color-text-high);
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
+	background-color: var(--color-bg-high);
 }

@@ -25,7 +25,12 @@ import { useUser } from "~/features/auth/core/user";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
-import { FRIENDS_PAGE, SETTINGS_PAGE, userPage } from "~/utils/urls";
+import {
+	EVENTS_PAGE,
+	FRIENDS_PAGE,
+	SETTINGS_PAGE,
+	userPage,
+} from "~/utils/urls";
 import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
@@ -210,7 +215,17 @@ export function Layout({
 
 	const sideNavChildren = (
 		<>
-			<SideNavHeader icon={<Calendar />}>
+			<SideNavHeader
+				icon={<Calendar />}
+				action={
+					user ? (
+						<Link to={EVENTS_PAGE} className={styles.viewAllLink}>
+							{t("common:actions.viewAll")}
+							<ChevronRight size={14} />
+						</Link>
+					) : null
+				}
+			>
 				{t("front:sideNav.myCalendar")}
 			</SideNavHeader>
 			{events.length > 0 ? (

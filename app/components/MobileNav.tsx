@@ -1,7 +1,7 @@
 import clsx from "clsx";
-import { isToday, isTomorrow } from "date-fns";
 import {
 	Calendar,
+	ChevronRight,
 	LogIn,
 	Menu,
 	Settings,
@@ -18,12 +18,14 @@ import { useUser } from "~/features/auth/core/user";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import type { RootLoaderData } from "~/root";
 import {
+	EVENTS_PAGE,
 	FRIENDS_PAGE,
 	navIconUrl,
 	SETTINGS_PAGE,
 	userPage,
 } from "~/utils/urls";
 import { Avatar } from "./Avatar";
+import { EventsList } from "./EventsList";
 import { SendouButton } from "./elements/Button";
 import { Image } from "./Image";
 import { LogInButtonContainer } from "./layout/LogInButtonContainer";
@@ -34,7 +36,6 @@ import {
 import { navItems } from "./layout/nav-items";
 import styles from "./MobileNav.module.css";
 import { NotificationDot } from "./NotificationDot";
-import { ListLink } from "./SideNav";
 import { StreamListItems } from "./StreamListItems";
 
 type SidebarData = RootLoaderData["sidebar"] | undefined;
@@ -302,6 +303,7 @@ function FriendsPanel({
 				onClick={onClose}
 			>
 				{t("common:actions.viewAll")}
+				<ChevronRight size={14} />
 			</Link>
 		</MobilePanel>
 	);
@@ -314,91 +316,19 @@ function TourneysPanel({
 	events: NonNullable<SidebarData>["events"];
 	onClose: () => void;
 }) {
-	const { t, i18n } = useTranslation(["front"]);
-
-	const formatDayHeader = (date: Date) => {
-		if (isToday(date)) {
-			const rtf = new Intl.RelativeTimeFormat(i18n.language, {
-				numeric: "auto",
-			});
-			const str = rtf.format(0, "day");
-			return str.charAt(0).toUpperCase() + str.slice(1);
-		}
-		if (isTomorrow(date)) {
-			const rtf = new Intl.RelativeTimeFormat(i18n.language, {
-				numeric: "auto",
-			});
-			const str = rtf.format(1, "day");
-			return str.charAt(0).toUpperCase() + str.slice(1);
-		}
-		return date.toLocaleDateString(i18n.language, {
-			weekday: "long",
-			month: "short",
-			day: "numeric",
-		});
-	};
-
-	const formatTime = (date: Date) => {
-		return date.toLocaleTimeString(i18n.language, {
-			hour: "numeric",
-			minute: "2-digit",
-		});
-	};
-
-	const getDayKey = (timestamp: number) => {
-		const date = new Date(timestamp * 1000);
-		return date.toDateString();
-	};
-
-	const groupedEvents = events.reduce<Record<string, typeof events>>(
-		(acc, event) => {
-			const key = getDayKey(event.startTime);
-			if (!acc[key]) {
-				acc[key] = [];
-			}
-			acc[key].push(event);
-			return acc;
-		},
-		{},
-	);
-
-	const dayKeys = Object.keys(groupedEvents);
+	const { t } = useTranslation(["front", "common"]);
 
 	return (
 		<MobilePanel title={t("front:sideNav.myCalendar")} onClose={onClose}>
-			{events.length > 0 ? (
-				dayKeys.map((dayKey) => {
-					const dayEvents = groupedEvents[dayKey];
-					const firstDate = new Date(dayEvents[0].startTime * 1000);
-
-					return (
-						<div key={dayKey}>
-							<div className={styles.dayHeader}>
-								{formatDayHeader(firstDate)}
-							</div>
-							{dayEvents.map((event) => (
-								<ListLink
-									key={`${event.type}-${event.id}`}
-									to={event.url}
-									imageUrl={event.logoUrl ?? undefined}
-									subtitle={formatTime(new Date(event.startTime * 1000))}
-									onClick={onClose}
-								>
-									{event.scrimStatus === "booked"
-										? t("front:sideNav.scrimVs", { opponent: event.name })
-										: event.scrimStatus === "looking"
-											? t("front:sideNav.lookingForScrim")
-											: event.name}
-								</ListLink>
-							))}
-						</div>
-					);
-				})
-			) : (
-				<div className="text-lighter text-sm p-2">
-					{t("front:sideNav.noEvents")}
-				</div>
-			)}
+			<EventsList events={events} onClick={onClose} />
+			<Link
+				to={EVENTS_PAGE}
+				className={styles.panelSectionLink}
+				onClick={onClose}
+			>
+				{t("common:actions.viewAll")}
+				<ChevronRight size={14} />
+			</Link>
 		</MobilePanel>
 	);
 }
