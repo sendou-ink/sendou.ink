@@ -26,11 +26,6 @@
 	margin-inline: var(--s-1);
 }
 
-.centered {
-	display: flex;
-	justify-content: center;
-}
-
 .list {
 	display: flex;
 	flex-direction: column;

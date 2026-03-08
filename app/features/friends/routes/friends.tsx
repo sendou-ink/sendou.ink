@@ -20,7 +20,8 @@ export const handle: SendouRouteHandle = {
 	i18n: ["friends"],
 };
 
-type ViewFilter = "friends" | "team" | "all";
+const VIEW_FILTERS = ["friends", "team", "all"] as const;
+type ViewFilter = (typeof VIEW_FILTERS)[number];
 
 export default function FriendsPage() {
 	const data = useLoaderData<FriendsLoaderData>();
@@ -141,12 +142,21 @@ function PendingRequestsSection() {
 function FriendsListSection() {
 	const { t } = useTranslation(["common", "friends"]);
 	const data = useLoaderData<FriendsLoaderData>();
-	const [filter, setFilter] = useState<ViewFilter>("friends");
+	const allCount = resolveShownItems("all", data).length;
+	const filterCounts: Record<ViewFilter, number> = {
+		friends: data.friends.length,
+		team: data.teamMembers.length,
+		all: allCount,
+	};
+
+	const defaultFilter =
+		VIEW_FILTERS.find((key) => filterCounts[key] > 0) ?? "friends";
+	const [filter, setFilter] = useState<ViewFilter>(defaultFilter);
 
 	const viewLabels: Record<ViewFilter, string> = {
-		friends: t("friends:view.friends"),
-		team: t("friends:view.teamMembers"),
-		all: t("friends:view.all"),
+		friends: `${t("friends:view.friends")} (${filterCounts.friends})`,
+		team: `${t("friends:view.teamMembers")} (${filterCounts.team})`,
+		all: `${t("friends:view.all")} (${filterCounts.all})`,
 	};
 
 	const shownItems = resolveShownItems(filter, data);
@@ -166,7 +176,7 @@ function FriendsListSection() {
 					orientation="horizontal"
 					className="stack horizontal xs"
 				>
-					{(["friends", "team", "all"] as const).map((value) => (
+					{VIEW_FILTERS.map((value) => (
 						<Radio key={value} value={value}>
 							{({ isSelected }) => (
 								<span

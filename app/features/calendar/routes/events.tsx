@@ -16,19 +16,22 @@ export const handle: SendouRouteHandle = {
 	i18n: ["calendar"],
 };
 
-// xxx: counts for each filter
-type ViewFilter = "registered" | "hosting" | "scrims" | "saved";
+const VIEW_FILTERS = ["registered", "hosting", "scrims", "saved"] as const;
+type ViewFilter = (typeof VIEW_FILTERS)[number];
 
 export default function EventsPage() {
 	const { t } = useTranslation(["calendar"]);
 	const data = useLoaderData<EventsLoaderData>();
-	const [filter, setFilter] = useState<ViewFilter>("registered");
+
+	const defaultFilter =
+		VIEW_FILTERS.find((key) => data[key].length > 0) ?? "registered";
+	const [filter, setFilter] = useState<ViewFilter>(defaultFilter);
 
 	const viewLabels: Record<ViewFilter, string> = {
-		registered: t("calendar:events.view.registered"),
-		hosting: t("calendar:events.view.hosting"),
-		scrims: t("calendar:events.view.scrims"),
-		saved: t("calendar:events.view.saved"),
+		registered: `${t("calendar:events.view.registered")} (${data.registered.length})`,
+		hosting: `${t("calendar:events.view.hosting")} (${data.hosting.length})`,
+		scrims: `${t("calendar:events.view.scrims")} (${data.scrims.length})`,
+		saved: `${t("calendar:events.view.saved")} (${data.saved.length})`,
 	};
 
 	const shownEvents =
@@ -57,21 +60,19 @@ export default function EventsPage() {
 						orientation="horizontal"
 						className="stack horizontal xs"
 					>
-						{(["registered", "hosting", "scrims", "saved"] as const).map(
-							(value) => (
-								<Radio key={value} value={value}>
-									{({ isSelected }) => (
-										<span
-											className={clsx(styles.filterRadio, {
-												[styles.filterRadioSelected]: isSelected,
-											})}
-										>
-											{viewLabels[value]}
-										</span>
-									)}
-								</Radio>
-							),
-						)}
+						{VIEW_FILTERS.map((value) => (
+							<Radio key={value} value={value}>
+								{({ isSelected }) => (
+									<span
+										className={clsx(styles.filterRadio, {
+											[styles.filterRadioSelected]: isSelected,
+										})}
+									>
+										{viewLabels[value]}
+									</span>
+								)}
+							</Radio>
+						))}
 					</RadioGroup>
 				)}
 			</div>
