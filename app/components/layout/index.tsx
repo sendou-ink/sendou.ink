@@ -31,6 +31,7 @@ import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
 import { Image } from "../Image";
 import { MobileNav } from "../MobileNav";
+import { NotificationDot } from "../NotificationDot";
 import { ListLink, SideNav, SideNavFooter, SideNavHeader } from "../SideNav";
 import sideNavStyles from "../SideNav.module.css";
 import { StreamListItems } from "../StreamListItems";
@@ -188,6 +189,7 @@ export function Layout({
 	}, []);
 
 	const user = useUser();
+	const { unseenIds } = useNotifications();
 	const sidebarData = data?.sidebar;
 	const events = sidebarData?.events ?? [];
 	const friends = sidebarData?.friends ?? [];
@@ -309,6 +311,7 @@ export function Layout({
 					<SideNavCollapseButton
 						onToggle={() => setSideNavCollapsed(!sideNavCollapsed)}
 						className={styles.sideNavCollapseButton}
+						showNotificationDot={sideNavCollapsed && unseenIds.length > 0}
 					/>
 					<TopNavMenus />
 					<TopRightButtons
@@ -379,19 +382,24 @@ function SiteLogoContent() {
 function SideNavCollapseButton({
 	onToggle,
 	className,
+	showNotificationDot,
 }: {
 	onToggle?: () => void;
 	className?: string;
+	showNotificationDot?: boolean;
 }) {
 	return (
-		<SendouButton
-			className={className}
-			variant="minimal"
-			size="small"
-			shape="square"
-			icon={<PanelLeft />}
-			onPress={onToggle}
-		/>
+		<div className={styles.sideNavCollapseButtonContainer}>
+			<SendouButton
+				className={className}
+				variant="minimal"
+				size="small"
+				shape="square"
+				icon={<PanelLeft />}
+				onPress={onToggle}
+			/>
+			{showNotificationDot ? <NotificationDot /> : null}
+		</div>
 	);
 }
 
@@ -437,11 +445,14 @@ function SideNavUserPanel() {
 				</Link>
 				<div className={sideNavStyles.sideNavFooterActions}>
 					{notifications ? (
-						<div className={sideNavStyles.sideNavFooterNotification} key={location.pathname}>
+						<div
+							className={sideNavStyles.sideNavFooterNotification}
+							key={location.pathname}
+						>
 							{unseenIds.length > 0 ? (
-								<div className={sideNavStyles.sideNavFooterUnseenDot}>
-									<div className={sideNavStyles.sideNavFooterUnseenDotPulse} />
-								</div>
+								<NotificationDot
+									className={sideNavStyles.sideNavFooterUnseenDot}
+								/>
 							) : null}
 							<SendouPopover
 								trigger={

@@ -33,6 +33,7 @@ import {
 } from "./layout/NotificationPopover";
 import { navItems } from "./layout/nav-items";
 import styles from "./MobileNav.module.css";
+import { NotificationDot } from "./NotificationDot";
 import { ListLink } from "./SideNav";
 import { StreamListItems } from "./StreamListItems";
 
@@ -169,11 +170,7 @@ function MobileTab({
 		>
 			<span className={styles.tabIcon}>
 				{icon}
-				{showNotificationDot ? (
-					<span className={styles.notificationDot}>
-						<span className={styles.notificationDotPulse} />
-					</span>
-				) : null}
+				{showNotificationDot ? <NotificationDot /> : null}
 			</span>
 			<span>{label}</span>
 		</button>

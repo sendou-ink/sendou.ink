@@ -142,6 +142,12 @@
 	}
 }
 
+.sideNavCollapseButtonContainer {
+	position: relative;
+	--dot-top: 2px;
+	--dot-right: 2px;
+}
+
 /* Doubled selector increases specificity to beat Button.module.css's display: flex */
 .sideNavCollapseButton.sideNavCollapseButton,
 .sideNavModalTrigger.sideNavModalTrigger {
