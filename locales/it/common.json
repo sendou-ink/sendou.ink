@@ -101,6 +101,7 @@
 	"footer.patreon.subtitle": "Supporto",
 	"footer.thanks": "Mille grazie ai supporter su Patreon!",
 	"actions.save": "Salva",
+	"actions.unsave": "",
 	"actions.saveChanges": "Salva cambiamenti",
 	"actions.submit": "Invia",
 	"actions.edit": "Modifica",

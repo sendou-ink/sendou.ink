@@ -101,6 +101,7 @@
 	"footer.patreon.subtitle": "Støt hjemmesiden",
 	"footer.thanks": "Tak til vores patrons for støtten",
 	"actions.save": "Gem",
+	"actions.unsave": "",
 	"actions.saveChanges": "Gem ændringer",
 	"actions.submit": "Fremlæg",
 	"actions.edit": "Rediger",

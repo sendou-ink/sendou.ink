@@ -1,6 +1,8 @@
 import { isToday, isTomorrow } from "date-fns";
+import { Bookmark } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { useFetcher } from "react-router";
 import type { SidebarStream } from "~/features/core/streams/streams.server";
 import type { LanguageCode } from "~/modules/i18n/config";
 import { databaseTimestampToDate, formatDistanceToNow } from "~/utils/dates";
@@ -13,9 +15,11 @@ import { TierPill } from "./TierPill";
 export function StreamListItems({
 	streams,
 	onClick,
+	isLoggedIn,
 }: {
 	streams: SidebarStream[];
 	onClick?: () => void;
+	isLoggedIn?: boolean;
 }) {
 	const { t, i18n } = useTranslation(["front"]);
 
@@ -92,7 +96,22 @@ export function StreamListItems({
 									})
 								)
 							}
-							badge={!isUpcoming ? "LIVE" : streamTierBadge(stream)}
+							badge={
+								!isUpcoming ? (
+									"LIVE"
+								) : (
+									<div className={styles.badgeRow}>
+										{isLoggedIn && stream.id.startsWith("upcoming-") ? (
+											<SaveTournamentStreamButton
+												tournamentId={Number(
+													stream.id.replace("upcoming-", ""),
+												)}
+											/>
+										) : null}
+										{streamTierBadge(stream)}
+									</div>
+								)
+							}
 							onClick={onClick}
 						>
 							{stream.name}
@@ -101,6 +120,36 @@ export function StreamListItems({
 				);
 			})}
 		</>
+	);
+}
+
+// xxx: show checked in checkmark for saved tournaments
+// xxx: reload sidebar data after saving tournament
+function SaveTournamentStreamButton({
+	tournamentId,
+}: {
+	tournamentId: number;
+}) {
+	const fetcher = useFetcher();
+
+	const handleClick = (e: React.MouseEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		fetcher.submit(
+			{ _action: "SAVE_TOURNAMENT" },
+			{ method: "post", action: `/to/${tournamentId}/register` },
+		);
+	};
+
+	return (
+		<button
+			type="button"
+			className={styles.saveIconButton}
+			title="Save"
+			onClick={handleClick}
+		>
+			<Bookmark size={14} />
+		</button>
 	);
 }
 

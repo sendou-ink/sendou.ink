@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
+import * as SavedTournamentRepository from "~/features/tournament/SavedTournamentRepository.server";
 import { findMapPoolByTeamId } from "~/features/tournament-bracket/queries/findMapPoolByTeamId.server";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
@@ -25,12 +26,17 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			mapPool: null,
 			friendPlayers: null,
 			teams: await TeamRepository.findAllMemberOfByUserId(user.id),
+			isSaved: await SavedTournamentRepository.isSaved({
+				userId: user.id,
+				tournamentId,
+			}),
 		};
 
 	return {
 		mapPool: findMapPoolByTeamId(ownTournamentTeam.id),
 		friendPlayers: await SQGroupRepository.friendsAndTeammates(user.id),
 		teams: await TeamRepository.findAllMemberOfByUserId(user.id),
+		isSaved: false,
 	};
 };
 

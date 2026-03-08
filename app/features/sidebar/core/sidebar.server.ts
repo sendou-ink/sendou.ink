@@ -16,6 +16,7 @@ import type { SidebarScrim } from "~/features/scrims/ScrimPostRepository.server"
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import { getSendouQSidebarStreams } from "~/features/sendouq-streams/core/streams.server";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
+import * as SavedTournamentRepository from "~/features/tournament/SavedTournamentRepository.server";
 import { cache, ttl } from "~/utils/cache.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
@@ -66,10 +67,19 @@ export async function resolveSidebarData(userId: number | null) {
 		};
 	}
 
-	const [tournamentsData, scrimsData, friendsWithActivity] = await Promise.all([
+	// xxx: combine queries
+	const [
+		tournamentsData,
+		scrimsData,
+		friendsWithActivity,
+		savedTournamentIds,
+		upcomingTournaments,
+	] = await Promise.all([
 		ShowcaseTournaments.categorizedTournamentsByUserId(userId),
 		ScrimPostRepository.findUserScrims(userId),
 		FriendRepository.findByUserIdWithActivity(userId),
+		SavedTournamentRepository.findTournamentIdsByUserId(userId),
+		ShowcaseTournaments.upcomingTournaments(),
 	]);
 
 	const seenTournamentIds = new Set<number>();
@@ -84,11 +94,23 @@ export async function resolveSidebarData(userId: number | null) {
 		})
 		.map(tournamentToSidebarEvent);
 
+	const savedTournamentIdSet = new Set(savedTournamentIds);
+	const savedEvents: SidebarEvent[] = upcomingTournaments
+		.filter(
+			(t) => savedTournamentIdSet.has(t.id) && !seenTournamentIds.has(t.id),
+		)
+		.map((t) => {
+			seenTournamentIds.add(t.id);
+			return tournamentToSidebarEvent(t);
+		});
+
 	const scrimEvents: SidebarEvent[] = scrimsData.map(scrimToSidebarEvent);
 
-	const personalEvents = [...tournamentEvents, ...scrimEvents].sort(
-		(a, b) => a.startTime - b.startTime,
-	);
+	const personalEvents = [
+		...tournamentEvents,
+		...savedEvents,
+		...scrimEvents,
+	].sort((a, b) => a.startTime - b.startTime);
 	const events = (
 		personalEvents.length > 0
 			? personalEvents

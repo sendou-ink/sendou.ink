@@ -10,7 +10,6 @@
 }
 
 .tierBadge {
-	margin-left: auto;
 	flex-shrink: 0;
 }
 
@@ -23,6 +22,30 @@
 	color: var(--color-text-high);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
+}
+
+.badgeRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	margin-left: auto;
+	flex-shrink: 0;
+}
+
+.saveIconButton {
+	display: grid;
+	place-items: center;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--color-text-high);
+	padding: var(--s-0-5);
+	border-radius: var(--radius-field);
+}
+
+.saveIconButton:hover {
+	color: var(--color-text);
+	background-color: var(--color-bg-higher);
 }
 
 .upcomingDivider::before,

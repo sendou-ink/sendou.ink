@@ -101,6 +101,7 @@
 	"footer.patreon.subtitle": "Support",
 	"footer.thanks": "Thanks to the patrons for the support",
 	"actions.save": "Save",
+	"actions.unsave": "Unsave",
 	"actions.saveChanges": "Save changes",
 	"actions.submit": "Submit",
 	"actions.edit": "Edit",

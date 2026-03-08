@@ -557,6 +557,14 @@ export interface PreparedMaps {
 	eliminationTeamCount?: number;
 }
 
+// xxx: or saved CalendarEvent?
+export interface SavedTournament {
+	id: GeneratedAlways<number>;
+	userId: number;
+	tournamentId: number;
+	createdAt: Generated<number>;
+}
+
 export interface TournamentBadgeOwner {
 	badgeId: number;
 	userId: number;
@@ -1302,4 +1310,5 @@ export interface DB {
 	Notification: Notification;
 	NotificationUser: NotificationUser;
 	NotificationUserSubscription: NotificationUserSubscription;
+	SavedTournament: SavedTournament;
 }

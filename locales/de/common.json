@@ -101,6 +101,7 @@
 	"footer.patreon.subtitle": "Support",
 	"footer.thanks": "Danke an die Patrons für den Support",
 	"actions.save": "Speichern",
+	"actions.unsave": "",
 	"actions.saveChanges": "Änderungen speichern",
 	"actions.submit": "Senden",
 	"actions.edit": "Bearbeiten",

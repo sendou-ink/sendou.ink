@@ -84,6 +84,7 @@
 	"events.view.registered": "Registered",
 	"events.view.hosting": "Hosting",
 	"events.view.scrims": "Scrims",
+	"events.view.saved": "Saved",
 	"events.empty": "No events in this category",
 	"events.emptyAll": "You have no upcoming events.",
 	"events.findOnCalendar": "Find an event to join on the calendar!"

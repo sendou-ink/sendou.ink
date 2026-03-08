@@ -101,6 +101,7 @@
 	"footer.patreon.subtitle": "후원",
 	"footer.thanks": "Patreon 후원자들에게 갑사드립니다",
 	"actions.save": "저장하기",
+	"actions.unsave": "",
 	"actions.saveChanges": "수정사항 저장",
 	"actions.submit": "제출",
 	"actions.edit": "편집",

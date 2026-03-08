@@ -276,7 +276,7 @@ export function Layout({
 					{t("front:sideNav.noStreams")}
 				</div>
 			) : null}
-			<StreamListItems streams={streams} />
+			<StreamListItems streams={streams} isLoggedIn={Boolean(user)} />
 		</>
 	);
 

@@ -16,7 +16,8 @@ export const handle: SendouRouteHandle = {
 	i18n: ["calendar"],
 };
 
-type ViewFilter = "registered" | "hosting" | "scrims";
+// xxx: counts for each filter
+type ViewFilter = "registered" | "hosting" | "scrims" | "saved";
 
 export default function EventsPage() {
 	const { t } = useTranslation(["calendar"]);
@@ -27,6 +28,7 @@ export default function EventsPage() {
 		registered: t("calendar:events.view.registered"),
 		hosting: t("calendar:events.view.hosting"),
 		scrims: t("calendar:events.view.scrims"),
+		saved: t("calendar:events.view.saved"),
 	};
 
 	const shownEvents =
@@ -34,12 +36,15 @@ export default function EventsPage() {
 			? data.registered
 			: filter === "hosting"
 				? data.hosting
-				: data.scrims;
+				: filter === "saved"
+					? data.saved
+					: data.scrims;
 
 	const hasNoEventsAtAll =
 		data.registered.length === 0 &&
 		data.hosting.length === 0 &&
-		data.scrims.length === 0;
+		data.scrims.length === 0 &&
+		data.saved.length === 0;
 
 	return (
 		<Main halfWidth>
@@ -52,19 +57,21 @@ export default function EventsPage() {
 						orientation="horizontal"
 						className="stack horizontal xs"
 					>
-						{(["registered", "hosting", "scrims"] as const).map((value) => (
-							<Radio key={value} value={value}>
-								{({ isSelected }) => (
-									<span
-										className={clsx(styles.filterRadio, {
-											[styles.filterRadioSelected]: isSelected,
-										})}
-									>
-										{viewLabels[value]}
-									</span>
-								)}
-							</Radio>
-						))}
+						{(["registered", "hosting", "scrims", "saved"] as const).map(
+							(value) => (
+								<Radio key={value} value={value}>
+									{({ isSelected }) => (
+										<span
+											className={clsx(styles.filterRadio, {
+												[styles.filterRadioSelected]: isSelected,
+											})}
+										>
+											{viewLabels[value]}
+										</span>
+									)}
+								</Radio>
+							),
+						)}
 					</RadioGroup>
 				)}
 			</div>

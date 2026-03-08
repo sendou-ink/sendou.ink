@@ -5,6 +5,7 @@ import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
+import * as SavedTournamentRepository from "~/features/tournament/SavedTournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
@@ -133,6 +134,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 					avatarFileName,
 				});
 				deleteSub({ tournamentId, userId: user.id });
+				await SavedTournamentRepository.unsave({
+					userId: user.id,
+					tournamentId,
+				});
 
 				ShowcaseTournaments.addToCached({
 					tournamentId,
@@ -281,6 +286,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 				}),
 			});
 
+			await SavedTournamentRepository.unsave({
+				userId: data.userId,
+				tournamentId,
+			});
+
 			ShowcaseTournaments.addToCached({
 				tournamentId,
 				type: "participant",
@@ -339,6 +349,14 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			await TournamentTeamRepository.deleteLogo(ownTeam.id);
 
+			break;
+		}
+		case "SAVE_TOURNAMENT": {
+			await SavedTournamentRepository.save({ userId: user.id, tournamentId });
+			break;
+		}
+		case "UNSAVE_TOURNAMENT": {
+			await SavedTournamentRepository.unsave({ userId: user.id, tournamentId });
 			break;
 		}
 		default: {

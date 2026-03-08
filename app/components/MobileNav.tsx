@@ -215,6 +215,7 @@ function MenuOverlay({
 	onClose: () => void;
 }) {
 	const { t } = useTranslation(["front", "common"]);
+	const user = useUser();
 
 	return (
 		<ModalOverlay className={styles.panelOverlay} isOpen isDismissable={false}>
@@ -265,7 +266,11 @@ function MenuOverlay({
 							</div>
 						) : null}
 						<ul className={styles.streamsList}>
-							<StreamListItems streams={streams} onClick={onClose} />
+							<StreamListItems
+								streams={streams}
+								onClick={onClose}
+								isLoggedIn={Boolean(user)}
+							/>
 						</ul>
 					</section>
 				</Dialog>

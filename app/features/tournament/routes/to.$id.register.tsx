@@ -1,6 +1,15 @@
 import clsx from "clsx";
 import Compressor from "compressorjs";
-import { AlertCircle, Check, Clock, Trash, User, X } from "lucide-react";
+import {
+	AlertCircle,
+	Bookmark,
+	BookmarkCheck,
+	Check,
+	Clock,
+	Trash,
+	User,
+	X,
+} from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Form, Link, useFetcher, useLoaderData } from "react-router";
@@ -202,19 +211,22 @@ function TournamentRegisterInfoTabs() {
 
 				<SendouTabPanel id="description">
 					<div className="stack lg">
-						{tournament.ctx.discordUrl ? (
-							<div className="w-max">
-								<LinkButton
-									to={tournament.ctx.discordUrl}
-									variant="outlined"
-									size="small"
-									isExternal
-									icon={<DiscordIcon />}
-								>
-									Join the Discord
-								</LinkButton>
-							</div>
-						) : null}
+						<div className="stack horizontal sm">
+							{tournament.ctx.discordUrl ? (
+								<div className="w-max">
+									<LinkButton
+										to={tournament.ctx.discordUrl}
+										variant="outlined"
+										size="small"
+										isExternal
+										icon={<DiscordIcon />}
+									>
+										Join the Discord
+									</LinkButton>
+								</div>
+							) : null}
+							<SaveTournamentButton />
+						</div>
 
 						<div className={styles.infoDescription}>
 							<Markdown>{tournament.ctx.description ?? ""}</Markdown>
@@ -1282,6 +1294,42 @@ function MapPoolValidationStatusMessage({
 				})}
 			</Alert>
 		</div>
+	);
+}
+
+function SaveTournamentButton() {
+	const { t } = useTranslation(["common"]);
+	const user = useUser();
+	const tournament = useTournament();
+	const data = useLoaderData<TournamentRegisterPageLoader>();
+	const fetcher = useFetcher();
+
+	const teamMemberOf = tournament.teamMemberOfByUser(user);
+	if (!user || tournament.hasStarted || teamMemberOf) return null;
+
+	const isSaved =
+		fetcher.formData?.get("_action") === "SAVE_TOURNAMENT"
+			? true
+			: fetcher.formData?.get("_action") === "UNSAVE_TOURNAMENT"
+				? false
+				: (data?.isSaved ?? false);
+
+	return (
+		<fetcher.Form method="post">
+			<input
+				type="hidden"
+				name="_action"
+				value={isSaved ? "UNSAVE_TOURNAMENT" : "SAVE_TOURNAMENT"}
+			/>
+			<SendouButton
+				type="submit"
+				variant="outlined"
+				size="small"
+				icon={isSaved ? <BookmarkCheck /> : <Bookmark />}
+			>
+				{isSaved ? t("common:actions.unsave") : t("common:actions.save")}
+			</SendouButton>
+		</fetcher.Form>
 	);
 }
 

@@ -5,7 +5,7 @@
 	padding: var(--s-0-5) var(--s-1-5);
 	display: grid;
 	place-items: center;
-	min-width: 24px;
+	min-width: 33px;
 	text-align: center;
 }
 

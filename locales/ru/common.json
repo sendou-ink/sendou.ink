@@ -101,6 +101,7 @@
 	"footer.patreon.subtitle": "Поддержать",
 	"footer.thanks": "Спасибо меценатам за поддержку",
 	"actions.save": "Сохранить",
+	"actions.unsave": "",
 	"actions.saveChanges": "Сохранить изменения",
 	"actions.submit": "Опубликовать",
 	"actions.edit": "Изменить",

@@ -101,6 +101,7 @@
 	"footer.patreon.subtitle": "支持",
 	"footer.thanks": "感谢Patreon上的支持者",
 	"actions.save": "保存",
+	"actions.unsave": "",
 	"actions.saveChanges": "保存更改内容",
 	"actions.submit": "确认",
 	"actions.edit": "编辑",

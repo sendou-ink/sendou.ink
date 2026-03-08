@@ -101,6 +101,7 @@
 	"footer.patreon.subtitle": "寄付",
 	"footer.thanks": "寄付のご協力ありがとうございます",
 	"actions.save": "保存",
+	"actions.unsave": "",
 	"actions.saveChanges": "変更を保存",
 	"actions.submit": "送信",
 	"actions.edit": "編集",

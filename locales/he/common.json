@@ -101,6 +101,7 @@
 	"footer.patreon.subtitle": "תמיכה",
 	"footer.thanks": "תודה לפטרונים על התמיכה",
 	"actions.save": "שמירה",
+	"actions.unsave": "",
 	"actions.saveChanges": "שמירת שינויים",
 	"actions.submit": "שליחה",
 	"actions.edit": "עריכה",
