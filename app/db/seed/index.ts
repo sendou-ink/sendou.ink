@@ -237,7 +237,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	variation === "NO_SCRIMS" ? undefined : scrimPostRequests,
 	associations,
 	notifications,
-	friendships,
+	() => friendships(variation),
 	liveStreams,
 ];
 
@@ -2800,7 +2800,7 @@ async function organization() {
 const SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS = [150, 151, 152, 153];
 const SENDOU_FRIEND_IDS_AS_TOURNAMENT_SUBS = [100, 101, 102, 103];
 
-async function friendships() {
+async function friendships(variation?: SeedVariation | null) {
 	const allFriendIds = [
 		...SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS,
 		...SENDOU_FRIEND_IDS_AS_TOURNAMENT_SUBS,
@@ -2819,6 +2819,8 @@ async function friendships() {
 			)
 			.run({ userOneId, userTwoId });
 	}
+
+	if (variation === "NO_SQ_GROUPS") return;
 
 	for (const friendId of SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS) {
 		const group = await SQGroupRepository.createGroup({

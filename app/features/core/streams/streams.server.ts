@@ -44,10 +44,10 @@ export function getLiveTournamentStreams(): SidebarStream[] {
 	return streams;
 }
 
-// xxx: not always reporting furthest round
 function deriveCurrentRound(tournament: Tournament): string {
-	for (const bracket of tournament.brackets) {
+	for (const bracket of tournament.brackets.toReversed()) {
 		if (bracket.preview) continue;
+		if (bracket.isUnderground) continue;
 
 		for (const match of bracket.data.match) {
 			const isActive =

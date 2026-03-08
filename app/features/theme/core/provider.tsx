@@ -15,7 +15,7 @@ type Theme = (typeof Theme)[keyof typeof Theme];
 const themes = Object.values(Theme);
 
 type ThemeContextType = {
-	htmlThemeClass: Theme;
+	htmlThemeClass: Theme | "";
 	metaColorScheme: "light dark" | "dark light";
 	userTheme: Theme | "auto" | null;
 	setUserTheme: (newTheme: Theme | "auto") => void;
@@ -39,7 +39,7 @@ function useSystemTheme() {
 	return useSyncExternalStore(
 		subscribeToSystemTheme,
 		getSystemTheme,
-		() => Theme.DARK,
+		() => null,
 	);
 }
 
@@ -49,7 +49,7 @@ type ThemeProviderProps = {
 	themeSource: "user-preference" | "static";
 };
 
-function colorScheme(theme: Theme) {
+function colorScheme(theme: Theme | "") {
 	return theme === Theme.LIGHT ? "light dark" : "dark light";
 }
 
@@ -66,10 +66,10 @@ function ThemeProvider({
 	const systemTheme = useSystemTheme();
 	const persistThemeFetcher = useFetcher();
 
-	const resolvedTheme = isStatic
+	const resolvedTheme: Theme | "" = isStatic
 		? (specifiedTheme ?? Theme.DARK)
 		: userPreference === "auto"
-			? systemTheme
+			? (systemTheme ?? "")
 			: userPreference;
 
 	const handleSetUserTheme = (newTheme: Theme | "auto") => {

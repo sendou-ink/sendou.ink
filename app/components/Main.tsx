@@ -32,7 +32,7 @@ export const Main = ({
 				classNameOverwrite
 					? clsx(classNameOverwrite, {
 							[styles.narrow]: halfWidth,
-							"pt-8-forced": showLeaderboard,
+							"pt-8": showLeaderboard,
 						})
 					: clsx(
 							styles.main,
@@ -40,7 +40,7 @@ export const Main = ({
 							{
 								[styles.narrow]: halfWidth,
 								[styles.wide]: bigger,
-								"pt-8-forced": showLeaderboard,
+								"pt-8": showLeaderboard,
 							},
 							className,
 						)

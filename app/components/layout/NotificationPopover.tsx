@@ -1,7 +1,7 @@
-import { Bell, RefreshCcw } from "lucide-react";
+import { Bell, ChevronRight, RefreshCcw } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useMatches, useRevalidator } from "react-router";
+import { Link, useMatches, useRevalidator } from "react-router";
 import {
 	NotificationItem,
 	NotificationItemDivider,
@@ -11,7 +11,7 @@ import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import type { RootLoaderData } from "~/root";
 import { NOTIFICATIONS_URL } from "~/utils/urls";
 import { useMarkNotificationsAsSeen } from "../../features/notifications/notifications-hooks";
-import { LinkButton, SendouButton } from "../elements/Button";
+import { SendouButton } from "../elements/Button";
 
 import styles from "./NotificationPopover.module.css";
 
@@ -95,15 +95,15 @@ function NotificationsFooter({ onClose }: { onClose?: () => void }) {
 	return (
 		<div>
 			<hr className={styles.divider} />
-			<LinkButton
-				variant="minimal"
-				size="small"
+			<Link
 				to={NOTIFICATIONS_URL}
-				testId="notifications-see-all-button"
+				className={styles.viewAllLink}
+				data-testid="notifications-see-all-button"
 				onClick={onClose}
 			>
-				{t("common:notifications.seeAll")}
-			</LinkButton>
+				{t("common:actions.viewAll")}
+				<ChevronRight size={14} />
+			</Link>
 		</div>
 	);
 }

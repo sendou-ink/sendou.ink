@@ -164,6 +164,7 @@ function Document({
 			dir={i18n.dir()}
 			className={clsx(htmlThemeClass, "scrollbar")}
 			style={Object.fromEntries(customThemeStyle)}
+			suppressHydrationWarning
 		>
 			<head>
 				<meta charSet="utf-8" />

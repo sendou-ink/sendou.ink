@@ -121,7 +121,12 @@ export function ListLink({
 				{subtitle || badge ? (
 					<div className={styles.listLinkSubtitleRow}>
 						{subtitle ? (
-							<span className={styles.listLinkSubtitle}>{subtitle}</span>
+							<span
+								className={styles.listLinkSubtitle}
+								suppressHydrationWarning
+							>
+								{subtitle}
+							</span>
 						) : null}
 						{typeof badge === "string" ? (
 							<span

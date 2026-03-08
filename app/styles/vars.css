@@ -1,6 +1,8 @@
-/* 
+@layer reset, base, components, utilities;
+
+/*
 ⚠️⚠️⚠️
-Make sure to read styles.md before editing colors in this file, 
+Make sure to read styles.md before editing colors in this file,
 it contains important information about how the styles work and how to edit them properly
 ⚠️⚠️⚠️
 */

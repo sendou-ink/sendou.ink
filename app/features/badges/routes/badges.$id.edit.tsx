@@ -25,7 +25,6 @@ export default function EditBadgePage() {
 		<SendouDialog
 			heading={`Editing winners of ${badge.displayName}`}
 			onCloseTo={parentMatch.pathname}
-			isFullScreen
 		>
 			<Form method="post" className="stack md">
 				{isStaff ? <Managers data={data} /> : null}
@@ -53,13 +52,13 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 		).length;
 
 	return (
-		<div className="stack md mx-auto">
+		<div className="stack md">
 			<div className="stack sm">
 				<h3 className={styles.editSmallHeader}>Managers</h3>
 				<UserSearch
 					key={managers.map((m) => m.id).join("-")}
 					label="Add new manager"
-					className="text-center mx-auto"
+					className="text-center"
 					name="new-manager"
 					onChange={(user) => {
 						if (!user) return;
@@ -134,12 +133,12 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 	const userInputKey = owners.map((o) => `${o.id}-${o.count}`).join("-");
 
 	return (
-		<div className="stack md mx-auto">
+		<div className="stack md">
 			<div className="stack sm">
 				<h3 className={styles.editSmallHeader}>Owners</h3>
 				<UserSearch
 					label="Add new owner"
-					className="text-center mx-auto"
+					className="text-center"
 					name="new-owner"
 					key={userInputKey}
 					onChange={(user) => {

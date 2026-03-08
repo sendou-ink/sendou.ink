@@ -55,7 +55,7 @@ export function GearSelect<Clearable extends boolean | undefined = undefined>({
 		>
 			{({ key, items: gear, brandId, idx }) => (
 				<SendouSelectItemSection
-					className={idx === 0 ? "pt-0-5-forced" : undefined}
+					className={idx === 0 ? "pt-0-5" : undefined}
 					heading={t(`game-misc:BRAND_${brandId}` as any)}
 					headingImgPath={brandImageUrl(brandId)}
 					key={key}

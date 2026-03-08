@@ -238,7 +238,7 @@ function MatchRow({
 		>
 			<div
 				className={clsx(styles.matchSeed, {
-					"text-lighter-important italic opaque": simulated,
+					"text-lighter italic opaque": simulated,
 					[styles.matchSeedWide]: isBigSeedNumber,
 				})}
 			>

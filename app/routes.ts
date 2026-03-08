@@ -44,6 +44,8 @@ export default [
 
 	route("/friends", "features/friends/routes/friends.tsx"),
 
+	route("/events", "features/calendar/routes/events.tsx"),
+
 	route("/suspended", "features/ban/routes/suspended.tsx"),
 
 	route("/u", "features/user-search/routes/u.tsx"),

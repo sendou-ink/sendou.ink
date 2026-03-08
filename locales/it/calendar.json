@@ -81,5 +81,12 @@
 	"filter.applyAndDefault": "",
 	"forms.draft": "",
 	"forms.draftInfo": "",
-	"forms.draftBracketStartBlocked": ""
+	"forms.draftBracketStartBlocked": "",
+	"events.title": "",
+	"events.view.registered": "",
+	"events.view.hosting": "",
+	"events.view.scrims": "",
+	"events.empty": "",
+	"events.emptyAll": "",
+	"events.findOnCalendar": ""
 }

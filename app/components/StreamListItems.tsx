@@ -2,7 +2,6 @@ import { isToday, isTomorrow } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { SidebarStream } from "~/features/core/streams/streams.server";
-import { useIsMounted } from "~/hooks/useIsMounted";
 import type { LanguageCode } from "~/modules/i18n/config";
 import { databaseTimestampToDate, formatDistanceToNow } from "~/utils/dates";
 import { navIconUrl } from "~/utils/urls";
@@ -19,7 +18,6 @@ export function StreamListItems({
 	onClick?: () => void;
 }) {
 	const { t, i18n } = useTranslation(["front"]);
-	const isMounted = useIsMounted();
 
 	const formatRelativeDate = (timestamp: number) => {
 		const date = new Date(timestamp * 1000);
@@ -60,7 +58,7 @@ export function StreamListItems({
 				const prevIsLive =
 					prevStream &&
 					databaseTimestampToDate(prevStream.startsAt).getTime() <= Date.now();
-				const showUpcomingDivider = isMounted && isUpcoming && prevIsLive;
+				const showUpcomingDivider = isUpcoming && prevIsLive;
 
 				return (
 					<React.Fragment key={stream.id}>
@@ -85,22 +83,16 @@ export function StreamListItems({
 									</span>
 								) : stream.subtitle ? (
 									stream.subtitle
-								) : isMounted ? (
-									isUpcoming ? (
-										formatRelativeDate(stream.startsAt)
-									) : (
-										formatDistanceToNow(startsAtDate, {
-											addSuffix: true,
-											language: i18n.language as LanguageCode,
-										})
-									)
+								) : isUpcoming ? (
+									formatRelativeDate(stream.startsAt)
 								) : (
-									""
+									formatDistanceToNow(startsAtDate, {
+										addSuffix: true,
+										language: i18n.language as LanguageCode,
+									})
 								)
 							}
-							badge={
-								isMounted && !isUpcoming ? "LIVE" : streamTierBadge(stream)
-							}
+							badge={!isUpcoming ? "LIVE" : streamTierBadge(stream)}
 							onClick={onClick}
 						>
 							{stream.name}

@@ -12,6 +12,7 @@ import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import { resolveFriendActivity } from "~/features/friends/friends-utils.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
+import type { SidebarScrim } from "~/features/scrims/ScrimPostRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import { getSendouQSidebarStreams } from "~/features/sendouq-streams/core/streams.server";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
@@ -81,27 +82,9 @@ export async function resolveSidebarData(userId: number | null) {
 			seenTournamentIds.add(t.id);
 			return true;
 		})
-		.map((t) => ({
-			id: t.id,
-			name: t.name,
-			url: t.url,
-			logoUrl: t.logoUrl,
-			startTime: t.startTime,
-			type: "tournament" as const,
-		}));
+		.map(tournamentToSidebarEvent);
 
-	const scrimsIconUrl = `${navIconUrl("scrims")}.png`;
-	const scrimEvents: SidebarEvent[] = scrimsData.map((s) => ({
-		id: s.id,
-		name: s.opponentName ?? "Scrim",
-		url: s.isAccepted
-			? href("/scrims/:id", { id: String(s.id) })
-			: href("/scrims"),
-		logoUrl: s.opponentAvatarUrl ?? scrimsIconUrl,
-		startTime: s.at,
-		type: "scrim" as const,
-		scrimStatus: s.isAccepted ? ("booked" as const) : ("looking" as const),
-	}));
+	const scrimEvents: SidebarEvent[] = scrimsData.map(scrimToSidebarEvent);
 
 	const personalEvents = [...tournamentEvents, ...scrimEvents].sort(
 		(a, b) => a.startTime - b.startTime,
@@ -345,5 +328,34 @@ function rowToSidebarFriend(
 		subtitle,
 		badge,
 		tournamentId: row.tournamentId,
+	};
+}
+
+export function tournamentToSidebarEvent(
+	t: ShowcaseCalendarEvent,
+): SidebarEvent {
+	return {
+		id: t.id,
+		name: t.name,
+		url: t.url,
+		logoUrl: t.logoUrl,
+		startTime: t.startTime,
+		type: "tournament" as const,
+	};
+}
+
+const SCRIMS_ICON_URL = `${navIconUrl("scrims")}.png`;
+
+export function scrimToSidebarEvent(s: SidebarScrim): SidebarEvent {
+	return {
+		id: s.id,
+		name: s.opponentName ?? "Scrim",
+		url: s.isAccepted
+			? href("/scrims/:id", { id: String(s.id) })
+			: href("/scrims"),
+		logoUrl: s.opponentAvatarUrl ?? SCRIMS_ICON_URL,
+		startTime: s.at,
+		type: "scrim" as const,
+		scrimStatus: s.isAccepted ? ("booked" as const) : ("looking" as const),
 	};
 }

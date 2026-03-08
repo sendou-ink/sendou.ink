@@ -48,11 +48,6 @@ export const handle: SendouRouteHandle = {
 				href: weaponBuildPage(data.meta.slug),
 				type: "IMAGE",
 			},
-			{
-				href: "/",
-				text: data.meta.breadcrumbText,
-				type: "TEXT",
-			},
 		];
 	},
 };
