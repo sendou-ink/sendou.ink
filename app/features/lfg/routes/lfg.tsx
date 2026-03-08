@@ -104,10 +104,12 @@ export default function LFGPage() {
 
 	return (
 		<Main className="stack xl">
-			<LFGAddFilterButton
-				addFilter={(newFilter) => setFilters([...filters, newFilter])}
-				filters={filters}
-			/>
+			<div className={styles.topRow}>
+				<LFGAddFilterButton
+					addFilter={(newFilter) => setFilters([...filters, newFilter])}
+					filters={filters}
+				/>
+			</div>
 			<LFGFilters
 				filters={filters}
 				changeFilter={(newFilter) =>
