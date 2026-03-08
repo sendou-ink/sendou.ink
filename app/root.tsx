@@ -329,31 +329,31 @@ export default function App() {
 
 	// Move overflow:hidden from html to body to allow position: sticky and position: fixed
 	// elements to work properly when a React Aria Component disabled scrolling
-	// useEffect(() => {
-	// 	const htmlStyle = document.documentElement.style;
-	// 	const bodyStyle = document.body.style;
+	useEffect(() => {
+		const htmlStyle = document.documentElement.style;
+		const bodyStyle = document.body.style;
 
-	// 	const observer = new MutationObserver(() => {
-	// 		if (htmlStyle.overflow === "hidden") {
-	// 			htmlStyle.overflow = "";
-	// 			bodyStyle.overflow = "hidden";
-	// 			bodyStyle.scrollbarGutter = "stable";
-	// 		} else if (
-	// 			htmlStyle.overflow === "" &&
-	// 			htmlStyle.scrollbarGutter !== "stable"
-	// 		) {
-	// 			bodyStyle.overflow = "";
-	// 			bodyStyle.scrollbarGutter = "";
-	// 		}
-	// 	});
+		const observer = new MutationObserver(() => {
+			if (htmlStyle.overflow === "hidden") {
+				htmlStyle.overflow = "";
+				bodyStyle.overflow = "hidden";
+				bodyStyle.scrollbarGutter = "stable";
+			} else if (
+				htmlStyle.overflow === "" &&
+				htmlStyle.scrollbarGutter !== "stable"
+			) {
+				bodyStyle.overflow = "";
+				bodyStyle.scrollbarGutter = "";
+			}
+		});
 
-	// 	observer.observe(document.documentElement, {
-	// 		attributes: true,
-	// 		attributeFilter: ["style"],
-	// 	});
+		observer.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ["style"],
+		});
 
-	// 	return () => observer.disconnect();
-	// }, []);
+		return () => observer.disconnect();
+	}, []);
 
 	return (
 		<ThemeProvider
