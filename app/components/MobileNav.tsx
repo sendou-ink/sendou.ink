@@ -290,7 +290,7 @@ function FriendsPanel({
 					<FriendMenu key={friend.id} {...friend} onNavigate={onClose} />
 				))
 			) : (
-				<div className="text-lighter text-sm p-2">
+				<div className="text-lighter text-sm p-2 text-center">
 					{user
 						? t("front:sideNav.friends.noFriends")
 						: t("front:sideNav.friends.notLoggedIn")}
