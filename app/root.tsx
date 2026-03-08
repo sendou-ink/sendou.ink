@@ -331,20 +331,23 @@ export default function App() {
 	// elements to work properly when a React Aria Component disabled scrolling
 	useEffect(() => {
 		const htmlStyle = document.documentElement.style;
-		const bodyStyle = document.body.style;
 
 		const observer = new MutationObserver(() => {
+			observer.disconnect();
+
 			if (htmlStyle.overflow === "hidden") {
-				htmlStyle.overflow = "";
-				bodyStyle.overflow = "hidden";
-				bodyStyle.scrollbarGutter = "stable";
-			} else if (
-				htmlStyle.overflow === "" &&
-				htmlStyle.scrollbarGutter !== "stable"
-			) {
-				bodyStyle.overflow = "";
-				bodyStyle.scrollbarGutter = "";
+				document.documentElement.style.overflow = "";
+				document.body.style.overflow = "hidden";
+				document.body.style.scrollbarGutter = "stable";
+			} else if (document.body.style.overflow === "hidden") {
+				document.body.style.overflow = "";
+				document.body.style.scrollbarGutter = "";
 			}
+
+			observer.observe(document.documentElement, {
+				attributes: true,
+				attributeFilter: ["style"],
+			});
 		});
 
 		observer.observe(document.documentElement, {
