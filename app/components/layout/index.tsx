@@ -422,6 +422,7 @@ function MyRampUnit() {
 
 function SideNavUserPanel() {
 	const { t } = useTranslation();
+	const location = useLocation();
 	const user = useUser();
 	const { notifications, unseenIds } = useNotifications();
 
@@ -436,7 +437,7 @@ function SideNavUserPanel() {
 				</Link>
 				<div className={sideNavStyles.sideNavFooterActions}>
 					{notifications ? (
-						<div className={sideNavStyles.sideNavFooterNotification}>
+						<div className={sideNavStyles.sideNavFooterNotification} key={location.pathname}>
 							{unseenIds.length > 0 ? (
 								<div className={sideNavStyles.sideNavFooterUnseenDot}>
 									<div className={sideNavStyles.sideNavFooterUnseenDotPulse} />

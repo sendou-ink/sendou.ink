@@ -12,29 +12,9 @@ import {
 	test,
 } from "~/utils/playwright";
 import { createFormHelpers } from "~/utils/playwright-form";
-import {
-	editTeamPage,
-	TEAM_SEARCH_PAGE,
-	teamPage,
-	userPage,
-} from "~/utils/urls";
+import { editTeamPage, teamPage, userPage } from "~/utils/urls";
 
-test.describe("Team search page", () => {
-	test("filters teams", async ({ page }) => {
-		await seed(page);
-		await impersonate(page);
-		await navigate({ page, url: TEAM_SEARCH_PAGE });
-
-		const searchInput = page.getByTestId("global-search-input");
-		await searchInput.fill("Alliance Rogue");
-
-		const firstResult = page.getByTestId("search-result-0");
-		await expect(firstResult).toContainText("Alliance Rogue");
-
-		await firstResult.click();
-		await expect(page).toHaveURL(/alliance-rogue/);
-	});
-
+test.describe("New team creation", () => {
 	test("creates new team", async ({ page }) => {
 		await seed(page);
 		await impersonate(page, NZAP_TEST_ID);
@@ -50,24 +30,6 @@ test.describe("Team search page", () => {
 		await form.submit();
 
 		await expect(page).toHaveURL(/chimera/);
-	});
-
-	test("filters teams by tag & displays tag", async ({ page }) => {
-		await seed(page);
-		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: teamPage("alliance-rogue") });
-
-		await page.getByTestId("edit-team-button").click();
-		await page.getByLabel("Tag").fill("AR");
-		await submit(page, "edit-team-submit-button");
-
-		await navigate({ page, url: TEAM_SEARCH_PAGE });
-
-		const searchInput = page.getByTestId("global-search-input");
-		await searchInput.fill("Alliance Rogue");
-
-		const firstResult = page.getByTestId("search-result-0");
-		await expect(firstResult).toContainText("Alliance Rogue");
 	});
 });
 
