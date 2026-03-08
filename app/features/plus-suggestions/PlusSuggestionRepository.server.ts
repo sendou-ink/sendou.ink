@@ -4,7 +4,7 @@ import { jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import type { MonthYear } from "~/features/plus-voting/core";
-import { databaseTimestampToDate } from "~/utils/dates";
+import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 
@@ -15,6 +15,7 @@ export async function findAllByMonth(args: MonthYear) {
 		.select(({ eb }) => [
 			"PlusSuggestion.id",
 			"PlusSuggestion.createdAt",
+			"PlusSuggestion.updatedAt",
 			"PlusSuggestion.text",
 			"PlusSuggestion.tier",
 			jsonObjectFrom(
@@ -56,6 +57,8 @@ export async function findAllByMonth(args: MonthYear) {
 			author: Row["author"];
 			createdAtRelative: string;
 			createdAt: number;
+			updatedAt: number | null;
+			updatedAtRelative: string | null;
 			id: Row["id"];
 			text: Row["text"];
 		}>;
@@ -75,6 +78,12 @@ export async function findAllByMonth(args: MonthYear) {
 				{ addSuffix: true },
 			),
 			createdAt: row.createdAt,
+			updatedAt: row.updatedAt,
+			updatedAtRelative: row.updatedAt
+				? formatDistance(databaseTimestampToDate(row.updatedAt), new Date(), {
+						addSuffix: true,
+					})
+				: null,
 			author: row.author,
 		};
 		if (existing) {
@@ -93,6 +102,14 @@ export async function findAllByMonth(args: MonthYear) {
 
 export function create(args: Insertable<DB["PlusSuggestion"]>) {
 	return db.insertInto("PlusSuggestion").values(args).execute();
+}
+
+export function updateTextById(id: number, text: string) {
+	return db
+		.updateTable("PlusSuggestion")
+		.set({ text, updatedAt: databaseTimestampNow() })
+		.where("id", "=", id)
+		.execute();
 }
 
 export function deleteById(id: number) {
