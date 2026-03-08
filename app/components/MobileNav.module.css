@@ -104,7 +104,7 @@
 	bottom: 0;
 	left: 0;
 	right: 0;
-	height: 85vh;
+	height: 85%;
 	background-color: var(--color-bg);
 	border-radius: var(--radius-box) var(--radius-box) 0 0;
 	overflow-y: auto;
