@@ -67,20 +67,13 @@ export async function resolveSidebarData(userId: number | null) {
 		};
 	}
 
-	// xxx: combine queries
-	const [
-		tournamentsData,
-		scrimsData,
-		friendsWithActivity,
-		savedTournamentIds,
-		upcomingTournaments,
-	] = await Promise.all([
-		ShowcaseTournaments.categorizedTournamentsByUserId(userId),
-		ScrimPostRepository.findUserScrims(userId),
-		FriendRepository.findByUserIdWithActivity(userId),
-		SavedTournamentRepository.findTournamentIdsByUserId(userId),
-		ShowcaseTournaments.upcomingTournaments(),
-	]);
+	const [tournamentsData, scrimsData, friendsWithActivity, savedTournaments] =
+		await Promise.all([
+			ShowcaseTournaments.categorizedTournamentsByUserId(userId),
+			ScrimPostRepository.findUserScrims(userId),
+			FriendRepository.findByUserIdWithActivity(userId),
+			SavedTournamentRepository.upcoming(userId),
+		]);
 
 	const seenTournamentIds = new Set<number>();
 	const tournamentEvents: SidebarEvent[] = [
@@ -94,11 +87,8 @@ export async function resolveSidebarData(userId: number | null) {
 		})
 		.map(tournamentToSidebarEvent);
 
-	const savedTournamentIdSet = new Set(savedTournamentIds);
-	const savedEvents: SidebarEvent[] = upcomingTournaments
-		.filter(
-			(t) => savedTournamentIdSet.has(t.id) && !seenTournamentIds.has(t.id),
-		)
+	const savedEvents: SidebarEvent[] = savedTournaments
+		.filter((t) => !seenTournamentIds.has(t.id))
 		.map((t) => {
 			seenTournamentIds.add(t.id);
 			return tournamentToSidebarEvent(t);

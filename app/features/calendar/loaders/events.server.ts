@@ -12,14 +12,11 @@ export type EventsLoaderData = typeof loader;
 export const loader = async () => {
 	const user = requireUser();
 
-	// xxx: should probably only load SavedTournamentRepository.upcoming (it can call to ShowcaseTournaments.upcomingTournaments as implementation detail)
-	const [tournamentsData, scrimsData, savedTournamentIds, upcomingTournaments] =
-		await Promise.all([
-			ShowcaseTournaments.categorizedTournamentsByUserId(user.id),
-			ScrimPostRepository.findUserScrims(user.id),
-			SavedTournamentRepository.findTournamentIdsByUserId(user.id),
-			ShowcaseTournaments.upcomingTournaments(),
-		]);
+	const [tournamentsData, scrimsData, savedTournaments] = await Promise.all([
+		ShowcaseTournaments.categorizedTournamentsByUserId(user.id),
+		ScrimPostRepository.findUserScrims(user.id),
+		SavedTournamentRepository.upcoming(user.id),
+	]);
 
 	const registered = tournamentsData.participatingFor
 		.map(tournamentToSidebarEvent)
@@ -33,9 +30,7 @@ export const loader = async () => {
 		.map(scrimToSidebarEvent)
 		.sort((a, b) => a.startTime - b.startTime);
 
-	const savedTournamentIdSet = new Set(savedTournamentIds);
-	const saved = upcomingTournaments
-		.filter((t) => savedTournamentIdSet.has(t.id))
+	const saved = savedTournaments
 		.map(tournamentToSidebarEvent)
 		.sort((a, b) => a.startTime - b.startTime);
 
