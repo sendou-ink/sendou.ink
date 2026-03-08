@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData, useSearchParams } from "react-router";
-import { AddNewButton } from "~/components/AddNewButton";
 import { SendouButton } from "~/components/elements/Button";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
@@ -11,7 +10,7 @@ import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { navIconUrl, newVodPage, VODS_PAGE } from "~/utils/urls";
+import { navIconUrl, VODS_PAGE } from "~/utils/urls";
 import { VodListing } from "../components/VodListing";
 import { loader } from "../loaders/vods.server";
 import { VODS_PAGE_BATCH_SIZE, videoMatchTypes } from "../vods-constants";
@@ -51,10 +50,7 @@ export default function VodsSearchPage() {
 
 	return (
 		<Main className="stack lg" bigger>
-			<div className="stack sm horizontal justify-between items-start">
-				<Filters addToSearchParams={addToSearchParams} />
-				<AddNewButton navIcon="vods" to={newVodPage()} />
-			</div>
+			<Filters addToSearchParams={addToSearchParams} />
 			{data.vods.length > 0 ? (
 				<>
 					<div className={styles.listingList}>

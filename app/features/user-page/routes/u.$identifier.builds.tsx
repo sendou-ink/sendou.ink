@@ -2,7 +2,6 @@ import { ArrowDownNarrowWide, Lock, LockOpen, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData, useMatches } from "react-router";
-import { AddNewButton } from "~/components/AddNewButton";
 import { BuildCard } from "~/components/BuildCard";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -16,7 +15,7 @@ import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { userNewBuildPage, userPage, weaponCategoryUrl } from "~/utils/urls";
+import { userPage, weaponCategoryUrl } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.builds.server";
 import { SubPageHeader } from "../components/SubPageHeader";
 import {
@@ -82,18 +81,15 @@ export default function UserBuildsPage() {
 			) : null}
 			<SubPageHeader user={layoutData.user} backTo={userPage(layoutData.user)}>
 				{isOwnPage ? (
-					<>
-						<SendouButton
-							onPress={() => setChangingSorting(true)}
-							size="small"
-							variant="outlined"
-							icon={<ArrowDownNarrowWide />}
-							data-testid="change-sorting-button"
-						>
-							{t("user:builds.sorting.changeButton")}
-						</SendouButton>
-						<AddNewButton navIcon="builds" to={userNewBuildPage(user)} />
-					</>
+					<SendouButton
+						onPress={() => setChangingSorting(true)}
+						size="small"
+						variant="outlined"
+						icon={<ArrowDownNarrowWide />}
+						data-testid="change-sorting-button"
+					>
+						{t("user:builds.sorting.changeButton")}
+					</SendouButton>
 				) : null}
 			</SubPageHeader>
 			<BuildsFilters

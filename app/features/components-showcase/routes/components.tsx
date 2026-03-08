@@ -2,7 +2,6 @@ import { parseDate } from "@internationalized/date";
 import { Check, Plus, Search, SquarePen, Trash } from "lucide-react";
 import { useState } from "react";
 import { Ability } from "~/components/Ability";
-import { AddNewButton } from "~/components/AddNewButton";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { Badge } from "~/components/Badge";
@@ -1592,10 +1591,6 @@ function SubNavSection({ id }: { id: string }) {
 							Tab 3
 						</SubNavLink>
 					</SubNav>
-				</ComponentRow>
-
-				<ComponentRow label="AddNewButton">
-					<AddNewButton to="/new" navIcon="calendar" />
 				</ComponentRow>
 			</div>
 		</Section>

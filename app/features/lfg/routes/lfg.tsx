@@ -4,7 +4,6 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useFetcher, useLoaderData } from "react-router";
-import { AddNewButton } from "~/components/AddNewButton";
 import { Alert } from "~/components/Alert";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
@@ -14,7 +13,7 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
-import { LFG_PAGE, lfgNewPostPage, navIconUrl } from "~/utils/urls";
+import { LFG_PAGE, navIconUrl } from "~/utils/urls";
 import { action } from "../actions/lfg.server";
 import { LFGAddFilterButton } from "../components/LFGAddFilterButton";
 import { LFGFilters } from "../components/LFGFilters";
@@ -105,13 +104,10 @@ export default function LFGPage() {
 
 	return (
 		<Main className="stack xl">
-			<div className="stack sm horizontal justify-end">
-				<LFGAddFilterButton
-					addFilter={(newFilter) => setFilters([...filters, newFilter])}
-					filters={filters}
-				/>
-				<AddNewButton navIcon="lfg" to={lfgNewPostPage()} />
-			</div>
+			<LFGAddFilterButton
+				addFilter={(newFilter) => setFilters([...filters, newFilter])}
+				filters={filters}
+			/>
 			<LFGFilters
 				filters={filters}
 				changeFilter={(newFilter) =>

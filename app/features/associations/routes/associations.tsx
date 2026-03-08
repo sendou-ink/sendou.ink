@@ -3,7 +3,6 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Outlet, useFetcher, useLoaderData } from "react-router";
 import { useCopyToClipboard } from "react-use";
-import { AddNewButton } from "~/components/AddNewButton";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
@@ -18,7 +17,7 @@ import {
 import { useUser } from "~/features/auth/core/user";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { associationsPage, newAssociationsPage, userPage } from "~/utils/urls";
+import { associationsPage, userPage } from "~/utils/urls";
 export { loader, action };
 
 export const handle: SendouRouteHandle = {
@@ -32,9 +31,6 @@ export default function AssociationsPage() {
 		<Main className="stack lg">
 			<Outlet />
 			<div className="stack sm">
-				<div className="stack items-end">
-					<AddNewButton to={newAssociationsPage()} navIcon="associations" />
-				</div>
 				<Header />
 			</div>
 			<JoinForm />

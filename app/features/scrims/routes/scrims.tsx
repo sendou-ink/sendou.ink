@@ -5,7 +5,6 @@ import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import * as R from "remeda";
 import type { z } from "zod";
-import { AddNewButton } from "~/components/AddNewButton";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -13,12 +12,7 @@ import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import {
-	associationsPage,
-	navIconUrl,
-	newScrimPostPage,
-	scrimsPage,
-} from "~/utils/urls";
+import { associationsPage, navIconUrl, scrimsPage } from "~/utils/urls";
 import {
 	SendouTab,
 	SendouTabList,
@@ -92,7 +86,6 @@ export default function ScrimsPage() {
 						/>
 					) : null}
 				</div>
-				<AddNewButton to={newScrimPostPage()} navIcon="scrims" />
 			</div>
 			<SendouTabs
 				defaultSelectedKey={
