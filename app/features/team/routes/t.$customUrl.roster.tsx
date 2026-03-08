@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
@@ -9,20 +10,18 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { TrashIcon } from "~/components/icons/Trash";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
-import { joinTeamPage } from "~/utils/urls";
-import type * as TeamRepository from "../TeamRepository.server";
-import { TEAM_MEMBER_ROLES } from "../team-constants";
-import { isTeamFull } from "../team-utils";
-import "../team.css";
 import { TeamGoBackButton } from "~/features/team/components/TeamGoBackButton";
 import { metaTags } from "~/utils/remix";
-
+import { joinTeamPage } from "~/utils/urls";
 import { action } from "../actions/t.$customUrl.roster.server";
 import { loader } from "../loaders/t.$customUrl.roster.server";
+import type * as TeamRepository from "../TeamRepository.server";
+import styles from "../team.module.css";
+import { TEAM_MEMBER_ROLES } from "../team-constants";
+import { isTeamFull } from "../team-utils";
 export { loader, action };
 
 export const meta: MetaFunction = (args) => {
@@ -111,7 +110,7 @@ function MemberActions() {
 		<div className="stack md">
 			<h2 className="text-lg">{t("team:roster.members.header")}</h2>
 
-			<div className="team__roster__members">
+			<div className={styles.rosterMembers}>
 				{team.members.map((member, i) => (
 					<MemberRow key={member.id} member={member} number={i} />
 				))}
@@ -152,10 +151,7 @@ function MemberRow({
 
 	return (
 		<React.Fragment key={member.id}>
-			<div
-				className="team__roster__members__member"
-				data-testid={`member-row-${number}`}
-			>
+			<div className={styles.rosterMember} data-testid={`member-row-${number}`}>
 				{member.username}
 			</div>
 			<div>
@@ -222,14 +218,14 @@ function MemberRow({
 					<SendouButton
 						size="small"
 						variant="destructive"
-						icon={<TrashIcon />}
+						icon={<Trash />}
 						data-testid={!isSelf ? "kick-button" : undefined}
 					>
 						{t("team:actionButtons.kick")}
 					</SendouButton>
 				</FormWithConfirm>
 			</div>
-			<hr className="team__roster__separator" />
+			<hr className={styles.rosterSeparator} />
 		</React.Fragment>
 	);
 }

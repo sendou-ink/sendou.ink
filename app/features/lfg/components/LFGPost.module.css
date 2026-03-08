@@ -29,7 +29,7 @@
 	text-overflow: ellipsis;
 	overflow: hidden;
 	white-space: nowrap;
-	color: var(--text);
+	color: var(--color-text);
 }
 
 .teamMemberName {
@@ -37,9 +37,9 @@
 	text-overflow: ellipsis;
 	overflow: hidden;
 	white-space: nowrap;
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
-	color: var(--text);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
 }
 
 .textContainer {
@@ -60,7 +60,7 @@
 }
 
 .textCut {
-	background-image: linear-gradient(to bottom, transparent, var(--bg));
+	background-image: linear-gradient(to bottom, transparent, var(--color-bg));
 	width: 100%;
 	position: absolute;
 	top: 0;
@@ -83,11 +83,12 @@
 }
 
 .pill {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
-	border-radius: var(--rounded);
-	background-color: var(--bg-lightest);
-	padding: var(--s-0-5) var(--s-2);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-bg-high);
+	padding: 0 var(--s-2);
+	height: var(--selector-size-sm);
 	display: flex;
 	align-items: center;
 	gap: var(--s-0-5);
@@ -100,18 +101,20 @@
 }
 
 .editButton {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
-	border-radius: var(--rounded);
-	background-color: var(--bg-lightest);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-bg-higher);
 	padding: var(--s-0-5) var(--s-2);
-	color: var(--text);
+	color: var(--color-text);
 	display: flex;
+	align-items: center;
 	gap: var(--s-1);
 }
 
 .editButton > svg {
-	width: 12px;
+	width: 14px;
+	height: 14px;
 }
 
 .tier {
@@ -125,9 +128,9 @@
 }
 
 .tierPillStart {
-	border-radius: 0 var(--rounded) var(--rounded) 0;
+	border-radius: 0 var(--radius-box) var(--radius-box) 0;
 }
 
 .tierPillEnd {
-	border-radius: var(--rounded) 0 0 var(--rounded);
+	border-radius: var(--radius-box) 0 0 var(--radius-box);
 }

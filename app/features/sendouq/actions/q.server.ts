@@ -5,9 +5,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
-import { giveTrust } from "~/features/tournament/queries/giveTrust.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import invariant from "~/utils/invariant";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import {
@@ -42,7 +40,6 @@ export const action: ActionFunction = async ({ request }) => {
 				data.direct === "true" ? SENDOUQ_LOOKING_PAGE : SENDOUQ_PREPARING_PAGE,
 			);
 		}
-		case "JOIN_TEAM_WITH_TRUST":
 		case "JOIN_TEAM": {
 			await validateCanJoinQ(user);
 
@@ -61,16 +58,6 @@ export const action: ActionFunction = async ({ request }) => {
 				userId: user.id,
 				role: "MANAGER",
 			});
-
-			if (data._action === "JOIN_TEAM_WITH_TRUST") {
-				const owner = groupInvitedTo.members.find((m) => m.role === "OWNER");
-				invariant(owner, "Owner not found");
-
-				giveTrust({
-					trustGiverUserId: user.id,
-					trustReceiverUserId: owner.id,
-				});
-			}
 
 			await refreshSendouQInstance();
 

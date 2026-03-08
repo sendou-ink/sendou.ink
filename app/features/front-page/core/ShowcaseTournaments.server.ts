@@ -26,6 +26,11 @@ interface ParticipationInfo {
 	organizers: Set<ShowcaseCalendarEvent["id"]>;
 }
 
+export async function upcomingTournaments(): Promise<ShowcaseCalendarEvent[]> {
+	const tournaments = await cachedTournaments();
+	return tournaments.upcoming;
+}
+
 export async function frontPageTournamentsByUserId(
 	userId: number | null,
 ): Promise<ShowcaseTournamentCollection> {

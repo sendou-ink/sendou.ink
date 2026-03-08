@@ -73,10 +73,6 @@ export const seedsActionSchema = z.union([
 	}),
 ]);
 
-export const joinSchema = z.object({
-	trust: z.preprocess(checkboxValueToBoolean, z.boolean()),
-});
-
 export const tournamentSearchSearchParamsSchema = z.object({
 	q: z.string().max(100),
 	limit: z.coerce.number().int().min(1).max(25).catch(25),

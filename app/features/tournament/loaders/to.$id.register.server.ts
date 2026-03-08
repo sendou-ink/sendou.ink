@@ -23,13 +23,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	if (!ownTournamentTeam)
 		return {
 			mapPool: null,
-			trusterPlayers: null,
+			friendPlayers: null,
 			teams: await TeamRepository.findAllMemberOfByUserId(user.id),
 		};
 
 	return {
 		mapPool: findMapPoolByTeamId(ownTournamentTeam.id),
-		trusterPlayers: await SQGroupRepository.usersThatTrusted(user.id),
+		friendPlayers: await SQGroupRepository.friendsAndTeammates(user.id),
 		teams: await TeamRepository.findAllMemberOfByUserId(user.id),
 	};
 };

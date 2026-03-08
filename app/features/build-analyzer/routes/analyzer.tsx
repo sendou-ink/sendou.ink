@@ -1,11 +1,14 @@
 import clsx from "clsx";
+import { FlaskConical } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
 import { Link } from "react-router";
+import * as R from "remeda";
 import { AbilitiesSelector } from "~/components/AbilitiesSelector";
 import { Ability } from "~/components/Ability";
 import Chart from "~/components/Chart";
+import { SendouSwitch } from "~/components/elements/Switch";
 import {
 	SendouTab,
 	SendouTabList,
@@ -13,9 +16,10 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { Image } from "~/components/Image";
-import { BeakerIcon } from "~/components/icons/Beaker";
 import { Main } from "~/components/Main";
+import { Placeholder } from "~/components/Placeholder";
 import { Table } from "~/components/Table";
+import { WeaponSelect } from "~/components/WeaponSelect";
 import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { abilitiesShort } from "~/modules/in-game-lists/abilities";
@@ -38,6 +42,7 @@ import {
 } from "~/modules/in-game-lists/weapon-ids";
 import { nullFilledArray } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
+import { logger } from "~/utils/logger";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	ANALYZER_URL,
@@ -82,12 +87,7 @@ import {
 	isMainOnlyAbility,
 	isStackableAbility,
 } from "../core/utils";
-import "../analyzer.css";
-import * as R from "remeda";
-import { SendouSwitch } from "~/components/elements/Switch";
-import { Placeholder } from "~/components/Placeholder";
-import { WeaponSelect } from "~/components/WeaponSelect";
-import { logger } from "~/utils/logger";
+import styles from "./analyzer.module.css";
 
 export const CURRENT_PATCH = "11.0.1";
 
@@ -244,8 +244,8 @@ function BuildAnalyzerPage() {
 
 	return (
 		<Main>
-			<div className="analyzer__container">
-				<div className="analyzer__left-column">
+			<div className={styles.container}>
+				<div className={styles.leftColumn}>
 					<div className="stack sm items-center w-full">
 						<div className="w-full">
 							<WeaponSelect
@@ -272,9 +272,9 @@ function BuildAnalyzerPage() {
 										handleChange({ newFocused: 3 });
 									}
 								}}
-								className="analyzer__sub-nav"
+								className={styles.subNav}
 							>
-								<SendouTabList>
+								<SendouTabList fullWidth>
 									<SendouTab id="build-1" data-testid="build1-tab">
 										{t("analyzer:build1")}
 									</SendouTab>
@@ -359,7 +359,7 @@ function BuildAnalyzerPage() {
 							<AbilityChunksRequired build={build} />
 						)}
 					</div>
-					<div className="analyzer__patch">
+					<div className={styles.patch}>
 						{t("analyzer:patch")} {CURRENT_PATCH}
 					</div>
 				</div>
@@ -368,14 +368,14 @@ function BuildAnalyzerPage() {
 						<StatCategory
 							title={t("analyzer:stat.category.main")}
 							summaryRightContent={
-								<div className="analyzer__weapon-info-badge">
+								<div className={styles.weaponInfoBadge}>
 									<Image
 										path={mainWeaponImageUrl(mainWeaponId)}
 										width={20}
 										height={20}
 										alt={t(`weapons:MAIN_${mainWeaponId}`)}
 									/>
-									<span className="analyzer__weapon-info-badge__text">
+									<span className={styles.weaponInfoBadgeText}>
 										{t(`weapons:MAIN_${mainWeaponId}`)}
 									</span>
 								</div>
@@ -388,7 +388,7 @@ function BuildAnalyzerPage() {
 					<StatCategory
 						title={t("analyzer:stat.category.sub")}
 						summaryRightContent={
-							<div className="analyzer__weapon-info-badge">
+							<div className={styles.weaponInfoBadge}>
 								<Image
 									path={subWeaponImageUrl(analyzed.weapon.subWeaponSplId)}
 									width={20}
@@ -477,7 +477,7 @@ function BuildAnalyzerPage() {
 					<StatCategory
 						title={t("analyzer:stat.category.special")}
 						summaryRightContent={
-							<div className="analyzer__weapon-info-badge">
+							<div className={styles.weaponInfoBadge}>
 								<Image
 									path={specialWeaponImageUrl(
 										analyzed.weapon.specialWeaponSplId,
@@ -742,13 +742,13 @@ function BuildAnalyzerPage() {
 					{analyzed.stats.subWeaponDefenseDamages.length > 0 && (
 						<StatCategory
 							title={t("analyzer:stat.category.subWeaponDefenseDamages")}
-							containerClassName="analyzer__table-container"
+							containerClassName={styles.tableContainer}
 							textBelow={t("analyzer:damageSubDefExplanation")}
 						>
 							{(["SRU"] as const).some(
 								(ability) => (abilityPoints.get(ability) ?? 0) > 0,
 							) ? (
-								<div className="analyzer__stat-card-highlighted" />
+								<div className={styles.statCardHighlighted} />
 							) : null}
 							<DamageTable
 								showPopovers
@@ -771,7 +771,7 @@ function BuildAnalyzerPage() {
 					{analyzed.stats.damages.length > 0 && (
 						<StatCategory
 							title={t("analyzer:stat.category.damage")}
-							containerClassName="analyzer__table-container"
+							containerClassName={styles.tableContainer}
 						>
 							<DamageTable
 								values={analyzed.stats.damages}
@@ -787,7 +787,7 @@ function BuildAnalyzerPage() {
 									`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
 								),
 							})}
-							containerClassName="analyzer__table-container"
+							containerClassName={styles.tableContainer}
 						>
 							<DamageTable values={analyzed.stats.specialWeaponDamages} />
 						</StatCategory>
@@ -796,12 +796,12 @@ function BuildAnalyzerPage() {
 					{analyzed.stats.fullInkTankOptions.length > 0 && (
 						<StatCategory
 							title={t("analyzer:stat.category.actionsPerInkTank")}
-							containerClassName="analyzer__table-container"
+							containerClassName={styles.tableContainer}
 						>
 							{(["ISM", "ISS"] as const).some(
 								(ability) => (abilityPoints.get(ability) ?? 0) > 0,
 							) ? (
-								<div className="analyzer__stat-card-highlighted" />
+								<div className={styles.statCardHighlighted} />
 							) : null}
 							<ConsumptionTable
 								isComparing={context.isComparing}
@@ -943,7 +943,7 @@ function BuildAnalyzerPage() {
 					</StatCategory>
 					{objectShredderSelected && (
 						<Link
-							className="analyzer__noticeable-link"
+							className={styles.noticeableLink}
 							to={objectDamageCalculatorPage(mainWeaponId)}
 						>
 							<Image
@@ -957,7 +957,7 @@ function BuildAnalyzerPage() {
 					)}
 					{user && focusedBuild && !buildIsEmpty(focusedBuild) ? (
 						<Link
-							className="analyzer__noticeable-link"
+							className={styles.noticeableLink}
 							to={userNewBuildPage(user, {
 								weapon: mainWeaponId,
 								build: focusedBuild,
@@ -990,24 +990,15 @@ interface StatChartProps {
 }
 
 function StatChartPopover(props: StatChartProps) {
-	const { t } = useTranslation(["analyzer"]);
-
 	return (
 		<SendouPopover
-			popoverClassName="analyzer__stat-popover"
+			popoverClassName={styles.statPopover}
 			trigger={
 				<SendouButton
-					className={
-						props.simple ? undefined : "analyzer__stat-popover-trigger"
-					}
+					shape="circle"
 					variant="minimal"
 					size="small"
-					icon={
-						<BeakerIcon
-							className="analyzer__stat-popover-trigger__icon"
-							title={t("analyzer:button.showChart")}
-						/>
-					}
+					icon={<FlaskConical />}
 				/>
 			}
 		>
@@ -1196,16 +1187,16 @@ function APCompare({
 		buildMains.length > 0 || build2Mains.length > 0;
 
 	return (
-		<div className="analyzer__ap-compare">
+		<div className={styles.apCompare}>
 			{hasAtLeastOneMainOnlyAbility ? (
 				<>
-					<div className="analyzer__ap-compare__mains">
+					<div className={styles.apCompareMains}>
 						{buildMains.map((ability) => (
 							<Ability key={ability} ability={ability} size="TINY" />
 						))}
 					</div>
 					<div />
-					<div className="analyzer__ap-compare__mains">
+					<div className={styles.apCompareMains}>
 						{build2Mains.map((ability) => (
 							<Ability key={ability} ability={ability} size="TINY" />
 						))}
@@ -1230,16 +1221,16 @@ function APCompare({
 							{t("analyzer:abilityPoints.short")}
 						</div>
 						<div
-							className={clsx("analyzer__ap-compare__bar", "justify-self-end", {
-								analyzer__better: ap >= ap2,
-							})}
+							className={clsx(
+								styles.apCompareBar,
+								"justify-self-end",
+								ap >= ap2 && styles.better,
+							)}
 							style={{ width: `${ap}px` }}
 						/>
 						<Ability ability={ability} size="TINY" />
 						<div
-							className={clsx("analyzer__ap-compare__bar", {
-								analyzer__better: ap <= ap2,
-							})}
+							className={clsx(styles.apCompareBar, ap <= ap2 && styles.better)}
 							style={{ width: `${ap2}px` }}
 						/>
 						<div
@@ -1283,7 +1274,7 @@ function EffectsSelector({
 	).reverse(); // reverse to show Tacticooler first as it always shows
 
 	return (
-		<div className="analyzer__effects-selector">
+		<div className={styles.effectsSelector}>
 			{effectsToShow.map((effect) => {
 				return (
 					<React.Fragment key={effect.type}>
@@ -1308,7 +1299,7 @@ function EffectsSelector({
 									onChange={(e) =>
 										handleLdeIntensityChange(Number(e.target.value))
 									}
-									className="analyzer__lde-intensity-select"
+									className={styles.ldeIntensitySelect}
 								>
 									{new Array(MAX_LDE_INTENSITY + 1).fill(null).map((_, i) => {
 										const percentage = ((i / MAX_LDE_INTENSITY) * 100)
@@ -1331,7 +1322,6 @@ function EffectsSelector({
 											? handleAddEffect(effect.type)
 											: handleRemoveEffect(effect.type)
 									}
-									size="small"
 								/>
 							)}
 						</div>
@@ -1352,7 +1342,7 @@ function AbilityChunksRequired({
 
 	return (
 		<details className="w-full">
-			<summary className="analyzer__ap-summary">{t("abilityChunks")}</summary>
+			<summary className={styles.apSummary}>{t("abilityChunks")}</summary>
 			<div className="stack sm horizontal flex-wrap mt-4">
 				{abilityChunksMapAsArray.map((a) => {
 					const mainAbilityName = a[0];
@@ -1364,7 +1354,7 @@ function AbilityChunksRequired({
 							className="stack items-center"
 						>
 							<Ability ability={mainAbilityName} size="TINY" />
-							<div className="analyzer__ap-text">{numChunksRequired}</div>
+							<div className={styles.apText}>{numChunksRequired}</div>
 						</div>
 					);
 				})}
@@ -1376,7 +1366,7 @@ function AbilityChunksRequired({
 function StatCategory({
 	title,
 	children,
-	containerClassName = "analyzer__stat-collection",
+	containerClassName = styles.statCollection,
 	textBelow,
 	summaryRightContent,
 	testId,
@@ -1389,14 +1379,14 @@ function StatCategory({
 	testId?: string;
 }) {
 	return (
-		<details className="analyzer__details">
-			<summary className="analyzer__summary" data-testid={testId}>
+		<details className={styles.details}>
+			<summary className={styles.summary} data-testid={testId}>
 				{title}
 				{summaryRightContent}
 			</summary>
 			<div className={containerClassName}>{children}</div>
 			{textBelow && (
-				<div className="analyzer__stat-category-explanation">{textBelow}</div>
+				<div className={styles.statCategoryExplanation}>{textBelow}</div>
 			)}
 		</details>
 	);
@@ -1461,18 +1451,19 @@ function StatCard({
 
 	return (
 		<div
-			className={clsx("analyzer__stat-card", {
-				"analyzer__stat-card-highlighted": isHighlighted(),
-			})}
+			className={clsx(
+				styles.statCard,
+				isHighlighted() && styles.statCardHighlighted,
+			)}
 			data-testid={testId}
 		>
-			<div className="analyzer__stat-card__title-and-value-container">
-				<h3 className="analyzer__stat-card__title">
+			<div className={styles.statCardTitleAndValueContainer}>
+				<h3 className={styles.statCardTitle}>
 					{title}{" "}
 					{popoverInfo && (
 						<SendouPopover
 							trigger={
-								<SendouButton className="analyzer__stat-card__popover-trigger">
+								<SendouButton className={styles.statCardPopoverTrigger}>
 									?
 								</SendouButton>
 							}
@@ -1481,9 +1472,9 @@ function StatCard({
 						</SendouPopover>
 					)}
 				</h3>
-				<div className="analyzer__stat-card-values">
-					<div className="analyzer__stat-card__value">
-						<h4 className="analyzer__stat-card__value__title">
+				<div className={styles.statCardValues}>
+					<div className={styles.statCardValue}>
+						<h4 className={styles.statCardValueTitle}>
 							{typeof stat === "number"
 								? t("value")
 								: showComparison
@@ -1491,7 +1482,7 @@ function StatCard({
 									: t("base")}
 						</h4>{" "}
 						<div
-							className="analyzer__stat-card__value__number"
+							className={styles.statCardValueNumber}
 							data-testid={testId ? `${testId}-base` : undefined}
 						>
 							{showComparison ? (stat as StatTuple)[0].value : baseValue}
@@ -1499,14 +1490,14 @@ function StatCard({
 						</div>
 					</div>
 					{showBuildValue() ? (
-						<div className="analyzer__stat-card__value">
+						<div className={styles.statCardValue}>
 							<h4
-								className="analyzer__stat-card__value__title"
+								className={styles.statCardValueTitle}
 								data-testid={testId ? `${testId}-build-title` : undefined}
 							>
 								{showComparison ? t("build2") : t("build")}
 							</h4>{" "}
-							<div className="analyzer__stat-card__value__number">
+							<div className={styles.statCardValueNumber}>
 								{(stat as StatTuple)[showComparison ? 1 : 0].value}
 								{suffix}
 							</div>
@@ -1515,7 +1506,7 @@ function StatCard({
 				</div>
 			</div>
 			{/* always render this so it reserves space */}
-			<div className="analyzer__stat-card__ability-container">
+			<div className={styles.statCardAbilityContainer}>
 				{!isStaticValue && (
 					<>
 						<ModifiedByAbilities abilities={stat[0].modifiedBy} />
@@ -1666,7 +1657,7 @@ function DamageTable({
 									{damage(val)}
 									{comparisonVal ? `/${damage(comparisonVal)}` : null}{" "}
 									{val.shotsToSplat && (
-										<span className="analyzer__shots-to-splat">
+										<span className={styles.shotsToSplat}>
 											{t("analyzer:damage.toSplat", {
 												count: val.shotsToSplat,
 											})}
@@ -1783,7 +1774,7 @@ function ConsumptionTable({
 				</tbody>
 			</Table>
 			{subWeaponId === TORPEDO_ID && (
-				<div className="analyzer__consumption-table-explanation">
+				<div className={styles.consumptionTableExplanation}>
 					{t("analyzer:torpedoExplanation")}
 				</div>
 			)}

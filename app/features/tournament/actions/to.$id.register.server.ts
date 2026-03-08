@@ -254,10 +254,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 			);
 			errorToastIfFalsy(ownTeam, "You are not registered to this tournament");
 			errorToastIfFalsy(
-				(await SQGroupRepository.usersThatTrusted(user.id)).trusters.some(
-					(trusterPlayer) => trusterPlayer.id === data.userId,
+				(await SQGroupRepository.friendsAndTeammates(user.id)).friends.some(
+					(friendPlayer) => friendPlayer.id === data.userId,
 				),
-				"No trust given from this user",
+				"Not a friend",
 			);
 			errorToastIfFalsy(
 				(await UserRepository.findLeanById(data.userId))?.friendCode,
@@ -279,10 +279,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 					tournament,
 					userId: data.userId,
 				}),
-			});
-			await SQGroupRepository.refreshTrust({
-				trustGiverUserId: data.userId,
-				trustReceiverUserId: user.id,
 			});
 
 			ShowcaseTournaments.addToCached({

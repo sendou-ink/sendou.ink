@@ -1,8 +1,7 @@
-import clsx from "clsx";
+import { Bell, RefreshCcw } from "lucide-react";
 import * as React from "react";
-import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { useLocation, useMatches, useRevalidator } from "react-router";
+import { useMatches, useRevalidator } from "react-router";
 import {
 	NotificationItem,
 	NotificationItemDivider,
@@ -13,9 +12,6 @@ import type { RootLoaderData } from "~/root";
 import { NOTIFICATIONS_URL } from "~/utils/urls";
 import { useMarkNotificationsAsSeen } from "../../features/notifications/notifications-hooks";
 import { LinkButton, SendouButton } from "../elements/Button";
-import { SendouPopover } from "../elements/Popover";
-import { BellIcon } from "../icons/Bell";
-import { RefreshIcon } from "../icons/Refresh";
 
 import styles from "./NotificationPopover.module.css";
 
@@ -23,8 +19,7 @@ export type LoaderNotification = NonNullable<
 	RootLoaderData["notifications"]
 >[number];
 
-export function NotificationPopover() {
-	const location = useLocation();
+export function useNotifications() {
 	const [root] = useMatches();
 
 	const notifications = (root.data as RootLoaderData | undefined)
@@ -38,42 +33,17 @@ export function NotificationPopover() {
 		[notifications],
 	);
 
-	if (!notifications) {
-		return null;
-	}
-
-	return (
-		<div className={styles.container} key={location.pathname}>
-			{unseenIds.length > 0 ? <div className={styles.unseenDot} /> : null}
-			<SendouPopover
-				trigger={
-					<Button
-						className="layout__header__button"
-						data-testid="notifications-button"
-					>
-						<BellIcon />
-					</Button>
-				}
-				popoverClassName={clsx(styles.popoverContainer, {
-					[styles.noNotificationsContainer]:
-						!notifications || notifications.length === 0,
-				})}
-			>
-				<NotificationContent
-					notifications={notifications ?? []}
-					unseenIds={unseenIds}
-				/>
-			</SendouPopover>
-		</div>
-	);
+	return { notifications, unseenIds };
 }
 
-function NotificationContent({
+export function NotificationContent({
 	notifications,
 	unseenIds,
+	onClose,
 }: {
 	notifications: LoaderNotification[];
 	unseenIds: number[];
+	onClose?: () => void;
 }) {
 	const { t } = useTranslation(["common"]);
 	const { revalidate, state } = useRevalidator();
@@ -84,12 +54,12 @@ function NotificationContent({
 		<>
 			<div className={styles.topContainer}>
 				<h2 className={styles.header}>
-					<BellIcon /> {t("common:notifications.title")}
+					<Bell /> {t("common:notifications.title")}
 				</h2>
 				<SendouButton
-					icon={<RefreshIcon />}
+					icon={<RefreshCcw />}
+					shape="circle"
 					variant="minimal"
-					className={styles.refreshButton}
 					onPress={revalidate}
 					isDisabled={state !== "idle"}
 				/>
@@ -113,13 +83,13 @@ function NotificationContent({
 				</NotificationsList>
 			)}
 			{notifications.length === NOTIFICATIONS.PEEK_COUNT ? (
-				<NotificationsFooter />
+				<NotificationsFooter onClose={onClose} />
 			) : null}
 		</>
 	);
 }
 
-function NotificationsFooter() {
+function NotificationsFooter({ onClose }: { onClose?: () => void }) {
 	const { t } = useTranslation(["common"]);
 
 	return (
@@ -129,8 +99,8 @@ function NotificationsFooter() {
 				variant="minimal"
 				size="small"
 				to={NOTIFICATIONS_URL}
-				className="mt-1-5"
 				testId="notifications-see-all-button"
+				onClick={onClose}
 			>
 				{t("common:notifications.seeAll")}
 			</LinkButton>

@@ -1,0 +1,22 @@
+.container {
+	display: flex;
+	gap: var(--s-3);
+	margin-left: auto;
+}
+
+.searchAndAddContainer {
+	display: grid;
+	grid-template-columns: 2fr 1fr;
+	gap: var(--s-2);
+}
+
+.searchWrapper > button,
+.addNewWrapper > button {
+	width: 100%;
+}
+
+@media screen and (max-width: 1000px) {
+	.searchAndAddContainer {
+		grid-template-columns: 1fr 1fr;
+	}
+}

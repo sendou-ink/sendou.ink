@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Pencil as EditIcon, Puzzle as PuzzleIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
 	href,
@@ -15,8 +16,6 @@ import { Image, WeaponImage } from "~/components/Image";
 import { BattlefyIcon } from "~/components/icons/Battlefy";
 import { BskyIcon } from "~/components/icons/Bsky";
 import { DiscordIcon } from "~/components/icons/Discord";
-import { EditIcon } from "~/components/icons/Edit";
-import { PuzzleIcon } from "~/components/icons/Puzzle";
 import { TwitchIcon } from "~/components/icons/Twitch";
 import { YouTubeIcon } from "~/components/icons/YouTube";
 import { useUser } from "~/features/auth/core/user";
@@ -39,7 +38,8 @@ import { UserPageIconNav } from "../components/UserPageIconNav";
 import { Widget } from "../components/Widget";
 import { loader } from "../loaders/u.$identifier.index.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
-import styles from "./u.$identifier.module.css";
+import styles from "../user-page.module.css";
+import newStyles from "./u.$identifier.module.css";
 export { loader };
 
 export const handle: SendouRouteHandle = {
@@ -84,12 +84,12 @@ function NewUserInfoPage() {
 	const isOwnPage = layoutData.user.id === user?.id;
 
 	return (
-		<div className={styles.container}>
-			<div className={styles.header}>
+		<div className={newStyles.container}>
+			<div className={newStyles.header}>
 				<Avatar user={layoutData.user} size="xmd" />
-				<div className={styles.userInfo}>
-					<div className={styles.nameGroup}>
-						<h1 className={styles.username}>{layoutData.user.username}</h1>
+				<div className={newStyles.userInfo}>
+					<div className={newStyles.nameGroup}>
+						<h1 className={newStyles.username}>{layoutData.user.username}</h1>
 						<ProfileSubtitle
 							inGameName={layoutData.user.inGameName}
 							pronouns={layoutData.user.pronouns}
@@ -99,12 +99,12 @@ function NewUserInfoPage() {
 						/>
 					</div>
 				</div>
-				<div className={styles.desktopIconNav}>
+				<div className={newStyles.desktopIconNav}>
 					<UserPageIconNav items={navItems} />
 				</div>
 			</div>
 			{isOwnPage ? (
-				<div className={styles.editButtons}>
+				<div className={newStyles.editButtons}>
 					<LinkButton
 						to={href("/u/:identifier/edit-widgets", {
 							identifier:
@@ -130,29 +130,29 @@ function NewUserInfoPage() {
 				</div>
 			) : null}
 
-			<div className={styles.mobileIconNav}>
+			<div className={newStyles.mobileIconNav}>
 				<UserPageIconNav items={navItems} />
 			</div>
 
-			<div className={styles.sideCarousel}>
+			<div className={newStyles.sideCarousel}>
 				{sideWidgets.map((widget) => (
 					<Widget key={widget.id} widget={widget} user={layoutData.user} />
 				))}
 			</div>
 
-			<div className={styles.mainStack}>
+			<div className={newStyles.mainStack}>
 				{mainWidgets.map((widget) => (
 					<Widget key={widget.id} widget={widget} user={layoutData.user} />
 				))}
 			</div>
 
-			<div className={styles.grid}>
-				<div className={styles.main}>
+			<div className={newStyles.grid}>
+				<div className={newStyles.main}>
 					{mainWidgets.map((widget) => (
 						<Widget key={widget.id} widget={widget} user={layoutData.user} />
 					))}
 				</div>
-				<div className={styles.side}>
+				<div className={newStyles.side}>
 					{sideWidgets.map((widget) => (
 						<Widget key={widget.id} widget={widget} user={layoutData.user} />
 					))}
@@ -173,11 +173,11 @@ export function OldUserInfoPage() {
 	}
 
 	return (
-		<div className="u__container">
-			<div className="u__avatar-container">
-				<Avatar user={layoutData.user} size="lg" className="u__avatar" />
+		<div className={styles.container}>
+			<div className={styles.avatarContainer}>
+				<Avatar user={layoutData.user} size="lg" className={styles.avatar} />
 				<div>
-					<h2 className="u__name">
+					<h2 className={styles.name}>
 						<div>{layoutData.user.username}</div>
 						<div>
 							{data.user.country ? (
@@ -187,7 +187,7 @@ export function OldUserInfoPage() {
 					</h2>
 					<TeamInfo />
 				</div>
-				<div className="u__socials">
+				<div className={styles.socials}>
 					{data.user.twitch ? (
 						<SocialLink type="twitch" identifier={data.user.twitch} />
 					) : null}
@@ -225,7 +225,7 @@ function TeamInfo() {
 		<div className="stack horizontal sm">
 			<Link
 				to={teamPage(data.user.team.customUrl)}
-				className="u__team"
+				className={styles.team}
 				data-testid="main-team-link"
 			>
 				{data.user.team.avatarUrl ? (
@@ -287,7 +287,7 @@ function SecondaryTeamsPopover() {
 					>
 						<Link
 							to={teamPage(team.customUrl)}
-							className="u__team text-main-forced"
+							className={clsx(styles.team, "text-main-forced")}
 						>
 							{team.avatarUrl ? (
 								<img
@@ -341,11 +341,11 @@ export function SocialLink({
 
 	return (
 		<a
-			className={clsx("u__social-link", {
-				youtube: type === "youtube",
-				twitch: type === "twitch",
-				battlefy: type === "battlefy",
-				bsky: type === "bsky",
+			className={clsx(styles.socialLink, {
+				[styles.socialLinkYoutube]: type === "youtube",
+				[styles.socialLinkTwitch]: type === "twitch",
+				[styles.socialLinkBattlefy]: type === "battlefy",
+				[styles.socialLinkBsky]: type === "bsky",
 			})}
 			href={href()}
 		>
@@ -397,38 +397,38 @@ function ExtraInfos() {
 	}
 
 	return (
-		<div className="u__extra-infos">
-			<div className="u__extra-info">#{data.user.id}</div>
+		<div className={styles.extraInfos}>
+			<div className={styles.extraInfo}>#{data.user.id}</div>
 			{data.user.discordUniqueName && (
-				<div className="u__extra-info">
-					<span className="u__extra-info__heading">
+				<div className={styles.extraInfo}>
+					<span className={styles.extraInfoHeading}>
 						<DiscordIcon />
 					</span>{" "}
 					{data.user.discordUniqueName}
 				</div>
 			)}
 			{data.user.pronouns && (
-				<div className="u__extra-info">
-					<span className="u__extra-info__heading">
+				<div className={styles.extraInfo}>
+					<span className={styles.extraInfoHeading}>
 						{t("user:usesPronouns")}
 					</span>{" "}
 					{data.user.pronouns.subject}/{data.user.pronouns.object}
 				</div>
 			)}
 			{data.user.inGameName && (
-				<div className="u__extra-info">
-					<span className="u__extra-info__heading">{t("user:ign.short")}</span>{" "}
+				<div className={styles.extraInfo}>
+					<span className={styles.extraInfoHeading}>{t("user:ign.short")}</span>{" "}
 					{data.user.inGameName}
 				</div>
 			)}
 			{typeof data.user.stickSens === "number" && (
-				<div className="u__extra-info">
-					<span className="u__extra-info__heading">{t("user:sens")}</span>{" "}
+				<div className={styles.extraInfo}>
+					<span className={styles.extraInfoHeading}>{t("user:sens")}</span>{" "}
 					{[motionSensText, stickSensText].filter(Boolean).join(" / ")}
 				</div>
 			)}
 			{data.user.plusTier && (
-				<div className="u__extra-info">
+				<div className={styles.extraInfo}>
 					<Image path={navIconUrl("plus")} width={20} height={20} alt="" />{" "}
 					{data.user.plusTier}
 				</div>
@@ -450,7 +450,7 @@ function WeaponPool() {
 		<div className="stack horizontal sm justify-center">
 			{data.user.weapons.map((weapon, i) => {
 				return (
-					<div key={weapon.weaponSplId} className="u__weapon">
+					<div key={weapon.weaponSplId} className={styles.weapon}>
 						<WeaponImage
 							testId={`${weapon.weaponSplId}-${i + 1}`}
 							weaponSplId={weapon.weaponSplId}
@@ -504,7 +504,7 @@ function ProfileSubtitle({
 	if (parts.length === 0) return null;
 
 	return (
-		<div className={styles.subtitle}>
+		<div className={newStyles.subtitle}>
 			{parts.map((part, i) => (
 				<span key={i} className="stack horizontal xs items-center">
 					{i > 0 ? <span>·</span> : null}
@@ -527,7 +527,7 @@ function TopPlacements() {
 	return (
 		<Link
 			to={topSearchPlayerPage(data.user.topPlacements[0].playerId)}
-			className="u__placements"
+			className={styles.placements}
 			data-testid="placements-box"
 		>
 			{modesShort.map((mode) => {
@@ -538,7 +538,7 @@ function TopPlacements() {
 				if (!placement) return null;
 
 				return (
-					<div key={mode} className="u__placements__mode">
+					<div key={mode} className={styles.placementsMode}>
 						<Image path={modeImageUrl(mode)} alt="" width={24} height={24} />
 						<div>
 							{placement.rank} / {placement.power}

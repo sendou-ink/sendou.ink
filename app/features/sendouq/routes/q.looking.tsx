@@ -126,7 +126,7 @@ function InfoText() {
 		return (
 			<fetcher.Form
 				method="post"
-				className="text-xs text-lighter ml-auto text-error stack horizontal sm"
+				className="text-xs text-lighter ml-auto text-error stack horizontal sm items-center"
 			>
 				{t("q:looking.inactiveGroup")}{" "}
 				<SubmitButton
@@ -145,7 +145,7 @@ function InfoText() {
 		return (
 			<fetcher.Form
 				method="post"
-				className="text-xs text-lighter ml-auto text-warning stack horizontal sm"
+				className="text-xs text-lighter ml-auto text-warning stack horizontal sm items-center"
 			>
 				{t("q:looking.inactiveGroup.soon")}{" "}
 				<SubmitButton
@@ -306,7 +306,7 @@ function Groups() {
 	);
 
 	const ownGroupElement = data.ownGroup ? (
-		<div className="stack md">
+		<div className="stack sm">
 			{!showChat && (
 				<ColumnHeader>{t("q:looking.columns.myGroup")}</ColumnHeader>
 			)}
@@ -372,7 +372,7 @@ function Groups() {
 				) : null}
 				<div className={styles.innerContainer}>
 					<SendouTabs>
-						<SendouTabList scrolling={isMobile}>
+						<SendouTabList>
 							<SendouTab id="groups" number={neutralGroups.length}>
 								{t("q:looking.columns.groups")}
 							</SendouTab>

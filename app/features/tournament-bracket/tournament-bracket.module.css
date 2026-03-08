@@ -1,0 +1,563 @@
+.finalize {
+	font-size: var(--font-sm);
+	margin-block-end: var(--s-4);
+	display: flex;
+	gap: var(--s-1);
+	flex-wrap: wrap;
+	justify-content: center;
+}
+
+.miniAlert {
+	background-color: var(--color-info-low);
+	font-size: var(--font-2xs);
+	border-radius: var(--radius-box);
+	padding: var(--s-1) var(--s-2);
+}
+
+.infos {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: var(--s-3);
+	background: var(--color-bg-high);
+	border-end-end-radius: var(--radius-box);
+	border-end-start-radius: var(--radius-box);
+	color: var(--tournaments-text);
+	column-gap: var(--s-8);
+	font-size: var(--font-sm);
+	letter-spacing: 0.3px;
+}
+
+.infosValue > button {
+	font-size: var(--font-2xs);
+}
+
+.lockedBanner {
+	width: 100%;
+	height: 10rem;
+	background-color: var(--color-bg-high);
+	border-start-end-radius: var(--radius-box);
+	border-start-start-radius: var(--radius-box);
+	grid-area: img;
+	display: grid;
+	place-items: center;
+	position: relative;
+	padding-inline: var(--s-2);
+}
+
+.lockedBannerLonely {
+	border-radius: var(--radius-box);
+}
+
+.stageBanner {
+	display: flex;
+	width: 100%;
+	height: 10rem;
+	flex-direction: column;
+	justify-content: space-between;
+	background-image: var(--_tournament-bg-url);
+	background-position: center;
+	border-start-end-radius: var(--radius-box);
+	border-start-start-radius: var(--radius-box);
+	grid-area: img;
+	background-repeat: no-repeat;
+	background-size: cover;
+	position: relative;
+}
+
+.stageBannerTopBar {
+	display: flex;
+	justify-content: space-between;
+	padding: var(--s-2);
+	backdrop-filter: blur(10px) brightness(95%);
+	background: rgb(0 0 0 / 40%);
+	border-start-end-radius: var(--radius-box);
+	border-start-start-radius: var(--radius-box);
+	font-size: var(--font-xs);
+	color: #fff;
+}
+
+.stageBannerBottomBar {
+	display: flex;
+	justify-content: flex-end;
+	padding: var(--s-2);
+}
+
+.stageBannerUndoButton {
+	position: absolute;
+	right: 8px;
+	bottom: 8px;
+}
+
+.stageBannerEndSetButton {
+	right: 8px;
+	bottom: 8px;
+}
+
+.stageBanner:has(.stageBannerEndSetButton)
+	.stageBannerUndoButton:not(.stageBannerEndSetButton) {
+	right: 72px;
+}
+
+.deadlinePopover {
+	position: absolute;
+	left: 8px;
+	bottom: 8px;
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.deadlinePopoverTrigger {
+	margin-block-start: 0;
+	background-color: var(--color-bg-higher) !important;
+}
+
+.deadlineIndicator {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--selector-size-sm);
+	height: var(--selector-size-sm);
+	border-radius: 50%;
+	font-weight: var(--weight-extra);
+	font-size: var(--font-xs);
+}
+
+.deadlineIndicatorWarning {
+	background-color: var(--color-warning);
+	color: var(--color-text-inverse);
+}
+
+.deadlineIndicatorError {
+	background-color: var(--color-error);
+	color: var(--color-text-inverse);
+}
+
+.stageBannerTopBarHeader {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-2);
+}
+
+.stageBannerTopBarMapTextBig {
+	display: none;
+}
+
+@media screen and (min-width: 480px) {
+	.stageBannerTopBar {
+		font-size: initial;
+	}
+
+	.stageBannerTopBarMapTextSmall {
+		display: none;
+	}
+
+	.stageBannerTopBarMapTextBig {
+		display: initial;
+	}
+}
+
+.noScreen {
+	display: flex;
+	gap: var(--s-0-5);
+}
+
+.noScreen > svg {
+	width: 24px;
+	fill: var(--color-success);
+}
+
+.noScreenBanned > svg {
+	fill: var(--color-error);
+}
+
+.duringMatchActions {
+	display: grid;
+	grid-template-areas:
+		"img"
+		"infos"
+		"rosters";
+	grid-template-columns: 1fr;
+}
+
+.duringMatchActionsActions {
+	display: flex;
+	justify-content: center;
+	color: var(--color-warning);
+	margin-block-start: var(--s-6);
+}
+
+.duringMatchActionsAmountWarningParagraph {
+	display: flex;
+	align-items: center;
+	text-align: center;
+	font-size: var(--font-xs);
+}
+
+.duringMatchActionsRosters {
+	display: flex;
+	width: 100%;
+	flex-wrap: wrap;
+	justify-content: space-evenly;
+	row-gap: var(--s-4);
+	text-align: center;
+}
+
+.duringMatchActionsRadioContainer {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.rosterButtonsContainer {
+	display: flex;
+	gap: var(--s-4);
+	align-items: center;
+	justify-content: center;
+	margin-block-start: var(--s-6);
+	height: 30px;
+}
+
+.editRosterButton {
+	font-style: italic;
+}
+
+.duringMatchActionsTeamPlayers {
+	display: flex;
+	width: 15rem;
+	flex-direction: column;
+	margin-top: var(--s-3);
+	margin-inline: auto;
+	gap: var(--s-2);
+}
+
+.duringMatchActionsCheckboxName {
+	display: flex;
+	align-items: center;
+	flex: 1;
+}
+
+.duringMatchActionsCheckboxName:not(:global(.disabled-opaque)):not(
+		:global(.presentational)
+	):hover {
+	border-radius: var(--radius-box);
+	cursor: pointer;
+	outline: 2px solid var(--color-accent-high);
+	outline-offset: 2px;
+}
+
+.duringMatchActionsCheckbox:not(#_) {
+	background: none;
+	all: unset;
+	width: 40% !important;
+	height: 1.5rem !important;
+	appearance: none;
+	background-color: var(--color-bg-higher);
+	border-end-start-radius: var(--radius-box);
+	border-start-start-radius: var(--radius-box);
+	cursor: pointer;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	letter-spacing: 0.4px;
+	z-index: 1;
+
+	&::after {
+		all: unset;
+		display: flex;
+		width: 100%;
+		height: 100%;
+		align-items: center;
+		justify-content: center;
+		color: var(--color-text-high);
+		content: "Inactive";
+		padding-block-end: 1px;
+	}
+
+	&:checked {
+		background-color: var(--color-text-accent);
+
+		&::after {
+			display: flex;
+			color: var(--color-text-inverse);
+			content: "Playing";
+		}
+	}
+
+	&:disabled {
+		pointer-events: none;
+		cursor: not-allowed;
+		opacity: 0.5;
+		outline: none;
+	}
+
+	&:focus-within {
+		outline: none;
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+}
+
+.duringMatchActionsPlayerName {
+	display: flex;
+	width: 60%;
+	height: 1.5rem;
+	align-items: center;
+	justify-content: center;
+	margin: 0;
+	background-color: var(--color-bg);
+	border-end-end-radius: var(--radius-box);
+	border-start-end-radius: var(--radius-box);
+	overflow-x: hidden;
+	text-overflow: ellipsis;
+	user-select: none;
+	cursor: pointer;
+	flex: 1;
+}
+
+.duringMatchActionsPlayerNameInner {
+	white-space: nowrap;
+	overflow-x: hidden;
+	text-overflow: ellipsis;
+	padding-inline: var(--s-2);
+	max-width: 150px;
+}
+
+.duringMatchActionsSeed {
+	font-size: var(--font-2xs);
+	color: var(--color-text-accent);
+}
+
+.duringMatchActionsTeamName {
+	color: var(--color-text);
+	font-weight: var(--weight-bold);
+}
+
+.rosters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-8);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	flex-direction: column;
+}
+
+.rosters ul {
+	padding: 0;
+	list-style: none;
+}
+
+.rostersSpacedHeader {
+	min-height: 45px;
+	display: flex;
+	align-items: center;
+}
+
+.inactivePlayer {
+	color: var(--color-text-high);
+	text-decoration: line-through;
+}
+
+@media screen and (min-width: 640px) {
+	.rosters {
+		justify-content: space-evenly;
+		flex-direction: row;
+	}
+}
+
+.modeProgress {
+	display: block;
+	text-align: center;
+	overflow-x: auto;
+	padding: 2px;
+	margin-bottom: var(--s-1-5);
+}
+
+.modeProgressInner {
+	display: inline-flex;
+	gap: var(--s-4);
+	justify-content: flex-start;
+}
+
+.modeProgressImage {
+	background-color: var(--color-bg-high);
+	border-radius: 100%;
+	padding: var(--s-3);
+	outline: 2px solid var(--color-bg-higher);
+	min-width: 40px;
+}
+
+.modeProgressImage > svg {
+	width: 20px;
+	height: 20px;
+}
+
+.modeProgressImageNotable {
+	background-color: var(--color-bg-higher);
+	border: none;
+	outline: 2px solid transparent;
+}
+
+.modeProgressImageTeamOneWin {
+	outline: 2px solid var(--color-info);
+}
+
+.modeProgressImageTeamTwoWin {
+	outline: 2px solid var(--color-error);
+}
+
+.modeProgressImageSelected {
+	background-color: var(--color-bg-high);
+}
+
+.modeProgressImageBanned {
+	outline: 2px solid var(--color-error);
+	background-color: var(--color-bg-high);
+}
+
+.modeProgressImageBanned > img {
+	filter: grayscale(100%);
+}
+
+.modeProgressImageBannedPopoverTrigger:focus-visible {
+	outline: none !important;
+}
+
+.teamOneDot {
+	border-radius: 100%;
+	background-color: var(--color-info);
+	width: 8px;
+	height: 8px;
+}
+
+.teamTwoDot {
+	border-radius: 100%;
+	background-color: var(--color-error);
+	width: 8px;
+	height: 8px;
+}
+
+.pointsInput {
+	padding: var(--s-4) var(--s-2) !important;
+	font-size: var(--font-sm);
+}
+
+@media screen and (min-width: 480px) {
+	.infos {
+		flex-direction: row;
+	}
+}
+
+.quickAction {
+	font-size: var(--font-xs);
+	color: var(--color-text);
+	background-color: var(--color-bg);
+	border-radius: var(--radius-box);
+	border: 2px solid var(--color-bg-higher);
+	padding-block: var(--s-1-5);
+	padding-inline: var(--s-3);
+	font-weight: var(--weight-bold);
+	align-items: center;
+}
+
+.quickActionSpaced {
+	display: flex;
+	gap: var(--s-1-5);
+}
+
+.quickActionVerySpaced {
+	display: flex;
+	gap: var(--s-3);
+}
+
+.quickActionCheckmark {
+	color: var(--color-success);
+}
+
+.compactifyButton {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	border-color: var(--color-bg-higher);
+	background-color: var(--color-bg);
+	border-radius: var(--radius-box);
+}
+
+.castInfoContainer {
+	display: flex;
+	gap: var(--s-2);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	width: max-content;
+}
+
+.castInfoContainerLabel {
+	padding: var(--s-2) var(--s-4);
+	text-transform: uppercase;
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-box) 0 0 var(--radius-box);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-high);
+	display: grid;
+	place-items: center;
+	justify-content: center;
+}
+
+.castInfoContainerContent {
+	padding-block: var(--s-2);
+	display: flex;
+	align-items: center;
+}
+
+.streamPopover {
+	width: 280px;
+}
+
+.actionSectionWrapper [class*="tabPanel"] {
+	background-color: var(--color-bg-high);
+	border-radius: 0 0 var(--radius-box) var(--radius-box);
+	padding: var(--s-4);
+}
+
+.actionSectionWrapper [class*="tabPanel"]:has([class*="chatContainer"]) {
+	padding: var(--s-1) var(--s-4);
+}
+
+.bracketNavLink {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	border-color: var(--color-bg-higher);
+	background-color: var(--color-bg);
+	border-radius: 0;
+}
+
+.bracketNavLinkBig {
+	font-size: var(--font-lg);
+}
+
+.bracketNavLink:active {
+	transform: translateY(0px);
+}
+
+.bracketNavLink:first-of-type {
+	border-start-start-radius: var(--radius-box);
+	border-end-start-radius: var(--radius-box);
+}
+
+.bracketNavLink:not(.bracketNavLink:first-of-type) {
+	margin-left: -2px;
+}
+
+.bracketNavLink:last-of-type {
+	border-start-end-radius: var(--radius-box);
+	border-end-end-radius: var(--radius-box);
+}
+
+.bracketNavLinkSelected {
+	color: var(--color-text);
+	background-color: var(--color-bg-high);
+}

@@ -23,5 +23,3 @@ export const TEAM_MEMBER_ROLES = [
 	"COACH",
 	"CHEERLEADER",
 ] as const;
-
-export const TEAMS_PER_PAGE = 40;

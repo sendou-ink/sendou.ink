@@ -1,10 +1,10 @@
+import { Trash } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Form, Link, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { WeaponImage } from "~/components/Image";
-import { TrashIcon } from "~/components/icons/Trash";
 import { Label } from "~/components/Label";
 import { RequiredHiddenInput } from "~/components/RequiredHiddenInput";
 import { SubmitButton } from "~/components/SubmitButton";
@@ -19,6 +19,7 @@ import { TOURNAMENT_SUB } from "../tournament-subs-constants";
 export { action, loader };
 
 import clsx from "clsx";
+import { mainStyles } from "~/components/Main";
 import styles from "./to.$id.subs.new.module.css";
 
 export const handle: SendouRouteHandle = {
@@ -40,7 +41,7 @@ export default function NewTournamentSubPage() {
 	);
 
 	return (
-		<div className="half-width">
+		<div className={mainStyles.narrow}>
 			<Form method="post" className="stack md items-start">
 				<div className="stack">
 					<h2>{t("tournament:subs.addPost")}</h2>
@@ -279,7 +280,7 @@ function WeaponPoolSelect({
 									/>
 								</div>
 								<SendouButton
-									icon={<TrashIcon />}
+									icon={<Trash />}
 									variant="minimal-destructive"
 									aria-label="Delete weapon"
 									onPress={() =>

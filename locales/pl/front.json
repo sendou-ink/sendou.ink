@@ -1,4 +1,8 @@
 {
+	"nav.play": "",
+	"nav.tools": "",
+	"nav.community": "",
+	"nav.weapons": "",
 	"sq.season": "",
 	"sq.prepare": "",
 	"sq.participate": "",
@@ -14,5 +18,20 @@
 	"leaderboards.topTeams": "",
 	"leaderboards.viewFull": "",
 	"updates.header": "",
-	"updates.viewPast": ""
+	"updates.viewPast": "",
+	"sideNav.myCalendar": "",
+	"sideNav.noEvents": "",
+	"sideNav.noStreams": "",
+	"sideNav.friends": "",
+	"sideNav.friends.notLoggedIn": "",
+	"sideNav.friends.noFriends": "",
+	"sideNav.streams": "",
+	"sideNav.streams.upcoming": "",
+	"sideNav.scrimVs": "",
+	"sideNav.lookingForScrim": "",
+	"mobileNav.menu": "",
+	"mobileNav.friends": "",
+	"mobileNav.you": "",
+	"mobileNav.login": "",
+	"mobileNav.queue": ""
 }

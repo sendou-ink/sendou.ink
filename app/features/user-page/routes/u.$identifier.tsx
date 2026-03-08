@@ -8,8 +8,7 @@ import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
-	navIconUrl,
-	USER_SEARCH_PAGE,
+	discordAvatarUrl,
 	userAdminPage,
 	userArtPage,
 	userBuildsPage,
@@ -27,7 +26,7 @@ import {
 } from "../loaders/u.$identifier.server";
 export { loader };
 
-import "~/styles/u.css";
+import "~/features/user-page/user-page.module.css";
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.data) return [];
@@ -46,18 +45,24 @@ export const handle: SendouRouteHandle = {
 
 		if (!data) return [];
 
-		return [
-			{
-				imgPath: navIconUrl("u"),
-				href: USER_SEARCH_PAGE,
-				type: "IMAGE",
-			},
-			{
+		if (!data.user.discordAvatar) {
+			return {
 				text: data.user.username,
 				href: userPage(data.user),
 				type: "TEXT",
-			},
-		];
+			};
+		}
+
+		return {
+			imgPath: discordAvatarUrl({
+				discordId: data.user.discordId,
+				discordAvatar: data.user.discordAvatar,
+				size: "sm",
+			}),
+			href: userPage(data.user),
+			type: "IMAGE",
+			text: data.user.username,
+		};
 	},
 };
 

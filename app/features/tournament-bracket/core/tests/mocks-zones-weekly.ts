@@ -338,7 +338,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 			discordId: "308483655515373570",
 			discordAvatar: "a5fff2b4706d99364e646cab28c8085b",
 			customUrl: "puma",
-			chatNameColor: null,
+			chatNameHue: null,
 		},
 		staff: [
 			{
@@ -348,7 +348,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				discordId: "395757059922198548",
 				discordAvatar: "2a569302e9545c6a07f8f8aa337d139d",
 				customUrl: "penis",
-				chatNameColor: null,
+				chatNameHue: null,
 				role: "ORGANIZER",
 			},
 			{
@@ -358,7 +358,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				discordId: "267963609924108288",
 				discordAvatar: "85090cfe2e0da693355bcec9740c1eaa",
 				customUrl: "cookie",
-				chatNameColor: null,
+				chatNameHue: null,
 				role: "ORGANIZER",
 			},
 			{
@@ -368,7 +368,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				discordId: "507102073427460098",
 				discordAvatar: "bd634c91f7d0475f3671956fa9a2110a",
 				customUrl: null,
-				chatNameColor: null,
+				chatNameHue: null,
 				role: "ORGANIZER",
 			},
 			{
@@ -378,7 +378,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				discordId: "111682034056835072",
 				discordAvatar: "f1191c94b1da5396a06b620408017c1f",
 				customUrl: "weizihao",
-				chatNameColor: null,
+				chatNameHue: null,
 				role: "ORGANIZER",
 			},
 		],

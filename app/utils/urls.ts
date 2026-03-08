@@ -91,9 +91,8 @@ export const SUPPORT_PAGE = "/support";
 export const CONTRIBUTIONS_PAGE = "/contributions";
 export const BADGES_PAGE = "/badges";
 export const BUILDS_PAGE = "/builds";
-export const USER_SEARCH_PAGE = "/u";
 export const TEAM_SEARCH_PAGE = "/t";
-export const NEW_TEAM_PAGE = "/t?new=true";
+export const NEW_TEAM_PAGE = "/t/new";
 export const CALENDAR_PAGE = "/calendar";
 export const CALENDAR_NEW_PAGE = "/calendar/new";
 export const TOURNAMENT_NEW_PAGE = "/calendar/new?tournament=true";
@@ -121,6 +120,7 @@ export const SENDOUQ_STREAMS_PAGE = "/q/streams";
 export const TIERS_PAGE = "/tiers";
 export const SUSPENDED_PAGE = "/suspended";
 export const LFG_PAGE = "/lfg";
+export const FRIENDS_PAGE = "/friends";
 export const SETTINGS_PAGE = "/settings";
 export const LUTI_PAGE = "/luti";
 export const PLUS_VOTING_PAGE = "/plus/voting";
@@ -140,7 +140,7 @@ export const THIRD_PLACEMENT_ICON_PATH =
 export const soundPath = (fileName: string) =>
 	`/static-assets/sounds/${fileName}.wav`;
 
-export const GET_TRUSTERS_ROUTE = "/trusters";
+export const GET_FRIENDS_FOR_ADDING_ROUTE = "/friends-for-adding";
 export const PATRONS_LIST_ROUTE = "/patrons-list";
 
 export const NOTIFICATIONS_URL = "/notifications";

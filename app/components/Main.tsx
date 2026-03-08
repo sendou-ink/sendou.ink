@@ -2,6 +2,7 @@ import clsx from "clsx";
 import type * as React from "react";
 import { isRouteErrorResponse, useRouteError } from "react-router";
 import { useHasRole } from "~/modules/permissions/hooks";
+import styles from "./Main.module.css";
 
 export const Main = ({
 	children,
@@ -26,41 +27,41 @@ export const Main = ({
 		!isRouteErrorResponse(error);
 
 	return (
-		<div className="layout__main-container">
-			<main
-				className={
-					classNameOverwrite
-						? clsx(classNameOverwrite, {
-								[containerClassName("narrow")]: halfWidth,
-								"pt-8-forced": showLeaderboard,
-							})
-						: clsx(
-								"layout__main",
-								containerClassName("normal"),
-								{
-									[containerClassName("narrow")]: halfWidth,
-									[containerClassName("wide")]: bigger,
-									"pt-8-forced": showLeaderboard,
-								},
-								className,
-							)
-				}
-				style={style}
-			>
-				{children}
-			</main>
-		</div>
+		<main
+			className={
+				classNameOverwrite
+					? clsx(classNameOverwrite, {
+							[styles.narrow]: halfWidth,
+							"pt-8": showLeaderboard,
+						})
+					: clsx(
+							styles.main,
+							styles.normal,
+							{
+								[styles.narrow]: halfWidth,
+								[styles.wide]: bigger,
+								"pt-8": showLeaderboard,
+							},
+							className,
+						)
+			}
+			style={style}
+		>
+			{children}
+		</main>
 	);
 };
 
+export { styles as mainStyles };
+
 export const containerClassName = (width: "narrow" | "normal" | "wide") => {
 	if (width === "narrow") {
-		return "half-width";
+		return styles.narrow;
 	}
 
 	if (width === "wide") {
-		return "bigger";
+		return styles.wide;
 	}
 
-	return "main";
+	return styles.normal;
 };

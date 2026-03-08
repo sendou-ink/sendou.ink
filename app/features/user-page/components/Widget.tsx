@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Link2 as LinkIcon } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
@@ -8,7 +9,6 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { Image, StageImage, WeaponImage } from "~/components/Image";
 import { BskyIcon } from "~/components/icons/Bsky";
 import { DiscordIcon } from "~/components/icons/Discord";
-import { LinkIcon } from "~/components/icons/Link";
 import { TwitchIcon } from "~/components/icons/Twitch";
 import { YouTubeIcon } from "~/components/icons/YouTube";
 import { Markdown } from "~/components/Markdown";

@@ -42,6 +42,7 @@
 	"forms.info.tag": "",
 	"forms.errors.duplicateName": "יש כבר צוות בשם הזה",
 	"forms.errors.noOnlySpecialCharacters": "",
+	"forms.customTheme.header": "",
 	"roster.teamFull": "הצוות מלא",
 	"roster.inviteLink.header": "שיתוף קישור הזמנה להוספת חברי צוות",
 	"roster.members.header": "חברי צוות",

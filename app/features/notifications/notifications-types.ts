@@ -65,7 +65,8 @@ export type Notification =
 	| NotificationItem<"SCRIM_SCHEDULED", { id: number; at: number }>
 	| NotificationItem<"SCRIM_CANCELED", { id: number; at: number }>
 	| NotificationItem<"SCRIM_STARTING_SOON", { id: number; at: number }>
-	| NotificationItem<"COMMISSIONS_CLOSED", { discordId: string }>;
+	| NotificationItem<"COMMISSIONS_CLOSED", { discordId: string }>
+	| NotificationItem<"FRIEND_REQUEST_RECEIVED", { senderUsername: string }>;
 
 type NotificationItem<
 	T extends string,

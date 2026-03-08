@@ -215,5 +215,9 @@
 	"errors.profileInGameName": "",
 	"labels.pronoun": "",
 	"bottomTexts.profilePronouns": "",
-	"errors.profilePronounsBothOrNeither": ""
+	"errors.profilePronounsBothOrNeither": "",
+	"labels.friendUser": "",
+	"errors.cannotFriendSelf": "",
+	"errors.alreadyFriends": "",
+	"errors.friendRequestExists": ""
 }

@@ -1,0 +1,269 @@
+.searchButton {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding: 0 var(--s-3);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg);
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+	cursor: pointer;
+	height: var(--field-size-sm);
+	transition: background-color 0.15s;
+}
+
+.searchButton:hover {
+	background-color: var(--color-bg-high);
+}
+
+.searchButton:focus-visible {
+	outline: var(--focus-ring);
+	outline-offset: 1px;
+}
+
+.searchIcon {
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+}
+
+.searchPlaceholder {
+	flex-grow: 1;
+	text-align: left;
+}
+
+.searchKbd {
+	padding: 2px var(--s-1);
+	border-radius: var(--radius-field);
+	font-size: var(--font-2xs);
+	background-color: var(--color-bg-higher);
+	font-family: inherit;
+}
+
+.overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	background-color: rgba(0, 0, 0, 0.25);
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	backdrop-filter: blur(10px);
+	padding: var(--layout-main-padding);
+	padding-top: 15vh;
+}
+
+.overlay[data-entering] {
+	animation: fade-in 200ms ease-out;
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.modal {
+	width: 100%;
+	max-width: 32rem;
+	background-color: var(--color-bg);
+	border-radius: var(--radius-box);
+	box-shadow:
+		0 10px 15px -3px rgba(0, 0, 0, 0.1),
+		0 4px 6px -2px rgba(0, 0, 0, 0.05);
+	overflow: hidden;
+}
+
+.modal[data-entering] {
+	animation: zoom-in-95 200ms ease-out;
+}
+
+@keyframes zoom-in-95 {
+	from {
+		opacity: 0;
+		transform: scale(0.95);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+.dialog {
+	outline: none;
+}
+
+.input {
+	padding: var(--s-4);
+	border: none;
+	border-bottom: 1px solid var(--color-border);
+	border-radius: 0;
+	background: transparent;
+	font-size: var(--font-md);
+	color: var(--color-text);
+	height: auto;
+
+	& input::placeholder {
+		color: var(--color-text-high);
+	}
+
+	&:focus-within {
+		outline: none;
+	}
+}
+
+.inputIcon {
+	color: var(--color-text-high);
+	flex-shrink: 0;
+}
+
+.listBox {
+	max-height: 300px;
+	overflow-y: auto;
+	padding: var(--s-2);
+	outline: none;
+}
+
+.listBoxItem {
+	padding: var(--s-2) var(--s-3);
+	border-radius: var(--radius-field);
+	cursor: pointer;
+	font-size: var(--font-sm);
+	outline: none;
+}
+
+.listBoxItem[data-focused] {
+	background-color: var(--color-bg-high);
+}
+
+.listBoxItem[data-selected] {
+	background-color: var(--color-accent-low);
+}
+
+.searchTypeContainer {
+	padding: var(--s-4);
+	border-bottom: 1px solid var(--color-border);
+}
+
+.searchTypeRadioGroup {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-2);
+}
+
+.searchTypeRadioWrapper {
+	outline: none;
+}
+
+.searchTypeRadio {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	padding: var(--s-1) var(--s-2);
+	border-radius: var(--radius-field);
+	font-size: var(--font-xs);
+	cursor: pointer;
+	border: 1px solid var(--color-border);
+	background-color: var(--color-bg);
+	transition:
+		background-color 0.15s,
+		border-color 0.15s;
+
+	& picture,
+	& img {
+		flex-shrink: 0;
+	}
+}
+
+.searchTypeRadioSelected {
+	background-color: var(--color-accent-high);
+	color: var(--color-text-inverse);
+	border-color: transparent;
+}
+
+.searchTypeRadioHovered {
+	background-color: var(--color-bg-high);
+}
+
+.searchTypeRadioFocusVisible {
+	outline: var(--focus-ring);
+	outline-offset: 1px;
+}
+
+.resultItem {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.resultTexts {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.resultName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.resultSecondary {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.resultLogo {
+	border-radius: var(--radius-field);
+	object-fit: cover;
+}
+
+.emptyState {
+	padding: var(--s-8);
+	text-align: center;
+	color: var(--color-text-high);
+	font-size: var(--font-sm);
+}
+
+.weaponDestinationHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-3) var(--s-4);
+	border-bottom: 1px solid var(--color-border);
+}
+
+.backButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg);
+	color: var(--color-text-high);
+	cursor: pointer;
+	transition: background-color 0.15s;
+}
+
+.backButton:hover {
+	background-color: var(--color-bg-high);
+}
+
+.selectedWeaponName {
+	font-weight: var(--weight-semi);
+}
+
+@media screen and (max-width: 1000px) {
+	.searchKbd {
+		display: none;
+	}
+}

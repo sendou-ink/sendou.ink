@@ -1,0 +1,18 @@
+.badges {
+	width: max-content;
+	padding: var(--s-2);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-badge);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+}
+
+.dayLabel {
+	margin: 0;
+}
+
+.avatarPreview {
+	width: 124px;
+	height: 124px;
+	border-radius: var(--radius-avatar);
+}

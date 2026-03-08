@@ -1,0 +1,79 @@
+/* Currently ignored by Biome, can be unignored when https://github.com/biomejs/biome/pull/3251 lands */
+
+/* https://github.com/tldraw/tldraw/blob/2352985e949d14270fc89dc60144239c37c8ff91/packages/tldraw/src/hooks/useStylesheet.ts */
+@import url("https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Source+Code+Pro&family=Source+Sans+Pro&family=Crimson+Pro&display=block");
+@import url("tldraw/tldraw.css");
+
+@font-face {
+	font-family: "Recursive";
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url(https://fonts.gstatic.com/s/recursive/v23/8vI-7wMr0mhh-RQChyHEH06TlXhq_gukbYrFMk1QuAIcyEwG_X-dpEfaE5YaERmK-CImKsvxvU-MXGX2fSqasNfUlTGZnI14ZeY.woff2)
+		format("woff2");
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+		U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+		U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: "Recursive";
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url(https://fonts.gstatic.com/s/recursive/v23/8vI-7wMr0mhh-RQChyHEH06TlXhq_gukbYrFMk1QuAIcyEwG_X-dpEfaE5YaERmK-CImKsvxvU-MXGX2fSqasNfUlTGZnI14ZeY.woff2)
+		format("woff2");
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+		U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+		U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: "Recursive Mono";
+	font-style: normal;
+	font-weight: 420;
+	font-display: swap;
+	src: url(https://fonts.gstatic.com/s/recursive/v23/8vI-7wMr0mhh-RQChyHEH06TlXhq_gukbYrFMk1QuAIcyEwG_X-dpEfaE5YaERmK-CImqvTxvU-MXGX2fSqasNfUlTGZnI14ZeY.woff2)
+		format("woff2");
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+		U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+		U+FEFF, U+FFFD;
+}
+
+div {
+	box-shadow: none !important;
+}
+
+/* Hacky selector to hide sidebar and top nav */
+body:has(.planner) nav,
+body:has(.planner) header {
+	display: none !important;
+}
+
+/** Hacky selector to remove the help button on bottom left */
+.tlui-help-menu {
+	display: none;
+}
+
+#TD-MenuPanel {
+	display: none;
+}
+
+#pw-oop-bottom_rail {
+	display: none;
+}
+
+.tl-canvas {
+	background-color: var(--color-bg);
+}
+
+img[src$="?outline=red"] {
+	--outline-width: 0.1rem;
+	--outline-color: crimson;
+	filter: drop-shadow(0 0 var(--outline-width) var(--outline-color))
+		drop-shadow(0 0 var(--outline-width) var(--outline-color))
+		drop-shadow(0 0 var(--outline-width) var(--outline-color));
+}

@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
-import { SendouButton } from "~/components/elements/Button";
 import {
 	SendouTab,
 	SendouTabList,
@@ -18,12 +17,9 @@ import { BSKYReplyIcon } from "~/components/icons/BSKYReply";
 import { BSKYRepostIcon } from "~/components/icons/BSKYRepost";
 import { ExternalIcon } from "~/components/icons/External";
 import { KeyIcon } from "~/components/icons/Key";
-import { LogOutIcon } from "~/components/icons/LogOut";
 import { SearchIcon } from "~/components/icons/Search";
 import { UsersIcon } from "~/components/icons/Users";
-import { navItems } from "~/components/layout/nav-items";
 import { Main } from "~/components/Main";
-import { useUser } from "~/features/auth/core/user";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import { TournamentCard } from "~/features/calendar/components/TournamentCard";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
@@ -35,7 +31,6 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BLANK_IMAGE_URL,
 	CALENDAR_TOURNAMENTS_PAGE,
-	LOG_OUT_URL,
 	LUTI_PAGE,
 	leaderboardsPage,
 	navIconUrl,
@@ -54,53 +49,11 @@ export default function FrontPage() {
 	return (
 		<Main className={styles.frontPageContainer}>
 			<LeagueBanner />
-			<DesktopSideNav />
 			<SeasonBanner />
 			<TournamentCards />
 			<ResultHighlights />
 			<ChangelogList />
 		</Main>
-	);
-}
-
-function DesktopSideNav() {
-	const user = useUser();
-	const { t } = useTranslation(["common"]);
-
-	return (
-		<nav className={styles.frontPageSideNav}>
-			{navItems.map((item) => {
-				return (
-					<Link
-						to={`/${item.url}`}
-						key={item.name}
-						prefetch={item.prefetch ? "render" : undefined}
-						className={styles.frontPageSideNavItem}
-					>
-						<Image
-							path={navIconUrl(item.name)}
-							height={20}
-							width={20}
-							alt={item.name}
-						/>
-						{<div>{t(`common:pages.${item.name}` as any)}</div>}
-					</Link>
-				);
-			})}
-			{user ? (
-				<form method="post" action={LOG_OUT_URL}>
-					<SendouButton
-						size="small"
-						variant="minimal"
-						icon={<LogOutIcon />}
-						type="submit"
-						className={styles.frontPageSideNavLogOut}
-					>
-						{t("common:header.logout")}
-					</SendouButton>
-				</form>
-			) : null}
-		</nav>
 	);
 }
 
@@ -228,13 +181,14 @@ function ShowcaseTournamentScroller({
 }) {
 	return (
 		<div className={styles.tournamentCards}>
-			<div className={clsx(styles.tournamentCardsSpacer, "overflow-x-scroll")}>
+			<div
+				className={clsx(
+					styles.tournamentCardsSpacer,
+					"overflow-x-scroll scrollbar",
+				)}
+			>
 				{tournaments.map((tournament) => (
-					<TournamentCard
-						key={tournament.id}
-						tournament={tournament}
-						className="mt-4"
-					/>
+					<TournamentCard key={tournament.id} tournament={tournament} />
 				))}
 			</div>
 			<AllTournamentsLinkCard />
@@ -248,7 +202,7 @@ function AllTournamentsLinkCard() {
 	return (
 		<Link
 			to={CALENDAR_TOURNAMENTS_PAGE}
-			className={clsx(styles.tournamentCardsViewAllCard, "mt-4")}
+			className={styles.tournamentCardsViewAllCard}
 		>
 			<Image path={navIconUrl("medal")} size={36} alt="" />
 			{t("front:showcase.viewAll")}
@@ -295,7 +249,9 @@ function ResultHighlights() {
 
 	return (
 		<>
-			<div className={clsx(styles.resultHighlights, "overflow-x-auto")}>
+			<div
+				className={clsx(styles.resultHighlights, "overflow-x-auto scrollbar")}
+			>
 				<div className="stack sm text-center">
 					<h2 className={styles.resultHighlightsTitle}>
 						{t("front:leaderboards.topPlayers")}
@@ -324,7 +280,9 @@ function ResultHighlights() {
 					{recentResults}
 				</div>
 			</div>
-			<div className={clsx(styles.resultHighlights, "overflow-x-auto")}>
+			<div
+				className={clsx(styles.resultHighlights, "overflow-x-auto scrollbar")}
+			>
 				<div className="stack sm text-center desktop-hidden">
 					{recentResults}
 				</div>

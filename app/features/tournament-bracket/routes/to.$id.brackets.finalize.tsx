@@ -229,7 +229,6 @@ function NewBadgeReceiversSelector({
 												badgeId: badge.id,
 												userId: member.userId,
 											})}
-											size="small"
 										/>
 										<Avatar user={member} size="xxs" className="mr-2" />
 										{member.username}

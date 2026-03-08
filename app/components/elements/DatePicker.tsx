@@ -1,3 +1,4 @@
+import { Calendar } from "lucide-react";
 import {
 	Button,
 	DateInput,
@@ -12,7 +13,7 @@ import {
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouCalendar } from "~/components/elements/Calendar";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import { CalendarIcon } from "../icons/Calendar";
+import styles from "./DatePicker.module.css";
 import { SendouLabel } from "./Label";
 
 interface SendouDatePickerProps<T extends DateValue>
@@ -51,14 +52,17 @@ export function SendouDatePicker<T extends DateValue>({
 		<ReactAriaDatePicker
 			{...rest}
 			validationBehavior="aria"
-			aria-label={label}
-			isInvalid={!!errorText}
+			className={styles.root}
 		>
 			<SendouLabel required={isRequired}>{label}</SendouLabel>
-			<Group className="react-aria-Group">
-				<DateInput>{(segment) => <DateSegment segment={segment} />}</DateInput>
-				<Button data-testid="open-calendar-button">
-					<CalendarIcon />
+			<Group className={styles.group}>
+				<DateInput className={styles.dateInput}>
+					{(segment) => (
+						<DateSegment segment={segment} className={styles.segment} />
+					)}
+				</DateInput>
+				<Button data-testid="open-calendar-button" className={styles.button}>
+					<Calendar className={styles.icon} />
 				</Button>
 			</Group>
 			<SendouBottomTexts

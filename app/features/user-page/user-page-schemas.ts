@@ -35,7 +35,6 @@ import {
 } from "~/utils/zod";
 import { allWidgetsFlat, findWidgetById } from "./core/widgets/portfolio";
 import {
-	CUSTOM_CSS_VAR_COLORS,
 	HIGHLIGHT_CHECKBOX_NAME,
 	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
 	IN_GAME_NAME_REGEXP,
@@ -53,21 +52,6 @@ export const seasonsSearchParamsSchema = z.object({
 		.refine((nth) => !nth || Seasons.allStarted(new Date()).includes(nth)),
 });
 
-const cssObjectSchema = z
-	.record(z.string(), z.string())
-	.nullable()
-	.refine(
-		(val) => {
-			if (!val) return true;
-			for (const [key, value] of Object.entries(val)) {
-				if (!CUSTOM_CSS_VAR_COLORS.includes(key as never)) return false;
-				if (!/^#(?:[0-9a-fA-F]{3}){1,2}[0-9]{0,2}$/.test(value)) return false;
-			}
-			return true;
-		},
-		{ message: "Invalid custom CSS colors" },
-	);
-
 const SENS_ITEMS = [
 	-50, -45, -40, -35, -30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 35,
 	40, 45, 50,
@@ -77,7 +61,6 @@ const SENS_ITEMS = [
 }));
 
 export const userEditProfileBaseSchema = z.object({
-	css: customField({ initialValue: null }, cssObjectSchema),
 	customName: textFieldOptional({
 		label: "labels.profileCustomName",
 		bottomText: "bottomTexts.profileCustomName",

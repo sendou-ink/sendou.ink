@@ -145,9 +145,9 @@ export const usersListForPost = async ({
 };
 
 async function validatePickup(userIds: number[], authorId: number) {
-	const trustError = await validatePickupTrust(userIds, authorId);
-	if (trustError) {
-		return trustError;
+	const friendsError = await validatePickupFriends(userIds, authorId);
+	if (friendsError) {
+		return friendsError;
 	}
 
 	const unbannedError = await validatePickupAllUnbanned(userIds);
@@ -158,10 +158,10 @@ async function validatePickup(userIds: number[], authorId: number) {
 	return null;
 }
 
-async function validatePickupTrust(userIds: number[], authorId: number) {
+async function validatePickupFriends(userIds: number[], authorId: number) {
 	const unconsentingUsers: string[] = [];
 
-	const trustedBy = await SQGroupRepository.usersThatTrusted(authorId);
+	const friendsData = await SQGroupRepository.friendsAndTeammates(authorId);
 
 	for (const userId of userIds) {
 		const user = await UserRepository.findLeanById(userId);
@@ -169,7 +169,7 @@ async function validatePickupTrust(userIds: number[], authorId: number) {
 
 		if (
 			user.preferences?.disallowScrimPickupsFromUntrusted &&
-			!trustedBy.trusters.some((truster) => truster.id === userId)
+			!friendsData.friends.some((friend) => friend.id === userId)
 		) {
 			unconsentingUsers.push(user.username);
 		}
@@ -178,7 +178,7 @@ async function validatePickupTrust(userIds: number[], authorId: number) {
 	return unconsentingUsers.length === 0
 		? null
 		: {
-				error: `Following users don't allow untrusted to add: ${unconsentingUsers.join(", ")}. Ask them to add you to their trusted list.`,
+				error: `Following users don't allow non-friends to add: ${unconsentingUsers.join(", ")}. Ask them to add you as a friend.`,
 			};
 }
 

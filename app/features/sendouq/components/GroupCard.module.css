@@ -1,17 +1,17 @@
 .group {
-	background-color: var(--bg-lighter-solid);
+	background-color: var(--color-bg-high);
 	width: 100%;
-	border-radius: var(--rounded);
-	padding: var(--s-2-5);
+	border-radius: var(--radius-box);
+	padding: var(--s-3);
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-4);
 	position: relative;
-	color: var(--text);
+	color: var(--color-text);
 }
 
 .noScreen {
-	background-color: var(--theme-error-transparent);
+	background-color: var(--color-error-low);
 	border-radius: 100%;
 	padding: var(--s-1);
 	width: 30px;
@@ -24,11 +24,11 @@
 	display: flex;
 	gap: var(--s-2);
 	align-items: center;
-	background-color: var(--bg-darker);
-	border-radius: var(--rounded);
-	font-size: var(--fonts-xsm);
-	font-weight: var(--semi-bold);
-	padding-inline-end: var(--s-2-5);
+	background-color: var(--color-bg);
+	border-radius: var(--radius-field);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	padding-inline-end: var(--s-3);
 }
 
 .name {
@@ -36,8 +36,8 @@
 	text-overflow: ellipsis;
 	overflow: hidden;
 	max-width: 7.5rem;
-	font-size: var(--fonts-xs);
-	color: var(--text);
+	font-size: var(--font-xs);
+	color: var(--color-text);
 }
 
 .avatar {
@@ -45,15 +45,15 @@
 }
 
 .avatarPositive {
-	outline: 2px solid var(--theme-success-transparent);
+	outline: 2px solid var(--color-success-low);
 }
 
 .avatarNeutral {
-	outline: 2px solid var(--theme-warning-transparent);
+	outline: 2px solid var(--color-warning-low);
 }
 
 .avatarNegative {
-	outline: 2px solid var(--theme-error-transparent);
+	outline: 2px solid var(--color-error-low);
 }
 
 .tier {
@@ -65,50 +65,53 @@
 }
 
 .extraInfo {
-	font-size: var(--fonts-xs);
-	background-color: var(--bg-darker);
-	border-radius: var(--rounded);
-	padding: var(--s-0-5) var(--s-1-5);
+	font-size: var(--font-xs);
+	background-color: var(--color-bg);
+	border-radius: var(--radius-selector);
+	padding: 0 var(--s-1-5);
 	width: max-content;
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
-	font-weight: var(--semi-bold);
-	min-height: 24px;
+	font-weight: var(--weight-semi);
+	height: var(--selector-size);
+
+	& img {
+		height: 24px;
+		width: 24px;
+	}
 }
 
 .extraInfoButton {
-	font-size: var(--fonts-xs);
-	background-color: var(--bg-darker);
-	border-radius: var(--rounded);
+	font-size: var(--font-xs);
+	background-color: var(--color-bg);
+	border-radius: var(--radius-box);
 	padding: var(--s-0-5) var(--s-1-5);
 	width: max-content;
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
-	font-weight: var(--semi-bold);
-	color: var(--text);
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
 	border: none;
-	min-height: 24px;
+	height: 24px;
 }
 
 .addNoteButton {
 	border: none;
 	padding: 0 var(--s-1-5);
-	color: var(--body);
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
-	background-color: var(--bg-darker);
+	color: var(--color-text-accent);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	background-color: var(--color-bg);
 	white-space: nowrap;
-}
-
-.addNoteButtonEdit > svg {
-	color: var(--theme);
+	height: 100%;
+	border-radius: var(--radius-selector);
 }
 
 .addNoteButton > svg {
-	width: 14px;
-	margin-inline-end: var(--s-1);
+	width: 18px;
+	height: 18px;
 }
 
 .noteTextarea {
@@ -117,7 +120,7 @@
 
 .futureMatchMode {
 	border-radius: 100%;
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg);
 	height: 30px;
 	width: 30px;
 	display: grid;
@@ -127,18 +130,20 @@
 
 .vcIcon {
 	height: 15px;
-	stroke-width: 2;
 }
 
 .star {
 	min-width: 18px;
 	max-width: 18px;
-	color: var(--theme-secondary);
-	stroke-width: 2;
+	color: var(--color-text-accent);
+}
+
+.starFilled {
+	fill: var(--color-text-accent);
 }
 
 .starInactive {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .displayTier {
@@ -146,11 +151,11 @@
 	gap: var(--s-1);
 	align-items: center;
 	position: absolute;
-	border-radius: var(--rounded);
-	background-color: var(--bg-darker);
-	padding: var(--s-0-5) var(--s-2-5);
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg);
+	padding: var(--s-0-5) var(--s-3);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	bottom: -36px;
 	left: 50%;
 	transform: translate(-50%, -50%);
@@ -158,12 +163,12 @@
 
 .popoverButton {
 	background-color: transparent;
-	color: var(--text-lighter);
-	font-size: var(--fonts-xs);
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
 	padding: 0;
 	border: none;
 	text-decoration: underline;
 	text-decoration-style: dotted;
-	font-weight: var(--bold);
+	font-weight: var(--weight-bold);
 	height: 19.8281px;
 }

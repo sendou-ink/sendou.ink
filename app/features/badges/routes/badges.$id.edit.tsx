@@ -1,13 +1,14 @@
+import { Trash } from "lucide-react";
 import * as React from "react";
 import { Form, useMatches, useOutletContext } from "react-router";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { UserSearch } from "~/components/elements/UserSearch";
-import { TrashIcon } from "~/components/icons/Trash";
 import type { Tables } from "~/db/tables";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { action } from "../actions/badges.$id.edit.server";
+import styles from "../badges.module.css";
 import type { BadgeDetailsLoaderData } from "../loaders/badges.$id.server";
 import type { BadgeDetailsContext } from "./badges.$id";
 export { action };
@@ -36,9 +37,9 @@ export default function EditBadgePage() {
 }
 
 function Managers({ data }: { data: BadgeDetailsLoaderData }) {
-	const [managers, setManagers] = React.useState<
-		Array<{ id: number; username: string }>
-	>(data.badge.managers);
+	const [managers, setManagers] = React.useState(
+		data.badge.managers.map((m) => ({ id: m.id, name: m.username })),
+	);
 
 	const amountOfChanges = managers
 		.filter((m) => !data.badge.managers.some((om) => om.id === m.id))
@@ -54,7 +55,7 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 	return (
 		<div className="stack md mx-auto">
 			<div className="stack sm">
-				<h3 className="badges-edit__small-header">Managers</h3>
+				<h3 className={styles.editSmallHeader}>Managers</h3>
 				<UserSearch
 					key={managers.map((m) => m.id).join("-")}
 					label="Add new manager"
@@ -69,12 +70,14 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 						setManagers([...managers, user]);
 					}}
 				/>
-				<ul className="badges-edit__users-list">
+				<ul className={styles.editUsersList}>
 					{managers.map((manager) => (
 						<li key={manager.id}>
-							{manager.username}
+							{manager.name}
 							<SendouButton
-								icon={<TrashIcon />}
+								shape="circle"
+								size="small"
+								icon={<Trash />}
 								variant="minimal-destructive"
 								aria-label="Delete badge manager"
 								onPress={() =>
@@ -112,16 +115,28 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 }
 
 function Owners({ data }: { data: BadgeDetailsLoaderData }) {
-	const [owners, setOwners] = React.useState(data.badge.owners);
+	const initialOwners = data.badge.owners.map((o) => ({
+		id: o.id,
+		name: o.username,
+		discordId: o.discordId,
+		count: o.count,
+	}));
+	const [owners, setOwners] =
+		React.useState<
+			Array<{ id: number; name: string; discordId: string; count: number }>
+		>(initialOwners);
 
-	const ownerDifferences = getOwnerDifferences(owners, data.badge.owners);
+	const ownerDifferences = getOwnerDifferences(
+		owners.map((o) => ({ ...o, username: o.name })),
+		data.badge.owners,
+	);
 
 	const userInputKey = owners.map((o) => `${o.id}-${o.count}`).join("-");
 
 	return (
 		<div className="stack md mx-auto">
 			<div className="stack sm">
-				<h3 className="badges-edit__small-header">Owners</h3>
+				<h3 className={styles.editSmallHeader}>Owners</h3>
 				<UserSearch
 					label="Add new owner"
 					className="text-center mx-auto"
@@ -143,12 +158,12 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 					}}
 				/>
 			</div>
-			<ul className="badges-edit__users-list">
+			<ul className={styles.editUsersList}>
 				{owners.map((owner) => (
 					<li key={owner.id}>
-						{owner.username}
+						{owner.name}
 						<input
-							className="badges-edit__number-input"
+							className={styles.editNumberInput}
 							type="number"
 							value={owner.count}
 							min={0}
@@ -167,7 +182,7 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 				))}
 			</ul>
 			{ownerDifferences.length > 0 ? (
-				<ul className="badges-edit__differences">
+				<ul className={styles.editDifferences}>
 					{ownerDifferences.map((o) => (
 						<li key={o.id}>
 							{o.type === "added" ? (

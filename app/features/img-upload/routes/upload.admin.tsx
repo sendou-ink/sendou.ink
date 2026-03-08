@@ -1,8 +1,8 @@
+import { Trash } from "lucide-react";
 import * as React from "react";
 import { Form, Link, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { TrashIcon } from "~/components/icons/Trash";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 
@@ -48,7 +48,7 @@ function ImageValidator() {
 									]}
 								>
 									<SendouButton
-										icon={<TrashIcon />}
+										icon={<Trash />}
 										variant="minimal-destructive"
 										size="medium"
 									/>

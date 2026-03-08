@@ -1,3 +1,4 @@
+import { Link as LinkIcon, Lock, LogOut, SquarePen, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData, useSearchParams } from "react-router";
@@ -13,11 +14,6 @@ import {
 } from "~/components/elements/Tabs";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image } from "~/components/Image";
-import { EditIcon } from "~/components/icons/Edit";
-import { LinkIcon } from "~/components/icons/Link";
-import { LockIcon } from "~/components/icons/Lock";
-import { LogOutIcon } from "~/components/icons/LogOut";
-import { UsersIcon } from "~/components/icons/Users";
 import { Main } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
@@ -44,11 +40,10 @@ import { action } from "../actions/org.$slug.server";
 import { EventCalendar } from "../components/EventCalendar";
 import { SocialLinksList } from "../components/SocialLinksList";
 import { loader } from "../loaders/org.$slug.server";
+import styles from "../tournament-organization.module.css";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "../tournament-organization-constants";
 import { updateIsEstablishedSchema } from "../tournament-organization-schemas";
 export { action, loader };
-
-import "../tournament-organization.css";
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.data) return [];
@@ -82,7 +77,6 @@ export const handle: SendouRouteHandle = {
 						}),
 						type: "IMAGE",
 						text: data.organization.name,
-						rounded: true,
 					}
 				: {
 						type: "TEXT",
@@ -137,7 +131,7 @@ function LogoHeader() {
 						{canEditOrganization ? (
 							<LinkButton
 								to={tournamentOrganizationEditPage(data.organization.slug)}
-								icon={<EditIcon />}
+								icon={<SquarePen />}
 								size="small"
 								variant="outlined"
 								testId="edit-org-button"
@@ -151,7 +145,7 @@ function LogoHeader() {
 									showHeading={false}
 									trigger={
 										<SendouButton
-											icon={<LogOutIcon />}
+											icon={<LogOut />}
 											size="small"
 											variant="destructive"
 										>
@@ -170,7 +164,7 @@ function LogoHeader() {
 									submitButtonText={t("org:leave.action")}
 								>
 									<SendouButton
-										icon={<LogOutIcon />}
+										icon={<LogOut />}
 										size="small"
 										variant="destructive"
 									>
@@ -206,7 +200,7 @@ function InfoTabs() {
 					<SendouTab id="socials" isDisabled={!hasSocials} icon={<LinkIcon />}>
 						{t("org:edit.form.socialLinks.title")}
 					</SendouTab>
-					<SendouTab id="members" icon={<UsersIcon />}>
+					<SendouTab id="members" icon={<Users />}>
 						{t("org:edit.form.members.title")}
 					</SendouTab>
 					<SendouTab
@@ -219,14 +213,14 @@ function InfoTabs() {
 					{canBanPlayers && data.bannedUsers ? (
 						<SendouTab
 							id="banned-users"
-							icon={<LockIcon />}
+							icon={<Lock />}
 							data-testid="banned-users-tab"
 						>
 							{t("org:banned.title")}
 						</SendouTab>
 					) : null}
 					{isAdmin ? (
-						<SendouTab id="admin" icon={<LockIcon />}>
+						<SendouTab id="admin" icon={<Lock />}>
 							Admin
 						</SendouTab>
 					) : null}
@@ -313,7 +307,7 @@ function AllTournamentsView() {
 	const data = useLoaderData<typeof loader>();
 
 	return (
-		<div className="org__events-container">
+		<div className={styles.eventsContainer}>
 			<EventCalendar
 				month={data.month}
 				year={data.year}
@@ -495,7 +489,7 @@ function EventsList({
 }
 
 function SectionDivider({ children }: { children: React.ReactNode }) {
-	return <div className="org__section-divider">{children}</div>;
+	return <div className={styles.sectionDivider}>{children}</div>;
 }
 
 function EventInfo({
@@ -515,14 +509,14 @@ function EventInfo({
 						? tournamentPage(event.tournamentId)
 						: calendarEventPage(event.eventId)
 				}
-				className="org__event-info"
+				className={styles.eventInfo}
 			>
 				{event.logoUrl ? (
 					<img src={event.logoUrl} alt={event.name} width={38} height={38} />
 				) : null}
 				<div>
-					<div className="org__event-info__name">{event.name}</div>
-					<time className="org__event-info__time" suppressHydrationWarning>
+					<div>{event.name}</div>
+					<time className={styles.eventInfoTime} suppressHydrationWarning>
 						{formatDateTime(databaseTimestampToDate(event.startTime), {
 							day: "numeric",
 							month: "numeric",
@@ -618,7 +612,7 @@ function EventLeaderboard({
 		<div className="stack md">
 			{ownEntry ? (
 				<>
-					<ol className="org__leaderboard-list" start={ownEntry.placement}>
+					<ol className={styles.leaderboardList} start={ownEntry.placement}>
 						<li>
 							<EventLeaderboardRow entry={ownEntry.entry} />
 						</li>
@@ -626,7 +620,7 @@ function EventLeaderboard({
 					<Divider />
 				</>
 			) : null}
-			<ol className="org__leaderboard-list">
+			<ol className={styles.leaderboardList}>
 				{leaderboard.map((entry) => (
 					<li key={entry.user.discordId}>
 						<EventLeaderboardRow entry={entry} />
@@ -645,7 +639,7 @@ function EventLeaderboardRow({
 	>[number];
 }) {
 	return (
-		<div className="org__leaderboard-list__row">
+		<div className={styles.leaderboardListRow}>
 			<Link
 				to={userPage(entry.user)}
 				className="stack horizontal sm items-center font-semi-bold text-main-forced"

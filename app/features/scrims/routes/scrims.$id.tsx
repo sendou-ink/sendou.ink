@@ -7,8 +7,6 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Image } from "~/components/Image";
-import { AlertIcon } from "~/components/icons/Alert";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import TimePopover from "~/components/TimePopover";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { cancelScrimSchema } from "~/features/scrims/scrims-schemas";
@@ -23,6 +21,7 @@ import { Main } from "../../../components/Main";
 import { databaseTimestampToDate } from "../../../utils/dates";
 import { logger } from "../../../utils/logger";
 import {
+	BLANK_IMAGE_URL,
 	mapsPageWithMapPool,
 	navIconUrl,
 	scrimsPage,
@@ -37,6 +36,8 @@ import { loader } from "../loaders/scrims.$id.server";
 import type { ScrimPost, ScrimPost as ScrimPostType } from "../scrims-types";
 import styles from "./scrims.$id.module.css";
 export { loader, action };
+
+import { Check, OctagonAlert } from "lucide-react";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["scrims", "q"],
@@ -177,9 +178,7 @@ function GroupCard({
 						to={teamPage(group.team.customUrl)}
 						className="stack horizontal items-center xs font-bold text-xs"
 					>
-						{group.team.avatarUrl ? (
-							<Avatar url={group.team.avatarUrl} size="xxs" />
-						) : null}
+						<Avatar url={group.team.avatarUrl ?? BLANK_IMAGE_URL} size="xxs" />
 						{group.team.name}
 					</Link>
 				) : null}
@@ -228,11 +227,7 @@ function ScreenBanIndicator() {
 									alt={t(`weapons:SPECIAL_${SPLATTERCOLOR_SCREEN_ID}`)}
 								/>
 								<div className={styles.screenBanIconOverlay}>
-									{data.anyUserPrefersNoScreen ? (
-										<AlertIcon />
-									) : (
-										<CheckmarkIcon />
-									)}
+									{data.anyUserPrefersNoScreen ? <OctagonAlert /> : <Check />}
 								</div>
 							</div>
 						</SendouButton>

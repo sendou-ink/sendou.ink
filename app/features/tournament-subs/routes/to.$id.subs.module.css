@@ -16,10 +16,10 @@
 		"weapon-top-text weapon-top-images"
 		"weapon-bottom-text weapon-bottom-images"
 		"message message";
-	border-radius: var(--rounded);
-	background-color: var(--bg-lighter);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
 	padding: var(--s-4);
-	column-gap: var(--s-2-5);
+	column-gap: var(--s-3);
 }
 
 .sectionAvatar {
@@ -34,9 +34,9 @@
 
 .sectionInfo {
 	grid-area: info;
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	gap: var(--s-2);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	display: flex;
 	height: 32px;
 	white-space: nowrap;
@@ -55,14 +55,14 @@
 
 .sectionMessage {
 	grid-area: message;
-	font-size: var(--fonts-sm);
+	font-size: var(--font-sm);
 	padding-block-start: var(--s-4);
 	white-space: pre-wrap;
 }
 
 .sectionWeaponText {
-	font-weight: var(--semi-bold);
-	font-size: var(--fonts-xs);
+	font-weight: var(--weight-semi);
+	font-size: var(--font-xs);
 	align-self: center;
 }
 

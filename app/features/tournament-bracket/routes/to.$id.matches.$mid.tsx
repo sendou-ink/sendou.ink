@@ -1,8 +1,8 @@
 import clsx from "clsx";
+import { ArrowLeft } from "lucide-react";
 import * as React from "react";
 import { Form, useLoaderData, useRevalidator } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
-import { ArrowLongLeftIcon } from "~/components/icons/ArrowLongLeft";
 import { containerClassName } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
@@ -28,7 +28,8 @@ import {
 } from "../tournament-bracket-utils";
 export { action, loader };
 
-import "../tournament-bracket.css";
+import tournamentStyles from "../../tournament/tournament.module.css";
+import styles from "../tournament-bracket.module.css";
 
 export default function TournamentMatchPage() {
 	const user = useUser();
@@ -93,7 +94,7 @@ export default function TournamentMatchPage() {
 						variant="outlined"
 						size="small"
 						className="w-max"
-						icon={<ArrowLongLeftIcon />}
+						icon={<ArrowLeft />}
 						testId="back-to-bracket-button"
 					>
 						Back to bracket
@@ -172,12 +173,12 @@ function BeforeMatchChat() {
 	}, [data.match.chatCode]);
 
 	return (
-		<div className="tournament__action-section mt-6">
+		<div className={clsx(tournamentStyles.actionSection, "mt-6")}>
 			<ConnectedChat
 				rooms={rooms}
 				users={chatUsers}
-				className="tournament__chat-container"
-				messagesContainerClassName="tournament__chat-messages-container"
+				className={tournamentStyles.chatContainer}
+				messagesContainerClassName={tournamentStyles.chatMessagesContainer}
 				missingUserName="???"
 			/>
 		</div>
@@ -398,8 +399,8 @@ function EndedEarlyMessage() {
 			: null;
 
 	return (
-		<div className="tournament-bracket__during-match-actions">
-			<div className="tournament-bracket__locked-banner tournament-bracket__locked-banner__lonely">
+		<div className={styles.duringMatchActions}>
+			<div className={clsx(styles.lockedBanner, styles.lockedBannerLonely)}>
 				<div className="stack sm items-center">
 					<div className="text-lg text-center font-bold">Match ended early</div>
 					{winnerTeam ? (
@@ -414,11 +415,7 @@ function EndedEarlyMessage() {
 				{tournament.isOrganizer(user) &&
 				tournament.matchCanBeReopened(data.match.id) ? (
 					<Form method="post" className="contents">
-						<SubmitButton
-							_action="REOPEN_MATCH"
-							className="tournament-bracket__stage-banner__undo-button"
-							testId="reopen-match-button"
-						>
+						<SubmitButton _action="REOPEN_MATCH" testId="reopen-match-button">
 							Reopen match
 						</SubmitButton>
 					</Form>

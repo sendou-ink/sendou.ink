@@ -1,3 +1,4 @@
+import { ArrowDownNarrowWide, Lock, LockOpen, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData, useMatches } from "react-router";
@@ -8,10 +9,6 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { FormMessage } from "~/components/FormMessage";
 import { Image, WeaponImage } from "~/components/Image";
-import { LockIcon } from "~/components/icons/Lock";
-import { SortIcon } from "~/components/icons/Sort";
-import { TrashIcon } from "~/components/icons/Trash";
-import { UnlockIcon } from "~/components/icons/Unlock";
 import { SubmitButton } from "~/components/SubmitButton";
 import { BUILD_SORT_IDENTIFIERS, type BuildSort } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
@@ -30,6 +27,7 @@ import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import { DEFAULT_BUILD_SORT } from "../user-page-constants";
 export { loader, action };
 
+import userStyles from "../user-page.module.css";
 import styles from "./u.$identifier.builds.module.css";
 
 export const handle: SendouRouteHandle = {
@@ -89,7 +87,7 @@ export default function UserBuildsPage() {
 							onPress={() => setChangingSorting(true)}
 							size="small"
 							variant="outlined"
-							icon={<SortIcon />}
+							icon={<ArrowDownNarrowWide />}
 							data-testid="change-sorting-button"
 						>
 							{t("user:builds.sorting.changeButton")}
@@ -145,7 +143,7 @@ function BuildsFilters({
 				onPress={() => setWeaponFilter("ALL")}
 				variant={weaponFilter === "ALL" ? undefined : "outlined"}
 				size="small"
-				className="u__build-filter-button"
+				className={userStyles.buildFilterButton}
 			>
 				{t("builds:stats.all")} ({data.builds.length})
 			</SendouButton>
@@ -155,8 +153,8 @@ function BuildsFilters({
 						onPress={() => setWeaponFilter("PUBLIC")}
 						variant={weaponFilter === "PUBLIC" ? undefined : "outlined"}
 						size="small"
-						className="u__build-filter-button"
-						icon={<UnlockIcon />}
+						className={userStyles.buildFilterButton}
+						icon={<LockOpen />}
 					>
 						{t("builds:stats.public")} ({publicBuildsCount})
 					</SendouButton>
@@ -164,8 +162,8 @@ function BuildsFilters({
 						onPress={() => setWeaponFilter("PRIVATE")}
 						variant={weaponFilter === "PRIVATE" ? undefined : "outlined"}
 						size="small"
-						className="u__build-filter-button"
-						icon={<LockIcon />}
+						className={userStyles.buildFilterButton}
+						icon={<Lock />}
 					>
 						{t("builds:stats.private")} ({privateBuildsCount})
 					</SendouButton>
@@ -261,14 +259,18 @@ function ChangeSortingDialog({ close }: { close: () => void }) {
 							}
 
 							return (
-								<div key={i} className="stack horizontal justify-between">
+								<div
+									key={i}
+									className="stack horizontal justify-between items-center"
+								>
 									<div className="font-bold">
 										{i + 1}) {t(`user:builds.sorting.${sort!}`)}
 									</div>
 									{(isLast && !canAddMoreSorting) ||
 									(canAddMoreSorting && isSecondToLast) ? (
 										<SendouButton
-											icon={<TrashIcon />}
+											size="small"
+											icon={<Trash />}
 											variant="minimal-destructive"
 											onPress={deleteLastSorting}
 										/>
@@ -341,7 +343,7 @@ function WeaponFilterMenu({
 				<SendouButton
 					variant={typeof weaponFilter === "number" ? undefined : "outlined"}
 					size="small"
-					className="u__build-filter-button"
+					className={userStyles.buildFilterButton}
 				>
 					<Image
 						path={weaponCategoryUrl("SHOOTERS")}

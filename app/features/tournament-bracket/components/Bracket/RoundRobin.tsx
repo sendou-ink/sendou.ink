@@ -1,6 +1,7 @@
 import type { Match as MatchType } from "~/modules/brackets-model";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { groupNumberToLetters } from "../../tournament-bracket-utils";
+import styles from "./bracket.module.css";
 import { Match } from "./Match";
 import { PlacementsTable } from "./PlacementsTable";
 import { RoundHeader } from "./RoundHeader";
@@ -31,7 +32,7 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 					<div key={groupName} className="stack lg ml-6">
 						<h2 className="text-lg">{groupName}</h2>
 						<div
-							className="elim-bracket__container"
+							className={styles.elimContainer}
 							style={{ "--round-count": rounds.length }}
 						>
 							{rounds.flatMap((round) => {
@@ -50,7 +51,7 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 								);
 
 								return (
-									<div key={round.id} className="elim-bracket__round-column">
+									<div key={round.id} className={styles.elimRoundColumn}>
 										<RoundHeader
 											roundId={round.id}
 											name={`Round ${round.number}`}
@@ -58,7 +59,7 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 											showInfos={someMatchOngoing}
 											maps={round.maps}
 										/>
-										<div className="elim-bracket__round-matches-container">
+										<div className={styles.elimRoundMatchesContainer}>
 											{matches.map((match) => {
 												if (!match.opponent1 || !match.opponent2) {
 													return null;

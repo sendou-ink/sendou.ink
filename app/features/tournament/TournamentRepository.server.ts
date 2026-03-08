@@ -1,3 +1,4 @@
+import { sub } from "date-fns";
 import { type Insertable, type NotNull, sql, type Transaction } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
@@ -19,7 +20,7 @@ import {
 	COMMON_USER_FIELDS,
 	concatUserSubmittedImagePrefix,
 	tournamentLogoWithDefault,
-	userChatNameColor,
+	userChatNameHue,
 } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 import type { TournamentTierNumber } from "./core/tiering";
@@ -85,7 +86,7 @@ export async function findById(id: number) {
 									"TournamentOrganizationMember.userId",
 									"TournamentOrganizationMember.role",
 									...COMMON_USER_FIELDS,
-									userChatNameColor,
+									userChatNameHue,
 									"User.pronouns",
 								])
 								.whereRef(
@@ -105,7 +106,7 @@ export async function findById(id: number) {
 			jsonObjectFrom(
 				eb
 					.selectFrom("User")
-					.select([...COMMON_USER_FIELDS, userChatNameColor, "User.pronouns"])
+					.select([...COMMON_USER_FIELDS, userChatNameHue, "User.pronouns"])
 					.whereRef("User.id", "=", "CalendarEvent.authorId"),
 			).as("author"),
 			jsonArrayFrom(
@@ -114,7 +115,7 @@ export async function findById(id: number) {
 					.innerJoin("User", "TournamentStaff.userId", "User.id")
 					.select([
 						...COMMON_USER_FIELDS,
-						userChatNameColor,
+						userChatNameHue,
 						"User.pronouns",
 						"TournamentStaff.role",
 					])
@@ -1251,4 +1252,42 @@ export function updateTournamentTier({
 		.set({ tier })
 		.where("id", "=", tournamentId)
 		.execute();
+}
+
+export async function findRunningTournamentIds() {
+	const now = new Date();
+	const oneDayAgo = sub(now, { days: 1 });
+
+	const rows = await db
+		.selectFrom("Tournament")
+		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEvent.id",
+			"CalendarEventDate.eventId",
+		)
+		.select("Tournament.id")
+		.where("Tournament.isFinalized", "=", 0)
+		.where("CalendarEventDate.startTime", "<", dateToDatabaseTimestamp(now))
+		.where(
+			"CalendarEventDate.startTime",
+			">",
+			dateToDatabaseTimestamp(oneDayAgo),
+		)
+		.where((eb) =>
+			eb.exists(
+				eb
+					.selectFrom("TournamentStage")
+					.select("TournamentStage.id")
+					.whereRef("TournamentStage.tournamentId", "=", "Tournament.id"),
+			),
+		)
+		.where(
+			sql<number>`json_extract("Tournament"."settings", '$.isTest')`,
+			"is not",
+			1,
+		)
+		.execute();
+
+	return rows.map((row) => row.id);
 }

@@ -1,9 +1,9 @@
+import { Plus } from "lucide-react";
 import { useLoaderData, useMatches } from "react-router";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { PlusIcon } from "~/components/icons/Plus";
 import { useUser } from "~/features/auth/core/user";
 import { addModNoteSchema } from "~/features/user-page/user-page-schemas";
 import { SendouForm } from "~/form";
@@ -15,7 +15,6 @@ import { action } from "../actions/u.$identifier.admin.server";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.admin.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
-import styles from "./u.$identifier.admin.module.css";
 export { loader, action };
 
 export default function UserAdminPage() {
@@ -60,7 +59,7 @@ function AccountInfos() {
 	const { formatDateTime } = useTimeFormat();
 
 	return (
-		<dl className={styles.dl}>
+		<dl>
 			<dt>User account created at</dt>
 			<dd>
 				{data.createdAt
@@ -170,7 +169,7 @@ function NewModNoteDialog() {
 			heading="Adding a new mod note"
 			showCloseButton
 			trigger={
-				<SendouButton icon={<PlusIcon />} className="ml-auto mt-6">
+				<SendouButton icon={<Plus />} className="ml-auto mt-6">
 					New note
 				</SendouButton>
 			}

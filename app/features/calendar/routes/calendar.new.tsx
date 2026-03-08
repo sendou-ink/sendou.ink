@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import Compressor from "compressorjs";
+import { Trash, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
@@ -10,10 +11,9 @@ import { Badge } from "~/components/Badge";
 import { DateInput } from "~/components/DateInput";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
-import { CrossIcon } from "~/components/icons/Cross";
-import { TrashIcon } from "~/components/icons/Trash";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { MapPoolSelector } from "~/components/MapPoolSelector";
@@ -25,20 +25,25 @@ import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
+import { useHasRole } from "~/modules/permissions/hooks";
 import {
 	databaseTimestampToDate,
 	getDateAtNextFullHour,
 	getDateWithHoursOffset,
 } from "~/utils/dates";
 import invariant from "~/utils/invariant";
+import { logger } from "~/utils/logger";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { pathnameFromPotentialURL } from "~/utils/strings";
 import { CREATING_TOURNAMENT_DOC_LINK, FAQ_PAGE } from "~/utils/urls";
+import { action } from "../actions/calendar.new.server";
 import {
 	CALENDAR_EVENT,
 	REG_CLOSES_AT_OPTIONS,
 	type RegClosesAtOption,
 } from "../calendar-constants";
+import styles from "../calendar-new.module.css";
 import {
 	calendarEventMaxDate,
 	calendarEventMinDate,
@@ -47,12 +52,6 @@ import {
 } from "../calendar-utils";
 import { BracketProgressionSelector } from "../components/BracketProgressionSelector";
 import { Tags } from "../components/Tags";
-import "~/styles/calendar-new.css";
-import { SendouSwitch } from "~/components/elements/Switch";
-import { useHasRole } from "~/modules/permissions/hooks";
-import { logger } from "~/utils/logger";
-import { metaTags } from "~/utils/remix";
-import { action } from "../actions/calendar.new.server";
 import { loader } from "../loaders/calendar.new.server";
 export { loader, action };
 
@@ -84,7 +83,7 @@ export default function CalendarNewEventPage() {
 
 	if (!data.eventToEdit && !isCalendarEventAdder) {
 		return (
-			<Main className="stack items-center">
+			<Main halfWidth className="stack items-center">
 				<Alert variation="WARNING">
 					You can't add a new event at this time (Discord account too young)
 				</Alert>
@@ -98,7 +97,7 @@ export default function CalendarNewEventPage() {
 		data.organizations.length === 0
 	) {
 		return (
-			<Main className="stack items-center">
+			<Main halfWidth className="stack items-center">
 				<Alert variation="WARNING">
 					No permissions to add tournaments. Tournaments are in beta, accessible
 					by Patreon supporters and established TO&apos;s. See{" "}
@@ -109,7 +108,7 @@ export default function CalendarNewEventPage() {
 	}
 
 	return (
-		<Main className="calendar-new__container">
+		<Main halfWidth>
 			<div className="stack md">
 				<div className="stack horizontal md items-center">
 					<h1 className="text-lg">
@@ -146,7 +145,6 @@ function TemplateTournamentForm() {
 			<div>
 				<Form className="stack horizontal sm flex-wrap">
 					<select
-						className="w-max"
 						name="copyEventId"
 						onChange={(event) => {
 							setEventId(event.target.value);
@@ -218,7 +216,7 @@ function EventForm() {
 	};
 
 	return (
-		<Form className="stack md items-start" ref={ref}>
+		<Form className="stack md" ref={ref}>
 			{eventToEdit && (
 				<input type="hidden" name="eventToEditId" value={eventToEdit.eventId} />
 			)}
@@ -269,7 +267,7 @@ function EventForm() {
 			)}
 			{data.isAddingTournament ? (
 				<div className="stack md w-full">
-					<Divider>Tournament format</Divider>
+					<Divider smallText>Tournament format</Divider>
 					<BracketProgressionSelector
 						initialBrackets={
 							baseEvent?.tournament?.ctx.settings.bracketProgression
@@ -483,7 +481,7 @@ function DatesInput({ allowMultiDate }: { allowMultiDate?: boolean }) {
 		});
 
 	return (
-		<div className="stack md items-start">
+		<div className="stack md">
 			<fieldset>
 				<legend>
 					{t("calendar:forms.dates")} <span className="text-error">*</span>
@@ -495,7 +493,7 @@ function DatesInput({ allowMultiDate }: { allowMultiDate?: boolean }) {
 								<div key={key} className="stack horizontal sm items-center">
 									<label
 										id={`date-input-${key}-label`}
-										className="calendar-new__day-label"
+										className={styles.dayLabel}
 										htmlFor={`date-input-${key}`}
 									>
 										{t("calendar:day", {
@@ -532,7 +530,7 @@ function DatesInput({ allowMultiDate }: { allowMultiDate?: boolean }) {
 											aria-controls={`date-input-${key}`}
 											aria-label={t("common:actions.remove")}
 											aria-describedby={`date-input-${key}-label`}
-											icon={<CrossIcon title={t("common:actions.remove")} />}
+											icon={<X />}
 											variant="minimal-destructive"
 										/>
 									)}
@@ -577,7 +575,7 @@ function DiscordLinkInput() {
 	const [value, setValue] = React.useState(baseEvent?.discordInviteCode ?? "");
 
 	return (
-		<div className="stack items-start">
+		<div className="stack">
 			<Label htmlFor="discordInviteCode">{t("forms.discordInvite")}</Label>
 			<Input
 				name="discordInviteCode"
@@ -611,7 +609,6 @@ function TagsAdder() {
 				<label htmlFor={id}>{t("calendar:forms.tags")}</label>
 				<select
 					id={id}
-					className="calendar-new__select"
 					onChange={(e) =>
 						setTags([...tags, e.target.value as CalendarEventTag])
 					}
@@ -666,7 +663,6 @@ function BadgesAdder() {
 				<label htmlFor={id}>{t("forms.badges")}</label>
 				<select
 					id={id}
-					className="calendar-new__select"
 					onChange={(e) => {
 						setBadges([
 							...badges,
@@ -685,7 +681,7 @@ function BadgesAdder() {
 				</select>
 			</div>
 			{badges.length > 0 && (
-				<div className="calendar-new__badges">
+				<div className={styles.badges}>
 					{badges.map((badge) => (
 						<div className="stack horizontal md items-center" key={badge.id}>
 							<Badge badge={badge} isAnimated size={32} />
@@ -693,7 +689,7 @@ function BadgesAdder() {
 							<SendouButton
 								className="ml-auto"
 								onPress={() => handleBadgeDelete(badge.id)}
-								icon={<TrashIcon />}
+								icon={<Trash />}
 								variant="minimal-destructive"
 								aria-label="Remove badge"
 							/>
@@ -727,7 +723,7 @@ function AvatarImageInput({
 					<img
 						src={baseEvent.tournament.ctx.logoUrl}
 						alt=""
-						className="calendar-new__avatar-preview"
+						className={styles.avatarPreview}
 					/>
 					<SendouButton
 						variant="outlined"
@@ -748,7 +744,6 @@ function AvatarImageInput({
 			<Label htmlFor="avatarImage">Logo</Label>
 			<input
 				id="avatarImage"
-				className="plain"
 				type="file"
 				name="img"
 				accept="image/png, image/jpeg, image/jpg, image/webp"
@@ -784,7 +779,7 @@ function AvatarImageInput({
 					<img
 						src={URL.createObjectURL(avatarImg)}
 						alt=""
-						className="calendar-new__avatar-preview"
+						className={styles.avatarPreview}
 					/>
 				</div>
 			)}
@@ -815,13 +810,10 @@ function RankedToggle() {
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				Ranked
-			</label>
+			<label htmlFor={id}>Ranked</label>
 			<SendouSwitch
 				name="isRanked"
 				id={id}
-				size="small"
 				isSelected={isRanked}
 				onChange={setIsRanked}
 			/>
@@ -844,13 +836,10 @@ function EnableNoScreenToggle() {
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				Splattercolor Screen toggle
-			</label>
+			<label htmlFor={id}>Splattercolor Screen toggle</label>
 			<SendouSwitch
 				name="enableNoScreenToggle"
 				id={id}
-				size="small"
 				isSelected={enableNoScreen}
 				onChange={setEnableNoScreen}
 			/>
@@ -870,13 +859,10 @@ function EnableSubsToggle() {
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				Subs tab
-			</label>
+			<label htmlFor={id}>Subs tab</label>
 			<SendouSwitch
 				name="enableSubs"
 				id={id}
-				size="small"
 				isSelected={enableSubs}
 				onChange={setEnableSubs}
 			/>
@@ -897,13 +883,10 @@ function AutonomousSubsToggle() {
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				Autonomous subs
-			</label>
+			<label htmlFor={id}>Autonomous subs</label>
 			<SendouSwitch
 				name="autonomousSubs"
 				id={id}
-				size="small"
 				isSelected={autonomousSubs}
 				onChange={setAutonomousSubs}
 			/>
@@ -924,13 +907,10 @@ function RequireIGNToggle() {
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				Require in-game names
-			</label>
+			<label htmlFor={id}>Require in-game names</label>
 			<SendouSwitch
 				name="requireInGameNames"
 				id={id}
-				size="small"
 				isSelected={requireIGNs}
 				onChange={setRequireIGNs}
 			/>
@@ -954,13 +934,10 @@ function InvitationalToggle({
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				Invitational
-			</label>
+			<label htmlFor={id}>Invitational</label>
 			<SendouSwitch
 				name="isInvitational"
 				id={id}
-				size="small"
 				isSelected={isInvitational}
 				onChange={setIsInvitational}
 			/>
@@ -981,13 +958,10 @@ function TestToggle() {
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				Test
-			</label>
+			<label htmlFor={id}>Test</label>
 			<SendouSwitch
 				name="isTest"
 				id={id}
-				size="small"
 				isSelected={isTest}
 				onChange={setIsTest}
 			/>
@@ -1009,13 +983,10 @@ function DraftToggle() {
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				{t("calendar:forms.draft")}
-			</label>
+			<label htmlFor={id}>{t("calendar:forms.draft")}</label>
 			<SendouSwitch
 				name="isDraft"
 				id={id}
-				size="small"
 				isSelected={isDraft}
 				onChange={setIsDraft}
 			/>
@@ -1042,14 +1013,11 @@ function RegClosesAtSelect() {
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				Registration closes at
-			</label>
+			<label htmlFor={id}>Registration closes at</label>
 			<select
 				name="regClosesAt"
 				value={regClosesAt}
 				onChange={(e) => setRegClosesAt(e.target.value as RegClosesAtOption)}
-				className="w-max"
 			>
 				{REG_CLOSES_AT_OPTIONS.map((option) => (
 					<option key={option} value={option}>
@@ -1101,7 +1069,7 @@ function TournamentMapPickingStyleSelect() {
 	}
 
 	return (
-		<div className="stack md w-full items-start">
+		<div className="stack md w-full">
 			<Divider>Tournament maps</Divider>
 			<div>
 				<label htmlFor={id}>Map picking style</label>
@@ -1253,7 +1221,7 @@ function MapPoolValidationStatusMessage({
 
 	return (
 		<div>
-			<Alert alertClassName="w-max" variation={alertVariation} tiny>
+			<Alert variation={alertVariation} tiny>
 				{t(`common:maps.validation.${status}`)}
 			</Alert>
 		</div>
@@ -1270,9 +1238,7 @@ function MemberCountSelect() {
 	return (
 		<>
 			<div>
-				<label htmlFor={id} className="w-max">
-					Players count
-				</label>
+				<label htmlFor={id}>Players count</label>
 				<select
 					id={id}
 					name="minMembersPerTeam"
@@ -1298,9 +1264,7 @@ function MaxTeamMemberCountInput() {
 
 	return (
 		<div>
-			<label htmlFor={id} className="w-max">
-				Max team size
-			</label>
+			<label htmlFor={id}>Max team size</label>
 			<input
 				type="number"
 				id={id}

@@ -1,8 +1,8 @@
+import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
 import { SendouButton } from "~/components/elements/Button";
 import { WeaponImage } from "~/components/Image";
-import { CrossIcon } from "~/components/icons/Cross";
 import { Label } from "~/components/Label";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import type { Tables } from "~/db/tables";
@@ -60,7 +60,7 @@ function Filter({
 					{t(`lfg:filters.${filter._tag}`)} {t("lfg:filters.suffix")}
 				</Label>
 				<SendouButton
-					icon={<CrossIcon />}
+					icon={<X />}
 					size="small"
 					variant="minimal-destructive"
 					onPress={removeFilter}

@@ -259,7 +259,6 @@ function Players({
 								size="small"
 								variant="minimal"
 								onPress={() => handlePlayerInputTypeChange(i)}
-								className="outline-theme"
 							>
 								{asPlainInput
 									? t("forms.team.player.addAsUser")

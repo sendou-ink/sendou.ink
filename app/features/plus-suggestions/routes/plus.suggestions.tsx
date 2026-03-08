@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Trash } from "lucide-react";
 import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
 import { Link, Outlet, useLoaderData, useSearchParams } from "react-router";
 import { Alert } from "~/components/Alert";
@@ -6,7 +7,6 @@ import { Avatar } from "~/components/Avatar";
 import { Catcher } from "~/components/Catcher";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { TrashIcon } from "~/components/icons/Trash";
 import { RelativeTime } from "~/components/RelativeTime";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
@@ -21,6 +21,7 @@ import { metaTags, type SerializeFrom } from "~/utils/remix";
 import { userPage } from "~/utils/urls";
 import { action } from "../actions/plus.suggestions.server";
 import { loader } from "../loaders/plus.suggestions.server";
+import styles from "../plus.module.css";
 import {
 	canAddCommentToSuggestionFE,
 	canDeleteComment,
@@ -70,7 +71,7 @@ export default function PlusSuggestionsPage() {
 	return (
 		<>
 			<Outlet />
-			<div className="plus__container">
+			<div className={styles.container}>
 				<div className="stack md">
 					<SuggestedForInfo />
 					{searchParams.get("alert") === "true" ? (
@@ -81,14 +82,14 @@ export default function PlusSuggestionsPage() {
 					) : null}
 					<div className="stack lg">
 						<div
-							className={clsx("plus__top-container", {
-								"content-centered": !canSuggestNewUser({
+							className={clsx(styles.topContainer, {
+								[styles.topContainerCentered]: !canSuggestNewUser({
 									user,
 									suggestions: data.suggestions,
 								}),
 							})}
 						>
-							<div className="plus__radios">
+							<div className={styles.radios}>
 								{[1, 2, 3].map((tier) => {
 									const id = String(tier);
 									const suggestions = data.suggestions.filter(
@@ -96,10 +97,10 @@ export default function PlusSuggestionsPage() {
 									);
 
 									return (
-										<div key={id} className="plus__radio-container">
-											<label htmlFor={id} className="plus__radio-label">
+										<div key={id} className={styles.radioContainer}>
+											<label htmlFor={id} className={styles.radioLabel}>
 												+{tier}{" "}
-												<span className="plus__users-count">
+												<span className={styles.usersCount}>
 													({suggestions.length})
 												</span>
 											</label>
@@ -128,7 +129,7 @@ export default function PlusSuggestionsPage() {
 								);
 							})}
 							{visibleSuggestions.length === 0 ? (
-								<div className="plus__suggested-info-text text-center">
+								<div className={clsx(styles.suggestedInfoText, "text-center")}>
 									No suggestions yet
 								</div>
 							) : null}
@@ -203,7 +204,7 @@ function SuggestedUser({
 
 	return (
 		<div className="stack md">
-			<div className="plus__suggested-user-info">
+			<div className={styles.suggestedUserInfo}>
 				<Avatar user={suggestion.suggested} size="md" />
 				<h2>
 					<Link className="all-unset" to={userPage(suggestion.suggested)}>
@@ -217,7 +218,7 @@ function SuggestedUser({
 					targetPlusTier: Number(tier),
 				}) ? (
 					<LinkButton
-						className="plus__comment-button"
+						className={styles.commentButton}
 						size="small"
 						variant="outlined"
 						to={`comment/${tier}/${suggestion.suggested.id}?tier=${tier}`}
@@ -256,17 +257,17 @@ export function PlusSuggestionComments({
 }) {
 	return (
 		<details open={defaultOpen} className="w-full">
-			<summary className="plus__view-comments-action">
+			<summary className={styles.viewCommentsAction}>
 				Comments ({suggestion.entries.length})
 			</summary>
 			<div className="stack sm mt-2">
 				{suggestion.entries.map((entry) => {
 					return (
-						<fieldset key={entry.id} className="plus__comment">
+						<fieldset key={entry.id} className={styles.comment}>
 							<legend>{entry.author.username}</legend>
 							{entry.text}
 							<div className="stack horizontal xs items-center">
-								<span className="plus__comment-time">
+								<span className={styles.commentTime}>
 									<RelativeTime
 										timestamp={databaseTimestampToDate(
 											entry.createdAt,
@@ -324,8 +325,8 @@ function CommentDeleteButton({
 			}
 		>
 			<SendouButton
-				className="plus__delete-button"
-				icon={<TrashIcon />}
+				className={styles.deleteButton}
+				icon={<Trash />}
 				variant="minimal-destructive"
 				aria-label="Delete comment"
 			/>

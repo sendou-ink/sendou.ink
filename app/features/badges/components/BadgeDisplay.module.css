@@ -5,8 +5,8 @@
 	min-height: 12rem;
 	align-items: center;
 	padding: var(--s-2);
-	border-radius: var(--rounded);
-	background-color: var(--bg-badge);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-badge);
 	margin-inline: auto;
 }
 
@@ -20,8 +20,8 @@
 }
 
 .badgeExplanation {
-	color: var(--text-lighter);
-	font-size: var(--fonts-xs);
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -40,15 +40,15 @@
 	margin-top: -8px;
 	margin-right: auto;
 	margin-left: auto;
-	color: var(--theme-vibrant);
-	font-size: var(--fonts-xxxs);
-	font-weight: var(--bold);
+	color: var(--color-accent-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 }
 
 .pagination {
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--s-2-5);
+	gap: var(--s-3);
 	justify-content: center;
 	align-items: center;
 	max-width: 20rem;
@@ -57,17 +57,18 @@
 }
 
 .paginationButton {
-	background-color: var(--bg-darker);
+	background-color: var(--color-bg);
 	border-radius: 100%;
 	padding: var(--s-1);
 	height: 24px;
 	width: 24px;
-	border: 2px solid var(--border);
-	font-size: var(--fonts-xs);
-	color: var(--text-lighter);
+	border: var(--border-style);
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
 }
 
 .paginationButtonActive {
-	color: var(--theme);
-	background-color: var(--bg-lightest);
+	color: var(--color-text-accent);
+	background-color: var(--color-bg-high);
+	border-color: var(--color-border-high);
 }

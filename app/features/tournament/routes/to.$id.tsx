@@ -19,7 +19,6 @@ import { removeMarkdown } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
 	tournamentDivisionsPage,
-	tournamentOrganizationPage,
 	tournamentPage,
 	tournamentRegisterPage,
 } from "~/utils/urls";
@@ -27,9 +26,6 @@ import { metaTags } from "../../../utils/remix";
 
 import { loader, type TournamentLoaderData } from "../loaders/to.$id.server";
 export { loader };
-
-import "~/styles/calendar-event.css";
-import "../tournament.css";
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	const navigatedToMatchPage =
@@ -73,25 +69,13 @@ export const handle: SendouRouteHandle = {
 		const data = JSON.parse(rawData) as TournamentLoaderData;
 
 		return [
-			data.tournament.ctx.organization?.logoUrl
-				? {
-						imgPath: data.tournament.ctx.organization.logoUrl,
-						href: tournamentOrganizationPage({
-							organizationSlug: data.tournament.ctx.organization.slug,
-						}),
-						type: "IMAGE" as const,
-						text: "",
-						rounded: true,
-					}
-				: null,
 			{
 				imgPath: data.tournament.ctx.logoUrl,
 				href: tournamentPage(data.tournament.ctx.id),
 				type: "IMAGE" as const,
 				text: data.tournament.ctx.name,
-				rounded: true,
 			},
-		].filter((crumb) => crumb !== null);
+		];
 	},
 };
 

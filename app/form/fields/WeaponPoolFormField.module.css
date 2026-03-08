@@ -13,9 +13,9 @@
 	align-items: center;
 	gap: var(--s-3);
 	padding: var(--s-2) var(--s-3);
-	border: 1px solid var(--border);
-	border-radius: var(--rounded);
-	background-color: var(--bg-lighter);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
 	transition: opacity 0.2s;
 }
 
@@ -26,8 +26,8 @@
 .dragHandle {
 	cursor: grab;
 	user-select: none;
-	color: var(--text-lighter);
-	font-size: var(--fonts-md);
+	color: var(--color-text-high);
+	font-size: var(--font-md);
 	touch-action: none;
 	background: none;
 	border: none;
@@ -41,9 +41,9 @@
 
 .weaponName {
 	text-transform: uppercase;
-	font-weight: var(--semi-bold);
-	color: var(--text-lighter);
-	font-size: var(--fonts-xxs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
 	flex: 1;
 	min-width: 0;
 	overflow: hidden;
@@ -57,14 +57,14 @@
 
 .actions {
 	display: flex;
-	gap: var(--s-1);
+	gap: var(--s-2);
 	flex-shrink: 0;
 }
 
 .starIconOutlined {
-	color: var(--theme-secondary);
+	color: var(--color-text-accent);
 }
 
 .starIconFilled {
-	fill: var(--theme-secondary);
+	fill: var(--color-text-accent);
 }

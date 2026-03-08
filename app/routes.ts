@@ -14,6 +14,10 @@ const devOnlyRoutes =
 					"features/admin/routes/generate-images.tsx",
 				),
 				route(
+					"/components",
+					"features/components-showcase/routes/components.tsx",
+				),
+				route(
 					"/comp-analyzer/all-ranges",
 					"features/comp-analyzer/routes/comp-analyzer.all-ranges.tsx",
 				),
@@ -23,6 +27,8 @@ const devOnlyRoutes =
 export default [
 	index("features/front-page/routes/index.tsx"),
 	route("/patrons-list", "features/front-page/routes/patrons-list.ts"),
+
+	route("/sidenav", "features/layout/routes/sidenav.ts"),
 
 	route("/notifications", "features/notifications/routes/notifications.tsx"),
 	route(
@@ -36,9 +42,13 @@ export default [
 
 	route("/settings", "features/settings/routes/settings.tsx"),
 
+	route("/friends", "features/friends/routes/friends.tsx"),
+
 	route("/suspended", "features/ban/routes/suspended.tsx"),
 
 	route("/u", "features/user-search/routes/u.tsx"),
+
+	route("/search", "features/search/routes/search.ts"),
 
 	route("/u/:identifier", "features/user-page/routes/u.$identifier.tsx", [
 		index("features/user-page/routes/u.$identifier.index.tsx"),
@@ -144,6 +154,7 @@ export default [
 	route("/support", "features/info/routes/support.tsx"),
 
 	route("/t", "features/team/routes/t.tsx"),
+	route("/t/new", "features/team/routes/t.new.tsx"),
 	route("/t/:customUrl", "features/team/routes/t.$customUrl.tsx", [
 		index("features/team/routes/t.$customUrl.index.tsx"),
 		route("edit", "features/team/routes/t.$customUrl.edit.tsx"),
@@ -193,7 +204,7 @@ export default [
 	]),
 	route("/play", "features/sendouq/routes/play.ts"),
 
-	route("/trusters", "features/sendouq/routes/trusters.ts"),
+	route("/friends-for-adding", "features/sendouq/routes/friends-for-adding.ts"),
 
 	route("/weapon-usage", "features/sendouq/routes/weapon-usage.ts"),
 

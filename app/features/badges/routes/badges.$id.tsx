@@ -6,6 +6,7 @@ import { LinkButton } from "~/components/elements/Button";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import type { SerializeFrom } from "~/utils/remix";
 import { userPage } from "~/utils/urls";
+import styles from "../badges.module.css";
 import { badgeExplanationText } from "../badges-utils";
 
 import { loader } from "../loaders/badges.$id.server";
@@ -29,10 +30,10 @@ export default function BadgeDetailsPage() {
 			<Outlet context={context} />
 			<Badge badge={data.badge} isAnimated size={200} />
 			<div>
-				<div className="badges__explanation">
+				<div className={styles.explanation}>
 					{badgeExplanationText(t, data.badge)}
 				</div>
-				<div className="badges__managers">
+				<div className={styles.managers}>
 					<Trans
 						i18nKey="managedBy"
 						ns="badges"
@@ -65,12 +66,12 @@ export default function BadgeDetailsPage() {
 					Edit
 				</LinkButton>
 			) : null}
-			<div className="badges__owners-container">
-				<ul className="badges__owners">
+			<div className={styles.ownersContainer}>
+				<ul className={styles.owners}>
 					{data.badge.owners.map((owner) => (
 						<li key={owner.id}>
 							<span
-								className={clsx("badges__count", {
+								className={clsx(styles.count, {
 									invisible: owner.count <= 1,
 								})}
 							>

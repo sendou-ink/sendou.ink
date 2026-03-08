@@ -1,9 +1,7 @@
 import { Trans, useTranslation } from "react-i18next";
 import { Link, useLoaderData, useMatches } from "react-router";
-import { CustomizedColorsInput } from "~/components/CustomizedColorsInput";
 import { FormMessage } from "~/components/FormMessage";
 import { BADGE } from "~/features/badges/badges-constants";
-import type { CustomFieldRenderProps } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useHasRole } from "~/modules/permissions/hooks";
@@ -28,7 +26,6 @@ export default function UserEditPage() {
 	invariant(parentRoute);
 	const layoutData = parentRoute.data as UserPageLoaderData;
 	const data = useLoaderData<typeof loader>();
-
 	const isSupporter = useHasRole("SUPPORTER");
 	const isArtist = useHasRole("ARTIST");
 
@@ -42,7 +39,6 @@ export default function UserEditPage() {
 	}));
 
 	const defaultValues = {
-		css: layoutData.css ?? null,
 		customName: data.user.customName ?? "",
 		customUrl: layoutData.user.customUrl ?? "",
 		inGameName: data.user.inGameName ?? "",
@@ -71,13 +67,6 @@ export default function UserEditPage() {
 			>
 				{({ FormField }) => (
 					<>
-						{isSupporter ? (
-							<FormField name="css">
-								{(props: CustomFieldRenderProps) => (
-									<CssCustomField {...props} initialColors={layoutData.css} />
-								)}
-							</FormField>
-						) : null}
 						<FormField name="customName" />
 						<FormField name="customUrl" />
 						<FormField name="inGameName" />
@@ -134,22 +123,6 @@ function useCountryOptions() {
 			: countryCode,
 	})).sort((a, b) =>
 		a.label.localeCompare(b.label, i18n.language, { sensitivity: "base" }),
-	);
-}
-
-function CssCustomField({
-	value,
-	onChange,
-	initialColors,
-}: CustomFieldRenderProps & {
-	initialColors?: Record<string, string> | null;
-}) {
-	return (
-		<CustomizedColorsInput
-			initialColors={initialColors}
-			value={value as Record<string, string> | null}
-			onChange={onChange as (value: Record<string, string> | null) => void}
-		/>
 	);
 }
 

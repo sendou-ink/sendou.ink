@@ -1,3 +1,4 @@
+import { clearCombinedStreamsCache } from "~/features/core/streams/streams.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
@@ -5,6 +6,7 @@ import { isAdmin } from "~/modules/permissions/utils";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import type { Unwrapped } from "~/utils/types";
 import { getServerTournamentManager } from "./brackets-manager/manager.server";
+import { RunningTournaments } from "./RunningTournaments.server";
 import { Tournament } from "./Tournament";
 
 const manager = getServerTournamentManager();
@@ -88,7 +90,10 @@ export async function tournamentFromDB(args: {
 }) {
 	const data = notFoundIfFalsy(await tournamentData(args));
 
-	return new Tournament({ ...data, simulateBrackets: false });
+	const tournament = new Tournament({ ...data, simulateBrackets: false });
+	syncTournamentToRegistry(tournament);
+
+	return tournament;
 }
 
 export async function tournamentFromDBCached(args: {
@@ -129,3 +134,34 @@ export function clearTournamentDataCache(tournamentId: number) {
 export function clearAllTournamentDataCache() {
 	tournamentDataCache.clear();
 }
+
+function syncTournamentToRegistry(tournament: Tournament) {
+	const isRunning = tournament.hasStarted && !tournament.everyBracketOver;
+	const wasInRegistry = RunningTournaments.has(tournament.ctx.id);
+
+	if (isRunning) {
+		RunningTournaments.add(tournament);
+		if (!wasInRegistry) {
+			clearCombinedStreamsCache();
+		}
+	} else {
+		if (wasInRegistry) {
+			clearCombinedStreamsCache();
+		}
+		RunningTournaments.remove(tournament.ctx.id);
+	}
+}
+
+async function primeRunningTournamentsCache() {
+	const tournamentIds = await TournamentRepository.findRunningTournamentIds();
+
+	for (const tournamentId of tournamentIds) {
+		const data = await tournamentData({ user: undefined, tournamentId });
+		if (!data) continue;
+
+		const tournament = new Tournament({ ...data, simulateBrackets: false });
+		syncTournamentToRegistry(tournament);
+	}
+}
+
+await primeRunningTournamentsCache();

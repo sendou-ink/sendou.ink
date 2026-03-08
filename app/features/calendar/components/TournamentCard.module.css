@@ -5,7 +5,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-1);
-	--tournament-card-icon-size: 13px;
+	--tournament-card-icon-size: 14px;
 }
 
 .containerTall {
@@ -13,9 +13,9 @@
 }
 
 .card {
-	background-color: var(--bg-lightest);
-	border-radius: var(--rounded);
-	color: var(--text);
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-box);
+	color: var(--color-text);
 	padding: var(--s-1) var(--s-2) var(--s-2) var(--s-2);
 	height: 100%;
 	min-width: var(--card-width);
@@ -23,26 +23,26 @@
 }
 
 .imgContainer {
-	background-color: var(--bg);
+	background-color: var(--color-bg);
 	padding: var(--s-1-5);
-	border-radius: 100%;
+	border-radius: var(--radius-avatar);
 	margin-left: -10px;
 	margin-top: -10px;
 }
 
 .avatarImg {
-	border-radius: 100%;
+	border-radius: var(--radius-avatar);
 }
 
 .card:hover .avatarImg {
-	outline: 6px solid var(--theme-transparent);
+	outline: 6px solid var(--color-bg-higher);
 }
 
 .org {
 	display: flex;
 	gap: var(--s-1);
-	font-size: var(--fonts-xxs);
-	color: var(--text-lighter);
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
 }
 
 .org span {
@@ -53,9 +53,9 @@
 }
 
 .time {
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
-	color: var(--text-lighter);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
 	display: block;
 	text-align: center;
 }
@@ -68,8 +68,9 @@
 }
 
 .name {
-	font-weight: var(--semi-bold);
-	font-size: var(--fonts-sm);
+	text-align: center;
+	font-weight: var(--weight-semi);
+	font-size: var(--font-sm);
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	max-width: 225px;
@@ -81,18 +82,21 @@
 }
 
 .teamCount {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
-	background-color: var(--bg-lightest);
-	border-radius: var(--rounded-sm);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-selector);
+	height: var(--selector-size);
 	width: max-content;
-	padding: var(--s-0-5) var(--s-1-5);
+	padding: 0 var(--s-1-5);
 	display: flex;
+	align-items: center;
 	gap: var(--s-1);
 }
 
 .teamCount svg {
 	width: var(--tournament-card-icon-size);
+	height: var(--tournament-card-icon-size);
 }
 
 .modesPillContainer {
@@ -100,12 +104,14 @@
 }
 
 .modesPill {
-	background-color: var(--bg-lightest);
-	border-radius: var(--rounded-sm);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-selector);
 	width: max-content;
-	padding: var(--s-0-5) var(--s-1-5);
+	padding: 0 var(--s-1-5);
 	display: flex;
 	gap: var(--s-1);
+	height: var(--selector-size);
+	align-items: center;
 }
 
 .pillsContainer {
@@ -122,21 +128,23 @@
 }
 
 .pill {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
-	border-radius: var(--rounded-sm);
-	padding: var(--s-0-5) var(--s-1-5);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	border-radius: var(--radius-selector);
+	height: var(--selector-size);
+	padding: 0 var(--s-1-5);
 	display: grid;
 	place-items: center;
 }
 
 .pillRanked {
-	background-color: var(--theme-info-transparent);
-	color: var(--theme-info);
+	background-color: var(--color-info-low);
+	color: var(--color-text-accent);
 }
 
 .pillRanked svg {
 	width: var(--tournament-card-icon-size);
+	height: var(--tournament-card-icon-size);
 }
 
 .firstPlacers {
@@ -152,15 +160,6 @@
 	text-overflow: ellipsis;
 }
 
-.badgesContainer {
-	display: flex;
-	gap: var(--s-1);
-	justify-content: center;
-	background-color: black;
-	border-radius: var(--rounded-sm);
-	padding: var(--s-1);
-}
-
 .badgeNavIcon {
 	min-width: 16px;
 }
@@ -171,7 +170,8 @@
 }
 
 .badgePill {
-	background-color: var(--bg-lightest);
-	border-radius: var(--rounded-sm);
-	padding: var(--s-0-5) var(--s-1-5);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-selector);
+	padding: 0 var(--s-1-5);
+	height: var(--selector-size);
 }

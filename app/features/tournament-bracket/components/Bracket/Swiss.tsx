@@ -11,6 +11,7 @@ import {
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type { Match as MatchType } from "~/modules/brackets-model";
 import type { Bracket as BracketType } from "../../core/Bracket";
+import styles from "../../tournament-bracket.module.css";
 import { groupNumberToLetters } from "../../tournament-bracket-utils";
 import { Match } from "./Match";
 import { PlacementsTable } from "./PlacementsTable";
@@ -106,9 +107,10 @@ export function SwissBracket({
 								key={g.groupId}
 								onPress={() => setSelectedGroupId(g.groupId)}
 								className={clsx(
-									"tournament-bracket__bracket-nav__link tournament-bracket__bracket-nav__link__big",
+									styles.bracketNavLink,
+									styles.bracketNavLinkBig,
 									{
-										"tournament-bracket__bracket-nav__link__selected":
+										[styles.bracketNavLinkSelected]:
 											selectedGroupId === g.groupId,
 									},
 								)}
