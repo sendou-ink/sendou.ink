@@ -58,7 +58,7 @@ const TOURNAMENT_SUB_QUOTA = 2;
 export async function resolveSidebarData(userId: number | null) {
 	if (!userId) {
 		const tournamentsData =
-			await ShowcaseTournaments.frontPageTournamentsByUserId(null);
+			await ShowcaseTournaments.categorizedTournamentsByUserId(null);
 		return {
 			events: showcaseEventsToSidebarEvents(tournamentsData.showcase),
 			friends: [] as SidebarFriend[],
@@ -67,7 +67,7 @@ export async function resolveSidebarData(userId: number | null) {
 	}
 
 	const [tournamentsData, scrimsData, friendsWithActivity] = await Promise.all([
-		ShowcaseTournaments.frontPageTournamentsByUserId(userId),
+		ShowcaseTournaments.categorizedTournamentsByUserId(userId),
 		ScrimPostRepository.findUserScrims(userId),
 		FriendRepository.findByUserIdWithActivity(userId),
 	]);

@@ -4,23 +4,13 @@ import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
-import {
-	SendouTab,
-	SendouTabList,
-	SendouTabPanel,
-	SendouTabs,
-} from "~/components/elements/Tabs";
 import { Image } from "~/components/Image";
 import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { BSKYLikeIcon } from "~/components/icons/BSKYLike";
 import { BSKYReplyIcon } from "~/components/icons/BSKYReply";
 import { BSKYRepostIcon } from "~/components/icons/BSKYRepost";
 import { ExternalIcon } from "~/components/icons/External";
-import { KeyIcon } from "~/components/icons/Key";
-import { SearchIcon } from "~/components/icons/Search";
-import { UsersIcon } from "~/components/icons/Users";
 import { Main } from "~/components/Main";
-import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import { TournamentCard } from "~/features/calendar/components/TournamentCard";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -30,7 +20,6 @@ import styles from "~/styles/front.module.css";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BLANK_IMAGE_URL,
-	CALENDAR_TOURNAMENTS_PAGE,
 	LUTI_PAGE,
 	leaderboardsPage,
 	navIconUrl,
@@ -50,7 +39,6 @@ export default function FrontPage() {
 		<Main className={styles.frontPageContainer}>
 			<LeagueBanner />
 			<SeasonBanner />
-			<TournamentCards />
 			<ResultHighlights />
 			<ChangelogList />
 		</Main>
@@ -116,96 +104,6 @@ function LeagueBanner() {
 			<Image path={navIconUrl("luti")} size={24} alt="" />
 			Registration now open for Leagues Under The Ink (LUTI) Season{" "}
 			{showBannerFor}!
-		</Link>
-	);
-}
-
-function TournamentCards() {
-	const { t } = useTranslation(["front"]);
-	const data = useLoaderData<typeof loader>();
-
-	if (
-		data.tournaments.participatingFor.length === 0 &&
-		data.tournaments.organizingFor.length === 0 &&
-		data.tournaments.showcase.length === 0
-	) {
-		return null;
-	}
-
-	const showSignedUpTab = data.tournaments.participatingFor.length > 0;
-	const showOrganizerTab = data.tournaments.organizingFor.length > 0;
-	const showDiscoverTab = data.tournaments.showcase.length > 0;
-
-	return (
-		<div>
-			<SendouTabs padded={false}>
-				<SendouTabList>
-					{showSignedUpTab ? (
-						<SendouTab id="signed-up" icon={<UsersIcon />}>
-							{t("front:showcase.tabs.signedUp")}
-						</SendouTab>
-					) : null}
-					{showOrganizerTab ? (
-						<SendouTab id="organizer" icon={<KeyIcon />}>
-							{t("front:showcase.tabs.organizer")}
-						</SendouTab>
-					) : null}
-					{showDiscoverTab ? (
-						<SendouTab id="discover" icon={<SearchIcon />}>
-							{t("front:showcase.tabs.discover")}
-						</SendouTab>
-					) : null}
-				</SendouTabList>
-				<SendouTabPanel id="signed-up">
-					<ShowcaseTournamentScroller
-						tournaments={data.tournaments.participatingFor}
-					/>
-				</SendouTabPanel>
-				<SendouTabPanel id="organizer">
-					<ShowcaseTournamentScroller
-						tournaments={data.tournaments.organizingFor}
-					/>
-				</SendouTabPanel>
-				<SendouTabPanel id="discover">
-					<ShowcaseTournamentScroller tournaments={data.tournaments.showcase} />
-				</SendouTabPanel>
-			</SendouTabs>
-		</div>
-	);
-}
-
-function ShowcaseTournamentScroller({
-	tournaments,
-}: {
-	tournaments: ShowcaseCalendarEvent[];
-}) {
-	return (
-		<div className={styles.tournamentCards}>
-			<div
-				className={clsx(
-					styles.tournamentCardsSpacer,
-					"overflow-x-scroll scrollbar",
-				)}
-			>
-				{tournaments.map((tournament) => (
-					<TournamentCard key={tournament.id} tournament={tournament} />
-				))}
-			</div>
-			<AllTournamentsLinkCard />
-		</div>
-	);
-}
-
-function AllTournamentsLinkCard() {
-	const { t } = useTranslation(["front"]);
-
-	return (
-		<Link
-			to={CALENDAR_TOURNAMENTS_PAGE}
-			className={styles.tournamentCardsViewAllCard}
-		>
-			<Image path={navIconUrl("medal")} size={36} alt="" />
-			{t("front:showcase.viewAll")}
 		</Link>
 	);
 }

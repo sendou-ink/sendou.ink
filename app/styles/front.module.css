@@ -100,40 +100,11 @@
 	translate: 2px;
 }
 
-.tournamentCards {
-	display: flex;
-	justify-content: space-between;
-	gap: var(--s-2);
-	margin-block-start: var(--s-2);
-}
-
 .tournamentCardsSpacer {
 	display: flex;
 	gap: var(--s-2);
 	height: 100%;
 	padding: var(--s-2);
-}
-
-.tournamentCardsViewAllCard {
-	background-color: var(--color-bg-high);
-	height: var(--card-height);
-	border-radius: var(--radius-box);
-	display: grid;
-	place-items: center;
-	padding: var(--s-2);
-	font-size: var(--font-2xs);
-	font-weight: var(--weight-bold);
-	text-align: center;
-	color: var(--color-text);
-	transition: 0.2s ease-out;
-	min-width: 90px;
-	max-width: 90px;
-	border: var(--border-style);
-	margin-top: var(--s-2);
-}
-
-.tournamentCardsViewAllCard:hover {
-	background-color: var(--color-bg-higher);
 }
 
 .resultHighlights {

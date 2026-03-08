@@ -12,7 +12,7 @@ export const loader = async () => {
 	const user = requireUser();
 
 	const [tournamentsData, scrimsData] = await Promise.all([
-		ShowcaseTournaments.frontPageTournamentsByUserId(user.id),
+		ShowcaseTournaments.categorizedTournamentsByUserId(user.id),
 		ScrimPostRepository.findUserScrims(user.id),
 	]);
 
