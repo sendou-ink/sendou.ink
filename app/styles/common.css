@@ -348,6 +348,10 @@
 			display: none;
 		}
 
+		optgroup {
+			color: var(--color-text);
+		}
+
 		option {
 			background-color: var(--color-bg);
 			color: var(--color-text);
