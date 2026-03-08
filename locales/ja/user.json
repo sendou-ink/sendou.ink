@@ -193,5 +193,6 @@
 	"builds.sorting.PUBLIC_BUILD": "公開ビルド",
 	"builds.sorting.PRIVATE_BUILD": "非公開ビルド",
 	"commissions.open": "",
-	"commissions.closed": ""
+	"commissions.closed": "",
+	"mutualFriends": ""
 }

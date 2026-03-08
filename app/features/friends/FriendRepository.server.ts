@@ -255,6 +255,72 @@ export async function deleteFriendRequestByReceiver({
 		.execute();
 }
 
+export async function findMutualFriends({
+	loggedInUserId,
+	targetUserId,
+}: {
+	loggedInUserId: number;
+	targetUserId: number;
+}) {
+	return db
+		.selectFrom("Friendship as f1")
+		.innerJoin("Friendship as f2", (join) =>
+			join.on((eb) =>
+				eb.and([
+					eb(
+						eb
+							.case()
+							.when("f1.userOneId", "=", loggedInUserId)
+							.then(eb.ref("f1.userTwoId"))
+							.else(eb.ref("f1.userOneId"))
+							.end(),
+						"=",
+						eb
+							.case()
+							.when("f2.userOneId", "=", targetUserId)
+							.then(eb.ref("f2.userTwoId"))
+							.else(eb.ref("f2.userOneId"))
+							.end(),
+					),
+				]),
+			),
+		)
+		.innerJoin("User", (join) =>
+			join.on((eb) =>
+				eb(
+					"User.id",
+					"=",
+					eb
+						.case()
+						.when("f1.userOneId", "=", loggedInUserId)
+						.then(eb.ref("f1.userTwoId"))
+						.else(eb.ref("f1.userOneId"))
+						.end(),
+				),
+			),
+		)
+		.where((eb) =>
+			eb.or([
+				eb("f1.userOneId", "=", loggedInUserId),
+				eb("f1.userTwoId", "=", loggedInUserId),
+			]),
+		)
+		.where((eb) =>
+			eb.or([
+				eb("f2.userOneId", "=", targetUserId),
+				eb("f2.userTwoId", "=", targetUserId),
+			]),
+		)
+		.select([
+			"User.id",
+			"User.username",
+			"User.discordId",
+			"User.discordAvatar",
+			"User.customUrl",
+		])
+		.execute();
+}
+
 export async function findFriendship({
 	userOneId,
 	userTwoId,

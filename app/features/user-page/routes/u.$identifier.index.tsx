@@ -33,6 +33,7 @@ import {
 	teamPage,
 	topSearchPlayerPage,
 } from "~/utils/urls";
+import { MutualFriends } from "../components/MutualFriends";
 import type { UserPageNavItem } from "../components/UserPageIconNav";
 import { UserPageIconNav } from "../components/UserPageIconNav";
 import { Widget } from "../components/Widget";
@@ -85,23 +86,26 @@ function NewUserInfoPage() {
 
 	return (
 		<div className={newStyles.container}>
-			<div className={newStyles.header}>
-				<Avatar user={layoutData.user} size="xmd" />
-				<div className={newStyles.userInfo}>
-					<div className={newStyles.nameGroup}>
-						<h1 className={newStyles.username}>{layoutData.user.username}</h1>
-						<ProfileSubtitle
-							inGameName={layoutData.user.inGameName}
-							pronouns={layoutData.user.pronouns}
-							plusTier={layoutData.user.plusTier}
-							country={layoutData.user.country}
-							language={i18n.language}
-						/>
+			<div className="stack sm">
+				<div className={newStyles.header}>
+					<Avatar user={layoutData.user} size="xmd" />
+					<div className={newStyles.userInfo}>
+						<div className={newStyles.nameGroup}>
+							<h1 className={newStyles.username}>{layoutData.user.username}</h1>
+							<ProfileSubtitle
+								inGameName={layoutData.user.inGameName}
+								pronouns={layoutData.user.pronouns}
+								plusTier={layoutData.user.plusTier}
+								country={layoutData.user.country}
+								language={i18n.language}
+							/>
+						</div>
+					</div>
+					<div className={newStyles.desktopIconNav}>
+						<UserPageIconNav items={navItems} />
 					</div>
 				</div>
-				<div className={newStyles.desktopIconNav}>
-					<UserPageIconNav items={navItems} />
-				</div>
+				<MutualFriends mutualFriends={layoutData.mutualFriends} />
 			</div>
 			{isOwnPage ? (
 				<div className={newStyles.editButtons}>
@@ -174,32 +178,37 @@ export function OldUserInfoPage() {
 
 	return (
 		<div className={styles.container}>
-			<div className={styles.avatarContainer}>
-				<Avatar user={layoutData.user} size="lg" className={styles.avatar} />
-				<div>
-					<h2 className={styles.name}>
-						<div>{layoutData.user.username}</div>
-						<div>
-							{data.user.country ? (
-								<Flag countryCode={data.user.country} tiny />
-							) : null}
-						</div>
-					</h2>
-					<TeamInfo />
+			<div className="stack sm">
+				<div className={styles.avatarContainer}>
+					<Avatar user={layoutData.user} size="lg" className={styles.avatar} />
+					<div>
+						<h2 className={styles.name}>
+							<div>{layoutData.user.username}</div>
+							<div>
+								{data.user.country ? (
+									<Flag countryCode={data.user.country} tiny />
+								) : null}
+							</div>
+						</h2>
+						<TeamInfo />
+					</div>
+					<div className={styles.socials}>
+						{data.user.twitch ? (
+							<SocialLink type="twitch" identifier={data.user.twitch} />
+						) : null}
+						{data.user.youtubeId ? (
+							<SocialLink type="youtube" identifier={data.user.youtubeId} />
+						) : null}
+						{data.user.battlefy ? (
+							<SocialLink type="battlefy" identifier={data.user.battlefy} />
+						) : null}
+						{data.user.bsky ? (
+							<SocialLink type="bsky" identifier={data.user.bsky} />
+						) : null}
+					</div>
 				</div>
-				<div className={styles.socials}>
-					{data.user.twitch ? (
-						<SocialLink type="twitch" identifier={data.user.twitch} />
-					) : null}
-					{data.user.youtubeId ? (
-						<SocialLink type="youtube" identifier={data.user.youtubeId} />
-					) : null}
-					{data.user.battlefy ? (
-						<SocialLink type="battlefy" identifier={data.user.battlefy} />
-					) : null}
-					{data.user.bsky ? (
-						<SocialLink type="bsky" identifier={data.user.bsky} />
-					) : null}
+				<div className="stack items-center">
+					<MutualFriends mutualFriends={layoutData.mutualFriends} />
 				</div>
 			</div>
 			<ExtraInfos />
