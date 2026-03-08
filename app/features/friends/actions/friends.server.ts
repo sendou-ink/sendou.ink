@@ -2,7 +2,9 @@ import type { ActionFunction } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { parseFormData } from "~/form/parse.server";
+import { errorToastIfFalsy } from "~/utils/remix.server";
 import * as FriendRepository from "../FriendRepository.server";
+import { FRIEND } from "../friends-constants";
 import { friendsActionSchema } from "../friends-schemas.server";
 
 export const action: ActionFunction = async ({ request }) => {
@@ -19,6 +21,14 @@ export const action: ActionFunction = async ({ request }) => {
 
 	switch (result.data._action) {
 		case "SEND_REQUEST": {
+			const pendingCount = await FriendRepository.countPendingSentRequests(
+				user.id,
+			);
+			errorToastIfFalsy(
+				pendingCount < FRIEND.MAX_PENDING_REQUESTS,
+				"Maximum pending friend requests reached",
+			);
+
 			await FriendRepository.insertFriendRequest({
 				senderId: user.id,
 				receiverId: result.data.userId,

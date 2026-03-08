@@ -28,6 +28,7 @@ import deleteTeamMember from "../queries/deleteTeamMember.server";
 import { findOwnTournamentTeam } from "../queries/findOwnTournamentTeam.server";
 import { joinTeam } from "../queries/joinLeaveTeam.server";
 import { upsertCounterpickMaps } from "../queries/upsertCounterpickMaps.server";
+import { TOURNAMENT } from "../tournament-constants";
 import { registerSchema } from "../tournament-schemas.server";
 import {
 	isOneModeTournamentOf,
@@ -352,6 +353,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "SAVE_TOURNAMENT": {
+			const count = await SavedTournamentRepository.countByUserId(user.id);
+			errorToastIfFalsy(
+				count < TOURNAMENT.MAX_SAVED_COUNT,
+				"Maximum saved tournaments reached",
+			);
+
 			await SavedTournamentRepository.save({ userId: user.id, tournamentId });
 			break;
 		}

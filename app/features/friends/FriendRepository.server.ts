@@ -321,6 +321,18 @@ export async function findMutualFriends({
 		.execute();
 }
 
+export async function countPendingSentRequests(
+	senderId: number,
+): Promise<number> {
+	const result = await db
+		.selectFrom("FriendRequest")
+		.select((eb) => eb.fn.countAll<number>().as("count"))
+		.where("FriendRequest.senderId", "=", senderId)
+		.executeTakeFirstOrThrow();
+
+	return result.count;
+}
+
 export async function findFriendship({
 	userOneId,
 	userTwoId,

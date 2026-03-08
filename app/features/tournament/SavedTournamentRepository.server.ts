@@ -47,6 +47,16 @@ export async function isSaved({
 	return Boolean(row);
 }
 
+export async function countByUserId(userId: number): Promise<number> {
+	const result = await db
+		.selectFrom("SavedTournament")
+		.select((eb) => eb.fn.countAll<number>().as("count"))
+		.where("userId", "=", userId)
+		.executeTakeFirstOrThrow();
+
+	return result.count;
+}
+
 export async function findTournamentIdsByUserId(
 	userId: number,
 ): Promise<number[]> {
