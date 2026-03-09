@@ -28,8 +28,13 @@ export default defineConfig(({ mode }) => {
 				enforce: "pre",
 				transform(code, id) {
 					if (!id.endsWith(".module.css")) return;
+					const layerOrder =
+						"@layer reset, base, elements, components, utilities;";
+					const layer = id.includes("/components/elements/")
+						? "elements"
+						: "components";
 					return {
-						code: `@layer reset, base, components, utilities;\n@layer components {\n${code}\n}`,
+						code: `${layerOrder}\n@layer ${layer} {\n${code}\n}`,
 					};
 				},
 			},
