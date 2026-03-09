@@ -101,7 +101,10 @@ export const userEditProfileBaseSchema = z.object({
 	inGameName: textFieldOptional({
 		label: "labels.profileInGameName",
 		bottomText: "bottomTexts.profileInGameName",
-		maxLength: 10 + 1 + 5, // 10 for name, 1 for #, 5 for discriminator
+		maxLength:
+			USER.IN_GAME_NAME_TEXT_MAX_LENGTH +
+			1 +
+			USER.IN_GAME_NAME_DISCRIMINATOR_MAX_LENGTH,
 		regExp: {
 			pattern: IN_GAME_NAME_REGEXP,
 			message: "forms:errors.profileInGameName",
