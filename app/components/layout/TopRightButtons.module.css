@@ -15,6 +15,49 @@
 	width: 100%;
 }
 
+.chatButtonWrapperPersistent {
+	display: none;
+	position: relative;
+
+	@media screen and (min-width: 1000px) {
+		display: block;
+	}
+
+	& > button {
+		width: 100%;
+	}
+}
+
+.chatButtonWrapperModal {
+	display: none;
+	position: relative;
+
+	@media screen and (min-width: 600px) and (max-width: 999px) {
+		display: block;
+	}
+
+	& > button {
+		width: 100%;
+	}
+}
+
+.chatUnreadBadge {
+	position: absolute;
+	top: -6px;
+	right: -6px;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-inverse);
+	background-color: var(--color-text-accent);
+	min-width: 18px;
+	height: 18px;
+	padding: 0 var(--s-1);
+	border-radius: 9px;
+	display: grid;
+	place-items: center;
+	pointer-events: none;
+}
+
 @media screen and (max-width: 1000px) {
 	.searchAndAddContainer {
 		grid-template-columns: 1fr 1fr;

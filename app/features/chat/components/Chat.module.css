@@ -80,6 +80,23 @@
 	position: relative;
 }
 
+.inputContainer > form {
+	background-color: var(--color-bg-high);
+	padding: var(--s-2);
+	border-top: 1.5px solid var(--color-border);
+}
+
+.sendButton.sendButton {
+	border-radius: var(--radius-full);
+	background-color: var(--color-text-accent);
+	color: var(--color-text-inverse);
+	flex-shrink: 0;
+}
+
+.sendButton.sendButton:disabled {
+	opacity: 0.4;
+}
+
 .messageContents {
 	font-size: var(--font-sm);
 	word-break: break-word;

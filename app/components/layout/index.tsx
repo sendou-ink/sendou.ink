@@ -40,6 +40,7 @@ import { NotificationDot } from "../NotificationDot";
 import { ListLink, SideNav, SideNavFooter, SideNavHeader } from "../SideNav";
 import sideNavStyles from "../SideNav.module.css";
 import { StreamListItems } from "../StreamListItems";
+import { ChatSidebar, MOCK_TOTAL_UNREAD } from "./ChatSidebar";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
 import { LogInButtonContainer } from "./LogInButtonContainer";
@@ -175,6 +176,8 @@ export function Layout({
 		data?.sidenavCollapsed ?? false,
 	);
 	const [sideNavModalOpen, setSideNavModalOpen] = React.useState(false);
+	const [chatSidebarOpen, setChatSidebarOpen] = React.useState(false);
+	const [chatSidebarModalOpen, setChatSidebarModalOpen] = React.useState(false);
 
 	const { t } = useTranslation(["front", "common"]);
 	const { formatRelativeDate } = useTimeFormat();
@@ -186,6 +189,7 @@ export function Layout({
 		const handleResize = () => {
 			if (window.innerWidth < 600 || window.innerWidth >= 1000) {
 				setSideNavModalOpen(false);
+				setChatSidebarModalOpen(false);
 			}
 		};
 
@@ -323,6 +327,22 @@ export function Layout({
 							</Modal>
 						</ModalOverlay>
 					</DialogTrigger>
+					<DialogTrigger
+						isOpen={chatSidebarModalOpen}
+						onOpenChange={setChatSidebarModalOpen}
+					>
+						<Button className={styles.chatSidebarModalTrigger}>{null}</Button>
+						<ModalOverlay
+							className={styles.chatSidebarModalOverlay}
+							isDismissable
+						>
+							<Modal className={styles.chatSidebarModal}>
+								<Dialog className={styles.chatSidebarModalDialog}>
+									<ChatSidebar />
+								</Dialog>
+							</Modal>
+						</ModalOverlay>
+					</DialogTrigger>
 					<SideNavCollapseButton
 						onToggle={() => setSideNavCollapsed(!sideNavCollapsed)}
 						className={styles.sideNavCollapseButton}
@@ -337,12 +357,28 @@ export function Layout({
 						)}
 						showSearch={Boolean(data?.user)}
 						isLoggedIn={Boolean(data?.user)}
+						onChatToggle={
+							data?.user && !chatSidebarOpen
+								? () => setChatSidebarOpen(true)
+								: undefined
+						}
+						onChatModalToggle={
+							data?.user
+								? () => setChatSidebarModalOpen((prev) => !prev)
+								: undefined
+						}
+						chatUnreadCount={MOCK_TOTAL_UNREAD}
 					/>
 				</header>
 				{showLeaderboard ? <MyRampUnit /> : null}
 				{children}
 				<Footer />
 			</div>
+			{chatSidebarOpen ? (
+				<div className={styles.chatSidebar}>
+					<ChatSidebar onClose={() => setChatSidebarOpen(false)} />
+				</div>
+			) : null}
 		</>
 	);
 }

@@ -4,6 +4,7 @@ import {
 	ChevronRight,
 	LogIn,
 	Menu,
+	MessageSquare,
 	Settings,
 	Tv,
 	User,
@@ -28,6 +29,7 @@ import { Avatar } from "./Avatar";
 import { EventsList } from "./EventsList";
 import { SendouButton } from "./elements/Button";
 import { Image } from "./Image";
+import { MOCK_TOTAL_UNREAD } from "./layout/ChatSidebar";
 import { LogInButtonContainer } from "./layout/LogInButtonContainer";
 import {
 	NotificationContent,
@@ -128,6 +130,13 @@ function MobileTabBar({
 						onPress={() => onTabPress("tourneys")}
 					/>
 					<MobileTab
+						icon={<MessageSquare />}
+						label={t("front:mobileNav.chat")}
+						isActive={false}
+						onPress={() => {}}
+						unreadCount={MOCK_TOTAL_UNREAD}
+					/>
+					<MobileTab
 						icon={<User />}
 						label={t("front:mobileNav.you")}
 						isActive={activePanel === "you"}
@@ -155,12 +164,14 @@ function MobileTab({
 	isActive,
 	onPress,
 	showNotificationDot,
+	unreadCount,
 }: {
 	icon: React.ReactNode;
 	label: string;
 	isActive: boolean;
 	onPress: () => void;
 	showNotificationDot?: boolean;
+	unreadCount?: number;
 }) {
 	return (
 		<button
@@ -172,6 +183,9 @@ function MobileTab({
 			<span className={styles.tabIcon}>
 				{icon}
 				{showNotificationDot ? <NotificationDot /> : null}
+				{unreadCount ? (
+					<span className={styles.tabBadge}>{unreadCount}</span>
+				) : null}
 			</span>
 			<span>{label}</span>
 		</button>

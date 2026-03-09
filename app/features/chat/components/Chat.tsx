@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { sub } from "date-fns";
+import { SendHorizontal } from "lucide-react";
 import * as React from "react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
@@ -17,6 +18,8 @@ export function ConnectedChat(props: ChatProps) {
 
 	return <Chat {...props} chat={chat} />;
 }
+
+// xxx: if we go with global chat refactor a lot / delete this
 
 export function Chat({
 	users,
@@ -176,7 +179,7 @@ export function Chat({
 				) : null}
 				<form onSubmit={handleSubmit} className="mt-4">
 					<input
-						className="w-full"
+						className="w-full text-xs"
 						ref={inputRef}
 						placeholder={t("common:chat.input.placeholder")}
 						disabled={sendingMessagesDisabled}
@@ -197,12 +200,12 @@ export function Chat({
 							</div>
 						)}
 						<SubmitButton
+							className={styles.sendButton}
 							size="small"
-							variant="minimal"
 							isDisabled={sendingMessagesDisabled}
-						>
-							{t("common:chat.send")}
-						</SubmitButton>
+							aria-label={t("common:chat.send")}
+							icon={<SendHorizontal size={16} />}
+						/>
 					</div>
 				</form>
 			</div>

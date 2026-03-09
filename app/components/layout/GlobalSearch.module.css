@@ -263,7 +263,8 @@
 	font-weight: var(--weight-semi);
 }
 
-@media screen and (max-width: 1000px) {
+/** needs to go away so we have enough space even with both side panels open */
+@media screen and (max-width: 1100px) {
 	.searchKbd {
 		display: none;
 	}

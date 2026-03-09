@@ -320,3 +320,21 @@
 	color: var(--color-text);
 	background-color: var(--color-bg-high);
 }
+
+.tabBadge {
+	position: absolute;
+	top: -4px;
+	right: -8px;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-inverse);
+	background-color: var(--color-text-accent);
+	min-width: 16px;
+	height: 16px;
+	padding: 0 var(--s-0-5);
+	border-radius: 8px;
+	display: grid;
+	place-items: center;
+	pointer-events: none;
+	line-height: 1;
+}
