@@ -29,5 +29,18 @@
 	"mobileNav.friends": "Friends",
 	"mobileNav.you": "You",
 	"mobileNav.login": "Login",
-	"mobileNav.queue": "Queue"
+	"mobileNav.queue": "Queue",
+	"rotations.header": "Rotations",
+	"rotations.series": "Anarchy Series",
+	"rotations.open": "Anarchy Open",
+	"rotations.x": "X Battle",
+	"rotations.current": "Now",
+	"rotations.next": "Next (in {{hours}}h {{minutes}}m)",
+	"rotations.nextAt": "Next (at {{time}})",
+	"rotations.in": "in {{hours}}h {{minutes}}m",
+	"rotations.at": "at {{time}}",
+	"rotations.nextLabel": "Next",
+	"rotations.credit": "Data from splatoon3.ink",
+	"rotations.filter.all": "All",
+	"rotations.remaining": "{{hours}}h {{minutes}}m"
 }

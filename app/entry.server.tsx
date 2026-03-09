@@ -13,6 +13,7 @@ import {
 	daily,
 	everyHourAt00,
 	everyHourAt30,
+	everyTwoHours,
 	everyTwoMinutes,
 } from "./routines/list.server";
 import { logger } from "./utils/logger";
@@ -106,6 +107,12 @@ if (!global.appStartSignal && process.env.NODE_ENV === "production") {
 	// 4:00 AM UTC
 	cron.schedule("0 4 * * *", async () => {
 		for (const routine of daily) {
+			await routine.run();
+		}
+	});
+
+	cron.schedule("5 */2 * * *", async () => {
+		for (const routine of everyTwoHours) {
 			await routine.run();
 		}
 	});

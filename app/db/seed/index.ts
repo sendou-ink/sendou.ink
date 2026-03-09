@@ -239,6 +239,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	notifications,
 	() => friendships(variation),
 	liveStreams,
+	splatoonRotations,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -307,6 +308,7 @@ function wipeDB() {
 		"TournamentOrganization",
 		"SeedingSkill",
 		"LiveStream",
+		"SplatoonRotation",
 	];
 
 	for (const table of tablesToDelete) {
@@ -2915,5 +2917,77 @@ function liveStreams() {
 				thumbnailUrl,
 				twitch,
 			});
+	}
+}
+
+function splatoonRotations() {
+	const nowUnix = Math.floor(Date.now() / 1000);
+	const TWO_HOURS = 2 * 60 * 60;
+
+	const currentStart = nowUnix - (nowUnix % TWO_HOURS);
+	const currentEnd = currentStart + TWO_HOURS;
+	const nextStart = currentEnd;
+	const nextEnd = nextStart + TWO_HOURS;
+
+	const rotationData = [
+		{
+			type: "SERIES",
+			mode: "SZ",
+			stageId1: 0,
+			stageId2: 3,
+			startTime: currentStart,
+			endTime: currentEnd,
+		},
+		{
+			type: "SERIES",
+			mode: "TC",
+			stageId1: 5,
+			stageId2: 8,
+			startTime: nextStart,
+			endTime: nextEnd,
+		},
+		{
+			type: "OPEN",
+			mode: "RM",
+			stageId1: 1,
+			stageId2: 4,
+			startTime: currentStart,
+			endTime: currentEnd,
+		},
+		{
+			type: "OPEN",
+			mode: "CB",
+			stageId1: 6,
+			stageId2: 9,
+			startTime: nextStart,
+			endTime: nextEnd,
+		},
+		{
+			type: "X",
+			mode: "CB",
+			stageId1: 2,
+			stageId2: 7,
+			startTime: currentStart,
+			endTime: currentEnd,
+		},
+		{
+			type: "X",
+			mode: "SZ",
+			stageId1: 10,
+			stageId2: 11,
+			startTime: nextStart,
+			endTime: nextEnd,
+		},
+	];
+
+	for (const rotation of rotationData) {
+		sql
+			.prepare(
+				`
+			insert into "SplatoonRotation" ("type", "mode", "stageId1", "stageId2", "startTime", "endTime")
+			values ($type, $mode, $stageId1, $stageId2, $startTime, $endTime)
+			`,
+			)
+			.run(rotation);
 	}
 }

@@ -4,12 +4,16 @@ import * as Changelog from "~/features/front-page/core/Changelog.server";
 import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import * as SplatoonRotationRepository from "~/features/splatoon-rotations/SplatoonRotationRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
+import type { SerializeFrom } from "~/utils/remix";
 import { discordAvatarUrl, teamPage, userPage } from "~/utils/urls";
 import * as ShowcaseTournaments from "../core/ShowcaseTournaments.server";
 
+export type FrontPageLoaderData = SerializeFrom<typeof loader>;
+
 export const loader = async () => {
-	const [tournaments, changelog, leaderboards] = await Promise.all([
+	const [tournaments, changelog, leaderboards, rotations] = await Promise.all([
 		ShowcaseTournaments.categorizedTournamentsByUserId(null),
 		cachified({
 			key: "front-changelog",
@@ -21,12 +25,14 @@ export const loader = async () => {
 			},
 		}),
 		cachedLeaderboards(),
+		SplatoonRotationRepository.findAll(),
 	]);
 
 	return {
 		tournaments,
 		changelog,
 		leaderboards,
+		rotations,
 	};
 };
 

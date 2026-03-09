@@ -12,6 +12,7 @@ import { BSKYRepostIcon } from "~/components/icons/BSKYRepost";
 import { ExternalIcon } from "~/components/icons/External";
 import { Main } from "~/components/Main";
 import { TournamentCard } from "~/features/calendar/components/TournamentCard";
+import { SplatoonRotations } from "~/features/front-page/components/SplatoonRotations";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -26,12 +27,11 @@ import {
 	SENDOUQ_PAGE,
 	sqHeaderGuyImageUrl,
 } from "~/utils/urls";
-
 import { type LeaderboardEntry, loader } from "../loaders/index.server";
 export { loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["front"],
+	i18n: ["front", "game-misc"],
 };
 
 export default function FrontPage() {
@@ -39,6 +39,7 @@ export default function FrontPage() {
 		<Main className={styles.frontPageContainer}>
 			<LeagueBanner />
 			<SeasonBanner />
+			<SplatoonRotations />
 			<ResultHighlights />
 			<ChangelogList />
 		</Main>

@@ -1215,6 +1215,19 @@ export interface NotificationUserSubscription {
 	subscription: JSONColumnType<NotificationSubscription>;
 }
 
+export const SPLATOON_ROTATION_TYPES = ["SERIES", "OPEN", "X"] as const;
+export type SplatoonRotationType = (typeof SPLATOON_ROTATION_TYPES)[number];
+
+export interface SplatoonRotation {
+	id: GeneratedAlways<number>;
+	type: SplatoonRotationType;
+	mode: string;
+	stageId1: number;
+	stageId2: number;
+	startTime: number;
+	endTime: number;
+}
+
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };
 export type TablesInsertable = { [P in keyof DB]: Insertable<DB[P]> };
 export type TablesUpdatable = { [P in keyof DB]: Updateable<DB[P]> };
@@ -1311,4 +1324,5 @@ export interface DB {
 	NotificationUser: NotificationUser;
 	NotificationUserSubscription: NotificationUserSubscription;
 	SavedTournament: SavedTournament;
+	SplatoonRotation: SplatoonRotation;
 }
