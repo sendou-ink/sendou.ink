@@ -81,17 +81,17 @@ Any changes here NEED to be reflected in oklch-gamut.ts as well
 */
 html.dark {
 	--color-base-0: oklch(100% var(--_base-c-0) var(--_base-h));
-	--color-base-1: oklch(94.873% var(--_base-c-1) var(--_base-h));
-	--color-base-2: oklch(81.397% var(--_base-c-2) var(--_base-h));
-	--color-base-3: oklch(63.785% var(--_base-c-3) var(--_base-h));
-	--color-base-4: oklch(46.004% var(--_base-c-4) var(--_base-h));
-	--color-base-5: oklch(34.138% var(--_base-c-5) var(--_base-h));
-	--color-base-6: oklch(27.313% var(--_base-c-6) var(--_base-h));
-	--color-base-7: oklch(20.97% var(--_base-c-7) var(--_base-h));
+	--color-base-1: oklch(95% var(--_base-c-1) var(--_base-h));
+	--color-base-2: oklch(81% var(--_base-c-2) var(--_base-h));
+	--color-base-3: oklch(64% var(--_base-c-3) var(--_base-h));
+	--color-base-4: oklch(46% var(--_base-c-4) var(--_base-h));
+	--color-base-5: oklch(34% var(--_base-c-5) var(--_base-h));
+	--color-base-6: oklch(27% var(--_base-c-6) var(--_base-h));
+	--color-base-7: oklch(21% var(--_base-c-7) var(--_base-h));
 
-	--color-accent-low: oklch(25.912% var(--_acc-c-0) var(--_acc-h));
-	--color-accent: oklch(52.262% var(--_acc-c-1) var(--_acc-h));
-	--color-accent-high: oklch(83.419% var(--_acc-c-2) var(--_acc-h));
+	--color-accent-low: oklch(26% var(--_acc-c-0) var(--_acc-h));
+	--color-accent: oklch(52% var(--_acc-c-1) var(--_acc-h));
+	--color-accent-high: oklch(83% var(--_acc-c-2) var(--_acc-h));
 
 	--color-second-low: oklch(
 		from var(--color-accent-low) l var(--_second-c-0) var(--_second-h)
@@ -130,18 +130,18 @@ html.dark {
 }
 
 html.light {
-	--color-base-0: oklch(20.97% var(--_base-c-7) var(--_base-h));
-	--color-base-1: oklch(27.313% var(--_base-c-6) var(--_base-h));
-	--color-base-2: oklch(34.138% var(--_base-c-5) var(--_base-h));
-	--color-base-3: oklch(46.004% var(--_base-c-4) var(--_base-h));
-	--color-base-4: oklch(63.785% var(--_base-c-3) var(--_base-h));
-	--color-base-5: oklch(81.397% var(--_base-c-2) var(--_base-h));
-	--color-base-6: oklch(94.873% var(--_base-c-1) var(--_base-h));
+	--color-base-0: oklch(21% var(--_base-c-7) var(--_base-h));
+	--color-base-1: oklch(27% var(--_base-c-6) var(--_base-h));
+	--color-base-2: oklch(34% var(--_base-c-5) var(--_base-h));
+	--color-base-3: oklch(46% var(--_base-c-4) var(--_base-h));
+	--color-base-4: oklch(64% var(--_base-c-3) var(--_base-h));
+	--color-base-5: oklch(81% var(--_base-c-2) var(--_base-h));
+	--color-base-6: oklch(95% var(--_base-c-1) var(--_base-h));
 	--color-base-7: oklch(100% var(--_base-c-0) var(--_base-h));
 
-	--color-accent-low: oklch(87.817% var(--_acc-c-3) var(--_acc-h));
-	--color-accent: oklch(52.919% var(--_acc-c-4) var(--_acc-h));
-	--color-accent-high: oklch(31.777% var(--_acc-c-5) var(--_acc-h));
+	--color-accent-low: oklch(88% var(--_acc-c-3) var(--_acc-h));
+	--color-accent: oklch(53% var(--_acc-c-4) var(--_acc-h));
+	--color-accent-high: oklch(32% var(--_acc-c-5) var(--_acc-h));
 
 	--color-second-low: oklch(
 		from var(--color-accent-low) l var(--_second-c-0) var(--_second-h)

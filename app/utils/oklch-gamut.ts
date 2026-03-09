@@ -228,22 +228,22 @@ function maximum_chroma_for_lh(L: number, h: number): number {
 
 const BASE_LIGHTNESS_VALUES = [
 	1.0, // --base-c-0
-	0.94873, // --base-c-1
-	0.81397, // --base-c-2
-	0.63785, // --base-c-3
-	0.46004, // --base-c-4
-	0.34138, // --base-c-5
-	0.27313, // --base-c-6
-	0.2097, // --base-c-7
+	0.95, // --base-c-1
+	0.81, // --base-c-2
+	0.64, // --base-c-3
+	0.46, // --base-c-4
+	0.34, // --base-c-5
+	0.27, // --base-c-6
+	0.21, // --base-c-7
 ] as const;
 
 const ACCENT_LIGHTNESS_VALUES = [
-	0.25912, // --acc-c-0: dark mode low
-	0.52262, // --acc-c-1: dark mode mid
-	0.83419, // --acc-c-2: dark mode high
-	0.87817, // --acc-c-3: light mode low
-	0.52919, // --acc-c-4: light mode mid
-	0.31777, // --acc-c-5: light mode high
+	0.26, // --acc-c-0: dark mode low
+	0.52, // --acc-c-1: dark mode mid
+	0.83, // --acc-c-2: dark mode high
+	0.88, // --acc-c-3: light mode low
+	0.53, // --acc-c-4: light mode mid
+	0.32, // --acc-c-5: light mode high
 ] as const;
 
 export const BASE_CHROMA_MULTIPLIERS = [
