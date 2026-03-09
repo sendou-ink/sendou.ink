@@ -1,9 +1,9 @@
-import { Outlet, useOutletContext, useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
 import { sub } from "date-fns";
 import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
+import { Outlet, useOutletContext, useRevalidator } from "react-router";
 import { useCopyToClipboard } from "react-use";
 import { Alert } from "~/components/Alert";
 import { Divider } from "~/components/Divider";
@@ -199,7 +199,11 @@ export default function TournamentBracketsPage() {
 							{bracket.participantTournamentTeamIds.length}/
 							{totalTeamsAvailableForTheBracket()} teams checked in
 							{bracket.canBeStarted ? (
-								<BracketStarter bracket={bracket} bracketIdx={bracketIdx} />
+								tournament.isDraft ? (
+									<DraftBracketStartPopover />
+								) : (
+									<BracketStarter bracket={bracket} bracketIdx={bracketIdx} />
+								)
 							) : null}
 						</Alert>
 						{!bracket.canBeStarted ? (
@@ -302,6 +306,27 @@ function BracketStarter({
 				Start the bracket
 			</SendouButton>
 		</>
+	);
+}
+
+function DraftBracketStartPopover() {
+	const { t } = useTranslation(["calendar"]);
+
+	return (
+		<SendouPopover
+			popoverClassName="text-xs"
+			trigger={
+				<SendouButton
+					variant="outlined"
+					size="small"
+					data-testid="finalize-bracket-button"
+				>
+					Start the bracket
+				</SendouButton>
+			}
+		>
+			{t("calendar:forms.draftBracketStartBlocked")}
+		</SendouPopover>
 	);
 }
 

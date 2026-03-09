@@ -22,11 +22,13 @@ export type CommonUser = Pick<
 	"id" | "username" | "discordId" | "discordAvatar" | "customUrl"
 >;
 
-export const userChatNameColor = sql<
+const userChatNameColorRaw = sql<
 	string | null
->`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."css" ->> 'chat', null)`.as(
-	"chatNameColor",
-);
+>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."css" ->> 'chat', null)`;
+
+export const userChatNameColor = userChatNameColorRaw.as("chatNameColor");
+
+export const userChatNameColorForJson = userChatNameColorRaw;
 
 export function commonUserJsonObject(eb: ExpressionBuilder<Tables, "User">) {
 	return jsonBuildObject({
@@ -111,19 +113,6 @@ export function concatUserSubmittedImagePrefix<T extends string | null>(
 		eb.fn<string>("concat", [sql.lit(`${USER_SUBMITTED_IMAGE_ROOT}/`), expr]),
 		sql`null`,
 	]);
-}
-
-/** Prevents ParseJSONResultsPlugin from trying to parse this as JSON */
-export function unJsonify<T>(value: T) {
-	if (typeof value !== "string") {
-		return value;
-	}
-
-	if (value.match(/^[[{]/) === null) {
-		return value;
-	}
-
-	return `\\${value}`;
 }
 
 export type JSONColumnTypeNullable<SelectType extends object | null> =

@@ -95,8 +95,13 @@
 		"description": "a guide to improving at Splatoon, beyond raw mechanical ability"
 	},
 	{
-		"title": "Sunken scrolls",
-		"url": "https://scrolls.tessaract.gay/",
-		"description": "an archive for Splatoon guides that would otherwise be lost to time"
+		"title": "Sunken Scrolls",
+		"url": "https://sunkenscrolls.ink",
+		"description": "an archive for Splatoon resources that would otherwise be lost to time"
+	},
+	{
+		"title": "Calculating weapon range sheet",
+		"url": "https://docs.google.com/spreadsheets/d/1nwuHQfBPCzV2FglB_9lGwPoZqWkrSqG78WBqn3Tfx80",
+		"description": "a spreadsheet by Centritide for calculating weapon ranges"
 	}
 ]

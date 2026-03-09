@@ -1,5 +1,5 @@
-import type { ZodType } from "zod/v4";
-import { z } from "zod/v4";
+import type { ZodType } from "zod";
+import { z } from "zod";
 import { CUSTOM_CSS_VAR_COLORS } from "~/features/user-page/user-page-constants";
 import {
 	abilities,
@@ -43,22 +43,32 @@ const abilityNameToType = (val: string) =>
 	abilities.find((ability) => ability.name === val)?.type;
 export const headMainSlotAbility = z
 	.string()
-	.refine((val) =>
-		["STACKABLE", "HEAD_MAIN_ONLY"].includes(abilityNameToType(val) as any),
+	.refine(
+		(val) =>
+			["STACKABLE", "HEAD_MAIN_ONLY"].includes(abilityNameToType(val) as any),
+		{ message: "forms:errors.required" },
 	);
 export const clothesMainSlotAbility = z
 	.string()
-	.refine((val) =>
-		["STACKABLE", "CLOTHES_MAIN_ONLY"].includes(abilityNameToType(val) as any),
+	.refine(
+		(val) =>
+			["STACKABLE", "CLOTHES_MAIN_ONLY"].includes(
+				abilityNameToType(val) as any,
+			),
+		{ message: "forms:errors.required" },
 	);
 export const shoesMainSlotAbility = z
 	.string()
-	.refine((val) =>
-		["STACKABLE", "SHOES_MAIN_ONLY"].includes(abilityNameToType(val) as any),
+	.refine(
+		(val) =>
+			["STACKABLE", "SHOES_MAIN_ONLY"].includes(abilityNameToType(val) as any),
+		{ message: "forms:errors.required" },
 	);
 export const stackableAbility = z
 	.string()
-	.refine((val) => abilityNameToType(val) === "STACKABLE");
+	.refine((val) => abilityNameToType(val) === "STACKABLE", {
+		message: "forms:errors.required",
+	});
 
 export const normalizeFriendCode = (value: string) => {
 	const onlyNumbers = value.replace(/\D/g, "");
@@ -116,11 +126,6 @@ export const subWeaponId = numericEnum(subWeaponIds);
 
 export const specialWeaponId = numericEnum(specialWeaponIds);
 
-export const qWeapon = z.object({
-	weaponSplId,
-	isFavorite: z.union([z.literal(0), z.literal(1)]),
-});
-
 export const modeShort = z.enum(["TW", "SZ", "TC", "RM", "CB"]);
 export const modeShortWithSpecial = z.enum([
 	"TW",
@@ -159,7 +164,19 @@ export function safeJSONParse(value: unknown): unknown {
 	}
 }
 
-const EMPTY_CHARACTERS = ["\u200B", "\u200C", "\u200D", "\u200E", "\u200F", "󠀠"];
+const EMPTY_CHARACTERS = [
+	"\u200B",
+	"\u200C",
+	"\u200D",
+	"\u200E",
+	"\u200F",
+	"󠀠",
+	"\u3164",
+	"\u115F",
+	"\u1160",
+	"\uFEFF",
+	"\u2060",
+];
 const EMPTY_CHARACTERS_REGEX = new RegExp(EMPTY_CHARACTERS.join("|"), "g");
 
 const zalgoRe = /%CC%/g;
@@ -187,7 +204,7 @@ export const safeNullableStringSchema = ({
 	max: number;
 }) =>
 	z.preprocess(
-		actuallyNonEmptyStringOrNull,
+		processMany(undefinedToNull, actuallyNonEmptyStringOrNull),
 		z
 			.string()
 			.min(min ?? 0)
@@ -216,21 +233,6 @@ export function actuallyNonEmptyStringOrNull(value: unknown) {
 	return trimmed === "" ? null : trimmed;
 }
 
-/**
- * Safely splits a string by a specified delimiter as Zod preprocess function.
- *
- * @param splitBy - The delimiter to split the string by. Defaults to a comma (",").
- * @returns A function that takes a value and returns the split string if the value is a string,
- *          otherwise returns the original value.
- */
-export const safeSplit =
-	(splitBy = ",") =>
-	(value: unknown): unknown => {
-		if (typeof value !== "string") return value;
-
-		return value.split(splitBy);
-	};
-
 export function falsyToNull(value: unknown): unknown {
 	if (value) return value;
 
@@ -243,16 +245,7 @@ export function nullLiteraltoNull(value: unknown): unknown {
 	return value;
 }
 
-export function jsonParseable(value: unknown) {
-	try {
-		JSON.parse(value as string);
-		return true;
-	} catch {
-		return false;
-	}
-}
-
-export function undefinedToNull(value: unknown): unknown {
+function undefinedToNull(value: unknown): unknown {
 	if (value === undefined) return null;
 
 	return value;
@@ -264,14 +257,6 @@ export function actualNumber(value: unknown) {
 	const parsed = Number(value);
 
 	return Number.isNaN(parsed) ? undefined : parsed;
-}
-
-export function trimmedString(value: unknown) {
-	if (typeof value !== "string") {
-		throw new Error("Expected string value");
-	}
-
-	return value.trim();
 }
 
 export function date(value: unknown) {

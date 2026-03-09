@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import {
 	clearTournamentDataCache,
@@ -14,7 +14,7 @@ import { deleteSub } from "../queries/deleteSub.server";
 import { deleteSubSchema } from "../tournament-subs-schemas.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,

@@ -1,4 +1,3 @@
-import type { SerializeFrom } from "@remix-run/node";
 import type { TFunction } from "i18next";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -7,6 +6,7 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import { MapIcon } from "~/components/icons/Map";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { nullFilledArray } from "~/utils/arrays";
+import type { SerializeFrom } from "~/utils/remix";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { pickInfoText } from "../tournament-bracket-utils";
 

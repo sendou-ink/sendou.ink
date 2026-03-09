@@ -1,8 +1,12 @@
-import type { ExpressionBuilder } from "kysely";
+import type { ExpressionBuilder, NotNull } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
+import { sortBadgesByFavorites } from "~/features/user-page/core/badge-sorting.server";
+import invariant from "~/utils/invariant";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { SPLATOON_3_XP_BADGE_VALUES } from "./badges-constants";
+import { findSplatoon3XpBadgeValue } from "./badges-utils";
 
 const addPermissions = <T extends { managers: { userId: number }[] }>(
 	row: T,
@@ -107,6 +111,46 @@ export function findManagedByUserId(userId: number) {
 		.execute();
 }
 
+export async function findByOwnerUserId(userId: number) {
+	const rows = await db
+		.selectFrom("BadgeOwner")
+		.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
+		.innerJoin("User", "User.id", "BadgeOwner.userId")
+		.select(({ fn }) => [
+			fn.count<number>("BadgeOwner.badgeId").as("count"),
+			"Badge.id",
+			"Badge.displayName",
+			"Badge.code",
+			"Badge.hue",
+			"User.favoriteBadgeIds",
+			"User.patronTier",
+		])
+		.where("BadgeOwner.userId", "=", userId)
+		.groupBy(["BadgeOwner.badgeId", "BadgeOwner.userId"])
+		.execute();
+
+	if (rows.length === 0) return [];
+
+	const { favoriteBadgeIds, patronTier } = rows[0];
+
+	return sortBadgesByFavorites({
+		favoriteBadgeIds,
+		badges: rows.map(
+			({ favoriteBadgeIds: _, patronTier: __, ...badge }) => badge,
+		),
+		patronTier,
+	}).badges;
+}
+
+export function findByAuthorUserId(userId: number) {
+	return db
+		.selectFrom("Badge")
+		.select(["Badge.id", "Badge.displayName", "Badge.code", "Badge.hue"])
+		.where("Badge.authorId", "=", userId)
+		.groupBy("Badge.id")
+		.execute();
+}
+
 export function replaceManagers({
 	badgeId,
 	managerIds,
@@ -156,6 +200,49 @@ export function replaceOwners({
 						userId,
 					})),
 				)
+				.execute();
+		}
+	});
+}
+
+export async function syncXPBadges() {
+	return db.transaction().execute(async (trx) => {
+		for (const value of SPLATOON_3_XP_BADGE_VALUES) {
+			const badge = await trx
+				.selectFrom("Badge")
+				.select("id")
+				.where("code", "=", String(value))
+				.executeTakeFirst();
+
+			invariant(badge, `Badge ${value} not found`);
+
+			await trx
+				.deleteFrom("TournamentBadgeOwner")
+				.where("badgeId", "=", badge.id)
+				.execute();
+		}
+
+		const userTopXPowers = await trx
+			.selectFrom("SplatoonPlayer")
+			.select(["userId", "peakXp"])
+			.where("userId", "is not", null)
+			.where("peakXp", "is not", null)
+			.$narrowType<{ userId: NotNull; peakXp: NotNull }>()
+			.execute();
+
+		for (const { userId, peakXp } of userTopXPowers) {
+			const badgeValue = findSplatoon3XpBadgeValue(peakXp!);
+			if (!badgeValue) continue;
+
+			await trx
+				.insertInto("TournamentBadgeOwner")
+				.values((eb) => ({
+					badgeId: eb
+						.selectFrom("Badge")
+						.select("id")
+						.where("code", "=", String(badgeValue)),
+					userId,
+				}))
 				.execute();
 		}
 	});

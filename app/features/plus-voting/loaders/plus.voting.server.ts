@@ -1,5 +1,5 @@
-import type { LoaderFunction } from "@remix-run/node";
 import { formatDistance } from "date-fns";
+import type { LoaderFunction } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import {
 	nextNonCompletedVoting,
@@ -33,8 +33,8 @@ export type PlusVotingLoaderData =
 			};
 	  };
 
-export const loader: LoaderFunction = async ({ request }) => {
-	const user = await getUser(request);
+export const loader: LoaderFunction = async () => {
+	const user = getUser();
 
 	const now = new Date();
 	const nextVotingRange = nextNonCompletedVoting(now);

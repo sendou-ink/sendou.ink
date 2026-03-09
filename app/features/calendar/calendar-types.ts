@@ -1,4 +1,4 @@
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import type { CalendarEventTag, Tables } from "~/db/tables";
 import type { calendarFiltersSearchParamsSchema } from "~/features/calendar/calendar-schemas";
 import type { ModeShortWithSpecial } from "~/modules/in-game-lists/types";
@@ -12,6 +12,10 @@ interface CommonEvent {
 	url: string;
 	/** Is the tournament ranked? If null, tournament is not hosted on sendou.ink */
 	isRanked: boolean | null;
+	/** Tournament tier (1=X, 2=S+, 3=S, 4=A+, 5=A, 6=B+, 7=B, 8=C+, 9=C). Null if not tiered. */
+	tier: number | null;
+	/** Tentative tier prediction based on series history. Displayed with ~ prefix. */
+	tentativeTier: number | null;
 	modes: Array<ModeShortWithSpecial> | null;
 	organization: {
 		name: string;

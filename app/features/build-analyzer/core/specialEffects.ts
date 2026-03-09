@@ -74,6 +74,27 @@ export const SPECIAL_EFFECTS = [
 		],
 	},
 	{
+		type: "AURA",
+		values: [
+			{
+				type: "RSU",
+				ap: 30,
+			},
+			{
+				type: "SSU",
+				ap: 30,
+			},
+			{
+				type: "RES",
+				ap: 30,
+			},
+			{
+				type: "IA",
+				ap: 30,
+			},
+		],
+	},
+	{
 		type: "TACTICOOLER",
 		values: [
 			{

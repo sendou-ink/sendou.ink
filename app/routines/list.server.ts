@@ -6,6 +6,7 @@ import { NotifyPlusServerVotingRoutine } from "./notifyPlusServerVoting";
 import { NotifyScrimStartingSoonRoutine } from "./notifyScrimStartingSoon";
 import { NotifySeasonStartRoutine } from "./notifySeasonStart";
 import { SetOldGroupsAsInactiveRoutine } from "./setOldGroupsAsInactive";
+import { SyncLiveStreamsRoutine } from "./syncLiveStreams";
 import { UpdatePatreonDataRoutine } from "./updatePatreonData";
 
 /** List of Routines that should occur hourly at XX:00 */
@@ -28,3 +29,6 @@ export const daily = [
 	DeleteOldNotificationsRoutine,
 	CloseExpiredCommissionsRoutine,
 ];
+
+/** List of Routines that should occur every 2 minutes */
+export const everyTwoMinutes = [SyncLiveStreamsRoutine];

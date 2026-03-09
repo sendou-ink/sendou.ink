@@ -87,6 +87,7 @@ export async function posts(user?: { id: number; plusTier: number | null }) {
 		])
 		.orderBy(sql`LFGPost.authorId = ${sql`${userId}`} desc`)
 		.orderBy("LFGPost.updatedAt", "desc")
+		.orderBy("LFGPost.type", "asc")
 		.where((eb) =>
 			eb.or([
 				eb(
@@ -154,5 +155,14 @@ export function deletePostsByTeamId(teamId: number, trx?: Transaction<DB>) {
 	return (trx ?? db)
 		.deleteFrom("LFGPost")
 		.where("teamId", "=", teamId)
+		.execute();
+}
+
+export async function findByAuthorUserId(authorId: number) {
+	return db
+		.selectFrom("LFGPost")
+		.select(["id", "type"])
+		.where("authorId", "=", authorId)
+		.orderBy("updatedAt", "desc")
 		.execute();
 }

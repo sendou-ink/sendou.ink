@@ -1,12 +1,17 @@
-import { type FetcherWithComponents, useFetcher } from "@remix-run/react";
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { type FetcherWithComponents, useFetcher } from "react-router";
 import type { SendouButtonProps } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import invariant from "~/utils/invariant";
 import { SubmitButton } from "./SubmitButton";
+
+interface ChildProps {
+	onPress?: () => void;
+	type?: "button";
+}
 
 export function FormWithConfirm({
 	fields,
@@ -22,7 +27,7 @@ export function FormWithConfirm({
 		| [name: string, value: string | number]
 		| readonly [name: string, value: string | number]
 	)[];
-	children: React.ReactNode;
+	children: React.ReactElement<ChildProps>;
 	dialogHeading: string;
 	submitButtonText?: string;
 	action?: string;
@@ -89,7 +94,6 @@ export function FormWithConfirm({
 				</div>
 			</SendouDialog>
 			{React.cloneElement(children, {
-				// @ts-expect-error broke with @types/react upgrade. TODO: figure out narrower type than React.ReactNode
 				onPress: openDialog,
 				type: "button",
 			})}

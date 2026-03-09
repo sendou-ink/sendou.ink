@@ -1,4 +1,3 @@
-import { useFetcher } from "@remix-run/react";
 import {
 	createContext,
 	type ReactNode,
@@ -7,6 +6,7 @@ import {
 	useEffect,
 	useState,
 } from "react";
+import { useFetcher } from "react-router";
 
 const Theme = {
 	DARK: "dark",
@@ -94,7 +94,6 @@ function ThemeProvider({
 		[setThemeState, persistTheme],
 	);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: biome migration
 	useEffect(() => {
 		if (!isAutoDetected) {
 			return;

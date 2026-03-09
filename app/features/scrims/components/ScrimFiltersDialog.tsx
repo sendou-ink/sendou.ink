@@ -1,17 +1,17 @@
-import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { useFetcher, useSearchParams } from "@remix-run/react";
 import * as React from "react";
-import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router";
+import type { z } from "zod";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { InputFormField } from "~/components/form/InputFormField";
 import { FilterFilledIcon } from "~/components/icons/FilterFilled";
-import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import type { ScrimFilters } from "~/features/scrims/scrims-types";
-import { scrimsFiltersSchema } from "../scrims-schemas";
-import { LutiDivsFormField } from "./LutiDivsFormField";
+import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
+import { scrimsFiltersFormSchema } from "../scrims-schemas";
+import type { LutiDiv } from "../scrims-types";
+
+type FormValues = z.infer<typeof scrimsFiltersFormSchema>;
 
 export function ScrimFiltersDialog({ filters }: { filters: ScrimFilters }) {
 	const { t } = useTranslation(["scrims"]);
@@ -44,6 +44,26 @@ export function ScrimFiltersDialog({ filters }: { filters: ScrimFilters }) {
 	);
 }
 
+function filtersToFormValues(filters: ScrimFilters): FormValues {
+	return {
+		weekdayTimes: filters.weekdayTimes,
+		weekendTimes: filters.weekendTimes,
+		divs: filters.divs ? [filters.divs.max, filters.divs.min] : [null, null],
+	};
+}
+
+function formValuesToFilters(values: FormValues): ScrimFilters {
+	const [max, min] = values.divs ?? [null, null];
+	return {
+		weekdayTimes: values.weekdayTimes,
+		weekendTimes: values.weekendTimes,
+		divs:
+			max || min
+				? { max: max as LutiDiv | null, min: min as LutiDiv | null }
+				: null,
+	};
+}
+
 function FiltersForm({
 	filters,
 	closeDialog,
@@ -53,96 +73,56 @@ function FiltersForm({
 }) {
 	const user = useUser();
 	const { t } = useTranslation(["scrims"]);
-
-	const methods = useForm({
-		resolver: standardSchemaResolver(scrimsFiltersSchema),
-		defaultValues: filters,
-	});
-	const fetcher = useFetcher<any>();
 	const [, setSearchParams] = useSearchParams();
 
-	const filtersToSearchParams = (newFilters: ScrimFilters) => {
+	const defaultValues = filtersToFormValues(filters);
+
+	const handleApply = (values: FormValues) => {
 		setSearchParams((prev) => {
-			prev.set("filters", JSON.stringify(newFilters));
+			prev.set("filters", JSON.stringify(formValuesToFilters(values)));
 			return prev;
+		});
+		closeDialog();
+	};
+
+	return (
+		<SendouForm
+			schema={scrimsFiltersFormSchema}
+			defaultValues={defaultValues}
+			onApply={handleApply}
+			submitButtonText={t("scrims:filters.apply")}
+			className="stack md-plus items-start"
+			secondarySubmit={user ? <ApplyAndPersistButton /> : null}
+		>
+			{({ FormField }) => (
+				<>
+					<FormField name="weekdayTimes" />
+					<FormField name="weekendTimes" />
+					<FormField name="divs" />
+				</>
+			)}
+		</SendouForm>
+	);
+}
+
+function ApplyAndPersistButton() {
+	const { t } = useTranslation(["scrims"]);
+	const { values, submitToServer, fetcherState } = useFormFieldContext();
+
+	const handlePress = () => {
+		submitToServer({
+			_action: "PERSIST_SCRIM_FILTERS",
+			filters: formValuesToFilters(values as FormValues),
 		});
 	};
 
-	const onApply = React.useCallback(
-		methods.handleSubmit((values) => {
-			filtersToSearchParams(values as ScrimFilters);
-			closeDialog();
-		}),
-		[],
-	);
-
-	const onApplyAndPersist = React.useCallback(
-		methods.handleSubmit((values) =>
-			fetcher.submit(
-				// @ts-expect-error TODO: fix
-				{
-					_action: "PERSIST_SCRIM_FILTERS",
-					filters: values as Parameters<typeof fetcher.submit>[0],
-				},
-				{
-					method: "post",
-					encType: "application/json",
-				},
-			),
-		),
-		[],
-	);
-
 	return (
-		<FormProvider {...methods}>
-			<fetcher.Form
-				className="stack md-plus items-start"
-				onSubmit={onApplyAndPersist}
-			>
-				<input type="hidden" name="_action" value="PERSIST_SCRIM_FILTERS" />
-				<div className="stack sm horizontal">
-					<InputFormField<ScrimFilters>
-						label={t("scrims:filters.weekdayStart")}
-						name={"weekdayTimes.start" as const}
-						type="time"
-						size="extra-small"
-					/>
-					<InputFormField<ScrimFilters>
-						label={t("scrims:filters.weekdayEnd")}
-						name={"weekdayTimes.end" as const}
-						type="time"
-						size="extra-small"
-					/>
-				</div>
-
-				<div className="stack sm horizontal">
-					<InputFormField<ScrimFilters>
-						label={t("scrims:filters.weekendStart")}
-						name={"weekendTimes.start" as const}
-						type="time"
-						size="extra-small"
-					/>
-					<InputFormField<ScrimFilters>
-						label={t("scrims:filters.weekendEnd")}
-						name={"weekendTimes.end" as const}
-						type="time"
-						size="extra-small"
-					/>
-				</div>
-
-				<LutiDivsFormField />
-
-				<div className="stack horizontal md justify-center mt-6 w-full">
-					<SendouButton onPress={() => onApply()}>
-						{t("scrims:filters.apply")}
-					</SendouButton>
-					{user ? (
-						<SubmitButton variant="outlined" state={fetcher.state}>
-							{t("scrims:filters.applyAndDefault")}
-						</SubmitButton>
-					) : null}
-				</div>
-			</fetcher.Form>
-		</FormProvider>
+		<SendouButton
+			variant="outlined"
+			onPress={handlePress}
+			isDisabled={fetcherState !== "idle"}
+		>
+			{t("scrims:filters.applyAndDefault")}
+		</SendouButton>
 	);
 }

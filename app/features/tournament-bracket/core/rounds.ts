@@ -108,7 +108,7 @@ export function getRounds(args: {
 }
 
 // adjusting losers bracket round numbers to start from 1, can sometimes start with 2 if byes are certain way
-export function adjustRoundNumbers<T extends { number: number }>(rounds: T[]) {
+function adjustRoundNumbers<T extends { number: number }>(rounds: T[]) {
 	if (rounds.at(0)?.number === 1) {
 		return rounds;
 	}

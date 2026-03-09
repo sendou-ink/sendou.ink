@@ -1,5 +1,5 @@
 export const PATREON_INITIAL_URL =
-	"https://www.patreon.com/api/oauth2/v2/campaigns/2744004/members?include=currently_entitled_tiers,user&fields%5Buser%5D=social_connections&fields%5Btier%5D=created_at";
+	"https://www.patreon.com/api/oauth2/v2/campaigns/2744004/members?include=currently_entitled_tiers,user&fields%5Buser%5D=social_connections&fields%5Bmember%5D=pledge_relationship_start";
 
 // tier 1 lowest, tier 4 highest
 export const TIER_1_ID = "6959473";

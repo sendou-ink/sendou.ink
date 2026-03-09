@@ -7,7 +7,6 @@ import type {
 } from "~/modules/in-game-lists/types";
 import type { DAMAGE_TYPE } from "./analyzer-constants";
 import type { SPECIAL_EFFECTS } from "./core/specialEffects";
-import type { abilityValues } from "./core/utils";
 import type { weaponParams } from "./core/weapon-params";
 
 type Overwrites = Record<
@@ -15,12 +14,9 @@ type Overwrites = Record<
 	Partial<Record<"High" | "Mid" | "Low", number>>
 >;
 
-export interface MainWeaponParams {
-	subWeaponId: SubWeaponId;
-	specialWeaponId: SpecialWeaponId;
+export interface BaseWeaponStats {
 	/** Replacing default values of the ability json for this specific weapon */
 	overwrites?: Overwrites;
-	SpecialPoint: number;
 	/** Weapon's weight class. "Light/Heavy weapon" */
 	WeaponSpeedType?: "Slow" | "Fast";
 	/** Total frames it takes the weapon to shoot out three times */
@@ -104,7 +100,51 @@ export interface MainWeaponParams {
 	//InkConsumeMidCharge_ChargeParam?: number;
 	// SpeedInkConsumeMax_WeaponRollParam?: number;
 	// SpeedInkConsumeMin_WeaponRollParam?: number;
+
+	// Range parameters for shooters/blasters/sloshers/splatlings/dualies
+	/** Initial bullet velocity */
+	Range_SpawnSpeed?: number;
+	/** Velocity cap after straight phase */
+	Range_GoStraightStateEndMaxSpeed?: number;
+	/** Frames in straight phase */
+	Range_GoStraightToBrakeStateFrame?: number;
+	/** Gravity constant (typically 0.016) */
+	Range_FreeGravity?: number;
+	/** Air resistance during free phase (rollers only, typically 0.1) */
+	Range_FreeAirResist?: number;
+	/** Velocity multiplier (typically 2.0) */
+	Range_ZRate?: number;
+	/** Air resistance during brake phase (typically 0.36) */
+	Range_BrakeAirResist?: number;
+	/** Gravity during brake phase (typically 0.07) */
+	Range_BrakeGravity?: number;
+	/** Frames in brake phase (typically 4) */
+	Range_BrakeToFreeStateFrame?: number;
+	/** Max frames (Splatanas) or max bounces (Bloblobber) before projectile stops */
+	Range_BurstFrame?: number;
+	/** Speed multiplier after bouncing (Bloblobber only) */
+	Range_BounceAfterMaxSpeed?: number;
+
+	// Range parameters for chargers (direct distance values)
+	/** Charger full charge range */
+	DistanceFullCharge?: number;
+	/** Charger max charge range */
+	DistanceMaxCharge?: number;
+	/** Charger min charge range */
+	DistanceMinCharge?: number;
+
+	// Blaster specific
+	/** Blaster explosion radius */
+	BlastRadius?: number;
 }
+
+export interface WeaponKit {
+	subWeaponId: SubWeaponId;
+	specialWeaponId: SpecialWeaponId;
+	SpecialPoint: number;
+}
+
+export type MainWeaponParams = BaseWeaponStats & WeaponKit;
 
 export interface DistanceDamage {
 	Damage: number;
@@ -142,6 +182,8 @@ export type SpecialWeaponParams = SpecialWeaponParamsObject[SpecialWeaponId] & {
 	ThrowDirectDamage?: number;
 	BulletDamageMin?: number;
 	BulletDamageMax?: number;
+	SplashDamageMax?: Array<DistanceDamage>;
+	SplashDamageMin?: Array<DistanceDamage>;
 	CannonDamage?: Array<DistanceDamage>;
 	BumpDamage?: number;
 	JumpDamage?: number;
@@ -149,7 +191,8 @@ export type SpecialWeaponParams = SpecialWeaponParamsObject[SpecialWeaponId] & {
 };
 
 export type ParamsJson = {
-	mainWeapons: Record<MainWeaponId, MainWeaponParams>;
+	baseWeaponStats: Record<MainWeaponId, BaseWeaponStats>;
+	weaponKits: Record<MainWeaponId, WeaponKit>;
 	subWeapons: Record<SubWeaponId, SubWeaponParams>;
 	specialWeapons: SpecialWeaponParamsObject;
 };
@@ -287,8 +330,6 @@ export interface AnalyzedBuild {
 }
 
 export type SpecialEffectType = (typeof SPECIAL_EFFECTS)[number]["type"];
-
-export type AbilityValuesKeys = keyof typeof abilityValues;
 
 export type AnyWeapon =
 	| { type: "MAIN"; id: MainWeaponId }

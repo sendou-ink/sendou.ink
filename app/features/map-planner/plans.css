@@ -47,8 +47,8 @@ div {
 	box-shadow: none !important;
 }
 
-/** Hacky selector to remove the question mark popup on bottom left */
-button[data-state="closed"][aria-haspopup="dialog"] {
+/** Hacky selector to remove the help button on bottom left */
+.tlui-help-menu {
 	display: none;
 }
 
@@ -189,6 +189,8 @@ img[src$="?outline=red"] {
 	background: transparent;
 	cursor: grab;
 	touch-action: none;
+	user-select: none;
+	-webkit-user-select: none;
 }
 
 .plans__draggable-button:hover {

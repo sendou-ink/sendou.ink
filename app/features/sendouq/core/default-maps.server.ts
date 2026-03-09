@@ -3,8 +3,8 @@ import * as MapList from "~/features/map-list-generator/core/MapList";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { logger } from "~/utils/logger";
-import * as QRepository from "../QRepository.server";
 import { SENDOUQ_BEST_OF } from "../q-constants";
+import * as SQGroupRepository from "../SQGroupRepository.server";
 
 let cachedDefaults: Map<string, number> | null = null;
 
@@ -59,7 +59,7 @@ async function calculateSeasonDefaultMaps(
 	seasonNth: number,
 ): Promise<Map<string, number>> {
 	const activeUsersWithPreferences =
-		await QRepository.mapModePreferencesBySeasonNth(seasonNth);
+		await SQGroupRepository.mapModePreferencesBySeasonNth(seasonNth);
 
 	const mapModeCounts = new Map<string, number>();
 

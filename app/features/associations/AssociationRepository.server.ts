@@ -1,7 +1,9 @@
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type { TablesInsertable, TablesUpdatable } from "~/db/tables";
+import type { TablesInsertable } from "~/db/tables";
 import type { AssociationVirtualIdentifier } from "~/features/associations/associations-constants";
+import { ASSOCIATION } from "~/features/associations/associations-constants";
+import { LimitReachedError } from "~/utils/errors";
 import { shortNanoid } from "~/utils/id";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
@@ -137,18 +139,23 @@ export function insert({ userId, ...associationArgs }: InsertArgs) {
 			.insertInto("AssociationMember")
 			.values({ userId, associationId: association.id, role: "ADMIN" })
 			.execute();
-	});
-}
 
-export function update(
-	associationId: number,
-	args: Partial<TablesUpdatable["Association"]>,
-) {
-	return db
-		.updateTable("Association")
-		.set(args)
-		.where("id", "=", associationId)
-		.execute();
+		const { count, patronTier } = await trx
+			.selectFrom("AssociationMember")
+			.innerJoin("User", "User.id", "AssociationMember.userId")
+			.select((eb) => [eb.fn.countAll<number>().as("count"), "User.patronTier"])
+			.where("AssociationMember.userId", "=", userId)
+			.executeTakeFirstOrThrow();
+
+		const maxCount =
+			(patronTier ?? 0) >= 2
+				? ASSOCIATION.MAX_COUNT_SUPPORTER
+				: ASSOCIATION.MAX_COUNT_REGULAR_USER;
+
+		if (count > maxCount) {
+			throw new LimitReachedError("Max amount of associations reached");
+		}
+	});
 }
 
 export function refreshInviteCode(associationId: number) {

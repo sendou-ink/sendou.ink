@@ -5,9 +5,11 @@ import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills } from "~/features/mmr/tiered.server";
 import { getDefaultMapWeights } from "~/features/sendouq/core/default-maps.server";
-import { addSkillsToGroups } from "~/features/sendouq/core/groups.server";
+import type {
+	SQMatch,
+	SQUncensoredGroup,
+} from "~/features/sendouq/core/SendouQ.server";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
-import type { LookingGroupWithInviteCode } from "~/features/sendouq/q-types";
 import {
 	BANNED_MAPS,
 	SENDOUQ_MAP_POOL,
@@ -20,14 +22,13 @@ import type {
 } from "~/modules/tournament-map-list-generator/types";
 import { logger } from "~/utils/logger";
 import { averageArray } from "~/utils/number";
-import type { MatchById } from "../queries/findMatchById.server";
 
 type WeightsMap = Map<string, number>;
 
 async function calculateMapWeights(
 	groupOnePreferences: UserMapModePreferences[],
 	groupTwoPreferences: UserMapModePreferences[],
-	modesIncluded: ModeShort[],
+	modesIncluded: readonly ModeShort[],
 ): Promise<WeightsMap> {
 	const teamOneVotes: WeightsMap = new Map();
 	const teamTwoVotes: WeightsMap = new Map();
@@ -129,7 +130,7 @@ async function applyDefaultWeights(
 }
 
 function countVotesForTeam(
-	modesIncluded: ModeShort[],
+	modesIncluded: readonly ModeShort[],
 	preferences: UserMapModePreferences[],
 	votesMap: WeightsMap,
 ) {
@@ -159,23 +160,13 @@ export async function matchMapList(
 	groupOne: {
 		preferences: { userId: number; preferences: UserMapModePreferences }[];
 		id: number;
-		ignoreModePreferences?: boolean;
 	},
 	groupTwo: {
 		preferences: { userId: number; preferences: UserMapModePreferences }[];
 		id: number;
-		ignoreModePreferences?: boolean;
 	},
+	modesIncluded: readonly ModeShort[],
 ): Promise<TournamentMapListMap[]> {
-	const modesIncluded = mapModePreferencesToModeList(
-		groupOne.ignoreModePreferences
-			? []
-			: groupOne.preferences.map(({ preferences }) => preferences.modes),
-		groupTwo.ignoreModePreferences
-			? []
-			: groupTwo.preferences.map(({ preferences }) => preferences.modes),
-	);
-
 	const weights = await calculateMapWeights(
 		groupOne.preferences.map((p) => p.preferences),
 		groupTwo.preferences.map((p) => p.preferences),
@@ -312,7 +303,10 @@ export function compareMatchToReportedScores({
 	newReporterGroupId,
 	previousReporterGroupId,
 }: {
-	match: MatchById;
+	match: Pick<SQMatch, "reportedByUserId" | "mapList"> & {
+		groupAlpha: { id: number };
+		groupBravo: { id: number };
+	};
 	winners: ("ALPHA" | "BRAVO")[];
 	newReporterGroupId: number;
 	previousReporterGroupId?: number;
@@ -342,7 +336,7 @@ export function compareMatchToReportedScores({
 		if (newWinner && !previousWinnerGroupId) return differentConstant;
 
 		const previousWinner =
-			previousWinnerGroupId === match.alphaGroupId ? "ALPHA" : "BRAVO";
+			previousWinnerGroupId === match.groupAlpha.id ? "ALPHA" : "BRAVO";
 
 		if (previousWinner !== newWinner) return differentConstant;
 	}
@@ -355,11 +349,11 @@ export function compareMatchToReportedScores({
 
 type CreateMatchMementoArgs = {
 	own: {
-		group: LookingGroupWithInviteCode;
+		group: SQUncensoredGroup;
 		preferences: { userId: number; preferences: UserMapModePreferences }[];
 	};
 	their: {
-		group: LookingGroupWithInviteCode;
+		group: SQUncensoredGroup;
 		preferences: { userId: number; preferences: UserMapModePreferences }[];
 	};
 	mapList: TournamentMapListMap[];
@@ -368,17 +362,9 @@ export function createMatchMemento(
 	args: CreateMatchMementoArgs,
 ): Omit<ParsedMemento, "mapPreferences"> {
 	const skills = userSkills(Seasons.currentOrPrevious()!.nth);
-	const withTiers = addSkillsToGroups({
-		groups: {
-			neutral: [],
-			likesReceived: [args.their.group],
-			own: args.own.group,
-		},
-		...skills,
-	});
 
-	const ownWithTier = withTiers.own;
-	const theirWithTier = withTiers.likesReceived[0];
+	const ownWithTier = args.own.group;
+	const theirWithTier = args.their.group;
 
 	return {
 		modePreferences: modePreferencesMemento(args),
@@ -401,7 +387,7 @@ export function createMatchMemento(
 			[ownWithTier, theirWithTier].map((group) => [
 				group!.id,
 				{
-					tier: group!.tier,
+					tier: group!.tier!,
 				},
 			]),
 		),

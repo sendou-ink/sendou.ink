@@ -27,7 +27,10 @@
 	"teamSize.4v4": "",
 	"forms.action.addMatch": "Добавить матч",
 	"forms.action.deleteMatch": "Удалить матч",
+	"forms.action.setAsCurrent": "",
+	"forms.action.copyFromPrevious": "",
 	"noVods": "Видео, совпадающие с фильтрами, не найдены. Может, мы что-то упустили? Посмотрите страницу FAQ с информацией о получении прав на загрузку VoD.",
 	"gainPerms": "Чтобы получить возможность загружать видео, пожалуйста, обратитесь в helpdesk на нашем Discord сервере",
-	"deleteConfirm": "Удалить видео под названием '{{title}}'?"
+	"deleteConfirm": "Удалить видео под названием '{{title}}'?",
+	"errors.youtubePreviewFailed": ""
 }

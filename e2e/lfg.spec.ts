@@ -1,5 +1,11 @@
-import test, { expect } from "@playwright/test";
-import { impersonate, navigate, seed, submit } from "~/utils/playwright";
+import {
+	expect,
+	impersonate,
+	navigate,
+	seed,
+	submit,
+	test,
+} from "~/utils/playwright";
 import { LFG_PAGE } from "~/utils/urls";
 
 test.describe("LFG", () => {
@@ -66,7 +72,8 @@ test.describe("LFG", () => {
 
 		await submit(page);
 
-		// wait for redirect to LFG page
+		// wait for redirect to LFG page & verify the language is displayed
+		await expect(page.getByText("DA / EN", { exact: true })).toBeVisible();
 		await expect(page.getByTestId("add-filter-button")).toBeVisible();
 		await expect(
 			page.getByText("test post for language editing"),
@@ -86,8 +93,7 @@ test.describe("LFG", () => {
 		).toBeVisible();
 
 		// verify updated language is displayed
-		await expect(page.getByText(/ES/)).toBeVisible();
-		await expect(page.getByText(/DA/)).not.toBeVisible();
+		await expect(page.getByText("EN / ES", { exact: true })).toBeVisible();
 	});
 
 	test("filters posts by language", async ({ page }) => {

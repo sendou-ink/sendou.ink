@@ -1,5 +1,5 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import type { ActionFunctionArgs } from "react-router";
+import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -22,7 +22,7 @@ import { generateTimeOptions } from "../scrims-utils";
 import { usersListForPost } from "./scrims.new.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 
 	const data = await parseRequestPayload({
 		request,
@@ -34,7 +34,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				userId: user.id,
 				postId: data.scrimPostId,
 			});
-			requirePermission(post, "DELETE_POST", user);
+			requirePermission(post, "DELETE_POST");
 
 			await ScrimPostRepository.del(post.id);
 
@@ -100,7 +100,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				userId: user.id,
 				requestId: data.scrimPostRequestId,
 			});
-			requirePermission(post, "MANAGE_REQUESTS", user);
+			requirePermission(post, "MANAGE_REQUESTS");
 
 			errorToastIfFalsy(!request.isAccepted, "Request is already accepted");
 
@@ -128,7 +128,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				userId: user.id,
 				requestId: data.scrimPostRequestId,
 			});
-			requirePermission(request, "CANCEL", user);
+			requirePermission(request, "CANCEL");
 
 			errorToastIfFalsy(
 				!request.isAccepted,

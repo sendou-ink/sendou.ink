@@ -1,15 +1,17 @@
-import { useSearchParams } from "@remix-run/react";
-import {
-	type AnalyzedBuild,
-	buildStats,
-	type DAMAGE_TYPE,
-	type DamageType,
-	possibleApValues,
-	validatedAnyWeaponFromSearchParams,
-} from "~/features/build-analyzer";
+import { useSearchParams } from "react-router";
 import { exampleMainWeaponIdWithSpecialWeaponId } from "~/modules/in-game-lists/weapon-ids";
 import { assertType } from "~/utils/types";
-import type { AnyWeapon } from "../build-analyzer/analyzer-types";
+import type { DAMAGE_TYPE } from "../build-analyzer/analyzer-constants";
+import type {
+	AnalyzedBuild,
+	AnyWeapon,
+	DamageType,
+} from "../build-analyzer/analyzer-types";
+import { buildStats } from "../build-analyzer/core/stats";
+import {
+	possibleApValues,
+	validatedAnyWeaponFromSearchParams,
+} from "../build-analyzer/core/utils";
 import {
 	calculateDamage,
 	resolveAllUniqueDamageTypes,
@@ -99,7 +101,7 @@ function validatedMultiShotFromSearchParams(searchParams: URLSearchParams) {
 	return searchParams.get(MULTI_SHOT_SP_KEY) !== "false";
 }
 
-export const damageTypePriorityList = [
+const damageTypePriorityList = [
 	"TURRET_MAX",
 	"TURRET_MIN",
 	"DIRECT_MAX",
@@ -137,11 +139,14 @@ export const damageTypePriorityList = [
 	"SPECIAL_CANNON",
 	"SPECIAL_BULLET_MAX",
 	"SPECIAL_BULLET_MIN",
+	"SPECIAL_SPLASH_MAX",
+	"SPECIAL_SPLASH_MIN",
 	"SPECIAL_BUMP",
 	"SPECIAL_JUMP",
 	"SPECIAL_TICK",
 	"SECONDARY_MODE_MAX",
 	"SECONDARY_MODE_MIN",
+	"COMBO",
 ] as const;
 assertType<
 	(typeof damageTypePriorityList)[number],

@@ -10,14 +10,20 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { z } from "zod/v4";
-import type { MainWeaponParams, SubWeaponParams } from "~/modules/analyzer";
-import type { ParamsJson } from "~/modules/analyzer/types";
+import { z } from "zod";
+import type {
+	BaseWeaponStats,
+	MainWeaponParams,
+	ParamsJson,
+	SubWeaponParams,
+	WeaponKit,
+} from "~/features/build-analyzer/analyzer-types";
 import {
 	type SpecialWeaponId,
 	SQUID_BEAKON_ID,
 	type SubWeaponId,
 	subWeaponIds,
+	weaponIdToBaseWeaponId,
 } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -41,13 +47,20 @@ type SubWeapon = (typeof subWeapons)[number];
 type SpecialWeapon = (typeof specialWeapons)[number];
 type TranslationArray = Array<{ language: string; key: string; value: string }>;
 
+const KIT_PROPERTIES = [
+	"SpecialPoint",
+	"subWeaponId",
+	"specialWeaponId",
+] as const;
+
 async function main() {
-	const mainWeaponsResult: Record<number, MainWeaponParams> = {};
+	const allMainWeaponParams: Record<number, MainWeaponParams> = {};
 	const subWeaponsResult: Record<number, SubWeaponParams> = {};
 	const specialWeaponsResult: any = {};
 	const translations: TranslationArray = [];
 
 	const langDicts = await loadLangDicts();
+	const hasLangDicts = langDicts.length > 0;
 
 	for (const weapon of weapons) {
 		if (mainWeaponShouldBeSkipped(weapon)) continue;
@@ -57,16 +70,21 @@ async function main() {
 			parametersToMainWeaponResult(weapon, rawParams),
 		);
 
-		translationsToArray({
-			arr: translations,
-			internalName: weapon.__RowId,
-			weaponId: weapon.Id,
-			type: "Main",
-			translations: langDicts,
-		});
+		if (hasLangDicts) {
+			translationsToArray({
+				arr: translations,
+				internalName: weapon.__RowId,
+				weaponId: weapon.Id,
+				type: "Main",
+				translations: langDicts,
+			});
+		}
 
-		mainWeaponsResult[weapon.Id] = params;
+		allMainWeaponParams[weapon.Id] = params;
 	}
+
+	const { baseWeaponStats, weaponKits } =
+		splitIntoBaseStatsAndKits(allMainWeaponParams);
 
 	for (const subWeapon of subWeapons) {
 		if (subWeaponShouldBeSkipped(subWeapon)) continue;
@@ -74,13 +92,15 @@ async function main() {
 		const rawParams = loadWeaponParamsObject(subWeapon);
 		const params = parametersToSubWeaponResult(subWeapon, rawParams);
 
-		translationsToArray({
-			arr: translations,
-			internalName: subWeapon.__RowId,
-			weaponId: subWeapon.Id,
-			type: "Sub",
-			translations: langDicts,
-		});
+		if (hasLangDicts) {
+			translationsToArray({
+				arr: translations,
+				internalName: subWeapon.__RowId,
+				weaponId: subWeapon.Id,
+				type: "Sub",
+				translations: langDicts,
+			});
+		}
 
 		subWeaponsResult[subWeapon.Id] = params;
 	}
@@ -91,30 +111,281 @@ async function main() {
 		const rawParams = loadWeaponParamsObject(specialWeapon);
 		const params = parametersToSpecialWeaponResult(rawParams);
 
-		translationsToArray({
-			arr: translations,
-			internalName: specialWeapon.__RowId,
-			weaponId: specialWeapon.Id,
-			type: "Special",
-			translations: langDicts,
-		});
+		// Super Chumps has two distinct splash damage values (near/far)
+		// that should be labeled separately in the analyzer
+		const SUPER_CHUMP_SPECIAL_ID = 16;
+		if (
+			specialWeapon.Id === SUPER_CHUMP_SPECIAL_ID &&
+			params.DistanceDamage?.length === 2
+		) {
+			const sorted = [...params.DistanceDamage].sort(
+				(a: any, b: any) => b.Damage - a.Damage,
+			);
+			params.SplashDamageMax = [sorted[0]];
+			params.SplashDamageMin = [sorted[1]];
+			params.DistanceDamage = undefined;
+		}
+
+		if (hasLangDicts) {
+			translationsToArray({
+				arr: translations,
+				internalName: specialWeapon.__RowId,
+				weaponId: specialWeapon.Id,
+				type: "Special",
+				translations: langDicts,
+			});
+		}
 
 		specialWeaponsResult[specialWeapon.Id] = params;
 	}
 
 	const toFile: ParamsJson = {
-		mainWeapons: mainWeaponsResult,
+		baseWeaponStats,
+		weaponKits,
 		subWeapons: subWeaponsResult,
 		specialWeapons: specialWeaponsResult,
 	};
 
+	const weaponParamsTs = `export const weaponParams = ${JSON.stringify(toFile, null, "\t")} as const;\n`;
+
 	fs.writeFileSync(
-		path.join(__dirname, "output", "params.json"),
-		`${JSON.stringify(toFile, null, 2)}\n`,
+		path.join(
+			__dirname,
+			"..",
+			"app",
+			"features",
+			"build-analyzer",
+			"core",
+			"weapon-params.ts",
+		),
+		weaponParamsTs,
 	);
 
-	writeTranslationsJsons(translations);
-	logWeaponIds(mainWeaponsResult);
+	if (hasLangDicts) {
+		writeTranslationsJsons(translations);
+	}
+	logWeaponIds(weaponKits);
+}
+
+function splitIntoBaseStatsAndKits(
+	allParams: Record<number, MainWeaponParams>,
+): {
+	baseWeaponStats: Record<number, BaseWeaponStats>;
+	weaponKits: Record<number, WeaponKit>;
+} {
+	const weaponGroups: Record<
+		number,
+		Array<{ id: number; params: MainWeaponParams }>
+	> = {};
+
+	for (const [idStr, params] of Object.entries(allParams)) {
+		const id = Number(idStr);
+		const baseId = weaponIdToBaseWeaponId(id);
+		if (!weaponGroups[baseId]) weaponGroups[baseId] = [];
+		weaponGroups[baseId].push({ id, params });
+	}
+
+	const baseWeaponStats: Record<number, BaseWeaponStats> = {};
+	const weaponKits: Record<number, WeaponKit> = {};
+
+	for (const [baseIdStr, variants] of Object.entries(weaponGroups)) {
+		const baseId = Number(baseIdStr);
+		const firstVariant = variants[0].params;
+
+		const nonKitProps = Object.keys(firstVariant).filter(
+			(k) => !KIT_PROPERTIES.includes(k as (typeof KIT_PROPERTIES)[number]),
+		) as Array<keyof MainWeaponParams>;
+
+		const sharedProps: Partial<MainWeaponParams> = {};
+		for (const prop of nonKitProps) {
+			const firstVal = JSON.stringify(firstVariant[prop]);
+			const allSame = variants.every(
+				(v) => JSON.stringify(v.params[prop]) === firstVal,
+			);
+			if (allSame && firstVariant[prop] !== undefined) {
+				(sharedProps as any)[prop] = firstVariant[prop];
+			}
+		}
+
+		baseWeaponStats[baseId] = sharedProps as BaseWeaponStats;
+
+		for (const variant of variants) {
+			const kit: WeaponKit = {
+				SpecialPoint: variant.params.SpecialPoint,
+				subWeaponId: variant.params.subWeaponId,
+				specialWeaponId: variant.params.specialWeaponId,
+			};
+
+			for (const prop of nonKitProps) {
+				if (!(prop in sharedProps) && variant.params[prop] !== undefined) {
+					(kit as any)[prop] = variant.params[prop];
+				}
+			}
+
+			weaponKits[variant.id] = kit;
+		}
+	}
+
+	return { baseWeaponStats, weaponKits };
+}
+
+function getWeaponCategoryName(weaponId: number): string | undefined {
+	for (const category of [
+		{ name: "SHOOTERS", range: [0, 199] },
+		{ name: "BLASTERS", range: [200, 299] },
+		{ name: "SHOOTERS", range: [300, 499] },
+		{ name: "ROLLERS", range: [1000, 1099] },
+		{ name: "BRUSHES", range: [1100, 1199] },
+		{ name: "CHARGERS", range: [2000, 2099] },
+		{ name: "SLOSHERS", range: [3000, 3099] },
+		{ name: "SPLATLINGS", range: [4000, 4099] },
+		{ name: "DUALIES", range: [5000, 5099] },
+		{ name: "BRELLAS", range: [6000, 6099] },
+		{ name: "STRINGERS", range: [7000, 7099] },
+		{ name: "SPLATANAS", range: [8000, 8099] },
+	]) {
+		if (weaponId >= category.range[0] && weaponId <= category.range[1]) {
+			return category.name;
+		}
+	}
+	return undefined;
+}
+
+function extractRangeParams(weapon: MainWeapon, params: any) {
+	const category = getWeaponCategoryName(weapon.Id);
+	const isBrella = category === "BRELLAS";
+	const isSlosher = category === "SLOSHERS";
+
+	if (!category) {
+		return {};
+	}
+
+	const isCharger = params.MoveParam?.$type === "spl__BulletChargerMoveParam";
+
+	if (isCharger) {
+		return {
+			DistanceFullCharge: params.MoveParam?.DistanceFullCharge,
+			DistanceMaxCharge: params.MoveParam?.DistanceMaxCharge,
+			DistanceMinCharge: params.MoveParam?.DistanceMinCharge,
+		};
+	}
+
+	if (isSlosher) {
+		const units = params.UnitGroupParam?.Unit;
+		const unitForRange = units?.reduce(
+			(best: any, unit: any) =>
+				(unit?.SpawnSpeedGround ?? 0) > (best?.SpawnSpeedGround ?? 0)
+					? unit
+					: best,
+			units?.[0],
+		);
+		const moveParam = unitForRange?.MoveParam;
+		const isBloblobber = weapon.Id === 3030 || weapon.Id === 3031;
+		return {
+			Range_SpawnSpeed: unitForRange?.SpawnSpeedGround,
+			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
+			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+			Range_FreeGravity: moveParam?.FreeGravity,
+			Range_BrakeAirResist: moveParam?.BrakeAirResist,
+			Range_BrakeGravity: moveParam?.BrakeGravity,
+			Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
+			Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
+			Range_BounceAfterMaxSpeed: isBloblobber ? 0.6 : undefined,
+			Range_BurstFrame: isBloblobber ? 3 : undefined,
+		};
+	}
+
+	const isRoller = category === "ROLLERS";
+	if (isRoller) {
+		const unit = params.VerticalSwingUnitGroupParam?.Unit?.[0];
+		const moveParam = unit?.UnitParam?.MoveParam;
+		return {
+			Range_SpawnSpeed: unit?.SpawnSpeedBase,
+			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+			Range_FreeGravity: moveParam?.FreeGravity,
+			Range_FreeAirResist: moveParam?.FreeAirResist,
+			Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
+		};
+	}
+
+	const isBrush = category === "BRUSHES";
+	if (isBrush) {
+		const unit = params.SwingUnitGroupParam?.Unit?.[0];
+		const moveParam = unit?.UnitParam?.MoveParam;
+		return {
+			Range_SpawnSpeed: unit?.SpawnSpeedBase,
+			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+			Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
+		};
+	}
+
+	const isSplatana = category === "SPLATANAS";
+	if (isSplatana) {
+		const bulletParam = params.BulletSaberVerticalParam;
+		const moveParam = bulletParam?.MoveParam;
+		return {
+			Range_SpawnSpeed: moveParam?.SpawnSpeed,
+			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
+			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+			Range_FreeGravity: moveParam?.FreeGravity,
+			Range_BrakeAirResist: moveParam?.BrakeAirResist,
+			Range_BrakeGravity: moveParam?.BrakeGravity,
+			Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
+			Range_BurstFrame: bulletParam?.BurstParam?.BurstFrame,
+		};
+	}
+
+	const isStringer = category === "STRINGERS";
+	if (isStringer) {
+		const bulletParam = params.spl__BulletStringerParam;
+		const moveParam = bulletParam?.MoveParam;
+		const isReefLux =
+			weapon.Id === 7020 || weapon.Id === 7021 || weapon.Id === 7022;
+		const blastRadius = isReefLux
+			? undefined
+			: bulletParam?.DetonationParam?.BlastParam?.DistanceDamage?.[0]?.Distance;
+		return {
+			Range_SpawnSpeed: moveParam?.SpawnSpeedMax,
+			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
+			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+			Range_FreeGravity: moveParam?.FreeGravity,
+			Range_BrakeAirResist: moveParam?.BrakeAirResist,
+			Range_BrakeGravity: moveParam?.BrakeGravity,
+			Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
+			BlastRadius: blastRadius,
+		};
+	}
+
+	const isSplatling = category === "SPLATLINGS";
+	if (isSplatling) {
+		const isBallpoint = weapon.Id === 4030 || weapon.Id === 4031;
+		const moveParam = isBallpoint ? params.VariableMoveParam : params.MoveParam;
+		return {
+			Range_SpawnSpeed: isBallpoint
+				? moveParam?.SpawnSpeed
+				: moveParam?.SpawnSpeedFirstLastAndSecond,
+			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
+			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+		};
+	}
+
+	const isBlaster = params.BlastParam?.DistanceDamage !== undefined;
+	const blastRadius = isBlaster
+		? params.BlastParam?.DistanceDamage?.[1]?.Distance
+		: undefined;
+
+	const moveParam = isBrella
+		? params.spl__BulletShelterShotgunParam?.GroupParams?.[0]?.MoveParam
+		: params.MoveParam;
+
+	return {
+		Range_SpawnSpeed: moveParam?.SpawnSpeed,
+		Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
+		Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+		Range_FreeGravity: moveParam?.FreeGravity,
+		Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
+		BlastRadius: blastRadius,
+	};
 }
 
 function parametersToMainWeaponResult(
@@ -164,7 +435,8 @@ function parametersToMainWeaponResult(
 	const BlastParam_DistanceDamage = () => {
 		// REEF-LUX has distance damage listed in params
 		// but actually doesn't deal it in game
-		if (weapon.Id === 7020) return undefined;
+		if (weapon.Id === 7020 || weapon.Id === 7021 || weapon.Id === 7022)
+			return undefined;
 
 		return (
 			params.BlastParam?.DistanceDamage ??
@@ -196,7 +468,8 @@ function parametersToMainWeaponResult(
 	};
 
 	const slosherDirectDamageSecondary = () => {
-		const isDreadWringer = weapon.Id === 3050 || weapon.Id === 3051;
+		const isDreadWringer =
+			weapon.Id === 3050 || weapon.Id === 3051 || weapon.Id === 3052;
 		if (!isDreadWringer) return;
 
 		const DamageParam_Secondary_ValueDirectMax =
@@ -214,7 +487,7 @@ function parametersToMainWeaponResult(
 		params.WeaponKeepChargeParam?.KeepChargeFullFrame ??
 		params.spl__WeaponStringerParam?.ChargeKeepParam?.KeepChargeFullFrame;
 
-	const isSloshingMachine = weapon.Id === 3020;
+	const isSloshingMachine = weapon.Id === 3020 || weapon.Id === 3021;
 
 	const DamageParam_SplatanaHorizontalDirect =
 		params.BulletSaberHorizontalParam?.DamageParam?.HitDamage +
@@ -246,11 +519,14 @@ function parametersToMainWeaponResult(
 		return Math.max(valueOne, valueTwo);
 	};
 
+	const rangeParams = extractRangeParams(weapon, params);
+
 	return {
 		SpecialPoint: weapon.SpecialPoint,
 		subWeaponId: resolveSubWeaponId(weapon),
 		specialWeaponId: resolveSpecialWeaponId(weapon),
 		overwrites: resolveOverwrites(params),
+		...rangeParams,
 		TripleShotSpanFrame: params.WeaponParam?.TripleShotSpanFrame,
 		WeaponSpeedType:
 			params.MainWeaponSetting?.WeaponSpeedType === "Mid"
@@ -325,7 +601,11 @@ function parametersToMainWeaponResult(
 			params.WideSwingUnitGroupParam?.DamageParam?.Inside?.DamageMaxValue,
 			params.WideSwingUnitGroupParam?.DamageParam?.Outside?.DamageMaxValue,
 		),
-		CanopyHP: params.spl__BulletShelterCanopyParam?.CanopyHP,
+		CanopyHP:
+			params.spl__BulletShelterCanopyParam?.CanopyHP ??
+			(weapon.Id === 6000 || weapon.Id === 6001 || weapon.Id === 6005
+				? 5000
+				: undefined),
 		ChargeFrameFullCharge:
 			params.WeaponParam?.ChargeFrameFullCharge ??
 			params.spl__WeaponStringerParam?.ChargeParam?.ChargeFrameFullCharge,
@@ -532,7 +812,7 @@ function parametersToSpecialWeaponResult(params: any) {
 
 		return [
 			{
-				Damage: 600,
+				Damage: 500,
 				Distance: 1,
 			},
 			...params.CannonParam.BlastParam.DistanceDamage,
@@ -883,7 +1163,7 @@ function writeTranslationsJsons(arr: TranslationArray) {
 	}
 }
 
-function logWeaponIds(weapons: Record<number, MainWeaponParams>) {
+function logWeaponIds(weapons: Record<number, WeaponKit>) {
 	logger.info(JSON.stringify(Object.keys(weapons).map(Number)));
 }
 

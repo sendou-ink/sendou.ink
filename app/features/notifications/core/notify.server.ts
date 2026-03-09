@@ -3,7 +3,7 @@ import pLimit from "p-limit";
 import { WebPushError } from "web-push";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import type { NotificationSubscription } from "../../../db/tables";
-import i18next from "../../../modules/i18n/i18next.server";
+import { i18next } from "../../../modules/i18n/i18next.server";
 import { logger } from "../../../utils/logger";
 import * as NotificationRepository from "../NotificationRepository.server";
 import type { Notification } from "../notifications-types";

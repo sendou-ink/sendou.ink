@@ -1,6 +1,6 @@
-import type { MetaFunction } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { TierImage, WeaponImage } from "~/components/Image";
 import { UserIcon } from "~/components/icons/User";
@@ -16,7 +16,7 @@ import { FAQ_PAGE, sendouQMatchPage, twitchUrl, userPage } from "~/utils/urls";
 import { loader } from "../loaders/q.streams.server";
 export { loader };
 
-import "~/features/sendouq/q.css";
+import styles from "./q.streams.module.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
@@ -59,14 +59,14 @@ export default function SendouQStreamsPage() {
 							<div className="stack horizontal justify-between items-end">
 								<Link
 									to={userPage(streamedMatch.user)}
-									className="q-stream__stream__user-container"
+									className={styles.userContainer}
 								>
 									<Avatar size="xxs" user={streamedMatch.user} />{" "}
 									{streamedMatch.user.username}
 								</Link>
 								<div className="stack horizontal sm">
 									{streamedMatch.weaponSplId ? (
-										<div className="q-stream__info-circle">
+										<div className={styles.infoCircle}>
 											<WeaponImage
 												weaponSplId={streamedMatch.weaponSplId}
 												size={24}
@@ -75,7 +75,7 @@ export default function SendouQStreamsPage() {
 										</div>
 									) : null}
 									{streamedMatch.tier ? (
-										<div className="q-stream__info-circle">
+										<div className={styles.infoCircle}>
 											<TierImage tier={streamedMatch.tier} width={24} />
 										</div>
 									) : null}
@@ -108,7 +108,7 @@ export default function SendouQStreamsPage() {
 										)}
 									/>
 								</div>
-								<div className="q-stream__stream__viewer-count">
+								<div className={styles.viewerCount}>
 									<UserIcon />
 									{streamedMatch.stream.viewerCount}
 								</div>

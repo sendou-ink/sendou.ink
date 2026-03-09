@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import * as AssociationsRepository from "~/features/associations/AssociationRepository.server";
 import * as Association from "~/features/associations/core/Association";
 import { getUser } from "~/features/auth/core/user.server";
@@ -10,7 +10,7 @@ import { scrimsFiltersSearchParamsObject } from "../scrims-schemas";
 import { dividePosts } from "../scrims-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUser(request);
+	const user = getUser();
 
 	const now = new Date();
 	const associations = user

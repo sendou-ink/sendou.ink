@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node";
+import { type ActionFunction, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import {
@@ -6,28 +6,65 @@ import {
 	nextNonCompletedVoting,
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
+import { parseFormData } from "~/form/parse.server";
 import invariant from "~/utils/invariant";
-import {
-	badRequestIfFalsy,
-	errorToastIfFalsy,
-	parseRequestPayload,
-} from "~/utils/remix.server";
+import { badRequestIfFalsy, errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
+import { plusSuggestionPage } from "~/utils/urls";
 import { suggestionActionSchema } from "../plus-suggestions-schemas";
-import { canDeleteComment, isFirstSuggestion } from "../plus-suggestions-utils";
+import {
+	canDeleteComment,
+	canEditSuggestion,
+	isFirstSuggestion,
+} from "../plus-suggestions-utils";
 
 export const action: ActionFunction = async ({ request }) => {
-	const data = await parseRequestPayload({
-		request,
-		schema: suggestionActionSchema,
-	});
-	const user = await requireUser(request);
+	const user = requireUser();
 
 	const votingMonthYear = rangeToMonthYear(
 		badRequestIfFalsy(nextNonCompletedVoting(new Date())),
 	);
 
+	const result = await parseFormData({
+		request,
+		schema: suggestionActionSchema,
+	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
+
 	switch (data._action) {
+		case "EDIT_SUGGESTION": {
+			const suggestions =
+				await PlusSuggestionRepository.findAllByMonth(votingMonthYear);
+
+			const suggestion = suggestions.find((s) =>
+				s.entries.some((entry) => entry.id === data.suggestionId),
+			);
+			invariant(suggestion);
+			const entry = suggestion.entries.find((e) => e.id === data.suggestionId);
+			invariant(entry);
+
+			errorToastIfFalsy(
+				canEditSuggestion({
+					user,
+					author: entry.author,
+					suggestionId: data.suggestionId,
+					suggestions,
+				}),
+				"No permissions to edit this suggestion",
+			);
+
+			await PlusSuggestionRepository.updateTextById(
+				data.suggestionId,
+				data.comment,
+			);
+
+			throw redirect(plusSuggestionPage({ tier: suggestion.tier }));
+		}
 		case "DELETE_COMMENT": {
 			const suggestions =
 				await PlusSuggestionRepository.findAllByMonth(votingMonthYear);
@@ -55,7 +92,10 @@ export const action: ActionFunction = async ({ request }) => {
 
 			if (
 				suggestionHasComments &&
-				isFirstSuggestion({ suggestionId: data.suggestionId, suggestions })
+				isFirstSuggestion({
+					suggestionId: data.suggestionId,
+					suggestions,
+				})
 			) {
 				// admin only action
 				await PlusSuggestionRepository.deleteWithCommentsBySuggestedUserId({

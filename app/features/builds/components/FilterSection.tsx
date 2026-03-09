@@ -4,7 +4,7 @@ import { Ability } from "~/components/Ability";
 import { SendouButton } from "~/components/elements/Button";
 import { ModeImage } from "~/components/Image";
 import { CrossIcon } from "~/components/icons/Cross";
-import { possibleApValues } from "~/features/build-analyzer";
+import { possibleApValues } from "~/features/build-analyzer/core/utils";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { abilities } from "~/modules/in-game-lists/abilities";
 import { modesShort } from "~/modules/in-game-lists/modes";

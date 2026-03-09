@@ -13,15 +13,11 @@ const dontWrite = process.argv.includes(NO_WRITE_KEY);
 const KNOWN_SUFFIXES = ["_zero", "_one", "_two", "_few", "_many", "_other"];
 
 const REPO_TRANSLATIONS_INFO_URL =
-	"https://github.com/sendou-ink/sendou.ink#translations";
+	"https://github.com/sendou-ink/sendou.ink/blob/main/docs/translation.md";
 
 const MD = {
 	inlineCode: (s: string) => `\`${s}\``,
 	strong: (s: string) => `**${s}**`,
-	h2: (s: string) => `## ${s}`,
-	li: (s: string) => `- ${s}`,
-	ticked: (s: string) => `- [x] ${s}`,
-	unticked: (s: string) => `- [ ] ${s}`,
 };
 
 const otherLanguageTranslationPath = (code?: string, fileName?: string) =>
@@ -114,7 +110,6 @@ if (dontWrite) {
 }
 
 const markdown = createTranslationProgessMarkdown({
-	missingTranslations,
 	totalTranslationCounts,
 });
 
@@ -318,70 +313,9 @@ function MDOverviewTable({
 	return rows.join("\n");
 }
 
-function MDDetailsList({
-	summary,
-	content,
-}: {
-	summary: string;
-	content: string[];
-}) {
-	return `<details><summary>${summary}</summary><ul>${content
-		.map((c) => `<li>${c}</li>`)
-		.join("")}</ul></details>`;
-}
-
-function MDMissingKeysList({
-	missingTranslations,
-}: {
-	missingTranslations: Record<string, Record<string, Array<string>>>;
-}) {
-	const blocks = [];
-
-	for (const [lang, missingKeysObj] of Object.entries(missingTranslations)) {
-		const parts = [];
-
-		parts.push(MD.h2(lang));
-
-		for (const [fileKey, missingKeys] of Object.entries(missingKeysObj)) {
-			const noneMissing = missingKeys.length === 0;
-			const checkbox = noneMissing ? MD.ticked : MD.unticked;
-			const fileEntry = checkbox(MD.inlineCode(`${fileKey}.json`));
-
-			const allMissing = missingKeys.length === totalTranslationCounts[fileKey];
-
-			const keysLabel = allMissing
-				? "All keys"
-				: missingKeys.length === 1
-					? "1 key"
-					: `${missingKeys.length} keys`;
-
-			const details = noneMissing
-				? ""
-				: MDDetailsList({
-						summary: `${keysLabel} missing`,
-						content: allMissing
-							? [
-									`Create a fresh copy of ${MD.inlineCode(
-										`en/${fileKey}.json`,
-									)} to get started.`,
-								]
-							: missingKeys,
-					});
-
-			parts.push(`${fileEntry} ${details}`);
-		}
-
-		blocks.push(parts.join("\n"));
-	}
-
-	return blocks.join("\n\n");
-}
-
 function createTranslationProgessMarkdown({
-	missingTranslations,
 	totalTranslationCounts,
 }: {
-	missingTranslations: Record<string, Record<string, Array<string>>>;
 	totalTranslationCounts: Record<string, number>;
 }) {
 	return `
@@ -395,9 +329,5 @@ If you want to contribute by adding missing translations, make sure to read the 
 
 Key: 🟢 = Done, 🟡 = In progress, 🔴 = Not started
 
-${MDOverviewTable({ totalTranslationCounts })}
-
-## Missing Keys
-  
-${MDMissingKeysList({ missingTranslations })}`;
+${MDOverviewTable({ totalTranslationCounts })}`;
 }

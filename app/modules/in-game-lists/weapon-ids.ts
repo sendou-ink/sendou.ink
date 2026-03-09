@@ -76,10 +76,7 @@ export const mainWeaponIds = weaponCategories
 	.flatMap((category) => category.weaponIds)
 	.sort((a, b) => a - b);
 
-export const weaponIdToAltId = new Map<
-	MainWeaponId,
-	MainWeaponId | MainWeaponId[]
->([
+const weaponIdToAltId = new Map<MainWeaponId, MainWeaponId | MainWeaponId[]>([
 	[40, [45, 47]],
 	[41, 46],
 	[200, 205],
@@ -151,19 +148,6 @@ export const weaponIdToType = (weaponId: MainWeaponId) => {
 	return "ALT_KIT";
 };
 
-/** Returns true if the weapon ID has alternate skins
- *
- *  * @example
- * // Splattershot, Hero Shot, Order Shot...
- * weaponIdHasAlts(40); // -> true
- * weaponIdHasAlts(41); // -> true
- *
- * // Sploosh-o-matic has no alt skins
- * weaponIdHasAlts(0); // -> false
- */
-export const weaponIdHasAlts = (weaponId: MainWeaponId) =>
-	weaponIdToAltId.has(weaponId) || altWeaponIdToId.has(weaponId);
-
 export const SPLAT_BOMB_ID = 0;
 export const SUCTION_BOMB_ID = 1;
 export const BURST_BOMB_ID = 2;
@@ -207,20 +191,20 @@ export const nonBombSubWeaponIds = [
 export const TRIZOOKA_ID = 1;
 export const BIG_BUBBLER_ID = 2;
 export const ZIPCASTER_ID = 3;
-export const TENTA_MISSILES_ID = 4;
+const TENTA_MISSILES_ID = 4;
 export const INK_STORM_ID = 5;
 export const BOOYAH_BOMB_ID = 6;
 export const WAVE_BREAKER_ID = 7;
 export const INK_VAC_ID = 8;
 export const KILLER_WAIL_ID = 9;
-export const INKJET_ID = 10;
-export const ULTRA_STAMP_ID = 11;
+const INKJET_ID = 10;
+const ULTRA_STAMP_ID = 11;
 export const CRAB_TANK_ID = 12;
-export const REEF_SLIDER_ID = 13;
-export const TRIPLE_INKSTRIKE_ID = 14;
-export const TACTICOOLER_ID = 15;
+const REEF_SLIDER_ID = 13;
+const TRIPLE_INKSTRIKE_ID = 14;
+const TACTICOOLER_ID = 15;
 export const SUPER_CHUMP_ID = 16;
-export const KRAKEN_ROYALE_ID = 17;
+const KRAKEN_ROYALE_ID = 17;
 export const TRIPLE_SPLASHDOWN_ID = 18;
 export const SPLATTERCOLOR_SCREEN_ID = 19;
 

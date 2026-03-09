@@ -1,6 +1,6 @@
-import { Link, Outlet, useFetcher, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { Link, Outlet, useFetcher, useLoaderData } from "react-router";
 import { useCopyToClipboard } from "react-use";
 import { AddNewButton } from "~/components/AddNewButton";
 import { Avatar } from "~/components/Avatar";

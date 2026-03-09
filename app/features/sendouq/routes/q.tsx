@@ -1,8 +1,8 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { Link, useFetcher, useLoaderData } from "react-router";
 import { Alert } from "~/components/Alert";
 import { LinkButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -21,7 +21,7 @@ import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useHasRole } from "~/modules/permissions/hooks";
 import invariant from "~/utils/invariant";
-import { metaTags } from "~/utils/remix";
+import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	LEADERBOARDS_PAGE,
@@ -43,7 +43,7 @@ import { FULL_GROUP_SIZE } from "../q-constants";
 import { userCanJoinQueueAt } from "../q-utils";
 export { loader, action };
 
-import "../q.css";
+import styles from "./q.module.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
@@ -124,6 +124,7 @@ export default function QPage() {
 									icon={<UserIcon />}
 									variant="outlined"
 									isDisabled={queueJoinStatus !== "NOW"}
+									testId="join-solo-button"
 								>
 									{t("q:front.actions.joinSolo")}
 								</SubmitButton>
@@ -208,11 +209,11 @@ function Clocks() {
 	useAutoRerender();
 
 	return (
-		<div className="q__clocks-container">
+		<div className={styles.clocksContainer}>
 			{countries.map((country) => {
 				return (
-					<div key={country.id} className="q__clock">
-						<div className="q__clock-country">
+					<div key={country.id} className={styles.clock}>
+						<div className={styles.clockCountry}>
 							{t(`q:front.cities.${country.city}`)}
 						</div>
 						<Flag countryCode={country.countryCode} />
@@ -392,11 +393,11 @@ function QLink({
 	subText: string;
 }) {
 	return (
-		<Link to={url} className="q__front-page-link">
+		<Link to={url} className={styles.frontPageLink}>
 			<Image path={navIconUrl(navIcon)} alt="" width={32} />
 			<div>
 				{title}
-				<div className="q__front-page-link__sub-text">{subText}</div>
+				<div className={styles.linkSubText}>{subText}</div>
 			</div>
 		</Link>
 	);

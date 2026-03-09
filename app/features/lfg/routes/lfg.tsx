@@ -1,8 +1,9 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { useFetcher, useLoaderData } from "@remix-run/react";
+import clsx from "clsx";
 import { add, sub } from "date-fns";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { AddNewButton } from "~/components/AddNewButton";
 import { Alert } from "~/components/Alert";
 import { Main } from "~/components/Main";
@@ -10,7 +11,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useSearchParamStateEncoder } from "~/hooks/useSearchParamState";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { metaTags } from "~/utils/remix";
+import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
 import { LFG_PAGE, lfgNewPostPage, navIconUrl } from "~/utils/urls";
@@ -26,6 +27,7 @@ import {
 	smallStrToFilter,
 } from "../lfg-types";
 import { loader } from "../loaders/lfg.server";
+import styles from "./lfg.module.css";
 export { loader, action };
 
 export const handle: SendouRouteHandle = {
@@ -124,7 +126,11 @@ export default function LFGPage() {
 				}
 			/>
 			{filteredPosts.map((post) => (
-				<div key={post.id} className="stack sm">
+				<div
+					key={post.id}
+					id={String(post.id)}
+					className={clsx("stack sm", styles.post)}
+				>
 					{showExpiryAlert(post) ? <PostExpiryAlert postId={post.id} /> : null}
 					<LFGPost post={post} tiersMap={tiersMap} />
 				</div>

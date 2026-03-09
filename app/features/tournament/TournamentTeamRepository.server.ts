@@ -277,9 +277,12 @@ export function update({
 					avatarFileName,
 					userId,
 				})
-			: // don't overwrite the existing avatarImgId even if no new avatar is provided
-				// delete is a separate functionality
-				undefined;
+			: team.teamId
+				? // clear pickup avatar when switching to team signup, as team logo will be used
+					null
+				: // don't overwrite the existing avatarImgId even if no new avatar is provided
+					// delete is a separate functionality
+					undefined;
 
 		await trx
 			.updateTable("TournamentTeam")

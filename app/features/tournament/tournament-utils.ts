@@ -12,7 +12,6 @@ import type { ParsedBracket } from "../tournament-bracket/core/Progression";
 import * as Progression from "../tournament-bracket/core/Progression";
 import type { Tournament as TournamentClass } from "../tournament-bracket/core/Tournament";
 import type { TournamentData } from "../tournament-bracket/core/Tournament.server";
-import type { PlayedSet } from "./core/sets.server";
 import { LEAGUES, TOURNAMENT } from "./tournament-constants";
 
 const mapPickingStyleToModeRecord = {
@@ -56,16 +55,6 @@ export function isOneModeTournamentOf(
 	return modesIncluded(mapPickingStyle, toSetMapPool).length === 1
 		? modesIncluded(mapPickingStyle, toSetMapPool)[0]
 		: null;
-}
-
-export function tournamentRoundI18nKey(round: PlayedSet["round"]) {
-	if (round.round === "grand_finals") return "bracket.grand_finals";
-	if (round.round === "bracket_reset") {
-		return "bracket.grand_finals.bracket_reset";
-	}
-	if (round.round === "finals") return `bracket.${round.type}.finals` as const;
-
-	return `bracket.${round.type}` as const;
 }
 
 export type CounterPickValidationStatus =
@@ -271,6 +260,75 @@ export function normalizedTeamCount({
 	minMembersPerTeam: number;
 }) {
 	return teamsCount * minMembersPerTeam;
+}
+
+export type TeamForOrdering = {
+	id: number;
+	seed: number | null;
+	members: { length: number };
+	avgSeedingSkillOrdinal: number | null;
+	createdAt: number;
+	startingBracketIdx: number | null;
+};
+
+export function compareTeamsForOrdering(
+	a: TeamForOrdering,
+	b: TeamForOrdering,
+	minMembersPerTeam: number,
+): number {
+	if (a.startingBracketIdx !== b.startingBracketIdx) {
+		return (a.startingBracketIdx ?? 0) - (b.startingBracketIdx ?? 0);
+	}
+
+	if (a.seed !== null && b.seed !== null) {
+		return a.seed - b.seed;
+	}
+
+	const aIsFull = a.members.length >= minMembersPerTeam;
+	const bIsFull = b.members.length >= minMembersPerTeam;
+
+	if (aIsFull && !bIsFull) {
+		return -1;
+	}
+	if (!aIsFull && bIsFull) {
+		return 1;
+	}
+
+	if (
+		a.avgSeedingSkillOrdinal !== b.avgSeedingSkillOrdinal &&
+		a.avgSeedingSkillOrdinal !== null &&
+		b.avgSeedingSkillOrdinal !== null
+	) {
+		return b.avgSeedingSkillOrdinal - a.avgSeedingSkillOrdinal;
+	}
+
+	return a.createdAt !== b.createdAt ? a.createdAt - b.createdAt : a.id - b.id;
+}
+
+export function sortTeamsBySeeding<T extends TeamForOrdering>(
+	teams: T[],
+	minMembersPerTeam: number,
+): T[] {
+	return [...teams].sort((a, b) =>
+		compareTeamsForOrdering(a, b, minMembersPerTeam),
+	);
+}
+
+export function findTeamInsertPosition<T extends TeamForOrdering>(
+	existingOrder: number[],
+	newTeam: T,
+	teamMap: Map<number, T>,
+	minMembersPerTeam: number,
+): number {
+	for (let i = 0; i < existingOrder.length; i++) {
+		const existingTeam = teamMap.get(existingOrder[i]);
+		if (!existingTeam) continue;
+
+		if (compareTeamsForOrdering(newTeam, existingTeam, minMembersPerTeam) < 0) {
+			return i;
+		}
+	}
+	return existingOrder.length;
 }
 
 export function getBracketProgressionLabel(

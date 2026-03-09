@@ -1,30 +1,22 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
-import { cors } from "remix-utils/cors";
-import { z } from "zod/v4";
+import type { LoaderFunctionArgs } from "react-router";
+import { z } from "zod";
 import { db } from "~/db/sql";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import i18next from "~/modules/i18n/i18next.server";
+import { i18next } from "~/modules/i18n/i18next.server";
 import { nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
 import { parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
 import type { GetTournamentTeamsResponse } from "../schema";
 
 const paramsSchema = z.object({
 	id,
 });
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
-	requireBearerAuth(request);
-
+export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const t = await i18next.getFixedT("en", ["game-misc"]);
 	const { id } = parseParams({
 		params,
@@ -90,6 +82,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 						"User.discordAvatar",
 						"User.battlefy",
 						"User.country",
+						"User.pronouns",
 						"TournamentTeamMember.inGameName",
 						"TournamentTeamMember.isOwner",
 						"TournamentTeamMember.createdAt",
@@ -148,6 +141,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					country: member.country,
 					captain: Boolean(member.isOwner),
 					inGameName: member.inGameName,
+					pronouns: member.pronouns,
 					friendCode: friendCodes[member.userId],
 					joinedAt: databaseTimestampToDate(member.createdAt).toISOString(),
 				};
@@ -168,7 +162,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		};
 	});
 
-	return await cors(request, json(result));
+	return Response.json(result);
 };
 
 function toSeedingPowerSP(ordinals: (number | null)[]) {

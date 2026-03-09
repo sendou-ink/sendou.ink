@@ -261,6 +261,7 @@ describe("matchMapList()", () => {
 				preferences: [{ userId: 2, preferences: emptyPreferences }],
 				id: 2,
 			},
+			["SZ"],
 		);
 
 		const szMaps = result.filter((m) => m.mode === "SZ");
@@ -317,6 +318,7 @@ describe("matchMapList()", () => {
 				],
 				id: 2,
 			},
+			["SZ"],
 		);
 
 		const szMaps = result.filter((m) => m.mode === "SZ");

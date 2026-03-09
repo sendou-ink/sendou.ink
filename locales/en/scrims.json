@@ -72,7 +72,7 @@
 	"forms.mapsTournament.title": "Tournament",
 	"page.scheduledScrim": "Scheduled scrim",
 	"associations.title": "Associations",
-	"associations.explanation": "Create an association to look in a smaller group (for example make one with your team's regular practice opponents or LUTI division).",
+	"associations.explanation": "Create an association to look in a smaller group (for example, make one with your team's regular practice opponents or LUTI division).",
 	"associations.join.title": "Join {{name}} association?",
 	"associations.delete.title": "Delete {{name}} association?",
 	"associations.admin": "Admin: {{username}}",

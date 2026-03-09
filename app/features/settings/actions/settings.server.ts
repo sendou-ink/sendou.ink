@@ -1,13 +1,13 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { parseRequestPayload, successToast } from "~/utils/remix.server";
+import { parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { settingsEditSchema } from "../settings-schemas";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: settingsEditSchema,
@@ -44,5 +44,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		}
 	}
 
-	return successToast("Settings updated");
+	// TODO: removed temporarily, restore when we have better toasts
+	// (current problem is that when you update no screen from /q/settings, you get redirected to /settings)
+	// return successToast("Settings updated");
 };

@@ -1,0 +1,128 @@
+.stagePopoverButton {
+	background-color: transparent;
+	color: var(--text-lighter);
+	font-size: var(--fonts-xs);
+	padding: 0;
+	border: none;
+	text-decoration: underline;
+	text-decoration-style: dotted;
+	font-weight: var(--body);
+	height: 19.8281px;
+}
+
+.stagePopoverButton:focus {
+	outline: none;
+	color: var(--theme);
+}
+
+.modePopoverButton {
+	background-color: transparent;
+	padding: 0;
+	border: none;
+}
+
+.modePopoverButton:focus {
+	outline: none;
+}
+
+.container {
+	/** Push footer down to avoid it "flashing" when the score reporter animates */
+	padding-bottom: 14rem;
+}
+
+.header {
+	line-height: 1.2;
+}
+
+.teamsContainer {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: var(--s-8);
+}
+
+.mapListChatContainer {
+	display: grid;
+	grid-template-columns: 2fr 1fr 2fr;
+	place-items: center;
+	gap: var(--s-4);
+}
+
+.userNameContainer {
+	display: flex;
+	gap: var(--s-2);
+	width: 175px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.reportSection {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	row-gap: var(--s-2);
+	column-gap: var(--s-2-5);
+	align-items: center;
+	font-size: var(--fonts-xs);
+}
+
+.poolPassContainer {
+	display: flex;
+	gap: var(--s-2);
+	flex-direction: column;
+	max-width: max-content;
+}
+
+.chatContainer {
+	align-self: flex-start;
+	top: var(--sticky-top);
+	position: sticky;
+	width: 100%;
+}
+
+.bottomMidSection {
+	display: flex;
+	flex-direction: column;
+	align-self: flex-start;
+	top: var(--sticky-top);
+	position: sticky;
+}
+
+.infoHeader {
+	text-transform: uppercase;
+	color: var(--text-lighter);
+	font-size: var(--fonts-xs);
+	line-height: 1.1;
+}
+
+.infoValue {
+	font-size: var(--fonts-xl);
+	font-weight: var(--semi-bold);
+	letter-spacing: 1px;
+}
+
+.screenLegality svg {
+	width: 24px;
+}
+
+.screenLegality .alert {
+	padding-block: var(--s-1);
+	padding-inline: var(--s-2-5);
+}
+
+.screenLegalityButton {
+	width: 100%;
+}
+
+.screenLegalityButton:focus-visible {
+	outline: none !important;
+}
+
+.screenLegalityButton:focus-visible .alert {
+	background-color: var(--bg-lighter);
+}
+
+@media screen and (min-width: 640px) {
+	.teamsContainer {
+		grid-template-columns: 1fr 1fr;
+	}
+}

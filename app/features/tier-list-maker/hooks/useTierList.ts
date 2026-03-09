@@ -4,10 +4,10 @@ import type {
 	DragStartEvent,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import { useSearchParams } from "@remix-run/react";
 import JSONCrush from "jsoncrush";
 import * as React from "react";
-import { z } from "zod/v4";
+import { useSearchParams } from "react-router";
+import { z } from "zod";
 import {
 	useSearchParamState,
 	useSearchParamStateEncoder,
@@ -358,7 +358,13 @@ export function useTierList() {
 
 		const allItemIds = getAllItemIdsForType(itemType);
 		return allItemIds
-			.map((id) => ({ id, type: itemType }) as TierListItem)
+			.map(
+				(id) =>
+					({
+						id,
+						type: itemType,
+					}) as TierListItem,
+			)
 			.flatMap((item) => {
 				if (placedItems.has(`${item.type}:${item.id}`)) {
 					if (!canAddDuplicates) return [];
@@ -454,7 +460,7 @@ export function useTierList() {
 
 const TIER_SEARCH_PARAM_NAME = "state";
 
-export function useSearchParamTiersState() {
+function useSearchParamTiersState() {
 	const [initialSearchParams] = useSearchParams();
 	const [tiers, setTiers] = React.useState<TierListState>(() => {
 		const param = initialSearchParams.get(TIER_SEARCH_PARAM_NAME);

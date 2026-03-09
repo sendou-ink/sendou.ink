@@ -1,5 +1,5 @@
 import cachified from "@epic-web/cachified";
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import * as ArtRepository from "../ArtRepository.server";
 import { FILTERED_TAG_KEY_SEARCH_PARAM_KEY } from "../art-constants";

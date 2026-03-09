@@ -1,5 +1,5 @@
-import type { ActionFunction } from "@remix-run/node";
-import { requireUserId } from "~/features/auth/core/user.server";
+import type { ActionFunction } from "react-router";
+import { requireUser } from "~/features/auth/core/user.server";
 import {
 	errorToastIfFalsy,
 	notFoundIfFalsy,
@@ -14,7 +14,7 @@ import {
 import { isTeamMember, isTeamOwner, resolveNewOwner } from "../team-utils";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUserId(request);
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: teamProfilePageActionSchema,

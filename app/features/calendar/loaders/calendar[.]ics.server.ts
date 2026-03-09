@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { parseSearchParams } from "~/utils/remix.server";
 import * as CalendarRepository from "../CalendarRepository.server";
 import { calendarFiltersSearchParamsObject } from "../calendar-schemas";

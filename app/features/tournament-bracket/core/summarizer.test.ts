@@ -6,6 +6,22 @@ import type { AllMatchResult } from "../queries/allMatchResultsByTournamentId.se
 import { tournamentSummary } from "./summarizer.server";
 import type { TournamentDataTeam } from "./Tournament.server";
 
+const createOpponent = (
+	id: number,
+	result: "win" | "loss",
+	score: number,
+	droppedOut = false,
+	activeRosterUserIds: number[] | null = null,
+	memberUserIds: number[] = [],
+): AllMatchResult["opponentOne"] => ({
+	id,
+	result,
+	score,
+	droppedOut,
+	activeRosterUserIds,
+	memberUserIds,
+});
+
 describe("tournamentSummary()", () => {
 	const createTeam = (
 		teamId: number,
@@ -30,6 +46,9 @@ describe("tournamentSummary()", () => {
 			plusTier: null,
 			createdAt: 0,
 			userId,
+			streamTwitch: null,
+			streamViewerCount: null,
+			streamThumbnailUrl: null,
 		})),
 		name: `Team ${teamId}`,
 		prefersNotToHost: 0,
@@ -170,16 +189,8 @@ describe("tournamentSummary()", () => {
 							winnerTeamId: 1,
 						},
 					],
-					opponentOne: {
-						id: 1,
-						result: "win",
-						score: 2,
-					},
-					opponentTwo: {
-						id: 2,
-						result: "loss",
-						score: 0,
-					},
+					opponentOne: createOpponent(1, "win", 2),
+					opponentTwo: createOpponent(2, "loss", 0),
 					roundMaps: {
 						count: 3,
 						type: "BEST_OF",
@@ -287,16 +298,8 @@ describe("tournamentSummary()", () => {
 					winnerTeamId: 1,
 				},
 			],
-			opponentOne: {
-				id: 1,
-				result: "win",
-				score: 2,
-			},
-			opponentTwo: {
-				id: 2,
-				result: "loss",
-				score: 0,
-			},
+			opponentOne: createOpponent(1, "win", 2),
+			opponentTwo: createOpponent(2, "loss", 0),
 			roundMaps: {
 				count: 3,
 				type: "BEST_OF",
@@ -335,16 +338,8 @@ describe("tournamentSummary()", () => {
 					winnerTeamId: 1,
 				},
 			],
-			opponentOne: {
-				id: 1,
-				result: "win",
-				score: 2,
-			},
-			opponentTwo: {
-				id: 2,
-				result: "loss",
-				score: 0,
-			},
+			opponentOne: createOpponent(1, "win", 2),
+			opponentTwo: createOpponent(2, "loss", 0),
 			roundMaps: {
 				count: 3,
 				type: "BEST_OF",
@@ -429,16 +424,8 @@ describe("tournamentSummary()", () => {
 					winnerTeamId: 1,
 				},
 			],
-			opponentOne: {
-				id: 1,
-				result: "win",
-				score: 2,
-			},
-			opponentTwo: {
-				id: 2,
-				result: "loss",
-				score: 1,
-			},
+			opponentOne: createOpponent(1, "win", 2),
+			opponentTwo: createOpponent(2, "loss", 1),
 			roundMaps: {
 				count: 3,
 				type: "BEST_OF",
@@ -602,16 +589,8 @@ describe("tournamentSummary()", () => {
 							winnerTeamId: 1,
 						},
 					],
-					opponentOne: {
-						id: 1,
-						result: "win",
-						score: 3,
-					},
-					opponentTwo: {
-						id: 2,
-						result: "loss",
-						score: 0,
-					},
+					opponentOne: createOpponent(1, "win", 3),
+					opponentTwo: createOpponent(2, "loss", 0),
 					roundMaps: {
 						count: 3,
 						type: "BEST_OF",
@@ -660,16 +639,8 @@ describe("tournamentSummary()", () => {
 							winnerTeamId: 1,
 						},
 					],
-					opponentOne: {
-						id: 1,
-						result: "win",
-						score: 2,
-					},
-					opponentTwo: {
-						id: 2,
-						result: "loss",
-						score: 0,
-					},
+					opponentOne: createOpponent(1, "win", 2),
+					opponentTwo: createOpponent(2, "loss", 0),
 					roundMaps: {
 						count: 3,
 						type: "BEST_OF",
@@ -828,16 +799,8 @@ describe("tournamentSummary()", () => {
 							winnerTeamId: 1,
 						},
 					],
-					opponentOne: {
-						id: 1,
-						result: "win",
-						score: 0,
-					},
-					opponentTwo: {
-						id: 2,
-						result: "loss",
-						score: 0,
-					},
+					opponentOne: createOpponent(1, "win", 0),
+					opponentTwo: createOpponent(2, "loss", 0),
 					roundMaps: {
 						count: 3,
 						type: "BEST_OF",
@@ -872,16 +835,8 @@ describe("tournamentSummary()", () => {
 							winnerTeamId: 1,
 						},
 					],
-					opponentOne: {
-						id: 1,
-						result: "win",
-						score: 1,
-					},
-					opponentTwo: {
-						id: 2,
-						result: "loss",
-						score: 0,
-					},
+					opponentOne: createOpponent(1, "win", 1),
+					opponentTwo: createOpponent(2, "loss", 0),
 					roundMaps: {
 						count: 3,
 						type: "BEST_OF",
@@ -905,16 +860,8 @@ describe("tournamentSummary()", () => {
 							winnerTeamId: 3,
 						},
 					],
-					opponentOne: {
-						id: 3,
-						result: "win",
-						score: 0,
-					},
-					opponentTwo: {
-						id: 4,
-						result: "loss",
-						score: 0,
-					},
+					opponentOne: createOpponent(3, "win", 0),
+					opponentTwo: createOpponent(4, "loss", 0),
 					roundMaps: {
 						count: 3,
 						type: "BEST_OF",
@@ -940,5 +887,100 @@ describe("tournamentSummary()", () => {
 		expect(skillsFromTeam2.length).toBe(0);
 		expect(skillsFromTeam3.length).toBe(0);
 		expect(skillsFromTeam4.length).toBe(0);
+	});
+
+	test("includes early-ended matches from dropped teams in skill calculations", () => {
+		const summary = summarize({
+			results: [
+				{
+					maps: [
+						{
+							mode: "SZ",
+							stageId: 1,
+							participants: [
+								{ tournamentTeamId: 1, userId: 1 },
+								{ tournamentTeamId: 1, userId: 2 },
+								{ tournamentTeamId: 1, userId: 3 },
+								{ tournamentTeamId: 1, userId: 4 },
+								{ tournamentTeamId: 2, userId: 5 },
+								{ tournamentTeamId: 2, userId: 6 },
+								{ tournamentTeamId: 2, userId: 7 },
+								{ tournamentTeamId: 2, userId: 8 },
+							],
+							winnerTeamId: 1,
+						},
+					],
+					opponentOne: createOpponent(1, "win", 1, false),
+					opponentTwo: createOpponent(2, "loss", 0, true),
+					roundMaps: {
+						count: 3,
+						type: "BEST_OF",
+					},
+				},
+			],
+		});
+
+		const skillsFromTeam1 = summary.skills.filter((s) =>
+			[1, 2, 3, 4].includes(s.userId ?? 0),
+		);
+		const skillsFromTeam2 = summary.skills.filter((s) =>
+			[5, 6, 7, 8].includes(s.userId ?? 0),
+		);
+
+		expect(skillsFromTeam1.length).toBe(4);
+		expect(skillsFromTeam2.length).toBe(4);
+	});
+
+	test("includes dropped team sets without maps using active roster", () => {
+		const summary = summarize({
+			results: [
+				{
+					maps: [],
+					opponentOne: createOpponent(1, "win", 0, false, [1, 2, 3, 4]),
+					opponentTwo: createOpponent(2, "loss", 0, true, [5, 6, 7, 8]),
+					roundMaps: {
+						count: 3,
+						type: "BEST_OF",
+					},
+				},
+			],
+		});
+
+		const skillsFromTeam1 = summary.skills.filter((s) =>
+			[1, 2, 3, 4].includes(s.userId ?? 0),
+		);
+		const skillsFromTeam2 = summary.skills.filter((s) =>
+			[5, 6, 7, 8].includes(s.userId ?? 0),
+		);
+
+		expect(skillsFromTeam1.length).toBe(4);
+		expect(skillsFromTeam2.length).toBe(4);
+	});
+
+	test("includes dropped team sets without maps using memberUserIds as fallback", () => {
+		const summary = summarize({
+			results: [
+				{
+					maps: [],
+					// No activeRosterUserIds, but memberUserIds is set
+					opponentOne: createOpponent(1, "win", 0, false, null, [1, 2, 3, 4]),
+					opponentTwo: createOpponent(2, "loss", 0, true, null, [5, 6, 7, 8]),
+					roundMaps: {
+						count: 3,
+						type: "BEST_OF",
+					},
+				},
+			],
+		});
+
+		const skillsFromTeam1 = summary.skills.filter((s) =>
+			[1, 2, 3, 4].includes(s.userId ?? 0),
+		);
+		const skillsFromTeam2 = summary.skills.filter((s) =>
+			[5, 6, 7, 8].includes(s.userId ?? 0),
+		);
+
+		expect(skillsFromTeam1.length).toBe(4);
+		expect(skillsFromTeam2.length).toBe(4);
 	});
 });

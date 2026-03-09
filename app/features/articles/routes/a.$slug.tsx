@@ -1,8 +1,8 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
-import Markdown from "markdown-to-jsx";
 import * as React from "react";
+import type { MetaFunction } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import { Main } from "~/components/Main";
+import { Markdown } from "~/components/Markdown";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -11,7 +11,7 @@ import {
 	articlePreviewUrl,
 	navIconUrl,
 } from "~/utils/urls";
-import { metaTags } from "../../../utils/remix";
+import { metaTags, type SerializeFrom } from "../../../utils/remix";
 
 import { loader } from "../loaders/a.$slug.server";
 export { loader };
@@ -64,9 +64,7 @@ export default function ArticlePage() {
 				<div className="text-sm text-lighter">
 					by <Author /> • <time>{data.dateString}</time>
 				</div>
-				<Markdown options={{ wrapper: React.Fragment }}>
-					{data.content}
-				</Markdown>
+				<Markdown>{data.content}</Markdown>
 			</article>
 		</Main>
 	);

@@ -1,8 +1,6 @@
-export function errorIsSqliteUniqueConstraintFailure(error: any) {
-	return error?.code === "SQLITE_CONSTRAINT_UNIQUE";
-}
-
-export function errorIsSqliteForeignKeyConstraintFailure(error: unknown) {
+export function errorIsSqliteForeignKeyConstraintFailure(
+	error: unknown,
+): error is Error {
 	return (
 		error instanceof Error &&
 		error?.message?.includes("FOREIGN KEY constraint failed")

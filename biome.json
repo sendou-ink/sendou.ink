@@ -8,7 +8,8 @@
 			"!app/db/seed/placements.json",
 			"!build/**/*",
 			"!test-results/**/*",
-			"!playwright-report/**/*"
+			"!playwright-report/**/*",
+			"!.react-router/**/*"
 		]
 	},
 	"linter": {

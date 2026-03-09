@@ -1,14 +1,14 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
-import { seasonAllMMRByUserId } from "~/features/mmr/queries/seasonAllMMRByUserId.server";
+import * as SkillRepository from "~/features/mmr/SkillRepository.server";
 import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
 import { seasonMapWinrateByUserId } from "~/features/sendouq/queries/seasonMapWinrateByUserId.server";
 import { seasonReportedWeaponsByUserId } from "~/features/sendouq/queries/seasonReportedWeaponsByUserId.server";
 import { seasonSetWinrateByUserId } from "~/features/sendouq/queries/seasonSetWinrateByUserId.server";
 import { seasonStagesByUserId } from "~/features/sendouq/queries/seasonStagesByUserId.server";
 import { seasonsMatesEnemiesByUserId } from "~/features/sendouq/queries/seasonsMatesEnemiesByUserId.server";
-import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
+import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfFalsy } from "~/utils/remix.server";
@@ -22,7 +22,7 @@ export type UserSeasonsPageLoaderData = NonNullable<
 >;
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const loggedInUser = await getUser(request);
+	const loggedInUser = getUser();
 	const { identifier } = userParamsSchema.parse(params);
 	const parsedSearchParams = seasonsSearchParamsSchema.safeParse(
 		Object.fromEntries(new URL(request.url).searchParams),
@@ -58,23 +58,26 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			maps: seasonMapWinrateByUserId({ season, userId: user.id }),
 			sets: seasonSetWinrateByUserId({ season, userId: user.id }),
 		},
-		skills: seasonAllMMRByUserId({ season, userId: user.id }),
+		skills: await SkillRepository.seasonProgressionByUserId({
+			season,
+			userId: user.id,
+		}),
 		tier,
 		isAccurateTiers,
 		results: {
-			value: await QMatchRepository.seasonResultsByUserId({
+			value: await SQMatchRepository.seasonResultsByUserId({
 				season,
 				userId: user.id,
 				page,
 			}),
 			currentPage: page,
-			pages: await QMatchRepository.seasonResultPagesByUserId({
+			pages: await SQMatchRepository.seasonResultPagesByUserId({
 				season,
 				userId: user.id,
 			}),
 		},
 		canceled: loggedInUser?.roles.includes("STAFF")
-			? await QMatchRepository.seasonCanceledMatchesByUserId({
+			? await SQMatchRepository.seasonCanceledMatchesByUserId({
 					season,
 					userId: user.id,
 				})

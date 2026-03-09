@@ -1,4 +1,4 @@
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import { STAFF_DISCORD_IDS } from "~/features/admin/admin-constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -95,10 +95,7 @@ function parsePatronData({
 		patronsWithIds.push({
 			patreonId: patron.relationships.user.data.id,
 			patronSince: dateToDatabaseTimestamp(
-				new Date(
-					patron.relationships.currently_entitled_tiers.data[0].attributes
-						?.created_at ?? Date.now(),
-				),
+				new Date(patron.attributes.pledge_relationship_start ?? Date.now()),
 			),
 			patronTier: idToTierNumber(tier),
 		});

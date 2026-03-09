@@ -1,0 +1,37 @@
+.layout {
+	position: relative;
+}
+
+.embedContainer {
+	margin-block: var(--s-2);
+}
+
+@media (min-width: 1425px) {
+	.embedContainer {
+		position: fixed;
+		left: max(24px, calc((100vw - 800px) / 2 - 320px - 48px));
+		top: 120px;
+		width: 320px;
+		margin-block: 0;
+	}
+}
+
+@media (min-width: 1700px) {
+	.embedContainer {
+		left: max(24px, calc((100vw - 800px) / 2 - 400px - 48px));
+		width: 400px;
+	}
+}
+
+/** we should use existing fieldset styles */
+.matchFieldset {
+	border: 1px solid var(--bg-lighter);
+	border-radius: var(--rounded);
+	padding: var(--s-4);
+}
+
+.povField {
+	width: 100%;
+	--select-width: 100%;
+	--input-width: 100%;
+}

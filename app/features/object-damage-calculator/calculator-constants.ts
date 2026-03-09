@@ -1,5 +1,8 @@
+import type {
+	AnyWeapon,
+	DamageType,
+} from "~/features/build-analyzer/analyzer-types";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import type { AnyWeapon, DamageType } from "../build-analyzer";
 import type { CombineWith } from "./calculator-types";
 import type objectDamages from "./core/object-dmg.json";
 
@@ -96,7 +99,8 @@ export const damagePriorities: Array<
 	["MAIN", [8000, 8010, 8020], "SPLATANA_HORIZONTAL", "Saber_Shot"],
 	["MAIN", [8000, 8010, 8020], "SPLATANA_HORIZONTAL_DIRECT", "Saber_Slash"],
 
-	["SUB", [0, 2, 7], "BOMB_NORMAL", "Bomb"], // TODO: could also consider "Bomb_DirectHit" it is almost the same but has different ratio for Big Bubbler core: 0.5 vs. 1.5
+	["SUB", [0, 2, 7], "BOMB_NORMAL", "Bomb"],
+	["SUB", [2], "BOMB_DIRECT", "Bomb_DirectHit"],
 	["SUB", [6], "BOMB_DIRECT", "Bomb_CurlingBullet"],
 	["SUB", [6], "BOMB_NORMAL", "Bomb"],
 	["SUB", [13], "SPLASH", "Bomb_TorpedoSplashBurst"],

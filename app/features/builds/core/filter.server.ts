@@ -1,5 +1,5 @@
 import type { Tables } from "~/db/tables";
-import { buildToAbilityPoints } from "~/features/build-analyzer";
+import { buildToAbilityPoints } from "~/features/build-analyzer/core/utils";
 import type {
 	BuildAbilitiesTuple,
 	ModeShort,

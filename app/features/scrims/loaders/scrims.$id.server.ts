@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { notFoundIfFalsy } from "../../../utils/remix.server";
@@ -9,8 +9,8 @@ import {
 import * as Scrim from "../core/Scrim";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const user = await requireUser(request);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const user = requireUser();
 
 	const post = notFoundIfFalsy(
 		await ScrimPostRepository.findById(Number(params.id)),

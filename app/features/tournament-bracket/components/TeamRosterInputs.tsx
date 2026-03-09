@@ -1,6 +1,6 @@
-import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
+import { Link, useFetcher, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { Label } from "~/components/Label";
@@ -86,7 +86,7 @@ export function TeamRosterInputs({
 	);
 }
 
-export function TeamRoster({
+function TeamRoster({
 	team,
 	bothTeamsHaveActiveRosters,
 	presentational,
@@ -229,6 +229,7 @@ export function TeamRoster({
 			/>
 			{!revising && canEditRoster ? (
 				<RosterFormWithButtons
+					idx={idx}
 					editingRoster={editingRoster}
 					setEditingRoster={setEditingRoster}
 					showCancelButton={Boolean(activeRoster)}
@@ -241,7 +242,7 @@ export function TeamRoster({
 	);
 }
 
-export function TeamRosterHeader({
+function TeamRosterHeader({
 	idx,
 	team,
 	tournamentId,
@@ -337,7 +338,7 @@ function WinnerRadio({
 	);
 }
 
-export function PointInput({
+function PointInput({
 	value,
 	onChange,
 	presentational,
@@ -472,6 +473,7 @@ function TeamRosterInputsCheckboxes({
 }
 
 function RosterFormWithButtons({
+	idx,
 	editingRoster,
 	setEditingRoster,
 	showCancelButton,
@@ -479,6 +481,7 @@ function RosterFormWithButtons({
 	teamId,
 	valid,
 }: {
+	idx: number;
 	editingRoster: boolean;
 	setEditingRoster: (editing: boolean) => void;
 	showCancelButton?: boolean;
@@ -520,7 +523,7 @@ function RosterFormWithButtons({
 				size="small"
 				_action="SET_ACTIVE_ROSTER"
 				isDisabled={!valid}
-				testId="save-active-roster-button"
+				testId={`save-active-roster-button-${idx}`}
 			>
 				Save
 			</SubmitButton>

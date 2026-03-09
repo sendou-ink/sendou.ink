@@ -1,6 +1,6 @@
-import type { MetaFunction } from "@remix-run/node";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
 import { Main } from "~/components/Main";
 import { languages } from "~/modules/i18n/config";
 import { metaTags } from "~/utils/remix";
@@ -45,7 +45,7 @@ const TRANSLATORS: Array<{
 		language: "de",
 	},
 	{
-		translators: ["KaiserOfNone", "Mario64iscool2"],
+		translators: ["KaiserOfNone", "Mario64iscool2", "Lasky"],
 		language: "es-ES",
 	},
 	{
@@ -120,6 +120,7 @@ export default function ContributionsPage() {
 				<li>TORIPNG - {t("contributions:toripng")}</li>
 				<li>uberu - {t("contributions:uberu")}</li>
 				<li>yaga - {t("contributions:yaga")}</li>
+				<li>Centritide - {t("contributions:centritide")}</li>
 				<li>Antariska, yaga & harryXYZ - {t("contributions:antariska")}</li>
 				<li>
 					<a href={SPLATOON_3_INK} target="_blank" rel="noreferrer">

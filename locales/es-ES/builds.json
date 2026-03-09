@@ -1,5 +1,7 @@
 {
 	"addBuild": "Añadir build",
+	"forms.title.new": "Crear nuevo build",
+	"forms.title.edit": "Editar build",
 	"reachBuildMaxCount": "Tienes la cantidad máxima de builds.",
 	"noBuilds": "Aún no hay builds. ¡Agrega tu primer build!",
 	"buildCard.info": "Info",
@@ -10,15 +12,15 @@
 	"forms.gear.HEAD": "Accesorios",
 	"forms.gear.CLOTHES": "Ropa",
 	"forms.gear.SHOES": "Calzado",
+	"forms.abilities": "Habilidades",
 	"forms.private.info": "Builds privados son visibles solo para tí.",
-	"forms.noGear.info": "",
 	"deleteConfirm": "¿Borrar build '{{title}}'?",
 	"stats.count.title": "Estadísticas de {{count}} builds para {{weapon}}",
 	"stats.ap.title": "Promedios de puntos de potenciadores",
-	"stats.percentage.title": "Frecuencia de potenciadores exclusivas",
+	"stats.percentage.title": "Frecuencia de potenciadores exclusivos",
 	"stats.all": "Todas",
-	"stats.public": "",
-	"stats.private": "",
+	"stats.public": "Público",
+	"stats.private": "Privado",
 	"addFilter": "Añadir filtro",
 	"linkButton.abilityStats": "Estadísticas de potenciadores",
 	"linkButton.popularBuilds": "Builds populares",
@@ -36,5 +38,5 @@
 	"filters.atMost": "Máximo",
 	"filters.date.since": "Desde",
 	"filters.date.custom": "Elegir fecha",
-	"filters.filterByWeapon": ""
+	"filters.filterByWeapon": "Filtrar por arma"
 }

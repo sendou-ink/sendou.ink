@@ -10,10 +10,6 @@ export function ordinalToSp(ordinal: number) {
 	return toTwoDecimals(ordinal * 15 + 1000);
 }
 
-export function spToOrdinal(sp: number) {
-	return (sp - 1000) / 15;
-}
-
 export function ordinalToRoundedSp(ordinal: number) {
 	return Math.round(ordinalToSp(ordinal));
 }

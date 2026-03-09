@@ -6,30 +6,10 @@
 	gap: var(--s-6);
 }
 
-.inGameNameText {
-	max-width: 8rem;
-}
-
-.inGameNameHashtag {
-	font-size: var(--fonts-lg);
-}
-
-.inGameNameDiscriminator {
-	width: 5rem;
-}
-
 .sensSelect {
 	width: 6rem;
 }
 
 .weaponPool {
 	width: 20rem;
-}
-
-.bioContainer {
-	width: 100%;
-}
-
-.bioContainer > textarea {
-	width: 100%;
 }

@@ -1,5 +1,5 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { requireUserId } from "~/features/auth/core/user.server";
+import type { ActionFunctionArgs } from "react-router";
+import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -28,6 +28,8 @@ import {
 	type TournamentBadgeReceivers,
 } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import { validateBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { refreshTentativeTiersCache } from "~/features/tournament-organization/core/tentativeTiers.server";
+import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -41,7 +43,7 @@ import { tournamentBracketsPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-	const user = await requireUserId(request);
+	const user = requireUser();
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,
@@ -104,6 +106,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			`Did not insert tournament summary. ${tournamentSummaryString}`,
 		);
 		finalizeTournament(tournamentId);
+	}
+
+	if (!tournament.isTest) {
+		await updateSeriesTierHistory(tournament);
 	}
 
 	if (tournament.ranked) {
@@ -175,5 +181,27 @@ async function notifyBadgeReceivers(badgeReceivers: TournamentBadgeReceivers) {
 		}
 	} catch (error) {
 		logger.error("Error notifying badge receivers", error);
+	}
+}
+
+async function updateSeriesTierHistory(tournament: Tournament) {
+	const organizationId = tournament.ctx.organization?.id;
+	if (!organizationId) return;
+
+	const tier = tournament.ctx.tier;
+	if (tier === null) return;
+
+	try {
+		await TournamentOrganizationRepository.updateSeriesTierHistory({
+			organizationId,
+			eventName: tournament.ctx.name,
+			newTier: tier,
+		});
+		await refreshTentativeTiersCache();
+		logger.info(
+			`Updated series tier history for tournament ${tournament.ctx.id} with tier ${tier}`,
+		);
+	} catch (error) {
+		logger.error("Error updating series tier history", error);
 	}
 }

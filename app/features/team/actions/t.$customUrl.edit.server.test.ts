@@ -6,15 +6,18 @@ import {
 	wrappedAction,
 } from "~/utils/Test";
 import { action as teamIndexPageAction } from "../actions/t.server";
-import type { createTeamSchema, editTeamSchema } from "../team-schemas.server";
+import type { createTeamSchema } from "../team-schemas";
+import type { editTeamSchema } from "../team-schemas.server";
 import { action as _editTeamProfileAction } from "./t.$customUrl.edit.server";
 
 const createTeamAction = wrappedAction<typeof createTeamSchema>({
 	action: teamIndexPageAction,
+	isJsonSubmission: true,
 });
 
 const editTeamProfileAction = wrappedAction<typeof editTeamSchema>({
 	action: _editTeamProfileAction,
+	isJsonSubmission: true,
 });
 
 const DEFAULT_FIELDS = {

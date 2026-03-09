@@ -1,5 +1,10 @@
 import invariant from "~/utils/invariant";
 
+export const hasTwitchEnvVars = () => {
+	const { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } = process.env;
+	return Boolean(TWITCH_CLIENT_ID && TWITCH_CLIENT_SECRET);
+};
+
 export const getTwitchEnvVars = () => {
 	const { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } = process.env;
 	invariant(

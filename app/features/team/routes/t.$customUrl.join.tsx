@@ -1,5 +1,5 @@
-import { Form, useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import { Form, useLoaderData } from "react-router";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { SendouRouteHandle } from "~/utils/remix.server";

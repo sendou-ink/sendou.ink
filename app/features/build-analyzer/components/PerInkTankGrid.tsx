@@ -6,9 +6,9 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
 import { MAX_AP } from "../analyzer-constants";
-import type { FullInkTankOption } from "../analyzer-types";
+import type { FullInkTankOption, SpecialWeaponParams } from "../analyzer-types";
 import { fullInkTankOptions } from "../core/stats";
-import { weaponParams } from "../core/utils";
+import { mainWeaponParams, weaponParams } from "../core/utils";
 
 interface PerInkTankGridProps {
 	weaponSplId: MainWeaponId;
@@ -243,13 +243,13 @@ function inkTankOptionsWhenNSubsUsed({
 	subsUsed: number;
 	weaponSplId: MainWeaponId;
 }) {
-	const mainWeaponParams = weaponParams().mainWeapons[weaponSplId];
+	const mainParams = mainWeaponParams(weaponSplId);
 
-	const subWeaponParams =
-		weaponParams().subWeapons[mainWeaponParams.subWeaponId];
+	const subWeaponParams = weaponParams().subWeapons[mainParams.subWeaponId];
 
-	const specialWeaponParams =
-		weaponParams().specialWeapons[mainWeaponParams.specialWeaponId];
+	const specialWeaponParams = weaponParams().specialWeapons[
+		mainParams.specialWeaponId
+	] as SpecialWeaponParams;
 
 	const options = fullInkTankOptions({
 		abilityPoints: new Map([
@@ -259,7 +259,7 @@ function inkTankOptionsWhenNSubsUsed({
 		weaponSplId,
 		hasTacticooler: false,
 		mainOnlyAbilities: [],
-		mainWeaponParams,
+		mainWeaponParams: mainParams,
 		specialWeaponParams,
 		subWeaponParams,
 	});

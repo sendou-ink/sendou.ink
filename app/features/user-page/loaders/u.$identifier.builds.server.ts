@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -10,8 +10,8 @@ import { userParamsSchema } from "../user-page-schemas";
 
 export type UserBuildsPageData = SerializeFrom<typeof loader>;
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const loggedInUser = await getUser(request);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const loggedInUser = getUser();
 	const { identifier } = userParamsSchema.parse(params);
 	const user = notFoundIfFalsy(
 		await UserRepository.identifierToBuildFields(identifier),

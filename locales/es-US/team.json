@@ -41,6 +41,7 @@
 	"forms.info.name": "Nota que si cambias el nombre de tu equipo, el nombre y la URL estarán libres para que otro equipo los tome",
 	"forms.info.tag": "",
 	"forms.errors.duplicateName": "Ya existe un equipo con ese nombre",
+	"forms.errors.noOnlySpecialCharacters": "",
 	"roster.teamFull": "El equipo esta lleno",
 	"roster.inviteLink.header": "Comparte el link de invitación para agregar más miembros",
 	"roster.members.header": "Miembros",

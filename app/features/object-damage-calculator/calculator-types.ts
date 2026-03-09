@@ -1,4 +1,4 @@
-import type { DamageType } from "../build-analyzer";
+import type { DamageType } from "~/features/build-analyzer/analyzer-types";
 import type { DAMAGE_RECEIVERS } from "./calculator-constants";
 
 export type DamageReceiver = (typeof DAMAGE_RECEIVERS)[number];

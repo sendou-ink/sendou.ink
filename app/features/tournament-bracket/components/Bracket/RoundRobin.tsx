@@ -28,7 +28,7 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 				});
 
 				return (
-					<div key={groupName} className="stack lg ml-4">
+					<div key={groupName} className="stack lg ml-6">
 						<h2 className="text-lg">{groupName}</h2>
 						<div
 							className="elim-bracket__container"

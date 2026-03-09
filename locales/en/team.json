@@ -41,6 +41,7 @@
 	"forms.info.name": "Note that if you change your team's name then someone else can claim the name and URL for their team",
 	"forms.info.tag": "Typically used before in-game name to indicate membership of a team (e.g. [TAG] PlayerName)",
 	"forms.errors.duplicateName": "There is already a team with this name",
+	"forms.errors.noOnlySpecialCharacters": "Team name can't be only special characters",
 	"roster.teamFull": "Team is full",
 	"roster.inviteLink.header": "Share invite link to add members",
 	"roster.members.header": "Members",

@@ -1,4 +1,4 @@
-import { Link } from "@remix-run/react";
+import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { userVodsPage } from "~/utils/urls";
 import type { Vod } from "../vods-types";

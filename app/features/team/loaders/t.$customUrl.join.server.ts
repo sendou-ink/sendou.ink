@@ -1,5 +1,5 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
+import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { SHORT_NANOID_LENGTH } from "~/utils/id";
 import { notFoundIfFalsy } from "~/utils/remix.server";
@@ -10,7 +10,7 @@ import { teamParamsSchema } from "../team-schemas.server";
 import { isTeamFull, isTeamMember } from "../team-utils";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const { customUrl } = teamParamsSchema.parse(params);
 
 	const team = notFoundIfFalsy(
