@@ -19,6 +19,14 @@
 		"displayName": "Silver Bullet (Winning Silver Bracket 50 Calibur)",
 		"authorDiscordId": "530093822806458368"
 	},
+	"abyssalcrystalblue": {
+		"displayName": "Abyssal Arena",
+		"authorDiscordId": "338806780446638082"
+	},
+	"abyssalcrystalred": {
+		"displayName": "Abyssal Arena Special Edition",
+		"authorDiscordId": "338806780446638082"
+	},
 	"academy_showcase": {
 		"displayName": "Academy Showcase",
 		"authorDiscordId": "643355948265766912"
@@ -74,6 +82,10 @@
 	"barnacle-bash": {
 		"displayName": "Barnacle Bash",
 		"authorDiscordId": "181270348262539265"
+	},
+	"bcoboon": {
+		"displayName": "Barracuda Boon",
+		"authorDiscordId": "338103199900893184"
 	},
 	"beach223": {
 		"displayName": "Summer Days",
@@ -215,6 +227,10 @@
 		"displayName": "Chi-Shoals",
 		"authorDiscordId": "528851510222782474"
 	},
+	"classascen": {
+		"displayName": "Class Ascendency",
+		"authorDiscordId": "528851510222782474"
+	},
 	"climbspire": {
 		"displayName": "Climb The Spire",
 		"authorDiscordId": "338806780446638082"
@@ -282,6 +298,10 @@
 	"custom_e-liter": {
 		"displayName": "Not Enough Liter",
 		"authorDiscordId": "352207524390240257"
+	},
+	"cyndaquil": {
+		"displayName": "Typh's Birthday Bonanza",
+		"authorDiscordId": "751912670403362836"
 	},
 	"daytonaspeedweeks1st": {
 		"displayName": "Just Daytona 1-5",
@@ -400,7 +420,7 @@
 		"authorDiscordId": "354880982890971136"
 	},
 	"full-auto": {
-		"displayName": "Full Auto",
+		"displayName": "Barrel Spinner [Special]",
 		"authorDiscordId": "534502084134043648"
 	},
 	"fullwipe": {
@@ -438,6 +458,14 @@
 	"girlsbandcryawa": {
 		"displayName": "Togenashi Togeari Subaru Bracket",
 		"authorDiscordId": "309327923129745409"
+	},
+	"gladiatorgold": {
+		"displayName": "Survival of the S+ Gladiator (Again)",
+		"authorDiscordId": "751912670403362836"
+	},
+	"gladiatorsilver": {
+		"displayName": "Survival of the S+ Gladiator",
+		"authorDiscordId": "751912670403362836"
 	},
 	"glaze": {
 		"displayName": "THE GLAZE GAUNTLET",
@@ -508,7 +536,7 @@
 		"authorDiscordId": "354880982890971136"
 	},
 	"ink-torrent": {
-		"displayName": "Ink Torrent",
+		"displayName": "Barrel Spinner",
 		"authorDiscordId": "534502084134043648"
 	},
 	"inkpractice": {
@@ -883,6 +911,14 @@
 		"displayName": "P.X.G",
 		"authorDiscordId": "528851510222782474"
 	},
+	"rabbithole1st": {
+		"displayName": "Rabbit Hole Cup [Winner]",
+		"authorDiscordId": "528851510222782474"
+	},
+	"rabbithole2nd": {
+		"displayName": "Rabbit Hole Cup [Runner-up]",
+		"authorDiscordId": "528851510222782474"
+	},
 	"raid-weekend": {
 		"displayName": "Raid Weekend",
 		"authorDiscordId": "354880982890971136"
@@ -910,6 +946,14 @@
 	"reccent": {
 		"displayName": "The REC Center",
 		"authorDiscordId": "1320944066002681876"
+	},
+	"redcrimsonbucket": {
+		"displayName": "Crimson Bucket",
+		"authorDiscordId": "338806780446638082"
+	},
+	"redenrumble": {
+		"displayName": "Reden's Rumble",
+		"authorDiscordId": "338806780446638082"
 	},
 	"remix": {
 		"displayName": "Remix Rumble",
@@ -945,6 +989,10 @@
 	},
 	"rpdeco": {
 		"displayName": "Rapid Rushdown",
+		"authorDiscordId": "528851510222782474"
+	},
+	"runspeed": {
+		"displayName": "Run Speed Up",
 		"authorDiscordId": "528851510222782474"
 	},
 	"s50badge": {
@@ -1035,6 +1083,22 @@
 		"displayName": "Shrimp of the Day",
 		"authorDiscordId": "309327923129745409"
 	},
+	"shs00": {
+		"displayName": "Sweetheart Splats Underground",
+		"authorDiscordId": "707620991500550235"
+	},
+	"shs01": {
+		"displayName": "Sweetheart Splats",
+		"authorDiscordId": "707620991500550235"
+	},
+	"shs02": {
+		"displayName": "Sweetheart Splats 2nd place",
+		"authorDiscordId": "707620991500550235"
+	},
+	"shs03": {
+		"displayName": "Sweetheart Splats 3rd place",
+		"authorDiscordId": "707620991500550235"
+	},
 	"shscap": {
 		"displayName": "Sheep Happens (Skill Capped)",
 		"authorDiscordId": "758345384585592902"
@@ -1042,6 +1106,10 @@
 	"silverstars": {
 		"displayName": "Leblanc Hideout Beta Bracket",
 		"authorDiscordId": "338806780446638082"
+	},
+	"skycat": {
+		"displayName": "Skycat Achievements",
+		"authorDiscordId": "776557393848434718"
 	},
 	"slyeion": {
 		"displayName": "Sylveon",
@@ -1330,6 +1398,10 @@
 	"urchincup": {
 		"displayName": "Urchin-Cup",
 		"authorDiscordId": "338806780446638082"
+	},
+	"valentines2v2tuesdays": {
+		"displayName": "Valentines 2v2 TUESDAYS",
+		"authorDiscordId": "754368445910614046"
 	},
 	"vchargersplash": {
 		"displayName": "Charger Assault",

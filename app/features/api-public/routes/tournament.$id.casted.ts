@@ -1,23 +1,15 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { cors } from "remix-utils/cors";
-import { z } from "zod/v4";
+import type { LoaderFunctionArgs } from "react-router";
+import { z } from "zod";
 import { db } from "~/db/sql";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
 import type { GetCastedTournamentMatchesResponse } from "../schema";
 
 const paramsSchema = z.object({
 	id,
 });
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
-	requireBearerAuth(request);
-
+export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id } = parseParams({
 		params,
 		schema: paramsSchema,
@@ -47,5 +39,5 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			})) ?? [],
 	};
 
-	return await cors(request, json(result));
+	return Response.json(result);
 };

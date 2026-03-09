@@ -1,5 +1,5 @@
-import { useLocation } from "@remix-run/react";
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router";
 import { logger } from "../../utils/logger";
 
 declare global {

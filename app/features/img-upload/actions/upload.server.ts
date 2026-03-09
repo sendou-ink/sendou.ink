@@ -1,11 +1,7 @@
-import type { ActionFunctionArgs, UploadHandler } from "@remix-run/node";
-import {
-	unstable_composeUploadHandlers as composeUploadHandlers,
-	unstable_createMemoryUploadHandler as createMemoryUploadHandler,
-	unstable_parseMultipartFormData as parseMultipartFormData,
-	redirect,
-} from "@remix-run/node";
-import { z } from "zod/v4";
+import type { FileUpload } from "@remix-run/form-data-parser";
+import type { ActionFunctionArgs } from "react-router";
+import { redirect } from "react-router";
+import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { isTeamManager } from "~/features/team/team-utils";
@@ -17,15 +13,16 @@ import {
 	badRequestIfFalsy,
 	errorToastIfFalsy,
 	parseSearchParams,
+	safeParseMultipartFormData,
 } from "~/utils/remix.server";
 import { teamPage, tournamentOrganizationPage } from "~/utils/urls";
 import * as ImageRepository from "../ImageRepository.server";
-import { s3UploadHandler } from "../s3.server";
+import { uploadStreamToS3 } from "../s3.server";
 import { MAX_UNVALIDATED_IMG_COUNT } from "../upload-constants";
 import { requestToImgType } from "../upload-utils";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 
 	const validatedType = requestToImgType(request);
 	errorToastIfFalsy(validatedType, "Invalid image type");
@@ -36,7 +33,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			: undefined;
 	const organization =
 		validatedType === "org-pfp"
-			? await requireEditableOrganization({ user, request })
+			? await requireEditableOrganization(request)
 			: undefined;
 
 	errorToastIfFalsy(
@@ -45,11 +42,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		"Too many unvalidated images",
 	);
 
-	const uploadHandler: UploadHandler = composeUploadHandlers(
-		s3UploadHandler(),
-		createMemoryUploadHandler(),
-	);
-	const formData = await parseMultipartFormData(request, uploadHandler);
+	const uploadHandler = async (fileUpload: FileUpload) => {
+		if (fileUpload.fieldName === "img") {
+			const [, ending] = fileUpload.name.split(".");
+			invariant(ending);
+			const newFilename = `img-${Date.now()}.${ending}`;
+
+			const uploadedFileLocation = await uploadStreamToS3(
+				fileUpload.stream(),
+				newFilename,
+			);
+			return uploadedFileLocation;
+		}
+		return null;
+	};
+
+	const formData = await safeParseMultipartFormData(request, uploadHandler);
 	const imgSrc = formData.get("img") as string | null;
 	invariant(imgSrc);
 
@@ -107,13 +115,7 @@ async function validatedTeam({
 	return team;
 }
 
-async function requireEditableOrganization({
-	user,
-	request,
-}: {
-	user: { id: number };
-	request: Request;
-}) {
+async function requireEditableOrganization(request: Request) {
 	const { slug } = parseSearchParams({
 		request,
 		schema: z.object({ slug: z.string() }),
@@ -122,7 +124,7 @@ async function requireEditableOrganization({
 		await TournamentOrganizationRepository.findBySlug(slug),
 	);
 
-	requirePermission(organization, "EDIT", user);
+	requirePermission(organization, "EDIT");
 
 	return organization;
 }

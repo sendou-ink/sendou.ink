@@ -1,0 +1,54 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.selectedBadges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-2);
+	align-items: center;
+}
+
+.count {
+	font-size: var(--fonts-xs);
+	color: var(--text-lighter);
+	font-weight: var(--semi-bold);
+}
+
+.badgeButton {
+	all: unset;
+	cursor: pointer;
+	border-radius: var(--rounded-sm);
+	padding: var(--s-0-5);
+	transition: background-color 0.15s;
+}
+
+.badgeButton:hover {
+	background-color: var(--bg-lightest);
+}
+
+.badgeButton:focus-visible {
+	outline: 2px solid var(--theme);
+	outline-offset: 2px;
+}
+
+.badgeImage {
+	display: block;
+	width: 48px;
+	height: 48px;
+	object-fit: contain;
+}
+
+.searchInput {
+	width: 100%;
+}
+
+.resultsGrid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1);
+	max-height: 300px;
+	overflow-y: auto;
+}

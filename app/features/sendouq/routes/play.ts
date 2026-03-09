@@ -1,4 +1,4 @@
-import { type LoaderFunction, redirect } from "@remix-run/node";
+import { type LoaderFunction, redirect } from "react-router";
 import { SENDOUQ_PAGE } from "~/utils/urls";
 
 // SendouQ's old URL was /play

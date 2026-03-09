@@ -1,10 +1,11 @@
-import { expect, test } from "@playwright/test";
 import {
+	expect,
 	impersonate,
 	isNotVisible,
 	navigate,
 	seed,
 	selectWeapon,
+	test,
 } from "~/utils/playwright";
 import { ANALYZER_URL } from "~/utils/urls";
 
@@ -41,7 +42,10 @@ test.describe("Build Analyzer", () => {
 		// on new build page with preselected values
 		await newBuildPrompt.click();
 		await expect(page.getByTestId("HEAD-gear-select")).toBeVisible();
-		await expect(page.getByTestId("weapon-0")).toContainText("Luna Blaster");
+		// Check that Luna Blaster appears in the weapon pool list (not in dropdown options)
+		await expect(
+			page.getByRole("listitem").getByText("Luna Blaster"),
+		).toBeVisible();
 		await page.getByTestId("SSU-ability").isVisible();
 	});
 

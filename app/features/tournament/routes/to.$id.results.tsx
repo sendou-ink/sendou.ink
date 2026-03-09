@@ -1,6 +1,6 @@
-import { Link } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
+import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import {
 	SendouTab,

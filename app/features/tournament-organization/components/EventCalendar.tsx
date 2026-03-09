@@ -1,4 +1,3 @@
-import type { SerializeFrom } from "@remix-run/node";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { LinkButton } from "~/components/elements/Button";
@@ -6,6 +5,7 @@ import type { MonthYear } from "~/features/plus-voting/core";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate, nullPaddedDatesOfMonth } from "~/utils/dates";
+import type { SerializeFrom } from "~/utils/remix";
 import type { loader } from "../loaders/org.$slug.server";
 
 interface EventCalendarProps {
@@ -93,8 +93,6 @@ function EventCalendarCell({
 				<img
 					className="org__calendar__day__logo"
 					src={events[0].logoUrl ?? fallbackLogoUrl}
-					width={32}
-					height={32}
 					alt={events[0].name}
 				/>
 			) : null}

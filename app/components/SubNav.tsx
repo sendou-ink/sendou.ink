@@ -1,7 +1,7 @@
-import type { LinkProps } from "@remix-run/react";
-import { NavLink } from "@remix-run/react";
 import clsx from "clsx";
 import type * as React from "react";
+import type { LinkProps } from "react-router";
+import { NavLink } from "react-router";
 
 export function SubNav({
 	children,

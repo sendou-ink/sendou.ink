@@ -1,15 +1,15 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import { reportedWeaponsToArrayOfArrays } from "~/features/sendouq-match/core/reported-weapons.server";
-import { reportedWeaponsByMatchId } from "~/features/sendouq-match/queries/reportedWeaponsByMatchId.server";
+import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { qMatchPageParamsSchema } from "../q-match-schemas";
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const user = await getUser(request);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const user = getUser();
 	const matchId = parseParams({
 		params,
 		schema: qMatchPageParamsSchema,
@@ -29,7 +29,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const match = SendouQ.mapMatch(matchUnmapped, user, privateNotes);
 
 	const rawReportedWeapons = match.reportedAt
-		? reportedWeaponsByMatchId(matchId)
+		? await ReportedWeaponRepository.findByMatchId(matchId)
 		: null;
 
 	return {

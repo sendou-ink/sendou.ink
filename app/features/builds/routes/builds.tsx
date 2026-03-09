@@ -1,7 +1,7 @@
-import type { MetaFunction } from "@remix-run/node";
-import { Link } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { Link } from "react-router";
 import { AddNewButton } from "~/components/AddNewButton";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";

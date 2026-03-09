@@ -41,6 +41,7 @@
 	"forms.info.name": "שימו לב שאם תשנו את שם הצוות שלכם, מישהו אחר יוכל לקחת בעלות על השם ועל כתובת האתר עבור הצוות שלו",
 	"forms.info.tag": "",
 	"forms.errors.duplicateName": "יש כבר צוות בשם הזה",
+	"forms.errors.noOnlySpecialCharacters": "",
 	"roster.teamFull": "הצוות מלא",
 	"roster.inviteLink.header": "שיתוף קישור הזמנה להוספת חברי צוות",
 	"roster.members.header": "חברי צוות",

@@ -1,4 +1,4 @@
-import { useSearchParams } from "@remix-run/react";
+import { useSearchParams } from "react-router";
 import { exampleMainWeaponIdWithSpecialWeaponId } from "~/modules/in-game-lists/weapon-ids";
 import { assertType } from "~/utils/types";
 import type { DAMAGE_TYPE } from "../build-analyzer/analyzer-constants";
@@ -139,11 +139,14 @@ const damageTypePriorityList = [
 	"SPECIAL_CANNON",
 	"SPECIAL_BULLET_MAX",
 	"SPECIAL_BULLET_MIN",
+	"SPECIAL_SPLASH_MAX",
+	"SPECIAL_SPLASH_MIN",
 	"SPECIAL_BUMP",
 	"SPECIAL_JUMP",
 	"SPECIAL_TICK",
 	"SECONDARY_MODE_MAX",
 	"SECONDARY_MODE_MIN",
+	"COMBO",
 ] as const;
 assertType<
 	(typeof damageTypePriorityList)[number],

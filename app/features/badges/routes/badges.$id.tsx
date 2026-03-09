@@ -1,6 +1,6 @@
-import { Link, Outlet, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import { Trans, useTranslation } from "react-i18next";
+import { Link, Outlet, useLoaderData } from "react-router";
 import { Badge } from "~/components/Badge";
 import { LinkButton } from "~/components/elements/Button";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";

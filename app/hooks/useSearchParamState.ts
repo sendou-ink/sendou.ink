@@ -1,5 +1,5 @@
-import { useSearchParams } from "@remix-run/react";
 import * as React from "react";
+import { useSearchParams } from "react-router";
 
 /** State backed search params. Used when you want to update search params without triggering navigation (runs loaders, rerenders the whole page extra time) */
 export function useSearchParamState<T>({

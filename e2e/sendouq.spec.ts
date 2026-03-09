@@ -1,7 +1,13 @@
-import test, { expect } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { impersonate, navigate, seed, submit } from "~/utils/playwright";
+import {
+	expect,
+	impersonate,
+	navigate,
+	seed,
+	submit,
+	test,
+} from "~/utils/playwright";
 import {
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PAGE,
@@ -34,7 +40,7 @@ test.describe("SendouQ", () => {
 		// Impersonate a different user
 		await impersonate(page, 3);
 		await navigate({ page, url: SENDOUQ_PAGE });
-		await page.getByRole("button", { name: "Join solo" }).click();
+		await submit(page, "join-solo-button");
 
 		await expect(page.getByTestId("sendouq-group-card")).toBeVisible();
 		// Verify ADMIN's preparing group is NOT visible
@@ -200,12 +206,12 @@ test.describe("SendouQ", () => {
 		// ADMIN creates a solo group
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: SENDOUQ_PAGE });
-		await page.getByRole("button", { name: "Join solo" }).click();
+		await submit(page, "join-solo-button");
 
 		// User 3 creates a solo group
 		await impersonate(page, 3);
 		await navigate({ page, url: SENDOUQ_PAGE });
-		await page.getByRole("button", { name: "Join solo" }).click();
+		await submit(page, "join-solo-button");
 
 		// Send request as ADMIN
 		await impersonate(page, ADMIN_ID);
@@ -217,7 +223,7 @@ test.describe("SendouQ", () => {
 		await expect(user3GroupCard).toBeVisible();
 
 		// Send request
-		await user3GroupCard.locator('button[type="submit"]').first().click();
+		await submit(page, "group-card-action-button");
 
 		// Accept request as user 3
 		await impersonate(page, 3);
@@ -230,7 +236,7 @@ test.describe("SendouQ", () => {
 		await expect(adminInviteCard).toBeVisible();
 
 		// Accept and merge
-		await adminInviteCard.locator('button[type="submit"]').first().click();
+		await submit(page, "group-card-action-button");
 
 		// Verify still on looking page (not redirected to match)
 		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);

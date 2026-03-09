@@ -1,0 +1,112 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--border);
+	border-radius: var(--rounded-sm);
+	background: var(--bg);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--s-2) var(--s-3);
+	background: var(--bg-lighter);
+	border: none;
+	border-radius: var(--rounded-sm);
+	cursor: pointer;
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+	color: var(--text);
+	width: 100%;
+	text-align: left;
+}
+
+.header:hover {
+	background: var(--bg-lightest);
+}
+
+.headerTitle {
+	flex: 1;
+}
+
+.collapseIcon {
+	font-size: var(--fonts-lg);
+	font-weight: var(--bold);
+	color: var(--text-lighter);
+	width: 20px;
+	text-align: center;
+}
+
+.content {
+	padding: var(--s-3);
+}
+
+.benchmarkLegend {
+	display: flex;
+	gap: var(--s-4);
+	margin-bottom: var(--s-3);
+	padding-bottom: var(--s-2);
+	border-bottom: 1px solid var(--border);
+}
+
+.legendItem {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--fonts-xs);
+	color: var(--text-lighter);
+}
+
+.legendLine {
+	width: 16px;
+	height: 2px;
+	background-image: repeating-linear-gradient(
+		to right,
+		rgb(100 100 120) 0,
+		rgb(100 100 120) 4px,
+		transparent 4px,
+		transparent 8px
+	);
+}
+
+.legendLabel {
+	white-space: nowrap;
+}
+
+.chartContainer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.weaponLegend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-3);
+}
+
+.weaponLegendItem {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.weaponLegendColor {
+	width: 12px;
+	height: 3px;
+	border-radius: 2px;
+}
+
+.weaponLegendRange {
+	font-size: var(--fonts-xs);
+	color: var(--text-lighter);
+	font-weight: var(--semi-bold);
+}
+
+.chart {
+	width: 100%;
+	max-width: 100%;
+	height: auto;
+	min-height: 150px;
+}

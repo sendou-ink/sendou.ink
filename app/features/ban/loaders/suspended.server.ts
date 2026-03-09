@@ -1,4 +1,4 @@
-import { type LoaderFunctionArgs, redirect } from "@remix-run/node";
+import { type LoaderFunctionArgs, redirect } from "react-router";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import {
 	IMPERSONATED_SESSION_KEY,

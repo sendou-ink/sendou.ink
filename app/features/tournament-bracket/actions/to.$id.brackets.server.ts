@@ -1,8 +1,12 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import { sql } from "~/db/sql";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import {
+	calculateTournamentTierFromTeams,
+	MIN_TEAMS_FOR_TIERING,
+} from "~/features/tournament/core/tiering";
 import { createSwissBracketInTransaction } from "~/features/tournament/queries/createSwissBracketInTransaction.server";
 import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -18,9 +22,9 @@ import {
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "~/utils/zod";
 import type { PreparedMaps } from "../../../db/tables";
-import { updateTeamSeeds } from "../../tournament/queries/updateTeamSeeds.server";
 import { getServerTournamentManager } from "../core/brackets-manager/manager.server";
 import { roundMapsFromInput } from "../core/mapList.server";
+import * as PreparedMapsUtils from "../core/PreparedMaps";
 import * as Swiss from "../core/Swiss";
 import type { Tournament } from "../core/Tournament";
 import {
@@ -34,7 +38,7 @@ import {
 } from "../tournament-bracket-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,
@@ -48,6 +52,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 	switch (data._action) {
 		case "START_BRACKET": {
 			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			errorToastIfFalsy(
+				!tournament.isDraft,
+				"Tournament must be opened before starting a bracket",
+			);
 
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			invariant(bracket, "Bracket not found");
@@ -113,20 +121,66 @@ export const action: ActionFunction = async ({ params, request }) => {
 						bracket,
 					}),
 				);
-
-				// ensures autoseeding is disabled
-				const isAllSeedsPersisted = tournament.ctx.teams.every(
-					(team) => typeof team.seed === "number",
-				);
-				if (!isAllSeedsPersisted) {
-					updateTeamSeeds({
-						tournamentId: tournament.ctx.id,
-						teamIds: tournament.ctx.teams.map((team) => team.id),
-					});
-				}
 			})();
 
-			if (!tournament.isTest) {
+			// persist maps as prepared even if they weren't initially so sibling brackets can reuse them
+			const existingPreparedMaps =
+				await TournamentRepository.findPreparedMapsById(tournamentId);
+			if (!existingPreparedMaps?.[data.bracketIdx]) {
+				await TournamentRepository.upsertPreparedMaps({
+					bracketIdx: data.bracketIdx,
+					tournamentId,
+					maps: {
+						maps,
+						authorId: user.id,
+						eliminationTeamCount:
+							bracket.type === "single_elimination" ||
+							bracket.type === "double_elimination"
+								? PreparedMapsUtils.eliminationTeamCountOptions(
+										seeding.length,
+									)[0].max
+								: undefined,
+					},
+				});
+			}
+
+			// ensures autoseeding is disabled
+			const isAllSeedsPersisted = tournament.ctx.teams.every(
+				(team) => typeof team.seed === "number",
+			);
+			if (!isAllSeedsPersisted) {
+				await TournamentRepository.updateTeamSeeds({
+					tournamentId: tournament.ctx.id,
+					teamIds: tournament.ctx.teams.map((team) => team.id),
+					teamsWithMembers: tournament.ctx.teams.map((team) => ({
+						teamId: team.id,
+						members: team.members.map((m) => ({
+							userId: m.userId,
+							username: m.username,
+						})),
+					})),
+				});
+			}
+
+			if (data.bracketIdx === 0 && seeding.length >= MIN_TEAMS_FOR_TIERING) {
+				const checkedInTeams = tournament.ctx.teams
+					.filter((team) => seeding.includes(team.id))
+					.map((team) => ({ avgOrdinal: team.avgSeedingSkillOrdinal }));
+
+				const { tierNumber } = calculateTournamentTierFromTeams(
+					checkedInTeams,
+					seeding.length,
+				);
+
+				if (tierNumber !== null) {
+					await TournamentRepository.updateTournamentTier({
+						tournamentId: tournament.ctx.id,
+						tier: tierNumber,
+					});
+				}
+			}
+
+			if (!tournament.isTest && !tournament.isDraft) {
 				notify({
 					userIds: seeding.flatMap((tournamentTeamId) =>
 						tournament.teamById(tournamentTeamId)!.members.map((m) => m.userId),

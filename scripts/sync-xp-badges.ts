@@ -1,7 +1,8 @@
 import "dotenv/config";
-import { syncXPBadges } from "~/features/badges/queries/syncXPBadges.server";
+import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import { logger } from "~/utils/logger";
 
-syncXPBadges();
-
-logger.info("Synced XP badges");
+void (async () => {
+	await BadgeRepository.syncXPBadges();
+	logger.info("Synced XP badges");
+})();

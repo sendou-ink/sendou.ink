@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 import { _action, id, safeJSONParse } from "~/utils/zod";
 
 const validateManySchema = z.object({

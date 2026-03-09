@@ -32,6 +32,7 @@ services:
       - SKALOP_TOKEN=${SKALOP_TOKEN}
       - SESSION_SECRET=${SESSION_SECRET}
       - PORT=5900
+      - NODE_ENV=development
     depends_on:
       - redis
     restart: unless-stopped

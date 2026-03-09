@@ -1,26 +1,34 @@
-import { useLoaderData } from "@remix-run/react";
-import type { z } from "zod/v4";
+import { useLoaderData, useMatches } from "react-router";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { SendouForm } from "~/components/form/SendouForm";
-import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { PlusIcon } from "~/components/icons/Plus";
-import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
-import { USER } from "~/features/user-page/user-page-constants";
 import { addModNoteSchema } from "~/features/user-page/user-page-schemas";
+import { SendouForm } from "~/form";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
+import invariant from "~/utils/invariant";
+import { userPage } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.admin.server";
+import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.admin.server";
+import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import styles from "./u.$identifier.admin.module.css";
 export { loader, action };
 
 export default function UserAdminPage() {
+	const [, parentRoute] = useMatches();
+	invariant(parentRoute);
+	const layoutData = parentRoute.data as UserPageLoaderData;
+
 	return (
-		<Main className="stack xl">
+		<div className="stack xl">
+			<SubPageHeader
+				user={layoutData.user}
+				backTo={userPage(layoutData.user)}
+			/>
 			<AccountInfos />
 
 			<div className="stack sm">
@@ -43,7 +51,7 @@ export default function UserAdminPage() {
 				</Divider>
 				<BanLog />
 			</div>
-		</Main>
+		</div>
 	);
 }
 
@@ -156,8 +164,6 @@ function ModNotes() {
 	);
 }
 
-type FormFields = z.infer<typeof addModNoteSchema>;
-
 function NewModNoteDialog() {
 	return (
 		<SendouDialog
@@ -169,19 +175,8 @@ function NewModNoteDialog() {
 				</SendouButton>
 			}
 		>
-			<SendouForm
-				schema={addModNoteSchema}
-				defaultValues={{
-					value: "",
-					_action: "ADD_MOD_NOTE",
-				}}
-			>
-				<TextAreaFormField<FormFields>
-					name="value"
-					label="Text"
-					maxLength={USER.MOD_NOTE_MAX_LENGTH}
-					bottomText="This note will be only visible to staff members."
-				/>
+			<SendouForm schema={addModNoteSchema}>
+				{({ FormField }) => <FormField name="value" />}
 			</SendouForm>
 		</SendouDialog>
 	);

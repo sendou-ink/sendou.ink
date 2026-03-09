@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
@@ -38,7 +38,7 @@ import {
 } from "../tournament-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const { avatarFileName, formData } = await uploadImageIfSubmitted({
 		request,
 		fileNamePrefix: "pickup-logo",
@@ -291,7 +291,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 			});
 
-			if (!tournament.isTest) {
+			if (!tournament.isTest && !tournament.isDraft) {
 				notify({
 					userIds: [data.userId],
 					notification: {

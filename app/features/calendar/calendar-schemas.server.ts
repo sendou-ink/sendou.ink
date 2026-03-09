@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
@@ -73,6 +73,7 @@ export const newCalendarEventActionSchema = z
 		toToolsMode: z.enum(["ALL", "TO", "SZ", "TC", "RM", "CB"]).optional(),
 		isRanked: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
 		isTest: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
+		isDraft: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
 		regClosesAt: z.enum(REG_CLOSES_AT_OPTIONS).nullish(),
 		enableNoScreenToggle: z.preprocess(
 			checkboxValueToBoolean,

@@ -22,6 +22,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Start MinIO
+        run: docker compose up -d minio
+
+      - name: Wait for MinIO to be ready
+        run: |
+          for i in {1..30}; do
+            if curl -sf http://127.0.0.1:9000/minio/health/live; then
+              echo "MinIO is ready"
+              exit 0
+            fi
+            echo "Waiting for MinIO... ($i/30)"
+            sleep 2
+          done
+          echo "MinIO failed to start"
+          exit 1
+
       - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
@@ -35,6 +51,10 @@ jobs:
 
       - name: Run E2E tests
         run: npm run test:e2e
+
+      - name: Stop MinIO
+        if: always()
+        run: docker compose down
 
       - uses: actions/upload-artifact@v4
         if: failure()

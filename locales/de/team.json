@@ -41,6 +41,7 @@
 	"forms.info.name": "Hinweis: Wenn du den Namen deines Teams änderst, können andere Teams den Namen und und die URL für sich beanspruchen.",
 	"forms.info.tag": "",
 	"forms.errors.duplicateName": "Es gibt bereits ein Team mit diesem Namen",
+	"forms.errors.noOnlySpecialCharacters": "",
 	"roster.teamFull": "Team ist voll",
 	"roster.inviteLink.header": "Teile den Einladungslink, um Mitglieder hinzuzufügen",
 	"roster.members.header": "Mitglieder",

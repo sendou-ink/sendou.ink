@@ -1,4 +1,4 @@
-import type { ActionFunction, LoaderFunctionArgs } from "@remix-run/node";
+import type { ActionFunction, LoaderFunctionArgs } from "react-router";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { updatePatreonData } from "~/modules/patreon";
 import {

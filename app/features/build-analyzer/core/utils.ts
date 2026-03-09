@@ -34,7 +34,16 @@ import { abilityValues as abilityValuesJson } from "./ability-values";
 import { weaponParams as rawWeaponParams } from "./weapon-params";
 
 export function weaponParams(): ParamsJson {
-	return rawWeaponParams as ParamsJson;
+	return rawWeaponParams as unknown as ParamsJson;
+}
+
+export function mainWeaponParams(weaponId: MainWeaponId): MainWeaponParams {
+	const params = rawWeaponParams as unknown as ParamsJson;
+	const baseId = weaponIdToBaseWeaponId(weaponId);
+	const baseStats = params.baseWeaponStats[baseId];
+	const kit = params.weaponKits[weaponId];
+
+	return { ...baseStats, ...kit } as MainWeaponParams;
 }
 
 export function buildToAbilityPoints(build: BuildAbilitiesTupleWithUnknown) {

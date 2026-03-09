@@ -88,7 +88,7 @@ function alreadyCommentedByUser({
 	);
 }
 
-export function playerAlreadySuggested({
+function playerAlreadySuggested({
 	suggestions,
 	suggested,
 	targetPlusTier,
@@ -129,6 +129,23 @@ function suggestionHasNoOtherComments({
 	throw new Error(`Invalid suggestion id: ${suggestionId}`);
 }
 
+interface CanEditSuggestionArgs {
+	suggestionId: Tables["PlusSuggestion"]["id"];
+	author: Pick<Tables["User"], "id">;
+	user?: Pick<Tables["User"], "id">;
+	suggestions: PlusSuggestionRepository.FindAllByMonthItem[];
+}
+export function canEditSuggestion(args: CanEditSuggestionArgs) {
+	const votingActive =
+		process.env.NODE_ENV === "test" ? false : isVotingActive();
+
+	return allTruthy([
+		!votingActive,
+		isFirstSuggestion(args),
+		args.author.id === args.user?.id,
+	]);
+}
+
 interface CanSuggestNewUserArgs {
 	user?: Pick<UserWithPlusTier, "id" | "plusTier">;
 	suggestions: PlusSuggestionRepository.FindAllByMonthItem[];
@@ -152,16 +169,6 @@ export function canSuggestNewUser({
 
 function isPlusServerMember(user?: Pick<UserWithPlusTier, "plusTier">) {
 	return Boolean(user?.plusTier);
-}
-
-export function playerAlreadyMember({
-	suggested,
-	targetPlusTier,
-}: {
-	suggested: Pick<UserWithPlusTier, "id" | "plusTier">;
-	targetPlusTier: NonNullable<UserWithPlusTier["plusTier"]>;
-}) {
-	return suggested.plusTier && suggested.plusTier <= targetPlusTier;
 }
 
 function hasUserSuggestedThisMonth({

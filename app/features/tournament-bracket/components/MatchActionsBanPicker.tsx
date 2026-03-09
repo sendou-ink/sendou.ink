@@ -1,7 +1,7 @@
-import { useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { useFetcher, useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
 import { ModeImage, StageImage } from "~/components/Image";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";

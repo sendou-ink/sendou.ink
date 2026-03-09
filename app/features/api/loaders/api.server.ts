@@ -1,24 +1,28 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ApiRepository from "../ApiRepository.server";
 import { checkUserHasApiAccess } from "../core/perms";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUser(request);
+export const loader = async () => {
+	const user = requireUser();
 
 	const hasApiAccess = await checkUserHasApiAccess(user);
 
 	if (!hasApiAccess) {
 		return {
 			hasAccess: false,
-			apiToken: null,
+			readToken: null,
+			writeToken: null,
 		};
 	}
 
-	const apiToken = await ApiRepository.findTokenByUserId(user.id);
+	const [readToken, writeToken] = await Promise.all([
+		ApiRepository.findTokenByUserId(user.id, "read"),
+		ApiRepository.findTokenByUserId(user.id, "write"),
+	]);
 
 	return {
 		hasAccess: true,
-		apiToken: apiToken?.token ?? null,
+		readToken: readToken?.token ?? null,
+		writeToken: writeToken?.token ?? null,
 	};
 };

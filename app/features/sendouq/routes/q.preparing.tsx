@@ -1,6 +1,6 @@
-import type { MetaFunction } from "@remix-run/node";
-import { useFetcher, useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";

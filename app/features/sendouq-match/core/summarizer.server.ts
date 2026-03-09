@@ -1,15 +1,21 @@
 import type { Tables } from "~/db/tables";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import type { SQMatch } from "~/features/sendouq/core/SendouQ.server";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { winnersArrayToWinner } from "../q-match-utils";
+
+type MatchForSummarizing = {
+	mapList: Array<{ mode: ModeShort; stageId: StageId }>;
+	groupAlpha: { id: number };
+	groupBravo: { id: number };
+};
 
 export function summarizeMaps({
 	match,
 	winners,
 	members,
 }: {
-	match: SQMatch;
+	match: MatchForSummarizing;
 	winners: ("ALPHA" | "BRAVO")[];
 	members: { id: number; groupId: number }[];
 }) {
@@ -59,7 +65,7 @@ export function summarizePlayerResults({
 	winners,
 	members,
 }: {
-	match: SQMatch;
+	match: MatchForSummarizing;
 	winners: ("ALPHA" | "BRAVO")[];
 	members: { id: number; groupId: number }[];
 }) {

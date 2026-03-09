@@ -1,6 +1,6 @@
-import { useFetcher } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { useFetcher } from "react-router";
 import { useCopyToClipboard } from "react-use";
 import { SendouButton } from "~/components/elements/Button";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";

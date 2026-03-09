@@ -1,4 +1,5 @@
-import type { MetaFunction } from "@remix-run/node";
+import * as React from "react";
+import type { MetaFunction } from "react-router";
 import {
 	Form,
 	Link,
@@ -6,8 +7,7 @@ import {
 	useLoaderData,
 	useNavigation,
 	useSearchParams,
-} from "@remix-run/react";
-import * as React from "react";
+} from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Catcher } from "~/components/Catcher";
 import { SendouButton } from "~/components/elements/Button";
@@ -112,7 +112,8 @@ function AdminActions() {
 
 	return (
 		<div className="stack lg">
-			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS && <Seed />}
+			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS ? <Seed /> : null}
+			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS ? <TestAdminNotification /> : null}
 			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS || isAdmin ? <Impersonate /> : null}
 
 			{isStaff ? <LinkPlayer /> : null}
@@ -455,6 +456,23 @@ function Seed() {
 					))}
 				</SendouSelect>
 			</div>
+		</fetcher.Form>
+	);
+}
+
+function TestAdminNotification() {
+	const fetcher = useFetcher();
+
+	return (
+		<fetcher.Form method="post">
+			<h2>Test Admin Notification</h2>
+			<SubmitButton
+				type="submit"
+				_action="TEST_ADMIN_NOTIFICATION"
+				state={fetcher.state}
+			>
+				Send Test
+			</SubmitButton>
 		</fetcher.Form>
 	);
 }

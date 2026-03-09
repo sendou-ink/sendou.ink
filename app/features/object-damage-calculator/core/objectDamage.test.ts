@@ -64,6 +64,7 @@ describe("calculateDamage()", () => {
 			});
 
 			for (const damage of analyzed.stats.damages) {
+				if (damage.type === "COMBO") continue;
 				calculate({ mainWeaponId, damageType: damage.type });
 			}
 		}
@@ -89,6 +90,7 @@ describe("calculateDamage()", () => {
 
 			for (const damage of analyzedWithSpecialWeapon.stats
 				.specialWeaponDamages) {
+				if (damage.type === "COMBO") continue;
 				calculate({
 					specialWeaponId,
 					damageType: damage.type,

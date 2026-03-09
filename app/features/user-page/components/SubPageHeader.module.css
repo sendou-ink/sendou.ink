@@ -1,0 +1,63 @@
+.subPageHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-4);
+	padding-block: var(--s-4);
+	flex-wrap: wrap;
+}
+
+.leftSection {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.actions {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+}
+
+.backButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	border-radius: 100%;
+	background-color: var(--bg);
+	border: 2px solid var(--bg-lightest);
+	color: var(--text);
+	transition: all 0.2s;
+}
+
+.backButton svg {
+	min-width: 30px;
+}
+
+.backButton:hover {
+	background-color: var(--bg-lightest);
+}
+
+.backIcon {
+	width: 24px;
+	height: 24px;
+}
+
+.avatar {
+	border-radius: 50%;
+}
+
+.userInfo {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	color: inherit;
+}
+
+.username {
+	font-weight: var(--semi-bold);
+	font-size: var(--fonts-sm);
+}

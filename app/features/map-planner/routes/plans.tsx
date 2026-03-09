@@ -1,5 +1,5 @@
-import type { MetaFunction } from "@remix-run/node";
 import { lazy } from "react";
+import type { MetaFunction } from "react-router";
 import { Placeholder } from "~/components/Placeholder";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { metaTags } from "~/utils/remix";

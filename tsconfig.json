@@ -1,6 +1,13 @@
 {
-	"include": ["./types/**/*.d.ts", "**/*.ts", "**/*.tsx"],
+	"include": [
+		"./types/**/*.d.ts",
+		"**/*.ts",
+		"**/*.tsx",
+		".react-router/types/**/*"
+	],
 	"compilerOptions": {
+		"types": ["@react-router/node", "vite/client"],
+		"rootDirs": [".", "./.react-router/types"],
 		"lib": ["DOM", "DOM.Iterable", "es2024"],
 		"module": "ESNext",
 		"isolatedModules": true,
@@ -25,8 +32,5 @@
 		"noFallthroughCasesInSwitch": true,
 		"useUnknownInCatchVariables": true,
 		"skipLibCheck": true
-	},
-	"ts-node": {
-		"transpileOnly": true
 	}
 }

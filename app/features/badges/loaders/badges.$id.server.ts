@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";

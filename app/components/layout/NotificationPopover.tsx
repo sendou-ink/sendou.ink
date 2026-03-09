@@ -1,8 +1,8 @@
-import { useLocation, useMatches, useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
+import { useLocation, useMatches, useRevalidator } from "react-router";
 import {
 	NotificationItem,
 	NotificationItemDivider,

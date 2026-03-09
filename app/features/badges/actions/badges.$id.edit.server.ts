@@ -1,7 +1,6 @@
-import type { ActionFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
-import { z } from "zod/v4";
-import { requireUser } from "~/features/auth/core/user.server";
+import type { ActionFunction } from "react-router";
+import { redirect } from "react-router";
+import { z } from "zod";
 import { notify } from "~/features/notifications/core/notify.server";
 import {
 	requirePermission,
@@ -21,13 +20,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 		schema: editBadgeActionSchema,
 	});
 	const badgeId = z.preprocess(actualNumber, z.number()).parse(params.id);
-	const user = await requireUser(request);
-
 	const badge = notFoundIfFalsy(await BadgeRepository.findById(badgeId));
 
 	switch (data._action) {
 		case "MANAGERS": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			const oldManagers = badge.managers;
 
@@ -54,7 +51,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "OWNERS": {
-			requirePermission(badge, "MANAGE", user);
+			requirePermission(badge, "MANAGE");
 
 			const oldOwners: number[] = badge.owners.flatMap((owner) =>
 				new Array(owner.count).fill(owner.id),

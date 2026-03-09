@@ -1,6 +1,6 @@
-import { Form, useLoaderData } from "@remix-run/react";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { Form, useLoaderData } from "react-router";
 import { Alert } from "~/components/Alert";
 import { LinkButton } from "~/components/elements/Button";
 import { FriendCodeInput } from "~/components/FriendCodeInput";
