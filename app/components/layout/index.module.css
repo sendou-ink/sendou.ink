@@ -10,7 +10,7 @@
 	align-items: center;
 	gap: var(--s-2);
 	border-bottom: 1.5px solid var(--color-border);
-	background-color: var(--color-bg);
+	background-color: var(--color-bg-nav);
 	font-weight: var(--weight-extra);
 	padding-inline: var(--s-4);
 	position: sticky;

@@ -1,5 +1,5 @@
 .sideNav {
-	background-color: var(--color-bg);
+	background-color: var(--color-bg-nav);
 	min-width: var(--layout-sidenav-width);
 	max-width: var(--layout-sidenav-width);
 	border-right: 1.5px solid var(--color-border);
