@@ -519,6 +519,7 @@ export function dayMonthYearRequired(args: DateTimeArgs) {
 		});
 }
 
+// xxx: should validate for duplicates too (if any duplicates -> error)
 export function checkboxGroup<V extends string>(
 	args: WithTypedTranslationKeys<
 		WithTypedItemLabels<

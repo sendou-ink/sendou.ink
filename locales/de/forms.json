@@ -106,7 +106,6 @@
 	"labels.vodYoutubeUrl": "YouTube-URL",
 	"labels.vodTitle": "Videotitel",
 	"labels.vodDate": "Videodatum",
-	"labels.vodType": "Typ",
 	"labels.vodTeamSize": "",
 	"labels.vodStartTimestamp": "Start-Zeitstempel",
 	"labels.vodMode": "Modus",
@@ -219,5 +218,7 @@
 	"labels.friendUser": "",
 	"errors.cannotFriendSelf": "",
 	"errors.alreadyFriends": "",
-	"errors.friendRequestExists": ""
+	"errors.friendRequestExists": "",
+	"labels.type": "",
+	"labels.visibility": ""
 }

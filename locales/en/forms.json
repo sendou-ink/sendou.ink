@@ -106,7 +106,6 @@
 	"labels.vodYoutubeUrl": "YouTube URL",
 	"labels.vodTitle": "Video title",
 	"labels.vodDate": "Video date",
-	"labels.vodType": "Type",
 	"labels.vodTeamSize": "Team size",
 	"labels.vodStartTimestamp": "Start timestamp",
 	"labels.vodMode": "Mode",
@@ -219,5 +218,7 @@
 	"labels.friendUser": "User",
 	"errors.cannotFriendSelf": "You can't send a friend request to yourself",
 	"errors.alreadyFriends": "You are already friends with this user",
-	"errors.friendRequestExists": "A friend request already exists between you and this user"
+	"errors.friendRequestExists": "A friend request already exists between you and this user",
+	"labels.type": "Type",
+	"labels.visibility": "Visibility"
 }

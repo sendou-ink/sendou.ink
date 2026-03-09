@@ -158,7 +158,7 @@ export const vodFormBaseSchema = z.object({
 		minMessage: "errors.dateTooOld",
 	}),
 	type: select({
-		label: "labels.vodType",
+		label: "labels.type",
 		items: videoMatchTypes.map((type) => ({
 			label: `vodTypes.${type}` as const,
 			value: type,

@@ -65,7 +65,7 @@ export const formFieldsShowcaseSchema = z.object({
 		],
 	}),
 	optionalSelect: selectOptional({
-		label: "labels.vodType",
+		label: "labels.type",
 		items: [
 			{ label: "vodTypes.TOURNAMENT", value: "TOURNAMENT" },
 			{ label: "vodTypes.CAST", value: "CAST" },

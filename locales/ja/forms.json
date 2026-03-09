@@ -106,7 +106,6 @@
 	"labels.vodYoutubeUrl": "YouTube URL",
 	"labels.vodTitle": "動画タイトル",
 	"labels.vodDate": "動画撮影/投稿日",
-	"labels.vodType": "タイプ",
 	"labels.vodTeamSize": "",
 	"labels.vodStartTimestamp": "開始タイムスタンプ",
 	"labels.vodMode": "ルール",
@@ -219,5 +218,7 @@
 	"labels.friendUser": "",
 	"errors.cannotFriendSelf": "",
 	"errors.alreadyFriends": "",
-	"errors.friendRequestExists": ""
+	"errors.friendRequestExists": "",
+	"labels.type": "",
+	"labels.visibility": ""
 }

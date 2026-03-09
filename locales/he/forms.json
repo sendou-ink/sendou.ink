@@ -106,7 +106,6 @@
 	"labels.vodYoutubeUrl": "YouTube URL",
 	"labels.vodTitle": "כותרת סרטון",
 	"labels.vodDate": "תאריך סרטון",
-	"labels.vodType": "סוג",
 	"labels.vodTeamSize": "",
 	"labels.vodStartTimestamp": "תחילת חותמת זמן",
 	"labels.vodMode": "מוד",
@@ -219,5 +218,7 @@
 	"labels.friendUser": "",
 	"errors.cannotFriendSelf": "",
 	"errors.alreadyFriends": "",
-	"errors.friendRequestExists": ""
+	"errors.friendRequestExists": "",
+	"labels.type": "",
+	"labels.visibility": ""
 }
