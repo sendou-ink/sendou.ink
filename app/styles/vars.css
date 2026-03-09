@@ -19,29 +19,29 @@ use oklch-gamut.ts to generate valid color palettes!
 html {
 	--_base-h: 268;
 	--_base-c-0: 0;
-	--_base-c-1: 0.02418640252723488;
-	--_base-c-2: 0.047119999999999995;
-	--_base-c-3: 0.1064;
-	--_base-c-4: 0.09804;
-	--_base-c-5: 0.10336000000000001;
-	--_base-c-6: 0.09804;
-	--_base-c-7: 0.05092;
+	--_base-c-1: 0.02357547860966049;
+	--_base-c-2: 0.031;
+	--_base-c-3: 0.06999999999999999;
+	--_base-c-4: 0.0645;
+	--_base-c-5: 0.068;
+	--_base-c-6: 0.0645;
+	--_base-c-7: 0.0335;
 
-	--_acc-h: 360;
-	--_acc-c-0: 0.0912;
-	--_acc-c-1: 0.21186558872491915;
+	--_acc-h: 253;
+	--_acc-c-0: 0.0801740871856143;
+	--_acc-c-1: 0.1603481743712286;
 	--_acc-c-2: 0.0816;
 	--_acc-c-3: 0.06;
-	--_acc-c-4: 0.2145290094090161;
-	--_acc-c-5: 0.1288211858120959;
+	--_acc-c-4: 0.16343179310913686;
+	--_acc-c-5: 0.09867579961306376;
 
-	--_second-h: 180;
-	--_second-c-0: 0.047012120400352186;
-	--_second-c-1: 0.09481890384235897;
+	--_second-h: 73;
+	--_second-c-0: 0.055379201356259726;
+	--_second-c-1: 0.11075840271251945;
 	--_second-c-2: 0.0816;
 	--_second-c-3: 0.06;
-	--_second-c-4: 0.0960108984048409;
-	--_second-c-5: 0.05765298510196014;
+	--_second-c-4: 0.11288837199545253;
+	--_second-c-5: 0.06815901705385813;
 
 	--_radius-box: 3;
 	--_radius-field: 2;
@@ -82,12 +82,12 @@ Any changes here NEED to be reflected in oklch-gamut.ts as well
 html.dark {
 	--color-base-0: oklch(100% var(--_base-c-0) var(--_base-h));
 	--color-base-1: oklch(95% var(--_base-c-1) var(--_base-h));
-	--color-base-2: oklch(81% var(--_base-c-2) var(--_base-h));
+	--color-base-2: oklch(90% var(--_base-c-2) var(--_base-h));
 	--color-base-3: oklch(64% var(--_base-c-3) var(--_base-h));
 	--color-base-4: oklch(46% var(--_base-c-4) var(--_base-h));
-	--color-base-5: oklch(34% var(--_base-c-5) var(--_base-h));
-	--color-base-6: oklch(27% var(--_base-c-6) var(--_base-h));
-	--color-base-7: oklch(21% var(--_base-c-7) var(--_base-h));
+	--color-base-5: oklch(32% var(--_base-c-5) var(--_base-h));
+	--color-base-6: oklch(25% var(--_base-c-6) var(--_base-h));
+	--color-base-7: oklch(17% var(--_base-c-7) var(--_base-h));
 
 	--color-accent-low: oklch(26% var(--_acc-c-0) var(--_acc-h));
 	--color-accent: oklch(52% var(--_acc-c-1) var(--_acc-h));
@@ -130,12 +130,12 @@ html.dark {
 }
 
 html.light {
-	--color-base-0: oklch(21% var(--_base-c-7) var(--_base-h));
-	--color-base-1: oklch(27% var(--_base-c-6) var(--_base-h));
-	--color-base-2: oklch(34% var(--_base-c-5) var(--_base-h));
+	--color-base-0: oklch(17% var(--_base-c-7) var(--_base-h));
+	--color-base-1: oklch(25% var(--_base-c-6) var(--_base-h));
+	--color-base-2: oklch(32% var(--_base-c-5) var(--_base-h));
 	--color-base-3: oklch(46% var(--_base-c-4) var(--_base-h));
 	--color-base-4: oklch(64% var(--_base-c-3) var(--_base-h));
-	--color-base-5: oklch(81% var(--_base-c-2) var(--_base-h));
+	--color-base-5: oklch(90% var(--_base-c-2) var(--_base-h));
 	--color-base-6: oklch(95% var(--_base-c-1) var(--_base-h));
 	--color-base-7: oklch(100% var(--_base-c-0) var(--_base-h));
 

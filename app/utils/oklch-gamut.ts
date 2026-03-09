@@ -229,12 +229,12 @@ function maximum_chroma_for_lh(L: number, h: number): number {
 const BASE_LIGHTNESS_VALUES = [
 	1.0, // --base-c-0
 	0.95, // --base-c-1
-	0.81, // --base-c-2
+	0.9, // --base-c-2
 	0.64, // --base-c-3
 	0.46, // --base-c-4
-	0.34, // --base-c-5
-	0.27, // --base-c-6
-	0.21, // --base-c-7
+	0.32, // --base-c-5
+	0.25, // --base-c-6
+	0.17, // --base-c-7
 ] as const;
 
 const ACCENT_LIGHTNESS_VALUES = [

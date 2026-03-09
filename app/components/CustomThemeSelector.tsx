@@ -171,8 +171,8 @@ function themeInputFromString(str: string): ThemeInput | null {
 
 const DEFAULT_THEME_INPUT: ThemeInput = {
 	baseHue: 268,
-	baseChroma: 0.076,
-	accentHue: 360,
+	baseChroma: 0.05,
+	accentHue: 253,
 	accentChroma: 0.24,
 	chatHue: null,
 	radiusBox: 3,
