@@ -92,7 +92,7 @@ async function fetchPatronData(urlToFetch: string) {
 
 		if (!response.ok) {
 			throw new Error(
-				`Patreon response not succesful. Status code was: ${response.status}`,
+				`Patreon response not successful. Status code was: ${response.status}`,
 			);
 		}
 
