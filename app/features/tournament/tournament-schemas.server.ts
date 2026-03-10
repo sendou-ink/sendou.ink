@@ -165,7 +165,9 @@ export const adminActionSchema = z.union([
 	}),
 	z.object({
 		_action: _action("UPDATE_IN_GAME_NAME"),
-		inGameNameText: z.string().max(USER.IN_GAME_NAME_TEXT_MAX_LENGTH),
+		inGameNameText: z
+			.string()
+			.refine((val) => [...val].length <= USER.IN_GAME_NAME_TEXT_MAX_LENGTH),
 		inGameNameDiscriminator: z
 			.string()
 			.refine((val) => /^[0-9a-z]{4,5}$/.test(val)),

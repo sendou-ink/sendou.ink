@@ -6,7 +6,7 @@
 	"types.TEAM_FOR_SCRIM": "Buscando compañeros para practicar",
 	"types.COACH_FOR_TEAM": "Ofrecer entrenamiento",
 	"post.lastActive": "hace",
-	"noPosts": "No posts matching the filter",
+	"noPosts": "Sin publicaciones que coincidan con el filtro",
 	"expiring": "La publicación caduca. ¿Sigues buscando?",
 	"addFilter": "",
 	"filters.Weapon": "Grupo de armas",
