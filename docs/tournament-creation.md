@@ -84,6 +84,31 @@ Especially for tournaments where verification is important. Players need to have
 
 All teams added by the tournament organizer manually. No open registration or subs list. In addition for invitational teams can add only 5 members before the tournament starts on their own (and 6 during it if autonomous subs are enabled).
 
+### Test
+
+Test tournaments are for dry-run testing. They don't appear on the calendar, don't send notifications to players, and won't show up in players' profiles or results. Test mode cannot be changed after creation and the tournament will never become a real tournament. The toggle is only available when creating a new tournament, not when editing.
+
+### Draft
+
+Draft mode hides the tournament from the calendar and front page. Only organizers can see and access it. This is useful for preparing a tournament privately before making it visible to participants.
+
+The tournament must be opened before any bracket can be started. To open a draft tournament, edit it on /calendar/new and disable the draft toggle.
+
+Unlike test mode, draft tournaments are fully functional once opened: they appear on the calendar, affect rankings/results, and behave like any other tournament.
+
+#### Draft vs Test
+
+| Feature | Draft | Test |
+|---------|-------|------|
+| Visible on calendar | No (until opened) | No (never) |
+| Accessible to organizers | Yes | Yes |
+| Accessible to anyone with link | No (until opened) | Yes |
+| Can be opened later | Yes | No |
+| Affects rankings/results | Yes (once opened) | No (never) |
+| Bracket can be started | Only after opening | Yes |
+| Editable after creation | Yes | No |
+| Purpose | Prepare tournament privately | Dry-run testing |
+
 ## Tournament maps
 
 With sendou.ink tournaments all maps are decided ahead of time.

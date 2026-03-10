@@ -43,7 +43,7 @@ import { possibleApValues } from "~/features/build-analyzer/core/utils";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import { metaTags } from "~/utils/remix";
 
-export const CURRENT_PATCH = "11.0";
+export const CURRENT_PATCH = "11.0.1";
 
 export const shouldRevalidate: ShouldRevalidateFunction = () => false;
 

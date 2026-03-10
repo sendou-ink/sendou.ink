@@ -465,7 +465,9 @@ function FancyStageBanner({
 							})}
 						</h4>
 					</div>
-					{data.match.startedAt && !data.matchIsOver ? (
+					{data.match.startedAt &&
+					!tournament.isLeagueDivision &&
+					!data.matchIsOver ? (
 						<DeadlineInfoPopover
 							startedAt={databaseTimestampToDate(data.match.startedAt)}
 							bestOf={data.match.bestOf}

@@ -53,7 +53,6 @@ export const action: ActionFunction = async ({ request }) => {
 		});
 	} else if (!isEditing) {
 		requireRole(
-			user,
 			isAddingTournament ? "TOURNAMENT_ADDER" : "CALENDAR_EVENT_ADDER",
 		);
 	}
@@ -96,6 +95,7 @@ export const action: ActionFunction = async ({ request }) => {
 		maxMembersPerTeam: data.maxMembersPerTeam ?? undefined,
 		isRanked: data.isRanked ?? undefined,
 		isTest: data.isTest ?? undefined,
+		isDraft: data.isDraft ?? undefined,
 		isInvitational: data.isInvitational ?? false,
 		enableNoScreenToggle: data.enableNoScreenToggle ?? undefined,
 		enableSubs: data.enableSubs ?? undefined,

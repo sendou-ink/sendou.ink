@@ -297,6 +297,8 @@ function MatchTimer({ match, bracket }: Pick<MatchProps, "match" | "bracket">) {
 		return () => clearInterval(interval);
 	}, []);
 
+	if (tournament.isLeagueDivision) return null;
+
 	if (!match.startedAt) return null;
 
 	const isOver =

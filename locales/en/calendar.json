@@ -76,5 +76,8 @@
 	"filter.orgsExcluded": "Hidden organizations",
 	"filter.authorIdsExcluded": "Authors excluded",
 	"filter.apply": "Apply",
-	"filter.applyAndDefault": "Apply & make default"
+	"filter.applyAndDefault": "Apply & make default",
+	"forms.draft": "Draft",
+	"forms.draftInfo": "Draft tournaments are hidden and only visible to organizers. The tournament must be opened (by disabling this toggle) before any bracket can be started.",
+	"forms.draftBracketStartBlocked": "Tournament is in draft mode. Edit the tournament and disable the draft toggle before starting the bracket."
 }

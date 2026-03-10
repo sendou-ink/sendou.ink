@@ -45,7 +45,6 @@ test.describe("Scrims", () => {
 		});
 		await page.getByLabel("Visibility").selectOption("2");
 
-		// Schema-defined field - use form helper
 		await form.fill("postText", "Test scrim");
 
 		await submit(page);
@@ -196,17 +195,17 @@ test.describe("Scrims", () => {
 		await selectUser({
 			labelName: "User 2",
 			page,
-			userName: "a",
+			userName: "5",
 		});
 		await selectUser({
 			labelName: "User 3",
 			page,
-			userName: "b",
+			userName: "6",
 		});
 		await selectUser({
 			labelName: "User 4",
 			page,
-			userName: "c",
+			userName: "7",
 		});
 
 		await page.getByLabel("Start time").selectOption({ index: 1 });

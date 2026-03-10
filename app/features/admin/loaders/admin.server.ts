@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { isImpersonating, requireUser } from "~/features/auth/core/user.server";
+import { isImpersonating } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { parseSafeSearchParams } from "~/utils/remix.server";
@@ -8,8 +8,7 @@ import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "../core/dev-controls";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
-		const user = requireUser();
-		requireRole(user, "STAFF");
+		requireRole("STAFF");
 	}
 
 	const parsedSearchParams = parseSafeSearchParams({

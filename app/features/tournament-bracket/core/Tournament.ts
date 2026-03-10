@@ -593,6 +593,11 @@ export class Tournament {
 		return this.ctx.settings.isTest ?? false;
 	}
 
+	/** Draft tournament that is hidden during preparation, must be opened before bracket start */
+	get isDraft() {
+		return this.ctx.settings.isDraft ?? false;
+	}
+
 	/** What seeding skill rating this tournament counts for */
 	get skillCountsFor() {
 		if (this.ranked) {

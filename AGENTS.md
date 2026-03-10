@@ -3,7 +3,7 @@
 - only rarely use comments, prefer descriptive variable and function names (leave existing comments as is)
 - if you encounter an existing TODO comment assume it is there for a reason and do not remove it
 - task is not considered completely until `npm run checks` passes
-- normal file structure has constants at the top immediately followed by the main function body of the file. Helpers are used to structure the code and they are at the bottom of the file (then hoisted to the top)
+- normal file structure has constants at the top immediately followed by the main function body of the file. Helpers are used to structure the code and they are at the bottom of the file (main implementation first, at the top of the file)
 - note: any formatting issue (such as tabs vs. spaces) can be resolved by running the `npm run biome:fix` command
 
 ## Commands
@@ -17,7 +17,7 @@
 
 ## Typescript
 
-- prefer early return over nesting if statements
+- prefer early return over nesting if statements (bouncer pattern)
 - do not use `any` type
 - for constants use ALL_CAPS
 - always use named exports
@@ -57,13 +57,6 @@
 - `db.sqlite3` is development database
 - `db-test.sqlite3` is the unit test database (should be blank sans migrations ran)
 - `db-prod.sqlite3` is a copy of the production environment db which can be freely experimented with
-
-## E2E testing
-
-- library used for E2E testing is Playwright
-- `page.goto` is forbidden, use the `navigate` function to do a page navigation
-- to submit a form you use the `submit` function
-- `page.waitForTimeout` should be avoided 
 
 ## Unit testing
 

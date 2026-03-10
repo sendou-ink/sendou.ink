@@ -46,11 +46,14 @@ export function findAllMemberOfByUserId(userId: number) {
 			"Team.id",
 			"Team.customUrl",
 			"Team.name",
+			"TeamMemberWithSecondary.role",
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"logoUrl",
 			),
 		])
 		.where("TeamMemberWithSecondary.userId", "=", userId)
+		.orderBy("TeamMemberWithSecondary.isMainTeam", "desc")
+		.orderBy("Team.name", "asc")
 		.execute();
 }
 

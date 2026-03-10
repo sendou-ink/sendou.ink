@@ -27,7 +27,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	let message: string;
 	switch (data._action) {
 		case "MIGRATE": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			try {
 				const errorMessage = await AdminRepository.migrate({
@@ -52,7 +52,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			}
 		}
 		case "REFRESH": {
-			requireRole(user, "ADMIN");
+			requireRole("ADMIN");
 
 			await AdminRepository.replacePlusTiers(
 				await plusTiersFromVotingAndLeaderboard(),
@@ -64,7 +64,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "FORCE_PATRON": {
-			requireRole(user, "ADMIN");
+			requireRole("ADMIN");
 
 			await AdminRepository.forcePatron({
 				id: data.user,
@@ -77,7 +77,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "CLEAN_UP": {
-			requireRole(user, "ADMIN");
+			requireRole("ADMIN");
 
 			// on purpose sync
 			AdminRepository.cleanUp();
@@ -86,7 +86,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "ARTIST": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			await AdminRepository.makeArtistByUserId(data.user);
 
@@ -94,7 +94,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "VIDEO_ADDER": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			await AdminRepository.makeVideoAdderByUserId(data.user);
 
@@ -102,7 +102,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "TOURNAMENT_ORGANIZER": {
-			requireRole(user, "ADMIN");
+			requireRole("ADMIN");
 
 			await AdminRepository.makeTournamentOrganizerByUserId(data.user);
 
@@ -110,7 +110,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "LINK_PLAYER": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			await AdminRepository.linkUserAndPlayer({
 				userId: data.user,
@@ -121,7 +121,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "BAN_USER": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			await AdminRepository.banUser({
 				bannedReason: data.reason ?? null,
@@ -136,7 +136,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UNBAN_USER": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			await AdminRepository.unbanUser({
 				userId: data.user,
@@ -149,7 +149,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UPDATE_FRIEND_CODE": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			await UserRepository.insertFriendCode({
 				friendCode: data.friendCode,
@@ -161,7 +161,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "API_ACCESS": {
-			requireRole(user, "ADMIN");
+			requireRole("ADMIN");
 
 			await AdminRepository.makeApiAccesserByUserId(data.user);
 
@@ -169,7 +169,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "TEST_ADMIN_NOTIFICATION": {
-			requireRole(user, "ADMIN");
+			requireRole("ADMIN");
 
 			await AdminNotifications.send("Test notification from admin panel");
 

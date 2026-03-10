@@ -259,6 +259,7 @@ function EventForm() {
 						setIsInvitational={setIsInvitational}
 					/>
 					{!eventToEdit ? <TestToggle /> : null}
+					<DraftToggle />
 				</>
 			) : null}
 			{data.isAddingTournament ? (
@@ -994,6 +995,31 @@ function TestToggle() {
 				Test tournaments don't appear on the calendar, don't send notifications
 				to players, and won't show up in players' profiles or results
 			</FormMessage>
+		</div>
+	);
+}
+
+function DraftToggle() {
+	const { t } = useTranslation(["calendar"]);
+	const baseEvent = useBaseEvent();
+	const [isDraft, setIsDraft] = React.useState(
+		baseEvent?.tournament?.ctx.settings.isDraft ?? false,
+	);
+	const id = React.useId();
+
+	return (
+		<div>
+			<label htmlFor={id} className="w-max">
+				{t("calendar:forms.draft")}
+			</label>
+			<SendouSwitch
+				name="isDraft"
+				id={id}
+				size="small"
+				isSelected={isDraft}
+				onChange={setIsDraft}
+			/>
+			<FormMessage type="info">{t("calendar:forms.draftInfo")}</FormMessage>
 		</div>
 	);
 }

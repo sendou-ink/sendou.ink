@@ -303,7 +303,10 @@ export function compareMatchToReportedScores({
 	newReporterGroupId,
 	previousReporterGroupId,
 }: {
-	match: SQMatch;
+	match: Pick<SQMatch, "reportedByUserId" | "mapList"> & {
+		groupAlpha: { id: number };
+		groupBravo: { id: number };
+	};
 	winners: ("ALPHA" | "BRAVO")[];
 	newReporterGroupId: number;
 	previousReporterGroupId?: number;

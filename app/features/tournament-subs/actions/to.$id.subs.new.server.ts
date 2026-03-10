@@ -1,5 +1,6 @@
 import { type ActionFunction, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import { requireNotBannedByOrganization } from "~/features/tournament/tournament-utils.server";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
@@ -26,6 +27,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 	});
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
+	await requireNotBannedByOrganization({ tournament, user });
 	errorToastIfFalsy(!tournament.everyBracketOver, "Tournament is over");
 	errorToastIfFalsy(
 		tournament.canAddNewSubPost,

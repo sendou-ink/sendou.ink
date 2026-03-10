@@ -3,12 +3,12 @@
 	"patreon+": "Supporter+ de sendou.ink en Patreon",
 	"xp": "Recibido por alcanzar {{xpText}}",
 	"tournament_one": "Recibido por ganar {{tournament}}",
-	"tournament_many": "",
+	"tournament_many": "Recibido por ganar {{tournament}} (×{{count}})",
 	"tournament_other": "Recibido por ganar {{tournament}} (×{{count}})",
 	"forYourEvent": "¿Insignia para tu evento?",
 	"managedBy": "Administrado por <0></0>",
-	"madeBy": "",
+	"madeBy": "creada por <0></0>",
 	"own.divider": "Insignias administradas",
 	"other.divider": "Otras insignias",
-	"noBadgesFound": ""
+	"noBadgesFound": "No se encontraron insignias que coincidan con tu búsqueda"
 }
