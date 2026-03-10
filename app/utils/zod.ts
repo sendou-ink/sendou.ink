@@ -245,7 +245,7 @@ export function nullLiteraltoNull(value: unknown): unknown {
 	return value;
 }
 
-export function undefinedToNull(value: unknown): unknown {
+function undefinedToNull(value: unknown): unknown {
 	if (value === undefined) return null;
 
 	return value;
@@ -257,14 +257,6 @@ export function actualNumber(value: unknown) {
 	const parsed = Number(value);
 
 	return Number.isNaN(parsed) ? undefined : parsed;
-}
-
-export function trimmedString(value: unknown) {
-	if (typeof value !== "string") {
-		throw new Error("Expected string value");
-	}
-
-	return value.trim();
 }
 
 export function date(value: unknown) {

@@ -415,13 +415,25 @@ function buildInitialValues<T extends z.ZodRawShape>(
 	const result: Record<string, unknown> = {};
 
 	for (const [key, fieldSchema] of Object.entries(schema.shape)) {
+		// @ts-expect-error Type instantiation is excessively deep with complex schemas
 		const formField = formRegistry.get(fieldSchema as z.ZodType) as
 			| FormField
 			| undefined;
 
 		const defaultValue = defaultValues?.[key as keyof typeof defaultValues];
 		if (defaultValue !== undefined) {
-			result[key] = defaultValue;
+			if (formField?.type === "array" && Array.isArray(defaultValue)) {
+				result[key] = (defaultValue as unknown[]).map((item) =>
+					typeof item === "object" && item !== null
+						? {
+								...(item as Record<string, unknown>),
+								_key: crypto.randomUUID(),
+							}
+						: item,
+				);
+			} else {
+				result[key] = defaultValue;
+			}
 		} else if (formField) {
 			result[key] = formField.initialValue;
 		}
