@@ -1,5 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { add, sub } from "date-fns";
+import { nanoid } from "nanoid";
 import * as R from "remeda";
 import { db, sql } from "~/db/sql";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
@@ -28,13 +29,10 @@ import {
 	summarizeMaps,
 	summarizePlayerResults,
 } from "~/features/sendouq-match/core/summarizer.server";
+import * as PlayerStatRepository from "~/features/sendouq-match/PlayerStatRepository.server";
 import { winnersArrayToWinner } from "~/features/sendouq-match/q-match-utils";
-import { addMapResults } from "~/features/sendouq-match/queries/addMapResults.server";
-import { addPlayerResults } from "~/features/sendouq-match/queries/addPlayerResults.server";
-import { addReportedWeapons } from "~/features/sendouq-match/queries/addReportedWeapons.server";
-import { addSkills } from "~/features/sendouq-match/queries/addSkills.server";
-import { reportScore } from "~/features/sendouq-match/queries/reportScore.server";
-import { setGroupAsInactive } from "~/features/sendouq-match/queries/setGroupAsInactive.server";
+import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
+import * as SkillRepository from "~/features/sendouq-match/SkillRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
@@ -86,6 +84,7 @@ import {
 	NZAP_TEST_AVATAR,
 	NZAP_TEST_DISCORD_ID,
 	NZAP_TEST_ID,
+	ORG_ADMIN_TEST_ID,
 } from "./constants";
 import placements from "./placements.json";
 
@@ -175,10 +174,13 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	nzapUser,
 	users,
 	fixAdminId,
+	makeArtists,
 	adminUserWeaponPool,
+	adminUserWidgets,
 	userProfiles,
 	userMapModePreferences,
 	userQWeaponPool,
+	seedingSkills,
 	lastMonthsVoting,
 	syncPlusTiers,
 	lastMonthSuggestions,
@@ -235,6 +237,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	variation === "NO_SCRIMS" ? undefined : scrimPostRequests,
 	associations,
 	notifications,
+	liveStreams,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -262,6 +265,8 @@ function wipeDB() {
 		"GroupMatchMap",
 		"GroupMatch",
 		"Group",
+		"TaggedArt",
+		"ArtTag",
 		"ArtUserMetadata",
 		"Art",
 		"UnvalidatedUserSubmittedImage",
@@ -289,12 +294,16 @@ function wipeDB() {
 		"UserFriendCode",
 		"NotificationUser",
 		"Notification",
+		"BanLog",
+		"ModNote",
 		"User",
 		"PlusSuggestion",
 		"PlusVote",
 		"TournamentBadgeOwner",
 		"BadgeManager",
 		"TournamentOrganization",
+		"SeedingSkill",
+		"LiveStream",
 	];
 
 	for (const table of tablesToDelete) {
@@ -343,6 +352,14 @@ function makeAdminTournamentOrganizer() {
 		.run();
 }
 
+function makeArtists() {
+	sql
+		.prepare(
+			`update "User" set "isArtist" = 1 where id in (${ADMIN_ID}, ${NZAP_TEST_ID})`,
+		)
+		.run();
+}
+
 function adminUserWeaponPool() {
 	for (const [i, weaponSplId] of [200, 1100, 2000, 4000].entries()) {
 		sql
@@ -354,6 +371,30 @@ function adminUserWeaponPool() {
 			)
 			.run({ userId: ADMIN_ID, weaponSplId, order: i + 1 });
 	}
+}
+
+async function adminUserWidgets() {
+	await UserRepository.upsertWidgets(ADMIN_ID, [
+		{
+			id: "bio",
+			settings: { bio: "" },
+		},
+		{
+			id: "badges-owned",
+		},
+		{
+			id: "teams",
+		},
+		{
+			id: "organizations",
+		},
+		{
+			id: "peak-sp",
+		},
+		{
+			id: "peak-xp",
+		},
+	]);
 }
 
 function nzapUser() {
@@ -539,6 +580,38 @@ async function userQWeaponPool() {
 			.set({ qWeaponPool: JSON.stringify(weaponPool) })
 			.where("User.id", "=", id)
 			.execute();
+	}
+}
+
+function seedingSkills() {
+	const users = sql.prepare('SELECT id FROM "User" LIMIT 500').all() as {
+		id: number;
+	}[];
+
+	for (const { id: userId } of users) {
+		if (faker.number.float() < 0.7) {
+			const mu = faker.number.float({ min: 22, max: 45 });
+			const sigma = faker.number.float({ min: 4, max: 8 });
+			const ordinal = mu - 3 * sigma;
+
+			sql
+				.prepare(
+					`INSERT INTO "SeedingSkill" ("userId", "type", "mu", "sigma", "ordinal") VALUES (?, 'RANKED', ?, ?, ?)`,
+				)
+				.run(userId, mu, sigma, ordinal);
+		}
+
+		if (faker.number.float() < 0.5) {
+			const mu = faker.number.float({ min: 22, max: 42 });
+			const sigma = faker.number.float({ min: 4, max: 8 });
+			const ordinal = mu - 3 * sigma;
+
+			sql
+				.prepare(
+					`INSERT INTO "SeedingSkill" ("userId", "type", "mu", "sigma", "ordinal") VALUES (?, 'UNRANKED', ?, ?, ?)`,
+				)
+				.run(userId, mu, sigma, ordinal);
+		}
 	}
 }
 
@@ -737,7 +810,10 @@ function patrons() {
 			.all() as any[]
 	)
 		.map((u) => u.id)
-		.filter((id) => id !== NZAP_TEST_ID && id !== ADMIN_ID) as number[];
+		.filter(
+			(id) =>
+				id !== NZAP_TEST_ID && id !== ADMIN_ID && id !== ORG_ADMIN_TEST_ID,
+		) as number[];
 
 	const givePatronStm = sql.prepare(
 		`update user set "patronTier" = $patronTier, "patronSince" = $patronSince where id = $id`,
@@ -755,6 +831,12 @@ function patrons() {
 		patronSince: dateToDatabaseTimestamp(faker.date.past()),
 		patronTier: 2,
 	});
+
+	// Give ORG_ADMIN_TEST_ID API access without patron status
+	// so they don't get TOURNAMENT_ADDER role
+	sql
+		.prepare(`update user set "isApiAccesser" = 1 where id = ?`)
+		.run(ORG_ADMIN_TEST_ID);
 }
 
 function userIdsInRandomOrder(specialLast = false) {
@@ -1343,13 +1425,15 @@ function calendarEventWithToToolsTeams(
         "name",
         "createdAt",
         "tournamentId",
-        "inviteCode"
+        "inviteCode",
+        "seed"
       ) values (
         $id,
         $name,
         $createdAt,
         $tournamentId,
-        $inviteCode
+        $inviteCode,
+        $seed
       )
       `,
 			)
@@ -1359,6 +1443,7 @@ function calendarEventWithToToolsTeams(
 				createdAt: dateToDatabaseTimestamp(new Date()),
 				tournamentId,
 				inviteCode: shortNanoid(),
+				seed: id,
 			});
 
 		// in PICNIC & PP Chimera is not checked in + in LUTI no check-ins at all
@@ -2277,28 +2362,28 @@ async function playedMatches() {
 				groupId: match.bravoGroupId,
 			})),
 		];
-		sql.transaction(() => {
-			reportScore({
-				matchId: match.id,
-				reportedByUserId:
-					faker.number.float(1) > 0.5
-						? groupAlphaMembers[0]
-						: groupBravoMembers[0],
-				winners,
-			});
-			addSkills({
-				skills: newSkills,
-				differences,
-				groupMatchId: match.id,
-				oldMatchMemento: { users: {}, groups: {}, pools: [] },
-			});
-			setGroupAsInactive(groupAlpha);
-			setGroupAsInactive(groupBravo);
-			addMapResults(summarizeMaps({ match: finishedMatch, members, winners }));
-			addPlayerResults(
-				summarizePlayerResults({ match: finishedMatch, members, winners }),
-			);
-		})();
+		await SQMatchRepository.updateScore({
+			matchId: match.id,
+			reportedByUserId:
+				faker.number.float(1) > 0.5
+					? groupAlphaMembers[0]
+					: groupBravoMembers[0],
+			winners,
+		});
+		await SkillRepository.createMatchSkills({
+			skills: newSkills,
+			differences,
+			groupMatchId: match.id,
+			oldMatchMemento: { users: {}, groups: {}, pools: [] },
+		});
+		await SQGroupRepository.setAsInactive(groupAlpha);
+		await SQGroupRepository.setAsInactive(groupBravo);
+		await PlayerStatRepository.upsertMapResults(
+			summarizeMaps({ match: finishedMatch, members, winners }),
+		);
+		await PlayerStatRepository.upsertPlayerResults(
+			summarizePlayerResults({ match: finishedMatch, members, winners }),
+		);
 
 		// -> add weapons for 90% of matches
 		if (faker.number.float(1) > 0.9) continue;
@@ -2307,7 +2392,7 @@ async function playedMatches() {
 			finishedMatch.mapList.map((m) => ({ map: m, user: u })),
 		);
 
-		addReportedWeapons(
+		await ReportedWeaponRepository.createMany(
 			mapsWithUsers.map((mu) => {
 				const weapon = () => {
 					if (faker.number.float(1) < 0.9) return defaultWeapons[mu.user];
@@ -2686,12 +2771,93 @@ async function organization() {
 				roleDisplayName: null,
 			},
 			{
-				userId: 3,
+				userId: ORG_ADMIN_TEST_ID,
 				role: "ADMIN",
 				roleDisplayName: null,
 			},
 		],
-		series: [],
+		series: [
+			{
+				name: "PICNIC",
+				description: "PICNIC tournament series",
+				showLeaderboard: false,
+			},
+		],
 		badges: [],
 	});
+
+	sql
+		.prepare(
+			`UPDATE "TournamentOrganizationSeries"
+			SET "tierHistory" = '[3, 4, 3]'
+			WHERE "organizationId" = 1 AND "name" = 'PICNIC'`,
+		)
+		.run();
+}
+
+function liveStreams() {
+	const userIds = userIdsInAscendingOrderById();
+
+	// Add deterministic streams for E2E testing
+	// Users 6 and 7 are in ITZ tournament team 102
+	const deterministicStreams = [
+		{ userId: 6, viewerCount: 150, twitch: "test_player_stream_1" },
+		{ userId: 7, viewerCount: 75, twitch: "test_player_stream_2" },
+		// Cast-only stream (user 100 is not in ITZ tournament teams)
+		{ userId: 100, viewerCount: 500, twitch: "test_cast_stream" },
+	];
+
+	for (const stream of deterministicStreams) {
+		sql
+			.prepare(
+				`
+			insert into "LiveStream" ("userId", "viewerCount", "thumbnailUrl", "twitch")
+			values ($userId, $viewerCount, $thumbnailUrl, $twitch)
+			`,
+			)
+			.run({
+				userId: stream.userId,
+				viewerCount: stream.viewerCount,
+				thumbnailUrl: "https://picsum.photos/320/180",
+				twitch: stream.twitch,
+			});
+	}
+
+	const streamingUserIds = [
+		...userIds.slice(3, 20),
+		...userIds.slice(40, 50),
+		...userIds.slice(100, 110),
+	].filter((id) => !deterministicStreams.some((s) => s.userId === id));
+
+	const shuffledStreamers = faker.helpers.shuffle(streamingUserIds);
+	const selectedStreamers = shuffledStreamers.slice(0, 17);
+
+	for (const userId of selectedStreamers) {
+		const viewerCount = faker.helpers.weightedArrayElement([
+			{ value: faker.number.int({ min: 5, max: 30 }), weight: 5 },
+			{ value: faker.number.int({ min: 31, max: 100 }), weight: 3 },
+			{ value: faker.number.int({ min: 101, max: 500 }), weight: 2 },
+			{ value: faker.number.int({ min: 501, max: 2000 }), weight: 1 },
+		]);
+
+		const thumbnailUrl = faker.image.urlPicsumPhotos({
+			width: 320,
+			height: 180,
+		});
+
+		const twitch = `fake_${nanoid()}`.toLowerCase();
+		sql
+			.prepare(
+				`
+			insert into "LiveStream" ("userId", "viewerCount", "thumbnailUrl", "twitch")
+			values ($userId, $viewerCount, $thumbnailUrl, $twitch)
+			`,
+			)
+			.run({
+				userId,
+				viewerCount,
+				thumbnailUrl,
+				twitch,
+			});
+	}
 }

@@ -1,14 +1,17 @@
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
+import { userEditProfileBaseSchema } from "~/features/user-page/user-page-schemas";
 import {
+	expect,
 	impersonate,
 	isNotVisible,
 	navigate,
 	seed,
-	selectWeapon,
 	submit,
+	test,
 } from "~/utils/playwright";
+import { createFormHelpers } from "~/utils/playwright-form";
 import { userEditProfilePage, userPage } from "~/utils/urls";
 
 const goToEditPage = (page: Page) =>
@@ -93,23 +96,20 @@ test.describe("User page", () => {
 		await page.getByTestId("flag-FI").isVisible();
 		await goToEditPage(page);
 
-		await page
-			.getByRole("textbox", { name: "In game name", exact: true })
-			.fill("Lean");
-		await page
-			.getByRole("textbox", { name: "In game name discriminator" })
-			.fill("1234");
+		const form = createFormHelpers(page, userEditProfileBaseSchema);
+
+		await form.fill("inGameName", "Lean#1234");
 		await page.getByLabel("R-stick sens").selectOption("0");
 		await page.getByLabel("Motion sens").selectOption("-50");
 
 		await page.getByLabel("Country").click();
-		await page.getByPlaceholder("Search countries").fill("Sweden");
+		await page.getByRole("searchbox", { name: "Search" }).fill("Sweden");
 		await page.getByRole("option", { name: "Sweden" }).click();
 
-		await page.getByLabel("Bio").fill("My awesome bio");
-		await submitEditForm(page);
+		await form.fill("bio", "My awesome bio");
+		await form.submit();
 
-		await page.getByTestId("flag-SV").isVisible();
+		await page.getByTestId("flag-SE").isVisible();
 		await page.getByText("My awesome bio").isVisible();
 		await page.getByText("Lean#1234").isVisible();
 		await page.getByText("Stick 0 / Motion -5").isVisible();
@@ -178,11 +178,16 @@ test.describe("User page", () => {
 		}
 
 		await goToEditPage(page);
-		await selectWeapon({ name: "Range Blaster", page });
-		await page.getByText("Max weapon count reached").isVisible();
-		await page.getByTestId("delete-weapon-1100").click();
 
-		await submitEditForm(page);
+		const form = createFormHelpers(page, userEditProfileBaseSchema);
+
+		await form.selectWeapons("weapons", ["Range Blaster"]);
+		await page
+			.getByRole("button", { name: /Inkbrush/ })
+			.getByRole("button", { name: "Delete" })
+			.click();
+
+		await form.submit();
 
 		for (const [i, id] of [200, 2000, 4000, 220].entries()) {
 			await expect(page.getByTestId(`${id}-${i + 1}`)).toBeVisible();

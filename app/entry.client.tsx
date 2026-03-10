@@ -4,6 +4,15 @@ import { I18nextProvider } from "react-i18next";
 import { HydratedRouter } from "react-router/dom";
 import { i18nLoader } from "./modules/i18n/loader";
 import { logger } from "./utils/logger";
+import { getSessionId } from "./utils/session-id";
+
+const originalFetch = window.fetch;
+window.fetch = (input, init) => {
+	const sessionId = getSessionId();
+	const headers = new Headers(init?.headers);
+	headers.set("Sendou-Session-Id", sessionId);
+	return originalFetch(input, { ...init, headers });
+};
 
 if ("serviceWorker" in navigator) {
 	window.addEventListener("load", () => {

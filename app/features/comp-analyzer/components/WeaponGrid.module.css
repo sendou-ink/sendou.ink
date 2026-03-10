@@ -1,0 +1,104 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.collapseToggle {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	background-color: transparent;
+	border: none;
+	cursor: pointer;
+	font-weight: var(--semi-bold);
+	color: var(--text);
+}
+
+.collapseArrow {
+	transition: transform 0.2s;
+}
+
+.collapseArrowCollapsed {
+	transform: rotate(-90deg);
+}
+
+.categorizationToggle {
+	display: flex;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+}
+
+.weaponGrid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: var(--s-4);
+}
+
+@media (max-width: 900px) {
+	.weaponGrid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (max-width: 600px) {
+	.weaponGrid {
+		grid-template-columns: 1fr;
+	}
+}
+
+.categorySection {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.categoryHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-bottom: var(--s-1);
+	border-bottom: 3px solid var(--border);
+}
+
+.categoryName {
+	font-weight: var(--semi-bold);
+	font-size: var(--fonts-sm);
+	text-transform: capitalize;
+}
+
+.categoryWeapons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1);
+}
+
+.weaponButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--s-1);
+	background-color: var(--bg-lighter);
+	border: 2px solid transparent;
+	border-radius: var(--rounded);
+	cursor: pointer;
+	transition: border-color 0.1s;
+}
+
+.weaponButton:hover {
+	border-color: var(--theme);
+}
+
+.weaponButton:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.weaponButton:disabled:hover {
+	border-color: transparent;
+}
+
+.weaponButtonSelected {
+	background-color: var(--bg-lightest);
+	border: 2px solid var(--border);
+}

@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { useFetcher } from "react-router";
 import { InfoPopover } from "~/components/InfoPopover";
 import { LockIcon } from "~/components/icons/Lock";

@@ -12,7 +12,7 @@ export function queryCurrentUserRating({
 	userId: number;
 	season: number;
 }) {
-	const skill = findCurrentSkillByUserId({ userId, season: season ?? null });
+	const skill = findCurrentSkillByUserId({ userId, season });
 
 	if (!skill) {
 		return { rating: rating(), matchesCount: 0 };

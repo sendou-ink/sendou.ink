@@ -1,11 +1,7 @@
 import type { PlaywrightTestConfig } from "@playwright/test";
 import { devices } from "@playwright/test";
 
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// require('dotenv').config();
+const WORKER_COUNT = Number(process.env.E2E_WORKERS) || 4;
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -25,16 +21,19 @@ const config: PlaywrightTestConfig = {
 	fullyParallel: true,
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
 	forbidOnly: !!process.env.CI,
-	retries: 2,
-	/* Opt out of parallel tests. */
-	workers: 1,
+	retries: 0,
+	/* Number of parallel workers */
+	workers: WORKER_COUNT,
 	/* Reporter to use. See https://playwright.dev/docs/test-reporters */
 	reporter: "list",
+	/* Global setup and teardown for managing multiple server instances */
+	globalSetup: "./e2e/global-setup.ts",
+	globalTeardown: "./e2e/global-teardown.ts",
 	/* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
 	use: {
 		/* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
 		actionTimeout: 0,
-		/* Base URL to use in actions like `await page.goto('/')`. */
+		/* Base URL will be set per-worker by the fixture */
 		baseURL: "http://localhost:6173",
 
 		trace: "retain-on-failure",
@@ -97,24 +96,6 @@ const config: PlaywrightTestConfig = {
 	/* Folder for test artifacts such as screenshots, videos, traces, etc. */
 	// outputDir: 'test-results/',
 
-	/* Run your local dev server before starting the tests */
-	webServer: {
-		// uncomment to see server logs output
-		// stdout: "pipe",
-		env: {
-			DB_PATH: "db-test-e2e.sqlite3",
-			DISCORD_CLIENT_ID: "123",
-			DISCORD_CLIENT_SECRET: "secret",
-			SESSION_SECRET: "secret",
-			PORT: "6173",
-			VITE_SITE_DOMAIN: "http://localhost:6173",
-			VITE_E2E_TEST_RUN: "true",
-		},
-		command: "npm run build && npm start",
-		port: 6173,
-		reuseExistingServer: false,
-		timeout: 60_000 * 2, // 2 minutes
-	},
 	build: {
 		external: ["**/*.json"],
 	},

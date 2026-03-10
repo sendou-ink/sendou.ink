@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { getUser } from "~/features/auth/core/user.server";
+import { calculateTentativeTier } from "~/features/tournament/core/tiering";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseSafeSearchParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
@@ -12,7 +13,7 @@ import { organizationFromParams } from "../tournament-organization-utils.server"
 export type OrganizationPageLoaderData = SerializeFrom<typeof loader>;
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
-	const user = await getUser(request);
+	const user = getUser();
 	const {
 		month = new Date().getMonth(),
 		year = new Date().getFullYear(),
@@ -52,6 +53,9 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 			description: series.description,
 			page,
 			leaderboard: series.showLeaderboard ? leaderboard : null,
+			tentativeTier: series.tierHistory
+				? calculateTentativeTier(series.tierHistory)
+				: null,
 			...rest,
 		};
 	};

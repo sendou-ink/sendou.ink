@@ -9,8 +9,8 @@ import {
 import * as Scrim from "../core/Scrim";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const user = await requireUser(request);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const user = requireUser();
 
 	const post = notFoundIfFalsy(
 		await ScrimPostRepository.findById(Number(params.id)),

@@ -41,6 +41,7 @@
 	"forms.info.name": "Note: Hvis du ændrer dit holds navn, så kan andre hold overtage det tidligere holdnavn og URL-adresse.",
 	"forms.info.tag": "",
 	"forms.errors.duplicateName": "Holdnavnet er taget af et andet hold",
+	"forms.errors.noOnlySpecialCharacters": "",
 	"roster.teamFull": "Holdet kan ikke få flere medlemmer",
 	"roster.inviteLink.header": "Del invitationslinket for at tilføje medlemmer",
 	"roster.members.header": "Medlemmer",

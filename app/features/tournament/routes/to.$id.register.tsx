@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import Compressor from "compressorjs";
-import Markdown from "markdown-to-jsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Form, Link, useFetcher, useLoaderData } from "react-router";
@@ -29,8 +28,10 @@ import { UserIcon } from "~/components/icons/User";
 import { Label } from "~/components/Label";
 import { containerClassName } from "~/components/Main";
 import { MapPoolStages } from "~/components/MapPoolSelector";
+import { Markdown } from "~/components/Markdown";
 import { Section } from "~/components/Section";
 import { SubmitButton } from "~/components/SubmitButton";
+import { TierPill } from "~/components/TierPill";
 import TimePopover from "~/components/TimePopover";
 import { useUser } from "~/features/auth/core/user";
 import { imgTypeToDimensions } from "~/features/img-upload/upload-constants";
@@ -72,8 +73,6 @@ export default function TournamentRegisterPage() {
 	const isMounted = useIsMounted();
 	const tournament = useTournament();
 
-	const startsAtEvenHour = tournament.ctx.startTime.getMinutes() === 0;
-
 	return (
 		<div className={clsx("stack lg", containerClassName("normal"))}>
 			<div className="tournament__logo-container">
@@ -96,7 +95,7 @@ export default function TournamentRegisterPage() {
 								className="stack horizontal sm items-center text-xs text-main-forced"
 							>
 								<Avatar
-									url={tournament.ctx.organization.avatarUrl ?? undefined}
+									url={tournament.ctx.organization.logoUrl ?? undefined}
 									size="xxs"
 								/>
 								{tournament.ctx.organization.name}
@@ -119,7 +118,7 @@ export default function TournamentRegisterPage() {
 									<TimePopover
 										time={tournament.ctx.startTime}
 										options={{
-											minute: startsAtEvenHour ? undefined : "numeric",
+											minute: "numeric",
 											hour: "numeric",
 											day: "numeric",
 											month: "long",
@@ -139,6 +138,11 @@ export default function TournamentRegisterPage() {
 								Unranked
 							</div>
 						)}
+						{tournament.ctx.tier ? (
+							<TierPill tier={tournament.ctx.tier} />
+						) : tournament.ctx.tentativeTier && !tournament.hasStarted ? (
+							<TierPill tier={tournament.ctx.tentativeTier} isTentative />
+						) : null}
 						<div className="tournament__badge tournament__badge__modes">
 							{tournament.modesIncluded.map((mode) => (
 								<ModeImage key={mode} mode={mode} size={16} />
@@ -217,9 +221,7 @@ function TournamentRegisterInfoTabs() {
 						) : null}
 
 						<div className="tournament__info__description">
-							<Markdown options={{ wrapper: React.Fragment }}>
-								{tournament.ctx.description ?? ""}
-							</Markdown>
+							<Markdown>{tournament.ctx.description ?? ""}</Markdown>
 						</div>
 						<TOPickedMapPoolInfo />
 						<TiebreakerMapPoolInfo />
@@ -229,9 +231,7 @@ function TournamentRegisterInfoTabs() {
 				{tournament.ctx.rules ? (
 					<SendouTabPanel id="rules">
 						<div className="tournament__info__description">
-							<Markdown options={{ wrapper: React.Fragment }}>
-								{tournament.ctx.rules ?? ""}
-							</Markdown>
+							<Markdown>{tournament.ctx.rules ?? ""}</Markdown>
 						</div>
 					</SendouTabPanel>
 				) : null}

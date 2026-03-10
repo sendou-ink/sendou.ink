@@ -5,8 +5,9 @@ import { Pagination } from "~/components/Pagination";
 import { useUser } from "~/features/auth/core/user";
 import { UserResultsTable } from "~/features/user-page/components/UserResultsTable";
 import invariant from "~/utils/invariant";
-import { userResultsEditHighlightsPage } from "~/utils/urls";
+import { userPage, userResultsEditHighlightsPage } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
+import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.results.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 export { loader };
@@ -32,6 +33,10 @@ export default function UserResultsPage() {
 
 	return (
 		<div className="stack lg">
+			<SubPageHeader
+				user={layoutData.user}
+				backTo={userPage(layoutData.user)}
+			/>
 			<div className="stack horizontal justify-between items-center">
 				<h2 className="text-lg">
 					{showAll || !data.hasHighlightedResults

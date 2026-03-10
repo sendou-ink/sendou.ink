@@ -14,6 +14,7 @@ import {
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { _action, actualNumber, friendCode } from "~/utils/zod";
+import * as AdminNotifications from "../core/admin-notifications.server";
 import { plusTiersFromVotingAndLeaderboard } from "../core/plus-tier.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -21,12 +22,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		request,
 		schema: adminActionSchema,
 	});
-	const user = await requireUser(request);
+	const user = requireUser();
 
 	let message: string;
 	switch (data._action) {
 		case "MIGRATE": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			try {
 				const errorMessage = await AdminRepository.migrate({
@@ -51,7 +52,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			}
 		}
 		case "REFRESH": {
-			requireRole(user, "ADMIN");
+			requireRole("ADMIN");
 
 			await AdminRepository.replacePlusTiers(
 				await plusTiersFromVotingAndLeaderboard(),
@@ -63,7 +64,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "FORCE_PATRON": {
-			requireRole(user, "ADMIN");
+			requireRole("ADMIN");
 
 			await AdminRepository.forcePatron({
 				id: data.user,
@@ -76,7 +77,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "CLEAN_UP": {
-			requireRole(user, "ADMIN");
+			requireRole("ADMIN");
 
 			// on purpose sync
 			AdminRepository.cleanUp();
@@ -85,7 +86,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "ARTIST": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			await AdminRepository.makeArtistByUserId(data.user);
 
@@ -93,7 +94,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "VIDEO_ADDER": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			await AdminRepository.makeVideoAdderByUserId(data.user);
 
@@ -101,7 +102,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "TOURNAMENT_ORGANIZER": {
-			requireRole(user, "ADMIN");
+			requireRole("ADMIN");
 
 			await AdminRepository.makeTournamentOrganizerByUserId(data.user);
 
@@ -109,7 +110,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "LINK_PLAYER": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			await AdminRepository.linkUserAndPlayer({
 				userId: data.user,
@@ -120,7 +121,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "BAN_USER": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			await AdminRepository.banUser({
 				bannedReason: data.reason ?? null,
@@ -135,7 +136,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UNBAN_USER": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			await AdminRepository.unbanUser({
 				userId: data.user,
@@ -148,7 +149,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UPDATE_FRIEND_CODE": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			await UserRepository.insertFriendCode({
 				friendCode: data.friendCode,
@@ -160,11 +161,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "API_ACCESS": {
-			requireRole(user, "ADMIN");
+			requireRole("ADMIN");
 
 			await AdminRepository.makeApiAccesserByUserId(data.user);
 
 			message = "API access granted";
+			break;
+		}
+		case "TEST_ADMIN_NOTIFICATION": {
+			requireRole("ADMIN");
+
+			await AdminNotifications.send("Test notification from admin panel");
+
+			message = "Test notification sent";
 			break;
 		}
 		default: {
@@ -228,5 +237,8 @@ export const adminActionSchema = z.union([
 	z.object({
 		_action: _action("API_ACCESS"),
 		user: z.preprocess(actualNumber, z.number().positive()),
+	}),
+	z.object({
+		_action: _action("TEST_ADMIN_NOTIFICATION"),
 	}),
 ]);

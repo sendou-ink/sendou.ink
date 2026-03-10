@@ -1,10 +1,10 @@
 import type { Transaction } from "kysely";
 import { db, sql } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
+import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-import { syncXPBadges } from "../badges/queries/syncXPBadges.server";
 
 const removeOldLikesStm = sql.prepare(/*sql*/ `
   delete from 
@@ -239,7 +239,7 @@ export async function linkUserAndPlayer({
 		.where("SplatoonPlayer.id", "=", playerId)
 		.execute();
 
-	syncXPBadges();
+	await BadgeRepository.syncXPBadges();
 	await BuildRepository.recalculateAllTop500();
 }
 

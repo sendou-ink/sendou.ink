@@ -12,7 +12,7 @@ import { manageRosterSchema, teamParamsSchema } from "../team-schemas.server";
 import { isTeamManager } from "../team-utils";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 
 	const { customUrl } = teamParamsSchema.parse(params);
 	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));

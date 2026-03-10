@@ -304,6 +304,7 @@ export function PlacementsTable({
 									allMatchesFinished={allMatchesFinished}
 									canEditDestination={canEditDestination}
 									tournamentTeamId={s.team.id}
+									droppedOut={Boolean(s.team.droppedOut)}
 								/>
 							</tr>
 							{!eliminatedRowRendered &&
@@ -333,6 +334,7 @@ function EditableDestination({
 	allMatchesFinished,
 	canEditDestination,
 	tournamentTeamId,
+	droppedOut,
 }: {
 	source: Bracket;
 	destination?: Bracket;
@@ -341,6 +343,7 @@ function EditableDestination({
 	allMatchesFinished: boolean;
 	canEditDestination: boolean;
 	tournamentTeamId: number;
+	droppedOut: boolean;
 }) {
 	const fetcher = useFetcher<any>();
 	const [editingDestination, setEditingDestination] = React.useState(false);
@@ -405,9 +408,11 @@ function EditableDestination({
 
 	return (
 		<>
-			{allMatchesFinished &&
-			overridenDestination &&
-			overridenDestination.idx !== destination?.idx ? (
+			{droppedOut ? (
+				<td />
+			) : allMatchesFinished &&
+				overridenDestination &&
+				overridenDestination.idx !== destination?.idx ? (
 				<td className="text-theme font-bold">
 					<span>→ {overridenDestination.name}</span>
 				</td>
@@ -422,7 +427,7 @@ function EditableDestination({
 			) : (
 				<td />
 			)}
-			{canEditDestination ? (
+			{canEditDestination && !droppedOut ? (
 				<td>
 					<SendouButton
 						variant="minimal"
@@ -431,6 +436,8 @@ function EditableDestination({
 						onPress={() => setEditingDestination(true)}
 					/>
 				</td>
+			) : canEditDestination ? (
+				<td />
 			) : null}
 		</>
 	);

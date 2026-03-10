@@ -157,3 +157,12 @@ export function deletePostsByTeamId(teamId: number, trx?: Transaction<DB>) {
 		.where("teamId", "=", teamId)
 		.execute();
 }
+
+export async function findByAuthorUserId(authorId: number) {
+	return db
+		.selectFrom("LFGPost")
+		.select(["id", "type"])
+		.where("authorId", "=", authorId)
+		.orderBy("updatedAt", "desc")
+		.execute();
+}

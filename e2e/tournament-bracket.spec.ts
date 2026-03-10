@@ -1,7 +1,9 @@
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
+import { updateNoScreenSchema } from "~/features/settings/settings-schemas";
 import {
+	expect,
 	impersonate,
 	isNotVisible,
 	navigate,
@@ -9,7 +11,9 @@ import {
 	selectUser,
 	startBracket,
 	submit,
+	test,
 } from "~/utils/playwright";
+import { createFormHelpers } from "~/utils/playwright-form";
 import {
 	NOTIFICATIONS_URL,
 	SETTINGS_PAGE,
@@ -17,6 +21,7 @@ import {
 	tournamentBracketsPage,
 	tournamentMatchPage,
 	tournamentPage,
+	tournamentTeamsPage,
 	userResultsPage,
 } from "~/utils/urls";
 
@@ -30,13 +35,11 @@ const navigateToMatch = async (page: Page, matchId: number) => {
 const reportResult = async ({
 	page,
 	amountOfMapsToReport,
-	sidesWithMoreThanFourPlayers = ["last"],
 	winner = 1,
 	points,
 }: {
 	page: Page;
 	amountOfMapsToReport: 1 | 2 | 3 | 4;
-	sidesWithMoreThanFourPlayers?: ("first" | "last")[];
 	winner?: 1 | 2;
 	points?: [number, number];
 }) => {
@@ -50,9 +53,12 @@ const reportResult = async ({
 
 	await page.getByTestId("actions-tab").click();
 
+	// Auto-detect and set rosters for teams with 5+ players
+	// Check if first team needs roster selection (checkbox exists and is not disabled)
+	const firstTeamCheckbox = page.getByTestId("player-checkbox-0").first();
 	if (
-		sidesWithMoreThanFourPlayers.includes("first") &&
-		!(await page.getByTestId("player-checkbox-0").first().isDisabled())
+		(await firstTeamCheckbox.count()) > 0 &&
+		!(await firstTeamCheckbox.isDisabled())
 	) {
 		await page.getByTestId("player-checkbox-0").first().click();
 		await page.getByTestId("player-checkbox-1").first().click();
@@ -64,9 +70,12 @@ const reportResult = async ({
 		// update went through
 		await expect(page.getByTestId("player-checkbox-0").first()).toBeDisabled();
 	}
+
+	// Check if second team needs roster selection
+	const lastTeamCheckbox = page.getByTestId("player-checkbox-0").last();
 	if (
-		sidesWithMoreThanFourPlayers.includes("last") &&
-		!(await page.getByTestId("player-checkbox-0").last().isDisabled())
+		(await lastTeamCheckbox.count()) > 0 &&
+		!(await lastTeamCheckbox.isDisabled())
 	) {
 		await page.getByTestId("player-checkbox-0").last().click();
 		await page.getByTestId("player-checkbox-1").last().click();
@@ -136,6 +145,8 @@ const expectScore = (page: Page, score: [number, number]) =>
 test.describe("Tournament bracket", () => {
 	test("sets active roster as regular member", async ({ page }) => {
 		const tournamentId = 1;
+		// User 37 is owner of team 10 (seed 10) which has 5 players
+		// Team 10 vs Team 9 (seed 9) is match 2 in WB Round 1
 		const matchId = 2;
 		await startBracket(page, tournamentId);
 
@@ -144,10 +155,13 @@ test.describe("Tournament bracket", () => {
 			page,
 			url: tournamentMatchPage({ tournamentId, matchId }),
 		});
+
 		await expect(page.getByTestId("active-roster-needed-text")).toBeVisible();
 
 		await page.getByTestId("actions-tab").click();
 
+		// Team 10 has 5 players; select first 4 for active roster
+		// Team 10 is team 2 (second team in the match), so use last()
 		await page.getByTestId("player-checkbox-0").last().click();
 		await page.getByTestId("player-checkbox-1").last().click();
 		await page.getByTestId("player-checkbox-2").last().click();
@@ -160,6 +174,7 @@ test.describe("Tournament bracket", () => {
 			page,
 			url: tournamentMatchPage({ tournamentId, matchId }),
 		});
+		// Only team 10 needed to set roster (team 9 has 4 players)
 		await isNotVisible(page.getByTestId("active-roster-needed-text"));
 
 		await page.getByTestId("actions-tab").click();
@@ -211,7 +226,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 1,
-			sidesWithMoreThanFourPlayers: ["first", "last"],
 		});
 		await backToBracket(page);
 
@@ -243,7 +257,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["last"],
 			winner: 2,
 		});
 		await backToBracket(page);
@@ -289,6 +302,8 @@ test.describe("Tournament bracket", () => {
 	test("completes and finalizes a small tournament with badge assigning", async ({
 		page,
 	}) => {
+		test.slow();
+
 		const tournamentId = 2;
 
 		await seed(page);
@@ -320,7 +335,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: [],
 		});
 		await backToBracket(page);
 
@@ -376,7 +390,13 @@ test.describe("Tournament bracket", () => {
 			await submit(page);
 		}
 
-		await page.getByTestId("brackets-tab").click();
+		await navigate({
+			page,
+			url: tournamentBracketsPage({
+				tournamentId,
+			}),
+		});
+
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
 
@@ -385,7 +405,6 @@ test.describe("Tournament bracket", () => {
 			await reportResult({
 				page,
 				amountOfMapsToReport: 2,
-				sidesWithMoreThanFourPlayers: ["first", "last"],
 				points: [100, 0],
 			});
 			await backToBracket(page);
@@ -425,7 +444,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 3,
-			sidesWithMoreThanFourPlayers: ["first", "last"],
 		});
 
 		await navigate({
@@ -439,7 +457,6 @@ test.describe("Tournament bracket", () => {
 			await reportResult({
 				page,
 				amountOfMapsToReport: 3,
-				sidesWithMoreThanFourPlayers: ["first", "last"],
 			});
 
 			await backToBracket(page);
@@ -502,7 +519,6 @@ test.describe("Tournament bracket", () => {
 			await reportResult({
 				page,
 				amountOfMapsToReport: 2,
-				sidesWithMoreThanFourPlayers: [],
 				points: [100, 0],
 			});
 			await backToBracket(page);
@@ -530,7 +546,10 @@ test.describe("Tournament bracket", () => {
 		});
 		await submit(page);
 
-		await page.getByTestId("teams-tab").click();
+		await navigate({
+			page,
+			url: tournamentTeamsPage(tournamentId),
+		});
 
 		await expect(
 			page.getByTestId("team-member-name").getByText("Sendou"),
@@ -623,7 +642,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["first"],
 			points: [100, 0],
 		});
 
@@ -687,7 +705,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["last"],
 			points: [100, 0],
 		});
 		await backToBracket(page);
@@ -698,7 +715,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["first"],
 			points: [100, 0],
 		});
 		await backToBracket(page);
@@ -707,7 +723,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["last"],
 			points: [100, 0],
 		});
 		await backToBracket(page);
@@ -716,7 +731,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["last"],
 			points: [100, 0],
 		});
 		await backToBracket(page);
@@ -727,13 +741,74 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["first"],
 			points: [0, 100],
 			winner: 2,
 		});
 	});
 
+	test("reopening round robin match does not lock already-unlocked matches (issue #2690)", async ({
+		page,
+	}) => {
+		const tournamentId = 3;
+
+		await seed(page);
+		await impersonate(page);
+
+		await navigate({
+			page,
+			url: tournamentBracketsPage({ tournamentId }),
+		});
+
+		await page.getByTestId("finalize-bracket-button").click();
+		await submit(page, "confirm-finalize-bracket-button");
+
+		// Use Group B which has 4 teams and 2 matches per round
+		// Group B Round 1: Match 7 (Whatcha Say vs Come Together), Match 8 (We Are Champions vs Please Mr Postman)
+		// Group B Round 2: Match 9 (Please Mr Postman vs Come Together), Match 10 (Whatcha Say vs We Are Champions)
+
+		// Complete R1 matches in group B (matches 7 and 8) to unlock R2 matches
+		await navigateToMatch(page, 7);
+		await reportResult({
+			page,
+			amountOfMapsToReport: 2,
+			points: [100, 0],
+		});
+		await backToBracket(page);
+
+		await navigateToMatch(page, 8);
+		await reportResult({
+			page,
+			amountOfMapsToReport: 2,
+			points: [100, 0],
+		});
+		await backToBracket(page);
+
+		// Match 9 is R2 in group B - should now be unlocked since R1 is complete
+		// Start it but don't complete it
+		await navigateToMatch(page, 9);
+		await reportResult({
+			page,
+			amountOfMapsToReport: 1,
+			points: [100, 0],
+		});
+		await backToBracket(page);
+
+		// Reopen match 7 (R1 match) - simulating a score misreport correction
+		await navigateToMatch(page, 7);
+		await submit(page, "reopen-match-button");
+		await backToBracket(page);
+
+		// Verify the R2 match that was already in progress is still playable
+		// Before the fix, this would become locked and unplayable
+		await navigateToMatch(page, 9);
+		await expect(page.getByText("1-0")).toBeVisible();
+		await page.getByTestId("actions-tab").click();
+		await expect(page.getByTestId("winner-radio-1")).toBeVisible();
+	});
+
 	test("locks/unlocks matches & sets match as casted", async ({ page }) => {
+		test.slow();
+
 		const tournamentId = 2;
 
 		await seed(page);
@@ -768,7 +843,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["last"],
 		});
 		await backToBracket(page);
 
@@ -780,7 +854,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["last"],
 		});
 		await backToBracket(page);
 
@@ -815,7 +888,6 @@ test.describe("Tournament bracket", () => {
 		await reportResult({
 			page,
 			amountOfMapsToReport: 2,
-			sidesWithMoreThanFourPlayers: ["last"],
 		});
 
 		await page.getByTestId("admin-tab").click();
@@ -846,7 +918,8 @@ test.describe("Tournament bracket", () => {
 			url: SETTINGS_PAGE,
 		});
 
-		await page.getByTestId("UPDATE_NO_SCREEN-switch").click();
+		const form = createFormHelpers(page, updateNoScreenSchema);
+		await form.check("newValue");
 
 		await navigate({
 			page,
@@ -887,7 +960,6 @@ test.describe("Tournament bracket", () => {
 			page,
 			amountOfMapsToReport: 3,
 			points: [100, 0],
-			sidesWithMoreThanFourPlayers: ["last"],
 			winner: 1,
 		});
 	});
@@ -914,7 +986,6 @@ test.describe("Tournament bracket", () => {
 			await reportResult({
 				page,
 				amountOfMapsToReport: 2,
-				sidesWithMoreThanFourPlayers: id === 1 ? [] : ["last"],
 			});
 			await backToBracket(page);
 		}
@@ -965,6 +1036,13 @@ test.describe("Tournament bracket", () => {
 		await page.getByLabel("Expected teams").selectOption("8");
 
 		await submit(page, "confirm-finalize-bracket-button");
+
+		await navigate({
+			page,
+			url: tournamentBracketsPage({ tournamentId }),
+		});
+
+		await page.getByRole("button", { name: "Great White" }).click();
 
 		await expect(page.getByTestId("prepared-maps-check-icon")).toBeVisible();
 
@@ -1077,6 +1155,9 @@ test.describe("Tournament bracket", () => {
 				await submit(page);
 
 				await submit(page, "undo-score-button");
+				await expect(
+					page.getByText("Please select the winner of this map"),
+				).toBeVisible();
 				await page.getByTestId("winner-radio-1").click();
 				await page.getByTestId("points-input-1").fill("100");
 				await submit(page, "report-score-button");
@@ -1126,5 +1207,49 @@ test.describe("Tournament bracket", () => {
 
 		// Verify match ended early
 		await expect(page.getByText("Match ended early")).toBeVisible();
+	});
+
+	test("dropping team out ends ongoing match early and auto-forfeits losers bracket match", async ({
+		page,
+	}) => {
+		const tournamentId = 2;
+
+		await startBracket(page, tournamentId);
+
+		// 1) Report partial score on match 5 (winners bracket)
+		await navigateToMatch(page, 5);
+		await reportResult({ page, amountOfMapsToReport: 1, winner: 1 });
+		await backToBracket(page);
+
+		// 2) Drop team 102 (one of the teams in match 5) via admin
+		await navigate({
+			page,
+			url: tournamentAdminPage(tournamentId),
+		});
+		await page.getByLabel("Action").selectOption("DROP_TEAM_OUT");
+		await page.getByLabel("Team", { exact: true }).selectOption("102");
+		await submit(page);
+
+		// 3) Verify the ongoing match ended early
+		await navigate({
+			page,
+			url: tournamentMatchPage({ tournamentId, matchId: 5 }),
+		});
+		await expect(page.getByText("Match ended early")).toBeVisible();
+		await expect(page.getByText("dropped out of the tournament")).toBeVisible();
+		await backToBracket(page);
+
+		// 4) Complete the adjacent match (match 6) so its loser goes to losers bracket
+		await navigateToMatch(page, 6);
+		await reportResult({ page, amountOfMapsToReport: 2 });
+		await backToBracket(page);
+
+		// 5) The losers bracket match (match 18) should now have teams:
+		//    - Loser of match 5 (team 102, dropped)
+		//    - Loser of match 6
+		//    It should have ended early since team 102 is dropped
+		await navigateToMatch(page, 18);
+		await expect(page.getByText("Match ended early")).toBeVisible();
+		await expect(page.getByText("dropped out of the tournament")).toBeVisible();
 	});
 });

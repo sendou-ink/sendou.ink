@@ -115,18 +115,5 @@ export function concatUserSubmittedImagePrefix<T extends string | null>(
 	]);
 }
 
-/** Prevents ParseJSONResultsPlugin from trying to parse this as JSON */
-export function unJsonify<T>(value: T) {
-	if (typeof value !== "string") {
-		return value;
-	}
-
-	if (value.match(/^[[{]/) === null) {
-		return value;
-	}
-
-	return `\\${value}`;
-}
-
 export type JSONColumnTypeNullable<SelectType extends object | null> =
 	ColumnType<SelectType | null, string | null, string | null>;

@@ -1,19 +1,15 @@
 import { useTranslation } from "react-i18next";
-import type { z } from "zod";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { InputFormField } from "~/components/form/InputFormField";
-import { SendouForm } from "~/components/form/SendouForm";
 import { createNewAssociationSchema } from "~/features/associations/associations-schemas";
+import { SendouForm } from "~/form/SendouForm";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { associationsPage } from "~/utils/urls";
 
 import { action } from "../actions/associations.new.server";
 export { action };
 
-type FormFields = z.infer<typeof createNewAssociationSchema>;
-
 export const handle: SendouRouteHandle = {
-	i18n: "scrims",
+	i18n: ["scrims"],
 };
 
 export default function AssociationsNewPage() {
@@ -24,16 +20,8 @@ export default function AssociationsNewPage() {
 			heading={t("scrims:associations.forms.title")}
 			onCloseTo={associationsPage()}
 		>
-			<SendouForm
-				schema={createNewAssociationSchema}
-				defaultValues={{
-					name: "",
-				}}
-			>
-				<InputFormField<FormFields>
-					label={t("scrims:associations.forms.name.title")}
-					name="name"
-				/>
+			<SendouForm schema={createNewAssociationSchema}>
+				{({ FormField }) => <FormField name="name" />}
 			</SendouForm>
 		</SendouDialog>
 	);

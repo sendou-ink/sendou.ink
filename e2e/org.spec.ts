@@ -1,15 +1,21 @@
-import test, { expect } from "@playwright/test";
-import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { NZAP_TEST_ID, ORG_ADMIN_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import {
+	banUserActionSchema,
+	newOrganizationSchema,
+	updateIsEstablishedSchema,
+} from "~/features/tournament-organization/tournament-organization-schemas";
+import {
+	expect,
 	impersonate,
 	isNotVisible,
 	navigate,
 	seed,
-	selectUser,
 	submit,
+	test,
 	waitForPOSTResponse,
 } from "~/utils/playwright";
+import { createFormHelpers } from "~/utils/playwright-form";
 import {
 	TOURNAMENT_NEW_PAGE,
 	tournamentOrganizationPage,
@@ -29,7 +35,8 @@ test.describe("Tournament Organization", () => {
 		await page.getByTestId("anything-adder-menu-button").click();
 		await page.getByTestId("menu-item-organization").click();
 
-		await page.getByLabel("Name").fill("Test Organization");
+		const form = createFormHelpers(page, newOrganizationSchema);
+		await form.fill("name", "Test Organization");
 		await submit(page);
 
 		await expect(page.getByTestId("edit-org-button")).toBeVisible();
@@ -54,8 +61,10 @@ test.describe("Tournament Organization", () => {
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url });
 		await editButtonLocator.click();
-		// Add member as admin - find the N-ZAP user's fieldset and change their role
-		const nzapFieldset = page.locator("fieldset").filter({ hasText: "N-ZAP" });
+		// Add member as admin - find the specific member fieldset containing N-ZAP
+		// The array field creates numbered fieldsets (#1, #2, #3) for each member
+		// Find the role select that belongs to the same fieldset as N-ZAP user select
+		const nzapFieldset = page.locator('fieldset:has(button:has-text("N-ZAP"))');
 		await nzapFieldset
 			.getByLabel("Role", { exact: true })
 			.selectOption("ADMIN");
@@ -99,13 +108,26 @@ test.describe("Tournament Organization", () => {
 		// Go to banned users section and add NZAP to ban list
 		await bannedUsersTab.click();
 		await page.getByText("New ban", { exact: true }).click();
-		await selectUser({
-			page,
-			userName: "N-ZAP",
-			labelName: "Player",
-			exact: true,
+		// Wait for the dialog to be visible
+		const dialog = page.getByRole("dialog");
+		await expect(dialog).toBeVisible();
+		// Find and click the UserSearch combobox (React Aria Select renders as combobox)
+		const userSearchCombobox = dialog.getByRole("button").filter({
+			has: page.locator('[class*="selectValue"]'),
 		});
-		await page.getByLabel("Private note").fill("Test reason");
+		await userSearchCombobox.click();
+		// Wait for the popover to open and fill search
+		await expect(page.getByTestId("user-search-input")).toBeVisible();
+		await page.getByTestId("user-search-input").fill("N-ZAP");
+		await expect(page.getByTestId("user-search-item").first()).toBeVisible();
+		await page.keyboard.press("Enter");
+		// Fill the note and set expiration date
+		const banForm = createFormHelpers(page, banUserActionSchema);
+		await banForm.fill("privateNote", "Test reason");
+		// Set a future expiration date to avoid validation issues
+		const futureDate = new Date();
+		futureDate.setMonth(futureDate.getMonth() + 1);
+		await banForm.setDateTime("expiresAt", futureDate);
 		await submit(page);
 		// The added ban should be visible in the table
 		await expect(page.getByRole("table")).toContainText("Test reason");
@@ -149,16 +171,36 @@ test.describe("Tournament Organization", () => {
 		await page.getByRole("button", { name: "Save" }).click();
 
 		await expect(page.getByText("Teams (1)")).toBeVisible();
+
+		// 5. As admin, ban user again but with permanent ban this time
+		await impersonate(page, ADMIN_ID);
+		await navigate({ page, url });
+		await bannedUsersTab.click();
+		await page.getByText("New ban", { exact: true }).click();
+		const dialog2 = page.getByRole("dialog");
+		await expect(dialog2).toBeVisible();
+		const userSearchCombobox2 = dialog2.getByRole("button").filter({
+			has: page.locator('[class*="selectValue"]'),
+		});
+		await userSearchCombobox2.click();
+		await expect(page.getByTestId("user-search-input")).toBeVisible();
+		await page.getByTestId("user-search-input").fill("N-ZAP");
+		await expect(page.getByTestId("user-search-item").first()).toBeVisible();
+		await page.keyboard.press("Enter");
+		const banForm2 = createFormHelpers(page, banUserActionSchema);
+		await banForm2.fill("privateNote", "Does not expire");
+		// Don't set expiresAt - leave empty for permanent ban
+		await submit(page);
+		// Verify "Permanent" appears in the table
+		await expect(page.getByRole("table")).toContainText("Permanent");
 	});
 
 	test("allows member of established org to create tournament", async ({
 		page,
 	}) => {
-		const ORG_ADMIN_ID = 3; // 3 = org admin, but not site admin
-
 		await seed(page);
 
-		await impersonate(page, ORG_ADMIN_ID);
+		await impersonate(page, ORG_ADMIN_TEST_ID);
 		await navigate({
 			page,
 			url: TOURNAMENT_NEW_PAGE,
@@ -174,11 +216,17 @@ test.describe("Tournament Organization", () => {
 			url: "/org/sendouink",
 		});
 
+		await page.getByRole("tab", { name: "Admin" }).click();
+
+		const isEstablishedForm = createFormHelpers(
+			page,
+			updateIsEstablishedSchema,
+		);
 		await waitForPOSTResponse(page, () =>
-			page.getByTestId("is-established-switch").click(),
+			isEstablishedForm.check("isEstablished"),
 		);
 
-		await impersonate(page, ORG_ADMIN_ID);
+		await impersonate(page, ORG_ADMIN_TEST_ID);
 		await navigate({
 			page,
 			url: TOURNAMENT_NEW_PAGE,

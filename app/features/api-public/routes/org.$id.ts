@@ -1,25 +1,17 @@
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import type { LoaderFunctionArgs } from "react-router";
-import { cors } from "remix-utils/cors";
 import { z } from "zod";
 import { db } from "~/db/sql";
 import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
 import type { GetTournamentOrganizationResponse } from "../schema";
 
 const paramsSchema = z.object({
 	id,
 });
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
-	requireBearerAuth(request);
-
+export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id } = parseParams({ params, schema: paramsSchema });
 
 	const organization = notFoundIfFalsy(
@@ -47,6 +39,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 							"User.id",
 							"User.discordId",
 							"User.username",
+							"User.pronouns",
 							"TournamentOrganizationMember.role",
 							"TournamentOrganizationMember.roleDisplayName",
 						])
@@ -68,10 +61,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			userId: member.id,
 			discordId: member.discordId,
 			name: member.username,
+			pronouns: member.pronouns,
 			role: member.role,
 			roleDisplayName: member.roleDisplayName,
 		})),
 	};
 
-	return await cors(request, Response.json(result));
+	return Response.json(result);
 };

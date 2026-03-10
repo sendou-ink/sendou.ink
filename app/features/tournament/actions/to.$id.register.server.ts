@@ -38,7 +38,7 @@ import {
 } from "../tournament-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const { avatarFileName, formData } = await uploadImageIfSubmitted({
 		request,
 		fileNamePrefix: "pickup-logo",
@@ -291,7 +291,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 			});
 
-			if (!tournament.isTest) {
+			if (!tournament.isTest && !tournament.isDraft) {
 				notify({
 					userIds: [data.userId],
 					notification: {

@@ -1,3 +1,4 @@
+import { sub } from "date-fns";
 import type {
 	Expression,
 	ExpressionBuilder,
@@ -17,6 +18,7 @@ import type {
 } from "~/db/tables";
 import { EXCLUDED_TAGS } from "~/features/calendar/calendar-constants";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import {
 	databaseTimestampNow,
 	databaseTimestampToDate,
@@ -99,7 +101,7 @@ function tournamentOrganization(organizationId: Expression<number | null>) {
 				"TournamentOrganization.slug",
 				"TournamentOrganization.isEstablished",
 				concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
-					"avatarUrl",
+					"logoUrl",
 				),
 			])
 			.whereRef("TournamentOrganization.id", "=", organizationId),
@@ -168,9 +170,11 @@ function findAllBetweenTwoTimestampsQuery({
 		.select((eb) => [
 			"CalendarEvent.id as eventId",
 			"CalendarEvent.authorId",
+			"CalendarEvent.organizationId",
 			"Tournament.id as tournamentId",
 			"Tournament.settings as tournamentSettings",
 			"Tournament.mapPickingStyle",
+			"Tournament.tier",
 			"CalendarEvent.name",
 			"CalendarEvent.tags",
 			"CalendarEventDate.startTime",
@@ -227,6 +231,16 @@ function findAllBetweenTwoTimestampsMapped(
 				? (row.tags.split(",") as CalendarEvent["tags"])
 				: [];
 
+			const isPastEvent =
+				databaseTimestampToDate(row.startTime) < sub(new Date(), { days: 1 });
+			const tentativeTier =
+				row.tier === null &&
+				row.organizationId !== null &&
+				row.tournamentId !== null &&
+				!isPastEvent
+					? getTentativeTier(row.organizationId, row.name)
+					: null;
+
 			return {
 				at: databaseTimestampToJavascriptTimestamp(row.startTime),
 				type: "calendar",
@@ -261,6 +275,8 @@ function findAllBetweenTwoTimestampsMapped(
 							isTest: row.tournamentSettings.isTest ?? false,
 						})
 					: null,
+				tier: row.tier ?? null,
+				tentativeTier,
 			};
 		},
 	);
@@ -422,6 +438,7 @@ type CreateArgs = Pick<
 	requireInGameNames?: boolean;
 	isRanked?: boolean;
 	isTest?: boolean;
+	isDraft?: boolean;
 	isInvitational?: boolean;
 	enableNoScreenToggle?: boolean;
 	enableSubs?: boolean;
@@ -456,6 +473,7 @@ export async function create(args: CreateArgs) {
 				thirdPlaceMatch: args.thirdPlaceMatch,
 				isRanked: args.isRanked,
 				isTest: args.isTest,
+				isDraft: args.isDraft,
 				isInvitational: args.isInvitational,
 				enableNoScreenToggle: args.enableNoScreenToggle,
 				enableSubs: args.enableSubs,
@@ -520,7 +538,7 @@ export async function create(args: CreateArgs) {
 				bracketUrl: args.bracketUrl,
 				avatarImgId: args.avatarImgId ?? avatarImgId,
 				organizationId: args.organizationId,
-				hidden: args.parentTournamentId || args.isTest ? 1 : 0,
+				hidden: args.parentTournamentId || args.isTest || args.isDraft ? 1 : 0,
 				tournamentId,
 			})
 			.returning("id")
@@ -600,6 +618,22 @@ export async function update(args: UpdateArgs) {
 			? await updateTournamentTables(args, trx, tournamentId)
 			: null;
 
+		if (tournamentId) {
+			const { parentTournamentId, settings: existingSettings } = await trx
+				.selectFrom("Tournament")
+				.select(["parentTournamentId", "settings"])
+				.where("id", "=", tournamentId)
+				.executeTakeFirstOrThrow();
+
+			const hidden =
+				existingSettings.isTest || parentTournamentId || args.isDraft ? 1 : 0;
+			await trx
+				.updateTable("CalendarEvent")
+				.set({ hidden })
+				.where("id", "=", args.eventId)
+				.execute();
+		}
+
 		await trx
 			.deleteFrom("CalendarEventDate")
 			.where("eventId", "=", args.eventId)
@@ -652,6 +686,7 @@ async function updateTournamentTables(
 		thirdPlaceMatch: args.thirdPlaceMatch,
 		isRanked: args.isRanked,
 		isTest: existingSettings.isTest, // this one is not editable after creation
+		isDraft: args.isDraft,
 		isInvitational: args.isInvitational,
 		enableNoScreenToggle: args.enableNoScreenToggle,
 		enableSubs: args.enableSubs,

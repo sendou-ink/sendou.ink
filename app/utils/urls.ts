@@ -77,6 +77,8 @@ export const bskyUrl = (accountName: string) =>
 	`https://bsky.app/profile/${accountName}`;
 export const twitchUrl = (accountName: string) =>
 	`https://twitch.tv/${accountName}`;
+export const youtubeUrl = (channelId: string) =>
+	`https://youtube.com/channel/${channelId}`;
 
 export const LOG_IN_URL = "/auth";
 export const LOG_OUT_URL = "/auth/logout";
@@ -103,6 +105,7 @@ export const PLANNER_URL = "/plans";
 export const MAPS_URL = "/maps";
 export const TIER_LIST_MAKER_URL = "/tier-list-maker";
 export const ANALYZER_URL = "/analyzer";
+export const COMP_ANALYZER_URL = "/comp-analyzer";
 export const OBJECT_DAMAGE_CALCULATOR_URL = "/object-damage-calculator";
 export const VODS_PAGE = "/vods";
 export const LEADERBOARDS_PAGE = "/leaderboards";
@@ -300,6 +303,8 @@ export const tournamentEditPage = (eventId: number) =>
 export const calendarReportWinnersPage = (eventId: number) =>
 	`/calendar/${eventId}/report-winners`;
 export const tournamentPage = (tournamentId: number) => `/to/${tournamentId}`;
+export const tournamentTeamsPage = (tournamentId: number) =>
+	`/to/${tournamentId}/teams`;
 export const tournamentTeamPage = ({
 	tournamentId,
 	tournamentTeamId,
@@ -449,6 +454,8 @@ export const badgeUrl = ({
 	code: Tables["Badge"]["code"];
 	extension?: "gif";
 }) => `/static-assets/badges/${code}${extension ? `.${extension}` : ""}`;
+export const gameBadgeUrl = (id: string) =>
+	`/static-assets/img/badges/${id}.avif`;
 export const articlePreviewUrl = (slug: string) =>
 	`/static-assets/img/article-previews/${slug}.png`;
 
@@ -489,6 +496,8 @@ export const stageImageUrl = (stageId: StageId) =>
 	`/static-assets/img/stages/${stageId}`;
 export const tierImageUrl = (tier: TierName | "CALCULATING") =>
 	`/static-assets/img/tiers/${tier.toLowerCase()}`;
+export const controllerImageUrl = (controller: string) =>
+	`/static-assets/img/controllers/${controller}.avif`;
 export const preferenceEmojiUrl = (preference?: Preference) => {
 	const emoji =
 		preference === "PREFER"

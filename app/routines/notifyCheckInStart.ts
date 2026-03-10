@@ -20,7 +20,7 @@ export const NotifyCheckInStartRoutine = new Routine({
 				user: undefined,
 			});
 
-			if (tournament.ctx.settings.isTest) {
+			if (tournament.ctx.settings.isTest || tournament.ctx.settings.isDraft) {
 				continue;
 			}
 

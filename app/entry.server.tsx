@@ -9,7 +9,12 @@ import { type EntryContext, ServerRouter } from "react-router";
 import { config } from "~/modules/i18n/config"; // your i18n configuration file
 import { i18next } from "~/modules/i18n/i18next.server";
 import { resources } from "./modules/i18n/resources.server";
-import { daily, everyHourAt00, everyHourAt30 } from "./routines/list.server";
+import {
+	daily,
+	everyHourAt00,
+	everyHourAt30,
+	everyTwoMinutes,
+} from "./routines/list.server";
 import { logger } from "./utils/logger";
 
 // Reject/cancel all pending promises after 5 seconds
@@ -36,6 +41,7 @@ export default async function handleRequest(
 			lng, // The locale we detected above
 			ns, // The namespaces the routes about to render wants to use
 			resources,
+			showSupportNotice: false,
 		});
 
 	return new Promise((resolve, reject) => {
@@ -103,8 +109,19 @@ if (!global.appStartSignal && process.env.NODE_ENV === "production") {
 			await routine.run();
 		}
 	});
+
+	cron.schedule("*/2 * * * *", async () => {
+		for (const routine of everyTwoMinutes) {
+			await routine.run();
+		}
+	});
 }
 
 process.on("unhandledRejection", (reason: string, p: Promise<any>) => {
 	logger.error("Unhandled Rejection at:", p, "reason:", reason);
 });
+
+// wrapper so we get request id shown in the server logs
+export function handleError(error: unknown) {
+	logger.error(error);
+}

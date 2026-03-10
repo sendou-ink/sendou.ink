@@ -35,6 +35,12 @@ export function turnOf({
 
 	switch (maps.pickBan) {
 		case "BAN_2": {
+			if (
+				isSetOverByResults({ count: maps.count, results, countType: maps.type })
+			) {
+				return null;
+			}
+
 			// typically lower seed is the "bottom team" and they pick first
 			const [secondPicker, firstPicker] = teams;
 

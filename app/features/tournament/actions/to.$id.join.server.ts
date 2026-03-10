@@ -1,6 +1,6 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
-import { requireUserId } from "~/features/auth/core/user.server";
+import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import {
 	clearTournamentDataCache,
@@ -31,7 +31,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		params,
 		schema: idObject,
 	});
-	const user = await requireUserId(request);
+	const user = requireUser();
 	const url = new URL(request.url);
 	const inviteCode = url.searchParams.get("code");
 	const data = await parseRequestPayload({ request, schema: joinSchema });

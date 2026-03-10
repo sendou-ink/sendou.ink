@@ -33,6 +33,7 @@ export async function findCurrentGroups() {
 		discordId: Tables["User"]["discordId"];
 		discordAvatar: Tables["User"]["discordAvatar"];
 		customUrl: Tables["User"]["customUrl"];
+		pronouns: Tables["User"]["pronouns"] | null;
 		mapModePreferences: Tables["User"]["mapModePreferences"];
 		noScreen: Tables["User"]["noScreen"];
 		languages: Tables["User"]["languages"];
@@ -692,5 +693,13 @@ export function setPreparingGroupAsActive(groupId: number) {
 		.set({ status: "ACTIVE", latestActionAt: databaseTimestampNow() })
 		.where("id", "=", groupId)
 		.where("status", "=", "PREPARING")
+		.execute();
+}
+
+export function setAsInactive(groupId: number, trx?: Transaction<DB>) {
+	return (trx ?? db)
+		.updateTable("Group")
+		.set({ status: "INACTIVE" })
+		.where("id", "=", groupId)
 		.execute();
 }

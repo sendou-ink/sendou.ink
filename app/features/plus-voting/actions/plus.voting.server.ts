@@ -14,7 +14,7 @@ import { PLUS_UPVOTE } from "../plus-voting-constants";
 import { votingActionSchema } from "../plus-voting-schemas";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: votingActionSchema,

@@ -1,26 +1,31 @@
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Link, useFetcher, useLoaderData, useSearchParams } from "react-router";
+import { Link, useLoaderData, useSearchParams } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
-import { LinkButton } from "~/components/elements/Button";
-import { SendouSwitch } from "~/components/elements/Switch";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { SendouDialog } from "~/components/elements/Dialog";
 import {
 	SendouTab,
 	SendouTabList,
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image } from "~/components/Image";
 import { EditIcon } from "~/components/icons/Edit";
 import { LinkIcon } from "~/components/icons/Link";
 import { LockIcon } from "~/components/icons/Lock";
+import { LogOutIcon } from "~/components/icons/LogOut";
 import { UsersIcon } from "~/components/icons/Users";
 import { Main } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
+import { TierPill } from "~/components/TierPill";
+import { useUser } from "~/features/auth/core/user";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { BannedUsersList } from "~/features/tournament-organization/components/BannedPlayersList";
+import { SendouForm } from "~/form/SendouForm";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
@@ -40,6 +45,7 @@ import { EventCalendar } from "../components/EventCalendar";
 import { SocialLinksList } from "../components/SocialLinksList";
 import { loader } from "../loaders/org.$slug.server";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "../tournament-organization-constants";
+import { updateIsEstablishedSchema } from "../tournament-organization-schemas";
 export { action, loader };
 
 import "../tournament-organization.css";
@@ -95,7 +101,6 @@ export default function TournamentOrganizationPage() {
 	return (
 		<Main className="stack lg">
 			<LogoHeader />
-			<AdminControls />
 			<InfoTabs />
 			{data.organization.series.length > 0 ? (
 				<SeriesSelector series={data.organization.series} />
@@ -110,26 +115,70 @@ export default function TournamentOrganizationPage() {
 }
 
 function LogoHeader() {
-	const { t } = useTranslation(["common"]);
+	const { t } = useTranslation(["common", "org"]);
 	const data = useLoaderData<typeof loader>();
+	const user = useUser();
 	const canEditOrganization = useHasPermission(data.organization, "EDIT");
+
+	const currentMember = user
+		? data.organization.members.find((m) => m.id === user.id)
+		: undefined;
+	const isSoleAdmin =
+		currentMember?.role === "ADMIN" &&
+		data.organization.members.filter((m) => m.role === "ADMIN").length === 1;
 
 	return (
 		<div className="stack horizontal md">
 			<Avatar size="lg" url={data.organization.avatarUrl ?? undefined} />
 			<div className="stack sm">
 				<div className="text-xl font-bold">{data.organization.name}</div>
-				{canEditOrganization ? (
-					<div className="stack items-start">
-						<LinkButton
-							to={tournamentOrganizationEditPage(data.organization.slug)}
-							icon={<EditIcon />}
-							size="small"
-							variant="outlined"
-							testId="edit-org-button"
-						>
-							{t("common:actions.edit")}
-						</LinkButton>
+				{canEditOrganization || currentMember ? (
+					<div className="stack horizontal sm items-start">
+						{canEditOrganization ? (
+							<LinkButton
+								to={tournamentOrganizationEditPage(data.organization.slug)}
+								icon={<EditIcon />}
+								size="small"
+								variant="outlined"
+								testId="edit-org-button"
+							>
+								{t("common:actions.edit")}
+							</LinkButton>
+						) : null}
+						{currentMember ? (
+							isSoleAdmin ? (
+								<SendouDialog
+									showHeading={false}
+									trigger={
+										<SendouButton
+											icon={<LogOutIcon />}
+											size="small"
+											variant="destructive"
+										>
+											{t("org:leave.action")}
+										</SendouButton>
+									}
+								>
+									<p>{t("org:leave.soleAdmin")}</p>
+								</SendouDialog>
+							) : (
+								<FormWithConfirm
+									dialogHeading={t("org:leave.confirm", {
+										organizationName: data.organization.name,
+									})}
+									fields={[["_action", "LEAVE_ORGANIZATION"]]}
+									submitButtonText={t("org:leave.action")}
+								>
+									<SendouButton
+										icon={<LogOutIcon />}
+										size="small"
+										variant="destructive"
+									>
+										{t("org:leave.action")}
+									</SendouButton>
+								</FormWithConfirm>
+							)
+						) : null}
 					</div>
 				) : null}
 				<div className="whitespace-pre-wrap text-sm text-lighter">
@@ -140,40 +189,10 @@ function LogoHeader() {
 	);
 }
 
-function AdminControls() {
-	const data = useLoaderData<typeof loader>();
-	const fetcher = useFetcher();
-	const isAdmin = useHasRole("ADMIN");
-
-	if (!isAdmin) return null;
-
-	const onChange = (isSelected: boolean) => {
-		fetcher.submit(
-			{ _action: "UPDATE_IS_ESTABLISHED", isEstablished: isSelected },
-			{ method: "post", encType: "application/json" },
-		);
-	};
-
-	return (
-		<div className="stack sm">
-			<div className="text-sm font-semi-bold">Admin Controls</div>
-			<div>
-				<SendouSwitch
-					defaultSelected={Boolean(data.organization.isEstablished)}
-					onChange={onChange}
-					isDisabled={fetcher.state !== "idle"}
-					data-testid="is-established-switch"
-				>
-					Is Established Organization
-				</SendouSwitch>
-			</div>
-		</div>
-	);
-}
-
 function InfoTabs() {
 	const { t } = useTranslation(["org"]);
 	const data = useLoaderData<typeof loader>();
+	const isAdmin = useHasRole("ADMIN");
 	const canBanPlayers = useHasPermission(data.organization, "BAN");
 
 	const hasSocials =
@@ -206,6 +225,11 @@ function InfoTabs() {
 							{t("org:banned.title")}
 						</SendouTab>
 					) : null}
+					{isAdmin ? (
+						<SendouTab id="admin" icon={<LockIcon />}>
+							Admin
+						</SendouTab>
+					) : null}
 				</SendouTabList>
 				<SendouTabPanel id="socials">
 					<SocialLinksList links={data.organization.socials ?? []} />
@@ -221,7 +245,39 @@ function InfoTabs() {
 						<BannedUsersList bannedUsers={data.bannedUsers} />
 					</SendouTabPanel>
 				) : null}
+				{isAdmin ? (
+					<SendouTabPanel id="admin">
+						<AdminControls />
+					</SendouTabPanel>
+				) : null}
 			</SendouTabs>
+		</div>
+	);
+}
+
+function AdminControls() {
+	const data = useLoaderData<typeof loader>();
+
+	return (
+		<div className="stack sm">
+			<SendouForm
+				className=""
+				schema={updateIsEstablishedSchema}
+				defaultValues={{
+					isEstablished: Boolean(data.organization.isEstablished),
+				}}
+				autoSubmit
+			>
+				{({ FormField }) => <FormField name="isEstablished" />}
+			</SendouForm>
+			<FormWithConfirm
+				dialogHeading={`Delete organization "${data.organization.name}"?`}
+				fields={[["_action", "DELETE_ORGANIZATION"]]}
+			>
+				<SendouButton variant="minimal-destructive">
+					Delete organization
+				</SendouButton>
+			</FormWithConfirm>
 		</div>
 	);
 }
@@ -336,7 +392,12 @@ function SeriesHeader({
 					/>
 				) : null}
 				<div>
-					<h2 className="text-lg">{series.name}</h2>
+					<div className="stack horizontal sm items-center">
+						<h2 className="text-lg">{series.name}</h2>
+						{series.tentativeTier ? (
+							<TierPill tier={series.tentativeTier} />
+						) : null}
+					</div>
 					{series.established ? (
 						<div className="text-lighter text-italic text-xs">
 							{t("org:events.established.short")}{" "}

@@ -39,7 +39,7 @@ const weapons = z.preprocess(
 				groupMatchMapId: id,
 			}),
 		)
-		.nullish()
+		.optional()
 		.default([]),
 );
 export const matchSchema = z.union([

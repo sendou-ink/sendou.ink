@@ -11,8 +11,8 @@ import { tournamentBracketsPage } from "~/utils/urls";
 import { canEditCalendarEvent } from "../calendar-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUser(request);
-	requireRole(user, "CALENDAR_EVENT_ADDER");
+	const user = requireUser();
+	requireRole("CALENDAR_EVENT_ADDER");
 
 	const url = new URL(request.url);
 
@@ -118,10 +118,15 @@ export async function findValidOrganizations(
 	});
 
 	if (isTournamentAdder) {
-		return ["NO_ORG", ...orgs.map((org) => R.omit(org, ["isEstablished"]))];
+		return [
+			"NO_ORG",
+			...orgs.map((org) =>
+				R.omit(org, ["isEstablished", "role", "roleDisplayName"]),
+			),
+		];
 	}
 
 	return orgs
 		.filter((org) => org.isEstablished)
-		.map((org) => R.omit(org, ["isEstablished"]));
+		.map((org) => R.omit(org, ["isEstablished", "role", "roleDisplayName"]));
 }

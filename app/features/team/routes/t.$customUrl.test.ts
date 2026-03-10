@@ -1,50 +1,42 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import { db } from "~/db/sql";
-import type { SerializeFrom } from "~/utils/remix";
 import {
 	assertResponseErrored,
 	dbInsertUsers,
 	dbReset,
 	wrappedAction,
-	wrappedLoader,
 } from "~/utils/Test";
-import { loader as userProfileLoader } from "../../user-page/loaders/u.$identifier.index.server";
 import { action as _teamPageAction } from "../actions/t.$customUrl.index.server";
 import { action as teamIndexPageAction } from "../actions/t.server";
 import { action as _editTeamAction } from "../routes/t.$customUrl.edit";
 import * as TeamRepository from "../TeamRepository.server";
+import type { createTeamSchema } from "../team-schemas";
 import type {
-	createTeamSchema,
 	editTeamSchema,
 	teamProfilePageActionSchema,
 } from "../team-schemas.server";
 
-const loadUserTeamLoader = wrappedLoader<
-	SerializeFrom<typeof userProfileLoader>
->({
-	loader: userProfileLoader,
-});
-
 const createTeamAction = wrappedAction<typeof createTeamSchema>({
 	action: teamIndexPageAction,
+	isJsonSubmission: true,
 });
 const teamPageAction = wrappedAction<typeof teamProfilePageActionSchema>({
 	action: _teamPageAction,
+	isJsonSubmission: true,
 });
 const editTeamAction = wrappedAction<typeof editTeamSchema>({
 	action: _editTeamAction,
+	isJsonSubmission: true,
 });
 
 async function loadTeams() {
-	const data = await loadUserTeamLoader({
-		user: "regular",
-		params: {
-			identifier: String(REGULAR_USER_TEST_ID),
-		},
-	});
+	const teams = await TeamRepository.teamsByMemberUserId(REGULAR_USER_TEST_ID);
 
-	return { team: data.user.team, secondaryTeams: data.user.secondaryTeams };
+	const mainTeam = teams.find((t) => t.isMainTeam);
+	const secondaryTeams = teams.filter((t) => !t.isMainTeam);
+
+	return { team: mainTeam, secondaryTeams };
 }
 
 describe("Secondary teams", () => {

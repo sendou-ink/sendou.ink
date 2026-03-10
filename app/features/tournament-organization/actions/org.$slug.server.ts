@@ -1,5 +1,5 @@
 import { isFuture } from "date-fns";
-import type { ActionFunctionArgs } from "react-router";
+import { type ActionFunctionArgs, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import {
 	requirePermission,
@@ -8,10 +8,13 @@ import {
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
-	dayMonthYearToDate,
 } from "~/utils/dates";
 import { logger } from "~/utils/logger";
-import { errorToast, parseRequestPayload } from "~/utils/remix.server";
+import {
+	errorToast,
+	errorToastIfFalsy,
+	parseRequestPayload,
+} from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
@@ -19,7 +22,7 @@ import { orgPageActionSchema } from "../tournament-organization-schemas";
 import { organizationFromParams } from "../tournament-organization-utils.server";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const organization = await organizationFromParams(params);
 	const data = await parseRequestPayload({
 		request,
@@ -28,7 +31,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	switch (data._action) {
 		case "BAN_USER": {
-			requirePermission(organization, "BAN", user);
+			requirePermission(organization, "BAN");
 
 			const allBannedUsers =
 				await TournamentOrganizationRepository.allBannedUsersByOrganizationId(
@@ -52,7 +55,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				userId: data.userId,
 				privateNote: data.privateNote,
 				expiresAt: data.expiresAt
-					? dateToDatabaseTimestamp(dayMonthYearToDate(data.expiresAt))
+					? dateToDatabaseTimestamp(data.expiresAt)
 					: null,
 			});
 
@@ -63,7 +66,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UNBAN_USER": {
-			requirePermission(organization, "BAN", user);
+			requirePermission(organization, "BAN");
 
 			await TournamentOrganizationRepository.unbanUser({
 				organizationId: organization.id,
@@ -77,7 +80,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UPDATE_IS_ESTABLISHED": {
-			requireRole(user, "ADMIN");
+			requireRole("ADMIN");
 
 			await TournamentOrganizationRepository.updateIsEstablished(
 				organization.id,
@@ -89,6 +92,39 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			);
 
 			break;
+		}
+		case "LEAVE_ORGANIZATION": {
+			const member = organization.members.find((m) => m.id === user.id);
+			errorToastIfFalsy(member, "You are not a member of this organization");
+
+			const adminCount = organization.members.filter(
+				(m) => m.role === "ADMIN",
+			).length;
+			if (member.role === "ADMIN" && adminCount === 1) {
+				errorToast("Cannot leave as the sole admin of the organization");
+			}
+
+			await TournamentOrganizationRepository.removeMember({
+				organizationId: organization.id,
+				userId: user.id,
+			});
+
+			logger.info(
+				`User left organization: organization=${organization.name} (${organization.id}), userId=${user.id}`,
+			);
+
+			break;
+		}
+		case "DELETE_ORGANIZATION": {
+			requireRole("ADMIN");
+
+			await TournamentOrganizationRepository.deleteById(organization.id);
+
+			logger.info(
+				`Organization deleted: organization=${organization.name} (${organization.id}), deleted by userId=${user.id}`,
+			);
+
+			throw redirect("/");
 		}
 		default: {
 			assertUnreachable(data);

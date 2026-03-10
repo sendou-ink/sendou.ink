@@ -14,12 +14,14 @@ export function TeamWithRoster({
 	team,
 	mapPool,
 	seed,
+	bracketLabel,
 	teamPageUrl,
 	activePlayers,
 }: {
 	team: TournamentDataTeam;
 	mapPool?: Array<Pick<Tables["MapPoolMap"], "stageId" | "mode">> | null;
 	seed?: number;
+	bracketLabel?: string;
 	teamPageUrl?: string;
 	activePlayers?: Tables["User"]["id"][];
 }) {
@@ -36,7 +38,9 @@ export function TeamWithRoster({
 					<div className="stack horizontal sm justify-end items-end">
 						{teamLogoSrc ? <Avatar size="xxs" url={teamLogoSrc} /> : null}
 						{seed ? (
-							<div className="tournament__team-with-roster__seed">#{seed}</div>
+							<div className="tournament__team-with-roster__seed">
+								{bracketLabel ? `${bracketLabel} ` : null}#{seed}
+							</div>
 						) : null}
 					</div>{" "}
 					{teamPageUrl ? (

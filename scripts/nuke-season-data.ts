@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { db } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import { addDummySkill } from "~/features/sendouq-match/queries/addDummySkill.server";
+import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 
@@ -36,7 +36,7 @@ async function main() {
 		.execute();
 
 	for (const match of allMatches) {
-		addDummySkill(match.id);
+		await SQMatchRepository.lockMatchWithoutSkillChange(match.id);
 	}
 
 	logger.info(`All done with nuking the season (${allMatches.length} matches)`);

@@ -13,8 +13,10 @@ import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
 import type { ScrimFilters } from "~/features/scrims/scrims-types";
 import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
+import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
+import type { StoredWidget } from "~/features/user-page/core/widgets/types";
 import type { ParticipantResult } from "~/modules/brackets-model";
 import type {
 	Ability,
@@ -363,6 +365,7 @@ export interface PlusSuggestion {
 	suggestedId: number;
 	text: string;
 	tier: number;
+	updatedAt: number | null;
 	year: number;
 }
 
@@ -429,6 +432,8 @@ export interface SplatoonPlayer {
 	id: GeneratedAlways<number>;
 	splId: string;
 	userId: number | null;
+	/** Players best XP across both divisions. Denormalized for performance. */
+	peakXp: number | null;
 }
 
 export interface TaggedArt {
@@ -471,6 +476,7 @@ export interface TournamentSettings {
 	/** Maximum number of team members that can be registered (only applies to 4v4 tournaments) */
 	maxMembersPerTeam?: number;
 	isTest?: boolean;
+	isDraft?: boolean;
 }
 
 export interface CastedMatchesInfo {
@@ -493,6 +499,18 @@ export interface Tournament {
 	parentTournamentId: number | null;
 	/** Is the tournament finalized meaning all the matches are played and TO has locked it making it read-only */
 	isFinalized: Generated<DBBoolean>;
+	/** Snapshot of teams and rosters when seeds were last saved. Used to detect NEW teams/players. */
+	seedingSnapshot: JSONColumnTypeNullable<SeedingSnapshot>;
+	/** Tournament tier based on top teams' skill. 1=X, 2=S+, 3=S, 4=A+, 5=A, 6=B+, 7=B, 8=C+, 9=C */
+	tier: TournamentTierNumber | null;
+}
+
+export interface SeedingSnapshot {
+	savedAt: number;
+	teams: Array<{
+		teamId: number;
+		members: Array<{ userId: number; username: string }>;
+	}>;
 }
 
 export interface PreparedMaps {
@@ -505,6 +523,7 @@ export interface PreparedMaps {
 export interface TournamentBadgeOwner {
 	badgeId: number;
 	userId: number;
+	tournamentId: number | null;
 }
 
 /** A group is a logical structure used to group multiple rounds together.
@@ -753,6 +772,7 @@ export interface TournamentOrganizationSeries {
 	description: string | null;
 	substringMatches: JSONColumnType<string[]>;
 	showLeaderboard: Generated<number>;
+	tierHistory: JSONColumnTypeNullable<TournamentTierNumber[]>;
 }
 
 export interface TournamentBracketProgressionOverride {
@@ -844,7 +864,24 @@ export interface UserPreferences {
 	 * "12h" = 12 hour format (e.g. 2:00 PM)
 	 * */
 	clockFormat?: "24h" | "12h" | "auto";
+	/** Is the new widget based user page enabled? (Supporter early preview) */
+	newProfileEnabled?: boolean;
 }
+
+export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;
+export const OBJECT_PRONOUNS = [
+	"him",
+	"her",
+	"them",
+	"its",
+	"all",
+	...SUBJECT_PRONOUNS,
+] as const;
+
+export type Pronouns = {
+	subject: (typeof SUBJECT_PRONOUNS)[number];
+	object: (typeof OBJECT_PRONOUNS)[number];
+};
 
 export interface User {
 	/** 1 = permabanned, timestamp = ban active till then */
@@ -874,6 +911,7 @@ export interface User {
 	isApiAccesser: Generated<DBBoolean | null>;
 	languages: string | null;
 	motionSens: number | null;
+	pronouns: JSONColumnTypeNullable<Pronouns>;
 	patronSince: number | null;
 	patronTier: number | null;
 	patronTill: number | null;
@@ -928,11 +966,27 @@ export interface UserFriendCode {
 	createdAt: GeneratedAlways<number>;
 }
 
+export interface UserWidget {
+	userId: number;
+	index: number;
+	widget: JSONColumnType<StoredWidget>;
+}
+export type ApiTokenType = "read" | "write";
+
 export interface ApiToken {
 	id: GeneratedAlways<number>;
 	userId: number;
 	token: string;
+	type: Generated<ApiTokenType>;
 	createdAt: GeneratedAlways<number>;
+}
+
+export interface LiveStream {
+	id: GeneratedAlways<number>;
+	userId: number | null;
+	viewerCount: number;
+	thumbnailUrl: string;
+	twitch: string | null;
 }
 
 export interface BanLog {
@@ -1109,6 +1163,7 @@ export interface DB {
 	AllTeamMember: TeamMember;
 	ApiToken: ApiToken;
 	Art: Art;
+	LiveStream: LiveStream;
 	ArtTag: ArtTag;
 	ArtUserMetadata: ArtUserMetadata;
 	TaggedArt: TaggedArt;
@@ -1178,6 +1233,7 @@ export interface DB {
 	UserSubmittedImage: UserSubmittedImage;
 	UserWeapon: UserWeapon;
 	UserFriendCode: UserFriendCode;
+	UserWidget: UserWidget;
 	Video: Video;
 	VideoMatch: VideoMatch;
 	VideoMatchPlayer: VideoMatchPlayer;

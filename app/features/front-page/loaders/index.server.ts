@@ -1,7 +1,6 @@
 import cachified from "@epic-web/cachified";
-import type { LoaderFunctionArgs } from "react-router";
 import type { Tables } from "~/db/tables";
-import { getUserId } from "~/features/auth/core/user.server";
+import { getUser } from "~/features/auth/core/user.server";
 import * as Changelog from "~/features/front-page/core/Changelog.server";
 import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
@@ -10,8 +9,8 @@ import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { discordAvatarUrl, teamPage, userPage } from "~/utils/urls";
 import * as ShowcaseTournaments from "../core/ShowcaseTournaments.server";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUserId(request);
+export const loader = async () => {
+	const user = getUser();
 
 	const [tournaments, changelog, leaderboards] = await Promise.all([
 		ShowcaseTournaments.frontPageTournamentsByUserId(user?.id ?? null),

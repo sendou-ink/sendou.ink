@@ -200,7 +200,8 @@
 .u__weapon {
 	padding: var(--s-2);
 	border-radius: 100%;
-	background-color: var(--bg-lighter);
+	background-color: var(--bg-lightest);
+	border: 2px solid var(--border);
 }
 
 .u__build-form {

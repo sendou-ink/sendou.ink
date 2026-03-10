@@ -94,7 +94,6 @@ function ThemeProvider({
 		[setThemeState, persistTheme],
 	);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: biome migration
 	useEffect(() => {
 		if (!isAutoDetected) {
 			return;

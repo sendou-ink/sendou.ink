@@ -1,19 +1,20 @@
-import { expect, test } from "@playwright/test";
-// import { NZAP_TEST_ID } from "~/db/seed/constants";
-// import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { StageId } from "~/modules/in-game-lists/types";
-// import invariant from "~/utils/invariant";
 import {
+	expect,
 	impersonate,
 	isNotVisible,
 	navigate,
 	seed,
-	// selectUser,
 	submit,
+	test,
 } from "~/utils/playwright";
-import { tournamentBracketsPage, tournamentPage } from "~/utils/urls";
+import {
+	tournamentBracketsPage,
+	tournamentPage,
+	tournamentTeamsPage,
+} from "~/utils/urls";
 
 // TODO: restore operates admin controls after single fetch tested in prod
 
@@ -254,7 +255,7 @@ test.describe("Tournament", () => {
 			url: `${tournamentPage(1)}/seeds`,
 		});
 
-		await page.getByTestId("seed-team-1").hover();
+		await page.getByTestId("seed-team-1-handle").hover();
 		await page.mouse.down();
 		// i think the drag & drop library might actually be a bit buggy
 		// so we have to do it in steps like this to allow for testing
@@ -263,7 +264,10 @@ test.describe("Tournament", () => {
 
 		await submit(page);
 
-		await page.getByTestId("teams-tab").click();
+		await navigate({
+			page,
+			url: tournamentTeamsPage(1),
+		});
 		await expect(page.getByTestId("team-name").first()).not.toHaveText(
 			"Chimera",
 		);

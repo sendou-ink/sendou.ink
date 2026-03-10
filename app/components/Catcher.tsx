@@ -6,6 +6,7 @@ import {
 } from "react-router";
 import { useLocation } from "react-use";
 import { useUser } from "~/features/auth/core/user";
+import { getSessionId } from "~/utils/session-id";
 import {
 	ERROR_GIRL_IMAGE_PATH,
 	LOG_IN_URL,
@@ -52,10 +53,11 @@ export function Catcher() {
 	}
 
 	if (!isRouteErrorResponse(error)) {
+		const sessionId = getSessionId();
 		const errorText = (() => {
 			if (!(error instanceof Error)) return;
 
-			return `Time: ${new Date().toISOString()}\nURL: ${location.href}\nUser ID: ${user?.id ?? "Not logged in"}\n${error.stack ?? error.message}`;
+			return `Session ID: ${sessionId}\nTime: ${new Date().toISOString()}\nURL: ${location.href}\nUser ID: ${user?.id ?? "Not logged in"}\n${error.stack ?? error.message}`;
 		})();
 
 		return (
@@ -124,12 +126,15 @@ export function Catcher() {
 					<h2>Error {error.status}</h2>
 					<GetHelp />
 					<div className="text-sm text-lighter font-semi-bold">
-						Please include the message below if any and an explanation on what
-						you were doing:
+						Please include the session ID and message below if any and an
+						explanation on what you were doing:
 					</div>
-					{error.data ? (
-						<pre>{JSON.stringify(JSON.parse(error.data), null, 2)}</pre>
-					) : null}
+					<pre>
+						Session ID: {getSessionId()}
+						{error.data
+							? `\n${JSON.stringify(JSON.parse(error.data), null, 2)}`
+							: null}
+					</pre>
 				</Main>
 			);
 	}

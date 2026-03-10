@@ -77,6 +77,18 @@ describe("actuallyNonEmptyStringOrNull", () => {
 	it("returns null for a string with only tag space emoji", () => {
 		expect(actuallyNonEmptyStringOrNull("󠀠󠀠󠀠󠀠󠀠")).toBeNull();
 	});
+
+	it("returns null for a string with only Hangul Filler", () => {
+		expect(actuallyNonEmptyStringOrNull("\u3164")).toBeNull();
+		expect(actuallyNonEmptyStringOrNull("ㅤㅤㅤ")).toBeNull();
+	});
+
+	it("returns null for other invisible characters", () => {
+		expect(actuallyNonEmptyStringOrNull("\u115F")).toBeNull();
+		expect(actuallyNonEmptyStringOrNull("\u1160")).toBeNull();
+		expect(actuallyNonEmptyStringOrNull("\uFEFF")).toBeNull();
+		expect(actuallyNonEmptyStringOrNull("\u2060")).toBeNull();
+	});
 });
 
 describe("timeString", () => {

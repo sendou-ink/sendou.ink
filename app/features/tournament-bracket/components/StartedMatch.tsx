@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { differenceInMinutes } from "date-fns";
 import type { TFunction } from "i18next";
+import type { JSX } from "react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Form, useLoaderData } from "react-router";
@@ -312,6 +313,7 @@ function FancyStageBanner({
 	};
 
 	const inBanPhase =
+		!data.matchIsOver &&
 		data.match.roundMaps?.pickBan === "BAN_2" &&
 		data.mapList &&
 		data.mapList.filter((m) => m.bannedByTournamentTeamId).length < 2;
@@ -463,7 +465,9 @@ function FancyStageBanner({
 							})}
 						</h4>
 					</div>
-					{data.match.startedAt && !data.matchIsOver ? (
+					{data.match.startedAt &&
+					!tournament.isLeagueDivision &&
+					!data.matchIsOver ? (
 						<DeadlineInfoPopover
 							startedAt={databaseTimestampToDate(data.match.startedAt)}
 							bestOf={data.match.bestOf}
@@ -661,11 +665,11 @@ function StartedMatchTabs({
 				...data.match.players.map((p) => ({ ...p, title: undefined })),
 				...(tournament.ctx.organization?.members ?? []).map((m) => ({
 					...m,
-					title: m.role === "STREAMER" ? "Stream" : "TO",
+					title: m.role === "STREAMER" ? "Cast" : "TO",
 				})),
 				...tournament.ctx.staff.map((s) => ({
 					...s,
-					title: s.role === "STREAMER" ? "Stream" : "TO",
+					title: s.role === "STREAMER" ? "Cast" : "TO",
 				})),
 				{
 					...tournament.ctx.author,

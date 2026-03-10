@@ -1,38 +1,42 @@
 import { z } from "zod";
-import { _action, actualNumber, trimmedString } from "~/utils/zod";
-import { PLUS_SUGGESTION, PLUS_TIERS } from "./plus-suggestions-constants";
+import {
+	idConstant,
+	selectDynamic,
+	stringConstant,
+	textAreaRequired,
+	userSearch,
+} from "~/form/fields";
+import { _action, actualNumber } from "~/utils/zod";
+import { PLUS_TIERS } from "./plus-suggestions-constants";
 
-export const followUpCommentActionSchema = z.object({
-	comment: z.preprocess(
-		trimmedString,
-		z.string().min(1).max(PLUS_SUGGESTION.COMMENT_MAX_LENGTH),
-	),
-	tier: z.preprocess(
-		actualNumber,
-		z
-			.number()
-			.min(Math.min(...PLUS_TIERS))
-			.max(Math.max(...PLUS_TIERS)),
-	),
-	suggestedId: z.preprocess(actualNumber, z.number()),
+export const followUpCommentFormSchema = z.object({
+	tier: idConstant(),
+	suggestedId: idConstant(),
+	comment: textAreaRequired({
+		label: "labels.comment",
+		maxLength: 280,
+	}),
 });
 
-export const firstCommentActionSchema = z.object({
-	tier: z.preprocess(
-		actualNumber,
-		z
-			.number()
-			.min(Math.min(...PLUS_TIERS))
-			.max(Math.max(...PLUS_TIERS)),
-	),
-	comment: z.preprocess(
-		trimmedString,
-		z.string().min(1).max(PLUS_SUGGESTION.FIRST_COMMENT_MAX_LENGTH),
-	),
-	userId: z.preprocess(actualNumber, z.number().positive()),
+const suggestionTextFormFieldSchema = textAreaRequired({
+	label: "labels.comment",
+	maxLength: 500,
+});
+
+export const newSuggestionFormSchema = z.object({
+	tier: selectDynamic({ label: "labels.plusTier" }),
+	userId: userSearch({ label: "labels.user" }),
+	comment: suggestionTextFormFieldSchema,
+});
+
+export const editSuggestionFormSchema = z.object({
+	_action: stringConstant("EDIT_SUGGESTION"),
+	suggestionId: idConstant(),
+	comment: suggestionTextFormFieldSchema,
 });
 
 export const suggestionActionSchema = z.union([
+	editSuggestionFormSchema,
 	z.object({
 		_action: _action("DELETE_COMMENT"),
 		suggestionId: z.preprocess(actualNumber, z.number()),

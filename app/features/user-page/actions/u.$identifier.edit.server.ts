@@ -1,61 +1,85 @@
 import { type ActionFunction, redirect } from "react-router";
-import { requireUserId } from "~/features/auth/core/user.server";
+import { requireUser } from "~/features/auth/core/user.server";
+import { BADGE } from "~/features/badges/badges-constants";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { safeParseRequestFormData } from "~/utils/remix.server";
-import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
+import { parseFormData } from "~/form/parse.server";
 import { userPage } from "~/utils/urls";
-import { userEditActionSchema } from "../user-page-schemas";
+import { userEditProfileSchemaServer } from "../user-page-schemas.server";
 
 export const action: ActionFunction = async ({ request }) => {
-	const parsedInput = await safeParseRequestFormData({
+	const user = requireUser();
+
+	const result = await parseFormData({
 		request,
-		schema: userEditActionSchema,
+		schema: userEditProfileSchemaServer,
 	});
 
-	if (!parsedInput.success) {
-		return {
-			errors: parsedInput.errors,
-		};
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
 	}
 
-	const { inGameNameText, inGameNameDiscriminator, ...data } = parsedInput.data;
+	const data = result.data;
 
-	const user = await requireUserId(request);
-	const inGameName =
-		inGameNameText && inGameNameDiscriminator
-			? `${inGameNameText}#${inGameNameDiscriminator}`
+	const [subjectPronoun, objectPronoun] = data.pronouns ?? [null, null];
+	const pronouns =
+		subjectPronoun && objectPronoun
+			? JSON.stringify({ subject: subjectPronoun, object: objectPronoun })
 			: null;
 
-	try {
-		const editedUser = await UserRepository.updateProfile({
-			...data,
-			inGameName,
-			userId: user.id,
-		});
+	const [motionSens, stickSens] = data.sensitivity ?? [null, null];
 
-		// TODO: to transaction
-		if (inGameName) {
-			const tournamentIdsAffected =
-				await TournamentTeamRepository.updateMemberInGameNameForNonStarted({
-					inGameName,
-					userId: user.id,
-				});
+	const weapons = data.weapons.map((w) => ({
+		weaponSplId: w.id,
+		isFavorite: w.isFavorite ? (1 as const) : (0 as const),
+	}));
 
-			for (const tournamentId of tournamentIdsAffected) {
-				clearTournamentDataCache(tournamentId);
-			}
+	const css = data.css ? JSON.stringify(data.css) : null;
+
+	const isSupporter = user.roles?.includes("SUPPORTER");
+	const isArtist = user.roles?.includes("ARTIST");
+
+	const maxBadgeCount = isSupporter
+		? BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1
+		: 1;
+	const limitedBadgeIds = data.favoriteBadgeIds.slice(0, maxBadgeCount);
+
+	const editedUser = await UserRepository.updateProfile({
+		userId: user.id,
+		country: data.country,
+		bio: data.bio,
+		customUrl: data.customUrl,
+		customName: data.customName,
+		motionSens: motionSens !== null ? Number(motionSens) : null,
+		stickSens: stickSens !== null ? Number(stickSens) : null,
+		pronouns,
+		inGameName: data.inGameName,
+		css: isSupporter ? css : null,
+		battlefy: data.battlefy,
+		weapons,
+		favoriteBadgeIds: limitedBadgeIds.length > 0 ? limitedBadgeIds : null,
+		showDiscordUniqueName: data.showDiscordUniqueName ? 1 : 0,
+		commissionsOpen: isArtist && data.commissionsOpen ? 1 : 0,
+		commissionText: isArtist ? data.commissionText : null,
+	});
+
+	await UserRepository.updatePreferences(user.id, {
+		newProfileEnabled: isSupporter ? data.newProfileEnabled : false,
+	});
+
+	// TODO: to transaction
+	if (data.inGameName) {
+		const tournamentIdsAffected =
+			await TournamentTeamRepository.updateMemberInGameNameForNonStarted({
+				inGameName: data.inGameName,
+				userId: user.id,
+			});
+
+		for (const tournamentId of tournamentIdsAffected) {
+			clearTournamentDataCache(tournamentId);
 		}
-
-		throw redirect(userPage(editedUser));
-	} catch (e) {
-		if (!errorIsSqliteUniqueConstraintFailure(e)) {
-			throw e;
-		}
-
-		return {
-			errors: ["forms.errors.invalidCustomUrl.duplicate"],
-		};
 	}
+
+	throw redirect(userPage(editedUser));
 };

@@ -79,7 +79,9 @@
 	"filter.orgsIncluded": "",
 	"filter.orgsExcluded": "",
 	"filter.authorIdsExcluded": "",
-	"filter.authorIdsExcludedBottom": "",
 	"filter.apply": "",
-	"filter.applyAndDefault": ""
+	"filter.applyAndDefault": "",
+	"forms.draft": "",
+	"forms.draftInfo": "",
+	"forms.draftBracketStartBlocked": ""
 }
