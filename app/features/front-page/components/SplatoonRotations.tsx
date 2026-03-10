@@ -31,7 +31,14 @@ export function SplatoonRotations() {
 	const [activeFilter, setActiveFilter] =
 		React.useState<RotationModeFilter>("ALL");
 
-	if (data.rotations.length === 0) return null;
+	const nowUnixLive = useNowUnix();
+
+	const allInThePast = data.rotations.every(
+		(rotation) => rotation.endTime <= nowUnixLive,
+	);
+	if (allInThePast) return null;
+
+	if (allInThePast || data.rotations.length === 0) return null;
 
 	const nowUnix = databaseTimestampNow();
 
@@ -71,10 +78,6 @@ export function SplatoonRotations() {
 		rotationsByType.set(rotation.type, existing);
 	}
 
-	const handleFilterChange = (filter: RotationModeFilter) => {
-		setActiveFilter(filter);
-	};
-
 	const sortedEntries = Array.from(rotationsByType.entries()).sort(
 		(a, b) => TYPE_ORDER.indexOf(a[0]) - TYPE_ORDER.indexOf(b[0]),
 	);
@@ -90,6 +93,7 @@ export function SplatoonRotations() {
 							current={current}
 							next={next}
 							nextAfter={nextAfter}
+							now={nowUnixLive}
 						/>
 					) : null,
 				)}
@@ -107,7 +111,7 @@ export function SplatoonRotations() {
 									? styles.rotationsModeFilterButtonActive
 									: null,
 							)}
-							onClick={() => handleFilterChange(filter)}
+							onClick={() => setActiveFilter(filter)}
 						>
 							{filter === "ALL" ? t("front:rotations.filter.all") : filter}
 						</button>
@@ -123,7 +127,7 @@ export function SplatoonRotations() {
 	);
 }
 
-function useTimeRemaining(startTimeUnix: number, endTimeUnix: number) {
+function useNowUnix() {
 	const [now, setNow] = React.useState(() => Math.floor(Date.now() / 1000));
 
 	React.useEffect(() => {
@@ -133,6 +137,15 @@ function useTimeRemaining(startTimeUnix: number, endTimeUnix: number) {
 		return () => clearInterval(interval);
 	}, []);
 
+	return now;
+}
+
+// xxx: can we use date-fns?
+function timeRemaining(
+	now: number,
+	startTimeUnix: number,
+	endTimeUnix: number,
+) {
 	const remaining = endTimeUnix - now;
 	if (remaining <= 0) return null;
 
@@ -145,16 +158,8 @@ function useTimeRemaining(startTimeUnix: number, endTimeUnix: number) {
 	return { hours, minutes, progress };
 }
 
-function useTimeUntil(startTimeUnix: number) {
-	const [now, setNow] = React.useState(() => Math.floor(Date.now() / 1000));
-
-	React.useEffect(() => {
-		const interval = setInterval(() => {
-			setNow(Math.floor(Date.now() / 1000));
-		}, 60_000);
-		return () => clearInterval(interval);
-	}, []);
-
+// xxx: can we use date-fns?
+function timeUntil(now: number, startTimeUnix: number) {
 	const diff = startTimeUnix - now;
 	if (diff <= 0) return null;
 
@@ -168,20 +173,23 @@ function RotationCard({
 	current,
 	next,
 	nextAfter,
+	now,
 }: {
 	type: string;
 	current: RotationFromLoader | undefined;
 	next: RotationFromLoader | undefined;
 	nextAfter: RotationFromLoader | undefined;
+	now: number;
 }) {
 	const { t } = useTranslation(["front", "game-misc"]);
-	const remaining = useTimeRemaining(
+	const remaining = timeRemaining(
+		now,
 		current?.startTime ?? 0,
 		current?.endTime ?? 0,
 	);
 	const displayRotation = current ?? next;
-	const nextStartsIn = useTimeUntil(next?.startTime ?? 0);
-	const nextAfterStartsIn = useTimeUntil(nextAfter?.startTime ?? 0);
+	const nextStartsIn = timeUntil(now, next?.startTime ?? 0);
+	const nextAfterStartsIn = timeUntil(now, nextAfter?.startTime ?? 0);
 	const shownNext = current ? next : nextAfter;
 	const shownNextStartsIn = current ? nextStartsIn : nextAfterStartsIn;
 

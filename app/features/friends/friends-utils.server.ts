@@ -1,5 +1,6 @@
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
+import { SENDOUQ_ACTIVITY_LABEL } from "./friends-constants";
 
 export function resolveFriendActivity(
 	friendId: number,
@@ -9,7 +10,7 @@ export function resolveFriendActivity(
 
 	if (ownGroup && ownGroup.members.length < FULL_GROUP_SIZE) {
 		return {
-			subtitle: "SendouQ",
+			subtitle: SENDOUQ_ACTIVITY_LABEL,
 			badge: `${ownGroup.members.length}/${FULL_GROUP_SIZE}`,
 		};
 	}

@@ -72,6 +72,71 @@ export function SideNavHeader({
 	);
 }
 
+function ListItemContent({
+	children,
+	user,
+	imageUrl,
+	overlayIconUrl,
+	subtitle,
+	badge,
+	badgeVariant,
+	suppressSubtitleHydrationWarning,
+}: {
+	children: React.ReactNode;
+	user?: Pick<Tables["User"], "discordId" | "discordAvatar">;
+	imageUrl?: string;
+	overlayIconUrl?: string;
+	subtitle?: React.ReactNode;
+	badge?: React.ReactNode;
+	badgeVariant?: "default" | "warning";
+	suppressSubtitleHydrationWarning?: boolean;
+}) {
+	return (
+		<>
+			{user ? (
+				<Avatar user={user} size="xxsm" />
+			) : imageUrl ? (
+				<div className={styles.listLinkImageContainer}>
+					<img src={imageUrl} alt="" className={styles.listLinkImage} />
+					{overlayIconUrl ? (
+						<img
+							src={overlayIconUrl}
+							alt=""
+							className={styles.listLinkOverlayIcon}
+						/>
+					) : null}
+				</div>
+			) : null}
+			<div className={styles.listLinkContent}>
+				<span className={styles.listLinkTitle}>{children}</span>
+				{subtitle || badge ? (
+					<div className={styles.listLinkSubtitleRow}>
+						{subtitle ? (
+							<span
+								className={styles.listLinkSubtitle}
+								suppressHydrationWarning={suppressSubtitleHydrationWarning}
+							>
+								{subtitle}
+							</span>
+						) : null}
+						{typeof badge === "string" ? (
+							<span
+								className={clsx(styles.listLinkBadge, {
+									[styles.listLinkBadgeWarning]: badgeVariant === "warning",
+								})}
+							>
+								{badge}
+							</span>
+						) : (
+							badge
+						)}
+					</div>
+				) : null}
+			</div>
+		</>
+	);
+}
+
 export function ListLink({
 	children,
 	to,
@@ -102,46 +167,17 @@ export function ListLink({
 			onClick={onClick}
 			aria-current={isActive ? "page" : undefined}
 		>
-			{user ? (
-				<Avatar user={user} size="xxsm" />
-			) : imageUrl ? (
-				<div className={styles.listLinkImageContainer}>
-					<img src={imageUrl} alt="" className={styles.listLinkImage} />
-					{overlayIconUrl ? (
-						<img
-							src={overlayIconUrl}
-							alt=""
-							className={styles.listLinkOverlayIcon}
-						/>
-					) : null}
-				</div>
-			) : null}
-			<div className={styles.listLinkContent}>
-				<span className={styles.listLinkTitle}>{children}</span>
-				{subtitle || badge ? (
-					<div className={styles.listLinkSubtitleRow}>
-						{subtitle ? (
-							<span
-								className={styles.listLinkSubtitle}
-								suppressHydrationWarning
-							>
-								{subtitle}
-							</span>
-						) : null}
-						{typeof badge === "string" ? (
-							<span
-								className={clsx(styles.listLinkBadge, {
-									[styles.listLinkBadgeWarning]: badgeVariant === "warning",
-								})}
-							>
-								{badge}
-							</span>
-						) : (
-							badge
-						)}
-					</div>
-				) : null}
-			</div>
+			<ListItemContent
+				user={user}
+				imageUrl={imageUrl}
+				overlayIconUrl={overlayIconUrl}
+				subtitle={subtitle}
+				badge={badge}
+				badgeVariant={badgeVariant}
+				suppressSubtitleHydrationWarning
+			>
+				{children}
+			</ListItemContent>
 		</Link>
 	);
 }
@@ -161,26 +197,14 @@ export function ListButton({
 }) {
 	return (
 		<Button className={styles.listButton}>
-			{user ? <Avatar user={user} size="xxsm" /> : null}
-			<div className={styles.listLinkContent}>
-				<span className={styles.listLinkTitle}>{children}</span>
-				{subtitle || badge ? (
-					<div className={styles.listLinkSubtitleRow}>
-						{subtitle ? (
-							<span className={styles.listLinkSubtitle}>{subtitle}</span>
-						) : null}
-						{badge ? (
-							<span
-								className={clsx(styles.listLinkBadge, {
-									[styles.listLinkBadgeWarning]: badgeVariant === "warning",
-								})}
-							>
-								{badge}
-							</span>
-						) : null}
-					</div>
-				) : null}
-			</div>
+			<ListItemContent
+				user={user}
+				subtitle={subtitle}
+				badge={badge}
+				badgeVariant={badgeVariant}
+			>
+				{children}
+			</ListItemContent>
 		</Button>
 	);
 }

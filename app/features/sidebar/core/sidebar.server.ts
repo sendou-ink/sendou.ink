@@ -9,6 +9,7 @@ import {
 	type SidebarStream,
 } from "~/features/core/streams/streams.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
+import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
 import { resolveFriendActivity } from "~/features/friends/friends-utils.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
@@ -253,7 +254,7 @@ function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
 			activity.badge ?? "",
 		);
 
-		if (activity.subtitle === "SendouQ") {
+		if (activity.subtitle === SENDOUQ_ACTIVITY_LABEL) {
 			sendouqFriends.push(sidebarFriend);
 		} else {
 			// this is temporary, will be replaced with "SQified tournament team creator"

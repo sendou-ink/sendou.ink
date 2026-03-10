@@ -10,6 +10,7 @@ import {
 	SendouMenuSection,
 } from "~/components/elements/Menu";
 import { ListButton } from "~/components/SideNav";
+import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { SENDOUQ_LOOKING_PAGE, tournamentSubsPage } from "~/utils/urls";
 
@@ -128,7 +129,7 @@ function resolveActivityHref(friend: {
 }) {
 	if (!friend.subtitle) return null;
 
-	if (friend.subtitle === "SendouQ") {
+	if (friend.subtitle === SENDOUQ_ACTIVITY_LABEL) {
 		return { url: SENDOUQ_LOOKING_PAGE, isSendouQ: true };
 	}
 

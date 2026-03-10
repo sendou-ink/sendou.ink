@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { useUser } from "~/features/auth/core/user";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
+import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
 import type { RootLoaderData } from "~/root";
 import {
 	EVENTS_PAGE,
@@ -50,7 +51,8 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 
 	const hasUnseenNotifications = unseenIds.length > 0;
 	const hasFriendInSendouQ =
-		sidebarData?.friends.some((f) => f.subtitle === "SendouQ") ?? false;
+		sidebarData?.friends.some((f) => f.subtitle === SENDOUQ_ACTIVITY_LABEL) ??
+		false;
 
 	const closePanel = () => setActivePanel("closed");
 
