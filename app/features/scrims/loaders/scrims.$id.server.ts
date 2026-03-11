@@ -45,6 +45,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	return {
 		post,
+		// xxx: only chatCode if permissions
+		chatCode: post.chatCode,
 		anyUserPrefersNoScreen:
 			await UserRepository.anyUserPrefersNoScreen(participantIds),
 		tournamentMapPool: post.mapsTournament

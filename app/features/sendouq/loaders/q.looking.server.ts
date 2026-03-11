@@ -57,6 +57,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				? []
 				: groups,
 		ownGroup,
+		// xxx: only chatCode if permissions
+		chatCode: ownGroup?.chatCode,
 		likes: ownGroup
 			? await SQGroupRepository.allLikesByGroupId(ownGroup.id)
 			: {

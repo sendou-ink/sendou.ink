@@ -67,5 +67,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				})
 			: null,
 		rawReportedWeapons,
+		// xxx: only chatCode if permissions
+		chatCode: match.chatCode,
 	};
 };

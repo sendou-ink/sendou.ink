@@ -119,5 +119,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		matchIsOver,
 		endedEarly,
 		noScreen,
+		// xxx: only chatCode if permissions
+		chatCode: match.chatCode,
 	};
 };

@@ -4,7 +4,11 @@ import * as React from "react";
 import { useMatches, useRevalidator } from "react-router";
 import { logger } from "~/utils/logger";
 import { soundPath } from "~/utils/urls";
-import type { RoomInfo, ServerRoomInfo } from "./chat-provider-types";
+import type {
+	RoomInfo,
+	RoomMetadata,
+	ServerRoomInfo,
+} from "./chat-provider-types";
 import type { ChatMessage, ChatUser } from "./chat-types";
 import { messageTypeToSound, soundEnabled, soundVolume } from "./chat-utils";
 import { ChatContext } from "./useChatContext";
@@ -161,7 +165,7 @@ function ChatProviderInner({
 			return;
 		}
 
-		// CHAT_HISTORY response
+		// CHAT_HISTORY response (also returned by SUBSCRIBE with metadata)
 		if (parsed.event === "CHAT_HISTORY" && Array.isArray(parsed.messages)) {
 			const chatCode = parsed.chatCode as string;
 			const messages = parsed.messages as ChatMessage[];
@@ -169,6 +173,30 @@ function ChatProviderInner({
 				...prev,
 				[chatCode]: messages,
 			}));
+
+			if (parsed.metadata) {
+				const metadata = parsed.metadata as RoomMetadata;
+				const newRoom: RoomInfo = {
+					chatCode,
+					header: metadata.header,
+					subtitle: metadata.subtitle ?? "",
+					url: metadata.url ?? "",
+					participantUserIds: metadata.participantUserIds,
+					expiresAt: metadata.expiresAt,
+					lastMessageTimestamp: messages.at(-1)?.timestamp ?? 0,
+					totalMessageCount: messages.length,
+				};
+				setRooms((prev) => {
+					const exists = prev.some((r) => r.chatCode === chatCode);
+					if (exists) return prev;
+					return [...prev, newRoom];
+				});
+
+				if (metadata.chatUsers) {
+					setChatUsersCache((prev) => ({ ...prev, ...metadata.chatUsers }));
+				}
+			}
+
 			return;
 		}
 
@@ -379,6 +407,8 @@ function ChatProviderInner({
 		setSidebarOpen,
 		subscribe,
 		unsubscribe,
+		setRooms,
+		setMessagesByRoom,
 	});
 
 	const contextValue = React.useMemo(
@@ -422,6 +452,9 @@ function ChatProviderInner({
 	);
 }
 
+// xxx: bug: when viewing as non-participant can't go back to list view
+// xxx: bug: room should close automatically if non-participant and leaves the route
+// xxx: bug: route loading state should show before room metadata loads
 function useChatRouteSync({
 	rooms,
 	userId,
@@ -429,6 +462,8 @@ function useChatRouteSync({
 	setSidebarOpen,
 	subscribe,
 	unsubscribe,
+	setRooms,
+	setMessagesByRoom,
 }: {
 	rooms: RoomInfo[];
 	userId: number;
@@ -436,6 +471,10 @@ function useChatRouteSync({
 	setSidebarOpen: (open: boolean) => void;
 	subscribe: (chatCode: string) => void;
 	unsubscribe: (chatCode: string) => void;
+	setRooms: React.Dispatch<React.SetStateAction<RoomInfo[]>>;
+	setMessagesByRoom: React.Dispatch<
+		React.SetStateAction<Record<string, ChatMessage[]>>
+	>;
 }) {
 	const matches = useMatches();
 	const subscribedRoomRef = React.useRef<string | null>(null);
@@ -451,38 +490,31 @@ function useChatRouteSync({
 			}
 		}
 
-		if (!chatCode) {
-			// Leaving a chat route: unsubscribe from staff-subscribed rooms
-			if (subscribedRoomRef.current) {
-				unsubscribe(subscribedRoomRef.current);
-				subscribedRoomRef.current = null;
-			}
-			return;
+		const previousSubscribed = subscribedRoomRef.current;
+
+		// Clean up previous non-participant subscription if chatCode changed
+		if (previousSubscribed && previousSubscribed !== chatCode) {
+			unsubscribe(previousSubscribed);
+			setRooms((prev) => prev.filter((r) => r.chatCode !== previousSubscribed));
+			setMessagesByRoom((prev) => {
+				const { [previousSubscribed]: _, ...rest } = prev;
+				return rest;
+			});
+			subscribedRoomRef.current = null;
 		}
+
+		if (!chatCode) return;
 
 		const room = rooms.find((r) => r.chatCode === chatCode);
+		const isParticipant = room?.participantUserIds.includes(userId);
 
-		if (room) {
-			const isParticipant = room.participantUserIds.includes(userId);
-
-			if (isParticipant) {
-				setActiveRoom(chatCode);
-				setSidebarOpen(true);
-			} else {
-				// Staff/TO viewing: subscribe temporarily
-				subscribe(chatCode);
-				subscribedRoomRef.current = chatCode;
-				setActiveRoom(chatCode);
-				setSidebarOpen(true);
-			}
+		if (!isParticipant && subscribedRoomRef.current !== chatCode) {
+			subscribe(chatCode);
+			subscribedRoomRef.current = chatCode;
 		}
 
-		return () => {
-			if (subscribedRoomRef.current) {
-				unsubscribe(subscribedRoomRef.current);
-				subscribedRoomRef.current = null;
-			}
-		};
+		setActiveRoom(chatCode);
+		setSidebarOpen(true);
 	}, [
 		matches,
 		rooms,
@@ -491,5 +523,7 @@ function useChatRouteSync({
 		setSidebarOpen,
 		subscribe,
 		unsubscribe,
+		setRooms,
+		setMessagesByRoom,
 	]);
 }
