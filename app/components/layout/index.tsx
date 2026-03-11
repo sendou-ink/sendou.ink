@@ -311,7 +311,10 @@ export function Layout({
 						isOpen={sideNavModalOpen}
 						onOpenChange={setSideNavModalOpen}
 					>
-						<SideNavCollapseButton className={styles.sideNavModalTrigger} />
+						<SideNavCollapseButton
+							className={styles.sideNavModalTrigger}
+							showNotificationDot={!sideNavModalOpen && unseenIds.length > 0}
+						/>
 						<ModalOverlay className={styles.sideNavModalOverlay} isDismissable>
 							<Modal className={styles.sideNavModal}>
 								<Dialog className={styles.sideNavModalDialog}>
@@ -331,7 +334,6 @@ export function Layout({
 						isOpen={chatSidebarModalOpen}
 						onOpenChange={setChatSidebarModalOpen}
 					>
-						<Button className={styles.chatSidebarModalTrigger}>{null}</Button>
 						<ModalOverlay
 							className={styles.chatSidebarModalOverlay}
 							isDismissable

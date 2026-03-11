@@ -144,9 +144,22 @@
 }
 
 .sideNavCollapseButtonContainer {
+	display: none;
 	position: relative;
 	--dot-top: 2px;
 	--dot-right: 2px;
+
+	&:has(.sideNavCollapseButton) {
+		@media screen and (min-width: 1000px) {
+			display: flex;
+		}
+	}
+
+	&:has(.sideNavModalTrigger) {
+		@media screen and (min-width: 600px) and (max-width: 999px) {
+			display: flex;
+		}
+	}
 }
 
 /* Doubled selector increases specificity to beat Button.module.css's display: flex */
