@@ -32,6 +32,7 @@
 	align-items: center;
 	justify-content: center;
 	border-radius: var(--radius-field);
+	font-weight: var(--weight-semi);
 	background-color: var(--color-bg-high);
 	cursor: pointer;
 	font-size: var(--font-xs);

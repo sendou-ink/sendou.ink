@@ -1343,10 +1343,10 @@ function TOPickedMapPoolInfo() {
 
 	return (
 		<Section title={t("calendar:forms.mapPool")}>
-			<div className="event__map-pool-section">
+			<div>
 				<MapPoolStages mapPool={mapPool} />
 				<LinkButton
-					className="event__create-map-list-link"
+					className="mt-4"
 					to={mapsPageWithMapPool(mapPool)}
 					variant="outlined"
 					size="small"

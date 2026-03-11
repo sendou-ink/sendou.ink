@@ -459,7 +459,7 @@
 .overlapDivider::before,
 .overlapDivider::after {
 	flex: 1;
-	border-bottom: 2px solid var(--color-accent-low);
+	border-bottom: 2px solid var(--color-bg-higher);
 	content: "";
 }
 
@@ -494,6 +494,6 @@
 
 .standingsDivider {
 	width: 5px;
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-high);
 	border-radius: var(--radius-box);
 }
