@@ -42,7 +42,7 @@
 .weaponName {
 	text-transform: uppercase;
 	font-weight: var(--weight-semi);
-	color: var(--color-text-high);
+	color: var(--color-text);
 	font-size: var(--font-2xs);
 	flex: 1;
 	min-width: 0;

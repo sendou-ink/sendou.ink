@@ -111,7 +111,7 @@ function TeamLFGPost({
 						</div>
 					</div>
 					<Divider />
-					<div className="stack horizontal justify-between">
+					<div className="stack horizontal justify-between items-center">
 						<PostTime createdAt={post.createdAt} updatedAt={post.updatedAt} />
 						{post.author.id === user?.id ? (
 							<PostEditButton id={post.id} />

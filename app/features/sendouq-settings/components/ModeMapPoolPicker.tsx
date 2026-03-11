@@ -159,7 +159,7 @@ function MapButton({
 				<Check className={styles.mapButtonIcon} onClick={onClick} />
 			) : null}
 			{tiebreaker ? (
-				<div className={clsx(styles.mapButtonText, "text-info")}>Tiebreak</div>
+				<div className={styles.mapButtonText}>Tiebreak</div>
 			) : banned ? (
 				<div className={clsx(styles.mapButtonText, "text-error")}>Banned</div>
 			) : null}

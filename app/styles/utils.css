@@ -498,7 +498,8 @@
 		}
 	}
 
-	.scrollbar {
+	.scrollbar,
+	textarea {
 		@supports not selector(::-webkit-scrollbar) {
 			scrollbar-width: thin;
 			scrollbar-color: var(--color-bg-higher) transparent;
@@ -516,6 +517,10 @@
 			border-radius: var(--radius-full);
 			border: 4px solid transparent;
 			background-clip: content-box;
+		}
+
+		&::-webkit-scrollbar-corner {
+			background-color: transparent;
 		}
 	}
 
