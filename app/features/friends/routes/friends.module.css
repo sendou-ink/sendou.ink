@@ -21,9 +21,16 @@
 	gap: var(--s-2);
 }
 
+.filterRadioContainer {
+	all: unset;
+}
+
 .filterRadio {
-	padding: var(--s-1) var(--s-2);
-	border-radius: var(--radius-field);
+	display: flex;
+	align-items: center;
+	padding: 0 var(--s-2);
+	height: var(--selector-size-sm);
+	border-radius: var(--radius-selector);
 	cursor: pointer;
 	color: var(--color-text-high);
 	font-weight: var(--weight-semi);

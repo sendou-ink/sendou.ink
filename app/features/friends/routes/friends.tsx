@@ -4,6 +4,7 @@ import { Radio, RadioGroup } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Form, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
+import { Divider } from "~/components/Divider";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { SendouForm } from "~/form/SendouForm";
@@ -30,6 +31,7 @@ export default function FriendsPage() {
 		<Main halfWidth>
 			<div className="stack lg">
 				<SendFriendRequestSection />
+				<Divider />
 				{data.incomingRequests.length > 0 ? <IncomingRequestsSection /> : null}
 				{data.pendingRequests.length > 0 ? <PendingRequestsSection /> : null}
 				<FriendsListSection />
@@ -43,7 +45,7 @@ function SendFriendRequestSection() {
 
 	return (
 		<section>
-			<h2 className="text-lg">{t("friends:sendRequest.title")}</h2>
+			<h2 className="text-lg mb-2">{t("friends:sendRequest.title")}</h2>
 			<SendouForm
 				schema={sendFriendRequestBaseSchema}
 				submitButtonText={t("friends:sendRequest.submit")}
@@ -177,7 +179,11 @@ function FriendsListSection() {
 					className="stack horizontal xs"
 				>
 					{VIEW_FILTERS.map((value) => (
-						<Radio key={value} value={value}>
+						<Radio
+							key={value}
+							value={value}
+							className={styles.filterRadioContainer}
+						>
 							{({ isSelected }) => (
 								<span
 									className={clsx(styles.filterRadio, {

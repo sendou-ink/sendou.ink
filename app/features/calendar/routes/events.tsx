@@ -61,7 +61,11 @@ export default function EventsPage() {
 						className="stack horizontal xs"
 					>
 						{VIEW_FILTERS.map((value) => (
-							<Radio key={value} value={value}>
+							<Radio
+								key={value}
+								value={value}
+								className={styles.filterRadioContainer}
+							>
 								{({ isSelected }) => (
 									<span
 										className={clsx(styles.filterRadio, {
