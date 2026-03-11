@@ -84,7 +84,7 @@ export function SplatoonRotations() {
 
 	return (
 		<div className={styles.rotationsContainer}>
-			<div className={styles.rotationsScroll}>
+			<div className={clsx(styles.rotationsScroll, "scrollbar")}>
 				{sortedEntries.map(([type, { current, next, nextAfter }]) =>
 					current || next ? (
 						<RotationCard
@@ -231,14 +231,16 @@ function RotationCard({
 				<StageImage
 					stageId={displayRotation.stageId1 as StageId}
 					className={styles.rotationCardStageImage}
+					height={64}
 				/>
 				<StageImage
 					stageId={displayRotation.stageId2 as StageId}
 					className={styles.rotationCardStageImage}
+					height={64}
 				/>
 			</div>
-			{shownNext ? (
-				<div className={styles.rotationCardNext}>
+			<div className={styles.rotationCardNext}>
+				{shownNext ? (
 					<div className={styles.rotationCardNextInfo}>
 						{current && shownNext.startTime === current.endTime ? (
 							t("front:rotations.nextLabel")
@@ -253,8 +255,8 @@ function RotationCard({
 						{t(`game-misc:STAGE_${shownNext.stageId1}` as any).split(" ")[0]},{" "}
 						{t(`game-misc:STAGE_${shownNext.stageId2}` as any).split(" ")[0]}
 					</div>
-				</div>
-			) : null}
+				) : null}
+			</div>
 		</div>
 	);
 }

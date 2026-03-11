@@ -1,7 +1,7 @@
 .rotationsContainer {
 	display: flex;
 	flex-direction: column;
-	gap: var(--s-3);
+	gap: var(--s-2);
 }
 
 .rotationsFooter {
@@ -27,8 +27,9 @@
 .rotationsModeFilterButton {
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
-	padding: var(--s-0-5) var(--s-2);
-	border-radius: var(--radius-field);
+	padding: 0 var(--s-2);
+	height: var(--selector-size);
+	border-radius: var(--radius-selector);
 	background-color: var(--color-bg-higher);
 	color: var(--color-text);
 	cursor: pointer;
@@ -42,8 +43,8 @@
 }
 
 .rotationsScroll {
-	display: flex;
-	gap: var(--s-3);
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
 	overflow-x: auto;
 }
 
@@ -54,7 +55,8 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-1-5);
-	min-width: 230px;
+	min-width: max-content;
+	text-wrap: nowrap;
 }
 
 .rotationCardType {
@@ -78,7 +80,7 @@
 	top: 0;
 	left: 0;
 	bottom: 0;
-	background-color: var(--color-border);
+	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-field);
 }
 
@@ -113,10 +115,12 @@
 }
 
 .rotationCardNext {
+	height: 20px;
 	color: var(--color-text-high);
 
-	img {
+	picture {
 		margin-inline: var(--s-0-5);
+		flex-shrink: 0;
 	}
 }
 

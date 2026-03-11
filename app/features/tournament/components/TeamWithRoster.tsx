@@ -74,9 +74,7 @@ export function TeamWithRoster({
 						return (
 							<li key={member.userId} className={styles.teamMemberRow}>
 								{member.isOwner ? (
-									<span className={`${styles.teamMemberNameRole} text-theme`}>
-										C
-									</span>
+									<span className={`${styles.teamMemberNameRole}`}>C</span>
 								) : null}
 								{isSub && !member.isOwner ? (
 									<span
