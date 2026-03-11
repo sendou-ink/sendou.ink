@@ -1,5 +1,7 @@
 import cachified from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "react-router";
+import { setMetadata } from "~/features/chat/ChatSystemMessage.server";
+import { TOURNAMENT_MATCH_EXPIRY_MS } from "~/features/chat/chat-constants";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -91,6 +93,24 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				countType: match.roundMaps.type,
 			})
 		: false;
+
+	// xxx: also need to check match is currently ongoing
+	if (match.chatCode) {
+		const playerIds = match.players.map((p) => p.id);
+		// xxx: should this be resolved inside setMetadata?
+		const chatUsers = await UserRepository.findChatUsersByUserIds(playerIds);
+
+		// xxx: module.function format
+		setMetadata({
+			chatCode: match.chatCode,
+			header: "Tournament Match",
+			subtitle: `Match #${matchId}`,
+			url: `/to/${tournamentId}/matches/${matchId}`,
+			participantUserIds: playerIds,
+			chatUsers,
+			expiresAt: Date.now() + TOURNAMENT_MATCH_EXPIRY_MS,
+		});
+	}
 
 	return {
 		match,

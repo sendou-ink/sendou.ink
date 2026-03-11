@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import * as React from "react";
+import type * as React from "react";
 import { Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
@@ -17,8 +17,6 @@ import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
-import { useChat } from "~/features/chat/chat-hooks";
-import { Chat } from "~/features/chat/components/Chat";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
@@ -211,51 +209,13 @@ function Groups() {
 	const data = useLoaderData<typeof loader>();
 	const isMounted = useIsMounted();
 
-	const [_unseenMessages, setUnseenMessages] = React.useState(0);
-	const [chatVisible, setChatVisible] = React.useState(false);
 	const { width } = useWindowSize();
-
-	const chatUsers = React.useMemo(() => {
-		return Object.fromEntries(
-			(data.ownGroup?.members ?? []).map((m) => [m.id, m]),
-		);
-	}, [data]);
-
-	const rooms = React.useMemo(() => {
-		return data.ownGroup?.chatCode
-			? [
-					{
-						code: data.ownGroup.chatCode,
-						label: "Group",
-					},
-				]
-			: [];
-	}, [data.ownGroup?.chatCode]);
-
-	const onNewMessage = React.useCallback(() => {
-		setUnseenMessages((msg) => msg + 1);
-	}, []);
-
-	const chat = useChat({ rooms, onNewMessage });
-
-	const onChatMount = React.useCallback(() => {
-		setChatVisible(true);
-	}, []);
-
-	const onChatUnmount = React.useCallback(() => {
-		setChatVisible(false);
-		setUnseenMessages(0);
-	}, []);
-
-	const unseenMessages = chatVisible ? 0 : _unseenMessages;
 
 	if (!isMounted) return null;
 
 	const isMobile = width < 750;
 	const isFullGroup =
 		data.ownGroup && data.ownGroup.members.length === FULL_GROUP_SIZE;
-
-	const showChat = data.ownGroup && data.ownGroup.members.length > 1;
 
 	const invitedGroupsDesktop = (
 		<div className="stack sm">
@@ -284,32 +244,9 @@ function Groups() {
 		</div>
 	);
 
-	const chatElement = (
-		<div>
-			{showChat ? (
-				<>
-					<Chat
-						rooms={rooms}
-						users={chatUsers}
-						className="w-full"
-						messagesContainerClassName={styles.messagesContainer}
-						chat={chat}
-						onMount={onChatMount}
-						onUnmount={onChatUnmount}
-					/>
-					{!isMobile ? (
-						<div className="mt-4">{invitedGroupsDesktop}</div>
-					) : null}
-				</>
-			) : null}
-		</div>
-	);
-
 	const ownGroupElement = data.ownGroup ? (
 		<div className="stack sm">
-			{!showChat && (
-				<ColumnHeader>{t("q:looking.columns.myGroup")}</ColumnHeader>
-			)}
+			<ColumnHeader>{t("q:looking.columns.myGroup")}</ColumnHeader>
 			<GroupCard group={data.ownGroup} showNote ownGroup={data.ownGroup} />
 			{data.ownGroup.inviteCode ? (
 				<MemberAdder
@@ -350,24 +287,8 @@ function Groups() {
 			>
 				{!isMobile ? (
 					<div>
-						<SendouTabs>
-							<SendouTabList>
-								{data.ownGroup && (
-									<SendouTab id="own" number={data.ownGroup.members.length}>
-										{t("q:looking.columns.myGroup")}
-									</SendouTab>
-								)}
-								{showChat && (
-									<SendouTab id="chat" number={unseenMessages}>
-										{t("q:looking.columns.chat")}
-									</SendouTab>
-								)}
-							</SendouTabList>
-							<SendouTabPanel id="own">{ownGroupElement}</SendouTabPanel>
-							{data.ownGroup?.chatCode && (
-								<SendouTabPanel id="chat">{chatElement}</SendouTabPanel>
-							)}
-						</SendouTabs>
+						{ownGroupElement}
+						{invitedGroupsDesktop}
 					</div>
 				) : null}
 				<div className={styles.innerContainer}>
@@ -391,11 +312,6 @@ function Groups() {
 							{isMobile && data.ownGroup && (
 								<SendouTab id="own" number={data.ownGroup.members.length}>
 									{t("q:looking.columns.myGroup")}
-								</SendouTab>
-							)}
-							{isMobile && showChat && (
-								<SendouTab id="chat" number={unseenMessages}>
-									{t("q:looking.columns.chat")}
 								</SendouTab>
 							)}
 						</SendouTabList>
@@ -457,7 +373,6 @@ function Groups() {
 							</div>
 						</SendouTabPanel>
 						<SendouTabPanel id="own">{ownGroupElement}</SendouTabPanel>
-						<SendouTabPanel id="chat">{chatElement}</SendouTabPanel>
 					</SendouTabs>
 				</div>
 				{!isMobile ? (

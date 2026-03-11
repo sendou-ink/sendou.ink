@@ -309,6 +309,8 @@
 	"chat.systemMsg.cancelConfirmed": "",
 	"chat.systemMsg.userLeft": "",
 	"chat.newMessages": "",
+	"chat.sidebar.title": "",
+	"chat.sidebar.noActiveChats": "",
 	"fc.title": "",
 	"fc.helpText": "",
 	"fc.whereToFind": "",

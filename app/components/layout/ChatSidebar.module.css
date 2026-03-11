@@ -168,6 +168,13 @@
 	white-space: nowrap;
 }
 
+.emptyState {
+	padding: var(--s-4);
+	text-align: center;
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+}
+
 .chatContainer {
 	flex: 1;
 	min-height: 0;

@@ -311,6 +311,8 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} ha confermato la cancellazione del match. Il match è ora bloccato",
 	"chat.systemMsg.userLeft": "{{name}} ha lasciato il gruppo",
 	"chat.newMessages": "Nuovi messaggi",
+	"chat.sidebar.title": "",
+	"chat.sidebar.noActiveChats": "",
 	"fc.title": "Codice amico",
 	"fc.helpText": "",
 	"fc.whereToFind": "",

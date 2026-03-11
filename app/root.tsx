@@ -41,6 +41,7 @@ import { Layout } from "./components/layout";
 import { Ramp } from "./components/ramp/Ramp";
 import { getUser } from "./features/auth/core/user.server";
 import { userMiddleware } from "./features/auth/core/user-middleware.server";
+import { ChatProvider } from "./features/chat/ChatProvider";
 import { getSidenavSession } from "./features/layout/core/sidenav-session.server";
 import { sessionIdMiddleware } from "./features/session-id/session-id-middleware.server";
 import {
@@ -193,7 +194,9 @@ function Document({
 						<I18nProvider locale={i18n.language}>
 							<SendouToastRegion />
 							<MyRamp data={data} />
-							<Layout data={data}>{children}</Layout>
+							<ChatProvider user={data?.user}>
+								<Layout data={data}>{children}</Layout>
+							</ChatProvider>
 						</I18nProvider>
 					</RouterProvider>
 				</React.StrictMode>

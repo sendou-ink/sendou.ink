@@ -1,5 +1,4 @@
 import clsx from "clsx";
-import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
 import { Alert } from "~/components/Alert";
@@ -29,7 +28,6 @@ import {
 	teamPage,
 	userPage,
 } from "../../../utils/urls";
-import { ConnectedChat } from "../../chat/components/Chat";
 import { action } from "../actions/scrims.$id.server";
 import * as Scrim from "../core/Scrim";
 import { loader } from "../loaders/scrims.$id.server";
@@ -110,7 +108,6 @@ export default function ScrimPage() {
 					/>
 				) : null}
 			</div>
-			<ScrimChat />
 		</Main>
 	);
 }
@@ -273,27 +270,6 @@ function MapsLink({
 					alt="Generate maplist"
 				/>
 			</Link>
-		</div>
-	);
-}
-
-function ScrimChat() {
-	const data = useLoaderData<typeof loader>();
-
-	const chatCode = data.post.chatCode;
-	const rooms = React.useMemo(
-		() => (chatCode ? [{ label: "Scrim", code: chatCode }] : []),
-		[chatCode],
-	);
-
-	if (!chatCode) {
-		logger.warn("No chat code found");
-		return null;
-	}
-
-	return (
-		<div className={styles.chatContainer}>
-			<ConnectedChat users={data.chatUsers} rooms={rooms} />
 		</div>
 	);
 }

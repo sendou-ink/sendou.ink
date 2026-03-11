@@ -6,8 +6,6 @@ import { LinkButton } from "~/components/elements/Button";
 import { containerClassName } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
-import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
-import { ConnectedChat } from "~/features/chat/components/Chat";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
@@ -22,13 +20,9 @@ import { OrganizerMatchMapListDialog } from "../components/OrganizerMatchMapList
 import { StartedMatch } from "../components/StartedMatch";
 import { getRounds } from "../core/rounds";
 import { loader } from "../loaders/to.$id.matches.$mid.server";
-import {
-	groupNumberToLetters,
-	tournamentMatchWebsocketRoom,
-} from "../tournament-bracket-utils";
+import { groupNumberToLetters } from "../tournament-bracket-utils";
 export { action, loader };
 
-import tournamentStyles from "../../tournament/tournament.module.css";
 import styles from "../tournament-bracket.module.css";
 
 export default function TournamentMatchPage() {
@@ -38,10 +32,7 @@ export default function TournamentMatchPage() {
 	const tournament = useTournament();
 	const data = useLoaderData<typeof loader>();
 
-	useWebsocketRevalidation({
-		room: tournamentMatchWebsocketRoom(data.match.id),
-		connected: !tournament.ctx.isFinalized,
-	});
+	// xxx: ensure tournament match chat can also be used before the match starts
 
 	React.useEffect(() => {
 		if (visibility !== "visible" || tournament.ctx.isFinalized) return;
@@ -61,20 +52,6 @@ export default function TournamentMatchPage() {
 		if (!data.match.opponentOne?.id || !data.match.opponentTwo?.id) return true;
 
 		return type !== "EDIT";
-	};
-
-	const showChatPeek = () => {
-		if (!showRosterPeek()) return false;
-
-		if (tournament.isOrganizerOrStreamer(user)) return true;
-
-		const teamId = tournament.teamMemberOfByUser(user)?.id;
-		if (!teamId) return false;
-
-		if (data.match.opponentOne?.id === teamId) return true;
-		if (data.match.opponentTwo?.id === teamId) return true;
-
-		return false;
 	};
 
 	return (
@@ -130,57 +107,7 @@ export default function TournamentMatchPage() {
 						teams={[data.match.opponentOne?.id, data.match.opponentTwo?.id]}
 					/>
 				) : null}
-				{showChatPeek() ? <BeforeMatchChat /> : null}
 			</div>
-		</div>
-	);
-}
-
-function BeforeMatchChat() {
-	const tournament = useTournament();
-	const data = useLoaderData<typeof loader>();
-
-	// TODO: resolve this on server (notice it is copy-pasted now)
-	const chatUsers = React.useMemo(() => {
-		return Object.fromEntries(
-			[
-				...data.match.players.map((p) => ({ ...p, title: undefined })),
-				...(tournament.ctx.organization?.members ?? []).map((m) => ({
-					...m,
-					title: m.role === "STREAMER" ? "Cast" : "TO",
-				})),
-				...tournament.ctx.staff.map((s) => ({
-					...s,
-					title: s.role === "STREAMER" ? "Cast" : "TO",
-				})),
-				{
-					...tournament.ctx.author,
-					title: "TO",
-				},
-			].map((p) => [p.id, p]),
-		);
-	}, [data, tournament]);
-
-	const rooms = React.useMemo(() => {
-		return data.match.chatCode
-			? [
-					{
-						code: data.match.chatCode,
-						label: "Match",
-					},
-				]
-			: [];
-	}, [data.match.chatCode]);
-
-	return (
-		<div className={clsx(tournamentStyles.actionSection, "mt-6")}>
-			<ConnectedChat
-				rooms={rooms}
-				users={chatUsers}
-				className={tournamentStyles.chatContainer}
-				messagesContainerClassName={tournamentStyles.chatMessagesContainer}
-				missingUserName="???"
-			/>
 		</div>
 	);
 }

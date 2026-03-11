@@ -312,6 +312,8 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} подтвердил отмену матча. Матч теперь закрыт",
 	"chat.systemMsg.userLeft": "{{name}} покинул группу",
 	"chat.newMessages": "Новые сообщения",
+	"chat.sidebar.title": "",
+	"chat.sidebar.noActiveChats": "",
 	"fc.title": "Код друга",
 	"fc.helpText": "",
 	"fc.whereToFind": "",

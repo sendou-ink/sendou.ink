@@ -311,6 +311,8 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} confirmó cancelar el partido. El partido está cerrado",
 	"chat.systemMsg.userLeft": "{{name}} se salió del grupo",
 	"chat.newMessages": "Nuevo mensajes",
+	"chat.sidebar.title": "",
+	"chat.sidebar.noActiveChats": "",
 	"fc.title": "Clave de amigo",
 	"fc.helpText": "",
 	"fc.whereToFind": "",

@@ -1,133 +1,38 @@
 import { ArrowLeft, MessageSquare, X } from "lucide-react";
-import * as React from "react";
 import { Button } from "react-aria-components";
-import type { ChatMessage, ChatUser } from "~/features/chat/chat-types";
+import { useTranslation } from "react-i18next";
 import { Chat } from "~/features/chat/components/Chat";
-import { navIconUrl } from "~/utils/urls";
+import { useChatContext } from "~/features/chat/useChatContext";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import styles from "./ChatSidebar.module.css";
 
-const IMG_ROOT = "https://sendou.nyc3.cdn.digitaloceanspaces.com";
-const SENDOUQ_ICON = `${navIconUrl("sendouq")}.png`;
-
-interface MockRoom {
-	name: string;
-	lastMessage: string;
-	timestamp: string;
-	code: string;
-	imageUrl: string;
-	unreadCount?: number;
-}
-
-const MOCK_ROOMS: MockRoom[] = [
-	{
-		name: "SQ Match vs Team Alpha",
-		lastMessage: "ggs, well played!",
-		timestamp: "2 min ago",
-		code: "sq-alpha",
-		imageUrl: SENDOUQ_ICON,
-		unreadCount: 3,
-	},
-	{
-		name: "Low Ink March 2026",
-		lastMessage: "Ready to start?",
-		timestamp: "15 min ago",
-		code: "tourney-low-ink",
-		imageUrl: `${IMG_ROOT}/tournament-logo-zWk5C1kvQtEWrd7d2c_KS-1735836299376.webp`,
-	},
-	{
-		name: "SQ Match vs Gamma Squad",
-		lastMessage: "Let's run it back",
-		timestamp: "1 hr ago",
-		code: "sq-gamma",
-		imageUrl: SENDOUQ_ICON,
-	},
-	{
-		name: "Lunar Eclipse 56",
-		lastMessage: "See you tomorrow",
-		timestamp: "3 hrs ago",
-		code: "tourney-lunar",
-		imageUrl: `${IMG_ROOT}/tournament-logo-0oizUoMYLKQkc_EdyDkOT-1767636658472.webp`,
-		unreadCount: 1,
-	},
-	{
-		name: "Shark Tank: Shallow Waters #35",
-		lastMessage: "Who's subbing?",
-		timestamp: "5 hrs ago",
-		code: "tourney-shark",
-		imageUrl: `${IMG_ROOT}/tournament-logo-PyRNcRLpLMXBpO8j8Ho5W-1772403193067.webp`,
-	},
-];
-
-export const MOCK_TOTAL_UNREAD = MOCK_ROOMS.reduce(
-	(sum, room) => sum + (room.unreadCount ?? 0),
-	0,
-);
-
-const MOCK_USERS: Record<number, ChatUser> = {
-	1: {
-		username: "Sendou",
-		discordId: "79237403620945920",
-		discordAvatar: null,
-		pronouns: null,
-		chatNameHue: "268",
-	},
-	2: {
-		username: "N-ZAP",
-		discordId: "455039198672453645",
-		discordAvatar: null,
-		pronouns: null,
-		chatNameHue: "120",
-	},
-};
-
-function mockMessagesForRoom(roomCode: string): ChatMessage[] {
-	return [
-		{
-			id: `${roomCode}-1`,
-			userId: 2,
-			contents: "Hey, ready for the match?",
-			timestamp: Date.now() - 120000,
-			room: roomCode,
-		},
-		{
-			id: `${roomCode}-2`,
-			userId: 1,
-			contents: "Yeah let's go!",
-			timestamp: Date.now() - 60000,
-			room: roomCode,
-		},
-		{
-			id: `${roomCode}-3`,
-			userId: 2,
-			contents: "glhf",
-			timestamp: Date.now(),
-			room: roomCode,
-		},
-	];
-}
-
+// xxx: also make it so that if only one room then we go directly to the chat view instead of showing the room list
 export function ChatSidebar({ onClose }: { onClose?: () => void }) {
-	const [activeRoom, setActiveRoom] = React.useState<MockRoom | null>(null);
+	const chatContext = useChatContext();
 
-	if (activeRoom) {
-		return <ChatView room={activeRoom} onBack={() => setActiveRoom(null)} />;
+	if (!chatContext) return null;
+
+	if (chatContext.activeRoom) {
+		return <ChatView onClose={onClose} />;
 	}
 
-	return <RoomList onSelectRoom={setActiveRoom} onClose={onClose} />;
+	return <RoomList onClose={onClose} />;
 }
 
-function RoomList({
-	onSelectRoom,
-	onClose,
-}: {
-	onSelectRoom: (room: MockRoom) => void;
-	onClose?: () => void;
-}) {
+function RoomList({ onClose }: { onClose?: () => void }) {
+	const { t } = useTranslation(["common"]);
+	const chatContext = useChatContext()!;
+	const { formatDateTime } = useTimeFormat();
+
+	const nonExpiredRooms = chatContext.rooms.filter(
+		(room) => room.expiresAt > Date.now(),
+	);
+
 	return (
 		<div className={styles.sidebar}>
 			<div className={styles.sidebarHeader}>
 				<MessageSquare size={18} />
-				<h2>Chat</h2>
+				<h2>{t("common:chat.sidebar.title")}</h2>
 				{onClose ? (
 					<Button className={styles.closeButton} onPress={onClose}>
 						<X size={18} />
@@ -135,56 +40,94 @@ function RoomList({
 				) : null}
 			</div>
 			<div className={styles.roomList}>
-				{MOCK_ROOMS.map((room) => (
-					<Button
-						key={room.code}
-						className={styles.roomItem}
-						onPress={() => onSelectRoom(room)}
-					>
-						<img src={room.imageUrl} alt="" className={styles.roomImage} />
-						<div className={styles.roomInfo}>
-							<span className={styles.roomName}>{room.name}</span>
-							<span className={styles.roomLastMessage}>{room.lastMessage}</span>
-						</div>
-						{room.unreadCount ? (
-							<span className={styles.unreadBadge}>{room.unreadCount}</span>
-						) : (
-							<span className={styles.roomTimestamp}>{room.timestamp}</span>
-						)}
-					</Button>
-				))}
+				{nonExpiredRooms.length === 0 ? (
+					<div className={styles.emptyState}>
+						{t("common:chat.sidebar.noActiveChats")}
+					</div>
+				) : (
+					nonExpiredRooms.map((room) => {
+						const unread = chatContext.unreadCounts[room.chatCode] ?? 0;
+
+						return (
+							<Button
+								key={room.chatCode}
+								className={styles.roomItem}
+								onPress={() => {
+									chatContext.requestHistory(room.chatCode);
+									chatContext.setActiveRoom(room.chatCode);
+									chatContext.markAsRead(room.chatCode);
+								}}
+							>
+								<div className={styles.roomInfo}>
+									<span className={styles.roomName}>{room.header}</span>
+									<span className={styles.roomLastMessage}>
+										{room.subtitle}
+									</span>
+								</div>
+								{unread > 0 ? (
+									<span className={styles.unreadBadge}>{unread}</span>
+								) : room.lastMessageTimestamp > 0 ? (
+									<span className={styles.roomTimestamp}>
+										{formatDateTime(new Date(room.lastMessageTimestamp), {
+											hour: "numeric",
+											minute: "numeric",
+										})}
+									</span>
+								) : null}
+							</Button>
+						);
+					})
+				)}
 			</div>
 		</div>
 	);
 }
 
-function ChatView({ room, onBack }: { room: MockRoom; onBack: () => void }) {
-	const messages = mockMessagesForRoom(room.code);
+function ChatView({ onClose }: { onClose?: () => void }) {
+	const chatContext = useChatContext()!;
+	const activeRoom = chatContext.activeRoom!;
 
-	const mockChat = {
+	const room = chatContext.rooms.find((r) => r.chatCode === activeRoom);
+	const messages = chatContext.messagesForRoom(activeRoom);
+
+	const chatAdapter = {
 		messages,
-		send: () => {},
-		currentRoom: room.code,
+		send: (contents: string) => chatContext.send(activeRoom, contents),
+		currentRoom: activeRoom,
 		setCurrentRoom: () => {},
-		readyState: "CONNECTED" as const,
+		readyState: chatContext.readyState,
 		unseenMessages: new Map<string, number>(),
+	};
+
+	const handleBack = () => {
+		chatContext.setActiveRoom(null);
 	};
 
 	return (
 		<div className={styles.sidebar}>
 			<div className={styles.chatHeader}>
-				<Button className={styles.backButton} onPress={onBack}>
+				<Button className={styles.backButton} onPress={handleBack}>
 					<ArrowLeft size={18} />
 				</Button>
-				<img src={room.imageUrl} alt="" className={styles.chatHeaderImage} />
-				<span className={styles.chatHeaderTitle}>{room.name}</span>
+				<span className={styles.chatHeaderTitle}>
+					{room?.header ?? activeRoom}
+				</span>
+				{onClose ? (
+					<Button className={styles.closeButton} onPress={onClose}>
+						<X size={18} />
+					</Button>
+				) : null}
 			</div>
 			<div className={styles.chatContainer}>
 				<Chat
-					users={MOCK_USERS}
-					rooms={[{ label: room.name, code: room.code }]}
-					chat={mockChat}
-					disabled
+					users={chatContext.chatUsers}
+					rooms={[
+						{
+							label: room?.header ?? "Chat",
+							code: activeRoom,
+						},
+					]}
+					chat={chatAdapter}
 				/>
 			</div>
 		</div>

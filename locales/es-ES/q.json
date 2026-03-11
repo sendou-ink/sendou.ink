@@ -163,12 +163,5 @@
 	"tiers.info.p3": "Cada rango también tiene un nivel plus (ver BRONCE+ de ejemplo). Significa que estás en el 50% superior de ese rango.",
 	"streams.noStreams": "No hay streams de partidos recientes",
 	"streams.ownStreamInfo": "¿Falta tu stream? Asegura que tu cuenta de Twitch esté conectada y que tu juego es Splatoon 3.",
-	"streams.ownStreamInfo.linkText": "Ver el FAQ para más información como sobre conectar tu cuenta de Twitch.",
-	"front.join.joinWithTrustAction": "Unirte y confiar de {{inviterName}}",
-	"front.join.joinWithTrustAction.explanation": "Confiar de un usuario le permite agregarte a un grupo sin enviar invitación en el futuro",
-	"settings.trusted.header": "Usuarios de confianza",
-	"settings.trusted.confirm": "¿Quitar {{name}} de los usuarios de confianza?",
-	"settings.trusted.trustedExplanation": "Los usuarios de confianza pueden añadirte directamente a grupos y equipos de torneos. Si te eliminan de esta lista, en el futuro tendrás que unirte a través de un enlace que ellos compartan.",
-	"settings.trusted.noTrustedExplanation": "Actualmente no confías en ningún usuario. Puedes confiar en usuarios cuando te unes a su grupo SendouQ o equipo de torneo a través de un enlace. Los usuarios de confianza pueden agregarte a grupos y equipos de torneos directamente.",
-	"settings.trusted.teamExplanation": "Además de los usuarios anteriores, los miembros de tu equipo <2>{{name}}</2> pueden agregarte directamente."
+	"streams.ownStreamInfo.linkText": "Ver el FAQ para más información como sobre conectar tu cuenta de Twitch."
 }

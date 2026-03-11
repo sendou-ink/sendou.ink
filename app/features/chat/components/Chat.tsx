@@ -9,17 +9,18 @@ import { SendouButton } from "../../../components/elements/Button";
 import { SubmitButton } from "../../../components/SubmitButton";
 import { useTimeFormat } from "../../../hooks/useTimeFormat";
 import { MESSAGE_MAX_LENGTH } from "../chat-constants";
-import { useChat, useChatAutoScroll } from "../chat-hooks";
+import { useChatAutoScroll } from "../chat-hooks";
 import type { ChatMessage, ChatProps, ChatUser } from "../chat-types";
 import styles from "./Chat.module.css";
 
-export function ConnectedChat(props: ChatProps) {
-	const chat = useChat(props);
-
-	return <Chat {...props} chat={chat} />;
+export interface ChatAdapter {
+	messages: ChatMessage[];
+	send: (contents: string) => void;
+	currentRoom: string | undefined;
+	setCurrentRoom: (room: string) => void;
+	readyState: "CONNECTING" | "CONNECTED" | "CLOSED";
+	unseenMessages: Map<string, number>;
 }
-
-// xxx: if we go with global chat refactor a lot / delete this
 
 export function Chat({
 	users,
@@ -32,8 +33,8 @@ export function Chat({
 	onUnmount,
 	disabled,
 	missingUserName,
-}: Omit<ChatProps, "revalidates" | "onNewMessage"> & {
-	chat: ReturnType<typeof useChat>;
+}: Omit<ChatProps, "onNewMessage" | "revalidates"> & {
+	chat: ChatAdapter;
 }) {
 	const { t } = useTranslation(["common"]);
 	const messagesContainerRef = React.useRef<HTMLOListElement>(null);

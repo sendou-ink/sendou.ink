@@ -311,6 +311,8 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} confirmou o cancelamento da partida. A partida foi trancada",
 	"chat.systemMsg.userLeft": "{{name}} deixou o grupo",
 	"chat.newMessages": "",
+	"chat.sidebar.title": "",
+	"chat.sidebar.noActiveChats": "",
 	"fc.title": "Código de amigo",
 	"fc.helpText": "",
 	"fc.whereToFind": "",

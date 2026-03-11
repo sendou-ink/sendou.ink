@@ -22,6 +22,7 @@ import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useLocation, useMatches } from "react-router";
 import { useUser } from "~/features/auth/core/user";
+import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
@@ -40,7 +41,7 @@ import { NotificationDot } from "../NotificationDot";
 import { ListLink, SideNav, SideNavFooter, SideNavHeader } from "../SideNav";
 import sideNavStyles from "../SideNav.module.css";
 import { StreamListItems } from "../StreamListItems";
-import { ChatSidebar, MOCK_TOTAL_UNREAD } from "./ChatSidebar";
+import { ChatSidebar } from "./ChatSidebar";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
 import { LogInButtonContainer } from "./LogInButtonContainer";
@@ -172,12 +173,15 @@ export function Layout({
 	children: React.ReactNode;
 	data?: RootLoaderData;
 }) {
+	const chatContext = useChatContext();
 	const [sideNavCollapsed, setSideNavCollapsed] = useSideNavCollapsed(
 		data?.sidenavCollapsed ?? false,
 	);
 	const [sideNavModalOpen, setSideNavModalOpen] = React.useState(false);
-	const [chatSidebarOpen, setChatSidebarOpen] = React.useState(false);
 	const [chatSidebarModalOpen, setChatSidebarModalOpen] = React.useState(false);
+
+	const chatSidebarOpen = chatContext?.sidebarOpen ?? false;
+	const setChatSidebarOpen = chatContext?.setSidebarOpen ?? (() => {});
 
 	const { t } = useTranslation(["front", "common"]);
 	const { formatRelativeDate } = useTimeFormat();
@@ -369,7 +373,7 @@ export function Layout({
 								? () => setChatSidebarModalOpen((prev) => !prev)
 								: undefined
 						}
-						chatUnreadCount={MOCK_TOTAL_UNREAD}
+						chatUnreadCount={chatContext?.totalUnreadCount}
 					/>
 				</header>
 				{showLeaderboard ? <MyRampUnit /> : null}

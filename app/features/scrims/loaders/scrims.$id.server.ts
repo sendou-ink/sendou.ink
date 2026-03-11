@@ -1,4 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
+import { setMetadata } from "~/features/chat/ChatSystemMessage.server";
+import { SCRIM_EXPIRY_MS } from "~/features/chat/chat-constants";
 import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { notFoundIfFalsy } from "../../../utils/remix.server";
@@ -25,10 +27,24 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	}
 
 	const participantIds = Scrim.participantIdsListFromAccepted(post);
+	const chatUsers = await UserRepository.findChatUsersByUserIds(participantIds);
+
+	// xxx: additional condition
+	if (post.chatCode) {
+		setMetadata({
+			chatCode: post.chatCode,
+			// xxx: better header+subtitle
+			header: "Scrim",
+			subtitle: `Scrim #${post.id}`,
+			url: `/scrims/${post.id}`,
+			participantUserIds: participantIds,
+			chatUsers,
+			expiresAt: Date.now() + SCRIM_EXPIRY_MS,
+		});
+	}
 
 	return {
 		post,
-		chatUsers: await UserRepository.findChatUsersByUserIds(participantIds),
 		anyUserPrefersNoScreen:
 			await UserRepository.anyUserPrefersNoScreen(participantIds),
 		tournamentMapPool: post.mapsTournament

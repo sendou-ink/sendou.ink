@@ -16,9 +16,7 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { useUser } from "~/features/auth/core/user";
-import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import { tournamentWebsocketRoom } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
@@ -48,11 +46,6 @@ export default function TournamentBracketsPage() {
 	const tournament = useTournament();
 	const isMounted = useIsMounted();
 	const ctx = useOutletContext();
-
-	useWebsocketRevalidation({
-		room: tournamentWebsocketRoom(tournament.ctx.id),
-		connected: !tournament.ctx.isFinalized,
-	});
 
 	const defaultBracketIdx = () => {
 		if (

@@ -305,6 +305,8 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} 确认取消对战，本次对战已锁定",
 	"chat.systemMsg.userLeft": "{{name}} 离开了小队",
 	"chat.newMessages": "新消息",
+	"chat.sidebar.title": "",
+	"chat.sidebar.noActiveChats": "",
 	"fc.title": "好友码",
 	"fc.helpText": "",
 	"fc.whereToFind": "",

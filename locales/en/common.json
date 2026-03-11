@@ -309,6 +309,8 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} confirmed canceling the match. Match is now locked",
 	"chat.systemMsg.userLeft": "{{name}} left the group",
 	"chat.newMessages": "New messages",
+	"chat.sidebar.title": "Chat",
+	"chat.sidebar.noActiveChats": "No active chats",
 	"fc.title": "Friend code",
 	"fc.helpText": "Used to verify your identity for sendou.ink staff, tournament organizers, and SendouQ opponents. You must always play only on this one account.",
 	"fc.whereToFind": "Find your friend code on your Nintendo Switch (2)",

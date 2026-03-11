@@ -18,8 +18,6 @@ import { Image } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
-import { useChat } from "~/features/chat/chat-hooks";
-import { Chat } from "~/features/chat/components/Chat";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -36,7 +34,6 @@ import {
 	specialWeaponImageUrl,
 	stageImageUrl,
 } from "~/utils/urls";
-import tournamentStyles from "../../tournament/tournament.module.css";
 import type { Bracket } from "../core/Bracket";
 import * as Deadline from "../core/Deadline";
 import * as PickBan from "../core/PickBan";
@@ -649,83 +646,11 @@ function StartedMatchTabs({
 	const user = useUser();
 	const tournament = useTournament();
 	const data = useLoaderData<TournamentMatchLoaderData>();
-	const [_unseenMessages, setUnseenMessages] = React.useState(0);
-	const [chatVisible, setChatVisible] = React.useState(false);
 	const [selectedTabKey, setSelectedTabKey] = useSearchParamState({
 		defaultValue: "rosters",
 		name: "tab",
-		revive: (value) =>
-			["chat", "rosters", "actions"].includes(value) ? value : null,
+		revive: (value) => (["rosters", "actions"].includes(value) ? value : null),
 	});
-
-	// TODO: resolve this on server (notice it is copy-pasted now)
-	const chatUsers = React.useMemo(() => {
-		return Object.fromEntries(
-			[
-				...data.match.players.map((p) => ({ ...p, title: undefined })),
-				...(tournament.ctx.organization?.members ?? []).map((m) => ({
-					...m,
-					title: m.role === "STREAMER" ? "Cast" : "TO",
-				})),
-				...tournament.ctx.staff.map((s) => ({
-					...s,
-					title: s.role === "STREAMER" ? "Cast" : "TO",
-				})),
-				{
-					...tournament.ctx.author,
-					title: "TO",
-				},
-			].map((p) => [p.id, p]),
-		);
-	}, [data, tournament]);
-
-	const showChat = (() => {
-		if (!data.match.chatCode) return false;
-		if (tournament.ctx.isFinalized && !tournament.isOrganizer(user)) {
-			return false;
-		}
-		const oneMonthAgo = new Date();
-		oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-		if (
-			tournament.ctx.startTime < oneMonthAgo &&
-			!tournament.isLeagueDivision
-		) {
-			return false;
-		}
-
-		return (
-			data.match.players.some((p) => p.id === user?.id) ||
-			tournament.isOrganizerOrStreamer(user)
-		);
-	})();
-
-	const rooms = React.useMemo(() => {
-		return showChat && data.match.chatCode
-			? [
-					{
-						code: data.match.chatCode,
-						label: "Match",
-					},
-				]
-			: [];
-	}, [showChat, data.match.chatCode]);
-
-	const onNewMessage = React.useCallback(() => {
-		setUnseenMessages((msg) => msg + 1);
-	}, []);
-
-	const chat = useChat({ rooms, onNewMessage });
-
-	const onChatMount = React.useCallback(() => {
-		setChatVisible(true);
-	}, []);
-
-	const onChatUnmount = React.useCallback(() => {
-		setChatVisible(false);
-		setUnseenMessages(0);
-	}, []);
-
-	const unseenMessages = chatVisible ? 0 : _unseenMessages;
 
 	const currentPosition = scores[0] + scores[1];
 
@@ -756,32 +681,11 @@ function StartedMatchTabs({
 				className={styles.matchTabs}
 			>
 				<SendouTabList>
-					{showChat && (
-						<SendouTab id="chat" number={unseenMessages} data-testid="chat-tab">
-							Chat
-						</SendouTab>
-					)}
 					<SendouTab id="rosters">Rosters</SendouTab>
 					<SendouTab id="actions" data-testid="actions-tab">
 						{presentational ? "Score" : "Actions"}
 					</SendouTab>
 				</SendouTabList>
-
-				<SendouTabPanel id="chat">
-					<Chat
-						rooms={rooms}
-						users={chatUsers}
-						className={tournamentStyles.chatContainer}
-						messagesContainerClassName={clsx(
-							tournamentStyles.chatMessagesContainer,
-							"pt-0",
-						)}
-						chat={chat}
-						onMount={onChatMount}
-						onUnmount={onChatUnmount}
-						missingUserName="???"
-					/>
-				</SendouTabPanel>
 
 				<SendouTabPanel id="rosters">
 					<MatchRosters teams={[teams[0].id, teams[1].id]} />

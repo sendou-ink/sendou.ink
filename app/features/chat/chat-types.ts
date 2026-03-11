@@ -42,10 +42,8 @@ export interface ChatProps {
 	className?: string;
 	messagesContainerClassName?: string;
 	hidden?: boolean;
-	onNewMessage?: (message: ChatMessage) => void;
 	onMount?: () => void;
 	onUnmount?: () => void;
 	disabled?: boolean;
 	missingUserName?: string;
-	revalidates?: boolean;
 }

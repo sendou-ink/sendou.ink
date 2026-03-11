@@ -220,6 +220,5 @@
 	"errors.alreadyFriends": "",
 	"errors.friendRequestExists": "",
 	"labels.type": "",
-	"labels.visibility": "",
-	"labels.vodType": "Tipo"
+	"labels.visibility": ""
 }

@@ -16,6 +16,7 @@ import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { useUser } from "~/features/auth/core/user";
+import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
 import type { RootLoaderData } from "~/root";
@@ -30,7 +31,6 @@ import { Avatar } from "./Avatar";
 import { EventsList } from "./EventsList";
 import { SendouButton } from "./elements/Button";
 import { Image } from "./Image";
-import { MOCK_TOTAL_UNREAD } from "./layout/ChatSidebar";
 import { LogInButtonContainer } from "./layout/LogInButtonContainer";
 import {
 	NotificationContent,
@@ -106,6 +106,7 @@ function MobileTabBar({
 	hasFriendInSendouQ: boolean;
 }) {
 	const { t } = useTranslation(["front", "common"]);
+	const chatContext = useChatContext();
 
 	return (
 		<nav className={styles.tabBar}>
@@ -135,8 +136,9 @@ function MobileTabBar({
 						icon={<MessageSquare />}
 						label={t("front:mobileNav.chat")}
 						isActive={false}
+						// onPress={() => chatContext?.setSidebarOpen(true)}
 						onPress={() => {}}
-						unreadCount={MOCK_TOTAL_UNREAD}
+						unreadCount={chatContext?.totalUnreadCount}
 					/>
 					<MobileTab
 						icon={<User />}

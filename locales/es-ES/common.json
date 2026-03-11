@@ -311,6 +311,8 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} confirmó cancelar la partida. La partida está cerrada",
 	"chat.systemMsg.userLeft": "{{name}} abandonó el grupo",
 	"chat.newMessages": "Nuevos mensajes",
+	"chat.sidebar.title": "",
+	"chat.sidebar.noActiveChats": "",
 	"fc.title": "Clave de amigo",
 	"fc.helpText": "Se usa para verificar tu identidad ante el staff de sendou.ink, organizadores de torneos y oponentes de SendouQ. Debes jugar siempre con esta misma cuenta.",
 	"fc.whereToFind": "Encuentra tu clave de amigo en tu Nintendo Switch (2)",
@@ -381,6 +383,5 @@
 	"header.parameter": "",
 	"weaponArt.title": "",
 	"tier.tentative": "Tier {{tierName}} provisional",
-	"tier.confirmed": "Tier {{tierName}} confirmado",
-	"header.login": "Acceso"
+	"tier.confirmed": "Tier {{tierName}} confirmado"
 }

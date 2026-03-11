@@ -151,7 +151,5 @@
 	"progression.error.NEGATIVE_PROGRESSION": "La progresión negativa solo es posible en eliminación doble",
 	"progression.error.NO_SE_SOURCE": "La eliminación simple no es un cuadro de origen válido",
 	"progression.error.NO_DE_POSITIVE": "La eliminación doble no es válida para progresión positiva",
-	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "El cuadro suizo con avance/eliminación anticipada debe llevar a otro cuadro",
-	"pre.roster.addTrusted.header": "Agregar personas con quienes has jugado",
-	"join.giveTrust": "¿Confiar a {{name}} para añadirte a torneos futuros?"
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "El cuadro suizo con avance/eliminación anticipada debe llevar a otro cuadro"
 }

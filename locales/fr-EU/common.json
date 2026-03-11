@@ -311,6 +311,8 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} a confirmé l'anunulation du match. Le match est maintenant vérrouillé",
 	"chat.systemMsg.userLeft": "{{name}} a quitté le groupe",
 	"chat.newMessages": "Nouveau message",
+	"chat.sidebar.title": "",
+	"chat.sidebar.noActiveChats": "",
 	"fc.title": "Code ami ",
 	"fc.helpText": "",
 	"fc.whereToFind": "",
