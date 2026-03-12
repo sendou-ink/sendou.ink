@@ -1,12 +1,12 @@
 import { ArrowLeft, MessageSquare, X } from "lucide-react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import { Chat } from "~/features/chat/components/Chat";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import styles from "./ChatSidebar.module.css";
 
-// xxx: also make it so that if only one room then we go directly to the chat view instead of showing the room list
 export function ChatSidebar({ onClose }: { onClose?: () => void }) {
 	const chatContext = useChatContext();
 
@@ -103,15 +103,30 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 		chatContext.setActiveRoom(null);
 	};
 
+	const headerContent = (
+		<>
+			<span className={styles.chatHeaderTitle}>
+				{room?.header ?? activeRoom}
+			</span>
+			{room?.subtitle ? (
+				<span className={styles.chatHeaderSubtitle}>{room.subtitle}</span>
+			) : null}
+		</>
+	);
+
 	return (
 		<div className={styles.sidebar}>
 			<div className={styles.chatHeader}>
 				<Button className={styles.backButton} onPress={handleBack}>
 					<ArrowLeft size={18} />
 				</Button>
-				<span className={styles.chatHeaderTitle}>
-					{room?.header ?? activeRoom}
-				</span>
+				{room?.url ? (
+					<Link to={room.url} className={styles.chatHeaderLink}>
+						{headerContent}
+					</Link>
+				) : (
+					<div className={styles.chatHeaderInfo}>{headerContent}</div>
+				)}
 				{onClose ? (
 					<Button className={styles.closeButton} onPress={onClose}>
 						<X size={18} />

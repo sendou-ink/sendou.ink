@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import { WebSocket } from "partysocket";
 import * as React from "react";
-import { useMatches, useRevalidator } from "react-router";
+import { useFetcher, useMatches, useRevalidator } from "react-router";
 import { logger } from "~/utils/logger";
 import { soundPath } from "~/utils/urls";
 import type {
@@ -15,7 +15,6 @@ import { ChatContext } from "./useChatContext";
 
 const PING_INTERVAL_MS = 60_000;
 const LOCAL_STORAGE_PREFIX = "chat_read__";
-const USER_FETCH_BATCH_DELAY_MS = 200;
 
 function flattenServerRoom(serverRoom: ServerRoomInfo): RoomInfo {
 	return {
@@ -91,9 +90,6 @@ function ChatProviderInner({
 	>({});
 
 	const ws = React.useRef<WebSocket>(undefined);
-	const pendingUserFetches = React.useRef<Set<number>>(new Set());
-	const fetchTimeoutRef =
-		React.useRef<ReturnType<typeof setTimeout>>(undefined);
 
 	const computeUnreadCounts = React.useCallback((roomList: RoomInfo[]) => {
 		const counts: Record<string, number> = {};
@@ -105,36 +101,13 @@ function ChatProviderInner({
 		setUnreadCounts(counts);
 	}, []);
 
-	const fetchUnknownUsers = React.useCallback((userIds: number[]) => {
-		for (const id of userIds) {
-			pendingUserFetches.current.add(id);
-		}
-
-		clearTimeout(fetchTimeoutRef.current);
-		fetchTimeoutRef.current = setTimeout(async () => {
-			const ids = [...pendingUserFetches.current];
-			pendingUserFetches.current.clear();
-
-			if (ids.length === 0) return;
-
-			try {
-				// xxx: we should use remix fetcher for this
-				const response = await fetch(`/api/chat-users?ids=${ids.join(",")}`);
-				if (!response.ok) return;
-
-				const users = (await response.json()) as Record<number, ChatUser>;
-				setChatUsersCache((prev) => ({ ...prev, ...users }));
-			} catch {
-				// fetch failed, will retry on next unknown user
-			}
-		}, USER_FETCH_BATCH_DELAY_MS);
-	}, []);
-
 	const onMessage = React.useEffectEvent((e: MessageEvent) => {
 		const parsed = JSON.parse(e.data);
+		logger.debug("WS message received:", parsed);
 
 		// Initial rooms payload on connect
 		if (parsed.rooms && Array.isArray(parsed.rooms)) {
+			logger.debug("WS initial rooms payload, count:", parsed.rooms.length);
 			const serverRooms = parsed.rooms as ServerRoomInfo[];
 			const roomList = serverRooms.map(flattenServerRoom);
 			setRooms(roomList);
@@ -150,6 +123,7 @@ function ChatProviderInner({
 
 		// ROOM_JOINED: new room added
 		if (parsed.event === "ROOM_JOINED" && parsed.room) {
+			logger.debug("WS ROOM_JOINED:", parsed.room?.chatCode);
 			const serverRoom = parsed.room as ServerRoomInfo;
 			const newRoom = flattenServerRoom(serverRoom);
 			setRooms((prev) => {
@@ -167,6 +141,12 @@ function ChatProviderInner({
 
 		// CHAT_HISTORY response (also returned by SUBSCRIBE with metadata)
 		if (parsed.event === "CHAT_HISTORY" && Array.isArray(parsed.messages)) {
+			logger.debug(
+				"WS CHAT_HISTORY for:",
+				parsed.chatCode,
+				"messages:",
+				parsed.messages.length,
+			);
 			const chatCode = parsed.chatCode as string;
 			const messages = parsed.messages as ChatMessage[];
 			setMessagesByRoom((prev) => ({
@@ -206,6 +186,12 @@ function ChatProviderInner({
 		) as (ChatMessage & { totalMessageCount?: number })[];
 
 		const isSystemMessage = Boolean(messageArr[0].type);
+		logger.debug(
+			"WS message(s):",
+			messageArr.length,
+			"system:",
+			isSystemMessage,
+		);
 		if (isSystemMessage) {
 			revalidate();
 		}
@@ -237,10 +223,6 @@ function ChatProviderInner({
 
 				return { ...prev, [roomCode]: [...existing, msg] };
 			});
-
-			if (msg.userId && !chatUsersCache[msg.userId]) {
-				fetchUnknownUsers([msg.userId]);
-			}
 
 			if (msg.totalMessageCount) {
 				setRooms((prev) =>
@@ -396,9 +378,20 @@ function ChatProviderInner({
 			if (open && activeRoom) {
 				markAsRead(activeRoom);
 			}
+
+			if (open && rooms.length === 1 && !activeRoom) {
+				requestHistory(rooms[0].chatCode);
+				setActiveRoom(rooms[0].chatCode);
+			}
 		},
-		[activeRoom, markAsRead],
+		[activeRoom, markAsRead, requestHistory, rooms.length, rooms[0]?.chatCode],
 	);
+
+	useFetchUnknownChatUsers({
+		messages: messagesByRoom,
+		chatUsersCache,
+		setChatUsersCache,
+	});
 
 	useChatRouteSync({
 		rooms,
@@ -452,7 +445,6 @@ function ChatProviderInner({
 	);
 }
 
-// xxx: bug: when viewing as non-participant can't go back to list view
 // xxx: bug: room should close automatically if non-participant and leaves the route
 // xxx: bug: route loading state should show before room metadata loads
 function useChatRouteSync({
@@ -476,20 +468,11 @@ function useChatRouteSync({
 		React.SetStateAction<Record<string, ChatMessage[]>>
 	>;
 }) {
-	const matches = useMatches();
+	const chatCode = useCurrentRouteChatCode();
 	const subscribedRoomRef = React.useRef<string | null>(null);
+	const previousRouteChatCodeRef = React.useRef<string | null>(null);
 
 	React.useEffect(() => {
-		let chatCode: string | null = null;
-
-		for (const match of matches) {
-			const matchData = match.data as { chatCode?: string } | undefined;
-			if (matchData?.chatCode) {
-				chatCode = matchData.chatCode;
-				break;
-			}
-		}
-
 		const previousSubscribed = subscribedRoomRef.current;
 
 		// Clean up previous non-participant subscription if chatCode changed
@@ -500,10 +483,15 @@ function useChatRouteSync({
 				const { [previousSubscribed]: _, ...rest } = prev;
 				return rest;
 			});
+			setActiveRoom(null);
+			setSidebarOpen(false);
 			subscribedRoomRef.current = null;
 		}
 
-		if (!chatCode) return;
+		if (!chatCode) {
+			previousRouteChatCodeRef.current = null;
+			return;
+		}
 
 		const room = rooms.find((r) => r.chatCode === chatCode);
 		const isParticipant = room?.participantUserIds.includes(userId);
@@ -513,10 +501,15 @@ function useChatRouteSync({
 			subscribedRoomRef.current = chatCode;
 		}
 
-		setActiveRoom(chatCode);
-		setSidebarOpen(true);
+		const routeChatCodeChanged = previousRouteChatCodeRef.current !== chatCode;
+		previousRouteChatCodeRef.current = chatCode;
+
+		if (routeChatCodeChanged) {
+			setActiveRoom(chatCode);
+			setSidebarOpen(true);
+		}
 	}, [
-		matches,
+		chatCode,
 		rooms,
 		userId,
 		setActiveRoom,
@@ -526,4 +519,55 @@ function useChatRouteSync({
 		setRooms,
 		setMessagesByRoom,
 	]);
+}
+
+function useCurrentRouteChatCode() {
+	const matches = useMatches();
+
+	for (const match of matches) {
+		const matchData = match.data as { chatCode?: string } | undefined;
+		if (matchData?.chatCode) {
+			return matchData.chatCode;
+		}
+	}
+
+	return null;
+}
+
+function useFetchUnknownChatUsers({
+	messages,
+	chatUsersCache,
+	setChatUsersCache,
+}: {
+	messages: Record<string, ChatMessage[]>;
+	chatUsersCache: Record<number, ChatUser>;
+	setChatUsersCache: React.Dispatch<
+		React.SetStateAction<Record<number, ChatUser>>
+	>;
+}) {
+	const fetcher = useFetcher<Record<number, ChatUser>>();
+
+	const unknownIds: number[] = [];
+	for (const msgs of Object.values(messages)) {
+		for (const msg of msgs) {
+			if (msg.userId && !chatUsersCache[msg.userId]) {
+				unknownIds.push(msg.userId);
+			}
+		}
+	}
+
+	const idsParam = unknownIds.sort((a, b) => a - b).join(",");
+
+	React.useEffect(() => {
+		if (!idsParam || fetcher.state !== "idle") return;
+
+		logger.debug(`Fetching unknown chat users: ${idsParam}`);
+		fetcher.load(`/api/chat-users?ids=${idsParam}`);
+	}, [idsParam, fetcher.load, fetcher.state]);
+
+	React.useEffect(() => {
+		if (!fetcher.data) return;
+
+		setChatUsersCache((prev) => ({ ...prev, ...fetcher.data }));
+	}, [fetcher.data, setChatUsersCache]);
 }

@@ -1,7 +1,7 @@
 import cachified from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "react-router";
-import { setMetadata } from "~/features/chat/ChatSystemMessage.server";
-import { TOURNAMENT_MATCH_EXPIRY_MS } from "~/features/chat/chat-constants";
+import { getUser } from "~/features/auth/core/user.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -9,7 +9,9 @@ import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { tournamentMatchPage } from "~/utils/urls";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
+import { tournamentFromDBCached } from "../core/Tournament.server";
 import { findMatchById } from "../queries/findMatchById.server";
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
 import { matchPageParamsSchema } from "../tournament-bracket-schemas.server";
@@ -21,6 +23,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { mid: matchId, id: tournamentId } = parseParams({
 		params,
 		schema: matchPageParamsSchema,
+	});
+	const user = getUser();
+	const tournament = await tournamentFromDBCached({
+		tournamentId,
+		user: undefined,
 	});
 
 	const match = notFoundIfFalsy(findMatchById(matchId));
@@ -94,21 +101,17 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			})
 		: false;
 
-	// xxx: also need to check match is currently ongoing
-	if (match.chatCode) {
+	if (match.chatCode && !matchIsOver) {
 		const playerIds = match.players.map((p) => p.id);
-		// xxx: should this be resolved inside setMetadata?
-		const chatUsers = await UserRepository.findChatUsersByUserIds(playerIds);
+		const matchContext = tournament.matchContextNamesById(matchId);
 
-		// xxx: module.function format
-		setMetadata({
+		ChatSystemMessage.setMetadata({
 			chatCode: match.chatCode,
-			header: "Tournament Match",
-			subtitle: `Match #${matchId}`,
-			url: `/to/${tournamentId}/matches/${matchId}`,
+			header: matchContext.roundName ?? `Match #${matchId}`,
+			subtitle: tournament.ctx.name,
+			url: tournamentMatchPage({ tournamentId, matchId }),
 			participantUserIds: playerIds,
-			chatUsers,
-			expiresAt: Date.now() + TOURNAMENT_MATCH_EXPIRY_MS,
+			expiresAfter: { hours: 2 },
 		});
 	}
 
@@ -119,7 +122,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		matchIsOver,
 		endedEarly,
 		noScreen,
-		// xxx: only chatCode if permissions
-		chatCode: match.chatCode,
+		chatCode: tournament.isOrganizerOrStreamer(user)
+			? match.chatCode
+			: undefined,
 	};
 };

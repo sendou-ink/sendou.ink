@@ -24,21 +24,6 @@ export function TopRightButtons({
 }) {
 	const { t } = useTranslation(["common", "front"]);
 
-	// xxx: anti-pattern? probablty just extract this
-	const chatButton = (variant: "outlined" | "primary", onPress: () => void) => (
-		<>
-			<SendouButton
-				size="small"
-				icon={<MessageSquare />}
-				variant={variant}
-				onPress={onPress}
-			/>
-			{chatUnreadCount ? (
-				<span className={styles.chatUnreadBadge}>{chatUnreadCount}</span>
-			) : null}
-		</>
-	);
-
 	return (
 		<div className={styles.container}>
 			{showSupport ? (
@@ -65,12 +50,20 @@ export function TopRightButtons({
 					</div>
 					{onChatToggle ? (
 						<div className={styles.chatButtonWrapperPersistent}>
-							{chatButton("outlined", onChatToggle)}
+							<ChatButton
+								variant="outlined"
+								onPress={onChatToggle}
+								unreadCount={chatUnreadCount}
+							/>
 						</div>
 					) : null}
 					{onChatModalToggle ? (
 						<div className={styles.chatButtonWrapperModal}>
-							{chatButton("outlined", onChatModalToggle)}
+							<ChatButton
+								variant="outlined"
+								onPress={onChatModalToggle}
+								unreadCount={chatUnreadCount}
+							/>
 						</div>
 					) : null}
 				</>
@@ -82,5 +75,29 @@ export function TopRightButtons({
 				</LogInButtonContainer>
 			)}
 		</div>
+	);
+}
+
+function ChatButton({
+	variant,
+	onPress,
+	unreadCount,
+}: {
+	variant: "outlined" | "primary";
+	onPress: () => void;
+	unreadCount?: number;
+}) {
+	return (
+		<>
+			<SendouButton
+				size="small"
+				icon={<MessageSquare />}
+				variant={variant}
+				onPress={onPress}
+			/>
+			{unreadCount ? (
+				<span className={styles.chatUnreadBadge}>{unreadCount}</span>
+			) : null}
+		</>
 	);
 }

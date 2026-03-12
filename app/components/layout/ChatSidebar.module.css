@@ -160,9 +160,40 @@
 	flex-shrink: 0;
 }
 
+.chatHeaderInfo {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	min-width: 0;
+}
+
+.chatHeaderLink {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	min-width: 0;
+	text-decoration: none;
+	color: inherit;
+	padding: var(--s-1) var(--s-2);
+	border-radius: var(--radius-field);
+	transition: background-color 0.15s;
+}
+
+.chatHeaderLink:hover {
+	background-color: var(--color-bg-higher);
+}
+
 .chatHeaderTitle {
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.chatHeaderSubtitle {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;

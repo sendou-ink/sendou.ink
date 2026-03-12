@@ -1,8 +1,10 @@
+import { add } from "date-fns";
 import { nanoid } from "nanoid";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-import type { ChatMessage, ChatUser } from "./chat-types";
+import type { ChatMessage } from "./chat-types";
 
 const SKALOP_TOKEN_HEADER_NAME = "Skalop-Token";
 
@@ -64,8 +66,7 @@ interface SetMetadataArgs {
 	subtitle: string;
 	url: string;
 	participantUserIds: number[];
-	chatUsers: Record<number, ChatUser>;
-	expiresAt: number;
+	expiresAfter: { hours: number } | { days: number };
 }
 
 // xxx: actually there is no dedup like this, for as long as the service is up, we dont resend metadata
@@ -73,7 +74,7 @@ const DEDUP_INTERVAL_MS = 30_000;
 const DEDUP_PRUNE_MS = 1000 * 60 * 60 * 24 * 30;
 const metadataDedup = new Map<string, number>();
 
-export function setMetadata(args: SetMetadataArgs) {
+export async function setMetadata(args: SetMetadataArgs) {
 	if (systemMessagesDisabled) return;
 	if (!process.env.SKALOP_SYSTEM_MESSAGE_URL) return;
 
@@ -89,6 +90,12 @@ export function setMetadata(args: SetMetadataArgs) {
 		}
 	}
 
+	const expiresAt = add(new Date(), args.expiresAfter).getTime();
+
+	const chatUsers = await UserRepository.findChatUsersByUserIds(
+		args.participantUserIds,
+	);
+
 	return void fetch(process.env.SKALOP_SYSTEM_MESSAGE_URL, {
 		method: "POST",
 		body: JSON.stringify({
@@ -96,8 +103,8 @@ export function setMetadata(args: SetMetadataArgs) {
 			chatCode: args.chatCode,
 			metadata: {
 				participantUserIds: args.participantUserIds,
-				chatUsers: args.chatUsers,
-				expiresAt: args.expiresAt,
+				chatUsers,
+				expiresAt,
 				header: args.header,
 				subtitle: args.subtitle,
 				url: args.url,

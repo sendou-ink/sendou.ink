@@ -12,7 +12,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		return Response.json({});
 	}
 
-	// xxx: use zod
 	const parsedIds = idsParam
 		.split(",")
 		.map(Number)
