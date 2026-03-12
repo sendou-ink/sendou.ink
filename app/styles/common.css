@@ -613,3 +613,9 @@
 .top-leaderboard iframe {
 	margin: 0 auto;
 }
+
+@media screen and (max-width: 599px) {
+	.publift-widget-sticky_footer-container {
+		bottom: 55px !important;
+	}
+}
