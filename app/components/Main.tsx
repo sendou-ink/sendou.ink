@@ -22,7 +22,7 @@ export const Main = ({
 	const error = useRouteError();
 	const isMinorSupporter = useHasRole("MINOR_SUPPORT");
 	const showLeaderboard =
-		import.meta.env.VITE_PLAYWIRE_PUBLISHER_ID &&
+		import.meta.env.VITE_FUSE_ENABLED &&
 		!isMinorSupporter &&
 		!isRouteErrorResponse(error);
 

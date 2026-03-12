@@ -613,10 +613,3 @@
 .top-leaderboard iframe {
 	margin: 0 auto;
 }
-
-@media screen and (max-width: 599px) {
-	#pw-oop-bottom_rail {
-		/* note actually the bottom nav is 55px */
-		bottom: 49px !important;
-	}
-}

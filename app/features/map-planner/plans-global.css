@@ -62,10 +62,6 @@ body:has(.planner) header {
 	display: none;
 }
 
-#pw-oop-bottom_rail {
-	display: none;
-}
-
 .tl-canvas {
 	background-color: var(--color-bg);
 }

@@ -37,8 +37,8 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Route } from "./+types/root";
 import { Catcher } from "./components/Catcher";
 import { SendouToastRegion, toastQueue } from "./components/elements/Toast";
+import { FusePageInit } from "./components/fuse/Fuse";
 import { Layout } from "./components/layout";
-import { Ramp } from "./components/ramp/Ramp";
 import { getUser } from "./features/auth/core/user.server";
 import { userMiddleware } from "./features/auth/core/user-middleware.server";
 import { ChatProvider } from "./features/chat/ChatProvider";
@@ -180,6 +180,13 @@ function Document({
 				<meta name="apple-mobile-web-app-capable" content="yes" />
 				<meta name="mobile-web-app-capable" content="yes" />
 				<meta name="theme-color" content="#010115" />
+				{import.meta.env.VITE_FUSE_ENABLED &&
+				!data?.user?.roles.includes("MINOR_SUPPORT") ? (
+					<script
+						async
+						src="https://cdn.fuseplatform.net/publift/tags/2/4242/fuse.js"
+					/>
+				) : null}
 				<Meta />
 				<Links />
 				<ThemeHead />
@@ -193,7 +200,7 @@ function Document({
 					<RouterProvider navigate={navigate} useHref={useHref}>
 						<I18nProvider locale={i18n.language}>
 							<SendouToastRegion />
-							<MyRamp data={data} />
+							<MyFuse data={data} />
 							<ChatProvider user={data?.user}>
 								<Layout data={data}>{children}</Layout>
 							</ChatProvider>
@@ -583,14 +590,14 @@ function PWALinks() {
 	);
 }
 
-function MyRamp({ data }: { data: RootLoaderData | undefined }) {
+function MyFuse({ data }: { data: RootLoaderData | undefined }) {
 	if (!data || data.user?.roles.includes("MINOR_SUPPORT")) {
 		return null;
 	}
 
 	return (
 		<ClientErrorBoundary fallback={null}>
-			<Ramp />
+			<FusePageInit />
 		</ClientErrorBoundary>
 	);
 }

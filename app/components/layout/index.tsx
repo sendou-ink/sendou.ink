@@ -35,6 +35,7 @@ import {
 import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
+import { FuseZone } from "../fuse/Fuse";
 import { Image } from "../Image";
 import { MobileNav } from "../MobileNav";
 import { NotificationDot } from "../NotificationDot";
@@ -211,7 +212,7 @@ export function Layout({
 	const isFrontPage = location.pathname === "/";
 
 	const showLeaderboard =
-		import.meta.env.VITE_PLAYWIRE_PUBLISHER_ID &&
+		import.meta.env.VITE_FUSE_ENABLED &&
 		!data?.user?.roles.includes("MINOR_SUPPORT") &&
 		!location.pathname.includes("plans");
 
@@ -376,7 +377,13 @@ export function Layout({
 						chatUnreadCount={chatContext?.totalUnreadCount}
 					/>
 				</header>
-				{showLeaderboard ? <MyRampUnit /> : null}
+				{showLeaderboard ? (
+					<FuseZone
+						id="fuse-header"
+						fuseSlot="header"
+						className="top-leaderboard"
+					/>
+				) : null}
 				{children}
 				<Footer />
 			</div>
@@ -479,10 +486,6 @@ function PageIcon({ crumb }: { crumb: Breadcrumb }) {
 			height={20}
 		/>
 	);
-}
-
-function MyRampUnit() {
-	return <div className="top-leaderboard" id="pw-leaderboard_atf" />;
 }
 
 function SideNavUserPanel() {
