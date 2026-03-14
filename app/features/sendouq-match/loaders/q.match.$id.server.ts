@@ -43,9 +43,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				})
 			: null,
 		rawReportedWeapons,
-		// xxx: as a safety measure, it'd be good to send chat code also when user is in the match
 		chatCode:
-			user?.roles.includes("STAFF") && !matchUsers.includes(user.id)
+			user?.roles.includes("STAFF") || (user && matchUsers.includes(user.id))
 				? match.chatCode
 				: null,
 	};

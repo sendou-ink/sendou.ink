@@ -29,7 +29,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	return {
 		post,
 		chatCode:
-			user.roles.includes("STAFF") && !participantIds.includes(user.id)
+			user.roles.includes("STAFF") || participantIds.includes(user.id)
 				? post.chatCode
 				: undefined,
 		anyUserPrefersNoScreen:

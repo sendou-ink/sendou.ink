@@ -46,5 +46,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				},
 		lastUpdated: Date.now(),
 		streamsCount: (await cachedStreams()).length,
+		chatCode: ownGroup ? ownGroup.chatCode : null,
 	};
 };

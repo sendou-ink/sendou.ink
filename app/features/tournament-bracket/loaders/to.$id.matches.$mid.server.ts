@@ -123,8 +123,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		endedEarly,
 		noScreen,
 		chatCode:
-			tournament.isOrganizerOrStreamer(user) &&
-			!match.players.some((p) => p.id === user?.id)
+			tournament.isOrganizerOrStreamer(user) ||
+			match.players.some((p) => p.id === user?.id)
 				? match.chatCode
 				: undefined,
 	};
