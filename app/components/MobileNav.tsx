@@ -47,6 +47,7 @@ type PanelType = "closed" | "menu" | "friends" | "tourneys" | "chat" | "you";
 
 export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 	const [activePanel, setActivePanel] = React.useState<PanelType>("closed");
+	const previousPanelRef = React.useRef<PanelType>("closed");
 	const user = useUser();
 	const { unseenIds } = useNotifications();
 	const chatContext = useChatContext();
@@ -57,10 +58,24 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 		sidebarData?.friends.some((f) => f.subtitle === SENDOUQ_ACTIVITY_LABEL) ??
 		false;
 
-	const closePanel = () => setActivePanel("closed");
+	const skipAnimation = previousPanelRef.current !== "closed";
+
+	const closePanel = () => {
+		previousPanelRef.current = activePanel;
+		setActivePanel("closed");
+	};
 
 	const handleTabPress = (panel: PanelType) => {
-		if (activePanel === "chat" && panel !== "chat") {
+		if (activePanel === panel) {
+			if (panel === "chat") {
+				chatContext?.setChatOpen(false);
+			}
+			previousPanelRef.current = activePanel;
+			setActivePanel("closed");
+			return;
+		}
+
+		if (activePanel === "chat") {
 			chatContext?.setChatOpen(false);
 		}
 
@@ -68,6 +83,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 			chatContext?.setChatOpen(true);
 		}
 
+		previousPanelRef.current = activePanel;
 		setActivePanel(panel);
 	};
 
@@ -82,6 +98,9 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 				<MenuOverlay
 					streams={sidebarData?.streams ?? []}
 					onClose={closePanel}
+					onTabPress={handleTabPress}
+					isLoggedIn={Boolean(user)}
+					skipAnimation={skipAnimation}
 				/>
 			) : null}
 
@@ -89,6 +108,9 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 				<FriendsPanel
 					friends={sidebarData?.friends ?? []}
 					onClose={closePanel}
+					onTabPress={handleTabPress}
+					isLoggedIn={Boolean(user)}
+					skipAnimation={skipAnimation}
 				/>
 			) : null}
 
@@ -96,13 +118,28 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 				<TourneysPanel
 					events={sidebarData?.events ?? []}
 					onClose={closePanel}
+					onTabPress={handleTabPress}
+					isLoggedIn={Boolean(user)}
+					skipAnimation={skipAnimation}
 				/>
 			) : null}
 
-			{activePanel === "you" ? <YouPanel onClose={closePanel} /> : null}
+			{activePanel === "you" ? (
+				<YouPanel
+					onClose={closePanel}
+					onTabPress={handleTabPress}
+					isLoggedIn={Boolean(user)}
+					skipAnimation={skipAnimation}
+				/>
+			) : null}
 
 			{chatContext?.chatOpen && layoutSize === "mobile" ? (
-				<ChatPanel onClose={closeChatPanel} />
+				<ChatPanel
+					onClose={closeChatPanel}
+					onTabPress={handleTabPress}
+					isLoggedIn={Boolean(user)}
+					skipAnimation={skipAnimation}
+				/>
 			) : null}
 
 			<MobileTabBar
@@ -224,15 +261,31 @@ function MobilePanel({
 	icon,
 	onClose,
 	children,
+	onTabPress,
+	isLoggedIn,
+	skipAnimation,
 }: {
 	title: string;
 	icon: React.ReactNode;
 	onClose: () => void;
 	children: React.ReactNode;
+	onTabPress: (panel: PanelType) => void;
+	isLoggedIn: boolean;
+	skipAnimation: boolean;
 }) {
 	return (
-		<ModalOverlay className={styles.panelOverlay} isOpen isDismissable={false}>
-			<Modal className={clsx(styles.panel, "scrollbar")}>
+		<ModalOverlay
+			className={clsx(styles.panelOverlay, skipAnimation && styles.noAnimation)}
+			isOpen
+			isDismissable={false}
+		>
+			<Modal
+				className={clsx(
+					styles.panel,
+					"scrollbar",
+					skipAnimation && styles.noAnimation,
+				)}
+			>
 				<Dialog className={styles.panelDialog}>
 					<header className={styles.panelHeader}>
 						<div className={styles.panelIconContainer}>{icon}</div>
@@ -246,6 +299,7 @@ function MobilePanel({
 						</button>
 					</header>
 					<div className={styles.panelContent}>{children}</div>
+					<GhostTabBar onTabPress={onTabPress} isLoggedIn={isLoggedIn} />
 				</Dialog>
 			</Modal>
 		</ModalOverlay>
@@ -255,16 +309,32 @@ function MobilePanel({
 function MenuOverlay({
 	streams,
 	onClose,
+	onTabPress,
+	isLoggedIn,
+	skipAnimation,
 }: {
 	streams: NonNullable<SidebarData>["streams"];
 	onClose: () => void;
+	onTabPress: (panel: PanelType) => void;
+	isLoggedIn: boolean;
+	skipAnimation: boolean;
 }) {
 	const { t } = useTranslation(["front", "common"]);
 	const user = useUser();
 
 	return (
-		<ModalOverlay className={styles.panelOverlay} isOpen isDismissable={false}>
-			<Modal className={clsx(styles.menuOverlay, "scrollbar")}>
+		<ModalOverlay
+			className={clsx(styles.panelOverlay, skipAnimation && styles.noAnimation)}
+			isOpen
+			isDismissable={false}
+		>
+			<Modal
+				className={clsx(
+					styles.menuOverlay,
+					"scrollbar",
+					skipAnimation && styles.noAnimation,
+				)}
+			>
 				<Dialog className={styles.panelDialog}>
 					<header className={styles.menuHeader}>
 						<div className={styles.panelIconContainer}>
@@ -322,6 +392,7 @@ function MenuOverlay({
 							/>
 						</ul>
 					</section>
+					<GhostTabBar onTabPress={onTabPress} isLoggedIn={isLoggedIn} />
 				</Dialog>
 			</Modal>
 		</ModalOverlay>
@@ -331,9 +402,15 @@ function MenuOverlay({
 function FriendsPanel({
 	friends,
 	onClose,
+	onTabPress,
+	isLoggedIn,
+	skipAnimation,
 }: {
 	friends: NonNullable<SidebarData>["friends"];
 	onClose: () => void;
+	onTabPress: (panel: PanelType) => void;
+	isLoggedIn: boolean;
+	skipAnimation: boolean;
 }) {
 	const { t } = useTranslation(["front", "common"]);
 	const user = useUser();
@@ -343,6 +420,9 @@ function FriendsPanel({
 			title={t("front:sideNav.friends")}
 			icon={<Users size={18} />}
 			onClose={onClose}
+			onTabPress={onTabPress}
+			isLoggedIn={isLoggedIn}
+			skipAnimation={skipAnimation}
 		>
 			{friends.length > 0 ? (
 				friends.map((friend) => (
@@ -370,9 +450,15 @@ function FriendsPanel({
 function TourneysPanel({
 	events,
 	onClose,
+	onTabPress,
+	isLoggedIn,
+	skipAnimation,
 }: {
 	events: NonNullable<SidebarData>["events"];
 	onClose: () => void;
+	onTabPress: (panel: PanelType) => void;
+	isLoggedIn: boolean;
+	skipAnimation: boolean;
 }) {
 	const { t } = useTranslation(["front", "common"]);
 
@@ -381,6 +467,9 @@ function TourneysPanel({
 			title={t("front:sideNav.myCalendar")}
 			icon={<Calendar size={18} />}
 			onClose={onClose}
+			onTabPress={onTabPress}
+			isLoggedIn={isLoggedIn}
+			skipAnimation={skipAnimation}
 		>
 			<EventsList events={events} onClick={onClose} />
 			<Link
@@ -395,7 +484,17 @@ function TourneysPanel({
 	);
 }
 
-function YouPanel({ onClose }: { onClose: () => void }) {
+function YouPanel({
+	onClose,
+	onTabPress,
+	isLoggedIn,
+	skipAnimation,
+}: {
+	onClose: () => void;
+	onTabPress: (panel: PanelType) => void;
+	isLoggedIn: boolean;
+	skipAnimation: boolean;
+}) {
 	const { t } = useTranslation(["front", "common"]);
 	const user = useUser();
 	const { notifications, unseenIds } = useNotifications();
@@ -409,6 +508,9 @@ function YouPanel({ onClose }: { onClose: () => void }) {
 			title={t("front:mobileNav.you")}
 			icon={<User size={18} />}
 			onClose={onClose}
+			onTabPress={onTabPress}
+			isLoggedIn={isLoggedIn}
+			skipAnimation={skipAnimation}
 		>
 			<div className={styles.youPanelUserRow}>
 				<Link
@@ -440,14 +542,68 @@ function YouPanel({ onClose }: { onClose: () => void }) {
 	);
 }
 
-function ChatPanel({ onClose }: { onClose: () => void }) {
+function ChatPanel({
+	onClose,
+	onTabPress,
+	isLoggedIn,
+	skipAnimation,
+}: {
+	onClose: () => void;
+	onTabPress: (panel: PanelType) => void;
+	isLoggedIn: boolean;
+	skipAnimation: boolean;
+}) {
 	return (
-		<ModalOverlay className={styles.panelOverlay} isOpen isDismissable={false}>
-			<Modal className={clsx(styles.panel, "scrollbar")}>
+		<ModalOverlay
+			className={clsx(styles.panelOverlay, skipAnimation && styles.noAnimation)}
+			isOpen
+			isDismissable={false}
+		>
+			<Modal
+				className={clsx(
+					styles.panel,
+					"scrollbar",
+					skipAnimation && styles.noAnimation,
+				)}
+			>
 				<Dialog className={styles.panelDialog}>
 					<ChatSidebar onClose={onClose} />
+					<GhostTabBar onTabPress={onTabPress} isLoggedIn={isLoggedIn} />
 				</Dialog>
 			</Modal>
 		</ModalOverlay>
+	);
+}
+
+const LOGGED_IN_TABS: PanelType[] = [
+	"menu",
+	"friends",
+	"tourneys",
+	"chat",
+	"you",
+];
+const LOGGED_OUT_TABS: PanelType[] = ["menu"];
+
+function GhostTabBar({
+	onTabPress,
+	isLoggedIn,
+}: {
+	onTabPress: (panel: PanelType) => void;
+	isLoggedIn: boolean;
+}) {
+	const tabs = isLoggedIn ? LOGGED_IN_TABS : LOGGED_OUT_TABS;
+
+	return (
+		<div className={styles.ghostTabBar} aria-hidden="true">
+			{tabs.map((tab) => (
+				<button
+					key={tab}
+					type="button"
+					className={styles.ghostTab}
+					tabIndex={-1}
+					onClick={() => onTabPress(tab)}
+				/>
+			))}
+		</div>
 	);
 }

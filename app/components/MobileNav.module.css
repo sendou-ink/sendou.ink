@@ -356,3 +356,36 @@
 	pointer-events: none;
 	line-height: 1;
 }
+
+.noAnimation[data-entering] {
+	animation: none;
+}
+
+.ghostTabBar {
+	position: fixed;
+	bottom: calc(0px - var(--layout-nav-height));
+	left: 0;
+	right: 0;
+	height: var(--layout-nav-height);
+	padding-bottom: env(safe-area-inset-bottom);
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	z-index: 100;
+}
+
+@media screen and (display-mode: standalone) {
+	.ghostTabBar {
+		height: calc(var(--layout-nav-height) + env(safe-area-inset-bottom));
+	}
+}
+
+.ghostTab {
+	height: 100%;
+	flex: 1;
+	background: none;
+	border: none;
+	cursor: pointer;
+	opacity: 0;
+	padding: 0;
+}
