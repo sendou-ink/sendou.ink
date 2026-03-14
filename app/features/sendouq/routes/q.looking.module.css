@@ -1,7 +1,3 @@
-.messagesContainer {
-	height: 350px;
-}
-
 .container {
 	display: grid;
 	justify-content: center;

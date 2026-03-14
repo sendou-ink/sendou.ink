@@ -45,12 +45,6 @@
 	letter-spacing: 1px;
 }
 
-.chatContainer {
-	border-radius: var(--radius-box);
-	background-color: var(--color-bg-high);
-	padding: var(--s-3);
-}
-
 .screenBanIndicator {
 	display: flex;
 	align-items: center;

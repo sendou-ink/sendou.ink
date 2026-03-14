@@ -76,13 +76,6 @@
 	max-width: max-content;
 }
 
-.chatContainer {
-	align-self: flex-start;
-	top: var(--layout-sticky-top);
-	position: sticky;
-	width: 100%;
-}
-
 .bottomMidSection {
 	display: flex;
 	flex-direction: column;

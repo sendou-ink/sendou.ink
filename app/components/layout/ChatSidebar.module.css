@@ -75,14 +75,6 @@
 	background-color: var(--color-bg-high);
 }
 
-.roomImage {
-	width: 32px;
-	height: 32px;
-	border-radius: var(--radius-avatar);
-	object-fit: cover;
-	flex-shrink: 0;
-}
-
 .roomInfo {
 	display: flex;
 	flex-direction: column;
@@ -174,14 +166,6 @@
 
 .backButton:hover {
 	background-color: var(--color-bg-higher);
-}
-
-.chatHeaderImage {
-	width: 24px;
-	height: 24px;
-	border-radius: var(--radius-avatar);
-	object-fit: cover;
-	flex-shrink: 0;
 }
 
 .chatHeaderInfo {
