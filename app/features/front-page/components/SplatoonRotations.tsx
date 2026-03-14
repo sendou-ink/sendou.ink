@@ -1,11 +1,16 @@
 import clsx from "clsx";
+import { differenceInSeconds } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { ModeImage, StageImage } from "~/components/Image";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { RankedModeShort, StageId } from "~/modules/in-game-lists/types";
-import { databaseTimestampNow } from "~/utils/dates";
+import {
+	databaseTimestampNow,
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import { SPLATOON_3_INK } from "~/utils/urls";
 import type { FrontPageLoaderData, loader } from "../loaders/index.server";
 import styles from "./SplatoonRotations.module.css";
@@ -93,7 +98,7 @@ export function SplatoonRotations() {
 							current={current}
 							next={next}
 							nextAfter={nextAfter}
-							now={nowUnixLive}
+							now={databaseTimestampToDate(nowUnixLive)}
 						/>
 					) : null,
 				)}
@@ -128,11 +133,13 @@ export function SplatoonRotations() {
 }
 
 function useNowUnix() {
-	const [now, setNow] = React.useState(() => Math.floor(Date.now() / 1000));
+	const [now, setNow] = React.useState(() =>
+		dateToDatabaseTimestamp(new Date()),
+	);
 
 	React.useEffect(() => {
 		const interval = setInterval(() => {
-			setNow(Math.floor(Date.now() / 1000));
+			setNow(dateToDatabaseTimestamp(new Date()));
 		}, 60_000);
 		return () => clearInterval(interval);
 	}, []);
@@ -140,31 +147,28 @@ function useNowUnix() {
 	return now;
 }
 
-// xxx: can we use date-fns?
-function timeRemaining(
-	now: number,
-	startTimeUnix: number,
-	endTimeUnix: number,
-) {
-	const remaining = endTimeUnix - now;
-	if (remaining <= 0) return null;
+function timeRemaining(now: Date, start: Date, end: Date) {
+	const remainingSeconds = differenceInSeconds(end, now);
+	if (remainingSeconds <= 0) return null;
 
-	const total = endTimeUnix - startTimeUnix;
-	const elapsed = now - startTimeUnix;
-	const progress = total > 0 ? Math.min(1, Math.max(0, elapsed / total)) : 0;
+	const totalSeconds = differenceInSeconds(end, start);
+	const elapsedSeconds = differenceInSeconds(now, start);
+	const progress =
+		totalSeconds > 0
+			? Math.min(1, Math.max(0, elapsedSeconds / totalSeconds))
+			: 0;
 
-	const hours = Math.floor(remaining / 3600);
-	const minutes = Math.floor((remaining % 3600) / 60);
+	const hours = Math.floor(remainingSeconds / 3600);
+	const minutes = Math.floor((remainingSeconds % 3600) / 60);
 	return { hours, minutes, progress };
 }
 
-// xxx: can we use date-fns?
-function timeUntil(now: number, startTimeUnix: number) {
-	const diff = startTimeUnix - now;
-	if (diff <= 0) return null;
+function timeUntil(now: Date, start: Date) {
+	const diffSeconds = differenceInSeconds(start, now);
+	if (diffSeconds <= 0) return null;
 
-	const hours = Math.floor(diff / 3600);
-	const minutes = Math.floor((diff % 3600) / 60);
+	const hours = Math.floor(diffSeconds / 3600);
+	const minutes = Math.floor((diffSeconds % 3600) / 60);
 	return { hours, minutes };
 }
 
@@ -179,17 +183,23 @@ function RotationCard({
 	current: RotationFromLoader | undefined;
 	next: RotationFromLoader | undefined;
 	nextAfter: RotationFromLoader | undefined;
-	now: number;
+	now: Date;
 }) {
 	const { t } = useTranslation(["front", "game-misc"]);
 	const remaining = timeRemaining(
 		now,
-		current?.startTime ?? 0,
-		current?.endTime ?? 0,
+		databaseTimestampToDate(current?.startTime ?? 0),
+		databaseTimestampToDate(current?.endTime ?? 0),
 	);
 	const displayRotation = current ?? next;
-	const nextStartsIn = timeUntil(now, next?.startTime ?? 0);
-	const nextAfterStartsIn = timeUntil(now, nextAfter?.startTime ?? 0);
+	const nextStartsIn = timeUntil(
+		now,
+		databaseTimestampToDate(next?.startTime ?? 0),
+	);
+	const nextAfterStartsIn = timeUntil(
+		now,
+		databaseTimestampToDate(nextAfter?.startTime ?? 0),
+	);
 	const shownNext = current ? next : nextAfter;
 	const shownNextStartsIn = current ? nextStartsIn : nextAfterStartsIn;
 
@@ -223,7 +233,10 @@ function RotationCard({
 					)}
 				>
 					<span className={styles.rotationCardProgressText}>
-						<NextLabel startTimeUnix={next.startTime} startsIn={nextStartsIn} />
+						<NextLabel
+							startTime={databaseTimestampToDate(next.startTime)}
+							startsIn={nextStartsIn}
+						/>
 					</span>
 				</div>
 			) : null}
@@ -246,7 +259,7 @@ function RotationCard({
 							t("front:rotations.nextLabel")
 						) : shownNextStartsIn ? (
 							<NextLabel
-								startTimeUnix={shownNext.startTime}
+								startTime={databaseTimestampToDate(shownNext.startTime)}
 								startsIn={shownNextStartsIn}
 								compact
 							/>
@@ -262,11 +275,11 @@ function RotationCard({
 }
 
 function NextLabel({
-	startTimeUnix,
+	startTime,
 	startsIn,
 	compact,
 }: {
-	startTimeUnix: number;
+	startTime: Date;
 	startsIn: { hours: number; minutes: number };
 	compact?: boolean;
 }) {
@@ -283,7 +296,7 @@ function NextLabel({
 			});
 		}
 		return t("front:rotations.at", {
-			time: formatTime(new Date(startTimeUnix * 1000)),
+			time: formatTime(startTime),
 		});
 	}
 
@@ -295,6 +308,6 @@ function NextLabel({
 	}
 
 	return t("front:rotations.nextAt", {
-		time: formatTime(new Date(startTimeUnix * 1000)),
+		time: formatTime(startTime),
 	});
 }
