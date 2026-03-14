@@ -519,7 +519,6 @@ export function dayMonthYearRequired(args: DateTimeArgs) {
 		});
 }
 
-// xxx: should validate for duplicates too (if any duplicates -> error)
 export function checkboxGroup<V extends string>(
 	args: WithTypedTranslationKeys<
 		WithTypedItemLabels<
@@ -531,6 +530,7 @@ export function checkboxGroup<V extends string>(
 	return z
 		.array(itemsSchema(args.items))
 		.min(args.minLength ?? 0)
+		.refine((val) => val.length === R.unique(val).length)
 		.register(formRegistry, {
 			...args,
 			label: prefixKey(args.label),
