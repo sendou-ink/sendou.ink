@@ -380,9 +380,9 @@ function MenuOverlay({
 							<div className={styles.panelIconContainer}>
 								<Tv size={18} />
 							</div>
-							<h3 className={styles.panelTitle}>
+							<h2 className={styles.panelTitle}>
 								{t("front:sideNav.streams")}
-							</h3>
+							</h2>
 						</header>
 						{streams.length === 0 ? (
 							<div className={styles.sideNavEmpty}>

@@ -54,7 +54,7 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 	return (
 		<div className="stack md">
 			<div className="stack sm">
-				<h3 className={styles.editSmallHeader}>Managers</h3>
+				<h2 className={styles.editSmallHeader}>Managers</h2>
 				<UserSearch
 					key={managers.map((m) => m.id).join("-")}
 					label="Add new manager"
@@ -135,7 +135,7 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 	return (
 		<div className="stack md">
 			<div className="stack sm">
-				<h3 className={styles.editSmallHeader}>Owners</h3>
+				<h2 className={styles.editSmallHeader}>Owners</h2>
 				<UserSearch
 					label="Add new owner"
 					className="text-center"
