@@ -17,7 +17,7 @@ import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import * as PrivateUserNoteRepository from "../PrivateUserNoteRepository.server";
 import { lookingSchema } from "../q-schemas.server";
 import { resolveFutureMatchModes } from "../q-utils";
-import { SendouQError } from "../q-utils.server";
+import { SendouQError, setGroupChatMetadata } from "../q-utils.server";
 
 // this function doesn't throw normally because we are assuming
 // if there is a validation error the user saw stale data
@@ -128,6 +128,15 @@ export const action: ActionFunction = async ({ request }) => {
 					ChatSystemMessage.removeRoom(theirGroup.chatCode);
 				}
 
+				const survivingGroup =
+					SendouQ.findUncensoredGroupById(survivingGroupId);
+				if (survivingGroup?.chatCode) {
+					setGroupChatMetadata({
+						chatCode: survivingGroup.chatCode,
+						members: survivingGroup.members,
+					});
+				}
+
 				break;
 			}
 			case "MATCH_UP": {
@@ -168,6 +177,20 @@ export const action: ActionFunction = async ({ request }) => {
 				});
 
 				await refreshSendouQInstance();
+
+				if (createdMatch.chatCode) {
+					ChatSystemMessage.setMetadata({
+						chatCode: createdMatch.chatCode,
+						header: `Match #${createdMatch.id}`,
+						subtitle: "SendouQ",
+						url: sendouQMatchPage(createdMatch.id),
+						participantUserIds: [
+							...ownGroup.members.map((m) => m.id),
+							...theirGroup.members.map((m) => m.id),
+						],
+						expiresAfter: { hours: 2 },
+					});
+				}
 
 				if (ownGroup.chatCode && theirGroup.chatCode) {
 					ChatSystemMessage.send([

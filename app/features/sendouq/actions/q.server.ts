@@ -17,6 +17,7 @@ import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
 import { frontPageSchema } from "../q-schemas.server";
 import { userCanJoinQueueAt } from "../q-utils";
+import { setGroupChatMetadata } from "../q-utils.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
@@ -35,6 +36,14 @@ export const action: ActionFunction = async ({ request }) => {
 			});
 
 			await refreshSendouQInstance();
+
+			const createdGroup = SendouQ.findOwnGroup(user.id);
+			if (createdGroup?.chatCode) {
+				setGroupChatMetadata({
+					chatCode: createdGroup.chatCode,
+					members: createdGroup.members,
+				});
+			}
 
 			return redirect(
 				data.direct === "true" ? SENDOUQ_LOOKING_PAGE : SENDOUQ_PREPARING_PAGE,
@@ -60,6 +69,14 @@ export const action: ActionFunction = async ({ request }) => {
 			});
 
 			await refreshSendouQInstance();
+
+			const joinedGroup = SendouQ.findOwnGroup(user.id);
+			if (joinedGroup?.chatCode) {
+				setGroupChatMetadata({
+					chatCode: joinedGroup.chatCode,
+					members: joinedGroup.members,
+				});
+			}
 
 			return redirect(
 				groupInvitedTo.status === "PREPARING"
