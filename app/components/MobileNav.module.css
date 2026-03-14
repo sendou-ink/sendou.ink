@@ -260,8 +260,8 @@
 }
 
 .navItemImage {
-	width: 48px;
-	height: 48px;
+	width: var(--field-size-lg);
+	aspect-ratio: 1 / 1;
 	border-radius: var(--radius-field);
 	background-color: var(--color-bg-higher);
 	display: grid;

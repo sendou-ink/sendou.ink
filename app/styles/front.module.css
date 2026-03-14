@@ -55,7 +55,7 @@
 	color: var(--color-text);
 	border: var(--border-style-high);
 	transition: --l 0.2s ease-out;
-	margin-block-start: var(--s-4);
+	margin-block-start: var(--s-6);
 }
 
 .seasonBanner:hover {
@@ -76,14 +76,15 @@
 	position: absolute;
 	width: 83px;
 	right: 6px;
-	top: -29px;
+	bottom: 0;
 }
 
 .seasonBannerLink {
 	background-color: var(--color-bg-higher);
-	border-radius: var(--radius-box);
+	border-radius: var(--radius-field);
 	width: max-content;
-	padding: var(--s-0-5) var(--s-1-5);
+	height: var(--field-size-sm);
+	padding: 0 var(--s-1-5);
 	font-size: var(--font-xs);
 	color: var(--color-text);
 	display: flex;

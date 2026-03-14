@@ -34,6 +34,10 @@
 	padding: 0;
 	border-radius: var(--radius-field);
 	margin-inline-start: auto;
+
+	@media screen and (min-width: 600px) {
+		height: var(--field-size-sm);
+	}
 }
 
 .closeButton:hover {

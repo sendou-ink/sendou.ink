@@ -137,6 +137,7 @@
 	border-color: var(--color-border);
 	border-top: 1.5px solid var(--color-border);
 	border-bottom: 1.5px solid var(--color-border);
+	height: var(--layout-nav-height);
 }
 
 .sideNavHeader:first-child {
@@ -214,6 +215,10 @@
 	cursor: pointer;
 	text-align: left;
 	width: 100%;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+	}
 }
 
 .listLinkImageContainer {
