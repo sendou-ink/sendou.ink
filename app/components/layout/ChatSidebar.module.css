@@ -1,15 +1,8 @@
-/** xxx: clean this up */
-
 .sidebar {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
 	overflow: hidden;
-
-	/* reset negative margin from SideNav header inside chat sidebar */
-	& :global(.sideNavHeader) {
-		margin-inline: 0;
-	}
 }
 
 .sidebarHeader {
@@ -56,46 +49,11 @@
 }
 
 .roomItem {
-	display: flex;
-	align-items: center;
-	gap: var(--s-2);
 	padding: var(--s-2);
-	border-radius: var(--radius-field);
-	background: none;
-	border: none;
-	cursor: pointer;
-	text-align: left;
-	width: 100%;
-	transition: background-color 0.15s;
-	font-size: var(--font-xs);
-	color: var(--color-text);
-}
-
-.roomItem:hover {
-	background-color: var(--color-bg-high);
-}
-
-.roomInfo {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-0-5);
-	min-width: 0;
-	flex: 1;
 }
 
 .roomName {
 	font-weight: var(--weight-semi);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.roomLastMessage {
-	font-size: var(--font-2xs);
-	color: var(--color-text-high);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .roomTimestamp {
@@ -127,12 +85,6 @@
 	background-color: var(--color-bg-high);
 	flex-shrink: 0;
 	min-height: var(--layout-nav-height);
-}
-
-.iconContainer {
-	background-color: var(--color-bg-high);
-	border-radius: var(--radius-field);
-	padding: var(--s-1-5);
 }
 
 .backButton {

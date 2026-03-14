@@ -475,7 +475,6 @@ function ChatProviderInner({
 	);
 }
 
-// xxx: bug: room should close automatically if non-participant and leaves the route
 function useChatRouteSync({
 	rooms,
 	userId,

@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { ArrowLeft, MessageSquare, X } from "lucide-react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
@@ -5,6 +6,7 @@ import { Link } from "react-router";
 import { Chat } from "~/features/chat/components/Chat";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
+import sideNavStyles from "../SideNav.module.css";
 import styles from "./ChatSidebar.module.css";
 
 export function ChatSidebar({ onClose }: { onClose?: () => void }) {
@@ -28,7 +30,7 @@ function SidebarHeader({ onClose }: { onClose?: () => void }) {
 
 	return (
 		<div className={styles.sidebarHeader}>
-			<div className={styles.iconContainer}>
+			<div className={sideNavStyles.iconContainer}>
 				<MessageSquare size={18} />
 			</div>
 			<h2>{t("common:chat.sidebar.title")}</h2>
@@ -78,16 +80,23 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 						return (
 							<Button
 								key={room.chatCode}
-								className={styles.roomItem}
+								className={clsx(sideNavStyles.listButton, styles.roomItem)}
 								onPress={() => {
 									chatContext.requestHistory(room.chatCode);
 									chatContext.setActiveRoom(room.chatCode);
 									chatContext.markAsRead(room.chatCode);
 								}}
 							>
-								<div className={styles.roomInfo}>
-									<span className={styles.roomName}>{room.header}</span>
-									<span className={styles.roomLastMessage}>
+								<div className={sideNavStyles.listLinkContent}>
+									<span
+										className={clsx(
+											sideNavStyles.listLinkTitle,
+											styles.roomName,
+										)}
+									>
+										{room.header}
+									</span>
+									<span className={sideNavStyles.listLinkSubtitle}>
 										{room.subtitle}
 									</span>
 								</div>
