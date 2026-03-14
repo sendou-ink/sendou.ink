@@ -446,9 +446,9 @@ function RegistrationProgress({
 
 	return (
 		<div>
-			<h2 className={clsx(styles.sectionHeader, "text-center")}>
+			<h3 className={clsx(styles.sectionHeader, "text-center")}>
 				{t("tournament:pre.steps.header")}
-			</h2>
+			</h3>
 			<section className={clsx(styles.section, "stack md")}>
 				<div className="stack horizontal lg justify-center text-sm font-semi-bold">
 					{steps.map((step, i) => {
@@ -675,9 +675,9 @@ function TeamInfo({
 	return (
 		<div>
 			<div className="stack horizontal justify-between">
-				<h2 className={styles.sectionHeader}>
+				<h3 className={styles.sectionHeader}>
 					2. {t("tournament:pre.info.header")}
-				</h2>
+				</h3>
 				{canUnregister &&
 				tournament.isLeagueSignup &&
 				!tournament.registrationOpen ? (
@@ -875,7 +875,7 @@ function FriendCode() {
 
 	return (
 		<div>
-			<h2 className={styles.sectionHeader}>1. Friend code</h2>
+			<h3 className={styles.sectionHeader}>1. Friend code</h3>
 			<section className={styles.section}>
 				<div className={clsx(styles.sectionInputContainer, "mx-auto")}>
 					<FriendCodeInput friendCode={user?.friendCode} />
@@ -901,9 +901,9 @@ function FriendCode() {
 function GoogleFormsLink() {
 	return (
 		<div>
-			<h2 className={styles.sectionHeader}>
+			<h3 className={styles.sectionHeader}>
 				Additional Requirement: Google Form
-			</h2>
+			</h3>
 			<section className={clsx(styles.section, "stack lg items-center")}>
 				<a
 					href={import.meta.env.VITE_LEAGUE_GOOGLE_FORM_URL}
@@ -975,9 +975,9 @@ function FillRoster({
 
 	return (
 		<div>
-			<h2 className={styles.sectionHeader}>
+			<h3 className={styles.sectionHeader}>
 				3. {t("tournament:pre.roster.header")}
-			</h2>
+			</h3>
 			<section className={clsx(styles.section, "stack lg items-center")}>
 				{playersAvailableToDirectlyAdd.length > 0 && canAddMembers ? (
 					<>
@@ -1199,9 +1199,9 @@ function CounterPickMapPoolPicker() {
 
 	return (
 		<div>
-			<h2 className={styles.sectionHeader}>
+			<h3 className={styles.sectionHeader}>
 				4. {t("tournament:pre.pool.header")}
-			</h2>
+			</h3>
 			<section className={styles.section}>
 				<fetcher.Form method="post" className="stack lg">
 					<input

@@ -80,9 +80,9 @@ function Results({
 			<div className="stack lg">
 				{results.map((tiersResults) => (
 					<div className="stack md" key={tiersResults.tier}>
-						<h2 className={styles.tierHeader}>
+						<h3 className={styles.tierHeader}>
 							<span>+{tiersResults.tier}</span>
-						</h2>
+						</h3>
 						{(["passed", "failed"] as const).map((status) => (
 							<div key={status} className={styles.passedInfoContainer}>
 								<h4 className={styles.passedHeader}>
