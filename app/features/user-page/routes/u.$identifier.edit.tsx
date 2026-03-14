@@ -1,6 +1,9 @@
 import { Trans, useTranslation } from "react-i18next";
 import { Link, useLoaderData, useMatches } from "react-router";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { FormMessage } from "~/components/FormMessage";
+import { FriendCodeInput } from "~/components/FriendCodeInput";
 import { BADGE } from "~/features/badges/badges-constants";
 import { SendouForm } from "~/form/SendouForm";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -17,7 +20,7 @@ import { userEditProfileBaseSchema } from "../user-page-schemas";
 export { loader, action };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["user"],
+	i18n: ["common", "user"],
 };
 
 export default function UserEditPage() {
@@ -67,6 +70,26 @@ export default function UserEditPage() {
 			>
 				{({ FormField }) => (
 					<>
+						<SendouDialog
+							heading={t("common:fc.title")}
+							trigger={
+								<SendouButton variant="outlined">
+									{data.friendCode
+										? `SW-${data.friendCode}`
+										: t("common:fc.set")}
+								</SendouButton>
+							}
+						>
+							<div className="stack md">
+								<FriendCodeInput friendCode={data.friendCode} />
+								<FormMessage type="info">
+									{t("common:fc.altingWarning")}
+								</FormMessage>
+								<FormMessage type="info">
+									{t("common:fc.changeHelp")}
+								</FormMessage>
+							</div>
+						</SendouDialog>
 						<FormField name="customName" />
 						<FormField name="customUrl" />
 						<FormField name="inGameName" />
