@@ -1,7 +1,12 @@
 import { nanoid } from "nanoid";
 import { WebSocket } from "partysocket";
 import * as React from "react";
-import { useFetcher, useMatches, useRevalidator } from "react-router";
+import {
+	useFetcher,
+	useLocation,
+	useMatches,
+	useRevalidator,
+} from "react-router";
 import { logger } from "~/utils/logger";
 import { soundPath } from "~/utils/urls";
 import type {
@@ -83,7 +88,7 @@ function ChatProviderInner({
 	const [readyState, setReadyState] = React.useState<
 		"CONNECTING" | "CONNECTED" | "CLOSED"
 	>("CONNECTING");
-	const [sidebarOpen, _setSidebarOpen] = React.useState(false);
+	const [chatOpen, _setChatOpen] = React.useState(false);
 	const [activeRoom, setActiveRoom] = React.useState<string | null>(null);
 	const [unreadCounts, setUnreadCounts] = React.useState<
 		Record<string, number>
@@ -118,6 +123,26 @@ function ChatProviderInner({
 			}
 			setChatUsersCache((prev) => ({ ...prev, ...allChatUsers }));
 			computeUnreadCounts(roomList);
+			return;
+		}
+
+		// ROOM_REMOVED: room deleted (e.g. group merge)
+		if (parsed.event === "ROOM_REMOVED" && parsed.chatCode) {
+			const removedCode = parsed.chatCode as string;
+			logger.debug("WS ROOM_REMOVED:", removedCode);
+			revalidate();
+			setRooms((prev) => prev.filter((r) => r.chatCode !== removedCode));
+			setMessagesByRoom((prev) => {
+				const { [removedCode]: _, ...rest } = prev;
+				return rest;
+			});
+			setUnreadCounts((prev) => {
+				const { [removedCode]: _, ...rest } = prev;
+				return rest;
+			});
+			if (activeRoom === removedCode) {
+				setActiveRoom(null);
+			}
 			return;
 		}
 
@@ -240,7 +265,7 @@ function ChatProviderInner({
 					),
 				);
 
-				if (roomCode === activeRoom && sidebarOpen) {
+				if (roomCode === activeRoom && chatOpen) {
 					writeLastReadCount(roomCode, msg.totalMessageCount);
 				} else {
 					setUnreadCounts((prev) => ({
@@ -372,9 +397,9 @@ function ChatProviderInner({
 		0,
 	);
 
-	const setSidebarOpen = React.useCallback(
+	const setChatOpen = React.useCallback(
 		(open: boolean) => {
-			_setSidebarOpen(open);
+			_setChatOpen(open);
 			if (open && activeRoom) {
 				markAsRead(activeRoom);
 			}
@@ -397,7 +422,7 @@ function ChatProviderInner({
 		rooms,
 		userId,
 		setActiveRoom,
-		setSidebarOpen,
+		setChatOpen,
 		subscribe,
 		unsubscribe,
 		setRooms,
@@ -417,8 +442,8 @@ function ChatProviderInner({
 			totalUnreadCount,
 			readyState,
 			chatUsers: chatUsersCache,
-			sidebarOpen,
-			setSidebarOpen,
+			chatOpen,
+			setChatOpen,
 			activeRoom,
 			setActiveRoom,
 		}),
@@ -434,9 +459,9 @@ function ChatProviderInner({
 			totalUnreadCount,
 			readyState,
 			chatUsersCache,
-			sidebarOpen,
+			chatOpen,
 			activeRoom,
-			setSidebarOpen,
+			setChatOpen,
 		],
 	);
 
@@ -451,7 +476,7 @@ function useChatRouteSync({
 	rooms,
 	userId,
 	setActiveRoom,
-	setSidebarOpen,
+	setChatOpen,
 	subscribe,
 	unsubscribe,
 	setRooms,
@@ -460,7 +485,7 @@ function useChatRouteSync({
 	rooms: RoomInfo[];
 	userId: number;
 	setActiveRoom: (chatCode: string | null) => void;
-	setSidebarOpen: (open: boolean) => void;
+	setChatOpen: (open: boolean) => void;
 	subscribe: (chatCode: string) => void;
 	unsubscribe: (chatCode: string) => void;
 	setRooms: React.Dispatch<React.SetStateAction<RoomInfo[]>>;
@@ -469,8 +494,10 @@ function useChatRouteSync({
 	>;
 }) {
 	const chatCode = useCurrentRouteChatCode();
+	const { pathname } = useLocation();
 	const subscribedRoomRef = React.useRef<string | null>(null);
 	const previousRouteChatCodeRef = React.useRef<string | null>(null);
+	const previousPathnameRef = React.useRef<string | null>(null);
 
 	React.useEffect(() => {
 		const previousSubscribed = subscribedRoomRef.current;
@@ -484,36 +511,52 @@ function useChatRouteSync({
 				return rest;
 			});
 			setActiveRoom(null);
-			setSidebarOpen(false);
+			setChatOpen(false);
 			subscribedRoomRef.current = null;
 		}
 
-		if (!chatCode) {
+		if (chatCode) {
+			const room = rooms.find((r) => r.chatCode === chatCode);
+			const isParticipant = room?.participantUserIds.includes(userId);
+
+			if (!isParticipant && subscribedRoomRef.current !== chatCode) {
+				logger.debug("Subscribing to non-participant room:", chatCode);
+				subscribe(chatCode);
+				subscribedRoomRef.current = chatCode;
+			}
+
+			const routeChatCodeChanged =
+				previousRouteChatCodeRef.current !== chatCode;
+			previousRouteChatCodeRef.current = chatCode;
+
+			if (routeChatCodeChanged) {
+				setActiveRoom(chatCode);
+				setChatOpen(true);
+			}
+		} else {
 			previousRouteChatCodeRef.current = null;
-			return;
-		}
 
-		const room = rooms.find((r) => r.chatCode === chatCode);
-		const isParticipant = room?.participantUserIds.includes(userId);
+			const pathnameChanged = previousPathnameRef.current !== pathname;
+			previousPathnameRef.current = pathname;
 
-		if (!isParticipant && subscribedRoomRef.current !== chatCode) {
-			subscribe(chatCode);
-			subscribedRoomRef.current = chatCode;
-		}
+			if (pathnameChanged) {
+				const matchedRoom = rooms.find(
+					(r) => r.url === pathname && r.participantUserIds.includes(userId),
+				);
 
-		const routeChatCodeChanged = previousRouteChatCodeRef.current !== chatCode;
-		previousRouteChatCodeRef.current = chatCode;
-
-		if (routeChatCodeChanged) {
-			setActiveRoom(chatCode);
-			setSidebarOpen(true);
+				if (matchedRoom) {
+					setActiveRoom(matchedRoom.chatCode);
+					setChatOpen(true);
+				}
+			}
 		}
 	}, [
 		chatCode,
+		pathname,
 		rooms,
 		userId,
 		setActiveRoom,
-		setSidebarOpen,
+		setChatOpen,
 		subscribe,
 		unsubscribe,
 		setRooms,

@@ -34,12 +34,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		? await ReportedWeaponRepository.findByMatchId(matchId)
 		: null;
 
+	const participantIds = [
+		...matchUnmapped.groupAlpha.members,
+		...matchUnmapped.groupBravo.members,
+	].map((m) => m.id);
 	if (match.chatCode && !match.isLocked) {
-		const participantIds = [
-			...matchUnmapped.groupAlpha.members,
-			...matchUnmapped.groupBravo.members,
-		].map((m) => m.id);
-
 		ChatSystemMessage.setMetadata({
 			chatCode: match.chatCode,
 			header: `Match #${matchId}`,
@@ -61,6 +60,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				})
 			: null,
 		rawReportedWeapons,
-		chatCode: user?.roles.includes("STAFF") ? match.chatCode : null,
+		chatCode:
+			user?.roles.includes("STAFF") && !participantIds.includes(user.id)
+				? match.chatCode
+				: null,
 	};
 };

@@ -8,6 +8,21 @@ import type { ChatMessage } from "./chat-types";
 
 const SKALOP_TOKEN_HEADER_NAME = "Skalop-Token";
 
+function logSkalpError(action: string) {
+	return (err: unknown) => {
+		const cause = err instanceof TypeError ? (err as any).cause : undefined;
+		const code = cause?.code;
+
+		if (code === "ECONNREFUSED") {
+			logger.error(
+				`Skalop "${action}" failed: connection refused at ${process.env.SKALOP_SYSTEM_MESSAGE_URL} — is the skalop service running?`,
+			);
+		} else {
+			logger.error(`Skalop "${action}" failed:`, err);
+		}
+	};
+}
+
 type PartialChatMessage = Pick<
 	ChatMessage,
 	"type" | "context" | "room" | "revalidateOnly"
@@ -57,8 +72,24 @@ export const send: ChatSystemMessageService["send"] = (partialMsg) => {
 			[SKALOP_TOKEN_HEADER_NAME, process.env.SKALOP_TOKEN!],
 			["Content-Type", "application/json"],
 		],
-	}).catch(logger.error);
+	}).catch(logSkalpError("sendMessage"));
 };
+
+export function removeRoom(chatCode: string) {
+	if (systemMessagesDisabled) return;
+
+	return void fetch(process.env.SKALOP_SYSTEM_MESSAGE_URL!, {
+		method: "POST",
+		body: JSON.stringify({
+			action: "removeRoom",
+			chatCode,
+		}),
+		headers: [
+			[SKALOP_TOKEN_HEADER_NAME, process.env.SKALOP_TOKEN!],
+			["Content-Type", "application/json"],
+		],
+	}).catch(logSkalpError("removeRoom"));
+}
 
 interface SetMetadataArgs {
 	chatCode: string;
@@ -66,31 +97,44 @@ interface SetMetadataArgs {
 	subtitle: string;
 	url: string;
 	participantUserIds: number[];
-	expiresAfter: { hours: number } | { days: number };
+	expiresAfter?: { hours: number } | { days: number };
+	expiresAt?: Date;
 }
 
-// xxx: actually there is no dedup like this, for as long as the service is up, we dont resend metadata
-const DEDUP_INTERVAL_MS = 30_000;
-const DEDUP_PRUNE_MS = 1000 * 60 * 60 * 24 * 30;
-const metadataDedup = new Map<string, number>();
+const MAX_DEDUP_CACHE_SIZE = 5_000;
+const DEDUP_CACHE_PRUNE_TARGET = 2_500;
+const metadataDedup = new Map<string, string>();
 
 export async function setMetadata(args: SetMetadataArgs) {
 	if (systemMessagesDisabled) return;
 	if (!process.env.SKALOP_SYSTEM_MESSAGE_URL) return;
 
-	const now = Date.now();
-	const lastSent = metadataDedup.get(args.chatCode);
-	if (lastSent && now - lastSent < DEDUP_INTERVAL_MS) return;
-	metadataDedup.set(args.chatCode, now);
+	const participantsKey = args.participantUserIds
+		.slice()
+		.sort((a, b) => a - b)
+		.join(",");
+	const cached = metadataDedup.get(args.chatCode);
+	if (cached === participantsKey) return;
 
-	// Prune old entries
-	for (const [key, timestamp] of metadataDedup) {
-		if (now - timestamp > DEDUP_PRUNE_MS) {
-			metadataDedup.delete(key);
+	metadataDedup.delete(args.chatCode);
+	metadataDedup.set(args.chatCode, participantsKey);
+
+	if (metadataDedup.size > MAX_DEDUP_CACHE_SIZE) {
+		const entries = [...metadataDedup.entries()];
+		metadataDedup.clear();
+		for (const entry of entries.slice(-DEDUP_CACHE_PRUNE_TARGET)) {
+			metadataDedup.set(entry[0], entry[1]);
 		}
 	}
 
-	const expiresAt = add(new Date(), args.expiresAfter).getTime();
+	invariant(
+		args.expiresAt || args.expiresAfter,
+		"setMetadata requires either expiresAt or expiresAfter",
+	);
+
+	const expiresAt = args.expiresAt
+		? args.expiresAt.getTime()
+		: add(new Date(), args.expiresAfter!).getTime();
 
 	const chatUsers = await UserRepository.findChatUsersByUserIds(
 		args.participantUserIds,
@@ -114,5 +158,5 @@ export async function setMetadata(args: SetMetadataArgs) {
 			[SKALOP_TOKEN_HEADER_NAME, process.env.SKALOP_TOKEN!],
 			["Content-Type", "application/json"],
 		],
-	}).catch(logger.error);
+	}).catch(logSkalpError("setMetadata"));
 }

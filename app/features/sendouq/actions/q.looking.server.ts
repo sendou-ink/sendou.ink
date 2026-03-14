@@ -121,19 +121,11 @@ export const action: ActionFunction = async ({ request }) => {
 
 				await refreshSendouQInstance();
 
-				if (ourGroup.chatCode && theirGroup.chatCode) {
-					ChatSystemMessage.send([
-						{
-							room: ourGroup.chatCode,
-							type: "NEW_GROUP",
-							revalidateOnly: true,
-						},
-						{
-							room: theirGroup.chatCode,
-							type: "NEW_GROUP",
-							revalidateOnly: true,
-						},
-					]);
+				if (ourGroup.chatCode) {
+					ChatSystemMessage.removeRoom(ourGroup.chatCode);
+				}
+				if (theirGroup.chatCode) {
+					ChatSystemMessage.removeRoom(theirGroup.chatCode);
 				}
 
 				break;

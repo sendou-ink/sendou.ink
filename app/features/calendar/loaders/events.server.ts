@@ -5,7 +5,7 @@ import {
 	scrimToSidebarEvent,
 	tournamentToSidebarEvent,
 } from "~/features/sidebar/core/sidebar.server";
-import * as SavedTournamentRepository from "~/features/tournament/SavedTournamentRepository.server";
+import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 
 export type EventsLoaderData = typeof loader;
 
@@ -15,7 +15,7 @@ export const loader = async () => {
 	const [tournamentsData, scrimsData, savedTournaments] = await Promise.all([
 		ShowcaseTournaments.categorizedTournamentsByUserId(user.id),
 		ScrimPostRepository.findUserScrims(user.id),
-		SavedTournamentRepository.upcoming(user.id),
+		SavedCalendarEventRepository.upcoming(user.id),
 	]);
 
 	const registered = tournamentsData.participatingFor

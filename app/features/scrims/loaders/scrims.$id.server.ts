@@ -1,5 +1,4 @@
 import type { LoaderFunctionArgs } from "react-router";
-import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { notFoundIfFalsy } from "../../../utils/remix.server";
@@ -27,22 +26,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const participantIds = Scrim.participantIdsListFromAccepted(post);
 
-	// xxx: additional condition
-	if (post.chatCode) {
-		ChatSystemMessage.setMetadata({
-			chatCode: post.chatCode,
-			// xxx: better header+subtitle
-			header: "Scrim",
-			subtitle: `Scrim #${post.id}`,
-			url: `/scrims/${post.id}`,
-			participantUserIds: participantIds,
-			expiresAfter: { hours: 3 },
-		});
-	}
-
 	return {
 		post,
-		chatCode: user.roles.includes("STAFF") ? post.chatCode : undefined,
+		chatCode:
+			user.roles.includes("STAFF") && !participantIds.includes(user.id)
+				? post.chatCode
+				: undefined,
 		anyUserPrefersNoScreen:
 			await UserRepository.anyUserPrefersNoScreen(participantIds),
 		tournamentMapPool: post.mapsTournament

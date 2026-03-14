@@ -122,8 +122,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		matchIsOver,
 		endedEarly,
 		noScreen,
-		chatCode: tournament.isOrganizerOrStreamer(user)
-			? match.chatCode
-			: undefined,
+		chatCode:
+			tournament.isOrganizerOrStreamer(user) &&
+			!match.players.some((p) => p.id === user?.id)
+				? match.chatCode
+				: undefined,
 	};
 };

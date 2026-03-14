@@ -19,6 +19,7 @@ import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
+import { useLayoutSize } from "~/hooks/useWindowSize";
 import type { RootLoaderData } from "~/root";
 import {
 	EVENTS_PAGE,
@@ -29,8 +30,8 @@ import {
 } from "~/utils/urls";
 import { Avatar } from "./Avatar";
 import { EventsList } from "./EventsList";
-import { SendouButton } from "./elements/Button";
 import { Image } from "./Image";
+import { ChatSidebar } from "./layout/ChatSidebar";
 import { LogInButtonContainer } from "./layout/LogInButtonContainer";
 import {
 	NotificationContent,
@@ -42,12 +43,14 @@ import { NotificationDot } from "./NotificationDot";
 import { StreamListItems } from "./StreamListItems";
 
 type SidebarData = RootLoaderData["sidebar"] | undefined;
-type PanelType = "closed" | "menu" | "friends" | "tourneys" | "you";
+type PanelType = "closed" | "menu" | "friends" | "tourneys" | "chat" | "you";
 
 export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 	const [activePanel, setActivePanel] = React.useState<PanelType>("closed");
 	const user = useUser();
 	const { unseenIds } = useNotifications();
+	const chatContext = useChatContext();
+	const layoutSize = useLayoutSize();
 
 	const hasUnseenNotifications = unseenIds.length > 0;
 	const hasFriendInSendouQ =
@@ -55,6 +58,23 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 		false;
 
 	const closePanel = () => setActivePanel("closed");
+
+	const handleTabPress = (panel: PanelType) => {
+		if (activePanel === "chat" && panel !== "chat") {
+			chatContext?.setChatOpen(false);
+		}
+
+		if (panel === "chat") {
+			chatContext?.setChatOpen(true);
+		}
+
+		setActivePanel(panel);
+	};
+
+	const closeChatPanel = () => {
+		chatContext?.setChatOpen(false);
+		closePanel();
+	};
 
 	return (
 		<div className={styles.mobileNav}>
@@ -81,9 +101,13 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 
 			{activePanel === "you" ? <YouPanel onClose={closePanel} /> : null}
 
+			{chatContext?.chatOpen && layoutSize === "mobile" ? (
+				<ChatPanel onClose={closeChatPanel} />
+			) : null}
+
 			<MobileTabBar
 				activePanel={activePanel}
-				onTabPress={setActivePanel}
+				onTabPress={handleTabPress}
 				isLoggedIn={Boolean(user)}
 				hasUnseenNotifications={hasUnseenNotifications}
 				hasFriendInSendouQ={hasFriendInSendouQ}
@@ -135,9 +159,8 @@ function MobileTabBar({
 					<MobileTab
 						icon={<MessageSquare />}
 						label={t("front:mobileNav.chat")}
-						isActive={false}
-						// onPress={() => chatContext?.setSidebarOpen(true)}
-						onPress={() => {}}
+						isActive={activePanel === "chat"}
+						onPress={() => onTabPress("chat")}
 						unreadCount={chatContext?.totalUnreadCount}
 					/>
 					<MobileTab
@@ -198,10 +221,12 @@ function MobileTab({
 
 function MobilePanel({
 	title,
+	icon,
 	onClose,
 	children,
 }: {
 	title: string;
+	icon: React.ReactNode;
 	onClose: () => void;
 	children: React.ReactNode;
 }) {
@@ -210,13 +235,15 @@ function MobilePanel({
 			<Modal className={clsx(styles.panel, "scrollbar")}>
 				<Dialog className={styles.panelDialog}>
 					<header className={styles.panelHeader}>
+						<div className={styles.panelIconContainer}>{icon}</div>
 						<h2 className={styles.panelTitle}>{title}</h2>
-						<SendouButton
-							icon={<X />}
-							variant="minimal"
-							shape="circle"
-							onPress={onClose}
-						/>
+						<button
+							type="button"
+							className={styles.panelCloseButton}
+							onClick={onClose}
+						>
+							<X size={18} />
+						</button>
 					</header>
 					<div className={styles.panelContent}>{children}</div>
 				</Dialog>
@@ -240,13 +267,17 @@ function MenuOverlay({
 			<Modal className={clsx(styles.menuOverlay, "scrollbar")}>
 				<Dialog className={styles.panelDialog}>
 					<header className={styles.menuHeader}>
-						<h2 className={styles.menuTitle}>{t("front:mobileNav.menu")}</h2>
-						<SendouButton
-							icon={<X />}
-							variant="minimal"
-							shape="circle"
-							onPress={onClose}
-						/>
+						<div className={styles.panelIconContainer}>
+							<Menu size={18} />
+						</div>
+						<h2 className={styles.panelTitle}>{t("front:mobileNav.menu")}</h2>
+						<button
+							type="button"
+							className={styles.panelCloseButton}
+							onClick={onClose}
+						>
+							<X size={18} />
+						</button>
 					</header>
 
 					<nav aria-label={t("front:mobileNav.menu")}>
@@ -308,13 +339,17 @@ function FriendsPanel({
 	const user = useUser();
 
 	return (
-		<MobilePanel title={t("front:sideNav.friends")} onClose={onClose}>
+		<MobilePanel
+			title={t("front:sideNav.friends")}
+			icon={<Users size={18} />}
+			onClose={onClose}
+		>
 			{friends.length > 0 ? (
 				friends.map((friend) => (
 					<FriendMenu key={friend.id} {...friend} onNavigate={onClose} />
 				))
 			) : (
-				<div className="text-lighter text-sm p-2 text-center">
+				<div className={styles.sideNavEmpty}>
 					{user
 						? t("front:sideNav.friends.noFriends")
 						: t("front:sideNav.friends.notLoggedIn")}
@@ -342,7 +377,11 @@ function TourneysPanel({
 	const { t } = useTranslation(["front", "common"]);
 
 	return (
-		<MobilePanel title={t("front:sideNav.myCalendar")} onClose={onClose}>
+		<MobilePanel
+			title={t("front:sideNav.myCalendar")}
+			icon={<Calendar size={18} />}
+			onClose={onClose}
+		>
 			<EventsList events={events} onClick={onClose} />
 			<Link
 				to={EVENTS_PAGE}
@@ -366,7 +405,11 @@ function YouPanel({ onClose }: { onClose: () => void }) {
 	}
 
 	return (
-		<MobilePanel title={t("front:mobileNav.you")} onClose={onClose}>
+		<MobilePanel
+			title={t("front:mobileNav.you")}
+			icon={<User size={18} />}
+			onClose={onClose}
+		>
 			<div className={styles.youPanelUserRow}>
 				<Link
 					to={userPage(user)}
@@ -394,5 +437,17 @@ function YouPanel({ onClose }: { onClose: () => void }) {
 				/>
 			) : null}
 		</MobilePanel>
+	);
+}
+
+function ChatPanel({ onClose }: { onClose: () => void }) {
+	return (
+		<ModalOverlay className={styles.panelOverlay} isOpen isDismissable={false}>
+			<Modal className={clsx(styles.panel, "scrollbar")}>
+				<Dialog className={styles.panelDialog}>
+					<ChatSidebar onClose={onClose} />
+				</Dialog>
+			</Modal>
+		</ModalOverlay>
 	);
 }

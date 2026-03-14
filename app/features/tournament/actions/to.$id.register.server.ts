@@ -5,7 +5,7 @@ import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
-import * as SavedTournamentRepository from "~/features/tournament/SavedTournamentRepository.server";
+import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
@@ -135,7 +135,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 					avatarFileName,
 				});
 				deleteSub({ tournamentId, userId: user.id });
-				await SavedTournamentRepository.unsave({
+				await SavedCalendarEventRepository.unsave({
 					userId: user.id,
 					tournamentId,
 				});
@@ -287,7 +287,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				}),
 			});
 
-			await SavedTournamentRepository.unsave({
+			await SavedCalendarEventRepository.unsave({
 				userId: data.userId,
 				tournamentId,
 			});
@@ -353,17 +353,23 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "SAVE_TOURNAMENT": {
-			const count = await SavedTournamentRepository.countByUserId(user.id);
+			const count = await SavedCalendarEventRepository.countByUserId(user.id);
 			errorToastIfFalsy(
 				count < TOURNAMENT.MAX_SAVED_COUNT,
 				"Maximum saved tournaments reached",
 			);
 
-			await SavedTournamentRepository.save({ userId: user.id, tournamentId });
+			await SavedCalendarEventRepository.save({
+				userId: user.id,
+				tournamentId,
+			});
 			break;
 		}
 		case "UNSAVE_TOURNAMENT": {
-			await SavedTournamentRepository.unsave({ userId: user.id, tournamentId });
+			await SavedCalendarEventRepository.unsave({
+				userId: user.id,
+				tournamentId,
+			});
 			break;
 		}
 		default: {

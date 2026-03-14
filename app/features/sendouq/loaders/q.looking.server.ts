@@ -3,6 +3,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
+import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import { groupExpiryStatus } from "../core/groups";
 import { SendouQ } from "../core/SendouQ.server";
 import * as PrivateUserNoteRepository from "../PrivateUserNoteRepository.server";
@@ -33,17 +34,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		});
 	}
 
-	// xxx: how to handle group changing..?
 	if (ownGroup?.chatCode) {
 		const memberIds = ownGroup.members.map((m: { id: number }) => m.id);
 
 		ChatSystemMessage.setMetadata({
 			chatCode: ownGroup.chatCode,
-			header: "Group",
+			header: `Group (${memberIds.length}/4)`,
 			subtitle: "SendouQ",
-			url: "/q/looking",
+			url: SENDOUQ_LOOKING_PAGE,
 			participantUserIds: memberIds,
-			expiresAfter: { hours: 1 },
+			expiresAfter: { hours: 2 },
 		});
 	}
 
@@ -53,8 +53,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				? []
 				: groups,
 		ownGroup,
-		// xxx: only chatCode if permissions
-		chatCode: ownGroup?.chatCode,
 		likes: ownGroup
 			? await SQGroupRepository.allLikesByGroupId(ownGroup.id)
 			: {

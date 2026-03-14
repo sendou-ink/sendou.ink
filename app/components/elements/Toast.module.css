@@ -3,7 +3,7 @@
 	gap: 8px;
 	display: flex;
 	position: fixed;
-	top: 55px;
+	top: var(--layout-nav-height);
 	right: 10px;
 	z-index: 10;
 }

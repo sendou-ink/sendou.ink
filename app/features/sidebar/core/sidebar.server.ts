@@ -2,6 +2,7 @@ import { cachified } from "@epic-web/cachified";
 import { addDays } from "date-fns";
 import { href } from "react-router";
 import * as R from "remeda";
+import { userIsBanned } from "~/features/ban/core/banned.server";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import {
 	COMBINED_STREAMS_KEY,
@@ -17,7 +18,7 @@ import type { SidebarScrim } from "~/features/scrims/ScrimPostRepository.server"
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import { getSendouQSidebarStreams } from "~/features/sendouq-streams/core/streams.server";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
-import * as SavedTournamentRepository from "~/features/tournament/SavedTournamentRepository.server";
+import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import { cache, ttl } from "~/utils/cache.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
@@ -73,7 +74,7 @@ export async function resolveSidebarData(userId: number | null) {
 			ShowcaseTournaments.categorizedTournamentsByUserId(userId),
 			ScrimPostRepository.findUserScrims(userId),
 			FriendRepository.findByUserIdWithActivity(userId),
-			SavedTournamentRepository.upcoming(userId),
+			SavedCalendarEventRepository.upcoming(userId),
 		]);
 
 	const seenTournamentIds = new Set<number>();
@@ -165,6 +166,8 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 	}
 
 	for (const row of xRankByUser.values()) {
+		if (userIsBanned(row.id)) continue;
+
 		if (
 			row.twitchUsername &&
 			seenUsernames.has(row.twitchUsername.toLowerCase())

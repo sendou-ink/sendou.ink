@@ -294,6 +294,7 @@
 	"leaderboard.updateInfo": "排行榜每30分钟更新",
 	"leaderboard.qualification": "赛季决赛资格",
 	"leaderboard.qualification.info": "",
+	"chat.expired": "",
 	"chat.connected": "已连接",
 	"chat.connecting": "",
 	"chat.disconnected": "未连接",

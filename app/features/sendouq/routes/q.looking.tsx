@@ -285,12 +285,7 @@ function Groups() {
 					[styles.containerMobile]: isMobile,
 				})}
 			>
-				{!isMobile ? (
-					<div>
-						{ownGroupElement}
-						{invitedGroupsDesktop}
-					</div>
-				) : null}
+				{!isMobile ? <div>{ownGroupElement}</div> : null}
 				<div className={styles.innerContainer}>
 					<SendouTabs>
 						<SendouTabList>

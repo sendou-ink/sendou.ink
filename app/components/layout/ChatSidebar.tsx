@@ -31,7 +31,9 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 	return (
 		<div className={styles.sidebar}>
 			<div className={styles.sidebarHeader}>
-				<MessageSquare size={18} />
+				<div className={styles.iconContainer}>
+					<MessageSquare size={18} />
+				</div>
 				<h2>{t("common:chat.sidebar.title")}</h2>
 				{onClose ? (
 					<Button className={styles.closeButton} onPress={onClose}>
@@ -87,7 +89,12 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 	const chatContext = useChatContext()!;
 	const activeRoom = chatContext.activeRoom!;
 
+	const otherRoomsUnreadCount = Object.entries(chatContext.unreadCounts)
+		.filter(([code]) => code !== activeRoom)
+		.reduce((sum, [, count]) => sum + count, 0);
+
 	const room = chatContext.rooms.find((r) => r.chatCode === activeRoom);
+	const roomExpired = Boolean(room?.expiresAt && room.expiresAt < Date.now());
 	const messages = chatContext.messagesForRoom(activeRoom);
 
 	const chatAdapter = {
@@ -119,6 +126,11 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 			<div className={styles.chatHeader}>
 				<Button className={styles.backButton} onPress={handleBack}>
 					<ArrowLeft size={18} />
+					{otherRoomsUnreadCount > 0 ? (
+						<span className={styles.backButtonBadge}>
+							{otherRoomsUnreadCount}
+						</span>
+					) : null}
 				</Button>
 				{room?.url ? (
 					<Link to={room.url} className={styles.chatHeaderLink}>
@@ -143,6 +155,7 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 						},
 					]}
 					chat={chatAdapter}
+					disabled={roomExpired}
 				/>
 			</div>
 		</div>

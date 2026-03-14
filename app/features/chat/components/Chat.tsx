@@ -178,37 +178,43 @@ export function Chat({
 						{t("common:chat.newMessages")}
 					</SendouButton>
 				) : null}
-				<form onSubmit={handleSubmit} className="mt-4">
-					<input
-						className="w-full text-xs"
-						ref={inputRef}
-						placeholder={t("common:chat.input.placeholder")}
-						disabled={sendingMessagesDisabled}
-						maxLength={MESSAGE_MAX_LENGTH}
-					/>{" "}
-					<div className={styles.bottomRow}>
-						{readyState === "CONNECTED" || readyState === "CONNECTING" ? (
-							<div className="text-xxs font-semi-bold text-lighter">
-								{t(
-									readyState === "CONNECTED"
-										? "common:chat.connected"
-										: "common:chat.connecting",
-								)}
-							</div>
-						) : (
-							<div className="text-xxs font-semi-bold text-warning">
-								{t("common:chat.disconnected")}
-							</div>
-						)}
-						<SubmitButton
-							className={styles.sendButton}
-							size="small"
-							isDisabled={sendingMessagesDisabled}
-							aria-label={t("common:chat.send")}
-							icon={<SendHorizontal size={16} />}
-						/>
+				{disabled ? (
+					<div className="text-xs text-lighter text-center my-4">
+						{t("common:chat.expired")}
 					</div>
-				</form>
+				) : (
+					<form onSubmit={handleSubmit} className="mt-4">
+						<input
+							className="w-full text-xs"
+							ref={inputRef}
+							placeholder={t("common:chat.input.placeholder")}
+							disabled={sendingMessagesDisabled}
+							maxLength={MESSAGE_MAX_LENGTH}
+						/>{" "}
+						<div className={styles.bottomRow}>
+							{readyState === "CONNECTED" || readyState === "CONNECTING" ? (
+								<div className="text-xxs font-semi-bold text-lighter">
+									{t(
+										readyState === "CONNECTED"
+											? "common:chat.connected"
+											: "common:chat.connecting",
+									)}
+								</div>
+							) : (
+								<div className="text-xxs font-semi-bold text-warning">
+									{t("common:chat.disconnected")}
+								</div>
+							)}
+							<SubmitButton
+								className={styles.sendButton}
+								size="small"
+								isDisabled={sendingMessagesDisabled}
+								aria-label={t("common:chat.send")}
+								icon={<SendHorizontal size={16} />}
+							/>
+						</div>
+					</form>
+				)}
 			</div>
 		</section>
 	);

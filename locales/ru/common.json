@@ -301,6 +301,7 @@
 	"leaderboard.updateInfo": "Таблица лидеров обновляется каждые 30 минут",
 	"leaderboard.qualification": "Квалификации для Финала Сезона",
 	"leaderboard.qualification.info": "Каждый игрок в команде должен завершить как минимум 7 игр SendouQ в текущем сезоне. Каждая уникальная команда из 4 игроков имеет свой собственный счёт.",
+	"chat.expired": "",
 	"chat.connected": "В сети",
 	"chat.connecting": "Подключение...",
 	"chat.disconnected": "Не в сети",

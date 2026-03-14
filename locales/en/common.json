@@ -298,6 +298,7 @@
 	"leaderboard.updateInfo": "Leaderboard is updated once every 30 minutes",
 	"leaderboard.qualification": "Qualification for Season Finale",
 	"leaderboard.qualification.info": "Every player of the roster needs 7 sets of SendouQ played during the season. Every unique roster of 4 have their own points.",
+	"chat.expired": "Room expired, now read-only",
 	"chat.connected": "Connected",
 	"chat.connecting": "Connecting...",
 	"chat.disconnected": "Disconnected",

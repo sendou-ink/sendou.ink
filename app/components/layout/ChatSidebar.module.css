@@ -16,12 +16,12 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
-	padding: var(--s-3) var(--s-3);
+	padding-inline: var(--s-2);
 	background-color: var(--color-bg-high);
 	border-bottom: 1.5px solid var(--color-border);
 	flex-shrink: 0;
 	color: var(--color-text-high);
-	min-height: 55px;
+	min-height: var(--layout-nav-height);
 
 	& h2 {
 		font-size: var(--font-xs);
@@ -130,14 +130,21 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
-	padding: var(--s-3) var(--s-2);
+	padding-inline: var(--s-2);
 	border-bottom: 1.5px solid var(--color-border);
 	background-color: var(--color-bg-high);
 	flex-shrink: 0;
-	min-height: 55px;
+	min-height: var(--layout-nav-height);
+}
+
+.iconContainer {
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-field);
+	padding: var(--s-1-5);
 }
 
 .backButton {
+	position: relative;
 	display: grid;
 	place-items: center;
 	background: none;
@@ -146,6 +153,23 @@
 	color: var(--color-text);
 	padding: var(--s-1);
 	border-radius: var(--radius-field);
+}
+
+.backButtonBadge {
+	position: absolute;
+	top: -2px;
+	right: -2px;
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-inverse);
+	background-color: var(--color-text-accent);
+	min-width: 14px;
+	height: 14px;
+	padding: 0 3px;
+	border-radius: 7px;
+	display: grid;
+	place-items: center;
+	line-height: 1;
 }
 
 .backButton:hover {
@@ -174,7 +198,6 @@
 	min-width: 0;
 	text-decoration: none;
 	color: inherit;
-	padding: var(--s-1) var(--s-2);
 	border-radius: var(--radius-field);
 	transition: background-color 0.15s;
 }

@@ -300,6 +300,7 @@
 	"leaderboard.updateInfo": "Le leaderboard s'actualise toute les 30 minutes",
 	"leaderboard.qualification": "Qualification pour la Season Finale",
 	"leaderboard.qualification.info": "Tous les joueurs du roster doivent avoir 7 matches de jouer pendant la saison. Uniquement les rosters de 4 joueurs ont leurs points.",
+	"chat.expired": "",
 	"chat.connected": "Connecté",
 	"chat.connecting": "Connexion...",
 	"chat.disconnected": "Déconnecté",

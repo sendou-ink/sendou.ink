@@ -300,6 +300,7 @@
 	"leaderboard.updateInfo": "La classifica viene aggiornata ogni 30 minuti",
 	"leaderboard.qualification": "Qualifica per Season Finale",
 	"leaderboard.qualification.info": "Ogni giocatore del roster deve avere 7 sets di SendouQ giocati durante la stagione. Ogni unico roster di 4 giocatori ha i propri punti.",
+	"chat.expired": "",
 	"chat.connected": "Connesso",
 	"chat.connecting": "",
 	"chat.disconnected": "Disconnesso",

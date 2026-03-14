@@ -181,8 +181,8 @@ export function Layout({
 	const [sideNavModalOpen, setSideNavModalOpen] = React.useState(false);
 	const [chatSidebarModalOpen, setChatSidebarModalOpen] = React.useState(false);
 
-	const chatSidebarOpen = chatContext?.sidebarOpen ?? false;
-	const setChatSidebarOpen = chatContext?.setSidebarOpen ?? (() => {});
+	const chatSidebarOpen = chatContext?.chatOpen ?? false;
+	const setChatSidebarOpen = chatContext?.setChatOpen ?? (() => {});
 
 	const { t } = useTranslation(["front", "common"]);
 	const { formatRelativeDate } = useTimeFormat();

@@ -42,8 +42,8 @@ export interface ChatContextValue {
 	totalUnreadCount: number;
 	readyState: "CONNECTING" | "CONNECTED" | "CLOSED";
 	chatUsers: Record<number, ChatUser>;
-	sidebarOpen: boolean;
-	setSidebarOpen: (open: boolean) => void;
+	chatOpen: boolean;
+	setChatOpen: (open: boolean) => void;
 	activeRoom: string | null;
 	setActiveRoom: (chatCode: string | null) => void;
 }

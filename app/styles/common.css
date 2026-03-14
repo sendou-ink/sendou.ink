@@ -600,22 +600,14 @@
 }
 
 .top-leaderboard {
-	min-height: 130px;
+	min-height: 100px;
 	margin: 10px 0;
 }
 
 @media screen and (min-width: 601px) {
-	.top-leaderboard {
-		min-height: 120px;
-	}
-}
-
-.top-leaderboard iframe {
-	margin: 0 auto;
-}
-
-@media screen and (max-width: 599px) {
-	.publift-widget-sticky_footer-container {
-		bottom: 55px !important;
+	@media screen and (max-width: 599px) {
+		.publift-widget-sticky_footer-container {
+			bottom: 55px !important;
+		}
 	}
 }

@@ -300,6 +300,7 @@
 	"leaderboard.updateInfo": "O placar é atualizado a cada 30 minutos",
 	"leaderboard.qualification": "Qualificação para o Final da Temporada",
 	"leaderboard.qualification.info": "",
+	"chat.expired": "",
 	"chat.connected": "Conectado(a)",
 	"chat.connecting": "",
 	"chat.disconnected": "Desconectado(a)",

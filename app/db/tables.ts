@@ -558,11 +558,10 @@ export interface PreparedMaps {
 	eliminationTeamCount?: number;
 }
 
-// xxx: or saved CalendarEvent?
-export interface SavedTournament {
+export interface SavedCalendarEvent {
 	id: GeneratedAlways<number>;
 	userId: number;
-	tournamentId: number;
+	calendarEventId: number;
 	createdAt: Generated<number>;
 }
 
@@ -1324,6 +1323,6 @@ export interface DB {
 	Notification: Notification;
 	NotificationUser: NotificationUser;
 	NotificationUserSubscription: NotificationUserSubscription;
-	SavedTournament: SavedTournament;
+	SavedCalendarEvent: SavedCalendarEvent;
 	SplatoonRotation: SplatoonRotation;
 }

@@ -294,6 +294,7 @@
 	"leaderboard.updateInfo": "リーダーボードは三十分に一回アップデートされます。",
 	"leaderboard.qualification": "今シーズンのフィナーレへの参加権",
 	"leaderboard.qualification.info": "名簿に載っている全てのプレイヤーは今シーズンSendouQを七セットプレイしてないといけません。四人のユニークな名簿ごとにポイントが計算されます。",
+	"chat.expired": "",
 	"chat.connected": "接続されています",
 	"chat.connecting": "",
 	"chat.disconnected": "接続されていません",

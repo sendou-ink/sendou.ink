@@ -300,6 +300,7 @@
 	"leaderboard.updateInfo": "La clasificación se actualiza cada 30 minutos",
 	"leaderboard.qualification": "Clasificación para la Final de Temporada",
 	"leaderboard.qualification.info": "Cada jugador de la plantilla debe jugar 7 sets de SendouQ durante la temporada. Cada alineación única de 4 jugadores tiene sus propios puntos.",
+	"chat.expired": "",
 	"chat.connected": "Conectado",
 	"chat.connecting": "Conectando...",
 	"chat.disconnected": "Desconectado",
