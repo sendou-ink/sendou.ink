@@ -3,11 +3,14 @@ import { ArrowLeft, MessageSquare, X } from "lucide-react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { resolveDatePlaceholders } from "~/features/chat/chat-utils";
 import { Chat } from "~/features/chat/components/Chat";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import sideNavStyles from "../SideNav.module.css";
 import styles from "./ChatSidebar.module.css";
+
+// xxx: add navIcon/url per room
 
 export function ChatSidebar({ onClose }: { onClose?: () => void }) {
 	const chatContext = useChatContext();
@@ -94,7 +97,14 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 											styles.roomName,
 										)}
 									>
-										{room.header}
+										{resolveDatePlaceholders(room.header, (d) =>
+											formatDateTime(d, {
+												month: "short",
+												day: "numeric",
+												hour: "numeric",
+												minute: "numeric",
+											}),
+										)}
 									</span>
 									<span className={sideNavStyles.listLinkSubtitle}>
 										{room.subtitle}
@@ -122,6 +132,7 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 function ChatView({ onClose }: { onClose?: () => void }) {
 	const chatContext = useChatContext()!;
 	const activeRoom = chatContext.activeRoom!;
+	const { formatDateTime } = useTimeFormat();
 
 	const otherRoomsUnreadCount = Object.entries(chatContext.unreadCounts)
 		.filter(([code]) => code !== activeRoom)
@@ -147,7 +158,14 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 	const headerContent = (
 		<>
 			<span className={styles.chatHeaderTitle}>
-				{room?.header ?? activeRoom}
+				{resolveDatePlaceholders(room?.header ?? activeRoom, (d) =>
+					formatDateTime(d, {
+						month: "short",
+						day: "numeric",
+						hour: "numeric",
+						minute: "numeric",
+					}),
+				)}
 			</span>
 			{room?.subtitle ? (
 				<span className={styles.chatHeaderSubtitle}>{room.subtitle}</span>

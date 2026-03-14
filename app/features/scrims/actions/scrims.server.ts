@@ -3,6 +3,7 @@ import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import { datePlaceholder } from "~/features/chat/chat-utils";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
@@ -113,9 +114,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			if (fullPost?.chatCode) {
 				ChatSystemMessage.setMetadata({
 					chatCode: fullPost.chatCode,
-					header: "Scrim",
-					// xxx: better subtitle?
-					subtitle: `Scrim #${post.id}`,
+					header: datePlaceholder(
+						databaseTimestampToDate(request.at ?? post.at),
+					),
+					subtitle: "Scrim",
 					url: scrimPage(post.id),
 					participantUserIds: Scrim.participantIdsListFromAccepted(fullPost),
 					expiresAt: add(databaseTimestampToDate(request.at ?? post.at), {
