@@ -66,6 +66,7 @@ export async function resolveSidebarData(userId: number | null) {
 			events: showcaseEventsToSidebarEvents(tournamentsData.showcase),
 			friends: [] as SidebarFriend[],
 			streams: await combinedStreamsCached(),
+			savedTournamentIds: [] as number[],
 		};
 	}
 
@@ -111,10 +112,13 @@ export async function resolveSidebarData(userId: number | null) {
 
 	const friends = resolveFriends(friendsWithActivity);
 
+	const savedTournamentIds = savedTournaments.map((t) => t.id);
+
 	return {
 		events,
 		friends,
 		streams: await combinedStreamsCached(),
+		savedTournamentIds,
 	};
 }
 

@@ -285,7 +285,11 @@ export function Layout({
 					{t("front:sideNav.noStreams")}
 				</div>
 			) : null}
-			<StreamListItems streams={streams} isLoggedIn={Boolean(user)} />
+			<StreamListItems
+				streams={streams}
+				isLoggedIn={Boolean(user)}
+				savedTournamentIds={sidebarData?.savedTournamentIds}
+			/>
 		</>
 	);
 

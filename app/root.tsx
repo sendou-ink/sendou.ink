@@ -74,9 +74,10 @@ import "nprogress/nprogress.css";
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	if (isRevalidation(args)) return true;
 
-	// user settings, lang change etc. require revalidation on root loader
-	const isSettingsPage = args.currentUrl.pathname === "/settings";
-	if (isSettingsPage) return true;
+	if (args.formData?.get("revalidateRoot") === "true") return true;
+
+	const json = args.json as Record<string, unknown> | undefined;
+	if (json?.revalidateRoot === true) return true;
 
 	return false;
 };

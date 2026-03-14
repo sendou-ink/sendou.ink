@@ -1,12 +1,12 @@
 import { isToday, isTomorrow } from "date-fns";
-import { Bookmark } from "lucide-react";
+import { Bookmark, BookmarkCheck } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import type { SidebarStream } from "~/features/core/streams/streams.server";
 import type { LanguageCode } from "~/modules/i18n/config";
 import { databaseTimestampToDate, formatDistanceToNow } from "~/utils/dates";
-import { navIconUrl } from "~/utils/urls";
+import { navIconUrl, tournamentRegisterPage } from "~/utils/urls";
 import { Image } from "./Image";
 import { ListLink } from "./SideNav";
 import styles from "./StreamListItems.module.css";
@@ -16,10 +16,12 @@ export function StreamListItems({
 	streams,
 	onClick,
 	isLoggedIn,
+	savedTournamentIds,
 }: {
 	streams: SidebarStream[];
 	onClick?: () => void;
 	isLoggedIn?: boolean;
+	savedTournamentIds?: number[];
 }) {
 	const { t, i18n } = useTranslation(["front"]);
 
@@ -63,6 +65,9 @@ export function StreamListItems({
 					prevStream &&
 					databaseTimestampToDate(prevStream.startsAt).getTime() <= Date.now();
 				const showUpcomingDivider = isUpcoming && prevIsLive;
+				const tournamentId = stream.id.startsWith("upcoming-")
+					? Number(stream.id.replace("upcoming-", ""))
+					: null;
 
 				return (
 					<React.Fragment key={stream.id}>
@@ -101,11 +106,12 @@ export function StreamListItems({
 									"LIVE"
 								) : (
 									<div className={styles.badgeRow}>
-										{isLoggedIn && stream.id.startsWith("upcoming-") ? (
+										{isLoggedIn && tournamentId !== null ? (
 											<SaveTournamentStreamButton
-												tournamentId={Number(
-													stream.id.replace("upcoming-", ""),
-												)}
+												tournamentId={tournamentId}
+												isSaved={
+													savedTournamentIds?.includes(tournamentId) ?? false
+												}
 											/>
 										) : null}
 										{streamTierBadge(stream)}
@@ -123,33 +129,40 @@ export function StreamListItems({
 	);
 }
 
-// xxx: show checked in checkmark for saved tournaments
-// xxx: reload sidebar data after saving tournament
 function SaveTournamentStreamButton({
 	tournamentId,
+	isSaved,
 }: {
 	tournamentId: number;
+	isSaved: boolean;
 }) {
 	const fetcher = useFetcher();
 
-	const handleClick = (e: React.MouseEvent) => {
-		e.preventDefault();
-		e.stopPropagation();
-		fetcher.submit(
-			{ _action: "SAVE_TOURNAMENT" },
-			{ method: "post", action: `/to/${tournamentId}/register` },
-		);
-	};
+	const optimisticSaved =
+		fetcher.formData?.get("_action") === "SAVE_TOURNAMENT"
+			? true
+			: fetcher.formData?.get("_action") === "UNSAVE_TOURNAMENT"
+				? false
+				: isSaved;
+
+	const Icon = optimisticSaved ? BookmarkCheck : Bookmark;
 
 	return (
-		<button
-			type="button"
-			className={styles.saveIconButton}
-			title="Save"
-			onClick={handleClick}
+		<fetcher.Form
+			method="post"
+			action={tournamentRegisterPage(tournamentId)}
+			onClick={(e) => e.stopPropagation()}
 		>
-			<Bookmark size={14} />
-		</button>
+			<input
+				type="hidden"
+				name="_action"
+				value={optimisticSaved ? "UNSAVE_TOURNAMENT" : "SAVE_TOURNAMENT"}
+			/>
+			<input type="hidden" name="revalidateRoot" value="true" />
+			<button type="submit" className={styles.saveIconButton} title="Save">
+				<Icon size={14} />
+			</button>
+		</fetcher.Form>
 	);
 }
 

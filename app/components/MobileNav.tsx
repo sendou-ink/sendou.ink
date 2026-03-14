@@ -97,6 +97,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 			{activePanel === "menu" ? (
 				<MenuOverlay
 					streams={sidebarData?.streams ?? []}
+					savedTournamentIds={sidebarData?.savedTournamentIds}
 					onClose={closePanel}
 					onTabPress={handleTabPress}
 					isLoggedIn={Boolean(user)}
@@ -308,12 +309,14 @@ function MobilePanel({
 
 function MenuOverlay({
 	streams,
+	savedTournamentIds,
 	onClose,
 	onTabPress,
 	isLoggedIn,
 	skipAnimation,
 }: {
 	streams: NonNullable<SidebarData>["streams"];
+	savedTournamentIds?: number[];
 	onClose: () => void;
 	onTabPress: (panel: PanelType) => void;
 	isLoggedIn: boolean;
@@ -389,6 +392,7 @@ function MenuOverlay({
 								streams={streams}
 								onClick={onClose}
 								isLoggedIn={Boolean(user)}
+								savedTournamentIds={savedTournamentIds}
 							/>
 						</ul>
 					</section>

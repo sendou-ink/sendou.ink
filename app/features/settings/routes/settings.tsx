@@ -79,6 +79,7 @@ export default function SettingsPage() {
 							newValue: user.preferences.clockFormat ?? "auto",
 						}}
 						autoSubmit
+						revalidateRoot
 					>
 						{({ FormField }) => <FormField name="newValue" />}
 					</SendouForm>
@@ -97,6 +98,7 @@ export default function SettingsPage() {
 										user.preferences.disableBuildAbilitySorting ?? false,
 								}}
 								autoSubmit
+								revalidateRoot
 							>
 								{({ FormField }) => <FormField name="newValue" />}
 							</SendouForm>
@@ -107,6 +109,7 @@ export default function SettingsPage() {
 										user.preferences.disallowScrimPickupsFromUntrusted ?? false,
 								}}
 								autoSubmit
+								revalidateRoot
 							>
 								{({ FormField }) => <FormField name="newValue" />}
 							</SendouForm>
@@ -116,6 +119,7 @@ export default function SettingsPage() {
 									newValue: Boolean(data.noScreen),
 								}}
 								autoSubmit
+								revalidateRoot
 							>
 								{({ FormField }) => <FormField name="newValue" />}
 							</SendouForm>
@@ -212,6 +216,7 @@ function CustomColorSelector() {
 			{
 				_action: "UPDATE_CUSTOM_THEME",
 				newValue: themeInput,
+				revalidateRoot: true,
 			} as unknown as Parameters<typeof fetcher.submit>[0],
 			{ method: "post", encType: "application/json" },
 		);
@@ -219,7 +224,7 @@ function CustomColorSelector() {
 
 	const handleReset = () => {
 		fetcher.submit(
-			{ _action: "UPDATE_CUSTOM_THEME", newValue: null },
+			{ _action: "UPDATE_CUSTOM_THEME", newValue: null, revalidateRoot: true },
 			{ method: "post", encType: "application/json" },
 		);
 	};

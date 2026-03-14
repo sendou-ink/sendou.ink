@@ -73,9 +73,7 @@ export async function countByUserId(userId: number): Promise<number> {
 	return result.count;
 }
 
-export async function findCalendarEventIdsByUserId(
-	userId: number,
-): Promise<number[]> {
+async function findCalendarEventIdsByUserId(userId: number): Promise<number[]> {
 	const rows = await db
 		.selectFrom("SavedCalendarEvent")
 		.select("calendarEventId")
