@@ -61,7 +61,7 @@ export function ScrimPostCard({
 						owner={owner}
 					/>
 				</div>
-				<h3 className={styles.teamName}>
+				<h2 className={styles.teamName}>
 					{isPickup ? (
 						<>
 							<span className={styles.pickupLabel}>{t("scrims:pickupBy")}</span>
@@ -70,7 +70,7 @@ export function ScrimPostCard({
 					) : (
 						teamName
 					)}
-				</h3>
+				</h2>
 				<div className={styles.rightIconsContainer}>
 					{post.isPrivate ? <ScrimVisibilityPopover /> : null}
 					<ScrimTeamMembersPopover users={post.users} />
@@ -496,7 +496,7 @@ export function ScrimRequestCard({
 						owner={owner}
 					/>
 				</div>
-				<h3 className={styles.teamName}>
+				<h2 className={styles.teamName}>
 					{isPickup ? (
 						<>
 							<span className={styles.pickupLabel}>{t("scrims:pickupBy")}</span>
@@ -505,7 +505,7 @@ export function ScrimRequestCard({
 					) : (
 						teamName
 					)}
-				</h3>
+				</h2>
 				<div className={styles.rightIconsContainer}>
 					<ScrimTeamMembersPopover users={request.users} />
 				</div>
