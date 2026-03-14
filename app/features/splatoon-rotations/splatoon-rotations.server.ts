@@ -1,36 +1,13 @@
 import { z } from "zod";
+import gameMisc from "~/../locales/en/game-misc.json";
 import type { TablesInsertable } from "~/db/tables";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import { SPLATOON3_INK_SCHEDULES_URL } from "~/utils/urls";
 
-// xxx: use stagesObj, ensure that has all names on type level
-const STAGE_NAME_TO_ID: Record<string, number> = {
-	"Scorch Gorge": 0,
-	"Eeltail Alley": 1,
-	"Hagglefish Market": 2,
-	"Undertow Spillway": 3,
-	"Mincemeat Metalworks": 4,
-	"Hammerhead Bridge": 5,
-	"Museum d'Alfonsino": 6,
-	"Mahi-Mahi Resort": 7,
-	"Inkblot Art Academy": 8,
-	"Sturgeon Shipyard": 9,
-	MakoMart: 10,
-	"Wahoo World": 11,
-	"Flounder Heights": 12,
-	"Brinewater Springs": 13,
-	"Manta Maria": 14,
-	"Um'ami Ruins": 15,
-	"Humpback Pump Track": 16,
-	"Barnacle & Dime": 17,
-	"Crableg Capital": 18,
-	"Shipshape Cargo Co.": 19,
-	"Bluefin Depot": 20,
-	"Robo ROM-en": 21,
-	"Marlin Airport": 22,
-	"Lemuria Hub": 23,
-	"Urchin Underpass": 24,
-};
+const STAGE_NAME_TO_ID = Object.fromEntries(
+	stageIds.map((id) => [gameMisc[`STAGE_${id}` as keyof typeof gameMisc], id]),
+) as Record<string, number>;
 
 const RULE_TO_MODE: Record<string, RankedModeShort> = {
 	AREA: "SZ",
