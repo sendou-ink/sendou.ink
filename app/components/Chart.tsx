@@ -126,10 +126,10 @@ function ChartTooltip({
 
 	return (
 		<div className={styles.tooltip}>
-			<h3 className="text-center text-md">
+			<h2 className="text-center text-md">
 				{header()}
 				{headerSuffix}
-			</h3>
+			</h2>
 			{dataPoints.map((dataPoint, index) => {
 				const color = dataPoint.style?.fill ?? "var(--color-accent)";
 

@@ -81,7 +81,7 @@ export function OrganizerMatchMapListDialog({
 				</div>
 				{bannedMaps && bannedMaps?.length > 0 ? (
 					<div className="mt-2">
-						<h3 className="text-sm">Banned maps</h3>
+						<h2 className="text-sm">Banned maps</h2>
 						<div className="text-xs">
 							{bannedMaps.map((map, i) => {
 								const bannedByTeam = tournament.teamById(

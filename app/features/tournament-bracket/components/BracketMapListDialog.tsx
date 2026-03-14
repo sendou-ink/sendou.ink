@@ -895,7 +895,7 @@ function RoundMapList({
 
 	return (
 		<div>
-			<h3>{name}</h3>
+			<h2>{name}</h2>
 			<div className={styles.roundControls}>
 				<button
 					type="button"

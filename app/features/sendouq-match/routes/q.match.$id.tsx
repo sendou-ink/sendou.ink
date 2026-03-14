@@ -492,7 +492,7 @@ function ReportWeaponsForm() {
 				value={JSON.stringify(weaponsUsage)}
 			/>
 			<div className="stack horizontal md justify-between w-max mx-auto">
-				<h3 className="text-md">{t("q:match.report.whoToReport")}</h3>
+				<h2 className="text-md">{t("q:match.report.whoToReport")}</h2>
 				<label className="stack horizontal xs items-center mb-0">
 					{t("q:match.report.whoToReport.me")}
 					<input

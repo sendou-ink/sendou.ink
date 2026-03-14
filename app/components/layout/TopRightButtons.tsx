@@ -90,6 +90,7 @@ function ChatButton({
 	return (
 		<>
 			<SendouButton
+				shape="square"
 				size="small"
 				icon={<MessageSquare />}
 				variant={variant}

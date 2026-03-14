@@ -106,7 +106,7 @@
 	height: 85%;
 	background-color: var(--color-bg);
 	border-radius: var(--radius-box) var(--radius-box) 0 0;
-	overflow-y: auto;
+	overflow: hidden;
 	display: flex;
 	flex-direction: column;
 }
@@ -130,7 +130,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
-	padding-inline: var(--s-2);
+	padding-inline: var(--s-4);
 	background-color: var(--color-bg-high);
 	border-bottom: 1.5px solid var(--color-border);
 	z-index: 1;
@@ -175,19 +175,17 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
-	padding-inline: var(--s-2);
+	padding-inline: var(--s-4);
 	background-color: var(--color-bg-high);
 	border-bottom: 1.5px solid var(--color-border);
+	border-top: 1.5px solid var(--color-border);
 	flex-shrink: 0;
 	color: var(--color-text-high);
 	min-height: var(--layout-nav-height);
-}
 
-.streamsSection {
-	padding: var(--s-1-5);
-	border-top: 1.5px solid var(--color-border);
-	background-color: var(--color-bg-high);
-	flex: 1;
+	&:has(+ nav) {
+		border-top: none;
+	}
 }
 
 .panelCloseButton {
@@ -197,7 +195,9 @@
 	border: none;
 	cursor: pointer;
 	color: var(--color-error);
-	padding: var(--s-1);
+	padding: 0;
+	height: var(--field-size);
+	aspect-ratio: 1 / 1;
 	border-radius: var(--radius-field);
 	margin-inline-start: auto;
 }
@@ -207,7 +207,6 @@
 
 .panelIconContainer {
 	border-radius: var(--radius-field);
-	padding: var(--s-1-5);
 }
 
 .streamsList {
@@ -312,8 +311,8 @@
 }
 
 .youPanelSettingsButton svg {
-	width: 20px;
-	height: 20px;
+	width: 18px;
+	height: 18px;
 }
 
 .panelSectionLink {
@@ -326,7 +325,7 @@
 	color: var(--color-text-high);
 	text-decoration: none;
 	padding: var(--s-1) var(--s-3);
-	background-color: var(--color-bg-higher);
+	background-color: var(--color-bg-high);
 	border-radius: var(--radius-field);
 
 	& svg {
@@ -336,7 +335,7 @@
 
 .panelSectionLink:hover {
 	color: var(--color-text);
-	background-color: var(--color-bg-high);
+	background-color: var(--color-bg-higher);
 }
 
 .tabBadge {

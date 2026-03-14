@@ -1458,7 +1458,7 @@ function StatCard({
 			data-testid={testId}
 		>
 			<div className={styles.statCardTitleAndValueContainer}>
-				<h3 className={styles.statCardTitle}>
+				<h2 className={styles.statCardTitle}>
 					{title}{" "}
 					{popoverInfo && (
 						<SendouPopover
@@ -1471,7 +1471,7 @@ function StatCard({
 							{popoverInfo}
 						</SendouPopover>
 					)}
-				</h3>
+				</h2>
 				<div className={styles.statCardValues}>
 					<div className={styles.statCardValue}>
 						<h4 className={styles.statCardValueTitle}>
