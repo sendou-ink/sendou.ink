@@ -16,7 +16,42 @@ export function ChatSidebar({ onClose }: { onClose?: () => void }) {
 		return <ChatView onClose={onClose} />;
 	}
 
+	if (chatContext.isLoading) {
+		return <LoadingState onClose={onClose} />;
+	}
+
 	return <RoomList onClose={onClose} />;
+}
+
+function SidebarHeader({ onClose }: { onClose?: () => void }) {
+	const { t } = useTranslation(["common"]);
+
+	return (
+		<div className={styles.sidebarHeader}>
+			<div className={styles.iconContainer}>
+				<MessageSquare size={18} />
+			</div>
+			<h2>{t("common:chat.sidebar.title")}</h2>
+			{onClose ? (
+				<Button className={styles.closeButton} onPress={onClose}>
+					<X size={18} />
+				</Button>
+			) : null}
+		</div>
+	);
+}
+
+function LoadingState({ onClose }: { onClose?: () => void }) {
+	const { t } = useTranslation(["common"]);
+
+	return (
+		<div className={styles.sidebar}>
+			<SidebarHeader onClose={onClose} />
+			<div className={styles.roomList}>
+				<div className={styles.emptyState}>{t("common:chat.connecting")}</div>
+			</div>
+		</div>
+	);
 }
 
 function RoomList({ onClose }: { onClose?: () => void }) {
@@ -30,17 +65,7 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 
 	return (
 		<div className={styles.sidebar}>
-			<div className={styles.sidebarHeader}>
-				<div className={styles.iconContainer}>
-					<MessageSquare size={18} />
-				</div>
-				<h2>{t("common:chat.sidebar.title")}</h2>
-				{onClose ? (
-					<Button className={styles.closeButton} onPress={onClose}>
-						<X size={18} />
-					</Button>
-				) : null}
-			</div>
+			<SidebarHeader onClose={onClose} />
 			<div className={styles.roomList}>
 				{nonExpiredRooms.length === 0 ? (
 					<div className={styles.emptyState}>

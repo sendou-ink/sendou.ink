@@ -78,6 +78,7 @@ function ChatProviderInner({
 }) {
 	const { revalidate } = useRevalidator();
 
+	const [isLoading, setIsLoading] = React.useState(true);
 	const [rooms, setRooms] = React.useState<RoomInfo[]>([]);
 	const [messagesByRoom, setMessagesByRoom] = React.useState<
 		Record<string, ChatMessage[]>
@@ -116,6 +117,7 @@ function ChatProviderInner({
 			const serverRooms = parsed.rooms as ServerRoomInfo[];
 			const roomList = serverRooms.map(flattenServerRoom);
 			setRooms(roomList);
+			setIsLoading(false);
 
 			const allChatUsers: Record<number, ChatUser> = {};
 			for (const sr of serverRooms) {
@@ -421,6 +423,7 @@ function ChatProviderInner({
 	useChatRouteSync({
 		rooms,
 		userId,
+		isLoading,
 		setActiveRoom,
 		setChatOpen,
 		subscribe,
@@ -431,6 +434,7 @@ function ChatProviderInner({
 
 	const contextValue = React.useMemo(
 		() => ({
+			isLoading,
 			rooms,
 			messagesForRoom,
 			send,
@@ -448,6 +452,7 @@ function ChatProviderInner({
 			setActiveRoom,
 		}),
 		[
+			isLoading,
 			rooms,
 			messagesForRoom,
 			send,
@@ -471,10 +476,10 @@ function ChatProviderInner({
 }
 
 // xxx: bug: room should close automatically if non-participant and leaves the route
-// xxx: bug: route loading state should show before room metadata loads
 function useChatRouteSync({
 	rooms,
 	userId,
+	isLoading,
 	setActiveRoom,
 	setChatOpen,
 	subscribe,
@@ -484,6 +489,7 @@ function useChatRouteSync({
 }: {
 	rooms: RoomInfo[];
 	userId: number;
+	isLoading: boolean;
 	setActiveRoom: (chatCode: string | null) => void;
 	setChatOpen: (open: boolean) => void;
 	subscribe: (chatCode: string) => void;
@@ -500,6 +506,8 @@ function useChatRouteSync({
 	const previousPathnameRef = React.useRef<string | null>(null);
 
 	React.useEffect(() => {
+		if (isLoading) return;
+
 		const previousSubscribed = subscribedRoomRef.current;
 
 		// Clean up previous non-participant subscription if chatCode changed
@@ -551,6 +559,7 @@ function useChatRouteSync({
 			}
 		}
 	}, [
+		isLoading,
 		chatCode,
 		pathname,
 		rooms,

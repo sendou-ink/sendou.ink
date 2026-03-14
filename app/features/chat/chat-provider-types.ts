@@ -31,6 +31,7 @@ export interface RoomInfo {
 }
 
 export interface ChatContextValue {
+	isLoading: boolean;
 	rooms: RoomInfo[];
 	messagesForRoom: (chatCode: string) => ChatMessage[];
 	send: (chatCode: string, contents: string) => void;
