@@ -18,8 +18,6 @@ import styles from "./SplatoonRotations.module.css";
 const ROTATION_MODE_FILTERS = ["ALL", "SZ", "TC", "RM", "CB"] as const;
 type RotationModeFilter = (typeof ROTATION_MODE_FILTERS)[number];
 
-// xxx: maybe we can avoid some added translations to front.json by using native web i18n apis instead
-
 const ROTATION_TYPE_LABELS: Record<string, string> = {
 	SERIES: "rotations.series",
 	OPEN: "rotations.open",
@@ -186,6 +184,7 @@ function RotationCard({
 	now: Date;
 }) {
 	const { t } = useTranslation(["front", "game-misc"]);
+	const { formatTime, formatDuration, formatRelativeTime } = useTimeFormat();
 	const remaining = timeRemaining(
 		now,
 		databaseTimestampToDate(current?.startTime ?? 0),
@@ -218,10 +217,7 @@ function RotationCard({
 						style={{ width: `${remaining.progress * 100}%` }}
 					/>
 					<span className={styles.rotationCardProgressText}>
-						{t("front:rotations.remaining", {
-							hours: remaining.hours,
-							minutes: remaining.minutes,
-						})}
+						{formatDuration(remaining.hours, remaining.minutes)}
 					</span>
 				</div>
 			) : null}
@@ -236,6 +232,8 @@ function RotationCard({
 						<NextLabel
 							startTime={databaseTimestampToDate(next.startTime)}
 							startsIn={nextStartsIn}
+							formatTime={formatTime}
+							formatRelativeTime={formatRelativeTime}
 						/>
 					</span>
 				</div>
@@ -261,6 +259,8 @@ function RotationCard({
 							<NextLabel
 								startTime={databaseTimestampToDate(shownNext.startTime)}
 								startsIn={shownNextStartsIn}
+								formatTime={formatTime}
+								formatRelativeTime={formatRelativeTime}
 								compact
 							/>
 						) : null}
@@ -277,37 +277,30 @@ function RotationCard({
 function NextLabel({
 	startTime,
 	startsIn,
+	formatTime,
+	formatRelativeTime,
 	compact,
 }: {
 	startTime: Date;
 	startsIn: { hours: number; minutes: number };
+	formatTime: (date: Date) => string;
+	formatRelativeTime: (hours: number, minutes: number) => string;
 	compact?: boolean;
 }) {
 	const { t } = useTranslation(["front"]);
-	const { formatTime } = useTimeFormat();
 
 	const withinTwoHours = startsIn.hours * 60 + startsIn.minutes <= 120;
 
 	if (compact) {
 		if (withinTwoHours) {
-			return t("front:rotations.in", {
-				hours: startsIn.hours,
-				minutes: startsIn.minutes,
-			});
+			return formatRelativeTime(startsIn.hours, startsIn.minutes);
 		}
-		return t("front:rotations.at", {
-			time: formatTime(startTime),
-		});
+		return formatTime(startTime);
 	}
 
 	if (withinTwoHours) {
-		return t("front:rotations.next", {
-			hours: startsIn.hours,
-			minutes: startsIn.minutes,
-		});
+		return `${t("front:rotations.nextLabel")} (${formatRelativeTime(startsIn.hours, startsIn.minutes)})`;
 	}
 
-	return t("front:rotations.nextAt", {
-		time: formatTime(startTime),
-	});
+	return `${t("front:rotations.nextLabel")} (${formatTime(startTime)})`;
 }
