@@ -38,6 +38,7 @@
 	overflow-x: hidden;
 	overflow-y: auto;
 	border-radius: 1rem;
+	border: 1px solid var(--color-border);
 	background-color: var(--color-bg);
 	padding: var(--s-6);
 	text-align: left;

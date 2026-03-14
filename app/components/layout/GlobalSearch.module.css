@@ -70,6 +70,7 @@
 .modal {
 	width: 100%;
 	max-width: 32rem;
+	border: 1px solid var(--color-border);
 	background-color: var(--color-bg);
 	border-radius: var(--radius-box);
 	box-shadow:
@@ -181,7 +182,7 @@
 }
 
 .searchTypeRadioSelected {
-	background-color: var(--color-accent-high);
+	background-color: var(--color-text-accent);
 	color: var(--color-text-inverse);
 	border-color: transparent;
 }

@@ -1,6 +1,6 @@
 .container {
 	display: flex;
-	gap: var(--s-3);
+	gap: var(--s-4);
 	margin-left: auto;
 }
 

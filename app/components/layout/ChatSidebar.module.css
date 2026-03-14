@@ -9,7 +9,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
-	padding-inline: var(--s-2);
+	padding-inline: var(--s-4);
 	background-color: var(--color-bg-high);
 	border-bottom: 1.5px solid var(--color-border);
 	flex-shrink: 0;
@@ -29,7 +29,9 @@
 	border: none;
 	cursor: pointer;
 	color: var(--color-error);
-	padding: var(--s-1);
+	height: var(--field-size);
+	aspect-ratio: 1 / 1;
+	padding: 0;
 	border-radius: var(--radius-field);
 	margin-inline-start: auto;
 }
@@ -95,7 +97,8 @@
 	border: none;
 	cursor: pointer;
 	color: var(--color-text);
-	padding: var(--s-1);
+	height: var(--field-size-sm);
+	aspect-ratio: 1 / 1;
 	border-radius: var(--radius-field);
 }
 

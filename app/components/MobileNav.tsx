@@ -281,11 +281,7 @@ function MobilePanel({
 			isDismissable={false}
 		>
 			<Modal
-				className={clsx(
-					styles.panel,
-					"scrollbar",
-					skipAnimation && styles.noAnimation,
-				)}
+				className={clsx(styles.panel, skipAnimation && styles.noAnimation)}
 			>
 				<Dialog className={styles.panelDialog}>
 					<header className={styles.panelHeader}>
@@ -299,7 +295,9 @@ function MobilePanel({
 							<X size={18} />
 						</button>
 					</header>
-					<div className={styles.panelContent}>{children}</div>
+					<div className={clsx(styles.panelContent, "scrollbar")}>
+						{children}
+					</div>
 					<GhostTabBar onTabPress={onTabPress} isLoggedIn={isLoggedIn} />
 				</Dialog>
 			</Modal>
@@ -377,10 +375,14 @@ function MenuOverlay({
 						</ul>
 					</nav>
 
-					<section className={styles.streamsSection}>
-						<header className={styles.streamsSectionHeader}>
-							<Tv />
-							<h3>{t("front:sideNav.streams")}</h3>
+					<section>
+						<header className={styles.menuHeader}>
+							<div className={styles.panelIconContainer}>
+								<Tv size={18} />
+							</div>
+							<h3 className={styles.panelTitle}>
+								{t("front:sideNav.streams")}
+							</h3>
 						</header>
 						{streams.length === 0 ? (
 							<div className={styles.sideNavEmpty}>
@@ -531,7 +533,7 @@ function YouPanel({
 					onClick={onClose}
 					aria-label={t("common:pages.settings")}
 				>
-					<Settings />
+					<Settings size={18} />
 				</Link>
 			</div>
 
