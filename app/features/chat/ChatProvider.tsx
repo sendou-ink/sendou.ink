@@ -426,6 +426,7 @@ function ChatProviderInner({
 		rooms,
 		userId,
 		isLoading,
+		activeRoom,
 		setActiveRoom,
 		setChatOpen,
 		subscribe,
@@ -481,6 +482,7 @@ function useChatRouteSync({
 	rooms,
 	userId,
 	isLoading,
+	activeRoom,
 	setActiveRoom,
 	setChatOpen,
 	subscribe,
@@ -491,6 +493,7 @@ function useChatRouteSync({
 	rooms: RoomInfo[];
 	userId: number;
 	isLoading: boolean;
+	activeRoom: string | null;
 	setActiveRoom: (chatCode: string | null) => void;
 	setChatOpen: (open: boolean) => void;
 	subscribe: (chatCode: string) => void;
@@ -519,8 +522,10 @@ function useChatRouteSync({
 				const { [previousSubscribed]: _, ...rest } = prev;
 				return rest;
 			});
-			setActiveRoom(null);
-			setChatOpen(false);
+			if (activeRoom === previousSubscribed) {
+				setActiveRoom(null);
+				setChatOpen(false);
+			}
 			subscribedRoomRef.current = null;
 		}
 
@@ -565,6 +570,7 @@ function useChatRouteSync({
 		pathname,
 		rooms,
 		userId,
+		activeRoom,
 		setActiveRoom,
 		setChatOpen,
 		subscribe,
