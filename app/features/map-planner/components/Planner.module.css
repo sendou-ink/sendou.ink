@@ -80,7 +80,6 @@
 	flex-wrap: wrap;
 	justify-content: center;
 	padding: var(--s-2);
-	gap: var(--s-2);
 }
 
 .stylePanel {

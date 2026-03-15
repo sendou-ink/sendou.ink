@@ -1,7 +1,5 @@
 import clsx from "clsx";
 import type * as React from "react";
-import { isRouteErrorResponse, useRouteError } from "react-router";
-import { useHasRole } from "~/modules/permissions/hooks";
 import styles from "./Main.module.css";
 
 export const Main = ({
@@ -19,20 +17,12 @@ export const Main = ({
 	bigger?: boolean;
 	style?: React.CSSProperties;
 }) => {
-	const error = useRouteError();
-	const isMinorSupporter = useHasRole("MINOR_SUPPORT");
-	const showLeaderboard =
-		import.meta.env.VITE_FUSE_ENABLED &&
-		!isMinorSupporter &&
-		!isRouteErrorResponse(error);
-
 	return (
 		<main
 			className={
 				classNameOverwrite
 					? clsx(classNameOverwrite, {
 							[styles.narrow]: halfWidth,
-							"pt-8": showLeaderboard,
 						})
 					: clsx(
 							styles.main,
@@ -40,7 +30,6 @@ export const Main = ({
 							{
 								[styles.narrow]: halfWidth,
 								[styles.wide]: bigger,
-								"pt-8": showLeaderboard,
 							},
 							className,
 						)
