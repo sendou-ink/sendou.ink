@@ -4,10 +4,7 @@ import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
-import {
-	concatUserSubmittedImagePrefix,
-	userChatNameColorForJson,
-} from "~/utils/kysely.server";
+import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { randomTeamName } from "~/utils/team-name";
 
@@ -114,7 +111,6 @@ export async function findLookingTeamsByTournamentId(tournamentId: number) {
 						role: eb.ref("TournamentTeamMember.role"),
 						isStayAsSub: eb.ref("TournamentTeamMember.isStayAsSub"),
 						weapons: eb.ref("User.qWeaponPool"),
-						chatNameColor: userChatNameColorForJson,
 						plusTier: eb.ref("PlusTier.tier"),
 					}),
 				])
@@ -155,7 +151,6 @@ export async function findSubGroups(tournamentId: number) {
 						role: eb.ref("TournamentTeamMember.role"),
 						isStayAsSub: eb.ref("TournamentTeamMember.isStayAsSub"),
 						weapons: eb.ref("User.qWeaponPool"),
-						chatNameColor: userChatNameColorForJson,
 						plusTier: eb.ref("PlusTier.tier"),
 					}),
 				])

@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Mic, Trash } from "lucide-react";
 import * as React from "react";
 import { Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
@@ -14,8 +15,6 @@ import {
 } from "~/components/elements/Tabs";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { WeaponImage } from "~/components/Image";
-import { MicrophoneIcon } from "~/components/icons/Microphone";
-import { TrashIcon } from "~/components/icons/Trash";
 import { Placeholder } from "~/components/Placeholder";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
@@ -157,7 +156,7 @@ function GroupsView({
 				) : null}
 				<div className={styles.innerContainer}>
 					<SendouTabs>
-						<SendouTabList scrolling={isMobile}>
+						<SendouTabList>
 							<SendouTab id="groups" number={neutralGroups.length}>
 								{t("q:looking.columns.groups")}
 							</SendouTab>
@@ -287,7 +286,7 @@ function SubCard({ sub }: { sub: SubEntry }) {
 
 	const infos = [
 		<div key="vc" className={styles.subsInfoVc}>
-			<MicrophoneIcon
+			<Mic
 				className={
 					sub.vc === "YES"
 						? "text-success"
@@ -375,7 +374,7 @@ function SubCard({ sub }: { sub: SubEntry }) {
 							variant="minimal-destructive"
 							size="small"
 							type="submit"
-							icon={<TrashIcon />}
+							icon={<Trash />}
 						>
 							{t("common:actions.delete")}
 						</SendouButton>

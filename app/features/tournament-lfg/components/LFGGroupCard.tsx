@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Mic, Star, Volume2, VolumeX } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher } from "react-router";
@@ -7,11 +8,6 @@ import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Image, WeaponImage } from "~/components/Image";
-import { MicrophoneIcon } from "~/components/icons/Microphone";
-import { SpeakerIcon } from "~/components/icons/Speaker";
-import { SpeakerXIcon } from "~/components/icons/SpeakerX";
-import { StarIcon } from "~/components/icons/Star";
-import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { Pronouns } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
@@ -280,7 +276,7 @@ function LFGMemberRoleManager({
 }) {
 	const fetcher = useFetcher();
 	const { t } = useTranslation(["q"]);
-	const Icon = member.role === "OWNER" ? StarFilledIcon : StarIcon;
+	const isFilled = member.role === "OWNER";
 
 	if (!showActions && member.role !== "OWNER") return null;
 
@@ -290,10 +286,11 @@ function LFGMemberRoleManager({
 				<SendouButton
 					variant="minimal"
 					icon={
-						<Icon
+						<Star
 							className={clsx(styles.star, {
 								[styles.starInactive]: member.role === "REGULAR",
 							})}
+							fill={isFilled ? "currentColor" : "none"}
 						/>
 					}
 				/>
@@ -342,11 +339,7 @@ function LFGVoiceChatInfo({
 	if (!member.languages || !member.vc) return null;
 
 	const Icon =
-		member.vc === "YES"
-			? MicrophoneIcon
-			: member.vc === "LISTEN_ONLY"
-				? SpeakerIcon
-				: SpeakerXIcon;
+		member.vc === "YES" ? Mic : member.vc === "LISTEN_ONLY" ? Volume2 : VolumeX;
 
 	const color = () => {
 		const languagesMatch =
