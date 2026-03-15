@@ -4,6 +4,12 @@
 	margin-left: auto;
 }
 
+.supportWrapper {
+	@media screen and (max-width: 599px) {
+		display: none;
+	}
+}
+
 .searchAndAddContainer {
 	display: grid;
 	grid-template-columns: 2fr 1fr;

@@ -2,6 +2,7 @@ import clsx from "clsx";
 import {
 	Calendar,
 	ChevronRight,
+	Heart,
 	LogIn,
 	Menu,
 	MessageSquare,
@@ -26,9 +27,11 @@ import {
 	FRIENDS_PAGE,
 	navIconUrl,
 	SETTINGS_PAGE,
+	SUPPORT_PAGE,
 	userPage,
 } from "~/utils/urls";
 import { Avatar } from "./Avatar";
+import { LinkButton } from "./elements/Button";
 import { EventsList } from "./EventsList";
 import { Image } from "./Image";
 import { ChatSidebar } from "./layout/ChatSidebar";
@@ -342,13 +345,25 @@ function MenuOverlay({
 							<Menu size={18} />
 						</div>
 						<h2 className={styles.panelTitle}>{t("front:mobileNav.menu")}</h2>
-						<button
-							type="button"
-							className={styles.panelCloseButton}
-							onClick={onClose}
-						>
-							<X size={18} />
-						</button>
+						<div className={styles.menuHeaderActions}>
+							{!user?.roles.includes("MINOR_SUPPORT") ? (
+								<LinkButton
+									to={SUPPORT_PAGE}
+									size="small"
+									icon={<Heart />}
+									variant="outlined"
+								>
+									{t("common:pages.support")}
+								</LinkButton>
+							) : null}
+							<button
+								type="button"
+								className={styles.panelCloseButton}
+								onClick={onClose}
+							>
+								<X size={18} />
+							</button>
+						</div>
 					</header>
 
 					<nav aria-label={t("front:mobileNav.menu")}>

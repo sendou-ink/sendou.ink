@@ -188,6 +188,13 @@
 	}
 }
 
+.menuHeaderActions {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	margin-inline-start: auto;
+}
+
 .panelCloseButton {
 	display: grid;
 	place-items: center;
