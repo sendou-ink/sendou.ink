@@ -10,8 +10,6 @@ import { useTimeFormat } from "~/hooks/useTimeFormat";
 import sideNavStyles from "../SideNav.module.css";
 import styles from "./ChatSidebar.module.css";
 
-// xxx: add navIcon/url per room
-
 export function ChatSidebar({ onClose }: { onClose?: () => void }) {
 	const chatContext = useChatContext();
 
@@ -90,6 +88,13 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 									chatContext.markAsRead(room.chatCode);
 								}}
 							>
+								{room.imageUrl ? (
+									<img
+										src={room.imageUrl}
+										alt=""
+										className={sideNavStyles.listLinkImage}
+									/>
+								) : null}
 								<div className={sideNavStyles.listLinkContent}>
 									<span
 										className={clsx(
@@ -157,19 +162,28 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 
 	const headerContent = (
 		<>
-			<span className={styles.chatHeaderTitle}>
-				{resolveDatePlaceholders(room?.header ?? activeRoom, (d) =>
-					formatDateTime(d, {
-						month: "short",
-						day: "numeric",
-						hour: "numeric",
-						minute: "numeric",
-					}),
-				)}
-			</span>
-			{room?.subtitle ? (
-				<span className={styles.chatHeaderSubtitle}>{room.subtitle}</span>
+			{room?.imageUrl ? (
+				<img
+					src={room.imageUrl}
+					alt=""
+					className={sideNavStyles.listLinkImage}
+				/>
 			) : null}
+			<div className={styles.chatHeaderInfo}>
+				<span className={styles.chatHeaderTitle}>
+					{resolveDatePlaceholders(room?.header ?? activeRoom, (d) =>
+						formatDateTime(d, {
+							month: "short",
+							day: "numeric",
+							hour: "numeric",
+							minute: "numeric",
+						}),
+					)}
+				</span>
+				{room?.subtitle ? (
+					<span className={styles.chatHeaderSubtitle}>{room.subtitle}</span>
+				) : null}
+			</div>
 		</>
 	);
 
@@ -189,7 +203,7 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 						{headerContent}
 					</Link>
 				) : (
-					<div className={styles.chatHeaderInfo}>{headerContent}</div>
+					<div className={styles.chatHeaderLink}>{headerContent}</div>
 				)}
 				{onClose ? (
 					<Button className={styles.closeButton} onPress={onClose}>

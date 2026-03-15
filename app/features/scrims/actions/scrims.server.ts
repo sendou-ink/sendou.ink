@@ -18,7 +18,7 @@ import {
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { scrimPage, scrimsPage } from "~/utils/urls";
+import { navIconUrl, scrimPage, scrimsPage } from "~/utils/urls";
 import * as Scrim from "../core/Scrim";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { type newRequestSchema, scrimsActionSchema } from "../scrims-schemas";
@@ -119,6 +119,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					),
 					subtitle: "Scrim",
 					url: scrimPage(post.id),
+					imageUrl: `${navIconUrl("scrims")}.avif`,
 					participantUserIds: Scrim.participantIdsListFromAccepted(fullPost),
 					expiresAt: add(databaseTimestampToDate(request.at ?? post.at), {
 						hours: 3,

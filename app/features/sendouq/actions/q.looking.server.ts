@@ -11,7 +11,7 @@ import {
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
+import { navIconUrl, SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
 import { groupAfterMorph } from "../core/groups";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import * as PrivateUserNoteRepository from "../PrivateUserNoteRepository.server";
@@ -184,6 +184,7 @@ export const action: ActionFunction = async ({ request }) => {
 						header: `Match #${createdMatch.id}`,
 						subtitle: "SendouQ",
 						url: sendouQMatchPage(createdMatch.id),
+						imageUrl: `${navIconUrl("sendouq")}.avif`,
 						participantUserIds: [
 							...ownGroup.members.map((m) => m.id),
 							...theirGroup.members.map((m) => m.id),

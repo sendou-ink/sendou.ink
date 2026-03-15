@@ -96,6 +96,7 @@ interface SetMetadataArgs {
 	header: string;
 	subtitle: string;
 	url: string;
+	imageUrl?: string;
 	participantUserIds: number[];
 	expiresAfter?: { hours: number } | { days: number };
 	expiresAt?: Date;
@@ -152,6 +153,7 @@ export async function setMetadata(args: SetMetadataArgs) {
 				header: args.header,
 				subtitle: args.subtitle,
 				url: args.url,
+				imageUrl: args.imageUrl,
 			},
 		}),
 		headers: [

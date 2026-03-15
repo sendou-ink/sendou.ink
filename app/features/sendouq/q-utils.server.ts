@@ -3,6 +3,7 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { TIERS } from "~/features/mmr/mmr-constants";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import {
+	navIconUrl,
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PAGE,
 	SENDOUQ_PREPARING_PAGE,
@@ -56,6 +57,7 @@ export function setGroupChatMetadata(group: {
 		header: `Group (${group.members.length}/4)`,
 		subtitle: "SendouQ",
 		url: SENDOUQ_LOOKING_PAGE,
+		imageUrl: `${navIconUrl("sendouq")}.avif`,
 		participantUserIds: group.members.map((m) => m.id),
 		expiresAfter: { hours: 2 },
 	});

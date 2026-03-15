@@ -136,7 +136,9 @@
 
 .chatHeaderLink {
 	display: flex;
-	flex-direction: column;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-1-5);
 	overflow: hidden;
 	min-width: 0;
 	text-decoration: none;

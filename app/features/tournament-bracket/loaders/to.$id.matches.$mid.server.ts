@@ -115,6 +115,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			header: matchContext.roundName ?? `Match #${matchId}`,
 			subtitle: tournament.ctx.name,
 			url: tournamentMatchPage({ tournamentId, matchId }),
+			imageUrl: tournament.ctx.logoUrl,
 			participantUserIds: playerIds,
 			expiresAfter: tournament.isLeagueDivision ? { days: 30 } : { hours: 2 },
 		});

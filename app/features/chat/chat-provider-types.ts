@@ -8,6 +8,7 @@ export interface RoomMetadata {
 	header: string;
 	subtitle?: string;
 	url?: string;
+	imageUrl?: string;
 }
 
 /** Room info as returned by Skalop on connect and ROOM_JOINED events */
@@ -24,6 +25,7 @@ export interface RoomInfo {
 	header: string;
 	subtitle: string;
 	url: string;
+	imageUrl: string;
 	participantUserIds: number[];
 	expiresAt: number;
 	lastMessageTimestamp: number;
