@@ -1,14 +1,15 @@
 .filter {
 	display: flex;
 	flex-direction: column;
-	padding: var(--s-2-5);
-	border-radius: var(--rounded);
-	background-color: var(--bg-lighter);
+	padding: var(--s-3);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
 	gap: var(--s-2);
 }
 
 .filterMode {
 	gap: var(--s-6);
+	flex-wrap: wrap;
 }
 
 .filterDate {
@@ -16,7 +17,7 @@
 	align-items: center;
 }
 
-@media screen and (min-width: 750px) {
+@container (width >= 560px) {
 	.filter {
 		flex-direction: row;
 	}

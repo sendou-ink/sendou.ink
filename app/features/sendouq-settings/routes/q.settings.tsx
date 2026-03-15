@@ -1,19 +1,10 @@
+import { Map as MapIcon, Mic, Puzzle, Volume2 } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useFetcher, useLoaderData } from "react-router";
-import { Avatar } from "~/components/Avatar";
-import { SendouButton } from "~/components/elements/Button";
-import { FormMessage } from "~/components/FormMessage";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { ModeImage } from "~/components/Image";
-import { MapIcon } from "~/components/icons/Map";
-import { MicrophoneFilledIcon } from "~/components/icons/MicrophoneFilled";
-import { PuzzleIcon } from "~/components/icons/Puzzle";
-import { SpeakerFilledIcon } from "~/components/icons/SpeakerFilled";
-import { TrashIcon } from "~/components/icons/Trash";
-import { UsersIcon } from "~/components/icons/Users";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { Preference, UserMapModePreferences } from "~/db/tables";
@@ -47,7 +38,7 @@ import {
 } from "../q-settings-schemas";
 export { loader, action };
 
-import "../q-settings.css";
+import styles from "./q.settings.module.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
@@ -79,7 +70,6 @@ export default function SendouQSettingsPage() {
 			<WeaponPool />
 			<VoiceChat />
 			<Sounds />
-			<TrustedUsers />
 			<Misc />
 		</Main>
 	);
@@ -150,7 +140,7 @@ function MapPicker() {
 
 	return (
 		<details>
-			<summary className="q-settings__summary">
+			<summary className={styles.summary}>
 				<div>
 					<span>{t("q:settings.maps.header")}</span> <MapIcon />
 				</div>
@@ -231,7 +221,6 @@ function MapPicker() {
 							_action="UPDATE_MAP_MODE_PREFERENCES"
 							state={fetcher.state}
 							className="mx-auto"
-							size="big"
 						>
 							{t("common:actions.save")}
 						</SubmitButton>
@@ -254,10 +243,9 @@ function VoiceChat() {
 
 	return (
 		<details>
-			<summary className="q-settings__summary">
+			<summary className={styles.summary}>
 				<div>
-					<span>{t("q:settings.voiceChat.header")}</span>{" "}
-					<MicrophoneFilledIcon />
+					<span>{t("q:settings.voiceChat.header")}</span> <Mic />
 				</div>
 			</summary>
 			<div className="mb-4 ml-2-5">
@@ -291,9 +279,9 @@ function WeaponPool() {
 
 	return (
 		<details>
-			<summary className="q-settings__summary">
+			<summary className={styles.summary}>
 				<div>
-					<span>{t("q:settings.weaponPool.header")}</span> <PuzzleIcon />
+					<span>{t("q:settings.weaponPool.header")}</span> <Puzzle />
 				</div>
 			</summary>
 			<div className="mb-4">
@@ -316,9 +304,9 @@ function Sounds() {
 
 	return (
 		<details>
-			<summary className="q-settings__summary">
+			<summary className={styles.summary}>
 				<div>
-					<span>{t("q:settings.sounds.header")}</span> <SpeakerFilledIcon />
+					<span>{t("q:settings.sounds.header")}</span> <Volume2 />
 				</div>
 			</summary>
 			<div className="mb-4">
@@ -416,9 +404,9 @@ function SoundSlider() {
 
 	return (
 		<div className="stack horizontal xs items-center ml-2-5">
-			<SpeakerFilledIcon className="q-settings__volume-slider-icon" />
+			<Volume2 className={styles.volumeSliderIcon} />
 			<input
-				className="q-settings__volume-slider-input"
+				className={styles.volumeSliderInput}
 				type="range"
 				value={volume}
 				onChange={changeVolume}
@@ -429,85 +417,13 @@ function SoundSlider() {
 	);
 }
 
-function TrustedUsers() {
-	const { t } = useTranslation(["q"]);
-	const data = useLoaderData<typeof loader>();
-
-	return (
-		<details>
-			<summary className="q-settings__summary">
-				<span>{t("q:settings.trusted.header")}</span> <UsersIcon />
-			</summary>
-			<div className="mb-4">
-				{data.trusted.length > 0 ? (
-					<div className="stack md mt-2">
-						{data.trusted.map((trustedUser) => {
-							return (
-								<div
-									key={trustedUser.id}
-									className="stack horizontal xs items-center"
-								>
-									<Avatar user={trustedUser} size="xxs" />
-									<div className="text-sm font-semi-bold">
-										{trustedUser.username}
-									</div>
-									<FormWithConfirm
-										dialogHeading={t("q:settings.trusted.confirm", {
-											name: trustedUser.username,
-										})}
-										fields={[
-											["_action", "REMOVE_TRUST"],
-											["userToRemoveTrustFromId", trustedUser.id],
-										]}
-										submitButtonText="Remove"
-									>
-										<SendouButton
-											className="small-text"
-											variant="minimal-destructive"
-											size="small"
-											type="submit"
-										>
-											<TrashIcon className="small-icon" />
-										</SendouButton>
-									</FormWithConfirm>
-								</div>
-							);
-						})}
-						<FormMessage type="info">
-							{t("q:settings.trusted.trustedExplanation")}
-						</FormMessage>
-					</div>
-				) : (
-					<FormMessage type="info" className="mb-2">
-						{t("q:settings.trusted.noTrustedExplanation")}
-					</FormMessage>
-				)}
-				{data.team ? (
-					<FormMessage type="info" className="mb-2">
-						<Trans
-							i18nKey="q:settings.trusted.teamExplanation"
-							t={t}
-							values={{
-								name: data.team.name,
-							}}
-						>
-							In addition to the users above, a member of your team{" "}
-							<b>{data.team.name}</b> can you add you directly.
-						</Trans>
-					</FormMessage>
-				) : null}
-			</div>
-		</details>
-	);
-}
-
 function Misc() {
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["q"]);
 
 	return (
 		<details>
-			<summary className="q-settings__summary">
+			<summary className={styles.summary}>
 				<div>{t("q:settings.misc.header")}</div>
 			</summary>
 			<div className="mb-4 ml-2-5">

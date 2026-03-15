@@ -35,8 +35,6 @@ export const action: ActionFunction = async ({ request }) => {
 		isFavorite: w.isFavorite ? (1 as const) : (0 as const),
 	}));
 
-	const css = data.css ? JSON.stringify(data.css) : null;
-
 	const isSupporter = user.roles?.includes("SUPPORTER");
 	const isArtist = user.roles?.includes("ARTIST");
 
@@ -55,7 +53,6 @@ export const action: ActionFunction = async ({ request }) => {
 		stickSens: stickSens !== null ? Number(stickSens) : null,
 		pronouns,
 		inGameName: data.inGameName,
-		css: isSupporter ? css : null,
 		battlefy: data.battlefy,
 		weapons,
 		favoriteBadgeIds: limitedBadgeIds.length > 0 ? limitedBadgeIds : null,

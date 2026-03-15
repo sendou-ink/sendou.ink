@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { sub } from "date-fns";
+import { SendHorizontal } from "lucide-react";
 import * as React from "react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
@@ -8,13 +9,17 @@ import { SendouButton } from "../../../components/elements/Button";
 import { SubmitButton } from "../../../components/SubmitButton";
 import { useTimeFormat } from "../../../hooks/useTimeFormat";
 import { MESSAGE_MAX_LENGTH } from "../chat-constants";
-import { useChat, useChatAutoScroll } from "../chat-hooks";
+import { useChatAutoScroll } from "../chat-hooks";
 import type { ChatMessage, ChatProps, ChatUser } from "../chat-types";
+import styles from "./Chat.module.css";
 
-export function ConnectedChat(props: ChatProps) {
-	const chat = useChat(props);
-
-	return <Chat {...props} chat={chat} />;
+export interface ChatAdapter {
+	messages: ChatMessage[];
+	send: (contents: string) => void;
+	currentRoom: string | undefined;
+	setCurrentRoom: (room: string) => void;
+	readyState: "CONNECTING" | "CONNECTED" | "CLOSED";
+	unseenMessages: Map<string, number>;
 }
 
 export function Chat({
@@ -28,8 +33,8 @@ export function Chat({
 	onUnmount,
 	disabled,
 	missingUserName,
-}: Omit<ChatProps, "revalidates" | "onNewMessage"> & {
-	chat: ReturnType<typeof useChat>;
+}: Omit<ChatProps, "onNewMessage" | "revalidates"> & {
+	chat: ChatAdapter;
 }) {
 	const { t } = useTranslation(["common"]);
 	const messagesContainerRef = React.useRef<HTMLOListElement>(null);
@@ -100,7 +105,7 @@ export function Chat({
 	};
 
 	return (
-		<section className={clsx("chat__container", className, { hidden })}>
+		<section className={clsx(styles.container, className, { hidden })}>
 			{rooms.length > 1 ? (
 				<div className="stack horizontal">
 					{rooms.map((room) => {
@@ -109,29 +114,35 @@ export function Chat({
 						return (
 							<Button
 								key={room.code}
-								className={clsx("chat__room-button", {
-									current: currentRoom === room.code,
+								className={clsx(styles.roomButton, {
+									[styles.roomButtonCurrent]: currentRoom === room.code,
 								})}
 								onPress={() => {
 									setCurrentRoom(room.code);
 									resetScroller();
 								}}
 							>
-								<span className="chat__room-button__unseen invisible" />
+								<span className={clsx(styles.roomButtonUnseen, "invisible")} />
 								{room.label}
 								{unseen ? (
-									<span className="chat__room-button__unseen">{unseen}</span>
+									<span className={styles.roomButtonUnseen}>{unseen}</span>
 								) : (
-									<span className="chat__room-button__unseen invisible" />
+									<span
+										className={clsx(styles.roomButtonUnseen, "invisible")}
+									/>
 								)}
 							</Button>
 						);
 					})}
 				</div>
 			) : null}
-			<div className="chat__input-container">
+			<div className={styles.inputContainer}>
 				<ol
-					className={clsx("chat__messages", messagesContainerClassName)}
+					className={clsx(
+						styles.messages,
+						"scrollbar",
+						messagesContainerClassName,
+					)}
 					ref={messagesContainerRef}
 				>
 					{messages.map((msg) => {
@@ -161,43 +172,49 @@ export function Chat({
 				</ol>
 				{unseenMessagesInTheRoom ? (
 					<SendouButton
-						className="chat__unseen-messages"
+						className={styles.unseenMessages}
 						onPress={scrollToBottom}
 					>
 						{t("common:chat.newMessages")}
 					</SendouButton>
 				) : null}
-				<form onSubmit={handleSubmit} className="mt-4">
-					<input
-						className="w-full"
-						ref={inputRef}
-						placeholder={t("common:chat.input.placeholder")}
-						disabled={sendingMessagesDisabled}
-						maxLength={MESSAGE_MAX_LENGTH}
-					/>{" "}
-					<div className="chat__bottom-row">
-						{readyState === "CONNECTED" || readyState === "CONNECTING" ? (
-							<div className="text-xxs font-semi-bold text-lighter">
-								{t(
-									readyState === "CONNECTED"
-										? "common:chat.connected"
-										: "common:chat.connecting",
-								)}
-							</div>
-						) : (
-							<div className="text-xxs font-semi-bold text-warning">
-								{t("common:chat.disconnected")}
-							</div>
-						)}
-						<SubmitButton
-							size="small"
-							variant="minimal"
-							isDisabled={sendingMessagesDisabled}
-						>
-							{t("common:chat.send")}
-						</SubmitButton>
+				{disabled ? (
+					<div className="text-xs text-lighter text-center my-4">
+						{t("common:chat.expired")}
 					</div>
-				</form>
+				) : (
+					<form onSubmit={handleSubmit} className="mt-4">
+						<input
+							className="w-full text-xs"
+							ref={inputRef}
+							placeholder={t("common:chat.input.placeholder")}
+							disabled={sendingMessagesDisabled}
+							maxLength={MESSAGE_MAX_LENGTH}
+						/>{" "}
+						<div className={styles.bottomRow}>
+							{readyState === "CONNECTED" || readyState === "CONNECTING" ? (
+								<div className="text-xxs font-semi-bold text-lighter">
+									{t(
+										readyState === "CONNECTED"
+											? "common:chat.connected"
+											: "common:chat.connecting",
+									)}
+								</div>
+							) : (
+								<div className="text-xxs font-semi-bold text-warning">
+									{t("common:chat.disconnected")}
+								</div>
+							)}
+							<SubmitButton
+								className={styles.sendButton}
+								size="small"
+								isDisabled={sendingMessagesDisabled}
+								aria-label={t("common:chat.send")}
+								icon={<SendHorizontal size={16} />}
+							/>
+						</div>
+					</form>
+				)}
 			</div>
 		</section>
 	);
@@ -213,33 +230,31 @@ function Message({
 	missingUserName?: string;
 }) {
 	return (
-		<li className="chat__message">
+		<li className={styles.message}>
 			{user ? (
 				<div
-					className={clsx("chat__avatar-wrapper", {
-						"chat__avatar-wrapper--staff": user.title,
+					className={clsx(styles.avatarWrapper, {
+						[styles.avatarWrapperStaff]: user.title,
 					})}
 				>
 					<Avatar user={user} size="xs" />
 					{user.title ? (
-						<span className="chat__avatar-badge">{user.title}</span>
+						<span className={styles.avatarBadge}>{user.title}</span>
 					) : null}
 				</div>
 			) : null}
 			<div>
-				<div className="chat__message__info">
+				<div className={styles.messageInfo}>
 					<div
-						className="chat__message__user"
+						className={styles.messageUser}
 						style={
-							user?.chatNameColor
-								? { "--chat-user-color": user.chatNameColor }
-								: undefined
+							user?.chatNameHue ? { "--chat-hue": user.chatNameHue } : undefined
 						}
 					>
 						{user?.username ?? missingUserName}
 					</div>
 					{user?.pronouns ? (
-						<span className="chat__pronouns-tag">
+						<span className={styles.pronounsTag}>
 							{user.pronouns.subject}/{user.pronouns.object}
 						</span>
 					) : null}
@@ -248,8 +263,8 @@ function Message({
 					) : null}
 				</div>
 				<div
-					className={clsx("chat__message__contents", {
-						pending: message.pending,
+					className={clsx(styles.messageContents, {
+						[styles.messageContentsPending]: message.pending,
 					})}
 				>
 					{message.contents}
@@ -267,12 +282,17 @@ function SystemMessage({
 	text: string;
 }) {
 	return (
-		<li className="chat__message">
+		<li className={styles.message}>
 			<div>
 				<div className="stack horizontal sm">
 					<MessageTimestamp timestamp={message.timestamp} />
 				</div>
-				<div className="chat__message__contents text-xs text-lighter font-semi-bold">
+				<div
+					className={clsx(
+						styles.messageContents,
+						"text-xs text-lighter font-semi-bold",
+					)}
+				>
 					{text}
 				</div>
 			</div>
@@ -285,7 +305,7 @@ function MessageTimestamp({ timestamp }: { timestamp: number }) {
 	const moreThanDayAgo = sub(new Date(), { days: 1 }) > new Date(timestamp);
 
 	return (
-		<time className="chat__message__time">
+		<time className={styles.messageTime}>
 			{moreThanDayAgo
 				? formatDateTime(new Date(timestamp), {
 						day: "numeric",

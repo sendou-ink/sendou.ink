@@ -8,7 +8,7 @@ import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
 	COMMON_USER_FIELDS,
-	userChatNameColorForJson,
+	userChatNameHueForJson,
 } from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { userIsBanned } from "../ban/core/banned.server";
@@ -41,7 +41,7 @@ export async function findCurrentGroups() {
 		role: Tables["GroupMember"]["role"];
 		note: Tables["GroupMember"]["note"];
 		weapons: Tables["User"]["qWeaponPool"];
-		chatNameColor: string | null;
+		chatNameHue: string | null;
 		plusTier: Tables["PlusTier"]["tier"] | null;
 	};
 
@@ -83,7 +83,7 @@ export async function findCurrentGroups() {
 						languages: eb.ref("User.languages"),
 						plusTier: eb.ref("PlusTier.tier"),
 						vc: eb.ref("User.vc"),
-						chatNameColor: userChatNameColorForJson,
+						chatNameHue: userChatNameHueForJson,
 					}),
 				])
 				.$castTo<SendouQMemberObject[]>()
@@ -371,11 +371,7 @@ export function rechallenge({
 		.execute();
 }
 
-/**
- * Retrieves information about users who have trusted the specified user,
- * including their associated teams and explicit trust relationships. Banned users are excluded.
- */
-export async function usersThatTrusted(userId: number) {
+export async function friendsAndTeammates(userId: number) {
 	const teams = await db
 		.selectFrom("TeamMemberWithSecondary")
 		.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
@@ -399,15 +395,27 @@ export async function usersThatTrusted(userId: number) {
 		)
 		.union((eb) =>
 			eb
-				.selectFrom("TrustRelationship")
-				.innerJoin("User", "User.id", "TrustRelationship.trustGiverUserId")
+				.selectFrom("Friendship")
+				.innerJoin("User", (join) =>
+					join.on((eb) =>
+						eb.or([
+							eb.and([
+								eb("Friendship.userOneId", "=", userId),
+								eb("User.id", "=", eb.ref("Friendship.userTwoId")),
+							]),
+							eb.and([
+								eb("Friendship.userTwoId", "=", userId),
+								eb("User.id", "=", eb.ref("Friendship.userOneId")),
+							]),
+						]),
+					),
+				)
 				.innerJoin("UserFriendCode", "UserFriendCode.userId", "User.id")
 				.select([
 					...COMMON_USER_FIELDS,
 					"User.inGameName",
 					sql<any>`null`.as("teamId"),
-				])
-				.where("TrustRelationship.trustReceiverUserId", "=", userId),
+				]),
 		)
 		.execute();
 
@@ -428,33 +436,8 @@ export async function usersThatTrusted(userId: number) {
 
 	return {
 		teams: teams.sort((a, b) => b.isMainTeam - a.isMainTeam),
-		trusters: deduplicatedRows,
+		friends: deduplicatedRows,
 	};
-}
-
-/** Update the timestamp of the trust relationship, delaying its automatic deletion */
-export async function refreshTrust({
-	trustGiverUserId,
-	trustReceiverUserId,
-}: {
-	trustGiverUserId: number;
-	trustReceiverUserId: number;
-}) {
-	return db
-		.updateTable("TrustRelationship")
-		.set({ lastUsedAt: databaseTimestampNow() })
-		.where("trustGiverUserId", "=", trustGiverUserId)
-		.where("trustReceiverUserId", "=", trustReceiverUserId)
-		.execute();
-}
-
-export async function deleteOldTrust() {
-	const twoMonthsAgo = sub(new Date(), { months: 2 });
-
-	return db
-		.deleteFrom("TrustRelationship")
-		.where("lastUsedAt", "<", dateToDatabaseTimestamp(twoMonthsAgo))
-		.executeTakeFirst();
 }
 
 export async function setOldGroupsAsInactive() {

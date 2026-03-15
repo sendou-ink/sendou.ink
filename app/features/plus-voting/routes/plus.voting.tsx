@@ -1,10 +1,12 @@
+import clsx from "clsx";
+import { Check } from "lucide-react";
 import * as React from "react";
 import type { MetaFunction } from "react-router";
 import { Form, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { RelativeTime } from "~/components/RelativeTime";
+import styles from "~/features/plus-suggestions/plus.module.css";
 import { usePlusVoting } from "~/features/plus-voting/core";
 import { metaTags } from "~/utils/remix";
 import { assertUnreachable } from "~/utils/types";
@@ -53,8 +55,8 @@ function VotingTimingInfo(
 	return (
 		<div className="stack md">
 			{data.voted ? (
-				<div className="plus-voting__alert">
-					<CheckmarkIcon /> You have voted
+				<div className={styles.votingAlert}>
+					<Check /> You have voted
 				</div>
 			) : null}
 			<div className="text-sm text-center">
@@ -83,7 +85,7 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 	if (!isReady) return null;
 
 	return (
-		<div className="plus-voting__container stack md">
+		<div className={clsx(styles.votingContainer, "stack md")}>
 			<div className="stack xs">
 				<div className="text-sm text-center">
 					Voting ends{" "}
@@ -93,7 +95,7 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 				</div>
 				{progress ? (
 					<progress
-						className="plus-voting__progress"
+						className={styles.votingProgress}
 						value={progress[0]}
 						max={progress[1]}
 						title={`Voting progress ${progress[0]} out of ${progress[1]}`}
@@ -125,14 +127,17 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 					<h2>{currentUser.user.username}</h2>
 					<div className="stack horizontal lg">
 						<SendouButton
-							className="plus-voting__vote-button downvote"
+							className={clsx(
+								styles.votingVoteButton,
+								styles.votingVoteButtonDownvote,
+							)}
 							variant="outlined"
 							onPress={() => addVote("downvote")}
 						>
 							-1
 						</SendouButton>
 						<SendouButton
-							className="plus-voting__vote-button"
+							className={styles.votingVoteButton}
 							variant="outlined"
 							onPress={() => addVote("upvote")}
 						>
@@ -147,7 +152,7 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 					) : null}
 					{currentUser.user.bio ? (
 						<article className="w-full">
-							<h2 className="plus-voting__bio-header">Bio</h2>
+							<h2 className={styles.votingBioHeader}>Bio</h2>
 							{currentUser.user.bio}
 						</article>
 					) : null}
@@ -155,7 +160,7 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 			) : (
 				<Form method="post">
 					<input type="hidden" name="votes" value={JSON.stringify(votes)} />
-					<SendouButton className="plus-voting__submit-button" type="submit">
+					<SendouButton className={styles.votingSubmitButton} type="submit">
 						Submit votes
 					</SendouButton>
 				</Form>

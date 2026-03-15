@@ -36,7 +36,7 @@ function createMember(overrides: Partial<SQGroupMember> = {}): SQGroupMember {
 		pronouns: null,
 		skillDifference: undefined,
 		noScreen: undefined,
-		chatNameColor: null,
+		chatNameHue: null,
 		mapModePreferences: undefined,
 		...overrides,
 	};
@@ -89,7 +89,7 @@ function createOwnGroupMember(
 		pronouns: null,
 		skillDifference: undefined,
 		noScreen: undefined,
-		chatNameColor: null,
+		chatNameHue: null,
 		mapModePreferences: undefined,
 		...overrides,
 	} satisfies OwnGroupMember;

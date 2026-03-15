@@ -1,0 +1,243 @@
+.sidebar {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	overflow: hidden;
+}
+
+.sidebarHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-inline: var(--s-4);
+	background-color: var(--color-bg-high);
+	border-bottom: 1.5px solid var(--color-border);
+	flex-shrink: 0;
+	color: var(--color-text-high);
+	min-height: var(--layout-nav-height);
+
+	& h2 {
+		font-size: var(--font-xs);
+		font-weight: var(--weight-bold);
+	}
+}
+
+.closeButton {
+	display: grid;
+	place-items: center;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--color-error);
+	height: var(--field-size);
+	aspect-ratio: 1 / 1;
+	padding: 0;
+	border-radius: var(--radius-field);
+	margin-inline-start: auto;
+
+	@media screen and (min-width: 600px) {
+		height: var(--field-size-sm);
+	}
+}
+
+.closeButton:hover {
+	background-color: var(--color-bg-higher);
+}
+
+.roomList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+	padding: var(--s-1-5);
+	overflow-y: auto;
+	flex: 1;
+	min-height: 0;
+}
+
+.roomItem {
+	padding: var(--s-2);
+}
+
+.roomName {
+	font-weight: var(--weight-semi);
+}
+
+.roomTimestamp {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	flex-shrink: 0;
+}
+
+.unreadBadge {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-inverse);
+	background-color: var(--color-text-accent);
+	min-width: 18px;
+	height: 18px;
+	padding: 0 var(--s-1);
+	border-radius: 9px;
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+}
+
+.chatHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-inline: var(--s-2);
+	border-bottom: 1.5px solid var(--color-border);
+	background-color: var(--color-bg-high);
+	flex-shrink: 0;
+	min-height: var(--layout-nav-height);
+}
+
+.backButton {
+	position: relative;
+	display: grid;
+	place-items: center;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--color-text);
+	height: var(--field-size-sm);
+	aspect-ratio: 1 / 1;
+	border-radius: var(--radius-field);
+}
+
+.backButtonBadge {
+	position: absolute;
+	top: -2px;
+	right: -2px;
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-inverse);
+	background-color: var(--color-text-accent);
+	min-width: 14px;
+	height: 14px;
+	padding: 0 3px;
+	border-radius: 7px;
+	display: grid;
+	place-items: center;
+	line-height: 1;
+}
+
+.backButton:hover {
+	background-color: var(--color-bg-higher);
+}
+
+.chatHeaderInfo {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	min-width: 0;
+}
+
+.chatHeaderLink {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-1-5);
+	overflow: hidden;
+	min-width: 0;
+	text-decoration: none;
+	color: inherit;
+	border-radius: var(--radius-field);
+	transition: background-color 0.15s;
+}
+
+.chatHeaderLink:hover {
+	background-color: var(--color-bg-higher);
+}
+
+.chatHeaderTitle {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.chatHeaderSubtitle {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.emptyState {
+	padding: var(--s-4);
+	text-align: center;
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+}
+
+.chatContainer {
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+	padding-block-start: var(--s-2);
+
+	/* Chat section.container - fill the space */
+	& > section {
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+
+	/* inputContainer wraps both messages + form - make it fill and flex */
+	& > section > div {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		margin-top: 0;
+		min-height: 0;
+	}
+
+	/* messages: no top padding, fill available space */
+	& ol {
+		padding-top: 0;
+		flex: 1;
+		height: auto;
+		padding-inline: var(--s-2);
+	}
+
+	/* form: stick to bottom, inline layout */
+	& form {
+		display: flex;
+		align-items: center;
+		gap: var(--s-1);
+		padding: var(--s-1-5);
+		border-top: 1.5px solid var(--color-border);
+		margin-top: 0;
+		flex-shrink: 0;
+	}
+
+	& form input {
+		flex: 1;
+	}
+
+	/* bottomRow: hide connected text, inline send button */
+	& form > div {
+		display: contents;
+	}
+
+	& form > div > div {
+		display: none;
+	}
+
+	/* replace "Send" text with send-horizontal icon */
+	& form button {
+		font-size: 0;
+		width: 32px;
+		height: 32px;
+		padding: 0;
+		display: grid;
+		place-items: center;
+		flex-shrink: 0;
+		background-color: transparent;
+		mask-image: none;
+	}
+}

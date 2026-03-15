@@ -99,7 +99,8 @@ test.describe("Tournament streams", () => {
 		await backToBracket(page);
 
 		// The LIVE button should be visible since team 102 members are streaming
-		const liveButton = page.getByText("LIVE").first();
+		const bracketsViewer = page.getByTestId("brackets-viewer");
+		const liveButton = bracketsViewer.getByText("LIVE").first();
 		await expect(liveButton).toBeVisible();
 
 		// Click the LIVE button to open the popover

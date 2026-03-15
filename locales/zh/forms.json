@@ -106,7 +106,6 @@
 	"labels.vodYoutubeUrl": "YouTube链接",
 	"labels.vodTitle": "视频标题",
 	"labels.vodDate": "视频日期",
-	"labels.vodType": "类型",
 	"labels.vodTeamSize": "",
 	"labels.vodStartTimestamp": "从该时间戳开始",
 	"labels.vodMode": "模式",
@@ -215,5 +214,11 @@
 	"errors.profileInGameName": "",
 	"labels.pronoun": "",
 	"bottomTexts.profilePronouns": "",
-	"errors.profilePronounsBothOrNeither": ""
+	"errors.profilePronounsBothOrNeither": "",
+	"labels.friendUser": "",
+	"errors.cannotFriendSelf": "",
+	"errors.alreadyFriends": "",
+	"errors.friendRequestExists": "",
+	"labels.type": "",
+	"labels.visibility": ""
 }

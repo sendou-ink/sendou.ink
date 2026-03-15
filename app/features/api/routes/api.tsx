@@ -1,3 +1,4 @@
+import { Eye, RefreshCcw } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
@@ -5,8 +6,6 @@ import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
 import { SendouButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { EyeIcon } from "~/components/icons/Eye";
-import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { metaTags } from "~/utils/remix";
@@ -95,7 +94,7 @@ function TokenSection({
 						<CopyToClipboardPopover
 							url={token}
 							trigger={
-								<SendouButton icon={<EyeIcon />}>
+								<SendouButton icon={<Eye />}>
 									{t("common:api.revealButton")}
 								</SendouButton>
 							}
@@ -107,11 +106,7 @@ function TokenSection({
 						submitButtonText={t("common:api.regenerate.confirm")}
 						fields={[["_action", generateAction]]}
 					>
-						<SendouButton
-							variant="outlined"
-							icon={<RefreshArrowsIcon />}
-							className="mr-auto"
-						>
+						<SendouButton variant="outlined" icon={<RefreshCcw />}>
 							{t("common:api.regenerate.button")}
 						</SendouButton>
 					</FormWithConfirm>

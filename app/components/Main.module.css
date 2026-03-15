@@ -1,0 +1,24 @@
+.main {
+	container-type: inline-size;
+	padding: var(--layout-main-padding);
+	margin-bottom: var(--s-32);
+	min-height: calc(100dvh - var(--layout-nav-height));
+}
+
+.normal {
+	width: 100%;
+	max-width: 48rem;
+	margin-inline: auto;
+}
+
+.narrow {
+	width: 100%;
+	max-width: 24rem;
+	margin-inline: auto;
+}
+
+.wide {
+	width: 100%;
+	max-width: 72rem;
+	margin-inline: auto;
+}

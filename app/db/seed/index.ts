@@ -237,7 +237,9 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	variation === "NO_SCRIMS" ? undefined : scrimPostRequests,
 	associations,
 	notifications,
+	() => friendships(variation),
 	liveStreams,
+	splatoonRotations,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -296,6 +298,8 @@ function wipeDB() {
 		"Notification",
 		"BanLog",
 		"ModNote",
+		"Friendship",
+		"FriendRequest",
 		"User",
 		"PlusSuggestion",
 		"PlusVote",
@@ -304,6 +308,7 @@ function wipeDB() {
 		"TournamentOrganization",
 		"SeedingSkill",
 		"LiveStream",
+		"SplatoonRotation",
 	];
 
 	for (const table of tablesToDelete) {
@@ -2692,8 +2697,7 @@ async function notifications() {
 		{
 			type: "TO_CHECK_IN_OPENED",
 			meta: { tournamentId: 1, tournamentName: "PICNIC #2" },
-			pictureUrl:
-				"http://localhost:5173/static-assets/img/tournament-logos/pn.png",
+			pictureUrl: "/static-assets/img/tournament-logos/pn.png",
 		},
 	];
 
@@ -2795,6 +2799,60 @@ async function organization() {
 		.run();
 }
 
+const SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS = [150, 151, 152, 153];
+const SENDOU_FRIEND_IDS_AS_TOURNAMENT_SUBS = [100, 101, 102, 103];
+
+async function friendships(variation?: SeedVariation | null) {
+	const allFriendIds = [
+		...SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS,
+		...SENDOU_FRIEND_IDS_AS_TOURNAMENT_SUBS,
+	];
+
+	for (const friendId of allFriendIds) {
+		const userOneId = Math.min(ADMIN_ID, friendId);
+		const userTwoId = Math.max(ADMIN_ID, friendId);
+
+		sql
+			.prepare(
+				/* sql */ `
+				insert into "Friendship" ("userOneId", "userTwoId")
+				values (@userOneId, @userTwoId)
+			`,
+			)
+			.run({ userOneId, userTwoId });
+	}
+
+	if (variation === "NO_SQ_GROUPS") return;
+
+	for (const friendId of SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS) {
+		const group = await SQGroupRepository.createGroup({
+			status: "ACTIVE",
+			userId: friendId,
+		});
+
+		const additionalMemberCount = faker.helpers.arrayElement([0, 1, 2]);
+		const additionalMembers = [200, 201, 202, 203, 204, 205].slice(
+			0,
+			additionalMemberCount,
+		);
+
+		for (const memberId of additionalMembers) {
+			sql
+				.prepare(
+					/* sql */ `
+					insert into "GroupMember" ("groupId", "userId", "role")
+					values (@groupId, @userId, @role)
+				`,
+				)
+				.run({
+					groupId: group.id,
+					userId: memberId + (friendId - 150) * 10,
+					role: "REGULAR",
+				});
+		}
+	}
+}
+
 function liveStreams() {
 	const userIds = userIdsInAscendingOrderById();
 
@@ -2859,5 +2917,77 @@ function liveStreams() {
 				thumbnailUrl,
 				twitch,
 			});
+	}
+}
+
+function splatoonRotations() {
+	const nowUnix = Math.floor(Date.now() / 1000);
+	const TWO_HOURS = 2 * 60 * 60;
+
+	const currentStart = nowUnix - (nowUnix % TWO_HOURS);
+	const currentEnd = currentStart + TWO_HOURS;
+	const nextStart = currentEnd;
+	const nextEnd = nextStart + TWO_HOURS;
+
+	const rotationData = [
+		{
+			type: "SERIES",
+			mode: "SZ",
+			stageId1: 0,
+			stageId2: 3,
+			startTime: currentStart,
+			endTime: currentEnd,
+		},
+		{
+			type: "SERIES",
+			mode: "TC",
+			stageId1: 5,
+			stageId2: 8,
+			startTime: nextStart,
+			endTime: nextEnd,
+		},
+		{
+			type: "OPEN",
+			mode: "RM",
+			stageId1: 1,
+			stageId2: 4,
+			startTime: currentStart,
+			endTime: currentEnd,
+		},
+		{
+			type: "OPEN",
+			mode: "CB",
+			stageId1: 6,
+			stageId2: 9,
+			startTime: nextStart,
+			endTime: nextEnd,
+		},
+		{
+			type: "X",
+			mode: "CB",
+			stageId1: 2,
+			stageId2: 7,
+			startTime: currentStart,
+			endTime: currentEnd,
+		},
+		{
+			type: "X",
+			mode: "SZ",
+			stageId1: 10,
+			stageId2: 11,
+			startTime: nextStart,
+			endTime: nextEnd,
+		},
+	];
+
+	for (const rotation of rotationData) {
+		sql
+			.prepare(
+				`
+			insert into "SplatoonRotation" ("type", "mode", "stageId1", "stageId2", "startTime", "endTime")
+			values ($type, $mode, $stageId1, $stageId2, $startTime, $endTime)
+			`,
+			)
+			.run(rotation);
 	}
 }

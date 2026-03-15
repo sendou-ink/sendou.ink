@@ -1,6 +1,8 @@
+import clsx from "clsx";
 import generalI18next from "i18next";
 import NProgress from "nprogress";
 import * as React from "react";
+import { useEffect } from "react";
 import { I18nProvider, RouterProvider } from "react-aria-components";
 import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
@@ -22,20 +24,25 @@ import {
 	useMatches,
 	useNavigate,
 	useNavigation,
+	useRevalidator,
 	useSearchParams,
 } from "react-router";
 import { useDebounce } from "react-use";
 import { useChangeLanguage } from "remix-i18next/react";
+import type { CustomTheme } from "~/db/tables";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
+import { resolveSidebarData } from "~/features/sidebar/core/sidebar.server";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Route } from "./+types/root";
 import { Catcher } from "./components/Catcher";
 import { SendouToastRegion, toastQueue } from "./components/elements/Toast";
+import { FusePageInit } from "./components/fuse/Fuse";
 import { Layout } from "./components/layout";
-import { Ramp } from "./components/ramp/Ramp";
 import { getUser } from "./features/auth/core/user.server";
 import { userMiddleware } from "./features/auth/core/user-middleware.server";
+import { ChatProvider } from "./features/chat/ChatProvider";
+import { getSidenavSession } from "./features/layout/core/sidenav-session.server";
 import { sessionIdMiddleware } from "./features/session-id/session-id-middleware.server";
 import {
 	isTheme,
@@ -44,7 +51,7 @@ import {
 	ThemeProvider,
 	useTheme,
 } from "./features/theme/core/provider";
-import { getThemeSession } from "./features/theme/core/session.server";
+import { getThemeSession } from "./features/theme/core/theme-session.server";
 import { useIsMounted } from "./hooks/useIsMounted";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
 import { i18nCookie, i18next } from "./modules/i18n/i18next.server";
@@ -57,21 +64,20 @@ export const middleware: Route.MiddlewareFunction[] = [
 	userMiddleware,
 ];
 
-import "nprogress/nprogress.css";
-import "~/styles/common.css";
-import "~/styles/elements.css";
-import "~/styles/flags.css";
-import "~/styles/layout.css";
-import "~/styles/reset.css";
-import "~/styles/utils.css";
 import "~/styles/vars.css";
+import "~/styles/normalize.css";
+import "~/styles/common.css";
+import "~/styles/utils.css";
+import "~/styles/flags.css";
+import "nprogress/nprogress.css";
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	if (isRevalidation(args)) return true;
 
-	// user settings, lang change etc. require revalidation on root loader
-	const isSettingsPage = args.currentUrl.pathname === "/settings";
-	if (isSettingsPage) return true;
+	if (args.formData?.get("revalidateRoot") === "true") return true;
+
+	const json = args.json as Record<string, unknown> | undefined;
+	if (json?.revalidateRoot === true) return true;
 
 	return false;
 };
@@ -93,11 +99,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = getUser();
 	const locale = await i18next.getLocale(request);
 	const themeSession = await getThemeSession(request);
+	const sidenavSession = await getSidenavSession(request);
+
+	const sidebarData = await resolveSidebarData(user?.id ?? null);
 
 	return data(
 		{
 			locale,
 			theme: themeSession.getTheme(),
+			sidenavCollapsed: sidenavSession.getCollapsed(),
 			user: user
 				? {
 						username: user.username,
@@ -113,11 +123,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 						roles: user.roles,
 					}
 				: undefined,
+			customTheme: user?.customTheme,
 			notifications: user
 				? await NotificationRepository.findByUserId(user.id, {
 						limit: NOTIFICATIONS.PEEK_COUNT,
 					})
 				: undefined,
+			sidebar: sidebarData,
 		},
 		{
 			headers: { "Set-Cookie": await i18nCookie.serialize(locale) },
@@ -126,31 +138,43 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["common", "forms", "game-misc", "weapons"],
+	i18n: ["common", "forms", "game-misc", "weapons", "front", "friends"],
 };
 
 function Document({
 	children,
 	data,
-	isErrored = false,
 }: {
 	children: React.ReactNode;
 	data?: RootLoaderData;
-	isErrored?: boolean;
 }) {
 	const { htmlThemeClass } = useTheme();
 	const { i18n } = useTranslation();
 	const navigate = useNavigate();
 	const locale = data?.locale ?? DEFAULT_LANGUAGE;
+	const customThemeStyle = useCustomThemeVars();
 
 	useChangeLanguage(locale);
 	usePreloadTranslation();
 	useLoadingIndicator();
 	useTriggerToasts();
-	const customizedCSSVars = useCustomizedCSSVars();
+	useSidebarRevalidation();
+
+	const htmlStyle: Record<string, string | number> = {
+		...Object.fromEntries(customThemeStyle),
+		...(data?.user?.roles.includes("MINOR_SUPPORT")
+			? { "--layout-fuse-bottom-height": "0px" }
+			: {}),
+	};
 
 	return (
-		<html lang={locale} dir={i18n.dir()} className={htmlThemeClass}>
+		<html
+			lang={locale}
+			dir={i18n.dir()}
+			className={clsx(htmlThemeClass, "scrollbar")}
+			style={htmlStyle}
+			suppressHydrationWarning
+		>
 			<head>
 				<meta charSet="utf-8" />
 				<meta
@@ -164,6 +188,13 @@ function Document({
 				<meta name="apple-mobile-web-app-capable" content="yes" />
 				<meta name="mobile-web-app-capable" content="yes" />
 				<meta name="theme-color" content="#010115" />
+				{import.meta.env.VITE_FUSE_ENABLED &&
+				!data?.user?.roles.includes("MINOR_SUPPORT") ? (
+					<script
+						async
+						src="https://cdn.fuseplatform.net/publift/tags/2/4242/fuse.js"
+					/>
+				) : null}
 				<Meta />
 				<Links />
 				<ThemeHead />
@@ -171,16 +202,16 @@ function Document({
 				<PWALinks />
 				<Fonts />
 			</head>
-			<body style={customizedCSSVars}>
+			<body>
 				{IS_E2E_TEST_RUN && <HydrationTestIndicator />}
 				<React.StrictMode>
 					<RouterProvider navigate={navigate} useHref={useHref}>
 						<I18nProvider locale={i18n.language}>
 							<SendouToastRegion />
-							<MyRamp data={data} />
-							<Layout data={data} isErrored={isErrored}>
-								{children}
-							</Layout>
+							<MyFuse data={data} />
+							<ChatProvider user={data?.user}>
+								<Layout data={data}>{children}</Layout>
+							</ChatProvider>
 						</I18nProvider>
 					</RouterProvider>
 				</React.StrictMode>
@@ -242,34 +273,38 @@ function useLoadingIndicator() {
 	);
 }
 
+function useSidebarRevalidation() {
+	const revalidator = useRevalidator();
+
+	useEffect(() => {
+		const TEN_MINUTES = 10 * 60 * 1000;
+
+		const revalidate = () => {
+			if (revalidator.state === "idle") {
+				revalidator.revalidate();
+			}
+		};
+
+		const handleVisibilityChange = () => {
+			if (document.visibilityState === "visible") {
+				revalidate();
+			}
+		};
+
+		document.addEventListener("visibilitychange", handleVisibilityChange);
+		const interval = setInterval(revalidate, TEN_MINUTES);
+
+		return () => {
+			document.removeEventListener("visibilitychange", handleVisibilityChange);
+			clearInterval(interval);
+		};
+	}, [revalidator]);
+}
+
 function usePreloadTranslation() {
 	React.useEffect(() => {
 		void generalI18next.loadNamespaces(allI18nNamespaces());
 	}, []);
-}
-
-const CUSTOMIZED_CSS_VARS_NAME = "css";
-
-function useCustomizedCSSVars() {
-	const matches = useMatches();
-
-	for (const match of matches) {
-		if ((match.data as any)?.[CUSTOMIZED_CSS_VARS_NAME]) {
-			return Object.fromEntries(
-				Object.entries(
-					(match.data as any)[CUSTOMIZED_CSS_VARS_NAME] as Record<
-						string,
-						string
-					>,
-				).map(([key, value]) => [
-					`--${key}`,
-					`var(--preview-${key}, ${value})`,
-				]),
-			) as React.CSSProperties;
-		}
-	}
-
-	return;
 }
 
 declare module "react-aria-components" {
@@ -278,12 +313,69 @@ declare module "react-aria-components" {
 	}
 }
 
+function useCustomThemeVars() {
+	const matches = useMatches();
+	const styles: Map<string, number> = new Map();
+
+	for (const match of matches) {
+		const data = match.data as { customTheme?: CustomTheme } | undefined;
+
+		if (data?.customTheme) {
+			for (const [key, value] of Object.entries(data.customTheme)) {
+				// Skips size and border variables for themes that arent the user's own
+				if (
+					match.id !== "root" &&
+					(key.includes("--_size") || key.includes("--_border"))
+				)
+					continue;
+				if (value === null) continue;
+
+				styles.set(key, value);
+			}
+		}
+	}
+
+	return styles;
+}
+
 export default function App() {
 	// prop drilling data instead of using useLoaderData in the child components directly because
 	// useLoaderData can't be used in CatchBoundary and layout is rendered in it as well
 	//
 	// Update 14.10.23: not sure if this still applies as the CatchBoundary is gone
 	const data = useLoaderData<RootLoaderData>();
+
+	// Move overflow:hidden from html to body to allow position: sticky and position: fixed
+	// elements to work properly when a React Aria Component disabled scrolling
+	useEffect(() => {
+		const htmlStyle = document.documentElement.style;
+		const bodyStyle = document.body.style;
+
+		const observer = new MutationObserver(() => {
+			observer.disconnect();
+
+			if (htmlStyle.overflow === "hidden") {
+				htmlStyle.overflow = "initial";
+				bodyStyle.overflow = "hidden";
+				bodyStyle.scrollbarGutter = "stable";
+			} else if (bodyStyle.overflow === "hidden") {
+				bodyStyle.overflow = "";
+				bodyStyle.scrollbarGutter = "";
+			}
+
+			observer.observe(document.documentElement, {
+				attributes: true,
+				attributeFilter: ["style"],
+			});
+		});
+
+		observer.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ["style"],
+		});
+
+		return () => observer.disconnect();
+	}, []);
 
 	return (
 		<ThemeProvider
@@ -300,7 +392,7 @@ export default function App() {
 export const ErrorBoundary = () => {
 	return (
 		<ThemeProvider themeSource="static" specifiedTheme={Theme.DARK}>
-			<Document isErrored>
+			<Document>
 				<Catcher />
 			</Document>
 		</ThemeProvider>
@@ -506,14 +598,14 @@ function PWALinks() {
 	);
 }
 
-function MyRamp({ data }: { data: RootLoaderData | undefined }) {
+function MyFuse({ data }: { data: RootLoaderData | undefined }) {
 	if (!data || data.user?.roles.includes("MINOR_SUPPORT")) {
 		return null;
 	}
 
 	return (
 		<ClientErrorBoundary fallback={null}>
-			<Ramp />
+			<FusePageInit />
 		</ClientErrorBoundary>
 	);
 }

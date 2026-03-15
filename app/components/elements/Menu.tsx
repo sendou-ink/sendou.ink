@@ -1,10 +1,13 @@
 import clsx from "clsx";
 import {
+	Header,
 	Menu,
 	MenuItem,
 	type MenuItemProps,
 	MenuTrigger,
 	Popover,
+	type PopoverProps,
+	Section,
 } from "react-aria-components";
 import { Image } from "../Image";
 import styles from "./Menu.module.css";
@@ -14,6 +17,8 @@ interface SendouMenuProps {
 	scrolling?: boolean;
 	opensLeft?: boolean;
 	children: React.ReactNode;
+	popoverClassName?: string;
+	placement?: PopoverProps["placement"];
 }
 
 export function SendouMenu({
@@ -21,17 +26,19 @@ export function SendouMenu({
 	trigger,
 	opensLeft,
 	scrolling,
+	placement,
 }: SendouMenuProps) {
 	return (
 		<MenuTrigger>
 			{trigger}
 			<Popover
-				className={clsx(styles.itemsContainer, {
+				placement={placement}
+				className={clsx(styles.popover, "scrollbar", {
 					[styles.scrolling]: scrolling,
-					[styles.itemsContainerOpensLeft]: !opensLeft,
+					[styles.popoverOpensLeft]: !opensLeft,
 				})}
 			>
-				<Menu>{children}</Menu>
+				<Menu className={styles.itemsContainer}>{children}</Menu>
 			</Popover>
 		</MenuTrigger>
 	);
@@ -41,6 +48,24 @@ export interface SendouMenuItemProps extends MenuItemProps {
 	icon?: React.ReactNode;
 	imagePath?: string;
 	isActive?: boolean;
+	isDestructive?: boolean;
+}
+
+export function SendouMenuSection({
+	children,
+	headerText,
+}: {
+	children: React.ReactNode;
+	headerText?: string;
+}) {
+	return (
+		<Section>
+			{headerText ? (
+				<Header className={styles.menuHeader}>{headerText}</Header>
+			) : null}
+			{children}
+		</Section>
+	);
 }
 
 export function SendouMenuItem(props: SendouMenuItemProps) {
@@ -56,6 +81,7 @@ export function SendouMenuItem(props: SendouMenuItemProps) {
 					[styles.itemSelected]: isSelected,
 					[styles.itemDisabled]: isDisabled,
 					[styles.itemActive]: props.isActive,
+					[styles.itemDestructive]: props.isDestructive,
 				})
 			}
 		>
@@ -68,8 +94,8 @@ export function SendouMenuItem(props: SendouMenuItemProps) {
 					<Image
 						path={props.imagePath}
 						alt=""
-						width={24}
-						height={24}
+						width={20}
+						height={20}
 						className={styles.itemImg}
 					/>
 				) : null}

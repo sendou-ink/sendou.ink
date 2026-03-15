@@ -1,10 +1,17 @@
 import clsx from "clsx";
+import {
+	Calendar,
+	ChevronLeft,
+	ChevronRight,
+	Eye,
+	EyeOff,
+	Link as LinkIcon,
+} from "lucide-react";
 import type * as React from "react";
 import type { DateValue } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData, useNavigate } from "react-router";
-import { AddNewButton } from "~/components/AddNewButton";
 import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
 import {
 	SendouButton,
@@ -12,12 +19,6 @@ import {
 } from "~/components/elements/Button";
 import { SendouCalendar } from "~/components/elements/Calendar";
 import { SendouPopover } from "~/components/elements/Popover";
-import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
-import { ArrowRightIcon } from "~/components/icons/ArrowRight";
-import { CalendarIcon } from "~/components/icons/Calendar";
-import { EyeIcon } from "~/components/icons/Eye";
-import { EyeSlashIcon } from "~/components/icons/EyeSlash";
-import { LinkIcon } from "~/components/icons/Link";
 import { Main } from "~/components/Main";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
@@ -26,12 +27,10 @@ import { dayMonthYearToDateValue } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
-	CALENDAR_NEW_PAGE,
 	CALENDAR_PAGE,
 	calendarIcalFeed,
 	calendarPage,
 	navIconUrl,
-	TOURNAMENT_NEW_PAGE,
 } from "~/utils/urls";
 import type { DayMonthYear } from "~/utils/zod";
 import { action } from "../actions/calendar";
@@ -74,14 +73,14 @@ export default function CalendarPage() {
 			<div className={styles.buttonsContainer}>
 				<div className={styles.navigateButtonsContainer}>
 					<NavigateButton
-						icon={<ArrowLeftIcon />}
+						icon={<ChevronLeft />}
 						daysInterval={previous}
 						filters={data.filters}
 					>
 						{t("common:actions.previous")}
 					</NavigateButton>
 					<NavigateButton
-						icon={<ArrowRightIcon />}
+						icon={<ChevronRight />}
 						daysInterval={next}
 						filters={data.filters}
 					>
@@ -106,12 +105,10 @@ export default function CalendarPage() {
 						key={CalendarEvent.filtersToString(data.filters)}
 						filters={data.filters}
 					/>
-					<AddNewButton navIcon="calendar" to={CALENDAR_NEW_PAGE} />
-					<AddNewButton navIcon="medal" to={TOURNAMENT_NEW_PAGE} />
 				</div>
 			</div>
 			<div
-				className={styles.columnsContainer}
+				className={clsx(styles.columnsContainer, "scrollbar")}
 				style={{ "--columns-count": DAYS_SHOWN_AT_A_TIME }}
 			>
 				{shown.map((date) => (
@@ -200,10 +197,7 @@ function CalendarDatePicker({
 	return (
 		<SendouPopover
 			trigger={
-				<SendouButton
-					className={styles.navigateButton}
-					icon={<CalendarIcon />}
-				/>
+				<SendouButton className={styles.navigateButton} icon={<Calendar />} />
 			}
 		>
 			<SendouCalendar
@@ -312,7 +306,7 @@ function ClockHeader({
 				</span>
 				{hiddenEventsCount > 0 ? (
 					<SendouButton
-						icon={hiddenShown ? <EyeIcon /> : <EyeSlashIcon />}
+						icon={hiddenShown ? <Eye /> : <EyeOff />}
 						onPress={onToggleHidden}
 						variant="minimal"
 						className={styles.hiddenEventsButton}

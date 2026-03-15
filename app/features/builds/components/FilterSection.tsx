@@ -1,9 +1,9 @@
 import clsx from "clsx";
+import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Ability } from "~/components/Ability";
 import { SendouButton } from "~/components/elements/Button";
 import { ModeImage } from "~/components/Image";
-import { CrossIcon } from "~/components/icons/Cross";
 import { possibleApValues } from "~/features/build-analyzer/core/utils";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { abilities } from "~/modules/in-game-lists/abilities";
@@ -47,7 +47,7 @@ export function FilterSection({
 				</div>
 				<div>
 					<SendouButton
-						icon={<CrossIcon />}
+						icon={<X />}
 						size="small"
 						variant="minimal-destructive"
 						onPress={remove}

@@ -530,6 +530,7 @@ export function checkboxGroup<V extends string>(
 	return z
 		.array(itemsSchema(args.items))
 		.min(args.minLength ?? 0)
+		.refine((val) => val.length === R.unique(val).length)
 		.register(formRegistry, {
 			...args,
 			label: prefixKey(args.label),

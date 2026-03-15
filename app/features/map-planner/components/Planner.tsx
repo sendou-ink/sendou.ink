@@ -22,6 +22,7 @@ import {
 	Tldraw,
 } from "@tldraw/tldraw";
 import clsx from "clsx";
+import { LogOut } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "~/features/theme/core/provider";
@@ -44,9 +45,10 @@ import {
 	subWeaponImageUrl,
 	weaponCategoryUrl,
 } from "~/utils/urls";
-import { SendouButton } from "../../../components/elements/Button";
+import { LinkButton, SendouButton } from "../../../components/elements/Button";
 import { Image } from "../../../components/Image";
 import type { StageBackgroundStyle } from "../plans-types";
+import styles from "./Planner.module.css";
 
 const DROPPED_IMAGE_SIZE_PX = 45;
 const BACKGROUND_WIDTH = 1127;
@@ -257,8 +259,8 @@ export default function Planner() {
 						width={DROPPED_IMAGE_SIZE_PX}
 						height={DROPPED_IMAGE_SIZE_PX}
 						alt=""
-						className="plans__drag-preview"
-						containerClassName="plans__drag-preview-container"
+						className={styles.dragPreview}
+						containerClassName={styles.dragPreviewContainer}
 					/>
 				) : null}
 			</DragOverlay>
@@ -269,7 +271,7 @@ export default function Planner() {
 // Formats the style panel so it can have classnames, this is needed so it can be moved below the header bar which blocks clicks (idk why this is different to the old version)
 function CustomStylePanel(props: TLUiStylePanelProps) {
 	return (
-		<div className="plans__style-panel">
+		<div className={styles.stylePanel}>
 			<DefaultStylePanel {...props} />
 		</div>
 	);
@@ -289,13 +291,14 @@ function OutlineToggle({
 	};
 
 	return (
-		<div className="plans__outline-toggle">
+		<div className={styles.outlineToggle}>
 			<SendouButton
 				variant="minimal"
 				onPress={handleClick}
-				className={clsx("plans__outline-toggle__button", {
-					"plans__outline-toggle__button__outlined": outlined,
-				})}
+				className={clsx(
+					styles.outlineToggleButton,
+					outlined && styles.outlineToggleButtonOutlined,
+				)}
 			>
 				{outlined
 					? t("common:actions.outlined")
@@ -331,9 +334,10 @@ function DraggableWeaponButton({
 		<button
 			type="button"
 			ref={setNodeRef}
-			className={clsx("plans__draggable-button", {
-				"plans__weapon-dragging": isDragging,
-			})}
+			className={clsx(
+				styles.draggableButton,
+				isDragging && styles.weaponDragging,
+			)}
 			{...listeners}
 			{...attributes}
 		>
@@ -355,14 +359,16 @@ function WeaponImageSelector() {
 
 	return (
 		<div
-			className={clsx("plans__weapons-section", {
-				"plans__weapons-section__wide": isWide,
-			})}
+			className={clsx(
+				styles.weaponsSection,
+				"scrollbar",
+				isWide && styles.weaponsSectionWide,
+			)}
 		>
 			{weaponCategories.map((category) => {
 				return (
 					<details key={category.name}>
-						<summary className="plans__weapons-summary">
+						<summary className={styles.weaponsSummary}>
 							<Image
 								path={weaponCategoryUrl(category.name)}
 								width={24}
@@ -371,7 +377,7 @@ function WeaponImageSelector() {
 							/>
 							{t(`common:weapon.category.${category.name}`)}
 						</summary>
-						<div className="plans__weapons-container">
+						<div className={styles.weaponsContainer}>
 							{category.weaponIds.map((weaponId) => {
 								return (
 									<DraggableWeaponButton
@@ -391,11 +397,11 @@ function WeaponImageSelector() {
 				);
 			})}
 			<details>
-				<summary className="plans__weapons-summary">
+				<summary className={styles.weaponsSummary}>
 					<Image path={subWeaponImageUrl(0)} width={24} height={24} alt="" />
 					{t("common:weapon.category.subs")}
 				</summary>
-				<div className="plans__weapons-container">
+				<div className={styles.weaponsContainer}>
 					{subWeaponIds.map((subWeaponId) => {
 						return (
 							<DraggableWeaponButton
@@ -413,7 +419,7 @@ function WeaponImageSelector() {
 				</div>
 			</details>
 			<details>
-				<summary className="plans__weapons-summary">
+				<summary className={styles.weaponsSummary}>
 					<Image
 						path={specialWeaponImageUrl(1)}
 						width={24}
@@ -422,7 +428,7 @@ function WeaponImageSelector() {
 					/>
 					{t("common:weapon.category.specials")}
 				</summary>
-				<div className="plans__weapons-container">
+				<div className={styles.weaponsContainer}>
 					{specialWeaponIds.map((specialWeaponId) => {
 						return (
 							<DraggableWeaponButton
@@ -440,11 +446,11 @@ function WeaponImageSelector() {
 				</div>
 			</details>
 			<details>
-				<summary className="plans__weapons-summary">
+				<summary className={styles.weaponsSummary}>
 					<Image path={modeImageUrl("RM")} width={24} height={24} alt="" />
 					{t("common:plans.adder.objective")}
 				</summary>
-				<div className="plans__weapons-container">
+				<div className={styles.weaponsContainer}>
 					{(["TC", "RM", "CB"] as const).map((mode) => {
 						return (
 							<DraggableWeaponButton
@@ -486,7 +492,7 @@ function StageBackgroundSelector({
 	};
 
 	return (
-		<div className="plans__top-section">
+		<div className={clsx(styles.topSection, "scrollbar planner")}>
 			<select
 				className="w-max"
 				value={stageId}
@@ -532,7 +538,6 @@ function StageBackgroundSelector({
 				})}
 			</select>
 			<SendouButton
-				size="small"
 				onPress={() =>
 					onAddBackground({ style: backgroundStyle, stageId, mode })
 				}
@@ -540,6 +545,7 @@ function StageBackgroundSelector({
 			>
 				{t("common:actions.setBg")}
 			</SendouButton>
+			<LinkButton to="/" icon={<LogOut />} variant="outlined" shape="square" />
 		</div>
 	);
 }

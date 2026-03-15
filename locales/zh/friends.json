@@ -1,0 +1,19 @@
+{
+	"incomingRequests.title": "",
+	"sendRequest.title": "",
+	"sendRequest.submit": "",
+	"pendingRequests.title": "",
+	"friendsList.title": "",
+	"friendsList.empty": "",
+	"friendsList.friendSince": "",
+	"friendsList.viewUserPage": "",
+	"friendsList.viewTournament": "",
+	"friendsList.joinSendouQ": "",
+	"friendsList.deleteFriend": "",
+	"friendsList.deleteConfirm": "",
+	"view.label": "",
+	"view.friends": "",
+	"view.teamMembers": "",
+	"view.all": "",
+	"teamMembers.empty": ""
+}

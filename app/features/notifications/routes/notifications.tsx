@@ -1,7 +1,7 @@
+import { Bell } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, type MetaFunction, useLoaderData } from "react-router";
-import { BellIcon } from "~/components/icons/Bell";
 import { Main } from "~/components/Main";
 import { metaTags } from "../../../utils/remix";
 import { SETTINGS_PAGE } from "../../../utils/urls";
@@ -54,7 +54,7 @@ export default function NotificationsPage() {
 		<Main className="stack md">
 			<div className="stack horizontal justify-between items-center flex-wrap">
 				<h2 className={styles.header}>
-					<BellIcon /> {t("common:notifications.title")}
+					<Bell /> {t("common:notifications.title")}
 				</h2>
 				<Link className="text-xs" to={SETTINGS_PAGE}>
 					{t("common:notifications.managePush")}

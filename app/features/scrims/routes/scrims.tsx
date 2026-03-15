@@ -5,7 +5,6 @@ import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import * as R from "remeda";
 import type { z } from "zod";
-import { AddNewButton } from "~/components/AddNewButton";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -13,22 +12,13 @@ import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import {
-	associationsPage,
-	navIconUrl,
-	newScrimPostPage,
-	scrimsPage,
-} from "~/utils/urls";
+import { associationsPage, navIconUrl, scrimsPage } from "~/utils/urls";
 import {
 	SendouTab,
 	SendouTabList,
 	SendouTabPanel,
 	SendouTabs,
 } from "../../../components/elements/Tabs";
-import { ArrowDownOnSquareIcon } from "../../../components/icons/ArrowDownOnSquare";
-import { CheckmarkIcon } from "../../../components/icons/Checkmark";
-import { FilterIcon } from "../../../components/icons/Filter";
-import { MegaphoneIcon } from "../../../components/icons/MegaphoneIcon";
 import { Main } from "../../../components/Main";
 import { action } from "../actions/scrims.server";
 import { ScrimPostCard, ScrimRequestCard } from "../components/ScrimCard";
@@ -38,6 +28,8 @@ import { loader } from "../loaders/scrims.server";
 import type { newRequestSchema } from "../scrims-schemas";
 import type { ScrimFilters, ScrimPost } from "../scrims-types";
 export { action, loader };
+
+import { Check, Download, Funnel, Megaphone } from "lucide-react";
 
 import styles from "./scrims.module.css";
 
@@ -94,7 +86,6 @@ export default function ScrimsPage() {
 						/>
 					) : null}
 				</div>
-				<AddNewButton to={newScrimPostPage()} navIcon="scrims" />
 			</div>
 			<SendouTabs
 				defaultSelectedKey={
@@ -109,7 +100,7 @@ export default function ScrimsPage() {
 					<SendouTabList sticky>
 						<SendouTab
 							id="available"
-							icon={<MegaphoneIcon />}
+							icon={<Megaphone />}
 							number={data.posts.neutral.length}
 							data-testid="available-scrims-tab"
 						>
@@ -118,7 +109,7 @@ export default function ScrimsPage() {
 						<SendouTab
 							id="owned"
 							isDisabled={!user}
-							icon={<ArrowDownOnSquareIcon />}
+							icon={<Download />}
 							number={data.posts.owned.length}
 						>
 							{t("scrims:tabs.owned")}
@@ -126,7 +117,7 @@ export default function ScrimsPage() {
 						<SendouTab
 							id="booked"
 							isDisabled={!user}
-							icon={<CheckmarkIcon />}
+							icon={<Check />}
 							number={data.posts.booked.length}
 							data-testid="booked-scrims-tab"
 						>
@@ -300,7 +291,7 @@ function AvailableScrimsFilterButtons({
 					variant="minimal"
 					size="miniscule"
 					onPress={() => setShowFiltered(!showFiltered)}
-					icon={<FilterIcon />}
+					icon={<Funnel />}
 					className={showFiltered ? styles.active : undefined}
 				>
 					{showFiltered
@@ -313,7 +304,7 @@ function AvailableScrimsFilterButtons({
 					variant="minimal"
 					size="miniscule"
 					onPress={() => setShowRequestPending(!showRequestPending)}
-					icon={<ArrowDownOnSquareIcon />}
+					icon={<Download />}
 					className={showRequestPending ? styles.active : undefined}
 					data-testid="toggle-pending-requests-button"
 				>

@@ -5,9 +5,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
-import { giveTrust } from "~/features/tournament/queries/giveTrust.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import invariant from "~/utils/invariant";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import {
@@ -19,6 +17,7 @@ import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
 import { frontPageSchema } from "../q-schemas.server";
 import { userCanJoinQueueAt } from "../q-utils";
+import { setGroupChatMetadata } from "../q-utils.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
@@ -38,11 +37,18 @@ export const action: ActionFunction = async ({ request }) => {
 
 			await refreshSendouQInstance();
 
+			const createdGroup = SendouQ.findOwnGroup(user.id);
+			if (createdGroup?.chatCode) {
+				setGroupChatMetadata({
+					chatCode: createdGroup.chatCode,
+					members: createdGroup.members,
+				});
+			}
+
 			return redirect(
 				data.direct === "true" ? SENDOUQ_LOOKING_PAGE : SENDOUQ_PREPARING_PAGE,
 			);
 		}
-		case "JOIN_TEAM_WITH_TRUST":
 		case "JOIN_TEAM": {
 			await validateCanJoinQ(user);
 
@@ -62,17 +68,15 @@ export const action: ActionFunction = async ({ request }) => {
 				role: "MANAGER",
 			});
 
-			if (data._action === "JOIN_TEAM_WITH_TRUST") {
-				const owner = groupInvitedTo.members.find((m) => m.role === "OWNER");
-				invariant(owner, "Owner not found");
+			await refreshSendouQInstance();
 
-				giveTrust({
-					trustGiverUserId: user.id,
-					trustReceiverUserId: owner.id,
+			const joinedGroup = SendouQ.findOwnGroup(user.id);
+			if (joinedGroup?.chatCode) {
+				setGroupChatMetadata({
+					chatCode: joinedGroup.chatCode,
+					members: joinedGroup.members,
 				});
 			}
-
-			await refreshSendouQInstance();
 
 			return redirect(
 				groupInvitedTo.status === "PREPARING"

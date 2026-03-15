@@ -18,8 +18,8 @@
 	justify-content: center;
 	width: 56px;
 	height: 56px;
-	background-color: var(--bg-lightest);
-	border: 2px solid var(--border);
+	background-color: var(--color-bg-high);
+	border: 2px solid var(--color-border);
 	border-radius: 50%;
 	flex-shrink: 0;
 }
@@ -32,8 +32,8 @@
 	justify-content: center;
 	width: 56px;
 	height: 56px;
-	background-color: var(--bg-lighter);
-	border: 2px dashed var(--border);
+	background-color: var(--color-bg-higher);
+	border: 2px dashed var(--color-border);
 	border-radius: 50%;
 	flex-shrink: 0;
 	opacity: 0.6;
@@ -45,16 +45,16 @@
 	gap: var(--s-2);
 	padding: var(--s-2) var(--s-3);
 	padding-left: var(--s-5);
-	background-color: var(--bg-lightest);
-	border: 2px solid var(--border);
-	border-radius: var(--rounded-full);
+	background-color: var(--color-bg-high);
+	border: 2px solid var(--color-border);
+	border-radius: var(--radius-full);
 	flex: 1;
 	min-width: 0;
 }
 
 .weaponName {
 	flex: 1;
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -65,9 +65,9 @@
 	align-items: center;
 	padding: var(--s-2) var(--s-3);
 	padding-left: var(--s-5);
-	background-color: var(--bg-lighter);
-	border: 2px dashed var(--border);
-	border-radius: var(--rounded-full);
+	background-color: var(--color-bg-higher);
+	border: 2px dashed var(--color-border);
+	border-radius: var(--radius-full);
 	flex: 1;
 	min-width: 0;
 	opacity: 0.6;
@@ -75,9 +75,9 @@
 
 .weaponNameEmpty {
 	flex: 1;
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	font-style: italic;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .removeButton {
@@ -92,12 +92,12 @@
 	font-size: 18px;
 	font-weight: bold;
 	line-height: 1;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	flex-shrink: 0;
 }
 
 .removeButton:hover {
-	color: var(--theme-error);
+	color: var(--color-error);
 }
 
 .subSpecialContainer {
@@ -116,7 +116,7 @@
 	justify-content: center;
 	width: 40px;
 	height: 40px;
-	background-color: var(--bg-lightest);
-	border: 2px solid var(--border);
+	background-color: var(--color-bg-high);
+	border: 2px solid var(--color-border);
 	border-radius: 50%;
 }

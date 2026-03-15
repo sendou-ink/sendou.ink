@@ -1,4 +1,13 @@
 import clsx from "clsx";
+import {
+	ChevronsUpDown,
+	Link as LinkIcon,
+	Minus,
+	MousePointerClick,
+	Plus,
+	RefreshCcw,
+	Unlink,
+} from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { type FetcherWithComponents, Link, useFetcher } from "react-router";
@@ -6,9 +15,6 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import { ModeImage, StageImage } from "~/components/Image";
 import { InfoPopover } from "~/components/InfoPopover";
 import { Input } from "~/components/Input";
-import { MinusIcon } from "~/components/icons/Minus";
-import { PlusIcon } from "~/components/icons/Plus";
-import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { TournamentRoundMaps } from "~/db/tables";
@@ -27,10 +33,6 @@ import invariant from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
 import { calendarEditPage } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
-import { ChevronUpDownIcon } from "../../../components/icons/ChevronUpDown";
-import { LinkIcon } from "../../../components/icons/Link";
-import { PickIcon } from "../../../components/icons/Pick";
-import { UnlinkIcon } from "../../../components/icons/Unlink";
 import { logger } from "../../../utils/logger";
 import type { Bracket } from "../core/Bracket";
 import * as PreparedMaps from "../core/PreparedMaps";
@@ -443,7 +445,7 @@ export function BracketMapListDialog({
 							!needsToPickEliminationTeamCount ? (
 								<SendouButton
 									size="small"
-									icon={<RefreshArrowsIcon />}
+									icon={<RefreshCcw />}
 									variant="outlined"
 									onPress={() =>
 										setMaps(
@@ -838,7 +840,7 @@ function PickBanSelect({
 	return (
 		<div>
 			<div className="stack horizontal xs items-center">
-				<PickIcon className="w-4" />
+				<MousePointerClick className="w-4" />
 				<Label htmlFor="pick-ban-style">Pick/ban style</Label>
 			</div>
 			<select
@@ -901,7 +903,7 @@ function RoundMapList({
 					onClick={() => onCountChange(Math.max(minCount, maps.count - 2))}
 					disabled={maps.count <= minCount}
 				>
-					<MinusIcon />
+					<Minus />
 				</button>
 				<div className={clsx(styles.roundButton, styles.roundButtonNumber)}>
 					{maps.count}
@@ -913,7 +915,7 @@ function RoundMapList({
 					disabled={maps.count >= maxCount}
 					data-testid="increase-map-count-button"
 				>
-					<PlusIcon />
+					<Plus />
 				</button>
 				<div className={styles.roundControlsDivider} />
 				<button
@@ -924,7 +926,7 @@ function RoundMapList({
 					onClick={() => onPickBanChange(!maps.pickBan)}
 					title="Toggle counterpick/ban"
 				>
-					<PickIcon />
+					<MousePointerClick />
 				</button>
 				{unlink ? (
 					<button
@@ -934,7 +936,7 @@ function RoundMapList({
 						title="Enter finals and 3rd place match separately"
 						data-testid="unlink-finals-3rd-place-match-button"
 					>
-						<UnlinkIcon />
+						<Unlink />
 					</button>
 				) : null}
 				{link ? (
@@ -1054,7 +1056,7 @@ function MapListRow({
 						);
 					})}
 				</select>
-				<ChevronUpDownIcon className={styles.mapSelectIcon} />
+				<ChevronsUpDown className={styles.mapSelectIcon} />
 			</div>
 		</li>
 	);

@@ -1,9 +1,9 @@
 import clsx from "clsx";
+import { X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
 import { useLoaderData, useSearchParams } from "react-router";
-import { AddNewButton } from "~/components/AddNewButton";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import {
@@ -12,11 +12,10 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
-import { CrossIcon } from "~/components/icons/Cross";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { artPage, navIconUrl, newArtPage } from "~/utils/urls";
+import { artPage, navIconUrl } from "~/utils/urls";
 import { metaTags, type SerializeFrom } from "../../../utils/remix";
 import { FILTERED_TAG_KEY_SEARCH_PARAM_KEY } from "../art-constants";
 import { ArtGrid } from "../components/ArtGrid";
@@ -103,27 +102,21 @@ export default function ArtPage() {
 						{t("art:openCommissionsOnly")}
 					</Label>
 				</div>
-				<div className="stack horizontal sm items-center">
-					<div
-						className={clsx({
-							invisible: selectedTab !== TABS.SHOWCASE,
-						})}
-					>
-						<TagSelect
-							key={filteredTag}
-							tags={data.allTags}
-							onSelectionChange={(tagName) => {
-								setSearchParams((prev) => {
-									prev.set(
-										FILTERED_TAG_KEY_SEARCH_PARAM_KEY,
-										tagName as string,
-									);
-									return prev;
-								});
-							}}
-						/>
-					</div>
-					<AddNewButton navIcon="art" to={newArtPage()} />
+				<div
+					className={clsx({
+						invisible: selectedTab !== TABS.SHOWCASE,
+					})}
+				>
+					<TagSelect
+						key={filteredTag}
+						tags={data.allTags}
+						onSelectionChange={(tagName) => {
+							setSearchParams((prev) => {
+								prev.set(FILTERED_TAG_KEY_SEARCH_PARAM_KEY, tagName as string);
+								return prev;
+							});
+						}}
+					/>
 				</div>
 			</div>
 			{filteredTag ? (
@@ -132,7 +125,7 @@ export default function ArtPage() {
 					<SendouButton
 						size="small"
 						variant="minimal-destructive"
-						icon={<CrossIcon />}
+						icon={<X />}
 						onPress={() => {
 							setSearchParams((prev) => {
 								prev.delete(FILTERED_TAG_KEY_SEARCH_PARAM_KEY);

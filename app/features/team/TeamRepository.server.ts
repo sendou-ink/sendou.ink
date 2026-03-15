@@ -1,7 +1,7 @@
 import type { Insertable, Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type { DB, Tables } from "~/db/tables";
+import type { CustomTheme, DB, Tables } from "~/db/tables";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { subsOfResult } from "~/features/team/team-utils";
 import { databaseTimestampNow } from "~/utils/dates";
@@ -34,6 +34,29 @@ export function findAllUndisbanded() {
 					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id"),
 			).as("members"),
 		])
+		.execute();
+}
+
+export function searchByName({
+	query,
+	limit,
+}: {
+	query: string;
+	limit: number;
+}) {
+	return db
+		.selectFrom("Team")
+		.leftJoin("UserSubmittedImage", "UserSubmittedImage.id", "Team.avatarImgId")
+		.select(({ eb }) => [
+			"Team.customUrl",
+			"Team.name",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"avatarUrl",
+			),
+		])
+		.where("Team.name", "like", `%${query}%`)
+		.orderBy("Team.name", "asc")
+		.limit(limit)
 		.execute();
 }
 
@@ -84,7 +107,7 @@ export function findByCustomUrl(
 			"Team.bio",
 			"Team.tag",
 			"Team.customUrl",
-			"Team.css",
+			"Team.customTheme",
 			concatUserSubmittedImagePrefix(eb.ref("AvatarImage.url")).as("avatarUrl"),
 			concatUserSubmittedImagePrefix(eb.ref("BannerImage.url")).as("bannerUrl"),
 			jsonArrayFrom(
@@ -285,9 +308,9 @@ export async function update({
 	bio,
 	bsky,
 	tag,
-	css,
+	customTheme,
 }: Pick<Insertable<Tables["Team"]>, "id" | "name" | "bio" | "bsky" | "tag"> & {
-	css: string | null;
+	customTheme: CustomTheme | null;
 }) {
 	const customUrl = mySlugify(name);
 
@@ -299,13 +322,29 @@ export async function update({
 			bio,
 			bsky,
 			tag,
-			css,
+			customTheme: customTheme ? JSON.stringify(customTheme) : null,
 		})
 		.where("id", "=", id)
 		.returningAll()
 		.executeTakeFirstOrThrow();
 
 	return team;
+}
+
+export async function updateCustomTheme({
+	id,
+	customTheme,
+}: {
+	id: number;
+	customTheme: CustomTheme | null;
+}) {
+	await db
+		.updateTable("AllTeam")
+		.set({
+			customTheme: customTheme ? JSON.stringify(customTheme) : null,
+		})
+		.where("id", "=", id)
+		.execute();
 }
 
 export function switchMainTeam({

@@ -3,6 +3,9 @@ export const ADMIN_ID = process.env.NODE_ENV === "test" ? 1 : 274;
 
 //                        Panda  Scep  Acing Baja   Michi
 export const STAFF_IDS = [11329, 9719, 9342, 20774, 23094];
+//                      hfcRed
+export const DEV_IDS = [27883];
+
 export const STAFF_DISCORD_IDS = [
 	"138757634500067328",
 	"184478601171828737",

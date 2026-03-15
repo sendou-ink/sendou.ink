@@ -43,5 +43,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				})
 			: null,
 		rawReportedWeapons,
+		chatCode:
+			user?.roles.includes("STAFF") || (user && matchUsers.includes(user.id))
+				? match.chatCode
+				: null,
 	};
 };

@@ -1,10 +1,9 @@
+import { Check, Clipboard } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
-import { ClipboardIcon } from "~/components/icons/Clipboard";
 
 interface CopyToClipboardPopoverProps {
 	url: string;
@@ -36,7 +35,7 @@ export function CopyToClipboardPopover({
 					size="miniscule"
 					variant="minimal"
 					onPress={() => copyToClipboard(url)}
-					icon={copySuccess ? <CheckmarkIcon /> : <ClipboardIcon />}
+					icon={copySuccess ? <Check /> : <Clipboard />}
 				>
 					{t("common:actions.copyToClipboard")}
 				</SendouButton>

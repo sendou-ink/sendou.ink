@@ -1,19 +1,20 @@
 import cachified from "@epic-web/cachified";
 import type { Tables } from "~/db/tables";
-import { getUser } from "~/features/auth/core/user.server";
 import * as Changelog from "~/features/front-page/core/Changelog.server";
 import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import * as SplatoonRotationRepository from "~/features/splatoon-rotations/SplatoonRotationRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
+import type { SerializeFrom } from "~/utils/remix";
 import { discordAvatarUrl, teamPage, userPage } from "~/utils/urls";
 import * as ShowcaseTournaments from "../core/ShowcaseTournaments.server";
 
-export const loader = async () => {
-	const user = getUser();
+export type FrontPageLoaderData = SerializeFrom<typeof loader>;
 
-	const [tournaments, changelog, leaderboards] = await Promise.all([
-		ShowcaseTournaments.frontPageTournamentsByUserId(user?.id ?? null),
+export const loader = async () => {
+	const [tournaments, changelog, leaderboards, rotations] = await Promise.all([
+		ShowcaseTournaments.categorizedTournamentsByUserId(null),
 		cachified({
 			key: "front-changelog",
 			cache,
@@ -24,12 +25,14 @@ export const loader = async () => {
 			},
 		}),
 		cachedLeaderboards(),
+		SplatoonRotationRepository.findAll(),
 	]);
 
 	return {
 		tournaments,
 		changelog,
 		leaderboards,
+		rotations,
 	};
 };
 

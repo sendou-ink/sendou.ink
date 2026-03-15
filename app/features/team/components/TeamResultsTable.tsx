@@ -1,9 +1,9 @@
+import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
-import { UsersIcon } from "~/components/icons/Users";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
 import type { TeamResultsLoaderData } from "~/features/team/loaders/t.$customUrl.results.server";
@@ -77,7 +77,7 @@ export function TeamResultsTable({ results }: TeamResultsTableProps) {
 										<SendouPopover
 											trigger={
 												<SendouButton
-													icon={<UsersIcon />}
+													icon={<Users />}
 													size="small"
 													variant="minimal"
 												>

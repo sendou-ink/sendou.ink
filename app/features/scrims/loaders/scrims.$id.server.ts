@@ -28,7 +28,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	return {
 		post,
-		chatUsers: await UserRepository.findChatUsersByUserIds(participantIds),
+		chatCode:
+			user.roles.includes("STAFF") || participantIds.includes(user.id)
+				? post.chatCode
+				: undefined,
 		anyUserPrefersNoScreen:
 			await UserRepository.anyUserPrefersNoScreen(participantIds),
 		tournamentMapPool: post.mapsTournament

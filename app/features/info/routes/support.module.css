@@ -1,0 +1,24 @@
+.table {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr 1fr;
+	place-items: center;
+	font-size: var(--font-sm);
+	row-gap: var(--s-2);
+}
+
+.checkmark {
+	color: var(--color-success);
+	width: 25px;
+}
+
+.popoverTrigger {
+	display: inline;
+	height: 1rem;
+	padding: 0;
+	border: none;
+	background-color: transparent;
+	color: var(--color-text-accent);
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
+	outline: initial;
+}

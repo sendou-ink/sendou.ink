@@ -1,5 +1,7 @@
 import cachified from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "react-router";
+import { getUser } from "~/features/auth/core/user.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -7,7 +9,9 @@ import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { tournamentMatchPage } from "~/utils/urls";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
+import { tournamentFromDBCached } from "../core/Tournament.server";
 import { findMatchById } from "../queries/findMatchById.server";
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
 import { matchPageParamsSchema } from "../tournament-bracket-schemas.server";
@@ -19,6 +23,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { mid: matchId, id: tournamentId } = parseParams({
 		params,
 		schema: matchPageParamsSchema,
+	});
+	const user = getUser();
+	const tournament = await tournamentFromDBCached({
+		tournamentId,
+		user: undefined,
 	});
 
 	const match = notFoundIfFalsy(findMatchById(matchId));
@@ -92,12 +101,37 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			})
 		: false;
 
+	if (
+		match.chatCode &&
+		!matchIsOver &&
+		match.opponentOne &&
+		match.opponentTwo
+	) {
+		const playerIds = match.players.map((p) => p.id);
+		const matchContext = tournament.matchContextNamesById(matchId);
+
+		ChatSystemMessage.setMetadata({
+			chatCode: match.chatCode,
+			header: matchContext.roundName ?? `Match #${matchId}`,
+			subtitle: tournament.ctx.name,
+			url: tournamentMatchPage({ tournamentId, matchId }),
+			imageUrl: tournament.ctx.logoUrl,
+			participantUserIds: playerIds,
+			expiresAfter: tournament.isLeagueDivision ? { days: 30 } : { hours: 2 },
+		});
+	}
+
+	const shouldSeeChat =
+		tournament.isOrganizerOrStreamer(user) ||
+		match.players.some((p) => p.id === user?.id);
+
 	return {
-		match,
+		match: shouldSeeChat ? match : { ...match, chatCode: undefined },
 		results,
 		mapList,
 		matchIsOver,
 		endedEarly,
 		noScreen,
+		chatCode: shouldSeeChat ? match.chatCode : undefined,
 	};
 };

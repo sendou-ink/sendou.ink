@@ -5,6 +5,7 @@ import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
+import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
@@ -27,6 +28,7 @@ import deleteTeamMember from "../queries/deleteTeamMember.server";
 import { findOwnTournamentTeam } from "../queries/findOwnTournamentTeam.server";
 import { joinTeam } from "../queries/joinLeaveTeam.server";
 import { upsertCounterpickMaps } from "../queries/upsertCounterpickMaps.server";
+import { TOURNAMENT } from "../tournament-constants";
 import { registerSchema } from "../tournament-schemas.server";
 import {
 	isOneModeTournamentOf,
@@ -133,6 +135,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 					avatarFileName,
 				});
 				deleteSub({ tournamentId, userId: user.id });
+				await SavedCalendarEventRepository.unsave({
+					userId: user.id,
+					tournamentId,
+				});
 
 				ShowcaseTournaments.addToCached({
 					tournamentId,
@@ -254,10 +260,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 			);
 			errorToastIfFalsy(ownTeam, "You are not registered to this tournament");
 			errorToastIfFalsy(
-				(await SQGroupRepository.usersThatTrusted(user.id)).trusters.some(
-					(trusterPlayer) => trusterPlayer.id === data.userId,
+				(await SQGroupRepository.friendsAndTeammates(user.id)).friends.some(
+					(friendPlayer) => friendPlayer.id === data.userId,
 				),
-				"No trust given from this user",
+				"Not a friend",
 			);
 			errorToastIfFalsy(
 				(await UserRepository.findLeanById(data.userId))?.friendCode,
@@ -280,9 +286,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 					userId: data.userId,
 				}),
 			});
-			await SQGroupRepository.refreshTrust({
-				trustGiverUserId: data.userId,
-				trustReceiverUserId: user.id,
+
+			await SavedCalendarEventRepository.unsave({
+				userId: data.userId,
+				tournamentId,
 			});
 
 			ShowcaseTournaments.addToCached({
@@ -343,6 +350,26 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			await TournamentTeamRepository.deleteLogo(ownTeam.id);
 
+			break;
+		}
+		case "SAVE_TOURNAMENT": {
+			const count = await SavedCalendarEventRepository.countByUserId(user.id);
+			errorToastIfFalsy(
+				count < TOURNAMENT.MAX_SAVED_COUNT,
+				"Maximum saved tournaments reached",
+			);
+
+			await SavedCalendarEventRepository.save({
+				userId: user.id,
+				tournamentId,
+			});
+			break;
+		}
+		case "UNSAVE_TOURNAMENT": {
+			await SavedCalendarEventRepository.unsave({
+				userId: user.id,
+				tournamentId,
+			});
 			break;
 		}
 		default: {

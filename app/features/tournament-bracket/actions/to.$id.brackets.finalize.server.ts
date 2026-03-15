@@ -12,6 +12,7 @@ import {
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as Standings from "~/features/tournament/core/Standings";
+import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import { tournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
@@ -107,6 +108,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		);
 		finalizeTournament(tournamentId);
 	}
+
+	await SavedCalendarEventRepository.deleteByTournamentId(tournamentId);
 
 	if (!tournament.isTest) {
 		await updateSeriesTierHistory(tournament);

@@ -62,7 +62,7 @@ export function FriendCodeInput({
 				</div>
 				{!friendCode ? (
 					<SubmitButton _action="ADD_FRIEND_CODE" state={fetcher.state}>
-						Save
+						{t("common:actions.save")}
 					</SubmitButton>
 				) : null}
 			</div>

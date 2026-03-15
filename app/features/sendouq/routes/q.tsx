@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { User, Users } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
@@ -10,8 +11,6 @@ import { Flag } from "~/components/Flag";
 import { FormMessage } from "~/components/FormMessage";
 import { FriendCodeInput } from "~/components/FriendCodeInput";
 import { Image } from "~/components/Image";
-import { UserIcon } from "~/components/icons/User";
-import { UsersIcon } from "~/components/icons/Users";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { Tables } from "~/db/tables";
@@ -20,7 +19,6 @@ import type * as Seasons from "~/features/mmr/core/Seasons";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useHasRole } from "~/modules/permissions/hooks";
-import invariant from "~/utils/invariant";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -112,7 +110,7 @@ export default function QPage() {
 							<input type="hidden" name="_action" value="JOIN_QUEUE" />
 							<div className="stack horizontal md items-center mt-4 mx-auto">
 								<SubmitButton
-									icon={<UsersIcon />}
+									icon={<Users />}
 									isDisabled={queueJoinStatus !== "NOW"}
 								>
 									{t("q:front.actions.joinWithGroup")}
@@ -121,7 +119,7 @@ export default function QPage() {
 									name="direct"
 									value="true"
 									state={fetcher.state}
-									icon={<UserIcon />}
+									icon={<User />}
 									variant="outlined"
 									isDisabled={queueJoinStatus !== "NOW"}
 									testId="join-solo-button"
@@ -257,9 +255,6 @@ function JoinTeamDialog({
 	const { t, i18n } = useTranslation(["q"]);
 	const fetcher = useFetcher();
 
-	const owner = members.find((m) => m.role === "OWNER");
-	invariant(owner, "Owner not found");
-
 	return (
 		<SendouDialog
 			isOpen={open}
@@ -279,17 +274,8 @@ function JoinTeamDialog({
 				<SubmitButton _action="JOIN_TEAM" state={fetcher.state}>
 					{t("q:front.join.joinAction")}
 				</SubmitButton>
-				<SubmitButton
-					_action="JOIN_TEAM_WITH_TRUST"
-					state={fetcher.state}
-					variant="outlined"
-				>
-					{t("q:front.join.joinWithTrustAction", {
-						inviterName: owner.username,
-					})}
-				</SubmitButton>
 				<FormMessage type="info">
-					{t("q:front.join.joinWithTrustAction.explanation")}
+					{t("q:front.join.friendSuggestion")}
 				</FormMessage>
 			</fetcher.Form>
 		</SendouDialog>
