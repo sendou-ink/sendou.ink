@@ -19,29 +19,6 @@
 	text-decoration: underline;
 }
 
-.rotationsModeFilter {
-	display: flex;
-	gap: var(--s-1);
-}
-
-.rotationsModeFilterButton {
-	font-size: var(--font-xs);
-	font-weight: var(--weight-semi);
-	padding: 0 var(--s-2);
-	height: var(--selector-size);
-	border-radius: var(--radius-selector);
-	background-color: var(--color-bg-higher);
-	color: var(--color-text);
-	cursor: pointer;
-	border: none;
-	transition: background-color 0.15s;
-}
-
-.rotationsModeFilterButtonActive {
-	background-color: var(--color-accent-high);
-	color: var(--color-text-inverse);
-}
-
 .rotationsScroll {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);

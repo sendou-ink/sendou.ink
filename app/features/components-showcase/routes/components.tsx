@@ -9,6 +9,10 @@ import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouCalendar } from "~/components/elements/Calendar";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
 import { SendouDatePicker } from "~/components/elements/DatePicker";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
@@ -653,6 +657,8 @@ function CheckboxSection({ id }: { id: string }) {
 function RadioButtonSection({ id }: { id: string }) {
 	const [selectedOption, setSelectedOption] = useState("option2");
 	const [selectedSize, setSelectedSize] = useState("medium");
+	const [chipValue, setChipValue] = useState("ALL");
+	const [chipVertical, setChipVertical] = useState("A");
 
 	return (
 		<Section>
@@ -770,6 +776,38 @@ function RadioButtonSection({ id }: { id: string }) {
 							<span>Disabled and checked</span>
 						</label>
 					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Chip Radio (Horizontal)">
+					<SendouChipRadioGroup>
+						{["ALL", "SZ", "TC", "RM", "CB"].map((val) => (
+							<SendouChipRadio
+								key={val}
+								name="chip-demo"
+								value={val}
+								checked={chipValue === val}
+								onChange={setChipValue}
+							>
+								{val}
+							</SendouChipRadio>
+						))}
+					</SendouChipRadioGroup>
+				</ComponentRow>
+
+				<ComponentRow label="Chip Radio (Vertical)">
+					<SendouChipRadioGroup orientation="vertical">
+						{["A", "B", "C"].map((val) => (
+							<SendouChipRadio
+								key={val}
+								name="chip-vertical-demo"
+								value={val}
+								checked={chipVertical === val}
+								onChange={setChipVertical}
+							>
+								{`Option ${val}`}
+							</SendouChipRadio>
+						))}
+					</SendouChipRadioGroup>
 				</ComponentRow>
 			</div>
 		</Section>

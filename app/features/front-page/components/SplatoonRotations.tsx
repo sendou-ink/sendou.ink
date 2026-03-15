@@ -3,6 +3,10 @@ import { differenceInSeconds } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
 import { ModeImage, StageImage } from "~/components/Image";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { RankedModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -102,24 +106,19 @@ export function SplatoonRotations() {
 				)}
 			</div>
 			<div className={styles.rotationsFooter}>
-				{/** xxx: can we use some shared component? */}
-				<div className={styles.rotationsModeFilter}>
+				<SendouChipRadioGroup>
 					{ROTATION_MODE_FILTERS.map((filter) => (
-						<button
+						<SendouChipRadio
 							key={filter}
-							type="button"
-							className={clsx(
-								styles.rotationsModeFilterButton,
-								activeFilter === filter
-									? styles.rotationsModeFilterButtonActive
-									: null,
-							)}
-							onClick={() => setActiveFilter(filter)}
+							name="rotation-mode-filter"
+							value={filter}
+							checked={activeFilter === filter}
+							onChange={(val) => setActiveFilter(val as RotationModeFilter)}
 						>
 							{filter === "ALL" ? t("front:rotations.filter.all") : filter}
-						</button>
+						</SendouChipRadio>
 					))}
-				</div>
+				</SendouChipRadioGroup>
 				<span className={styles.rotationsCredit}>
 					<a href={SPLATOON_3_INK} target="_blank" rel="noopener noreferrer">
 						{t("front:rotations.credit")}
