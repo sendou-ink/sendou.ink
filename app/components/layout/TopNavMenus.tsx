@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { useUser } from "~/features/auth/core/user";
 import { navIconUrl } from "~/utils/urls";
 import { SendouPopover } from "../elements/Popover";
 import { Image } from "../Image";
@@ -28,6 +29,12 @@ const NAV_CATEGORIES = [
 			{ name: "maps", url: "maps" },
 			{ name: "tier-list-maker", url: "tier-list-maker" },
 			{ name: "xsearch", url: "xsearch" },
+			{
+				name: "admin",
+				url: "admin",
+				icon: "settings" as const,
+				staffOnly: true as const,
+			},
 		],
 	},
 	{
@@ -61,6 +68,12 @@ function CategoryMenu({
 }) {
 	const { t } = useTranslation(["common", "front"]);
 	const [isOpen, setIsOpen] = useState(false);
+	const user = useUser();
+	const isStaff = user?.roles.includes("STAFF") ?? false;
+
+	const visibleItems = category.items.filter(
+		(item) => !("staffOnly" in item) || isStaff,
+	);
 
 	return (
 		<SendouPopover
@@ -75,7 +88,7 @@ function CategoryMenu({
 			onOpenChange={setIsOpen}
 		>
 			<div className={styles.menuContent}>
-				{category.items.map((item) => (
+				{visibleItems.map((item) => (
 					<Link
 						key={item.url}
 						to={`/${item.url}`}
@@ -83,7 +96,7 @@ function CategoryMenu({
 						onClick={() => setIsOpen(false)}
 					>
 						<Image
-							path={navIconUrl(item.name)}
+							path={navIconUrl("icon" in item ? item.icon : item.name)}
 							alt=""
 							size={20}
 							className={styles.menuItemIcon}
