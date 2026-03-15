@@ -220,5 +220,8 @@
 	"errors.alreadyFriends": "",
 	"errors.friendRequestExists": "",
 	"labels.type": "",
-	"labels.visibility": ""
+	"labels.visibility": "",
+	"labels.note": "",
+	"labels.stayAsSub": "",
+	"bottomTexts.stayAsSub": ""
 }

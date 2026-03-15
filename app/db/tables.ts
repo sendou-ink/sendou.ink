@@ -6,6 +6,7 @@ import type {
 	Selectable,
 	Updateable,
 } from "kysely";
+import type { AssociationIdentifier } from "~/features/associations/associations-constants";
 import type { AssociationVisibility } from "~/features/associations/associations-types";
 import type { tags } from "~/features/calendar/calendar-constants";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
@@ -740,6 +741,12 @@ export interface TournamentSub {
 	visibility: "+1" | "+2" | "+3" | "ALL";
 }
 
+export interface TournamentLFGLike {
+	likerTeamId: number;
+	targetTeamId: number;
+	createdAt: Generated<number>;
+}
+
 export interface TournamentStaff {
 	tournamentId: number;
 	userId: number;
@@ -760,6 +767,10 @@ export interface TournamentTeam {
 	tournamentId: number;
 	teamId: number | null;
 	avatarImgId: number | null;
+	isLooking: Generated<DBBoolean>;
+	isPlaceholder: Generated<DBBoolean>;
+	lfgVisibility: JSONColumnTypeNullable<AssociationIdentifier>;
+	lfgNote: string | null;
 }
 
 export interface TournamentTeamCheckIn {
@@ -777,6 +788,10 @@ export interface TournamentTeamMember {
 	inGameName: string | null;
 	tournamentTeamId: number;
 	userId: number;
+	role: Generated<"OWNER" | "MANAGER" | "REGULAR">;
+	isStayAsSub: Generated<DBBoolean>;
+	// denormalized from TournamentTeam.isLooking
+	isLooking: Generated<DBBoolean>;
 }
 
 export interface TournamentOrganization {
@@ -1282,6 +1297,7 @@ export interface DB {
 	Tournament: Tournament;
 	TournamentStaff: TournamentStaff;
 	TournamentGroup: TournamentGroup;
+	TournamentLFGLike: TournamentLFGLike;
 	TournamentMatch: TournamentMatch;
 	TournamentMatchPickBanEvent: TournamentMatchPickBanEvent;
 	TournamentMatchGameResult: TournamentMatchGameResult;

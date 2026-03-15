@@ -220,5 +220,8 @@
 	"errors.alreadyFriends": "You are already friends with this user",
 	"errors.friendRequestExists": "A friend request already exists between you and this user",
 	"labels.type": "Type",
-	"labels.visibility": "Visibility"
+	"labels.visibility": "Visibility",
+	"labels.note": "Note",
+	"labels.stayAsSub": "Stay as sub",
+	"bottomTexts.stayAsSub": "If you don't find a full team before registration ends, you will stay as a solo sub for the duration of the tournament"
 }

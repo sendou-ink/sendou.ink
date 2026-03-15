@@ -358,7 +358,7 @@ export const tournamentJoinPage = ({
 	inviteCode: string;
 }) => `/to/${tournamentId}/join?code=${inviteCode}`;
 export const tournamentSubsPage = (tournamentId: number) => {
-	return `/to/${tournamentId}/subs`;
+	return `/to/${tournamentId}/looking`;
 };
 export const tournamentStreamsPage = (tournamentId: number) => {
 	return `/to/${tournamentId}/streams`;

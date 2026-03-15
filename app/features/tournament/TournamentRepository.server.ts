@@ -123,13 +123,20 @@ export async function findById(id: number) {
 			).as("staff"),
 			jsonArrayFrom(
 				eb
-					.selectFrom("TournamentSub")
+					.selectFrom("TournamentTeamMember")
+					.innerJoin(
+						"TournamentTeam",
+						"TournamentTeam.id",
+						"TournamentTeamMember.tournamentTeamId",
+					)
 					.select(({ fn }) => [
-						"TournamentSub.visibility",
+						sql<string>`'ALL'`.as("visibility"),
 						fn.countAll<number>().as("count"),
 					])
-					.where("TournamentSub.tournamentId", "=", id)
-					.groupBy("TournamentSub.visibility"),
+					.where("TournamentTeam.tournamentId", "=", id)
+					// xxx: this is not correct
+					.where("TournamentTeam.isPlaceholder", "=", 1)
+					.where("TournamentTeamMember.isStayAsSub", "=", 1),
 			).as("subCounts"),
 			jsonArrayFrom(
 				eb
@@ -252,6 +259,7 @@ export async function findById(id: number) {
 						).as("team"),
 					])
 					.where("TournamentTeam.tournamentId", "=", id)
+					.where("TournamentTeam.isPlaceholder", "=", 0)
 					.orderBy("TournamentTeam.seed", "asc")
 					.orderBy("TournamentTeam.createdAt", "asc")
 					.orderBy("TournamentTeam.id", "asc"),
@@ -485,6 +493,7 @@ export function forShowcase() {
 						),
 				)
 				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+				.where("TournamentTeam.isPlaceholder", "=", 0)
 				.where((eb) =>
 					eb.or([
 						eb("TournamentTeamCheckIn.checkedInAt", "is not", null),

@@ -181,11 +181,13 @@ export function TournamentLayout() {
 				>
 					{t("tournament:tabs.teams", { count: tournament.ctx.teams.length })}
 				</SubNavLink>
-				{!tournament.everyBracketOver && tournament.subsFeatureEnabled && (
-					<SubNavLink to="subs" end={false}>
-						{t("tournament:tabs.subs", { count: subsCount() })}
+				{!tournament.isInvitational && !tournament.everyBracketOver ? (
+					<SubNavLink to="looking">
+						{tournament.registrationOpen
+							? t("tournament:tabs.looking")
+							: t("tournament:tabs.subs", { count: subsCount() })}
 					</SubNavLink>
-				)}
+				) : null}
 				{tournament.hasStarted && !tournament.everyBracketOver ? (
 					<SubNavLink to="streams">
 						{t("tournament:tabs.streams", {

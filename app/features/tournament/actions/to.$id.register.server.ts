@@ -11,6 +11,7 @@ import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { deleteSub } from "~/features/tournament-subs/queries/deleteSub.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { logger } from "~/utils/logger";
@@ -120,6 +121,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 					"Team name already taken for this tournament",
 				);
 
+				await TournamentLFGRepository.leaveLfg({
+					userId: user.id,
+					tournamentId,
+				});
 				await TournamentTeamRepository.create({
 					ownerInGameName: await inGameNameIfNeeded({
 						tournament,
@@ -277,6 +282,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 				message: "The user is banned from events hosted by this organization",
 			});
 
+			await TournamentLFGRepository.leaveLfg({
+				userId: data.userId,
+				tournamentId,
+			});
 			joinTeam({
 				userId: data.userId,
 				newTeamId: ownTeam.id,

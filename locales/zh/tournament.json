@@ -8,6 +8,7 @@
 	"tabs.results": "",
 	"tabs.streams": "直播 ({{count}})",
 	"tabs.subs": "替补 ({{count}})",
+	"tabs.looking": "",
 	"pre.steps.header": "参加比赛需完成以下步骤",
 	"pre.steps.name": "队伍名称",
 	"pre.steps.roster": "完整阵容",

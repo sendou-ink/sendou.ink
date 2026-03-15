@@ -37,8 +37,8 @@ import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.s
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
 import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/sendouq-settings/q-settings-constants";
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
@@ -70,6 +70,7 @@ import {
 } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
+import { randomTeamName } from "~/utils/team-name";
 import { mySlugify } from "~/utils/urls";
 import {
 	getArtFilename,
@@ -220,6 +221,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	calendarEventWithToToolsLUTI,
 	calendarEventWithToToolsTeamsLUTI,
 	tournamentSubs,
+	variation === "NO_TOURNAMENT_TEAMS" ? undefined : tournamentLfgGroups,
 	adminBuilds,
 	manySplattershotBuilds,
 	detailedTeam(variation),
@@ -279,6 +281,7 @@ function wipeDB() {
 		"MapPoolMap",
 		"TournamentMatchGameResult",
 		"TournamentTeamCheckIn",
+		"TournamentLFGLike",
 		"TournamentTeam",
 		"TournamentStage",
 		"TournamentResult",
@@ -896,9 +899,7 @@ function calendarEvents() {
 			)
 			.run({
 				id,
-				name: `${R.capitalize(faker.word.adjective())} ${R.capitalize(
-					faker.word.noun(),
-				)}`,
+				name: randomTeamName(),
 				description: faker.lorem.paragraph(),
 				discordInviteCode: faker.lorem.word(),
 				bracketUrl: faker.internet.url(),
@@ -1014,7 +1015,7 @@ async function calendarEventResults() {
 				.fill(null)
 				.map((_, i) => ({
 					placement: i + 1,
-					teamName: R.capitalize(faker.word.noun()),
+					teamName: randomTeamName(),
 					players: new Array(
 						faker.helpers.arrayElement([1, 2, 3, 4, 4, 4, 4, 4, 5, 6]),
 					)
@@ -1376,12 +1377,7 @@ function calendarEventWithToToolsToSetMapPool() {
 	}
 }
 
-const validTournamentTeamName = () => {
-	while (true) {
-		const name = faker.music.songName();
-		if (name.length <= TOURNAMENT.TEAM_NAME_MAX_LENGTH) return name;
-	}
-};
+const validTournamentTeamName = () => randomTeamName();
 
 const availableStages: StageId[] = [1, 2, 3, 4, 6, 7, 8, 10, 11];
 const availablePairs = rankedModesShort
@@ -1490,12 +1486,14 @@ function calendarEventWithToToolsTeams(
         "tournamentTeamId",
         "userId",
         "isOwner",
-        "createdAt"
+        "createdAt",
+        "role"
       ) values (
         $tournamentTeamId,
         $userId,
         $isOwner,
-        $createdAt
+        $createdAt,
+        $role
       )
       `,
 				)
@@ -1504,6 +1502,7 @@ function calendarEventWithToToolsTeams(
 					userId,
 					isOwner: i === 0 ? 1 : 0,
 					createdAt: dateToDatabaseTimestamp(yesterday),
+					role: i === 0 ? "OWNER" : "REGULAR",
 				});
 		}
 
@@ -1633,6 +1632,107 @@ function tournamentSubs() {
 	}
 
 	return null;
+}
+
+async function tournamentLfgGroups() {
+	const availableUsers = userIdsInAscendingOrderById().slice(300);
+
+	const MAX_GROUP_SIZE = 6;
+
+	const tournaments = [1, 2, 3];
+
+	let userIndex = 0;
+	for (const tournamentId of tournaments) {
+		const users = availableUsers.slice(userIndex, userIndex + 8);
+		userIndex += 8;
+
+		// Group 1: solo placeholder, has note, isStayAsSub=1
+		const { id: team1Id } = await TournamentLFGRepository.createPlaceholderTeam(
+			{
+				tournamentId,
+				userId: users[0],
+				isStayAsSub: true,
+			},
+		);
+		await TournamentLFGRepository.updateTeamNote({
+			teamId: team1Id,
+			value: "Looking for a team, can play any role",
+		});
+
+		// Group 2: solo placeholder
+		const { id: team2Id } = await TournamentLFGRepository.createPlaceholderTeam(
+			{
+				tournamentId,
+				userId: users[1],
+			},
+		);
+
+		// Group 3: solo placeholder
+		const { id: team3Id } = await TournamentLFGRepository.createPlaceholderTeam(
+			{
+				tournamentId,
+				userId: users[2],
+			},
+		);
+
+		// Group 4: solo placeholder
+		const { id: team4Id } = await TournamentLFGRepository.createPlaceholderTeam(
+			{
+				tournamentId,
+				userId: users[3],
+			},
+		);
+
+		// Group 5: 2-member group (merged from two placeholders)
+		const { id: mergeTarget1 } =
+			await TournamentLFGRepository.createPlaceholderTeam({
+				tournamentId,
+				userId: users[4],
+			});
+		const { id: mergeSource1 } =
+			await TournamentLFGRepository.createPlaceholderTeam({
+				tournamentId,
+				userId: users[5],
+			});
+		await TournamentLFGRepository.mergeTeams({
+			survivingTeamId: mergeTarget1,
+			otherTeamId: mergeSource1,
+			maxGroupSize: MAX_GROUP_SIZE,
+		});
+
+		// Group 6: 2-member group (merged from two placeholders)
+		const { id: mergeTarget2 } =
+			await TournamentLFGRepository.createPlaceholderTeam({
+				tournamentId,
+				userId: users[6],
+			});
+		const { id: mergeSource2 } =
+			await TournamentLFGRepository.createPlaceholderTeam({
+				tournamentId,
+				userId: users[7],
+			});
+		await TournamentLFGRepository.mergeTeams({
+			survivingTeamId: mergeTarget2,
+			otherTeamId: mergeSource2,
+			maxGroupSize: MAX_GROUP_SIZE,
+		});
+
+		// Team 1 -> Team 2 (one-way like)
+		await TournamentLFGRepository.addLike({
+			likerTeamId: team1Id,
+			targetTeamId: team2Id,
+		});
+		// Team 2 -> Team 1 (mutual — tests invitation UI)
+		await TournamentLFGRepository.addLike({
+			likerTeamId: team2Id,
+			targetTeamId: team1Id,
+		});
+		// Team 3 -> Team 4 (one-way like)
+		await TournamentLFGRepository.addLike({
+			likerTeamId: team3Id,
+			targetTeamId: team4Id,
+		});
+	}
 }
 
 const randomAbility = (legalTypes: AbilityType[]) => {
@@ -1826,12 +1926,7 @@ function otherTeams() {
 	);
 
 	for (let i = 3; i < 50; i++) {
-		const teamName =
-			i === 3
-				? "Team Olive"
-				: `${R.capitalize(faker.word.adjective())} ${R.capitalize(
-						faker.word.noun(),
-					)}`;
+		const teamName = i === 3 ? "Team Olive" : randomTeamName();
 		const teamCustomUrl = mySlugify(teamName);
 
 		sql
