@@ -66,6 +66,14 @@ body:has(.planner) header {
 	background-color: var(--color-bg);
 }
 
+.tlui-toolbar-container.tlui-toolbar__tools {
+	bottom: calc(var(--layout-fuse-bottom-height) + env(safe-area-inset-bottom));
+}
+
+.tl-watermark_SEE-LICENSE {
+	bottom: calc(var(--layout-fuse-bottom-height) + env(safe-area-inset-bottom));
+}
+
 img[src$="?outline=red"] {
 	--outline-width: 0.1rem;
 	--outline-color: crimson;

@@ -253,6 +253,7 @@ html {
 	*/
 	--layout-nav-height: 55px;
 	--layout-sidenav-width: 250px;
+	--layout-fuse-bottom-height: 90px;
 	--layout-main-padding: var(--s-3);
 	--layout-sticky-top: calc(
 		var(--layout-nav-height) +

@@ -160,12 +160,19 @@ function Document({
 	useTriggerToasts();
 	useSidebarRevalidation();
 
+	const htmlStyle: Record<string, string | number> = {
+		...Object.fromEntries(customThemeStyle),
+		...(data?.user?.roles.includes("MINOR_SUPPORT")
+			? { "--layout-fuse-bottom-height": "0px" }
+			: {}),
+	};
+
 	return (
 		<html
 			lang={locale}
 			dir={i18n.dir()}
 			className={clsx(htmlThemeClass, "scrollbar")}
-			style={Object.fromEntries(customThemeStyle)}
+			style={htmlStyle}
 			suppressHydrationWarning
 		>
 			<head>
