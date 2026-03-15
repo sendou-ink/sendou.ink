@@ -101,7 +101,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			})
 		: false;
 
-	if (match.chatCode && !matchIsOver) {
+	if (
+		match.chatCode &&
+		!matchIsOver &&
+		match.opponentOne &&
+		match.opponentTwo
+	) {
 		const playerIds = match.players.map((p) => p.id);
 		const matchContext = tournament.matchContextNamesById(matchId);
 
@@ -111,21 +116,21 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			subtitle: tournament.ctx.name,
 			url: tournamentMatchPage({ tournamentId, matchId }),
 			participantUserIds: playerIds,
-			expiresAfter: { hours: 2 },
+			expiresAfter: tournament.isLeagueDivision ? { days: 30 } : { hours: 2 },
 		});
 	}
 
+	const shouldSeeChat =
+		tournament.isOrganizerOrStreamer(user) ||
+		match.players.some((p) => p.id === user?.id);
+
 	return {
-		match,
+		match: shouldSeeChat ? match : { ...match, chatCode: undefined },
 		results,
 		mapList,
 		matchIsOver,
 		endedEarly,
 		noScreen,
-		chatCode:
-			tournament.isOrganizerOrStreamer(user) ||
-			match.players.some((p) => p.id === user?.id)
-				? match.chatCode
-				: undefined,
+		chatCode: shouldSeeChat ? match.chatCode : undefined,
 	};
 };

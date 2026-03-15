@@ -32,8 +32,6 @@ export default function TournamentMatchPage() {
 	const tournament = useTournament();
 	const data = useLoaderData<typeof loader>();
 
-	// xxx: ensure tournament match chat can also be used before the match starts
-
 	React.useEffect(() => {
 		if (visibility !== "visible" || tournament.ctx.isFinalized) return;
 
