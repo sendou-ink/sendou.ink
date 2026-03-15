@@ -67,11 +67,17 @@ body:has(.planner) header {
 }
 
 .tlui-toolbar-container.tlui-toolbar__tools {
-	bottom: calc(var(--layout-fuse-bottom-height) + env(safe-area-inset-bottom));
+	bottom: calc(
+		var(--layout-fuse-bottom-height) +
+		env(safe-area-inset-bottom)
+	) !important;
 }
 
 .tl-watermark_SEE-LICENSE {
-	bottom: calc(var(--layout-fuse-bottom-height) + env(safe-area-inset-bottom));
+	bottom: calc(
+		var(--layout-fuse-bottom-height) +
+		env(safe-area-inset-bottom)
+	) !important;
 }
 
 img[src$="?outline=red"] {

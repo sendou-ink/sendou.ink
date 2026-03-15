@@ -362,9 +362,7 @@ export function Layout({
 					<TopNavMenus />
 					<TopRightButtons
 						showSupport={Boolean(
-							data &&
-								!data?.user?.roles.includes("MINOR_SUPPORT") &&
-								isFrontPage,
+							data && !data?.user?.roles.includes("MINOR_SUPPORT"),
 						)}
 						showSearch={Boolean(data?.user)}
 						isLoggedIn={Boolean(data?.user)}

@@ -27,14 +27,16 @@ export function TopRightButtons({
 	return (
 		<div className={styles.container}>
 			{showSupport ? (
-				<LinkButton
-					to={SUPPORT_PAGE}
-					size="small"
-					icon={<Heart />}
-					variant="outlined"
-				>
-					{t("common:pages.support")}
-				</LinkButton>
+				<div className={styles.supportWrapper}>
+					<LinkButton
+						to={SUPPORT_PAGE}
+						size="small"
+						icon={<Heart />}
+						variant="outlined"
+					>
+						{t("common:pages.support")}
+					</LinkButton>
+				</div>
 			) : null}
 			{isLoggedIn ? (
 				<>
