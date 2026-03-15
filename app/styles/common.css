@@ -9,16 +9,7 @@
 		color-scheme: light dark;
 		accent-color: var(--color-text-accent);
 		scrollbar-gutter: stable;
-		scroll-padding-top: var(--layout-nav-height);
-	}
-
-	@media screen and (display-mode: standalone) {
-		html {
-			scroll-padding-top: calc(
-				var(--layout-nav-height) +
-				env(safe-area-inset-top)
-			);
-		}
+		scroll-padding-top: var(--layout-sticky-top);
 	}
 
 	body {
@@ -603,10 +594,8 @@
 	min-height: 100px;
 }
 
-@media screen and (min-width: 601px) {
-	@media screen and (max-width: 599px) {
-		.publift-widget-sticky_footer-container {
-			bottom: 55px !important;
-		}
+@media screen and (max-width: 599px) {
+	.publift-widget-sticky_footer-container {
+		bottom: calc(var(--layout-nav-height) + env(safe-area-inset-bottom));
 	}
 }
