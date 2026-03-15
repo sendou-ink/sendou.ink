@@ -7,7 +7,8 @@
 }
 
 .secondary {
-	margin-block-end: var(--s-2);
+	gap: var(--s-1);
+	margin-block-end: 0;
 }
 
 .linkContainer {
@@ -22,6 +23,15 @@
 
 .linkContainer.active {
 	color: var(--color-text-accent);
+}
+
+.secondary .linkContainer {
+	max-width: none;
+	flex: none;
+}
+
+.secondary .linkContainer.active {
+	color: var(--color-text);
 }
 
 .link {
@@ -41,9 +51,17 @@
 }
 
 .linkSecondary {
-	font-size: var(--font-2xs);
-	padding: var(--s-0-5) var(--s-2);
-	background-color: var(--color-bg-high);
+	height: var(--selector-size-sm);
+	border-radius: var(--radius-selector);
+	padding: 0 var(--s-2);
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	background-color: transparent;
+}
+
+.secondary .linkContainer.active .linkSecondary {
+	background-color: var(--color-bg-higher);
+	color: var(--color-text);
 }
 
 .container.compact .link {
@@ -65,4 +83,8 @@
 
 .linkContainer.active > .borderGuy {
 	visibility: initial;
+}
+
+.secondary .borderGuy {
+	display: none;
 }

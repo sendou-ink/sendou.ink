@@ -142,40 +142,42 @@ export default function UserSeasonsPage() {
 				</div>
 			) : null}
 			<div className="mt-4">
-				<SubNav secondary>
-					<SubNavLink
-						to={tabLink("weapons")}
-						secondary
-						controlled
-						active={data.info.currentTab === "weapons"}
-					>
-						{t("user:seasons.tabs.weapons")}
-					</SubNavLink>
-					<SubNavLink
-						to={tabLink("stages")}
-						secondary
-						controlled
-						active={data.info.currentTab === "stages"}
-					>
-						{t("user:seasons.tabs.stages")}
-					</SubNavLink>
-					<SubNavLink
-						to={tabLink("mates")}
-						secondary
-						controlled
-						active={data.info.currentTab === "mates"}
-					>
-						{t("user:seasons.tabs.teammates")}
-					</SubNavLink>
-					<SubNavLink
-						to={tabLink("enemies")}
-						secondary
-						controlled
-						active={data.info.currentTab === "enemies"}
-					>
-						{t("user:seasons.tabs.opponents")}
-					</SubNavLink>
-				</SubNav>
+				<div className="mb-2">
+					<SubNav secondary>
+						<SubNavLink
+							to={tabLink("weapons")}
+							secondary
+							controlled
+							active={data.info.currentTab === "weapons"}
+						>
+							{t("user:seasons.tabs.weapons")}
+						</SubNavLink>
+						<SubNavLink
+							to={tabLink("stages")}
+							secondary
+							controlled
+							active={data.info.currentTab === "stages"}
+						>
+							{t("user:seasons.tabs.stages")}
+						</SubNavLink>
+						<SubNavLink
+							to={tabLink("mates")}
+							secondary
+							controlled
+							active={data.info.currentTab === "mates"}
+						>
+							{t("user:seasons.tabs.teammates")}
+						</SubNavLink>
+						<SubNavLink
+							to={tabLink("enemies")}
+							secondary
+							controlled
+							active={data.info.currentTab === "enemies"}
+						>
+							{t("user:seasons.tabs.opponents")}
+						</SubNavLink>
+					</SubNav>
+				</div>
 				<div className={styles.seasonInfoContainer}>
 					{data.info.weapons ? <Weapons weapons={data.info.weapons} /> : null}
 					{data.info.stages ? (

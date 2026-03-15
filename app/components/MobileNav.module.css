@@ -215,25 +215,6 @@
 	padding: 0;
 }
 
-.streamsSectionHeader {
-	display: flex;
-	align-items: center;
-	gap: var(--s-2);
-	padding: var(--s-2);
-	color: var(--color-text-high);
-}
-
-.streamsSectionHeader svg {
-	width: 18px;
-	height: 18px;
-}
-
-.streamsSectionHeader h3 {
-	font-size: var(--font-xs);
-	font-weight: var(--weight-bold);
-	margin: 0;
-}
-
 .navGrid {
 	list-style: none;
 	margin: 0;

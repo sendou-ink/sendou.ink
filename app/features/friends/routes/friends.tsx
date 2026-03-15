@@ -1,12 +1,10 @@
-import clsx from "clsx";
-import { useState } from "react";
-import { Radio, RadioGroup } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { Form, useLoaderData } from "react-router";
+import { Form, useLoaderData, useSearchParams } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SubNav, SubNavLink } from "~/components/SubNav";
 import { SendouForm } from "~/form/SendouForm";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FriendMenu } from "../components/FriendMenu";
@@ -144,6 +142,8 @@ function PendingRequestsSection() {
 function FriendsListSection() {
 	const { t } = useTranslation(["common", "friends"]);
 	const data = useLoaderData<FriendsLoaderData>();
+	const [searchParams] = useSearchParams();
+
 	const allCount = resolveShownItems("all", data).length;
 	const filterCounts: Record<ViewFilter, number> = {
 		friends: data.friends.length,
@@ -151,9 +151,11 @@ function FriendsListSection() {
 		all: allCount,
 	};
 
+	const viewParam = searchParams.get("view") as ViewFilter | null;
 	const defaultFilter =
 		VIEW_FILTERS.find((key) => filterCounts[key] > 0) ?? "friends";
-	const [filter, setFilter] = useState<ViewFilter>(defaultFilter);
+	const filter =
+		viewParam && VIEW_FILTERS.includes(viewParam) ? viewParam : defaultFilter;
 
 	const viewLabels: Record<ViewFilter, string> = {
 		friends: `${t("friends:view.friends")} (${filterCounts.friends})`,
@@ -171,31 +173,20 @@ function FriendsListSection() {
 		<section>
 			<div className={styles.friendsListHeader}>
 				<h2 className="text-lg">{t("friends:friendsList.title")}</h2>
-				<RadioGroup
-					value={filter}
-					onChange={(v) => setFilter(v as ViewFilter)}
-					aria-label={t("friends:view.label")}
-					orientation="horizontal"
-					className="stack horizontal xs"
-				>
+				<SubNav secondary>
 					{VIEW_FILTERS.map((value) => (
-						<Radio
+						<SubNavLink
 							key={value}
-							value={value}
-							className={styles.filterRadioContainer}
+							to={`?view=${value}`}
+							secondary
+							controlled
+							active={filter === value}
+							unstable_defaultShouldRevalidate={false}
 						>
-							{({ isSelected }) => (
-								<span
-									className={clsx(styles.filterRadio, {
-										[styles.filterRadioSelected]: isSelected,
-									})}
-								>
-									{viewLabels[value]}
-								</span>
-							)}
-						</Radio>
+							{viewLabels[value]}
+						</SubNavLink>
 					))}
-				</RadioGroup>
+				</SubNav>
 			</div>
 			{shownItems.length === 0 ? (
 				<p className="text-lighter text-sm">{t(emptyKey)}</p>

@@ -1,10 +1,8 @@
-import clsx from "clsx";
-import { useState } from "react";
-import { Radio, RadioGroup } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { Link, useLoaderData } from "react-router";
+import { Link, useLoaderData, useSearchParams } from "react-router";
 import { EventsList } from "~/components/EventsList";
 import { Main } from "~/components/Main";
+import { SubNav, SubNavLink } from "~/components/SubNav";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { CALENDAR_PAGE } from "~/utils/urls";
 import type { EventsLoaderData } from "../loaders/events.server";
@@ -22,10 +20,13 @@ type ViewFilter = (typeof VIEW_FILTERS)[number];
 export default function EventsPage() {
 	const { t } = useTranslation(["calendar"]);
 	const data = useLoaderData<EventsLoaderData>();
+	const [searchParams] = useSearchParams();
 
+	const viewParam = searchParams.get("view") as ViewFilter | null;
 	const defaultFilter =
 		VIEW_FILTERS.find((key) => data[key].length > 0) ?? "registered";
-	const [filter, setFilter] = useState<ViewFilter>(defaultFilter);
+	const filter =
+		viewParam && VIEW_FILTERS.includes(viewParam) ? viewParam : defaultFilter;
 
 	const viewLabels: Record<ViewFilter, string> = {
 		registered: `${t("calendar:events.view.registered")} (${data.registered.length})`,
@@ -54,30 +55,20 @@ export default function EventsPage() {
 			<div className={styles.eventsListHeader}>
 				<h2 className="text-lg mx-2">{t("calendar:events.title")}</h2>
 				{hasNoEventsAtAll ? null : (
-					<RadioGroup
-						value={filter}
-						onChange={(v) => setFilter(v as ViewFilter)}
-						orientation="horizontal"
-						className="stack horizontal xs"
-					>
+					<SubNav secondary>
 						{VIEW_FILTERS.map((value) => (
-							<Radio
+							<SubNavLink
 								key={value}
-								value={value}
-								className={styles.filterRadioContainer}
+								to={`?view=${value}`}
+								secondary
+								controlled
+								active={filter === value}
+								unstable_defaultShouldRevalidate={false}
 							>
-								{({ isSelected }) => (
-									<span
-										className={clsx(styles.filterRadio, {
-											[styles.filterRadioSelected]: isSelected,
-										})}
-									>
-										{viewLabels[value]}
-									</span>
-								)}
-							</Radio>
+								{viewLabels[value]}
+							</SubNavLink>
 						))}
-					</RadioGroup>
+					</SubNav>
 				)}
 			</div>
 			{hasNoEventsAtAll ? (
