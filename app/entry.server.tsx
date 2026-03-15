@@ -1,3 +1,4 @@
+import "@formatjs/intl-durationformat/polyfill.js";
 import { PassThrough } from "node:stream";
 import { createReadableStreamFromReadable } from "@react-router/node";
 import { createInstance } from "i18next";
