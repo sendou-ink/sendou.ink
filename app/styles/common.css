@@ -592,10 +592,14 @@
 
 .top-leaderboard {
 	min-height: 100px;
+	margin: 10px 0;
 }
 
 @media screen and (max-width: 599px) {
 	.publift-widget-sticky_footer-container {
-		bottom: calc(var(--layout-nav-height) + env(safe-area-inset-bottom));
+		bottom: calc(
+			var(--layout-nav-height) +
+			env(safe-area-inset-bottom)
+		) !important;
 	}
 }
