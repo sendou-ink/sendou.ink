@@ -94,7 +94,7 @@
 	height: 18px;
 }
 
-@media screen and (min-width: 640px) {
+@container (width >= 640px) {
 	.section {
 		grid-template-columns: max-content 1fr max-content max-content;
 		grid-template-areas:

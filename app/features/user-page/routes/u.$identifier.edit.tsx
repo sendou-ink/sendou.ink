@@ -71,6 +71,7 @@ export default function UserEditPage() {
 				{({ FormField }) => (
 					<>
 						<SendouDialog
+							isDismissable
 							heading={t("common:fc.title")}
 							trigger={
 								<SendouButton variant="outlined">

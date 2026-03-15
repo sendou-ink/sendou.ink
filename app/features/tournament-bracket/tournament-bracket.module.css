@@ -146,7 +146,7 @@
 	display: none;
 }
 
-@media screen and (min-width: 480px) {
+@container (width >= 480px) {
 	.stageBannerTopBar {
 		font-size: initial;
 	}
@@ -167,11 +167,11 @@
 
 .noScreen > svg {
 	width: 24px;
-	fill: var(--color-success);
+	color: var(--color-success);
 }
 
 .noScreenBanned > svg {
-	fill: var(--color-error);
+	color: var(--color-error);
 }
 
 .duringMatchActions {
@@ -363,7 +363,7 @@
 	text-decoration: line-through;
 }
 
-@media screen and (min-width: 640px) {
+@container (width >= 640px) {
 	.rosters {
 		justify-content: space-evenly;
 		flex-direction: row;
@@ -447,7 +447,7 @@
 	font-size: var(--font-sm);
 }
 
-@media screen and (min-width: 480px) {
+@container (width >= 480px) {
 	.infos {
 		flex-direction: row;
 	}

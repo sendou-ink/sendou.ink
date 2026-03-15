@@ -104,13 +104,13 @@
 	outline: none;
 }
 
-@media (width < 640px) {
+@container (width < 580px) {
 	.desktopOnly {
 		display: none;
 	}
 }
 
-@media (width >= 640px) {
+@container (width >= 580px) {
 	.mobileOnly {
 		display: none;
 	}

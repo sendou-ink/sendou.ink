@@ -60,7 +60,7 @@
 	grid-area: players;
 }
 
-@media screen and (min-width: 640px) {
+@container (width >= 640px) {
 	.headerRow {
 		display: grid;
 	}

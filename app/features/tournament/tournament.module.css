@@ -316,7 +316,7 @@
 	font-size: var(--font-sm);
 }
 
-@media screen and (min-width: 640px) {
+@container (width >= 640px) {
 	.section {
 		margin: 0;
 		border-radius: var(--radius-box);
@@ -353,7 +353,7 @@
 	text-align: center;
 }
 
-@media screen and (min-width: 480px) {
+@container (width >= 480px) {
 	.teamSetTopContainer {
 		flex-direction: row;
 		align-items: flex-end;
@@ -381,7 +381,7 @@
 }
 
 .teamSetModeLoss {
-	border-color: var(--color-bg-higher);
+	border-color: var(--color-error);
 }
 
 .teamSetStageContainer {

@@ -1,4 +1,5 @@
 .main {
+	container-type: inline-size;
 	padding: var(--layout-main-padding);
 	margin-bottom: var(--s-32);
 	min-height: calc(100dvh - var(--layout-nav-height));

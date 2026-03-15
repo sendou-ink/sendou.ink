@@ -61,7 +61,6 @@
 	overflow-x: auto;
 	gap: var(--s-4);
 	padding-block: var(--s-2);
-	scrollbar-width: thin;
 	scroll-snap-type: x mandatory;
 }
 
@@ -80,7 +79,7 @@
 	display: none;
 }
 
-@media screen and (min-width: 768px) {
+@container (width >= 720px) {
 	.header {
 		flex-direction: row;
 		flex-wrap: wrap;

@@ -2,7 +2,7 @@
 	position: relative;
 	width: 100%;
 	height: 18px;
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg);
 }
 
 .progressBar {
@@ -10,7 +10,7 @@
 	left: 0;
 	top: 0;
 	height: 100%;
-	background-color: var(--color-accent);
+	background-color: var(--color-text-accent);
 	transition:
 		width 0.5s ease-in-out,
 		background-color 0.3s ease;
@@ -55,6 +55,7 @@
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
 	white-space: nowrap;
+	text-shadow: 0 0 3px black;
 }
 
 .gameMarkerHidden .gameMarkerText {
