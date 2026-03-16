@@ -6936,7 +6936,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "260999523806085120",
 					discordAvatar: "4f15f20946fbd992ee9d694a539e6317",
 					customUrl: "elemental",
-					chatNameHue: null,
 				},
 				{
 					userId: 622,
@@ -6947,7 +6946,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "201922904781357057",
 					discordAvatar: "7fa46b7dc27fa589d3d278ba4b60224f",
 					customUrl: "dotjpg",
-					chatNameHue: null,
 				},
 				{
 					userId: 680,
@@ -6958,7 +6956,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "87494390724964352",
 					discordAvatar: "3b82ee3101ba39120b6a65c042a04a37",
 					customUrl: "inkfarer",
-					chatNameHue: null,
 				},
 				{
 					userId: 936,
@@ -6969,7 +6966,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "119620026767507456",
 					discordAvatar: "aa1ff5b8eefd5a26657c411138a160b8",
 					customUrl: null,
-					chatNameHue: null,
 				},
 				{
 					userId: 1402,
@@ -6980,7 +6976,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "216335108037148673",
 					discordAvatar: "458f1e233a3b590a62f6b867b95a6241",
 					customUrl: "grace",
-					chatNameHue: null,
 				},
 				{
 					userId: 1755,
@@ -6991,7 +6986,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "200777324520538113",
 					discordAvatar: "a_d71ac2f474ce422ce711e8e74d657b2f",
 					customUrl: "brushstrokes",
-					chatNameHue: null,
 				},
 				{
 					userId: 2908,
@@ -7002,7 +6996,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "112254088992792576",
 					discordAvatar: "711e8d48f316687faa4fdb41ab9298f0",
 					customUrl: "kitsunekeira",
-					chatNameHue: null,
 				},
 				{
 					userId: 3742,
@@ -7013,7 +7006,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "124007565758693376",
 					discordAvatar: "ca9e37c9b31dfa39f88b2a2da2d4af21",
 					customUrl: "thoma",
-					chatNameHue: "40",
 				},
 				{
 					userId: 3806,
@@ -7024,7 +7016,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "113026708071821312",
 					discordAvatar: "4b3f0da55a834acc0beb258edd9c7e34",
 					customUrl: null,
-					chatNameHue: null,
 				},
 				{
 					userId: 4941,
@@ -7035,7 +7026,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "236292964052107264",
 					discordAvatar: "c95b9a8cfb9164f3a66267a5e8cfe8b1",
 					customUrl: "hoeenhero",
-					chatNameHue: null,
 				},
 				{
 					userId: 5036,
@@ -7046,7 +7036,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "248232091005747201",
 					discordAvatar: "40a21a204f8fae6ae2e7e8c5de70de83",
 					customUrl: "toasty",
-					chatNameHue: null,
 				},
 				{
 					userId: 8098,
@@ -7057,7 +7046,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "442431978269310987",
 					discordAvatar: "e0fd0fed98a4d3c3bfd56332678d4e6c",
 					customUrl: "popgun",
-					chatNameHue: null,
 				},
 				{
 					userId: 8750,
@@ -7068,7 +7056,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "273188925189914628",
 					discordAvatar: "c62afa020e24ead92cc043ffa809ffdc",
 					customUrl: "liberowolf",
-					chatNameHue: null,
 				},
 				{
 					userId: 9222,
@@ -7079,7 +7066,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "298241282550267906",
 					discordAvatar: "f69bb5af745eca4e9b7f55504c641f78",
 					customUrl: "jardonian",
-					chatNameHue: null,
 				},
 				{
 					userId: 9719,
@@ -7090,7 +7076,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "184478601171828737",
 					discordAvatar: "75dedb3527b73d9571151f0a00d1c365",
 					customUrl: "scepidilionz",
-					chatNameHue: "180",
 				},
 				{
 					userId: 18720,
@@ -7101,7 +7086,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "103988435785650176",
 					discordAvatar: "df9936bea9dcbd250daf8e2ef2d7c04a",
 					customUrl: "tulip",
-					chatNameHue: null,
 				},
 			],
 		},
@@ -7113,7 +7097,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			discordId: "236292964052107264",
 			discordAvatar: "c95b9a8cfb9164f3a66267a5e8cfe8b1",
 			customUrl: "hoeenhero",
-			chatNameHue: null,
 		},
 		staff: [
 			{
@@ -7123,7 +7106,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordId: "260999523806085120",
 				discordAvatar: "4f15f20946fbd992ee9d694a539e6317",
 				customUrl: "elemental",
-				chatNameHue: null,
+
 				role: "ORGANIZER",
 			},
 			{
@@ -7133,7 +7116,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordId: "176095582534762496",
 				discordAvatar: "89e15b6e74f5abdef1183c9416434dde",
 				customUrl: "pock",
-				chatNameHue: "220",
+
 				role: "ORGANIZER",
 			},
 			{
@@ -7143,7 +7126,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordId: "87494390724964352",
 				discordAvatar: "3b82ee3101ba39120b6a65c042a04a37",
 				customUrl: "inkfarer",
-				chatNameHue: null,
+
 				role: "STREAMER",
 			},
 			{
@@ -7153,7 +7136,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordId: "334504066405367808",
 				discordAvatar: "0d31f0d52ebfeaa0216fcacb86eb140a",
 				customUrl: "shads",
-				chatNameHue: null,
+
 				role: "ORGANIZER",
 			},
 			{
@@ -7163,7 +7146,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordId: "112254088992792576",
 				discordAvatar: "711e8d48f316687faa4fdb41ab9298f0",
 				customUrl: "kitsunekeira",
-				chatNameHue: null,
+
 				role: "ORGANIZER",
 			},
 			{
@@ -7173,7 +7156,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordId: "412316772637736981",
 				discordAvatar: "1408d204fa8a128efd2d2625476468c2",
 				customUrl: null,
-				chatNameHue: null,
+
 				role: "ORGANIZER",
 			},
 			{
@@ -7183,7 +7166,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordId: "578038263433134080",
 				discordAvatar: "f552df977e0165e7fb93d1ce2a7512d4",
 				customUrl: "bars",
-				chatNameHue: null,
+
 				role: "ORGANIZER",
 			},
 			{
@@ -7193,7 +7176,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordId: "230161540299489280",
 				discordAvatar: "a_3ca2a0737b2c1e2b5e82ddc98fe79c8b",
 				customUrl: "bowen",
-				chatNameHue: null,
+
 				role: "ORGANIZER",
 			},
 			{
@@ -7203,7 +7186,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordId: "678892046534311936",
 				discordAvatar: "11490e6c0ace327ebc32a117b9e0510c",
 				customUrl: "toes",
-				chatNameHue: null,
+
 				role: "ORGANIZER",
 			},
 			{
@@ -7213,7 +7196,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordId: "512418782933811221",
 				discordAvatar: "c3afd465b53dedbb97fb9dd504d01305",
 				customUrl: "neato",
-				chatNameHue: null,
+
 				role: "ORGANIZER",
 			},
 			{
@@ -7223,7 +7206,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordId: "182994907907096585",
 				discordAvatar: "31da63dcb6dd1dbe4c3f135c105f07e7",
 				customUrl: "strings",
-				chatNameHue: "220",
+
 				role: "ORGANIZER",
 			},
 			{
@@ -7233,7 +7216,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordId: "725416982681223259",
 				discordAvatar: "cb9bf51b05f22c763a2b4812bdd574cc",
 				customUrl: "michi",
-				chatNameHue: null,
+
 				role: "ORGANIZER",
 			},
 			{
@@ -7243,7 +7226,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordId: "367803257717784599",
 				discordAvatar: "b8ad30de9487a9699093b728098e01d0",
 				customUrl: "glumbaron",
-				chatNameHue: null,
+
 				role: "ORGANIZER",
 			},
 			{
@@ -7253,7 +7236,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordId: "1058063829973618698",
 				discordAvatar: "dc110c2d77ea84e470c87a18ac0b7e5d",
 				customUrl: "lemon7890",
-				chatNameHue: null,
+
 				role: "ORGANIZER",
 			},
 			{
@@ -7263,7 +7246,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordId: "1132918323697418310",
 				discordAvatar: "48089383c5d666ae7ef8417d205bfa1f",
 				customUrl: "eemeee",
-				chatNameHue: null,
+
 				role: "ORGANIZER",
 			},
 			{
@@ -7273,7 +7256,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordId: "689577992430944281",
 				discordAvatar: "911c0ac66f9489406ea4ae970e7ed5b0",
 				customUrl: "pin-eye",
-				chatNameHue: null,
+
 				role: "ORGANIZER",
 			},
 		],

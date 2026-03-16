@@ -155,7 +155,6 @@ async function resolveOwnTeam({
 		role: m.isOwner ? "OWNER" : "REGULAR",
 		isStayAsSub: false,
 		weapons: null,
-		chatNameColor: null,
 		plusTier: m.plusTier,
 	}));
 
@@ -196,7 +195,6 @@ function transformMembers(
 			role: m.role,
 			isStayAsSub: m.isStayAsSub === 1,
 			weapons,
-			chatNameColor: m.chatNameColor,
 			plusTier: m.plusTier,
 		};
 	});

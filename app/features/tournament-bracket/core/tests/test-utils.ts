@@ -95,7 +95,6 @@ export const testTournament = ({
 			seedingSnapshot: null,
 			teams: nTeams(participant.length, Math.min(...participant)),
 			author: {
-				chatNameHue: null,
 				customUrl: null,
 				discordAvatar: null,
 				discordId: "123",

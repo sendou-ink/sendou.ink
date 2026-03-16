@@ -30,7 +30,6 @@ export type LFGGroupMember = {
 	role: "OWNER" | "MANAGER" | "REGULAR";
 	isStayAsSub: boolean;
 	weapons: Array<{ weaponSplId: MainWeaponId; isFavorite: boolean }> | null;
-	chatNameColor: string | null;
 	plusTier: number | null;
 };
 

@@ -28,8 +28,6 @@ const userChatNameHueRaw = sql<
 
 export const userChatNameHue = userChatNameHueRaw.as("chatNameHue");
 
-export const userChatNameHueForJson = userChatNameHueRaw;
-
 export function commonUserJsonObject(eb: ExpressionBuilder<Tables, "User">) {
 	return jsonBuildObject({
 		id: eb.ref("User.id"),

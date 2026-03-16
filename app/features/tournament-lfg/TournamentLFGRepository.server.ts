@@ -67,7 +67,6 @@ type TournamentLFGMemberObject = {
 	role: Tables["TournamentTeamMember"]["role"];
 	isStayAsSub: Tables["TournamentTeamMember"]["isStayAsSub"];
 	weapons: Tables["User"]["qWeaponPool"];
-	chatNameColor: string | null;
 	plusTier: Tables["PlusTier"]["tier"] | null;
 };
 

@@ -20,7 +20,6 @@ import {
 	COMMON_USER_FIELDS,
 	concatUserSubmittedImagePrefix,
 	tournamentLogoWithDefault,
-	userChatNameHue,
 } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 import type { TournamentTierNumber } from "./core/tiering";
@@ -86,7 +85,7 @@ export async function findById(id: number) {
 									"TournamentOrganizationMember.userId",
 									"TournamentOrganizationMember.role",
 									...COMMON_USER_FIELDS,
-									userChatNameHue,
+
 									"User.pronouns",
 								])
 								.whereRef(
@@ -106,7 +105,7 @@ export async function findById(id: number) {
 			jsonObjectFrom(
 				eb
 					.selectFrom("User")
-					.select([...COMMON_USER_FIELDS, userChatNameHue, "User.pronouns"])
+					.select([...COMMON_USER_FIELDS, "User.pronouns"])
 					.whereRef("User.id", "=", "CalendarEvent.authorId"),
 			).as("author"),
 			jsonArrayFrom(
@@ -115,7 +114,7 @@ export async function findById(id: number) {
 					.innerJoin("User", "TournamentStaff.userId", "User.id")
 					.select([
 						...COMMON_USER_FIELDS,
-						userChatNameHue,
+
 						"User.pronouns",
 						"TournamentStaff.role",
 					])

@@ -1469,7 +1469,6 @@ export const PADDLING_POOL_257 = () =>
 				discordId: "163771047068303360",
 				discordAvatar: "b33d8f230218d6a92705a63fdf803851",
 				customUrl: "alicetheto",
-				chatNameHue: "180",
 			},
 			staff: [
 				{
@@ -1479,7 +1478,7 @@ export const PADDLING_POOL_257 = () =>
 					discordId: "178489224192851969",
 					discordAvatar: "8b8c1d85cc525ea366f3ce2a6a594c05",
 					customUrl: "pinky",
-					chatNameHue: null,
+
 					role: "ORGANIZER",
 				},
 				{
@@ -1489,7 +1488,7 @@ export const PADDLING_POOL_257 = () =>
 					discordId: "275213752025088000",
 					discordAvatar: "25bf68c5aa4e622ceb5a241c34841c6d",
 					customUrl: null,
-					chatNameHue: null,
+
 					role: "ORGANIZER",
 				},
 				{
@@ -1499,7 +1498,7 @@ export const PADDLING_POOL_257 = () =>
 					discordId: "195618756800675841",
 					discordAvatar: "a_03ec4bbcb2a4ab000237c9f3e9e71508",
 					customUrl: "sdomi19",
-					chatNameHue: null,
+
 					role: "ORGANIZER",
 				},
 				{
@@ -1509,7 +1508,7 @@ export const PADDLING_POOL_257 = () =>
 					discordId: "413759870333091884",
 					discordAvatar: "a_b55f70ada809a600e73c5088b910e659",
 					customUrl: "brufnie",
-					chatNameHue: null,
+
 					role: "STREAMER",
 				},
 			],
@@ -8068,7 +8067,6 @@ export const PADDLING_POOL_255 = () =>
 				discordId: "163771047068303360",
 				discordAvatar: "b33d8f230218d6a92705a63fdf803851",
 				customUrl: "alicetheto",
-				chatNameHue: "0",
 			},
 			staff: [
 				{
@@ -8078,7 +8076,7 @@ export const PADDLING_POOL_255 = () =>
 					discordId: "178489224192851969",
 					discordAvatar: "8b8c1d85cc525ea366f3ce2a6a594c05",
 					customUrl: "pinky",
-					chatNameHue: null,
+
 					role: "ORGANIZER",
 				},
 				{
@@ -8088,7 +8086,7 @@ export const PADDLING_POOL_255 = () =>
 					discordId: "275213752025088000",
 					discordAvatar: "25bf68c5aa4e622ceb5a241c34841c6d",
 					customUrl: null,
-					chatNameHue: null,
+
 					role: "ORGANIZER",
 				},
 				{
@@ -8098,7 +8096,7 @@ export const PADDLING_POOL_255 = () =>
 					discordId: "195618756800675841",
 					discordAvatar: "a_03ec4bbcb2a4ab000237c9f3e9e71508",
 					customUrl: "sdomi19",
-					chatNameHue: null,
+
 					role: "ORGANIZER",
 				},
 				{
@@ -8108,7 +8106,7 @@ export const PADDLING_POOL_255 = () =>
 					discordId: "413759870333091884",
 					discordAvatar: "a_b55f70ada809a600e73c5088b910e659",
 					customUrl: "brufnie",
-					chatNameHue: null,
+
 					role: "STREAMER",
 				},
 			],
@@ -14993,7 +14991,6 @@ export const IN_THE_ZONE_32 = ({
 				discordId: "79237403620945920",
 				discordAvatar: "6fc41a44b069a0d2152ac06d1e496c6c",
 				customUrl: "sendou",
-				chatNameHue: null,
 			},
 			staff: [
 				{
@@ -15003,7 +15000,7 @@ export const IN_THE_ZONE_32 = ({
 					discordId: "163771047068303360",
 					discordAvatar: "b33d8f230218d6a92705a63fdf803851",
 					customUrl: "alicetheto",
-					chatNameHue: "0",
+
 					role: "STREAMER",
 				},
 				{
@@ -15013,7 +15010,7 @@ export const IN_THE_ZONE_32 = ({
 					discordId: "413759870333091884",
 					discordAvatar: "a_b55f70ada809a600e73c5088b910e659",
 					customUrl: "brufnie",
-					chatNameHue: null,
+
 					role: "STREAMER",
 				},
 			],

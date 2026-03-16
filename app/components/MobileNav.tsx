@@ -31,8 +31,8 @@ import {
 	userPage,
 } from "~/utils/urls";
 import { Avatar } from "./Avatar";
-import { LinkButton } from "./elements/Button";
 import { EventsList } from "./EventsList";
+import { LinkButton } from "./elements/Button";
 import { Image } from "./Image";
 import { ChatSidebar } from "./layout/ChatSidebar";
 import { LogInButtonContainer } from "./layout/LogInButtonContainer";
