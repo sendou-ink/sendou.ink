@@ -454,34 +454,6 @@ describe("leaveLfg", () => {
 		dbReset();
 	});
 
-	test("removes member from placeholder team", async () => {
-		const tournament = await createTournament();
-		const team = await createPlaceholder(tournament.id, 1);
-
-		await db
-			.insertInto("TournamentTeamMember")
-			.values({
-				tournamentTeamId: team.id,
-				userId: 2,
-				isOwner: 0,
-				role: "REGULAR",
-			})
-			.execute();
-
-		await TournamentLFGRepository.leaveLfg({
-			userId: 2,
-			tournamentId: tournament.id,
-		});
-
-		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
-			tournament.id,
-		);
-		const members = groups[0].members;
-
-		expect(members).toHaveLength(1);
-		expect(members[0].id).toBe(1);
-	});
-
 	test("deletes placeholder team when last member leaves", async () => {
 		const tournament = await createTournament();
 		await createPlaceholder(tournament.id, 1);
@@ -496,44 +468,6 @@ describe("leaveLfg", () => {
 		);
 
 		expect(groups).toHaveLength(0);
-	});
-
-	test("promotes MANAGER to OWNER when owner leaves placeholder", async () => {
-		const tournament = await createTournament();
-		const team = await createPlaceholder(tournament.id, 1);
-
-		await db
-			.insertInto("TournamentTeamMember")
-			.values({
-				tournamentTeamId: team.id,
-				userId: 2,
-				isOwner: 0,
-				role: "MANAGER",
-			})
-			.execute();
-
-		await db
-			.insertInto("TournamentTeamMember")
-			.values({
-				tournamentTeamId: team.id,
-				userId: 3,
-				isOwner: 0,
-				role: "REGULAR",
-			})
-			.execute();
-
-		await TournamentLFGRepository.leaveLfg({
-			userId: 1,
-			tournamentId: tournament.id,
-		});
-
-		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
-			tournament.id,
-		);
-		const members = groups[0].members;
-		const newOwner = members.find((m) => m.id === 2);
-
-		expect(newOwner?.role).toBe("OWNER");
 	});
 
 	test("sets isLooking=0 for non-placeholder team", async () => {

@@ -53,8 +53,6 @@ export default function TournamentLFGShell() {
 	return <TournamentLFGPage />;
 }
 
-// xxx: no button if already in the tournament
-// xxx: can we reuse the column layout with sendouq?
 function TournamentLFGPage() {
 	const data = useLoaderData<typeof loader>();
 	if (data.mode === "subs") {

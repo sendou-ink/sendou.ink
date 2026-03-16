@@ -163,7 +163,6 @@ export async function findSubGroups(tournamentId: number) {
 	return rows;
 }
 
-// xxx: ensure that the team size does not exceed the max, also filter out in frontend
 export function mergeTeams({
 	survivingTeamId,
 	otherTeamId,

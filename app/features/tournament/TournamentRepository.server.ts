@@ -178,6 +178,7 @@ export async function findById(id: number) {
 									"SeedingSkill.ordinal",
 									"PlusTier.tier as plusTier",
 									"TournamentTeamMember.isOwner",
+									"TournamentTeamMember.role",
 									"TournamentTeamMember.createdAt",
 									sql<string | null> /*sql*/`coalesce(
                     "TournamentTeamMember"."inGameName",

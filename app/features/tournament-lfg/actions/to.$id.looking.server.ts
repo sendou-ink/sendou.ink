@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import { requireNotBannedByOrganization } from "~/features/tournament/tournament-utils.server";
 import {
 	clearTournamentDataCache,
 	tournamentFromDBCached,
@@ -14,9 +15,6 @@ import { idObject } from "~/utils/zod";
 import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
 import { lookingSchema } from "../tournament-lfg-schemas";
 import { survivingTeamId } from "../tournament-lfg-utils";
-
-// xxx: prevent actions in certain cases? like when tournament has started
-// xxx: add `requireNotBannedByOrganization` & other checks from deleted to.$id.subs.new.tsx route
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const user = requireUser();
@@ -53,14 +51,20 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				tournamentId,
 				user,
 			});
+			await requireNotBannedByOrganization({ tournament, user });
+			errorToastIfFalsy(
+				tournament.canAddNewSubPost,
+				"Cannot add sub post at this time",
+			);
 			const team = tournament.teamMemberOfByUser(user);
 
 			if (team) {
-				// xxx: or isManager, also just show errorToast no return null
-				const isTeamOwner = team.members.some(
-					(m) => m.userId === user.id && m.isOwner,
+				const member = team.members.find((m) => m.userId === user.id);
+				const canManageTeam = member?.isOwner || member?.role === "MANAGER";
+				errorToastIfFalsy(
+					canManageTeam,
+					"Only team owners and managers can join the queue",
 				);
-				if (!isTeamOwner) return null;
 
 				errorToastIfFalsy(
 					team.members.length < tournament.maxMembersPerTeam,
@@ -210,6 +214,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				tournamentId,
 				user,
 			});
+			await requireNotBannedByOrganization({ tournament, user });
+			errorToastIfFalsy(!tournament.everyBracketOver, "Tournament is over");
 			errorToastIfFalsy(
 				tournament.canAddNewSubPost,
 				"Cannot add sub post at this time",
