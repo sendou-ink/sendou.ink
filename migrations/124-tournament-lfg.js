@@ -12,6 +12,9 @@ export function up(db) {
 		db.prepare(
 			/*sql*/ `alter table "TournamentTeam" add column "lfgNote" text`,
 		).run();
+		db.prepare(
+			/*sql*/ `alter table "TournamentTeam" add column "chatCode" text`,
+		).run();
 
 		db.prepare(
 			/*sql*/ `alter table "TournamentTeamMember" add column "role" text not null default 'REGULAR'`,

@@ -771,6 +771,7 @@ export interface TournamentTeam {
 	isPlaceholder: Generated<DBBoolean>;
 	lfgVisibility: JSONColumnTypeNullable<AssociationIdentifier>;
 	lfgNote: string | null;
+	chatCode: Generated<string | null>;
 }
 
 export interface TournamentTeamCheckIn {
