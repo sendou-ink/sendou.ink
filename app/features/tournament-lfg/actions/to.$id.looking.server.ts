@@ -1,6 +1,9 @@
 import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
+import {
+	clearTournamentDataCache,
+	tournamentFromDBCached,
+} from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	errorToastIfFalsy,
 	parseParams,
@@ -14,7 +17,6 @@ import { survivingTeamId } from "../tournament-lfg-utils";
 
 // xxx: prevent actions in certain cases? like when tournament has started
 // xxx: add `requireNotBannedByOrganization` & other checks from deleted to.$id.subs.new.tsx route
-// xxx: add `clearTournamentDataCache`
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const user = requireUser();
@@ -54,6 +56,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			const team = tournament.teamMemberOfByUser(user);
 
 			if (team) {
+				// xxx: or isManager, also just show errorToast no return null
+				const isTeamOwner = team.members.some(
+					(m) => m.userId === user.id && m.isOwner,
+				);
+				if (!isTeamOwner) return null;
+
 				errorToastIfFalsy(
 					team.members.length < tournament.maxMembersPerTeam,
 					"Team is already at max capacity",
@@ -247,6 +255,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			assertUnreachable(data);
 		}
 	}
+
+	clearTournamentDataCache(tournamentId);
 
 	return null;
 };

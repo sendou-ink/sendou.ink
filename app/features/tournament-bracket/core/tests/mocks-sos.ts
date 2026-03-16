@@ -2209,7 +2209,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "333766288969302018",
 				discordAvatar: "42d40d5ae6ff7081ae57bc02b6e2f717",
 				customUrl: null,
-
 				role: "ORGANIZER",
 			},
 			{
@@ -2219,7 +2218,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "260999523806085120",
 				discordAvatar: "a_71a6a4b4f76bd79bc9d7743e322a879d",
 				customUrl: "elemental",
-
 				role: "ORGANIZER",
 			},
 			{
@@ -2229,7 +2227,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "468596581357060097",
 				discordAvatar: "940589e5c6793a5cbbab2adebd84fe0b",
 				customUrl: null,
-
 				role: "ORGANIZER",
 			},
 			{
@@ -2239,7 +2236,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "418176537561661441",
 				discordAvatar: "bab3e7a9cdb2071de7f2ae29256fc83b",
 				customUrl: null,
-
 				role: "ORGANIZER",
 			},
 			{
@@ -2249,7 +2245,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "302160815132246016",
 				discordAvatar: "da7cfcd1a5b8bee37cfa5d308b0898eb",
 				customUrl: "mashimashi",
-
 				role: "ORGANIZER",
 			},
 			{
@@ -2259,7 +2254,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "183025242266927104",
 				discordAvatar: "a9475b488962953152c60f4f138b1618",
 				customUrl: "tux",
-
 				role: "ORGANIZER",
 			},
 			{
@@ -2269,7 +2263,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "343219263655510021",
 				discordAvatar: "f30c675fc07203ca112d93fd03b5cc96",
 				customUrl: "tbob408",
-
 				role: "ORGANIZER",
 			},
 			{
@@ -2279,7 +2272,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "390444783425945602",
 				discordAvatar: "e821ac7a457033d6c990bcaf518287e5",
 				customUrl: null,
-
 				role: "STREAMER",
 			},
 			{
@@ -2289,7 +2281,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "422790410566500352",
 				discordAvatar: "77b479e49ec0d09edb8f9b975bff04ce",
 				customUrl: "reefsixes",
-
 				role: "ORGANIZER",
 			},
 			{
@@ -2299,7 +2290,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "360259023389327361",
 				discordAvatar: "c5a2506e46e135b2568ef48242f669e8",
 				customUrl: "kloud",
-
 				role: "ORGANIZER",
 			},
 			{
@@ -2309,7 +2299,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "247504664378081280",
 				discordAvatar: "a_a60bcc9c76d4baa9814287fdc5c28fe9",
 				customUrl: "pipedreamdx",
-
 				role: "STREAMER",
 			},
 			{
@@ -2319,7 +2308,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "184478601171828737",
 				discordAvatar: "75dedb3527b73d9571151f0a00d1c365",
 				customUrl: "scepidilionz",
-
 				role: "ORGANIZER",
 			},
 			{
@@ -2329,7 +2317,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "565712290020589569",
 				discordAvatar: "498b21d6f64dcd56d06e61c2ec39e571",
 				customUrl: "rooster",
-
 				role: "ORGANIZER",
 			},
 			{
@@ -2339,7 +2326,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "103988435785650176",
 				discordAvatar: "5fef4bf0c1b8a6a76fe2f43b956bfc3d",
 				customUrl: "tulip",
-
 				role: "ORGANIZER",
 			},
 			{
@@ -2349,7 +2335,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "221418644297482250",
 				discordAvatar: "6b7156dcd0582ee160564bfa0c5cdc0e",
 				customUrl: "fusionboltzgx",
-
 				role: "ORGANIZER",
 			},
 			{
@@ -2359,7 +2344,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "458714559855722497",
 				discordAvatar: "b815bb6090c2b32fec23f1336fae5663",
 				customUrl: null,
-
 				role: "ORGANIZER",
 			},
 			{
@@ -2369,18 +2353,7 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "599633578648928307",
 				discordAvatar: "f5139304fb364bca35634a8e5cd11c0f",
 				customUrl: "phantom_spl",
-
 				role: "ORGANIZER",
-			},
-		],
-		subCounts: [
-			{
-				visibility: "+3",
-				count: 1,
-			},
-			{
-				visibility: "ALL",
-				count: 17,
 			},
 		],
 		bracketProgressionOverrides: overrides ?? [],

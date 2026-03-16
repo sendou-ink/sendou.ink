@@ -7,7 +7,7 @@
 	"tabs.seeds": "Семена",
 	"tabs.results": "Результаты",
 	"tabs.streams": "Трансляции: ({{count}})",
-	"tabs.subs": "Запасные: ({{count}})",
+	"tabs.subs": "Запасные",
 	"tabs.looking": "",
 	"pre.steps.header": "Завершите следующие шаги, чтобы закончить регистрацию",
 	"pre.steps.name": "Имя команды",
@@ -154,5 +154,6 @@
 	"progression.error.NEGATIVE_PROGRESSION": "Отрицательная прогрессия возможна только в Double Elimination турнирах",
 	"progression.error.NO_SE_SOURCE": "Single elimination не валидная сетка-исток",
 	"progression.error.NO_DE_POSITIVE": "Double elimination не валидно для позитивной прогрессии",
-	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": ""
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "",
+	"lfg.askCaptainToJoinQueue": ""
 }

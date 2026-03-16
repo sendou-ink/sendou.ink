@@ -1460,7 +1460,6 @@ export const PADDLING_POOL_257 = () =>
 				"Hosted by Dapple Productions.\n\nThe longest tournament series in Splatoon!\nEvery week a tournament!\n\n✓ DE or Groups into SE\n✓ All Modes (Picnic system)\n✓ Badge prize\n✓ A well-ran tournament experience\n\nCome join!",
 			rules: null,
 			logoUrl: "/test.png",
-			subCounts: [],
 			startTime: 1709748000,
 			author: {
 				id: 860,
@@ -1478,7 +1477,6 @@ export const PADDLING_POOL_257 = () =>
 					discordId: "178489224192851969",
 					discordAvatar: "8b8c1d85cc525ea366f3ce2a6a594c05",
 					customUrl: "pinky",
-
 					role: "ORGANIZER",
 				},
 				{
@@ -1488,7 +1486,6 @@ export const PADDLING_POOL_257 = () =>
 					discordId: "275213752025088000",
 					discordAvatar: "25bf68c5aa4e622ceb5a241c34841c6d",
 					customUrl: null,
-
 					role: "ORGANIZER",
 				},
 				{
@@ -1498,7 +1495,6 @@ export const PADDLING_POOL_257 = () =>
 					discordId: "195618756800675841",
 					discordAvatar: "a_03ec4bbcb2a4ab000237c9f3e9e71508",
 					customUrl: "sdomi19",
-
 					role: "ORGANIZER",
 				},
 				{
@@ -1508,7 +1504,6 @@ export const PADDLING_POOL_257 = () =>
 					discordId: "413759870333091884",
 					discordAvatar: "a_b55f70ada809a600e73c5088b910e659",
 					customUrl: "brufnie",
-
 					role: "STREAMER",
 				},
 			],
@@ -8058,7 +8053,6 @@ export const PADDLING_POOL_255 = () =>
 			description: null,
 			rules: null,
 			logoUrl: "/test.png",
-			subCounts: [],
 			startTime: 1708538400,
 			author: {
 				id: 860,
@@ -8076,7 +8070,6 @@ export const PADDLING_POOL_255 = () =>
 					discordId: "178489224192851969",
 					discordAvatar: "8b8c1d85cc525ea366f3ce2a6a594c05",
 					customUrl: "pinky",
-
 					role: "ORGANIZER",
 				},
 				{
@@ -8086,7 +8079,6 @@ export const PADDLING_POOL_255 = () =>
 					discordId: "275213752025088000",
 					discordAvatar: "25bf68c5aa4e622ceb5a241c34841c6d",
 					customUrl: null,
-
 					role: "ORGANIZER",
 				},
 				{
@@ -8096,7 +8088,6 @@ export const PADDLING_POOL_255 = () =>
 					discordId: "195618756800675841",
 					discordAvatar: "a_03ec4bbcb2a4ab000237c9f3e9e71508",
 					customUrl: "sdomi19",
-
 					role: "ORGANIZER",
 				},
 				{
@@ -8106,7 +8097,6 @@ export const PADDLING_POOL_255 = () =>
 					discordId: "413759870333091884",
 					discordAvatar: "a_b55f70ada809a600e73c5088b910e659",
 					customUrl: "brufnie",
-
 					role: "STREAMER",
 				},
 			],
@@ -14982,7 +14972,6 @@ export const IN_THE_ZONE_32 = ({
 			description: "Part of sendou.ink ranked season 2",
 			rules: null,
 			logoUrl: "/test.png",
-			subCounts: [],
 			startTime: 1707588000,
 			author: {
 				id: 274,
@@ -15000,7 +14989,6 @@ export const IN_THE_ZONE_32 = ({
 					discordId: "163771047068303360",
 					discordAvatar: "b33d8f230218d6a92705a63fdf803851",
 					customUrl: "alicetheto",
-
 					role: "STREAMER",
 				},
 				{
@@ -15010,7 +14998,6 @@ export const IN_THE_ZONE_32 = ({
 					discordId: "413759870333091884",
 					discordAvatar: "a_b55f70ada809a600e73c5088b910e659",
 					customUrl: "brufnie",
-
 					role: "STREAMER",
 				},
 			],

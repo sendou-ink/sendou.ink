@@ -74,7 +74,6 @@ export const testTournament = ({
 			name: "test",
 			castTwitchAccounts: [],
 			bracketProgressionOverrides: [],
-			subCounts: [],
 			staff: [],
 			tieBreakerMapPool: [],
 			toSetMapPool: [],

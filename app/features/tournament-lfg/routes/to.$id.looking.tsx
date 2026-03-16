@@ -7,6 +7,7 @@ import { Link, useFetcher, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { SendouPopover } from "~/components/elements/Popover";
 import {
 	SendouTab,
 	SendouTabList,
@@ -52,7 +53,6 @@ export default function TournamentLFGShell() {
 	return <TournamentLFGPage />;
 }
 
-// xxx: show one button to join at the top with dialog opening? instead of two inline
 // xxx: no button if already in the tournament
 // xxx: can we reuse the column layout with sendouq?
 function TournamentLFGPage() {
@@ -324,24 +324,13 @@ function SubCard({ sub }: { sub: SubEntry }) {
 				<Link to={userPage(sub)} className={styles.subsSectionName}>
 					{sub.username}
 				</Link>
-				<div className={styles.subsSectionSpacer} />
 				<div className={styles.subsSectionInfo}>{infos}</div>
 				{sub.weapons ? (
-					<>
-						<div
-							className={clsx(
-								styles.subsSectionWeaponTopText,
-								styles.subsSectionWeaponText,
-							)}
-						>
+					<div className={styles.subsSectionWeapons}>
+						<div className={styles.subsSectionWeaponText}>
 							{t("tournament:subs.prefersToPlay")}
 						</div>
-						<div
-							className={clsx(
-								styles.subsSectionWeaponTopImages,
-								styles.subsSectionWeaponImages,
-							)}
-						>
+						<div className={styles.subsSectionWeaponImages}>
 							{sub.weapons.map((wpn) => (
 								<WeaponImage
 									key={wpn.weaponSplId}
@@ -351,7 +340,7 @@ function SubCard({ sub }: { sub: SubEntry }) {
 								/>
 							))}
 						</div>
-					</>
+					</div>
 				) : null}
 				{sub.message ? (
 					<div className={styles.subsSectionMessage}>{sub.message}</div>
@@ -414,7 +403,7 @@ function JoinQueueForm() {
 }
 
 function TeamQueueSection() {
-	const { t } = useTranslation(["q"]);
+	const { t } = useTranslation(["q", "tournament"]);
 	const data = useLoaderData<typeof loader>() as Extract<
 		LookingLoaderData,
 		{ mode: "looking" }
@@ -426,20 +415,36 @@ function TeamQueueSection() {
 
 	const isAtMaxMembers =
 		data.ownTeam.members.length >= tournament.maxMembersPerTeam;
+	const canJoinQueue =
+		data.ownTeam.usersRole === "OWNER" || data.ownTeam.usersRole === "MANAGER";
 
 	return (
 		<div className="stack md">
 			<LFGGroupCard group={data.ownTeam} />
 			{!isAtMaxMembers ? (
-				<fetcher.Form method="post" className="stack items-center">
-					<SubmitButton
-						_action="JOIN_QUEUE"
-						state={fetcher.state}
-						variant="outlined"
-					>
-						{t("q:looking.joinQPromptMembers")}
-					</SubmitButton>
-				</fetcher.Form>
+				canJoinQueue ? (
+					<fetcher.Form method="post" className="stack items-center">
+						<SubmitButton
+							_action="JOIN_QUEUE"
+							state={fetcher.state}
+							variant="outlined"
+						>
+							{t("q:looking.joinQPromptMembers")}
+						</SubmitButton>
+					</fetcher.Form>
+				) : (
+					<div className="stack items-center">
+						<SendouPopover
+							trigger={
+								<SendouButton variant="outlined">
+									{t("q:looking.joinQPromptMembers")}
+								</SendouButton>
+							}
+						>
+							{t("tournament:lfg.askCaptainToJoinQueue")}
+						</SendouPopover>
+					</div>
+				)
 			) : null}
 		</div>
 	);

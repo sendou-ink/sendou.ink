@@ -16,7 +16,6 @@ import { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { removeMarkdown } from "~/utils/strings";
-import { assertUnreachable } from "~/utils/types";
 import {
 	tournamentDivisionsPage,
 	tournamentPage,
@@ -116,29 +115,6 @@ export function TournamentLayout() {
 			window.tourney = tournament;
 		}, [tournament]);
 	}
-	const subsCount = () =>
-		// biome-ignore lint/suspicious/useIterableCallbackReturn: Biome 2.3.1 upgrade
-		tournament.ctx.subCounts.reduce((acc, cur) => {
-			if (cur.visibility === "ALL") return acc + cur.count;
-
-			const userPlusTier = user?.plusTier ?? 4;
-
-			switch (cur.visibility) {
-				case "+1": {
-					return userPlusTier === 1 ? acc + cur.count : acc;
-				}
-				case "+2": {
-					return userPlusTier <= 2 ? acc + cur.count : acc;
-				}
-				case "+3": {
-					return userPlusTier <= 3 ? acc + cur.count : acc;
-				}
-				default: {
-					assertUnreachable(cur.visibility);
-				}
-			}
-		}, 0);
-
 	return (
 		<Main bigger>
 			<SubNav>
@@ -185,7 +161,7 @@ export function TournamentLayout() {
 					<SubNavLink to="looking">
 						{tournament.registrationOpen
 							? t("tournament:tabs.looking")
-							: t("tournament:tabs.subs", { count: subsCount() })}
+							: t("tournament:tabs.subs")}
 					</SubNavLink>
 				) : null}
 				{tournament.hasStarted && !tournament.everyBracketOver ? (

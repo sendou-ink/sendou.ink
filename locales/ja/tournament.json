@@ -7,7 +7,7 @@
 	"tabs.seeds": "シード",
 	"tabs.results": "結果",
 	"tabs.streams": "配信 ({{count}})",
-	"tabs.subs": "サブ ({{count}})",
+	"tabs.subs": "サブ",
 	"tabs.looking": "",
 	"pre.steps.header": "トーナメント参加のために下記を入力してください",
 	"pre.steps.name": "チーム名",
@@ -146,5 +146,6 @@
 	"progression.error.NEGATIVE_PROGRESSION": "逆の進行はダブルエリ三ネーションの時のみ可能です",
 	"progression.error.NO_SE_SOURCE": "シングルエリ三ネーションは妥当なブラケットではないです",
 	"progression.error.NO_DE_POSITIVE": "ダブルエリミネーションは普通の進行(前向き)では妥当ではないです",
-	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": ""
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "",
+	"lfg.askCaptainToJoinQueue": ""
 }

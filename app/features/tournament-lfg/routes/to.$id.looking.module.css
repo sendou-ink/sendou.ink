@@ -2,7 +2,7 @@
 	display: grid;
 	justify-content: center;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: var(--s-7);
+	gap: var(--s-6);
 }
 
 .containerMobile {
@@ -17,10 +17,10 @@
 
 .header {
 	text-align: center;
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	text-transform: uppercase;
-	color: var(--theme);
+	color: var(--color-text-accent);
 	display: flex;
 	align-items: center;
 }
@@ -30,9 +30,9 @@
 	flex: 1;
 	content: "";
 	padding: 2px;
-	background-color: var(--theme-transparent);
+	background-color: var(--color-bg-high);
 	margin: 5px;
-	border-radius: var(--rounded);
+	border-radius: var(--radius-box);
 }
 
 .subsContainer {
@@ -49,13 +49,12 @@
 	grid-template-areas:
 		"avatar name"
 		"avatar info"
-		"spacer spacer"
-		"weapon-top-text weapon-top-images"
+		"weapons weapons"
 		"message message";
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	padding: var(--s-4);
-	column-gap: var(--s-2-5);
+	column-gap: var(--s-3);
 	border: var(--border-style);
 }
 
@@ -67,6 +66,7 @@
 .subsSectionName {
 	grid-area: name;
 	align-self: flex-end;
+	font-weight: var(--weight-semi);
 }
 
 .subsSectionInfo {
@@ -98,41 +98,22 @@
 }
 
 .subsSectionWeaponText {
-	font-weight: var(--semi-bold);
-	font-size: var(--fonts-xs);
+	font-weight: var(--weight-semi);
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
 	align-self: center;
 }
 
-.subsSectionWeaponTopText {
-	grid-area: weapon-top-text;
+.subsSectionWeapons {
+	grid-area: weapons;
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-block-start: var(--s-2);
 }
 
 .subsSectionWeaponImages {
 	display: flex;
 	gap: var(--s-1);
-	width: 11rem;
 	align-items: center;
-}
-
-.subsSectionWeaponTopImages {
-	grid-area: weapon-top-images;
-}
-
-.subsSectionSpacer {
-	grid-area: spacer;
-	height: 18px;
-}
-
-@container (width >= 640px) {
-	.section {
-		grid-template-columns: max-content 1fr max-content max-content;
-		grid-template-areas:
-			"avatar name weapon-top-text weapon-top-images"
-			"avatar info . ."
-			"message message message message";
-	}
-
-	.subsSectionSpacer {
-		display: none;
-	}
 }

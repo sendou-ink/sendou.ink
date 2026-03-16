@@ -7,7 +7,7 @@
 	"tabs.seeds": "种子",
 	"tabs.results": "",
 	"tabs.streams": "直播 ({{count}})",
-	"tabs.subs": "替补 ({{count}})",
+	"tabs.subs": "替补",
 	"tabs.looking": "",
 	"pre.steps.header": "参加比赛需完成以下步骤",
 	"pre.steps.name": "队伍名称",
@@ -146,5 +146,6 @@
 	"progression.error.NEGATIVE_PROGRESSION": "",
 	"progression.error.NO_SE_SOURCE": "",
 	"progression.error.NO_DE_POSITIVE": "",
-	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": ""
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "",
+	"lfg.askCaptainToJoinQueue": ""
 }

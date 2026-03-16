@@ -63,7 +63,6 @@ type TournamentLFGMemberObject = {
 	languages: Tables["User"]["languages"];
 	vc: Tables["User"]["vc"];
 	pronouns: Tables["User"]["pronouns"];
-	country: Tables["User"]["country"];
 	role: Tables["TournamentTeamMember"]["role"];
 	isStayAsSub: Tables["TournamentTeamMember"]["isStayAsSub"];
 	weapons: Tables["User"]["qWeaponPool"];
@@ -105,8 +104,6 @@ export async function findLookingTeamsByTournamentId(tournamentId: number) {
 						languages: eb.ref("User.languages"),
 						vc: eb.ref("User.vc"),
 						pronouns: eb.ref("User.pronouns"),
-						// xxx: is it better to show country rather than languages?
-						country: eb.ref("User.country"),
 						role: eb.ref("TournamentTeamMember.role"),
 						isStayAsSub: eb.ref("TournamentTeamMember.isStayAsSub"),
 						weapons: eb.ref("User.qWeaponPool"),
@@ -146,7 +143,6 @@ export async function findSubGroups(tournamentId: number) {
 						languages: eb.ref("User.languages"),
 						vc: eb.ref("User.vc"),
 						pronouns: eb.ref("User.pronouns"),
-						country: eb.ref("User.country"),
 						role: eb.ref("TournamentTeamMember.role"),
 						isStayAsSub: eb.ref("TournamentTeamMember.isStayAsSub"),
 						weapons: eb.ref("User.qWeaponPool"),
@@ -349,7 +345,6 @@ export function leaveLfg({
 			)
 			.select([
 				"TournamentTeamMember.tournamentTeamId",
-				"TournamentTeamMember.role",
 				"TournamentTeam.isPlaceholder",
 			])
 			.where("TournamentTeamMember.userId", "=", userId)
@@ -373,40 +368,10 @@ export function leaveLfg({
 			return;
 		}
 
-		// xxx: or just call TournamentTeam.unregister?
-		// xxx: also leaving team should not be possible via this so remove that code
 		await trx
-			.deleteFrom("TournamentTeamMember")
-			.where("userId", "=", userId)
-			.where("tournamentTeamId", "=", userTeam.tournamentTeamId)
+			.deleteFrom("TournamentTeam")
+			.where("id", "=", userTeam.tournamentTeamId)
 			.execute();
-
-		const remainingMembers = await trx
-			.selectFrom("TournamentTeamMember")
-			.select(["userId", "role"])
-			.where("tournamentTeamId", "=", userTeam.tournamentTeamId)
-			.execute();
-
-		if (remainingMembers.length === 0) {
-			await trx
-				.deleteFrom("TournamentTeam")
-				.where("id", "=", userTeam.tournamentTeamId)
-				.execute();
-			return;
-		}
-
-		if (userTeam.role === "OWNER") {
-			const newOwner =
-				remainingMembers.find((m) => m.role === "MANAGER") ??
-				remainingMembers[0];
-
-			await trx
-				.updateTable("TournamentTeamMember")
-				.set({ role: "OWNER" })
-				.where("userId", "=", newOwner.userId)
-				.where("tournamentTeamId", "=", userTeam.tournamentTeamId)
-				.execute();
-		}
 	});
 }
 

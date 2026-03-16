@@ -7,7 +7,7 @@
 	"tabs.seeds": "Listas de Equipos",
 	"tabs.results": "Resultados",
 	"tabs.streams": "Streams ({{count}})",
-	"tabs.subs": "Subs ({{count}})",
+	"tabs.subs": "Subs",
 	"tabs.looking": "",
 	"pre.steps.header": "Completa estos pasos para jugar",
 	"pre.steps.name": "Nombre de equipo",
@@ -152,5 +152,6 @@
 	"progression.error.NEGATIVE_PROGRESSION": "La progresión negativa solo es posible en eliminación doble",
 	"progression.error.NO_SE_SOURCE": "La eliminación simple no es un cuadro de origen válido",
 	"progression.error.NO_DE_POSITIVE": "La eliminación doble no es válida para progresión positiva",
-	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "El cuadro suizo con avance/eliminación anticipada debe llevar a otro cuadro"
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "El cuadro suizo con avance/eliminación anticipada debe llevar a otro cuadro",
+	"lfg.askCaptainToJoinQueue": ""
 }

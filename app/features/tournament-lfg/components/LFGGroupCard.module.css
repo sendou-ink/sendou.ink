@@ -1,24 +1,24 @@
 .group {
-	background-color: var(--bg-lighter-solid);
+	background-color: var(--color-bg-high);
 	width: 100%;
-	border-radius: var(--rounded);
-	padding: var(--s-2-5);
+	border-radius: var(--radius-box);
+	padding: var(--s-3);
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-4);
 	position: relative;
-	color: var(--text);
+	color: var(--color-text);
 }
 
 .member {
 	display: flex;
 	gap: var(--s-2);
 	align-items: center;
-	background-color: var(--bg-darker);
-	border-radius: var(--rounded);
-	font-size: var(--fonts-xsm);
-	font-weight: var(--semi-bold);
-	padding-inline-end: var(--s-2-5);
+	background-color: var(--color-bg);
+	border-radius: var(--radius-box);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	padding-inline-end: var(--s-3);
 }
 
 .name {
@@ -26,20 +26,20 @@
 	text-overflow: ellipsis;
 	overflow: hidden;
 	max-width: 7.5rem;
-	font-size: var(--fonts-xs);
-	color: var(--text);
+	font-size: var(--font-xs);
+	color: var(--color-text);
 }
 
 .extraInfo {
-	font-size: var(--fonts-xs);
-	background-color: var(--bg-darker);
-	border-radius: var(--rounded);
+	font-size: var(--font-xs);
+	background-color: var(--color-bg);
+	border-radius: var(--radius-box);
 	padding: var(--s-0-5) var(--s-1-5);
 	width: max-content;
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
-	font-weight: var(--semi-bold);
+	font-weight: var(--weight-semi);
 	min-height: 24px;
 }
 
@@ -51,12 +51,12 @@
 .star {
 	min-width: 18px;
 	max-width: 18px;
-	color: var(--theme-secondary);
+	color: var(--color-text-second);
 	stroke-width: 2;
 }
 
 .starInactive {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .teamHeader {
@@ -66,6 +66,6 @@
 }
 
 .teamName {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 }

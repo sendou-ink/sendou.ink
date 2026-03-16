@@ -7,7 +7,7 @@
 	"tabs.seeds": "Listas de Equipos",
 	"tabs.results": "",
 	"tabs.streams": "Streams ({{count}})",
-	"tabs.subs": "Subs ({{count}})",
+	"tabs.subs": "Subs",
 	"tabs.looking": "",
 	"pre.steps.header": "Completa estos pasos para jugar",
 	"pre.steps.name": "Nombre de equipo",
@@ -152,5 +152,6 @@
 	"progression.error.NEGATIVE_PROGRESSION": "",
 	"progression.error.NO_SE_SOURCE": "",
 	"progression.error.NO_DE_POSITIVE": "",
-	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": ""
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "",
+	"lfg.askCaptainToJoinQueue": ""
 }

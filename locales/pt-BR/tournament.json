@@ -7,7 +7,7 @@
 	"tabs.seeds": "Sementes",
 	"tabs.results": "",
 	"tabs.streams": "Transmissões ({{count}})",
-	"tabs.subs": "Inscritos ({{count}})",
+	"tabs.subs": "Inscritos",
 	"tabs.looking": "",
 	"pre.steps.header": "Complete esses passos para jogar",
 	"pre.steps.name": "Nome do time",
@@ -152,5 +152,6 @@
 	"progression.error.NEGATIVE_PROGRESSION": "",
 	"progression.error.NO_SE_SOURCE": "",
 	"progression.error.NO_DE_POSITIVE": "",
-	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": ""
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "",
+	"lfg.askCaptainToJoinQueue": ""
 }

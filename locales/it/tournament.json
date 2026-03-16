@@ -7,7 +7,7 @@
 	"tabs.seeds": "Seed",
 	"tabs.results": "Resultati",
 	"tabs.streams": "Stream ({{count}})",
-	"tabs.subs": "Sub ({{count}})",
+	"tabs.subs": "Sub",
 	"tabs.looking": "",
 	"pre.steps.header": "Completa questi passaggi per giocare",
 	"pre.steps.name": "Nome team",
@@ -152,5 +152,6 @@
 	"progression.error.NEGATIVE_PROGRESSION": "La progressione negativa è disponibile solo in doppia eliminazione",
 	"progression.error.NO_SE_SOURCE": "Eliminazione singola non è un bracket sorgente valido",
 	"progression.error.NO_DE_POSITIVE": "Doppia eliminazione non è valida per progressione positiva",
-	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": ""
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "",
+	"lfg.askCaptainToJoinQueue": ""
 }
