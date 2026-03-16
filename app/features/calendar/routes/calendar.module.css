@@ -30,7 +30,7 @@
 	outline: var(--focus-ring);
 }
 
-@media screen and (min-width: 600px) {
+@container (width >= 640px) {
 	.navigateButton {
 		flex: initial;
 	}

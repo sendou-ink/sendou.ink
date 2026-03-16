@@ -177,7 +177,7 @@
 	gap: var(--s-1-5);
 }
 
-@media screen and (min-width: 480px) {
+@container (width >= 480px) {
 	.placements {
 		gap: var(--s-10);
 	}

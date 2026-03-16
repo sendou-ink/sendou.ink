@@ -109,7 +109,7 @@
 	outline: none !important;
 }
 
-@media screen and (min-width: 640px) {
+@container (width >= 640px) {
 	.teamsContainer {
 		grid-template-columns: 1fr 1fr;
 	}

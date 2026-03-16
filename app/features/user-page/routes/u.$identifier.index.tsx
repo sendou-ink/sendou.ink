@@ -138,7 +138,7 @@ function NewUserInfoPage() {
 				<UserPageIconNav items={navItems} />
 			</div>
 
-			<div className={newStyles.sideCarousel}>
+			<div className={clsx(newStyles.sideCarousel, "scrollbar")}>
 				{sideWidgets.map((widget) => (
 					<Widget key={widget.id} widget={widget} user={layoutData.user} />
 				))}

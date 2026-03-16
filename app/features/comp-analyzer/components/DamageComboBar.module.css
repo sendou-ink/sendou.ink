@@ -232,7 +232,7 @@
 	margin-bottom: var(--s-1);
 }
 
-@media (max-width: 640px) {
+@container (width < 640px) {
 	.slidersContainer {
 		grid-template-columns: auto 1fr auto;
 	}

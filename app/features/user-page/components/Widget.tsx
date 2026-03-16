@@ -595,7 +595,7 @@ function Builds({
 	builds: Extract<LoadedWidget, { id: "builds" }>["data"];
 }) {
 	return (
-		<div className={styles.builds}>
+		<div className={clsx(styles.builds, "scrollbar")}>
 			{builds.map((build) => (
 				<BuildCard key={build.id} build={build} canEdit={false} />
 			))}

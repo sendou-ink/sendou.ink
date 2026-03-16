@@ -29,12 +29,6 @@
 	width: 100%;
 }
 
-@media screen and (min-width: 431px) {
-	.grid {
-		max-height: 70vh;
-	}
-}
-
 .hp {
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);

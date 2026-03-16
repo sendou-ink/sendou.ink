@@ -14,6 +14,16 @@
 	gap: var(--s-4);
 }
 
+@container (width < 640px) {
+	.container {
+		grid-template-columns: 1fr;
+	}
+
+	.leftColumn {
+		position: initial;
+	}
+}
+
 .apCompare {
 	display: grid;
 	grid-template-columns: 1fr max-content max-content max-content 1fr;
@@ -114,7 +124,7 @@
 	white-space: nowrap;
 }
 
-@media screen and (min-width: 480px) {
+@container (width >= 480px) {
 	.weaponInfoBadgeText {
 		max-width: initial;
 	}
@@ -243,16 +253,6 @@
 	height: var(--selector-size-sm);
 	display: flex;
 	align-items: center;
-}
-
-@media screen and (max-width: 640px) {
-	.container {
-		grid-template-columns: 1fr;
-	}
-
-	.leftColumn {
-		position: initial;
-	}
 }
 
 .statPopover {
