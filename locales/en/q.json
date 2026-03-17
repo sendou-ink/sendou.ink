@@ -25,6 +25,7 @@
 	"front.cities.tokyo": "Tokyo",
 	"front.inviteCodeWrong": "Invite code doesn't match any active team",
 	"front.noFriendCode": "Set friend code before joining the group",
+	"front.noFriendCodeHelp": "You need to save your friend code to play SendouQ",
 	"front.upcomingSeason.header": "It's off-season!",
 	"front.upcomingSeason.date": "Join Season {{nth}} starting {{date}}",
 	"front.noUpcomingSeason": "Next season start time to be announced",

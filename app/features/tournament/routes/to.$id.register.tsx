@@ -26,7 +26,7 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { FriendCodeInput } from "~/components/FriendCodeInput";
+import { FriendCodePopover } from "~/components/FriendCodePopover";
 import { Image, ModeImage } from "~/components/Image";
 import { Input } from "~/components/Input";
 import { DiscordIcon } from "~/components/icons/Discord";
@@ -55,7 +55,6 @@ import {
 	mapsPageWithMapPool,
 	navIconUrl,
 	SENDOU_INK_BASE_URL,
-	SENDOU_INK_DISCORD_URL,
 	tournamentJoinPage,
 	tournamentOrganizationPage,
 	tournamentSubsPage,
@@ -320,6 +319,7 @@ function RegistrationForms() {
 
 	const ownTeam = tournament.ownedTeamByUser(user);
 	const ownTeamCheckedIn = Boolean(ownTeam && ownTeam.checkIns.length > 0);
+	const hasFriendCodeSet = Boolean(user?.friendCode);
 
 	if (!user && !tournament.isInvitational) {
 		return <PleaseLogIn />;
@@ -341,31 +341,30 @@ function RegistrationForms() {
 
 	return (
 		<div className="stack lg">
-			{showRegistrationProgress() ? (
-				<RegistrationProgress
-					checkedIn={ownTeamCheckedIn}
-					name={ownTeam?.name}
-					mapPool={data?.mapPool ?? undefined}
-					members={ownTeam?.members}
+			{showRegisterNewTeam() ? <FriendCode /> : null}
+			{hasFriendCodeSet ? (
+				showRegistrationProgress() ? (
+					<RegistrationProgress
+						checkedIn={ownTeamCheckedIn}
+						name={ownTeam?.name}
+						mapPool={data?.mapPool ?? undefined}
+						members={ownTeam?.members}
+					/>
+				) : (
+					<Alert>
+						This tournament is invitational. Tournament organizer adds all
+						teams.
+					</Alert>
+				)
+			) : null}
+			{showRegisterNewTeam() && hasFriendCodeSet ? (
+				<TeamInfo
+					ownTeam={ownTeam}
+					canUnregister={Boolean(ownTeam && !ownTeamCheckedIn)}
 				/>
-			) : (
-				<Alert>
-					This tournament is invitational. Tournament organizer adds all teams.
-				</Alert>
-			)}
-			{showRegisterNewTeam() ? (
-				<>
-					<FriendCode />
-					{user?.friendCode ? (
-						<TeamInfo
-							ownTeam={ownTeam}
-							canUnregister={Boolean(ownTeam && !ownTeamCheckedIn)}
-						/>
-					) : null}
-				</>
 			) : null}
 			{tournament.isLeagueSignup ? <GoogleFormsLink /> : null}
-			{ownTeam ? (
+			{ownTeam && hasFriendCodeSet ? (
 				<>
 					<FillRoster ownTeam={ownTeam} ownTeamCheckedIn={ownTeamCheckedIn} />
 					{tournament.teamsPrePickMaps ? (
@@ -677,7 +676,7 @@ function TeamInfo({
 		<div>
 			<div className="stack horizontal justify-between">
 				<h3 className={styles.sectionHeader}>
-					2. {t("tournament:pre.info.header")}
+					1. {t("tournament:pre.info.header")}
 				</h3>
 				{canUnregister &&
 				tournament.isLeagueSignup &&
@@ -874,27 +873,21 @@ function TournamentLogoUpload({
 function FriendCode() {
 	const user = useUser();
 
+	if (!user?.friendCode) {
+		return (
+			<div className="stack items-center">
+				<FriendCodePopover size="small" />
+				<div className={clsx(styles.sectionWarning, "mt-2")}>
+					To play tournaments on sendou.ink you'll need to register your friend
+					code.
+				</div>
+			</div>
+		);
+	}
+
 	return (
-		<div>
-			<h3 className={styles.sectionHeader}>1. Friend code</h3>
-			<section className={styles.section}>
-				<div className={clsx(styles.sectionInputContainer, "mx-auto")}>
-					<FriendCodeInput friendCode={user?.friendCode} />
-				</div>
-			</section>
-			{user?.friendCode ? (
-				<div className={styles.sectionWarning}>
-					Is the friend code above wrong? Post a message on the{" "}
-					<a
-						href={SENDOU_INK_DISCORD_URL}
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						sendou.ink Discord helpdesk
-					</a>{" "}
-					to change it.
-				</div>
-			) : null}
+		<div className="flex justify-end">
+			<FriendCodePopover size="small" />
 		</div>
 	);
 }
@@ -977,7 +970,7 @@ function FillRoster({
 	return (
 		<div>
 			<h3 className={styles.sectionHeader}>
-				3. {t("tournament:pre.roster.header")}
+				2. {t("tournament:pre.roster.header")}
 			</h3>
 			<section className={clsx(styles.section, "stack lg items-center")}>
 				{playersAvailableToDirectlyAdd.length > 0 && canAddMembers ? (
@@ -1201,7 +1194,7 @@ function CounterPickMapPoolPicker() {
 	return (
 		<div>
 			<h3 className={styles.sectionHeader}>
-				4. {t("tournament:pre.pool.header")}
+				3. {t("tournament:pre.pool.header")}
 			</h3>
 			<section className={styles.section}>
 				<fetcher.Form method="post" className="stack lg">

@@ -25,6 +25,7 @@
 	"front.cities.tokyo": "Tokyo",
 	"front.inviteCodeWrong": "Il codice invito non corrisponde a nessun team attivo",
 	"front.noFriendCode": "Seleziona codice amico prima di unirti al gruppo",
+	"front.noFriendCodeHelp": "",
 	"front.upcomingSeason.header": "Siamo in off-season!",
 	"front.upcomingSeason.date": "Unisciti alla Stagione {{nth}} a partire dal {{date}}",
 	"front.noUpcomingSeason": "L'inizio della prossima stagione deve ancora venir annunciato",

@@ -9,7 +9,7 @@ import { LinkButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { Flag } from "~/components/Flag";
 import { FormMessage } from "~/components/FormMessage";
-import { FriendCodeInput } from "~/components/FriendCodeInput";
+import { FriendCodePopover } from "~/components/FriendCodePopover";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
@@ -102,10 +102,7 @@ export default function QPage() {
 							members={data.groupInvitedTo.members}
 						/>
 					) : null}
-					{user ? (
-						<FriendCodeInput friendCode={data.friendCode?.friendCode} />
-					) : null}
-					{user ? (
+					{user?.friendCode ? (
 						<fetcher.Form className="stack md" method="post">
 							<input type="hidden" name="_action" value="JOIN_QUEUE" />
 							<div className="stack horizontal md items-center mt-4 mx-auto">
@@ -141,14 +138,17 @@ export default function QPage() {
 										minute: "numeric",
 									})}
 								</div>
-							) : !data.friendCode ? (
-								<div className="text-lighter text-xs text-center text-error">
-									Save your friend code to join the queue
-								</div>
 							) : (
 								<PreviewQueueButton />
 							)}
 						</fetcher.Form>
+					) : user ? (
+						<div className="stack md items-center">
+							<FriendCodePopover />
+							<div className="text-lighter text-xs text-center">
+								{t("q:front.noFriendCodeHelp")}
+							</div>
+						</div>
 					) : (
 						<form
 							className="stack md items-center"
@@ -161,6 +161,11 @@ export default function QPage() {
 						</form>
 					)}
 				</>
+			) : null}
+			{user?.friendCode ? (
+				<div className="stack items-center">
+					<FriendCodePopover size="small" />
+				</div>
 			) : null}
 			<QLinks />
 		</Main>

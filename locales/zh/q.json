@@ -25,6 +25,7 @@
 	"front.cities.tokyo": "东京",
 	"front.inviteCodeWrong": "没有符合该邀请码的活跃中队伍",
 	"front.noFriendCode": "在加入小组前需要先设置好友码",
+	"front.noFriendCodeHelp": "",
 	"front.upcomingSeason.header": "赛季还未开始！",
 	"front.upcomingSeason.date": "赛季 {{nth}} 将于 {{date}} 开始",
 	"front.noUpcomingSeason": "新赛季开始时间未知",

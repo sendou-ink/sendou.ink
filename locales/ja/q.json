@@ -25,6 +25,7 @@
 	"front.cities.tokyo": "東京",
 	"front.inviteCodeWrong": "インバイトコードがどの募集中のチームにも該当しません",
 	"front.noFriendCode": "グループをジョインする前にフレンドコードをセットしよう",
+	"front.noFriendCodeHelp": "",
 	"front.upcomingSeason.header": "オフシーズンだよ！",
 	"front.upcomingSeason.date": "{{date}}に開始するシーズン{{nth}}をジョインする ",
 	"front.noUpcomingSeason": "来シーズンの開始日時は近いうちに発表されます。",

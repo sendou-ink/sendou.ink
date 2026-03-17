@@ -313,7 +313,6 @@
 	"chat.sidebar.title": "Chat",
 	"chat.sidebar.noActiveChats": "No active chats",
 	"fc.title": "Friend code",
-	"fc.helpText": "Used to verify your identity for sendou.ink staff, tournament organizers, and SendouQ opponents. You must always play only on this one account.",
 	"fc.whereToFind": "Find your friend code on your Nintendo Switch (2)",
 	"fc.onceSetStaffOnly": "Once set, only a member of staff can change it",
 	"fc.set": "Set friend code",

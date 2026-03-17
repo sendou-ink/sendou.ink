@@ -25,6 +25,7 @@
 	"front.cities.tokyo": "Токио",
 	"front.inviteCodeWrong": "Код приглашения не соответствует какой-либо активной команде.",
 	"front.noFriendCode": "Укажите код друга перед тем, как присоединиться к группе",
+	"front.noFriendCodeHelp": "",
 	"front.upcomingSeason.header": "Сейчас межсезонье!",
 	"front.upcomingSeason.date": "Присоединяйтесь к Сезону {{nth}}. Дата начала - {{date}}",
 	"front.noUpcomingSeason": "Дата следующего сезона ещё не объявлена",
