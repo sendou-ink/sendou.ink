@@ -332,6 +332,8 @@
 			margin: 0.5rem;
 			translate: -0.5rem;
 			max-height: 50dvh;
+			scrollbar-width: thin;
+			scrollbar-color: var(--color-bg-higher) transparent;
 		}
 
 		/* biome-ignore lint: experimental CSS feature */

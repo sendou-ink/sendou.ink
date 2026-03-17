@@ -116,8 +116,15 @@
 
 .logoContainer {
 	display: flex;
+	flex-direction: column;
 	align-items: center;
 	gap: var(--s-4);
+}
+
+@container (width >= 480px) {
+	.logoContainer {
+		flex-direction: row;
+	}
 }
 
 .logo {

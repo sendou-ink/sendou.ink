@@ -165,7 +165,8 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
-	padding: var(--s-1) var(--s-2);
+	padding: 0 var(--s-2);
+	height: var(--field-size-sm);
 	border-radius: var(--radius-field);
 	font-size: var(--font-xs);
 	cursor: pointer;
@@ -246,8 +247,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 28px;
-	height: 28px;
+	height: var(--field-size-sm);
+	aspect-ratio: 1 / 1;
 	border: 1px solid var(--color-border);
 	border-radius: var(--radius-field);
 	background-color: var(--color-bg);
