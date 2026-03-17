@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { Map as MapIcon, Mic, Puzzle, Volume2 } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
@@ -65,12 +66,14 @@ export const meta: MetaFunction = (args) => {
 
 export default function SendouQSettingsPage() {
 	return (
-		<Main>
+		<Main className="stack sm">
 			<MapPicker />
-			<WeaponPool />
-			<VoiceChat />
-			<Sounds />
-			<Misc />
+			<div className="half-width stack sm">
+				<WeaponPool />
+				<VoiceChat />
+				<Sounds />
+				<Misc />
+			</div>
 		</Main>
 	);
 }
@@ -140,7 +143,7 @@ function MapPicker() {
 
 	return (
 		<details>
-			<summary className={styles.summary}>
+			<summary className={clsx(styles.summary, "half-width")}>
 				<div>
 					<span>{t("q:settings.maps.header")}</span> <MapIcon />
 				</div>

@@ -1089,7 +1089,7 @@ function MapListMap({
 											>
 												<img
 													src={preferenceEmojiUrl(preference)}
-													className="q-settings__radio__emoji"
+													className={styles.preferenceEmoji}
 													width={18}
 													alt={`${preference} emoji`}
 												/>
@@ -1342,7 +1342,7 @@ function MapListMapPickInfo({
 							<div key={userId} className="stack horizontal items-center xs">
 								<img
 									src={preferenceEmojiUrl(preference)}
-									className="q-settings__radio__emoji"
+									className={styles.preferenceEmoji}
 									width={18}
 									alt={`${preference} emoji`}
 								/>

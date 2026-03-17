@@ -109,6 +109,11 @@
 	outline: none !important;
 }
 
+.preferenceEmoji {
+	filter: grayscale(100%);
+	transition: all 0.2s;
+}
+
 @container (width >= 640px) {
 	.teamsContainer {
 		grid-template-columns: 1fr 1fr;
