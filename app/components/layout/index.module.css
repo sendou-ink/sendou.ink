@@ -242,6 +242,12 @@
 	}
 }
 
+@media screen and (max-width: 1474px) {
+	.sidebarFuseSpace {
+		padding-bottom: 90px;
+	}
+}
+
 .chatSidebarModalOverlay {
 	position: fixed;
 	inset: 0;

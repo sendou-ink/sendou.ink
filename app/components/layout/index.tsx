@@ -302,6 +302,7 @@ export function Layout({
 	return (
 		<>
 			<SideNav
+				className={showLeaderboard ? styles.sidebarFuseSpace : undefined}
 				collapsed={sideNavCollapsed}
 				footer={sideNavFooterContent}
 				top={<SiteTitle />}
@@ -395,7 +396,12 @@ export function Layout({
 				<Footer />
 			</div>
 			{chatSidebarOpen ? (
-				<div className={styles.chatSidebar}>
+				<div
+					className={clsx(
+						styles.chatSidebar,
+						showLeaderboard && styles.sidebarFuseSpace,
+					)}
+				>
 					<ChatSidebar onClose={() => setChatSidebarOpen(false)} />
 				</div>
 			) : null}

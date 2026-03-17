@@ -81,7 +81,6 @@
 }
 
 .inputContainer > form {
-	background-color: var(--color-bg-high);
 	padding: var(--s-2);
 	border-top: 1.5px solid var(--color-border);
 }
