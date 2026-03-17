@@ -10,9 +10,43 @@
 	}
 }
 
+.supportWrapperCompact {
+	display: none;
+}
+
+.addNewWrapperCompact {
+	display: none;
+}
+
+@media screen and (min-width: 600px) {
+	@container (max-width: 600px) {
+		.supportWrapper {
+			display: none;
+		}
+
+		.supportWrapperCompact {
+			display: block;
+		}
+	}
+
+	@container (max-width: 475px) {
+		.addNewWrapper {
+			display: none;
+		}
+
+		.addNewWrapperCompact {
+			display: block;
+		}
+
+		.searchAndAddContainer {
+			grid-template-columns: 2fr 1fr;
+		}
+	}
+}
+
 .searchAndAddContainer {
 	display: grid;
-	grid-template-columns: 2fr 1fr;
+	grid-template-columns: 2fr max-content;
 	gap: var(--s-2);
 }
 

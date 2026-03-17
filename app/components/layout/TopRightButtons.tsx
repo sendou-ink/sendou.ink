@@ -27,16 +27,27 @@ export function TopRightButtons({
 	return (
 		<div className={styles.container}>
 			{showSupport ? (
-				<div className={styles.supportWrapper}>
-					<LinkButton
-						to={SUPPORT_PAGE}
-						size="small"
-						icon={<Heart />}
-						variant="outlined"
-					>
-						{t("common:pages.support")}
-					</LinkButton>
-				</div>
+				<>
+					<div className={styles.supportWrapper}>
+						<LinkButton
+							to={SUPPORT_PAGE}
+							size="small"
+							icon={<Heart />}
+							variant="outlined"
+						>
+							{t("common:pages.support")}
+						</LinkButton>
+					</div>
+					<div className={styles.supportWrapperCompact}>
+						<LinkButton
+							to={SUPPORT_PAGE}
+							size="small"
+							icon={<Heart />}
+							variant="outlined"
+							shape="square"
+						/>
+					</div>
+				</>
 			) : null}
 			{isLoggedIn ? (
 				<>
@@ -48,6 +59,9 @@ export function TopRightButtons({
 						) : null}
 						<div className={styles.addNewWrapper}>
 							<AnythingAdder />
+						</div>
+						<div className={styles.addNewWrapperCompact}>
+							<AnythingAdder compact />
 						</div>
 					</div>
 					{onChatToggle ? (

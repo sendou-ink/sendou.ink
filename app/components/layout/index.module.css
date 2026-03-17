@@ -4,6 +4,7 @@
 }
 
 .header {
+	container-type: inline-size;
 	display: flex;
 	width: 100%;
 	height: var(--layout-nav-height);

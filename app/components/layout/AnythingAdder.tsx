@@ -22,7 +22,7 @@ import {
 	type SendouMenuItemProps,
 } from "../elements/Menu";
 
-export function AnythingAdder() {
+export function AnythingAdder({ compact }: { compact?: boolean }) {
 	const { t } = useTranslation(["common"]);
 	const user = useUser();
 
@@ -106,9 +106,10 @@ export function AnythingAdder() {
 				<SendouButton
 					size="small"
 					icon={<Plus />}
+					shape={compact ? "square" : undefined}
 					data-testid="anything-adder-menu-button"
 				>
-					{t("common:actions.addNew")}…
+					{compact ? undefined : `${t("common:actions.addNew")}…`}
 				</SendouButton>
 			}
 		>
