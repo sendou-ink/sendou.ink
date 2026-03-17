@@ -323,6 +323,10 @@ export default [
 				"/tournament/:id/teams/:teamId/remove-member",
 				"features/api-public/routes/tournament.$id.teams.$teamId.remove-member.ts",
 			),
+			route(
+				"/tournament/:id/teams/:teamId/update-member-ign",
+				"features/api-public/routes/tournament.$id.teams.$teamId.update-member-ign.ts",
+			),
 		]),
 	]),
 

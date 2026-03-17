@@ -13,7 +13,7 @@ import {
 	TIER_4_ID,
 	UNKNOWN_TIER_ID,
 } from "./constants";
-import { patronResponseSchema } from "./schema";
+import { patreonRateLimitSchema, patronResponseSchema } from "./schema";
 
 export async function updatePatreonData(): Promise<void> {
 	const patrons: UserRepository.UpdatePatronDataArgs = [];
@@ -47,28 +47,63 @@ export async function updatePatreonData(): Promise<void> {
 	await UserRepository.updatePatronData(patronsWithMods);
 }
 
+const MAX_RETRIES = 10;
+const DEFAULT_RETRY_AFTER_SECONDS = 10;
+const MAX_RETRY_AFTER_SECONDS = 60;
+
 async function fetchPatronData(urlToFetch: string) {
 	if (!process.env.PATREON_ACCESS_TOKEN) {
 		throw new Error("Missing Patreon access token");
 	}
 
-	const response = await fetchWithTimeout(
-		urlToFetch,
-		{
-			headers: {
-				Authorization: `Bearer ${process.env.PATREON_ACCESS_TOKEN}`,
+	for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+		const response = await fetchWithTimeout(
+			urlToFetch,
+			{
+				headers: {
+					Authorization: `Bearer ${process.env.PATREON_ACCESS_TOKEN}`,
+				},
 			},
-		},
-		30_000,
-	);
-
-	if (!response.ok) {
-		throw new Error(
-			`Patreon response not succesful. Status code was: ${response.status}`,
+			30_000,
 		);
+
+		if (response.status === 429) {
+			if (attempt === MAX_RETRIES) {
+				throw new Error(
+					`Patreon rate limit exceeded after ${MAX_RETRIES} retries`,
+				);
+			}
+
+			const parsed = patreonRateLimitSchema.safeParse(await response.json());
+			const retryAfterSeconds = Math.min(
+				parsed.success
+					? (parsed.data.errors[0]?.retry_after_seconds ??
+							DEFAULT_RETRY_AFTER_SECONDS)
+					: DEFAULT_RETRY_AFTER_SECONDS,
+				MAX_RETRY_AFTER_SECONDS,
+			);
+
+			logger.warn(
+				`Patreon rate limited, retrying in ${retryAfterSeconds}s (attempt ${attempt + 1}/${MAX_RETRIES})`,
+			);
+			await sleep(retryAfterSeconds * 1000);
+			continue;
+		}
+
+		if (!response.ok) {
+			throw new Error(
+				`Patreon response not successful. Status code was: ${response.status}`,
+			);
+		}
+
+		return patronResponseSchema.parse(await response.json());
 	}
 
-	return patronResponseSchema.parse(await response.json());
+	throw new Error("Unexpected end of fetch retry loop");
+}
+
+function sleep(ms: number) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function parsePatronData({

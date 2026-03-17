@@ -4,6 +4,7 @@ import { ariaAttributes } from "../utils";
 import { FormFieldWrapper } from "./FormFieldWrapper";
 
 type TextareaFormFieldProps = FormFieldProps<"text-area"> & {
+	disabled?: boolean;
 	value: string;
 	onChange: (value: string) => void;
 };
@@ -15,6 +16,7 @@ export function TextareaFormField({
 	maxLength,
 	error,
 	onBlur,
+	disabled,
 	value,
 	onChange,
 }: TextareaFormFieldProps) {
@@ -36,6 +38,7 @@ export function TextareaFormField({
 				value={value}
 				onChange={(e) => onChange(e.target.value)}
 				onBlur={() => onBlur?.()}
+				disabled={disabled}
 				{...ariaAttributes({
 					id,
 					bottomText,

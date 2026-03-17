@@ -28,18 +28,31 @@ type ContrastArray = {
 
 export function CustomizedColorsInput({
 	initialColors,
+	value: controlledValue,
+	onChange,
 }: {
 	initialColors?: Record<string, string> | null;
+	value?: Record<string, string> | null;
+	onChange?: (value: Record<string, string> | null) => void;
 }) {
 	const { t } = useTranslation();
 	const [colors, setColors] = React.useState<CustomColorsRecord>(
-		initialColors ?? {},
+		controlledValue ?? initialColors ?? {},
 	);
 
 	const [defaultColors, setDefaultColors] = React.useState<
 		Record<string, string>[]
 	>([]);
 	const [contrasts, setContrast] = React.useState<ContrastArray>([]);
+
+	const updateColors = (newColors: CustomColorsRecord) => {
+		setColors(newColors);
+		if (onChange) {
+			const filtered = colorsWithDefaultsFilteredOut(newColors, defaultColors);
+			const hasValues = Object.keys(filtered).length > 0;
+			onChange(hasValues ? (filtered as Record<string, string>) : null);
+		}
+	};
 
 	useDebounce(
 		() => {
@@ -79,13 +92,15 @@ export function CustomizedColorsInput({
 			</summary>
 			<div>
 				<Label>{t("custom.colors.title")}</Label>
-				<input
-					type="hidden"
-					name="css"
-					value={JSON.stringify(
-						colorsWithDefaultsFilteredOut(colors, defaultColors),
-					)}
-				/>
+				{!onChange ? (
+					<input
+						type="hidden"
+						name="css"
+						value={JSON.stringify(
+							colorsWithDefaultsFilteredOut(colors, defaultColors),
+						)}
+					/>
+				) : null}
 				<div className="colors__container colors__grid">
 					{CUSTOM_CSS_VAR_COLORS.filter(
 						(cssVar) => cssVar !== "bg-lightest",
@@ -102,7 +117,7 @@ export function CustomizedColorsInput({
 										if (cssVar === "bg-lighter") {
 											extras["bg-lightest"] = `${e.target.value}80`;
 										}
-										setColors({
+										updateColors({
 											...colors,
 											...extras,
 											[cssVar]: e.target.value,
@@ -122,7 +137,7 @@ export function CustomizedColorsInput({
 												(color) => color["bg-lightest"],
 											)?.["bg-lightest"];
 										}
-										setColors({
+										updateColors({
 											...newColors,
 											[cssVar]: defaultColors.find((color) => color[cssVar])?.[
 												cssVar

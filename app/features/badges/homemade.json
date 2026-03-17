@@ -539,6 +539,10 @@
 		"displayName": "Barrel Spinner",
 		"authorDiscordId": "534502084134043648"
 	},
+	"inkcup": {
+		"displayName": "Ink Cup",
+		"authorDiscordId": "754368445910614046"
+	},
 	"inkpractice": {
 		"displayName": "Ink Practice",
 		"authorDiscordId": "342369454719631361"
@@ -614,6 +618,10 @@
 	"ktmed": {
 		"displayName": "Reef Reunion (500 KT Power)",
 		"authorDiscordId": "1170249805373657093"
+	},
+	"lanlakes": {
+		"displayName": "LAN of 10,000 Lakes",
+		"authorDiscordId": "100956973356302336"
 	},
 	"ld4copper": {
 		"displayName": "LD4 (3eme)",

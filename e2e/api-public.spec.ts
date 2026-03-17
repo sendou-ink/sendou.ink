@@ -317,6 +317,27 @@ test.describe("Public API - Write endpoints", () => {
 		expect(response.status()).toBe(200);
 	});
 
+	test("updates member IGN via API", async ({ page }) => {
+		await seed(page);
+		await impersonate(page, ADMIN_ID);
+
+		const token = await generateWriteToken(page);
+
+		const response = await page.request.fetch(
+			`/api/tournament/${ITZ_TOURNAMENT_ID}/teams/${ITZ_TEAM_ID}/update-member-ign`,
+			{
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				data: { userId: ADMIN_ID, inGameName: "NewName#9999" },
+			},
+		);
+
+		expect(response.status()).toBe(200);
+	});
+
 	test("returns 400 when user is not the organizer of this tournament", async ({
 		page,
 	}) => {

@@ -1,11 +1,14 @@
 import clsx from "clsx";
+import { useTranslation } from "react-i18next";
 import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
 import { Link, Outlet, useLoaderData, useSearchParams } from "react-router";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { Catcher } from "~/components/Catcher";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
+import { EditIcon } from "~/components/icons/Edit";
 import { TrashIcon } from "~/components/icons/Trash";
 import { RelativeTime } from "~/components/RelativeTime";
 import type { Tables } from "~/db/tables";
@@ -15,15 +18,18 @@ import {
 	isVotingActive,
 	nextNonCompletedVoting,
 } from "~/features/plus-voting/core";
+import { SendouForm } from "~/form/SendouForm";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import { userPage } from "~/utils/urls";
 import { action } from "../actions/plus.suggestions.server";
 import { loader } from "../loaders/plus.suggestions.server";
+import { editSuggestionFormSchema } from "../plus-suggestions-schemas";
 import {
 	canAddCommentToSuggestionFE,
 	canDeleteComment,
+	canEditSuggestion,
 	canSuggestNewUser,
 } from "../plus-suggestions-utils";
 export { action, loader };
@@ -70,6 +76,7 @@ export default function PlusSuggestionsPage() {
 	return (
 		<>
 			<Outlet />
+			<EditSuggestionDialog suggestions={data.suggestions} />
 			<div className="plus__container">
 				<div className="stack md">
 					<SuggestedForInfo />
@@ -254,6 +261,9 @@ export function PlusSuggestionComments({
 	};
 	defaultOpen?: true;
 }) {
+	const { t } = useTranslation(["common"]);
+	const [, setSearchParams] = useSearchParams();
+
 	return (
 		<details open={defaultOpen} className="w-full">
 			<summary className="plus__view-comments-action">
@@ -275,6 +285,39 @@ export function PlusSuggestionComments({
 										{entry.createdAtRelative}
 									</RelativeTime>
 								</span>
+								{entry.updatedAt ? (
+									<span className="plus__edited-indicator">
+										(
+										<RelativeTime
+											timestamp={databaseTimestampToDate(
+												entry.updatedAt,
+											).getTime()}
+										>
+											edited
+										</RelativeTime>
+										)
+									</span>
+								) : null}
+								{deleteButtonArgs &&
+								canEditSuggestion({
+									author: entry.author,
+									user: deleteButtonArgs.user,
+									suggestionId: entry.id,
+									suggestions: deleteButtonArgs.suggestions,
+								}) ? (
+									<SendouButton
+										className="plus__edit-button"
+										icon={<EditIcon />}
+										variant="minimal"
+										aria-label={t("common:actions.edit")}
+										onPress={() =>
+											setSearchParams((prev) => {
+												prev.set("editingSuggestionId", String(entry.id));
+												return prev;
+											})
+										}
+									/>
+								) : null}
 								{deleteButtonArgs &&
 								canDeleteComment({
 									author: entry.author,
@@ -331,6 +374,60 @@ function CommentDeleteButton({
 			/>
 		</FormWithConfirm>
 	);
+}
+
+function EditSuggestionDialog({
+	suggestions,
+}: {
+	suggestions: PlusSuggestionRepository.FindAllByMonthItem[];
+}) {
+	const { t } = useTranslation(["common"]);
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const editingSuggestionId = Number(searchParams.get("editingSuggestionId"));
+
+	const entry = editingSuggestionId
+		? findEntryById(suggestions, editingSuggestionId)
+		: null;
+
+	const handleClose = () => {
+		setSearchParams((prev) => {
+			prev.delete("editingSuggestionId");
+			return prev;
+		});
+	};
+
+	return (
+		<SendouDialog
+			isOpen={Boolean(entry)}
+			onClose={handleClose}
+			heading={t("common:actions.edit")}
+		>
+			{entry ? (
+				<SendouForm
+					schema={editSuggestionFormSchema}
+					defaultValues={{
+						suggestionId: entry.id,
+						comment: entry.text,
+					}}
+				>
+					{({ FormField }) => <FormField name="comment" />}
+				</SendouForm>
+			) : null}
+		</SendouDialog>
+	);
+}
+
+function findEntryById(
+	suggestions: PlusSuggestionRepository.FindAllByMonthItem[],
+	id: number,
+) {
+	for (const suggestion of suggestions) {
+		for (const entry of suggestion.entries) {
+			if (entry.id === id) return entry;
+		}
+	}
+	return null;
 }
 
 export const ErrorBoundary = Catcher;

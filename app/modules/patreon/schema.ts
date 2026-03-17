@@ -7,6 +7,14 @@ import {
 	UNKNOWN_TIER_ID,
 } from "./constants";
 
+export const patreonRateLimitSchema = z.object({
+	errors: z.array(
+		z.object({
+			retry_after_seconds: z.number().optional(),
+		}),
+	),
+});
+
 export const patronResponseSchema = z.object({
 	data: z.array(
 		z.object({

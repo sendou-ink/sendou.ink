@@ -129,6 +129,23 @@ function suggestionHasNoOtherComments({
 	throw new Error(`Invalid suggestion id: ${suggestionId}`);
 }
 
+interface CanEditSuggestionArgs {
+	suggestionId: Tables["PlusSuggestion"]["id"];
+	author: Pick<Tables["User"], "id">;
+	user?: Pick<Tables["User"], "id">;
+	suggestions: PlusSuggestionRepository.FindAllByMonthItem[];
+}
+export function canEditSuggestion(args: CanEditSuggestionArgs) {
+	const votingActive =
+		process.env.NODE_ENV === "test" ? false : isVotingActive();
+
+	return allTruthy([
+		!votingActive,
+		isFirstSuggestion(args),
+		args.author.id === args.user?.id,
+	]);
+}
+
 interface CanSuggestNewUserArgs {
 	user?: Pick<UserWithPlusTier, "id" | "plusTier">;
 	suggestions: PlusSuggestionRepository.FindAllByMonthItem[];

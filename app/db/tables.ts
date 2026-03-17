@@ -365,6 +365,7 @@ export interface PlusSuggestion {
 	suggestedId: number;
 	text: string;
 	tier: number;
+	updatedAt: number | null;
 	year: number;
 }
 
