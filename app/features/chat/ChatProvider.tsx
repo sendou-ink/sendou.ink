@@ -7,6 +7,7 @@ import {
 	useMatches,
 	useRevalidator,
 } from "react-router";
+import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import { logger } from "~/utils/logger";
 import { soundPath } from "~/utils/urls";
 import type {
@@ -557,6 +558,7 @@ function useChatRouteSync({
 }) {
 	const chatCode = useCurrentRouteChatCode();
 	const { pathname } = useLocation();
+	const layoutSize = useLayoutSize();
 	const subscribedRoomRef = React.useRef<string | null>(null);
 	const previousRouteChatCodeRef = React.useRef<string | null>(null);
 	const previousPathnameRef = React.useRef<string | null>(null);
@@ -597,7 +599,9 @@ function useChatRouteSync({
 
 			if (routeChatCodeChanged) {
 				setActiveRoom(chatCode);
-				setChatOpen(true);
+				if (layoutSize === "desktop") {
+					setChatOpen(true);
+				}
 			}
 		} else {
 			previousRouteChatCodeRef.current = null;
@@ -612,7 +616,9 @@ function useChatRouteSync({
 
 				if (matchedRoom) {
 					setActiveRoom(matchedRoom.chatCode);
-					setChatOpen(true);
+					if (layoutSize === "desktop") {
+						setChatOpen(true);
+					}
 				}
 			}
 		}
@@ -625,6 +631,7 @@ function useChatRouteSync({
 		activeRoom,
 		setActiveRoom,
 		setChatOpen,
+		layoutSize,
 		subscribe,
 		unsubscribe,
 		setRooms,
