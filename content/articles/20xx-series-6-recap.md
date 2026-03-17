@@ -99,6 +99,8 @@ Before the action began, a trailer announced the return collab between Dapple Pr
 
 The online tournament will take place on Saturday, April 4th at 1 PM ET / 7 PM CET. Registration is already open, and you can sign up at [Dapple.ink/gfg](http://dapple.ink/gfg)\! 
 
+**March 17, 2026 Update:** the Splatoon 3 Gamers for Giving 2026 charity event has been **rescheduled to Sunday, April 5th**, to not clash with those playing in the newly-announced Splatoon 3 North American League 2026. It will be at the same time (1 PM ET / 7 PM CET).
+
 Returning to the action at hand, PxG and Azure were back at it, ready to settle who would be the 20XX Series 6 champions. A fitting test between teams who had not lost a single game to any team but each other. 
 
 Azure had back-to-back Splat Zones at Barnacle & Dime battles, but this time they were in ezmd’s shoes. They were wiped out twice by PxG, managed to get the zone only once for a short time before losing it, and ultimately, lost the game just over two minutes in. 
