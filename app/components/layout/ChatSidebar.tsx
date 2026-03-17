@@ -143,6 +143,7 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 }
 
 function ChatView({ onClose }: { onClose?: () => void }) {
+	const { t } = useTranslation(["common"]);
 	const chatContext = useChatContext()!;
 	const activeRoom = chatContext.activeRoom!;
 	const { formatDateTime } = useTimeFormat();
@@ -184,13 +185,15 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 						room?.isObsolete ? "line-through" : null,
 					)}
 				>
-					{resolveDatePlaceholders(room?.header ?? activeRoom, (d) =>
-						formatDateTime(d, {
-							month: "short",
-							day: "numeric",
-							hour: "numeric",
-							minute: "numeric",
-						}),
+					{resolveDatePlaceholders(
+						room?.header ?? t("common:chat.sidebar.title"),
+						(d) =>
+							formatDateTime(d, {
+								month: "short",
+								day: "numeric",
+								hour: "numeric",
+								minute: "numeric",
+							}),
 					)}
 				</span>
 				{room?.subtitle ? (
