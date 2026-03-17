@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { Mic, Star, Volume2, VolumeX } from "lucide-react";
 import * as React from "react";
+import { Flipped } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher } from "react-router";
 import { Avatar } from "~/components/Avatar";
@@ -11,7 +12,9 @@ import { Image, WeaponImage } from "~/components/Image";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { Pronouns } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
+import { IS_Q_LOOKING_MOBILE_BREAKPOINT } from "~/features/sendouq/q-constants";
 import { SendouForm } from "~/form/SendouForm";
+import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { languagesUnified } from "~/modules/i18n/config";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { navIconUrl, userPage } from "~/utils/urls";
@@ -64,52 +67,72 @@ export function LFGGroupCard({
 		: undefined;
 
 	return (
-		<section className={styles.group}>
-			{group.teamName ? (
-				<Divider smallText className={styles.teamHeader}>
-					{group.teamAvatarUrl ? (
-						<Avatar size="xxs" url={group.teamAvatarUrl} />
-					) : null}
-					<div className={styles.teamName}>{group.teamName}</div>
-				</Divider>
-			) : null}
-			<div className="stack md">
-				{group.members.map((member) => (
-					<LFGGroupMemberRow
-						key={member.discordId}
-						member={member}
-						showActions={showActions}
-						isOwnGroup={isOwnGroup}
+		<LFGGroupCardContainer groupId={group.id} isOwnGroup={isOwnGroup}>
+			<section className={styles.group}>
+				{group.teamName ? (
+					<Divider smallText className={styles.teamHeader}>
+						{group.teamAvatarUrl ? (
+							<Avatar size="xxs" url={group.teamAvatarUrl} />
+						) : null}
+						<div className={styles.teamName}>{group.teamName}</div>
+					</Divider>
+				) : null}
+				<div className="stack md">
+					{group.members.map((member) => (
+						<LFGGroupMemberRow
+							key={member.discordId}
+							member={member}
+							showActions={showActions}
+							isOwnGroup={isOwnGroup}
+						/>
+					))}
+				</div>
+				{isOwnGroup ? (
+					<LFGTeamNote
+						note={group.note}
+						editable={group.usersRole === "OWNER"}
+						isStayAsSub={currentMember?.isStayAsSub ?? false}
 					/>
-				))}
-			</div>
-			{isOwnGroup ? (
-				<LFGTeamNote
-					note={group.note}
-					editable={group.usersRole === "OWNER"}
-					isStayAsSub={currentMember?.isStayAsSub ?? false}
-				/>
-			) : null}
-			{action &&
-			(ownGroup?.usersRole === "OWNER" || ownGroup?.usersRole === "MANAGER") ? (
-				<fetcher.Form className="stack items-center" method="post">
-					<input type="hidden" name="targetTeamId" value={group.id} />
-					<SubmitButton
-						size="small"
-						variant={action === "UNLIKE" ? "destructive" : "outlined"}
-						_action={action}
-						state={fetcher.state}
-					>
-						{action === "LIKE"
-							? t("q:looking.groups.actions.invite")
-							: action === "ACCEPT"
-								? t("common:actions.accept")
-								: t("q:looking.groups.actions.undo")}
-					</SubmitButton>
-				</fetcher.Form>
-			) : null}
-		</section>
+				) : null}
+				{action &&
+				(ownGroup?.usersRole === "OWNER" ||
+					ownGroup?.usersRole === "MANAGER") ? (
+					<fetcher.Form className="stack items-center" method="post">
+						<input type="hidden" name="targetTeamId" value={group.id} />
+						<SubmitButton
+							size="small"
+							variant={action === "UNLIKE" ? "destructive" : "outlined"}
+							_action={action}
+							state={fetcher.state}
+						>
+							{action === "LIKE"
+								? t("q:looking.groups.actions.invite")
+								: action === "ACCEPT"
+									? t("common:actions.accept")
+									: t("q:looking.groups.actions.undo")}
+						</SubmitButton>
+					</fetcher.Form>
+				) : null}
+			</section>
+		</LFGGroupCardContainer>
 	);
+}
+
+function LFGGroupCardContainer({
+	isOwnGroup,
+	groupId,
+	children,
+}: {
+	isOwnGroup: boolean;
+	groupId: number;
+	children: React.ReactNode;
+}) {
+	const width = useMainContentWidth();
+	const layout = width < IS_Q_LOOKING_MOBILE_BREAKPOINT ? "mobile" : "desktop";
+
+	if (isOwnGroup) return <>{children}</>;
+
+	return <Flipped flipId={`${layout}-${groupId}`}>{children}</Flipped>;
 }
 
 function LFGGroupMemberRow({
@@ -284,6 +307,7 @@ function LFGMemberRoleManager({
 			trigger={
 				<SendouButton
 					variant="minimal"
+					size="miniscule"
 					icon={
 						<Star
 							className={clsx(styles.star, {
@@ -367,7 +391,7 @@ function LFGVoiceChatInfo({
 			trigger={
 				<SendouButton
 					variant="minimal"
-					size="small"
+					size="miniscule"
 					icon={<Icon className={clsx(styles.vcIcon, color())} />}
 				/>
 			}

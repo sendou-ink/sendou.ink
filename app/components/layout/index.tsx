@@ -202,6 +202,12 @@ export function Layout({
 		return () => window.removeEventListener("resize", handleResize);
 	}, []);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally close modals on navigation
+	React.useEffect(() => {
+		setSideNavModalOpen(false);
+		setChatSidebarModalOpen(false);
+	}, [location.pathname]);
+
 	const user = useUser();
 	const { unseenIds } = useNotifications();
 	const sidebarData = data?.sidebar;
@@ -316,7 +322,6 @@ export function Layout({
 						<SiteLogoContent />
 					</Link>
 					<DialogTrigger
-						key={location.pathname}
 						isOpen={sideNavModalOpen}
 						onOpenChange={setSideNavModalOpen}
 					>

@@ -16,6 +16,7 @@ import { useUser } from "~/features/auth/core/user";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { ordinalToRoundedSp } from "~/features/mmr/mmr-utils";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
+import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { languagesUnified } from "~/modules/i18n/config";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
@@ -36,7 +37,11 @@ import type {
 	SQMatchGroupMember,
 	SQOwnGroup,
 } from "../core/SendouQ.server";
-import { FULL_GROUP_SIZE, SENDOUQ } from "../q-constants";
+import {
+	FULL_GROUP_SIZE,
+	IS_Q_LOOKING_MOBILE_BREAKPOINT,
+	SENDOUQ,
+} from "../q-constants";
 import { resolveFutureMatchModes } from "../q-utils";
 import styles from "./GroupCard.module.css";
 
@@ -248,10 +253,13 @@ function GroupCardContainer({
 	groupId: number;
 	children: React.ReactNode;
 }) {
+	const width = useMainContentWidth();
+	const layout = width < IS_Q_LOOKING_MOBILE_BREAKPOINT ? "mobile" : "desktop";
+
 	// we don't want it to animate
 	if (isOwnGroup) return <>{children}</>;
 
-	return <Flipped flipId={groupId}>{children}</Flipped>;
+	return <Flipped flipId={`${layout}-${groupId}`}>{children}</Flipped>;
 }
 
 function GroupMember({

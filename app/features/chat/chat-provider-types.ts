@@ -9,6 +9,7 @@ export interface RoomMetadata {
 	subtitle?: string;
 	url?: string;
 	imageUrl?: string;
+	createdAt?: number;
 }
 
 /** Room info as returned by Skalop on connect and ROOM_JOINED events */
@@ -30,6 +31,8 @@ export interface RoomInfo {
 	expiresAt: number;
 	lastMessageTimestamp: number;
 	totalMessageCount: number;
+	createdAt: number;
+	isObsolete?: boolean;
 }
 
 export interface ChatContextValue {

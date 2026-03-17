@@ -12,7 +12,6 @@ import {
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
-import { deleteSub } from "~/features/tournament-subs/queries/deleteSub.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { logger } from "~/utils/logger";
 import {
@@ -139,7 +138,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 					tournamentId,
 					avatarFileName,
 				});
-				deleteSub({ tournamentId, userId: user.id });
 				await SavedCalendarEventRepository.unsave({
 					userId: user.id,
 					tournamentId,

@@ -21,7 +21,12 @@ export const loader = async () => {
 	const friends = unique
 		.filter((f) => f.friendshipId !== null)
 		.map((friend) => {
-			const activity = resolveFriendActivity(friend.id, friend.tournamentName);
+			const activity = resolveFriendActivity(
+				friend.id,
+				friend.tournamentName,
+				friend.teamMemberCount,
+				friend.tournamentMinTeamSize,
+			);
 
 			return {
 				id: friend.id,
@@ -51,7 +56,12 @@ export const loader = async () => {
 	const teamMembers = unique
 		.filter((f) => f.friendshipId === null)
 		.map((tm) => {
-			const activity = resolveFriendActivity(tm.id, tm.tournamentName);
+			const activity = resolveFriendActivity(
+				tm.id,
+				tm.tournamentName,
+				tm.teamMemberCount,
+				tm.tournamentMinTeamSize,
+			);
 
 			return {
 				id: tm.id,

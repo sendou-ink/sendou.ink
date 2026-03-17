@@ -62,9 +62,12 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 	const chatContext = useChatContext()!;
 	const { formatDateTime } = useTimeFormat();
 
-	const nonExpiredRooms = chatContext.rooms.filter(
-		(room) => room.expiresAt > Date.now(),
-	);
+	const nonExpiredRooms = chatContext.rooms
+		.filter((room) => room.expiresAt > Date.now())
+		.sort((a, b) => {
+			if (a.isObsolete !== b.isObsolete) return a.isObsolete ? 1 : -1;
+			return 0;
+		});
 
 	return (
 		<div className={styles.sidebar}>
@@ -81,7 +84,11 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 						return (
 							<Button
 								key={room.chatCode}
-								className={clsx(sideNavStyles.listButton, styles.roomItem)}
+								className={clsx(
+									sideNavStyles.listButton,
+									styles.roomItem,
+									room.isObsolete ? "opaque" : null,
+								)}
 								onPress={() => {
 									chatContext.requestHistory(room.chatCode);
 									chatContext.setActiveRoom(room.chatCode);
@@ -100,6 +107,7 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 										className={clsx(
 											sideNavStyles.listLinkTitle,
 											styles.roomName,
+											room.isObsolete ? "line-through" : null,
 										)}
 									>
 										{resolveDatePlaceholders(room.header, (d) =>
@@ -115,7 +123,7 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 										{room.subtitle}
 									</span>
 								</div>
-								{unread > 0 ? (
+								{unread > 0 && !room.isObsolete ? (
 									<span className={styles.unreadBadge}>{unread}</span>
 								) : room.lastMessageTimestamp > 0 ? (
 									<span className={styles.roomTimestamp}>
@@ -170,7 +178,12 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 				/>
 			) : null}
 			<div className={styles.chatHeaderInfo}>
-				<span className={styles.chatHeaderTitle}>
+				<span
+					className={clsx(
+						styles.chatHeaderTitle,
+						room?.isObsolete ? "line-through" : null,
+					)}
+				>
 					{resolveDatePlaceholders(room?.header ?? activeRoom, (d) =>
 						formatDateTime(d, {
 							month: "short",

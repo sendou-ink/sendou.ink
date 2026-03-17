@@ -1,5 +1,4 @@
 import { sql } from "~/db/sql";
-import { deleteSub } from "~/features/tournament-subs/queries/deleteSub.server";
 import invariant from "~/utils/invariant";
 import { checkOut } from "./checkOut.server";
 
@@ -26,6 +25,7 @@ const deleteMemberStm = sql.prepare(/*sql*/ `
     and "userId" = @userId
 `);
 
+// xxx: migrate to kysely. note: deleteSub was deleted from here
 export const joinTeam = sql.transaction(
 	({
 		previousTeamId,
@@ -33,7 +33,7 @@ export const joinTeam = sql.transaction(
 		newTeamId,
 		userId,
 		inGameName,
-		tournamentId,
+		tournamentId: _tournamentId,
 		checkOutTeam = false,
 	}: {
 		previousTeamId?: number;
@@ -48,10 +48,6 @@ export const joinTeam = sql.transaction(
 			deleteTeamStm.run({ tournamentTeamId: previousTeamId ?? null });
 		} else if (whatToDoWithPreviousTeam === "LEAVE") {
 			deleteMemberStm.run({ tournamentTeamId: previousTeamId ?? null, userId });
-		}
-
-		if (!previousTeamId) {
-			deleteSub({ tournamentId, userId });
 		}
 
 		if (checkOutTeam) {

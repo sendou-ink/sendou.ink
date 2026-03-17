@@ -15,7 +15,7 @@
 	gap: var(--s-2);
 	align-items: center;
 	background-color: var(--color-bg);
-	border-radius: var(--radius-box);
+	border-radius: calc(var(--radius-box) + 6px);
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
 	padding-inline-end: var(--s-3);

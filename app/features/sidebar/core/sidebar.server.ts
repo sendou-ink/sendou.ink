@@ -248,7 +248,12 @@ function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
 	const inactiveFriends: FriendWithActivity[] = [];
 
 	for (const friend of friendRows) {
-		const activity = resolveFriendActivity(friend.id, friend.tournamentName);
+		const activity = resolveFriendActivity(
+			friend.id,
+			friend.tournamentName,
+			friend.teamMemberCount,
+			friend.tournamentMinTeamSize,
+		);
 
 		if (!activity.subtitle) {
 			inactiveFriends.push(friend);
@@ -291,7 +296,12 @@ function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
 			if (result.length >= MAX_FRIENDS_VISIBLE) break;
 			if (shownIds.has(tm.id)) continue;
 
-			const activity = resolveFriendActivity(tm.id, tm.tournamentName);
+			const activity = resolveFriendActivity(
+				tm.id,
+				tm.tournamentName,
+				tm.teamMemberCount,
+				tm.tournamentMinTeamSize,
+			);
 			if (!activity.subtitle) {
 				inactiveTeamMembers.push(tm);
 				continue;

@@ -27,7 +27,7 @@
 
 .mapButton {
 	background-image: var(--map-image-url);
-	background-size: contain;
+	background-size: cover;
 	height: var(--map-height);
 	width: var(--map-width);
 	border: none;

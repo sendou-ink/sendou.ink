@@ -170,9 +170,9 @@ function FriendsListSection() {
 			: "friends:friendsList.empty";
 
 	return (
-		<section>
+		<section className="stack md">
 			<div className={styles.friendsListHeader}>
-				<h2 className="text-lg">{t("friends:friendsList.title")}</h2>
+				<h2 className="text-lg ml-1">{t("friends:friendsList.title")}</h2>
 				<SubNav secondary>
 					{VIEW_FILTERS.map((value) => (
 						<SubNavLink
@@ -188,15 +188,17 @@ function FriendsListSection() {
 					))}
 				</SubNav>
 			</div>
-			{shownItems.length === 0 ? (
-				<p className="text-lighter text-sm">{t(emptyKey)}</p>
-			) : (
-				<div className="stack xs">
-					{shownItems.map((item) => (
-						<FriendMenu key={item.id} name={item.username} {...item} />
-					))}
-				</div>
-			)}
+			<div>
+				{shownItems.length === 0 ? (
+					<p className="no-results">{t(emptyKey)}</p>
+				) : (
+					<div className="stack xs">
+						{shownItems.map((item) => (
+							<FriendMenu key={item.id} name={item.username} {...item} />
+						))}
+					</div>
+				)}
+			</div>
 		</section>
 	);
 }

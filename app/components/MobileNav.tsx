@@ -20,7 +20,7 @@ import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
-import { useLayoutSize } from "~/hooks/useWindowSize";
+import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import type { RootLoaderData } from "~/root";
 import {
 	EVENTS_PAGE,

@@ -32,7 +32,47 @@ function flattenServerRoom(serverRoom: ServerRoomInfo): RoomInfo {
 		expiresAt: serverRoom.metadata.expiresAt,
 		lastMessageTimestamp: serverRoom.lastMessageTimestamp ?? 0,
 		totalMessageCount: serverRoom.totalMessageCount,
+		createdAt: serverRoom.metadata.createdAt ?? 0,
 	};
+}
+
+const SENDOUQ_GROUP_HEADER_PATTERN = /^Group\b/;
+
+function isSendouQGroupRoom(room: RoomInfo) {
+	return (
+		room.subtitle === "SendouQ" &&
+		SENDOUQ_GROUP_HEADER_PATTERN.test(room.header)
+	);
+}
+
+function resolveObsoleteGroupRooms(rooms: RoomInfo[]): RoomInfo[] {
+	const groupRooms = rooms.filter(isSendouQGroupRoom);
+
+	if (groupRooms.length <= 1) return rooms;
+
+	const newestCreatedAt = Math.max(...groupRooms.map((r) => r.createdAt));
+
+	// If no room has createdAt set, skip resolution
+	if (newestCreatedAt === 0) return rooms;
+
+	const obsoleteChatCodes = new Set<string>();
+	const removedChatCodes = new Set<string>();
+
+	for (const room of groupRooms) {
+		if (room.createdAt === newestCreatedAt) continue;
+
+		if (room.totalMessageCount === 0) {
+			removedChatCodes.add(room.chatCode);
+		} else {
+			obsoleteChatCodes.add(room.chatCode);
+		}
+	}
+
+	return rooms
+		.filter((r) => !removedChatCodes.has(r.chatCode))
+		.map((r) =>
+			obsoleteChatCodes.has(r.chatCode) ? { ...r, isObsolete: true } : r,
+		);
 }
 
 function localStorageKey(chatCode: string) {
@@ -116,7 +156,9 @@ function ChatProviderInner({
 		if (parsed.rooms && Array.isArray(parsed.rooms)) {
 			logger.debug("WS initial rooms payload, count:", parsed.rooms.length);
 			const serverRooms = parsed.rooms as ServerRoomInfo[];
-			const roomList = serverRooms.map(flattenServerRoom);
+			const roomList = resolveObsoleteGroupRooms(
+				serverRooms.map(flattenServerRoom),
+			);
 			setRooms(roomList);
 			setIsLoading(false);
 
@@ -157,12 +199,19 @@ function ChatProviderInner({
 			setRooms((prev) => {
 				const exists = prev.some((r) => r.chatCode === newRoom.chatCode);
 				if (exists) return prev;
-				return [...prev, newRoom];
+				return resolveObsoleteGroupRooms([...prev, newRoom]);
 			});
 
 			setChatUsersCache((prev) => ({
 				...prev,
 				...serverRoom.metadata.chatUsers,
+			}));
+
+			const lastRead = readLastReadCount(serverRoom.chatCode);
+			const unread = Math.max(0, serverRoom.totalMessageCount - lastRead);
+			setUnreadCounts((prev) => ({
+				...prev,
+				[serverRoom.chatCode]: unread,
 			}));
 			return;
 		}
@@ -194,6 +243,7 @@ function ChatProviderInner({
 					expiresAt: metadata.expiresAt,
 					lastMessageTimestamp: messages.at(-1)?.timestamp ?? 0,
 					totalMessageCount: messages.length,
+					createdAt: metadata.createdAt ?? 0,
 				};
 				setRooms((prev) => {
 					const exists = prev.some((r) => r.chatCode === chatCode);
@@ -212,7 +262,7 @@ function ChatProviderInner({
 		// Regular message(s)
 		const messageArr = (
 			Array.isArray(parsed) ? parsed : [parsed]
-		) as (ChatMessage & { totalMessageCount?: number })[];
+		) as (ChatMessage & { totalMessageCount: number })[];
 
 		const isSystemMessage = Boolean(messageArr[0].type);
 		logger.debug(
@@ -253,30 +303,31 @@ function ChatProviderInner({
 				return { ...prev, [roomCode]: [...existing, msg] };
 			});
 
-			if (msg.totalMessageCount) {
-				setRooms((prev) =>
-					prev.map((r) =>
-						r.chatCode === roomCode
-							? {
-									...r,
-									lastMessageTimestamp: msg.timestamp,
-									totalMessageCount: Math.max(
-										r.totalMessageCount,
-										msg.totalMessageCount!,
-									),
-								}
-							: r,
-					),
-				);
+			setRooms((prev) =>
+				prev.map((r) =>
+					r.chatCode === roomCode
+						? {
+								...r,
+								lastMessageTimestamp: msg.timestamp,
+								totalMessageCount: Math.max(
+									r.totalMessageCount,
+									msg.totalMessageCount!,
+								),
+							}
+						: r,
+				),
+			);
 
-				if (roomCode === activeRoom && chatOpen) {
-					writeLastReadCount(roomCode, msg.totalMessageCount);
-				} else {
-					setUnreadCounts((prev) => ({
-						...prev,
-						[roomCode]: (prev[roomCode] ?? 0) + 1,
-					}));
-				}
+			if (roomCode === activeRoom && chatOpen) {
+				writeLastReadCount(roomCode, msg.totalMessageCount);
+			} else {
+				setUnreadCounts((prev) => ({
+					...prev,
+					[roomCode]: Math.max(
+						0,
+						msg.totalMessageCount - readLastReadCount(roomCode),
+					),
+				}));
 			}
 		}
 	});
@@ -323,7 +374,8 @@ function ChatProviderInner({
 		const handleStorage = (e: StorageEvent) => {
 			if (!e.key?.startsWith(LOCAL_STORAGE_PREFIX)) return;
 			const chatCode = e.key.slice(LOCAL_STORAGE_PREFIX.length);
-			const newCount = e.newValue ? Number(e.newValue) : 0;
+			const parsed = Number(e.newValue);
+			const newCount = Number.isFinite(parsed) ? parsed : 0;
 
 			setUnreadCounts((prev) => {
 				const room = rooms.find((r) => r.chatCode === chatCode);

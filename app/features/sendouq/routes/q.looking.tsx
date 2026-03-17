@@ -19,8 +19,8 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
-import { useWindowSize } from "~/hooks/useWindowSize";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -36,7 +36,10 @@ import { GroupLeaver } from "../components/GroupLeaver";
 import { MemberAdder } from "../components/MemberAdder";
 import { groupExpiryStatus } from "../core/groups";
 import { loader } from "../loaders/q.looking.server";
-import { FULL_GROUP_SIZE } from "../q-constants";
+import {
+	FULL_GROUP_SIZE,
+	IS_Q_LOOKING_MOBILE_BREAKPOINT,
+} from "../q-constants";
 export { action, loader };
 
 import styles from "./q.looking.module.css";
@@ -209,11 +212,11 @@ function Groups() {
 	const data = useLoaderData<typeof loader>();
 	const isMounted = useIsMounted();
 
-	const { width } = useWindowSize();
+	const width = useMainContentWidth();
 
 	if (!isMounted) return null;
 
-	const isMobile = width < 750;
+	const isMobile = width < IS_Q_LOOKING_MOBILE_BREAKPOINT;
 	const isFullGroup =
 		data.ownGroup && data.ownGroup.members.length === FULL_GROUP_SIZE;
 
@@ -410,9 +413,9 @@ function Groups() {
 }
 
 function ColumnHeader({ children }: { children: React.ReactNode }) {
-	const { width } = useWindowSize();
+	const width = useMainContentWidth();
 
-	const isMobile = width < 750;
+	const isMobile = width < IS_Q_LOOKING_MOBILE_BREAKPOINT;
 
 	if (isMobile) return null;
 

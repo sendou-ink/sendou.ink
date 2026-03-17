@@ -8,7 +8,9 @@ export interface IsVisibleArgs {
 	associations: {
 		virtual: Array<string>;
 		actual: Array<{ id: number }>;
+		friendIds?: Array<number>;
 	} | null;
+	contentOwnerUserId?: number;
 }
 
 export function isVisible(args: IsVisibleArgs) {
@@ -28,6 +30,14 @@ export function isVisible(args: IsVisibleArgs) {
 	const isPublic = currentVisibility.includes(null);
 
 	if (isPublic) return true;
+
+	if (
+		currentVisibility.includes("FRIENDS") &&
+		args.contentOwnerUserId &&
+		args.associations?.friendIds?.includes(args.contentOwnerUserId)
+	) {
+		return true;
+	}
 
 	return (
 		args.associations?.actual.some((association) =>

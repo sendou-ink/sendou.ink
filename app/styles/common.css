@@ -593,6 +593,8 @@
 .top-leaderboard {
 	min-height: 100px;
 	margin-top: 10px;
+	display: grid;
+	place-items: center;
 }
 
 @media screen and (max-width: 599px) {

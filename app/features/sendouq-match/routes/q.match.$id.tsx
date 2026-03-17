@@ -34,8 +34,8 @@ import { AddPrivateNoteDialog } from "~/features/sendouq-match/components/AddPri
 import type { ReportedWeaponForMerging } from "~/features/sendouq-match/core/reported-weapons.server";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
-import { useWindowSize } from "~/hooks/useWindowSize";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { useHasRole } from "~/modules/permissions/hooks";
@@ -650,8 +650,8 @@ function BottomSection({
 	participatingInTheMatch: boolean;
 }) {
 	const { t } = useTranslation(["q", "common"]);
-	const { width } = useWindowSize();
-	const isMobile = width < 750;
+	const width = useMainContentWidth();
+	const isMobile = width < 650;
 	const isMounted = useIsMounted();
 	const user = useUser();
 	const isStaff = useHasRole("STAFF");

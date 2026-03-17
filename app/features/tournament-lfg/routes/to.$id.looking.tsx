@@ -19,10 +19,11 @@ import { WeaponImage } from "~/components/Image";
 import { Placeholder } from "~/components/Placeholder";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
+import { IS_Q_LOOKING_MOBILE_BREAKPOINT } from "~/features/sendouq/q-constants";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { SendouForm } from "~/form/SendouForm";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import { useWindowSize } from "~/hooks/useWindowSize";
+import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { userPage } from "~/utils/urls";
 import { LFGGroupCard } from "../components/LFGGroupCard";
@@ -69,9 +70,9 @@ function GroupsView({
 }) {
 	const { t } = useTranslation(["q"]);
 	const tournament = useTournament();
-	const { width } = useWindowSize();
+	const width = useMainContentWidth();
 
-	const isMobile = width < 750;
+	const isMobile = width < IS_Q_LOOKING_MOBILE_BREAKPOINT;
 
 	const ownMemberCount =
 		data.ownGroup?.members.length ?? data.ownTeam?.members.length ?? 0;
@@ -373,9 +374,9 @@ function SubCard({ sub }: { sub: SubEntry }) {
 }
 
 function ColumnHeader({ children }: { children: React.ReactNode }) {
-	const { width } = useWindowSize();
+	const width = useMainContentWidth();
 
-	const isMobile = width < 750;
+	const isMobile = width < IS_Q_LOOKING_MOBILE_BREAKPOINT;
 
 	if (isMobile) return null;
 

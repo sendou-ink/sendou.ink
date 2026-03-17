@@ -1,87 +1,52 @@
+import { type SelectQueryBuilder, sql } from "kysely";
 import { db } from "~/db/sql";
+import type { DB } from "~/db/tables";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 
 export async function findByUserIdWithActivity(userId: number) {
 	const [friendRows, teamMemberRows] = await Promise.all([
-		db
-			.selectFrom("Friendship")
-			.innerJoin("User", (join) =>
-				join.on((eb) =>
+		withLfgJoins(
+			db
+				.selectFrom("Friendship")
+				.innerJoin("User", (join) =>
+					join.on((eb) =>
+						eb.or([
+							eb.and([
+								eb("Friendship.userOneId", "=", userId),
+								eb("User.id", "=", eb.ref("Friendship.userTwoId")),
+							]),
+							eb.and([
+								eb("Friendship.userTwoId", "=", userId),
+								eb("User.id", "=", eb.ref("Friendship.userOneId")),
+							]),
+						]),
+					),
+				)
+				.where((eb) =>
 					eb.or([
-						eb.and([
-							eb("Friendship.userOneId", "=", userId),
-							eb("User.id", "=", eb.ref("Friendship.userTwoId")),
-						]),
-						eb.and([
-							eb("Friendship.userTwoId", "=", userId),
-							eb("User.id", "=", eb.ref("Friendship.userOneId")),
-						]),
+						eb("Friendship.userOneId", "=", userId),
+						eb("Friendship.userTwoId", "=", userId),
 					]),
 				),
-			)
-			.leftJoin("TournamentSub", "TournamentSub.userId", "User.id")
-			.leftJoin(
-				"CalendarEvent",
-				"CalendarEvent.tournamentId",
-				"TournamentSub.tournamentId",
-			)
-			.leftJoin(
-				"CalendarEventDate",
-				"CalendarEventDate.eventId",
-				"CalendarEvent.id",
-			)
+		)
 			.select([
 				"Friendship.id as friendshipId",
-				"User.id",
-				"User.username",
-				"User.discordId",
-				"User.discordAvatar",
-				"User.customUrl",
-				"CalendarEvent.name as tournamentName",
-				"TournamentSub.tournamentId",
-				"CalendarEventDate.startTime as tournamentStartTime",
 				"Friendship.createdAt as friendshipCreatedAt",
 			])
-			.where((eb) =>
-				eb.or([
-					eb("Friendship.userOneId", "=", userId),
-					eb("Friendship.userTwoId", "=", userId),
-				]),
-			)
 			.orderBy("Friendship.createdAt", "desc")
 			.execute(),
-		db
-			.selectFrom("TeamMemberWithSecondary as myMembership")
-			.innerJoin("TeamMemberWithSecondary as otherMembership", (join) =>
-				join
-					.onRef("otherMembership.teamId", "=", "myMembership.teamId")
-					.on("otherMembership.userId", "!=", userId),
-			)
-			.innerJoin("User", "User.id", "otherMembership.userId")
-			.leftJoin("TournamentSub", "TournamentSub.userId", "User.id")
-			.leftJoin(
-				"CalendarEvent",
-				"CalendarEvent.tournamentId",
-				"TournamentSub.tournamentId",
-			)
-			.leftJoin(
-				"CalendarEventDate",
-				"CalendarEventDate.eventId",
-				"CalendarEvent.id",
-			)
-			.select([
-				"User.id",
-				"User.username",
-				"User.discordId",
-				"User.discordAvatar",
-				"User.customUrl",
-				"CalendarEvent.name as tournamentName",
-				"TournamentSub.tournamentId",
-				"CalendarEventDate.startTime as tournamentStartTime",
-			])
-			.where("myMembership.userId", "=", userId)
-			.where("myMembership.leftAt", "is", null)
-			.where("otherMembership.leftAt", "is", null)
-			.execute(),
+		withLfgJoins(
+			db
+				.selectFrom("TeamMemberWithSecondary as myMembership")
+				.innerJoin("TeamMemberWithSecondary as otherMembership", (join) =>
+					join
+						.onRef("otherMembership.teamId", "=", "myMembership.teamId")
+						.on("otherMembership.userId", "!=", userId),
+				)
+				.innerJoin("User", "User.id", "otherMembership.userId")
+				.where("myMembership.userId", "=", userId),
+		).execute(),
 	]);
 
 	return [
@@ -92,6 +57,63 @@ export async function findByUserIdWithActivity(userId: number) {
 			friendshipCreatedAt: null as number | null,
 		})),
 	];
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function withLfgJoins<QB extends SelectQueryBuilder<any, any, any>>(qb: QB) {
+	const nowTimestamp = dateToDatabaseTimestamp(new Date());
+
+	return (qb as SelectQueryBuilder<DB, keyof DB, Record<string, never>>)
+		.leftJoin("TournamentTeamMember", (join) =>
+			join
+				.onRef("TournamentTeamMember.userId", "=", "User.id")
+				.on("TournamentTeamMember.isLooking", "=", 1),
+		)
+		.leftJoin(
+			"TournamentTeam",
+			"TournamentTeam.id",
+			"TournamentTeamMember.tournamentTeamId",
+		)
+		.leftJoin("Tournament", (join) =>
+			join
+				.onRef("Tournament.id", "=", "TournamentTeam.tournamentId")
+				.on((eb) =>
+					eb.or([
+						eb(
+							sql`json_extract("Tournament"."settings", '$.regClosesAt')`,
+							"is",
+							null,
+						),
+						eb(
+							sql<number>`json_extract("Tournament"."settings", '$.regClosesAt')`,
+							">",
+							nowTimestamp,
+						),
+					]),
+				),
+		)
+		.leftJoin("CalendarEvent", "CalendarEvent.tournamentId", "Tournament.id")
+		.leftJoin(
+			"CalendarEventDate",
+			"CalendarEventDate.eventId",
+			"CalendarEvent.id",
+		)
+		.select([
+			...COMMON_USER_FIELDS,
+			"CalendarEvent.name as tournamentName",
+			"TournamentTeam.tournamentId",
+			"CalendarEventDate.startTime as tournamentStartTime",
+			sql<
+				number | null
+			>`(SELECT COUNT(*) FROM "TournamentTeamMember" "ttm" WHERE "ttm"."tournamentTeamId" = "TournamentTeam"."id")`.as(
+				"teamMemberCount",
+			),
+			sql<
+				number | null
+			>`json_extract("Tournament"."settings", '$.minMembersPerTeam')`.as(
+				"tournamentMinTeamSize",
+			),
+		]);
 }
 
 export async function findPendingSentRequests(senderId: number) {
@@ -331,6 +353,29 @@ export async function countPendingSentRequests(
 		.executeTakeFirstOrThrow();
 
 	return result.count;
+}
+
+export async function findFriendIds(userId: number): Promise<number[]> {
+	const rows = await db
+		.selectFrom("Friendship")
+		.select((eb) =>
+			eb
+				.case()
+				.when("Friendship.userOneId", "=", userId)
+				.then(eb.ref("Friendship.userTwoId"))
+				.else(eb.ref("Friendship.userOneId"))
+				.end()
+				.as("friendId"),
+		)
+		.where((eb) =>
+			eb.or([
+				eb("Friendship.userOneId", "=", userId),
+				eb("Friendship.userTwoId", "=", userId),
+			]),
+		)
+		.execute();
+
+	return rows.map((row) => row.friendId);
 }
 
 export async function findFriendship({

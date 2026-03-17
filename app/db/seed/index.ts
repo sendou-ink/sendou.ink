@@ -56,7 +56,6 @@ import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import { stagesObj as s, stageIds } from "~/modules/in-game-lists/stage-ids";
 import type {
 	AbilityType,
-	MainWeaponId,
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
@@ -220,7 +219,6 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	calendarEventWithToToolsTeamsDepths,
 	calendarEventWithToToolsLUTI,
 	calendarEventWithToToolsTeamsLUTI,
-	tournamentSubs,
 	variation === "NO_TOURNAMENT_TEAMS" ? undefined : tournamentLfgGroups,
 	adminBuilds,
 	manySplattershotBuilds,
@@ -1565,79 +1563,18 @@ function calendarEventWithToToolsTeams(
 	}
 }
 
-function tournamentSubs() {
-	for (let id = 100; id < 120; id++) {
-		const includedWeaponIds: MainWeaponId[] = [];
-
-		sql
-			.prepare(
-				/* sql */ `
-      insert into "TournamentSub" (
-        "userId",
-        "tournamentId",
-        "canVc",
-        "bestWeapons",
-        "okWeapons",
-        "message",
-        "visibility"
-      ) values (
-        @userId,
-        @tournamentId,
-        @canVc,
-        @bestWeapons,
-        @okWeapons,
-        @message,
-        @visibility
-      )
-    `,
-			)
-			.run({
-				userId: id,
-				tournamentId: 1,
-				canVc: Number(faker.number.float(1) > 0.5),
-				bestWeapons: nullFilledArray(
-					faker.helpers.arrayElement([1, 1, 1, 2, 2, 3, 4, 5]),
-				)
-					// biome-ignore lint/suspicious/useIterableCallbackReturn: Biome 2.3.1 upgrade
-					.map(() => {
-						while (true) {
-							const weaponId = R.sample(mainWeaponIds, 1)[0]!;
-							if (!includedWeaponIds.includes(weaponId)) {
-								includedWeaponIds.push(weaponId);
-								return weaponId;
-							}
-						}
-					})
-					.join(","),
-				okWeapons:
-					faker.number.float(1) > 0.5
-						? null
-						: nullFilledArray(
-								faker.helpers.arrayElement([1, 1, 1, 2, 2, 3, 4, 5]),
-							)
-								// biome-ignore lint/suspicious/useIterableCallbackReturn: Biome 2.3.1 upgrade
-								.map(() => {
-									while (true) {
-										const weaponId = R.sample(mainWeaponIds, 1)[0]!;
-										if (!includedWeaponIds.includes(weaponId)) {
-											includedWeaponIds.push(weaponId);
-											return weaponId;
-										}
-									}
-								})
-								.join(","),
-				message: faker.number.float(1) > 0.5 ? null : faker.lorem.paragraph(),
-				visibility: id < 105 ? "+1" : id < 110 ? "+2" : id < 115 ? "+2" : "ALL",
-			});
-	}
-
-	return null;
-}
-
 async function tournamentLfgGroups() {
 	const availableUsers = userIdsInAscendingOrderById().slice(300);
 
 	const MAX_GROUP_SIZE = 6;
+
+	// Add admin's friends to tournament LFG so sidebar shows tournament friends
+	for (const friendId of SENDOU_FRIEND_IDS_IN_TOURNAMENT_LFG) {
+		await TournamentLFGRepository.createPlaceholderTeam({
+			tournamentId: 1,
+			userId: friendId,
+		});
+	}
 
 	const tournaments = [1, 2, 3];
 
@@ -2895,12 +2832,14 @@ async function organization() {
 }
 
 const SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS = [150, 151, 152, 153];
-const SENDOU_FRIEND_IDS_AS_TOURNAMENT_SUBS = [100, 101, 102, 103];
+const SENDOU_FRIEND_IDS_IN_TOURNAMENT_LFG = [100, 101];
+const SENDOU_FRIEND_IDS_OTHER = [102, 103];
 
 async function friendships(variation?: SeedVariation | null) {
 	const allFriendIds = [
 		...SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS,
-		...SENDOU_FRIEND_IDS_AS_TOURNAMENT_SUBS,
+		...SENDOU_FRIEND_IDS_IN_TOURNAMENT_LFG,
+		...SENDOU_FRIEND_IDS_OTHER,
 	];
 
 	for (const friendId of allFriendIds) {

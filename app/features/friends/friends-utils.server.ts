@@ -5,6 +5,8 @@ import { SENDOUQ_ACTIVITY_LABEL } from "./friends-constants";
 export function resolveFriendActivity(
 	friendId: number,
 	tournamentName: string | null,
+	teamMemberCount: number | null,
+	tournamentMinTeamSize: number | null,
 ) {
 	const ownGroup = SendouQ.findOwnGroup(friendId);
 
@@ -18,7 +20,7 @@ export function resolveFriendActivity(
 	if (tournamentName) {
 		return {
 			subtitle: tournamentName,
-			badge: `1/${FULL_GROUP_SIZE}`,
+			badge: `${teamMemberCount ?? 1}/${tournamentMinTeamSize ?? FULL_GROUP_SIZE}`,
 		};
 	}
 

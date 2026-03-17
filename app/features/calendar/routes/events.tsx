@@ -72,12 +72,12 @@ export default function EventsPage() {
 				)}
 			</div>
 			{hasNoEventsAtAll ? (
-				<p className="text-lighter text-sm">
+				<p className="no-results mt-4">
 					{t("calendar:events.emptyAll")}{" "}
 					<Link to={CALENDAR_PAGE}>{t("calendar:events.findOnCalendar")}</Link>
 				</p>
 			) : shownEvents.length === 0 ? (
-				<p className="text-lighter text-sm">{t("calendar:events.empty")}</p>
+				<p className="no-results mt-4">{t("calendar:events.empty")}</p>
 			) : (
 				<EventsList events={shownEvents} />
 			)}

@@ -17,3 +17,6 @@ export const SENDOUQ_BEST_OF = 7;
 export const JOIN_CODE_SEARCH_PARAM_KEY = "join";
 
 export const USER_SKILLS_CACHE_KEY = "user-skills";
+
+/** Breakpoint (in px) for the main container after which we switch from 3-column layout to tabs */
+export const IS_Q_LOOKING_MOBILE_BREAKPOINT = 700;
