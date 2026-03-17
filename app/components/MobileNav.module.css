@@ -219,7 +219,15 @@
 .streamsList {
 	list-style: none;
 	margin: 0;
-	padding: 0;
+	padding: var(--s-4);
+
+	& a:not(:first-child) {
+		padding-block: var(--s-2);
+	}
+
+	& a:first-child {
+		padding-block-start: 0;
+	}
 }
 
 .navGrid {
