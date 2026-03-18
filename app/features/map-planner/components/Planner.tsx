@@ -22,7 +22,13 @@ import {
 	Tldraw,
 } from "@tldraw/tldraw";
 import clsx from "clsx";
-import { LogOut } from "lucide-react";
+import {
+	ChevronDown,
+	ChevronLeft,
+	ChevronRight,
+	ChevronUp,
+	LogOut,
+} from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "~/features/theme/core/provider";
@@ -55,11 +61,15 @@ const BACKGROUND_WIDTH = 1127;
 const BACKGROUND_HEIGHT = 634;
 
 export default function Planner() {
-	const { i18n } = useTranslation();
+	const { t, i18n } = useTranslation(["common"]);
 	const { htmlThemeClass } = useTheme();
+
+	const isWide = i18n.language === "fr";
 
 	const [editor, setEditor] = React.useState<Editor | null>(null);
 	const [imgOutlined, setImgOutlined] = React.useState(false);
+	const [topCollapsed, setTopCollapsed] = React.useState(false);
+	const [weaponsCollapsed, setWeaponsCollapsed] = React.useState(false);
 	const [activeDragItem, setActiveDragItem] = React.useState<{
 		src: string;
 		previewPath: string;
@@ -246,9 +256,62 @@ export default function Planner() {
 			onDragStart={handleDragStart}
 			onDragEnd={handleDragEnd}
 		>
-			<StageBackgroundSelector onAddBackground={handleAddBackgroundImage} />
-			<OutlineToggle outlined={imgOutlined} setImgOutlined={setImgOutlined} />
-			<WeaponImageSelector />
+			<div
+				className={clsx(
+					styles.topWrapper,
+					topCollapsed && styles.topWrapperCollapsed,
+				)}
+			>
+				<StageBackgroundSelector onAddBackground={handleAddBackgroundImage} />
+				<button
+					type="button"
+					className={styles.topToggle}
+					onClick={() => setTopCollapsed(!topCollapsed)}
+					aria-label={
+						topCollapsed
+							? t("common:actions.showMore")
+							: t("common:actions.hide")
+					}
+				>
+					{topCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+				</button>
+			</div>
+			<div
+				className={clsx(
+					styles.weaponsWrapper,
+					weaponsCollapsed && styles.weaponsWrapperCollapsed,
+				)}
+			>
+				<div
+					className={clsx(
+						styles.weaponsSection,
+						"scrollbar",
+						isWide && styles.weaponsSectionWide,
+					)}
+				>
+					<OutlineToggle
+						outlined={imgOutlined}
+						setImgOutlined={setImgOutlined}
+					/>
+					<WeaponImageSelector />
+				</div>
+				<button
+					type="button"
+					className={styles.weaponsToggle}
+					onClick={() => setWeaponsCollapsed(!weaponsCollapsed)}
+					aria-label={
+						weaponsCollapsed
+							? t("common:actions.showMore")
+							: t("common:actions.hide")
+					}
+				>
+					{weaponsCollapsed ? (
+						<ChevronRight size={16} />
+					) : (
+						<ChevronLeft size={16} />
+					)}
+				</button>
+			</div>
 			<div style={{ position: "fixed", inset: 0 }}>
 				<Tldraw onMount={handleMount} components={tldrawComponents} />
 			</div>
@@ -291,20 +354,16 @@ function OutlineToggle({
 	};
 
 	return (
-		<div className={styles.outlineToggle}>
-			<SendouButton
-				variant="minimal"
-				onPress={handleClick}
-				className={clsx(
-					styles.outlineToggleButton,
-					outlined && styles.outlineToggleButtonOutlined,
-				)}
-			>
-				{outlined
-					? t("common:actions.outlined")
-					: t("common:actions.noOutline")}
-			</SendouButton>
-		</div>
+		<SendouButton
+			variant="minimal"
+			onPress={handleClick}
+			className={clsx(
+				styles.outlineToggleButton,
+				outlined && styles.outlineToggleButtonOutlined,
+			)}
+		>
+			{outlined ? t("common:actions.outlined") : t("common:actions.noOutline")}
+		</SendouButton>
 	);
 }
 
@@ -353,18 +412,10 @@ function DraggableWeaponButton({
 }
 
 function WeaponImageSelector() {
-	const { t, i18n } = useTranslation(["weapons", "common", "game-misc"]);
-
-	const isWide = i18n.language === "fr";
+	const { t } = useTranslation(["weapons", "common", "game-misc"]);
 
 	return (
-		<div
-			className={clsx(
-				styles.weaponsSection,
-				"scrollbar",
-				isWide && styles.weaponsSectionWide,
-			)}
-		>
+		<>
 			{weaponCategories.map((category) => {
 				return (
 					<details key={category.name}>
@@ -467,7 +518,7 @@ function WeaponImageSelector() {
 					})}
 				</div>
 			</details>
-		</div>
+		</>
 	);
 }
 

@@ -62,8 +62,25 @@ body:has(.planner) header {
 	display: none;
 }
 
-.tl-canvas {
-	background-color: var(--color-bg);
+.tl-theme__dark.tl-theme__dark,
+.tl-theme__light.tl-theme__light {
+	--color-panel: var(--color-bg);
+	--color-divider: var(--color-border);
+	--color-selected: var(--color-text-accent);
+	--color-selected-contrast: var(--color-text-inverse);
+	--color-hint: var(--color-bg-high);
+	--color-muted-2: var(--color-bg-high);
+	--color-background: var(--color-bg);
+}
+
+.tlui-style-panel,
+.tlui-toolbar__tools,
+.tlui-popover__content {
+	border: var(--border-style);
+}
+
+.tlui-style-panel {
+	margin-top: 0 !important;
 }
 
 .tlui-toolbar-container.tlui-toolbar__tools {
