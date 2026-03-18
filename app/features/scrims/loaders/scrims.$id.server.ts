@@ -1,6 +1,8 @@
 import type { LoaderFunctionArgs } from "react-router";
+import { chatAccessible } from "~/features/chat/chat-utils";
 import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { databaseTimestampToDate } from "~/utils/dates";
 import { notFoundIfFalsy } from "../../../utils/remix.server";
 import {
 	type AuthenticatedUser,
@@ -29,7 +31,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	return {
 		post,
 		chatCode:
-			user.roles.includes("STAFF") || participantIds.includes(user.id)
+			(user.roles.includes("STAFF") || participantIds.includes(user.id)) &&
+			chatAccessible({
+				isStaff: user.roles.includes("STAFF"),
+				expiresAfterDays: 1,
+				comparedTo: databaseTimestampToDate(Scrim.getStartTime(post)),
+			})
 				? post.chatCode
 				: undefined,
 		anyUserPrefersNoScreen:

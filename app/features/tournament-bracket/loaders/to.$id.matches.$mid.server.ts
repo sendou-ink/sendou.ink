@@ -2,6 +2,7 @@ import cachified from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import { chatAccessible } from "~/features/chat/chat-utils";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -125,6 +126,18 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		tournament.isOrganizerOrStreamer(user) ||
 		match.players.some((p) => p.id === user?.id);
 
+	const isStaff = user?.roles.includes("STAFF") ?? false;
+	const chatCodeExpired = tournament.ctx.isFinalized
+		? true
+		: !chatAccessible({
+				isStaff,
+				expiresAfterDays: 90,
+				comparedTo: tournament.ctx.startTime,
+			});
+
+	const visibleChatCode =
+		shouldSeeChat && !chatCodeExpired ? match.chatCode : undefined;
+
 	return {
 		match: shouldSeeChat ? match : { ...match, chatCode: undefined },
 		results,
@@ -132,6 +145,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		matchIsOver,
 		endedEarly,
 		noScreen,
-		chatCode: shouldSeeChat ? match.chatCode : undefined,
+		chatCode: visibleChatCode,
 	};
 };

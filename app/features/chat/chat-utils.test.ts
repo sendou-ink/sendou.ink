@@ -1,5 +1,52 @@
+import { sub } from "date-fns";
 import { describe, expect, test } from "vitest";
-import { datePlaceholder, resolveDatePlaceholders } from "./chat-utils";
+import {
+	chatAccessible,
+	datePlaceholder,
+	resolveDatePlaceholders,
+} from "./chat-utils";
+
+describe("chatCodeVisible", () => {
+	test("visible when within expiration window", () => {
+		const result = chatAccessible({
+			isStaff: false,
+			expiresAfterDays: 1,
+			comparedTo: new Date(),
+		});
+
+		expect(result).toBe(true);
+	});
+
+	test("not visible when past expiration window", () => {
+		const result = chatAccessible({
+			isStaff: false,
+			expiresAfterDays: 1,
+			comparedTo: sub(new Date(), { days: 3 }),
+		});
+
+		expect(result).toBe(false);
+	});
+
+	test("staff gets 7 extra days", () => {
+		const result = chatAccessible({
+			isStaff: true,
+			expiresAfterDays: 1,
+			comparedTo: sub(new Date(), { days: 5 }),
+		});
+
+		expect(result).toBe(true);
+	});
+
+	test("staff extra days are not infinite", () => {
+		const result = chatAccessible({
+			isStaff: true,
+			expiresAfterDays: 1,
+			comparedTo: sub(new Date(), { days: 10 }),
+		});
+
+		expect(result).toBe(false);
+	});
+});
 
 describe("datePlaceholder", () => {
 	test("returns correctly formatted placeholder string", () => {

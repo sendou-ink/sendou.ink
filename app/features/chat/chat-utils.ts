@@ -1,4 +1,19 @@
+import { differenceInDays } from "date-fns";
 import type { ChatMessage } from "./chat-types";
+
+const STAFF_EXTRA_DAYS = 7;
+
+export function chatAccessible(args: {
+	isStaff: boolean;
+	expiresAfterDays: number;
+	comparedTo: Date;
+}): boolean {
+	const extraDays = args.isStaff ? STAFF_EXTRA_DAYS : 0;
+	return (
+		differenceInDays(new Date(), args.comparedTo) <=
+		args.expiresAfterDays + extraDays
+	);
+}
 
 const DATE_PLACEHOLDER_PATTERN = /\{\{date:(\d+)\}\}/g;
 
