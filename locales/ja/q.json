@@ -96,6 +96,7 @@
 	"looking.groups.actions.kick": "キックする",
 	"looking.groups.actions.leaveGroup": "グループを出る",
 	"looking.groups.actions.stopLooking": "",
+	"looking.groups.actions.stopLooking.confirm": "",
 	"looking.groups.actions.leaveQ": "列から出る",
 	"looking.groups.actions.goBack": "戻る",
 	"looking.groups.adder.quickAdd": "クイック追加",

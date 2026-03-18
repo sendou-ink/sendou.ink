@@ -25,7 +25,6 @@ const deleteMemberStm = sql.prepare(/*sql*/ `
     and "userId" = @userId
 `);
 
-// xxx: migrate to kysely. note: deleteSub was deleted from here
 export const joinTeam = sql.transaction(
 	({
 		previousTeamId,

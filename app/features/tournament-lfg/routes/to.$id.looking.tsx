@@ -119,9 +119,7 @@ function GroupsView({
 	const ownGroupElement = data.ownGroup ? (
 		<div className="stack md">
 			<LFGGroupCard group={data.ownGroup} ownGroup={data.ownGroup} />
-			<LFGGroupLeaver
-				type={data.ownGroup.members.length === 1 ? "LEAVE_Q" : "LEAVE_GROUP"}
-			/>
+			<LFGGroupLeaver />
 			{!isMobile ? invitedGroupsDesktop : null}
 		</div>
 	) : null;
@@ -449,34 +447,18 @@ function TeamQueueSection() {
 	);
 }
 
-function LFGGroupLeaver({ type }: { type: "LEAVE_GROUP" | "LEAVE_Q" }) {
+function LFGGroupLeaver() {
 	const { t } = useTranslation(["q"]);
-	const fetcher = useFetcher();
-
-	if (type === "LEAVE_GROUP") {
-		return (
-			<FormWithConfirm
-				dialogHeading="Leave this group?"
-				fields={[["_action", "LEAVE_GROUP"]]}
-				submitButtonText="Leave"
-			>
-				<SendouButton variant="minimal-destructive" size="small">
-					{t("q:looking.groups.actions.stopLooking")}
-				</SendouButton>
-			</FormWithConfirm>
-		);
-	}
 
 	return (
-		<fetcher.Form method="POST">
-			<SubmitButton
-				_action="LEAVE_GROUP"
-				variant="minimal-destructive"
-				size="small"
-				state={fetcher.state}
-			>
-				{t("q:looking.groups.actions.leaveQ")}
-			</SubmitButton>
-		</fetcher.Form>
+		<FormWithConfirm
+			dialogHeading={t("q:looking.groups.actions.stopLooking.confirm")}
+			fields={[["_action", "LEAVE_GROUP"]]}
+			submitButtonText={t("q:looking.groups.actions.stopLooking")}
+		>
+			<SendouButton variant="minimal-destructive" size="small">
+				{t("q:looking.groups.actions.stopLooking")}
+			</SendouButton>
+		</FormWithConfirm>
 	);
 }

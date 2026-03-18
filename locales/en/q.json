@@ -96,6 +96,7 @@
 	"looking.groups.actions.kick": "Kick",
 	"looking.groups.actions.leaveGroup": "Leave group",
 	"looking.groups.actions.stopLooking": "Stop looking",
+	"looking.groups.actions.stopLooking.confirm": "Do you want to stop looking (any invitations given/received deleted)?",
 	"looking.groups.actions.leaveQ": "Leave queue",
 	"looking.groups.actions.goBack": "Go back",
 	"looking.groups.adder.quickAdd": "Quick add",

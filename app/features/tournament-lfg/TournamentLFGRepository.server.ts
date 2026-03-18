@@ -8,8 +8,6 @@ import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { randomTeamName } from "~/utils/team-name";
 
-// xxx: handle visibility like scrim post
-
 export function startLooking(teamId: number) {
 	return db
 		.updateTable("TournamentTeam")
@@ -152,12 +150,9 @@ export async function findSubGroups(tournamentId: number) {
 				.$castTo<TournamentLFGMemberObject[]>()
 				.as("members"),
 		])
-		// xxx: is this correct?
 		.where("TournamentTeam.tournamentId", "=", tournamentId)
 		.where("TournamentTeam.isPlaceholder", "=", 1)
 		.where("TournamentTeamMember.isStayAsSub", "=", 1)
-		.groupBy("TournamentTeam.id")
-		.having(({ fn }) => fn.countAll<number>(), "=", 1)
 		.execute();
 
 	return rows;
@@ -364,6 +359,7 @@ export function leaveLfg({
 				.set({ isStayAsSub: 0 })
 				.where("tournamentTeamId", "=", userTeam.tournamentTeamId)
 				.execute();
+			await deleteLikesByTeamId(userTeam.tournamentTeamId, trx);
 			return;
 		}
 

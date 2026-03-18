@@ -73,7 +73,6 @@ import {
 import { useTournament } from "./to.$id";
 export { loader, action };
 
-// xxx: allow promoting members to managers
 export default function TournamentRegisterPage() {
 	const isMounted = useIsMounted();
 	const tournament = useTournament();
