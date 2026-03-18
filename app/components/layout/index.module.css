@@ -244,7 +244,7 @@
 
 @media screen and (max-width: 1474px) {
 	.sidebarFuseSpace {
-		padding-bottom: 90px;
+		padding-bottom: var(--layout-fuse-bottom-height);
 	}
 }
 

@@ -90,6 +90,13 @@ body:has(.planner) header {
 	) !important;
 }
 
+.tlui-toolbar__tools > .tlui-popover {
+	bottom: calc(
+		var(--layout-fuse-bottom-height) +
+		env(safe-area-inset-bottom)
+	) !important;
+}
+
 .tl-watermark_SEE-LICENSE {
 	bottom: calc(
 		var(--layout-fuse-bottom-height) +

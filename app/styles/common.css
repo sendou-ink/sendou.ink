@@ -600,7 +600,7 @@
 }
 
 @media screen and (max-width: 599px) {
-	.publift-widget-sticky_footer-container {
+	body:not(:has(.planner)) .publift-widget-sticky_footer-container {
 		bottom: calc(
 			var(--layout-nav-height) +
 			env(safe-area-inset-bottom)
