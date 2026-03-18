@@ -118,7 +118,7 @@ function QMatchPage() {
 	// biome-ignore lint/correctness/useExhaustiveDependencies: biome migration
 	React.useEffect(() => {
 		setShowWeaponsForm(false);
-	}, [data.reportedWeapons, data.match.id]);
+	}, [JSON.stringify(data.reportedWeapons), data.match.id]);
 
 	const ownMember =
 		data.match.groupAlpha.members.find((m) => m.id === user?.id) ??
@@ -917,7 +917,6 @@ function MapList({
 								addRecentlyReportedWeapon={addRecentlyReportedWeapon}
 								onOwnWeaponSelected={(newReportedWeapon) => {
 									if (!newReportedWeapon) return;
-									// xxx: previously revalidation was suppressed during weapon reporting to avoid race conditions, needs new mechanism with global ChatProvider
 									setOwnWeaponsUsage((val) => {
 										const result = val.filter(
 											(reportedWeapon) =>
