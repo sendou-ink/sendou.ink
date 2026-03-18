@@ -369,7 +369,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 			{title ? <h2 className={styles.title}>{title}</h2> : null}
 			<React.Fragment key={locationKey}>{resolvedChildren}</React.Fragment>
 			{autoSubmit || autoApply ? null : (
-				<div className="mt-4 stack horizontal md mx-auto justify-center">
+				<div className="mt-4 stack horizontal md mx-auto justify-center items-center">
 					<SubmitButton
 						_action={_action}
 						testId={submitButtonTestId}

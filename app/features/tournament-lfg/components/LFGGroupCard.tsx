@@ -92,6 +92,7 @@ export function LFGGroupCard({
 						note={group.note}
 						editable={group.usersRole === "OWNER"}
 						isStayAsSub={currentMember?.isStayAsSub ?? false}
+						memberCount={group.members.length}
 					/>
 				) : null}
 				{action &&
@@ -198,10 +199,12 @@ function LFGTeamNote({
 	note,
 	editable,
 	isStayAsSub,
+	memberCount,
 }: {
 	note: string | null;
 	editable: boolean;
 	isStayAsSub: boolean;
+	memberCount: number;
 }) {
 	const { t } = useTranslation(["common", "q"]);
 	const [editing, setEditing] = React.useState(false);
@@ -217,6 +220,7 @@ function LFGTeamNote({
 			<LFGEditGroupForm
 				note={note}
 				isStayAsSub={isStayAsSub}
+				memberCount={memberCount}
 				stopEditing={() => setEditing(false)}
 			/>
 		);
@@ -256,10 +260,12 @@ function LFGTeamNote({
 function LFGEditGroupForm({
 	note,
 	isStayAsSub,
+	memberCount,
 	stopEditing,
 }: {
 	note: string | null;
 	isStayAsSub: boolean;
+	memberCount: number;
 	stopEditing: () => void;
 }) {
 	const { t } = useTranslation(["common"]);
@@ -282,7 +288,7 @@ function LFGEditGroupForm({
 			{({ FormField }) => (
 				<>
 					<FormField name="note" />
-					<FormField name="stayAsSub" />
+					{memberCount === 1 ? <FormField name="stayAsSub" /> : null}
 				</>
 			)}
 		</SendouForm>
