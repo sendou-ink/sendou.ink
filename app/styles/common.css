@@ -124,6 +124,14 @@
 		background: transparent;
 		margin: auto 0;
 		outline: none;
+
+		&:-webkit-autofill,
+		&:-webkit-autofill:hover,
+		&:-webkit-autofill:focus {
+			-webkit-text-fill-color: var(--color-text);
+			-webkit-background-clip: text;
+			caret-color: var(--color-text);
+		}
 	}
 
 	.input-addon {
@@ -148,6 +156,14 @@
 		height: var(--field-size);
 		font-size: var(--font-sm);
 		outline: none;
+
+		&:-webkit-autofill,
+		&:-webkit-autofill:hover,
+		&:-webkit-autofill:focus {
+			-webkit-text-fill-color: var(--color-text);
+			-webkit-background-clip: text;
+			caret-color: var(--color-text);
+		}
 
 		&::placeholder {
 			color: var(--color-text-high);

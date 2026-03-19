@@ -37,14 +37,6 @@ export const action: ActionFunction = async ({ request }) => {
 
 			await refreshSendouQInstance();
 
-			const createdGroup = SendouQ.findOwnGroup(user.id);
-			if (createdGroup?.chatCode) {
-				setGroupChatMetadata({
-					chatCode: createdGroup.chatCode,
-					members: createdGroup.members,
-				});
-			}
-
 			return redirect(
 				data.direct === "true" ? SENDOUQ_LOOKING_PAGE : SENDOUQ_PREPARING_PAGE,
 			);

@@ -11,7 +11,7 @@ import {
 	waitForPOSTResponse,
 } from "~/utils/playwright";
 import { createFormHelpers } from "~/utils/playwright-form";
-import { SETTINGS_PAGE } from "~/utils/urls";
+import { CALENDAR_PAGE, SETTINGS_PAGE } from "~/utils/urls";
 
 test.describe("Settings", () => {
 	test("updates 'disableBuildAbilitySorting'", async ({ page }) => {
@@ -56,12 +56,11 @@ test.describe("Settings", () => {
 
 		await navigate({
 			page,
-			url: "/",
+			url: CALENDAR_PAGE,
 		});
 
-		const tournamentCard = page.getByTestId("tournament-card").first();
-		const timeElement = tournamentCard.locator("time");
-		const initialTime = await timeElement.textContent();
+		const clockHeader = page.locator("[class*='clockHeader']").first();
+		const initialTime = await clockHeader.locator("span").first().textContent();
 
 		expect(initialTime).toMatch(/AM|PM/);
 
@@ -75,10 +74,10 @@ test.describe("Settings", () => {
 
 		await navigate({
 			page,
-			url: "/",
+			url: CALENDAR_PAGE,
 		});
 
-		const newTime = await tournamentCard.locator("time").textContent();
+		const newTime = await clockHeader.locator("span").first().textContent();
 
 		expect(newTime).not.toMatch(/AM|PM/);
 		expect(newTime).not.toBe(initialTime);

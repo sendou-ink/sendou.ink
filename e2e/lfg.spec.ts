@@ -17,7 +17,7 @@ test.describe("LFG", () => {
 			url: LFG_PAGE,
 		});
 
-		await page.getByTestId("anything-adder-menu-button").click();
+		await page.getByTestId("anything-adder-menu-button").first().click();
 		await page.getByTestId("menu-item-lfgPost").click();
 
 		await page.getByLabel("Text").fill("looking for a cool team");
@@ -38,14 +38,13 @@ test.describe("LFG", () => {
 		});
 
 		// create post with Japanese and Korean
-		await page.getByTestId("anything-adder-menu-button").click();
+		await page.getByTestId("anything-adder-menu-button").first().click();
 		await page.getByTestId("menu-item-lfgPost").click();
 
 		await page.getByLabel("Text").fill("looking for Japanese/Korean team");
 
-		const languageSelect = page.getByLabel("Languages");
-		await languageSelect.selectOption("ja");
-		await languageSelect.selectOption("ko");
+		await page.getByLabel("日本語").check();
+		await page.getByLabel("한국어").check();
 
 		await submit(page);
 
@@ -62,18 +61,17 @@ test.describe("LFG", () => {
 		});
 
 		// create post with Dansk
-		await page.getByTestId("anything-adder-menu-button").click();
+		await page.getByTestId("anything-adder-menu-button").first().click();
 		await page.getByTestId("menu-item-lfgPost").click();
 
 		await page.getByLabel("Text").fill("test post for language editing");
 
-		const languageSelect = page.getByLabel("Languages");
-		await languageSelect.selectOption("da");
+		await page.getByLabel("Dansk").check();
 
 		await submit(page);
 
 		// wait for redirect to LFG page & verify the language is displayed
-		await expect(page.getByText("DA / EN", { exact: true })).toBeVisible();
+		await expect(page.getByText("EN / DA", { exact: true })).toBeVisible();
 		await expect(page.getByTestId("add-filter-button")).toBeVisible();
 		await expect(
 			page.getByText("test post for language editing"),
@@ -81,8 +79,8 @@ test.describe("LFG", () => {
 
 		// remove Dansk and add Spanish
 		await page.getByRole("link", { name: "Edit" }).first().click();
-		await page.getByText("Dansk").locator("..").getByRole("button").click();
-		await languageSelect.selectOption("es");
+		await page.getByLabel("Dansk").uncheck();
+		await page.getByLabel("Español").check();
 
 		await submit(page);
 
@@ -105,13 +103,12 @@ test.describe("LFG", () => {
 		});
 
 		// create post with Japanese
-		await page.getByTestId("anything-adder-menu-button").click();
+		await page.getByTestId("anything-adder-menu-button").first().click();
 		await page.getByTestId("menu-item-lfgPost").click();
 
 		await page.getByLabel("Text").fill("Japanese speaking team");
 
-		const languageSelect = page.getByLabel("Languages");
-		await languageSelect.selectOption("ja");
+		await page.getByLabel("日本語").check();
 
 		await submit(page);
 

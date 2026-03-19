@@ -331,6 +331,7 @@
 	"settings.notifications.permissionDenied": "Push notifications were denied. Check your browser settings to re-enable",
 	"settings.clockFormat": "Clock format",
 	"settings.theme": "Theme",
+	"settings.themeInfo": "This also sets the colors of your user page to others",
 	"settings.locales": "Language",
 	"settings.preferences": "Preferences",
 	"settings.customTheme.colors": "Colors",

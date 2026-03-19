@@ -20,7 +20,7 @@ test.describe("Associations", () => {
 			url: "/",
 		});
 
-		await page.getByTestId("anything-adder-menu-button").click();
+		await page.getByTestId("anything-adder-menu-button").first().click();
 		await page.getByTestId("menu-item-association").click();
 
 		await page.getByLabel("Name").fill("My Association");

@@ -22,5 +22,8 @@ export const logger = {
 	info: (...args: unknown[]) => console.log(...formatLog(...args)),
 	error: (...args: unknown[]) => console.error(...formatLog(...args)),
 	warn: (...args: unknown[]) => console.warn(...formatLog(...args)),
-	debug: (...args: unknown[]) => console.debug(...formatLog(...args)),
+	debug: (...args: unknown[]) => {
+		if (process.env.NODE_ENV === "production") return;
+		console.debug(...formatLog(...args));
+	},
 };

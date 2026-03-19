@@ -10,6 +10,7 @@ import {
 	seed,
 	submit,
 	test,
+	waitForPOSTResponse,
 } from "~/utils/playwright";
 import { createFormHelpers } from "~/utils/playwright-form";
 import { userEditProfilePage, userPage } from "~/utils/urls";
@@ -133,14 +134,18 @@ test.describe("User page", () => {
 		await baseHueSlider.fill("120");
 
 		// save
-		await page.getByRole("button", { name: "Save" }).first().click();
+		await waitForPOSTResponse(page, () =>
+			page.getByRole("button", { name: "Save" }).first().click(),
+		);
 		await page.reload();
 
 		// verify custom theme was applied
 		await expect(hasCustomTheme()).resolves.toBe(true);
 
 		// reset
-		await page.getByRole("button", { name: "Reset" }).first().click();
+		await waitForPOSTResponse(page, () =>
+			page.getByRole("button", { name: "Reset" }).first().click(),
+		);
 		await page.reload();
 
 		// verify custom theme was removed

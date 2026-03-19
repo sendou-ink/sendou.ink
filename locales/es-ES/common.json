@@ -333,6 +333,7 @@
 	"settings.notifications.permissionDenied": "El permiso de notificaciones fue denegado. Actívalo en la configuración de tu navegador.",
 	"settings.clockFormat": "Formato de hora",
 	"settings.theme": "",
+	"settings.themeInfo": "",
 	"settings.locales": "",
 	"settings.preferences": "",
 	"settings.customTheme.colors": "",

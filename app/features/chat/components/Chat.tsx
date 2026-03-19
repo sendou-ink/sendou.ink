@@ -211,6 +211,7 @@ export function Chat({
 								isDisabled={sendingMessagesDisabled}
 								aria-label={t("common:chat.send")}
 								icon={<SendHorizontal size={16} />}
+								testId="chat-submit-button"
 							/>
 						</div>
 					</form>

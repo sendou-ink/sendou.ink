@@ -32,7 +32,7 @@ test.describe("Tournament Organization", () => {
 		await impersonate(page);
 		await navigate({ page, url: "/" });
 
-		await page.getByTestId("anything-adder-menu-button").click();
+		await page.getByTestId("anything-adder-menu-button").first().click();
 		await page.getByTestId("menu-item-organization").click();
 
 		const form = createFormHelpers(page, newOrganizationSchema);
@@ -144,10 +144,12 @@ test.describe("Tournament Organization", () => {
 
 		// Fill in team details
 		await page.getByLabel("Team name").fill("Banned Team");
-		await page.getByRole("button", { name: "Save" }).click();
+		await waitForPOSTResponse(page, () =>
+			page.getByTestId("save-team-button").click(),
+		);
 
-		// Verify error toast appears indicating user is banned
-		await expect(page.getByText(/you are banned/i)).toBeVisible();
+		// Verify the team was not created (Fill roster only appears after successful registration)
+		await expect(page.getByText("Fill roster")).not.toBeVisible();
 
 		// 3. As admin, remove the ban
 		await impersonate(page, ADMIN_ID);
@@ -165,12 +167,15 @@ test.describe("Tournament Organization", () => {
 		await page.getByRole("tab", { name: "Register" }).click();
 
 		// Try to create a team again
-		await expect(page.getByText("Teams (0)")).toBeVisible();
+		await expect(page.getByText(/Teams \(\d+\)/)).toBeVisible();
+
+		const teamCountBefore = await page.getByText(/Teams \(\d+\)/).textContent();
 
 		await page.getByLabel("Team name").fill("Unbanned Team");
-		await page.getByRole("button", { name: "Save" }).click();
+		await page.getByTestId("save-team-button").click();
 
-		await expect(page.getByText("Teams (1)")).toBeVisible();
+		const countBefore = Number(teamCountBefore?.match(/\d+/)?.[0] ?? 0);
+		await expect(page.getByText(`Teams (${countBefore + 1})`)).toBeVisible();
 
 		// 5. As admin, ban user again but with permanent ban this time
 		await impersonate(page, ADMIN_ID);

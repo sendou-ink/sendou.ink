@@ -9,6 +9,7 @@ import {
 } from "react-aria-components";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { SendouButton } from "./Button";
 import styles from "./Toast.module.css";
 
@@ -33,7 +34,10 @@ export function SendouToastRegion() {
 	const { t } = useTranslation(["common"]);
 
 	return (
-		<ToastRegion queue={toastQueue} className={styles.toastRegion}>
+		<ToastRegion
+			queue={toastQueue}
+			className={clsx(styles.toastRegion, { hidden: IS_E2E_TEST_RUN })}
+		>
 			{({ toast }) => (
 				<Toast
 					style={{ viewTransitionName: toast.key }}

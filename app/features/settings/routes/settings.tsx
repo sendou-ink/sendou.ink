@@ -131,6 +131,7 @@ export default function SettingsPage() {
 				</Divider>
 				<ThemeSelector />
 				<CustomColorSelector />
+				<FormMessage type="info">{t("common:settings.themeInfo")}</FormMessage>
 			</div>
 		</Main>
 	);

@@ -329,6 +329,7 @@ export function Layout({
 						<SideNavCollapseButton
 							className={styles.sideNavModalTrigger}
 							showNotificationDot={!sideNavModalOpen && unseenIds.length > 0}
+							testId="sidenav-modal-trigger"
 						/>
 						<ModalOverlay className={styles.sideNavModalOverlay} isDismissable>
 							<Modal className={styles.sideNavModal}>
@@ -364,6 +365,7 @@ export function Layout({
 						onToggle={() => setSideNavCollapsed(!sideNavCollapsed)}
 						className={styles.sideNavCollapseButton}
 						showNotificationDot={sideNavCollapsed && unseenIds.length > 0}
+						testId="sidenav-collapse-button"
 					/>
 					<TopNavMenus />
 					<TopRightButtons
@@ -460,13 +462,15 @@ function SideNavCollapseButton({
 	onToggle,
 	className,
 	showNotificationDot,
+	testId,
 }: {
 	onToggle?: () => void;
 	className?: string;
 	showNotificationDot?: boolean;
+	testId?: string;
 }) {
 	return (
-		<div className={styles.sideNavCollapseButtonContainer}>
+		<div className={styles.sideNavCollapseButtonContainer} data-testid={testId}>
 			<SendouButton
 				className={className}
 				variant="minimal"

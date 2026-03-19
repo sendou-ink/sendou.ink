@@ -20,7 +20,7 @@ test.describe("New team creation", () => {
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({ page, url: "/" });
 
-		await page.getByTestId("anything-adder-menu-button").click();
+		await page.getByTestId("anything-adder-menu-button").first().click();
 		await page.getByTestId("menu-item-team").click();
 
 		await expect(page).toHaveURL(/t\/new/);

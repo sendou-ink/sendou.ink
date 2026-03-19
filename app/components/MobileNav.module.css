@@ -148,6 +148,8 @@
 	flex: 1;
 	overflow-y: auto;
 	padding: var(--s-2);
+	display: flex;
+	flex-direction: column;
 }
 
 .panelDialog {
@@ -316,12 +318,14 @@
 	align-items: center;
 	gap: 2px;
 	width: fit-content;
-	margin: var(--s-4) auto;
-	font-size: var(--font-2xs);
+	margin-top: auto;
+	margin-inline: auto;
+	margin-bottom: var(--s-4);
+	font-size: var(--font-xs);
 	color: var(--color-text-high);
 	text-decoration: none;
-	height: var(--selector-size);
-	padding: 0 var(--s-3);
+	height: var(--field-size);
+	padding: 0 var(--s-4);
 	background-color: var(--color-bg-high);
 	border-radius: var(--radius-selector);
 

@@ -333,6 +333,7 @@
 	"settings.notifications.permissionDenied": "Les notifications push ont été refusées. Vérifiez les paramètres de votre navigateur pour les réactiver",
 	"settings.clockFormat": "",
 	"settings.theme": "",
+	"settings.themeInfo": "",
 	"settings.locales": "",
 	"settings.preferences": "",
 	"settings.customTheme.colors": "",
