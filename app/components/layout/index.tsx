@@ -128,12 +128,16 @@ function useNavOffset(headerRef: React.RefObject<HTMLElement | null>) {
 
 	const MOBILE_BREAKPOINT = 600;
 	const NAV_HEIGHT_FALLBACK = 55;
+	const SCROLL_THRESHOLD_PX = 200;
+
+	const scrollAccumulator = React.useRef(0);
 
 	React.useEffect(() => {
 		const handleScroll = () => {
 			if (window.innerWidth >= MOBILE_BREAKPOINT) {
 				setNavOffset(0);
 				lastScrollY.current = window.scrollY;
+				scrollAccumulator.current = 0;
 				return;
 			}
 
@@ -141,10 +145,32 @@ function useNavOffset(headerRef: React.RefObject<HTMLElement | null>) {
 			const currentScrollY = window.scrollY;
 			const scrollDelta = currentScrollY - lastScrollY.current;
 
-			setNavOffset((prevOffset) => {
-				const newOffset = prevOffset - scrollDelta;
-				return Math.max(-navHeight, Math.min(0, newOffset));
-			});
+			const directionChanged =
+				(scrollDelta > 0 && scrollAccumulator.current < 0) ||
+				(scrollDelta < 0 && scrollAccumulator.current > 0);
+
+			if (directionChanged) {
+				scrollAccumulator.current = 0;
+			}
+
+			scrollAccumulator.current += scrollDelta;
+
+			if (Math.abs(scrollAccumulator.current) >= SCROLL_THRESHOLD_PX) {
+				const overflow =
+					scrollAccumulator.current > 0
+						? scrollAccumulator.current - SCROLL_THRESHOLD_PX
+						: scrollAccumulator.current + SCROLL_THRESHOLD_PX;
+
+				setNavOffset((prevOffset) => {
+					const newOffset = prevOffset - overflow;
+					return Math.max(-navHeight, Math.min(0, newOffset));
+				});
+
+				scrollAccumulator.current =
+					scrollAccumulator.current > 0
+						? SCROLL_THRESHOLD_PX
+						: -SCROLL_THRESHOLD_PX;
+			}
 
 			lastScrollY.current = currentScrollY;
 		};
