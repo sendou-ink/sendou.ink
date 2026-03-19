@@ -124,6 +124,6 @@ Will we make it through another Splatoon 3 North American League without any new
 
 The only way to know is to stick with us and watch as 2026 keeps proving that it’s *the* year for Competitive Splatoon\!
 
-Original Posting Date: March 19, 2026
+Original Posting Date: March 19, 2026 at [Splatoon Stronghold](https://www.splatoonstronghold.com/news/na-league-returns-for-2026)
 
 Written and formatted for publication by [YELLOW](https://bsky.app/profile/great-hero-yellow.bsky.social).
