@@ -1,0 +1,137 @@
+.controls {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.selects {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--s-4);
+}
+
+.ability {
+	position: absolute;
+}
+
+.apLabel {
+	display: flex;
+	justify-content: center;
+	gap: var(--s-1-5);
+}
+
+.grid {
+	column-gap: var(--s-2);
+	display: grid;
+	max-height: 60vh;
+	overflow: auto;
+	row-gap: var(--s-2);
+	width: 100%;
+}
+
+.hp {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+}
+
+.tableHeader {
+	align-items: center;
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-box);
+	display: flex;
+	flex-direction: column;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	gap: var(--s-1);
+	height: 100%;
+	left: 0;
+	outline: 5px solid var(--color-bg);
+	padding-block: var(--s-2);
+	padding-inline: var(--s-2);
+	position: sticky;
+	text-align: center;
+	top: 0;
+	white-space: nowrap;
+	width: 100%;
+}
+
+.weaponImage {
+	min-width: 24px;
+}
+
+.distance {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	margin-block-start: var(--s-0-5);
+}
+
+.receiverButton {
+	all: unset;
+	cursor: pointer;
+	border-radius: var(--radius-field);
+	width: var(--field-size);
+	height: var(--field-size);
+}
+
+.receiverButton:focus-visible {
+	outline: var(--focus-ring);
+	outline-offset: 1px;
+}
+
+.receiverImage {
+	padding: var(--s-2);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg);
+}
+
+.tableCard {
+	display: grid;
+	width: 100%;
+	height: 100%;
+	padding: var(--s-2);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	place-items: center;
+}
+
+.tableCardResults {
+	display: grid;
+	column-gap: var(--s-2);
+	grid-template-columns: 1fr 1fr;
+	padding-inline: var(--s-2);
+}
+
+.abbr {
+	color: var(--color-text-high);
+	font-weight: var(--weight-bold);
+	text-decoration: none;
+}
+
+.multiplier {
+	color: var(--color-text-accent);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	letter-spacing: 0.5px;
+	margin-block-start: var(--s-2);
+}
+
+.bottomContainer {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.patch {
+	border-radius: var(--radius-selector);
+	background-color: var(--color-accent-low);
+	color: var(--color-accent-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	padding-inline: var(--s-2);
+	height: var(--selector-size-sm);
+	display: flex;
+	align-items: center;
+}

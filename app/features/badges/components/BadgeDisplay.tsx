@@ -1,9 +1,9 @@
 import clsx from "clsx";
+import { Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Badge } from "~/components/Badge";
 import { SendouButton } from "~/components/elements/Button";
-import { TrashIcon } from "~/components/icons/Trash";
 import type { Tables } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-constants";
 import { usePagination } from "~/hooks/usePagination";
@@ -96,7 +96,7 @@ export function BadgeDisplay({
 					{badgeExplanationText(t, bigBadge)}
 					{onChange ? (
 						<SendouButton
-							icon={<TrashIcon />}
+							icon={<Trash />}
 							variant="minimal-destructive"
 							onPress={() =>
 								onChange(

@@ -1,4 +1,4 @@
-import { Button } from "react-aria-components";
+import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useUser } from "~/features/auth/core/user";
 import {
@@ -15,14 +15,14 @@ import {
 	TOURNAMENT_NEW_PAGE,
 	userNewBuildPage,
 } from "~/utils/urls";
+import { SendouButton } from "../elements/Button";
 import {
 	SendouMenu,
 	SendouMenuItem,
 	type SendouMenuItemProps,
 } from "../elements/Menu";
-import { PlusIcon } from "../icons/Plus";
 
-export function AnythingAdder() {
+export function AnythingAdder({ compact }: { compact?: boolean }) {
 	const { t } = useTranslation(["common"]);
 	const user = useUser();
 
@@ -101,13 +101,16 @@ export function AnythingAdder() {
 
 	return (
 		<SendouMenu
+			placement="bottom right"
 			trigger={
-				<Button
-					className="layout__header__button"
+				<SendouButton
+					size="small"
+					icon={<Plus />}
+					shape={compact ? "square" : undefined}
 					data-testid="anything-adder-menu-button"
 				>
-					<PlusIcon className="layout__header__button__icon" />
-				</Button>
+					{compact ? undefined : `${t("common:actions.addNew")}…`}
+				</SendouButton>
 			}
 		>
 			{items.map((item) => (

@@ -1,9 +1,8 @@
+import { Plus, Trash } from "lucide-react";
 import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
-import { PlusIcon } from "~/components/icons/Plus";
-import { TrashIcon } from "~/components/icons/Trash";
 import type { FormFieldProps } from "../types";
 import styles from "./ArrayFormField.module.css";
 import { useTranslatedTexts } from "./FormFieldWrapper";
@@ -90,7 +89,7 @@ export function ArrayFormField({
 						</div>
 						{count > min ? (
 							<SendouButton
-								icon={<TrashIcon />}
+								icon={<Trash />}
 								aria-label="Remove item"
 								size="small"
 								variant="minimal-destructive"
@@ -108,7 +107,7 @@ export function ArrayFormField({
 			) : null}
 			<SendouButton
 				size="small"
-				icon={<PlusIcon />}
+				icon={<Plus />}
 				onPress={handleAdd}
 				isDisabled={count >= max}
 				className="m-0-auto"
@@ -139,7 +138,8 @@ function ArrayItemFieldset({
 				<legend className={styles.headerLabel}>#{index + 1}</legend>
 				{canRemove ? (
 					<SendouButton
-						icon={<TrashIcon />}
+						shape="circle"
+						icon={<Trash />}
 						aria-label="Remove item"
 						size="small"
 						variant="minimal-destructive"

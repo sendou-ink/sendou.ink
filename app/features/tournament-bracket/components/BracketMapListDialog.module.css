@@ -26,20 +26,20 @@
 	width: 2rem;
 	height: 2rem;
 	border-radius: 50%;
-	border: 2px solid var(--bg-lightest-solid);
-	background-color: var(--bg-lighter);
-	color: var(--text);
+	border: 2px solid var(--color-bg-higher);
+	background-color: var(--color-bg-high);
+	color: var(--color-text);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 	cursor: pointer;
 	transition: background-color 0.2s ease;
 }
 
-.roundButton:hover:not(:disabled) {
-	background-color: var(--bg-lightest);
+.roundButton:hover:not(:disabled):not(.roundButtonActive) {
+	background-color: var(--color-bg-higher);
 }
 
 .roundButton:disabled {
@@ -48,8 +48,8 @@
 }
 
 .roundButton:focus-visible {
-	outline: 2px solid var(--theme);
-	outline-offset: 2px;
+	outline: var(--focus-ring);
+	outline-offset: 1px;
 }
 
 .roundButton svg {
@@ -58,26 +58,21 @@
 }
 
 .roundButtonActive {
-	background-color: var(--theme);
-	color: var(--button-text);
-	border-color: var(--theme);
-}
-
-.roundButtonActive:hover {
-	background-color: var(--theme-transparent);
-	color: var(--text);
+	background-color: var(--color-text-accent);
+	color: var(--color-text-inverse);
+	border-color: var(--color-text-accent);
 }
 
 .roundButtonNumber {
 	cursor: default;
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 }
 
 .roundControlsDivider {
 	width: 3px;
 	height: 2rem;
-	border-radius: var(--rounded);
-	background-color: var(--bg-lightest-solid);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-higher);
 	margin-inline: var(--s-1);
 }
 
@@ -94,8 +89,8 @@
 .mapSelectContainer {
 	display: flex;
 	gap: var(--s-2);
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 	align-items: center;
 	position: relative;
 	flex: 1;
@@ -114,9 +109,8 @@
 .mapSelectIcon {
 	width: 1.25rem;
 	height: 1.25rem;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	margin-left: auto;
-	stroke-width: 2px;
 }
 
 .infoPopover {
@@ -128,11 +122,11 @@
 }
 
 .patternCode {
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 	padding: 2px 6px;
-	border-radius: var(--rounded-sm);
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	border-radius: var(--radius-field);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	display: inline-block;
 	min-width: 4.5rem;
 	text-align: center;
@@ -142,7 +136,7 @@
 	display: flex;
 	gap: var(--s-2);
 	align-items: baseline;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	margin-block: var(--s-2);
 }
 

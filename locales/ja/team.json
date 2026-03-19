@@ -42,6 +42,7 @@
 	"forms.info.tag": "",
 	"forms.errors.duplicateName": "そのチーム名はすでに使用されています",
 	"forms.errors.noOnlySpecialCharacters": "",
+	"forms.customTheme.header": "",
 	"roster.teamFull": "チームは満員です",
 	"roster.inviteLink.header": "招待リンクを共有する",
 	"roster.members.header": "メンバー",

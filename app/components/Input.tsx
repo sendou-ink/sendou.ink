@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import styles from "./Input.module.css";
 
 export function Input({
 	name,
@@ -20,8 +21,10 @@ export function Input({
 	value,
 	placeholder,
 	onChange,
+	onKeyDown,
 	disableAutoComplete = false,
 	readOnly,
+	ref,
 }: {
 	name?: string;
 	id?: string;
@@ -42,17 +45,21 @@ export function Input({
 	value?: string;
 	placeholder?: string;
 	onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+	onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 	disableAutoComplete?: boolean;
 	readOnly?: boolean;
+	ref?: React.Ref<HTMLInputElement>;
 }) {
 	return (
 		<div
-			className={clsx("input-container", className, {
-				"input__read-only": readOnly,
+			className={clsx(styles.container, className, {
+				[styles.readOnly]: readOnly,
 			})}
 		>
-			{leftAddon ? <div className="input-addon">{leftAddon}</div> : null}
+			{leftAddon ? <div className={styles.addon}>{leftAddon}</div> : null}
 			<input
+				ref={ref}
+				className="in-container"
 				name={name}
 				id={id}
 				minLength={minLength}
@@ -65,6 +72,7 @@ export function Input({
 				data-testid={testId}
 				value={value}
 				onChange={onChange}
+				onKeyDown={onKeyDown}
 				aria-label={ariaLabel}
 				required={required}
 				placeholder={placeholder}

@@ -1,0 +1,8 @@
+.eventsListHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: var(--s-2);
+	margin-block-end: var(--s-2);
+}

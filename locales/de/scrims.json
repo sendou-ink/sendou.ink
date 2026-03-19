@@ -58,6 +58,7 @@
 	"forms.text.title": "Text",
 	"forms.visibility.title": "Sichtbarkeit",
 	"forms.visibility.public": "Öffentlich",
+	"forms.visibility.friends": "",
 	"forms.visibility.noneAvailable": "Keine Assoziationen verfügkar. Erstelle eine, um in einer kleineren Gruppe nach einem Scrim zu suchen.",
 	"forms.notFoundVisibility.title": "Wenn kein Scrim gefunden wurde bis",
 	"forms.notFoundVisibility.explanation": "Leer lassen, wenn sich die Sichtbarkeit deines Posts nicht mit der Zeit ändern soll.",

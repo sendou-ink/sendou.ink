@@ -193,5 +193,10 @@
 	"builds.sorting.PUBLIC_BUILD": "Публичные сборки",
 	"builds.sorting.PRIVATE_BUILD": "Частные сборки",
 	"commissions.open": "",
-	"commissions.closed": ""
+	"commissions.closed": "",
+	"mutualFriends": "",
+	"mutualFriends.count_one": "",
+	"mutualFriends.count_few": "",
+	"mutualFriends.count_many": "",
+	"mutualFriends.count_other": ""
 }

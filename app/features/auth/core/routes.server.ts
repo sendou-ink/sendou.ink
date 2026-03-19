@@ -3,8 +3,9 @@ import type { ActionFunction, LoaderFunction } from "react-router";
 import { redirect } from "react-router";
 import { z } from "zod";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
+import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { requireRole } from "~/modules/permissions/guards.server";
+import { isAdmin, isStaff } from "~/modules/permissions/utils";
 import { logger } from "~/utils/logger";
 import {
 	canAccessLohiEndpoint,
@@ -74,18 +75,35 @@ export const logInAction: ActionFunction = async ({ request }) => {
 
 export const impersonateAction: ActionFunction = async ({ request }) => {
 	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
-		requireRole("ADMIN");
+		const user = requireUser();
+		if (!user.roles.includes("ADMIN") && !user.roles.includes("DEV")) {
+			throw new Response("Forbidden", { status: 403 });
+		}
+
+		if (user.roles.includes("DEV") && !user.roles.includes("ADMIN")) {
+			const url = new URL(request.url);
+			const targetId = Number(url.searchParams.get("id"));
+			if (isAdmin({ id: targetId }) || isStaff({ id: targetId })) {
+				throw new Response("Forbidden", { status: 403 });
+			}
+		}
 	}
 
 	const session = await authSessionStorage.getSession(
 		request.headers.get("Cookie"),
 	);
 
+	const realUserId = session.get(SESSION_KEY);
+
 	const url = new URL(request.url);
 	const rawId = url.searchParams.get("id");
 
 	const userId = Number(url.searchParams.get("id"));
 	if (!rawId || Number.isNaN(userId)) throw new Response(null, { status: 400 });
+
+	logger.info(
+		`Impersonation: user ${realUserId} started impersonating user ${userId}`,
+	);
 
 	session.set(IMPERSONATED_SESSION_KEY, userId);
 
@@ -97,6 +115,13 @@ export const impersonateAction: ActionFunction = async ({ request }) => {
 export const stopImpersonatingAction: ActionFunction = async ({ request }) => {
 	const session = await authSessionStorage.getSession(
 		request.headers.get("Cookie"),
+	);
+
+	const realUserId = session.get(SESSION_KEY);
+	const impersonatedUserId = session.get(IMPERSONATED_SESSION_KEY);
+
+	logger.info(
+		`Impersonation: user ${realUserId} stopped impersonating user ${impersonatedUserId}`,
 	);
 
 	session.unset(IMPERSONATED_SESSION_KEY);

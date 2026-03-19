@@ -19,6 +19,25 @@ export default defineConfig(({ mode }) => {
 			},
 		},
 		plugins: [
+			{
+				// Wraps CSS modules in @layer components so utility classes always win.
+				// The layer order declaration is prepended to each module because in Vite
+				// dev mode, module <style> tags are injected before global stylesheets —
+				// without it the implicit first @layer components would get lowest priority.
+				name: "css-modules-layer",
+				enforce: "pre",
+				transform(code, id) {
+					if (!id.endsWith(".module.css")) return;
+					const layerOrder =
+						"@layer reset, base, elements, components, utilities;";
+					const layer = id.includes("/components/elements/")
+						? "elements"
+						: "components";
+					return {
+						code: `${layerOrder}\n@layer ${layer} {\n${code}\n}`,
+					};
+				},
+			},
 			reactRouter(),
 			babel({
 				filter: /\.[jt]sx?$/,

@@ -12,7 +12,7 @@ import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import { deleteSub } from "~/features/tournament-subs/queries/deleteSub.server";
+import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -83,7 +83,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 				tournamentId,
 			});
-			deleteSub({ tournamentId, userId: data.userId });
+			await TournamentLFGRepository.leaveLfg({
+				userId: data.userId,
+				tournamentId,
+			});
 
 			ShowcaseTournaments.addToCached({
 				tournamentId,
@@ -247,6 +250,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"User has no friend code set",
 			);
 
+			await TournamentLFGRepository.leaveLfg({
+				userId: data.userId,
+				tournamentId,
+			});
 			joinTeam({
 				userId: data.userId,
 				newTeamId: team.id,

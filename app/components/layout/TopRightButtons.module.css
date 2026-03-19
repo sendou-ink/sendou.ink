@@ -1,0 +1,105 @@
+.container {
+	display: flex;
+	gap: var(--s-4);
+	margin-left: auto;
+}
+
+.supportWrapper {
+	@media screen and (max-width: 599px) {
+		display: none;
+	}
+}
+
+.supportWrapperCompact {
+	display: none;
+}
+
+.addNewWrapperCompact {
+	display: none;
+}
+
+@media screen and (min-width: 600px) {
+	@container (max-width: 600px) {
+		.supportWrapper {
+			display: none;
+		}
+
+		.supportWrapperCompact {
+			display: block;
+		}
+	}
+
+	@container (max-width: 475px) {
+		.addNewWrapper {
+			display: none;
+		}
+
+		.addNewWrapperCompact {
+			display: block;
+		}
+
+		.searchAndAddContainer {
+			grid-template-columns: 2fr 1fr;
+		}
+	}
+}
+
+.searchAndAddContainer {
+	display: grid;
+	grid-template-columns: 2fr max-content;
+	gap: var(--s-2);
+}
+
+.searchWrapper > button,
+.addNewWrapper > button {
+	width: 100%;
+}
+
+.chatButtonWrapperPersistent {
+	display: none;
+	position: relative;
+
+	@media screen and (min-width: 1000px) {
+		display: block;
+	}
+
+	& > button {
+		width: 100%;
+	}
+}
+
+.chatButtonWrapperModal {
+	display: none;
+	position: relative;
+
+	@media screen and (min-width: 600px) and (max-width: 999px) {
+		display: block;
+	}
+
+	& > button {
+		width: 100%;
+	}
+}
+
+.chatUnreadBadge {
+	position: absolute;
+	top: -6px;
+	right: -6px;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-inverse);
+	background-color: var(--color-text-accent);
+	min-width: 18px;
+	height: 18px;
+	padding: 0 var(--s-1);
+	border-radius: 9px;
+	display: grid;
+	place-items: center;
+	pointer-events: none;
+}
+
+@media screen and (max-width: 1000px) {
+	.searchAndAddContainer {
+		grid-template-columns: 1fr 1fr;
+	}
+}

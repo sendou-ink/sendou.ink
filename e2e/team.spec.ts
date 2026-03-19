@@ -12,67 +12,24 @@ import {
 	test,
 } from "~/utils/playwright";
 import { createFormHelpers } from "~/utils/playwright-form";
-import {
-	editTeamPage,
-	TEAM_SEARCH_PAGE,
-	teamPage,
-	userPage,
-} from "~/utils/urls";
+import { editTeamPage, teamPage, userPage } from "~/utils/urls";
 
-test.describe("Team search page", () => {
-	test("filters teams", async ({ page }) => {
-		await seed(page);
-		await impersonate(page);
-		await navigate({ page, url: TEAM_SEARCH_PAGE });
-
-		const searchInput = page.getByTestId("team-search-input");
-		const firstTeamName = page.getByTestId("team-0");
-		const secondTeamName = page.getByTestId("team-1");
-
-		await expect(firstTeamName).toHaveText("Alliance Rogue");
-		await expect(secondTeamName).toBeVisible();
-
-		await searchInput.fill("Alliance Rogue");
-		await expect(secondTeamName).not.toBeVisible();
-
-		await firstTeamName.click();
-		await expect(page).toHaveURL(/alliance-rogue/);
-	});
-
+test.describe("New team creation", () => {
 	test("creates new team", async ({ page }) => {
 		await seed(page);
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({ page, url: "/" });
 
-		await page.getByTestId("anything-adder-menu-button").click();
+		await page.getByTestId("anything-adder-menu-button").first().click();
 		await page.getByTestId("menu-item-team").click();
 
-		await expect(page).toHaveURL(/new=true/);
+		await expect(page).toHaveURL(/t\/new/);
 
 		const form = createFormHelpers(page, createTeamSchema);
 		await form.fill("name", "Chimera");
 		await form.submit();
 
 		await expect(page).toHaveURL(/chimera/);
-	});
-
-	test("filters teams by tag & displays tag", async ({ page }) => {
-		await seed(page);
-		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: teamPage("alliance-rogue") });
-
-		await page.getByTestId("edit-team-button").click();
-		await page.getByLabel("Tag").fill("AR");
-		await submit(page, "edit-team-submit-button");
-
-		await navigate({ page, url: TEAM_SEARCH_PAGE });
-
-		const searchInput = page.getByTestId("team-search-input");
-		await searchInput.fill("ar");
-
-		const firstTeamName = page.getByTestId("team-0");
-		await expect(firstTeamName).toContainText("Alliance Rogue");
-		await expect(firstTeamName).toContainText("AR");
 	});
 });
 
@@ -129,16 +86,13 @@ test.describe("Team page", () => {
 		await seed(page);
 		await impersonate(page, ADMIN_ID);
 
-		await navigate({ page, url: TEAM_SEARCH_PAGE });
-		const firstTeamName = page.getByTestId("team-0");
-		await firstTeamName.click();
+		await navigate({ page, url: teamPage("alliance-rogue") });
 
 		await page.getByTestId("edit-team-button").click();
 		await page.getByTestId("delete-team-button").click();
 		await modalClickConfirmButton(page);
 
-		await expect(page).toHaveURL(TEAM_SEARCH_PAGE);
-		await expect(page.getByTestId("team-0")).not.toHaveText("Alliance Rogue");
+		await expect(page).not.toHaveURL(/alliance-rogue/);
 	});
 
 	test("resets invite code, joins team, leaves, rejoins", async ({ page }) => {

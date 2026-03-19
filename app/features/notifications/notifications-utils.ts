@@ -1,6 +1,7 @@
 import { assertUnreachable } from "~/utils/types";
 import {
 	badgePage,
+	FRIENDS_PAGE,
 	PLUS_VOTING_PAGE,
 	plusSuggestionPage,
 	SENDOUQ_PAGE,
@@ -40,6 +41,8 @@ export const notificationNavIcon = (type: Notification["type"]) => {
 		case "SCRIM_CANCELED":
 		case "SCRIM_STARTING_SOON":
 			return "scrims";
+		case "FRIEND_REQUEST_RECEIVED":
+			return "sendou_love";
 		default:
 			assertUnreachable(type);
 	}
@@ -89,6 +92,9 @@ export const notificationLink = (notification: Notification) => {
 		}
 		case "COMMISSIONS_CLOSED": {
 			return userEditProfilePage({ discordId: notification.meta.discordId });
+		}
+		case "FRIEND_REQUEST_RECEIVED": {
+			return FRIENDS_PAGE;
 		}
 		default:
 			assertUnreachable(notification);

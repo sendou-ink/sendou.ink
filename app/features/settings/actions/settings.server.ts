@@ -2,7 +2,9 @@ import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { parseRequestPayload } from "~/utils/remix.server";
+import { isSupporter } from "~/modules/permissions/utils";
+import { clampThemeToGamut } from "~/utils/oklch-gamut";
+import { errorToast, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { settingsEditSchema } from "../settings-schemas";
 
@@ -14,6 +16,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	});
 
 	switch (data._action) {
+		case "UPDATE_CUSTOM_THEME": {
+			if (!isSupporter(user)) {
+				throw errorToast("Custom themes are for supporters only");
+			}
+
+			const clampedTheme = data.newValue
+				? clampThemeToGamut(data.newValue)
+				: null;
+
+			await UserRepository.updateCustomTheme(user.id, clampedTheme);
+			break;
+		}
 		case "UPDATE_DISABLE_BUILD_ABILITY_SORTING": {
 			await UserRepository.updatePreferences(user.id, {
 				disableBuildAbilitySorting: data.newValue,

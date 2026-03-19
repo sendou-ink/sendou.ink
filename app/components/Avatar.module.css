@@ -1,0 +1,21 @@
+.identicon {
+	filter: blur(99px);
+	transition: filter 0.3s;
+}
+
+.loaded {
+	filter: blur(0);
+}
+
+.avatarWrapper {
+	flex-shrink: 0;
+	width: fit-content;
+	height: fit-content;
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-avatar);
+	overflow: hidden;
+}
+
+.avatarWrapper img {
+	display: block;
+}

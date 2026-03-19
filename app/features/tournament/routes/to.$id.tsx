@@ -16,10 +16,8 @@ import { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { removeMarkdown } from "~/utils/strings";
-import { assertUnreachable } from "~/utils/types";
 import {
 	tournamentDivisionsPage,
-	tournamentOrganizationPage,
 	tournamentPage,
 	tournamentRegisterPage,
 } from "~/utils/urls";
@@ -27,9 +25,6 @@ import { metaTags } from "../../../utils/remix";
 
 import { loader, type TournamentLoaderData } from "../loaders/to.$id.server";
 export { loader };
-
-import "~/styles/calendar-event.css";
-import "../tournament.css";
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	const navigatedToMatchPage =
@@ -73,25 +68,13 @@ export const handle: SendouRouteHandle = {
 		const data = JSON.parse(rawData) as TournamentLoaderData;
 
 		return [
-			data.tournament.ctx.organization?.logoUrl
-				? {
-						imgPath: data.tournament.ctx.organization.logoUrl,
-						href: tournamentOrganizationPage({
-							organizationSlug: data.tournament.ctx.organization.slug,
-						}),
-						type: "IMAGE" as const,
-						text: "",
-						rounded: true,
-					}
-				: null,
 			{
 				imgPath: data.tournament.ctx.logoUrl,
 				href: tournamentPage(data.tournament.ctx.id),
 				type: "IMAGE" as const,
 				text: data.tournament.ctx.name,
-				rounded: true,
 			},
-		].filter((crumb) => crumb !== null);
+		];
 	},
 };
 
@@ -132,29 +115,6 @@ export function TournamentLayout() {
 			window.tourney = tournament;
 		}, [tournament]);
 	}
-	const subsCount = () =>
-		// biome-ignore lint/suspicious/useIterableCallbackReturn: Biome 2.3.1 upgrade
-		tournament.ctx.subCounts.reduce((acc, cur) => {
-			if (cur.visibility === "ALL") return acc + cur.count;
-
-			const userPlusTier = user?.plusTier ?? 4;
-
-			switch (cur.visibility) {
-				case "+1": {
-					return userPlusTier === 1 ? acc + cur.count : acc;
-				}
-				case "+2": {
-					return userPlusTier <= 2 ? acc + cur.count : acc;
-				}
-				case "+3": {
-					return userPlusTier <= 3 ? acc + cur.count : acc;
-				}
-				default: {
-					assertUnreachable(cur.visibility);
-				}
-			}
-		}, 0);
-
 	return (
 		<Main bigger>
 			<SubNav>
@@ -197,11 +157,13 @@ export function TournamentLayout() {
 				>
 					{t("tournament:tabs.teams", { count: tournament.ctx.teams.length })}
 				</SubNavLink>
-				{!tournament.everyBracketOver && tournament.subsFeatureEnabled && (
-					<SubNavLink to="subs" end={false}>
-						{t("tournament:tabs.subs", { count: subsCount() })}
+				{!tournament.isInvitational && !tournament.everyBracketOver ? (
+					<SubNavLink to="looking">
+						{tournament.registrationOpen
+							? t("tournament:tabs.looking")
+							: t("tournament:tabs.subs")}
 					</SubNavLink>
-				)}
+				) : null}
 				{tournament.hasStarted && !tournament.everyBracketOver ? (
 					<SubNavLink to="streams">
 						{t("tournament:tabs.streams", {

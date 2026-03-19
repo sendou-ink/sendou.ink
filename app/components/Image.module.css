@@ -1,0 +1,8 @@
+.tierContainer {
+	display: grid;
+}
+
+.tierImg {
+	grid-column: 1;
+	grid-row: 1;
+}

@@ -7,7 +7,8 @@
 	"tabs.seeds": "Seeds",
 	"tabs.results": "Results",
 	"tabs.streams": "Streams ({{count}})",
-	"tabs.subs": "Subs ({{count}})",
+	"tabs.subs": "Subs",
+	"tabs.looking": "LFG",
 	"pre.steps.header": "Complete these steps to play",
 	"pre.steps.name": "Team name",
 	"pre.steps.roster": "Full roster",
@@ -28,7 +29,7 @@
 	"pre.roster.header": "Fill roster",
 	"pre.roster.footer": "At least {{atLeastCount}} members are required to participate. Max roster size is {{maxCount}}.",
 	"pre.roster.footer.noSubs": "Format is {{format}}. No subs allowed.",
-	"pre.roster.addTrusted.header": "Add people you have played with",
+	"pre.roster.addFriend.header": "Add friends",
 	"pre.roster.delete.button": "Delete member",
 	"pre.roster.delete.header": "Member to delete",
 	"pre.pool.header": "Pick map pool",
@@ -122,7 +123,7 @@
 	"join.error.ALREADY_JOINED": "You're already a member of this team.",
 	"join.error.NOT_LOGGED_IN": "You must be logged in to join a team.",
 	"join.VALID": "Join {{teamName}} for {{eventName}}?",
-	"join.giveTrust": "Trust {{name}} to add you on their own to future tournaments?",
+	"join.friendSuggestion": "You can add the captain as a friend to let them add you directly next time",
 	"subs.prefersToPlay": "Prefers to play",
 	"subs.canPlay": "Can play",
 	"subs.canVC": "Can VC",
@@ -149,5 +150,6 @@
 	"progression.error.NEGATIVE_PROGRESSION": "Negative progression only possible for double elimination",
 	"progression.error.NO_SE_SOURCE": "Single elimination is not a valid source bracket",
 	"progression.error.NO_DE_POSITIVE": "Double elimination is not valid for positive progression",
-	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "Swiss bracket with early advance/elimination must lead to another bracket"
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "Swiss bracket with early advance/elimination must lead to another bracket",
+	"lfg.askCaptainToJoinQueue": "Ask your team's captain or a manager to join the queue"
 }

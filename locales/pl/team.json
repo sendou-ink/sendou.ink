@@ -42,6 +42,7 @@
 	"forms.info.tag": "",
 	"forms.errors.duplicateName": "Istnieje już drużyna o tym imieniu",
 	"forms.errors.noOnlySpecialCharacters": "",
+	"forms.customTheme.header": "",
 	"roster.teamFull": "Drużyna jest pełna",
 	"roster.inviteLink.header": "Udostępnij link by dodać członków",
 	"roster.members.header": "Członkowie",

@@ -14,13 +14,13 @@ import {
 	useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Search as SearchIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { Input } from "~/components/Input";
 import { MainSlotIcon } from "~/components/icons/MainSlot";
-import { SearchIcon } from "~/components/icons/Search";
 import { SideSlotIcon } from "~/components/icons/SideSlot";
 import { Placeholder } from "~/components/Placeholder";
 import type { Tables } from "~/db/tables";

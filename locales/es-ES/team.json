@@ -42,6 +42,7 @@
 	"forms.info.tag": "Normalmente se usa antes del nombre en el juego para indicar pertenencia a un equipo (ej. [TAG] NombreJugador)",
 	"forms.errors.duplicateName": "Ya existe un equipo con ese nombre",
 	"forms.errors.noOnlySpecialCharacters": "El nombre del equipo no puede ser solo caracteres especiales",
+	"forms.customTheme.header": "",
 	"roster.teamFull": "El equipo está lleno",
 	"roster.inviteLink.header": "Comparte el link de invitación para agregar más miembros",
 	"roster.members.header": "Miembros",

@@ -1,0 +1,192 @@
+.topWrapper {
+	position: fixed;
+	z-index: 10;
+	top: 0;
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	max-width: 100%;
+}
+
+.topWrapperCollapsed {
+	transform: translateX(-50%) translateY(-100%);
+
+	& .topSection {
+		visibility: hidden;
+	}
+}
+
+.topToggle {
+	position: absolute;
+	bottom: 0;
+	transform: translateY(100%);
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--field-size);
+	padding: var(--s-0-5) 0;
+	border: var(--border-style);
+	border-top: none;
+	border-radius: 0 0 var(--radius-selector) var(--radius-selector);
+	background-color: var(--color-bg);
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
+}
+
+.topSection {
+	display: flex;
+	align-items: center;
+	padding: var(--s-2);
+	border: var(--border-style);
+	border-top: transparent;
+	border-radius: 0 0 var(--radius-box) var(--radius-box);
+	background-color: var(--color-bg);
+	gap: var(--s-2);
+	max-width: 100%;
+	overflow: auto;
+	animation: scrolling forwards;
+	animation-timeline: scroll(x self);
+}
+
+@keyframes scrolling {
+	0%,
+	to {
+		border-radius: 0;
+		border-left: 0;
+		border-right: 0;
+	}
+}
+
+.outlineToggleButton {
+	background-color: var(--color-bg-high);
+	color: var(--color-text);
+	font-size: var(--font-xs);
+	padding: var(--s-2);
+	width: 100%;
+	border-radius: 0;
+	border-bottom: var(--border-style);
+	transform: translateY(0);
+	position: sticky;
+	top: 0;
+}
+
+.outlineToggleButtonOutlined {
+	background-color: var(--color-text-accent);
+	color: var(--color-text-inverse);
+}
+
+.weaponsWrapper {
+	position: fixed;
+	z-index: 10;
+	top: 15vh;
+	left: 0;
+}
+
+.weaponsWrapperCollapsed {
+	transform: translateX(-100%);
+
+	& .weaponsSection {
+		visibility: hidden;
+	}
+}
+
+.weaponsToggle {
+	position: absolute;
+	right: 0;
+	top: 50%;
+	transform: translateY(-50%) translateX(100%);
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: var(--field-size);
+	padding: 0 var(--s-0-5);
+	border: var(--border-style);
+	border-left: none;
+	border-radius: 0 var(--radius-selector) var(--radius-selector) 0;
+	background-color: var(--color-bg);
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
+}
+
+.weaponsSection {
+	width: 150px;
+	max-height: 70vh;
+	border: var(--border-style);
+	border-left: transparent;
+	border-radius: 0 var(--radius-box) var(--radius-box) 0;
+	background: var(--color-bg);
+	gap: 2px;
+	overflow-y: auto;
+}
+
+.weaponsSectionWide {
+	width: 175px;
+}
+
+.weaponsSummary {
+	background-color: var(--color-bg-high);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+	padding: var(--s-2);
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.weaponsContainer {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	padding: var(--s-2);
+}
+
+.stylePanel {
+	position: fixed;
+	z-index: 10;
+	top: 15vh;
+	right: 0;
+}
+
+.draggableButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--s-0-5);
+	border: none;
+	border-radius: var(--radius-box);
+	background: transparent;
+	cursor: grab;
+	touch-action: none;
+}
+
+.draggableButton:hover {
+	background-color: var(--color-bg-high);
+}
+
+.weaponDragging {
+	opacity: 0.5;
+}
+
+.dragPreviewContainer {
+	display: block;
+	min-width: 45px;
+	min-height: 45px;
+}
+
+.dragPreview {
+	cursor: grabbing;
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}

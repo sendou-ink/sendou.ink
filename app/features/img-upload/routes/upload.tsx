@@ -65,7 +65,6 @@ export default function FileUploadPage() {
 				<label htmlFor="img-field">{t("common:upload.imageToUpload")}</label>
 				<input
 					id="img-field"
-					className="plain"
 					type="file"
 					name="img"
 					accept="image/png, image/jpeg, image/webp"

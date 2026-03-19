@@ -6,20 +6,18 @@ import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
 import {
 	errorToastIfFalsy,
 	notFoundIfFalsy,
 	parseParams,
-	parseRequestPayload,
 } from "~/utils/remix.server";
 import { tournamentPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
 import { findByInviteCode } from "../queries/findTeamByInviteCode.server";
-import { giveTrust } from "../queries/giveTrust.server";
 import { joinTeam } from "../queries/joinLeaveTeam.server";
-import { joinSchema } from "../tournament-schemas.server";
 import { validateCanJoinTeam } from "../tournament-utils";
 import {
 	inGameNameIfNeeded,
@@ -34,7 +32,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
 	const url = new URL(request.url);
 	const inviteCode = url.searchParams.get("code");
-	const data = await parseRequestPayload({ request, schema: joinSchema });
 	invariant(inviteCode, "code is missing");
 
 	const leanTeam = notFoundIfFalsy(findByInviteCode(inviteCode));
@@ -85,6 +82,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			? "DELETE"
 			: "LEAVE";
 
+	await TournamentLFGRepository.leaveLfg({ userId: user.id, tournamentId });
 	joinTeam({
 		userId: user.id,
 		newTeamId: teamToJoin.id,
@@ -108,17 +106,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 		type: "participant",
 		userId: user.id,
 	});
-
-	if (data.trust) {
-		const inviterUserId = teamToJoin.members.find(
-			(member) => member.isOwner,
-		)?.userId;
-		invariant(inviterUserId, "Inviter user could not be resolved");
-		giveTrust({
-			trustGiverUserId: user.id,
-			trustReceiverUserId: inviterUserId,
-		});
-	}
 
 	clearTournamentDataCache(tournamentId);
 

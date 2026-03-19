@@ -1,14 +1,11 @@
+import { Check, Clipboard, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Outlet, useFetcher, useLoaderData } from "react-router";
 import { useCopyToClipboard } from "react-use";
-import { AddNewButton } from "~/components/AddNewButton";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
-import { ClipboardIcon } from "~/components/icons/Clipboard";
-import { TrashIcon } from "~/components/icons/Trash";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
@@ -20,7 +17,7 @@ import {
 import { useUser } from "~/features/auth/core/user";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { associationsPage, newAssociationsPage, userPage } from "~/utils/urls";
+import { associationsPage, userPage } from "~/utils/urls";
 export { loader, action };
 
 export const handle: SendouRouteHandle = {
@@ -34,9 +31,6 @@ export default function AssociationsPage() {
 		<Main className="stack lg">
 			<Outlet />
 			<div className="stack sm">
-				<div className="stack items-end">
-					<AddNewButton to={newAssociationsPage()} navIcon="associations" />
-				</div>
 				<Header />
 			</div>
 			<JoinForm />
@@ -97,7 +91,7 @@ function Association({
 
 	return (
 		<section>
-			<div className="stack horizontal sm">
+			<div className="stack horizontal sm items-center justify-between">
 				<h2 className="text-lg"> {association.name}</h2>
 				{canManage ? (
 					<FormWithConfirm
@@ -110,7 +104,8 @@ function Association({
 						]}
 					>
 						<SendouButton
-							icon={<TrashIcon className="small-icon" />}
+							shape="square"
+							icon={<Trash className="small-icon" />}
 							className="small-text"
 							variant="minimal-destructive"
 							type="submit"
@@ -197,9 +192,10 @@ function AssociationInviteCodeActions({
 			<div className="stack horizontal sm items-center">
 				<input type="text" value={inviteLink} readOnly id={id} />
 				<SendouButton
+					shape="square"
 					variant={copySuccess ? "outlined-success" : "outlined"}
 					onPress={() => copyToClipboard(inviteLink)}
-					icon={copySuccess ? <CheckmarkIcon /> : <ClipboardIcon />}
+					icon={copySuccess ? <Check /> : <Clipboard />}
 					aria-label="Copy to clipboard"
 				/>
 			</div>
@@ -208,7 +204,6 @@ function AssociationInviteCodeActions({
 				<SubmitButton
 					variant="minimal-destructive"
 					size="small"
-					className="mt-4"
 					_action="REFRESH_INVITE_CODE"
 					state={fetcher.state}
 				>
@@ -233,7 +228,7 @@ function AssociationMember({
 	const { t } = useTranslation(["common", "scrims"]);
 
 	return (
-		<div className="stack horizontal sm">
+		<div className="stack horizontal sm items-center justify-between">
 			<Link
 				to={userPage(member)}
 				className="text-main-forced stack horizontal sm"
@@ -254,9 +249,11 @@ function AssociationMember({
 					]}
 				>
 					<SendouButton
-						icon={<TrashIcon className="small-icon" />}
+						shape="square"
+						icon={<Trash className="small-icon" />}
 						className="small-text"
 						variant="minimal-destructive"
+						size="small"
 						type="submit"
 					/>
 				</FormWithConfirm>

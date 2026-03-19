@@ -1,10 +1,10 @@
+import { Funnel } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
 import type { z } from "zod";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { FilterFilledIcon } from "~/components/icons/FilterFilled";
 import { useUser } from "~/features/auth/core/user";
 import type { ScrimFilters } from "~/features/scrims/scrims-types";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
@@ -22,7 +22,7 @@ export function ScrimFiltersDialog({ filters }: { filters: ScrimFilters }) {
 			<SendouButton
 				variant="outlined"
 				size="small"
-				icon={<FilterFilledIcon />}
+				icon={<Funnel />}
 				onPress={() => setIsOpen(true)}
 				data-testid="filter-scrims-button"
 			>

@@ -1,0 +1,107 @@
+.container {
+	--map-width: 90px;
+	--map-height: 50px;
+}
+
+.slot {
+	font-size: var(--font-xs);
+	display: grid;
+	place-items: center;
+	color: var(--color-text-high);
+	border-radius: var(--radius-field);
+	font-weight: var(--weight-bold);
+	width: 24px;
+	height: 24px;
+	border: 2px dotted var(--color-bg-higher);
+}
+
+.slotIcon {
+	color: var(--color-success);
+	width: 16px;
+	height: 16px;
+}
+
+.slotPicked {
+	border-style: solid;
+}
+
+.mapButton {
+	background-image: var(--map-image-url);
+	background-size: cover;
+	height: var(--map-height);
+	width: var(--map-width);
+	border: none;
+	background-color: transparent;
+	transition:
+		filter,
+		opacity 0.2s;
+	border-radius: var(--radius-box);
+}
+
+@keyframes wiggle {
+	0% {
+		transform: rotate(0deg);
+	}
+
+	25% {
+		transform: rotate(5deg);
+	}
+
+	75% {
+		transform: rotate(-5deg);
+	}
+
+	100% {
+		transform: rotate(0deg);
+	}
+}
+
+.mapButtonWiggle {
+	animation: wiggle 0.25s infinite;
+	animation-iteration-count: 1;
+}
+
+.mapButton:active {
+	transform: none;
+}
+
+.mapButtonGreyedOut {
+	filter: grayscale(100%) !important;
+	opacity: 0.4 !important;
+}
+
+.mapButtonIcon {
+	position: absolute;
+	top: 2px;
+	color: var(--color-success);
+	width: 48px;
+	height: 48px;
+	cursor: pointer;
+}
+
+.mapButtonText {
+	position: absolute;
+	top: 14px;
+	text-transform: uppercase;
+	font-weight: var(--weight-bold);
+	cursor: not-allowed;
+}
+
+.mapButtonLabel {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	font-weight: var(--weight-semi);
+}
+
+.divider::before,
+.divider::after {
+	border-bottom: 2px dotted var(--color-bg-higher);
+}
+
+.divider {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	text-transform: uppercase;
+	display: flex;
+	gap: var(--s-2);
+}

@@ -1,13 +1,11 @@
 import clsx from "clsx";
+import { ArrowLeft } from "lucide-react";
 import * as React from "react";
 import { Form, useLoaderData, useRevalidator } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
-import { ArrowLongLeftIcon } from "~/components/icons/ArrowLongLeft";
 import { containerClassName } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
-import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
-import { ConnectedChat } from "~/features/chat/components/Chat";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
@@ -22,13 +20,10 @@ import { OrganizerMatchMapListDialog } from "../components/OrganizerMatchMapList
 import { StartedMatch } from "../components/StartedMatch";
 import { getRounds } from "../core/rounds";
 import { loader } from "../loaders/to.$id.matches.$mid.server";
-import {
-	groupNumberToLetters,
-	tournamentMatchWebsocketRoom,
-} from "../tournament-bracket-utils";
+import { groupNumberToLetters } from "../tournament-bracket-utils";
 export { action, loader };
 
-import "../tournament-bracket.css";
+import styles from "../tournament-bracket.module.css";
 
 export default function TournamentMatchPage() {
 	const user = useUser();
@@ -36,11 +31,6 @@ export default function TournamentMatchPage() {
 	const { revalidate } = useRevalidator();
 	const tournament = useTournament();
 	const data = useLoaderData<typeof loader>();
-
-	useWebsocketRevalidation({
-		room: tournamentMatchWebsocketRoom(data.match.id),
-		connected: !tournament.ctx.isFinalized,
-	});
 
 	React.useEffect(() => {
 		if (visibility !== "visible" || tournament.ctx.isFinalized) return;
@@ -62,20 +52,6 @@ export default function TournamentMatchPage() {
 		return type !== "EDIT";
 	};
 
-	const showChatPeek = () => {
-		if (!showRosterPeek()) return false;
-
-		if (tournament.isOrganizerOrStreamer(user)) return true;
-
-		const teamId = tournament.teamMemberOfByUser(user)?.id;
-		if (!teamId) return false;
-
-		if (data.match.opponentOne?.id === teamId) return true;
-		if (data.match.opponentTwo?.id === teamId) return true;
-
-		return false;
-	};
-
 	return (
 		<div className={clsx("stack lg", containerClassName("normal"))}>
 			<div className="flex horizontal justify-between items-center">
@@ -93,7 +69,7 @@ export default function TournamentMatchPage() {
 						variant="outlined"
 						size="small"
 						className="w-max"
-						icon={<ArrowLongLeftIcon />}
+						icon={<ArrowLeft />}
 						testId="back-to-bracket-button"
 					>
 						Back to bracket
@@ -129,57 +105,7 @@ export default function TournamentMatchPage() {
 						teams={[data.match.opponentOne?.id, data.match.opponentTwo?.id]}
 					/>
 				) : null}
-				{showChatPeek() ? <BeforeMatchChat /> : null}
 			</div>
-		</div>
-	);
-}
-
-function BeforeMatchChat() {
-	const tournament = useTournament();
-	const data = useLoaderData<typeof loader>();
-
-	// TODO: resolve this on server (notice it is copy-pasted now)
-	const chatUsers = React.useMemo(() => {
-		return Object.fromEntries(
-			[
-				...data.match.players.map((p) => ({ ...p, title: undefined })),
-				...(tournament.ctx.organization?.members ?? []).map((m) => ({
-					...m,
-					title: m.role === "STREAMER" ? "Cast" : "TO",
-				})),
-				...tournament.ctx.staff.map((s) => ({
-					...s,
-					title: s.role === "STREAMER" ? "Cast" : "TO",
-				})),
-				{
-					...tournament.ctx.author,
-					title: "TO",
-				},
-			].map((p) => [p.id, p]),
-		);
-	}, [data, tournament]);
-
-	const rooms = React.useMemo(() => {
-		return data.match.chatCode
-			? [
-					{
-						code: data.match.chatCode,
-						label: "Match",
-					},
-				]
-			: [];
-	}, [data.match.chatCode]);
-
-	return (
-		<div className="tournament__action-section mt-6">
-			<ConnectedChat
-				rooms={rooms}
-				users={chatUsers}
-				className="tournament__chat-container"
-				messagesContainerClassName="tournament__chat-messages-container"
-				missingUserName="???"
-			/>
 		</div>
 	);
 }
@@ -398,8 +324,8 @@ function EndedEarlyMessage() {
 			: null;
 
 	return (
-		<div className="tournament-bracket__during-match-actions">
-			<div className="tournament-bracket__locked-banner tournament-bracket__locked-banner__lonely">
+		<div className={styles.duringMatchActions}>
+			<div className={clsx(styles.lockedBanner, styles.lockedBannerLonely)}>
 				<div className="stack sm items-center">
 					<div className="text-lg text-center font-bold">Match ended early</div>
 					{winnerTeam ? (
@@ -414,11 +340,7 @@ function EndedEarlyMessage() {
 				{tournament.isOrganizer(user) &&
 				tournament.matchCanBeReopened(data.match.id) ? (
 					<Form method="post" className="contents">
-						<SubmitButton
-							_action="REOPEN_MATCH"
-							className="tournament-bracket__stage-banner__undo-button"
-							testId="reopen-match-button"
-						>
+						<SubmitButton _action="REOPEN_MATCH" testId="reopen-match-button">
 							Reopen match
 						</SubmitButton>
 					</Form>

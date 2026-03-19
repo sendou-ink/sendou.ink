@@ -1,0 +1,312 @@
+.banner {
+	background-image:
+		linear-gradient(
+			to bottom,
+			rgba(255, 255, 255, 0),
+			rgba(255, 255, 255, 0),
+			rgba(0, 0, 0, 0.6)
+		),
+		var(--team-banner-img);
+	background-size: cover;
+	width: 100%;
+	aspect-ratio: 2 / 1;
+	display: grid;
+	grid-template-areas: "flags ." "avatar name";
+	padding: var(--s-5);
+	border-radius: var(--radius-box);
+}
+
+.bannerPlaceholder {
+	height: 6rem;
+	background-color: var(--color-accent-low);
+}
+
+.bannerFlags {
+	grid-area: flags;
+	margin-top: -5px;
+	display: none;
+	column-gap: var(--s-4);
+}
+
+.bannerName {
+	grid-area: name;
+	align-self: flex-end;
+	justify-self: flex-end;
+	font-size: 36px;
+	line-height: 1;
+	font-weight: var(--weight-bold);
+	color: #fff;
+	display: none;
+	align-items: center;
+	gap: var(--s-3);
+	position: relative;
+}
+
+.bskyLink {
+	padding: var(--s-1);
+	border: 1px solid;
+	border-radius: 50%;
+	border-color: #1285fe;
+	background-color: #1285fe2f;
+	height: 24.4px;
+	width: 24.4px;
+	display: grid;
+	place-items: center;
+}
+
+.bskyLink > svg {
+	width: 0.9rem;
+}
+
+.bskyLink path {
+	fill: #1285fe;
+}
+
+.bannerAvatar {
+	grid-area: avatar;
+	align-self: flex-end;
+	margin-bottom: -110px;
+}
+
+.bannerAvatar > div {
+	padding: var(--s-2);
+	background-color: var(--color-bg);
+	border-radius: var(--radius-avatar);
+	display: grid;
+	place-items: center;
+	width: 7rem;
+}
+
+.bannerAvatarSpacer {
+	height: 4rem;
+}
+
+.mobileNameCountry {
+	display: flex;
+	font-size: var(--font-xl);
+	align-items: center;
+	font-weight: var(--weight-bold);
+	flex-direction: column;
+}
+
+.mobileTeamName {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.bannerTag {
+	font-size: var(--font-sm);
+	background-color: var(--color-accent-low);
+	color: var(--color-accent);
+	padding: var(--s-1) var(--s-1-5);
+	border-radius: var(--radius-box);
+}
+
+.bannerTagDesktop {
+	position: absolute;
+	bottom: 41px;
+	right: 0;
+	display: none;
+}
+
+.bannerTagMobile {
+	font-size: var(--font-xs);
+	padding: var(--s-0-5) var(--s-1);
+	margin-block: var(--s-1);
+}
+
+.bannerAvatar img {
+	border-radius: var(--radius-avatar);
+}
+
+.actionButtons {
+	display: flex;
+	justify-content: center;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+}
+
+.results {
+	background-color: var(--color-bg-higher);
+	max-width: 32rem;
+	margin: 0 auto;
+	border-radius: var(--radius-box);
+	padding: var(--s-1) var(--s-4);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-sm);
+	display: flex;
+	justify-content: space-between;
+	width: min(100%, 48rem);
+	color: var(--color-text);
+	white-space: nowrap;
+}
+
+.resultsPlacements {
+	list-style: none;
+	display: flex;
+	gap: var(--s-4);
+}
+
+.resultsPlacements > li {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.member {
+	display: none;
+	flex-direction: column;
+}
+
+.memberSection {
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-box);
+	padding: var(--s-2) var(--s-4);
+	font-size: var(--font-xl);
+	font-weight: var(--weight-bold);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	height: 4.5rem;
+}
+
+.memberAvatarNameContainer {
+	display: flex;
+	align-items: center;
+	gap: var(--s-4);
+	color: var(--color-text);
+	font-weight: var(--weight-bold);
+}
+
+.memberAvatar {
+	background-color: var(--color-bg);
+	padding: var(--s-2);
+	border-radius: var(--radius-avatar);
+}
+
+.memberRole {
+	margin-left: auto;
+	font-size: var(--font-sm);
+	color: var(--color-text-high);
+	margin-inline-end: var(--s-3);
+	font-weight: var(--weight-bold);
+}
+
+.memberRoleMobile {
+	color: var(--color-text-high);
+	font-weight: var(--weight-bold);
+}
+
+.memberCardContainer {
+	width: 16rem;
+	margin: 0 auto;
+	display: flex;
+	text-align: center;
+	flex-direction: column;
+}
+
+.memberCard {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-3);
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-box);
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
+}
+
+.memberCardName {
+	color: var(--color-text);
+	font-weight: var(--weight-bold);
+	margin-block-start: var(--s-2);
+}
+
+.rosterMembers {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--s-4);
+	place-items: center;
+	max-width: max-content;
+}
+
+.rosterMember {
+	justify-self: flex-start;
+	font-weight: var(--weight-bold);
+	font-size: var(--font-sm);
+}
+
+.rosterSeparator {
+	grid-column: 1 / 3;
+	width: 100%;
+}
+
+.inviteContainer {
+	margin-block-start: var(--s-16);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-12);
+	align-items: center;
+}
+
+.imageLinksList {
+	display: flex;
+	gap: var(--s-8);
+	padding-left: var(--s-4);
+	font-size: var(--font-sm);
+}
+
+.formDivider {
+	margin-block: var(--s-6);
+}
+
+@container (width >= 640px) {
+	.bannerFlags {
+		display: flex;
+	}
+	.bannerName {
+		display: flex;
+	}
+	.bannerTagDesktop {
+		display: initial;
+	}
+
+	.bannerAvatar > div {
+		width: 10rem;
+	}
+
+	.bannerAvatar {
+		margin-left: var(--s-2);
+		margin-bottom: -90px;
+	}
+
+	.mobileNameCountry {
+		display: none;
+	}
+
+	.member {
+		display: flex;
+	}
+
+	.memberCardContainer {
+		display: none;
+	}
+
+	.rosterMembers {
+		grid-template-columns: 1fr 1fr max-content max-content;
+	}
+
+	.rosterSeparator {
+		display: none;
+	}
+
+	.bannerPlaceholder {
+		height: 12rem;
+	}
+
+	.actionButtons {
+		justify-content: flex-end;
+	}
+}

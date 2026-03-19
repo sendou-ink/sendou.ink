@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import * as React from "react";
+import type * as React from "react";
 import { Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
@@ -17,12 +17,10 @@ import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
-import { useChat } from "~/features/chat/chat-hooks";
-import { Chat } from "~/features/chat/components/Chat";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
-import { useWindowSize } from "~/hooks/useWindowSize";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -38,7 +36,10 @@ import { GroupLeaver } from "../components/GroupLeaver";
 import { MemberAdder } from "../components/MemberAdder";
 import { groupExpiryStatus } from "../core/groups";
 import { loader } from "../loaders/q.looking.server";
-import { FULL_GROUP_SIZE } from "../q-constants";
+import {
+	FULL_GROUP_SIZE,
+	IS_Q_LOOKING_MOBILE_BREAKPOINT,
+} from "../q-constants";
 export { action, loader };
 
 import styles from "./q.looking.module.css";
@@ -126,7 +127,7 @@ function InfoText() {
 		return (
 			<fetcher.Form
 				method="post"
-				className="text-xs text-lighter ml-auto text-error stack horizontal sm"
+				className="text-xs text-lighter ml-auto text-error stack horizontal sm items-center"
 			>
 				{t("q:looking.inactiveGroup")}{" "}
 				<SubmitButton
@@ -145,7 +146,7 @@ function InfoText() {
 		return (
 			<fetcher.Form
 				method="post"
-				className="text-xs text-lighter ml-auto text-warning stack horizontal sm"
+				className="text-xs text-lighter ml-auto text-warning stack horizontal sm items-center"
 			>
 				{t("q:looking.inactiveGroup.soon")}{" "}
 				<SubmitButton
@@ -211,51 +212,13 @@ function Groups() {
 	const data = useLoaderData<typeof loader>();
 	const isMounted = useIsMounted();
 
-	const [_unseenMessages, setUnseenMessages] = React.useState(0);
-	const [chatVisible, setChatVisible] = React.useState(false);
-	const { width } = useWindowSize();
-
-	const chatUsers = React.useMemo(() => {
-		return Object.fromEntries(
-			(data.ownGroup?.members ?? []).map((m) => [m.id, m]),
-		);
-	}, [data]);
-
-	const rooms = React.useMemo(() => {
-		return data.ownGroup?.chatCode
-			? [
-					{
-						code: data.ownGroup.chatCode,
-						label: "Group",
-					},
-				]
-			: [];
-	}, [data.ownGroup?.chatCode]);
-
-	const onNewMessage = React.useCallback(() => {
-		setUnseenMessages((msg) => msg + 1);
-	}, []);
-
-	const chat = useChat({ rooms, onNewMessage });
-
-	const onChatMount = React.useCallback(() => {
-		setChatVisible(true);
-	}, []);
-
-	const onChatUnmount = React.useCallback(() => {
-		setChatVisible(false);
-		setUnseenMessages(0);
-	}, []);
-
-	const unseenMessages = chatVisible ? 0 : _unseenMessages;
+	const width = useMainContentWidth();
 
 	if (!isMounted) return null;
 
-	const isMobile = width < 750;
+	const isMobile = width < IS_Q_LOOKING_MOBILE_BREAKPOINT;
 	const isFullGroup =
 		data.ownGroup && data.ownGroup.members.length === FULL_GROUP_SIZE;
-
-	const showChat = data.ownGroup && data.ownGroup.members.length > 1;
 
 	const invitedGroupsDesktop = (
 		<div className="stack sm">
@@ -284,32 +247,9 @@ function Groups() {
 		</div>
 	);
 
-	const chatElement = (
-		<div>
-			{showChat ? (
-				<>
-					<Chat
-						rooms={rooms}
-						users={chatUsers}
-						className="w-full"
-						messagesContainerClassName={styles.messagesContainer}
-						chat={chat}
-						onMount={onChatMount}
-						onUnmount={onChatUnmount}
-					/>
-					{!isMobile ? (
-						<div className="mt-4">{invitedGroupsDesktop}</div>
-					) : null}
-				</>
-			) : null}
-		</div>
-	);
-
 	const ownGroupElement = data.ownGroup ? (
-		<div className="stack md">
-			{!showChat && (
-				<ColumnHeader>{t("q:looking.columns.myGroup")}</ColumnHeader>
-			)}
+		<div className="stack sm">
+			<ColumnHeader>{t("q:looking.columns.myGroup")}</ColumnHeader>
 			<GroupCard group={data.ownGroup} showNote ownGroup={data.ownGroup} />
 			{data.ownGroup.inviteCode ? (
 				<MemberAdder
@@ -348,31 +288,10 @@ function Groups() {
 					[styles.containerMobile]: isMobile,
 				})}
 			>
-				{!isMobile ? (
-					<div>
-						<SendouTabs>
-							<SendouTabList>
-								{data.ownGroup && (
-									<SendouTab id="own" number={data.ownGroup.members.length}>
-										{t("q:looking.columns.myGroup")}
-									</SendouTab>
-								)}
-								{showChat && (
-									<SendouTab id="chat" number={unseenMessages}>
-										{t("q:looking.columns.chat")}
-									</SendouTab>
-								)}
-							</SendouTabList>
-							<SendouTabPanel id="own">{ownGroupElement}</SendouTabPanel>
-							{data.ownGroup?.chatCode && (
-								<SendouTabPanel id="chat">{chatElement}</SendouTabPanel>
-							)}
-						</SendouTabs>
-					</div>
-				) : null}
+				{!isMobile ? <div>{ownGroupElement}</div> : null}
 				<div className={styles.innerContainer}>
 					<SendouTabs>
-						<SendouTabList scrolling={isMobile}>
+						<SendouTabList>
 							<SendouTab id="groups" number={neutralGroups.length}>
 								{t("q:looking.columns.groups")}
 							</SendouTab>
@@ -391,11 +310,6 @@ function Groups() {
 							{isMobile && data.ownGroup && (
 								<SendouTab id="own" number={data.ownGroup.members.length}>
 									{t("q:looking.columns.myGroup")}
-								</SendouTab>
-							)}
-							{isMobile && showChat && (
-								<SendouTab id="chat" number={unseenMessages}>
-									{t("q:looking.columns.chat")}
 								</SendouTab>
 							)}
 						</SendouTabList>
@@ -457,7 +371,6 @@ function Groups() {
 							</div>
 						</SendouTabPanel>
 						<SendouTabPanel id="own">{ownGroupElement}</SendouTabPanel>
-						<SendouTabPanel id="chat">{chatElement}</SendouTabPanel>
 					</SendouTabs>
 				</div>
 				{!isMobile ? (
@@ -500,9 +413,9 @@ function Groups() {
 }
 
 function ColumnHeader({ children }: { children: React.ReactNode }) {
-	const { width } = useWindowSize();
+	const width = useMainContentWidth();
 
-	const isMobile = width < 750;
+	const isMobile = width < IS_Q_LOOKING_MOBILE_BREAKPOINT;
 
 	if (isMobile) return null;
 

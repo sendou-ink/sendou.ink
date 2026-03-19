@@ -106,7 +106,6 @@
 	"labels.vodYoutubeUrl": "YouTube URL",
 	"labels.vodTitle": "Название видео",
 	"labels.vodDate": "Дата выпуска видео",
-	"labels.vodType": "Тип",
 	"labels.vodTeamSize": "",
 	"labels.vodStartTimestamp": "Временная метка начала",
 	"labels.vodMode": "Режим",
@@ -215,5 +214,14 @@
 	"errors.profileInGameName": "",
 	"labels.pronoun": "",
 	"bottomTexts.profilePronouns": "",
-	"errors.profilePronounsBothOrNeither": ""
+	"errors.profilePronounsBothOrNeither": "",
+	"labels.friendUser": "",
+	"errors.cannotFriendSelf": "",
+	"errors.alreadyFriends": "",
+	"errors.friendRequestExists": "",
+	"labels.type": "",
+	"labels.visibility": "",
+	"labels.note": "",
+	"labels.stayAsSub": "",
+	"bottomTexts.stayAsSub": ""
 }

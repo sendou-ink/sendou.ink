@@ -8,7 +8,7 @@
 	"post.lastActive": "最後にログインした時",
 	"noPosts": "フィルターに該当するポーストはありません",
 	"expiring": "ポーストの期限が切れます。まだ探していますか？",
-	"addFilter": "フィルターを足す",
+	"addFilter": "",
 	"filters.Weapon": "武器プール",
 	"filters.Type": "ポーストの種類",
 	"filters.Timezone": "タイムゾーン(何時間違うか)",

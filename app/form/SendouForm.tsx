@@ -61,6 +61,7 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	submitButtonTestId?: string;
 	autoSubmit?: boolean;
 	autoApply?: boolean;
+	revalidateRoot?: boolean;
 	className?: string;
 	onApply?: (values: z.infer<z.ZodObject<T>>) => void;
 	secondarySubmit?: React.ReactNode;
@@ -86,6 +87,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 	submitButtonTestId,
 	autoSubmit,
 	autoApply,
+	revalidateRoot,
 	className,
 	onApply,
 	secondarySubmit,
@@ -223,6 +225,9 @@ export function SendouForm<T extends z.ZodRawShape>({
 		return true;
 	};
 
+	const addRevalidateRoot = (vals: Record<string, unknown>) =>
+		revalidateRoot ? { ...vals, revalidateRoot: true } : vals;
+
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (!validateAndPrepare()) return;
@@ -230,7 +235,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 		if (onApply) {
 			onApply(values as z.infer<z.ZodObject<T>>);
 		} else {
-			fetcher.submit(values as Record<string, string>, {
+			fetcher.submit(addRevalidateRoot(values) as Record<string, string>, {
 				method,
 				action,
 				encType: "application/json",
@@ -284,11 +289,14 @@ export function SendouForm<T extends z.ZodRawShape>({
 					if (autoApply && onApply) {
 						onApply(updatedValues as z.infer<z.ZodObject<T>>);
 					} else if (autoSubmit) {
-						fetcher.submit(updatedValues as Record<string, string>, {
-							method,
-							action,
-							encType: "application/json",
-						});
+						fetcher.submit(
+							addRevalidateRoot(updatedValues) as Record<string, string>,
+							{
+								method,
+								action,
+								encType: "application/json",
+							},
+						);
 					}
 				}
 			: undefined;
@@ -300,11 +308,14 @@ export function SendouForm<T extends z.ZodRawShape>({
 			onApply(values as z.infer<z.ZodObject<T>>);
 		}
 
-		fetcher.submit(valuesToSubmit as Record<string, string>, {
-			method,
-			action,
-			encType: "application/json",
-		});
+		fetcher.submit(
+			addRevalidateRoot(valuesToSubmit) as Record<string, string>,
+			{
+				method,
+				action,
+				encType: "application/json",
+			},
+		);
 	};
 
 	const contextValue: FormContextValue<T> = {
@@ -358,7 +369,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 			{title ? <h2 className={styles.title}>{title}</h2> : null}
 			<React.Fragment key={locationKey}>{resolvedChildren}</React.Fragment>
 			{autoSubmit || autoApply ? null : (
-				<div className="mt-4 stack horizontal md mx-auto justify-center">
+				<div className="mt-4 stack horizontal md mx-auto justify-center items-center">
 					<SubmitButton
 						_action={_action}
 						testId={submitButtonTestId}
@@ -415,7 +426,6 @@ function buildInitialValues<T extends z.ZodRawShape>(
 	const result: Record<string, unknown> = {};
 
 	for (const [key, fieldSchema] of Object.entries(schema.shape)) {
-		// @ts-expect-error Type instantiation is excessively deep with complex schemas
 		const formField = formRegistry.get(fieldSchema as z.ZodType) as
 			| FormField
 			| undefined;

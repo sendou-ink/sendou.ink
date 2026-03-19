@@ -193,5 +193,8 @@
 	"builds.sorting.PUBLIC_BUILD": "offentlige sæt",
 	"builds.sorting.PRIVATE_BUILD": "Private sæt",
 	"commissions.open": "",
-	"commissions.closed": ""
+	"commissions.closed": "",
+	"mutualFriends": "",
+	"mutualFriends.count_one": "",
+	"mutualFriends.count_other": ""
 }

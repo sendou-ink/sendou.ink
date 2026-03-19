@@ -7,7 +7,8 @@
 	"tabs.seeds": "Семена",
 	"tabs.results": "Результаты",
 	"tabs.streams": "Трансляции: ({{count}})",
-	"tabs.subs": "Запасные: ({{count}})",
+	"tabs.subs": "Запасные",
+	"tabs.looking": "",
 	"pre.steps.header": "Завершите следующие шаги, чтобы закончить регистрацию",
 	"pre.steps.name": "Имя команды",
 	"pre.steps.roster": "Полный состав",
@@ -28,7 +29,7 @@
 	"pre.roster.header": "Заполните состав",
 	"pre.roster.footer": "Необходимый минимум игроков для данного турнира: {{atLeastCount}}. Максимальное количество игроков в составе: {{maxCount}}",
 	"pre.roster.footer.noSubs": "",
-	"pre.roster.addTrusted.header": "Добавить людей, с которыми вы играли",
+	"pre.roster.addFriend.header": "",
 	"pre.roster.delete.button": "Удалить участника",
 	"pre.roster.delete.header": "Участник для удаления",
 	"pre.pool.header": "Выберите пул арен",
@@ -126,7 +127,7 @@
 	"join.error.ALREADY_JOINED": "Вы уже вступили в команду.",
 	"join.error.NOT_LOGGED_IN": "Вы должны войти, прежде чем вступить в команду.",
 	"join.VALID": "Вступить в команду {{teamName}} для турнира {{eventName}}?",
-	"join.giveTrust": "Доверять {{name}} добавлять вас в будущие турниры?",
+	"join.friendSuggestion": "",
 	"subs.prefersToPlay": "Предпочитает играть на",
 	"subs.canPlay": "Может играть",
 	"subs.canVC": "Голосовой чат",
@@ -153,5 +154,6 @@
 	"progression.error.NEGATIVE_PROGRESSION": "Отрицательная прогрессия возможна только в Double Elimination турнирах",
 	"progression.error.NO_SE_SOURCE": "Single elimination не валидная сетка-исток",
 	"progression.error.NO_DE_POSITIVE": "Double elimination не валидно для позитивной прогрессии",
-	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": ""
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "",
+	"lfg.askCaptainToJoinQueue": ""
 }

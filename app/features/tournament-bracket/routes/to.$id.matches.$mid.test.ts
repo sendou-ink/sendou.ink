@@ -1,4 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
+	send: vi.fn(),
+	removeRoom: vi.fn(),
+	setMetadata: vi.fn(),
+}));
+
 import type { adminActionSchema } from "~/features/tournament/tournament-schemas.server";
 import {
 	dbInsertTournament,

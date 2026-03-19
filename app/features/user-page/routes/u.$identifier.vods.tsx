@@ -1,10 +1,9 @@
 import { useLoaderData, useMatches } from "react-router";
-import { AddNewButton } from "~/components/AddNewButton";
 import { VodListing } from "~/features/vods/components/VodListing";
 import styles from "~/features/vods/routes/vods.module.css";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { newVodPage, userPage } from "~/utils/urls";
+import { userPage } from "~/utils/urls";
 import { SubPageHeader } from "../components/SubPageHeader";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import { loader } from "../loaders/u.$identifier.vods.server";
@@ -22,9 +21,10 @@ export default function UserVodsPage() {
 
 	return (
 		<div className="stack md">
-			<SubPageHeader user={layoutData.user} backTo={userPage(layoutData.user)}>
-				<AddNewButton navIcon="vods" to={newVodPage()} />
-			</SubPageHeader>
+			<SubPageHeader
+				user={layoutData.user}
+				backTo={userPage(layoutData.user)}
+			/>
 			<div className={styles.listingList}>
 				{data.vods.map((vod) => (
 					<VodListing key={vod.id} vod={vod} showUser={false} />

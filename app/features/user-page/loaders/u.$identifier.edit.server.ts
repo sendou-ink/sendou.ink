@@ -19,13 +19,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		identifier,
 		true,
 	))!;
-
 	const preferences = await UserRepository.preferencesByUserId(user.id);
+	const friendCodeResult = await UserRepository.currentFriendCodeByUserId(
+		user.id,
+	);
 
 	return {
 		user: userProfile,
 		favoriteBadgeIds: userProfile.favoriteBadgeIds,
 		discordUniqueName: userProfile.discordUniqueName,
 		newProfileEnabled: preferences?.newProfileEnabled ?? false,
+		friendCode: friendCodeResult?.friendCode ?? null,
 	};
 };

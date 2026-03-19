@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import { nanoid } from "nanoid";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -6,12 +7,12 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
-import { PlusIcon } from "~/components/icons/Plus";
 import { Label } from "~/components/Label";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as Swiss from "~/features/tournament-bracket/core/Swiss";
 import { defaultBracketSettings } from "../../tournament/tournament-utils";
+import styles from "./BracketProgressionSelector.module.css";
 
 const defaultBracket = (): Progression.InputBracket => ({
 	id: nanoid(),
@@ -133,7 +134,7 @@ export function BracketProgressionSelector({
 				))}
 			</div>
 			<SendouButton
-				icon={<PlusIcon />}
+				icon={<Plus />}
 				size="small"
 				variant="outlined"
 				onPress={handleAddBracket}
@@ -189,7 +190,7 @@ function TournamentFormatBracketSelector({
 	return (
 		<div className="stack horizontal md items-center">
 			<div>
-				<div className="format-selector__count">Bracket #{count}</div>
+				<div className={styles.count}>Bracket #{count}</div>
 				{onDelete ? (
 					<SendouButton
 						size="small"
@@ -202,7 +203,7 @@ function TournamentFormatBracketSelector({
 					</SendouButton>
 				) : null}
 			</div>
-			<div className="format-selector__divider" />
+			<div className={styles.divider} />
 			<div className="stack md items-start">
 				<div>
 					<Label htmlFor={createId("name")}>Bracket's name</Label>
@@ -475,7 +476,6 @@ function TournamentFormatBracketSelector({
 						<div className="stack sm horizontal mt-1 mb-2">
 							<SendouSwitch
 								id={createId("follow-up-bracket")}
-								size="small"
 								isSelected={Boolean(bracket.sources)}
 								onChange={(isSelected) =>
 									updateBracket({

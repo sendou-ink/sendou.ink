@@ -7,7 +7,8 @@
 	"tabs.seeds": "种子",
 	"tabs.results": "",
 	"tabs.streams": "直播 ({{count}})",
-	"tabs.subs": "替补 ({{count}})",
+	"tabs.subs": "替补",
+	"tabs.looking": "",
 	"pre.steps.header": "参加比赛需完成以下步骤",
 	"pre.steps.name": "队伍名称",
 	"pre.steps.roster": "完整阵容",
@@ -28,7 +29,7 @@
 	"pre.roster.header": "填写阵容",
 	"pre.roster.footer": "需要至少 {{atLeastCount}} 名成员，成员数量上限为 {{maxCount}}",
 	"pre.roster.footer.noSubs": "",
-	"pre.roster.addTrusted.header": "添加与您游玩过的玩家",
+	"pre.roster.addFriend.header": "",
 	"pre.roster.delete.button": "删除成员",
 	"pre.roster.delete.header": "要删除的成员",
 	"pre.pool.header": "选择地图池",
@@ -118,7 +119,7 @@
 	"join.error.ALREADY_JOINED": "您已经是该队伍的成员了。",
 	"join.error.NOT_LOGGED_IN": "您需要登录后才能加入队伍。",
 	"join.VALID": "加入 {{teamName}} 参与 {{eventName}}？",
-	"join.giveTrust": "给予 {{name}} 在未来比赛里自行添加您的权限？",
+	"join.friendSuggestion": "",
 	"subs.prefersToPlay": "倾向于使用",
 	"subs.canPlay": "可以使用",
 	"subs.canVC": "可以语音",
@@ -145,5 +146,6 @@
 	"progression.error.NEGATIVE_PROGRESSION": "",
 	"progression.error.NO_SE_SOURCE": "",
 	"progression.error.NO_DE_POSITIVE": "",
-	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": ""
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "",
+	"lfg.askCaptainToJoinQueue": ""
 }

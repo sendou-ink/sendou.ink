@@ -3,6 +3,7 @@ import { Radio, RadioGroup } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import type { Preference } from "~/db/tables";
 import { preferenceEmojiUrl } from "~/utils/urls";
+import styles from "./PreferenceRadioGroup.module.css";
 
 export function PreferenceRadioGroup({
 	preference,
@@ -26,17 +27,16 @@ export function PreferenceRadioGroup({
 			orientation="horizontal"
 		>
 			<Radio value="AVOID" aria-label="Avoid the mode">
-				{({ isSelected, isHovered, isFocusVisible }) => (
+				{({ isSelected, isFocusVisible }) => (
 					<span
-						className={clsx("q-settings__radio", {
-							"q-settings__radio__checked": isSelected,
-							"q-settings__radio__hovered": isHovered,
-							"q-settings__radio__focus-visible": isFocusVisible,
+						className={clsx(styles.radio, {
+							[styles.checked]: isSelected,
+							[styles.focusVisible]: isFocusVisible,
 						})}
 					>
 						<img
 							src={preferenceEmojiUrl("AVOID")}
-							className="q-settings__radio__emoji"
+							className={styles.emoji}
 							width={18}
 							alt="Avoid emoji"
 						/>
@@ -45,17 +45,16 @@ export function PreferenceRadioGroup({
 				)}
 			</Radio>
 			<Radio value="NEUTRAL" aria-label="Neutral towards the mode">
-				{({ isSelected, isHovered, isFocusVisible }) => (
+				{({ isSelected, isFocusVisible }) => (
 					<span
-						className={clsx("q-settings__radio", {
-							"q-settings__radio__checked": isSelected,
-							"q-settings__radio__hovered": isHovered,
-							"q-settings__radio__focus-visible": isFocusVisible,
+						className={clsx(styles.radio, {
+							[styles.checked]: isSelected,
+							[styles.focusVisible]: isFocusVisible,
 						})}
 					>
 						<img
 							src={preferenceEmojiUrl()}
-							className="q-settings__radio__emoji"
+							className={styles.emoji}
 							width={18}
 							alt="Neutral emoji"
 						/>
@@ -64,17 +63,16 @@ export function PreferenceRadioGroup({
 				)}
 			</Radio>
 			<Radio value="PREFER" aria-label="Prefer the mode">
-				{({ isSelected, isHovered, isFocusVisible }) => (
+				{({ isSelected, isFocusVisible }) => (
 					<span
-						className={clsx("q-settings__radio", {
-							"q-settings__radio__checked": isSelected,
-							"q-settings__radio__hovered": isHovered,
-							"q-settings__radio__focus-visible": isFocusVisible,
+						className={clsx(styles.radio, {
+							[styles.checked]: isSelected,
+							[styles.focusVisible]: isFocusVisible,
 						})}
 					>
 						<img
 							src={preferenceEmojiUrl("PREFER")}
-							className="q-settings__radio__emoji"
+							className={styles.emoji}
 							width={18}
 							alt="Prefer emoji"
 						/>

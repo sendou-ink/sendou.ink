@@ -2039,7 +2039,6 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "260999523806085120",
 					discordAvatar: "a_71a6a4b4f76bd79bc9d7743e322a879d",
 					customUrl: "elemental",
-					chatNameColor: null,
 				},
 				{
 					userId: 622,
@@ -2050,7 +2049,6 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "201922904781357057",
 					discordAvatar: "7fa46b7dc27fa589d3d278ba4b60224f",
 					customUrl: "dotjpg",
-					chatNameColor: null,
 				},
 				{
 					userId: 680,
@@ -2061,7 +2059,6 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "87494390724964352",
 					discordAvatar: "3b82ee3101ba39120b6a65c042a04a37",
 					customUrl: "inkfarer",
-					chatNameColor: null,
 				},
 				{
 					userId: 936,
@@ -2072,7 +2069,6 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "119620026767507456",
 					discordAvatar: "aa1ff5b8eefd5a26657c411138a160b8",
 					customUrl: null,
-					chatNameColor: null,
 				},
 				{
 					userId: 1402,
@@ -2083,7 +2079,6 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "216335108037148673",
 					discordAvatar: "458f1e233a3b590a62f6b867b95a6241",
 					customUrl: "grace",
-					chatNameColor: null,
 				},
 				{
 					userId: 1755,
@@ -2094,7 +2089,6 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "200777324520538113",
 					discordAvatar: "a_d71ac2f474ce422ce711e8e74d657b2f",
 					customUrl: "brushstrokes",
-					chatNameColor: null,
 				},
 				{
 					userId: 2908,
@@ -2105,7 +2099,6 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "112254088992792576",
 					discordAvatar: "711e8d48f316687faa4fdb41ab9298f0",
 					customUrl: "kitsunekeira",
-					chatNameColor: null,
 				},
 				{
 					userId: 3742,
@@ -2116,7 +2109,6 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "124007565758693376",
 					discordAvatar: "702429723f31a57326f87d11063139f7",
 					customUrl: "thoma",
-					chatNameColor: "#bde5ff",
 				},
 				{
 					userId: 3806,
@@ -2127,7 +2119,6 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "113026708071821312",
 					discordAvatar: "4b3f0da55a834acc0beb258edd9c7e34",
 					customUrl: null,
-					chatNameColor: null,
 				},
 				{
 					userId: 4941,
@@ -2138,7 +2129,6 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "236292964052107264",
 					discordAvatar: "c95b9a8cfb9164f3a66267a5e8cfe8b1",
 					customUrl: "hoeenhero",
-					chatNameColor: null,
 				},
 				{
 					userId: 5036,
@@ -2149,7 +2139,6 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "248232091005747201",
 					discordAvatar: "40a21a204f8fae6ae2e7e8c5de70de83",
 					customUrl: "toasty",
-					chatNameColor: null,
 				},
 				{
 					userId: 8098,
@@ -2160,7 +2149,6 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "442431978269310987",
 					discordAvatar: "e0fd0fed98a4d3c3bfd56332678d4e6c",
 					customUrl: "popgun",
-					chatNameColor: null,
 				},
 				{
 					userId: 8750,
@@ -2171,7 +2159,6 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "273188925189914628",
 					discordAvatar: "c62afa020e24ead92cc043ffa809ffdc",
 					customUrl: "liberowolf",
-					chatNameColor: null,
 				},
 				{
 					userId: 9222,
@@ -2182,7 +2169,6 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "298241282550267906",
 					discordAvatar: "f69bb5af745eca4e9b7f55504c641f78",
 					customUrl: "jardonian",
-					chatNameColor: null,
 				},
 				{
 					userId: 9719,
@@ -2193,7 +2179,6 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "184478601171828737",
 					discordAvatar: "75dedb3527b73d9571151f0a00d1c365",
 					customUrl: "scepidilionz",
-					chatNameColor: "#00fa2a",
 				},
 				{
 					userId: 18720,
@@ -2204,7 +2189,6 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "103988435785650176",
 					discordAvatar: "5fef4bf0c1b8a6a76fe2f43b956bfc3d",
 					customUrl: "tulip",
-					chatNameColor: null,
 				},
 			],
 		},
@@ -2216,7 +2200,6 @@ export const SWIM_OR_SINK_167 = (
 			discordId: "216335108037148673",
 			discordAvatar: "458f1e233a3b590a62f6b867b95a6241",
 			customUrl: "grace",
-			chatNameColor: null,
 		},
 		staff: [
 			{
@@ -2226,7 +2209,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "333766288969302018",
 				discordAvatar: "42d40d5ae6ff7081ae57bc02b6e2f717",
 				customUrl: null,
-				chatNameColor: null,
 				role: "ORGANIZER",
 			},
 			{
@@ -2236,7 +2218,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "260999523806085120",
 				discordAvatar: "a_71a6a4b4f76bd79bc9d7743e322a879d",
 				customUrl: "elemental",
-				chatNameColor: null,
 				role: "ORGANIZER",
 			},
 			{
@@ -2246,7 +2227,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "468596581357060097",
 				discordAvatar: "940589e5c6793a5cbbab2adebd84fe0b",
 				customUrl: null,
-				chatNameColor: "#ff6a00",
 				role: "ORGANIZER",
 			},
 			{
@@ -2256,7 +2236,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "418176537561661441",
 				discordAvatar: "bab3e7a9cdb2071de7f2ae29256fc83b",
 				customUrl: null,
-				chatNameColor: null,
 				role: "ORGANIZER",
 			},
 			{
@@ -2266,7 +2245,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "302160815132246016",
 				discordAvatar: "da7cfcd1a5b8bee37cfa5d308b0898eb",
 				customUrl: "mashimashi",
-				chatNameColor: null,
 				role: "ORGANIZER",
 			},
 			{
@@ -2276,7 +2254,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "183025242266927104",
 				discordAvatar: "a9475b488962953152c60f4f138b1618",
 				customUrl: "tux",
-				chatNameColor: null,
 				role: "ORGANIZER",
 			},
 			{
@@ -2286,7 +2263,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "343219263655510021",
 				discordAvatar: "f30c675fc07203ca112d93fd03b5cc96",
 				customUrl: "tbob408",
-				chatNameColor: "#3ac200",
 				role: "ORGANIZER",
 			},
 			{
@@ -2296,7 +2272,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "390444783425945602",
 				discordAvatar: "e821ac7a457033d6c990bcaf518287e5",
 				customUrl: null,
-				chatNameColor: null,
 				role: "STREAMER",
 			},
 			{
@@ -2306,7 +2281,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "422790410566500352",
 				discordAvatar: "77b479e49ec0d09edb8f9b975bff04ce",
 				customUrl: "reefsixes",
-				chatNameColor: null,
 				role: "ORGANIZER",
 			},
 			{
@@ -2316,7 +2290,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "360259023389327361",
 				discordAvatar: "c5a2506e46e135b2568ef48242f669e8",
 				customUrl: "kloud",
-				chatNameColor: null,
 				role: "ORGANIZER",
 			},
 			{
@@ -2326,7 +2299,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "247504664378081280",
 				discordAvatar: "a_a60bcc9c76d4baa9814287fdc5c28fe9",
 				customUrl: "pipedreamdx",
-				chatNameColor: null,
 				role: "STREAMER",
 			},
 			{
@@ -2336,7 +2308,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "184478601171828737",
 				discordAvatar: "75dedb3527b73d9571151f0a00d1c365",
 				customUrl: "scepidilionz",
-				chatNameColor: "#00fa2a",
 				role: "ORGANIZER",
 			},
 			{
@@ -2346,7 +2317,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "565712290020589569",
 				discordAvatar: "498b21d6f64dcd56d06e61c2ec39e571",
 				customUrl: "rooster",
-				chatNameColor: null,
 				role: "ORGANIZER",
 			},
 			{
@@ -2356,7 +2326,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "103988435785650176",
 				discordAvatar: "5fef4bf0c1b8a6a76fe2f43b956bfc3d",
 				customUrl: "tulip",
-				chatNameColor: null,
 				role: "ORGANIZER",
 			},
 			{
@@ -2366,7 +2335,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "221418644297482250",
 				discordAvatar: "6b7156dcd0582ee160564bfa0c5cdc0e",
 				customUrl: "fusionboltzgx",
-				chatNameColor: "#6d8283",
 				role: "ORGANIZER",
 			},
 			{
@@ -2376,7 +2344,6 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "458714559855722497",
 				discordAvatar: "b815bb6090c2b32fec23f1336fae5663",
 				customUrl: null,
-				chatNameColor: null,
 				role: "ORGANIZER",
 			},
 			{
@@ -2386,18 +2353,7 @@ export const SWIM_OR_SINK_167 = (
 				discordId: "599633578648928307",
 				discordAvatar: "f5139304fb364bca35634a8e5cd11c0f",
 				customUrl: "phantom_spl",
-				chatNameColor: null,
 				role: "ORGANIZER",
-			},
-		],
-		subCounts: [
-			{
-				visibility: "+3",
-				count: 1,
-			},
-			{
-				visibility: "ALL",
-				count: 17,
 			},
 		],
 		bracketProgressionOverrides: overrides ?? [],
@@ -2429,6 +2385,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 9403,
@@ -2445,6 +2402,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 31868,
@@ -2461,6 +2419,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 13562,
@@ -2477,6 +2436,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 34724,
@@ -2493,6 +2453,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 27222,
@@ -2509,6 +2470,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -2569,6 +2531,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 331,
@@ -2585,6 +2548,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 44,
@@ -2601,6 +2565,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 65,
@@ -2617,6 +2582,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -2677,6 +2643,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 10200,
@@ -2693,6 +2660,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 1038,
@@ -2709,6 +2677,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 1059,
@@ -2725,6 +2694,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 267,
@@ -2741,6 +2711,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -2801,6 +2772,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 9034,
@@ -2817,6 +2789,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 590,
@@ -2833,6 +2806,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 29643,
@@ -2849,6 +2823,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -2909,6 +2884,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 5368,
@@ -2925,6 +2901,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 373,
@@ -2941,6 +2918,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 37677,
@@ -2957,6 +2935,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -3017,6 +2996,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 11143,
@@ -3033,6 +3013,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 20311,
@@ -3049,6 +3030,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 11815,
@@ -3065,6 +3047,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 5001,
@@ -3081,6 +3064,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 7216,
@@ -3097,6 +3081,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -3162,6 +3147,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 20026,
@@ -3178,6 +3164,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 5227,
@@ -3194,6 +3181,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 25622,
@@ -3210,6 +3198,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 25053,
@@ -3226,6 +3215,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -3291,6 +3281,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 5947,
@@ -3307,6 +3298,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 8760,
@@ -3323,6 +3315,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 1548,
@@ -3339,6 +3332,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 163,
@@ -3355,6 +3349,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -3420,6 +3415,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 2670,
@@ -3436,6 +3432,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 36265,
@@ -3452,6 +3449,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 23505,
@@ -3468,6 +3466,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -3533,6 +3532,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 11244,
@@ -3549,6 +3549,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 3181,
@@ -3565,6 +3566,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 11495,
@@ -3581,6 +3583,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 31073,
@@ -3597,6 +3600,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -3657,6 +3661,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 21487,
@@ -3673,6 +3678,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 28391,
@@ -3689,6 +3695,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 23292,
@@ -3705,6 +3712,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 27438,
@@ -3721,6 +3729,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -3781,6 +3790,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 4307,
@@ -3797,6 +3807,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 20731,
@@ -3813,6 +3824,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 22706,
@@ -3829,6 +3841,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -3889,6 +3902,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 15278,
@@ -3905,6 +3919,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 34414,
@@ -3921,6 +3936,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 863,
@@ -3937,6 +3953,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 31526,
@@ -3953,6 +3970,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -4018,6 +4036,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 1736,
@@ -4034,6 +4053,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 986,
@@ -4050,6 +4070,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 2300,
@@ -4066,6 +4087,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 25464,
@@ -4082,6 +4104,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 30204,
@@ -4098,6 +4121,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -4163,6 +4187,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 11275,
@@ -4179,6 +4204,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 9718,
@@ -4195,6 +4221,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [],
@@ -4229,6 +4256,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 2088,
@@ -4245,6 +4273,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 9454,
@@ -4261,6 +4290,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 2059,
@@ -4277,6 +4307,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -4337,6 +4368,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 25168,
@@ -4353,6 +4385,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 27485,
@@ -4369,6 +4402,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 14007,
@@ -4385,6 +4419,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -4445,6 +4480,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 1338,
@@ -4461,6 +4497,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 5679,
@@ -4477,6 +4514,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 241,
@@ -4493,6 +4531,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -4553,6 +4592,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 33116,
@@ -4569,6 +4609,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 34014,
@@ -4585,6 +4626,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 44751,
@@ -4601,6 +4643,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 44198,
@@ -4617,6 +4660,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 22756,
@@ -4633,6 +4677,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -4698,6 +4743,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 1487,
@@ -4714,6 +4760,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 17310,
@@ -4730,6 +4777,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 34657,
@@ -4746,6 +4794,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 22409,
@@ -4762,6 +4811,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -4827,6 +4877,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 2672,
@@ -4843,6 +4894,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 4504,
@@ -4859,6 +4911,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 25856,
@@ -4875,6 +4928,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -4940,6 +4994,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 34071,
@@ -4956,6 +5011,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 23946,
@@ -4972,6 +5028,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 21339,
@@ -4988,6 +5045,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -5048,6 +5106,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 5261,
@@ -5064,6 +5123,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 190,
@@ -5080,6 +5140,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 12585,
@@ -5096,6 +5157,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -5156,6 +5218,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 2731,
@@ -5172,6 +5235,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 31764,
@@ -5188,6 +5252,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 25133,
@@ -5204,6 +5269,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 17855,
@@ -5220,6 +5286,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [],
@@ -5259,6 +5326,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 32885,
@@ -5275,6 +5343,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 1953,
@@ -5291,6 +5360,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 15188,
@@ -5307,6 +5377,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 2888,
@@ -5323,6 +5394,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -5388,6 +5460,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 8297,
@@ -5404,6 +5477,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 8830,
@@ -5420,6 +5494,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 38176,
@@ -5436,6 +5511,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -5501,6 +5577,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 36215,
@@ -5517,6 +5594,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [],
@@ -5556,6 +5634,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 6051,
@@ -5572,6 +5651,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 22903,
@@ -5588,6 +5668,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 23132,
@@ -5604,6 +5685,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -5664,6 +5746,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 29120,
@@ -5680,6 +5763,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 35225,
@@ -5696,6 +5780,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 8587,
@@ -5712,6 +5797,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 23333,
@@ -5728,6 +5814,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -5793,6 +5880,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 31395,
@@ -5809,6 +5897,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 31195,
@@ -5825,6 +5914,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 28700,
@@ -5841,6 +5931,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 33402,
@@ -5857,6 +5948,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -5917,6 +6009,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 30686,
@@ -5933,6 +6026,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 22396,
@@ -5949,6 +6043,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 1961,
@@ -5965,6 +6060,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -6030,6 +6126,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 5187,
@@ -6046,6 +6143,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 10265,
@@ -6062,6 +6160,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 22744,
@@ -6078,6 +6177,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 29823,
@@ -6094,6 +6194,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -6159,6 +6260,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 13671,
@@ -6175,6 +6277,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 30612,
@@ -6191,6 +6294,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 36898,
@@ -6207,6 +6311,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 31580,
@@ -6223,6 +6328,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -6288,6 +6394,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 31533,
@@ -6304,6 +6411,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 29483,
@@ -6320,6 +6428,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 42118,
@@ -6336,6 +6445,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 36800,
@@ -6352,6 +6462,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [],
@@ -6391,6 +6502,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 26820,
@@ -6407,6 +6519,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 31154,
@@ -6423,6 +6536,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 10297,
@@ -6439,6 +6553,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 3513,
@@ -6455,6 +6570,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 25469,
@@ -6471,6 +6587,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -6536,6 +6653,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 3635,
@@ -6552,6 +6670,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 7433,
@@ -6568,6 +6687,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 6647,
@@ -6584,6 +6704,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [],
@@ -6623,6 +6744,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 20807,
@@ -6639,6 +6761,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 42703,
@@ -6655,6 +6778,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 42409,
@@ -6671,6 +6795,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -6736,6 +6861,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 11941,
@@ -6752,6 +6878,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 715,
@@ -6768,6 +6895,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 11409,
@@ -6784,6 +6912,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [],
@@ -6818,6 +6947,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 29182,
@@ -6834,6 +6964,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 9235,
@@ -6850,6 +6981,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 30591,
@@ -6866,6 +6998,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -6926,6 +7059,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 2279,
@@ -6942,6 +7076,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 26162,
@@ -6958,6 +7093,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 4334,
@@ -6974,6 +7110,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 24013,
@@ -6990,6 +7127,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [],
@@ -7029,6 +7167,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 26801,
@@ -7045,6 +7184,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 29855,
@@ -7061,6 +7201,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 34594,
@@ -7077,6 +7218,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 33825,
@@ -7093,6 +7235,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -7153,6 +7296,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 26988,
@@ -7169,6 +7313,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 26989,
@@ -7185,6 +7330,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 12610,
@@ -7201,6 +7347,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 25755,
@@ -7217,6 +7364,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -7282,6 +7430,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 37341,
@@ -7298,6 +7447,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 22699,
@@ -7314,6 +7464,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 28145,
@@ -7330,6 +7481,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 39363,
@@ -7346,6 +7498,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 27113,
@@ -7362,6 +7515,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -7427,6 +7581,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 29467,
@@ -7443,6 +7598,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 10611,
@@ -7459,6 +7615,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 46099,
@@ -7475,6 +7632,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -7535,6 +7693,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 45163,
@@ -7551,6 +7710,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 2620,
@@ -7567,6 +7727,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 32203,
@@ -7583,6 +7744,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 46101,
@@ -7599,6 +7761,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -7659,6 +7822,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 29011,
@@ -7675,6 +7839,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 23082,
@@ -7691,6 +7856,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 33067,
@@ -7707,6 +7873,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 21549,
@@ -7723,6 +7890,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -7788,6 +7956,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 20240,
@@ -7804,6 +7973,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 28097,
@@ -7820,6 +7990,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 21249,
@@ -7836,6 +8007,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -7896,6 +8068,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 23712,
@@ -7912,6 +8085,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 27474,
@@ -7928,6 +8102,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 20990,
@@ -7944,6 +8119,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 8080,
@@ -7960,6 +8136,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 28671,
@@ -7976,6 +8153,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -8036,6 +8214,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 3275,
@@ -8052,6 +8231,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 35169,
@@ -8068,6 +8248,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 7008,
@@ -8084,6 +8265,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 40169,
@@ -8100,6 +8282,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -8165,6 +8348,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 23183,
@@ -8181,6 +8365,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 7664,
@@ -8197,6 +8382,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 30237,
@@ -8213,6 +8399,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [],
@@ -8252,6 +8439,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 8552,
@@ -8268,6 +8456,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 29897,
@@ -8284,6 +8473,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 1894,
@@ -8300,6 +8490,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [
@@ -8360,6 +8551,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 43850,
@@ -8376,6 +8568,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 45635,
@@ -8392,6 +8585,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 					{
 						userId: 46045,
@@ -8408,6 +8602,7 @@ export const SWIM_OR_SINK_167 = (
 						streamTwitch: null,
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
+						role: "REGULAR",
 					},
 				],
 				checkIns: [

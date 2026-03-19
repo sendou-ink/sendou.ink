@@ -23,6 +23,7 @@ export function FriendCodeInput({
 
 	return (
 		<fetcher.Form method="post" action={SENDOUQ_PAGE}>
+			<input type="hidden" name="revalidateRoot" value="true" />
 			<div
 				className={clsx("stack sm horizontal items-end", {
 					"justify-center": friendCode,
@@ -34,8 +35,7 @@ export function FriendCodeInput({
 							<Label htmlFor={id}>{t("common:fc.title")}</Label>
 							<InfoPopover tiny>
 								<div className="stack sm">
-									<div>{t("common:fc.helpText")}</div>
-									<div className="text-lighter text-xs font-bold">
+									<div className="text-xs font-bold">
 										{t("common:fc.whereToFind")}
 									</div>
 									<Image
@@ -62,7 +62,7 @@ export function FriendCodeInput({
 				</div>
 				{!friendCode ? (
 					<SubmitButton _action="ADD_FRIEND_CODE" state={fetcher.state}>
-						Save
+						{t("common:actions.save")}
 					</SubmitButton>
 				) : null}
 			</div>

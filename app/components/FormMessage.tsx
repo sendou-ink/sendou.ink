@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import type * as React from "react";
+import styles from "./FormMessage.module.css";
 
 export function FormMessage({
 	children,
@@ -18,8 +19,8 @@ export function FormMessage({
 		<div
 			id={id}
 			className={clsx(
-				{ "info-message": type === "info", "error-message": type === "error" },
-				{ "no-margin": !spaced },
+				{ [styles.info]: type === "info", [styles.error]: type === "error" },
+				{ [styles.noMargin]: !spaced },
 				className,
 			)}
 		>

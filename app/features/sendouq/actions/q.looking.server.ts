@@ -11,13 +11,13 @@ import {
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
+import { navIconUrl, SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
 import { groupAfterMorph } from "../core/groups";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import * as PrivateUserNoteRepository from "../PrivateUserNoteRepository.server";
 import { lookingSchema } from "../q-schemas.server";
 import { resolveFutureMatchModes } from "../q-utils";
-import { SendouQError } from "../q-utils.server";
+import { SendouQError, setGroupChatMetadata } from "../q-utils.server";
 
 // this function doesn't throw normally because we are assuming
 // if there is a validation error the user saw stale data
@@ -121,19 +121,20 @@ export const action: ActionFunction = async ({ request }) => {
 
 				await refreshSendouQInstance();
 
-				if (ourGroup.chatCode && theirGroup.chatCode) {
-					ChatSystemMessage.send([
-						{
-							room: ourGroup.chatCode,
-							type: "NEW_GROUP",
-							revalidateOnly: true,
-						},
-						{
-							room: theirGroup.chatCode,
-							type: "NEW_GROUP",
-							revalidateOnly: true,
-						},
-					]);
+				if (ourGroup.chatCode) {
+					ChatSystemMessage.removeRoom(ourGroup.chatCode);
+				}
+				if (theirGroup.chatCode) {
+					ChatSystemMessage.removeRoom(theirGroup.chatCode);
+				}
+
+				const survivingGroup =
+					SendouQ.findUncensoredGroupById(survivingGroupId);
+				if (survivingGroup?.chatCode) {
+					setGroupChatMetadata({
+						chatCode: survivingGroup.chatCode,
+						members: survivingGroup.members,
+					});
 				}
 
 				break;
@@ -176,6 +177,21 @@ export const action: ActionFunction = async ({ request }) => {
 				});
 
 				await refreshSendouQInstance();
+
+				if (createdMatch.chatCode) {
+					ChatSystemMessage.setMetadata({
+						chatCode: createdMatch.chatCode,
+						header: `Match #${createdMatch.id}`,
+						subtitle: "SendouQ",
+						url: sendouQMatchPage(createdMatch.id),
+						imageUrl: `${navIconUrl("sendouq")}.avif`,
+						participantUserIds: [
+							...ownGroup.members.map((m) => m.id),
+							...theirGroup.members.map((m) => m.id),
+						],
+						expiresAfter: { hours: 2 },
+					});
+				}
 
 				if (ownGroup.chatCode && theirGroup.chatCode) {
 					ChatSystemMessage.send([

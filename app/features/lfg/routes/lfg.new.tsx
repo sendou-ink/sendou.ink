@@ -1,22 +1,23 @@
-import * as React from "react";
+import { ChevronLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Link, useFetcher, useLoaderData } from "react-router";
-import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { Link, useLoaderData } from "react-router";
+import { LinkButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { WeaponImage } from "~/components/Image";
-import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
-import { CrossIcon } from "~/components/icons/Cross";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
-import { languagesUnified } from "~/modules/i18n/config";
+import { FormField } from "~/form/FormField";
+import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
+import type { SelectOption } from "~/form/types";
+import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { useHasRole } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { LFG_PAGE, navIconUrl, userEditProfilePage } from "~/utils/urls";
 import { action } from "../actions/lfg.new.server";
 import { LFG, TEAM_POST_TYPES, TIMEZONES } from "../lfg-constants";
+import { lfgNewSchema } from "../lfg-schemas";
 import { loader } from "../loaders/lfg.new.server";
 export { loader, action };
 
@@ -29,249 +30,105 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
+const browserTimezone = () => {
+	try {
+		const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+		if (TIMEZONES.includes(tz)) return tz;
+	} catch {
+		// ignore
+	}
+	return TIMEZONES[0];
+};
+
 export default function LFGNewPostPage() {
 	const isPlusServerMember = useHasRole("PLUS_SERVER_MEMBER");
 	const data = useLoaderData<typeof loader>();
-	const fetcher = useFetcher();
 	const { t } = useTranslation(["common", "lfg"]);
+	const user = useUser();
 	const availableTypes = useAvailablePostTypes();
-	const [type, setType] = React.useState(data.postToEdit?.type ?? LFG.types[0]);
 
 	if (availableTypes.length === 0) {
 		return (
 			<Main halfWidth className="stack items-center">
 				<h2 className="text-lg mb-4">{t("lfg:new.noMorePosts")}</h2>
-				<LinkButton to={LFG_PAGE} icon={<ArrowLeftIcon />}>
+				<LinkButton to={LFG_PAGE} icon={<ChevronLeft />}>
 					{t("common:actions.goBack")}
 				</LinkButton>
 			</Main>
 		);
 	}
 
+	const typeOptions: SelectOption[] = availableTypes.map((type) => ({
+		value: type,
+		label: `${t(`lfg:types.${type}`)}${data.team && TEAM_POST_TYPES.includes(type) ? ` (${data.team.name})` : ""}`,
+	}));
+
+	const timezoneOptions: SelectOption[] = TIMEZONES.map((tz) => ({
+		value: tz,
+		label: tz,
+	}));
+
+	const plusTierOptions: SelectOption[] = [1, 2, 3]
+		.filter((tier) => user?.plusTier && tier >= user.plusTier)
+		.map((tier) => ({
+			value: String(tier),
+			label: `+${tier} ${tier > 1 ? t("lfg:filters.orAbove") : ""}`.trim(),
+		}));
+
 	return (
 		<Main halfWidth>
-			<h2 className="text-lg mb-4">
-				{data.postToEdit ? "Editing LFG post" : "New LFG post"}
-			</h2>
-			<fetcher.Form className="stack md items-start" method="post">
-				{data.postToEdit ? (
-					<input type="hidden" name="postId" value={data.postToEdit.id} />
-				) : null}
-				<TypeSelect
-					type={type}
-					setType={setType}
-					availableTypes={availableTypes}
+			<SendouForm
+				schema={lfgNewSchema}
+				title={data.postToEdit ? "Editing LFG post" : "New LFG post"}
+				defaultValues={{
+					postId: data.postToEdit?.id,
+					type: data.postToEdit?.type ?? availableTypes[0],
+					timezone: data.postToEdit?.timezone ?? browserTimezone(),
+					postText: data.postToEdit?.text ?? "",
+					plusTierVisibility: data.postToEdit?.plusTierVisibility
+						? String(data.postToEdit.plusTierVisibility)
+						: null,
+					languages: (data.languages ?? []) as UnifiedLanguageCode[],
+				}}
+			>
+				<FormField
+					name="type"
+					options={typeOptions}
+					disabled={!!data.postToEdit}
 				/>
-				<TimezoneSelect />
-				<Textarea />
-				{isPlusServerMember && type !== "COACH_FOR_TEAM" ? (
-					<PlusVisibilitySelect />
-				) : null}
-				<Languages />
-				{type !== "COACH_FOR_TEAM" && <WeaponPool />}
-				<SubmitButton state={fetcher.state}>
-					{t("common:actions.submit")}
-				</SubmitButton>
-			</fetcher.Form>
+				<FormField name="timezone" options={timezoneOptions} />
+				<FormField name="postText" />
+				<ConditionalFields
+					isPlusServerMember={isPlusServerMember}
+					plusTierOptions={plusTierOptions}
+				/>
+				<FormField name="languages" />
+				<ConditionalWeaponPool />
+			</SendouForm>
 		</Main>
 	);
 }
 
-const useAvailablePostTypes = () => {
-	const data = useLoaderData<typeof loader>();
-
-	return (
-		LFG.types
-			// can't look for a team, if not in one
-			.filter((type) => data.team || !TEAM_POST_TYPES.includes(type))
-			// can't post two posts of same type
-			.filter(
-				(type) =>
-					!data.userPostTypes.includes(type) || data.postToEdit?.type === type,
-			)
-	);
-};
-
-function TypeSelect({
-	type,
-	setType,
-	availableTypes,
+function ConditionalFields({
+	isPlusServerMember,
+	plusTierOptions,
 }: {
-	type: Tables["LFGPost"]["type"];
-	setType: (type: Tables["LFGPost"]["type"]) => void;
-	availableTypes: Tables["LFGPost"]["type"][];
+	isPlusServerMember: boolean;
+	plusTierOptions: SelectOption[];
 }) {
-	const { t } = useTranslation(["lfg"]);
-	const data = useLoaderData<typeof loader>();
+	const { values } = useFormFieldContext();
+	const type = values.type as Tables["LFGPost"]["type"];
 
-	return (
-		<div>
-			<Label>{t("lfg:new.type.header")}</Label>
-			{data.postToEdit ? (
-				<input type="hidden" name="type" value={type} />
-			) : null}
-			<select
-				name="type"
-				value={type}
-				onChange={(e) => setType(e.target.value as Tables["LFGPost"]["type"])}
-				disabled={Boolean(data.postToEdit)}
-			>
-				{availableTypes.map((type) => (
-					<option key={type} value={type}>
-						{t(`lfg:types.${type}`)}{" "}
-						{data.team && TEAM_POST_TYPES.includes(type)
-							? `(${data.team.name})`
-							: ""}
-					</option>
-				))}
-			</select>
-		</div>
-	);
+	return isPlusServerMember && type !== "COACH_FOR_TEAM" ? (
+		<FormField name="plusTierVisibility" options={plusTierOptions} />
+	) : null;
 }
 
-function TimezoneSelect() {
-	const { t } = useTranslation(["lfg"]);
-	const data = useLoaderData<typeof loader>();
-	const [selected, setSelected] = React.useState(
-		data.postToEdit?.timezone ?? TIMEZONES[0],
-	);
+function ConditionalWeaponPool() {
+	const { values } = useFormFieldContext();
+	const type = values.type as Tables["LFGPost"]["type"];
 
-	React.useEffect(() => {
-		const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-		if (!TIMEZONES.includes(timezone)) return;
-
-		setSelected(timezone);
-	}, []);
-
-	return (
-		<div>
-			<Label>{t("lfg:new.timezone.header")}</Label>
-			<select
-				name="timezone"
-				onChange={(e) => setSelected(e.target.value)}
-				value={selected}
-			>
-				{TIMEZONES.map((tz) => (
-					<option key={tz} value={tz}>
-						{tz}
-					</option>
-				))}
-			</select>
-		</div>
-	);
-}
-
-function Textarea() {
-	const { t } = useTranslation(["lfg"]);
-	const data = useLoaderData<typeof loader>();
-	const [value, setValue] = React.useState(data.postToEdit?.text ?? "");
-
-	return (
-		<div>
-			<Label
-				htmlFor="postText"
-				valueLimits={{ current: value.length, max: LFG.MAX_TEXT_LENGTH }}
-			>
-				{t("lfg:new.text.header")}
-			</Label>
-			<textarea
-				id="postText"
-				name="postText"
-				value={value}
-				onChange={(e) => setValue(e.target.value)}
-				maxLength={LFG.MAX_TEXT_LENGTH}
-				required
-			/>
-		</div>
-	);
-}
-
-function PlusVisibilitySelect() {
-	const { t } = useTranslation(["lfg"]);
-	const user = useUser();
-	const data = useLoaderData<typeof loader>();
-	const [selected, setSelected] = React.useState<number | "">(
-		data.postToEdit?.plusTierVisibility ?? "",
-	);
-
-	const options = [1, 2, 3].filter(
-		(tier) => user?.plusTier && tier >= user?.plusTier,
-	);
-
-	return (
-		<div>
-			<Label>{t("lfg:new.visibility.header")}</Label>
-			<select
-				name="plusTierVisibility"
-				onChange={(e) =>
-					setSelected(e.target.value === "" ? "" : Number(e.target.value))
-				}
-				value={selected}
-			>
-				{options.map((tier) => (
-					<option key={tier} value={tier}>
-						+{tier} {tier > 1 ? t("lfg:filters.orAbove") : ""}
-					</option>
-				))}
-				<option value="">{t("lfg:new.visibility.everyone")}</option>
-			</select>
-		</div>
-	);
-}
-
-function Languages() {
-	const { t } = useTranslation(["lfg"]);
-	const data = useLoaderData<typeof loader>();
-	const [value, setValue] = React.useState(data.languages ?? []);
-
-	return (
-		<div>
-			<input type="hidden" name="languages" value={JSON.stringify(value)} />
-			<Label htmlFor="postLanguage">{t("lfg:new.languages.header")}</Label>
-			<select
-				id="postLanguage"
-				className="w-max"
-				onChange={(e) => {
-					const newLanguages = [...value, e.target.value].sort((a, b) =>
-						a.localeCompare(b),
-					);
-					setValue(newLanguages);
-				}}
-			>
-				<option value="">{t("lfg:new.languages.placeholder")}</option>
-				{languagesUnified
-					.filter((lang) => !value.includes(lang.code))
-					.map((option) => {
-						return (
-							<option key={option.code} value={option.code}>
-								{option.name}
-							</option>
-						);
-					})}
-			</select>
-			<div className="mt-2">
-				{value.map((code) => {
-					const name = languagesUnified.find((l) => l.code === code)?.name;
-
-					return (
-						<div key={code} className="stack horizontal items-center sm">
-							<span>{name}</span>
-							<SendouButton
-								icon={<CrossIcon />}
-								variant="minimal-destructive"
-								onPress={() => {
-									const newLanguages = value.filter(
-										(codeInArr) => codeInArr !== code,
-									);
-									setValue(newLanguages);
-								}}
-							/>
-						</div>
-					);
-				})}
-			</div>
-		</div>
-	);
+	return type !== "COACH_FOR_TEAM" ? <WeaponPool /> : null;
 }
 
 function WeaponPool() {
@@ -301,3 +158,18 @@ function WeaponPool() {
 		</div>
 	);
 }
+
+const useAvailablePostTypes = () => {
+	const data = useLoaderData<typeof loader>();
+
+	return (
+		LFG.types
+			// can't look for a team, if not in one
+			.filter((type) => data.team || !TEAM_POST_TYPES.includes(type))
+			// can't post two posts of same type
+			.filter(
+				(type) =>
+					!data.userPostTypes.includes(type) || data.postToEdit?.type === type,
+			)
+	);
+};

@@ -1,7 +1,9 @@
 import { redirect } from "react-router";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { TIERS } from "~/features/mmr/mmr-constants";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import {
+	navIconUrl,
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PAGE,
 	SENDOUQ_PREPARING_PAGE,
@@ -44,6 +46,21 @@ export function sqRedirectIfNeeded({
 	if (currentLocation === "match" && newLocation.includes("match")) return;
 
 	throw redirect(newLocation);
+}
+
+export function setGroupChatMetadata(group: {
+	chatCode: string;
+	members: { id: number }[];
+}) {
+	ChatSystemMessage.setMetadata({
+		chatCode: group.chatCode,
+		header: `Group (${group.members.length}/4)`,
+		subtitle: "SendouQ",
+		url: SENDOUQ_LOOKING_PAGE,
+		imageUrl: `${navIconUrl("sendouq")}.avif`,
+		participantUserIds: group.members.map((m) => m.id),
+		expiresAfter: { hours: 2 },
+	});
 }
 
 const allTiersOrdered = TIERS.flatMap((t) => [

@@ -6,7 +6,6 @@ export const loader = async () => {
 
 	return {
 		settings: await QSettingsRepository.settingsByUserId(user.id),
-		trusted: await QSettingsRepository.findTrustedUsersByGiverId(user.id),
 		team: await QSettingsRepository.currentTeamByUserId(user.id),
 	};
 };

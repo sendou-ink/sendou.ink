@@ -1,3 +1,4 @@
+import { Search } from "lucide-react";
 import * as React from "react";
 import type { MetaFunction } from "react-router";
 import {
@@ -21,7 +22,6 @@ import {
 import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
-import { SearchIcon } from "~/components/icons/Search";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { SEED_VARIATIONS } from "~/features/api-private/constants";
@@ -47,6 +47,17 @@ export const meta: MetaFunction = (args) => {
 };
 
 export default function AdminPage() {
+	const isStaff = useHasRole("STAFF");
+
+	// is dev user or is someone impersonating another user (allow them to stop)
+	if (!isStaff) {
+		return (
+			<Main>
+				<Impersonate />
+			</Main>
+		);
+	}
+
 	return (
 		<Main>
 			<SendouTabs>
@@ -84,7 +95,7 @@ function FriendCodeLookUp() {
 				/>
 				<SubmitButton
 					state={fetcher.state}
-					icon={<SearchIcon />}
+					icon={<Search />}
 					onPress={() => setSearchParams({ friendCode })}
 				>
 					Search
@@ -109,12 +120,15 @@ function FriendCodeLookUp() {
 function AdminActions() {
 	const isStaff = useHasRole("STAFF");
 	const isAdmin = useHasRole("ADMIN");
+	const isDev = useHasRole("DEV");
 
 	return (
 		<div className="stack lg">
 			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS ? <Seed /> : null}
 			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS ? <TestAdminNotification /> : null}
-			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS || isAdmin ? <Impersonate /> : null}
+			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS || isAdmin || isDev ? (
+				<Impersonate />
+			) : null}
 
 			{isStaff ? <LinkPlayer /> : null}
 			{isStaff ? <GiveArtist /> : null}
@@ -172,16 +186,20 @@ function MigrateUser() {
 		<fetcher.Form className="stack md" method="post">
 			<h2>Migrate user data</h2>
 			<div className="stack horizontal md">
-				<UserSearch
-					label="Old user"
-					name="old-user"
-					onChange={(newUser) => setOldUserId(newUser?.id)}
-				/>
-				<UserSearch
-					label="New user"
-					name="new-user"
-					onChange={(newUser) => setNewUserId(newUser?.id)}
-				/>
+				<div className="flex-same-size">
+					<UserSearch
+						label="Old user"
+						name="old-user"
+						onChange={(newUser) => setOldUserId(newUser?.id)}
+					/>
+				</div>
+				<div className="flex-same-size">
+					<UserSearch
+						label="New user"
+						name="new-user"
+						onChange={(newUser) => setNewUserId(newUser?.id)}
+					/>
+				</div>
 			</div>
 			<div className="stack horizontal md">
 				<SubmitButton
@@ -207,8 +225,10 @@ function LinkPlayer() {
 		<fetcher.Form className="stack md" method="post">
 			<h2>Link player</h2>
 			<div className="stack horizontal md">
-				<UserSearch label="User" name="user" />
-				<div>
+				<div className="flex-same-size">
+					<UserSearch label="User" name="user" />
+				</div>
+				<div className="flex-same-size">
 					<label>Player ID</label>
 					<input type="number" name="playerId" />
 				</div>
@@ -302,8 +322,10 @@ function UpdateFriendCode() {
 		<fetcher.Form className="stack md" method="post">
 			<h2>Update friend code</h2>
 			<div className="stack horizontal md">
-				<UserSearch label="User" name="user" />
-				<div>
+				<div className="flex-same-size">
+					<UserSearch label="User" name="user" />
+				</div>
+				<div className="flex-same-size">
 					<label htmlFor={id}>Friend code</label>
 					<Input
 						leftAddon="SW-"
@@ -334,9 +356,11 @@ function ForcePatron() {
 		<fetcher.Form className="stack md" method="post">
 			<h2>Force patron</h2>
 			<div className="stack horizontal md">
-				<UserSearch label="User" name="user" />
+				<div className="flex-same-size">
+					<UserSearch label="User" name="user" />
+				</div>
 
-				<div>
+				<div className="flex-same-size">
 					<label>Tier</label>
 					<select name="patronTier">
 						<option value="1">Support</option>
@@ -345,7 +369,7 @@ function ForcePatron() {
 					</select>
 				</div>
 
-				<div>
+				<div className="flex-same-size">
 					<label>Patron till</label>
 					<input name="patronTill" type="date" />
 				</div>
@@ -370,14 +394,16 @@ function BanUser() {
 		<fetcher.Form className="stack md" method="post">
 			<h2 className="text-warning">Ban user</h2>
 			<div className="stack horizontal md">
-				<UserSearch label="User" name="user" />
+				<div className="flex-same-size">
+					<UserSearch label="User" name="user" />
+				</div>
 
-				<div>
+				<div className="flex-same-size">
 					<label>Banned till</label>
 					<input name="duration" type="datetime-local" />
 				</div>
 
-				<div>
+				<div className="flex-same-size">
 					<label>Reason</label>
 					<input name="reason" type="text" />
 				</div>

@@ -1,0 +1,23 @@
+.pendingRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--s-1) var(--s-2);
+	border-radius: var(--radius-field);
+}
+
+.pendingUser {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-weight: var(--weight-semi);
+}
+
+.friendsListHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: var(--s-2);
+	margin-block-end: var(--s-2);
+}

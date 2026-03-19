@@ -7,7 +7,8 @@
 	"tabs.seeds": "シード",
 	"tabs.results": "結果",
 	"tabs.streams": "配信 ({{count}})",
-	"tabs.subs": "サブ ({{count}})",
+	"tabs.subs": "サブ",
+	"tabs.looking": "",
 	"pre.steps.header": "トーナメント参加のために下記を入力してください",
 	"pre.steps.name": "チーム名",
 	"pre.steps.roster": "全プレイヤー",
@@ -28,7 +29,7 @@
 	"pre.roster.header": "参加プレイヤーを登録",
 	"pre.roster.footer": "少なくとも {{atLeastCount}} 人の参加が必要です。最大メンバー数は {{maxCount}} です。",
 	"pre.roster.footer.noSubs": "",
-	"pre.roster.addTrusted.header": "一緒にプレイしたことがあるプレイヤーを追加する",
+	"pre.roster.addFriend.header": "",
 	"pre.roster.delete.button": "メンバーを削除する",
 	"pre.roster.delete.header": "削除するメンバー",
 	"pre.pool.header": "マッププールを選択する",
@@ -118,7 +119,7 @@
 	"join.error.ALREADY_JOINED": "あなたはすでにこのチームのメンバーです。",
 	"join.error.NOT_LOGGED_IN": "チームに参加するにはログインをしてください。",
 	"join.VALID": "チーム {{teamName}} に参加しますか? (参加イベント: {{eventName}})",
-	"join.giveTrust": "{{name}} を信頼ユーザーとして登録しますか? (このユーザーが今後あなたをプレイヤーとしてトーナメントに登録できるようになります)",
+	"join.friendSuggestion": "",
 	"subs.prefersToPlay": "プレイをしたい",
 	"subs.canPlay": "プレイできる",
 	"subs.canVC": "VCあり",
@@ -145,5 +146,6 @@
 	"progression.error.NEGATIVE_PROGRESSION": "逆の進行はダブルエリ三ネーションの時のみ可能です",
 	"progression.error.NO_SE_SOURCE": "シングルエリ三ネーションは妥当なブラケットではないです",
 	"progression.error.NO_DE_POSITIVE": "ダブルエリミネーションは普通の進行(前向き)では妥当ではないです",
-	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": ""
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "",
+	"lfg.askCaptainToJoinQueue": ""
 }

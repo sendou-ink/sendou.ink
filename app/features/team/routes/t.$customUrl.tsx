@@ -11,7 +11,7 @@ import { bskyUrl, navIconUrl, TEAM_SEARCH_PAGE, teamPage } from "~/utils/urls";
 import { loader } from "../loaders/t.$customUrl.server";
 export { loader };
 
-import "../team.css";
+import styles from "../team.module.css";
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.data) return [];
@@ -72,9 +72,10 @@ function TeamBanner() {
 	return (
 		<>
 			<div
-				className={clsx("team__banner", {
-					team__banner__placeholder: !team.bannerUrl,
-				})}
+				className={clsx(
+					styles.banner,
+					!team.bannerUrl && styles.bannerPlaceholder,
+				)}
 				style={{
 					"--team-banner-img": team.bannerUrl
 						? `url("${team.bannerUrl}")`
@@ -82,13 +83,13 @@ function TeamBanner() {
 				}}
 			>
 				{team.avatarUrl ? (
-					<div className="team__banner__avatar">
+					<div className={styles.bannerAvatar}>
 						<div>
 							<img src={team.avatarUrl} alt="" />
 						</div>
 					</div>
 				) : null}
-				<div className="team__banner__flags">
+				<div className={styles.bannerFlags}>
 					{R.unique(
 						team.members
 							.map((member) => member.country)
@@ -97,16 +98,16 @@ function TeamBanner() {
 						return <Flag key={country} countryCode={country} />;
 					})}
 				</div>
-				<div className="team__banner__name">
+				<div className={styles.bannerName}>
 					{team.tag ? (
-						<div className="team__banner__tag team__banner__tag__desktop">
+						<div className={`${styles.bannerTag} ${styles.bannerTagDesktop}`}>
 							{team.tag}
 						</div>
 					) : null}
 					{team.name} <BskyLink />
 				</div>
 			</div>
-			{team.avatarUrl ? <div className="team__banner__avatar__spacer" /> : null}
+			{team.avatarUrl ? <div className={styles.bannerAvatarSpacer} /> : null}
 		</>
 	);
 }
@@ -115,7 +116,7 @@ function MobileTeamNameCountry() {
 	const { team } = useLoaderData<typeof loader>();
 
 	return (
-		<div className="team__mobile-name-country">
+		<div className={styles.mobileNameCountry}>
 			<div className="stack horizontal sm">
 				{R.unique(
 					team.members
@@ -125,12 +126,12 @@ function MobileTeamNameCountry() {
 					return <Flag key={country} countryCode={country} tiny />;
 				})}
 			</div>
-			<div className="team__mobile-team-name">
+			<div className={styles.mobileTeamName}>
 				{team.name}
 				<BskyLink />
 			</div>
 			{team.tag ? (
-				<div className="team__banner__tag team__banner__tag__mobile">
+				<div className={`${styles.bannerTag} ${styles.bannerTagMobile}`}>
 					{team.tag}
 				</div>
 			) : null}
@@ -145,7 +146,7 @@ function BskyLink() {
 
 	return (
 		<a
-			className="team__bsky-link"
+			className={styles.bskyLink}
 			data-testid="bsky-link"
 			href={bskyUrl(team.bsky)}
 			target="_blank"

@@ -1,13 +1,12 @@
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useMatches } from "react-router";
-import { AddNewButton } from "~/components/AddNewButton";
 import { ART_SOURCES, type ArtSource } from "~/features/art/art-types";
 import { ArtGrid } from "~/features/art/components/ArtGrid";
 import { useUser } from "~/features/auth/core/user";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { newArtPage, userPage } from "~/utils/urls";
+import { userPage } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.art.server";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.art.server";
@@ -53,9 +52,10 @@ export default function UserArtPage() {
 
 	return (
 		<div className="stack md">
-			<SubPageHeader user={layoutData.user} backTo={userPage(layoutData.user)}>
-				<AddNewButton navIcon="art" to={newArtPage()} />
-			</SubPageHeader>
+			<SubPageHeader
+				user={layoutData.user}
+				backTo={userPage(layoutData.user)}
+			/>
 			<div className="stack horizontal justify-between items-start text-xs text-lighter">
 				<div>
 					{data.unvalidatedArtCount > 0

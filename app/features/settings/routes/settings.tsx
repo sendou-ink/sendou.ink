@@ -1,7 +1,15 @@
+import { LogOut } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { useLoaderData, useNavigate, useSearchParams } from "react-router";
+import {
+	useFetcher,
+	useLoaderData,
+	useNavigate,
+	useSearchParams,
+} from "react-router";
+import { CustomThemeSelector } from "~/components/CustomThemeSelector";
+import { Divider } from "~/components/Divider";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
@@ -10,9 +18,10 @@ import { Theme, useTheme } from "~/features/theme/core/provider";
 import { SelectFormField } from "~/form/fields/SelectFormField";
 import { SendouForm } from "~/form/SendouForm";
 import { languages } from "~/modules/i18n/config";
+import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { navIconUrl, SETTINGS_PAGE } from "~/utils/urls";
+import { LOG_OUT_URL, navIconUrl, SETTINGS_PAGE } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
 import { action } from "../actions/settings.server";
@@ -23,6 +32,9 @@ import {
 	disallowScrimPickupsFromUntrustedSchema,
 	updateNoScreenSchema,
 } from "../settings-schemas";
+import styles from "./settings.module.css";
+import "./settings.global.css";
+import type { ThemeInput } from "~/utils/oklch-gamut";
 export { loader, action };
 
 export const handle: SendouRouteHandle = {
@@ -41,9 +53,25 @@ export default function SettingsPage() {
 	return (
 		<Main halfWidth>
 			<div className="stack md">
-				<h2 className="text-lg">{t("common:pages.settings")}</h2>
+				<div className="stack horizontal justify-between">
+					<h2 className="text-lg">{t("common:pages.settings")}</h2>
+					{user ? (
+						<form method="post" action={LOG_OUT_URL}>
+							<SendouButton
+								size="small"
+								variant="outlined"
+								icon={<LogOut />}
+								type="submit"
+							>
+								{t("common:header.logout")}
+							</SendouButton>
+						</form>
+					) : null}
+				</div>
+				<Divider className={styles.divider} smallText>
+					{t("common:settings.locales")}
+				</Divider>
 				<LanguageSelector />
-				<ThemeSelector />
 				{user ? (
 					<SendouForm
 						schema={clockFormatSchema}
@@ -51,12 +79,16 @@ export default function SettingsPage() {
 							newValue: user.preferences.clockFormat ?? "auto",
 						}}
 						autoSubmit
+						revalidateRoot
 					>
 						{({ FormField }) => <FormField name="newValue" />}
 					</SendouForm>
 				) : null}
 				{user ? (
 					<>
+						<Divider className={styles.divider} smallText>
+							{t("common:settings.preferences")}
+						</Divider>
 						<PushNotificationsEnabler />
 						<div className="mt-6 stack md">
 							<SendouForm
@@ -66,6 +98,7 @@ export default function SettingsPage() {
 										user.preferences.disableBuildAbilitySorting ?? false,
 								}}
 								autoSubmit
+								revalidateRoot
 							>
 								{({ FormField }) => <FormField name="newValue" />}
 							</SendouForm>
@@ -76,6 +109,7 @@ export default function SettingsPage() {
 										user.preferences.disallowScrimPickupsFromUntrusted ?? false,
 								}}
 								autoSubmit
+								revalidateRoot
 							>
 								{({ FormField }) => <FormField name="newValue" />}
 							</SendouForm>
@@ -85,12 +119,19 @@ export default function SettingsPage() {
 									newValue: Boolean(data.noScreen),
 								}}
 								autoSubmit
+								revalidateRoot
 							>
 								{({ FormField }) => <FormField name="newValue" />}
 							</SendouForm>
 						</div>
 					</>
 				) : null}
+				<Divider className={styles.divider} smallText>
+					{t("common:settings.theme")}
+				</Divider>
+				<ThemeSelector />
+				<CustomColorSelector />
+				<FormMessage type="info">{t("common:settings.themeInfo")}</FormMessage>
 			</div>
 		</Main>
 	);
@@ -162,6 +203,40 @@ function ThemeSelector() {
 			items={themeItems}
 			value={userTheme ?? "auto"}
 			onChange={handleThemeChange}
+		/>
+	);
+}
+
+function CustomColorSelector() {
+	const data = useLoaderData<typeof loader>();
+	const isSupporter = useHasRole("SUPPORTER");
+	const fetcher = useFetcher();
+
+	const handleSave = (themeInput: ThemeInput) => {
+		fetcher.submit(
+			{
+				_action: "UPDATE_CUSTOM_THEME",
+				newValue: themeInput,
+				revalidateRoot: true,
+			} as unknown as Parameters<typeof fetcher.submit>[0],
+			{ method: "post", encType: "application/json" },
+		);
+	};
+
+	const handleReset = () => {
+		fetcher.submit(
+			{ _action: "UPDATE_CUSTOM_THEME", newValue: null, revalidateRoot: true },
+			{ method: "post", encType: "application/json" },
+		);
+	};
+
+	return (
+		<CustomThemeSelector
+			isPersonalTheme
+			initialTheme={data.customTheme}
+			isSupporter={isSupporter}
+			onSave={handleSave}
+			onReset={handleReset}
 		/>
 	);
 }

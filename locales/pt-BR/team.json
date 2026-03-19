@@ -42,6 +42,7 @@
 	"forms.info.tag": "",
 	"forms.errors.duplicateName": "Já existe um time com esse nome",
 	"forms.errors.noOnlySpecialCharacters": "",
+	"forms.customTheme.header": "",
 	"roster.teamFull": "O time está cheio",
 	"roster.inviteLink.header": "Compartilhe o link de convite para adicionar membros",
 	"roster.members.header": "Membros",

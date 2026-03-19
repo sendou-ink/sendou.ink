@@ -292,6 +292,7 @@ export function FormField({
 	}
 
 	if (formField.type === "array") {
+		// @ts-expect-error Type instantiation is excessively deep with complex schemas
 		const innerFieldMeta = formRegistry.get(formField.field) as
 			| FormFieldType
 			| undefined;

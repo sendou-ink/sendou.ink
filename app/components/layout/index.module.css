@@ -1,24 +1,271 @@
-.hamburger.fab {
-	display: grid;
+.container {
+	flex: 1;
+	min-width: 0;
+}
+
+.header {
+	container-type: inline-size;
+	display: flex;
+	width: 100%;
+	height: var(--layout-nav-height);
+	align-items: center;
+	gap: var(--s-2);
+	border-bottom: 1.5px solid var(--color-border);
+	background-color: var(--color-bg-nav);
+	font-weight: var(--weight-extra);
+	padding-inline: var(--s-4);
+	position: sticky;
+	top: 0;
+	z-index: 10;
+}
+
+.siteTitleFlipper {
+	min-width: 0;
+	overflow: hidden;
+}
+
+.siteTitle {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	height: 100%;
+	min-width: 0;
+	overflow: hidden;
+}
+
+.siteLogo {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 36px;
+	background-color: var(--color-text-accent);
+	border-radius: var(--radius-field);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-inverse);
+	text-decoration: none;
+	flex-shrink: 0;
+	transition: background-color 0.2s;
+	line-height: 1;
+}
+
+.siteLogoS {
+	font-size: 14px;
+	position: relative;
+	top: -4px;
+}
+
+.siteLogoInk {
+	font-size: 12px;
+	position: relative;
+	bottom: -4px;
+}
+
+.siteLogo:focus-visible {
+	outline: var(--focus-ring);
+	outline-offset: 1px;
+}
+
+.separator {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	font-weight: var(--weight-bold);
+	opacity: 0.5;
+	animation: fadeIn 200ms ease-out 150ms both;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 0.5;
+	}
+}
+
+.pageIcon {
+	width: 28px;
+	height: 28px;
+	flex-shrink: 0;
+	animation: fadeInFull 200ms ease-out 150ms both;
+	object-fit: cover;
+}
+
+@keyframes fadeInFull {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.pageName {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+	animation: fadeInFull 200ms ease-out 150ms both;
+}
+
+@media screen and (display-mode: standalone) {
+	.header {
+		align-items: flex-end;
+		padding-top: calc(var(--s-2) + env(safe-area-inset-top));
+		padding-bottom: var(--s-2);
+		height: calc(var(--layout-nav-height) + env(safe-area-inset-top));
+	}
+
+	.sideNavModalOverlay,
+	.chatSidebarModalOverlay {
+		top: calc(var(--layout-nav-height) + env(safe-area-inset-top));
+	}
+}
+
+.sideNavEmpty {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	padding: var(--s-1) var(--s-2);
+	margin: 0 auto;
+	font-style: italic;
+}
+
+.viewAllLink {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+
+	& svg {
+		stroke-width: 3;
+	}
+}
+
+.sideNavCollapseButtonContainer {
+	display: none;
+	position: relative;
+	--dot-top: 2px;
+	--dot-right: 2px;
+
+	&:has(.sideNavCollapseButton) {
+		@media screen and (min-width: 1000px) {
+			display: flex;
+		}
+	}
+
+	&:has(.sideNavModalTrigger) {
+		@media screen and (min-width: 600px) and (max-width: 999px) {
+			display: flex;
+		}
+	}
+}
+
+/* Doubled selector increases specificity to beat Button.module.css's display: flex */
+.sideNavCollapseButton.sideNavCollapseButton,
+.sideNavModalTrigger.sideNavModalTrigger {
+	display: none;
+
+	& svg {
+		color: var(--color-text);
+		min-width: 20px;
+		max-width: 20px;
+	}
+
+	&.sideNavCollapseButton {
+		@media screen and (min-width: 1000px) {
+			display: flex;
+		}
+	}
+
+	&.sideNavModalTrigger {
+		@media screen and (min-width: 600px) and (max-width: 999px) {
+			display: flex;
+		}
+	}
+}
+
+.sideNavModalOverlay {
 	position: fixed;
-	right: 27.5px;
-	bottom: 105px;
-	border-radius: 100%;
-	width: 3.75rem;
-	height: 3.75rem;
-	backdrop-filter: var(--backdrop-filter);
-	background-color: transparent;
-	border-color: var(--theme-transparent);
+	inset: 0;
+	top: var(--layout-nav-height);
+	background-color: rgba(0, 0, 0, 0.4);
+	backdrop-filter: blur(4px);
+	z-index: 20;
 }
 
-.hamburger.fab svg {
-	min-width: 2.25rem;
-	max-width: 2.25rem;
-	stroke-width: 2px;
+.sideNavModal {
+	height: 100%;
+	width: var(--layout-sidenav-width);
+	border-right: 1.5px solid var(--color-border);
 }
 
-@media screen and (min-width: 600px) {
-	.hamburger.fab {
+.sideNavModalDialog {
+	outline: none;
+	height: 100%;
+}
+
+.sideNavInModal.sideNavInModal {
+	display: flex;
+	position: static;
+	height: 100%;
+	min-width: unset;
+	max-width: unset;
+	border-right: none;
+}
+
+.mobileLogo {
+	display: flex;
+
+	@media screen and (min-width: 600px) {
 		display: none;
 	}
+}
+
+.chatSidebar {
+	display: none;
+	background-color: var(--color-bg-nav);
+	min-width: var(--layout-sidenav-width);
+	max-width: var(--layout-sidenav-width);
+	border-left: 1.5px solid var(--color-border);
+	position: sticky;
+	top: 0;
+	right: 0;
+	height: 100dvh;
+	flex-direction: column;
+	overflow: hidden;
+
+	@media screen and (min-width: 1000px) {
+		display: flex;
+	}
+}
+
+@media screen and (max-width: 1474px) {
+	.sidebarFuseSpace {
+		padding-bottom: var(--layout-fuse-bottom-height);
+	}
+}
+
+.chatSidebarModalOverlay {
+	position: fixed;
+	inset: 0;
+	top: var(--layout-nav-height);
+	background-color: rgba(0, 0, 0, 0.4);
+	backdrop-filter: blur(4px);
+	z-index: 20;
+}
+
+.chatSidebarModal {
+	height: 100%;
+	width: var(--layout-sidenav-width);
+	margin-left: auto;
+	border-left: 1.5px solid var(--color-border);
+	background-color: var(--color-bg-nav);
+}
+
+.chatSidebarModalDialog {
+	outline: none;
+	height: 100%;
 }

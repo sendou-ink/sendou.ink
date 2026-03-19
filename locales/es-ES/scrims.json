@@ -58,6 +58,7 @@
 	"forms.text.title": "Texto",
 	"forms.visibility.title": "Visibilidad",
 	"forms.visibility.public": "Pública",
+	"forms.visibility.friends": "",
 	"forms.visibility.noneAvailable": "No hay asociaciones disponibles. Crea una para buscar un scrim en un grupo más reducido.",
 	"forms.notFoundVisibility.title": "Si no se encuentra antes de",
 	"forms.notFoundVisibility.explanation": "Déjalo en blanco si no quieres que la visibilidad de tu publicación cambie con el tiempo",

@@ -1,0 +1,311 @@
+.container {
+	display: grid;
+	gap: var(--s-10);
+	grid-template-columns: 1fr 2fr;
+}
+
+.leftColumn {
+	position: sticky;
+	top: var(--layout-sticky-top);
+	display: flex;
+	height: max-content;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-4);
+}
+
+@container (width < 640px) {
+	.container {
+		grid-template-columns: 1fr;
+	}
+
+	.leftColumn {
+		position: initial;
+	}
+}
+
+.apCompare {
+	display: grid;
+	grid-template-columns: 1fr max-content max-content max-content 1fr;
+	gap: var(--s-2);
+	font-size: var(--font-xs);
+	align-items: center;
+}
+
+.apCompareMains {
+	grid-column: span 2;
+	display: flex;
+	justify-content: center;
+	gap: var(--s-2);
+	margin-block-end: var(--s-2);
+}
+
+.apCompareBar {
+	height: 100%;
+	background-color: var(--color-info);
+}
+
+.apCompareBar.better {
+	background-color: var(--color-success);
+}
+
+.effectsSelector {
+	display: grid;
+	gap: var(--s-2);
+	grid-template-columns: 1fr 2.5fr;
+	place-items: center;
+}
+
+.ldeIntensitySelect {
+	font-size: var(--font-2xs);
+}
+
+.apSummary {
+	width: 100%;
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	padding-block: var(--s-1);
+	padding-inline: var(--s-2);
+}
+
+.noticeableLink {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	border-radius: var(--radius-box);
+	background-color: var(--color-accent-low);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	gap: var(--s-2);
+	padding-block: var(--s-1);
+	padding-inline: var(--s-2);
+}
+
+.apText {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+}
+
+.summary {
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
+	padding-block: var(--s-2);
+	padding-inline: var(--s-3);
+	position: relative;
+}
+
+.details:has(.statCardHighlighted) .summary {
+	background-color: var(--color-bg-higher);
+}
+
+.weaponInfoBadge {
+	display: inline-flex;
+	font-size: var(--font-xs);
+	gap: var(--s-2);
+	align-items: center;
+	background-color: var(--color-bg);
+	border-radius: var(--radius-field);
+	padding: var(--s-1) var(--s-3);
+	margin-inline-start: auto;
+	position: absolute;
+	right: 10px;
+	top: 6.5px;
+}
+
+.weaponInfoBadgeText {
+	max-width: 140px;
+	overflow-x: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+@container (width >= 480px) {
+	.weaponInfoBadgeText {
+		max-width: initial;
+	}
+}
+
+.statCollection {
+	display: grid;
+	gap: var(--s-2);
+	grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+	margin-block-start: var(--s-4);
+}
+
+.statCard {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	padding: var(--s-2);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	gap: var(--s-4);
+}
+
+.statCardHighlighted {
+	background-color: var(--color-bg-higher);
+}
+
+.statCardTitleAndValueContainer {
+	display: flex;
+	height: 100%;
+	flex-direction: column;
+	flex-grow: 1;
+	justify-content: space-between;
+}
+
+.statCardTitle {
+	font-size: var(--font-xs);
+	line-height: 1.35;
+	text-align: center;
+	word-break: break-word;
+}
+
+.statCardAbilityContainer {
+	min-height: 22px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.statCardPopoverTrigger {
+	display: inline;
+	height: 1rem;
+	padding: 0;
+	border: none;
+	background-color: transparent;
+	color: var(--color-accent);
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
+	outline: initial;
+}
+
+.statCardValues {
+	display: flex;
+	justify-content: space-evenly;
+	margin-top: var(--s-2);
+	gap: var(--s-1);
+}
+
+.statCardValue {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.statCardValueTitle {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-body);
+	letter-spacing: 0.5px;
+	text-transform: uppercase;
+}
+
+.statCardValueNumber {
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
+}
+
+.tableContainer {
+	width: 100%;
+	padding: var(--s-3);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	margin-block-start: var(--s-4);
+	padding-block: var(--s-2);
+}
+
+.shotsToSplat {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	margin-inline-start: var(--s-4);
+}
+
+.consumptionTableExplanation {
+	margin-top: var(--s-2);
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+}
+
+.statCategoryExplanation {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	margin-block-start: var(--s-3);
+}
+
+.subNav {
+	margin-block-end: var(--s-4);
+}
+
+.patch {
+	border-radius: var(--radius-selector);
+	background-color: var(--color-accent-low);
+	color: var(--color-accent-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	padding-inline: var(--s-2);
+	height: var(--selector-size-sm);
+	display: flex;
+	align-items: center;
+}
+
+.statPopover {
+	min-width: 360px;
+
+	--chart-bg: transparent;
+	--chart-height: 250px;
+	--chart-width: 340px;
+}
+
+@media screen and (min-width: 700px) {
+	.statPopover {
+		min-width: calc(360px * 1.75);
+		--chart-height: calc(250px * 1.75);
+		--chart-width: calc(340px * 1.75);
+	}
+}
+
+.inkGridContainer {
+	overflow: auto;
+	min-width: min(100vw, 1100px);
+}
+
+.inkGrid {
+	display: grid;
+	grid-template-columns: repeat(41, 1fr);
+}
+
+.inkGridHorizontalAbility {
+	grid-column: span 41;
+	display: grid;
+	place-items: center;
+	padding-block-end: var(--s-2);
+}
+
+.inkGridAp {
+	display: grid;
+	place-items: center;
+	font-weight: var(--weight-semi);
+	font-size: var(--font-xs);
+}
+
+.inkGridApFocused {
+	color: var(--color-accent);
+	font-weight: var(--weight-bold);
+	text-decoration: underline;
+}
+
+.inkGridCell {
+	width: 25px;
+	font-size: var(--font-xs);
+	display: grid;
+	place-items: center;
+	background-color: var(--cell-color);
+	cursor: help;
+}

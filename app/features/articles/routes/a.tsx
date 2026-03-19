@@ -5,8 +5,8 @@ import { Main } from "~/components/Main";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { ARTICLES_MAIN_PAGE, articlePage, navIconUrl } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
-
 import { loader } from "../loaders/a.server";
+import styles from "./a.module.css";
 export { loader };
 
 export const handle: SendouRouteHandle = {
@@ -33,13 +33,10 @@ export default function ArticlesMainPage() {
 
 	return (
 		<Main className="stack lg">
-			<ul className="articles-list">
+			<ul className={styles.list}>
 				{data.articles.map((article) => (
 					<li key={article.title}>
-						<Link
-							to={articlePage(article.slug)}
-							className="articles-list__title"
-						>
+						<Link to={articlePage(article.slug)} className={styles.title}>
 							{article.title}
 						</Link>
 						<div className="text-xs text-lighter">

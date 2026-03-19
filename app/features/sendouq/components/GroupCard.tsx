@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import type { SqlBool } from "kysely";
+import { Mic, PenSquare, Star, Trash, Volume2, VolumeX } from "lucide-react";
 import * as React from "react";
 import { Flipped } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
@@ -9,19 +10,13 @@ import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
-import { EditIcon } from "~/components/icons/Edit";
-import { MicrophoneIcon } from "~/components/icons/Microphone";
-import { SpeakerIcon } from "~/components/icons/Speaker";
-import { SpeakerXIcon } from "~/components/icons/SpeakerX";
-import { StarIcon } from "~/components/icons/Star";
-import { StarFilledIcon } from "~/components/icons/StarFilled";
-import { TrashIcon } from "~/components/icons/Trash";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { ParsedMemento } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { ordinalToRoundedSp } from "~/features/mmr/mmr-utils";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
+import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { languagesUnified } from "~/modules/i18n/config";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
@@ -42,9 +37,19 @@ import type {
 	SQMatchGroupMember,
 	SQOwnGroup,
 } from "../core/SendouQ.server";
-import { FULL_GROUP_SIZE, SENDOUQ } from "../q-constants";
+import {
+	FULL_GROUP_SIZE,
+	IS_Q_LOOKING_MOBILE_BREAKPOINT,
+	SENDOUQ,
+} from "../q-constants";
 import { resolveFutureMatchModes } from "../q-utils";
 import styles from "./GroupCard.module.css";
+
+const SENTIMENT_STYLES = {
+	POSITIVE: styles.avatarPositive,
+	NEUTRAL: styles.avatarNeutral,
+	NEGATIVE: styles.avatarNegative,
+} as const;
 
 export function GroupCard({
 	group,
@@ -248,10 +253,13 @@ function GroupCardContainer({
 	groupId: number;
 	children: React.ReactNode;
 }) {
+	const width = useMainContentWidth();
+	const layout = width < IS_Q_LOOKING_MOBILE_BREAKPOINT ? "mobile" : "desktop";
+
 	// we don't want it to animate
 	if (isOwnGroup) return <>{children}</>;
 
-	return <Flipped flipId={groupId}>{children}</Flipped>;
+	return <Flipped flipId={`${layout}-${groupId}`}>{children}</Flipped>;
 }
 
 function GroupMember({
@@ -292,9 +300,7 @@ function GroupMember({
 										size="xs"
 										className={clsx(
 											styles.avatar,
-											styles[
-												`avatar${member.privateNote.sentiment.charAt(0).toUpperCase() + member.privateNote.sentiment.slice(1).toLowerCase()}`
-											],
+											SENTIMENT_STYLES[member.privateNote.sentiment],
 										)}
 									/>
 								</SendouButton>
@@ -384,7 +390,7 @@ function GroupMember({
 					{showAddNote ? (
 						<LinkButton
 							to={`?note=${member.id}`}
-							icon={<EditIcon />}
+							icon={<PenSquare />}
 							className={clsx(styles.addNoteButton, {
 								[styles.addNoteButtonEdit]: member.privateNote,
 							})}
@@ -547,7 +553,7 @@ function DeletePrivateNoteForm({
 			]}
 		>
 			<SubmitButton variant="minimal-destructive" size="small" type="submit">
-				<TrashIcon className="small-icon" />
+				<Trash className="small-icon" />
 			</SubmitButton>
 		</FormWithConfirm>
 	);
@@ -642,7 +648,6 @@ function MemberRoleManager({
 	const loggedInUser = useUser();
 	const fetcher = useFetcher();
 	const { t } = useTranslation(["q"]);
-	const Icon = member.role === "OWNER" ? StarFilledIcon : StarIcon;
 
 	if (displayOnly && member.role !== "OWNER") return null;
 
@@ -652,8 +657,9 @@ function MemberRoleManager({
 				<SendouButton
 					variant="minimal"
 					icon={
-						<Icon
+						<Star
 							className={clsx(styles.star, {
+								[styles.starFilled]: member.role === "OWNER",
 								[styles.starInactive]: member.role === "REGULAR",
 							})}
 						/>
@@ -777,11 +783,14 @@ function VoiceChatInfo({
 	if (!member.languages || !member.vc) return null;
 
 	const Icon =
+		member.vc === "YES" ? Mic : member.vc === "LISTEN_ONLY" ? Volume2 : VolumeX;
+
+	const iconTestId =
 		member.vc === "YES"
-			? MicrophoneIcon
+			? "microphone-icon"
 			: member.vc === "LISTEN_ONLY"
-				? SpeakerIcon
-				: SpeakerXIcon;
+				? "speaker-icon"
+				: "speaker-x-icon";
 
 	const color = () => {
 		const languagesMatch =
@@ -813,8 +822,13 @@ function VoiceChatInfo({
 			trigger={
 				<SendouButton
 					variant="minimal"
-					size="small"
-					icon={<Icon className={clsx(styles.vcIcon, color())} />}
+					size="miniscule"
+					icon={
+						<Icon
+							className={clsx(styles.vcIcon, color())}
+							data-testid={iconTestId}
+						/>
+					}
 				/>
 			}
 		>

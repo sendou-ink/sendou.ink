@@ -32,7 +32,7 @@ export type ChatUser = Pick<
 	Tables["User"],
 	"username" | "discordId" | "discordAvatar" | "pronouns"
 > & {
-	chatNameColor: string | null;
+	chatNameHue: string | null;
 	title?: string;
 };
 
@@ -42,10 +42,8 @@ export interface ChatProps {
 	className?: string;
 	messagesContainerClassName?: string;
 	hidden?: boolean;
-	onNewMessage?: (message: ChatMessage) => void;
 	onMount?: () => void;
 	onUnmount?: () => void;
 	disabled?: boolean;
 	missingUserName?: string;
-	revalidates?: boolean;
 }

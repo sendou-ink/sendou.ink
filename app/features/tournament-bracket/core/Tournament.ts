@@ -827,6 +827,7 @@ export class Tournament {
 	/** Can a new sub post be made at this time? */
 	get canAddNewSubPost() {
 		if (!this.subsFeatureEnabled) return false;
+		if (this.ctx.isFinalized) return false;
 
 		return (
 			!this.ctx.settings.regClosesAt ||
