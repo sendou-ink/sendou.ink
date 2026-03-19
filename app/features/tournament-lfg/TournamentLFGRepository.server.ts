@@ -152,6 +152,7 @@ export async function findSubGroups(tournamentId: number) {
 		.where("TournamentTeam.tournamentId", "=", tournamentId)
 		.where("TournamentTeam.isPlaceholder", "=", 1)
 		.where("TournamentTeamMember.isStayAsSub", "=", 1)
+		.groupBy("TournamentTeam.id")
 		.execute();
 
 	return rows;
