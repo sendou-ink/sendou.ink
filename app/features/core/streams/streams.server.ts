@@ -30,6 +30,8 @@ export function getLiveTournamentStreams(): SidebarStream[] {
 	const streams: SidebarStream[] = [];
 
 	for (const tournament of RunningTournaments.all) {
+		if (tournament.isLeagueDivision) continue;
+
 		streams.push({
 			id: `tournament-${tournament.ctx.id}`,
 			name: tournament.ctx.name,
