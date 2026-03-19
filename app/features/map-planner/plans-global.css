@@ -83,14 +83,7 @@ body:has(.planner) header {
 	margin-top: 0 !important;
 }
 
-.tlui-toolbar-container.tlui-toolbar__tools {
-	bottom: calc(
-		var(--layout-fuse-bottom-height) +
-		env(safe-area-inset-bottom)
-	) !important;
-}
-
-.tlui-toolbar__tools > .tlui-popover {
+.tlui-layout__bottom__main.tlui-layout__bottom__main {
 	bottom: calc(
 		var(--layout-fuse-bottom-height) +
 		env(safe-area-inset-bottom)

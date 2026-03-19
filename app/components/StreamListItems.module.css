@@ -39,8 +39,10 @@
 	border: none;
 	cursor: pointer;
 	color: var(--color-text-high);
-	padding: var(--s-0-5);
-	border-radius: var(--radius-field);
+	padding: 0;
+	height: var(--selector-size-sm);
+	aspect-ratio: 1 / 1;
+	border-radius: var(--radius-selector);
 }
 
 .saveIconButton:hover {
