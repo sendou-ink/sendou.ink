@@ -88,6 +88,10 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 							{matches.map((match, matchIdx) => {
 								const lineType = (() => {
 									if (isLastRound) return "none" as const;
+									if (
+										nextRound?.name === TOURNAMENT.ROUND_NAMES.THIRD_PLACE_MATCH
+									)
+										return "none" as const;
 									if (nextRoundMatchCount === matches.length)
 										return "straight" as const;
 									return matchIdx % 2 === 0
