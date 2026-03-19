@@ -16,17 +16,11 @@
 	display: flex;
 	justify-content: space-around;
 	align-items: center;
-	height: var(--layout-nav-height);
+	height: calc(var(--layout-nav-height) + env(safe-area-inset-bottom));
 	background-color: var(--color-bg);
 	border-top: 1.5px solid var(--color-border);
 	padding: 0 var(--s-4);
 	padding-bottom: env(safe-area-inset-bottom);
-}
-
-@media screen and (display-mode: standalone) {
-	.tabBar {
-		height: calc(var(--layout-nav-height) + env(safe-area-inset-bottom));
-	}
 }
 
 .tab {
@@ -368,18 +362,12 @@
 	bottom: calc(0px - var(--layout-nav-height));
 	left: 0;
 	right: 0;
-	height: var(--layout-nav-height);
+	height: calc(var(--layout-nav-height) + env(safe-area-inset-bottom));
 	padding-bottom: env(safe-area-inset-bottom);
 	display: flex;
 	justify-content: space-around;
 	align-items: center;
 	z-index: 100;
-}
-
-@media screen and (display-mode: standalone) {
-	.ghostTabBar {
-		height: calc(var(--layout-nav-height) + env(safe-area-inset-bottom));
-	}
 }
 
 .ghostTab {
