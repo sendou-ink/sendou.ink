@@ -79,6 +79,8 @@ export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	const json = args.json as Record<string, unknown> | undefined;
 	if (json?.revalidateRoot === true) return true;
 
+	if (args.nextUrl.searchParams.has("lng")) return true;
+
 	return false;
 };
 
