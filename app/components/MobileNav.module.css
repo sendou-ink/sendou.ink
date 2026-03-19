@@ -109,6 +109,7 @@
 	overflow: hidden;
 	display: flex;
 	flex-direction: column;
+	padding-block-end: env(safe-area-inset-bottom);
 }
 
 .panel[data-entering] {
