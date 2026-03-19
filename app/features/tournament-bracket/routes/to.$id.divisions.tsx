@@ -6,6 +6,7 @@ import type { SerializeFrom } from "~/utils/remix";
 import { tournamentBracketsPage } from "../../../utils/urls";
 
 import { loader } from "../loaders/to.$id.divisions.server";
+import styles from "./to.$id.divisions.module.css";
 export { loader };
 
 export default function TournamentDivisionsPage() {
@@ -20,7 +21,7 @@ export default function TournamentDivisionsPage() {
 	}
 
 	return (
-		<div className="tournament__div__grid">
+		<div className={styles.grid}>
 			{data.divisions.map((div) => (
 				<DivisionLink key={div.tournamentId} div={div} />
 			))}
@@ -40,14 +41,12 @@ function DivisionLink({
 	return (
 		<Link
 			to={tournamentBracketsPage({ tournamentId: div.tournamentId })}
-			className={clsx("tournament__div__link", {
-				tournament__div__link__participant: data.divsParticipantOf.includes(
-					div.tournamentId,
-				),
+			className={clsx(styles.link, {
+				[styles.participant]: data.divsParticipantOf.includes(div.tournamentId),
 			})}
 		>
 			{shortName}
-			<div className="tournament__div__participant-counts">
+			<div className={styles.participantCounts}>
 				<Users />{" "}
 				{t("calendar:count.teams", {
 					count: div.teamsCount,
