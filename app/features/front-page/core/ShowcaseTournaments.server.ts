@@ -312,6 +312,7 @@ function mapTournamentFromDB(
 		tier: tournament.tier ?? null,
 		tentativeTier,
 		hidden: Boolean(tournament.hidden),
+		minMembersPerTeam: tournament.settings.minMembersPerTeam ?? 4,
 		modes: null,
 		firstPlacer:
 			highestDivWinners.length > 0

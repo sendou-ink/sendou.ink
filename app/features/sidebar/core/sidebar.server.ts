@@ -215,6 +215,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 		if (event.startTime < nowTimestamp) continue;
 		if (event.startTime > threeDaysFromNow) continue;
 		if (event.hidden) continue;
+		if ((event.minMembersPerTeam ?? 4) < 4) continue;
 
 		ranked.push({
 			stream: {
