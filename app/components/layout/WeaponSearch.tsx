@@ -70,7 +70,7 @@ export function filterWeaponResults(
 			matches.push({
 				id,
 				name: weaponName,
-				slug: mySlugify(weaponName),
+				slug: mySlugify(t(`weapons:MAIN_${id}`, { lng: "en" })),
 			});
 		}
 
