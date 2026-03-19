@@ -24,6 +24,7 @@ import { Link, useFetcher, useLocation, useMatches } from "react-router";
 import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
+import { useIsMounted } from "~/hooks/useIsMounted";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -212,6 +213,7 @@ export function Layout({
 
 	const { t } = useTranslation(["front", "common"]);
 	const { formatRelativeDate } = useTimeFormat();
+	const isMounted = useIsMounted();
 	const location = useLocation();
 	const headerRef = React.useRef<HTMLElement>(null);
 	const navOffset = useNavOffset(headerRef);
@@ -275,7 +277,13 @@ export function Layout({
 						key={`${event.type}-${event.id}`}
 						to={event.url}
 						imageUrl={event.logoUrl ?? undefined}
-						subtitle={formatRelativeDate(event.startTime)}
+						subtitle={
+							isMounted ? (
+								formatRelativeDate(event.startTime)
+							) : (
+								<span className="invisible">Placeholder</span>
+							)
+						}
 					>
 						{event.scrimStatus === "booked"
 							? t("front:sideNav.scrimVs", { opponent: event.name })
