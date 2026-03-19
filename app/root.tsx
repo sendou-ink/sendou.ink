@@ -173,6 +173,12 @@ function Document({
 			dir={i18n.dir()}
 			className={clsx(htmlThemeClass, "scrollbar")}
 			style={htmlStyle}
+			data-fuse={
+				import.meta.env.VITE_FUSE_ENABLED &&
+				!data?.user?.roles.includes("MINOR_SUPPORT")
+					? "true"
+					: undefined
+			}
 			suppressHydrationWarning
 		>
 			<head>
