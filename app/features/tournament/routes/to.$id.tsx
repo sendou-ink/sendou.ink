@@ -157,7 +157,9 @@ export function TournamentLayout() {
 				>
 					{t("tournament:tabs.teams", { count: tournament.ctx.teams.length })}
 				</SubNavLink>
-				{!tournament.isInvitational && !tournament.everyBracketOver ? (
+				{!tournament.isInvitational &&
+				!tournament.everyBracketOver &&
+				!(tournament.isLeagueSignup && !tournament.registrationOpen) ? (
 					<SubNavLink to="looking">
 						{tournament.registrationOpen
 							? t("tournament:tabs.looking")
