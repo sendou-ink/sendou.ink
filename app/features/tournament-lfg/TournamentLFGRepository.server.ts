@@ -85,7 +85,6 @@ export async function findLookingTeamsByTournamentId(tournamentId: number) {
 		.select(({ fn, eb }) => [
 			"TournamentTeam.id",
 			"TournamentTeam.isPlaceholder",
-			"TournamentTeam.lfgVisibility as visibility",
 			"TournamentTeam.lfgNote as note",
 			"TournamentTeam.name as teamName",
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(

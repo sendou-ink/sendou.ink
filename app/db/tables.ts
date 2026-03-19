@@ -769,7 +769,6 @@ export interface TournamentTeam {
 	avatarImgId: number | null;
 	isLooking: Generated<DBBoolean>;
 	isPlaceholder: Generated<DBBoolean>;
-	lfgVisibility: JSONColumnTypeNullable<AssociationIdentifier>;
 	lfgNote: string | null;
 	chatCode: Generated<string | null>;
 }

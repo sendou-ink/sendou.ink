@@ -7,9 +7,6 @@ export function up(db) {
 			/*sql*/ `alter table "TournamentTeam" add column "isPlaceholder" integer not null default 0`,
 		).run();
 		db.prepare(
-			/*sql*/ `alter table "TournamentTeam" add column "lfgVisibility" text`,
-		).run();
-		db.prepare(
 			/*sql*/ `alter table "TournamentTeam" add column "lfgNote" text`,
 		).run();
 		db.prepare(
