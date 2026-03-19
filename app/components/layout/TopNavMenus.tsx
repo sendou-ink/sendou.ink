@@ -17,6 +17,9 @@ const NAV_CATEGORIES = [
 			{ name: "lfg", url: "lfg" },
 			{ name: "calendar", url: "calendar" },
 			{ name: "leaderboards", url: "leaderboards" },
+			...(import.meta.env.VITE_SHOW_LUTI_NAV_ITEM === "true"
+				? [{ name: "luti" as const, url: "luti" as const }]
+				: []),
 		],
 	},
 	{
