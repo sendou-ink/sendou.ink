@@ -143,7 +143,9 @@ function MapButton({
 	const { t } = useTranslation(["game-misc"]);
 
 	return (
-		<div className="stack items-center relative">
+		<div
+			className={clsx("stack items-center relative", styles.mapButtonContainer)}
+		>
 			<button
 				className={clsx(styles.mapButton, {
 					[styles.mapButtonWiggle]: wiggle,
@@ -164,7 +166,7 @@ function MapButton({
 				<div className={clsx(styles.mapButtonText, "text-error")}>Banned</div>
 			) : null}
 			<div className={styles.mapButtonLabel}>
-				{t(`game-misc:STAGE_${stageId}`)}
+				{t(`game-misc:STAGE_${stageId}`).split(" ")[0]}
 			</div>
 		</div>
 	);

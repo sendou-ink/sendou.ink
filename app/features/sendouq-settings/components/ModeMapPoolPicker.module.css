@@ -93,6 +93,11 @@
 	font-weight: var(--weight-semi);
 }
 
+.mapButtonContainer {
+	width: var(--map-width);
+	text-align: center;
+}
+
 .divider::before,
 .divider::after {
 	border-bottom: 2px dotted var(--color-bg-higher);
