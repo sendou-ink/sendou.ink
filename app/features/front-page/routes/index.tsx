@@ -4,12 +4,13 @@ import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
-import { Image } from "~/components/Image";
+import { Image, WeaponImage } from "~/components/Image";
 import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { BSKYLikeIcon } from "~/components/icons/BSKYLike";
 import { BSKYReplyIcon } from "~/components/icons/BSKYReply";
 import { BSKYRepostIcon } from "~/components/icons/BSKYRepost";
 import { ExternalIcon } from "~/components/icons/External";
+import { navItems } from "~/components/layout/nav-items";
 import { Main } from "~/components/Main";
 import { TournamentCard } from "~/features/calendar/components/TournamentCard";
 import { SplatoonRotations } from "~/features/front-page/components/SplatoonRotations";
@@ -41,6 +42,7 @@ export default function FrontPage() {
 			<SeasonBanner />
 			<SplatoonRotations />
 			<ResultHighlights />
+			<DiscoverFeatures />
 			<ChangelogList />
 		</Main>
 	);
@@ -223,6 +225,61 @@ function Leaderboard({
 				<Image path={navIconUrl("leaderboards")} size={16} alt="" />
 				{t("front:leaderboards.viewFull")}
 			</Link>
+		</div>
+	);
+}
+
+const DISCOVER_EXCLUDED_ITEMS = new Set(["settings", "luti"]);
+
+function DiscoverFeatures() {
+	const { t } = useTranslation(["front", "common"]);
+	const data = useLoaderData<typeof loader>();
+
+	const filteredNavItems = navItems.filter(
+		(item) => !DISCOVER_EXCLUDED_ITEMS.has(item.name),
+	);
+
+	return (
+		<div className="stack md">
+			<Divider smallText className="text-uppercase text-xs font-bold">
+				{t("front:discover.header")}
+			</Divider>
+			{data.weaponPool && data.weaponPool.length > 0 ? (
+				<div className={styles.weaponPills}>
+					{data.weaponPool.map((weapon) => (
+						<Link
+							key={weapon.weaponSplId}
+							to={`?search=open&type=weapons&weapon=${weapon.weaponSplId}`}
+							className={styles.weaponPill}
+						>
+							<WeaponImage
+								weaponSplId={weapon.weaponSplId}
+								variant="badge"
+								size={32}
+							/>
+						</Link>
+					))}
+				</div>
+			) : null}
+			<nav className={styles.discoverGrid}>
+				{filteredNavItems.map((item) => (
+					<Link
+						key={item.name}
+						to={`/${item.url}`}
+						className={styles.discoverGridItem}
+					>
+						<div className={styles.discoverGridItemImage}>
+							<Image
+								path={navIconUrl(item.name)}
+								height={32}
+								width={32}
+								alt=""
+							/>
+						</div>
+						<span>{t(`common:pages.${item.name}` as any)}</span>
+					</Link>
+				))}
+			</nav>
 		</div>
 	);
 }

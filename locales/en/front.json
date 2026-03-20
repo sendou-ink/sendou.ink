@@ -38,5 +38,6 @@
 	"rotations.current": "Now",
 	"rotations.nextLabel": "Next",
 	"rotations.credit": "Data from splatoon3.ink",
-	"rotations.filter.all": "All"
+	"rotations.filter.all": "All",
+	"discover.header": "Discover all the features"
 }

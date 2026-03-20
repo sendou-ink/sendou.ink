@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import type { TFunction } from "i18next";
 import { Search } from "lucide-react";
 import * as React from "react";
 import {
@@ -18,6 +19,7 @@ import { Avatar } from "~/components/Avatar";
 import { Image } from "~/components/Image";
 import { Input } from "~/components/Input";
 import type { SearchLoaderData } from "~/features/search/routes/search";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	mySlugify,
 	navIconUrl,
@@ -83,6 +85,7 @@ export function GlobalSearch() {
 
 	const searchParamOpen = searchParams.get("search") === "open";
 	const searchParamType = searchParams.get("type");
+	const searchParamWeapon = searchParams.get("weapon");
 	const initialSearchType =
 		searchParamType && SEARCH_TYPES.includes(searchParamType as SearchType)
 			? (searchParamType as SearchType)
@@ -91,10 +94,10 @@ export function GlobalSearch() {
 	const [isOpen, setIsOpen] = React.useState(searchParamOpen);
 
 	React.useEffect(() => {
-		if (searchParamOpen && !isOpen) {
+		if (searchParamOpen) {
 			setIsOpen(true);
 		}
-	}, [searchParamOpen, isOpen]);
+	}, [searchParamOpen]);
 
 	React.useEffect(() => {
 		setIsMac(/Mac|iPhone|iPad|iPod/.test(navigator.userAgent));
@@ -115,10 +118,11 @@ export function GlobalSearch() {
 
 	const handleOpenChange = (open: boolean) => {
 		setIsOpen(open);
-		if (!open && (searchParamOpen || searchParamType)) {
+		if (!open && (searchParamOpen || searchParamType || searchParamWeapon)) {
 			const newParams = new URLSearchParams(searchParams);
 			newParams.delete("search");
 			newParams.delete("type");
+			newParams.delete("weapon");
 			setSearchParams(newParams, { replace: true });
 		}
 	};
@@ -138,8 +142,9 @@ export function GlobalSearch() {
 				<Modal className={styles.modal}>
 					<Dialog className={styles.dialog} aria-label={t("common:search")}>
 						<GlobalSearchContent
-							onClose={() => handleOpenChange(false)}
+							onClose={() => setIsOpen(false)}
 							initialSearchType={initialSearchType}
+							initialWeaponId={searchParamWeapon}
 						/>
 					</Dialog>
 				</Modal>
@@ -148,12 +153,26 @@ export function GlobalSearch() {
 	);
 }
 
+function resolveInitialWeapon(
+	weaponIdStr: string | null,
+	t: TFunction<["common", "weapons"]>,
+): SelectedWeapon | null {
+	if (!weaponIdStr) return null;
+	const id = Number(weaponIdStr) as MainWeaponId;
+	if (Number.isNaN(id)) return null;
+	const name = t(`weapons:MAIN_${id}`);
+	if (!name || name === `MAIN_${id}`) return null;
+	return { id, name, slug: mySlugify(name) };
+}
+
 function GlobalSearchContent({
 	onClose,
 	initialSearchType,
+	initialWeaponId,
 }: {
 	onClose: () => void;
 	initialSearchType: SearchType | null;
+	initialWeaponId: string | null;
 }) {
 	const { t } = useTranslation(["common", "weapons"]);
 	const navigate = useNavigate();
@@ -162,7 +181,9 @@ function GlobalSearchContent({
 		initialSearchType ?? getInitialSearchType(),
 	);
 	const [selectedWeapon, setSelectedWeapon] =
-		React.useState<SelectedWeapon | null>(null);
+		React.useState<SelectedWeapon | null>(
+			resolveInitialWeapon(initialWeaponId, t),
+		);
 	const inputRef = React.useRef<HTMLInputElement>(null);
 	const listBoxRef = React.useRef<HTMLDivElement>(null);
 
