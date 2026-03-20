@@ -15,6 +15,7 @@ export const everyHourAt00 = [
 	NotifyPlusServerVotingRoutine,
 	NotifyCheckInStartRoutine,
 	NotifyScrimStartingSoonRoutine,
+	SyncSplatoonRotationsRoutine,
 ];
 
 /** List of Routines that should occur hourly at XX:30 */
@@ -28,9 +29,6 @@ export const daily = [
 	DeleteOldNotificationsRoutine,
 	CloseExpiredCommissionsRoutine,
 ];
-
-/** List of Routines that should occur every 2 hours */
-export const everyTwoHours = [SyncSplatoonRotationsRoutine];
 
 /** List of Routines that should occur every 2 minutes */
 export const everyTwoMinutes = [SyncLiveStreamsRoutine];
