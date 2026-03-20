@@ -582,8 +582,7 @@ function ChatPanel({
 		>
 			<Modal
 				className={clsx(
-					styles.panel,
-					"scrollbar",
+					styles.menuOverlay,
 					skipAnimation && styles.noAnimation,
 				)}
 			>
