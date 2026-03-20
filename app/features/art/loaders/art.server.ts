@@ -27,9 +27,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		: null;
 
 	if (!filteredTag) {
-		return filteredTagName
-			? { ...cachedArts, showcaseArts: [] }
-			: cachedArts;
+		return filteredTagName ? { ...cachedArts, showcaseArts: [] } : cachedArts;
 	}
 
 	return {

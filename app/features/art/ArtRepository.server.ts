@@ -171,6 +171,15 @@ export async function findAllTags() {
 	return db.selectFrom("ArtTag").select(["id", "name"]).execute();
 }
 
+export async function deleteOrphanTags() {
+	const result = await db
+		.deleteFrom("ArtTag")
+		.where("id", "not in", db.selectFrom("TaggedArt").select("TaggedArt.tagId"))
+		.executeTakeFirst();
+
+	return Number(result.numDeletedRows);
+}
+
 export async function findArtsByUserId(
 	userId: number,
 	{ includeAuthored = true, includeTagged = true } = {},

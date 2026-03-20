@@ -1,5 +1,6 @@
 import { CloseExpiredCommissionsRoutine } from "./closeExpiredCommissions";
 import { DeleteOldNotificationsRoutine } from "./deleteOldNotifications";
+import { DeleteOrphanArtTagsRoutine } from "./deleteOrphanArtTags";
 import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
 import { NotifyPlusServerVotingRoutine } from "./notifyPlusServerVoting";
 import { NotifyScrimStartingSoonRoutine } from "./notifyScrimStartingSoon";
@@ -28,6 +29,7 @@ export const everyHourAt30 = [
 export const daily = [
 	DeleteOldNotificationsRoutine,
 	CloseExpiredCommissionsRoutine,
+	DeleteOrphanArtTagsRoutine,
 ];
 
 /** List of Routines that should occur every 2 minutes */
