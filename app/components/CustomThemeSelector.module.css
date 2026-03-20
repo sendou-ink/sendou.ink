@@ -17,7 +17,7 @@
 .customThemeSelectorNoSupporter {
 	position: absolute;
 	inset: 0;
-	z-index: 10;
+	z-index: 5;
 	backdrop-filter: blur(3px);
 	display: flex;
 	flex-direction: column;
