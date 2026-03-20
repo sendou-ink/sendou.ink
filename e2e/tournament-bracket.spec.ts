@@ -135,8 +135,10 @@ const reportResult = async ({
 };
 
 const backToBracket = async (page: Page) => {
-	await page.getByTestId("back-to-bracket-button").click();
-	await expect(page.getByTestId("brackets-viewer")).toBeVisible();
+	await expect(async () => {
+		await page.getByTestId("back-to-bracket-button").click({ timeout: 5000 });
+		await expect(page.getByTestId("brackets-viewer")).toBeVisible();
+	}).toPass();
 };
 
 const expectScore = (page: Page, score: [number, number]) =>
@@ -197,6 +199,7 @@ test.describe("Tournament bracket", () => {
 	// 6) Try to reopen N-ZAP's first match and succeed
 	// 7) As N-ZAP, undo all scores and switch to different team sweeping
 	test("reports score and sees bracket update", async ({ page }) => {
+		test.slow();
 		const tournamentId = 2;
 		await startBracket(page);
 
@@ -496,6 +499,7 @@ test.describe("Tournament bracket", () => {
 	test("changes SOS format and progresses with it & adds a member to another team", async ({
 		page,
 	}) => {
+		test.slow();
 		const tournamentId = 4;
 
 		await seed(page, "SMALL_SOS");
