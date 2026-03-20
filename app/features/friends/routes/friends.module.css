@@ -13,6 +13,12 @@
 	font-weight: var(--weight-semi);
 }
 
+.userName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 .friendsListHeader {
 	display: flex;
 	align-items: center;

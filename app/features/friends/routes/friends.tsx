@@ -72,7 +72,7 @@ function IncomingRequestsSection() {
 								}}
 								size="xs"
 							/>
-							<span>{request.sender.username}</span>
+							<span className={styles.userName}>{request.sender.username}</span>
 						</div>
 						<div className="stack horizontal sm">
 							<Form method="post">
