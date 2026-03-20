@@ -42,6 +42,6 @@
 }
 
 .radio:checked + .label {
-	background-color: var(--color-accent-high);
+	background-color: var(--color-text-accent);
 	color: var(--color-text-inverse);
 }
