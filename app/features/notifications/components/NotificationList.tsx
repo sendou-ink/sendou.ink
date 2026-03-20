@@ -18,8 +18,10 @@ export function NotificationsList({ children }: { children: React.ReactNode }) {
 
 export function NotificationItem({
 	notification,
+	onClose,
 }: {
 	notification: LoaderNotification;
+	onClose?: () => void;
 }) {
 	const { t, i18n } = useTranslation(["common"]);
 
@@ -28,6 +30,7 @@ export function NotificationItem({
 			to={notificationLink(notification)}
 			className={styles.item}
 			data-testid="notification-item"
+			onClick={onClose}
 		>
 			<NotificationImage notification={notification}>
 				{!notification.seen ? <div className={styles.unseenDot} /> : null}

@@ -76,6 +76,7 @@ export function NotificationContent({
 							<NotificationItem
 								key={notification.id}
 								notification={notification}
+								onClose={onClose}
 							/>
 							{i !== notifications.length - 1 && <NotificationItemDivider />}
 						</React.Fragment>
