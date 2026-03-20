@@ -31,20 +31,26 @@ test.describe("Navigation", () => {
 		await expect(playMenu.getByRole("link", { name: "SendouQ" })).toBeVisible();
 		await expect(playMenu.getByRole("link", { name: "Scrims" })).toBeVisible();
 		await playMenu.getByRole("link", { name: "SendouQ" }).click();
-		await expect(playMenu.getByRole("link", { name: "SendouQ" })).not.toBeVisible();
+		await expect(
+			playMenu.getByRole("link", { name: "SendouQ" }),
+		).not.toBeVisible();
 
 		await navigate({ page, url: "/" });
 
 		// TopNavMenus — Tools
 		await page.getByRole("button", { name: "Tools" }).click();
 		const toolsMenu = page.locator("[class*='menuContent']");
-		await expect(toolsMenu.getByRole("link", { name: "Analyzer" })).toBeVisible();
+		await expect(
+			toolsMenu.getByRole("link", { name: "Analyzer" }),
+		).toBeVisible();
 		await page.keyboard.press("Escape");
 
 		// TopNavMenus — Community
 		await page.getByRole("button", { name: "Community" }).click();
 		const communityMenu = page.locator("[class*='menuContent']");
-		await expect(communityMenu.getByRole("link", { name: "Builds" })).toBeVisible();
+		await expect(
+			communityMenu.getByRole("link", { name: "Builds" }),
+		).toBeVisible();
 		await page.keyboard.press("Escape");
 
 		// SideNav footer — user info
@@ -73,9 +79,15 @@ test.describe("Navigation", () => {
 		// Menu panel — open and verify contents
 		await menuTab.click();
 		const mobileMenu = page.getByLabel("Menu", { exact: true });
-		await expect(mobileMenu.getByRole("link", { name: "SendouQ" })).toBeVisible();
-		await expect(mobileMenu.getByRole("link", { name: "Analyzer" })).toBeVisible();
-		await expect(mobileMenu.getByRole("link", { name: "Builds" })).toBeVisible();
+		await expect(
+			mobileMenu.getByRole("link", { name: "SendouQ" }),
+		).toBeVisible();
+		await expect(
+			mobileMenu.getByRole("link", { name: "Analyzer" }),
+		).toBeVisible();
+		await expect(
+			mobileMenu.getByRole("link", { name: "Builds" }),
+		).toBeVisible();
 		await expect(
 			page.locator("h3").filter({ hasText: "Streams" }),
 		).toBeVisible();
@@ -87,7 +99,9 @@ test.describe("Navigation", () => {
 			.locator("[class*='ghostTab']:not([class*='ghostTabBar'])")
 			.nth(1)
 			.dispatchEvent("click");
-		await expect(mobileMenu.getByRole("link", { name: "SendouQ" })).not.toBeVisible();
+		await expect(
+			mobileMenu.getByRole("link", { name: "SendouQ" }),
+		).not.toBeVisible();
 		const friendsViewAll = page.getByRole("link", { name: /View all/ });
 		await expect(friendsViewAll).toBeVisible();
 
@@ -146,7 +160,9 @@ test.describe("Navigation", () => {
 		// TopNavMenus still work
 		await page.getByRole("button", { name: "Play" }).click();
 		const tabletPlayMenu = page.locator("[class*='menuContent']");
-		await expect(tabletPlayMenu.getByRole("link", { name: "SendouQ" })).toBeVisible();
+		await expect(
+			tabletPlayMenu.getByRole("link", { name: "SendouQ" }),
+		).toBeVisible();
 		await page.keyboard.press("Escape");
 
 		// MobileNav hidden

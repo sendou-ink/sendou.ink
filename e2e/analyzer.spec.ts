@@ -72,7 +72,9 @@ test.describe("Build Analyzer", () => {
 		await expect(swimSpeedAbilityLocator).toBeVisible();
 		await swimSpeedAbilityButtonLocator.click();
 		await expect(
-			page.locator("[data-testid='ability-selector'] [data-testid='SSU-ability']"),
+			page.locator(
+				"[data-testid='ability-selector'] [data-testid='SSU-ability']",
+			),
 		).toHaveCount(2);
 
 		await page.getByTestId("ap-tab").click();
