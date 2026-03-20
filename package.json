@@ -64,7 +64,7 @@
 		"ics": "^3.8.1",
 		"isbot": "^5.1.36",
 		"jsoncrush": "^1.1.8",
-		"kysely": "^0.28.12",
+		"kysely": "^0.28.14",
 		"lru-cache": "^11.2.7",
 		"lucide-react": "^0.562.0",
 		"markdown-to-jsx": "^9.7.9",
