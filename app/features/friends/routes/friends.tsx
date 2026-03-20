@@ -70,7 +70,7 @@ function IncomingRequestsSection() {
 									discordId: request.sender.discordId,
 									discordAvatar: request.sender.discordAvatar,
 								}}
-								size="xs"
+								size="xxsm"
 							/>
 							<span className={styles.userName}>{request.sender.username}</span>
 						</div>
@@ -121,9 +121,11 @@ function PendingRequestsSection() {
 									discordId: request.receiver.discordId,
 									discordAvatar: request.receiver.discordAvatar,
 								}}
-								size="xs"
+								size="xxsm"
 							/>
-							<span>{request.receiver.username}</span>
+							<span className={styles.userName}>
+								{request.receiver.username}
+							</span>
 						</div>
 						<Form method="post">
 							<input type="hidden" name="_action" value="CANCEL_REQUEST" />
