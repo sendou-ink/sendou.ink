@@ -267,7 +267,7 @@ export interface GetCastedTournamentMatchesResponse {
 	 */
 	current: Array<{
 		matchId: number;
-		channel: TournamentCastChannel;
+		channel: TournamentCastChannel | null;
 	}>;
 	/*
 	 * Matches that are locked to be casted.
@@ -278,13 +278,21 @@ export interface GetCastedTournamentMatchesResponse {
 	}>;
 }
 
-type TournamentCastChannel = {
-	type: "TWITCH";
-	/**
-	 * @example "iplsplatoon"
-	 */
-	channelId: string;
-};
+type TournamentCastChannel =
+	| {
+			type: "TWITCH";
+			/**
+			 * @example "iplsplatoon"
+			 */
+			channelId: string;
+	  }
+	| {
+			type: "YOUTUBE";
+			/**
+			 * @example "UCxxxxxxxxxxxxxxxx"
+			 */
+			channelId: string;
+	  };
 
 /** GET /api/tournament-match/{matchId} */
 

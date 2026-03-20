@@ -48,6 +48,7 @@ export async function findById(id: number) {
 			"CalendarEvent.tags",
 			"Tournament.settings",
 			"Tournament.castTwitchAccounts",
+			"Tournament.castYoutubeChannels",
 			"Tournament.castedMatchesInfo",
 			"Tournament.mapPickingStyle",
 			"Tournament.rules",
@@ -918,6 +919,22 @@ export function updateCastTwitchAccounts({
 		.execute();
 }
 
+export function updateCastYoutubeChannels({
+	tournamentId,
+	castYoutubeChannels,
+}: {
+	tournamentId: number;
+	castYoutubeChannels: string[];
+}) {
+	return db
+		.updateTable("Tournament")
+		.set({
+			castYoutubeChannels: JSON.stringify(castYoutubeChannels),
+		})
+		.where("id", "=", tournamentId)
+		.execute();
+}
+
 const castedMatchesInfoByTournamentId = async (
 	trx: Transaction<DB>,
 	tournamentId: number,
@@ -1005,10 +1022,12 @@ export function setMatchAsCasted({
 	matchId,
 	tournamentId,
 	twitchAccount,
+	youtubeChannel,
 }: {
 	matchId: number;
 	tournamentId: number;
-	twitchAccount: string | null;
+	twitchAccount?: string | null;
+	youtubeChannel?: string | null;
 }) {
 	return db.transaction().execute(async (trx) => {
 		const castedMatchesInfo = await castedMatchesInfoByTournamentId(
@@ -1016,15 +1035,17 @@ export function setMatchAsCasted({
 			tournamentId,
 		);
 
+		const channelValue = twitchAccount ?? youtubeChannel ?? null;
+
 		let newCastedMatchesInfo: CastedMatchesInfo;
-		if (twitchAccount === null) {
+		if (channelValue === null) {
 			newCastedMatchesInfo = {
 				...castedMatchesInfo,
 				castedMatches: castedMatchesInfo.castedMatches.filter(
 					(cm) => cm.matchId !== matchId,
 				),
 			};
-		} else {
+		} else if (twitchAccount) {
 			newCastedMatchesInfo = {
 				...castedMatchesInfo,
 				castedMatches: castedMatchesInfo.castedMatches
@@ -1036,6 +1057,16 @@ export function setMatchAsCasted({
 							cm.matchId !== matchId && cm.twitchAccount !== twitchAccount,
 					)
 					.concat([{ twitchAccount, matchId }]),
+			};
+		} else {
+			newCastedMatchesInfo = {
+				...castedMatchesInfo,
+				castedMatches: castedMatchesInfo.castedMatches
+					.filter(
+						(cm) =>
+							cm.matchId !== matchId && cm.youtubeChannel !== youtubeChannel,
+					)
+					.concat([{ youtubeChannel: youtubeChannel!, matchId }]),
 			};
 		}
 

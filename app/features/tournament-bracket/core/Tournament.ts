@@ -1396,6 +1396,7 @@ export class Tournament {
 			.map((member) => ({
 				thumbnailUrl: member.streamThumbnailUrl!,
 				twitchUserName: member.streamTwitch!,
+				youtubeChannelId: null as string | null,
 				viewerCount: member.streamViewerCount!,
 				userId: member.userId,
 			}));
@@ -1403,11 +1404,23 @@ export class Tournament {
 		const castStreams = this.ctx.castStreams.map((stream) => ({
 			thumbnailUrl: stream.thumbnailUrl,
 			twitchUserName: stream.twitch!,
+			youtubeChannelId: null as string | null,
 			viewerCount: stream.viewerCount,
 			userId: null as number | null,
 		}));
 
-		return [...memberStreams, ...castStreams].sort(
+		const youtubeCastStreams = (this.ctx.castYoutubeChannels ?? []).map(
+			(channelId) => ({
+				// TODO: fetch YouTube thumbnail and viewer count via YouTube Data API
+				thumbnailUrl: null as string | null,
+				twitchUserName: null as string | null,
+				youtubeChannelId: channelId,
+				viewerCount: 0,
+				userId: null as number | null,
+			}),
+		);
+
+		return [...memberStreams, ...castStreams, ...youtubeCastStreams].sort(
 			(a, b) => b.viewerCount - a.viewerCount,
 		);
 	}

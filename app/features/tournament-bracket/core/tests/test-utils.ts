@@ -73,6 +73,7 @@ export const testTournament = ({
 			isFinalized: 0,
 			name: "test",
 			castTwitchAccounts: [],
+			castYoutubeChannels: null,
 			bracketProgressionOverrides: [],
 			subCounts: [],
 			staff: [],

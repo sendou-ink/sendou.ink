@@ -542,10 +542,18 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Not an organizer or streamer",
 			);
 
+			const twitchAccount = data.castChannel?.startsWith("twitch:")
+				? data.castChannel.slice("twitch:".length)
+				: null;
+			const youtubeChannel = data.castChannel?.startsWith("youtube:")
+				? data.castChannel.slice("youtube:".length)
+				: null;
+
 			await TournamentRepository.setMatchAsCasted({
 				matchId: match.id,
 				tournamentId: tournament.ctx.id,
-				twitchAccount: data.twitchAccount,
+				twitchAccount,
+				youtubeChannel,
 			});
 
 			emitTournamentUpdate = true;

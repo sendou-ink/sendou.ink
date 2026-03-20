@@ -483,7 +483,11 @@ export interface CastedMatchesInfo {
 	/** Array for match ID's that are locked because they are pending to be casted */
 	lockedMatches: number[];
 	/** What matches are streamed currently & where */
-	castedMatches: { twitchAccount: string; matchId: number }[];
+	castedMatches: {
+		twitchAccount?: string;
+		youtubeChannel?: string;
+		matchId: number;
+	}[];
 }
 
 export interface Tournament {
@@ -493,6 +497,7 @@ export interface Tournament {
 	/** Maps prepared ahead of time for rounds. Follows settings.bracketProgression order. Null in the spot if not defined yet for that bracket. */
 	preparedMaps: JSONColumnTypeNullable<(PreparedMaps | null)[]>;
 	castTwitchAccounts: JSONColumnTypeNullable<string[]>;
+	castYoutubeChannels: JSONColumnTypeNullable<string[]>;
 	castedMatchesInfo: JSONColumnTypeNullable<CastedMatchesInfo>;
 	rules: string | null;
 	/** Related "parent tournament", the tournament that contains the original sign-ups (for leagues) */

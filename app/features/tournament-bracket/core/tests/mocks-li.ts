@@ -6904,6 +6904,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			},
 		},
 		castTwitchAccounts: ["iplsplatoon"],
+		castYoutubeChannels: null,
 		castedMatchesInfo: {
 			castedMatches: [
 				{

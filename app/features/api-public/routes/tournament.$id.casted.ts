@@ -27,10 +27,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		current:
 			tournament.castedMatchesInfo?.castedMatches.map((match) => ({
 				matchId: match.matchId,
-				channel: {
-					type: "TWITCH",
-					channelId: match.twitchAccount,
-				},
+				channel: match.twitchAccount
+					? { type: "TWITCH" as const, channelId: match.twitchAccount }
+					: match.youtubeChannel
+						? { type: "YOUTUBE" as const, channelId: match.youtubeChannel }
+						: null,
 			})) ?? [],
 		future:
 			tournament.castedMatchesInfo?.lockedMatches.map((matchId) => ({

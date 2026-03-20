@@ -2,7 +2,7 @@ import { Avatar } from "~/components/Avatar";
 import { UserIcon } from "~/components/icons/User";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { twitchThumbnailUrlToSrc } from "~/modules/twitch/utils";
-import { twitchUrl } from "~/utils/urls";
+import { twitchUrl, youtubeUrl } from "~/utils/urls";
 import { useTournament } from "../routes/to.$id";
 
 export function TournamentStream({
@@ -18,18 +18,22 @@ export function TournamentStream({
 	);
 	const user = team?.members.find((m) => m.userId === stream.userId);
 
+	const streamUrl = stream.youtubeChannelId
+		? youtubeUrl(stream.youtubeChannelId)
+		: twitchUrl(stream.twitchUserName!);
+
+	const streamLabel = stream.youtubeChannelId
+		? stream.youtubeChannelId
+		: stream.twitchUserName!;
+
 	return (
 		<div
 			key={stream.userId}
 			className="stack sm"
 			data-testid="tournament-stream"
 		>
-			{withThumbnail ? (
-				<a
-					href={twitchUrl(stream.twitchUserName)}
-					target="_blank"
-					rel="noreferrer"
-				>
+			{withThumbnail && stream.thumbnailUrl ? (
+				<a href={streamUrl} target="_blank" rel="noreferrer">
 					<img
 						alt=""
 						src={twitchThumbnailUrlToSrc(stream.thumbnailUrl)}
@@ -47,7 +51,7 @@ export function TournamentStream({
 				) : (
 					<div className="tournament__stream__user-container">
 						<Avatar size="xxs" url={tournament.ctx.logoUrl} />
-						Cast <span className="text-lighter">{stream.twitchUserName}</span>
+						Cast <span className="text-lighter">{streamLabel}</span>
 					</div>
 				)}
 				<div className="tournament__stream__viewer-count">
@@ -57,7 +61,7 @@ export function TournamentStream({
 			</div>
 			{!withThumbnail ? (
 				<a
-					href={twitchUrl(stream.twitchUserName)}
+					href={streamUrl}
 					target="_blank"
 					rel="noreferrer"
 					className="text-xxs text-semi-bold text-center"

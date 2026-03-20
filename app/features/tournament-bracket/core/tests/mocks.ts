@@ -1444,6 +1444,7 @@ export const PADDLING_POOL_257 = () =>
 			},
 			discordUrl: null,
 			castTwitchAccounts: ["dappleproductions"],
+			castYoutubeChannels: null,
 			castedMatchesInfo: {
 				castedMatches: [
 					{
@@ -8044,6 +8045,7 @@ export const PADDLING_POOL_255 = () =>
 			},
 			discordUrl: null,
 			castTwitchAccounts: ["dappleproductions"],
+			castYoutubeChannels: null,
 			castedMatchesInfo: {
 				castedMatches: [
 					{
@@ -14977,6 +14979,7 @@ export const IN_THE_ZONE_32 = ({
 			},
 			discordUrl: null,
 			castTwitchAccounts: ["dappleproductions", "kyochandxd"],
+			castYoutubeChannels: null,
 			castedMatchesInfo: null,
 			seedingSnapshot: null,
 			mapPickingStyle: "AUTO_SZ",

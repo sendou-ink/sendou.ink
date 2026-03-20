@@ -158,6 +158,19 @@ export const adminActionSchema = z.union([
 		),
 	}),
 	z.object({
+		_action: _action("UPDATE_CAST_YOUTUBE_CHANNELS"),
+		castYoutubeChannels: z.preprocess(
+			(val) =>
+				typeof val === "string"
+					? val
+							.split(",")
+							.map((channel) => channel.trim())
+							.filter(Boolean)
+					: val,
+			z.array(z.string()),
+		),
+	}),
+	z.object({
 		_action: _action("RESET_BRACKET"),
 		stageId: id,
 	}),

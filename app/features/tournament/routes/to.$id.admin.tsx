@@ -114,6 +114,8 @@ export default function TournamentAdminPage() {
 			) : null}
 			<Divider smallText>Cast Twitch Accounts</Divider>
 			<CastTwitchAccounts />
+			<Divider smallText>Cast YouTube Channels</Divider>
+			<CastYoutubeChannels />
 			<Divider smallText>Participant list download</Divider>
 			<DownloadParticipants />
 			{!tournament.isLeagueSignup ? (
@@ -427,6 +429,39 @@ function CastTwitchAccounts() {
 				automatically based on their profile data. You can also enter multiple
 				accounts, just separate them with a comma e.g.
 				&quot;sendouc,leanny&quot;
+			</FormMessage>
+		</fetcher.Form>
+	);
+}
+
+function CastYoutubeChannels() {
+	const id = React.useId();
+	const fetcher = useFetcher();
+	const tournament = useTournament();
+
+	return (
+		<fetcher.Form method="post" className="stack sm">
+			<div className="stack horizontal sm items-end">
+				<div>
+					<Label htmlFor={id}>YouTube channel IDs</Label>
+					<input
+						id={id}
+						placeholder="UCxxxxxxxxxxxxxxxx"
+						name="castYoutubeChannels"
+						defaultValue={tournament.ctx.castYoutubeChannels?.join(",")}
+					/>
+				</div>
+				<SubmitButton
+					testId="save-cast-youtube-channels-button"
+					state={fetcher.state}
+					_action="UPDATE_CAST_YOUTUBE_CHANNELS"
+				>
+					Save
+				</SubmitButton>
+			</div>
+			<FormMessage type="info">
+				YouTube channel ID where the tournament is casted. You can also enter
+				multiple IDs, just separate them with a comma.
 			</FormMessage>
 		</fetcher.Form>
 	);

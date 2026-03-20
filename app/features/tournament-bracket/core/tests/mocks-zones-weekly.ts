@@ -318,6 +318,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 			},
 		},
 		castTwitchAccounts: null,
+		castYoutubeChannels: null,
 		castedMatchesInfo: null,
 		seedingSnapshot: null,
 		mapPickingStyle: "TO",

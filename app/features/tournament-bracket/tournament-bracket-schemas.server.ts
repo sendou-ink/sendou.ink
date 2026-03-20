@@ -84,9 +84,9 @@ export const matchSchema = z.union([
 	}),
 	z.object({
 		_action: _action("SET_AS_CASTED"),
-		twitchAccount: z.preprocess(
+		castChannel: z.preprocess(
 			nullLiteraltoNull,
-			z.string().min(1).max(100).nullable(),
+			z.string().min(1).max(110).nullable(),
 		),
 	}),
 	z.object({

@@ -369,6 +369,16 @@ export const action: ActionFunction = async ({ request, params }) => {
 			message = "Cast account updated";
 			break;
 		}
+		case "UPDATE_CAST_YOUTUBE_CHANNELS": {
+			validateIsTournamentOrganizer();
+			await TournamentRepository.updateCastYoutubeChannels({
+				tournamentId: tournament.ctx.id,
+				castYoutubeChannels: data.castYoutubeChannels,
+			});
+
+			message = "Cast account updated";
+			break;
+		}
 		case "DROP_TEAM_OUT": {
 			validateIsTournamentOrganizer();
 			const droppingTeam = tournament.teamById(data.teamId);

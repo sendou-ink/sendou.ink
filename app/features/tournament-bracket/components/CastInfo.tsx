@@ -11,7 +11,7 @@ import { useTournament } from "~/features/tournament/routes/to.$id";
 const lockingInfo =
 	"You can lock the match to indicate that it should not be started before the cast is ready. Match being locked prevents score reporting and hides the map list till the organizer/streamer unlocks it.";
 const setAsCastedInfo =
-	"Select the Twitch account that is currently casting this match. It is then indicated in the bracket view.";
+	"Select the Twitch or YouTube account that is currently casting this match. It is then indicated in the bracket view.";
 
 export function CastInfo({
 	matchIsOngoing,
@@ -29,14 +29,20 @@ export function CastInfo({
 
 	const castedMatchesInfo = tournament.ctx.castedMatchesInfo;
 	const castTwitchAccounts = tournament.ctx.castTwitchAccounts ?? [];
+	const castYoutubeChannels = tournament.ctx.castYoutubeChannels ?? [];
 	const currentlyCastedOn = castedMatchesInfo?.castedMatches.find(
 		(cm) => cm.matchId === matchId,
-	)?.twitchAccount;
+	);
+	const currentTwitchAccount = currentlyCastedOn?.twitchAccount;
+	const currentYoutubeChannel = currentlyCastedOn?.youtubeChannel;
 	const isLocked = castedMatchesInfo?.lockedMatches?.includes(matchId);
 
 	const hasPerms = tournament.isOrganizerOrStreamer(user);
 
-	if (castTwitchAccounts.length === 0 || !hasPerms || matchIsOver) return null;
+	const hasCastAccounts =
+		castTwitchAccounts.length > 0 || castYoutubeChannels.length > 0;
+
+	if (!hasCastAccounts || !hasPerms || matchIsOver) return null;
 
 	// match can only be locked when status is Locked or Waiting (team(s) busy with previous match)
 	if (
@@ -72,38 +78,44 @@ export function CastInfo({
 			submitButtonText="Save"
 			_action="SET_AS_CASTED"
 			infoText={setAsCastedInfo}
-		>
-			<select
-				name="twitchAccount"
-				id="twitchAccount"
-				defaultValue={currentlyCastedOn ?? "null"}
-				data-testid="cast-info-select"
-			>
-				<option value="null">Not casted</option>
-				{castTwitchAccounts.map((account) => (
-					<option key={account} value={account}>
-						{account}
-					</option>
-				))}
-			</select>
-		</CastInfoWrapper>
+			currentTwitchAccount={currentTwitchAccount}
+			currentYoutubeChannel={currentYoutubeChannel}
+			castTwitchAccounts={castTwitchAccounts}
+			castYoutubeChannels={castYoutubeChannels}
+		/>
 	);
 }
 
 function CastInfoWrapper({
-	children,
 	icon,
 	submitButtonText,
 	_action,
 	infoText,
+	currentTwitchAccount,
+	currentYoutubeChannel,
+	castTwitchAccounts,
+	castYoutubeChannels,
 }: {
-	children?: React.ReactNode;
 	icon?: JSX.Element;
 	submitButtonText?: string;
 	_action?: string;
 	infoText?: string;
+	currentTwitchAccount?: string;
+	currentYoutubeChannel?: string;
+	castTwitchAccounts?: string[];
+	castYoutubeChannels?: string[];
 }) {
 	const fetcher = useFetcher();
+
+	const hasCastSelect =
+		(castTwitchAccounts && castTwitchAccounts.length > 0) ||
+		(castYoutubeChannels && castYoutubeChannels.length > 0);
+
+	const currentValue = currentTwitchAccount
+		? `twitch:${currentTwitchAccount}`
+		: currentYoutubeChannel
+			? `youtube:${currentYoutubeChannel}`
+			: "null";
 
 	return (
 		<div className="stack horizontal sm justify-center items-center">
@@ -116,9 +128,13 @@ function CastInfoWrapper({
 				</div>
 
 				<div className="stack horizontal sm items-center justify-between w-full">
-					{children ? (
+					{hasCastSelect ? (
 						<div className="tournament-bracket__cast-info-container__content">
-							{children}
+							<CastSelect
+								currentValue={currentValue}
+								castTwitchAccounts={castTwitchAccounts ?? []}
+								castYoutubeChannels={castYoutubeChannels ?? []}
+							/>
 						</div>
 					) : null}
 					{submitButtonText && _action ? (
@@ -136,5 +152,36 @@ function CastInfoWrapper({
 			</fetcher.Form>
 			{infoText ? <InfoPopover>{infoText}</InfoPopover> : null}
 		</div>
+	);
+}
+
+function CastSelect({
+	currentValue,
+	castTwitchAccounts,
+	castYoutubeChannels,
+}: {
+	currentValue: string;
+	castTwitchAccounts: string[];
+	castYoutubeChannels: string[];
+}) {
+	return (
+		<select
+			name="castChannel"
+			id="castChannel"
+			defaultValue={currentValue}
+			data-testid="cast-info-select"
+		>
+			<option value="null">Not casted</option>
+			{castTwitchAccounts.map((account) => (
+				<option key={`twitch:${account}`} value={`twitch:${account}`}>
+					Twitch: {account}
+				</option>
+			))}
+			{castYoutubeChannels.map((channelId) => (
+				<option key={`youtube:${channelId}`} value={`youtube:${channelId}`}>
+					YouTube: {channelId}
+				</option>
+			))}
+		</select>
 	);
 }

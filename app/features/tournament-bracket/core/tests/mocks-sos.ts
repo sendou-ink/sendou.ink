@@ -2007,6 +2007,7 @@ export const SWIM_OR_SINK_167 = (
 			minMembersPerTeam: 4,
 		},
 		castTwitchAccounts: ["iplsplatoon"],
+		castYoutubeChannels: null,
 		castedMatchesInfo: {
 			castedMatches: [
 				{
