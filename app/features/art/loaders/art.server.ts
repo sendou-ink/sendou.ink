@@ -26,7 +26,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		? cachedArts.allTags.find((t) => t.name === filteredTagName)
 		: null;
 
-	if (!filteredTag) return cachedArts;
+	if (!filteredTag) {
+		return filteredTagName
+			? { ...cachedArts, showcaseArts: [] }
+			: cachedArts;
+	}
 
 	return {
 		...cachedArts,

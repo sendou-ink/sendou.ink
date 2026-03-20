@@ -30,5 +30,6 @@
 	"forms.tags.placeholder": "",
 	"forms.tags.maxReached": "Limite de tags atteinte",
 	"delete.title": "",
-	"unlink.title": ""
+	"unlink.title": "",
+	"noArtForTag": ""
 }
