@@ -54,7 +54,8 @@
 	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 	text-decoration: none;
-	padding: var(--s-1) var(--s-3);
+	padding: 0 var(--s-3);
+	height: var(--selector-size);
 	background-color: var(--color-bg-high);
 	border-radius: var(--radius-field);
 

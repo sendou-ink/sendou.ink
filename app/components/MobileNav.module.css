@@ -317,11 +317,11 @@
 	margin-top: auto;
 	margin-inline: auto;
 	margin-bottom: var(--s-4);
-	font-size: var(--font-xs);
+	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 	text-decoration: none;
-	height: var(--field-size);
-	padding: 0 var(--s-4);
+	height: var(--selector-size);
+	padding: 0 var(--s-3);
 	background-color: var(--color-bg-high);
 	border-radius: var(--radius-selector);
 
