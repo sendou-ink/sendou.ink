@@ -363,12 +363,18 @@ export default function App() {
 			observer.disconnect();
 
 			if (htmlStyle.overflow === "hidden") {
+				htmlStyle.overflow = "";
+				htmlStyle.scrollbarGutter = "";
+
+				const scrollbarWidth =
+					window.innerWidth - document.documentElement.clientWidth;
+					
 				htmlStyle.overflow = "initial";
 				bodyStyle.overflow = "hidden";
-				bodyStyle.scrollbarGutter = "stable";
+				bodyStyle.paddingRight = `${scrollbarWidth}px`;
 			} else if (bodyStyle.overflow === "hidden") {
 				bodyStyle.overflow = "";
-				bodyStyle.scrollbarGutter = "";
+				bodyStyle.paddingRight = "";
 			}
 
 			observer.observe(document.documentElement, {
