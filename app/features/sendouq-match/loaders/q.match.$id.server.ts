@@ -45,15 +45,30 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				})
 			: null,
 		rawReportedWeapons,
-		chatCode:
-			(user?.roles.includes("STAFF") ||
-				(user && matchUsers.includes(user.id))) &&
-			chatAccessible({
-				isStaff: user?.roles.includes("STAFF") ?? false,
+		chatCode: (() => {
+			const isStaff = user?.roles.includes("STAFF") ?? false;
+			const isParticipant = user && matchUsers.includes(user.id);
+
+			if (!(isStaff || isParticipant)) return null;
+
+			const accessible = chatAccessible({
+				isStaff,
 				expiresAfterDays: 1,
 				comparedTo: databaseTimestampToDate(matchUnmapped.createdAt),
-			})
-				? match.chatCode
-				: null,
+			});
+			if (!accessible) return null;
+
+			if (!isParticipant) return match.chatCode ?? null;
+
+			const codes = [
+				match.chatCode,
+				match.groupAlpha.chatCode,
+				match.groupBravo.chatCode,
+			].filter((c): c is string => Boolean(c));
+
+			if (codes.length === 0) return null;
+			if (codes.length === 1) return codes[0];
+			return codes;
+		})(),
 	};
 };

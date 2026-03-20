@@ -556,55 +556,71 @@ function useChatRouteSync({
 		React.SetStateAction<Record<string, ChatMessage[]>>
 	>;
 }) {
-	const chatCode = useCurrentRouteChatCode();
+	const rawChatCode = useCurrentRouteChatCode();
+	const chatCodesKey = rawChatCode
+		? Array.isArray(rawChatCode)
+			? rawChatCode.join(",")
+			: rawChatCode
+		: "";
 	const { pathname } = useLocation();
 	const layoutSize = useLayoutSize();
-	const subscribedRoomRef = React.useRef<string | null>(null);
-	const previousRouteChatCodeRef = React.useRef<string | null>(null);
+	const subscribedRoomRef = React.useRef<string[]>([]);
+	const previousRouteChatCodeRef = React.useRef<string[]>([]);
 	const previousPathnameRef = React.useRef<string | null>(null);
 
 	React.useEffect(() => {
 		if (isLoading) return;
 
-		const previousSubscribed = subscribedRoomRef.current;
+		const chatCodes = chatCodesKey ? chatCodesKey.split(",") : [];
 
-		// Clean up previous non-participant subscription if chatCode changed
-		if (previousSubscribed && previousSubscribed !== chatCode) {
-			unsubscribe(previousSubscribed);
-			setRooms((prev) => prev.filter((r) => r.chatCode !== previousSubscribed));
+		// Clean up subscriptions for rooms no longer in chatCodes
+		const previousSubscribed = subscribedRoomRef.current;
+		const removedRooms = previousSubscribed.filter(
+			(code) => !chatCodes.includes(code),
+		);
+		for (const code of removedRooms) {
+			unsubscribe(code);
+			setRooms((prev) => prev.filter((r) => r.chatCode !== code));
 			setMessagesByRoom((prev) => {
-				const { [previousSubscribed]: _, ...rest } = prev;
+				const { [code]: _, ...rest } = prev;
 				return rest;
 			});
-			if (activeRoom === previousSubscribed) {
+			if (activeRoom === code) {
 				setActiveRoom(null);
 				setChatOpen(false);
 			}
-			subscribedRoomRef.current = null;
+		}
+		if (removedRooms.length > 0) {
+			subscribedRoomRef.current = previousSubscribed.filter((code) =>
+				chatCodes.includes(code),
+			);
 		}
 
-		if (chatCode) {
-			const room = rooms.find((r) => r.chatCode === chatCode);
-			const isParticipant = room?.participantUserIds.includes(userId);
+		if (chatCodes.length > 0) {
+			for (const code of chatCodes) {
+				const alreadyInRooms = rooms.some((r) => r.chatCode === code);
 
-			if (!isParticipant && subscribedRoomRef.current !== chatCode) {
-				logger.debug("Subscribing to non-participant room:", chatCode);
-				subscribe(chatCode);
-				subscribedRoomRef.current = chatCode;
+				if (!alreadyInRooms && !subscribedRoomRef.current.includes(code)) {
+					logger.debug("Subscribing to non-participant room:", code);
+					subscribe(code);
+					subscribedRoomRef.current = [...subscribedRoomRef.current, code];
+				}
 			}
 
+			const previousCodes = previousRouteChatCodeRef.current;
 			const routeChatCodeChanged =
-				previousRouteChatCodeRef.current !== chatCode;
-			previousRouteChatCodeRef.current = chatCode;
+				chatCodes.length !== previousCodes.length ||
+				chatCodes.some((code, i) => previousCodes[i] !== code);
+			previousRouteChatCodeRef.current = chatCodes;
 
 			if (routeChatCodeChanged) {
-				setActiveRoom(chatCode);
+				setActiveRoom(chatCodes[0]);
 				if (layoutSize === "desktop") {
 					setChatOpen(true);
 				}
 			}
 		} else {
-			previousRouteChatCodeRef.current = null;
+			previousRouteChatCodeRef.current = [];
 
 			const pathnameChanged = previousPathnameRef.current !== pathname;
 			previousPathnameRef.current = pathname;
@@ -624,7 +640,7 @@ function useChatRouteSync({
 		}
 	}, [
 		isLoading,
-		chatCode,
+		chatCodesKey,
 		pathname,
 		rooms,
 		userId,
@@ -639,11 +655,13 @@ function useChatRouteSync({
 	]);
 }
 
-function useCurrentRouteChatCode() {
+function useCurrentRouteChatCode(): string | string[] | null {
 	const matches = useMatches();
 
 	for (const match of matches) {
-		const matchData = match.data as { chatCode?: string } | undefined;
+		const matchData = match.data as
+			| { chatCode?: string | string[] }
+			| undefined;
 		if (matchData?.chatCode) {
 			return matchData.chatCode;
 		}
