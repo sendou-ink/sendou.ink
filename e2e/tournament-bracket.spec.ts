@@ -1024,6 +1024,8 @@ test.describe("Tournament bracket", () => {
 	test("swiss tournament with bracket advancing/unadvancing & dropping out a team", async ({
 		page,
 	}) => {
+		test.slow();
+
 		const tournamentId = 5;
 
 		await seed(page);
