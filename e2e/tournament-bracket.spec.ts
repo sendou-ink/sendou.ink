@@ -135,10 +135,8 @@ const reportResult = async ({
 };
 
 const backToBracket = async (page: Page) => {
-	await expect(async () => {
-		await page.getByTestId("back-to-bracket-button").click({ timeout: 5000 });
-		await expect(page.getByTestId("brackets-viewer")).toBeVisible();
-	}).toPass();
+	await page.getByTestId("back-to-bracket-button").click();
+	await expect(page.getByTestId("brackets-viewer")).toBeVisible();
 };
 
 const expectScore = (page: Page, score: [number, number]) =>
@@ -1192,15 +1190,15 @@ test.describe("Tournament bracket", () => {
 
 		await backToBracket(page);
 
-		// Fast forward a bit to ensure timer shows on bracket
-		await page.clock.fastForward("00:10"); // 10 seconds
-		await page.waitForTimeout(1000);
-
 		const bracketMatch = page.locator('[data-match-id="5"]');
 		await expect(bracketMatch).toBeVisible();
 
+		// Verify timer shows on bracket page (timer is a sibling of the match link)
+		const matchWrapper = bracketMatch.locator("..");
+		await expect(matchWrapper.getByTestId("bracket-match-timer")).toBeVisible();
+
 		// Fast forward time past limit (30 minutes for Bo3 = 26min limit)
-		await page.clock.fastForward("29:50"); // Total 30 minutes
+		await page.clock.fastForward("30:00");
 		await page.reload();
 
 		await navigateToMatch(page, matchId);
