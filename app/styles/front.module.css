@@ -165,3 +165,62 @@
 	gap: var(--s-2);
 	flex-wrap: wrap;
 }
+
+.weaponPills {
+	display: flex;
+	gap: var(--s-2);
+	justify-content: center;
+	flex-wrap: wrap;
+}
+
+.weaponPill {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-full);
+	padding: var(--s-1);
+	transition: background-color 0.15s ease-out;
+}
+
+.weaponPill:hover {
+	background-color: var(--color-bg-high);
+}
+
+.discoverGrid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: var(--s-3);
+	padding: var(--s-2);
+}
+
+@media (min-width: 600px) {
+	.discoverGrid {
+		grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+	}
+}
+
+.discoverGridItem {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+	text-decoration: none;
+	color: var(--color-text);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	text-align: center;
+}
+
+.discoverGridItem:hover .discoverGridItemImage {
+	background-color: var(--color-bg-high);
+}
+
+.discoverGridItemImage {
+	width: var(--field-size-lg);
+	aspect-ratio: 1 / 1;
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-higher);
+	display: grid;
+	place-items: center;
+}

@@ -368,7 +368,7 @@ export default function App() {
 
 				const scrollbarWidth =
 					window.innerWidth - document.documentElement.clientWidth;
-					
+
 				htmlStyle.overflow = "initial";
 				bodyStyle.overflow = "hidden";
 				bodyStyle.paddingRight = `${scrollbarWidth}px`;

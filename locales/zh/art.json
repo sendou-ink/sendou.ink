@@ -27,5 +27,6 @@
 	"forms.tags.placeholder": "",
 	"forms.tags.maxReached": "已达到最大标签数",
 	"delete.title": "",
-	"unlink.title": ""
+	"unlink.title": "",
+	"noArtForTag": ""
 }

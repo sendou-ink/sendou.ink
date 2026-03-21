@@ -303,6 +303,54 @@ describe("deleteById", () => {
 	});
 });
 
+describe("deleteOrphanTags", () => {
+	beforeEach(async () => {
+		imageCounter = 0;
+		await dbInsertUsers(1);
+	});
+
+	afterEach(() => {
+		dbReset();
+	});
+
+	test("deletes tags with no associated art", async () => {
+		const art = await ArtRepository.insert({
+			authorId: 1,
+			url: "https://example.com/image-1.png",
+			validatedAt: Date.now(),
+			description: null,
+			linkedUsers: [],
+			tags: [{ name: "Orphan1" }, { name: "Orphan2" }],
+		});
+
+		await ArtRepository.deleteById(art.id);
+
+		const deletedCount = await ArtRepository.deleteOrphanTags();
+		expect(deletedCount).toBe(2);
+
+		const tags = await ArtRepository.findAllTags();
+		expect(tags).toHaveLength(0);
+	});
+
+	test("does not delete tags that are still linked to art", async () => {
+		await ArtRepository.insert({
+			authorId: 1,
+			url: "https://example.com/image-1.png",
+			validatedAt: Date.now(),
+			description: null,
+			linkedUsers: [],
+			tags: [{ name: "InUse" }],
+		});
+
+		const deletedCount = await ArtRepository.deleteOrphanTags();
+		expect(deletedCount).toBe(0);
+
+		const tags = await ArtRepository.findAllTags();
+		expect(tags).toHaveLength(1);
+		expect(tags[0].name).toBe("InUse");
+	});
+});
+
 describe("insert", () => {
 	beforeEach(async () => {
 		imageCounter = 0;

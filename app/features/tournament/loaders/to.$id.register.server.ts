@@ -21,7 +21,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		tournamentId,
 		userId: user.id,
 	});
-	if (!ownTournamentTeam)
+	if (!ownTournamentTeam) {
 		return {
 			mapPool: null,
 			friendPlayers: null,
@@ -31,6 +31,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				tournamentId,
 			}),
 		};
+	}
 
 	return {
 		mapPool: findMapPoolByTeamId(ownTournamentTeam.id),

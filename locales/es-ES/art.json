@@ -30,5 +30,6 @@
 	"forms.tags.placeholder": "Selecciona una etiqueta",
 	"forms.tags.maxReached": "Limite máximo de etiquetas",
 	"delete.title": "¿Seguro que quieres eliminar este arte?",
-	"unlink.title": "¿Seguro que quieres desvincular este arte de tu perfil? (solo {{username}} puede volver a añadirlo)"
+	"unlink.title": "¿Seguro que quieres desvincular este arte de tu perfil? (solo {{username}} puede volver a añadirlo)",
+	"noArtForTag": ""
 }

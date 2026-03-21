@@ -160,7 +160,13 @@ export default function ArtPage() {
 					<ArtGrid arts={recentlyUploadedArts} showUploadDate />
 				</SendouTabPanel>
 				<SendouTabPanel id={TABS.SHOWCASE}>
-					<ArtGrid arts={showcaseArts} />
+					{filteredTag && showcaseArts.length === 0 ? (
+						<div className="no-results mt-4">
+							{t("art:noArtForTag", { tag: filteredTag })}
+						</div>
+					) : (
+						<ArtGrid arts={showcaseArts} />
+					)}
 				</SendouTabPanel>
 			</SendouTabs>
 		</Main>

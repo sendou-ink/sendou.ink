@@ -1,9 +1,11 @@
 import cachified from "@epic-web/cachified";
 import type { Tables } from "~/db/tables";
+import { getUser } from "~/features/auth/core/user.server";
 import * as Changelog from "~/features/front-page/core/Changelog.server";
 import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
 import * as SplatoonRotationRepository from "~/features/splatoon-rotations/SplatoonRotationRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import type { SerializeFrom } from "~/utils/remix";
@@ -13,26 +15,35 @@ import * as ShowcaseTournaments from "../core/ShowcaseTournaments.server";
 export type FrontPageLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async () => {
-	const [tournaments, changelog, leaderboards, rotations] = await Promise.all([
-		ShowcaseTournaments.categorizedTournamentsByUserId(null),
-		cachified({
-			key: "front-changelog",
-			cache,
-			ttl: ttl(IN_MILLISECONDS.ONE_HOUR),
-			staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
-			async getFreshValue() {
-				return Changelog.get();
-			},
-		}),
-		cachedLeaderboards(),
-		SplatoonRotationRepository.findAll(),
-	]);
+	const user = getUser();
+
+	const [tournaments, changelog, leaderboards, rotations, weaponPool] =
+		await Promise.all([
+			ShowcaseTournaments.categorizedTournamentsByUserId(null),
+			cachified({
+				key: "front-changelog",
+				cache,
+				ttl: ttl(IN_MILLISECONDS.ONE_HOUR),
+				staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
+				async getFreshValue() {
+					return Changelog.get();
+				},
+			}),
+			cachedLeaderboards(),
+			SplatoonRotationRepository.findAll(),
+			user
+				? QSettingsRepository.settingsByUserId(user.id).then(
+						(s) => s.qWeaponPool ?? null,
+					)
+				: Promise.resolve(null),
+		]);
 
 	return {
 		tournaments,
 		changelog,
 		leaderboards,
 		rotations,
+		weaponPool,
 	};
 };
 

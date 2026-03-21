@@ -9,6 +9,7 @@ import {
 	matchMapList,
 } from "~/features/sendouq-match/core/match.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { navIconUrl, SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
@@ -177,6 +178,7 @@ export const action: ActionFunction = async ({ request }) => {
 				});
 
 				await refreshSendouQInstance();
+				refreshStreamsCache();
 
 				if (createdMatch.chatCode) {
 					ChatSystemMessage.setMetadata({

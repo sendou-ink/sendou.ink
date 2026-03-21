@@ -9,6 +9,7 @@ import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { preparingSchema } from "../q-schemas.server";
+import { setGroupChatMetadata } from "../q-utils.server";
 
 export type SendouQPreparingAction = typeof action;
 
@@ -57,6 +58,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 
 			await refreshSendouQInstance();
+
+			const updatedGroup = SendouQ.findOwnGroup(user.id);
+			if (updatedGroup?.chatCode) {
+				setGroupChatMetadata({
+					chatCode: updatedGroup.chatCode,
+					members: updatedGroup.members,
+				});
+			}
 
 			notify({
 				userIds: [data.id],

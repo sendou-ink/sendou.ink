@@ -173,7 +173,6 @@
 	align-items: center;
 	gap: var(--s-2);
 	padding-inline: var(--s-4);
-	padding-block-start: env(safe-area-inset-top);
 	background-color: var(--color-bg-high);
 	border-bottom: 1.5px solid var(--color-border);
 	border-top: 1.5px solid var(--color-border);
@@ -181,8 +180,9 @@
 	color: var(--color-text-high);
 	min-height: var(--layout-nav-height);
 
-	&:has(+ nav) {
+	&:first-child {
 		border-top: none;
+		padding-block-start: env(safe-area-inset-top);
 	}
 }
 

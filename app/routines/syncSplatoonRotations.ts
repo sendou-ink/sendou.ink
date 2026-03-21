@@ -8,8 +8,6 @@ export const SyncSplatoonRotationsRoutine = new Routine({
 });
 
 async function syncSplatoonRotations() {
-	if (import.meta.env.VITE_PROD_MODE !== "true") return;
-
 	const rotations = await fetchRotations();
 	await SplatoonRotationRepository.replaceAll(rotations);
 }
