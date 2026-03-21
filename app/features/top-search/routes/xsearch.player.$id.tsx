@@ -17,7 +17,8 @@ import {
 import { action } from "../actions/xsearch.player.$id.server";
 import { PlacementsTable } from "../components/Placements";
 import { loader } from "../loaders/xsearch.player.$id.server";
-export { loader, action };
+
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: ({ match }) => {

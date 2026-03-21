@@ -24,6 +24,7 @@ import {
 	loader,
 	type UserPageLoaderData,
 } from "../loaders/u.$identifier.server";
+
 export { loader };
 
 import "~/features/user-page/user-page.module.css";

@@ -21,6 +21,7 @@ import { FILTERED_TAG_KEY_SEARCH_PARAM_KEY } from "../art-constants";
 import { ArtGrid } from "../components/ArtGrid";
 import { TagSelect } from "../components/TagSelect";
 import { loader } from "../loaders/art.server";
+
 export { loader };
 
 const OPEN_COMMISIONS_KEY = "open";

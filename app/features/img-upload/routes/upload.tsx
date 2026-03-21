@@ -10,6 +10,7 @@ import { action } from "../actions/upload.server";
 import { loader } from "../loaders/upload.server";
 import { imgTypeToDimensions, imgTypeToStyle } from "../upload-constants";
 import type { ImageUploadType } from "../upload-types";
+
 export { action, loader };
 
 export default function FileUploadPage() {

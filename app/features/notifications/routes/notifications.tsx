@@ -12,6 +12,7 @@ import {
 } from "../components/NotificationList";
 import { loader } from "../loaders/notifications.server";
 import { useMarkNotificationsAsSeen } from "../notifications-hooks";
+
 export { loader };
 
 import styles from "./notifications.module.css";

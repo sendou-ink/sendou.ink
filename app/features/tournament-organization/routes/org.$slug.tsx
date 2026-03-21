@@ -43,6 +43,7 @@ import { loader } from "../loaders/org.$slug.server";
 import styles from "../tournament-organization.module.css";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "../tournament-organization-constants";
 import { updateIsEstablishedSchema } from "../tournament-organization-schemas";
+
 export { action, loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {

@@ -12,7 +12,8 @@ import { action } from "../actions/t.new.server";
 import { loader } from "../loaders/t.new.server";
 import { TEAM } from "../team-constants";
 import { createTeamSchema } from "../team-schemas";
-export { loader, action };
+
+export { action, loader };
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({

@@ -6,6 +6,7 @@ import { PLUS_SERVER_DISCORD_URL, userPage } from "~/utils/urls";
 
 import { loader } from "../loaders/plus.voting.results.server";
 import styles from "../plus-voting-results.module.css";
+
 export { loader };
 
 export const meta: MetaFunction = (args) => {

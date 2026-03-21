@@ -30,6 +30,7 @@ import {
 } from "../leaderboards-constants";
 import { seasonHasTopTen } from "../leaderboards-utils";
 import { loader } from "../loaders/leaderboards.server";
+
 export { loader };
 
 import styles from "../../top-search/top-search.module.css";

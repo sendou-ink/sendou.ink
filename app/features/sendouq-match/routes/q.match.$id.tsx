@@ -62,7 +62,8 @@ import { action } from "../actions/q.match.$id.server";
 import { matchEndedAtIndex } from "../core/match";
 import { loader } from "../loaders/q.match.$id.server";
 import { resolveGroupMemberOf } from "../q-match-utils";
-export { loader, action };
+
+export { action, loader };
 
 import styles from "./q.match.$id.module.css";
 

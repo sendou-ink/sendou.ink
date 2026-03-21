@@ -22,6 +22,7 @@ import {
 	isTeamOwner,
 	resolveNewOwner,
 } from "../team-utils";
+
 export { action };
 
 export default function TeamIndexPage() {

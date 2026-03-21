@@ -23,7 +23,8 @@ import { ART } from "../art-constants";
 import { previewUrl } from "../art-utils";
 import { TagSelect } from "../components/TagSelect";
 import { loader } from "../loaders/art.new.server";
-export { loader, action };
+
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["art"],

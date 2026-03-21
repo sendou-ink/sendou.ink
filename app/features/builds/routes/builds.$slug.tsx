@@ -44,6 +44,7 @@ import type { AbilityBuildFilter, BuildFilter } from "../builds-types";
 import { FilterSection } from "../components/FilterSection";
 
 import { loader } from "../loaders/builds.$slug.server";
+
 export { loader };
 
 import styles from "./builds.$slug.module.css";

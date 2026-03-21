@@ -22,7 +22,8 @@ import type * as TeamRepository from "../TeamRepository.server";
 import styles from "../team.module.css";
 import { TEAM_MEMBER_ROLES } from "../team-constants";
 import { isTeamFull } from "../team-utils";
-export { loader, action };
+
+export { action, loader };
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({

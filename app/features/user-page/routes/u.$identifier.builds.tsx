@@ -24,7 +24,8 @@ import {
 } from "../loaders/u.$identifier.builds.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import { DEFAULT_BUILD_SORT } from "../user-page-constants";
-export { loader, action };
+
+export { action, loader };
 
 import userStyles from "../user-page.module.css";
 import styles from "./u.$identifier.builds.module.css";

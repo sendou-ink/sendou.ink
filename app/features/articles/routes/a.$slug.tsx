@@ -13,6 +13,7 @@ import {
 import { metaTags, type SerializeFrom } from "../../../utils/remix";
 
 import { loader } from "../loaders/a.$slug.server";
+
 export { loader };
 
 export const handle: SendouRouteHandle = {

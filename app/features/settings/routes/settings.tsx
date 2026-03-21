@@ -35,7 +35,8 @@ import {
 import styles from "./settings.module.css";
 import "./settings.global.css";
 import type { ThemeInput } from "~/utils/oklch-gamut";
-export { loader, action };
+
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: () => ({

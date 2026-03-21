@@ -53,7 +53,8 @@ import {
 import { BracketProgressionSelector } from "../components/BracketProgressionSelector";
 import { Tags } from "../components/Tags";
 import { loader } from "../loaders/calendar.new.server";
-export { loader, action };
+
+export { action, loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.data) return [];

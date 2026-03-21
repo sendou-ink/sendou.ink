@@ -7,6 +7,7 @@ import { ARTICLES_MAIN_PAGE, articlePage, navIconUrl } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
 import { loader } from "../loaders/a.server";
 import styles from "./a.module.css";
+
 export { loader };
 
 export const handle: SendouRouteHandle = {

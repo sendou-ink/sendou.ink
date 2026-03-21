@@ -25,6 +25,7 @@ import type { PlayedSet } from "../core/sets.server";
 import { loader } from "../loaders/to.$id.teams.$tid.server";
 import styles from "../tournament.module.css";
 import { useTournament } from "./to.$id";
+
 export { loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {

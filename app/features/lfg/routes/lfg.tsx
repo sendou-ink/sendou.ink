@@ -27,7 +27,8 @@ import {
 } from "../lfg-types";
 import { loader } from "../loaders/lfg.server";
 import styles from "./lfg.module.css";
-export { loader, action };
+
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["lfg"],

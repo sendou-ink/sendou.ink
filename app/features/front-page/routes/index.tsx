@@ -29,6 +29,7 @@ import {
 	sqHeaderGuyImageUrl,
 } from "~/utils/urls";
 import { type LeaderboardEntry, loader } from "../loaders/index.server";
+
 export { loader };
 
 export const handle: SendouRouteHandle = {

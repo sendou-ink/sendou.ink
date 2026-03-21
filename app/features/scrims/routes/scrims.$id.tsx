@@ -33,7 +33,8 @@ import * as Scrim from "../core/Scrim";
 import { loader } from "../loaders/scrims.$id.server";
 import type { ScrimPost, ScrimPost as ScrimPostType } from "../scrims-types";
 import styles from "./scrims.$id.module.css";
-export { loader, action };
+
+export { action, loader };
 
 import { Check, OctagonAlert } from "lucide-react";
 

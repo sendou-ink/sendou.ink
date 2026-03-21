@@ -7,6 +7,7 @@ import { userPage } from "~/utils/urls";
 import { SubPageHeader } from "../components/SubPageHeader";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import { loader } from "../loaders/u.$identifier.vods.server";
+
 export { loader };
 
 export const handle: SendouRouteHandle = {

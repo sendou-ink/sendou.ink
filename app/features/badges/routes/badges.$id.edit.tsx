@@ -11,6 +11,7 @@ import { action } from "../actions/badges.$id.edit.server";
 import styles from "../badges.module.css";
 import type { BadgeDetailsLoaderData } from "../loaders/badges.$id.server";
 import type { BadgeDetailsContext } from "./badges.$id";
+
 export { action };
 
 export default function EditBadgePage() {

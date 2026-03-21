@@ -7,6 +7,7 @@ import { tournamentBracketsPage } from "../../../utils/urls";
 
 import { loader } from "../loaders/to.$id.divisions.server";
 import styles from "./to.$id.divisions.module.css";
+
 export { loader };
 
 export default function TournamentDivisionsPage() {

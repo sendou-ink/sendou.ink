@@ -71,7 +71,8 @@ import {
 	validateCounterPickMapPool,
 } from "../tournament-utils";
 import { useTournament } from "./to.$id";
-export { loader, action };
+
+export { action, loader };
 
 export default function TournamentRegisterPage() {
 	const isMounted = useIsMounted();

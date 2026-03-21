@@ -38,7 +38,8 @@ import {
 } from "../calendar-utils";
 import { Tags } from "../components/Tags";
 import { loader } from "../loaders/calendar.$id.server";
-export { loader, action };
+
+export { action, loader };
 
 export const meta: MetaFunction = (args) => {
 	const data = args.data as SerializeFrom<typeof loader>;

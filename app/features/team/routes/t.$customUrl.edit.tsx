@@ -22,6 +22,7 @@ import { loader } from "../loaders/t.$customUrl.edit.server";
 import styles from "../team.module.css";
 import { TEAM } from "../team-constants";
 import { isTeamOwner } from "../team-utils";
+
 export { action, loader };
 
 export const meta: MetaFunction = (args) => {

@@ -149,7 +149,6 @@
 	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-selector);
 	width: max-content;
-	padding: 0 var(--s-2);
 	height: var(--selector-size);
 	display: flex;
 	gap: var(--s-1);

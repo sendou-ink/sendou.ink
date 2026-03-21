@@ -19,7 +19,8 @@ import { action } from "../actions/lfg.new.server";
 import { LFG, TEAM_POST_TYPES, TIMEZONES } from "../lfg-constants";
 import { lfgNewSchema } from "../lfg-schemas";
 import { loader } from "../loaders/lfg.new.server";
-export { loader, action };
+
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["lfg"],

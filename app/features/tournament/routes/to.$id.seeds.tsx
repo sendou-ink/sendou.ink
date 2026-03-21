@@ -37,7 +37,8 @@ import { action } from "../actions/to.$id.seeds.server";
 import { loader } from "../loaders/to.$id.seeds.server";
 import { useTournament } from "./to.$id";
 import styles from "./to.$id.seeds.module.css";
-export { loader, action };
+
+export { action, loader };
 
 export default function TournamentSeedsPage() {
 	const tournament = useTournament();

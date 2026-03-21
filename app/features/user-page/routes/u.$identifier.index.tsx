@@ -41,6 +41,7 @@ import { loader } from "../loaders/u.$identifier.index.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import styles from "../user-page.module.css";
 import newStyles from "./u.$identifier.module.css";
+
 export { loader };
 
 export const handle: SendouRouteHandle = {
