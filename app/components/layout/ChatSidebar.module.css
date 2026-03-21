@@ -23,6 +23,17 @@
 	}
 }
 
+@media screen and (display-mode: standalone) and (max-width: 599px) {
+	.sidebarHeader,
+	.chatHeader {
+		padding-block-start: env(safe-area-inset-top);
+	}
+
+	.sidebar {
+		padding-block-end: env(safe-area-inset-bottom);
+	}
+}
+
 .closeButton {
 	display: grid;
 	place-items: center;
