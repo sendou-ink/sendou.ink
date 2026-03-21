@@ -371,7 +371,7 @@ function MatchTimer({ match, bracket }: Pick<MatchProps, "match" | "bracket">) {
 				: "var(--color-text)";
 
 	return (
-		<div className={styles.matchTimer}>
+		<div className={styles.matchTimer} data-testid="bracket-match-timer">
 			<div className={styles.matchHeaderBox} style={{ color: statusColor }}>
 				{displayText}
 			</div>
