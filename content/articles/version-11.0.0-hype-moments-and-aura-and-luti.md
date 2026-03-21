@@ -1,6 +1,6 @@
 ---
 title: "Version 11.0.0: Hype Moments and Aura Update... and LUTI?!"
-date: 2026-12-31
+date: 2025-12-31
 author:
    - name: YELLOW
      link: https://sendou.ink/u/great-hero-yellow
