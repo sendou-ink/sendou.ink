@@ -93,7 +93,7 @@
 		background-color: var(--color-bg);
 		font-size: var(--font-sm);
 		outline: none;
-		resize: vertical;
+		resize: both;
 
 		&:focus-within {
 			outline: var(--focus-ring);
