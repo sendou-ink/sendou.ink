@@ -299,7 +299,7 @@ function TournamentFormatBracketSelector({
 
 				{bracket.type === "round_robin" ? (
 					<div>
-						<Label htmlFor="teamsPerGroup">Teams per group</Label>
+						<Label htmlFor="teamsPerGroup">Max participants per group</Label>
 						<select
 							value={
 								bracket.settings.teamsPerGroup ??
@@ -323,6 +323,10 @@ function TournamentFormatBracketSelector({
 							<option value="5">5</option>
 							<option value="6">6</option>
 						</select>
+						<FormMessage type="info">
+							Participants are distributed equally, so groups may have fewer
+							than selected
+						</FormMessage>
 					</div>
 				) : null}
 
