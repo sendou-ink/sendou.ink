@@ -473,7 +473,60 @@ test.describe("Tournament bracket", () => {
 		await isNotVisible(page.getByTestId("reopen-match-button"));
 		await backToBracket(page);
 
-		// added result to user profile
+	});
+
+	test("shows tournament results on user profile after finalized tournament", async ({
+		page,
+	}) => {
+		const tournamentId = 4;
+
+		await seed(page, "SMALL_SOS");
+		await impersonate(page);
+
+		await navigate({
+			page,
+			url: tournamentAdminPage(tournamentId),
+		});
+
+		await page.getByLabel("Action").selectOption("CHECK_OUT");
+		for (const teamId of ["303", "304"]) {
+			await page.getByLabel("Team", { exact: true }).selectOption(teamId);
+			await submit(page);
+		}
+
+		await page.getByTestId("edit-event-info-button").click();
+		for (let i = 0; i < 3; i++) {
+			await page.getByTestId("delete-bracket-button").last().click();
+		}
+		await page.getByTestId("placements-input").last().fill("1,2");
+		await submit(page);
+
+		await page.getByTestId("brackets-tab").click();
+		await page.getByTestId("finalize-bracket-button").click();
+		await submit(page, "confirm-finalize-bracket-button");
+
+		await page.locator('[data-match-id="1"]').click();
+		await reportResult({
+			page,
+			amountOfMapsToReport: 2,
+			points: [100, 0],
+		});
+		await backToBracket(page);
+
+		await page.getByRole("tab", { name: "Great White" }).click();
+		await page.getByTestId("finalize-bracket-button").click();
+		await submit(page, "confirm-finalize-bracket-button");
+
+		await page.locator('[data-match-id="2"]').click();
+		await reportResult({
+			page,
+			amountOfMapsToReport: 3,
+		});
+		await backToBracket(page);
+
+		await page.getByTestId("finalize-tournament-button").click();
+		await page.getByRole("button", { name: "Finalize" }).click();
+
 		await page.getByTestId("results-tab").click();
 		await page.getByTestId("result-team-name").first().click();
 		await page.getByTestId("team-member-name").first().click();
@@ -484,14 +537,12 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("user-results-tab").click();
 		await expect(
 			page.getByTestId("tournament-name-cell").first(),
-		).toContainText("Paddling Pool 253");
+		).toContainText("Swim or Sink 101");
 
 		await page.getByTestId("mates-button").first().click();
 		await expect(
 			page.locator('[data-testid="mates-cell-placement-0"] li'),
 		).toHaveCount(3);
-
-		// if more assertions added below we need to close the popover first (data-testid="underlay")
 	});
 
 	test("changes SOS format and progresses with it & adds a member to another team", async ({
