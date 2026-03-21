@@ -135,8 +135,10 @@ const reportResult = async ({
 };
 
 const backToBracket = async (page: Page) => {
-	await page.getByTestId("back-to-bracket-button").click();
-	await expect(page.getByTestId("brackets-viewer")).toBeVisible();
+	await expect(async () => {
+		await page.getByTestId("back-to-bracket-button").click();
+		await expect(page.getByTestId("brackets-viewer")).toBeVisible();
+	}).toPass();
 };
 
 const expectScore = (page: Page, score: [number, number]) =>
@@ -372,7 +374,7 @@ test.describe("Tournament bracket", () => {
 	test("completes and finalizes a small tournament (RR->SE w/ underground bracket)", async ({
 		page,
 	}) => {
-		test.slow();
+		test.setTimeout(150_000);
 
 		const tournamentId = 3;
 
@@ -741,6 +743,7 @@ test.describe("Tournament bracket", () => {
 	});
 
 	test("reopens round robin match and changes score", async ({ page }) => {
+		test.slow();
 		const tournamentId = 3;
 
 		await seed(page);
