@@ -24,6 +24,7 @@ import type { TeamLoaderData } from "~/features/team/loaders/t.$customUrl.server
 import invariant from "~/utils/invariant";
 import { action } from "../actions/t.$customUrl.index.server";
 import type * as TeamRepository from "../TeamRepository.server";
+
 export { action };
 
 export default function TeamIndexPage() {

@@ -23,7 +23,8 @@ import {
 	disallowScrimPickupsFromUntrustedSchema,
 	updateNoScreenSchema,
 } from "../settings-schemas";
-export { loader, action };
+
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: () => ({

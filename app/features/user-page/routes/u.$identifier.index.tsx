@@ -40,6 +40,7 @@ import { Widget } from "../components/Widget";
 import { loader } from "../loaders/u.$identifier.index.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import styles from "./u.$identifier.module.css";
+
 export { loader };
 
 export const handle: SendouRouteHandle = {

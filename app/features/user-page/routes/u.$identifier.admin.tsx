@@ -16,7 +16,8 @@ import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.admin.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import styles from "./u.$identifier.admin.module.css";
-export { loader, action };
+
+export { action, loader };
 
 export default function UserAdminPage() {
 	const [, parentRoute] = useMatches();

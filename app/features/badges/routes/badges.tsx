@@ -13,6 +13,7 @@ import { BADGES_DOC_LINK, BADGES_PAGE, navIconUrl } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
 
 import { type BadgesLoaderData, loader } from "../loaders/badges.server";
+
 export { loader };
 
 import "~/styles/badges.css";

@@ -6,7 +6,8 @@ import { UserResultsTable } from "~/features/user-page/components/UserResultsTab
 
 import { action } from "../actions/u.$identifier.results.highlights.server";
 import { loader } from "../loaders/u.$identifier.results.server";
-export { loader, action };
+
+export { action, loader };
 
 export default function ResultHighlightsEditPage() {
 	const { t } = useTranslation(["common", "user"]);

@@ -41,7 +41,8 @@ import { action } from "../actions/q.server";
 import { loader } from "../loaders/q.server";
 import { FULL_GROUP_SIZE } from "../q-constants";
 import { userCanJoinQueueAt } from "../q-utils";
-export { loader, action };
+
+export { action, loader };
 
 import styles from "./q.module.css";
 

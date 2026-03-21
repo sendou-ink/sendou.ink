@@ -45,7 +45,8 @@ import {
 	updateVoiceChatSchema,
 	updateWeaponPoolSchema,
 } from "../q-settings-schemas";
-export { loader, action };
+
+export { action, loader };
 
 import "../q-settings.css";
 

@@ -8,6 +8,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 
 import { action } from "../actions/upload.admin.server";
 import { loader } from "../loaders/upload.admin.server";
+
 export { action, loader };
 
 export default function ImageUploadAdminPage() {

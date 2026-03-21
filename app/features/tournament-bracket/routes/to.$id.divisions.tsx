@@ -6,6 +6,7 @@ import { UsersIcon } from "../../../components/icons/Users";
 import { tournamentBracketsPage } from "../../../utils/urls";
 
 import { loader } from "../loaders/to.$id.divisions.server";
+
 export { loader };
 
 export default function TournamentDivisionsPage() {

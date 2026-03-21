@@ -25,7 +25,8 @@ import { action } from "../actions/t.server";
 import { loader } from "../loaders/t.server";
 import { TEAM, TEAMS_PER_PAGE } from "../team-constants";
 import { createTeamSchema } from "../team-schemas";
-export { loader, action };
+
+export { action, loader };
 
 import "../team.css";
 

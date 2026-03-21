@@ -17,6 +17,7 @@ import type { SerializeFrom } from "~/utils/remix";
 import { tournamentRegisterPage, userPage } from "~/utils/urls";
 import { action } from "../actions/to.$id.subs.server";
 import { loader } from "../loaders/to.$id.subs.server";
+
 export { action, loader };
 
 import styles from "./to.$id.subs.module.css";

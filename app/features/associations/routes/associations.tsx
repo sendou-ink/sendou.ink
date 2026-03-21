@@ -21,7 +21,8 @@ import { useUser } from "~/features/auth/core/user";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { associationsPage, newAssociationsPage, userPage } from "~/utils/urls";
-export { loader, action };
+
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: "scrims",

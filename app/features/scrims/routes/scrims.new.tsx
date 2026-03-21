@@ -21,7 +21,8 @@ import { loader, type ScrimsNewLoaderData } from "../loaders/scrims.new.server";
 import { SCRIM } from "../scrims-constants";
 import { scrimsNewFormSchema } from "../scrims-schemas";
 import styles from "./scrims.new.module.css";
-export { loader, action };
+
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: "scrims",

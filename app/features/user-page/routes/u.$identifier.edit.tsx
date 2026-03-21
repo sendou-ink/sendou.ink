@@ -16,7 +16,8 @@ import { loader } from "../loaders/u.$identifier.edit.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import { COUNTRY_CODES } from "../user-page-constants";
 import { userEditProfileBaseSchema } from "../user-page-schemas";
-export { loader, action };
+
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["user"],

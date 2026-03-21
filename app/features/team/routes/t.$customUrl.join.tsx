@@ -7,7 +7,8 @@ import "../team.css";
 
 import { action } from "../actions/t.$customUrl.join.server";
 import { loader } from "../loaders/t.$customUrl.join.server";
-export { loader, action };
+
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["team"],

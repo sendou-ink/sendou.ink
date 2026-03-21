@@ -9,6 +9,7 @@ import { userPage } from "~/utils/urls";
 import { badgeExplanationText } from "../badges-utils";
 
 import { loader } from "../loaders/badges.$id.server";
+
 export { loader };
 
 export interface BadgeDetailsContext {

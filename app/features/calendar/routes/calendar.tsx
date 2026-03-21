@@ -40,6 +40,7 @@ import { FiltersDialog } from "../components/FiltersDialog";
 import { TournamentCard } from "../components/TournamentCard";
 import * as CalendarEvent from "../core/CalendarEvent";
 import { type CalendarLoaderData, loader } from "../loaders/calendar.server";
+
 export { action, loader };
 
 import styles from "./calendar.module.css";

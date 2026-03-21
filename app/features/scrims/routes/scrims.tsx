@@ -37,6 +37,7 @@ import * as Scrim from "../core/Scrim";
 import { loader } from "../loaders/scrims.server";
 import type { newRequestSchema } from "../scrims-schemas";
 import type { ScrimFilters, ScrimPost } from "../scrims-types";
+
 export { action, loader };
 
 import styles from "./scrims.module.css";

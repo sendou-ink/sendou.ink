@@ -10,6 +10,7 @@ import { SendouButton } from "../../../components/elements/Button";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.results.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+
 export { loader };
 
 export default function UserResultsPage() {

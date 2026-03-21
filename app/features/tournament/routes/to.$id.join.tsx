@@ -13,6 +13,7 @@ import { action } from "../actions/to.$id.join.server";
 import { loader } from "../loaders/to.$id.join.server";
 import { validateCanJoinTeam } from "../tournament-utils";
 import { useTournament } from "./to.$id";
+
 export { action, loader };
 
 export default function JoinTeamPage() {

@@ -9,6 +9,7 @@ import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { bskyUrl, navIconUrl, TEAM_SEARCH_PAGE, teamPage } from "~/utils/urls";
 import { loader } from "../loaders/t.$customUrl.server";
+
 export { loader };
 
 import "../team.css";

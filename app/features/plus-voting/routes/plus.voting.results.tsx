@@ -5,6 +5,7 @@ import { metaTags, type SerializeFrom } from "~/utils/remix";
 import { PLUS_SERVER_DISCORD_URL, userPage } from "~/utils/urls";
 
 import { loader } from "../loaders/plus.voting.results.server";
+
 export { loader };
 
 import "~/styles/plus-history.css";

@@ -13,7 +13,8 @@ import { metaTags } from "~/utils/remix";
 import { API_DOC_LINK } from "~/utils/urls";
 import { action } from "../actions/api.server";
 import { loader } from "../loaders/api.server";
-export { loader, action };
+
+export { action, loader };
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({

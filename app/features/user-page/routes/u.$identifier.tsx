@@ -25,6 +25,7 @@ import {
 	loader,
 	type UserPageLoaderData,
 } from "../loaders/u.$identifier.server";
+
 export { loader };
 
 import "~/styles/u.css";

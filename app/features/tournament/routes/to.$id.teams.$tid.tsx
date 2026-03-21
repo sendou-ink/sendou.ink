@@ -24,6 +24,7 @@ import * as Standings from "../core/Standings";
 import type { PlayedSet } from "../core/sets.server";
 import { loader } from "../loaders/to.$id.teams.$tid.server";
 import { useTournament } from "./to.$id";
+
 export { loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {

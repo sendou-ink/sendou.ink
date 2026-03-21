@@ -16,6 +16,7 @@ import { VodListing } from "../components/VodListing";
 import { loader } from "../loaders/vods.server";
 import { VODS_PAGE_BATCH_SIZE, videoMatchTypes } from "../vods-constants";
 import styles from "./vods.module.css";
+
 export { loader };
 
 export const handle: SendouRouteHandle = {

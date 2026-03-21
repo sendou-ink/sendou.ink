@@ -46,6 +46,7 @@ import { SocialLinksList } from "../components/SocialLinksList";
 import { loader } from "../loaders/org.$slug.server";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "../tournament-organization-constants";
 import { updateIsEstablishedSchema } from "../tournament-organization-schemas";
+
 export { action, loader };
 
 import "../tournament-organization.css";

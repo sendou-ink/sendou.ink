@@ -26,6 +26,7 @@ import {
 import { metaTags } from "../../../utils/remix";
 
 import { loader, type TournamentLoaderData } from "../loaders/to.$id.server";
+
 export { loader };
 
 import "~/styles/calendar-event.css";

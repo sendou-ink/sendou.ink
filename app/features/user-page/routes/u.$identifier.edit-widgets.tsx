@@ -36,7 +36,7 @@ import { WidgetSettingsForm } from "../components/WidgetSettingsForm";
 import { loader } from "../loaders/u.$identifier.edit-widgets.server";
 import styles from "./u.$identifier.edit-widgets.module.css";
 
-export { loader, action };
+export { action, loader };
 
 export default function EditWidgetsPage() {
 	const { t } = useTranslation(["user", "common"]);

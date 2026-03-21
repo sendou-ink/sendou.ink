@@ -33,7 +33,8 @@ import { loader } from "../loaders/vods.$id.server";
 import type { Vod } from "../vods-types";
 import { canEditVideo, secondsToHoursMinutesSecondString } from "../vods-utils";
 import styles from "./vods.$id.module.css";
-export { loader, action };
+
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: ({ match }) => {

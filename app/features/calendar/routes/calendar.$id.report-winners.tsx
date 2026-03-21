@@ -14,7 +14,8 @@ import type { Unpacked } from "~/utils/types";
 import { action } from "../actions/calendar.$id.report-winners.server";
 import { CALENDAR_EVENT_RESULT } from "../calendar-constants";
 import { loader } from "../loaders/calendar.$id.report-winners.server";
-export { loader, action };
+
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: "calendar",

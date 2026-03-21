@@ -20,6 +20,7 @@ import {
 	type FinalizeTournamentLoaderData,
 	loader,
 } from "../loaders/to.$id.brackets.finalize.server";
+
 export { action, loader };
 
 export default function TournamentFinalizePage() {

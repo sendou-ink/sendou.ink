@@ -12,6 +12,7 @@ import { action } from "../actions/u.$identifier.art.server";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.art.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+
 export { action, loader };
 
 export const handle: SendouRouteHandle = {

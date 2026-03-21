@@ -54,7 +54,8 @@ import { logger } from "~/utils/logger";
 import { metaTags } from "~/utils/remix";
 import { action } from "../actions/calendar.new.server";
 import { loader } from "../loaders/calendar.new.server";
-export { loader, action };
+
+export { action, loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.data) return [];

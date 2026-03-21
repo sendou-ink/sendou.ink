@@ -4,6 +4,7 @@ import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 
 import { loader } from "../loaders/suspended.server";
+
 export { loader };
 
 export default function SuspendedPage() {

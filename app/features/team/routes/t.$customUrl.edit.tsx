@@ -20,6 +20,7 @@ import { TeamGoBackButton } from "~/features/team/components/TeamGoBackButton";
 import { metaTags } from "~/utils/remix";
 import { action } from "../actions/t.$customUrl.edit.server";
 import { loader } from "../loaders/t.$customUrl.edit.server";
+
 export { action, loader };
 
 export const meta: MetaFunction = (args) => {

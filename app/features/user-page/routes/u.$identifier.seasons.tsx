@@ -63,6 +63,7 @@ import {
 	type UserSeasonsPageLoaderData,
 } from "../loaders/u.$identifier.seasons.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+
 export { loader };
 
 export const handle: SendouRouteHandle = {

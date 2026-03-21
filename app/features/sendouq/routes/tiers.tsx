@@ -13,6 +13,7 @@ import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 
 import { loader } from "../loaders/tiers.server";
+
 export { loader };
 
 export const meta: MetaFunction = (args) => {
