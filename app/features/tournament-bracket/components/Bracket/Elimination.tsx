@@ -20,8 +20,22 @@ const MATCH_SPACING = MATCH_HEIGHT + GAP;
 export function EliminationBracketSide(props: EliminationBracketSideProps) {
 	const rounds = getRounds({ ...props, bracketData: props.bracket.data });
 
-	const firstRoundMatchCount = props.bracket.data.match.filter(
+	const firstRoundMatches = props.bracket.data.match.filter(
 		(match) => match.round_id === rounds[0]?.id,
+	);
+	const firstRoundHasOngoing = firstRoundMatches.some(
+		(match) =>
+			match.opponent1 &&
+			match.opponent2 &&
+			match.opponent1.result !== "win" &&
+			match.opponent2.result !== "win",
+	);
+	const firstRoundHidden =
+		!props.isExpanded && rounds.length > 2 && !firstRoundHasOngoing;
+
+	const firstVisibleRoundId = firstRoundHidden ? rounds[1]?.id : rounds[0]?.id;
+	const firstVisibleRoundMatchCount = props.bracket.data.match.filter(
+		(match) => match.round_id === firstVisibleRoundId,
 	).length;
 
 	let atLeastOneColumnHidden = false;
@@ -103,7 +117,8 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 									if (matches.length <= 1) return undefined;
 									if (nextRoundMatchCount === matches.length) return undefined;
 
-									const spreadFactor = firstRoundMatchCount / matches.length;
+									const spreadFactor =
+										firstVisibleRoundMatchCount / matches.length;
 									return GAP / 2 + (spreadFactor - 1) * (MATCH_SPACING / 2);
 								})();
 
