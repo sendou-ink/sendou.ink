@@ -380,6 +380,7 @@
 
 .modeProgressInner {
 	display: inline-flex;
+	align-items: center;
 	gap: var(--s-4);
 	justify-content: flex-start;
 }
