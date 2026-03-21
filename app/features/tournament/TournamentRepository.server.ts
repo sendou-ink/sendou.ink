@@ -1240,7 +1240,7 @@ export function updateTournamentTier({
 
 export async function findRunningTournamentIds() {
 	const now = new Date();
-	const oneDayAgo = sub(now, { days: 1 });
+	const cutoff = sub(now, { days: 2 });
 
 	const rows = await db
 		.selectFrom("Tournament")
@@ -1253,11 +1253,7 @@ export async function findRunningTournamentIds() {
 		.select("Tournament.id")
 		.where("Tournament.isFinalized", "=", 0)
 		.where("CalendarEventDate.startTime", "<", dateToDatabaseTimestamp(now))
-		.where(
-			"CalendarEventDate.startTime",
-			">",
-			dateToDatabaseTimestamp(oneDayAgo),
-		)
+		.where("CalendarEventDate.startTime", ">", dateToDatabaseTimestamp(cutoff))
 		.where((eb) =>
 			eb.exists(
 				eb
