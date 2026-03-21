@@ -469,20 +469,16 @@ function tooManyPlacements(brackets: ParsedBracket[]) {
 	const roundRobins = brackets.flatMap((bracket, bracketIdx) =>
 		bracket.type === "round_robin" ? [bracketIdx] : [],
 	);
-	// technically not correct but i guess not too common to have different round robins in the same bracket
-	const size = Math.min(
-		...roundRobins.map(
-			(bracketIdx) =>
-				brackets[bracketIdx].settings.teamsPerGroup ?? Number.POSITIVE_INFINITY,
-		),
-	);
 
 	for (const [bracketIdx, bracket] of brackets.entries()) {
 		for (const source of bracket.sources ?? []) {
-			if (
-				roundRobins.includes(source.bracketIdx) &&
-				source.placements.some((placement) => placement > size)
-			) {
+			if (!roundRobins.includes(source.bracketIdx)) continue;
+
+			const size =
+				brackets[source.bracketIdx].settings.teamsPerGroup ??
+				TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
+
+			if (source.placements.some((placement) => placement > size)) {
 				return bracketIdx;
 			}
 		}

@@ -407,6 +407,26 @@ describe("validatedSources - other rules", () => {
 		expect((error as any).bracketIdx).toEqual(1);
 	});
 
+	it("does not flag TOO_MANY_PLACEMENTS when larger round robin has valid high placements", () => {
+		const result = getValidatedBrackets([
+			{
+				settings: { teamsPerGroup: 6 },
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [{ bracketId: "0", placements: "1,2,3,4,5,6" }],
+			},
+			{
+				settings: { teamsPerGroup: 4 },
+				type: "round_robin",
+			},
+		]);
+
+		expect(Array.isArray(result)).toBe(true);
+	});
+
 	it("handles DUPLICATE_BRACKET_NAME", () => {
 		const error = getValidatedBrackets([
 			{
