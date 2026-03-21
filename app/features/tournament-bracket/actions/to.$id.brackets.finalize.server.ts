@@ -133,6 +133,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	clearTournamentDataCache(tournamentId);
 
+	// ensure RunningTournament = sidebar updates
+	await tournamentFromDB({ tournamentId, user });
+
 	return successToastWithRedirect({
 		url: tournamentBracketsPage({ tournamentId }),
 		message: "Tournament finalized",
