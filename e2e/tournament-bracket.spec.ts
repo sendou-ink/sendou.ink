@@ -472,7 +472,6 @@ test.describe("Tournament bracket", () => {
 		await navigateToMatch(page, 14);
 		await isNotVisible(page.getByTestId("reopen-match-button"));
 		await backToBracket(page);
-
 	});
 
 	test("shows tournament results on user profile after finalized tournament", async ({
