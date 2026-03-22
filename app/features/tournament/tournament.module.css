@@ -32,7 +32,7 @@
 .teamWithRosterMember {
 	display: grid;
 	gap: var(--s-1-5);
-	grid-template-columns: max-content minmax(0, 1fr);
+	grid-template-columns: max-content minmax(0, max-content);
 }
 
 .teamWithRosterMemberInactive {
