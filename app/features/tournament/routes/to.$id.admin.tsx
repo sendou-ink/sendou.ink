@@ -31,6 +31,7 @@ import {
 } from "~/utils/urls";
 import { BracketProgressionSelector } from "../../calendar/components/BracketProgressionSelector";
 import { useTournament } from "./to.$id";
+import adminStyles from "./to.$id.admin.module.css";
 
 export { action } from "../actions/to.$id.admin.server";
 
@@ -266,7 +267,10 @@ function TeamActions() {
 		<div className="stack md">
 			<fetcher.Form
 				method="post"
-				className="stack horizontal sm items-end flex-wrap"
+				className={clsx(
+					"stack horizontal sm items-end flex-wrap",
+					adminStyles.actionForm,
+				)}
 			>
 				<div className="flex-same-size">
 					<label htmlFor="action">Action</label>
