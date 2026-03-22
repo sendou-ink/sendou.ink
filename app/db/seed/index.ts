@@ -2959,62 +2959,56 @@ function splatoonRotations() {
 	const TWO_HOURS = 2 * 60 * 60;
 
 	const currentStart = nowUnix - (nowUnix % TWO_HOURS);
-	const currentEnd = currentStart + TWO_HOURS;
-	const nextStart = currentEnd;
-	const nextEnd = nextStart + TWO_HOURS;
 
+	const slotStart = (slot: number) => currentStart + slot * TWO_HOURS;
+	const slotEnd = (slot: number) => slotStart(slot) + TWO_HOURS;
+
+	// based on real splatoon3.ink data with realistic stage/mode combinations
 	const rotationData = [
-		{
-			type: "SERIES",
-			mode: "SZ",
-			stageId1: 0,
-			stageId2: 3,
-			startTime: currentStart,
-			endTime: currentEnd,
-		},
-		{
-			type: "SERIES",
-			mode: "TC",
-			stageId1: 5,
-			stageId2: 8,
-			startTime: nextStart,
-			endTime: nextEnd,
-		},
-		{
-			type: "OPEN",
-			mode: "RM",
-			stageId1: 1,
-			stageId2: 4,
-			startTime: currentStart,
-			endTime: currentEnd,
-		},
-		{
-			type: "OPEN",
-			mode: "CB",
-			stageId1: 6,
-			stageId2: 9,
-			startTime: nextStart,
-			endTime: nextEnd,
-		},
-		{
-			type: "X",
-			mode: "CB",
-			stageId1: 2,
-			stageId2: 7,
-			startTime: currentStart,
-			endTime: currentEnd,
-		},
-		{
-			type: "X",
-			mode: "SZ",
-			stageId1: 10,
-			stageId2: 11,
-			startTime: nextStart,
-			endTime: nextEnd,
-		},
+		{ type: "SERIES", mode: "SZ", stageId1: 0, stageId2: 11 },
+		{ type: "SERIES", mode: "TC", stageId1: 1, stageId2: 24 },
+		{ type: "SERIES", mode: "RM", stageId1: 7, stageId2: 23 },
+		{ type: "SERIES", mode: "CB", stageId1: 0, stageId2: 9 },
+		{ type: "SERIES", mode: "SZ", stageId1: 13, stageId2: 21 },
+		{ type: "SERIES", mode: "RM", stageId1: 3, stageId2: 17 },
+		{ type: "SERIES", mode: "SZ", stageId1: 6, stageId2: 7 },
+		{ type: "SERIES", mode: "TC", stageId1: 8, stageId2: 23 },
+		{ type: "SERIES", mode: "CB", stageId1: 2, stageId2: 18 },
+		{ type: "SERIES", mode: "RM", stageId1: 10, stageId2: 20 },
+		{ type: "SERIES", mode: "SZ", stageId1: 12, stageId2: 11 },
+		{ type: "SERIES", mode: "TC", stageId1: 4, stageId2: 17 },
+		{ type: "OPEN", mode: "RM", stageId1: 14, stageId2: 23 },
+		{ type: "OPEN", mode: "CB", stageId1: 10, stageId2: 11 },
+		{ type: "OPEN", mode: "SZ", stageId1: 2, stageId2: 17 },
+		{ type: "OPEN", mode: "TC", stageId1: 15, stageId2: 20 },
+		{ type: "OPEN", mode: "RM", stageId1: 12, stageId2: 19 },
+		{ type: "OPEN", mode: "TC", stageId1: 11, stageId2: 16 },
+		{ type: "OPEN", mode: "CB", stageId1: 5, stageId2: 23 },
+		{ type: "OPEN", mode: "RM", stageId1: 1, stageId2: 7 },
+		{ type: "OPEN", mode: "SZ", stageId1: 3, stageId2: 9 },
+		{ type: "OPEN", mode: "TC", stageId1: 17, stageId2: 18 },
+		{ type: "OPEN", mode: "CB", stageId1: 4, stageId2: 13 },
+		{ type: "OPEN", mode: "RM", stageId1: 15, stageId2: 22 },
+		{ type: "X", mode: "CB", stageId1: 13, stageId2: 7 },
+		{ type: "X", mode: "RM", stageId1: 4, stageId2: 20 },
+		{ type: "X", mode: "TC", stageId1: 10, stageId2: 19 },
+		{ type: "X", mode: "SZ", stageId1: 1, stageId2: 14 },
+		{ type: "X", mode: "CB", stageId1: 4, stageId2: 22 },
+		{ type: "X", mode: "SZ", stageId1: 15, stageId2: 19 },
+		{ type: "X", mode: "RM", stageId1: 18, stageId2: 24 },
+		{ type: "X", mode: "CB", stageId1: 17, stageId2: 14 },
+		{ type: "X", mode: "TC", stageId1: 16, stageId2: 20 },
+		{ type: "X", mode: "SZ", stageId1: 0, stageId2: 23 },
+		{ type: "X", mode: "RM", stageId1: 3, stageId2: 6 },
+		{ type: "X", mode: "CB", stageId1: 9, stageId2: 21 },
 	];
 
-	for (const rotation of rotationData) {
+	const ROTATIONS_PER_TYPE = 12;
+
+	for (let i = 0; i < rotationData.length; i++) {
+		const slot = i % ROTATIONS_PER_TYPE;
+		const rotation = rotationData[i];
+
 		sql
 			.prepare(
 				`
@@ -3022,6 +3016,10 @@ function splatoonRotations() {
 			values ($type, $mode, $stageId1, $stageId2, $startTime, $endTime)
 			`,
 			)
-			.run(rotation);
+			.run({
+				...rotation,
+				startTime: slotStart(slot),
+				endTime: slotEnd(slot),
+			});
 	}
 }
