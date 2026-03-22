@@ -101,7 +101,10 @@ export function TournamentLayout() {
 	const { t } = useTranslation(["tournament"]);
 	const user = useUser();
 	const rawData = useLoaderData<typeof loader>();
-	const data = JSON.parse(rawData) as TournamentLoaderData;
+	const data = React.useMemo(
+		() => JSON.parse(rawData) as TournamentLoaderData,
+		[rawData],
+	);
 	const tournament = React.useMemo(
 		() => new Tournament(data.tournament),
 		[data],
