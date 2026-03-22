@@ -49,39 +49,49 @@ export default function FrontPage() {
 	);
 }
 
-function SeasonBanner() {
-	const { t } = useTranslation(["front"]);
-	const season = Seasons.next(new Date()) ?? Seasons.currentOrPrevious()!;
-	const _previousSeason = Seasons.previous();
+function useSeasonData() {
+	const season = Seasons.next() ?? Seasons.currentOrPrevious()!;
+	const previousSeason = Seasons.previous();
+
+	const isInFuture = new Date() < season.starts;
+	const isShowingPreviousSeason = previousSeason?.nth === season.nth;
+
+	return { season, isInFuture, isShowingPreviousSeason };
+}
+
+function SeasonDates({
+	season,
+	className,
+}: {
+	season: ReturnType<typeof useSeasonData>["season"];
+	className: string;
+}) {
 	const isMounted = useIsMounted();
 	const { formatDate } = useTimeFormat();
 
-	const isInFuture = new Date() < season.starts;
-	const isShowingPreviousSeason = _previousSeason?.nth === season.nth;
+	return isMounted ? (
+		<div className={className}>
+			{formatDate(season.starts, { month: "long", day: "numeric" })} -{" "}
+			{formatDate(season.ends, { month: "long", day: "numeric" })}
+		</div>
+	) : (
+		<div className={clsx(className, "invisible")}>X</div>
+	);
+}
+
+function SeasonBanner() {
+	const { t } = useTranslation(["front"]);
+	const { season, isInFuture, isShowingPreviousSeason } = useSeasonData();
 
 	if (isShowingPreviousSeason) return null;
 
 	return (
-		<div className="stack xs">
+		<div className={styles.seasonBannerMobileOnly}>
 			<Link to={SENDOUQ_PAGE} className={styles.seasonBanner}>
 				<div className={styles.seasonBannerHeader}>
 					{t("front:sq.season", { nth: season.nth })}
 				</div>
-				{isMounted ? (
-					<div className={styles.seasonBannerDates}>
-						{formatDate(season.starts, {
-							month: "long",
-							day: "numeric",
-						})}{" "}
-						-{" "}
-						{formatDate(season.ends, {
-							month: "long",
-							day: "numeric",
-						})}
-					</div>
-				) : (
-					<div className={clsx(styles.seasonBannerDates, "invisible")}>X</div>
-				)}
+				<SeasonDates season={season} className={styles.seasonBannerDates} />
 				<Image
 					className={styles.seasonBannerImg}
 					path={sqHeaderGuyImageUrl(season.nth)}
@@ -99,6 +109,33 @@ function SeasonBanner() {
 	);
 }
 
+function SeasonCard() {
+	const { t } = useTranslation(["front"]);
+	const { season, isInFuture, isShowingPreviousSeason } = useSeasonData();
+
+	if (isShowingPreviousSeason) return null;
+
+	return (
+		<>
+			<Link to={SENDOUQ_PAGE} className={styles.seasonCard}>
+				<div className={styles.seasonCardHeader}>
+					{t("front:sq.season", { nth: season.nth })}
+				</div>
+				<SeasonDates season={season} className={styles.seasonCardDates} />
+				<Image
+					className={styles.seasonCardImg}
+					path={sqHeaderGuyImageUrl(season.nth)}
+					alt=""
+				/>
+			</Link>
+			<Link to={SENDOUQ_PAGE} className={styles.seasonCardButton}>
+				<Image path={navIconUrl("sendouq")} size={16} alt="" />
+				{isInFuture ? t("front:sq.prepare") : t("front:sq.participate")}
+			</Link>
+		</>
+	);
+}
+
 function LeagueBanner() {
 	const showBannerFor = import.meta.env.VITE_SHOW_BANNER_FOR_SEASON;
 	if (!showBannerFor) return null;
@@ -113,7 +150,7 @@ function LeagueBanner() {
 }
 
 function ResultHighlights() {
-	const { t } = useTranslation(["front"]);
+	const { t } = useTranslation(["front", "common"]);
 	const data = useLoaderData<typeof loader>();
 
 	// should not happen
@@ -127,33 +164,21 @@ function ResultHighlights() {
 
 	const season = Seasons.currentOrPrevious()!;
 
-	const recentResults = (
-		<>
-			<h2
-				className={clsx(
-					styles.resultHighlightsTitle,
-					styles.resultHighlightsTitleTournaments,
-				)}
-			>
-				{t("front:showcase.results")}
-			</h2>
-			<div className={styles.tournamentCardsSpacer}>
-				{data.tournaments.results.map((tournament) => (
-					<TournamentCard
-						key={tournament.id}
-						tournament={tournament}
-						withRelativeTime
-					/>
-				))}
-			</div>
-		</>
-	);
-
 	return (
 		<>
 			<div
-				className={clsx(styles.resultHighlights, "overflow-x-auto scrollbar")}
+				className={clsx(
+					styles.resultHighlights,
+					styles.resultHighlightsTop,
+					"overflow-x-auto scrollbar",
+				)}
 			>
+				<div className={styles.seasonCardDesktopOnly}>
+					<h2 className={styles.resultHighlightsTitle}>
+						{t("common:pages.sendouq")}
+					</h2>
+					<SeasonCard />
+				</div>
 				<div className="stack sm text-center">
 					<h2 className={styles.resultHighlightsTitle}>
 						{t("front:leaderboards.topPlayers")}
@@ -178,15 +203,26 @@ function ResultHighlights() {
 						})}
 					/>
 				</div>
-				<div className="stack sm text-center mobile-hidden">
-					{recentResults}
-				</div>
 			</div>
-			<div
-				className={clsx(styles.resultHighlights, "overflow-x-auto scrollbar")}
-			>
-				<div className="stack sm text-center desktop-hidden">
-					{recentResults}
+			<div className={clsx(styles.resultHighlights, "scrollbar")}>
+				<div className="stack sm text-center">
+					<h2
+						className={clsx(
+							styles.resultHighlightsTitle,
+							styles.resultHighlightsTitleTournaments,
+						)}
+					>
+						{t("front:showcase.results")}
+					</h2>
+					<div className={styles.tournamentCardsSpacer}>
+						{data.tournaments.results.map((tournament) => (
+							<TournamentCard
+								key={tournament.id}
+								tournament={tournament}
+								withRelativeTime
+							/>
+						))}
+					</div>
 				</div>
 			</div>
 		</>

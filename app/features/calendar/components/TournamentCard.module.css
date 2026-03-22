@@ -150,6 +150,7 @@
 .firstPlacers {
 	margin-inline: auto;
 	margin-top: var(--s-5);
+	margin-block-end: var(--s-4);
 	width: max-content;
 }
 
