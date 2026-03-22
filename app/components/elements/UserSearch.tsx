@@ -66,16 +66,19 @@ export const UserSearch = React.forwardRef(function UserSearch<
 	};
 
 	// clear if selected user is not in the new filtered items
+	const itemsJoined = items.map((user) => user.id).join(",");
 	React.useEffect(() => {
+		const ids = itemsJoined.split(",").map(Number);
+
 		if (
 			selectedKey &&
 			selectedKey !== initialUserId &&
-			!items.some((user) => user.id === selectedKey)
+			!ids.includes(selectedKey)
 		) {
 			setSelectedKey(null);
 			onChange?.(null);
 		}
-	}, [items, selectedKey, onChange, initialUserId]);
+	}, [itemsJoined, selectedKey, onChange, initialUserId]);
 
 	return (
 		<Select
