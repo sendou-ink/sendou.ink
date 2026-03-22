@@ -97,6 +97,30 @@
 	transition: all 0.2s ease-out;
 }
 
+.seasonBannerMobileOnly {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.seasonCardDesktopOnly {
+	display: none;
+	flex-direction: column;
+	gap: var(--s-2);
+	text-align: center;
+	align-items: center;
+}
+
+@media screen and (min-width: 750px) {
+	.seasonBannerMobileOnly {
+		display: none;
+	}
+
+	.seasonCardDesktopOnly {
+		display: flex;
+	}
+}
+
 .seasonBannerLink:hover svg {
 	translate: 2px;
 }
@@ -105,13 +129,24 @@
 	display: flex;
 	gap: var(--s-2);
 	height: 100%;
-	padding: var(--s-2);
+	padding: 0 var(--s-2) var(--s-2) var(--s-2);
+	overflow-x: auto;
 }
 
 .resultHighlights {
 	display: flex;
 	gap: var(--s-2);
 	padding: var(--s-2);
+}
+
+.resultHighlights > div {
+	flex: 1 1 0;
+	width: 100%;
+}
+
+.resultHighlightsTop {
+	--card-width: 100%;
+	overflow-x: auto;
 }
 
 .resultHighlightsTitle {
@@ -121,6 +156,64 @@
 .resultHighlightsTitleTournaments {
 	align-self: flex-start;
 	margin-inline-start: 65px;
+}
+
+.seasonCard {
+	--l: 50%;
+
+	min-width: var(--card-width);
+	max-width: var(--card-width);
+	flex: 1;
+	background: linear-gradient(
+		to bottom,
+		var(--color-bg-higher),
+		var(--l),
+		var(--color-bg)
+	);
+	border-radius: var(--radius-box);
+	border: var(--border-style-high);
+	display: flex;
+	flex-direction: column;
+	padding: var(--s-2);
+	position: relative;
+	color: var(--color-text);
+	overflow: hidden;
+	transition: --l 0.2s ease-out;
+}
+
+.seasonCard:hover {
+	--l: 75%;
+}
+
+.seasonCardHeader {
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
+	padding-block-start: var(--s-2);
+}
+
+.seasonCardDates {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-lighter);
+}
+
+.seasonCardImg {
+	position: absolute;
+	width: 140px;
+	bottom: 0;
+	right: 40px;
+}
+
+.seasonCardButton {
+	font-size: var(--font-2xs);
+	color: var(--color-text);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-selector);
+	width: max-content;
+	height: var(--selector-size);
+	display: flex;
+	gap: var(--s-1);
+	padding: var(--s-0-5) var(--s-1-5);
 }
 
 .leaderboard {
