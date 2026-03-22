@@ -107,7 +107,9 @@ Azure had back-to-back Splat Zones at Barnacle & Dime battles, but this time the
 
 For Tower Control at Inkblot Art Academy, Volty switched from Carbon Roller Deco to Sloshing Machine, making prime material for the commentators to make as many cleaning-related puns as they could. Azure’s furthest tower push ended at 41, which PxG tied, but in the last minute, got pushed back to 42, leading to Azure winning, 59-58. 
 
-### *PxG ties their score 41-41 with Azure*
+<img width="1000" height="562" alt="inkblottie" src="https://github.com/user-attachments/assets/bb4599fb-f560-49ff-9cf3-0da3599d7d05" />
+
+*PxG ties their score 41-41 with Azure*
 
 Game three was Tower Control again, at Hagglefish Market. It took until 1:49 for either team to clear the first checkpoint, and would be done by PxG. Azure made a strong push in overtime, clearing their first checkpoint and getting close to PxG’s relatively-low score, but were stopped just shy. PxG took another game, 60-50. 
 
