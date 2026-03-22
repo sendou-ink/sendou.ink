@@ -222,6 +222,7 @@
 
 .leaderboard {
 	width: 100%;
+	min-width: 14rem;
 	max-width: var(--card-width);
 	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-box);
