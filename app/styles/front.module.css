@@ -140,8 +140,12 @@
 }
 
 .resultHighlights > div {
-	flex: 1 1 0;
+	flex: 3 1 0;
 	width: 100%;
+}
+
+.resultHighlights > .seasonCardDesktopOnly {
+	flex: 2 1 0;
 }
 
 .resultHighlightsTop {
@@ -201,7 +205,7 @@
 	position: absolute;
 	width: 140px;
 	bottom: 0;
-	right: 40px;
+	right: 16px;
 }
 
 .seasonCardButton {
@@ -217,7 +221,7 @@
 }
 
 .leaderboard {
-	min-width: var(--card-width);
+	width: 100%;
 	max-width: var(--card-width);
 	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-box);
