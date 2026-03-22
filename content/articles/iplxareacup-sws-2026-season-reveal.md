@@ -194,6 +194,6 @@ English stream by [Inkling Performance Labs](https://iplabs.ink/) (@iplabs.ink o
 
 Japanese stream by AREA CUP ([Website](https://areacup.com/), @splatzones\_glb on Twitter)
 
-Original Posting Date: March 22, 2026
+Original Posting Date: March 22, 2026 at [Splatoon Stronghold](https://www.splatoonstronghold.com/news/splat-world-series-2026)
 
 Written and formatted for publication by [YELLOW](https://bsky.app/profile/great-hero-yellow.bsky.social).
