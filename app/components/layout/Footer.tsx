@@ -73,9 +73,10 @@ export function Footer() {
 					is not affiliated with Nintendo.
 				</p>
 				<p>
-					Any tournaments hosted on sendou.ink are unofficial and Nintendo is
-					not a sponsor or affiliated with them. Terms for participating in and
-					viewing Community Tournaments using Nintendo Games can be found here:{" "}
+					All tournaments hosted on sendou.ink are unofficial and are not
+					sponsored by or affiliated with Nintendo. Terms for participating in
+					and viewing Community Tournaments using Nintendo Games can be found
+					here:{" "}
 					<a
 						href={NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL}
 						target="_blank"
