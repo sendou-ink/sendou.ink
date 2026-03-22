@@ -1,5 +1,5 @@
 import { sub } from "date-fns";
-import { Check, Eye, EyeOff, Map as MapIcon } from "lucide-react";
+import { Check, Eye, EyeOff, Map as MapIcon, Stamp } from "lucide-react";
 import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
@@ -168,17 +168,6 @@ export default function TournamentBracketsPage() {
 	return (
 		<div>
 			<Outlet context={ctx} />
-			{tournament.canFinalize(user) ? (
-				<div className={styles.finalize}>
-					<LinkButton
-						variant="minimal"
-						testId="finalize-tournament-button"
-						to="finalize"
-					>
-						{t("tournament:actions.finalize.question")}
-					</LinkButton>
-				</div>
-			) : null}
 			{bracket.preview &&
 			bracket.enoughTeams &&
 			tournament.isOrganizer(user) &&
@@ -222,6 +211,15 @@ export default function TournamentBracketsPage() {
 			<div className="stack horizontal sm mb-4">
 				{bracket.type !== "round_robin" && !bracket.preview ? (
 					<CompactifyButton />
+				) : null}
+				{tournament.canFinalize(user) ? (
+					<LinkButton
+						to="finalize"
+						testId="finalize-tournament-button"
+						icon={<Stamp />}
+					>
+						{t("tournament:actions.finalize.button")}
+					</LinkButton>
 				) : null}
 				{showPrepareMapsButton ? (
 					// Error Boundary because preparing maps is optional, so no need to make the whole page inaccessible if it fails

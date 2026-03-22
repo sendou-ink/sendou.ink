@@ -1,12 +1,3 @@
-.finalize {
-	font-size: var(--font-sm);
-	margin-block-end: var(--s-4);
-	display: flex;
-	gap: var(--s-1);
-	flex-wrap: wrap;
-	justify-content: center;
-}
-
 .miniAlert {
 	background-color: var(--color-info-low);
 	font-size: var(--font-2xs);

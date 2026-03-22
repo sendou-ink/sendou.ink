@@ -46,37 +46,42 @@ export default function TournamentFinalizePage() {
 			onCloseTo={bracketUrl}
 			heading={t("tournament:actions.finalize")}
 		>
-			<FinalizeForm
-				error={badgesError}
-				isAssigningBadges={!isAssignLaterSelected && tournamentHasBadges}
-			>
-				{tournamentHasBadges ? (
-					<>
-						<SendouSwitch
-							isSelected={isAssignLaterSelected}
-							onChange={setIsAssignLaterSelected}
-							data-testid="assign-badges-later-switch"
-						>
-							{t("tournament:actions.finalize.assignBadgesLater")}
-						</SendouSwitch>
-						{!isAssignLaterSelected ? (
-							<>
-								<input
-									type="hidden"
-									name="badgeReceivers"
-									value={JSON.stringify(badgeReceivers)}
-								/>
-								<NewBadgeReceiversSelector
-									badges={data.badges}
-									standings={data.standings}
-									badgeReceivers={badgeReceivers}
-									setBadgeReceivers={setBadgeReceivers}
-								/>
-							</>
-						) : null}
-					</>
-				) : null}
-			</FinalizeForm>
+			<div className="stack md">
+				<FormMessage type="info">
+					{t("tournament:actions.finalize.notice")}
+				</FormMessage>
+				<FinalizeForm
+					error={badgesError}
+					isAssigningBadges={!isAssignLaterSelected && tournamentHasBadges}
+				>
+					{tournamentHasBadges ? (
+						<>
+							<SendouSwitch
+								isSelected={isAssignLaterSelected}
+								onChange={setIsAssignLaterSelected}
+								data-testid="assign-badges-later-switch"
+							>
+								{t("tournament:actions.finalize.assignBadgesLater")}
+							</SendouSwitch>
+							{!isAssignLaterSelected ? (
+								<>
+									<input
+										type="hidden"
+										name="badgeReceivers"
+										value={JSON.stringify(badgeReceivers)}
+									/>
+									<NewBadgeReceiversSelector
+										badges={data.badges}
+										standings={data.standings}
+										badgeReceivers={badgeReceivers}
+										setBadgeReceivers={setBadgeReceivers}
+									/>
+								</>
+							) : null}
+						</>
+					) : null}
+				</FinalizeForm>
+			</div>
 		</SendouDialog>
 	);
 }
