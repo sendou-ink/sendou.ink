@@ -334,7 +334,6 @@
 			outline-offset: 1px;
 		}
 
-		/* biome-ignore lint: experimental CSS feature */
 		&::picker(select) {
 			@supports (appearance: base-select) {
 				appearance: base-select;
@@ -351,7 +350,6 @@
 			scrollbar-color: var(--color-bg-higher) transparent;
 		}
 
-		/* biome-ignore lint: experimental CSS feature */
 		&::picker-icon {
 			display: none;
 		}

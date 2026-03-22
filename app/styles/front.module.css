@@ -310,10 +310,6 @@
 	text-align: center;
 }
 
-.discoverGridItem:hover .discoverGridItemImage {
-	background-color: var(--color-bg-high);
-}
-
 .discoverGridItemImage {
 	width: var(--field-size-lg);
 	aspect-ratio: 1 / 1;
@@ -321,4 +317,8 @@
 	background-color: var(--color-bg-higher);
 	display: grid;
 	place-items: center;
+}
+
+.discoverGridItem:hover .discoverGridItemImage {
+	background-color: var(--color-bg-high);
 }

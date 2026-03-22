@@ -10,6 +10,21 @@
 	max-width: 100%;
 }
 
+.topSection {
+	display: flex;
+	align-items: center;
+	padding: var(--s-2);
+	border: var(--border-style);
+	border-top: transparent;
+	border-radius: 0 0 var(--radius-box) var(--radius-box);
+	background-color: var(--color-bg);
+	gap: var(--s-2);
+	max-width: 100%;
+	overflow: auto;
+	animation: scrolling forwards;
+	animation-timeline: scroll(x self);
+}
+
 .topWrapperCollapsed {
 	transform: translateX(-50%) translateY(-100%);
 
@@ -37,21 +52,6 @@
 	&:hover {
 		background-color: var(--color-bg-high);
 	}
-}
-
-.topSection {
-	display: flex;
-	align-items: center;
-	padding: var(--s-2);
-	border: var(--border-style);
-	border-top: transparent;
-	border-radius: 0 0 var(--radius-box) var(--radius-box);
-	background-color: var(--color-bg);
-	gap: var(--s-2);
-	max-width: 100%;
-	overflow: auto;
-	animation: scrolling forwards;
-	animation-timeline: scroll(x self);
 }
 
 @keyframes scrolling {
@@ -88,6 +88,17 @@
 	left: 0;
 }
 
+.weaponsSection {
+	width: 150px;
+	max-height: 70vh;
+	border: var(--border-style);
+	border-left: transparent;
+	border-radius: 0 var(--radius-box) var(--radius-box) 0;
+	background: var(--color-bg);
+	gap: 2px;
+	overflow-y: auto;
+}
+
 .weaponsWrapperCollapsed {
 	transform: translateX(-100%);
 
@@ -116,17 +127,6 @@
 	&:hover {
 		background-color: var(--color-bg-high);
 	}
-}
-
-.weaponsSection {
-	width: 150px;
-	max-height: 70vh;
-	border: var(--border-style);
-	border-left: transparent;
-	border-radius: 0 var(--radius-box) var(--radius-box) 0;
-	background: var(--color-bg);
-	gap: 2px;
-	overflow-y: auto;
 }
 
 .weaponsSectionWide {
