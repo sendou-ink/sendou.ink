@@ -12,9 +12,10 @@ import styles from "./Button.module.css";
 type ButtonVariant =
 	| "primary"
 	| "success"
+	| "destructive"
 	| "outlined"
 	| "outlined-success"
-	| "destructive"
+	| "outlined-destructive"
 	| "minimal"
 	| "minimal-success"
 	| "minimal-destructive";
@@ -24,6 +25,7 @@ export interface SendouButtonProps
 	className?: string;
 	variant?: ButtonVariant;
 	size?: "miniscule" | "small" | "medium" | "big";
+	shape?: "circle" | "square";
 	icon?: JSX.Element;
 	children?: React.ReactNode;
 }
@@ -32,6 +34,7 @@ export function SendouButton({
 	children,
 	variant,
 	size,
+	shape,
 	className,
 	icon,
 	...rest
@@ -39,7 +42,7 @@ export function SendouButton({
 	return (
 		<ReactAriaButton
 			{...rest}
-			className={buttonClassName({ className, variant, size })}
+			className={buttonClassName({ className, variant, size, shape })}
 		>
 			{icon &&
 				React.cloneElement(icon, {
@@ -58,6 +61,7 @@ export interface LinkButtonProps {
 	className?: string;
 	variant?: SendouButtonProps["variant"];
 	size?: SendouButtonProps["size"];
+	shape?: SendouButtonProps["shape"];
 	icon?: JSX.Element;
 	children?: React.ReactNode;
 	onClick?: React.MouseEventHandler<HTMLAnchorElement>;
@@ -72,6 +76,7 @@ export function LinkButton({
 	className,
 	variant,
 	size,
+	shape,
 	icon,
 	children,
 	onClick,
@@ -80,7 +85,7 @@ export function LinkButton({
 	if (isExternal) {
 		return (
 			<a
-				className={buttonClassName({ className, variant, size })}
+				className={buttonClassName({ className, variant, size, shape })}
 				href={to as string}
 				target="_blank"
 				rel="noreferrer"
@@ -98,11 +103,12 @@ export function LinkButton({
 
 	return (
 		<Link
-			className={buttonClassName({ className, variant, size })}
+			className={buttonClassName({ className, variant, size, shape })}
 			to={to}
 			data-testid={testId}
 			prefetch={prefetch}
 			preventScrollReset={preventScrollReset}
+			onClick={onClick}
 		>
 			{icon &&
 				React.cloneElement(icon, {
@@ -117,19 +123,22 @@ function buttonClassName({
 	className,
 	variant,
 	size,
-}: Pick<SendouButtonProps, "className" | "variant" | "size">) {
+	shape,
+}: Pick<SendouButtonProps, "className" | "variant" | "size" | "shape">) {
 	const variantToClassname = (variant: ButtonVariant) => {
 		switch (variant) {
 			case "primary":
 				return styles.primary;
 			case "success":
 				return styles.success;
+			case "destructive":
+				return styles.destructive;
 			case "outlined":
 				return styles.outlined;
 			case "outlined-success":
 				return styles.outlinedSuccess;
-			case "destructive":
-				return styles.destructive;
+			case "outlined-destructive":
+				return styles.outlinedDestructive;
 			case "minimal":
 				return styles.minimal;
 			case "minimal-success":
@@ -150,6 +159,10 @@ function buttonClassName({
 			[styles.big]: size === "big",
 			[styles.miniscule]: size === "miniscule",
 		},
+		{
+			[styles.circle]: shape === "circle",
+			[styles.square]: shape === "square",
+		},
 	);
 }
 
@@ -162,5 +175,6 @@ function iconClassName(
 		[styles.lonely]: !children,
 		[styles.buttonIconSmall]: size === "small",
 		[styles.buttonIconMiniscule]: size === "miniscule",
+		[styles.buttonIconBig]: size === "big",
 	});
 }

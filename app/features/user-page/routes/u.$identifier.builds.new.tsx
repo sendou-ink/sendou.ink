@@ -32,12 +32,10 @@ export default function NewBuildPage() {
 	}
 
 	return (
-		<div className="half-width u__build-form">
-			<NewBuildForm
-				defaultValues={defaultValues}
-				gearIdToAbilities={gearIdToAbilities}
-				isEditing={defaultValues?.buildToEditId != null}
-			/>
-		</div>
+		<NewBuildForm
+			defaultValues={defaultValues}
+			gearIdToAbilities={gearIdToAbilities}
+			isEditing={defaultValues?.buildToEditId != null}
+		/>
 	);
 }

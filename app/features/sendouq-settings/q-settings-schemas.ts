@@ -16,7 +16,7 @@ export const updateWeaponPoolSchema = z.object({
 	}),
 });
 
-const LANGUAGE_OPTIONS = languagesUnified.map((lang) => ({
+export const LANGUAGE_OPTIONS = languagesUnified.map((lang) => ({
 	label: () => lang.name,
 	value: lang.code,
 }));

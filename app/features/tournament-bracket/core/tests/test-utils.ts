@@ -74,7 +74,6 @@ export const testTournament = ({
 			name: "test",
 			castTwitchAccounts: [],
 			bracketProgressionOverrides: [],
-			subCounts: [],
 			staff: [],
 			tieBreakerMapPool: [],
 			toSetMapPool: [],
@@ -95,7 +94,6 @@ export const testTournament = ({
 			seedingSnapshot: null,
 			teams: nTeams(participant.length, Math.min(...participant)),
 			author: {
-				chatNameColor: null,
 				customUrl: null,
 				discordAvatar: null,
 				discordId: "123",

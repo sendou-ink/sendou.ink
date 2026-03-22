@@ -1,15 +1,10 @@
 import { Outlet } from "react-router";
-import { AddNewButton } from "~/components/AddNewButton";
 import { Main } from "~/components/Main";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import {
-	navIconUrl,
-	plusSuggestionPage,
-	plusSuggestionsNewPage,
-} from "~/utils/urls";
+import { navIconUrl, plusSuggestionPage } from "~/utils/urls";
 
-import "~/styles/plus.css";
+import "../plus.module.css";
 
 export const handle: SendouRouteHandle = {
 	navItemName: "plus",
@@ -23,9 +18,6 @@ export const handle: SendouRouteHandle = {
 export default function PlusPageLayout() {
 	return (
 		<Main className="stack md">
-			<div className="stack items-end">
-				<AddNewButton navIcon="plus" to={plusSuggestionsNewPage()} />
-			</div>
 			<SubNav>
 				<SubNavLink to="suggestions">Suggestions</SubNavLink>
 				<SubNavLink to="voting/results">Results</SubNavLink>

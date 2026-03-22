@@ -10,6 +10,7 @@ import { action } from "../actions/upload.server";
 import { loader } from "../loaders/upload.server";
 import { imgTypeToDimensions, imgTypeToStyle } from "../upload-constants";
 import type { ImageUploadType } from "../upload-types";
+
 export { action, loader };
 
 export default function FileUploadPage() {
@@ -65,7 +66,6 @@ export default function FileUploadPage() {
 				<label htmlFor="img-field">{t("common:upload.imageToUpload")}</label>
 				<input
 					id="img-field"
-					className="plain"
 					type="file"
 					name="img"
 					accept="image/png, image/jpeg, image/webp"

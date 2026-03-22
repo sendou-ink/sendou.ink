@@ -5,6 +5,7 @@ import { Placement } from "~/components/Placement";
 import invariant from "~/utils/invariant";
 import { winnersImageUrl } from "~/utils/urls";
 import playerData from "../top-ten.json";
+import styles from "./TopTenPlayer.module.css";
 
 export function TopTenPlayer({
 	power,
@@ -31,12 +32,14 @@ export function TopTenPlayer({
 				"mt-2": small,
 			})}
 		>
-			<div className={clsx("winner__container", { small })}>
+			<div
+				className={clsx(styles.container, { [styles.containerSmall]: small })}
+			>
 				<Image
 					path={winnersImageUrl({ season, placement })}
 					alt=""
-					containerClassName="winner__img-container"
-					className="winner__img"
+					containerClassName={styles.imgContainer}
+					className={styles.img}
 					height={small ? 50 : 150}
 					containerStyle={
 						{

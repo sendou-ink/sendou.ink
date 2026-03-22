@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import styles from "./Divider.module.css";
 
 export function Divider({
 	children,
@@ -10,7 +11,11 @@ export function Divider({
 	smallText?: boolean;
 }) {
 	return (
-		<div className={clsx("divider", className, { "text-sm": smallText })}>
+		<div
+			className={clsx(styles.divider, className, {
+				[styles.smallText]: smallText,
+			})}
+		>
 			{children}
 		</div>
 	);

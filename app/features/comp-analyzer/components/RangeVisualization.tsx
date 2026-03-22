@@ -220,7 +220,7 @@ function TrajectoryChart({
 							y1={0}
 							x2={xScale(tick)}
 							y2={innerHeight}
-							stroke="var(--border)"
+							stroke="var(--color-border)"
 							strokeWidth={0.5}
 						/>
 					))}
@@ -231,7 +231,7 @@ function TrajectoryChart({
 							y1={yScale(tick)}
 							x2={innerWidth}
 							y2={yScale(tick)}
-							stroke="var(--border)"
+							stroke="var(--color-border)"
 							strokeWidth={0.5}
 						/>
 					))}
@@ -242,7 +242,7 @@ function TrajectoryChart({
 						y1={groundY}
 						x2={innerWidth}
 						y2={groundY}
-						stroke="var(--text-lighter)"
+						stroke="var(--color-text-high)"
 						strokeWidth={1}
 					/>
 
@@ -308,7 +308,7 @@ function TrajectoryChart({
 							y={innerHeight + 15}
 							textAnchor="middle"
 							fontSize={10}
-							fill="var(--text-lighter)"
+							fill="var(--color-text-high)"
 						>
 							{tick}
 						</text>
@@ -322,7 +322,7 @@ function TrajectoryChart({
 							y={yScale(tick) + 3}
 							textAnchor="end"
 							fontSize={10}
-							fill="var(--text-lighter)"
+							fill="var(--color-text-high)"
 						>
 							{tick}
 						</text>
@@ -334,7 +334,7 @@ function TrajectoryChart({
 						y={innerHeight + 25}
 						textAnchor="middle"
 						fontSize={11}
-						fill="var(--text-lighter)"
+						fill="var(--color-text-high)"
 					>
 						z
 					</text>
@@ -343,7 +343,7 @@ function TrajectoryChart({
 						y={innerHeight / 2}
 						textAnchor="middle"
 						fontSize={11}
-						fill="var(--text-lighter)"
+						fill="var(--color-text-high)"
 						transform={`rotate(-90, -25, ${innerHeight / 2})`}
 					>
 						y

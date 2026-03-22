@@ -3,21 +3,22 @@ import { Form, useLoaderData } from "react-router";
 import { FormErrors } from "~/components/FormErrors";
 import { SubmitButton } from "~/components/SubmitButton";
 import { UserResultsTable } from "~/features/user-page/components/UserResultsTable";
-
 import { action } from "../actions/u.$identifier.results.highlights.server";
 import { loader } from "../loaders/u.$identifier.results.server";
-export { loader, action };
+import styles from "../user-page.module.css";
+
+export { action, loader };
 
 export default function ResultHighlightsEditPage() {
 	const { t } = useTranslation(["common", "user"]);
 	const data = useLoaderData<typeof loader>();
 
 	return (
-		<div className="u__highlights-container">
+		<div className={styles.highlightsContainer}>
 			<Form id="highlights-form" method="post" className="stack md items-start">
 				<h2 className="text-start">{t("user:results.highlights.choose")}</h2>
-				<div className="u__results-table-wrapper">
-					<fieldset className="u__results-table-highlights">
+				<div className={styles.resultsTableWrapper}>
+					<fieldset className={styles.resultsTableHighlights}>
 						<legend>{t("user:results.highlights.explanation")}</legend>
 						<UserResultsTable
 							id="user-results-highlight-selection"
@@ -27,7 +28,7 @@ export default function ResultHighlightsEditPage() {
 					</fieldset>
 				</div>
 			</Form>
-			<div className="u__highlights-sticky-button">
+			<div className={styles.highlightsStickyButton}>
 				<FormErrors namespace="user" />
 				<SubmitButton form="highlights-form">
 					{t("common:actions.save")}

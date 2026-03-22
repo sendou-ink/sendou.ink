@@ -7,13 +7,13 @@ import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	ARTICLES_MAIN_PAGE,
-	articlePage,
 	articlePreviewUrl,
 	navIconUrl,
 } from "~/utils/urls";
 import { metaTags, type SerializeFrom } from "../../../utils/remix";
 
 import { loader } from "../loaders/a.$slug.server";
+
 export { loader };
 
 export const handle: SendouRouteHandle = {
@@ -27,11 +27,6 @@ export const handle: SendouRouteHandle = {
 				imgPath: navIconUrl("articles"),
 				href: ARTICLES_MAIN_PAGE,
 				type: "IMAGE",
-			},
-			{
-				text: data.title,
-				href: articlePage(data.slug),
-				type: "TEXT",
 			},
 		];
 	},
@@ -64,10 +59,36 @@ export default function ArticlePage() {
 				<div className="text-sm text-lighter">
 					by <Author /> • <time>{data.dateString}</time>
 				</div>
-				<Markdown>{data.content}</Markdown>
+				<Markdown>
+					{contentWithoutLeadingTitle(data.content, data.title)}
+				</Markdown>
 			</article>
 		</Main>
 	);
+}
+
+function normalizeText(text: string) {
+	return text
+		.replace(/\*+/g, "")
+		.replace(/…/g, "...")
+		.replace(/\\!/g, "!")
+		.trim();
+}
+
+function contentWithoutLeadingTitle(content: string, title: string) {
+	const trimmed = content.trimStart();
+	const firstLineEnd = trimmed.indexOf("\n");
+	const firstLine =
+		firstLineEnd === -1 ? trimmed : trimmed.slice(0, firstLineEnd);
+
+	if (
+		firstLine.startsWith("# ") &&
+		normalizeText(firstLine.slice(2)) === normalizeText(title)
+	) {
+		return trimmed.slice(firstLine.length).trimStart();
+	}
+
+	return content;
 }
 
 function Author() {

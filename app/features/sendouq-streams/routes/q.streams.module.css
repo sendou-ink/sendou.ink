@@ -1,19 +1,19 @@
 .userContainer {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	display: flex;
 	gap: var(--s-2);
 	align-items: center;
-	font-weight: var(--semi-bold);
-	color: var(--text);
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
 }
 
 .viewerCount {
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	display: flex;
 	gap: var(--s-2);
 	align-items: center;
 	margin-block-start: -5px;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .viewerCount > svg {
@@ -22,6 +22,6 @@
 
 .infoCircle {
 	border-radius: 100%;
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	padding: var(--s-1);
 }

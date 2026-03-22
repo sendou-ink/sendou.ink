@@ -5,7 +5,7 @@ import {
 	dbReset,
 	wrappedAction,
 } from "~/utils/Test";
-import { action as teamIndexPageAction } from "../actions/t.server";
+import { action as teamIndexPageAction } from "../actions/t.new.server";
 import type { createTeamSchema } from "../team-schemas";
 import type { editTeamSchema } from "../team-schemas.server";
 import { action as _editTeamProfileAction } from "./t.$customUrl.edit.server";
@@ -37,10 +37,23 @@ describe("team page editing", () => {
 		dbReset();
 	});
 
-	it("adds valid custom css vars", async () => {
+	it("adds valid custom theme", async () => {
 		const response = await editTeamProfileAction(
 			{
-				css: JSON.stringify({ bg: "#fff" }),
+				customTheme: {
+					baseHue: 180,
+					baseChroma: 0.05,
+					accentHue: 200,
+					accentChroma: 0.1,
+					chatHue: null,
+					radiusBox: 3,
+					radiusField: 2,
+					radiusSelector: 2,
+					borderWidth: 2,
+					sizeField: 1,
+					sizeSelector: 1,
+					sizeSpacing: 1,
+				},
 				...DEFAULT_FIELDS,
 			},
 			{ user: "regular", params: { customUrl: "team-1" } },
@@ -49,26 +62,35 @@ describe("team page editing", () => {
 		expect(response.status).toBe(302);
 	});
 
-	it("prevents adding custom css var of unknown property", async () => {
+	it("allows null custom theme", async () => {
 		const response = await editTeamProfileAction(
 			{
-				css: JSON.stringify({
-					"backdrop-filter": "#fff",
-				}),
+				customTheme: null,
 				...DEFAULT_FIELDS,
 			},
 			{ user: "regular", params: { customUrl: "team-1" } },
 		);
 
-		assertResponseErrored(response);
+		expect(response.status).toBe(302);
 	});
 
-	it("prevents adding custom css var of unknown value", async () => {
+	it("prevents adding custom theme with invalid values", async () => {
 		const response = await editTeamProfileAction(
 			{
-				css: JSON.stringify({
-					bg: "url(https://sendou.ink/u?q=1&_data=features%2Fuser-search%2Froutes%2Fu)",
-				}),
+				customTheme: {
+					baseHue: 500, // Invalid: max is 360
+					baseChroma: 0.05,
+					accentHue: 200,
+					accentChroma: 0.1,
+					chatHue: null,
+					radiusBox: 3,
+					radiusField: 2,
+					radiusSelector: 2,
+					borderWidth: 2,
+					sizeField: 1,
+					sizeSelector: 1,
+					sizeSpacing: 1,
+				},
 				...DEFAULT_FIELDS,
 			},
 			{ user: "regular", params: { customUrl: "team-1" } },

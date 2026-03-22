@@ -16,6 +16,7 @@ const stm = sql.prepare(/*sql*/ `
       and "TournamentTeamMember"."isOwner" = 1
   where
     "TournamentTeam"."tournamentId" = @tournamentId
+    and "TournamentTeam"."isPlaceholder" = 0
     and "TournamentTeamMember"."userId" = @userId
 `);
 

@@ -1,3 +1,4 @@
+import "@formatjs/intl-durationformat/polyfill.js";
 import i18next from "i18next";
 import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider } from "react-i18next";

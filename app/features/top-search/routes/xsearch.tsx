@@ -13,9 +13,8 @@ import { navIconUrl, topSearchPage } from "~/utils/urls";
 import { PlacementsTable } from "../components/Placements";
 import { loader } from "../loaders/xsearch.server";
 import type { MonthYear } from "../top-search-utils";
-export { loader };
 
-import "../top-search.css";
+export { loader };
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: () => ({

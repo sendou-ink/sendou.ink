@@ -24,7 +24,6 @@ const DEFAULT_FIELDS = {
 	weapons: [{ id: 1 as MainWeaponId, isFavorite: false }],
 	showDiscordUniqueName: true,
 	newProfileEnabled: false,
-	css: null,
 };
 
 describe("user page editing", () => {
@@ -35,43 +34,14 @@ describe("user page editing", () => {
 		dbReset();
 	});
 
-	it("adds valid custom css vars", async () => {
+	it("saves profile with default fields", async () => {
 		const response = await action(
 			{
 				...DEFAULT_FIELDS,
-				css: { bg: "#fff" },
 			},
 			{ user: "regular", params: { identifier: "2" } },
 		);
 
 		expect(response.status).toBe(302);
-	});
-
-	it("prevents adding custom css var of unknown property", async () => {
-		const res = await action(
-			{
-				...DEFAULT_FIELDS,
-				css: {
-					"backdrop-filter": "#fff",
-				} as any,
-			},
-			{ user: "regular", params: { identifier: "2" } },
-		);
-
-		expect(res.fieldErrors.css).toBeDefined();
-	});
-
-	it("prevents adding custom css var of unknown value", async () => {
-		const res = await action(
-			{
-				...DEFAULT_FIELDS,
-				css: {
-					bg: "url(https://sendou.ink/u?q=1&_data=features%2Fuser-search%2Froutes%2Fu)",
-				},
-			},
-			{ user: "regular", params: { identifier: "2" } },
-		);
-
-		expect(res.fieldErrors.css).toBeDefined();
 	});
 });

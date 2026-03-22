@@ -5,7 +5,7 @@ import {
 	redirect,
 } from "react-router";
 import { isTheme } from "../core/provider";
-import { getThemeSession } from "../core/session.server";
+import { getThemeSession } from "../core/theme-session.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const themeSession = await getThemeSession(request);

@@ -3,6 +3,7 @@ import { Main } from "~/components/Main";
 import { TeamGoBackButton } from "~/features/team/components/TeamGoBackButton";
 import { TeamResultsTable } from "~/features/team/components/TeamResultsTable";
 import { loader } from "../loaders/t.$customUrl.results.server";
+
 export { loader };
 
 export default function TeamResultsPage() {

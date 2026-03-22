@@ -21,7 +21,8 @@ import { loader, type ScrimsNewLoaderData } from "../loaders/scrims.new.server";
 import { SCRIM } from "../scrims-constants";
 import { scrimsNewFormSchema } from "../scrims-schemas";
 import styles from "./scrims.new.module.css";
-export { loader, action };
+
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: "scrims",
@@ -257,7 +258,9 @@ function AssociationSelect({
 			<option value="PUBLIC">{t("scrims:forms.visibility.public")}</option>
 			{associations.virtual.map((association) => (
 				<option key={association} value={association}>
-					{association}
+					{association === "FRIENDS"
+						? t("scrims:forms.visibility.friends")
+						: association}
 				</option>
 			))}
 			{associations.actual.map((association) => (

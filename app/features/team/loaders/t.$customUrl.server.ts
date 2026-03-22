@@ -16,7 +16,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	return {
 		team,
-		css: canAddCustomizedColors(team) ? team.css : null,
+		customTheme: canAddCustomizedColors(team) ? team.customTheme : null,
 		results: resultsMapped(results),
 	};
 };

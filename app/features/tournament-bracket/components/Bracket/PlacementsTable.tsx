@@ -1,11 +1,9 @@
 import clsx from "clsx";
+import { Check, SquarePen, X } from "lucide-react";
 import * as React from "react";
 import { Link, useFetcher } from "react-router";
 import invariant from "~/utils/invariant";
 import { SendouButton } from "../../../../components/elements/Button";
-import { CheckmarkIcon } from "../../../../components/icons/Checkmark";
-import { CrossIcon } from "../../../../components/icons/Cross";
-import { EditIcon } from "../../../../components/icons/Edit";
 import { logger } from "../../../../utils/logger";
 import { tournamentTeamPage } from "../../../../utils/urls";
 import { useUser } from "../../../auth/core/user";
@@ -13,6 +11,7 @@ import { TOURNAMENT } from "../../../tournament/tournament-constants";
 import type { Bracket } from "../../core/Bracket";
 import * as Progression from "../../core/Progression";
 import * as Swiss from "../../core/Swiss";
+import styles from "./bracket.module.css";
 
 export function PlacementsTable({
 	groupId,
@@ -130,7 +129,7 @@ export function PlacementsTable({
 	let eliminatedRowRendered = false;
 
 	return (
-		<table className="rr__placements-table" cellSpacing={0}>
+		<table className={styles.rrPlacementsTable} cellSpacing={0}>
 			<thead>
 				<tr>
 					<th>Team</th>
@@ -390,14 +389,14 @@ function EditableDestination({
 					<div className="stack horizontal xs">
 						<SendouButton
 							variant="minimal"
-							icon={<CheckmarkIcon title="Save destination" />}
+							icon={<Check />}
 							size="small"
 							onPress={handleSubmit}
 						/>
 						<SendouButton
 							variant="minimal-destructive"
 							size="small"
-							icon={<CrossIcon title="Cancel" />}
+							icon={<X />}
 							onPress={() => setEditingDestination(false)}
 						/>
 					</div>
@@ -431,7 +430,7 @@ function EditableDestination({
 				<td>
 					<SendouButton
 						variant="minimal"
-						icon={<EditIcon title="Edit destination" />}
+						icon={<SquarePen />}
 						size="small"
 						onPress={() => setEditingDestination(true)}
 					/>
@@ -458,17 +457,17 @@ function SwissDividerRow({
 		: `Eliminated (@ ${threshold} losses)`;
 
 	return (
-		<tr className="tournament__standings__divider-row">
-			<td colSpan={columnCount} className="tournament__standings__divider">
+		<tr className={styles.standingsDividerRow}>
+			<td colSpan={columnCount} className={styles.standingsDivider}>
 				<div
-					className={clsx("tournament__standings__divider-content", {
-						"tournament__standings__divider--qualified": isQualified,
-						"tournament__standings__divider--eliminated": !isQualified,
+					className={clsx(styles.standingsDividerContent, {
+						[styles.standingsDividerQualified]: isQualified,
+						[styles.standingsDividerEliminated]: !isQualified,
 					})}
 				>
-					<div className="tournament__standings__divider-line" />
-					<span className="tournament__standings__divider-text">{message}</span>
-					<div className="tournament__standings__divider-line" />
+					<div className={styles.standingsDividerLine} />
+					<span className={styles.standingsDividerText}>{message}</span>
+					<div className={styles.standingsDividerLine} />
 				</div>
 			</td>
 		</tr>

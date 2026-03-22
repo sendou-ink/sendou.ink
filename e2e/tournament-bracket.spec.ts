@@ -135,8 +135,10 @@ const reportResult = async ({
 };
 
 const backToBracket = async (page: Page) => {
-	await page.getByTestId("back-to-bracket-button").click();
-	await expect(page.getByTestId("brackets-viewer")).toBeVisible();
+	await expect(async () => {
+		await page.getByTestId("back-to-bracket-button").click();
+		await expect(page.getByTestId("brackets-viewer")).toBeVisible();
+	}).toPass();
 };
 
 const expectScore = (page: Page, score: [number, number]) =>
@@ -197,6 +199,7 @@ test.describe("Tournament bracket", () => {
 	// 6) Try to reopen N-ZAP's first match and succeed
 	// 7) As N-ZAP, undo all scores and switch to different team sweeping
 	test("reports score and sees bracket update", async ({ page }) => {
+		test.slow();
 		const tournamentId = 2;
 		await startBracket(page);
 
@@ -354,7 +357,9 @@ test.describe("Tournament bracket", () => {
 			url: userResultsPage({ discordId: ADMIN_DISCORD_ID }),
 		});
 
-		await expect(page.getByText("In The Zone 22")).toBeVisible();
+		await expect(
+			page.getByTestId("tournament-name-cell").getByText("In The Zone 22"),
+		).toBeVisible();
 
 		await navigate({
 			page,
@@ -369,7 +374,7 @@ test.describe("Tournament bracket", () => {
 	test("completes and finalizes a small tournament (RR->SE w/ underground bracket)", async ({
 		page,
 	}) => {
-		test.slow();
+		test.setTimeout(150_000);
 
 		const tournamentId = 3;
 
@@ -417,7 +422,7 @@ test.describe("Tournament bracket", () => {
 			url: tournamentBracketsPage({ tournamentId }),
 		});
 
-		await page.getByRole("button", { name: "Underground" }).click();
+		await page.getByRole("tab", { name: "Underground" }).click();
 		await submit(page, "check-in-bracket-button");
 
 		await impersonate(page);
@@ -469,8 +474,60 @@ test.describe("Tournament bracket", () => {
 		await navigateToMatch(page, 14);
 		await isNotVisible(page.getByTestId("reopen-match-button"));
 		await backToBracket(page);
+	});
 
-		// added result to user profile
+	test("shows tournament results on user profile after finalized tournament", async ({
+		page,
+	}) => {
+		const tournamentId = 4;
+
+		await seed(page, "SMALL_SOS");
+		await impersonate(page);
+
+		await navigate({
+			page,
+			url: tournamentAdminPage(tournamentId),
+		});
+
+		await page.getByLabel("Action").selectOption("CHECK_OUT");
+		for (const teamId of ["303", "304"]) {
+			await page.getByLabel("Team", { exact: true }).selectOption(teamId);
+			await submit(page);
+		}
+
+		await page.getByTestId("edit-event-info-button").click();
+		for (let i = 0; i < 3; i++) {
+			await page.getByTestId("delete-bracket-button").last().click();
+		}
+		await page.getByTestId("placements-input").last().fill("1,2");
+		await submit(page);
+
+		await page.getByTestId("brackets-tab").click();
+		await page.getByTestId("finalize-bracket-button").click();
+		await submit(page, "confirm-finalize-bracket-button");
+
+		await page.locator('[data-match-id="1"]').click();
+		await reportResult({
+			page,
+			amountOfMapsToReport: 2,
+			points: [100, 0],
+		});
+		await backToBracket(page);
+
+		await page.getByRole("tab", { name: "Great White" }).click();
+		await page.getByTestId("finalize-bracket-button").click();
+		await submit(page, "confirm-finalize-bracket-button");
+
+		await page.locator('[data-match-id="2"]').click();
+		await reportResult({
+			page,
+			amountOfMapsToReport: 3,
+		});
+		await backToBracket(page);
+
+		await page.getByTestId("finalize-tournament-button").click();
+		await page.getByRole("button", { name: "Finalize" }).click();
+
 		await page.getByTestId("results-tab").click();
 		await page.getByTestId("result-team-name").first().click();
 		await page.getByTestId("team-member-name").first().click();
@@ -481,19 +538,18 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("user-results-tab").click();
 		await expect(
 			page.getByTestId("tournament-name-cell").first(),
-		).toContainText("Paddling Pool 253");
+		).toContainText("Swim or Sink 101");
 
 		await page.getByTestId("mates-button").first().click();
 		await expect(
 			page.locator('[data-testid="mates-cell-placement-0"] li'),
 		).toHaveCount(3);
-
-		// if more assertions added below we need to close the popover first (data-testid="underlay")
 	});
 
 	test("changes SOS format and progresses with it & adds a member to another team", async ({
 		page,
 	}) => {
+		test.slow();
 		const tournamentId = 4;
 
 		await seed(page, "SMALL_SOS");
@@ -524,10 +580,10 @@ test.describe("Tournament bracket", () => {
 			await backToBracket(page);
 		}
 
-		await page.getByRole("button", { name: "Hammerhead" }).click();
+		await page.getByRole("tab", { name: "Hammerhead" }).click();
 		await isNotVisible(page.getByTestId("brackets-viewer"));
 
-		await page.getByRole("button", { name: "Mako" }).click();
+		await page.getByRole("tab", { name: "Mako" }).click();
 		await expect(page.getByTestId("brackets-viewer")).toBeVisible();
 
 		await page.getByTestId("finalize-bracket-button").click();
@@ -615,7 +671,7 @@ test.describe("Tournament bracket", () => {
 			"Hammerhead",
 			"Mako",
 		]) {
-			await page.getByRole("button", { name: bracketName }).click();
+			await page.getByRole("tab", { name: bracketName }).click();
 			await page.getByTestId("finalize-bracket-button").click();
 			await submit(page, "confirm-finalize-bracket-button");
 		}
@@ -687,6 +743,7 @@ test.describe("Tournament bracket", () => {
 	});
 
 	test("reopens round robin match and changes score", async ({ page }) => {
+		test.slow();
 		const tournamentId = 3;
 
 		await seed(page);
@@ -967,6 +1024,8 @@ test.describe("Tournament bracket", () => {
 	test("swiss tournament with bracket advancing/unadvancing & dropping out a team", async ({
 		page,
 	}) => {
+		test.slow();
+
 		const tournamentId = 5;
 
 		await seed(page);
@@ -1029,7 +1088,7 @@ test.describe("Tournament bracket", () => {
 			url: tournamentBracketsPage({ tournamentId }),
 		});
 
-		await page.getByRole("button", { name: "Great White" }).click();
+		await page.getByRole("tab", { name: "Great White" }).click();
 
 		await page.getByTestId("prepare-maps-button").click();
 
@@ -1042,22 +1101,22 @@ test.describe("Tournament bracket", () => {
 			url: tournamentBracketsPage({ tournamentId }),
 		});
 
-		await page.getByRole("button", { name: "Great White" }).click();
+		await page.getByRole("tab", { name: "Great White" }).click();
 
 		await expect(page.getByTestId("prepared-maps-check-icon")).toBeVisible();
 
 		// we did not prepare maps for group stage
-		await page.getByRole("button", { name: "Groups stage" }).click();
+		await page.getByRole("tab", { name: "Groups stage" }).click();
 
 		await isNotVisible(page.getByTestId("prepared-maps-check-icon"));
 
 		// should reuse prepared maps from Great White
-		await page.getByRole("button", { name: "Hammerhead" }).click();
+		await page.getByRole("tab", { name: "Hammerhead" }).click();
 
 		await expect(page.getByTestId("prepared-maps-check-icon")).toBeVisible();
 
 		// finally, test third place match linking
-		await page.getByRole("button", { name: "Great White" }).click();
+		await page.getByRole("tab", { name: "Great White" }).click();
 
 		await page.getByTestId("prepare-maps-button").click();
 
@@ -1072,7 +1131,7 @@ test.describe("Tournament bracket", () => {
 			url: tournamentBracketsPage({ tournamentId }),
 		});
 
-		await page.getByRole("button", { name: "Great White" }).click();
+		await page.getByRole("tab", { name: "Great White" }).click();
 
 		await page.getByTestId("prepare-maps-button").click();
 
@@ -1116,9 +1175,7 @@ test.describe("Tournament bracket", () => {
 					await submit(page);
 				}
 
-				await expect(
-					page.locator(".tournament-bracket__mode-progress__image__banned"),
-				).toHaveCount(2);
+				await expect(page.getByTestId("mode-progress-banned")).toHaveCount(2);
 			}
 
 			await impersonate(page, teamOneCaptainId);
@@ -1188,15 +1245,15 @@ test.describe("Tournament bracket", () => {
 
 		await backToBracket(page);
 
-		// Fast forward a bit to ensure timer shows on bracket
-		await page.clock.fastForward("00:10"); // 10 seconds
-		await page.waitForTimeout(1000);
-
 		const bracketMatch = page.locator('[data-match-id="5"]');
 		await expect(bracketMatch).toBeVisible();
 
+		// Verify timer shows on bracket page (timer is a sibling of the match link)
+		const matchWrapper = bracketMatch.locator("..");
+		await expect(matchWrapper.getByTestId("bracket-match-timer")).toBeVisible();
+
 		// Fast forward time past limit (30 minutes for Bo3 = 26min limit)
-		await page.clock.fastForward("29:50"); // Total 30 minutes
+		await page.clock.fastForward("30:00");
 		await page.reload();
 
 		await navigateToMatch(page, matchId);

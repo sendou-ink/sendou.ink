@@ -1,0 +1,24 @@
+.trigger {
+	border: var(--border-style-high);
+	border-radius: 100%;
+	background-color: transparent;
+	color: var(--color-text);
+	font-size: var(--font-md);
+	padding: var(--s-0-5);
+	width: var(--selector-size);
+	height: var(--selector-size);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+}
+
+.triggerTiny {
+	width: var(--selector-size-sm);
+	height: var(--selector-size-sm);
+	font-size: var(--font-xs);
+}

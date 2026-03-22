@@ -1,11 +1,12 @@
 .pill {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
-	border-radius: var(--rounded-sm);
-	padding: var(--s-0-5) var(--s-1-5);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	border-radius: var(--radius-selector);
+	padding: 0 var(--s-1-5);
+	height: var(--selector-size-sm);
 	display: grid;
 	place-items: center;
-	min-width: 24px;
+	min-width: 33px;
 	text-align: center;
 }
 

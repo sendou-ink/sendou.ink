@@ -73,37 +73,41 @@ interface SendouTabProps extends TabProps {
 
 export function SendouTab({ icon, children, number, ...rest }: SendouTabProps) {
 	return (
-		<Tab className={clsx(buttonStyles.button, styles.tabButton)} {...rest}>
-			{icon}
-			{children}
-			{typeof number === "number" && number !== 0 && (
-				<span className={styles.tabNumber}>{number}</span>
-			)}
+		<Tab className={styles.tabContainer} {...rest}>
+			<div className={clsx(buttonStyles.button, styles.tabButton)}>
+				{icon}
+				{children}
+				{typeof number === "number" && number !== 0 && (
+					<span className={styles.tabNumber}>{number}</span>
+				)}
+			</div>
 		</Tab>
 	);
 }
 
 interface SendouTabListProps<T extends object> extends TabListProps<T> {
-	/** Should overflow-x: auto CSS rule be applied? Defaults to true */
-	scrolling?: boolean;
 	sticky?: boolean;
+	/** Should tabs take 100% width with equal distribution? */
+	fullWidth?: boolean;
 }
 
 export function SendouTabList<T extends object>({
-	scrolling = true,
 	sticky,
+	fullWidth,
 	...rest
 }: SendouTabListProps<T>) {
 	return (
-		<TabList
-			className={clsx(styles.tabList, {
-				"overflow-x-auto": scrolling,
-				// invisible: cantSwitchTabs && !disappearing,
-				// hidden: cantSwitchTabs && disappearing,
-				[styles.sticky]: sticky,
-			})}
-			{...rest}
-		/>
+		<div className={clsx(styles.tabListContainer, "scrollbar")}>
+			<TabList
+				className={clsx(styles.tabList, {
+					// invisible: cantSwitchTabs && !disappearing,
+					// hidden: cantSwitchTabs && disappearing,
+					[styles.sticky]: sticky,
+					[styles.fullWidth]: fullWidth,
+				})}
+				{...rest}
+			/>
+		</div>
 	);
 }
 

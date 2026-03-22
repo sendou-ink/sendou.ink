@@ -8,6 +8,7 @@
 	"tabs.results": "",
 	"tabs.streams": "",
 	"tabs.subs": "",
+	"tabs.looking": "",
 	"pre.steps.header": "",
 	"pre.steps.name": "",
 	"pre.steps.roster": "",
@@ -28,7 +29,7 @@
 	"pre.roster.header": "",
 	"pre.roster.footer": "",
 	"pre.roster.footer.noSubs": "",
-	"pre.roster.addTrusted.header": "",
+	"pre.roster.addFriend.header": "",
 	"pre.roster.delete.button": "",
 	"pre.roster.delete.header": "",
 	"pre.pool.header": "",
@@ -118,7 +119,7 @@
 	"join.error.ALREADY_JOINED": "",
 	"join.error.NOT_LOGGED_IN": "",
 	"join.VALID": "",
-	"join.giveTrust": "",
+	"join.friendSuggestion": "",
 	"subs.prefersToPlay": "",
 	"subs.canPlay": "",
 	"subs.canVC": "",
@@ -145,5 +146,6 @@
 	"progression.error.NEGATIVE_PROGRESSION": "",
 	"progression.error.NO_SE_SOURCE": "",
 	"progression.error.NO_DE_POSITIVE": "",
-	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": ""
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "",
+	"lfg.askCaptainToJoinQueue": ""
 }

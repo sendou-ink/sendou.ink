@@ -31,11 +31,12 @@ function getClockFormatOptions(
 }
 
 /**
- * Hook for formatting dates and times according to user preferences and locale.
+ * Hook for formatting dates, times, durations, and relative times
+ * according to user preferences and locale.
  * Respects the user's clock format preference (12h/24h) and current language.
  *
  * @example
- * const { formatDateTime, formatTime, formatDate } = useTimeFormat();
+ * const { formatDateTime, formatTime, formatDate, formatDuration, formatRelativeTime } = useTimeFormat();
  *
  * // Format full date and time
  * formatDateTime(new Date('2025-01-15T14:30:00'));
@@ -52,6 +53,16 @@ function getClockFormatOptions(
  * // Custom options
  * formatDateTime(new Date(), { dateStyle: 'full', timeStyle: 'short' });
  * // => "Wednesday, January 15, 2025 at 2:30 PM"
+ *
+ * // Format a duration (hours + minutes)
+ * formatDuration(1, 30);
+ * // => "1h 30m" (en) or locale-appropriate narrow format
+ *
+ * // Format relative time (picks the largest significant unit)
+ * formatRelativeTime(2, 15);
+ * // => "in 2 hr."
+ * formatRelativeTime(0, 45);
+ * // => "in 45 min."
  */
 export function useTimeFormat() {
 	const { i18n } = useTranslation();
@@ -122,12 +133,31 @@ export function useTimeFormat() {
 		});
 	};
 
+	const formatDuration = (hours: number, minutes: number) => {
+		return new Intl.DurationFormat(i18n.language, { style: "narrow" }).format({
+			hours,
+			minutes,
+		});
+	};
+
+	const formatRelativeTime = (hours: number, minutes: number) => {
+		const rtf = new Intl.RelativeTimeFormat(i18n.language, { style: "short" });
+
+		if (hours > 0) {
+			return rtf.format(hours, "hour");
+		}
+
+		return rtf.format(minutes, "minute");
+	};
+
 	return {
 		formatDateTime,
 		formatTime,
 		formatDate,
 		formatDateTimeSmartMinutes,
 		formatDistanceToNow,
+		formatDuration,
+		formatRelativeTime,
 	};
 }
 

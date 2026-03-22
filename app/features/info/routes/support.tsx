@@ -1,9 +1,9 @@
+import { Check } from "lucide-react";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Badge } from "~/components/Badge";
 import { LinkButton } from "~/components/elements/Button";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { Main } from "~/components/Main";
 import { metaTags } from "~/utils/remix";
 import {
@@ -12,8 +12,7 @@ import {
 } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
-
-import "../support.css";
+import styles from "./support.module.css";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -168,7 +167,7 @@ export default function SupportPage() {
 function SupportTable() {
 	const { t } = useTranslation();
 	return (
-		<div className="support__table">
+		<div className={styles.table}>
 			<div />
 			<div>Support</div>
 			<div>Supporter</div>
@@ -183,7 +182,7 @@ function SupportTable() {
 									{" "}
 									<SendouPopover
 										trigger={
-											<SendouButton className="support__popover-trigger">
+											<SendouButton className={styles.popoverTrigger}>
 												?
 											</SendouButton>
 										}
@@ -194,9 +193,7 @@ function SupportTable() {
 							) : null}
 						</div>
 						<div>
-							{perk.tier === 1 ? (
-								<CheckmarkIcon className="support__checkmark" />
-							) : null}
+							{perk.tier === 1 ? <Check className={styles.checkmark} /> : null}
 						</div>
 						{perk.name === "badge" ? (
 							<div>
@@ -208,9 +205,7 @@ function SupportTable() {
 							</div>
 						) : (
 							<div>
-								{perk.tier <= 2 ? (
-									<CheckmarkIcon className="support__checkmark" />
-								) : null}
+								{perk.tier <= 2 ? <Check className={styles.checkmark} /> : null}
 							</div>
 						)}
 						{perk.name === "badge" ? (
@@ -226,9 +221,7 @@ function SupportTable() {
 							</div>
 						) : (
 							<div>
-								{perk.tier <= 3 ? (
-									<CheckmarkIcon className="support__checkmark" />
-								) : null}
+								{perk.tier <= 3 ? <Check className={styles.checkmark} /> : null}
 							</div>
 						)}
 					</React.Fragment>

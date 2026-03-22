@@ -34,13 +34,6 @@ export const action = async ({ request }: { request: Request }) => {
 			});
 			break;
 		}
-		case "REMOVE_TRUST": {
-			await QSettingsRepository.deleteTrustedUser({
-				trustGiverUserId: user.id,
-				trustReceiverUserId: data.userToRemoveTrustFromId,
-			});
-			break;
-		}
 		default: {
 			assertUnreachable(data);
 		}

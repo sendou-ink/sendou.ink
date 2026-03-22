@@ -7,7 +7,8 @@
 	"tabs.seeds": "Seedninger",
 	"tabs.results": "",
 	"tabs.streams": "Streams ({{count}})",
-	"tabs.subs": "Suppleanter ({{count}})",
+	"tabs.subs": "Suppleanter",
+	"tabs.looking": "",
 	"pre.steps.header": "Fuldfør disse trin for at spille",
 	"pre.steps.name": "Holdnavn",
 	"pre.steps.roster": "Holdmedlemmer",
@@ -28,7 +29,7 @@
 	"pre.roster.header": "Udfyld holdmedlemslisten",
 	"pre.roster.footer": "Mindst {{atLeastCount}} holdmedlemmer kræves for at deltage. Der kan maks være {{maxCount}} på holdet",
 	"pre.roster.footer.noSubs": "",
-	"pre.roster.addTrusted.header": "Tilføj personer, som du har spillet med",
+	"pre.roster.addFriend.header": "",
 	"pre.roster.delete.button": "Fjern medlem",
 	"pre.roster.delete.header": "Medlem der fjernes",
 	"pre.pool.header": "Vælg banepulje",
@@ -122,7 +123,7 @@
 	"join.error.ALREADY_JOINED": "Du er allerede medlem af dette hold",
 	"join.error.NOT_LOGGED_IN": "Du skal logge på før at du kan blive medlem af et hold",
 	"join.VALID": "Bliv medlem af {{teamName}} i {{eventName}}?",
-	"join.giveTrust": "Giv tilladelse til {{name}}, så de uden din tilladelse kan tilføje dig til fremtidige turneringer?",
+	"join.friendSuggestion": "",
 	"subs.prefersToPlay": "Foretrækker at spille",
 	"subs.canPlay": "Kan spille",
 	"subs.canVC": "Kan snakke",
@@ -149,5 +150,6 @@
 	"progression.error.NEGATIVE_PROGRESSION": "",
 	"progression.error.NO_SE_SOURCE": "",
 	"progression.error.NO_DE_POSITIVE": "",
-	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": ""
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "",
+	"lfg.askCaptainToJoinQueue": ""
 }

@@ -14,13 +14,13 @@ import {
 	useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Search as SearchIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { Input } from "~/components/Input";
 import { MainSlotIcon } from "~/components/icons/MainSlot";
-import { SearchIcon } from "~/components/icons/Search";
 import { SideSlotIcon } from "~/components/icons/SideSlot";
 import { Placeholder } from "~/components/Placeholder";
 import type { Tables } from "~/db/tables";
@@ -36,7 +36,7 @@ import { WidgetSettingsForm } from "../components/WidgetSettingsForm";
 import { loader } from "../loaders/u.$identifier.edit-widgets.server";
 import styles from "./u.$identifier.edit-widgets.module.css";
 
-export { loader, action };
+export { action, loader };
 
 export default function EditWidgetsPage() {
 	const { t } = useTranslation(["user", "common"]);

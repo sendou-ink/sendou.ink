@@ -1,10 +1,11 @@
 import clsx from "clsx";
+import { X } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
-import { CrossIcon } from "~/components/icons/Cross";
 import type { CalendarEventTag } from "~/db/tables";
 import { tags as allTags } from "../calendar-constants";
+import styles from "./Tags.module.css";
 
 export function Tags({
 	tags,
@@ -24,24 +25,29 @@ export function Tags({
 	if (tags.length === 0) return null;
 
 	return (
-		<ul className={clsx("calendar__event__tags", { small, centered })}>
+		<ul
+			className={clsx(styles.tags, {
+				[styles.small]: small,
+				[styles.centered]: centered,
+			})}
+		>
 			{tags.map((tag) => (
 				<React.Fragment key={tag}>
 					<li
 						style={{ backgroundColor: allTags[tag].color }}
-						className="calendar__event__tag"
+						className={styles.tag}
 					>
 						{t(`tag.name.${tag}`)}
-						{onDelete && (
+						{onDelete ? (
 							<SendouButton
 								onPress={() => onDelete(tag)}
-								className="calendar__event__tag-delete-button"
-								icon={<CrossIcon />}
+								className={styles.tagDeleteButton}
+								icon={<X />}
 								variant="minimal"
 								aria-label="Remove date"
 								size="small"
 							/>
-						)}
+						) : null}
 					</li>
 				</React.Fragment>
 			))}

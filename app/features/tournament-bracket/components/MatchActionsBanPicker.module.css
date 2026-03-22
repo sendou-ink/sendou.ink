@@ -1,0 +1,85 @@
+.mapPoolPicker {
+	--map-width: 90px;
+	--map-height: 50px;
+}
+
+.divider::before,
+.divider::after {
+	border-bottom: 2px dotted var(--color-bg-higher);
+}
+
+.divider {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	text-transform: uppercase;
+	display: flex;
+	gap: var(--s-2);
+}
+
+.mapButton {
+	background-image: var(--map-image-url);
+	background-size: cover;
+	height: var(--map-height);
+	width: var(--map-width);
+	border: none;
+	background-color: transparent;
+	transition:
+		filter,
+		opacity 0.2s;
+	border-radius: var(--radius-box);
+}
+
+.mapButton:active {
+	transform: none;
+}
+
+.mapButtonGreyedOut {
+	filter: grayscale(100%) !important;
+	opacity: 0.4 !important;
+}
+
+.mapButtonIcon {
+	position: absolute;
+	top: 2px;
+	color: var(--color-success);
+	width: 48px;
+	height: 48px;
+	cursor: pointer;
+}
+
+.mapButtonIconError {
+	color: var(--color-error);
+}
+
+.mapButtonNumber {
+	position: absolute;
+	background-color: var(--color-text-accent);
+	border-radius: 100%;
+	width: 18px;
+	height: 18px;
+	display: grid;
+	place-items: center;
+	color: var(--color-text-inverse);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	top: -5px;
+	left: 0;
+}
+
+.mapButtonFrom {
+	position: absolute;
+	bottom: -15px;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+}
+
+.mapButtonContainer {
+	width: var(--map-width);
+	text-align: center;
+}
+
+.mapButtonLabel {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	font-weight: var(--weight-semi);
+}

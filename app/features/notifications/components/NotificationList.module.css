@@ -1,66 +1,65 @@
 .itemDivider {
-	margin-inline: var(--s-2-5);
+	margin-inline: var(--s-3);
 	border-width: 0.5px;
-	border-color: var(--border);
+	border-color: var(--color-bg-high);
 }
 
 .item {
-	line-height: 1.4;
-	padding: var(--s-1) var(--s-2-5);
+	padding: var(--s-1) var(--s-3);
 	display: grid;
 	grid-template-areas: "image header" "image timestamp";
 	grid-template-columns: 30px 1fr;
 	column-gap: var(--s-2);
-	padding-block: var(--s-2-5);
-	color: var(--text);
+	padding-block: var(--s-3);
+	color: var(--color-text);
 }
 
 .unseenDot {
-	background-color: var(--theme);
+	background-color: var(--color-text-accent);
 	border-radius: 100%;
 	width: 8px;
 	height: 8px;
 	position: absolute;
 	top: -1px;
 	left: -1px;
-	outline: 2px solid var(--theme-transparent);
+	outline: 2px solid var(--color-bg);
 }
 
 .imageContainer {
 	place-self: center;
 	grid-area: image;
-	border-radius: 100%;
+	border-radius: var(--radius-avatar);
 	width: 30px;
 	height: 30px;
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-high);
 	display: grid;
 	place-items: center;
 	position: relative;
 }
 
 .item:hover .imageContainer {
-	outline: 3px solid var(--theme-transparent);
+	outline: 3px solid var(--color-bg-higher);
 }
 
 .item:focus-within .imageContainer {
-	outline: 3px solid var(--theme-transparent);
+	outline: 3px solid var(--color-accent-low);
 }
 
 .itemImage {
 	width: 30px;
 	height: 30px;
-	border-radius: 100%;
+	border-radius: var(--radius-avatar);
 }
 
 .itemHeader {
 	grid-area: header;
-	font-size: var(--fonts-xsm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 }
 
 .timestamp {
 	grid-area: timestamp;
-	color: var(--text-lighter);
-	font-size: var(--fonts-xxs);
-	font-weight: var(--body);
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-body);
 }

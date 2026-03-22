@@ -1,8 +1,8 @@
 .overlay {
 	position: fixed;
 	inset: 0;
-	z-index: 10;
-	overflow-y: auto;
+	z-index: 20;
+	overflow: hidden;
 	background-color: rgba(0, 0, 0, 0.25);
 	display: flex;
 	min-height: 100%;
@@ -11,7 +11,6 @@
 	padding: 1rem;
 	text-align: center;
 	backdrop-filter: blur(10px); /* Adjust blur value as needed */
-	padding-block: var(--s-32);
 }
 
 .fullScreenOverlay {
@@ -35,17 +34,22 @@
 .modal {
 	width: 100%;
 	max-width: 28rem;
-	overflow: hidden;
+	max-height: 80dvh;
+	overflow-x: hidden;
+	overflow-y: auto;
 	border-radius: 1rem;
-	background-color: var(--bg-lighter-solid);
-	border: 2.5px solid var(--border);
+	border: 1px solid var(--color-border);
+	background-color: var(--color-bg);
 	padding: var(--s-6);
 	text-align: left;
 	vertical-align: middle;
 	box-shadow:
 		0 10px 15px -3px rgba(0, 0, 0, 0.1),
 		0 4px 6px -2px rgba(0, 0, 0, 0.05);
-	margin: auto;
+}
+
+:global(html[data-fuse="true"]) .modal {
+	max-height: 72dvh;
 }
 
 .fullScreenModal {
@@ -76,7 +80,7 @@
 }
 
 .headingContainer {
-	border-bottom: 2px solid var(--border);
+	border-bottom: var(--border-style);
 	padding-block-end: var(--s-2);
 	margin-block-end: var(--s-4);
 	display: flex;
@@ -90,5 +94,5 @@
 }
 
 .heading {
-	font-size: var(--fonts-lg);
+	font-size: var(--font-lg);
 }

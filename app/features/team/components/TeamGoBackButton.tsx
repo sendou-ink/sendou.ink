@@ -1,7 +1,7 @@
+import { ChevronLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useMatches } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
-import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
 import type { TeamLoaderData } from "~/features/team/loaders/t.$customUrl.server";
 import invariant from "~/utils/invariant";
 import { teamPage } from "~/utils/urls";
@@ -17,7 +17,7 @@ export function TeamGoBackButton() {
 		<div className="stack">
 			<LinkButton
 				to={teamPage(layoutData.team.customUrl)}
-				icon={<ArrowLeftIcon />}
+				icon={<ChevronLeft />}
 				variant="outlined"
 				size="small"
 				className="mr-auto"

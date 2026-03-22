@@ -9,6 +9,7 @@ import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { preparingSchema } from "../q-schemas.server";
+import { setGroupChatMetadata } from "../q-utils.server";
 
 export type SendouQPreparingAction = typeof action;
 
@@ -38,17 +39,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 			return redirect(SENDOUQ_LOOKING_PAGE);
 		}
-		case "ADD_TRUSTED": {
+		case "ADD_FRIEND": {
 			const available = await SQGroupRepository.findActiveGroupMembers();
 			if (available.some(({ userId }) => userId === data.id)) {
 				return { error: "taken" } as const;
 			}
 
 			errorToastIfFalsy(
-				(await SQGroupRepository.usersThatTrusted(user.id)).trusters.some(
-					(trusterUser) => trusterUser.id === data.id,
+				(await SQGroupRepository.friendsAndTeammates(user.id)).friends.some(
+					(friendUser) => friendUser.id === data.id,
 				),
-				"Not trusted",
+				"Not a friend",
 			);
 
 			await SQGroupRepository.addMember(ownGroup.id, {
@@ -56,12 +57,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				role: "MANAGER",
 			});
 
-			await SQGroupRepository.refreshTrust({
-				trustGiverUserId: data.id,
-				trustReceiverUserId: user.id,
-			});
-
 			await refreshSendouQInstance();
+
+			const updatedGroup = SendouQ.findOwnGroup(user.id);
+			if (updatedGroup?.chatCode) {
+				setGroupChatMetadata({
+					chatCode: updatedGroup.chatCode,
+					members: updatedGroup.members,
+				});
+			}
 
 			notify({
 				userIds: [data.id],

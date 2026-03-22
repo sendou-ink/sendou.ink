@@ -145,9 +145,9 @@ export const weaponParams = {
 			InkConsume: 0.016,
 		},
 		"100": {
-			Range_SpawnSpeed: 2.2,
+			Range_SpawnSpeed: 2.75,
 			Range_GoStraightStateEndMaxSpeed: 2.2698,
-			Range_GoStraightToBrakeStateFrame: 5,
+			Range_GoStraightToBrakeStateFrame: 4,
 			Range_FreeGravity: 0.016,
 			Range_ZRate: 2,
 			MoveSpeed: 0.079,
@@ -445,12 +445,6 @@ export const weaponParams = {
 			InkConsume_WeaponSwingParam: 0.085,
 		},
 		"1020": {
-			overwrites: {
-				ConsumeRt_Main: {
-					High: 0.5,
-					Mid: 0.7,
-				},
-			},
 			Range_SpawnSpeed: 2.0289,
 			Range_GoStraightToBrakeStateFrame: 9,
 			Range_FreeGravity: 0.04,
@@ -508,7 +502,7 @@ export const weaponParams = {
 			BodyParam_Damage: 250,
 			SwingUnitGroupParam_DamageParam_DamageMinValue: 200,
 			SwingUnitGroupParam_DamageParam_DamageMaxValue: 400,
-			InkConsume_WeaponSwingParam: 0.03,
+			InkConsume_WeaponSwingParam: 0.027,
 		},
 		"1120": {
 			Range_SpawnSpeed: 1.05,
@@ -599,7 +593,7 @@ export const weaponParams = {
 			DistanceMaxCharge: 19.564,
 			DistanceMinCharge: 19.564,
 			WeaponSpeedType: "Fast",
-			MoveSpeedFullCharge: 0.06,
+			MoveSpeedFullCharge: 0.068,
 			DamageParam_ValueFullCharge: 850,
 			DamageParam_ValueMaxCharge: 850,
 			DamageParam_ValueMinCharge: 300,
@@ -691,7 +685,7 @@ export const weaponParams = {
 			Range_BounceAfterMaxSpeed: 0.6,
 			Range_BurstFrame: 3,
 			MoveSpeed: 0.05,
-			DamageParam_ValueDirect: 300,
+			DamageParam_ValueDirect: 320,
 			InkRecoverStop: 40,
 			InkConsumeSlosher: 0.08,
 		},
@@ -981,7 +975,7 @@ export const weaponParams = {
 			MoveSpeed: 0.05,
 			DamageParam_ValueMax: 1190,
 			CanopyHP: 7000,
-			InkConsumeUmbrella_WeaponShelterCanopyParam: 0.3,
+			InkConsumeUmbrella_WeaponShelterCanopyParam: 0.23,
 			InkConsume_WeaponShelterShotgunParam: 0.11,
 		},
 		"6020": {
@@ -1117,7 +1111,7 @@ export const weaponParams = {
 	},
 	weaponKits: {
 		"0": {
-			SpecialPoint: 180,
+			SpecialPoint: 190,
 			subWeaponId: 6,
 			specialWeaponId: 11,
 		},
@@ -1137,7 +1131,7 @@ export const weaponParams = {
 			specialWeaponId: 7,
 		},
 		"20": {
-			SpecialPoint: 200,
+			SpecialPoint: 210,
 			subWeaponId: 2,
 			specialWeaponId: 12,
 		},
@@ -1167,7 +1161,7 @@ export const weaponParams = {
 			specialWeaponId: 19,
 		},
 		"40": {
-			SpecialPoint: 210,
+			SpecialPoint: 200,
 			subWeaponId: 1,
 			specialWeaponId: 1,
 		},
@@ -1182,7 +1176,7 @@ export const weaponParams = {
 			specialWeaponId: 17,
 		},
 		"45": {
-			SpecialPoint: 210,
+			SpecialPoint: 200,
 			subWeaponId: 1,
 			specialWeaponId: 1,
 		},
@@ -1192,7 +1186,7 @@ export const weaponParams = {
 			specialWeaponId: 14,
 		},
 		"47": {
-			SpecialPoint: 210,
+			SpecialPoint: 200,
 			subWeaponId: 1,
 			specialWeaponId: 1,
 		},
@@ -1277,7 +1271,7 @@ export const weaponParams = {
 			specialWeaponId: 3,
 		},
 		"201": {
-			SpecialPoint: 180,
+			SpecialPoint: 190,
 			subWeaponId: 5,
 			specialWeaponId: 11,
 		},
@@ -1287,12 +1281,12 @@ export const weaponParams = {
 			specialWeaponId: 3,
 		},
 		"210": {
-			SpecialPoint: 180,
+			SpecialPoint: 190,
 			subWeaponId: 7,
 			specialWeaponId: 2,
 		},
 		"211": {
-			SpecialPoint: 180,
+			SpecialPoint: 190,
 			subWeaponId: 9,
 			specialWeaponId: 18,
 		},
@@ -1337,7 +1331,7 @@ export const weaponParams = {
 			specialWeaponId: 8,
 		},
 		"251": {
-			SpecialPoint: 190,
+			SpecialPoint: 200,
 			subWeaponId: 12,
 			specialWeaponId: 9,
 		},
@@ -1427,7 +1421,7 @@ export const weaponParams = {
 			specialWeaponId: 2,
 		},
 		"1020": {
-			SpecialPoint: 190,
+			SpecialPoint: 200,
 			subWeaponId: 3,
 			specialWeaponId: 15,
 		},
@@ -1472,7 +1466,7 @@ export const weaponParams = {
 			specialWeaponId: 9,
 		},
 		"1101": {
-			SpecialPoint: 180,
+			SpecialPoint: 190,
 			subWeaponId: 10,
 			specialWeaponId: 11,
 		},
@@ -1697,7 +1691,7 @@ export const weaponParams = {
 			specialWeaponId: 1,
 		},
 		"4010": {
-			SpecialPoint: 200,
+			SpecialPoint: 210,
 			subWeaponId: 3,
 			specialWeaponId: 7,
 		},
@@ -1707,7 +1701,7 @@ export const weaponParams = {
 			specialWeaponId: 17,
 		},
 		"4015": {
-			SpecialPoint: 200,
+			SpecialPoint: 210,
 			subWeaponId: 3,
 			specialWeaponId: 7,
 		},
@@ -1757,7 +1751,7 @@ export const weaponParams = {
 			specialWeaponId: 12,
 		},
 		"5000": {
-			SpecialPoint: 170,
+			SpecialPoint: 180,
 			subWeaponId: 8,
 			specialWeaponId: 15,
 		},
@@ -1772,7 +1766,7 @@ export const weaponParams = {
 			specialWeaponId: 9,
 		},
 		"5010": {
-			SpecialPoint: 190,
+			SpecialPoint: 200,
 			subWeaponId: 1,
 			specialWeaponId: 12,
 		},
@@ -1787,7 +1781,7 @@ export const weaponParams = {
 			specialWeaponId: 2,
 		},
 		"5015": {
-			SpecialPoint: 190,
+			SpecialPoint: 200,
 			subWeaponId: 1,
 			specialWeaponId: 12,
 		},
@@ -2529,7 +2523,7 @@ export const weaponParams = {
 			ThrowDamage: [
 				{
 					Damage: 2200,
-					Distance: 4,
+					Distance: 3.6,
 				},
 				{
 					Damage: 600,

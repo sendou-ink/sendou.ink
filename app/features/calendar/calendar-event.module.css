@@ -1,0 +1,60 @@
+.day {
+	color: var(--color-text-high);
+}
+
+.times {
+	display: grid;
+	column-gap: var(--s-1-5);
+	font-weight: var(--weight-semi);
+	grid-template-columns: max-content 1fr;
+}
+
+.times > time {
+	height: 1.25rem;
+}
+
+.mapPoolSection {
+	display: flex;
+	max-width: 32rem;
+	flex-direction: column;
+	padding: var(--s-2);
+	margin: 0 auto;
+	gap: var(--s-4);
+}
+
+.createMapListLink {
+	display: flex;
+	width: max-content;
+	align-items: center;
+	margin: 0 auto;
+	font-size: var(--font-xs);
+	gap: var(--s-1-5);
+}
+
+.author {
+	display: flex;
+	align-items: center;
+	color: var(--color-text-high);
+	font-weight: var(--weight-semi);
+	gap: var(--s-1);
+}
+
+.resultsPlayers {
+	display: flex;
+	flex-wrap: wrap;
+	padding: 0;
+	gap: var(--s-3);
+	list-style: none;
+}
+
+.resultsSection {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	overflow-x: auto;
+}
+
+.resultsParticipantCount {
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+}

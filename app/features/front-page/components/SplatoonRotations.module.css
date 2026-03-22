@@ -1,0 +1,109 @@
+.rotationsContainer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.rotationsFooter {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.rotationsCredit {
+	font-size: var(--font-2xs);
+}
+
+.rotationsCredit a {
+	color: var(--color-text-high);
+	text-decoration: underline;
+}
+
+.rotationsScroll {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	overflow-x: auto;
+}
+
+.rotationCard {
+	flex: 1 1 0;
+	border-radius: var(--radius-box);
+	padding: var(--s-2);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+	min-width: max-content;
+	text-wrap: nowrap;
+}
+
+.rotationCardType {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.rotationCardProgress {
+	position: relative;
+	height: 18px;
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-field);
+	overflow: hidden;
+}
+
+.rotationCardProgressBar {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-field);
+}
+
+.rotationCardProgressStriped {
+	background-image: repeating-linear-gradient(
+		45deg,
+		transparent,
+		transparent 6px,
+		var(--color-bg) 6px,
+		var(--color-bg) 12px
+	);
+}
+
+.rotationCardProgressText {
+	position: relative;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+	font-size: var(--font-2xs);
+}
+
+.rotationCardStages {
+	display: flex;
+	gap: var(--s-1);
+}
+
+.rotationCardStageImage {
+	border-radius: var(--radius-field);
+	flex: 1;
+	min-width: 0;
+}
+
+.rotationCardNext {
+	height: 20px;
+	color: var(--color-text-high);
+
+	picture {
+		margin-inline: var(--s-0-5);
+		flex-shrink: 0;
+	}
+}
+
+.rotationCardNextInfo {
+	font-size: var(--font-xs);
+	display: flex;
+	align-items: center;
+	gap: var(--s-0-5);
+}

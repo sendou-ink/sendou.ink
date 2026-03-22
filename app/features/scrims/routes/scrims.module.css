@@ -2,72 +2,6 @@
 	min-height: 100vh;
 }
 
-.postTime {
-	border-radius: var(--rounded-sm);
-	background-color: var(--border);
-	text-transform: uppercase;
-	padding: var(--s-0-5) var(--s-2);
-	font-weight: var(--bold);
-	width: max-content;
-	display: flex;
-	gap: var(--s-0-5);
-}
-
-.postPrivateCell {
-	min-width: 24px;
-}
-
-.postPrivateCell svg {
-	width: 18px;
-}
-
-.postIcon {
-	min-width: 24px;
-}
-
-.postStatus {
-	display: flex;
-	gap: var(--s-1);
-	font-weight: var(--semi-bold);
-	padding-block: var(--s-1);
-	padding-inline: var(--s-2);
-	width: max-content;
-	border-radius: var(--rounded-sm);
-}
-
-.postStatusConfirmed {
-	background-color: var(--theme-success-transparent);
-}
-
-.postStatus svg {
-	width: 18px;
-}
-
-.postStatusConfirmed svg {
-	fill: var(--theme-success);
-}
-
-.postStatusPending {
-	background-color: var(--theme-info-transparent);
-}
-
-.postStatusPending svg {
-	fill: var(--theme-info);
-}
-
-.postStatusCanceled {
-	background-color: var(--theme-warning-transparent);
-}
-
-.postStatusCanceled svg {
-	fill: var(--theme-warning);
-}
-
-.postFloatingActionCell {
-	position: sticky;
-	right: 0;
-}
-
 .cardsGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -81,5 +15,5 @@
 }
 
 .filterButtons button:not(.active) {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }

@@ -1,6 +1,9 @@
+import { add } from "date-fns";
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import { datePlaceholder } from "~/features/chat/chat-utils";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
@@ -15,7 +18,8 @@ import {
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { scrimsPage } from "~/utils/urls";
+import { navIconUrl, scrimPage, scrimsPage } from "~/utils/urls";
+import * as Scrim from "../core/Scrim";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { type newRequestSchema, scrimsActionSchema } from "../scrims-schemas";
 import { generateTimeOptions } from "../scrims-utils";
@@ -105,6 +109,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			errorToastIfFalsy(!request.isAccepted, "Request is already accepted");
 
 			await ScrimPostRepository.acceptRequest(data.scrimPostRequestId);
+
+			const fullPost = await ScrimPostRepository.findById(post.id);
+			if (fullPost?.chatCode) {
+				ChatSystemMessage.setMetadata({
+					chatCode: fullPost.chatCode,
+					header: datePlaceholder(
+						databaseTimestampToDate(request.at ?? post.at),
+					),
+					subtitle: "Scrim",
+					url: scrimPage(post.id),
+					imageUrl: `${navIconUrl("scrims")}.avif`,
+					participantUserIds: Scrim.participantIdsListFromAccepted(fullPost),
+					expiresAt: add(databaseTimestampToDate(request.at ?? post.at), {
+						hours: 3,
+					}),
+				});
+			}
 
 			notify({
 				userIds: [

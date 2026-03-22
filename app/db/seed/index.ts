@@ -37,8 +37,8 @@ import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.s
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
 import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/sendouq-settings/q-settings-constants";
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
@@ -56,7 +56,6 @@ import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import { stagesObj as s, stageIds } from "~/modules/in-game-lists/stage-ids";
 import type {
 	AbilityType,
-	MainWeaponId,
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
@@ -70,6 +69,7 @@ import {
 } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
+import { randomTeamName } from "~/utils/team-name";
 import { mySlugify } from "~/utils/urls";
 import {
 	getArtFilename,
@@ -219,7 +219,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	calendarEventWithToToolsTeamsDepths,
 	calendarEventWithToToolsLUTI,
 	calendarEventWithToToolsTeamsLUTI,
-	tournamentSubs,
+	variation === "NO_TOURNAMENT_TEAMS" ? undefined : tournamentLfgGroups,
 	adminBuilds,
 	manySplattershotBuilds,
 	detailedTeam(variation),
@@ -237,7 +237,9 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	variation === "NO_SCRIMS" ? undefined : scrimPostRequests,
 	associations,
 	notifications,
+	() => friendships(variation),
 	liveStreams,
+	splatoonRotations,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -277,6 +279,7 @@ function wipeDB() {
 		"MapPoolMap",
 		"TournamentMatchGameResult",
 		"TournamentTeamCheckIn",
+		"TournamentLFGLike",
 		"TournamentTeam",
 		"TournamentStage",
 		"TournamentResult",
@@ -296,6 +299,8 @@ function wipeDB() {
 		"Notification",
 		"BanLog",
 		"ModNote",
+		"Friendship",
+		"FriendRequest",
 		"User",
 		"PlusSuggestion",
 		"PlusVote",
@@ -304,6 +309,7 @@ function wipeDB() {
 		"TournamentOrganization",
 		"SeedingSkill",
 		"LiveStream",
+		"SplatoonRotation",
 	];
 
 	for (const table of tablesToDelete) {
@@ -891,9 +897,7 @@ function calendarEvents() {
 			)
 			.run({
 				id,
-				name: `${R.capitalize(faker.word.adjective())} ${R.capitalize(
-					faker.word.noun(),
-				)}`,
+				name: randomTeamName(),
 				description: faker.lorem.paragraph(),
 				discordInviteCode: faker.lorem.word(),
 				bracketUrl: faker.internet.url(),
@@ -1009,7 +1013,7 @@ async function calendarEventResults() {
 				.fill(null)
 				.map((_, i) => ({
 					placement: i + 1,
-					teamName: R.capitalize(faker.word.noun()),
+					teamName: randomTeamName(),
 					players: new Array(
 						faker.helpers.arrayElement([1, 2, 3, 4, 4, 4, 4, 4, 5, 6]),
 					)
@@ -1371,12 +1375,7 @@ function calendarEventWithToToolsToSetMapPool() {
 	}
 }
 
-const validTournamentTeamName = () => {
-	while (true) {
-		const name = faker.music.songName();
-		if (name.length <= TOURNAMENT.TEAM_NAME_MAX_LENGTH) return name;
-	}
-};
+const validTournamentTeamName = () => randomTeamName();
 
 const availableStages: StageId[] = [1, 2, 3, 4, 6, 7, 8, 10, 11];
 const availablePairs = rankedModesShort
@@ -1485,12 +1484,14 @@ function calendarEventWithToToolsTeams(
         "tournamentTeamId",
         "userId",
         "isOwner",
-        "createdAt"
+        "createdAt",
+        "role"
       ) values (
         $tournamentTeamId,
         $userId,
         $isOwner,
-        $createdAt
+        $createdAt,
+        $role
       )
       `,
 				)
@@ -1499,6 +1500,7 @@ function calendarEventWithToToolsTeams(
 					userId,
 					isOwner: i === 0 ? 1 : 0,
 					createdAt: dateToDatabaseTimestamp(yesterday),
+					role: i === 0 ? "OWNER" : "REGULAR",
 				});
 		}
 
@@ -1561,73 +1563,113 @@ function calendarEventWithToToolsTeams(
 	}
 }
 
-function tournamentSubs() {
-	for (let id = 100; id < 120; id++) {
-		const includedWeaponIds: MainWeaponId[] = [];
+async function tournamentLfgGroups() {
+	const availableUsers = userIdsInAscendingOrderById().slice(300);
 
-		sql
-			.prepare(
-				/* sql */ `
-      insert into "TournamentSub" (
-        "userId",
-        "tournamentId",
-        "canVc",
-        "bestWeapons",
-        "okWeapons",
-        "message",
-        "visibility"
-      ) values (
-        @userId,
-        @tournamentId,
-        @canVc,
-        @bestWeapons,
-        @okWeapons,
-        @message,
-        @visibility
-      )
-    `,
-			)
-			.run({
-				userId: id,
-				tournamentId: 1,
-				canVc: Number(faker.number.float(1) > 0.5),
-				bestWeapons: nullFilledArray(
-					faker.helpers.arrayElement([1, 1, 1, 2, 2, 3, 4, 5]),
-				)
-					// biome-ignore lint/suspicious/useIterableCallbackReturn: Biome 2.3.1 upgrade
-					.map(() => {
-						while (true) {
-							const weaponId = R.sample(mainWeaponIds, 1)[0]!;
-							if (!includedWeaponIds.includes(weaponId)) {
-								includedWeaponIds.push(weaponId);
-								return weaponId;
-							}
-						}
-					})
-					.join(","),
-				okWeapons:
-					faker.number.float(1) > 0.5
-						? null
-						: nullFilledArray(
-								faker.helpers.arrayElement([1, 1, 1, 2, 2, 3, 4, 5]),
-							)
-								// biome-ignore lint/suspicious/useIterableCallbackReturn: Biome 2.3.1 upgrade
-								.map(() => {
-									while (true) {
-										const weaponId = R.sample(mainWeaponIds, 1)[0]!;
-										if (!includedWeaponIds.includes(weaponId)) {
-											includedWeaponIds.push(weaponId);
-											return weaponId;
-										}
-									}
-								})
-								.join(","),
-				message: faker.number.float(1) > 0.5 ? null : faker.lorem.paragraph(),
-				visibility: id < 105 ? "+1" : id < 110 ? "+2" : id < 115 ? "+2" : "ALL",
-			});
+	const MAX_GROUP_SIZE = 6;
+
+	// Add admin's friends to tournament LFG so sidebar shows tournament friends
+	for (const friendId of SENDOU_FRIEND_IDS_IN_TOURNAMENT_LFG) {
+		await TournamentLFGRepository.createPlaceholderTeam({
+			tournamentId: 1,
+			userId: friendId,
+		});
 	}
 
-	return null;
+	const tournaments = [1, 2, 3];
+
+	let userIndex = 0;
+	for (const tournamentId of tournaments) {
+		const users = availableUsers.slice(userIndex, userIndex + 8);
+		userIndex += 8;
+
+		// Group 1: solo placeholder, has note, isStayAsSub=1
+		const { id: team1Id } = await TournamentLFGRepository.createPlaceholderTeam(
+			{
+				tournamentId,
+				userId: users[0],
+				isStayAsSub: true,
+			},
+		);
+		await TournamentLFGRepository.updateTeamNote({
+			teamId: team1Id,
+			value: "Looking for a team, can play any role",
+		});
+
+		// Group 2: solo placeholder
+		const { id: team2Id } = await TournamentLFGRepository.createPlaceholderTeam(
+			{
+				tournamentId,
+				userId: users[1],
+			},
+		);
+
+		// Group 3: solo placeholder
+		const { id: team3Id } = await TournamentLFGRepository.createPlaceholderTeam(
+			{
+				tournamentId,
+				userId: users[2],
+			},
+		);
+
+		// Group 4: solo placeholder
+		const { id: team4Id } = await TournamentLFGRepository.createPlaceholderTeam(
+			{
+				tournamentId,
+				userId: users[3],
+			},
+		);
+
+		// Group 5: 2-member group (merged from two placeholders)
+		const { id: mergeTarget1 } =
+			await TournamentLFGRepository.createPlaceholderTeam({
+				tournamentId,
+				userId: users[4],
+			});
+		const { id: mergeSource1 } =
+			await TournamentLFGRepository.createPlaceholderTeam({
+				tournamentId,
+				userId: users[5],
+			});
+		await TournamentLFGRepository.mergeTeams({
+			survivingTeamId: mergeTarget1,
+			otherTeamId: mergeSource1,
+			maxGroupSize: MAX_GROUP_SIZE,
+		});
+
+		// Group 6: 2-member group (merged from two placeholders)
+		const { id: mergeTarget2 } =
+			await TournamentLFGRepository.createPlaceholderTeam({
+				tournamentId,
+				userId: users[6],
+			});
+		const { id: mergeSource2 } =
+			await TournamentLFGRepository.createPlaceholderTeam({
+				tournamentId,
+				userId: users[7],
+			});
+		await TournamentLFGRepository.mergeTeams({
+			survivingTeamId: mergeTarget2,
+			otherTeamId: mergeSource2,
+			maxGroupSize: MAX_GROUP_SIZE,
+		});
+
+		// Team 1 -> Team 2 (one-way like)
+		await TournamentLFGRepository.addLike({
+			likerTeamId: team1Id,
+			targetTeamId: team2Id,
+		});
+		// Team 2 -> Team 1 (mutual — tests invitation UI)
+		await TournamentLFGRepository.addLike({
+			likerTeamId: team2Id,
+			targetTeamId: team1Id,
+		});
+		// Team 3 -> Team 4 (one-way like)
+		await TournamentLFGRepository.addLike({
+			likerTeamId: team3Id,
+			targetTeamId: team4Id,
+		});
+	}
 }
 
 const randomAbility = (legalTypes: AbilityType[]) => {
@@ -1821,12 +1863,7 @@ function otherTeams() {
 	);
 
 	for (let i = 3; i < 50; i++) {
-		const teamName =
-			i === 3
-				? "Team Olive"
-				: `${R.capitalize(faker.word.adjective())} ${R.capitalize(
-						faker.word.noun(),
-					)}`;
+		const teamName = i === 3 ? "Team Olive" : randomTeamName();
 		const teamCustomUrl = mySlugify(teamName);
 
 		sql
@@ -2692,8 +2729,7 @@ async function notifications() {
 		{
 			type: "TO_CHECK_IN_OPENED",
 			meta: { tournamentId: 1, tournamentName: "PICNIC #2" },
-			pictureUrl:
-				"http://localhost:5173/static-assets/img/tournament-logos/pn.png",
+			pictureUrl: "/static-assets/img/tournament-logos/pn.png",
 		},
 	];
 
@@ -2795,6 +2831,62 @@ async function organization() {
 		.run();
 }
 
+const SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS = [150, 151, 152, 153];
+const SENDOU_FRIEND_IDS_IN_TOURNAMENT_LFG = [100, 101];
+const SENDOU_FRIEND_IDS_OTHER = [102, 103];
+
+async function friendships(variation?: SeedVariation | null) {
+	const allFriendIds = [
+		...SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS,
+		...SENDOU_FRIEND_IDS_IN_TOURNAMENT_LFG,
+		...SENDOU_FRIEND_IDS_OTHER,
+	];
+
+	for (const friendId of allFriendIds) {
+		const userOneId = Math.min(ADMIN_ID, friendId);
+		const userTwoId = Math.max(ADMIN_ID, friendId);
+
+		sql
+			.prepare(
+				/* sql */ `
+				insert into "Friendship" ("userOneId", "userTwoId")
+				values (@userOneId, @userTwoId)
+			`,
+			)
+			.run({ userOneId, userTwoId });
+	}
+
+	if (variation === "NO_SQ_GROUPS") return;
+
+	for (const friendId of SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS) {
+		const group = await SQGroupRepository.createGroup({
+			status: "ACTIVE",
+			userId: friendId,
+		});
+
+		const additionalMemberCount = faker.helpers.arrayElement([0, 1, 2]);
+		const additionalMembers = [200, 201, 202, 203, 204, 205].slice(
+			0,
+			additionalMemberCount,
+		);
+
+		for (const memberId of additionalMembers) {
+			sql
+				.prepare(
+					/* sql */ `
+					insert into "GroupMember" ("groupId", "userId", "role")
+					values (@groupId, @userId, @role)
+				`,
+				)
+				.run({
+					groupId: group.id,
+					userId: memberId + (friendId - 150) * 10,
+					role: "REGULAR",
+				});
+		}
+	}
+}
+
 function liveStreams() {
 	const userIds = userIdsInAscendingOrderById();
 
@@ -2859,5 +2951,77 @@ function liveStreams() {
 				thumbnailUrl,
 				twitch,
 			});
+	}
+}
+
+function splatoonRotations() {
+	const nowUnix = Math.floor(Date.now() / 1000);
+	const TWO_HOURS = 2 * 60 * 60;
+
+	const currentStart = nowUnix - (nowUnix % TWO_HOURS);
+	const currentEnd = currentStart + TWO_HOURS;
+	const nextStart = currentEnd;
+	const nextEnd = nextStart + TWO_HOURS;
+
+	const rotationData = [
+		{
+			type: "SERIES",
+			mode: "SZ",
+			stageId1: 0,
+			stageId2: 3,
+			startTime: currentStart,
+			endTime: currentEnd,
+		},
+		{
+			type: "SERIES",
+			mode: "TC",
+			stageId1: 5,
+			stageId2: 8,
+			startTime: nextStart,
+			endTime: nextEnd,
+		},
+		{
+			type: "OPEN",
+			mode: "RM",
+			stageId1: 1,
+			stageId2: 4,
+			startTime: currentStart,
+			endTime: currentEnd,
+		},
+		{
+			type: "OPEN",
+			mode: "CB",
+			stageId1: 6,
+			stageId2: 9,
+			startTime: nextStart,
+			endTime: nextEnd,
+		},
+		{
+			type: "X",
+			mode: "CB",
+			stageId1: 2,
+			stageId2: 7,
+			startTime: currentStart,
+			endTime: currentEnd,
+		},
+		{
+			type: "X",
+			mode: "SZ",
+			stageId1: 10,
+			stageId2: 11,
+			startTime: nextStart,
+			endTime: nextEnd,
+		},
+	];
+
+	for (const rotation of rotationData) {
+		sql
+			.prepare(
+				`
+			insert into "SplatoonRotation" ("type", "mode", "stageId1", "stageId2", "startTime", "endTime")
+			values ($type, $mode, $stageId1, $stageId2, $startTime, $endTime)
+			`,
+			)
+			.run(rotation);
 	}
 }

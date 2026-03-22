@@ -38,6 +38,7 @@ export function InputFormField({
 				{leftAddon ? <span className="input-addon">{leftAddon}</span> : null}
 				<input
 					id={id}
+					className={leftAddon ? "in-container" : undefined}
 					type={inputType}
 					value={value}
 					onChange={(e) => onChange(e.target.value)}

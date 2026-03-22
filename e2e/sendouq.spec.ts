@@ -18,7 +18,7 @@ import {
 } from "~/utils/urls";
 
 test.describe("SendouQ", () => {
-	test("Group preparation flow - add trusted users and users via invite link", async ({
+	test("Group preparation flow - add friends and users via invite link", async ({
 		page,
 	}) => {
 		await seed(page, "NO_SQ_GROUPS");
@@ -52,15 +52,15 @@ test.describe("SendouQ", () => {
 
 		// -----------------
 
-		// Add trusted user
+		// Add friend
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: SENDOUQ_PREPARING_PAGE });
-		const trustedUserSelect = page.locator('select[name="id"]');
-		await trustedUserSelect.selectOption({ index: 1 }); // Select first trusted user
+		const friendUserSelect = page.locator('select[name="id"]');
+		await friendUserSelect.selectOption({ index: 1 }); // Select first friend
 
-		// Find the add button with ADD_TRUSTED action and wait for it to be enabled
+		// Find the add button with ADD_FRIEND action and wait for it to be enabled
 		const addMemberButton = page.locator(
-			'button[type="submit"][value="ADD_TRUSTED"]',
+			'button[type="submit"][value="ADD_FRIEND"]',
 		);
 		await expect(addMemberButton).toBeEnabled();
 		await addMemberButton.click();

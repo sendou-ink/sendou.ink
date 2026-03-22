@@ -1,6 +1,6 @@
+import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
-import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
 import type { Tables } from "~/db/tables";
 import styles from "./SubPageHeader.module.css";
 
@@ -21,7 +21,7 @@ export function SubPageHeader({
 					className={styles.backButton}
 					aria-label="Back to profile"
 				>
-					<ArrowLeftIcon className={styles.backIcon} />
+					<ArrowLeft className={styles.backIcon} />
 				</Link>
 				<Link to={backTo} className={styles.userInfo}>
 					<Avatar user={user} size="xs" className={styles.avatar} />

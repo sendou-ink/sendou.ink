@@ -81,5 +81,13 @@
 	"filter.applyAndDefault": "Aplicar y establecer por defecto",
 	"forms.draft": "Borrador",
 	"forms.draftInfo": "Los torneos en borrador están ocultos y solo son visibles para los organizadores. El torneo debe abrirse (desactivando esta opción) antes de que pueda iniciarse cualquier cuadro.",
-	"forms.draftBracketStartBlocked": "El torneo está en modo borrador. Edita el torneo y desactiva la opción de borrador antes de iniciar el cuadro."
+	"forms.draftBracketStartBlocked": "El torneo está en modo borrador. Edita el torneo y desactiva la opción de borrador antes de iniciar el cuadro.",
+	"events.title": "",
+	"events.view.registered": "",
+	"events.view.hosting": "",
+	"events.view.scrims": "",
+	"events.view.saved": "",
+	"events.empty": "",
+	"events.emptyAll": "",
+	"events.findOnCalendar": ""
 }

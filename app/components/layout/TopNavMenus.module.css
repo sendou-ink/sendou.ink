@@ -1,0 +1,62 @@
+.container {
+	display: none;
+	align-items: center;
+
+	@media screen and (min-width: 600px) {
+		display: flex;
+	}
+}
+
+.menuButton {
+	display: flex;
+	align-items: center;
+	padding: 0 var(--s-2);
+	height: var(--field-size-sm);
+	border: none;
+	border-radius: var(--radius-field);
+	background: transparent;
+	color: var(--color-text);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.menuButton:focus-visible {
+	outline: var(--focus-ring);
+	outline-offset: 1px;
+}
+
+.menuPopover {
+	background-color: var(--color-bg-high);
+}
+
+.menuContent {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--s-0-5);
+}
+
+.menuItem {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-1-5) var(--s-2);
+	border-radius: var(--radius-field);
+	color: var(--color-text);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	text-decoration: none;
+	transition:
+		background-color 0.15s,
+		color 0.15s;
+
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-higher);
+	}
+}
+
+.menuItemIcon {
+	flex-shrink: 0;
+}

@@ -1,31 +1,32 @@
 .card {
 	border: var(--border-style);
-	border-radius: var(--rounded-xs);
+	border-radius: var(--radius-box);
 	margin: 0;
 	padding: 0;
 }
 
 .header {
+	--header-border-radius: calc(var(--radius-field) - 2px);
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
 	padding: var(--s-2) var(--s-3);
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-higher);
 	border-bottom: var(--border-style);
-	border-radius: var(--rounded-xs) var(--rounded-xs) 0 0;
+	border-radius: var(--header-border-radius) var(--header-border-radius) 0 0;
 }
 
 .dragHandle {
 	width: var(--s-5);
 	height: var(--s-5);
 	cursor: grab;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .headerLabel {
 	flex: 1;
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 }
 
 .content {

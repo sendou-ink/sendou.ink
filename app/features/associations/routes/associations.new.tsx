@@ -6,6 +6,7 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { associationsPage } from "~/utils/urls";
 
 import { action } from "../actions/associations.new.server";
+
 export { action };
 
 export const handle: SendouRouteHandle = {

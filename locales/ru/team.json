@@ -42,6 +42,7 @@
 	"forms.info.tag": "",
 	"forms.errors.duplicateName": "Уже существует команда с таким названием",
 	"forms.errors.noOnlySpecialCharacters": "",
+	"forms.customTheme.header": "",
 	"roster.teamFull": "Команда заполнена",
 	"roster.inviteLink.header": "Поделитесь ссылкой на приглашение, чтобы добавить участников",
 	"roster.members.header": "Участники",

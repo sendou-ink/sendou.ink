@@ -7,7 +7,8 @@
 	"tabs.seeds": "Seed",
 	"tabs.results": "Resultati",
 	"tabs.streams": "Stream ({{count}})",
-	"tabs.subs": "Sub ({{count}})",
+	"tabs.subs": "Sub",
+	"tabs.looking": "",
 	"pre.steps.header": "Completa questi passaggi per giocare",
 	"pre.steps.name": "Nome team",
 	"pre.steps.roster": "Roster completo",
@@ -28,7 +29,7 @@
 	"pre.roster.header": "Riempi roster",
 	"pre.roster.footer": "Sono necessari almeno {{atLeastCount}} membri per partecipare. La dimensione massima del roster è {{maxCount}}",
 	"pre.roster.footer.noSubs": "",
-	"pre.roster.addTrusted.header": "Aggiungi persone con cui hai giocato",
+	"pre.roster.addFriend.header": "",
 	"pre.roster.delete.button": "Elimina membro",
 	"pre.roster.delete.header": "Membro da eliminare",
 	"pre.pool.header": "Scegli pool mappe",
@@ -124,7 +125,7 @@
 	"join.error.ALREADY_JOINED": "Sei già membro di questo team.",
 	"join.error.NOT_LOGGED_IN": "Devi aver fatto l'accesso per unirti a un team.",
 	"join.VALID": "Unirsi a {{teamName}} per {{eventName}}?",
-	"join.giveTrust": "Fidarsi di {{name}} per aggiungerti da sé in tornei futuri?",
+	"join.friendSuggestion": "",
 	"subs.prefersToPlay": "Preferisce giocare",
 	"subs.canPlay": "Può giocare",
 	"subs.canVC": "Può fare VC",
@@ -151,5 +152,6 @@
 	"progression.error.NEGATIVE_PROGRESSION": "La progressione negativa è disponibile solo in doppia eliminazione",
 	"progression.error.NO_SE_SOURCE": "Eliminazione singola non è un bracket sorgente valido",
 	"progression.error.NO_DE_POSITIVE": "Doppia eliminazione non è valida per progressione positiva",
-	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": ""
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "",
+	"lfg.askCaptainToJoinQueue": ""
 }

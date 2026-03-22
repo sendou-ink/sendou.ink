@@ -1,11 +1,10 @@
 import clsx from "clsx";
+import { Check, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
 import { ModeImage, StageImage } from "~/components/Image";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
-import { CrossIcon } from "~/components/icons/Cross";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { TournamentRoundMaps } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
@@ -17,6 +16,7 @@ import { stageImageUrl } from "~/utils/urls";
 import * as PickBan from "../core/PickBan";
 import type { TournamentDataTeam } from "../core/Tournament.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import styles from "./MatchActionsBanPicker.module.css";
 
 export function MatchActionsBanPicker({
 	teams,
@@ -130,8 +130,8 @@ function MapPicker({
 					.sort((a, b) => a.stageId - b.stageId);
 
 				return (
-					<div key={mode} className="map-pool-picker stack sm">
-						<Divider className="map-pool-picker__divider">
+					<div key={mode} className={clsx(styles.mapPoolPicker, "stack sm")}>
+						<Divider className={styles.divider}>
 							<ModeImage mode={mode} size={32} />
 						</Divider>
 						<div
@@ -200,10 +200,12 @@ function MapButton({
 	const { t } = useTranslation(["game-misc"]);
 
 	return (
-		<div className="stack items-center relative">
+		<div
+			className={clsx("stack items-center relative", styles.mapButtonContainer)}
+		>
 			<button
-				className={clsx("map-pool-picker__map-button", {
-					"map-pool-picker__map-button__greyed-out": selected || disabled,
+				className={clsx(styles.mapButton, {
+					[styles.mapButtonGreyedOut]: selected || disabled,
 				})}
 				style={{ "--map-image-url": `url("${stageImageUrl(stageId)}.png")` }}
 				onClick={onClick}
@@ -212,20 +214,15 @@ function MapButton({
 				data-testid={!disabled && onClick ? "pick-ban-button" : undefined}
 			/>
 			{selected ? (
-				<CheckmarkIcon
-					className="map-pool-picker__map-button__icon"
-					onClick={onClick}
-				/>
+				<Check className={styles.mapButtonIcon} onClick={onClick} />
 			) : null}
 			{disabled ? (
-				<CrossIcon className="map-pool-picker__map-button__icon map-pool-picker__map-button__icon__error" />
+				<X className={clsx(styles.mapButtonIcon, styles.mapButtonIconError)} />
 			) : null}
-			{number ? (
-				<span className="map-pool-picker__map-button__number">{number}</span>
-			) : null}
+			{number ? <span className={styles.mapButtonNumber}>{number}</span> : null}
 			{from ? (
 				<span
-					className={clsx("map-pool-picker__map-button__from", {
+					className={clsx(styles.mapButtonFrom, {
 						"text-theme": from === "BOTH",
 						"text-success": from === "US",
 						"text-error": from === "THEM",
@@ -234,8 +231,8 @@ function MapButton({
 					{from === "BOTH" ? "Both" : from === "THEM" ? "Them" : "Us"}
 				</span>
 			) : null}
-			<div className="map-pool-picker__map-button__label">
-				{t(`game-misc:STAGE_${stageId}`)}
+			<div className={styles.mapButtonLabel}>
+				{t(`game-misc:STAGE_${stageId}`).split(" ")[0]}
 			</div>
 		</div>
 	);

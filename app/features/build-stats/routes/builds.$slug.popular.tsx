@@ -14,6 +14,7 @@ import {
 import { metaTags, type SerializeFrom } from "../../../utils/remix";
 
 import { loader } from "../loaders/builds.$slug.popular.server";
+
 export { loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
@@ -44,11 +45,6 @@ export const handle: SendouRouteHandle = {
 				imgPath: outlinedMainWeaponImageUrl(data.meta.weaponId),
 				href: weaponBuildPage(data.meta.slug),
 				type: "IMAGE",
-			},
-			{
-				href: "/",
-				text: data.meta.breadcrumbText,
-				type: "TEXT",
 			},
 		];
 	},

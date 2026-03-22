@@ -1,4 +1,5 @@
 import { FieldError as ReactAriaFieldError } from "react-aria-components";
+import styles from "../FormMessage.module.css";
 
 export function SendouFieldError({
 	children,
@@ -8,7 +9,7 @@ export function SendouFieldError({
 	id?: string;
 }) {
 	return (
-		<ReactAriaFieldError className="error-message" id={id}>
+		<ReactAriaFieldError className={styles.error} id={id}>
 			{children}
 		</ReactAriaFieldError>
 	);

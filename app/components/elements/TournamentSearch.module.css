@@ -1,8 +1,8 @@
 .item {
-	font-size: var(--fonts-xsm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 	padding: var(--s-1-5);
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	height: 33px;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -29,7 +29,6 @@
 }
 
 .selectValue {
-	max-width: calc(var(--select-width) - 55px);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
@@ -39,14 +38,14 @@
 }
 
 button:disabled .selectValue {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-style: italic;
 }
 
 .placeholder {
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
-	color: var(--text-lighter);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
 	text-align: center;
 	display: grid;
 	place-items: center;
@@ -55,8 +54,8 @@ button:disabled .selectValue {
 }
 
 .itemAdditionalText {
-	font-size: var(--fonts-xxsm);
-	color: var(--text-lighter);
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
 }
 
 button .itemAdditionalText {
@@ -66,6 +65,6 @@ button .itemAdditionalText {
 .logo {
 	width: 24px;
 	height: 24px;
-	border-radius: var(--rounded-sm);
+	border-radius: var(--radius-field);
 	object-fit: cover;
 }

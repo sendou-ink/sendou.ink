@@ -14,17 +14,17 @@
 }
 
 .categoryLabel {
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
-	color: var(--text-lighter);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
 }
 
 .categoryPill {
 	display: flex;
 	align-items: center;
-	background-color: var(--bg-lightest);
-	border: 2px solid var(--border);
-	border-radius: var(--rounded-full);
+	background-color: var(--color-bg-high);
+	border: 2px solid var(--color-border);
+	border-radius: var(--radius-full);
 	overflow-x: auto;
 	overflow-y: hidden;
 	max-width: 100%;
@@ -37,7 +37,7 @@
 	align-items: center;
 	gap: var(--s-1);
 	padding: var(--s-1) var(--s-4);
-	border-left: 1.5px solid var(--border);
+	border-left: 1.5px solid var(--color-border);
 	flex-shrink: 0;
 }
 
@@ -46,7 +46,7 @@
 }
 
 .categoryName {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
 	white-space: nowrap;
 }

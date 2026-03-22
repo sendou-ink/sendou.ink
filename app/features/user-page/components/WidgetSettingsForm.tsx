@@ -282,6 +282,7 @@ function TierListField({ value, onChange }: CustomFieldRenderProps<string>) {
 			<div className="input-container">
 				<div className="input-addon">/tier-list-maker?</div>
 				<input
+					className="in-container"
 					id="tier-list-searchParams"
 					value={value ?? ""}
 					onChange={handleChange}

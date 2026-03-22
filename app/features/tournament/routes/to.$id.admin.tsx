@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
@@ -10,7 +11,6 @@ import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Input } from "~/components/Input";
-import { TrashIcon } from "~/components/icons/Trash";
 import { Label } from "~/components/Label";
 import { containerClassName } from "~/components/Main";
 import { Redirect } from "~/components/Redirect";
@@ -268,7 +268,7 @@ function TeamActions() {
 				method="post"
 				className="stack horizontal sm items-end flex-wrap"
 			>
-				<div>
+				<div className="flex-same-size">
 					<label htmlFor="action">Action</label>
 					<select
 						id="action"
@@ -288,7 +288,7 @@ function TeamActions() {
 					</select>
 				</div>
 				{selectedAction.inputs.includes("REGISTERED_TEAM") ? (
-					<div>
+					<div className="flex-same-size">
 						<label htmlFor="teamId">Team</label>
 						<select
 							id="teamId"
@@ -308,13 +308,13 @@ function TeamActions() {
 					</div>
 				) : null}
 				{selectedAction.inputs.includes("TEAM_NAME") ? (
-					<div>
+					<div className="flex-same-size">
 						<label htmlFor="teamName">Team name</label>
 						<input id="teamName" name="teamName" />
 					</div>
 				) : null}
 				{selectedTeam && selectedAction.inputs.includes("ROSTER_MEMBER") ? (
-					<div>
+					<div className="flex-same-size">
 						<label htmlFor="memberId">Member</label>
 						<select id="memberId" name="memberId">
 							{selectedTeam.members.map((member) => (
@@ -326,12 +326,12 @@ function TeamActions() {
 					</div>
 				) : null}
 				{selectedAction.inputs.includes("USER") ? (
-					<div>
+					<div className="flex-same-size">
 						<UserSearch name="userId" label="User" />
 					</div>
 				) : null}
 				{selectedAction.inputs.includes("BRACKET") ? (
-					<div>
+					<div className="flex-same-size">
 						<label htmlFor="bracket">Bracket</label>
 						<select id="bracket" name="bracketIdx">
 							{tournament.brackets.map((bracket, bracketIdx) => (
@@ -353,7 +353,7 @@ function TeamActions() {
 					</div>
 				) : null}
 				{selectedTeam && selectedAction.inputs.includes("IN_GAME_NAME") ? (
-					<div className="stack items-start">
+					<div className="stack items-start flex-same-size">
 						<Label>New IGN</Label>
 						<div className="stack horizontal sm items-center">
 							<Input
@@ -405,7 +405,7 @@ function CastTwitchAccounts() {
 	return (
 		<fetcher.Form method="post" className="stack sm">
 			<div className="stack horizontal sm items-end">
-				<div>
+				<div className="flex-same-size">
 					<Label htmlFor={id}>Twitch accounts</Label>
 					<input
 						id={id}
@@ -438,13 +438,13 @@ function StaffAdder() {
 	return (
 		<fetcher.Form method="post" className="stack sm">
 			<div className="stack horizontal sm flex-wrap items-start">
-				<div>
+				<div className="flex-same-size">
 					<UserSearch name="userId" label="New staffer" isRequired />
 				</div>
-				<div className="stack horizontal sm items-end">
-					<div>
+				<div className="stack horizontal sm items-end flex-same-size">
+					<div className="w-full">
 						<Label htmlFor="staff-role">Role</Label>
-						<select name="role" id="staff-role" className="w-max">
+						<select name="role" id="staff-role" className="w-full">
 							<option value="ORGANIZER">Organizer</option>
 							<option value="STREAMER">Streamer</option>
 						</select>
@@ -516,7 +516,7 @@ function RemoveStaffButton({
 				size="small"
 				data-testid="remove-staff-button"
 			>
-				<TrashIcon className="small-icon" />
+				<Trash className="small-icon" />
 			</SendouButton>
 		</FormWithConfirm>
 	);
@@ -730,7 +730,7 @@ function BracketReset() {
 	return (
 		<div>
 			<fetcher.Form method="post" className="stack horizontal sm items-end">
-				<div>
+				<div className="flex-same-size">
 					<label htmlFor="bracket">Bracket</label>
 					<select
 						id="bracket"
@@ -745,7 +745,7 @@ function BracketReset() {
 						))}
 					</select>
 				</div>
-				<div>
+				<div className="flex-same-size">
 					<label htmlFor="bracket-confirmation">
 						Type bracket name (&quot;{bracketToDeleteName}&quot;) to confirm
 					</label>
@@ -823,7 +823,7 @@ function ReopenTournament() {
 	return (
 		<div>
 			<fetcher.Form method="post" className="stack horizontal sm items-end">
-				<div>
+				<div className="flex-same-size">
 					<label htmlFor="reopen-confirmation">
 						Type tournament name (&quot;{tournament.ctx.name}&quot;) to confirm
 					</label>

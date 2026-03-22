@@ -34,6 +34,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 					associations,
 					time: now,
 					visibility: post.visibility,
+					contentOwnerUserId: post.users.find((u) => u.isOwner)?.id,
 				}),
 		)
 		.map((post) => ({

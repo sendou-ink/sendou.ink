@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { SquarePen, Trash, Unlink, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
@@ -6,10 +7,6 @@ import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { CrossIcon } from "~/components/icons/Cross";
-import { EditIcon } from "~/components/icons/Edit";
-import { TrashIcon } from "~/components/icons/Trash";
-import { UnlinkIcon } from "~/components/icons/Unlink";
 import { Pagination } from "~/components/Pagination";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { usePagination } from "~/hooks/usePagination";
@@ -21,6 +18,7 @@ import { ResponsiveMasonry } from "../../../modules/responsive-masonry/component
 import { ART_PER_PAGE } from "../art-constants";
 import type { ListedArt } from "../art-types";
 import { previewUrl } from "../art-utils";
+import styles from "./ArtGrid.module.css";
 
 export function ArtGrid({
 	arts,
@@ -107,18 +105,18 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 				alt=""
 				src={art.url}
 				loading="lazy"
-				className="art__dialog__img"
+				className={styles.dialogImg}
 				onLoad={() => setImageLoaded(true)}
 			/>
 			{art.tags || art.linkedUsers ? (
 				<div
-					className={clsx("art__tags-container", { invisible: !imageLoaded })}
+					className={clsx(styles.tagsContainer, { invisible: !imageLoaded })}
 				>
 					{art.linkedUsers?.map((user) => (
 						<Link
 							to={userPage(user)}
 							key={user.discordId}
-							className="art__dialog__tag art__dialog__tag__user"
+							className={clsx(styles.dialogTag, styles.dialogTagUser)}
 						>
 							{user.username}
 						</Link>
@@ -127,7 +125,7 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 						<Link
 							to={artPage(tag.name)}
 							key={tag.id}
-							className="art__dialog__tag"
+							className={styles.dialogTag}
 						>
 							#{tag.name}
 						</Link>
@@ -136,7 +134,7 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 			) : null}
 			{art.description ? (
 				<div
-					className={clsx("art__dialog__description", {
+					className={clsx(styles.dialogDescription, {
 						invisible: !imageLoaded,
 					})}
 				>
@@ -147,7 +145,7 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 				variant="destructive"
 				className="mx-auto mt-6"
 				onPress={close}
-				icon={<CrossIcon />}
+				icon={<X />}
 			>
 				Close
 			</SendouButton>
@@ -180,7 +178,7 @@ function ImagePreview({
 			loading="lazy"
 			onClick={onClick}
 			onLoad={() => setImageLoaded(true)}
-			className={enablePreview ? "art__thumbnail" : undefined}
+			className={enablePreview ? styles.thumbnail : undefined}
 		/>
 	);
 
@@ -197,7 +195,7 @@ function ImagePreview({
 						to={newArtPage(art.id)}
 						size="small"
 						variant="outlined"
-						icon={<EditIcon />}
+						icon={<SquarePen />}
 					>
 						{t("common:actions.edit")}
 					</LinkButton>
@@ -208,11 +206,7 @@ function ImagePreview({
 							["_action", "DELETE_ART"],
 						]}
 					>
-						<SendouButton
-							icon={<TrashIcon />}
-							variant="destructive"
-							size="small"
-						/>
+						<SendouButton icon={<Trash />} variant="destructive" size="small" />
 					</FormWithConfirm>
 				</div>
 			</div>
@@ -266,7 +260,7 @@ function ImagePreview({
 							submitButtonText={t("common:actions.remove")}
 						>
 							<SendouButton
-								icon={<UnlinkIcon />}
+								icon={<Unlink />}
 								variant="destructive"
 								size="small"
 							/>

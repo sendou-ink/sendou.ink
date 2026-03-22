@@ -3,7 +3,6 @@ import type { Tables, UserMapModePreferences } from "~/db/tables";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { modesShort } from "~/modules/in-game-lists/modes";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 
 export async function settingsByUserId(userId: number) {
 	const preferences = await db
@@ -120,27 +119,4 @@ export function currentTeamByUserId(userId: number) {
 		.select(["Team.name"])
 		.where("TeamMember.userId", "=", userId)
 		.executeTakeFirst();
-}
-
-export function findTrustedUsersByGiverId(trustGiverUserId: number) {
-	return db
-		.selectFrom("TrustRelationship")
-		.innerJoin("User", "User.id", "TrustRelationship.trustReceiverUserId")
-		.select(COMMON_USER_FIELDS)
-		.where("TrustRelationship.trustGiverUserId", "=", trustGiverUserId)
-		.execute();
-}
-
-export function deleteTrustedUser({
-	trustGiverUserId,
-	trustReceiverUserId,
-}: {
-	trustGiverUserId: number;
-	trustReceiverUserId: number;
-}) {
-	return db
-		.deleteFrom("TrustRelationship")
-		.where("TrustRelationship.trustGiverUserId", "=", trustGiverUserId)
-		.where("TrustRelationship.trustReceiverUserId", "=", trustReceiverUserId)
-		.execute();
 }

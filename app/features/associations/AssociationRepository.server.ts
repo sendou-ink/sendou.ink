@@ -3,6 +3,7 @@ import { db } from "~/db/sql";
 import type { TablesInsertable } from "~/db/tables";
 import type { AssociationVirtualIdentifier } from "~/features/associations/associations-constants";
 import { ASSOCIATION } from "~/features/associations/associations-constants";
+import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import { LimitReachedError } from "~/utils/errors";
 import { shortNanoid } from "~/utils/id";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
@@ -28,6 +29,7 @@ export async function findByMemberUserId(
 	return {
 		actual: await findBy({ type: "user", userId }, options),
 		virtual: await virtualAssociationsByUserId(userId),
+		friendIds: await FriendRepository.findFriendIds(userId),
 	};
 }
 
@@ -94,6 +96,10 @@ async function findBy(
 	}));
 }
 
+const DEFAULT_VIRTUAL_ASSOCIATIONS: Array<AssociationVirtualIdentifier> = [
+	"FRIENDS",
+];
+
 async function virtualAssociationsByUserId(
 	userId: number,
 ): Promise<Array<AssociationVirtualIdentifier>> {
@@ -103,14 +109,16 @@ async function virtualAssociationsByUserId(
 			.select(["PlusTier.tier as plusTier"])
 			.where("userId", "=", userId)
 			.executeTakeFirst()) ?? {};
-	if (!plusTier) return [];
+	if (!plusTier) return [...DEFAULT_VIRTUAL_ASSOCIATIONS];
 
-	if (plusTier === 1) return ["+1", "+2", "+3"] as const;
-	if (plusTier === 2) return ["+2", "+3"] as const;
-	if (plusTier === 3) return ["+3"] as const;
+	if (plusTier === 1)
+		return [...DEFAULT_VIRTUAL_ASSOCIATIONS, "+1", "+2", "+3"] as const;
+	if (plusTier === 2)
+		return [...DEFAULT_VIRTUAL_ASSOCIATIONS, "+2", "+3"] as const;
+	if (plusTier === 3) return [...DEFAULT_VIRTUAL_ASSOCIATIONS, "+3"] as const;
 
 	logger.error("Invalid plusTier", { plusTier });
-	return [];
+	return [...DEFAULT_VIRTUAL_ASSOCIATIONS];
 }
 
 type InsertArgs = Omit<TablesInsertable["Association"], "inviteCode"> & {

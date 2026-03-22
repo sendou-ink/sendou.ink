@@ -13,7 +13,8 @@ import { GroupLeaver } from "../components/GroupLeaver";
 import { MemberAdder } from "../components/MemberAdder";
 import { loader } from "../loaders/q.preparing.server";
 import { FULL_GROUP_SIZE } from "../q-constants";
-export { loader, action };
+
+export { action, loader };
 
 import styles from "./q.preparing.module.css";
 

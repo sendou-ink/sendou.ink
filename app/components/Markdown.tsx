@@ -13,7 +13,8 @@ export function Markdown({ children }: { children: string }) {
 		.replace(/style\s*=\s*("[^"]*"|'[^']*')/gi, (_match, value) => {
 			const sanitized = value.replace(CSS_URL_REGEX, "");
 			return `style=${sanitized}`;
-		});
+		})
+		.replace(/ +$/gm, "");
 
 	return (
 		<MarkdownToJsx

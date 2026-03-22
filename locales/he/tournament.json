@@ -7,7 +7,8 @@
 	"tabs.seeds": "דירוג",
 	"tabs.results": "",
 	"tabs.streams": "שידורים חיים ({{count}})",
-	"tabs.subs": "מחליפים ({{count}})",
+	"tabs.subs": "מחליפים",
+	"tabs.looking": "",
 	"pre.steps.header": "השלימו את השלבים הבאים כדי לשחק",
 	"pre.steps.name": "שם קבוצה",
 	"pre.steps.roster": "צוות מלא",
@@ -28,7 +29,7 @@
 	"pre.roster.header": "מלא צוות",
 	"pre.roster.footer": "לפחות {{atLeastCount}} חברי צוות נדרשים כדי להשתתף. גודל הצוות המרבי הוא {{maxCount}}",
 	"pre.roster.footer.noSubs": "",
-	"pre.roster.addTrusted.header": "הוסיפו אנשים ששיחקתם איתם",
+	"pre.roster.addFriend.header": "",
 	"pre.roster.delete.button": "מחקו חבר צוות",
 	"pre.roster.delete.header": "חבר צוות למחיקה",
 	"pre.pool.header": "בחרו מאגר מפות",
@@ -124,7 +125,7 @@
 	"join.error.ALREADY_JOINED": "אתם כבר חברי קבוצה בצוות זה.",
 	"join.error.NOT_LOGGED_IN": "עליכם להיות מחוברים כדי להצטרף לצוות.",
 	"join.VALID": "להצטרף {{teamName}} עבור {{eventName}}?",
-	"join.giveTrust": "בטחו ב-{{name}} להוסיף אותכם בכוחות עצמם לאירועים עתידיים?",
+	"join.friendSuggestion": "",
 	"subs.prefersToPlay": "עדיפות לשחק",
 	"subs.canPlay": "יכול.ה לשחק",
 	"subs.canVC": "יכול.ה VC",
@@ -151,5 +152,6 @@
 	"progression.error.NEGATIVE_PROGRESSION": "",
 	"progression.error.NO_SE_SOURCE": "",
 	"progression.error.NO_DE_POSITIVE": "",
-	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": ""
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "",
+	"lfg.askCaptainToJoinQueue": ""
 }

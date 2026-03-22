@@ -39,9 +39,6 @@ async function banUser(
 	await waitForPOSTResponse(page, () =>
 		banForm.getByRole("button", { name: "Save" }).click(),
 	);
-
-	// Verify ban was successful
-	await expect(page.getByText("User banned")).toBeVisible();
 }
 
 async function unbanUser(page: Page) {

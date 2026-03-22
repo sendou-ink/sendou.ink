@@ -29,5 +29,6 @@
 	"forms.tags.placeholder": "",
 	"forms.tags.maxReached": "Maks antal etiketter opnået",
 	"delete.title": "",
-	"unlink.title": ""
+	"unlink.title": "",
+	"noArtForTag": ""
 }

@@ -1,10 +1,14 @@
+import { sub } from "date-fns";
+import { clearCombinedStreamsCache } from "~/features/core/streams/streams.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import { isAdmin } from "~/modules/permissions/utils";
+import { databaseTimestampToDate } from "~/utils/dates";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import type { Unwrapped } from "~/utils/types";
 import { getServerTournamentManager } from "./brackets-manager/manager.server";
+import { RunningTournaments } from "./RunningTournaments.server";
 import { Tournament } from "./Tournament";
 
 const manager = getServerTournamentManager();
@@ -88,7 +92,10 @@ export async function tournamentFromDB(args: {
 }) {
 	const data = notFoundIfFalsy(await tournamentData(args));
 
-	return new Tournament({ ...data, simulateBrackets: false });
+	const tournament = new Tournament({ ...data, simulateBrackets: false });
+	syncTournamentToRegistry(tournament);
+
+	return tournament;
 }
 
 export async function tournamentFromDBCached(args: {
@@ -129,3 +136,57 @@ export function clearTournamentDataCache(tournamentId: number) {
 export function clearAllTournamentDataCache() {
 	tournamentDataCache.clear();
 }
+
+const RUNNING_TOURNAMENT_MAX_AGE_HOURS = 6;
+
+function mostRecentStartTime(tournament: Tournament) {
+	const bracketStartTimes = tournament.ctx.settings.bracketProgression
+		.filter((b) => b.startTime)
+		.map((b) => databaseTimestampToDate(b.startTime!));
+
+	const allStartTimes = [tournament.ctx.startTime, ...bracketStartTimes];
+
+	return allStartTimes
+		.filter((t) => t <= new Date())
+		.sort((a, b) => b.getTime() - a.getTime())[0];
+}
+
+function isTournamentLive(tournament: Tournament) {
+	if (!tournament.hasStarted || tournament.everyBracketOver) return false;
+
+	const cutoff = sub(new Date(), { hours: RUNNING_TOURNAMENT_MAX_AGE_HOURS });
+	const latestStartTime = mostRecentStartTime(tournament);
+
+	return Boolean(latestStartTime && latestStartTime >= cutoff);
+}
+
+function syncTournamentToRegistry(tournament: Tournament) {
+	const isRunning = isTournamentLive(tournament);
+	const wasInRegistry = RunningTournaments.has(tournament.ctx.id);
+
+	if (isRunning) {
+		RunningTournaments.add(tournament);
+		if (!wasInRegistry) {
+			clearCombinedStreamsCache();
+		}
+	} else {
+		if (wasInRegistry) {
+			clearCombinedStreamsCache();
+		}
+		RunningTournaments.remove(tournament.ctx.id);
+	}
+}
+
+async function primeRunningTournamentsCache() {
+	const tournamentIds = await TournamentRepository.findRunningTournamentIds();
+
+	for (const tournamentId of tournamentIds) {
+		const data = await tournamentData({ user: undefined, tournamentId });
+		if (!data) continue;
+
+		const tournament = new Tournament({ ...data, simulateBrackets: false });
+		syncTournamentToRegistry(tournament);
+	}
+}
+
+await primeRunningTournamentsCache();

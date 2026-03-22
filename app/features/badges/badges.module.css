@@ -1,0 +1,108 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-badge);
+	color: var(--color-text-high);
+	gap: var(--s-6);
+	padding-block: var(--s-2);
+	padding-inline: var(--s-3);
+}
+
+.smallBadges {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--s-2);
+	margin-block-start: var(--s-1);
+}
+
+.generalInfoTexts {
+	display: flex;
+	justify-content: space-between;
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+	padding-inline: var(--s-1);
+}
+
+.explanation {
+	color: var(--color-text-accent);
+	font-weight: var(--weight-semi);
+	text-align: center;
+}
+
+.managers {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	text-align: center;
+}
+
+.ownersContainer {
+	height: 8rem;
+	overflow-y: auto;
+}
+
+.owners {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	padding: 0;
+	font-size: var(--font-sm);
+	gap: var(--s-1-5);
+}
+
+.owners > li {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	line-height: 1.1;
+	list-style: none;
+}
+
+.count {
+	color: var(--color-accent-high);
+	font-size: var(--font-xs);
+}
+
+.editUsersList > li {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	list-style: none;
+}
+
+.editUsersList {
+	display: flex;
+	flex-direction: column;
+	padding: 0;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	gap: var(--s-2);
+	padding-block-end: var(--s-3);
+}
+
+.editNumberInput {
+	max-width: 5rem;
+}
+
+.editSmallHeader {
+	font-size: var(--font-md);
+}
+
+.editDifferences {
+	padding: 0;
+	font-size: var(--font-xs);
+	list-style: none;
+}
+
+.editDifferences > li::before {
+	content: "-";
+	padding-inline-end: 5px;
+}
+
+.searchInput {
+	height: 40px !important;
+	margin: 0 auto;
+	font-size: var(--font-lg);
+}

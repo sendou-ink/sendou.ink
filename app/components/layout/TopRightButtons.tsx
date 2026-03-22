@@ -1,46 +1,120 @@
+import { Heart, LogIn, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SUPPORT_PAGE } from "~/utils/urls";
-import { LinkButton } from "../elements/Button";
-import { HamburgerIcon } from "../icons/Hamburger";
-import { HeartIcon } from "../icons/Heart";
+import { LinkButton, SendouButton } from "../elements/Button";
 import { AnythingAdder } from "./AnythingAdder";
-import { NotificationPopover } from "./NotificationPopover";
-import { UserItem } from "./UserItem";
+import { GlobalSearch } from "./GlobalSearch";
+import { LogInButtonContainer } from "./LogInButtonContainer";
+import styles from "./TopRightButtons.module.css";
 
 export function TopRightButtons({
 	showSupport,
-	isErrored,
-	openNavDialog,
+	showSearch,
+	isLoggedIn,
+	onChatToggle,
+	onChatModalToggle,
+	chatUnreadCount,
 }: {
 	showSupport: boolean;
-	isErrored: boolean;
-	openNavDialog: () => void;
+	showSearch: boolean;
+	isLoggedIn: boolean;
+	onChatToggle?: () => void;
+	onChatModalToggle?: () => void;
+	chatUnreadCount?: number;
 }) {
-	const { t } = useTranslation(["common"]);
+	const { t } = useTranslation(["common", "front"]);
 
 	return (
-		<div className="layout__header__right-container">
+		<div className={styles.container}>
 			{showSupport ? (
-				<LinkButton
-					to={SUPPORT_PAGE}
-					size="small"
-					icon={<HeartIcon />}
-					variant="outlined"
-				>
-					{t("common:pages.support")}
-				</LinkButton>
+				<>
+					<div className={styles.supportWrapper}>
+						<LinkButton
+							to={SUPPORT_PAGE}
+							size="small"
+							icon={<Heart />}
+							variant="outlined"
+						>
+							{t("common:pages.support")}
+						</LinkButton>
+					</div>
+					<div className={styles.supportWrapperCompact}>
+						<LinkButton
+							to={SUPPORT_PAGE}
+							size="small"
+							icon={<Heart />}
+							variant="outlined"
+							shape="square"
+						/>
+					</div>
+				</>
 			) : null}
-			<NotificationPopover />
-			<AnythingAdder />
-			<button
-				aria-label="Open navigation"
-				onClick={openNavDialog}
-				className="layout__header__button"
-				type="button"
-			>
-				<HamburgerIcon className="layout__header__button__icon" />
-			</button>
-			{!isErrored ? <UserItem /> : null}
+			{isLoggedIn ? (
+				<>
+					<div className={styles.searchAndAddContainer}>
+						{showSearch ? (
+							<div className={styles.searchWrapper}>
+								<GlobalSearch />
+							</div>
+						) : null}
+						<div className={styles.addNewWrapper}>
+							<AnythingAdder />
+						</div>
+						<div className={styles.addNewWrapperCompact}>
+							<AnythingAdder compact />
+						</div>
+					</div>
+					{onChatToggle ? (
+						<div className={styles.chatButtonWrapperPersistent}>
+							<ChatButton
+								variant="outlined"
+								onPress={onChatToggle}
+								unreadCount={chatUnreadCount}
+							/>
+						</div>
+					) : null}
+					{onChatModalToggle ? (
+						<div className={styles.chatButtonWrapperModal}>
+							<ChatButton
+								variant="outlined"
+								onPress={onChatModalToggle}
+								unreadCount={chatUnreadCount}
+							/>
+						</div>
+					) : null}
+				</>
+			) : (
+				<LogInButtonContainer>
+					<SendouButton type="submit" size="small" icon={<LogIn />}>
+						{t("front:mobileNav.login")}
+					</SendouButton>
+				</LogInButtonContainer>
+			)}
 		</div>
+	);
+}
+
+function ChatButton({
+	variant,
+	onPress,
+	unreadCount,
+}: {
+	variant: "outlined" | "primary";
+	onPress: () => void;
+	unreadCount?: number;
+}) {
+	return (
+		<>
+			<SendouButton
+				shape="square"
+				size="small"
+				icon={<MessageSquare />}
+				variant={variant}
+				onPress={onPress}
+			/>
+			{unreadCount ? (
+				<span className={styles.chatUnreadBadge}>{unreadCount}</span>
+			) : null}
+		</>
 	);
 }

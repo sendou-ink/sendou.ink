@@ -1,4 +1,5 @@
 import { Label as ReactAriaLabel } from "react-aria-components";
+import styles from "./Label.module.css";
 
 export function SendouLabel({
 	children,
@@ -8,8 +9,8 @@ export function SendouLabel({
 	required?: boolean;
 }) {
 	return (
-		<ReactAriaLabel>
-			{children} {required && <span className="text-error">*</span>}
+		<ReactAriaLabel className={styles.label}>
+			{children} {required ? <span className="text-error">*</span> : null}
 		</ReactAriaLabel>
 	);
 }

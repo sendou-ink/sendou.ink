@@ -1,0 +1,320 @@
+/* --match-height and gap must match constants in Elimination.tsx */
+.bracket {
+	--match-width: 140px;
+	--match-height: 55px;
+	overflow-x: auto;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-8);
+	padding-block-end: var(--s-6);
+}
+
+.scrollingBracket {
+	padding: var(--s-4) var(--s-6);
+	max-width: 100%;
+	max-height: min(1000px, 70vh);
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	overflow: scroll;
+	user-select: none;
+}
+
+.matchHeader {
+	position: absolute;
+	display: flex;
+	justify-content: space-between;
+	width: var(--match-width);
+	margin-block-start: calc(var(--selector-size-xs) * -1);
+}
+
+.matchHeaderBox {
+	background-color: var(--color-bg-higher);
+	padding: 0 var(--s-1);
+	height: var(--selector-size-xs);
+	display: flex;
+	align-items: center;
+	border-radius: var(--radius-selector);
+	font-size: var(--font-2xs) !important;
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
+	border: 0;
+}
+
+.matchHeaderBoxButton {
+	height: 18.86px;
+}
+
+.matchTimer {
+	position: absolute;
+	top: 50%;
+	left: 0;
+	transform: translate(-100%, -50%);
+	margin-inline-start: 8px;
+}
+
+.match {
+	width: var(--match-width);
+	min-height: var(--match-height);
+	max-height: var(--match-height);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	padding: 0 var(--s-2);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	color: var(--text-main);
+	justify-content: center;
+	transition: background-color 0.2s;
+}
+
+a.match:hover {
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-field);
+}
+
+.matchSeparator {
+	min-height: 2px;
+	max-height: 2px;
+	width: 100%;
+	background-color: var(--color-bg-higher);
+}
+
+.matchBye {
+	visibility: hidden;
+	min-height: var(--match-height);
+	max-height: var(--match-height);
+}
+
+.matchSeed {
+	color: var(--color-text-accent);
+	margin-inline-end: var(--s-0-5);
+	min-width: 15px;
+	max-width: 15px;
+}
+
+.matchSeedWide {
+	min-width: 22px;
+	max-width: 22px;
+}
+
+.matchTeamName {
+	max-width: 95px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.matchTeamNameNarrow {
+	max-width: 75px;
+}
+
+.matchTeamNameNarrowest {
+	max-width: 70px;
+}
+
+.matchScore {
+	margin-inline-start: auto;
+}
+
+.elimContainer {
+	--line-width: 30px;
+	display: grid;
+	grid-template-columns: repeat(
+			var(--round-count),
+			calc(var(--match-width) + var(--line-width))
+		);
+	overflow: visible;
+}
+
+.elimRoundMatchesContainer {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-around;
+	gap: var(--s-8);
+	margin-top: var(--s-6);
+	flex: 1;
+	overflow: visible;
+}
+
+.elimRoundMatchesContainerTopBye {
+	margin-top: -18px;
+}
+
+.elimRoundHeader {
+	text-align: center;
+	background-color: var(--color-bg-higher);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	padding-block: var(--s-2);
+	width: var(--match-width);
+	border-radius: var(--radius-box);
+}
+
+.elimRoundHeaderInfos {
+	width: var(--match-width);
+	display: flex;
+	justify-content: space-between;
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	font-weight: var(--weight-semi);
+}
+
+.elimRoundColumn {
+	display: flex;
+	flex-direction: column;
+}
+
+.matchWrapper {
+	position: relative;
+	width: var(--match-width);
+	height: var(--match-height);
+}
+
+.matchLineContainer {
+	position: absolute;
+	top: 0;
+	left: 100%;
+	width: var(--line-width);
+	height: 100%;
+	pointer-events: none;
+}
+
+.matchLineStraight::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 0;
+	width: 100%;
+	height: 2px;
+	background: var(--color-border);
+	transform: translateY(-50%);
+}
+
+.matchLineCurveDown::before,
+.matchLineCurveUp::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 0;
+	width: 50%;
+	height: 2px;
+	background: var(--color-border);
+	transform: translateY(-50%);
+}
+
+.matchLineCurveDown::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: calc(50% - 1px);
+	width: 2px;
+	height: calc(50% + var(--bracket-vertical-extend, 50px));
+	background: var(--color-border);
+}
+
+.matchLineCurveUp::after {
+	content: "";
+	position: absolute;
+	bottom: 50%;
+	left: calc(50% - 1px);
+	width: 2px;
+	height: calc(50% + var(--bracket-vertical-extend, 50px));
+	background: var(--color-border);
+}
+
+.matchLineConnectorDown {
+	position: absolute;
+	top: calc(100% + var(--bracket-vertical-extend, 50px) - 1px);
+	left: calc(50% - 1px);
+	width: calc(50% + 1px);
+	height: 2px;
+	background: var(--color-border);
+}
+
+.matchLineConnectorUp {
+	position: absolute;
+	bottom: calc(100% + var(--bracket-vertical-extend, 50px) - 1px);
+	left: calc(50% - 1px);
+	width: calc(50% + 1px);
+	height: 2px;
+	background: var(--color-border);
+}
+
+.rrPlacementsTable {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	min-width: max-content;
+	overflow-x: auto;
+	max-width: 600px;
+}
+
+.rrPlacementsTable thead {
+	color: var(--color-text-high);
+}
+
+.rrPlacementsTable th {
+	text-align: left;
+}
+
+.rrPlacementsTable th abbr {
+	padding-inline: var(--s-2);
+}
+
+.rrPlacementsTable td span {
+	padding-inline: var(--s-2);
+}
+
+.rrPlacementsTable tbody tr:nth-child(odd) {
+	background-color: var(--color-bg-high);
+}
+
+.rrPlacementsTable tbody tr:nth-child(even) {
+	background-color: var(--color-bg-higher);
+}
+
+.standingsDividerRow {
+	background-color: transparent !important;
+}
+
+.standingsDivider {
+	padding: 0;
+}
+
+.standingsDividerContent {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-block: var(--s-2);
+}
+
+.standingsDividerLine {
+	flex: 1;
+	height: 2px;
+	background-color: var(--color-border);
+}
+
+.standingsDividerText {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	white-space: nowrap;
+}
+
+.standingsDividerQualified .standingsDividerLine {
+	background-color: var(--color-success);
+}
+
+.standingsDividerQualified .standingsDividerText {
+	color: var(--color-success);
+}
+
+.standingsDividerEliminated .standingsDividerLine {
+	background-color: var(--color-error);
+}
+
+.standingsDividerEliminated .standingsDividerText {
+	color: var(--color-error);
+}

@@ -52,6 +52,12 @@ export const registerSchema = z.union([
 	z.object({
 		_action: _action("DELETE_LOGO"),
 	}),
+	z.object({
+		_action: _action("SAVE_TOURNAMENT"),
+	}),
+	z.object({
+		_action: _action("UNSAVE_TOURNAMENT"),
+	}),
 ]);
 
 export const seedsActionSchema = z.union([
@@ -72,10 +78,6 @@ export const seedsActionSchema = z.union([
 		),
 	}),
 ]);
-
-export const joinSchema = z.object({
-	trust: z.preprocess(checkboxValueToBoolean, z.boolean()),
-});
 
 export const tournamentSearchSearchParamsSchema = z.object({
 	q: z.string().max(100),

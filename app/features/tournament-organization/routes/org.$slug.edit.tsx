@@ -7,6 +7,7 @@ import { action } from "../actions/org.$slug.edit.server";
 import { loader } from "../loaders/org.$slug.edit.server";
 import { handle, meta } from "../routes/org.$slug";
 import { organizationEditFormSchema } from "../tournament-organization-schemas";
+
 export { action, handle, loader, meta };
 
 export default function TournamentOrganizationEditPage() {

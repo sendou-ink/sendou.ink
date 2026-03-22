@@ -1,7 +1,7 @@
+import { Filter } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
-import { FilterIcon } from "~/components/icons/Filter";
 import type { LFGFilter } from "../lfg-types";
 
 const defaultFilters: Record<LFGFilter["_tag"], LFGFilter> = {
@@ -29,7 +29,7 @@ export function LFGAddFilterButton({
 				<SendouButton
 					variant="outlined"
 					size="small"
-					icon={<FilterIcon />}
+					icon={<Filter />}
 					data-testid="add-filter-button"
 				>
 					{t("lfg:addFilter")}

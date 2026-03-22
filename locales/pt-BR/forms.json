@@ -106,7 +106,6 @@
 	"labels.vodYoutubeUrl": "URL do YouTube",
 	"labels.vodTitle": "Título do vídeo",
 	"labels.vodDate": "Data do vídeo",
-	"labels.vodType": "Tipo",
 	"labels.vodTeamSize": "",
 	"labels.vodStartTimestamp": "Marcador de início",
 	"labels.vodMode": "Modo",
@@ -215,5 +214,14 @@
 	"errors.profileInGameName": "",
 	"labels.pronoun": "",
 	"bottomTexts.profilePronouns": "",
-	"errors.profilePronounsBothOrNeither": ""
+	"errors.profilePronounsBothOrNeither": "",
+	"labels.friendUser": "",
+	"errors.cannotFriendSelf": "",
+	"errors.alreadyFriends": "",
+	"errors.friendRequestExists": "",
+	"labels.type": "",
+	"labels.visibility": "",
+	"labels.note": "",
+	"labels.stayAsSub": "",
+	"bottomTexts.stayAsSub": ""
 }

@@ -7,6 +7,7 @@ import commonDa from "../../../locales/da/common.json";
 import contributionsDa from "../../../locales/da/contributions.json";
 import faqDa from "../../../locales/da/faq.json";
 import formsDa from "../../../locales/da/forms.json";
+import friendsDa from "../../../locales/da/friends.json";
 import frontDa from "../../../locales/da/front.json";
 import gameBadgesDa from "../../../locales/da/game-badges.json";
 import gameMiscDa from "../../../locales/da/game-misc.json";
@@ -30,6 +31,7 @@ import commonDe from "../../../locales/de/common.json";
 import contributionsDe from "../../../locales/de/contributions.json";
 import faqDe from "../../../locales/de/faq.json";
 import formsDe from "../../../locales/de/forms.json";
+import friendsDe from "../../../locales/de/friends.json";
 import frontDe from "../../../locales/de/front.json";
 import gameBadgesDe from "../../../locales/de/game-badges.json";
 import gameMiscDe from "../../../locales/de/game-misc.json";
@@ -53,6 +55,7 @@ import common from "../../../locales/en/common.json";
 import contributions from "../../../locales/en/contributions.json";
 import faq from "../../../locales/en/faq.json";
 import forms from "../../../locales/en/forms.json";
+import friends from "../../../locales/en/friends.json";
 import front from "../../../locales/en/front.json";
 import gameBadges from "../../../locales/en/game-badges.json";
 import gameMisc from "../../../locales/en/game-misc.json";
@@ -76,6 +79,7 @@ import commonEsEs from "../../../locales/es-ES/common.json";
 import contributionsEsEs from "../../../locales/es-ES/contributions.json";
 import faqEsEs from "../../../locales/es-ES/faq.json";
 import formsEsEs from "../../../locales/es-ES/forms.json";
+import friendsEsEs from "../../../locales/es-ES/friends.json";
 import frontEsEs from "../../../locales/es-ES/front.json";
 import gameBadgesEsEs from "../../../locales/es-ES/game-badges.json";
 import gameMiscEsEs from "../../../locales/es-ES/game-misc.json";
@@ -99,6 +103,7 @@ import commonEsUs from "../../../locales/es-US/common.json";
 import contributionsEsUs from "../../../locales/es-US/contributions.json";
 import faqEsUs from "../../../locales/es-US/faq.json";
 import formsEsUs from "../../../locales/es-US/forms.json";
+import friendsEsUs from "../../../locales/es-US/friends.json";
 import frontEsUs from "../../../locales/es-US/front.json";
 import gameBadgesEsUs from "../../../locales/es-US/game-badges.json";
 import gameMiscEsUs from "../../../locales/es-US/game-misc.json";
@@ -122,6 +127,7 @@ import commonFrCa from "../../../locales/fr-CA/common.json";
 import contributionsFrCa from "../../../locales/fr-CA/contributions.json";
 import faqFrCa from "../../../locales/fr-CA/faq.json";
 import formsFrCa from "../../../locales/fr-CA/forms.json";
+import friendsFrCa from "../../../locales/fr-CA/friends.json";
 import frontFrCa from "../../../locales/fr-CA/front.json";
 import gameBadgesFrCa from "../../../locales/fr-CA/game-badges.json";
 import gameMiscFrCa from "../../../locales/fr-CA/game-misc.json";
@@ -145,6 +151,7 @@ import commonFrEu from "../../../locales/fr-EU/common.json";
 import contributionsFrEu from "../../../locales/fr-EU/contributions.json";
 import faqFrEu from "../../../locales/fr-EU/faq.json";
 import formsFrEu from "../../../locales/fr-EU/forms.json";
+import friendsFrEu from "../../../locales/fr-EU/friends.json";
 import frontFrEu from "../../../locales/fr-EU/front.json";
 import gameBadgesFrEu from "../../../locales/fr-EU/game-badges.json";
 import gameMiscFrEu from "../../../locales/fr-EU/game-misc.json";
@@ -168,6 +175,7 @@ import commonHe from "../../../locales/he/common.json";
 import contributionsHe from "../../../locales/he/contributions.json";
 import faqHe from "../../../locales/he/faq.json";
 import formsHe from "../../../locales/he/forms.json";
+import friendsHe from "../../../locales/he/friends.json";
 import frontHe from "../../../locales/he/front.json";
 import gameBadgesHe from "../../../locales/he/game-badges.json";
 import gameMiscHe from "../../../locales/he/game-misc.json";
@@ -191,6 +199,7 @@ import commonIt from "../../../locales/it/common.json";
 import contributionsIt from "../../../locales/it/contributions.json";
 import faqIt from "../../../locales/it/faq.json";
 import formsIt from "../../../locales/it/forms.json";
+import friendsIt from "../../../locales/it/friends.json";
 import frontIt from "../../../locales/it/front.json";
 import gameBadgesIt from "../../../locales/it/game-badges.json";
 import gameMiscIt from "../../../locales/it/game-misc.json";
@@ -214,6 +223,7 @@ import commonJa from "../../../locales/ja/common.json";
 import contributionsJa from "../../../locales/ja/contributions.json";
 import faqJa from "../../../locales/ja/faq.json";
 import formsJa from "../../../locales/ja/forms.json";
+import friendsJa from "../../../locales/ja/friends.json";
 import frontJa from "../../../locales/ja/front.json";
 import gameBadgesJa from "../../../locales/ja/game-badges.json";
 import gameMiscJa from "../../../locales/ja/game-misc.json";
@@ -237,6 +247,7 @@ import commonKo from "../../../locales/ko/common.json";
 import contributionsKo from "../../../locales/ko/contributions.json";
 import faqKo from "../../../locales/ko/faq.json";
 import formsKo from "../../../locales/ko/forms.json";
+import friendsKo from "../../../locales/ko/friends.json";
 import frontKo from "../../../locales/ko/front.json";
 import gameBadgesKo from "../../../locales/ko/game-badges.json";
 import gameMiscKo from "../../../locales/ko/game-misc.json";
@@ -260,6 +271,7 @@ import commonNl from "../../../locales/nl/common.json";
 import contributionsNl from "../../../locales/nl/contributions.json";
 import faqNl from "../../../locales/nl/faq.json";
 import formsNl from "../../../locales/nl/forms.json";
+import friendsNl from "../../../locales/nl/friends.json";
 import frontNl from "../../../locales/nl/front.json";
 import gameBadgesNl from "../../../locales/nl/game-badges.json";
 import gameMiscNl from "../../../locales/nl/game-misc.json";
@@ -283,6 +295,7 @@ import commonPl from "../../../locales/pl/common.json";
 import contributionsPl from "../../../locales/pl/contributions.json";
 import faqPl from "../../../locales/pl/faq.json";
 import formsPl from "../../../locales/pl/forms.json";
+import friendsPl from "../../../locales/pl/friends.json";
 import frontPl from "../../../locales/pl/front.json";
 import gameBadgesPl from "../../../locales/pl/game-badges.json";
 import gameMiscPl from "../../../locales/pl/game-misc.json";
@@ -306,6 +319,7 @@ import commonPtBr from "../../../locales/pt-BR/common.json";
 import contributionsPtBr from "../../../locales/pt-BR/contributions.json";
 import faqPtBr from "../../../locales/pt-BR/faq.json";
 import formsPtBr from "../../../locales/pt-BR/forms.json";
+import friendsPtBr from "../../../locales/pt-BR/friends.json";
 import frontPtBr from "../../../locales/pt-BR/front.json";
 import gameBadgesPtBr from "../../../locales/pt-BR/game-badges.json";
 import gameMiscPtBr from "../../../locales/pt-BR/game-misc.json";
@@ -329,6 +343,7 @@ import commonRu from "../../../locales/ru/common.json";
 import contributionsRu from "../../../locales/ru/contributions.json";
 import faqRu from "../../../locales/ru/faq.json";
 import formsRu from "../../../locales/ru/forms.json";
+import friendsRu from "../../../locales/ru/friends.json";
 import frontRu from "../../../locales/ru/front.json";
 import gameBadgesRu from "../../../locales/ru/game-badges.json";
 import gameMiscRu from "../../../locales/ru/game-misc.json";
@@ -352,6 +367,7 @@ import commonZh from "../../../locales/zh/common.json";
 import contributionsZh from "../../../locales/zh/contributions.json";
 import faqZh from "../../../locales/zh/faq.json";
 import formsZh from "../../../locales/zh/forms.json";
+import friendsZh from "../../../locales/zh/friends.json";
 import frontZh from "../../../locales/zh/front.json";
 import gameBadgesZh from "../../../locales/zh/game-badges.json";
 import gameMiscZh from "../../../locales/zh/game-misc.json";
@@ -372,6 +388,7 @@ export const resources = {
 		gear: gearEsUs,
 		faq: faqEsUs,
 		forms: formsEsUs,
+		friends: friendsEsUs,
 		weapons: weaponsEsUs,
 		scrims: scrimsEsUs,
 		common: commonEsUs,
@@ -397,6 +414,7 @@ export const resources = {
 		gear: gear,
 		faq: faq,
 		forms: forms,
+		friends: friends,
 		weapons: weapons,
 		scrims: scrimsEn,
 		common: common,
@@ -422,6 +440,7 @@ export const resources = {
 		gear: gearKo,
 		faq: faqKo,
 		forms: formsKo,
+		friends: friendsKo,
 		weapons: weaponsKo,
 		scrims: scrimsKo,
 		common: commonKo,
@@ -447,6 +466,7 @@ export const resources = {
 		gear: gearDe,
 		faq: faqDe,
 		forms: formsDe,
+		friends: friendsDe,
 		weapons: weaponsDe,
 		scrims: scrimsDe,
 		common: commonDe,
@@ -472,6 +492,7 @@ export const resources = {
 		gear: gearNl,
 		faq: faqNl,
 		forms: formsNl,
+		friends: friendsNl,
 		weapons: weaponsNl,
 		scrims: scrimsNl,
 		common: commonNl,
@@ -497,6 +518,7 @@ export const resources = {
 		gear: gearPtBr,
 		faq: faqPtBr,
 		forms: formsPtBr,
+		friends: friendsPtBr,
 		weapons: weaponsPtBr,
 		scrims: scrimsPtBr,
 		common: commonPtBr,
@@ -522,6 +544,7 @@ export const resources = {
 		gear: gearZh,
 		faq: faqZh,
 		forms: formsZh,
+		friends: friendsZh,
 		weapons: weaponsZh,
 		scrims: scrimsZh,
 		common: commonZh,
@@ -547,6 +570,7 @@ export const resources = {
 		gear: gearFrCa,
 		faq: faqFrCa,
 		forms: formsFrCa,
+		friends: friendsFrCa,
 		weapons: weaponsFrCa,
 		scrims: scrimsFrCa,
 		common: commonFrCa,
@@ -572,6 +596,7 @@ export const resources = {
 		gear: gearRu,
 		faq: faqRu,
 		forms: formsRu,
+		friends: friendsRu,
 		weapons: weaponsRu,
 		scrims: scrimsRu,
 		common: commonRu,
@@ -597,6 +622,7 @@ export const resources = {
 		gear: gearIt,
 		faq: faqIt,
 		forms: formsIt,
+		friends: friendsIt,
 		weapons: weaponsIt,
 		scrims: scrimsIt,
 		common: commonIt,
@@ -622,6 +648,7 @@ export const resources = {
 		gear: gearJa,
 		faq: faqJa,
 		forms: formsJa,
+		friends: friendsJa,
 		weapons: weaponsJa,
 		scrims: scrimsJa,
 		common: commonJa,
@@ -647,6 +674,7 @@ export const resources = {
 		gear: gearDa,
 		faq: faqDa,
 		forms: formsDa,
+		friends: friendsDa,
 		weapons: weaponsDa,
 		scrims: scrimsDa,
 		common: commonDa,
@@ -672,6 +700,7 @@ export const resources = {
 		gear: gearEsEs,
 		faq: faqEsEs,
 		forms: formsEsEs,
+		friends: friendsEsEs,
 		weapons: weaponsEsEs,
 		scrims: scrimsEsEs,
 		common: commonEsEs,
@@ -697,6 +726,7 @@ export const resources = {
 		gear: gearHe,
 		faq: faqHe,
 		forms: formsHe,
+		friends: friendsHe,
 		weapons: weaponsHe,
 		scrims: scrimsHe,
 		common: commonHe,
@@ -722,6 +752,7 @@ export const resources = {
 		gear: gearFrEu,
 		faq: faqFrEu,
 		forms: formsFrEu,
+		friends: friendsFrEu,
 		weapons: weaponsFrEu,
 		scrims: scrimsFrEu,
 		common: commonFrEu,
@@ -747,6 +778,7 @@ export const resources = {
 		gear: gearPl,
 		faq: faqPl,
 		forms: formsPl,
+		friends: friendsPl,
 		weapons: weaponsPl,
 		scrims: scrimsPl,
 		common: commonPl,

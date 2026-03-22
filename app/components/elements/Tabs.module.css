@@ -1,7 +1,23 @@
+.tabListContainer {
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+
 .tabList {
 	display: flex;
 	flex-direction: row;
-	border-bottom: 2px solid var(--border);
+	border-bottom: 2px solid var(--color-border);
+	min-width: fit-content;
+}
+
+.fullWidth {
+	width: 100%;
+	min-width: 100%;
+}
+
+.fullWidth .tabContainer {
+	flex: 1;
+	min-width: 0;
 }
 
 .tabList svg {
@@ -23,38 +39,48 @@
 	padding-block-start: var(--s-4);
 }
 
-.disappearing:has(.tabList .tabButton:only-child).padded .tabPanel {
+.disappearing:has(.tabList > div:only-child).padded .tabPanel {
 	padding-top: 0;
 }
 
-.disappearing .tabList:has(.tabButton:only-child) {
+.disappearing .tabList:has(> div:only-child) {
 	display: none;
+}
+
+.tabContainer {
+	min-width: fit-content;
+	margin-bottom: -2px;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: -2px;
+	}
 }
 
 .tabButton {
 	background-color: transparent;
 	border: none;
-	font-size: var(--fonts-xs);
+	font-size: var(--font-xs);
 	border-radius: 0;
 	border-bottom: 2px solid transparent;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	white-space: nowrap;
 	flex: 1;
 	transform: none !important;
 }
 
-.tabButton[data-selected] {
-	border-color: var(--theme);
-	color: var(--text);
+.tabContainer[data-selected] .tabButton {
+	border-color: var(--color-text-accent);
+	color: var(--color-text);
 }
 
-.tabButton[data-focus-visible] {
-	color: var(--theme) !important;
+.tabContainer[data-focus-visible] .tabButton {
+	color: var(--color-text-accent) !important;
 	outline: none;
 }
 
 .tabNumber {
-	color: var(--theme);
+	color: var(--color-text-accent);
 	margin-inline-start: var(--s-2);
 }
 
@@ -62,5 +88,5 @@
 	position: sticky;
 	top: 47px;
 	z-index: 1;
-	background-color: var(--bg);
+	background-color: var(--color-bg);
 }

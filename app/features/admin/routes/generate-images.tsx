@@ -106,11 +106,11 @@ function InfoSquare({
 				style={{
 					width: "12rem",
 					height: "12rem",
-					borderRadius: "var(--rounded)",
+					borderRadius: "var(--radius-box)",
 					marginTop: "1rem",
 					display: "grid",
 					placeItems: "center",
-					borderColor: "var(--border)",
+					borderColor: "var(--color-border)",
 					borderWidth: "2px",
 					borderStyle: "solid",
 				}}

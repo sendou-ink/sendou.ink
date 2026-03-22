@@ -72,11 +72,6 @@ export const navItems = [
 		prefetch: false,
 	},
 	{
-		name: "u",
-		url: "u",
-		prefetch: false,
-	},
-	{
 		name: "xsearch",
 		url: "xsearch",
 		prefetch: false,
@@ -94,11 +89,6 @@ export const navItems = [
 	{
 		name: "art",
 		url: "art",
-		prefetch: false,
-	},
-	{
-		name: "t",
-		url: "t",
 		prefetch: false,
 	},
 	{

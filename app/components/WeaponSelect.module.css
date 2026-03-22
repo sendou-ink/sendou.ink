@@ -1,7 +1,3 @@
-.selectWidthWider {
-	--select-width: 100%;
-}
-
 .item {
 	display: flex;
 	gap: var(--s-2);

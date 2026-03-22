@@ -265,7 +265,6 @@ export type Breadcrumb =
 			type: "IMAGE";
 			href: string;
 			text?: string;
-			rounded?: boolean;
 	  }
 	| { text: string; type: "TEXT"; href: string };
 

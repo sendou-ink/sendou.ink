@@ -15,7 +15,6 @@ import {
 	COMMON_USER_FIELDS,
 	concatUserSubmittedImagePrefix,
 	tournamentLogoWithDefault,
-	userChatNameColor,
 } from "~/utils/kysely.server";
 import type { Unpacked } from "~/utils/types";
 import { FULL_GROUP_SIZE } from "../sendouq/q-constants";
@@ -130,7 +129,6 @@ function groupWithTeamAndMembers(
 								.orderBy("UserFriendCode.createdAt", "desc")
 								.limit(1)
 								.as("friendCode"),
-							userChatNameColor,
 						])
 						.whereRef("GroupMember.groupId", "=", groupIdRef)
 						.orderBy("GroupMember.userId", "asc"),

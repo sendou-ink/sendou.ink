@@ -1,16 +1,21 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import { clampThemeToGamut } from "~/utils/oklch-gamut";
 import {
 	errorToastIfFalsy,
 	notFoundIfFalsy,
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { mySlugify, TEAM_SEARCH_PAGE, teamPage } from "~/utils/urls";
+import { mySlugify, teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
 import { editTeamSchema, teamParamsSchema } from "../team-schemas.server";
-import { isTeamManager, isTeamOwner } from "../team-utils";
+import {
+	canAddCustomizedColors,
+	isTeamManager,
+	isTeamOwner,
+} from "../team-utils";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
@@ -36,9 +41,26 @@ export const action: ActionFunction = async ({ request, params }) => {
 	}
 
 	switch (data._action) {
+		case "UPDATE_CUSTOM_THEME": {
+			errorToastIfFalsy(
+				canAddCustomizedColors(team),
+				"Team does not have custom theme access",
+			);
+
+			const customTheme = data.newValue
+				? clampThemeToGamut(data.newValue)
+				: null;
+
+			await TeamRepository.updateCustomTheme({
+				id: team.id,
+				customTheme,
+			});
+
+			return { ok: true };
+		}
 		case "DELETE_TEAM": {
 			await TeamRepository.del(team.id);
-			throw redirect(TEAM_SEARCH_PAGE);
+			throw redirect("/");
 		}
 		case "DELETE_AVATAR": {
 			await TeamRepository.removeTeamImage(team.id, "avatar");
@@ -65,9 +87,15 @@ export const action: ActionFunction = async ({ request, params }) => {
 				return { errors: ["forms:errors.duplicateName"] };
 			}
 
+			const customTheme =
+				canAddCustomizedColors(team) && data.customTheme
+					? clampThemeToGamut(data.customTheme)
+					: null;
+
 			const updatedTeam = await TeamRepository.update({
 				id: team.id,
 				...data,
+				customTheme,
 			});
 
 			throw redirect(teamPage(updatedTeam.customUrl));

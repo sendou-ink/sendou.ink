@@ -14,10 +14,11 @@ import {
 import { metaTags, type SerializeFrom } from "../../../utils/remix";
 
 import { loader } from "../loaders/builds.$slug.stats.server";
+
 export { loader };
 
-import "../build-stats.css";
 import { MAX_AP } from "~/features/build-analyzer/analyzer-constants";
+import styles from "./builds.$slug.stats.module.css";
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.data) return [];
@@ -48,11 +49,6 @@ export const handle: SendouRouteHandle = {
 				href: weaponBuildPage(data.meta.slug),
 				type: "IMAGE",
 			},
-			{
-				href: "/",
-				text: data.meta.breadcrumbText,
-				type: "TEXT",
-			},
 		];
 	},
 };
@@ -79,11 +75,11 @@ export default function BuildStatsPage() {
 							);
 
 						return (
-							<div key={stats.name} className="build-stats__ability-row">
+							<div key={stats.name} className={styles.abilityRow}>
 								<div>
 									<Ability ability={stats.name} size="SUB" />
 								</div>
-								<div className="build-stats__bars">
+								<div className={styles.bars}>
 									<div>
 										<WeaponImage
 											variant="badge"
@@ -95,7 +91,7 @@ export default function BuildStatsPage() {
 										{stats.apAverage.weapon} {t("analyzer:abilityPoints.short")}
 									</div>{" "}
 									<div
-										className="build-stats__bar"
+										className={styles.bar}
 										style={{ width: `${apToPx(stats.apAverage.weapon)}px` }}
 									/>
 									<div className="text-xs text-lighter font-bold justify-self-center">
@@ -105,7 +101,7 @@ export default function BuildStatsPage() {
 										{stats.apAverage.all} {t("analyzer:abilityPoints.short")}
 									</div>{" "}
 									<div
-										className="build-stats__bar"
+										className={styles.bar}
 										style={{ width: `${apToPx(stats.apAverage.all)}px` }}
 									/>
 								</div>
@@ -123,9 +119,9 @@ export default function BuildStatsPage() {
 							Math.floor((ap / MAX_AP) * 125);
 
 						return (
-							<div key={stats.name} className="build-stats__ability-row">
+							<div key={stats.name} className={styles.abilityRow}>
 								<Ability ability={stats.name} size="SUB" />
-								<div className="build-stats__bars">
+								<div className={styles.bars}>
 									<div>
 										<WeaponImage
 											variant="badge"
@@ -135,7 +131,7 @@ export default function BuildStatsPage() {
 									</div>
 									<div>{stats.percentage.weapon}%</div>{" "}
 									<div
-										className="build-stats__bar"
+										className={styles.bar}
 										style={{
 											width: `${percentageToPx(stats.percentage.weapon)}px`,
 										}}
@@ -145,7 +141,7 @@ export default function BuildStatsPage() {
 									</div>
 									<div>{stats.percentage.all}%</div>{" "}
 									<div
-										className="build-stats__bar"
+										className={styles.bar}
 										style={{
 											width: `${percentageToPx(stats.percentage.all)}px`,
 										}}

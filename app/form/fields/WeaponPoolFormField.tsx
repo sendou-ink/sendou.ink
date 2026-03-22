@@ -15,13 +15,11 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import clsx from "clsx";
+import { Star, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { WeaponImage } from "~/components/Image";
-import { StarIcon } from "~/components/icons/Star";
-import { StarFilledIcon } from "~/components/icons/StarFilled";
-import { TrashIcon } from "~/components/icons/Trash";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { FormFieldProps } from "../types";
@@ -213,9 +211,9 @@ function StaticWeaponItem({
 						size="small"
 						icon={
 							weapon.isFavorite ? (
-								<StarFilledIcon className={styles.starIconFilled} />
+								<Star className={styles.starIconFilled} fill="currentColor" />
 							) : (
-								<StarIcon className={styles.starIconOutlined} />
+								<Star className={styles.starIconOutlined} />
 							)
 						}
 						aria-label="Toggle favorite"
@@ -225,7 +223,7 @@ function StaticWeaponItem({
 				<SendouButton
 					variant="minimal-destructive"
 					size="small"
-					icon={<TrashIcon />}
+					icon={<Trash />}
 					aria-label="Delete"
 					onPress={() => onRemove(weapon.id)}
 				/>
@@ -293,9 +291,9 @@ function SortableWeaponItem({
 						size="small"
 						icon={
 							weapon.isFavorite ? (
-								<StarFilledIcon className={styles.starIconFilled} />
+								<Star className={styles.starIconFilled} fill="currentColor" />
 							) : (
-								<StarIcon className={styles.starIconOutlined} />
+								<Star className={styles.starIconOutlined} />
 							)
 						}
 						aria-label="Toggle favorite"
@@ -305,7 +303,7 @@ function SortableWeaponItem({
 				<SendouButton
 					variant="minimal-destructive"
 					size="small"
-					icon={<TrashIcon />}
+					icon={<Trash />}
 					aria-label="Delete"
 					onPress={() => onRemove(weapon.id)}
 				/>

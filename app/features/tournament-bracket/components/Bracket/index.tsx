@@ -1,7 +1,9 @@
+import clsx from "clsx";
 import * as React from "react";
 import { useDraggable } from "react-use-draggable-scroll";
 import { useBracketExpanded } from "~/features/tournament/routes/to.$id";
 import type { Bracket as BracketType } from "../../core/Bracket";
+import styles from "./bracket.module.css";
 import { EliminationBracketSide } from "./Elimination";
 import { RoundRobinBracket } from "./RoundRobin";
 import { SwissBracket } from "./Swiss";
@@ -68,7 +70,7 @@ function BracketContainer({
 }) {
 	if (!scrollable) {
 		return (
-			<div className="bracket" data-testid="brackets-viewer">
+			<div className={styles.bracket} data-testid="brackets-viewer">
 				{children}
 			</div>
 		);
@@ -91,7 +93,7 @@ function ScrollableBracketContainer({
 
 	return (
 		<div
-			className="bracket scrolling-bracket"
+			className={clsx(styles.bracket, styles.scrollingBracket)}
 			data-testid="brackets-viewer"
 			ref={ref}
 			{...events}

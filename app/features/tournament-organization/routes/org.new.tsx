@@ -5,6 +5,7 @@ import { SendouForm } from "~/form/SendouForm";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { action } from "../actions/org.new.server";
 import { newOrganizationSchema } from "../tournament-organization-schemas";
+
 export { action };
 
 export default function NewOrganizationPage() {

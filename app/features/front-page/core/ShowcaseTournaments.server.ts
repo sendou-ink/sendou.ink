@@ -26,7 +26,12 @@ interface ParticipationInfo {
 	organizers: Set<ShowcaseCalendarEvent["id"]>;
 }
 
-export async function frontPageTournamentsByUserId(
+export async function upcomingTournaments(): Promise<ShowcaseCalendarEvent[]> {
+	const tournaments = await cachedTournaments();
+	return tournaments.upcoming;
+}
+
+export async function categorizedTournamentsByUserId(
 	userId: number | null,
 ): Promise<ShowcaseTournamentCollection> {
 	const tournaments = await cachedTournaments();
@@ -307,6 +312,7 @@ function mapTournamentFromDB(
 		tier: tournament.tier ?? null,
 		tentativeTier,
 		hidden: Boolean(tournament.hidden),
+		minMembersPerTeam: tournament.settings.minMembersPerTeam ?? 4,
 		modes: null,
 		firstPlacer:
 			highestDivWinners.length > 0

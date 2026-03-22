@@ -42,6 +42,7 @@
 	"forms.info.tag": "",
 	"forms.errors.duplicateName": "该队名已被使用",
 	"forms.errors.noOnlySpecialCharacters": "",
+	"forms.customTheme.header": "",
 	"roster.teamFull": "成员已满",
 	"roster.inviteLink.header": "分享邀请链接来添加成员",
 	"roster.members.header": "成员",

@@ -1,0 +1,44 @@
+.trigger {
+	display: flex;
+	align-items: center;
+
+	span {
+		color: var(--color-text-high);
+	}
+}
+
+.avatarStack {
+	display: flex;
+	align-items: center;
+}
+
+.stackedAvatar {
+	border-radius: 50%;
+	border: 2px solid var(--color-bg);
+}
+
+.stackedAvatar:not(:first-child) {
+	margin-inline-start: -8px;
+}
+
+.overflow {
+	font-size: var(--font-xs);
+	margin-inline: var(--s-1);
+}
+
+.list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+.friendLink {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	padding: var(--s-0-5) var(--s-1);
+	text-decoration: none;
+	color: var(--color-text);
+}

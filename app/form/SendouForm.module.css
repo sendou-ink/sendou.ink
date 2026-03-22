@@ -8,6 +8,6 @@
 }
 
 .title {
-	font-size: var(--fonts-lg);
-	font-weight: bold;
+	font-size: var(--font-lg);
+	font-weight: var(--weight-extra);
 }

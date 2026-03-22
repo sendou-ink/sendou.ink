@@ -1,6 +1,5 @@
 import type { ZodType } from "zod";
 import { z } from "zod";
-import { CUSTOM_CSS_VAR_COLORS } from "~/features/user-page/user-page-constants";
 import {
 	abilities,
 	type abilitiesShort,
@@ -35,6 +34,123 @@ export const dbBoolean = z.coerce.number().min(0).max(1).int();
 
 const hexCodeRegex = /^#(?:[0-9a-fA-F]{3}){1,2}[0-9]{0,2}$/; // https://stackoverflow.com/a/1636354
 export const hexCode = z.string().regex(hexCodeRegex);
+
+export const THEME_INPUT_LIMITS = {
+	BASE_HUE_MIN: 0,
+	BASE_HUE_MAX: 360,
+	BASE_CHROMA_MIN: 0,
+	BASE_CHROMA_MAX: 0.1,
+	ACCENT_HUE_MIN: 0,
+	ACCENT_HUE_MAX: 360,
+	ACCENT_CHROMA_MIN: 0,
+	ACCENT_CHROMA_MAX: 0.3,
+	RADIUS_MIN: 0,
+	RADIUS_MAX: 5,
+	RADIUS_STEP: 1,
+	BORDER_WIDTH_MIN: 0.5,
+	BORDER_WIDTH_MAX: 2,
+	BORDER_WIDTH_STEP: 0.5,
+	SIZE_MIN: 0.9,
+	SIZE_MAX: 1.1,
+	SIZE_STEP: 0.05,
+} as const;
+
+function isValidStep(value: number, min: number, step: number) {
+	const diff = value - min;
+	const steps = Math.round(diff / step);
+	return Math.abs(diff - steps * step) < 0.0001;
+}
+
+export const themeInputSchema = z.object({
+	baseHue: z
+		.number()
+		.min(THEME_INPUT_LIMITS.BASE_HUE_MIN)
+		.max(THEME_INPUT_LIMITS.BASE_HUE_MAX),
+	baseChroma: z
+		.number()
+		.min(THEME_INPUT_LIMITS.BASE_CHROMA_MIN)
+		.max(THEME_INPUT_LIMITS.BASE_CHROMA_MAX),
+	accentHue: z
+		.number()
+		.min(THEME_INPUT_LIMITS.ACCENT_HUE_MIN)
+		.max(THEME_INPUT_LIMITS.ACCENT_HUE_MAX),
+	accentChroma: z
+		.number()
+		.min(THEME_INPUT_LIMITS.ACCENT_CHROMA_MIN)
+		.max(THEME_INPUT_LIMITS.ACCENT_CHROMA_MAX),
+	chatHue: z
+		.number()
+		.min(THEME_INPUT_LIMITS.BASE_HUE_MIN)
+		.max(THEME_INPUT_LIMITS.BASE_HUE_MAX)
+		.nullable(),
+	radiusBox: z
+		.number()
+		.int()
+		.min(THEME_INPUT_LIMITS.RADIUS_MIN)
+		.max(THEME_INPUT_LIMITS.RADIUS_MAX),
+	radiusField: z
+		.number()
+		.int()
+		.min(THEME_INPUT_LIMITS.RADIUS_MIN)
+		.max(THEME_INPUT_LIMITS.RADIUS_MAX),
+	radiusSelector: z
+		.number()
+		.int()
+		.min(THEME_INPUT_LIMITS.RADIUS_MIN)
+		.max(THEME_INPUT_LIMITS.RADIUS_MAX),
+	borderWidth: z
+		.number()
+		.min(THEME_INPUT_LIMITS.BORDER_WIDTH_MIN)
+		.max(THEME_INPUT_LIMITS.BORDER_WIDTH_MAX)
+		.refine(
+			(val) =>
+				isValidStep(
+					val,
+					THEME_INPUT_LIMITS.BORDER_WIDTH_MIN,
+					THEME_INPUT_LIMITS.BORDER_WIDTH_STEP,
+				),
+			{ message: "Must be a valid step increment" },
+		),
+	sizeField: z
+		.number()
+		.min(THEME_INPUT_LIMITS.SIZE_MIN)
+		.max(THEME_INPUT_LIMITS.SIZE_MAX)
+		.refine(
+			(val) =>
+				isValidStep(
+					val,
+					THEME_INPUT_LIMITS.SIZE_MIN,
+					THEME_INPUT_LIMITS.SIZE_STEP,
+				),
+			{ message: "Must be a valid step increment" },
+		),
+	sizeSelector: z
+		.number()
+		.min(THEME_INPUT_LIMITS.SIZE_MIN)
+		.max(THEME_INPUT_LIMITS.SIZE_MAX)
+		.refine(
+			(val) =>
+				isValidStep(
+					val,
+					THEME_INPUT_LIMITS.SIZE_MIN,
+					THEME_INPUT_LIMITS.SIZE_STEP,
+				),
+			{ message: "Must be a valid step increment" },
+		),
+	sizeSpacing: z
+		.number()
+		.min(THEME_INPUT_LIMITS.SIZE_MIN)
+		.max(THEME_INPUT_LIMITS.SIZE_MAX)
+		.refine(
+			(val) =>
+				isValidStep(
+					val,
+					THEME_INPUT_LIMITS.SIZE_MIN,
+					THEME_INPUT_LIMITS.SIZE_STEP,
+				),
+			{ message: "Must be a valid step increment" },
+		),
+});
 
 const timeStringRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 export const timeString = z.string().regex(timeStringRegex);
@@ -352,27 +468,3 @@ export const dayMonthYear = z.object({
 });
 
 export type DayMonthYear = z.infer<typeof dayMonthYear>;
-
-export const customCssVarObject = z.preprocess(
-	falsyToNull,
-	z.string().nullable().refine(validSerializedCustomCssVarObject, {
-		message: "Invalid custom CSS var object",
-	}),
-);
-
-function validSerializedCustomCssVarObject(value: unknown) {
-	if (!value) return true;
-
-	try {
-		const parsedValue = JSON.parse(value as string);
-
-		for (const [key, value] of Object.entries(parsedValue)) {
-			if (!CUSTOM_CSS_VAR_COLORS.includes(key as any)) return false;
-			if (!hexCodeRegex.test(value as string)) return false;
-		}
-
-		return true;
-	} catch {
-		return false;
-	}
-}

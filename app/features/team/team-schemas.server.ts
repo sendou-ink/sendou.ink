@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { mySlugify } from "~/utils/urls";
-import { _action, customCssVarObject, falsyToNull, id } from "~/utils/zod";
+import { _action, falsyToNull, id, themeInputSchema } from "~/utils/zod";
 import * as TeamRepository from "./TeamRepository.server";
 import { TEAM, TEAM_MEMBER_ROLES } from "./team-constants";
 import { createTeamSchema } from "./team-schemas";
@@ -40,6 +40,13 @@ const deleteActionsSchema = z.object({
 export const editTeamSchema = z.union([
 	deleteActionsSchema,
 	z.object({
+		_action: _action("UPDATE_CUSTOM_THEME"),
+		newValue: z.preprocess(
+			(val) => (!val || val === "null" ? null : val),
+			themeInputSchema.nullable(),
+		),
+	}),
+	z.object({
 		_action: _action("EDIT"),
 		name: z.string().min(TEAM.NAME_MIN_LENGTH).max(TEAM.NAME_MAX_LENGTH),
 		bio: z.preprocess(
@@ -54,7 +61,10 @@ export const editTeamSchema = z.union([
 			falsyToNull,
 			z.string().max(TEAM.TAG_MAX_LENGTH).nullable(),
 		),
-		css: customCssVarObject,
+		customTheme: z.preprocess(
+			(val) => (!val || val === "null" ? null : val),
+			themeInputSchema.nullable(),
+		),
 	}),
 ]);
 

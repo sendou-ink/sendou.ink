@@ -1,11 +1,11 @@
 import useSWRImmutable from "swr/immutable";
 import type { PatronsListLoaderData } from "~/features/front-page/routes/patrons-list";
-import type { TrustersLoaderData } from "~/features/sendouq/routes/trusters";
+import type { FriendsForAddingLoaderData } from "~/features/sendouq/routes/friends-for-adding";
 import type { WeaponUsageLoaderData } from "~/features/sendouq/routes/weapon-usage";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { logger } from "~/utils/logger";
 import {
-	GET_TRUSTERS_ROUTE,
+	GET_FRIENDS_FOR_ADDING_ROUTE,
 	getWeaponUsage,
 	PATRONS_LIST_ROUTE,
 } from "~/utils/urls";
@@ -39,15 +39,15 @@ export function useWeaponUsage(args: {
 	};
 }
 
-export function useTrusted() {
-	const { data, error } = useSWRImmutable<TrustersLoaderData>(
-		GET_TRUSTERS_ROUTE,
-		fetcher(GET_TRUSTERS_ROUTE),
+export function useFriendsForAdding() {
+	const { data, error } = useSWRImmutable<FriendsForAddingLoaderData>(
+		GET_FRIENDS_FOR_ADDING_ROUTE,
+		fetcher(GET_FRIENDS_FOR_ADDING_ROUTE),
 	);
 
 	return {
-		trusters: data?.trusters.trusters,
-		teams: data?.trusters.teams,
+		friends: data?.friendsForAdding.friends,
+		teams: data?.friendsForAdding.teams,
 		isLoading: !error && !data,
 		isError: error,
 	};

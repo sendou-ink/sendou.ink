@@ -7,7 +7,8 @@
 	"tabs.seeds": "Listas de Equipos",
 	"tabs.results": "Resultados",
 	"tabs.streams": "Streams ({{count}})",
-	"tabs.subs": "Subs ({{count}})",
+	"tabs.subs": "Subs",
+	"tabs.looking": "",
 	"pre.steps.header": "Completa estos pasos para jugar",
 	"pre.steps.name": "Nombre de equipo",
 	"pre.steps.roster": "Equipo lleno",
@@ -28,7 +29,7 @@
 	"pre.roster.header": "Llenar equipo",
 	"pre.roster.footer": "Se requieren al menos {{atLeastCount}} miembros para participar. La cantidad máxima es {{maxCount}}",
 	"pre.roster.footer.noSubs": "El formato es {{format}}. No se permiten subs.",
-	"pre.roster.addTrusted.header": "Agregar personas con quienes has jugado",
+	"pre.roster.addFriend.header": "",
 	"pre.roster.delete.button": "Borrar miembro",
 	"pre.roster.delete.header": "Miembro que quieres borrar",
 	"pre.pool.header": "Escojer grupo de mapas",
@@ -124,7 +125,7 @@
 	"join.error.ALREADY_JOINED": "Ya eres miembro de este equipo.",
 	"join.error.NOT_LOGGED_IN": "Debes de ingresarte al sitio para unirte a un equipo.",
 	"join.VALID": "¿Unirte a {{teamName}} para {{eventName}}?",
-	"join.giveTrust": "¿Confiar a {{name}} para añadirte a torneos futuros?",
+	"join.friendSuggestion": "",
 	"subs.prefersToPlay": "Prefiere jugar",
 	"subs.canPlay": "Puede jugar",
 	"subs.canVC": "Puede usar chat de voz",
@@ -151,5 +152,6 @@
 	"progression.error.NEGATIVE_PROGRESSION": "La progresión negativa solo es posible en eliminación doble",
 	"progression.error.NO_SE_SOURCE": "La eliminación simple no es un cuadro de origen válido",
 	"progression.error.NO_DE_POSITIVE": "La eliminación doble no es válida para progresión positiva",
-	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "El cuadro suizo con avance/eliminación anticipada debe llevar a otro cuadro"
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "El cuadro suizo con avance/eliminación anticipada debe llevar a otro cuadro",
+	"lfg.askCaptainToJoinQueue": ""
 }

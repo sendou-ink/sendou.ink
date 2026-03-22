@@ -19,6 +19,7 @@ import {
 	TIER_PLUS_URL,
 	tierImageUrl,
 } from "~/utils/urls";
+import styles from "./Image.module.css";
 
 interface ImageProps {
 	path: string;
@@ -229,14 +230,14 @@ export function TierImage({ tier, className, width = 200 }: TierImageProps) {
 	const height = width * 0.8675;
 
 	return (
-		<div className={clsx("tier__container", className)} style={{ width }}>
+		<div className={clsx(styles.tierContainer, className)} style={{ width }}>
 			<Image
 				path={tierImageUrl(tier.name)}
 				width={width}
 				height={height}
 				alt={title}
 				title={title}
-				containerClassName="tier__img"
+				containerClassName={styles.tierImg}
 			/>
 			{tier.isPlus ? (
 				<Image
@@ -245,7 +246,7 @@ export function TierImage({ tier, className, width = 200 }: TierImageProps) {
 					height={height}
 					alt={title}
 					title={title}
-					containerClassName="tier__img"
+					containerClassName={styles.tierImg}
 				/>
 			) : null}
 		</div>

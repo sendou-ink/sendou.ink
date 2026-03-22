@@ -19,9 +19,6 @@ export const frontPageSchema = z.union([
 		_action: _action("JOIN_TEAM"),
 	}),
 	z.object({
-		_action: _action("JOIN_TEAM_WITH_TRUST"),
-	}),
-	z.object({
 		_action: _action("ADD_FRIEND_CODE"),
 		friendCode,
 	}),
@@ -32,7 +29,7 @@ export const preparingSchema = z.union([
 		_action: _action("JOIN_QUEUE"),
 	}),
 	z.object({
-		_action: _action("ADD_TRUSTED"),
+		_action: _action("ADD_FRIEND"),
 		id,
 	}),
 ]);

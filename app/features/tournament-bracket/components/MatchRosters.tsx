@@ -4,10 +4,8 @@ import { Avatar } from "~/components/Avatar";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { tournamentTeamPage, userPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import styles from "../tournament-bracket.module.css";
 
-const INACTIVE_PLAYER_LINK_CSS = "text-lighter-important";
-const INACTIVE_PLAYER_NAME_CSS =
-	"tournament__team-with-roster__member__inactive";
 export function MatchRosters({
 	teams,
 }: {
@@ -40,17 +38,16 @@ export function MatchRosters({
 		: null;
 
 	return (
-		<div className="tournament-bracket__rosters">
+		<div className={styles.rosters}>
 			<div className="stack xxs">
 				<div className="stack xs horizontal items-center text-lighter">
-					<div className="tournament-bracket__team-one-dot" />
+					<div className={styles.teamOneDot} />
 					Team 1
 				</div>
 				<h2
 					className={clsx("text-sm", {
 						"text-lighter": !teamOne,
-						"tournament-bracket__rosters__spaced-header":
-							teamOneLogoSrc || teamTwoLogoSrc,
+						[styles.rostersSpacedHeader]: teamOne || teamTwo,
 					})}
 				>
 					{teamOne ? (
@@ -61,9 +58,11 @@ export function MatchRosters({
 							})}
 							className="text-main-forced font-bold stack horizontal xs items-center"
 						>
-							{teamOneLogoSrc ? (
-								<Avatar url={teamOneLogoSrc} size="sm" />
-							) : null}
+							<Avatar
+								url={teamOneLogoSrc}
+								identiconInput={teamOne.name}
+								size="sm"
+							/>
 							{teamOne.name}
 						</Link>
 					) : (
@@ -84,17 +83,11 @@ export function MatchRosters({
 									<Link
 										to={userPage(p)}
 										className={clsx("stack horizontal sm items-center", {
-											[INACTIVE_PLAYER_LINK_CSS]: isInactive,
+											[styles.inactivePlayer]: isInactive,
 										})}
 									>
 										<Avatar user={p} size="xxs" />
-										<span
-											className={clsx({
-												[INACTIVE_PLAYER_NAME_CSS]: isInactive,
-											})}
-										>
-											{p.username}
-										</span>
+										<span>{p.username}</span>
 										{p.pronouns ? (
 											<span className="text-lighter ml-1 text-xxxs">
 												{p.pronouns.subject}/{p.pronouns.object}
@@ -109,14 +102,13 @@ export function MatchRosters({
 			</div>
 			<div className="stack xxs">
 				<div className="stack xs horizontal items-center text-lighter">
-					<div className="tournament-bracket__team-two-dot" />
+					<div className={styles.teamTwoDot} />
 					Team 2
 				</div>
 				<h2
 					className={clsx("text-sm", {
 						"text-lighter": !teamTwo,
-						"tournament-bracket__rosters__spaced-header":
-							teamOneLogoSrc || teamTwoLogoSrc,
+						[styles.rostersSpacedHeader]: teamOne || teamTwo,
 					})}
 				>
 					{teamTwo ? (
@@ -127,9 +119,11 @@ export function MatchRosters({
 							})}
 							className="text-main-forced font-bold stack horizontal xs items-center"
 						>
-							{teamTwoLogoSrc ? (
-								<Avatar url={teamTwoLogoSrc} size="sm" />
-							) : null}
+							<Avatar
+								url={teamTwoLogoSrc}
+								identiconInput={teamTwo.name}
+								size="sm"
+							/>
 							{teamTwo.name}
 						</Link>
 					) : (
@@ -150,17 +144,11 @@ export function MatchRosters({
 									<Link
 										to={userPage(p)}
 										className={clsx("stack horizontal sm items-center", {
-											[INACTIVE_PLAYER_LINK_CSS]: isInactive,
+											[styles.inactivePlayer]: isInactive,
 										})}
 									>
 										<Avatar user={p} size="xxs" />
-										<span
-											className={clsx({
-												[INACTIVE_PLAYER_NAME_CSS]: isInactive,
-											})}
-										>
-											{p.username}
-										</span>
+										<span>{p.username}</span>
 										{p.pronouns ? (
 											<span className="text-lighter ml-1 text-xxxs">
 												{p.pronouns.subject}/{p.pronouns.object}

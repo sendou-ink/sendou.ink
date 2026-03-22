@@ -36,13 +36,51 @@ export type MemberRole = (typeof TEAM_MEMBER_ROLES)[number];
 /** In SQLite booleans are presented as 0 (false) and 1 (true) */
 export type DBBoolean = number;
 
+export const CUSTOM_THEME_VARS = [
+	"--_base-h",
+	"--_base-c-0",
+	"--_base-c-1",
+	"--_base-c-2",
+	"--_base-c-3",
+	"--_base-c-4",
+	"--_base-c-5",
+	"--_base-c-6",
+	"--_base-c-7",
+	"--_acc-h",
+	"--_acc-c-0",
+	"--_acc-c-1",
+	"--_acc-c-2",
+	"--_acc-c-3",
+	"--_acc-c-4",
+	"--_acc-c-5",
+	"--_second-h",
+	"--_second-c-0",
+	"--_second-c-1",
+	"--_second-c-2",
+	"--_second-c-3",
+	"--_second-c-4",
+	"--_second-c-5",
+	"--_chat-h",
+	"--_radius-box",
+	"--_radius-field",
+	"--_radius-selector",
+	"--_border-width",
+	"--_size-field",
+	"--_size-selector",
+	"--_size-spacing",
+] as const;
+export type CustomThemeVar = (typeof CUSTOM_THEME_VARS)[number];
+export type CustomTheme = Omit<Record<CustomThemeVar, number>, "--_chat-h"> & {
+	"--_chat-h": number | null;
+};
+
 export interface Team {
 	avatarImgId: number | null;
 	bannerImgId: number | null;
 	bio: string | null;
 	createdAt: Generated<number>;
-	css: JSONColumnTypeNullable<Record<string, string>>;
 	customUrl: string;
+	customTheme: JSONColumnTypeNullable<CustomTheme>;
 	deletedAt: number | null;
 	id: GeneratedAlways<number>;
 	inviteCode: string;
@@ -520,6 +558,13 @@ export interface PreparedMaps {
 	eliminationTeamCount?: number;
 }
 
+export interface SavedCalendarEvent {
+	id: GeneratedAlways<number>;
+	userId: number;
+	calendarEventId: number;
+	createdAt: Generated<number>;
+}
+
 export interface TournamentBadgeOwner {
 	badgeId: number;
 	userId: number;
@@ -695,6 +740,12 @@ export interface TournamentSub {
 	visibility: "+1" | "+2" | "+3" | "ALL";
 }
 
+export interface TournamentLFGLike {
+	likerTeamId: number;
+	targetTeamId: number;
+	createdAt: Generated<number>;
+}
+
 export interface TournamentStaff {
 	tournamentId: number;
 	userId: number;
@@ -715,6 +766,10 @@ export interface TournamentTeam {
 	tournamentId: number;
 	teamId: number | null;
 	avatarImgId: number | null;
+	isLooking: Generated<DBBoolean>;
+	isPlaceholder: Generated<DBBoolean>;
+	lfgNote: string | null;
+	chatCode: Generated<string | null>;
 }
 
 export interface TournamentTeamCheckIn {
@@ -732,6 +787,10 @@ export interface TournamentTeamMember {
 	inGameName: string | null;
 	tournamentTeamId: number;
 	userId: number;
+	role: Generated<"OWNER" | "MANAGER" | "REGULAR">;
+	isStayAsSub: Generated<DBBoolean>;
+	// denormalized from TournamentTeam.isLooking
+	isLooking: Generated<DBBoolean>;
 }
 
 export interface TournamentOrganization {
@@ -795,6 +854,22 @@ export interface TrustRelationship {
 	trustGiverUserId: number;
 	trustReceiverUserId: number;
 	lastUsedAt: number;
+}
+
+/** Mutual friendship between two users. Invariant: userOneId < userTwoId. */
+export interface Friendship {
+	id: GeneratedAlways<number>;
+	userOneId: number;
+	userTwoId: number;
+	createdAt: Generated<number>;
+}
+
+/** Pending friend request from one user to another. */
+export interface FriendRequest {
+	id: GeneratedAlways<number>;
+	senderId: number;
+	receiverId: number;
+	createdAt: Generated<number>;
 }
 
 export interface UnvalidatedUserSubmittedImage {
@@ -892,7 +967,7 @@ export interface User {
 	commissionsOpenedAt: number | null;
 	commissionText: string | null;
 	country: string | null;
-	css: JSONColumnTypeNullable<Record<string, string>>;
+	customTheme: JSONColumnTypeNullable<CustomTheme>;
 	customUrl: string | null;
 	discordAvatar: string | null;
 	discordId: string;
@@ -1154,6 +1229,19 @@ export interface NotificationUserSubscription {
 	subscription: JSONColumnType<NotificationSubscription>;
 }
 
+export const SPLATOON_ROTATION_TYPES = ["SERIES", "OPEN", "X"] as const;
+export type SplatoonRotationType = (typeof SPLATOON_ROTATION_TYPES)[number];
+
+export interface SplatoonRotation {
+	id: GeneratedAlways<number>;
+	type: SplatoonRotationType;
+	mode: string;
+	stageId1: number;
+	stageId2: number;
+	startTime: number;
+	endTime: number;
+}
+
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };
 export type TablesInsertable = { [P in keyof DB]: Insertable<DB[P]> };
 export type TablesUpdatable = { [P in keyof DB]: Updateable<DB[P]> };
@@ -1208,6 +1296,7 @@ export interface DB {
 	Tournament: Tournament;
 	TournamentStaff: TournamentStaff;
 	TournamentGroup: TournamentGroup;
+	TournamentLFGLike: TournamentLFGLike;
 	TournamentMatch: TournamentMatch;
 	TournamentMatchPickBanEvent: TournamentMatchPickBanEvent;
 	TournamentMatchGameResult: TournamentMatchGameResult;
@@ -1226,6 +1315,8 @@ export interface DB {
 	TournamentBracketProgressionOverride: TournamentBracketProgressionOverride;
 	TournamentOrganizationBannedUser: TournamentOrganizationBannedUser;
 	TrustRelationship: TrustRelationship;
+	Friendship: Friendship;
+	FriendRequest: FriendRequest;
 	UnvalidatedUserSubmittedImage: UnvalidatedUserSubmittedImage;
 	UnvalidatedVideo: UnvalidatedVideo;
 	User: User;
@@ -1247,4 +1338,6 @@ export interface DB {
 	Notification: Notification;
 	NotificationUser: NotificationUser;
 	NotificationUserSubscription: NotificationUserSubscription;
+	SavedCalendarEvent: SavedCalendarEvent;
+	SplatoonRotation: SplatoonRotation;
 }

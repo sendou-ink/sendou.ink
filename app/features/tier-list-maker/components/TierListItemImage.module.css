@@ -9,7 +9,7 @@
 	position: absolute;
 	bottom: 2px;
 	right: 2px;
-	background-color: var(--bg-lighter-solid);
+	background-color: var(--color-bg-high);
 	border-radius: 100%;
 	padding: var(--s-1);
 }

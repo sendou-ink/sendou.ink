@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Check, Clipboard } from "lucide-react";
 import * as React from "react";
 import { useRef, useState } from "react";
 import { Dialog, Popover } from "react-aria-components";
@@ -6,8 +7,8 @@ import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { SendouButton } from "./elements/Button";
-import { CheckmarkIcon } from "./icons/Checkmark";
-import { ClipboardIcon } from "./icons/Clipboard";
+import popoverStyles from "./elements/Popover.module.css";
+import styles from "./TimePopover.module.css";
 
 export default function TimePopover({
 	time,
@@ -54,8 +55,9 @@ export default function TimePopover({
 				ref={triggerRef}
 				className={clsx(
 					className,
-					"clickable text-only-button",
-					underline ? "dotted" : "",
+					"clickable",
+					styles.textOnlyButton,
+					underline ? styles.dotted : "",
 				)}
 				onClick={() => {
 					setOpen(true);
@@ -65,11 +67,11 @@ export default function TimePopover({
 			</button>
 			<Popover
 				isOpen={open}
-				className={"sendou-popover-content"}
+				className={popoverStyles.content}
 				onOpenChange={setOpen}
 				triggerRef={triggerRef}
 			>
-				<Dialog>
+				<Dialog className={popoverStyles.dialog}>
 					<div className="stack sm">
 						<div className="text-center" suppressHydrationWarning>
 							{formatTime(time, {
@@ -82,7 +84,7 @@ export default function TimePopover({
 							size="miniscule"
 							variant="minimal"
 							onPress={() => copyToClipboard(`<t:${time.valueOf() / 1000}:F>`)}
-							icon={copySuccess ? <CheckmarkIcon /> : <ClipboardIcon />}
+							icon={copySuccess ? <Check /> : <Clipboard />}
 						>
 							{t("common:actions.copyTimestampForDiscord")}
 						</SendouButton>

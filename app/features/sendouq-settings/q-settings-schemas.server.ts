@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { _action, id, modeShort, safeJSONParse, stageId } from "~/utils/zod";
+import { _action, modeShort, safeJSONParse, stageId } from "~/utils/zod";
 import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "./q-settings-constants";
 import {
 	updateVoiceChatSchema,
@@ -34,8 +34,4 @@ export const settingsActionSchema = z.union([
 	}),
 	updateVoiceChatSchema,
 	updateWeaponPoolSchema,
-	z.object({
-		_action: _action("REMOVE_TRUST"),
-		userToRemoveTrustFromId: id,
-	}),
 ]);

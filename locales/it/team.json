@@ -42,6 +42,7 @@
 	"forms.info.tag": "",
 	"forms.errors.duplicateName": "Esiste già un team con questo nome",
 	"forms.errors.noOnlySpecialCharacters": "",
+	"forms.customTheme.header": "",
 	"roster.teamFull": "Il team è completo",
 	"roster.inviteLink.header": "Condividi link di invito per aggiungere membri",
 	"roster.members.header": "Membri",
