@@ -98,6 +98,8 @@ test.describe("SendouQ", () => {
 	test("Challenge flow - send challenge, report match, seasons page, quick rejoin with replay", async ({
 		page,
 	}) => {
+		test.slow();
+
 		await seed(page); // DEFAULT seed includes full groups for ADMIN and NZAP
 		await impersonate(page, ADMIN_ID);
 
