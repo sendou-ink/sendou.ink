@@ -54,19 +54,19 @@ export function WithFormField({
 		onChange({ teamId: Number(e.target.value), mode: "TEAM" });
 	};
 
-	const handleUserChange = (
-		selectedUser: { id: number } | null,
-		index: number,
-	) => {
-		if (!fromValue || fromValue.mode !== "PICKUP") return;
+	const handleUserChange = React.useCallback(
+		(selectedUser: { id: number } | null, index: number) => {
+			if (!fromValue || fromValue.mode !== "PICKUP") return;
 
-		onChange({
-			mode: "PICKUP",
-			users: fromValue.users.map((u, j) =>
-				j === index ? selectedUser?.id : u,
-			),
-		});
-	};
+			onChange({
+				mode: "PICKUP",
+				users: fromValue.users.map((u, j) =>
+					j === index ? selectedUser?.id : u,
+				),
+			});
+		},
+		[fromValue, onChange],
+	);
 
 	const selectValue = fromValue?.mode === "TEAM" ? fromValue.teamId : "PICKUP";
 
@@ -93,12 +93,13 @@ export function WithFormField({
 						label={t("scrims:forms.with.user", { nth: 1 })}
 					/>
 					{fromValue.users.map((userId, i) => (
-						<UserSearch
+						<PickupUserSearch
 							key={i}
+							index={i}
 							initialUserId={userId}
-							onChange={(selectedUser) => handleUserChange(selectedUser, i)}
 							isRequired={i < 3}
 							label={t("scrims:forms.with.user", { nth: i + 2 })}
+							onUserChange={handleUserChange}
 						/>
 					))}
 					{translatedError ? (
@@ -113,5 +114,35 @@ export function WithFormField({
 				</div>
 			) : null}
 		</FormFieldWrapper>
+	);
+}
+
+function PickupUserSearch({
+	index,
+	initialUserId,
+	isRequired,
+	label,
+	onUserChange,
+}: {
+	index: number;
+	initialUserId: number | null | undefined;
+	isRequired: boolean;
+	label: string;
+	onUserChange: (selectedUser: { id: number } | null, index: number) => void;
+}) {
+	const handleChange = React.useCallback(
+		(selectedUser: { id: number } | null) => {
+			onUserChange(selectedUser, index);
+		},
+		[index, onUserChange],
+	);
+
+	return (
+		<UserSearch
+			initialUserId={initialUserId ?? undefined}
+			onChange={handleChange}
+			isRequired={isRequired}
+			label={label}
+		/>
 	);
 }
