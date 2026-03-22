@@ -860,7 +860,7 @@ function EnableSubsToggle() {
 
 	return (
 		<div>
-			<label htmlFor={id}>Subs tab</label>
+			<label htmlFor={id}>LFG tab</label>
 			<SendouSwitch
 				name="enableSubs"
 				id={id}
@@ -868,8 +868,8 @@ function EnableSubsToggle() {
 				onChange={setEnableSubs}
 			/>
 			<FormMessage type="info">
-				Allow users to sign up as "subs" in addition to the normal event
-				sign-up.
+				Allow participants to look for more members via the LFG feature and sign
+				up as subs (after registration is closed).
 			</FormMessage>
 		</div>
 	);

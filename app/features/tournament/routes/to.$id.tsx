@@ -160,7 +160,8 @@ export function TournamentLayout() {
 				</SubNavLink>
 				{!tournament.isInvitational &&
 				!tournament.everyBracketOver &&
-				!(tournament.isLeagueSignup && !tournament.registrationOpen) ? (
+				!(tournament.isLeagueSignup && !tournament.registrationOpen) &&
+				tournament.lfgEnabled ? (
 					<SubNavLink to="looking">
 						{tournament.registrationOpen
 							? t("tournament:tabs.looking")
