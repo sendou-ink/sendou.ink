@@ -102,6 +102,7 @@ export function generateYoutubeTimestamps(
 	resolvers: {
 		weaponName: (weaponId: number) => string;
 		stageName: (stageId: number) => string;
+		modeName: (mode: string) => string;
 	},
 ) {
 	const lines: string[] = [];
@@ -115,7 +116,7 @@ export function generateYoutubeTimestamps(
 	for (const match of matches) {
 		const timestamp = secondsToHoursMinutesSecondString(match.startsAt);
 		const stage = resolvers.stageName(match.stageId);
-		const mode = match.mode;
+		const mode = resolvers.modeName(match.mode);
 
 		const weaponPart =
 			!isCast && match.weapons.length === 1

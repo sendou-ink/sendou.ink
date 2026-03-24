@@ -34,5 +34,9 @@
 	"deleteConfirm": "Cancellare video il titolo '{{title}}'?",
 	"errors.youtubePreviewFailed": "",
 	"copyTimestamps": "",
-	"copyTimestamps.help": ""
+	"copyTimestamps.help": "",
+	"copyTimestamps.modeFormat": "",
+	"copyTimestamps.stageFormat": "",
+	"copyTimestamps.format.short": "",
+	"copyTimestamps.format.long": ""
 }

@@ -34,5 +34,9 @@
 	"deleteConfirm": "¿Borrar video con el título de '{{title}}'?",
 	"errors.youtubePreviewFailed": "",
 	"copyTimestamps": "",
-	"copyTimestamps.help": ""
+	"copyTimestamps.help": "",
+	"copyTimestamps.modeFormat": "",
+	"copyTimestamps.stageFormat": "",
+	"copyTimestamps.format.short": "",
+	"copyTimestamps.format.long": ""
 }

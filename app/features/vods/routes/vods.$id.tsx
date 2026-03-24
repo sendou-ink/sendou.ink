@@ -14,6 +14,7 @@ import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
+import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -261,10 +262,21 @@ function CopyTimestampsButton({
 	const [dialogOpen, setDialogOpen] = React.useState(false);
 	const [copied, setCopied] = React.useState(false);
 	const [copyTrigger, setCopyTrigger] = React.useState(0);
+	const [modeFormat, setModeFormat] = React.useState<"short" | "long">("short");
+	const [stageFormat, setStageFormat] = React.useState<"short" | "long">(
+		"long",
+	);
 
 	const timestamps = generateYoutubeTimestamps(matches, type, {
 		weaponName: (id) => t(`weapons:MAIN_${id}` as "weapons:MAIN_0"),
-		stageName: (id) => t(`game-misc:STAGE_${id}` as "game-misc:STAGE_0"),
+		stageName: (id) => {
+			const fullName = t(`game-misc:STAGE_${id}` as "game-misc:STAGE_0");
+			return stageFormat === "short" ? shortStageName(fullName) : fullName;
+		},
+		modeName: (mode) =>
+			modeFormat === "long"
+				? t(`game-misc:MODE_LONG_${mode}` as "game-misc:MODE_LONG_SZ")
+				: mode,
 	});
 
 	React.useEffect(() => {
@@ -301,6 +313,40 @@ function CopyTimestampsButton({
 				heading={t("vods:copyTimestamps")}
 			>
 				<div className="stack md">
+					<div className="stack horizontal md w-full">
+						<label className="flex-same-size">
+							{t("vods:copyTimestamps.modeFormat")}
+							<select
+								value={modeFormat}
+								onChange={(e) =>
+									setModeFormat(e.target.value as "short" | "long")
+								}
+							>
+								<option value="short">
+									{t("vods:copyTimestamps.format.short")}
+								</option>
+								<option value="long">
+									{t("vods:copyTimestamps.format.long")}
+								</option>
+							</select>
+						</label>
+						<label className="flex-same-size">
+							{t("vods:copyTimestamps.stageFormat")}
+							<select
+								value={stageFormat}
+								onChange={(e) =>
+									setStageFormat(e.target.value as "short" | "long")
+								}
+							>
+								<option value="short">
+									{t("vods:copyTimestamps.format.short")}
+								</option>
+								<option value="long">
+									{t("vods:copyTimestamps.format.long")}
+								</option>
+							</select>
+						</label>
+					</div>
 					<textarea
 						readOnly
 						value={timestamps}

@@ -9,6 +9,7 @@ import {
 } from "~/components/elements/ChipRadio";
 import { ModeImage, StageImage } from "~/components/Image";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
+import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type { RankedModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	databaseTimestampNow,
@@ -264,8 +265,8 @@ function RotationCard({
 							/>
 						) : null}
 						<ModeImage mode={shownNext.mode as RankedModeShort} width={16} />{" "}
-						{t(`game-misc:STAGE_${shownNext.stageId1}` as any).split(" ")[0]},{" "}
-						{t(`game-misc:STAGE_${shownNext.stageId2}` as any).split(" ")[0]}
+						{shortStageName(t(`game-misc:STAGE_${shownNext.stageId1}` as any))},{" "}
+						{shortStageName(t(`game-misc:STAGE_${shownNext.stageId2}` as any))}
 					</div>
 				) : null}
 			</div>

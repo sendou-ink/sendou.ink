@@ -34,5 +34,9 @@
 	"deleteConfirm": "Delete video with the title '{{title}}'?",
 	"errors.youtubePreviewFailed": "Failed to load YouTube preview",
 	"copyTimestamps": "Copy timestamps",
-	"copyTimestamps.help": "Paste these into your YouTube video description to create chapter markers."
+	"copyTimestamps.help": "Paste these into your YouTube video description to create chapter markers.",
+	"copyTimestamps.modeFormat": "Mode format",
+	"copyTimestamps.stageFormat": "Stage format",
+	"copyTimestamps.format.short": "Short",
+	"copyTimestamps.format.long": "Long"
 }

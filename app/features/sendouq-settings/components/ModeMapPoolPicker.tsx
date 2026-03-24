@@ -4,7 +4,7 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Divider } from "~/components/Divider";
 import { ModeImage } from "~/components/Image";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import { shortStageName, stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { nullFilledArray } from "~/utils/arrays";
 import { stageImageUrl } from "~/utils/urls";
@@ -166,7 +166,7 @@ function MapButton({
 				<div className={clsx(styles.mapButtonText, "text-error")}>Banned</div>
 			) : null}
 			<div className={styles.mapButtonLabel}>
-				{t(`game-misc:STAGE_${stageId}`).split(" ")[0]}
+				{shortStageName(t(`game-misc:STAGE_${stageId}`))}
 			</div>
 		</div>
 	);

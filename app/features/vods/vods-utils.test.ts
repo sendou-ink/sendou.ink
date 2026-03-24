@@ -95,9 +95,22 @@ const STAGE_NAMES: Record<number, string> = {
 	10: "MakoMart",
 };
 
+const MODE_LONG_NAMES: Record<string, string> = {
+	SZ: "Splat Zones",
+	TC: "Tower Control",
+	RM: "Rainmaker",
+	CB: "Clam Blitz",
+};
+
 const RESOLVERS = {
 	weaponName: (id: number) => WEAPON_NAMES[id] ?? String(id),
 	stageName: (id: number) => STAGE_NAMES[id] ?? String(id),
+	modeName: (mode: string) => mode,
+};
+
+const LONG_MODE_RESOLVERS = {
+	...RESOLVERS,
+	modeName: (mode: string) => MODE_LONG_NAMES[mode] ?? mode,
 };
 
 describe("generateYoutubeTimestamps", () => {
@@ -152,6 +165,33 @@ describe("generateYoutubeTimestamps", () => {
 		const result = generateYoutubeTimestamps(matches, "CAST", RESOLVERS);
 
 		expect(result).toBe("0:00 Intro\n0:25 CB MakoMart");
+	});
+
+	it("should use long mode names when resolver returns them", () => {
+		const matches = [
+			makeMatch({
+				startsAt: 521,
+				mode: "SZ",
+				stageId: 7,
+				weapons: [40 as MainWeaponId],
+			}),
+			makeMatch({
+				startsAt: 759,
+				mode: "RM",
+				stageId: 2,
+				weapons: [7010 as MainWeaponId],
+			}),
+		];
+
+		const result = generateYoutubeTimestamps(
+			matches,
+			"TOURNAMENT",
+			LONG_MODE_RESOLVERS,
+		);
+
+		expect(result).toBe(
+			"0:00 Intro\n8:41 Splattershot / Splat Zones Mahi-Mahi Resort\n12:39 Tri-Stringer / Rainmaker Hagglefish Market",
+		);
 	});
 });
 

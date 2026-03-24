@@ -34,5 +34,9 @@
 	"deleteConfirm": "¿Borrar el vídeo con el título '{{title}}'?",
 	"errors.youtubePreviewFailed": "Error al cargar la vista previa de YouTube",
 	"copyTimestamps": "",
-	"copyTimestamps.help": ""
+	"copyTimestamps.help": "",
+	"copyTimestamps.modeFormat": "",
+	"copyTimestamps.stageFormat": "",
+	"copyTimestamps.format.short": "",
+	"copyTimestamps.format.long": ""
 }
