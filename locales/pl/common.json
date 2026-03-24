@@ -118,6 +118,7 @@
 	"actions.showMore": "",
 	"actions.showLess": "",
 	"actions.copyToClipboard": "Skopiuj do schowka",
+	"actions.copied": "",
 	"actions.copyTimestampForDiscord": "",
 	"actions.create": "Stwórz",
 	"actions.close": "Zamknij",

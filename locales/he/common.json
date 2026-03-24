@@ -118,6 +118,7 @@
 	"actions.showMore": "",
 	"actions.showLess": "",
 	"actions.copyToClipboard": "ההעתקה ללוח",
+	"actions.copied": "",
 	"actions.copyTimestampForDiscord": "",
 	"actions.create": "יצירה",
 	"actions.close": "סגירה",

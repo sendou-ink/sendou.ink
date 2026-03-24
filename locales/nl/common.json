@@ -118,6 +118,7 @@
 	"actions.showMore": "",
 	"actions.showLess": "",
 	"actions.copyToClipboard": "Kopiëren naar klembord",
+	"actions.copied": "",
 	"actions.copyTimestampForDiscord": "",
 	"actions.create": "",
 	"actions.close": "",

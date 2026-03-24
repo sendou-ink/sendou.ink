@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "~/modules/in-game-lists/types";
 import {
 	extractYoutubeIdFromVideoUrl,
+	generateYoutubeTimestamps,
 	hoursMinutesSecondsStringToSeconds,
 	secondsToHoursMinutesSecondString,
 } from "./vods-utils";
@@ -63,6 +69,89 @@ describe("secondsToHoursMinutesSecondString", () => {
 		expect(() => secondsToHoursMinutesSecondString(1.5)).toThrow(
 			"Non-integer number of seconds",
 		);
+	});
+});
+
+function makeMatch(overrides: {
+	startsAt: number;
+	mode: ModeShort;
+	stageId: StageId;
+	weapons: MainWeaponId[];
+}) {
+	return { id: 1, ...overrides };
+}
+
+const WEAPON_NAMES: Record<number, string> = {
+	40: "Splattershot",
+	200: "Luna Blaster",
+	6010: "Tenta Brella",
+	7010: "Tri-Stringer",
+};
+
+const STAGE_NAMES: Record<number, string> = {
+	0: "Scorch Gorge",
+	2: "Hagglefish Market",
+	7: "Mahi-Mahi Resort",
+	10: "MakoMart",
+};
+
+const RESOLVERS = {
+	weaponName: (id: number) => WEAPON_NAMES[id] ?? String(id),
+	stageName: (id: number) => STAGE_NAMES[id] ?? String(id),
+};
+
+describe("generateYoutubeTimestamps", () => {
+	it("should include intro line when first match starts after 0", () => {
+		const matches = [
+			makeMatch({
+				startsAt: 521,
+				mode: "SZ",
+				stageId: 7,
+				weapons: [40 as MainWeaponId],
+			}),
+			makeMatch({
+				startsAt: 759,
+				mode: "TC",
+				stageId: 2,
+				weapons: [7010 as MainWeaponId],
+			}),
+		];
+
+		const result = generateYoutubeTimestamps(matches, "TOURNAMENT", RESOLVERS);
+
+		expect(result).toBe(
+			"0:00 Intro\n8:41 Splattershot / SZ Mahi-Mahi Resort\n12:39 Tri-Stringer / TC Hagglefish Market",
+		);
+	});
+
+	it("should not include intro line when first match starts at 0", () => {
+		const matches = [
+			makeMatch({
+				startsAt: 0,
+				mode: "RM",
+				stageId: 0,
+				weapons: [40 as MainWeaponId],
+			}),
+		];
+
+		const result = generateYoutubeTimestamps(matches, "SCRIM", RESOLVERS);
+
+		expect(result).toBe("0:00 Splattershot / RM Scorch Gorge");
+	});
+
+	it("should not include weapon for CAST type", () => {
+		const matches = [
+			makeMatch({
+				startsAt: 25,
+				mode: "CB",
+				stageId: 10,
+				weapons: [200 as MainWeaponId, 6010 as MainWeaponId],
+			}),
+		];
+
+		const result = generateYoutubeTimestamps(matches, "CAST", RESOLVERS);
+
+		expect(result).toBe("0:00 Intro\n0:25 CB MakoMart");
 	});
 });
 

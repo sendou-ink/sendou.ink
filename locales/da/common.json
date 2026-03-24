@@ -118,6 +118,7 @@
 	"actions.showMore": "",
 	"actions.showLess": "",
 	"actions.copyToClipboard": "Kopiér til udklipsholder",
+	"actions.copied": "",
 	"actions.copyTimestampForDiscord": "",
 	"actions.create": "Skab",
 	"actions.close": "Luk",

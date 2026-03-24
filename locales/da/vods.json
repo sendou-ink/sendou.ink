@@ -32,5 +32,7 @@
 	"noVods": "",
 	"gainPerms": "Skriv venligst en besked til helpdesken på vores Discordserver for at få rettigheder til at uploade videoer.",
 	"deleteConfirm": "Vil du slette videoen: '{{title}}'?",
-	"errors.youtubePreviewFailed": ""
+	"errors.youtubePreviewFailed": "",
+	"copyTimestamps": "",
+	"copyTimestamps.help": ""
 }

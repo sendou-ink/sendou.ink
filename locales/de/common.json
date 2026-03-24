@@ -118,6 +118,7 @@
 	"actions.showMore": "",
 	"actions.showLess": "",
 	"actions.copyToClipboard": "In die Zwischenablage kopieren",
+	"actions.copied": "",
 	"actions.copyTimestampForDiscord": "Discord-Zeitstempel kopieren",
 	"actions.create": "Erstellen",
 	"actions.close": "Schließen",

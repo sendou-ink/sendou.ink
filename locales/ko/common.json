@@ -118,6 +118,7 @@
 	"actions.showMore": "",
 	"actions.showLess": "",
 	"actions.copyToClipboard": "클립보드로 복사",
+	"actions.copied": "",
 	"actions.copyTimestampForDiscord": "",
 	"actions.create": "생성",
 	"actions.close": "닫기",

@@ -118,6 +118,7 @@
 	"actions.showMore": "Mostrar más",
 	"actions.showLess": "Mostrar menos",
 	"actions.copyToClipboard": "Copiar a clipboard",
+	"actions.copied": "",
 	"actions.copyTimestampForDiscord": "",
 	"actions.create": "Crear",
 	"actions.close": "Cerrar",

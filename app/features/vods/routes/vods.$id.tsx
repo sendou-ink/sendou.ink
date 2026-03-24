@@ -1,10 +1,11 @@
 import clsx from "clsx";
-import { SquarePen, Trash } from "lucide-react";
+import { Check, ClipboardCopy, Copy, SquarePen, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
@@ -30,12 +31,17 @@ import { action } from "../actions/vods.$id.server";
 import { PovUser } from "../components/VodPov";
 import { loader } from "../loaders/vods.$id.server";
 import type { Vod } from "../vods-types";
-import { canEditVideo, secondsToHoursMinutesSecondString } from "../vods-utils";
+import {
+	canEditVideo,
+	generateYoutubeTimestamps,
+	secondsToHoursMinutesSecondString,
+} from "../vods-utils";
 import styles from "./vods.$id.module.css";
 
 export { action, loader };
 
 export const handle: SendouRouteHandle = {
+	i18n: ["vods"],
 	breadcrumb: ({ match }) => {
 		const data = match.data as SerializeFrom<typeof loader> | undefined;
 
@@ -115,6 +121,12 @@ export default function VodPage() {
 							typeof data.vod.pov === "string" ? undefined : data.vod.pov?.id,
 					}) ? (
 						<div className="stack horizontal md">
+							{user?.id === data.vod.submitterUserId ? (
+								<CopyTimestampsButton
+									matches={data.vod.matches}
+									type={data.vod.type}
+								/>
+							) : null}
 							<LinkButton
 								to={newVodPage(data.vod.id)}
 								size="small"
@@ -235,5 +247,79 @@ function Match({
 				{secondsToHoursMinutesSecondString(match.startsAt)}
 			</SendouButton>
 		</div>
+	);
+}
+
+function CopyTimestampsButton({
+	matches,
+	type,
+}: {
+	matches: Vod["matches"];
+	type: Vod["type"];
+}) {
+	const { t } = useTranslation(["vods", "weapons", "game-misc", "common"]);
+	const [dialogOpen, setDialogOpen] = React.useState(false);
+	const [copied, setCopied] = React.useState(false);
+	const [copyTrigger, setCopyTrigger] = React.useState(0);
+
+	const timestamps = generateYoutubeTimestamps(matches, type, {
+		weaponName: (id) => t(`weapons:MAIN_${id}` as "weapons:MAIN_0"),
+		stageName: (id) => t(`game-misc:STAGE_${id}` as "game-misc:STAGE_0"),
+	});
+
+	React.useEffect(() => {
+		if (copyTrigger === 0) return;
+
+		setCopied(true);
+		const timeout = setTimeout(() => setCopied(false), 2000);
+
+		return () => clearTimeout(timeout);
+	}, [copyTrigger]);
+
+	const handleCopy = () => {
+		navigator.clipboard.writeText(timestamps);
+		setCopyTrigger((prev) => prev + 1);
+	};
+
+	return (
+		<>
+			<SendouButton
+				size="small"
+				variant="outlined"
+				icon={<ClipboardCopy />}
+				onPress={() => {
+					setDialogOpen(true);
+					setCopied(false);
+				}}
+				data-testid="copy-timestamps-button"
+			>
+				{t("vods:copyTimestamps")}
+			</SendouButton>
+			<SendouDialog
+				isOpen={dialogOpen}
+				onClose={() => setDialogOpen(false)}
+				heading={t("vods:copyTimestamps")}
+			>
+				<div className="stack md">
+					<textarea
+						readOnly
+						value={timestamps}
+						rows={Math.min(matches.length + 2, 15)}
+						className="w-full"
+					/>
+					<p className="text-lighter text-xs">
+						{t("vods:copyTimestamps.help")}
+					</p>
+					<SendouButton
+						onPress={handleCopy}
+						icon={copied ? <Check /> : <Copy />}
+					>
+						{copied
+							? t("common:actions.copied")
+							: t("common:actions.copyToClipboard")}
+					</SendouButton>
+				</div>
+			</SendouDialog>
+		</>
 	);
 }

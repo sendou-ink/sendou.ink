@@ -118,6 +118,7 @@
 	"actions.showMore": "",
 	"actions.showLess": "",
 	"actions.copyToClipboard": "Copier dans le presse-papier",
+	"actions.copied": "",
 	"actions.copyTimestampForDiscord": "",
 	"actions.create": "Créer",
 	"actions.close": "Fermer",
