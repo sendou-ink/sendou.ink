@@ -12,6 +12,7 @@ import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { seededRandom } from "~/utils/random";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
 import { tournamentMatchPage } from "~/utils/urls";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
 import * as PickBan from "../core/PickBan";
@@ -247,8 +248,10 @@ async function executeRolls({
 			type: "ROLL",
 			mapListIndex: null,
 		});
-	} catch {
-		// xxx: check it really is foreign key violation
+	} catch (error) {
+		if (!errorIsSqliteUniqueConstraintFailure(error)) {
+			throw error;
+		}
 		// unique constraint violation — another request already handled this roll
 	}
 

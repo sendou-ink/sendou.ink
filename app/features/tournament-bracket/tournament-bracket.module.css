@@ -88,7 +88,7 @@
 
 .stageBanner:has(.stageBannerEndSetButton)
 	.stageBannerUndoButton:not(.stageBannerEndSetButton) {
-	right: 72px;
+	right: 78px;
 }
 
 .deadlinePopover {

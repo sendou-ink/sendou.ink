@@ -285,12 +285,26 @@ export const action: ActionFunction = async ({ params, request }) => {
 				`Undoing score: Position: ${data.position}; User ID: ${user.id}; Match ID: ${match.id}`,
 			);
 
-			const pickBanEventToDeleteNumber = await (async () => {
-				if (!match.roundMaps?.pickBan) return;
+			const pickBanEventNumbersToDelete = await (async () => {
+				if (!match.roundMaps?.pickBan) return [];
 
 				const pickBanEvents = await TournamentRepository.pickBanEventsByMatchId(
 					match.id,
 				);
+
+				if (match.roundMaps.pickBan === "CUSTOM") {
+					const customFlow = match.roundMaps.customFlow;
+					if (!customFlow) return [];
+
+					// event DB numbers are 1-indexed
+					const threshold =
+						customFlow.preSet.length +
+						(results.length - 1) * customFlow.postGame.length +
+						1;
+					return pickBanEvents
+						.filter((e) => e.number >= threshold)
+						.map((e) => e.number);
+				}
 
 				const unplayedPicks = pickBanEvents
 					.filter((e) => e.type === "PICK")
@@ -302,7 +316,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 					);
 				invariant(unplayedPicks.length <= 1, "Too many unplayed picks");
 
-				return unplayedPicks[0]?.number;
+				return unplayedPicks[0] ? [unplayedPicks[0].number] : [];
 			})();
 
 			sql.transaction(() => {
@@ -322,8 +336,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 					manager.reset.matchResults(match.id);
 				}
 
-				if (typeof pickBanEventToDeleteNumber === "number") {
-					deletePickBanEvent({ matchId, number: pickBanEventToDeleteNumber });
+				for (const number of pickBanEventNumbersToDelete) {
+					deletePickBanEvent({ matchId, number });
 				}
 			})();
 

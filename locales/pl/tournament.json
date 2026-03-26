@@ -185,5 +185,10 @@
 	"pickBan.pickMap": "",
 	"pickBan.banMap": "",
 	"pickBan.pickMode": "",
-	"pickBan.banMode": ""
+	"pickBan.banMode": "",
+	"match.tab.mapInfo": "",
+	"match.mapInfo.bans": "",
+	"match.mapInfo.playedStages": "",
+	"match.mapInfo.noBans": "",
+	"match.mapInfo.noPlayedStages": ""
 }

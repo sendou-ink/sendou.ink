@@ -181,5 +181,10 @@
 	"pickBan.pickMap": "Pick a map",
 	"pickBan.banMap": "Ban a map",
 	"pickBan.pickMode": "Pick a mode",
-	"pickBan.banMode": "Ban a mode"
+	"pickBan.banMode": "Ban a mode",
+	"match.tab.mapInfo": "Map info",
+	"match.mapInfo.bans": "{{teamName}} bans",
+	"match.mapInfo.playedStages": "Played stages",
+	"match.mapInfo.noBans": "No bans",
+	"match.mapInfo.noPlayedStages": "No stages played yet"
 }
