@@ -1,6 +1,7 @@
 // src/routes/__root.tsx
 /// <reference types="vite/client" />
 
+import "../modules/i18n/init";
 import {
 	createRootRoute,
 	HeadContent,
@@ -8,6 +9,7 @@ import {
 	Scripts,
 } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { Main } from "~/components/Main";
 import commonCss from "../styles/common.css?url";
 import flagsCss from "../styles/flags.css?url";
 import normalizeCss from "../styles/normalize.css?url";
@@ -30,6 +32,19 @@ export const Route = createRootRoute({
 			},
 		],
 		links: [
+			{
+				rel: "preconnect",
+				href: "https://fonts.googleapis.com",
+			},
+			{
+				rel: "preconnect",
+				href: "https://fonts.gstatic.com",
+				crossOrigin: "",
+			},
+			{
+				rel: "stylesheet",
+				href: "https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap",
+			},
 			{
 				rel: "stylesheet",
 				href: commonCss,
@@ -58,14 +73,16 @@ export const Route = createRootRoute({
 function RootComponent() {
 	return (
 		<RootDocument>
-			<Outlet />
+			<Main>
+				<Outlet />
+			</Main>
 		</RootDocument>
 	);
 }
 
 function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
 	return (
-		<html lang="en">
+		<html lang="en" className="dark">
 			<head>
 				<HeadContent />
 			</head>
