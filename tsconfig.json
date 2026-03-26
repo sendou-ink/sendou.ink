@@ -20,7 +20,7 @@
 		"strict": true,
 		"baseUrl": ".",
 		"paths": {
-			"~/*": ["./app/*"]
+			"~/*": ["./src/*"]
 		},
 		"noEmit": true,
 		"forceConsistentCasingInFileNames": true,

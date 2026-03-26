@@ -9,38 +9,65 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LutiRouteImport } from './routes/luti'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as QIndexRouteImport } from './routes/q/index'
 
+const LutiRoute = LutiRouteImport.update({
+  id: '/luti',
+  path: '/luti',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const QIndexRoute = QIndexRouteImport.update({
+  id: '/q/',
+  path: '/q/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/luti': typeof LutiRoute
+  '/q/': typeof QIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/luti': typeof LutiRoute
+  '/q': typeof QIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/luti': typeof LutiRoute
+  '/q/': typeof QIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/luti' | '/q/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/luti' | '/q'
+  id: '__root__' | '/' | '/luti' | '/q/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LutiRoute: typeof LutiRoute
+  QIndexRoute: typeof QIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/luti': {
+      id: '/luti'
+      path: '/luti'
+      fullPath: '/luti'
+      preLoaderRoute: typeof LutiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/q/': {
+      id: '/q/'
+      path: '/q'
+      fullPath: '/q/'
+      preLoaderRoute: typeof QIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LutiRoute: LutiRoute,
+  QIndexRoute: QIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -2,7 +2,6 @@ import clsx from "clsx";
 import { differenceInSeconds } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useLoaderData } from "react-router";
 import {
 	SendouChipRadio,
 	SendouChipRadioGroup,
@@ -34,6 +33,7 @@ type RotationFromLoader = FrontPageLoaderData["rotations"][number];
 const TYPE_ORDER = ["X", "SERIES", "OPEN"];
 
 export function SplatoonRotations() {
+	return null;
 	const { t } = useTranslation(["front"]);
 	const data = useLoaderData<typeof loader>();
 	const [activeFilter, setActiveFilter] =
