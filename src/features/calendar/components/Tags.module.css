@@ -1,0 +1,43 @@
+.tags {
+	display: flex;
+	flex-wrap: wrap;
+	padding: 0;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	gap: var(--s-1);
+	list-style: none;
+
+	& > li {
+		height: var(--selector-size-sm);
+		display: flex;
+		align-items: center;
+		border-radius: var(--radius-selector);
+		padding-inline: var(--s-1-5);
+	}
+}
+
+.small {
+	font-size: var(--font-2xs);
+
+	& > li {
+		height: var(--selector-size-xs);
+	}
+}
+
+.centered {
+	justify-content: center;
+}
+
+.tag {
+	color: var(--color-text-inverse);
+}
+
+.tagDeleteButton {
+	margin-left: auto;
+
+	& > svg {
+		width: 0.85rem !important;
+		color: var(--color-text-inverse);
+		margin-inline: var(--s-1) 0 !important;
+	}
+}

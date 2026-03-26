@@ -1,0 +1,71 @@
+.stageRow {
+	display: flex;
+	width: 100%;
+	align-items: flex-end;
+}
+
+.stageNameRow {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	align-items: center;
+	justify-content: space-between;
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	gap: var(--s-2);
+	padding-block: var(--s-1-5);
+	padding-inline: var(--s-3);
+}
+
+@container (width >= 560px) {
+	.stageNameRow {
+		flex-direction: row;
+	}
+}
+
+.stageImage {
+	border-radius: var(--radius-box);
+}
+
+.modeButtonsContainer {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--s-1);
+}
+
+.modeButton {
+	padding: 0;
+	height: var(--field-size-sm);
+	aspect-ratio: 1 / 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: var(--border-style);
+	border-radius: var(--radius-full);
+	background-color: var(--color-bg);
+	color: var(--color-accent);
+	opacity: 1 !important;
+	outline: initial;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+}
+
+.modeButton.selected {
+	border: 2px solid transparent;
+	background-color: var(--color-bg-higher);
+}
+
+.modeButton.preselected {
+	border: var(--border-style-accent);
+	background-color: var(--color-bg-higher);
+}
+
+.mode:not(.selected, .preselected) {
+	filter: grayscale(100%) brightness(50%);
+}

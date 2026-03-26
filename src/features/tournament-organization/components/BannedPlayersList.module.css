@@ -1,0 +1,43 @@
+.bannedUsersContainer {
+	width: 100%;
+}
+
+.actionsCell {
+	text-align: center;
+	width: 100px;
+}
+
+.reasonCell {
+	max-width: 250px;
+}
+
+.noteContainer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.expandButton {
+	background: none;
+	border: none;
+	color: var(--color-accent);
+	cursor: pointer;
+	font-size: var(--font-2xs);
+	padding: 0;
+	text-align: left;
+	text-decoration: underline;
+}
+
+.expandButton:hover {
+	opacity: 0.8;
+}
+
+.banPlayerButton {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.expiredBan {
+	text-decoration: line-through;
+	color: var(--color-text-high);
+}

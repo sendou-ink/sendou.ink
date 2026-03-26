@@ -1,0 +1,137 @@
+.wideLayout {
+	display: grid;
+	grid-template-columns: 1fr;
+	align-items: flex-start;
+	column-gap: var(--s-6);
+	row-gap: var(--s-2);
+}
+
+.wideLayout .leftRow {
+	display: flex;
+	gap: var(--s-2);
+	flex-direction: column;
+}
+
+@container (width >= 640px) {
+	.wideLayout {
+		grid-template-columns: 1fr 2fr;
+		row-gap: 0;
+	}
+
+	.wideLayout .leftRow {
+		position: sticky;
+		top: 55px;
+	}
+}
+
+.userName {
+	max-width: 125px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	color: var(--color-text);
+}
+
+.teamMemberName {
+	max-width: 75px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
+}
+
+.textContainer {
+	position: relative;
+	max-height: 150px;
+	overflow: hidden;
+}
+
+.textContainerExpanded {
+	position: relative;
+	margin-bottom: var(--s-6);
+}
+
+.text {
+	word-wrap: break-word;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.textCut {
+	background-image: linear-gradient(to bottom, transparent, var(--color-bg));
+	width: 100%;
+	position: absolute;
+	top: 0;
+	height: 100%;
+}
+
+.showAllButton {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	width: max-content;
+	margin-left: auto;
+	margin-right: auto;
+	z-index: 1;
+}
+
+.showAllButtonExpanded {
+	bottom: -35px;
+}
+
+.pill {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-bg-high);
+	padding: 0 var(--s-2);
+	height: var(--selector-size-sm);
+	display: flex;
+	align-items: center;
+	gap: var(--s-0-5);
+	position: relative;
+}
+
+.pillPlaceholder {
+	visibility: hidden;
+	width: 37px;
+}
+
+.editButton {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-bg-higher);
+	padding: 0 var(--s-2);
+	height: var(--selector-size-sm);
+	color: var(--color-text);
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.editButton > svg {
+	width: 14px;
+	height: 14px;
+}
+
+.tier {
+	position: absolute;
+	top: -3px;
+	right: 4px;
+}
+
+.tierPill {
+	width: 60px;
+}
+
+.tierPillStart {
+	border-radius: 0 var(--radius-box) var(--radius-box) 0;
+}
+
+.tierPillEnd {
+	border-radius: var(--radius-box) 0 0 var(--radius-box);
+}

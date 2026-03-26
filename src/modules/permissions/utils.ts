@@ -1,0 +1,21 @@
+import { ADMIN_ID, DEV_IDS, STAFF_IDS } from "~/features/admin/admin-constants";
+
+export function isAdmin(user?: { id: number }) {
+	return user?.id === ADMIN_ID;
+}
+
+export function isStaff(user?: { id: number }) {
+	if (!user) return false;
+
+	return STAFF_IDS.includes(user.id);
+}
+
+export function isDev(user?: { id: number }) {
+	if (!user) return false;
+
+	return DEV_IDS.includes(user.id);
+}
+
+export function isSupporter(user?: { patronTier: number | null }) {
+	return typeof user?.patronTier === "number" && user.patronTier >= 2;
+}

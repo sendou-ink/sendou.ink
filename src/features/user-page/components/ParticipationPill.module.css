@@ -1,0 +1,29 @@
+.container {
+	width: 60px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.text {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	text-align: center;
+}
+
+.pill {
+	display: flex;
+	gap: var(--s-1);
+	height: 10px;
+}
+
+.pillLine {
+	width: 100%;
+	height: 100%;
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-box);
+}
+
+.participating {
+	background-color: var(--color-accent);
+}

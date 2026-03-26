@@ -1,0 +1,51 @@
+.iconNav {
+	display: flex;
+	justify-content: center;
+	gap: var(--s-2);
+	overflow-x: auto;
+	scroll-snap-type: x mandatory;
+	padding-block: var(--s-2);
+	scrollbar-width: thin;
+}
+
+.iconNavItem {
+	flex: 0 0 auto;
+	scroll-snap-align: start;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: var(--field-size);
+	aspect-ratio: 1 / 1;
+	background-color: var(--color-bg);
+	border: 2px solid var(--color-bg-higher);
+	border-radius: var(--radius-box);
+	color: var(--color-text);
+	transition: all 0.2s;
+	cursor: pointer;
+}
+
+.iconNavItem:hover {
+	background-color: var(--color-bg-higher);
+}
+
+.iconNavItem:focus-visible {
+	outline: 2px solid var(--color-text-second);
+	outline-offset: 2px;
+}
+
+.iconNavItem.active {
+	border-color: var(--color-text-second);
+	background-color: var(--color-bg-higher);
+}
+
+@container (width >= 720px) {
+	.iconNav {
+		display: grid;
+		grid-template-columns: repeat(4, 42px);
+		grid-auto-rows: 42px;
+		gap: var(--s-2);
+		overflow-x: visible;
+		scroll-snap-type: none;
+		padding-block: 0;
+	}
+}

@@ -1,0 +1,231 @@
+import { add } from "date-fns";
+import { type ActionFunctionArgs, redirect } from "react-router";
+import type { z } from "zod";
+import type { Tables } from "~/db/tables";
+import { requireUser } from "~/features/auth/core/user.server";
+import { userIsBanned } from "~/features/ban/core/banned.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { parseFormData } from "~/form/parse.server";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import invariant from "~/utils/invariant";
+import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
+import { assertUnreachable } from "~/utils/types";
+import { scrimsPage } from "~/utils/urls";
+import * as SQGroupRepository from "../../sendouq/SQGroupRepository.server";
+import * as TeamRepository from "../../team/TeamRepository.server";
+import * as ScrimPostRepository from "../ScrimPostRepository.server";
+import { LUTI_DIVS, SCRIM } from "../scrims-constants";
+import {
+	type fromSchema,
+	type RANGE_END_OPTIONS,
+	scrimsNewFormSchema,
+} from "../scrims-schemas";
+import type { LutiDiv } from "../scrims-types";
+import { serializeLutiDiv } from "../scrims-utils";
+
+export const action = async ({ request }: ActionFunctionArgs) => {
+	const user = requireUser();
+	const result = await parseFormData({
+		request,
+		schema: scrimsNewFormSchema,
+	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
+
+	if (data.from.mode === "PICKUP") {
+		if (data.from.users.includes(user.id)) {
+			return {
+				fieldErrors: { from: "Don't add yourself to the pickup member list" },
+			};
+		}
+
+		const pickupUserError = await validatePickup(data.from.users, user.id);
+		if (pickupUserError) {
+			return { fieldErrors: { from: pickupUserError.error } };
+		}
+	}
+
+	const rangeEndDate = data.rangeEnd
+		? resolveRangeEndToDate(data.at, data.rangeEnd)
+		: null;
+
+	const resolvedDivs = data.divs ? resolveDivs(data.divs) : null;
+
+	await ScrimPostRepository.insert({
+		at: dateToDatabaseTimestamp(data.at),
+		rangeEnd: rangeEndDate ? dateToDatabaseTimestamp(rangeEndDate) : null,
+		maxDiv: resolvedDivs?.[0] ? serializeLutiDiv(resolvedDivs[0]) : null,
+		minDiv: resolvedDivs?.[1] ? serializeLutiDiv(resolvedDivs[1]) : null,
+		text: data.postText,
+		managedByAnyone: data.managedByAnyone,
+		maps:
+			data.maps === "NO_PREFERENCE" || data.maps === "TOURNAMENT"
+				? null
+				: data.maps,
+		mapsTournamentId: data.mapsTournamentId,
+		isScheduledForFuture:
+			data.at >
+			// 10 minutes is an arbitrary threshold
+			add(new Date(), {
+				minutes: 10,
+			}),
+		visibility:
+			data.baseVisibility !== "PUBLIC"
+				? {
+						forAssociation: data.baseVisibility,
+						notFoundInstructions: data.notFoundVisibility.at
+							? [
+									{
+										at: dateToDatabaseTimestamp(data.notFoundVisibility.at),
+										forAssociation:
+											data.notFoundVisibility.forAssociation !== "PUBLIC"
+												? data.notFoundVisibility.forAssociation
+												: null,
+									},
+								]
+							: undefined,
+					}
+				: null,
+		teamId: data.from.mode === "TEAM" ? data.from.teamId : null,
+		users: (await usersListForPost({ authorId: user.id, from: data.from })).map(
+			(userId) => ({
+				userId,
+				isOwner: Number(user.id === userId),
+			}),
+		),
+	});
+
+	return redirect(scrimsPage());
+};
+
+const ROLES_TO_EXCLUDE: Tables["TeamMember"]["role"][] = [
+	"CHEERLEADER",
+	"COACH",
+	"SUB",
+];
+
+export const usersListForPost = async ({
+	from,
+	authorId,
+}: {
+	from: z.infer<typeof fromSchema>;
+	authorId: number;
+}) => {
+	if (from.mode === "PICKUP") {
+		return [authorId, ...from.users];
+	}
+
+	const teamId = from.teamId;
+	const team = (await TeamRepository.teamsByMemberUserId(authorId)).find(
+		(team) => team.id === teamId,
+	);
+	errorToastIfFalsy(team, "User is not a member of this team");
+
+	const filteredMembers = team.members.filter(
+		(member) => !ROLES_TO_EXCLUDE.includes(member.role),
+	);
+
+	// handle case when all users are from excluded roles
+	const result = (
+		filteredMembers.length >= SCRIM.MIN_MEMBERS_PER_TEAM
+			? filteredMembers
+			: team.members
+	).map((member) => member.id);
+
+	if (result.length < SCRIM.MIN_MEMBERS_PER_TEAM) {
+		errorToast("Your team does not have enough members (4) to scrim");
+	}
+
+	// ensure author is included in the list even if they match the ignore condition
+	return result.includes(authorId) ? result : [authorId, ...result];
+};
+
+async function validatePickup(userIds: number[], authorId: number) {
+	const friendsError = await validatePickupFriends(userIds, authorId);
+	if (friendsError) {
+		return friendsError;
+	}
+
+	const unbannedError = await validatePickupAllUnbanned(userIds);
+	if (unbannedError) {
+		return unbannedError;
+	}
+
+	return null;
+}
+
+async function validatePickupFriends(userIds: number[], authorId: number) {
+	const unconsentingUsers: string[] = [];
+
+	const friendsData = await SQGroupRepository.friendsAndTeammates(authorId);
+
+	for (const userId of userIds) {
+		const user = await UserRepository.findLeanById(userId);
+		invariant(user, "User not found");
+
+		if (
+			user.preferences?.disallowScrimPickupsFromUntrusted &&
+			!friendsData.friends.some((friend) => friend.id === userId)
+		) {
+			unconsentingUsers.push(user.username);
+		}
+	}
+
+	return unconsentingUsers.length === 0
+		? null
+		: {
+				error: `Following users don't allow non-friends to add: ${unconsentingUsers.join(", ")}. Ask them to add you as a friend.`,
+			};
+}
+
+async function validatePickupAllUnbanned(userIds: number[]) {
+	const bannedUsers = userIds.filter(userIsBanned);
+
+	return bannedUsers.length === 0
+		? null
+		: {
+				error: "Pickup includes banned users.",
+			};
+}
+
+function resolveRangeEndToDate(
+	startDate: Date,
+	rangeEnd: (typeof RANGE_END_OPTIONS)[number],
+): Date {
+	switch (rangeEnd) {
+		case "+30min":
+			return add(startDate, { minutes: 30 });
+		case "+1hour":
+			return add(startDate, { hours: 1 });
+		case "+1.5hours":
+			return add(startDate, { hours: 1, minutes: 30 });
+		case "+2hours":
+			return add(startDate, { hours: 2 });
+		case "+2.5hours":
+			return add(startDate, { hours: 2, minutes: 30 });
+		case "+3hours":
+			return add(startDate, { hours: 3 });
+		default: {
+			assertUnreachable(rangeEnd);
+		}
+	}
+}
+
+function resolveDivs(
+	divs: [LutiDiv | null, LutiDiv | null],
+): [LutiDiv | null, LutiDiv | null] {
+	const [max, min] = divs;
+	if (!max || !min) return divs;
+
+	const maxIndex = LUTI_DIVS.indexOf(max);
+	const minIndex = LUTI_DIVS.indexOf(min);
+
+	if (minIndex < maxIndex) {
+		return [min, max];
+	}
+	return divs;
+}

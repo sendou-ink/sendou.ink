@@ -1,0 +1,64 @@
+import type { ActionFunctionArgs } from "react-router";
+import { requireUser } from "~/features/auth/core/user.server";
+import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { isSupporter } from "~/modules/permissions/utils";
+import { clampThemeToGamut } from "~/utils/oklch-gamut";
+import { errorToast, parseRequestPayload } from "~/utils/remix.server";
+import { assertUnreachable } from "~/utils/types";
+import { settingsEditSchema } from "../settings-schemas";
+
+export const action = async ({ request }: ActionFunctionArgs) => {
+	const user = requireUser();
+	const data = await parseRequestPayload({
+		request,
+		schema: settingsEditSchema,
+	});
+
+	switch (data._action) {
+		case "UPDATE_CUSTOM_THEME": {
+			if (!isSupporter(user)) {
+				throw errorToast("Custom themes are for supporters only");
+			}
+
+			const clampedTheme = data.newValue
+				? clampThemeToGamut(data.newValue)
+				: null;
+
+			await UserRepository.updateCustomTheme(user.id, clampedTheme);
+			break;
+		}
+		case "UPDATE_DISABLE_BUILD_ABILITY_SORTING": {
+			await UserRepository.updatePreferences(user.id, {
+				disableBuildAbilitySorting: data.newValue,
+			});
+			break;
+		}
+		case "DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED": {
+			await UserRepository.updatePreferences(user.id, {
+				disallowScrimPickupsFromUntrusted: data.newValue,
+			});
+			break;
+		}
+		case "UPDATE_NO_SCREEN": {
+			await QSettingsRepository.updateNoScreen({
+				userId: user.id,
+				noScreen: Number(data.newValue),
+			});
+			break;
+		}
+		case "UPDATE_CLOCK_FORMAT": {
+			await UserRepository.updatePreferences(user.id, {
+				clockFormat: data.newValue,
+			});
+			break;
+		}
+		default: {
+			assertUnreachable(data);
+		}
+	}
+
+	// TODO: removed temporarily, restore when we have better toasts
+	// (current problem is that when you update no screen from /q/settings, you get redirected to /settings)
+	// return successToast("Settings updated");
+};

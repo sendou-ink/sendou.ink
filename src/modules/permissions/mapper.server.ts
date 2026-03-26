@@ -1,0 +1,66 @@
+import type { UserWithPlusTier } from "~/db/tables";
+import { userDiscordIdIsAged } from "~/utils/users";
+import type { Role } from "./types";
+import { isAdmin, isDev, isStaff, isSupporter } from "./utils";
+
+export function userRoles(
+	user: Pick<
+		UserWithPlusTier,
+		| "id"
+		| "discordId"
+		| "plusTier"
+		| "isArtist"
+		| "isTournamentOrganizer"
+		| "isVideoAdder"
+		| "isApiAccesser"
+		| "patronTier"
+	>,
+) {
+	const result: Array<Role> = [];
+
+	if (isAdmin(user)) {
+		result.push("ADMIN");
+	}
+
+	if (isStaff(user) || isAdmin(user)) {
+		result.push("STAFF");
+	}
+
+	if (isDev(user)) {
+		result.push("DEV");
+	}
+
+	if (typeof user.patronTier === "number") {
+		result.push("MINOR_SUPPORT");
+	}
+
+	if (isSupporter(user)) {
+		result.push("SUPPORTER");
+	}
+
+	if (typeof user.plusTier === "number") {
+		result.push("PLUS_SERVER_MEMBER");
+	}
+
+	if (user.isArtist) {
+		result.push("ARTIST");
+	}
+
+	if (user.isVideoAdder) {
+		result.push("VIDEO_ADDER");
+	}
+
+	if (user.isTournamentOrganizer || isSupporter(user)) {
+		result.push("TOURNAMENT_ADDER");
+	}
+
+	if (userDiscordIdIsAged(user) || isSupporter(user)) {
+		result.push("CALENDAR_EVENT_ADDER");
+	}
+
+	if (user.isTournamentOrganizer || user.isApiAccesser || isSupporter(user)) {
+		result.push("API_ACCESSER");
+	}
+
+	return result;
+}

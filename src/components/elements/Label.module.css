@@ -1,0 +1,6 @@
+.label {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+	margin-block-end: var(--label-margin);
+	display: block;
+}

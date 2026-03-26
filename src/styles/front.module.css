@@ -1,0 +1,324 @@
+.frontPageContainer {
+	--card-width: 225px;
+	--card-height: 93px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-8);
+}
+
+.changeLogImg {
+	max-height: 300px;
+	border-radius: var(--radius-field);
+}
+
+.changeLogIconButton {
+	display: flex;
+	flex-direction: row;
+	gap: var(--s-1-5);
+	justify-content: center;
+	align-items: center;
+	font-weight: var(--weight-bold);
+	font-size: var(--font-xs);
+	border-radius: 100%;
+	color: var(--color-text-high);
+}
+
+.changeLogIconButton:hover {
+	color: var(--color-text-accent);
+}
+
+.externalLinkIcon {
+	width: 18px;
+	stroke-width: 2px;
+}
+
+@property --l {
+	syntax: "<percentage>";
+	inherits: false;
+	initial-value: 50%;
+}
+
+.seasonBanner {
+	/*  needed for firefox to have a valid output */
+	--l: 50%;
+
+	background: linear-gradient(
+		to right,
+		var(--color-bg-higher),
+		var(--l),
+		var(--color-bg)
+	);
+	border-radius: var(--radius-box);
+	padding: var(--s-2) var(--s-3);
+	line-height: 1.35;
+	position: relative;
+	color: var(--color-text);
+	border: var(--border-style-high);
+	transition: --l 0.2s ease-out;
+	margin-block-start: var(--s-6);
+}
+
+.seasonBanner:hover {
+	--l: 75%;
+}
+
+.seasonBannerHeader {
+	font-size: var(--font-xl);
+	font-weight: var(--weight-bold);
+}
+
+.seasonBannerDates {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+}
+
+.seasonBannerImg {
+	position: absolute;
+	width: 83px;
+	right: 6px;
+	bottom: 0;
+}
+
+.seasonBannerLink {
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-field);
+	width: max-content;
+	height: var(--field-size-sm);
+	padding: 0 var(--s-1-5);
+	font-size: var(--font-xs);
+	color: var(--color-text);
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+}
+
+.seasonBannerLink svg {
+	width: 24px;
+	transition: all 0.2s ease-out;
+}
+
+.seasonBannerMobileOnly {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.seasonCardDesktopOnly {
+	display: none;
+	flex-direction: column;
+	gap: var(--s-2);
+	text-align: center;
+	align-items: center;
+}
+
+@media screen and (min-width: 750px) {
+	.seasonBannerMobileOnly {
+		display: none;
+	}
+
+	.seasonCardDesktopOnly {
+		display: flex;
+	}
+}
+
+.seasonBannerLink:hover svg {
+	translate: 2px;
+}
+
+.tournamentCardsSpacer {
+	display: flex;
+	gap: var(--s-2);
+	height: 100%;
+	padding: 0 var(--s-2) var(--s-2) var(--s-2);
+	overflow-x: auto;
+}
+
+.resultHighlights {
+	display: flex;
+	gap: var(--s-2);
+	padding: var(--s-2);
+}
+
+.resultHighlights > div {
+	flex: 3 1 0;
+	width: 100%;
+}
+
+.resultHighlights > .seasonCardDesktopOnly {
+	flex: 2 1 0;
+}
+
+.resultHighlightsTop {
+	--card-width: 100%;
+	overflow-x: auto;
+}
+
+.resultHighlightsTitle {
+	font-size: var(--font-xs);
+}
+
+.resultHighlightsTitleTournaments {
+	align-self: flex-start;
+	margin-inline-start: 65px;
+}
+
+.seasonCard {
+	--l: 50%;
+
+	min-width: var(--card-width);
+	max-width: var(--card-width);
+	flex: 1;
+	background: linear-gradient(
+		to bottom,
+		var(--color-bg-higher),
+		var(--l),
+		var(--color-bg)
+	);
+	border-radius: var(--radius-box);
+	border: var(--border-style-high);
+	display: flex;
+	flex-direction: column;
+	padding: var(--s-2);
+	position: relative;
+	color: var(--color-text);
+	overflow: hidden;
+	transition: --l 0.2s ease-out;
+}
+
+.seasonCard:hover {
+	--l: 75%;
+}
+
+.seasonCardHeader {
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
+	padding-block-start: var(--s-2);
+}
+
+.seasonCardDates {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-lighter);
+}
+
+.seasonCardImg {
+	position: absolute;
+	width: 140px;
+	bottom: 0;
+	right: 16px;
+}
+
+.seasonCardButton {
+	font-size: var(--font-2xs);
+	color: var(--color-text);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-selector);
+	width: max-content;
+	height: var(--selector-size);
+	display: flex;
+	gap: var(--s-1);
+	padding: var(--s-0-5) var(--s-1-5);
+}
+
+.leaderboard {
+	width: 100%;
+	min-width: 14rem;
+	max-width: var(--card-width);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-box);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	padding: var(--s-2);
+}
+
+.leaderboardName {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+	white-space: nowrap;
+	max-width: 140px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.leaderboardViewAll {
+	font-size: var(--font-2xs);
+	color: var(--color-text);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-selector);
+	width: max-content;
+	height: var(--selector-size);
+	display: flex;
+	gap: var(--s-1);
+	padding: var(--s-0-5) var(--s-1-5);
+}
+
+.lutiBanner {
+	background-color: #4874a0;
+	color: #fff;
+	border-radius: var(--radius-box);
+	padding: var(--s-2);
+	justify-content: center;
+	display: flex;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+}
+
+.weaponPills {
+	display: flex;
+	gap: var(--s-2);
+	justify-content: center;
+	flex-wrap: wrap;
+}
+
+.weaponPill {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-full);
+	padding: var(--s-1);
+	transition: background-color 0.15s ease-out;
+}
+
+.weaponPill:hover {
+	background-color: var(--color-bg-high);
+}
+
+.discoverGrid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: var(--s-3);
+	padding: var(--s-2);
+}
+
+@media (min-width: 600px) {
+	.discoverGrid {
+		grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+	}
+}
+
+.discoverGridItem {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+	text-decoration: none;
+	color: var(--color-text);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	text-align: center;
+}
+
+.discoverGridItemImage {
+	width: var(--field-size-lg);
+	aspect-ratio: 1 / 1;
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-higher);
+	display: grid;
+	place-items: center;
+}
+
+.discoverGridItem:hover .discoverGridItemImage {
+	background-color: var(--color-bg-high);
+}

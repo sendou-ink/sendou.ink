@@ -1,0 +1,58 @@
+import clsx from "clsx";
+import { Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Link, useLoaderData } from "react-router";
+import type { SerializeFrom } from "~/utils/remix";
+import { tournamentBracketsPage } from "../../../utils/urls";
+
+import { loader } from "../loaders/to.$id.divisions.server";
+import styles from "./to.$id.divisions.module.css";
+
+export { loader };
+
+export default function TournamentDivisionsPage() {
+	const data = useLoaderData<typeof loader>();
+
+	if (data.divisions.length === 0) {
+		return (
+			<div className="text-center text-lg font-semi-bold text-lighter">
+				Divisions have not been released yet, check back later
+			</div>
+		);
+	}
+
+	return (
+		<div className={styles.grid}>
+			{data.divisions.map((div) => (
+				<DivisionLink key={div.tournamentId} div={div} />
+			))}
+		</div>
+	);
+}
+
+function DivisionLink({
+	div,
+}: {
+	div: SerializeFrom<typeof loader>["divisions"][number];
+}) {
+	const data = useLoaderData<typeof loader>();
+	const { t } = useTranslation(["calendar"]);
+	const shortName = div.name.split("-").at(-1);
+
+	return (
+		<Link
+			to={tournamentBracketsPage({ tournamentId: div.tournamentId })}
+			className={clsx(styles.link, {
+				[styles.participant]: data.divsParticipantOf.includes(div.tournamentId),
+			})}
+		>
+			{shortName}
+			<div className={styles.participantCounts}>
+				<Users />{" "}
+				{t("calendar:count.teams", {
+					count: div.teamsCount,
+				})}
+			</div>
+		</Link>
+	);
+}

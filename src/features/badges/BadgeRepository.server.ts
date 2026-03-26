@@ -1,0 +1,249 @@
+import type { ExpressionBuilder, NotNull } from "kysely";
+import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
+import { db } from "~/db/sql";
+import type { DB } from "~/db/tables";
+import { sortBadgesByFavorites } from "~/features/user-page/core/badge-sorting.server";
+import invariant from "~/utils/invariant";
+import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { SPLATOON_3_XP_BADGE_VALUES } from "./badges-constants";
+import { findSplatoon3XpBadgeValue } from "./badges-utils";
+
+const addPermissions = <T extends { managers: { userId: number }[] }>(
+	row: T,
+) => ({
+	...row,
+	permissions: {
+		MANAGE: row.managers.map((m) => m.userId),
+	},
+});
+
+const withAuthor = (eb: ExpressionBuilder<DB, "Badge">) => {
+	return jsonObjectFrom(
+		eb
+			.selectFrom("User")
+			.select(COMMON_USER_FIELDS)
+			.whereRef("User.id", "=", "Badge.authorId"),
+	).as("author");
+};
+
+const withManagers = (eb: ExpressionBuilder<DB, "Badge">) => {
+	return jsonArrayFrom(
+		eb
+			.selectFrom("BadgeManager")
+			.innerJoin("User", "BadgeManager.userId", "User.id")
+			.select(["userId", ...COMMON_USER_FIELDS])
+			.whereRef("BadgeManager.badgeId", "=", "Badge.id"),
+	).as("managers");
+};
+
+const withOwners = (eb: ExpressionBuilder<DB, "Badge">) => {
+	return jsonArrayFrom(
+		eb
+			.selectFrom("BadgeOwner")
+			.innerJoin("User", "BadgeOwner.userId", "User.id")
+			.select(({ fn }) => [
+				fn.count<number>("BadgeOwner.badgeId").as("count"),
+				"User.id",
+				"User.discordId",
+				"User.username",
+			])
+			.whereRef("BadgeOwner.badgeId", "=", "Badge.id")
+			.groupBy("User.id")
+			.orderBy("count", "desc"),
+	).as("owners");
+};
+
+export async function all() {
+	const rows = await db
+		.selectFrom("Badge")
+		.select(({ eb }) => [
+			"id",
+			"displayName",
+			"code",
+			"hue",
+			withManagers(eb),
+			withAuthor(eb),
+		])
+		.execute();
+
+	return rows.map(addPermissions);
+}
+
+export async function findById(badgeId: number) {
+	const row = await db
+		.selectFrom("Badge")
+		.select((eb) => [
+			"Badge.id",
+			"Badge.displayName",
+			"Badge.code",
+			"Badge.hue",
+			withAuthor(eb),
+			withManagers(eb),
+			withOwners(eb),
+		])
+		.where("id", "=", badgeId)
+		.executeTakeFirst();
+
+	if (!row) {
+		return null;
+	}
+
+	return addPermissions(row);
+}
+
+export function findByManagersList(userIds: number[]) {
+	return db
+		.selectFrom("Badge")
+		.select(["Badge.id", "Badge.code", "Badge.displayName", "Badge.hue"])
+		.innerJoin("BadgeManager", "Badge.id", "BadgeManager.badgeId")
+		.where("BadgeManager.userId", "in", userIds)
+		.orderBy("Badge.id", "asc")
+		.groupBy("Badge.id")
+		.execute();
+}
+
+export function findManagedByUserId(userId: number) {
+	return db
+		.selectFrom("BadgeManager")
+		.innerJoin("Badge", "Badge.id", "BadgeManager.badgeId")
+		.select(["Badge.id", "Badge.code", "Badge.displayName", "Badge.hue"])
+		.where("BadgeManager.userId", "=", userId)
+		.execute();
+}
+
+export async function findByOwnerUserId(userId: number) {
+	const rows = await db
+		.selectFrom("BadgeOwner")
+		.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
+		.innerJoin("User", "User.id", "BadgeOwner.userId")
+		.select(({ fn }) => [
+			fn.count<number>("BadgeOwner.badgeId").as("count"),
+			"Badge.id",
+			"Badge.displayName",
+			"Badge.code",
+			"Badge.hue",
+			"User.favoriteBadgeIds",
+			"User.patronTier",
+		])
+		.where("BadgeOwner.userId", "=", userId)
+		.groupBy(["BadgeOwner.badgeId", "BadgeOwner.userId"])
+		.execute();
+
+	if (rows.length === 0) return [];
+
+	const { favoriteBadgeIds, patronTier } = rows[0];
+
+	return sortBadgesByFavorites({
+		favoriteBadgeIds,
+		badges: rows.map(
+			({ favoriteBadgeIds: _, patronTier: __, ...badge }) => badge,
+		),
+		patronTier,
+	}).badges;
+}
+
+export function findByAuthorUserId(userId: number) {
+	return db
+		.selectFrom("Badge")
+		.select(["Badge.id", "Badge.displayName", "Badge.code", "Badge.hue"])
+		.where("Badge.authorId", "=", userId)
+		.groupBy("Badge.id")
+		.execute();
+}
+
+export function replaceManagers({
+	badgeId,
+	managerIds,
+}: {
+	badgeId: number;
+	managerIds: number[];
+}) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.deleteFrom("BadgeManager")
+			.where("badgeId", "=", badgeId)
+			.execute();
+
+		if (managerIds.length > 0) {
+			await trx
+				.insertInto("BadgeManager")
+				.values(
+					managerIds.map((userId) => ({
+						badgeId,
+						userId,
+					})),
+				)
+				.execute();
+		}
+	});
+}
+
+export function replaceOwners({
+	badgeId,
+	ownerIds,
+}: {
+	badgeId: number;
+	ownerIds: number[];
+}) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.deleteFrom("TournamentBadgeOwner")
+			.where("badgeId", "=", badgeId)
+			.execute();
+
+		if (ownerIds.length > 0) {
+			await trx
+				.insertInto("TournamentBadgeOwner")
+				.values(
+					ownerIds.map((userId) => ({
+						badgeId,
+						userId,
+					})),
+				)
+				.execute();
+		}
+	});
+}
+
+export async function syncXPBadges() {
+	return db.transaction().execute(async (trx) => {
+		for (const value of SPLATOON_3_XP_BADGE_VALUES) {
+			const badge = await trx
+				.selectFrom("Badge")
+				.select("id")
+				.where("code", "=", String(value))
+				.executeTakeFirst();
+
+			invariant(badge, `Badge ${value} not found`);
+
+			await trx
+				.deleteFrom("TournamentBadgeOwner")
+				.where("badgeId", "=", badge.id)
+				.execute();
+		}
+
+		const userTopXPowers = await trx
+			.selectFrom("SplatoonPlayer")
+			.select(["userId", "peakXp"])
+			.where("userId", "is not", null)
+			.where("peakXp", "is not", null)
+			.$narrowType<{ userId: NotNull; peakXp: NotNull }>()
+			.execute();
+
+		for (const { userId, peakXp } of userTopXPowers) {
+			const badgeValue = findSplatoon3XpBadgeValue(peakXp!);
+			if (!badgeValue) continue;
+
+			await trx
+				.insertInto("TournamentBadgeOwner")
+				.values((eb) => ({
+					badgeId: eb
+						.selectFrom("Badge")
+						.select("id")
+						.where("code", "=", String(badgeValue)),
+					userId,
+				}))
+				.execute();
+		}
+	});
+}

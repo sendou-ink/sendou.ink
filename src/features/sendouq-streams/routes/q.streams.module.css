@@ -1,0 +1,27 @@
+.userContainer {
+	font-size: var(--font-xs);
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
+}
+
+.viewerCount {
+	font-size: var(--font-xs);
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+	margin-block-start: -5px;
+	color: var(--color-text-high);
+}
+
+.viewerCount > svg {
+	width: 0.75rem;
+}
+
+.infoCircle {
+	border-radius: 100%;
+	background-color: var(--color-bg-high);
+	padding: var(--s-1);
+}

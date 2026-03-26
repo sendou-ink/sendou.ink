@@ -1,0 +1,70 @@
+.list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	padding: 0;
+	margin: 0;
+	margin-block-start: var(--s-2);
+	list-style: none;
+}
+
+.item {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	padding: var(--s-2) var(--s-3);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	transition: opacity 0.2s;
+}
+
+.item.isDragging {
+	opacity: 0.5;
+}
+
+.dragHandle {
+	cursor: grab;
+	user-select: none;
+	color: var(--color-text-high);
+	font-size: var(--font-md);
+	touch-action: none;
+	background: none;
+	border: none;
+	padding: 0;
+	flex-shrink: 0;
+}
+
+.dragHandle:active {
+	cursor: grabbing;
+}
+
+.weaponName {
+	text-transform: uppercase;
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
+	font-size: var(--font-2xs);
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.weaponImage {
+	flex-shrink: 0;
+}
+
+.actions {
+	display: flex;
+	gap: var(--s-2);
+	flex-shrink: 0;
+}
+
+.starIconOutlined {
+	color: var(--color-text-accent);
+}
+
+.starIconFilled {
+	fill: var(--color-text-accent);
+}

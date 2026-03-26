@@ -1,0 +1,12 @@
+.root {
+	width: 100%;
+}
+
+.root input:not([type="radio"], [type="checkbox"]),
+.root textarea,
+.root select,
+.root .react-aria-Group,
+.root .react-aria-Select button,
+.root .react-aria-DatePicker {
+	width: 100%;
+}

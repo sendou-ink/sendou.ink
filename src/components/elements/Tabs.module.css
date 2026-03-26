@@ -1,0 +1,92 @@
+.tabListContainer {
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+
+.tabList {
+	display: flex;
+	flex-direction: row;
+	border-bottom: 2px solid var(--color-border);
+	min-width: fit-content;
+}
+
+.fullWidth {
+	width: 100%;
+	min-width: 100%;
+}
+
+.tabList svg {
+	--icon-size: 16px;
+	min-width: var(--icon-size);
+	min-height: var(--icon-size);
+	max-width: var(--icon-size);
+	max-height: var(--icon-size);
+	margin-inline-end: var(--s-1-5);
+}
+
+.tabButton img {
+	min-width: 16px;
+	min-height: 16px;
+	margin-inline-end: var(--s-1-5);
+}
+
+.padded .tabPanel {
+	padding-block-start: var(--s-4);
+}
+
+.disappearing:has(.tabList > div:only-child).padded .tabPanel {
+	padding-top: 0;
+}
+
+.disappearing .tabList:has(> div:only-child) {
+	display: none;
+}
+
+.tabContainer {
+	min-width: fit-content;
+	margin-bottom: -2px;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: -2px;
+	}
+}
+
+.fullWidth .tabContainer {
+	flex: 1;
+	min-width: 0;
+}
+
+.tabButton {
+	background-color: transparent;
+	border: none;
+	font-size: var(--font-xs);
+	border-radius: 0;
+	border-bottom: 2px solid transparent;
+	color: var(--color-text-high);
+	white-space: nowrap;
+	flex: 1;
+	transform: none !important;
+}
+
+.tabContainer[data-selected] .tabButton {
+	border-color: var(--color-text-accent);
+	color: var(--color-text);
+}
+
+.tabContainer[data-focus-visible] .tabButton {
+	color: var(--color-text-accent) !important;
+	outline: none;
+}
+
+.tabNumber {
+	color: var(--color-text-accent);
+	margin-inline-start: var(--s-2);
+}
+
+.sticky {
+	position: sticky;
+	top: 47px;
+	z-index: 1;
+	background-color: var(--color-bg);
+}

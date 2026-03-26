@@ -1,0 +1,152 @@
+.button {
+	display: flex;
+	width: auto;
+	align-items: center;
+	justify-content: center;
+	border: var(--border-style-accent);
+	border-radius: var(--radius-field);
+	appearance: none;
+	background: var(--color-text-accent);
+	color: var(--color-text-inverse);
+	cursor: pointer;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+	padding: 0 var(--field-padding);
+	user-select: none;
+	outline-color: var(--color-text-accent);
+	height: var(--field-size);
+	white-space: nowrap;
+}
+
+.button[data-focus-visible],
+.button:focus-visible {
+	outline-style: solid;
+	outline-width: 2px;
+	outline-offset: 1px;
+}
+
+.button[data-pressed],
+.button:active {
+	transform: translateY(1px);
+}
+
+.button[data-disabled],
+.button:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
+	transform: initial;
+}
+
+.outlined {
+	background-color: transparent;
+	color: var(--color-text-accent);
+}
+
+.outlinedSuccess {
+	border-color: var(--color-success);
+	background-color: transparent;
+	color: var(--color-success);
+	outline-color: var(--color-success);
+}
+
+.outlinedDestructive {
+	border-color: var(--color-error);
+	background-color: transparent;
+	color: var(--color-error);
+	outline-color: var(--color-error);
+}
+
+.small {
+	font-size: var(--font-xs);
+	height: var(--field-size-sm);
+}
+
+.miniscule {
+	font-size: var(--font-2xs);
+	height: var(--field-size-xs);
+}
+
+.big {
+	font-size: var(--font-md);
+	height: var(--field-size-lg);
+}
+
+.square {
+	aspect-ratio: 1 / 1;
+	padding: 0;
+}
+
+.circle {
+	border-radius: 50%;
+	aspect-ratio: 1 / 1;
+	padding: 0;
+}
+
+.minimal {
+	padding: 0;
+	border: none;
+	background-color: transparent;
+	color: var(--color-text-accent);
+	outline: initial;
+}
+
+.minimal[data-focus-visible] {
+	outline: var(--focus-ring);
+}
+
+.minimalSuccess {
+	padding: 0;
+	border: none;
+	background-color: transparent;
+	color: var(--color-success);
+	outline-color: var(--color-success);
+}
+
+.success {
+	border-color: var(--color-success);
+	background-color: var(--color-success);
+	outline-color: var(--color-success);
+}
+
+.destructive {
+	border-color: var(--color-error);
+	background-color: var(--color-error);
+	color: var(--color-text-inverse);
+	outline-color: var(--color-error);
+}
+
+.minimalDestructive {
+	padding: 0;
+	border: none;
+	background-color: transparent;
+	color: var(--color-error);
+	outline-color: var(--color-error);
+}
+
+.buttonIcon {
+	min-width: 20px;
+	max-width: 20px;
+	margin-inline-end: var(--s-1-5);
+}
+
+.buttonIcon.lonely {
+	margin-inline-end: 0 !important;
+}
+
+.buttonIconSmall {
+	min-width: 18px;
+	max-width: 18px;
+	margin-inline-end: var(--s-1);
+}
+
+.buttonIconMiniscule {
+	min-width: 14px;
+	max-width: 14px;
+	margin-inline-end: var(--s-1);
+}
+
+.buttonIconBig {
+	min-width: 28px;
+	max-width: 28px;
+	margin-inline-end: var(--s-2);
+}

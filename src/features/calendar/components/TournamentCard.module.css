@@ -1,0 +1,178 @@
+.container {
+	min-width: var(--card-width);
+	max-width: var(--card-width);
+	height: calc(var(--card-height) + 26px);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	--tournament-card-icon-size: 14px;
+}
+
+.containerTall {
+	height: 100%;
+}
+
+.card {
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-box);
+	color: var(--color-text);
+	padding: var(--s-1) var(--s-2) var(--s-2) var(--s-2);
+	height: 100%;
+	min-width: var(--card-width);
+	max-width: var(--card-width);
+}
+
+.imgContainer {
+	background-color: var(--color-bg);
+	padding: var(--s-1-5);
+	border-radius: var(--radius-avatar);
+	margin-left: -10px;
+	margin-top: -10px;
+}
+
+.avatarImg {
+	border-radius: var(--radius-avatar);
+}
+
+.card:hover .avatarImg {
+	outline: 6px solid var(--color-bg-higher);
+}
+
+.org {
+	display: flex;
+	gap: var(--s-1);
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.org span {
+	max-width: 165px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.time {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	display: block;
+	text-align: center;
+}
+
+.nameRow {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.name {
+	text-align: center;
+	font-weight: var(--weight-semi);
+	font-size: var(--font-sm);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	max-width: 225px;
+	overflow: hidden;
+}
+
+.nameWithTier {
+	max-width: 165px;
+}
+
+.teamCount {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-selector);
+	height: var(--selector-size);
+	width: max-content;
+	padding: 0 var(--s-1-5);
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.teamCount svg {
+	width: var(--tournament-card-icon-size);
+	height: var(--tournament-card-icon-size);
+}
+
+.modesPillContainer {
+	padding-inline-start: 12px;
+}
+
+.modesPill {
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-selector);
+	width: max-content;
+	padding: 0 var(--s-1-5);
+	display: flex;
+	gap: var(--s-1);
+	height: var(--selector-size);
+	align-items: center;
+}
+
+.pillsContainer {
+	display: flex;
+	gap: var(--s-1);
+	justify-content: end;
+	padding-inline-end: 12px;
+	width: 100%;
+}
+
+.pillsContainer.lonely {
+	padding-inline-end: 0px;
+	padding-inline-start: 12px;
+}
+
+.pill {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	border-radius: var(--radius-selector);
+	height: var(--selector-size);
+	padding: 0 var(--s-1-5);
+	display: grid;
+	place-items: center;
+}
+
+.pillRanked {
+	background-color: var(--color-info-low);
+	color: var(--color-text-accent);
+}
+
+.pillRanked svg {
+	width: var(--tournament-card-icon-size);
+	height: var(--tournament-card-icon-size);
+}
+
+.firstPlacers {
+	margin-inline: auto;
+	margin-top: var(--s-5);
+	margin-block-end: var(--s-4);
+	width: max-content;
+}
+
+.firstPlacersTeamName {
+	max-width: 150px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.badgeNavIcon {
+	min-width: 16px;
+}
+
+.badgeDisplay {
+	min-width: initial;
+	min-height: initial;
+}
+
+.badgePill {
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-selector);
+	padding: 0 var(--s-1-5);
+	height: var(--selector-size);
+}

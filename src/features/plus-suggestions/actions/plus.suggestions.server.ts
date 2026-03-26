@@ -1,0 +1,129 @@
+import { type ActionFunction, redirect } from "react-router";
+import { requireUser } from "~/features/auth/core/user.server";
+import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
+import {
+	isVotingActive,
+	nextNonCompletedVoting,
+	rangeToMonthYear,
+} from "~/features/plus-voting/core";
+import { parseFormData } from "~/form/parse.server";
+import invariant from "~/utils/invariant";
+import { badRequestIfFalsy, errorToastIfFalsy } from "~/utils/remix.server";
+import { assertUnreachable } from "~/utils/types";
+import { plusSuggestionPage } from "~/utils/urls";
+import { suggestionActionSchema } from "../plus-suggestions-schemas";
+import {
+	canDeleteComment,
+	canEditSuggestion,
+	isFirstSuggestion,
+} from "../plus-suggestions-utils";
+
+export const action: ActionFunction = async ({ request }) => {
+	const user = requireUser();
+
+	const votingMonthYear = rangeToMonthYear(
+		badRequestIfFalsy(nextNonCompletedVoting(new Date())),
+	);
+
+	const result = await parseFormData({
+		request,
+		schema: suggestionActionSchema,
+	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
+
+	switch (data._action) {
+		case "EDIT_SUGGESTION": {
+			const suggestions =
+				await PlusSuggestionRepository.findAllByMonth(votingMonthYear);
+
+			const suggestion = suggestions.find((s) =>
+				s.entries.some((entry) => entry.id === data.suggestionId),
+			);
+			invariant(suggestion);
+			const entry = suggestion.entries.find((e) => e.id === data.suggestionId);
+			invariant(entry);
+
+			errorToastIfFalsy(
+				canEditSuggestion({
+					user,
+					author: entry.author,
+					suggestionId: data.suggestionId,
+					suggestions,
+				}),
+				"No permissions to edit this suggestion",
+			);
+
+			await PlusSuggestionRepository.updateTextById(
+				data.suggestionId,
+				data.comment,
+			);
+
+			throw redirect(plusSuggestionPage({ tier: suggestion.tier }));
+		}
+		case "DELETE_COMMENT": {
+			const suggestions =
+				await PlusSuggestionRepository.findAllByMonth(votingMonthYear);
+
+			const suggestionToDelete = suggestions.find((suggestion) =>
+				suggestion.entries.some((entry) => entry.id === data.suggestionId),
+			);
+			invariant(suggestionToDelete);
+			const entryToDelete = suggestionToDelete.entries.find(
+				(entry) => entry.id === data.suggestionId,
+			);
+			invariant(entryToDelete);
+
+			errorToastIfFalsy(
+				canDeleteComment({
+					user,
+					author: entryToDelete.author,
+					suggestionId: data.suggestionId,
+					suggestions,
+				}),
+				"No permissions to delete this comment",
+			);
+
+			const suggestionHasComments = suggestionToDelete.entries.length > 1;
+
+			if (
+				suggestionHasComments &&
+				isFirstSuggestion({
+					suggestionId: data.suggestionId,
+					suggestions,
+				})
+			) {
+				// admin only action
+				await PlusSuggestionRepository.deleteWithCommentsBySuggestedUserId({
+					tier: suggestionToDelete.tier,
+					userId: suggestionToDelete.suggested.id,
+					...votingMonthYear,
+				});
+			} else {
+				await PlusSuggestionRepository.deleteById(data.suggestionId);
+			}
+
+			break;
+		}
+		case "DELETE_SUGGESTION_OF_THEMSELVES": {
+			invariant(!isVotingActive(), "Voting is active");
+
+			await PlusSuggestionRepository.deleteWithCommentsBySuggestedUserId({
+				tier: data.tier,
+				userId: user.id,
+				...votingMonthYear,
+			});
+
+			break;
+		}
+		default: {
+			assertUnreachable(data);
+		}
+	}
+
+	return null;
+};

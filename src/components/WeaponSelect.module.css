@@ -1,0 +1,16 @@
+.item {
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+}
+
+.weaponImg {
+	min-width: 24px;
+}
+
+.weaponLabel {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	min-width: 0;
+}

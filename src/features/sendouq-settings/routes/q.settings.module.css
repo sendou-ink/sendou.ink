@@ -1,0 +1,36 @@
+.summary {
+	padding: var(--s-3);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
+	margin-block-end: var(--s-4);
+	position: relative;
+}
+
+.summary > div {
+	display: inline-flex;
+}
+
+.summary svg {
+	width: 24px;
+	color: var(--color-text-accent);
+	position: absolute;
+	right: 20px;
+	top: 14px;
+}
+
+.volumeSliderIcon {
+	width: 16px;
+	height: 16px;
+}
+
+/*
+Necessary because default style adds padding, making the slider not go from 0 to 1 visually
+Changing the default style would affect all other input elements, so we need to override it
+*/
+.volumeSliderInput {
+	padding-left: 0 !important;
+	padding-right: 0 !important;
+	border: 0 !important;
+}

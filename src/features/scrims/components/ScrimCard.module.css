@@ -1,0 +1,147 @@
+.card {
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	overflow: hidden;
+	background-color: var(--color-bg);
+	display: flex;
+	flex-direction: column;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	padding: var(--s-4);
+	padding-bottom: var(--s-3);
+}
+
+.avatarContainer {
+	flex-shrink: 0;
+}
+
+.teamName {
+	flex: 1;
+	font-size: var(--font-lg);
+	font-weight: var(--weight-semi);
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+	line-height: 1.2;
+}
+
+.pickupLabel {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	text-transform: uppercase;
+	color: var(--color-text-high);
+}
+
+.rightIconsContainer {
+	flex-shrink: 0;
+	align-self: flex-start;
+	display: flex;
+	gap: var(--s-2);
+}
+
+.usersIcon {
+	width: 18px;
+	height: 18px;
+}
+
+.infoRow {
+	display: flex;
+	gap: var(--s-6);
+	padding-inline: var(--s-4);
+	padding-bottom: var(--s-3);
+	flex-wrap: wrap;
+}
+
+.infoItem {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.infoLabel {
+	text-transform: uppercase;
+	color: var(--color-text-high);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-2xs);
+}
+
+.infoValue {
+	font-weight: var(--weight-semi);
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-xs);
+}
+
+.textContent {
+	padding-inline: var(--s-4);
+	padding-bottom: var(--s-3);
+	font-size: var(--font-sm);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.expandButton {
+	background: none;
+	border: none;
+	color: var(--color-text-accent);
+	cursor: pointer;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	padding: 0;
+	text-align: left;
+	text-decoration: underline;
+}
+
+.expandButton:hover {
+	opacity: 0.8;
+}
+
+.footer {
+	background-color: var(--color-bg-high);
+	padding: var(--s-2) var(--s-4);
+	display: flex;
+	justify-content: center;
+	margin-block-start: auto;
+}
+
+.requestCard {
+	background-color: var(--color-bg-high);
+}
+
+.requestFooter {
+	background-image: repeating-linear-gradient(
+		45deg,
+		var(--color-bg),
+		var(--color-bg) 10px,
+		var(--color-bg-higher) 10px,
+		var(--color-bg-higher) 20px
+	);
+}
+
+.filteredFooter {
+	background-color: var(--color-accent-low);
+}
+
+.canceledContainer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.strikethrough button {
+	text-decoration: line-through;
+}
+
+.canceledLabel {
+	color: var(--color-error);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	text-transform: uppercase;
+}

@@ -1,0 +1,174 @@
+.group {
+	background-color: var(--color-bg-high);
+	width: 100%;
+	border-radius: var(--radius-box);
+	padding: var(--s-3);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+	position: relative;
+	color: var(--color-text);
+}
+
+.noScreen {
+	background-color: var(--color-error-low);
+	border-radius: 100%;
+	padding: var(--s-1);
+	width: 30px;
+	height: 30px;
+	display: grid;
+	place-items: center;
+}
+
+.member {
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+	background-color: var(--color-bg);
+	border-radius: calc(var(--radius-box) + 6px);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	padding-inline-end: var(--s-3);
+}
+
+.name {
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	max-width: 7.5rem;
+	font-size: var(--font-xs);
+	color: var(--color-text);
+}
+
+.avatar {
+	min-width: 36px;
+}
+
+.avatarPositive {
+	outline: 2px solid var(--color-success-low);
+}
+
+.avatarNeutral {
+	outline: 2px solid var(--color-warning-low);
+}
+
+.avatarNegative {
+	outline: 2px solid var(--color-error-low);
+}
+
+.tier {
+	margin-inline-start: auto;
+}
+
+.tierPlaceholder {
+	min-width: 26.58px;
+}
+
+.extraInfo {
+	font-size: var(--font-xs);
+	background-color: var(--color-bg);
+	border-radius: var(--radius-selector);
+	padding: 0 var(--s-1-5);
+	width: max-content;
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-weight: var(--weight-semi);
+	height: var(--selector-size);
+
+	& img {
+		height: 24px;
+		width: 24px;
+	}
+}
+
+.extraInfoButton {
+	font-size: var(--font-xs);
+	background-color: var(--color-bg);
+	border-radius: var(--radius-box);
+	padding: var(--s-0-5) var(--s-1-5);
+	width: max-content;
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
+	border: none;
+	height: 24px;
+}
+
+.addNoteButton {
+	border: none;
+	padding: 0 var(--s-1-5);
+	color: var(--color-text-accent);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	background-color: var(--color-bg);
+	white-space: nowrap;
+	height: 100%;
+	border-radius: var(--radius-selector);
+}
+
+.addNoteButton > svg {
+	width: 18px;
+	height: 18px;
+}
+
+.noteTextarea {
+	height: 4rem !important;
+}
+
+.futureMatchMode {
+	border-radius: 100%;
+	background-color: var(--color-bg);
+	height: 30px;
+	width: 30px;
+	display: grid;
+	place-items: center;
+	padding: var(--s-1-5);
+}
+
+.vcIcon {
+	height: 15px;
+}
+
+.star {
+	min-width: 18px;
+	max-width: 18px;
+	color: var(--color-text-accent);
+}
+
+.starFilled {
+	fill: var(--color-text-accent);
+}
+
+.starInactive {
+	color: var(--color-text-high);
+}
+
+.displayTier {
+	display: flex;
+	gap: var(--s-1);
+	align-items: center;
+	position: absolute;
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg);
+	padding: var(--s-0-5) var(--s-3);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	bottom: -36px;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.popoverButton {
+	background-color: transparent;
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+	padding: 0;
+	border: none;
+	text-decoration: underline;
+	text-decoration-style: dotted;
+	font-weight: var(--weight-bold);
+	height: 19.8281px;
+}

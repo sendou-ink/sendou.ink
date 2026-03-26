@@ -1,0 +1,11 @@
+.count {
+	color: var(--color-accent-high);
+	font-size: var(--font-sm);
+	white-space: nowrap;
+}
+
+.divider {
+	background-color: var(--color-accent-high);
+	width: 2px;
+	align-self: stretch;
+}

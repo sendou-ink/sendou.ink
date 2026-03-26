@@ -1,0 +1,84 @@
+.container {
+	user-select: none;
+}
+
+.header {
+	display: flex;
+	justify-content: space-between;
+}
+
+.tierList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin-bottom: var(--s-6);
+}
+
+.tierListScreenshotMode {
+	padding: var(--s-4);
+	max-width: 720px;
+	min-width: 720px;
+}
+
+.filters {
+	display: flex;
+	gap: var(--s-4);
+}
+
+.modeFilters {
+	column-gap: var(--s-8);
+	row-gap: var(--s-2);
+	flex-wrap: wrap;
+}
+
+.titleInput {
+	width: 100%;
+	padding: 0 var(--s-2) var(--s-2) var(--s-2);
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
+	text-align: center;
+	background: transparent;
+	border: none;
+	color: var(--color-text);
+	outline: none;
+}
+
+.titleInput::placeholder {
+	color: var(--color-text-high);
+	opacity: 0.3;
+}
+
+.titleInput:focus::placeholder {
+	opacity: 0.5;
+}
+
+.authorSection {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	gap: var(--s-0-5);
+	margin-bottom: var(--s-3);
+	margin-top: -15px;
+}
+
+.authorBy {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-high);
+	text-transform: lowercase;
+	white-space: nowrap;
+}
+
+.authorInfo {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.authorUsername {
+	font-weight: var(--weight-bold);
+	font-size: var(--font-xs);
+	color: var(--color-text);
+	white-space: nowrap;
+}

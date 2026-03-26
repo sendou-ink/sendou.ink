@@ -1,0 +1,85 @@
+import type {
+	AbilityPoints,
+	SpecialWeaponParams,
+	SubWeaponParams,
+} from "~/features/build-analyzer/analyzer-types";
+import {
+	specialDeviceHp,
+	specialFieldHp,
+	subStats,
+} from "~/features/build-analyzer/core/stats";
+import {
+	hpDivided,
+	mainWeaponParams,
+	weaponParams,
+} from "~/features/build-analyzer/core/utils";
+import {
+	BIG_BUBBLER_ID,
+	CRAB_TANK_ID,
+	SPLASH_WALL_ID,
+} from "~/modules/in-game-lists/weapon-ids";
+import invariant from "~/utils/invariant";
+import type { HitPoints } from "../calculator-types";
+
+const WAVE_BREAKER_HP = 480;
+const SPRINKLER_HP = 120;
+const RAINMAKER_HP = 1000;
+const SPLAT_BRELLA_SHIELD_HP = 500;
+const BOOYAH_BOMB_ARMOR_HP = 470;
+const INK_VAC_HP = 1200;
+const BEAKON_HP = 120;
+const TORPEDO_HP = 20;
+const SUPER_CHUMP_HP = 60;
+const TRIPLE_SPLASHDOWN_HP = 100;
+
+export const objectHitPoints = (abilityPoints: AbilityPoints): HitPoints => {
+	const params = weaponParams();
+
+	const Wsb_Shield = subStats({
+		abilityPoints,
+		subWeaponParams: params.subWeapons[SPLASH_WALL_ID] as SubWeaponParams,
+	}).subHp?.value;
+	const GreatBarrier_Barrier = specialFieldHp({
+		abilityPoints,
+		specialWeaponParams: params.specialWeapons[
+			BIG_BUBBLER_ID
+		] as SpecialWeaponParams,
+	})?.value;
+	const GreatBarrier_WeakPoint = specialDeviceHp({
+		abilityPoints,
+		specialWeaponParams: params.specialWeapons[
+			BIG_BUBBLER_ID
+		] as SpecialWeaponParams,
+	})?.value;
+
+	invariant(Wsb_Shield);
+	invariant(GreatBarrier_Barrier);
+	invariant(GreatBarrier_WeakPoint);
+
+	return {
+		BulletUmbrellaCanopyNormal: SPLAT_BRELLA_SHIELD_HP,
+		BulletUmbrellaCanopyWide: hpDivided(mainWeaponParams(6010).CanopyHP!),
+		BulletUmbrellaCanopyCompact: hpDivided(mainWeaponParams(6020).CanopyHP!),
+		BulletShelterCanopyFocus: hpDivided(mainWeaponParams(6030).CanopyHP!),
+		BulletUmbrellaCanopyNormal_Launched: SPLAT_BRELLA_SHIELD_HP * 2,
+		BulletUmbrellaCanopyWide_Launched: hpDivided(
+			mainWeaponParams(6010).CanopyHP! * (10 / 6),
+		),
+		BulletShelterCanopyFocus_Launched: hpDivided(
+			mainWeaponParams(6030).CanopyHP! * (10 / 6),
+		),
+		Wsb_Shield,
+		Bomb_TorpedoBullet: TORPEDO_HP,
+		Chariot: hpDivided(params.specialWeapons[CRAB_TANK_ID].ArmorHP),
+		Gachihoko_Barrier: RAINMAKER_HP,
+		GreatBarrier_Barrier,
+		GreatBarrier_WeakPoint,
+		NiceBall_Armor: BOOYAH_BOMB_ARMOR_HP, // ??
+		BlowerInhale: INK_VAC_HP,
+		ShockSonar: WAVE_BREAKER_HP,
+		Wsb_Flag: BEAKON_HP,
+		Wsb_Sprinkler: SPRINKLER_HP,
+		Decoy: SUPER_CHUMP_HP,
+		BulletPogo: TRIPLE_SPLASHDOWN_HP,
+	};
+};

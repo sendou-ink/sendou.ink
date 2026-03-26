@@ -1,0 +1,44 @@
+.thumbnail {
+	cursor: pointer;
+	transition: all 0.2s ease;
+
+	&:hover {
+		scale: 1.025;
+	}
+}
+
+.dialogTag {
+	background-color: #fff;
+	border-radius: var(--radius-box);
+	color: #000;
+	font-size: var(--font-2xs);
+	padding-inline: var(--s-1);
+	margin-block: var(--s-1) var(--s-0-5);
+}
+
+.dialogTagUser {
+	background-color: var(--color-accent);
+}
+
+.dialogDescription {
+	font-size: var(--font-sm);
+	text-align: center;
+	color: #fff;
+}
+
+.dialogImg {
+	max-width: 100%;
+	max-height: 75vh;
+	width: 100%;
+	height: auto;
+	object-fit: contain;
+	display: block;
+}
+
+.tagsContainer {
+	display: flex;
+	gap: var(--s-0-5) var(--s-2);
+	justify-content: center;
+	flex-wrap: wrap;
+	margin-block-start: var(--s-0-5);
+}

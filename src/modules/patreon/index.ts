@@ -1,0 +1,1 @@
+export { updatePatreonData } from "./updater";

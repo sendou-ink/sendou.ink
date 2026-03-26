@@ -1,0 +1,80 @@
+import { jsonArrayFrom } from "kysely/helpers/sqlite";
+import type { LoaderFunctionArgs } from "react-router";
+import { z } from "zod";
+import { db } from "~/db/sql";
+import { databaseTimestampToDate } from "~/utils/dates";
+import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { id } from "~/utils/zod";
+import type { GetTournamentResponse } from "../schema";
+
+const paramsSchema = z.object({
+	id,
+});
+
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const { id } = parseParams({ params, schema: paramsSchema });
+
+	const tournament = notFoundIfFalsy(
+		await db
+			.selectFrom("Tournament")
+			.innerJoin("CalendarEvent", "CalendarEvent.tournamentId", "Tournament.id")
+			.innerJoin(
+				"CalendarEventDate",
+				"CalendarEventDate.eventId",
+				"CalendarEvent.id",
+			)
+			.select(({ eb, exists, selectFrom }) => [
+				"CalendarEvent.name",
+				"CalendarEvent.organizationId",
+				"CalendarEventDate.startTime",
+				"Tournament.settings",
+				exists(
+					selectFrom("TournamentResult")
+						.where("TournamentResult.tournamentId", "=", id)
+						.select("TournamentResult.tournamentId"),
+				).as("isFinalized"),
+				eb
+					.selectFrom("UserSubmittedImage")
+					.select(["UserSubmittedImage.url"])
+					.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id")
+					.as("logoUrl"),
+				jsonArrayFrom(
+					eb
+						.selectFrom("TournamentTeam")
+						.leftJoin("TournamentTeamCheckIn", (join) =>
+							join
+								.onRef(
+									"TournamentTeam.id",
+									"=",
+									"TournamentTeamCheckIn.tournamentTeamId",
+								)
+								.on("TournamentTeamCheckIn.bracketIdx", "is", null),
+						)
+						.select(["TournamentTeamCheckIn.checkedInAt"])
+						.where("TournamentTeam.tournamentId", "=", id),
+				).as("teams"),
+			])
+			.where("Tournament.id", "=", id)
+			.executeTakeFirst(),
+	);
+
+	const result: GetTournamentResponse = {
+		name: tournament.name,
+		startTime: databaseTimestampToDate(tournament.startTime).toISOString(),
+		url: `https://sendou.ink/to/${id}/brackets`,
+		logoUrl: tournament.logoUrl,
+		teams: {
+			checkedInCount: tournament.teams.filter((team) => team.checkedInAt)
+				.length,
+			registeredCount: tournament.teams.length,
+		},
+		brackets: tournament.settings.bracketProgression.map((bp) => ({
+			name: bp.name,
+			type: bp.type,
+		})),
+		organizationId: tournament.organizationId,
+		isFinalized: Boolean(tournament.isFinalized),
+	};
+
+	return Response.json(result);
+};

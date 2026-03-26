@@ -1,0 +1,26 @@
+import { type ActionFunctionArgs, redirect } from "react-router";
+import { requireUser } from "~/features/auth/core/user.server";
+import { badRequestIfFalsy, unauthorizedIfFalsy } from "~/utils/remix.server";
+import { userVodsPage } from "~/utils/urls";
+import * as VodRepository from "../VodRepository.server";
+import { canEditVideo } from "../vods-utils";
+
+export const action = async ({ params }: ActionFunctionArgs) => {
+	const user = requireUser();
+
+	const vod = badRequestIfFalsy(
+		await VodRepository.findVodById(Number(params.id)),
+	);
+
+	unauthorizedIfFalsy(
+		canEditVideo({
+			userId: user.id,
+			submitterUserId: vod.submitterUserId,
+			povUserId: typeof vod.pov === "string" ? undefined : vod.pov?.id,
+		}),
+	);
+
+	await VodRepository.deleteById(vod.id);
+
+	return redirect(userVodsPage(user));
+};

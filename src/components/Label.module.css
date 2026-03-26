@@ -1,0 +1,28 @@
+.container {
+	display: flex;
+	align-items: flex-end;
+	gap: var(--s-2);
+	margin-block-end: var(--label-margin);
+
+	.mb-0 {
+		margin-block-end: 0;
+	}
+
+	& > label {
+		margin: 0;
+	}
+}
+
+.value {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	margin-block-start: -5px;
+}
+
+.valueWarning {
+	color: var(--color-warning);
+}
+
+.valueError {
+	color: var(--color-error);
+}

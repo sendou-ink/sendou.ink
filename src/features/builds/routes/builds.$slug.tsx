@@ -1,0 +1,364 @@
+import {
+	Calendar,
+	ChartColumnBig,
+	Flame,
+	FlaskConical,
+	Funnel,
+	Map as MapIcon,
+} from "lucide-react";
+import { nanoid } from "nanoid";
+import * as React from "react";
+import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import {
+	type ShouldRevalidateFunction,
+	useLoaderData,
+	useSearchParams,
+} from "react-router";
+import * as R from "remeda";
+import { BuildCard } from "~/components/BuildCard";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
+import { Main } from "~/components/Main";
+import { safeJSONParse } from "~/utils/json";
+import { isRevalidation, metaTags, type SerializeFrom } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+import type { Unpacked } from "~/utils/types";
+import {
+	BUILDS_PAGE,
+	navIconUrl,
+	outlinedMainWeaponImageUrl,
+	weaponBuildPage,
+	weaponBuildPopularPage,
+	weaponBuildStatsPage,
+} from "~/utils/urls";
+import {
+	BUILDS_PAGE_BATCH_SIZE,
+	BUILDS_PAGE_MAX_BUILDS,
+	FILTER_SEARCH_PARAM_KEY,
+	MAX_BUILD_FILTERS,
+	PATCHES,
+} from "../builds-constants";
+import type { BuildFiltersFromSearchParams } from "../builds-schemas.server";
+import type { AbilityBuildFilter, BuildFilter } from "../builds-types";
+import { FilterSection } from "../components/FilterSection";
+
+import { loader } from "../loaders/builds.$slug.server";
+
+export { loader };
+
+import styles from "./builds.$slug.module.css";
+
+const filterOutMeaninglessFilters = (
+	filter: Unpacked<BuildFiltersFromSearchParams>,
+) => {
+	if (filter.type !== "ability") return true;
+
+	return (
+		filter.comparison !== "AT_LEAST" ||
+		typeof filter.value !== "number" ||
+		filter.value > 0
+	);
+};
+export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
+	if (isRevalidation(args)) return true;
+
+	const oldLimit = args.currentUrl.searchParams.get("limit");
+	const newLimit = args.nextUrl.searchParams.get("limit");
+
+	// limit was changed -> revalidate
+	if (oldLimit !== newLimit) {
+		return true;
+	}
+
+	const rawOldFilters = args.currentUrl.searchParams.get(
+		FILTER_SEARCH_PARAM_KEY,
+	);
+	const oldFilters = rawOldFilters
+		? safeJSONParse<BuildFiltersFromSearchParams>(rawOldFilters, []).filter(
+				filterOutMeaninglessFilters,
+			)
+		: null;
+	const rawNewFilters = args.nextUrl.searchParams.get(FILTER_SEARCH_PARAM_KEY);
+	const newFilters = rawNewFilters
+		? // no safeJSONParse as the value should be coming from app code and should be trustworthy
+			(JSON.parse(rawNewFilters) as BuildFiltersFromSearchParams).filter(
+				filterOutMeaninglessFilters,
+			)
+		: null;
+
+	// meaningful filter was added/removed -> revalidate
+	if (oldFilters && newFilters && oldFilters.length !== newFilters.length) {
+		return true;
+	}
+	// no meaningful filters were or going to be in use -> skip revalidation
+	if (
+		oldFilters &&
+		newFilters &&
+		oldFilters.length === 0 &&
+		newFilters.length === 0
+	) {
+		return false;
+	}
+	// all meaningful filters identical -> skip revalidation
+	if (
+		newFilters?.every((f1) =>
+			oldFilters?.some((f2) => {
+				if (f1.type !== f2.type) return false;
+
+				if (f1.type === "mode" && f2.type === "mode") {
+					return f1.mode === f2.mode;
+				}
+				if (f1.type === "date" && f2.type === "date") {
+					return f1.date === f2.date;
+				}
+				if (f1.type !== "ability" || f2.type !== "ability") return false;
+
+				return (
+					f1.ability === f2.ability &&
+					f1.comparison === f2.comparison &&
+					f1.value === f2.value
+				);
+			}),
+		)
+	) {
+		return false;
+	}
+
+	return args.defaultShouldRevalidate;
+};
+
+export const meta: MetaFunction<typeof loader> = (args) => {
+	if (!args.data) return [];
+
+	return metaTags({
+		title: `${args.data.weaponName} builds`,
+		ogTitle: `${args.data.weaponName} Splatoon 3 builds`,
+		description: `Collection of ${args.data.weaponName} builds from the top competitive players. Find the best combination of abilities and level up your gameplay.`,
+		location: args.location,
+	});
+};
+
+export const handle: SendouRouteHandle = {
+	i18n: ["weapons", "builds", "gear", "analyzer"],
+	breadcrumb: ({ match }) => {
+		const data = match.data as SerializeFrom<typeof loader> | undefined;
+
+		if (!data) return [];
+
+		return [
+			{
+				imgPath: navIconUrl("builds"),
+				href: BUILDS_PAGE,
+				type: "IMAGE",
+			},
+			{
+				imgPath: outlinedMainWeaponImageUrl(data.weaponId),
+				href: weaponBuildPage(data.slug),
+				type: "IMAGE",
+			},
+		];
+	},
+};
+
+export function BuildCards({ data }: { data: SerializeFrom<typeof loader> }) {
+	return (
+		<div className={styles.buildsContainer}>
+			{data.builds.map((build) => {
+				return (
+					<BuildCard
+						key={build.id}
+						build={build}
+						owner={
+							build.owner
+								? { ...build.owner, plusTier: build.plusTier }
+								: undefined
+						}
+						canEdit={false}
+					/>
+				);
+			})}
+		</div>
+	);
+}
+
+export default function WeaponsBuildsPage() {
+	const data = useLoaderData<typeof loader>();
+	const { t } = useTranslation(["common", "builds"]);
+	const [, setSearchParams] = useSearchParams();
+	const [filters, setFilters] = React.useState<BuildFilter[]>(
+		data.filters ? data.filters.map((f) => ({ ...f, id: nanoid() })) : [],
+	);
+
+	const filtersForSearchParams = (filters: BuildFilter[]) =>
+		JSON.stringify(
+			filters.map((f) => {
+				return R.omit(f, ["id"]);
+			}),
+		);
+	const syncSearchParams = (newFilters: BuildFilter[]) => {
+		setSearchParams(
+			filtersForSearchParams.length > 0
+				? {
+						[FILTER_SEARCH_PARAM_KEY]: filtersForSearchParams(newFilters),
+					}
+				: {},
+		);
+	};
+
+	const handleFilterAdd = (type: BuildFilter["type"]) => {
+		const newFilter: BuildFilter =
+			type === "ability"
+				? {
+						id: nanoid(),
+						type: "ability",
+						ability: "ISM",
+						comparison: "AT_LEAST",
+						value: 0,
+					}
+				: type === "date"
+					? {
+							id: nanoid(),
+							type: "date",
+							date: PATCHES[0].date,
+						}
+					: {
+							id: nanoid(),
+							type: "mode",
+							mode: "SZ",
+						};
+
+		const newFilters = [...filters, newFilter];
+		setFilters(newFilters);
+
+		// no need to sync new ability filter as this doesn't have effect till they make other choices
+		if (type !== "ability") {
+			syncSearchParams(newFilters);
+		}
+	};
+
+	const handleFilterChange = (i: number, newFilter: Partial<BuildFilter>) => {
+		const newFilters = structuredClone(filters);
+
+		newFilters[i] = {
+			...(filters[i] as AbilityBuildFilter),
+			...(newFilter as AbilityBuildFilter),
+		};
+
+		setFilters(newFilters);
+
+		syncSearchParams(newFilters);
+	};
+
+	const handleFilterDelete = (i: number) => {
+		const newFilters = filters.filter((_, index) => index !== i);
+		setFilters(newFilters);
+
+		syncSearchParams(newFilters);
+	};
+
+	const loadMoreLink = () => {
+		const params = new URLSearchParams();
+
+		params.set("limit", String(data.limit + BUILDS_PAGE_BATCH_SIZE));
+
+		if (filters.length > 0) {
+			params.set(FILTER_SEARCH_PARAM_KEY, filtersForSearchParams(filters));
+		}
+
+		return `?${params.toString()}`;
+	};
+
+	const nthOfSameFilter = (index: number) => {
+		const type = filters[index].type;
+
+		return filters.slice(0, index).filter((f) => f.type === type).length + 1;
+	};
+
+	return (
+		<Main className="stack lg">
+			<div className={styles.buildsButtons}>
+				<SendouMenu
+					trigger={
+						<SendouButton
+							variant="outlined"
+							size="small"
+							icon={<Funnel />}
+							isDisabled={filters.length >= MAX_BUILD_FILTERS}
+							data-testid="add-filter-button"
+						>
+							{t("builds:addFilter")}
+						</SendouButton>
+					}
+				>
+					<SendouMenuItem
+						icon={<FlaskConical />}
+						isDisabled={filters.length >= MAX_BUILD_FILTERS}
+						onAction={() => handleFilterAdd("ability")}
+						data-testid="menu-item-ability"
+					>
+						{t("builds:filters.type.ability")}
+					</SendouMenuItem>
+					<SendouMenuItem
+						icon={<MapIcon />}
+						onAction={() => handleFilterAdd("mode")}
+						data-testid="menu-item-mode"
+					>
+						{t("builds:filters.type.mode")}
+					</SendouMenuItem>
+					<SendouMenuItem
+						icon={<Calendar />}
+						isDisabled={filters.some((filter) => filter.type === "date")}
+						onAction={() => handleFilterAdd("date")}
+						data-testid="menu-item-date"
+					>
+						{t("builds:filters.type.date")}
+					</SendouMenuItem>
+				</SendouMenu>
+				<div className={styles.buildsButtonsLink}>
+					<LinkButton
+						to={weaponBuildStatsPage(data.slug)}
+						variant="outlined"
+						icon={<ChartColumnBig />}
+						size="small"
+					>
+						{t("builds:linkButton.abilityStats")}
+					</LinkButton>
+					<LinkButton
+						to={weaponBuildPopularPage(data.slug)}
+						variant="outlined"
+						icon={<Flame />}
+						size="small"
+					>
+						{t("builds:linkButton.popularBuilds")}
+					</LinkButton>
+				</div>
+			</div>
+			{filters.length > 0 ? (
+				<div className="stack md">
+					{filters.map((filter, i) => (
+						<FilterSection
+							key={filter.id}
+							number={i + 1}
+							filter={filter}
+							onChange={(newFilter) => handleFilterChange(i, newFilter)}
+							remove={() => handleFilterDelete(i)}
+							nthOfSame={nthOfSameFilter(i)}
+						/>
+					))}
+				</div>
+			) : null}
+			<BuildCards data={data} />
+			{data.limit < BUILDS_PAGE_MAX_BUILDS && data.hasMoreBuilds ? (
+				<LinkButton
+					className="m-0-auto"
+					size="small"
+					to={loadMoreLink()}
+					preventScrollReset
+				>
+					{t("common:actions.loadMore")}
+				</LinkButton>
+			) : null}
+		</Main>
+	);
+}

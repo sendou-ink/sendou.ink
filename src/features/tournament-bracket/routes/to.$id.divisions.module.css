@@ -1,0 +1,45 @@
+.grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+	gap: var(--s-4);
+}
+
+.link {
+	background-color: var(--color-bg-high);
+	padding: var(--s-2) var(--s-4);
+	border-radius: var(--radius-box);
+	font-size: var(--fonts-lg);
+	font-weight: var(--weight-semi);
+	width: 100%;
+	white-space: nowrap;
+	border: var(--border-style);
+}
+
+.link:focus-visible {
+	outline: 3px solid var(--color-accent);
+	outline-offset: 3px;
+}
+
+.participant {
+	outline: 3px solid var(--color-bg-higher);
+	outline-offset: 3px;
+}
+
+.participant svg {
+	fill: var(--color-accent);
+}
+
+.participantCounts {
+	display: flex;
+	align-items: center;
+	font-weight: var(--weight-body);
+	color: var(--color-text-high);
+	font-size: var(--fonts-sm);
+	gap: var(--s-2);
+	margin-block-end: var(--s-1);
+}
+
+.participantCounts > svg {
+	width: 1rem;
+	margin-block-end: 1px;
+}

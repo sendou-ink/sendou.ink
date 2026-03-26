@@ -1,0 +1,76 @@
+.popoverContainer {
+	min-width: 300px;
+	padding: 0;
+	background-color: var(--color-bg);
+}
+
+.popoverContainer svg {
+	width: 16px;
+}
+
+.noNotificationsContainer {
+	min-height: 200px;
+}
+
+.topContainer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: var(--s-1) var(--s-2);
+
+	& svg {
+		min-width: 18px;
+		min-height: 18px;
+		max-width: 18px;
+		max-height: 18px;
+	}
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	font-size: var(--font-sm);
+	gap: var(--s-2);
+}
+
+.noNotifications {
+	display: grid;
+	place-items: center;
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	margin-block-start: 65px;
+}
+
+.divider {
+	border-color: var(--color-border);
+}
+
+.viewAllLink {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	width: fit-content;
+	margin: var(--s-2) auto;
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	text-decoration: none;
+	padding: 0 var(--s-3);
+	height: var(--selector-size);
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-field);
+
+	& svg {
+		stroke-width: 3;
+	}
+}
+
+@media screen and (max-width: 599px) {
+	.viewAllLink {
+		margin-top: var(--s-4);
+	}
+}
+
+.viewAllLink:hover {
+	color: var(--color-text);
+	background-color: var(--color-bg-higher);
+}

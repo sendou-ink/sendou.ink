@@ -1,0 +1,9 @@
+.header {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.header svg {
+	width: 24px;
+}

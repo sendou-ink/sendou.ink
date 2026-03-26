@@ -1,0 +1,19 @@
+.placeholder {
+	min-height: 100vh;
+}
+
+.cardsGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+	gap: var(--s-4);
+}
+
+.filterButtons {
+	display: flex;
+	gap: var(--s-6);
+	align-items: center;
+}
+
+.filterButtons button:not(.active) {
+	color: var(--color-text-high);
+}

@@ -1,7 +1,6 @@
-import { reactRouter } from "@react-router/dev/vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import viteReact from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
-import babel from "vite-plugin-babel";
-import tsconfigPaths from "vite-tsconfig-paths";
 import { configDefaults } from "vitest/config";
 
 export default defineConfig(({ mode }) => {
@@ -38,15 +37,9 @@ export default defineConfig(({ mode }) => {
 					};
 				},
 			},
-			reactRouter(),
-			babel({
-				filter: /\.[jt]sx?$/,
-				babelConfig: {
-					presets: ["@babel/preset-typescript"],
-					plugins: [["babel-plugin-react-compiler", {}]],
-				},
-			}),
-			tsconfigPaths(),
+			tanstackStart(),
+			// xxx: verify has react compiler
+			viteReact(),
 		],
 		test: {
 			projects: [
@@ -74,6 +67,9 @@ export default defineConfig(({ mode }) => {
 			// if we decide later that this is a useful optimization in some cases then we can
 			// switch the value to a callback one that checks the file path
 			assetsInlineLimit: 0,
+		},
+		resolve: {
+			tsconfigPaths: true,
 		},
 	};
 });

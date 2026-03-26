@@ -1,0 +1,113 @@
+.buttonsContainer {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--s-6);
+	align-items: start;
+	flex-wrap: wrap-reverse;
+}
+
+.navigateButtonsContainer {
+	display: flex;
+	gap: var(--s-4);
+	width: 100%;
+}
+
+.navigateButton {
+	all: unset;
+	background-color: var(--color-bg-higher);
+	border: var(--border-style);
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-weight: var(--weight-bold);
+	border-radius: var(--radius-field);
+	padding: var(--s-1) var(--s-2);
+	font-size: var(--font-xs);
+	flex: 1 1 0;
+}
+
+.navigateButton:focus-visible {
+	outline: var(--focus-ring);
+}
+
+@container (width >= 640px) {
+	.navigateButton {
+		flex: initial;
+	}
+
+	.navigateButtonsContainer {
+		width: initial;
+	}
+}
+
+.navigateButton:not(.navigateArrowButton) {
+	justify-content: center;
+}
+
+.navigateButton svg {
+	max-width: 1.75rem;
+	min-width: 1.75rem;
+	max-height: 1.75rem;
+}
+
+.navigateArrowButton svg {
+	margin-inline-start: -5px;
+}
+
+.columnsContainer {
+	display: grid;
+	grid-template-columns: repeat(var(--columns-count), 225px);
+	gap: var(--s-12);
+	overflow-x: auto;
+}
+
+.dayHeader {
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	padding: var(--s-2);
+	text-align: center;
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
+}
+
+.dayHeaderToday {
+	background-color: var(--color-bg-higher);
+	border: var(--border-style-high);
+}
+
+.dayHeaderWeekday {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.dayEvents {
+	margin-block-start: var(--s-4);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.clockHeader {
+	font-weight: var(--weight-semi);
+	font-size: var(--font-sm);
+}
+
+.clockHeaderDivider {
+	width: 100%;
+	height: 3px;
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-box);
+}
+
+.hiddenEventsButton svg {
+	width: 1rem;
+	height: 1rem;
+}
+
+.calendar {
+	background-color: initial;
+	padding: var(--s-2);
+	border: none;
+}

@@ -1,0 +1,38 @@
+.filter {
+	display: flex;
+	flex-direction: column;
+	padding: var(--s-3);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	gap: var(--s-2);
+}
+
+.filterMode {
+	gap: var(--s-6);
+	flex-wrap: wrap;
+}
+
+.filterDate {
+	display: flex;
+	align-items: center;
+}
+
+@container (width >= 560px) {
+	.filter {
+		flex-direction: row;
+	}
+}
+
+.abilityContainer {
+	display: flex;
+	width: 32px;
+	align-items: center;
+}
+
+.apSelect {
+	width: 75px;
+}
+
+.dateSelect {
+	width: 275px;
+}

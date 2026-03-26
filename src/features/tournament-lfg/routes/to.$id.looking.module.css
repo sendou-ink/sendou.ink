@@ -1,0 +1,119 @@
+.container {
+	display: grid;
+	justify-content: center;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--s-6);
+}
+
+.containerMobile {
+	grid-template-columns: 1fr;
+	min-width: 300px;
+	margin: 0 auto;
+}
+
+.innerContainer {
+	max-width: 94vw;
+}
+
+.header {
+	text-align: center;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	text-transform: uppercase;
+	color: var(--color-text-accent);
+	display: flex;
+	align-items: center;
+}
+
+.header::before,
+.header::after {
+	flex: 1;
+	content: "";
+	padding: 2px;
+	background-color: var(--color-bg-high);
+	margin: 5px;
+	border-radius: var(--radius-box);
+}
+
+.subsContainer {
+	max-width: 52rem;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-8);
+	margin-inline: auto;
+}
+
+.subsSection {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	grid-template-areas:
+		"avatar name"
+		"avatar info"
+		"weapons weapons"
+		"message message";
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	padding: var(--s-4);
+	column-gap: var(--s-3);
+	border: var(--border-style);
+}
+
+.subsSectionAvatar {
+	grid-area: avatar;
+	align-self: center;
+}
+
+.subsSectionName {
+	grid-area: name;
+	align-self: flex-end;
+	font-weight: var(--weight-semi);
+}
+
+.subsSectionInfo {
+	grid-area: info;
+	font-size: var(--font-sm);
+	gap: var(--s-2);
+	color: var(--color-text-high);
+	display: flex;
+	height: 32px;
+	white-space: nowrap;
+	align-items: center;
+}
+
+.subsInfoVc {
+	display: flex;
+	align-items: center;
+	gap: var(--s-0-5);
+}
+
+.subsInfoVc > svg {
+	width: 18px;
+}
+
+.subsSectionMessage {
+	grid-area: message;
+	font-size: var(--font-sm);
+	padding-block-start: var(--s-4);
+	white-space: pre-wrap;
+}
+
+.subsSectionWeaponText {
+	font-weight: var(--weight-semi);
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	align-self: center;
+}
+
+.subsSectionWeapons {
+	grid-area: weapons;
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-block-start: var(--s-2);
+}
+
+.subsSectionWeaponImages {
+	display: flex;
+	gap: var(--s-1);
+	align-items: center;
+}

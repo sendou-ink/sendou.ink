@@ -1,0 +1,323 @@
+import clsx from "clsx";
+import {
+	Calendar,
+	ChevronLeft,
+	ChevronRight,
+	Eye,
+	EyeOff,
+	Link as LinkIcon,
+} from "lucide-react";
+import type * as React from "react";
+import type { DateValue } from "react-aria-components";
+import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { Link, useLoaderData, useNavigate } from "react-router";
+import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
+import {
+	SendouButton,
+	type SendouButtonProps,
+} from "~/components/elements/Button";
+import { SendouCalendar } from "~/components/elements/Calendar";
+import { SendouPopover } from "~/components/elements/Popover";
+import { Main } from "~/components/Main";
+import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
+import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
+import { dayMonthYearToDateValue } from "~/utils/dates";
+import { metaTags } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+import {
+	CALENDAR_PAGE,
+	calendarIcalFeed,
+	calendarPage,
+	navIconUrl,
+} from "~/utils/urls";
+import type { DayMonthYear } from "~/utils/zod";
+import { action } from "../actions/calendar";
+import { daysForCalendar } from "../calendar-utils";
+import { FiltersDialog } from "../components/FiltersDialog";
+import { TournamentCard } from "../components/TournamentCard";
+import * as CalendarEvent from "../core/CalendarEvent";
+import { type CalendarLoaderData, loader } from "../loaders/calendar.server";
+
+export { action, loader };
+
+import styles from "./calendar.module.css";
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Calendar",
+		ogTitle: "Splatoon competitive event calendar",
+		location: args.location,
+		description:
+			"Browser Splatoon competitive tournaments and events both local and online. Events for players of all skill levels from newcomer to pro.",
+	});
+};
+
+export const handle: SendouRouteHandle = {
+	i18n: ["calendar", "front"],
+	breadcrumb: () => ({
+		imgPath: navIconUrl("calendar"),
+		href: CALENDAR_PAGE,
+		type: "IMAGE",
+	}),
+};
+
+export default function CalendarPage() {
+	const { t } = useTranslation(["calendar", "common"]);
+	const data = useLoaderData<typeof loader>();
+
+	const { previous, shown, next, current } = daysForCalendar(data.dateViewed);
+
+	return (
+		<Main bigger className="stack lg">
+			<div className={styles.buttonsContainer}>
+				<div className={styles.navigateButtonsContainer}>
+					<NavigateButton
+						icon={<ChevronLeft />}
+						daysInterval={previous}
+						filters={data.filters}
+					>
+						{t("common:actions.previous")}
+					</NavigateButton>
+					<NavigateButton
+						icon={<ChevronRight />}
+						daysInterval={next}
+						filters={data.filters}
+					>
+						{t("common:actions.next")}
+					</NavigateButton>
+					<CalendarDatePicker
+						dayMonthYear={current}
+						filters={data.filters}
+						key={JSON.stringify(current)}
+					/>
+				</div>
+				<div className="stack sm horizontal ml-auto">
+					<CopyToClipboardPopover
+						trigger={
+							<SendouButton icon={<LinkIcon />} size="small" variant="outlined">
+								{t("calendar:icalFeed")}
+							</SendouButton>
+						}
+						url={calendarIcalFeed(data.filters)}
+					/>
+					<FiltersDialog
+						key={CalendarEvent.filtersToString(data.filters)}
+						filters={data.filters}
+					/>
+				</div>
+			</div>
+			<div
+				className={clsx(styles.columnsContainer, "scrollbar")}
+				style={{ "--columns-count": DAYS_SHOWN_AT_A_TIME }}
+			>
+				{shown.map((date) => (
+					<DayEventsColumn
+						key={`${date.month}-${date.day}`}
+						date={date.day}
+						month={date.month}
+						year={date.year}
+						eventTimes={data.eventTimes.filter((event) => {
+							const eventDate = new Date(event.at);
+
+							return (
+								eventDate.getDate() === date.day &&
+								eventDate.getMonth() === date.month
+							);
+						})}
+					/>
+				))}
+			</div>
+		</Main>
+	);
+}
+
+function NavigateButton({
+	icon,
+	children,
+	daysInterval,
+	filters,
+}: {
+	icon: SendouButtonProps["icon"];
+	children: React.ReactNode;
+	daysInterval: ReturnType<typeof daysForCalendar>["shown"];
+	filters?: CalendarLoaderData["filters"];
+}) {
+	const { formatDate } = useTimeFormat();
+	const lowestDate = daysInterval[0];
+	const highestDate = daysInterval[daysInterval.length - 1];
+
+	const dateToString = (
+		day: ReturnType<typeof daysForCalendar>["shown"][number],
+	) =>
+		formatDate(new Date(new Date().getFullYear(), day.month, day.day), {
+			day: "numeric",
+			month: "short",
+		});
+
+	return (
+		<Link
+			to={calendarPage({ filters, dayMonthYear: lowestDate })}
+			className={clsx(styles.navigateButton, styles.navigateArrowButton)}
+			data-testid="calendar-navigate-button"
+		>
+			{icon}
+			<div>
+				<div>{children}</div>
+				<div className="text-xxs text-lighter">
+					{dateToString(lowestDate)} - {dateToString(highestDate)}
+				</div>
+			</div>
+		</Link>
+	);
+}
+
+function CalendarDatePicker({
+	dayMonthYear,
+	filters,
+}: {
+	dayMonthYear: DayMonthYear;
+	filters?: CalendarLoaderData["filters"];
+}) {
+	const navigate = useNavigate();
+
+	const onChange = (date: DateValue) => {
+		navigate(
+			calendarPage({
+				filters,
+				dayMonthYear: {
+					day: date.day,
+					month: date.month - 1,
+					year: date.year,
+				},
+			}),
+		);
+	};
+
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton className={styles.navigateButton} icon={<Calendar />} />
+			}
+		>
+			<SendouCalendar
+				className={styles.calendar}
+				value={dayMonthYearToDateValue(dayMonthYear)}
+				onChange={onChange}
+			/>
+		</SendouPopover>
+	);
+}
+
+function DayEventsColumn({
+	date,
+	month,
+	year,
+	eventTimes,
+}: {
+	date: number;
+	month: number;
+	year: number;
+	eventTimes: CalendarLoaderData["eventTimes"];
+}) {
+	const eventTimesCollapsed = useCollapsableEvents(eventTimes);
+
+	return (
+		<div>
+			<DayHeader date={date} month={month} year={year} />
+			<div className={styles.dayEvents}>
+				{eventTimesCollapsed.map((eventTime, i) => {
+					return (
+						<div key={eventTime.date.from.getTime()} className="stack md">
+							<ClockHeader
+								date={eventTime.date.from}
+								toDate={eventTime.date.to}
+								hiddenEventsCount={eventTime.hiddenCount}
+								hiddenShown={eventTime.hiddenShown}
+								onToggleHidden={eventTime.onToggleHidden}
+								className={i !== 0 ? "mt-4" : undefined}
+							/>
+							{eventTime.eventsShown.map((event) => (
+								<TournamentCard key={event.id} tournament={event} />
+							))}
+						</div>
+					);
+				})}
+			</div>
+		</div>
+	);
+}
+
+function DayHeader(props: { date: number; month: number; year: number }) {
+	const { formatDate } = useTimeFormat();
+
+	const date = new Date(props.year, props.month, props.date);
+	const isToday = date.toDateString() === new Date().toDateString();
+
+	return (
+		<div
+			className={clsx(styles.dayHeader, {
+				[styles.dayHeaderToday]: isToday,
+			})}
+			data-testid={isToday ? "today-header" : undefined}
+		>
+			{formatDate(date, {
+				day: "numeric",
+				month: "long",
+			})}
+			<div className={styles.dayHeaderWeekday}>
+				{formatDate(date, {
+					weekday: "long",
+				})}
+			</div>
+		</div>
+	);
+}
+
+function ClockHeader({
+	date,
+	toDate,
+	hiddenEventsCount = 0,
+	onToggleHidden,
+	hiddenShown,
+	className,
+}: {
+	date: Date;
+	toDate?: Date;
+	hiddenEventsCount?: number;
+	onToggleHidden: () => void;
+	hiddenShown: boolean;
+	className?: string;
+}) {
+	const { formatTime } = useTimeFormat();
+
+	const isInThePast = (toDate ?? date).getTime() < Date.now();
+
+	return (
+		<div className={clsx(className, styles.clockHeader)}>
+			<div className="stack horizontal justify-between">
+				<span
+					className={clsx({
+						"text-lighter italic": isInThePast,
+					})}
+				>
+					{formatTime(date)}
+					{toDate ? ` - ${formatTime(toDate)}` : ""}
+				</span>
+				{hiddenEventsCount > 0 ? (
+					<SendouButton
+						icon={hiddenShown ? <Eye /> : <EyeOff />}
+						onPress={onToggleHidden}
+						variant="minimal"
+						className={styles.hiddenEventsButton}
+						data-testid="hidden-events-button"
+					>
+						{hiddenEventsCount}
+					</SendouButton>
+				) : null}
+			</div>
+			<div className={styles.clockHeaderDivider} />
+		</div>
+	);
+}

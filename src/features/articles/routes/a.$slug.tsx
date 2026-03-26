@@ -1,0 +1,115 @@
+import * as React from "react";
+import type { MetaFunction } from "react-router";
+import { Link, useLoaderData } from "react-router";
+import { Main } from "~/components/Main";
+import { Markdown } from "~/components/Markdown";
+import invariant from "~/utils/invariant";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+import {
+	ARTICLES_MAIN_PAGE,
+	articlePreviewUrl,
+	navIconUrl,
+} from "~/utils/urls";
+import { metaTags, type SerializeFrom } from "../../../utils/remix";
+
+import { loader } from "../loaders/a.$slug.server";
+
+export { loader };
+
+export const handle: SendouRouteHandle = {
+	breadcrumb: ({ match }) => {
+		const data = match.data as SerializeFrom<typeof loader> | undefined;
+
+		if (!data) return [];
+
+		return [
+			{
+				imgPath: navIconUrl("articles"),
+				href: ARTICLES_MAIN_PAGE,
+				type: "IMAGE",
+			},
+		];
+	},
+};
+
+export const meta: MetaFunction = (args) => {
+	invariant(args.params.slug);
+	const data = args.data as SerializeFrom<typeof loader> | null;
+
+	if (!data) return [];
+
+	const description = data.content.trim().split("\n")[0];
+
+	return metaTags({
+		title: data.title,
+		description,
+		image: {
+			url: articlePreviewUrl(args.params.slug),
+		},
+		location: args.location,
+	});
+};
+
+export default function ArticlePage() {
+	const data = useLoaderData<typeof loader>();
+	return (
+		<Main>
+			<article className="article">
+				<h1>{data.title}</h1>
+				<div className="text-sm text-lighter">
+					by <Author /> • <time>{data.dateString}</time>
+				</div>
+				<Markdown>
+					{contentWithoutLeadingTitle(data.content, data.title)}
+				</Markdown>
+			</article>
+		</Main>
+	);
+}
+
+function normalizeText(text: string) {
+	return text
+		.replace(/\*+/g, "")
+		.replace(/…/g, "...")
+		.replace(/\\!/g, "!")
+		.trim();
+}
+
+function contentWithoutLeadingTitle(content: string, title: string) {
+	const trimmed = content.trimStart();
+	const firstLineEnd = trimmed.indexOf("\n");
+	const firstLine =
+		firstLineEnd === -1 ? trimmed : trimmed.slice(0, firstLineEnd);
+
+	if (
+		firstLine.startsWith("# ") &&
+		normalizeText(firstLine.slice(2)) === normalizeText(title)
+	) {
+		return trimmed.slice(firstLine.length).trimStart();
+	}
+
+	return content;
+}
+
+function Author() {
+	const data = useLoaderData<typeof loader>();
+
+	return data.authors.map((author, i) => {
+		if (!author.link) return author.name;
+
+		const authorLink = author.link.includes("https://sendou.ink")
+			? author.link.replace("https://sendou.ink", "")
+			: author.link;
+
+		return (
+			<React.Fragment key={author.name}>
+				{author.link.includes("https://sendou.ink") ? (
+					<Link to={authorLink}>{author.name}</Link>
+				) : (
+					<a href={author.link}>{author.name}</a>
+				)}
+				{i < data.authors.length - 1 ? " & " : ""}
+			</React.Fragment>
+		);
+	});
+}

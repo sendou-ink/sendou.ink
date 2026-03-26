@@ -1,0 +1,399 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+}
+
+.avatarContainer {
+	display: grid;
+	justify-content: center;
+	column-gap: var(--s-3);
+	grid-template-areas: "avatar name" "avatar team" "avatar ." "avatar ." "socials .";
+}
+
+.avatar {
+	min-width: 125px;
+	grid-area: avatar;
+}
+
+.team {
+	display: flex;
+	font-weight: var(--weight-bold);
+	color: var(--color-text);
+	gap: var(--s-1-5);
+	grid-area: team;
+	align-items: center;
+}
+
+.name {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	grid-area: name;
+	overflow-wrap: anywhere;
+	gap: var(--s-3);
+}
+
+.socials {
+	display: flex;
+	justify-content: center;
+	gap: var(--s-1-5);
+	grid-area: socials;
+	padding-block-start: var(--s-3);
+}
+
+.socialLink {
+	padding: var(--s-1);
+	border: 1px solid;
+	border-radius: 50%;
+}
+
+.extraInfoHeading > svg {
+	width: 0.8rem;
+}
+
+.socialLink > svg {
+	width: 0.9rem;
+}
+
+.socialLinkYoutube {
+	border-color: #f00;
+	background-color: #ff00002f;
+}
+
+.socialLinkYoutube > svg {
+	fill: #f00;
+}
+
+.socialLinkTwitch {
+	border-color: #9146ff;
+	background-color: #9146ff2f;
+}
+
+.socialLinkTwitch > svg {
+	fill: #9146ff;
+}
+
+.socialLinkBattlefy {
+	border-color: #de4c5e;
+	background-color: #de4c5e2f;
+}
+
+.socialLinkBattlefy > svg {
+	fill: #de4c5e;
+}
+
+.socialLinkBsky {
+	border-color: #1285fe;
+	background-color: #1285fe2f;
+	display: grid;
+	place-items: center;
+}
+
+.socialLinkBsky path {
+	fill: #1285fe;
+}
+
+.extraInfos {
+	display: flex;
+	max-width: 24rem;
+	flex-wrap: wrap;
+	gap: var(--s-3);
+	margin-inline: auto;
+}
+
+.extraInfo {
+	padding: var(--s-1) var(--s-1-5);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	font-size: var(--font-2xs);
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.extraInfoHeading {
+	color: var(--color-text-accent);
+	font-weight: var(--weight-bold);
+}
+
+.resultsTableWrapper {
+	width: 100%;
+	overflow-x: auto;
+}
+
+.resultsTableHighlights {
+	border: var(--s-2) solid var(--color-bg-high);
+	padding-inline: 0 !important;
+}
+
+.resultsTableHighlights > legend {
+	margin-inline-start: var(--s-2);
+	padding-inline: var(--s-1);
+}
+
+.resultsPlayers {
+	display: flex;
+	flex-direction: column;
+	padding: 0;
+	gap: var(--s-3);
+	list-style: none;
+}
+
+.weapon {
+	padding: var(--s-2);
+	border-radius: 100%;
+	background-color: var(--color-bg-high);
+}
+
+.buildFilterButton {
+	padding: 0 var(--s-1-5) !important;
+	gap: var(--s-1);
+	min-height: 32px;
+}
+
+.placements {
+	display: flex;
+	flex-wrap: wrap;
+	padding: var(--s-4);
+	border-radius: var(--radius-box);
+	margin: 0 auto;
+	background-color: var(--color-bg-high);
+	color: var(--color-text);
+	gap: var(--s-6);
+	transition: 0.1s ease-in-out background-color;
+}
+
+.placements:hover {
+	background-color: var(--color-bg-higher);
+}
+
+.placementsMode {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	gap: var(--s-1-5);
+}
+
+@container (width >= 480px) {
+	.placements {
+		gap: var(--s-10);
+	}
+
+	.placementsMode {
+		font-size: var(--font-sm);
+	}
+}
+
+.seasonWeaponContainer {
+	display: flex;
+	align-items: center;
+	font-size: var(--font-sm);
+	flex-direction: column;
+	font-weight: var(--weight-bold);
+	position: relative;
+	width: 60px;
+}
+
+.seasonWeaponBorderOuter {
+	--degree: 80deg;
+	--smoothing: 0.5deg;
+	--color: var(--color-text-accent);
+
+	display: block;
+	content: "";
+	height: 60px;
+	width: 60px;
+	border-radius: 50%;
+	background: conic-gradient(
+		var(--color) var(--degree),
+		transparent calc(var(--degree) + var(--smoothing)) 100%
+	);
+	position: absolute;
+}
+
+.seasonWeaponBorderOuterStatic {
+	height: 60px;
+	width: 60px;
+	background-color: var(--color-bg-high);
+	position: absolute;
+	border-radius: 50%;
+}
+
+.seasonWeaponBorderInner {
+	height: 84%;
+	width: 84%;
+	top: 8%;
+	left: 8%;
+	position: relative;
+	border-radius: 50%;
+	background: var(--color-bg);
+	display: grid;
+	place-items: center;
+}
+
+.seasonWeaponCount {
+	margin-top: 62px;
+}
+
+.seasonPlayerName {
+	width: 64px;
+	font-size: var(--font-xs);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-align: center;
+	font-weight: var(--weight-semi);
+}
+
+.seasonMatch {
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-box);
+	padding: var(--s-2) var(--s-3);
+	color: var(--color-text);
+	transition: ease-in 0.2s background-color;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.seasonMatchWithSubSection {
+	border-radius: var(--radius-box) var(--radius-box) 0 0;
+}
+
+.seasonMatchSubSection {
+	border-radius: 0 0 var(--radius-box) var(--radius-box);
+	background-color: var(--color-bg-high);
+	font-size: var(--font-xs);
+	text-align: center;
+	font-weight: var(--weight-bold);
+	display: flex;
+	gap: var(--s-1);
+	justify-content: center;
+	padding-block: var(--s-0-5);
+}
+
+.seasonMatch:hover {
+	background-color: var(--color-bg-higher);
+}
+
+.seasonMatchUser {
+	display: flex;
+	flex-direction: column;
+	font-size: var(--font-xs);
+	width: 65px;
+	align-items: center;
+}
+
+.seasonMatchUserName {
+	max-width: 60px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.seasonMatchScore {
+	font-size: var(--font-xl);
+	font-weight: var(--weight-bold);
+	margin-inline: auto;
+}
+
+.seasonMatchSetResults {
+	list-style: none;
+	display: flex;
+	gap: var(--s-2);
+	flex-direction: row;
+	margin: 0 auto;
+	padding: 0;
+}
+
+.seasonMatchSetResults li {
+	width: 28px;
+	height: 28px;
+	display: grid;
+	place-items: center;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	border: 3px solid var(--color-accent);
+	border-radius: var(--radius-field);
+	color: var(--color-text);
+	border-color: var(--color-error);
+}
+
+.seasonMatchSetResults li[data-is-win="true"] {
+	border-color: var(--color-success);
+}
+
+.seasonInfoContainer {
+	background-color: var(--color-bg-high);
+	padding: var(--s-3) var(--s-2);
+	border-radius: var(--radius-box);
+}
+
+.seasonWinrate {
+	background-color: var(--color-bg-high);
+	padding: var(--s-0-5) var(--s-2);
+	border-radius: var(--radius-box);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+}
+
+.seasonWeaponUsageContainer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	width: 300px;
+	min-height: 175px;
+}
+
+.seasonWeaponUsageWeaponsContainer {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-3);
+	justify-content: center;
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+.seasonWeaponUsageWeapon {
+	border-radius: 100%;
+	background-color: var(--color-bg-high);
+	padding: var(--s-1-5);
+}
+
+.seasonTentative {
+	text-transform: uppercase;
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	margin-top: -8px;
+	display: flex;
+	gap: var(--s-1);
+	align-items: center;
+	line-height: 1.3;
+}
+
+.seasonTentativeExplanation {
+	text-transform: initial;
+}
+
+.highlightsContainer {
+	position: relative;
+	padding-bottom: 80px; /* Leave space for sticky button */
+}
+
+.highlightsStickyButton {
+	position: sticky;
+	bottom: 0;
+	background-color: var(--color-bg);
+	padding: var(--s-2) 0;
+	border-top: 1px solid var(--color-bg-high);
+	z-index: 10;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-2);
+	margin-top: var(--s-4);
+}

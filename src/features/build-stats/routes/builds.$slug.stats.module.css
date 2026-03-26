@@ -1,0 +1,20 @@
+.abilityRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.bars {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	display: grid;
+	align-items: center;
+	grid-template-columns: max-content 65px 1fr;
+	column-gap: var(--s-2);
+	row-gap: var(--s-1);
+}
+
+.bar {
+	background-color: var(--color-text-accent);
+	height: 100%;
+}
