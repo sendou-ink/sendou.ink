@@ -102,7 +102,7 @@ function MapPicker({
 	});
 
 	const modes = modesShort.filter((mode) =>
-		pickBanMapPool.some((map) => map.mode === mode),
+		pickBanMapPool.some((map) => map.mode === mode && map.isLegal),
 	);
 
 	const canPickBan =
@@ -192,7 +192,9 @@ function MapPicker({
 								);
 							})}
 						</div>
-						{pickersLastWonMode === mode && modes.length > 1 ? (
+						{data.match.roundMaps?.pickBan !== "CUSTOM" &&
+						pickersLastWonMode === mode &&
+						modes.length > 1 ? (
 							<div className="text-error text-xs text-center mt-2">
 								Can&apos;t pick the same mode team last won on
 							</div>

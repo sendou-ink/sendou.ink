@@ -382,7 +382,7 @@ export function mapsListWithLegality(args: MapListWithStatusesArgs) {
 	const modesIncluded = R.unique(mapPool.map((m) => m.mode));
 
 	const unavailableStagesSet = unavailableStages(args);
-	const unavailableModesSetAll = unavailableModes(args);
+	const unavailableModesSetAll = unavailableModes({ ...args, modesIncluded });
 	const unavailableModesSet =
 		// one mode tournament
 		unavailableModesSetAll.size < modesIncluded.length
@@ -448,11 +448,13 @@ function unavailableModes({
 	pickerTeamId,
 	maps,
 	pickBanEvents,
+	modesIncluded,
 }: {
 	results: Array<{ mode: ModeShort; winnerTeamId: number }>;
 	pickerTeamId: number;
 	maps: TournamentRoundMaps | null;
 	pickBanEvents?: PickBanEvent[];
+	modesIncluded: ModeShort[];
 }): Set<ModeShort> {
 	if (
 		!maps?.pickBan ||
@@ -463,16 +465,15 @@ function unavailableModes({
 	}
 
 	if (maps.pickBan === "CUSTOM") {
-		const modeBans = (pickBanEvents ?? [])
-			.filter((e) => e.type === "MODE_BAN" && e.mode !== null)
-			.map((e) => e.mode!);
-
 		// If the immediately preceding event is a MODE_PICK, only that mode is available
 		const lastEvent = (pickBanEvents ?? []).at(-1);
 		if (lastEvent?.type === "MODE_PICK" && lastEvent.mode) {
-			const allModes: ModeShort[] = ["TW", "SZ", "TC", "RM", "CB"];
-			return new Set(allModes.filter((m) => m !== lastEvent.mode));
+			return new Set(modesIncluded.filter((m) => m !== lastEvent.mode));
 		}
+
+		const modeBans = (pickBanEvents ?? [])
+			.filter((e) => e.type === "MODE_BAN" && e.mode !== null)
+			.map((e) => e.mode!);
 
 		return new Set(modeBans);
 	}
