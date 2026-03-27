@@ -15,8 +15,10 @@ import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { SPLATOON_3_INK } from "~/utils/urls";
-import type { FrontPageLoaderData, loader } from "../loaders/index.server";
+import type { FrontPageData } from "../front-page-queries";
+import { frontPageQueryOptions } from "../front-page-queries";
 import styles from "./SplatoonRotations.module.css";
 
 const ROTATION_MODE_FILTERS = ["ALL", "SZ", "TC", "RM", "CB"] as const;
@@ -28,14 +30,13 @@ const ROTATION_TYPE_LABELS: Record<string, string> = {
 	X: "rotations.x",
 };
 
-type RotationFromLoader = FrontPageLoaderData["rotations"][number];
+type RotationFromLoader = FrontPageData["rotations"][number];
 
 const TYPE_ORDER = ["X", "SERIES", "OPEN"];
 
 export function SplatoonRotations() {
-	return null;
 	const { t } = useTranslation(["front"]);
-	const data = useLoaderData<typeof loader>();
+	const { data } = useSuspenseQuery(frontPageQueryOptions());
 	const [activeFilter, setActiveFilter] =
 		React.useState<RotationModeFilter>("ALL");
 

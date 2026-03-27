@@ -1,8 +1,6 @@
-import { useMatches } from "react-router";
 import type { RootLoaderData } from "~/root";
 
+// TODO: replace with useQuery(rootDataQueryOptions()) once root loader is implemented
 export function useUser() {
-	const [root] = useMatches();
-
-	return (root.data as RootLoaderData | undefined)?.user;
+	return undefined as RootLoaderData["user"];
 }

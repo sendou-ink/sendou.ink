@@ -2,8 +2,9 @@
 /// <reference types="vite/client" />
 
 import "../modules/i18n/init";
+import type { QueryClient } from "@tanstack/react-query";
 import {
-	createRootRoute,
+	createRootRouteWithContext,
 	HeadContent,
 	Outlet,
 	Scripts,
@@ -16,7 +17,7 @@ import normalizeCss from "../styles/normalize.css?url";
 import utilsCss from "../styles/utils.css?url";
 import varsCss from "../styles/vars.css?url";
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
 	head: () => ({
 		// xxx: real meta
 		meta: [
