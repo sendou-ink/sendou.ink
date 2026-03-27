@@ -39,6 +39,12 @@ export interface GetUserResponse {
 	/** Teams user is member of. The main team is always first in the array. */
 	teams: Array<GlobalTeamMembership>;
 	/**
+	 * Splatoon 3 splashtag name & ID, if one is set.
+	 *
+	 * @example "Sendou#2955"
+	 */
+	inGameName: string | null;
+	/**
 	 * User's pronouns.
 	 *
 	 * @example { "subject": "he", "object": "him" }
