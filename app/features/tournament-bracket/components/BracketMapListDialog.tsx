@@ -285,6 +285,19 @@ export function BracketMapListDialog({
 		return true;
 	};
 
+	const validateCustomFlow = () => {
+		if (pickBanStyle !== "CUSTOM") return true;
+		if (roundsWithPickBan.size === 0) return true;
+		if (!customFlow) return false;
+
+		return (
+			PickBan.validateCustomFlowSection(customFlow.preSet, "preSet").length ===
+				0 &&
+			PickBan.validateCustomFlowSection(customFlow.postGame, "postGame")
+				.length === 0
+		);
+	};
+
 	const lacksToSetMapPool =
 		tournament.ctx.toSetMapPool.length === 0 &&
 		tournament.ctx.mapPickingStyle === "TO";
@@ -297,7 +310,6 @@ export function BracketMapListDialog({
 			bracket.type === "double_elimination") &&
 		!eliminationTeamCount;
 
-	// xxx: we should not be able to submit/save map list if custom flow is wrong!
 	return (
 		<SendouDialog
 			heading={`Maplist selection (${bracket.name})`}
@@ -634,9 +646,13 @@ export function BracketMapListDialog({
 									})}
 								</div>
 								{!validateNoDecreasingCount() ? (
-									<div className="text-warning text-center">
+									<div className="mt-4 text-warning text-center">
 										Invalid selection: tournament progression decreases in map
 										count
+									</div>
+								) : !validateCustomFlow() ? (
+									<div className="mt-4 text-warning text-center">
+										Invalid selection: custom pick/ban flow is invalid
 									</div>
 								) : (
 									<SubmitButton
