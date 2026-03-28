@@ -46,8 +46,6 @@ import {
 import styles from "./BracketMapListDialog.module.css";
 import { CustomFlowBuilder } from "./CustomFlowBuilder";
 
-// xxx: (pre-existing bug) currently if you select pick/ban or even with custom flow and save maps without selecting any map to contain them, the flow is not saved in the prepared maps. warn on save?
-
 export function BracketMapListDialog({
 	close,
 	bracket,
@@ -296,6 +294,14 @@ export function BracketMapListDialog({
 			PickBan.validateCustomFlowSection(customFlow.postGame, "postGame")
 				.length === 0
 		);
+	};
+
+	const validateCustomFlowRoundsSelected = () => {
+		if (globalSelections) return true;
+		if (pickBanStyle !== "CUSTOM") return true;
+		if (!customFlow) return true;
+
+		return roundsWithPickBan.size > 0;
 	};
 
 	const lacksToSetMapPool =
@@ -653,6 +659,11 @@ export function BracketMapListDialog({
 								) : !validateCustomFlow() ? (
 									<div className="mt-4 text-warning text-center">
 										Invalid selection: custom pick/ban flow is invalid
+									</div>
+								) : !validateCustomFlowRoundsSelected() ? (
+									<div className="mt-4 text-warning text-center">
+										Custom flow is configured but no rounds have pick/ban
+										enabled
 									</div>
 								) : (
 									<SubmitButton
