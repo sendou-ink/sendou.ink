@@ -24,7 +24,7 @@ import { Link, useFetcher, useLocation, useMatches } from "react-router";
 import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -51,6 +51,8 @@ import { NotificationContent, useNotifications } from "./NotificationPopover";
 import notificationPopoverStyles from "./NotificationPopover.module.css";
 import { TopNavMenus } from "./TopNavMenus";
 import { TopRightButtons } from "./TopRightButtons";
+
+const MAX_DESKTOP_FRIENDS = 4;
 
 function useTimeFormat() {
 	const { i18n } = useTranslation();
@@ -213,7 +215,7 @@ export function Layout({
 
 	const { t } = useTranslation(["front", "common"]);
 	const { formatRelativeDate } = useTimeFormat();
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const location = useLocation();
 	const headerRef = React.useRef<HTMLElement>(null);
 	const navOffset = useNavOffset(headerRef);
@@ -278,7 +280,7 @@ export function Layout({
 						to={event.url}
 						imageUrl={event.logoUrl ?? undefined}
 						subtitle={
-							isMounted ? (
+							isHydrated ? (
 								formatRelativeDate(event.startTime)
 							) : (
 								<span className="invisible">Placeholder</span>
@@ -310,7 +312,9 @@ export function Layout({
 				{t("front:sideNav.friends")}
 			</SideNavHeader>
 			{friends.length > 0 ? (
-				friends.map((friend) => <FriendMenu key={friend.id} {...friend} />)
+				friends
+					.slice(0, MAX_DESKTOP_FRIENDS)
+					.map((friend) => <FriendMenu key={friend.id} {...friend} />)
 			) : (
 				<div className={styles.sideNavEmpty}>
 					{user
@@ -466,12 +470,22 @@ function SiteTitle() {
 
 				{hasBreadcrumbs ? (
 					<>
-						{breadcrumbs.map((crumb) => (
-							<React.Fragment key={crumb.href}>
-								<span className={styles.separator}>/</span>
-								<PageIcon crumb={crumb} />
-							</React.Fragment>
-						))}
+						{breadcrumbs.map((crumb) => {
+							const isCurrentPage = location.pathname === crumb.href;
+
+							return (
+								<React.Fragment key={crumb.href}>
+									<span className={styles.separator}>/</span>
+									{isCurrentPage ? (
+										<PageIcon crumb={crumb} />
+									) : (
+										<Link to={crumb.href} className={styles.breadcrumbLink}>
+											<PageIcon crumb={crumb} />
+										</Link>
+									)}
+								</React.Fragment>
+							);
+						})}
 
 						{currentPageText ? (
 							<span className={styles.pageName}>{currentPageText}</span>

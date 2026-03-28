@@ -2,7 +2,7 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { LOG_IN_URL, SENDOU_INK_DISCORD_URL } from "~/utils/urls";
 import styles from "./UserItem.module.css";
 
@@ -12,7 +12,7 @@ export function LogInButtonContainer({
 	children: React.ReactNode;
 }) {
 	const { t } = useTranslation();
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const [searchParams] = useSearchParams();
 	const authError = searchParams.get("authError");
 
@@ -22,7 +22,7 @@ export function LogInButtonContainer({
 				{children}
 			</form>
 			{authError != null &&
-				isMounted &&
+				isHydrated &&
 				createPortal(
 					<SendouDialog
 						isDismissable

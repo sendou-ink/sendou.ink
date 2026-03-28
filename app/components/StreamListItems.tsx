@@ -4,7 +4,7 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import type { SidebarStream } from "~/features/core/streams/streams.server";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import type { LanguageCode } from "~/modules/i18n/config";
 import { databaseTimestampToDate, formatDistanceToNow } from "~/utils/dates";
 import { navIconUrl, tournamentRegisterPage } from "~/utils/urls";
@@ -25,7 +25,7 @@ export function StreamListItems({
 	savedTournamentIds?: number[];
 }) {
 	const { t, i18n } = useTranslation(["front"]);
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
 	const formatRelativeDate = (timestamp: number) => {
 		const date = new Date(timestamp * 1000);
@@ -94,7 +94,7 @@ export function StreamListItems({
 									</span>
 								) : stream.subtitle ? (
 									stream.subtitle
-								) : !isMounted ? (
+								) : !isHydrated ? (
 									<span className="invisible">Placeholder</span>
 								) : isUpcoming ? (
 									formatRelativeDate(stream.startsAt)

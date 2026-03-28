@@ -12,7 +12,7 @@ import {
 } from "react-aria-components";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouCalendar } from "~/components/elements/Calendar";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import styles from "./DatePicker.module.css";
 import { SendouLabel } from "./Label";
 
@@ -32,9 +32,9 @@ export function SendouDatePicker<T extends DateValue>({
 	isRequired,
 	...rest
 }: SendouDatePickerProps<T>) {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
-	if (!isMounted) {
+	if (!isHydrated) {
 		return (
 			<div>
 				<SendouLabel required={isRequired}>{label}</SendouLabel>

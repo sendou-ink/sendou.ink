@@ -298,3 +298,9 @@
 .listLinkBadgeWarning {
 	background-color: var(--color-text-second);
 }
+
+@media screen and (min-width: 1475px) {
+	:global(html[data-fuse="true"]) .sideNav {
+		z-index: 20;
+	}
+}

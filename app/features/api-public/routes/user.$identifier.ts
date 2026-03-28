@@ -32,6 +32,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				"User.customUrl",
 				"User.discordId",
 				"User.discordAvatar",
+				"User.inGameName",
 				"User.pronouns",
 				"PlusTier.tier",
 				jsonArrayFrom(
@@ -91,6 +92,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			: null,
 		url: `https://sendou.ink/u/${user.customUrl ?? user.discordId}`,
 		country: user.country,
+		inGameName: user.inGameName,
 		pronouns: user.pronouns,
 		plusServerTier: user.tier as GetUserResponse["plusServerTier"],
 		socials: {

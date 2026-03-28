@@ -8,7 +8,7 @@ import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Pagination } from "~/components/Pagination";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { usePagination } from "~/hooks/usePagination";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
@@ -49,9 +49,9 @@ export function ArtGrid({
 		revive: (value) =>
 			itemsToDisplay.find((art) => art.id === Number(value))?.id,
 	});
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
-	if (!isMounted) return null;
+	if (!isHydrated) return null;
 
 	const bigArt = itemsToDisplay.find((art) => art.id === bigArtId);
 

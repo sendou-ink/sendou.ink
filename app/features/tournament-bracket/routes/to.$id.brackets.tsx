@@ -17,7 +17,7 @@ import {
 } from "~/components/elements/Tabs";
 import { useUser } from "~/features/auth/core/user";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useVisibilityChange } from "~/hooks/useVisibilityChange";
@@ -45,7 +45,7 @@ export default function TournamentBracketsPage() {
 	const { revalidate } = useRevalidator();
 	const user = useUser();
 	const tournament = useTournament();
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const ctx = useOutletContext();
 
 	const defaultBracketIdx = () => {
@@ -88,7 +88,7 @@ export default function TournamentBracketsPage() {
 		tournament.isOrganizer(user) &&
 		!bracket.canBeStarted &&
 		bracket.preview &&
-		isMounted;
+		isHydrated;
 
 	const waitingForTeamsText = () => {
 		if (bracketIdx > 0 || tournament.regularCheckInStartInThePast) {
@@ -252,7 +252,7 @@ function BracketStarter({
 	bracketIdx: number;
 }) {
 	const [dialogOpen, setDialogOpen] = React.useState(false);
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
 	const close = React.useCallback(() => {
 		setDialogOpen(false);
@@ -260,7 +260,7 @@ function BracketStarter({
 
 	return (
 		<>
-			{isMounted && dialogOpen ? (
+			{isHydrated && dialogOpen ? (
 				<BracketMapListDialog
 					close={close}
 					bracket={bracket}
@@ -308,7 +308,7 @@ function MapPreparer({
 	bracketIdx: number;
 }) {
 	const [dialogOpen, setDialogOpen] = React.useState(false);
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const prepared = useTournamentPreparedMaps();
 	const tournament = useTournament();
 
@@ -326,7 +326,7 @@ function MapPreparer({
 
 	return (
 		<>
-			{isMounted && dialogOpen ? (
+			{isHydrated && dialogOpen ? (
 				<BracketMapListDialog
 					close={close}
 					bracket={bracket}

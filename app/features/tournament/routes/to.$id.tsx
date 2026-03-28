@@ -14,7 +14,7 @@ import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-con
 import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { removeMarkdown } from "~/utils/strings";
 import {
@@ -83,12 +83,12 @@ export const handle: SendouRouteHandle = {
 const TournamentContext = React.createContext<Tournament>(null!);
 
 export default function TournamentLayoutShell() {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
 	// tournaments are something that people like to refresh a lot
 	// which can cause spikes that are hard for the server to handle
 	// this is just making sure the SSR for this page is as fast as possible in prod
-	if (!isMounted)
+	if (!isHydrated)
 		return (
 			<Main bigger>
 				<Placeholder />

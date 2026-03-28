@@ -32,5 +32,11 @@
 	"noVods": "",
 	"gainPerms": "Por favor, faça uma postagem (em Inglês) no helpdesk do nosso Discord para obter permissões de upload de vídeos.",
 	"deleteConfirm": "",
-	"errors.youtubePreviewFailed": ""
+	"errors.youtubePreviewFailed": "",
+	"copyTimestamps": "",
+	"copyTimestamps.help": "",
+	"copyTimestamps.modeFormat": "",
+	"copyTimestamps.stageFormat": "",
+	"copyTimestamps.format.short": "",
+	"copyTimestamps.format.long": ""
 }

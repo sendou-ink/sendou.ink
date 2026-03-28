@@ -131,11 +131,18 @@
 }
 
 .listBoxItem {
+	display: block;
 	padding: var(--s-2) var(--s-3);
 	border-radius: var(--radius-field);
 	cursor: pointer;
 	font-size: var(--font-sm);
 	outline: none;
+	color: inherit;
+	text-decoration: none;
+}
+
+.listBoxItem[data-hovered] {
+	background-color: var(--color-bg-high);
 }
 
 .listBoxItem[data-focused] {

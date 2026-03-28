@@ -32,5 +32,11 @@
 	"noVods": "Aucune vidéo a été trouvé. Est-ce qu'il nous manque quelque chose ? Consultez la page FAQ pour savoir comment obtenir les autorisations de téléchargement VoD.",
 	"gainPerms": "Demandez sur le channel helpdesk de notre discord pour avoir les permissions de publier vos VoD",
 	"deleteConfirm": "Supprimer la vidéo '{{title}}'?",
-	"errors.youtubePreviewFailed": ""
+	"errors.youtubePreviewFailed": "",
+	"copyTimestamps": "",
+	"copyTimestamps.help": "",
+	"copyTimestamps.modeFormat": "",
+	"copyTimestamps.stageFormat": "",
+	"copyTimestamps.format.short": "",
+	"copyTimestamps.format.long": ""
 }

@@ -518,8 +518,8 @@ export interface TournamentSettings {
 }
 
 export interface CastedMatchesInfo {
-	/** Array for match ID's that are locked because they are pending to be casted */
-	lockedMatches: number[];
+	/** Array for matches that are locked because they are pending to be casted */
+	lockedMatches: Array<{ twitchAccount: string; matchId: number }>;
 	/** What matches are streamed currently & where */
 	castedMatches: { twitchAccount: string; matchId: number }[];
 }
@@ -1096,6 +1096,13 @@ export interface LiveStream {
 	twitch: string | null;
 }
 
+export interface TournamentStreamer {
+	id: GeneratedAlways<number>;
+	userId: number | null;
+	tournamentId: number;
+	twitchAccount: string;
+}
+
 export interface BanLog {
 	id: GeneratedAlways<number>;
 	userId: number;
@@ -1346,6 +1353,7 @@ export interface DB {
 	TournamentOrganizationSeries: TournamentOrganizationSeries;
 	TournamentBracketProgressionOverride: TournamentBracketProgressionOverride;
 	TournamentOrganizationBannedUser: TournamentOrganizationBannedUser;
+	TournamentStreamer: TournamentStreamer;
 	TrustRelationship: TrustRelationship;
 	Friendship: Friendship;
 	FriendRequest: FriendRequest;

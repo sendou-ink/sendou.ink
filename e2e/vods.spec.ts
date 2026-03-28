@@ -71,6 +71,15 @@ test.describe("VoDs page", () => {
 		await page.getByText(formattedDate).isVisible();
 		await page.getByTestId("weapon-img-4001").isVisible();
 		await page.getByTestId("weapon-img-6010").isVisible();
+
+		await page.getByTestId("copy-timestamps-button").click();
+		await page.getByText("0:00 Intro").isVisible();
+		await page
+			.getByText("0:20 Zink Mini Splatling / TC Hammerhead Bridge")
+			.isVisible();
+		await page
+			.getByText("5:55 Tenta Brella / RM Museum d'Alfonsino")
+			.isVisible();
 	});
 
 	test("adds video (cast)", async ({ page }) => {

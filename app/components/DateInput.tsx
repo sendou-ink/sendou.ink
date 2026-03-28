@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { dateToYearMonthDayHourMinuteString, isValidDate } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 
@@ -38,20 +38,20 @@ export function DateInput({
 		}
 		return [null, ""];
 	});
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
 	return (
 		<>
-			{parsedDate && isMounted && (
+			{parsedDate && isHydrated && (
 				<input name={name} type="hidden" value={parsedDate.getTime() ?? ""} />
 			)}
 			<input
 				{...inputProps}
 				type="datetime-local"
-				disabled={!isMounted || inputProps.disabled}
+				disabled={!isHydrated || inputProps.disabled}
 				// This is important, because SSR will likely have a date in the wrong
 				// timezone. We can only fill in a value once hydration is over.
-				value={isMounted ? valueString : ""}
+				value={isHydrated ? valueString : ""}
 				min={min ? dateToYearMonthDayHourMinuteString(min) : undefined}
 				max={max ? dateToYearMonthDayHourMinuteString(max) : undefined}
 				onChange={(e) => {

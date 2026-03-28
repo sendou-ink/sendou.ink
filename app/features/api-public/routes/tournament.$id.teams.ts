@@ -104,6 +104,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			).as("mapPool"),
 		])
 		.where("TournamentTeam.tournamentId", "=", id)
+		.where("TournamentTeam.isPlaceholder", "=", 0)
 		.orderBy("TournamentTeam.createdAt", "asc")
 		.execute();
 

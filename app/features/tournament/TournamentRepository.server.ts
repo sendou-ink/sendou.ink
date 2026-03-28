@@ -338,6 +338,7 @@ export async function findChildTournaments(parentTournamentId: number) {
 				.selectFrom("TournamentTeam")
 				.select(({ fn }) => [fn.countAll<number>().as("teamsCount")])
 				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+				.where("TournamentTeam.isPlaceholder", "=", 0)
 				.as("teamsCount"),
 			jsonArrayFrom(
 				eb
@@ -348,7 +349,8 @@ export async function findChildTournaments(parentTournamentId: number) {
 						"TournamentTeam.id",
 					)
 					.select(["TournamentTeamMember.userId"])
-					.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id"),
+					.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+					.where("TournamentTeam.isPlaceholder", "=", 0),
 			).as("teamMembers"),
 		])
 		.where("Tournament.parentTournamentId", "=", parentTournamentId)
@@ -933,9 +935,11 @@ const castedMatchesInfoByTournamentId = async (
 export function lockMatch({
 	matchId,
 	tournamentId,
+	twitchAccount,
 }: {
 	matchId: number;
 	tournamentId: number;
+	twitchAccount: string;
 }) {
 	return db.transaction().execute(async (trx) => {
 		const castedMatchesInfo = await castedMatchesInfoByTournamentId(
@@ -943,8 +947,8 @@ export function lockMatch({
 			tournamentId,
 		);
 
-		if (!castedMatchesInfo.lockedMatches.includes(matchId)) {
-			castedMatchesInfo.lockedMatches.push(matchId);
+		if (!castedMatchesInfo.lockedMatches.some((lm) => lm.matchId === matchId)) {
+			castedMatchesInfo.lockedMatches.push({ matchId, twitchAccount });
 		}
 
 		await trx
@@ -971,7 +975,7 @@ export function unlockMatch({
 		);
 
 		castedMatchesInfo.lockedMatches = castedMatchesInfo.lockedMatches.filter(
-			(lockedMatchId) => lockedMatchId !== matchId,
+			(lm) => lm.matchId !== matchId,
 		);
 
 		await trx
@@ -1019,6 +1023,9 @@ export function setMatchAsCasted({
 				castedMatches: castedMatchesInfo.castedMatches.filter(
 					(cm) => cm.matchId !== matchId,
 				),
+				lockedMatches: castedMatchesInfo.lockedMatches.filter(
+					(lm) => lm.matchId !== matchId,
+				),
 			};
 		} else {
 			newCastedMatchesInfo = {
@@ -1032,6 +1039,9 @@ export function setMatchAsCasted({
 							cm.matchId !== matchId && cm.twitchAccount !== twitchAccount,
 					)
 					.concat([{ twitchAccount, matchId }]),
+				lockedMatches: castedMatchesInfo.lockedMatches.filter(
+					(lm) => lm.matchId !== matchId,
+				),
 			};
 		}
 

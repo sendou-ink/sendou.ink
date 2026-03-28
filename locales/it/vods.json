@@ -32,5 +32,11 @@
 	"noVods": "Nessun video trovato con questo filtro. Ci stiamo dimenticando di qualcosa? Consulta il FAQ per informazioni su come ottenere il permesso per caricare VoD",
 	"gainPerms": "Si prega di postare sull'helpdesk del nostro Discord per ottenere permessi per caricare VoD",
 	"deleteConfirm": "Cancellare video il titolo '{{title}}'?",
-	"errors.youtubePreviewFailed": ""
+	"errors.youtubePreviewFailed": "",
+	"copyTimestamps": "",
+	"copyTimestamps.help": "",
+	"copyTimestamps.modeFormat": "",
+	"copyTimestamps.stageFormat": "",
+	"copyTimestamps.format.short": "",
+	"copyTimestamps.format.long": ""
 }

@@ -92,6 +92,7 @@ export const matchSchema = z.union([
 	}),
 	z.object({
 		_action: _action("LOCK"),
+		twitchAccount: z.string().min(1).max(100),
 	}),
 	z.object({
 		_action: _action("UNLOCK"),

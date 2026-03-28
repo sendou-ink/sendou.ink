@@ -12,7 +12,7 @@ import { Image, TierImage, WeaponImage } from "~/components/Image";
 import { useUser } from "~/features/auth/core/user";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -92,7 +92,7 @@ function TeamLFGPost({
 	post: Post & { team: NonNullable<Post["team"]> };
 	tiersMap: TiersMap;
 }) {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const user = useUser();
 	const isAdmin = useHasRole("ADMIN");
 	const [isExpanded, setIsExpanded] = React.useState(false);
@@ -104,7 +104,7 @@ function TeamLFGPost({
 					<div className="stack horizontal items-center justify-between">
 						<PostTeamLogoHeader team={post.team} />
 						<div className="stack horizontal items-center sm">
-							{isMounted && <PostTimezonePill timezone={post.timezone} />}
+							{isHydrated && <PostTimezonePill timezone={post.timezone} />}
 							{post.languages && (
 								<PostLanguagePill languages={post.languages} />
 							)}
@@ -305,18 +305,18 @@ function PostPills({
 	canEdit?: boolean;
 	postId: number;
 }) {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
 	return (
 		<div
 			className={clsx("stack sm xs-row horizontal flex-wrap", {
-				invisible: !isMounted,
+				invisible: !isHydrated,
 			})}
 		>
-			{typeof timezone === "string" && isMounted && (
+			{typeof timezone === "string" && isHydrated && (
 				<PostTimezonePill timezone={timezone} />
 			)}
-			{!isMounted && <PostTimezonePillPlaceholder />}
+			{!isHydrated && <PostTimezonePillPlaceholder />}
 			{typeof plusTier === "number" && (
 				<PostPlusServerPill plusTier={plusTier} />
 			)}

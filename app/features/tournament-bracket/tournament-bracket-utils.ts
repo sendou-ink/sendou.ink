@@ -100,7 +100,7 @@ export function matchIsLocked({
 
 	const locked = tournament.ctx.castedMatchesInfo?.lockedMatches ?? [];
 
-	return locked.includes(matchId);
+	return locked.some((lm) => lm.matchId === matchId);
 }
 
 export function pickInfoText({

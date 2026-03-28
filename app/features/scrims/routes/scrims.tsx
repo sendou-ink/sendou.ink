@@ -7,7 +7,7 @@ import * as R from "remeda";
 import type { z } from "zod";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
@@ -59,9 +59,9 @@ export default function ScrimsPage() {
 	const user = useUser();
 	const { t } = useTranslation(["calendar", "scrims"]);
 	const data = useLoaderData<typeof loader>();
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
-	if (!isMounted)
+	if (!isHydrated)
 		return (
 			<Main>
 				<div className={styles.placeholder} />

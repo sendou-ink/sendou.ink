@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { type FetcherWithComponents, useFetcher } from "react-router";
 import type { SendouButtonProps } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import invariant from "~/utils/invariant";
 import { SubmitButton } from "./SubmitButton";
 
@@ -38,7 +38,7 @@ export function FormWithConfirm({
 	const componentsFetcher = useFetcher();
 	const fetcher = _fetcher ?? componentsFetcher;
 
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const { t } = useTranslation(["common"]);
 	const [dialogOpen, setDialogOpen] = React.useState(false);
 	const formRef = React.useRef<HTMLFormElement>(null);
@@ -57,7 +57,7 @@ export function FormWithConfirm({
 
 	return (
 		<>
-			{isMounted
+			{isHydrated
 				? // using portal here makes nesting this component in another form work
 					createPortal(
 						<fetcher.Form

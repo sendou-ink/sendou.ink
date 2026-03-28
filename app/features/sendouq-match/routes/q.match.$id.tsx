@@ -33,7 +33,7 @@ import { useRecentlyReportedWeapons } from "~/features/sendouq/q-hooks";
 import { AddPrivateNoteDialog } from "~/features/sendouq-match/components/AddPrivateNoteDialog";
 import type { ReportedWeaponForMerging } from "~/features/sendouq-match/core/reported-weapons.server";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
@@ -93,9 +93,9 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function QMatchShell() {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
-	if (!isMounted)
+	if (!isHydrated)
 		return (
 			<Main>
 				<Placeholder />
@@ -108,7 +108,7 @@ export default function QMatchShell() {
 function QMatchPage() {
 	const user = useUser();
 	const isStaff = useHasRole("STAFF");
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const { t } = useTranslation(["q"]);
 	const { formatDateTime } = useTimeFormat();
 	const data = useLoaderData<typeof loader>();
@@ -161,10 +161,10 @@ function QMatchPage() {
 				<h2>{t("q:match.header", { number: data.match.id })}</h2>
 				<div
 					className={clsx("text-xs text-lighter", {
-						invisible: !isMounted,
+						invisible: !isHydrated,
 					})}
 				>
-					{isMounted
+					{isHydrated
 						? formatDateTime(databaseTimestampToDate(data.match.createdAt), {
 								day: "numeric",
 								month: "numeric",
@@ -249,7 +249,7 @@ function Score({
 	reportedAt: number;
 	ownTeamReported: boolean;
 }) {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const { t } = useTranslation(["q"]);
 	const { formatDateTime } = useTimeFormat();
 	const data = useLoaderData<typeof loader>();
@@ -300,10 +300,10 @@ function Score({
 			<div className="text-lg font-bold">{score.join(" - ")}</div>
 			{data.match.isLocked ? (
 				<div
-					className={clsx("text-xs text-lighter", { invisible: !isMounted })}
+					className={clsx("text-xs text-lighter", { invisible: !isHydrated })}
 				>
 					{t("q:match.reportedBy", { name: reporter?.username ?? "admin" })}{" "}
-					{isMounted
+					{isHydrated
 						? formatDateTime(databaseTimestampToDate(reportedAt), {
 								day: "numeric",
 								month: "numeric",
@@ -653,7 +653,7 @@ function BottomSection({
 	const { t } = useTranslation(["q", "common"]);
 	const width = useMainContentWidth();
 	const isMobile = width < 650;
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const user = useUser();
 	const isStaff = useHasRole("STAFF");
 	const data = useLoaderData<typeof loader>();
@@ -669,7 +669,7 @@ function BottomSection({
 		return `SQ${lastDigit}`;
 	};
 
-	if (!isMounted) return null;
+	if (!isHydrated) return null;
 
 	const mapListElement = (
 		<MapList

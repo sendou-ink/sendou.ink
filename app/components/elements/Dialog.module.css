@@ -56,6 +56,7 @@
 	min-width: 100%;
 	min-height: 100%;
 	border-radius: 0;
+	padding-block-start: calc(env(safe-area-inset-top) + var(--s-6));
 	padding-block-end: var(--s-32);
 }
 

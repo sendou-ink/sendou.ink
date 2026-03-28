@@ -8,7 +8,7 @@ import { Flag } from "~/components/Flag";
 import { Image, ModeImage } from "~/components/Image";
 import { TierPill } from "~/components/TierPill";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl } from "~/utils/urls";
@@ -25,7 +25,7 @@ export function TournamentCard({
 	className?: string;
 	withRelativeTime?: boolean;
 }) {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const { formatDateTimeSmartMinutes, formatDistanceToNow } = useTimeFormat();
 
 	const isShowcase = tournament.type === "showcase";
@@ -34,7 +34,7 @@ export function TournamentCard({
 
 	const time = () => {
 		if (!isShowcase) return null;
-		if (!isMounted) return "Placeholder";
+		if (!isHydrated) return "Placeholder";
 
 		const date = databaseTimestampToDate(tournament.startTime);
 
@@ -101,7 +101,7 @@ export function TournamentCard({
 				{isShowcase ? (
 					<time
 						className={clsx(styles.time, {
-							invisible: !isMounted,
+							invisible: !isHydrated,
 						})}
 						dateTime={databaseTimestampToDate(
 							tournament.startTime,

@@ -1,5 +1,5 @@
 import { db } from "~/db/sql";
-import type { TablesInsertable } from "~/db/tables";
+import type { Tables, TablesInsertable } from "~/db/tables";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import * as StreamRanking from "../sidebar/core/StreamRanking";
 
@@ -13,6 +13,20 @@ export function replaceAll(
 			await trx.insertInto("LiveStream").values(streams).execute();
 		}
 	});
+}
+
+export function insertTournamentStreamers(
+	rows: Omit<Tables["TournamentStreamer"], "id">[],
+) {
+	if (rows.length === 0) return;
+
+	return db
+		.insertInto("TournamentStreamer")
+		.values(rows)
+		.onConflict((oc) =>
+			oc.columns(["twitchAccount", "tournamentId"]).doNothing(),
+		)
+		.execute();
 }
 
 export function findXRankStreams() {

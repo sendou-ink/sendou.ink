@@ -16,7 +16,7 @@ import { TournamentCard } from "~/features/calendar/components/TournamentCard";
 import { SplatoonRotations } from "~/features/front-page/components/SplatoonRotations";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import styles from "~/styles/front.module.css";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -66,10 +66,10 @@ function SeasonDates({
 	season: ReturnType<typeof useSeasonData>["season"];
 	className: string;
 }) {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const { formatDate } = useTimeFormat();
 
-	return isMounted ? (
+	return isHydrated ? (
 		<div className={className}>
 			{formatDate(season.starts, { month: "long", day: "numeric" })} -{" "}
 			{formatDate(season.ends, { month: "long", day: "numeric" })}

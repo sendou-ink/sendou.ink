@@ -18,7 +18,7 @@ import { Placeholder } from "~/components/Placeholder";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { metaTags } from "~/utils/remix";
@@ -62,9 +62,9 @@ export const meta: MetaFunction = (args) => {
 };
 
 export default function QLookingShell() {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
-	if (!isMounted)
+	if (!isHydrated)
 		return (
 			<Main>
 				<Placeholder />
@@ -115,7 +115,7 @@ function QLookingPage() {
 
 function InfoText() {
 	const { t } = useTranslation(["q"]);
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const data = useLoaderData<typeof loader>();
 	const fetcher = useFetcher();
 	const { formatTime } = useTimeFormat();
@@ -165,7 +165,7 @@ function InfoText() {
 	return (
 		<div
 			className={clsx("text-xs text-lighter stack horizontal justify-between", {
-				invisible: !isMounted,
+				invisible: !isHydrated,
 			})}
 		>
 			<div className="stack sm horizontal">
@@ -181,7 +181,7 @@ function InfoText() {
 				<StreamsLinkButton />
 			</div>
 			<span className="text-xxs">
-				{isMounted
+				{isHydrated
 					? t("q:looking.lastUpdatedAt", {
 							time: formatTime(new Date(data.lastUpdated)),
 						})
@@ -211,11 +211,11 @@ function StreamsLinkButton() {
 function Groups() {
 	const { t } = useTranslation(["q"]);
 	const data = useLoaderData<typeof loader>();
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
 	const width = useMainContentWidth();
 
-	if (!isMounted) return null;
+	if (!isHydrated) return null;
 
 	const isMobile = width < IS_Q_LOOKING_MOBILE_BREAKPOINT;
 	const isFullGroup =

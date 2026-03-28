@@ -42,7 +42,7 @@ import type {
 	SeasonTournamentResult,
 } from "~/features/sendouq-match/SQMatchRepository.server";
 import { useWeaponUsage } from "~/hooks/swr";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
@@ -206,7 +206,7 @@ function SeasonHeader({
 }) {
 	const { t } = useTranslation(["user"]);
 	const { formatDate } = useTimeFormat();
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const { starts, ends } = Seasons.nthToDateRange(seasonViewed);
 	const navigate = useNavigate();
 	const options = useSeasonSelectOptions();
@@ -237,9 +237,11 @@ function SeasonHeader({
 				)}
 			</SendouSelect>
 			<div
-				className={clsx("text-sm text-lighter mt-2", { invisible: !isMounted })}
+				className={clsx("text-sm text-lighter mt-2", {
+					invisible: !isHydrated,
+				})}
 			>
-				{isMounted ? (
+				{isHydrated ? (
 					<>
 						{formatDate(new Date(starts), {
 							day: "numeric",
@@ -735,7 +737,7 @@ function Results({
 	seasonViewed: number;
 	results: UserSeasonsPageLoaderData["results"];
 }) {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const { formatDate } = useTimeFormat();
 	const [, setSearchParams] = useSearchParams();
 	const ref = React.useRef<HTMLDivElement>(null);
@@ -768,11 +770,11 @@ function Results({
 									className={clsx(
 										"text-xs font-semi-bold text-theme-secondary",
 										{
-											invisible: !isMounted || !shouldRenderDateHeader,
+											invisible: !isHydrated || !shouldRenderDateHeader,
 										},
 									)}
 								>
-									{isMounted
+									{isHydrated
 										? formatDate(databaseTimestampToDate(result.createdAt), {
 												weekday: "long",
 												month: "long",

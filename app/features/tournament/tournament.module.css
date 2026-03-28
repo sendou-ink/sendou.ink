@@ -181,6 +181,10 @@
 	margin-block-start: var(--s-6);
 }
 
+.infoDescription > :first-child {
+	margin-block-start: 0;
+}
+
 .infoDescription > h1 {
 	font-size: var(--font-xl);
 }

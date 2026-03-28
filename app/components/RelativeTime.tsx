@@ -1,5 +1,5 @@
 import type * as React from "react";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 
 export function RelativeTime({
@@ -9,13 +9,13 @@ export function RelativeTime({
 	children: React.ReactNode;
 	timestamp: number;
 }) {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const { formatDateTime } = useTimeFormat();
 
 	return (
 		<abbr
 			title={
-				isMounted
+				isHydrated
 					? formatDateTime(new Date(timestamp), {
 							hour: "numeric",
 							minute: "numeric",

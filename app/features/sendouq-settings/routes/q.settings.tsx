@@ -15,7 +15,7 @@ import {
 } from "~/features/chat/chat-utils";
 import { updateNoScreenSchema } from "~/features/settings/settings-schemas";
 import { SendouForm } from "~/form/SendouForm";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { metaTags } from "~/utils/remix";
@@ -304,7 +304,7 @@ function WeaponPool() {
 
 function Sounds() {
 	const { t } = useTranslation(["q"]);
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
 	return (
 		<details>
@@ -314,8 +314,8 @@ function Sounds() {
 				</div>
 			</summary>
 			<div className="mb-4">
-				{isMounted && <SoundCheckboxes />}
-				{isMounted && <SoundSlider />}
+				{isHydrated && <SoundCheckboxes />}
+				{isHydrated && <SoundSlider />}
 			</div>
 		</details>
 	);

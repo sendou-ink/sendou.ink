@@ -23,7 +23,7 @@ import {
 	isLeagueRoundLocked,
 	resolveLeagueRoundStartDate,
 } from "~/features/tournament/tournament-utils";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type { StageId } from "~/modules/in-game-lists/types";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
@@ -79,7 +79,7 @@ export function StartedMatch({
 	type: "EDIT" | "OTHER";
 }) {
 	const { t } = useTranslation(["tournament"]);
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const user = useUser();
 	const tournament = useTournament();
 	const data = useLoaderData<TournamentMatchLoaderData>();
@@ -253,11 +253,11 @@ export function StartedMatch({
 			{result ? (
 				<div
 					className={clsx("text-center text-xs text-lighter", {
-						invisible: !isMounted,
+						invisible: !isHydrated,
 					})}
 					data-testid="report-timestamp"
 				>
-					{isMounted
+					{isHydrated
 						? databaseTimestampToDate(result.createdAt).toLocaleString()
 						: "t"}
 				</div>

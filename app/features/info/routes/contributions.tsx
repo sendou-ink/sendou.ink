@@ -118,6 +118,7 @@ export default function ContributionsPage() {
 				<li>Lean - {t("contributions:lean")}</li>
 				<li>borzoic - {t("contributions:borzoic")}</li>
 				<li>TORIPNG - {t("contributions:toripng")}</li>
+				<li>BUGSLAP - {t("contributions:toripng")}</li>
 				<li>uberu - {t("contributions:uberu")}</li>
 				<li>yaga - {t("contributions:yaga")}</li>
 				<li>Centritide - {t("contributions:centritide")}</li>

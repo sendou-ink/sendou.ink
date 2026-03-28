@@ -95,3 +95,36 @@ export function hoursMinutesSecondsStringToSeconds(
 export function youtubeIdToYoutubeUrl(youtubeId: string) {
 	return `https://www.youtube.com/watch?v=${youtubeId}`;
 }
+
+export function generateYoutubeTimestamps(
+	matches: Vod["matches"],
+	type: Vod["type"],
+	resolvers: {
+		weaponName: (weaponId: number) => string;
+		stageName: (stageId: number) => string;
+		modeName: (mode: string) => string;
+	},
+) {
+	const lines: string[] = [];
+
+	if (matches.length > 0 && matches[0].startsAt > 0) {
+		lines.push("0:00 Intro");
+	}
+
+	const isCast = type === "CAST";
+
+	for (const match of matches) {
+		const timestamp = secondsToHoursMinutesSecondString(match.startsAt);
+		const stage = resolvers.stageName(match.stageId);
+		const mode = resolvers.modeName(match.mode);
+
+		const weaponPart =
+			!isCast && match.weapons.length === 1
+				? `${resolvers.weaponName(match.weapons[0])} / `
+				: "";
+
+		lines.push(`${timestamp} ${weaponPart}${mode} ${stage}`);
+	}
+
+	return lines.join("\n");
+}

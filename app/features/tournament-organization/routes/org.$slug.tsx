@@ -23,7 +23,7 @@ import { useUser } from "~/features/auth/core/user";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { BannedUsersList } from "~/features/tournament-organization/components/BannedPlayersList";
 import { SendouForm } from "~/form/SendouForm";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
@@ -503,7 +503,7 @@ function EventInfo({
 	showYear?: boolean;
 }) {
 	const { formatDateTime } = useTimeFormat();
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
 	return (
 		<div className="stack sm">
@@ -521,9 +521,9 @@ function EventInfo({
 				<div>
 					<div>{event.name}</div>
 					<time
-						className={clsx(styles.eventInfoTime, { invisible: !isMounted })}
+						className={clsx(styles.eventInfoTime, { invisible: !isHydrated })}
 					>
-						{isMounted
+						{isHydrated
 							? formatDateTime(databaseTimestampToDate(event.startTime), {
 									day: "numeric",
 									month: "numeric",

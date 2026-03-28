@@ -52,7 +52,7 @@ export type SidebarFriend = {
 };
 
 const MAX_EVENTS_VISIBLE = 5;
-const MAX_FRIENDS_VISIBLE = 4;
+const MAX_FRIENDS_VISIBLE = 8;
 const MAX_STREAMS_VISIBLE = 5;
 const UPCOMING_TOURNAMENT_WINDOW_DAYS = 3;
 const SENDOUQ_QUOTA = 2;

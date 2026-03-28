@@ -32,5 +32,11 @@
 	"noVods": "",
 	"gainPerms": "请在我们的Discord服务器的helpdesk频道申请获取上传视频的资格。",
 	"deleteConfirm": "确认要删除 '{{title}}' 吗？",
-	"errors.youtubePreviewFailed": ""
+	"errors.youtubePreviewFailed": "",
+	"copyTimestamps": "",
+	"copyTimestamps.help": "",
+	"copyTimestamps.modeFormat": "",
+	"copyTimestamps.stageFormat": "",
+	"copyTimestamps.format.short": "",
+	"copyTimestamps.format.long": ""
 }

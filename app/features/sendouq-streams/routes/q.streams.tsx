@@ -6,7 +6,7 @@ import { Avatar } from "~/components/Avatar";
 import { TierImage, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { twitchThumbnailUrlToSrc } from "~/modules/twitch/utils";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
@@ -125,10 +125,10 @@ export default function SendouQStreamsPage() {
 
 function RelativeStartTime({ startedAt }: { startedAt: Date }) {
 	const { i18n } = useTranslation();
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	useAutoRerender();
 
-	if (!isMounted) return null;
+	if (!isHydrated) return null;
 
 	const minutesAgo = Math.floor((startedAt.getTime() - Date.now()) / 1000 / 60);
 	const formatter = new Intl.RelativeTimeFormat(i18n.language, {

@@ -1,3 +1,4 @@
+import { isAfter, subDays } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -29,9 +30,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const tournament = await tournamentDataCached({ tournamentId, user });
 
-	const tournamentStartedInTheLastMonth =
-		databaseTimestampToDate(tournament.ctx.startTime) >
-		new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+	const friendCodeVisibilityDays = tournament.ctx.parentTournamentId ? 120 : 30;
+	const tournamentStartedRecently = isAfter(
+		databaseTimestampToDate(tournament.ctx.startTime),
+		subDays(new Date(), friendCodeVisibilityDays),
+	);
 	const isTournamentAdmin =
 		tournament.ctx.author.id === user?.id ||
 		tournament.ctx.staff.some(
@@ -53,7 +56,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		throw new Response(null, { status: 404 });
 	}
 
-	const showFriendCodes = tournamentStartedInTheLastMonth && isTournamentAdmin;
+	const showFriendCodes = tournamentStartedRecently && isTournamentAdmin;
 
 	const isLeagueSignup = Object.values(LEAGUES)
 		.flat()

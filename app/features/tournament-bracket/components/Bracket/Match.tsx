@@ -99,7 +99,9 @@ function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 	};
 	const toBeCasted =
 		!isOver &&
-		tournament.ctx.castedMatchesInfo?.lockedMatches?.includes(match.id);
+		tournament.ctx.castedMatchesInfo?.lockedMatches?.some(
+			(lm) => lm.matchId === match.id,
+		);
 
 	return (
 		<div className={styles.matchHeader}>
@@ -340,8 +342,8 @@ function MatchTimer({ match, bracket }: Pick<MatchProps, "match" | "bracket">) {
 
 	if (isOver) return null;
 
-	const isLocked = tournament.ctx.castedMatchesInfo?.lockedMatches?.includes(
-		match.id,
+	const isLocked = tournament.ctx.castedMatchesInfo?.lockedMatches?.some(
+		(lm) => lm.matchId === match.id,
 	);
 	if (isLocked) return null;
 

@@ -1137,7 +1137,11 @@ export class Tournament {
 						return { type: "WAITING_FOR_MATCH" } as const;
 					}
 
-					if (this.ctx.castedMatchesInfo?.lockedMatches.includes(match.id)) {
+					if (
+						this.ctx.castedMatchesInfo?.lockedMatches.some(
+							(lm) => lm.matchId === match.id,
+						)
+					) {
 						return { type: "WAITING_FOR_CAST" } as const;
 					}
 

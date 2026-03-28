@@ -52,7 +52,7 @@ import {
 	useTheme,
 } from "./features/theme/core/provider";
 import { getThemeSession } from "./features/theme/core/theme-session.server";
-import { useIsMounted } from "./hooks/useIsMounted";
+import { useHydrated } from "./hooks/useHydrated";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
 import { i18nCookie, i18next } from "./modules/i18n/i18next.server";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
@@ -416,9 +416,9 @@ export const ErrorBoundary = () => {
 };
 
 function HydrationTestIndicator() {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
-	if (!isMounted) return null;
+	if (!isHydrated) return null;
 
 	return <div style={{ display: "none" }} data-testid="hydrated" />;
 }

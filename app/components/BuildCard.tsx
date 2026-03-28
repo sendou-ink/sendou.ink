@@ -5,7 +5,7 @@ import { Link } from "react-router";
 import type { GearType, Tables, UserWithPlusTier } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type { BuildWeaponWithTop500Info } from "~/features/builds/builds-types";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type {
 	Ability as AbilityType,
@@ -56,7 +56,7 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 	const user = useUser();
 	const { t } = useTranslation(["weapons", "builds", "common", "game-misc"]);
 	const { formatDate } = useTimeFormat();
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
 	const {
 		id,
@@ -123,9 +123,9 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 							</div>
 						) : null}
 						<time
-							className={clsx("whitespace-nowrap", { invisible: !isMounted })}
+							className={clsx("whitespace-nowrap", { invisible: !isHydrated })}
 						>
-							{isMounted
+							{isHydrated
 								? formatDate(databaseTimestampToDate(updatedAt), {
 										day: "numeric",
 										month: "long",
