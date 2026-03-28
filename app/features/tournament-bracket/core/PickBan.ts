@@ -465,13 +465,19 @@ function unavailableModes({
 	}
 
 	if (maps.pickBan === "CUSTOM") {
-		// If the immediately preceding event is a MODE_PICK, only that mode is available
-		const lastEvent = (pickBanEvents ?? []).at(-1);
-		if (lastEvent?.type === "MODE_PICK" && lastEvent.mode) {
-			return new Set(modesIncluded.filter((m) => m !== lastEvent.mode));
+		const currentSectionEvents = currentSectionPickBanEvents({
+			pickBanEvents: pickBanEvents ?? [],
+			maps,
+		});
+
+		const modePick = currentSectionEvents.findLast(
+			(e) => e.type === "MODE_PICK",
+		);
+		if (modePick?.mode) {
+			return new Set(modesIncluded.filter((m) => m !== modePick.mode));
 		}
 
-		const modeBans = (pickBanEvents ?? [])
+		const modeBans = currentSectionEvents
 			.filter((e) => e.type === "MODE_BAN" && e.mode !== null)
 			.map((e) => e.mode!);
 
@@ -487,6 +493,30 @@ function unavailableModes({
 	);
 
 	return result;
+}
+
+function currentSectionPickBanEvents({
+	pickBanEvents,
+	maps,
+}: {
+	pickBanEvents: PickBanEvent[];
+	maps: TournamentRoundMaps;
+}): PickBanEvent[] {
+	const preSetLength = maps.customFlow?.preSet.length ?? 0;
+	const postGameLength = maps.customFlow?.postGame.length ?? 0;
+
+	if (pickBanEvents.length <= preSetLength) {
+		return pickBanEvents;
+	}
+
+	if (postGameLength === 0) return [];
+
+	const eventsAfterPreSet = pickBanEvents.length - preSetLength;
+	const currentCycleStart =
+		preSetLength +
+		Math.floor(eventsAfterPreSet / postGameLength) * postGameLength;
+
+	return pickBanEvents.slice(currentCycleStart);
 }
 
 const BEFORE_SET_INVALID_WHO: ReadonlySet<WhoSide> = new Set([

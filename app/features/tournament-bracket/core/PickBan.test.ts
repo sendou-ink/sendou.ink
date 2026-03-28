@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { TournamentRoundMaps } from "~/db/tables";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	CUSTOM_FLOW_VALIDATION_ERRORS,
+	mapsListWithLegality,
+	type PickBanEvent,
 	resolveCurrentStep,
 	resolveTeamFromSide,
 	turnOf,
@@ -669,6 +672,114 @@ describe("turnOf — BAN_2 flow", () => {
 		});
 
 		expect(result).toBeNull();
+	});
+});
+
+describe("mapsListWithLegality — MODE_PICK restriction survives intervening events", () => {
+	const SZ = "SZ" as ModeShort;
+	const TC = "TC" as ModeShort;
+	const RM = "RM" as ModeShort;
+
+	const toSetMapPool = [
+		{ mode: SZ, stageId: 1 as StageId },
+		{ mode: SZ, stageId: 2 as StageId },
+		{ mode: TC, stageId: 3 as StageId },
+		{ mode: TC, stageId: 4 as StageId },
+		{ mode: RM, stageId: 5 as StageId },
+	];
+
+	const teams = [{ mapPool: [] }, { mapPool: [] }] as unknown as Parameters<
+		typeof mapsListWithLegality
+	>[0]["teams"];
+
+	const customMaps: TournamentRoundMaps = {
+		count: 5,
+		type: "BEST_OF",
+		pickBan: "CUSTOM",
+		customFlow: {
+			preSet: [
+				{ action: "MODE_PICK", side: "HIGHER_SEED" },
+				{ action: "BAN", side: "LOWER_SEED" },
+				{ action: "BAN", side: "LOWER_SEED" },
+				{ action: "PICK", side: "LOWER_SEED" },
+			],
+			postGame: [{ action: "PICK", side: "LOSER" }],
+		},
+	};
+
+	it("restricts to picked mode even when bans happen after MODE_PICK", () => {
+		const pickBanEvents: PickBanEvent[] = [
+			{ type: "MODE_PICK", stageId: null, mode: SZ },
+			{ type: "BAN", stageId: 3 as StageId, mode: TC },
+			{ type: "BAN", stageId: 5 as StageId, mode: RM },
+		];
+
+		const result = mapsListWithLegality({
+			results: [],
+			maps: customMaps,
+			mapList: null,
+			teams,
+			pickerTeamId: 100,
+			tieBreakerMapPool: [],
+			toSetMapPool,
+			pickBanEvents,
+		});
+
+		const legalModes = new Set(
+			result.filter((m) => m.isLegal).map((m) => m.mode),
+		);
+
+		// MODE_PICK chose SZ, so only SZ maps should be legal
+		expect(legalModes).toEqual(new Set([SZ]));
+		// TC and RM should not be legal
+		expect(legalModes.has(TC)).toBe(false);
+		expect(legalModes.has(RM)).toBe(false);
+	});
+
+	it("does not carry MODE_PICK restriction from a previous game section", () => {
+		const mapsWithPostGameModePick: TournamentRoundMaps = {
+			count: 5,
+			type: "BEST_OF",
+			pickBan: "CUSTOM",
+			customFlow: {
+				preSet: [
+					{ action: "MODE_PICK", side: "HIGHER_SEED" },
+					{ action: "PICK", side: "LOWER_SEED" },
+				],
+				postGame: [
+					{ action: "MODE_BAN", side: "WINNER" },
+					{ action: "PICK", side: "LOSER" },
+				],
+			},
+		};
+
+		// preSet: MODE_PICK(SZ), PICK — then game 1 played
+		// postGame cycle 1: MODE_BAN(TC), now at PICK step with no MODE_PICK in this section
+		const pickBanEvents: PickBanEvent[] = [
+			{ type: "MODE_PICK", stageId: null, mode: SZ },
+			{ type: "PICK", stageId: 1 as StageId, mode: SZ },
+			{ type: "MODE_BAN", stageId: null, mode: TC },
+		];
+
+		const result = mapsListWithLegality({
+			results: [{ mode: SZ, stageId: 1 as StageId, winnerTeamId: 200 }],
+			maps: mapsWithPostGameModePick,
+			mapList: null,
+			teams,
+			pickerTeamId: 100,
+			tieBreakerMapPool: [],
+			toSetMapPool,
+			pickBanEvents,
+		});
+
+		const legalModes = new Set(
+			result.filter((m) => m.isLegal).map((m) => m.mode),
+		);
+
+		// No MODE_PICK in the current postGame section, so SZ restriction should not apply
+		// Only TC is mode-banned, SZ and RM should be legal
+		expect(legalModes).toEqual(new Set([SZ, RM]));
+		expect(legalModes.has(TC)).toBe(false);
 	});
 });
 
