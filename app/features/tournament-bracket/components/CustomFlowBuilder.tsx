@@ -86,6 +86,8 @@ function validationErrorToI18nKey(error: CustomFlowValidationError) {
 			return "tournament:customFlow.validation.tooManyModePicks" as const;
 		case "TOO_MANY_MAP_PICKS":
 			return "tournament:customFlow.validation.tooManyMapPicks" as const;
+		case "SAME_TEAM_MODE_AND_MAP_PICK":
+			return "tournament:customFlow.validation.sameTeamModeAndMapPick" as const;
 	}
 }
 

@@ -168,6 +168,7 @@
 	"customFlow.validation.winnerLoserInPreSet": "",
 	"customFlow.validation.tooManyModePicks": "",
 	"customFlow.validation.tooManyMapPicks": "",
+	"customFlow.validation.sameTeamModeAndMapPick": "",
 	"customFlow.who.ALPHA": "",
 	"customFlow.who.BRAVO": "",
 	"customFlow.who.HIGHER_SEED": "",

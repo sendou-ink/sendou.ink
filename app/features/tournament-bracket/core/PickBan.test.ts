@@ -8,7 +8,6 @@ import {
 	validateCustomFlowSection,
 } from "./PickBan";
 
-// xxx: maybe also validate that you can't do Pick (mode) followed by Pick (map) by the same team as that is clearly redundant
 describe("validateCustomFlowSection", () => {
 	it("returns no errors for valid preSet steps", () => {
 		const steps = [
@@ -196,6 +195,51 @@ describe("validateCustomFlowSection", () => {
 	it("returns LAST_STEP_MUST_BE_PICK_OR_ROLL for empty steps array", () => {
 		expect(validateCustomFlowSection([], "preSet")).toContain(
 			CUSTOM_FLOW_VALIDATION_ERRORS.LAST_STEP_MUST_BE_PICK_OR_ROLL,
+		);
+	});
+
+	it("returns SAME_TEAM_MODE_AND_MAP_PICK when same side does MODE_PICK and PICK", () => {
+		const steps = [
+			{ action: "MODE_PICK" as const, side: "ALPHA" as const },
+			{ action: "PICK" as const, side: "ALPHA" as const },
+		];
+
+		expect(validateCustomFlowSection(steps, "preSet")).toContain(
+			CUSTOM_FLOW_VALIDATION_ERRORS.SAME_TEAM_MODE_AND_MAP_PICK,
+		);
+	});
+
+	it("returns SAME_TEAM_MODE_AND_MAP_PICK even with bans between", () => {
+		const steps = [
+			{ action: "MODE_PICK" as const, side: "HIGHER_SEED" as const },
+			{ action: "BAN" as const, side: "LOWER_SEED" as const },
+			{ action: "PICK" as const, side: "HIGHER_SEED" as const },
+		];
+
+		expect(validateCustomFlowSection(steps, "preSet")).toContain(
+			CUSTOM_FLOW_VALIDATION_ERRORS.SAME_TEAM_MODE_AND_MAP_PICK,
+		);
+	});
+
+	it("does not return SAME_TEAM_MODE_AND_MAP_PICK when different sides", () => {
+		const steps = [
+			{ action: "MODE_PICK" as const, side: "ALPHA" as const },
+			{ action: "PICK" as const, side: "BRAVO" as const },
+		];
+
+		expect(validateCustomFlowSection(steps, "preSet")).not.toContain(
+			CUSTOM_FLOW_VALIDATION_ERRORS.SAME_TEAM_MODE_AND_MAP_PICK,
+		);
+	});
+
+	it("does not return SAME_TEAM_MODE_AND_MAP_PICK for MODE_PICK followed by ROLL", () => {
+		const steps = [
+			{ action: "MODE_PICK" as const, side: "ALPHA" as const },
+			{ action: "ROLL" as const },
+		];
+
+		expect(validateCustomFlowSection(steps, "preSet")).not.toContain(
+			CUSTOM_FLOW_VALIDATION_ERRORS.SAME_TEAM_MODE_AND_MAP_PICK,
 		);
 	});
 
