@@ -18,6 +18,12 @@ import type { TournamentDataTeam } from "../core/Tournament.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import styles from "./MatchActionsBanPicker.module.css";
 
+/** stageId is omitted for mode-only actions (MODE_PICK / MODE_BAN) where no specific stage is selected */
+type BanPickerSelection = {
+	mode: ModeShort;
+	stageId?: StageId;
+};
+
 export function MatchActionsBanPicker({
 	teams,
 }: {
@@ -25,10 +31,7 @@ export function MatchActionsBanPicker({
 }) {
 	const data = useLoaderData<TournamentMatchLoaderData>();
 	const maps = data.match.roundMaps!;
-	const [selected, setSelected] = React.useState<{
-		mode: ModeShort;
-		stageId: StageId;
-	}>();
+	const [selected, setSelected] = React.useState<BanPickerSelection>();
 
 	const turnOfResult = PickBan.turnOf({
 		results: data.results,
@@ -80,8 +83,8 @@ function MapPicker({
 	teams,
 	actionType,
 }: {
-	selected?: { mode: ModeShort; stageId: StageId };
-	setSelected: (selected: { mode: ModeShort; stageId: StageId }) => void;
+	selected?: BanPickerSelection;
+	setSelected: (selected: BanPickerSelection) => void;
 	pickerTeamId: number;
 	teams: [TournamentDataTeam, TournamentDataTeam];
 	actionType: ActionType;
@@ -280,8 +283,8 @@ function ModePicker({
 	pickerTeamId,
 	teams,
 }: {
-	selected?: { mode: ModeShort; stageId: StageId };
-	setSelected: (selected: { mode: ModeShort; stageId: StageId }) => void;
+	selected?: BanPickerSelection;
+	setSelected: (selected: BanPickerSelection) => void;
 	pickerTeamId: number;
 	teams: [TournamentDataTeam, TournamentDataTeam];
 }) {
@@ -318,12 +321,7 @@ function ModePicker({
 					className={clsx(styles.mapButton, {
 						[styles.mapButtonGreyedOut]: selected?.mode === mode,
 					})}
-					onClick={
-						canPickBan
-							? // xxx: why do we have to have this 0 stageId here? a bit hacky
-								() => setSelected({ mode, stageId: 0 as StageId })
-							: undefined
-					}
+					onClick={canPickBan ? () => setSelected({ mode }) : undefined}
 					disabled={!canPickBan}
 					data-testid={canPickBan ? "pick-ban-button" : undefined}
 				>
@@ -346,10 +344,7 @@ function CounterpickSubmitter({
 	pickBan,
 	actionType,
 }: {
-	selected?: {
-		mode: ModeShort;
-		stageId: StageId;
-	};
+	selected?: BanPickerSelection;
 	pickingTeam: TournamentDataTeam;
 	pickBan: NonNullable<TournamentRoundMaps["pickBan"]>;
 	actionType: ActionType;
@@ -404,6 +399,9 @@ function CounterpickSubmitter({
 
 	invariant(selected, "CounterpickSubmitter: selected is undefined");
 
+	const stageId = selected.stageId!;
+	invariant(typeof stageId === "number", "Expected stageId");
+
 	return (
 		<div className="stack md items-center">
 			<div
@@ -415,21 +413,17 @@ function CounterpickSubmitter({
 				})}
 			>
 				{actionLabel()}: {t(`game-misc:MODE_SHORT_${selected.mode}`)}
-				{!isModeAction ? ` ${t(`game-misc:STAGE_${selected.stageId}`)}` : null}
+				{!isModeAction ? ` ${t(`game-misc:STAGE_${stageId}`)}` : null}
 			</div>
 			<div className="stack sm horizontal">
 				<ModeImage mode={selected.mode} size={32} />
 				{!isModeAction ? (
-					<StageImage
-						stageId={selected.stageId}
-						height={32}
-						className="rounded-sm"
-					/>
+					<StageImage stageId={stageId} height={32} className="rounded-sm" />
 				) : null}
 			</div>
 			<fetcher.Form method="post">
 				{!isModeAction ? (
-					<input type="hidden" name="stageId" value={selected.stageId} />
+					<input type="hidden" name="stageId" value={stageId} />
 				) : null}
 				<input type="hidden" name="mode" value={selected.mode} />
 				<SubmitButton _action="BAN_PICK">Confirm</SubmitButton>
