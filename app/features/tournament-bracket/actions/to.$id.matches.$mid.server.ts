@@ -9,7 +9,6 @@ import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.se
 import * as TournamentMatchRepository from "~/features/tournament-bracket/TournamentMatchRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-import { seededRandom } from "~/utils/random";
 import {
 	errorToastIfFalsy,
 	notFoundIfFalsy,
@@ -18,6 +17,7 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { getServerTournamentManager } from "../core/brackets-manager/manager.server";
+import { executeRoll } from "../core/executeRoll.server";
 import { resolveMapList } from "../core/mapList.server";
 import * as PickBan from "../core/PickBan";
 import {
@@ -498,48 +498,18 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			// Chain roll after action for CUSTOM flow
 			if (match.roundMaps.pickBan === "CUSTOM" && match.roundMaps.customFlow) {
-				const eventCount = currentPickBanEvents.length + 1;
-				const step = PickBan.resolveCurrentStep({
-					eventCount,
-					preSet: match.roundMaps.customFlow.preSet,
-					postGame: match.roundMaps.customFlow.postGame,
-					resultsCount: results.length,
+				const updatedEvents = await TournamentRepository.pickBanEventsByMatchId(
+					match.id,
+				);
+				await executeRoll({
+					matchId: match.id,
+					maps: match.roundMaps,
+					pickBanEvents: updatedEvents,
+					results,
+					tournamentId,
+					teams: [teamOne, teamTwo],
+					tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
 				});
-
-				if (step?.action === "ROLL") {
-					const toSetMapPool =
-						await TournamentRepository.findTOSetMapPoolById(tournamentId);
-					const updatedEvents =
-						await TournamentRepository.pickBanEventsByMatchId(match.id);
-					const legalMaps = PickBan.mapsListWithLegality({
-						toSetMapPool,
-						maps: match.roundMaps,
-						mapList: null,
-						teams: [teamOne, teamTwo],
-						tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
-						pickerTeamId: match.opponentOne.id,
-						results,
-						pickBanEvents: updatedEvents,
-					}).filter((m) => m.isLegal);
-
-					invariant(legalMaps.length > 0, "Unexpected no legal maps");
-
-					const eventNumber = eventCount + 1;
-					const { randomInteger } = seededRandom(
-						`roll-${matchId}-${eventNumber}`,
-					);
-					const selectedMap = legalMaps[randomInteger(legalMaps.length)]!;
-
-					await TournamentRepository.addPickBanEvent({
-						authorId: null,
-						matchId: match.id,
-						stageId: selectedMap.stageId,
-						mode: selectedMap.mode,
-						number: eventNumber,
-						type: "ROLL",
-						mapListIndex: null,
-					});
-				}
 			}
 
 			emitMatchUpdate = true;

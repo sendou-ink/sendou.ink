@@ -8,14 +8,11 @@ import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamR
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
-import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-import { seededRandom } from "~/utils/random";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
 import { tournamentMatchPage } from "~/utils/urls";
+import { executeRoll } from "../core/executeRoll.server";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
-import * as PickBan from "../core/PickBan";
 import { tournamentFromDBCached } from "../core/Tournament.server";
 import { findMatchById } from "../queries/findMatchById.server";
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
@@ -59,18 +56,23 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		match.opponentOne?.id &&
 		match.opponentTwo?.id
 	) {
-		const rollsExecuted = await executeRolls({
-			matchId,
-			match,
-			maps: match.roundMaps,
-			pickBanEvents,
-			results,
-			tournamentId,
-		});
-		if (rollsExecuted) {
-			pickBanEvents = await TournamentRepository.pickBanEventsByMatchId(
-				match.id,
-			);
+		const teamOne = tournament.teamById(match.opponentOne.id);
+		const teamTwo = tournament.teamById(match.opponentTwo.id);
+		if (teamOne && teamTwo) {
+			const rollExecuted = await executeRoll({
+				matchId,
+				maps: match.roundMaps,
+				pickBanEvents,
+				results,
+				tournamentId,
+				teams: [teamOne, teamTwo],
+				tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
+			});
+			if (rollExecuted) {
+				pickBanEvents = await TournamentRepository.pickBanEventsByMatchId(
+					match.id,
+				);
+			}
 		}
 	}
 
@@ -181,79 +183,3 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		})),
 	};
 };
-
-// xxx: can we somehow unify the logic with to.$id.matches.$mid.server.ts /actions?
-async function executeRolls({
-	matchId,
-	match,
-	maps,
-	pickBanEvents,
-	results,
-	tournamentId,
-}: {
-	matchId: number;
-	match: NonNullable<ReturnType<typeof findMatchById>>;
-	maps: NonNullable<NonNullable<ReturnType<typeof findMatchById>>["roundMaps"]>;
-	pickBanEvents: Awaited<
-		ReturnType<typeof TournamentRepository.pickBanEventsByMatchId>
-	>;
-	results: ReturnType<typeof findResultsByMatchId>;
-	tournamentId: number;
-}) {
-	const customFlow = maps.customFlow;
-	if (!customFlow) return false;
-
-	const step = PickBan.resolveCurrentStep({
-		eventCount: pickBanEvents.length,
-		preSet: customFlow.preSet,
-		postGame: customFlow.postGame,
-		resultsCount: results.length,
-	});
-
-	if (!step || step.action !== "ROLL") return false;
-
-	const toSetMapPool =
-		await TournamentRepository.findTOSetMapPoolById(tournamentId);
-	const legalMaps = PickBan.mapsListWithLegality({
-		toSetMapPool,
-		maps,
-		mapList: null,
-		teams: [
-			{ id: match.opponentOne!.id! } as Parameters<
-				typeof PickBan.mapsListWithLegality
-			>[0]["teams"][0],
-			{ id: match.opponentTwo!.id! } as Parameters<
-				typeof PickBan.mapsListWithLegality
-			>[0]["teams"][0],
-		],
-		tieBreakerMapPool: [],
-		pickerTeamId: match.opponentOne!.id!,
-		results,
-		pickBanEvents,
-	}).filter((m) => m.isLegal);
-
-	invariant(legalMaps.length > 0, "Unexpected no legal maps");
-
-	const eventNumber = pickBanEvents.length + 1;
-	const { randomInteger } = seededRandom(`roll-${matchId}-${eventNumber}`);
-	const selectedMap = legalMaps[randomInteger(legalMaps.length)]!;
-
-	try {
-		await TournamentRepository.addPickBanEvent({
-			authorId: null,
-			matchId,
-			stageId: selectedMap.stageId,
-			mode: selectedMap.mode,
-			number: eventNumber,
-			type: "ROLL",
-			mapListIndex: null,
-		});
-	} catch (error) {
-		if (!errorIsSqliteUniqueConstraintFailure(error)) {
-			throw error;
-		}
-		// unique constraint violation — another request already handled this roll
-	}
-
-	return true;
-}
