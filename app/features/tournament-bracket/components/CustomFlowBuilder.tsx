@@ -97,7 +97,6 @@ interface PartialStep {
 	side?: WhoSide;
 }
 
-// xxx: add Vitest component tests
 export function CustomFlowBuilder({
 	value,
 	onChange,
