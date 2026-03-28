@@ -400,8 +400,8 @@ function CounterpickSubmitter({
 
 	invariant(selected, "CounterpickSubmitter: selected is undefined");
 
-	const stageId = selected.stageId!;
-	invariant(typeof stageId === "number", "Expected stageId");
+	const stageId = isModeAction ? null : selected.stageId;
+	invariant(isModeAction || typeof stageId === "number", "Expected stageId");
 
 	return (
 		<div className="stack md items-center">
@@ -414,16 +414,16 @@ function CounterpickSubmitter({
 				})}
 			>
 				{actionLabel()}: {t(`game-misc:MODE_SHORT_${selected.mode}`)}
-				{!isModeAction ? ` ${t(`game-misc:STAGE_${stageId}`)}` : null}
+				{stageId ? ` ${t(`game-misc:STAGE_${stageId}`)}` : null}
 			</div>
 			<div className="stack sm horizontal">
 				<ModeImage mode={selected.mode} size={32} />
-				{!isModeAction ? (
+				{stageId ? (
 					<StageImage stageId={stageId} height={32} className="rounded-sm" />
 				) : null}
 			</div>
 			<fetcher.Form method="post">
-				{!isModeAction ? (
+				{stageId ? (
 					<input type="hidden" name="stageId" value={stageId} />
 				) : null}
 				<input type="hidden" name="mode" value={selected.mode} />
