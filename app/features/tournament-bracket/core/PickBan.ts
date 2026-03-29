@@ -369,18 +369,7 @@ export function mapsListWithLegality(args: MapListWithStatusesArgs) {
 					...args.tieBreakerMapPool,
 				];
 
-				const deduped: ModeWithStage[] = [];
-				for (const map of combinedPools) {
-					if (
-						!deduped.some(
-							(m) => m.mode === map.mode && m.stageId === map.stageId,
-						)
-					) {
-						deduped.push(map);
-					}
-				}
-
-				return deduped;
+				return R.uniqueBy(combinedPools, (m) => `${m.mode}-${m.stageId}`);
 			}
 			default: {
 				assertUnreachable(args.maps.pickBan);
