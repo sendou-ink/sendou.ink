@@ -1,12 +1,12 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { useUser } from "~/features/auth/core/user";
 import { usePatrons } from "~/hooks/swr";
 import {
 	API_PAGE,
 	CONTRIBUTIONS_PAGE,
 	FAQ_PAGE,
 	NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL,
-	PRIVACY_POLICY_PAGE,
 	SENDOU_INK_DISCORD_URL,
 	SENDOU_INK_GITHUB_URL,
 	SENDOU_LOVE_EMOJI_PATH,
@@ -21,16 +21,20 @@ import styles from "./Footer.module.css";
 
 export function Footer() {
 	const { t } = useTranslation();
+	const user = useUser();
+
+	const showPrivacySettings =
+		import.meta.env.VITE_FUSE_ENABLED && !user?.roles.includes("MINOR_SUPPORT");
 
 	const currentYear = new Date().getFullYear();
 
 	return (
 		<footer className={styles.footer}>
 			<div className={styles.linkList}>
-				<Link to={PRIVACY_POLICY_PAGE}>{t("pages.privacy")}</Link>
 				<Link to={CONTRIBUTIONS_PAGE}>{t("pages.contributors")}</Link>
 				<Link to={FAQ_PAGE}>{t("pages.faq")}</Link>
 				<Link to={API_PAGE}>{t("pages.api")}</Link>
+				{showPrivacySettings ? <div data-fuse-privacy-tool /> : null}
 			</div>
 			<div className={styles.socials}>
 				<a

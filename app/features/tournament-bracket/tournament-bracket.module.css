@@ -20,8 +20,10 @@
 	letter-spacing: 0.3px;
 }
 
-.infosValue > button {
-	font-size: var(--font-2xs);
+.infosValue {
+	& > button {
+		font-size: var(--font-2xs);
+	}
 }
 
 .lockedBanner {
@@ -86,9 +88,11 @@
 	bottom: 8px;
 }
 
-.stageBanner:has(.stageBannerEndSetButton)
-	.stageBannerUndoButton:not(.stageBannerEndSetButton) {
-	right: 78px;
+.stageBanner {
+	&:has(.stageBannerEndSetButton)
+		.stageBannerUndoButton:not(.stageBannerEndSetButton) {
+		right: 78px;
+	}
 }
 
 .deadlinePopover {
@@ -154,15 +158,17 @@
 .noScreen {
 	display: flex;
 	gap: var(--s-0-5);
+
+	& > svg {
+		width: 24px;
+		color: var(--color-success);
+	}
 }
 
-.noScreen > svg {
-	width: 24px;
-	color: var(--color-success);
-}
-
-.noScreenBanned > svg {
-	color: var(--color-error);
+.noScreenBanned {
+	& > svg {
+		color: var(--color-error);
+	}
 }
 
 .duringMatchActions {
@@ -229,15 +235,13 @@
 	display: flex;
 	align-items: center;
 	flex: 1;
-}
 
-.duringMatchActionsCheckboxName:not(:global(.disabled-opaque)):not(
-		:global(.presentational)
-	):hover {
-	border-radius: var(--radius-box);
-	cursor: pointer;
-	outline: 2px solid var(--color-accent-high);
-	outline-offset: 2px;
+	&:not(:global(.disabled-opaque)):not(:global(.presentational)):hover {
+		border-radius: var(--radius-box);
+		cursor: pointer;
+		outline: 2px solid var(--color-accent-high);
+		outline-offset: 2px;
+	}
 }
 
 .duringMatchActionsCheckbox:not(#_) {
@@ -336,11 +340,11 @@
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	flex-direction: column;
-}
 
-.rosters ul {
-	padding: 0;
-	list-style: none;
+	& ul {
+		padding: 0;
+		list-style: none;
+	}
 }
 
 .rostersSpacedHeader {
@@ -382,11 +386,11 @@
 	padding: var(--s-3);
 	outline: 2px solid var(--color-bg-higher);
 	min-width: 40px;
-}
 
-.modeProgressImage > svg {
-	width: 20px;
-	height: 20px;
+	& > svg {
+		width: 20px;
+		height: 20px;
+	}
 }
 
 .modeProgressImageNotable {
@@ -410,10 +414,10 @@
 .modeProgressImageBanned {
 	outline: 2px solid var(--color-error);
 	background-color: var(--color-bg-high);
-}
 
-.modeProgressImageBanned > img {
-	filter: grayscale(100%);
+	& > img {
+		filter: grayscale(100%);
+	}
 }
 
 .modeProgressImageBannedPopoverTrigger:focus-visible {
@@ -509,14 +513,16 @@
 	width: 280px;
 }
 
-.actionSectionWrapper [class*="tabPanel"] {
-	background-color: var(--color-bg-high);
-	border-radius: 0 0 var(--radius-box) var(--radius-box);
-	padding: var(--s-4);
-}
+.actionSectionWrapper {
+	& [class*="tabPanel"] {
+		background-color: var(--color-bg-high);
+		border-radius: 0 0 var(--radius-box) var(--radius-box);
+		padding: var(--s-4);
 
-.actionSectionWrapper [class*="tabPanel"]:has([class*="chatContainer"]) {
-	padding: var(--s-1) var(--s-4);
+		&:has([class*="chatContainer"]) {
+			padding: var(--s-1) var(--s-4);
+		}
+	}
 }
 
 .bracketNavLink {
@@ -525,28 +531,28 @@
 	border-color: var(--color-bg-higher);
 	background-color: var(--color-bg);
 	border-radius: 0;
+
+	&:active {
+		transform: translateY(0px);
+	}
+
+	&:first-of-type {
+		border-start-start-radius: var(--radius-box);
+		border-end-start-radius: var(--radius-box);
+	}
+
+	&:not(&:first-of-type) {
+		margin-left: -2px;
+	}
+
+	&:last-of-type {
+		border-start-end-radius: var(--radius-box);
+		border-end-end-radius: var(--radius-box);
+	}
 }
 
 .bracketNavLinkBig {
 	font-size: var(--font-lg);
-}
-
-.bracketNavLink:active {
-	transform: translateY(0px);
-}
-
-.bracketNavLink:first-of-type {
-	border-start-start-radius: var(--radius-box);
-	border-end-start-radius: var(--radius-box);
-}
-
-.bracketNavLink:not(.bracketNavLink:first-of-type) {
-	margin-left: -2px;
-}
-
-.bracketNavLink:last-of-type {
-	border-start-end-radius: var(--radius-box);
-	border-end-end-radius: var(--radius-box);
 }
 
 .bracketNavLinkSelected {

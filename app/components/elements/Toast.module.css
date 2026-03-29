@@ -74,10 +74,10 @@
 .closeButton {
 	margin-inline-start: auto;
 	outline-color: var(--color-text) !important;
-}
 
-.closeButton svg {
-	width: 1rem;
+	& svg {
+		width: 1rem;
+	}
 }
 
 .alertIcon {

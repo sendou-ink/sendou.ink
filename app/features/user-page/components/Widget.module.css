@@ -125,14 +125,14 @@
 	gap: var(--s-1);
 	max-width: 100%;
 	overflow: hidden;
-}
 
-.tournamentName a {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	min-width: 0;
-	max-width: 175px;
+	& a {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		min-width: 0;
+		max-width: 175px;
+	}
 }
 
 .resultDate {
@@ -179,10 +179,10 @@
 	padding: var(--s-2);
 	transition: background-color 0.2s;
 	background-color: var(--color-bg-high);
-}
 
-.lfgPost:hover {
-	background-color: var(--color-bg-higher);
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
 }
 
 .xRankPeaks {
@@ -267,10 +267,10 @@
 	align-items: center;
 	word-break: break-all;
 	overflow-wrap: break-word;
-}
 
-.socialLink svg {
-	width: 18px;
+	& svg {
+		width: 18px;
+	}
 }
 
 .socialLinkIconContainer {
@@ -280,28 +280,28 @@
 	border-radius: var(--radius-box);
 	padding: var(--s-2);
 	flex-shrink: 0;
-}
 
-.socialLinkIconContainer svg {
-	width: 18px;
-	height: 18px;
-	fill: var(--color-text);
-}
+	& svg {
+		width: 18px;
+		height: 18px;
+		fill: var(--color-text);
+	}
 
-.socialLinkIconContainer.twitch svg {
-	fill: #9146ff;
-}
+	&.twitch svg {
+		fill: #9146ff;
+	}
 
-.socialLinkIconContainer.youtube svg {
-	fill: #f00;
-}
+	&.youtube svg {
+		fill: #f00;
+	}
 
-.socialLinkIconContainer.bsky path {
-	fill: #1285fe;
-}
+	&.bsky path {
+		fill: #1285fe;
+	}
 
-.socialLinkIconContainer.discord svg {
-	fill: #5865f2;
+	&.discord svg {
+		fill: #5865f2;
+	}
 }
 
 .socialLinksIcons {

@@ -13,20 +13,20 @@
 	width: 100%;
 	white-space: nowrap;
 	border: var(--border-style);
-}
 
-.link:focus-visible {
-	outline: 3px solid var(--color-accent);
-	outline-offset: 3px;
+	&:focus-visible {
+		outline: 3px solid var(--color-accent);
+		outline-offset: 3px;
+	}
 }
 
 .participant {
 	outline: 3px solid var(--color-bg-higher);
 	outline-offset: 3px;
-}
 
-.participant svg {
-	fill: var(--color-accent);
+	& svg {
+		fill: var(--color-accent);
+	}
 }
 
 .participantCounts {
@@ -37,9 +37,9 @@
 	font-size: var(--fonts-sm);
 	gap: var(--s-2);
 	margin-block-end: var(--s-1);
-}
 
-.participantCounts > svg {
-	width: 1rem;
-	margin-block-end: 1px;
+	& > svg {
+		width: 1rem;
+		margin-block-end: 1px;
+	}
 }

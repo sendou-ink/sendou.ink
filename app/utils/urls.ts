@@ -88,7 +88,6 @@ export const ADMIN_PAGE = "/admin";
 export const API_PAGE = "/api";
 export const ARTICLES_MAIN_PAGE = "/a";
 export const FAQ_PAGE = "/faq";
-export const PRIVACY_POLICY_PAGE = "/privacy-policy";
 export const SUPPORT_PAGE = "/support";
 export const CONTRIBUTIONS_PAGE = "/contributions";
 export const BADGES_PAGE = "/badges";

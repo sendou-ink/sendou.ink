@@ -82,15 +82,15 @@
 	justify-content: space-between;
 	gap: var(--s-2);
 	font-weight: var(--weight-bold);
-}
 
-.calendarMonthSelector a {
-	font-size: var(--font-xl);
-}
+	& a {
+		font-size: var(--font-xl);
+	}
 
-.calendarMonthSelector > div {
-	font-size: var(--font-lg);
-	margin-block-start: var(--s-1);
+	& > div {
+		font-size: var(--font-lg);
+		margin-block-start: var(--s-1);
+	}
 }
 
 .sectionDivider {
@@ -130,10 +130,10 @@
 	font-weight: var(--weight-semi);
 	color: var(--color-text);
 	width: max-content;
-}
 
-.eventInfo img {
-	border-radius: var(--radius-avatar);
+	& img {
+		border-radius: var(--radius-avatar);
+	}
 }
 
 .eventInfoTime {
@@ -146,13 +146,13 @@
 	display: flex;
 	gap: var(--s-4);
 	flex-direction: column;
-}
 
-.leaderboardList li::marker {
-	font-size: var(--font-lg);
-	font-weight: var(--weight-bold);
-	color: var(--color-accent);
-	padding-inline-end: var(--s-2);
+	& li::marker {
+		font-size: var(--font-lg);
+		font-weight: var(--weight-bold);
+		color: var(--color-accent);
+		padding-inline-end: var(--s-2);
+	}
 }
 
 .leaderboardListRow {
@@ -169,10 +169,10 @@
 	gap: var(--s-2);
 	align-items: center;
 	max-width: max-content;
-}
 
-.socialLink svg {
-	width: 18px;
+	& svg {
+		width: 18px;
+	}
 }
 
 .socialLinkIconContainer {
@@ -183,14 +183,20 @@
 	padding: var(--s-2);
 }
 
-.socialLinkTwitch svg {
-	fill: #9146ff;
+.socialLinkTwitch {
+	& svg {
+		fill: #9146ff;
+	}
 }
 
-.socialLinkYoutube svg {
-	fill: #f00;
+.socialLinkYoutube {
+	& svg {
+		fill: #f00;
+	}
 }
 
-.socialLinkBsky path {
-	fill: #1285fe;
+.socialLinkBsky {
+	& path {
+		fill: #1285fe;
+	}
 }

@@ -52,29 +52,33 @@
 	width: 24.4px;
 	display: grid;
 	place-items: center;
-}
 
-.bskyLink > svg {
-	width: 0.9rem;
-}
+	& > svg {
+		width: 0.9rem;
+	}
 
-.bskyLink path {
-	fill: #1285fe;
+	& path {
+		fill: #1285fe;
+	}
 }
 
 .bannerAvatar {
 	grid-area: avatar;
 	align-self: flex-end;
 	margin-bottom: -110px;
-}
 
-.bannerAvatar > div {
-	padding: var(--s-2);
-	background-color: var(--color-bg);
-	border-radius: var(--radius-avatar);
-	display: grid;
-	place-items: center;
-	width: 7rem;
+	& > div {
+		padding: var(--s-2);
+		background-color: var(--color-bg);
+		border-radius: var(--radius-avatar);
+		display: grid;
+		place-items: center;
+		width: 7rem;
+	}
+
+	& img {
+		border-radius: var(--radius-avatar);
+	}
 }
 
 .bannerAvatarSpacer {
@@ -116,10 +120,6 @@
 	margin-block: var(--s-1);
 }
 
-.bannerAvatar img {
-	border-radius: var(--radius-avatar);
-}
-
 .actionButtons {
 	display: flex;
 	justify-content: center;
@@ -146,12 +146,12 @@
 	list-style: none;
 	display: flex;
 	gap: var(--s-4);
-}
 
-.resultsPlacements > li {
-	display: flex;
-	align-items: center;
-	gap: var(--s-1);
+	& > li {
+		display: flex;
+		align-items: center;
+		gap: var(--s-1);
+	}
 }
 
 .member {

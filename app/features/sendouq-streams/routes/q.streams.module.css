@@ -14,10 +14,10 @@
 	align-items: center;
 	margin-block-start: -5px;
 	color: var(--color-text-high);
-}
 
-.viewerCount > svg {
-	width: 0.75rem;
+	& > svg {
+		width: 0.75rem;
+	}
 }
 
 .infoCircle {

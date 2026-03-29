@@ -11,15 +11,15 @@
 	cursor: pointer;
 	height: var(--field-size-sm);
 	transition: background-color 0.15s;
-}
 
-.searchButton:hover {
-	background-color: var(--color-bg-high);
-}
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
 
-.searchButton:focus-visible {
-	outline: var(--focus-ring);
-	outline-offset: 1px;
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
 }
 
 .searchIcon {
@@ -52,10 +52,10 @@
 	backdrop-filter: blur(10px);
 	padding: var(--layout-main-padding);
 	padding-top: 15vh;
-}
 
-.overlay[data-entering] {
-	animation: fade-in 200ms ease-out;
+	&[data-entering] {
+		animation: fade-in 200ms ease-out;
+	}
 }
 
 @keyframes fade-in {
@@ -77,10 +77,10 @@
 		0 10px 15px -3px rgba(0, 0, 0, 0.1),
 		0 4px 6px -2px rgba(0, 0, 0, 0.05);
 	overflow: hidden;
-}
 
-.modal[data-entering] {
-	animation: zoom-in-95 200ms ease-out;
+	&[data-entering] {
+		animation: zoom-in-95 200ms ease-out;
+	}
 }
 
 @keyframes zoom-in-95 {
@@ -139,18 +139,18 @@
 	outline: none;
 	color: inherit;
 	text-decoration: none;
-}
 
-.listBoxItem[data-hovered] {
-	background-color: var(--color-bg-high);
-}
+	&[data-hovered] {
+		background-color: var(--color-bg-high);
+	}
 
-.listBoxItem[data-focused] {
-	background-color: var(--color-bg-high);
-}
+	&[data-focused] {
+		background-color: var(--color-bg-high);
+	}
 
-.listBoxItem[data-selected] {
-	background-color: var(--color-accent-low);
+	&[data-selected] {
+		background-color: var(--color-accent-low);
+	}
 }
 
 .searchTypeContainer {
@@ -262,10 +262,10 @@
 	color: var(--color-text-high);
 	cursor: pointer;
 	transition: background-color 0.15s;
-}
 
-.backButton:hover {
-	background-color: var(--color-bg-high);
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
 }
 
 .selectedWeaponName {

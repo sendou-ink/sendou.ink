@@ -250,30 +250,30 @@ a.match:hover {
 	min-width: max-content;
 	overflow-x: auto;
 	max-width: 600px;
-}
 
-.rrPlacementsTable thead {
-	color: var(--color-text-high);
-}
+	& thead {
+		color: var(--color-text-high);
+	}
 
-.rrPlacementsTable th {
-	text-align: left;
-}
+	& th {
+		text-align: left;
 
-.rrPlacementsTable th abbr {
-	padding-inline: var(--s-2);
-}
+		& abbr {
+			padding-inline: var(--s-2);
+		}
+	}
 
-.rrPlacementsTable td span {
-	padding-inline: var(--s-2);
-}
+	& td span {
+		padding-inline: var(--s-2);
+	}
 
-.rrPlacementsTable tbody tr:nth-child(odd) {
-	background-color: var(--color-bg-high);
-}
+	& tbody tr:nth-child(odd) {
+		background-color: var(--color-bg-high);
+	}
 
-.rrPlacementsTable tbody tr:nth-child(even) {
-	background-color: var(--color-bg-higher);
+	& tbody tr:nth-child(even) {
+		background-color: var(--color-bg-higher);
+	}
 }
 
 .standingsDividerRow {
@@ -303,18 +303,22 @@ a.match:hover {
 	white-space: nowrap;
 }
 
-.standingsDividerQualified .standingsDividerLine {
-	background-color: var(--color-success);
+.standingsDividerQualified {
+	& .standingsDividerLine {
+		background-color: var(--color-success);
+	}
+
+	& .standingsDividerText {
+		color: var(--color-success);
+	}
 }
 
-.standingsDividerQualified .standingsDividerText {
-	color: var(--color-success);
-}
+.standingsDividerEliminated {
+	& .standingsDividerLine {
+		background-color: var(--color-error);
+	}
 
-.standingsDividerEliminated .standingsDividerLine {
-	background-color: var(--color-error);
-}
-
-.standingsDividerEliminated .standingsDividerText {
-	color: var(--color-error);
+	& .standingsDividerText {
+		color: var(--color-error);
+	}
 }

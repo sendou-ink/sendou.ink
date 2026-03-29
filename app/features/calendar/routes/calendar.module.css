@@ -24,10 +24,20 @@
 	padding: var(--s-1) var(--s-2);
 	font-size: var(--font-xs);
 	flex: 1 1 0;
-}
 
-.navigateButton:focus-visible {
-	outline: var(--focus-ring);
+	&:focus-visible {
+		outline: var(--focus-ring);
+	}
+
+	&:not(.navigateArrowButton) {
+		justify-content: center;
+	}
+
+	& svg {
+		max-width: 1.75rem;
+		min-width: 1.75rem;
+		max-height: 1.75rem;
+	}
 }
 
 @container (width >= 640px) {
@@ -40,18 +50,10 @@
 	}
 }
 
-.navigateButton:not(.navigateArrowButton) {
-	justify-content: center;
-}
-
-.navigateButton svg {
-	max-width: 1.75rem;
-	min-width: 1.75rem;
-	max-height: 1.75rem;
-}
-
-.navigateArrowButton svg {
-	margin-inline-start: -5px;
+.navigateArrowButton {
+	& svg {
+		margin-inline-start: -5px;
+	}
 }
 
 .columnsContainer {
@@ -101,9 +103,11 @@
 	border-radius: var(--radius-box);
 }
 
-.hiddenEventsButton svg {
-	width: 1rem;
-	height: 1rem;
+.hiddenEventsButton {
+	& svg {
+		width: 1rem;
+		height: 1rem;
+	}
 }
 
 .calendar {

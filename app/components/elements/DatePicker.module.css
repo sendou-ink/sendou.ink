@@ -13,24 +13,28 @@
 	cursor: pointer;
 }
 
-.root[data-open] .group {
-	border-color: transparent;
-	outline: var(--focus-ring);
+.root {
+	&[data-open] .group {
+		border-color: transparent;
+		outline: var(--focus-ring);
+	}
 }
 
 .dateInput {
 	display: flex;
 }
 
-.segment:not([data-type="literal"]) {
-	padding: 0 var(--s-0-5);
-	border-radius: 5px;
-}
+.segment {
+	&:not([data-type="literal"]) {
+		padding: 0 var(--s-0-5);
+		border-radius: 5px;
+	}
 
-.segment:focus-visible {
-	background-color: var(--color-bg-high);
-	color: var(--color-text-accent);
-	outline: none;
+	&:focus-visible {
+		background-color: var(--color-bg-high);
+		color: var(--color-text-accent);
+		outline: none;
+	}
 }
 
 .button {

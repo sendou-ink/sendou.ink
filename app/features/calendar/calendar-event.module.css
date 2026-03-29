@@ -7,10 +7,10 @@
 	column-gap: var(--s-1-5);
 	font-weight: var(--weight-semi);
 	grid-template-columns: max-content 1fr;
-}
 
-.times > time {
-	height: 1.25rem;
+	& > time {
+		height: 1.25rem;
+	}
 }
 
 .mapPoolSection {

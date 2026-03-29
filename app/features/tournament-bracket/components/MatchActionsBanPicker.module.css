@@ -3,17 +3,17 @@
 	--map-height: 50px;
 }
 
-.divider::before,
-.divider::after {
-	border-bottom: 2px dotted var(--color-bg-higher);
-}
-
 .divider {
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	text-transform: uppercase;
 	display: flex;
 	gap: var(--s-2);
+
+	&::before,
+	&::after {
+		border-bottom: 2px dotted var(--color-bg-higher);
+	}
 }
 
 .mapButton {
@@ -27,10 +27,10 @@
 		filter,
 		opacity 0.2s;
 	border-radius: var(--radius-box);
-}
 
-.mapButton:active {
-	transform: none;
+	&:active {
+		transform: none;
+	}
 }
 
 .mapButtonGreyedOut {

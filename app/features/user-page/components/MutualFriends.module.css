@@ -15,10 +15,10 @@
 .stackedAvatar {
 	border-radius: 50%;
 	border: 2px solid var(--color-bg);
-}
 
-.stackedAvatar:not(:first-child) {
-	margin-inline-start: -8px;
+	&:not(:first-child) {
+		margin-inline-start: -8px;
+	}
 }
 
 .overflow {

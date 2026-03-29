@@ -171,34 +171,34 @@
 
 .infoDescription {
 	white-space: pre-wrap;
-}
 
-.infoDescription > :is(h1, h2, h3, h4, h5, h6) {
-	margin-block-end: var(--s-6);
-}
+	& > :is(h1, h2, h3, h4, h5, h6) {
+		margin-block-end: var(--s-6);
+	}
 
-.infoDescription > :is(h2, h3, h4, h5, h6) {
-	margin-block-start: var(--s-6);
-}
+	& > :is(h2, h3, h4, h5, h6) {
+		margin-block-start: var(--s-6);
+	}
 
-.infoDescription > :first-child {
-	margin-block-start: 0;
-}
+	& > :first-child {
+		margin-block-start: 0;
+	}
 
-.infoDescription > h1 {
-	font-size: var(--font-xl);
-}
+	& > h1 {
+		font-size: var(--font-xl);
+	}
 
-.infoDescription > :is(h2, h3, h4, h5, h6) {
-	font-size: var(--font-lg);
-}
+	& > :is(h2, h3, h4, h5, h6) {
+		font-size: var(--font-lg);
+	}
 
-.infoDescription > :is(h3, h4, h5, h6) {
-	font-size: var(--font-md);
-}
+	& > :is(h3, h4, h5, h6) {
+		font-size: var(--font-md);
+	}
 
-.infoDescription > ul:has(+ p) {
-	margin-block-end: var(--s-6);
+	& > ul:has(+ p) {
+		margin-block-end: var(--s-6);
+	}
 }
 
 .by {
@@ -283,10 +283,10 @@
 	align-items: center;
 	margin-block-start: -5px;
 	color: var(--color-text-high);
-}
 
-.streamViewerCount > svg {
-	width: 0.75rem;
+	& > svg {
+		width: 0.75rem;
+	}
 }
 
 .teamStats {
@@ -315,11 +315,11 @@
 .teamStatMain {
 	font-size: var(--font-xl);
 	font-weight: var(--weight-semi);
-}
 
-.teamStatMain sup {
-	font-size: var(--font-sm);
-	font-weight: var(--weight-semi);
+	& sup {
+		font-size: var(--font-sm);
+		font-weight: var(--weight-semi);
+	}
 }
 
 .teamStatSub {
@@ -449,13 +449,13 @@
 	align-items: center;
 	color: var(--color-accent);
 	font-size: var(--font-lg);
-}
 
-.overlapDivider::before,
-.overlapDivider::after {
-	flex: 1;
-	border-bottom: 2px solid var(--color-bg-higher);
-	content: "";
+	&::before,
+	&::after {
+		flex: 1;
+		border-bottom: 2px solid var(--color-bg-higher);
+		content: "";
+	}
 }
 
 .standingsMatchResultSquare {

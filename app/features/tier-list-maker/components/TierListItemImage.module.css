@@ -1,8 +1,10 @@
-.imageWrapper img {
-	pointer-events: none;
-	user-select: none;
-	-webkit-user-select: none;
-	-webkit-touch-callout: none;
+.imageWrapper {
+	& img {
+		pointer-events: none;
+		user-select: none;
+		-webkit-user-select: none;
+		-webkit-touch-callout: none;
+	}
 }
 
 .modeOverlay {

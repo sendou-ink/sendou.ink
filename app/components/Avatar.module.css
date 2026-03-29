@@ -14,8 +14,8 @@
 	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-avatar);
 	overflow: hidden;
-}
 
-.avatarWrapper img {
-	display: block;
+	& img {
+		display: block;
+	}
 }

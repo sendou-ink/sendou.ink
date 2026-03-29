@@ -50,10 +50,10 @@
 	@media screen and (min-width: 600px) {
 		height: var(--field-size-sm);
 	}
-}
 
-.closeButton:hover {
-	background-color: var(--color-bg-higher);
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
 }
 
 .roomList {
@@ -116,6 +116,10 @@
 	height: var(--field-size-sm);
 	aspect-ratio: 1 / 1;
 	border-radius: var(--radius-field);
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
 }
 
 .backButtonBadge {
@@ -133,10 +137,6 @@
 	display: grid;
 	place-items: center;
 	line-height: 1;
-}
-
-.backButton:hover {
-	background-color: var(--color-bg-higher);
 }
 
 .chatHeaderInfo {
@@ -157,10 +157,10 @@
 	color: inherit;
 	border-radius: var(--radius-field);
 	transition: background-color 0.15s;
-}
 
-.chatHeaderLink:hover {
-	background-color: var(--color-bg-higher);
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
 }
 
 .chatHeaderTitle {

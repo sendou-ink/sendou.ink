@@ -3,38 +3,40 @@
 	flex-direction: column;
 	gap: var(--s-4);
 	font-size: var(--font-md);
+
+	& h2 {
+		font-size: var(--font-lg);
+		margin-block-end: var(--s-2);
+		color: var(--color-text-accent);
+	}
+
+	& h3 {
+		font-size: var(--font-md);
+		margin-block-end: var(--s-3);
+	}
+
+	& p {
+		margin-block: var(--s-2);
+	}
 }
 
-.container h2 {
-	font-size: var(--font-lg);
-	margin-block-end: var(--s-2);
-	color: var(--color-text-accent);
-}
+.tableOfContents {
+	& ul {
+		padding-left: 0;
+	}
 
-.container h3 {
-	font-size: var(--font-md);
-	margin-block-end: var(--s-3);
-}
+	& li {
+		list-style: none;
+		font-size: var(--font-sm);
+		font-weight: var(--weight-semi);
+	}
 
-.container p {
-	margin-block: var(--s-2);
-}
+	& li:has(button) {
+		margin-block-start: var(--s-2);
+	}
 
-.tableOfContents ul {
-	padding-left: 0;
-}
-
-.tableOfContents li {
-	list-style: none;
-	font-size: var(--font-sm);
-	font-weight: var(--weight-semi);
-}
-
-.tableOfContents li:has(button) {
-	margin-block-start: var(--s-2);
-}
-
-.tableOfContents li:not(:has(button)) {
-	margin-inline-start: var(--s-2);
-	font-size: var(--font-xs);
+	& li:not(:has(button)) {
+		margin-inline-start: var(--s-2);
+		font-size: var(--font-xs);
+	}
 }

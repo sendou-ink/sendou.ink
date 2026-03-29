@@ -12,8 +12,8 @@
 	display: flex;
 	gap: var(--s-6);
 	align-items: center;
-}
 
-.filterButtons button:not(.active) {
-	color: var(--color-text-high);
+	& button:not(.active) {
+		color: var(--color-text-high);
+	}
 }

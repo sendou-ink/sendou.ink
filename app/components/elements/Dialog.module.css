@@ -11,15 +11,15 @@
 	padding: 1rem;
 	text-align: center;
 	backdrop-filter: blur(10px); /* Adjust blur value as needed */
+
+	&[data-entering] {
+		animation: fade-in 300ms ease-out;
+	}
 }
 
 .fullScreenOverlay {
 	padding: 0;
 	display: initial;
-}
-
-.overlay[data-entering] {
-	animation: fade-in 300ms ease-out;
 }
 
 @keyframes fade-in {
@@ -46,6 +46,10 @@
 	box-shadow:
 		0 10px 15px -3px rgba(0, 0, 0, 0.1),
 		0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+	&[data-entering] {
+		animation: zoom-in-95 300ms ease-out;
+	}
 }
 
 :global(html[data-fuse="true"]) .modal {
@@ -58,10 +62,6 @@
 	border-radius: 0;
 	padding-block-start: calc(env(safe-area-inset-top) + var(--s-6));
 	padding-block-end: var(--s-32);
-}
-
-.modal[data-entering] {
-	animation: zoom-in-95 300ms ease-out;
 }
 
 @keyframes zoom-in-95 {

@@ -113,11 +113,11 @@
 	margin-inline: auto;
 	padding-block: var(--s-1);
 	padding-inline: var(--s-3) var(--s-4);
-}
 
-.votingAlert > svg {
-	height: 1.75rem;
-	fill: var(--color-success);
+	& > svg {
+		height: 1.75rem;
+		fill: var(--color-success);
+	}
 }
 
 .votingBioHeader {

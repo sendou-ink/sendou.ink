@@ -20,10 +20,10 @@
 	color: var(--color-text);
 	width: 100%;
 	text-align: left;
-}
 
-.header:hover {
-	background: var(--color-bg-high);
+	&:hover {
+		background: var(--color-bg-high);
+	}
 }
 
 .headerTitle {
@@ -75,6 +75,22 @@
 	padding: 0 var(--s-2);
 	color: var(--color-text-inverse);
 	font-weight: var(--weight-semi);
+
+	&[data-slot-color="yellow"] {
+		background-color: #f5d742;
+	}
+
+	&[data-slot-color="pink"] {
+		background-color: #f5b8d0;
+	}
+
+	&[data-slot-color="green"] {
+		background-color: #90e8a8;
+	}
+
+	&[data-slot-color="blue"] {
+		background-color: #8cd4f5;
+	}
 }
 
 .damageTypeLabel {
@@ -89,10 +105,10 @@
 	border: 1px solid transparent;
 	border-radius: var(--radius-selector);
 	cursor: pointer;
-}
 
-.damageTypeLabel:hover {
-	text-decoration: line-through;
+	&:hover {
+		text-decoration: line-through;
+	}
 }
 
 .damageValue {
@@ -105,22 +121,6 @@
 	font-weight: var(--weight-semi);
 	opacity: 0.8;
 	margin-left: var(--s-0-5);
-}
-
-.segment[data-slot-color="yellow"] {
-	background-color: #f5d742;
-}
-
-.segment[data-slot-color="pink"] {
-	background-color: #f5b8d0;
-}
-
-.segment[data-slot-color="green"] {
-	background-color: #90e8a8;
-}
-
-.segment[data-slot-color="blue"] {
-	background-color: #8cd4f5;
 }
 
 .weaponIcon {
@@ -184,15 +184,15 @@
 	color: var(--color-text);
 	cursor: pointer;
 	transition: background-color 0.15s ease;
-}
 
-.filterControlButton:hover:not(:disabled) {
-	background: var(--color-bg-high);
-}
+	&:hover:not(:disabled) {
+		background: var(--color-bg-high);
+	}
 
-.filterControlButton:disabled {
-	opacity: 0.5;
-	cursor: not-allowed;
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
 }
 
 .filteredItemsRow {
@@ -216,10 +216,10 @@
 	color: var(--color-text-high);
 	cursor: pointer;
 	transition: background-color 0.15s ease;
-}
 
-.filteredItem:hover {
-	background: var(--color-bg-high);
+	&:hover {
+		background: var(--color-bg-high);
+	}
 }
 
 .slidersContainer {

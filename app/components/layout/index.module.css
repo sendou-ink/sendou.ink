@@ -52,6 +52,11 @@
 	flex-shrink: 0;
 	transition: background-color 0.2s;
 	line-height: 1;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
 }
 
 .siteLogoS {
@@ -64,11 +69,6 @@
 	font-size: 12px;
 	position: relative;
 	bottom: -4px;
-}
-
-.siteLogo:focus-visible {
-	outline: var(--focus-ring);
-	outline-offset: 1px;
 }
 
 .separator {
@@ -110,11 +110,11 @@
 	align-items: center;
 	text-decoration: none;
 	border-radius: var(--radius-field);
-}
 
-.breadcrumbLink:focus-visible {
-	outline: var(--focus-ring);
-	outline-offset: 1px;
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
 }
 
 .pageName {

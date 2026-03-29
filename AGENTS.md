@@ -47,6 +47,7 @@
 - clsx library is used for conditional class names
 - prefer using [CSS variables](./app/styles/vars.css) for theming
 - for simple styling, prefer [utility classes](./app/styles/utils.css) over creating a new class
+- use CSS nesting with the `&` selector to group related selectors (pseudo-classes, pseudo-elements, child selectors, attribute selectors) under their parent instead of repeating the parent selector
 
 ## SQL
 

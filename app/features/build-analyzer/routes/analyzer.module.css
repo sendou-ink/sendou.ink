@@ -43,10 +43,10 @@
 .apCompareBar {
 	height: 100%;
 	background-color: var(--color-info);
-}
 
-.apCompareBar.better {
-	background-color: var(--color-success);
+	&.better {
+		background-color: var(--color-success);
+	}
 }
 
 .effectsSelector {

@@ -36,6 +36,10 @@
 		filter,
 		opacity 0.2s;
 	border-radius: var(--radius-box);
+
+	&:active {
+		transform: none;
+	}
 }
 
 @keyframes wiggle {
@@ -59,10 +63,6 @@
 .mapButtonWiggle {
 	animation: wiggle 0.25s infinite;
 	animation-iteration-count: 1;
-}
-
-.mapButton:active {
-	transform: none;
 }
 
 .mapButtonGreyedOut {
@@ -98,15 +98,15 @@
 	text-align: center;
 }
 
-.divider::before,
-.divider::after {
-	border-bottom: 2px dotted var(--color-bg-higher);
-}
-
 .divider {
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	text-transform: uppercase;
 	display: flex;
 	gap: var(--s-2);
+
+	&::before,
+	&::after {
+		border-bottom: 2px dotted var(--color-bg-higher);
+	}
 }

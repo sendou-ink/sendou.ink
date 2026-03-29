@@ -62,11 +62,11 @@
 	gap: var(--s-4);
 	padding-block: var(--s-2);
 	scroll-snap-type: x mandatory;
-}
 
-.sideCarousel > * {
-	flex: 0 0 280px;
-	scroll-snap-align: start;
+	& > * {
+		flex: 0 0 280px;
+		scroll-snap-align: start;
+	}
 }
 
 .mainStack {

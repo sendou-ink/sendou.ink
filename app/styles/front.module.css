@@ -21,10 +21,10 @@
 	font-size: var(--font-xs);
 	border-radius: 100%;
 	color: var(--color-text-high);
-}
 
-.changeLogIconButton:hover {
-	color: var(--color-text-accent);
+	&:hover {
+		color: var(--color-text-accent);
+	}
 }
 
 .externalLinkIcon {
@@ -56,10 +56,10 @@
 	border: var(--border-style-high);
 	transition: --l 0.2s ease-out;
 	margin-block-start: var(--s-6);
-}
 
-.seasonBanner:hover {
-	--l: 75%;
+	&:hover {
+		--l: 75%;
+	}
 }
 
 .seasonBannerHeader {
@@ -90,11 +90,15 @@
 	display: flex;
 	gap: var(--s-2);
 	align-items: center;
-}
 
-.seasonBannerLink svg {
-	width: 24px;
-	transition: all 0.2s ease-out;
+	& svg {
+		width: 24px;
+		transition: all 0.2s ease-out;
+	}
+
+	&:hover svg {
+		translate: 2px;
+	}
 }
 
 .seasonBannerMobileOnly {
@@ -121,10 +125,6 @@
 	}
 }
 
-.seasonBannerLink:hover svg {
-	translate: 2px;
-}
-
 .tournamentCardsSpacer {
 	display: flex;
 	gap: var(--s-2);
@@ -140,15 +140,15 @@
 	display: flex;
 	gap: var(--s-2);
 	padding: var(--s-2);
-}
 
-.resultHighlights > div {
-	flex: 3 1 0;
-	width: 100%;
-}
+	& > div {
+		flex: 3 1 0;
+		width: 100%;
+	}
 
-.resultHighlights > .seasonCardDesktopOnly {
-	flex: 2 1 0;
+	& > .seasonCardDesktopOnly {
+		flex: 2 1 0;
+	}
 }
 
 .resultHighlightsTop {
@@ -186,10 +186,10 @@
 	color: var(--color-text);
 	overflow: hidden;
 	transition: --l 0.2s ease-out;
-}
 
-.seasonCard:hover {
-	--l: 75%;
+	&:hover {
+		--l: 75%;
+	}
 }
 
 .seasonCardHeader {
@@ -284,10 +284,10 @@
 	border-radius: var(--radius-full);
 	padding: var(--s-1);
 	transition: background-color 0.15s ease-out;
-}
 
-.weaponPill:hover {
-	background-color: var(--color-bg-high);
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
 }
 
 .discoverGrid {
@@ -303,6 +303,15 @@
 	}
 }
 
+.discoverGridItemImage {
+	width: var(--field-size-lg);
+	aspect-ratio: 1 / 1;
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-higher);
+	display: grid;
+	place-items: center;
+}
+
 .discoverGridItem {
 	display: flex;
 	flex-direction: column;
@@ -313,17 +322,8 @@
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	text-align: center;
-}
 
-.discoverGridItemImage {
-	width: var(--field-size-lg);
-	aspect-ratio: 1 / 1;
-	border-radius: var(--radius-field);
-	background-color: var(--color-bg-higher);
-	display: grid;
-	place-items: center;
-}
-
-.discoverGridItem:hover .discoverGridItemImage {
-	background-color: var(--color-bg-high);
+	&:hover .discoverGridItemImage {
+		background-color: var(--color-bg-high);
+	}
 }

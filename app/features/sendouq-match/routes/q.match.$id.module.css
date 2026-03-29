@@ -8,21 +8,21 @@
 	text-decoration-style: dotted;
 	font-weight: var(--weight-body);
 	height: 19.8281px;
-}
 
-.stagePopoverButton:focus {
-	outline: none;
-	color: var(--color-text-accent);
+	&:focus {
+		outline: none;
+		color: var(--color-text-accent);
+	}
 }
 
 .modePopoverButton {
 	background-color: transparent;
 	padding: 0;
 	border: none;
-}
 
-.modePopoverButton:focus {
-	outline: none;
+	&:focus {
+		outline: none;
+	}
 }
 
 .container {
@@ -97,16 +97,18 @@
 	letter-spacing: 1px;
 }
 
-.screenLegality svg {
-	width: 24px;
+.screenLegality {
+	& svg {
+		width: 24px;
+	}
 }
 
 .screenLegalityButton {
 	width: 100%;
-}
 
-.screenLegalityButton:focus-visible {
-	outline: none !important;
+	&:focus-visible {
+		outline: none !important;
+	}
 }
 
 .preferenceEmoji {

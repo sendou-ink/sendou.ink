@@ -89,19 +89,19 @@
 	touch-action: none;
 	user-select: none;
 	-webkit-user-select: none;
-}
 
-.dragHandle:hover {
-	color: var(--color-text);
-}
+	&:hover {
+		color: var(--color-text);
+	}
 
-.dragHandle:active:not(:disabled) {
-	cursor: grabbing;
-}
+	&:active:not(:disabled) {
+		cursor: grabbing;
+	}
 
-.dragHandle:disabled {
-	cursor: not-allowed;
-	opacity: 0.5;
+	&:disabled {
+		cursor: not-allowed;
+		opacity: 0.5;
+	}
 }
 
 .seedInput {
@@ -112,11 +112,11 @@
 	background-color: var(--color-bg);
 	color: var(--color-text);
 	font-size: var(--font-xs);
-}
 
-.seedInput:focus {
-	outline: var(--focus-ring);
-	outline-offset: 1px;
+	&:focus {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
 }
 
 .teamNameContainer {

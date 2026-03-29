@@ -22,15 +22,15 @@
 	cursor: pointer;
 	border-radius: var(--radius-full);
 	transition: opacity 0.15s ease;
-}
 
-.arrow:hover:not(:disabled) {
-	opacity: 0.7;
-}
+	&:hover:not(:disabled) {
+		opacity: 0.7;
+	}
 
-.arrow:disabled {
-	opacity: 0.3;
-	cursor: not-allowed;
+	&:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+	}
 }
 
 .page {
@@ -48,10 +48,10 @@
 	cursor: pointer;
 	border-radius: var(--radius-full);
 	transition: background-color 0.15s ease;
-}
 
-.page:hover:not(.pageActive) {
-	background-color: var(--color-bg-higher);
+	&:hover:not(.pageActive) {
+		background-color: var(--color-bg-higher);
+	}
 }
 
 .pageActive {
@@ -75,10 +75,10 @@
 	cursor: pointer;
 	border-radius: var(--radius-full);
 	transition: background-color 0.15s ease;
-}
 
-.ellipsisButton:hover {
-	background-color: var(--color-bg-higher);
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
 }
 
 .jumpToForm {
@@ -98,10 +98,10 @@
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
 	text-align: center;
-}
 
-.jumpToInput:focus {
-	outline: none;
+	&:focus {
+		outline: none;
+	}
 }
 
 @container (width < 580px) {

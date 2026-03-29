@@ -83,19 +83,19 @@
 	border-radius: var(--radius-box);
 	cursor: pointer;
 	transition: border-color 0.1s;
-}
 
-.weaponButton:hover {
-	border-color: var(--color-text-accent);
-}
+	&:hover {
+		border-color: var(--color-text-accent);
+	}
 
-.weaponButton:disabled {
-	opacity: 0.6;
-	cursor: not-allowed;
-}
+	&:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
 
-.weaponButton:disabled:hover {
-	border-color: transparent;
+		&:hover {
+			border-color: transparent;
+		}
+	}
 }
 
 .weaponButtonSelected {

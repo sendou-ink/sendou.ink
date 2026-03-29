@@ -8,53 +8,15 @@
 	flex-direction: row;
 	border-bottom: 2px solid var(--color-border);
 	min-width: fit-content;
-}
 
-.fullWidth {
-	width: 100%;
-	min-width: 100%;
-}
-
-.tabList svg {
-	--icon-size: 16px;
-	min-width: var(--icon-size);
-	min-height: var(--icon-size);
-	max-width: var(--icon-size);
-	max-height: var(--icon-size);
-	margin-inline-end: var(--s-1-5);
-}
-
-.tabButton img {
-	min-width: 16px;
-	min-height: 16px;
-	margin-inline-end: var(--s-1-5);
-}
-
-.padded .tabPanel {
-	padding-block-start: var(--s-4);
-}
-
-.disappearing:has(.tabList > div:only-child).padded .tabPanel {
-	padding-top: 0;
-}
-
-.disappearing .tabList:has(> div:only-child) {
-	display: none;
-}
-
-.tabContainer {
-	min-width: fit-content;
-	margin-bottom: -2px;
-
-	&:focus-visible {
-		outline: var(--focus-ring);
-		outline-offset: -2px;
+	& svg {
+		--icon-size: 16px;
+		min-width: var(--icon-size);
+		min-height: var(--icon-size);
+		max-width: var(--icon-size);
+		max-height: var(--icon-size);
+		margin-inline-end: var(--s-1-5);
 	}
-}
-
-.fullWidth .tabContainer {
-	flex: 1;
-	min-width: 0;
 }
 
 .tabButton {
@@ -67,16 +29,58 @@
 	white-space: nowrap;
 	flex: 1;
 	transform: none !important;
+
+	& img {
+		min-width: 16px;
+		min-height: 16px;
+		margin-inline-end: var(--s-1-5);
+	}
 }
 
-.tabContainer[data-selected] .tabButton {
-	border-color: var(--color-text-accent);
-	color: var(--color-text);
+.tabContainer {
+	min-width: fit-content;
+	margin-bottom: -2px;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: -2px;
+	}
+
+	&[data-selected] .tabButton {
+		border-color: var(--color-text-accent);
+		color: var(--color-text);
+	}
+
+	&[data-focus-visible] .tabButton {
+		color: var(--color-text-accent) !important;
+		outline: none;
+	}
 }
 
-.tabContainer[data-focus-visible] .tabButton {
-	color: var(--color-text-accent) !important;
-	outline: none;
+.fullWidth {
+	width: 100%;
+	min-width: 100%;
+
+	& .tabContainer {
+		flex: 1;
+		min-width: 0;
+	}
+}
+
+.padded {
+	& .tabPanel {
+		padding-block-start: var(--s-4);
+	}
+}
+
+.disappearing {
+	&:has(.tabList > div:only-child).padded .tabPanel {
+		padding-top: 0;
+	}
+
+	& .tabList:has(> div:only-child) {
+		display: none;
+	}
 }
 
 .tabNumber {

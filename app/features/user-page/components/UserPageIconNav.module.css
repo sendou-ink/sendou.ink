@@ -22,20 +22,20 @@
 	color: var(--color-text);
 	transition: all 0.2s;
 	cursor: pointer;
-}
 
-.iconNavItem:hover {
-	background-color: var(--color-bg-higher);
-}
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
 
-.iconNavItem:focus-visible {
-	outline: 2px solid var(--color-text-second);
-	outline-offset: 2px;
-}
+	&:focus-visible {
+		outline: 2px solid var(--color-text-second);
+		outline-offset: 2px;
+	}
 
-.iconNavItem.active {
-	border-color: var(--color-text-second);
-	background-color: var(--color-bg-higher);
+	&.active {
+		border-color: var(--color-text-second);
+		background-color: var(--color-bg-higher);
+	}
 }
 
 @container (width >= 720px) {

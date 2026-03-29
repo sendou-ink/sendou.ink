@@ -23,16 +23,16 @@
 	color: var(--color-text-accent);
 	display: flex;
 	align-items: center;
-}
 
-.header::before,
-.header::after {
-	flex: 1;
-	content: "";
-	padding: 2px;
-	background-color: var(--color-bg-high);
-	margin: 5px;
-	border-radius: var(--radius-box);
+	&::before,
+	&::after {
+		flex: 1;
+		content: "";
+		padding: 2px;
+		background-color: var(--color-bg-high);
+		margin: 5px;
+		border-radius: var(--radius-box);
+	}
 }
 
 .subsContainer {
@@ -84,10 +84,10 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-0-5);
-}
 
-.subsInfoVc > svg {
-	width: 18px;
+	& > svg {
+		width: 18px;
+	}
 }
 
 .subsSectionMessage {

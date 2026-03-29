@@ -9,10 +9,10 @@
 	align-items: center;
 	grid-template-columns: 200px 1fr;
 	gap: var(--s-4);
-}
 
-.componentRow:last-child {
-	border-bottom: none;
+	&:last-child {
+		border-bottom: none;
+	}
 }
 
 .componentLabel {

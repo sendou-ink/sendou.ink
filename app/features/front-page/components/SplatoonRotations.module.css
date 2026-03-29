@@ -12,11 +12,11 @@
 
 .rotationsCredit {
 	font-size: var(--font-2xs);
-}
 
-.rotationsCredit a {
-	color: var(--color-text-high);
-	text-decoration: underline;
+	& a {
+		color: var(--color-text-high);
+		text-decoration: underline;
+	}
 }
 
 .rotationsScroll {

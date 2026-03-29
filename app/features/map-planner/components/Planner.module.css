@@ -167,10 +167,10 @@
 	background: transparent;
 	cursor: grab;
 	touch-action: none;
-}
 
-.draggableButton:hover {
-	background-color: var(--color-bg-high);
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
 }
 
 .weaponDragging {

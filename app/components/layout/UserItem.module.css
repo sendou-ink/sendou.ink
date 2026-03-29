@@ -1,8 +1,8 @@
 .userItem {
 	outline-offset: 1px;
 	border-radius: var(--radius-avatar);
-}
 
-.userItem:focus-visible {
-	outline: var(--focus-ring);
+	&:focus-visible {
+		outline: var(--focus-ring);
+	}
 }
