@@ -22,6 +22,7 @@ import { resolveMapList } from "../core/mapList.server";
 import * as PickBan from "../core/PickBan";
 import {
 	clearTournamentDataCache,
+	type TournamentDataTeam,
 	tournamentFromDB,
 } from "../core/Tournament.server";
 import { deleteMatchPickBanEvents } from "../queries/deleteMatchPickBanEvents.server";
@@ -459,22 +460,34 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const isModeAction =
 				actionType === "MODE_PICK" || actionType === "MODE_BAN";
 
-			if (!isModeAction) {
+			const pickBanLegalityArgs = {
+				results,
+				maps: match.roundMaps,
+				toSetMapPool:
+					tournament.ctx.mapPickingStyle === "TO"
+						? await TournamentRepository.findTOSetMapPoolById(tournamentId)
+						: [],
+				mapList,
+				tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
+				teams: [teamOne, teamTwo] as [TournamentDataTeam, TournamentDataTeam],
+				pickerTeamId,
+				pickBanEvents: currentPickBanEvents,
+			};
+
+			if (isModeAction) {
+				errorToastIfFalsy(
+					PickBan.isModeLegal({
+						mode: data.mode,
+						...pickBanLegalityArgs,
+					}),
+					"Illegal mode",
+				);
+			} else {
 				errorToastIfFalsy(data.stageId, "Stage is required for map actions");
 				errorToastIfFalsy(
 					PickBan.isLegal({
-						results,
 						map: { stageId: data.stageId, mode: data.mode },
-						maps: match.roundMaps,
-						toSetMapPool:
-							tournament.ctx.mapPickingStyle === "TO"
-								? await TournamentRepository.findTOSetMapPoolById(tournamentId)
-								: [],
-						mapList,
-						tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
-						teams: [teamOne, teamTwo],
-						pickerTeamId,
-						pickBanEvents: currentPickBanEvents,
+						...pickBanLegalityArgs,
 					}),
 					"Illegal pick",
 				);

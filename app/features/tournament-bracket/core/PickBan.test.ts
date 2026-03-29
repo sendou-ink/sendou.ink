@@ -3,6 +3,7 @@ import type { TournamentRoundMaps } from "~/db/tables";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	CUSTOM_FLOW_VALIDATION_ERRORS,
+	isModeLegal,
 	mapsListWithLegality,
 	type PickBanEvent,
 	resolveCurrentStep,
@@ -780,6 +781,82 @@ describe("mapsListWithLegality — MODE_PICK restriction survives intervening ev
 		// Only TC is mode-banned, SZ and RM should be legal
 		expect(legalModes).toEqual(new Set([SZ, RM]));
 		expect(legalModes.has(TC)).toBe(false);
+	});
+});
+
+describe("isModeLegal", () => {
+	const SZ = "SZ" as ModeShort;
+	const TC = "TC" as ModeShort;
+	const RM = "RM" as ModeShort;
+	const CB = "CB" as ModeShort;
+
+	const toSetMapPool = [
+		{ mode: SZ, stageId: 1 as StageId },
+		{ mode: SZ, stageId: 2 as StageId },
+		{ mode: TC, stageId: 3 as StageId },
+		{ mode: RM, stageId: 5 as StageId },
+	];
+
+	const teams = [{ mapPool: [] }, { mapPool: [] }] as unknown as Parameters<
+		typeof mapsListWithLegality
+	>[0]["teams"];
+
+	const customMaps: TournamentRoundMaps = {
+		count: 5,
+		type: "BEST_OF",
+		pickBan: "CUSTOM",
+		customFlow: {
+			preSet: [
+				{ action: "MODE_BAN", side: "HIGHER_SEED" },
+				{ action: "MODE_PICK", side: "LOWER_SEED" },
+				{ action: "PICK", side: "LOWER_SEED" },
+			],
+			postGame: [{ action: "PICK", side: "LOSER" }],
+		},
+	};
+
+	const baseArgs = {
+		results: [],
+		maps: customMaps,
+		mapList: null,
+		teams,
+		pickerTeamId: 100,
+		tieBreakerMapPool: [],
+		toSetMapPool,
+	};
+
+	it("returns true for a mode present in the pool with no bans", () => {
+		expect(
+			isModeLegal({
+				mode: TC,
+				...baseArgs,
+				pickBanEvents: [],
+			}),
+		).toBe(true);
+	});
+
+	it("returns false for a mode that has been banned", () => {
+		const pickBanEvents: PickBanEvent[] = [
+			{ type: "MODE_BAN", stageId: null, mode: TC },
+		];
+
+		expect(
+			isModeLegal({
+				mode: TC,
+				...baseArgs,
+				pickBanEvents,
+			}),
+		).toBe(false);
+	});
+
+	it("returns false for a mode not in the map pool", () => {
+		expect(
+			isModeLegal({
+				mode: CB,
+				...baseArgs,
+				pickBanEvents: [],
+			}),
+		).toBe(false);
 	});
 });
 
