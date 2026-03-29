@@ -629,8 +629,6 @@ export interface TournamentMatchPickBanEvent {
 	matchId: number;
 	authorId: number | null;
 	number: number;
-	// xxx: this doesnt seem to be set anywhere? validate and either set or remove here + migration
-	mapListIndex: number | null;
 	createdAt: GeneratedAlways<number>;
 }
 

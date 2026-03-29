@@ -512,7 +512,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 				mode: data.mode,
 				number: currentPickBanEvents.length + 1,
 				type: eventType,
-				mapListIndex: null,
 			});
 
 			// Chain roll after action for CUSTOM flow

@@ -66,7 +66,6 @@ export async function executeRoll({
 			mode: selectedMap.mode,
 			number: eventNumber,
 			type: "ROLL",
-			mapListIndex: null,
 		});
 	} catch (error) {
 		if (!errorIsSqliteUniqueConstraintFailure(error)) {

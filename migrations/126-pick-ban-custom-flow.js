@@ -9,7 +9,6 @@ export function up(db) {
         "matchId" integer not null,
         "authorId" integer,
         "number" integer not null,
-        "mapListIndex" integer,
         "createdAt" integer default (strftime('%s', 'now')) not null,
         foreign key ("authorId") references "User"("id") on delete restrict,
         foreign key ("matchId") references "TournamentMatch"("id") on delete cascade,
