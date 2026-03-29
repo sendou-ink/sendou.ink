@@ -161,11 +161,11 @@
 	align-items: center;
 	flex-shrink: 0;
 	border-radius: var(--radius-full);
-}
 
-.removeButton:hover {
-	color: var(--color-error);
-	background-color: color-mix(in srgb, var(--color-error) 10%, transparent);
+	&:hover {
+		color: var(--color-error);
+		background-color: color-mix(in srgb, var(--color-error) 10%, transparent);
+	}
 }
 
 .removeButtonHidden {
