@@ -414,16 +414,16 @@ function CounterpickSubmitter({
 				})}
 			>
 				{actionLabel()}: {t(`game-misc:MODE_SHORT_${selected.mode}`)}
-				{stageId ? ` ${t(`game-misc:STAGE_${stageId}`)}` : null}
+				{typeof stageId === "number" ? ` ${t(`game-misc:STAGE_${stageId}`)}` : null}
 			</div>
 			<div className="stack sm horizontal">
 				<ModeImage mode={selected.mode} size={32} />
-				{stageId ? (
+				{typeof stageId === "number" ? (
 					<StageImage stageId={stageId} height={32} className="rounded-sm" />
 				) : null}
 			</div>
 			<fetcher.Form method="post">
-				{stageId ? (
+				{typeof stageId === "number" ? (
 					<input type="hidden" name="stageId" value={stageId} />
 				) : null}
 				<input type="hidden" name="mode" value={selected.mode} />

@@ -483,7 +483,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 					"Illegal mode",
 				);
 			} else {
-				errorToastIfFalsy(data.stageId, "Stage is required for map actions");
+				errorToastIfFalsy(typeof data.stageId === "number", "Stage is required for map actions");
 				errorToastIfFalsy(
 					PickBan.isLegal({
 						map: { stageId: data.stageId, mode: data.mode },
