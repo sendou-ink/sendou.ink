@@ -414,7 +414,9 @@ function CounterpickSubmitter({
 				})}
 			>
 				{actionLabel()}: {t(`game-misc:MODE_SHORT_${selected.mode}`)}
-				{typeof stageId === "number" ? ` ${t(`game-misc:STAGE_${stageId}`)}` : null}
+				{typeof stageId === "number"
+					? ` ${t(`game-misc:STAGE_${stageId}`)}`
+					: null}
 			</div>
 			<div className="stack sm horizontal">
 				<ModeImage mode={selected.mode} size={32} />
