@@ -6,6 +6,7 @@ import {
 	isModeLegal,
 	mapsListWithLegality,
 	type PickBanEvent,
+	type PickBanTeam,
 	resolveCurrentStep,
 	resolveTeamFromSide,
 	turnOf,
@@ -332,7 +333,10 @@ describe("resolveCurrentStep", () => {
 });
 
 describe("resolveTeamFromSide", () => {
-	const teams: [number, number] = [100, 200];
+	const teams: [PickBanTeam, PickBanTeam] = [
+		{ id: 100, seed: 2 },
+		{ id: 200, seed: 1 },
+	];
 
 	it("resolves ALPHA to teams[0]", () => {
 		expect(resolveTeamFromSide({ side: "ALPHA", teams, results: [] })).toBe(
@@ -355,6 +359,36 @@ describe("resolveTeamFromSide", () => {
 	it("resolves LOWER_SEED to teams[0]", () => {
 		expect(
 			resolveTeamFromSide({ side: "LOWER_SEED", teams, results: [] }),
+		).toBe(100);
+	});
+
+	it("resolves HIGHER_SEED by seed, not array position", () => {
+		const swappedTeams: [PickBanTeam, PickBanTeam] = [
+			{ id: 200, seed: 1 },
+			{ id: 100, seed: 2 },
+		];
+
+		expect(
+			resolveTeamFromSide({
+				side: "HIGHER_SEED",
+				teams: swappedTeams,
+				results: [],
+			}),
+		).toBe(200);
+	});
+
+	it("resolves LOWER_SEED by seed, not array position", () => {
+		const swappedTeams: [PickBanTeam, PickBanTeam] = [
+			{ id: 200, seed: 1 },
+			{ id: 100, seed: 2 },
+		];
+
+		expect(
+			resolveTeamFromSide({
+				side: "LOWER_SEED",
+				teams: swappedTeams,
+				results: [],
+			}),
 		).toBe(100);
 	});
 
@@ -396,7 +430,10 @@ describe("turnOf — CUSTOM flow", () => {
 			],
 		},
 	};
-	const teams: [number, number] = [100, 200];
+	const teams: [PickBanTeam, PickBanTeam] = [
+		{ id: 100, seed: 2 },
+		{ id: 200, seed: 1 },
+	];
 
 	it("returns first preSet step", () => {
 		const result = turnOf({
@@ -506,7 +543,10 @@ describe("turnOf — CUSTOM flow", () => {
 });
 
 describe("turnOf — CUSTOM flow stepCurrent/stepTotal", () => {
-	const teams: [number, number] = [100, 200];
+	const teams: [PickBanTeam, PickBanTeam] = [
+		{ id: 100, seed: 2 },
+		{ id: 200, seed: 1 },
+	];
 
 	it("counts consecutive bans by same side in preSet", () => {
 		const maps: TournamentRoundMaps = {
@@ -635,7 +675,10 @@ describe("turnOf — BAN_2 flow", () => {
 		type: "BEST_OF",
 		pickBan: "BAN_2",
 	};
-	const teams: [number, number] = [100, 200];
+	const teams: [PickBanTeam, PickBanTeam] = [
+		{ id: 100, seed: 2 },
+		{ id: 200, seed: 1 },
+	];
 
 	it("returns action BAN for first picker", () => {
 		const result = turnOf({
@@ -866,7 +909,10 @@ describe("turnOf — COUNTERPICK flow", () => {
 		type: "BEST_OF",
 		pickBan: "COUNTERPICK",
 	};
-	const teams: [number, number] = [100, 200];
+	const teams: [PickBanTeam, PickBanTeam] = [
+		{ id: 100, seed: 2 },
+		{ id: 200, seed: 1 },
+	];
 
 	it("returns action PICK for loser of last game", () => {
 		const result = turnOf({

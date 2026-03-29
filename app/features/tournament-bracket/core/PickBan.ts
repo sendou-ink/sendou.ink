@@ -25,6 +25,11 @@ export const types = [
 ] as const;
 export type Type = (typeof types)[number];
 
+export interface PickBanTeam {
+	id: number;
+	seed: number;
+}
+
 export interface TurnOfResult {
 	teamId: number;
 	action: ActionType;
@@ -41,7 +46,7 @@ export function turnOf({
 }: {
 	results: Array<{ winnerTeamId: number }>;
 	maps: TournamentRoundMaps;
-	teams: [number, number];
+	teams: [PickBanTeam, PickBanTeam];
 	mapList?: TournamentMapListMap[] | null;
 	pickBanEventCount?: number;
 }): TurnOfResult | null {
@@ -60,15 +65,15 @@ export function turnOf({
 			const [secondPicker, firstPicker] = teams;
 
 			if (
-				!mapList.some((map) => map.bannedByTournamentTeamId === firstPicker)
+				!mapList.some((map) => map.bannedByTournamentTeamId === firstPicker.id)
 			) {
-				return { teamId: firstPicker, action: "BAN" };
+				return { teamId: firstPicker.id, action: "BAN" };
 			}
 
 			if (
-				!mapList.some((map) => map.bannedByTournamentTeamId === secondPicker)
+				!mapList.some((map) => map.bannedByTournamentTeamId === secondPicker.id)
 			) {
-				return { teamId: secondPicker, action: "BAN" };
+				return { teamId: secondPicker.id, action: "BAN" };
 			}
 
 			return null;
@@ -88,12 +93,10 @@ export function turnOf({
 			const latestWinner = results[results.length - 1]?.winnerTeamId;
 			invariant(latestWinner, "turnOf: No winner found");
 
-			const teamId = teams.find(
-				(tournamentTeamId) => latestWinner !== tournamentTeamId,
-			);
-			invariant(teamId, "turnOf: No result found");
+			const team = teams.find((team) => latestWinner !== team.id);
+			invariant(team, "turnOf: No result found");
 
-			return { teamId, action: "PICK" };
+			return { teamId: team.id, action: "PICK" };
 		}
 		case "CUSTOM": {
 			return turnOfCustom({ results, maps, teams, pickBanEventCount });
@@ -112,7 +115,7 @@ function turnOfCustom({
 }: {
 	results: Array<{ winnerTeamId: number }>;
 	maps: TournamentRoundMaps;
-	teams: [number, number];
+	teams: [PickBanTeam, PickBanTeam];
 	pickBanEventCount?: number;
 }): TurnOfResult | null {
 	if (
@@ -258,19 +261,18 @@ export function resolveTeamFromSide({
 	results,
 }: {
 	side: WhoSide;
-	teams: [number, number];
+	teams: [PickBanTeam, PickBanTeam];
 	results: Array<{ winnerTeamId: number }>;
 }): number {
 	switch (side) {
 		case "ALPHA":
-			return teams[0];
+			return teams[0].id;
 		case "BRAVO":
-			return teams[1];
+			return teams[1].id;
 		case "HIGHER_SEED":
-			// teams[1] is higher seed (convention: second = higher seed)
-			return teams[1];
+			return teams[0].seed <= teams[1].seed ? teams[0].id : teams[1].id;
 		case "LOWER_SEED":
-			return teams[0];
+			return teams[0].seed <= teams[1].seed ? teams[1].id : teams[0].id;
 		case "WINNER": {
 			const lastWinner = results[results.length - 1]?.winnerTeamId;
 			invariant(lastWinner, "resolveTeamFromSide: No winner found");
@@ -279,7 +281,7 @@ export function resolveTeamFromSide({
 		case "LOSER": {
 			const lastWinner = results[results.length - 1]?.winnerTeamId;
 			invariant(lastWinner, "resolveTeamFromSide: No winner found");
-			return teams.find((t) => t !== lastWinner)!;
+			return teams.find((t) => t.id !== lastWinner)!.id;
 		}
 		default:
 			assertUnreachable(side);

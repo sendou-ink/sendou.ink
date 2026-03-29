@@ -304,7 +304,16 @@ function FancyStageBanner({
 		return PickBan.turnOf({
 			results: data.results,
 			maps: data.match.roundMaps,
-			teams: [data.match.opponentOne.id, data.match.opponentTwo.id],
+			teams: [
+				{
+					id: data.match.opponentOne.id,
+					seed: tournament.teamById(data.match.opponentOne.id)!.seed,
+				},
+				{
+					id: data.match.opponentTwo.id,
+					seed: tournament.teamById(data.match.opponentTwo.id)!.seed,
+				},
+			],
 			mapList: data.mapList,
 			pickBanEventCount: data.pickBanEventCount,
 		});

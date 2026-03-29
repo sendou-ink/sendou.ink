@@ -444,7 +444,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const turnOfResult = PickBan.turnOf({
 				results,
 				maps: match.roundMaps,
-				teams: [match.opponentOne.id, match.opponentTwo.id],
+				teams: [
+					{ id: match.opponentOne.id, seed: teamOne.seed },
+					{ id: match.opponentTwo.id, seed: teamTwo.seed },
+				],
 				mapList,
 				pickBanEventCount: currentPickBanEvents.length,
 			});

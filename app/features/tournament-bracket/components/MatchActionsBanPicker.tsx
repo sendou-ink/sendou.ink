@@ -31,13 +31,17 @@ export function MatchActionsBanPicker({
 	teams: [TournamentDataTeam, TournamentDataTeam];
 }) {
 	const data = useLoaderData<TournamentMatchLoaderData>();
+	const tournament = useTournament();
 	const maps = data.match.roundMaps!;
 	const [selected, setSelected] = React.useState<BanPickerSelection>();
 
 	const turnOfResult = PickBan.turnOf({
 		results: data.results,
 		maps,
-		teams: [teams[0].id, teams[1].id],
+		teams: [
+			{ id: teams[0].id, seed: tournament.teamById(teams[0].id)!.seed },
+			{ id: teams[1].id, seed: tournament.teamById(teams[1].id)!.seed },
+		],
 		mapList: data.mapList,
 		pickBanEventCount: data.pickBanEventCount,
 	})!;

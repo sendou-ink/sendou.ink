@@ -49,6 +49,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
 
 	// Execute pending ROLL steps for CUSTOM flow
+	// xxx: how to not make it execute all the time?
 	if (
 		!matchIsOver &&
 		match.roundMaps?.pickBan === "CUSTOM" &&

@@ -116,7 +116,10 @@ export function MatchActions({
 		PickBan.turnOf({
 			results: data.results,
 			maps: data.match.roundMaps,
-			teams: [teams[0].id, teams[1].id],
+			teams: [
+				{ id: teams[0].id, seed: tournament.teamById(teams[0].id)!.seed },
+				{ id: teams[1].id, seed: tournament.teamById(teams[1].id)!.seed },
+			],
 			mapList: data.mapList,
 			pickBanEventCount: data.pickBanEventCount,
 		});
