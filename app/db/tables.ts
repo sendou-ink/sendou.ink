@@ -225,11 +225,6 @@ export interface CalendarEventResultTeam {
 	placement: number;
 }
 
-export interface FreshPlusTier {
-	tier: number | null;
-	userId: number;
-}
-
 export interface Group {
 	chatCode: string | null;
 	createdAt: Generated<number>;
@@ -429,7 +424,6 @@ export interface PlusVotingResult {
 	month: number;
 	year: number;
 	wasSuggested: DBBoolean;
-	passedVoting: DBBoolean;
 }
 
 export interface ReportedWeapon {
@@ -1306,7 +1300,7 @@ export interface DB {
 	CalendarEventDate: CalendarEventDate;
 	CalendarEventResultPlayer: CalendarEventResultPlayer;
 	CalendarEventResultTeam: CalendarEventResultTeam;
-	FreshPlusTier: FreshPlusTier;
+
 	Group: Group;
 	GroupLike: GroupLike;
 	GroupMatch: GroupMatch;

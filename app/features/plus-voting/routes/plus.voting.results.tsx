@@ -44,7 +44,7 @@ export default function PlusVotingResultsPage() {
 									? `, your score was ${result.score}% ${
 											result.betterThan
 												? `(better than ${result.betterThan}% others)`
-												: "(at least 60% required to pass)"
+												: ""
 										}`
 									: ""}
 							</li>

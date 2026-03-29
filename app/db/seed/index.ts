@@ -739,14 +739,15 @@ async function thisMonthsSuggestions() {
 	}
 }
 
-function syncPlusTiers() {
-	sql
-		.prepare(
-			/* sql */ `
-    insert into "PlusTier" ("userId", "tier") select "userId", "tier" from "FreshPlusTier" where "tier" is not null;
-  `,
-		)
-		.run();
+async function syncPlusTiers() {
+	const tiers = await PlusVotingRepository.allPlusTiersFromLatestVoting();
+
+	if (tiers.length === 0) return;
+
+	await db
+		.insertInto("PlusTier")
+		.values(tiers.map(({ userId, plusTier }) => ({ userId, tier: plusTier })))
+		.execute();
 }
 
 function getAvailableBadgeIds() {

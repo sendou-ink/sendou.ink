@@ -11,6 +11,7 @@ import {
 import invariant from "~/utils/invariant";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
+import * as PlusVoting from "./core/PlusVoting";
 
 const resultsByMonthYearQuery = (args: MonthYear) =>
 	db
@@ -19,9 +20,9 @@ const resultsByMonthYearQuery = (args: MonthYear) =>
 		.select([
 			...COMMON_USER_FIELDS,
 			"PlusVotingResult.wasSuggested",
-			"PlusVotingResult.passedVoting",
 			"PlusVotingResult.tier",
 			"PlusVotingResult.score",
+			"PlusVotingResult.votedId",
 		])
 		.where("PlusVotingResult.month", "=", args.month)
 		.where("PlusVotingResult.year", "=", args.year)
@@ -31,26 +32,88 @@ type ResultsByMonthYearQueryReturnType = InferResult<
 >;
 
 export function allPlusTiersFromLatestVoting() {
-	return db
-		.selectFrom("FreshPlusTier")
-		.select(["FreshPlusTier.userId", "FreshPlusTier.tier as plusTier"])
-		.where("FreshPlusTier.tier", "is not", null)
-		.execute() as Promise<{ userId: number; plusTier: number }[]>;
+	return (
+		db
+			.selectFrom("PlusVotingResult")
+			.select([
+				"PlusVotingResult.votedId",
+				"PlusVotingResult.tier",
+				"PlusVotingResult.score",
+				"PlusVotingResult.wasSuggested",
+			])
+			.where(
+				"PlusVotingResult.year",
+				"=",
+				db
+					.selectFrom("PlusVote")
+					.select("PlusVote.year")
+					.where("PlusVote.validAfter", "<", sql<number>`strftime('%s', 'now')`)
+					.orderBy("PlusVote.year", "desc")
+					.orderBy("PlusVote.month", "desc")
+					.limit(1),
+			)
+			.where(
+				"PlusVotingResult.month",
+				"=",
+				db
+					.selectFrom("PlusVote")
+					.select("PlusVote.month")
+					.where("PlusVote.validAfter", "<", sql<number>`strftime('%s', 'now')`)
+					.orderBy("PlusVote.year", "desc")
+					.orderBy("PlusVote.month", "desc")
+					.limit(1),
+			)
+			.execute()
+			// CLAUDETODO: don't use then, just await (assign the value to intermediate variable)
+			.then((rows) => {
+				const withPassed = PlusVoting.computePassedVoting(rows);
+				return PlusVoting.computeFreshPlusTiers(withPassed);
+			})
+	);
 }
 
 export type ResultsByMonthYearItem = Unwrapped<typeof resultsByMonthYear>;
 export async function resultsByMonthYear(args: MonthYear) {
 	const rows = await resultsByMonthYearQuery(args).execute();
 
-	return groupPlusVotingResults(rows);
+	const passedMap = new Map<
+		string,
+		{ passedVoting: number; wasSuggested: number }
+	>();
+	const rawForVoting = rows.map((row) => ({
+		votedId: row.votedId,
+		tier: row.tier,
+		score: row.score,
+		wasSuggested: row.wasSuggested,
+	}));
+	for (const r of PlusVoting.computePassedVoting(rawForVoting)) {
+		passedMap.set(`${r.votedId}-${r.tier}`, {
+			passedVoting: r.passedVoting,
+			wasSuggested: r.wasSuggested,
+		});
+	}
+
+	const enrichedRows = rows.map((row) => {
+		const computed = passedMap.get(`${row.votedId}-${row.tier}`);
+		return {
+			...row,
+			passedVoting: computed?.passedVoting ?? 0,
+		};
+	});
+
+	return groupPlusVotingResults(enrichedRows);
 }
 
-function groupPlusVotingResults(rows: ResultsByMonthYearQueryReturnType) {
+type EnrichedRow = ResultsByMonthYearQueryReturnType[number] & {
+	passedVoting: number;
+};
+
+function groupPlusVotingResults(rows: EnrichedRow[]) {
 	const grouped: Record<
 		number,
 		{
-			passed: ResultsByMonthYearQueryReturnType;
-			failed: ResultsByMonthYearQueryReturnType;
+			passed: EnrichedRow[];
+			failed: EnrichedRow[];
 		}
 	> = {};
 
