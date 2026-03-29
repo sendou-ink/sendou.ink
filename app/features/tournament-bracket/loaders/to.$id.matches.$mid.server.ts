@@ -13,6 +13,7 @@ import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { tournamentMatchPage } from "~/utils/urls";
 import { executeRoll } from "../core/executeRoll.server";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
+import * as PickBan from "../core/PickBan";
 import { tournamentFromDBCached } from "../core/Tournament.server";
 import { findMatchById } from "../queries/findMatchById.server";
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
@@ -48,8 +49,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const matchIsOver =
 		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
 
-	// Execute pending ROLL steps for CUSTOM flow
-	// xxx: how to not make it execute all the time?
 	if (
 		!matchIsOver &&
 		match.roundMaps?.pickBan === "CUSTOM" &&
@@ -57,22 +56,30 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		match.opponentOne?.id &&
 		match.opponentTwo?.id
 	) {
-		const teamOne = tournament.teamById(match.opponentOne.id);
-		const teamTwo = tournament.teamById(match.opponentTwo.id);
-		if (teamOne && teamTwo) {
-			const rollExecuted = await executeRoll({
-				matchId,
-				maps: match.roundMaps,
-				pickBanEvents,
-				results,
-				tournamentId,
-				teams: [teamOne, teamTwo],
-				tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
-			});
-			if (rollExecuted) {
-				pickBanEvents = await TournamentRepository.pickBanEventsByMatchId(
-					match.id,
-				);
+		const currentStep = PickBan.resolveCurrentStep({
+			eventCount: pickBanEvents.length,
+			preSet: match.roundMaps.customFlow.preSet,
+			postGame: match.roundMaps.customFlow.postGame,
+			resultsCount: results.length,
+		});
+		if (currentStep?.action === "ROLL") {
+			const teamOne = tournament.teamById(match.opponentOne.id);
+			const teamTwo = tournament.teamById(match.opponentTwo.id);
+			if (teamOne && teamTwo) {
+				const rollExecuted = await executeRoll({
+					matchId,
+					maps: match.roundMaps,
+					pickBanEvents,
+					results,
+					tournamentId,
+					teams: [teamOne, teamTwo],
+					tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
+				});
+				if (rollExecuted) {
+					pickBanEvents = await TournamentRepository.pickBanEventsByMatchId(
+						match.id,
+					);
+				}
 			}
 		}
 	}
