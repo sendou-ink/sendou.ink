@@ -93,9 +93,22 @@ export function findMatchesWithStartedAt(tournamentId: number) {
 			"TournamentStage.id",
 			"TournamentMatch.stageId",
 		)
+		.innerJoin(
+			"TournamentRound",
+			"TournamentRound.id",
+			"TournamentMatch.roundId",
+		)
+		.innerJoin(
+			"TournamentGroup",
+			"TournamentGroup.id",
+			"TournamentMatch.groupId",
+		)
 		.select((eb) => [
 			"TournamentMatch.id",
 			"TournamentMatch.startedAt",
+			"TournamentStage.type as stageType",
+			"TournamentRound.number as roundNumber",
+			"TournamentGroup.number as groupNumber",
 			jsonArrayFrom(
 				eb
 					.selectFrom("TournamentMatchGameResultParticipant")

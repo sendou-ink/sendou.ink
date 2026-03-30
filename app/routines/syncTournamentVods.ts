@@ -10,7 +10,8 @@ import {
 import { logger } from "~/utils/logger";
 import { Routine } from "./routine.server";
 
-const VOD_TIMESTAMP_OFFSET_SECONDS = 300;
+const VOD_TIMESTAMP_OFFSET_SECONDS = 180;
+const BRACKET_RESET_OFFSET_SECONDS = 0;
 
 export const SyncTournamentVodsRoutine = new Routine({
 	name: "SyncTournamentVods",
@@ -97,8 +98,15 @@ export async function processOneTournament(tournamentId: number) {
 					matchStartSeconds >= vodStartSeconds &&
 					matchStartSeconds <= vodEndSeconds
 				) {
+					const isBracketReset =
+						match.stageType === "double_elimination" &&
+						match.groupNumber === 3 &&
+						match.roundNumber === 2;
+					const offsetSeconds = isBracketReset
+						? BRACKET_RESET_OFFSET_SECONDS
+						: VOD_TIMESTAMP_OFFSET_SECONDS;
 					const timestampSeconds =
-						matchStartSeconds - vodStartSeconds + VOD_TIMESTAMP_OFFSET_SECONDS;
+						matchStartSeconds - vodStartSeconds + offsetSeconds;
 
 					vods.push({
 						matchId: match.id,
