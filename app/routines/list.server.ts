@@ -8,6 +8,7 @@ import { NotifySeasonStartRoutine } from "./notifySeasonStart";
 import { SetOldGroupsAsInactiveRoutine } from "./setOldGroupsAsInactive";
 import { SyncLiveStreamsRoutine } from "./syncLiveStreams";
 import { SyncSplatoonRotationsRoutine } from "./syncSplatoonRotations";
+import { SyncTournamentVodsRoutine } from "./syncTournamentVods";
 import { UpdatePatreonDataRoutine } from "./updatePatreonData";
 
 /** List of Routines that should occur hourly at XX:00 */
@@ -17,6 +18,7 @@ export const everyHourAt00 = [
 	NotifyCheckInStartRoutine,
 	NotifyScrimStartingSoonRoutine,
 	SyncSplatoonRotationsRoutine,
+	SyncTournamentVodsRoutine,
 ];
 
 /** List of Routines that should occur hourly at XX:30 */

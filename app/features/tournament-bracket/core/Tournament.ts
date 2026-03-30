@@ -37,6 +37,15 @@ import type { TournamentData, TournamentDataTeam } from "./Tournament.server";
 
 export type OptionalIdObject = { id: number } | undefined;
 
+export type MatchVod = {
+	matchId: number;
+	platform: string;
+	account: string;
+	vodId: string;
+	timestampSeconds: number;
+	viewCount: number;
+};
+
 /** Extends and providers utility functions on top of the bracket-manager library. Updating data after the bracket has started is responsibility of bracket-manager. */
 export class Tournament {
 	brackets: Bracket[] = [];

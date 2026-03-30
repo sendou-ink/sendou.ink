@@ -2,8 +2,12 @@ import { isAfter, subDays } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import { LEAGUES } from "~/features/tournament/tournament-constants";
+import {
+	LEAGUES,
+	TOURNAMENT,
+} from "~/features/tournament/tournament-constants";
 import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentMatchVodRepository from "~/features/tournament-bracket/TournamentMatchVodRepository.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
@@ -19,6 +23,7 @@ export type TournamentLoaderData = {
 	preparedMaps:
 		| Awaited<ReturnType<typeof TournamentRepository.findPreparedMapsById>>
 		| undefined;
+	vods: TournamentMatchVodRepository.VodsByTournamentId | undefined;
 };
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
@@ -65,6 +70,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		? await TournamentRepository.hasChildTournaments(tournamentId)
 		: false;
 
+	const showVods =
+		tournament.ctx.isFinalized &&
+		isAfter(
+			databaseTimestampToDate(tournament.ctx.startTime),
+			subDays(new Date(), TOURNAMENT.VOD_VISIBILITY_DAYS),
+		);
+
 	// skip expensive rr7 data serialization (hot path loader)
 	return JSON.stringify({
 		tournament,
@@ -76,5 +88,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			isTournamentOrganizer && !tournament.ctx.isFinalized
 				? await TournamentRepository.findPreparedMapsById(tournamentId)
 				: undefined,
+		vods: showVods
+			? await TournamentMatchVodRepository.findVodsByTournamentId(tournamentId)
+			: undefined,
 	});
 };

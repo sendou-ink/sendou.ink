@@ -1101,6 +1101,17 @@ export interface TournamentStreamer {
 	twitchAccount: string;
 }
 
+export interface TournamentMatchVod {
+	id: GeneratedAlways<number>;
+	matchId: number;
+	userId: number | null;
+	platform: string;
+	account: string;
+	vodId: string;
+	timestampSeconds: number;
+	viewCount: number;
+}
+
 export interface BanLog {
 	id: GeneratedAlways<number>;
 	userId: number;
@@ -1352,6 +1363,7 @@ export interface DB {
 	TournamentBracketProgressionOverride: TournamentBracketProgressionOverride;
 	TournamentOrganizationBannedUser: TournamentOrganizationBannedUser;
 	TournamentStreamer: TournamentStreamer;
+	TournamentMatchVod: TournamentMatchVod;
 	TrustRelationship: TrustRelationship;
 	Friendship: Friendship;
 	FriendRequest: FriendRequest;

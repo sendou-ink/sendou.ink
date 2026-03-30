@@ -7,12 +7,20 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { useUser } from "~/features/auth/core/user";
 import { TournamentStream } from "~/features/tournament/components/TournamentStream";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import {
+	useTournament,
+	useTournamentVods,
+} from "~/features/tournament/routes/to.$id";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { Unpacked } from "~/utils/types";
-import { tournamentMatchPage, tournamentStreamsPage } from "~/utils/urls";
+import {
+	tournamentMatchPage,
+	tournamentStreamsPage,
+	vodUrl,
+} from "~/utils/urls";
 import type { Bracket } from "../../core/Bracket";
 import * as Deadline from "../../core/Deadline";
+import type { MatchVod } from "../../core/Tournament";
 import type { TournamentData } from "../../core/Tournament.server";
 import parentStyles from "../../tournament-bracket.module.css";
 import { matchEndedEarly } from "../../tournament-bracket-utils";
@@ -68,6 +76,7 @@ export function Match(props: MatchProps) {
 
 function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 	const tournament = useTournament();
+	const vods = useTournamentVods();
 	const streamingParticipants = tournament.streamingParticipantIds ?? [];
 
 	const prefix = () => {
@@ -80,6 +89,7 @@ function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 
 	const isOver =
 		match.opponent1?.result === "win" || match.opponent2?.result === "win";
+	const matchVods = isOver ? vods.filter((v) => v.matchId === match.id) : [];
 	const hasStreams = () => {
 		if (isOver || !match.opponent1?.id || !match.opponent2?.id) return false;
 		if (
@@ -140,6 +150,23 @@ function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 					}
 				>
 					<MatchStreams match={match} />
+				</SendouPopover>
+			) : matchVods.length > 0 ? (
+				<SendouPopover
+					placement="top"
+					popoverClassName="w-max"
+					trigger={
+						<SendouButton
+							className={clsx(
+								styles.matchHeaderBox,
+								styles.matchHeaderBoxButton,
+							)}
+						>
+							📺 VOD
+						</SendouButton>
+					}
+				>
+					<MatchVods vods={matchVods} />
 				</SendouPopover>
 			) : null}
 		</div>
@@ -316,6 +343,27 @@ function MatchStreams({ match }: Pick<MatchProps, "match">) {
 					stream={stream}
 					withThumbnail={false}
 				/>
+			))}
+		</div>
+	);
+}
+
+function MatchVods({ vods }: { vods: MatchVod[] }) {
+	return (
+		<div className={clsx("stack sm", parentStyles.streamPopover)}>
+			{vods.map((vod) => (
+				<a
+					key={`${vod.vodId}-${vod.account}`}
+					href={vodUrl(vod)}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="stack horizontal xs items-center"
+				>
+					<span className="font-semi-bold">{vod.account}</span>
+					<span className="text-lighter text-xs">
+						{vod.viewCount.toLocaleString()} views
+					</span>
+				</a>
 			))}
 		</div>
 	);
