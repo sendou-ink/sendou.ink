@@ -314,6 +314,7 @@ function mapTournamentFromDB(
 		hidden: Boolean(tournament.hidden),
 		minMembersPerTeam: tournament.settings.minMembersPerTeam ?? 4,
 		modes: null,
+		hasVods: (tournament.vodCount ?? 0) > 0,
 		firstPlacer:
 			highestDivWinners.length > 0
 				? {

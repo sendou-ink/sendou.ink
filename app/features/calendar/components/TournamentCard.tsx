@@ -120,6 +120,9 @@ export function TournamentCard({
 				) : null}
 			</Link>
 			<div className="stack horizontal justify-between items-center">
+				{isShowcase && "hasVods" in tournament && tournament.hasVods ? (
+					<div className={styles.vodIndicator}>📺 VODs</div>
+				) : null}
 				{tournament.modes ? <ModesPill modes={tournament.modes} /> : null}
 				<div
 					className={clsx(styles.pillsContainer, {

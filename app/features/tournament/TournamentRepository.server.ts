@@ -539,6 +539,21 @@ export function forShowcase() {
 						).as("pickupAvatarUrl"),
 					]),
 			).as("firstPlacers"),
+			eb
+				.selectFrom("TournamentMatchVod")
+				.innerJoin(
+					"TournamentMatch",
+					"TournamentMatch.id",
+					"TournamentMatchVod.matchId",
+				)
+				.innerJoin(
+					"TournamentStage",
+					"TournamentStage.id",
+					"TournamentMatch.stageId",
+				)
+				.whereRef("TournamentStage.tournamentId", "=", "Tournament.id")
+				.select(({ fn }) => [fn.countAll<number>().as("count")])
+				.as("vodCount"),
 		])
 		.where("CalendarEventDate.startTime", ">", databaseTimestampWeekAgo())
 		.orderBy("CalendarEventDate.startTime", "asc")

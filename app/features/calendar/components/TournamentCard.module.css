@@ -170,6 +170,20 @@
 	min-height: initial;
 }
 
+.vodIndicator {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-selector);
+	height: var(--selector-size);
+	width: max-content;
+	padding: 0 var(--s-1-5);
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	white-space: nowrap;
+}
+
 .badgePill {
 	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-selector);
