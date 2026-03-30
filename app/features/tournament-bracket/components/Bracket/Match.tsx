@@ -349,22 +349,41 @@ function MatchStreams({ match }: Pick<MatchProps, "match">) {
 }
 
 function MatchVods({ vods }: { vods: MatchVod[] }) {
+	const tournament = useTournament();
+
 	return (
-		<div className={clsx("stack sm", parentStyles.streamPopover)}>
-			{vods.map((vod) => (
-				<a
-					key={`${vod.vodId}-${vod.account}`}
-					href={vodUrl(vod)}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="stack horizontal xs items-center"
-				>
-					<span className="font-semi-bold">{vod.account}</span>
-					<span className="text-lighter text-xs">
-						{vod.viewCount.toLocaleString()} views
-					</span>
-				</a>
-			))}
+		<div className={clsx("stack md", parentStyles.streamPopover)}>
+			{vods.map((vod) => {
+				const team = vod.userId
+					? tournament.ctx.teams.find((t) =>
+							t.members.some((m) => m.userId === vod.userId),
+						)
+					: null;
+				const user = team?.members.find((m) => m.userId === vod.userId);
+
+				return (
+					<a
+						key={`${vod.vodId}-${vod.account}`}
+						href={vodUrl(vod)}
+						target="_blank"
+						rel="noopener noreferrer"
+						className={parentStyles.vodLink}
+					>
+						{user ? (
+							<>
+								<Avatar size="xxs" user={user} />
+								<span className="font-semi-bold">{user.username}</span>
+								<span className="text-theme-secondary">{team?.name}</span>
+							</>
+						) : (
+							<span className="font-semi-bold">{vod.account}</span>
+						)}
+						<span className="text-lighter text-xs">
+							{vod.viewCount.toLocaleString()} views
+						</span>
+					</a>
+				);
+			})}
 		</div>
 	);
 }

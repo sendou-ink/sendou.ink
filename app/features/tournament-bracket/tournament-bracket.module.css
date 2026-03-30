@@ -513,6 +513,17 @@
 	width: 280px;
 }
 
+.vodLink {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-xs);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	min-width: 0;
+}
+
 .actionSectionWrapper {
 	& [class*="tabPanel"] {
 		background-color: var(--color-bg-high);

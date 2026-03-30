@@ -39,6 +39,7 @@ export type OptionalIdObject = { id: number } | undefined;
 
 export type MatchVod = {
 	matchId: number;
+	userId: number | null;
 	platform: string;
 	account: string;
 	vodId: string;

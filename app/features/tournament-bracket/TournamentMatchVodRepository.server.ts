@@ -23,6 +23,7 @@ export function findVodsByTournamentId(tournamentId: number) {
 		)
 		.select([
 			"TournamentMatchVod.matchId",
+			"TournamentMatchVod.userId",
 			"TournamentMatchVod.platform",
 			"TournamentMatchVod.account",
 			"TournamentMatchVod.vodId",
