@@ -39,6 +39,7 @@ interface MatchProps {
 	hideMatchTimer?: boolean;
 	lineType?: LineType;
 	lineVerticalExtend?: number;
+	spoilerCensor?: "full" | "score-only";
 }
 
 export function Match(props: MatchProps) {
@@ -204,6 +205,7 @@ function MatchRow({
 	isPreview,
 	showSimulation,
 	bracket,
+	spoilerCensor,
 }: MatchProps & { side: 1 | 2 }) {
 	const user = useUser();
 	const tournament = useTournament();
@@ -212,6 +214,7 @@ function MatchRow({
 	const opponent = match[`opponent${side}`];
 
 	const score = () => {
+		if (spoilerCensor) return null;
 		if (!match.opponent1?.id || !match.opponent2?.id || isPreview) return null;
 
 		const opponentScore = opponent!.score;
@@ -235,7 +238,7 @@ function MatchRow({
 		return opponentScore ?? 0;
 	};
 
-	const isLoser = opponent?.result === "loss";
+	const isLoser = spoilerCensor ? false : opponent?.result === "loss";
 
 	const { team, simulated } = (() => {
 		if (opponent?.id) {
@@ -255,15 +258,24 @@ function MatchRow({
 	const ownTeam = tournament.teamMemberOfByUser(user);
 
 	const logoSrc = team ? tournament.tournamentTeamLogoSrc(team) : null;
-	const showAvatar = !simulated && team;
+	const showAvatar = spoilerCensor === "full" ? false : !simulated && team;
 
-	const isBigSeedNumber = team?.seed && team.seed > 99;
+	const isBigSeedNumber =
+		spoilerCensor === "full" ? false : team?.seed && team.seed > 99;
+
+	const displayedSeed = spoilerCensor === "full" ? null : team?.seed;
+	const displayedName =
+		spoilerCensor === "full" ? "???" : (team?.name ?? "???");
 
 	return (
 		<div
 			className={clsx("stack horizontal", { "text-lighter": isLoser })}
 			data-participant-id={team?.id}
-			title={team?.members.map((m) => m.username).join(", ")}
+			title={
+				spoilerCensor === "full"
+					? undefined
+					: team?.members.map((m) => m.username).join(", ")
+			}
 		>
 			<div
 				className={clsx(styles.matchSeed, {
@@ -271,13 +283,13 @@ function MatchRow({
 					[styles.matchSeedWide]: isBigSeedNumber,
 				})}
 			>
-				{team?.seed}
+				{displayedSeed}
 			</div>
 			{showAvatar ? (
 				<Avatar
 					size="xxxs"
 					url={logoSrc}
-					identiconInput={team.name}
+					identiconInput={team!.name}
 					className="mr-1"
 				/>
 			) : null}
@@ -294,7 +306,7 @@ function MatchRow({
 					invisible: !team,
 				})}
 			>
-				{team?.name ?? "???"}
+				{displayedName}
 			</div>{" "}
 			<div className={styles.matchScore}>{score()}</div>
 		</div>

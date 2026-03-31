@@ -1,5 +1,7 @@
 import clsx from "clsx";
+import { differenceInDays } from "date-fns";
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import {
@@ -13,6 +15,7 @@ import { InfoPopover } from "~/components/InfoPopover";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
 import type { Standing } from "~/features/tournament-bracket/core/Bracket";
+import { useSpoilerFree } from "~/hooks/useSpoilerFree";
 import {
 	SPR_INFO_URL,
 	tournamentMatchPage,
@@ -20,10 +23,18 @@ import {
 } from "~/utils/urls";
 import * as Standings from "../core/Standings";
 import styles from "../tournament.module.css";
+import { TOURNAMENT } from "../tournament-constants";
 import { useTournament } from "./to.$id";
 
+// xxx: instead of blur just hide the whole page and show a giant (centered) button to reveal
 export default function TournamentResultsPage() {
 	const tournament = useTournament();
+	const { isCensored, reveal } = useSpoilerFree();
+
+	const withinSpoilerWindow =
+		differenceInDays(new Date(), tournament.ctx.startTime) <
+		TOURNAMENT.VOD_VISIBILITY_DAYS;
+	const censored = withinSpoilerWindow && isCensored(tournament.ctx.id);
 
 	const standingsResult = Standings.tournamentStandings(tournament);
 
@@ -36,14 +47,41 @@ export default function TournamentResultsPage() {
 			);
 		}
 
-		return (
+		return censored ? (
+			<SpoilerOverlay onReveal={() => reveal(tournament.ctx.id)}>
+				<ResultsTable standings={standingsResult.standings} />
+			</SpoilerOverlay>
+		) : (
 			<div>
 				<ResultsTable standings={standingsResult.standings} />
 			</div>
 		);
 	}
 
-	return (
+	return censored ? (
+		<SpoilerOverlay onReveal={() => reveal(tournament.ctx.id)}>
+			<SendouTabs>
+				<SendouTabList>
+					{standingsResult.standings.map(({ div }) => (
+						<SendouTab key={div} id={div}>
+							{div}
+						</SendouTab>
+					))}
+				</SendouTabList>
+				{standingsResult.standings.map(({ div, standings }) => (
+					<SendouTabPanel key={div} id={div}>
+						{standings.length === 0 ? (
+							<div className="text-center text-lg font-semi-bold text-lighter">
+								No team finished yet, check back later
+							</div>
+						) : (
+							<ResultsTable standings={standings} />
+						)}
+					</SendouTabPanel>
+				))}
+			</SendouTabs>
+		</SpoilerOverlay>
+	) : (
 		<SendouTabs>
 			<SendouTabList>
 				{standingsResult.standings.map(({ div }) => (
@@ -64,6 +102,31 @@ export default function TournamentResultsPage() {
 				</SendouTabPanel>
 			))}
 		</SendouTabs>
+	);
+}
+
+function SpoilerOverlay({
+	children,
+	onReveal,
+}: {
+	children: React.ReactNode;
+	onReveal: () => void;
+}) {
+	const { t } = useTranslation(["common"]);
+
+	return (
+		<div className={styles.spoilerContainer}>
+			<div className={styles.spoilerOverlay}>
+				<button
+					type="button"
+					className={styles.spoilerRevealButton}
+					onClick={onReveal}
+				>
+					{t("common:spoilerFree.showResults")}
+				</button>
+			</div>
+			{children}
+		</div>
 	);
 }
 

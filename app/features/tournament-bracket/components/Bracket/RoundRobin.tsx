@@ -5,8 +5,10 @@ import styles from "./bracket.module.css";
 import { Match } from "./Match";
 import { PlacementsTable } from "./PlacementsTable";
 import { RoundHeader } from "./RoundHeader";
+import { useBracketSpoilerCensor } from "./useBracketSpoilerCensor";
 
 export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
+	const { censored, matchCensorLevel } = useBracketSpoilerCensor();
 	const groups = getGroups(bracket);
 
 	return (
@@ -75,6 +77,12 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 														bracket={bracket}
 														type="groups"
 														group={groupName.split(" ")[1]}
+														spoilerCensor={matchCensorLevel({
+															bracketType: "round_robin",
+															roundNumber: round.number,
+															roundIdx: 0,
+															matchType: "groups",
+														})}
 													/>
 												);
 											})}
@@ -83,11 +91,13 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 								);
 							})}
 						</div>
-						<PlacementsTable
-							bracket={bracket}
-							groupId={groupId}
-							allMatchesFinished={allMatchesFinished}
-						/>
+						{censored ? null : (
+							<PlacementsTable
+								bracket={bracket}
+								groupId={groupId}
+								allMatchesFinished={allMatchesFinished}
+							/>
+						)}
 					</div>
 				);
 			})}

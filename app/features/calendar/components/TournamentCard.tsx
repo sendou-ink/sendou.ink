@@ -9,6 +9,7 @@ import { Image, ModeImage } from "~/components/Image";
 import { TierPill } from "~/components/TierPill";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useSpoilerFree } from "~/hooks/useSpoilerFree";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl } from "~/utils/urls";
@@ -16,6 +17,7 @@ import type { CalendarEvent, ShowcaseCalendarEvent } from "../calendar-types";
 import { Tags } from "./Tags";
 import styles from "./TournamentCard.module.css";
 
+// xxx: button and styling quite ugly, can we stop hover style on the tournament logo?
 export function TournamentCard({
 	tournament,
 	className,
@@ -27,6 +29,7 @@ export function TournamentCard({
 }) {
 	const isHydrated = useHydrated();
 	const { formatDateTimeSmartMinutes, formatDistanceToNow } = useTimeFormat();
+	const { isCensored, reveal } = useSpoilerFree();
 
 	const isShowcase = tournament.type === "showcase";
 	const isCalendar = tournament.type === "calendar";
@@ -116,7 +119,11 @@ export function TournamentCard({
 					</div>
 				) : null}
 				{isShowcase && tournament.firstPlacer ? (
-					<TournamentFirstPlacers firstPlacer={tournament.firstPlacer} />
+					isCensored(tournament.id) ? (
+						<CensoredFirstPlacers onReveal={() => reveal(tournament.id)} />
+					) : (
+						<TournamentFirstPlacers firstPlacer={tournament.firstPlacer} />
+					)
 				) : null}
 			</Link>
 			<div className="stack horizontal justify-between items-center">
@@ -188,6 +195,33 @@ function TournamentFirstPlacers({
 						+{firstPlacer.notShownMembersCount}
 					</div>
 				) : null}
+			</div>
+		</div>
+	);
+}
+
+function CensoredFirstPlacers({ onReveal }: { onReveal: () => void }) {
+	const { t } = useTranslation(["common"]);
+
+	return (
+		<div className={styles.firstPlacers}>
+			<div className={styles.spoilerOverlay}>
+				<button
+					type="button"
+					className={styles.spoilerRevealButton}
+					onClick={(e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						onReveal();
+					}}
+				>
+					{t("common:spoilerFree.showResults")}
+				</button>
+			</div>
+			<div className="stack xs horizontal items-center text-xs">
+				<div className="stack items-start">
+					<span className={styles.firstPlacersTeamName}>???</span>
+				</div>
 			</div>
 		</div>
 	);

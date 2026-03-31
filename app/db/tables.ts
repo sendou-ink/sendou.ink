@@ -971,6 +971,8 @@ export interface UserPreferences {
 	clockFormat?: "24h" | "12h" | "auto";
 	/** Is the new widget based user page enabled? (Supporter early preview) */
 	newProfileEnabled?: boolean;
+	// xxx: jsdoc here
+	spoilerFreeMode?: boolean;
 }
 
 export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;

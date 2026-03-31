@@ -148,10 +148,32 @@
 }
 
 .firstPlacers {
+	position: relative;
 	margin-inline: auto;
 	margin-top: var(--s-5);
 	margin-block-end: var(--s-4);
 	width: max-content;
+}
+
+.spoilerOverlay {
+	position: absolute;
+	inset: 0;
+	z-index: 5;
+	backdrop-filter: blur(3px);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.spoilerRevealButton {
+	background-color: var(--color-bg);
+	color: var(--color-text);
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+	padding: var(--s-1) var(--s-3);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	cursor: pointer;
 }
 
 .firstPlacersTeamName {

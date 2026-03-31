@@ -30,6 +30,7 @@ import {
 	clockFormatSchema,
 	disableBuildAbilitySortingSchema,
 	disallowScrimPickupsFromUntrustedSchema,
+	spoilerFreeModeSchema,
 	updateNoScreenSchema,
 } from "../settings-schemas";
 import styles from "./settings.module.css";
@@ -108,6 +109,16 @@ export default function SettingsPage() {
 								defaultValues={{
 									newValue:
 										user.preferences.disallowScrimPickupsFromUntrusted ?? false,
+								}}
+								autoSubmit
+								revalidateRoot
+							>
+								{({ FormField }) => <FormField name="newValue" />}
+							</SendouForm>
+							<SendouForm
+								schema={spoilerFreeModeSchema}
+								defaultValues={{
+									newValue: user.preferences.spoilerFreeMode ?? false,
 								}}
 								autoSubmit
 								revalidateRoot

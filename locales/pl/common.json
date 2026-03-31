@@ -393,5 +393,7 @@
 	"header.parameter": "",
 	"weaponArt.title": "",
 	"tier.tentative": "",
-	"tier.confirmed": ""
+	"tier.confirmed": "",
+	"spoilerFree.showResults": "",
+	"spoilerFree.hideResults": ""
 }

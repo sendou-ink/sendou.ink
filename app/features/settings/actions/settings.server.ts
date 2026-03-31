@@ -40,6 +40,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 			break;
 		}
+		case "UPDATE_SPOILER_FREE_MODE": {
+			await UserRepository.updatePreferences(user.id, {
+				spoilerFreeMode: data.newValue,
+			});
+			break;
+		}
 		case "UPDATE_NO_SCREEN": {
 			await QSettingsRepository.updateNoScreen({
 				userId: user.id,

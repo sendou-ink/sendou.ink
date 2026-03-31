@@ -392,5 +392,7 @@
 	"header.parameter": "",
 	"weaponArt.title": "",
 	"tier.tentative": "Tier {{tierName}} provisional",
-	"tier.confirmed": "Tier {{tierName}} confirmado"
+	"tier.confirmed": "Tier {{tierName}} confirmado",
+	"spoilerFree.showResults": "",
+	"spoilerFree.hideResults": ""
 }

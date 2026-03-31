@@ -390,5 +390,7 @@
 	"header.parameter": "Parameter",
 	"weaponArt.title": "Community Art",
 	"tier.tentative": "Tentative {{tierName}}-tier (based on series history)",
-	"tier.confirmed": "{{tierName}}-tier tournament"
+	"tier.confirmed": "{{tierName}}-tier tournament",
+	"spoilerFree.showResults": "Show results",
+	"spoilerFree.hideResults": "Hide results"
 }
