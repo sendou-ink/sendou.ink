@@ -253,7 +253,7 @@ export function SwissBracket({
 										);
 									})}
 								</div>
-								{teamWithBye ? (
+								{teamWithBye && !(censored && round.number > 1) ? (
 									<div
 										className="text-xs text-lighter font-semi-bold"
 										data-testid="bye-team"

@@ -1,9 +1,11 @@
 import clsx from "clsx";
 import { differenceInDays } from "date-fns";
+import { ShieldMinus } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
+import { SendouButton } from "~/components/elements/Button";
 import {
 	SendouTab,
 	SendouTabList,
@@ -26,7 +28,6 @@ import styles from "../tournament.module.css";
 import { TOURNAMENT } from "../tournament-constants";
 import { useTournament } from "./to.$id";
 
-// xxx: instead of blur just hide the whole page and show a giant (centered) button to reveal
 export default function TournamentResultsPage() {
 	const tournament = useTournament();
 	const { isCensored, reveal } = useSpoilerFree();
@@ -106,7 +107,6 @@ export default function TournamentResultsPage() {
 }
 
 function SpoilerOverlay({
-	children,
 	onReveal,
 }: {
 	children: React.ReactNode;
@@ -115,17 +115,15 @@ function SpoilerOverlay({
 	const { t } = useTranslation(["common"]);
 
 	return (
-		<div className={styles.spoilerContainer}>
-			<div className={styles.spoilerOverlay}>
-				<button
-					type="button"
-					className={styles.spoilerRevealButton}
-					onClick={onReveal}
-				>
-					{t("common:spoilerFree.showResults")}
-				</button>
-			</div>
-			{children}
+		<div className={styles.spoilerRevealContainer}>
+			<SendouButton
+				variant="outlined"
+				size="big"
+				onPress={onReveal}
+				icon={<ShieldMinus />}
+			>
+				{t("common:spoilerFree.showResults")}
+			</SendouButton>
 		</div>
 	);
 }

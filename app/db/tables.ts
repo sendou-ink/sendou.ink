@@ -971,7 +971,7 @@ export interface UserPreferences {
 	clockFormat?: "24h" | "12h" | "auto";
 	/** Is the new widget based user page enabled? (Supporter early preview) */
 	newProfileEnabled?: boolean;
-	// xxx: jsdoc here
+	/** Is spoiler-free mode enabled? Hides recent tournament results and scores until the user chooses to reveal them. */
 	spoilerFreeMode?: boolean;
 }
 

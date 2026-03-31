@@ -497,28 +497,9 @@
 	border-radius: var(--radius-box);
 }
 
-.spoilerContainer {
-	position: relative;
-	overflow: hidden;
-}
-
-.spoilerOverlay {
-	position: absolute;
-	inset: 0;
-	z-index: 5;
-	backdrop-filter: blur(3px);
+.spoilerRevealContainer {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-}
-
-.spoilerRevealButton {
-	background-color: var(--color-bg);
-	color: var(--color-text);
-	border: var(--border-style);
-	border-radius: var(--radius-field);
-	padding: var(--s-2) var(--s-6);
-	font-size: var(--font-md);
-	font-weight: var(--weight-semi);
-	cursor: pointer;
+	padding: var(--s-12) 0;
 }

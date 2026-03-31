@@ -153,7 +153,6 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 														? "losers"
 														: undefined
 										}
-										// xxx: check behavior for each bracket type
 										spoilerCensor={matchCensorLevel({
 											bracketType:
 												props.type === "single"

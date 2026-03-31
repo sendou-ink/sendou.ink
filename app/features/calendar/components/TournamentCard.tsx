@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { Trophy, Users } from "lucide-react";
+import { ShieldMinus, Trophy, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
@@ -17,7 +17,6 @@ import type { CalendarEvent, ShowcaseCalendarEvent } from "../calendar-types";
 import { Tags } from "./Tags";
 import styles from "./TournamentCard.module.css";
 
-// xxx: button and styling quite ugly, can we stop hover style on the tournament logo?
 export function TournamentCard({
 	tournament,
 	className,
@@ -119,14 +118,16 @@ export function TournamentCard({
 					</div>
 				) : null}
 				{isShowcase && tournament.firstPlacer ? (
-					isCensored(tournament.id) ? (
-						<CensoredFirstPlacers onReveal={() => reveal(tournament.id)} />
-					) : (
-						<TournamentFirstPlacers firstPlacer={tournament.firstPlacer} />
-					)
+					<TournamentFirstPlacers
+						firstPlacer={tournament.firstPlacer}
+						censored={isCensored(tournament.id)}
+					/>
 				) : null}
 			</Link>
 			<div className="stack horizontal justify-between items-center">
+				{isShowcase && tournament.firstPlacer && isCensored(tournament.id) ? (
+					<SpoilerRevealPill onReveal={() => reveal(tournament.id)} />
+				) : null}
 				{isShowcase && "hasVods" in tournament && tournament.hasVods ? (
 					<div className={styles.vodIndicator}>📺 VODs</div>
 				) : null}
@@ -157,15 +158,17 @@ export function TournamentCard({
 
 function TournamentFirstPlacers({
 	firstPlacer,
+	censored,
 }: {
 	firstPlacer: NonNullable<ShowcaseCalendarEvent["firstPlacer"]>;
+	censored: boolean;
 }) {
 	const { t } = useTranslation(["front"]);
 
 	return (
 		<div className={styles.firstPlacers}>
 			<div className="stack xs horizontal items-center text-xs">
-				{firstPlacer.logoUrl ? (
+				{!censored && firstPlacer.logoUrl ? (
 					<img
 						src={firstPlacer.logoUrl}
 						alt=""
@@ -175,7 +178,7 @@ function TournamentFirstPlacers({
 				) : null}{" "}
 				<div className="stack items-start">
 					<span className={styles.firstPlacersTeamName}>
-						{firstPlacer.teamName}
+						{censored ? "???" : firstPlacer.teamName}
 					</span>
 					<div className="text-xxxs text-lighter font-bold text-uppercase">
 						{t("front:showcase.card.winner")}
@@ -186,11 +189,13 @@ function TournamentFirstPlacers({
 			<div className="text-xxs stack items-start mt-1">
 				{firstPlacer.members.map((member) => (
 					<div key={member.id} className="stack horizontal xs items-center">
-						{member.country ? <Flag tiny countryCode={member.country} /> : null}
-						{member.username}{" "}
+						{!censored && member.country ? (
+							<Flag tiny countryCode={member.country} />
+						) : null}
+						{censored ? "???" : member.username}{" "}
 					</div>
 				))}
-				{firstPlacer.notShownMembersCount > 0 ? (
+				{!censored && firstPlacer.notShownMembersCount > 0 ? (
 					<div className="font-bold text-lighter">
 						+{firstPlacer.notShownMembersCount}
 					</div>
@@ -200,30 +205,18 @@ function TournamentFirstPlacers({
 	);
 }
 
-function CensoredFirstPlacers({ onReveal }: { onReveal: () => void }) {
+function SpoilerRevealPill({ onReveal }: { onReveal: () => void }) {
 	const { t } = useTranslation(["common"]);
 
 	return (
-		<div className={styles.firstPlacers}>
-			<div className={styles.spoilerOverlay}>
-				<button
-					type="button"
-					className={styles.spoilerRevealButton}
-					onClick={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						onReveal();
-					}}
-				>
-					{t("common:spoilerFree.showResults")}
-				</button>
-			</div>
-			<div className="stack xs horizontal items-center text-xs">
-				<div className="stack items-start">
-					<span className={styles.firstPlacersTeamName}>???</span>
-				</div>
-			</div>
-		</div>
+		<SendouButton
+			variant="outlined"
+			size="miniscule"
+			onPress={onReveal}
+			icon={<ShieldMinus />}
+		>
+			{t("common:spoilerFree.showResults")}
+		</SendouButton>
 	);
 }
 
