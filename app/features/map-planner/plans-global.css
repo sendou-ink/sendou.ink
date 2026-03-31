@@ -2,7 +2,7 @@
 
 /* https://github.com/tldraw/tldraw/blob/2352985e949d14270fc89dc60144239c37c8ff91/packages/tldraw/src/hooks/useStylesheet.ts */
 @import url("https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Source+Code+Pro&family=Source+Sans+Pro&family=Crimson+Pro&display=block");
-@import url("tldraw/tldraw.css");
+@import url("@tldraw/tldraw/tldraw.css");
 
 @font-face {
 	font-family: "Recursive";
