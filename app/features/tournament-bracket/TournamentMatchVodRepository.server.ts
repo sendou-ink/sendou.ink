@@ -26,7 +26,7 @@ export function findVodsByTournamentId(tournamentId: number) {
 			"TournamentMatchVod.userId",
 			"TournamentMatchVod.platform",
 			"TournamentMatchVod.account",
-			"TournamentMatchVod.vodId",
+			"TournamentMatchVod.platformVideoId",
 			"TournamentMatchVod.timestampSeconds",
 			"TournamentMatchVod.viewCount",
 		])
@@ -38,7 +38,17 @@ export function findVodsByTournamentId(tournamentId: number) {
 export function insertMany(vods: Insertable<DB["TournamentMatchVod"]>[]) {
 	if (vods.length === 0) return;
 
-	return db.insertInto("TournamentMatchVod").values(vods).execute();
+	return db
+		.insertInto("TournamentMatchVod")
+		.values(vods)
+		.onConflict((oc) =>
+			oc.columns(["matchId", "account"]).doUpdateSet((eb) => ({
+				viewCount: eb.ref("excluded.viewCount"),
+				timestampSeconds: eb.ref("excluded.timestampSeconds"),
+				platformVideoId: eb.ref("excluded.platformVideoId"),
+			})),
+		)
+		.execute();
 }
 
 export function findFinalizedTournamentsNeedingVods() {

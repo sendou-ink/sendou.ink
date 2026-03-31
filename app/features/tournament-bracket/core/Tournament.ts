@@ -42,7 +42,7 @@ export type MatchVod = {
 	userId: number | null;
 	platform: string;
 	account: string;
-	vodId: string;
+	platformVideoId: string;
 	timestampSeconds: number;
 	viewCount: number;
 };

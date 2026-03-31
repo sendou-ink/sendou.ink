@@ -165,11 +165,9 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 												round.name === TOURNAMENT.ROUND_NAMES.GRAND_FINALS ||
 												round.name === TOURNAMENT.ROUND_NAMES.BRACKET_RESET
 													? "grands"
-													: props.type === "winners"
-														? "winners"
-														: props.type === "losers"
-															? "losers"
-															: undefined,
+													: props.type === "losers"
+														? "losers"
+														: "winners",
 										})}
 										lineType={lineType}
 										lineVerticalExtend={verticalExtend}

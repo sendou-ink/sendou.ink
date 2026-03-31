@@ -375,7 +375,7 @@ function MatchVods({ vods }: { vods: MatchVod[] }) {
 
 				return (
 					<a
-						key={`${vod.vodId}-${vod.account}`}
+						key={`${vod.platformVideoId}-${vod.account}`}
 						href={vodUrl(vod)}
 						target="_blank"
 						rel="noopener noreferrer"

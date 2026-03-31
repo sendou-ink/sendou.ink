@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import { twitchFetch } from "./fetch";
 import {
 	type RawVideo,
@@ -13,8 +14,7 @@ export async function getUsersByLogin(
 
 	const results: UsersResponse["data"] = [];
 
-	for (let i = 0; i < logins.length; i += 100) {
-		const batch = logins.slice(i, i + 100);
+	for (const batch of R.chunk(logins, 100)) {
 		const params = batch.map((l) => `login=${encodeURIComponent(l)}`).join("&");
 
 		const res = await twitchFetch(

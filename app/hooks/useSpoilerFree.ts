@@ -32,7 +32,12 @@ export function useSpoilerFree() {
 		getSnapshot,
 		getServerSnapshot,
 	);
-	const revealedIds: number[] = JSON.parse(raw);
+	let revealedIds: number[];
+	try {
+		revealedIds = JSON.parse(raw);
+	} catch {
+		revealedIds = [];
+	}
 
 	const isEnabled = Boolean(user?.preferences.spoilerFreeMode);
 
