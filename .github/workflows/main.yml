@@ -12,37 +12,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: npm-${{ hashFiles('package-lock.json') }}
-          restore-keys: npm-
+          cache: "pnpm"
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
-        run: npx playwright install chromium
+        run: pnpm exec playwright install chromium
 
       - name: Formatter/Linter
-        run: npm run biome:check
+        run: pnpm run biome:check
       - name: Typecheck
-        run: npm run typecheck
+        run: pnpm run typecheck
       - name: Unit tests
-        run: npm run test:unit:browser
+        run: pnpm run test:unit:browser
       - name: Knip unused check
-        run: npm run knip
+        run: pnpm run knip
       - name: Check translations jsons
-        run: npm run check-translation-jsons:no-write
+        run: pnpm run check-translation-jsons:no-write
       - name: Check homemade badges
-        run: npm run check-homemade-badges
+        run: pnpm run check-homemade-badges
       - name: Check articles
-        run: npm run check-articles
+        run: pnpm run check-articles
       - name: Check test DB migrations
-        run: npm run check-test-db-migrations
+        run: pnpm run check-test-db-migrations

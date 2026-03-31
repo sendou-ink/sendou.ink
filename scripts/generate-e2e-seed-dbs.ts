@@ -42,7 +42,7 @@ async function generatePreSeededDatabases() {
 		fs.copyFileSync(baseDbPath, outputPath);
 
 		execSync(
-			`npx vite-node scripts/seed-single-variation.ts -- ${variation} ${outputPath}`,
+			`pnpm exec vite-node scripts/seed-single-variation.ts -- ${variation} ${outputPath}`,
 			{ stdio: "inherit" },
 		);
 

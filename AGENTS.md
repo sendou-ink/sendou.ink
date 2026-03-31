@@ -2,18 +2,18 @@
 
 - only rarely use comments, prefer descriptive variable and function names (leave existing comments as is)
 - if you encounter an existing TODO comment assume it is there for a reason and do not remove it
-- task is not considered completely until `npm run checks` passes
+- task is not considered completely until `pnpm run checks` passes
 - normal file structure has constants at the top immediately followed by the main function body of the file. Helpers are used to structure the code and they are at the bottom of the file (main implementation first, at the top of the file)
-- note: any formatting issue (such as tabs vs. spaces) can be resolved by running the `npm run biome:fix` command
+- note: any formatting issue (such as tabs vs. spaces) can be resolved by running the `pnpm run biome:fix` command
 
 ## Commands
 
-- `npm run typecheck` runs TypeScript type checking
-- `npm run biome:fix` runs Biome code formatter and linter
-- `npm run test:unit:browser` runs all unit tests and browser tests
-- `npm run test:e2e` runs all e2e tests
-- `npm run test:e2e:flaky-detect` runs all e2e tests and repeats each 10 times
-- `npm run i18n:sync` syncs translation jsons with English 
+- `pnpm run typecheck` runs TypeScript type checking
+- `pnpm run biome:fix` runs Biome code formatter and linter
+- `pnpm run test:unit:browser` runs all unit tests and browser tests
+- `pnpm run test:e2e` runs all e2e tests
+- `pnpm run test:e2e:flaky-detect` runs all e2e tests and repeats each 10 times
+- `pnpm run i18n:sync` syncs translation jsons with English 
 
 ## Typescript
 
@@ -75,7 +75,7 @@
 - by default everything should be translated via i18next
 - some a11y labels or text that should not normally be encountered by user (example given, error message by server) can be english
 - before adding a new translation, check that one doesn't already exist you can reuse (particularly in the common.json)
-- add only English translation and use `npm run i18n:sync` to initialize other jsons with empty string ready for translators
+- add only English translation and use `pnpm run i18n:sync` to initialize other jsons with empty string ready for translators
 
 ## Commit messages
 

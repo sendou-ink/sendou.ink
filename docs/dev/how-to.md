@@ -4,7 +4,7 @@ Guides on how to do different things when developing sendou.ink
 
 ## Fix style/lint errors (Biome)
 
-Run the `npm run biome:fix` command. Also you might want to set up Biome as an extension to your IDE and run automatically when you save a file.
+Run the `pnpm run biome:fix` command. Also you might want to set up Biome as an extension to your IDE and run automatically when you save a file.
 
 ## Add a new database migration
 
@@ -22,8 +22,8 @@ export function up(db) {
 Note: No need to implement the "down" migration
 
 3) Update the typings in `app/db/tables.ts`
-4) Run `npm run migrate up` to apply your migration
-4) Set env var `DB_PATH=db-test.sqlite3` in `.env` file & run the `npm run migrate up` command again to update the database used in unit tests
+4) Run `pnpm run migrate up` to apply your migration
+4) Set env var `DB_PATH=db-test.sqlite3` in `.env` file & run the `pnpm run migrate up` command again to update the database used in unit tests
 
 ## Add a new translation string
 
@@ -55,4 +55,4 @@ When utilizing feature specific translations ensure the json is loaded. This is 
 
 ### Sync
 
-Use the `npm run i18n:sync` command to sync translation jsons with English (removing and adding keys for each language as needed). There is not currently a check in the pipeline that this was done but it should always be ran when a new translation string has been added or removed.
+Use the `pnpm run i18n:sync` command to sync translation jsons with English (removing and adding keys for each language as needed). There is not currently a check in the pipeline that this was done but it should always be ran when a new translation string has been added or removed.

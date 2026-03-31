@@ -1,5 +1,5 @@
 // Auto-generated team name data from adj.json and sub.json
-// Regenerate with: npx tsx scripts/generate-team-names.ts
+// Regenerate with: pnpm exec tsx scripts/generate-team-names.ts
 
 export const ADJECTIVES = [
 	"Inkless",

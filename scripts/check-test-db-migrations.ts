@@ -57,7 +57,7 @@ for (const dbPath of DB_FILES) {
 
 if (hasErrors) {
 	console.error(
-		"\nRun `npm run test:e2e:generate-seeds` to regenerate test databases.",
+		"\nRun `pnpm run test:e2e:generate-seeds` to regenerate test databases.",
 	);
 	process.exit(1);
 } else {

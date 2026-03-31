@@ -1,4 +1,4 @@
-// usage: npx tsx ./scripts/unlock-league-matches.ts <parentTournamentId>
+// usage: pnpm exec tsx ./scripts/unlock-league-matches.ts <parentTournamentId>
 import "dotenv/config";
 import { sql } from "~/db/sql";
 import invariant from "~/utils/invariant";

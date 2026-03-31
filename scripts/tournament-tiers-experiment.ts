@@ -2,7 +2,7 @@
 /**
  * Tournament Tiering Experiment Script
  *
- * Run with: npx tsx scripts/tournament-tiers-experiment.ts
+ * Run with: pnpm exec tsx scripts/tournament-tiers-experiment.ts
  *
  * Calculates tournament tiers based on top teams' average SeedingSkill.
  * Tweak the THRESHOLDS object to experiment with different tier distributions.

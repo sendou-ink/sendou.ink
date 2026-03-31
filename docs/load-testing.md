@@ -7,7 +7,7 @@ This guide explains how to profile and optimize slow routes in sendou.ink.
 Install autocannon globally:
 
 ```bash
-npm install -g autocannon
+pnpm add -g autocannon
 ```
 
 ## Step 1: Identify Slow Routes
@@ -100,7 +100,7 @@ db.close();
 Run with:
 
 ```bash
-npx tsx profile-query.ts
+pnpm exec tsx profile-query.ts
 ```
 
 ## Step 3: Analyze Query Plans
@@ -221,7 +221,7 @@ After applying fixes, restart the dev server and re-run autocannon:
 
 ```bash
 # Restart server to pick up changes
-# (Ctrl+C and npm run dev)
+# (Ctrl+C and pnpm dev)
 
 # Re-benchmark
 autocannon -c 10 -d 10 http://localhost:301/leaderboards
@@ -246,7 +246,7 @@ console.log(`Rows: ${result.length}`);
 db.close();
 EOF
 
-npx tsx profile.ts
+pnpm exec tsx profile.ts
 
 # 3. Clean up
 rm profile.ts
