@@ -130,3 +130,15 @@ export function findMatchesWithStartedAt(tournamentId: number) {
 		.where("TournamentMatch.startedAt", "is not", null)
 		.execute();
 }
+
+export async function findCastedMatchHistoryByTournamentId(
+	tournamentId: number,
+) {
+	const result = await db
+		.selectFrom("Tournament")
+		.select("Tournament.castedMatchesInfo")
+		.where("Tournament.id", "=", tournamentId)
+		.executeTakeFirst();
+
+	return result?.castedMatchesInfo?.castedMatchHistory ?? [];
+}

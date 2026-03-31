@@ -522,6 +522,11 @@ export interface CastedMatchesInfo {
 	lockedMatches: Array<{ twitchAccount: string; matchId: number }>;
 	/** What matches are streamed currently & where */
 	castedMatches: { twitchAccount: string; matchId: number }[];
+	castedMatchHistory?: Array<{
+		twitchAccount: string;
+		matchId: number;
+		timestamp: number;
+	}>;
 }
 
 export interface Tournament {

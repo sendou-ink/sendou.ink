@@ -1043,6 +1043,7 @@ export function setMatchAsCasted({
 				),
 			};
 		} else {
+			const existingHistory = castedMatchesInfo.castedMatchHistory ?? [];
 			newCastedMatchesInfo = {
 				...castedMatchesInfo,
 				castedMatches: castedMatchesInfo.castedMatches
@@ -1057,6 +1058,13 @@ export function setMatchAsCasted({
 				lockedMatches: castedMatchesInfo.lockedMatches.filter(
 					(lm) => lm.matchId !== matchId,
 				),
+				castedMatchHistory: existingHistory.concat([
+					{
+						twitchAccount,
+						matchId,
+						timestamp: databaseTimestampNow(),
+					},
+				]),
 			};
 		}
 

@@ -30,95 +30,127 @@ async function syncTournamentVods() {
 }
 
 export async function processOneTournament(tournamentId: number) {
+	const matches =
+		await TournamentMatchVodRepository.findMatchesWithStartedAt(tournamentId);
+	if (matches.length === 0) return;
+
+	const matchesById = new Map(matches.map((m) => [m.id, m]));
+	const loginToTwitchId = new Map<string, string>();
+	const vods: Insertable<DB["TournamentMatchVod"]>[] = [];
+
+	// Player stream VODs
 	const streamers =
 		await TournamentMatchVodRepository.findStreamersByTournamentId(
 			tournamentId,
 		);
-	if (streamers.length === 0) return;
 
-	const twitchLogins = streamers.map((s) => s.twitchAccount);
-	const twitchUsers = await getUsersByLogin(twitchLogins);
-
-	const loginToUserId = new Map(
-		twitchUsers.map((u) => [u.login.toLowerCase(), u.id]),
-	);
-
-	const matches =
-		await TournamentMatchVodRepository.findMatchesWithStartedAt(tournamentId);
-
-	const participantsByMatch = new Map(
-		matches.map((m) => [m.id, new Set(m.participants.map((p) => p.userId))]),
-	);
-
-	const streamerDbUserIds = new Map(
-		streamers
-			.filter((s) => s.userId !== null)
-			.map((s) => [s.twitchAccount.toLowerCase(), s.userId!]),
-	);
-
-	const vods: Insertable<DB["TournamentMatchVod"]>[] = [];
-
-	for (const streamer of streamers) {
-		const twitchUserId = loginToUserId.get(
-			streamer.twitchAccount.toLowerCase(),
+	if (streamers.length > 0) {
+		const twitchUsers = await getUsersByLogin(
+			streamers.map((s) => s.twitchAccount),
 		);
-		if (!twitchUserId) continue;
-
-		let videos: Awaited<ReturnType<typeof getArchiveVideos>>;
-		try {
-			videos = await getArchiveVideos(twitchUserId);
-		} catch (e) {
-			logger.warn(`Failed to fetch VODs for ${streamer.twitchAccount}: ${e}`);
-			continue;
+		for (const u of twitchUsers) {
+			loginToTwitchId.set(u.login.toLowerCase(), u.id);
 		}
 
-		if (videos.length === 0) continue;
+		const participantsByMatch = new Map(
+			matches.map((m) => [m.id, new Set(m.participants.map((p) => p.userId))]),
+		);
 
-		const dbUserId =
-			streamerDbUserIds.get(streamer.twitchAccount.toLowerCase()) ?? null;
+		const streamerDbUserIds = new Map(
+			streamers
+				.filter((s) => s.userId !== null)
+				.map((s) => [s.twitchAccount.toLowerCase(), s.userId!]),
+		);
 
-		for (const match of matches) {
-			if (!match.startedAt) continue;
+		for (const streamer of streamers) {
+			const twitchUserId = loginToTwitchId.get(
+				streamer.twitchAccount.toLowerCase(),
+			);
+			if (!twitchUserId) continue;
 
-			if (dbUserId !== null) {
-				const matchParticipants = participantsByMatch.get(match.id);
-				if (!matchParticipants?.has(dbUserId)) continue;
-			}
+			const videos = await fetchArchiveVideos(
+				twitchUserId,
+				streamer.twitchAccount,
+			);
+			if (!videos) continue;
 
-			const matchStartSeconds = match.startedAt;
+			const dbUserId =
+				streamerDbUserIds.get(streamer.twitchAccount.toLowerCase()) ?? null;
 
-			for (const video of videos) {
-				const vodStartSeconds = Math.floor(
-					new Date(video.created_at).getTime() / 1000,
-				);
-				const vodDurationSeconds = parseTwitchDuration(video.duration);
-				const vodEndSeconds = vodStartSeconds + vodDurationSeconds;
+			for (const match of matches) {
+				if (!match.startedAt) continue;
 
-				if (
-					matchStartSeconds >= vodStartSeconds &&
-					matchStartSeconds <= vodEndSeconds
-				) {
-					const isBracketReset =
-						match.stageType === "double_elimination" &&
-						match.groupNumber === 3 &&
-						match.roundNumber === 2;
-					const offsetSeconds = isBracketReset
-						? BRACKET_RESET_OFFSET_SECONDS
-						: VOD_TIMESTAMP_OFFSET_SECONDS;
-					const timestampSeconds =
-						matchStartSeconds - vodStartSeconds + offsetSeconds;
-
-					vods.push({
-						matchId: match.id,
-						userId: dbUserId,
-						platform: "TWITCH",
-						account: streamer.twitchAccount,
-						vodId: video.id,
-						timestampSeconds,
-						viewCount: video.view_count,
-					});
-					break;
+				if (dbUserId !== null) {
+					const matchParticipants = participantsByMatch.get(match.id);
+					if (!matchParticipants?.has(dbUserId)) continue;
 				}
+
+				const vodMatch = findMatchingVod(match.startedAt, match, videos);
+				if (!vodMatch) continue;
+
+				vods.push({
+					matchId: match.id,
+					userId: dbUserId,
+					platform: "TWITCH",
+					account: streamer.twitchAccount,
+					...vodMatch,
+				});
+			}
+		}
+	}
+
+	// Cast stream VODs
+	const castedMatchHistory =
+		await TournamentMatchVodRepository.findCastedMatchHistoryByTournamentId(
+			tournamentId,
+		);
+
+	if (castedMatchHistory.length > 0) {
+		const castMatchesByAccount = new Map<string, Set<number>>();
+		for (const entry of castedMatchHistory) {
+			if (!castMatchesByAccount.has(entry.twitchAccount)) {
+				castMatchesByAccount.set(entry.twitchAccount, new Set());
+			}
+			castMatchesByAccount.get(entry.twitchAccount)!.add(entry.matchId);
+		}
+
+		const newCastLogins = [...castMatchesByAccount.keys()].filter(
+			(account) => !loginToTwitchId.has(account.toLowerCase()),
+		);
+		if (newCastLogins.length > 0) {
+			const newUsers = await getUsersByLogin(newCastLogins);
+			for (const u of newUsers) {
+				loginToTwitchId.set(u.login.toLowerCase(), u.id);
+			}
+		}
+
+		const addedVodKeys = new Set(vods.map((v) => `${v.matchId}-${v.account}`));
+
+		for (const [account, matchIds] of castMatchesByAccount) {
+			const twitchUserId = loginToTwitchId.get(account.toLowerCase());
+			if (!twitchUserId) continue;
+
+			const videos = await fetchArchiveVideos(twitchUserId, account);
+			if (!videos) continue;
+
+			for (const matchId of matchIds) {
+				const match = matchesById.get(matchId);
+				if (!match?.startedAt) continue;
+
+				const vodKey = `${matchId}-${account}`;
+				if (addedVodKeys.has(vodKey)) continue;
+
+				const vodMatch = findMatchingVod(match.startedAt, match, videos);
+				if (!vodMatch) continue;
+
+				vods.push({
+					matchId,
+					userId: null,
+					platform: "TWITCH",
+					account,
+					...vodMatch,
+				});
+				addedVodKeys.add(vodKey);
 			}
 		}
 	}
@@ -127,4 +159,51 @@ export async function processOneTournament(tournamentId: number) {
 		await TournamentMatchVodRepository.insertMany(vods);
 		logger.info(`Inserted ${vods.length} VODs for tournament ${tournamentId}`);
 	}
+}
+
+async function fetchArchiveVideos(twitchUserId: string, accountName: string) {
+	try {
+		const videos = await getArchiveVideos(twitchUserId);
+		return videos.length > 0 ? videos : null;
+	} catch (e) {
+		logger.warn(`Failed to fetch VODs for ${accountName}: ${e}`);
+		return null;
+	}
+}
+
+function findMatchingVod(
+	matchStartSeconds: number,
+	match: { stageType: string; groupNumber: number; roundNumber: number },
+	videos: NonNullable<Awaited<ReturnType<typeof fetchArchiveVideos>>>,
+) {
+	for (const video of videos) {
+		const vodStartSeconds = Math.floor(
+			new Date(video.created_at).getTime() / 1000,
+		);
+		const vodDurationSeconds = parseTwitchDuration(video.duration);
+		const vodEndSeconds = vodStartSeconds + vodDurationSeconds;
+
+		if (
+			matchStartSeconds >= vodStartSeconds &&
+			matchStartSeconds <= vodEndSeconds
+		) {
+			const isBracketReset =
+				match.stageType === "double_elimination" &&
+				match.groupNumber === 3 &&
+				match.roundNumber === 2;
+			const offsetSeconds = isBracketReset
+				? BRACKET_RESET_OFFSET_SECONDS
+				: VOD_TIMESTAMP_OFFSET_SECONDS;
+			const timestampSeconds =
+				matchStartSeconds - vodStartSeconds + offsetSeconds;
+
+			return {
+				vodId: video.id,
+				timestampSeconds,
+				viewCount: video.view_count,
+			};
+		}
+	}
+
+	return null;
 }
