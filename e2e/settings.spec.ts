@@ -103,7 +103,7 @@ test.describe("Spoiler-free mode", () => {
 	const FINALIZED_TOURNAMENT_ID = 7;
 
 	test("censors bracket and reveals on click", async ({ page }) => {
-		await seed(page);
+		await seed(page, "FINALIZED_BRACKET");
 		await impersonate(page);
 		await enableSpoilerFreeMode(page);
 
@@ -141,7 +141,7 @@ test.describe("Spoiler-free mode", () => {
 	});
 
 	test("results page is censored and can be revealed", async ({ page }) => {
-		await seed(page);
+		await seed(page, "FINALIZED_BRACKET");
 		await impersonate(page);
 		await enableSpoilerFreeMode(page);
 

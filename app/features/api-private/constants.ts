@@ -6,4 +6,5 @@ export const SEED_VARIATIONS = [
 	"NZAP_IN_TEAM",
 	"NO_SCRIMS",
 	"NO_SQ_GROUPS",
+	"FINALIZED_BRACKET",
 ] as const;

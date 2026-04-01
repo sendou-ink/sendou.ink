@@ -240,7 +240,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	() => friendships(variation),
 	liveStreams,
 	splatoonRotations,
-	finalizedBracket,
+	variation === "FINALIZED_BRACKET" ? finalizedBracket : undefined,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -509,7 +509,6 @@ function finalizedBracket() {
 			});
 		}
 	}
-
 }
 
 function wipeDB() {
