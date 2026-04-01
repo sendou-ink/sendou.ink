@@ -215,7 +215,7 @@ function SpoilerRevealPill({ onReveal }: { onReveal: () => void }) {
 			onPress={onReveal}
 			icon={<ShieldMinus />}
 		>
-			{t("common:spoilerFree.showResults")}
+			{t("common:actions.reveal")}
 		</SendouButton>
 	);
 }

@@ -20,7 +20,6 @@ import {
 } from "~/utils/urls";
 import type { Bracket } from "../../core/Bracket";
 import * as Deadline from "../../core/Deadline";
-import type { MatchVod } from "../../core/Tournament";
 import type { TournamentData } from "../../core/Tournament.server";
 import parentStyles from "../../tournament-bracket.module.css";
 import { matchEndedEarly } from "../../tournament-bracket-utils";
@@ -360,7 +359,19 @@ function MatchStreams({ match }: Pick<MatchProps, "match">) {
 	);
 }
 
-function MatchVods({ vods }: { vods: MatchVod[] }) {
+interface MatchVodsProps {
+	vods: Array<{
+		matchId: number;
+		userId: number | null;
+		platform: string;
+		account: string;
+		platformVideoId: string;
+		timestampSeconds: number;
+		viewCount: number;
+	}>;
+}
+
+function MatchVods({ vods }: MatchVodsProps) {
 	const tournament = useTournament();
 
 	return (

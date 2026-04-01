@@ -1,4 +1,5 @@
 import { CloseExpiredCommissionsRoutine } from "./closeExpiredCommissions";
+import { DeleteObsoleteMatchVodsRoutine } from "./deleteObsoleteMatchVods";
 import { DeleteOldNotificationsRoutine } from "./deleteOldNotifications";
 import { DeleteOrphanArtTagsRoutine } from "./deleteOrphanArtTags";
 import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
@@ -29,6 +30,7 @@ export const everyHourAt30 = [
 
 /** List of Routines that should occur daily */
 export const daily = [
+	DeleteObsoleteMatchVodsRoutine,
 	DeleteOldNotificationsRoutine,
 	CloseExpiredCommissionsRoutine,
 	DeleteOrphanArtTagsRoutine,

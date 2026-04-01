@@ -16,10 +16,6 @@ export function up(db) {
 		).run();
 
 		db.prepare(
-			/*sql*/ `create index "tournament_match_vod_match_id" on "TournamentMatchVod"("matchId")`,
-		).run();
-
-		db.prepare(
 			/*sql*/ `create unique index "tournament_match_vod_match_id_account" on "TournamentMatchVod"("matchId", "account")`,
 		).run();
 	})();

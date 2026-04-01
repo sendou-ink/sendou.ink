@@ -1,5 +1,4 @@
 import type { Insertable } from "kysely";
-import * as R from "remeda";
 import type { DB } from "~/db/tables";
 import * as TournamentMatchVodRepository from "~/features/tournament-bracket/TournamentMatchVodRepository.server";
 import { hasTwitchEnvVars } from "~/modules/twitch/utils";

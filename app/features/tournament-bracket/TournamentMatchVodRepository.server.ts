@@ -4,6 +4,7 @@ import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { TOURNAMENT } from "../tournament/tournament-constants";
 
 export type VodsByTournamentId = Awaited<
 	ReturnType<typeof findVodsByTournamentId>
@@ -85,6 +86,39 @@ export function findFinalizedTournamentsNeedingVods() {
 			),
 		)
 		.execute();
+}
+
+export function deleteObsolete() {
+	const cutoff = dateToDatabaseTimestamp(
+		subDays(new Date(), TOURNAMENT.VOD_VISIBILITY_DAYS),
+	);
+
+	return db
+		.deleteFrom("TournamentMatchVod")
+		.where(
+			"matchId",
+			"in",
+			db
+				.selectFrom("TournamentMatch")
+				.innerJoin(
+					"TournamentStage",
+					"TournamentStage.id",
+					"TournamentMatch.stageId",
+				)
+				.innerJoin(
+					"CalendarEvent",
+					"CalendarEvent.tournamentId",
+					"TournamentStage.tournamentId",
+				)
+				.innerJoin(
+					"CalendarEventDate",
+					"CalendarEventDate.eventId",
+					"CalendarEvent.id",
+				)
+				.select("TournamentMatch.id")
+				.where("CalendarEventDate.startTime", "<", cutoff),
+		)
+		.executeTakeFirst();
 }
 
 export function findStreamersByTournamentId(tournamentId: number) {

@@ -22,6 +22,7 @@ import {
 } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 import type { TournamentTierNumber } from "./core/tiering";
+import { updatedCastedMatchesInfo } from "./tournament-utils";
 
 export type FindById = NonNullable<Unwrapped<typeof findById>>;
 export async function findById(id: number) {
@@ -1031,42 +1032,11 @@ export function setMatchAsCasted({
 			tournamentId,
 		);
 
-		let newCastedMatchesInfo: CastedMatchesInfo;
-		if (twitchAccount === null) {
-			newCastedMatchesInfo = {
-				...castedMatchesInfo,
-				castedMatches: castedMatchesInfo.castedMatches.filter(
-					(cm) => cm.matchId !== matchId,
-				),
-				lockedMatches: castedMatchesInfo.lockedMatches.filter(
-					(lm) => lm.matchId !== matchId,
-				),
-			};
-		} else {
-			const existingHistory = castedMatchesInfo.castedMatchHistory ?? [];
-			newCastedMatchesInfo = {
-				...castedMatchesInfo,
-				castedMatches: castedMatchesInfo.castedMatches
-					.filter(
-						(cm) =>
-							// currently a match can only  be streamed by one account
-							// and a cast can only stream one match at a time
-							// these can change in the future
-							cm.matchId !== matchId && cm.twitchAccount !== twitchAccount,
-					)
-					.concat([{ twitchAccount, matchId }]),
-				lockedMatches: castedMatchesInfo.lockedMatches.filter(
-					(lm) => lm.matchId !== matchId,
-				),
-				castedMatchHistory: existingHistory.concat([
-					{
-						twitchAccount,
-						matchId,
-						timestamp: databaseTimestampNow(),
-					},
-				]),
-			};
-		}
+		const newCastedMatchesInfo = updatedCastedMatchesInfo(castedMatchesInfo, {
+			matchId,
+			twitchAccount,
+			timestamp: databaseTimestampNow(),
+		});
 
 		await trx
 			.updateTable("Tournament")

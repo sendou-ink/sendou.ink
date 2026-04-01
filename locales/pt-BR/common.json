@@ -146,6 +146,7 @@
 	"actions.viewAll": "",
 	"actions.hide": "",
 	"actions.settings": "",
+	"actions.reveal": "",
 	"noResults": "",
 	"maps.createMapList": "Criar lista de mapas",
 	"maps.halfSz": "50% Zones",

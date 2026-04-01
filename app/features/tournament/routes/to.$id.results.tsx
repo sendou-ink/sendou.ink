@@ -29,6 +29,7 @@ import { TOURNAMENT } from "../tournament-constants";
 import { useTournament } from "./to.$id";
 
 export default function TournamentResultsPage() {
+	const { t } = useTranslation(["common"]);
 	const tournament = useTournament();
 	const { isCensored, reveal } = useSpoilerFree();
 
@@ -36,6 +37,21 @@ export default function TournamentResultsPage() {
 		differenceInDays(new Date(), tournament.ctx.startTime) <
 		TOURNAMENT.VOD_VISIBILITY_DAYS;
 	const censored = withinSpoilerWindow && isCensored(tournament.ctx.id);
+
+	if (censored) {
+		return (
+			<div className={styles.spoilerRevealContainer}>
+				<SendouButton
+					variant="outlined"
+					size="big"
+					onPress={() => reveal(tournament.ctx.id)}
+					icon={<ShieldMinus />}
+				>
+					{t("common:spoilerFree.showResults")}
+				</SendouButton>
+			</div>
+		);
+	}
 
 	const standingsResult = Standings.tournamentStandings(tournament);
 
@@ -48,41 +64,14 @@ export default function TournamentResultsPage() {
 			);
 		}
 
-		return censored ? (
-			<SpoilerOverlay onReveal={() => reveal(tournament.ctx.id)}>
-				<ResultsTable standings={standingsResult.standings} />
-			</SpoilerOverlay>
-		) : (
+		return (
 			<div>
 				<ResultsTable standings={standingsResult.standings} />
 			</div>
 		);
 	}
 
-	return censored ? (
-		<SpoilerOverlay onReveal={() => reveal(tournament.ctx.id)}>
-			<SendouTabs>
-				<SendouTabList>
-					{standingsResult.standings.map(({ div }) => (
-						<SendouTab key={div} id={div}>
-							{div}
-						</SendouTab>
-					))}
-				</SendouTabList>
-				{standingsResult.standings.map(({ div, standings }) => (
-					<SendouTabPanel key={div} id={div}>
-						{standings.length === 0 ? (
-							<div className="text-center text-lg font-semi-bold text-lighter">
-								No team finished yet, check back later
-							</div>
-						) : (
-							<ResultsTable standings={standings} />
-						)}
-					</SendouTabPanel>
-				))}
-			</SendouTabs>
-		</SpoilerOverlay>
-	) : (
+	return (
 		<SendouTabs>
 			<SendouTabList>
 				{standingsResult.standings.map(({ div }) => (
@@ -103,28 +92,6 @@ export default function TournamentResultsPage() {
 				</SendouTabPanel>
 			))}
 		</SendouTabs>
-	);
-}
-
-function SpoilerOverlay({
-	onReveal,
-}: {
-	children: React.ReactNode;
-	onReveal: () => void;
-}) {
-	const { t } = useTranslation(["common"]);
-
-	return (
-		<div className={styles.spoilerRevealContainer}>
-			<SendouButton
-				variant="outlined"
-				size="big"
-				onPress={onReveal}
-				icon={<ShieldMinus />}
-			>
-				{t("common:spoilerFree.showResults")}
-			</SendouButton>
-		</div>
 	);
 }
 
