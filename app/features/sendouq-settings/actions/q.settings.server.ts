@@ -15,9 +15,7 @@ export const action = async ({ request }: { request: Request }) => {
 	switch (data._action) {
 		case "UPDATE_MAP_MODE_PREFERENCES": {
 			if (typeof data.teamId === "number") {
-				const allTeams = await TeamRepository.findAllMemberOfByUserId(
-					user.id,
-				);
+				const allTeams = await TeamRepository.findAllMemberOfByUserId(user.id);
 				const canManage = allTeams.some(
 					(t) => t.id === data.teamId && (t.isOwner || t.isManager),
 				);

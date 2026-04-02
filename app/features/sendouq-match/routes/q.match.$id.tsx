@@ -1293,14 +1293,14 @@ function MapListMapPickInfo({
 		return result;
 	};
 
-	const sourceTeamNames = () => {
+	const sourceTeams = () => {
 		if (!data.match.memento?.pools) return [];
 
 		const pickerGroups = [data.match.groupAlpha, data.match.groupBravo].filter(
 			(g) => map.source === "BOTH" || String(g.id) === map.source,
 		);
 
-		const teamNames: string[] = [];
+		const teams: Array<{ name: string; avatarUrl: string | null }> = [];
 		for (const pickerGroup of pickerGroups) {
 			for (const poolEntry of data.match.memento.pools) {
 				if (!poolEntry.teamName) continue;
@@ -1311,14 +1311,20 @@ function MapListMapPickInfo({
 				const modePool = poolEntry.pool.find((p) => p.mode === map.mode);
 				if (
 					modePool?.stages.includes(map.stageId) &&
-					!teamNames.includes(poolEntry.teamName)
+					!teams.some((t) => t.name === poolEntry.teamName)
 				) {
-					teamNames.push(poolEntry.teamName);
+					teams.push({
+						name: poolEntry.teamName,
+						avatarUrl:
+							pickerGroup.team?.name === poolEntry.teamName
+								? pickerGroup.team.avatarUrl
+								: null,
+					});
 				}
 			}
 		}
 
-		return teamNames;
+		return teams;
 	};
 
 	const mapPreferences = data.match.memento?.mapPreferences?.[i];
@@ -1349,14 +1355,19 @@ function MapListMapPickInfo({
 					<div className="text-sm text-center text-lighter">
 						{t("tournament:pickInfo.default.explanation")}
 					</div>
-				) : sourceTeamNames().length > 0 ? (
+				) : sourceTeams().length > 0 ? (
 					<div className="stack sm">
-						{sourceTeamNames().map((teamName) => (
+						{sourceTeams().map((team) => (
 							<div
-								key={teamName}
+								key={team.name}
 								className="stack sm horizontal items-center xs"
 							>
-								{t("tournament:pickInfo.teamMapList", { teamName })}
+								<Avatar
+									size="xxs"
+									url={team.avatarUrl}
+									identiconInput={team.name}
+								/>
+								{team.name}
 							</div>
 						))}
 					</div>

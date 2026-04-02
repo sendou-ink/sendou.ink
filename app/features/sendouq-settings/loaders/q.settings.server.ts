@@ -6,9 +6,7 @@ export const loader = async () => {
 	const user = requireUser();
 
 	const allTeams = await TeamRepository.findAllMemberOfByUserId(user.id);
-	const manageableTeams = allTeams.filter(
-		(t) => t.isOwner || t.isManager,
-	);
+	const manageableTeams = allTeams.filter((t) => t.isOwner || t.isManager);
 
 	return {
 		settings: await QSettingsRepository.settingsByUserId(user.id),
