@@ -326,7 +326,7 @@ function MapPickerSelectOption({
 
 	return (
 		<div className="stack horizontal xs items-center">
-			<Avatar size="xxxs" identiconInput={team.name} />
+			<Avatar size="xxxs" url={team.logoUrl} identiconInput={team.name} />
 			{team.name}
 		</div>
 	);

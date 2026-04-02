@@ -1328,16 +1328,14 @@ function MapListMapPickInfo({
 	};
 
 	const mapPreferences = data.match.memento?.mapPreferences?.[i];
-	const showPopover = () => {
-		// legacy preference system (season 2)
-		if (mapPreferences && mapPreferences.length > 0) return true;
+	const teams = sourceTeams();
+	const poolMemberIds = sourcePoolMemberIds();
+	const showPopover =
+		(mapPreferences && mapPreferences.length > 0) ||
+		map.source === "DEFAULT" ||
+		poolMemberIds.length > 0;
 
-		if (map.source === "DEFAULT") return true;
-
-		return sourcePoolMemberIds().length > 0;
-	};
-
-	if (showPopover()) {
+	if (showPopover) {
 		return (
 			<SendouPopover
 				popoverClassName="text-main-forced"
@@ -1355,9 +1353,9 @@ function MapListMapPickInfo({
 					<div className="text-sm text-center text-lighter">
 						{t("tournament:pickInfo.default.explanation")}
 					</div>
-				) : sourceTeams().length > 0 ? (
+				) : teams.length > 0 ? (
 					<div className="stack sm">
-						{sourceTeams().map((team) => (
+						{teams.map((team) => (
 							<div
 								key={team.name}
 								className="stack sm horizontal items-center xs"
@@ -1371,9 +1369,9 @@ function MapListMapPickInfo({
 							</div>
 						))}
 					</div>
-				) : sourcePoolMemberIds().length > 0 ? (
+				) : poolMemberIds.length > 0 ? (
 					<div className="stack sm">
-						{sourcePoolMemberIds().map((userId) => {
+						{poolMemberIds.map((userId) => {
 							const user = userIdToUser(userId);
 							return (
 								<div
