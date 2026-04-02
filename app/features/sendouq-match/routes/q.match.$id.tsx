@@ -1293,6 +1293,34 @@ function MapListMapPickInfo({
 		return result;
 	};
 
+	const sourceTeamNames = () => {
+		if (!data.match.memento?.pools) return [];
+
+		const pickerGroups = [data.match.groupAlpha, data.match.groupBravo].filter(
+			(g) => map.source === "BOTH" || String(g.id) === map.source,
+		);
+
+		const teamNames: string[] = [];
+		for (const pickerGroup of pickerGroups) {
+			for (const poolEntry of data.match.memento.pools) {
+				if (!poolEntry.teamName) continue;
+				if (!pickerGroup.members.some((m) => m.id === poolEntry.userId)) {
+					continue;
+				}
+
+				const modePool = poolEntry.pool.find((p) => p.mode === map.mode);
+				if (
+					modePool?.stages.includes(map.stageId) &&
+					!teamNames.includes(poolEntry.teamName)
+				) {
+					teamNames.push(poolEntry.teamName);
+				}
+			}
+		}
+
+		return teamNames;
+	};
+
 	const mapPreferences = data.match.memento?.mapPreferences?.[i];
 	const showPopover = () => {
 		// legacy preference system (season 2)
@@ -1320,6 +1348,17 @@ function MapListMapPickInfo({
 				{map.source === "DEFAULT" ? (
 					<div className="text-sm text-center text-lighter">
 						{t("tournament:pickInfo.default.explanation")}
+					</div>
+				) : sourceTeamNames().length > 0 ? (
+					<div className="stack sm">
+						{sourceTeamNames().map((teamName) => (
+							<div
+								key={teamName}
+								className="stack sm horizontal items-center xs"
+							>
+								{t("tournament:pickInfo.teamMapList", { teamName })}
+							</div>
+						))}
 					</div>
 				) : sourcePoolMemberIds().length > 0 ? (
 					<div className="stack sm">

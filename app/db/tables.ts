@@ -86,6 +86,7 @@ export interface Team {
 	inviteCode: string;
 	name: string;
 	bsky: string | null;
+	mapModePreferences: JSONColumnTypeNullable<UserMapModePreferences>;
 	/** Team's tag, typically used in-game in front of users' names to indicate they are a member of the team. */
 	tag: string | null;
 }
@@ -289,7 +290,11 @@ export type ParsedMemento = {
 	>;
 	/** mapPreferences of season 2 */
 	mapPreferences?: Array<{ userId: number; preference?: Preference }[]>;
-	pools: Array<{ userId: number; pool: UserMapModePreferences["pool"] }>;
+	pools: Array<{
+		userId: number;
+		pool: UserMapModePreferences["pool"];
+		teamName?: string;
+	}>;
 };
 
 export interface GroupMatch {

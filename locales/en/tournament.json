@@ -54,6 +54,7 @@
 	"pickInfo.default.explanation": "A suitable map was not available from the participants' pools. This map was selected from all popular maps instead.",
 	"pickInfo.votes_one": "{{count}} vote",
 	"pickInfo.votes_other": "{{count}} votes",
+	"pickInfo.teamMapList": "{{teamName}} map list",
 	"pickInfo.counterpick": "Counterpick",
 	"pickInfo.roll": "Random",
 	"generator.error": "Changes you made weren't saved since the tournament started",

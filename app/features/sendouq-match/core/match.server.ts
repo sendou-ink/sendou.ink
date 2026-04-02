@@ -347,14 +347,19 @@ export function compareMatchToReportedScores({
 	return "SAME";
 }
 
+type GroupPreference = {
+	userId: number;
+	preferences: UserMapModePreferences;
+	teamName?: string | null;
+};
 type CreateMatchMementoArgs = {
 	own: {
 		group: SQUncensoredGroup;
-		preferences: { userId: number; preferences: UserMapModePreferences }[];
+		preferences: GroupPreference[];
 	};
 	their: {
 		group: SQUncensoredGroup;
-		preferences: { userId: number; preferences: UserMapModePreferences }[];
+		preferences: GroupPreference[];
 	};
 	mapList: TournamentMapListMap[];
 };
@@ -440,6 +445,7 @@ function poolsMemento(args: CreateMatchMementoArgs): ParsedMemento["pools"] {
 		return {
 			userId: p.userId,
 			pool,
+			...(p.teamName ? { teamName: p.teamName } : {}),
 		};
 	});
 }

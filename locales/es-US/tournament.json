@@ -55,6 +55,7 @@
 	"pickInfo.votes_one": "",
 	"pickInfo.votes_many": "",
 	"pickInfo.votes_other": "",
+	"pickInfo.teamMapList": "",
 	"pickInfo.counterpick": "Contraselección",
 	"pickInfo.roll": "",
 	"generator.error": "Cambios no fueron guardados ya que el torneo comenzó",

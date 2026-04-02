@@ -52,6 +52,7 @@
 	"pickInfo.both": "両者選択",
 	"pickInfo.default": "",
 	"pickInfo.default.explanation": "",
+	"pickInfo.teamMapList": "",
 	"pickInfo.counterpick": "順番に選ぶ",
 	"pickInfo.roll": "",
 	"generator.error": "トーナメントが開始済みなので変更は保存されませんでした。",

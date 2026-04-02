@@ -60,6 +60,41 @@ export async function updateUserMapModePreferences({
 		.execute();
 }
 
+export async function updateTeamMapModePreferences({
+	teamId,
+	mapModePreferences,
+}: {
+	teamId: number;
+	mapModePreferences: UserMapModePreferences;
+}) {
+	const modesExcluded = modesShort.filter(
+		(mode) => !mapModePreferences.pool.some((mp) => mp.mode === mode),
+	);
+
+	const currentPreferences = (
+		await db
+			.selectFrom("AllTeam")
+			.select("mapModePreferences")
+			.where("id", "=", teamId)
+			.executeTakeFirstOrThrow()
+	).mapModePreferences;
+
+	for (const mode of modesExcluded) {
+		const previousModePreference = currentPreferences?.pool.filter(
+			(mp) => mp.mode === mode,
+		);
+		if (previousModePreference && previousModePreference.length > 0) {
+			mapModePreferences.pool.push(...previousModePreference);
+		}
+	}
+
+	return db
+		.updateTable("AllTeam")
+		.set({ mapModePreferences: JSON.stringify(mapModePreferences) })
+		.where("id", "=", teamId)
+		.execute();
+}
+
 export function updateVoiceChat(args: {
 	userId: number;
 	vc: Tables["User"]["vc"];
@@ -110,13 +145,4 @@ export function updateNoScreen({
 		})
 		.where("User.id", "=", userId)
 		.execute();
-}
-
-export function currentTeamByUserId(userId: number) {
-	return db
-		.selectFrom("TeamMember")
-		.innerJoin("Team", "Team.id", "TeamMember.teamId")
-		.select(["Team.name"])
-		.where("TeamMember.userId", "=", userId)
-		.executeTakeFirst();
 }
