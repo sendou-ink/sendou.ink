@@ -1,2 +1,35 @@
 .root {
+	display: flex;
+	justify-content: space-between;
+	padding-inline: var(--s-1-5);
+}
+
+.activeRosters {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.modeProgress {
+	display: flex;
+	gap: var(--s-1);
+}
+
+.mode {
+	background-color: var(--color-bg-high);
+	border: var(--border-style);
+	border-radius: var(--radius-full);
+	padding: var(--s-1);
+}
+
+.team {
+	display: flex;
+	gap: var(--s-1);
+}
+
+.vs {
+	text-transform: uppercase;
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-high);
 }
