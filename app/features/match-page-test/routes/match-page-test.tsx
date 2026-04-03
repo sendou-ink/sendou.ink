@@ -9,6 +9,11 @@ import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomR
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
 import { MatchPage } from "~/components/match-page/MatchPage";
 import { MatchPageHeader } from "~/components/match-page/MatchPageHeader";
+import {
+	MatchActionTab,
+	MatchRosterTab,
+	MatchTabs,
+} from "~/components/match-page/MatchTabs";
 
 export default function MatchPageTestRoute() {
 	return (
@@ -112,6 +117,11 @@ export default function MatchPageTestRoute() {
 						}}
 					/>
 				</MatchBannerContainer>
+
+				<MatchTabs tabs={["rosters", "action"]}>
+					<MatchRosterTab />
+					<MatchActionTab />
+				</MatchTabs>
 			</MatchPage>
 		</Main>
 	);

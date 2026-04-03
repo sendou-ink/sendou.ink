@@ -1,0 +1,11 @@
+.root {
+	& [class*="tabPanel"] {
+		background-color: var(--color-bg-high);
+		border-radius: 0 0 var(--radius-box) var(--radius-box);
+		padding: var(--s-4);
+
+		&:has([class*="chatContainer"]) {
+			padding: var(--s-1) var(--s-4);
+		}
+	}
+}
