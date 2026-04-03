@@ -39,7 +39,7 @@ export default function MatchPageTestRoute() {
 							totalMinutes: 1,
 						}}
 					/>
-					<MatchBanner stageId={1} mode="SZ">
+					<MatchBanner stageId={1} mode="SZ" screenLegal={false}>
 						Team 2 pick
 					</MatchBanner>
 					<MatchBannerBottomRow

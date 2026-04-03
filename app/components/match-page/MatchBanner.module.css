@@ -36,7 +36,31 @@
 	gap: var(--s-1);
 }
 
+.notice {
+	display: flex;
+	gap: var(--s-0-5);
+	align-items: center;
+	color: var(--color-text-high);
+	grid-area: notice;
+	align-self: flex-end;
+	justify-self: center;
+	background-color: var(--color-bg-high);
+	padding: var(--s-0-5) var(--s-1-5);
+	border-radius: var(--radius-field);
+	font-size: var(--font-3xs);
+	font-weight: normal;
+	height: auto;
+}
+
 .thickText {
 	font-size: var(--font-md);
 	font-weight: var(--weight-semi);
+}
+
+.legalIcon {
+	color: var(--color-success);
+}
+
+.illegalIcon {
+	color: var(--color-error);
 }
