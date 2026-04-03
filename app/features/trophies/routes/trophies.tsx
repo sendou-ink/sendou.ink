@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import { Main } from "~/components/Main";
-import { Trophy } from "~/components/Trophy";
+import { Trophy, TrophyContextProvider } from "~/components/Trophy";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, TROPHIES_PAGE } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
@@ -36,9 +36,11 @@ export default function TrophiesPage() {
 	return (
 		<Main>
 			<h1>{t("trophies:title")}</h1>
-			{data.trophies.map((trophy) => (
-				<Trophy key={trophy.id} model={trophy.model} />
-			))}
+			<TrophyContextProvider>
+				{data.trophies.map((trophy) => (
+					<Trophy key={trophy.id} model={trophy.model} />
+				))}
+			</TrophyContextProvider>
 		</Main>
 	);
 }
