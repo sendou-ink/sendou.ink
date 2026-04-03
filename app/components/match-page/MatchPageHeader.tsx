@@ -15,7 +15,7 @@ export function MatchPageHeader({
 				<h2 className={styles.title}>{children}</h2>
 				<div className={styles.subtitle}>{subtitle}</div>
 			</div>
-			{topRight ? <div className={styles.topRight}>{topRight}</div> : null}
+			{topRight ? <div>{topRight}</div> : null}
 		</div>
 	);
 }

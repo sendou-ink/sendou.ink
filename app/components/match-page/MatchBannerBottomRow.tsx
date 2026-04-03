@@ -27,15 +27,21 @@ export function MatchBannerBottomRow({
 function ModeProgress({ games }: Pick<MatchBannerBottomRowProps, "games">) {
 	return (
 		<div className={styles.modeProgress}>
-			<div className={styles.mode}>
-				<ModeImage mode="SZ" size={12} />
-			</div>
-			<div className={styles.mode}>
-				<ModeImage mode="TC" size={12} />
-			</div>
-			<div className={styles.mode}>
-				<ModeImage mode="RM" size={12} />
-			</div>
+			{games.map((game, i) => (
+				<div key={i} className={styles.mode}>
+					<ModeImage mode={game.mode} size={12} />
+				</div>
+			))}
+		</div>
+	);
+}
+
+function Roster({ users }: { users: CommonUser[] }) {
+	return (
+		<div className={styles.team}>
+			{users.map((user) => (
+				<Avatar key={user.id} user={user} size="xxs" />
+			))}
 		</div>
 	);
 }
@@ -45,19 +51,9 @@ function ActiveRosters({
 }: Pick<MatchBannerBottomRowProps, "activeRosters">) {
 	return (
 		<div className={styles.activeRosters}>
-			<div className={styles.team}>
-				<Avatar user={{ discordAvatar: null, discordId: "asd" }} size="xxs" />
-				<Avatar user={{ discordAvatar: null, discordId: "cx" }} size="xxs" />
-				<Avatar user={{ discordAvatar: null, discordId: "zczxc" }} size="xxs" />
-				<Avatar user={{ discordAvatar: null, discordId: "sgd" }} size="xxs" />
-			</div>
+			<Roster users={activeRosters.alpha} />
 			<div className={styles.vs}>vs.</div>
-			<div className={styles.team}>
-				<Avatar user={{ discordAvatar: null, discordId: "123" }} size="xxs" />
-				<Avatar user={{ discordAvatar: null, discordId: "2345" }} size="xxs" />
-				<Avatar user={{ discordAvatar: null, discordId: "2351" }} size="xxs" />
-				<Avatar user={{ discordAvatar: null, discordId: "12123" }} size="xxs" />
-			</div>
+			<Roster users={activeRosters.bravo} />
 		</div>
 	);
 }

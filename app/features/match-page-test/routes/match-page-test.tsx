@@ -43,7 +43,11 @@ export default function MatchPageTestRoute() {
 						Team 2 pick
 					</MatchBanner>
 					<MatchBannerBottomRow
-						games={[{ mode: "SZ", winner: "ALPHA" }]}
+						games={[
+							{ mode: "SZ", winner: "ALPHA" },
+							{ mode: "TC", winner: "BRAVO" },
+							{ mode: "RM", winner: "ALPHA" },
+						]}
 						activeRosters={{
 							alpha: [
 								{
@@ -53,12 +57,54 @@ export default function MatchPageTestRoute() {
 									discordAvatar: null,
 									customUrl: "sendou",
 								},
-							],
-							bravo: [
 								{
 									id: 2,
 									username: "Lean",
 									discordId: "456",
+									discordAvatar: null,
+									customUrl: null,
+								},
+								{
+									id: 3,
+									username: "Kiver",
+									discordId: "789",
+									discordAvatar: null,
+									customUrl: null,
+								},
+								{
+									id: 4,
+									username: "Brian",
+									discordId: "012",
+									discordAvatar: null,
+									customUrl: null,
+								},
+							],
+							bravo: [
+								{
+									id: 5,
+									username: "Naga",
+									discordId: "345",
+									discordAvatar: null,
+									customUrl: null,
+								},
+								{
+									id: 6,
+									username: "Grey",
+									discordId: "678",
+									discordAvatar: null,
+									customUrl: null,
+								},
+								{
+									id: 7,
+									username: "Zack",
+									discordId: "901",
+									discordAvatar: null,
+									customUrl: null,
+								},
+								{
+									id: 8,
+									username: "Lime",
+									discordId: "234",
 									discordAvatar: null,
 									customUrl: null,
 								},
