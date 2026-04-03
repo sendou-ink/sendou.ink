@@ -1,4 +1,10 @@
 .root {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+}
+
+.banner {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	grid-template-areas: "mode stage" "notice x";

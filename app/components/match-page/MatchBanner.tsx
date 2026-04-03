@@ -6,31 +6,36 @@ import { ModeImage } from "../Image";
 import styles from "./MatchBanner.module.css";
 
 export function MatchBanner({
-	children,
 	stageId,
 	mode,
+	top,
+	bottom,
 }: {
-	children: React.ReactNode;
 	stageId: StageId;
 	mode: ModeShort;
+	top: React.ReactNode;
+	bottom: React.ReactNode;
 }) {
 	const { t } = useTranslation(["game-misc"]);
 
 	return (
-		<div
-			className={styles.root}
-			style={{
-				"--stage-img": `url(${stageBannerImageUrl(stageId)})`,
-			}}
-		>
-			<div className={clsx(styles.mode, styles.thickText)}>
-				<ModeImage mode={mode} size={24} />
-				{t(`game-misc:MODE_SHORT_${mode}`)} {t(`game-misc:STAGE_${stageId}`)}
+		<div className={styles.root}>
+			{top}
+			<div
+				className={styles.banner}
+				style={{
+					"--stage-img": `url(${stageBannerImageUrl(stageId)})`,
+				}}
+			>
+				<div className={clsx(styles.mode, styles.thickText)}>
+					<ModeImage mode={mode} size={24} />
+					{t(`game-misc:MODE_SHORT_${mode}`)} {t(`game-misc:STAGE_${stageId}`)}
+				</div>
+				<div className={clsx(styles.stage, styles.thickText)}>
+					{t(`game-misc:STAGE_${stageId}`)}
+				</div>
 			</div>
-			<div className={clsx(styles.stage, styles.thickText)}>
-				{t(`game-misc:STAGE_${stageId}`)}
-			</div>
-			{children}
+			{bottom}
 		</div>
 	);
 }

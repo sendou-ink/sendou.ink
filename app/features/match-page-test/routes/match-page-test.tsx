@@ -22,44 +22,50 @@ export default function MatchPageTestRoute() {
 					Round 2.1
 				</MatchPageHeader>
 
-				<MatchBanner stageId={1} mode="SZ">
-					<MatchBannerTopRow
-						score={{
-							alpha: 1,
-							bravo: 2,
-							isFinal: false,
-							count: 5,
-							bestOf: true,
-						}}
-						time={{
-							currentMinutes: 3,
-							totalMinutes: 1,
-						}}
-					/>
-					<MatchBannerBottomRow
-						games={[{ mode: "SZ", winner: "ALPHA" }]}
-						activeRosters={{
-							alpha: [
-								{
-									id: 1,
-									username: "Sendou",
-									discordId: "123",
-									discordAvatar: null,
-									customUrl: "sendou",
-								},
-							],
-							bravo: [
-								{
-									id: 2,
-									username: "Lean",
-									discordId: "456",
-									discordAvatar: null,
-									customUrl: null,
-								},
-							],
-						}}
-					/>
-				</MatchBanner>
+				<MatchBanner
+					stageId={1}
+					mode="SZ"
+					top={
+						<MatchBannerTopRow
+							score={{
+								alpha: 1,
+								bravo: 2,
+								isFinal: false,
+								count: 5,
+								bestOf: true,
+							}}
+							time={{
+								currentMinutes: 3,
+								totalMinutes: 1,
+							}}
+						/>
+					}
+					bottom={
+						<MatchBannerBottomRow
+							games={[{ mode: "SZ", winner: "ALPHA" }]}
+							activeRosters={{
+								alpha: [
+									{
+										id: 1,
+										username: "Sendou",
+										discordId: "123",
+										discordAvatar: null,
+										customUrl: "sendou",
+									},
+								],
+								bravo: [
+									{
+										id: 2,
+										username: "Lean",
+										discordId: "456",
+										discordAvatar: null,
+										customUrl: null,
+									},
+								],
+							}}
+						/>
+					}
+				/>
 			</MatchPage>
 		</Main>
 	);
