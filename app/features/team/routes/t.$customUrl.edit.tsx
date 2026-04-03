@@ -277,6 +277,7 @@ function TeamCustomThemeSelector() {
 			isPersonalTheme={false}
 			onSave={handleSave}
 			onReset={handleReset}
+			fetcherState={fetcher.state}
 		/>
 	);
 }

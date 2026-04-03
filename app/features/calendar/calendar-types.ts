@@ -52,6 +52,7 @@ export interface ShowcaseCalendarEvent extends CommonEvent {
 		notShownMembersCount: number;
 		div: string | null;
 	} | null;
+	hasVods?: boolean;
 }
 
 export interface GroupedCalendarEvents {

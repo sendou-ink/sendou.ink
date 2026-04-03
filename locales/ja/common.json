@@ -147,6 +147,7 @@
 	"actions.viewAll": "",
 	"actions.hide": "",
 	"actions.settings": "",
+	"actions.reveal": "",
 	"noResults": "",
 	"maps.createMapList": "ステージ一覧を作る",
 	"maps.halfSz": "ガチエリア (2ヶ所)",
@@ -387,5 +388,7 @@
 	"header.parameter": "",
 	"weaponArt.title": "",
 	"tier.tentative": "",
-	"tier.confirmed": ""
+	"tier.confirmed": "",
+	"spoilerFree.showResults": "",
+	"spoilerFree.hideResults": ""
 }

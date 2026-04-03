@@ -550,3 +550,10 @@ export const mySlugify = (name: string) => {
 export const isCustomUrl = (value: string) => {
 	return Number.isNaN(Number(value));
 };
+
+export function vodUrl(vod: {
+	platformVideoId: string;
+	timestampSeconds: number;
+}) {
+	return `https://www.twitch.tv/videos/${vod.platformVideoId}?t=${vod.timestampSeconds}s`;
+}

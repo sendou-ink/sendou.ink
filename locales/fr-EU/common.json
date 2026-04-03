@@ -147,6 +147,7 @@
 	"actions.viewAll": "",
 	"actions.hide": "",
 	"actions.settings": "",
+	"actions.reveal": "",
 	"noResults": "Aucun résultats",
 	"maps.createMapList": "Créer une liste de stages",
 	"maps.halfSz": "50% DdZ",
@@ -393,5 +394,7 @@
 	"header.parameter": "",
 	"weaponArt.title": "",
 	"tier.tentative": "",
-	"tier.confirmed": ""
+	"tier.confirmed": "",
+	"spoilerFree.showResults": "",
+	"spoilerFree.hideResults": ""
 }

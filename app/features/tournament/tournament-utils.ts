@@ -4,7 +4,11 @@ import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { weekNumberToDate } from "~/utils/dates";
 import { SHORT_NANOID_LENGTH } from "~/utils/id";
-import type { Tables, TournamentStageSettings } from "../../db/tables";
+import type {
+	CastedMatchesInfo,
+	Tables,
+	TournamentStageSettings,
+} from "../../db/tables";
 import { assertUnreachable } from "../../utils/types";
 import { MapPool } from "../map-list-generator/core/map-pool";
 import * as Seasons from "../mmr/core/Seasons";
@@ -385,4 +389,47 @@ export function getBracketProgressionLabel(
 	}
 
 	return prefix;
+}
+
+/**
+ * Returns a new `CastedMatchesInfo` with the cast assignment applied. Tracks history of streamed set per channel.
+ * Deduplicates history by `matchId` so that correcting a wrong channel replaces the previous entry.
+ *
+ */
+export function updatedCastedMatchesInfo(
+	current: CastedMatchesInfo,
+	args: { matchId: number; twitchAccount: string | null; timestamp: number },
+): CastedMatchesInfo {
+	const { matchId, twitchAccount, timestamp } = args;
+
+	if (twitchAccount === null) {
+		return {
+			...current,
+			castedMatches: current.castedMatches.filter(
+				(cm) => cm.matchId !== matchId,
+			),
+			lockedMatches: current.lockedMatches.filter(
+				(lm) => lm.matchId !== matchId,
+			),
+		};
+	}
+
+	const existingHistory = current.castedMatchHistory ?? [];
+
+	return {
+		...current,
+		castedMatches: current.castedMatches
+			.filter(
+				(cm) =>
+					// currently a match can only be streamed by one account
+					// and a cast can only stream one match at a time
+					// these can change in the future
+					cm.matchId !== matchId && cm.twitchAccount !== twitchAccount,
+			)
+			.concat([{ twitchAccount, matchId }]),
+		lockedMatches: current.lockedMatches.filter((lm) => lm.matchId !== matchId),
+		castedMatchHistory: existingHistory
+			.filter((entry) => entry.matchId !== matchId)
+			.concat([{ twitchAccount, matchId, timestamp }]),
+	};
 }

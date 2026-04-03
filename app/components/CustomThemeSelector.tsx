@@ -265,6 +265,7 @@ export function CustomThemeSelector({
 	onSave,
 	onReset,
 	hidePatreonInfo,
+	fetcherState,
 }: {
 	initialTheme: CustomTheme | null | undefined;
 	isSupporter: boolean;
@@ -272,6 +273,7 @@ export function CustomThemeSelector({
 	onSave: (themeInput: ThemeInput) => void;
 	onReset: () => void;
 	hidePatreonInfo?: boolean;
+	fetcherState?: "idle" | "submitting" | "loading";
 }) {
 	const { t } = useTranslation(["common"]);
 
@@ -438,11 +440,18 @@ export function CustomThemeSelector({
 				}}
 			/>
 			<div className={styles.customThemeSelectorActions}>
-				<SendouButton isDisabled={!isSupporter} onPress={handleSave}>
+				<SendouButton
+					isDisabled={
+						!isSupporter || (fetcherState != null && fetcherState !== "idle")
+					}
+					onPress={handleSave}
+				>
 					{t("common:actions.save")}
 				</SendouButton>
 				<SendouButton
-					isDisabled={!isSupporter}
+					isDisabled={
+						!isSupporter || (fetcherState != null && fetcherState !== "idle")
+					}
 					variant="destructive"
 					onPress={handleReset}
 				>

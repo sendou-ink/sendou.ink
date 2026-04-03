@@ -55,6 +55,7 @@ import { getThemeSession } from "./features/theme/core/theme-session.server";
 import { useHydrated } from "./hooks/useHydrated";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
 import { i18nCookie, i18next } from "./modules/i18n/i18next.server";
+import { isSupporter } from "./modules/permissions/utils";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { allI18nNamespaces } from "./utils/i18n";
 import { isRevalidation, metaTags, type SerializeFrom } from "./utils/remix";
@@ -125,7 +126,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 						roles: user.roles,
 					}
 				: undefined,
-			customTheme: user?.customTheme,
+			customTheme: isSupporter(user) ? user?.customTheme : undefined,
 			notifications: user
 				? await NotificationRepository.findByUserId(user.id, {
 						limit: NOTIFICATIONS.PEEK_COUNT,

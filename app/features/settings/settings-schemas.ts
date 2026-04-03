@@ -35,6 +35,14 @@ export const disallowScrimPickupsFromUntrustedSchema = z.object({
 	}),
 });
 
+export const spoilerFreeModeSchema = z.object({
+	_action: stringConstant("UPDATE_SPOILER_FREE_MODE"),
+	newValue: toggle({
+		label: "labels.spoilerFreeMode",
+		bottomText: "bottomTexts.spoilerFreeMode",
+	}),
+});
+
 export const updateNoScreenSchema = z.object({
 	_action: stringConstant("UPDATE_NO_SCREEN"),
 	newValue: toggle({
@@ -47,6 +55,7 @@ export const settingsEditSchema = z.union([
 	customThemeSchema,
 	disableBuildAbilitySortingSchema,
 	disallowScrimPickupsFromUntrustedSchema,
+	spoilerFreeModeSchema,
 	updateNoScreenSchema,
 	clockFormatSchema,
 ]);

@@ -148,6 +148,7 @@
 }
 
 .firstPlacers {
+	position: relative;
 	margin-inline: auto;
 	margin-top: var(--s-5);
 	margin-block-end: var(--s-4);
@@ -168,6 +169,24 @@
 .badgeDisplay {
 	min-width: initial;
 	min-height: initial;
+}
+
+.vodIndicator {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-selector);
+	height: var(--selector-size);
+	width: max-content;
+	padding: 0 var(--s-1-5);
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	white-space: nowrap;
+
+	&:not(:first-child) {
+		margin-inline-start: var(--s-1);
+	}
 }
 
 .badgePill {

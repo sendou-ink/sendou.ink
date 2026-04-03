@@ -147,6 +147,7 @@
 	"actions.viewAll": "View all",
 	"actions.hide": "Hide",
 	"actions.settings": "Settings",
+	"actions.reveal": "Reveal",
 	"noResults": "No results",
 	"maps.createMapList": "Create map list",
 	"maps.halfSz": "50% SZ",
@@ -391,5 +392,7 @@
 	"header.parameter": "Parameter",
 	"weaponArt.title": "Community Art",
 	"tier.tentative": "Tentative {{tierName}}-tier (based on series history)",
-	"tier.confirmed": "{{tierName}}-tier tournament"
+	"tier.confirmed": "{{tierName}}-tier tournament",
+	"spoilerFree.showResults": "Show results",
+	"spoilerFree.hideResults": "Hide results"
 }

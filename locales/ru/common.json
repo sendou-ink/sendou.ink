@@ -147,6 +147,7 @@
 	"actions.viewAll": "",
 	"actions.hide": "",
 	"actions.settings": "",
+	"actions.reveal": "",
 	"noResults": "Нет результатов",
 	"maps.createMapList": "Создать список карт",
 	"maps.halfSz": "50% Зон",
@@ -394,5 +395,7 @@
 	"header.parameter": "",
 	"weaponArt.title": "",
 	"tier.tentative": "",
-	"tier.confirmed": ""
+	"tier.confirmed": "",
+	"spoilerFree.showResults": "",
+	"spoilerFree.hideResults": ""
 }

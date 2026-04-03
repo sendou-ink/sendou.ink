@@ -73,8 +73,11 @@ export const action: ActionFunction = async ({ request }) => {
 				fileUpload.fieldName === "img" ||
 				fileUpload.fieldName === "smallImg"
 			) {
-				const [, ending] = fileUpload.name.split(".");
-				invariant(ending);
+				const ending = fileUpload.name.split(".").pop();
+				invariant(
+					ending && ending !== fileUpload.name,
+					`File missing extension: "${fileUpload.name}"`,
+				);
 				const newFilename = `${preDecidedFilename}${fileUpload.fieldName === "smallImg" ? "-small" : ""}.${ending}`;
 
 				const uploadedFileLocation = await uploadStreamToS3(

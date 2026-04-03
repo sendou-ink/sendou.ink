@@ -5,6 +5,7 @@ import { getRounds } from "../../core/rounds";
 import styles from "./bracket.module.css";
 import { Match } from "./Match";
 import { RoundHeader } from "./RoundHeader";
+import { useBracketSpoilerCensor } from "./useBracketSpoilerCensor";
 
 interface EliminationBracketSideProps {
 	bracket: BracketType;
@@ -18,11 +19,15 @@ const GAP = 32;
 const MATCH_SPACING = MATCH_HEIGHT + GAP;
 
 export function EliminationBracketSide(props: EliminationBracketSideProps) {
+	const { censored, matchCensorLevel } = useBracketSpoilerCensor();
 	const rounds = getRounds({ ...props, bracketData: props.bracket.data });
 
 	const hiddenRoundIds = new Set(
 		rounds
 			.filter((round, roundIdx) => {
+				if (censored && round.name === TOURNAMENT.ROUND_NAMES.BRACKET_RESET) {
+					return true;
+				}
 				if (props.isExpanded) return false;
 				if (roundIdx >= rounds.length - 2) return false;
 
@@ -110,6 +115,8 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 										nextRound?.name === TOURNAMENT.ROUND_NAMES.THIRD_PLACE_MATCH
 									)
 										return "none" as const;
+									if (nextRound && hiddenRoundIds.has(nextRound.id))
+										return "none" as const;
 									if (nextRoundMatchCount === matches.length)
 										return "straight" as const;
 									return matchIdx % 2 === 0
@@ -146,6 +153,22 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 														? "losers"
 														: undefined
 										}
+										spoilerCensor={matchCensorLevel({
+											bracketType:
+												props.type === "single"
+													? "single_elimination"
+													: "double_elimination",
+											roundName: round.name,
+											roundNumber: round.number,
+											roundIdx,
+											matchType:
+												round.name === TOURNAMENT.ROUND_NAMES.GRAND_FINALS ||
+												round.name === TOURNAMENT.ROUND_NAMES.BRACKET_RESET
+													? "grands"
+													: props.type === "losers"
+														? "losers"
+														: "winners",
+										})}
 										lineType={lineType}
 										lineVerticalExtend={verticalExtend}
 									/>

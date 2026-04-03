@@ -305,6 +305,10 @@ function ChatProviderInner({
 					return { ...prev, [roomCode]: updated };
 				}
 
+				if (existing.some((m) => m.id === msg.id)) {
+					return prev;
+				}
+
 				return { ...prev, [roomCode]: [...existing, msg] };
 			});
 

@@ -147,6 +147,7 @@
 	"actions.viewAll": "",
 	"actions.hide": "",
 	"actions.settings": "",
+	"actions.reveal": "",
 	"noResults": "",
 	"maps.createMapList": "Crear lista de escenarios",
 	"maps.halfSz": "50% Pintazonas",
@@ -393,5 +394,7 @@
 	"header.parameter": "",
 	"weaponArt.title": "",
 	"tier.tentative": "",
-	"tier.confirmed": ""
+	"tier.confirmed": "",
+	"spoilerFree.showResults": "",
+	"spoilerFree.hideResults": ""
 }

@@ -147,6 +147,7 @@
 	"actions.viewAll": "",
 	"actions.hide": "Ocultar",
 	"actions.settings": "Ajustes",
+	"actions.reveal": "",
 	"noResults": "Sin resultados",
 	"maps.createMapList": "Crear lista de mapas",
 	"maps.halfSz": "50% Pintazonas",
@@ -393,5 +394,7 @@
 	"header.parameter": "",
 	"weaponArt.title": "",
 	"tier.tentative": "Tier {{tierName}} provisional",
-	"tier.confirmed": "Tier {{tierName}} confirmado"
+	"tier.confirmed": "Tier {{tierName}} confirmado",
+	"spoilerFree.showResults": "",
+	"spoilerFree.hideResults": ""
 }

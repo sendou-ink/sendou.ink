@@ -274,6 +274,10 @@
 	gap: var(--s-2);
 	align-items: center;
 	font-weight: var(--weight-semi);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	min-width: 0;
 }
 
 .streamViewerCount {
@@ -491,4 +495,11 @@
 	width: 5px;
 	background-color: var(--color-bg-high);
 	border-radius: var(--radius-box);
+}
+
+.spoilerRevealContainer {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: var(--s-12) 0;
 }

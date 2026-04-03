@@ -527,6 +527,11 @@ export interface CastedMatchesInfo {
 	lockedMatches: Array<{ twitchAccount: string; matchId: number }>;
 	/** What matches are streamed currently & where */
 	castedMatches: { twitchAccount: string; matchId: number }[];
+	castedMatchHistory?: Array<{
+		twitchAccount: string;
+		matchId: number;
+		timestamp: number;
+	}>;
 }
 
 export interface Tournament {
@@ -976,6 +981,8 @@ export interface UserPreferences {
 	clockFormat?: "24h" | "12h" | "auto";
 	/** Is the new widget based user page enabled? (Supporter early preview) */
 	newProfileEnabled?: boolean;
+	/** Is spoiler-free mode enabled? Hides recent tournament results and scores until the user chooses to reveal them. */
+	spoilerFreeMode?: boolean;
 }
 
 export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;
@@ -1104,6 +1111,17 @@ export interface TournamentStreamer {
 	userId: number | null;
 	tournamentId: number;
 	twitchAccount: string;
+}
+
+export interface TournamentMatchVod {
+	id: GeneratedAlways<number>;
+	matchId: number;
+	userId: number | null;
+	platform: string;
+	account: string;
+	platformVideoId: string;
+	timestampSeconds: number;
+	viewCount: number;
 }
 
 export interface BanLog {
@@ -1357,6 +1375,7 @@ export interface DB {
 	TournamentBracketProgressionOverride: TournamentBracketProgressionOverride;
 	TournamentOrganizationBannedUser: TournamentOrganizationBannedUser;
 	TournamentStreamer: TournamentStreamer;
+	TournamentMatchVod: TournamentMatchVod;
 	TrustRelationship: TrustRelationship;
 	Friendship: Friendship;
 	FriendRequest: FriendRequest;

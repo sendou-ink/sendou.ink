@@ -17,6 +17,8 @@ export const TOURNAMENT = {
 	SWISS_DEFAULT_ROUND_COUNT: 5,
 	SE_DEFAULT_HAS_THIRD_PLACE_MATCH: true,
 	MAX_SAVED_COUNT: 20,
+	/** How many days after a tournament ends VOD links are shown on the bracket */
+	VOD_VISIBILITY_DAYS: 7,
 	ROUND_NAMES: {
 		WB_FINALS: "WB Finals",
 		GRAND_FINALS: "Grand Finals",

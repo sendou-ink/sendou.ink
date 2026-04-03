@@ -147,6 +147,7 @@
 	"actions.viewAll": "",
 	"actions.hide": "",
 	"actions.settings": "",
+	"actions.reveal": "",
 	"noResults": "",
 	"maps.createMapList": "Stwórz liste map",
 	"maps.halfSz": "50% SZ",
@@ -394,5 +395,7 @@
 	"header.parameter": "",
 	"weaponArt.title": "",
 	"tier.tentative": "",
-	"tier.confirmed": ""
+	"tier.confirmed": "",
+	"spoilerFree.showResults": "",
+	"spoilerFree.hideResults": ""
 }
