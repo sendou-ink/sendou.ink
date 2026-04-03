@@ -108,7 +108,7 @@
 		"@types/web-push": "3.6.4",
 		"@vitest/browser-playwright": "4.1.2",
 		"@vitest/ui": "4.1.2",
-		"babel-plugin-react-compiler": "19.1.0-rc.2",
+		"babel-plugin-react-compiler": "19.1.0-rc.3",
 		"cross-env": "10.1.0",
 		"dotenv": "17.3.1",
 		"i18next-locales-sync": "2.1.1",
