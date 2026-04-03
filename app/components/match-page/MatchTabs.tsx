@@ -1,4 +1,4 @@
-import { Tally5, Users } from "lucide-react";
+import { DoorOpen, Tally5, Users } from "lucide-react";
 import type * as React from "react";
 import { useSearchParams } from "react-router";
 import invariant from "~/utils/invariant";
@@ -21,16 +21,19 @@ const TAB_KEY = "tab";
 const TAB_KEYS = {
 	ROSTERS: "rosters",
 	ACTION: "action",
+	JOIN: "join",
 } as const;
 
 const TAB_ICONS: Record<MatchTabsKey, React.ReactNode> = {
 	rosters: <Users />,
 	action: <Tally5 />,
+	join: <DoorOpen />,
 };
 
 const TAB_LABELS: Record<MatchTabsKey, string> = {
 	rosters: "Rosters",
 	action: "Action",
+	join: "Join",
 };
 
 export function MatchTabs({ children, tabs }: MatchTabsProps) {
@@ -68,4 +71,8 @@ export function MatchRosterTab() {
 
 export function MatchActionTab() {
 	return <SendouTabPanel id={TAB_KEYS.ACTION}>Report content</SendouTabPanel>;
+}
+
+export function MatchJoinTab() {
+	return <SendouTabPanel id={TAB_KEYS.JOIN}>Join content</SendouTabPanel>;
 }
