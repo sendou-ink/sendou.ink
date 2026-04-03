@@ -10,7 +10,7 @@ import {
 } from "../elements/Tabs";
 import styles from "./MatchTabs.module.css";
 
-type MatchTabsKey = (typeof MATCH_TABS_KEYS)[keyof typeof MATCH_TABS_KEYS];
+type MatchTabsKey = (typeof TAB_KEYS)[keyof typeof TAB_KEYS];
 interface MatchTabsProps {
 	children: React.ReactNode;
 	tabs: Array<MatchTabsKey>;
@@ -18,14 +18,19 @@ interface MatchTabsProps {
 
 const TAB_KEY = "tab";
 
-const MATCH_TABS_KEYS = {
+const TAB_KEYS = {
 	ROSTERS: "rosters",
 	ACTION: "action",
 } as const;
 
-const ICONS: Record<MatchTabsKey, React.ReactNode> = {
+const TAB_ICONS: Record<MatchTabsKey, React.ReactNode> = {
 	rosters: <Users />,
 	action: <Tally5 />,
+};
+
+const TAB_LABELS: Record<MatchTabsKey, string> = {
+	rosters: "Rosters",
+	action: "Action",
 };
 
 export function MatchTabs({ children, tabs }: MatchTabsProps) {
@@ -44,12 +49,11 @@ export function MatchTabs({ children, tabs }: MatchTabsProps) {
 				}
 			>
 				<SendouTabList>
-					<SendouTab id={MATCH_TABS_KEYS.ROSTERS} icon={ICONS.rosters}>
-						Rosters
-					</SendouTab>
-					<SendouTab id="action" icon={ICONS.action}>
-						Action
-					</SendouTab>
+					{tabs.map((tab) => (
+						<SendouTab key={tab} id={tab} icon={TAB_ICONS[tab]}>
+							{TAB_LABELS[tab]}
+						</SendouTab>
+					))}
 				</SendouTabList>
 
 				{children}
@@ -59,13 +63,9 @@ export function MatchTabs({ children, tabs }: MatchTabsProps) {
 }
 
 export function MatchRosterTab() {
-	return (
-		<SendouTabPanel id={MATCH_TABS_KEYS.ROSTERS}>Roster content</SendouTabPanel>
-	);
+	return <SendouTabPanel id={TAB_KEYS.ROSTERS}>Roster content</SendouTabPanel>;
 }
 
 export function MatchActionTab() {
-	return (
-		<SendouTabPanel id={MATCH_TABS_KEYS.ACTION}>Report content</SendouTabPanel>
-	);
+	return <SendouTabPanel id={TAB_KEYS.ACTION}>Report content</SendouTabPanel>;
 }
