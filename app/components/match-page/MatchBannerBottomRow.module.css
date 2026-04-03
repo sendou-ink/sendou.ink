@@ -2,6 +2,12 @@
 	display: flex;
 	justify-content: space-between;
 	padding-inline: var(--s-1-5);
+
+	@container (max-width: 500px) {
+		flex-direction: column-reverse;
+		align-items: center;
+		gap: var(--s-3);
+	}
 }
 
 .activeRosters {
@@ -16,8 +22,7 @@
 }
 
 .mode {
-	background-color: var(--color-bg-high);
-	border: var(--border-style);
+	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-full);
 	padding: var(--s-1);
 }

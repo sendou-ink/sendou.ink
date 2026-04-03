@@ -29,7 +29,7 @@ function ModeProgress({ games }: Pick<MatchBannerBottomRowProps, "games">) {
 		<div className={styles.modeProgress}>
 			{games.map((game, i) => (
 				<div key={i} className={styles.mode}>
-					<ModeImage mode={game.mode} size={12} />
+					<ModeImage mode={game.mode} size={16} />
 				</div>
 			))}
 		</div>
