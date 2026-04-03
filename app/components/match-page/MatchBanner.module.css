@@ -7,7 +7,7 @@
 .banner {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
-	grid-template-areas: "mode stage" "notice x";
+	grid-template-areas: "map info" "notice notice";
 	background-size: cover;
 	background-position: center;
 	background-repeat: no-repeat;
@@ -25,13 +25,13 @@
 		var(--stage-img);
 }
 
-.stage {
-	grid-area: stage;
+.info {
+	grid-area: info;
 	justify-self: flex-end;
 }
 
-.mode {
-	grid-area: mode;
+.map {
+	grid-area: map;
 	display: flex;
 	gap: var(--s-1);
 }

@@ -1,7 +1,10 @@
 import { ArrowLeft } from "lucide-react";
 import { SendouButton } from "~/components/elements/Button";
 import { Main } from "~/components/Main";
-import { MatchBanner } from "~/components/match-page/MatchBanner";
+import {
+	MatchBanner,
+	MatchBannerContainer,
+} from "~/components/match-page/MatchBanner";
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
 import { MatchPage } from "~/components/match-page/MatchPage";
@@ -22,50 +25,47 @@ export default function MatchPageTestRoute() {
 					Round 2.1
 				</MatchPageHeader>
 
-				<MatchBanner
-					stageId={1}
-					mode="SZ"
-					top={
-						<MatchBannerTopRow
-							score={{
-								alpha: 1,
-								bravo: 2,
-								isFinal: false,
-								count: 5,
-								bestOf: true,
-							}}
-							time={{
-								currentMinutes: 3,
-								totalMinutes: 1,
-							}}
-						/>
-					}
-					bottom={
-						<MatchBannerBottomRow
-							games={[{ mode: "SZ", winner: "ALPHA" }]}
-							activeRosters={{
-								alpha: [
-									{
-										id: 1,
-										username: "Sendou",
-										discordId: "123",
-										discordAvatar: null,
-										customUrl: "sendou",
-									},
-								],
-								bravo: [
-									{
-										id: 2,
-										username: "Lean",
-										discordId: "456",
-										discordAvatar: null,
-										customUrl: null,
-									},
-								],
-							}}
-						/>
-					}
-				/>
+				<MatchBannerContainer>
+					<MatchBannerTopRow
+						score={{
+							alpha: 1,
+							bravo: 2,
+							isFinal: false,
+							count: 5,
+							bestOf: true,
+						}}
+						time={{
+							currentMinutes: 3,
+							totalMinutes: 1,
+						}}
+					/>
+					<MatchBanner stageId={1} mode="SZ">
+						Team 2 pick
+					</MatchBanner>
+					<MatchBannerBottomRow
+						games={[{ mode: "SZ", winner: "ALPHA" }]}
+						activeRosters={{
+							alpha: [
+								{
+									id: 1,
+									username: "Sendou",
+									discordId: "123",
+									discordAvatar: null,
+									customUrl: "sendou",
+								},
+							],
+							bravo: [
+								{
+									id: 2,
+									username: "Lean",
+									discordId: "456",
+									discordAvatar: null,
+									customUrl: null,
+								},
+							],
+						}}
+					/>
+				</MatchBannerContainer>
 			</MatchPage>
 		</Main>
 	);
