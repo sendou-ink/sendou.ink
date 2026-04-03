@@ -2,7 +2,13 @@ import { ungzip } from "pako";
 import { PicoCAD2Viewer } from "picocad2-web";
 import { useRef } from "react";
 
-export function Trophy({ model }: { model: string }) {
+export function Trophy({
+	model,
+	preview,
+}: {
+	model: string;
+	preview?: boolean;
+}) {
 	const modelState = ungzip(
 		Uint8Array.from(atob(model), (c) => c.charCodeAt(0)),
 		{
@@ -23,11 +29,18 @@ export function Trophy({ model }: { model: string }) {
 			canvas,
 			resolution: { width: 128, height: 128, scale: 4 },
 		});
+		viewerRef.current = viewer;
 
 		viewer.setState(JSON.parse(modelState));
+
+		if (preview) {
+			viewer.draw();
+			viewer.dispose();
+			return;
+		}
+
 		viewer.cameraMode = "spin";
 		viewer.cameraModeSpeed = 5;
-
 		viewer.startRenderLoop(false);
 		viewer.enableCameraControls({
 			spinInertiaFactor: 0.95,
@@ -40,8 +53,6 @@ export function Trophy({ model }: { model: string }) {
 				restoreTime: 1000,
 			},
 		});
-
-		viewerRef.current = viewer;
 	};
 
 	return <canvas ref={canvasRef} />;
