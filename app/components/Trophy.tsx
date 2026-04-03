@@ -28,7 +28,7 @@ export function Trophy({ model }: { model: string }) {
 		viewer.cameraMode = "spin";
 		viewer.cameraModeSpeed = 5;
 
-		viewer.startRenderLoop();
+		viewer.startRenderLoop(false);
 		viewer.enableCameraControls({
 			spinInertiaFactor: 0.95,
 			pan: false,
