@@ -1,0 +1,36 @@
+.root {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-template-areas: "mode stage" "notice x";
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	width: 100%;
+	height: 175px;
+	border-radius: var(--radius-box);
+	padding: var(--s-2);
+	background-image:
+		linear-gradient(
+			to top,
+			rgba(255, 255, 255, 0),
+			rgba(255, 255, 255, 0),
+			rgba(0, 0, 0, 0.6)
+		),
+		var(--stage-img);
+}
+
+.stage {
+	grid-area: stage;
+	justify-self: flex-end;
+}
+
+.mode {
+	grid-area: mode;
+	display: flex;
+	gap: var(--s-1);
+}
+
+.thickText {
+	font-size: var(--font-md);
+	font-weight: var(--weight-semi);
+}

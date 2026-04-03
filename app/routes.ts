@@ -26,6 +26,10 @@ const devOnlyRoutes =
 					"features/bracket-test/routes/bracket-test.tsx",
 					[index("features/bracket-test/routes/bracket-test.index.tsx")],
 				),
+				route(
+					"/match-page-test",
+					"features/match-page-test/routes/match-page-test.tsx",
+				),
 			] satisfies RouteConfig)
 		: [];
 
