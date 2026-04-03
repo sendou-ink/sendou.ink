@@ -148,6 +148,21 @@ export type BadgeOwner = {
 	tournamentId: number | null;
 };
 
+export interface Trophy {
+	id: GeneratedAlways<number>;
+	name: string;
+	model: string;
+	organizationId: number | null;
+	creatorId: number;
+	managerId: number;
+}
+
+export interface TrophyOwner {
+	trophyId: number;
+	userId: number;
+	tournamentId: number;
+}
+
 export interface Build {
 	clothesGearSplId: number;
 	description: string | null;
@@ -1371,6 +1386,8 @@ export interface DB {
 	TournamentOrganizationBannedUser: TournamentOrganizationBannedUser;
 	TournamentStreamer: TournamentStreamer;
 	TournamentMatchVod: TournamentMatchVod;
+	Trophy: Trophy;
+	TrophyOwner: TrophyOwner;
 	TrustRelationship: TrustRelationship;
 	Friendship: Friendship;
 	FriendRequest: FriendRequest;

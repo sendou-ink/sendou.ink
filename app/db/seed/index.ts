@@ -77,6 +77,7 @@ import {
 	SEED_TEAM_IMAGES,
 	SEED_TOURNAMENT_IMAGES,
 } from "../../../scripts/seed-art-urls";
+import trophies from "./trophies.json";
 import type { QWeaponPool, Tables, UserMapModePreferences } from "../tables";
 import {
 	ADMIN_TEST_AVATAR,
@@ -241,6 +242,8 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	liveStreams,
 	splatoonRotations,
 	variation === "FINALIZED_BRACKET" ? finalizedBracket : undefined,
+	trophiesToDb,
+	trophyOwners,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -559,6 +562,8 @@ function wipeDB() {
 		"User",
 		"PlusSuggestion",
 		"PlusVote",
+		"TrophyOwner",
+		"Trophy",
 		"TournamentBadgeOwner",
 		"BadgeManager",
 		"TournamentOrganization",
@@ -1061,6 +1066,72 @@ function badgeManagers() {
 				`insert into "BadgeManager" ("badgeId", "userId") values ($id, $userId)`,
 			)
 			.run({ id, userId: NZAP_TEST_ID });
+	}
+}
+
+function trophiesToDb() {
+	const insertTrophyStm = sql.prepare(
+		`insert into "Trophy" ("name", "model", "organizationId", "creatorId", "managerId") values ($name, $model, $organizationId, $creatorId, $managerId)`,
+	);
+
+	for (const [name, model] of Object.entries(trophies)) {
+		insertTrophyStm.run({
+			name,
+			model,
+			organizationId: 1,
+			creatorId: ADMIN_ID,
+			managerId: NZAP_TEST_ID,
+		});
+	}
+}
+
+function trophyOwners() {
+	const trophyIds = (
+		sql.prepare(`select "id" from "Trophy"`).all() as any[]
+	).map((t) => t.id) as number[];
+
+	const tournamentIds = (
+		sql.prepare(`select "id" from "Tournament"`).all() as any[]
+	).map((t) => t.id) as number[];
+
+	let userIds = (
+		sql
+			.prepare(
+				`select "id" from "User" where id != ${NZAP_TEST_ID} and id != ${ADMIN_ID}`,
+			)
+			.all() as any[]
+	).map((u) => u.id) as number[];
+
+	const insertTrophyOwnerStm = sql.prepare(
+		`insert into "TrophyOwner" ("trophyId", "userId", "tournamentId") values ($trophyId, $userId, $tournamentId)`,
+	);
+
+	for (const trophyId of trophyIds) {
+		userIds = faker.helpers.shuffle(userIds);
+		for (
+			let i = 0;
+			i <
+			faker.number.int({
+				min: 1,
+				max: 8,
+			});
+			i++
+		) {
+			const userId = userIds.shift()!;
+			const tournamentId = faker.helpers.arrayElement(tournamentIds);
+
+			insertTrophyOwnerStm.run({ trophyId, userId, tournamentId });
+
+			userIds.push(userId);
+		}
+	}
+
+	for (const trophyId of trophyIds) {
+		insertTrophyOwnerStm.run({
+			trophyId,
+			userId: ADMIN_ID,
+			tournamentId: faker.helpers.arrayElement(tournamentIds),
+		});
 	}
 }
 
