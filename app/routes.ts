@@ -86,6 +86,8 @@ export default [
 		]),
 	]),
 
+	route("/trophies", "features/trophies/routes/trophies.tsx"),
+
 	...prefix("/calendar", [
 		index("features/calendar/routes/calendar.tsx"),
 		route("new", "features/calendar/routes/calendar.new.tsx"),

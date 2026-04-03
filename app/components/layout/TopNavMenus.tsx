@@ -47,6 +47,7 @@ const NAV_CATEGORIES = [
 			{ name: "art", url: "art" },
 			{ name: "articles", url: "a" },
 			{ name: "vods", url: "vods" },
+			{ name: "trophies", url: "trophies" },
 			{ name: "badges", url: "badges" },
 			{ name: "links", url: "links" },
 			{ name: "plus", url: "plus/suggestions" },

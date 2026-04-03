@@ -2,7 +2,7 @@ import { ungzip } from "pako";
 import { PicoCAD2Viewer } from "picocad2-web";
 import { useRef } from "react";
 
-export function Trophy(model: string) {
+export function Trophy({ model }: { model: string }) {
 	const modelState = ungzip(
 		Uint8Array.from(atob(model), (c) => c.charCodeAt(0)),
 		{
@@ -28,7 +28,7 @@ export function Trophy(model: string) {
 		viewer.cameraMode = "spin";
 		viewer.cameraModeSpeed = 5;
 
-		viewer.startRenderLoop(false);
+		viewer.startRenderLoop();
 		viewer.enableCameraControls({
 			spinInertiaFactor: 0.95,
 			pan: false,

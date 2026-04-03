@@ -77,7 +77,6 @@ import {
 	SEED_TEAM_IMAGES,
 	SEED_TOURNAMENT_IMAGES,
 } from "../../../scripts/seed-art-urls";
-import trophies from "./trophies.json";
 import type { QWeaponPool, Tables, UserMapModePreferences } from "../tables";
 import {
 	ADMIN_TEST_AVATAR,
@@ -88,6 +87,7 @@ import {
 	ORG_ADMIN_TEST_ID,
 } from "./constants";
 import placements from "./placements.json";
+import trophies from "./trophies.json";
 
 const SENDOUQ_DEFAULT_MAPS: Record<
 	ModeShort,
