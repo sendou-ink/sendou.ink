@@ -22,7 +22,7 @@ import { useUser } from "~/features/auth/core/user";
 import { IS_Q_LOOKING_MOBILE_BREAKPOINT } from "~/features/sendouq/q-constants";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { SendouForm } from "~/form/SendouForm";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { userPage } from "~/utils/urls";
@@ -47,9 +47,9 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function TournamentLFGShell() {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
-	if (!isMounted) return <Placeholder />;
+	if (!isHydrated) return <Placeholder />;
 
 	return <TournamentLFGPage />;
 }

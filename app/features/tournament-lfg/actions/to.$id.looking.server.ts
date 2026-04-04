@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import { notify } from "~/features/notifications/core/notify.server";
 import { requireNotBannedByOrganization } from "~/features/tournament/tournament-utils.server";
 import {
 	clearTournamentDataCache,
@@ -83,12 +84,39 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "LIKE": {
-			const ownGroup = await findOwnGroup();
+			const groups =
+				await TournamentLFGRepository.findLookingTeamsByTournamentId(
+					tournamentId,
+				);
+			const ownGroup = groups.find((g) =>
+				g.members.some((m) => m.id === user.id),
+			);
 			if (!ownGroup || !isGroupManager(ownGroup)) return null;
+
+			const targetGroup = groups.find((g) => g.id === data.targetTeamId);
+			if (!targetGroup) return null;
 
 			await TournamentLFGRepository.addLike({
 				likerTeamId: ownGroup.id,
 				targetTeamId: data.targetTeamId,
+			});
+
+			const tournament = await tournamentFromDBCached({
+				tournamentId,
+				user,
+			});
+
+			notify({
+				userIds: targetGroup.members.map((m) => m.id),
+				notification: {
+					type: "TO_LIKE_RECEIVED",
+					meta: {
+						tournamentId,
+						tournamentName: tournament.ctx.name,
+						likerUsername: user.username,
+					},
+					pictureUrl: tournament.ctx.logoUrl,
+				},
 			});
 
 			break;
@@ -156,6 +184,19 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				survivingTeamId: surviving,
 				otherTeamId: otherGroup.id,
 				maxGroupSize: tournament.maxMembersPerTeam,
+			});
+
+			notify({
+				userIds: theirGroup.members.map((m) => m.id),
+				notification: {
+					type: "TO_LIKE_ACCEPTED",
+					meta: {
+						tournamentId,
+						tournamentName: tournament.ctx.name,
+						accepterUsername: user.username,
+					},
+					pictureUrl: tournament.ctx.logoUrl,
+				},
 			});
 
 			break;

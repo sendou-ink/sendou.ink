@@ -1,0 +1,188 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+	padding: var(--s-4);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg);
+}
+
+.palette {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.paletteGroup {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-2);
+	align-items: center;
+}
+
+.paletteLabel {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-second);
+	min-width: 3rem;
+}
+
+.chip {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 4px 10px;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	cursor: grab;
+	user-select: none;
+	white-space: nowrap;
+	border: 1px solid var(--color-border);
+	background-color: var(--color-bg-high);
+	color: var(--color-text);
+	touch-action: none;
+}
+
+.chipWho {
+	border-radius: 4px;
+}
+
+.chipAction {
+	border-radius: var(--radius-full);
+}
+
+.chipDragging {
+	opacity: 0.5;
+}
+
+.sections {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--s-4);
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.sectionHeader {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+}
+
+.stepList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	min-height: 3rem;
+}
+
+.stepRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-1) var(--s-2);
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-field);
+	border: 1px solid var(--color-border);
+}
+
+.stepRowDragging {
+	opacity: 0.5;
+}
+
+.dragHandle {
+	cursor: grab;
+	color: var(--color-text-second);
+	display: flex;
+	align-items: center;
+	touch-action: none;
+	flex-shrink: 0;
+	background: none;
+	border: none;
+	padding: 0;
+}
+
+.dropZone {
+	flex: 1;
+	min-height: 2rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px dashed var(--color-border);
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	transition:
+		border-color 0.15s,
+		background-color 0.15s;
+}
+
+.dropZoneWho {
+	border-radius: 4px;
+	max-width: 8rem;
+	min-width: 6rem;
+}
+
+.dropZoneAction {
+	border-radius: var(--radius-full);
+}
+
+.dropZoneOver {
+	border-color: var(--color-text-accent);
+	background-color: color-mix(
+		in srgb,
+		var(--color-text-accent) 10%,
+		transparent
+	);
+}
+
+.dropZoneInvalid {
+	border-color: var(--color-error);
+	background-color: color-mix(in srgb, var(--color-error) 10%, transparent);
+}
+
+.dropZoneFilled {
+	border-style: solid;
+	border-color: var(--color-border);
+	background-color: var(--color-bg-higher);
+	color: var(--color-text);
+}
+
+.removeButton {
+	background: none;
+	border: none;
+	color: var(--color-text-second);
+	cursor: pointer;
+	padding: 2px;
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	border-radius: var(--radius-full);
+
+	&:hover {
+		color: var(--color-error);
+		background-color: color-mix(in srgb, var(--color-error) 10%, transparent);
+	}
+}
+
+.removeButtonHidden {
+	visibility: hidden;
+}
+
+.addStepButton {
+	font-size: var(--font-xs);
+	align-self: flex-start;
+}
+
+.validationError {
+	font-size: var(--font-xs);
+	color: var(--color-error);
+	margin-block-start: var(--s-1);
+}
+
+.overlay {
+	z-index: 999;
+}

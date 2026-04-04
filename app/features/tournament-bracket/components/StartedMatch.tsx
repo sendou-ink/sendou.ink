@@ -19,8 +19,11 @@ import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import {
+	isLeagueRoundLocked,
+	resolveLeagueRoundStartDate,
+} from "~/features/tournament/tournament-utils";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type { StageId } from "~/modules/in-game-lists/types";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
@@ -51,6 +54,7 @@ import {
 } from "../tournament-bracket-utils";
 import { DeadlineInfoPopover } from "./DeadlineInfoPopover";
 import { MatchActions } from "./MatchActions";
+import { MatchMapInfo } from "./MatchMapInfo";
 import { MatchRosters } from "./MatchRosters";
 import { MatchTimer } from "./MatchTimer";
 
@@ -75,7 +79,7 @@ export function StartedMatch({
 	type: "EDIT" | "OTHER";
 }) {
 	const { t } = useTranslation(["tournament"]);
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const user = useUser();
 	const tournament = useTournament();
 	const data = useLoaderData<TournamentMatchLoaderData>();
@@ -249,11 +253,11 @@ export function StartedMatch({
 			{result ? (
 				<div
 					className={clsx("text-center text-xs text-lighter", {
-						invisible: !isMounted,
+						invisible: !isHydrated,
 					})}
 					data-testid="report-timestamp"
 				>
-					{isMounted
+					{isHydrated
 						? databaseTimestampToDate(result.createdAt).toLocaleString()
 						: "t"}
 				</div>
@@ -285,10 +289,10 @@ function FancyStageBanner({
 	const gamesCompleted = data.results.length;
 
 	const stageNameToBannerImageUrl = (stageId: StageId) => {
-		return `${stageImageUrl(stageId)}.png`;
+		return `${stageImageUrl(stageId)}.avif`;
 	};
 
-	const banPickingTeam = () => {
+	const turnOfResult = (() => {
 		if (
 			!data.match.roundMaps ||
 			!data.match.opponentOne?.id ||
@@ -297,14 +301,28 @@ function FancyStageBanner({
 			return null;
 		}
 
-		const pickingTeamId = PickBan.turnOf({
+		return PickBan.turnOf({
 			results: data.results,
 			maps: data.match.roundMaps,
-			teams: [data.match.opponentOne.id, data.match.opponentTwo.id],
+			teams: [
+				{
+					id: data.match.opponentOne.id,
+					seed: tournament.teamById(data.match.opponentOne.id)!.seed,
+				},
+				{
+					id: data.match.opponentTwo.id,
+					seed: tournament.teamById(data.match.opponentTwo.id)!.seed,
+				},
+			],
 			mapList: data.mapList,
+			pickBanEventCount: data.pickBanEventCount,
 		});
+	})();
 
-		return pickingTeamId ? teams.find((t) => t.id === pickingTeamId) : null;
+	const banPickingTeam = () => {
+		return turnOfResult
+			? teams.find((t) => t.id === turnOfResult.teamId)
+			: null;
 	};
 
 	const style = {
@@ -346,32 +364,37 @@ function FancyStageBanner({
 		return null;
 	})();
 
-	const waitingForLeagueRoundToStart = (() => {
-		const date = resolveLeagueRoundStartDate(tournament, data.match.roundId);
+	const waitingForLeagueRoundToStart = isLeagueRoundLocked(
+		tournament,
+		data.match.roundId,
+	);
 
-		if (!date) return false;
+	const noStageHeading = () => {
+		if (data.match.roundMaps?.pickBan === "CUSTOM" && turnOfResult) {
+			const stepCounter =
+				turnOfResult.stepTotal && turnOfResult.stepTotal > 1
+					? ` (${turnOfResult.stepCurrent}/${turnOfResult.stepTotal})`
+					: "";
 
-		return date > new Date();
-	})();
+			switch (turnOfResult.action) {
+				case "PICK":
+					return t("tournament:pickBan.pickMap") + stepCounter;
+				case "BAN":
+					return t("tournament:pickBan.banMap") + stepCounter;
+				case "MODE_PICK":
+					return t("tournament:pickBan.pickMode") + stepCounter;
+				case "MODE_BAN":
+					return t("tournament:pickBan.banMode") + stepCounter;
+				default:
+					return t("tournament:pickBan.counterpick");
+			}
+		}
+		return t("tournament:pickBan.counterpick");
+	};
 
 	return (
 		<>
-			{inBanPhase ? (
-				<div className={styles.lockedBanner}>
-					<div className="stack sm items-center">
-						<div className="text-lg text-center font-bold">Banning phase</div>
-						<div>Waiting for {banPickingTeam()?.name}</div>
-					</div>
-				</div>
-			) : !stage ? (
-				<div className={styles.lockedBanner}>
-					<div className="stack sm items-center">
-						<div className="text-lg text-center font-bold">Counterpick</div>
-						<div>Waiting for {banPickingTeam()?.name}</div>
-						{children}
-					</div>
-				</div>
-			) : matchIsLocked ? (
+			{matchIsLocked ? (
 				<div className={styles.lockedBanner}>
 					<div className="stack sm items-center">
 						<div className="text-lg text-center font-bold">
@@ -432,6 +455,23 @@ function FancyStageBanner({
 							gamesCompleted={gamesCompleted}
 						/>
 					) : null}
+				</div>
+			) : inBanPhase ? (
+				<div className={styles.lockedBanner}>
+					<div className="stack sm items-center">
+						<div className="text-lg text-center font-bold">Banning phase</div>
+						<div>Waiting for {banPickingTeam()?.name}</div>
+					</div>
+				</div>
+			) : !stage ? (
+				<div className={styles.lockedBanner}>
+					<div className="stack sm items-center">
+						<div className="text-lg text-center font-bold">
+							{noStageHeading()}
+						</div>
+						<div>Waiting for {banPickingTeam()?.name}</div>
+						{children}
+					</div>
 				</div>
 			) : (
 				<div
@@ -643,13 +683,18 @@ function StartedMatchTabs({
 	teams: [TournamentDataTeam, TournamentDataTeam];
 	result?: Result;
 }) {
+	const { t } = useTranslation(["tournament"]);
 	const user = useUser();
 	const tournament = useTournament();
 	const data = useLoaderData<TournamentMatchLoaderData>();
+	const isCustomFlow = data.match.roundMaps?.pickBan === "CUSTOM";
+	const validTabs = isCustomFlow
+		? ["rosters", "actions", "map-info"]
+		: ["rosters", "actions"];
 	const [selectedTabKey, setSelectedTabKey] = useSearchParamState({
 		defaultValue: "rosters",
 		name: "tab",
-		revive: (value) => (["rosters", "actions"].includes(value) ? value : null),
+		revive: (value) => (validTabs.includes(value) ? value : null),
 	});
 
 	const currentPosition = scores[0] + scores[1];
@@ -685,6 +730,11 @@ function StartedMatchTabs({
 					<SendouTab id="actions" data-testid="actions-tab">
 						{presentational ? "Score" : "Actions"}
 					</SendouTab>
+					{isCustomFlow ? (
+						<SendouTab id="map-info">
+							{t("tournament:match.tab.mapInfo")}
+						</SendouTab>
+					) : null}
 				</SendouTabList>
 
 				<SendouTabPanel id="rosters">
@@ -713,6 +763,12 @@ function StartedMatchTabs({
 						}
 					/>
 				</SendouTabPanel>
+
+				{isCustomFlow ? (
+					<SendouTabPanel id="map-info">
+						<MatchMapInfo teams={[teams[0].id, teams[1].id]} />
+					</SendouTabPanel>
+				) : null}
 			</SendouTabs>
 		</ActionSectionWrapper>
 	);

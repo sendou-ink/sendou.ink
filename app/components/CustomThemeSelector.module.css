@@ -55,30 +55,32 @@
 	align-items: center;
 }
 
-.hueSlider::-webkit-slider-runnable-track {
-	background: linear-gradient(
-		to right,
-		oklch(65% 0.15 0),
-		oklch(65% 0.15 60),
-		oklch(65% 0.15 120),
-		oklch(65% 0.15 180),
-		oklch(65% 0.15 240),
-		oklch(65% 0.15 300),
-		oklch(65% 0.15 360)
-	) !important;
-}
+.hueSlider {
+	&::-webkit-slider-runnable-track {
+		background: linear-gradient(
+			to right,
+			oklch(65% 0.15 0),
+			oklch(65% 0.15 60),
+			oklch(65% 0.15 120),
+			oklch(65% 0.15 180),
+			oklch(65% 0.15 240),
+			oklch(65% 0.15 300),
+			oklch(65% 0.15 360)
+		) !important;
+	}
 
-.hueSlider::-moz-range-track {
-	background: linear-gradient(
-		to right,
-		oklch(65% 0.15 0),
-		oklch(65% 0.15 60),
-		oklch(65% 0.15 120),
-		oklch(65% 0.15 180),
-		oklch(65% 0.15 240),
-		oklch(65% 0.15 300),
-		oklch(65% 0.15 360)
-	) !important;
+	&::-moz-range-track {
+		background: linear-gradient(
+			to right,
+			oklch(65% 0.15 0),
+			oklch(65% 0.15 60),
+			oklch(65% 0.15 120),
+			oklch(65% 0.15 180),
+			oklch(65% 0.15 240),
+			oklch(65% 0.15 300),
+			oklch(65% 0.15 360)
+		) !important;
+	}
 }
 
 .chatColorPreview {
@@ -97,7 +99,9 @@
 	align-items: center;
 }
 
-.themeShareInput input {
-	flex: 1;
-	min-width: 0;
+.themeShareInput {
+	& input {
+		flex: 1;
+		min-width: 0;
+	}
 }

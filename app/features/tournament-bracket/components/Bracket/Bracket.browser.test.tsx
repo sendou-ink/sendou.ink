@@ -100,6 +100,7 @@ vi.mock("~/features/auth/core/user", () => ({
 
 vi.mock("~/features/tournament/routes/to.$id", () => ({
 	useTournament: () => mockTournament,
+	useTournamentVods: () => [],
 	useBracketExpanded: () => ({
 		bracketExpanded: true,
 		setBracketExpanded: vi.fn(),

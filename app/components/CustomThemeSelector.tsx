@@ -188,12 +188,14 @@ function themeInputFromCustomTheme(customTheme: CustomTheme): ThemeInput {
 	return {
 		baseHue: customTheme["--_base-h"] ?? DEFAULT_THEME_INPUT.baseHue,
 		baseChroma:
-			(customTheme["--_base-c-2"] ?? 0) / BASE_CHROMA_MULTIPLIERS[2] ||
-			DEFAULT_THEME_INPUT.baseChroma,
+			typeof customTheme["--_base-c-2"] === "number"
+				? customTheme["--_base-c-2"] / BASE_CHROMA_MULTIPLIERS[2]
+				: DEFAULT_THEME_INPUT.baseChroma,
 		accentHue: customTheme["--_acc-h"] ?? DEFAULT_THEME_INPUT.accentHue,
 		accentChroma:
-			(customTheme["--_acc-c-2"] ?? 0) / ACCENT_CHROMA_MULTIPLIERS[2] ||
-			DEFAULT_THEME_INPUT.accentChroma,
+			typeof customTheme["--_acc-c-2"] === "number"
+				? customTheme["--_acc-c-2"] / ACCENT_CHROMA_MULTIPLIERS[2]
+				: DEFAULT_THEME_INPUT.accentChroma,
 		chatHue: customTheme["--_chat-h"],
 		radiusBox: customTheme["--_radius-box"] ?? DEFAULT_THEME_INPUT.radiusBox,
 		radiusField:
@@ -263,6 +265,7 @@ export function CustomThemeSelector({
 	onSave,
 	onReset,
 	hidePatreonInfo,
+	fetcherState,
 }: {
 	initialTheme: CustomTheme | null | undefined;
 	isSupporter: boolean;
@@ -270,6 +273,7 @@ export function CustomThemeSelector({
 	onSave: (themeInput: ThemeInput) => void;
 	onReset: () => void;
 	hidePatreonInfo?: boolean;
+	fetcherState?: "idle" | "submitting" | "loading";
 }) {
 	const { t } = useTranslation(["common"]);
 
@@ -436,11 +440,18 @@ export function CustomThemeSelector({
 				}}
 			/>
 			<div className={styles.customThemeSelectorActions}>
-				<SendouButton isDisabled={!isSupporter} onPress={handleSave}>
+				<SendouButton
+					isDisabled={
+						!isSupporter || (fetcherState != null && fetcherState !== "idle")
+					}
+					onPress={handleSave}
+				>
 					{t("common:actions.save")}
 				</SendouButton>
 				<SendouButton
-					isDisabled={!isSupporter}
+					isDisabled={
+						!isSupporter || (fetcherState != null && fetcherState !== "idle")
+					}
 					variant="destructive"
 					onPress={handleReset}
 				>

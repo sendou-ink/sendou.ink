@@ -216,6 +216,22 @@ erDiagram
     User ||--o{ TournamentOrganizationBannedUser : banned_from
 ```
 
+## Tournament VODs
+
+```mermaid
+erDiagram
+    TournamentStreamer }o--|| Tournament : tournament
+    TournamentStreamer }o--o| User : user
+
+    TournamentMatchVod }o--|| TournamentMatch : match
+    TournamentMatchVod }o--o| User : user
+```
+
+### Notes
+
+- **TournamentStreamer** - Twitch accounts streaming a tournament; auto-populated when players/casters go live. `userId` is null for cast accounts not linked to a sendou.ink user. Unique on `(twitchAccount, tournamentId)`.
+- **TournamentMatchVod** - Past broadcast VOD references for tournament matches with a timestamp offset to jump to the specific match.
+
 ## Videos
 ```mermaid
 erDiagram

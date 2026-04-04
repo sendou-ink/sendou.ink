@@ -4,7 +4,7 @@ import { FormMessage } from "~/components/FormMessage";
 import { FriendCodePopover } from "~/components/FriendCodePopover";
 import { BADGE } from "~/features/badges/badges-constants";
 import { SendouForm } from "~/form/SendouForm";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { countryCodeToTranslatedName } from "~/utils/i18n";
 import invariant from "~/utils/invariant";
@@ -114,11 +114,11 @@ export default function UserEditPage() {
 
 function useCountryOptions() {
 	const { i18n } = useTranslation();
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
 	return COUNTRY_CODES.map((countryCode) => ({
 		value: countryCode,
-		label: isMounted
+		label: isHydrated
 			? countryCodeToTranslatedName({
 					countryCode,
 					language: i18n.language,

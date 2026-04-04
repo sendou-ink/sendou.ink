@@ -20,10 +20,10 @@
 	color: var(--color-text);
 	width: 100%;
 	text-align: left;
-}
 
-.header:hover {
-	background: var(--color-bg-high);
+	&:hover {
+		background: var(--color-bg-high);
+	}
 }
 
 .headerTitle {

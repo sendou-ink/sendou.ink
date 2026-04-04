@@ -32,5 +32,11 @@
 	"noVods": "",
 	"gainPerms": "Por favor envia un mensaje en el 'helpdesk' de nuestro Discord para obtener permiso para subir videos.",
 	"deleteConfirm": "¿Borrar video con el título de '{{title}}'?",
-	"errors.youtubePreviewFailed": ""
+	"errors.youtubePreviewFailed": "",
+	"copyTimestamps": "",
+	"copyTimestamps.help": "",
+	"copyTimestamps.modeFormat": "",
+	"copyTimestamps.stageFormat": "",
+	"copyTimestamps.format.short": "",
+	"copyTimestamps.format.long": ""
 }

@@ -33,7 +33,7 @@ import { useRecentlyReportedWeapons } from "~/features/sendouq/q-hooks";
 import { AddPrivateNoteDialog } from "~/features/sendouq-match/components/AddPrivateNoteDialog";
 import type { ReportedWeaponForMerging } from "~/features/sendouq-match/core/reported-weapons.server";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
@@ -93,9 +93,9 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function QMatchShell() {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
-	if (!isMounted)
+	if (!isHydrated)
 		return (
 			<Main>
 				<Placeholder />
@@ -108,7 +108,7 @@ export default function QMatchShell() {
 function QMatchPage() {
 	const user = useUser();
 	const isStaff = useHasRole("STAFF");
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const { t } = useTranslation(["q"]);
 	const { formatDateTime } = useTimeFormat();
 	const data = useLoaderData<typeof loader>();
@@ -161,10 +161,10 @@ function QMatchPage() {
 				<h2>{t("q:match.header", { number: data.match.id })}</h2>
 				<div
 					className={clsx("text-xs text-lighter", {
-						invisible: !isMounted,
+						invisible: !isHydrated,
 					})}
 				>
-					{isMounted
+					{isHydrated
 						? formatDateTime(databaseTimestampToDate(data.match.createdAt), {
 								day: "numeric",
 								month: "numeric",
@@ -249,7 +249,7 @@ function Score({
 	reportedAt: number;
 	ownTeamReported: boolean;
 }) {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const { t } = useTranslation(["q"]);
 	const { formatDateTime } = useTimeFormat();
 	const data = useLoaderData<typeof loader>();
@@ -300,10 +300,10 @@ function Score({
 			<div className="text-lg font-bold">{score.join(" - ")}</div>
 			{data.match.isLocked ? (
 				<div
-					className={clsx("text-xs text-lighter", { invisible: !isMounted })}
+					className={clsx("text-xs text-lighter", { invisible: !isHydrated })}
 				>
 					{t("q:match.reportedBy", { name: reporter?.username ?? "admin" })}{" "}
-					{isMounted
+					{isHydrated
 						? formatDateTime(databaseTimestampToDate(reportedAt), {
 								day: "numeric",
 								month: "numeric",
@@ -653,7 +653,7 @@ function BottomSection({
 	const { t } = useTranslation(["q", "common"]);
 	const width = useMainContentWidth();
 	const isMobile = width < 650;
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const user = useUser();
 	const isStaff = useHasRole("STAFF");
 	const data = useLoaderData<typeof loader>();
@@ -669,7 +669,7 @@ function BottomSection({
 		return `SQ${lastDigit}`;
 	};
 
-	if (!isMounted) return null;
+	if (!isHydrated) return null;
 
 	const mapListElement = (
 		<MapList
@@ -1293,17 +1293,49 @@ function MapListMapPickInfo({
 		return result;
 	};
 
-	const mapPreferences = data.match.memento?.mapPreferences?.[i];
-	const showPopover = () => {
-		// legacy preference system (season 2)
-		if (mapPreferences && mapPreferences.length > 0) return true;
+	const sourceTeams = () => {
+		if (!data.match.memento?.pools) return [];
 
-		if (map.source === "DEFAULT") return true;
+		const pickerGroups = [data.match.groupAlpha, data.match.groupBravo].filter(
+			(g) => map.source === "BOTH" || String(g.id) === map.source,
+		);
 
-		return sourcePoolMemberIds().length > 0;
+		const teams: Array<{ name: string; avatarUrl: string | null }> = [];
+		for (const pickerGroup of pickerGroups) {
+			for (const poolEntry of data.match.memento.pools) {
+				if (!poolEntry.teamName) continue;
+				if (!pickerGroup.members.some((m) => m.id === poolEntry.userId)) {
+					continue;
+				}
+
+				const modePool = poolEntry.pool.find((p) => p.mode === map.mode);
+				if (
+					modePool?.stages.includes(map.stageId) &&
+					!teams.some((t) => t.name === poolEntry.teamName)
+				) {
+					teams.push({
+						name: poolEntry.teamName,
+						avatarUrl:
+							pickerGroup.team?.name === poolEntry.teamName
+								? pickerGroup.team.avatarUrl
+								: null,
+					});
+				}
+			}
+		}
+
+		return teams;
 	};
 
-	if (showPopover()) {
+	const mapPreferences = data.match.memento?.mapPreferences?.[i];
+	const teams = sourceTeams();
+	const poolMemberIds = sourcePoolMemberIds();
+	const showPopover =
+		(mapPreferences && mapPreferences.length > 0) ||
+		map.source === "DEFAULT" ||
+		poolMemberIds.length > 0;
+
+	if (showPopover) {
 		return (
 			<SendouPopover
 				popoverClassName="text-main-forced"
@@ -1321,9 +1353,25 @@ function MapListMapPickInfo({
 					<div className="text-sm text-center text-lighter">
 						{t("tournament:pickInfo.default.explanation")}
 					</div>
-				) : sourcePoolMemberIds().length > 0 ? (
+				) : teams.length > 0 ? (
 					<div className="stack sm">
-						{sourcePoolMemberIds().map((userId) => {
+						{teams.map((team) => (
+							<div
+								key={team.name}
+								className="stack sm horizontal items-center xs"
+							>
+								<Avatar
+									size="xxs"
+									url={team.avatarUrl}
+									identiconInput={team.name}
+								/>
+								{team.name}
+							</div>
+						))}
+					</div>
+				) : poolMemberIds.length > 0 ? (
+					<div className="stack sm">
+						{poolMemberIds.map((userId) => {
 							const user = userIdToUser(userId);
 							return (
 								<div

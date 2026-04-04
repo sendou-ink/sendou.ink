@@ -32,5 +32,11 @@
 	"noVods": "No videos found matching this filter. Are we missing something? See the FAQ page for information on how to gain VoD uploading permissions.",
 	"gainPerms": "Please post on the helpdesk of our Discord to gain permissions to upload videos",
 	"deleteConfirm": "Delete video with the title '{{title}}'?",
-	"errors.youtubePreviewFailed": "Failed to load YouTube preview"
+	"errors.youtubePreviewFailed": "Failed to load YouTube preview",
+	"copyTimestamps": "Copy timestamps",
+	"copyTimestamps.help": "Paste these into your YouTube video description to create chapter markers.",
+	"copyTimestamps.modeFormat": "Mode format",
+	"copyTimestamps.stageFormat": "Stage format",
+	"copyTimestamps.format.short": "Short",
+	"copyTimestamps.format.long": "Long"
 }

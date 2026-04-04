@@ -84,6 +84,7 @@ export const ALL_WIDGETS = {
 		defineWidget({ id: "badges-managed", slot: "main" }),
 	],
 	teams: [defineWidget({ id: "teams", slot: "side" })],
+	friends: [defineWidget({ id: "friends", slot: "side" })],
 	sendouq: [
 		defineWidget({ id: "peak-sp", slot: "side" }),
 		defineWidget({ id: "top-10-seasons", slot: "side" }),

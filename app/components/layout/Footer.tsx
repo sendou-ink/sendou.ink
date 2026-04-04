@@ -1,18 +1,21 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { useUser } from "~/features/auth/core/user";
 import { usePatrons } from "~/hooks/swr";
 import {
 	API_PAGE,
 	CONTRIBUTIONS_PAGE,
 	FAQ_PAGE,
 	NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL,
-	PRIVACY_POLICY_PAGE,
 	SENDOU_INK_DISCORD_URL,
 	SENDOU_INK_GITHUB_URL,
 	SENDOU_LOVE_EMOJI_PATH,
 	SUPPORT_PAGE,
 	userPage,
 } from "~/utils/urls";
+
+declare const __GIT_COMMIT__: string;
+
 import { Image } from "../Image";
 import { DiscordIcon } from "../icons/Discord";
 import { GitHubIcon } from "../icons/GitHub";
@@ -21,16 +24,20 @@ import styles from "./Footer.module.css";
 
 export function Footer() {
 	const { t } = useTranslation();
+	const user = useUser();
+
+	const showPrivacySettings =
+		import.meta.env.VITE_FUSE_ENABLED && !user?.roles.includes("MINOR_SUPPORT");
 
 	const currentYear = new Date().getFullYear();
 
 	return (
 		<footer className={styles.footer}>
 			<div className={styles.linkList}>
-				<Link to={PRIVACY_POLICY_PAGE}>{t("pages.privacy")}</Link>
 				<Link to={CONTRIBUTIONS_PAGE}>{t("pages.contributors")}</Link>
 				<Link to={FAQ_PAGE}>{t("pages.faq")}</Link>
 				<Link to={API_PAGE}>{t("pages.api")}</Link>
+				{showPrivacySettings ? <div data-fuse-privacy-tool /> : null}
 			</div>
 			<div className={styles.socials}>
 				<a
@@ -73,9 +80,10 @@ export function Footer() {
 					is not affiliated with Nintendo.
 				</p>
 				<p>
-					Any tournaments hosted on sendou.ink are unofficial and Nintendo is
-					not a sponsor or affiliated with them. Terms for participating in and
-					viewing Community Tournaments using Nintendo Games can be found here:{" "}
+					All tournaments hosted on sendou.ink are unofficial and are not
+					sponsored by or affiliated with Nintendo. Terms for participating in
+					and viewing Community Tournaments using Nintendo Games can be found
+					here:{" "}
 					<a
 						href={NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL}
 						target="_blank"
@@ -85,6 +93,16 @@ export function Footer() {
 					</a>
 				</p>
 			</div>
+			{__GIT_COMMIT__ ? (
+				<a
+					className={styles.sourceLink}
+					href={`${SENDOU_INK_GITHUB_URL}/commits/${__GIT_COMMIT__}/`}
+					target="_blank"
+					rel="noreferrer"
+				>
+					{t("footer.version")} {__GIT_COMMIT__.slice(0, 10)}
+				</a>
+			) : null}
 		</footer>
 	);
 }

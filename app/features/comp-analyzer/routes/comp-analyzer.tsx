@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { COMP_ANALYZER_URL, navIconUrl } from "~/utils/urls";
@@ -37,9 +37,9 @@ export const handle: SendouRouteHandle = {
 export const shouldRevalidate: ShouldRevalidateFunction = () => false;
 
 export default function CompAnalyzerShell() {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
-	if (!isMounted) {
+	if (!isHydrated) {
 		return <Placeholder />;
 	}
 

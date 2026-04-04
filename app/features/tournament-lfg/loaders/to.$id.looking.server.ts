@@ -25,6 +25,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		user,
 	});
 
+	if (!tournament.lfgEnabled) {
+		throw new Response(null, { status: 404 });
+	}
+
 	if (tournament.isLeagueSignup && !tournament.registrationOpen) {
 		throw new Response(null, { status: 404 });
 	}

@@ -11,7 +11,9 @@ import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { tournamentMatchPage } from "~/utils/urls";
+import { executeRoll } from "../core/executeRoll.server";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
+import * as PickBan from "../core/PickBan";
 import { tournamentFromDBCached } from "../core/Tournament.server";
 import { findMatchById } from "../queries/findMatchById.server";
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
@@ -38,7 +40,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		throw new Response(null, { status: 404 });
 	}
 
-	const pickBanEvents = match.roundMaps?.pickBan
+	let pickBanEvents = match.roundMaps?.pickBan
 		? await TournamentRepository.pickBanEventsByMatchId(match.id)
 		: [];
 
@@ -46,6 +48,41 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const matchIsOver =
 		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
+
+	if (
+		!matchIsOver &&
+		match.roundMaps?.pickBan === "CUSTOM" &&
+		match.roundMaps.customFlow &&
+		match.opponentOne?.id &&
+		match.opponentTwo?.id
+	) {
+		const currentStep = PickBan.resolveCurrentStep({
+			eventCount: pickBanEvents.length,
+			preSet: match.roundMaps.customFlow.preSet,
+			postGame: match.roundMaps.customFlow.postGame,
+			resultsCount: results.length,
+		});
+		if (currentStep?.action === "ROLL") {
+			const teamOne = tournament.teamById(match.opponentOne.id);
+			const teamTwo = tournament.teamById(match.opponentTwo.id);
+			if (teamOne && teamTwo) {
+				const rollExecuted = await executeRoll({
+					matchId,
+					maps: match.roundMaps,
+					pickBanEvents,
+					results,
+					tournamentId,
+					teams: [teamOne, teamTwo],
+					tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
+				});
+				if (rollExecuted) {
+					pickBanEvents = await TournamentRepository.pickBanEventsByMatchId(
+						match.id,
+					);
+				}
+			}
+		}
+	}
 
 	// cached so that some user changing their noScreen preference doesn't
 	// change the selection once the match has started
@@ -146,5 +183,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		endedEarly,
 		noScreen,
 		chatCode: visibleChatCode,
+		pickBanEventCount: pickBanEvents.length,
+		pickBanEvents: pickBanEvents.map((e) => ({
+			type: e.type,
+			stageId: e.stageId,
+			mode: e.mode,
+		})),
 	};
 };

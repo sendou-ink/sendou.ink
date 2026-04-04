@@ -17,10 +17,10 @@
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	transition: opacity 0.2s;
-}
 
-.item.isDragging {
-	opacity: 0.5;
+	&.isDragging {
+		opacity: 0.5;
+	}
 }
 
 .dragHandle {
@@ -33,10 +33,10 @@
 	border: none;
 	padding: 0;
 	flex-shrink: 0;
-}
 
-.dragHandle:active {
-	cursor: grabbing;
+	&:active {
+		cursor: grabbing;
+	}
 }
 
 .weaponName {

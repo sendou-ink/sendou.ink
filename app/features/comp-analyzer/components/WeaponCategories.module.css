@@ -39,10 +39,10 @@
 	padding: var(--s-1) var(--s-4);
 	border-left: 1.5px solid var(--color-border);
 	flex-shrink: 0;
-}
 
-.categoryItem[data-first="true"] {
-	border-left: none;
+	&[data-first="true"] {
+		border-left: none;
+	}
 }
 
 .categoryName {

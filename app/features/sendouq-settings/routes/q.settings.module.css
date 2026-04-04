@@ -6,18 +6,18 @@
 	font-weight: var(--weight-bold);
 	margin-block-end: var(--s-4);
 	position: relative;
-}
 
-.summary > div {
-	display: inline-flex;
-}
+	& > div {
+		display: inline-flex;
+	}
 
-.summary svg {
-	width: 24px;
-	color: var(--color-text-accent);
-	position: absolute;
-	right: 20px;
-	top: 14px;
+	& svg {
+		width: 24px;
+		color: var(--color-text-accent);
+		position: absolute;
+		right: 20px;
+		top: 14px;
+	}
 }
 
 .volumeSliderIcon {

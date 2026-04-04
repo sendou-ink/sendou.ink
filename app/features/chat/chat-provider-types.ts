@@ -52,4 +52,7 @@ export interface ChatContextValue {
 	setChatOpen: (open: boolean) => void;
 	activeRoom: string | null;
 	setActiveRoom: (chatCode: string | null) => void;
+	chatLabels: Record<number, string>;
+	setChatLabels: (labels: Record<number, string>) => void;
+	clearChatLabels: () => void;
 }

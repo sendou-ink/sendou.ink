@@ -35,22 +35,22 @@
 	color: var(--color-text);
 	transition: 0.1s ease-in-out background-color;
 	border-radius: 0;
+
+	&:first-of-type {
+		border-radius: var(--radius-box) var(--radius-box) 0 0;
+	}
+
+	&:last-of-type {
+		border-radius: 0 0 var(--radius-box) var(--radius-box);
+	}
+
+	&:only-child {
+		border-radius: var(--radius-box);
+	}
 }
 
 a.tableRow:hover {
 	background-color: var(--color-bg-higher);
-}
-
-.tableRow:first-of-type {
-	border-radius: var(--radius-box) var(--radius-box) 0 0;
-}
-
-.tableRow:last-of-type {
-	border-radius: 0 0 var(--radius-box) var(--radius-box);
-}
-
-.tableRow:only-child {
-	border-radius: var(--radius-box);
 }
 
 .tableRowQualification {

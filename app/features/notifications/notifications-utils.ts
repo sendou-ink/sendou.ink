@@ -10,6 +10,7 @@ import {
 	sendouQMatchPage,
 	tournamentBracketsPage,
 	tournamentRegisterPage,
+	tournamentSubsPage,
 	tournamentTeamPage,
 	userArtPage,
 	userEditProfilePage,
@@ -35,6 +36,8 @@ export const notificationNavIcon = (type: Notification["type"]) => {
 		case "TO_BRACKET_STARTED":
 		case "TO_CHECK_IN_OPENED":
 		case "TO_TEST_CREATED":
+		case "TO_LIKE_RECEIVED":
+		case "TO_LIKE_ACCEPTED":
 			return "medal";
 		case "SCRIM_NEW_REQUEST":
 		case "SCRIM_SCHEDULED":
@@ -95,6 +98,10 @@ export const notificationLink = (notification: Notification) => {
 		}
 		case "FRIEND_REQUEST_RECEIVED": {
 			return FRIENDS_PAGE;
+		}
+		case "TO_LIKE_RECEIVED":
+		case "TO_LIKE_ACCEPTED": {
+			return tournamentSubsPage(notification.meta.tournamentId);
 		}
 		default:
 			assertUnreachable(notification);

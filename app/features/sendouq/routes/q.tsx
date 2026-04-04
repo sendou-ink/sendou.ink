@@ -17,7 +17,7 @@ import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type * as Seasons from "~/features/mmr/core/Seasons";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -208,7 +208,7 @@ const clockFormatter = ({
 		minute: "numeric",
 	});
 function Clocks() {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const { t, i18n } = useTranslation(["q"]);
 	useAutoRerender();
 
@@ -221,8 +221,8 @@ function Clocks() {
 							{t(`q:front.cities.${country.city}`)}
 						</div>
 						<Flag countryCode={country.countryCode} />
-						<div className={clsx({ invisible: !isMounted })}>
-							{isMounted
+						<div className={clsx({ invisible: !isHydrated })}>
+							{isHydrated
 								? weekdayFormatter({
 										timeZone: country.timeZone,
 										locale: i18n.language,
@@ -230,8 +230,8 @@ function Clocks() {
 								: // take space
 									"Monday"}
 						</div>
-						<div className={clsx({ invisible: !isMounted })}>
-							{isMounted
+						<div className={clsx({ invisible: !isHydrated })}>
+							{isHydrated
 								? clockFormatter({
 										timeZone: country.timeZone,
 										locale: i18n.language,
@@ -294,7 +294,7 @@ function ActiveSeasonInfo({
 	season: SerializeFrom<Seasons.ListItem>;
 }) {
 	const { t, i18n } = useTranslation(["q"]);
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
 	const starts = new Date(season.starts);
 	const ends = new Date(season.ends);
@@ -310,11 +310,11 @@ function ActiveSeasonInfo({
 	return (
 		<div
 			className={clsx("text-lighter text-xs text-center", {
-				invisible: !isMounted,
+				invisible: !isHydrated,
 			})}
 		>
 			{t("q:front.seasonOpen", { nth: season.nth })}{" "}
-			{isMounted ? (
+			{isHydrated ? (
 				<b>
 					{dateToString(starts)} - {dateToString(ends)}
 				</b>
@@ -401,8 +401,8 @@ function UpcomingSeasonInfo({
 	season: SerializeFrom<Seasons.ListItem>;
 }) {
 	const { t } = useTranslation(["q"]);
-	const isMounted = useIsMounted();
-	if (!isMounted) return null;
+	const isHydrated = useHydrated();
+	if (!isHydrated) return null;
 
 	const starts = new Date(season.starts);
 

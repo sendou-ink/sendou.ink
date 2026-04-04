@@ -45,22 +45,22 @@
 		outline: var(--focus-ring);
 		outline-offset: -1px;
 	}
-}
 
-.tab:hover,
-.tab[data-active="true"] {
-	color: var(--color-text-accent);
+	&:hover,
+	&[data-active="true"] {
+		color: var(--color-text-accent);
+	}
 }
 
 .tabIcon {
 	position: relative;
 	width: 24px;
 	height: 24px;
-}
 
-.tabIcon svg {
-	width: 24px;
-	height: 24px;
+	& svg {
+		width: 24px;
+		height: 24px;
+	}
 }
 
 .sideNavEmpty {
@@ -77,10 +77,10 @@
 	z-index: 18;
 	background-color: rgba(0, 0, 0, 0.25);
 	backdrop-filter: blur(10px);
-}
 
-.panelOverlay[data-entering] {
-	animation: fade-in 200ms ease-out;
+	&[data-entering] {
+		animation: fade-in 200ms ease-out;
+	}
 }
 
 @keyframes fade-in {
@@ -104,10 +104,10 @@
 	display: flex;
 	flex-direction: column;
 	padding-block-end: env(safe-area-inset-bottom);
-}
 
-.panel[data-entering] {
-	animation: slide-up 200ms ease-out;
+	&[data-entering] {
+		animation: slide-up 200ms ease-out;
+	}
 }
 
 @keyframes slide-up {
@@ -162,10 +162,10 @@
 	overflow-y: auto;
 	display: flex;
 	flex-direction: column;
-}
 
-.menuOverlay[data-entering] {
-	animation: fade-in 200ms ease-out;
+	&[data-entering] {
+		animation: fade-in 200ms ease-out;
+	}
 }
 
 .menuHeader {
@@ -205,9 +205,10 @@
 	aspect-ratio: 1 / 1;
 	border-radius: var(--radius-field);
 	margin-inline-start: auto;
-}
-.panelCloseButton:hover {
-	background-color: var(--color-bg-higher);
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
 }
 
 .panelIconContainer {
@@ -248,10 +249,10 @@
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	text-align: center;
-}
 
-.navItem:hover {
-	color: var(--color-text-accent);
+	&:hover {
+		color: var(--color-text-accent);
+	}
 }
 
 .navItemImage {
@@ -278,10 +279,10 @@
 	text-decoration: none;
 	color: var(--color-text);
 	border-radius: var(--radius-field);
-}
 
-.youPanelUser:hover {
-	background-color: var(--color-bg-high);
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
 }
 
 .youPanelUsername {
@@ -298,16 +299,16 @@
 	border-radius: var(--radius-field);
 	height: var(--field-size);
 	aspect-ratio: 1 / 1;
-}
 
-.youPanelSettingsButton:hover {
-	background-color: var(--color-bg-high);
-	color: var(--color-text);
-}
+	&:hover {
+		background-color: var(--color-bg-high);
+		color: var(--color-text);
+	}
 
-.youPanelSettingsButton svg {
-	width: 18px;
-	height: 18px;
+	& svg {
+		width: 18px;
+		height: 18px;
+	}
 }
 
 .panelSectionLink {
@@ -329,11 +330,11 @@
 	& svg {
 		stroke-width: 3;
 	}
-}
 
-.panelSectionLink:hover {
-	color: var(--color-text);
-	background-color: var(--color-bg-higher);
+	&:hover {
+		color: var(--color-text);
+		background-color: var(--color-bg-higher);
+	}
 }
 
 .tabBadge {
@@ -354,8 +355,10 @@
 	line-height: 1;
 }
 
-.noAnimation[data-entering] {
-	animation: none;
+.noAnimation {
+	&[data-entering] {
+		animation: none;
+	}
 }
 
 .ghostTabBar {

@@ -14,7 +14,7 @@ Check out `sendou.ink/app/features/api-public/schema.ts`
 
 ```bash
 sendou@macbook ~ % curl -H "Authorization: Bearer mytoken" https://sendou.ink/api/tournament/1 
-{"name":"PICNIC mini","startTime":"2023-05-18T18:00:00.000Z","url":"https://sendou.ink/to/1/brackets","logoUrl":"https://sendou.ink/static-assets/img/tournament-logos/pn.png","teams":{"checkedInCount":25,"registeredCount":31},"brackets":[{"name":"Main bracket","type":"double_elimination"}],"organizationId":1,"isFinalized":true}% 
+{"name":"PICNIC mini","startTime":"2023-05-18T18:00:00.000Z","url":"https://sendou.ink/to/1/brackets","logoUrl":"https://sendou.ink/static-assets/img/tournament-logos/pn.avif","teams":{"checkedInCount":25,"registeredCount":31},"brackets":[{"name":"Main bracket","type":"double_elimination"}],"organizationId":1,"isFinalized":true}% 
 ```
 
 ## Clients (unofficial)

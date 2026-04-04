@@ -1,3 +1,5 @@
-.root button[class] {
-	width: 100%;
+.root {
+	& button[class] {
+		width: 100%;
+	}
 }

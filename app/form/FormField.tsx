@@ -118,16 +118,19 @@ export function FormField({
 		runValidation(latestValue ?? value);
 	};
 
-	const handleChange = (newValue: unknown) => {
-		context?.setValue(name, newValue);
-		if (hasSubmitted && context) {
-			const updatedValues = isNestedPath
-				? setNestedValue(context.values, name, newValue)
-				: { ...context.values, [name]: newValue };
-			context.revalidateAll(updatedValues);
-		}
-		context?.onFieldChange?.(name, newValue);
-	};
+	const handleChange = React.useCallback(
+		(newValue: unknown) => {
+			context?.setValue(name, newValue);
+			if (hasSubmitted && context) {
+				const updatedValues = isNestedPath
+					? setNestedValue(context.values, name, newValue)
+					: { ...context.values, [name]: newValue };
+				context.revalidateAll(updatedValues);
+			}
+			context?.onFieldChange?.(name, newValue);
+		},
+		[context, hasSubmitted, isNestedPath, name],
+	);
 
 	const displayedError = serverError ?? clientError;
 

@@ -17,7 +17,7 @@ import { InfoPopover } from "~/components/InfoPopover";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
-import type { TournamentRoundMaps } from "~/db/tables";
+import type { CustomPickBanFlow, TournamentRoundMaps } from "~/db/tables";
 import {
 	useTournament,
 	useTournamentPreparedMaps,
@@ -44,6 +44,7 @@ import {
 	type TournamentRoundMapList,
 } from "../core/toMapList";
 import styles from "./BracketMapListDialog.module.css";
+import { CustomFlowBuilder } from "./CustomFlowBuilder";
 
 export function BracketMapListDialog({
 	close,
@@ -166,6 +167,9 @@ export function BracketMapListDialog({
 		Array.from(maps.values()).find((round) => round.pickBan)?.pickBan ??
 			"COUNTERPICK",
 	);
+	const [customFlow, setCustomFlow] = React.useState<CustomPickBanFlow | null>(
+		preparedMaps?.maps.find((m) => m.customFlow)?.customFlow ?? null,
+	);
 	const [hoveredMap, setHoveredMap] = React.useState<string | null>(null);
 
 	const roundsWithPickBan = new Set(
@@ -279,6 +283,27 @@ export function BracketMapListDialog({
 		return true;
 	};
 
+	const validateCustomFlow = () => {
+		if (pickBanStyle !== "CUSTOM") return true;
+		if (roundsWithPickBan.size === 0) return true;
+		if (!customFlow) return false;
+
+		return (
+			PickBan.validateCustomFlowSection(customFlow.preSet, "preSet").length ===
+				0 &&
+			PickBan.validateCustomFlowSection(customFlow.postGame, "postGame")
+				.length === 0
+		);
+	};
+
+	const validateCustomFlowRoundsSelected = () => {
+		if (globalSelections) return true;
+		if (pickBanStyle !== "CUSTOM") return true;
+		if (!customFlow) return true;
+
+		return roundsWithPickBan.size > 0;
+	};
+
 	const lacksToSetMapPool =
 		tournament.ctx.toSetMapPool.length === 0 &&
 		tournament.ctx.mapPickingStyle === "TO";
@@ -314,6 +339,7 @@ export function BracketMapListDialog({
 							roundId: key,
 							groupId: rounds.find((r) => r.id === key)?.group_id,
 							type: countType,
+							customFlow: value.pickBan === "CUSTOM" ? customFlow : undefined,
 						})),
 					)}
 				/>
@@ -466,6 +492,9 @@ export function BracketMapListDialog({
 								</SendouButton>
 							) : null}
 						</div>
+						{pickBanStyle === "CUSTOM" && !needsToPickEliminationTeamCount ? (
+							<CustomFlowBuilder value={customFlow} onChange={setCustomFlow} />
+						) : null}
 						{needsToPickEliminationTeamCount ? (
 							<div className="text-center text-lg font-bold my-24">
 								Pick the expected teams count above to prepare maps
@@ -623,9 +652,18 @@ export function BracketMapListDialog({
 									})}
 								</div>
 								{!validateNoDecreasingCount() ? (
-									<div className="text-warning text-center">
+									<div className="mt-4 text-warning text-center">
 										Invalid selection: tournament progression decreases in map
 										count
+									</div>
+								) : !validateCustomFlow() ? (
+									<div className="mt-4 text-warning text-center">
+										Invalid selection: custom pick/ban flow is invalid
+									</div>
+								) : !validateCustomFlowRoundsSelected() ? (
+									<div className="mt-4 text-warning text-center">
+										Custom flow is configured but no rounds have pick/ban
+										enabled
 									</div>
 								) : (
 									<SubmitButton
@@ -830,6 +868,7 @@ function PickBanSelect({
 		COUNTERPICK: "Counterpick",
 		COUNTERPICK_MODE_REPEAT_OK: "Counterpick (mode repeat allowed)",
 		BAN_2: "Ban 2",
+		CUSTOM: "Custom",
 	};
 
 	// selection doesn't make sense for one mode only tournaments as you have to repeat the mode
@@ -952,44 +991,57 @@ function RoundMapList({
 				) : null}
 			</div>
 			<ol className="pl-0">
-				{nullFilledArray(
-					maps.pickBan === "BAN_2" ? maps.count + 2 : maps.count,
-				).map((_, i) => {
-					const map = maps.list?.[i];
-
-					if (map) {
-						return (
-							<MapListRow
+				{maps.pickBan === "CUSTOM"
+					? nullFilledArray(maps.count).map((_, i) => (
+							<MysteryRow
 								key={i}
-								map={map}
 								number={i + 1}
-								onHoverMap={onHoverMap}
-								hoveredMap={hoveredMap}
-								onMapChange={(map) => {
-									onRoundMapListChange({
-										...maps,
-										list: maps.list?.map((m, j) => (i === j ? map : m)),
-									});
-								}}
+								isCounterpicks={false}
+								isTiebreaker={false}
+								isCustomFlow
 							/>
-						);
-					}
+						))
+					: nullFilledArray(
+							maps.pickBan === "BAN_2" ? maps.count + 2 : maps.count,
+						).map((_, i) => {
+							const map = maps.list?.[i];
 
-					const isTeamsPick = !maps.list && i === 0;
-					const isLast =
-						i === (maps.pickBan === "BAN_2" ? maps.count + 2 : maps.count) - 1;
-
-					return (
-						<MysteryRow
-							key={i}
-							number={i + 1}
-							isCounterpicks={!isTeamsPick && maps.pickBan === "COUNTERPICK"}
-							isTiebreaker={
-								tournament.ctx.mapPickingStyle === "AUTO_ALL" && isLast
+							if (map) {
+								return (
+									<MapListRow
+										key={i}
+										map={map}
+										number={i + 1}
+										onHoverMap={onHoverMap}
+										hoveredMap={hoveredMap}
+										onMapChange={(map) => {
+											onRoundMapListChange({
+												...maps,
+												list: maps.list?.map((m, j) => (i === j ? map : m)),
+											});
+										}}
+									/>
+								);
 							}
-						/>
-					);
-				})}
+
+							const isTeamsPick = !maps.list && i === 0;
+							const isLast =
+								i ===
+								(maps.pickBan === "BAN_2" ? maps.count + 2 : maps.count) - 1;
+
+							return (
+								<MysteryRow
+									key={i}
+									number={i + 1}
+									isCounterpicks={
+										!isTeamsPick && maps.pickBan === "COUNTERPICK"
+									}
+									isTiebreaker={
+										tournament.ctx.mapPickingStyle === "AUTO_ALL" && isLast
+									}
+								/>
+							);
+						})}
 			</ol>
 		</div>
 	);
@@ -1066,24 +1118,28 @@ function MysteryRow({
 	number,
 	isCounterpicks,
 	isTiebreaker,
+	isCustomFlow,
 }: {
 	number: number;
 	isCounterpicks: boolean;
 	isTiebreaker: boolean;
+	isCustomFlow?: boolean;
 }) {
 	return (
 		<li className={styles.mapListRow}>
 			<div
 				className={clsx("stack horizontal items-center xs text-lighter", {
-					"text-info": isCounterpicks,
+					"text-accent-high": isCounterpicks,
 				})}
 			>
 				<span className="text-lg">{number}.</span>
-				{isCounterpicks
-					? "Counterpick"
-					: isTiebreaker
-						? "Tiebreaker"
-						: "Team's pick"}
+				{isCustomFlow
+					? "Custom flow"
+					: isCounterpicks
+						? "Counterpick"
+						: isTiebreaker
+							? "Tiebreaker"
+							: "Team's pick"}
 			</div>
 		</li>
 	);

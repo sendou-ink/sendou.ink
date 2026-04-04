@@ -170,12 +170,11 @@ export function useTierList() {
 						activeContainer,
 						arrayMove(containerItems, oldIndex, newIndex),
 					);
+					setTiers({
+						...tiers,
+						tierItems: newTierItems,
+					});
 				}
-
-				setTiers({
-					...tiers,
-					tierItems: newTierItems,
-				});
 			}
 			return;
 		}

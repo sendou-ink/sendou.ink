@@ -1,18 +1,3 @@
-.root {
-	--height: var(--selector-size-sm);
-
-	cursor: pointer;
-	display: grid;
-	grid-template-columns: auto 1fr;
-	align-items: center;
-	gap: 0.571rem;
-	color: var(--text-color);
-	forced-color-adjust: none;
-	font-size: var(--font-xs);
-	font-weight: var(--weight-bold);
-	margin-block-end: 0;
-}
-
 .indicator {
 	width: calc(var(--height) * 1.75);
 	height: var(--height);
@@ -36,25 +21,40 @@
 	}
 }
 
-.root[data-selected] .indicator {
-	background: var(--color-text-accent);
-	border-color: var(--color-text-accent);
-	grid-template-columns: 1fr 1fr 0fr;
+.root {
+	--height: var(--selector-size-sm);
 
-	&:before {
-		background: var(--color-text-inverse);
+	cursor: pointer;
+	display: grid;
+	grid-template-columns: auto 1fr;
+	align-items: center;
+	gap: 0.571rem;
+	color: var(--text-color);
+	forced-color-adjust: none;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+	margin-block-end: 0;
+
+	&[data-selected] .indicator {
+		background: var(--color-text-accent);
+		border-color: var(--color-text-accent);
+		grid-template-columns: 1fr 1fr 0fr;
+
+		&:before {
+			background: var(--color-text-inverse);
+		}
 	}
-}
 
-.root[data-focus-visible] .indicator {
-	outline: var(--focus-ring);
-	outline-offset: 1px;
-}
+	&[data-focus-visible] .indicator {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
 
-.root[data-disabled] .indicator {
-	opacity: 0.65;
-}
+	&[data-disabled] {
+		cursor: not-allowed;
 
-.root[data-disabled] {
-	cursor: not-allowed;
+		& .indicator {
+			opacity: 0.65;
+		}
+	}
 }

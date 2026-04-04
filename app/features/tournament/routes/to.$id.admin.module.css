@@ -1,0 +1,3 @@
+.actionForm > :global(.flex-same-size) {
+	min-width: 10rem;
+}

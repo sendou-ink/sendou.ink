@@ -39,6 +39,12 @@ export interface GetUserResponse {
 	/** Teams user is member of. The main team is always first in the array. */
 	teams: Array<GlobalTeamMembership>;
 	/**
+	 * Splatoon 3 splashtag name & ID, if one is set.
+	 *
+	 * @example "Sendou#2955"
+	 */
+	inGameName: string | null;
+	/**
 	 * User's pronouns.
 	 *
 	 * @example { "subject": "he", "object": "him" }
@@ -146,7 +152,7 @@ export interface GetTournamentResponse {
 	 */
 	url: string;
 	/**
-	 * @example "https://sendou.ink/static-assets/img/tournament-logos/itz.png"
+	 * @example "https://sendou.ink/static-assets/img/tournament-logos/itz.avif"
 	 */
 	logoUrl: string | null;
 	/**
@@ -274,7 +280,7 @@ export interface GetCastedTournamentMatchesResponse {
 	 */
 	future: Array<{
 		matchId: number;
-		channel: TournamentCastChannel | null;
+		channel: TournamentCastChannel;
 	}>;
 }
 
@@ -452,7 +458,7 @@ type Badge = {
 	name: string;
 	count: number;
 	/**
-	 * @example "https://sendou.ink/static-assets/badges/monday.png"
+	 * @example "https://sendou.ink/static-assets/badges/monday.avif"
 	 */
 	imageUrl: string;
 	/**
@@ -482,8 +488,16 @@ export type MapListMap = {
 	 * - "BOTH" both teams picked the map
 	 * - "TO" if it was a TO pick (from predefined maplist)
 	 * - "COUNTERPICK" if it was a counterpick
+	 * - "ROLL" if it was randomly selected
 	 */
-	source: number | "DEFAULT" | "TIEBREAKER" | "BOTH" | "TO" | "COUNTERPICK";
+	source:
+		| number
+		| "DEFAULT"
+		| "TIEBREAKER"
+		| "BOTH"
+		| "TO"
+		| "COUNTERPICK"
+		| "ROLL";
 	winnerTeamId: number | null;
 	participatedUserIds: Array<number> | null;
 	/** (round robin only) points of the match used for tiebreaker purposes. e.g. [100, 0] indicates a knockout. */

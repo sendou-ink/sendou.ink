@@ -30,7 +30,7 @@ import { ModeImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { useUser } from "~/features/auth/core/user";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -65,9 +65,9 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function TierListMakerPage() {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
-	if (!isMounted)
+	if (!isHydrated)
 		return (
 			<Main bigger>
 				<Placeholder />

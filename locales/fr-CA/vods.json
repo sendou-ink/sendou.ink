@@ -32,5 +32,11 @@
 	"noVods": "",
 	"gainPerms": "",
 	"deleteConfirm": "",
-	"errors.youtubePreviewFailed": ""
+	"errors.youtubePreviewFailed": "",
+	"copyTimestamps": "",
+	"copyTimestamps.help": "",
+	"copyTimestamps.modeFormat": "",
+	"copyTimestamps.stageFormat": "",
+	"copyTimestamps.format.short": "",
+	"copyTimestamps.format.long": ""
 }

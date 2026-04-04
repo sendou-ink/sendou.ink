@@ -27,8 +27,8 @@
 	border: var(--border-style);
 	border-radius: 50%;
 	background-color: var(--color-bg-ability);
-}
 
-.abilityButton.isDragging {
-	box-shadow: 0 0 100px inset rgb(255 255 255 / 25%);
+	&.isDragging {
+		box-shadow: 0 0 100px inset rgb(255 255 255 / 25%);
+	}
 }

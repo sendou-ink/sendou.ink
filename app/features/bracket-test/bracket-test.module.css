@@ -1,0 +1,20 @@
+.settings {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-4);
+	align-items: flex-end;
+	padding: var(--s-4);
+	background: var(--color-bg-high);
+	border-radius: var(--rounded);
+	margin-bottom: var(--s-6);
+}
+
+.settingGroup {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.teamCountInput {
+	width: 5rem;
+}

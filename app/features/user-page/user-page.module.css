@@ -48,39 +48,43 @@
 	border-radius: 50%;
 }
 
-.extraInfoHeading > svg {
-	width: 0.8rem;
+.extraInfoHeading {
+	& > svg {
+		width: 0.8rem;
+	}
 }
 
-.socialLink > svg {
-	width: 0.9rem;
+.socialLink {
+	& > svg {
+		width: 0.9rem;
+	}
 }
 
 .socialLinkYoutube {
 	border-color: #f00;
 	background-color: #ff00002f;
-}
 
-.socialLinkYoutube > svg {
-	fill: #f00;
+	& > svg {
+		fill: #f00;
+	}
 }
 
 .socialLinkTwitch {
 	border-color: #9146ff;
 	background-color: #9146ff2f;
-}
 
-.socialLinkTwitch > svg {
-	fill: #9146ff;
+	& > svg {
+		fill: #9146ff;
+	}
 }
 
 .socialLinkBattlefy {
 	border-color: #de4c5e;
 	background-color: #de4c5e2f;
-}
 
-.socialLinkBattlefy > svg {
-	fill: #de4c5e;
+	& > svg {
+		fill: #de4c5e;
+	}
 }
 
 .socialLinkBsky {
@@ -88,10 +92,10 @@
 	background-color: #1285fe2f;
 	display: grid;
 	place-items: center;
-}
 
-.socialLinkBsky path {
-	fill: #1285fe;
+	& path {
+		fill: #1285fe;
+	}
 }
 
 .extraInfos {
@@ -125,11 +129,11 @@
 .resultsTableHighlights {
 	border: var(--s-2) solid var(--color-bg-high);
 	padding-inline: 0 !important;
-}
 
-.resultsTableHighlights > legend {
-	margin-inline-start: var(--s-2);
-	padding-inline: var(--s-1);
+	& > legend {
+		margin-inline-start: var(--s-2);
+		padding-inline: var(--s-1);
+	}
 }
 
 .resultsPlayers {
@@ -162,10 +166,10 @@
 	color: var(--color-text);
 	gap: var(--s-6);
 	transition: 0.1s ease-in-out background-color;
-}
 
-.placements:hover {
-	background-color: var(--color-bg-higher);
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
 }
 
 .placementsMode {
@@ -257,6 +261,10 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-4);
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
 }
 
 .seasonMatchWithSubSection {
@@ -273,10 +281,6 @@
 	gap: var(--s-1);
 	justify-content: center;
 	padding-block: var(--s-0-5);
-}
-
-.seasonMatch:hover {
-	background-color: var(--color-bg-higher);
 }
 
 .seasonMatchUser {
@@ -307,23 +311,23 @@
 	flex-direction: row;
 	margin: 0 auto;
 	padding: 0;
-}
 
-.seasonMatchSetResults li {
-	width: 28px;
-	height: 28px;
-	display: grid;
-	place-items: center;
-	font-size: var(--font-xs);
-	font-weight: var(--weight-semi);
-	border: 3px solid var(--color-accent);
-	border-radius: var(--radius-field);
-	color: var(--color-text);
-	border-color: var(--color-error);
-}
+	& li {
+		width: 28px;
+		height: 28px;
+		display: grid;
+		place-items: center;
+		font-size: var(--font-xs);
+		font-weight: var(--weight-semi);
+		border: 3px solid var(--color-accent);
+		border-radius: var(--radius-field);
+		color: var(--color-text);
+		border-color: var(--color-error);
 
-.seasonMatchSetResults li[data-is-win="true"] {
-	border-color: var(--color-success);
+		&[data-is-win="true"] {
+			border-color: var(--color-success);
+		}
+	}
 }
 
 .seasonInfoContainer {

@@ -49,16 +49,20 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
+
+	& svg {
+		color: var(--color-success);
+	}
 }
 
 .screenBanImageWrapper {
 	position: relative;
 	display: inline-block;
 	line-height: 0;
-}
 
-.screenBanImageWrapper picture {
-	flex-shrink: 0;
+	& picture {
+		flex-shrink: 0;
+	}
 }
 
 .screenBanIconOverlay {
@@ -72,18 +76,16 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
+
+	& svg {
+		width: 14px;
+		height: 14px;
+		color: var(--color-bg);
+	}
 }
 
-.screenBanIconOverlay svg {
-	width: 14px;
-	height: 14px;
-	color: var(--color-bg);
-}
-
-.screenBanIndicator svg {
-	color: var(--color-success);
-}
-
-.screenBanIndicatorWarning svg {
-	color: var(--color-error);
+.screenBanIndicatorWarning {
+	& svg {
+		color: var(--color-error);
+	}
 }

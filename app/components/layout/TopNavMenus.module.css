@@ -20,11 +20,11 @@
 	font-weight: var(--weight-semi);
 	cursor: pointer;
 	white-space: nowrap;
-}
 
-.menuButton:focus-visible {
-	outline: var(--focus-ring);
-	outline-offset: 1px;
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
 }
 
 .menuPopover {

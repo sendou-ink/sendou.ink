@@ -22,7 +22,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import type { CalendarEventTag, Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
@@ -460,8 +460,8 @@ function DatesInput({ allowMultiDate }: { allowMultiDate?: boolean }) {
 
 	const datesCount = datesInputState.length;
 
-	const isMounted = useIsMounted();
-	const usersTimeZone = isMounted
+	const isHydrated = useHydrated();
+	const usersTimeZone = isHydrated
 		? Intl.DateTimeFormat().resolvedOptions().timeZone
 		: "";
 	const NEW_CALENDAR_EVENT_HOURS_OFFSET = 24;
@@ -541,7 +541,7 @@ function DatesInput({ allowMultiDate }: { allowMultiDate?: boolean }) {
 					</div>
 					{datesCount < CALENDAR_EVENT.MAX_AMOUNT_OF_DATES &&
 						allowMultiDate && <AddButton onAdd={addDate} />}
-					<FormMessage type="info" className={clsx({ invisible: !isMounted })}>
+					<FormMessage type="info" className={clsx({ invisible: !isHydrated })}>
 						{t("calendar:inYourTimeZone")} {usersTimeZone}
 					</FormMessage>
 				</div>
@@ -860,7 +860,7 @@ function EnableSubsToggle() {
 
 	return (
 		<div>
-			<label htmlFor={id}>Subs tab</label>
+			<label htmlFor={id}>LFG tab</label>
 			<SendouSwitch
 				name="enableSubs"
 				id={id}
@@ -868,8 +868,8 @@ function EnableSubsToggle() {
 				onChange={setEnableSubs}
 			/>
 			<FormMessage type="info">
-				Allow users to sign up as "subs" in addition to the normal event
-				sign-up.
+				Allow participants to look for more members via the LFG feature and sign
+				up as subs (after registration is closed).
 			</FormMessage>
 		</div>
 	);

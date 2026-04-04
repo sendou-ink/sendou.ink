@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { CastedMatchesInfo } from "~/db/tables";
 import type { ParsedBracket } from "../tournament-bracket/core/Progression";
 import {
 	compareTeamsForOrdering,
@@ -6,6 +7,7 @@ import {
 	getBracketProgressionLabel,
 	sortTeamsBySeeding,
 	type TeamForOrdering,
+	updatedCastedMatchesInfo,
 } from "./tournament-utils";
 
 const createTeam = (
@@ -455,5 +457,170 @@ describe("getBracketProgressionLabel", () => {
 		const result = getBracketProgressionLabel(0, progression);
 
 		expect(result).toBe("C");
+	});
+});
+
+const emptyCastedMatchesInfo = (): CastedMatchesInfo => ({
+	castedMatches: [],
+	lockedMatches: [],
+	castedMatchHistory: [],
+});
+
+describe("updatedCastedMatchesInfo", () => {
+	describe("assigning a cast", () => {
+		it("adds entry to castedMatches and history", () => {
+			const result = updatedCastedMatchesInfo(emptyCastedMatchesInfo(), {
+				matchId: 1,
+				twitchAccount: "streamer_a",
+				timestamp: 1000,
+			});
+
+			expect(result.castedMatches).toEqual([
+				{ twitchAccount: "streamer_a", matchId: 1 },
+			]);
+			expect(result.castedMatchHistory).toEqual([
+				{ twitchAccount: "streamer_a", matchId: 1, timestamp: 1000 },
+			]);
+		});
+
+		it("removes prior castedMatches entry for same matchId", () => {
+			const current = emptyCastedMatchesInfo();
+			current.castedMatches = [{ twitchAccount: "old_streamer", matchId: 1 }];
+
+			const result = updatedCastedMatchesInfo(current, {
+				matchId: 1,
+				twitchAccount: "new_streamer",
+				timestamp: 1000,
+			});
+
+			expect(result.castedMatches).toEqual([
+				{ twitchAccount: "new_streamer", matchId: 1 },
+			]);
+		});
+
+		it("removes prior castedMatches entry for same twitchAccount", () => {
+			const current = emptyCastedMatchesInfo();
+			current.castedMatches = [{ twitchAccount: "streamer_a", matchId: 1 }];
+
+			const result = updatedCastedMatchesInfo(current, {
+				matchId: 2,
+				twitchAccount: "streamer_a",
+				timestamp: 1000,
+			});
+
+			expect(result.castedMatches).toEqual([
+				{ twitchAccount: "streamer_a", matchId: 2 },
+			]);
+		});
+
+		it("removes matchId from lockedMatches", () => {
+			const current = emptyCastedMatchesInfo();
+			current.lockedMatches = [
+				{ twitchAccount: "streamer_a", matchId: 1 },
+				{ twitchAccount: "streamer_b", matchId: 2 },
+			];
+
+			const result = updatedCastedMatchesInfo(current, {
+				matchId: 1,
+				twitchAccount: "streamer_a",
+				timestamp: 1000,
+			});
+
+			expect(result.lockedMatches).toEqual([
+				{ twitchAccount: "streamer_b", matchId: 2 },
+			]);
+		});
+
+		it("deduplicates history by matchId when channel is corrected", () => {
+			const current = emptyCastedMatchesInfo();
+			current.castedMatchHistory = [
+				{ twitchAccount: "wrong_channel", matchId: 1, timestamp: 500 },
+				{ twitchAccount: "other_streamer", matchId: 2, timestamp: 600 },
+			];
+
+			const result = updatedCastedMatchesInfo(current, {
+				matchId: 1,
+				twitchAccount: "correct_channel",
+				timestamp: 1000,
+			});
+
+			expect(result.castedMatchHistory).toEqual([
+				{ twitchAccount: "other_streamer", matchId: 2, timestamp: 600 },
+				{ twitchAccount: "correct_channel", matchId: 1, timestamp: 1000 },
+			]);
+		});
+
+		it("deduplicates history when same account+matchId is reassigned", () => {
+			const current = emptyCastedMatchesInfo();
+			current.castedMatchHistory = [
+				{ twitchAccount: "streamer_a", matchId: 1, timestamp: 500 },
+			];
+
+			const result = updatedCastedMatchesInfo(current, {
+				matchId: 1,
+				twitchAccount: "streamer_a",
+				timestamp: 1000,
+			});
+
+			expect(result.castedMatchHistory).toEqual([
+				{ twitchAccount: "streamer_a", matchId: 1, timestamp: 1000 },
+			]);
+		});
+
+		it("initializes history when undefined", () => {
+			const current: CastedMatchesInfo = {
+				castedMatches: [],
+				lockedMatches: [],
+			};
+
+			const result = updatedCastedMatchesInfo(current, {
+				matchId: 1,
+				twitchAccount: "streamer_a",
+				timestamp: 1000,
+			});
+
+			expect(result.castedMatchHistory).toEqual([
+				{ twitchAccount: "streamer_a", matchId: 1, timestamp: 1000 },
+			]);
+		});
+	});
+
+	describe("unassigning a cast", () => {
+		it("removes matchId from castedMatches and lockedMatches", () => {
+			const current = emptyCastedMatchesInfo();
+			current.castedMatches = [
+				{ twitchAccount: "streamer_a", matchId: 1 },
+				{ twitchAccount: "streamer_b", matchId: 2 },
+			];
+			current.lockedMatches = [{ twitchAccount: "streamer_a", matchId: 1 }];
+
+			const result = updatedCastedMatchesInfo(current, {
+				matchId: 1,
+				twitchAccount: null,
+				timestamp: 1000,
+			});
+
+			expect(result.castedMatches).toEqual([
+				{ twitchAccount: "streamer_b", matchId: 2 },
+			]);
+			expect(result.lockedMatches).toEqual([]);
+		});
+
+		it("does not modify castedMatchHistory", () => {
+			const current = emptyCastedMatchesInfo();
+			current.castedMatchHistory = [
+				{ twitchAccount: "streamer_a", matchId: 1, timestamp: 500 },
+			];
+
+			const result = updatedCastedMatchesInfo(current, {
+				matchId: 1,
+				twitchAccount: null,
+				timestamp: 1000,
+			});
+
+			expect(result.castedMatchHistory).toEqual([
+				{ twitchAccount: "streamer_a", matchId: 1, timestamp: 500 },
+			]);
+		});
 	});
 });

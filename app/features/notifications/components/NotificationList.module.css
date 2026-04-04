@@ -4,27 +4,6 @@
 	border-color: var(--color-bg-high);
 }
 
-.item {
-	padding: var(--s-1) var(--s-3);
-	display: grid;
-	grid-template-areas: "image header" "image timestamp";
-	grid-template-columns: 30px 1fr;
-	column-gap: var(--s-2);
-	padding-block: var(--s-3);
-	color: var(--color-text);
-}
-
-.unseenDot {
-	background-color: var(--color-text-accent);
-	border-radius: 100%;
-	width: 8px;
-	height: 8px;
-	position: absolute;
-	top: -1px;
-	left: -1px;
-	outline: 2px solid var(--color-bg);
-}
-
 .imageContainer {
 	place-self: center;
 	grid-area: image;
@@ -37,12 +16,33 @@
 	position: relative;
 }
 
-.item:hover .imageContainer {
-	outline: 3px solid var(--color-bg-higher);
+.item {
+	padding: var(--s-1) var(--s-3);
+	display: grid;
+	grid-template-areas: "image header" "image timestamp";
+	grid-template-columns: 30px 1fr;
+	column-gap: var(--s-2);
+	padding-block: var(--s-3);
+	color: var(--color-text);
+
+	&:hover .imageContainer {
+		outline: 3px solid var(--color-bg-higher);
+	}
+
+	&:focus-within .imageContainer {
+		outline: 3px solid var(--color-accent-low);
+	}
 }
 
-.item:focus-within .imageContainer {
-	outline: 3px solid var(--color-accent-low);
+.unseenDot {
+	background-color: var(--color-text-accent);
+	border-radius: 100%;
+	width: 8px;
+	height: 8px;
+	position: absolute;
+	top: -1px;
+	left: -1px;
+	outline: 2px solid var(--color-bg);
 }
 
 .itemImage {

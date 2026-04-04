@@ -18,7 +18,7 @@ description: Run, debug, and manage Playwright e2e tests. Use when running e2e t
 
 Before running tests, check for these common issues:
 
-1. **Stale worker databases** — Files matching `db-test-e2e-*.sqlite3` in the project root can cause "table already exists" migration errors if the schema has changed since they were created. Run `npm run test:e2e:generate-seeds` to regenerate these from the seed databases.
+1. **Stale worker databases** — Files matching `db-test-e2e-*.sqlite3` in the project root can cause "table already exists" migration errors if the schema has changed since they were created. Run `pnpm run test:e2e:generate-seeds` to regenerate these from the seed databases.
 
 2. **Port conflicts** — Check if anything is already listening on the e2e ports (base port through base+3):
    ```
@@ -26,7 +26,7 @@ Before running tests, check for these common issues:
    ```
    If ports are occupied by leftover e2e servers, kill them. If occupied by something else, warn the user.
 
-3. **Seed databases exist** — Verify `e2e/seeds/` contains the expected seed files. If missing, run `npm run test:e2e:generate-seeds`.
+3. **Seed databases exist** — Verify `e2e/seeds/` contains the expected seed files. If missing, run `pnpm run test:e2e:generate-seeds`.
 
 4. **Docker running** — MinIO requires Docker. Check with `docker info` if there are storage-related failures.
 
@@ -34,22 +34,22 @@ Before running tests, check for these common issues:
 
 ### Run all tests
 ```bash
-npm run test:e2e
+pnpm run test:e2e
 ```
 
 ### Run a specific test file
 ```bash
-npx playwright test e2e/<name>.spec.ts
+pnpm exec playwright test e2e/<name>.spec.ts
 ```
 
 ### Flaky detection (repeats each test 10 times, stops on first failure)
 ```bash
-npm run test:e2e:flaky-detect
+pnpm run test:e2e:flaky-detect
 ```
 
 ### Regenerate seed databases (after schema/migration changes)
 ```bash
-npm run test:e2e:generate-seeds
+pnpm run test:e2e:generate-seeds
 ```
 
 ## Debugging failures
@@ -65,19 +65,19 @@ Common infrastructure errors and fixes:
 - **"table already exists"** → Stale worker DBs. Run `rm -f db-test-e2e-*.sqlite3`
 - **"Server on port X did not start within timeout"** → Port conflict or app build error. Check ports with `lsof -i :<port>` and check for build errors
 - **"MinIO failed to start"** → Docker not running or compose issue. Check `docker info`
-- **Seed-related errors** → Run `npm run test:e2e:generate-seeds`
+- **Seed-related errors** → Run `pnpm run test:e2e:generate-seeds`
 
 ### Step 3: Reduce to single debug worker
 If the error is unclear, re-run with debug output and a single worker to see server logs:
 ```bash
-E2E_DEBUG=true E2E_WORKERS=1 npx playwright test e2e/<failing-test>.spec.ts
+E2E_DEBUG=true E2E_WORKERS=1 pnpm exec playwright test e2e/<failing-test>.spec.ts
 ```
 This shows stdout/stderr from the test server, which is hidden by default.
 
 ### Step 4: Examine trace artifacts
 Playwright is configured with `trace: "retain-on-failure"`. After a failure, view the trace:
 ```bash
-npx playwright show-trace test-results/<test-folder>/trace.zip
+pnpm exec playwright show-trace test-results/<test-folder>/trace.zip
 ```
 
 ## Test pattern reference

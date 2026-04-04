@@ -20,10 +20,10 @@
 .checked {
 	color: var(--color-text);
 	outline: 2px solid var(--color-bg-higher);
-}
 
-.checked .emoji {
-	filter: grayscale(0%);
+	& .emoji {
+		filter: grayscale(0%);
+	}
 }
 
 .focusVisible {

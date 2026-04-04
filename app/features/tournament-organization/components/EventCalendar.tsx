@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { LinkButton } from "~/components/elements/Button";
 import type { MonthYear } from "~/features/plus-voting/core";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate, nullPaddedDatesOfMonth } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
@@ -23,7 +23,7 @@ export function EventCalendar({
 	fallbackLogoUrl,
 }: EventCalendarProps) {
 	const dates = nullPaddedDatesOfMonth({ month, year });
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const { i18n } = useTranslation();
 
 	const dayHeaders = Array.from({ length: 7 }, (_, i) => {
@@ -47,7 +47,7 @@ export function EventCalendar({
 						const startTimeDate = databaseTimestampToDate(event.startTime);
 
 						return (
-							isMounted &&
+							isHydrated &&
 							startTimeDate.getDate() === date?.getUTCDate() &&
 							startTimeDate.getMonth() === date.getUTCMonth()
 						);
@@ -76,14 +76,14 @@ function EventCalendarCell({
 	events: SerializeFrom<typeof loader>["events"];
 	fallbackLogoUrl: string;
 }) {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
 	return (
 		<div
 			className={clsx(styles.calendarDay, {
 				[styles.calendarDayPrevious]: !date,
 				[styles.calendarDayToday]:
-					isMounted &&
+					isHydrated &&
 					date?.getDate() === new Date().getDate() &&
 					date?.getMonth() === new Date().getMonth() &&
 					date?.getFullYear() === new Date().getFullYear(),

@@ -64,6 +64,7 @@ export function generateTournamentRoundMaplist(
 				return 1;
 			}
 			if (args.pickBanStyle === "BAN_2") return count + 2;
+			if (args.pickBanStyle === "CUSTOM") return 0;
 
 			assertUnreachable(args.pickBanStyle);
 		};

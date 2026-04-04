@@ -2,10 +2,10 @@
 	min-width: 300px;
 	padding: 0;
 	background-color: var(--color-bg);
-}
 
-.popoverContainer svg {
-	width: 16px;
+	& svg {
+		width: 16px;
+	}
 }
 
 .noNotificationsContainer {
@@ -62,15 +62,15 @@
 	& svg {
 		stroke-width: 3;
 	}
+
+	&:hover {
+		color: var(--color-text);
+		background-color: var(--color-bg-higher);
+	}
 }
 
 @media screen and (max-width: 599px) {
 	.viewAllLink {
 		margin-top: var(--s-4);
 	}
-}
-
-.viewAllLink:hover {
-	color: var(--color-text);
-	background-color: var(--color-bg-higher);
 }

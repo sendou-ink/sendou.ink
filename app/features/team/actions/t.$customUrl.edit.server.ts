@@ -35,7 +35,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	if (data._action.includes("DELETE")) {
 		errorToastIfFalsy(
-			isTeamOwner({ team, user }),
+			isTeamOwner({ team, user }) || user.roles.includes("ADMIN"),
 			"You are not the team owner",
 		);
 	}

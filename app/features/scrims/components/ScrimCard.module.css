@@ -97,10 +97,10 @@
 	padding: 0;
 	text-align: left;
 	text-decoration: underline;
-}
 
-.expandButton:hover {
-	opacity: 0.8;
+	&:hover {
+		opacity: 0.8;
+	}
 }
 
 .footer {
@@ -135,8 +135,10 @@
 	gap: var(--s-0-5);
 }
 
-.strikethrough button {
-	text-decoration: line-through;
+.strikethrough {
+	& button {
+		text-decoration: line-through;
+	}
 }
 
 .canceledLabel {

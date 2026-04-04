@@ -134,7 +134,7 @@ function EventSchedule({
 		<div className="stack md horizontal items-center mx-auto">
 			<img
 				alt=""
-				src={`http://localhost:5173/static-assets/img/tournament-logos/${imgId}.png`}
+				src={`http://localhost:5173/static-assets/img/tournament-logos/${imgId}.avif`}
 				style={{
 					width: "4rem",
 					height: "4rem",

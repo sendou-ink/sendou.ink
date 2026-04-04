@@ -17,8 +17,8 @@ import { Image } from "~/components/Image";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { filterWeapon } from "~/modules/in-game-lists/utils";
 import {
+	altWeaponIdToId,
 	mainWeaponIds,
-	weaponIdToType,
 } from "~/modules/in-game-lists/weapon-ids";
 import {
 	ANALYZER_URL,
@@ -46,6 +46,7 @@ export type WeaponDestination = (typeof WEAPON_DESTINATIONS)[number];
 export interface SelectedWeapon {
 	id: MainWeaponId;
 	name: string;
+	englishName: string;
 	slug: string;
 }
 
@@ -57,8 +58,6 @@ export function filterWeaponResults(
 
 	const matches: SelectedWeapon[] = [];
 	for (const id of mainWeaponIds) {
-		if (weaponIdToType(id) === "ALT_SKIN") continue;
-
 		const weaponName = t(`weapons:MAIN_${id}`);
 		const isMatch = filterWeapon({
 			weapon: { type: "MAIN", id },
@@ -67,10 +66,17 @@ export function filterWeaponResults(
 		});
 
 		if (isMatch) {
+			const englishName = t(`weapons:MAIN_${id}`, { lng: "en" });
+			const baseId = altWeaponIdToId.get(id);
+			const slugName =
+				baseId !== undefined
+					? t(`weapons:MAIN_${baseId}`, { lng: "en" })
+					: englishName;
 			matches.push({
 				id,
 				name: weaponName,
-				slug: mySlugify(t(`weapons:MAIN_${id}`, { lng: "en" })),
+				englishName,
+				slug: mySlugify(slugName),
 			});
 		}
 
@@ -80,7 +86,7 @@ export function filterWeaponResults(
 	return matches;
 }
 
-export function getWeaponDestinationUrl(
+function getWeaponDestinationUrl(
 	key: WeaponDestination,
 	weapon: SelectedWeapon,
 ): string {
@@ -90,7 +96,7 @@ export function getWeaponDestinationUrl(
 		stats: weaponBuildStatsPage(weapon.slug),
 		analyzer: `${ANALYZER_URL}?weapon=${weapon.id}`,
 		vods: `${VODS_PAGE}?weapon=${weapon.id}`,
-		art: `/art?tab=showcase&tag=${encodeURIComponent(weapon.name.toLowerCase())}`,
+		art: `/art?tab=showcase&tag=${encodeURIComponent(weapon.englishName.toLowerCase())}`,
 		lfg: `${LFG_PAGE}?q=w.${weapon.id}`,
 	};
 
@@ -139,7 +145,11 @@ export function WeaponDestinationMenu({
 				onAction={onSelect}
 				autoFocus="first"
 			>
-				<ListBoxItem id="builds" className={styles.listBoxItem}>
+				<ListBoxItem
+					id="builds"
+					href={getWeaponDestinationUrl("builds", selectedWeapon)}
+					className={styles.listBoxItem}
+				>
 					<div className={styles.resultItem}>
 						<FlaskConical size={20} />
 						<span className={styles.resultName}>
@@ -147,7 +157,11 @@ export function WeaponDestinationMenu({
 						</span>
 					</div>
 				</ListBoxItem>
-				<ListBoxItem id="popular" className={styles.listBoxItem}>
+				<ListBoxItem
+					id="popular"
+					href={getWeaponDestinationUrl("popular", selectedWeapon)}
+					className={styles.listBoxItem}
+				>
 					<div className={styles.resultItem}>
 						<Flame size={20} />
 						<span className={styles.resultName}>
@@ -155,7 +169,11 @@ export function WeaponDestinationMenu({
 						</span>
 					</div>
 				</ListBoxItem>
-				<ListBoxItem id="stats" className={styles.listBoxItem}>
+				<ListBoxItem
+					id="stats"
+					href={getWeaponDestinationUrl("stats", selectedWeapon)}
+					className={styles.listBoxItem}
+				>
 					<div className={styles.resultItem}>
 						<ChartColumnBig size={20} />
 						<span className={styles.resultName}>
@@ -163,7 +181,11 @@ export function WeaponDestinationMenu({
 						</span>
 					</div>
 				</ListBoxItem>
-				<ListBoxItem id="analyzer" className={styles.listBoxItem}>
+				<ListBoxItem
+					id="analyzer"
+					href={getWeaponDestinationUrl("analyzer", selectedWeapon)}
+					className={styles.listBoxItem}
+				>
 					<div className={styles.resultItem}>
 						<Calculator size={20} />
 						<span className={styles.resultName}>
@@ -171,19 +193,31 @@ export function WeaponDestinationMenu({
 						</span>
 					</div>
 				</ListBoxItem>
-				<ListBoxItem id="vods" className={styles.listBoxItem}>
+				<ListBoxItem
+					id="vods"
+					href={getWeaponDestinationUrl("vods", selectedWeapon)}
+					className={styles.listBoxItem}
+				>
 					<div className={styles.resultItem}>
 						<Videotape size={20} />
 						<span className={styles.resultName}>{t("common:pages.vods")}</span>
 					</div>
 				</ListBoxItem>
-				<ListBoxItem id="art" className={styles.listBoxItem}>
+				<ListBoxItem
+					id="art"
+					href={getWeaponDestinationUrl("art", selectedWeapon)}
+					className={styles.listBoxItem}
+				>
 					<div className={styles.resultItem}>
 						<ImageIcon size={20} />
 						<span className={styles.resultName}>{t("common:pages.art")}</span>
 					</div>
 				</ListBoxItem>
-				<ListBoxItem id="lfg" className={styles.listBoxItem}>
+				<ListBoxItem
+					id="lfg"
+					href={getWeaponDestinationUrl("lfg", selectedWeapon)}
+					className={styles.listBoxItem}
+				>
 					<div className={styles.resultItem}>
 						<Users size={20} />
 						<span className={styles.resultName}>{t("common:pages.lfg")}</span>

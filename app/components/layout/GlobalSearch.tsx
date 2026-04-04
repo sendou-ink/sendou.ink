@@ -13,13 +13,14 @@ import {
 	RadioGroup,
 } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { useFetcher, useNavigate, useSearchParams } from "react-router";
+import { useFetcher, useSearchParams } from "react-router";
 import { useDebounce } from "react-use";
 import { Avatar } from "~/components/Avatar";
 import { Image } from "~/components/Image";
 import { Input } from "~/components/Input";
 import type { SearchLoaderData } from "~/features/search/routes/search";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { altWeaponIdToId } from "~/modules/in-game-lists/weapon-ids";
 import {
 	mySlugify,
 	navIconUrl,
@@ -32,10 +33,8 @@ import styles from "./GlobalSearch.module.css";
 import {
 	filterWeaponResults,
 	getRecentWeapons,
-	getWeaponDestinationUrl,
 	type SelectedWeapon,
 	saveRecentWeapon,
-	type WeaponDestination,
 	WeaponDestinationMenu,
 	WeaponResultsList,
 } from "./WeaponSearch";
@@ -162,7 +161,13 @@ function resolveInitialWeapon(
 	if (Number.isNaN(id)) return null;
 	const name = t(`weapons:MAIN_${id}`);
 	if (!name || name === `MAIN_${id}`) return null;
-	return { id, name, slug: mySlugify(name) };
+	const englishName = t(`weapons:MAIN_${id}`, { lng: "en" });
+	const baseId = altWeaponIdToId.get(id);
+	const slugName =
+		baseId !== undefined
+			? t(`weapons:MAIN_${baseId}`, { lng: "en" })
+			: englishName;
+	return { id, name, englishName, slug: mySlugify(slugName) };
 }
 
 function GlobalSearchContent({
@@ -175,7 +180,6 @@ function GlobalSearchContent({
 	initialWeaponId: string | null;
 }) {
 	const { t } = useTranslation(["common", "weapons"]);
-	const navigate = useNavigate();
 	const [query, setQuery] = React.useState("");
 	const [searchType, setSearchType] = React.useState<SearchType>(
 		initialSearchType ?? getInitialSearchType(),
@@ -186,6 +190,11 @@ function GlobalSearchContent({
 		);
 	const inputRef = React.useRef<HTMLInputElement>(null);
 	const listBoxRef = React.useRef<HTMLDivElement>(null);
+	const modifierKeyRef = React.useRef(false);
+
+	const handleClickCapture = (e: React.MouseEvent) => {
+		modifierKeyRef.current = e.metaKey || e.ctrlKey;
+	};
 
 	const fetcher = useFetcher<SearchLoaderData>();
 
@@ -225,7 +234,13 @@ function GlobalSearchContent({
 		searchType === "weapons"
 			? getRecentWeapons().map((id) => {
 					const name = t(`weapons:MAIN_${id}`);
-					return { id, name, slug: mySlugify(name) };
+					const englishName = t(`weapons:MAIN_${id}`, { lng: "en" });
+					const baseId = altWeaponIdToId.get(id);
+					const slugName =
+						baseId !== undefined
+							? t(`weapons:MAIN_${baseId}`, { lng: "en" })
+							: englishName;
+					return { id, name, englishName, slug: mySlugify(slugName) };
 				})
 			: [];
 
@@ -241,9 +256,7 @@ function GlobalSearchContent({
 			return;
 		}
 
-		const result = results.find((r) => getResultKey(r) === key);
-		if (result) {
-			navigate(getResultHref(result));
+		if (!modifierKeyRef.current) {
 			onClose();
 		}
 	};
@@ -261,16 +274,13 @@ function GlobalSearchContent({
 		}
 	};
 
-	const handleDestinationSelect = (key: React.Key) => {
+	const handleDestinationSelect = () => {
 		if (!selectedWeapon) return;
 
-		const url = getWeaponDestinationUrl(
-			key as WeaponDestination,
-			selectedWeapon,
-		);
 		saveRecentWeapon(selectedWeapon.id);
-		navigate(url);
-		onClose();
+		if (!modifierKeyRef.current) {
+			onClose();
+		}
 	};
 
 	const handleBackToWeaponSearch = () => {
@@ -279,17 +289,19 @@ function GlobalSearchContent({
 
 	if (searchType === "weapons" && selectedWeapon) {
 		return (
-			<WeaponDestinationMenu
-				selectedWeapon={selectedWeapon}
-				onBack={handleBackToWeaponSearch}
-				onSelect={handleDestinationSelect}
-				listBoxRef={listBoxRef}
-			/>
+			<div onClickCapture={handleClickCapture}>
+				<WeaponDestinationMenu
+					selectedWeapon={selectedWeapon}
+					onBack={handleBackToWeaponSearch}
+					onSelect={handleDestinationSelect}
+					listBoxRef={listBoxRef}
+				/>
+			</div>
 		);
 	}
 
 	return (
-		<>
+		<div onClickCapture={handleClickCapture}>
 			<Input
 				ref={inputRef}
 				className={styles.input}
@@ -342,7 +354,6 @@ function GlobalSearchContent({
 					ref={listBoxRef}
 					className={clsx(styles.listBox, "scrollbar")}
 					aria-label={t("common:search")}
-					selectionMode="single"
 					onAction={handleSelect}
 					renderEmptyState={() =>
 						hasQuery ? (
@@ -358,6 +369,7 @@ function GlobalSearchContent({
 						<ListBoxItem
 							key={getResultKey(result)}
 							id={getResultKey(result)}
+							href={getResultHref(result)}
 							className={styles.listBoxItem}
 						>
 							<ResultItem result={result} />
@@ -365,7 +377,7 @@ function GlobalSearchContent({
 					))}
 				</ListBox>
 			)}
-		</>
+		</div>
 	);
 }
 

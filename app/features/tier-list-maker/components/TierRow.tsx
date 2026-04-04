@@ -163,11 +163,7 @@ export function TierRow({ tier }: TierRowProps) {
 						strategy={horizontalListSortingStrategy}
 					>
 						{items.map((item) => (
-							<DraggableItem
-								key={tierListItemId(item)}
-								item={item}
-								forcePng={screenshotMode}
-							/>
+							<DraggableItem key={tierListItemId(item)} item={item} />
 						))}
 					</SortableContext>
 				) : null}

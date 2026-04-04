@@ -819,14 +819,14 @@ export class Tournament {
 		return this.ctx.settings.isInvitational ?? false;
 	}
 
-	/** Does this tournament have the option for teams to sign up as subs? Subs is a solo sign-up that teams can ask to join their team if they need more players. */
-	get subsFeatureEnabled() {
+	/** Does this tournament have the option for teams to look for more members via the integrated LFG-solution. Also applies to solo subs view (after registration is closed) */
+	get lfgEnabled() {
 		return this.ctx.settings.enableSubs ?? true;
 	}
 
 	/** Can a new sub post be made at this time? */
 	get canAddNewSubPost() {
-		if (!this.subsFeatureEnabled) return false;
+		if (!this.lfgEnabled) return false;
 		if (this.ctx.isFinalized) return false;
 
 		return (
@@ -1137,7 +1137,11 @@ export class Tournament {
 						return { type: "WAITING_FOR_MATCH" } as const;
 					}
 
-					if (this.ctx.castedMatchesInfo?.lockedMatches.includes(match.id)) {
+					if (
+						this.ctx.castedMatchesInfo?.lockedMatches.some(
+							(lm) => lm.matchId === match.id,
+						)
+					) {
 						return { type: "WAITING_FOR_CAST" } as const;
 					}
 

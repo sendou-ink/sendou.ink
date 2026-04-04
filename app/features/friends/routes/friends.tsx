@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Form, useLoaderData, useSearchParams } from "react-router";
+import { Form, Link, useLoaderData, useSearchParams } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { Main } from "~/components/Main";
@@ -64,7 +64,7 @@ function IncomingRequestsSection() {
 			<div className="stack sm">
 				{data.incomingRequests.map((request) => (
 					<div key={request.id} className={styles.pendingRow}>
-						<div className={styles.pendingUser}>
+						<Link to={request.sender.url} className={styles.pendingUser}>
 							<Avatar
 								user={{
 									discordId: request.sender.discordId,
@@ -73,7 +73,7 @@ function IncomingRequestsSection() {
 								size="xxsm"
 							/>
 							<span className={styles.userName}>{request.sender.username}</span>
-						</div>
+						</Link>
 						<div className="stack horizontal sm">
 							<Form method="post">
 								<input type="hidden" name="_action" value="ACCEPT_REQUEST" />
@@ -115,7 +115,7 @@ function PendingRequestsSection() {
 			<div className="stack sm">
 				{data.pendingRequests.map((request) => (
 					<div key={request.id} className={styles.pendingRow}>
-						<div className={styles.pendingUser}>
+						<Link to={request.receiver.url} className={styles.pendingUser}>
 							<Avatar
 								user={{
 									discordId: request.receiver.discordId,
@@ -126,7 +126,7 @@ function PendingRequestsSection() {
 							<span className={styles.userName}>
 								{request.receiver.username}
 							</span>
-						</div>
+						</Link>
 						<Form method="post">
 							<input type="hidden" name="_action" value="CANCEL_REQUEST" />
 							<input type="hidden" name="friendRequestId" value={request.id} />

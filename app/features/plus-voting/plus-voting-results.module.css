@@ -22,22 +22,22 @@
 	display: flex;
 	flex-direction: row;
 	color: var(--color-text-accent);
-}
 
-.tierHeader::before,
-.tierHeader::after {
-	flex: 1 1;
-	border-bottom: 3px solid var(--color-bg-high);
-	margin: auto;
-	content: "";
-}
+	&::before,
+	&::after {
+		flex: 1 1;
+		border-bottom: 3px solid var(--color-bg-high);
+		margin: auto;
+		content: "";
+	}
 
-.tierHeader::before {
-	margin-right: 10px;
-}
+	&::before {
+		margin-right: 10px;
+	}
 
-.tierHeader::after {
-	margin-left: 10px;
+	&::after {
+		margin-left: 10px;
+	}
 }
 
 .passedInfoContainer {

@@ -41,15 +41,15 @@
 	border: none;
 	color: var(--color-text);
 	outline: none;
-}
 
-.titleInput::placeholder {
-	color: var(--color-text-high);
-	opacity: 0.3;
-}
+	&::placeholder {
+		color: var(--color-text-high);
+		opacity: 0.3;
+	}
 
-.titleInput:focus::placeholder {
-	opacity: 0.5;
+	&:focus::placeholder {
+		opacity: 0.5;
+	}
 }
 
 .authorSection {

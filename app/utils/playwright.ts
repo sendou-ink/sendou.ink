@@ -118,10 +118,21 @@ export async function expectIsHydrated(page: Page) {
 	await expect(page.getByTestId("hydrated")).toHaveCount(1);
 }
 
-export function seed(page: Page, variation?: SeedVariation) {
-	return page.request.post("/seed", {
-		form: { variation: variation ?? "DEFAULT", source: "e2e" },
-	});
+export async function seed(page: Page, variation?: SeedVariation) {
+	const MAX_ATTEMPTS = 3;
+
+	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+		try {
+			return await page.request.post("/seed", {
+				form: { variation: variation ?? "DEFAULT", source: "e2e" },
+				timeout: 7_500,
+			});
+		} catch (error) {
+			if (attempt === MAX_ATTEMPTS) throw error;
+		}
+	}
+
+	throw new Error("seed: unreachable");
 }
 
 export function impersonate(page: Page, userId = ADMIN_ID) {

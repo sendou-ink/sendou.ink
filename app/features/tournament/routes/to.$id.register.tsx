@@ -6,6 +6,7 @@ import {
 	BookmarkCheck,
 	Check,
 	Clock,
+	Share2,
 	Trash,
 	User,
 	X,
@@ -16,6 +17,7 @@ import { Form, Link, useFetcher, useLoaderData } from "react-router";
 import { useCopyToClipboard } from "react-use";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
+import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -44,7 +46,7 @@ import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { ModeMapPoolPicker } from "~/features/sendouq-settings/components/ModeMapPoolPicker";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
@@ -57,6 +59,7 @@ import {
 	SENDOU_INK_BASE_URL,
 	tournamentJoinPage,
 	tournamentOrganizationPage,
+	tournamentPage,
 	tournamentSubsPage,
 	userEditProfilePage,
 	userPage,
@@ -75,7 +78,7 @@ import { useTournament } from "./to.$id";
 export { action, loader };
 
 export default function TournamentRegisterPage() {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const tournament = useTournament();
 
 	return (
@@ -119,7 +122,7 @@ export default function TournamentRegisterPage() {
 						<div className={clsx(styles.by, "mt-2")}>
 							<div className="stack horizontal xs items-center">
 								<Clock className={styles.infoIcon} />{" "}
-								{isMounted ? (
+								{isHydrated ? (
 									<TimePopover
 										time={tournament.ctx.startTime}
 										options={{
@@ -226,6 +229,7 @@ function TournamentRegisterInfoTabs() {
 								</div>
 							) : null}
 							<SaveTournamentButton />
+							<ShareTournamentButton />
 						</div>
 
 						<div className={styles.infoDescription}>
@@ -389,7 +393,7 @@ function RegistrationProgress({
 }) {
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const { formatDate } = useTimeFormat();
 
 	const completedIfTruthy = (condition: unknown) =>
@@ -430,7 +434,7 @@ function RegistrationProgress({
 		tournament.registrationClosesAt.getTime() !==
 		tournament.ctx.startTime.getTime();
 
-	const registrationClosesAtString = isMounted
+	const registrationClosesAtString = isHydrated
 		? formatDate(
 				tournament.isLeagueSignup
 					? tournament.ctx.startTime
@@ -519,13 +523,13 @@ function CheckIn({
 	checkedIn?: boolean;
 }) {
 	const { t } = useTranslation(["tournament"]);
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const fetcher = useFetcher();
 	const { formatTime } = useTimeFormat();
 
 	useAutoRerender();
 
-	const checkInStartsString = isMounted
+	const checkInStartsString = isHydrated
 		? formatTime(startDate, {
 				minute: "numeric",
 				hour: "numeric",
@@ -534,7 +538,7 @@ function CheckIn({
 			})
 		: "";
 
-	const checkInEndsString = isMounted
+	const checkInEndsString = isHydrated
 		? formatTime(endDate, {
 				minute: "numeric",
 				hour: "numeric",
@@ -545,7 +549,7 @@ function CheckIn({
 
 	if (status === "UPCOMING") {
 		return (
-			<div className={clsx("text-center text-xs", { invisible: !isMounted })}>
+			<div className={clsx("text-center text-xs", { invisible: !isHydrated })}>
 				{t("tournament:pre.checkIn.range", {
 					start: checkInStartsString,
 					finish: checkInEndsString,
@@ -1324,6 +1328,44 @@ function SaveTournamentButton() {
 				{isSaved ? t("common:actions.unsave") : t("common:actions.save")}
 			</SendouButton>
 		</fetcher.Form>
+	);
+}
+
+function ShareTournamentButton() {
+	const { t } = useTranslation(["common"]);
+	const tournament = useTournament();
+
+	const url = `${SENDOU_INK_BASE_URL}${tournamentPage(tournament.ctx.id)}`;
+
+	const handleShare = () => {
+		navigator.share({ url });
+	};
+
+	if (
+		typeof navigator !== "undefined" &&
+		typeof navigator.share === "function"
+	) {
+		return (
+			<SendouButton
+				variant="outlined"
+				size="small"
+				icon={<Share2 />}
+				onPress={handleShare}
+			>
+				{t("common:actions.share")}
+			</SendouButton>
+		);
+	}
+
+	return (
+		<CopyToClipboardPopover
+			url={url}
+			trigger={
+				<SendouButton variant="outlined" size="small" icon={<Share2 />}>
+					{t("common:actions.share")}
+				</SendouButton>
+			}
+		/>
 	);
 }
 

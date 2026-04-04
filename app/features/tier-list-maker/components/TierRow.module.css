@@ -17,10 +17,10 @@
 	cursor: pointer;
 	transition: opacity 0.2s;
 	border: none;
-}
 
-.tierLabel:hover {
-	opacity: 0.9;
+	&:hover {
+		opacity: 0.9;
+	}
 }
 
 .tierName {
@@ -91,6 +91,15 @@
 	border: none;
 	cursor: pointer;
 	transition: opacity 0.2s;
+
+	&:hover:not(:disabled) {
+		opacity: 0.8;
+	}
+
+	&:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+	}
 }
 
 .arrowButtonUpper {
@@ -99,15 +108,6 @@
 
 .arrowButtonLower {
 	border-radius: 0 0 var(--radius-field) 0;
-}
-
-.arrowButton:hover:not(:disabled) {
-	opacity: 0.8;
-}
-
-.arrowButton:disabled {
-	opacity: 0.3;
-	cursor: not-allowed;
 }
 
 .arrowIcon {
@@ -137,11 +137,11 @@
 	cursor: pointer;
 	transition: all 0.2s;
 	padding: 0;
-}
 
-.colorButton:hover {
-	transform: scale(1.1);
-	border-color: var(--color-text-high);
+	&:hover {
+		transform: scale(1.1);
+		border-color: var(--color-text-high);
+	}
 }
 
 .colorButtonSelected {

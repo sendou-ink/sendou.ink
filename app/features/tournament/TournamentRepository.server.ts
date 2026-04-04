@@ -22,6 +22,7 @@ import {
 } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 import type { TournamentTierNumber } from "./core/tiering";
+import { updatedCastedMatchesInfo } from "./tournament-utils";
 
 export type FindById = NonNullable<Unwrapped<typeof findById>>;
 export async function findById(id: number) {
@@ -316,6 +317,17 @@ export async function findById(id: number) {
 	};
 }
 
+export async function hasChildTournaments(parentTournamentId: number) {
+	const row = await db
+		.selectFrom("Tournament")
+		.select("Tournament.id")
+		.where("Tournament.parentTournamentId", "=", parentTournamentId)
+		.limit(1)
+		.executeTakeFirst();
+
+	return Boolean(row);
+}
+
 export async function findChildTournaments(parentTournamentId: number) {
 	const rows = await db
 		.selectFrom("Tournament")
@@ -327,6 +339,7 @@ export async function findChildTournaments(parentTournamentId: number) {
 				.selectFrom("TournamentTeam")
 				.select(({ fn }) => [fn.countAll<number>().as("teamsCount")])
 				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+				.where("TournamentTeam.isPlaceholder", "=", 0)
 				.as("teamsCount"),
 			jsonArrayFrom(
 				eb
@@ -337,7 +350,8 @@ export async function findChildTournaments(parentTournamentId: number) {
 						"TournamentTeam.id",
 					)
 					.select(["TournamentTeamMember.userId"])
-					.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id"),
+					.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+					.where("TournamentTeam.isPlaceholder", "=", 0),
 			).as("teamMembers"),
 		])
 		.where("Tournament.parentTournamentId", "=", parentTournamentId)
@@ -526,6 +540,21 @@ export function forShowcase() {
 						).as("pickupAvatarUrl"),
 					]),
 			).as("firstPlacers"),
+			eb
+				.selectFrom("TournamentMatchVod")
+				.innerJoin(
+					"TournamentMatch",
+					"TournamentMatch.id",
+					"TournamentMatchVod.matchId",
+				)
+				.innerJoin(
+					"TournamentStage",
+					"TournamentStage.id",
+					"TournamentMatch.stageId",
+				)
+				.whereRef("TournamentStage.tournamentId", "=", "Tournament.id")
+				.select(({ fn }) => [fn.countAll<number>().as("count")])
+				.as("vodCount"),
 		])
 		.where("CalendarEventDate.startTime", ">", databaseTimestampWeekAgo())
 		.orderBy("CalendarEventDate.startTime", "asc")
@@ -922,9 +951,11 @@ const castedMatchesInfoByTournamentId = async (
 export function lockMatch({
 	matchId,
 	tournamentId,
+	twitchAccount,
 }: {
 	matchId: number;
 	tournamentId: number;
+	twitchAccount: string;
 }) {
 	return db.transaction().execute(async (trx) => {
 		const castedMatchesInfo = await castedMatchesInfoByTournamentId(
@@ -932,8 +963,8 @@ export function lockMatch({
 			tournamentId,
 		);
 
-		if (!castedMatchesInfo.lockedMatches.includes(matchId)) {
-			castedMatchesInfo.lockedMatches.push(matchId);
+		if (!castedMatchesInfo.lockedMatches.some((lm) => lm.matchId === matchId)) {
+			castedMatchesInfo.lockedMatches.push({ matchId, twitchAccount });
 		}
 
 		await trx
@@ -960,7 +991,7 @@ export function unlockMatch({
 		);
 
 		castedMatchesInfo.lockedMatches = castedMatchesInfo.lockedMatches.filter(
-			(lockedMatchId) => lockedMatchId !== matchId,
+			(lm) => lm.matchId !== matchId,
 		);
 
 		await trx
@@ -1001,28 +1032,11 @@ export function setMatchAsCasted({
 			tournamentId,
 		);
 
-		let newCastedMatchesInfo: CastedMatchesInfo;
-		if (twitchAccount === null) {
-			newCastedMatchesInfo = {
-				...castedMatchesInfo,
-				castedMatches: castedMatchesInfo.castedMatches.filter(
-					(cm) => cm.matchId !== matchId,
-				),
-			};
-		} else {
-			newCastedMatchesInfo = {
-				...castedMatchesInfo,
-				castedMatches: castedMatchesInfo.castedMatches
-					.filter(
-						(cm) =>
-							// currently a match can only  be streamed by one account
-							// and a cast can only stream one match at a time
-							// these can change in the future
-							cm.matchId !== matchId && cm.twitchAccount !== twitchAccount,
-					)
-					.concat([{ twitchAccount, matchId }]),
-			};
-		}
+		const newCastedMatchesInfo = updatedCastedMatchesInfo(castedMatchesInfo, {
+			matchId,
+			twitchAccount,
+			timestamp: databaseTimestampNow(),
+		});
 
 		await trx
 			.updateTable("Tournament")

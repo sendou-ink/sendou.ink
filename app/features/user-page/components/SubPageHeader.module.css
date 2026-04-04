@@ -31,14 +31,14 @@
 	border: 2px solid var(--color-bg-higher);
 	color: var(--color-text);
 	transition: all 0.2s;
-}
 
-.backButton svg {
-	min-width: 30px;
-}
+	& svg {
+		min-width: 30px;
+	}
 
-.backButton:hover {
-	background-color: var(--color-bg-higher);
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
 }
 
 .backIcon {

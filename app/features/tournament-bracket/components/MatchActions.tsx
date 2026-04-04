@@ -6,7 +6,7 @@ import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";
+import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
 import invariant from "~/utils/invariant";
 import * as PickBan from "../core/PickBan";
 import type { TournamentDataTeam } from "../core/Tournament.server";
@@ -107,22 +107,31 @@ export function MatchActions({
 		[tournament, data.match.id],
 	);
 
+	const bothTeamsHaveActiveRosters = teams.every((team) =>
+		tournamentTeamToActiveRosterUserIds(team, tournament.minMembersPerTeam),
+	);
+
 	const turnOf =
 		data.match.roundMaps &&
 		PickBan.turnOf({
 			results: data.results,
 			maps: data.match.roundMaps,
-			teams: [teams[0].id, teams[1].id],
+			teams: [
+				{ id: teams[0].id, seed: tournament.teamById(teams[0].id)!.seed },
+				{ id: teams[1].id, seed: tournament.teamById(teams[1].id)!.seed },
+			],
 			mapList: data.mapList,
+			pickBanEventCount: data.pickBanEventCount,
 		});
 
-	if (turnOf) {
-		return <MatchActionsBanPicker key={turnOf} teams={[teams[0], teams[1]]} />;
+	if (turnOf && bothTeamsHaveActiveRosters) {
+		return (
+			<MatchActionsBanPicker
+				key={`${turnOf.teamId}-${data.pickBanEventCount}`}
+				teams={[teams[0], teams[1]]}
+			/>
+		);
 	}
-
-	const bothTeamsHaveActiveRosters = teams.every((team) =>
-		tournamentTeamToActiveRosterUserIds(team, tournament.minMembersPerTeam),
-	);
 
 	const canEditFinishedSet =
 		result && tournament.isOrganizer(user) && !tournament.ctx.isFinalized;
@@ -230,11 +239,7 @@ function ReportScoreButtons({
 	const [endConfirmation, setEndConfirmation] = React.useState(false);
 	const [pointConfirmation, setPointConfirmation] = React.useState(false);
 
-	const leagueRoundStartDate = resolveLeagueRoundStartDate(
-		tournament,
-		data.match.roundId,
-	);
-	if (leagueRoundStartDate && leagueRoundStartDate > new Date()) {
+	if (isLeagueRoundLocked(tournament, data.match.roundId)) {
 		return (
 			<p className={styles.duringMatchActionsAmountWarningParagraph}>
 				League round has not started yet

@@ -1,7 +1,7 @@
 import { lazy } from "react";
 import type { MetaFunction } from "react-router";
 import { Placeholder } from "~/components/Placeholder";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, PLANNER_URL } from "~/utils/urls";
@@ -30,9 +30,9 @@ export const handle: SendouRouteHandle = {
 const Planner = lazy(() => import("~/features/map-planner/components/Planner"));
 
 export default function MapPlannerPage() {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
-	if (!isMounted) return <Placeholder />;
+	if (!isHydrated) return <Placeholder />;
 
 	return <Planner />;
 }

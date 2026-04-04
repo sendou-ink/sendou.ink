@@ -25,8 +25,8 @@ interface ResolveCurrentMapListArgs {
 	teams: [teamOneId: number, teamTwoId: number];
 	maps: TournamentRoundMaps;
 	pickBanEvents: Array<{
-		mode: ModeShort;
-		stageId: StageId;
+		mode: ModeShort | null;
+		stageId: StageId | null;
 		type: Tables["TournamentMatchPickBanEvent"]["type"];
 	}>;
 	/** Maps that both teams (interleaved) have recently played in the tournament with the most recent being first. */
@@ -36,6 +36,11 @@ interface ResolveCurrentMapListArgs {
 export function resolveMapList(
 	args: ResolveCurrentMapListArgs,
 ): TournamentMapListMap[] {
+	// CUSTOM flow: map list is built from pick/ban events
+	if (args.maps.pickBan === "CUSTOM") {
+		return resolveCustomMapList(args);
+	}
+
 	const baseMaps =
 		args.mapPickingStyle === "TO"
 			? args.maps!.list?.map((m) => ({ ...m, source: "TO" as const }))
@@ -65,6 +70,12 @@ export function resolveMapList(
 		.concat(
 			...args.pickBanEvents
 				.filter((event) => event.type === "PICK")
+				.filter(
+					(
+						event,
+					): event is typeof event & { mode: ModeShort; stageId: StageId } =>
+						event.mode !== null && event.stageId !== null,
+				)
 				.map((map) => ({
 					mode: map.mode,
 					stageId: map.stageId,
@@ -72,6 +83,25 @@ export function resolveMapList(
 					bannedByTournamentTeamId: undefined,
 				})),
 		);
+}
+
+function resolveCustomMapList(
+	args: ResolveCurrentMapListArgs,
+): TournamentMapListMap[] {
+	return args.pickBanEvents
+		.filter((event) => event.type === "PICK" || event.type === "ROLL")
+		.filter(
+			(event): event is typeof event & { mode: ModeShort; stageId: StageId } =>
+				event.mode !== null && event.stageId !== null,
+		)
+		.map((event) => ({
+			mode: event.mode,
+			stageId: event.stageId,
+			source: (event.type === "ROLL"
+				? "ROLL"
+				: "COUNTERPICK") as TournamentMaplistSource,
+			bannedByTournamentTeamId: undefined,
+		}));
 }
 
 export function mapListFromResults(
@@ -136,6 +166,8 @@ function resolveFreshTeamPickedMapList(
 			case "COUNTERPICK":
 			case "COUNTERPICK_MODE_REPEAT_OK":
 				return 1;
+			case "CUSTOM":
+				return 0;
 			default:
 				assertUnreachable(pickBan);
 		}

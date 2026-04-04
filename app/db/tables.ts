@@ -86,6 +86,7 @@ export interface Team {
 	inviteCode: string;
 	name: string;
 	bsky: string | null;
+	mapModePreferences: JSONColumnTypeNullable<UserMapModePreferences>;
 	/** Team's tag, typically used in-game in front of users' names to indicate they are a member of the team. */
 	tag: string | null;
 }
@@ -289,7 +290,11 @@ export type ParsedMemento = {
 	>;
 	/** mapPreferences of season 2 */
 	mapPreferences?: Array<{ userId: number; preference?: Preference }[]>;
-	pools: Array<{ userId: number; pool: UserMapModePreferences["pool"] }>;
+	pools: Array<{
+		userId: number;
+		pool: UserMapModePreferences["pool"];
+		teamName?: string;
+	}>;
 };
 
 export interface GroupMatch {
@@ -518,10 +523,15 @@ export interface TournamentSettings {
 }
 
 export interface CastedMatchesInfo {
-	/** Array for match ID's that are locked because they are pending to be casted */
-	lockedMatches: number[];
+	/** Array for matches that are locked because they are pending to be casted */
+	lockedMatches: Array<{ twitchAccount: string; matchId: number }>;
 	/** What matches are streamed currently & where */
 	castedMatches: { twitchAccount: string; matchId: number }[];
+	castedMatchHistory?: Array<{
+		twitchAccount: string;
+		matchId: number;
+		timestamp: number;
+	}>;
 }
 
 export interface Tournament {
@@ -623,11 +633,11 @@ export interface TournamentMatch {
 
 /** Represents one decision, pick or ban, during tournaments pick/ban (counterpick, ban 2) phase. */
 export interface TournamentMatchPickBanEvent {
-	type: "PICK" | "BAN";
-	stageId: StageId;
-	mode: ModeShort;
+	type: "PICK" | "BAN" | "ROLL" | "MODE_PICK" | "MODE_BAN";
+	stageId: StageId | null;
+	mode: ModeShort | null;
 	matchId: number;
-	authorId: number;
+	authorId: number | null;
 	number: number;
 	createdAt: GeneratedAlways<number>;
 }
@@ -677,6 +687,36 @@ export interface TournamentRoundMaps {
 	count: number;
 	type: "BEST_OF" | "PLAY_ALL";
 	pickBan?: PickBan.Type | null;
+	customFlow?: CustomPickBanFlow | null;
+}
+
+export const WHO_SIDES = [
+	"ALPHA",
+	"BRAVO",
+	"HIGHER_SEED",
+	"LOWER_SEED",
+	"WINNER",
+	"LOSER",
+] as const;
+export type WhoSide = (typeof WHO_SIDES)[number];
+
+export const ACTION_TYPES = [
+	"ROLL",
+	"PICK",
+	"BAN",
+	"MODE_PICK",
+	"MODE_BAN",
+] as const;
+export type ActionType = (typeof ACTION_TYPES)[number];
+
+export interface CustomPickBanStep {
+	action: ActionType;
+	side?: WhoSide;
+}
+
+export interface CustomPickBanFlow {
+	preSet: CustomPickBanStep[];
+	postGame: CustomPickBanStep[];
 }
 
 /**
@@ -941,6 +981,8 @@ export interface UserPreferences {
 	clockFormat?: "24h" | "12h" | "auto";
 	/** Is the new widget based user page enabled? (Supporter early preview) */
 	newProfileEnabled?: boolean;
+	/** Is spoiler-free mode enabled? Hides recent tournament results and scores until the user chooses to reveal them. */
+	spoilerFreeMode?: boolean;
 }
 
 export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;
@@ -1062,6 +1104,24 @@ export interface LiveStream {
 	viewerCount: number;
 	thumbnailUrl: string;
 	twitch: string | null;
+}
+
+export interface TournamentStreamer {
+	id: GeneratedAlways<number>;
+	userId: number | null;
+	tournamentId: number;
+	twitchAccount: string;
+}
+
+export interface TournamentMatchVod {
+	id: GeneratedAlways<number>;
+	matchId: number;
+	userId: number | null;
+	platform: string;
+	account: string;
+	platformVideoId: string;
+	timestampSeconds: number;
+	viewCount: number;
 }
 
 export interface BanLog {
@@ -1314,6 +1374,8 @@ export interface DB {
 	TournamentOrganizationSeries: TournamentOrganizationSeries;
 	TournamentBracketProgressionOverride: TournamentBracketProgressionOverride;
 	TournamentOrganizationBannedUser: TournamentOrganizationBannedUser;
+	TournamentStreamer: TournamentStreamer;
+	TournamentMatchVod: TournamentMatchVod;
 	TrustRelationship: TrustRelationship;
 	Friendship: Friendship;
 	FriendRequest: FriendRequest;

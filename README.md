@@ -82,8 +82,8 @@ Then there is a sequence of commands you need to run:
 ```bash
 git clone https://github.com/sendou-ink/sendou.ink.git # Clones repository
 cd sendou.ink # Change to the project's folder
-npm install # Install dependencies
-npm run dev # Setup the development environment and run the project
+pnpm install # Install dependencies
+pnpm dev # Setup the development environment and run the project
 ```
 
 You should then be able to access the application by visiting http://localhost:5173

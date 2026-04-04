@@ -1,5 +1,13 @@
 import { sub } from "date-fns";
-import { Check, Eye, EyeOff, Map as MapIcon } from "lucide-react";
+import {
+	Check,
+	Eye,
+	EyeOff,
+	Map as MapIcon,
+	ShieldMinus,
+	ShieldPlus,
+	Stamp,
+} from "lucide-react";
 import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
@@ -17,7 +25,7 @@ import {
 } from "~/components/elements/Tabs";
 import { useUser } from "~/features/auth/core/user";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useVisibilityChange } from "~/hooks/useVisibilityChange";
@@ -29,6 +37,7 @@ import {
 } from "../../tournament/routes/to.$id";
 import { action } from "../actions/to.$id.brackets.server";
 import { Bracket } from "../components/Bracket";
+import { useBracketSpoilerCensor } from "../components/Bracket/useBracketSpoilerCensor";
 import { BracketMapListDialog } from "../components/BracketMapListDialog";
 import { TournamentTeamActions } from "../components/TournamentTeamActions";
 import type { Bracket as BracketType } from "../core/Bracket";
@@ -39,13 +48,13 @@ export { action };
 import styles from "../tournament-bracket.module.css";
 
 export default function TournamentBracketsPage() {
-	const { t } = useTranslation(["tournament"]);
+	const { t } = useTranslation(["common", "tournament"]);
 	const { formatDateTime, formatTime } = useTimeFormat();
 	const visibility = useVisibilityChange();
 	const { revalidate } = useRevalidator();
 	const user = useUser();
 	const tournament = useTournament();
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const ctx = useOutletContext();
 
 	const defaultBracketIdx = () => {
@@ -84,11 +93,18 @@ export default function TournamentBracketsPage() {
 		tournament.autonomousSubs &&
 		teamProgressStatus?.type !== "THANKS_FOR_PLAYING";
 
+	const {
+		censored,
+		canToggle,
+		reveal: revealSpoiler,
+		hide: hideSpoiler,
+	} = useBracketSpoilerCensor();
+
 	const showPrepareMapsButton =
 		tournament.isOrganizer(user) &&
 		!bracket.canBeStarted &&
 		bracket.preview &&
-		isMounted;
+		isHydrated;
 
 	const waitingForTeamsText = () => {
 		if (bracketIdx > 0 || tournament.regularCheckInStartInThePast) {
@@ -168,17 +184,6 @@ export default function TournamentBracketsPage() {
 	return (
 		<div>
 			<Outlet context={ctx} />
-			{tournament.canFinalize(user) ? (
-				<div className={styles.finalize}>
-					<LinkButton
-						variant="minimal"
-						testId="finalize-tournament-button"
-						to="finalize"
-					>
-						{t("tournament:actions.finalize.question")}
-					</LinkButton>
-				</div>
-			) : null}
 			{bracket.preview &&
 			bracket.enoughTeams &&
 			tournament.isOrganizer(user) &&
@@ -223,6 +228,24 @@ export default function TournamentBracketsPage() {
 				{bracket.type !== "round_robin" && !bracket.preview ? (
 					<CompactifyButton />
 				) : null}
+				{tournament.canFinalize(user) ? (
+					<LinkButton
+						to="finalize"
+						testId="finalize-tournament-button"
+						icon={<Stamp />}
+					>
+						{t("tournament:actions.finalize.button")}
+					</LinkButton>
+				) : null}
+				{censored ? (
+					<SendouButton onPress={revealSpoiler} icon={<ShieldMinus />}>
+						{t("common:spoilerFree.showResults")}
+					</SendouButton>
+				) : canToggle ? (
+					<SendouButton onPress={hideSpoiler} icon={<ShieldPlus />}>
+						{t("common:spoilerFree.hideResults")}
+					</SendouButton>
+				) : null}
 				{showPrepareMapsButton ? (
 					// Error Boundary because preparing maps is optional, so no need to make the whole page inaccessible if it fails
 					<ErrorBoundary fallback={null}>
@@ -254,7 +277,7 @@ function BracketStarter({
 	bracketIdx: number;
 }) {
 	const [dialogOpen, setDialogOpen] = React.useState(false);
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
 	const close = React.useCallback(() => {
 		setDialogOpen(false);
@@ -262,7 +285,7 @@ function BracketStarter({
 
 	return (
 		<>
-			{isMounted && dialogOpen ? (
+			{isHydrated && dialogOpen ? (
 				<BracketMapListDialog
 					close={close}
 					bracket={bracket}
@@ -310,7 +333,7 @@ function MapPreparer({
 	bracketIdx: number;
 }) {
 	const [dialogOpen, setDialogOpen] = React.useState(false);
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const prepared = useTournamentPreparedMaps();
 	const tournament = useTournament();
 
@@ -328,7 +351,7 @@ function MapPreparer({
 
 	return (
 		<>
-			{isMounted && dialogOpen ? (
+			{isHydrated && dialogOpen ? (
 				<BracketMapListDialog
 					close={close}
 					bracket={bracket}

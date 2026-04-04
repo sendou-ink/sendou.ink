@@ -136,10 +136,10 @@ export async function getSendouQSidebarStreams(): Promise<
 				id: `sendouq-${matchId}`,
 				name: `Match #${matchId}`,
 				imageUrl: averageTier
-					? `${tierImageUrl(averageTier.name)}.png`
-					: `${navIconUrl("sendouq")}.png`,
+					? `${tierImageUrl(averageTier.name)}.avif`
+					: `${navIconUrl("sendouq")}.avif`,
 				overlayIconUrl: averageTier
-					? `${navIconUrl("sendouq")}.png`
+					? `${navIconUrl("sendouq")}.avif`
 					: undefined,
 				url: SENDOUQ_STREAMS_PAGE,
 				subtitle: averageTier

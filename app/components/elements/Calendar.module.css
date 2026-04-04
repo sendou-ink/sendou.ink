@@ -58,23 +58,23 @@
 		outline: var(--focus-ring);
 		outline-offset: 1px;
 	}
-}
 
-.cell[data-outside-month] {
-	display: none;
-}
+	&[data-outside-month] {
+		display: none;
+	}
 
-.cell[data-disabled] {
-	opacity: 0.5;
-	background-color: transparent !important;
-}
+	&[data-disabled] {
+		opacity: 0.5;
+		background-color: transparent !important;
+	}
 
-.cell[data-selected] {
-	background-color: var(--color-bg-high);
-	color: var(--color-text-accent);
-}
+	&[data-selected] {
+		background-color: var(--color-bg-high);
+		color: var(--color-text-accent);
+	}
 
-.cell:hover {
-	background-color: var(--color-bg-high);
-	outline: initial;
+	&:hover {
+		background-color: var(--color-bg-high);
+		outline: initial;
+	}
 }

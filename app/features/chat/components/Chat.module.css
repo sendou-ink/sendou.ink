@@ -31,9 +31,11 @@
 	flex-shrink: 0;
 }
 
-.avatarWrapperStaff img {
-	border: var(--border-style-accent);
-	border-radius: var(--radius-avatar);
+.avatarWrapperStaff {
+	& img {
+		border: var(--border-style-accent);
+		border-radius: var(--radius-avatar);
+	}
 }
 
 .avatarBadge {
@@ -78,11 +80,11 @@
 .inputContainer {
 	margin-top: auto;
 	position: relative;
-}
 
-.inputContainer > form {
-	padding: var(--s-2);
-	border-top: 1.5px solid var(--color-border);
+	& > form {
+		padding: var(--s-2);
+		border-top: 1.5px solid var(--color-border);
+	}
 }
 
 .sendButton.sendButton {
@@ -90,10 +92,10 @@
 	background-color: var(--color-text-accent);
 	color: var(--color-text-inverse);
 	flex-shrink: 0;
-}
 
-.sendButton.sendButton:disabled {
-	opacity: 0.4;
+	&:disabled {
+		opacity: 0.4;
+	}
 }
 
 .messageContents {

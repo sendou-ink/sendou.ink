@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ACTION_TYPES, WHO_SIDES } from "~/db/tables";
 import {
 	_action,
 	checkboxValueToBoolean,
@@ -66,7 +67,7 @@ export const matchSchema = z.union([
 	}),
 	z.object({
 		_action: _action("BAN_PICK"),
-		stageId,
+		stageId: stageId.optional(),
 		mode: modeShort,
 	}),
 	z.object({
@@ -91,6 +92,7 @@ export const matchSchema = z.union([
 	}),
 	z.object({
 		_action: _action("LOCK"),
+		twitchAccount: z.string().min(1).max(100),
 	}),
 	z.object({
 		_action: _action("UNLOCK"),
@@ -102,6 +104,18 @@ export const matchSchema = z.union([
 ]);
 
 export const bracketIdx = z.coerce.number().int().min(0).max(100);
+
+const customPickBanStep = z.object({
+	action: z.enum(ACTION_TYPES),
+	side: z.enum(WHO_SIDES).optional(),
+});
+
+const customPickBanFlow = z
+	.object({
+		preSet: z.array(customPickBanStep),
+		postGame: z.array(customPickBanStep),
+	})
+	.nullish();
 
 const tournamentRoundMaps = z.object({
 	roundId: z.number().int().min(0),
@@ -117,6 +131,7 @@ const tournamentRoundMaps = z.object({
 	count: numericEnum(TOURNAMENT.AVAILABLE_BEST_OF),
 	type: z.enum(["BEST_OF", "PLAY_ALL"]),
 	pickBan: z.enum(PickBan.types).nullish(),
+	customFlow: customPickBanFlow,
 });
 export const bracketSchema = z.union([
 	z.object({

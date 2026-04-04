@@ -38,8 +38,8 @@
 	position: absolute;
 	top: -15px;
 	right: -15px;
-}
 
-.matchMode.cast {
-	right: -8px;
+	&.cast {
+		right: -8px;
+	}
 }

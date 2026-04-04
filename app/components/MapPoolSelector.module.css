@@ -54,16 +54,16 @@
 		outline: var(--focus-ring);
 		outline-offset: 1px;
 	}
-}
 
-.modeButton.selected {
-	border: 2px solid transparent;
-	background-color: var(--color-bg-higher);
-}
+	&.selected {
+		border: 2px solid transparent;
+		background-color: var(--color-bg-higher);
+	}
 
-.modeButton.preselected {
-	border: var(--border-style-accent);
-	background-color: var(--color-bg-higher);
+	&.preselected {
+		border: var(--border-style-accent);
+		background-color: var(--color-bg-higher);
+	}
 }
 
 .mode:not(.selected, .preselected) {

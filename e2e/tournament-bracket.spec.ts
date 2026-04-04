@@ -12,6 +12,7 @@ import {
 	startBracket,
 	submit,
 	test,
+	waitForPOSTResponse,
 } from "~/utils/playwright";
 import { createFormHelpers } from "~/utils/playwright-form";
 import {
@@ -1308,5 +1309,142 @@ test.describe("Tournament bracket", () => {
 		await navigateToMatch(page, 18);
 		await expect(page.getByText("Match ended early")).toBeVisible();
 		await expect(page.getByText("dropped out of the tournament")).toBeVisible();
+	});
+
+	test("ban/pick CUSTOM flow", async ({ page }) => {
+		test.slow();
+		const tournamentId = 4;
+		const matchId = 2;
+		const higherSeedCaptainId = 29;
+		const lowerSeedCaptainId = 33;
+
+		const customFlow = {
+			preSet: [
+				{ action: "BAN", side: "HIGHER_SEED" },
+				{ action: "BAN", side: "HIGHER_SEED" },
+				{ action: "BAN", side: "LOWER_SEED" },
+				{ action: "BAN", side: "LOWER_SEED" },
+				{ action: "ROLL" },
+			],
+			postGame: [
+				{ action: "BAN", side: "WINNER" },
+				{ action: "BAN", side: "WINNER" },
+				{ action: "PICK", side: "LOSER" },
+			],
+		};
+
+		// 1) Start bracket with CUSTOM pick/ban flow
+		await seed(page);
+		await impersonate(page);
+
+		await navigate({
+			page,
+			url: tournamentBracketsPage({ tournamentId }),
+		});
+
+		await page.getByTestId("finalize-bracket-button").click();
+		await page.getByLabel("Pick/ban").selectOption("CUSTOM");
+		await expect(page.getByText("Before set")).toBeVisible();
+
+		await waitForPOSTResponse(page, async () => {
+			await page.evaluate((cfStr) => {
+				const input = document.querySelector(
+					'input[name="maps"]',
+				) as HTMLInputElement;
+				const maps = JSON.parse(input.value);
+				const cf = JSON.parse(cfStr);
+				for (const m of maps) {
+					if (m.pickBan === "CUSTOM") {
+						m.customFlow = cf;
+					}
+				}
+				input.value = JSON.stringify(maps);
+
+				const form = input.closest("form")!;
+				const btn = document.createElement("button");
+				btn.type = "submit";
+				btn.name = "_action";
+				btn.value = "START_BRACKET";
+				btn.style.display = "none";
+				form.appendChild(btn);
+				btn.click();
+			}, JSON.stringify(customFlow));
+		});
+
+		// 2) PreSet: Higher seed bans 2 maps
+		await impersonate(page, higherSeedCaptainId);
+		await navigate({
+			page,
+			url: tournamentMatchPage({ tournamentId, matchId }),
+		});
+		await page.getByTestId("actions-tab").click();
+
+		await page.getByTestId("pick-ban-button").first().click();
+		await submit(page);
+
+		await expect(page.getByText(/Ban a map \(2\/2\)/)).toBeVisible();
+		await page.getByTestId("pick-ban-button").first().click();
+		await submit(page);
+
+		// 3) PreSet: Lower seed bans 2 maps
+		await impersonate(page, lowerSeedCaptainId);
+		await navigate({
+			page,
+			url: tournamentMatchPage({ tournamentId, matchId }),
+		});
+		await page.getByTestId("actions-tab").click();
+
+		await page.getByTestId("pick-ban-button").first().click();
+		await submit(page);
+
+		await expect(page.getByText(/Ban a map \(2\/2\)/)).toBeVisible();
+		await page.getByTestId("pick-ban-button").first().click();
+		await submit(page);
+
+		// 4) Roll auto-executed after last ban; report game 1 score
+		await expect(page.getByTestId("stage-banner")).toBeVisible();
+		await page.getByTestId("actions-tab").click();
+
+		await page.getByTestId("winner-radio-1").click();
+		await page.getByTestId("points-input-1").fill("100");
+		await submit(page, "report-score-button");
+		await expectScore(page, [1, 0]);
+
+		// 5) PostGame: Winner (team 1, captain 33) bans 2 maps
+		await expect(page.getByText(/Ban a map/)).toBeVisible();
+		await page.getByTestId("pick-ban-button").first().click();
+		await submit(page);
+
+		await expect(page.getByText(/Ban a map \(2\/2\)/)).toBeVisible();
+		await page.getByTestId("pick-ban-button").first().click();
+		await submit(page);
+
+		// PostGame: Loser (team 2, captain 29) picks a map
+		await impersonate(page, higherSeedCaptainId);
+		await navigate({
+			page,
+			url: tournamentMatchPage({ tournamentId, matchId }),
+		});
+		await page.getByTestId("actions-tab").click();
+
+		await expect(page.getByText(/Pick a map/)).toBeVisible();
+		await page.getByTestId("pick-ban-button").first().click();
+		await submit(page);
+
+		// 6) Undo game 1 score — also deletes postGame pick/ban events
+		await expect(page.getByTestId("stage-banner")).toBeVisible();
+		await submit(page, "undo-score-button");
+
+		await expectScore(page, [0, 0]);
+		await expect(page.getByTestId("stage-banner")).toBeVisible();
+
+		// 7) Re-report game 1 and verify postGame cycle restarts
+		await page.getByTestId("actions-tab").click();
+		await page.getByTestId("winner-radio-1").click();
+		await page.getByTestId("points-input-1").fill("100");
+		await submit(page, "report-score-button");
+		await expectScore(page, [1, 0]);
+
+		await expect(page.getByText(/Ban a map/)).toBeVisible();
 	});
 });

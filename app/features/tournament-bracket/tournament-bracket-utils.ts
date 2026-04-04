@@ -100,7 +100,7 @@ export function matchIsLocked({
 
 	const locked = tournament.ctx.castedMatchesInfo?.lockedMatches ?? [];
 
-	return locked.includes(matchId);
+	return locked.some((lm) => lm.matchId === matchId);
 }
 
 export function pickInfoText({
@@ -127,6 +127,9 @@ export function pickInfoText({
 	if (map.source === "DEFAULT") return t("tournament:pickInfo.default");
 	if (map.source === "COUNTERPICK") {
 		return t("tournament:pickInfo.counterpick");
+	}
+	if (map.source === "ROLL") {
+		return t("tournament:pickInfo.roll");
 	}
 	if (map.source === "TO") return "";
 

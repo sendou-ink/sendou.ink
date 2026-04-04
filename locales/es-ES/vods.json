@@ -32,5 +32,11 @@
 	"noVods": "No se han encontrado vídeos que coincidan con este filtro. ¿Nos falta alguno? Consulta la página de Preguntas frecuentes para saber cómo obtener permisos para subir vídeos (VoD).",
 	"gainPerms": "Por favor envía un mensaje en el 'helpdesk' de nuestro Discord para obtener permiso para subir videos.",
 	"deleteConfirm": "¿Borrar el vídeo con el título '{{title}}'?",
-	"errors.youtubePreviewFailed": "Error al cargar la vista previa de YouTube"
+	"errors.youtubePreviewFailed": "Error al cargar la vista previa de YouTube",
+	"copyTimestamps": "",
+	"copyTimestamps.help": "",
+	"copyTimestamps.modeFormat": "",
+	"copyTimestamps.stageFormat": "",
+	"copyTimestamps.format.short": "",
+	"copyTimestamps.format.long": ""
 }

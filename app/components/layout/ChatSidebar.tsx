@@ -156,6 +156,17 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 	const roomExpired = Boolean(room?.expiresAt && room.expiresAt < Date.now());
 	const messages = chatContext.messagesForRoom(activeRoom);
 
+	const participantIds = new Set(room?.participantUserIds ?? []);
+	const usersWithLabels = { ...chatContext.chatUsers };
+	for (const [userIdStr, label] of Object.entries(chatContext.chatLabels)) {
+		const userId = Number(userIdStr);
+		if (participantIds.has(userId)) continue;
+		const existing = usersWithLabels[userId];
+		if (existing) {
+			usersWithLabels[userId] = { ...existing, title: label };
+		}
+	}
+
 	const chatAdapter = {
 		messages,
 		send: (contents: string) => chatContext.send(activeRoom, contents),
@@ -229,7 +240,7 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 			</div>
 			<div className={styles.chatContainer}>
 				<Chat
-					users={chatContext.chatUsers}
+					users={usersWithLabels}
 					rooms={[
 						{
 							label: room?.header ?? "Chat",

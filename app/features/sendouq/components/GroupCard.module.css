@@ -107,11 +107,11 @@
 	white-space: nowrap;
 	height: 100%;
 	border-radius: var(--radius-selector);
-}
 
-.addNoteButton > svg {
-	width: 18px;
-	height: 18px;
+	& > svg {
+		width: 18px;
+		height: 18px;
+	}
 }
 
 .noteTextarea {

@@ -28,5 +28,6 @@ export function i18nLoader() {
 			},
 			// without this hydration fails in E2E tests
 			initImmediate: false,
+			showSupportNotice: false,
 		});
 }

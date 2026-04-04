@@ -1,6 +1,7 @@
 import * as ArtRepository from "~/features/art/ArtRepository.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
+import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
@@ -291,6 +292,9 @@ export const WIDGET_LOADERS = {
 		settings: ExtractWidgetSettings<"game-badges-small">,
 	) => {
 		return settings.badgeIds;
+	},
+	friends: async (userId: number) => {
+		return FriendRepository.findFriendsByUserId(userId);
 	},
 };
 

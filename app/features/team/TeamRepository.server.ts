@@ -69,7 +69,10 @@ export function findAllMemberOfByUserId(userId: number) {
 			"Team.id",
 			"Team.customUrl",
 			"Team.name",
+			"Team.mapModePreferences",
 			"TeamMemberWithSecondary.role",
+			"TeamMemberWithSecondary.isOwner",
+			"TeamMemberWithSecondary.isManager",
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"logoUrl",
 			),

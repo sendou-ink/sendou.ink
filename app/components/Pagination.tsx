@@ -9,12 +9,15 @@ export function Pagination({
 	nextPage,
 	previousPage,
 	setPage,
+	compact,
 }: {
 	currentPage: number;
 	pagesCount: number;
 	nextPage: () => void;
 	previousPage: () => void;
 	setPage: (page: number) => void;
+	/** Renders only the current page number with prev/next arrows */
+	compact?: boolean;
 }) {
 	const pages = getPageNumbers(currentPage, pagesCount);
 	const [jumpToIndex, setJumpToIndex] = React.useState<number | null>(null);
@@ -30,30 +33,36 @@ export function Pagination({
 			>
 				<ChevronLeft size={18} />
 			</button>
-			{pages.map((page, index) =>
-				page.value === "..." ? (
-					<JumpToEllipsis
-						key={`ellipsis-${index}`}
-						isOpen={jumpToIndex === index}
-						pagesCount={pagesCount}
-						desktopOnly={page.desktopOnly}
-						mobileOnly={page.mobileOnly}
-						onOpen={() => setJumpToIndex(index)}
-						onClose={() => setJumpToIndex(null)}
-						onJump={(page) => {
-							setPage(page);
-							setJumpToIndex(null);
-						}}
-					/>
-				) : (
-					<PageButton
-						key={page.value}
-						page={page.value}
-						currentPage={currentPage}
-						desktopOnly={page.desktopOnly}
-						setPage={setPage}
-					/>
-				),
+			{compact ? (
+				<span className={clsx(styles.page, styles.pageActive)}>
+					{currentPage}
+				</span>
+			) : (
+				pages.map((page, index) =>
+					page.value === "..." ? (
+						<JumpToEllipsis
+							key={`ellipsis-${index}`}
+							isOpen={jumpToIndex === index}
+							pagesCount={pagesCount}
+							desktopOnly={page.desktopOnly}
+							mobileOnly={page.mobileOnly}
+							onOpen={() => setJumpToIndex(index)}
+							onClose={() => setJumpToIndex(null)}
+							onJump={(page) => {
+								setPage(page);
+								setJumpToIndex(null);
+							}}
+						/>
+					) : (
+						<PageButton
+							key={page.value}
+							page={page.value}
+							currentPage={currentPage}
+							desktopOnly={page.desktopOnly}
+							setPage={setPage}
+						/>
+					),
+				)
 			)}
 			<button
 				type="button"

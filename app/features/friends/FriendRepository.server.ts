@@ -355,6 +355,34 @@ export async function countPendingSentRequests(
 	return result.count;
 }
 
+export async function findFriendsByUserId(userId: number) {
+	return db
+		.selectFrom("Friendship")
+		.innerJoin("User", (join) =>
+			join.on((eb) =>
+				eb.or([
+					eb.and([
+						eb("Friendship.userOneId", "=", userId),
+						eb("User.id", "=", eb.ref("Friendship.userTwoId")),
+					]),
+					eb.and([
+						eb("Friendship.userTwoId", "=", userId),
+						eb("User.id", "=", eb.ref("Friendship.userOneId")),
+					]),
+				]),
+			),
+		)
+		.where((eb) =>
+			eb.or([
+				eb("Friendship.userOneId", "=", userId),
+				eb("Friendship.userTwoId", "=", userId),
+			]),
+		)
+		.select([...COMMON_USER_FIELDS])
+		.orderBy("User.username", "asc")
+		.execute();
+}
+
 export async function findFriendIds(userId: number): Promise<number[]> {
 	const rows = await db
 		.selectFrom("Friendship")

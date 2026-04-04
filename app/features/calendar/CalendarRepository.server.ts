@@ -147,6 +147,7 @@ const withTeamsCount = (
 				),
 		)
 		.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+		.where("TournamentTeam.isPlaceholder", "=", 0)
 		.where((eb) =>
 			eb.or([
 				eb("TournamentTeamCheckIn.checkedInAt", "is not", null),

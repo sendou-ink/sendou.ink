@@ -21,7 +21,7 @@ import { Placeholder } from "~/components/Placeholder";
 import { Table } from "~/components/Table";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import { useUser } from "~/features/auth/core/user";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { abilitiesShort } from "~/modules/in-game-lists/abilities";
 import type {
 	Ability as AbilityType,
@@ -114,9 +114,9 @@ export const handle: SendouRouteHandle = {
 export const shouldRevalidate: ShouldRevalidateFunction = () => false;
 
 export default function BuildAnalyzerShell() {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
-	if (!isMounted) {
+	if (!isHydrated) {
 		return <Placeholder />;
 	}
 

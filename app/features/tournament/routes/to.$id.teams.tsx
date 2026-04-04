@@ -1,10 +1,16 @@
-import { tournamentTeamPage } from "~/utils/urls";
+import { Redirect } from "~/components/Redirect";
+import { tournamentDivisionsPage, tournamentTeamPage } from "~/utils/urls";
 import { TeamWithRoster } from "../components/TeamWithRoster";
 import { getBracketProgressionLabel } from "../tournament-utils";
-import { useTournament } from "./to.$id";
+import { useHasChildTournaments, useTournament } from "./to.$id";
 
 export default function TournamentTeamsPage() {
 	const tournament = useTournament();
+	const hasChildTournaments = useHasChildTournaments();
+
+	if (tournament.isLeagueSignup && hasChildTournaments) {
+		return <Redirect to={tournamentDivisionsPage(tournament.ctx.id)} />;
+	}
 
 	const perBracketSeedCounters = new Map<number, number>();
 	const teamSeedInfo = tournament.ctx.teams.map((team, globalIndex) => {

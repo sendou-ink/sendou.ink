@@ -33,9 +33,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				},
 			})) ?? [],
 		future:
-			tournament.castedMatchesInfo?.lockedMatches.map((matchId) => ({
-				matchId: matchId,
-				channel: null,
+			tournament.castedMatchesInfo?.lockedMatches.map((lm) => ({
+				matchId: lm.matchId,
+				channel: {
+					type: "TWITCH" as const,
+					channelId: lm.twitchAccount,
+				},
 			})) ?? [],
 	};
 

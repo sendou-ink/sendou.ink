@@ -19,19 +19,10 @@
 	align-items: center;
 	color: var(--color-text);
 	gap: var(--s-1-5);
-}
 
-.linkContainer.active {
-	color: var(--color-text-accent);
-}
-
-.secondary .linkContainer {
-	max-width: none;
-	flex: none;
-}
-
-.secondary .linkContainer.active {
-	color: var(--color-text);
+	&.active {
+		color: var(--color-text-accent);
+	}
 }
 
 .link {
@@ -59,15 +50,6 @@
 	background-color: transparent;
 }
 
-.secondary .linkContainer.active .linkSecondary {
-	background-color: var(--color-bg-higher);
-	color: var(--color-text);
-}
-
-.container.compact .link {
-	padding: var(--s-1) var(--s-2);
-}
-
 .borderGuy {
 	width: 78%;
 	height: 3px;
@@ -81,8 +63,26 @@
 	background-color: var(--color-bg-high);
 }
 
+.container.compact .link {
+	padding: var(--s-1) var(--s-2);
+}
+
 .linkContainer.active > .borderGuy {
 	visibility: initial;
+}
+
+.secondary .linkContainer {
+	max-width: none;
+	flex: none;
+}
+
+.secondary .linkContainer.active {
+	color: var(--color-text);
+}
+
+.secondary .linkContainer.active .linkSecondary {
+	background-color: var(--color-bg-higher);
+	color: var(--color-text);
 }
 
 .secondary .borderGuy {

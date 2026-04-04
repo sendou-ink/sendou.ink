@@ -44,10 +44,10 @@
 	justify-content: flex-start;
 	transition: background-color 0.15s;
 	cursor: pointer;
-}
 
-.item[data-focused] {
-	background-color: var(--color-bg-higher);
+	&[data-focused] {
+		background-color: var(--color-bg-higher);
+	}
 }
 
 .itemDisabled {

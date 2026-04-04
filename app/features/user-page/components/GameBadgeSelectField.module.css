@@ -23,15 +23,15 @@
 	border-radius: var(--rounded-sm);
 	padding: var(--s-0-5);
 	transition: background-color 0.15s;
-}
 
-.badgeButton:hover {
-	background-color: var(--bg-lightest);
-}
+	&:hover {
+		background-color: var(--bg-lightest);
+	}
 
-.badgeButton:focus-visible {
-	outline: 2px solid var(--theme);
-	outline-offset: 2px;
+	&:focus-visible {
+		outline: 2px solid var(--theme);
+		outline-offset: 2px;
+	}
 }
 
 .badgeImage {

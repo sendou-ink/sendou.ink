@@ -2,7 +2,7 @@
 /**
  * Backfill Tournament Tiers Script
  *
- * Run with: npx tsx scripts/backfill-tournament-tiers.ts
+ * Run with: pnpm exec tsx scripts/backfill-tournament-tiers.ts
  *
  * Retroactively calculates and sets tiers for all finalized tournaments,
  * then populates series tier history based on those tiers.

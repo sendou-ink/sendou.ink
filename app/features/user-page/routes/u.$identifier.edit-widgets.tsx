@@ -30,7 +30,7 @@ import {
 	findWidgetById,
 } from "~/features/user-page/core/widgets/portfolio";
 import { USER } from "~/features/user-page/user-page-constants";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { action } from "../actions/u.$identifier.edit-widgets.server";
 import { WidgetSettingsForm } from "../components/WidgetSettingsForm";
 import { loader } from "../loaders/u.$identifier.edit-widgets.server";
@@ -41,7 +41,7 @@ export { action, loader };
 export default function EditWidgetsPage() {
 	const { t } = useTranslation(["user", "common"]);
 	const data = useLoaderData<typeof loader>();
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const fetcher = useFetcher();
 
 	const [selectedWidgets, setSelectedWidgets] = useState<
@@ -134,7 +134,7 @@ export default function EditWidgetsPage() {
 		setExpandedWidgetId(expandedWidgetId === widgetId ? null : widgetId);
 	};
 
-	if (!isMounted) {
+	if (!isHydrated) {
 		return <Placeholder />;
 	}
 

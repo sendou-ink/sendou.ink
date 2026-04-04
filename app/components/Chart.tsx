@@ -4,7 +4,7 @@ import { type AxisOptions, Chart as ReactChart } from "react-charts";
 import type { TooltipRendererProps } from "react-charts/types/components/TooltipRenderer";
 import { useTranslation } from "react-i18next";
 import { Theme, useTheme } from "~/features/theme/core/provider";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import styles from "./Chart.module.css";
 
@@ -25,7 +25,7 @@ export default function Chart({
 }) {
 	const { i18n } = useTranslation();
 	const theme = useTheme();
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
 	const primaryAxis = React.useMemo<
 		AxisOptions<(typeof options)[number]["data"][number]>
@@ -62,7 +62,7 @@ export default function Chart({
 		[],
 	);
 
-	if (!isMounted) {
+	if (!isHydrated) {
 		return <div className={clsx(styles.container, containerClassName)} />;
 	}
 

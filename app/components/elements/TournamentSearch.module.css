@@ -18,14 +18,14 @@
 
 .itemTextsContainer {
 	line-height: 1.1;
-}
 
-.itemTextsContainer span {
-	max-width: 175px;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	overflow: hidden;
-	display: block;
+	& span {
+		max-width: 175px;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		overflow: hidden;
+		display: block;
+	}
 }
 
 .selectValue {

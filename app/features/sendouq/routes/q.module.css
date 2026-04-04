@@ -32,10 +32,10 @@
 	align-items: center;
 	gap: var(--s-3);
 	transition: background-color 0.2s;
-}
 
-.frontPageLink:hover {
-	background-color: var(--color-bg-higher);
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
 }
 
 .linkSubText {

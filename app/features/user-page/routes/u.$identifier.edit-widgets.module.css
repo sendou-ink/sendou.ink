@@ -13,11 +13,11 @@
 	margin-bottom: var(--s-6);
 	flex-wrap: wrap;
 	gap: var(--s-4);
-}
 
-.header h1 {
-	font-size: var(--font-xl);
-	font-weight: var(--weight-bold);
+	& h1 {
+		font-size: var(--font-xl);
+		font-weight: var(--weight-bold);
+	}
 }
 
 .actions {
@@ -166,6 +166,21 @@
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	transition: opacity 0.2s;
+
+	& .widgetName {
+		cursor: grab;
+		user-select: none;
+		-webkit-user-select: none;
+		touch-action: none;
+
+		&:active {
+			cursor: grabbing;
+		}
+	}
+
+	&.isDragging {
+		opacity: 0.5;
+	}
 }
 
 .widgetSettings {
@@ -173,21 +188,6 @@
 	margin-top: var(--s-1);
 	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-box);
-}
-
-.draggableWidget .widgetName {
-	cursor: grab;
-	user-select: none;
-	-webkit-user-select: none;
-	touch-action: none;
-}
-
-.draggableWidget .widgetName:active {
-	cursor: grabbing;
-}
-
-.draggableWidget.isDragging {
-	opacity: 0.5;
 }
 
 .selectedWidgetsList {

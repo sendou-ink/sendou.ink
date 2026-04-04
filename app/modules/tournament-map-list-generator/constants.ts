@@ -6,6 +6,7 @@ export const sourceTypes = [
 	"BOTH",
 	"TO",
 	"COUNTERPICK",
+	"ROLL",
 ] as const;
 
 // this is only used as a fallback, in the case that map list generation has a bug

@@ -122,7 +122,11 @@ export const languagesUnified = [
 	},
 	{
 		code: "zh",
-		name: "中文",
+		name: "中文（普通话）",
+	},
+	{
+		code: "yue",
+		name: "中文（廣東話）",
 	},
 ] as const;
 

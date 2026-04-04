@@ -227,6 +227,10 @@
 		"displayName": "Chi-Shoals",
 		"authorDiscordId": "528851510222782474"
 	},
+	"chishoalssr": {
+		"displayName": "Chi-Shoals Salmon Run Edition",
+		"authorDiscordId": "752582395076673577"
+	},
 	"classascen": {
 		"displayName": "Class Ascendency",
 		"authorDiscordId": "528851510222782474"
@@ -868,7 +872,11 @@
 		"authorDiscordId": "528851510222782474"
 	},
 	"paralarvae": {
-		"displayName": "Paralarvae Parfait",
+		"displayName": "Paralarvae Parfait - D7 Cap",
+		"authorDiscordId": "338806780446638082"
+	},
+	"paralarvead2": {
+		"displayName": "Paralarvae Parfait - D2 Cap",
 		"authorDiscordId": "338806780446638082"
 	},
 	"pdraft": {
@@ -1410,6 +1418,10 @@
 	"urchincup": {
 		"displayName": "Urchin-Cup",
 		"authorDiscordId": "338806780446638082"
+	},
+	"usagibadge": {
+		"displayName": "Usagi",
+		"authorDiscordId": "1466857444851581040"
 	},
 	"valentines2v2tuesdays": {
 		"displayName": "Valentines 2v2 TUESDAYS",

@@ -94,10 +94,10 @@
 	line-height: 1;
 	color: var(--color-text-high);
 	flex-shrink: 0;
-}
 
-.removeButton:hover {
-	color: var(--color-error);
+	&:hover {
+		color: var(--color-error);
+	}
 }
 
 .subSpecialContainer {

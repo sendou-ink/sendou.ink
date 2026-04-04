@@ -66,16 +66,19 @@ export const UserSearch = React.forwardRef(function UserSearch<
 	};
 
 	// clear if selected user is not in the new filtered items
+	const itemsJoined = items.map((user) => user.id).join(",");
 	React.useEffect(() => {
+		const ids = itemsJoined.split(",").map(Number);
+
 		if (
 			selectedKey &&
 			selectedKey !== initialUserId &&
-			!items.some((user) => user.id === selectedKey)
+			!ids.includes(selectedKey)
 		) {
 			setSelectedKey(null);
 			onChange?.(null);
 		}
-	}, [items, selectedKey, onChange, initialUserId]);
+	}, [itemsJoined, selectedKey, onChange, initialUserId]);
 
 	return (
 		<Select
@@ -238,12 +241,16 @@ function useUserSearch(
 		[filterText],
 	);
 
+	const initialUserResult = initialUserFetcher.data?.results.find(
+		(r): r is UserResult => r.type === "user",
+	);
+
 	const items = () => {
 		// data fetched for the query user has currently typed
 		if (queryFetcher.data && queryFetcher.data.query === filterText) {
-			const userResults = queryFetcher.data.results.filter(
-				(r): r is UserResult => r.type === "user",
-			);
+			const userResults = queryFetcher.data.results
+				.filter((r): r is UserResult => r.type === "user")
+				.filter((user) => user.id !== initialUserResult?.id);
 			if (userResults.length === 0) {
 				return [{ id: "NO_RESULTS" as const }];
 			}
@@ -252,10 +259,6 @@ function useUserSearch(
 
 		return [{ id: "PLACEHOLDER" as const }];
 	};
-
-	const initialUserResult = initialUserFetcher.data?.results.find(
-		(r): r is UserResult => r.type === "user",
-	);
 
 	return {
 		filterText,

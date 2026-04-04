@@ -157,6 +157,16 @@ function Team({
 		setResults({ ...results, placement: e.target.value });
 	};
 
+	const handleSetPlayers = React.useCallback(
+		(action: React.SetStateAction<TeamResults["players"]>) => {
+			setResults((prev) => ({
+				...prev,
+				players: typeof action === "function" ? action(prev.players) : action,
+			}));
+		},
+		[],
+	);
+
 	if (hidden) return null;
 
 	return (
@@ -197,10 +207,7 @@ function Team({
 					/>
 				</div>
 			</div>
-			<Players
-				players={results.players}
-				setPlayers={(players) => setResults({ ...results, players })}
-			/>
+			<Players players={results.players} setPlayers={handleSetPlayers} />
 			{onRemoveTeam && (
 				<SendouButton
 					onPress={onRemoveTeam}
@@ -220,7 +227,7 @@ function Players({
 	setPlayers,
 }: {
 	players: TeamResults["players"];
-	setPlayers: (newPlayers: TeamResults["players"]) => void;
+	setPlayers: React.Dispatch<React.SetStateAction<TeamResults["players"]>>;
 }) {
 	const { t } = useTranslation("calendar");
 	const handleAddPlayer = () => {
@@ -237,12 +244,17 @@ function Players({
 		setPlayers(newPlayers);
 	};
 
-	const handleInputChange = (index: number, newValue: string | number) => {
-		const newPlayers = [...players];
-		newPlayers[index] =
-			typeof newValue === "string" ? newValue : { id: newValue };
-		setPlayers(newPlayers);
-	};
+	const handleInputChange = React.useCallback(
+		(index: number, newValue: string | number) => {
+			setPlayers((prev) => {
+				const newPlayers = [...prev];
+				newPlayers[index] =
+					typeof newValue === "string" ? newValue : { id: newValue };
+				return newPlayers;
+			});
+		},
+		[setPlayers],
+	);
 
 	return (
 		<div className="stack md">
@@ -266,24 +278,13 @@ function Players({
 									: t("forms.team.player.addAsText")}
 							</SendouButton>
 						</div>
-						{asPlainInput ? (
-							<input
-								id={formId}
-								value={player}
-								onChange={(e) => handleInputChange(i, e.target.value)}
-								max={CALENDAR_EVENT_RESULT.MAX_PLAYER_NAME_LENGTH}
-							/>
-						) : (
-							<UserSearch
-								id={formId}
-								name="team-player"
-								initialUserId={player.id}
-								onChange={(newUser) => {
-									if (!newUser) return;
-									handleInputChange(i, newUser.id);
-								}}
-							/>
-						)}
+						<PlayerInput
+							formId={formId}
+							player={player}
+							index={i}
+							asPlainInput={asPlainInput}
+							onInputChange={handleInputChange}
+						/>
 					</div>
 				);
 			})}
@@ -308,5 +309,54 @@ function Players({
 				</SendouButton>
 			</div>
 		</div>
+	);
+}
+
+function PlayerInput({
+	formId,
+	player,
+	index,
+	asPlainInput,
+	onInputChange,
+}: {
+	formId: string;
+	player: TeamResults["players"][number];
+	index: number;
+	asPlainInput: boolean;
+	onInputChange: (index: number, newValue: string | number) => void;
+}) {
+	const handlePlainChange = React.useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			onInputChange(index, e.target.value);
+		},
+		[index, onInputChange],
+	);
+
+	const handleUserChange = React.useCallback(
+		(newUser: { id: number } | null) => {
+			if (!newUser) return;
+			onInputChange(index, newUser.id);
+		},
+		[index, onInputChange],
+	);
+
+	if (asPlainInput) {
+		return (
+			<input
+				id={formId}
+				value={player as string}
+				onChange={handlePlainChange}
+				max={CALENDAR_EVENT_RESULT.MAX_PLAYER_NAME_LENGTH}
+			/>
+		);
+	}
+
+	return (
+		<UserSearch
+			id={formId}
+			name="team-player"
+			initialUserId={(player as { id: number }).id}
+			onChange={handleUserChange}
+		/>
 	);
 }

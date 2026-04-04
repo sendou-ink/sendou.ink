@@ -334,7 +334,7 @@ export default function Planner() {
 // Formats the style panel so it can have classnames, this is needed so it can be moved below the header bar which blocks clicks (idk why this is different to the old version)
 function CustomStylePanel(props: TLUiStylePanelProps) {
 	return (
-		<div className={styles.stylePanel}>
+		<div className={props.isMobile ? undefined : styles.stylePanel}>
 			<DefaultStylePanel {...props} />
 		</div>
 	);
@@ -434,7 +434,7 @@ function WeaponImageSelector() {
 									<DraggableWeaponButton
 										key={weaponId}
 										id={`main-${weaponId}`}
-										src={`${outlinedMainWeaponImageUrl(weaponId)}.png`}
+										src={`${outlinedMainWeaponImageUrl(weaponId)}.avif`}
 										imgPath={mainWeaponImageUrl(weaponId)}
 										previewPath={outlinedMainWeaponImageUrl(weaponId)}
 										alt={t(`weapons:MAIN_${weaponId}`)}
@@ -458,7 +458,7 @@ function WeaponImageSelector() {
 							<DraggableWeaponButton
 								key={subWeaponId}
 								id={`sub-${subWeaponId}`}
-								src={`${subWeaponImageUrl(subWeaponId)}.png`}
+								src={`${subWeaponImageUrl(subWeaponId)}.avif`}
 								imgPath={subWeaponImageUrl(subWeaponId)}
 								previewPath={subWeaponImageUrl(subWeaponId)}
 								alt={t(`weapons:SUB_${subWeaponId}`)}
@@ -485,7 +485,7 @@ function WeaponImageSelector() {
 							<DraggableWeaponButton
 								key={specialWeaponId}
 								id={`special-${specialWeaponId}`}
-								src={`${specialWeaponImageUrl(specialWeaponId)}.png`}
+								src={`${specialWeaponImageUrl(specialWeaponId)}.avif`}
 								imgPath={specialWeaponImageUrl(specialWeaponId)}
 								previewPath={specialWeaponImageUrl(specialWeaponId)}
 								alt={t(`weapons:SPECIAL_${specialWeaponId}`)}
@@ -507,7 +507,7 @@ function WeaponImageSelector() {
 							<DraggableWeaponButton
 								key={mode}
 								id={`mode-${mode}`}
-								src={`${modeImageUrl(mode)}.png`}
+								src={`${modeImageUrl(mode)}.avif`}
 								imgPath={modeImageUrl(mode)}
 								previewPath={modeImageUrl(mode)}
 								alt={t(`game-misc:MODE_LONG_${mode}`)}

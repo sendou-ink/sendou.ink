@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import * as React from "react";
 import type { Tables } from "~/db/tables";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { BLANK_IMAGE_URL, discordAvatarUrl } from "~/utils/urls";
 import styles from "./Avatar.module.css";
 
@@ -118,7 +118,7 @@ export function Avatar({
 } & React.ButtonHTMLAttributes<HTMLImageElement>) {
 	const [isErrored, setIsErrored] = React.useState(false);
 	const [loaded, setLoaded] = React.useState(false);
-	const isClient = useIsMounted();
+	const isClient = useHydrated();
 
 	const isIdenticon =
 		!url && (!user?.discordAvatar || isErrored || identiconInput);

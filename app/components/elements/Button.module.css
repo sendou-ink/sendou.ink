@@ -16,25 +16,25 @@
 	outline-color: var(--color-text-accent);
 	height: var(--field-size);
 	white-space: nowrap;
-}
 
-.button[data-focus-visible],
-.button:focus-visible {
-	outline-style: solid;
-	outline-width: 2px;
-	outline-offset: 1px;
-}
+	&[data-focus-visible],
+	&:focus-visible {
+		outline-style: solid;
+		outline-width: 2px;
+		outline-offset: 1px;
+	}
 
-.button[data-pressed],
-.button:active {
-	transform: translateY(1px);
-}
+	&[data-pressed],
+	&:active {
+		transform: translateY(1px);
+	}
 
-.button[data-disabled],
-.button:disabled {
-	cursor: not-allowed;
-	opacity: 0.5;
-	transform: initial;
+	&[data-disabled],
+	&:disabled {
+		cursor: not-allowed;
+		opacity: 0.5;
+		transform: initial;
+	}
 }
 
 .outlined {
@@ -88,10 +88,10 @@
 	background-color: transparent;
 	color: var(--color-text-accent);
 	outline: initial;
-}
 
-.minimal[data-focus-visible] {
-	outline: var(--focus-ring);
+	&[data-focus-visible] {
+		outline: var(--focus-ring);
+	}
 }
 
 .minimalSuccess {
@@ -127,10 +127,10 @@
 	min-width: 20px;
 	max-width: 20px;
 	margin-inline-end: var(--s-1-5);
-}
 
-.buttonIcon.lonely {
-	margin-inline-end: 0 !important;
+	&.lonely {
+		margin-inline-end: 0 !important;
+	}
 }
 
 .buttonIconSmall {

@@ -96,7 +96,7 @@ async function globalSetup(_config: FullConfig) {
 	// Use port 6173 as the base - tests will rewrite URLs as needed
 	// biome-ignore lint/suspicious/noConsole: CLI script output
 	console.log("Building the application...");
-	execSync("npm run build", {
+	execSync("pnpm run build", {
 		stdio: "inherit",
 		env: {
 			...process.env,
@@ -125,13 +125,13 @@ async function globalSetup(_config: FullConfig) {
 		if (!fs.existsSync(dbPath)) {
 			// biome-ignore lint/suspicious/noConsole: CLI script output
 			console.log(`Setting up database for worker ${i}: ${dbPath}`);
-			execSync(`DB_PATH=${dbPath} npm run migrate up`, { stdio: "inherit" });
+			execSync(`DB_PATH=${dbPath} pnpm run migrate up`, { stdio: "inherit" });
 		}
 
 		// Start server
 		// biome-ignore lint/suspicious/noConsole: CLI script output
 		console.log(`Starting server for worker ${i} on port ${port}...`);
-		const serverProcess = spawn("npm", ["start"], {
+		const serverProcess = spawn("pnpm", ["start"], {
 			env: {
 				...process.env,
 				DB_PATH: dbPath,

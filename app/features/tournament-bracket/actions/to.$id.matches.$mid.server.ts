@@ -17,10 +17,12 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { getServerTournamentManager } from "../core/brackets-manager/manager.server";
+import { executeRoll } from "../core/executeRoll.server";
 import { resolveMapList } from "../core/mapList.server";
 import * as PickBan from "../core/PickBan";
 import {
 	clearTournamentDataCache,
+	type TournamentDataTeam,
 	tournamentFromDB,
 } from "../core/Tournament.server";
 import { deleteMatchPickBanEvents } from "../queries/deleteMatchPickBanEvents.server";
@@ -284,12 +286,26 @@ export const action: ActionFunction = async ({ params, request }) => {
 				`Undoing score: Position: ${data.position}; User ID: ${user.id}; Match ID: ${match.id}`,
 			);
 
-			const pickBanEventToDeleteNumber = await (async () => {
-				if (!match.roundMaps?.pickBan) return;
+			const pickBanEventNumbersToDelete = await (async () => {
+				if (!match.roundMaps?.pickBan) return [];
 
 				const pickBanEvents = await TournamentRepository.pickBanEventsByMatchId(
 					match.id,
 				);
+
+				if (match.roundMaps.pickBan === "CUSTOM") {
+					const customFlow = match.roundMaps.customFlow;
+					if (!customFlow) return [];
+
+					// event DB numbers are 1-indexed
+					const threshold =
+						customFlow.preSet.length +
+						(results.length - 1) * customFlow.postGame.length +
+						1;
+					return pickBanEvents
+						.filter((e) => e.number >= threshold)
+						.map((e) => e.number);
+				}
 
 				const unplayedPicks = pickBanEvents
 					.filter((e) => e.type === "PICK")
@@ -301,7 +317,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 					);
 				invariant(unplayedPicks.length <= 1, "Too many unplayed picks");
 
-				return unplayedPicks[0]?.number;
+				return unplayedPicks[0] ? [unplayedPicks[0].number] : [];
 			})();
 
 			sql.transaction(() => {
@@ -321,8 +337,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 					manager.reset.matchResults(match.id);
 				}
 
-				if (typeof pickBanEventToDeleteNumber === "number") {
-					deletePickBanEvent({ matchId, number: pickBanEventToDeleteNumber });
+				for (const number of pickBanEventNumbersToDelete) {
+					deletePickBanEvent({ matchId, number });
 				}
 			})();
 
@@ -421,47 +437,98 @@ export const action: ActionFunction = async ({ params, request }) => {
 				match.roundMaps && match.opponentOne?.id && match.opponentTwo?.id,
 				"Missing fields to pick/ban",
 			);
-			const pickerTeamId = PickBan.turnOf({
+
+			const currentPickBanEvents =
+				await TournamentRepository.pickBanEventsByMatchId(match.id);
+
+			const turnOfResult = PickBan.turnOf({
 				results,
 				maps: match.roundMaps,
-				teams: [match.opponentOne.id, match.opponentTwo.id],
+				teams: [
+					{ id: match.opponentOne.id, seed: teamOne.seed },
+					{ id: match.opponentTwo.id, seed: teamTwo.seed },
+				],
 				mapList,
+				pickBanEventCount: currentPickBanEvents.length,
 			});
-			errorToastIfFalsy(pickerTeamId, "Not time to pick/ban");
+			errorToastIfFalsy(turnOfResult, "Not time to pick/ban");
+			const pickerTeamId = turnOfResult.teamId;
+			const actionType = turnOfResult.action;
 			errorToastIfFalsy(
 				tournament.isOrganizer(user) ||
 					tournament.ownedTeamByUser(user)?.id === pickerTeamId,
 				"Unauthorized",
 			);
 
-			errorToastIfFalsy(
-				PickBan.isLegal({
-					results,
-					map: data,
-					maps: match.roundMaps,
-					toSetMapPool:
-						tournament.ctx.mapPickingStyle === "TO"
-							? await TournamentRepository.findTOSetMapPoolById(tournamentId)
-							: [],
-					mapList,
-					tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
-					teams: [teamOne, teamTwo],
-					pickerTeamId,
-				}),
-				"Illegal pick",
-			);
+			const isModeAction =
+				actionType === "MODE_PICK" || actionType === "MODE_BAN";
 
-			const pickBanEvents = await TournamentRepository.pickBanEventsByMatchId(
-				match.id,
-			);
+			const pickBanLegalityArgs = {
+				results,
+				maps: match.roundMaps,
+				toSetMapPool:
+					tournament.ctx.mapPickingStyle === "TO"
+						? await TournamentRepository.findTOSetMapPoolById(tournamentId)
+						: [],
+				mapList,
+				tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
+				teams: [teamOne, teamTwo] as [TournamentDataTeam, TournamentDataTeam],
+				pickerTeamId,
+				pickBanEvents: currentPickBanEvents,
+			};
+
+			if (isModeAction) {
+				errorToastIfFalsy(
+					PickBan.isModeLegal({
+						mode: data.mode,
+						...pickBanLegalityArgs,
+					}),
+					"Illegal mode",
+				);
+			} else {
+				errorToastIfFalsy(
+					typeof data.stageId === "number",
+					"Stage is required for map actions",
+				);
+				errorToastIfFalsy(
+					PickBan.isLegal({
+						map: { stageId: data.stageId, mode: data.mode },
+						...pickBanLegalityArgs,
+					}),
+					"Illegal pick",
+				);
+			}
+
+			const eventType = (() => {
+				if (match.roundMaps.pickBan === "CUSTOM") return actionType;
+				if (match.roundMaps.pickBan === "BAN_2") return "BAN" as const;
+				return "PICK" as const;
+			})();
+
 			await TournamentRepository.addPickBanEvent({
 				authorId: user.id,
 				matchId: match.id,
-				stageId: data.stageId,
+				stageId: isModeAction ? null : data.stageId!,
 				mode: data.mode,
-				number: pickBanEvents.length + 1,
-				type: match.roundMaps.pickBan === "BAN_2" ? "BAN" : "PICK",
+				number: currentPickBanEvents.length + 1,
+				type: eventType,
 			});
+
+			// Chain roll after action for CUSTOM flow
+			if (match.roundMaps.pickBan === "CUSTOM" && match.roundMaps.customFlow) {
+				const updatedEvents = await TournamentRepository.pickBanEventsByMatchId(
+					match.id,
+				);
+				await executeRoll({
+					matchId: match.id,
+					maps: match.roundMaps,
+					pickBanEvents: updatedEvents,
+					results,
+					tournamentId,
+					teams: [teamOne, teamTwo],
+					tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
+				});
+			}
 
 			emitMatchUpdate = true;
 
@@ -541,6 +608,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 				tournament.isOrganizerOrStreamer(user),
 				"Not an organizer or streamer",
 			);
+			errorToastIfFalsy(
+				data.twitchAccount === null ||
+					tournament.ctx.castTwitchAccounts?.includes(data.twitchAccount),
+				"Invalid Twitch account",
+			);
 
 			await TournamentRepository.setMatchAsCasted({
 				matchId: match.id,
@@ -557,6 +629,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 				tournament.isOrganizerOrStreamer(user),
 				"Not an organizer or streamer",
 			);
+			errorToastIfFalsy(
+				tournament.ctx.castTwitchAccounts?.includes(data.twitchAccount),
+				"Invalid Twitch account",
+			);
 
 			// can't lock if match status is not Locked or Waiting (team(s) busy with previous match), let's update their view to reflect that
 			if (
@@ -569,6 +645,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			await TournamentRepository.lockMatch({
 				matchId: match.id,
 				tournamentId: tournament.ctx.id,
+				twitchAccount: data.twitchAccount,
 			});
 
 			emitMatchUpdate = true;

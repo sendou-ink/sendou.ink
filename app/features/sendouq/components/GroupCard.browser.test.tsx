@@ -217,9 +217,9 @@ describe("GroupCard", () => {
 				}),
 			});
 
-			// Weapons are rendered as picture elements
-			const pictures = screen.container.querySelectorAll("picture");
-			expect(pictures.length).toBeGreaterThan(0);
+			// Weapons are rendered as img elements
+			const images = screen.container.querySelectorAll("img");
+			expect(images.length).toBeGreaterThan(0);
 		});
 	});
 

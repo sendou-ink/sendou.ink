@@ -136,6 +136,10 @@ function ChatProviderInner({
 	const [unreadCounts, setUnreadCounts] = React.useState<
 		Record<string, number>
 	>({});
+	const [chatLabels, setChatLabels] = React.useState<Record<number, string>>(
+		{},
+	);
+	const clearChatLabels = React.useCallback(() => setChatLabels({}), []);
 
 	const ws = React.useRef<WebSocket>(undefined);
 
@@ -299,6 +303,10 @@ function ChatProviderInner({
 					const updated = [...existing];
 					updated[pendingIndex] = msg;
 					return { ...prev, [roomCode]: updated };
+				}
+
+				if (existing.some((m) => m.id === msg.id)) {
+					return prev;
 				}
 
 				return { ...prev, [roomCode]: [...existing, msg] };
@@ -486,6 +494,8 @@ function ChatProviderInner({
 		unsubscribe,
 		setRooms,
 		setMessagesByRoom,
+		requestHistory,
+		messagesByRoom,
 	});
 
 	const contextValue = React.useMemo(
@@ -506,6 +516,9 @@ function ChatProviderInner({
 			setChatOpen,
 			activeRoom,
 			setActiveRoom,
+			chatLabels,
+			setChatLabels,
+			clearChatLabels,
 		}),
 		[
 			isLoading,
@@ -523,6 +536,8 @@ function ChatProviderInner({
 			chatOpen,
 			activeRoom,
 			setChatOpen,
+			chatLabels,
+			clearChatLabels,
 		],
 	);
 
@@ -542,6 +557,8 @@ function useChatRouteSync({
 	unsubscribe,
 	setRooms,
 	setMessagesByRoom,
+	requestHistory,
+	messagesByRoom,
 }: {
 	rooms: RoomInfo[];
 	userId: number;
@@ -555,6 +572,8 @@ function useChatRouteSync({
 	setMessagesByRoom: React.Dispatch<
 		React.SetStateAction<Record<string, ChatMessage[]>>
 	>;
+	requestHistory: (chatCode: string) => void;
+	messagesByRoom: Record<string, ChatMessage[]>;
 }) {
 	const rawChatCode = useCurrentRouteChatCode();
 	const chatCodesKey = rawChatCode
@@ -615,6 +634,9 @@ function useChatRouteSync({
 
 			if (routeChatCodeChanged) {
 				setActiveRoom(chatCodes[0]);
+				if (!messagesByRoom[chatCodes[0]]) {
+					requestHistory(chatCodes[0]);
+				}
 				if (layoutSize === "desktop") {
 					setChatOpen(true);
 				}
@@ -632,6 +654,9 @@ function useChatRouteSync({
 
 				if (matchedRoom) {
 					setActiveRoom(matchedRoom.chatCode);
+					if (!messagesByRoom[matchedRoom.chatCode]) {
+						requestHistory(matchedRoom.chatCode);
+					}
 					if (layoutSize === "desktop") {
 						setChatOpen(true);
 					}
@@ -652,6 +677,8 @@ function useChatRouteSync({
 		unsubscribe,
 		setRooms,
 		setMessagesByRoom,
+		requestHistory,
+		messagesByRoom,
 	]);
 }
 

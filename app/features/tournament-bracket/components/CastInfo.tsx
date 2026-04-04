@@ -32,7 +32,9 @@ export function CastInfo({
 	const currentlyCastedOn = castedMatchesInfo?.castedMatches.find(
 		(cm) => cm.matchId === matchId,
 	)?.twitchAccount;
-	const isLocked = castedMatchesInfo?.lockedMatches?.includes(matchId);
+	const isLocked = castedMatchesInfo?.lockedMatches?.some(
+		(lm) => lm.matchId === matchId,
+	);
 
 	const hasPerms = tournament.isOrganizerOrStreamer(user);
 
@@ -50,7 +52,27 @@ export function CastInfo({
 				_action="LOCK"
 				icon={<Lock />}
 				infoText={lockingInfo}
-			/>
+			>
+				{castTwitchAccounts.length > 1 ? (
+					<select
+						name="twitchAccount"
+						id="twitchAccount"
+						aria-label="Twitch account"
+					>
+						{castTwitchAccounts.map((account) => (
+							<option key={account} value={account}>
+								{account}
+							</option>
+						))}
+					</select>
+				) : (
+					<input
+						type="hidden"
+						name="twitchAccount"
+						value={castTwitchAccounts[0]}
+					/>
+				)}
+			</CastInfoWrapper>
 		);
 	}
 
@@ -76,6 +98,7 @@ export function CastInfo({
 			<select
 				name="twitchAccount"
 				id="twitchAccount"
+				aria-label="Twitch account"
 				defaultValue={currentlyCastedOn ?? "null"}
 				data-testid="cast-info-select"
 			>

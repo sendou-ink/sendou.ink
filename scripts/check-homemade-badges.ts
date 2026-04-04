@@ -60,7 +60,7 @@ for (const [key, badge] of Object.entries(badges)) {
 const badgesLocation = path.join("public", "static-assets", "badges");
 
 for (const fileName of Object.keys(badges)) {
-	for (const ext of ["png", "avif", "gif"]) {
+	for (const ext of ["avif", "gif"]) {
 		const filePath = path.join(badgesLocation, `${fileName}.${ext}`);
 		if (!fs.existsSync(filePath)) {
 			console.error(

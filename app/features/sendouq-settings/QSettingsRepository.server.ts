@@ -32,10 +32,6 @@ export async function updateUserMapModePreferences({
 	userId: number;
 	mapModePreferences: UserMapModePreferences;
 }) {
-	const modesExcluded = modesShort.filter(
-		(mode) => !mapModePreferences.pool.some((mp) => mp.mode === mode),
-	);
-
 	const currentPreferences = (
 		await db
 			.selectFrom("User")
@@ -44,19 +40,52 @@ export async function updateUserMapModePreferences({
 			.executeTakeFirstOrThrow()
 	).mapModePreferences;
 
-	for (const mode of modesExcluded) {
-		const previousModePreference = currentPreferences?.pool.filter(
-			(mp) => mp.mode === mode,
-		);
-		if (previousModePreference && previousModePreference.length > 0) {
-			mapModePreferences.pool.push(...previousModePreference);
-		}
-	}
+	const mergedPool = mergeExcludedModePreferences(
+		mapModePreferences.pool,
+		currentPreferences?.pool,
+	);
 
 	return db
 		.updateTable("User")
-		.set({ mapModePreferences: JSON.stringify(mapModePreferences) })
+		.set({
+			mapModePreferences: JSON.stringify({
+				...mapModePreferences,
+				pool: mergedPool,
+			}),
+		})
 		.where("id", "=", userId)
+		.execute();
+}
+
+export async function updateTeamMapModePreferences({
+	teamId,
+	mapModePreferences,
+}: {
+	teamId: number;
+	mapModePreferences: UserMapModePreferences;
+}) {
+	const currentPreferences = (
+		await db
+			.selectFrom("AllTeam")
+			.select("mapModePreferences")
+			.where("id", "=", teamId)
+			.executeTakeFirstOrThrow()
+	).mapModePreferences;
+
+	const mergedPool = mergeExcludedModePreferences(
+		mapModePreferences.pool,
+		currentPreferences?.pool,
+	);
+
+	return db
+		.updateTable("AllTeam")
+		.set({
+			mapModePreferences: JSON.stringify({
+				...mapModePreferences,
+				pool: mergedPool,
+			}),
+		})
+		.where("id", "=", teamId)
 		.execute();
 }
 
@@ -112,11 +141,21 @@ export function updateNoScreen({
 		.execute();
 }
 
-export function currentTeamByUserId(userId: number) {
-	return db
-		.selectFrom("TeamMember")
-		.innerJoin("Team", "Team.id", "TeamMember.teamId")
-		.select(["Team.name"])
-		.where("TeamMember.userId", "=", userId)
-		.executeTakeFirst();
+/**
+ * Preserves existing preferences for modes not included in the new submission.
+ * So if they later want to play this mode again, the system remembers their maps.
+ */
+function mergeExcludedModePreferences(
+	newPool: UserMapModePreferences["pool"],
+	currentPool: UserMapModePreferences["pool"] | undefined,
+) {
+	const modesExcluded = modesShort.filter(
+		(mode) => !newPool.some((mp) => mp.mode === mode),
+	);
+
+	const preservedPreferences = modesExcluded.flatMap(
+		(mode) => currentPool?.filter((mp) => mp.mode === mode) ?? [],
+	);
+
+	return [...newPool, ...preservedPreferences];
 }

@@ -7,6 +7,15 @@ export function errorIsSqliteForeignKeyConstraintFailure(
 	);
 }
 
+export function errorIsSqliteUniqueConstraintFailure(
+	error: unknown,
+): error is Error {
+	return (
+		error instanceof Error &&
+		error?.message?.includes("UNIQUE constraint failed")
+	);
+}
+
 export function parseDBJsonArray(value: any) {
 	const parsed = JSON.parse(value);
 

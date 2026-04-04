@@ -67,7 +67,7 @@ export const testTournament = ({
 			tentativeTier: null,
 			parentTournamentId: null,
 			rules: null,
-			logoUrl: "/test.png",
+			logoUrl: "/test.avif",
 			discordUrl: null,
 			startTime: 1705858842,
 			isFinalized: 0,

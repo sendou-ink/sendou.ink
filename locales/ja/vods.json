@@ -32,5 +32,11 @@
 	"noVods": "",
 	"gainPerms": "動画をアップロードする権限を取得するためディスコードのヘルプデスクにメッセージを送ってください。",
 	"deleteConfirm": "動画:'{{title}}'を消去しますか？?",
-	"errors.youtubePreviewFailed": ""
+	"errors.youtubePreviewFailed": "",
+	"copyTimestamps": "",
+	"copyTimestamps.help": "",
+	"copyTimestamps.modeFormat": "",
+	"copyTimestamps.stageFormat": "",
+	"copyTimestamps.format.short": "",
+	"copyTimestamps.format.long": ""
 }

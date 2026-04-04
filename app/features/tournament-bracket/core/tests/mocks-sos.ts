@@ -2192,7 +2192,7 @@ export const SWIM_OR_SINK_167 = (
 				},
 			],
 		},
-		logoUrl: "test.png",
+		logoUrl: "test.avif",
 		author: {
 			id: 1402,
 			username: "grace",

@@ -94,6 +94,10 @@ export function LFGGroupCard({
 						isStayAsSub={currentMember?.isStayAsSub ?? false}
 						memberCount={group.members.length}
 					/>
+				) : group.note ? (
+					<div className="text-lighter text-center text-xs mt-1">
+						{group.note}
+					</div>
 				) : null}
 				{action &&
 				(ownGroup?.usersRole === "OWNER" ||
