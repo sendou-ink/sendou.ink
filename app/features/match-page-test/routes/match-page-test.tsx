@@ -228,7 +228,16 @@ export default function MatchPageTestRoute() {
 							},
 						]}
 					/>
-					<MatchActionTab />
+					<MatchActionTab
+						teams={[
+							{ id: 1, name: "Chimera" },
+							{ id: 2, name: "Koopa Clan" },
+						]}
+						ownTeamId={1}
+						stageId={4}
+						mode="SZ"
+						withPoints={true}
+					/>
 				</MatchTabs>
 			</MatchPage>
 		</Main>
