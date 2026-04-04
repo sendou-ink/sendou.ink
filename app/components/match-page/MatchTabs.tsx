@@ -87,7 +87,6 @@ interface MatchJoinTabProps {
 	showNoSplatnetAlert: boolean;
 }
 
-// xxx: hydration error?
 export function MatchJoinTab({
 	joinLink,
 	hostedBy,

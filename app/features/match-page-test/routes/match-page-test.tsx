@@ -15,6 +15,11 @@ import {
 	MatchRosterTab,
 	MatchTabs,
 } from "~/components/match-page/MatchTabs";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+
+export const handle: SendouRouteHandle = {
+	i18n: ["q"],
+};
 
 export default function MatchPageTestRoute() {
 	return (
