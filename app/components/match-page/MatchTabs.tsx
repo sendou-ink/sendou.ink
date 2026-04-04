@@ -1,7 +1,11 @@
 import { DoorOpen, Tally5, Users } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import type * as React from "react";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
+import { Alert } from "~/components/Alert";
 import invariant from "~/utils/invariant";
+import type { CommonUser } from "~/utils/kysely.server";
 import {
 	SendouTab,
 	SendouTabList,
@@ -65,6 +69,8 @@ export function MatchTabs({ children, tabs }: MatchTabsProps) {
 	);
 }
 
+// xxx: extract tabs to different components
+
 export function MatchRosterTab() {
 	return <SendouTabPanel id={TAB_KEYS.ROSTERS}>Roster content</SendouTabPanel>;
 }
@@ -73,6 +79,57 @@ export function MatchActionTab() {
 	return <SendouTabPanel id={TAB_KEYS.ACTION}>Report content</SendouTabPanel>;
 }
 
-export function MatchJoinTab() {
-	return <SendouTabPanel id={TAB_KEYS.JOIN}>Join content</SendouTabPanel>;
+interface MatchJoinTabProps {
+	joinLink?: string;
+	hostedBy?: CommonUser;
+	pool: string;
+	pass: string;
+	showNoSplatnetAlert: boolean;
+}
+
+// xxx: hydration error?
+export function MatchJoinTab({
+	joinLink,
+	hostedBy,
+	pool,
+	pass,
+	showNoSplatnetAlert,
+}: MatchJoinTabProps) {
+	const { t } = useTranslation(["q"]);
+
+	return (
+		<SendouTabPanel id={TAB_KEYS.JOIN}>
+			<div className="stack lg">
+				{showNoSplatnetAlert ? (
+					<Alert variation="WARNING" tiny>
+						{t("q:match.noSplatnetWarning")}
+					</Alert>
+				) : null}
+				<div className={styles.joinContent}>
+					{joinLink ? (
+						<QRCodeSVG value={joinLink} size={148} className={styles.qrCode} />
+					) : null}
+					<div className={styles.joinInfo}>
+						{hostedBy ? (
+							<InfoWithHeader
+								header={t("q:match.hostedBy")}
+								value={hostedBy.username}
+							/>
+						) : null}
+						<InfoWithHeader header={t("q:match.pool")} value={pool} />
+						<InfoWithHeader header={t("q:match.password.short")} value={pass} />
+					</div>
+				</div>
+			</div>
+		</SendouTabPanel>
+	);
+}
+
+function InfoWithHeader({ header, value }: { header: string; value: string }) {
+	return (
+		<div>
+			<div className={styles.infoHeader}>{header}</div>
+			<div className={styles.infoValue}>{value}</div>
+		</div>
+	);
 }

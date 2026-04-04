@@ -9,3 +9,34 @@
 		}
 	}
 }
+
+.joinContent {
+	display: flex;
+	gap: var(--s-4);
+	align-items: center;
+}
+
+.joinInfo {
+	display: grid;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.infoHeader {
+	text-transform: uppercase;
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	line-height: 1.1;
+}
+
+.infoValue {
+	font-size: var(--font-lg);
+	font-weight: var(--weight-semi);
+	letter-spacing: 1px;
+}
+
+.qrCode {
+	background-color: white;
+	padding: var(--s-2);
+	border-radius: var(--radius-field);
+}

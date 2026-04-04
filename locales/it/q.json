@@ -142,6 +142,8 @@
 	"match.helpdesk": "Helpdesk",
 	"match.pool": "Pool",
 	"match.password.short": "Pass",
+	"match.hostedBy": "",
+	"match.noSplatnetWarning": "",
 	"match.cancelMatch": "Cancella match",
 	"match.canceled": "Match cancellato",
 	"match.cancelRequested": "Cancellazione richiesta",

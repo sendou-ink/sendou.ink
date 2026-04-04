@@ -142,6 +142,8 @@
 	"match.helpdesk": "Helpdesk",
 	"match.pool": "Canal",
 	"match.password.short": "Mot de passe",
+	"match.hostedBy": "",
+	"match.noSplatnetWarning": "",
 	"match.cancelMatch": "Annuler match",
 	"match.canceled": "Match annulé",
 	"match.cancelRequested": "Annulation demandée",

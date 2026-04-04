@@ -142,6 +142,8 @@
 	"match.helpdesk": "Служба поддержки",
 	"match.pool": "Канал",
 	"match.password.short": "Пароль",
+	"match.hostedBy": "",
+	"match.noSplatnetWarning": "",
 	"match.cancelMatch": "Отменить матч",
 	"match.canceled": "Матч был отменён",
 	"match.cancelRequested": "Запрос об отмене матча",

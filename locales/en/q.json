@@ -142,6 +142,8 @@
 	"match.helpdesk": "Helpdesk",
 	"match.pool": "Pool",
 	"match.password.short": "Pass",
+	"match.hostedBy": "Hosted by",
+	"match.noSplatnetWarning": "One or more players don't have Splatnet, remember to use the pool and pass",
 	"match.cancelMatch": "Cancel match",
 	"match.canceled": "Match canceled",
 	"match.cancelRequested": "Cancel requested",

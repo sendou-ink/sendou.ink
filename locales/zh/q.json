@@ -142,6 +142,8 @@
 	"match.helpdesk": "Helpdesk",
 	"match.pool": "频道",
 	"match.password.short": "密码",
+	"match.hostedBy": "",
+	"match.noSplatnetWarning": "",
 	"match.cancelMatch": "取消对战",
 	"match.canceled": "对战已取消",
 	"match.cancelRequested": "已申请取消",
