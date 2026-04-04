@@ -1050,6 +1050,7 @@ export interface User {
 	preferences: JSONColumnTypeNullable<UserPreferences>;
 	/** User creation date. Can be null because we did not always save this. */
 	createdAt: number | null;
+	joinOrder: number | null;
 	/** Last message used when creating a tournament sub post */
 	lastSubMessage: string | null;
 }

@@ -191,6 +191,9 @@ export const WIDGET_LOADERS = {
 	"patron-since": async (userId: number) => {
 		return UserRepository.patronSinceByUserId(userId);
 	},
+	"join-date": async (userId: number) => {
+		return UserRepository.joinOrderByUserId(userId);
+	},
 	videos: async (userId: number) => {
 		return VodRepository.findByUserId(userId, 3);
 	},
