@@ -106,7 +106,21 @@ export function MatchJoinTab({
 				) : null}
 				<div className={styles.joinContent}>
 					{joinLink ? (
-						<QRCodeSVG value={joinLink} size={148} className={styles.qrCode} />
+						<div className={styles.qrCodeContainer}>
+							<QRCodeSVG
+								value={joinLink}
+								size={140}
+								className={styles.qrCode}
+							/>
+							<a
+								href={joinLink}
+								target="_blank"
+								rel="noopener noreferrer"
+								className={styles.joinLink}
+							>
+								{joinLink}
+							</a>
+						</div>
 					) : null}
 					<div className={styles.joinInfo}>
 						{hostedBy ? (
