@@ -2,10 +2,12 @@ import { DoorOpen, Tally5, Users } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import type * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { Alert } from "~/components/Alert";
+import { Avatar } from "~/components/Avatar";
 import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
+import { userPage } from "~/utils/urls";
 import {
 	SendouTab,
 	SendouTabList,
@@ -71,8 +73,75 @@ export function MatchTabs({ children, tabs }: MatchTabsProps) {
 
 // xxx: extract tabs to different components
 
-export function MatchRosterTab() {
-	return <SendouTabPanel id={TAB_KEYS.ROSTERS}>Roster content</SendouTabPanel>;
+interface RosterTabTeam {
+	team?: {
+		name: string;
+		url: string;
+		avatar?: string;
+	};
+	members: Array<CommonUser>;
+}
+
+interface MatchRosterTabProps {
+	teams: [RosterTabTeam, RosterTabTeam];
+}
+
+export function MatchRosterTab({ teams }: MatchRosterTabProps) {
+	return (
+		<SendouTabPanel id={TAB_KEYS.ROSTERS}>
+			<div className={styles.rosters}>
+				<TeamRoster team={teams[0]} side="alpha" />
+				<TeamRoster team={teams[1]} side="bravo" />
+			</div>
+		</SendouTabPanel>
+	);
+}
+
+function TeamRoster({
+	team,
+	side,
+}: {
+	team: RosterTabTeam;
+	side: "alpha" | "bravo";
+}) {
+	const dotClassName = side === "alpha" ? styles.teamOneDot : styles.teamTwoDot;
+	const label = side === "alpha" ? "Alpha" : "Bravo";
+
+	return (
+		<div className="stack xxs">
+			{team.team ? (
+				<Link to={team.team.url} className="stack horizontal sm">
+					<Avatar
+						url={team.team.avatar}
+						identiconInput={team.team.name}
+						size="sm"
+					/>
+					<div className="stack justify-center line-height-tight">
+						<h2 className="text-main-forced font-bold">{team.team.name}</h2>
+						<div className="stack xs horizontal items-center text-lighter">
+							<div className={dotClassName} />
+							{label}
+						</div>
+					</div>
+				</Link>
+			) : null}
+			{team.members.length > 0 ? (
+				<ul className={styles.rosterMembers}>
+					{team.members.map((member) => (
+						<li key={member.id}>
+							<Link
+								to={userPage(member)}
+								className="stack horizontal sm items-center"
+							>
+								<Avatar user={member} size="xxs" />
+								<span>{member.username}</span>
+							</Link>
+						</li>
+					))}
+				</ul>
+			) : null}
+		</div>
+	);
 }
 
 export function MatchActionTab() {

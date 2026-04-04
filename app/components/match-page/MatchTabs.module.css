@@ -10,6 +10,64 @@
 	}
 }
 
+.rosters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-8);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	flex-direction: column;
+}
+
+@container (width >= 640px) {
+	.rosters {
+		justify-content: space-evenly;
+		flex-direction: row;
+	}
+}
+
+.rostersSpacedHeader {
+	min-height: 45px;
+	display: flex;
+	align-items: center;
+}
+
+.rosterMembers {
+	position: relative;
+	padding-left: 34px;
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin-top: var(--s-1-5);
+
+	&::before {
+		content: "";
+		position: absolute;
+		left: 21px;
+		top: -8px;
+		bottom: 0;
+		width: 3px;
+		background-color: var(--color-border-high);
+		opacity: 0.3;
+		border-radius: 0 0 var(--radius-field) var(--radius-field);
+	}
+}
+
+.teamOneDot {
+	border-radius: 100%;
+	background-color: var(--color-accent);
+	width: 8px;
+	height: 8px;
+}
+
+.teamTwoDot {
+	border-radius: 100%;
+	background-color: var(--color-second);
+	width: 8px;
+	height: 8px;
+}
+
 .joinContent {
 	display: flex;
 	gap: var(--s-4);

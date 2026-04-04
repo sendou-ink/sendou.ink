@@ -138,7 +138,76 @@ export default function MatchPageTestRoute() {
 						pass="8430"
 						showNoSplatnetAlert
 					/>
-					<MatchRosterTab />
+					<MatchRosterTab
+						teams={[
+							{
+								team: { name: "me in japan", url: "/t/me-in-japan" },
+								members: [
+									{
+										id: 1,
+										username: "Sendou",
+										discordId: "123",
+										discordAvatar: null,
+										customUrl: "sendou",
+									},
+									{
+										id: 2,
+										username: "Lean",
+										discordId: "456",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 3,
+										username: "Kiver",
+										discordId: "789",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 4,
+										username: "Brian",
+										discordId: "012",
+										discordAvatar: null,
+										customUrl: null,
+									},
+								],
+							},
+							{
+								team: { name: "Question Mark", url: "/t/question-mark" },
+								members: [
+									{
+										id: 5,
+										username: "Naga",
+										discordId: "345",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 6,
+										username: "Grey",
+										discordId: "678",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 7,
+										username: "Zack",
+										discordId: "901",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 8,
+										username: "Lime",
+										discordId: "234",
+										discordAvatar: null,
+										customUrl: null,
+									},
+								],
+							},
+						]}
+					/>
 					<MatchActionTab />
 				</MatchTabs>
 			</MatchPage>

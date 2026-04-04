@@ -70,7 +70,6 @@ function ScreenNotice({ screenLegal }: Pick<MatchBannerProps, "screenLegal">) {
 						height={imgSize}
 						alt=""
 					/>
-					{t("weapons:SPECIAL_19")}
 				</SendouButton>
 			}
 		>
