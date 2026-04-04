@@ -90,9 +90,9 @@ describe("UserRepository", () => {
 		expect((await UserRepository.joinOrderByUserId(firstId))?.joinOrder).toBe(
 			1,
 		);
-		expect(
-			(await UserRepository.joinOrderByUserId(secondId))?.joinOrder,
-		).toBe(2);
+		expect((await UserRepository.joinOrderByUserId(secondId))?.joinOrder).toBe(
+			2,
+		);
 
 		await UserRepository.upsert({
 			discordId: "1",

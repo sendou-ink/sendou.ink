@@ -980,9 +980,11 @@ export function upsert(
 			joinOrder: eb
 				.selectFrom("User")
 				.select(
-					eb(eb.fn.coalesce(eb.fn.max("joinOrder"), eb.val(0)), "+", eb.val(1)).as(
-						"nextJoinOrder",
-					),
+					eb(
+						eb.fn.coalesce(eb.fn.max("joinOrder"), eb.val(0)),
+						"+",
+						eb.val(1),
+					).as("nextJoinOrder"),
 				),
 		}))
 		.onConflict((oc) => {
