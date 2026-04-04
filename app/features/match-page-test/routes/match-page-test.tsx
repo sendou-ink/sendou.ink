@@ -1,20 +1,18 @@
 import { ArrowLeft } from "lucide-react";
 import { SendouButton } from "~/components/elements/Button";
 import { Main } from "~/components/Main";
+import { MatchActionTab } from "~/components/match-page/MatchActionTab";
 import {
 	MatchBanner,
 	MatchBannerContainer,
 } from "~/components/match-page/MatchBanner";
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
+import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchPage } from "~/components/match-page/MatchPage";
 import { MatchPageHeader } from "~/components/match-page/MatchPageHeader";
-import {
-	MatchActionTab,
-	MatchJoinTab,
-	MatchRosterTab,
-	MatchTabs,
-} from "~/components/match-page/MatchTabs";
+import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
+import { MatchTabs } from "~/components/match-page/MatchTabs";
 import { logger } from "~/utils/logger";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 
