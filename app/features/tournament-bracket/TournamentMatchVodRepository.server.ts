@@ -1,9 +1,9 @@
-import { subDays } from "date-fns";
+import { subDays, subHours } from "date-fns";
 import type { Insertable } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { TOURNAMENT } from "../tournament/tournament-constants";
 
 export type VodsByTournamentId = Awaited<
@@ -52,8 +52,10 @@ export function insertMany(vods: Insertable<DB["TournamentMatchVod"]>[]) {
 		.execute();
 }
 
-export function findFinalizedTournamentsNeedingVods() {
+export function findTournamentsNeedingVodSync() {
 	const oneDayAgo = dateToDatabaseTimestamp(subDays(new Date(), 1));
+	const threeHoursAgo = dateToDatabaseTimestamp(subHours(new Date(), 3));
+	const sixHoursAgo = dateToDatabaseTimestamp(subHours(new Date(), 6));
 
 	return db
 		.selectFrom("Tournament")
@@ -65,26 +67,30 @@ export function findFinalizedTournamentsNeedingVods() {
 		)
 		.select(["Tournament.id"])
 		.where("Tournament.isFinalized", "=", 1)
-		.where("CalendarEventDate.startTime", ">", oneDayAgo)
-		.where(({ eb, selectFrom }) =>
-			eb(
-				selectFrom("TournamentMatchVod")
-					.innerJoin(
-						"TournamentMatch",
-						"TournamentMatch.id",
-						"TournamentMatchVod.matchId",
-					)
-					.innerJoin(
-						"TournamentStage",
-						"TournamentStage.id",
-						"TournamentMatch.stageId",
-					)
-					.select(({ fn }) => [fn.countAll<number>().as("count")])
-					.whereRef("TournamentStage.tournamentId", "=", "Tournament.id"),
-				"=",
-				0,
-			),
+		.where(({ or, and, eb }) =>
+			or([
+				and([
+					eb("CalendarEventDate.startTime", ">", oneDayAgo),
+					eb("Tournament.vodsSyncCount", "=", 0),
+				]),
+				and([
+					eb("Tournament.vodsSyncCount", "=", 1),
+					eb("Tournament.vodsLastSyncAt", "<=", threeHoursAgo),
+					eb("Tournament.vodsLastSyncAt", ">", sixHoursAgo),
+				]),
+			]),
 		)
+		.execute();
+}
+
+export function markVodSyncCompleted(tournamentId: number) {
+	return db
+		.updateTable("Tournament")
+		.set((eb) => ({
+			vodsLastSyncAt: databaseTimestampNow(),
+			vodsSyncCount: eb("vodsSyncCount", "+", 1),
+		}))
+		.where("id", "=", tournamentId)
 		.execute();
 }
 

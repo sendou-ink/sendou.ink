@@ -22,17 +22,26 @@ async function syncTournamentVods() {
 	if (!hasTwitchEnvVars()) return;
 
 	const tournaments =
-		await TournamentMatchVodRepository.findFinalizedTournamentsNeedingVods();
+		await TournamentMatchVodRepository.findTournamentsNeedingVodSync();
 
 	for (const tournament of tournaments) {
-		await processOneTournament(tournament.id);
+		try {
+			const hadApiError = await processOneTournament(tournament.id);
+			if (!hadApiError) {
+				await TournamentMatchVodRepository.markVodSyncCompleted(tournament.id);
+			}
+		} catch (e) {
+			logger.warn(`Failed to sync VODs for tournament ${tournament.id}: ${e}`);
+		}
 	}
 }
 
 export async function processOneTournament(tournamentId: number) {
 	const matches =
 		await TournamentMatchVodRepository.findMatchesWithStartedAt(tournamentId);
-	if (matches.length === 0) return;
+	if (matches.length === 0) return false;
+
+	let hadApiError = false;
 
 	const matchesById = new Map(matches.map((m) => [m.id, m]));
 	const loginToTwitchId = new Map<string, string>();
@@ -74,10 +83,14 @@ export async function processOneTournament(tournamentId: number) {
 			);
 			if (!twitchUserId) continue;
 
-			const videos = await fetchArchiveVideos(
-				twitchUserId,
-				streamer.twitchAccount,
-			);
+			let videos: Awaited<ReturnType<typeof fetchArchiveVideos>>;
+			try {
+				videos = await fetchArchiveVideos(twitchUserId);
+			} catch (e) {
+				logger.warn(`Failed to fetch VODs for ${streamer.twitchAccount}: ${e}`);
+				hadApiError = true;
+				continue;
+			}
 			if (!videos) continue;
 
 			for (const match of matches) {
@@ -131,7 +144,14 @@ export async function processOneTournament(tournamentId: number) {
 			const twitchUserId = loginToTwitchId.get(account.toLowerCase());
 			if (!twitchUserId) continue;
 
-			const videos = await fetchArchiveVideos(twitchUserId, account);
+			let videos: Awaited<ReturnType<typeof fetchArchiveVideos>>;
+			try {
+				videos = await fetchArchiveVideos(twitchUserId);
+			} catch (e) {
+				logger.warn(`Failed to fetch VODs for ${account}: ${e}`);
+				hadApiError = true;
+				continue;
+			}
 			if (!videos) continue;
 
 			for (const matchId of matchIds) {
@@ -160,16 +180,13 @@ export async function processOneTournament(tournamentId: number) {
 		await TournamentMatchVodRepository.insertMany(vods);
 		logger.info(`Inserted ${vods.length} VODs for tournament ${tournamentId}`);
 	}
+
+	return hadApiError;
 }
 
-async function fetchArchiveVideos(twitchUserId: string, accountName: string) {
-	try {
-		const videos = await getArchiveVideos(twitchUserId);
-		return videos.length > 0 ? videos : null;
-	} catch (e) {
-		logger.warn(`Failed to fetch VODs for ${accountName}: ${e}`);
-		return null;
-	}
+async function fetchArchiveVideos(twitchUserId: string) {
+	const videos = await getArchiveVideos(twitchUserId);
+	return videos.length > 0 ? videos : null;
 }
 
 function findMatchingVod(
