@@ -164,6 +164,7 @@
 	"match.outcome.loss": "負け",
 	"match.screen.ban": "{{special}}が付いてる武器はこのマッチでは禁止です",
 	"match.screen.allowed": "{{special}}が付いてる武器は使用可能です",
+	"match.subbedOut": "",
 	"preparing.joinQ": "列に入る",
 	"tiers.currentCriteria": "現在の基準",
 	"tiers.info.p1": "例として、Leviathanはプレイヤーの上位5%、Diamondは上位15%",

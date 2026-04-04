@@ -164,6 +164,7 @@
 	"match.outcome.loss": "derrota",
 	"match.screen.ban": "Armas com o/a {{special}} não são permitidas nessa partida",
 	"match.screen.allowed": "Armas com o/a {{special}} são permitidas nessa partida",
+	"match.subbedOut": "",
 	"preparing.joinQ": "Entrar na fila",
 	"tiers.currentCriteria": "Critérios atuais",
 	"tiers.info.p1": "Por exemplo, Leviathan é o top 5% dos jogadores. Diamond é top 15% e etc.",

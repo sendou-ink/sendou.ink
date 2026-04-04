@@ -1,10 +1,12 @@
-import { DoorOpen, Tally5, Users } from "lucide-react";
+import { Armchair, DoorOpen, Tally5, Users } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
 import { userPage } from "~/utils/urls";
@@ -80,6 +82,8 @@ interface RosterTabTeam {
 		avatar?: string;
 	};
 	members: Array<CommonUser>;
+	/** Sub user ids i.e. those who are not the current active roster */
+	subbedOut?: Array<number>;
 }
 
 interface MatchRosterTabProps {
@@ -107,6 +111,14 @@ function TeamRoster({
 	const dotClassName = side === "alpha" ? styles.teamOneDot : styles.teamTwoDot;
 	const label = side === "alpha" ? "Alpha" : "Bravo";
 
+	const subbedOutSet = new Set(team.subbedOut);
+	const activeMembers = team.members.filter(
+		(member) => !subbedOutSet.has(member.id),
+	);
+	const subbedOutMembers = team.members.filter((member) =>
+		subbedOutSet.has(member.id),
+	);
+
 	return (
 		<div className="stack xxs">
 			{team.team ? (
@@ -127,7 +139,7 @@ function TeamRoster({
 			) : null}
 			{team.members.length > 0 ? (
 				<ul className={styles.rosterMembers}>
-					{team.members.map((member) => (
+					{activeMembers.map((member) => (
 						<li key={member.id}>
 							<Link
 								to={userPage(member)}
@@ -138,9 +150,47 @@ function TeamRoster({
 							</Link>
 						</li>
 					))}
+					{subbedOutMembers.length > 0 ? (
+						<li>
+							<SubbedOutPopover members={subbedOutMembers} />
+						</li>
+					) : null}
 				</ul>
 			) : null}
 		</div>
+	);
+}
+
+function SubbedOutPopover({ members }: { members: Array<CommonUser> }) {
+	const { t } = useTranslation(["q"]);
+
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton variant="minimal" size="small">
+					<div className={styles.subbedOutTrigger}>
+						<div className={styles.subbedOutIcon}>
+							<Armchair size={16} />
+						</div>
+						+{members.length}
+					</div>
+				</SendouButton>
+			}
+		>
+			<div className={styles.subbedOutPopover}>
+				<div className={styles.subbedOutHeader}>{t("q:match.subbedOut")}</div>
+				{members.map((member) => (
+					<Link
+						key={member.id}
+						to={userPage(member)}
+						className="stack horizontal sm items-center"
+					>
+						<Avatar user={member} size="xxs" />
+						<span>{member.username}</span>
+					</Link>
+				))}
+			</div>
+		</SendouPopover>
 	);
 }
 

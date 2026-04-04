@@ -164,6 +164,7 @@
 	"match.outcome.loss": "проигрыш",
 	"match.screen.ban": "Оружия с {{special}} запрещены в этом матче",
 	"match.screen.allowed": "Оружия с {{special}} разрешены в этом матче",
+	"match.subbedOut": "",
 	"preparing.joinQ": "Присоединиться к очереди",
 	"tiers.currentCriteria": "Текущие критерии",
 	"tiers.info.p1": "Например, Leviathan - топ 5% игроков, Diamond - 85 процентиль и т.д.",

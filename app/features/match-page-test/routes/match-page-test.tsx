@@ -171,7 +171,15 @@ export default function MatchPageTestRoute() {
 										discordAvatar: null,
 										customUrl: null,
 									},
+									{
+										id: 9,
+										username: "Poppy",
+										discordId: "567",
+										discordAvatar: null,
+										customUrl: null,
+									},
 								],
+								subbedOut: [9],
 							},
 							{
 								team: { name: "Question Mark", url: "/t/question-mark" },

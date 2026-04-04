@@ -164,6 +164,7 @@
 	"match.outcome.loss": "perdida",
 	"match.screen.ban": "Armas con {{special}} son prohibidas para este partido",
 	"match.screen.allowed": "Armas con {{special}} se permiten para este partido",
+	"match.subbedOut": "",
 	"preparing.joinQ": "Unirte a la fila",
 	"tiers.currentCriteria": "Criterios actuales",
 	"tiers.info.p1": "Por ejemplo, Leviathan se encuentra entre el 5% de los mejores jugadores. Diamond es el percentil 85, etc.",

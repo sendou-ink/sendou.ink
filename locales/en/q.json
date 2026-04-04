@@ -164,6 +164,7 @@
 	"match.outcome.loss": "loss",
 	"match.screen.ban": "Weapons with {{special}} are not allowed in this match",
 	"match.screen.allowed": "Weapons with {{special}} are allowed in this match",
+	"match.subbedOut": "Subbed out",
 	"preparing.joinQ": "Join the queue",
 	"tiers.currentCriteria": "Current criteria",
 	"tiers.info.p1": "For example, Leviathan is the top 5% of players. Diamond is the 85th percentile etc.",
