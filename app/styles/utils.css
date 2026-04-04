@@ -155,6 +155,10 @@
 		height: 100%;
 	}
 
+	.h-max {
+		height: max-content;
+	}
+
 	.w-full {
 		width: 100%;
 	}

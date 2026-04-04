@@ -80,6 +80,19 @@
 	text-transform: uppercase;
 }
 
+.rosterEditCount {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	margin-block-end: var(--s-2);
+	margin-inline-start: 12px;
+}
+
+.rosterEditButtons {
+	display: flex;
+	gap: var(--s-2);
+	margin-block-start: var(--s-4);
+}
+
 .teamOneDot {
 	border-radius: 100%;
 	background-color: var(--color-accent);

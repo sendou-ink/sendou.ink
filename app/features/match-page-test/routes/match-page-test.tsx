@@ -15,6 +15,7 @@ import {
 	MatchRosterTab,
 	MatchTabs,
 } from "~/components/match-page/MatchTabs";
+import { logger } from "~/utils/logger";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 
 export const handle: SendouRouteHandle = {
@@ -139,9 +140,18 @@ export default function MatchPageTestRoute() {
 						showNoSplatnetAlert
 					/>
 					<MatchRosterTab
+						minMembersPerTeam={4}
+						canEditSubbedOut={[true, false]}
+						onSubbedOutChange={(teamId, subbedOut) => {
+							logger.info("onSubbedOutChange", { teamId, subbedOut });
+						}}
 						teams={[
 							{
-								team: { name: "me in japan", url: "/t/me-in-japan" },
+								team: {
+									id: 1,
+									name: "me in japan",
+									url: "/t/me-in-japan",
+								},
 								members: [
 									{
 										id: 1,
@@ -182,7 +192,11 @@ export default function MatchPageTestRoute() {
 								subbedOut: [9],
 							},
 							{
-								team: { name: "Question Mark", url: "/t/question-mark" },
+								team: {
+									id: 2,
+									name: "Question Mark",
+									url: "/t/question-mark",
+								},
 								members: [
 									{
 										id: 5,
