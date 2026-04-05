@@ -25,6 +25,7 @@
 .teamRadioContainer {
 	--label-margin: 0;
 	width: 100%;
+	height: 100%;
 	max-width: 250px;
 }
 
@@ -88,6 +89,7 @@
 	background-color: var(--color-bg-high);
 	min-width: 160px;
 	transition: background-color 0.15s;
+	height: 100%;
 
 	&:hover .checkCircle {
 		border-color: var(--color-accent-high);

@@ -101,8 +101,9 @@ function TournamentMatchHeader() {
 	const tournament = useTournament();
 	const data = useLoaderData<typeof loader>();
 
-	const { bracketName, roundName } =
-		tournament.matchContextNamesById(data.match.id);
+	const { bracketName, roundName } = tournament.matchContextNamesById(
+		data.match.id,
+	);
 
 	return (
 		<MatchPageHeader
