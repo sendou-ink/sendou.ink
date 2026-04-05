@@ -1,6 +1,5 @@
 import { differenceInMinutes } from "date-fns";
 import { ArrowLeft } from "lucide-react";
-import * as React from "react";
 import { useFetcher, useLoaderData } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
 import { containerClassName } from "~/components/Main";
@@ -18,13 +17,9 @@ import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs } from "~/components/match-page/MatchTabs";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import { assertUnreachable } from "~/utils/types";
 import { tournamentBracketsPage, tournamentTeamPage } from "~/utils/urls";
 import { action } from "../actions/to.$id.matches.$mid.server";
-import { getRounds } from "../core/rounds";
 import { loader } from "../loaders/to.$id.matches.$mid.server";
-import { groupNumberToLetters } from "../tournament-bracket-utils";
 
 export { action, loader };
 
@@ -106,95 +101,8 @@ function TournamentMatchHeader() {
 	const tournament = useTournament();
 	const data = useLoaderData<typeof loader>();
 
-	const { bracketName, roundName } = React.useMemo(() => {
-		let bracketName: string | undefined;
-		let roundName: string | undefined;
-
-		for (const bracket of tournament.brackets) {
-			if (bracket.preview) continue;
-
-			for (const match of bracket.data.match) {
-				if (match.id === data.match.id) {
-					bracketName = bracket.name;
-
-					if (bracket.type === "round_robin") {
-						const group = bracket.data.group.find(
-							(group) => group.id === match.group_id,
-						);
-						const round = bracket.data.round.find(
-							(round) => round.id === match.round_id,
-						);
-
-						roundName = `Groups ${group?.number ? groupNumberToLetters(group.number) : ""}${round?.number ?? ""}.${match.number}`;
-					} else if (bracket.type === "swiss") {
-						const group = bracket.data.group.find(
-							(group) => group.id === match.group_id,
-						);
-						const round = bracket.data.round.find(
-							(round) => round.id === match.round_id,
-						);
-
-						const oneGroupOnly = bracket.data.group.length === 1;
-
-						roundName = `Swiss${oneGroupOnly ? "" : " Group"} ${group?.number && !oneGroupOnly ? groupNumberToLetters(group.number) : ""} ${round?.number ?? ""}.${match.number}`;
-					} else if (
-						bracket.type === "single_elimination" ||
-						bracket.type === "double_elimination"
-					) {
-						const rounds =
-							bracket.type === "single_elimination"
-								? getRounds({ type: "single", bracketData: bracket.data })
-								: [
-										...getRounds({
-											type: "winners",
-											bracketData: bracket.data,
-										}),
-										...getRounds({
-											type: "losers",
-											bracketData: bracket.data,
-										}),
-									];
-
-						const round = rounds.find((round) => round.id === match.round_id);
-
-						if (round) {
-							const specifier = () => {
-								if (
-									[
-										TOURNAMENT.ROUND_NAMES.WB_FINALS,
-										TOURNAMENT.ROUND_NAMES.GRAND_FINALS,
-										TOURNAMENT.ROUND_NAMES.BRACKET_RESET,
-										TOURNAMENT.ROUND_NAMES.FINALS,
-										TOURNAMENT.ROUND_NAMES.LB_FINALS,
-										TOURNAMENT.ROUND_NAMES.LB_SEMIS,
-										TOURNAMENT.ROUND_NAMES.THIRD_PLACE_MATCH,
-									].includes(round.name as any)
-								) {
-									return "";
-								}
-
-								const roundNameEndsInDigit = /\d$/.test(round.name);
-
-								if (!roundNameEndsInDigit) {
-									return ` ${match.number}`;
-								}
-
-								return `.${match.number}`;
-							};
-							roundName = `${round.name}${specifier()}`;
-						}
-					} else {
-						assertUnreachable(bracket.type);
-					}
-				}
-			}
-		}
-
-		return {
-			bracketName,
-			roundName,
-		};
-	}, [tournament, data.match.id]);
+	const { bracketName, roundName } =
+		tournament.matchContextNamesById(data.match.id);
 
 	return (
 		<MatchPageHeader
