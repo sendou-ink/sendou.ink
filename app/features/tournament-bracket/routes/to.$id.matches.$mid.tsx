@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import * as React from "react";
 import { useFetcher, useLoaderData } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
+import { containerClassName } from "~/components/Main";
 import { MatchActionTab } from "~/components/match-page/MatchActionTab";
 import {
 	MatchBanner,
@@ -55,7 +56,7 @@ export default function TournamentMatchPage() {
 	};
 
 	return (
-		<MatchPage>
+		<MatchPage className={containerClassName("normal")}>
 			<TournamentMatchHeader />
 
 			<MatchBannerContainer>

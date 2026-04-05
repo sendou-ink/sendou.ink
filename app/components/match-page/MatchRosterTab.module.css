@@ -9,8 +9,11 @@
 
 @container (width >= 640px) {
 	.rosters {
-		justify-content: space-evenly;
-		flex-direction: row;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		justify-content: center;
+		max-width: max-content;
+		margin-inline: auto;
 	}
 }
 
