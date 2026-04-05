@@ -214,7 +214,7 @@ function ResultHighlights() {
 					>
 						{t("front:showcase.results")}
 					</h2>
-					<div className={styles.tournamentCardsSpacer}>
+					<div className={clsx(styles.tournamentCardsSpacer, "scrollbar")}>
 						{data.tournaments.results.map((tournament) => (
 							<TournamentCard
 								key={tournament.id}
