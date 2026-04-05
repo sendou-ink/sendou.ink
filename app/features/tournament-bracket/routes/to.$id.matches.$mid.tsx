@@ -1,20 +1,25 @@
 import { differenceInMinutes } from "date-fns";
 import { ArrowLeft } from "lucide-react";
 import * as React from "react";
-import { useLoaderData } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
+import { MatchActionTab } from "~/components/match-page/MatchActionTab";
 import {
 	MatchBanner,
 	MatchBannerContainer,
 } from "~/components/match-page/MatchBanner";
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
+import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchPage } from "~/components/match-page/MatchPage";
 import { MatchPageHeader } from "~/components/match-page/MatchPageHeader";
+import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
+import { MatchTabs } from "~/components/match-page/MatchTabs";
+import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { assertUnreachable } from "~/utils/types";
-import { tournamentBracketsPage } from "~/utils/urls";
+import { tournamentBracketsPage, tournamentTeamPage } from "~/utils/urls";
 import { action } from "../actions/to.$id.matches.$mid.server";
 import { getRounds } from "../core/rounds";
 import { loader } from "../loaders/to.$id.matches.$mid.server";
@@ -250,124 +255,206 @@ function TournamentMatchBannerTopRow() {
 }
 
 function TournamentMatchTabs() {
-	return null;
+	const data = useLoaderData<typeof loader>();
+	const tournament = useTournament();
+	const user = useUser();
 
-	// return (
-	// 	<MatchTabs tabs={["join", "rosters", "action"]}>
-	// 		<MatchJoinTab
-	// 			joinLink="https://app.nintendo.net/private_battle/abc123"
-	// 			hostedBy={{
-	// 				id: 1,
-	// 				username: "Grey",
-	// 				discordId: "123456789",
-	// 				discordAvatar: null,
-	// 				customUrl: null,
-	// 			}}
-	// 			pool="SQ7"
-	// 			pass="8430"
-	// 			showNoSplatnetAlert
-	// 		/>
-	// 		<MatchRosterTab
-	// 			minMembersPerTeam={4}
-	// 			canEditSubbedOut={[true, false]}
-	// 			onSubbedOutChange={(teamId, subbedOut) => {
-	// 				logger.info("onSubbedOutChange", { teamId, subbedOut });
-	// 			}}
-	// 			teams={[
-	// 				{
-	// 					team: {
-	// 						id: 1,
-	// 						name: "me in japan",
-	// 						url: "/t/me-in-japan",
-	// 					},
-	// 					members: [
-	// 						{
-	// 							id: 1,
-	// 							username: "Sendou",
-	// 							discordId: "123",
-	// 							discordAvatar: null,
-	// 							customUrl: "sendou",
-	// 						},
-	// 						{
-	// 							id: 2,
-	// 							username: "Lean",
-	// 							discordId: "456",
-	// 							discordAvatar: null,
-	// 							customUrl: null,
-	// 						},
-	// 						{
-	// 							id: 3,
-	// 							username: "Kiver",
-	// 							discordId: "789",
-	// 							discordAvatar: null,
-	// 							customUrl: null,
-	// 						},
-	// 						{
-	// 							id: 4,
-	// 							username: "Brian",
-	// 							discordId: "012",
-	// 							discordAvatar: null,
-	// 							customUrl: null,
-	// 						},
-	// 						{
-	// 							id: 9,
-	// 							username: "Poppy",
-	// 							discordId: "567",
-	// 							discordAvatar: null,
-	// 							customUrl: null,
-	// 						},
-	// 					],
-	// 					subbedOut: [9],
-	// 				},
-	// 				{
-	// 					team: {
-	// 						id: 2,
-	// 						name: "Question Mark",
-	// 						url: "/t/question-mark",
-	// 					},
-	// 					members: [
-	// 						{
-	// 							id: 5,
-	// 							username: "Naga",
-	// 							discordId: "345",
-	// 							discordAvatar: null,
-	// 							customUrl: null,
-	// 						},
-	// 						{
-	// 							id: 6,
-	// 							username: "Grey",
-	// 							discordId: "678",
-	// 							discordAvatar: null,
-	// 							customUrl: null,
-	// 						},
-	// 						{
-	// 							id: 7,
-	// 							username: "Zack",
-	// 							discordId: "901",
-	// 							discordAvatar: null,
-	// 							customUrl: null,
-	// 						},
-	// 						{
-	// 							id: 8,
-	// 							username: "Lime",
-	// 							discordId: "234",
-	// 							discordAvatar: null,
-	// 							customUrl: null,
-	// 						},
-	// 					],
-	// 				},
-	// 			]}
-	// 		/>
-	// 		<MatchActionTab
-	// 			teams={[
-	// 				{ id: 1, name: "Chimera" },
-	// 				{ id: 2, name: "Koopa Clan" },
-	// 			]}
-	// 			ownTeamId={1}
-	// 			stageId={4}
-	// 			mode="SZ"
-	// 			withPoints={true}
-	// 		/>
-	// 	</MatchTabs>
-	// );
+	const opponentOneId = data.match.opponentOne?.id;
+	const opponentTwoId = data.match.opponentTwo?.id;
+	if (!opponentOneId || !opponentTwoId) return null;
+
+	const scoreSum =
+		(data.match.opponentOne?.score ?? 0) + (data.match.opponentTwo?.score ?? 0);
+	const currentMap = data.mapList?.filter((m) => !m.bannedByTournamentTeamId)[
+		scoreSum
+	];
+
+	const canReportScore = tournament.canReportScore({
+		matchId: data.match.id,
+		user,
+	});
+	const isParticipant = data.match.players.some((p) => p.id === user?.id);
+
+	const tabs = resolveVisibleTabs({
+		matchIsOver: data.matchIsOver,
+		canReportScore,
+		isParticipant,
+		hasCurrentMap: Boolean(currentMap),
+	});
+
+	return (
+		<MatchTabs tabs={tabs}>
+			{tabs.includes("join") ? <TournamentMatchJoinTab /> : null}
+			<TournamentMatchRosterTab />
+			{tabs.includes("action") ? <TournamentMatchActionTab /> : null}
+		</MatchTabs>
+	);
+}
+
+function TournamentMatchJoinTab() {
+	return (
+		<MatchJoinTab
+			joinLink="https://app.nintendo.net/private_battle/abc123"
+			hostedBy={{
+				id: 1,
+				username: "Grey",
+				discordId: "123456789",
+				discordAvatar: null,
+				customUrl: null,
+			}}
+			pool="SQ7"
+			pass="8430"
+			showNoSplatnetAlert
+		/>
+	);
+}
+
+function TournamentMatchRosterTab() {
+	const data = useLoaderData<typeof loader>();
+	const tournament = useTournament();
+	const user = useUser();
+	const fetcher = useFetcher();
+
+	const teamOne = tournament.teamById(data.match.opponentOne!.id!)!;
+	const teamTwo = tournament.teamById(data.match.opponentTwo!.id!)!;
+
+	return (
+		<MatchRosterTab
+			minMembersPerTeam={tournament.minMembersPerTeam}
+			canEditSubbedOut={[
+				canEditSubbedOutForTeam(teamOne),
+				canEditSubbedOutForTeam(teamTwo),
+			]}
+			onSubbedOutChange={handleSubbedOutChange}
+			isSubmitting={fetcher.state !== "idle"}
+			teams={[rosterTeamData(teamOne), rosterTeamData(teamTwo)]}
+		/>
+	);
+
+	function rosterTeamData(
+		team: NonNullable<ReturnType<typeof tournament.teamById>>,
+	) {
+		const subbedOut =
+			team.activeRosterUserIds &&
+			team.members.length > tournament.minMembersPerTeam
+				? team.members
+						.filter((m) => !team.activeRosterUserIds!.includes(m.userId))
+						.map((m) => m.userId)
+				: undefined;
+
+		return {
+			team: {
+				id: team.id,
+				name: team.name,
+				url: tournamentTeamPage({
+					tournamentId: tournament.ctx.id,
+					tournamentTeamId: team.id,
+				}),
+				avatar: team.pickupAvatarUrl ?? undefined,
+			},
+			members: team.members.map((m) => ({
+				id: m.userId,
+				username: m.username,
+				discordId: m.discordId,
+				discordAvatar: m.discordAvatar,
+				customUrl: m.customUrl,
+			})),
+			subbedOut,
+		};
+	}
+
+	function canEditSubbedOutForTeam(
+		team: NonNullable<ReturnType<typeof tournament.teamById>>,
+	) {
+		if (data.matchIsOver) return false;
+		if (data.results.length > 0) return false;
+		if (team.members.length <= tournament.minMembersPerTeam) return false;
+
+		const isMemberOfTeam = team.members.some((m) => m.userId === user?.id);
+		return isMemberOfTeam || tournament.isOrganizer(user);
+	}
+
+	function handleSubbedOutChange(teamId: number, subbedOut: number[]) {
+		const team = tournament.teamById(teamId);
+		if (!team) return;
+
+		const activeRoster = team.members
+			.filter((m) => !subbedOut.includes(m.userId))
+			.map((m) => m.userId);
+
+		fetcher.submit(
+			{
+				_action: "SET_ACTIVE_ROSTER",
+				roster: JSON.stringify(activeRoster),
+				teamId: String(teamId),
+			},
+			{ method: "post" },
+		);
+	}
+}
+
+function TournamentMatchActionTab() {
+	const data = useLoaderData<typeof loader>();
+	const tournament = useTournament();
+	const user = useUser();
+
+	const scoreSum =
+		(data.match.opponentOne?.score ?? 0) + (data.match.opponentTwo?.score ?? 0);
+	const currentMap = data.mapList?.filter((m) => !m.bannedByTournamentTeamId)[
+		scoreSum
+	];
+	if (!currentMap) return null;
+
+	const teamOne = tournament.teamById(data.match.opponentOne!.id!)!;
+	const teamTwo = tournament.teamById(data.match.opponentTwo!.id!)!;
+
+	const userTeamId = tournament.teamMemberOfByUser(user)?.id;
+	const withPoints = tournament.bracketByIdxOrDefault(
+		tournament.matchIdToBracketIdx(data.match.id) ?? 0,
+	).collectResultsWithPoints;
+
+	return (
+		<MatchActionTab
+			teams={[
+				{
+					id: teamOne.id,
+					name: teamOne.name,
+					avatar: teamOne.pickupAvatarUrl ?? undefined,
+				},
+				{
+					id: teamTwo.id,
+					name: teamTwo.name,
+					avatar: teamTwo.pickupAvatarUrl ?? undefined,
+				},
+			]}
+			ownTeamId={userTeamId ?? teamOne.id}
+			stageId={currentMap.stageId}
+			mode={currentMap.mode}
+			withPoints={withPoints}
+		/>
+	);
+}
+
+function resolveVisibleTabs({
+	matchIsOver,
+	canReportScore,
+	isParticipant,
+	hasCurrentMap,
+}: {
+	matchIsOver: boolean;
+	canReportScore: boolean;
+	isParticipant: boolean;
+	hasCurrentMap: boolean;
+}) {
+	const tabs: Array<"join" | "rosters" | "action"> = [];
+
+	if (!matchIsOver && isParticipant) {
+		tabs.push("join");
+	}
+	tabs.push("rosters");
+	if (canReportScore && hasCurrentMap) {
+		tabs.push("action");
+	}
+
+	return tabs;
 }
