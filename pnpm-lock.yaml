@@ -135,8 +135,8 @@ importers:
         specifier: 1.1.16
         version: 1.1.16(react@19.2.4)
       picocad2-web:
-        specifier: ^1.2.7
-        version: 1.2.7
+        specifier: ^1.2.12
+        version: 1.2.12
       react:
         specifier: 19.2.4
         version: 19.2.4
@@ -4041,8 +4041,8 @@ packages:
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
 
-  picocad2-web@1.2.7:
-    resolution: {integrity: sha512-EyauOhMRLqpW0dHxfxuoq6E6+oyf26Gre9SeENHOnU5mDtxDWO6SSZetxZU+pf9VyNm4kJLAF1Z8tjigFOHqdw==}
+  picocad2-web@1.2.12:
+    resolution: {integrity: sha512-jk4gvxK8byVzE+g0DJHs+xrN2kRPATrhTkoyMCV8sydt43dsIcZI5bYkA6xCZnlBnz4y4mxEqEOV+fqdj853wg==}
     engines: {node: '>=18.0.0'}
 
   picocolors@1.1.1:
@@ -9539,7 +9539,7 @@ snapshots:
 
   pathe@2.0.3: {}
 
-  picocad2-web@1.2.7:
+  picocad2-web@1.2.12:
     dependencies:
       gl-matrix: 3.4.4
       twgl.js: 7.0.0
