@@ -1,6 +1,6 @@
 import { ungzip } from "pako";
 import { PicoCAD2Context, PicoCAD2Viewer } from "picocad2-web";
-import { createContext, useContext, useEffect, useRef } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 const TrophyCtx = createContext<PicoCAD2Context | undefined>(undefined);
 
@@ -17,23 +17,17 @@ export function TrophyContextProvider({
 }: {
 	children: React.ReactNode;
 }) {
-	const ref = useRef<PicoCAD2Context | null>(null);
-
-	if (!ref.current && typeof document !== "undefined") {
-		ref.current = new PicoCAD2Context();
-	}
+	const [context, setContext] = useState<PicoCAD2Context | undefined>();
 
 	useEffect(() => {
+		const ctx = new PicoCAD2Context();
+		setContext(ctx);
 		return () => {
-			ref.current?.dispose();
+			ctx.dispose();
 		};
 	}, []);
 
-	return (
-		<TrophyCtx.Provider value={ref.current ?? undefined}>
-			{children}
-		</TrophyCtx.Provider>
-	);
+	return <TrophyCtx.Provider value={context}>{children}</TrophyCtx.Provider>;
 }
 
 export function Trophy({
