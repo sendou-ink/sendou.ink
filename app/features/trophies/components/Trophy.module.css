@@ -1,0 +1,11 @@
+.trophy {
+	width: 100% !important;
+	height: auto !important;
+	aspect-ratio: 1 / 1;
+	opacity: 1;
+	transition: opacity 0.2s ease;
+
+	@starting-style {
+		opacity: 0;
+	}
+}

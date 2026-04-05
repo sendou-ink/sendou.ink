@@ -1,12 +1,19 @@
-import { useTranslation } from "react-i18next";
-import type { MetaFunction } from "react-router";
-import { useLoaderData } from "react-router";
+import { Search } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+	type MetaFunction,
+	NavLink,
+	Outlet,
+	useLoaderData,
+} from "react-router";
+import { Input } from "~/components/Input";
 import { Main } from "~/components/Main";
-import { Trophy, TrophyContextProvider } from "~/components/Trophy";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, TROPHIES_PAGE } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
+import { Trophy, TrophyContextProvider } from "../components/Trophy";
 import { loader } from "../loaders/trophies.server";
+import styles from "./trophies.module.css";
 
 export { loader };
 
@@ -30,17 +37,65 @@ export const meta: MetaFunction = (args) => {
 };
 
 export default function TrophiesPage() {
-	const { t } = useTranslation(["trophies"]);
 	const data = useLoaderData<typeof loader>();
+
+	const [inputValue, setInputValue] = useState("");
+	const inputValueNormalized = inputValue.toLowerCase();
+	const filteredTrophies = data.trophies.filter((trophy) =>
+		trophy.name.toLowerCase().includes(inputValueNormalized),
+	);
+	const visibleCount = useProgressiveRender(
+		filteredTrophies.length,
+		inputValue,
+	);
 
 	return (
 		<Main>
-			<h1>{t("trophies:title")}</h1>
-			<TrophyContextProvider>
-				{data.trophies.map((trophy) => (
-					<Trophy key={trophy.id} model={trophy.model} />
-				))}
-			</TrophyContextProvider>
+			<div className={styles.mainContent}>
+				<Outlet />
+				<div className={styles.trophiesListContainer}>
+					<Input
+						icon={<Search />}
+						value={inputValue}
+						onChange={(e) => setInputValue(e.target.value)}
+					/>
+					<div className={styles.trophiesList}>
+						<TrophyContextProvider>
+							{filteredTrophies.map((trophy, i) =>
+								i < visibleCount ? (
+									<NavLink to={String(trophy.id)} key={trophy.id}>
+										<Trophy model={trophy.model} preview />
+									</NavLink>
+								) : (
+									<div key={trophy.id} className={styles.placeholder} />
+								),
+							)}
+						</TrophyContextProvider>
+					</div>
+				</div>
+			</div>
 		</Main>
 	);
+}
+
+function useProgressiveRender(total: number, resetKey: string) {
+	const [count, setCount] = useState(1);
+	const prevKeyRef = useRef(resetKey);
+
+	if (prevKeyRef.current !== resetKey) {
+		prevKeyRef.current = resetKey;
+		setCount(1);
+	}
+
+	useEffect(() => {
+		if (count >= total) return;
+
+		const id = requestAnimationFrame(() => {
+			setCount((c) => c + 1);
+		});
+
+		return () => cancelAnimationFrame(id);
+	}, [count, total]);
+
+	return count;
 }

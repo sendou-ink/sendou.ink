@@ -1,6 +1,8 @@
+import { clsx } from "clsx";
 import { ungzip } from "pako";
 import { PicoCAD2Context, PicoCAD2Viewer } from "picocad2-web";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
+import style from "./Trophy.module.css";
 
 const TrophyCtx = createContext<PicoCAD2Context | undefined>(undefined);
 
@@ -32,9 +34,11 @@ export function TrophyContextProvider({
 
 export function Trophy({
 	model,
+	className,
 	preview,
 }: {
 	model: string;
+	className?: string;
 	preview?: boolean;
 }) {
 	const context = useContext(TrophyCtx);
@@ -85,5 +89,5 @@ export function Trophy({
 		});
 	};
 
-	return <canvas ref={canvasRef} />;
+	return <canvas ref={canvasRef} className={clsx(style.trophy, className)} />;
 }
