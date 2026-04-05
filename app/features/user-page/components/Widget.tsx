@@ -174,6 +174,14 @@ export function Widget({
 						})}
 					/>
 				);
+			case "join-date":
+				if (!widget.data) return null;
+				return (
+					<BigValue
+						value={`#${widget.data.joinOrder}`}
+						footer={widget.data.isSpl2 ? "SPL2" : undefined}
+					/>
+				);
 			case "timezone":
 				return <TimezoneWidget timezone={widget.data.timezone} />;
 			case "favorite-stage":

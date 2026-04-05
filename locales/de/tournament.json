@@ -54,6 +54,7 @@
 	"pickInfo.default.explanation": "",
 	"pickInfo.votes_one": "",
 	"pickInfo.votes_other": "",
+	"pickInfo.teamMapList": "",
 	"pickInfo.counterpick": "Counterpick",
 	"pickInfo.roll": "",
 	"generator.error": "Die Änderungen wurden nicht gespeichert, weil das Turnier bereits begonnen hat",

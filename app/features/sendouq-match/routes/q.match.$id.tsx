@@ -1293,17 +1293,49 @@ function MapListMapPickInfo({
 		return result;
 	};
 
-	const mapPreferences = data.match.memento?.mapPreferences?.[i];
-	const showPopover = () => {
-		// legacy preference system (season 2)
-		if (mapPreferences && mapPreferences.length > 0) return true;
+	const sourceTeams = () => {
+		if (!data.match.memento?.pools) return [];
 
-		if (map.source === "DEFAULT") return true;
+		const pickerGroups = [data.match.groupAlpha, data.match.groupBravo].filter(
+			(g) => map.source === "BOTH" || String(g.id) === map.source,
+		);
 
-		return sourcePoolMemberIds().length > 0;
+		const teams: Array<{ name: string; avatarUrl: string | null }> = [];
+		for (const pickerGroup of pickerGroups) {
+			for (const poolEntry of data.match.memento.pools) {
+				if (!poolEntry.teamName) continue;
+				if (!pickerGroup.members.some((m) => m.id === poolEntry.userId)) {
+					continue;
+				}
+
+				const modePool = poolEntry.pool.find((p) => p.mode === map.mode);
+				if (
+					modePool?.stages.includes(map.stageId) &&
+					!teams.some((t) => t.name === poolEntry.teamName)
+				) {
+					teams.push({
+						name: poolEntry.teamName,
+						avatarUrl:
+							pickerGroup.team?.name === poolEntry.teamName
+								? pickerGroup.team.avatarUrl
+								: null,
+					});
+				}
+			}
+		}
+
+		return teams;
 	};
 
-	if (showPopover()) {
+	const mapPreferences = data.match.memento?.mapPreferences?.[i];
+	const teams = sourceTeams();
+	const poolMemberIds = sourcePoolMemberIds();
+	const showPopover =
+		(mapPreferences && mapPreferences.length > 0) ||
+		map.source === "DEFAULT" ||
+		poolMemberIds.length > 0;
+
+	if (showPopover) {
 		return (
 			<SendouPopover
 				popoverClassName="text-main-forced"
@@ -1321,9 +1353,25 @@ function MapListMapPickInfo({
 					<div className="text-sm text-center text-lighter">
 						{t("tournament:pickInfo.default.explanation")}
 					</div>
-				) : sourcePoolMemberIds().length > 0 ? (
+				) : teams.length > 0 ? (
 					<div className="stack sm">
-						{sourcePoolMemberIds().map((userId) => {
+						{teams.map((team) => (
+							<div
+								key={team.name}
+								className="stack sm horizontal items-center xs"
+							>
+								<Avatar
+									size="xxs"
+									url={team.avatarUrl}
+									identiconInput={team.name}
+								/>
+								{team.name}
+							</div>
+						))}
+					</div>
+				) : poolMemberIds.length > 0 ? (
+					<div className="stack sm">
+						{poolMemberIds.map((userId) => {
 							const user = userIdToUser(userId);
 							return (
 								<div

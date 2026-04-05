@@ -55,6 +55,7 @@
 	"pickInfo.votes_one": "",
 	"pickInfo.votes_many": "",
 	"pickInfo.votes_other": "",
+	"pickInfo.teamMapList": "",
 	"pickInfo.counterpick": "",
 	"pickInfo.roll": "",
 	"generator.error": "Les modifications apportées n'ont pas été enregistrées depuis le début du tournoi",

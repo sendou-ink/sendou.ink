@@ -179,7 +179,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	adminUserWeaponPool,
 	adminUserWidgets,
 	userProfiles,
-	userMapModePreferences,
+	variation === "TEAM_MAP_PREFS" ? undefined : userMapModePreferences,
 	userQWeaponPool,
 	seedingSkills,
 	lastMonthsVoting,
@@ -231,7 +231,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	arts,
 	commissionsOpen,
 	playedMatches,
-	variation === "NO_SQ_GROUPS" ? undefined : groups,
+	variation === "NO_SQ_GROUPS" ? undefined : () => groups(variation),
 	friendCodes,
 	lfgPosts,
 	variation === "NO_SCRIMS" ? undefined : scrimPosts,
@@ -2170,6 +2170,20 @@ const detailedTeam = (seedVariation?: SeedVariation | null) => () => {
 			)
 			.run();
 	}
+
+	const teamPreferences: UserMapModePreferences = {
+		modes: modesShort.map((mode) => ({ mode, preference: "PREFER" as const })),
+		pool: modesShort.map((mode) => ({
+			mode,
+			stages: [...SENDOUQ_DEFAULT_MAPS[mode]],
+		})),
+	};
+
+	sql
+		.prepare(
+			/*sql*/ `update "AllTeam" set "mapModePreferences" = ? where "id" = 1`,
+		)
+		.run(JSON.stringify(teamPreferences));
 };
 
 function otherTeams() {
@@ -2527,7 +2541,11 @@ function commissionsOpen() {
 }
 
 const SENDOU_IN_FULL_GROUP = true;
-async function groups() {
+async function groups(variation?: SeedVariation | null) {
+	if (variation === "TEAM_MAP_PREFS") {
+		return teamMapPrefsGroups();
+	}
+
 	const users = userIdsInAscendingOrderById()
 		.slice(0, 100)
 		.filter((id) => id !== ADMIN_ID && id !== NZAP_TEST_ID);
@@ -2567,6 +2585,65 @@ async function groups() {
 			users.push(ADMIN_ID);
 		}
 	}
+}
+
+async function teamMapPrefsGroups() {
+	const arMemberIds = (
+		sql
+			.prepare(
+				/*sql*/ `select "userId" from "AllTeamMember" where "teamId" = 1 and "leftAt" is null and "userId" != ?`,
+			)
+			.all(ADMIN_ID) as any[]
+	).map((row: any) => row.userId as number);
+
+	const arMemberSet = new Set(arMemberIds);
+	const users = userIdsInAscendingOrderById()
+		.slice(0, 100)
+		.filter(
+			(id) => id !== ADMIN_ID && id !== NZAP_TEST_ID && !arMemberSet.has(id),
+		);
+
+	const nzapGroup = await SQGroupRepository.createGroup({
+		status: "ACTIVE",
+		userId: NZAP_TEST_ID,
+	});
+	for (let j = 0; j < 3; j++) {
+		sql
+			.prepare(
+				/* sql */ `
+				insert into "GroupMember" ("groupId", "userId", "role")
+				values (@groupId, @userId, @role)
+			`,
+			)
+			.run({
+				groupId: nzapGroup.id,
+				userId: users.pop()!,
+				role: "REGULAR",
+			});
+	}
+
+	const adminGroup = await SQGroupRepository.createGroup({
+		status: "ACTIVE",
+		userId: ADMIN_ID,
+	});
+	for (const memberId of arMemberIds) {
+		sql
+			.prepare(
+				/* sql */ `
+				insert into "GroupMember" ("groupId", "userId", "role")
+				values (@groupId, @userId, @role)
+			`,
+			)
+			.run({
+				groupId: adminGroup.id,
+				userId: memberId,
+				role: "REGULAR",
+			});
+	}
+
+	sql
+		.prepare(/*sql*/ `update "Group" set "teamId" = 1 where "id" = ?`)
+		.run(adminGroup.id);
 }
 
 const randomMapList = (
@@ -3182,7 +3259,7 @@ async function friendships(variation?: SeedVariation | null) {
 			.run({ userOneId, userTwoId });
 	}
 
-	if (variation === "NO_SQ_GROUPS") return;
+	if (variation === "NO_SQ_GROUPS" || variation === "TEAM_MAP_PREFS") return;
 
 	for (const friendId of SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS) {
 		const group = await SQGroupRepository.createGroup({

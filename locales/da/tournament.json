@@ -54,6 +54,7 @@
 	"pickInfo.default.explanation": "",
 	"pickInfo.votes_one": "",
 	"pickInfo.votes_other": "",
+	"pickInfo.teamMapList": "",
 	"pickInfo.counterpick": "Modvalg",
 	"pickInfo.roll": "",
 	"generator.error": "Ændringer, som du har lavet, blev ikke gemt, da turneringen nu er begyndt. ",

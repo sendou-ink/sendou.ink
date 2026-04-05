@@ -1,10 +1,12 @@
 .container {
-	display: flex;
-	gap: var(--s-1);
+	display: grid;
+	grid-template-columns: subgrid;
+	grid-column: 1 / -1;
 	min-height: 68px;
 }
 
 .tierLabel {
+	grid-column: 1;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -42,21 +44,19 @@
 }
 
 .targetZone {
-	flex: 1;
+	grid-column: 2;
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--s-1-5);
 	padding: var(--s-2);
 	background: var(--color-bg-high);
-	border: 2px dashed transparent;
 	border-radius: var(--radius-field) 0 0 var(--radius-field);
 	align-items: center;
 	align-content: center;
-	transition: all 0.2s;
+	transition: background 0.2s;
 }
 
 .targetZoneOver {
-	border-color: var(--color-accent-low);
 	background: var(--color-bg-higher);
 }
 
@@ -75,6 +75,7 @@
 }
 
 .arrowControls {
+	grid-column: 3;
 	display: grid;
 	grid-template-rows: 1fr 1fr;
 	gap: var(--s-1);

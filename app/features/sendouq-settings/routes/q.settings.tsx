@@ -5,10 +5,13 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useFetcher, useLoaderData } from "react-router";
+import { Avatar } from "~/components/Avatar";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { ModeImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { Preference, UserMapModePreferences } from "~/db/tables";
+import { useUser } from "~/features/auth/core/user";
 import {
 	soundCodeToLocalStorageKey,
 	soundVolume,
@@ -18,6 +21,7 @@ import { SendouForm } from "~/form/SendouForm";
 import { useHydrated } from "~/hooks/useHydrated";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
+import type { SerializeFrom } from "~/utils/remix";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -79,28 +83,51 @@ export default function SendouQSettingsPage() {
 	);
 }
 
+const PERSONAL_KEY = "personal";
+
+type ManageableTeam = SerializeFrom<typeof loader>["manageableTeams"][number];
+
+function preferencesFromRaw(
+	raw: UserMapModePreferences | null,
+): UserMapModePreferences {
+	if (!raw) return { pool: [], modes: [] };
+
+	return {
+		modes: raw.modes,
+		pool: raw.pool.map((p) => ({
+			mode: p.mode,
+			stages: p.stages.filter((s) => !BANNED_MAPS[p.mode].includes(s)),
+		})),
+	};
+}
+
 function MapPicker() {
 	const { t } = useTranslation(["q", "common"]);
 	const data = useLoaderData<typeof loader>();
 	const fetcher = useFetcher();
-	const [preferences, setPreferences] = React.useState<UserMapModePreferences>(
-		() => {
-			if (!data.settings.mapModePreferences) {
-				return {
-					pool: [],
-					modes: [],
-				};
-			}
+	const hasTeams = data.manageableTeams.length > 0;
 
-			return {
-				modes: data.settings.mapModePreferences.modes,
-				pool: data.settings.mapModePreferences.pool.map((p) => ({
-					mode: p.mode,
-					stages: p.stages.filter((s) => !BANNED_MAPS[p.mode].includes(s)),
-				})),
-			};
-		},
+	const [selectedKey, setSelectedKey] = useState<string>(PERSONAL_KEY);
+
+	const selectedTeamId =
+		selectedKey === PERSONAL_KEY ? undefined : Number(selectedKey);
+
+	const preferencesForSelection = (key: string) => {
+		if (key === PERSONAL_KEY) {
+			return preferencesFromRaw(data.settings.mapModePreferences);
+		}
+		const team = data.manageableTeams.find((t) => String(t.id) === key);
+		return preferencesFromRaw(team?.mapModePreferences ?? null);
+	};
+
+	const [preferences, setPreferences] = useState<UserMapModePreferences>(() =>
+		preferencesForSelection(PERSONAL_KEY),
 	);
+
+	const handleSelectionChange = (key: string) => {
+		setSelectedKey(key);
+		setPreferences(preferencesForSelection(key));
+	};
 
 	const handleModePreferenceChange = ({
 		mode,
@@ -142,6 +169,14 @@ function MapPicker() {
 		return true;
 	};
 
+	const selectItems = [
+		{ id: PERSONAL_KEY, name: t("q:settings.maps.personal") },
+		...data.manageableTeams.map((team) => ({
+			id: String(team.id),
+			name: team.name,
+		})),
+	];
+
 	return (
 		<details>
 			<summary className={clsx(styles.summary, "half-width")}>
@@ -164,7 +199,34 @@ function MapPicker() {
 						}),
 					})}
 				/>
+				{selectedTeamId ? (
+					<input type="hidden" name="teamId" value={selectedTeamId} />
+				) : null}
 				<div className="stack lg">
+					{hasTeams ? (
+						<div className="half-width">
+							<SendouSelect
+								value={selectedKey}
+								onChange={(key) => handleSelectionChange(String(key))}
+								aria-label={t("q:settings.maps.preferencesFor")}
+								items={selectItems}
+								bottomText={t("q:settings.maps.teamExplanation")}
+							>
+								{(item) => (
+									<SendouSelectItem
+										key={item.id}
+										id={item.id}
+										textValue={item.name}
+									>
+										<MapPickerSelectOption
+											item={item}
+											teams={data.manageableTeams}
+										/>
+									</SendouSelectItem>
+								)}
+							</SendouSelect>
+						</div>
+					) : null}
 					<div className="stack items-center">
 						{modesShort.map((modeShort) => {
 							const preference = preferences.modes.find(
@@ -238,6 +300,35 @@ function MapPicker() {
 				</div>
 			</fetcher.Form>
 		</details>
+	);
+}
+
+function MapPickerSelectOption({
+	item,
+	teams,
+}: {
+	item: { id: string; name: string };
+	teams: ManageableTeam[];
+}) {
+	const user = useUser();
+
+	if (item.id === PERSONAL_KEY) {
+		return (
+			<div className="stack horizontal xs items-center">
+				<Avatar user={user} size="xxxs" />
+				{item.name}
+			</div>
+		);
+	}
+
+	const team = teams.find((t) => String(t.id) === item.id);
+	if (!team) return item.name;
+
+	return (
+		<div className="stack horizontal xs items-center">
+			<Avatar size="xxxs" url={team.logoUrl} identiconInput={team.name} />
+			{team.name}
+		</div>
 	);
 }
 
