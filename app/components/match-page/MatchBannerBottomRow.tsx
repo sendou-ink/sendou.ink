@@ -5,11 +5,11 @@ import { ModeImage } from "../Image";
 import styles from "./MatchBannerBottomRow.module.css";
 
 interface MatchBannerBottomRowProps {
-	games: Array<{ mode: ModeShort; winner: "ALPHA" | "BRAVO" }>;
+	games: Array<{ mode: ModeShort; winner?: "ALPHA" | "BRAVO" }>;
 	activeRosters: {
-		alpha: CommonUser[];
-		bravo: CommonUser[];
-	};
+		alpha: CommonUser[] | null;
+		bravo: CommonUser[] | null;
+	} | null;
 }
 
 export function MatchBannerBottomRow({
@@ -49,6 +49,10 @@ function Roster({ users }: { users: CommonUser[] }) {
 function ActiveRosters({
 	activeRosters,
 }: Pick<MatchBannerBottomRowProps, "activeRosters">) {
+	if (!activeRosters?.alpha || !activeRosters.bravo) {
+		return null;
+	}
+
 	return (
 		<div className={styles.activeRosters}>
 			<Roster users={activeRosters.alpha} />

@@ -1,117 +1,102 @@
-import clsx from "clsx";
+import { differenceInMinutes } from "date-fns";
 import { ArrowLeft } from "lucide-react";
 import * as React from "react";
-import { Form, useLoaderData, useRevalidator } from "react-router";
+import { useLoaderData } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
-import { containerClassName } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
-import { useUser } from "~/features/auth/core/user";
+import {
+	MatchBanner,
+	MatchBannerContainer,
+} from "~/components/match-page/MatchBanner";
+import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
+import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
+import { MatchPage } from "~/components/match-page/MatchPage";
+import { MatchPageHeader } from "~/components/match-page/MatchPageHeader";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
-import { useVisibilityChange } from "~/hooks/useVisibilityChange";
-import invariant from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
 import { tournamentBracketsPage } from "~/utils/urls";
 import { action } from "../actions/to.$id.matches.$mid.server";
-import { CastInfo } from "../components/CastInfo";
-import { MatchRosters } from "../components/MatchRosters";
-import { OrganizerMatchMapListDialog } from "../components/OrganizerMatchMapListDialog";
-import { StartedMatch } from "../components/StartedMatch";
 import { getRounds } from "../core/rounds";
 import { loader } from "../loaders/to.$id.matches.$mid.server";
 import { groupNumberToLetters } from "../tournament-bracket-utils";
 
 export { action, loader };
 
-import styles from "../tournament-bracket.module.css";
+// xxx: can we simplify loader to return values that are closer to what we want to display?
 
 export default function TournamentMatchPage() {
-	const user = useUser();
-	const visibility = useVisibilityChange();
-	const { revalidate } = useRevalidator();
-	const tournament = useTournament();
 	const data = useLoaderData<typeof loader>();
+	const tournament = useTournament();
 
-	React.useEffect(() => {
-		if (visibility !== "visible" || tournament.ctx.isFinalized) return;
+	const opponentOne = data.match.opponentOne;
+	const opponentTwo = data.match.opponentTwo;
 
-		revalidate();
-	}, [visibility, revalidate, tournament.ctx.isFinalized]);
+	const scoreSum = (opponentOne?.score ?? 0) + (opponentTwo?.score ?? 0);
 
-	const type =
-		tournament.canReportScore({ matchId: data.match.id, user }) ||
-		tournament.isOrganizerOrStreamer(user)
-			? "EDIT"
-			: "OTHER";
+	const currentMap = data.mapList?.filter((m) => !m.bannedByTournamentTeamId)[
+		scoreSum
+	];
 
-	const showRosterPeek = () => {
-		if (data.matchIsOver) return false;
+	const activeRosterByTeamId = (tournamentTeamId: number) => {
+		const team = tournament.teamById(tournamentTeamId);
+		if (!team) return null;
 
-		if (!data.match.opponentOne?.id || !data.match.opponentTwo?.id) return true;
+		const activeRosterUserIds = team.activeRosterUserIds;
+		if (!activeRosterUserIds?.length) return null;
 
-		return type !== "EDIT";
+		return team.members
+			.filter((member) => !activeRosterUserIds.includes(member.userId))
+			.map((member) => ({ ...member, id: member.userId }));
 	};
 
 	return (
-		<div className={clsx("stack lg", containerClassName("normal"))}>
-			<div className="flex horizontal justify-between items-center">
-				<MatchHeader />
-				<div className="stack md horizontal flex-wrap-reverse justify-end">
-					{tournament.isOrganizerOrStreamer(user) ? (
-						<OrganizerMatchMapListDialog data={data} />
-					) : null}
-					<LinkButton
-						to={tournamentBracketsPage({
-							tournamentId: tournament.ctx.id,
-							bracketIdx: tournament.matchIdToBracketIdx(data.match.id),
-							groupId: data.match.groupId,
-						})}
-						variant="outlined"
-						size="small"
-						className="w-max"
-						icon={<ArrowLeft />}
-						testId="back-to-bracket-button"
+		<MatchPage>
+			<TournamentMatchHeader />
+
+			<MatchBannerContainer>
+				<TournamentMatchBannerTopRow />
+				{currentMap ? (
+					<MatchBanner
+						stageId={currentMap.stageId}
+						mode={currentMap.mode}
+						screenLegal={!data.noScreen}
 					>
-						Back to bracket
-					</LinkButton>
-				</div>
-			</div>
-			<div className="stack md">
-				<CastInfo
-					matchIsOngoing={Boolean(
-						(data.match.opponentOne?.score &&
-							data.match.opponentOne.score > 0) ||
-							(data.match.opponentTwo?.score &&
-								data.match.opponentTwo.score > 0),
-					)}
-					matchIsOver={data.matchIsOver}
-					matchId={data.match.id}
-					matchStatus={data.match.status}
+						Team 2 pick
+					</MatchBanner>
+				) : null}
+				<MatchBannerBottomRow
+					games={
+						data.mapList?.map((map, i) => {
+							const result = data.results.at(i);
+							const winner = result
+								? result.winnerTeamId === opponentOne?.id
+									? "ALPHA"
+									: "BRAVO"
+								: undefined;
+
+							return {
+								mode: map.mode,
+								winner,
+							};
+						}) ?? []
+					}
+					activeRosters={
+						opponentOne?.id && opponentTwo?.id
+							? {
+									alpha: activeRosterByTeamId(opponentOne.id),
+									bravo: activeRosterByTeamId(opponentTwo.id),
+								}
+							: null
+					}
 				/>
-				{data.matchIsOver && !data.endedEarly && data.results.length > 0 ? (
-					<ResultsSection />
-				) : null}
-				{data.matchIsOver && data.endedEarly ? <EndedEarlyMessage /> : null}
-				{!data.matchIsOver &&
-				typeof data.match.opponentOne?.id === "number" &&
-				typeof data.match.opponentTwo?.id === "number" ? (
-					<MapListSection
-						teams={[data.match.opponentOne.id, data.match.opponentTwo.id]}
-						type={type}
-					/>
-				) : null}
-				{showRosterPeek() ? (
-					<MatchRosters
-						teams={[data.match.opponentOne?.id, data.match.opponentTwo?.id]}
-					/>
-				) : null}
-			</div>
-		</div>
+			</MatchBannerContainer>
+
+			<TournamentMatchTabs />
+		</MatchPage>
 	);
 }
 
-function MatchHeader() {
+function TournamentMatchHeader() {
 	const tournament = useTournament();
 	const data = useLoaderData<typeof loader>();
 
@@ -158,7 +143,10 @@ function MatchHeader() {
 											type: "winners",
 											bracketData: bracket.data,
 										}),
-										...getRounds({ type: "losers", bracketData: bracket.data }),
+										...getRounds({
+											type: "losers",
+											bracketData: bracket.data,
+										}),
 									];
 
 						const round = rounds.find((round) => round.id === match.round_id);
@@ -203,150 +191,183 @@ function MatchHeader() {
 	}, [tournament, data.match.id]);
 
 	return (
-		<div className="line-height-tight" data-testid="match-header">
-			<h2 className="text-lg">{roundName}</h2>
-			{tournament.ctx.settings.bracketProgression.length > 1 ? (
-				<div className="text-lighter text-xs font-bold">{bracketName}</div>
-			) : null}
-		</div>
+		<MatchPageHeader
+			// xxx: fix !
+			subtitle={bracketName!}
+			topRight={
+				<LinkButton
+					to={tournamentBracketsPage({
+						tournamentId: tournament.ctx.id,
+						bracketIdx: tournament.matchIdToBracketIdx(data.match.id),
+						groupId: data.match.groupId,
+					})}
+					variant="outlined"
+					size="small"
+					className="w-max"
+					icon={<ArrowLeft />}
+					testId="back-to-bracket-button"
+				>
+					Back to bracket
+				</LinkButton>
+			}
+		>
+			{roundName}
+		</MatchPageHeader>
 	);
 }
 
-function MapListSection({
-	teams,
-	type,
-}: {
-	teams: [id: number, id: number];
-	type: "EDIT" | "OTHER";
-}) {
+function TournamentMatchBannerTopRow() {
+	const currentTime = new Date();
 	const data = useLoaderData<typeof loader>();
-	const tournament = useTournament();
 
-	const teamOneId = teams[0];
-	const teamOne = React.useMemo(
-		() => tournament.teamById(teamOneId),
-		[teamOneId, tournament],
-	);
-	const teamTwoId = teams[1];
-	const teamTwo = React.useMemo(
-		() => tournament.teamById(teamTwoId),
-		[teamTwoId, tournament],
-	);
+	if (
+		!data.match.startedAt ||
+		!data.match.opponentOne ||
+		!data.match.opponentTwo
+	)
+		return null;
 
-	if (!teamOne || !teamTwo) return null;
-
-	invariant(data.mapList, "No mapList found for this map list");
-
-	const scoreSum =
-		(data.match.opponentOne?.score ?? 0) + (data.match.opponentTwo?.score ?? 0);
-
-	const currentMap = data.mapList?.filter((m) => !m.bannedByTournamentTeamId)[
-		scoreSum
-	];
+	const totalMinutes = differenceInMinutes(currentTime, data.match.startedAt);
 
 	return (
-		<StartedMatch
-			currentStageWithMode={currentMap}
-			teams={[teamOne, teamTwo]}
-			type={type}
+		<MatchBannerTopRow
+			score={{
+				alpha: data.match.opponentOne.score ?? 0,
+				bravo: data.match.opponentTwo.score ?? 0,
+				isFinal:
+					data.match.opponentOne?.result === "win" ||
+					data.match.opponentTwo?.result === "win",
+				count: data.match.roundMaps.count,
+				bestOf: data.match.roundMaps.type === "BEST_OF",
+			}}
+			time={{
+				// xxx: current
+				currentMinutes: 3,
+				totalMinutes,
+			}}
 		/>
 	);
 }
 
-function ResultsSection() {
-	const data = useLoaderData<typeof loader>();
-	const tournament = useTournament();
-	const [selectedResultIndex, setSelectedResultIndex] = useSearchParamState({
-		defaultValue: data.results.length - 1,
-		name: "result",
-		revive: (value) => {
-			const maybeIndex = Number(value);
-			if (!Number.isInteger(maybeIndex)) return;
-			if (maybeIndex < 0 || maybeIndex >= data.results.length) return;
+function TournamentMatchTabs() {
+	return null;
 
-			return maybeIndex;
-		},
-	});
-
-	const result = data.results[selectedResultIndex];
-	invariant(result, "Result is missing");
-
-	const teamOne = data.match.opponentOne?.id
-		? tournament.teamById(data.match.opponentOne.id)
-		: undefined;
-	const teamTwo = data.match.opponentTwo?.id
-		? tournament.teamById(data.match.opponentTwo.id)
-		: undefined;
-
-	if (!teamOne || !teamTwo) {
-		throw new Error("Team is missing");
-	}
-
-	const resultSource = data.mapList?.find(
-		(m) => m.stageId === result.stageId && m.mode === result.mode,
-	)?.source;
-
-	return (
-		<StartedMatch
-			currentStageWithMode={{ ...result, source: resultSource ?? "TO" }}
-			teams={[teamOne, teamTwo]}
-			selectedResultIndex={selectedResultIndex}
-			setSelectedResultIndex={setSelectedResultIndex}
-			result={result}
-			type="OTHER"
-		/>
-	);
-}
-
-function EndedEarlyMessage() {
-	const user = useUser();
-	const data = useLoaderData<typeof loader>();
-	const tournament = useTournament();
-
-	const winnerTeamId =
-		data.match.opponentOne?.result === "win"
-			? data.match.opponentOne.id
-			: data.match.opponentTwo?.result === "win"
-				? data.match.opponentTwo.id
-				: null;
-
-	const winnerTeam = winnerTeamId ? tournament.teamById(winnerTeamId) : null;
-
-	const opponentOneTeam = data.match.opponentOne?.id
-		? tournament.teamById(data.match.opponentOne.id)
-		: null;
-	const opponentTwoTeam = data.match.opponentTwo?.id
-		? tournament.teamById(data.match.opponentTwo.id)
-		: null;
-	const droppedTeam = opponentOneTeam?.droppedOut
-		? opponentOneTeam
-		: opponentTwoTeam?.droppedOut
-			? opponentTwoTeam
-			: null;
-
-	return (
-		<div className={styles.duringMatchActions}>
-			<div className={clsx(styles.lockedBanner, styles.lockedBannerLonely)}>
-				<div className="stack sm items-center">
-					<div className="text-lg text-center font-bold">Match ended early</div>
-					{winnerTeam ? (
-						<div className="text-xs text-lighter text-center">
-							{droppedTeam
-								? `${droppedTeam.name} dropped out of the tournament.`
-								: "The organizer ended this match as it exceeded the time limit."}{" "}
-							Winner: {winnerTeam.name}
-						</div>
-					) : null}
-				</div>
-				{tournament.isOrganizer(user) &&
-				tournament.matchCanBeReopened(data.match.id) ? (
-					<Form method="post" className="contents">
-						<SubmitButton _action="REOPEN_MATCH" testId="reopen-match-button">
-							Reopen match
-						</SubmitButton>
-					</Form>
-				) : null}
-			</div>
-		</div>
-	);
+	// return (
+	// 	<MatchTabs tabs={["join", "rosters", "action"]}>
+	// 		<MatchJoinTab
+	// 			joinLink="https://app.nintendo.net/private_battle/abc123"
+	// 			hostedBy={{
+	// 				id: 1,
+	// 				username: "Grey",
+	// 				discordId: "123456789",
+	// 				discordAvatar: null,
+	// 				customUrl: null,
+	// 			}}
+	// 			pool="SQ7"
+	// 			pass="8430"
+	// 			showNoSplatnetAlert
+	// 		/>
+	// 		<MatchRosterTab
+	// 			minMembersPerTeam={4}
+	// 			canEditSubbedOut={[true, false]}
+	// 			onSubbedOutChange={(teamId, subbedOut) => {
+	// 				logger.info("onSubbedOutChange", { teamId, subbedOut });
+	// 			}}
+	// 			teams={[
+	// 				{
+	// 					team: {
+	// 						id: 1,
+	// 						name: "me in japan",
+	// 						url: "/t/me-in-japan",
+	// 					},
+	// 					members: [
+	// 						{
+	// 							id: 1,
+	// 							username: "Sendou",
+	// 							discordId: "123",
+	// 							discordAvatar: null,
+	// 							customUrl: "sendou",
+	// 						},
+	// 						{
+	// 							id: 2,
+	// 							username: "Lean",
+	// 							discordId: "456",
+	// 							discordAvatar: null,
+	// 							customUrl: null,
+	// 						},
+	// 						{
+	// 							id: 3,
+	// 							username: "Kiver",
+	// 							discordId: "789",
+	// 							discordAvatar: null,
+	// 							customUrl: null,
+	// 						},
+	// 						{
+	// 							id: 4,
+	// 							username: "Brian",
+	// 							discordId: "012",
+	// 							discordAvatar: null,
+	// 							customUrl: null,
+	// 						},
+	// 						{
+	// 							id: 9,
+	// 							username: "Poppy",
+	// 							discordId: "567",
+	// 							discordAvatar: null,
+	// 							customUrl: null,
+	// 						},
+	// 					],
+	// 					subbedOut: [9],
+	// 				},
+	// 				{
+	// 					team: {
+	// 						id: 2,
+	// 						name: "Question Mark",
+	// 						url: "/t/question-mark",
+	// 					},
+	// 					members: [
+	// 						{
+	// 							id: 5,
+	// 							username: "Naga",
+	// 							discordId: "345",
+	// 							discordAvatar: null,
+	// 							customUrl: null,
+	// 						},
+	// 						{
+	// 							id: 6,
+	// 							username: "Grey",
+	// 							discordId: "678",
+	// 							discordAvatar: null,
+	// 							customUrl: null,
+	// 						},
+	// 						{
+	// 							id: 7,
+	// 							username: "Zack",
+	// 							discordId: "901",
+	// 							discordAvatar: null,
+	// 							customUrl: null,
+	// 						},
+	// 						{
+	// 							id: 8,
+	// 							username: "Lime",
+	// 							discordId: "234",
+	// 							discordAvatar: null,
+	// 							customUrl: null,
+	// 						},
+	// 					],
+	// 				},
+	// 			]}
+	// 		/>
+	// 		<MatchActionTab
+	// 			teams={[
+	// 				{ id: 1, name: "Chimera" },
+	// 				{ id: 2, name: "Koopa Clan" },
+	// 			]}
+	// 			ownTeamId={1}
+	// 			stageId={4}
+	// 			mode="SZ"
+	// 			withPoints={true}
+	// 		/>
+	// 	</MatchTabs>
+	// );
 }

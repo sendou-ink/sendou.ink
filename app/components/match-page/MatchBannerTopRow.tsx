@@ -42,21 +42,31 @@ function Timer({ time }: { time: MatchBannerTopRowProps["time"] }) {
 
 	if (!isHydrated) return null;
 
-	const formatter = new Intl.NumberFormat(i18n.language, {
+	const minuteFormatter = new Intl.NumberFormat(i18n.language, {
 		style: "unit",
 		unit: "minute",
 		unitDisplay: "short",
 	});
+	const hourFormatter = new Intl.NumberFormat(i18n.language, {
+		style: "unit",
+		unit: "hour",
+		unitDisplay: "short",
+	});
 
+	const MAX_MINUTES = 60;
 	const dateTime = (minutes: number) => `PT0H${minutes}M`;
+	const displayValue = (minutes: number) =>
+		minutes >= MAX_MINUTES
+			? `${hourFormatter.format(1)}+`
+			: minuteFormatter.format(minutes);
 
 	return (
 		<div className={styles.values}>
 			<time dateTime={dateTime(time.currentMinutes)} className={styles.sub}>
-				{formatter.format(time.currentMinutes)}
+				{displayValue(time.currentMinutes)}
 			</time>
 			<time dateTime={dateTime(time.totalMinutes)}>
-				{formatter.format(time.totalMinutes)}
+				{displayValue(time.totalMinutes)}
 			</time>
 		</div>
 	);
