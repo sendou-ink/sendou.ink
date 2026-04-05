@@ -1486,5 +1486,9 @@
 	"zekkocup": {
 		"displayName": "Zekko Cup",
 		"authorDiscordId": "1320944066002681876"
+	},
+	"ocl": {
+		"displayName": "O.R.K.A. Comp Labs",
+		"authorDiscordId": "176158372914003968"
 	}
 }
