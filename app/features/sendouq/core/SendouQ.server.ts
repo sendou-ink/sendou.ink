@@ -155,6 +155,7 @@ class SendouQClass {
 		return this.groups.find((group) => group.inviteCode === inviteCode);
 	}
 
+	// xxx: only needed stuff here
 	/**
 	 * Maps a database match to a format with appropriate censoring based on user permissions.
 	 * Includes private notes for team members and censors sensitive data for non-participants.
