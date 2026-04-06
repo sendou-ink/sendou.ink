@@ -31,7 +31,13 @@ function Score({ score }: { score: MatchBannerTopRowProps["score"] }) {
 			<div>
 				{score.alpha}-{score.bravo}
 			</div>
-			<div className={styles.sub}>Final</div>
+			<div className={styles.sub}>
+				{score.isFinal
+					? "Final"
+					: score.bestOf
+						? `Best of ${score.count}`
+						: `Play all ${score.count}`}
+			</div>
 		</div>
 	);
 }

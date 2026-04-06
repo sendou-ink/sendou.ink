@@ -49,7 +49,25 @@ export function MatchBanner({
 	);
 }
 
-function ScreenNotice({ screenLegal }: Pick<MatchBannerProps, "screenLegal">) {
+export function MultiMatchBanner({ stageIds }: { stageIds: StageId[] }) {
+	return (
+		<div className={clsx(styles.banner, styles.multiBanner)}>
+			{stageIds.map((stageId, i) => (
+				<div
+					key={`${stageId}-${i}`}
+					className={styles.segment}
+					style={
+						{
+							"--stage-img": `url(${stageBannerImageUrl(stageId)})`,
+						} as React.CSSProperties
+					}
+				/>
+			))}
+		</div>
+	);
+}
+
+function ScreenNotice({ screenLegal }: { screenLegal: boolean }) {
 	const { t } = useTranslation(["weapons", "q"]);
 
 	const imgSize = 18;

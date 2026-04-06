@@ -216,9 +216,15 @@ class SendouQClass {
 			};
 		};
 
+		const reportedMapsCount = match.mapList.filter(
+			(map) => map.winnerGroupId,
+		).length;
+		const currentMap = match.mapList.at(reportedMapsCount);
+
 		return {
 			...match,
 			chatCode: isMatchInsider ? match.chatCode : undefined,
+			currentMap,
 			groupAlpha: this.#getAddMemberPrivateNoteMapper(notes)(
 				matchGroupCensorer(match.groupAlpha, isTeamAlphaMember),
 			),

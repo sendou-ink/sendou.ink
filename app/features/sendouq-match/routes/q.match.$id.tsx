@@ -7,6 +7,7 @@ import { MatchActionTab } from "~/components/match-page/MatchActionTab";
 import {
 	MatchBanner,
 	MatchBannerContainer,
+	MultiMatchBanner,
 } from "~/components/match-page/MatchBanner";
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
@@ -19,7 +20,6 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-import { logger } from "~/utils/logger";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { SENDOUQ_RULES_PAGE } from "~/utils/urls";
 import { action } from "../actions/q.match.$id.server";
@@ -81,28 +81,60 @@ function SendouQMatchBanner() {
 			0,
 		);
 
-	const reportedCount = data.match.mapList.filter(
-		(map) => map.winnerGroupId,
-	).length;
+	const topRow = (
+		<MatchBannerTopRow
+			score={{
+				alpha: countScore(data.match.groupAlpha.id),
+				bravo: countScore(data.match.groupBravo.id),
+				isFinal: Boolean(data.match.isLocked),
+				count: SENDOUQ_BEST_OF,
+				bestOf: true,
+			}}
+			time={{
+				currentMinutes: 3,
+				totalMinutes: 1,
+			}}
+		/>
+	);
 
-	const currentMap = data.match.mapList.at(reportedCount);
+	const bottomRow = (
+		<MatchBannerBottomRow
+			games={data.match.mapList.map((map) => ({
+				mode: map.mode,
+				winner:
+					map.winnerGroupId === data.match.groupAlpha.id
+						? "ALPHA"
+						: map.winnerGroupId === data.match.groupBravo.id
+							? "BRAVO"
+							: undefined,
+			}))}
+			activeRosters={{
+				alpha: data.match.groupAlpha.members,
+				bravo: data.match.groupBravo.members,
+			}}
+		/>
+	);
+
+	if (data.match.isLocked) {
+		const playedStageIds = data.match.mapList
+			.filter((m) => m.winnerGroupId !== null)
+			.map((m) => m.stageId);
+
+		return (
+			<MatchBannerContainer>
+				{topRow}
+				<MultiMatchBanner stageIds={playedStageIds} />
+				{bottomRow}
+			</MatchBannerContainer>
+		);
+	}
+
+	const currentMap = data.match.currentMap;
 	invariant(currentMap);
 
 	return (
 		<MatchBannerContainer>
-			<MatchBannerTopRow
-				score={{
-					alpha: countScore(data.match.groupAlpha.id),
-					bravo: countScore(data.match.groupBravo.id),
-					isFinal: Boolean(data.match.isLocked),
-					count: SENDOUQ_BEST_OF,
-					bestOf: true,
-				}}
-				time={{
-					currentMinutes: 3,
-					totalMinutes: 1,
-				}}
-			/>
+			{topRow}
 			<MatchBanner
 				stageId={currentMap.stageId}
 				mode={currentMap.mode}
@@ -114,26 +146,17 @@ function SendouQMatchBanner() {
 					5 <Vote />
 				</div>
 			</MatchBanner>
-			<MatchBannerBottomRow
-				games={data.match.mapList.map((map) => ({
-					mode: map.mode,
-					winner:
-						map.winnerGroupId === data.match.groupAlpha.id
-							? "ALPHA"
-							: map.winnerGroupId === data.match.groupBravo.id
-								? "BRAVO"
-								: undefined,
-				}))}
-				activeRosters={{
-					alpha: data.match.groupAlpha.members,
-					bravo: data.match.groupBravo.members,
-				}}
-			/>
+			{bottomRow}
 		</MatchBannerContainer>
 	);
 }
 
 function SendouQMatchTabs() {
+	const data = useLoaderData<typeof loader>();
+
+	const currentMap = data.match.currentMap;
+	invariant(currentMap);
+
 	return (
 		<MatchTabs tabs={["join", "rosters", "action"]}>
 			<MatchJoinTab
@@ -151,103 +174,26 @@ function SendouQMatchTabs() {
 			/>
 			<MatchRosterTab
 				minMembersPerTeam={4}
-				canEditSubbedOut={[true, false]}
-				onSubbedOutChange={(teamId, subbedOut) => {
-					logger.info("onSubbedOutChange", { teamId, subbedOut });
-				}}
+				canEditSubbedOut={[false, false]}
 				teams={[
 					{
-						team: {
-							id: 1,
-							name: "me in japan",
-							url: "/t/me-in-japan",
-						},
-						members: [
-							{
-								id: 1,
-								username: "Sendou",
-								discordId: "123",
-								discordAvatar: null,
-								customUrl: "sendou",
-							},
-							{
-								id: 2,
-								username: "Lean",
-								discordId: "456",
-								discordAvatar: null,
-								customUrl: null,
-							},
-							{
-								id: 3,
-								username: "Kiver",
-								discordId: "789",
-								discordAvatar: null,
-								customUrl: null,
-							},
-							{
-								id: 4,
-								username: "Brian",
-								discordId: "012",
-								discordAvatar: null,
-								customUrl: null,
-							},
-							{
-								id: 9,
-								username: "Poppy",
-								discordId: "567",
-								discordAvatar: null,
-								customUrl: null,
-							},
-						],
-						subbedOut: [9],
+						team: data.match.groupAlpha.team,
+						members: data.match.groupAlpha.members,
 					},
 					{
-						team: {
-							id: 2,
-							name: "Question Mark",
-							url: "/t/question-mark",
-						},
-						members: [
-							{
-								id: 5,
-								username: "Naga",
-								discordId: "345",
-								discordAvatar: null,
-								customUrl: null,
-							},
-							{
-								id: 6,
-								username: "Grey",
-								discordId: "678",
-								discordAvatar: null,
-								customUrl: null,
-							},
-							{
-								id: 7,
-								username: "Zack",
-								discordId: "901",
-								discordAvatar: null,
-								customUrl: null,
-							},
-							{
-								id: 8,
-								username: "Lime",
-								discordId: "234",
-								discordAvatar: null,
-								customUrl: null,
-							},
-						],
+						team: data.match.groupBravo.team,
+						members: data.match.groupBravo.members,
 					},
 				]}
 			/>
 			<MatchActionTab
 				teams={[
-					{ id: 1, name: "Chimera" },
-					{ id: 2, name: "Koopa Clan" },
+					{ id: data.match.groupAlpha.id, name: "Group Alpha" },
+					{ id: data.match.groupBravo.id, name: "Group Bravo" },
 				]}
 				ownTeamId={1}
-				stageId={4}
-				mode="SZ"
+				stageId={currentMap.stageId}
+				mode={currentMap.mode}
 				withPoints={false}
 			/>
 		</MatchTabs>

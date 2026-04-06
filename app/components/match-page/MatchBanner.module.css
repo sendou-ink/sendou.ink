@@ -65,3 +65,45 @@
 .illegalIcon {
 	color: var(--color-error);
 }
+
+.multiBanner {
+	display: flex;
+	padding: 0;
+	overflow: hidden;
+	background-image: none;
+}
+
+.segment {
+	--slant: 13px;
+
+	flex: 1 1 0;
+	min-width: 0;
+	height: 100%;
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-image:
+		linear-gradient(
+			to top,
+			rgba(255, 255, 255, 0),
+			rgba(255, 255, 255, 0),
+			rgba(0, 0, 0, 0.6)
+		),
+		var(--stage-img);
+	clip-path: polygon(
+		var(--slant) 0,
+		100% 0,
+		calc(100% - var(--slant)) 100%,
+		0 100%
+	);
+	margin-inline-start: calc(var(--slant) * -1);
+
+	&:first-child {
+		clip-path: polygon(0 0, 100% 0, calc(100% - var(--slant)) 100%, 0 100%);
+		margin-inline-start: 0;
+	}
+
+	&:last-child {
+		clip-path: polygon(var(--slant) 0, 100% 0, 100% 100%, 0 100%);
+	}
+}
