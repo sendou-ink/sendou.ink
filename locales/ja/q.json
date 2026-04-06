@@ -139,6 +139,8 @@
 	"match.report.weaponLabel": "武器",
 	"match.sides.alpha": "アルファチーム",
 	"match.sides.bravo": "ブラボーチーム",
+	"match.groupAlpha": "",
+	"match.groupBravo": "",
 	"match.helpdesk": "ヘルプデスク",
 	"match.pool": "プール",
 	"match.password.short": "通過",

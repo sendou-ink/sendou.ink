@@ -139,6 +139,8 @@
 	"match.report.weaponLabel": "Оружие",
 	"match.sides.alpha": "Альфа",
 	"match.sides.bravo": "Браво",
+	"match.groupAlpha": "",
+	"match.groupBravo": "",
 	"match.helpdesk": "Служба поддержки",
 	"match.pool": "Канал",
 	"match.password.short": "Пароль",

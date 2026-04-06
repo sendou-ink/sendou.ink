@@ -21,7 +21,7 @@ import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { SENDOUQ_RULES_PAGE } from "~/utils/urls";
+import { SENDOUQ_RULES_PAGE, teamPage } from "~/utils/urls";
 import { action } from "../actions/q.match.$id.server";
 import { loader } from "../loaders/q.match.$id.server";
 
@@ -153,6 +153,7 @@ function SendouQMatchBanner() {
 
 function SendouQMatchTabs() {
 	const data = useLoaderData<typeof loader>();
+	const { t } = useTranslation(["q"]);
 
 	const currentMap = data.match.currentMap;
 	invariant(currentMap);
@@ -177,11 +178,13 @@ function SendouQMatchTabs() {
 				canEditSubbedOut={[false, false]}
 				teams={[
 					{
-						team: data.match.groupAlpha.team,
+						team: mapRosterTeam(data.match.groupAlpha.team),
+						defaultName: t("q:match.groupAlpha"),
 						members: data.match.groupAlpha.members,
 					},
 					{
-						team: data.match.groupBravo.team,
+						team: mapRosterTeam(data.match.groupBravo.team),
+						defaultName: t("q:match.groupBravo"),
 						members: data.match.groupBravo.members,
 					},
 				]}
@@ -198,4 +201,21 @@ function SendouQMatchTabs() {
 			/>
 		</MatchTabs>
 	);
+}
+
+function mapRosterTeam(
+	team: {
+		id: number;
+		name: string;
+		customUrl: string;
+		avatarUrl: string | null;
+	} | null,
+) {
+	if (!team) return undefined;
+	return {
+		id: team.id,
+		name: team.name,
+		url: teamPage(team.customUrl),
+		avatar: team.avatarUrl ?? undefined,
+	};
 }

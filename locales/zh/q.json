@@ -139,6 +139,8 @@
 	"match.report.weaponLabel": "武器",
 	"match.sides.alpha": "Alpha",
 	"match.sides.bravo": "Bravo",
+	"match.groupAlpha": "",
+	"match.groupBravo": "",
 	"match.helpdesk": "Helpdesk",
 	"match.pool": "频道",
 	"match.password.short": "密码",

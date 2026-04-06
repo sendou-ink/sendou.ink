@@ -97,6 +97,7 @@ function groupWithTeamAndMembers(
 							"UserSubmittedImage.id",
 						)
 						.select((eb) => [
+							"AllTeam.id",
 							"AllTeam.name",
 							"AllTeam.customUrl",
 							concatUserSubmittedImagePrefix(

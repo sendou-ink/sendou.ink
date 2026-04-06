@@ -5,6 +5,7 @@ import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
 import { userPage } from "~/utils/urls";
 import { SendouTabPanel } from "../elements/Tabs";
@@ -18,6 +19,7 @@ interface RosterTabTeam {
 		url: string;
 		avatar?: string;
 	};
+	defaultName?: string;
 	members: Array<CommonUser>;
 	/** Sub user ids i.e. those who are not the current active roster */
 	subbedOut?: Array<number>;
@@ -96,22 +98,12 @@ function TeamRoster({
 
 	return (
 		<div className="stack xxs">
-			{team.team ? (
-				<Link to={team.team.url} className="stack horizontal sm">
-					<Avatar
-						url={team.team.avatar}
-						identiconInput={team.team.name}
-						size="sm"
-					/>
-					<div className="stack justify-center line-height-tight">
-						<h2 className="text-main-forced font-bold">{team.team.name}</h2>
-						<div className="stack xs horizontal items-center text-lighter">
-							<div className={dotClassName} />
-							{label}
-						</div>
-					</div>
-				</Link>
-			) : null}
+			<TeamHeader
+				team={team}
+				side={side}
+				label={label}
+				dotClassName={dotClassName}
+			/>
 			{team.members.length > 0 ? (
 				<ul className={styles.rosterMembers}>
 					{isEditing
@@ -210,6 +202,52 @@ function TeamRoster({
 		setSelectedMemberIds(activeMembers.map((m) => m.id));
 		setIsEditing(false);
 	}
+}
+
+function TeamHeader({
+	team,
+	side,
+	label,
+	dotClassName,
+}: {
+	team: RosterTabTeam;
+	side: "alpha" | "bravo";
+	label: string;
+	dotClassName: string;
+}) {
+	if (team.team) {
+		return (
+			<Link to={team.team.url} className="stack horizontal sm">
+				<Avatar
+					url={team.team.avatar}
+					identiconInput={team.team.name}
+					size="sm"
+				/>
+				<div className="stack justify-center line-height-tight">
+					<h2 className="text-main-forced font-bold">{team.team.name}</h2>
+					<div className="stack xs horizontal items-center text-lighter">
+						<div className={dotClassName} />
+						{label}
+					</div>
+				</div>
+			</Link>
+		);
+	}
+
+	invariant(team.defaultName, "team or defaultName must be provided");
+
+	return (
+		<div className="stack horizontal sm">
+			<div className={styles.teamAvatar} data-side={side} />
+			<div className="stack justify-center line-height-tight">
+				<h2 className="text-main-forced font-bold">{team.defaultName}</h2>
+				<div className="stack xs horizontal items-center text-lighter">
+					<div className={dotClassName} />
+					{label}
+				</div>
+			</div>
+		</div>
+	);
 }
 
 function SubbedOutPopover({ members }: { members: Array<CommonUser> }) {

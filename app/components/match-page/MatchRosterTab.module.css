@@ -101,3 +101,18 @@
 	width: 8px;
 	height: 8px;
 }
+
+.teamAvatar {
+	border-radius: var(--radius-avatar);
+	width: 44px;
+	height: 44px;
+	flex-shrink: 0;
+
+	&[data-side="alpha"] {
+		background-color: var(--color-accent);
+	}
+
+	&[data-side="bravo"] {
+		background-color: var(--color-second);
+	}
+}

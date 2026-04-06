@@ -190,11 +190,7 @@ export default function MatchPageTestRoute() {
 								subbedOut: [9],
 							},
 							{
-								team: {
-									id: 2,
-									name: "Question Mark",
-									url: "/t/question-mark",
-								},
+								defaultName: "Group Bravo",
 								members: [
 									{
 										id: 5,
