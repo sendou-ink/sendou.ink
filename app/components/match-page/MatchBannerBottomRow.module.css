@@ -18,6 +18,7 @@
 
 .modeProgress {
 	display: flex;
+	align-items: center;
 	gap: var(--s-1);
 }
 
@@ -25,6 +26,11 @@
 	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-full);
 	padding: var(--s-1);
+}
+
+.modeCount {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
 }
 
 .team {

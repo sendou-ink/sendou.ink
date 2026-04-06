@@ -25,6 +25,20 @@ export function MatchBannerBottomRow({
 }
 
 function ModeProgress({ games }: Pick<MatchBannerBottomRowProps, "games">) {
+	const allSameMode =
+		games.length > 1 && games.every((game) => game.mode === games[0].mode);
+
+	if (allSameMode) {
+		return (
+			<div className={styles.modeProgress}>
+				<div className={styles.mode}>
+					<ModeImage mode={games[0].mode} size={16} />
+				</div>
+				<div className={styles.modeCount}>×{games.length}</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className={styles.modeProgress}>
 			{games.map((game, i) => (
