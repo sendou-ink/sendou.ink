@@ -1,3 +1,4 @@
+import { differenceInMinutes } from "date-fns";
 import { Scale, Vote } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
@@ -18,6 +19,7 @@ import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs } from "~/components/match-page/MatchTabs";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
+import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -72,8 +74,9 @@ function SendouQMatchHeader() {
 	);
 }
 
-function SendouQMatchBanner() {
+function SendouQMatchBannerTopRow() {
 	const data = useLoaderData<typeof loader>();
+	useAutoRerender("ten seconds");
 
 	const countScore = (groupId: number) =>
 		data.match.mapList.reduce(
@@ -81,7 +84,15 @@ function SendouQMatchBanner() {
 			0,
 		);
 
-	const topRow = (
+	const now = new Date();
+	const startedAt = databaseTimestampToDate(data.match.createdAt);
+
+	// xxx: change to reported of a map
+	const lastReportAt = data.match.reportedAt
+		? databaseTimestampToDate(data.match.reportedAt)
+		: startedAt;
+
+	return (
 		<MatchBannerTopRow
 			score={{
 				alpha: countScore(data.match.groupAlpha.id),
@@ -91,11 +102,15 @@ function SendouQMatchBanner() {
 				bestOf: true,
 			}}
 			time={{
-				currentMinutes: 3,
-				totalMinutes: 1,
+				currentMinutes: Math.max(0, differenceInMinutes(now, lastReportAt)),
+				totalMinutes: Math.max(0, differenceInMinutes(now, startedAt)),
 			}}
 		/>
 	);
+}
+
+function SendouQMatchBanner() {
+	const data = useLoaderData<typeof loader>();
 
 	const bottomRow = (
 		<MatchBannerBottomRow
@@ -122,7 +137,7 @@ function SendouQMatchBanner() {
 
 		return (
 			<MatchBannerContainer>
-				{topRow}
+				<SendouQMatchBannerTopRow />
 				<MultiMatchBanner stageIds={playedStageIds} />
 				{bottomRow}
 			</MatchBannerContainer>
@@ -134,7 +149,7 @@ function SendouQMatchBanner() {
 
 	return (
 		<MatchBannerContainer>
-			{topRow}
+			<SendouQMatchBannerTopRow />
 			<MatchBanner
 				stageId={currentMap.stageId}
 				mode={currentMap.mode}
