@@ -12,11 +12,6 @@ export default defineConfig(({ mode }) => {
 		ssr: {
 			noExternal: ["react-charts", "react-use"],
 		},
-		esbuild: {
-			supported: {
-				"top-level-await": true, //browsers can handle top-level-await features
-			},
-		},
 		plugins: [
 			{
 				// Wraps CSS modules in @layer components so utility classes always win.
