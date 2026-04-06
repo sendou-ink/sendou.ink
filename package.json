@@ -120,7 +120,6 @@
 		"vite": "8.0.4",
 		"vite-node": "6.0.0",
 		"vite-plugin-babel": "1.6.0",
-		"vite-tsconfig-paths": "6.1.1",
 		"vitest": "4.1.2",
 		"vitest-browser-react": "2.2.0"
 	},

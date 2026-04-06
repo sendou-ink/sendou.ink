@@ -1,7 +1,6 @@
 import { reactRouter } from "@react-router/dev/vite";
 import { defineConfig, loadEnv } from "vite";
 import babel from "vite-plugin-babel";
-import tsconfigPaths from "vite-tsconfig-paths";
 import { configDefaults } from "vitest/config";
 
 export default defineConfig(({ mode }) => {
@@ -46,7 +45,6 @@ export default defineConfig(({ mode }) => {
 					plugins: [["babel-plugin-react-compiler", {}]],
 				},
 			}),
-			tsconfigPaths(),
 		],
 		test: {
 			projects: [
@@ -78,6 +76,9 @@ export default defineConfig(({ mode }) => {
 				return undefined;
 			},
 			sourcemap: true,
+		},
+		resolve: {
+			tsconfigPaths: true,
 		},
 	};
 });
