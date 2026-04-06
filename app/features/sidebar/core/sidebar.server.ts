@@ -37,7 +37,7 @@ export type SidebarEvent = {
 	logoUrl: string | null;
 	startTime: number;
 	type: "tournament" | "scrim";
-	scrimStatus?: "booked" | "looking";
+	scrimStatus?: "booked" | "looking" | "requestPending";
 };
 
 export type SidebarFriend = {
@@ -381,12 +381,13 @@ export function scrimToSidebarEvent(s: SidebarScrim): SidebarEvent {
 	return {
 		id: s.id,
 		name: s.opponentName ?? "Scrim",
-		url: s.isAccepted
-			? href("/scrims/:id", { id: String(s.id) })
-			: href("/scrims"),
+		url:
+			s.status === "booked"
+				? href("/scrims/:id", { id: String(s.id) })
+				: href("/scrims"),
 		logoUrl: s.opponentAvatarUrl ?? SCRIMS_ICON_URL,
 		startTime: s.at,
 		type: "scrim" as const,
-		scrimStatus: s.isAccepted ? ("booked" as const) : ("looking" as const),
+		scrimStatus: s.status,
 	};
 }

@@ -408,7 +408,7 @@ export type SidebarScrim = {
 	at: number;
 	opponentName: string | null;
 	opponentAvatarUrl: string | null;
-	isAccepted: boolean;
+	status: "booked" | "looking" | "requestPending";
 };
 
 export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
@@ -443,33 +443,40 @@ export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
 		.orderBy("ScrimPost.at", "asc")
 		.execute();
 
-	return rows.map(mapDBRowToScrimPost).map((post) => {
-		const isAccepted = Scrim.isAccepted(post);
+	return rows
+		.map(mapDBRowToScrimPost)
+		.filter(
+			(post) => !Scrim.isAccepted(post) || Scrim.isParticipating(post, userId),
+		)
+		.map((post) => {
+			const isAccepted = Scrim.isAccepted(post);
+			const userIsInPost = post.users.some((u) => u.id === userId);
 
-		if (!isAccepted) {
+			if (!isAccepted) {
+				return {
+					id: post.id,
+					at: post.at,
+					opponentName: null,
+					opponentAvatarUrl: null,
+					status: userIsInPost
+						? ("looking" as const)
+						: ("requestPending" as const),
+				};
+			}
+
+			const opponent = userIsInPost
+				? post.requests[0]
+				: { team: post.team, users: post.users };
+			const opponentTeam = opponent?.team;
+			const opponentOwner = opponent?.users.find((u) => u.isOwner);
+
 			return {
 				id: post.id,
 				at: post.at,
-				opponentName: null,
-				opponentAvatarUrl: null,
-				isAccepted: false,
+				opponentName: opponentTeam?.name ?? null,
+				opponentAvatarUrl:
+					opponentTeam?.avatarUrl ?? opponentOwner?.discordAvatar ?? null,
+				status: "booked" as const,
 			};
-		}
-
-		const userIsInPost = post.users.some((u) => u.id === userId);
-		const opponent = userIsInPost
-			? post.requests[0]
-			: { team: post.team, users: post.users };
-		const opponentTeam = opponent?.team;
-		const opponentOwner = opponent?.users.find((u) => u.isOwner);
-
-		return {
-			id: post.id,
-			at: post.at,
-			opponentName: opponentTeam?.name ?? null,
-			opponentAvatarUrl:
-				opponentTeam?.avatarUrl ?? opponentOwner?.discordAvatar ?? null,
-			isAccepted: true,
-		};
-	});
+		});
 }

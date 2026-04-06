@@ -90,7 +90,9 @@ export function EventsList({
 									? t("front:sideNav.scrimVs", { opponent: event.name })
 									: event.scrimStatus === "looking"
 										? t("front:sideNav.lookingForScrim")
-										: event.name}
+										: event.scrimStatus === "requestPending"
+											? t("front:sideNav.scrimRequestPending")
+											: event.name}
 							</ListLink>
 						))}
 					</div>
