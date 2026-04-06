@@ -2,7 +2,9 @@ import { differenceInMinutes } from "date-fns";
 import { Scale, Vote } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
-import { LinkButton } from "~/components/elements/Button";
+import { Avatar } from "~/components/Avatar";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { Main } from "~/components/Main";
 import { MatchActionTab } from "~/components/match-page/MatchActionTab";
 import {
@@ -10,6 +12,7 @@ import {
 	MatchBannerContainer,
 	MultiMatchBanner,
 } from "~/components/match-page/MatchBanner";
+import bannerStyles from "~/components/match-page/MatchBanner.module.css";
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
 import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
@@ -17,9 +20,11 @@ import { MatchPage } from "~/components/match-page/MatchPage";
 import { MatchPageHeader } from "~/components/match-page/MatchPageHeader";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs } from "~/components/match-page/MatchTabs";
+import type { ParsedMemento } from "~/db/tables";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -157,9 +162,7 @@ function SendouQMatchBanner() {
 					!data.match.groupAlpha.noScreen && !data.match.groupBravo.noScreen
 				}
 			>
-				<div className="stack horizontal xs">
-					5 <Vote />
-				</div>
+				<CurrentMapVotesBadge currentMap={currentMap} />
 			</MatchBanner>
 			{bottomRow}
 		</MatchBannerContainer>
@@ -218,6 +221,54 @@ function SendouQMatchTabs() {
 	);
 }
 
+function CurrentMapVotesBadge({
+	currentMap,
+}: {
+	currentMap: { mode: ModeShort; stageId: StageId; source: string };
+}) {
+	const { t } = useTranslation(["q"]);
+	const data = useLoaderData<typeof loader>();
+
+	const voterIds = currentMapVoterIds({
+		currentMap,
+		groupAlpha: data.match.groupAlpha,
+		groupBravo: data.match.groupBravo,
+		pools: data.match.memento?.pools,
+	});
+
+	if (voterIds.length === 0) return null;
+
+	const userIdToUser = (userId: number) =>
+		[...data.match.groupAlpha.members, ...data.match.groupBravo.members].find(
+			(m) => m.id === userId,
+		);
+
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton variant="minimal" className={bannerStyles.infoBadge}>
+					{voterIds.length} <Vote />
+				</SendouButton>
+			}
+		>
+			<div className="stack sm">
+				<div className="text-sm text-lighter font-semi-bold">
+					{t("q:match.mapVoters.header")}
+				</div>
+				{voterIds.map((userId) => {
+					const user = userIdToUser(userId);
+					return (
+						<div key={userId} className="stack sm horizontal items-center xs">
+							<Avatar user={user} size="xxs" />
+							{user?.username}
+						</div>
+					);
+				})}
+			</div>
+		</SendouPopover>
+	);
+}
+
 function mapRosterTeam(
 	team: {
 		id: number;
@@ -233,4 +284,36 @@ function mapRosterTeam(
 		url: teamPage(team.customUrl),
 		avatar: team.avatarUrl ?? undefined,
 	};
+}
+
+// xxx: probably can be made cleaner -> more work in the loader
+function currentMapVoterIds({
+	currentMap,
+	groupAlpha,
+	groupBravo,
+	pools,
+}: {
+	currentMap: { mode: ModeShort; stageId: StageId; source: string };
+	groupAlpha: { id: number; members: Array<{ id: number }> };
+	groupBravo: { id: number; members: Array<{ id: number }> };
+	pools: ParsedMemento["pools"] | undefined;
+}): number[] {
+	if (!pools) return [];
+
+	const pickerGroups = [groupAlpha, groupBravo].filter(
+		(g) => currentMap.source === "BOTH" || String(g.id) === currentMap.source,
+	);
+	if (pickerGroups.length === 0) return [];
+
+	const result: number[] = [];
+	for (const pickerGroup of pickerGroups) {
+		for (const { userId, pool } of pools) {
+			if (!pickerGroup.members.some((m) => m.id === userId)) continue;
+			const modePool = pool.find((p) => p.mode === currentMap.mode);
+			if (modePool?.stages.includes(currentMap.stageId)) {
+				result.push(userId);
+			}
+		}
+	}
+	return result;
 }

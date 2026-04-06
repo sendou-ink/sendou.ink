@@ -53,6 +53,16 @@
 	height: auto;
 }
 
+.infoBadge {
+	display: flex;
+	gap: var(--s-1-5);
+	align-items: center;
+	height: auto;
+	color: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+}
+
 .thickText {
 	font-size: var(--font-md);
 	font-weight: var(--weight-semi);

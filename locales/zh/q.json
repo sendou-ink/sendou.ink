@@ -121,6 +121,7 @@
 	"looking.range.or": "或",
 	"looking.range.or.explanation": "",
 	"match.header": "对战 #{{number}}",
+	"match.mapVoters.header": "",
 	"match.spInfo": "SP会在双方提交相同的比分后改变",
 	"match.dispute.button": "分歧？",
 	"match.dispute.p1": "如果比分有误，请联系对手修改。比分可以重新提交，知道双方提交的比分相同为止。",

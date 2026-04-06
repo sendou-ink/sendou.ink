@@ -121,6 +121,7 @@
 	"looking.range.or": "",
 	"looking.range.or.explanation": "",
 	"match.header": "Partida #{{number}}",
+	"match.mapVoters.header": "",
 	"match.spInfo": "SP será ajustado depois que ambos os times declarem o mesmo resultado",
 	"match.dispute.button": "Disputar?",
 	"match.dispute.p1": "Se há algum erro entre em contato com o outro time para que eles corrijam do lado deles. As pontuações podem ser redeclaradas livremente até que ambos os times declarem a mesma pontuação.",

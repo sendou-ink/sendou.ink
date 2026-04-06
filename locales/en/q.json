@@ -121,6 +121,7 @@
 	"looking.range.or": "or",
 	"looking.range.or.explanation": "You will be matched with a group whose average rank is one of these. The exact rank is not shown to avoid behavior where groups only play against tiers lower than themselves.",
 	"match.header": "Match #{{number}}",
+	"match.mapVoters.header": "Voted for this map",
 	"match.spInfo": "SP will be adjusted after both teams report the same result",
 	"match.dispute.button": "Dispute?",
 	"match.dispute.p1": "If there is a mistake, contact the other team to correct it on their side. Score can be freely rereported till both teams report the same result.",

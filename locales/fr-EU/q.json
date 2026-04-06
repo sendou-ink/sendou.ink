@@ -121,6 +121,7 @@
 	"looking.range.or": "ou",
 	"looking.range.or.explanation": "",
 	"match.header": "Match #{{number}}",
+	"match.mapVoters.header": "",
 	"match.spInfo": "Les SP après que les deux teams est reportées le même résultat",
 	"match.dispute.button": "Dispute?",
 	"match.dispute.p1": "S'il y a une erreur, contactez l'autre équipe pour la corriger de son côté. Le score peut être librement rapporté jusqu'à ce que les deux équipes rapportent le même résultat.",

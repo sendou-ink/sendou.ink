@@ -121,6 +121,7 @@
 	"looking.range.or": "か",
 	"looking.range.or.explanation": "",
 	"match.header": "マッチ #{{number}}番",
+	"match.mapVoters.header": "",
 	"match.spInfo": "SP は両チームが同じ結果を報告してからアップデートされます。",
 	"match.dispute.button": "異議を唱えますか?",
 	"match.dispute.p1": "間違いがあった場合相手側のチームと話し、情報を合わせてください。両チームが同じスコアを報告するまでスコアは再報告できます。",

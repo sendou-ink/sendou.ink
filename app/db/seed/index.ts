@@ -77,7 +77,12 @@ import {
 	SEED_TEAM_IMAGES,
 	SEED_TOURNAMENT_IMAGES,
 } from "../../../scripts/seed-art-urls";
-import type { QWeaponPool, Tables, UserMapModePreferences } from "../tables";
+import type {
+	ParsedMemento,
+	QWeaponPool,
+	Tables,
+	UserMapModePreferences,
+} from "../tables";
 import {
 	ADMIN_TEST_AVATAR,
 	AMOUNT_OF_CALENDAR_EVENTS,
@@ -2464,12 +2469,18 @@ async function groups(variation?: SeedVariation | null) {
 
 	let nzapGroupId = 0;
 	let sendouGroupId = 0;
+	const nzapGroupMemberIds: number[] = [];
+	const sendouGroupMemberIds: number[] = [];
 
 	for (let i = 0; i < 25; i++) {
+		const ownerId = users.pop()!;
 		const group = await SQGroupRepository.createGroup({
 			status: "ACTIVE",
-			userId: users.pop()!,
+			userId: ownerId,
 		});
+
+		if (i === 0) nzapGroupMemberIds.push(ownerId);
+		if (i === 1) sendouGroupMemberIds.push(ownerId);
 
 		const amountOfAdditionalMembers = () => {
 			if (SENDOU_IN_FULL_GROUP) {
@@ -2481,6 +2492,7 @@ async function groups(variation?: SeedVariation | null) {
 		};
 
 		for (let j = 0; j < amountOfAdditionalMembers(); j++) {
+			const memberId = users.pop()!;
 			sql
 				.prepare(
 					/* sql */ `
@@ -2490,9 +2502,12 @@ async function groups(variation?: SeedVariation | null) {
 				)
 				.run({
 					groupId: group.id,
-					userId: users.pop()!,
+					userId: memberId,
 					role: "REGULAR",
 				});
+
+			if (i === 0) nzapGroupMemberIds.push(memberId);
+			if (i === 1) sendouGroupMemberIds.push(memberId);
 		}
 
 		if (i === 0) nzapGroupId = group.id;
@@ -2504,11 +2519,20 @@ async function groups(variation?: SeedVariation | null) {
 	}
 
 	if (variation === "IN_SQ_MATCH") {
+		const mapList = randomMapList(sendouGroupId, nzapGroupId);
+		const memento = buildSeedMemento({
+			mapList,
+			alphaGroupId: sendouGroupId,
+			bravoGroupId: nzapGroupId,
+			alphaMemberIds: sendouGroupMemberIds,
+			bravoMemberIds: nzapGroupMemberIds,
+		});
+
 		await SQMatchRepository.create({
 			alphaGroupId: sendouGroupId,
 			bravoGroupId: nzapGroupId,
-			mapList: randomMapList(sendouGroupId, nzapGroupId),
-			memento: { users: {}, groups: {}, pools: [] },
+			mapList,
+			memento,
 		});
 	}
 }
@@ -2542,6 +2566,68 @@ const randomMapList = (
 
 	return mapList;
 };
+
+function buildSeedMemento({
+	mapList,
+	alphaGroupId,
+	bravoGroupId,
+	alphaMemberIds,
+	bravoMemberIds,
+}: {
+	mapList: TournamentMapListMap[];
+	alphaGroupId: number;
+	bravoGroupId: number;
+	alphaMemberIds: number[];
+	bravoMemberIds: number[];
+}): ParsedMemento {
+	const userPools = new Map<number, Map<ModeShort, Set<StageId>>>();
+
+	const addVote = (userId: number, mode: ModeShort, stageId: StageId) => {
+		let modes = userPools.get(userId);
+		if (!modes) {
+			modes = new Map();
+			userPools.set(userId, modes);
+		}
+		let stages = modes.get(mode);
+		if (!stages) {
+			stages = new Set();
+			modes.set(mode, stages);
+		}
+		stages.add(stageId);
+	};
+
+	for (const map of mapList) {
+		const candidates: number[] =
+			map.source === "BOTH"
+				? [...alphaMemberIds, ...bravoMemberIds]
+				: map.source === alphaGroupId
+					? alphaMemberIds
+					: map.source === bravoGroupId
+						? bravoMemberIds
+						: [];
+
+		if (candidates.length === 0) continue;
+
+		const voterCount = faker.number.int({ min: 1, max: candidates.length });
+		const voters = faker.helpers.arrayElements(candidates, voterCount);
+
+		for (const voterId of voters) {
+			addVote(voterId, map.mode, map.stageId);
+		}
+	}
+
+	const pools: ParsedMemento["pools"] = Array.from(userPools.entries()).map(
+		([userId, modes]) => ({
+			userId,
+			pool: Array.from(modes.entries()).map(([mode, stages]) => ({
+				mode,
+				stages: Array.from(stages),
+			})),
+		}),
+	);
+
+	return { users: {}, groups: {}, pools };
+}
 
 const MATCHES_COUNT = 500;
 

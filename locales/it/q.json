@@ -121,6 +121,7 @@
 	"looking.range.or": "o",
 	"looking.range.or.explanation": "",
 	"match.header": "Match #{{number}}",
+	"match.mapVoters.header": "",
 	"match.spInfo": "Gli SP verranno sistemati una volta che entrambi i team riporteranno lo stesso punteggio",
 	"match.dispute.button": "Disputa?",
 	"match.dispute.p1": "Se c'è stato un errore contatta l'altro team per farlo correggere dal loro lato. Il punteggio può essere liberamente ririportato finché entrambi i team non lo riportano uguale",

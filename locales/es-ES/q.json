@@ -121,6 +121,7 @@
 	"looking.range.or": "o",
 	"looking.range.or.explanation": "Serás emparejado con un grupo cuyo rango promedio sea uno de estos. El rango exacto no se muestra para evitar que los grupos jueguen únicamente contra niveles inferiores al suyo.",
 	"match.header": "Partido #{{number}}",
+	"match.mapVoters.header": "",
 	"match.spInfo": "Fuerza Sendou será ajustada despues de que ambos equipos informen el mismo resultado",
 	"match.dispute.button": "¿Disputar?",
 	"match.dispute.p1": "Si hay un error, contacta al otro equipo para que lo corrijan. El resultado puede ser informado libremente hasta que ambos equipos informen el mismo resultado.",
