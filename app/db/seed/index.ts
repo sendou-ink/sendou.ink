@@ -230,7 +230,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	arts,
 	commissionsOpen,
 	playedMatches,
-	variation === "NO_SQ_GROUPS" ? undefined : groups,
+	variation === "NO_SQ_GROUPS" ? undefined : () => groups(variation),
 	friendCodes,
 	lfgPosts,
 	variation === "NO_SCRIMS" ? undefined : scrimPosts,
@@ -2456,11 +2456,14 @@ function commissionsOpen() {
 }
 
 const SENDOU_IN_FULL_GROUP = true;
-async function groups() {
+async function groups(variation?: SeedVariation | null) {
 	const users = userIdsInAscendingOrderById()
 		.slice(0, 100)
 		.filter((id) => id !== ADMIN_ID && id !== NZAP_TEST_ID);
 	users.push(NZAP_TEST_ID);
+
+	let nzapGroupId = 0;
+	let sendouGroupId = 0;
 
 	for (let i = 0; i < 25; i++) {
 		const group = await SQGroupRepository.createGroup({
@@ -2492,9 +2495,21 @@ async function groups() {
 				});
 		}
 
+		if (i === 0) nzapGroupId = group.id;
+		if (i === 1) sendouGroupId = group.id;
+
 		if (i === 0 && SENDOU_IN_FULL_GROUP) {
 			users.push(ADMIN_ID);
 		}
+	}
+
+	if (variation === "IN_SQ_MATCH") {
+		await SQMatchRepository.create({
+			alphaGroupId: sendouGroupId,
+			bravoGroupId: nzapGroupId,
+			mapList: randomMapList(sendouGroupId, nzapGroupId),
+			memento: { users: {}, groups: {}, pools: [] },
+		});
 	}
 }
 

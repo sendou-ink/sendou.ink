@@ -7,4 +7,5 @@ export const SEED_VARIATIONS = [
 	"NO_SCRIMS",
 	"NO_SQ_GROUPS",
 	"FINALIZED_BRACKET",
+	"IN_SQ_MATCH",
 ] as const;
