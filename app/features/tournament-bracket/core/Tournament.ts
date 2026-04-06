@@ -1057,7 +1057,7 @@ export class Tournament {
 
 		return this.ctx.teams.find((team) =>
 			team.members.some(
-				(member) => member.userId === user.id && member.isOwner,
+				(member) => member.userId === user.id && member.role === "OWNER",
 			),
 		) as (typeof this.ctx.teams)[number] & { inviteCode: string };
 	}

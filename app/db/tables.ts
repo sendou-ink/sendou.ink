@@ -826,7 +826,6 @@ export interface TournamentTeamCheckIn {
 
 export interface TournamentTeamMember {
 	createdAt: Generated<number>;
-	isOwner: Generated<number>;
 	inGameName: string | null;
 	tournamentTeamId: number;
 	userId: number;

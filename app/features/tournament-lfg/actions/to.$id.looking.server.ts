@@ -61,7 +61,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			if (team) {
 				const member = team.members.find((m) => m.userId === user.id);
-				const canManageTeam = member?.isOwner || member?.role === "MANAGER";
+				const canManageTeam =
+					member?.role === "OWNER" || member?.role === "MANAGER";
 				errorToastIfFalsy(
 					canManageTeam,
 					"Only team owners and managers can join the queue",

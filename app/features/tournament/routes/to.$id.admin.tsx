@@ -534,10 +534,10 @@ function DownloadParticipants() {
 			.slice()
 			.sort((a, b) => a.name.localeCompare(b.name))
 			.map((team) => {
-				const owner = team.members.find((user) => user.isOwner);
+				const owner = team.members.find((user) => user.role === "OWNER");
 				invariant(owner);
 
-				const nonOwners = team.members.filter((user) => !user.isOwner);
+				const nonOwners = team.members.filter((user) => user.role !== "OWNER");
 
 				let result = `-- ${team.name} --\n(C) ${owner.username} (IGN: ${owner.inGameName ?? ""}) - <@${owner.discordId}>`;
 
