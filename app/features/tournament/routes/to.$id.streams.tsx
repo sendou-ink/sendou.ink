@@ -24,8 +24,19 @@ export default function TournamentStreamsPage() {
 	return (
 		<div className="stack horizontal lg flex-wrap justify-center">
 			{tournament.streams.map((stream) => (
-				<TournamentStream key={stream.twitchUserName} stream={stream} />
+				<TournamentStream
+					key={
+						stream.twitchUserName ??
+						stream.youtubeChannelId ??
+						String(stream.userId)
+					}
+					stream={stream}
+				/>
 			))}
 		</div>
 	);
 }
+
+
+
+

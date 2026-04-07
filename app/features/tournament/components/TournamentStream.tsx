@@ -18,13 +18,19 @@ export function TournamentStream({
 	);
 	const user = team?.members.find((m) => m.userId === stream.userId);
 
-	const streamUrl = stream.youtubeChannelId
-		? youtubeUrl(stream.youtubeChannelId)
-		: twitchUrl(stream.twitchUserName!);
+	const streamUrl = hasStreamUrl(stream)
+		? stream.url
+		: stream.youtubeChannelId
+			? youtubeUrl(stream.youtubeChannelId)
+			: twitchUrl(stream.twitchUserName!);
 
 	const streamLabel = stream.youtubeChannelId
-		? stream.youtubeChannelId
+		? (("title" in stream && stream.title) || stream.youtubeChannelId)
 		: stream.twitchUserName!;
+
+	const thumbnailUrl = stream.youtubeChannelId
+		? stream.thumbnailUrl
+		: twitchThumbnailUrlToSrc(stream.thumbnailUrl!);
 
 	return (
 		<div
@@ -34,12 +40,7 @@ export function TournamentStream({
 		>
 			{withThumbnail && stream.thumbnailUrl ? (
 				<a href={streamUrl} target="_blank" rel="noreferrer">
-					<img
-						alt=""
-						src={twitchThumbnailUrlToSrc(stream.thumbnailUrl)}
-						width={320}
-						height={180}
-					/>
+					<img alt="" src={thumbnailUrl} width={320} height={180} />
 				</a>
 			) : null}
 			<div className="stack md horizontal justify-between">
@@ -51,7 +52,7 @@ export function TournamentStream({
 				) : (
 					<div className="tournament__stream__user-container">
 						<Avatar size="xxs" url={tournament.ctx.logoUrl} />
-						Cast <span className="text-lighter">{streamLabel}</span>
+						Cast <span className="text-lighter" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "200px", display: "inline-block", verticalAlign: "bottom" }}>{streamLabel}</span>
 					</div>
 				)}
 				<div className="tournament__stream__viewer-count">
@@ -71,4 +72,10 @@ export function TournamentStream({
 			) : null}
 		</div>
 	);
+}
+
+function hasStreamUrl(
+	stream: Tournament["streams"][number],
+): stream is Tournament["streams"][number] & { url: string } {
+	return "url" in stream && typeof stream.url === "string";
 }

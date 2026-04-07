@@ -2,6 +2,7 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import { isAdmin } from "~/modules/permissions/utils";
+import { getLiveStreamsByChannelIds } from "~/modules/youtube";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import type { Unwrapped } from "~/utils/types";
 import { getServerTournamentManager } from "./brackets-manager/manager.server";
@@ -16,11 +17,23 @@ const combinedTournamentData = async (tournamentId: number) => {
 	const ctx = await TournamentRepository.findById(tournamentId);
 	if (!ctx) return null;
 
+	const youtubeStreams = await getLiveStreamsByChannelIds(
+		ctx.castYoutubeChannels ?? [],
+	);
+
 	return {
 		data: tournamentManagerData(tournamentId),
-		ctx,
+		ctx: {
+			...ctx,
+			youtubeStreams,
+		},
 	};
 };
+
+type CombinedTournamentData = NonNullable<
+	Awaited<ReturnType<typeof combinedTournamentData>>
+>;
+type CombinedTournamentDataContext = CombinedTournamentData["ctx"];
 
 export type TournamentData = NonNullable<Unwrapped<typeof tournamentData>>;
 export type TournamentDataTeam = TournamentData["ctx"]["teams"][number];
@@ -43,7 +56,8 @@ function dataMapped({
 	user,
 }: {
 	data: TournamentManagerDataSet;
-	ctx: TournamentRepository.FindById;
+	ctx: TournamentRepository.FindById &
+		Partial<Pick<CombinedTournamentDataContext, "youtubeStreams">>;
 	user?: { id: number };
 }) {
 	const tournamentHasStarted = data.stage.length > 0;

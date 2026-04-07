@@ -1405,18 +1405,22 @@ export class Tournament {
 			thumbnailUrl: stream.thumbnailUrl,
 			twitchUserName: stream.twitch!,
 			youtubeChannelId: null as string | null,
+			youtubeVideoId: null as string | null,
+			url: null as string | null,
 			viewerCount: stream.viewerCount,
 			userId: null as number | null,
 		}));
 
-		const youtubeCastStreams = (this.ctx.castYoutubeChannels ?? []).map(
-			(channelId) => ({
-				// TODO: fetch YouTube thumbnail and viewer count via YouTube Data API
-				thumbnailUrl: null as string | null,
+		const youtubeCastStreams = (this.ctx.youtubeStreams ?? []).map(
+			(stream) => ({
+				thumbnailUrl: stream.thumbnailUrl,
 				twitchUserName: null as string | null,
-				youtubeChannelId: channelId,
-				viewerCount: 0,
+				youtubeChannelId: stream.youtubeChannelId,
+				youtubeVideoId: stream.youtubeVideoId,
+				url: stream.url,
+				viewerCount: stream.viewerCount,
 				userId: null as number | null,
+				title: stream.title as string | null,
 			}),
 		);
 
