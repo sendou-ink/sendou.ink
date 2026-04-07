@@ -355,13 +355,12 @@ function finalizedBracket() {
 		for (let j = 0; j < 4; j++) {
 			sql
 				.prepare(
-					`insert into "TournamentTeamMember" ("tournamentTeamId", "userId", "isOwner", "createdAt", "role")
-					 values ($tournamentTeamId, $userId, $isOwner, $createdAt, $role)`,
+					`insert into "TournamentTeamMember" ("tournamentTeamId", "userId", "createdAt", "role")
+					 values ($tournamentTeamId, $userId, $createdAt, $role)`,
 				)
 				.run({
 					tournamentTeamId: teamId,
 					userId: userIds.shift()!,
-					isOwner: j === 0 ? 1 : 0,
 					createdAt: dateToDatabaseTimestamp(new Date()),
 					role: j === 0 ? "OWNER" : "REGULAR",
 				});
@@ -1738,13 +1737,11 @@ function calendarEventWithToToolsTeams(
       insert into "TournamentTeamMember" (
         "tournamentTeamId",
         "userId",
-        "isOwner",
         "createdAt",
         "role"
       ) values (
         $tournamentTeamId,
         $userId,
-        $isOwner,
         $createdAt,
         $role
       )
@@ -1753,7 +1750,6 @@ function calendarEventWithToToolsTeams(
 				.run({
 					tournamentTeamId: id + teamIdAddition,
 					userId,
-					isOwner: i === 0 ? 1 : 0,
 					createdAt: dateToDatabaseTimestamp(yesterday),
 					role: i === 0 ? "OWNER" : "REGULAR",
 				});

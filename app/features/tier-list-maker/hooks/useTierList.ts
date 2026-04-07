@@ -394,10 +394,12 @@ export function useTierList() {
 			newTiers[currentIndex - 1],
 		];
 
-		setTiers({
+		const newState = {
 			...tiers,
 			tiers: newTiers,
-		});
+		};
+		setTiers(newState);
+		persistTiersStateToParams(newState);
 	};
 
 	const handleMoveTierDown = (tierId: string) => {
@@ -412,10 +414,12 @@ export function useTierList() {
 			newTiers[currentIndex],
 		];
 
-		setTiers({
+		const newState = {
 			...tiers,
 			tiers: newTiers,
-		});
+		};
+		setTiers(newState);
+		persistTiersStateToParams(newState);
 	};
 
 	const handleReset = () => {

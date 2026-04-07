@@ -349,6 +349,7 @@ function extractRangeParams(weapon: MainWeapon, params: any) {
 			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
 			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
 			Range_FreeGravity: moveParam?.FreeGravity,
+			Range_FreeAirResist: moveParam?.FreeAirResist,
 			Range_BrakeAirResist: moveParam?.BrakeAirResist,
 			Range_BrakeGravity: moveParam?.BrakeGravity,
 			Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,

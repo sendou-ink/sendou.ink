@@ -102,7 +102,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			validateIsTournamentOrganizer();
 			const team = tournament.teamById(data.teamId);
 			errorToastIfFalsy(team, "Invalid team id");
-			const oldCaptain = team.members.find((m) => m.isOwner);
+			const oldCaptain = team.members.find((m) => m.role === "OWNER");
 			invariant(oldCaptain, "Team has no captain");
 			const newCaptain = team.members.find((m) => m.userId === data.memberId);
 			errorToastIfFalsy(newCaptain, "Invalid member id");
@@ -191,7 +191,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Can't remove last member from checked in team",
 			);
 			errorToastIfFalsy(
-				!team.members.find((m) => m.userId === data.memberId)?.isOwner,
+				team.members.find((m) => m.userId === data.memberId)?.role !== "OWNER",
 				"Cannot remove team owner",
 			);
 			errorToastIfFalsy(

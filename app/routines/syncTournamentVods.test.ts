@@ -161,6 +161,86 @@ describe("syncTournamentVods", () => {
 		expect(vods).toHaveLength(0);
 	});
 
+	test("returns hadApiError=true when getArchiveVideos throws for a streamer", async () => {
+		await seedTournamentWithMatches();
+		await seedStreamer("player_stream", 1);
+		await seedTournamentTeamAndGameResult(1, [1, 2]);
+
+		mockGetUsersByLogin.mockResolvedValue([
+			{ id: "twitch-1", login: "player_stream" },
+		]);
+		mockGetArchiveVideos.mockRejectedValue(new Error("Twitch API down"));
+
+		const hadApiError = await runProcessOneTournament();
+
+		expect(hadApiError).toBe(true);
+	});
+
+	test("returns hadApiError=false when getArchiveVideos returns empty (no vods found)", async () => {
+		await seedTournamentWithMatches();
+		await seedStreamer("player_stream", 1);
+		await seedTournamentTeamAndGameResult(1, [1, 2]);
+
+		mockGetUsersByLogin.mockResolvedValue([
+			{ id: "twitch-1", login: "player_stream" },
+		]);
+		mockGetArchiveVideos.mockResolvedValue([]);
+
+		const hadApiError = await runProcessOneTournament();
+
+		expect(hadApiError).toBe(false);
+		const vods = await findAllVods();
+		expect(vods).toHaveLength(0);
+	});
+
+	test("returns hadApiError=true when cast account API call fails", async () => {
+		await seedTournamentWithMatches({
+			castedMatchesInfo: {
+				lockedMatches: [],
+				castedMatches: [],
+				castedMatchHistory: [
+					{
+						twitchAccount: "caster_stream",
+						matchId: 1,
+						timestamp: MATCH_START_SECONDS,
+					},
+				],
+			},
+		});
+
+		mockGetUsersByLogin.mockResolvedValue([
+			{ id: "twitch-c", login: "caster_stream" },
+		]);
+		mockGetArchiveVideos.mockRejectedValue(new Error("Twitch API down"));
+
+		const hadApiError = await runProcessOneTournament();
+
+		expect(hadApiError).toBe(true);
+	});
+
+	test("still inserts vods from successful streamers when another streamer's API call fails", async () => {
+		await seedTournamentWithMatches();
+		await seedStreamer("good_stream", 1);
+		await seedStreamer("bad_stream", 3);
+		await seedTournamentTeamAndGameResult(1, [1, 2]);
+		await seedTournamentTeamAndGameResult(2, [3, 4]);
+
+		mockGetUsersByLogin.mockResolvedValue([
+			{ id: "twitch-g", login: "good_stream" },
+			{ id: "twitch-b", login: "bad_stream" },
+		]);
+		mockGetArchiveVideos
+			.mockResolvedValueOnce([twitchVideo()])
+			.mockRejectedValueOnce(new Error("Twitch API down"));
+
+		const hadApiError = await runProcessOneTournament();
+
+		expect(hadApiError).toBe(true);
+		const vods = await findAllVods();
+		expect(vods).toHaveLength(1);
+		expect(vods[0].account).toBe("good_stream");
+	});
+
 	test("no matches with startedAt results in no processing", async () => {
 		await seedTournamentWithMatches();
 

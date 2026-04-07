@@ -178,7 +178,6 @@ export async function findById(id: number) {
 									"User.twitch",
 									"SeedingSkill.ordinal",
 									"PlusTier.tier as plusTier",
-									"TournamentTeamMember.isOwner",
 									"TournamentTeamMember.role",
 									"TournamentTeamMember.createdAt",
 									sql<string | null> /*sql*/`coalesce(

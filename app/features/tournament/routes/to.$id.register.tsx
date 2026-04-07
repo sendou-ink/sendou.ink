@@ -1162,7 +1162,7 @@ function DeleteMember({ members }: { members: TournamentDataTeam["members"] }) {
 			<div className="stack md horizontal">
 				<select name="userId" id={id}>
 					{members
-						.filter((member) => !member.isOwner)
+						.filter((member) => member.role !== "OWNER")
 						.map((member) => (
 							<option key={member.userId} value={member.userId}>
 								{member.username}

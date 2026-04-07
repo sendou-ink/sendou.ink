@@ -42,7 +42,6 @@ export function createPlaceholderTeam(args: CreatePlaceholderTeamArgs) {
 			.values({
 				tournamentTeamId: createdTeam.id,
 				userId: args.userId,
-				isOwner: 1,
 				role: "OWNER",
 				isStayAsSub: args.isStayAsSub ? 1 : 0,
 			})

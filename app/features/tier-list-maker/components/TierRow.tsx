@@ -5,7 +5,6 @@ import {
 } from "@dnd-kit/sortable";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, Trash } from "lucide-react";
-import { useLayoutEffect, useRef } from "react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
@@ -37,9 +36,6 @@ export function TierRow({ tier }: TierRowProps) {
 		handleMoveTierDown,
 		showTierHeaders,
 		screenshotMode,
-		tierLabelWidth,
-		registerTierLabelWidth,
-		unregisterTierLabelWidth,
 	} = useTierListState();
 
 	const items = getItemsInTier(tier.id);
@@ -47,28 +43,10 @@ export function TierRow({ tier }: TierRowProps) {
 	const { setNodeRef, isOver } = useDroppable({
 		id: tier.id,
 	});
-	const labelRef = useRef<HTMLButtonElement>(null);
-
-	// biome-ignore lint/correctness/useExhaustiveDependencies: tier.name impacts width
-	useLayoutEffect(() => {
-		if (labelRef.current) {
-			// Temporarily remove width constraint to measure natural width
-			const currentWidth = labelRef.current.style.width;
-			labelRef.current.style.width = "auto";
-			const naturalWidth = labelRef.current.scrollWidth;
-			labelRef.current.style.width = currentWidth;
-			registerTierLabelWidth(tier.id, naturalWidth);
-		}
-	}, [tier.id, tier.name, registerTierLabelWidth]);
 
 	const tierIndex = state.tiers.findIndex((t) => t.id === tier.id);
 	const isFirstTier = tierIndex === 0;
 	const isLastTier = tierIndex === state.tiers.length - 1;
-
-	const handleDelete = () => {
-		unregisterTierLabelWidth(tier.id);
-		handleRemoveTier(tier.id);
-	};
 
 	return (
 		<div className={styles.container}>
@@ -76,11 +54,9 @@ export function TierRow({ tier }: TierRowProps) {
 				<SendouPopover
 					trigger={
 						<Button
-							ref={labelRef}
 							className={styles.tierLabel}
 							style={{
 								backgroundColor: tier.color,
-								width: tierLabelWidth,
 							}}
 						>
 							<span
@@ -135,7 +111,7 @@ export function TierRow({ tier }: TierRowProps) {
 						</div>
 						<div className="stack horizontal justify-end">
 							<SendouButton
-								onPress={handleDelete}
+								onPress={() => handleRemoveTier(tier.id)}
 								variant="minimal-destructive"
 								icon={<Trash />}
 							/>

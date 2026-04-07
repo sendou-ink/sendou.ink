@@ -148,7 +148,6 @@ export function create({
 			.values({
 				tournamentTeamId: tournamentTeam.id,
 				userId,
-				isOwner: 1,
 				role: "OWNER",
 				inGameName: ownerInGameName,
 			})
@@ -197,7 +196,7 @@ export function copyFromAnotherTournament({
 			.select([
 				"TournamentTeamMember.createdAt",
 				"TournamentTeamMember.inGameName",
-				"TournamentTeamMember.isOwner",
+				"TournamentTeamMember.role",
 				"TournamentTeamMember.userId",
 
 				// -- exclude these
