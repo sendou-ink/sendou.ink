@@ -1,8 +1,9 @@
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
 import type { GearType } from "~/db/tables";
 import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
 import { newBuildBaseSchema } from "~/features/user-page/user-page-schemas";
+import invariant from "~/utils/invariant";
 import { expect, impersonate, navigate, seed, test } from "~/utils/playwright";
 import { createFormHelpers } from "~/utils/playwright-form";
 import { BUILDS_PAGE, userBuildsPage, userNewBuildPage } from "~/utils/urls";
@@ -69,6 +70,10 @@ test.describe("Builds", () => {
 			url: userBuildsPage({ discordId: ADMIN_DISCORD_ID }),
 		});
 
+		const buildIdBefore = await buildIdFromEditLink(
+			page.getByTestId("edit-build").first(),
+		);
+
 		await page.getByTestId("edit-build").first().click();
 
 		const form = createFormHelpers(page, newBuildBaseSchema);
@@ -82,6 +87,11 @@ test.describe("Builds", () => {
 		await expect(page.getByTestId("build-card").first()).toContainText(
 			"Private",
 		);
+
+		const buildIdAfter = await buildIdFromEditLink(
+			page.getByTestId("edit-build").first(),
+		);
+		expect(buildIdAfter).toBe(buildIdBefore);
 
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({
@@ -156,4 +166,12 @@ async function selectGear({
 		.getByRole("listbox", { name: "Suggestions" })
 		.getByTestId(`gear-select-option-${name}`)
 		.click();
+}
+
+async function buildIdFromEditLink(locator: Locator) {
+	const href = await locator.getAttribute("href");
+	invariant(href, "edit-build link missing href");
+	const match = href.match(/buildId=(\d+)/);
+	invariant(match, `buildId not found in href: ${href}`);
+	return Number(match[1]);
 }

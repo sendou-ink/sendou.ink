@@ -10,6 +10,7 @@ import type {
 	ModeShort,
 } from "~/modules/in-game-lists/types";
 import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { LimitReachedError } from "~/utils/errors";
 import invariant from "~/utils/invariant";
 import { commonUserJsonObject } from "~/utils/kysely.server";
@@ -107,6 +108,14 @@ interface CreateArgs {
 	private: TablesInsertable["Build"]["private"];
 }
 
+function serializeModes(modes: Array<ModeShort> | null) {
+	if (!modes || modes.length === 0) return null;
+
+	return JSON.stringify(
+		modes.slice().sort((a, b) => modesShort.indexOf(a) - modesShort.indexOf(b)),
+	);
+}
+
 async function createInTrx({
 	args,
 	trx,
@@ -120,22 +129,29 @@ async function createInTrx({
 			ownerId: args.ownerId,
 			title: args.title,
 			description: args.description,
-			modes:
-				args.modes && args.modes.length > 0
-					? JSON.stringify(
-							args.modes
-								.slice()
-								.sort((a, b) => modesShort.indexOf(a) - modesShort.indexOf(b)),
-						)
-					: null,
-			headGearSplId: args.headGearSplId ?? -1,
-			clothesGearSplId: args.clothesGearSplId ?? -1,
-			shoesGearSplId: args.shoesGearSplId ?? -1,
+			modes: serializeModes(args.modes),
+			headGearSplId: args.headGearSplId,
+			clothesGearSplId: args.clothesGearSplId,
+			shoesGearSplId: args.shoesGearSplId,
 			private: args.private,
 		})
 		.returningAll()
 		.executeTakeFirstOrThrow();
 
+	await populateBuildChildrenInTrx({ trx, buildId, updatedAt, args });
+}
+
+async function populateBuildChildrenInTrx({
+	trx,
+	buildId,
+	updatedAt,
+	args,
+}: {
+	trx: Transaction<DB>;
+	buildId: number;
+	updatedAt: number;
+	args: CreateArgs;
+}) {
 	await trx
 		.insertInto("BuildWeapon")
 		.values(
@@ -204,8 +220,37 @@ export async function create(args: CreateArgs) {
 
 export async function update(args: CreateArgs & { id: number }) {
 	return db.transaction().execute(async (trx) => {
-		await trx.deleteFrom("Build").where("id", "=", args.id).execute();
-		await createInTrx({ args, trx });
+		const { updatedAt } = await trx
+			.updateTable("Build")
+			.set({
+				title: args.title,
+				description: args.description,
+				modes: serializeModes(args.modes),
+				headGearSplId: args.headGearSplId,
+				clothesGearSplId: args.clothesGearSplId,
+				shoesGearSplId: args.shoesGearSplId,
+				private: args.private,
+				updatedAt: dateToDatabaseTimestamp(new Date()),
+			})
+			.where("id", "=", args.id)
+			.returning("updatedAt")
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.deleteFrom("BuildWeapon")
+			.where("buildId", "=", args.id)
+			.execute();
+		await trx
+			.deleteFrom("BuildAbility")
+			.where("buildId", "=", args.id)
+			.execute();
+
+		await populateBuildChildrenInTrx({
+			trx,
+			buildId: args.id,
+			updatedAt,
+			args,
+		});
 	});
 }
 
@@ -408,8 +453,8 @@ function hasXRankPlacement(eb: ExpressionBuilder<DB, "BuildWeapon">) {
 		eb
 			.selectFrom("Build")
 			.select("BuildWeapon.buildId")
-			.leftJoin("SplatoonPlayer", "SplatoonPlayer.userId", "Build.ownerId")
-			.leftJoin(
+			.innerJoin("SplatoonPlayer", "SplatoonPlayer.userId", "Build.ownerId")
+			.innerJoin(
 				"XRankPlacement",
 				"XRankPlacement.playerId",
 				"SplatoonPlayer.id",

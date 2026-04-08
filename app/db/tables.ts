@@ -150,14 +150,14 @@ export type BadgeOwner = {
 };
 
 export interface Build {
-	clothesGearSplId: number;
+	clothesGearSplId: number | null;
 	description: string | null;
-	headGearSplId: number;
+	headGearSplId: number | null;
 	id: GeneratedAlways<number>;
 	modes: JSONColumnTypeNullable<ModeShort[]>;
 	ownerId: number;
 	private: DBBoolean | null;
-	shoesGearSplId: number;
+	shoesGearSplId: number | null;
 	title: string;
 	updatedAt: Generated<number>;
 }

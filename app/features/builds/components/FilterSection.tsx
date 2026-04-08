@@ -12,7 +12,7 @@ import type {
 	Ability as AbilityType,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import { dateToYYYYMMDD } from "~/utils/dates";
+import { dateToYYYYMMDD, isValidDate } from "~/utils/dates";
 import { PATCHES } from "../builds-constants";
 import type {
 	AbilityBuildFilter,
@@ -198,26 +198,19 @@ function DateFilter({
 	const { t } = useTranslation(["builds"]);
 	const { formatDate } = useTimeFormat();
 
-	const selectValue = () => {
-		const dateString = dateToYYYYMMDD(new Date(filter.date));
-
-		if (
-			PATCHES.find(({ date }) => {
-				return new Date(date).toISOString().split("T")[0] === dateString;
-			})
-		) {
-			return dateString;
-		}
-
-		return "CUSTOM";
-	};
+	const selectValue = () =>
+		PATCHES.some(({ date }) => date === filter.date) ? filter.date : "CUSTOM";
 
 	// on Saturday so it doesn't overlap with actual path dates (no patches on Saturdays)
 	const oneMonthAgoOnSaturday = new Date();
-	oneMonthAgoOnSaturday.setDate(oneMonthAgoOnSaturday.getDate() - 30);
-	oneMonthAgoOnSaturday.setDate(
-		oneMonthAgoOnSaturday.getDate() - oneMonthAgoOnSaturday.getDay() + 6,
+	oneMonthAgoOnSaturday.setUTCDate(oneMonthAgoOnSaturday.getUTCDate() - 30);
+	oneMonthAgoOnSaturday.setUTCDate(
+		oneMonthAgoOnSaturday.getUTCDate() - oneMonthAgoOnSaturday.getUTCDay() + 6,
 	);
+
+	const customDate = isValidDate(new Date(filter.date))
+		? new Date(filter.date)
+		: oneMonthAgoOnSaturday;
 
 	return (
 		<div className={clsx(styles.filter, styles.filterDate)}>
@@ -255,7 +248,7 @@ function DateFilter({
 			{selectValue() === "CUSTOM" ? (
 				<input
 					type="date"
-					value={dateToYYYYMMDD(new Date(filter.date))}
+					value={dateToYYYYMMDD(customDate)}
 					onChange={(e) => onChange({ date: e.target.value })}
 					max={dateToYYYYMMDD(new Date())}
 					data-testid="date-input"

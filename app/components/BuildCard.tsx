@@ -72,7 +72,7 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 	} = build;
 
 	const isNoGear = [headGearSplId, clothesGearSplId, shoesGearSplId].some(
-		(id) => id === -1,
+		(id) => typeof id !== "number",
 	);
 
 	return (
@@ -274,7 +274,7 @@ function AbilitiesRowWithGear({
 }: {
 	gearType: GearType;
 	abilities: AbilityType[];
-	gearId: number;
+	gearId: number | null;
 }) {
 	const { t } = useTranslation(["gear"]);
 	const translatedGearName = t(
@@ -283,7 +283,7 @@ function AbilitiesRowWithGear({
 
 	return (
 		<>
-			{gearId !== -1 ? (
+			{typeof gearId === "number" ? (
 				<Image
 					height={64}
 					width={64}
