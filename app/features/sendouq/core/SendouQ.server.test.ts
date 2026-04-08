@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { db } from "~/db/sql";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
+import { databaseTimestampNow } from "~/utils/dates";
 import { dbInsertUsers, dbReset } from "~/utils/Test";
 import * as SQGroupRepository from "../SQGroupRepository.server";
 import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
@@ -393,9 +394,18 @@ describe("SendouQ", () => {
 				await insertSkill(3, 2000);
 				await insertSkill(4, 1050);
 
-				await createGroup([4]);
-				await createGroup([2]);
-				await createGroup([3]);
+				const g4Id = await createGroup([4]);
+				const g2Id = await createGroup([2]);
+				const g3Id = await createGroup([3]);
+				// Force identical latestActionAt so the sort comparator's
+				// recency tie-breaker stays neutral and the assertion does
+				// not depend on whether the group inserts straddle a
+				// millisecond boundary (which they can on slow CI).
+				await db
+					.updateTable("Group")
+					.set({ latestActionAt: databaseTimestampNow() })
+					.where("id", "in", [g4Id, g2Id, g3Id])
+					.execute();
 				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
