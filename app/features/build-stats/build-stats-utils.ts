@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import { abilities } from "~/modules/in-game-lists/abilities";
 import type { Ability } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
@@ -101,18 +102,14 @@ type AbilityCountsMap = Map<Ability, number>;
 const POPULAR_BUILDS_TO_SHOW = 25;
 
 export function popularBuilds(builds: Array<AbilitiesByWeapon>) {
-	const counts = new Map<string, number>();
-	for (const build of builds) {
-		const summedUpAbilities = sumUpAbilities(build);
-		const serializedAbilities = serializeAbilityCountsMap(summedUpAbilities);
-
-		counts.set(serializedAbilities, (counts.get(serializedAbilities) ?? 0) + 1);
-	}
-
-	const serializedToShow = Array.from(counts.entries())
-		.sort((a, b) => b[1] - a[1])
-		.filter(([, count]) => count > 1)
-		.slice(0, POPULAR_BUILDS_TO_SHOW);
+	const serializedToShow = R.pipe(
+		builds,
+		R.countBy((build) => serializeAbilityCountsMap(sumUpAbilities(build))),
+		R.entries(),
+		R.sortBy([([, count]) => count, "desc"]),
+		R.filter(([, count]) => count > 1),
+		R.take(POPULAR_BUILDS_TO_SHOW),
+	);
 
 	return serializedToShowToResultType(serializedToShow);
 }

@@ -1,5 +1,6 @@
 import type { ExpressionBuilder, Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { BuildWeapon, DB, Tables, TablesInsertable } from "~/db/tables";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -77,22 +78,15 @@ function dbAbilitiesToArrayOfArrays(
 		Pick<Tables["BuildAbility"], "ability" | "gearType" | "slotIndex">
 	>,
 ): BuildAbilitiesTuple {
-	const sorted = abilities
-		.slice()
-		.sort((a, b) => {
-			if (a.gearType === b.gearType) return a.slotIndex - b.slotIndex;
-
-			return gearOrder.indexOf(a.gearType) - gearOrder.indexOf(b.gearType);
-		})
-		.map((a) => a.ability);
+	const sorted = R.sortBy(
+		abilities,
+		(a) => gearOrder.indexOf(a.gearType),
+		(a) => a.slotIndex,
+	).map((a) => a.ability);
 
 	invariant(sorted.length === 12, "expected 12 abilities");
 
-	return [
-		[sorted[0], sorted[1], sorted[2], sorted[3]],
-		[sorted[4], sorted[5], sorted[6], sorted[7]],
-		[sorted[8], sorted[9], sorted[10], sorted[11]],
-	];
+	return R.chunk(sorted, 4) as BuildAbilitiesTuple;
 }
 
 interface CreateArgs {
