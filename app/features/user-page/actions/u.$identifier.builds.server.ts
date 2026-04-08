@@ -26,15 +26,9 @@ export const action: ActionFunction = async ({ request }) => {
 
 	switch (data._action) {
 		case "DELETE_BUILD": {
-			const usersBuilds = await BuildRepository.allByUserId(user.id, {
-				showPrivate: true,
-			});
+			const ownerId = await BuildRepository.ownerIdById(data.buildToDeleteId);
 
-			const buildToDelete = usersBuilds.find(
-				(build) => build.id === data.buildToDeleteId,
-			);
-
-			errorToastIfFalsy(buildToDelete, "Build to delete not found");
+			errorToastIfFalsy(ownerId === user.id, "Build to delete not found");
 
 			await BuildRepository.deleteById(data.buildToDeleteId);
 
