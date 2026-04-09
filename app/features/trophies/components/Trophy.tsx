@@ -1,4 +1,5 @@
 import { clsx } from "clsx";
+import { Ban } from "lucide-react";
 import { ungzip } from "pako";
 import { PicoCAD2Context, PicoCAD2Viewer } from "picocad2-web";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
@@ -43,6 +44,7 @@ export function Trophy({
 }) {
 	const context = useContext(TrophyCtx);
 	const viewerRef = useRef<PicoCAD2Viewer | null>(null);
+	const [error, setError] = useState<boolean>(false);
 
 	const modelState = ungzip(
 		Uint8Array.from(atob(model), (c) => c.charCodeAt(0)),
@@ -65,7 +67,12 @@ export function Trophy({
 		});
 		viewerRef.current = viewer;
 
-		viewer.setState(JSON.parse(modelState));
+		try {
+			viewer.setState(JSON.parse(modelState));
+		} catch (_) {
+			setError(true);
+			return;
+		}
 
 		if (preview) {
 			viewer.draw();
@@ -88,6 +95,14 @@ export function Trophy({
 			},
 		});
 	};
+
+	if (error) {
+		return (
+			<div className={clsx(style.trophy, style.error, className)}>
+				<Ban size={48} />
+			</div>
+		);
+	}
 
 	return <canvas ref={canvasRef} className={clsx(style.trophy, className)} />;
 }

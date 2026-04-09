@@ -9,3 +9,10 @@
 		opacity: 0;
 	}
 }
+
+.error {
+	color: var(--color-text-high);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
