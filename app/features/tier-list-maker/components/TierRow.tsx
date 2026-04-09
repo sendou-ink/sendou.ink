@@ -1,8 +1,5 @@
-import { useDroppable } from "@dnd-kit/core";
-import {
-	horizontalListSortingStrategy,
-	SortableContext,
-} from "@dnd-kit/sortable";
+import { useDndContext, useDroppable } from "@dnd-kit/core";
+import { SortableContext } from "@dnd-kit/sortable";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, Trash } from "lucide-react";
 import { Button } from "react-aria-components";
@@ -43,6 +40,10 @@ export function TierRow({ tier }: TierRowProps) {
 	const { setNodeRef, isOver } = useDroppable({
 		id: tier.id,
 	});
+	const { over } = useDndContext();
+	const isOverTierItem =
+		over != null &&
+		items.some((item) => tierListItemId(item) === String(over.id));
 
 	const tierIndex = state.tiers.findIndex((t) => t.id === tier.id);
 	const isFirstTier = tierIndex === 0;
@@ -126,7 +127,7 @@ export function TierRow({ tier }: TierRowProps) {
 					borderRadius: screenshotMode ? "var(--radius-field)" : undefined,
 				}}
 				className={clsx(styles.targetZone, {
-					[styles.targetZoneOver]: isOver,
+					[styles.targetZoneOver]: isOver || isOverTierItem,
 				})}
 			>
 				{items.length === 0 && !screenshotMode ? (
@@ -134,10 +135,7 @@ export function TierRow({ tier }: TierRowProps) {
 						{t("tier-list-maker:dropItems")}
 					</div>
 				) : items.length > 0 ? (
-					<SortableContext
-						items={items.map(tierListItemId)}
-						strategy={horizontalListSortingStrategy}
-					>
+					<SortableContext items={items.map(tierListItemId)}>
 						{items.map((item) => (
 							<DraggableItem key={tierListItemId(item)} item={item} />
 						))}

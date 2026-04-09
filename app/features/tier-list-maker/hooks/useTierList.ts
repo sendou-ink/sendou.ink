@@ -20,6 +20,7 @@ import {
 	subWeaponIds,
 	weaponIdToType,
 } from "~/modules/in-game-lists/weapon-ids";
+import invariant from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
 import { modeShort, safeJSONParse } from "~/utils/zod";
 import { DEFAULT_TIERS } from "../tier-list-maker-constants";
@@ -30,7 +31,11 @@ import {
 	tierListItemTypeSchema,
 	tierListStateSerializedSchema,
 } from "../tier-list-maker-schemas";
-import { getNextNthForItem } from "../tier-list-maker-utils";
+import {
+	getNextNthForItem,
+	parseItemFromId,
+	tierListItemId,
+} from "../tier-list-maker-utils";
 
 export function useTierList() {
 	const [itemType, setItemType] = useSearchParamState<TierListItem["type"]>({
@@ -42,7 +47,7 @@ export function useTierList() {
 		},
 	});
 
-	const { tiers, setTiers, persistTiersStateToParams } =
+	const { tiers, setTiers, persistTiersStateToParams, removeItem, moveItem } =
 		useSearchParamTiersState();
 	const [activeItem, setActiveItem] = React.useState<TierListItem | null>(null);
 
@@ -87,38 +92,6 @@ export function useTierList() {
 		encode: JSON.stringify,
 	});
 
-	const parseItemFromId = (id: string): TierListItem | null => {
-		const [type, idStr, nth] = String(id).split(":");
-		if (!type || !idStr) return null;
-
-		if (type === "mode" || type === "stage-mode") {
-			return {
-				type: type as TierListItem["type"],
-				id: idStr,
-				nth: nth ? Number(nth) : undefined,
-			} as TierListItem;
-		}
-
-		return {
-			type: type as TierListItem["type"],
-			id: Number(idStr),
-			nth: nth ? Number(nth) : undefined,
-		} as TierListItem;
-	};
-
-	const findContainer = (item: TierListItem): string | null => {
-		for (const [tierId, items] of tiers.tierItems.entries()) {
-			if (
-				items.some(
-					(i) => i.id === item.id && i.type === item.type && i.nth === item.nth,
-				)
-			) {
-				return tierId;
-			}
-		}
-		return null;
-	};
-
 	const handleDragStart = (event: DragStartEvent) => {
 		const item = parseItemFromId(String(event.active.id));
 		if (item) {
@@ -126,155 +99,36 @@ export function useTierList() {
 		}
 	};
 
-	const handleDragOver = (event: DragOverEvent) => {
-		const { active, over } = event;
-
-		if (!over) {
-			return;
-		}
-
-		const activeItem = parseItemFromId(String(active.id));
-		if (!activeItem) return;
-
-		const overId = over.id;
-
-		const activeContainer = findContainer(activeItem);
-		const overItem = parseItemFromId(String(overId));
-		const overContainer = String(overId).startsWith("tier-")
-			? String(overId)
-			: overItem
-				? findContainer(overItem)
-				: null;
-
-		// Same-container reordering is handled in handleDragEnd. Doing it here
-		// would create a render → dragOver ping-pong loop with arrayMove.
-		if (!overContainer || activeContainer === overContainer) {
-			return;
-		}
-
-		const newTierItems = new Map(tiers.tierItems);
-		const activeItems = activeContainer
-			? newTierItems.get(activeContainer) || []
-			: [];
-		const overItems = newTierItems.get(overContainer) || [];
-
-		const overIndex = overItem
-			? overItems.findIndex(
-					(item) =>
-						item.id === overItem.id &&
-						item.type === overItem.type &&
-						item.nth === overItem.nth,
-				)
-			: overItems.length;
-
-		if (activeContainer) {
-			newTierItems.set(
-				activeContainer,
-				activeItems.filter(
-					(item) =>
-						!(
-							item.id === activeItem.id &&
-							item.type === activeItem.type &&
-							item.nth === activeItem.nth
-						),
-				),
-			);
-		}
-
-		const newOverItems = [...overItems];
-		newOverItems.splice(
-			overIndex === -1 ? newOverItems.length : overIndex,
-			0,
-			activeItem,
-		);
-		newTierItems.set(overContainer, newOverItems);
-
-		setTiers({
-			...tiers,
-			tierItems: newTierItems,
-		});
-	};
-
 	const handleDragEnd = (event: DragEndEvent) => {
-		const { active, over } = event;
 		setActiveItem(null);
 
-		if (!over) {
-			persistTiersStateToParams(tiers);
+		if (!event.over) return;
+
+		const itemId = String(event.active.id);
+		const item = parseItemFromId(itemId);
+		invariant(item);
+
+		const wasRemoved = event.collisions?.some((c) => c.id === "item-pool");
+
+		if (wasRemoved) {
+			removeItem(item);
 			return;
 		}
 
-		const item = parseItemFromId(String(active.id));
-		if (!item) {
-			persistTiersStateToParams(tiers);
-			return;
-		}
+		// xxx: extract some of these to constants
+		const newTier = event.collisions?.find((c) =>
+			(c.id as string).startsWith("tier-"),
+		)?.id;
 
-		const overId = over.id;
+		const overItem = event.collisions?.find(
+			(c) => !(c.id as string).startsWith("tier-") && c.id !== "item-pool",
+		)?.id;
 
-		const overItem = parseItemFromId(String(overId));
-		const isDroppedInPool =
-			overId === "item-pool" || (overItem && !findContainer(overItem));
-
-		if (isDroppedInPool) {
-			const newTierItems = new Map(tiers.tierItems);
-			const currentContainer = findContainer(item);
-
-			if (currentContainer) {
-				const containerItems = newTierItems.get(currentContainer) || [];
-				newTierItems.set(
-					currentContainer,
-					containerItems.filter(
-						(i) =>
-							!(i.id === item.id && i.type === item.type && i.nth === item.nth),
-					),
-				);
-			}
-
-			const newState = {
-				...tiers,
-				tierItems: newTierItems,
-			};
-			setTiers(newState);
-			persistTiersStateToParams(newState);
-			return;
-		}
-
-		const activeContainer = findContainer(item);
-		if (!activeContainer) {
-			persistTiersStateToParams(tiers);
-			return;
-		}
-
-		const containerItems = tiers.tierItems.get(activeContainer) || [];
-		const oldIndex = containerItems.findIndex(
-			(i) => i.id === item.id && i.type === item.type && i.nth === item.nth,
-		);
-		const newIndex = overItem
-			? containerItems.findIndex(
-					(i) =>
-						i.id === overItem.id &&
-						i.type === overItem.type &&
-						i.nth === overItem.nth,
-				)
-			: -1;
-
-		if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-			const newTierItems = new Map(tiers.tierItems);
-			newTierItems.set(
-				activeContainer,
-				arrayMove(containerItems, oldIndex, newIndex),
-			);
-			const newState = {
-				...tiers,
-				tierItems: newTierItems,
-			};
-			setTiers(newState);
-			persistTiersStateToParams(newState);
-			return;
-		}
-
-		persistTiersStateToParams(tiers);
+		moveItem({
+			movedItemId: itemId,
+			overItemId: overItem ? String(overItem) : undefined,
+			tierId: newTier ? String(newTier) : undefined,
+		});
 	};
 
 	const handleAddTier = () => {
@@ -449,7 +303,6 @@ export function useTierList() {
 		state: tiers,
 		activeItem,
 		handleDragStart,
-		handleDragOver,
 		handleDragEnd,
 		handleAddTier,
 		handleRemoveTier,
@@ -519,9 +372,134 @@ function useSearchParamTiersState() {
 		);
 	};
 
+	const findContainer = (item: TierListItem): string | null => {
+		for (const [tierId, items] of tiers.tierItems.entries()) {
+			if (
+				items.some(
+					(i) => i.id === item.id && i.type === item.type && i.nth === item.nth,
+				)
+			) {
+				return tierId;
+			}
+		}
+		return null;
+	};
+
+	const updateStateAndSearchParams = (state: TierListState) => {
+		setTiers(state);
+		persistTiersStateToParams(state);
+	};
+
+	const removeItem = (item: TierListItem) => {
+		const newTierItems = new Map(tiers.tierItems);
+
+		const currentContainer = findContainer(item);
+		if (!currentContainer) return;
+
+		const containerItems = newTierItems.get(currentContainer) || [];
+		newTierItems.set(
+			currentContainer,
+			containerItems.filter(
+				(tierItem) => tierListItemId(tierItem) !== tierListItemId(item),
+			),
+		);
+
+		updateStateAndSearchParams({
+			...tiers,
+			tierItems: newTierItems,
+		});
+	};
+
+	const moveItem = ({
+		movedItemId,
+		overItemId,
+		tierId,
+	}: {
+		movedItemId: string;
+		overItemId?: string;
+		tierId?: string;
+	}) => {
+		if (!tierId) return;
+		if (movedItemId === overItemId) return;
+
+		let resultState = {
+			...tiers,
+			tierItems: new Map(tiers.tierItems),
+		};
+
+		const [oldTier, oldTierItems] = Array.from(tiers.tierItems.entries()).find(
+			([, b]) => b.some((item) => movedItemId === tierListItemId(item)),
+		) ?? [null, null];
+		const oldIndex = oldTierItems?.findIndex(
+			(item) => movedItemId === tierListItemId(item),
+		);
+
+		// did we drop it over some other item?
+		if (overItemId) {
+			const [newTier, newTierItems] = Array.from(
+				tiers.tierItems.entries(),
+			).find(([, b]) => b.some((item) => overItemId === tierListItemId(item)))!;
+			const newIndex = oldTierItems?.findIndex(
+				(item) => overItemId === tierListItemId(item),
+			);
+
+			// moving inside a tier
+			if (oldTier === newTier) {
+				const newOrder = arrayMove(newTierItems, oldIndex!, newIndex!);
+
+				resultState.tierItems.set(newTier, newOrder);
+
+				// moving from tier to tier
+			} else {
+				resultState = filterOutItemFromEveryTierById(resultState, movedItemId);
+
+				const oldItems = resultState.tierItems.get(newTier) ?? [];
+				const withItem = oldItems.toSpliced(
+					newIndex ?? oldItems.length,
+					0,
+					parseItemFromId(movedItemId)!,
+				);
+
+				resultState.tierItems.set(newTier, withItem);
+			}
+
+			// we moved it to some tier (but not on item)
+		} else if (oldTier !== tierId) {
+			resultState = filterOutItemFromEveryTierById(resultState, movedItemId);
+
+			const existingTier = resultState.tierItems.get(tierId);
+
+			if (existingTier) {
+				existingTier.push(parseItemFromId(movedItemId)!);
+			} else {
+				resultState.tierItems.set(tierId, [parseItemFromId(movedItemId)!]);
+			}
+		}
+
+		updateStateAndSearchParams(resultState);
+	};
+
 	return {
 		tiers,
 		setTiers,
 		persistTiersStateToParams,
+		removeItem,
+		moveItem,
 	};
+}
+
+function filterOutItemFromEveryTierById(
+	state: TierListState,
+	itemId: string,
+): TierListState {
+	const result = { ...state };
+
+	for (const [tier, items] of state.tierItems.entries()) {
+		result.tierItems.set(
+			tier,
+			items.filter((item) => tierListItemId(item) !== itemId),
+		);
+	}
+
+	return result;
 }

@@ -91,7 +91,6 @@ function TierListMakerContent() {
 		state,
 		activeItem,
 		handleDragStart,
-		handleDragOver,
 		handleDragEnd,
 		handleAddTier,
 		handleReset,
@@ -163,9 +162,7 @@ function TierListMakerContent() {
 
 			<DndContext
 				sensors={sensors}
-				collisionDetection={pointerWithin}
 				onDragStart={handleDragStart}
-				onDragOver={handleDragOver}
 				onDragEnd={handleDragEnd}
 			>
 				<div className="stack">
