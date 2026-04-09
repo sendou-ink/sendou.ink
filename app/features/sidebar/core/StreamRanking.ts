@@ -27,8 +27,9 @@ export function rank(
 
 export function tournamentTierToScore(
 	tier: TournamentTierNumber | null,
+	membersPerTeam?: number,
 ): number {
-	return tier ?? 9;
+	return Math.min(9, (tier ?? 9) + 4 - (membersPerTeam ?? 4));
 }
 
 export function upcomingTournamentTierToScore(tier: number): number {

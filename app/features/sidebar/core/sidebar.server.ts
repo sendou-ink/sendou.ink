@@ -152,7 +152,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 	for (const stream of tournamentStreams) {
 		ranked.push({
 			stream,
-			score: StreamRanking.tournamentTierToScore(stream.tier),
+			score: StreamRanking.tournamentTierToScore(stream.tier, stream.membersPerTeam),
 		});
 	}
 
