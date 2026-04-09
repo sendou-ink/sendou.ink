@@ -1,4 +1,9 @@
-import { ADMIN_ID, DEV_IDS, STAFF_IDS } from "~/features/admin/admin-constants";
+import {
+	ADMIN_ID,
+	DEV_IDS,
+	QA_IDS,
+	STAFF_IDS,
+} from "~/features/admin/admin-constants";
 
 export function isAdmin(user?: { id: number }) {
 	return user?.id === ADMIN_ID;
@@ -14,6 +19,12 @@ export function isDev(user?: { id: number }) {
 	if (!user) return false;
 
 	return DEV_IDS.includes(user.id);
+}
+
+export function isQa(user?: { id: number }) {
+	if (!user) return false;
+
+	return QA_IDS.includes(user.id);
 }
 
 export function isSupporter(user?: { patronTier: number | null }) {

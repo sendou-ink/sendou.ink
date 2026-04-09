@@ -1,3 +1,14 @@
 {
-	"title": ""
+	"title": "",
+	"new.tabs.upload": "",
+	"new.tabs.pending": "",
+	"new.tabs.reviewed": "",
+	"new.pending.empty": "",
+	"new.pending.accept": "",
+	"new.pending.decline": "",
+	"new.pending.declineHeading": "",
+	"new.pending.declineReason": "",
+	"new.pending.declinedBy": "",
+	"new.pending.acceptedBy": "",
+	"new.reviewed.empty": ""
 }

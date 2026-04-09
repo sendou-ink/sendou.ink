@@ -1,5 +1,9 @@
 {
 	"submit": "Finalizar",
+	"labels.trophyName": "",
+	"labels.trophyModel": "",
+	"labels.trophyOrganization": "",
+	"labels.trophyDescription": "",
 	"labels.name": "Nombre",
 	"labels.bio": "Biografía",
 	"labels.tag": "",

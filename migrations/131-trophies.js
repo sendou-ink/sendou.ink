@@ -32,5 +32,32 @@ export function up(db) {
 		db.prepare(
 			/*sql*/ `create unique index "trophy_owner_tournament_user_unique" on "TrophyOwner"("tournamentId", "userId", "trophyId")`,
 		).run();
+
+		db.prepare(
+			/*sql*/ `
+      create table "PendingTrophy" (
+        "id" integer primary key,
+        "name" text not null,
+        "model" text not null,
+        "description" text not null,
+        "organizationId" integer,
+        "submitterUserId" integer not null,
+        "createdAt" integer not null,
+        "declineReason" text,
+        "declinedAt" integer,
+        "declinedByUserId" integer,
+        "acceptedAt" integer,
+        "acceptedByUserId" integer,
+        foreign key ("organizationId") references "TournamentOrganization"("id") on delete set null,
+        foreign key ("submitterUserId") references "User"("id") on delete cascade,
+        foreign key ("declinedByUserId") references "User"("id") on delete set null,
+        foreign key ("acceptedByUserId") references "User"("id") on delete set null
+      ) strict
+    `,
+		).run();
+
+		db.prepare(
+			/*sql*/ `create index "pending_trophy_submitter_idx" on "PendingTrophy"("submitterUserId")`,
+		).run();
 	})();
 }

@@ -1,4 +1,3 @@
-import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { Trophy } from "../components/Trophy";
 import { loader } from "../loaders/trophies.$id.server";
@@ -7,7 +6,6 @@ import styles from "./trophies.module.css";
 export { loader };
 
 export default function TrophyDetailsPage() {
-	const { t } = useTranslation("trophies");
 	const data = useLoaderData<typeof loader>();
 
 	return (

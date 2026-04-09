@@ -1,5 +1,9 @@
 {
 	"submit": "Złóż",
+	"labels.trophyName": "",
+	"labels.trophyModel": "",
+	"labels.trophyOrganization": "",
+	"labels.trophyDescription": "",
 	"labels.name": "Imię",
 	"labels.bio": "Opis",
 	"labels.tag": "",

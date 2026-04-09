@@ -1,8 +1,8 @@
 import { clsx } from "clsx";
 import { Ban } from "lucide-react";
-import { ungzip } from "pako";
 import { PicoCAD2Context, PicoCAD2Viewer } from "picocad2-web";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { decompressTrophyModel } from "../trophies-utils";
 import style from "./Trophy.module.css";
 
 const TrophyCtx = createContext<PicoCAD2Context | undefined>(undefined);
@@ -46,12 +46,7 @@ export function Trophy({
 	const viewerRef = useRef<PicoCAD2Viewer | null>(null);
 	const [error, setError] = useState<boolean>(false);
 
-	const modelState = ungzip(
-		Uint8Array.from(atob(model), (c) => c.charCodeAt(0)),
-		{
-			to: "string",
-		},
-	);
+	const modelState = decompressTrophyModel(model);
 
 	const canvasRef = (canvas: HTMLCanvasElement | null) => {
 		if (!canvas) {

@@ -5,6 +5,7 @@ import {
 	CALENDAR_NEW_PAGE,
 	lfgNewPostPage,
 	NEW_TEAM_PAGE,
+	NEW_TROPHY_PAGE,
 	navIconUrl,
 	newArtPage,
 	newAssociationsPage,
@@ -96,6 +97,12 @@ export function AnythingAdder({ compact }: { compact?: boolean }) {
 			children: t("header.adder.plusSuggestion"),
 			imagePath: navIconUrl("plus"),
 			href: plusSuggestionsNewPage(),
+		},
+		{
+			id: "trophy",
+			children: t("header.adder.trophy"),
+			imagePath: navIconUrl("trophies"),
+			href: NEW_TROPHY_PAGE,
 		},
 	].filter((item) => item !== null);
 

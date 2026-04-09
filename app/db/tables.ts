@@ -164,6 +164,21 @@ export interface TrophyOwner {
 	tournamentId: number;
 }
 
+export interface PendingTrophy {
+	id: GeneratedAlways<number>;
+	name: string;
+	model: string;
+	description: string;
+	organizationId: number | null;
+	submitterUserId: number;
+	createdAt: number;
+	declineReason: string | null;
+	declinedAt: number | null;
+	declinedByUserId: number | null;
+	acceptedAt: number | null;
+	acceptedByUserId: number | null;
+}
+
 export interface Build {
 	clothesGearSplId: number;
 	description: string | null;
@@ -1397,6 +1412,7 @@ export interface DB {
 	TournamentMatchVod: TournamentMatchVod;
 	Trophy: Trophy;
 	TrophyOwner: TrophyOwner;
+	PendingTrophy: PendingTrophy;
 	TrustRelationship: TrustRelationship;
 	Friendship: Friendship;
 	FriendRequest: FriendRequest;

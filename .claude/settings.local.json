@@ -1,0 +1,5 @@
+{
+	"permissions": {
+		"allow": ["Bash(xargs grep:*)", "Bash(pnpm run:*)"]
+	}
+}

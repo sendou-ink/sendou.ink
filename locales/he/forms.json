@@ -1,5 +1,9 @@
 {
 	"submit": "שליחה",
+	"labels.trophyName": "",
+	"labels.trophyModel": "",
+	"labels.trophyOrganization": "",
+	"labels.trophyDescription": "",
 	"labels.name": "שם",
 	"labels.bio": "ביו",
 	"labels.tag": "",

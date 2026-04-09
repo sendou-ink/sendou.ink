@@ -1,0 +1,93 @@
+.modelTextarea {
+	min-height: 160px;
+	font-family: var(--font-mono);
+	font-size: var(--font-xs);
+}
+
+.descriptionTextarea {
+	min-height: 120px;
+}
+
+.pendingList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.pendingItem {
+	display: grid;
+	grid-template-columns: 100px 1fr;
+	gap: var(--s-4);
+	padding: var(--s-3);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.pendingMain {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	min-width: 0;
+}
+
+.pendingHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+}
+
+.pendingName {
+	font-weight: var(--weight-semi);
+}
+
+.pendingMeta {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}
+
+.pendingDescription {
+	white-space: pre-wrap;
+	font-size: var(--font-sm);
+}
+
+.pendingActions {
+	display: flex;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+}
+
+.declined {
+	background-color: var(--color-error-low);
+	border: 1px solid var(--color-error);
+	border-radius: var(--radius-field);
+	padding: var(--s-2);
+	font-size: var(--font-sm);
+
+	> p {
+		color: var(--color-error-high);
+		font-weight: var(--weight-bold);
+	}
+}
+
+.accepted {
+	background-color: var(--color-success-low);
+	border: 1px solid var(--color-success);
+	border-radius: var(--radius-field);
+	padding: var(--s-2);
+	font-size: var(--font-sm);
+
+	> p {
+		color: var(--color-success-high);
+		font-weight: var(--weight-bold);
+	}
+}
+
+.dialogForm {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	min-width: 280px;
+}

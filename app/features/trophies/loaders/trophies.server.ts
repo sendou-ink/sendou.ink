@@ -1,11 +1,8 @@
 import { cachified } from "@epic-web/cachified";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
-import type { SerializeFrom } from "~/utils/remix";
 import * as TrophyRepository from "../TrophyRepository.server";
 
 const TROPHIES_CACHE_KEY = "trophies";
-
-export type TrophiesLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async () => {
 	const trophies = await cachified({

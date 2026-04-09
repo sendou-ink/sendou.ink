@@ -1,5 +1,9 @@
 {
 	"submit": "Опубликовать",
+	"labels.trophyName": "",
+	"labels.trophyModel": "",
+	"labels.trophyOrganization": "",
+	"labels.trophyDescription": "",
 	"labels.name": "Название",
 	"labels.bio": "Описание",
 	"labels.tag": "",

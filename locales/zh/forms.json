@@ -1,5 +1,9 @@
 {
 	"submit": "确认",
+	"labels.trophyName": "",
+	"labels.trophyModel": "",
+	"labels.trophyOrganization": "",
+	"labels.trophyDescription": "",
 	"labels.name": "名称",
 	"labels.bio": "简介",
 	"labels.tag": "",

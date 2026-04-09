@@ -92,6 +92,7 @@ export const SUPPORT_PAGE = "/support";
 export const CONTRIBUTIONS_PAGE = "/contributions";
 export const BADGES_PAGE = "/badges";
 export const TROPHIES_PAGE = "/trophies";
+export const NEW_TROPHY_PAGE = "/trophies/new";
 export const BUILDS_PAGE = "/builds";
 export const TEAM_SEARCH_PAGE = "/t";
 export const NEW_TEAM_PAGE = "/t/new";

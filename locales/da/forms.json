@@ -1,5 +1,9 @@
 {
 	"submit": "Fremlæg",
+	"labels.trophyName": "",
+	"labels.trophyModel": "",
+	"labels.trophyOrganization": "",
+	"labels.trophyDescription": "",
 	"labels.name": "Navn",
 	"labels.bio": "Biografi",
 	"labels.tag": "",

@@ -1,5 +1,9 @@
 {
 	"submit": "제출",
+	"labels.trophyName": "",
+	"labels.trophyModel": "",
+	"labels.trophyOrganization": "",
+	"labels.trophyDescription": "",
 	"labels.name": "이름",
 	"labels.bio": "소개",
 	"labels.tag": "",

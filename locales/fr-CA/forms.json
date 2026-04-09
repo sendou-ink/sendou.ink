@@ -1,5 +1,9 @@
 {
 	"submit": "Envoyer",
+	"labels.trophyName": "",
+	"labels.trophyModel": "",
+	"labels.trophyOrganization": "",
+	"labels.trophyDescription": "",
 	"labels.name": "Nom",
 	"labels.bio": "Bio",
 	"labels.tag": "",

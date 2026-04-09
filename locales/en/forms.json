@@ -1,5 +1,9 @@
 {
 	"submit": "Submit",
+	"labels.trophyName": "Name",
+	"labels.trophyModel": "3D model",
+	"labels.trophyOrganization": "Organization",
+	"labels.trophyDescription": "Description",
 	"labels.name": "Name",
 	"labels.bio": "Bio",
 	"labels.tag": "Tag",
