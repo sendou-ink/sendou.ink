@@ -161,6 +161,7 @@ function TierListMakerContent() {
 			</div>
 
 			<DndContext
+				key={itemType}
 				sensors={sensors}
 				onDragStart={handleDragStart}
 				onDragEnd={handleDragEnd}
