@@ -5,6 +5,7 @@ import { parseFormData } from "~/form/parse.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as TrophyRepository from "../TrophyRepository.server";
+import { TROPHY_PENDING_PER_USER_LIMIT } from "../trophies-constants";
 import {
 	createTrophyFormSchema,
 	pendingTrophyActionSchema,
@@ -25,6 +26,14 @@ export const action: ActionFunction = async ({ request }) => {
 		if (!result.success) {
 			return { fieldErrors: result.fieldErrors };
 		}
+
+		const pendingCount = await TrophyRepository.unreviewedCountBySubmitter(
+			user.id,
+		);
+		errorToastIfFalsy(
+			pendingCount < TROPHY_PENDING_PER_USER_LIMIT,
+			"Pending trophy limit reached",
+		);
 
 		await TrophyRepository.createPending({
 			name: result.data.name,

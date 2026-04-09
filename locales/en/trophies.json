@@ -1,5 +1,6 @@
 {
 	"title": "Trophies",
+	"new.form.limitReached": "You have reached the limit of {{limit}} pending trophies. Delete or wait for an existing submission to be reviewed before submitting another.",
 	"new.tabs.upload": "Upload",
 	"new.tabs.pending": "Pending",
 	"new.tabs.reviewed": "Reviewed",

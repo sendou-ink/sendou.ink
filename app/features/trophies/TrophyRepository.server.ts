@@ -107,6 +107,18 @@ export async function pendingBySubmitter(submitterUserId: number) {
 		.execute();
 }
 
+export async function unreviewedCountBySubmitter(submitterUserId: number) {
+	const row = await db
+		.selectFrom("PendingTrophy")
+		.select((eb) => eb.fn.countAll<number>().as("count"))
+		.where("submitterUserId", "=", submitterUserId)
+		.where("acceptedAt", "is", null)
+		.where("declinedAt", "is", null)
+		.executeTakeFirstOrThrow();
+
+	return row.count;
+}
+
 export async function deletePending(id: number) {
 	await db.deleteFrom("PendingTrophy").where("id", "=", id).execute();
 }

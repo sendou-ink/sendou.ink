@@ -31,7 +31,10 @@ import {
 	loader,
 	type NewTrophyLoaderData,
 } from "../loaders/trophies.new.server";
-import { TROPHY_DECLINE_REASON_MAX_LENGTH } from "../trophies-constants";
+import {
+	TROPHY_DECLINE_REASON_MAX_LENGTH,
+	TROPHY_PENDING_PER_USER_LIMIT,
+} from "../trophies-constants";
 import { createTrophyFormSchema } from "../trophies-schemas";
 import styles from "./trophies.new.module.css";
 
@@ -70,7 +73,15 @@ export default function NewTrophyPage() {
 					<SendouTab id="reviewed">{t("trophies:new.tabs.reviewed")}</SendouTab>
 				</SendouTabList>
 				<SendouTabPanel id="upload">
-					<NewTrophyForm />
+					{data.ownUnreviewedCount >= TROPHY_PENDING_PER_USER_LIMIT ? (
+						<Alert variation="WARNING">
+							{t("trophies:new.form.limitReached", {
+								limit: TROPHY_PENDING_PER_USER_LIMIT,
+							})}
+						</Alert>
+					) : (
+						<NewTrophyForm />
+					)}
 				</SendouTabPanel>
 				<SendouTabPanel id="pending">
 					<TrophyList items={data.pendingTrophies} listKind="pending" />
