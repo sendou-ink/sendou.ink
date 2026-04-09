@@ -252,18 +252,22 @@ function TrophyListRow({
 				{isAccepted ? (
 					<div className={styles.accepted}>
 						<p>
-							{t("trophies:new.pending.acceptedBy", {
-								name: pending.acceptedByUsername ?? "",
-							})}
+							{pending.acceptedByUsername
+								? t("trophies:new.pending.acceptedBy", {
+										name: pending.acceptedByUsername,
+									})
+								: t("trophies:new.pending.accepted")}
 						</p>
 					</div>
 				) : null}
 				{isDeclined ? (
 					<div className={styles.declined}>
 						<p>
-							{t("trophies:new.pending.declinedBy", {
-								name: pending.declinedByUsername ?? "",
-							})}
+							{pending.declinedByUsername
+								? t("trophies:new.pending.declinedBy", {
+										name: pending.declinedByUsername,
+									})
+								: t("trophies:new.pending.declined")}
 						</p>
 						<div>{pending.declineReason}</div>
 					</div>

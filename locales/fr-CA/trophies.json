@@ -8,7 +8,9 @@
 	"new.pending.decline": "",
 	"new.pending.declineHeading": "",
 	"new.pending.declineReason": "",
+	"new.pending.declined": "",
 	"new.pending.declinedBy": "",
+	"new.pending.accepted": "",
 	"new.pending.acceptedBy": "",
 	"new.reviewed.empty": ""
 }

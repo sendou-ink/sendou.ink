@@ -10,9 +10,11 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 	const user = requireUser();
 	const canReview = canReviewTrophies(user);
 
-	const allItems = canReview
+	const rawItems = canReview
 		? await TrophyRepository.allPending()
 		: await TrophyRepository.pendingBySubmitter(user.id);
+
+	const allItems = canReview ? rawItems : rawItems.map(stripReviewerInfo);
 
 	const pendingTrophies = allItems.filter(
 		(item) => !item.acceptedAt && !item.declinedAt,
@@ -28,3 +30,15 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 		reviewedTrophies,
 	};
 };
+
+function stripReviewerInfo(
+	item: Awaited<ReturnType<typeof TrophyRepository.allPending>>[number],
+) {
+	return {
+		...item,
+		acceptedByUserId: null,
+		acceptedByUsername: null,
+		declinedByUserId: null,
+		declinedByUsername: null,
+	};
+}
