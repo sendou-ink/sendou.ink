@@ -80,7 +80,7 @@ export default function NewTrophyPage() {
 							})}
 						</Alert>
 					) : (
-						<NewTrophyForm />
+						<NewTrophyForm key={data.ownUnreviewedCount} />
 					)}
 				</SendouTabPanel>
 				<SendouTabPanel id="pending">
