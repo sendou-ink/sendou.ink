@@ -6,8 +6,6 @@ import {
 	Funnel,
 	Map as MapIcon,
 } from "lucide-react";
-import { nanoid } from "nanoid";
-import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import {
@@ -49,9 +47,63 @@ export { loader };
 
 import styles from "./builds.$slug.module.css";
 
-const filterOutMeaninglessFilters = (
-	filter: Unpacked<BuildFiltersFromSearchParams>,
-) => {
+type ParsedFilter = Unpacked<BuildFiltersFromSearchParams>;
+
+/**
+ * Returns true if the meaningful build filters in `next` differ from those in `current`.
+ * Order-insensitive and duplicate-safe; AT_LEAST 0 ability filters are treated as no-ops.
+ */
+export function buildFiltersMeaningfullyChanged(
+	current: URLSearchParams,
+	next: URLSearchParams,
+): boolean {
+	const oldFilters = extractMeaningfulFilters(current);
+	const newFilters = extractMeaningfulFilters(next);
+
+	return !R.isDeepEqual(
+		R.sortBy(oldFilters, filterKey),
+		R.sortBy(newFilters, filterKey),
+	);
+}
+
+export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
+	if (isRevalidation(args)) return true;
+
+	if (
+		args.currentUrl.searchParams.get("limit") !==
+		args.nextUrl.searchParams.get("limit")
+	) {
+		return true;
+	}
+
+	if (
+		buildFiltersMeaningfullyChanged(
+			args.currentUrl.searchParams,
+			args.nextUrl.searchParams,
+		)
+	) {
+		return args.defaultShouldRevalidate;
+	}
+
+	return false;
+};
+
+function parseFiltersFromSearchParams(
+	searchParams: URLSearchParams,
+): BuildFilter[] {
+	const raw = searchParams.get(FILTER_SEARCH_PARAM_KEY);
+	if (!raw) return [];
+
+	return safeJSONParse<BuildFilter[]>(raw, []);
+}
+
+function extractMeaningfulFilters(
+	searchParams: URLSearchParams,
+): BuildFiltersFromSearchParams {
+	return parseFiltersFromSearchParams(searchParams).filter(isMeaningfulFilter);
+}
+
+function isMeaningfulFilter(filter: ParsedFilter): boolean {
 	if (filter.type !== "ability") return true;
 
 	return (
@@ -59,74 +111,13 @@ const filterOutMeaninglessFilters = (
 		typeof filter.value !== "number" ||
 		filter.value > 0
 	);
-};
-export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
-	if (isRevalidation(args)) return true;
+}
 
-	const oldLimit = args.currentUrl.searchParams.get("limit");
-	const newLimit = args.nextUrl.searchParams.get("limit");
-
-	// limit was changed -> revalidate
-	if (oldLimit !== newLimit) {
-		return true;
-	}
-
-	const rawOldFilters = args.currentUrl.searchParams.get(
-		FILTER_SEARCH_PARAM_KEY,
-	);
-	const oldFilters = rawOldFilters
-		? safeJSONParse<BuildFiltersFromSearchParams>(rawOldFilters, []).filter(
-				filterOutMeaninglessFilters,
-			)
-		: null;
-	const rawNewFilters = args.nextUrl.searchParams.get(FILTER_SEARCH_PARAM_KEY);
-	const newFilters = rawNewFilters
-		? // no safeJSONParse as the value should be coming from app code and should be trustworthy
-			(JSON.parse(rawNewFilters) as BuildFiltersFromSearchParams).filter(
-				filterOutMeaninglessFilters,
-			)
-		: null;
-
-	// meaningful filter was added/removed -> revalidate
-	if (oldFilters && newFilters && oldFilters.length !== newFilters.length) {
-		return true;
-	}
-	// no meaningful filters were or going to be in use -> skip revalidation
-	if (
-		oldFilters &&
-		newFilters &&
-		oldFilters.length === 0 &&
-		newFilters.length === 0
-	) {
-		return false;
-	}
-	// all meaningful filters identical -> skip revalidation
-	if (
-		newFilters?.every((f1) =>
-			oldFilters?.some((f2) => {
-				if (f1.type !== f2.type) return false;
-
-				if (f1.type === "mode" && f2.type === "mode") {
-					return f1.mode === f2.mode;
-				}
-				if (f1.type === "date" && f2.type === "date") {
-					return f1.date === f2.date;
-				}
-				if (f1.type !== "ability" || f2.type !== "ability") return false;
-
-				return (
-					f1.ability === f2.ability &&
-					f1.comparison === f2.comparison &&
-					f1.value === f2.value
-				);
-			}),
-		)
-	) {
-		return false;
-	}
-
-	return args.defaultShouldRevalidate;
-};
+function filterKey(filter: ParsedFilter): string {
+	if (filter.type === "mode") return `mode:${filter.mode}`;
+	if (filter.type === "date") return `date:${filter.date}`;
+	return `ability:${filter.ability}:${filter.comparison}:${filter.value}`;
+}
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.data) return [];
@@ -185,22 +176,14 @@ export function BuildCards({ data }: { data: SerializeFrom<typeof loader> }) {
 export default function WeaponsBuildsPage() {
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common", "builds"]);
-	const [, setSearchParams] = useSearchParams();
-	const [filters, setFilters] = React.useState<BuildFilter[]>(
-		data.filters ? data.filters.map((f) => ({ ...f, id: nanoid() })) : [],
-	);
+	const [searchParams, setSearchParams] = useSearchParams();
+	const filters = parseFiltersFromSearchParams(searchParams);
 
-	const filtersForSearchParams = (filters: BuildFilter[]) =>
-		JSON.stringify(
-			filters.map((f) => {
-				return R.omit(f, ["id"]);
-			}),
-		);
 	const syncSearchParams = (newFilters: BuildFilter[]) => {
 		setSearchParams(
-			filtersForSearchParams.length > 0
+			newFilters.length > 0
 				? {
-						[FILTER_SEARCH_PARAM_KEY]: filtersForSearchParams(newFilters),
+						[FILTER_SEARCH_PARAM_KEY]: JSON.stringify(newFilters),
 					}
 				: {},
 		);
@@ -210,7 +193,6 @@ export default function WeaponsBuildsPage() {
 		const newFilter: BuildFilter =
 			type === "ability"
 				? {
-						id: nanoid(),
 						type: "ability",
 						ability: "ISM",
 						comparison: "AT_LEAST",
@@ -218,43 +200,32 @@ export default function WeaponsBuildsPage() {
 					}
 				: type === "date"
 					? {
-							id: nanoid(),
 							type: "date",
 							date: PATCHES[0].date,
 						}
 					: {
-							id: nanoid(),
 							type: "mode",
 							mode: "SZ",
 						};
 
-		const newFilters = [...filters, newFilter];
-		setFilters(newFilters);
-
-		// no need to sync new ability filter as this doesn't have effect till they make other choices
-		if (type !== "ability") {
-			syncSearchParams(newFilters);
-		}
+		syncSearchParams([...filters, newFilter]);
 	};
 
 	const handleFilterChange = (i: number, newFilter: Partial<BuildFilter>) => {
-		const newFilters = structuredClone(filters);
-
-		newFilters[i] = {
-			...(filters[i] as AbilityBuildFilter),
-			...(newFilter as AbilityBuildFilter),
-		};
-
-		setFilters(newFilters);
+		const newFilters = filters.map((f, index) =>
+			index === i
+				? ({
+						...(f as AbilityBuildFilter),
+						...(newFilter as AbilityBuildFilter),
+					} as BuildFilter)
+				: f,
+		);
 
 		syncSearchParams(newFilters);
 	};
 
 	const handleFilterDelete = (i: number) => {
-		const newFilters = filters.filter((_, index) => index !== i);
-		setFilters(newFilters);
-
-		syncSearchParams(newFilters);
+		syncSearchParams(filters.filter((_, index) => index !== i));
 	};
 
 	const loadMoreLink = () => {
@@ -263,7 +234,7 @@ export default function WeaponsBuildsPage() {
 		params.set("limit", String(data.limit + BUILDS_PAGE_BATCH_SIZE));
 
 		if (filters.length > 0) {
-			params.set(FILTER_SEARCH_PARAM_KEY, filtersForSearchParams(filters));
+			params.set(FILTER_SEARCH_PARAM_KEY, JSON.stringify(filters));
 		}
 
 		return `?${params.toString()}`;
@@ -338,7 +309,7 @@ export default function WeaponsBuildsPage() {
 				<div className="stack md">
 					{filters.map((filter, i) => (
 						<FilterSection
-							key={filter.id}
+							key={i}
 							number={i + 1}
 							filter={filter}
 							onChange={(newFilter) => handleFilterChange(i, newFilter)}

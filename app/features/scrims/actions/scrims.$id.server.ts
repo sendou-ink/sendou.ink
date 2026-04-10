@@ -2,6 +2,7 @@ import type { ActionFunctionArgs } from "react-router";
 import { notify } from "~/features/notifications/core/notify.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import {
+	errorToastIfFalsy,
 	notFoundIfFalsy,
 	parseParams,
 	parseRequestPayload,
@@ -28,6 +29,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	});
 
 	requirePermission(post, "CANCEL");
+
+	errorToastIfFalsy(Scrim.isAccepted(post), "Scrim is not accepted");
+	errorToastIfFalsy(!post.canceled, "Scrim is already canceled");
 
 	if (databaseTimestampToDate(Scrim.getStartTime(post)) < new Date()) {
 		errorToast("Cannot cancel a scrim that was already scheduled to start");

@@ -94,7 +94,7 @@ function simulateTrajectoryPoints(params: TrajectoryParams): TrajectoryPoint[] {
 
 	for (let i = 0; i < brakeToFreeFrame && frame < maxFrames; i++) {
 		vz *= 1 - brakeAirResist;
-		vy -= brakeGravity;
+		vy = (1 - brakeAirResist) * vy - brakeGravity;
 		z += vz;
 		y += vy;
 		points.push({ z, y });
@@ -117,7 +117,7 @@ function simulateTrajectoryPoints(params: TrajectoryParams): TrajectoryPoint[] {
 
 	while (frame < maxFrames) {
 		vz *= 1 - freeAirResist;
-		vy -= freeGravity;
+		vy = (1 - freeAirResist) * vy - freeGravity;
 		z += vz;
 		y += vy;
 

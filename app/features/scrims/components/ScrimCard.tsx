@@ -295,26 +295,24 @@ function ScrimInfoItem({
 	);
 }
 
-function ScrimExpandableText({
-	text,
-	maxBeforeTruncate = 50,
-}: {
-	text: string;
-	maxBeforeTruncate?: number;
-}) {
+function ScrimExpandableText({ text }: { text: string }) {
 	const { t } = useTranslation(["common"]);
 	const [isExpanded, setIsExpanded] = useState(false);
+	const [isOverflowing, setIsOverflowing] = useState(false);
 
-	const shouldTruncate = text.length > maxBeforeTruncate;
-	const displayText =
-		shouldTruncate && !isExpanded
-			? `${text.slice(0, maxBeforeTruncate)}...`
-			: text;
+	const measureRef = (node: HTMLDivElement | null) => {
+		if (!node) return;
+		if (node.scrollHeight - node.clientHeight > 1) {
+			setIsOverflowing(true);
+		}
+	};
 
 	return (
 		<div className={styles.textContent}>
-			<span>{displayText}</span>
-			{shouldTruncate ? (
+			<div ref={measureRef} className={clsx(!isExpanded && styles.clampedText)}>
+				{text}
+			</div>
+			{isOverflowing ? (
 				<button
 					type="button"
 					onClick={() => setIsExpanded(!isExpanded)}
@@ -511,9 +509,7 @@ export function ScrimRequestCard({
 				</div>
 			</div>
 
-			{request.message ? (
-				<ScrimExpandableText text={request.message} maxBeforeTruncate={100} />
-			) : null}
+			{request.message ? <ScrimExpandableText text={request.message} /> : null}
 
 			{showFooter ? (
 				<div className={clsx(styles.footer, styles.requestFooter)}>

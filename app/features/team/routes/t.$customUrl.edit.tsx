@@ -229,7 +229,7 @@ function BioTextarea() {
 	const [value, setValue] = React.useState(team.bio ?? "");
 
 	return (
-		<div className="u-edit__bio-container">
+		<div className="w-full">
 			<Label
 				htmlFor="bio"
 				valueLimits={{ current: value.length, max: TEAM.BIO_MAX_LENGTH }}
@@ -243,6 +243,7 @@ function BioTextarea() {
 				onChange={(e) => setValue(e.target.value)}
 				maxLength={TEAM.BIO_MAX_LENGTH}
 				data-testid="bio-textarea"
+				className="w-full"
 			/>
 		</div>
 	);

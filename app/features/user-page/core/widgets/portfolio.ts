@@ -34,6 +34,7 @@ export const ALL_WIDGETS = {
 		}),
 		defineWidget({ id: "organizations", slot: "side" }),
 		defineWidget({ id: "patron-since", slot: "side" }),
+		defineWidget({ id: "join-date", slot: "side" }),
 		defineWidget({
 			id: "timezone",
 			slot: "side",

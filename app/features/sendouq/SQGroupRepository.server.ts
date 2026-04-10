@@ -12,7 +12,31 @@ import { userIsBanned } from "../ban/core/banned.server";
 import { FULL_GROUP_SIZE } from "./q-constants";
 import { SendouQError } from "./q-utils.server";
 
-export function mapModePreferencesByGroupId(groupId: number) {
+export async function mapModePreferencesByGroupId(groupId: number) {
+	const group = await db
+		.selectFrom("Group")
+		.leftJoin("AllTeam", "AllTeam.id", "Group.teamId")
+		.select([
+			"AllTeam.mapModePreferences as teamMapModePreferences",
+			"AllTeam.name as teamName",
+		])
+		.where("Group.id", "=", groupId)
+		.executeTakeFirst();
+
+	if (group?.teamMapModePreferences) {
+		const members = await db
+			.selectFrom("GroupMember")
+			.select("GroupMember.userId")
+			.where("GroupMember.groupId", "=", groupId)
+			.execute();
+
+		return members.map((m) => ({
+			userId: m.userId,
+			preferences: group.teamMapModePreferences as UserMapModePreferences,
+			teamName: group.teamName,
+		}));
+	}
+
 	return db
 		.selectFrom("GroupMember")
 		.innerJoin("User", "User.id", "GroupMember.userId")

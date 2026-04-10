@@ -62,6 +62,49 @@ describe("UserRepository", () => {
 		expect(updatedUser?.createdAt).toEqual(createdAt);
 	});
 
+	test("new user gets joinOrder of 1", async () => {
+		const { id } = await UserRepository.upsert({
+			discordId: "1",
+			discordName: "TestUser",
+			discordAvatar: null,
+		});
+
+		const result = await UserRepository.joinOrderByUserId(id);
+
+		expect(result?.joinOrder).toBe(1);
+	});
+
+	test("joinOrder increments for each new user and does not change on update", async () => {
+		const { id: firstId } = await UserRepository.upsert({
+			discordId: "1",
+			discordName: "FirstUser",
+			discordAvatar: null,
+		});
+
+		const { id: secondId } = await UserRepository.upsert({
+			discordId: "2",
+			discordName: "SecondUser",
+			discordAvatar: null,
+		});
+
+		expect((await UserRepository.joinOrderByUserId(firstId))?.joinOrder).toBe(
+			1,
+		);
+		expect((await UserRepository.joinOrderByUserId(secondId))?.joinOrder).toBe(
+			2,
+		);
+
+		await UserRepository.upsert({
+			discordId: "1",
+			discordName: "UpdatedFirstUser",
+			discordAvatar: null,
+		});
+
+		expect((await UserRepository.joinOrderByUserId(firstId))?.joinOrder).toBe(
+			1,
+		);
+	});
+
 	describe("userRoles", () => {
 		test("returns empty array for basic user", async () => {
 			await UserRepository.upsert({

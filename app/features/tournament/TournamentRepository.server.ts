@@ -178,7 +178,6 @@ export async function findById(id: number) {
 									"User.twitch",
 									"SeedingSkill.ordinal",
 									"PlusTier.tier as plusTier",
-									"TournamentTeamMember.isOwner",
 									"TournamentTeamMember.role",
 									"TournamentTeamMember.createdAt",
 									sql<string | null> /*sql*/`coalesce(
@@ -647,68 +646,6 @@ export async function friendCodesByTournamentId(tournamentId: number) {
 	);
 }
 
-export function checkIn({
-	tournamentTeamId,
-	bracketIdx,
-}: {
-	tournamentTeamId: number;
-	bracketIdx: number | null;
-}) {
-	return db.transaction().execute(async (trx) => {
-		let query = trx
-			.deleteFrom("TournamentTeamCheckIn")
-			.where("TournamentTeamCheckIn.tournamentTeamId", "=", tournamentTeamId)
-			.where("TournamentTeamCheckIn.isCheckOut", "=", 1);
-
-		if (typeof bracketIdx === "number") {
-			query = query.where("TournamentTeamCheckIn.bracketIdx", "=", bracketIdx);
-		}
-
-		await query.execute();
-
-		await trx
-			.insertInto("TournamentTeamCheckIn")
-			.values({
-				checkedInAt: dateToDatabaseTimestamp(new Date()),
-				tournamentTeamId,
-				bracketIdx,
-			})
-			.execute();
-	});
-}
-
-export function checkOut({
-	tournamentTeamId,
-	bracketIdx,
-}: {
-	tournamentTeamId: number;
-	bracketIdx: number | null;
-}) {
-	return db.transaction().execute(async (trx) => {
-		let query = trx
-			.deleteFrom("TournamentTeamCheckIn")
-			.where("TournamentTeamCheckIn.tournamentTeamId", "=", tournamentTeamId);
-
-		if (typeof bracketIdx === "number") {
-			query = query.where("TournamentTeamCheckIn.bracketIdx", "=", bracketIdx);
-		}
-
-		await query.execute();
-
-		if (typeof bracketIdx === "number") {
-			await trx
-				.insertInto("TournamentTeamCheckIn")
-				.values({
-					checkedInAt: dateToDatabaseTimestamp(new Date()),
-					tournamentTeamId,
-					bracketIdx,
-					isCheckOut: 1,
-				})
-				.execute();
-		}
-	});
-}
-
 export function updateProgression({
 	tournamentId,
 	bracketProgression,
@@ -798,56 +735,6 @@ export function overrideTeamBracketProgression({
 			sourceBracketIdx,
 			destinationBracketIdx,
 		})
-		.execute();
-}
-
-export function updateTeamName({
-	tournamentTeamId,
-	name,
-}: {
-	tournamentTeamId: number;
-	name: string;
-}) {
-	return db
-		.updateTable("TournamentTeam")
-		.set({
-			name,
-		})
-		.where("id", "=", tournamentTeamId)
-		.execute();
-}
-
-export function dropTeamOut({
-	tournamentTeamId,
-	previewBracketIdxs,
-}: {
-	tournamentTeamId: number;
-	previewBracketIdxs: number[];
-}) {
-	return db.transaction().execute(async (trx) => {
-		await trx
-			.deleteFrom("TournamentTeamCheckIn")
-			.where("tournamentTeamId", "=", tournamentTeamId)
-			.where("TournamentTeamCheckIn.bracketIdx", "in", previewBracketIdxs)
-			.execute();
-
-		await trx
-			.updateTable("TournamentTeam")
-			.set({
-				droppedOut: 1,
-			})
-			.where("id", "=", tournamentTeamId)
-			.execute();
-	});
-}
-
-export function undoDropTeamOut(tournamentTeamId: number) {
-	return db
-		.updateTable("TournamentTeam")
-		.set({
-			droppedOut: 0,
-		})
-		.where("id", "=", tournamentTeamId)
 		.execute();
 }
 

@@ -69,7 +69,10 @@ export function findAllMemberOfByUserId(userId: number) {
 			"Team.id",
 			"Team.customUrl",
 			"Team.name",
+			"Team.mapModePreferences",
 			"TeamMemberWithSecondary.role",
+			"TeamMemberWithSecondary.isOwner",
+			"TeamMemberWithSecondary.isManager",
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"logoUrl",
 			),
@@ -308,10 +311,7 @@ export async function update({
 	bio,
 	bsky,
 	tag,
-	customTheme,
-}: Pick<Insertable<Tables["Team"]>, "id" | "name" | "bio" | "bsky" | "tag"> & {
-	customTheme: CustomTheme | null;
-}) {
+}: Pick<Insertable<Tables["Team"]>, "id" | "name" | "bio" | "bsky" | "tag">) {
 	const customUrl = mySlugify(name);
 
 	const team = await db
@@ -322,7 +322,6 @@ export async function update({
 			bio,
 			bsky,
 			tag,
-			customTheme: customTheme ? JSON.stringify(customTheme) : null,
 		})
 		.where("id", "=", id)
 		.returningAll()

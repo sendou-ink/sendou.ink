@@ -160,7 +160,7 @@ async function resolveOwnTeam({
 		languages: [],
 		vc: null,
 		pronouns: null,
-		role: m.isOwner ? "OWNER" : m.role === "MANAGER" ? "MANAGER" : "REGULAR",
+		role: m.role,
 		isStayAsSub: false,
 		weapons: null,
 		plusTier: m.plusTier,

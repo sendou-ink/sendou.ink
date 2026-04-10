@@ -86,6 +86,7 @@ export interface Team {
 	inviteCode: string;
 	name: string;
 	bsky: string | null;
+	mapModePreferences: JSONColumnTypeNullable<UserMapModePreferences>;
 	/** Team's tag, typically used in-game in front of users' names to indicate they are a member of the team. */
 	tag: string | null;
 }
@@ -149,14 +150,14 @@ export type BadgeOwner = {
 };
 
 export interface Build {
-	clothesGearSplId: number;
+	clothesGearSplId: number | null;
 	description: string | null;
-	headGearSplId: number;
+	headGearSplId: number | null;
 	id: GeneratedAlways<number>;
 	modes: JSONColumnTypeNullable<ModeShort[]>;
 	ownerId: number;
 	private: DBBoolean | null;
-	shoesGearSplId: number;
+	shoesGearSplId: number | null;
 	title: string;
 	updatedAt: Generated<number>;
 }
@@ -289,7 +290,11 @@ export type ParsedMemento = {
 	>;
 	/** mapPreferences of season 2 */
 	mapPreferences?: Array<{ userId: number; preference?: Preference }[]>;
-	pools: Array<{ userId: number; pool: UserMapModePreferences["pool"] }>;
+	pools: Array<{
+		userId: number;
+		pool: UserMapModePreferences["pool"];
+		teamName?: string;
+	}>;
 };
 
 export interface GroupMatch {
@@ -546,6 +551,9 @@ export interface Tournament {
 	seedingSnapshot: JSONColumnTypeNullable<SeedingSnapshot>;
 	/** Tournament tier based on top teams' skill. 1=X, 2=S+, 3=S, 4=A+, 5=A, 6=B+, 7=B, 8=C+, 9=C */
 	tier: TournamentTierNumber | null;
+	vodsLastSyncAt: Generated<number | null>;
+	/** How many times vods have been synced (automatic process that happens when tournament has concluded). */
+	vodsSyncCount: Generated<number>;
 }
 
 export interface SeedingSnapshot {
@@ -818,7 +826,6 @@ export interface TournamentTeamCheckIn {
 
 export interface TournamentTeamMember {
 	createdAt: Generated<number>;
-	isOwner: Generated<number>;
 	inGameName: string | null;
 	tournamentTeamId: number;
 	userId: number;
@@ -1042,6 +1049,7 @@ export interface User {
 	preferences: JSONColumnTypeNullable<UserPreferences>;
 	/** User creation date. Can be null because we did not always save this. */
 	createdAt: number | null;
+	joinOrder: number | null;
 	/** Last message used when creating a tournament sub post */
 	lastSubMessage: string | null;
 }

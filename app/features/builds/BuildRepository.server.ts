@@ -1,5 +1,6 @@
 import type { ExpressionBuilder, Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { BuildWeapon, DB, Tables, TablesInsertable } from "~/db/tables";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -10,6 +11,7 @@ import type {
 	ModeShort,
 } from "~/modules/in-game-lists/types";
 import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { LimitReachedError } from "~/utils/errors";
 import invariant from "~/utils/invariant";
 import { commonUserJsonObject } from "~/utils/kysely.server";
@@ -76,22 +78,15 @@ function dbAbilitiesToArrayOfArrays(
 		Pick<Tables["BuildAbility"], "ability" | "gearType" | "slotIndex">
 	>,
 ): BuildAbilitiesTuple {
-	const sorted = abilities
-		.slice()
-		.sort((a, b) => {
-			if (a.gearType === b.gearType) return a.slotIndex - b.slotIndex;
-
-			return gearOrder.indexOf(a.gearType) - gearOrder.indexOf(b.gearType);
-		})
-		.map((a) => a.ability);
+	const sorted = R.sortBy(
+		abilities,
+		(a) => gearOrder.indexOf(a.gearType),
+		(a) => a.slotIndex,
+	).map((a) => a.ability);
 
 	invariant(sorted.length === 12, "expected 12 abilities");
 
-	return [
-		[sorted[0], sorted[1], sorted[2], sorted[3]],
-		[sorted[4], sorted[5], sorted[6], sorted[7]],
-		[sorted[8], sorted[9], sorted[10], sorted[11]],
-	];
+	return R.chunk(sorted, 4) as BuildAbilitiesTuple;
 }
 
 interface CreateArgs {
@@ -107,6 +102,14 @@ interface CreateArgs {
 	private: TablesInsertable["Build"]["private"];
 }
 
+function serializeModes(modes: Array<ModeShort> | null) {
+	if (!modes || modes.length === 0) return null;
+
+	return JSON.stringify(
+		modes.slice().sort((a, b) => modesShort.indexOf(a) - modesShort.indexOf(b)),
+	);
+}
+
 async function createInTrx({
 	args,
 	trx,
@@ -120,22 +123,29 @@ async function createInTrx({
 			ownerId: args.ownerId,
 			title: args.title,
 			description: args.description,
-			modes:
-				args.modes && args.modes.length > 0
-					? JSON.stringify(
-							args.modes
-								.slice()
-								.sort((a, b) => modesShort.indexOf(a) - modesShort.indexOf(b)),
-						)
-					: null,
-			headGearSplId: args.headGearSplId ?? -1,
-			clothesGearSplId: args.clothesGearSplId ?? -1,
-			shoesGearSplId: args.shoesGearSplId ?? -1,
+			modes: serializeModes(args.modes),
+			headGearSplId: args.headGearSplId,
+			clothesGearSplId: args.clothesGearSplId,
+			shoesGearSplId: args.shoesGearSplId,
 			private: args.private,
 		})
 		.returningAll()
 		.executeTakeFirstOrThrow();
 
+	await populateBuildChildrenInTrx({ trx, buildId, updatedAt, args });
+}
+
+async function populateBuildChildrenInTrx({
+	trx,
+	buildId,
+	updatedAt,
+	args,
+}: {
+	trx: Transaction<DB>;
+	buildId: number;
+	updatedAt: number;
+	args: CreateArgs;
+}) {
 	await trx
 		.insertInto("BuildWeapon")
 		.values(
@@ -204,8 +214,37 @@ export async function create(args: CreateArgs) {
 
 export async function update(args: CreateArgs & { id: number }) {
 	return db.transaction().execute(async (trx) => {
-		await trx.deleteFrom("Build").where("id", "=", args.id).execute();
-		await createInTrx({ args, trx });
+		const { updatedAt } = await trx
+			.updateTable("Build")
+			.set({
+				title: args.title,
+				description: args.description,
+				modes: serializeModes(args.modes),
+				headGearSplId: args.headGearSplId,
+				clothesGearSplId: args.clothesGearSplId,
+				shoesGearSplId: args.shoesGearSplId,
+				private: args.private,
+				updatedAt: dateToDatabaseTimestamp(new Date()),
+			})
+			.where("id", "=", args.id)
+			.returning("updatedAt")
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.deleteFrom("BuildWeapon")
+			.where("buildId", "=", args.id)
+			.execute();
+		await trx
+			.deleteFrom("BuildAbility")
+			.where("buildId", "=", args.id)
+			.execute();
+
+		await populateBuildChildrenInTrx({
+			trx,
+			buildId: args.id,
+			updatedAt,
+			args,
+		});
 	});
 }
 
@@ -281,65 +320,23 @@ export async function allByWeaponId(
 	const { limit, sortAbilities: shouldSortAbilities = false } = options;
 	const weaponIds = weaponIdToArrayWithAlts(weaponId);
 
-	let rows: Awaited<ReturnType<typeof buildsByWeaponIdQuery>>;
+	// For weapons with alts, run separate queries and merge.
+	// This allows each query to use the covering index for ordering,
+	// which is ~6x faster than using IN with multiple values.
+	const allResults = await Promise.all(
+		weaponIds.map((id) => buildsByWeaponIdQuery(id, limit)),
+	);
 
-	if (weaponIds.length === 1) {
-		rows = await buildsByWeaponIdQuery(weaponIds[0], limit);
-	} else {
-		// For weapons with alts, run separate queries and merge.
-		// This allows each query to use the covering index for ordering,
-		// which is ~6x faster than using IN with multiple values.
-		const allResults = await Promise.all(
-			weaponIds.map((id) => buildsByWeaponIdQuery(id, limit)),
-		);
-
-		const seenBuildIds = new Set<number>();
-		type BuildRow = Awaited<ReturnType<typeof buildsByWeaponIdQuery>>[number];
-		const merged: BuildRow[] = [];
-
-		// Merge results maintaining sort order (tier asc, isTop500 desc, updatedAt desc)
-		// Since each query returns sorted results, we can interleave them
-		const pointers = allResults.map(() => 0);
-
-		while (merged.length < limit) {
-			let bestIdx = -1;
-			let bestRow: BuildRow | null = null;
-
-			for (let i = 0; i < allResults.length; i++) {
-				while (
-					pointers[i] < allResults[i].length &&
-					seenBuildIds.has(allResults[i][pointers[i]].id)
-				) {
-					pointers[i]++;
-				}
-
-				if (pointers[i] >= allResults[i].length) continue;
-
-				const row = allResults[i][pointers[i]];
-
-				if (
-					!bestRow ||
-					row.bwTier < bestRow.bwTier ||
-					(row.bwTier === bestRow.bwTier &&
-						row.bwIsTop500 > bestRow.bwIsTop500) ||
-					(row.bwTier === bestRow.bwTier &&
-						row.bwIsTop500 === bestRow.bwIsTop500 &&
-						row.bwUpdatedAt > bestRow.bwUpdatedAt)
-				) {
-					bestIdx = i;
-					bestRow = row;
-				}
-			}
-
-			if (bestIdx === -1 || !bestRow) break;
-
-			seenBuildIds.add(bestRow.id);
-			merged.push(bestRow);
-			pointers[bestIdx]++;
-		}
-
-		rows = merged;
-	}
+	const rows = R.pipe(
+		allResults.flat(),
+		R.sortBy(
+			(row) => row.bwTier,
+			[(row) => row.bwIsTop500, "desc"],
+			[(row) => row.bwUpdatedAt, "desc"],
+		),
+		R.uniqueBy((row) => row.id),
+		R.take(limit),
+	);
 
 	return rows.map((row) => {
 		const abilities = dbAbilitiesToArrayOfArrays(row.abilities);
@@ -408,8 +405,8 @@ function hasXRankPlacement(eb: ExpressionBuilder<DB, "BuildWeapon">) {
 		eb
 			.selectFrom("Build")
 			.select("BuildWeapon.buildId")
-			.leftJoin("SplatoonPlayer", "SplatoonPlayer.userId", "Build.ownerId")
-			.leftJoin(
+			.innerJoin("SplatoonPlayer", "SplatoonPlayer.userId", "Build.ownerId")
+			.innerJoin(
 				"XRankPlacement",
 				"XRankPlacement.playerId",
 				"SplatoonPlayer.id",

@@ -1,5 +1,6 @@
 import { requireUser } from "~/features/auth/core/user.server";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
+import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { settingsActionSchema } from "../q-settings-schemas.server";
@@ -13,10 +14,25 @@ export const action = async ({ request }: { request: Request }) => {
 
 	switch (data._action) {
 		case "UPDATE_MAP_MODE_PREFERENCES": {
-			await QSettingsRepository.updateUserMapModePreferences({
-				mapModePreferences: data.mapModePreferences,
-				userId: user.id,
-			});
+			if (typeof data.teamId === "number") {
+				const allTeams = await TeamRepository.findAllMemberOfByUserId(user.id);
+				const canManage = allTeams.some(
+					(t) => t.id === data.teamId && (t.isOwner || t.isManager),
+				);
+				if (!canManage) {
+					throw new Response(null, { status: 403 });
+				}
+
+				await QSettingsRepository.updateTeamMapModePreferences({
+					mapModePreferences: data.mapModePreferences,
+					teamId: data.teamId,
+				});
+			} else {
+				await QSettingsRepository.updateUserMapModePreferences({
+					mapModePreferences: data.mapModePreferences,
+					userId: user.id,
+				});
+			}
 			break;
 		}
 		case "UPDATE_VC": {

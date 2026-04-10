@@ -68,13 +68,9 @@ function resolveDefaultValues(
 	return {
 		buildToEditId: buildToEdit?.id,
 		weapons,
-		head: buildToEdit?.headGearSplId === -1 ? null : buildToEdit?.headGearSplId,
-		clothes:
-			buildToEdit?.clothesGearSplId === -1
-				? null
-				: buildToEdit?.clothesGearSplId,
-		shoes:
-			buildToEdit?.shoesGearSplId === -1 ? null : buildToEdit?.shoesGearSplId,
+		head: buildToEdit?.headGearSplId,
+		clothes: buildToEdit?.clothesGearSplId,
+		shoes: buildToEdit?.shoesGearSplId,
 		abilities,
 		title: buildToEdit?.title,
 		description: buildToEdit?.description ?? null,

@@ -84,7 +84,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 						"User.country",
 						"User.pronouns",
 						"TournamentTeamMember.inGameName",
-						"TournamentTeamMember.isOwner",
+						"TournamentTeamMember.role",
 						"TournamentTeamMember.createdAt",
 						"RankedSeedingSkill.ordinal as rankedOrdinal",
 						"UnrankedSeedingSkill.ordinal as unrankedOrdinal",
@@ -140,7 +140,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 						? `https://cdn.discordapp.com/avatars/${member.discordId}/${member.discordAvatar}.png`
 						: null,
 					country: member.country,
-					captain: Boolean(member.isOwner),
+					captain: member.role === "OWNER",
 					inGameName: member.inGameName,
 					pronouns: member.pronouns,
 					friendCode: friendCodes[member.userId],

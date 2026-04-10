@@ -30,6 +30,7 @@ import { sortBadgesByFavorites } from "./core/badge-sorting.server";
 import { findWidgetById } from "./core/widgets/portfolio";
 import { WIDGET_LOADERS } from "./core/widgets/portfolio-loaders.server";
 import type { LoadedWidget } from "./core/widgets/types";
+import { SPL2_JOIN_ORDER_CUTOFF } from "./user-page-constants";
 
 export const identifierToUserIdQuery = (identifier: string) =>
 	db
@@ -926,6 +927,21 @@ export async function patronSinceByUserId(userId: number) {
 	)?.patronSince;
 }
 
+export async function joinOrderByUserId(userId: number) {
+	const row = await db
+		.selectFrom("User")
+		.select("User.joinOrder")
+		.where("id", "=", userId)
+		.executeTakeFirst();
+
+	if (!row?.joinOrder) return null;
+
+	return {
+		joinOrder: row.joinOrder,
+		isSpl2: row.joinOrder <= SPL2_JOIN_ORDER_CUTOFF,
+	};
+}
+
 export async function commissionsByUserId(userId: number) {
 	return await db
 		.selectFrom("User")
@@ -958,7 +974,19 @@ export function upsert(
 ) {
 	return db
 		.insertInto("User")
-		.values({ ...args, createdAt: databaseTimestampNow() })
+		.values((eb) => ({
+			...args,
+			createdAt: databaseTimestampNow(),
+			joinOrder: eb
+				.selectFrom("User")
+				.select(
+					eb(
+						eb.fn.coalesce(eb.fn.max("joinOrder"), eb.val(0)),
+						"+",
+						eb.val(1),
+					).as("nextJoinOrder"),
+				),
+		}))
 		.onConflict((oc) => {
 			return oc.column("discordId").doUpdateSet({
 				...R.omit(args, ["discordId"]),

@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { format } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
@@ -173,13 +174,13 @@ function ScrimsDaySeparatedCards({
 	filters: ScrimFilters;
 }) {
 	const postsByDay = R.groupBy(posts, (post) =>
-		databaseTimestampToDate(post.at).getDate(),
+		format(databaseTimestampToDate(post.at), "yyyy-MM-dd"),
 	);
 
 	return (
 		<div className="stack lg">
 			{Object.entries(postsByDay)
-				.sort((a, b) => a[1][0].at - b[1][0].at)
+				.sort(([a], [b]) => a.localeCompare(b))
 				.map(([day, dayPosts]) => (
 					<ScrimsDaySection key={day} posts={dayPosts!} filters={filters} />
 				))}
@@ -328,13 +329,13 @@ function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
 	const { formatDate } = useTimeFormat();
 
 	const postsByDay = R.groupBy(posts, (post) =>
-		databaseTimestampToDate(post.at).getDate(),
+		format(databaseTimestampToDate(post.at), "yyyy-MM-dd"),
 	);
 
 	return (
 		<div className="stack lg">
 			{Object.entries(postsByDay)
-				.sort((a, b) => a[1][0].at - b[1][0].at)
+				.sort(([a], [b]) => a.localeCompare(b))
 				.map(([day, posts]) => {
 					return (
 						<div key={day} className="stack md">
@@ -397,13 +398,13 @@ function ScrimsDaySeparatedBookedCards({ posts }: { posts: ScrimPost[] }) {
 	const { formatDate } = useTimeFormat();
 
 	const postsByDay = R.groupBy(posts, (post) =>
-		databaseTimestampToDate(post.at).getDate(),
+		format(databaseTimestampToDate(post.at), "yyyy-MM-dd"),
 	);
 
 	return (
 		<div className="stack lg">
 			{Object.entries(postsByDay)
-				.sort((a, b) => a[1][0].at - b[1][0].at)
+				.sort(([a], [b]) => a.localeCompare(b))
 				.map(([day, posts]) => {
 					return (
 						<div key={day} className="stack md">

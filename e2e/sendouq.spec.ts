@@ -249,4 +249,39 @@ test.describe("SendouQ", () => {
 			combinedGroup.getByTestId("sendouq-group-card-member"),
 		).toHaveCount(2);
 	});
+
+	test("Team map preferences shown on match page", async ({ page }) => {
+		await seed(page, "TEAM_MAP_PREFS");
+		await impersonate(page, ADMIN_ID);
+
+		await navigate({ page, url: SENDOUQ_LOOKING_PAGE });
+
+		const groupCards = page.getByTestId("sendouq-group-card");
+		const count = await groupCards.count();
+		for (let i = 1; i < count; i++) {
+			const groupCard = groupCards.nth(i);
+			const challengeButton = groupCard
+				.locator('button[type="submit"]')
+				.first();
+			await challengeButton.click();
+		}
+
+		await impersonate(page, NZAP_TEST_ID);
+		await navigate({ page, url: SENDOUQ_LOOKING_PAGE });
+
+		const acceptButton = page
+			.getByRole("button", { name: "Start match" })
+			.first();
+		await expect(acceptButton).toBeVisible();
+		await acceptButton.click();
+
+		await expect(page).toHaveURL(/\/q\/match\/\d+/);
+
+		const popoverButton = page.getByRole("button", { name: /votes/ }).first();
+		await expect(popoverButton).toBeVisible();
+		await popoverButton.click();
+
+		const popover = page.getByRole("dialog");
+		await expect(popover.getByText("Alliance Rogue")).toBeVisible();
+	});
 });

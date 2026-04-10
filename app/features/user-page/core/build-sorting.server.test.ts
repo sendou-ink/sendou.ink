@@ -329,6 +329,41 @@ describe("sortBuilds()", () => {
 
 			expect(sortedBuilds[2].id).toBe(1);
 		});
+
+		it(`sorts ${identifier} with null gear last`, () => {
+			const key = (
+				{
+					HEADGEAR_ID: "headGearSplId",
+					CLOTHES_ID: "clothesGearSplId",
+					SHOES_ID: "shoesGearSplId",
+				} as const
+			)[identifier]!;
+
+			const builds = [
+				mockBuild({
+					id: 1,
+					[key]: null,
+				}),
+				mockBuild({
+					id: 2,
+					[key]: 5,
+				}),
+				mockBuild({
+					id: 3,
+					[key]: 1,
+				}),
+			];
+
+			const sortedBuilds = sortBuilds({
+				builds,
+				buildSorting: [identifier as any],
+				weaponPool: [],
+			});
+
+			expect(sortedBuilds[0].id).toBe(3);
+			expect(sortedBuilds[1].id).toBe(2);
+			expect(sortedBuilds[2].id).toBe(1);
+		});
 	}
 
 	it("sorts when buildSort not given", () => {

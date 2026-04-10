@@ -379,7 +379,6 @@ describe("updateMemberRole", () => {
 			.values({
 				tournamentTeamId: team.id,
 				userId: 2,
-				isOwner: 0,
 				role: "REGULAR",
 			})
 			.execute();
@@ -490,7 +489,6 @@ describe("leaveLfg", () => {
 			.values({
 				tournamentTeamId: team.id,
 				userId: 1,
-				isOwner: 1,
 				role: "OWNER",
 			})
 			.execute();
