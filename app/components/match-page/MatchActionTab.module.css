@@ -9,6 +9,18 @@
 	justify-items: center;
 	align-items: center;
 	gap: var(--s-4);
+
+	@media screen and (max-width: 599px) {
+		grid-template-columns: auto 1fr;
+		grid-template-areas:
+			"header header"
+			"stage alpha"
+			"stage bravo"
+			"ko ko"
+			"points-alpha points-bravo"
+			"submit submit";
+		gap: var(--s-2);
+	}
 }
 
 .title {
@@ -27,21 +39,56 @@
 	width: 100%;
 	height: 100%;
 	max-width: 250px;
+
+	@media screen and (max-width: 599px) {
+		max-width: unset;
+	}
 }
 
 .alpha {
 	grid-area: alpha;
 	justify-self: end;
+
+	@media screen and (max-width: 599px) {
+		justify-self: stretch;
+		align-self: end;
+	}
 }
 
 .bravo {
 	grid-area: bravo;
 	justify-self: start;
+
+	@media screen and (max-width: 599px) {
+		justify-self: stretch;
+		align-self: start;
+	}
+}
+
+/** xxx: migrate to container queries (everywhere on this file too) */
+.stageImageContainer {
+	grid-area: stage;
+
+	@media screen and (max-width: 599px) {
+		align-self: stretch;
+		overflow: hidden;
+		border-radius: var(--radius-box);
+		width: 90px;
+		position: relative;
+	}
 }
 
 .stageImage {
-	grid-area: stage;
 	border-radius: var(--radius-box);
+
+	@media screen and (max-width: 599px) {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		border-radius: 0;
+	}
 }
 
 .pointsAlpha {
@@ -93,6 +140,10 @@
 
 	&:hover .checkCircle {
 		border-color: var(--color-accent-high);
+	}
+
+	@media screen and (max-width: 599px) {
+		min-width: unset;
 	}
 }
 

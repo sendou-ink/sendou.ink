@@ -48,6 +48,7 @@ export function MatchActionTab({
 	const pointsValid = !withPoints || isKo || points[0] > 0 || points[1] > 0;
 	const canSubmit = winnerId !== null && pointsValid;
 
+	// xxx: add haptics
 	return (
 		<SendouTabPanel id={TAB_KEYS.ACTION}>
 			<div className={styles.root}>
@@ -67,11 +68,13 @@ export function MatchActionTab({
 						isOwnTeam={teams[0].id === ownTeamId}
 						className={styles.alpha}
 					/>
-					<StageImage
-						stageId={stageId}
-						width={90}
-						className={styles.stageImage}
-					/>
+					<div className={styles.stageImageContainer}>
+						<StageImage
+							stageId={stageId}
+							width={90}
+							className={styles.stageImage}
+						/>
+					</div>
 					<TeamRadioOption
 						team={teams[1]}
 						isOwnTeam={teams[1].id === ownTeamId}
