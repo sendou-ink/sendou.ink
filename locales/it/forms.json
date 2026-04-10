@@ -29,6 +29,7 @@
 	"errors.notAllowedCharacters": "",
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "Esiste già un team con questo nome",
+	"errors.trophyNameTaken": "",
 	"errors.noOnlySpecialCharacters": "",
 	"labels.weaponPool": "Pool armi",
 	"placeholders.weaponPoolFull": "",

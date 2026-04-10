@@ -29,6 +29,7 @@
 	"errors.notAllowedCharacters": "",
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "יש כבר צוות בשם הזה",
+	"errors.trophyNameTaken": "",
 	"errors.noOnlySpecialCharacters": "",
 	"labels.weaponPool": "מאגר נשקים",
 	"placeholders.weaponPoolFull": "",

@@ -29,6 +29,7 @@
 	"errors.notAllowedCharacters": "",
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "Holdnavnet er taget af et andet hold",
+	"errors.trophyNameTaken": "",
 	"errors.noOnlySpecialCharacters": "",
 	"labels.weaponPool": "Våbenpulje",
 	"placeholders.weaponPoolFull": "",

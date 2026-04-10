@@ -29,6 +29,7 @@
 	"errors.notAllowedCharacters": "",
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "Istnieje już drużyna o tym imieniu",
+	"errors.trophyNameTaken": "",
 	"errors.noOnlySpecialCharacters": "",
 	"labels.weaponPool": "Pula broni",
 	"placeholders.weaponPoolFull": "",

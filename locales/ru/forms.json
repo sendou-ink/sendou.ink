@@ -29,6 +29,7 @@
 	"errors.notAllowedCharacters": "",
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "Уже существует команда с таким названием",
+	"errors.trophyNameTaken": "",
 	"errors.noOnlySpecialCharacters": "",
 	"labels.weaponPool": "Используемое оружие",
 	"placeholders.weaponPoolFull": "",

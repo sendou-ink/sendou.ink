@@ -27,13 +27,21 @@ export const action: ActionFunction = async ({ request }) => {
 			return { fieldErrors: result.fieldErrors };
 		}
 
-		const pendingCount = await TrophyRepository.unreviewedCountBySubmitter(
-			user.id,
-		);
+		const [pendingCount, nameExists] = await Promise.all([
+			TrophyRepository.unreviewedCountBySubmitter(user.id),
+			TrophyRepository.existsByName(result.data.name),
+		]);
+
 		errorToastIfFalsy(
 			pendingCount < TROPHY_PENDING_PER_USER_LIMIT,
 			"Pending trophy limit reached",
 		);
+
+		if (nameExists) {
+			return {
+				fieldErrors: { name: "forms:errors.trophyNameTaken" },
+			};
+		}
 
 		await TrophyRepository.createPending({
 			name: result.data.name,

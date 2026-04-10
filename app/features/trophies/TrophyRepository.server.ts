@@ -15,6 +15,25 @@ export async function findById(trophyId: number) {
 	return row ?? null;
 }
 
+export async function existsByName(name: string) {
+	const trophy = await db
+		.selectFrom("Trophy")
+		.select("id")
+		.where("name", "=", name)
+		.executeTakeFirst();
+
+	if (trophy) return true;
+
+	const pending = await db
+		.selectFrom("PendingTrophy")
+		.select("id")
+		.where("name", "=", name)
+		.where("declinedAt", "is", null)
+		.executeTakeFirst();
+
+	return Boolean(pending);
+}
+
 export async function createPending(args: {
 	name: string;
 	model: string;
