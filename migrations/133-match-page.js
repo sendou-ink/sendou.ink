@@ -11,5 +11,9 @@ export function up(db) {
       ) strict
       `,
 		).run();
+
+		db.prepare(
+			/* sql */ `alter table "User" add "noSplatnet" integer default 0`,
+		).run();
 	})();
 }

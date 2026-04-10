@@ -34,6 +34,7 @@ import {
 	disallowScrimPickupsFromUntrustedSchema,
 	spoilerFreeModeSchema,
 	updateNoScreenSchema,
+	updateNoSplatnetSchema,
 } from "../settings-schemas";
 import styles from "./settings.module.css";
 import "./settings.global.css";
@@ -121,6 +122,16 @@ export default function SettingsPage() {
 								schema={spoilerFreeModeSchema}
 								defaultValues={{
 									newValue: user.preferences.spoilerFreeMode ?? false,
+								}}
+								autoSubmit
+								revalidateRoot
+							>
+								{({ FormField }) => <FormField name="newValue" />}
+							</SendouForm>
+							<SendouForm
+								schema={updateNoSplatnetSchema}
+								defaultValues={{
+									newValue: Boolean(data.noSplatnet),
 								}}
 								autoSubmit
 								revalidateRoot

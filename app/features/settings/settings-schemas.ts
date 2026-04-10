@@ -51,11 +51,20 @@ export const updateNoScreenSchema = z.object({
 	}),
 });
 
+export const updateNoSplatnetSchema = z.object({
+	_action: stringConstant("UPDATE_NO_SPLATNET"),
+	newValue: toggle({
+		label: "labels.noSplatnet",
+		bottomText: "bottomTexts.noScreen",
+	}),
+});
+
 export const settingsEditSchema = z.union([
 	customThemeSchema,
 	disableBuildAbilitySortingSchema,
 	disallowScrimPickupsFromUntrustedSchema,
 	spoilerFreeModeSchema,
 	updateNoScreenSchema,
+	updateNoSplatnetSchema,
 	clockFormatSchema,
 ]);

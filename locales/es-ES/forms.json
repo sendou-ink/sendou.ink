@@ -8,6 +8,7 @@
 	"labels.disableBuildAbilitySorting": "Builds: Desactivar orden automático de potenciadores",
 	"labels.disallowScrimPickupsFromUntrusted": "No permitir invitaciones de usuarios no verificados",
 	"labels.noScreen": "[Accesibilidad] Evitar Pantintalla",
+	"labels.noSplatnet": "",
 	"labels.spoilerFreeMode": "",
 	"bottomTexts.name": "Nota que si cambias el nombre de tu equipo, el nombre y la URL estarán libres para que otro equipo los tome",
 	"bottomTexts.tag": "Normalmente se usa antes del nombre en el juego para indicar pertenencia a un equipo (ej. [TAG] NombreJugador)",

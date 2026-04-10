@@ -4,6 +4,7 @@ import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { qMatchPageParamsSchema } from "../q-match-schemas";
 
@@ -86,17 +87,21 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		...matchUnmapped.groupBravo.members,
 	].map((m) => m.id);
 
-	const [privateNotes, roomLinks] = await Promise.all([
-		user
-			? PrivateUserNoteRepository.byAuthorUserId(user.id, matchUsers)
-			: undefined,
-		RoomLinkRepository.findByUserIds(matchUsers, 3),
-	]);
+	const [privateNotes, roomLinks, anyUserPrefersNoSplatnet] = await Promise.all(
+		[
+			user
+				? PrivateUserNoteRepository.byAuthorUserId(user.id, matchUsers)
+				: undefined,
+			RoomLinkRepository.findByUserIds(matchUsers, 3),
+			UserRepository.anyUserPrefersNoSplatnet(matchUsers),
+		],
+	);
 
 	const match = SendouQ.mapMatch(matchUnmapped, user, privateNotes);
 
 	return {
 		match,
 		roomLinks,
+		anyUserPrefersNoSplatnet,
 	};
 };

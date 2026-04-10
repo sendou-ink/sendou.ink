@@ -1240,6 +1240,21 @@ export async function anyUserPrefersNoScreen(
 	return Boolean(result);
 }
 
+export async function anyUserPrefersNoSplatnet(
+	userIds: number[],
+): Promise<boolean> {
+	if (userIds.length === 0) return false;
+
+	const result = await db
+		.selectFrom("User")
+		.select("User.noSplatnet")
+		.where("User.id", "in", userIds)
+		.where("User.noSplatnet", "=", 1)
+		.executeTakeFirst();
+
+	return Boolean(result);
+}
+
 export async function socialLinksByUserId(userId: number) {
 	const user = await db
 		.selectFrom("User")

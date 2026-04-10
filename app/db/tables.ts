@@ -1045,6 +1045,8 @@ export interface User {
 	qWeaponPool: JSONColumnTypeNullable<QWeaponPool[]>;
 	plusSkippedForSeasonNth: number | null;
 	noScreen: Generated<DBBoolean>;
+	/** User doesn't have access to SplatNet 3 to join rooms made by others */
+	noSplatnet: Generated<DBBoolean>;
 	buildSorting: JSONColumnTypeNullable<BuildSort[]>;
 	preferences: JSONColumnTypeNullable<UserPreferences>;
 	/** User creation date. Can be null because we did not always save this. */

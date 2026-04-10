@@ -248,7 +248,7 @@ function SendouQMatchTabs() {
 				isConfirming={confirmFetcher.state !== "idle"}
 				pool="SQ7"
 				pass="8430"
-				showNoSplatnetAlert={false}
+				showNoSplatnetAlert={data.anyUserPrefersNoSplatnet}
 			/>
 			<MatchRosterTab
 				minMembersPerTeam={4}
