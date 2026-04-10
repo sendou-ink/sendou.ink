@@ -24,6 +24,7 @@ import type { ParsedMemento } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
+import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -246,8 +247,8 @@ function SendouQMatchTabs() {
 					);
 				}}
 				isConfirming={confirmFetcher.state !== "idle"}
-				pool="SQ7"
-				pass="8430"
+				pool={`SQ${String(data.match.id).at(-1)}`}
+				pass={resolveRoomPass(data.match.id)}
 				showNoSplatnetAlert={data.anyUserPrefersNoSplatnet}
 			/>
 			<MatchRosterTab
