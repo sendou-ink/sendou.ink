@@ -2548,6 +2548,23 @@ async function groups(variation?: SeedVariation | null) {
 			mapList,
 			memento,
 		});
+
+		const thirtyMinutesAgo = dateToDatabaseTimestamp(
+			sub(new Date(), { minutes: 30 }),
+		);
+		sql
+			.prepare(
+				/* sql */ `
+				insert into "RoomLink" ("userId", "url", "createdAt", "refreshedAt")
+				values (@userId, @url, @createdAt, @refreshedAt)
+			`,
+			)
+			.run({
+				userId: ADMIN_ID,
+				url: "https://example.com//private_battle/seed_room_123",
+				createdAt: thirtyMinutesAgo,
+				refreshedAt: thirtyMinutesAgo,
+			});
 	}
 }
 

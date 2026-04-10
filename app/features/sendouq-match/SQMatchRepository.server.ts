@@ -17,7 +17,7 @@ import {
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import type { Unpacked } from "~/utils/types";
-import { FULL_GROUP_SIZE } from "../sendouq/q-constants";
+import { FULL_GROUP_SIZE, SENDOUQ_BEST_OF } from "../sendouq/q-constants";
 import * as SQGroupRepository from "../sendouq/SQGroupRepository.server";
 import { MATCHES_PER_SEASONS_PAGE } from "../user-page/user-page-constants";
 import { compareMatchToReportedScores } from "./core/match.server";
@@ -817,6 +817,140 @@ export async function cancelMatch({
 		await lockMatchWithoutSkillChange(match.id, trx);
 	});
 	return { status: "CANCEL_CONFIRMED", shouldRefreshCaches: true };
+}
+
+export type ReportMapWinnerResult =
+	| { status: "MAP_REPORTED" }
+	| { status: "MATCH_FINALIZED" }
+	| { status: "ALREADY_LOCKED" }
+	| { status: "INVALID_WINNER" }
+	| { status: "STALE" };
+
+// xxx: split this guy up
+export async function reportMapWinner({
+	matchId,
+	winnerId,
+	reportedByUserId,
+	reportedCount,
+}: {
+	matchId: number;
+	winnerId: number;
+	reportedByUserId: number;
+	reportedCount: number;
+}): Promise<ReportMapWinnerResult> {
+	const match = await findById(matchId);
+	invariant(match, "Match not found");
+
+	if (match.isLocked) {
+		return { status: "ALREADY_LOCKED" };
+	}
+
+	if (winnerId !== match.groupAlpha.id && winnerId !== match.groupBravo.id) {
+		return { status: "INVALID_WINNER" };
+	}
+
+	const actualReportedCount = match.mapList.filter(
+		(m) => m.winnerGroupId !== null,
+	).length;
+	if (actualReportedCount !== reportedCount) {
+		return { status: "STALE" };
+	}
+
+	const currentMap = match.mapList.find((m) => m.winnerGroupId === null);
+	invariant(currentMap, "No unreported map found");
+
+	const mapsToWin = Math.ceil(SENDOUQ_BEST_OF / 2);
+
+	const alphaWins =
+		match.mapList.filter((m) => m.winnerGroupId === match.groupAlpha.id)
+			.length + (winnerId === match.groupAlpha.id ? 1 : 0);
+	const bravoWins =
+		match.mapList.filter((m) => m.winnerGroupId === match.groupBravo.id)
+			.length + (winnerId === match.groupBravo.id ? 1 : 0);
+
+	const matchIsOver = alphaWins >= mapsToWin || bravoWins >= mapsToWin;
+
+	if (!matchIsOver) {
+		await db.transaction().execute(async (trx) => {
+			await trx
+				.updateTable("GroupMatchMap")
+				.set({ winnerGroupId: winnerId })
+				.where("id", "=", currentMap.id)
+				.execute();
+			await trx
+				.updateTable("GroupMatch")
+				.set({
+					// xxx: need to move these to GroupMatchMap
+					reportedAt: dateToDatabaseTimestamp(new Date()),
+					reportedByUserId,
+				})
+				.where("id", "=", matchId)
+				.execute();
+		});
+		return { status: "MAP_REPORTED" };
+	}
+
+	const members = buildMembers(match);
+	const winnerGroupId =
+		alphaWins >= mapsToWin ? match.groupAlpha.id : match.groupBravo.id;
+	const loserGroupId =
+		alphaWins >= mapsToWin ? match.groupBravo.id : match.groupAlpha.id;
+
+	const winners: ("ALPHA" | "BRAVO")[] = match.mapList
+		.filter((m) => m.winnerGroupId !== null)
+		.map((m) => (m.winnerGroupId === match.groupAlpha.id ? "ALPHA" : "BRAVO"));
+	winners.push(winnerId === match.groupAlpha.id ? "ALPHA" : "BRAVO");
+
+	const { newSkills, differences } = calculateMatchSkills({
+		groupMatchId: match.id,
+		winner: (match.groupAlpha.id === winnerGroupId
+			? match.groupAlpha
+			: match.groupBravo
+		).members.map((m) => m.id),
+		loser: (match.groupAlpha.id === loserGroupId
+			? match.groupAlpha
+			: match.groupBravo
+		).members.map((m) => m.id),
+		winnerGroupId,
+		loserGroupId,
+	});
+
+	await db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("GroupMatchMap")
+			.set({ winnerGroupId: winnerId })
+			.where("id", "=", currentMap.id)
+			.execute();
+		await trx
+			.updateTable("GroupMatch")
+			.set({
+				reportedAt: dateToDatabaseTimestamp(new Date()),
+				reportedByUserId,
+			})
+			.where("id", "=", matchId)
+			.execute();
+		await SQGroupRepository.setAsInactive(match.groupAlpha.id, trx);
+		await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
+		await PlayerStatRepository.upsertMapResults(
+			summarizeMaps({ match, members, winners }),
+			trx,
+		);
+		await PlayerStatRepository.upsertPlayerResults(
+			summarizePlayerResults({ match, members, winners }),
+			trx,
+		);
+		await SkillRepository.createMatchSkills(
+			{
+				skills: newSkills,
+				differences,
+				groupMatchId: match.id,
+				oldMatchMemento: match.memento,
+			},
+			trx,
+		);
+	});
+
+	return { status: "MATCH_FINALIZED" };
 }
 
 function buildMembers(

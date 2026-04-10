@@ -3,7 +3,7 @@ import { redirect } from "react-router";
 import type { ReportedWeapon } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import type { ChatMessage } from "~/features/chat/chat-types";
+import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import {
@@ -18,6 +18,7 @@ import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.ser
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
+	errorToast,
 	errorToastIfFalsy,
 	notFoundIfFalsy,
 	parseParams,
@@ -46,126 +47,31 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			);
 			const match = SendouQ.mapMatch(unmappedMatch, user);
 
-			if (match.isLocked) {
-				const oldReportedWeapons =
-					(await ReportedWeaponRepository.findByMatchId(matchId)) ?? [];
-				const mergedWeapons = mergeReportedWeapons({
-					oldWeapons: oldReportedWeapons,
-					newWeapons: data.weapons,
-					newReportedMapsCount: data.winners.length,
-				});
-				await ReportedWeaponRepository.replaceByMatchId(
-					matchId,
-					mergedWeapons.map((w) => ({
-						groupMatchMapId: w.groupMatchMapId,
-						userId: w.userId,
-						weaponSplId: w.weaponSplId,
-					})),
-				);
-				return null;
-			}
-
-			errorToastIfFalsy(
-				!data.adminReport || user.roles.includes("STAFF"),
-				"Only mods can report scores as admin",
-			);
-
 			const members = [
-				...match.groupAlpha.members.map((m) => ({
-					...m,
-					groupId: match.groupAlpha.id,
-				})),
-				...match.groupBravo.members.map((m) => ({
-					...m,
-					groupId: match.groupBravo.id,
-				})),
+				...match.groupAlpha.members,
+				...match.groupBravo.members,
 			];
 			invariant(
-				members.some((m) => m.id === user.id) || data.adminReport,
+				members.some((m) => m.id === user.id),
 				"User is not a member of any group",
 			);
 
-			if (data.adminReport) {
-				await SQMatchRepository.adminReport({
-					matchId,
-					reportedByUserId: user.id,
-					winners: data.winners,
-				});
-
-				try {
-					refreshUserSkills(Seasons.currentOrPrevious()!.nth);
-				} catch (error) {
-					logger.warn("Error refreshing user skills", error);
-				}
-				refreshStreamsCache();
-
-				await refreshSendouQInstance();
-
-				if (match.chatCode) {
-					ChatSystemMessage.send({
-						room: match.chatCode,
-						type: "SCORE_CONFIRMED",
-						context: { name: user.username },
-					});
-				}
-
-				break;
-			}
-
-			const matchIsBeingCanceled = data.winners.length === 0;
-
-			if (matchIsBeingCanceled) {
-				const result = await SQMatchRepository.cancelMatch({
-					matchId,
-					reportedByUserId: user.id,
-				});
-
-				if (result.shouldRefreshCaches) {
-					try {
-						refreshUserSkills(Seasons.currentOrPrevious()!.nth);
-					} catch (error) {
-						logger.warn("Error refreshing user skills", error);
-					}
-					refreshStreamsCache();
-				}
-
-				if (result.status === "CANT_CANCEL") {
-					return { error: "cant-cancel" as const };
-				}
-
-				if (result.status === "DUPLICATE") {
-					break;
-				}
-
-				await refreshSendouQInstance();
-
-				if (match.chatCode) {
-					const type: NonNullable<ChatMessage["type"]> =
-						result.status === "CANCEL_CONFIRMED"
-							? "CANCEL_CONFIRMED"
-							: "CANCEL_REPORTED";
-
-					ChatSystemMessage.send({
-						room: match.chatCode,
-						type,
-						context: { name: user.username },
-					});
-				}
-
-				break;
-			}
-
-			const result = await SQMatchRepository.reportScore({
+			const result = await SQMatchRepository.reportMapWinner({
 				matchId,
+				winnerId: data.winnerId,
 				reportedByUserId: user.id,
-				winners: data.winners,
-				weapons: data.weapons as (ReportedWeapon & {
-					mapIndex: number;
-					groupMatchMapId: number;
-				})[],
+				reportedCount: data.reportedCount,
 			});
 
-			if (result.shouldRefreshCaches) {
+			if (result.status === "ALREADY_LOCKED" || result.status === "STALE") {
+				return null;
+			}
+
+			if (result.status === "INVALID_WINNER") {
+				return errorToast("Invalid winner id");
+			}
+
+			if (result.status === "MATCH_FINALIZED") {
 				try {
 					refreshUserSkills(Seasons.currentOrPrevious()!.nth);
 				} catch (error) {
@@ -174,21 +80,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				refreshStreamsCache();
 			}
 
-			if (result.status === "DIFFERENT") {
-				return { error: "different" as const };
-			}
+			await refreshSendouQInstance();
 
-			if (result.status !== "DUPLICATE") {
-				await refreshSendouQInstance();
-			}
-
-			if (match.chatCode && result.status !== "DUPLICATE") {
-				const type: NonNullable<ChatMessage["type"]> =
-					result.status === "CONFIRMED" ? "SCORE_CONFIRMED" : "SCORE_REPORTED";
-
+			if (match.chatCode && result.status === "MATCH_FINALIZED") {
 				ChatSystemMessage.send({
 					room: match.chatCode,
-					type,
+					type: "SCORE_CONFIRMED",
 					context: { name: user.username },
 				});
 			}
@@ -266,6 +163,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			});
 
 			throw redirect(sendouQMatchPage(matchId));
+		}
+		case "CONFIRM_ROOM": {
+			await RoomLinkRepository.refreshTimestamp(user.id);
+			break;
 		}
 		default: {
 			assertUnreachable(data);

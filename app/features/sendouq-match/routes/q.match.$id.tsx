@@ -1,7 +1,7 @@
 import { differenceInMinutes } from "date-fns";
 import { Scale, Vote } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useLoaderData } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -21,6 +21,7 @@ import { MatchPageHeader } from "~/components/match-page/MatchPageHeader";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs } from "~/components/match-page/MatchTabs";
 import type { ParsedMemento } from "~/db/tables";
+import { useUser } from "~/features/auth/core/user";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
@@ -31,6 +32,7 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { SENDOUQ_RULES_PAGE, teamPage } from "~/utils/urls";
 import { action } from "../actions/q.match.$id.server";
 import { loader } from "../loaders/q.match.$id.server";
+import { resolveGroupMemberOf } from "../q-match-utils";
 
 export { action, loader };
 
@@ -171,25 +173,82 @@ function SendouQMatchBanner() {
 
 function SendouQMatchTabs() {
 	const data = useLoaderData<typeof loader>();
+	const user = useUser();
+	const fetcher = useFetcher();
+	const confirmFetcher = useFetcher();
 	const { t } = useTranslation(["q"]);
 
 	const currentMap = data.match.currentMap;
-	invariant(currentMap);
+
+	const userSide = resolveGroupMemberOf({
+		groupAlpha: data.match.groupAlpha,
+		groupBravo: data.match.groupBravo,
+		userId: user?.id,
+	});
+	const ownTeamId =
+		userSide === "ALPHA"
+			? data.match.groupAlpha.id
+			: userSide === "BRAVO"
+				? data.match.groupBravo.id
+				: data.match.groupAlpha.id;
+
+	const reportedCount = data.match.mapList.filter(
+		(m) => m.winnerGroupId !== null,
+	).length;
+
+	const showActionTab = !data.match.isLocked && currentMap;
+
+	const tabs: Array<"join" | "rosters" | "action"> = showActionTab
+		? ["join", "rosters", "action"]
+		: ["join", "rosters"];
+
+	const allMembers = [
+		...data.match.groupAlpha.members,
+		...data.match.groupBravo.members,
+	];
+
+	// roomLinks are ordered by refreshedAt asc, so the first valid one is the oldest confirmed room
+	const validRoomLink = data.roomLinks.find(
+		(rl) => rl.refreshedAt >= data.match.createdAt,
+	);
+	const ownStaleRoomLink = validRoomLink
+		? undefined
+		: data.roomLinks.find((rl) => rl.userId === user?.id);
+
+	const activeRoomLink = validRoomLink ?? ownStaleRoomLink;
+	const isStale = activeRoomLink ? !validRoomLink : undefined;
+	const staleMinutesAgo = ownStaleRoomLink
+		? differenceInMinutes(
+				new Date(),
+				databaseTimestampToDate(ownStaleRoomLink.refreshedAt),
+			)
+		: 0;
+	const hostedByUsername = activeRoomLink
+		? allMembers.find((m) => m.id === activeRoomLink.userId)?.username
+		: undefined;
 
 	return (
-		<MatchTabs tabs={["join", "rosters", "action"]}>
+		<MatchTabs tabs={tabs}>
 			<MatchJoinTab
-				joinLink="https://app.nintendo.net/private_battle/abc123"
-				hostedBy={{
-					id: 1,
-					username: "Grey",
-					discordId: "123456789",
-					discordAvatar: null,
-					customUrl: null,
+				joinLink={activeRoomLink?.url}
+				hostedBy={hostedByUsername}
+				isStale={isStale}
+				staleMinutesAgo={staleMinutesAgo}
+				refreshedAt={
+					validRoomLink
+						? databaseTimestampToDate(validRoomLink.refreshedAt)
+						: undefined
+				}
+				onConfirmRoom={() => {
+					confirmFetcher.submit(
+						{ _action: "CONFIRM_ROOM" },
+						{ method: "post" },
+					);
 				}}
+				isConfirming={confirmFetcher.state !== "idle"}
 				pool="SQ7"
 				pass="8430"
-				showNoSplatnetAlert
+				showNoSplatnetAlert={false}
 			/>
 			<MatchRosterTab
 				minMembersPerTeam={4}
@@ -207,16 +266,29 @@ function SendouQMatchTabs() {
 					},
 				]}
 			/>
-			<MatchActionTab
-				teams={[
-					{ id: data.match.groupAlpha.id, name: "Group Alpha" },
-					{ id: data.match.groupBravo.id, name: "Group Bravo" },
-				]}
-				ownTeamId={1}
-				stageId={currentMap.stageId}
-				mode={currentMap.mode}
-				withPoints={false}
-			/>
+			{showActionTab ? (
+				<MatchActionTab
+					teams={[
+						{ id: data.match.groupAlpha.id, name: "Group Alpha" },
+						{ id: data.match.groupBravo.id, name: "Group Bravo" },
+					]}
+					ownTeamId={ownTeamId}
+					stageId={currentMap.stageId}
+					mode={currentMap.mode}
+					withPoints={false}
+					isSubmitting={fetcher.state !== "idle"}
+					onSubmit={(winnerId) => {
+						fetcher.submit(
+							{
+								_action: "REPORT_SCORE",
+								winnerId: String(winnerId),
+								reportedCount: String(reportedCount),
+							},
+							{ method: "post" },
+						);
+					}}
+				/>
+			) : null}
 		</MatchTabs>
 	);
 }

@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
+import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
@@ -85,13 +86,17 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		...matchUnmapped.groupBravo.members,
 	].map((m) => m.id);
 
-	const privateNotes = user
-		? await PrivateUserNoteRepository.byAuthorUserId(user.id, matchUsers)
-		: undefined;
+	const [privateNotes, roomLinks] = await Promise.all([
+		user
+			? PrivateUserNoteRepository.byAuthorUserId(user.id, matchUsers)
+			: undefined,
+		RoomLinkRepository.findByUserIds(matchUsers, 3),
+	]);
 
 	const match = SendouQ.mapMatch(matchUnmapped, user, privateNotes);
 
 	return {
 		match,
+		roomLinks,
 	};
 };

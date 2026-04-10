@@ -126,13 +126,6 @@ export default function MatchPageTestRoute() {
 				<MatchTabs tabs={["join", "rosters", "action"]}>
 					<MatchJoinTab
 						joinLink="https://app.nintendo.net/private_battle/abc123"
-						hostedBy={{
-							id: 1,
-							username: "Grey",
-							discordId: "123456789",
-							discordAvatar: null,
-							customUrl: null,
-						}}
 						pool="SQ7"
 						pass="8430"
 						showNoSplatnetAlert

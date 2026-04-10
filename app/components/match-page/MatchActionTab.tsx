@@ -25,15 +25,20 @@ interface MatchActionTabProps {
 	stageId: StageId;
 	mode: ModeShort;
 	withPoints: boolean;
+	onSubmit?: (winnerId: number) => void;
+	isSubmitting?: boolean;
 }
 
 // xxx: mobile design
+// xxx: reset state after some score has been submitted
 export function MatchActionTab({
 	teams,
 	ownTeamId,
 	stageId,
 	mode,
 	withPoints,
+	onSubmit,
+	isSubmitting,
 }: MatchActionTabProps) {
 	const { t } = useTranslation(["q", "game-misc", "common"]);
 	const [winnerId, setWinnerId] = useState<number | null>(null);
@@ -112,7 +117,12 @@ export function MatchActionTab({
 
 				<SendouButton
 					variant="primary"
-					isDisabled={!canSubmit}
+					isDisabled={!canSubmit || isSubmitting}
+					onPress={() => {
+						if (winnerId !== null) {
+							onSubmit?.(winnerId);
+						}
+					}}
 					className={styles.submit}
 				>
 					{t("common:actions.submit")}
