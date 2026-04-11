@@ -315,6 +315,11 @@ function GlobalSearchContent({
 		inputRef.current?.focus();
 	};
 
+	const handlePrefixBlur = () => {
+		setIsPrefixEditable(false);
+		setEditablePrefix("");
+	};
+
 	const handleDestinationSelect = () => {
 		if (!selectedWeapon) return;
 
@@ -355,6 +360,7 @@ function GlobalSearchContent({
 					}
 					readOnly={!isPrefixEditable}
 					onChange={handlePrefixChange}
+					onBlur={handlePrefixBlur}
 				/>
 				<Input
 					ref={inputRef}
