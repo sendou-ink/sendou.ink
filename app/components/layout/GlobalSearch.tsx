@@ -283,7 +283,7 @@ function GlobalSearchContent({
 
 	const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
-		const separatorMatch = value.match(/^([a-zA-Z]+): /);
+		const separatorMatch = value.match(/^([a-zA-Z]+)\. /);
 		if (separatorMatch) {
 			const typedPrefix = separatorMatch[1];
 			const matchedType = SEARCH_TYPES.find(
@@ -318,7 +318,7 @@ function GlobalSearchContent({
 	const handlePrefixChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
 		setEditablePrefix(value);
-		if (!value.endsWith(":") && !value.endsWith(" ")) return;
+		if (!value.endsWith(".") && !value.endsWith(" ")) return;
 
 		const typedPrefix = value.slice(0, -1);
 		const matchedType = SEARCH_TYPES.find(
@@ -374,7 +374,7 @@ function GlobalSearchContent({
 					value={
 						isPrefixEditable
 							? editablePrefix
-							: `${SEARCH_TYPE_TO_PREFIX[searchType]}:`
+							: `${SEARCH_TYPE_TO_PREFIX[searchType]}.`
 					}
 					readOnly={!isPrefixEditable}
 					onChange={handlePrefixChange}
