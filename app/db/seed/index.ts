@@ -244,6 +244,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	variation === "FINALIZED_BRACKET" ? finalizedBracket : undefined,
 	trophiesToDb,
 	trophyOwners,
+	pendingTrophiesToDb,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -1106,31 +1107,117 @@ function trophyOwners() {
 		`insert into "TrophyOwner" ("trophyId", "userId", "tournamentId") values ($trophyId, $userId, $tournamentId)`,
 	);
 
+	const usedCombinations = new Set<string>();
+	const insertOwner = (
+		trophyId: number,
+		userId: number,
+		tournamentId: number,
+	) => {
+		const key = `${trophyId}-${userId}-${tournamentId}`;
+		if (usedCombinations.has(key)) return;
+		usedCombinations.add(key);
+		insertTrophyOwnerStm.run({ trophyId, userId, tournamentId });
+	};
+
 	for (const trophyId of trophyIds) {
 		userIds = faker.helpers.shuffle(userIds);
-		for (
-			let i = 0;
-			i <
-			faker.number.int({
-				min: 1,
-				max: 8,
-			});
-			i++
-		) {
-			const userId = userIds.shift()!;
-			const tournamentId = faker.helpers.arrayElement(tournamentIds);
+		const ownerCount = faker.number.int({ min: 1, max: 8 });
 
-			insertTrophyOwnerStm.run({ trophyId, userId, tournamentId });
+		for (let i = 0; i < ownerCount; i++) {
+			const userId = userIds.shift()!;
+			const copies = faker.number.int({ min: 1, max: 3 });
+			const shuffledTournaments = faker.helpers.shuffle([...tournamentIds]);
+
+			for (let j = 0; j < copies && j < shuffledTournaments.length; j++) {
+				insertOwner(trophyId, userId, shuffledTournaments[j]);
+			}
 
 			userIds.push(userId);
 		}
 	}
 
 	for (const trophyId of trophyIds) {
-		insertTrophyOwnerStm.run({
-			trophyId,
-			userId: ADMIN_ID,
-			tournamentId: faker.helpers.arrayElement(tournamentIds),
+		const shuffledTournaments = faker.helpers.shuffle([...tournamentIds]);
+		const copies = faker.number.int({ min: 1, max: 3 });
+
+		for (let i = 0; i < copies && i < shuffledTournaments.length; i++) {
+			insertOwner(trophyId, ADMIN_ID, shuffledTournaments[i]);
+		}
+	}
+}
+
+function pendingTrophiesToDb() {
+	const userIds = (
+		sql
+			.prepare(
+				`select "id" from "User" where id != ${ADMIN_ID} order by random() limit 10`,
+			)
+			.all() as any[]
+	).map((u) => u.id) as number[];
+
+	const orgIds = (
+		sql
+			.prepare(`select "id" from "TournamentOrganization" limit 5`)
+			.all() as any[]
+	).map((o) => o.id) as number[];
+
+	const trophyEntries = Object.entries(trophies);
+
+	const insertPendingStm = sql.prepare(
+		`insert into "PendingTrophy" ("name", "model", "description", "organizationId", "submitterUserId", "createdAt", "declineReason", "declinedAt", "declinedByUserId", "acceptedAt", "acceptedByUserId") values ($name, $model, $description, $organizationId, $submitterUserId, $createdAt, $declineReason, $declinedAt, $declinedByUserId, $acceptedAt, $acceptedByUserId)`,
+	);
+
+	const now = Math.floor(Date.now() / 1000);
+
+	for (let i = 0; i < 5; i++) {
+		const [trophyName, model] = trophyEntries[i % trophyEntries.length];
+		insertPendingStm.run({
+			name: `Pending ${trophyName} ${i + 1}`,
+			model,
+			description: faker.lorem.sentence(),
+			organizationId: faker.helpers.arrayElement(orgIds),
+			submitterUserId: faker.helpers.arrayElement(userIds),
+			createdAt: now - i * 3600,
+			declineReason: null,
+			declinedAt: null,
+			declinedByUserId: null,
+			acceptedAt: null,
+			acceptedByUserId: null,
+		});
+	}
+
+	for (let i = 0; i < 3; i++) {
+		const [trophyName, model] = trophyEntries[(i + 5) % trophyEntries.length];
+		insertPendingStm.run({
+			name: `Accepted ${trophyName} ${i + 1}`,
+			model,
+			description: faker.lorem.sentence(),
+			organizationId: faker.helpers.arrayElement(orgIds),
+			submitterUserId: faker.helpers.arrayElement(userIds),
+			createdAt: now - (i + 5) * 3600,
+			declineReason: null,
+			declinedAt: null,
+			declinedByUserId: null,
+			acceptedAt: now - i * 1800,
+			acceptedByUserId: ADMIN_ID,
+		});
+	}
+
+	for (let i = 0; i < 3; i++) {
+		const [trophyName, model] =
+			trophyEntries[(i + 8) % trophyEntries.length];
+		insertPendingStm.run({
+			name: `Declined ${trophyName} ${i + 1}`,
+			model,
+			description: faker.lorem.sentence(),
+			organizationId: faker.helpers.arrayElement(orgIds),
+			submitterUserId: faker.helpers.arrayElement(userIds),
+			createdAt: now - (i + 8) * 3600,
+			declineReason: faker.lorem.sentence(),
+			declinedAt: now - i * 1800,
+			declinedByUserId: ADMIN_ID,
+			acceptedAt: null,
+			acceptedByUserId: null,
 		});
 	}
 }
