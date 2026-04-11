@@ -62,6 +62,15 @@
 	border-radius: var(--radius-box);
 }
 
+.mapLabel {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
 .winIndicator {
 	display: flex;
 	flex-direction: column;

@@ -3,10 +3,11 @@ import { Check, RefreshCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
+import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 import { Avatar } from "../Avatar";
-import { StageImage } from "../Image";
+import { ModeImage, StageImage } from "../Image";
 import styles from "./MatchTimeline.module.css";
 
 type MatchSide = "ALPHA" | "BRAVO";
@@ -35,6 +36,8 @@ export interface MatchTimelineProps {
 	maps: TimelineMap[];
 }
 
+// xxx: need to show Pick/Bans somewhere, on tab?
+// xxx: align checkmarks better
 export function MatchTimeline({ teams, score, maps }: MatchTimelineProps) {
 	return (
 		<div className={styles.root}>
@@ -129,6 +132,7 @@ function TimelineHeader({
 }
 
 function TimelineMapRow({ map }: { map: TimelineMap }) {
+	const { t } = useTranslation(["game-misc"]);
 	const isHydrated = useHydrated();
 	const { formatTime } = useTimeFormat();
 
@@ -152,6 +156,10 @@ function TimelineMapRow({ map }: { map: TimelineMap }) {
 					width={80}
 					className={styles.mapStageImage}
 				/>
+				<div className={styles.mapLabel}>
+					<ModeImage mode={map.mode} size={14} />
+					<span>{shortStageName(t(`game-misc:STAGE_${map.stageId}`))}</span>
+				</div>
 			</div>
 			<div className={styles.mapSide}>
 				{map.winner === "BRAVO" ? (
