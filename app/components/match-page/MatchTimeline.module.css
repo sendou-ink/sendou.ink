@@ -1,11 +1,122 @@
 .root {
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	row-gap: var(--s-4);
+	column-gap: var(--s-3);
+	align-items: center;
 }
 
 .header {
+	display: contents;
+}
+
+.headerTeam {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: var(--s-1);
+}
+
+.headerTeamBravo {
+	align-items: flex-start;
+}
+
+.headerTeamName {
+	font-weight: var(--weight-bold);
+	font-size: var(--font-sm);
+}
+
+.headerAvatars {
+	display: flex;
+	gap: var(--s-0-5);
+}
+
+.headerScore {
+	font-size: var(--font-xl);
+	font-weight: var(--weight-extra);
+	text-align: center;
 }
 
 .mapEvent {
+	display: contents;
+}
+
+.mapSide {
+	justify-self: center;
+}
+
+.mapCenter {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.mapTimestamp {
+	font-size: var(--font-3xs);
+	color: var(--color-text-high);
+	font-weight: var(--weight-semi);
+}
+
+.mapStageImage {
+	border-radius: var(--radius-box);
+}
+
+.winIndicator {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-0-5);
+	/** align center roughly to the stage image center */
+	margin-block-start: var(--s-6);
+}
+
+.winCheck {
+	color: var(--color-success);
+}
+
+.winPoints {
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-semi);
 }
 
 .substitutionEvent {
+	display: contents;
+}
+
+.subCenter {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.subIcon {
+	color: var(--color-text-high);
+}
+
+.subDetail {
+	display: grid;
+	grid-template-columns: auto auto 1fr;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.subLabelOut {
+	color: var(--color-error);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-3xs);
+	text-transform: uppercase;
+}
+
+.subLabelIn {
+	color: var(--color-success);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-3xs);
+	text-transform: uppercase;
+}
+
+.subPlayerName {
+	font-weight: var(--weight-semi);
+	font-size: var(--font-xs);
 }
