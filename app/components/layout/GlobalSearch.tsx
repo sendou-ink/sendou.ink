@@ -281,6 +281,24 @@ function GlobalSearchContent({
 		setEditablePrefix("");
 	};
 
+	const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		const separatorMatch = value.match(/^([a-zA-Z]+): /);
+		if (separatorMatch) {
+			const typedPrefix = separatorMatch[1];
+			const matchedType = SEARCH_TYPES.find(
+				(type) => SEARCH_TYPE_TO_PREFIX[type] === typedPrefix,
+			);
+			if (matchedType) {
+				setSearchType(matchedType);
+				setSelectedWeapon(null);
+				setQuery(value.slice(separatorMatch[0].length));
+				return;
+			}
+		}
+		setQuery(value);
+	};
+
 	const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === "Backspace" && query === "") {
 			e.preventDefault();
@@ -367,7 +385,7 @@ function GlobalSearchContent({
 					className={styles.input}
 					placeholder={t("common:search.placeholder")}
 					value={query}
-					onChange={(e) => setQuery(e.target.value)}
+					onChange={handleQueryChange}
 					onKeyDown={handleInputKeyDown}
 					icon={<Search className={styles.inputIcon} />}
 				/>
