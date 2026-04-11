@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import {
-	ChevronsUpDown,
 	Link as LinkIcon,
 	Minus,
 	MousePointerClick,
@@ -12,6 +11,11 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { type FetcherWithComponents, Link, useFetcher } from "react-router";
 import { SendouDialog } from "~/components/elements/Dialog";
+import {
+	SendouSelect,
+	SendouSelectItem,
+	SendouSelectItemSection,
+} from "~/components/elements/Select";
 import { ModeImage, StageImage } from "~/components/Image";
 import { InfoPopover } from "~/components/InfoPopover";
 import { Input } from "~/components/Input";
@@ -1060,8 +1064,29 @@ function MapListRow({
 	hoveredMap: string | null;
 	onMapChange: (map: NonNullable<TournamentRoundMaps["list"]>[number]) => void;
 }) {
-	const { t } = useTranslation(["game-misc"]);
+	const { t } = useTranslation(["common", "game-misc"]);
 	const tournament = useTournament();
+
+	const items = modesShort.flatMap((mode) => {
+		const mapsForMode = tournament.ctx.toSetMapPool.filter(
+			(m) => m.mode === mode,
+		);
+
+		if (mapsForMode.length === 0) return [];
+
+		return [
+			{
+				key: mode,
+				modeLabel: t(`game-misc:MODE_LONG_${mode}`),
+				maps: mapsForMode.map((m) => ({
+					id: serializedMapMode(m),
+					mode,
+					stageId: m.stageId,
+					name: t(`game-misc:STAGE_${m.stageId}`),
+				})),
+			},
+		];
+	});
 
 	return (
 		<li
@@ -1070,46 +1095,43 @@ function MapListRow({
 			})}
 			onMouseEnter={() => onHoverMap(serializedMapMode(map))}
 		>
-			<div className={styles.mapSelectContainer}>
-				<span className="text-sm text-lighter font-semi-bold">{number}.</span>
-				<ModeImage mode={map.mode} size={24} />
-				<StageImage stageId={map.stageId} height={24} className="rounded-sm" />
-				{t(`game-misc:STAGE_${map.stageId}`)}
-				<select
-					className={styles.mapSelect}
-					value={serializedMapMode(map)}
-					onChange={(e) => {
-						const [mode, stageId] = e.target.value.split("-");
-						onMapChange({
-							mode: mode as ModeShort,
-							stageId: Number(stageId) as StageId,
-						});
-					}}
-				>
-					{modesShort.map((mode) => {
-						const mapsForMode = tournament.ctx.toSetMapPool.filter(
-							(m) => m.mode === mode,
-						);
-
-						if (mapsForMode.length === 0) return null;
-
-						return (
-							<optgroup key={mode} label={t(`game-misc:MODE_LONG_${mode}`)}>
-								{mapsForMode.map((m) => (
-									<option
-										key={serializedMapMode(m)}
-										value={serializedMapMode(m)}
-									>
-										{t(`game-misc:MODE_SHORT_${mode}`)}{" "}
-										{t(`game-misc:STAGE_${m.stageId}`)}
-									</option>
-								))}
-							</optgroup>
-						);
-					})}
-				</select>
-				<ChevronsUpDown className={styles.mapSelectIcon} />
-			</div>
+			<span className="text-sm text-lighter font-semi-bold">{number}.</span>
+			<SendouSelect
+				aria-label="Map"
+				items={items}
+				selectedKey={serializedMapMode(map)}
+				onSelectionChange={(key) => {
+					if (key === null) return;
+					const [mode, stageId] = String(key).split("-");
+					onMapChange({
+						mode: mode as ModeShort,
+						stageId: Number(stageId) as StageId,
+					});
+				}}
+				search={{
+					placeholder: t("common:forms.stageSearch.search.placeholder"),
+				}}
+				className={styles.mapRowSelect}
+				popoverClassName={styles.mapRowSelectPopover}
+			>
+				{(group) => (
+					<SendouSelectItemSection key={group.key} heading={group.modeLabel}>
+						{group.maps.map((m) => (
+							<SendouSelectItem key={m.id} id={m.id} textValue={m.name}>
+								<div className={styles.mapSelectItem}>
+									<ModeImage mode={m.mode} size={20} />
+									<StageImage
+										stageId={m.stageId}
+										height={20}
+										className="rounded-sm"
+									/>
+									<span>{m.name}</span>
+								</div>
+							</SendouSelectItem>
+						))}
+					</SendouSelectItemSection>
+				)}
+			</SendouSelect>
 		</li>
 	);
 }

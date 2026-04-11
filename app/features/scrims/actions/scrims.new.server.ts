@@ -183,7 +183,7 @@ async function validatePickupFriends(userIds: number[], authorId: number) {
 }
 
 async function validatePickupAllUnbanned(userIds: number[]) {
-	const bannedUsers = userIds.filter(userIsBanned);
+	const bannedUsers = userIds.filter((id) => userIsBanned(id));
 
 	return bannedUsers.length === 0
 		? null

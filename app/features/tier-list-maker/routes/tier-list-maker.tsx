@@ -162,6 +162,7 @@ function TierListMakerContent() {
 			</div>
 
 			<DndContext
+				key={itemType}
 				sensors={sensors}
 				collisionDetection={pointerWithin}
 				onDragStart={handleDragStart}

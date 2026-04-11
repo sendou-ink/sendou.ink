@@ -5,7 +5,6 @@ import { getServerTournamentManager } from "../tournament-bracket/core/brackets-
 import { tournamentFromDB } from "../tournament-bracket/core/Tournament.server";
 import { joinTeam } from "./queries/joinLeaveTeam.server";
 import { updateRoundMaps } from "./queries/updateRoundMaps.server";
-import * as TournamentRepository from "./TournamentRepository.server";
 import * as TournamentTeamRepository from "./TournamentTeamRepository.server";
 
 /**
@@ -79,7 +78,7 @@ export async function dbInsertTournamentTeam({
 		});
 	}
 
-	await TournamentRepository.checkIn({
+	await TournamentTeamRepository.checkIn({
 		tournamentTeamId: tournamentTeam.id,
 		// no sources = regular check in
 		bracketIdx: null,

@@ -1,8 +1,8 @@
 import type { LoaderFunctionArgs } from "react-router";
+import * as R from "remeda";
 import { getUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfFalsy, privatelyCachedJson } from "~/utils/remix.server";
 import { sortBuilds } from "../core/build-sorting.server";
@@ -37,19 +37,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	return privatelyCachedJson({
 		buildSorting: user.buildSorting,
 		builds: sortedBuilds,
-		weaponCounts: calculateWeaponCounts(),
+		weaponCounts: R.countBy(
+			builds.flatMap((build) => build.weapons),
+			(weapon) => weapon.weaponSplId,
+		),
 	});
-
-	function calculateWeaponCounts() {
-		return builds.reduce(
-			(acc, build) => {
-				for (const weapon of build.weapons) {
-					acc[weapon.weaponSplId] = (acc[weapon.weaponSplId] ?? 0) + 1;
-				}
-
-				return acc;
-			},
-			{} as Record<MainWeaponId, number>,
-		);
-	}
 };

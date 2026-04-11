@@ -66,7 +66,9 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 		.filter((room) => room.expiresAt > Date.now())
 		.sort((a, b) => {
 			if (a.isObsolete !== b.isObsolete) return a.isObsolete ? 1 : -1;
-			return 0;
+			const aRecency = a.lastMessageTimestamp || a.createdAt;
+			const bRecency = b.lastMessageTimestamp || b.createdAt;
+			return bRecency - aRecency;
 		});
 
 	return (

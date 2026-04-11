@@ -4,7 +4,7 @@ import type { AssociationVisibility } from "../associations-types";
 
 export interface IsVisibleArgs {
 	visibility: AssociationVisibility | null;
-	time: Date;
+	time?: Date;
 	associations: {
 		virtual: Array<string>;
 		actual: Array<{ id: number }>;
@@ -20,7 +20,7 @@ export function isVisible(args: IsVisibleArgs) {
 		args.visibility.forAssociation,
 	];
 
-	const dbTime = dateToDatabaseTimestamp(args.time);
+	const dbTime = dateToDatabaseTimestamp(args.time ?? new Date());
 	for (const visibility of args.visibility.notFoundInstructions ?? []) {
 		if (dbTime > visibility.at) {
 			currentVisibility.push(visibility.forAssociation);

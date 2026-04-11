@@ -77,7 +77,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const whatToDoWithPreviousTeam = !previousTeam
 		? undefined
 		: previousTeam.members.some(
-					(member) => member.userId === user.id && member.isOwner,
+					(member) => member.userId === user.id && member.role === "OWNER",
 				)
 			? "DELETE"
 			: "LEAVE";

@@ -3,7 +3,7 @@ import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/* sql */ `
   update TournamentTeamMember
-    set "isOwner" = @isOwner
+    set "role" = @role
   where
     "tournamentTeamId" = @tournamentTeamId and
       "userId" = @userId
@@ -18,13 +18,13 @@ export const changeTeamOwner = sql.transaction(
 		stm.run({
 			tournamentTeamId: args.tournamentTeamId,
 			userId: args.oldCaptainId,
-			isOwner: 0,
+			role: "REGULAR",
 		});
 
 		stm.run({
 			tournamentTeamId: args.tournamentTeamId,
 			userId: args.newCaptainId,
-			isOwner: 1,
+			role: "OWNER",
 		});
 	},
 );

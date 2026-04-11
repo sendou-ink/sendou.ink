@@ -42,7 +42,6 @@ describe("tournamentSummary()", () => {
 			username: "test",
 			inGameName: "test",
 			twitch: null,
-			isOwner: 0,
 			plusTier: null,
 			createdAt: 0,
 			userId,

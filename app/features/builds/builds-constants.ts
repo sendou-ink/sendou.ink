@@ -4,9 +4,11 @@ export const MAX_BUILD_FILTERS = 6;
 
 export const FILTER_SEARCH_PARAM_KEY = "f";
 
-export const PATCHES = [
+type Patch = { patch: string; date: string };
+
+export const PATCHES: Array<Patch> = [
 	{
-		path: "11.1.0",
+		patch: "11.1.0",
 		date: "2026-03-18",
 	},
 	{

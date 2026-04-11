@@ -3,6 +3,7 @@ import type { Insertable } from "kysely";
 import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import { ConcurrentModificationError } from "~/utils/errors";
 import { shortNanoid } from "~/utils/id";
 import {
 	COMMON_USER_FIELDS,
@@ -342,11 +343,32 @@ export async function findAllRelevant(userId?: number): Promise<ScrimPost[]> {
 }
 
 export function acceptRequest(scrimPostRequestId: number) {
-	return db
-		.updateTable("ScrimPostRequest")
-		.set({ isAccepted: 1 })
-		.where("id", "=", scrimPostRequestId)
-		.execute();
+	return db.transaction().execute(async (trx) => {
+		const target = await trx
+			.selectFrom("ScrimPostRequest")
+			.select("scrimPostId")
+			.where("id", "=", scrimPostRequestId)
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.updateTable("ScrimPostRequest")
+			.set({ isAccepted: 1 })
+			.where("id", "=", scrimPostRequestId)
+			.execute();
+
+		const acceptedRequests = await trx
+			.selectFrom("ScrimPostRequest")
+			.select("id")
+			.where("scrimPostId", "=", target.scrimPostId)
+			.where("isAccepted", "=", 1)
+			.execute();
+
+		if (acceptedRequests.length > 1) {
+			throw new ConcurrentModificationError(
+				"Another request for this scrim post was already accepted",
+			);
+		}
+	});
 }
 
 export function deleteRequest(scrimPostRequestId: number) {

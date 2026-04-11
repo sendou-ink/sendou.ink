@@ -61,10 +61,6 @@ export const editTeamSchema = z.union([
 			falsyToNull,
 			z.string().max(TEAM.TAG_MAX_LENGTH).nullable(),
 		),
-		customTheme: z.preprocess(
-			(val) => (!val || val === "null" ? null : val),
-			themeInputSchema.nullable(),
-		),
 	}),
 ]);
 

@@ -10,6 +10,7 @@ import {
 import { createSwissBracketInTransaction } from "~/features/tournament/queries/createSwissBracketInTransaction.server";
 import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -287,7 +288,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				`Checking in (bracket try): tournament team id: ${teamMemberOf.id} - user id: ${user.id} - tournament id: ${tournament.ctx.id} - bracket idx: ${data.bracketIdx}`,
 			);
 
-			await TournamentRepository.checkIn({
+			await TournamentTeamRepository.checkIn({
 				bracketIdx: data.bracketIdx,
 				tournamentTeamId: teamMemberOf.id,
 			});

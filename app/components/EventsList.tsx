@@ -1,7 +1,9 @@
 import { isToday, isTomorrow } from "date-fns";
 import { useTranslation } from "react-i18next";
 import type { SidebarEvent } from "~/features/sidebar/core/sidebar.server";
+import { useHydrated } from "~/hooks/useHydrated";
 import styles from "./EventsList.module.css";
+import { Placeholder } from "./Placeholder";
 import { ListLink } from "./SideNav";
 
 export function EventsList({
@@ -12,6 +14,7 @@ export function EventsList({
 	onClick?: () => void;
 }) {
 	const { t, i18n } = useTranslation(["front"]);
+	const isHydrated = useHydrated();
 
 	if (events.length === 0) {
 		return (
@@ -19,6 +22,10 @@ export function EventsList({
 				{t("front:sideNav.noEvents")}
 			</div>
 		);
+	}
+
+	if (!isHydrated) {
+		return <Placeholder />;
 	}
 
 	const getDayKey = (timestamp: number) => {

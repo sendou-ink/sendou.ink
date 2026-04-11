@@ -146,36 +146,9 @@ export function useTierList() {
 				? findContainer(overItem)
 				: null;
 
+		// Same-container reordering is handled in handleDragEnd. Doing it here
+		// would create a render → dragOver ping-pong loop with arrayMove.
 		if (!overContainer || activeContainer === overContainer) {
-			if (activeContainer && overContainer === activeContainer) {
-				const newTierItems = new Map(tiers.tierItems);
-				const containerItems = newTierItems.get(activeContainer) || [];
-				const oldIndex = containerItems.findIndex(
-					(item) =>
-						item.id === activeItem.id &&
-						item.type === activeItem.type &&
-						item.nth === activeItem.nth,
-				);
-				const newIndex = overItem
-					? containerItems.findIndex(
-							(item) =>
-								item.id === overItem.id &&
-								item.type === overItem.type &&
-								item.nth === overItem.nth,
-						)
-					: -1;
-
-				if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-					newTierItems.set(
-						activeContainer,
-						arrayMove(containerItems, oldIndex, newIndex),
-					);
-					setTiers({
-						...tiers,
-						tierItems: newTierItems,
-					});
-				}
-			}
 			return;
 		}
 
@@ -227,11 +200,15 @@ export function useTierList() {
 		setActiveItem(null);
 
 		if (!over) {
+			persistTiersStateToParams(tiers);
 			return;
 		}
 
 		const item = parseItemFromId(String(active.id));
-		if (!item) return;
+		if (!item) {
+			persistTiersStateToParams(tiers);
+			return;
+		}
 
 		const overId = over.id;
 
@@ -262,6 +239,41 @@ export function useTierList() {
 			persistTiersStateToParams(newState);
 			return;
 		}
+
+		const activeContainer = findContainer(item);
+		if (!activeContainer) {
+			persistTiersStateToParams(tiers);
+			return;
+		}
+
+		const containerItems = tiers.tierItems.get(activeContainer) || [];
+		const oldIndex = containerItems.findIndex(
+			(i) => i.id === item.id && i.type === item.type && i.nth === item.nth,
+		);
+		const newIndex = overItem
+			? containerItems.findIndex(
+					(i) =>
+						i.id === overItem.id &&
+						i.type === overItem.type &&
+						i.nth === overItem.nth,
+				)
+			: -1;
+
+		if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+			const newTierItems = new Map(tiers.tierItems);
+			newTierItems.set(
+				activeContainer,
+				arrayMove(containerItems, oldIndex, newIndex),
+			);
+			const newState = {
+				...tiers,
+				tierItems: newTierItems,
+			};
+			setTiers(newState);
+			persistTiersStateToParams(newState);
+			return;
+		}
+
 		persistTiersStateToParams(tiers);
 	};
 
@@ -423,10 +435,12 @@ export function useTierList() {
 	};
 
 	const handleReset = () => {
-		setTiers({
+		const newState = {
 			tiers: DEFAULT_TIERS,
 			tierItems: new Map(),
-		});
+		};
+		setTiers(newState);
+		persistTiersStateToParams(newState);
 	};
 
 	return {

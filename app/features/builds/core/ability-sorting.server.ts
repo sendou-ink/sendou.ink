@@ -54,24 +54,13 @@ const sortAbilityCount = (a: [Ability, number], b: [Ability, number]) => {
 	return b[1] - a[1];
 };
 function subAbilitiesSorted(abilities: BuildAbilitiesTuple): Ability[] {
-	const subAbilitiesUnsorted = [
-		abilities[0].slice(1),
-		abilities[1].slice(1),
-		abilities[2].slice(1),
-	].flat();
+	const subAbilitiesUnsorted = abilities.flatMap((row) => row.slice(1));
 
-	const counts = Array.from(
-		subAbilitiesUnsorted
-			.reduce((acc, cur) => {
-				if (!acc.has(cur)) {
-					acc.set(cur, 1);
-				} else {
-					acc.set(cur, acc.get(cur)! + 1);
-				}
-				return acc;
-			}, new Map<Ability, number>())
-			.entries(),
-	).sort(sortAbilityCount);
+	const countsMap = new Map<Ability, number>();
+	for (const ability of subAbilitiesUnsorted) {
+		countsMap.set(ability, (countsMap.get(ability) ?? 0) + 1);
+	}
+	const counts = Array.from(countsMap).sort(sortAbilityCount);
 
 	const subAbilities: Ability[][] = [[], [], []];
 	while (counts.length > 0) {

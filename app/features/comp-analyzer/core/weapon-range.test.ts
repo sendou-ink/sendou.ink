@@ -6,8 +6,9 @@ import { getWeaponsWithRange } from "./weapon-range";
 const RANGE_COMPARISONS: [MainWeaponId, MainWeaponId][] = [
 	[220, 210], // Range Blaster > Blaster
 	[70, 40], // Splattershot Pro > Splattershot
-	// [2020, 7030], // Splatterscope > Wellstring V TODO: a failing case
-	// [2070, 7010], // Snipewriter 5H > Tri-Stringer TODO: a failing case
+	[7010, 7030], // Tri-Stringer > Wellstring V
+	[2020, 7030], // Splatterscope > Wellstring V
+	[2070, 7010], // Snipewriter 5H > Tri-Stringer
 ];
 
 describe("weapon range comparisons", () => {

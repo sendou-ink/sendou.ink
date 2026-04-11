@@ -6,6 +6,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
+import { TierPill } from "~/components/TierPill";
 import type { TeamResultsLoaderData } from "~/features/team/loaders/t.$customUrl.results.server";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -69,6 +70,7 @@ export function TeamResultsTable({ results }: TeamResultsTableProps) {
 									>
 										{result.tournamentName}
 									</Link>
+									{result.tier ? <TierPill tier={result.tier} /> : null}
 								</div>
 							</td>
 							<td>
