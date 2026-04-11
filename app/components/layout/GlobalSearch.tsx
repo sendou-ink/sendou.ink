@@ -48,6 +48,14 @@ const SEARCH_TYPES = [
 ] as const;
 type SearchType = (typeof SEARCH_TYPES)[number];
 
+const SEARCH_TYPE_TO_PREFIX: Record<SearchType, string> = {
+	weapons: "w",
+	users: "u",
+	teams: "t",
+	organizations: "o",
+	tournaments: "to",
+};
+
 const STORAGE_KEY = "global-search-search-type";
 
 function searchTypeIconPath(type: SearchType): string {
@@ -188,9 +196,14 @@ function GlobalSearchContent({
 		React.useState<SelectedWeapon | null>(
 			resolveInitialWeapon(initialWeaponId, t),
 		);
+
 	const inputRef = React.useRef<HTMLInputElement>(null);
+	const prefixInputRef = React.useRef<HTMLInputElement>(null);
 	const listBoxRef = React.useRef<HTMLDivElement>(null);
 	const modifierKeyRef = React.useRef(false);
+
+	const [isPrefixEditable, setIsPrefixEditable] = React.useState(false);
+	const [editablePrefix, setEditablePrefix] = React.useState("");
 
 	const handleClickCapture = (e: React.MouseEvent) => {
 		modifierKeyRef.current = e.metaKey || e.ctrlKey;
@@ -264,14 +277,42 @@ function GlobalSearchContent({
 	const handleSearchTypeChange = (value: string) => {
 		setSearchType(value as SearchType);
 		setSelectedWeapon(null);
+		setIsPrefixEditable(false);
+		setEditablePrefix("");
 	};
 
 	const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		if (e.key === "Backspace" && query === "") {
+			e.preventDefault();
+			setIsPrefixEditable(true);
+			setEditablePrefix("");
+			prefixInputRef.current?.focus();
+			return;
+		}
+
 		const currentResults = searchType === "weapons" ? weaponResults : results;
 		if (e.key === "ArrowDown" && currentResults.length > 0) {
 			e.preventDefault();
 			listBoxRef.current?.focus();
 		}
+	};
+
+	const handlePrefixChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		setEditablePrefix(value);
+		if (!value.endsWith(":") && !value.endsWith(" ")) return;
+
+		const typedPrefix = value.slice(0, -1);
+		const matchedType = SEARCH_TYPES.find(
+			(type) => SEARCH_TYPE_TO_PREFIX[type] === typedPrefix,
+		);
+		if (!matchedType) return;
+
+		setSearchType(matchedType);
+		setSelectedWeapon(null);
+		setIsPrefixEditable(false);
+		setEditablePrefix("");
+		inputRef.current?.focus();
 	};
 
 	const handleDestinationSelect = () => {
@@ -302,15 +343,29 @@ function GlobalSearchContent({
 
 	return (
 		<div onClickCapture={handleClickCapture}>
-			<Input
-				ref={inputRef}
-				className={styles.input}
-				placeholder={t("common:search.placeholder")}
-				value={query}
-				onChange={(e) => setQuery(e.target.value)}
-				onKeyDown={handleInputKeyDown}
-				icon={<Search className={styles.inputIcon} />}
-			/>
+			<div className={styles.inputContainer}>
+				<input
+					ref={prefixInputRef}
+					className={styles.inputPrefix}
+					type="text"
+					value={
+						isPrefixEditable
+							? editablePrefix
+							: `${SEARCH_TYPE_TO_PREFIX[searchType]}:`
+					}
+					readOnly={!isPrefixEditable}
+					onChange={handlePrefixChange}
+				/>
+				<Input
+					ref={inputRef}
+					className={styles.input}
+					placeholder={t("common:search.placeholder")}
+					value={query}
+					onChange={(e) => setQuery(e.target.value)}
+					onKeyDown={handleInputKeyDown}
+					icon={<Search className={styles.inputIcon} />}
+				/>
+			</div>
 			<div className={styles.searchTypeContainer}>
 				<RadioGroup
 					value={searchType}
