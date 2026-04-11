@@ -13,6 +13,7 @@ import { MatchPage } from "~/components/match-page/MatchPage";
 import { MatchPageHeader } from "~/components/match-page/MatchPageHeader";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs } from "~/components/match-page/MatchTabs";
+import { MatchTimeline } from "~/components/match-page/MatchTimeline";
 import { logger } from "~/utils/logger";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 
@@ -228,6 +229,221 @@ export default function MatchPageTestRoute() {
 						withPoints={true}
 					/>
 				</MatchTabs>
+
+				<MatchTimeline
+					teams={{
+						alpha: { name: "me in japan" },
+						bravo: { name: "Group Bravo" },
+					}}
+					score={{ alpha: 3, bravo: 0 }}
+					maps={[
+						{
+							stageId: 1,
+							mode: "SZ",
+							timestamp: 1712855000,
+							winner: "ALPHA",
+							rosters: {
+								alpha: [
+									{
+										id: 1,
+										username: "Sendou",
+										discordId: "123",
+										discordAvatar: null,
+										customUrl: "sendou",
+									},
+									{
+										id: 2,
+										username: "Lean",
+										discordId: "456",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 3,
+										username: "Kiver",
+										discordId: "789",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 4,
+										username: "Brian",
+										discordId: "012",
+										discordAvatar: null,
+										customUrl: null,
+									},
+								],
+								bravo: [
+									{
+										id: 5,
+										username: "Naga",
+										discordId: "345",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 6,
+										username: "Grey",
+										discordId: "678",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 7,
+										username: "Zack",
+										discordId: "901",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 8,
+										username: "Lime",
+										discordId: "234",
+										discordAvatar: null,
+										customUrl: null,
+									},
+								],
+							},
+						},
+						{
+							stageId: 4,
+							mode: "TC",
+							timestamp: 1712855600,
+							winner: "ALPHA",
+							rosters: {
+								alpha: [
+									{
+										id: 1,
+										username: "Sendou",
+										discordId: "123",
+										discordAvatar: null,
+										customUrl: "sendou",
+									},
+									{
+										id: 2,
+										username: "Lean",
+										discordId: "456",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 3,
+										username: "Kiver",
+										discordId: "789",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 4,
+										username: "Brian",
+										discordId: "012",
+										discordAvatar: null,
+										customUrl: null,
+									},
+								],
+								bravo: [
+									{
+										id: 5,
+										username: "Naga",
+										discordId: "345",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 6,
+										username: "Grey",
+										discordId: "678",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 7,
+										username: "Zack",
+										discordId: "901",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 8,
+										username: "Lime",
+										discordId: "234",
+										discordAvatar: null,
+										customUrl: null,
+									},
+								],
+							},
+						},
+						{
+							stageId: 2,
+							mode: "RM",
+							timestamp: 1712856200,
+							winner: "ALPHA",
+							points: [100, 42],
+							rosters: {
+								alpha: [
+									{
+										id: 1,
+										username: "Sendou",
+										discordId: "123",
+										discordAvatar: null,
+										customUrl: "sendou",
+									},
+									{
+										id: 2,
+										username: "Lean",
+										discordId: "456",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 3,
+										username: "Kiver",
+										discordId: "789",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 4,
+										username: "Brian",
+										discordId: "012",
+										discordAvatar: null,
+										customUrl: null,
+									},
+								],
+								bravo: [
+									{
+										id: 5,
+										username: "Naga",
+										discordId: "345",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 6,
+										username: "Grey",
+										discordId: "678",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 9,
+										username: "Poppy",
+										discordId: "567",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									{
+										id: 8,
+										username: "Lime",
+										discordId: "234",
+										discordAvatar: null,
+										customUrl: null,
+									},
+								],
+							},
+						},
+					]}
+				/>
 			</MatchPage>
 		</Main>
 	);
