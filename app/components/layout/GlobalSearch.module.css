@@ -103,25 +103,22 @@
 	align-items: center;
 	border-bottom: 1px solid var(--color-border);
 
-	&:has(.input:focus-within) {
+	&:focus-within {
 		border-color: var(--color-text-accent);
 	}
 }
 
 .inputPrefix {
-	all: unset;
-	margin: 0;
-	padding: 0;
-	border: none;
 	font-size: var(--font-xs);
 	color: var(--color-text-high);
 	margin-left: var(--s-4);
 	background-color: var(--color-bg-high);
 	border-radius: var(--radius-selector);
-	width: var(--s-4);
 	height: var(--selector-size);
 	padding-inline: var(--s-1);
 	text-align: center;
+	width: var(--s-8);
+	line-height: 1.75;
 }
 
 .input.input {
