@@ -1,5 +1,12 @@
 {
 	"title": "",
+	"details.createdBy": "",
+	"details.managedBy": "",
+	"details.organization": "",
+	"details.owners": "",
+	"details.noOwners": "",
+	"details.tournamentHistory": "",
+	"details.noTournamentHistory": "",
 	"new.form.limitReached": "",
 	"new.tabs.upload": "",
 	"new.tabs.pending": "",

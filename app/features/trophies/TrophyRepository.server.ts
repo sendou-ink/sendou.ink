@@ -1,15 +1,69 @@
+import type { ExpressionBuilder } from "kysely";
+import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
+import type { DB } from "~/db/tables";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 
 export async function all() {
 	return db.selectFrom("Trophy").select(["id", "name", "model"]).execute();
 }
 
+const withCreator = (eb: ExpressionBuilder<DB, "Trophy">) => {
+	return jsonObjectFrom(
+		eb
+			.selectFrom("User")
+			.select(COMMON_USER_FIELDS)
+			.whereRef("User.id", "=", "Trophy.creatorId"),
+	).as("creator");
+};
+
+const withManager = (eb: ExpressionBuilder<DB, "Trophy">) => {
+	return jsonObjectFrom(
+		eb
+			.selectFrom("User")
+			.select(COMMON_USER_FIELDS)
+			.whereRef("User.id", "=", "Trophy.managerId"),
+	).as("manager");
+};
+
+const withOrganization = (eb: ExpressionBuilder<DB, "Trophy">) => {
+	return jsonObjectFrom(
+		eb
+			.selectFrom("TournamentOrganization")
+			.select(["TournamentOrganization.name", "TournamentOrganization.slug"])
+			.whereRef("TournamentOrganization.id", "=", "Trophy.organizationId"),
+	).as("organization");
+};
+
+const withOwners = (eb: ExpressionBuilder<DB, "Trophy">) => {
+	return jsonArrayFrom(
+		eb
+			.selectFrom("TrophyOwner")
+			.innerJoin("User", "TrophyOwner.userId", "User.id")
+			.select(({ fn }) => [
+				fn.count<number>("TrophyOwner.trophyId").as("count"),
+				...COMMON_USER_FIELDS,
+			])
+			.whereRef("TrophyOwner.trophyId", "=", "Trophy.id")
+			.groupBy("User.id")
+			.orderBy("count", "desc"),
+	).as("owners");
+};
+
 export async function findById(trophyId: number) {
 	const row = await db
 		.selectFrom("Trophy")
-		.select(["id", "name", "model"])
-		.where("id", "=", trophyId)
+		.select((eb) => [
+			"Trophy.id",
+			"Trophy.name",
+			"Trophy.model",
+			withCreator(eb),
+			withManager(eb),
+			withOrganization(eb),
+			withOwners(eb),
+		])
+		.where("Trophy.id", "=", trophyId)
 		.executeTakeFirst();
 
 	return row ?? null;

@@ -1204,8 +1204,7 @@ function pendingTrophiesToDb() {
 	}
 
 	for (let i = 0; i < 3; i++) {
-		const [trophyName, model] =
-			trophyEntries[(i + 8) % trophyEntries.length];
+		const [trophyName, model] = trophyEntries[(i + 8) % trophyEntries.length];
 		insertPendingStm.run({
 			name: `Declined ${trophyName} ${i + 1}`,
 			model,
