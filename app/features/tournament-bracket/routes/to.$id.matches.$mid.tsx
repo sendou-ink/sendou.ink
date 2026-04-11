@@ -318,6 +318,7 @@ function TournamentMatchActionTab() {
 
 	return (
 		<MatchActionTab
+			key={scoreSum}
 			teams={[
 				{
 					id: teamOne.id,

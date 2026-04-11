@@ -30,7 +30,6 @@ interface MatchActionTabProps {
 }
 
 // xxx: mobile design
-// xxx: reset state after some score has been submitted
 export function MatchActionTab({
 	teams,
 	ownTeamId,

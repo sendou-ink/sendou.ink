@@ -269,6 +269,7 @@ function SendouQMatchTabs() {
 			/>
 			{showActionTab ? (
 				<MatchActionTab
+					key={reportedCount}
 					teams={[
 						{ id: data.match.groupAlpha.id, name: "Group Alpha" },
 						{ id: data.match.groupBravo.id, name: "Group Bravo" },
