@@ -17,9 +17,12 @@ import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs } from "~/components/match-page/MatchTabs";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
+import type { CommonUser } from "~/utils/kysely.server";
 import { tournamentBracketsPage, tournamentTeamPage } from "~/utils/urls";
 import { action } from "../actions/to.$id.matches.$mid.server";
 import { loader } from "../loaders/to.$id.matches.$mid.server";
+import { isSetOverByScore } from "../tournament-bracket-utils";
 
 export { action, loader };
 
@@ -301,20 +304,64 @@ function TournamentMatchActionTab() {
 	const tournament = useTournament();
 	const user = useUser();
 
-	const scoreSum =
-		(data.match.opponentOne?.score ?? 0) + (data.match.opponentTwo?.score ?? 0);
+	const opponentOneId = data.match.opponentOne!.id!;
+	const opponentTwoId = data.match.opponentTwo!.id!;
+
+	const scores: [number, number] = [
+		data.match.opponentOne?.score ?? 0,
+		data.match.opponentTwo?.score ?? 0,
+	];
+	const scoreSum = scores[0] + scores[1];
+
 	const currentMap = data.mapList?.filter((m) => !m.bannedByTournamentTeamId)[
 		scoreSum
 	];
 	if (!currentMap) return null;
 
-	const teamOne = tournament.teamById(data.match.opponentOne!.id!)!;
-	const teamTwo = tournament.teamById(data.match.opponentTwo!.id!)!;
+	const teamOne = tournament.teamById(opponentOneId)!;
+	const teamTwo = tournament.teamById(opponentTwoId)!;
 
 	const userTeamId = tournament.teamMemberOfByUser(user)?.id;
 	const withPoints = tournament.bracketByIdxOrDefault(
 		tournament.matchIdToBracketIdx(data.match.id) ?? 0,
 	).collectResultsWithPoints;
+
+	const count = data.match.roundMaps.count;
+	const countType = data.match.roundMaps.type;
+
+	// xxx: we can do something better here
+	const setEndingTeamIds: number[] = [];
+	if (
+		isSetOverByScore({
+			scores: [scores[0] + 1, scores[1]],
+			count,
+			countType,
+		})
+	) {
+		setEndingTeamIds.push(teamOne.id);
+	}
+	if (
+		isSetOverByScore({
+			scores: [scores[0], scores[1] + 1],
+			count,
+			countType,
+		})
+	) {
+		setEndingTeamIds.push(teamTwo.id);
+	}
+
+	const setEnding =
+		setEndingTeamIds.length > 0
+			? {
+					...buildSetEndingData({
+						teams: [teamOne, teamTwo],
+						scores,
+						results: data.results,
+						opponentOneId,
+					}),
+					setEndingTeamIds,
+				}
+			: undefined;
 
 	return (
 		<MatchActionTab
@@ -335,8 +382,114 @@ function TournamentMatchActionTab() {
 			stageId={currentMap.stageId}
 			mode={currentMap.mode}
 			withPoints={withPoints}
+			setEnding={setEnding}
 		/>
 	);
+}
+
+function buildSetEndingData({
+	teams,
+	scores,
+	results,
+	opponentOneId,
+}: {
+	teams: [
+		NonNullable<ReturnType<ReturnType<typeof useTournament>["teamById"]>>,
+		NonNullable<ReturnType<ReturnType<typeof useTournament>["teamById"]>>,
+	];
+	scores: [number, number];
+	results: ReturnType<typeof useLoaderData<typeof loader>>["results"];
+	opponentOneId: number;
+}) {
+	const [teamOne, teamTwo] = teams;
+
+	const memberToCommonUser = (m: {
+		userId: number;
+		username: string;
+		discordId: string;
+		discordAvatar: string | null;
+		customUrl: string | null;
+	}): CommonUser => ({
+		id: m.userId,
+		username: m.username,
+		discordId: m.discordId,
+		discordAvatar: m.discordAvatar,
+		customUrl: m.customUrl,
+	});
+
+	const teamOneMembersMap = new Map(
+		teamOne.members.map((m) => [m.userId, memberToCommonUser(m)]),
+	);
+	const teamTwoMembersMap = new Map(
+		teamTwo.members.map((m) => [m.userId, memberToCommonUser(m)]),
+	);
+
+	const previousMaps = results.map((result) => {
+		const alphaParticipants: CommonUser[] = [];
+		const bravoParticipants: CommonUser[] = [];
+
+		for (const p of result.participants) {
+			const user =
+				teamOneMembersMap.get(p.userId) ?? teamTwoMembersMap.get(p.userId);
+			if (!user) continue;
+
+			if (p.tournamentTeamId === opponentOneId) {
+				alphaParticipants.push(user);
+			} else {
+				bravoParticipants.push(user);
+			}
+		}
+
+		return {
+			stageId: result.stageId,
+			mode: result.mode,
+			timestamp: databaseTimestampToJavascriptTimestamp(result.createdAt),
+			winner:
+				result.winnerTeamId === opponentOneId
+					? ("ALPHA" as const)
+					: ("BRAVO" as const),
+			rosters: {
+				alpha: alphaParticipants,
+				bravo: bravoParticipants,
+			},
+			points:
+				result.opponentOnePoints != null && result.opponentTwoPoints != null
+					? ([result.opponentOnePoints, result.opponentTwoPoints] as [
+							number,
+							number,
+						])
+					: undefined,
+		};
+	});
+
+	const activeRosterUsers = (
+		team: NonNullable<ReturnType<ReturnType<typeof useTournament>["teamById"]>>,
+	): CommonUser[] => {
+		const activeIds = team.activeRosterUserIds;
+		const members = activeIds
+			? team.members.filter((m) => activeIds.includes(m.userId))
+			: team.members;
+		return members.map(memberToCommonUser);
+	};
+
+	return {
+		teams: {
+			alpha: {
+				name: teamOne.name,
+				avatar: teamOne.pickupAvatarUrl ?? undefined,
+			},
+			bravo: {
+				name: teamTwo.name,
+				avatar: teamTwo.pickupAvatarUrl ?? undefined,
+			},
+		},
+		score: { alpha: scores[0], bravo: scores[1] },
+		previousMaps,
+		currentRosters: {
+			alpha: activeRosterUsers(teamOne),
+			bravo: activeRosterUsers(teamTwo),
+		},
+	};
 }
 
 function resolveVisibleTabs({

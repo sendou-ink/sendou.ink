@@ -215,3 +215,20 @@
 	font-weight: normal;
 	text-decoration: underline;
 }
+
+.confirmationRoot {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-4);
+}
+
+.confirmationMessage {
+	font-weight: var(--weight-semi);
+	text-align: center;
+}
+
+.confirmationButtons {
+	display: flex;
+	gap: var(--s-3);
+}
