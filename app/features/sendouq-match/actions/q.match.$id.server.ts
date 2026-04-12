@@ -71,6 +71,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				return errorToast("Invalid winner id");
 			}
 
+			if (result.status === "SCORE_DISAGREEMENT") {
+				await refreshSendouQInstance();
+				return errorToast(
+					"Score does not match the other team's report. Contact the other team to adjust.",
+				);
+			}
+
 			if (result.status === "MATCH_FINALIZED") {
 				try {
 					refreshUserSkills(Seasons.currentOrPrevious()!.nth);
@@ -166,6 +173,22 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		}
 		case "CONFIRM_ROOM": {
 			await RoomLinkRepository.refreshTimestamp(user.id);
+			break;
+		}
+		case "UNDO_REPORT": {
+			const result = await SQMatchRepository.undoMatchReport({
+				matchId,
+				requestedByUserId: user.id,
+			});
+
+			if (result.status === "NOT_ALLOWED") {
+				return errorToast("Cannot undo report");
+			}
+			if (result.status === "ALREADY_LOCKED") {
+				return null;
+			}
+
+			await refreshSendouQInstance();
 			break;
 		}
 		default: {

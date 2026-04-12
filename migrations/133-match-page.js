@@ -15,5 +15,13 @@ export function up(db) {
 		db.prepare(
 			/* sql */ `alter table "User" add "noSplatnet" integer default 0`,
 		).run();
+
+		db.prepare(
+			/* sql */ `alter table "GroupMatch" add "confirmedAt" integer`,
+		).run();
+
+		db.prepare(
+			/* sql */ `alter table "GroupMatch" add "confirmedByUserId" integer references "User"("id")`,
+		).run();
 	})();
 }

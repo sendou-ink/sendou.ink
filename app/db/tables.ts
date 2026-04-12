@@ -301,6 +301,8 @@ export interface GroupMatch {
 	alphaGroupId: number;
 	bravoGroupId: number;
 	chatCode: string | null;
+	confirmedAt: number | null;
+	confirmedByUserId: number | null;
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
 	memento: JSONColumnTypeNullable<ParsedMemento>;

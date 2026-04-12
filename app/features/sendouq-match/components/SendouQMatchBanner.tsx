@@ -44,14 +44,28 @@ export function SendouQMatchBanner({
 		/>
 	);
 
-	if (data.match.isLocked) {
+	// xxx: util or Module here
+	const mapsToWin = Math.ceil(SENDOUQ_BEST_OF / 2);
+	const alphaWins = data.match.mapList.filter(
+		(m) => m.winnerGroupId === data.match.groupAlpha.id,
+	).length;
+	const bravoWins = data.match.mapList.filter(
+		(m) => m.winnerGroupId === data.match.groupBravo.id,
+	).length;
+	const awaitingConfirmation =
+		!data.match.isLocked && (alphaWins >= mapsToWin || bravoWins >= mapsToWin);
+
+	if (data.match.isLocked || awaitingConfirmation) {
 		const playedStageIds = data.match.mapList
 			.filter((m) => m.winnerGroupId !== null)
 			.map((m) => m.stageId);
 
 		return (
 			<MatchBannerContainer>
-				<SendouQMatchBannerTopRow data={data} />
+				<SendouQMatchBannerTopRow
+					data={data}
+					awaitingConfirmation={awaitingConfirmation}
+				/>
 				<MultiMatchBanner stageIds={playedStageIds} />
 				{bottomRow}
 			</MatchBannerContainer>
@@ -63,7 +77,7 @@ export function SendouQMatchBanner({
 
 	return (
 		<MatchBannerContainer>
-			<SendouQMatchBannerTopRow data={data} />
+			<SendouQMatchBannerTopRow data={data} awaitingConfirmation={false} />
 			<MatchBanner
 				stageId={currentMap.stageId}
 				mode={currentMap.mode}
@@ -80,8 +94,10 @@ export function SendouQMatchBanner({
 
 function SendouQMatchBannerTopRow({
 	data,
+	awaitingConfirmation,
 }: {
 	data: SerializeFrom<SendouQMatchLoaderData>;
+	awaitingConfirmation: boolean;
 }) {
 	useAutoRerender("ten seconds");
 
@@ -109,7 +125,7 @@ function SendouQMatchBannerTopRow({
 				bestOf: true,
 			}}
 			time={
-				data.match.isLocked
+				data.match.isLocked || awaitingConfirmation
 					? undefined
 					: {
 							currentMinutes: Math.max(

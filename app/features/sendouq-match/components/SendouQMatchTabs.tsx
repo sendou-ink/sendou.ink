@@ -1,12 +1,16 @@
 import { differenceInMinutes } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouTabPanel } from "~/components/elements/Tabs";
 import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
-import { MatchTabs } from "~/components/match-page/MatchTabs";
+import { MatchTabs, TAB_KEYS } from "~/components/match-page/MatchTabs";
 import type { TimelineMap } from "~/components/match-page/MatchTimeline";
+import { MatchTimeline } from "~/components/match-page/MatchTimeline";
 import { useUser } from "~/features/auth/core/user";
+import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
@@ -42,13 +46,38 @@ export function SendouQMatchTabs({
 		(m) => m.winnerGroupId !== null,
 	).length;
 
-	const showActionTab = !data.match.isLocked && currentMap;
+	// xxx: util or Module
+	const mapsToWin = Math.ceil(SENDOUQ_BEST_OF / 2);
+	const alphaWins = data.match.mapList.filter(
+		(m) => m.winnerGroupId === data.match.groupAlpha.id,
+	).length;
+	const bravoWins = data.match.mapList.filter(
+		(m) => m.winnerGroupId === data.match.groupBravo.id,
+	).length;
+	const awaitingConfirmation =
+		!data.match.isLocked && (alphaWins >= mapsToWin || bravoWins >= mapsToWin);
 
-	const tabs: Array<"join" | "rosters" | "action" | "result"> = showActionTab
-		? ["join", "rosters", "action"]
-		: data.match.isLocked
+	const reporterGroupId = data.match.reportedByUserId
+		? data.match.groupAlpha.members.some(
+				(m) => m.id === data.match.reportedByUserId,
+			)
+			? data.match.groupAlpha.id
+			: data.match.groupBravo.id
+		: undefined;
+	const isOnReporterTeam =
+		awaitingConfirmation && reporterGroupId === ownTeamId;
+
+	const showActionTab =
+		!data.match.isLocked && !awaitingConfirmation && currentMap;
+
+	const tabs: Array<"join" | "rosters" | "action" | "result"> =
+		awaitingConfirmation
 			? ["result", "rosters"]
-			: ["join", "rosters"];
+			: showActionTab
+				? ["join", "rosters", "action"]
+				: data.match.isLocked
+					? ["result", "rosters"]
+					: ["join", "rosters"];
 
 	const allMembers = [
 		...data.match.groupAlpha.members,
@@ -81,15 +110,17 @@ export function SendouQMatchTabs({
 				<MatchResultTab
 					teams={resolveTimelineTeams(data.match)}
 					score={{
-						alpha: data.match.mapList.filter(
-							(m) => m.winnerGroupId === data.match.groupAlpha.id,
-						).length,
-						bravo: data.match.mapList.filter(
-							(m) => m.winnerGroupId === data.match.groupBravo.id,
-						).length,
+						alpha: alphaWins,
+						bravo: bravoWins,
 					}}
 					maps={resolveTimelineMaps(data.match)}
 				/>
+			) : awaitingConfirmation ? (
+				isOnReporterTeam ? (
+					<ReporterWaitingTab data={data} />
+				) : (
+					<ConfirmerTab data={data} reportedCount={reportedCount} />
+				)
 			) : (
 				<MatchJoinTab
 					joinLink={activeRoomLink?.url}
@@ -138,6 +169,101 @@ export function SendouQMatchTabs({
 				/>
 			) : null}
 		</MatchTabs>
+	);
+}
+
+function ConfirmerTab({
+	data,
+	reportedCount,
+}: {
+	data: SerializeFrom<SendouQMatchLoaderData>;
+	reportedCount: number;
+}) {
+	const fetcher = useFetcher();
+	const { t } = useTranslation(["q"]);
+
+	const decidingMap = [...data.match.mapList]
+		.reverse()
+		.find((m) => m.winnerGroupId !== null);
+
+	return (
+		<SendouTabPanel id={TAB_KEYS.RESULT}>
+			<MatchTimeline
+				teams={resolveTimelineTeams(data.match)}
+				score={{
+					alpha: data.match.mapList.filter(
+						(m) => m.winnerGroupId === data.match.groupAlpha.id,
+					).length,
+					bravo: data.match.mapList.filter(
+						(m) => m.winnerGroupId === data.match.groupBravo.id,
+					).length,
+				}}
+				maps={resolveTimelineMaps(data.match)}
+			/>
+			<div className="stack md items-center mt-4">
+				<SendouButton
+					variant="primary"
+					isPending={fetcher.state !== "idle"}
+					onPress={() => {
+						if (!decidingMap?.winnerGroupId) return;
+						fetcher.submit(
+							{
+								_action: "REPORT_SCORE",
+								winnerId: String(decidingMap.winnerGroupId),
+								reportedCount: String(reportedCount),
+							},
+							{ method: "post" },
+						);
+					}}
+				>
+					{t("q:match.confirmScore")}
+				</SendouButton>
+				<p className="text-lighter text-xs text-center">
+					{t("q:match.confirmScore.wrongHint")}
+				</p>
+			</div>
+		</SendouTabPanel>
+	);
+}
+
+function ReporterWaitingTab({
+	data,
+}: {
+	data: SerializeFrom<SendouQMatchLoaderData>;
+}) {
+	const undoFetcher = useFetcher();
+	const { t } = useTranslation(["q"]);
+
+	return (
+		<SendouTabPanel id={TAB_KEYS.RESULT}>
+			<MatchTimeline
+				teams={resolveTimelineTeams(data.match)}
+				score={{
+					alpha: data.match.mapList.filter(
+						(m) => m.winnerGroupId === data.match.groupAlpha.id,
+					).length,
+					bravo: data.match.mapList.filter(
+						(m) => m.winnerGroupId === data.match.groupBravo.id,
+					).length,
+				}}
+				maps={resolveTimelineMaps(data.match)}
+			/>
+			<div className="stack md items-center mt-4">
+				<p className="text-lighter text-sm">
+					{t("q:match.waitingForConfirmation")}
+				</p>
+				<SendouButton
+					variant="outlined"
+					size="small"
+					isPending={undoFetcher.state !== "idle"}
+					onPress={() => {
+						undoFetcher.submit({ _action: "UNDO_REPORT" }, { method: "post" });
+					}}
+				>
+					{t("q:match.undoReport")}
+				</SendouButton>
+			</div>
+		</SendouTabPanel>
 	);
 }
 

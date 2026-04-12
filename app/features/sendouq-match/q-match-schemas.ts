@@ -48,6 +48,9 @@ export const matchSchema = z.union([
 	z.object({
 		_action: _action("CONFIRM_ROOM"),
 	}),
+	z.object({
+		_action: _action("UNDO_REPORT"),
+	}),
 ]);
 
 export const qMatchPageParamsSchema = z.object({
