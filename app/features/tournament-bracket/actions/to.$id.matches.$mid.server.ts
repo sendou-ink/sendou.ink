@@ -113,6 +113,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	let emitMatchUpdate = false;
 	let emitTournamentUpdate = false;
+	let endedDroppedMatchIds: number[] = [];
 
 	switch (data._action) {
 		case "REPORT_SCORE": {
@@ -225,7 +226,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 				}
 
 				if (setOver) {
-					endDroppedTeamMatches({ tournament, manager });
+					endedDroppedMatchIds = endDroppedTeamMatches({
+						tournament,
+						manager,
+					});
 				}
 			})();
 
@@ -710,6 +714,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 						result: winnerTeamId === match.opponentTwo!.id ? "win" : "loss",
 					},
 				});
+
+				endedDroppedMatchIds = endDroppedTeamMatches({
+					tournament,
+					manager,
+				});
 			})();
 
 			emitMatchUpdate = true;
@@ -732,6 +741,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 				type: "TOURNAMENT_MATCH_UPDATED",
 				revalidateOnly: true,
 			},
+			...endedDroppedMatchIds.map((id) => ({
+				room: tournamentMatchWebsocketRoom(id),
+				type: "TOURNAMENT_MATCH_UPDATED" as const,
+				revalidateOnly: true as const,
+			})),
 		]);
 	}
 	if (emitTournamentUpdate) {

@@ -37,6 +37,7 @@ import {
 import {
 	inGameNameIfNeeded,
 	requireNotBannedByOrganization,
+	requireSendouQParticipationIfNeeded,
 } from "../tournament-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
@@ -100,6 +101,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 				await requireNotBannedByOrganization({
 					tournament,
 					user,
+				});
+				await requireSendouQParticipationIfNeeded({
+					tournament,
+					userId: user.id,
 				});
 
 				errorToastIfFalsy(!tournament.isInvitational, "Event is invite only");
@@ -278,6 +283,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 				tournament,
 				user: { id: data.userId },
 				message: "The user is banned from events hosted by this organization",
+			});
+			await requireSendouQParticipationIfNeeded({
+				tournament,
+				userId: data.userId,
 			});
 
 			await TournamentLFGRepository.leaveLfg({

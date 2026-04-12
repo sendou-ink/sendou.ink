@@ -550,6 +550,7 @@ export interface TournamentSettings {
 	maxMembersPerTeam?: number;
 	isTest?: boolean;
 	isDraft?: boolean;
+	requireSendouQParticipation?: boolean;
 }
 
 export interface CastedMatchesInfo {

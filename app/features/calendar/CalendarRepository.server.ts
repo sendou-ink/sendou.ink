@@ -437,6 +437,7 @@ type CreateArgs = Pick<
 	teamsPerGroup?: number;
 	thirdPlaceMatch?: boolean;
 	requireInGameNames?: boolean;
+	requireSendouQParticipation?: boolean;
 	isRanked?: boolean;
 	isTest?: boolean;
 	isDraft?: boolean;
@@ -481,6 +482,7 @@ export async function create(args: CreateArgs) {
 				autonomousSubs: args.autonomousSubs,
 				regClosesAt: args.regClosesAt,
 				requireInGameNames: args.requireInGameNames,
+				requireSendouQParticipation: args.requireSendouQParticipation,
 				minMembersPerTeam: args.minMembersPerTeam,
 				maxMembersPerTeam: args.maxMembersPerTeam,
 				swiss:
@@ -694,6 +696,7 @@ async function updateTournamentTables(
 		autonomousSubs: args.autonomousSubs,
 		regClosesAt: args.regClosesAt,
 		requireInGameNames: args.requireInGameNames,
+		requireSendouQParticipation: args.requireSendouQParticipation,
 		minMembersPerTeam: args.minMembersPerTeam,
 		maxMembersPerTeam: args.maxMembersPerTeam,
 		swiss:

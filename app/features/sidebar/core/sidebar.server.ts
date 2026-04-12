@@ -152,7 +152,10 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 	for (const stream of tournamentStreams) {
 		ranked.push({
 			stream,
-			score: StreamRanking.tournamentTierToScore(stream.tier),
+			score: StreamRanking.tournamentTierToScore(
+				stream.tier,
+				stream.membersPerTeam,
+			),
 		});
 	}
 
@@ -215,7 +218,8 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 		if (event.startTime < nowTimestamp) continue;
 		if (event.startTime > threeDaysFromNow) continue;
 		if (event.hidden) continue;
-		if ((event.minMembersPerTeam ?? 4) < 4) continue;
+
+		const membersPerTeam = event.minMembersPerTeam ?? 4;
 
 		ranked.push({
 			stream: {
@@ -226,9 +230,13 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 				subtitle: "",
 				startsAt: event.startTime,
 				tier: (event.tier as TournamentTierNumber) ?? null,
+				membersPerTeam,
 				tentativeTier: event.tentativeTier ?? undefined,
 			},
-			score: StreamRanking.upcomingTournamentTierToScore(effectiveTier),
+			score: StreamRanking.upcomingTournamentTierToScore(
+				effectiveTier,
+				membersPerTeam,
+			),
 		});
 	}
 

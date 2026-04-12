@@ -25,14 +25,28 @@ export function rank(
 	return [...live, ...upcoming].map((rs) => rs.stream);
 }
 
+const SMALL_TOURNAMENT_PENALTY = 4;
+
 export function tournamentTierToScore(
 	tier: TournamentTierNumber | null,
+	membersPerTeam?: number,
 ): number {
-	return tier ?? 9;
+	const base = tier ?? 9;
+	const isSmallTeamSize = (membersPerTeam ?? 4) < 4;
+
+	return Math.min(9, base + (isSmallTeamSize ? SMALL_TOURNAMENT_PENALTY : 0));
 }
 
-export function upcomingTournamentTierToScore(tier: number): number {
-	return Math.min(9, tier + 4);
+export function upcomingTournamentTierToScore(
+	tier: number,
+	membersPerTeam?: number,
+): number {
+	const isSmallTeamSize = (membersPerTeam ?? 4) < 4;
+
+	return Math.min(
+		9,
+		tier + 4 + (isSmallTeamSize ? SMALL_TOURNAMENT_PENALTY : 0),
+	);
 }
 
 export function sendouQTierToScore(tier: {

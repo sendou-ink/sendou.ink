@@ -48,6 +48,14 @@ const SEARCH_TYPES = [
 ] as const;
 type SearchType = (typeof SEARCH_TYPES)[number];
 
+const SEARCH_TYPE_TO_PREFIX: Record<SearchType, string> = {
+	weapons: "w",
+	users: "u",
+	teams: "t",
+	organizations: "o",
+	tournaments: "to",
+};
+
 const STORAGE_KEY = "global-search-search-type";
 
 function searchTypeIconPath(type: SearchType): string {
@@ -188,6 +196,7 @@ function GlobalSearchContent({
 		React.useState<SelectedWeapon | null>(
 			resolveInitialWeapon(initialWeaponId, t),
 		);
+
 	const inputRef = React.useRef<HTMLInputElement>(null);
 	const listBoxRef = React.useRef<HTMLDivElement>(null);
 	const modifierKeyRef = React.useRef(false);
@@ -215,7 +224,7 @@ function GlobalSearchContent({
 	useDebounce(
 		() => {
 			if (searchType === "weapons") return;
-			if (!query) return;
+			if (query.length < 3) return;
 			fetcher.load(
 				`/search?q=${encodeURIComponent(query)}&type=${searchType}&limit=10`,
 			);
@@ -224,11 +233,13 @@ function GlobalSearchContent({
 		[query, searchType],
 	);
 
-	const results = fetcher.data?.results ?? [];
-	const hasQuery = query.length > 0;
+	const hasQuery = query.length >= 3;
+	const fetchedType = fetcher.data?.type ?? null;
+	const results =
+		hasQuery && fetchedType === searchType ? (fetcher.data?.results ?? []) : [];
 
 	const weaponResults =
-		searchType === "weapons" ? filterWeaponResults(query, t) : [];
+		searchType === "weapons" && hasQuery ? filterWeaponResults(query, t) : [];
 
 	const recentWeapons: SelectedWeapon[] =
 		searchType === "weapons"
@@ -264,6 +275,26 @@ function GlobalSearchContent({
 	const handleSearchTypeChange = (value: string) => {
 		setSearchType(value as SearchType);
 		setSelectedWeapon(null);
+	};
+
+	const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		const separatorMatch = value.match(/^([a-zA-Z]+)\.$/);
+
+		if (separatorMatch) {
+			const typedPrefix = separatorMatch[1];
+			const matchedType = SEARCH_TYPES.find(
+				(type) => SEARCH_TYPE_TO_PREFIX[type] === typedPrefix,
+			);
+			if (matchedType) {
+				setSearchType(matchedType);
+				setSelectedWeapon(null);
+				setQuery("");
+				return;
+			}
+		}
+
+		setQuery(value);
 	};
 
 	const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -302,15 +333,20 @@ function GlobalSearchContent({
 
 	return (
 		<div onClickCapture={handleClickCapture}>
-			<Input
-				ref={inputRef}
-				className={styles.input}
-				placeholder={t("common:search.placeholder")}
-				value={query}
-				onChange={(e) => setQuery(e.target.value)}
-				onKeyDown={handleInputKeyDown}
-				icon={<Search className={styles.inputIcon} />}
-			/>
+			<div className={styles.inputContainer}>
+				<p className={styles.inputPrefix}>
+					{`${SEARCH_TYPE_TO_PREFIX[searchType]}.`}
+				</p>
+				<Input
+					ref={inputRef}
+					className={styles.input}
+					placeholder={t("common:search.placeholder")}
+					value={query}
+					onChange={handleQueryChange}
+					onKeyDown={handleInputKeyDown}
+					icon={<Search className={styles.inputIcon} />}
+				/>
+			</div>
 			<div className={styles.searchTypeContainer}>
 				<RadioGroup
 					value={searchType}

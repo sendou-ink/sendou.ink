@@ -21,6 +21,7 @@ export type SidebarStream = {
 	subtitle: string;
 	startsAt: number;
 	tier: TournamentTierNumber | null;
+	membersPerTeam?: number;
 	tentativeTier?: number;
 	peakXp?: number;
 	twitchUsername?: string;
@@ -31,7 +32,7 @@ export function getLiveTournamentStreams(): SidebarStream[] {
 
 	for (const tournament of RunningTournaments.all) {
 		if (tournament.isLeagueDivision) continue;
-		if (tournament.minMembersPerTeam < 4) continue;
+		if (tournament.streams.length === 0) continue;
 
 		streams.push({
 			id: `tournament-${tournament.ctx.id}`,
@@ -41,6 +42,7 @@ export function getLiveTournamentStreams(): SidebarStream[] {
 			subtitle: deriveCurrentRound(tournament),
 			startsAt: dateToDatabaseTimestamp(tournament.ctx.startTime),
 			tier: tournament.ctx.tier,
+			membersPerTeam: tournament.minMembersPerTeam,
 		});
 	}
 

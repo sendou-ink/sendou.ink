@@ -1,7 +1,7 @@
 .topWrapper {
 	position: fixed;
 	z-index: 10;
-	top: 0;
+	top: env(safe-area-inset-top, 0);
 	left: 50%;
 	transform: translateX(-50%);
 	display: flex;

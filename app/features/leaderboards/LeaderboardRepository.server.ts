@@ -180,6 +180,45 @@ async function userIdsWithEnoughSqMatchesForTeamLeaderboard(seasonNth: number) {
 		.map(([userId]) => userId);
 }
 
+export async function userHasEnoughSqMatches(userId: number) {
+	const season = Seasons.currentOrPrevious();
+	if (!season) return false;
+
+	const dateRange = Seasons.nthToDateRange(season.nth);
+	if (!dateRange) return false;
+
+	const rows = await db
+		.selectFrom("GroupMatch")
+		.innerJoin("GroupMember", (join) =>
+			join.on((eb) =>
+				eb.or([
+					eb("GroupMatch.alphaGroupId", "=", eb.ref("GroupMember.groupId")),
+					eb("GroupMatch.bravoGroupId", "=", eb.ref("GroupMember.groupId")),
+				]),
+			),
+		)
+		.innerJoin("Skill", (join) =>
+			join
+				.onRef("Skill.groupMatchId", "=", "GroupMatch.id")
+				.onRef("Skill.userId", "=", "GroupMember.userId"),
+		)
+		.where("GroupMember.userId", "=", userId)
+		.where(
+			"GroupMatch.createdAt",
+			">",
+			dateToDatabaseTimestamp(dateRange.starts),
+		)
+		.where(
+			"GroupMatch.createdAt",
+			"<",
+			dateToDatabaseTimestamp(add(dateRange.ends, { days: 1 })),
+		)
+		.select(db.fn.countAll<number>().as("count"))
+		.executeTakeFirstOrThrow();
+
+	return rows.count >= MATCHES_COUNT_NEEDED_FOR_LEADERBOARD;
+}
+
 function filterOneEntryPerUser(
 	entries: TeamLeaderboardBySeasonQueryReturnType,
 ) {
