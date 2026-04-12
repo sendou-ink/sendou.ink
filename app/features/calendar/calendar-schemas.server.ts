@@ -85,6 +85,10 @@ export const newCalendarEventActionSchema = z
 			checkboxValueToBoolean,
 			z.boolean().nullish(),
 		),
+		requireSendouQParticipation: z.preprocess(
+			checkboxValueToBoolean,
+			z.boolean().nullish(),
+		),
 		minMembersPerTeam: z.preprocess(
 			actualNumber,
 			z.number().int().min(1).max(4).nullish(),

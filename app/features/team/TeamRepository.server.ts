@@ -192,6 +192,7 @@ export async function findResultsById(teamId: number) {
 			"CalendarEventDate.eventId",
 			"CalendarEvent.id",
 		)
+		.innerJoin("Tournament", "Tournament.id", "results.tournamentId")
 		.select((eb) => [
 			"results.placement",
 			"results.tournamentId",
@@ -199,6 +200,7 @@ export async function findResultsById(teamId: number) {
 			"results.tournamentTeamId",
 			"CalendarEvent.name as tournamentName",
 			"CalendarEventDate.startTime",
+			"Tournament.tier",
 			tournamentLogoOrNull(eb).as("logoUrl"),
 			jsonArrayFrom(
 				eb

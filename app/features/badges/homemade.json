@@ -1483,6 +1483,10 @@
 		"displayName": "WRC #0",
 		"authorDiscordId": "683603297839743009"
 	},
+	"wwarning": {
+		"displayName": "Without Warning",
+		"authorDiscordId": "752582395076673577"
+	},
 	"zekkocup": {
 		"displayName": "Zekko Cup",
 		"authorDiscordId": "1320944066002681876"

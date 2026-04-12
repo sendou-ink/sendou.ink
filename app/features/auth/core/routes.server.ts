@@ -19,6 +19,7 @@ import {
 	IMPERSONATED_SESSION_KEY,
 	SESSION_KEY,
 } from "./authenticator.server";
+import type { AuthErrorCode } from "./errors";
 import { authSessionStorage } from "./session.server";
 import { getUser } from "./user.server";
 
@@ -47,8 +48,11 @@ export const callbackLoader: LoaderFunction = async ({ request }) => {
 		});
 	} catch (error) {
 		if (error instanceof Error) {
-			logger.error("Error during authentication:", error);
-			throw redirect(authErrorUrl("unknown"));
+			logger.error(
+				`Error during authentication (${classifyAuthError(error)}):`,
+				error,
+			);
+			throw redirect(authErrorUrl(classifyAuthError(error)));
 		}
 
 		throw error;
@@ -209,3 +213,24 @@ export const logInViaLinkLoader: LoaderFunction = async ({ request }) => {
 		headers: { "Set-Cookie": await authSessionStorage.commitSession(session) },
 	});
 };
+
+function classifyAuthError(error: Error): AuthErrorCode {
+	const message = error.message;
+
+	if (
+		message.includes("rate limited") ||
+		("status" in error && error.status === 429)
+	) {
+		return "discordOverloaded";
+	}
+
+	if (message === "Unverified user") {
+		return "unverifiedEmail";
+	}
+
+	if (message.includes("Missing state")) {
+		return "browserPrivacy";
+	}
+
+	return "unknown";
+}

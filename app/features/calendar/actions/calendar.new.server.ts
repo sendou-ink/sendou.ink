@@ -100,6 +100,7 @@ export const action: ActionFunction = async ({ request }) => {
 		enableNoScreenToggle: data.enableNoScreenToggle ?? undefined,
 		enableSubs: data.enableSubs ?? undefined,
 		requireInGameNames: data.requireInGameNames ?? undefined,
+		requireSendouQParticipation: data.requireSendouQParticipation ?? undefined,
 		autonomousSubs: data.autonomousSubs ?? undefined,
 		tournamentToCopyId: data.tournamentToCopyId,
 		regClosesAt: data.regClosesAt

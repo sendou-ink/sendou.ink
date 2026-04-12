@@ -48,6 +48,14 @@ const SEARCH_TYPES = [
 ] as const;
 type SearchType = (typeof SEARCH_TYPES)[number];
 
+const SEARCH_TYPE_TO_PREFIX: Record<SearchType, string> = {
+	weapons: "w",
+	users: "u",
+	teams: "t",
+	organizations: "o",
+	tournaments: "to",
+};
+
 const STORAGE_KEY = "global-search-search-type";
 
 function searchTypeIconPath(type: SearchType): string {
@@ -188,6 +196,7 @@ function GlobalSearchContent({
 		React.useState<SelectedWeapon | null>(
 			resolveInitialWeapon(initialWeaponId, t),
 		);
+
 	const inputRef = React.useRef<HTMLInputElement>(null);
 	const listBoxRef = React.useRef<HTMLDivElement>(null);
 	const modifierKeyRef = React.useRef(false);
@@ -266,6 +275,26 @@ function GlobalSearchContent({
 		setSelectedWeapon(null);
 	};
 
+	const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		const separatorMatch = value.match(/^([a-zA-Z]+)\.(?=[a-zA-Z ]) ?/);
+
+		if (separatorMatch) {
+			const typedPrefix = separatorMatch[1];
+			const matchedType = SEARCH_TYPES.find(
+				(type) => SEARCH_TYPE_TO_PREFIX[type] === typedPrefix,
+			);
+			if (matchedType) {
+				setSearchType(matchedType);
+				setSelectedWeapon(null);
+				setQuery(value.slice(separatorMatch[0].length));
+				return;
+			}
+		}
+
+		setQuery(value);
+	};
+
 	const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		const currentResults = searchType === "weapons" ? weaponResults : results;
 		if (e.key === "ArrowDown" && currentResults.length > 0) {
@@ -302,15 +331,20 @@ function GlobalSearchContent({
 
 	return (
 		<div onClickCapture={handleClickCapture}>
-			<Input
-				ref={inputRef}
-				className={styles.input}
-				placeholder={t("common:search.placeholder")}
-				value={query}
-				onChange={(e) => setQuery(e.target.value)}
-				onKeyDown={handleInputKeyDown}
-				icon={<Search className={styles.inputIcon} />}
-			/>
+			<div className={styles.inputContainer}>
+				<p className={styles.inputPrefix}>
+					{`${SEARCH_TYPE_TO_PREFIX[searchType]}.`}
+				</p>
+				<Input
+					ref={inputRef}
+					className={styles.input}
+					placeholder={t("common:search.placeholder")}
+					value={query}
+					onChange={handleQueryChange}
+					onKeyDown={handleInputKeyDown}
+					icon={<Search className={styles.inputIcon} />}
+				/>
+			</div>
 			<div className={styles.searchTypeContainer}>
 				<RadioGroup
 					value={searchType}

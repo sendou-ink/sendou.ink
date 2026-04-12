@@ -5,6 +5,7 @@ import {
 } from "@dnd-kit/sortable";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, Trash } from "lucide-react";
+import { useLayoutEffect, useRef } from "react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
@@ -28,6 +29,7 @@ interface TierRowProps {
 export function TierRow({ tier }: TierRowProps) {
 	const {
 		state,
+		activeItem,
 		getItemsInTier,
 		handleRemoveTier,
 		handleRenameTier,
@@ -42,6 +44,11 @@ export function TierRow({ tier }: TierRowProps) {
 	const { t } = useTranslation(["tier-list-maker", "common"]);
 	const { setNodeRef, isOver } = useDroppable({
 		id: tier.id,
+	});
+
+	const combinedRef = useLockedHeightWhileDragging({
+		setNodeRef,
+		isDragging: activeItem !== null,
 	});
 
 	const tierIndex = state.tiers.findIndex((t) => t.id === tier.id);
@@ -121,7 +128,7 @@ export function TierRow({ tier }: TierRowProps) {
 			) : null}
 
 			<div
-				ref={setNodeRef}
+				ref={combinedRef}
 				style={{
 					borderRadius: screenshotMode ? "var(--radius-field)" : undefined,
 				}}
@@ -169,6 +176,49 @@ export function TierRow({ tier }: TierRowProps) {
 			) : null}
 		</div>
 	);
+}
+
+function useLockedHeightWhileDragging({
+	setNodeRef,
+	isDragging,
+}: {
+	setNodeRef: (node: HTMLElement | null) => void;
+	isDragging: boolean;
+}) {
+	const ref = useRef<HTMLDivElement>(null);
+
+	const combinedRef = (node: HTMLDivElement | null) => {
+		ref.current = node;
+		setNodeRef(node);
+	};
+
+	useLayoutEffect(() => {
+		const el = ref.current;
+		if (!el) return;
+
+		if (isDragging) {
+			const rect = el.getBoundingClientRect();
+			const firstItem = el.firstElementChild;
+			const topOffset = firstItem
+				? firstItem.getBoundingClientRect().top - rect.top
+				: undefined;
+
+			el.style.height = `${rect.height}px`;
+			el.style.overflow = "hidden";
+
+			if (topOffset !== undefined) {
+				el.style.alignContent = "flex-start";
+				el.style.paddingTop = `${topOffset}px`;
+			}
+		} else {
+			el.style.height = "";
+			el.style.overflow = "";
+			el.style.alignContent = "";
+			el.style.paddingTop = "";
+		}
+	}, [isDragging]);
+
+	return combinedRef;
 }
 
 function tierNameFontSize(name: string) {

@@ -43,6 +43,7 @@ import { NotificationDot } from "../NotificationDot";
 import { ListLink, SideNav, SideNavFooter, SideNavHeader } from "../SideNav";
 import sideNavStyles from "../SideNav.module.css";
 import { StreamListItems } from "../StreamListItems";
+import { AuthErrorDialog } from "./AuthErrorDialog";
 import { ChatSidebar } from "./ChatSidebar";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
@@ -447,6 +448,7 @@ export function Layout({
 					<ChatSidebar onClose={() => setChatSidebarOpen(false)} />
 				</div>
 			) : null}
+			<AuthErrorDialog />
 		</>
 	);
 }
@@ -542,16 +544,26 @@ function PageIcon({ crumb }: { crumb: Breadcrumb }) {
 	const isExternal = crumb.imgPath.includes(".");
 	const iconClass = clsx(styles.pageIcon, "rounded");
 
-	return isExternal ? (
-		<img src={crumb.imgPath} alt="" className={iconClass} />
-	) : (
-		<Image
-			path={crumb.imgPath}
-			alt=""
-			className={iconClass}
-			width={20}
-			height={20}
-		/>
+	return (
+		<div className={styles.pageIconWrapper}>
+			{isExternal ? (
+				<img
+					src={crumb.imgPath}
+					alt=""
+					className={iconClass}
+					width={28}
+					height={28}
+				/>
+			) : (
+				<Image
+					path={crumb.imgPath}
+					alt=""
+					className={iconClass}
+					width={20}
+					height={20}
+				/>
+			)}
+		</div>
 	);
 }
 

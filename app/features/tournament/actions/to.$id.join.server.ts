@@ -22,6 +22,7 @@ import { validateCanJoinTeam } from "../tournament-utils";
 import {
 	inGameNameIfNeeded,
 	requireNotBannedByOrganization,
+	requireSendouQParticipationIfNeeded,
 } from "../tournament-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
@@ -41,6 +42,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 	await requireNotBannedByOrganization({
 		tournament,
 		user,
+	});
+	await requireSendouQParticipationIfNeeded({
+		tournament,
+		userId: user.id,
 	});
 
 	const teamToJoin = tournament.ctx.teams.find(

@@ -86,11 +86,18 @@
 	}
 }
 
+.pageIconWrapper {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	width: 28px;
+	height: 28px;
+	animation: fadeInFull 200ms ease-out 150ms both;
+}
+
 .pageIcon {
 	width: 28px;
 	height: 28px;
-	flex-shrink: 0;
-	animation: fadeInFull 200ms ease-out 150ms both;
 	object-fit: cover;
 }
 

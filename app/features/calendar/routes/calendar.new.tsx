@@ -259,6 +259,7 @@ function EventForm() {
 					/>
 					{!eventToEdit ? <TestToggle /> : null}
 					<DraftToggle />
+					<AdminOnlySettings />
 				</>
 			) : null}
 			{data.isAddingTournament ? (
@@ -992,6 +993,38 @@ function DraftToggle() {
 				onChange={setIsDraft}
 			/>
 			<FormMessage type="info">{t("calendar:forms.draftInfo")}</FormMessage>
+		</div>
+	);
+}
+
+function AdminOnlySettings() {
+	const isAdmin = useHasRole("ADMIN");
+
+	if (!isAdmin) return null;
+
+	return <RequireSendouQParticipationToggle />;
+}
+
+function RequireSendouQParticipationToggle() {
+	const baseEvent = useBaseEvent();
+	const [requireSendouQParticipation, setRequireSendouQParticipation] =
+		React.useState(
+			baseEvent?.tournament?.ctx.settings.requireSendouQParticipation ?? false,
+		);
+	const id = React.useId();
+
+	return (
+		<div>
+			<label htmlFor={id}>Require SendouQ participation</label>
+			<SendouSwitch
+				name="requireSendouQParticipation"
+				id={id}
+				isSelected={requireSendouQParticipation}
+				onChange={setRequireSendouQParticipation}
+			/>
+			<FormMessage type="info">
+				Players must have played enough SendouQ matches this season to register
+			</FormMessage>
 		</div>
 	);
 }

@@ -402,7 +402,7 @@ function ChatProviderInner({
 
 	const messagesForRoom = React.useCallback(
 		(chatCode: string) => {
-			return (messagesByRoom[chatCode] ?? []).sort(
+			return (messagesByRoom[chatCode] ?? []).toSorted(
 				(a, b) => a.timestamp - b.timestamp,
 			);
 		},
