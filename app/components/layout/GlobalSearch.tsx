@@ -277,7 +277,7 @@ function GlobalSearchContent({
 
 	const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
-		const separatorMatch = value.match(/^([a-zA-Z]+)\. /);
+		const separatorMatch = value.match(/^([a-zA-Z]+)\.(?=[a-zA-Z ]) ?/);
 
 		if (separatorMatch) {
 			const typedPrefix = separatorMatch[1];
