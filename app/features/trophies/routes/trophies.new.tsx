@@ -24,7 +24,11 @@ import type { CustomFieldRenderProps } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { navIconUrl, TROPHIES_PAGE } from "~/utils/urls";
+import {
+	navIconUrl,
+	PICOCAD2_WEB_VIEWER_URL,
+	TROPHIES_PAGE,
+} from "~/utils/urls";
 import { action } from "../actions/trophies.new.server";
 import { Trophy, TrophyContextProvider } from "../components/Trophy";
 import {
@@ -36,6 +40,7 @@ import {
 	TROPHY_PENDING_PER_USER_LIMIT,
 } from "../trophies-constants";
 import { createTrophyFormSchema } from "../trophies-schemas";
+import { compressTrophyModel } from "../trophies-utils";
 import styles from "./trophies.new.module.css";
 
 export { action, loader };
@@ -100,21 +105,21 @@ function NewTrophyForm() {
 			{({ names, FormField }) => (
 				<>
 					<FormField name={names.name} />
+					<FormField name={names.organizationId}>
+						{({ error, value, onChange }: CustomFieldRenderProps) => (
+							<OrganizationField
+								error={error}
+								value={value as number | null}
+								onChange={onChange}
+							/>
+						)}
+					</FormField>
 					<FormField name={names.model}>
 						{({ name, error, value, onChange }: CustomFieldRenderProps) => (
 							<ModelField
 								name={name}
 								error={error}
 								value={value as string}
-								onChange={onChange}
-							/>
-						)}
-					</FormField>
-					<FormField name={names.organizationId}>
-						{({ error, value, onChange }: CustomFieldRenderProps) => (
-							<OrganizationField
-								error={error}
-								value={value as number | null}
 								onChange={onChange}
 							/>
 						)}
@@ -138,6 +143,19 @@ function ModelField({
 	onChange: (value: string) => void;
 }) {
 	const { t } = useTranslation(["forms"]);
+	const [previewModel, setPreviewModel] = React.useState(() =>
+		value ? compressTrophyModel(value) : "",
+	);
+	const timerRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
+
+	const handleChange = (newValue: string) => {
+		onChange(newValue);
+		clearTimeout(timerRef.current);
+		
+		timerRef.current = setTimeout(() => {
+			setPreviewModel(newValue ? compressTrophyModel(newValue) : "");
+		}, 500);
+	};
 
 	return (
 		<div>
@@ -148,10 +166,31 @@ function ModelField({
 				id={name}
 				className={styles.modelTextarea}
 				value={value ?? ""}
-				onChange={(e) => onChange(e.target.value)}
+				onChange={(e) => handleChange(e.target.value)}
 				spellCheck={false}
 			/>
+			<FormMessage type="info">
+				{t("forms:bottomTexts.trophyModel")}
+				<a
+					href={PICOCAD2_WEB_VIEWER_URL}
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					{" "}
+					PicoCAD2 Web Viewer
+				</a>
+			</FormMessage>
 			{error ? <FormMessage type="error">{error}</FormMessage> : null}
+			{previewModel ? (
+				<>
+					<Trophy
+						model={previewModel}
+						className={styles.trophyPreview}
+						preview
+					/>
+					<Trophy model={previewModel} className={styles.trophyPreview} />
+				</>
+			) : null}
 		</div>
 	);
 }
@@ -294,6 +333,7 @@ function TrophyListRow({
 							>
 								{t("trophies:new.pending.accept")}
 							</SendouButton>
+							<DeclineButton pendingTrophyId={pending.id} />
 							<SendouButton
 								variant="outlined"
 								size="small"
@@ -301,7 +341,6 @@ function TrophyListRow({
 								icon={<Clipboard size={16} />}
 								onPress={() => navigator.clipboard.writeText(pending.model)}
 							/>
-							<DeclineButton pendingTrophyId={pending.id} />
 						</>
 					) : null}
 					{isOwner || canReview ? (

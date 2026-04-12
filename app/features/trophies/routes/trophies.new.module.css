@@ -4,6 +4,13 @@
 	font-size: var(--font-xs);
 }
 
+.trophyPreview {
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	margin-top: var(--s-4);
+}
+
 .descriptionTextarea {
 	min-height: 120px;
 }

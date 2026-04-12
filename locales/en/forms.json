@@ -1,7 +1,7 @@
 {
 	"submit": "Submit",
 	"labels.trophyName": "Name",
-	"labels.trophyModel": "3D model",
+	"labels.trophyModel": "3D model state",
 	"labels.trophyOrganization": "Organization",
 	"labels.trophyDescription": "Description",
 	"labels.name": "Name",
@@ -19,6 +19,7 @@
 	"bottomTexts.disallowScrimPickupsFromUntrusted": "Only applies if you are in the lobby as group leader. Other group leaders can still pick you up.",
 	"bottomTexts.noScreen": "Affects tournaments, scrims and SendouQ",
 	"bottomTexts.spoilerFreeMode": "Hides tournament results from the last week",
+	"bottomTexts.trophyModel": "The 3D model state exported from the",
 	"options.clockFormat.auto": "Automatic",
 	"options.clockFormat.24h": "24-hour",
 	"options.clockFormat.12h": "12-hour",
