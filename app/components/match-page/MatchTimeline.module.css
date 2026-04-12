@@ -43,13 +43,16 @@
 }
 
 .mapSide {
+	display: grid;
+	grid-template-rows: auto 1fr auto;
 	justify-self: center;
+	align-self: stretch;
 }
 
 .mapCenter {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
+	display: grid;
+	grid-template-rows: auto 1fr auto;
+	justify-items: center;
 	gap: var(--s-1);
 }
 
@@ -73,13 +76,12 @@
 }
 
 .winIndicator {
+	grid-row: 2;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	gap: var(--s-0-5);
-	/** align center roughly to the stage image center */
-	margin-block-start: var(--s-6);
 }
 
 .winCheck {
