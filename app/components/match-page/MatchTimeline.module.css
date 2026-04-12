@@ -1,9 +1,10 @@
 .root {
 	display: grid;
-	grid-template-columns: 1fr auto 1fr;
+	grid-template-columns: repeat(3, max-content);
 	row-gap: var(--s-4);
 	column-gap: var(--s-3);
 	align-items: center;
+	justify-content: center;
 }
 
 .header {

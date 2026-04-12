@@ -108,10 +108,17 @@ function SendouQMatchBannerTopRow({
 				count: SENDOUQ_BEST_OF,
 				bestOf: true,
 			}}
-			time={{
-				currentMinutes: Math.max(0, differenceInMinutes(now, lastReportAt)),
-				totalMinutes: Math.max(0, differenceInMinutes(now, startedAt)),
-			}}
+			time={
+				data.match.isLocked
+					? undefined
+					: {
+							currentMinutes: Math.max(
+								0,
+								differenceInMinutes(now, lastReportAt),
+							),
+							totalMinutes: Math.max(0, differenceInMinutes(now, startedAt)),
+						}
+			}
 		/>
 	);
 }

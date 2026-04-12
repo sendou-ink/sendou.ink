@@ -2,8 +2,10 @@ import { differenceInMinutes } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
+import { MatchResultTab } from "~/components/match-page/MatchResultTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs } from "~/components/match-page/MatchTabs";
+import type { TimelineMap } from "~/components/match-page/MatchTimeline";
 import { useUser } from "~/features/auth/core/user";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -42,9 +44,11 @@ export function SendouQMatchTabs({
 
 	const showActionTab = !data.match.isLocked && currentMap;
 
-	const tabs: Array<"join" | "rosters" | "action"> = showActionTab
+	const tabs: Array<"join" | "rosters" | "action" | "result"> = showActionTab
 		? ["join", "rosters", "action"]
-		: ["join", "rosters"];
+		: data.match.isLocked
+			? ["result", "rosters"]
+			: ["join", "rosters"];
 
 	const allMembers = [
 		...data.match.groupAlpha.members,
@@ -73,27 +77,42 @@ export function SendouQMatchTabs({
 
 	return (
 		<MatchTabs tabs={tabs}>
-			<MatchJoinTab
-				joinLink={activeRoomLink?.url}
-				hostedBy={hostedByUsername}
-				isStale={isStale}
-				staleMinutesAgo={staleMinutesAgo}
-				refreshedAt={
-					validRoomLink
-						? databaseTimestampToDate(validRoomLink.refreshedAt)
-						: undefined
-				}
-				onConfirmRoom={() => {
-					confirmFetcher.submit(
-						{ _action: "CONFIRM_ROOM" },
-						{ method: "post" },
-					);
-				}}
-				isConfirming={confirmFetcher.state !== "idle"}
-				pool={`SQ${String(data.match.id).at(-1)}`}
-				pass={resolveRoomPass(data.match.id)}
-				showNoSplatnetAlert={data.anyUserPrefersNoSplatnet}
-			/>
+			{data.match.isLocked ? (
+				<MatchResultTab
+					teams={resolveTimelineTeams(data.match)}
+					score={{
+						alpha: data.match.mapList.filter(
+							(m) => m.winnerGroupId === data.match.groupAlpha.id,
+						).length,
+						bravo: data.match.mapList.filter(
+							(m) => m.winnerGroupId === data.match.groupBravo.id,
+						).length,
+					}}
+					maps={resolveTimelineMaps(data.match)}
+				/>
+			) : (
+				<MatchJoinTab
+					joinLink={activeRoomLink?.url}
+					hostedBy={hostedByUsername}
+					isStale={isStale}
+					staleMinutesAgo={staleMinutesAgo}
+					refreshedAt={
+						validRoomLink
+							? databaseTimestampToDate(validRoomLink.refreshedAt)
+							: undefined
+					}
+					onConfirmRoom={() => {
+						confirmFetcher.submit(
+							{ _action: "CONFIRM_ROOM" },
+							{ method: "post" },
+						);
+					}}
+					isConfirming={confirmFetcher.state !== "idle"}
+					pool={`SQ${String(data.match.id).at(-1)}`}
+					pass={resolveRoomPass(data.match.id)}
+					showNoSplatnetAlert={data.anyUserPrefersNoSplatnet}
+				/>
+			)}
 			<MatchRosterTab
 				minMembersPerTeam={4}
 				canEditSubbedOut={[false, false]}
@@ -120,6 +139,40 @@ export function SendouQMatchTabs({
 			) : null}
 		</MatchTabs>
 	);
+}
+
+type MatchData = SerializeFrom<SendouQMatchLoaderData>["match"];
+
+function resolveTimelineTeams(match: MatchData) {
+	return {
+		alpha: {
+			// xxx: this stuff is copypasted in quite a few places
+			name: match.groupAlpha.team?.name ?? "Group Alpha",
+			avatar: match.groupAlpha.team?.avatarUrl ?? undefined,
+		},
+		bravo: {
+			name: match.groupBravo.team?.name ?? "Group Bravo",
+			avatar: match.groupBravo.team?.avatarUrl ?? undefined,
+		},
+	};
+}
+
+function resolveTimelineMaps(match: MatchData): TimelineMap[] {
+	return match.mapList
+		.filter((m) => m.winnerGroupId !== null)
+		.map((map) => ({
+			stageId: map.stageId,
+			mode: map.mode,
+			timestamp: match.createdAt,
+			winner:
+				map.winnerGroupId === match.groupAlpha.id
+					? ("ALPHA" as const)
+					: ("BRAVO" as const),
+			rosters: {
+				alpha: match.groupAlpha.members,
+				bravo: match.groupBravo.members,
+			},
+		}));
 }
 
 function mapRosterTeam(

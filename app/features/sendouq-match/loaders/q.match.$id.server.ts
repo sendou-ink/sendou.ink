@@ -106,4 +106,5 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	};
 };
 
+// xxx: SerializeFrom
 export type SendouQMatchLoaderData = typeof loader;

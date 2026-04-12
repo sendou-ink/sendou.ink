@@ -10,7 +10,7 @@ interface MatchBannerTopRowProps {
 		count: number;
 		bestOf: boolean;
 	};
-	time: {
+	time?: {
 		currentMinutes: number;
 		totalMinutes: number;
 	};
@@ -20,7 +20,7 @@ export function MatchBannerTopRow({ score, time }: MatchBannerTopRowProps) {
 	return (
 		<div className={styles.root}>
 			<Score score={score} />
-			<Timer time={time} />
+			{time ? <Timer time={time} /> : null}
 		</div>
 	);
 }
@@ -42,7 +42,11 @@ function Score({ score }: { score: MatchBannerTopRowProps["score"] }) {
 	);
 }
 
-function Timer({ time }: { time: MatchBannerTopRowProps["time"] }) {
+function Timer({
+	time,
+}: {
+	time: NonNullable<MatchBannerTopRowProps["time"]>;
+}) {
 	const isHydrated = useHydrated();
 	const { i18n } = useTranslation();
 
