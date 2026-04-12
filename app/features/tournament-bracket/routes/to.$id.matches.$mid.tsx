@@ -484,7 +484,7 @@ function buildSetEndingData({
 			},
 		},
 		score: { alpha: scores[0], bravo: scores[1] },
-		previousMaps,
+		maps: previousMaps,
 		currentRosters: {
 			alpha: activeRosterUsers(teamOne),
 			bravo: activeRosterUsers(teamTwo),

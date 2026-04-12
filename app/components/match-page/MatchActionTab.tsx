@@ -15,8 +15,8 @@ import styles from "./MatchActionTab.module.css";
 import { TAB_KEYS } from "./MatchTabs";
 import {
 	MatchTimeline,
+	type MatchTimelineProps,
 	type TimelineMap,
-	type TimelineTeam,
 } from "./MatchTimeline";
 
 interface ActionTabTeam {
@@ -25,11 +25,7 @@ interface ActionTabTeam {
 	avatar?: string;
 }
 
-// xxx: i guess we can just extend the interface of TimelineProps?
-interface SetEndingData {
-	teams: { alpha: TimelineTeam; bravo: TimelineTeam };
-	score: { alpha: number; bravo: number };
-	previousMaps: TimelineMap[];
+interface SetEndingData extends MatchTimelineProps {
 	currentRosters: { alpha: CommonUser[]; bravo: CommonUser[] };
 	setEndingTeamIds: number[];
 }
@@ -223,7 +219,7 @@ function SetEndingConfirmation({
 			<MatchTimeline
 				teams={setEnding.teams}
 				score={updatedScore}
-				maps={[...setEnding.previousMaps, newMap]}
+				maps={[...setEnding.maps, newMap]}
 			/>
 			<div className={styles.confirmationMessage}>
 				{t("q:match.action.confirmSetEnding")}

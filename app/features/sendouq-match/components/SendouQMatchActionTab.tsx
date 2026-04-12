@@ -125,7 +125,7 @@ function buildSendouQSetEndingData({
 			},
 		},
 		score: { alpha: scores[0], bravo: scores[1] },
-		previousMaps,
+		maps: previousMaps,
 		currentRosters: {
 			alpha: match.groupAlpha.members,
 			bravo: match.groupBravo.members,
