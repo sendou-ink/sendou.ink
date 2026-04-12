@@ -105,3 +105,5 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		anyUserPrefersNoSplatnet,
 	};
 };
+
+export type SendouQMatchLoaderData = typeof loader;
