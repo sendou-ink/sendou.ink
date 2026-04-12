@@ -92,6 +92,11 @@
 	}
 }
 
+.trophyPreviewButton {
+	all: unset;
+	cursor: pointer;
+}
+
 .dialogForm {
 	display: flex;
 	flex-direction: column;

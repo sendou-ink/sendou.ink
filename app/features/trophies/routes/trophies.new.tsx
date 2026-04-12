@@ -151,7 +151,7 @@ function ModelField({
 	const handleChange = (newValue: string) => {
 		onChange(newValue);
 		clearTimeout(timerRef.current);
-		
+
 		timerRef.current = setTimeout(() => {
 			setPreviewModel(newValue ? compressTrophyModel(newValue) : "");
 		}, 500);
@@ -285,9 +285,25 @@ function TrophyListRow({
 		fetcher.submit(formData, { method: "post" });
 	};
 
+	const [previewOpen, setPreviewOpen] = React.useState(false);
+
 	return (
 		<div className={styles.pendingItem}>
-			<Trophy model={pending.model} preview />
+			<button
+				type="button"
+				className={styles.trophyPreviewButton}
+				onClick={() => setPreviewOpen(true)}
+			>
+				<Trophy model={pending.model} preview />
+			</button>
+			<SendouDialog
+				heading={pending.name}
+				isOpen={previewOpen}
+				onClose={() => setPreviewOpen(false)}
+				showCloseButton
+			>
+				<Trophy model={pending.model} className={styles.trophyPreview} />
+			</SendouDialog>
 			<div className={styles.pendingMain}>
 				<div className={styles.pendingHeader}>
 					<span className={styles.pendingName}>{pending.name}</span>
