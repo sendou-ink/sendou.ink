@@ -17,9 +17,46 @@ window.fetch = (input, init) => {
 
 if ("serviceWorker" in navigator) {
 	window.addEventListener("load", () => {
-		// we will register it after the page complete the load
-		void navigator.serviceWorker.register("/sw-2.js");
+		void navigator.serviceWorker.register("/sw-2.js").then((registration) => {
+			if (
+				"Notification" in window &&
+				"PushManager" in window &&
+				Notification.permission === "granted" &&
+				!sessionStorage.getItem("push-renewed")
+			) {
+				sessionStorage.setItem("push-renewed", "1");
+				void renewPushSubscription(registration);
+			}
+		});
 	});
+}
+
+async function renewPushSubscription(registration: ServiceWorkerRegistration) {
+	try {
+		const existing = await registration.pushManager.getSubscription();
+
+		const isExpired =
+			existing?.expirationTime != null && existing.expirationTime <= Date.now();
+
+		let subscription = existing;
+		if (!subscription || isExpired) {
+			if (isExpired) {
+				await existing?.unsubscribe();
+			}
+			subscription = await registration.pushManager.subscribe({
+				userVisibleOnly: true,
+				applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,
+			});
+		}
+
+		await fetch("/notifications/subscribe", {
+			method: "post",
+			body: JSON.stringify(subscription),
+			headers: { "content-type": "application/json" },
+		});
+	} catch (error) {
+		logger.error(error);
+	}
 }
 
 i18nLoader()

@@ -21,6 +21,7 @@ import { SendouForm } from "~/form/SendouForm";
 import { languages } from "~/modules/i18n/config";
 import { useHasRole } from "~/modules/permissions/hooks";
 import type { RootLoaderData } from "~/root";
+import { ensurePushSubscription } from "~/utils/push-subscription";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { LOG_OUT_URL, navIconUrl, SETTINGS_PAGE } from "~/utils/urls";
@@ -265,48 +266,29 @@ function PushNotificationsEnabler() {
 
 	React.useEffect(() => {
 		if (!("serviceWorker" in navigator)) {
-			// Service Worker isn't supported on this browser, disable or hide UI.
 			setNotificationsPermsGranted("not-supported");
 			return;
 		}
 
 		if (!("PushManager" in window)) {
-			// Push isn't supported on this browser, disable or hide UI.
 			setNotificationsPermsGranted("not-supported");
 			return;
 		}
 
-		setNotificationsPermsGranted(Notification.permission);
+		const permission = Notification.permission;
+		setNotificationsPermsGranted(permission);
+
+		if (permission === "granted") {
+			void subscribeToPush();
+		}
 	}, []);
 
 	function askPermission() {
 		Notification.requestPermission().then((permission) => {
 			setNotificationsPermsGranted(permission);
 			if (permission === "granted") {
-				initServiceWorker();
+				void subscribeToPush();
 			}
-		});
-	}
-
-	async function initServiceWorker() {
-		const swRegistration = await navigator.serviceWorker.register("sw-2.js");
-		const subscription = await swRegistration.pushManager.getSubscription();
-		if (subscription) {
-			sendSubscriptionToServer(subscription);
-		} else {
-			const subscription = await swRegistration.pushManager.subscribe({
-				userVisibleOnly: true,
-				applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,
-			});
-			sendSubscriptionToServer(subscription);
-		}
-	}
-
-	function sendSubscriptionToServer(subscription: PushSubscription) {
-		fetch("/notifications/subscribe", {
-			method: "post",
-			body: JSON.stringify(subscription),
-			headers: { "content-type": "application/json" },
 		});
 	}
 
@@ -346,4 +328,9 @@ function PushNotificationsEnabler() {
 			</FormMessage>
 		</div>
 	);
+}
+
+async function subscribeToPush() {
+	const registration = await navigator.serviceWorker.ready;
+	await ensurePushSubscription(registration);
 }
