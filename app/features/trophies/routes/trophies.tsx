@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
 	type MetaFunction,
 	NavLink,
@@ -13,6 +13,7 @@ import { navIconUrl, TROPHIES_PAGE } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
 import { Trophy, TrophyContextProvider } from "../components/Trophy";
 import { loader } from "../loaders/trophies.server";
+import { useProgressiveRender } from "../trophies-utils";
 import styles from "./trophies.module.css";
 
 export { loader };
@@ -80,26 +81,4 @@ export default function TrophiesPage() {
 			</div>
 		</Main>
 	);
-}
-
-function useProgressiveRender(total: number, resetKey: string) {
-	const [count, setCount] = useState(1);
-	const prevKeyRef = useRef(resetKey);
-
-	if (prevKeyRef.current !== resetKey) {
-		prevKeyRef.current = resetKey;
-		setCount(1);
-	}
-
-	useEffect(() => {
-		if (count >= total) return;
-
-		const id = requestAnimationFrame(() => {
-			setCount((c) => c + 1);
-		});
-
-		return () => cancelAnimationFrame(id);
-	}, [count, total]);
-
-	return count;
 }

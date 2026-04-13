@@ -209,12 +209,12 @@
 }
 
 .trophyGridItem {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: var(--s-1);
 	border: var(--border-style);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 }
 
+.trophyGridPlaceholder {
+	width: 100%;
+	aspect-ratio: 1 / 1;
+}

@@ -41,7 +41,7 @@ import {
 	TROPHY_PENDING_PER_USER_LIMIT,
 } from "../trophies-constants";
 import { createTrophyFormSchema } from "../trophies-schemas";
-import { compressTrophyModel } from "../trophies-utils";
+import { compressTrophyModel, useProgressiveRender } from "../trophies-utils";
 import styles from "./trophies.new.module.css";
 
 export { action, loader };
@@ -228,6 +228,7 @@ function TrophyList({
 }) {
 	const { t } = useTranslation(["trophies"]);
 	const data = useLoaderData<typeof loader>();
+	const visibleCount = useProgressiveRender(items.length, listKind);
 
 	if (items.length === 0) {
 		return (
@@ -242,7 +243,7 @@ function TrophyList({
 	return (
 		<TrophyContextProvider>
 			<div className={styles.pendingList}>
-				{items.map((item) => (
+				{items.slice(0, visibleCount).map((item) => (
 					<TrophyListRow
 						key={item.id}
 						pending={item}
