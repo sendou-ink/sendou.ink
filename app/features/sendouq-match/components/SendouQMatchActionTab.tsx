@@ -1,4 +1,7 @@
+import { Ban, Undo2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
+import { SendouButton } from "~/components/elements/Button";
 import { MatchActionTab } from "~/components/match-page/MatchActionTab";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import { isSetOverByScore } from "~/features/tournament-bracket/tournament-bracket-utils";
@@ -16,6 +19,7 @@ export function SendouQMatchActionTab({
 	ownTeamId: number;
 	reportedCount: number;
 }) {
+	const { t } = useTranslation(["q"]);
 	const fetcher = useFetcher();
 
 	const alphaScore = data.match.mapList.filter(
@@ -59,6 +63,8 @@ export function SendouQMatchActionTab({
 				}
 			: undefined;
 
+	const scoreIsNotZero = alphaScore > 0 || bravoScore > 0;
+
 	return (
 		<MatchActionTab
 			key={reportedCount}
@@ -82,6 +88,26 @@ export function SendouQMatchActionTab({
 					{ method: "post" },
 				);
 			}}
+			actionButtons={
+				<>
+					<SendouButton
+						variant="minimal-destructive"
+						size="miniscule"
+						icon={<Ban size={16} />}
+					>
+						{t("q:match.action.requestCancel")}
+					</SendouButton>
+					{scoreIsNotZero ? (
+						<SendouButton
+							variant="minimal-destructive"
+							size="miniscule"
+							icon={<Undo2 size={16} />}
+						>
+							{t("q:match.undoReport")}
+						</SendouButton>
+					) : null}
+				</>
+			}
 		/>
 	);
 }

@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { Check } from "lucide-react";
+import type * as React from "react";
 import { useId, useState } from "react";
 import { Radio, RadioGroup } from "react-aria-components";
 import { useTranslation } from "react-i18next";
@@ -39,6 +40,7 @@ interface MatchActionTabProps {
 	onSubmit?: (winnerId: number) => void;
 	isSubmitting?: boolean;
 	setEnding?: SetEndingData;
+	actionButtons?: React.ReactNode;
 }
 
 export function MatchActionTab({
@@ -50,6 +52,7 @@ export function MatchActionTab({
 	onSubmit,
 	isSubmitting,
 	setEnding,
+	actionButtons,
 }: MatchActionTabProps) {
 	const { t } = useTranslation(["q", "game-misc", "common"]);
 	const [winnerId, setWinnerId] = useState<number | null>(null);
@@ -84,6 +87,9 @@ export function MatchActionTab({
 						{t(`game-misc:MODE_SHORT_${mode}`)}{" "}
 						{t(`game-misc:STAGE_${stageId}`)}
 					</div>
+					{actionButtons ? (
+						<div className={styles.actionButtons}>{actionButtons}</div>
+					) : null}
 
 					<RadioGroup
 						value={winnerId !== null ? String(winnerId) : undefined}
