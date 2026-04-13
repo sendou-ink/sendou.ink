@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { Link as LinkIcon, Lock, LogOut, SquarePen, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Link, useLoaderData, useSearchParams } from "react-router";
+import { Link, NavLink, useLoaderData, useSearchParams } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -22,6 +22,10 @@ import { TierPill } from "~/components/TierPill";
 import { useUser } from "~/features/auth/core/user";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { BannedUsersList } from "~/features/tournament-organization/components/BannedPlayersList";
+import {
+	Trophy,
+	TrophyContextProvider,
+} from "~/features/trophies/components/Trophy";
 import { SendouForm } from "~/form/SendouForm";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
@@ -33,6 +37,7 @@ import {
 	BLANK_IMAGE_URL,
 	calendarEventPage,
 	navIconUrl,
+	TROPHIES_PAGE,
 	tournamentOrganizationEditPage,
 	tournamentOrganizationPage,
 	tournamentPage,
@@ -65,7 +70,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["badges", "org"],
+	i18n: ["badges", "org", "trophies"],
 	breadcrumb: ({ match }) => {
 		const data = match.data as SerializeFrom<typeof loader> | undefined;
 
@@ -187,7 +192,7 @@ function LogoHeader() {
 }
 
 function InfoTabs() {
-	const { t } = useTranslation(["org"]);
+	const { t } = useTranslation(["org", "trophies"]);
 	const data = useLoaderData<typeof loader>();
 	const isAdmin = useHasRole("ADMIN");
 	const canBanPlayers = useHasPermission(data.organization, "BAN");
@@ -195,6 +200,7 @@ function InfoTabs() {
 	const hasSocials =
 		data.organization.socials && data.organization.socials.length > 0;
 	const hasBadges = data.organization.badges.length > 0;
+	const hasTrophies = data.trophies.length > 0;
 
 	return (
 		<div>
@@ -212,6 +218,13 @@ function InfoTabs() {
 						icon={<Image path={navIconUrl("badges")} alt="" width={16} />}
 					>
 						{t("org:edit.form.badges.title")}
+					</SendouTab>
+					<SendouTab
+						id="trophies"
+						isDisabled={!hasTrophies}
+						icon={<Image path={navIconUrl("trophies")} alt="" width={16} />}
+					>
+						{t("trophies:title")}
 					</SendouTab>
 					{canBanPlayers && data.bannedUsers ? (
 						<SendouTab
@@ -236,6 +249,9 @@ function InfoTabs() {
 				</SendouTabPanel>
 				<SendouTabPanel id="badges">
 					<BadgeDisplay badges={data.organization.badges} />
+				</SendouTabPanel>
+				<SendouTabPanel id="trophies">
+					<TrophyGrid trophies={data.trophies} />
 				</SendouTabPanel>
 				{data.bannedUsers ? (
 					<SendouTabPanel id="banned-users">
@@ -662,5 +678,27 @@ function EventLeaderboardRow({
 				<Placement placement={3} /> ×{entry.placements.third}
 			</div>
 		</div>
+	);
+}
+
+function TrophyGrid({
+	trophies,
+}: {
+	trophies: SerializeFrom<typeof loader>["trophies"];
+}) {
+	return (
+		<TrophyContextProvider>
+			<div className={styles.trophyGrid}>
+				{trophies.map((trophy) => (
+					<NavLink
+						key={trophy.id}
+						to={`${TROPHIES_PAGE}/${trophy.id}`}
+						className={styles.trophyGridItem}
+					>
+						<Trophy model={trophy.model} preview />
+					</NavLink>
+				))}
+			</div>
+		</TrophyContextProvider>
 	);
 }

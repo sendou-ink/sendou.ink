@@ -52,6 +52,14 @@ const withOwners = (eb: ExpressionBuilder<DB, "Trophy">) => {
 	).as("owners");
 };
 
+export async function findByOrganizationId(organizationId: number) {
+	return db
+		.selectFrom("Trophy")
+		.select(["id", "name", "model"])
+		.where("organizationId", "=", organizationId)
+		.execute();
+}
+
 export async function findById(trophyId: number) {
 	const row = await db
 		.selectFrom("Trophy")

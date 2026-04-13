@@ -102,7 +102,7 @@ export const action: ActionFunction = async ({ request }) => {
 			const pending = await TrophyRepository.findPendingById(
 				data.pendingTrophyId,
 			);
-			
+
 			errorToastIfFalsy(pending, "Pending trophy not found");
 			errorToastIfFalsy(
 				!pending.declinedAt,

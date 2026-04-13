@@ -200,3 +200,21 @@
 		fill: #1285fe;
 	}
 }
+
+.trophyGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, 100px);
+	justify-content: center;
+	gap: var(--s-2);
+}
+
+.trophyGridItem {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
