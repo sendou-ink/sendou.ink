@@ -21,6 +21,7 @@ export function SendouQMatchActionTab({
 }) {
 	const { t } = useTranslation(["q"]);
 	const fetcher = useFetcher();
+	const undoFetcher = useFetcher();
 
 	const alphaScore = data.match.mapList.filter(
 		(m) => m.winnerGroupId === data.match.groupAlpha.id,
@@ -102,6 +103,13 @@ export function SendouQMatchActionTab({
 							variant="minimal-destructive"
 							size="miniscule"
 							icon={<Undo2 size={16} />}
+							isPending={undoFetcher.state !== "idle"}
+							onPress={() => {
+								undoFetcher.submit(
+									{ _action: "UNDO_MAP_REPORT" },
+									{ method: "post" },
+								);
+							}}
 						>
 							{t("q:match.undoReport")}
 						</SendouButton>

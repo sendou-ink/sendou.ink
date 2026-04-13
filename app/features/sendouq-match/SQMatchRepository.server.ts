@@ -1095,6 +1095,50 @@ export async function undoMatchReport({
 	return { status: "SUCCESS" };
 }
 
+// xxx: also send map idx to undo to avoid "double undo"
+export async function undoMapReport({
+	matchId,
+}: {
+	matchId: number;
+}): Promise<{ status: "SUCCESS" | "NOT_ALLOWED" | "ALREADY_LOCKED" }> {
+	const match = await findById(matchId);
+	invariant(match, "Match not found");
+
+	if (match.isLocked) {
+		return { status: "ALREADY_LOCKED" };
+	}
+
+	// xxx: util or Module
+	const mapsToWin = Math.ceil(SENDOUQ_BEST_OF / 2);
+	const alphaWins = match.mapList.filter(
+		(m) => m.winnerGroupId === match.groupAlpha.id,
+	).length;
+	const bravoWins = match.mapList.filter(
+		(m) => m.winnerGroupId === match.groupBravo.id,
+	).length;
+	const scoreIsDecisive = alphaWins >= mapsToWin || bravoWins >= mapsToWin;
+
+	if (scoreIsDecisive) {
+		return { status: "NOT_ALLOWED" };
+	}
+
+	const lastReportedMap = [...match.mapList]
+		.reverse()
+		.find((m) => m.winnerGroupId !== null);
+
+	if (!lastReportedMap) {
+		return { status: "NOT_ALLOWED" };
+	}
+
+	await db
+		.updateTable("GroupMatchMap")
+		.set({ winnerGroupId: null })
+		.where("id", "=", lastReportedMap.id)
+		.execute();
+
+	return { status: "SUCCESS" };
+}
+
 function buildMembers(
 	match: NonNullable<Awaited<ReturnType<typeof findById>>>,
 ) {

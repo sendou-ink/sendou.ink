@@ -64,6 +64,7 @@ export function MatchActionTab({
 	const canSubmit = winnerId !== null && pointsValid;
 
 	// xxx: add haptics
+	// xxx: i'd be nicer if the score report buttons don't shift horizontally (when some stage names are two lines)
 	return (
 		<SendouTabPanel id={TAB_KEYS.ACTION}>
 			{confirming && winnerId !== null && setEnding ? (

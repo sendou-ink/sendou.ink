@@ -175,7 +175,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			await RoomLinkRepository.refreshTimestamp(user.id);
 			break;
 		}
-		case "UNDO_REPORT": {
+		case "UNDO_MATCH_REPORT": {
 			const result = await SQMatchRepository.undoMatchReport({
 				matchId,
 				requestedByUserId: user.id,
@@ -183,6 +183,21 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			if (result.status === "NOT_ALLOWED") {
 				return errorToast("Cannot undo report");
+			}
+			if (result.status === "ALREADY_LOCKED") {
+				return null;
+			}
+
+			await refreshSendouQInstance();
+			break;
+		}
+		case "UNDO_MAP_REPORT": {
+			const result = await SQMatchRepository.undoMapReport({
+				matchId,
+			});
+
+			if (result.status === "NOT_ALLOWED") {
+				return errorToast("Cannot undo map report");
 			}
 			if (result.status === "ALREADY_LOCKED") {
 				return null;

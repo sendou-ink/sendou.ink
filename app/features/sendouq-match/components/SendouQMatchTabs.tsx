@@ -252,7 +252,10 @@ function ReporterWaitingTab({ data }: { data: SendouQMatchLoaderData }) {
 					size="small"
 					isPending={undoFetcher.state !== "idle"}
 					onPress={() => {
-						undoFetcher.submit({ _action: "UNDO_REPORT" }, { method: "post" });
+						undoFetcher.submit(
+							{ _action: "UNDO_MATCH_REPORT" },
+							{ method: "post" },
+						);
 					}}
 				>
 					{t("q:match.undoReport")}

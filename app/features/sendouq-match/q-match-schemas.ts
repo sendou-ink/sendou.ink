@@ -49,7 +49,10 @@ export const matchSchema = z.union([
 		_action: _action("CONFIRM_ROOM"),
 	}),
 	z.object({
-		_action: _action("UNDO_REPORT"),
+		_action: _action("UNDO_MATCH_REPORT"),
+	}),
+	z.object({
+		_action: _action("UNDO_MAP_REPORT"),
 	}),
 ]);
 
