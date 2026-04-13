@@ -76,9 +76,9 @@ function resolveTeamForEvent({
 		case "BRAVO":
 			return teams[1];
 		case "HIGHER_SEED":
-			return teams[1];
-		case "LOWER_SEED":
 			return teams[0];
+		case "LOWER_SEED":
+			return teams[1];
 		case "WINNER":
 		case "LOSER": {
 			const cycleIndex = Math.floor(
