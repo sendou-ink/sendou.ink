@@ -12,13 +12,13 @@
 	"new.tabs.pending": "Pending",
 	"new.tabs.reviewed": "Reviewed",
 	"new.pending.empty": "No pending trophies",
-	"new.pending.accept": "Accept",
+	"new.pending.approve": "Approve",
+	"new.pending.approved": "Approved",
+	"new.pending.approvalProgress": "{{current}}/{{required}} approvals",
 	"new.pending.decline": "Decline",
 	"new.pending.declineHeading": "Decline trophy",
 	"new.pending.declineReason": "Reason",
 	"new.pending.declined": "Declined",
 	"new.pending.declinedBy": "Declined by {{name}}",
-	"new.pending.accepted": "Accepted",
-	"new.pending.acceptedBy": "Accepted by {{name}}",
 	"new.reviewed.empty": "No reviewed trophies"
 }

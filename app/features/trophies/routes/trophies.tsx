@@ -64,7 +64,11 @@ export default function TrophiesPage() {
 							{filteredTrophies.map((trophy, i) =>
 								i < visibleCount ? (
 									<NavLink to={String(trophy.id)} key={trophy.id}>
-										<Trophy className={styles.trophy} model={trophy.model} preview />
+										<Trophy
+											className={styles.trophy}
+											model={trophy.model}
+											preview
+										/>
 									</NavLink>
 								) : (
 									<div key={trophy.id} className={styles.placeholder} />

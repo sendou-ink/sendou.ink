@@ -1163,11 +1163,16 @@ function pendingTrophiesToDb() {
 	const trophyEntries = Object.entries(trophies);
 
 	const insertPendingStm = sql.prepare(
-		`insert into "PendingTrophy" ("name", "model", "description", "organizationId", "submitterUserId", "createdAt", "declineReason", "declinedAt", "declinedByUserId", "acceptedAt", "acceptedByUserId") values ($name, $model, $description, $organizationId, $submitterUserId, $createdAt, $declineReason, $declinedAt, $declinedByUserId, $acceptedAt, $acceptedByUserId)`,
+		`insert into "PendingTrophy" ("name", "model", "description", "organizationId", "submitterUserId", "createdAt", "declineReason", "declinedAt", "declinedByUserId") values ($name, $model, $description, $organizationId, $submitterUserId, $createdAt, $declineReason, $declinedAt, $declinedByUserId)`,
+	);
+
+	const insertApprovalStm = sql.prepare(
+		`insert into "PendingTrophyApproval" ("pendingTrophyId", "userId", "createdAt") values ($pendingTrophyId, $userId, $createdAt)`,
 	);
 
 	const now = Math.floor(Date.now() / 1000);
 
+	// 5 pending
 	for (let i = 0; i < 5; i++) {
 		const [trophyName, model] = trophyEntries[i % trophyEntries.length];
 		insertPendingStm.run({
@@ -1180,15 +1185,14 @@ function pendingTrophiesToDb() {
 			declineReason: null,
 			declinedAt: null,
 			declinedByUserId: null,
-			acceptedAt: null,
-			acceptedByUserId: null,
 		});
 	}
 
-	for (let i = 0; i < 3; i++) {
+	// 2 with one approval
+	for (let i = 0; i < 2; i++) {
 		const [trophyName, model] = trophyEntries[(i + 5) % trophyEntries.length];
-		insertPendingStm.run({
-			name: `Accepted ${trophyName} ${i + 1}`,
+		const { lastInsertRowid } = insertPendingStm.run({
+			name: `Partial ${trophyName} ${i + 1}`,
 			model,
 			description: faker.lorem.sentence(),
 			organizationId: faker.helpers.arrayElement(orgIds),
@@ -1197,25 +1201,55 @@ function pendingTrophiesToDb() {
 			declineReason: null,
 			declinedAt: null,
 			declinedByUserId: null,
-			acceptedAt: now - i * 1800,
-			acceptedByUserId: ADMIN_ID,
+		});
+
+		insertApprovalStm.run({
+			pendingTrophyId: Number(lastInsertRowid),
+			userId: ADMIN_ID,
+			createdAt: now - i * 1800,
 		});
 	}
 
+	// 3 fully approved
 	for (let i = 0; i < 3; i++) {
-		const [trophyName, model] = trophyEntries[(i + 8) % trophyEntries.length];
+		const [trophyName, model] = trophyEntries[(i + 7) % trophyEntries.length];
+		const { lastInsertRowid } = insertPendingStm.run({
+			name: `Accepted ${trophyName} ${i + 1}`,
+			model,
+			description: faker.lorem.sentence(),
+			organizationId: faker.helpers.arrayElement(orgIds),
+			submitterUserId: faker.helpers.arrayElement(userIds),
+			createdAt: now - (i + 7) * 3600,
+			declineReason: null,
+			declinedAt: null,
+			declinedByUserId: null,
+		});
+
+		insertApprovalStm.run({
+			pendingTrophyId: Number(lastInsertRowid),
+			userId: ADMIN_ID,
+			createdAt: now - (i + 1) * 1800,
+		});
+		insertApprovalStm.run({
+			pendingTrophyId: Number(lastInsertRowid),
+			userId: NZAP_TEST_ID,
+			createdAt: now - i * 1800,
+		});
+	}
+
+	// 3 declined
+	for (let i = 0; i < 3; i++) {
+		const [trophyName, model] = trophyEntries[(i + 10) % trophyEntries.length];
 		insertPendingStm.run({
 			name: `Declined ${trophyName} ${i + 1}`,
 			model,
 			description: faker.lorem.sentence(),
 			organizationId: faker.helpers.arrayElement(orgIds),
 			submitterUserId: faker.helpers.arrayElement(userIds),
-			createdAt: now - (i + 8) * 3600,
+			createdAt: now - (i + 10) * 3600,
 			declineReason: faker.lorem.sentence(),
 			declinedAt: now - i * 1800,
 			declinedByUserId: ADMIN_ID,
-			acceptedAt: null,
-			acceptedByUserId: null,
 		});
 	}
 }

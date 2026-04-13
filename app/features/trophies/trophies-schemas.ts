@@ -48,7 +48,7 @@ export const pendingTrophyActionSchema = z.union([
 			.max(TROPHY_DECLINE_REASON_MAX_LENGTH),
 	}),
 	z.object({
-		_action: _action("ACCEPT"),
+		_action: _action("APPROVE"),
 		pendingTrophyId: id,
 	}),
 ]);

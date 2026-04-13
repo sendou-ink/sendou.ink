@@ -46,18 +46,28 @@ export function up(db) {
         "declineReason" text,
         "declinedAt" integer,
         "declinedByUserId" integer,
-        "acceptedAt" integer,
-        "acceptedByUserId" integer,
         foreign key ("organizationId") references "TournamentOrganization"("id") on delete set null,
         foreign key ("submitterUserId") references "User"("id") on delete cascade,
-        foreign key ("declinedByUserId") references "User"("id") on delete set null,
-        foreign key ("acceptedByUserId") references "User"("id") on delete set null
+        foreign key ("declinedByUserId") references "User"("id") on delete set null
       ) strict
     `,
 		).run();
 
 		db.prepare(
 			/*sql*/ `create index "pending_trophy_submitter_idx" on "PendingTrophy"("submitterUserId")`,
+		).run();
+
+		db.prepare(
+			/*sql*/ `
+      create table "PendingTrophyApproval" (
+        "pendingTrophyId" integer not null,
+        "userId" integer not null,
+        "createdAt" integer not null,
+        foreign key ("pendingTrophyId") references "PendingTrophy"("id") on delete cascade,
+        foreign key ("userId") references "User"("id"),
+        unique("pendingTrophyId", "userId")
+      ) strict
+    `,
 		).run();
 	})();
 }

@@ -5,7 +5,10 @@ import { parseFormData } from "~/form/parse.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as TrophyRepository from "../TrophyRepository.server";
-import { TROPHY_PENDING_PER_USER_LIMIT } from "../trophies-constants";
+import {
+	TROPHY_APPROVALS_REQUIRED,
+	TROPHY_PENDING_PER_USER_LIMIT,
+} from "../trophies-constants";
 import {
 	createTrophyFormSchema,
 	pendingTrophyActionSchema,
@@ -82,7 +85,7 @@ export const action: ActionFunction = async ({ request }) => {
 			errorToastIfFalsy(pending, "Pending trophy not found");
 			errorToastIfFalsy(!pending.declinedAt, "Trophy is already declined");
 			errorToastIfFalsy(
-				!pending.acceptedAt,
+				pending.approvals.length < TROPHY_APPROVALS_REQUIRED,
 				"Cannot decline an accepted trophy",
 			);
 
@@ -93,23 +96,36 @@ export const action: ActionFunction = async ({ request }) => {
 			});
 			return null;
 		}
-		case "ACCEPT": {
+		case "APPROVE": {
 			errorToastIfFalsy(canReviewTrophies(user), "Not allowed");
 
 			const pending = await TrophyRepository.findPendingById(
 				data.pendingTrophyId,
 			);
+			
 			errorToastIfFalsy(pending, "Pending trophy not found");
-			errorToastIfFalsy(!pending.declinedAt, "Cannot accept a declined trophy");
-			errorToastIfFalsy(!pending.acceptedAt, "Trophy is already accepted");
+			errorToastIfFalsy(
+				!pending.declinedAt,
+				"Cannot approve a declined trophy",
+			);
+			errorToastIfFalsy(
+				pending.approvals.length < TROPHY_APPROVALS_REQUIRED,
+				"Trophy is already accepted",
+			);
+			errorToastIfFalsy(
+				!pending.approvals.some((a) => a.userId === user.id),
+				"Already approved",
+			);
 
-			const inserted = await TrophyRepository.acceptPending({
-				id: data.pendingTrophyId,
-				acceptedByUserId: user.id,
+			const inserted = await TrophyRepository.addApproval({
+				pendingTrophyId: data.pendingTrophyId,
+				userId: user.id,
 			});
-			errorToastIfFalsy(inserted, "Failed to accept trophy");
 
-			clearTrophiesCache();
+			if (inserted) {
+				clearTrophiesCache();
+			}
+
 			return null;
 		}
 		default: {

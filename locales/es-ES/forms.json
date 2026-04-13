@@ -19,6 +19,7 @@
 	"bottomTexts.disallowScrimPickupsFromUntrusted": "Solo aplica si estás en el lobby como líder de grupo. Otros líderes de grupo aún pueden añadirte.",
 	"bottomTexts.noScreen": "Afecta a torneos, scrims y SendouQ.",
 	"bottomTexts.spoilerFreeMode": "",
+	"bottomTexts.trophyModel": "",
 	"options.clockFormat.auto": "Automático",
 	"options.clockFormat.24h": "24 horas",
 	"options.clockFormat.12h": "12 horas",

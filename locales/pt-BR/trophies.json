@@ -12,13 +12,13 @@
 	"new.tabs.pending": "",
 	"new.tabs.reviewed": "",
 	"new.pending.empty": "",
-	"new.pending.accept": "",
+	"new.pending.approve": "",
+	"new.pending.approved": "",
+	"new.pending.approvalProgress": "",
 	"new.pending.decline": "",
 	"new.pending.declineHeading": "",
 	"new.pending.declineReason": "",
 	"new.pending.declined": "",
 	"new.pending.declinedBy": "",
-	"new.pending.accepted": "",
-	"new.pending.acceptedBy": "",
 	"new.reviewed.empty": ""
 }

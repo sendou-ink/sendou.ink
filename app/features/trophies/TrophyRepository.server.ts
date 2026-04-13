@@ -4,6 +4,7 @@ import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { TROPHY_APPROVALS_REQUIRED } from "./trophies-constants";
 
 export async function all() {
 	return db.selectFrom("Trophy").select(["id", "name", "model"]).execute();
@@ -107,12 +108,29 @@ export async function createPending(args: {
 			declineReason: null,
 			declinedAt: null,
 			declinedByUserId: null,
-			acceptedAt: null,
-			acceptedByUserId: null,
 		})
 		.returning("id")
 		.executeTakeFirstOrThrow();
 }
+
+const withApprovals = (eb: ExpressionBuilder<DB, "PendingTrophy">) => {
+	return jsonArrayFrom(
+		eb
+			.selectFrom("PendingTrophyApproval")
+			.innerJoin("User", "PendingTrophyApproval.userId", "User.id")
+			.select([
+				"PendingTrophyApproval.userId",
+				"PendingTrophyApproval.createdAt",
+				"User.username",
+			])
+			.whereRef(
+				"PendingTrophyApproval.pendingTrophyId",
+				"=",
+				"PendingTrophy.id",
+			)
+			.orderBy("PendingTrophyApproval.createdAt", "asc"),
+	).as("approvals");
+};
 
 function pendingBaseQuery() {
 	return db
@@ -128,16 +146,11 @@ function pendingBaseQuery() {
 			"PendingTrophy.declinedByUserId",
 		)
 		.leftJoin(
-			"User as Acceptor",
-			"Acceptor.id",
-			"PendingTrophy.acceptedByUserId",
-		)
-		.leftJoin(
 			"TournamentOrganization",
 			"TournamentOrganization.id",
 			"PendingTrophy.organizationId",
 		)
-		.select([
+		.select((eb) => [
 			"PendingTrophy.id",
 			"PendingTrophy.name",
 			"PendingTrophy.model",
@@ -148,14 +161,12 @@ function pendingBaseQuery() {
 			"PendingTrophy.declineReason",
 			"PendingTrophy.declinedAt",
 			"PendingTrophy.declinedByUserId",
-			"PendingTrophy.acceptedAt",
-			"PendingTrophy.acceptedByUserId",
 			"Submitter.username as submitterUsername",
 			"Submitter.discordId as submitterDiscordId",
 			"Decliner.username as declinedByUsername",
-			"Acceptor.username as acceptedByUsername",
 			"TournamentOrganization.name as organizationName",
 			"TournamentOrganization.slug as organizationSlug",
+			withApprovals(eb),
 		]);
 }
 
@@ -185,8 +196,21 @@ export async function unreviewedCountBySubmitter(submitterUserId: number) {
 		.selectFrom("PendingTrophy")
 		.select((eb) => eb.fn.countAll<number>().as("count"))
 		.where("submitterUserId", "=", submitterUserId)
-		.where("acceptedAt", "is", null)
 		.where("declinedAt", "is", null)
+		.where((eb) =>
+			eb(
+				eb
+					.selectFrom("PendingTrophyApproval")
+					.select((eb2) => eb2.fn.countAll<number>().as("approvalCount"))
+					.whereRef(
+						"PendingTrophyApproval.pendingTrophyId",
+						"=",
+						"PendingTrophy.id",
+					),
+				"<",
+				TROPHY_APPROVALS_REQUIRED,
+			),
+		)
 		.executeTakeFirstOrThrow();
 
 	return row.count;
@@ -201,33 +225,58 @@ export async function declinePending(args: {
 	reason: string;
 	declinedByUserId: number;
 }) {
-	await db
-		.updateTable("PendingTrophy")
-		.set({
-			declineReason: args.reason,
-			declinedAt: dateToDatabaseTimestamp(new Date()),
-			declinedByUserId: args.declinedByUserId,
-		})
-		.where("id", "=", args.id)
-		.execute();
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.deleteFrom("PendingTrophyApproval")
+			.where("pendingTrophyId", "=", args.id)
+			.execute();
+
+		await trx
+			.updateTable("PendingTrophy")
+			.set({
+				declineReason: args.reason,
+				declinedAt: dateToDatabaseTimestamp(new Date()),
+				declinedByUserId: args.declinedByUserId,
+			})
+			.where("id", "=", args.id)
+			.execute();
+	});
 }
 
-export async function acceptPending(args: {
-	id: number;
-	acceptedByUserId: number;
+export async function addApproval(args: {
+	pendingTrophyId: number;
+	userId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
+		await trx
+			.insertInto("PendingTrophyApproval")
+			.values({
+				pendingTrophyId: args.pendingTrophyId,
+				userId: args.userId,
+				createdAt: dateToDatabaseTimestamp(new Date()),
+			})
+			.execute();
+
+		const { count } = await trx
+			.selectFrom("PendingTrophyApproval")
+			.select((eb) => eb.fn.countAll<number>().as("count"))
+			.where("pendingTrophyId", "=", args.pendingTrophyId)
+			.executeTakeFirstOrThrow();
+
+		if (count < TROPHY_APPROVALS_REQUIRED) {
+			return null;
+		}
+
 		const pending = await trx
 			.selectFrom("PendingTrophy")
 			.select(["id", "name", "model", "organizationId", "submitterUserId"])
-			.where("id", "=", args.id)
+			.where("id", "=", args.pendingTrophyId)
 			.where("declinedAt", "is", null)
-			.where("acceptedAt", "is", null)
 			.executeTakeFirst();
 
 		if (!pending) return null;
 
-		const inserted = await trx
+		return trx
 			.insertInto("Trophy")
 			.values({
 				name: pending.name,
@@ -238,16 +287,5 @@ export async function acceptPending(args: {
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
-
-		await trx
-			.updateTable("PendingTrophy")
-			.set({
-				acceptedAt: dateToDatabaseTimestamp(new Date()),
-				acceptedByUserId: args.acceptedByUserId,
-			})
-			.where("id", "=", args.id)
-			.execute();
-
-		return inserted;
 	});
 }

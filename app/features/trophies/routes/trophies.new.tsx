@@ -36,6 +36,7 @@ import {
 	type NewTrophyLoaderData,
 } from "../loaders/trophies.new.server";
 import {
+	TROPHY_APPROVALS_REQUIRED,
 	TROPHY_DECLINE_REASON_MAX_LENGTH,
 	TROPHY_PENDING_PER_USER_LIMIT,
 } from "../trophies-constants";
@@ -268,8 +269,11 @@ function TrophyListRow({
 
 	const isOwner = pending.submitterUserId === currentUserId;
 	const isDeclined = pending.declinedAt !== null;
-	const isAccepted = pending.acceptedAt !== null;
+	const isAccepted = pending.approvals.length >= TROPHY_APPROVALS_REQUIRED;
 	const isReviewed = isDeclined || isAccepted;
+	const alreadyApproved = pending.approvals.some(
+		(a) => a.userId === currentUserId,
+	);
 
 	const handleDelete = () => {
 		const formData = new FormData();
@@ -278,9 +282,9 @@ function TrophyListRow({
 		fetcher.submit(formData, { method: "post" });
 	};
 
-	const handleAccept = () => {
+	const handleApprove = () => {
 		const formData = new FormData();
-		formData.append("_action", "ACCEPT");
+		formData.append("_action", "APPROVE");
 		formData.append("pendingTrophyId", String(pending.id));
 		fetcher.submit(formData, { method: "post" });
 	};
@@ -315,14 +319,18 @@ function TrophyListRow({
 				{pending.description ? (
 					<div className={styles.pendingDescription}>{pending.description}</div>
 				) : null}
-				{isAccepted ? (
+				{pending.approvals.length > 0 && !isDeclined ? (
 					<div className={styles.accepted}>
 						<p>
-							{pending.acceptedByUsername
-								? t("trophies:new.pending.acceptedBy", {
-										name: pending.acceptedByUsername,
-									})
-								: t("trophies:new.pending.accepted")}
+							{t("trophies:new.pending.approvalProgress", {
+								current: pending.approvals.length,
+								required: TROPHY_APPROVALS_REQUIRED,
+							})}
+						</p>
+						<p>
+							{pending.approvals.some((a) => a.userId === currentUserId)
+								? `(${pending.approvals.map((a) => a.username).join(", ")})`
+								: ""}
 						</p>
 					</div>
 				) : null}
@@ -344,10 +352,12 @@ function TrophyListRow({
 							<SendouButton
 								variant="outlined"
 								size="small"
-								onPress={handleAccept}
-								isDisabled={fetcher.state !== "idle"}
+								onPress={handleApprove}
+								isDisabled={fetcher.state !== "idle" || alreadyApproved}
 							>
-								{t("trophies:new.pending.accept")}
+								{alreadyApproved
+									? t("trophies:new.pending.approved")
+									: t("trophies:new.pending.approve")}
 							</SendouButton>
 							<DeclineButton pendingTrophyId={pending.id} />
 							<SendouButton

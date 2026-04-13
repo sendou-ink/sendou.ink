@@ -175,8 +175,12 @@ export interface PendingTrophy {
 	declineReason: string | null;
 	declinedAt: number | null;
 	declinedByUserId: number | null;
-	acceptedAt: number | null;
-	acceptedByUserId: number | null;
+}
+
+export interface PendingTrophyApproval {
+	pendingTrophyId: number;
+	userId: number;
+	createdAt: number;
 }
 
 export interface Build {
@@ -1413,6 +1417,7 @@ export interface DB {
 	Trophy: Trophy;
 	TrophyOwner: TrophyOwner;
 	PendingTrophy: PendingTrophy;
+	PendingTrophyApproval: PendingTrophyApproval;
 	TrustRelationship: TrustRelationship;
 	Friendship: Friendship;
 	FriendRequest: FriendRequest;
