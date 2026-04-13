@@ -30,6 +30,10 @@ export function MatchMapInfo({ teams }: { teams: [number, number] }) {
 			postGame: customFlow.postGame,
 			teams,
 			results: data.results,
+			seeds: {
+				[teams[0]]: teamOne?.seed ?? 0,
+				[teams[1]]: teamTwo?.seed ?? 0,
+			},
 		});
 
 		if (teamId === teams[0]) {
@@ -56,12 +60,14 @@ function resolveTeamForEvent({
 	postGame,
 	teams,
 	results,
+	seeds,
 }: {
 	eventIndex: number;
 	preSet: CustomPickBanStep[];
 	postGame: CustomPickBanStep[];
 	teams: [number, number];
 	results: Array<{ winnerTeamId: number }>;
+	seeds: Record<number, number>;
 }): number | null {
 	const step =
 		eventIndex < preSet.length
@@ -76,9 +82,9 @@ function resolveTeamForEvent({
 		case "BRAVO":
 			return teams[1];
 		case "HIGHER_SEED":
-			return teams[0];
+  			return seeds[teams[0]] < seeds[teams[1]] ? teams[0] : teams[1];
 		case "LOWER_SEED":
-			return teams[1];
+  			return seeds[teams[0]] > seeds[teams[1]] ? teams[0] : teams[1];
 		case "WINNER":
 		case "LOSER": {
 			const cycleIndex = Math.floor(
