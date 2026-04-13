@@ -31,8 +31,8 @@ export function MatchMapInfo({ teams }: { teams: [number, number] }) {
 			teams,
 			results: data.results,
 			seeds: {
-				[teams[0]]: teamOne?.seed,
-				[teams[1]]: teamTwo?.seed,
+				[teams[0]]: teamOne?.seed ?? 0,
+				[teams[1]]: teamTwo?.seed ?? 0,
 			},
 		});
 
