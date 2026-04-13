@@ -31,8 +31,8 @@ export function MatchMapInfo({ teams }: { teams: [number, number] }) {
 			teams,
 			results: data.results,
 			seeds: {
-				[teams[0]]: teamOne?.seed ?? 0,
-				[teams[1]]: teamTwo?.seed ?? 0,
+				[teams[0]]: teamOne?.seed,
+				[teams[1]]: teamTwo?.seed,
 			},
 		});
 
@@ -82,9 +82,9 @@ function resolveTeamForEvent({
 		case "BRAVO":
 			return teams[1];
 		case "HIGHER_SEED":
-  			return seeds[teams[0]] < seeds[teams[1]] ? teams[0] : teams[1];
+			return seeds[teams[0]] < seeds[teams[1]] ? teams[0] : teams[1];
 		case "LOWER_SEED":
-  			return seeds[teams[0]] > seeds[teams[1]] ? teams[0] : teams[1];
+			return seeds[teams[0]] > seeds[teams[1]] ? teams[0] : teams[1];
 		case "WINNER":
 		case "LOSER": {
 			const cycleIndex = Math.floor(
