@@ -18,14 +18,9 @@ import { useAutoRerender } from "~/hooks/useAutoRerender";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-import type { SerializeFrom } from "~/utils/remix";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 
-export function SendouQMatchBanner({
-	data,
-}: {
-	data: SerializeFrom<SendouQMatchLoaderData>;
-}) {
+export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 	const bottomRow = (
 		<MatchBannerBottomRow
 			games={data.match.mapList.map((map) => ({
@@ -96,7 +91,7 @@ function SendouQMatchBannerTopRow({
 	data,
 	awaitingConfirmation,
 }: {
-	data: SerializeFrom<SendouQMatchLoaderData>;
+	data: SendouQMatchLoaderData;
 	awaitingConfirmation: boolean;
 }) {
 	useAutoRerender("ten seconds");
@@ -143,7 +138,7 @@ function CurrentMapVotesBadge({
 	data,
 	currentMap,
 }: {
-	data: SerializeFrom<SendouQMatchLoaderData>;
+	data: SendouQMatchLoaderData;
 	currentMap: { mode: ModeShort; stageId: StageId; source: string };
 }) {
 	const { t } = useTranslation(["q"]);

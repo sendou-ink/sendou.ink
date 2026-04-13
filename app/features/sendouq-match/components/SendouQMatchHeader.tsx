@@ -4,15 +4,10 @@ import { LinkButton } from "~/components/elements/Button";
 import { MatchPageHeader } from "~/components/match-page/MatchPageHeader";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { databaseTimestampToDate } from "~/utils/dates";
-import type { SerializeFrom } from "~/utils/remix";
 import { SENDOUQ_RULES_PAGE } from "~/utils/urls";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 
-export function SendouQMatchHeader({
-	data,
-}: {
-	data: SerializeFrom<SendouQMatchLoaderData>;
-}) {
+export function SendouQMatchHeader({ data }: { data: SendouQMatchLoaderData }) {
 	const { t } = useTranslation(["q"]);
 
 	const season = Seasons.currentOrPrevious(

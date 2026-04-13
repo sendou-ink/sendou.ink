@@ -23,7 +23,6 @@ interface MatchBannerProps {
 	children: React.ReactNode;
 }
 
-// xxx: image (on /match-page-test) not showing on Firefox?
 export function MatchBanner({
 	stageId,
 	mode,

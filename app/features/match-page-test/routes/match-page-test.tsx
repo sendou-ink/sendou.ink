@@ -236,6 +236,115 @@ export default function MatchPageTestRoute() {
 						bravo: { name: "Group Bravo" },
 					}}
 					score={{ alpha: 3, bravo: 0 }}
+					spChanges={{
+						alpha: {
+							members: [
+								{
+									user: {
+										id: 1,
+										username: "Sendou",
+										discordId: "123",
+										discordAvatar: null,
+										customUrl: "sendou",
+									},
+									skillDifference: { calculated: true, spDiff: 12.3 },
+								},
+								{
+									user: {
+										id: 2,
+										username: "Lean",
+										discordId: "456",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									skillDifference: { calculated: true, spDiff: 8.7 },
+								},
+								{
+									user: {
+										id: 3,
+										username: "Kiver",
+										discordId: "789",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									skillDifference: {
+										calculated: false,
+										matchesCount: 3,
+										matchesCountNeeded: 7,
+									},
+								},
+								{
+									user: {
+										id: 4,
+										username: "Brian",
+										discordId: "012",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									skillDifference: {
+										calculated: false,
+										matchesCount: 7,
+										matchesCountNeeded: 7,
+										newSp: 1850,
+									},
+								},
+							],
+							skillDifference: {
+								calculated: false,
+								matchesCount: 5,
+								matchesCountNeeded: 7,
+							},
+						},
+						bravo: {
+							members: [
+								{
+									user: {
+										id: 5,
+										username: "Naga",
+										discordId: "345",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									skillDifference: { calculated: true, spDiff: -11.2 },
+								},
+								{
+									user: {
+										id: 6,
+										username: "Grey",
+										discordId: "678",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									skillDifference: { calculated: true, spDiff: -9.4 },
+								},
+								{
+									user: {
+										id: 7,
+										username: "Zack",
+										discordId: "901",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									skillDifference: { calculated: true, spDiff: -13.8 },
+								},
+								{
+									user: {
+										id: 8,
+										username: "Lime",
+										discordId: "234",
+										discordAvatar: null,
+										customUrl: null,
+									},
+									skillDifference: { calculated: true, spDiff: -7.6 },
+								},
+							],
+							skillDifference: {
+								calculated: true,
+								oldSp: 1980,
+								newSp: 1968,
+							},
+						},
+					}}
 					maps={[
 						{
 							stageId: 1,

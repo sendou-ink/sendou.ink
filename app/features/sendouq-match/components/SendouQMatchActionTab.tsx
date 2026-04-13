@@ -3,7 +3,6 @@ import { MatchActionTab } from "~/components/match-page/MatchActionTab";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import { isSetOverByScore } from "~/features/tournament-bracket/tournament-bracket-utils";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import type { SerializeFrom } from "~/utils/remix";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 
 export function SendouQMatchActionTab({
@@ -12,7 +11,7 @@ export function SendouQMatchActionTab({
 	ownTeamId,
 	reportedCount,
 }: {
-	data: SerializeFrom<SendouQMatchLoaderData>;
+	data: SendouQMatchLoaderData;
 	currentMap: { stageId: StageId; mode: ModeShort };
 	ownTeamId: number;
 	reportedCount: number;
@@ -91,7 +90,7 @@ function buildSendouQSetEndingData({
 	match,
 	scores,
 }: {
-	match: SerializeFrom<SendouQMatchLoaderData>["match"];
+	match: SendouQMatchLoaderData["match"];
 	scores: [number, number];
 }) {
 	const completedMaps = match.mapList.filter((m) => m.winnerGroupId !== null);

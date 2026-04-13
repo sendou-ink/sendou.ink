@@ -1,6 +1,7 @@
 import clsx from "clsx";
-import { Check, RefreshCcw } from "lucide-react";
+import { Check, RefreshCcw, TrendingUp, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import type { GroupSkillDifference, UserSkillDifference } from "~/db/tables";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
@@ -30,15 +31,37 @@ export interface TimelineMap {
 	points?: [number, number];
 }
 
+interface TimelineSpMember {
+	user: CommonUser;
+	skillDifference: UserSkillDifference;
+}
+
+export interface TimelineSpChanges {
+	alpha: {
+		members: TimelineSpMember[];
+		skillDifference?: GroupSkillDifference;
+	};
+	bravo: {
+		members: TimelineSpMember[];
+		skillDifference?: GroupSkillDifference;
+	};
+}
+
 export interface MatchTimelineProps {
 	teams: { alpha: TimelineTeam; bravo: TimelineTeam };
 	score: { alpha: number; bravo: number };
 	maps: TimelineMap[];
+	spChanges?: TimelineSpChanges;
 }
 
 // xxx: need to show Pick/Bans somewhere, on tab?
 // xxx: align checkmarks better
-export function MatchTimeline({ teams, score, maps }: MatchTimelineProps) {
+export function MatchTimeline({
+	teams,
+	score,
+	maps,
+	spChanges,
+}: MatchTimelineProps) {
 	return (
 		<div className={styles.root}>
 			<TimelineHeader teams={teams} score={score} maps={maps} />
@@ -57,6 +80,7 @@ export function MatchTimeline({ teams, score, maps }: MatchTimelineProps) {
 					</div>
 				);
 			})}
+			{spChanges ? <TimelineSpSection spChanges={spChanges} /> : null}
 		</div>
 	);
 }
@@ -175,7 +199,7 @@ function WinIndicator({ points }: { points?: number }) {
 
 	return (
 		<div className={styles.winIndicator}>
-			<Check size={32} className={styles.winCheck} />
+			<Check size={18} className={styles.winCheck} />
 			{points === 100 ? (
 				<span className={styles.winPoints}>{t("q:match.action.ko")}</span>
 			) : points ? (
@@ -187,27 +211,43 @@ function WinIndicator({ points }: { points?: number }) {
 	);
 }
 
+function TimelineEventRow({
+	icon,
+	alphaContent,
+	bravoContent,
+}: {
+	icon: React.ReactNode;
+	alphaContent: React.ReactNode;
+	bravoContent: React.ReactNode;
+}) {
+	return (
+		<div className={styles.eventRow}>
+			<div className={styles.eventAlpha}>{alphaContent}</div>
+			<div className={styles.subCenter}>{icon}</div>
+			<div>{bravoContent}</div>
+		</div>
+	);
+}
+
 function TimelineSubstitutionRow({
 	substitution,
 }: {
 	substitution: InferredSubstitution;
 }) {
 	return (
-		<div className={styles.substitutionEvent}>
-			<div>
-				{substitution.side === "ALPHA" ? (
+		<TimelineEventRow
+			icon={<RefreshCcw size={32} className={styles.eventIcon} />}
+			alphaContent={
+				substitution.side === "ALPHA" ? (
 					<SubstitutionDetail substitution={substitution} />
-				) : null}
-			</div>
-			<div className={styles.subCenter}>
-				<RefreshCcw size={24} className={styles.subIcon} />
-			</div>
-			<div>
-				{substitution.side === "BRAVO" ? (
+				) : null
+			}
+			bravoContent={
+				substitution.side === "BRAVO" ? (
 					<SubstitutionDetail substitution={substitution} />
-				) : null}
-			</div>
-		</div>
+				) : null
+			}
+		/>
 	);
 }
 
@@ -229,6 +269,143 @@ function SubstitutionDetail({
 			<Avatar user={substitution.playerIn} size="xxxs" />
 			<span className={styles.subPlayerName}>
 				{substitution.playerIn.username}
+			</span>
+		</div>
+	);
+}
+
+function TimelineSpSection({ spChanges }: { spChanges: TimelineSpChanges }) {
+	const alphaMembersWithDiff = spChanges.alpha.members.filter(
+		(m) => !m.skillDifference.calculated || m.skillDifference.spDiff !== 0,
+	);
+	const bravoMembersWithDiff = spChanges.bravo.members.filter(
+		(m) => !m.skillDifference.calculated || m.skillDifference.spDiff !== 0,
+	);
+
+	const maxMemberRows = Math.max(
+		alphaMembersWithDiff.length,
+		bravoMembersWithDiff.length,
+	);
+
+	if (
+		maxMemberRows === 0 &&
+		!spChanges.alpha.skillDifference &&
+		!spChanges.bravo.skillDifference
+	) {
+		return null;
+	}
+
+	return (
+		<div className={styles.spSection}>
+			<div className={styles.spColumn}>
+				{alphaMembersWithDiff.map((m) => (
+					<SpMemberDetail key={m.user.id} member={m} />
+				))}
+				{spChanges.alpha.skillDifference ? (
+					<SpTeamDetail skillDifference={spChanges.alpha.skillDifference} />
+				) : null}
+			</div>
+			<div className={styles.spIcon}>
+				<TrendingUp size={32} className={styles.eventIcon} />
+			</div>
+			<div className={styles.spColumn}>
+				{bravoMembersWithDiff.map((m) => (
+					<SpMemberDetail key={m.user.id} member={m} />
+				))}
+				{spChanges.bravo.skillDifference ? (
+					<SpTeamDetail skillDifference={spChanges.bravo.skillDifference} />
+				) : null}
+			</div>
+		</div>
+	);
+}
+
+function SpMemberDetail({ member }: { member: TimelineSpMember }) {
+	if (member.skillDifference.calculated) {
+		const isPositive = member.skillDifference.spDiff > 0;
+
+		return (
+			<div className={styles.spDetail}>
+				<Avatar user={member.user} size="xxs" />
+				<span className={isPositive ? "text-success" : "text-warning"}>
+					{isPositive ? "▲" : "▼"}
+				</span>
+				<span>{Math.abs(member.skillDifference.spDiff)}SP</span>
+			</div>
+		);
+	}
+
+	if (
+		member.skillDifference.matchesCount ===
+		member.skillDifference.matchesCountNeeded
+	) {
+		return (
+			<div className={styles.spDetail}>
+				<Avatar user={member.user} size="xxs" />
+				<span className={styles.spCalculatingIcon}>◆</span>
+				<span>
+					{member.skillDifference.newSp ? (
+						<>{member.skillDifference.newSp}SP</>
+					) : null}
+				</span>
+			</div>
+		);
+	}
+
+	return (
+		<div className={styles.spDetail}>
+			<Avatar user={member.user} size="xxs" />
+			<span className={styles.spCalculatingIcon}>◆</span>
+			<span>
+				{member.skillDifference.matchesCount}/
+				{member.skillDifference.matchesCountNeeded}
+			</span>
+		</div>
+	);
+}
+
+function SpTeamDetail({
+	skillDifference,
+}: {
+	skillDifference: GroupSkillDifference;
+}) {
+	if (skillDifference.calculated) {
+		const diff = skillDifference.newSp - skillDifference.oldSp;
+		const isPositive = diff > 0;
+
+		return (
+			<div className={styles.spDetail}>
+				<div className={styles.spTeamIcon}>
+					<Users size={16} />
+				</div>
+				<span className={isPositive ? "text-success" : "text-warning"}>
+					{isPositive ? "▲" : "▼"}
+				</span>
+				<span>{Math.abs(diff)}SP</span>
+			</div>
+		);
+	}
+
+	if (skillDifference.newSp) {
+		return (
+			<div className={styles.spDetail}>
+				<div className={styles.spTeamIcon}>
+					<Users size={16} />
+				</div>
+				<span className={styles.spCalculatingIcon}>◆</span>
+				<span>{skillDifference.newSp}SP</span>
+			</div>
+		);
+	}
+
+	return (
+		<div className={styles.spDetail}>
+			<div className={styles.spTeamIcon}>
+				<Users size={16} />
+			</div>
+			<span className={styles.spCalculatingIcon}>◆</span>
+			<span>
+				{skillDifference.matchesCount}/{skillDifference.matchesCountNeeded}
 			</span>
 		</div>
 	);

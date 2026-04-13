@@ -7,23 +7,21 @@ import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs, TAB_KEYS } from "~/components/match-page/MatchTabs";
-import type { TimelineMap } from "~/components/match-page/MatchTimeline";
+import type {
+	TimelineMap,
+	TimelineSpChanges,
+} from "~/components/match-page/MatchTimeline";
 import { MatchTimeline } from "~/components/match-page/MatchTimeline";
 import { useUser } from "~/features/auth/core/user";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { databaseTimestampToDate } from "~/utils/dates";
-import type { SerializeFrom } from "~/utils/remix";
 import { teamPage } from "~/utils/urls";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 import { resolveGroupMemberOf } from "../q-match-utils";
 import { SendouQMatchActionTab } from "./SendouQMatchActionTab";
 
-export function SendouQMatchTabs({
-	data,
-}: {
-	data: SerializeFrom<SendouQMatchLoaderData>;
-}) {
+export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 	const user = useUser();
 	const confirmFetcher = useFetcher();
 	const { t } = useTranslation(["q"]);
@@ -114,6 +112,7 @@ export function SendouQMatchTabs({
 						bravo: bravoWins,
 					}}
 					maps={resolveTimelineMaps(data.match)}
+					spChanges={resolveTimelineSpChanges(data.match)}
 				/>
 			) : awaitingConfirmation ? (
 				isOnReporterTeam ? (
@@ -176,7 +175,7 @@ function ConfirmerTab({
 	data,
 	reportedCount,
 }: {
-	data: SerializeFrom<SendouQMatchLoaderData>;
+	data: SendouQMatchLoaderData;
 	reportedCount: number;
 }) {
 	const fetcher = useFetcher();
@@ -226,11 +225,7 @@ function ConfirmerTab({
 	);
 }
 
-function ReporterWaitingTab({
-	data,
-}: {
-	data: SerializeFrom<SendouQMatchLoaderData>;
-}) {
+function ReporterWaitingTab({ data }: { data: SendouQMatchLoaderData }) {
 	const undoFetcher = useFetcher();
 	const { t } = useTranslation(["q"]);
 
@@ -267,7 +262,7 @@ function ReporterWaitingTab({
 	);
 }
 
-type MatchData = SerializeFrom<SendouQMatchLoaderData>["match"];
+type MatchData = SendouQMatchLoaderData["match"];
 
 function resolveTimelineTeams(match: MatchData) {
 	return {
@@ -299,6 +294,49 @@ function resolveTimelineMaps(match: MatchData): TimelineMap[] {
 				bravo: match.groupBravo.members,
 			},
 		}));
+}
+
+function resolveTimelineSpChanges(
+	match: MatchData,
+): TimelineSpChanges | undefined {
+	const resolveMembers = (
+		group: MatchData["groupAlpha"] | MatchData["groupBravo"],
+	) =>
+		group.members
+			.filter((m) => m.skillDifference)
+			.map((m) => ({
+				user: {
+					id: m.id,
+					username: m.username,
+					discordId: m.discordId,
+					discordAvatar: m.discordAvatar,
+					customUrl: m.customUrl,
+				},
+				skillDifference: m.skillDifference!,
+			}));
+
+	const alphaMembers = resolveMembers(match.groupAlpha);
+	const bravoMembers = resolveMembers(match.groupBravo);
+
+	if (
+		alphaMembers.length === 0 &&
+		bravoMembers.length === 0 &&
+		!match.groupAlpha.skillDifference &&
+		!match.groupBravo.skillDifference
+	) {
+		return undefined;
+	}
+
+	return {
+		alpha: {
+			members: alphaMembers,
+			skillDifference: match.groupAlpha.skillDifference,
+		},
+		bravo: {
+			members: bravoMembers,
+			skillDifference: match.groupBravo.skillDifference,
+		},
+	};
 }
 
 function mapRosterTeam(
