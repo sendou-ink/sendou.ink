@@ -54,6 +54,15 @@ export const matchSchema = z.union([
 	z.object({
 		_action: _action("UNDO_MAP_REPORT"),
 	}),
+	z.object({
+		_action: _action("REQUEST_CANCEL"),
+	}),
+	z.object({
+		_action: _action("ACCEPT_CANCEL"),
+	}),
+	z.object({
+		_action: _action("REFUSE_CANCEL"),
+	}),
 ]);
 
 export const qMatchPageParamsSchema = z.object({

@@ -118,7 +118,7 @@ export function MatchActionTab({
 					</RadioGroup>
 
 					{withPoints ? (
-						<>
+						<div className={styles.pointsRow}>
 							<PointsInput
 								value={points[0]}
 								onChange={(value) => setPoints([value, points[1]])}
@@ -150,7 +150,7 @@ export function MatchActionTab({
 								hidden={isKo}
 								className={styles.pointsBravo}
 							/>
-						</>
+						</div>
 					) : null}
 
 					<SendouButton

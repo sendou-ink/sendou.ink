@@ -1,8 +1,8 @@
 .root {
 	display: grid;
 	grid-template-columns: repeat(3, max-content);
-	row-gap: var(--s-4);
-	column-gap: var(--s-3);
+	row-gap: var(--s-6);
+	column-gap: var(--s-4);
 	align-items: center;
 	justify-content: center;
 }
@@ -15,7 +15,7 @@
 	display: flex;
 	flex-direction: column;
 	align-items: flex-end;
-	gap: var(--s-1);
+	gap: var(--s-1-5);
 }
 
 .headerTeamBravo {
@@ -24,12 +24,12 @@
 
 .headerTeamName {
 	font-weight: var(--weight-bold);
-	font-size: var(--font-sm);
+	font-size: var(--font-md);
 }
 
 .headerAvatars {
 	display: flex;
-	gap: var(--s-0-5);
+	gap: var(--s-1);
 }
 
 .headerScore {
@@ -75,22 +75,53 @@
 	color: var(--color-text-high);
 }
 
-.winIndicator {
+.sideResult {
 	grid-row: 2;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	gap: var(--s-0-5);
+	gap: var(--s-2-5);
 }
 
-.winCheck {
-	color: var(--color-success);
-	stroke-width: 3;
+.resultHeader {
+	display: flex;
+	align-items: baseline;
+	gap: var(--s-1);
 }
 
-.winPoints {
+.resultLabel {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-extra);
+	text-transform: uppercase;
+}
+
+.resultPoints {
 	font-size: var(--font-3xs);
+	font-weight: var(--weight-semi);
+}
+
+.weaponRow {
+	display: flex;
+	gap: var(--s-0-5);
+	background-color: var(--color-bg-higher);
+	border: none;
+	border-radius: var(--radius-full);
+	padding: var(--s-0-5) var(--s-1-5);
+	cursor: pointer;
+}
+
+.weaponPopover {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.weaponPopoverRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 }
 
@@ -117,9 +148,10 @@
 
 .subDetail {
 	display: grid;
-	grid-template-columns: auto auto 1fr;
+	grid-template-columns: max-content 1fr;
 	align-items: center;
-	gap: var(--s-1);
+	row-gap: var(--s-1);
+	column-gap: var(--s-3);
 }
 
 .subLabelOut {

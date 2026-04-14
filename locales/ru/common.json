@@ -143,6 +143,7 @@
 	"actions.disable": "Выключить",
 	"actions.accept": "Подтвердить",
 	"actions.decline": "",
+	"actions.refuse": "",
 	"actions.confirm": "",
 	"actions.next": "",
 	"actions.previous": "",

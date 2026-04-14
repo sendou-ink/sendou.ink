@@ -44,6 +44,8 @@ export async function findById(id: number) {
 			"GroupMatch.confirmedByUserId",
 			"GroupMatch.chatCode",
 			"GroupMatch.memento",
+			"GroupMatch.cancelRequestedByUserId",
+			"GroupMatch.cancelAcceptedByUserId",
 			exists(
 				selectFrom("Skill")
 					.select("Skill.id")
@@ -819,6 +821,135 @@ export async function cancelMatch({
 		await lockMatchWithoutSkillChange(match.id, trx);
 	});
 	return { status: "CANCEL_CONFIRMED", shouldRefreshCaches: true };
+}
+
+export type RequestCancelResult =
+	| { status: "REQUESTED" }
+	| { status: "ALREADY_LOCKED" }
+	| { status: "ALREADY_REQUESTED" };
+
+export async function requestCancelMatch({
+	matchId,
+	requestedByUserId,
+}: {
+	matchId: number;
+	requestedByUserId: number;
+}): Promise<RequestCancelResult> {
+	const match = await findById(matchId);
+	invariant(match, "Match not found");
+
+	if (match.isLocked) {
+		return { status: "ALREADY_LOCKED" };
+	}
+
+	if (match.cancelRequestedByUserId) {
+		return { status: "ALREADY_REQUESTED" };
+	}
+
+	await db
+		.updateTable("GroupMatch")
+		.set({ cancelRequestedByUserId: requestedByUserId })
+		.where("id", "=", matchId)
+		.execute();
+
+	return { status: "REQUESTED" };
+}
+
+export type AcceptCancelResult =
+	| { status: "ACCEPTED" }
+	| { status: "ALREADY_LOCKED" }
+	| { status: "NO_CANCEL_REQUEST" }
+	| { status: "NOT_ALLOWED" };
+
+export async function acceptCancelMatch({
+	matchId,
+	acceptedByUserId,
+}: {
+	matchId: number;
+	acceptedByUserId: number;
+}): Promise<AcceptCancelResult> {
+	const match = await findById(matchId);
+	invariant(match, "Match not found");
+
+	if (match.isLocked) {
+		return { status: "ALREADY_LOCKED" };
+	}
+
+	if (!match.cancelRequestedByUserId) {
+		return { status: "NO_CANCEL_REQUEST" };
+	}
+
+	const members = buildMembers(match);
+	const requesterGroupId = members.find(
+		(m) => m.id === match.cancelRequestedByUserId,
+	)?.groupId;
+	invariant(requesterGroupId, "Requester is not a member of any group");
+
+	const accepterGroupId = members.find(
+		(m) => m.id === acceptedByUserId,
+	)?.groupId;
+	invariant(accepterGroupId, "Accepter is not a member of any group");
+
+	if (accepterGroupId === requesterGroupId) {
+		return { status: "NOT_ALLOWED" };
+	}
+
+	await db.transaction().execute(async (trx) => {
+		await SQGroupRepository.setAsInactive(requesterGroupId, trx);
+		await SQGroupRepository.setAsInactive(accepterGroupId, trx);
+		await lockMatchWithoutSkillChange(match.id, trx);
+		await trx
+			.updateTable("GroupMatch")
+			.set({ cancelAcceptedByUserId: acceptedByUserId })
+			.where("id", "=", matchId)
+			.execute();
+	});
+
+	return { status: "ACCEPTED" };
+}
+
+export type RefuseCancelResult =
+	| { status: "REFUSED" }
+	| { status: "ALREADY_LOCKED" }
+	| { status: "NO_CANCEL_REQUEST" }
+	| { status: "NOT_ALLOWED" };
+
+export async function refuseCancelMatch({
+	matchId,
+	refusedByUserId,
+}: {
+	matchId: number;
+	refusedByUserId: number;
+}): Promise<RefuseCancelResult> {
+	const match = await findById(matchId);
+	invariant(match, "Match not found");
+
+	if (match.isLocked) {
+		return { status: "ALREADY_LOCKED" };
+	}
+
+	if (!match.cancelRequestedByUserId) {
+		return { status: "NO_CANCEL_REQUEST" };
+	}
+
+	const members = buildMembers(match);
+	const requesterGroupId = members.find(
+		(m) => m.id === match.cancelRequestedByUserId,
+	)?.groupId;
+	const refuserGroupId = members.find((m) => m.id === refusedByUserId)?.groupId;
+	invariant(refuserGroupId, "Refuser is not a member of any group");
+
+	if (refuserGroupId === requesterGroupId) {
+		return { status: "NOT_ALLOWED" };
+	}
+
+	await db
+		.updateTable("GroupMatch")
+		.set({ cancelRequestedByUserId: null })
+		.where("id", "=", matchId)
+		.execute();
+
+	return { status: "REFUSED" };
 }
 
 export type ReportMapWinnerResult =

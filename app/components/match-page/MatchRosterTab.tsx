@@ -5,12 +5,19 @@ import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import { Image, TierImage } from "~/components/Image";
+import type { TierName } from "~/features/mmr/mmr-constants";
 import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
-import { userPage } from "~/utils/urls";
+import { tierImageUrl, userPage } from "~/utils/urls";
 import { SendouTabPanel } from "../elements/Tabs";
 import styles from "./MatchRosterTab.module.css";
 import { TAB_KEYS } from "./MatchTabs";
+
+type RosterTabMember = CommonUser & {
+	tier?: { name: TierName; isPlus: boolean } | "CALCULATING";
+	plusTier?: number | null;
+};
 
 interface RosterTabTeam {
 	team?: {
@@ -20,9 +27,10 @@ interface RosterTabTeam {
 		avatar?: string;
 	};
 	defaultName?: string;
-	members: Array<CommonUser>;
+	members: Array<RosterTabMember>;
 	/** Sub user ids i.e. those who are not the current active roster */
 	subbedOut?: Array<number>;
+	tier?: { name: TierName; isPlus: boolean };
 }
 
 interface MatchRosterTabProps {
@@ -126,6 +134,7 @@ function TeamRoster({
 										to={userPage(member)}
 										className="stack horizontal sm items-center"
 									>
+										<MemberTierBadge tier={member.tier} />
 										<Avatar user={member} size="xxs" />
 										<span>{member.username}</span>
 									</Link>
@@ -215,6 +224,10 @@ function TeamHeader({
 	label: string;
 	dotClassName: string;
 }) {
+	const tierText = team.tier
+		? `${team.tier.name.toLowerCase()}${team.tier.isPlus ? "+" : ""}`
+		: undefined;
+
 	if (team.team) {
 		return (
 			<Link to={team.team.url} className="stack horizontal sm">
@@ -228,6 +241,12 @@ function TeamHeader({
 					<div className="stack xs horizontal items-center text-lighter">
 						<div className={dotClassName} />
 						{label}
+						{tierText ? (
+							<>
+								<span>•</span>
+								<span className="text-capitalize">{tierText}</span>
+							</>
+						) : null}
 					</div>
 				</div>
 			</Link>
@@ -244,13 +263,42 @@ function TeamHeader({
 				<div className="stack xs horizontal items-center text-lighter">
 					<div className={dotClassName} />
 					{label}
+					{tierText ? (
+						<>
+							<span>•</span>
+							<span className="text-capitalize">{tierText}</span>
+						</>
+					) : null}
 				</div>
 			</div>
 		</div>
 	);
 }
 
-function SubbedOutPopover({ members }: { members: Array<CommonUser> }) {
+function MemberTierBadge({
+	tier,
+}: {
+	tier?: { name: TierName; isPlus: boolean } | "CALCULATING";
+}) {
+	if (!tier) return null;
+
+	return (
+		<div className={styles.tierBadge}>
+			{tier === "CALCULATING" ? (
+				<Image
+					path={tierImageUrl("CALCULATING")}
+					alt=""
+					width={22}
+					height={22 * 0.8675}
+				/>
+			) : (
+				<TierImage tier={tier} width={22} />
+			)}
+		</div>
+	);
+}
+
+function SubbedOutPopover({ members }: { members: Array<RosterTabMember> }) {
 	const { t } = useTranslation(["q"]);
 
 	return (

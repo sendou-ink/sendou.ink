@@ -9,6 +9,7 @@ import * as AssociationRepository from "~/features/associations/AssociationRepos
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { tags } from "~/features/calendar/calendar-constants";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
@@ -70,7 +71,7 @@ import {
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import { randomTeamName } from "~/utils/team-name";
-import { mySlugify } from "~/utils/urls";
+import { mySlugify, navIconUrl, sendouQMatchPage } from "~/utils/urls";
 import {
 	getArtFilename,
 	SEED_ART_URLS,
@@ -2542,12 +2543,24 @@ async function groups(variation?: SeedVariation | null) {
 			bravoMemberIds: nzapGroupMemberIds,
 		});
 
-		await SQMatchRepository.create({
+		const createdMatch = await SQMatchRepository.create({
 			alphaGroupId: sendouGroupId,
 			bravoGroupId: nzapGroupId,
 			mapList,
 			memento,
 		});
+
+		if (createdMatch.chatCode) {
+			await ChatSystemMessage.setMetadata({
+				chatCode: createdMatch.chatCode,
+				header: `Match #${createdMatch.id}`,
+				subtitle: "SendouQ",
+				url: sendouQMatchPage(createdMatch.id),
+				imageUrl: `${navIconUrl("sendouq")}.avif`,
+				participantUserIds: [...sendouGroupMemberIds, ...nzapGroupMemberIds],
+				expiresAfter: { hours: 2 },
+			});
+		}
 
 		const thirtyMinutesAgo = dateToDatabaseTimestamp(
 			sub(new Date(), { minutes: 30 }),
@@ -2716,7 +2729,47 @@ function buildSeedMemento({
 		}),
 	);
 
-	return { users: {}, groups: {}, pools };
+	const tierNames = [
+		"LEVIATHAN",
+		"DIAMOND",
+		"PLATINUM",
+		"GOLD",
+		"SILVER",
+		"BRONZE",
+		"IRON",
+	] as const;
+
+	const users: ParsedMemento["users"] = {};
+	for (const userId of [...alphaMemberIds, ...bravoMemberIds]) {
+		const tierName = faker.helpers.arrayElement(tierNames);
+		users[userId] = {
+			skill: {
+				ordinal: faker.number.float({ min: 1000, max: 3000 }),
+				tier: {
+					name: tierName,
+					isPlus: faker.datatype.boolean(),
+				},
+				approximate: false,
+			},
+		};
+	}
+
+	const groups: ParsedMemento["groups"] = {
+		[alphaGroupId]: {
+			tier: {
+				name: faker.helpers.arrayElement(tierNames),
+				isPlus: faker.datatype.boolean(),
+			},
+		},
+		[bravoGroupId]: {
+			tier: {
+				name: faker.helpers.arrayElement(tierNames),
+				isPlus: faker.datatype.boolean(),
+			},
+		},
+	};
+
+	return { users, groups, pools };
 }
 
 const MATCHES_COUNT = 500;

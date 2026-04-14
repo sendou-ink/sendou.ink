@@ -18,10 +18,8 @@
 			"actions actions"
 			"stage alpha"
 			"stage bravo"
-			"ko ko"
-			"points-alpha points-bravo"
+			"points points"
 			"submit submit";
-		gap: var(--s-2);
 	}
 }
 
@@ -36,11 +34,11 @@
 	grid-area: actions;
 	display: flex;
 	gap: var(--s-6);
-	margin-top: calc(-1 * var(--s-4));
+	margin-block-start: calc(-1 * var(--s-4));
 
 	@media screen and (max-width: 599px) {
-		margin-top: calc(-1 * var(--s-2));
-		margin-bottom: var(--s-2);
+		margin-block-start: calc(-1 * var(--s-3));
+		margin-block-end: calc(-1 * var(--s-0-5));
 	}
 }
 
@@ -105,6 +103,18 @@
 	}
 }
 
+.pointsRow {
+	display: contents;
+
+	@media screen and (max-width: 599px) {
+		display: flex;
+		grid-area: points;
+		justify-content: center;
+		align-items: flex-end;
+		gap: var(--s-4);
+	}
+}
+
 .pointsAlpha {
 	grid-area: points-alpha;
 	justify-self: end;
@@ -126,6 +136,7 @@
 
 .submit {
 	grid-area: submit;
+	margin-block-start: var(--s-2);
 }
 
 .checkCircle {

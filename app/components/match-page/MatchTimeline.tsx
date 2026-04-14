@@ -1,14 +1,20 @@
 import clsx from "clsx";
-import { Check, RefreshCcw, TrendingUp, Users } from "lucide-react";
+import { RefreshCcw, TrendingUp, Users } from "lucide-react";
+import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import type { GroupSkillDifference, UserSkillDifference } from "~/db/tables";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 import { Avatar } from "../Avatar";
-import { ModeImage, StageImage } from "../Image";
+import { SendouPopover } from "../elements/Popover";
+import { Image, ModeImage, StageImage, WeaponImage } from "../Image";
 import styles from "./MatchTimeline.module.css";
 
 type MatchSide = "ALPHA" | "BRAVO";
@@ -26,6 +32,10 @@ export interface TimelineMap {
 	rosters: {
 		alpha: CommonUser[];
 		bravo: CommonUser[];
+	};
+	weapons?: {
+		alpha: Array<MainWeaponId | null>;
+		bravo: Array<MainWeaponId | null>;
 	};
 	/** Optional point values [alpha, bravo] */
 	points?: [number, number];
@@ -133,7 +143,7 @@ function TimelineHeader({
 				{initialRosters ? (
 					<div className={styles.headerAvatars}>
 						{initialRosters.alpha.map((user) => (
-							<Avatar key={user.id} user={user} size="xxxs" />
+							<Avatar key={user.id} user={user} size="xxs" />
 						))}
 					</div>
 				) : null}
@@ -146,7 +156,7 @@ function TimelineHeader({
 				{initialRosters ? (
 					<div className={styles.headerAvatars}>
 						{initialRosters.bravo.map((user) => (
-							<Avatar key={user.id} user={user} size="xxxs" />
+							<Avatar key={user.id} user={user} size="xxs" />
 						))}
 					</div>
 				) : null}
@@ -163,9 +173,11 @@ function TimelineMapRow({ map }: { map: TimelineMap }) {
 	return (
 		<div className={styles.mapEvent}>
 			<div className={styles.mapSide}>
-				{map.winner === "ALPHA" ? (
-					<WinIndicator points={map.points?.[0]} />
-				) : null}
+				<SideResult
+					result={map.winner === "ALPHA" ? "WIN" : "LOSS"}
+					points={map.points?.[0]}
+					weapons={map.weapons?.alpha}
+				/>
 			</div>
 			<div className={styles.mapCenter}>
 				<time className={styles.mapTimestamp}>
@@ -186,28 +198,91 @@ function TimelineMapRow({ map }: { map: TimelineMap }) {
 				</div>
 			</div>
 			<div className={styles.mapSide}>
-				{map.winner === "BRAVO" ? (
-					<WinIndicator points={map.points?.[1]} />
-				) : null}
+				<SideResult
+					result={map.winner === "BRAVO" ? "WIN" : "LOSS"}
+					points={map.points?.[1]}
+					weapons={map.weapons?.bravo}
+				/>
 			</div>
 		</div>
 	);
 }
 
-function WinIndicator({ points }: { points?: number }) {
+function SideResult({
+	result,
+	points,
+	weapons,
+}: {
+	result: "WIN" | "LOSS";
+	points?: number;
+	weapons?: Array<MainWeaponId | null>;
+}) {
 	const { t } = useTranslation(["q"]);
 
 	return (
-		<div className={styles.winIndicator}>
-			<Check size={18} className={styles.winCheck} />
-			{points === 100 ? (
-				<span className={styles.winPoints}>{t("q:match.action.ko")}</span>
-			) : points ? (
-				<span className={styles.winPoints}>
-					{t("q:match.timeline.points", { count: points })}
+		<div className={styles.sideResult}>
+			<div className={styles.resultHeader}>
+				<span
+					className={clsx(
+						styles.resultLabel,
+						result === "WIN" ? "text-success" : "text-error",
+					)}
+				>
+					{result === "WIN"
+						? t("q:match.timeline.win")
+						: t("q:match.timeline.loss")}
 				</span>
-			) : null}
+				{points === 100 ? (
+					<span className={styles.resultPoints}>{t("q:match.action.ko")}</span>
+				) : points ? (
+					<span className={styles.resultPoints}>
+						{t("q:match.timeline.points", { count: points })}
+					</span>
+				) : null}
+			</div>
+			{weapons ? <WeaponPill weapons={weapons} /> : null}
 		</div>
+	);
+}
+
+function WeaponPill({ weapons }: { weapons: Array<MainWeaponId | null> }) {
+	const { t } = useTranslation(["weapons"]);
+
+	return (
+		<SendouPopover
+			trigger={
+				<Button className={styles.weaponRow}>
+					{weapons.map((weaponId, i) =>
+						weaponId !== null ? (
+							<WeaponImage
+								key={i}
+								weaponSplId={weaponId}
+								variant="badge"
+								size={24}
+							/>
+						) : (
+							<Image
+								key={i}
+								path="/static-assets/img/abilities/UNKNOWN"
+								alt="?"
+								size={24}
+							/>
+						),
+					)}
+				</Button>
+			}
+		>
+			<div className={styles.weaponPopover}>
+				{weapons.map((weaponId, i) =>
+					weaponId !== null ? (
+						<div key={i} className={styles.weaponPopoverRow}>
+							<WeaponImage weaponSplId={weaponId} variant="badge" size={32} />
+							<span>{t(`weapons:MAIN_${weaponId}` as any)}</span>
+						</div>
+					) : null,
+				)}
+			</div>
+		</SendouPopover>
 	);
 }
 
@@ -261,15 +336,19 @@ function SubstitutionDetail({
 	return (
 		<div className={styles.subDetail}>
 			<span className={styles.subLabelOut}>{t("q:match.timeline.out")}</span>
-			<Avatar user={substitution.playerOut} size="xxxs" />
-			<span className={styles.subPlayerName}>
-				{substitution.playerOut.username}
-			</span>
+			<div className="stack horizontal items-center sm">
+				<Avatar user={substitution.playerOut} size="xxxs" />
+				<span className={styles.subPlayerName}>
+					{substitution.playerOut.username}
+				</span>
+			</div>
 			<span className={styles.subLabelIn}>{t("q:match.timeline.in")}</span>
-			<Avatar user={substitution.playerIn} size="xxxs" />
-			<span className={styles.subPlayerName}>
-				{substitution.playerIn.username}
-			</span>
+			<div className="stack horizontal items-center sm">
+				<Avatar user={substitution.playerIn} size="xxxs" />
+				<span className={styles.subPlayerName}>
+					{substitution.playerIn.username}
+				</span>
+			</div>
 		</div>
 	);
 }

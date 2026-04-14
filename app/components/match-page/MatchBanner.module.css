@@ -1,4 +1,6 @@
 .root {
+	--banner-height: 175px;
+
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-1-5);
@@ -14,7 +16,7 @@
 	background-position: center;
 	background-repeat: no-repeat;
 	width: 100%;
-	height: 175px;
+	height: var(--banner-height);
 	border-radius: var(--radius-box);
 	padding: var(--s-2);
 	background-image:
@@ -117,4 +119,26 @@
 	&:last-child {
 		clip-path: polygon(var(--slant) 0, 100% 0, 100% 100%, 0 100%);
 	}
+}
+
+.iconBanner {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-1);
+	width: 100%;
+	height: var(--banner-height);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-higher);
+}
+
+.iconBannerHeader {
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
+}
+
+.iconBannerSubtitle {
+	font-size: var(--font-xs);
+	color: var(--color-text-low);
 }

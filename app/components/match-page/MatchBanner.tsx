@@ -23,6 +23,7 @@ interface MatchBannerProps {
 	children: React.ReactNode;
 }
 
+// xxx: light mode wrong mode + stage name and votes text
 export function MatchBanner({
 	stageId,
 	mode,
@@ -63,6 +64,24 @@ export function MultiMatchBanner({ stageIds }: { stageIds: StageId[] }) {
 					}
 				/>
 			))}
+		</div>
+	);
+}
+
+interface IconBannerProps {
+	icon: React.ReactNode;
+	header: string;
+	subtitle?: string;
+}
+
+export function IconBanner({ icon, header, subtitle }: IconBannerProps) {
+	return (
+		<div className={styles.iconBanner}>
+			{icon}
+			<div className={styles.iconBannerHeader}>{header}</div>
+			{subtitle ? (
+				<div className={styles.iconBannerSubtitle}>{subtitle}</div>
+			) : null}
 		</div>
 	);
 }

@@ -206,6 +206,93 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			await refreshSendouQInstance();
 			break;
 		}
+		case "REQUEST_CANCEL": {
+			const unmappedMatch = notFoundIfFalsy(
+				await SQMatchRepository.findById(matchId),
+			);
+
+			const result = await SQMatchRepository.requestCancelMatch({
+				matchId,
+				requestedByUserId: user.id,
+			});
+
+			if (result.status === "ALREADY_LOCKED") {
+				return null;
+			}
+			if (result.status === "ALREADY_REQUESTED") {
+				return null;
+			}
+
+			if (unmappedMatch.chatCode) {
+				ChatSystemMessage.send({
+					room: unmappedMatch.chatCode,
+					revalidateOnly: true,
+				});
+			}
+
+			await refreshSendouQInstance();
+			break;
+		}
+		case "ACCEPT_CANCEL": {
+			const unmappedMatch = notFoundIfFalsy(
+				await SQMatchRepository.findById(matchId),
+			);
+
+			const result = await SQMatchRepository.acceptCancelMatch({
+				matchId,
+				acceptedByUserId: user.id,
+			});
+
+			if (result.status === "ALREADY_LOCKED") {
+				return null;
+			}
+			if (result.status === "NO_CANCEL_REQUEST") {
+				return null;
+			}
+			if (result.status === "NOT_ALLOWED") {
+				return errorToast("Cannot accept own cancel request");
+			}
+
+			if (unmappedMatch.chatCode) {
+				ChatSystemMessage.send({
+					room: unmappedMatch.chatCode,
+					revalidateOnly: true,
+				});
+			}
+
+			await refreshSendouQInstance();
+			break;
+		}
+		case "REFUSE_CANCEL": {
+			const unmappedMatch = notFoundIfFalsy(
+				await SQMatchRepository.findById(matchId),
+			);
+
+			const result = await SQMatchRepository.refuseCancelMatch({
+				matchId,
+				refusedByUserId: user.id,
+			});
+
+			if (result.status === "ALREADY_LOCKED") {
+				return null;
+			}
+			if (result.status === "NO_CANCEL_REQUEST") {
+				return null;
+			}
+			if (result.status === "NOT_ALLOWED") {
+				return errorToast("Cannot refuse own cancel request");
+			}
+
+			if (unmappedMatch.chatCode) {
+				ChatSystemMessage.send({
+					room: unmappedMatch.chatCode,
+					revalidateOnly: true,
+				});
+			}
+
+			await refreshSendouQInstance();
+			break;
+		}
 		default: {
 			assertUnreachable(data);
 		}

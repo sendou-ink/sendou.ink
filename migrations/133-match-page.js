@@ -23,5 +23,13 @@ export function up(db) {
 		db.prepare(
 			/* sql */ `alter table "GroupMatch" add "confirmedByUserId" integer references "User"("id")`,
 		).run();
+
+		db.prepare(
+			/* sql */ `alter table "GroupMatch" add "cancelRequestedByUserId" integer references "User"("id")`,
+		).run();
+
+		db.prepare(
+			/* sql */ `alter table "GroupMatch" add "cancelAcceptedByUserId" integer references "User"("id")`,
+		).run();
 	})();
 }

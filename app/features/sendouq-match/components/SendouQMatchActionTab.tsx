@@ -2,11 +2,15 @@ import { Ban, Undo2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouTabPanel } from "~/components/elements/Tabs";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { MatchActionTab } from "~/components/match-page/MatchActionTab";
+import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import { isSetOverByScore } from "~/features/tournament-bracket/tournament-bracket-utils";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
+import styles from "./SendouQMatchActionTab.module.css";
 
 export function SendouQMatchActionTab({
 	data,
@@ -19,9 +23,10 @@ export function SendouQMatchActionTab({
 	ownTeamId: number;
 	reportedCount: number;
 }) {
-	const { t } = useTranslation(["q"]);
+	const { t } = useTranslation(["q", "common"]);
 	const fetcher = useFetcher();
 	const undoFetcher = useFetcher();
+	const cancelFetcher = useFetcher();
 
 	const alphaScore = data.match.mapList.filter(
 		(m) => m.winnerGroupId === data.match.groupAlpha.id,
@@ -29,6 +34,66 @@ export function SendouQMatchActionTab({
 	const bravoScore = data.match.mapList.filter(
 		(m) => m.winnerGroupId === data.match.groupBravo.id,
 	).length;
+
+	const cancelRequesterIsAlpha = data.match.groupAlpha.members.some(
+		(m) => m.id === data.match.cancelRequestedByUserId,
+	);
+	const cancelRequestedByGroupId = data.match.cancelRequestedByUserId
+		? cancelRequesterIsAlpha
+			? data.match.groupAlpha.id
+			: data.match.groupBravo.id
+		: undefined;
+
+	if (cancelRequestedByGroupId === ownTeamId) {
+		return (
+			<SendouTabPanel id={TAB_KEYS.ACTION}>
+				<div className={styles.cancelWaiting}>
+					{t("q:match.cancelPendingConfirmation")}
+				</div>
+			</SendouTabPanel>
+		);
+	}
+
+	if (
+		cancelRequestedByGroupId != null &&
+		cancelRequestedByGroupId !== ownTeamId
+	) {
+		return (
+			<SendouTabPanel id={TAB_KEYS.ACTION}>
+				<div className={styles.cancelRespondRoot}>
+					<div className={styles.cancelRespondHeader}>
+						{t("q:match.action.acceptCancelingSet")}
+					</div>
+					<div className={styles.cancelRespondButtons}>
+						<SendouButton
+							variant="outlined"
+							isDisabled={cancelFetcher.state !== "idle"}
+							onPress={() => {
+								cancelFetcher.submit(
+									{ _action: "REFUSE_CANCEL" },
+									{ method: "post" },
+								);
+							}}
+						>
+							{t("common:actions.refuse")}
+						</SendouButton>
+						<SendouButton
+							variant="primary"
+							isDisabled={cancelFetcher.state !== "idle"}
+							onPress={() => {
+								cancelFetcher.submit(
+									{ _action: "ACCEPT_CANCEL" },
+									{ method: "post" },
+								);
+							}}
+						>
+							{t("common:actions.accept")}
+						</SendouButton>
+					</div>
+				</div>
+			</SendouTabPanel>
+		);
+	}
 
 	const scores: [number, number] = [alphaScore, bravoScore];
 
@@ -91,13 +156,20 @@ export function SendouQMatchActionTab({
 			}}
 			actionButtons={
 				<>
-					<SendouButton
-						variant="minimal-destructive"
-						size="miniscule"
-						icon={<Ban size={16} />}
+					<FormWithConfirm
+						fields={[["_action", "REQUEST_CANCEL"]]}
+						dialogHeading={t("q:match.cancelMatch.confirm")}
+						submitButtonText={t("common:actions.confirm")}
+						fetcher={cancelFetcher}
 					>
-						{t("q:match.action.requestCancel")}
-					</SendouButton>
+						<SendouButton
+							variant="minimal-destructive"
+							size="miniscule"
+							icon={<Ban size={16} />}
+						>
+							{t("q:match.action.requestCancel")}
+						</SendouButton>
+					</FormWithConfirm>
 					{scoreIsNotZero ? (
 						<SendouButton
 							variant="minimal-destructive"

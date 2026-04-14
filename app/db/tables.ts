@@ -308,6 +308,9 @@ export interface GroupMatch {
 	memento: JSONColumnTypeNullable<ParsedMemento>;
 	reportedAt: number | null;
 	reportedByUserId: number | null;
+	// xxx: how to backfill?
+	cancelRequestedByUserId: number | null;
+	cancelAcceptedByUserId: number | null;
 }
 
 export interface GroupMatchMap {

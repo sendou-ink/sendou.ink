@@ -276,7 +276,7 @@ function ChatProviderInner({
 			"system:",
 			isSystemMessage,
 		);
-		if (isSystemMessage) {
+		if (isSystemMessage || messageArr[0].revalidateOnly) {
 			revalidate();
 		}
 

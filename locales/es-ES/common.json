@@ -143,6 +143,7 @@
 	"actions.disable": "Desactivar",
 	"actions.accept": "Aceptar",
 	"actions.decline": "",
+	"actions.refuse": "",
 	"actions.confirm": "Confirmar",
 	"actions.next": "Siguiente",
 	"actions.previous": "Anterior",

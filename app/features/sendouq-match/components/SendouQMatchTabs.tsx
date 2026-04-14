@@ -113,7 +113,16 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 					}}
 					maps={resolveTimelineMaps(data.match)}
 					spChanges={resolveTimelineSpChanges(data.match)}
-				/>
+				>
+					{data.match.cancelRequestedByUserId ? (
+						<p className="text-lighter text-xxs text-center mt-4">
+							{t("q:match.canceled.detail", {
+								requester: resolveCancelRequesterUsername(data.match),
+								accepter: resolveCancelAccepterUsername(data.match),
+							})}
+						</p>
+					) : null}
+				</MatchResultTab>
 			) : awaitingConfirmation ? (
 				isOnReporterTeam ? (
 					<ReporterWaitingTab data={data} />
@@ -150,12 +159,14 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 					{
 						team: mapRosterTeam(data.match.groupAlpha.team),
 						defaultName: t("q:match.groupAlpha"),
-						members: data.match.groupAlpha.members,
+						members: mapRosterMembers(data.match.groupAlpha.members),
+						tier: data.match.groupAlpha.tier ?? undefined,
 					},
 					{
 						team: mapRosterTeam(data.match.groupBravo.team),
 						defaultName: t("q:match.groupBravo"),
-						members: data.match.groupBravo.members,
+						members: mapRosterMembers(data.match.groupBravo.members),
+						tier: data.match.groupBravo.tier ?? undefined,
 					},
 				]}
 			/>
@@ -340,6 +351,32 @@ function resolveTimelineSpChanges(
 			skillDifference: match.groupBravo.skillDifference,
 		},
 	};
+}
+
+function resolveCancelRequesterUsername(match: MatchData) {
+	const allMembers = [...match.groupAlpha.members, ...match.groupBravo.members];
+	return (
+		allMembers.find((m) => m.id === match.cancelRequestedByUserId)?.username ??
+		"?"
+	);
+}
+
+function resolveCancelAccepterUsername(match: MatchData) {
+	const allMembers = [...match.groupAlpha.members, ...match.groupBravo.members];
+	return (
+		allMembers.find((m) => m.id === match.cancelAcceptedByUserId)?.username ??
+		"?"
+	);
+}
+
+function mapRosterMembers(members: MatchData["groupAlpha"]["members"]) {
+	return members.map((member) => ({
+		...member,
+		tier:
+			member.skill === "CALCULATING"
+				? ("CALCULATING" as const)
+				: member.skill?.tier,
+	}));
 }
 
 function mapRosterTeam(

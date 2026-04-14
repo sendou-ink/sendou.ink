@@ -1,10 +1,11 @@
 import { differenceInMinutes } from "date-fns";
-import { Vote } from "lucide-react";
+import { Ban, Vote } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import {
+	IconBanner,
 	MatchBanner,
 	MatchBannerContainer,
 	MultiMatchBanner,
@@ -21,6 +22,18 @@ import invariant from "~/utils/invariant";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 
 export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
+	const { t } = useTranslation(["q"]);
+
+	const cancelRequested = Boolean(data.match.cancelRequestedByUserId);
+	const cancelRequesterIsAlpha = data.match.groupAlpha.members.some(
+		(m) => m.id === data.match.cancelRequestedByUserId,
+	);
+	const cancelRequesterName = cancelRequested
+		? cancelRequesterIsAlpha
+			? (data.match.groupAlpha.team?.name ?? "Group Alpha")
+			: (data.match.groupBravo.team?.name ?? "Group Bravo")
+		: undefined;
+
 	const bottomRow = (
 		<MatchBannerBottomRow
 			games={data.match.mapList.map((map) => ({
@@ -51,6 +64,8 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 		!data.match.isLocked && (alphaWins >= mapsToWin || bravoWins >= mapsToWin);
 
 	if (data.match.isLocked || awaitingConfirmation) {
+		const isCanceled = data.match.isLocked && cancelRequested;
+
 		const playedStageIds = data.match.mapList
 			.filter((m) => m.winnerGroupId !== null)
 			.map((m) => m.stageId);
@@ -61,7 +76,11 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 					data={data}
 					awaitingConfirmation={awaitingConfirmation}
 				/>
-				<MultiMatchBanner stageIds={playedStageIds} />
+				{isCanceled ? (
+					<IconBanner icon={<Ban size={32} />} header={t("q:match.canceled")} />
+				) : (
+					<MultiMatchBanner stageIds={playedStageIds} />
+				)}
 				{bottomRow}
 			</MatchBannerContainer>
 		);
@@ -73,15 +92,25 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 	return (
 		<MatchBannerContainer>
 			<SendouQMatchBannerTopRow data={data} awaitingConfirmation={false} />
-			<MatchBanner
-				stageId={currentMap.stageId}
-				mode={currentMap.mode}
-				screenLegal={
-					!data.match.groupAlpha.noScreen && !data.match.groupBravo.noScreen
-				}
-			>
-				<CurrentMapVotesBadge data={data} currentMap={currentMap} />
-			</MatchBanner>
+			{cancelRequesterName ? (
+				<IconBanner
+					icon={<Ban size={32} />}
+					header={t("q:match.cancelRequested")}
+					subtitle={t("q:match.cancelRequested.subtitle", {
+						teamName: cancelRequesterName,
+					})}
+				/>
+			) : (
+				<MatchBanner
+					stageId={currentMap.stageId}
+					mode={currentMap.mode}
+					screenLegal={
+						!data.match.groupAlpha.noScreen && !data.match.groupBravo.noScreen
+					}
+				>
+					<CurrentMapVotesBadge data={data} currentMap={currentMap} />
+				</MatchBanner>
+			)}
 			{bottomRow}
 		</MatchBannerContainer>
 	);
