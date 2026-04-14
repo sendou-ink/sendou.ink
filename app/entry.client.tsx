@@ -5,6 +5,7 @@ import { I18nextProvider } from "react-i18next";
 import { HydratedRouter } from "react-router/dom";
 import { i18nLoader } from "./modules/i18n/loader";
 import { logger } from "./utils/logger";
+import { ensurePushSubscription } from "./utils/push-subscription";
 import { getSessionId } from "./utils/session-id";
 
 const originalFetch = window.fetch;
@@ -25,38 +26,10 @@ if ("serviceWorker" in navigator) {
 				!sessionStorage.getItem("push-renewed")
 			) {
 				sessionStorage.setItem("push-renewed", "1");
-				void renewPushSubscription(registration);
+				void ensurePushSubscription(registration).catch(logger.error);
 			}
 		});
 	});
-}
-
-async function renewPushSubscription(registration: ServiceWorkerRegistration) {
-	try {
-		const existing = await registration.pushManager.getSubscription();
-
-		const isExpired =
-			existing?.expirationTime != null && existing.expirationTime <= Date.now();
-
-		let subscription = existing;
-		if (!subscription || isExpired) {
-			if (isExpired) {
-				await existing?.unsubscribe();
-			}
-			subscription = await registration.pushManager.subscribe({
-				userVisibleOnly: true,
-				applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,
-			});
-		}
-
-		await fetch("/notifications/subscribe", {
-			method: "post",
-			body: JSON.stringify(subscription),
-			headers: { "content-type": "application/json" },
-		});
-	} catch (error) {
-		logger.error(error);
-	}
 }
 
 i18nLoader()
