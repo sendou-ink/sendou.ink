@@ -288,9 +288,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 				`Checking in (bracket try): tournament team id: ${teamMemberOf.id} - user id: ${user.id} - tournament id: ${tournament.ctx.id} - bracket idx: ${data.bracketIdx}`,
 			);
 
-			await TournamentTeamRepository.checkIn({
+			await TournamentTeamRepository.checkIn(teamMemberOf.id, {
 				bracketIdx: data.bracketIdx,
-				tournamentTeamId: teamMemberOf.id,
 			});
 
 			logger.info(

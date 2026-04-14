@@ -2,6 +2,7 @@ import type { Transaction } from "kysely";
 import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
+import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { flatZip } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
@@ -111,13 +112,11 @@ export function create({
 	avatarFileName,
 	userId,
 	tournamentId,
-	ownerInGameName,
 }: {
 	team: Pick<Tables["TournamentTeam"], "name" | "prefersNotToHost" | "teamId">;
 	avatarFileName?: string;
 	userId: number;
 	tournamentId: number;
-	ownerInGameName: string | null;
 }) {
 	return db.transaction().execute(async (trx) => {
 		const avatarImgId = avatarFileName
@@ -141,18 +140,42 @@ export function create({
 			.returning("id")
 			.executeTakeFirstOrThrow();
 
+		const inGameName = await resolveInGameName(trx, tournamentId, userId);
+
 		await trx
 			.insertInto("TournamentTeamMember")
 			.values({
 				tournamentTeamId: tournamentTeam.id,
 				userId,
 				role: "OWNER",
-				inGameName: ownerInGameName,
+				inGameName,
 			})
 			.execute();
 
 		return tournamentTeam;
 	});
+}
+
+async function resolveInGameName(
+	trx: Transaction<DB>,
+	tournamentId: number,
+	userId: number,
+) {
+	const tournament = await trx
+		.selectFrom("Tournament")
+		.select("Tournament.settings")
+		.where("Tournament.id", "=", tournamentId)
+		.executeTakeFirstOrThrow();
+
+	if (!tournament.settings.requireInGameNames) return null;
+
+	const user = await trx
+		.selectFrom("User")
+		.select("User.inGameName")
+		.where("User.id", "=", userId)
+		.executeTakeFirstOrThrow();
+
+	return user.inGameName;
 }
 
 export function copyFromAnotherTournament({
@@ -355,13 +378,17 @@ export function updateStartingBrackets(
 	});
 }
 
-export function checkIn({
-	tournamentTeamId,
-	bracketIdx,
-}: {
-	tournamentTeamId: number;
-	bracketIdx: number | null;
-}) {
+/**
+ * Checks in a tournament team. Clears any existing check-out records before inserting the check-in.
+ * When called without `bracketIdx`, checks in for the whole tournament.
+ * When called with `bracketIdx`, checks in for a specific bracket (e.g. after progression).
+ */
+export function checkIn(
+	tournamentTeamId: number,
+	options?: { bracketIdx: number },
+) {
+	const bracketIdx = options?.bracketIdx ?? null;
+
 	return db.transaction().execute(async (trx) => {
 		let query = trx
 			.deleteFrom("TournamentTeamCheckIn")
@@ -467,6 +494,139 @@ export function undoDropOut(tournamentTeamId: number) {
 		.execute();
 }
 
+export function join({
+	previousTeamId,
+	whatToDoWithPreviousTeam,
+	newTeamId,
+	userId,
+	checkOutTeam = false,
+}: {
+	previousTeamId?: number;
+	whatToDoWithPreviousTeam?: "LEAVE" | "DELETE";
+	newTeamId: number;
+	userId: number;
+	checkOutTeam?: boolean;
+}) {
+	return db.transaction().execute(async (trx) => {
+		if (whatToDoWithPreviousTeam === "DELETE") {
+			await trx
+				.deleteFrom("TournamentTeam")
+				.where("TournamentTeam.id", "=", previousTeamId!)
+				.execute();
+		} else if (whatToDoWithPreviousTeam === "LEAVE") {
+			await trx
+				.deleteFrom("TournamentTeamMember")
+				.where("TournamentTeamMember.tournamentTeamId", "=", previousTeamId!)
+				.where("TournamentTeamMember.userId", "=", userId)
+				.execute();
+		}
+
+		if (checkOutTeam) {
+			invariant(
+				previousTeamId,
+				"previousTeamId is required when checking out team",
+			);
+			await trx
+				.deleteFrom("TournamentTeamCheckIn")
+				.where("TournamentTeamCheckIn.tournamentTeamId", "=", previousTeamId)
+				.execute();
+		}
+
+		const tournamentId = (
+			await trx
+				.selectFrom("TournamentTeam")
+				.select("TournamentTeam.tournamentId")
+				.where("TournamentTeam.id", "=", newTeamId)
+				.executeTakeFirstOrThrow()
+		).tournamentId;
+
+		const inGameName = await resolveInGameName(trx, tournamentId, userId);
+
+		await trx
+			.insertInto("TournamentTeamMember")
+			.values({
+				tournamentTeamId: newTeamId,
+				userId,
+				inGameName,
+			})
+			.execute();
+	});
+}
+
+export function del(tournamentTeamId: number) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.deleteFrom("MapPoolMap")
+			.where("MapPoolMap.tournamentTeamId", "=", tournamentTeamId)
+			.execute();
+
+		await trx
+			.deleteFrom("TournamentTeam")
+			.where("TournamentTeam.id", "=", tournamentTeamId)
+			.execute();
+	});
+}
+
+export function leave({ teamId, userId }: { teamId: number; userId: number }) {
+	return db
+		.deleteFrom("TournamentTeamMember")
+		.where("TournamentTeamMember.tournamentTeamId", "=", teamId)
+		.where("TournamentTeamMember.userId", "=", userId)
+		.execute();
+}
+
+export function transferOwnership(
+	tournamentTeamId: number,
+	{
+		oldCaptainId,
+		newCaptainId,
+	}: { oldCaptainId: number; newCaptainId: number },
+) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("TournamentTeamMember")
+			.set({ role: "REGULAR" })
+			.where("TournamentTeamMember.tournamentTeamId", "=", tournamentTeamId)
+			.where("TournamentTeamMember.userId", "=", oldCaptainId)
+			.execute();
+
+		await trx
+			.updateTable("TournamentTeamMember")
+			.set({ role: "OWNER" })
+			.where("TournamentTeamMember.tournamentTeamId", "=", tournamentTeamId)
+			.where("TournamentTeamMember.userId", "=", newCaptainId)
+			.execute();
+	});
+}
+
+export function upsertCounterpickMaps({
+	tournamentTeamId,
+	mapPool,
+}: {
+	tournamentTeamId: Tables["TournamentTeam"]["id"];
+	mapPool: MapPool;
+}) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.deleteFrom("MapPoolMap")
+			.where("MapPoolMap.tournamentTeamId", "=", tournamentTeamId)
+			.execute();
+
+		if (mapPool.stageModePairs.length > 0) {
+			await trx
+				.insertInto("MapPoolMap")
+				.values(
+					mapPool.stageModePairs.map(({ stageId, mode }) => ({
+						tournamentTeamId,
+						stageId,
+						mode,
+					})),
+				)
+				.execute();
+		}
+	});
+}
+
 async function findTeamRecentMaps(teamId: number, limit: number) {
 	return db
 		.selectFrom("TournamentMatchGameResult")
@@ -483,6 +643,14 @@ async function findTeamRecentMaps(teamId: number, limit: number) {
 		.orderBy("TournamentMatchGameResult.createdAt", "desc")
 		.limit(limit)
 		.execute();
+}
+
+export function findByInviteCode(inviteCode: string) {
+	return db
+		.selectFrom("TournamentTeam")
+		.select(["TournamentTeam.id", "TournamentTeam.tournamentId"])
+		.where("TournamentTeam.inviteCode", "=", inviteCode)
+		.executeTakeFirst();
 }
 
 export async function findRecentlyPlayedMapsByIds({

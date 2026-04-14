@@ -29,14 +29,11 @@ import { deleteMatchPickBanEvents } from "../queries/deleteMatchPickBanEvents.se
 import { deleteParticipantsByMatchGameResultId } from "../queries/deleteParticipantsByMatchGameResultId.server";
 import { deletePickBanEvent } from "../queries/deletePickBanEvent.server";
 import { deleteTournamentMatchGameResultById } from "../queries/deleteTournamentMatchGameResultById.server";
-import {
-	type FindMatchById,
-	findMatchById,
-} from "../queries/findMatchById.server";
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
 import { insertTournamentMatchGameResult } from "../queries/insertTournamentMatchGameResult.server";
 import { insertTournamentMatchGameResultParticipant } from "../queries/insertTournamentMatchGameResultParticipant.server";
 import { updateMatchGameResultPoints } from "../queries/updateMatchGameResultPoints.server";
+import type { FindMatchById } from "../TournamentMatchRepository.server";
 import {
 	matchPageParamsSchema,
 	matchSchema,
@@ -56,7 +53,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 		params,
 		schema: matchPageParamsSchema,
 	});
-	const match = notFoundIfFalsy(findMatchById(matchId));
+	const match = notFoundIfFalsy(
+		await TournamentMatchRepository.findMatchById(matchId),
+	);
 	const data = await parseRequestPayload({
 		request,
 		schema: matchSchema,
