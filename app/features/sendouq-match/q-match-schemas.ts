@@ -55,6 +55,10 @@ export const matchSchema = z.union([
 		_action: _action("UNDO_MAP_REPORT"),
 	}),
 	z.object({
+		_action: _action("UNDO_WEAPON_REPORT"),
+		mapIndex: z.coerce.number().int().nonnegative(),
+	}),
+	z.object({
 		_action: _action("REQUEST_CANCEL"),
 	}),
 	z.object({

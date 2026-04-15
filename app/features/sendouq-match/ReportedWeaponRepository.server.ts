@@ -40,6 +40,31 @@ export async function replaceByMatchId(
 	}
 }
 
+export async function deleteByUserMapIndex({
+	matchId,
+	userId,
+	mapIndex,
+}: {
+	matchId: number;
+	userId: number;
+	mapIndex: number;
+}) {
+	const groupMatchMap = await db
+		.selectFrom("GroupMatchMap")
+		.select("id")
+		.where("matchId", "=", matchId)
+		.where("index", "=", mapIndex)
+		.executeTakeFirst();
+
+	if (!groupMatchMap) return;
+
+	await db
+		.deleteFrom("ReportedWeapon")
+		.where("groupMatchMapId", "=", groupMatchMap.id)
+		.where("userId", "=", userId)
+		.execute();
+}
+
 export async function findByMatchId(matchId: number) {
 	const rows = await db
 		.selectFrom("ReportedWeapon")

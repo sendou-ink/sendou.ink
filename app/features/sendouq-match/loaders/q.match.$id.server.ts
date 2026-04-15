@@ -4,6 +4,7 @@ import { chatAccessible } from "~/features/chat/chat-utils";
 import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
+import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -27,15 +28,15 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		...matchUnmapped.groupBravo.members,
 	].map((m) => m.id);
 
-	const [privateNotes, roomLinks, anyUserPrefersNoSplatnet] = await Promise.all(
-		[
+	const [privateNotes, roomLinks, anyUserPrefersNoSplatnet, reportedWeapons] =
+		await Promise.all([
 			user
 				? PrivateUserNoteRepository.byAuthorUserId(user.id, matchUsers)
 				: undefined,
 			RoomLinkRepository.findByUserIds(matchUsers, 3),
 			UserRepository.anyUserPrefersNoSplatnet(matchUsers),
-		],
-	);
+			ReportedWeaponRepository.findByMatchId(matchId),
+		]);
 
 	const match = SendouQ.mapMatch(matchUnmapped, user, privateNotes);
 
@@ -43,6 +44,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		match,
 		roomLinks,
 		anyUserPrefersNoSplatnet,
+		reportedWeapons,
 		chatCode: (() => {
 			const isStaff = user?.roles.includes("STAFF") ?? false;
 			const isParticipant = user && matchUsers.includes(user.id);

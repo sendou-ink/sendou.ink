@@ -193,6 +193,8 @@
 	"match.timeline.teamSp": "",
 	"match.waitingForConfirmation": "",
 	"match.undoReport": "",
+	"match.weapon.yourWeapon": "",
+	"match.weapon.undoWeapon": "",
 	"match.confirmScore": "",
 	"match.confirmScore.wrongHint": "",
 	"preparing.joinQ": "开始匹配",

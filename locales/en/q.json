@@ -193,6 +193,8 @@
 	"match.timeline.teamSp": "Team SP",
 	"match.waitingForConfirmation": "Waiting for the other team to confirm the result",
 	"match.undoReport": "Undo report",
+	"match.weapon.yourWeapon": "Your weapon",
+	"match.weapon.undoWeapon": "Undo weapon",
 	"match.confirmScore": "Confirm score",
 	"match.confirmScore.wrongHint": "Wrong score? Ask the other team to undo their report and adjust it.",
 	"preparing.joinQ": "Join the queue",

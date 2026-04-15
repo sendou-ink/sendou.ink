@@ -135,9 +135,18 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			throw redirect(SENDOUQ_PREPARING_PAGE);
 		}
+		// xxx: why not REPORT_WEAPON
 		case "REPORT_WEAPONS": {
 			const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
-			errorToastIfFalsy(match.reportedAt, "Match has not been reported yet");
+
+			const members = [
+				...match.groupAlpha.members,
+				...match.groupBravo.members,
+			];
+			invariant(
+				members.some((m) => m.id === user.id),
+				"User is not a member of any group",
+			);
 
 			const oldReportedWeapons =
 				(await ReportedWeaponRepository.findByMatchId(matchId)) ?? [];
@@ -158,6 +167,17 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					weaponSplId: w.weaponSplId,
 				})),
 			);
+
+			break;
+		}
+		case "UNDO_WEAPON_REPORT": {
+			notFoundIfFalsy(await SQMatchRepository.findById(matchId));
+
+			await ReportedWeaponRepository.deleteByUserMapIndex({
+				matchId,
+				userId: user.id,
+				mapIndex: data.mapIndex,
+			});
 
 			break;
 		}

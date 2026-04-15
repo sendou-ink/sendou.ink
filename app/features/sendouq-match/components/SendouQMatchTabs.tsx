@@ -111,7 +111,7 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 						alpha: alphaWins,
 						bravo: bravoWins,
 					}}
-					maps={resolveTimelineMaps(data.match)}
+					maps={resolveTimelineMaps(data.match, data.reportedWeapons)}
 					spChanges={resolveTimelineSpChanges(data.match)}
 				>
 					{data.match.cancelRequestedByUserId ? (
@@ -175,6 +175,8 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 					data={data}
 					currentMap={currentMap}
 					ownTeamId={ownTeamId}
+					// xxx: why not just useUser in SendouQMatchActionTab?
+					ownUserId={user!.id}
 					reportedCount={reportedCount}
 				/>
 			) : null}
@@ -208,7 +210,7 @@ function ConfirmerTab({
 						(m) => m.winnerGroupId === data.match.groupBravo.id,
 					).length,
 				}}
-				maps={resolveTimelineMaps(data.match)}
+				maps={resolveTimelineMaps(data.match, data.reportedWeapons)}
 			/>
 			<div className="stack md items-center mt-4">
 				<SendouButton
@@ -252,7 +254,7 @@ function ReporterWaitingTab({ data }: { data: SendouQMatchLoaderData }) {
 						(m) => m.winnerGroupId === data.match.groupBravo.id,
 					).length,
 				}}
-				maps={resolveTimelineMaps(data.match)}
+				maps={resolveTimelineMaps(data.match, data.reportedWeapons)}
 			/>
 			<div className="stack md items-center mt-4">
 				<p className="text-lighter text-sm">
@@ -292,22 +294,47 @@ function resolveTimelineTeams(match: MatchData) {
 	};
 }
 
-function resolveTimelineMaps(match: MatchData): TimelineMap[] {
+function resolveTimelineMaps(
+	match: MatchData,
+	reportedWeapons: SendouQMatchLoaderData["reportedWeapons"],
+): TimelineMap[] {
 	return match.mapList
 		.filter((m) => m.winnerGroupId !== null)
-		.map((map) => ({
-			stageId: map.stageId,
-			mode: map.mode,
-			timestamp: match.createdAt,
-			winner:
-				map.winnerGroupId === match.groupAlpha.id
-					? ("ALPHA" as const)
-					: ("BRAVO" as const),
-			rosters: {
-				alpha: match.groupAlpha.members,
-				bravo: match.groupBravo.members,
-			},
-		}));
+		.map((map) => {
+			const alphaWeapons = match.groupAlpha.members.map((member) => {
+				const w = reportedWeapons?.find(
+					(rw) => rw.groupMatchMapId === map.id && rw.userId === member.id,
+				);
+				return w ? w.weaponSplId : null;
+			});
+			const bravoWeapons = match.groupBravo.members.map((member) => {
+				const w = reportedWeapons?.find(
+					(rw) => rw.groupMatchMapId === map.id && rw.userId === member.id,
+				);
+				return w ? w.weaponSplId : null;
+			});
+
+			const hasAnyWeapon =
+				alphaWeapons.some((w) => w !== null) ||
+				bravoWeapons.some((w) => w !== null);
+
+			return {
+				stageId: map.stageId,
+				mode: map.mode,
+				timestamp: match.createdAt,
+				winner:
+					map.winnerGroupId === match.groupAlpha.id
+						? ("ALPHA" as const)
+						: ("BRAVO" as const),
+				rosters: {
+					alpha: match.groupAlpha.members,
+					bravo: match.groupBravo.members,
+				},
+				weapons: hasAnyWeapon
+					? { alpha: alphaWeapons, bravo: bravoWeapons }
+					: undefined,
+			};
+		});
 }
 
 function resolveTimelineSpChanges(

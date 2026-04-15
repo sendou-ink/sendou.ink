@@ -7,8 +7,13 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { MatchActionTab } from "~/components/match-page/MatchActionTab";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
+import { useRecentlyReportedWeapons } from "~/features/sendouq/q-hooks";
 import { isSetOverByScore } from "~/features/tournament-bracket/tournament-bracket-utils";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "~/modules/in-game-lists/types";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 import styles from "./SendouQMatchActionTab.module.css";
 
@@ -16,17 +21,22 @@ export function SendouQMatchActionTab({
 	data,
 	currentMap,
 	ownTeamId,
+	ownUserId,
 	reportedCount,
 }: {
 	data: SendouQMatchLoaderData;
 	currentMap: { stageId: StageId; mode: ModeShort };
 	ownTeamId: number;
+	ownUserId: number;
 	reportedCount: number;
 }) {
 	const { t } = useTranslation(["q", "common"]);
 	const fetcher = useFetcher();
 	const undoFetcher = useFetcher();
 	const cancelFetcher = useFetcher();
+	const weaponFetcher = useFetcher();
+	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
+		useRecentlyReportedWeapons();
 
 	const alphaScore = data.match.mapList.filter(
 		(m) => m.winnerGroupId === data.match.groupAlpha.id,
@@ -131,6 +141,16 @@ export function SendouQMatchActionTab({
 
 	const scoreIsNotZero = alphaScore > 0 || bravoScore > 0;
 
+	const weaponReportMaps = data.match.mapList
+		.slice(0, reportedCount + 1)
+		.map((m) => ({ stageId: m.stageId, mode: m.mode }));
+
+	const weaponPastReported: MainWeaponId[] = data.reportedWeapons
+		? data.reportedWeapons
+				.filter((w) => w.userId === ownUserId)
+				.map((w) => w.weaponSplId)
+		: [];
+
 	return (
 		<MatchActionTab
 			key={reportedCount}
@@ -153,6 +173,42 @@ export function SendouQMatchActionTab({
 					},
 					{ method: "post" },
 				);
+			}}
+			weaponReport={{
+				maps: weaponReportMaps,
+				pastReported: weaponPastReported,
+				quickSelectWeaponIds: recentlyReportedWeapons,
+				isSubmitting: weaponFetcher.state !== "idle",
+				onSubmit: (weaponSplId) => {
+					addRecentlyReportedWeapon(weaponSplId);
+					const mapIndex = weaponPastReported.length;
+					const map = data.match.mapList[mapIndex];
+					weaponFetcher.submit(
+						{
+							_action: "REPORT_WEAPONS",
+							weapons: JSON.stringify([
+								{
+									weaponSplId,
+									userId: ownUserId,
+									mapIndex,
+									groupMatchMapId: map.id,
+								},
+							]),
+						},
+						{ method: "post" },
+					);
+				},
+				onUndo: () => {
+					const mapIndex = weaponPastReported.length - 1;
+					if (mapIndex < 0) return;
+					weaponFetcher.submit(
+						{
+							_action: "UNDO_WEAPON_REPORT",
+							mapIndex: String(mapIndex),
+						},
+						{ method: "post" },
+					);
+				},
 			}}
 			actionButtons={
 				<>
