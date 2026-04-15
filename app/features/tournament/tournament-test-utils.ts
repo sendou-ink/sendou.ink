@@ -3,7 +3,6 @@ import { databaseTimestampNow } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { getServerTournamentManager } from "../tournament-bracket/core/brackets-manager/manager.server";
 import { tournamentFromDB } from "../tournament-bracket/core/Tournament.server";
-import { joinTeam } from "./queries/joinLeaveTeam.server";
 import { updateRoundMaps } from "./queries/updateRoundMaps.server";
 import * as TournamentTeamRepository from "./TournamentTeamRepository.server";
 
@@ -57,7 +56,6 @@ export async function dbInsertTournamentTeam({
 	tournamentId?: number;
 }) {
 	const tournamentTeam = await TournamentTeamRepository.create({
-		ownerInGameName: null,
 		team: {
 			name: `Test Team ${ownerId}`,
 			prefersNotToHost: 0,
@@ -70,19 +68,13 @@ export async function dbInsertTournamentTeam({
 	for (let i = 1; i < membersCount; i++) {
 		const memberId = ownerId + i;
 
-		joinTeam({
+		await TournamentTeamRepository.join({
 			userId: memberId,
 			newTeamId: tournamentTeam.id,
-			tournamentId,
-			inGameName: null,
 		});
 	}
 
-	await TournamentTeamRepository.checkIn({
-		tournamentTeamId: tournamentTeam.id,
-		// no sources = regular check in
-		bracketIdx: null,
-	});
+	await TournamentTeamRepository.checkIn(tournamentTeam.id);
 }
 
 /**

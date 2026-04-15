@@ -1,4 +1,5 @@
 import { type LoaderFunctionArgs, redirect } from "react-router";
+import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { parseParams } from "~/utils/remix.server";
 import {
 	tournamentBracketsPage,
@@ -6,20 +7,23 @@ import {
 	tournamentResultsPage,
 } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
-import hasTournamentFinalized from "../queries/hasTournamentFinalized.server";
-import hasTournamentStarted from "../queries/hasTournamentStarted.server";
 
-export const loader = ({ params }: LoaderFunctionArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,
 	});
 
-	if (!hasTournamentStarted(tournamentId)) {
+	const tournament = await tournamentFromDBCached({
+		tournamentId,
+		user: undefined,
+	});
+
+	if (!tournament.hasStarted) {
 		return redirect(tournamentRegisterPage(tournamentId));
 	}
 
-	if (!hasTournamentFinalized(tournamentId)) {
+	if (!tournament.ctx.isFinalized) {
 		return redirect(tournamentBracketsPage({ tournamentId }));
 	}
 

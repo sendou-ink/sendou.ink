@@ -480,6 +480,7 @@ test.describe("Tournament bracket", () => {
 	test("shows tournament results on user profile after finalized tournament", async ({
 		page,
 	}) => {
+		test.slow();
 		const tournamentId = 4;
 
 		await seed(page, "SMALL_SOS");

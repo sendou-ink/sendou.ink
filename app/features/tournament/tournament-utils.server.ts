@@ -1,27 +1,10 @@
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import type { getServerTournamentManager } from "~/features/tournament-bracket/core/brackets-manager/manager.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { logger } from "~/utils/logger";
 import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "../leaderboards/leaderboards-constants";
 import type { Tournament } from "../tournament-bracket/core/Tournament";
-
-export const inGameNameIfNeeded = async ({
-	tournament,
-	userId,
-}: {
-	tournament: Tournament;
-	userId: number;
-}) => {
-	if (!tournament.ctx.settings.requireInGameNames) return null;
-
-	const inGameName = await UserRepository.inGameNameByUserId(userId);
-
-	errorToastIfFalsy(inGameName, "No in-game name");
-
-	return inGameName;
-};
 
 export async function requireNotBannedByOrganization({
 	tournament,

@@ -3,10 +3,10 @@ import { getUser } from "~/features/auth/core/user.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
+import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { findMapPoolByTeamId } from "~/features/tournament-bracket/queries/findMapPoolByTeamId.server";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
-import { findOwnTournamentTeam } from "../queries/findOwnTournamentTeam.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const user = getUser();
@@ -17,11 +17,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		schema: idObject,
 	});
 
-	const ownTournamentTeam = findOwnTournamentTeam({
-		tournamentId,
-		userId: user.id,
-	});
-	if (!ownTournamentTeam) {
+	const tournament = await tournamentFromDBCached({ tournamentId, user });
+	const ownTeam = tournament.ownedTeamByUser(user);
+
+	if (!ownTeam) {
 		return {
 			mapPool: null,
 			friendPlayers: null,
@@ -34,7 +33,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	}
 
 	return {
-		mapPool: findMapPoolByTeamId(ownTournamentTeam.id),
+		mapPool: findMapPoolByTeamId(ownTeam.id),
 		friendPlayers: await SQGroupRepository.friendsAndTeammates(user.id),
 		teams: await TeamRepository.findAllMemberOfByUserId(user.id),
 		isSaved: false,

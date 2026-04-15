@@ -15,8 +15,8 @@ import { executeRoll } from "../core/executeRoll.server";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
 import * as PickBan from "../core/PickBan";
 import { tournamentFromDBCached } from "../core/Tournament.server";
-import { findMatchById } from "../queries/findMatchById.server";
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
+import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
 import { matchPageParamsSchema } from "../tournament-bracket-schemas.server";
 import { matchEndedEarly } from "../tournament-bracket-utils";
 
@@ -33,7 +33,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		user: undefined,
 	});
 
-	const match = notFoundIfFalsy(findMatchById(matchId));
+	const match = notFoundIfFalsy(
+		await TournamentMatchRepository.findMatchById(matchId),
+	);
 
 	const isBye = !match.opponentOne || !match.opponentTwo;
 	if (isBye) {

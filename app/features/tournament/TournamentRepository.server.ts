@@ -464,6 +464,7 @@ export function forShowcase() {
 			"Tournament.id",
 			"Tournament.settings",
 			"Tournament.tier",
+			"Tournament.isFinalized",
 			"CalendarEvent.authorId",
 			"CalendarEvent.name",
 			"CalendarEvent.organizationId",

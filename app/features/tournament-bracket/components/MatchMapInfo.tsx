@@ -3,6 +3,7 @@ import { useLoaderData } from "react-router";
 import { ModeImage, StageImage } from "~/components/Image";
 import type { CustomPickBanStep } from "~/db/tables";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import styles from "./MatchMapInfo.module.css";
@@ -17,6 +18,11 @@ export function MatchMapInfo({ teams }: { teams: [number, number] }) {
 	const customFlow = data.match.roundMaps?.customFlow;
 	if (!customFlow) return null;
 
+	const pickBanTeams: [PickBan.PickBanTeam, PickBan.PickBanTeam] = [
+		{ id: teams[0], seed: teamOne?.seed ?? 0 },
+		{ id: teams[1], seed: teamTwo?.seed ?? 0 },
+	];
+
 	const teamOneBans: BanEvent[] = [];
 	const teamTwoBans: BanEvent[] = [];
 
@@ -28,7 +34,7 @@ export function MatchMapInfo({ teams }: { teams: [number, number] }) {
 			eventIndex: i,
 			preSet: customFlow.preSet,
 			postGame: customFlow.postGame,
-			teams,
+			teams: pickBanTeams,
 			results: data.results,
 		});
 
@@ -60,7 +66,7 @@ function resolveTeamForEvent({
 	eventIndex: number;
 	preSet: CustomPickBanStep[];
 	postGame: CustomPickBanStep[];
-	teams: [number, number];
+	teams: [PickBan.PickBanTeam, PickBan.PickBanTeam];
 	results: Array<{ winnerTeamId: number }>;
 }): number | null {
 	const step =
@@ -70,27 +76,27 @@ function resolveTeamForEvent({
 
 	if (!step?.side) return null;
 
-	switch (step.side) {
-		case "ALPHA":
-			return teams[0];
-		case "BRAVO":
-			return teams[1];
-		case "HIGHER_SEED":
-			return teams[1];
-		case "LOWER_SEED":
-			return teams[0];
-		case "WINNER":
-		case "LOSER": {
-			const cycleIndex = Math.floor(
-				(eventIndex - preSet.length) / postGame.length,
-			);
-			const result = results[cycleIndex];
-			if (!result) return null;
+	// PickBan.resolveTeamFromSide uses the last element of results for WINNER/LOSER,
+	// but here we iterate over all historical events so we need to slice
+	// results to the correct post-game cycle
+	if (step.side === "WINNER" || step.side === "LOSER") {
+		const cycleIndex = Math.floor(
+			(eventIndex - preSet.length) / postGame.length,
+		);
+		if (!results[cycleIndex]) return null;
 
-			if (step.side === "WINNER") return result.winnerTeamId;
-			return teams.find((t) => t !== result.winnerTeamId) ?? null;
-		}
+		return PickBan.resolveTeamFromSide({
+			side: step.side,
+			teams,
+			results: results.slice(0, cycleIndex + 1),
+		});
 	}
+
+	return PickBan.resolveTeamFromSide({
+		side: step.side,
+		teams,
+		results,
+	});
 }
 
 interface BanEvent {

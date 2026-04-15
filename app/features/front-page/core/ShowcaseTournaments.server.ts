@@ -183,8 +183,12 @@ async function cachedTournaments() {
 }
 
 function deleteExtraResults(tournaments: ShowcaseCalendarEvent[]) {
+	const threeDaysAgo = databaseTimestampThreeDaysAgo();
 	const nonResults = tournaments.filter(
-		(tournament) => !tournament.firstPlacer,
+		(tournament) =>
+			!tournament.firstPlacer &&
+			!tournament.isFinalized &&
+			tournament.startTime > threeDaysAgo,
 	);
 
 	const rankedResults = tournaments
@@ -312,6 +316,7 @@ function mapTournamentFromDB(
 		tier: tournament.tier ?? null,
 		tentativeTier,
 		hidden: Boolean(tournament.hidden),
+		isFinalized: Boolean(tournament.isFinalized),
 		minMembersPerTeam: tournament.settings.minMembersPerTeam ?? 4,
 		modes: null,
 		hasVods: (tournament.vodCount ?? 0) > 0,
@@ -373,6 +378,14 @@ function databaseTimestampWeekFromNow() {
 	const now = new Date();
 
 	now.setDate(now.getDate() + 7);
+
+	return dateToDatabaseTimestamp(now);
+}
+
+function databaseTimestampThreeDaysAgo() {
+	const now = new Date();
+
+	now.setDate(now.getDate() - 3);
 
 	return dateToDatabaseTimestamp(now);
 }

@@ -1,7 +1,6 @@
 import "dotenv/config";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import { joinTeam } from "~/features/tournament/queries/joinLeaveTeam.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -101,10 +100,6 @@ async function main() {
 		const teamName = resolvedNames[i];
 		const owner = entry.members[0];
 
-		const ownerInGameName = tournament.ctx.settings.requireInGameNames
-			? await UserRepository.inGameNameByUserId(owner.id)
-			: null;
-
 		const tournamentTeam = await TournamentTeamRepository.create({
 			team: {
 				name: teamName,
@@ -113,19 +108,12 @@ async function main() {
 			},
 			userId: owner.id,
 			tournamentId,
-			ownerInGameName: ownerInGameName ?? null,
 		});
 
 		for (const member of entry.members.slice(1)) {
-			const memberInGameName = tournament.ctx.settings.requireInGameNames
-				? await UserRepository.inGameNameByUserId(member.id)
-				: null;
-
-			joinTeam({
+			await TournamentTeamRepository.join({
 				newTeamId: tournamentTeam.id,
 				userId: member.id,
-				inGameName: memberInGameName ?? null,
-				tournamentId,
 			});
 		}
 
