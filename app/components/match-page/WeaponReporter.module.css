@@ -55,3 +55,27 @@
 	display: flex;
 	gap: var(--s-1);
 }
+
+.rootCollapsed {
+	display: flex;
+	justify-content: center;
+	background-color: var(--color-bg-higher);
+	border-radius: 0 0 var(--radius-box) var(--radius-box);
+	padding: var(--s-2);
+	margin: var(--s-4) calc(-1 * var(--s-4)) calc(-1 * var(--s-4));
+}
+
+.rootExpanded {
+	position: relative;
+}
+
+.collapseButton {
+	position: absolute;
+	top: var(--s-1);
+	right: var(--s-1);
+
+	& svg {
+		min-width: 22px;
+		max-width: 22px;
+	}
+}

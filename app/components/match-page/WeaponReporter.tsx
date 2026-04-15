@@ -1,12 +1,16 @@
+import clsx from "clsx";
+import { ChevronUp, Crosshair } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useFetcher } from "react-router";
+import { useUser } from "~/features/auth/core/user";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type {
 	MainWeaponId,
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
-import { abilityImageUrl } from "~/utils/urls";
+import { abilityImageUrl, SETTINGS_PAGE } from "~/utils/urls";
 import { SendouButton } from "../elements/Button";
 import { Image, ModeImage, StageImage, WeaponImage } from "../Image";
 import { WeaponSelect } from "../WeaponSelect";
@@ -26,7 +30,6 @@ export interface WeaponReporterProps {
 	isSubmitting?: boolean;
 }
 
-// xxx: default collapsed, small minimal button to uncollapse
 // xxx: on sendouq all weapons report different / component tab..? or not? check usage
 export function WeaponReporter({
 	maps,
@@ -37,6 +40,11 @@ export function WeaponReporter({
 	isSubmitting,
 }: WeaponReporterProps) {
 	const { t } = useTranslation(["q", "game-misc", "common"]);
+	const user = useUser();
+	const fetcher = useFetcher();
+	const [isOpen, setIsOpen] = useState(
+		() => user?.preferences.weaponReportDefaultOpen ?? false,
+	);
 	const [selectedWeapon, setSelectedWeapon] = useState<MainWeaponId | null>(
 		null,
 	);
@@ -47,8 +55,39 @@ export function WeaponReporter({
 	const unreportedCount =
 		maps.length - inputTargetIndex - (inputTargetMap ? 1 : 0);
 
+	const handleToggle = (newOpen: boolean) => {
+		setIsOpen(newOpen);
+		fetcher.submit(
+			{ _action: "UPDATE_WEAPON_REPORT_DEFAULT_OPEN", newValue: newOpen },
+			{ method: "post", action: SETTINGS_PAGE, encType: "application/json" },
+		);
+	};
+
+	if (!isOpen) {
+		return (
+			<div className={styles.rootCollapsed}>
+				<SendouButton
+					variant="minimal"
+					size="small"
+					icon={<Crosshair size={16} />}
+					onPress={() => handleToggle(true)}
+				>
+					{t("q:match.actions.reportWeapons")}
+				</SendouButton>
+			</div>
+		);
+	}
+
 	return (
-		<div className={styles.root}>
+		<div className={clsx(styles.root, styles.rootExpanded)}>
+			<SendouButton
+				variant="minimal"
+				size="miniscule"
+				icon={<ChevronUp size={22} />}
+				onPress={() => handleToggle(false)}
+				className={styles.collapseButton}
+				aria-label={t("q:match.actions.reportWeapons")}
+			/>
 			{pastReported.length > 0 ? (
 				<div className={styles.pastRow}>
 					{pastReported.map((weaponId, i) => (

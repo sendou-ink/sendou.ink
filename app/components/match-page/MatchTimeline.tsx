@@ -65,7 +65,7 @@ export interface MatchTimelineProps {
 }
 
 // xxx: need to show Pick/Bans somewhere, on tab?
-// xxx: align checkmarks better
+// xxx: for SP changes, click the delta to see old and new SP raw
 export function MatchTimeline({
 	teams,
 	score,
@@ -245,6 +245,7 @@ function SideResult({
 	);
 }
 
+// xxx: outlines for question marks
 function WeaponPill({ weapons }: { weapons: Array<MainWeaponId | null> }) {
 	const { t } = useTranslation(["weapons"]);
 

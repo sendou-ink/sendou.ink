@@ -59,6 +59,11 @@ export const updateNoSplatnetSchema = z.object({
 	}),
 });
 
+const weaponReportDefaultOpenSchema = z.object({
+	_action: stringConstant("UPDATE_WEAPON_REPORT_DEFAULT_OPEN"),
+	newValue: z.boolean(),
+});
+
 export const settingsEditSchema = z.union([
 	customThemeSchema,
 	disableBuildAbilitySortingSchema,
@@ -67,4 +72,5 @@ export const settingsEditSchema = z.union([
 	updateNoScreenSchema,
 	updateNoSplatnetSchema,
 	clockFormatSchema,
+	weaponReportDefaultOpenSchema,
 ]);

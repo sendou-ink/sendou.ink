@@ -66,6 +66,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 			break;
 		}
+		case "UPDATE_WEAPON_REPORT_DEFAULT_OPEN": {
+			await UserRepository.updatePreferences(user.id, {
+				weaponReportDefaultOpen: data.newValue,
+			});
+			break;
+		}
 		default: {
 			assertUnreachable(data);
 		}

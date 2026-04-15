@@ -991,6 +991,7 @@ export interface UserPreferences {
 	newProfileEnabled?: boolean;
 	/** Is spoiler-free mode enabled? Hides recent tournament results and scores until the user chooses to reveal them. */
 	spoilerFreeMode?: boolean;
+	weaponReportDefaultOpen?: boolean;
 }
 
 export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;
