@@ -1,6 +1,5 @@
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
-import type { ReportedWeapon } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
@@ -26,7 +25,6 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_PREPARING_PAGE, sendouQMatchPage } from "~/utils/urls";
-import { mergeReportedWeapons } from "../core/reported-weapons.server";
 import { matchSchema, qMatchPageParamsSchema } from "../q-match-schemas";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -135,8 +133,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			throw redirect(SENDOUQ_PREPARING_PAGE);
 		}
-		// xxx: why not REPORT_WEAPON
-		case "REPORT_WEAPONS": {
+		case "REPORT_WEAPON": {
 			const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
 
 			const members = [
@@ -148,25 +145,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				"User is not a member of any group",
 			);
 
-			const oldReportedWeapons =
-				(await ReportedWeaponRepository.findByMatchId(matchId)) ?? [];
-
-			const mergedWeapons = mergeReportedWeapons({
-				oldWeapons: oldReportedWeapons,
-				newWeapons: data.weapons as (ReportedWeapon & {
-					mapIndex: number;
-					groupMatchMapId: number;
-				})[],
+			await ReportedWeaponRepository.upsertOne({
+				groupMatchMapId: data.groupMatchMapId,
+				userId: user.id,
+				weaponSplId: data.weaponSplId,
 			});
-
-			await ReportedWeaponRepository.replaceByMatchId(
-				matchId,
-				mergedWeapons.map((w) => ({
-					groupMatchMapId: w.groupMatchMapId,
-					userId: w.userId,
-					weaponSplId: w.weaponSplId,
-				})),
-			);
 
 			break;
 		}

@@ -11,6 +11,23 @@ export function createMany(
 	return (trx ?? db).insertInto("ReportedWeapon").values(weapons).execute();
 }
 
+export async function upsertOne({
+	groupMatchMapId,
+	userId,
+	weaponSplId,
+}: TablesInsertable["ReportedWeapon"] & { groupMatchMapId: number }) {
+	await db
+		.deleteFrom("ReportedWeapon")
+		.where("groupMatchMapId", "=", groupMatchMapId)
+		.where("userId", "=", userId)
+		.execute();
+
+	await db
+		.insertInto("ReportedWeapon")
+		.values({ groupMatchMapId, userId, weaponSplId })
+		.execute();
+}
+
 export async function replaceByMatchId(
 	matchId: number,
 	weapons: TablesInsertable["ReportedWeapon"][],

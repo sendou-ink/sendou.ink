@@ -185,15 +185,9 @@ export function SendouQMatchActionTab({
 					const map = data.match.mapList[mapIndex];
 					weaponFetcher.submit(
 						{
-							_action: "REPORT_WEAPONS",
-							weapons: JSON.stringify([
-								{
-									weaponSplId,
-									userId: ownUserId,
-									mapIndex,
-									groupMatchMapId: map.id,
-								},
-							]),
+							_action: "REPORT_WEAPON",
+							weaponSplId: String(weaponSplId),
+							groupMatchMapId: String(map.id),
 						},
 						{ method: "post" },
 					);

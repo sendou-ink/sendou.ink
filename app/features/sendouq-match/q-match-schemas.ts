@@ -1,27 +1,7 @@
 import { z } from "zod";
 import { SENDOUQ } from "~/features/sendouq/q-constants";
-import {
-	_action,
-	falsyToNull,
-	id,
-	safeJSONParse,
-	weaponSplId,
-} from "~/utils/zod";
+import { _action, falsyToNull, id, weaponSplId } from "~/utils/zod";
 
-const weapons = z.preprocess(
-	safeJSONParse,
-	z
-		.array(
-			z.object({
-				weaponSplId,
-				userId: id,
-				mapIndex: z.number().int().nonnegative(),
-				groupMatchMapId: id,
-			}),
-		)
-		.optional()
-		.default([]),
-);
 export const matchSchema = z.union([
 	z.object({
 		_action: _action("REPORT_SCORE"),
@@ -33,8 +13,9 @@ export const matchSchema = z.union([
 		previousGroupId: id,
 	}),
 	z.object({
-		_action: _action("REPORT_WEAPONS"),
-		weapons,
+		_action: _action("REPORT_WEAPON"),
+		weaponSplId,
+		groupMatchMapId: id,
 	}),
 	z.object({
 		_action: _action("ADD_PRIVATE_USER_NOTE"),
