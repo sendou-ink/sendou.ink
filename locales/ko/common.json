@@ -228,6 +228,7 @@
 	"plans.bgStyle.OVER": "전체",
 	"plans.bgStyle.MINI": "",
 	"plans.adder.objective": "",
+	"plans.ranges": "",
 	"articles.by": "{{author}} 작성",
 	"theme.light": "라이트",
 	"theme.dark": "다크",

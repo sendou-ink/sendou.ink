@@ -228,6 +228,7 @@
 	"plans.bgStyle.OVER": "頭上マップ",
 	"plans.bgStyle.MINI": "ミニマップ",
 	"plans.adder.objective": "目的",
+	"plans.ranges": "",
 	"articles.by": "作者: {{author}}",
 	"theme.light": "Light",
 	"theme.dark": "Dark",

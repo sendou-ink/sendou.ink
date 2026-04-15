@@ -231,6 +231,7 @@
 	"plans.bgStyle.OVER": "Vue de dessus",
 	"plans.bgStyle.MINI": "Minimap",
 	"plans.adder.objective": "Objectif",
+	"plans.ranges": "",
 	"articles.by": "par {{author}}",
 	"theme.light": "Clair",
 	"theme.dark": "Sombre",

@@ -230,6 +230,7 @@
 	"plans.bgStyle.OVER": "Overhead",
 	"plans.bgStyle.MINI": "Minimap",
 	"plans.adder.objective": "Objective",
+	"plans.ranges": "Ranges",
 	"articles.by": "by {{author}}",
 	"theme.light": "Light",
 	"theme.dark": "Dark",

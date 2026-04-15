@@ -31,12 +31,18 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { getWeaponRange } from "~/features/comp-analyzer/core/weapon-range";
 import { useTheme } from "~/features/theme/core/provider";
 import type { LanguageCode } from "~/modules/i18n/config";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "~/modules/in-game-lists/types";
 import {
+	mainWeaponIds,
 	specialWeaponIds,
 	subWeaponIds,
 	weaponCategories,
@@ -59,7 +65,12 @@ import styles from "./Planner.module.css";
 const DROPPED_IMAGE_SIZE_PX = 45;
 const BACKGROUND_WIDTH = 1127;
 const BACKGROUND_HEIGHT = 634;
+const GAME_UNITS_TO_MINIMAP_PX = 5;
+const MAIN_WEAPON_URL_PATTERN = /main-weapons-outlined\/(\d+)/;
 
+// xxx: when range toggled, adding new weapons doesnt add their range by default
+// xxx: lock range circle
+// xxx: check constant
 export default function Planner() {
 	const { t, i18n } = useTranslation(["common"]);
 	const { htmlThemeClass } = useTheme();
@@ -70,6 +81,8 @@ export default function Planner() {
 	const [imgOutlined, setImgOutlined] = React.useState(false);
 	const [topCollapsed, setTopCollapsed] = React.useState(false);
 	const [weaponsCollapsed, setWeaponsCollapsed] = React.useState(false);
+	const [rangesVisible, setRangesVisible] = React.useState(false);
+	const rangeCleanupRef = React.useRef<(() => void) | null>(null);
 	const [activeDragItem, setActiveDragItem] = React.useState<{
 		src: string;
 		previewPath: string;
@@ -200,6 +213,71 @@ export default function Planner() {
 		handleAddWeaponAtPosition(src, [pagePoint.x, pagePoint.y]);
 	};
 
+	const handleRangeToggle = () => {
+		if (!editor) return;
+
+		if (rangesVisible) {
+			rangeCleanupRef.current?.();
+			rangeCleanupRef.current = null;
+			removeRangeCircles(editor);
+			setRangesVisible(false);
+		} else {
+			removeRangeCircles(editor);
+			createRangeCircles(editor);
+
+			const unsubChange = editor.sideEffects.registerAfterChangeHandler(
+				"shape",
+				(_prev, next) => {
+					if (next.meta.isRangeCircle) return;
+
+					const rangeCircle = editor
+						.getCurrentPageShapes()
+						.find(
+							(s) =>
+								s.meta.isRangeCircle === true &&
+								s.meta.weaponShapeId === next.id,
+						);
+					if (!rangeCircle) return;
+
+					const radiusPx = (rangeCircle.props as { w: number }).w / 2;
+					const centerX = next.x + (next.props as { w: number }).w / 2;
+					const centerY = next.y + (next.props as { h: number }).h / 2;
+
+					editor.updateShape({
+						id: rangeCircle.id,
+						type: rangeCircle.type,
+						x: centerX - radiusPx,
+						y: centerY - radiusPx,
+					});
+				},
+			);
+
+			const unsubDelete = editor.sideEffects.registerAfterDeleteHandler(
+				"shape",
+				(shape) => {
+					if (shape.meta.isRangeCircle) return;
+
+					const rangeCircle = editor
+						.getCurrentPageShapes()
+						.find(
+							(s) =>
+								s.meta.isRangeCircle === true &&
+								s.meta.weaponShapeId === shape.id,
+						);
+					if (!rangeCircle) return;
+
+					editor.deleteShapes([rangeCircle]);
+				},
+			);
+
+			rangeCleanupRef.current = () => {
+				unsubChange();
+				unsubDelete();
+			};
+			setRangesVisible(true);
+		}
+	};
+
 	const handleAddBackgroundImage = React.useCallback(
 		(urlArgs: {
 			stageId: StageId;
@@ -225,6 +303,9 @@ export default function Planner() {
 			});
 
 			editor.zoomToFit();
+			rangeCleanupRef.current?.();
+			rangeCleanupRef.current = null;
+			setRangesVisible(false);
 		},
 		[editor, handleAddImage],
 	);
@@ -293,6 +374,7 @@ export default function Planner() {
 						outlined={imgOutlined}
 						setImgOutlined={setImgOutlined}
 					/>
+					<RangeToggle active={rangesVisible} onToggle={handleRangeToggle} />
 					<WeaponImageSelector />
 				</div>
 				<button
@@ -363,6 +445,29 @@ function OutlineToggle({
 			)}
 		>
 			{outlined ? t("common:actions.outlined") : t("common:actions.noOutline")}
+		</SendouButton>
+	);
+}
+
+function RangeToggle({
+	active,
+	onToggle,
+}: {
+	active: boolean;
+	onToggle: () => void;
+}) {
+	const { t } = useTranslation(["common"]);
+
+	return (
+		<SendouButton
+			variant="minimal"
+			onPress={onToggle}
+			className={clsx(
+				styles.outlineToggleButton,
+				active && styles.outlineToggleButtonOutlined,
+			)}
+		>
+			{t("common:plans.ranges")}
 		</SendouButton>
 	);
 }
@@ -633,4 +738,75 @@ function ourLanguageToTldrawLanguage(ourLanguageUserSelected: string) {
 
 	logger.error(`No tldraw language found for: ${ourLanguageUserSelected}`);
 	return "en";
+}
+
+function extractMainWeaponIdFromSrc(src: string): MainWeaponId | null {
+	const match = src.match(MAIN_WEAPON_URL_PATTERN);
+	if (!match) return null;
+
+	const id = Number(match[1]);
+	if (!mainWeaponIds.includes(id as MainWeaponId)) return null;
+
+	return id as MainWeaponId;
+}
+
+function createRangeCircles(editor: Editor) {
+	const shapes = editor.getCurrentPageShapes();
+	const weaponShapeIds: TLShapeId[] = [];
+
+	for (const shape of shapes) {
+		if (shape.type !== "image") continue;
+
+		const assetId = (shape.props as { assetId?: string }).assetId;
+		if (!assetId) continue;
+
+		const asset = editor.getAsset(assetId as TLAssetId);
+		if (!asset || asset.type !== "image" || !asset.props.src) continue;
+
+		const weaponId = extractMainWeaponIdFromSrc(asset.props.src);
+		if (!weaponId) continue;
+
+		const rangeResult = getWeaponRange(weaponId);
+		if (rangeResult.rangeType === "unsupported" || rangeResult.range <= 0)
+			continue;
+
+		const radiusPx = rangeResult.range * GAME_UNITS_TO_MINIMAP_PX;
+		const diameter = radiusPx * 2;
+
+		const centerX = shape.x + (shape.props as { w: number }).w / 2;
+		const centerY = shape.y + (shape.props as { h: number }).h / 2;
+
+		editor.createShape({
+			type: "geo",
+			x: centerX - radiusPx,
+			y: centerY - radiusPx,
+			opacity: 0.3,
+			props: {
+				geo: "ellipse",
+				w: diameter,
+				h: diameter,
+				color: "red",
+				fill: "solid",
+				dash: "solid",
+				size: "s",
+			},
+			meta: { isRangeCircle: true, weaponShapeId: shape.id },
+		});
+		weaponShapeIds.push(shape.id);
+	}
+
+	if (weaponShapeIds.length > 0) {
+		editor.bringToFront(weaponShapeIds);
+	}
+}
+
+function removeRangeCircles(editor: Editor) {
+	const shapes = editor.getCurrentPageShapes();
+	const rangeShapes = shapes.filter(
+		(shape) => shape.meta.isRangeCircle === true,
+	);
+
+	if (rangeShapes.length === 0) return;
+
+	editor.deleteShapes(rangeShapes);
 }

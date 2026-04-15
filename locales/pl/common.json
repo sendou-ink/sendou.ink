@@ -231,6 +231,7 @@
 	"plans.bgStyle.OVER": "Overhead",
 	"plans.bgStyle.MINI": "",
 	"plans.adder.objective": "",
+	"plans.ranges": "",
 	"articles.by": "napisane przez {{author}}",
 	"theme.light": "Jasny",
 	"theme.dark": "Ciemny",
