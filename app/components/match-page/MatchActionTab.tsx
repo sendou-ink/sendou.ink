@@ -4,6 +4,7 @@ import type * as React from "react";
 import { useId, useState } from "react";
 import { Radio, RadioGroup } from "react-aria-components";
 import { useTranslation } from "react-i18next";
+import { useWebHaptics } from "web-haptics/react";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 import { Avatar } from "../Avatar";
@@ -62,11 +63,13 @@ export function MatchActionTab({
 	const [isKo, setIsKo] = useState(false);
 	const [points, setPoints] = useState<[number, number]>([0, 0]);
 	const [confirming, setConfirming] = useState(false);
+	const { trigger } = useWebHaptics();
 
 	const pointsValid = !withPoints || isKo || points[0] > 0 || points[1] > 0;
 	const canSubmit = winnerId !== null && pointsValid;
 
-	// xxx: add haptics
+	const isOnTeam = teams[0].id === ownTeamId || teams[1].id === ownTeamId;
+
 	// xxx: i'd be nicer if the score report buttons don't shift horizontally (when some stage names are two lines)
 	return (
 		<SendouTabPanel id={TAB_KEYS.ACTION}>
@@ -97,7 +100,25 @@ export function MatchActionTab({
 
 					<RadioGroup
 						value={winnerId !== null ? String(winnerId) : undefined}
-						onChange={(value) => setWinnerId(Number(value))}
+						onChange={(value) => {
+							const selectedId = Number(value);
+							setWinnerId(selectedId);
+
+							const isEnemySelection = isOnTeam && selectedId !== ownTeamId;
+							if (isEnemySelection) {
+								trigger([
+									{ duration: 40, intensity: 0.7 },
+									{ delay: 40, duration: 40, intensity: 0.7 },
+									{ delay: 40, duration: 40, intensity: 0.9 },
+									{ delay: 40, duration: 50, intensity: 0.6 },
+								]);
+							} else {
+								trigger([
+									{ duration: 30 },
+									{ delay: 60, duration: 40, intensity: 1 },
+								]);
+							}
+						}}
 						aria-label={t("q:match.action.selectWinner")}
 						className={styles.selectionRow}
 					>
