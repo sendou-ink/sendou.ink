@@ -18,14 +18,22 @@
 .mapRow {
 	display: flex;
 	align-items: center;
-	gap: var(--s-3);
+	gap: var(--s-4);
+
+	@media screen and (max-width: 479px) {
+		flex-direction: column;
+	}
 }
 
 .mapInfo {
 	display: flex;
 	flex-direction: column;
-	align-items: center;
-	gap: var(--s-1);
+	align-self: flex-end;
+	gap: var(--s-2);
+
+	@media screen and (max-width: 479px) {
+		align-self: center;
+	}
 }
 
 .mapLabel {
@@ -44,11 +52,23 @@
 .inputRow {
 	display: flex;
 	align-items: flex-end;
-	gap: var(--s-3);
+	gap: var(--s-4);
+
+	@media screen and (max-width: 479px) {
+		width: 100%;
+	}
 }
 
 .weaponSelectContainer {
 	min-width: 200px;
+
+	& button {
+		border: var(--border-style-high);
+	}
+
+	@media screen and (max-width: 479px) {
+		flex: 1;
+	}
 }
 
 .unreportedRow {
@@ -72,7 +92,7 @@
 .collapseButton {
 	position: absolute;
 	top: var(--s-1);
-	right: var(--s-1);
+	right: var(--s-2);
 
 	& svg {
 		min-width: 22px;

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { useUser } from "~/features/auth/core/user";
-import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -12,7 +11,7 @@ import type {
 } from "~/modules/in-game-lists/types";
 import { abilityImageUrl, SETTINGS_PAGE } from "~/utils/urls";
 import { SendouButton } from "../elements/Button";
-import { Image, ModeImage, StageImage, WeaponImage } from "../Image";
+import { Image, StageImage, WeaponImage } from "../Image";
 import { WeaponSelect } from "../WeaponSelect";
 import styles from "./WeaponReporter.module.css";
 
@@ -114,7 +113,7 @@ export function WeaponReporter({
 					<div className={styles.inputRow}>
 						<div className={styles.weaponSelectContainer}>
 							<WeaponSelect
-								label={t("q:match.weapon.yourWeapon")}
+								label={`${t("q:match.weapon.yourWeapon")} #${inputTargetIndex + 1}`}
 								value={selectedWeapon}
 								onChange={setSelectedWeapon}
 								quickSelectWeaponsIds={quickSelectWeaponIds}
@@ -152,19 +151,13 @@ export function WeaponReporter({
 }
 
 function MapInfo({ map }: { map: WeaponReporterMap }) {
-	const { t } = useTranslation(["game-misc"]);
-
 	return (
 		<div className={styles.mapInfo}>
 			<StageImage
 				stageId={map.stageId}
-				width={60}
+				width={100}
 				className={styles.stageImage}
 			/>
-			<div className={styles.mapLabel}>
-				<ModeImage mode={map.mode} size={14} />
-				<span>{shortStageName(t(`game-misc:STAGE_${map.stageId}`))}</span>
-			</div>
 		</div>
 	);
 }
