@@ -111,6 +111,10 @@
 	cursor: pointer;
 }
 
+:global(html.light) .unknownWeapon {
+	filter: drop-shadow(0 0 1px var(--color-text));
+}
+
 .weaponPopover {
 	display: flex;
 	flex-direction: column;

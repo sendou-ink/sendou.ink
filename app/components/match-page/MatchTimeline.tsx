@@ -264,6 +264,7 @@ function WeaponPill({ weapons }: { weapons: Array<MainWeaponId | null> }) {
 						) : (
 							<Image
 								key={i}
+								className={styles.unknownWeapon}
 								path="/static-assets/img/abilities/UNKNOWN"
 								alt="?"
 								size={24}
