@@ -6,14 +6,13 @@ import { SendouTabPanel } from "~/components/elements/Tabs";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { MatchActionTab } from "~/components/match-page/MatchActionTab";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
-import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import { useRecentlyReportedWeapons } from "~/features/sendouq/q-hooks";
-import { isSetOverByScore } from "~/features/tournament-bracket/tournament-bracket-utils";
 import type {
 	MainWeaponId,
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
+import * as SendouQMatch from "../core/SendouQMatch";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 import styles from "./SendouQMatchActionTab.module.css";
 
@@ -38,12 +37,11 @@ export function SendouQMatchActionTab({
 	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
 		useRecentlyReportedWeapons();
 
-	const alphaScore = data.match.mapList.filter(
-		(m) => m.winnerGroupId === data.match.groupAlpha.id,
-	).length;
-	const bravoScore = data.match.mapList.filter(
-		(m) => m.winnerGroupId === data.match.groupBravo.id,
-	).length;
+	const {
+		mapsToWin,
+		alphaWins: alphaScore,
+		bravoWins: bravoScore,
+	} = SendouQMatch.score(data.match);
 
 	const cancelRequesterIsAlpha = data.match.groupAlpha.members.some(
 		(m) => m.id === data.match.cancelRequestedByUserId,
@@ -107,24 +105,11 @@ export function SendouQMatchActionTab({
 
 	const scores: [number, number] = [alphaScore, bravoScore];
 
-	// xxx: we can improve this
 	const setEndingTeamIds: number[] = [];
-	if (
-		isSetOverByScore({
-			scores: [scores[0] + 1, scores[1]],
-			count: SENDOUQ_BEST_OF,
-			countType: "BEST_OF",
-		})
-	) {
+	if (alphaScore + 1 === mapsToWin) {
 		setEndingTeamIds.push(data.match.groupAlpha.id);
 	}
-	if (
-		isSetOverByScore({
-			scores: [scores[0], scores[1] + 1],
-			count: SENDOUQ_BEST_OF,
-			countType: "BEST_OF",
-		})
-	) {
+	if (bravoScore + 1 === mapsToWin) {
 		setEndingTeamIds.push(data.match.groupBravo.id);
 	}
 
