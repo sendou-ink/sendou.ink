@@ -10,8 +10,9 @@
 	justify-items: center;
 	align-items: center;
 	gap: var(--s-4);
+	container-type: inline-size;
 
-	@media screen and (max-width: 599px) {
+	@container (max-width: 599px) {
 		grid-template-columns: auto 1fr;
 		grid-template-areas:
 			"header header"
@@ -36,7 +37,7 @@
 	gap: var(--s-6);
 	margin-block-start: calc(-1 * var(--s-4));
 
-	@media screen and (max-width: 599px) {
+	@container (max-width: 599px) {
 		margin-block-start: calc(-1 * var(--s-3));
 		margin-block-end: calc(-1 * var(--s-0-5));
 	}
@@ -52,7 +53,7 @@
 	height: 100%;
 	max-width: 250px;
 
-	@media screen and (max-width: 599px) {
+	@container (max-width: 599px) {
 		max-width: unset;
 	}
 }
@@ -61,7 +62,7 @@
 	grid-area: alpha;
 	justify-self: end;
 
-	@media screen and (max-width: 599px) {
+	@container (max-width: 599px) {
 		justify-self: stretch;
 		align-self: end;
 	}
@@ -71,17 +72,16 @@
 	grid-area: bravo;
 	justify-self: start;
 
-	@media screen and (max-width: 599px) {
+	@container (max-width: 599px) {
 		justify-self: stretch;
 		align-self: start;
 	}
 }
 
-/** xxx: migrate to container queries (everywhere on this file too) */
 .stageImageContainer {
 	grid-area: stage;
 
-	@media screen and (max-width: 599px) {
+	@container (max-width: 599px) {
 		align-self: stretch;
 		overflow: hidden;
 		border-radius: var(--radius-box);
@@ -93,7 +93,7 @@
 .stageImage {
 	border-radius: var(--radius-box);
 
-	@media screen and (max-width: 599px) {
+	@container (max-width: 599px) {
 		position: absolute;
 		inset: 0;
 		width: 100%;
@@ -106,7 +106,7 @@
 .pointsRow {
 	display: contents;
 
-	@media screen and (max-width: 599px) {
+	@container (max-width: 599px) {
 		display: flex;
 		grid-area: points;
 		justify-content: center;
@@ -167,7 +167,7 @@
 		border-color: var(--color-accent-high);
 	}
 
-	@media screen and (max-width: 599px) {
+	@container (max-width: 599px) {
 		min-width: unset;
 	}
 }
