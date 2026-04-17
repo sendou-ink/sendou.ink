@@ -15,7 +15,6 @@ export const handle: SendouRouteHandle = {
 };
 
 // xxx: translate all & check for unused translations
-// xxx: "This score will end the set. Please confirm." -> "This score will end the set. Please confirm below." and up top
 // xxx: check result confirm visiblity for all, needs to be obvious that they still need to report score.
 
 export default function SendouQMatchPage() {

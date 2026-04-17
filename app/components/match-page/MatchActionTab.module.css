@@ -251,9 +251,12 @@
 .confirmationMessage {
 	font-weight: var(--weight-semi);
 	text-align: center;
+	color: var(--color-warning);
+	margin-block-end: var(--s-4);
 }
 
 .confirmationButtons {
 	display: flex;
 	gap: var(--s-3);
+	margin-block-start: var(--s-4);
 }

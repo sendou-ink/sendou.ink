@@ -248,24 +248,24 @@ function SetEndingConfirmation({
 
 	return (
 		<div className={styles.confirmationRoot}>
+			<div className={styles.confirmationMessage}>
+				{t("q:match.action.confirmSetEnding")}
+			</div>
 			<MatchTimeline
 				teams={setEnding.teams}
 				score={updatedScore}
 				maps={[...setEnding.maps, newMap]}
 			/>
-			<div className={styles.confirmationMessage}>
-				{t("q:match.action.confirmSetEnding")}
-			</div>
 			<div className={styles.confirmationButtons}>
-				<SendouButton variant="outlined" onPress={onBack}>
-					{t("common:actions.back")}
-				</SendouButton>
 				<SendouButton
 					variant="primary"
 					isDisabled={isSubmitting}
 					onPress={onConfirm}
 				>
 					{t("common:actions.confirm")}
+				</SendouButton>
+				<SendouButton variant="outlined" onPress={onBack}>
+					{t("common:actions.back")}
 				</SendouButton>
 			</div>
 		</div>
