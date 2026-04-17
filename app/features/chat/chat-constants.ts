@@ -1,8 +1,6 @@
 export const MESSAGE_MAX_LENGTH = 200;
 
-// xxx: placeholder pattern — adjust to match the real SplatNet room link format
-export const SPLATNET_ROOM_LINK_PATTERN =
-	/https:\/\/app\.splatoon3\.nintendo\.net\/\S+/g;
+export const SPLATNET_ROOM_LINK_PATTERN = /https:\/\/s\.nintendo\.com\/\S+/g;
 
 export function extractRoomLink(text: string): string | null {
 	const match = text.match(SPLATNET_ROOM_LINK_PATTERN);
