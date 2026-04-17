@@ -8,7 +8,7 @@ import { logger } from "../../../../utils/logger";
 import { tournamentTeamPage } from "../../../../utils/urls";
 import { useUser } from "../../../auth/core/user";
 import { TOURNAMENT } from "../../../tournament/tournament-constants";
-import type { Bracket } from "../../core/Bracket";
+import type { Bracket, Standing } from "../../core/Bracket";
 import * as Progression from "../../core/Progression";
 import * as Swiss from "../../core/Swiss";
 import styles from "./bracket.module.css";
@@ -75,9 +75,8 @@ export function PlacementsTable({
 			return a.placement - b.placement;
 		});
 
-	const destinationBracket = (placement: number) => {
+	const destinationBracket = (standing: Standing) => {
 		if (bracket.type === "swiss" && bracket.settings?.advanceThreshold) {
-			const standing = standings[placement - 1];
 			const stats = standing.stats;
 			invariant(stats);
 
@@ -95,6 +94,8 @@ export function PlacementsTable({
 					)
 				: undefined;
 		}
+
+		const placement = standings.indexOf(standing) + 1;
 
 		return bracket.tournament.brackets.find(
 			(b) =>
@@ -125,6 +126,59 @@ export function PlacementsTable({
 		);
 	})();
 
+	if (bracket.settings?.hasAbDivisions) {
+		const aStandings = standings.filter((s) => s.team.abDivision === 0);
+		const bStandings = standings.filter((s) => s.team.abDivision === 1);
+
+		return (
+			<div className="stack lg">
+				<StandingsTable
+					bracket={bracket}
+					standings={aStandings}
+					destinationBracket={destinationBracket}
+					possibleDestinationBrackets={possibleDestinationBrackets}
+					canEditDestination={canEditDestination}
+					allMatchesFinished={allMatchesFinished}
+				/>
+				<StandingsTable
+					bracket={bracket}
+					standings={bStandings}
+					destinationBracket={destinationBracket}
+					possibleDestinationBrackets={possibleDestinationBrackets}
+					canEditDestination={canEditDestination}
+					allMatchesFinished={allMatchesFinished}
+				/>
+			</div>
+		);
+	}
+
+	return (
+		<StandingsTable
+			bracket={bracket}
+			standings={standings}
+			destinationBracket={destinationBracket}
+			possibleDestinationBrackets={possibleDestinationBrackets}
+			canEditDestination={canEditDestination}
+			allMatchesFinished={allMatchesFinished}
+		/>
+	);
+}
+
+function StandingsTable({
+	bracket,
+	standings,
+	destinationBracket,
+	possibleDestinationBrackets,
+	canEditDestination,
+	allMatchesFinished,
+}: {
+	bracket: Bracket;
+	standings: Standing[];
+	destinationBracket: (standing: Standing) => Bracket | undefined;
+	possibleDestinationBrackets: Bracket[];
+	canEditDestination: boolean;
+	allMatchesFinished: boolean;
+}) {
 	let qualifiedRowRendered = false;
 	let eliminatedRowRendered = false;
 
@@ -179,7 +233,7 @@ export function PlacementsTable({
 
 					const team = bracket.tournament.teamById(s.team.id);
 
-					const dest = destinationBracket(i + 1);
+					const dest = destinationBracket(s);
 
 					const overridenDestination =
 						bracket.tournament.ctx.bracketProgressionOverrides.find(
