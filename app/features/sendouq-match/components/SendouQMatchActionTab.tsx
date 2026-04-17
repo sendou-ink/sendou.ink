@@ -6,6 +6,7 @@ import { SendouTabPanel } from "~/components/elements/Tabs";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { MatchActionTab } from "~/components/match-page/MatchActionTab";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
+import { useUser } from "~/features/auth/core/user";
 import { useRecentlyReportedWeapons } from "~/features/sendouq/q-hooks";
 import type {
 	MainWeaponId,
@@ -16,26 +17,28 @@ import * as SendouQMatch from "../core/SendouQMatch";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 import styles from "./SendouQMatchActionTab.module.css";
 
+// xxx: staff report
 export function SendouQMatchActionTab({
 	data,
 	currentMap,
 	ownTeamId,
-	ownUserId,
 	reportedCount,
 }: {
 	data: SendouQMatchLoaderData;
 	currentMap: { stageId: StageId; mode: ModeShort };
 	ownTeamId: number;
-	ownUserId: number;
 	reportedCount: number;
 }) {
 	const { t } = useTranslation(["q", "common"]);
+	const user = useUser();
 	const fetcher = useFetcher();
 	const undoFetcher = useFetcher();
 	const cancelFetcher = useFetcher();
 	const weaponFetcher = useFetcher();
 	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
 		useRecentlyReportedWeapons();
+
+	if (!user) return null;
 
 	const {
 		mapsToWin,
@@ -132,7 +135,7 @@ export function SendouQMatchActionTab({
 
 	const weaponPastReported: MainWeaponId[] = data.reportedWeapons
 		? data.reportedWeapons
-				.filter((w) => w.userId === ownUserId)
+				.filter((w) => w.userId === user.id)
 				.map((w) => w.weaponSplId)
 		: [];
 

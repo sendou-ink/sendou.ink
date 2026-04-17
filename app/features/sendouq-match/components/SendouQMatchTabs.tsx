@@ -61,7 +61,7 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 		awaitingConfirmation && reporterGroupId === ownTeamId;
 
 	const showActionTab =
-		!data.match.isLocked && !awaitingConfirmation && currentMap;
+		!data.match.isLocked && !awaitingConfirmation && currentMap && userSide;
 
 	const tabs: Array<"join" | "rosters" | "action" | "result"> =
 		awaitingConfirmation
@@ -170,8 +170,6 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 					data={data}
 					currentMap={currentMap}
 					ownTeamId={ownTeamId}
-					// xxx: why not just useUser in SendouQMatchActionTab?
-					ownUserId={user!.id}
 					reportedCount={reportedCount}
 				/>
 			) : null}
