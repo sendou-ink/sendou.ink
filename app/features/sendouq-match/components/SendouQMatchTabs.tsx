@@ -13,10 +13,10 @@ import type {
 } from "~/components/match-page/MatchTimeline";
 import { MatchTimeline } from "~/components/match-page/MatchTimeline";
 import { useUser } from "~/features/auth/core/user";
-import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { teamPage } from "~/utils/urls";
+import * as SendouQMatch from "../core/SendouQMatch";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 import { resolveGroupMemberOf } from "../q-match-utils";
 import { SendouQMatchActionTab } from "./SendouQMatchActionTab";
@@ -44,16 +44,8 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 		(m) => m.winnerGroupId !== null,
 	).length;
 
-	// xxx: util or Module
-	const mapsToWin = Math.ceil(SENDOUQ_BEST_OF / 2);
-	const alphaWins = data.match.mapList.filter(
-		(m) => m.winnerGroupId === data.match.groupAlpha.id,
-	).length;
-	const bravoWins = data.match.mapList.filter(
-		(m) => m.winnerGroupId === data.match.groupBravo.id,
-	).length;
-	const awaitingConfirmation =
-		!data.match.isLocked && (alphaWins >= mapsToWin || bravoWins >= mapsToWin);
+	const { alphaWins, bravoWins, isDecisive } = SendouQMatch.score(data.match);
+	const awaitingConfirmation = !data.match.isLocked && isDecisive;
 
 	const decidingReportedByUserId = [...data.match.mapList]
 		.reverse()

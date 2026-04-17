@@ -19,6 +19,7 @@ import { useAutoRerender } from "~/hooks/useAutoRerender";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
+import * as SendouQMatch from "../core/SendouQMatch";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 
 export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
@@ -52,16 +53,8 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 		/>
 	);
 
-	// xxx: util or Module here
-	const mapsToWin = Math.ceil(SENDOUQ_BEST_OF / 2);
-	const alphaWins = data.match.mapList.filter(
-		(m) => m.winnerGroupId === data.match.groupAlpha.id,
-	).length;
-	const bravoWins = data.match.mapList.filter(
-		(m) => m.winnerGroupId === data.match.groupBravo.id,
-	).length;
 	const awaitingConfirmation =
-		!data.match.isLocked && (alphaWins >= mapsToWin || bravoWins >= mapsToWin);
+		!data.match.isLocked && SendouQMatch.score(data.match).isDecisive;
 
 	if (data.match.isLocked || awaitingConfirmation) {
 		const isCanceled = data.match.isLocked && cancelRequested;

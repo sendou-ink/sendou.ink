@@ -17,11 +17,12 @@ import {
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import type { Unpacked } from "~/utils/types";
-import { FULL_GROUP_SIZE, SENDOUQ_BEST_OF } from "../sendouq/q-constants";
+import { FULL_GROUP_SIZE } from "../sendouq/q-constants";
 import * as SQGroupRepository from "../sendouq/SQGroupRepository.server";
 import { MATCHES_PER_SEASONS_PAGE } from "../user-page/user-page-constants";
 import { compareMatchToReportedScores } from "./core/match.server";
 import { mergeReportedWeapons } from "./core/reported-weapons.server";
+import * as SendouQMatch from "./core/SendouQMatch";
 import { calculateMatchSkills } from "./core/skills.server";
 import {
 	summarizeMaps,
@@ -976,16 +977,12 @@ export async function reportMapWinner({
 		return { status: "INVALID_WINNER" };
 	}
 
-	// xxx: maybe some util or Module better?
-	const mapsToWin = Math.ceil(SENDOUQ_BEST_OF / 2);
-	const existingAlphaWins = match.mapList.filter(
-		(m) => m.winnerGroupId === match.groupAlpha.id,
-	).length;
-	const existingBravoWins = match.mapList.filter(
-		(m) => m.winnerGroupId === match.groupBravo.id,
-	).length;
-	const scoreAlreadyDecisive =
-		existingAlphaWins >= mapsToWin || existingBravoWins >= mapsToWin;
+	const {
+		mapsToWin,
+		alphaWins: existingAlphaWins,
+		bravoWins: existingBravoWins,
+		isDecisive: scoreAlreadyDecisive,
+	} = SendouQMatch.score(match);
 
 	// Confirmation flow: score is already decisive (first team reported the set-ending map)
 	if (scoreAlreadyDecisive) {
@@ -1161,17 +1158,7 @@ export async function undoMatchReport({
 		return { status: "ALREADY_LOCKED" };
 	}
 
-	// xxx: util or Module
-	const mapsToWin = Math.ceil(SENDOUQ_BEST_OF / 2);
-	const alphaWins = match.mapList.filter(
-		(m) => m.winnerGroupId === match.groupAlpha.id,
-	).length;
-	const bravoWins = match.mapList.filter(
-		(m) => m.winnerGroupId === match.groupBravo.id,
-	).length;
-	const scoreIsDecisive = alphaWins >= mapsToWin || bravoWins >= mapsToWin;
-
-	if (!scoreIsDecisive) {
+	if (!SendouQMatch.score(match).isDecisive) {
 		return { status: "NOT_ALLOWED" };
 	}
 
@@ -1218,17 +1205,7 @@ export async function undoMapReport({
 		return { status: "ALREADY_LOCKED" };
 	}
 
-	// xxx: util or Module
-	const mapsToWin = Math.ceil(SENDOUQ_BEST_OF / 2);
-	const alphaWins = match.mapList.filter(
-		(m) => m.winnerGroupId === match.groupAlpha.id,
-	).length;
-	const bravoWins = match.mapList.filter(
-		(m) => m.winnerGroupId === match.groupBravo.id,
-	).length;
-	const scoreIsDecisive = alphaWins >= mapsToWin || bravoWins >= mapsToWin;
-
-	if (scoreIsDecisive) {
+	if (SendouQMatch.score(match).isDecisive) {
 		return { status: "NOT_ALLOWED" };
 	}
 
