@@ -8,7 +8,10 @@ import { Avatar } from "../../../components/Avatar";
 import { SendouButton } from "../../../components/elements/Button";
 import { SubmitButton } from "../../../components/SubmitButton";
 import { useTimeFormat } from "../../../hooks/useTimeFormat";
-import { MESSAGE_MAX_LENGTH } from "../chat-constants";
+import {
+	MESSAGE_MAX_LENGTH,
+	SPLATNET_ROOM_LINK_PATTERN,
+} from "../chat-constants";
 import { useChatAutoScroll } from "../chat-hooks";
 import type { ChatMessage, ChatProps, ChatUser } from "../chat-types";
 import styles from "./Chat.module.css";
@@ -268,7 +271,9 @@ function Message({
 						[styles.messageContentsPending]: message.pending,
 					})}
 				>
-					{message.contents}
+					{message.contents ? (
+						<MessageContents text={message.contents} />
+					) : null}
 				</div>
 			</div>
 		</li>
@@ -299,6 +304,41 @@ function SystemMessage({
 			</div>
 		</li>
 	);
+}
+
+function MessageContents({ text }: { text: string }) {
+	const pattern = new RegExp(SPLATNET_ROOM_LINK_PATTERN.source, "g");
+	const matches = [...text.matchAll(pattern)];
+
+	if (matches.length === 0) return <>{text}</>;
+
+	const parts: React.ReactNode[] = [];
+	let lastIndex = 0;
+
+	for (let i = 0; i < matches.length; i++) {
+		const match = matches[i];
+		if (match.index > lastIndex) {
+			parts.push(text.slice(lastIndex, match.index));
+		}
+		parts.push(
+			<a
+				key={i}
+				href={match[0]}
+				target="_blank"
+				rel="noopener noreferrer"
+				className={styles.roomLink}
+			>
+				{match[0]}
+			</a>,
+		);
+		lastIndex = match.index + match[0].length;
+	}
+
+	if (lastIndex < text.length) {
+		parts.push(text.slice(lastIndex));
+	}
+
+	return <>{parts}</>;
 }
 
 function MessageTimestamp({ timestamp }: { timestamp: number }) {

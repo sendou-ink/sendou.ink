@@ -27,6 +27,11 @@
 			rgba(0, 0, 0, 0.6)
 		),
 		var(--stage-img);
+	color: var(--color-text);
+
+	:global(html.light) & {
+		color: var(--color-text-inverse);
+	}
 }
 
 .info {

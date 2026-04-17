@@ -160,6 +160,8 @@ export default function MatchPageTestRoute() {
 										discordAvatar: null,
 										customUrl: "sendou",
 										tier: { name: "LEVIATHAN", isPlus: true },
+										plusTier: 1,
+										weaponPool: [0, 2000, 4000],
 									},
 									{
 										id: 2,
@@ -168,6 +170,8 @@ export default function MatchPageTestRoute() {
 										discordAvatar: null,
 										customUrl: null,
 										tier: { name: "DIAMOND", isPlus: false },
+										plusTier: 2,
+										weaponPool: [20, 1100],
 									},
 									{
 										id: 3,
@@ -205,6 +209,8 @@ export default function MatchPageTestRoute() {
 										discordAvatar: null,
 										customUrl: null,
 										tier: { name: "PLATINUM", isPlus: false },
+										plusTier: 3,
+										weaponPool: [40, 3000],
 									},
 									{
 										id: 6,
@@ -260,7 +266,12 @@ export default function MatchPageTestRoute() {
 											discordAvatar: null,
 											customUrl: "sendou",
 										},
-										skillDifference: { calculated: true, spDiff: 12.3 },
+										skillDifference: {
+											calculated: true,
+											spDiff: 12.3,
+											oldSp: 1402.43,
+											newSp: 1414.73,
+										},
 									},
 									{
 										user: {
@@ -270,7 +281,12 @@ export default function MatchPageTestRoute() {
 											discordAvatar: null,
 											customUrl: null,
 										},
-										skillDifference: { calculated: true, spDiff: 8.7 },
+										skillDifference: {
+											calculated: true,
+											spDiff: 8.7,
+											oldSp: 1521.18,
+											newSp: 1529.88,
+										},
 									},
 									{
 										user: {
@@ -318,7 +334,12 @@ export default function MatchPageTestRoute() {
 											discordAvatar: null,
 											customUrl: null,
 										},
-										skillDifference: { calculated: true, spDiff: -11.2 },
+										skillDifference: {
+											calculated: true,
+											spDiff: -11.2,
+											oldSp: 1612.55,
+											newSp: 1601.35,
+										},
 									},
 									{
 										user: {
@@ -328,7 +349,12 @@ export default function MatchPageTestRoute() {
 											discordAvatar: null,
 											customUrl: null,
 										},
-										skillDifference: { calculated: true, spDiff: -9.4 },
+										skillDifference: {
+											calculated: true,
+											spDiff: -9.4,
+											oldSp: 1488.62,
+											newSp: 1479.22,
+										},
 									},
 									{
 										user: {
@@ -338,7 +364,12 @@ export default function MatchPageTestRoute() {
 											discordAvatar: null,
 											customUrl: null,
 										},
-										skillDifference: { calculated: true, spDiff: -13.8 },
+										skillDifference: {
+											calculated: true,
+											spDiff: -13.8,
+											oldSp: 1730.91,
+											newSp: 1717.11,
+										},
 									},
 									{
 										user: {
@@ -348,7 +379,12 @@ export default function MatchPageTestRoute() {
 											discordAvatar: null,
 											customUrl: null,
 										},
-										skillDifference: { calculated: true, spDiff: -7.6 },
+										skillDifference: {
+											calculated: true,
+											spDiff: -7.6,
+											oldSp: 1555.04,
+											newSp: 1547.44,
+										},
 									},
 								],
 								skillDifference: {

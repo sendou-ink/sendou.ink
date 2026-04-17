@@ -53,7 +53,71 @@
 	height: 24px;
 	border-radius: 100%;
 	background-color: var(--color-bg-higher);
+	border: none;
+	padding: 0;
+	cursor: pointer;
 	flex-shrink: 0;
+}
+
+.tierPopover {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.tierPopoverName {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	text-transform: capitalize;
+}
+
+.memberGrid {
+	display: grid;
+	grid-template-areas:
+		"avatar name"
+		"tier meta";
+	grid-template-columns: auto 1fr;
+	column-gap: var(--s-2);
+	row-gap: var(--s-1);
+	align-items: center;
+}
+
+.memberLink {
+	grid-row: 1;
+	grid-column: 1 / -1;
+	display: grid;
+	grid-template-columns: subgrid;
+	column-gap: var(--s-2);
+	align-items: center;
+}
+
+.memberTier {
+	grid-area: tier;
+	justify-self: center;
+}
+
+.memberMetaArea {
+	grid-area: meta;
+}
+
+.memberMeta {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-2xs);
+}
+
+.plusTier {
+	display: flex;
+	align-items: center;
+	gap: var(--s-0-5);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-full);
+	padding: var(--s-0-5) var(--s-1-5);
+	padding-inline-start: var(--s-1);
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
 }
 
 .subbedOutTrigger {

@@ -107,6 +107,12 @@
 	opacity: 0.7;
 }
 
+.roomLink {
+	color: var(--color-text-accent);
+	text-decoration: underline;
+	word-break: break-all;
+}
+
 .roomButton {
 	border: 0;
 	border-bottom: var(--border-style);

@@ -1,6 +1,5 @@
 import clsx from "clsx";
-import { RefreshCcw, TrendingUp, Users } from "lucide-react";
-import { Button } from "react-aria-components";
+import { ArrowRight, RefreshCcw, TrendingUp, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { GroupSkillDifference, UserSkillDifference } from "~/db/tables";
 import { useHydrated } from "~/hooks/useHydrated";
@@ -13,9 +12,11 @@ import type {
 } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 import { Avatar } from "../Avatar";
+import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
-import { Image, ModeImage, StageImage, WeaponImage } from "../Image";
+import { ModeImage, StageImage } from "../Image";
 import styles from "./MatchTimeline.module.css";
+import { WeaponPool } from "./WeaponPool";
 
 type MatchSide = "ALPHA" | "BRAVO";
 
@@ -65,7 +66,6 @@ export interface MatchTimelineProps {
 }
 
 // xxx: need to show Pick/Bans somewhere, on tab?
-// xxx: for SP changes, click the delta to see old and new SP raw
 export function MatchTimeline({
 	teams,
 	score,
@@ -240,51 +240,8 @@ function SideResult({
 					</span>
 				) : null}
 			</div>
-			{weapons ? <WeaponPill weapons={weapons} /> : null}
+			{weapons ? <WeaponPool weapons={weapons} /> : null}
 		</div>
-	);
-}
-
-// xxx: outlines for question marks
-function WeaponPill({ weapons }: { weapons: Array<MainWeaponId | null> }) {
-	const { t } = useTranslation(["weapons"]);
-
-	return (
-		<SendouPopover
-			trigger={
-				<Button className={styles.weaponRow}>
-					{weapons.map((weaponId, i) =>
-						weaponId !== null ? (
-							<WeaponImage
-								key={i}
-								weaponSplId={weaponId}
-								variant="badge"
-								size={24}
-							/>
-						) : (
-							<Image
-								key={i}
-								className={styles.unknownWeapon}
-								path="/static-assets/img/abilities/UNKNOWN"
-								alt="?"
-								size={24}
-							/>
-						),
-					)}
-				</Button>
-			}
-		>
-			<div className={styles.weaponPopover}>
-				{weapons.map((weaponId, i) =>
-					weaponId !== null ? (
-						<div key={i} className={styles.weaponPopoverRow}>
-							<WeaponImage weaponSplId={weaponId} variant="badge" size={32} />
-							<span>{t(`weapons:MAIN_${weaponId}` as any)}</span>
-						</div>
-					) : null,
-				)}
-			</div>
-		</SendouPopover>
 	);
 }
 
@@ -403,15 +360,20 @@ function TimelineSpSection({ spChanges }: { spChanges: TimelineSpChanges }) {
 
 function SpMemberDetail({ member }: { member: TimelineSpMember }) {
 	if (member.skillDifference.calculated) {
-		const isPositive = member.skillDifference.spDiff > 0;
+		const { spDiff, oldSp, newSp } = member.skillDifference;
+		const isPositive = spDiff > 0;
+		const arrow = isPositive ? "▲" : "▼";
 
 		return (
 			<div className={styles.spDetail}>
 				<Avatar user={member.user} size="xxs" />
-				<span className={isPositive ? "text-success" : "text-warning"}>
-					{isPositive ? "▲" : "▼"}
-				</span>
-				<span>{Math.abs(member.skillDifference.spDiff)}SP</span>
+				<SpDeltaTrigger
+					arrow={arrow}
+					isPositive={isPositive}
+					value={Math.abs(spDiff)}
+					oldSp={oldSp}
+					newSp={newSp}
+				/>
 			</div>
 		);
 	}
@@ -423,12 +385,14 @@ function SpMemberDetail({ member }: { member: TimelineSpMember }) {
 		return (
 			<div className={styles.spDetail}>
 				<Avatar user={member.user} size="xxs" />
-				<span className={styles.spCalculatingIcon}>◆</span>
-				<span>
-					{member.skillDifference.newSp ? (
-						<>{member.skillDifference.newSp}SP</>
-					) : null}
-				</span>
+				<div className={styles.spDetailContent}>
+					<span className={styles.spCalculatingIcon}>◆</span>
+					<span>
+						{member.skillDifference.newSp ? (
+							<>{member.skillDifference.newSp}SP</>
+						) : null}
+					</span>
+				</div>
 			</div>
 		);
 	}
@@ -436,11 +400,13 @@ function SpMemberDetail({ member }: { member: TimelineSpMember }) {
 	return (
 		<div className={styles.spDetail}>
 			<Avatar user={member.user} size="xxs" />
-			<span className={styles.spCalculatingIcon}>◆</span>
-			<span>
-				{member.skillDifference.matchesCount}/
-				{member.skillDifference.matchesCountNeeded}
-			</span>
+			<div className={styles.spDetailContent}>
+				<span className={styles.spCalculatingIcon}>◆</span>
+				<span>
+					{member.skillDifference.matchesCount}/
+					{member.skillDifference.matchesCountNeeded}
+				</span>
+			</div>
 		</div>
 	);
 }
@@ -451,18 +417,23 @@ function SpTeamDetail({
 	skillDifference: GroupSkillDifference;
 }) {
 	if (skillDifference.calculated) {
-		const diff = skillDifference.newSp - skillDifference.oldSp;
+		const { oldSp, newSp } = skillDifference;
+		const diff = newSp - oldSp;
 		const isPositive = diff > 0;
+		const arrow = isPositive ? "▲" : "▼";
 
 		return (
 			<div className={styles.spDetail}>
 				<div className={styles.spTeamIcon}>
 					<Users size={16} />
 				</div>
-				<span className={isPositive ? "text-success" : "text-warning"}>
-					{isPositive ? "▲" : "▼"}
-				</span>
-				<span>{Math.abs(diff)}SP</span>
+				<SpDeltaTrigger
+					arrow={arrow}
+					isPositive={isPositive}
+					value={Math.abs(diff)}
+					oldSp={oldSp}
+					newSp={newSp}
+				/>
 			</div>
 		);
 	}
@@ -473,8 +444,10 @@ function SpTeamDetail({
 				<div className={styles.spTeamIcon}>
 					<Users size={16} />
 				</div>
-				<span className={styles.spCalculatingIcon}>◆</span>
-				<span>{skillDifference.newSp}SP</span>
+				<div className={styles.spDetailContent}>
+					<span className={styles.spCalculatingIcon}>◆</span>
+					<span>{skillDifference.newSp}SP</span>
+				</div>
 			</div>
 		);
 	}
@@ -484,10 +457,54 @@ function SpTeamDetail({
 			<div className={styles.spTeamIcon}>
 				<Users size={16} />
 			</div>
-			<span className={styles.spCalculatingIcon}>◆</span>
-			<span>
-				{skillDifference.matchesCount}/{skillDifference.matchesCountNeeded}
-			</span>
+			<div className={styles.spDetailContent}>
+				<span className={styles.spCalculatingIcon}>◆</span>
+				<span>
+					{skillDifference.matchesCount}/{skillDifference.matchesCountNeeded}
+				</span>
+			</div>
 		</div>
+	);
+}
+
+function SpDeltaTrigger({
+	arrow,
+	isPositive,
+	value,
+	oldSp,
+	newSp,
+}: {
+	arrow: string;
+	isPositive: boolean;
+	value: number;
+	oldSp?: number;
+	newSp?: number;
+}) {
+	const arrowClass = isPositive ? "text-success" : "text-warning";
+
+	if (oldSp === undefined || newSp === undefined) {
+		return (
+			<div className={styles.spDetailContent}>
+				<span className={arrowClass}>{arrow}</span>
+				<span>{value}SP</span>
+			</div>
+		);
+	}
+
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton variant="minimal" className={styles.spDeltaTrigger}>
+					<span className={arrowClass}>{arrow}</span>
+					<span>{value}SP</span>
+				</SendouButton>
+			}
+		>
+			<div className={styles.spRawPopover}>
+				<span>{oldSp}SP</span>
+				<ArrowRight size={16} />
+				<span>{newSp}SP</span>
+			</div>
+		</SendouPopover>
 	);
 }

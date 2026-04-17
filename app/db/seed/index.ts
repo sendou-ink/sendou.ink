@@ -2550,6 +2550,25 @@ async function groups(variation?: SeedVariation | null) {
 			memento,
 		});
 
+		const guaranteedWeaponPoolUserIds = [
+			sendouGroupMemberIds[1],
+			sendouGroupMemberIds[2],
+			nzapGroupMemberIds[1],
+			nzapGroupMemberIds[2],
+		].filter((id): id is number => typeof id === "number");
+		for (const userId of guaranteedWeaponPoolUserIds) {
+			const weapons: QWeaponPool[] = [
+				{ weaponSplId: 0, isFavorite: 1 },
+				{ weaponSplId: 2000, isFavorite: 0 },
+				{ weaponSplId: 4000, isFavorite: 0 },
+			];
+			await db
+				.updateTable("User")
+				.set({ qWeaponPool: JSON.stringify(weapons) })
+				.where("User.id", "=", userId)
+				.execute();
+		}
+
 		if (createdMatch.chatCode) {
 			await ChatSystemMessage.setMetadata({
 				chatCode: createdMatch.chatCode,

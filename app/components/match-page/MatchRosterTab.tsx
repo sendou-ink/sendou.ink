@@ -7,16 +7,19 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Image, TierImage } from "~/components/Image";
 import type { TierName } from "~/features/mmr/mmr-constants";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
-import { tierImageUrl, userPage } from "~/utils/urls";
+import { navIconUrl, tierImageUrl, userPage } from "~/utils/urls";
 import { SendouTabPanel } from "../elements/Tabs";
 import styles from "./MatchRosterTab.module.css";
 import { TAB_KEYS } from "./MatchTabs";
+import { WeaponPool } from "./WeaponPool";
 
 type RosterTabMember = CommonUser & {
 	tier?: { name: TierName; isPlus: boolean } | "CALCULATING";
 	plusTier?: number | null;
+	weaponPool?: Array<MainWeaponId>;
 };
 
 interface RosterTabTeam {
@@ -129,15 +132,20 @@ function TeamRoster({
 								</li>
 							))
 						: activeMembers.map((member) => (
-								<li key={member.id}>
-									<Link
-										to={userPage(member)}
-										className="stack horizontal sm items-center"
-									>
-										<MemberTierBadge tier={member.tier} />
+								<li key={member.id} className={styles.memberGrid}>
+									<Link to={userPage(member)} className={styles.memberLink}>
 										<Avatar user={member} size="xxs" />
 										<span>{member.username}</span>
 									</Link>
+									<div className={styles.memberTier}>
+										<MemberTierPopover tier={member.tier} />
+									</div>
+									<div className={styles.memberMetaArea}>
+										<MemberMeta
+											plusTier={member.plusTier}
+											weaponPool={member.weaponPool}
+										/>
+									</div>
 								</li>
 							))}
 					{!isEditing && subbedOutMembers.length > 0 ? (
@@ -275,7 +283,7 @@ function TeamHeader({
 	);
 }
 
-function MemberTierBadge({
+function MemberTierPopover({
 	tier,
 }: {
 	tier?: { name: TierName; isPlus: boolean } | "CALCULATING";
@@ -283,17 +291,82 @@ function MemberTierBadge({
 	if (!tier) return null;
 
 	return (
-		<div className={styles.tierBadge}>
-			{tier === "CALCULATING" ? (
+		<SendouPopover
+			trigger={
+				<SendouButton variant="minimal" className={styles.tierBadge}>
+					{tier === "CALCULATING" ? (
+						<Image
+							path={tierImageUrl("CALCULATING")}
+							alt=""
+							width={22}
+							height={22 * 0.8675}
+						/>
+					) : (
+						<TierImage tier={tier} width={22} />
+					)}
+				</SendouButton>
+			}
+		>
+			<MemberTierPopoverContent tier={tier} />
+		</SendouPopover>
+	);
+}
+
+function MemberTierPopoverContent({
+	tier,
+}: {
+	tier: { name: TierName; isPlus: boolean } | "CALCULATING";
+}) {
+	const { t } = useTranslation(["q"]);
+
+	if (tier === "CALCULATING") {
+		return (
+			<div className={styles.tierPopover}>
 				<Image
 					path={tierImageUrl("CALCULATING")}
 					alt=""
-					width={22}
-					height={22 * 0.8675}
+					width={80}
+					height={80 * 0.8675}
 				/>
-			) : (
-				<TierImage tier={tier} width={22} />
-			)}
+				<span className={styles.tierPopoverName}>
+					{t("q:looking.sp.calculating")}
+				</span>
+			</div>
+		);
+	}
+
+	return (
+		<div className={styles.tierPopover}>
+			<TierImage tier={tier} width={80} />
+			<span className={styles.tierPopoverName}>
+				{tier.name.toLowerCase()}
+				{tier.isPlus ? "+" : ""}
+			</span>
+		</div>
+	);
+}
+
+function MemberMeta({
+	plusTier,
+	weaponPool,
+}: {
+	plusTier?: number | null;
+	weaponPool?: Array<MainWeaponId>;
+}) {
+	const hasPlusTier = typeof plusTier === "number";
+	const hasWeapons = weaponPool && weaponPool.length > 0;
+
+	if (!hasPlusTier && !hasWeapons) return null;
+
+	return (
+		<div className={styles.memberMeta}>
+			{hasPlusTier ? (
+				<div className={styles.plusTier}>
+					<Image path={navIconUrl("plus")} width={16} height={16} alt="" />
+					<span>{plusTier}</span>
+				</div>
+			) : null}
+			{hasWeapons ? <WeaponPool weapons={weaponPool} size={18} /> : null}
 		</div>
 	);
 }

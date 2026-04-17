@@ -259,6 +259,8 @@ export type UserSkillDifference =
 	| {
 			calculated: true;
 			spDiff: number;
+			oldSp?: number;
+			newSp?: number;
 	  }
 	| CalculatingSkill;
 export type GroupSkillDifference =
