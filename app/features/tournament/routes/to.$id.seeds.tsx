@@ -29,6 +29,7 @@ import { InfoPopover } from "~/components/InfoPopover";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Table } from "~/components/Table";
 import type { SeedingSnapshot } from "~/db/tables";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import invariant from "~/utils/invariant";
 import { navIconUrl, userResultsPage } from "~/utils/urls";
@@ -159,6 +160,11 @@ export default function TournamentSeedsPage() {
 					key={tournament.ctx.teams
 						.map((team) => team.startingBracketIdx ?? 0)
 						.join()}
+				/>
+			) : null}
+			{hasAbDivisionsStartingBracket(tournament) ? (
+				<AbDivisionsDialog
+					key={tournament.ctx.teams.map((team) => team.abDivision ?? -1).join()}
 				/>
 			) : null}
 			<ul className={styles.teamsList}>
@@ -422,6 +428,127 @@ function StartingBracketDialog() {
 						_action="UPDATE_STARTING_BRACKETS"
 						size="big"
 						testId="set-starting-brackets-submit-button"
+					>
+						Save
+					</SubmitButton>
+				</fetcher.Form>
+			</SendouDialog>
+		</div>
+	);
+}
+
+function hasAbDivisionsStartingBracket(tournament: Tournament) {
+	return tournament.ctx.settings.bracketProgression.some(
+		(bracket) => !bracket.sources && bracket.settings?.hasAbDivisions,
+	);
+}
+
+type AbDivisionValue = 0 | 1 | null;
+
+function AbDivisionsDialog() {
+	const fetcher = useFetcher();
+	const tournament = useTournament();
+
+	const [isOpen, setIsOpen] = React.useState(false);
+	const [teamAbDivisions, setTeamAbDivisions] = React.useState<
+		{ tournamentTeamId: number; abDivision: AbDivisionValue }[]
+	>(
+		tournament.ctx.teams.map((team) => ({
+			tournamentTeamId: team.id,
+			abDivision:
+				team.abDivision === 0 || team.abDivision === 1 ? team.abDivision : null,
+		})),
+	);
+
+	const counts = teamAbDivisions.reduce(
+		(acc, team) => {
+			if (team.abDivision === 0) acc.a++;
+			else if (team.abDivision === 1) acc.b++;
+			else acc.unassigned++;
+			return acc;
+		},
+		{ a: 0, b: 0, unassigned: 0 },
+	);
+
+	return (
+		<div>
+			<SendouButton
+				size="small"
+				onPress={() => setIsOpen(true)}
+				data-testid="set-ab-divisions"
+			>
+				Set A/B divisions
+			</SendouButton>
+			<SendouDialog
+				heading="Setting A/B divisions"
+				isOpen={isOpen}
+				onClose={() => setIsOpen(false)}
+				isFullScreen
+			>
+				<fetcher.Form className="stack lg items-center" method="post">
+					<div className="stack horizontal sm text-xs">
+						<span>A: {counts.a}</span>
+						<span>B: {counts.b}</span>
+						<span>Unassigned: {counts.unassigned}</span>
+					</div>
+					<input type="hidden" name="_action" value="UPDATE_AB_DIVISIONS" />
+					<input
+						type="hidden"
+						name="abDivisions"
+						value={JSON.stringify(teamAbDivisions)}
+					/>
+
+					<Table>
+						<thead>
+							<tr>
+								<th>Team</th>
+								<th>Division</th>
+							</tr>
+						</thead>
+						<tbody>
+							{tournament.ctx.teams.map((team) => {
+								const { abDivision } = teamAbDivisions.find(
+									({ tournamentTeamId }) => tournamentTeamId === team.id,
+								)!;
+
+								return (
+									<tr key={team.id}>
+										<td>{team.name}</td>
+										<td>
+											<select
+												className="w-max"
+												data-testid="ab-division-select"
+												value={abDivision === null ? "" : String(abDivision)}
+												onChange={(e) => {
+													const rawValue = e.target.value;
+													const newDivision: AbDivisionValue =
+														rawValue === ""
+															? null
+															: (Number(rawValue) as 0 | 1);
+													setTeamAbDivisions((teamAbDivisions) =>
+														teamAbDivisions.map((t) =>
+															t.tournamentTeamId === team.id
+																? { ...t, abDivision: newDivision }
+																: t,
+														),
+													);
+												}}
+											>
+												<option value="">Unassigned</option>
+												<option value="0">A</option>
+												<option value="1">B</option>
+											</select>
+										</td>
+									</tr>
+								);
+							})}
+						</tbody>
+					</Table>
+					<SubmitButton
+						state={fetcher.state}
+						_action="UPDATE_AB_DIVISIONS"
+						size="big"
+						testId="set-ab-divisions-submit-button"
 					>
 						Save
 					</SubmitButton>

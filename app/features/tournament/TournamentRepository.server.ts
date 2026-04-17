@@ -150,6 +150,7 @@ export async function findById(id: number) {
 						"TournamentTeam.createdAt",
 						"TournamentTeam.activeRosterUserIds",
 						"TournamentTeam.startingBracketIdx",
+						"TournamentTeam.abDivision",
 						concatUserSubmittedImagePrefix(
 							innerEb.ref("UserSubmittedImage.url"),
 						).as("pickupAvatarUrl"),

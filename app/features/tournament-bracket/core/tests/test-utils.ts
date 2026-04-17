@@ -15,6 +15,7 @@ export const tournamentCtxTeam = (
 		inviteCode: null,
 		avgSeedingSkillOrdinal: null,
 		startingBracketIdx: null,
+		abDivision: null,
 		team: null,
 		mapPool: [],
 		members: [],

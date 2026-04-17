@@ -57,6 +57,82 @@ export function makeRoundRobinMatches<T>(
 }
 
 /**
+ * Makes a list of rounds containing the matches of a bipartite (A/B divisions) round-robin group.
+ *
+ * Every A team plays every B team exactly once; there are no A-vs-A or B-vs-B matches.
+ * Round 1 is cross-seeded (strongest A vs weakest B), and B is rotated cyclically downward
+ * in each subsequent round. For N participants per side, there are N rounds and N² matches.
+ *
+ * @param divisionA Participants in division A, ordered by seed.
+ * @param divisionB Participants in division B, ordered by seed.
+ */
+export function makeAbDivisionRoundRobinMatches<T>(
+	divisionA: T[],
+	divisionB: T[],
+): [T, T][][] {
+	if (divisionA.length !== divisionB.length) {
+		throw Error("Divisions A and B must have the same number of participants.");
+	}
+
+	const n = divisionA.length;
+	const rounds: [T, T][][] = [];
+
+	for (let roundIdx = 0; roundIdx < n; roundIdx++) {
+		const matches: [T, T][] = [];
+
+		for (let i = 0; i < n; i++) {
+			const bIdx = (((n - 1 - i - roundIdx) % n) + n) % n;
+			matches.push([divisionA[i], divisionB[bIdx]]);
+		}
+
+		rounds.push(matches);
+	}
+
+	return rounds;
+}
+
+/**
+ * Distributes A/B division participants into groups such that each group has an
+ * equal number of A and B participants.
+ *
+ * The snake ordering used by `groups.seed_optimized` is applied independently to
+ * each pool, so that relative seed order within each pool is preserved within
+ * every group.
+ *
+ * @param divisionA Participants in division A, ordered by seed.
+ * @param divisionB Participants in division B, ordered by seed.
+ * @param groupCount Number of groups to distribute into.
+ */
+export function makeAbDivisionGroups<T>(
+	divisionA: T[],
+	divisionB: T[],
+	groupCount: number,
+): { a: T[]; b: T[] }[] {
+	if (divisionA.length !== divisionB.length)
+		throw Error("Divisions A and B must have the same number of participants.");
+
+	if (groupCount <= 0) throw Error("Group count must be strictly positive.");
+
+	if (divisionA.length % groupCount !== 0)
+		throw Error("Pool size must be divisible by group count.");
+
+	const aOrdered = ordering["groups.seed_optimized"](divisionA, groupCount);
+	const bOrdered = ordering["groups.seed_optimized"](divisionB, groupCount);
+
+	const perPoolGroupSize = divisionA.length / groupCount;
+	const groups: { a: T[]; b: T[] }[] = [];
+
+	for (let i = 0; i < groupCount; i++) {
+		groups.push({
+			a: aOrdered.slice(i * perPoolGroupSize, (i + 1) * perPoolGroupSize),
+			b: bOrdered.slice(i * perPoolGroupSize, (i + 1) * perPoolGroupSize),
+		});
+	}
+
+	return groups;
+}
+
+/**
  * Distributes participants in rounds for a round-robin group.
  *
  * Conditions:
@@ -141,6 +217,60 @@ export function assertRoundRobin(
 			checkAllOpponents[match[1]].add(match[0]);
 		}
 	}
+}
+
+/**
+ * A helper to assert our generated bipartite round-robin is correct.
+ *
+ * @param divisionA Seeds in division A (ordered by seed).
+ * @param divisionB Seeds in division B (ordered by seed).
+ * @param output The resulting rounds of matches.
+ */
+export function assertAbDivisionRoundRobin(
+	divisionA: number[],
+	divisionB: number[],
+	output: [number, number][][],
+): void {
+	const n = divisionA.length;
+
+	// xxx: maybe we should allow different of max 1 participant?
+	if (divisionB.length !== n)
+		throw Error("Divisions A and B must have the same size");
+
+	if (output.length !== n) throw Error("Round count is wrong");
+	if (!output.every((round) => round.length === n))
+		throw Error("Not every round has the good number of matches");
+
+	const aSet = new Set(divisionA);
+	const bSet = new Set(divisionB);
+	const seenPairings = new Set<string>();
+
+	for (const round of output) {
+		const playingInRound = new Set<number>();
+
+		for (const match of round) {
+			if (match.length !== 2) throw Error("One match is not a pair");
+
+			const [a, b] = match;
+
+			if (!aSet.has(a)) throw Error(`${a} is not a division A participant`);
+			if (!bSet.has(b)) throw Error(`${b} is not a division B participant`);
+
+			if (playingInRound.has(a)) throw Error("This team is already playing");
+			playingInRound.add(a);
+
+			if (playingInRound.has(b)) throw Error("This team is already playing");
+			playingInRound.add(b);
+
+			const pairingKey = `${a}-${b}`;
+			if (seenPairings.has(pairingKey))
+				throw Error("The teams have already been paired");
+			seenPairings.add(pairingKey);
+		}
+	}
+
+	if (seenPairings.size !== n * n)
+		throw Error("Not every A vs B pairing was generated");
 }
 
 /**

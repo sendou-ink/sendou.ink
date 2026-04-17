@@ -294,6 +294,16 @@ export abstract class Bracket {
 		const virtualTournamentId = 1;
 
 		if (teams.length >= TOURNAMENT.ENOUGH_TEAMS_TO_START) {
+			const settings = this.tournament.bracketManagerSettings(
+				this.settings,
+				this.type,
+				teams.length,
+			);
+			const abDivisions =
+				this.type === "round_robin" && this.settings?.hasAbDivisions === true
+					? this.abDivisionsForPreview(teams, settings.groupCount)
+					: undefined;
+
 			manager.create({
 				tournamentId: virtualTournamentId,
 				name: "Virtual",
@@ -302,15 +312,36 @@ export abstract class Bracket {
 					this.type === "round_robin"
 						? teams
 						: fillWithNullTillPowerOfTwo(teams),
-				settings: this.tournament.bracketManagerSettings(
-					this.settings,
-					this.type,
-					teams.length,
-				),
+				settings: abDivisions
+					? settings
+					: {
+							...settings,
+							hasAbDivisions: false,
+						},
+				abDivisions,
 			});
 		}
 
 		return manager.get.tournamentData(virtualTournamentId);
+	}
+
+	private abDivisionsForPreview(
+		teams: number[],
+		groupCount: number | undefined,
+	): (0 | 1)[] | undefined {
+		if (!groupCount || teams.length % (2 * groupCount) !== 0) return undefined;
+
+		const assignments = teams.map((teamId) => {
+			const team = this.tournament.teamById(teamId);
+			return team?.abDivision ?? null;
+		});
+
+		const aCount = assignments.filter((value) => value === 0).length;
+		const bCount = assignments.filter((value) => value === 1).length;
+		if (aCount === bCount && aCount + bCount === teams.length)
+			return assignments as (0 | 1)[];
+
+		return teams.map((_, index) => (index % 2 === 0 ? 0 : 1));
 	}
 
 	get isUnderground() {

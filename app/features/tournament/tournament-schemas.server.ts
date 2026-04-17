@@ -77,6 +77,18 @@ export const seedsActionSchema = z.union([
 			),
 		),
 	}),
+	z.object({
+		_action: _action("UPDATE_AB_DIVISIONS"),
+		abDivisions: z.preprocess(
+			safeJSONParse,
+			z.array(
+				z.object({
+					tournamentTeamId: id,
+					abDivision: z.union([z.literal(0), z.literal(1), z.null()]),
+				}),
+			),
+		),
+	}),
 ]);
 
 export const tournamentSearchSearchParamsSchema = z.object({

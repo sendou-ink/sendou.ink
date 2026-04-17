@@ -43,6 +43,12 @@ export interface InputStage {
 	/** Contains participants or `null` for BYEs. */
 	seeding?: Seeding;
 
+	/**
+	 * A/B division assignment parallel to `seeding`. `0` = A, `1` = B.
+	 * Required when `settings.hasAbDivisions` is `true`.
+	 */
+	abDivisions?: (0 | 1)[];
+
 	/** Contains optional settings specific to each stage type. */
 	settings?: StageSettings;
 }
@@ -89,6 +95,13 @@ export interface StageSettings {
 	 * - If `double`, each participant plays each opponent twice, once at home and once away.
 	 */
 	roundRobinMode?: RoundRobinMode;
+
+	/**
+	 * Whether to generate a bipartite round-robin where teams are split into two
+	 * A/B divisions and every match pairs one A team with one B team.
+	 * Only valid on round-robin stages.
+	 */
+	hasAbDivisions?: boolean;
 
 	/**
 	 * A list of seeds per group for a round-robin stage to be manually ordered.
