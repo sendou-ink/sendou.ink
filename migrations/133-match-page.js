@@ -1,4 +1,6 @@
 export function up(db) {
+	db.pragma("foreign_keys = OFF");
+
 	db.transaction(() => {
 		db.prepare(
 			/* sql */ `
@@ -31,5 +33,87 @@ export function up(db) {
 		db.prepare(
 			/* sql */ `alter table "GroupMatch" add "cancelAcceptedByUserId" integer references "User"("id")`,
 		).run();
+
+		db.prepare(
+			/* sql */ `alter table "GroupMatchMap" add "reportedAt" integer`,
+		).run();
+
+		db.prepare(
+			/* sql */ `alter table "GroupMatchMap" add "reportedByUserId" integer references "User"("id")`,
+		).run();
+
+		db.prepare(
+			/* sql */ `
+        update "GroupMatchMap"
+        set
+          "reportedAt" = (
+            select "reportedAt" from "GroupMatch"
+            where "GroupMatch"."id" = "GroupMatchMap"."matchId"
+          ),
+          "reportedByUserId" = (
+            select "reportedByUserId" from "GroupMatch"
+            where "GroupMatch"."id" = "GroupMatchMap"."matchId"
+          )
+      `,
+		).run();
+
+		db.prepare(
+			/* sql */ `
+        create table "GroupMatch_new" (
+          "id" integer primary key,
+          "alphaGroupId" integer not null,
+          "bravoGroupId" integer not null,
+          "createdAt" integer default (strftime('%s', 'now')) not null,
+          "chatCode" text,
+          "memento" text,
+          "confirmedAt" integer,
+          "confirmedByUserId" integer references "User"("id"),
+          "cancelRequestedByUserId" integer references "User"("id"),
+          "cancelAcceptedByUserId" integer references "User"("id"),
+          foreign key ("alphaGroupId") references "Group"("id") on delete restrict,
+          foreign key ("bravoGroupId") references "Group"("id") on delete restrict,
+          unique("alphaGroupId") on conflict rollback,
+          unique("bravoGroupId") on conflict rollback
+        ) strict
+      `,
+		).run();
+
+		db.prepare(
+			/* sql */ `
+        insert into "GroupMatch_new" (
+          "id", "alphaGroupId", "bravoGroupId", "createdAt", "chatCode", "memento",
+          "confirmedAt", "confirmedByUserId",
+          "cancelRequestedByUserId", "cancelAcceptedByUserId"
+        )
+        select
+          "id", "alphaGroupId", "bravoGroupId", "createdAt", "chatCode", "memento",
+          "confirmedAt", "confirmedByUserId",
+          "cancelRequestedByUserId", "cancelAcceptedByUserId"
+        from "GroupMatch"
+      `,
+		).run();
+
+		db.prepare(/* sql */ `drop table "GroupMatch"`).run();
+		db.prepare(
+			/* sql */ `alter table "GroupMatch_new" rename to "GroupMatch"`,
+		).run();
+
+		db.prepare(
+			/* sql */ `create index group_match_alpha_group_id on "GroupMatch"("alphaGroupId")`,
+		).run();
+		db.prepare(
+			/* sql */ `create index group_match_bravo_group_id on "GroupMatch"("bravoGroupId")`,
+		).run();
+		db.prepare(
+			/* sql */ `create index group_match_created_at on "GroupMatch"("createdAt")`,
+		).run();
+
+		db.prepare(
+			/* sql */ `create index group_match_map_reported_at on "GroupMatchMap"("reportedAt")`,
+		).run();
+
+		db.pragma("foreign_key_check");
 	})();
+
+	db.pragma("foreign_keys = ON");
 }

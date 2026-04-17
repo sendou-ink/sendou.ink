@@ -73,14 +73,6 @@ const createMatch = async (alphaGroupId: number, bravoGroupId: number) => {
 	return match;
 };
 
-const fetchMatch = async (matchId: number) => {
-	return db
-		.selectFrom("GroupMatch")
-		.selectAll()
-		.where("id", "=", matchId)
-		.executeTakeFirst();
-};
-
 const fetchMapResults = async (matchId: number) => {
 	return db
 		.selectFrom("GroupMatchMap")
@@ -128,7 +120,7 @@ describe("updateScore", () => {
 		dbReset();
 	});
 
-	test("updates match reportedAt and reportedByUserId", async () => {
+	test("updates map reportedAt and reportedByUserId", async () => {
 		const alphaGroupId = await createGroup([1, 2, 3, 4]);
 		const bravoGroupId = await createGroup([5, 6, 7, 8]);
 		const match = await createMatch(alphaGroupId, bravoGroupId);
@@ -139,9 +131,11 @@ describe("updateScore", () => {
 			winners: ["ALPHA", "ALPHA", "BRAVO", "ALPHA"],
 		});
 
-		const updatedMatch = await fetchMatch(match.id);
-		expect(updatedMatch?.reportedAt).not.toBeNull();
-		expect(updatedMatch?.reportedByUserId).toBe(1);
+		const maps = await fetchMapResults(match.id);
+		for (const map of maps) {
+			expect(map.reportedAt).not.toBeNull();
+			expect(map.reportedByUserId).toBe(1);
+		}
 	});
 
 	test("sets winners correctly for each map", async () => {
@@ -238,8 +232,8 @@ describe("adminReport", () => {
 		expect(alphaGroup?.status).toBe("INACTIVE");
 		expect(bravoGroup?.status).toBe("INACTIVE");
 
-		const updatedMatch = await fetchMatch(match.id);
-		expect(updatedMatch?.reportedAt).not.toBeNull();
+		const maps = await fetchMapResults(match.id);
+		expect(maps[0].reportedAt).not.toBeNull();
 	});
 
 	test("creates skills to lock the match", async () => {

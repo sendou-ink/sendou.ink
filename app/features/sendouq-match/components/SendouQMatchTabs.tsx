@@ -55,9 +55,12 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 	const awaitingConfirmation =
 		!data.match.isLocked && (alphaWins >= mapsToWin || bravoWins >= mapsToWin);
 
-	const reporterGroupId = data.match.reportedByUserId
+	const decidingReportedByUserId = [...data.match.mapList]
+		.reverse()
+		.find((m) => m.winnerGroupId !== null)?.reportedByUserId;
+	const reporterGroupId = decidingReportedByUserId
 		? data.match.groupAlpha.members.some(
-				(m) => m.id === data.match.reportedByUserId,
+				(m) => m.id === decidingReportedByUserId,
 			)
 			? data.match.groupAlpha.id
 			: data.match.groupBravo.id

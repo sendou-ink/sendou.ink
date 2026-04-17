@@ -303,7 +303,7 @@ export function compareMatchToReportedScores({
 	newReporterGroupId,
 	previousReporterGroupId,
 }: {
-	match: Pick<SQMatch, "reportedByUserId" | "mapList"> & {
+	match: Pick<SQMatch, "mapList"> & {
 		groupAlpha: { id: number };
 		groupBravo: { id: number };
 	};
@@ -312,7 +312,9 @@ export function compareMatchToReportedScores({
 	previousReporterGroupId?: number;
 }) {
 	// match has not been reported before
-	if (!match.reportedByUserId) return "FIRST_REPORT";
+	if (!match.mapList.some((m) => m.reportedByUserId !== null)) {
+		return "FIRST_REPORT";
+	}
 
 	const sameGroupReporting = newReporterGroupId === previousReporterGroupId;
 	const differentConstant = sameGroupReporting ? "FIX_PREVIOUS" : "DIFFERENT";

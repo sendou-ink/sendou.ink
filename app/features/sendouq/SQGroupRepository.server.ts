@@ -523,8 +523,8 @@ export async function findRecentlyFinishedMatches() {
 					.whereRef("GroupMember.groupId", "=", "GroupMatch.bravoGroupId"),
 			).as("groupBravoMemberIds"),
 		])
-		.where("GroupMatch.reportedAt", "is not", null)
-		.where("GroupMatch.reportedAt", ">", dateToDatabaseTimestamp(twoHoursAgo))
+		.where("GroupMatch.confirmedAt", "is not", null)
+		.where("GroupMatch.confirmedAt", ">", dateToDatabaseTimestamp(twoHoursAgo))
 		.execute();
 
 	return rows.map((row) => ({

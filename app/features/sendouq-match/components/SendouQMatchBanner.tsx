@@ -134,9 +134,13 @@ function SendouQMatchBannerTopRow({
 	const now = new Date();
 	const startedAt = databaseTimestampToDate(data.match.createdAt);
 
-	// xxx: change to reported of a map
-	const lastReportAt = data.match.reportedAt
-		? databaseTimestampToDate(data.match.reportedAt)
+	const lastMapReportedAt = data.match.mapList.reduce<number | null>(
+		(acc, m) =>
+			m.reportedAt && (!acc || m.reportedAt > acc) ? m.reportedAt : acc,
+		null,
+	);
+	const lastReportAt = lastMapReportedAt
+		? databaseTimestampToDate(lastMapReportedAt)
 		: startedAt;
 
 	return (

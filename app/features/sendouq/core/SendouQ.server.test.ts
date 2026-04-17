@@ -54,16 +54,16 @@ const createGroup = async (
 const createMatch = async (
 	alphaGroupId: number,
 	bravoGroupId: number,
-	options: { reportedAt?: number } = {},
+	options: { confirmedAt?: number } = {},
 ) => {
-	const { reportedAt = Date.now() } = options;
+	const { confirmedAt = Date.now() } = options;
 
 	await db
 		.insertInto("GroupMatch")
 		.values({
 			alphaGroupId,
 			bravoGroupId,
-			reportedAt,
+			confirmedAt,
 		})
 		.execute();
 };

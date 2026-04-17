@@ -38,8 +38,6 @@ export async function findById(id: number) {
 		.select(({ exists, selectFrom, eb }) => [
 			"GroupMatch.id",
 			"GroupMatch.createdAt",
-			"GroupMatch.reportedAt",
-			"GroupMatch.reportedByUserId",
 			"GroupMatch.confirmedAt",
 			"GroupMatch.confirmedByUserId",
 			"GroupMatch.chatCode",
@@ -60,6 +58,8 @@ export async function findById(id: number) {
 						"GroupMatchMap.stageId",
 						"GroupMatchMap.source",
 						"GroupMatchMap.winnerGroupId",
+						"GroupMatchMap.reportedAt",
+						"GroupMatchMap.reportedByUserId",
 					])
 					.where("GroupMatchMap.matchId", "=", id)
 					.orderBy("GroupMatchMap.index", "asc"),
@@ -522,20 +522,17 @@ export async function updateScore(
 	trx?: Transaction<DB>,
 ) {
 	const executor = trx ?? db;
+	const reportedAt = dateToDatabaseTimestamp(new Date());
 
 	const match = await executor
-		.updateTable("GroupMatch")
-		.set({
-			reportedAt: dateToDatabaseTimestamp(new Date()),
-			reportedByUserId,
-		})
+		.selectFrom("GroupMatch")
+		.select(["alphaGroupId", "bravoGroupId"])
 		.where("id", "=", matchId)
-		.returningAll()
 		.executeTakeFirstOrThrow();
 
 	await executor
 		.updateTable("GroupMatchMap")
-		.set({ winnerGroupId: null })
+		.set({ winnerGroupId: null, reportedAt, reportedByUserId })
 		.where("matchId", "=", matchId)
 		.execute();
 
@@ -667,9 +664,7 @@ export async function reportScore({
 	)?.groupId;
 	invariant(reporterGroupId, "Reporter is not a member of any group");
 
-	const previousReporterGroupId = match.reportedByUserId
-		? members.find((m) => m.id === match.reportedByUserId)?.groupId
-		: undefined;
+	const previousReporterGroupId = lastReporterGroupId(match, members);
 
 	const compared = compareMatchToReportedScores({
 		match,
@@ -785,9 +780,7 @@ export async function cancelMatch({
 	)?.groupId;
 	invariant(reporterGroupId, "Reporter is not a member of any group");
 
-	const previousReporterGroupId = match.reportedByUserId
-		? members.find((m) => m.id === match.reportedByUserId)?.groupId
-		: undefined;
+	const previousReporterGroupId = lastReporterGroupId(match, members);
 
 	const compared = compareMatchToReportedScores({
 		match,
@@ -1023,22 +1016,15 @@ export async function reportMapWinner({
 
 	// Non-final map: report and continue
 	if (!matchIsOver) {
-		await db.transaction().execute(async (trx) => {
-			await trx
-				.updateTable("GroupMatchMap")
-				.set({ winnerGroupId: winnerId })
-				.where("id", "=", currentMap.id)
-				.execute();
-			await trx
-				.updateTable("GroupMatch")
-				.set({
-					// xxx: need to move these to GroupMatchMap
-					reportedAt: dateToDatabaseTimestamp(new Date()),
-					reportedByUserId,
-				})
-				.where("id", "=", matchId)
-				.execute();
-		});
+		await db
+			.updateTable("GroupMatchMap")
+			.set({
+				winnerGroupId: winnerId,
+				reportedAt: dateToDatabaseTimestamp(new Date()),
+				reportedByUserId,
+			})
+			.where("id", "=", currentMap.id)
+			.execute();
 		return { status: "MAP_REPORTED" };
 	}
 
@@ -1052,16 +1038,12 @@ export async function reportMapWinner({
 	await db.transaction().execute(async (trx) => {
 		await trx
 			.updateTable("GroupMatchMap")
-			.set({ winnerGroupId: winnerId })
-			.where("id", "=", currentMap.id)
-			.execute();
-		await trx
-			.updateTable("GroupMatch")
 			.set({
+				winnerGroupId: winnerId,
 				reportedAt: dateToDatabaseTimestamp(new Date()),
 				reportedByUserId,
 			})
-			.where("id", "=", matchId)
+			.where("id", "=", currentMap.id)
 			.execute();
 		await SQGroupRepository.setAsInactive(reporterGroupId, trx);
 	});
@@ -1088,20 +1070,20 @@ async function handleMatchConfirmation({
 	)?.groupId;
 	invariant(reporterGroupId, "Reporter is not a member of any group");
 
-	const originalReporterGroupId = match.reportedByUserId
-		? members.find((m) => m.id === match.reportedByUserId)?.groupId
+	// Find the deciding map (last map with a winner)
+	const decidingMap = match.mapList
+		.toReversed()
+		.find((m) => m.winnerGroupId !== null);
+	invariant(decidingMap, "No deciding map found");
+
+	const originalReporterGroupId = decidingMap.reportedByUserId
+		? members.find((m) => m.id === decidingMap.reportedByUserId)?.groupId
 		: undefined;
 
 	// Same team re-reporting
 	if (reporterGroupId === originalReporterGroupId) {
 		return { status: "STALE" };
 	}
-
-	// Find the deciding map (last map with a winner)
-	const decidingMap = match.mapList
-		.toReversed()
-		.find((m) => m.winnerGroupId !== null);
-	invariant(decidingMap, "No deciding map found");
 
 	// Other team reports a different winner for the deciding map
 	if (winnerId !== decidingMap.winnerGroupId) {
@@ -1189,19 +1171,7 @@ export async function undoMatchReport({
 	).length;
 	const scoreIsDecisive = alphaWins >= mapsToWin || bravoWins >= mapsToWin;
 
-	if (!scoreIsDecisive || !match.reportedByUserId) {
-		return { status: "NOT_ALLOWED" };
-	}
-
-	const members = buildMembers(match);
-	const requesterGroupId = members.find(
-		(m) => m.id === requestedByUserId,
-	)?.groupId;
-	const reporterGroupId = members.find(
-		(m) => m.id === match.reportedByUserId,
-	)?.groupId;
-
-	if (requesterGroupId !== reporterGroupId) {
+	if (!scoreIsDecisive) {
 		return { status: "NOT_ALLOWED" };
 	}
 
@@ -1210,18 +1180,27 @@ export async function undoMatchReport({
 		.find((m) => m.winnerGroupId !== null);
 	invariant(decidingMap, "No deciding map found");
 
-	await db.transaction().execute(async (trx) => {
-		await trx
-			.updateTable("GroupMatchMap")
-			.set({ winnerGroupId: null })
-			.where("id", "=", decidingMap.id)
-			.execute();
-		await trx
-			.updateTable("GroupMatch")
-			.set({ reportedAt: null, reportedByUserId: null })
-			.where("id", "=", matchId)
-			.execute();
-	});
+	if (!decidingMap.reportedByUserId) {
+		return { status: "NOT_ALLOWED" };
+	}
+
+	const members = buildMembers(match);
+	const requesterGroupId = members.find(
+		(m) => m.id === requestedByUserId,
+	)?.groupId;
+	const reporterGroupId = members.find(
+		(m) => m.id === decidingMap.reportedByUserId,
+	)?.groupId;
+
+	if (requesterGroupId !== reporterGroupId) {
+		return { status: "NOT_ALLOWED" };
+	}
+
+	await db
+		.updateTable("GroupMatchMap")
+		.set({ winnerGroupId: null, reportedAt: null, reportedByUserId: null })
+		.where("id", "=", decidingMap.id)
+		.execute();
 
 	return { status: "SUCCESS" };
 }
@@ -1283,4 +1262,16 @@ function buildMembers(
 			groupId: match.groupBravo.id,
 		})),
 	];
+}
+
+function lastReporterGroupId(
+	match: NonNullable<Awaited<ReturnType<typeof findById>>>,
+	members: ReturnType<typeof buildMembers>,
+) {
+	const lastReportedMap = match.mapList
+		.toReversed()
+		.find((m) => m.reportedByUserId !== null);
+	if (!lastReportedMap?.reportedByUserId) return undefined;
+	return members.find((m) => m.id === lastReportedMap.reportedByUserId)
+		?.groupId;
 }
