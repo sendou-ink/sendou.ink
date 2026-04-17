@@ -1192,11 +1192,12 @@ export async function undoMatchReport({
 	return { status: "SUCCESS" };
 }
 
-// xxx: also send map idx to undo to avoid "double undo"
 export async function undoMapReport({
 	matchId,
+	mapIndex,
 }: {
 	matchId: number;
+	mapIndex: number;
 }): Promise<{ status: "SUCCESS" | "NOT_ALLOWED" | "ALREADY_LOCKED" }> {
 	const match = await findById(matchId);
 	invariant(match, "Match not found");
@@ -1209,18 +1210,22 @@ export async function undoMapReport({
 		return { status: "NOT_ALLOWED" };
 	}
 
-	const lastReportedMap = [...match.mapList]
-		.reverse()
-		.find((m) => m.winnerGroupId !== null);
+	const targetMap = match.mapList[mapIndex];
+	if (!targetMap || targetMap.winnerGroupId === null) {
+		return { status: "NOT_ALLOWED" };
+	}
 
-	if (!lastReportedMap) {
+	const hasLaterReport = match.mapList
+		.slice(mapIndex + 1)
+		.some((m) => m.winnerGroupId !== null);
+	if (hasLaterReport) {
 		return { status: "NOT_ALLOWED" };
 	}
 
 	await db
 		.updateTable("GroupMatchMap")
 		.set({ winnerGroupId: null })
-		.where("id", "=", lastReportedMap.id)
+		.where("id", "=", targetMap.id)
 		.execute();
 
 	return { status: "SUCCESS" };

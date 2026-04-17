@@ -212,8 +212,15 @@ export function SendouQMatchActionTab({
 							icon={<Undo2 size={16} />}
 							isPending={undoFetcher.state !== "idle"}
 							onPress={() => {
+								const mapIndex = data.match.mapList.findLastIndex(
+									(m) => m.winnerGroupId !== null,
+								);
+								if (mapIndex < 0) return;
 								undoFetcher.submit(
-									{ _action: "UNDO_MAP_REPORT" },
+									{
+										_action: "UNDO_MAP_REPORT",
+										mapIndex: String(mapIndex),
+									},
 									{ method: "post" },
 								);
 							}}

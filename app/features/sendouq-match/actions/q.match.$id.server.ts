@@ -197,6 +197,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		case "UNDO_MAP_REPORT": {
 			const result = await SQMatchRepository.undoMapReport({
 				matchId,
+				mapIndex: data.mapIndex,
 			});
 
 			if (result.status === "NOT_ALLOWED") {
