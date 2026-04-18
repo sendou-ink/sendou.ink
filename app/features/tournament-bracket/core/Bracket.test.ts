@@ -262,4 +262,32 @@ describe("round robin A/B divisions standings", () => {
 		expect(divisionA.map((s) => s.team.id)).toEqual([1, 3]);
 		expect(divisionB.map((s) => s.team.id)).toEqual([2, 4]);
 	});
+
+	it("source({ placements: [1] }) returns top team from each division", () => {
+		const tournament = abDivisionsTournament();
+		const { teams } = tournament.bracketByIdx(0)!.source({ placements: [1] });
+
+		expect(teams).toEqual([1, 2]);
+	});
+
+	it("source({ placements: [1, 2] }) returns top two teams from each division", () => {
+		const tournament = abDivisionsTournament();
+		const { teams } = tournament
+			.bracketByIdx(0)!
+			.source({ placements: [1, 2] });
+
+		expect(teams).toHaveLength(4);
+		expect(new Set(teams)).toEqual(new Set([1, 2, 3, 4]));
+		expect(teams.slice(0, 2)).toEqual([1, 3]);
+		expect(teams.slice(2, 4)).toEqual([2, 4]);
+	});
+
+	it("source ignores placements beyond division size", () => {
+		const tournament = abDivisionsTournament();
+		const { teams } = tournament
+			.bracketByIdx(0)!
+			.source({ placements: [1, 5] });
+
+		expect(teams).toEqual([1, 2]);
+	});
 });

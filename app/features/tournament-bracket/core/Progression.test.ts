@@ -427,6 +427,55 @@ describe("validatedSources - other rules", () => {
 		expect(Array.isArray(result)).toBe(true);
 	});
 
+	it("flags TOO_MANY_PLACEMENTS on A/B divisions when placement exceeds per-division size", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {
+					hasAbDivisions: true,
+					teamsPerGroup: 6,
+				},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1,2,3,4",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("TOO_MANY_PLACEMENTS");
+		expect((error as any).bracketIdx).toEqual(1);
+	});
+
+	it("accepts A/B divisions placements up to per-division size", () => {
+		const result = getValidatedBrackets([
+			{
+				settings: {
+					hasAbDivisions: true,
+					teamsPerGroup: 6,
+				},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1,2,3",
+					},
+				],
+			},
+		]);
+
+		expect(Array.isArray(result)).toBe(true);
+	});
+
 	it("handles DUPLICATE_BRACKET_NAME", () => {
 		const error = getValidatedBrackets([
 			{

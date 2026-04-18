@@ -75,7 +75,7 @@ export function PlacementsTable({
 			return a.placement - b.placement;
 		});
 
-	const destinationBracket = (standing: Standing) => {
+	const destinationBracket = (standing: Standing, placement: number) => {
 		if (bracket.type === "swiss" && bracket.settings?.advanceThreshold) {
 			const stats = standing.stats;
 			invariant(stats);
@@ -94,8 +94,6 @@ export function PlacementsTable({
 					)
 				: undefined;
 		}
-
-		const placement = standings.indexOf(standing) + 1;
 
 		return bracket.tournament.brackets.find(
 			(b) =>
@@ -174,7 +172,10 @@ function StandingsTable({
 }: {
 	bracket: Bracket;
 	standings: Standing[];
-	destinationBracket: (standing: Standing) => Bracket | undefined;
+	destinationBracket: (
+		standing: Standing,
+		placement: number,
+	) => Bracket | undefined;
 	possibleDestinationBrackets: Bracket[];
 	canEditDestination: boolean;
 	allMatchesFinished: boolean;
@@ -233,7 +234,7 @@ function StandingsTable({
 
 					const team = bracket.tournament.teamById(s.team.id);
 
-					const dest = destinationBracket(s);
+					const dest = destinationBracket(s, i + 1);
 
 					const overridenDestination =
 						bracket.tournament.ctx.bracketProgressionOverrides.find(

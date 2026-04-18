@@ -513,9 +513,13 @@ function tooManyPlacements(brackets: ParsedBracket[]) {
 		for (const source of bracket.sources ?? []) {
 			if (!roundRobins.includes(source.bracketIdx)) continue;
 
-			const size =
-				brackets[source.bracketIdx].settings.teamsPerGroup ??
+			const sourceSettings = brackets[source.bracketIdx].settings;
+			const teamsPerGroup =
+				sourceSettings.teamsPerGroup ??
 				TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
+			const size = sourceSettings.hasAbDivisions
+				? teamsPerGroup / 2
+				: teamsPerGroup;
 
 			if (source.placements.some((placement) => placement > size)) {
 				return bracketIdx;
