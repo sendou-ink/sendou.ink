@@ -113,6 +113,8 @@
 	"match.pool": "Pool",
 	"match.score": "{{scoreOne}}-{{scoreTwo}} (Melhor de {{bestOf}})",
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (Jogar todas {{bestOf}})",
+	"match.activeRosterMissing.header": "",
+	"match.activeRosterMissing.subtitle": "",
 	"match.action.undoLastScore": "Desfazer última pontuação",
 	"match.action.reopenMatch": "Reabrir partida",
 	"match.action.endSet": "",

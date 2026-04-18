@@ -40,7 +40,7 @@ interface MatchActionTabProps {
 	stageId: StageId;
 	mode: ModeShort;
 	withPoints: boolean;
-	onSubmit?: (winnerId: number) => void;
+	onSubmit?: (data: { winnerId: number; points?: [number, number] }) => void;
 	isSubmitting?: boolean;
 	setEnding?: SetEndingData;
 	actionButtons?: React.ReactNode;
@@ -73,6 +73,18 @@ export function MatchActionTab({
 		ownTeamId != null &&
 		(teams[0].id === ownTeamId || teams[1].id === ownTeamId);
 
+	const submit = () => {
+		if (winnerId === null) return;
+		const submitPoints: [number, number] | undefined = withPoints
+			? isKo
+				? winnerId === teams[0].id
+					? [100, 0]
+					: [0, 100]
+				: points
+			: undefined;
+		onSubmit?.({ winnerId, points: submitPoints });
+	};
+
 	return (
 		<SendouTabPanel id={TAB_KEYS.ACTION}>
 			{confirming && winnerId !== null && setEnding ? (
@@ -87,7 +99,7 @@ export function MatchActionTab({
 					points={points}
 					isSubmitting={isSubmitting}
 					onBack={() => setConfirming(false)}
-					onConfirm={() => onSubmit?.(winnerId)}
+					onConfirm={submit}
 				/>
 			) : (
 				<div className={styles.root}>
@@ -188,7 +200,7 @@ export function MatchActionTab({
 							if (setEnding?.setEndingTeamIds.includes(winnerId)) {
 								setConfirming(true);
 							} else {
-								onSubmit?.(winnerId);
+								submit();
 							}
 						}}
 						className={styles.submit}

@@ -154,7 +154,7 @@ export function SendouQMatchActionTab({
 			withPoints={false}
 			isSubmitting={fetcher.state !== "idle"}
 			setEnding={setEnding}
-			onSubmit={(winnerId) => {
+			onSubmit={({ winnerId }) => {
 				fetcher.submit(
 					{
 						_action: "REPORT_SCORE",

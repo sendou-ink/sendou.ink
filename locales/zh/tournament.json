@@ -107,6 +107,8 @@
 	"match.pool": "频道",
 	"match.score": "{{scoreOne}}-{{scoreTwo}} (Bo {{bestOf}})",
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (全部 {{bestOf}} 场)",
+	"match.activeRosterMissing.header": "",
+	"match.activeRosterMissing.subtitle": "",
 	"match.action.undoLastScore": "撤销上次比分",
 	"match.action.reopenMatch": "重新开始对战",
 	"match.action.endSet": "",

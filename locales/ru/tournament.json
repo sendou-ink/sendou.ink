@@ -115,6 +115,8 @@
 	"match.pool": "Канал",
 	"match.score": "{{scoreOne}}-{{scoreTwo}} (Лучшее из {{bestOf}})",
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (Играть все {{bestOf}})",
+	"match.activeRosterMissing.header": "",
+	"match.activeRosterMissing.subtitle": "",
 	"match.action.undoLastScore": "Отменить последний результат",
 	"match.action.reopenMatch": "Открыть матч заново",
 	"match.action.endSet": "",

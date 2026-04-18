@@ -111,6 +111,8 @@
 	"match.pool": "Pulje",
 	"match.score": "{{scoreOne}}-{{scoreTwo}} (Best ud af {{bestOf}})",
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (Spil alle runder {{bestOf}})",
+	"match.activeRosterMissing.header": "",
+	"match.activeRosterMissing.subtitle": "",
 	"match.action.undoLastScore": "Annuller sidste score",
 	"match.action.reopenMatch": "Genåbn kamp",
 	"match.action.endSet": "",

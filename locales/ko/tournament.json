@@ -107,6 +107,8 @@
 	"match.pool": "",
 	"match.score": "",
 	"match.score.playAll": "",
+	"match.activeRosterMissing.header": "",
+	"match.activeRosterMissing.subtitle": "",
 	"match.action.undoLastScore": "",
 	"match.action.reopenMatch": "",
 	"match.action.endSet": "",

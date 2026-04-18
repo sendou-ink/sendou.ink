@@ -111,6 +111,8 @@
 	"match.pool": "Pool",
 	"match.score": "{{scoreOne}}-{{scoreTwo}} (Best of {{bestOf}})",
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (Play all {{bestOf}})",
+	"match.activeRosterMissing.header": "Active roster needed",
+	"match.activeRosterMissing.subtitle": "Waiting on {{teams}}",
 	"match.action.undoLastScore": "Undo last score",
 	"match.action.reopenMatch": "Reopen match",
 	"match.action.endSet": "End set",

@@ -113,6 +113,8 @@
 	"match.pool": "Canal",
 	"match.score": "{{scoreOne}}-{{scoreTwo}} (Mejor de {{bestOf}})",
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (Jugar todos los {{bestOf}})",
+	"match.activeRosterMissing.header": "",
+	"match.activeRosterMissing.subtitle": "",
 	"match.action.undoLastScore": "Anular resultado previo",
 	"match.action.reopenMatch": "Reabrir partido",
 	"match.action.endSet": "",

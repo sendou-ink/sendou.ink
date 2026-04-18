@@ -40,6 +40,7 @@ interface MatchRosterTabProps {
 	teams: [RosterTabTeam, RosterTabTeam];
 	minMembersPerTeam: number;
 	canEditSubbedOut?: [boolean, boolean];
+	defaultIsEditing?: [boolean, boolean];
 	onSubbedOutChange?: (teamId: number, subbedOut: number[]) => void;
 	isSubmitting?: boolean;
 }
@@ -48,6 +49,7 @@ export function MatchRosterTab({
 	teams,
 	minMembersPerTeam,
 	canEditSubbedOut,
+	defaultIsEditing,
 	onSubbedOutChange,
 	isSubmitting,
 }: MatchRosterTabProps) {
@@ -58,6 +60,7 @@ export function MatchRosterTab({
 					team={teams[0]}
 					side="alpha"
 					canEditSubbedOut={canEditSubbedOut?.[0] ?? false}
+					defaultIsEditing={defaultIsEditing?.[0] ?? false}
 					minMembersPerTeam={minMembersPerTeam}
 					onSubbedOutChange={onSubbedOutChange}
 					isSubmitting={isSubmitting}
@@ -66,6 +69,7 @@ export function MatchRosterTab({
 					team={teams[1]}
 					side="bravo"
 					canEditSubbedOut={canEditSubbedOut?.[1] ?? false}
+					defaultIsEditing={defaultIsEditing?.[1] ?? false}
 					minMembersPerTeam={minMembersPerTeam}
 					onSubbedOutChange={onSubbedOutChange}
 					isSubmitting={isSubmitting}
@@ -79,6 +83,7 @@ function TeamRoster({
 	team,
 	side,
 	canEditSubbedOut,
+	defaultIsEditing,
 	minMembersPerTeam,
 	onSubbedOutChange,
 	isSubmitting,
@@ -86,12 +91,13 @@ function TeamRoster({
 	team: RosterTabTeam;
 	side: "alpha" | "bravo";
 	canEditSubbedOut: boolean;
+	defaultIsEditing: boolean;
 	minMembersPerTeam: number;
 	onSubbedOutChange?: (teamId: number, subbedOut: number[]) => void;
 	isSubmitting?: boolean;
 }) {
 	const { t } = useTranslation(["common"]);
-	const [isEditing, setIsEditing] = useState(false);
+	const [isEditing, setIsEditing] = useState(defaultIsEditing);
 	const [selectedMemberIds, setSelectedMemberIds] = useState<number[]>([]);
 
 	const dotClassName = side === "alpha" ? styles.teamOneDot : styles.teamTwoDot;

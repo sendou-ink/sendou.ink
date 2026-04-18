@@ -1,10 +1,12 @@
 import { differenceInMinutes } from "date-fns";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Undo2, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
-import { LinkButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { containerClassName } from "~/components/Main";
 import { MatchActionTab } from "~/components/match-page/MatchActionTab";
 import {
+	IconBanner,
 	MatchBanner,
 	MatchBannerContainer,
 } from "~/components/match-page/MatchBanner";
@@ -22,13 +24,17 @@ import type { CommonUser } from "~/utils/kysely.server";
 import { tournamentBracketsPage, tournamentTeamPage } from "~/utils/urls";
 import { action } from "../actions/to.$id.matches.$mid.server";
 import { loader } from "../loaders/to.$id.matches.$mid.server";
-import { isSetOverByScore } from "../tournament-bracket-utils";
+import {
+	isSetOverByScore,
+	tournamentTeamToActiveRosterUserIds,
+} from "../tournament-bracket-utils";
 
 export { action, loader };
 
 // xxx: can we simplify loader to return values that are closer to what we want to display?
 
 export default function TournamentMatchPage() {
+	const { t } = useTranslation(["tournament"]);
 	const data = useLoaderData<typeof loader>();
 	const tournament = useTournament();
 
@@ -40,6 +46,8 @@ export default function TournamentMatchPage() {
 	const currentMap = data.mapList?.filter((m) => !m.bannedByTournamentTeamId)[
 		scoreSum
 	];
+
+	const teamsMissingActiveRoster = useTeamsMissingActiveRoster();
 
 	const activeRosterByTeamId = (tournamentTeamId: number) => {
 		const team = tournament.teamById(tournamentTeamId);
@@ -59,7 +67,15 @@ export default function TournamentMatchPage() {
 
 			<MatchBannerContainer>
 				<TournamentMatchBannerTopRow />
-				{currentMap ? (
+				{teamsMissingActiveRoster.length > 0 ? (
+					<IconBanner
+						icon={<Users size={32} />}
+						header={t("tournament:match.activeRosterMissing.header")}
+						subtitle={t("tournament:match.activeRosterMissing.subtitle", {
+							teams: teamsMissingActiveRoster.join(" & "),
+						})}
+					/>
+				) : currentMap ? (
 					<MatchBanner
 						stageId={currentMap.stageId}
 						mode={currentMap.mode}
@@ -171,6 +187,7 @@ function TournamentMatchTabs() {
 	const data = useLoaderData<typeof loader>();
 	const tournament = useTournament();
 	const user = useUser();
+	const teamsMissingActiveRoster = useTeamsMissingActiveRoster();
 
 	const opponentOneId = data.match.opponentOne?.id;
 	const opponentTwoId = data.match.opponentTwo?.id;
@@ -193,6 +210,7 @@ function TournamentMatchTabs() {
 		canReportScore,
 		isParticipant,
 		hasCurrentMap: Boolean(currentMap),
+		hasMissingActiveRoster: teamsMissingActiveRoster.length > 0,
 	});
 
 	return (
@@ -230,6 +248,10 @@ function TournamentMatchRosterTab() {
 			canEditSubbedOut={[
 				canEditSubbedOutForTeam(teamOne),
 				canEditSubbedOutForTeam(teamTwo),
+			]}
+			defaultIsEditing={[
+				needsActiveRosterSelection(teamOne),
+				needsActiveRosterSelection(teamTwo),
 			]}
 			onSubbedOutChange={handleSubbedOutChange}
 			isSubmitting={fetcher.state !== "idle"}
@@ -280,6 +302,16 @@ function TournamentMatchRosterTab() {
 		return isMemberOfTeam || tournament.isOrganizer(user);
 	}
 
+	function needsActiveRosterSelection(
+		team: NonNullable<ReturnType<typeof tournament.teamById>>,
+	) {
+		if (!canEditSubbedOutForTeam(team)) return false;
+		return !tournamentTeamToActiveRosterUserIds(
+			team,
+			tournament.minMembersPerTeam,
+		);
+	}
+
 	function handleSubbedOutChange(teamId: number, subbedOut: number[]) {
 		const team = tournament.teamById(teamId);
 		if (!team) return;
@@ -300,9 +332,12 @@ function TournamentMatchRosterTab() {
 }
 
 function TournamentMatchActionTab() {
+	const { t } = useTranslation(["q"]);
 	const data = useLoaderData<typeof loader>();
 	const tournament = useTournament();
 	const user = useUser();
+	const reportFetcher = useFetcher();
+	const undoFetcher = useFetcher();
 
 	const opponentOneId = data.match.opponentOne!.id!;
 	const opponentTwoId = data.match.opponentTwo!.id!;
@@ -383,6 +418,39 @@ function TournamentMatchActionTab() {
 			mode={currentMap.mode}
 			withPoints={withPoints}
 			setEnding={setEnding}
+			isSubmitting={reportFetcher.state !== "idle"}
+			onSubmit={({ winnerId, points }) => {
+				reportFetcher.submit(
+					{
+						_action: "REPORT_SCORE",
+						winnerTeamId: String(winnerId),
+						position: String(scoreSum),
+						...(points ? { points: JSON.stringify(points) } : {}),
+					},
+					{ method: "post" },
+				);
+			}}
+			actionButtons={
+				scoreSum > 0 ? (
+					<SendouButton
+						variant="minimal-destructive"
+						size="miniscule"
+						icon={<Undo2 size={16} />}
+						isPending={undoFetcher.state !== "idle"}
+						onPress={() => {
+							undoFetcher.submit(
+								{
+									_action: "UNDO_REPORT_SCORE",
+									position: String(scoreSum - 1),
+								},
+								{ method: "post" },
+							);
+						}}
+					>
+						{t("q:match.undoReport")}
+					</SendouButton>
+				) : null
+			}
 		/>
 	);
 }
@@ -497,11 +565,13 @@ function resolveVisibleTabs({
 	canReportScore,
 	isParticipant,
 	hasCurrentMap,
+	hasMissingActiveRoster,
 }: {
 	matchIsOver: boolean;
 	canReportScore: boolean;
 	isParticipant: boolean;
 	hasCurrentMap: boolean;
+	hasMissingActiveRoster: boolean;
 }) {
 	const tabs: Array<"join" | "rosters" | "action"> = [];
 
@@ -509,9 +579,30 @@ function resolveVisibleTabs({
 		tabs.push("join");
 	}
 	tabs.push("rosters");
-	if (canReportScore && hasCurrentMap) {
+	if (canReportScore && hasCurrentMap && !hasMissingActiveRoster) {
 		tabs.push("action");
 	}
 
 	return tabs;
+}
+
+function useTeamsMissingActiveRoster(): string[] {
+	const data = useLoaderData<typeof loader>();
+	const tournament = useTournament();
+
+	const opponentOneId = data.match.opponentOne?.id;
+	const opponentTwoId = data.match.opponentTwo?.id;
+	if (!opponentOneId || !opponentTwoId) return [];
+
+	return [opponentOneId, opponentTwoId]
+		.map((id) => tournament.teamById(id))
+		.filter((team) => team != null)
+		.filter(
+			(team) =>
+				!tournamentTeamToActiveRosterUserIds(
+					team,
+					tournament.minMembersPerTeam,
+				),
+		)
+		.map((team) => team.name);
 }
