@@ -27,14 +27,14 @@ test.describe("Tournament A/B divisions", () => {
 
 		await page.getByTestId("set-ab-divisions").click();
 
-		const divisionSelects = page.getByTestId("ab-division-select");
-		await expect(divisionSelects).toHaveCount(TEAMS_PER_DIVISION * 2);
+		const divisionRadioGroups = page.getByTestId("ab-division-radio-group");
+		await expect(divisionRadioGroups).toHaveCount(TEAMS_PER_DIVISION * 2);
 
 		for (let i = 0; i < TEAMS_PER_DIVISION; i++) {
-			await divisionSelects.nth(i).selectOption("0");
+			await divisionRadioGroups.nth(i).getByText("A", { exact: true }).click();
 		}
 		for (let i = TEAMS_PER_DIVISION; i < TEAMS_PER_DIVISION * 2; i++) {
-			await divisionSelects.nth(i).selectOption("1");
+			await divisionRadioGroups.nth(i).getByText("B", { exact: true }).click();
 		}
 
 		await submit(page, "set-ab-divisions-submit-button");

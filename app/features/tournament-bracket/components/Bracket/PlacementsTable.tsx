@@ -128,26 +128,38 @@ export function PlacementsTable({
 		const aStandings = standings.filter((s) => s.team.abDivision === 0);
 		const bStandings = standings.filter((s) => s.team.abDivision === 1);
 
+		if (aStandings.length === 0 && bStandings.length === 0) {
+			return null;
+		}
+
 		return (
 			<div className="stack lg">
-				<StandingsTable
-					bracket={bracket}
-					standings={aStandings}
-					destinationBracket={destinationBracket}
-					possibleDestinationBrackets={possibleDestinationBrackets}
-					canEditDestination={canEditDestination}
-					allMatchesFinished={allMatchesFinished}
-				/>
-				<StandingsTable
-					bracket={bracket}
-					standings={bStandings}
-					destinationBracket={destinationBracket}
-					possibleDestinationBrackets={possibleDestinationBrackets}
-					canEditDestination={canEditDestination}
-					allMatchesFinished={allMatchesFinished}
-				/>
+				{aStandings.length > 0 ? (
+					<StandingsTable
+						bracket={bracket}
+						standings={aStandings}
+						destinationBracket={destinationBracket}
+						possibleDestinationBrackets={possibleDestinationBrackets}
+						canEditDestination={canEditDestination}
+						allMatchesFinished={allMatchesFinished}
+					/>
+				) : null}
+				{bStandings.length > 0 ? (
+					<StandingsTable
+						bracket={bracket}
+						standings={bStandings}
+						destinationBracket={destinationBracket}
+						possibleDestinationBrackets={possibleDestinationBrackets}
+						canEditDestination={canEditDestination}
+						allMatchesFinished={allMatchesFinished}
+					/>
+				) : null}
 			</div>
 		);
+	}
+
+	if (standings.length === 0) {
+		return null;
 	}
 
 	return (

@@ -23,6 +23,10 @@ import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { Catcher } from "~/components/Catcher";
 import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { Image } from "~/components/Image";
 import { InfoPopover } from "~/components/InfoPopover";
@@ -40,6 +44,12 @@ import { useTournament } from "./to.$id";
 import styles from "./to.$id.seeds.module.css";
 
 export { action, loader };
+
+const AB_DIVISION_RADIO_OPTIONS = [
+	{ value: "unassigned", label: "Unassigned" },
+	{ value: "0", label: "A" },
+	{ value: "1", label: "B" },
+] as const;
 
 export default function TournamentSeedsPage() {
 	const tournament = useTournament();
@@ -514,30 +524,36 @@ function AbDivisionsDialog() {
 								return (
 									<tr key={team.id}>
 										<td>{team.name}</td>
-										<td>
-											<select
-												className="w-max"
-												data-testid="ab-division-select"
-												value={abDivision === null ? "" : String(abDivision)}
-												onChange={(e) => {
-													const rawValue = e.target.value;
-													const newDivision: AbDivisionValue =
-														rawValue === ""
-															? null
-															: (Number(rawValue) as 0 | 1);
-													setTeamAbDivisions((teamAbDivisions) =>
-														teamAbDivisions.map((t) =>
-															t.tournamentTeamId === team.id
-																? { ...t, abDivision: newDivision }
-																: t,
-														),
-													);
-												}}
-											>
-												<option value="">Unassigned</option>
-												<option value="0">A</option>
-												<option value="1">B</option>
-											</select>
+										<td data-testid="ab-division-radio-group">
+											<SendouChipRadioGroup>
+												{AB_DIVISION_RADIO_OPTIONS.map(({ value, label }) => (
+													<SendouChipRadio
+														key={value}
+														name={`ab-division-${team.id}`}
+														value={value}
+														checked={
+															(abDivision === null
+																? "unassigned"
+																: String(abDivision)) === value
+														}
+														onChange={(rawValue) => {
+															const newDivision: AbDivisionValue =
+																rawValue === "unassigned"
+																	? null
+																	: (Number(rawValue) as 0 | 1);
+															setTeamAbDivisions((teamAbDivisions) =>
+																teamAbDivisions.map((t) =>
+																	t.tournamentTeamId === team.id
+																		? { ...t, abDivision: newDivision }
+																		: t,
+																),
+															);
+														}}
+													>
+														{label}
+													</SendouChipRadio>
+												))}
+											</SendouChipRadioGroup>
 										</td>
 									</tr>
 								);
