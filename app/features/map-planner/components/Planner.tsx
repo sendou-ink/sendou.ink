@@ -238,31 +238,33 @@ export default function Planner() {
 				(_prev, next) => {
 					if (next.meta.isRangeCircle) return;
 
-					const rangeCircle = editor
+					const rangeCircles = editor
 						.getCurrentPageShapes()
-						.find(
+						.filter(
 							(s) =>
 								s.meta.isRangeCircle === true &&
 								s.meta.weaponShapeId === next.id,
 						);
-					if (!rangeCircle) return;
+					if (rangeCircles.length === 0) return;
 
-					const radiusPx = (rangeCircle.props as { w: number }).w / 2;
 					const centerX = next.x + (next.props as { w: number }).w / 2;
 					const centerY = next.y + (next.props as { h: number }).h / 2;
 
-					editor.updateShape({
-						id: rangeCircle.id,
-						type: rangeCircle.type,
-						isLocked: false,
-					});
-					editor.updateShape({
-						id: rangeCircle.id,
-						type: rangeCircle.type,
-						x: centerX - radiusPx,
-						y: centerY - radiusPx,
-						isLocked: true,
-					});
+					for (const rangeCircle of rangeCircles) {
+						const radiusPx = (rangeCircle.props as { w: number }).w / 2;
+						editor.updateShape({
+							id: rangeCircle.id,
+							type: rangeCircle.type,
+							isLocked: false,
+						});
+						editor.updateShape({
+							id: rangeCircle.id,
+							type: rangeCircle.type,
+							x: centerX - radiusPx,
+							y: centerY - radiusPx,
+							isLocked: true,
+						});
+					}
 				},
 			);
 
@@ -271,21 +273,23 @@ export default function Planner() {
 				(shape) => {
 					if (shape.meta.isRangeCircle) return;
 
-					const rangeCircle = editor
+					const rangeCircles = editor
 						.getCurrentPageShapes()
-						.find(
+						.filter(
 							(s) =>
 								s.meta.isRangeCircle === true &&
 								s.meta.weaponShapeId === shape.id,
 						);
-					if (!rangeCircle) return;
+					if (rangeCircles.length === 0) return;
 
-					editor.updateShape({
-						id: rangeCircle.id,
-						type: rangeCircle.type,
-						isLocked: false,
-					});
-					editor.deleteShapes([rangeCircle]);
+					for (const rangeCircle of rangeCircles) {
+						editor.updateShape({
+							id: rangeCircle.id,
+							type: rangeCircle.type,
+							isLocked: false,
+						});
+					}
+					editor.deleteShapes(rangeCircles);
 				},
 			);
 
@@ -788,12 +792,49 @@ function createRangeCircleForShape(
 	const rangeResult = getWeaponRange(weaponId);
 	if (rangeResult.rangeType === "unsupported" || rangeResult.range <= 0) return;
 
-	const radiusPx = rangeResult.range * GAME_UNITS_TO_MINIMAP_PX;
-	const diameter = radiusPx * 2;
-
 	const centerX = shape.x + (shape.props as { w: number }).w / 2;
 	const centerY = shape.y + (shape.props as { h: number }).h / 2;
 
+	if (typeof rangeResult.blastRadius === "number") {
+		createCircle(editor, {
+			centerX,
+			centerY,
+			radiusPx:
+				(rangeResult.range + rangeResult.blastRadius) *
+				GAME_UNITS_TO_MINIMAP_PX,
+			color: "blue",
+			weaponShapeId: shape.id,
+		});
+	}
+
+	createCircle(editor, {
+		centerX,
+		centerY,
+		radiusPx: rangeResult.range * GAME_UNITS_TO_MINIMAP_PX,
+		color: "red",
+		weaponShapeId: shape.id,
+	});
+
+	editor.bringToFront([shape.id]);
+}
+
+function createCircle(
+	editor: Editor,
+	{
+		centerX,
+		centerY,
+		radiusPx,
+		color,
+		weaponShapeId,
+	}: {
+		centerX: number;
+		centerY: number;
+		radiusPx: number;
+		color: "red" | "blue";
+		weaponShapeId: TLShapeId;
+	},
+) {
+	const diameter = radiusPx * 2;
 	editor.createShape({
 		type: "geo",
 		x: centerX - radiusPx,
@@ -804,14 +845,13 @@ function createRangeCircleForShape(
 			geo: "ellipse",
 			w: diameter,
 			h: diameter,
-			color: "red",
+			color,
 			fill: "solid",
 			dash: "solid",
 			size: "s",
 		},
-		meta: { isRangeCircle: true, weaponShapeId: shape.id },
+		meta: { isRangeCircle: true, weaponShapeId },
 	});
-	editor.bringToFront([shape.id]);
 }
 
 function removeRangeCircles(editor: Editor) {
