@@ -775,11 +775,6 @@ export class Create {
 				);
 		}
 
-		if (divisionA.length !== divisionB.length)
-			throw Error(
-				"A and B divisions must have the same number of participants.",
-			);
-
 		return helpers.makeAbDivisionGroups(
 			divisionA,
 			divisionB,

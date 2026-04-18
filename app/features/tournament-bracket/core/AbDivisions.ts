@@ -14,9 +14,11 @@ interface ValidateArgs {
  * suitable for surfacing to the organizer if any of the following are violated:
  *
  * - Every team has an A (0) or B (1) assignment
- * - The counts of A and B teams are equal
- * - The total team count can be split evenly across the groups
- * - Each group's team count is even (so A and B can be balanced within the group)
+ * - The counts of A and B teams differ by at most 1
+ * - When the counts differ by 1, there must be only one group (uneven divisions can't be split
+ *   evenly across multiple groups)
+ * - When the counts are equal, the total team count splits evenly across the groups and each
+ *   group's team count is even (so A and B can be balanced within the group)
  */
 export function validate({
 	abDivisionsBySeedOrder,
@@ -39,11 +41,22 @@ export function validate({
 	const bCount = abDivisionsBySeedOrder.filter(
 		(division) => division === 1,
 	).length;
+	const diff = Math.abs(aCount - bCount);
 
-	if (aCount !== bCount) {
+	if (diff > 1) {
 		return err(
-			`Unbalanced A/B divisions (${aCount} A, ${bCount} B) — must be equal to start the bracket`,
+			`Unbalanced A/B divisions (${aCount} A, ${bCount} B) — counts can differ by at most 1`,
 		);
+	}
+
+	if (diff === 1) {
+		if (groupCount !== 1) {
+			return err(
+				`Uneven A/B divisions (${aCount} A, ${bCount} B) are only supported with a single group`,
+			);
+		}
+
+		return ok(abDivisionsBySeedOrder as (0 | 1)[]);
 	}
 
 	if (teamCount % groupCount !== 0) {

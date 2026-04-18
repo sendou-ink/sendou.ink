@@ -221,20 +221,40 @@ describe("Create a round-robin stage", () => {
 		).toThrow("abDivisions must be provided when hasAbDivisions is enabled.");
 	});
 
-	test("throws when A/B divisions have different sizes", () => {
+	test("creates an A/B divisions round-robin with uneven (±1) divisions and a single group", () => {
+		const seeding = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+		manager.create({
+			name: "Uneven AB",
+			tournamentId: 0,
+			type: "round_robin",
+			seeding,
+			abDivisions: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+			settings: {
+				groupCount: 1,
+				hasAbDivisions: true,
+				seedOrdering: ["groups.seed_optimized"],
+			},
+		});
+
+		expect(storage.select("group")!.length).toBe(1);
+		expect(storage.select("round")!.length).toBe(6);
+		expect(storage.select("match")!.length).toBe(30);
+	});
+
+	test("throws when A/B divisions are uneven with multiple groups", () => {
 		expect(() =>
 			manager.create({
-				name: "Unbalanced AB",
+				name: "Uneven AB multi-group",
 				tournamentId: 0,
 				type: "round_robin",
-				seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-				abDivisions: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+				seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+				abDivisions: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
 				settings: {
-					groupCount: 1,
+					groupCount: 2,
 					hasAbDivisions: true,
 				},
 			}),
-		).toThrow("A and B divisions must have the same number of participants.");
+		).toThrow("Uneven A/B divisions are only supported with a single group.");
 	});
 });
 

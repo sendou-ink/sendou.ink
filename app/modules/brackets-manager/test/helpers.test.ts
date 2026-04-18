@@ -115,8 +115,46 @@ describe("A/B divisions round-robin groups", () => {
 		]);
 	});
 
-	test("throws when divisions have different sizes", () => {
-		expect(() => makeAbDivisionRoundRobinMatches([1, 2, 3], [4, 5])).toThrow();
+	test("supports uneven divisions where |A| = |B| + 1", () => {
+		const divisionA = [1, 2, 3, 4, 5, 6];
+		const divisionB = [11, 12, 13, 14, 15];
+
+		const rounds = makeAbDivisionRoundRobinMatches(divisionA, divisionB);
+
+		assertAbDivisionRoundRobin(divisionA, divisionB, rounds);
+		expect(rounds).toHaveLength(6);
+		expect(rounds.flat()).toHaveLength(5 * 6);
+		expect(rounds.every((round) => round.length === 5)).toBe(true);
+
+		const byeCountPerA = new Map(divisionA.map((a) => [a, 0]));
+		for (const round of rounds) {
+			const playingA = new Set(round.map(([a]) => a));
+			for (const a of divisionA) {
+				if (!playingA.has(a)) byeCountPerA.set(a, byeCountPerA.get(a)! + 1);
+			}
+		}
+		expect([...byeCountPerA.values()]).toEqual([1, 1, 1, 1, 1, 1]);
+	});
+
+	test("supports uneven divisions where |B| = |A| + 1", () => {
+		const divisionA = [1, 2, 3, 4, 5];
+		const divisionB = [11, 12, 13, 14, 15, 16];
+
+		const rounds = makeAbDivisionRoundRobinMatches(divisionA, divisionB);
+
+		assertAbDivisionRoundRobin(divisionA, divisionB, rounds);
+		expect(rounds).toHaveLength(6);
+		expect(rounds.flat()).toHaveLength(5 * 6);
+		expect(rounds.every((round) => round.length === 5)).toBe(true);
+
+		const byeCountPerB = new Map(divisionB.map((b) => [b, 0]));
+		for (const round of rounds) {
+			const playingB = new Set(round.map(([, b]) => b));
+			for (const b of divisionB) {
+				if (!playingB.has(b)) byeCountPerB.set(b, byeCountPerB.get(b)! + 1);
+			}
+		}
+		expect([...byeCountPerB.values()]).toEqual([1, 1, 1, 1, 1, 1]);
 	});
 
 	test("handles non-contiguous seed identifiers in each pool", () => {
@@ -231,8 +269,14 @@ describe("A/B division group distribution", () => {
 		]);
 	});
 
-	test("throws when pools have different sizes", () => {
-		expect(() => makeAbDivisionGroups([1, 2], [3], 1)).toThrow();
+	test("allows uneven pools with a single group", () => {
+		expect(makeAbDivisionGroups([1, 2, 3], [4, 5], 1)).toEqual([
+			{ a: [1, 2, 3], b: [4, 5] },
+		]);
+	});
+
+	test("throws when pools have different sizes and multiple groups", () => {
+		expect(() => makeAbDivisionGroups([1, 2, 3], [4, 5], 2)).toThrow();
 	});
 
 	test("throws when pool size is not divisible by group count", () => {

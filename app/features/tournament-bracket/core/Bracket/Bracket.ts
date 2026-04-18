@@ -7,6 +7,7 @@ import type { Round } from "~/modules/brackets-model";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { fillWithNullTillPowerOfTwo } from "../../tournament-bracket-utils";
+import * as AbDivisions from "../AbDivisions";
 import { getTournamentManager } from "../brackets-manager";
 import * as Progression from "../Progression";
 import type { OptionalIdObject, Tournament } from "../Tournament";
@@ -329,19 +330,39 @@ export abstract class Bracket {
 		teams: number[],
 		groupCount: number | undefined,
 	): (0 | 1)[] | undefined {
-		if (!groupCount || teams.length % (2 * groupCount) !== 0) return undefined;
+		if (!groupCount) return undefined;
 
 		const assignments = teams.map((teamId) => {
 			const team = this.tournament.teamById(teamId);
 			return team?.abDivision ?? null;
 		});
 
-		const aCount = assignments.filter((value) => value === 0).length;
-		const bCount = assignments.filter((value) => value === 1).length;
-		if (aCount === bCount && aCount + bCount === teams.length)
+		const allAssigned = assignments.every(
+			(value) => value === 0 || value === 1,
+		);
+		if (
+			allAssigned &&
+			AbDivisions.validate({
+				abDivisionsBySeedOrder: assignments,
+				groupCount,
+			}).isOk()
+		) {
 			return assignments as (0 | 1)[];
+		}
 
-		return teams.map((_, index) => (index % 2 === 0 ? 0 : 1));
+		const fakeAssignments: (0 | 1)[] = teams.map((_, index) =>
+			index % 2 === 0 ? 0 : 1,
+		);
+		if (
+			AbDivisions.validate({
+				abDivisionsBySeedOrder: fakeAssignments,
+				groupCount,
+			}).isOk()
+		) {
+			return fakeAssignments;
+		}
+
+		return undefined;
 	}
 
 	get isUnderground() {

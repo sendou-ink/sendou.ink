@@ -42,7 +42,7 @@ describe("AbDivisions.validate", () => {
 		expect(result.isErr()).toBe(true);
 	});
 
-	it("rejects unbalanced A/B counts", () => {
+	it("rejects A/B counts differing by more than 1", () => {
 		const result = AbDivisions.validate({
 			abDivisionsBySeedOrder: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
 			groupCount: 1,
@@ -50,6 +50,25 @@ describe("AbDivisions.validate", () => {
 
 		expect(result.isErr()).toBe(true);
 		expect(result._unsafeUnwrapErr()).toMatch(/7 A, 5 B/);
+	});
+
+	it("accepts a ±1 uneven configuration with a single group", () => {
+		const result = AbDivisions.validate({
+			abDivisionsBySeedOrder: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+			groupCount: 1,
+		});
+
+		expect(result.isOk()).toBe(true);
+	});
+
+	it("rejects a ±1 uneven configuration when there are multiple groups", () => {
+		const result = AbDivisions.validate({
+			abDivisionsBySeedOrder: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+			groupCount: 2,
+		});
+
+		expect(result.isErr()).toBe(true);
+		expect(result._unsafeUnwrapErr()).toMatch(/single group/);
 	});
 
 	it("rejects team counts not divisible by group count", () => {

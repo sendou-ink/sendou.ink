@@ -61,7 +61,11 @@ export function makeRoundRobinMatches<T>(
  *
  * Every A team plays every B team exactly once; there are no A-vs-A or B-vs-B matches.
  * Round 1 is cross-seeded (strongest A vs weakest B), and B is rotated cyclically downward
- * in each subsequent round. For N participants per side, there are N rounds and N² matches.
+ * in each subsequent round.
+ *
+ * When the divisions have different sizes, the shorter side is padded with bye slots so the
+ * rotation still works. Those bye pairings are filtered out of the output, so each round has
+ * exactly `min(|A|, |B|)` real matches and the total is `|A| * |B|`.
  *
  * @param divisionA Participants in division A, ordered by seed.
  * @param divisionB Participants in division B, ordered by seed.
@@ -70,11 +74,15 @@ export function makeAbDivisionRoundRobinMatches<T>(
 	divisionA: T[],
 	divisionB: T[],
 ): [T, T][][] {
-	if (divisionA.length !== divisionB.length) {
-		throw Error("Divisions A and B must have the same number of participants.");
-	}
-
-	const n = divisionA.length;
+	const n = Math.max(divisionA.length, divisionB.length);
+	const paddedA: (T | null)[] = [
+		...divisionA,
+		...Array(n - divisionA.length).fill(null),
+	];
+	const paddedB: (T | null)[] = [
+		...divisionB,
+		...Array(n - divisionB.length).fill(null),
+	];
 	const rounds: [T, T][][] = [];
 
 	for (let roundIdx = 0; roundIdx < n; roundIdx++) {
@@ -82,7 +90,10 @@ export function makeAbDivisionRoundRobinMatches<T>(
 
 		for (let i = 0; i < n; i++) {
 			const bIdx = (((n - 1 - i - roundIdx) % n) + n) % n;
-			matches.push([divisionA[i], divisionB[bIdx]]);
+			const a = paddedA[i];
+			const b = paddedB[bIdx];
+			if (a === null || b === null) continue;
+			matches.push([a, b]);
 		}
 
 		rounds.push(matches);
@@ -108,10 +119,16 @@ export function makeAbDivisionGroups<T>(
 	divisionB: T[],
 	groupCount: number,
 ): { a: T[]; b: T[] }[] {
-	if (divisionA.length !== divisionB.length)
-		throw Error("Divisions A and B must have the same number of participants.");
-
 	if (groupCount <= 0) throw Error("Group count must be strictly positive.");
+
+	if (divisionA.length !== divisionB.length) {
+		if (groupCount !== 1)
+			throw Error(
+				"Uneven A/B divisions are only supported with a single group.",
+			);
+
+		return [{ a: divisionA, b: divisionB }];
+	}
 
 	if (divisionA.length % groupCount !== 0)
 		throw Error("Pool size must be divisible by group count.");
@@ -231,14 +248,11 @@ export function assertAbDivisionRoundRobin(
 	divisionB: number[],
 	output: [number, number][][],
 ): void {
-	const n = divisionA.length;
+	const roundCount = Math.max(divisionA.length, divisionB.length);
+	const matchesPerRound = Math.min(divisionA.length, divisionB.length);
 
-	// xxx: maybe we should allow different of max 1 participant?
-	if (divisionB.length !== n)
-		throw Error("Divisions A and B must have the same size");
-
-	if (output.length !== n) throw Error("Round count is wrong");
-	if (!output.every((round) => round.length === n))
+	if (output.length !== roundCount) throw Error("Round count is wrong");
+	if (!output.every((round) => round.length === matchesPerRound))
 		throw Error("Not every round has the good number of matches");
 
 	const aSet = new Set(divisionA);
@@ -269,7 +283,7 @@ export function assertAbDivisionRoundRobin(
 		}
 	}
 
-	if (seenPairings.size !== n * n)
+	if (seenPairings.size !== divisionA.length * divisionB.length)
 		throw Error("Not every A vs B pairing was generated");
 }
 
