@@ -188,6 +188,7 @@ function TournamentMatchRosterTab({
 		team: NonNullable<ReturnType<typeof tournament.teamById>>,
 	) {
 		const subbedOut =
+			!data.matchIsOver &&
 			team.activeRosterUserIds &&
 			team.members.length > tournament.minMembersPerTeam
 				? team.members

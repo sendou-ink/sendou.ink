@@ -127,11 +127,15 @@ function TournamentMatchBannerTopRow({
 				count: data.match.roundMaps.count,
 				bestOf: data.match.roundMaps.type === "BEST_OF",
 			}}
-			time={{
-				// xxx: current
-				currentMinutes: 3,
-				totalMinutes,
-			}}
+			time={
+				data.matchIsOver
+					? undefined
+					: {
+							// xxx: current
+							currentMinutes: 3,
+							totalMinutes,
+						}
+			}
 		/>
 	);
 }
