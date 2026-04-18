@@ -19,15 +19,13 @@ import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs } from "~/components/match-page/MatchTabs";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import type { CommonUser } from "~/utils/kysely.server";
 import { tournamentBracketsPage, tournamentTeamPage } from "~/utils/urls";
 import { action } from "../actions/to.$id.matches.$mid.server";
 import { loader } from "../loaders/to.$id.matches.$mid.server";
-import {
-	isSetOverByScore,
-	tournamentTeamToActiveRosterUserIds,
-} from "../tournament-bracket-utils";
+import { isSetOverByScore } from "../tournament-match-utils";
 
 export { action, loader };
 

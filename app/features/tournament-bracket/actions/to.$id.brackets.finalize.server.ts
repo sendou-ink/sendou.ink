@@ -23,12 +23,12 @@ import {
 	addSummary,
 	finalizeTournament,
 } from "~/features/tournament-bracket/queries/addSummary.server";
-import { allMatchResultsByTournamentId } from "~/features/tournament-bracket/queries/allMatchResultsByTournamentId.server";
 import {
 	finalizeTournamentActionSchema,
 	type TournamentBadgeReceivers,
 } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import { validateBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { allMatchResultsByTournamentId } from "~/features/tournament-match/queries/allMatchResultsByTournamentId.server";
 import { refreshTentativeTiersCache } from "~/features/tournament-organization/core/tentativeTiers.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import invariant from "~/utils/invariant";

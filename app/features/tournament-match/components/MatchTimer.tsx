@@ -1,7 +1,7 @@
 import { clsx } from "clsx";
 import { differenceInSeconds } from "date-fns";
 import * as React from "react";
-import * as Deadline from "../core/Deadline";
+import * as Deadline from "~/features/tournament-bracket/core/Deadline";
 import styles from "./MatchTimer.module.css";
 
 interface MatchTimerProps {

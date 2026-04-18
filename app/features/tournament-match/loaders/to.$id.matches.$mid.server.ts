@@ -5,6 +5,9 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatAccessible } from "~/features/chat/chat-utils";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
+import { matchPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
@@ -13,12 +16,9 @@ import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { tournamentMatchPage } from "~/utils/urls";
 import { executeRoll } from "../core/executeRoll.server";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
-import * as PickBan from "../core/PickBan";
-import { tournamentFromDBCached } from "../core/Tournament.server";
 import { findMatchById } from "../queries/findMatchById.server";
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
-import { matchPageParamsSchema } from "../tournament-bracket-schemas.server";
-import { matchEndedEarly } from "../tournament-bracket-utils";
+import { matchEndedEarly } from "../tournament-match-utils";
 
 export type TournamentMatchLoaderData = typeof loader;
 

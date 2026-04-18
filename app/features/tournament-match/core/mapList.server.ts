@@ -1,7 +1,10 @@
 import type { Tables, TournamentRoundMaps } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { mapPickingStyleToModes } from "~/features/tournament/tournament-utils";
+import type { Bracket } from "~/features/tournament-bracket/core/Bracket";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import { findMapPoolByTeamId } from "~/features/tournament-bracket/queries/findMapPoolByTeamId.server";
+import { findTieBreakerMapPoolByTournamentId } from "~/features/tournament-bracket/queries/findTieBreakerMapPoolByTournamentId.server";
 import type { Round } from "~/modules/brackets-model";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { generateBalancedMapList } from "~/modules/tournament-map-list-generator/balanced-map-list";
@@ -14,9 +17,6 @@ import { syncCached } from "~/utils/cache.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
-import { findMapPoolByTeamId } from "../queries/findMapPoolByTeamId.server";
-import { findTieBreakerMapPoolByTournamentId } from "../queries/findTieBreakerMapPoolByTournamentId.server";
-import type { Bracket } from "./Bracket";
 
 interface ResolveCurrentMapListArgs {
 	tournamentId: number;

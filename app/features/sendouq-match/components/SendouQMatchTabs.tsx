@@ -13,7 +13,7 @@ import type {
 } from "~/components/match-page/MatchTimeline";
 import { MatchTimeline } from "~/components/match-page/MatchTimeline";
 import { useUser } from "~/features/auth/core/user";
-import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { resolveRoomPass } from "~/features/tournament-match/tournament-match-utils";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { teamPage } from "~/utils/urls";

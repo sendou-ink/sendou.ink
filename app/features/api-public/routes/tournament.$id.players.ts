@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
-import * as TournamentMatchRepository from "~/features/tournament-bracket/TournamentMatchRepository.server";
+import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import type { GetTournamentPlayersResponse } from "../schema";

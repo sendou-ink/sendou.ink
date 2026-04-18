@@ -5,6 +5,7 @@ import type {
 	TournamentRoundMaps,
 	WhoSide,
 } from "~/db/tables";
+import { isSetOverByResults } from "~/features/tournament-match/tournament-match-utils";
 import type {
 	ModeShort,
 	ModeWithStage,
@@ -14,7 +15,6 @@ import type { TournamentMapListMap } from "~/modules/tournament-map-list-generat
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
-import { isSetOverByResults } from "../tournament-bracket-utils";
 import type { TournamentDataTeam } from "./Tournament.server";
 
 export const types = [

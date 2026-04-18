@@ -8,7 +8,7 @@ import { useTournament } from "~/features/tournament/routes/to.$id";
 import { nullFilledArray } from "~/utils/arrays";
 import type { SerializeFrom } from "~/utils/remix";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
-import { pickInfoText } from "../tournament-bracket-utils";
+import { pickInfoText } from "../tournament-match-utils";
 
 export function OrganizerMatchMapListDialog({
 	data,

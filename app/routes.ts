@@ -149,7 +149,7 @@ export default [
 		),
 		route(
 			"matches/:mid",
-			"features/tournament-bracket/routes/to.$id.matches.$mid.tsx",
+			"features/tournament-match/routes/to.$id.matches.$mid.tsx",
 		),
 	]),
 	route("luti", "features/tournament/routes/luti.ts"),

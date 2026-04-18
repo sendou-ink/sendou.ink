@@ -1,12 +1,12 @@
 import type { TournamentRoundMaps } from "~/db/tables";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import type { ModeWithStage } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { seededRandom } from "~/utils/random";
 import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
 import type { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
-import * as PickBan from "./PickBan";
-import type { TournamentDataTeam } from "./Tournament.server";
 
 export async function executeRoll({
 	matchId,

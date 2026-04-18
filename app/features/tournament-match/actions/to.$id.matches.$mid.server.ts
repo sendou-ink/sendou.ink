@@ -6,7 +6,23 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.server";
-import * as TournamentMatchRepository from "~/features/tournament-bracket/TournamentMatchRepository.server";
+import { getServerTournamentManager } from "~/features/tournament-bracket/core/brackets-manager/manager.server";
+import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import {
+	clearTournamentDataCache,
+	type TournamentDataTeam,
+	tournamentFromDB,
+} from "~/features/tournament-bracket/core/Tournament.server";
+import { deletePickBanEvent } from "~/features/tournament-bracket/queries/deletePickBanEvent.server";
+import {
+	matchPageParamsSchema,
+	matchSchema,
+} from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+import {
+	tournamentTeamToActiveRosterUserIds,
+	tournamentWebsocketRoom,
+} from "~/features/tournament-bracket/tournament-bracket-utils";
+import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -16,18 +32,10 @@ import {
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { getServerTournamentManager } from "../core/brackets-manager/manager.server";
 import { executeRoll } from "../core/executeRoll.server";
 import { resolveMapList } from "../core/mapList.server";
-import * as PickBan from "../core/PickBan";
-import {
-	clearTournamentDataCache,
-	type TournamentDataTeam,
-	tournamentFromDB,
-} from "../core/Tournament.server";
 import { deleteMatchPickBanEvents } from "../queries/deleteMatchPickBanEvents.server";
 import { deleteParticipantsByMatchGameResultId } from "../queries/deleteParticipantsByMatchGameResultId.server";
-import { deletePickBanEvent } from "../queries/deletePickBanEvent.server";
 import { deleteTournamentMatchGameResultById } from "../queries/deleteTournamentMatchGameResultById.server";
 import {
 	type FindMatchById,
@@ -38,17 +46,11 @@ import { insertTournamentMatchGameResult } from "../queries/insertTournamentMatc
 import { insertTournamentMatchGameResultParticipant } from "../queries/insertTournamentMatchGameResultParticipant.server";
 import { updateMatchGameResultPoints } from "../queries/updateMatchGameResultPoints.server";
 import {
-	matchPageParamsSchema,
-	matchSchema,
-} from "../tournament-bracket-schemas.server";
-import {
 	isSetOverByScore,
 	matchEndedEarly,
 	matchIsLocked,
 	tournamentMatchWebsocketRoom,
-	tournamentTeamToActiveRosterUserIds,
-	tournamentWebsocketRoom,
-} from "../tournament-bracket-utils";
+} from "../tournament-match-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
 	const user = requireUser();

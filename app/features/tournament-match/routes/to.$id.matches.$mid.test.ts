@@ -12,6 +12,7 @@ import {
 	dbInsertTournamentTeam,
 	dbStartTournament,
 } from "~/features/tournament/tournament-test-utils";
+import type { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import type { SerializeFrom } from "~/utils/remix";
 import {
 	assertResponseErrored,
@@ -21,7 +22,6 @@ import {
 	wrappedLoader,
 } from "~/utils/Test";
 import { action as adminAction } from "../../tournament/routes/to.$id.admin";
-import type { matchSchema } from "../tournament-bracket-schemas.server";
 import { action, loader } from "./to.$id.matches.$mid";
 
 const tournamentMatchAction = wrappedAction<typeof matchSchema>({

@@ -7,19 +7,16 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
+import { TeamRosterInputs } from "~/features/tournament-bracket/components/TeamRosterInputs";
+import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import styles from "~/features/tournament-bracket/tournament-bracket.module.css";
+import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import invariant from "~/utils/invariant";
-import * as PickBan from "../core/PickBan";
-import type { TournamentDataTeam } from "../core/Tournament.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
-import styles from "../tournament-bracket.module.css";
-import {
-	isSetOverByScore,
-	matchIsLocked,
-	tournamentTeamToActiveRosterUserIds,
-} from "../tournament-bracket-utils";
+import { isSetOverByScore, matchIsLocked } from "../tournament-match-utils";
 import { MatchActionsBanPicker } from "./MatchActionsBanPicker";
 import type { Result } from "./StartedMatch";
-import { TeamRosterInputs } from "./TeamRosterInputs";
 
 export function MatchActions({
 	teams,

@@ -6,14 +6,14 @@ import { SendouButton } from "~/components/elements/Button";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
+import type { Result } from "~/features/tournament-match/components/StartedMatch";
+import type { TournamentMatchLoaderData } from "~/features/tournament-match/loaders/to.$id.matches.$mid.server";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import { tournamentTeamPage, userPage } from "~/utils/urls";
 import { useTournament } from "../../tournament/routes/to.$id";
 import type { TournamentDataTeam } from "../core/Tournament.server";
-import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import styles from "../tournament-bracket.module.css";
 import { tournamentTeamToActiveRosterUserIds } from "../tournament-bracket-utils";
-import type { Result } from "./StartedMatch";
 
 /** Inputs to select who played for teams in a match as well as the winner. Can also be used in a presentational way. */
 export function TeamRosterInputs({

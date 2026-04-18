@@ -23,6 +23,16 @@ import {
 	isLeagueRoundLocked,
 	resolveLeagueRoundStartDate,
 } from "~/features/tournament/tournament-utils";
+import { DeadlineInfoPopover } from "~/features/tournament-bracket/components/DeadlineInfoPopover";
+import type { Bracket } from "~/features/tournament-bracket/core/Bracket";
+import * as Deadline from "~/features/tournament-bracket/core/Deadline";
+import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import styles from "~/features/tournament-bracket/tournament-bracket.module.css";
+import {
+	groupNumberToLetters,
+	tournamentTeamToActiveRosterUserIds,
+} from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type { StageId } from "~/modules/in-game-lists/types";
@@ -37,22 +47,14 @@ import {
 	specialWeaponImageUrl,
 	stageImageUrl,
 } from "~/utils/urls";
-import type { Bracket } from "../core/Bracket";
-import * as Deadline from "../core/Deadline";
-import * as PickBan from "../core/PickBan";
-import type { TournamentDataTeam } from "../core/Tournament.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
-import styles from "../tournament-bracket.module.css";
 import {
-	groupNumberToLetters,
 	mapCountPlayedInSetWithCertainty,
 	matchIsLocked,
 	pickInfoText,
 	resolveHostingTeam,
 	resolveRoomPass,
-	tournamentTeamToActiveRosterUserIds,
-} from "../tournament-bracket-utils";
-import { DeadlineInfoPopover } from "./DeadlineInfoPopover";
+} from "../tournament-match-utils";
 import { MatchActions } from "./MatchActions";
 import { MatchMapInfo } from "./MatchMapInfo";
 import { MatchRosters } from "./MatchRosters";

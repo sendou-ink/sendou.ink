@@ -9,13 +9,13 @@ import { SubmitButton } from "~/components/SubmitButton";
 import type { ActionType, TournamentRoundMaps } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { stageImageUrl } from "~/utils/urls";
-import * as PickBan from "../core/PickBan";
-import type { TournamentDataTeam } from "../core/Tournament.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import styles from "./MatchActionsBanPicker.module.css";
 

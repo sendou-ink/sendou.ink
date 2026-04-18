@@ -1,8 +1,8 @@
 import { ordinal, rating } from "openskill";
 import { describe, expect, test } from "vitest";
+import type { AllMatchResult } from "~/features/tournament-match/queries/allMatchResultsByTournamentId.server";
 import invariant from "~/utils/invariant";
 import type { Tables } from "../../../db/tables";
-import type { AllMatchResult } from "../queries/allMatchResultsByTournamentId.server";
 import { tournamentSummary } from "./summarizer.server";
 import type { TournamentDataTeam } from "./Tournament.server";
 

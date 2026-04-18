@@ -2,9 +2,9 @@ import clsx from "clsx";
 import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import styles from "~/features/tournament-bracket/tournament-bracket.module.css";
 import { tournamentTeamPage, userPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
-import styles from "../tournament-bracket.module.css";
 
 export function MatchRosters({
 	teams,
