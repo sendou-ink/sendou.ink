@@ -5,6 +5,7 @@
 		"header header header"
 		"actions actions actions"
 		"alpha stage bravo"
+		".     label ."
 		"points-alpha ko points-bravo"
 		". submit .";
 	justify-items: center;
@@ -19,6 +20,7 @@
 			"actions actions"
 			"stage alpha"
 			"stage bravo"
+			"label ."
 			"points points"
 			"submit submit";
 	}
@@ -36,11 +38,6 @@
 	display: flex;
 	gap: var(--s-6);
 	margin-block-start: calc(-1 * var(--s-4));
-
-	@container (max-width: 599px) {
-		margin-block-start: calc(-1 * var(--s-3));
-		margin-block-end: calc(-1 * var(--s-0-5));
-	}
 }
 
 .selectionRow {
@@ -78,29 +75,35 @@
 	}
 }
 
-.stageImageContainer {
+.stageImageWrapper {
 	grid-area: stage;
 
 	@container (max-width: 599px) {
 		align-self: stretch;
-		overflow: hidden;
-		border-radius: var(--radius-box);
 		width: 90px;
-		position: relative;
 	}
 }
 
 .stageImage {
 	border-radius: var(--radius-box);
+	display: block;
 
 	@container (max-width: 599px) {
-		position: absolute;
-		inset: 0;
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
-		border-radius: 0;
 	}
+}
+
+.stageLabel {
+	grid-area: label;
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	margin-block-start: -11px;
 }
 
 .pointsRow {
@@ -136,7 +139,7 @@
 
 .submit {
 	grid-area: submit;
-	margin-block-start: var(--s-2);
+	margin-block-start: calc(-1 * var(--s-2));
 }
 
 .checkCircle {

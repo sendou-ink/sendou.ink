@@ -5,13 +5,14 @@ import { useId, useState } from "react";
 import { Radio, RadioGroup } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useWebHaptics } from "web-haptics/react";
+import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
 import { SendouTabPanel } from "../elements/Tabs";
-import { StageImage } from "../Image";
+import { ModeImage, StageImage } from "../Image";
 import { Label } from "../Label";
 import styles from "./MatchActionTab.module.css";
 import { TAB_KEYS } from "./MatchTabs";
@@ -70,7 +71,6 @@ export function MatchActionTab({
 
 	const isOnTeam = teams[0].id === ownTeamId || teams[1].id === ownTeamId;
 
-	// xxx: i'd be nicer if the score report buttons don't shift horizontally (when some stage names are two lines)
 	return (
 		<SendouTabPanel id={TAB_KEYS.ACTION}>
 			{confirming && winnerId !== null && setEnding ? (
@@ -89,11 +89,7 @@ export function MatchActionTab({
 				/>
 			) : (
 				<div className={styles.root}>
-					<div className={styles.title}>
-						{t("q:match.action.selectWinner")}{" "}
-						{t(`game-misc:MODE_SHORT_${mode}`)}{" "}
-						{t(`game-misc:STAGE_${stageId}`)}
-					</div>
+					<div className={styles.title}>{t("q:match.action.selectWinner")}</div>
 					{actionButtons ? (
 						<div className={styles.actionButtons}>{actionButtons}</div>
 					) : null}
@@ -127,12 +123,15 @@ export function MatchActionTab({
 							isOwnTeam={teams[0].id === ownTeamId}
 							className={styles.alpha}
 						/>
-						<div className={styles.stageImageContainer}>
-							<StageImage
-								stageId={stageId}
-								width={90}
-								className={styles.stageImage}
-							/>
+						<StageImage
+							stageId={stageId}
+							width={90}
+							className={styles.stageImage}
+							containerClassName={styles.stageImageWrapper}
+						/>
+						<div className={styles.stageLabel}>
+							<ModeImage mode={mode} size={14} />
+							<span>{shortStageName(t(`game-misc:STAGE_${stageId}`))}</span>
 						</div>
 						<TeamRadioOption
 							team={teams[1]}
