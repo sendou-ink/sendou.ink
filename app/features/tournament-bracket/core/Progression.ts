@@ -97,6 +97,21 @@ export type ValidationError =
 	| {
 			type: "SWISS_EARLY_ADVANCE_NO_DESTINATION";
 			bracketIdx: number;
+	  }
+	// A/B divisions setting is only valid on round robin brackets
+	| {
+			type: "AB_DIVISIONS_NOT_ROUND_ROBIN";
+			bracketIdx: number;
+	  }
+	// A/B divisions setting is only valid on starting brackets (no sources)
+	| {
+			type: "AB_DIVISIONS_NOT_STARTING";
+			bracketIdx: number;
+	  }
+	// A/B divisions requires an even teamsPerGroup so each group can be split equally
+	| {
+			type: "AB_DIVISIONS_ODD_TEAMS_PER_GROUP";
+			bracketIdx: number;
 	  };
 
 /** Takes validated brackets and returns them in the format that is ready for user input. */
@@ -270,6 +285,30 @@ export function bracketsToValidationError(
 	if (typeof faultyBracketIdx === "number") {
 		return {
 			type: "SWISS_EARLY_ADVANCE_NO_DESTINATION",
+			bracketIdx: faultyBracketIdx,
+		};
+	}
+
+	faultyBracketIdx = abDivisionsOnNonRoundRobin(brackets);
+	if (typeof faultyBracketIdx === "number") {
+		return {
+			type: "AB_DIVISIONS_NOT_ROUND_ROBIN",
+			bracketIdx: faultyBracketIdx,
+		};
+	}
+
+	faultyBracketIdx = abDivisionsOnNonStartingBracket(brackets);
+	if (typeof faultyBracketIdx === "number") {
+		return {
+			type: "AB_DIVISIONS_NOT_STARTING",
+			bracketIdx: faultyBracketIdx,
+		};
+	}
+
+	faultyBracketIdx = abDivisionsOddTeamsPerGroup(brackets);
+	if (typeof faultyBracketIdx === "number") {
+		return {
+			type: "AB_DIVISIONS_ODD_TEAMS_PER_GROUP",
 			bracketIdx: faultyBracketIdx,
 		};
 	}
@@ -474,9 +513,13 @@ function tooManyPlacements(brackets: ParsedBracket[]) {
 		for (const source of bracket.sources ?? []) {
 			if (!roundRobins.includes(source.bracketIdx)) continue;
 
-			const size =
-				brackets[source.bracketIdx].settings.teamsPerGroup ??
+			const sourceSettings = brackets[source.bracketIdx].settings;
+			const teamsPerGroup =
+				sourceSettings.teamsPerGroup ??
 				TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
+			const size = sourceSettings.hasAbDivisions
+				? teamsPerGroup / 2
+				: teamsPerGroup;
 
 			if (source.placements.some((placement) => placement > size)) {
 				return bracketIdx;
@@ -540,6 +583,46 @@ function noDoubleEliminationPositive(brackets: ParsedBracket[]) {
 			) {
 				return bracketIdx;
 			}
+		}
+	}
+
+	return null;
+}
+
+function abDivisionsOnNonRoundRobin(brackets: ParsedBracket[]) {
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		if (bracket.settings.hasAbDivisions && bracket.type !== "round_robin") {
+			return bracketIdx;
+		}
+	}
+
+	return null;
+}
+
+function abDivisionsOnNonStartingBracket(brackets: ParsedBracket[]) {
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		if (
+			bracket.settings.hasAbDivisions &&
+			bracket.sources &&
+			bracket.sources.length > 0
+		) {
+			return bracketIdx;
+		}
+	}
+
+	return null;
+}
+
+function abDivisionsOddTeamsPerGroup(brackets: ParsedBracket[]) {
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		if (!bracket.settings.hasAbDivisions) continue;
+
+		const teamsPerGroup =
+			bracket.settings.teamsPerGroup ??
+			TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
+
+		if (teamsPerGroup % 2 !== 0) {
+			return bracketIdx;
 		}
 	}
 

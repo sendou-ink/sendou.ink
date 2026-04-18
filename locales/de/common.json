@@ -234,6 +234,7 @@
 	"plans.bgStyle.OVER": "Vogelperspektive",
 	"plans.bgStyle.MINI": "",
 	"plans.adder.objective": "",
+	"plans.ranges": "",
 	"articles.by": "von {{author}}",
 	"theme.light": "Hell",
 	"theme.dark": "Dunkel",

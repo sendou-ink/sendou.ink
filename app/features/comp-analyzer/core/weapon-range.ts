@@ -159,7 +159,7 @@ export interface WeaponRangeResult {
 	trajectory?: TrajectoryPoint[];
 }
 
-function getWeaponRange(weaponId: MainWeaponId): WeaponRangeResult {
+export function getWeaponRange(weaponId: MainWeaponId): WeaponRangeResult {
 	const category = getWeaponCategoryName(weaponId);
 
 	if (!category) {

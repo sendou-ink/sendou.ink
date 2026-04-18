@@ -33,6 +33,7 @@ describe("tournamentSummary()", () => {
 		inviteCode: null,
 		avgSeedingSkillOrdinal: null,
 		startingBracketIdx: null,
+		abDivision: null,
 		mapPool: [],
 		members: userIds.map((userId) => ({
 			country: null,

@@ -380,6 +380,35 @@ export function updateStartingBrackets(
 	});
 }
 
+export function updateAbDivisions(
+	abDivisions: {
+		tournamentTeamId: number;
+		abDivision: 0 | 1 | null;
+	}[],
+) {
+	const grouped = Object.groupBy(abDivisions, (ab) => String(ab.abDivision));
+
+	return db.transaction().execute(async (trx) => {
+		for (const [abDivisionKey, tournamentTeams = []] of Object.entries(
+			grouped,
+		)) {
+			if (tournamentTeams.length === 0) continue;
+
+			await trx
+				.updateTable("TournamentTeam")
+				.set({
+					abDivision: abDivisionKey === "null" ? null : Number(abDivisionKey),
+				})
+				.where(
+					"TournamentTeam.id",
+					"in",
+					tournamentTeams.map((t) => t.tournamentTeamId),
+				)
+				.execute();
+		}
+	});
+}
+
 /**
  * Checks in a tournament team. Clears any existing check-out records before inserting the check-in.
  * When called without `bracketIdx`, checks in for the whole tournament.

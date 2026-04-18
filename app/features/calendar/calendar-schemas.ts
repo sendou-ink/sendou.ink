@@ -252,6 +252,7 @@ export const bracketProgressionSchema = z.preprocess(
 					.object({
 						thirdPlaceMatch: z.boolean().optional(),
 						teamsPerGroup: z.number().int().optional(),
+						hasAbDivisions: z.boolean().optional(),
 						groupCount: z.number().int().optional(),
 						roundCount: z.number().int().optional(),
 						advanceThreshold: z.number().int().optional(),

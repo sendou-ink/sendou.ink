@@ -556,6 +556,7 @@ export class Tournament {
 				return {
 					groupCount: Math.ceil(participantsCount / teamsPerGroup),
 					seedOrdering: ["groups.seed_optimized"],
+					hasAbDivisions: selectedSettings?.hasAbDivisions ?? false,
 				};
 			}
 			case "swiss": {

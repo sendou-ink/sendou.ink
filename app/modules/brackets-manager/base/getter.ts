@@ -3,11 +3,9 @@ import type {
 	GroupType,
 	Match,
 	Round,
-	SeedOrdering,
 	Stage,
 	StageType,
 } from "~/modules/brackets-model";
-import type { Create } from "../create";
 import * as helpers from "../helpers";
 import type { RoundPositionalInfo, Storage } from "../types";
 
@@ -536,38 +534,6 @@ export class BaseGetter {
 		roundNumber: number,
 	): Match[] {
 		return [this.getDiagonalMatch(match.group_id, roundNumber, match.number)];
-	}
-
-	/**
-	 * Returns the good seeding ordering based on the stage's type.
-	 *
-	 * @param stageType The type of the stage.
-	 * @param create A reference to a Create instance.
-	 */
-	protected static getSeedingOrdering(
-		stageType: StageType,
-		create: Create,
-	): SeedOrdering {
-		return stageType === "round_robin"
-			? create.getRoundRobinOrdering()
-			: create.getStandardBracketFirstRoundOrdering();
-	}
-
-	/**
-	 * Returns the matches which contain the seeding of a stage based on its type.
-	 *
-	 * @param stageId ID of the stage.
-	 * @param stageType The type of the stage.
-	 */
-	protected getSeedingMatches(
-		stageId: number,
-		stageType: StageType,
-	): Match[] | null {
-		if (stageType === "round_robin")
-			return this.storage.select("match", { stage_id: stageId });
-
-		const firstRound = this.getUpperBracketFirstRound(stageId);
-		return this.storage.select("match", { round_id: firstRound.id });
 	}
 
 	/**
