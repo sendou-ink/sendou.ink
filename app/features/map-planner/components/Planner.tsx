@@ -68,7 +68,6 @@ const BACKGROUND_HEIGHT = 634;
 const GAME_UNITS_TO_MINIMAP_PX = 5;
 const MAIN_WEAPON_URL_PATTERN = /main-weapons-outlined\/(\d+)/;
 
-// xxx: lock range circle
 // xxx: check constant
 export default function Planner() {
 	const { t, i18n } = useTranslation(["common"]);
@@ -255,8 +254,14 @@ export default function Planner() {
 					editor.updateShape({
 						id: rangeCircle.id,
 						type: rangeCircle.type,
+						isLocked: false,
+					});
+					editor.updateShape({
+						id: rangeCircle.id,
+						type: rangeCircle.type,
 						x: centerX - radiusPx,
 						y: centerY - radiusPx,
+						isLocked: true,
 					});
 				},
 			);
@@ -275,6 +280,11 @@ export default function Planner() {
 						);
 					if (!rangeCircle) return;
 
+					editor.updateShape({
+						id: rangeCircle.id,
+						type: rangeCircle.type,
+						isLocked: false,
+					});
 					editor.deleteShapes([rangeCircle]);
 				},
 			);
@@ -788,6 +798,7 @@ function createRangeCircleForShape(
 		type: "geo",
 		x: centerX - radiusPx,
 		y: centerY - radiusPx,
+		isLocked: true,
 		opacity: 0.3,
 		props: {
 			geo: "ellipse",
@@ -811,5 +822,12 @@ function removeRangeCircles(editor: Editor) {
 
 	if (rangeShapes.length === 0) return;
 
+	for (const rangeShape of rangeShapes) {
+		editor.updateShape({
+			id: rangeShape.id,
+			type: rangeShape.type,
+			isLocked: false,
+		});
+	}
 	editor.deleteShapes(rangeShapes);
 }
