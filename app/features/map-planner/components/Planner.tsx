@@ -68,7 +68,6 @@ const BACKGROUND_HEIGHT = 634;
 const GAME_UNITS_TO_MINIMAP_PX = 5;
 const MAIN_WEAPON_URL_PATTERN = /main-weapons-outlined\/(\d+)/;
 
-// xxx: when range toggled, adding new weapons doesnt add their range by default
 // xxx: lock range circle
 // xxx: check constant
 export default function Planner() {
@@ -223,7 +222,17 @@ export default function Planner() {
 			setRangesVisible(false);
 		} else {
 			removeRangeCircles(editor);
-			createRangeCircles(editor);
+			for (const shape of editor.getCurrentPageShapes()) {
+				createRangeCircleForShape(editor, shape);
+			}
+
+			const unsubCreate = editor.sideEffects.registerAfterCreateHandler(
+				"shape",
+				(shape) => {
+					if (shape.meta.isRangeCircle) return;
+					createRangeCircleForShape(editor, shape);
+				},
+			);
 
 			const unsubChange = editor.sideEffects.registerAfterChangeHandler(
 				"shape",
@@ -271,6 +280,7 @@ export default function Planner() {
 			);
 
 			rangeCleanupRef.current = () => {
+				unsubCreate();
 				unsubChange();
 				unsubDelete();
 			};
@@ -750,54 +760,47 @@ function extractMainWeaponIdFromSrc(src: string): MainWeaponId | null {
 	return id as MainWeaponId;
 }
 
-function createRangeCircles(editor: Editor) {
-	const shapes = editor.getCurrentPageShapes();
-	const weaponShapeIds: TLShapeId[] = [];
+function createRangeCircleForShape(
+	editor: Editor,
+	shape: ReturnType<Editor["getCurrentPageShapes"]>[number],
+) {
+	if (shape.type !== "image") return;
 
-	for (const shape of shapes) {
-		if (shape.type !== "image") continue;
+	const assetId = (shape.props as { assetId?: string }).assetId;
+	if (!assetId) return;
 
-		const assetId = (shape.props as { assetId?: string }).assetId;
-		if (!assetId) continue;
+	const asset = editor.getAsset(assetId as TLAssetId);
+	if (!asset || asset.type !== "image" || !asset.props.src) return;
 
-		const asset = editor.getAsset(assetId as TLAssetId);
-		if (!asset || asset.type !== "image" || !asset.props.src) continue;
+	const weaponId = extractMainWeaponIdFromSrc(asset.props.src);
+	if (!weaponId) return;
 
-		const weaponId = extractMainWeaponIdFromSrc(asset.props.src);
-		if (!weaponId) continue;
+	const rangeResult = getWeaponRange(weaponId);
+	if (rangeResult.rangeType === "unsupported" || rangeResult.range <= 0) return;
 
-		const rangeResult = getWeaponRange(weaponId);
-		if (rangeResult.rangeType === "unsupported" || rangeResult.range <= 0)
-			continue;
+	const radiusPx = rangeResult.range * GAME_UNITS_TO_MINIMAP_PX;
+	const diameter = radiusPx * 2;
 
-		const radiusPx = rangeResult.range * GAME_UNITS_TO_MINIMAP_PX;
-		const diameter = radiusPx * 2;
+	const centerX = shape.x + (shape.props as { w: number }).w / 2;
+	const centerY = shape.y + (shape.props as { h: number }).h / 2;
 
-		const centerX = shape.x + (shape.props as { w: number }).w / 2;
-		const centerY = shape.y + (shape.props as { h: number }).h / 2;
-
-		editor.createShape({
-			type: "geo",
-			x: centerX - radiusPx,
-			y: centerY - radiusPx,
-			opacity: 0.3,
-			props: {
-				geo: "ellipse",
-				w: diameter,
-				h: diameter,
-				color: "red",
-				fill: "solid",
-				dash: "solid",
-				size: "s",
-			},
-			meta: { isRangeCircle: true, weaponShapeId: shape.id },
-		});
-		weaponShapeIds.push(shape.id);
-	}
-
-	if (weaponShapeIds.length > 0) {
-		editor.bringToFront(weaponShapeIds);
-	}
+	editor.createShape({
+		type: "geo",
+		x: centerX - radiusPx,
+		y: centerY - radiusPx,
+		opacity: 0.3,
+		props: {
+			geo: "ellipse",
+			w: diameter,
+			h: diameter,
+			color: "red",
+			fill: "solid",
+			dash: "solid",
+			size: "s",
+		},
+		meta: { isRangeCircle: true, weaponShapeId: shape.id },
+	});
+	editor.bringToFront([shape.id]);
 }
 
 function removeRangeCircles(editor: Editor) {
