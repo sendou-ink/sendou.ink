@@ -28,6 +28,8 @@ import {
 	ChevronRight,
 	ChevronUp,
 	LogOut,
+	Radius,
+	Square,
 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -463,6 +465,7 @@ function OutlineToggle({
 		<SendouButton
 			variant="minimal"
 			onPress={handleClick}
+			icon={<Square />}
 			className={clsx(
 				styles.outlineToggleButton,
 				outlined && styles.outlineToggleButtonOutlined,
@@ -486,6 +489,7 @@ function RangeToggle({
 		<SendouButton
 			variant="minimal"
 			onPress={onToggle}
+			icon={<Radius />}
 			className={clsx(
 				styles.outlineToggleButton,
 				active && styles.outlineToggleButtonOutlined,
