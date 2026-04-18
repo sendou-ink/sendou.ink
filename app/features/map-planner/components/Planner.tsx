@@ -61,16 +61,17 @@ import {
 } from "~/utils/urls";
 import { LinkButton, SendouButton } from "../../../components/elements/Button";
 import { Image } from "../../../components/Image";
-import type { StageBackgroundStyle } from "../plans-types";
 import styles from "./Planner.module.css";
 
 const DROPPED_IMAGE_SIZE_PX = 45;
 const BACKGROUND_WIDTH = 1127;
 const BACKGROUND_HEIGHT = 634;
-const GAME_UNITS_TO_MINIMAP_PX = 5;
+const GAME_UNITS_TO_PX: Record<"MINI" | "OVER", number> = {
+	MINI: 4.4,
+	OVER: 8.4,
+};
 const MAIN_WEAPON_URL_PATTERN = /main-weapons-outlined\/(\d+)/;
 
-// xxx: check constant
 export default function Planner() {
 	const { t, i18n } = useTranslation(["common"]);
 	const { htmlThemeClass } = useTheme();
@@ -82,6 +83,9 @@ export default function Planner() {
 	const [topCollapsed, setTopCollapsed] = React.useState(false);
 	const [weaponsCollapsed, setWeaponsCollapsed] = React.useState(false);
 	const [rangesVisible, setRangesVisible] = React.useState(false);
+	const [backgroundStyle, setBackgroundStyle] = React.useState<"MINI" | "OVER">(
+		"MINI",
+	);
 	const rangeCleanupRef = React.useRef<(() => void) | null>(null);
 	const [activeDragItem, setActiveDragItem] = React.useState<{
 		src: string;
@@ -222,16 +226,17 @@ export default function Planner() {
 			removeRangeCircles(editor);
 			setRangesVisible(false);
 		} else {
+			const gameUnitsToPx = GAME_UNITS_TO_PX[backgroundStyle];
 			removeRangeCircles(editor);
 			for (const shape of editor.getCurrentPageShapes()) {
-				createRangeCircleForShape(editor, shape);
+				createRangeCircleForShape(editor, shape, gameUnitsToPx);
 			}
 
 			const unsubCreate = editor.sideEffects.registerAfterCreateHandler(
 				"shape",
 				(shape) => {
 					if (shape.meta.isRangeCircle) return;
-					createRangeCircleForShape(editor, shape);
+					createRangeCircleForShape(editor, shape, gameUnitsToPx);
 				},
 			);
 
@@ -308,7 +313,7 @@ export default function Planner() {
 		(urlArgs: {
 			stageId: StageId;
 			mode: ModeShort;
-			style: StageBackgroundStyle;
+			style: "MINI" | "OVER";
 		}) => {
 			if (!editor) return;
 
@@ -332,6 +337,7 @@ export default function Planner() {
 			rangeCleanupRef.current?.();
 			rangeCleanupRef.current = null;
 			setRangesVisible(false);
+			setBackgroundStyle(urlArgs.style);
 		},
 		[editor, handleAddImage],
 	);
@@ -662,14 +668,15 @@ function StageBackgroundSelector({
 	onAddBackground: (args: {
 		stageId: StageId;
 		mode: ModeShort;
-		style: StageBackgroundStyle;
+		style: "MINI" | "OVER";
 	}) => void;
 }) {
 	const { t } = useTranslation(["game-misc", "common"]);
 	const [stageId, setStageId] = React.useState<StageId>(stageIds[0]);
 	const [mode, setMode] = React.useState<ModeShort>("SZ");
-	const [backgroundStyle, setBackgroundStyle] =
-		React.useState<StageBackgroundStyle>("MINI");
+	const [backgroundStyle, setBackgroundStyle] = React.useState<"MINI" | "OVER">(
+		"MINI",
+	);
 
 	const handleStageIdChange = (stageId: StageId) => {
 		setStageId(stageId);
@@ -709,9 +716,7 @@ function StageBackgroundSelector({
 			<select
 				className="w-max"
 				value={backgroundStyle}
-				onChange={(e) =>
-					setBackgroundStyle(e.target.value as StageBackgroundStyle)
-				}
+				onChange={(e) => setBackgroundStyle(e.target.value as "MINI" | "OVER")}
 			>
 				{(["MINI", "OVER"] as const).map((style) => {
 					return (
@@ -781,6 +786,7 @@ function extractMainWeaponIdFromSrc(src: string): MainWeaponId | null {
 function createRangeCircleForShape(
 	editor: Editor,
 	shape: ReturnType<Editor["getCurrentPageShapes"]>[number],
+	gameUnitsToPx: number,
 ) {
 	if (shape.type !== "image") return;
 
@@ -803,9 +809,7 @@ function createRangeCircleForShape(
 		createCircle(editor, {
 			centerX,
 			centerY,
-			radiusPx:
-				(rangeResult.range + rangeResult.blastRadius) *
-				GAME_UNITS_TO_MINIMAP_PX,
+			radiusPx: (rangeResult.range + rangeResult.blastRadius) * gameUnitsToPx,
 			color: "blue",
 			weaponShapeId: shape.id,
 		});
@@ -814,7 +818,7 @@ function createRangeCircleForShape(
 	createCircle(editor, {
 		centerX,
 		centerY,
-		radiusPx: rangeResult.range * GAME_UNITS_TO_MINIMAP_PX,
+		radiusPx: rangeResult.range * gameUnitsToPx,
 		color: "red",
 		weaponShapeId: shape.id,
 	});
