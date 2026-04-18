@@ -5,8 +5,6 @@ interface ValidateArgs {
 	groupCount: number;
 }
 
-// xxx: check if other places should use this module, e.g. brackets-manager
-
 /**
  * Validates that the checked-in teams are ready to start a bipartite (A/B) round robin bracket.
  *
