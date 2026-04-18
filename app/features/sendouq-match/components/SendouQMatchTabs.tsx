@@ -73,20 +73,15 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 		currentMap &&
 		(isParticipant || isStaffOnly);
 
-	const tabs: Array<"join" | "rosters" | "action" | "result"> =
-		awaitingConfirmation
-			? isParticipant
-				? ["result", "rosters", "join"]
-				: ["result", "rosters"]
-			: showActionTab
-				? isParticipant
-					? ["join", "rosters", "action"]
-					: ["rosters", "action"]
-				: data.match.isLocked
-					? ["result", "rosters"]
-					: isParticipant
-						? ["join", "rosters"]
-						: ["rosters"];
+	const tabs: Array<"join" | "rosters" | "action" | "result"> = [];
+	if (awaitingConfirmation || data.match.isLocked) {
+		tabs.push("result", "rosters");
+		if (awaitingConfirmation && isParticipant) tabs.push("join");
+	} else {
+		if (isParticipant) tabs.push("join");
+		tabs.push("rosters");
+		if (showActionTab) tabs.push("action");
+	}
 
 	const allMembers = [
 		...data.match.groupAlpha.members,
