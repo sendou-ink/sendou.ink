@@ -694,11 +694,12 @@ function TrophyGrid({
 			<div className={styles.trophyGrid}>
 				{trophies.map((trophy, i) =>
 					i < visibleCount ? (
-						<NavLink
-							key={trophy.id}
-							to={`${TROPHIES_PAGE}/${trophy.id}`}
-						>
-							<Trophy model={trophy.model} className={styles.trophyGridItem} preview />
+						<NavLink key={trophy.id} to={`${TROPHIES_PAGE}/${trophy.id}`}>
+							<Trophy
+								model={trophy.model}
+								className={styles.trophyGridItem}
+								preview
+							/>
 						</NavLink>
 					) : (
 						<div key={trophy.id} className={styles.trophyGridPlaceholder} />

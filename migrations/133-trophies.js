@@ -69,5 +69,9 @@ export function up(db) {
       ) strict
     `,
 		).run();
+
+		db.prepare(
+			/*sql*/ `alter table "CalendarEvent" add column "trophyId" integer references "Trophy"("id") on delete set null`,
+		).run();
 	})();
 }

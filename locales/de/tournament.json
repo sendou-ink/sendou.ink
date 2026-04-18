@@ -87,6 +87,8 @@
 	"actions.finalize.error.BADGE_NOT_ASSIGNED": "",
 	"actions.finalize.error.DUPLICATE_TOURNAMENT_TEAM_ID": "",
 	"actions.finalize.error.BADGE_NOT_FOUND": "",
+	"actions.finalize.error.TROPHY_NOT_FOUND": "",
+	"actions.finalize.error.TROPHY_NOT_ASSIGNED": "",
 	"actions.finalize.assignBadgesLater": "",
 	"finalize.receivingTeam.label": "",
 	"finalize.receivingTeam.placeholder": "",

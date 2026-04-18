@@ -22,6 +22,8 @@
 	"forms.tags.placeholder": "Choisir un tag",
 	"forms.badges": "Badge à gagner",
 	"forms.badges.placeholder": "Choisissez le badge à faire gagner",
+	"forms.trophy": "",
+	"forms.trophy.placeholder": "",
 	"forms.mapPool": "Stages disponibles",
 	"forms.participantCount": "Nombre de participants",
 	"forms.reportResultsHeader": "Déclarer les résultats pour {{eventName}}",

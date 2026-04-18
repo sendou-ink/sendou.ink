@@ -234,6 +234,7 @@ export interface CalendarEvent {
 	tournamentId: number | null;
 	organizationId: number | null;
 	avatarImgId: number | null;
+	trophyId: number | null;
 }
 
 export interface CalendarEventBadge {

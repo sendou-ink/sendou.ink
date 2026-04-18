@@ -16,3 +16,9 @@
 	height: 124px;
 	border-radius: var(--radius-avatar);
 }
+
+.trophyPreview {
+	background-color: var(--color-bg-high);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+}

@@ -16,6 +16,8 @@
 	"forms.tags.placeholder": "タグを選択",
 	"forms.badges": "バッジプライズ",
 	"forms.badges.placeholder": "バッジプライズを選択する",
+	"forms.trophy": "",
+	"forms.trophy.placeholder": "",
 	"forms.mapPool": "ステージプール",
 	"forms.participantCount": "参加者数",
 	"forms.reportResultsHeader": "{{eventName}} の報告結果",

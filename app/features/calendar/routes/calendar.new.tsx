@@ -22,6 +22,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import type { CalendarEventTag, Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { Trophy } from "~/features/trophies/components/Trophy";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
@@ -184,6 +185,45 @@ function EventForm() {
 	const data = useLoaderData<typeof loader>();
 	const [bracketProgressionErrored, setBracketProgressionErrored] =
 		React.useState(false);
+	const [organizationId, setOrganizationId] = React.useState<number | null>(
+		baseEvent?.organization?.id ?? null,
+	);
+	const [trophyId, setTrophyId] = React.useState<number | null>(
+		baseEvent?.trophy?.id ?? null,
+	);
+	const [badges, setBadges] = React.useState(baseEvent?.badgePrizes ?? []);
+
+	const handleOrganizationChange = (newOrganizationId: number | null) => {
+		setOrganizationId(newOrganizationId);
+		if (trophyId) {
+			const trophyStillValid = data.trophies.some(
+				(t) => t.id === trophyId && t.organizationId === newOrganizationId,
+			);
+			if (!trophyStillValid) {
+				setTrophyId(null);
+			}
+		}
+	};
+
+	const handleTrophyChange = (newTrophyId: number | null) => {
+		setTrophyId(newTrophyId);
+		if (newTrophyId) {
+			setBadges([]);
+		}
+	};
+
+	const handleBadgesChange = (
+		newBadges: typeof badges | ((prev: typeof badges) => typeof badges),
+	) => {
+		setBadges((prev) => {
+			const next =
+				typeof newBadges === "function" ? newBadges(prev) : newBadges;
+			if (next.length > 0) {
+				setTrophyId(null);
+			}
+			return next;
+		});
+	};
 
 	const handleSubmit = () => {
 		const isValid = ref.current?.checkValidity();
@@ -233,13 +273,27 @@ function EventForm() {
 			) : null}
 			<NameInput />
 			<DescriptionTextarea supportsMarkdown={data.isAddingTournament} />
-			<OrganizationSelect />
+			<OrganizationSelect
+				organizationId={organizationId}
+				onChange={handleOrganizationChange}
+			/>
 			{data.isAddingTournament ? <RulesTextarea supportsMarkdown /> : null}
 			<DatesInput allowMultiDate={!data.isAddingTournament} />
 			{!data.isAddingTournament ? <BracketUrlInput /> : null}
 			<DiscordLinkInput />
 			<TagsAdder />
-			<BadgesAdder />
+			<BadgesAdder
+				badges={badges}
+				setBadges={handleBadgesChange}
+				disabled={trophyId !== null}
+			/>
+			{data.isAddingTournament ? (
+				<TrophyAdder
+					organizationId={organizationId}
+					trophyId={trophyId}
+					onChange={handleTrophyChange}
+				/>
+			) : null}
 			{data.isAddingTournament ? (
 				<AvatarImageInput avatarImg={avatarImg} setAvatarImg={setAvatarImg} />
 			) : null}
@@ -352,10 +406,15 @@ function DescriptionTextarea({
 	);
 }
 
-function OrganizationSelect() {
+function OrganizationSelect({
+	organizationId,
+	onChange,
+}: {
+	organizationId: number | null;
+	onChange: (organizationId: number | null) => void;
+}) {
 	const id = React.useId();
 	const data = useLoaderData<typeof loader>();
-	const baseEvent = useBaseEvent();
 
 	if (data.organizations.length === 0) return null;
 
@@ -365,7 +424,11 @@ function OrganizationSelect() {
 			<select
 				id={id}
 				name="organizationId"
-				defaultValue={baseEvent?.organization?.id ?? ""}
+				value={organizationId ?? ""}
+				onChange={(e) => {
+					const value = e.target.value;
+					onChange(value === "" ? null : Number(value));
+				}}
 			>
 				{data.organizations.includes("NO_ORG") ? (
 					<option key="NO_ORG" value="">
@@ -633,11 +696,22 @@ function TagsAdder() {
 	);
 }
 
-function BadgesAdder() {
+type LoaderData = ReturnType<typeof useLoaderData<typeof loader>>;
+type BadgeItem = NonNullable<LoaderData["managedBadges"]>[number];
+
+function BadgesAdder({
+	badges,
+	setBadges,
+	disabled,
+}: {
+	badges: Array<BadgeItem>;
+	setBadges: (
+		badges: Array<BadgeItem> | ((prev: Array<BadgeItem>) => Array<BadgeItem>),
+	) => void;
+	disabled: boolean;
+}) {
 	const { t } = useTranslation("calendar");
-	const baseEvent = useBaseEvent();
 	const { managedBadges } = useLoaderData<typeof loader>();
-	const [badges, setBadges] = React.useState(baseEvent?.badgePrizes ?? []);
 	const id = React.useId();
 
 	const input = (
@@ -649,6 +723,7 @@ function BadgesAdder() {
 	);
 
 	if (managedBadges.length === 0) return input;
+	if (disabled) return input;
 
 	const handleBadgeDelete = (badgeId: Tables["Badge"]["id"]) => {
 		setBadges(badges.filter((badge) => badge.id !== badgeId));
@@ -665,6 +740,7 @@ function BadgesAdder() {
 				<label htmlFor={id}>{t("forms.badges")}</label>
 				<select
 					id={id}
+					value=""
 					onChange={(e) => {
 						setBadges([
 							...badges,
@@ -699,6 +775,80 @@ function BadgesAdder() {
 					))}
 				</div>
 			)}
+		</div>
+	);
+}
+
+function TrophyAdder({
+	organizationId,
+	trophyId,
+	onChange,
+}: {
+	organizationId: number | null;
+	trophyId: number | null;
+	onChange: (trophyId: number | null) => void;
+}) {
+	const { t } = useTranslation("calendar");
+	const { trophies } = useLoaderData<typeof loader>();
+	const id = React.useId();
+
+	const input = (
+		<input
+			type="hidden"
+			name="trophyId"
+			value={trophyId !== null ? String(trophyId) : ""}
+		/>
+	);
+
+	const availableTrophies = organizationId
+		? trophies.filter((trophy) => trophy.organizationId === organizationId)
+		: [];
+
+	if (availableTrophies.length === 0 && trophyId === null) return input;
+
+	const selectedTrophy = trophyId
+		? trophies.find((trophy) => trophy.id === trophyId)
+		: null;
+
+	return (
+		<div className="stack md">
+			{input}
+			<div>
+				<label htmlFor={id}>{t("forms.trophy")}</label>
+				<select
+					id={id}
+					value={trophyId ?? ""}
+					onChange={(e) => {
+						const value = e.target.value;
+						onChange(value === "" ? null : Number(value));
+					}}
+				>
+					<option value="">{t("forms.trophy.placeholder")}</option>
+					{availableTrophies.map((trophy) => (
+						<option key={trophy.id} value={trophy.id}>
+							{trophy.name}
+						</option>
+					))}
+				</select>
+			</div>
+			{selectedTrophy ? (
+				<div className="stack md items-center">
+					<Trophy
+						model={selectedTrophy.model}
+						className={styles.trophyPreview}
+					/>
+					<div className="stack horizontal md items-center">
+						<span>{selectedTrophy.name}</span>
+						<SendouButton
+							className="ml-auto"
+							onPress={() => onChange(null)}
+							icon={<Trash />}
+							variant="minimal-destructive"
+							aria-label="Remove trophy"
+						/>
+					</div>
+				</div>
+			) : null}
 		</div>
 	);
 }

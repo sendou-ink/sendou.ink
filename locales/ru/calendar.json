@@ -24,6 +24,8 @@
 	"forms.tags.placeholder": "Выберите тег",
 	"forms.badges": "Призовые значки",
 	"forms.badges.placeholder": "Выберите призовой значок",
+	"forms.trophy": "",
+	"forms.trophy.placeholder": "",
 	"forms.mapPool": "Список карт",
 	"forms.participantCount": "Количество участников",
 	"forms.reportResultsHeader": "Указать результаты для {{eventName}}",

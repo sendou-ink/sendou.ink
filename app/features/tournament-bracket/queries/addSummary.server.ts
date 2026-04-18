@@ -2,7 +2,10 @@ import { ordinal } from "openskill";
 import { sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import { identifierToUserIds } from "~/features/mmr/mmr-utils";
-import type { TournamentBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+import type {
+	TournamentBadgeReceivers,
+	TournamentTrophyReceiver,
+} from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import type { TournamentSummary } from "../core/summarizer.server";
 
@@ -142,6 +145,18 @@ const addTournamentBadgeOwnersStm = sql.prepare(/* sql */ `
   )
 `);
 
+const addTrophyOwnersStm = sql.prepare(/* sql */ `
+  insert into "TrophyOwner" (
+    "trophyId",
+    "userId",
+    "tournamentId"
+  ) values (
+    @trophyId,
+    @userId,
+    @tournamentId
+  ) on conflict("tournamentId", "userId", "trophyId") do nothing
+`);
+
 const finalizeTournamentStm = sql.prepare(/* sql */ `
   update "Tournament" set
     "isFinalized" = 1
@@ -154,11 +169,13 @@ export const addSummary = sql.transaction(
 		summary,
 		season,
 		badgeReceivers = [],
+		trophyReceiver,
 	}: {
 		tournamentId: number;
 		summary: TournamentSummary;
 		season?: number;
 		badgeReceivers?: TournamentBadgeReceivers;
+		trophyReceiver?: TournamentTrophyReceiver;
 	}) => {
 		for (const skill of summary.skills) {
 			const insertedSkill = addSkillStm.get({
@@ -222,6 +239,16 @@ export const addSummary = sql.transaction(
 				addTournamentBadgeOwnersStm.run({
 					tournamentId,
 					badgeId: badgeReceiver.badgeId,
+					userId,
+				});
+			}
+		}
+
+		if (trophyReceiver) {
+			for (const userId of trophyReceiver.userIds) {
+				addTrophyOwnersStm.run({
+					tournamentId,
+					trophyId: trophyReceiver.trophyId,
 					userId,
 				});
 			}

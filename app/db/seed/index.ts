@@ -245,6 +245,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	trophiesToDb,
 	trophyOwners,
 	pendingTrophiesToDb,
+	assignTrophyToTournament,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -1252,6 +1253,16 @@ function pendingTrophiesToDb() {
 			declinedByUserId: ADMIN_ID,
 		});
 	}
+}
+
+function assignTrophyToTournament() {
+	const PICNIC_EVENT_ID = 201;
+	sql
+		.prepare(`delete from "CalendarEventBadge" where "eventId" = ?`)
+		.run(PICNIC_EVENT_ID);
+	sql
+		.prepare(`update "CalendarEvent" set "trophyId" = 1 where "id" = ?`)
+		.run(PICNIC_EVENT_ID);
 }
 
 function patrons() {

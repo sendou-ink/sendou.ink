@@ -6,6 +6,7 @@ import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { tournamentData } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { tournamentBracketsPage } from "~/utils/urls";
 import { canEditCalendarEvent } from "../calendar-utils";
@@ -24,6 +25,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 					includeMapPool: true,
 					includeTieBreakerMapPool: true,
 					includeBadgePrizes: true,
+					includeTrophy: true,
 				});
 
 		if (!event) return;
@@ -83,12 +85,24 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			? await eventWithTournament("copyEventId")
 			: undefined;
 
+	const validOrganizationIds = organizations.flatMap((org) =>
+		typeof org === "string" ? [] : [org.id],
+	);
+
+	const trophies =
+		await TrophyRepository.findByOrganizationIds(validOrganizationIds);
+
 	const eventToCopy = eventToCopyRaw
 		? {
 				...eventToCopyRaw,
 				badgePrizes: eventToCopyRaw.badgePrizes?.filter((badge) =>
 					managedBadges.some((mb) => mb.id === badge.id),
 				),
+				trophy: eventToCopyRaw.trophy
+					? trophies.some((t) => t.id === eventToCopyRaw.trophy?.id)
+						? eventToCopyRaw.trophy
+						: null
+					: null,
 			}
 		: undefined;
 
@@ -106,6 +120,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				? await CalendarRepository.findRecentTournamentsByAuthorId(user.id)
 				: undefined,
 		organizations,
+		trophies,
 	};
 };
 

@@ -86,6 +86,15 @@ const withBadgePrizes = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
 	).as("badgePrizes");
 };
 
+const withTrophy = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
+	return jsonObjectFrom(
+		eb
+			.selectFrom("Trophy")
+			.select(["Trophy.id", "Trophy.name", "Trophy.model"])
+			.whereRef("Trophy.id", "=", "CalendarEvent.trophyId"),
+	).as("trophy");
+};
+
 function tournamentOrganization(organizationId: Expression<number | null>) {
 	return jsonObjectFrom(
 		db
@@ -204,6 +213,12 @@ function findAllBetweenTwoTimestampsQuery({
 					)
 					.orderBy("Badge.id", "asc"),
 			).as("badges"),
+			jsonObjectFrom(
+				eb
+					.selectFrom("Trophy")
+					.select(["Trophy.model"])
+					.whereRef("Trophy.id", "=", "CalendarEvent.trophyId"),
+			).as("trophy"),
 		])
 		.where("CalendarEvent.hidden", "=", 0)
 		.where(
@@ -266,6 +281,7 @@ function findAllBetweenTwoTimestampsMapped(
 							? modesIncluded(row.mapPickingStyle, row.toSetMapPool)
 							: null,
 				badges: row.badges,
+				trophy: row.trophy,
 				logoUrl: row.logoUrl,
 				startTime: row.normalizedStartTime,
 				isRanked: row.tournamentSettings
@@ -299,10 +315,12 @@ export async function findById(
 		includeMapPool = false,
 		includeTieBreakerMapPool = false,
 		includeBadgePrizes = false,
+		includeTrophy = false,
 	}: {
 		includeMapPool?: boolean;
 		includeTieBreakerMapPool?: boolean;
 		includeBadgePrizes?: boolean;
+		includeTrophy?: boolean;
 	} = {},
 ) {
 	const [firstRow, ...rest] = await db
@@ -310,6 +328,7 @@ export async function findById(
 		.$if(includeMapPool, (qb) => qb.select(withMapPool))
 		.$if(includeTieBreakerMapPool, (qb) => qb.select(withTieBreakerMapPool))
 		.$if(includeBadgePrizes, (qb) => qb.select(withBadgePrizes))
+		.$if(includeTrophy, (qb) => qb.select(withTrophy))
 		.innerJoin(
 			"CalendarEventDate",
 			"CalendarEvent.id",
@@ -428,6 +447,7 @@ type CreateArgs = Pick<
 > & {
 	startTimes: Array<Tables["CalendarEventDate"]["startTime"]>;
 	badges: Array<Tables["CalendarEventBadge"]["badgeId"]>;
+	trophyId?: Tables["CalendarEvent"]["trophyId"];
 	mapPoolMaps?: Array<Pick<Tables["MapPoolMap"], "mode" | "stageId">>;
 	isFullTournament: boolean;
 	mapPickingStyle: Tables["Tournament"]["mapPickingStyle"];
@@ -543,6 +563,7 @@ export async function create(args: CreateArgs) {
 				organizationId: args.organizationId,
 				hidden: args.parentTournamentId || args.isTest || args.isDraft ? 1 : 0,
 				tournamentId,
+				trophyId: args.trophyId ?? null,
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
@@ -612,6 +633,7 @@ export async function update(args: UpdateArgs) {
 				bracketUrl: args.bracketUrl,
 				avatarImgId: args.avatarImgId ?? avatarImgId,
 				organizationId: args.organizationId,
+				trophyId: args.trophyId ?? null,
 			})
 			.where("id", "=", args.eventId)
 			.returning("tournamentId")

@@ -12,6 +12,7 @@ import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { requireRole } from "~/modules/permissions/guards.server";
 import {
@@ -57,6 +58,16 @@ export const action: ActionFunction = async ({ request }) => {
 		);
 	}
 
+	if (data.trophyId) {
+		const trophyOrganizationId = await TrophyRepository.findOrganizationIdById(
+			data.trophyId,
+		);
+		if (trophyOrganizationId !== data.organizationId) {
+			errorToast("Trophy does not belong to the selected organization");
+		}
+		data.badges = [];
+	}
+
 	const managedBadges = await BadgeRepository.findManagedByUserId(user.id);
 
 	const startTimes = data.date.map((date) => dateToDatabaseTimestamp(date));
@@ -82,6 +93,7 @@ export const action: ActionFunction = async ({ request }) => {
 			data.badges?.filter((badge) =>
 				managedBadges.some((mb) => mb.id === badge),
 			) ?? [],
+		trophyId: data.trophyId ?? null,
 		// newly uploaded avatar
 		avatarFileName,
 		// reused avatar either via edit or template

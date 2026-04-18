@@ -25,6 +25,7 @@ export const newCalendarEventActionSchema = z
 		eventToEditId: z.preprocess(actualNumber, id.nullish()),
 		tournamentToCopyId: z.preprocess(actualNumber, id.nullish()),
 		organizationId: z.preprocess(actualNumber, id.nullish()),
+		trophyId: z.preprocess(actualNumber, id.nullish()),
 		name: z
 			.string()
 			.min(CALENDAR_EVENT.NAME_MIN_LENGTH)
@@ -129,5 +130,14 @@ export const newCalendarEventActionSchema = z
 		{
 			message:
 				'Map pool must contain a map for each ranked mode if using "Prepicked by teams - All modes"',
+		},
+	)
+	.refine(
+		(schema) => {
+			if (!schema.trophyId) return true;
+			return !schema.badges || schema.badges.length === 0;
+		},
+		{
+			message: "Cannot combine trophy and badges",
 		},
 	);

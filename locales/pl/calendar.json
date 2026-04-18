@@ -24,6 +24,8 @@
 	"forms.tags.placeholder": "Wybierz tag",
 	"forms.badges": "Odznaki",
 	"forms.badges.placeholder": "Wybierz odznakę",
+	"forms.trophy": "",
+	"forms.trophy.placeholder": "",
 	"forms.mapPool": "Pula map",
 	"forms.participantCount": "Ilość osób biorących udział",
 	"forms.reportResultsHeader": "Zgłaszanie wyników dla {{eventName}}",

@@ -37,6 +37,7 @@ export interface CalendarEvent extends CommonEvent {
 	badges: Array<
 		Pick<Tables["Badge"], "id" | "code" | "displayName" | "hue">
 	> | null;
+	trophy: Pick<Tables["Trophy"], "model"> | null;
 }
 
 export interface ShowcaseCalendarEvent extends CommonEvent {

@@ -60,6 +60,16 @@ export async function findByOrganizationId(organizationId: number) {
 		.execute();
 }
 
+export async function findByOrganizationIds(organizationIds: number[]) {
+	if (organizationIds.length === 0) return [];
+
+	return db
+		.selectFrom("Trophy")
+		.select(["id", "name", "model", "organizationId"])
+		.where("organizationId", "in", organizationIds)
+		.execute();
+}
+
 export async function findById(trophyId: number) {
 	const row = await db
 		.selectFrom("Trophy")
@@ -76,6 +86,16 @@ export async function findById(trophyId: number) {
 		.executeTakeFirst();
 
 	return row ?? null;
+}
+
+export async function findOrganizationIdById(trophyId: number) {
+	const row = await db
+		.selectFrom("Trophy")
+		.select("organizationId")
+		.where("id", "=", trophyId)
+		.executeTakeFirst();
+
+	return row?.organizationId ?? null;
 }
 
 export async function existsByName(name: string) {
