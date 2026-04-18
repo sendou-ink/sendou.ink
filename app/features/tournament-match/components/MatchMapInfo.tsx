@@ -4,11 +4,11 @@ import { ModeImage, StageImage } from "~/components/Image";
 import type { CustomPickBanStep } from "~/db/tables";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import type { loader } from "../loaders/to.$id.matches.$mid.server";
 import styles from "./MatchMapInfo.module.css";
 
 export function MatchMapInfo({ teams }: { teams: [number, number] }) {
-	const data = useLoaderData<TournamentMatchLoaderData>();
+	const data = useLoaderData<typeof loader>();
 	const tournament = useTournament();
 
 	const teamOne = tournament.teamById(teams[0]);

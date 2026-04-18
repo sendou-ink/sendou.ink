@@ -40,14 +40,16 @@ import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { nullFilledArray } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
-import type { SerializeFrom } from "~/utils/remix";
 import type { Unpacked } from "~/utils/types";
 import {
 	modeImageUrl,
 	specialWeaponImageUrl,
 	stageImageUrl,
 } from "~/utils/urls";
-import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import type {
+	loader,
+	TournamentMatchLoaderData,
+} from "../loaders/to.$id.matches.$mid.server";
 import {
 	mapCountPlayedInSetWithCertainty,
 	matchIsLocked,
@@ -60,9 +62,7 @@ import { MatchMapInfo } from "./MatchMapInfo";
 import { MatchRosters } from "./MatchRosters";
 import { MatchTimer } from "./MatchTimer";
 
-export type Result = Unpacked<
-	SerializeFrom<TournamentMatchLoaderData>["results"]
->;
+export type Result = Unpacked<TournamentMatchLoaderData["results"]>;
 
 export function StartedMatch({
 	teams,
@@ -84,7 +84,7 @@ export function StartedMatch({
 	const isHydrated = useHydrated();
 	const user = useUser();
 	const tournament = useTournament();
-	const data = useLoaderData<TournamentMatchLoaderData>();
+	const data = useLoaderData<typeof loader>();
 
 	const scoreOne = data.match.opponentOne?.score ?? 0;
 	const scoreTwo = data.match.opponentTwo?.score ?? 0;
@@ -284,7 +284,7 @@ function FancyStageBanner({
 	waitingForPreviousMatch: boolean;
 }) {
 	const user = useUser();
-	const data = useLoaderData<TournamentMatchLoaderData>();
+	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["game-misc", "tournament"]);
 	const tournament = useTournament();
 
@@ -549,7 +549,7 @@ function ModeProgressIndicator({
 	setSelectedResultIndex?: (index: number) => void;
 }) {
 	const tournament = useTournament();
-	const data = useLoaderData<TournamentMatchLoaderData>();
+	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["game-misc"]);
 
 	const maxIndexThatWillBePlayedForSure =
@@ -688,7 +688,7 @@ function StartedMatchTabs({
 	const { t } = useTranslation(["tournament"]);
 	const user = useUser();
 	const tournament = useTournament();
-	const data = useLoaderData<TournamentMatchLoaderData>();
+	const data = useLoaderData<typeof loader>();
 	const isCustomFlow = data.match.roundMaps?.pickBan === "CUSTOM";
 	const validTabs = isCustomFlow
 		? ["rosters", "actions", "map-info"]

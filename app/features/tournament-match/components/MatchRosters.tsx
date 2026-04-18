@@ -4,14 +4,14 @@ import { Avatar } from "~/components/Avatar";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import styles from "~/features/tournament-bracket/tournament-bracket.module.css";
 import { tournamentTeamPage, userPage } from "~/utils/urls";
-import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import type { loader } from "../loaders/to.$id.matches.$mid.server";
 
 export function MatchRosters({
 	teams,
 }: {
 	teams: [id: number | null | undefined, id: number | null | undefined];
 }) {
-	const data = useLoaderData<TournamentMatchLoaderData>();
+	const data = useLoaderData<typeof loader>();
 	const tournament = useTournament();
 
 	const teamOne = teams[0] ? tournament.teamById(teams[0]) : undefined;

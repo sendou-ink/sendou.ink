@@ -16,7 +16,7 @@ import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { stageImageUrl } from "~/utils/urls";
-import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import type { loader } from "../loaders/to.$id.matches.$mid.server";
 import styles from "./MatchActionsBanPicker.module.css";
 
 /** stageId is omitted for mode-only actions (MODE_PICK / MODE_BAN) where no specific stage is selected */
@@ -30,7 +30,7 @@ export function MatchActionsBanPicker({
 }: {
 	teams: [TournamentDataTeam, TournamentDataTeam];
 }) {
-	const data = useLoaderData<TournamentMatchLoaderData>();
+	const data = useLoaderData<typeof loader>();
 	const tournament = useTournament();
 	const maps = data.match.roundMaps!;
 	const [selected, setSelected] = React.useState<BanPickerSelection>();
@@ -95,7 +95,7 @@ function MapPicker({
 	actionType: ActionType;
 }) {
 	const user = useUser();
-	const data = useLoaderData<TournamentMatchLoaderData>();
+	const data = useLoaderData<typeof loader>();
 	const tournament = useTournament();
 
 	const pickBanMapPool = PickBan.mapsListWithLegality({
@@ -294,7 +294,7 @@ function ModePicker({
 	teams: [TournamentDataTeam, TournamentDataTeam];
 }) {
 	const user = useUser();
-	const data = useLoaderData<TournamentMatchLoaderData>();
+	const data = useLoaderData<typeof loader>();
 	const tournament = useTournament();
 	const { t } = useTranslation(["game-misc"]);
 

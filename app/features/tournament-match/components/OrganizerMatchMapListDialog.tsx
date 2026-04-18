@@ -6,14 +6,13 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { nullFilledArray } from "~/utils/arrays";
-import type { SerializeFrom } from "~/utils/remix";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { pickInfoText } from "../tournament-match-utils";
 
 export function OrganizerMatchMapListDialog({
 	data,
 }: {
-	data: SerializeFrom<TournamentMatchLoaderData>;
+	data: TournamentMatchLoaderData;
 }) {
 	const { t } = useTranslation(["game-misc", "tournament"]);
 	const [isOpen, setIsOpen] = React.useState(false);

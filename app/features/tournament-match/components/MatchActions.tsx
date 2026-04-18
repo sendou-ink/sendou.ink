@@ -13,7 +13,7 @@ import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tour
 import styles from "~/features/tournament-bracket/tournament-bracket.module.css";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import invariant from "~/utils/invariant";
-import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import type { loader } from "../loaders/to.$id.matches.$mid.server";
 import { isSetOverByScore, matchIsLocked } from "../tournament-match-utils";
 import { MatchActionsBanPicker } from "./MatchActionsBanPicker";
 import type { Result } from "./StartedMatch";
@@ -33,7 +33,7 @@ export function MatchActions({
 }) {
 	const user = useUser();
 	const tournament = useTournament();
-	const data = useLoaderData<TournamentMatchLoaderData>();
+	const data = useLoaderData<typeof loader>();
 
 	const [checkedPlayers, setCheckedPlayers] = React.useState<
 		[number[], number[]]
@@ -228,7 +228,7 @@ function ReportScoreButtons({
 	matchLocked: boolean;
 	newScore: [number, number];
 }) {
-	const data = useLoaderData<TournamentMatchLoaderData>();
+	const data = useLoaderData<typeof loader>();
 	const user = useUser();
 	const tournament = useTournament();
 	const confirmCheckId = React.useId();

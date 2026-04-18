@@ -7,7 +7,7 @@ import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import type { Result } from "~/features/tournament-match/components/StartedMatch";
-import type { TournamentMatchLoaderData } from "~/features/tournament-match/loaders/to.$id.matches.$mid.server";
+import type { loader as tournamentMatchLoader } from "~/features/tournament-match/loaders/to.$id.matches.$mid.server";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import { tournamentTeamPage, userPage } from "~/utils/urls";
 import { useTournament } from "../../tournament/routes/to.$id";
@@ -392,7 +392,7 @@ function TeamRosterInputsCheckboxes({
 	handlePlayerClick: (playerId: number) => void;
 	presentational: boolean;
 }) {
-	const data = useLoaderData<TournamentMatchLoaderData>();
+	const data = useLoaderData<typeof tournamentMatchLoader>();
 	const id = React.useId();
 	const tournament = useTournament();
 
