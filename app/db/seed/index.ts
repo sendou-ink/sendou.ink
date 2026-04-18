@@ -241,6 +241,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	liveStreams,
 	splatoonRotations,
 	variation === "FINALIZED_BRACKET" ? finalizedBracket : undefined,
+	variation === "AB_RR" ? abDivisionsTournament : undefined,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -506,6 +507,106 @@ function finalizedBracket() {
 				participantCount: 8,
 				setResults: JSON.stringify(p.setResults),
 			});
+		}
+	}
+}
+
+const AB_RR_TOURNAMENT_ID = 8;
+const AB_RR_EVENT_ID = 208;
+const AB_RR_TEAM_ID_OFFSET = 700;
+const AB_RR_TEAM_COUNT = 12;
+
+function abDivisionsTournament() {
+	sql
+		.prepare(
+			`insert into "Tournament" ("id", "mapPickingStyle", "settings")
+			 values ($id, $mapPickingStyle, $settings)`,
+		)
+		.run({
+			id: AB_RR_TOURNAMENT_ID,
+			mapPickingStyle: "AUTO_ALL",
+			settings: JSON.stringify({
+				bracketProgression: [
+					{
+						type: "round_robin",
+						name: "Groups stage",
+						requiresCheckIn: false,
+						settings: {
+							hasAbDivisions: true,
+							teamsPerGroup: AB_RR_TEAM_COUNT,
+						},
+					},
+				],
+			}),
+		});
+
+	sql
+		.prepare(
+			`insert into "CalendarEvent" ("id", "name", "description", "discordInviteCode", "bracketUrl", "authorId", "tournamentId")
+			 values ($id, $name, $description, $discordInviteCode, $bracketUrl, $authorId, $tournamentId)`,
+		)
+		.run({
+			id: AB_RR_EVENT_ID,
+			name: "A/B Divisions Cup",
+			description: "Bipartite round robin tournament for testing",
+			discordInviteCode: "abrr",
+			bracketUrl: "https://example.com",
+			authorId: ADMIN_ID,
+			tournamentId: AB_RR_TOURNAMENT_ID,
+		});
+
+	sql
+		.prepare(
+			`insert into "CalendarEventDate" ("eventId", "startTime")
+			 values ($eventId, $startTime)`,
+		)
+		.run({
+			eventId: AB_RR_EVENT_ID,
+			startTime: dateToDatabaseTimestamp(new Date(Date.now() - 1000 * 60 * 30)),
+		});
+
+	const userIds = userIdsInAscendingOrderById();
+	const now = dateToDatabaseTimestamp(new Date());
+
+	for (let i = 0; i < AB_RR_TEAM_COUNT; i++) {
+		const teamId = AB_RR_TEAM_ID_OFFSET + i + 1;
+
+		sql
+			.prepare(
+				`insert into "TournamentTeam" ("id", "name", "createdAt", "tournamentId", "inviteCode", "seed")
+				 values ($id, $name, $createdAt, $tournamentId, $inviteCode, $seed)`,
+			)
+			.run({
+				id: teamId,
+				name: `AB Team ${i + 1}`,
+				createdAt: now,
+				tournamentId: AB_RR_TOURNAMENT_ID,
+				inviteCode: shortNanoid(),
+				seed: i + 1,
+			});
+
+		sql
+			.prepare(
+				`insert into "TournamentTeamCheckIn" ("tournamentTeamId", "checkedInAt")
+				 values ($tournamentTeamId, $checkedInAt)`,
+			)
+			.run({
+				tournamentTeamId: teamId,
+				checkedInAt: now,
+			});
+
+		for (let j = 0; j < 4; j++) {
+			sql
+				.prepare(
+					`insert into "TournamentTeamMember" ("tournamentTeamId", "userId", "createdAt", "role")
+					 values ($tournamentTeamId, $userId, $createdAt, $role)`,
+				)
+				.run({
+					tournamentTeamId: teamId,
+					userId: userIds.shift()!,
+					createdAt: now,
+					role: j === 0 ? "OWNER" : "REGULAR",
+				});
 		}
 	}
 }

@@ -184,7 +184,11 @@ function StandingsTable({
 	let eliminatedRowRendered = false;
 
 	return (
-		<table className={styles.rrPlacementsTable} cellSpacing={0}>
+		<table
+			className={styles.rrPlacementsTable}
+			cellSpacing={0}
+			data-testid="rr-standings-table"
+		>
 			<thead>
 				<tr>
 					<th>Team</th>
