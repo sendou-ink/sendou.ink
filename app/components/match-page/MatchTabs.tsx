@@ -48,6 +48,7 @@ export function MatchTabs({ children, tabs }: MatchTabsProps) {
 				onSelectionChange={(key) =>
 					setSearchParams({ [TAB_KEY]: key as string })
 				}
+				disappearing={false}
 			>
 				<SendouTabList>
 					{tabs.map((tab) => (

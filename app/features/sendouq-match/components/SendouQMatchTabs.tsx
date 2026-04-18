@@ -14,6 +14,7 @@ import type {
 import { MatchTimeline } from "~/components/match-page/MatchTimeline";
 import { useUser } from "~/features/auth/core/user";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { teamPage } from "~/utils/urls";
 import * as SendouQMatch from "../core/SendouQMatch";
@@ -23,6 +24,7 @@ import { SendouQMatchActionTab } from "./SendouQMatchActionTab";
 
 export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 	const user = useUser();
+	const isStaff = useHasRole("STAFF");
 	const confirmFetcher = useFetcher();
 	const { t } = useTranslation(["q"]);
 
@@ -33,12 +35,15 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 		groupBravo: data.match.groupBravo,
 		userId: user?.id,
 	});
+	const isStaffOnly = isStaff && !userSide;
 	const ownTeamId =
 		userSide === "ALPHA"
 			? data.match.groupAlpha.id
 			: userSide === "BRAVO"
 				? data.match.groupBravo.id
-				: data.match.groupAlpha.id;
+				: isStaffOnly
+					? null
+					: data.match.groupAlpha.id;
 
 	const reportedCount = data.match.mapList.filter(
 		(m) => m.winnerGroupId !== null,
@@ -60,17 +65,28 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 	const isOnReporterTeam =
 		awaitingConfirmation && reporterGroupId === ownTeamId;
 
+	const isParticipant = Boolean(userSide);
+
 	const showActionTab =
-		!data.match.isLocked && !awaitingConfirmation && currentMap && userSide;
+		!data.match.isLocked &&
+		!awaitingConfirmation &&
+		currentMap &&
+		(isParticipant || isStaffOnly);
 
 	const tabs: Array<"join" | "rosters" | "action" | "result"> =
 		awaitingConfirmation
-			? ["result", "rosters"]
+			? isParticipant
+				? ["result", "rosters", "join"]
+				: ["result", "rosters"]
 			: showActionTab
-				? ["join", "rosters", "action"]
+				? isParticipant
+					? ["join", "rosters", "action"]
+					: ["rosters", "action"]
 				: data.match.isLocked
 					? ["result", "rosters"]
-					: ["join", "rosters"];
+					: isParticipant
+						? ["join", "rosters"]
+						: ["rosters"];
 
 	const allMembers = [
 		...data.match.groupAlpha.members,
@@ -119,12 +135,13 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 					) : null}
 				</MatchResultTab>
 			) : awaitingConfirmation ? (
-				isOnReporterTeam ? (
+				isOnReporterTeam || isStaffOnly ? (
 					<ReporterWaitingTab data={data} />
 				) : (
 					<ConfirmerTab data={data} reportedCount={reportedCount} />
 				)
-			) : (
+			) : null}
+			{!data.match.isLocked && isParticipant ? (
 				<MatchJoinTab
 					joinLink={activeRoomLink?.url}
 					hostedBy={hostedByUsername}
@@ -146,7 +163,7 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 					pass={resolveRoomPass(data.match.id)}
 					showNoSplatnetAlert={data.anyUserPrefersNoSplatnet}
 				/>
-			)}
+			) : null}
 			<MatchRosterTab
 				minMembersPerTeam={4}
 				canEditSubbedOut={[false, false]}

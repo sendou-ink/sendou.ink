@@ -960,11 +960,13 @@ export async function reportMapWinner({
 	winnerId,
 	reportedByUserId,
 	reportedCount,
+	isStaffReport,
 }: {
 	matchId: number;
 	winnerId: number;
 	reportedByUserId: number;
 	reportedCount: number;
+	isStaffReport?: boolean;
 }): Promise<ReportMapWinnerResult> {
 	const match = await findById(matchId);
 	invariant(match, "Match not found");
@@ -986,6 +988,8 @@ export async function reportMapWinner({
 
 	// Confirmation flow: score is already decisive (first team reported the set-ending map)
 	if (scoreAlreadyDecisive) {
+		// Staff sees the Undo view in awaiting state and cannot reach this path via the UI
+		if (isStaffReport) return { status: "STALE" };
 		return handleMatchConfirmation({
 			match,
 			winnerId,
@@ -1023,6 +1027,16 @@ export async function reportMapWinner({
 			.where("id", "=", currentMap.id)
 			.execute();
 		return { status: "MAP_REPORTED" };
+	}
+
+	// Set-ending map reported by staff: auto-finalize (no awaiting confirmation)
+	if (isStaffReport) {
+		return handleStaffFinalization({
+			match,
+			currentMap,
+			winnerId,
+			reportedByUserId,
+		});
 	}
 
 	// Set-ending map: first report, await confirmation from other team
@@ -1098,6 +1112,93 @@ async function handleMatchConfirmation({
 		.filter((m) => m.winnerGroupId !== null)
 		.map((m) => (m.winnerGroupId === match.groupAlpha.id ? "ALPHA" : "BRAVO"));
 
+	await finalizeMatch({
+		match,
+		members,
+		winners,
+		winnerGroupId,
+		loserGroupId,
+		confirmedByUserId: reportedByUserId,
+		preFinalize: (trx) => SQGroupRepository.setAsInactive(reporterGroupId, trx),
+	});
+
+	return { status: "MATCH_FINALIZED" };
+}
+
+async function handleStaffFinalization({
+	match,
+	currentMap,
+	winnerId,
+	reportedByUserId,
+}: {
+	match: NonNullable<Awaited<ReturnType<typeof findById>>>;
+	currentMap: NonNullable<
+		Awaited<ReturnType<typeof findById>>
+	>["mapList"][number];
+	winnerId: number;
+	reportedByUserId: number;
+}): Promise<ReportMapWinnerResult> {
+	const winnerGroupId = winnerId;
+	const loserGroupId =
+		winnerId === match.groupAlpha.id
+			? match.groupBravo.id
+			: match.groupAlpha.id;
+
+	const members = buildMembers(match);
+
+	const winners: ("ALPHA" | "BRAVO")[] = [
+		...match.mapList
+			.filter((m) => m.winnerGroupId !== null)
+			.map((m) =>
+				m.winnerGroupId === match.groupAlpha.id
+					? ("ALPHA" as const)
+					: ("BRAVO" as const),
+			),
+		winnerId === match.groupAlpha.id ? "ALPHA" : "BRAVO",
+	];
+
+	await finalizeMatch({
+		match,
+		members,
+		winners,
+		winnerGroupId,
+		loserGroupId,
+		confirmedByUserId: reportedByUserId,
+		preFinalize: async (trx) => {
+			await trx
+				.updateTable("GroupMatchMap")
+				.set({
+					winnerGroupId,
+					reportedAt: dateToDatabaseTimestamp(new Date()),
+					reportedByUserId,
+				})
+				.where("id", "=", currentMap.id)
+				.execute();
+			await SQGroupRepository.setAsInactive(match.groupAlpha.id, trx);
+			await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
+		},
+	});
+
+	return { status: "MATCH_FINALIZED" };
+}
+
+async function finalizeMatch({
+	match,
+	members,
+	winners,
+	winnerGroupId,
+	loserGroupId,
+	confirmedByUserId,
+	preFinalize,
+}: {
+	match: NonNullable<Awaited<ReturnType<typeof findById>>>;
+	members: ReturnType<typeof buildMembers>;
+	winners: ("ALPHA" | "BRAVO")[];
+	winnerGroupId: number;
+	loserGroupId: number;
+	confirmedByUserId: number;
+	preFinalize?: (trx: Transaction<DB>) => Promise<unknown>;
+}) {
 	const { newSkills, differences } = calculateMatchSkills({
 		groupMatchId: match.id,
 		winner: (match.groupAlpha.id === winnerGroupId
@@ -1113,15 +1214,15 @@ async function handleMatchConfirmation({
 	});
 
 	await db.transaction().execute(async (trx) => {
+		if (preFinalize) await preFinalize(trx);
 		await trx
 			.updateTable("GroupMatch")
 			.set({
 				confirmedAt: dateToDatabaseTimestamp(new Date()),
-				confirmedByUserId: reportedByUserId,
+				confirmedByUserId,
 			})
 			.where("id", "=", match.id)
 			.execute();
-		await SQGroupRepository.setAsInactive(reporterGroupId, trx);
 		await PlayerStatRepository.upsertMapResults(
 			summarizeMaps({ match, members, winners }),
 			trx,
@@ -1140,16 +1241,16 @@ async function handleMatchConfirmation({
 			trx,
 		);
 	});
-
-	return { status: "MATCH_FINALIZED" };
 }
 
 export async function undoMatchReport({
 	matchId,
 	requestedByUserId,
+	isStaff,
 }: {
 	matchId: number;
 	requestedByUserId: number;
+	isStaff?: boolean;
 }): Promise<{ status: "SUCCESS" | "NOT_ALLOWED" | "ALREADY_LOCKED" }> {
 	const match = await findById(matchId);
 	invariant(match, "Match not found");
@@ -1179,7 +1280,7 @@ export async function undoMatchReport({
 		(m) => m.id === decidingMap.reportedByUserId,
 	)?.groupId;
 
-	if (requesterGroupId !== reporterGroupId) {
+	if (!isStaff && requesterGroupId !== reporterGroupId) {
 		return { status: "NOT_ALLOWED" };
 	}
 

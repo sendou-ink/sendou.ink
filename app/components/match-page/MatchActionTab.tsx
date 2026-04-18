@@ -36,7 +36,7 @@ interface SetEndingData extends MatchTimelineProps {
 
 interface MatchActionTabProps {
 	teams: [ActionTabTeam, ActionTabTeam];
-	ownTeamId: number;
+	ownTeamId: number | null;
 	stageId: StageId;
 	mode: ModeShort;
 	withPoints: boolean;
@@ -69,7 +69,9 @@ export function MatchActionTab({
 	const pointsValid = !withPoints || isKo || points[0] > 0 || points[1] > 0;
 	const canSubmit = winnerId !== null && pointsValid;
 
-	const isOnTeam = teams[0].id === ownTeamId || teams[1].id === ownTeamId;
+	const isOnTeam =
+		ownTeamId != null &&
+		(teams[0].id === ownTeamId || teams[1].id === ownTeamId);
 
 	return (
 		<SendouTabPanel id={TAB_KEYS.ACTION}>
@@ -121,6 +123,7 @@ export function MatchActionTab({
 						<TeamRadioOption
 							team={teams[0]}
 							isOwnTeam={teams[0].id === ownTeamId}
+							hideLabel={ownTeamId == null}
 							className={styles.alpha}
 						/>
 						<StageImage
@@ -136,6 +139,7 @@ export function MatchActionTab({
 						<TeamRadioOption
 							team={teams[1]}
 							isOwnTeam={teams[1].id === ownTeamId}
+							hideLabel={ownTeamId == null}
 							className={clsx(styles.bravo)}
 						/>
 					</RadioGroup>
@@ -274,10 +278,12 @@ function SetEndingConfirmation({
 function TeamRadioOption({
 	team,
 	isOwnTeam,
+	hideLabel,
 	className,
 }: {
 	team: ActionTabTeam;
 	isOwnTeam: boolean;
+	hideLabel?: boolean;
 	className?: string;
 }) {
 	const { t } = useTranslation(["q"]);
@@ -306,16 +312,18 @@ function TeamRadioOption({
 						<Avatar url={team.avatar} identiconInput={team.name} size="xxs" />
 						<span className={styles.teamInfo}>
 							<span className={styles.teamName}>{team.name}</span>
-							<span
-								className={clsx(styles.teamLabel, {
-									[styles.myTeamLabel]: isOwnTeam,
-									[styles.opponentLabel]: !isOwnTeam,
-								})}
-							>
-								{isOwnTeam
-									? t("q:match.action.myTeam")
-									: t("q:match.action.opponent")}
-							</span>
+							{hideLabel ? null : (
+								<span
+									className={clsx(styles.teamLabel, {
+										[styles.myTeamLabel]: isOwnTeam,
+										[styles.opponentLabel]: !isOwnTeam,
+									})}
+								>
+									{isOwnTeam
+										? t("q:match.action.myTeam")
+										: t("q:match.action.opponent")}
+								</span>
+							)}
 						</span>
 					</span>
 				</span>

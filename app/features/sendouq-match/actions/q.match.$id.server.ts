@@ -49,9 +49,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				...match.groupAlpha.members,
 				...match.groupBravo.members,
 			];
-			invariant(
-				members.some((m) => m.id === user.id),
-				"User is not a member of any group",
+			const isParticipant = members.some((m) => m.id === user.id);
+			const isStaffReport = !isParticipant && user.roles.includes("STAFF");
+			errorToastIfFalsy(
+				isParticipant || isStaffReport,
+				"Not allowed to report score",
 			);
 
 			const result = await SQMatchRepository.reportMapWinner({
@@ -59,6 +61,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				winnerId: data.winnerId,
 				reportedByUserId: user.id,
 				reportedCount: data.reportedCount,
+				isStaffReport,
 			});
 
 			if (result.status === "ALREADY_LOCKED" || result.status === "STALE") {
@@ -182,6 +185,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			const result = await SQMatchRepository.undoMatchReport({
 				matchId,
 				requestedByUserId: user.id,
+				isStaff: user.roles.includes("STAFF"),
 			});
 
 			if (result.status === "NOT_ALLOWED") {

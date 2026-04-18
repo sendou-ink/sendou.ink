@@ -17,7 +17,6 @@ import * as SendouQMatch from "../core/SendouQMatch";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 import styles from "./SendouQMatchActionTab.module.css";
 
-// xxx: staff report
 export function SendouQMatchActionTab({
 	data,
 	currentMap,
@@ -26,7 +25,7 @@ export function SendouQMatchActionTab({
 }: {
 	data: SendouQMatchLoaderData;
 	currentMap: { stageId: StageId; mode: ModeShort };
-	ownTeamId: number;
+	ownTeamId: number | null;
 	reportedCount: number;
 }) {
 	const { t } = useTranslation(["q", "common"]);
@@ -39,6 +38,8 @@ export function SendouQMatchActionTab({
 		useRecentlyReportedWeapons();
 
 	if (!user) return null;
+
+	const isStaffOnly = ownTeamId == null;
 
 	const {
 		mapsToWin,
@@ -55,7 +56,7 @@ export function SendouQMatchActionTab({
 			: data.match.groupBravo.id
 		: undefined;
 
-	if (cancelRequestedByGroupId === ownTeamId) {
+	if (!isStaffOnly && cancelRequestedByGroupId === ownTeamId) {
 		return (
 			<SendouTabPanel id={TAB_KEYS.ACTION}>
 				<div className={styles.cancelWaiting}>
@@ -66,6 +67,7 @@ export function SendouQMatchActionTab({
 	}
 
 	if (
+		!isStaffOnly &&
 		cancelRequestedByGroupId != null &&
 		cancelRequestedByGroupId !== ownTeamId
 	) {
@@ -162,52 +164,58 @@ export function SendouQMatchActionTab({
 					{ method: "post" },
 				);
 			}}
-			weaponReport={{
-				maps: weaponReportMaps,
-				pastReported: weaponPastReported,
-				quickSelectWeaponIds: recentlyReportedWeapons,
-				isSubmitting: weaponFetcher.state !== "idle",
-				onSubmit: (weaponSplId) => {
-					addRecentlyReportedWeapon(weaponSplId);
-					const mapIndex = weaponPastReported.length;
-					const map = data.match.mapList[mapIndex];
-					weaponFetcher.submit(
-						{
-							_action: "REPORT_WEAPON",
-							weaponSplId: String(weaponSplId),
-							groupMatchMapId: String(map.id),
-						},
-						{ method: "post" },
-					);
-				},
-				onUndo: () => {
-					const mapIndex = weaponPastReported.length - 1;
-					if (mapIndex < 0) return;
-					weaponFetcher.submit(
-						{
-							_action: "UNDO_WEAPON_REPORT",
-							mapIndex: String(mapIndex),
-						},
-						{ method: "post" },
-					);
-				},
-			}}
+			weaponReport={
+				isStaffOnly
+					? undefined
+					: {
+							maps: weaponReportMaps,
+							pastReported: weaponPastReported,
+							quickSelectWeaponIds: recentlyReportedWeapons,
+							isSubmitting: weaponFetcher.state !== "idle",
+							onSubmit: (weaponSplId) => {
+								addRecentlyReportedWeapon(weaponSplId);
+								const mapIndex = weaponPastReported.length;
+								const map = data.match.mapList[mapIndex];
+								weaponFetcher.submit(
+									{
+										_action: "REPORT_WEAPON",
+										weaponSplId: String(weaponSplId),
+										groupMatchMapId: String(map.id),
+									},
+									{ method: "post" },
+								);
+							},
+							onUndo: () => {
+								const mapIndex = weaponPastReported.length - 1;
+								if (mapIndex < 0) return;
+								weaponFetcher.submit(
+									{
+										_action: "UNDO_WEAPON_REPORT",
+										mapIndex: String(mapIndex),
+									},
+									{ method: "post" },
+								);
+							},
+						}
+			}
 			actionButtons={
 				<>
-					<FormWithConfirm
-						fields={[["_action", "REQUEST_CANCEL"]]}
-						dialogHeading={t("q:match.cancelMatch.confirm")}
-						submitButtonText={t("common:actions.confirm")}
-						fetcher={cancelFetcher}
-					>
-						<SendouButton
-							variant="minimal-destructive"
-							size="miniscule"
-							icon={<Ban size={16} />}
+					{isStaffOnly ? null : (
+						<FormWithConfirm
+							fields={[["_action", "REQUEST_CANCEL"]]}
+							dialogHeading={t("q:match.cancelMatch.confirm")}
+							submitButtonText={t("common:actions.confirm")}
+							fetcher={cancelFetcher}
 						>
-							{t("q:match.action.requestCancel")}
-						</SendouButton>
-					</FormWithConfirm>
+							<SendouButton
+								variant="minimal-destructive"
+								size="miniscule"
+								icon={<Ban size={16} />}
+							>
+								{t("q:match.action.requestCancel")}
+							</SendouButton>
+						</FormWithConfirm>
+					)}
 					{scoreIsNotZero ? (
 						<SendouButton
 							variant="minimal-destructive"
