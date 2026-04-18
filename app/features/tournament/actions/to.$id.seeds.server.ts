@@ -68,7 +68,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 			);
 			break;
 		}
-		// xxx: also ensure cant be updated once a bracket has started
 		case "UPDATE_AB_DIVISIONS": {
 			errorToastIfFalsy(
 				tournament.ctx.settings.bracketProgression.some(

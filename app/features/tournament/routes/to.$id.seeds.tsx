@@ -33,6 +33,7 @@ import { InfoPopover } from "~/components/InfoPopover";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Table } from "~/components/Table";
 import type { SeedingSnapshot } from "~/db/tables";
+import * as AbDivisions from "~/features/tournament-bracket/core/AbDivisions";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import invariant from "~/utils/invariant";
@@ -40,6 +41,7 @@ import { navIconUrl, userResultsPage } from "~/utils/urls";
 import { ordinalToRoundedSp } from "../../mmr/mmr-utils";
 import { action } from "../actions/to.$id.seeds.server";
 import { loader } from "../loaders/to.$id.seeds.server";
+import { TOURNAMENT } from "../tournament-constants";
 import { useTournament } from "./to.$id";
 import styles from "./to.$id.seeds.module.css";
 
@@ -173,9 +175,14 @@ export default function TournamentSeedsPage() {
 				/>
 			) : null}
 			{hasAbDivisionsStartingBracket(tournament) ? (
-				<AbDivisionsDialog
-					key={tournament.ctx.teams.map((team) => team.abDivision ?? -1).join()}
-				/>
+				<>
+					<AbDivisionsDialog
+						key={tournament.ctx.teams
+							.map((team) => team.abDivision ?? -1)
+							.join()}
+					/>
+					<AbDivisionImbalanceWarning />
+				</>
 			) : null}
 			<ul className={styles.teamsList}>
 				<li className={styles.headerRow}>
@@ -453,6 +460,64 @@ function hasAbDivisionsStartingBracket(tournament: Tournament) {
 	);
 }
 
+function AbDivisionImbalanceWarning() {
+	const tournament = useTournament();
+
+	const warnings = tournament.ctx.settings.bracketProgression
+		.map((bracket, bracketIdx) => {
+			if (bracket.sources || !bracket.settings?.hasAbDivisions) return null;
+
+			const bracketTeams = tournament.isMultiStartingBracket
+				? tournament.ctx.teams.filter(
+						(team) => (team.startingBracketIdx ?? 0) === bracketIdx,
+					)
+				: tournament.ctx.teams;
+			const checkedInTeams = bracketTeams.filter(
+				(team) => team.checkIns.length > 0,
+			);
+
+			const { a, b } = AbDivisions.countByDivision(checkedInTeams);
+			const diff = Math.abs(a - b);
+
+			const teamsPerGroup =
+				bracket.settings.teamsPerGroup ??
+				TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
+			const groupCount = Math.max(
+				1,
+				Math.ceil(checkedInTeams.length / teamsPerGroup),
+			);
+
+			const tooImbalanced = diff > 1;
+			const unevenWithMultipleGroups = diff === 1 && groupCount > 1;
+			if (!tooImbalanced && !unevenWithMultipleGroups) return null;
+
+			const prefix = tournament.isMultiStartingBracket
+				? `${bracket.name}: `
+				: "";
+			const reason = tooImbalanced
+				? "counts can differ by at most 1 to start bracket"
+				: "uneven A/B is only allowed with a single group";
+
+			return `${prefix}${a} checked-in A teams, ${b} checked-in B teams — ${reason}.`;
+		})
+		.filter((warning): warning is string => warning !== null);
+
+	if (warnings.length === 0) return null;
+
+	return (
+		<Alert variation="WARNING">
+			<div
+				data-testid="ab-divisions-imbalance-warning"
+				className="stack xs text-xs"
+			>
+				{warnings.map((warning) => (
+					<div key={warning}>{warning}</div>
+				))}
+			</div>
+		</Alert>
+	);
+}
+
 type AbDivisionValue = 0 | 1 | null;
 
 function AbDivisionsDialog() {
@@ -470,15 +535,7 @@ function AbDivisionsDialog() {
 		})),
 	);
 
-	const counts = teamAbDivisions.reduce(
-		(acc, team) => {
-			if (team.abDivision === 0) acc.a++;
-			else if (team.abDivision === 1) acc.b++;
-			else acc.unassigned++;
-			return acc;
-		},
-		{ a: 0, b: 0, unassigned: 0 },
-	);
+	const counts = AbDivisions.countByDivision(teamAbDivisions);
 
 	return (
 		<div>
