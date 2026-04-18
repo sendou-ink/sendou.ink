@@ -5,6 +5,7 @@ import {
 	IconBanner,
 	MatchBanner,
 	MatchBannerContainer,
+	MultiMatchBanner,
 } from "~/components/match-page/MatchBanner";
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
@@ -42,7 +43,7 @@ export function TournamentMatchBanner({
 		if (!activeRosterUserIds?.length) return null;
 
 		return team.members
-			.filter((member) => !activeRosterUserIds.includes(member.userId))
+			.filter((member) => activeRosterUserIds.includes(member.userId))
 			.map((member) => ({ ...member, id: member.userId }));
 	};
 
@@ -56,6 +57,10 @@ export function TournamentMatchBanner({
 					subtitle={t("tournament:match.activeRosterMissing.subtitle", {
 						teams: teamsMissingActiveRoster.join(" & "),
 					})}
+				/>
+			) : data.matchIsOver ? (
+				<MultiMatchBanner
+					stageIds={data.results.map((result) => result.stageId)}
 				/>
 			) : currentMap ? (
 				<MatchBanner

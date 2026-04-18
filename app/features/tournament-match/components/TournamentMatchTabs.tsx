@@ -1,7 +1,9 @@
 import { useFetcher } from "react-router";
 import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
+import { MatchResultTab } from "~/components/match-page/MatchResultTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs } from "~/components/match-page/MatchTabs";
+import type { TimelineMap } from "~/components/match-page/MatchTimeline";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
@@ -50,6 +52,16 @@ export function TournamentMatchTabs({
 
 	return (
 		<MatchTabs tabs={tabs}>
+			{tabs.includes("result") ? (
+				<MatchResultTab
+					teams={resolveTimelineTeams(opponentOneId, opponentTwoId, tournament)}
+					score={{
+						alpha: data.match.opponentOne?.score ?? 0,
+						bravo: data.match.opponentTwo?.score ?? 0,
+					}}
+					maps={resolveTimelineMaps(data, opponentOneId, opponentTwoId)}
+				/>
+			) : null}
 			{tabs.includes("join") ? <TournamentMatchJoinTab /> : null}
 			<TournamentMatchRosterTab data={data} />
 			{tabs.includes("action") && currentMap ? (
@@ -61,6 +73,75 @@ export function TournamentMatchTabs({
 			) : null}
 		</MatchTabs>
 	);
+}
+
+function resolveTimelineTeams(
+	opponentOneId: number,
+	opponentTwoId: number,
+	tournament: ReturnType<typeof useTournament>,
+) {
+	const teamOne = tournament.teamById(opponentOneId);
+	const teamTwo = tournament.teamById(opponentTwoId);
+
+	return {
+		alpha: {
+			name: teamOne?.name ?? "?",
+			avatar: teamOne?.pickupAvatarUrl ?? undefined,
+		},
+		bravo: {
+			name: teamTwo?.name ?? "?",
+			avatar: teamTwo?.pickupAvatarUrl ?? undefined,
+		},
+	};
+}
+
+function resolveTimelineMaps(
+	data: TournamentMatchLoaderData,
+	opponentOneId: number,
+	opponentTwoId: number,
+): TimelineMap[] {
+	const playerById = new Map(data.match.players.map((p) => [p.id, p]));
+
+	const resolveRoster = (
+		participants: (typeof data.results)[number]["participants"],
+		tournamentTeamId: number,
+	) =>
+		participants
+			.filter((p) => p.tournamentTeamId === tournamentTeamId)
+			.map((p) => playerById.get(p.userId))
+			.filter((u): u is NonNullable<typeof u> => u != null)
+			.map((u) => ({
+				id: u.id,
+				username: u.username,
+				discordId: u.discordId,
+				discordAvatar: u.discordAvatar,
+				customUrl: u.customUrl,
+			}));
+
+	return data.results.map((result) => {
+		const hasPoints =
+			result.opponentOnePoints !== null && result.opponentTwoPoints !== null;
+
+		return {
+			stageId: result.stageId,
+			mode: result.mode,
+			timestamp: result.createdAt,
+			winner:
+				result.winnerTeamId === opponentOneId
+					? ("ALPHA" as const)
+					: ("BRAVO" as const),
+			rosters: {
+				alpha: resolveRoster(result.participants, opponentOneId),
+				bravo: resolveRoster(result.participants, opponentTwoId),
+			},
+			points: hasPoints
+				? ([result.opponentOnePoints, result.opponentTwoPoints] as [
+						number,
+						number,
+					])
+				: undefined,
+		};
+	});
 }
 
 function TournamentMatchJoinTab() {
@@ -139,7 +220,6 @@ function TournamentMatchRosterTab({
 		team: NonNullable<ReturnType<typeof tournament.teamById>>,
 	) {
 		if (data.matchIsOver) return false;
-		if (data.results.length > 0) return false;
 		if (team.members.length <= tournament.minMembersPerTeam) return false;
 
 		const isMemberOfTeam = team.members.some((m) => m.userId === user?.id);
@@ -188,8 +268,11 @@ function resolveVisibleTabs({
 	hasCurrentMap: boolean;
 	hasMissingActiveRoster: boolean;
 }) {
-	const tabs: Array<"join" | "rosters" | "action"> = [];
+	const tabs: Array<"join" | "rosters" | "action" | "result"> = [];
 
+	if (matchIsOver) {
+		tabs.push("result");
+	}
 	if (!matchIsOver && isParticipant) {
 		tabs.push("join");
 	}
