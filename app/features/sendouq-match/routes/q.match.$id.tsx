@@ -16,6 +16,7 @@ export const handle: SendouRouteHandle = {
 
 // xxx: translate all & check for unused translations
 // xxx: check result confirm visiblity for all, needs to be obvious that they still need to report score.
+// xxx: maybe also handle redirect when user answer to continue on match page is pending
 
 export default function SendouQMatchPage() {
 	const data = useLoaderData<typeof loader>();

@@ -63,6 +63,8 @@ export interface MatchTimelineProps {
 	score: { alpha: number; bravo: number };
 	maps: TimelineMap[];
 	spChanges?: TimelineSpChanges;
+	/** When true, render only the team + score header (no per-map rows or SP section). */
+	compact?: boolean;
 }
 
 // xxx: need to show Pick/Bans somewhere, on tab?
@@ -71,26 +73,31 @@ export function MatchTimeline({
 	score,
 	maps,
 	spChanges,
+	compact = false,
 }: MatchTimelineProps) {
 	return (
 		<div className={styles.root}>
 			<TimelineHeader teams={teams} score={score} maps={maps} />
-			{maps.map((map, i) => {
-				const previousMap = maps[i - 1];
-				const substitutions = previousMap
-					? inferSubstitutions(previousMap, map)
-					: [];
+			{compact
+				? null
+				: maps.map((map, i) => {
+						const previousMap = maps[i - 1];
+						const substitutions = previousMap
+							? inferSubstitutions(previousMap, map)
+							: [];
 
-				return (
-					<div key={i} className="contents">
-						{substitutions.map((sub, j) => (
-							<TimelineSubstitutionRow key={j} substitution={sub} />
-						))}
-						<TimelineMapRow map={map} />
-					</div>
-				);
-			})}
-			{spChanges ? <TimelineSpSection spChanges={spChanges} /> : null}
+						return (
+							<div key={i} className="contents">
+								{substitutions.map((sub, j) => (
+									<TimelineSubstitutionRow key={j} substitution={sub} />
+								))}
+								<TimelineMapRow map={map} />
+							</div>
+						);
+					})}
+			{!compact && spChanges ? (
+				<TimelineSpSection spChanges={spChanges} />
+			) : null}
 		</div>
 	);
 }

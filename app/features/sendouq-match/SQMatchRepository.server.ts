@@ -45,6 +45,7 @@ export async function findById(id: number) {
 			"GroupMatch.memento",
 			"GroupMatch.cancelRequestedByUserId",
 			"GroupMatch.cancelAcceptedByUserId",
+
 			exists(
 				selectFrom("Skill")
 					.select("Skill.id")
@@ -93,6 +94,7 @@ function groupWithTeamAndMembers(
 			.select(({ eb }) => [
 				"Group.id",
 				"Group.chatCode",
+				"Group.matchmade",
 				jsonObjectFrom(
 					eb
 						.selectFrom("AllTeam")
@@ -116,6 +118,19 @@ function groupWithTeamAndMembers(
 						.selectFrom("GroupMember")
 						.innerJoin("User", "User.id", "GroupMember.userId")
 						.leftJoin("PlusTier", "User.id", "PlusTier.userId")
+						.leftJoin("GroupMatchContinueVote", (join) =>
+							join
+								.onRef(
+									"GroupMember.userId",
+									"=",
+									"GroupMatchContinueVote.userId",
+								)
+								.onRef(
+									"GroupMember.groupId",
+									"=",
+									"GroupMatchContinueVote.groupId",
+								),
+						)
 						.select((arrayEb) => [
 							...COMMON_USER_FIELDS,
 							"GroupMember.role",
@@ -128,6 +143,7 @@ function groupWithTeamAndMembers(
 							"User.qWeaponPool as weapons",
 							"User.mapModePreferences",
 							"PlusTier.tier as plusTier",
+							"GroupMatchContinueVote.isContinuing",
 							arrayEb
 								.selectFrom("UserFriendCode")
 								.select("UserFriendCode.friendCode")
@@ -1284,11 +1300,21 @@ export async function undoMatchReport({
 		return { status: "NOT_ALLOWED" };
 	}
 
-	await db
-		.updateTable("GroupMatchMap")
-		.set({ winnerGroupId: null, reportedAt: null, reportedByUserId: null })
-		.where("id", "=", decidingMap.id)
-		.execute();
+	await db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("GroupMatchMap")
+			.set({ winnerGroupId: null, reportedAt: null, reportedByUserId: null })
+			.where("id", "=", decidingMap.id)
+			.execute();
+
+		await trx
+			.deleteFrom("GroupMatchContinueVote")
+			.where("GroupMatchContinueVote.groupId", "in", [
+				match.groupAlpha.id,
+				match.groupBravo.id,
+			])
+			.execute();
+	});
 
 	return { status: "SUCCESS" };
 }
@@ -1323,11 +1349,21 @@ export async function undoMapReport({
 		return { status: "NOT_ALLOWED" };
 	}
 
-	await db
-		.updateTable("GroupMatchMap")
-		.set({ winnerGroupId: null })
-		.where("id", "=", targetMap.id)
-		.execute();
+	await db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("GroupMatchMap")
+			.set({ winnerGroupId: null })
+			.where("id", "=", targetMap.id)
+			.execute();
+
+		await trx
+			.deleteFrom("GroupMatchContinueVote")
+			.where("GroupMatchContinueVote.groupId", "in", [
+				match.groupAlpha.id,
+				match.groupBravo.id,
+			])
+			.execute();
+	});
 
 	return { status: "SUCCESS" };
 }

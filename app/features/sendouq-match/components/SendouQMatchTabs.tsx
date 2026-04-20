@@ -1,22 +1,22 @@
 import { differenceInMinutes } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
-import { SendouButton } from "~/components/elements/Button";
-import { SendouTabPanel } from "~/components/elements/Tabs";
 import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
-import { MatchTabs, TAB_KEYS } from "~/components/match-page/MatchTabs";
-import type {
-	TimelineMap,
-	TimelineSpChanges,
-} from "~/components/match-page/MatchTimeline";
-import { MatchTimeline } from "~/components/match-page/MatchTimeline";
+import { MatchTabs } from "~/components/match-page/MatchTabs";
+import { Redirect } from "~/components/Redirect";
 import { useUser } from "~/features/auth/core/user";
+import { DISPLAY_VOTE_RESULT_SECONDS } from "~/features/sendouq/q-constants";
 import { resolveRoomPass } from "~/features/tournament-match/tournament-match-utils";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { teamPage } from "~/utils/urls";
+import { SENDOUQ_LOOKING_PAGE, teamPage } from "~/utils/urls";
+import {
+	resolveTimelineMaps,
+	resolveTimelineSpChanges,
+	resolveTimelineTeams,
+} from "../core/match-timeline";
 import * as SendouQMatch from "../core/SendouQMatch";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 import { resolveGroupMemberOf } from "../q-match-utils";
@@ -45,43 +45,41 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 					? null
 					: data.match.groupAlpha.id;
 
-	const reportedCount = data.match.mapList.filter(
-		(m) => m.winnerGroupId !== null,
-	).length;
-
 	const { alphaWins, bravoWins, isDecisive } = SendouQMatch.score(data.match);
 	const awaitingConfirmation = !data.match.isLocked && isDecisive;
-
-	const decidingReportedByUserId = [...data.match.mapList]
-		.reverse()
-		.find((m) => m.winnerGroupId !== null)?.reportedByUserId;
-	const reporterGroupId = decidingReportedByUserId
-		? data.match.groupAlpha.members.some(
-				(m) => m.id === decidingReportedByUserId,
-			)
-			? data.match.groupAlpha.id
-			: data.match.groupBravo.id
-		: undefined;
-	const isOnReporterTeam =
-		awaitingConfirmation && reporterGroupId === ownTeamId;
+	const isLocked = data.match.isLocked;
+	const isCanceled = data.match.cancelAcceptedByUserId != null;
 
 	const isParticipant = Boolean(userSide);
+	const migrated = data.migratedToGroupId != null && isParticipant;
+
+	// xxx: hmm is this really correct?
+	if (migrated) {
+		return <Redirect to={SENDOUQ_LOOKING_PAGE} />;
+	}
+
+	const now = Math.floor(Date.now() / 1000);
+	const lockedVoteVisible =
+		data.match.confirmedAt !== null &&
+		now < data.match.confirmedAt + DISPLAY_VOTE_RESULT_SECONDS;
+
+	const matchInProgress = !isLocked && !awaitingConfirmation && currentMap;
 
 	const showActionTab =
-		!data.match.isLocked &&
-		!awaitingConfirmation &&
-		currentMap &&
-		(isParticipant || isStaffOnly);
+		(isParticipant || (isStaffOnly && Boolean(matchInProgress))) &&
+		!isCanceled &&
+		(matchInProgress ||
+			awaitingConfirmation ||
+			(isLocked && lockedVoteVisible));
 
 	const tabs: Array<"join" | "rosters" | "action" | "result"> = [];
-	if (awaitingConfirmation || data.match.isLocked) {
+	if (isLocked) {
 		tabs.push("result", "rosters");
-		if (awaitingConfirmation && isParticipant) tabs.push("join");
 	} else {
 		if (isParticipant) tabs.push("join");
 		tabs.push("rosters");
-		if (showActionTab) tabs.push("action");
 	}
+	if (showActionTab) tabs.push("action");
 
 	const allMembers = [
 		...data.match.groupAlpha.members,
@@ -110,13 +108,10 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 
 	return (
 		<MatchTabs tabs={tabs}>
-			{data.match.isLocked ? (
+			{isLocked ? (
 				<MatchResultTab
 					teams={resolveTimelineTeams(data.match)}
-					score={{
-						alpha: alphaWins,
-						bravo: bravoWins,
-					}}
+					score={{ alpha: alphaWins, bravo: bravoWins }}
 					maps={resolveTimelineMaps(data.match, data.reportedWeapons)}
 					spChanges={resolveTimelineSpChanges(data.match)}
 				>
@@ -129,14 +124,8 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 						</p>
 					) : null}
 				</MatchResultTab>
-			) : awaitingConfirmation ? (
-				isOnReporterTeam || isStaffOnly ? (
-					<ReporterWaitingTab data={data} />
-				) : (
-					<ConfirmerTab data={data} reportedCount={reportedCount} />
-				)
 			) : null}
-			{!data.match.isLocked && isParticipant ? (
+			{!isLocked && isParticipant ? (
 				<MatchJoinTab
 					joinLink={activeRoomLink?.url}
 					hostedBy={hostedByUsername}
@@ -180,210 +169,19 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 			{showActionTab ? (
 				<SendouQMatchActionTab
 					data={data}
-					currentMap={currentMap}
+					currentMap={currentMap ?? undefined}
 					ownTeamId={ownTeamId}
-					reportedCount={reportedCount}
+					reportedCount={
+						data.match.mapList.filter((m) => m.winnerGroupId !== null).length
+					}
+					viewerSide={userSide}
 				/>
 			) : null}
 		</MatchTabs>
 	);
 }
 
-function ConfirmerTab({
-	data,
-	reportedCount,
-}: {
-	data: SendouQMatchLoaderData;
-	reportedCount: number;
-}) {
-	const fetcher = useFetcher();
-	const { t } = useTranslation(["q"]);
-
-	const decidingMap = [...data.match.mapList]
-		.reverse()
-		.find((m) => m.winnerGroupId !== null);
-
-	return (
-		<SendouTabPanel id={TAB_KEYS.RESULT}>
-			<MatchTimeline
-				teams={resolveTimelineTeams(data.match)}
-				score={{
-					alpha: data.match.mapList.filter(
-						(m) => m.winnerGroupId === data.match.groupAlpha.id,
-					).length,
-					bravo: data.match.mapList.filter(
-						(m) => m.winnerGroupId === data.match.groupBravo.id,
-					).length,
-				}}
-				maps={resolveTimelineMaps(data.match, data.reportedWeapons)}
-			/>
-			<div className="stack md items-center mt-4">
-				<SendouButton
-					variant="primary"
-					isPending={fetcher.state !== "idle"}
-					onPress={() => {
-						if (!decidingMap?.winnerGroupId) return;
-						fetcher.submit(
-							{
-								_action: "REPORT_SCORE",
-								winnerId: String(decidingMap.winnerGroupId),
-								reportedCount: String(reportedCount),
-							},
-							{ method: "post" },
-						);
-					}}
-				>
-					{t("q:match.confirmScore")}
-				</SendouButton>
-				<p className="text-lighter text-xs text-center">
-					{t("q:match.confirmScore.wrongHint")}
-				</p>
-			</div>
-		</SendouTabPanel>
-	);
-}
-
-function ReporterWaitingTab({ data }: { data: SendouQMatchLoaderData }) {
-	const undoFetcher = useFetcher();
-	const { t } = useTranslation(["q"]);
-
-	return (
-		<SendouTabPanel id={TAB_KEYS.RESULT}>
-			<MatchTimeline
-				teams={resolveTimelineTeams(data.match)}
-				score={{
-					alpha: data.match.mapList.filter(
-						(m) => m.winnerGroupId === data.match.groupAlpha.id,
-					).length,
-					bravo: data.match.mapList.filter(
-						(m) => m.winnerGroupId === data.match.groupBravo.id,
-					).length,
-				}}
-				maps={resolveTimelineMaps(data.match, data.reportedWeapons)}
-			/>
-			<div className="stack md items-center mt-4">
-				<p className="text-lighter text-sm">
-					{t("q:match.waitingForConfirmation")}
-				</p>
-				<SendouButton
-					variant="outlined"
-					size="small"
-					isPending={undoFetcher.state !== "idle"}
-					onPress={() => {
-						undoFetcher.submit(
-							{ _action: "UNDO_MATCH_REPORT" },
-							{ method: "post" },
-						);
-					}}
-				>
-					{t("q:match.undoReport")}
-				</SendouButton>
-			</div>
-		</SendouTabPanel>
-	);
-}
-
 type MatchData = SendouQMatchLoaderData["match"];
-
-function resolveTimelineTeams(match: MatchData) {
-	return {
-		alpha: {
-			// xxx: this stuff is copypasted in quite a few places
-			name: match.groupAlpha.team?.name ?? "Group Alpha",
-			avatar: match.groupAlpha.team?.avatarUrl ?? undefined,
-		},
-		bravo: {
-			name: match.groupBravo.team?.name ?? "Group Bravo",
-			avatar: match.groupBravo.team?.avatarUrl ?? undefined,
-		},
-	};
-}
-
-function resolveTimelineMaps(
-	match: MatchData,
-	reportedWeapons: SendouQMatchLoaderData["reportedWeapons"],
-): TimelineMap[] {
-	return match.mapList
-		.filter((m) => m.winnerGroupId !== null)
-		.map((map) => {
-			const alphaWeapons = match.groupAlpha.members.map((member) => {
-				const w = reportedWeapons?.find(
-					(rw) => rw.groupMatchMapId === map.id && rw.userId === member.id,
-				);
-				return w ? w.weaponSplId : null;
-			});
-			const bravoWeapons = match.groupBravo.members.map((member) => {
-				const w = reportedWeapons?.find(
-					(rw) => rw.groupMatchMapId === map.id && rw.userId === member.id,
-				);
-				return w ? w.weaponSplId : null;
-			});
-
-			const hasAnyWeapon =
-				alphaWeapons.some((w) => w !== null) ||
-				bravoWeapons.some((w) => w !== null);
-
-			return {
-				stageId: map.stageId,
-				mode: map.mode,
-				timestamp: match.createdAt,
-				winner:
-					map.winnerGroupId === match.groupAlpha.id
-						? ("ALPHA" as const)
-						: ("BRAVO" as const),
-				rosters: {
-					alpha: match.groupAlpha.members,
-					bravo: match.groupBravo.members,
-				},
-				weapons: hasAnyWeapon
-					? { alpha: alphaWeapons, bravo: bravoWeapons }
-					: undefined,
-			};
-		});
-}
-
-function resolveTimelineSpChanges(
-	match: MatchData,
-): TimelineSpChanges | undefined {
-	const resolveMembers = (
-		group: MatchData["groupAlpha"] | MatchData["groupBravo"],
-	) =>
-		group.members
-			.filter((m) => m.skillDifference)
-			.map((m) => ({
-				user: {
-					id: m.id,
-					username: m.username,
-					discordId: m.discordId,
-					discordAvatar: m.discordAvatar,
-					customUrl: m.customUrl,
-				},
-				skillDifference: m.skillDifference!,
-			}));
-
-	const alphaMembers = resolveMembers(match.groupAlpha);
-	const bravoMembers = resolveMembers(match.groupBravo);
-
-	if (
-		alphaMembers.length === 0 &&
-		bravoMembers.length === 0 &&
-		!match.groupAlpha.skillDifference &&
-		!match.groupBravo.skillDifference
-	) {
-		return undefined;
-	}
-
-	return {
-		alpha: {
-			members: alphaMembers,
-			skillDifference: match.groupAlpha.skillDifference,
-		},
-		bravo: {
-			members: bravoMembers,
-			skillDifference: match.groupBravo.skillDifference,
-		},
-	};
-}
 
 function resolveCancelRequesterUsername(match: MatchData) {
 	const allMembers = [...match.groupAlpha.members, ...match.groupBravo.members];

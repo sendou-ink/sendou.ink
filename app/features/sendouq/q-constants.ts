@@ -14,6 +14,8 @@ export const FULL_GROUP_SIZE = 4;
 
 export const SENDOUQ_BEST_OF = 7;
 
+export const DISPLAY_VOTE_RESULT_SECONDS = 3 * 60 * 60;
+
 export const JOIN_CODE_SEARCH_PARAM_KEY = "join";
 
 export const USER_SKILLS_CACHE_KEY = "user-skills";

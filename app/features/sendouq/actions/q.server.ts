@@ -3,6 +3,7 @@ import { redirect } from "react-router";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -30,10 +31,17 @@ export const action: ActionFunction = async ({ request }) => {
 		case "JOIN_QUEUE": {
 			await validateCanJoinQ(user);
 
-			await SQGroupRepository.createGroup({
+			const { chatCodeToRevalidate } = await SQGroupRepository.createGroup({
 				status: data.direct === "true" ? "ACTIVE" : "PREPARING",
 				userId: user.id,
 			});
+
+			if (chatCodeToRevalidate) {
+				ChatSystemMessage.send({
+					room: chatCodeToRevalidate,
+					revalidateOnly: true,
+				});
+			}
 
 			await refreshSendouQInstance();
 
@@ -55,10 +63,20 @@ export const action: ActionFunction = async ({ request }) => {
 				"Invite code doesn't match any active team",
 			);
 
-			await SQGroupRepository.addMember(groupInvitedTo.id, {
-				userId: user.id,
-				role: "MANAGER",
-			});
+			const { chatCodeToRevalidate } = await SQGroupRepository.addMember(
+				groupInvitedTo.id,
+				{
+					userId: user.id,
+					role: "MANAGER",
+				},
+			);
+
+			if (chatCodeToRevalidate) {
+				ChatSystemMessage.send({
+					room: chatCodeToRevalidate,
+					revalidateOnly: true,
+				});
+			}
 
 			await refreshSendouQInstance();
 

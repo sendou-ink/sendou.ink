@@ -40,8 +40,18 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const match = SendouQ.mapMatch(matchUnmapped, user, privateNotes);
 
+	const ownCurrentGroup = user ? SendouQ.findOwnGroup(user.id) : undefined;
+	const migratedToGroupId =
+		ownCurrentGroup &&
+		ownCurrentGroup.id !== match.groupAlpha.id &&
+		ownCurrentGroup.id !== match.groupBravo.id
+			? ownCurrentGroup.id
+			: null;
+
 	return {
 		match,
+		// xxx: i don't think this is the correct idea
+		migratedToGroupId,
 		roomLinks,
 		anyUserPrefersNoSplatnet,
 		reportedWeapons,

@@ -35,6 +35,10 @@ export function up(db) {
 		).run();
 
 		db.prepare(
+			/* sql */ `alter table "Group" add "matchmade" integer default 0 not null`,
+		).run();
+
+		db.prepare(
 			/* sql */ `alter table "GroupMatchMap" add "reportedAt" integer`,
 		).run();
 
@@ -110,6 +114,25 @@ export function up(db) {
 
 		db.prepare(
 			/* sql */ `create index group_match_map_reported_at on "GroupMatchMap"("reportedAt")`,
+		).run();
+
+		db.prepare(
+			/* sql */ `
+        create table "GroupMatchContinueVote" (
+          "id" integer primary key,
+          "groupId" integer not null,
+          "userId" integer not null,
+          "isContinuing" integer not null check ("isContinuing" in (0, 1)),
+          "votedAt" integer default (strftime('%s', 'now')) not null,
+          foreign key ("groupId") references "Group"("id") on delete cascade,
+          foreign key ("userId") references "User"("id") on delete cascade,
+          unique("groupId", "userId")
+        ) strict
+      `,
+		).run();
+
+		db.prepare(
+			/* sql */ `create index group_match_continue_vote_group_id on "GroupMatchContinueVote"("groupId")`,
 		).run();
 
 		db.pragma("foreign_key_check");

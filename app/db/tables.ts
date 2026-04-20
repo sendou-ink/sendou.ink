@@ -237,6 +237,8 @@ export interface Group {
 	id: GeneratedAlways<number>;
 	inviteCode: string;
 	latestActionAt: Generated<number>;
+	/** If truthy, group was at least partly made in the matchmaking UI (/q/looking) */
+	matchmade: Generated<DBBoolean>;
 	status: "PREPARING" | "ACTIVE" | "INACTIVE";
 	teamId: number | null;
 }
@@ -311,6 +313,14 @@ export interface GroupMatch {
 	// xxx: how to backfill?
 	cancelRequestedByUserId: number | null;
 	cancelAcceptedByUserId: number | null;
+}
+
+export interface GroupMatchContinueVote {
+	id: GeneratedAlways<number>;
+	groupId: number;
+	userId: number;
+	isContinuing: DBBoolean;
+	votedAt: Generated<number>;
 }
 
 export interface GroupMatchMap {
@@ -1354,6 +1364,7 @@ export interface DB {
 	Group: Group;
 	GroupLike: GroupLike;
 	GroupMatch: GroupMatch;
+	GroupMatchContinueVote: GroupMatchContinueVote;
 	GroupMatchMap: GroupMatchMap;
 	GroupMember: GroupMember;
 	PrivateUserNote: PrivateUserNote;

@@ -199,6 +199,7 @@ class SendouQClass {
 				skillDifference: match.memento?.groups[group.id]?.skillDifference,
 				modePreferences: this.#groupModePreferences(group),
 				usersRole: null as Tables["GroupMember"]["role"] | null,
+				matchmade: Boolean(group.matchmade),
 				members: group.members.map((member) => {
 					return {
 						...member,
@@ -207,6 +208,10 @@ class SendouQClass {
 						skillDifference: match.memento?.users[member.id]?.skillDifference,
 						noScreen: undefined,
 						languages: member.languages?.split(",") || [],
+						isContinuing:
+							typeof member.isContinuing === "number"
+								? Boolean(member.isContinuing)
+								: null,
 						friendCode:
 							isMatchInsider && happenedInLastMonth
 								? member.friendCode

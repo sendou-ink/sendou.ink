@@ -25,3 +25,16 @@
 	display: flex;
 	gap: var(--s-3);
 }
+
+.rematchContent {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.divider {
+	border: none;
+	border-top: 2px solid var(--color-border);
+	margin-block: var(--s-2);
+	width: 100%;
+}

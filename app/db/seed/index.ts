@@ -2534,6 +2534,19 @@ async function groups(variation?: SeedVariation | null) {
 	}
 
 	if (variation === "IN_SQ_MATCH") {
+		// Sendou's side tests the matchmade cascade vote flow, NZAP's side
+		// tests the trusted one-click flow.
+		sql
+			.prepare(
+				/* sql */ `update "Group" set "matchmade" = @matchmade where "id" = @id`,
+			)
+			.run({ matchmade: 1, id: sendouGroupId });
+		sql
+			.prepare(
+				/* sql */ `update "Group" set "matchmade" = @matchmade where "id" = @id`,
+			)
+			.run({ matchmade: 0, id: nzapGroupId });
+
 		const mapList = randomMapList(sendouGroupId, nzapGroupId);
 		const memento = buildSeedMemento({
 			mapList,

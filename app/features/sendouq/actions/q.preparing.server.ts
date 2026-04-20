@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
@@ -52,10 +53,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				"Not a friend",
 			);
 
-			await SQGroupRepository.addMember(ownGroup.id, {
-				userId: data.id,
-				role: "MANAGER",
-			});
+			const { chatCodeToRevalidate } = await SQGroupRepository.addMember(
+				ownGroup.id,
+				{
+					userId: data.id,
+					role: "MANAGER",
+				},
+			);
+
+			if (chatCodeToRevalidate) {
+				ChatSystemMessage.send({
+					room: chatCodeToRevalidate,
+					revalidateOnly: true,
+				});
+			}
 
 			await refreshSendouQInstance();
 

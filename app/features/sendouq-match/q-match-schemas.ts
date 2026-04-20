@@ -13,6 +13,10 @@ export const matchSchema = z.union([
 		previousGroupId: id,
 	}),
 	z.object({
+		_action: _action("CAST_CONTINUE_VOTE"),
+		isContinuing: z.enum(["0", "1"]).transform((v) => Number(v) as 0 | 1),
+	}),
+	z.object({
 		_action: _action("REPORT_WEAPON"),
 		weaponSplId,
 		groupMatchMapId: id,

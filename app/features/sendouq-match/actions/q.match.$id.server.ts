@@ -11,6 +11,7 @@ import {
 } from "~/features/sendouq/core/SendouQ.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
+import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/GroupMatchContinueVoteRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.server";
@@ -24,7 +25,8 @@ import {
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { SENDOUQ_PREPARING_PAGE, sendouQMatchPage } from "~/utils/urls";
+import { sendouQMatchPage } from "~/utils/urls";
+import * as RejoinVote from "../core/RejoinVote";
 import { matchSchema, qMatchPageParamsSchema } from "../q-match-schemas";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -116,6 +118,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				"Previous group not found in this match",
 			);
 
+			errorToastIfFalsy(
+				!previousGroup.matchmade,
+				"This group must use the continue vote",
+			);
+
 			for (const member of previousGroup.members) {
 				const currentGroup = SendouQ.findOwnGroup(member.id);
 				errorToastIfFalsy(!currentGroup, "Member is already in a group");
@@ -130,11 +137,82 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			await SQGroupRepository.createGroupFromPrevious({
 				previousGroupId: data.previousGroupId,
 				members: previousGroup.members.map((m) => ({ id: m.id, role: m.role })),
+				status: "ACTIVE",
 			});
 
 			await refreshSendouQInstance();
 
-			throw redirect(SENDOUQ_PREPARING_PAGE);
+			if (match.chatCode) {
+				ChatSystemMessage.send({
+					room: match.chatCode,
+					revalidateOnly: true,
+				});
+			}
+
+			break;
+		}
+		case "CAST_CONTINUE_VOTE": {
+			const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
+
+			// xxx: some SendouQMatch module util
+			const viewerSide: "ALPHA" | "BRAVO" | null =
+				match.groupAlpha.members.some((m) => m.id === user.id)
+					? "ALPHA"
+					: match.groupBravo.members.some((m) => m.id === user.id)
+						? "BRAVO"
+						: null;
+			errorToastIfFalsy(viewerSide, "Not a participant");
+
+			const viewerGroup =
+				viewerSide === "ALPHA" ? match.groupAlpha : match.groupBravo;
+			errorToastIfFalsy(
+				viewerGroup.matchmade,
+				"This group uses the trusted rematch flow",
+			);
+
+			if (
+				!RejoinVote.canCastVote(
+					await GroupMatchContinueVoteRepository.findForGroups([
+						viewerGroup.id,
+					]),
+					user.id,
+				)
+			) {
+				return null;
+			}
+
+			await GroupMatchContinueVoteRepository.cast({
+				groupId: viewerGroup.id,
+				userId: user.id,
+				isContinuing: data.isContinuing,
+			});
+
+			const votingResult = RejoinVote.result(
+				await GroupMatchContinueVoteRepository.findForGroups([viewerGroup.id]),
+			);
+
+			if (votingResult.type === "RESOLVED") {
+				const survivors = viewerGroup.members
+					.filter((m) => votingResult.continuingUserIds.includes(m.id))
+					.map((m) => ({ id: m.id, role: m.role }));
+
+				await SQGroupRepository.createGroupFromPrevious({
+					previousGroupId: viewerGroup.id,
+					members: survivors,
+					status: "ACTIVE",
+				});
+
+				await refreshSendouQInstance();
+			}
+
+			if (match.chatCode) {
+				ChatSystemMessage.send({
+					room: match.chatCode,
+					revalidateOnly: true,
+				});
+			}
+
+			break;
 		}
 		case "REPORT_WEAPON": {
 			const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
