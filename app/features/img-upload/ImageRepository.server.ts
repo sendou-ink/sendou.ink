@@ -1,8 +1,20 @@
 import { db } from "~/db/sql";
+import type { TablesInsertable } from "~/db/tables";
 import { databaseTimestampNow } from "~/utils/dates";
 import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
 import { IMAGES_TO_VALIDATE_AT_ONCE } from "./upload-constants";
 import type { ImageUploadType } from "./upload-types";
+
+/** Creates a new (Unvalidated)UserSubmittedImage */
+export function insert(
+	args: TablesInsertable["UnvalidatedUserSubmittedImage"],
+) {
+	return db
+		.insertInto("UnvalidatedUserSubmittedImage")
+		.values(args)
+		.returningAll()
+		.executeTakeFirstOrThrow();
+}
 
 /** Finds an unvalidated image by ID with associated calendar event data */
 export function findById(id: number) {
