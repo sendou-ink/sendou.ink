@@ -5,5 +5,8 @@ export const NZAP_TEST_AVATAR = "f809176af93132c3db5f0a5019e96339"; // https://c
 export const NZAP_TEST_ID = 2;
 export const REGULAR_USER_TEST_ID = 2;
 export const ORG_ADMIN_TEST_ID = 3;
+// Matches STAFF_IDS[0] (Panda) so the seeded user is recognized as STAFF.
+export const STAFF_TEST_ID = 11329;
+export const STAFF_TEST_DISCORD_ID = "138757634500067328";
 
 export const AMOUNT_OF_CALENDAR_EVENTS = 200;

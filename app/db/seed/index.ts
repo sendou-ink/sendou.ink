@@ -91,6 +91,8 @@ import {
 	NZAP_TEST_DISCORD_ID,
 	NZAP_TEST_ID,
 	ORG_ADMIN_TEST_ID,
+	STAFF_TEST_DISCORD_ID,
+	STAFF_TEST_ID,
 } from "./constants";
 import placements from "./placements.json";
 
@@ -179,7 +181,9 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	makeAdminTournamentOrganizer,
 	nzapUser,
 	users,
+	staffUser,
 	fixAdminId,
+	fixStaffUserId,
 	makeArtists,
 	adminUserWeaponPool,
 	adminUserWidgets,
@@ -672,6 +676,26 @@ function nzapUser() {
 		discordAvatar: NZAP_TEST_AVATAR,
 		discordUniqueName: null,
 	});
+}
+
+function staffUser() {
+	return UserRepository.upsert({
+		discordId: STAFF_TEST_DISCORD_ID,
+		discordName: "Panda",
+		twitch: null,
+		youtubeId: null,
+		discordAvatar: null,
+		discordUniqueName: null,
+	});
+}
+
+function fixStaffUserId() {
+	sql.prepare(`delete from user where id = ${STAFF_TEST_ID}`).run();
+	sql
+		.prepare(
+			`update "User" set "id" = ${STAFF_TEST_ID} where "discordId" = '${STAFF_TEST_DISCORD_ID}'`,
+		)
+		.run();
 }
 
 async function users() {
