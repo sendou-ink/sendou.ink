@@ -183,6 +183,7 @@
 	"comp.groupBy.special": "Arma especial",
 	"comp.selectWeapons": "Selecciona hasta {{max}} armas",
 	"comp.removeWeapon": "Eliminar arma",
+	"comp.reorderWeapon": "",
 	"comp.pickWeapon": "Elige un arma",
 	"comp.showWeaponGrid": "Mostrar selector de armas",
 	"comp.hideWeaponGrid": "Ocultar selector de armas",

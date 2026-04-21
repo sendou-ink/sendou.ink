@@ -8,6 +8,7 @@ import { SelectedWeapons } from "./SelectedWeapons";
 const defaultProps: ComponentProps<typeof SelectedWeapons> = {
 	selectedWeaponIds: [],
 	onRemove: vi.fn(),
+	onReorder: vi.fn(),
 };
 
 function renderSelectedWeapons(
@@ -100,9 +101,7 @@ describe("SelectedWeapons", () => {
 				selectedWeaponIds: [0],
 			});
 
-			const removeButton = screen.getByRole("button", {
-				name: "Remove weapon",
-			});
+			const removeButton = screen.getByTestId("remove-weapon-0");
 			await expect.element(removeButton).toBeVisible();
 		});
 

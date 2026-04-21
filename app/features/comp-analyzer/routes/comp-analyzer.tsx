@@ -78,6 +78,7 @@ function CompAnalyzerPage() {
 			<SelectedWeapons
 				selectedWeaponIds={selectedWeaponIds}
 				onRemove={handleRemoveWeapon}
+				onReorder={setSelectedWeaponIds}
 			/>
 			<WeaponCategories selectedWeaponIds={selectedWeaponIds} />
 			<WeaponGrid

@@ -156,7 +156,13 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Points are invalid (winner must have more points than loser)",
 			);
 
-			// TODO: could also validate that if bracket demands it then points are defined
+			const bracket = tournament.bracketByIdx(
+				tournament.matchIdToBracketIdx(match.id)!,
+			)!;
+			errorToastIfFalsy(
+				!bracket.collectResultsWithPoints || data.points,
+				"Points are required for this bracket",
+			);
 
 			scores[scoreToIncrement()]++;
 

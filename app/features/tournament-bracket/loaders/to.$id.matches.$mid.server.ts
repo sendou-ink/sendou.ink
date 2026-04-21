@@ -147,18 +147,18 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	if (
 		match.chatCode &&
 		!matchIsOver &&
-		match.opponentOne &&
-		match.opponentTwo
+		match.opponentOne?.id &&
+		match.opponentTwo?.id
 	) {
 		// only add global chat for active roster (or all if not yet set i.e. first match)
 		// if roster changed mid-set the subs can still see the chat on the match page
-		const teamAlpha = tournament.teamById(match.opponentOne.id!)!;
+		const teamAlpha = tournament.teamById(match.opponentOne.id)!;
 		const teamAlphaActiveRoster =
 			tournamentTeamToActiveRosterUserIds(
 				teamAlpha,
 				tournament.minMembersPerTeam,
 			) ?? teamAlpha.members.map((m) => m.userId);
-		const teamBravo = tournament.teamById(match.opponentTwo.id!)!;
+		const teamBravo = tournament.teamById(match.opponentTwo.id)!;
 		const teamBravoActiveRoster =
 			tournamentTeamToActiveRosterUserIds(
 				teamBravo,
