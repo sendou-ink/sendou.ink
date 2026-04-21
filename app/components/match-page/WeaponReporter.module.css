@@ -83,7 +83,7 @@
 	background-color: var(--color-bg-higher);
 	border-radius: 0 0 var(--radius-box) var(--radius-box);
 	padding: var(--s-2);
-	margin: var(--s-4) calc(-1 * var(--s-4)) calc(-1 * var(--s-4));
+	margin: 0 calc(-1 * var(--s-4)) calc(-1 * var(--s-4));
 }
 
 .rootExpanded {

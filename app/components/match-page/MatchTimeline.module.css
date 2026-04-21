@@ -25,6 +25,7 @@
 .headerTeamName {
 	font-weight: var(--weight-bold);
 	font-size: var(--font-md);
+	text-box: trim-start cap alphabetic;
 }
 
 .headerAvatars {
