@@ -208,6 +208,7 @@ function mapRosterMembers(members: MatchData["groupAlpha"]["members"]) {
 				: member.skill?.tier,
 		plusTier: member.plusTier ?? undefined,
 		weaponPool: member.weapons?.map((w) => w.weaponSplId),
+		friendCode: member.friendCode,
 	}));
 }
 

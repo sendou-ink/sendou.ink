@@ -92,6 +92,21 @@
 	align-items: center;
 }
 
+.memberMenuTrigger {
+	background: none;
+	border: 0;
+	padding: 0;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
+	cursor: pointer;
+	width: 100%;
+}
+
+.friendCodeHeader {
+	text-align: center;
+}
+
 .memberTier {
 	grid-area: tier;
 	justify-self: center;

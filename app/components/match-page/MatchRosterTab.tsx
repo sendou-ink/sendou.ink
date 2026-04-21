@@ -1,9 +1,16 @@
-import { Armchair, Edit } from "lucide-react";
+import clsx from "clsx";
+import { Armchair, Edit, User } from "lucide-react";
 import { useState } from "react";
+import { Button as ReactAriaButton } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouMenu,
+	SendouMenuItem,
+	SendouMenuSection,
+} from "~/components/elements/Menu";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Image, TierImage } from "~/components/Image";
 import type { TierName } from "~/features/mmr/mmr-constants";
@@ -20,6 +27,7 @@ type RosterTabMember = CommonUser & {
 	tier?: { name: TierName; isPlus: boolean } | "CALCULATING";
 	plusTier?: number | null;
 	weaponPool?: Array<MainWeaponId>;
+	friendCode?: string | null;
 };
 
 interface RosterTabTeam {
@@ -139,10 +147,10 @@ function TeamRoster({
 							))
 						: activeMembers.map((member) => (
 								<li key={member.id} className={styles.memberGrid}>
-									<Link to={userPage(member)} className={styles.memberLink}>
-										<Avatar user={member} size="xxs" />
-										<span>{member.username}</span>
-									</Link>
+									<RosterMemberLink
+										member={member}
+										className={styles.memberLink}
+									/>
 									<div className={styles.memberTier}>
 										<MemberTierPopover tier={member.tier} />
 									</div>
@@ -396,16 +404,52 @@ function SubbedOutPopover({ members }: { members: Array<RosterTabMember> }) {
 			<div className={styles.subbedOutPopover}>
 				<div className={styles.subbedOutHeader}>{t("q:match.subbedOut")}</div>
 				{members.map((member) => (
-					<Link
+					<RosterMemberLink
 						key={member.id}
-						to={userPage(member)}
+						member={member}
 						className="stack horizontal sm items-center"
-					>
-						<Avatar user={member} size="xxs" />
-						<span>{member.username}</span>
-					</Link>
+					/>
 				))}
 			</div>
 		</SendouPopover>
+	);
+}
+
+function RosterMemberLink({
+	member,
+	className,
+}: {
+	member: RosterTabMember;
+	className?: string;
+}) {
+	const { t } = useTranslation(["friends"]);
+
+	if (!member.friendCode) {
+		return (
+			<Link to={userPage(member)} className={className}>
+				<Avatar user={member} size="xxs" />
+				<span>{member.username}</span>
+			</Link>
+		);
+	}
+
+	return (
+		<SendouMenu
+			trigger={
+				<ReactAriaButton className={clsx(className, styles.memberMenuTrigger)}>
+					<Avatar user={member} size="xxs" />
+					<span>{member.username}</span>
+				</ReactAriaButton>
+			}
+		>
+			<SendouMenuSection
+				headerText={`SW-${member.friendCode}`}
+				headerClassName={styles.friendCodeHeader}
+			>
+				<SendouMenuItem href={userPage(member)} icon={<User />}>
+					{t("friends:friendsList.viewUserPage")}
+				</SendouMenuItem>
+			</SendouMenuSection>
+		</SendouMenu>
 	);
 }
