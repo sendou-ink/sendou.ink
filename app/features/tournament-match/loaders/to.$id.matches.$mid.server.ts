@@ -3,6 +3,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatAccessible } from "~/features/chat/chat-utils";
+import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
@@ -176,6 +177,17 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const visibleChatCode =
 		shouldSeeChat && !chatCodeExpired ? match.chatCode : undefined;
 
+	// xxx: optimization, can be skipped if user can't join anyway
+	const [roomLinks, anyUserPrefersNoSplatnet] = matchIsOver
+		? ([[], false] as const)
+		: await Promise.all([
+				RoomLinkRepository.findByUserIds(
+					match.players.map((p) => p.id),
+					3,
+				),
+				UserRepository.anyUserPrefersNoSplatnet(match.players.map((p) => p.id)),
+			]);
+
 	return {
 		match: shouldSeeChat ? match : { ...match, chatCode: undefined },
 		results,
@@ -184,6 +196,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		endedEarly,
 		noScreen,
 		chatCode: visibleChatCode,
+		roomLinks,
+		anyUserPrefersNoSplatnet,
 		pickBanEventCount: pickBanEvents.length,
 		pickBanEvents: pickBanEvents.map((e) => ({
 			type: e.type,

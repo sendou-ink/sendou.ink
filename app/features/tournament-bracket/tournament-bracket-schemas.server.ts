@@ -101,6 +101,10 @@ export const matchSchema = z.union([
 		_action: _action("END_SET"),
 		winnerTeamId: z.preprocess(nullLiteraltoNull, id.nullable()),
 	}),
+	// xxx: one central API for confirm room?
+	z.object({
+		_action: _action("CONFIRM_ROOM"),
+	}),
 ]);
 
 export const bracketIdx = z.coerce.number().int().min(0).max(100);

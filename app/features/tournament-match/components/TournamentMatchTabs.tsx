@@ -1,3 +1,4 @@
+import { differenceInMinutes } from "date-fns";
 import { useFetcher } from "react-router";
 import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
@@ -6,9 +7,14 @@ import { MatchTabs } from "~/components/match-page/MatchTabs";
 import type { TimelineMap } from "~/components/match-page/MatchTimeline";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
+import {
+	groupNumberToLetters,
+	tournamentTeamToActiveRosterUserIds,
+} from "~/features/tournament-bracket/tournament-bracket-utils";
+import { databaseTimestampToDate } from "~/utils/dates";
 import { tournamentTeamPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import { resolveHostingTeam, resolveRoomPass } from "../tournament-match-utils";
 import { TournamentMatchActionTab } from "./TournamentMatchActionTab";
 
 export function TournamentMatchTabs({
@@ -62,7 +68,7 @@ export function TournamentMatchTabs({
 					maps={resolveTimelineMaps(data, opponentOneId, opponentTwoId)}
 				/>
 			) : null}
-			{tabs.includes("join") ? <TournamentMatchJoinTab /> : null}
+			{tabs.includes("join") ? <TournamentMatchJoinTab data={data} /> : null}
 			<TournamentMatchRosterTab data={data} />
 			{tabs.includes("action") && currentMap ? (
 				<TournamentMatchActionTab
@@ -144,13 +150,77 @@ function resolveTimelineMaps(
 	});
 }
 
-function TournamentMatchJoinTab() {
+function TournamentMatchJoinTab({ data }: { data: TournamentMatchLoaderData }) {
+	const tournament = useTournament();
+	const user = useUser();
+	const confirmFetcher = useFetcher();
+
+	const teamOne = tournament.teamById(data.match.opponentOne!.id!)!;
+	const teamTwo = tournament.teamById(data.match.opponentTwo!.id!)!;
+	const hostingTeam = resolveHostingTeam([teamOne, teamTwo]);
+
+	const hasRoundRobin = tournament.brackets.some(
+		(b) => b.type === "round_robin",
+	);
+	const bracketIdx = tournament.brackets.findIndex((b) =>
+		b.data.match.some((m) => m.id === data.match.id),
+	);
+	const bracket = tournament.brackets[bracketIdx];
+	const bracketMatch = bracket?.data.match.find((m) => m.id === data.match.id);
+	const group = bracket?.data.group.find(
+		(g) => g.id === bracketMatch?.group_id,
+	);
+
+	const poolCode = tournament.resolvePoolCode({
+		hostingTeamId: hostingTeam.id,
+		groupLetters:
+			group && bracket?.type === "round_robin"
+				? groupNumberToLetters(group.number)
+				: undefined,
+		bracketNumber:
+			hasRoundRobin && bracket?.type !== "round_robin"
+				? bracketIdx + 1
+				: undefined,
+	});
+
+	// xxx: maybe some shared util?
+	const freshnessCutoff = data.match.startedAt ?? 0;
+	const validRoomLink = data.roomLinks.find(
+		(rl) => rl.refreshedAt >= freshnessCutoff,
+	);
+	const ownStaleRoomLink = validRoomLink
+		? undefined
+		: data.roomLinks.find((rl) => rl.userId === user?.id);
+	const activeRoomLink = validRoomLink ?? ownStaleRoomLink;
+	const isStale = activeRoomLink ? !validRoomLink : undefined;
+	const staleMinutesAgo = ownStaleRoomLink
+		? differenceInMinutes(
+				new Date(),
+				databaseTimestampToDate(ownStaleRoomLink.refreshedAt),
+			)
+		: 0;
+	const roomLinkUsername = activeRoomLink
+		? data.match.players.find((p) => p.id === activeRoomLink.userId)?.username
+		: undefined;
+
 	return (
 		<MatchJoinTab
-			joinLink="https://app.nintendo.net/private_battle/abc123"
-			pool="SQ7"
-			pass="8430"
-			showNoSplatnetAlert
+			joinLink={activeRoomLink?.url}
+			hostedBy={roomLinkUsername ?? hostingTeam.name}
+			isStale={isStale}
+			staleMinutesAgo={staleMinutesAgo}
+			refreshedAt={
+				validRoomLink
+					? databaseTimestampToDate(validRoomLink.refreshedAt)
+					: undefined
+			}
+			onConfirmRoom={() => {
+				confirmFetcher.submit({ _action: "CONFIRM_ROOM" }, { method: "post" });
+			}}
+			isConfirming={confirmFetcher.state !== "idle"}
+			pool={`${poolCode.prefix}${poolCode.suffix}`}
+			pass={resolveRoomPass(hostingTeam.id)}
+			showNoSplatnetAlert={data.anyUserPrefersNoSplatnet}
 		/>
 	);
 }

@@ -3,6 +3,7 @@ import { sql } from "~/db/sql";
 import { TournamentMatchStatus } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.server";
@@ -726,6 +727,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
 
+			break;
+		}
+		case "CONFIRM_ROOM": {
+			await RoomLinkRepository.refreshTimestamp(user.id);
 			break;
 		}
 		default: {
