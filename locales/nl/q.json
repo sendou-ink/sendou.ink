@@ -192,6 +192,7 @@
 	"match.action.pickerThem": "",
 	"match.action.pickerBoth": "",
 	"match.action.pickBanPrompt": "",
+	"match.action.pickBanWaiting": "",
 	"match.action.picking": "",
 	"match.action.banning": "",
 	"match.cancelRequested.subtitle": "",

@@ -13,7 +13,7 @@ import styles from "./MatchActionPickBanTab.module.css";
 import { TAB_KEYS } from "./MatchTabs";
 import { WeaponReporter, type WeaponReporterProps } from "./WeaponReporter";
 
-interface PickBanMapOption {
+export interface PickBanMapOption {
 	stageId?: StageId;
 	mode?: ModeShort;
 	picker?: "US" | "THEM" | "BOTH";

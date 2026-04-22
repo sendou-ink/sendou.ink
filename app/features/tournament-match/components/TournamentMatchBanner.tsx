@@ -1,5 +1,5 @@
 import { differenceInMinutes } from "date-fns";
-import { Users } from "lucide-react";
+import { Check, Users, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
 	IconBanner,
@@ -10,6 +10,7 @@ import {
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 
@@ -34,6 +35,8 @@ export function TournamentMatchBanner({
 		data,
 		tournament,
 	);
+
+	const pickBanBanner = resolvePickBanBanner(data, tournament, t);
 
 	const activeRosterByTeamId = (tournamentTeamId: number) => {
 		const team = tournament.teamById(tournamentTeamId);
@@ -61,6 +64,12 @@ export function TournamentMatchBanner({
 			) : data.matchIsOver ? (
 				<MultiMatchBanner
 					stageIds={data.results.map((result) => result.stageId)}
+				/>
+			) : pickBanBanner ? (
+				<IconBanner
+					icon={pickBanBanner.icon}
+					header={pickBanBanner.header}
+					subtitle={pickBanBanner.subtitle}
 				/>
 			) : currentMap ? (
 				<MatchBanner
@@ -138,6 +147,77 @@ function TournamentMatchBannerTopRow({
 			}
 		/>
 	);
+}
+
+function resolvePickBanBanner(
+	data: TournamentMatchLoaderData,
+	tournament: ReturnType<typeof useTournament>,
+	t: ReturnType<typeof useTranslation<["tournament"]>>["t"],
+): { icon: React.ReactNode; header: string; subtitle: string } | null {
+	if (data.matchIsOver) return null;
+	if (!data.match.roundMaps?.pickBan) return null;
+
+	const opponentOneId = data.match.opponentOne?.id;
+	const opponentTwoId = data.match.opponentTwo?.id;
+	if (!opponentOneId || !opponentTwoId) return null;
+
+	const teamOne = tournament.teamById(opponentOneId);
+	const teamTwo = tournament.teamById(opponentTwoId);
+	if (!teamOne || !teamTwo) return null;
+
+	const turnOfResult = PickBan.turnOf({
+		results: data.results,
+		maps: data.match.roundMaps,
+		teams: [
+			{ id: teamOne.id, seed: teamOne.seed },
+			{ id: teamTwo.id, seed: teamTwo.seed },
+		],
+		mapList: data.mapList,
+		pickBanEventCount: data.pickBanEventCount,
+	});
+	if (!turnOfResult) return null;
+
+	const pickingTeam = turnOfResult.teamId === teamOne.id ? teamOne : teamTwo;
+
+	const isCustom = data.match.roundMaps.pickBan === "CUSTOM";
+	const isCounterpick =
+		data.match.roundMaps.pickBan === "COUNTERPICK" ||
+		data.match.roundMaps.pickBan === "COUNTERPICK_MODE_REPEAT_OK";
+
+	const stepCounter =
+		isCustom && turnOfResult.stepTotal && turnOfResult.stepTotal > 1
+			? ` (${turnOfResult.stepCurrent}/${turnOfResult.stepTotal})`
+			: "";
+
+	const header = (() => {
+		if (isCounterpick) return t("tournament:pickBan.counterpick");
+		switch (turnOfResult.action) {
+			case "PICK":
+				return t("tournament:pickBan.pickMap") + stepCounter;
+			case "BAN":
+				return t("tournament:pickBan.banMap") + stepCounter;
+			case "MODE_PICK":
+				return t("tournament:pickBan.pickMode") + stepCounter;
+			case "MODE_BAN":
+				return t("tournament:pickBan.banMode") + stepCounter;
+			default:
+				return "";
+		}
+	})();
+
+	if (!header) return null;
+
+	const isBan =
+		turnOfResult.action === "BAN" || turnOfResult.action === "MODE_BAN";
+
+	return {
+		// xxx: better icons, e.g. the "Pick" icon we use elsewhere too
+		icon: isBan ? <X size={32} /> : <Check size={32} />,
+		header,
+		subtitle: t("tournament:pickBan.waitingFor", {
+			teamName: pickingTeam.name,
+		}),
+	};
 }
 
 function resolveTeamsMissingActiveRoster(

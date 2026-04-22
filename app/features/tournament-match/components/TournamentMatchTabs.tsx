@@ -7,6 +7,7 @@ import { MatchTabs } from "~/components/match-page/MatchTabs";
 import type { TimelineMap } from "~/components/match-page/MatchTimeline";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import {
 	groupNumberToLetters,
 	tournamentTeamToActiveRosterUserIds,
@@ -16,6 +17,7 @@ import { tournamentTeamPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { resolveHostingTeam, resolveRoomPass } from "../tournament-match-utils";
 import { TournamentMatchActionTab } from "./TournamentMatchActionTab";
+import { TournamentMatchPickBanTab } from "./TournamentMatchPickBanTab";
 
 export function TournamentMatchTabs({
 	data,
@@ -39,6 +41,7 @@ export function TournamentMatchTabs({
 		data,
 		tournament,
 	);
+	const hasMissingActiveRoster = teamsMissingActiveRoster.length > 0;
 
 	const canReportScore = tournament.canReportScore({
 		matchId: data.match.id,
@@ -46,12 +49,35 @@ export function TournamentMatchTabs({
 	});
 	const isParticipant = data.match.players.some((p) => p.id === user?.id);
 
+	const teamOne = tournament.teamById(opponentOneId);
+	const teamTwo = tournament.teamById(opponentTwoId);
+	const pickBanTeams =
+		teamOne && teamTwo
+			? ([teamOne, teamTwo] as [typeof teamOne, typeof teamTwo])
+			: undefined;
+
+	const turnOfResult =
+		pickBanTeams && data.match.roundMaps
+			? PickBan.turnOf({
+					results: data.results,
+					maps: data.match.roundMaps,
+					teams: [
+						{ id: pickBanTeams[0].id, seed: pickBanTeams[0].seed },
+						{ id: pickBanTeams[1].id, seed: pickBanTeams[1].seed },
+					],
+					mapList: data.mapList,
+					pickBanEventCount: data.pickBanEventCount,
+				})
+			: null;
+	const isPickBanStep = turnOfResult !== null && !hasMissingActiveRoster;
+
 	const tabs = resolveVisibleTabs({
 		matchIsOver: data.matchIsOver,
 		canReportScore,
 		isParticipant,
 		hasCurrentMap: Boolean(currentMap),
-		hasMissingActiveRoster: teamsMissingActiveRoster.length > 0,
+		hasMissingActiveRoster,
+		isPickBanStep,
 	});
 
 	const userTeamId = tournament.teamMemberOfByUser(user)?.id;
@@ -70,12 +96,21 @@ export function TournamentMatchTabs({
 			) : null}
 			{tabs.includes("join") ? <TournamentMatchJoinTab data={data} /> : null}
 			<TournamentMatchRosterTab data={data} />
-			{tabs.includes("action") && currentMap ? (
-				<TournamentMatchActionTab
-					data={data}
-					currentMap={currentMap}
-					ownTeamId={userTeamId ?? opponentOneId}
-				/>
+			{tabs.includes("action") ? (
+				isPickBanStep && pickBanTeams && turnOfResult ? (
+					<TournamentMatchPickBanTab
+						key={`${turnOfResult.teamId}-${data.pickBanEventCount}`}
+						data={data}
+						teams={pickBanTeams}
+						turnOfResult={turnOfResult}
+					/>
+				) : currentMap ? (
+					<TournamentMatchActionTab
+						data={data}
+						currentMap={currentMap}
+						ownTeamId={userTeamId ?? opponentOneId}
+					/>
+				) : null
 			) : null}
 		</MatchTabs>
 	);
@@ -332,12 +367,14 @@ function resolveVisibleTabs({
 	isParticipant,
 	hasCurrentMap,
 	hasMissingActiveRoster,
+	isPickBanStep,
 }: {
 	matchIsOver: boolean;
 	canReportScore: boolean;
 	isParticipant: boolean;
 	hasCurrentMap: boolean;
 	hasMissingActiveRoster: boolean;
+	isPickBanStep: boolean;
 }) {
 	const tabs: Array<"join" | "rosters" | "action" | "result"> = [];
 
@@ -348,7 +385,10 @@ function resolveVisibleTabs({
 		tabs.push("join");
 	}
 	tabs.push("rosters");
-	if (canReportScore && hasCurrentMap && !hasMissingActiveRoster) {
+	if (
+		isPickBanStep ||
+		(canReportScore && hasCurrentMap && !hasMissingActiveRoster)
+	) {
 		tabs.push("action");
 	}
 

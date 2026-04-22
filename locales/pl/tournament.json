@@ -190,6 +190,7 @@
 	"pickBan.banMap": "",
 	"pickBan.pickMode": "",
 	"pickBan.banMode": "",
+	"pickBan.waitingFor": "",
 	"match.tab.mapInfo": "",
 	"match.mapInfo.bans": "",
 	"match.mapInfo.playedStages": "",

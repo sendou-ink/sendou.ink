@@ -186,6 +186,7 @@
 	"pickBan.banMap": "Ban a map",
 	"pickBan.pickMode": "Pick a mode",
 	"pickBan.banMode": "Ban a mode",
+	"pickBan.waitingFor": "Waiting for {{teamName}}",
 	"match.tab.mapInfo": "Map info",
 	"match.mapInfo.bans": "{{teamName}} bans",
 	"match.mapInfo.playedStages": "Played stages",
