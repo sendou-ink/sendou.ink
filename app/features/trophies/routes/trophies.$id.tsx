@@ -1,10 +1,17 @@
 import clsx from "clsx";
+import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
-import { userPage } from "~/utils/urls";
+import { TierPill } from "~/components/TierPill";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
+import { databaseTimestampToDate } from "~/utils/dates";
+import { tournamentPage, userPage } from "~/utils/urls";
 import { Trophy } from "../components/Trophy";
-import { loader } from "../loaders/trophies.$id.server";
+import {
+	loader,
+	type TrophyDetailsLoaderData,
+} from "../loaders/trophies.$id.server";
 import styles from "./trophies.module.css";
 
 export { loader };
@@ -12,7 +19,7 @@ export { loader };
 export default function TrophyDetailsPage() {
 	const { t } = useTranslation(["trophies"]);
 	const data = useLoaderData<typeof loader>();
-	const { trophy } = data;
+	const { trophy, tournaments } = data;
 
 	return (
 		<div className={styles.trophyDetailsContainer}>
@@ -46,9 +53,20 @@ export default function TrophyDetailsPage() {
 					<Divider className={styles.divider} smallText>
 						{t("trophies:details.tournamentHistory")}
 					</Divider>
-					<p className="text-center text-lighter text-xxs">
-						{t("trophies:details.noTournamentHistory")}
-					</p>
+					{tournaments.length > 0 ? (
+						<ul className={styles.tournamentHistory}>
+							{tournaments.map((tournament) => (
+								<TournamentHistoryEntry
+									key={tournament.tournamentId}
+									tournament={tournament}
+								/>
+							))}
+						</ul>
+					) : (
+						<p className="text-center text-lighter text-xxs">
+							{t("trophies:details.noTournamentHistory")}
+						</p>
+					)}
 				</div>
 				<div className="stack xs">
 					<Divider className={styles.divider} smallText>
@@ -77,5 +95,55 @@ export default function TrophyDetailsPage() {
 				</div>
 			</div>
 		</div>
+	);
+}
+
+function TournamentHistoryEntry({
+	tournament,
+}: {
+	tournament: TrophyDetailsLoaderData["tournaments"][number];
+}) {
+	const { formatDate } = useTimeFormat();
+
+	return (
+		<li>
+			<Link
+				to={tournamentPage(tournament.tournamentId)}
+				className={styles.tournamentHistoryEntry}
+			>
+				<img
+					src={tournament.logoUrl}
+					alt=""
+					width={32}
+					height={32}
+					className={styles.tournamentHistoryLogo}
+				/>
+				<div className="stack xxs">
+					<span className={styles.tournamentHistoryName}>
+						<p>{tournament.name}</p>
+						{tournament.tier ? (
+							<TierPill tier={tournament.tier} />
+						) : tournament.tentativeTier ? (
+							<TierPill tier={tournament.tentativeTier} isTentative />
+						) : null}
+					</span>
+					<div className={styles.tournamentHistoryMeta}>
+						<span className={styles.tournamentHistoryMetaItem}>
+							<Users className={styles.tournamentHistoryIcon} />
+							{tournament.teamsCount}
+						</span>
+						{tournament.startTime ? (
+							<span className={styles.tournamentHistoryMetaItem}>
+								{formatDate(databaseTimestampToDate(tournament.startTime), {
+									day: "numeric",
+									month: "short",
+									year: "numeric",
+								})}
+							</span>
+						) : null}
+					</div>
+				</div>
+			</Link>
+		</li>
 	);
 }

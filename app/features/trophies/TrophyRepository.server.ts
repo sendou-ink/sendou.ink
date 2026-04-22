@@ -1,9 +1,17 @@
+import { sub } from "date-fns";
 import type { ExpressionBuilder } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import {
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
+import {
+	COMMON_USER_FIELDS,
+	tournamentLogoWithDefault,
+} from "~/utils/kysely.server";
+import { getTentativeTier } from "../tournament-organization/core/tentativeTiers.server";
 import { TROPHY_APPROVALS_REQUIRED } from "./trophies-constants";
 
 export async function all() {
@@ -86,6 +94,54 @@ export async function findById(trophyId: number) {
 		.executeTakeFirst();
 
 	return row ?? null;
+}
+
+export async function findTournamentsByTrophyId(trophyId: number) {
+	const rows = await db
+		.selectFrom("CalendarEvent")
+		.innerJoin("Tournament", "Tournament.id", "CalendarEvent.tournamentId")
+		.select((eb) => [
+			"Tournament.id as tournamentId",
+			"CalendarEvent.name",
+			"CalendarEvent.organizationId",
+			"Tournament.tier",
+			tournamentLogoWithDefault(eb).as("logoUrl"),
+			eb
+				.selectFrom("CalendarEventDate")
+				.select((eb2) => eb2.fn.min<number>("startTime").as("startTime"))
+				.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id")
+				.as("startTime"),
+			eb
+				.selectFrom("TournamentTeam")
+				.select((eb2) => eb2.fn.countAll<number>().as("count"))
+				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+				.where("TournamentTeam.isPlaceholder", "=", 0)
+				.as("teamsCount"),
+		])
+		.where("CalendarEvent.trophyId", "=", trophyId)
+		.where("CalendarEvent.hidden", "=", 0)
+		.orderBy("startTime", "desc")
+		.execute();
+
+	return rows.map((row) => {
+		const isPastEvent =
+			row.startTime !== null &&
+			databaseTimestampToDate(row.startTime) < sub(new Date(), { days: 1 });
+		const tentativeTier =
+			row.tier === null && row.organizationId !== null && !isPastEvent
+				? getTentativeTier(row.organizationId, row.name)
+				: null;
+
+		return {
+			tournamentId: row.tournamentId,
+			name: row.name,
+			tier: row.tier,
+			tentativeTier,
+			logoUrl: row.logoUrl,
+			startTime: row.startTime,
+			teamsCount: row.teamsCount,
+		};
+	});
 }
 
 export async function findOrganizationIdById(trophyId: number) {
