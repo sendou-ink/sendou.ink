@@ -84,8 +84,8 @@ importers:
         specifier: 8.2.1
         version: 8.2.1
       i18next-http-backend:
-        specifier: 3.0.4
-        version: 3.0.4
+        specifier: 3.0.5
+        version: 3.0.5
       ics:
         specifier: 3.11.0
         version: 3.11.0
@@ -3829,8 +3829,8 @@ packages:
   i18next-browser-languagedetector@8.2.1:
     resolution: {integrity: sha512-bZg8+4bdmaOiApD7N7BPT9W8MLZG+nPTOFlLiJiT8uzKXFjhxw4v2ierCXOwB5sFDMtuA5G4kgYZ0AznZxQ/cw==}
 
-  i18next-http-backend@3.0.4:
-    resolution: {integrity: sha512-udwrBIE6cNpqn1gRAqRULq3+7MzIIuaiKRWrz++dVz5SqWW2VwXmPJtAgkI0JtMLFaADC9qNmnZAxWAhsxXx2g==}
+  i18next-http-backend@3.0.5:
+    resolution: {integrity: sha512-QaWHnsxieEDcqKe+vo/RFqpiIFRi/KBqlOSPcUlvinBaISCeiTRCbtrazHAjtHtsLC66oDsROAH8frWkQzfMMQ==}
 
   i18next-locales-sync@2.1.1:
     resolution: {integrity: sha512-NC/Zw0kKT+VULSh6zzDSxvqDUS9BHY6tk2cj93qQ/yaNuKc3hg4VlJFDeuaxdovY1/LobcdQCAc6g1U03qe2SQ==}
@@ -9616,7 +9616,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.2
 
-  i18next-http-backend@3.0.4:
+  i18next-http-backend@3.0.5:
     dependencies:
       cross-fetch: 4.1.0
     transitivePeerDependencies:

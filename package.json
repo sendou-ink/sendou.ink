@@ -61,7 +61,7 @@
 		"gray-matter": "4.0.3",
 		"i18next": "25.10.10",
 		"i18next-browser-languagedetector": "8.2.1",
-		"i18next-http-backend": "3.0.4",
+		"i18next-http-backend": "3.0.5",
 		"ics": "3.11.0",
 		"isbot": "5.1.38",
 		"jsoncrush": "1.1.8",
