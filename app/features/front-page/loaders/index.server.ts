@@ -8,6 +8,7 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
 import * as SplatoonRotationRepository from "~/features/splatoon-rotations/SplatoonRotationRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
+import { databaseTimestampNow } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import { discordAvatarUrl, teamPage, userPage } from "~/utils/urls";
 import * as ShowcaseTournaments from "../core/ShowcaseTournaments.server";
@@ -44,6 +45,7 @@ export const loader = async () => {
 		leaderboards,
 		rotations,
 		weaponPool,
+		now: databaseTimestampNow(),
 	};
 };
 

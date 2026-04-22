@@ -18,7 +18,10 @@ import { tournamentFromDBCached } from "../core/Tournament.server";
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
 import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
 import { matchPageParamsSchema } from "../tournament-bracket-schemas.server";
-import { matchEndedEarly } from "../tournament-bracket-utils";
+import {
+	matchEndedEarly,
+	tournamentTeamToActiveRosterUserIds,
+} from "../tournament-bracket-utils";
 
 export type TournamentMatchLoaderData = typeof loader;
 
@@ -144,10 +147,26 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	if (
 		match.chatCode &&
 		!matchIsOver &&
-		match.opponentOne &&
-		match.opponentTwo
+		match.opponentOne?.id &&
+		match.opponentTwo?.id
 	) {
-		const playerIds = match.players.map((p) => p.id);
+		// only add global chat for active roster (or all if not yet set i.e. first match)
+		// if roster changed mid-set the subs can still see the chat on the match page
+		const teamAlpha = tournament.teamById(match.opponentOne.id)!;
+		const teamAlphaActiveRoster =
+			tournamentTeamToActiveRosterUserIds(
+				teamAlpha,
+				tournament.minMembersPerTeam,
+			) ?? teamAlpha.members.map((m) => m.userId);
+		const teamBravo = tournament.teamById(match.opponentTwo.id)!;
+		const teamBravoActiveRoster =
+			tournamentTeamToActiveRosterUserIds(
+				teamBravo,
+				tournament.minMembersPerTeam,
+			) ?? teamBravo.members.map((m) => m.userId);
+
+		const playerIds = [...teamAlphaActiveRoster, ...teamBravoActiveRoster];
+
 		const matchContext = tournament.matchContextNamesById(matchId);
 
 		ChatSystemMessage.setMetadata({
@@ -165,14 +184,15 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		tournament.isOrganizerOrStreamer(user) ||
 		match.players.some((p) => p.id === user?.id);
 
-	const isStaff = user?.roles.includes("STAFF") ?? false;
-	const chatCodeExpired = tournament.ctx.isFinalized
-		? true
-		: !chatAccessible({
-				isStaff,
-				expiresAfterDays: 90,
-				comparedTo: tournament.ctx.startTime,
-			});
+	const isSiteStaff = user?.roles.includes("STAFF") ?? false;
+	const isTournamentStaff = tournament.isOrganizer(user);
+	const chatCodeExpired =
+		tournament.ctx.isFinalized && !isSiteStaff && !isTournamentStaff
+			? true
+			: !chatAccessible({
+					expiresAfterDays: tournament.isLeagueDivision ? 30 : 7,
+					comparedTo: tournament.ctx.startTime,
+				});
 
 	const visibleChatCode =
 		shouldSeeChat && !chatCodeExpired ? match.chatCode : undefined;

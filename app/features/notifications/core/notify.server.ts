@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next";
 import pLimit from "p-limit";
-import { WebPushError } from "web-push";
+import { type Urgency, WebPushError } from "web-push";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import type { NotificationSubscription } from "../../../db/tables";
 import { i18next } from "../../../modules/i18n/i18next.server";
@@ -12,6 +12,29 @@ import {
 	notificationLink,
 } from "../notifications-utils";
 import webPush, { webPushEnabled } from "./webPush.server";
+
+const NOTIFICATION_URGENCY: Record<Notification["type"], Urgency> = {
+	SQ_ADDED_TO_GROUP: "high",
+	SQ_NEW_MATCH: "high",
+	TO_ADDED_TO_TEAM: "normal",
+	TO_BRACKET_STARTED: "high",
+	TO_CHECK_IN_OPENED: "high",
+	TO_TEST_CREATED: "normal",
+	TO_LIKE_RECEIVED: "high",
+	TO_LIKE_ACCEPTED: "high",
+	BADGE_ADDED: "normal",
+	BADGE_MANAGER_ADDED: "normal",
+	PLUS_VOTING_STARTED: "normal",
+	PLUS_SUGGESTION_ADDED: "normal",
+	TAGGED_TO_ART: "normal",
+	SEASON_STARTED: "normal",
+	SCRIM_NEW_REQUEST: "high",
+	SCRIM_SCHEDULED: "high",
+	SCRIM_CANCELED: "high",
+	SCRIM_STARTING_SOON: "high",
+	COMMISSIONS_CLOSED: "normal",
+	FRIEND_REQUEST_RECEIVED: "normal",
+};
 
 /**
  * Create notifications both in the database and send push notifications to users (if enabled).
@@ -125,6 +148,7 @@ async function sendPushNotification({
 		await webPush.sendNotification(
 			subscription,
 			JSON.stringify(pushNotificationOptions(notification, t)),
+			{ urgency: NOTIFICATION_URGENCY[notification.type] },
 		);
 	} catch (err) {
 		if (!(err instanceof WebPushError)) {

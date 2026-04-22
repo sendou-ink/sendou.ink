@@ -9,9 +9,8 @@ Another key objective is to bridge the gap between casual and competitive player
 <details>
 <summary>Screenshots</summary>
 
-<img src="screenshot-1.png">
-<img src="screenshot-2.png">
-<img src="screenshot-3.png">
+<img src="desktop-bracket.png">
+<img src="mobile-analyzer.png">
 
 </details>
 

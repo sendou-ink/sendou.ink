@@ -387,21 +387,21 @@ export function Layout({
 							</Modal>
 						</ModalOverlay>
 					</DialogTrigger>
-					<DialogTrigger
+					<ModalOverlay
+						className={styles.chatSidebarModalOverlay}
+						isDismissable
 						isOpen={chatSidebarModalOpen}
 						onOpenChange={setChatSidebarModalOpen}
 					>
-						<ModalOverlay
-							className={styles.chatSidebarModalOverlay}
-							isDismissable
-						>
-							<Modal className={styles.chatSidebarModal}>
-								<Dialog className={styles.chatSidebarModalDialog}>
-									<ChatSidebar />
-								</Dialog>
-							</Modal>
-						</ModalOverlay>
-					</DialogTrigger>
+						<Modal className={styles.chatSidebarModal}>
+							<Dialog
+								className={styles.chatSidebarModalDialog}
+								aria-label={t("common:chat.sidebar.title")}
+							>
+								<ChatSidebar />
+							</Dialog>
+						</Modal>
+					</ModalOverlay>
 					<SideNavCollapseButton
 						onToggle={() => setSideNavCollapsed(!sideNavCollapsed)}
 						className={styles.sideNavCollapseButton}

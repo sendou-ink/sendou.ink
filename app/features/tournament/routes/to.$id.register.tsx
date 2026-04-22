@@ -1381,15 +1381,12 @@ function TOPickedMapPoolInfo() {
 		<Section title={t("calendar:forms.mapPool")}>
 			<div>
 				<MapPoolStages mapPool={mapPool} />
-				<LinkButton
-					className="mt-4"
-					to={mapsPageWithMapPool(mapPool)}
-					variant="outlined"
-					size="small"
-				>
-					<Image alt="" path={navIconUrl("maps")} width={22} height={22} />
-					{t("calendar:createMapList")}
-				</LinkButton>
+				<div className="stack items-center mt-4">
+					<LinkButton to={mapsPageWithMapPool(mapPool)} variant="outlined">
+						<Image alt="" path={navIconUrl("maps")} width={22} height={22} />
+						{t("calendar:createMapList")}
+					</LinkButton>
+				</div>
 			</div>
 		</Section>
 	);

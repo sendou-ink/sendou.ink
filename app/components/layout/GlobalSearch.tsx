@@ -3,6 +3,7 @@ import type { TFunction } from "i18next";
 import { Search } from "lucide-react";
 import * as React from "react";
 import {
+	Button,
 	Dialog,
 	DialogTrigger,
 	ListBox,
@@ -136,15 +137,11 @@ export function GlobalSearch() {
 
 	return (
 		<DialogTrigger isOpen={isOpen} onOpenChange={handleOpenChange}>
-			<button
-				type="button"
-				className={styles.searchButton}
-				onClick={() => setIsOpen(true)}
-			>
+			<Button className={styles.searchButton}>
 				<Search className={styles.searchIcon} />
 				<span className={styles.searchPlaceholder}>{t("common:search")}</span>
 				<kbd className={styles.searchKbd}>{isMac ? "Cmd+K" : "Ctrl+K"}</kbd>
-			</button>
+			</Button>
 			<ModalOverlay className={styles.overlay} isDismissable>
 				<Modal className={styles.modal}>
 					<Dialog className={styles.dialog} aria-label={t("common:search")}>

@@ -544,13 +544,27 @@ const baseTournamentResultsQuery = (userId: number) =>
 		.innerJoin("Tournament", "Tournament.id", "TournamentResult.tournamentId")
 		.where("TournamentResult.userId", "=", userId);
 
+const escapeLikePattern = (value: string) =>
+	value.replace(/[\\%_]/g, (char) => `\\${char}`);
+
+const tournamentNameLikeExpr = (tournamentName: string) => {
+	const pattern = `%${escapeLikePattern(tournamentName)}%`;
+	return sql<boolean>`${sql.ref("CalendarEvent.name")} like ${pattern} escape '\\'`;
+};
+
 export function findResultsByUserId(
 	userId: number,
 	{
 		showHighlightsOnly = false,
 		limit,
 		offset,
-	}: { showHighlightsOnly?: boolean; limit?: number; offset?: number } = {},
+		tournamentName,
+	}: {
+		showHighlightsOnly?: boolean;
+		limit?: number;
+		offset?: number;
+		tournamentName?: string;
+	} = {},
 ) {
 	let calendarEventResultsQuery = baseCalendarEventResultsQuery(userId).select(
 		({ eb, fn }) => [
@@ -634,6 +648,15 @@ export function findResultsByUserId(
 		);
 	}
 
+	if (tournamentName) {
+		calendarEventResultsQuery = calendarEventResultsQuery.where(
+			tournamentNameLikeExpr(tournamentName),
+		);
+		tournamentResultsQuery = tournamentResultsQuery.where(
+			tournamentNameLikeExpr(tournamentName),
+		);
+	}
+
 	let query = calendarEventResultsQuery
 		.unionAll(tournamentResultsQuery)
 		.orderBy("startTime", "desc")
@@ -652,7 +675,10 @@ export function findResultsByUserId(
 
 export async function countResultsByUserId(
 	userId: number,
-	{ showHighlightsOnly = false }: { showHighlightsOnly?: boolean } = {},
+	{
+		showHighlightsOnly = false,
+		tournamentName,
+	}: { showHighlightsOnly?: boolean; tournamentName?: string } = {},
 ) {
 	let calendarEventResultsQuery = baseCalendarEventResultsQuery(userId).select(
 		({ fn }) => [fn.countAll<number>().as("count")],
@@ -672,6 +698,15 @@ export async function countResultsByUserId(
 			"TournamentResult.isHighlight",
 			"=",
 			1,
+		);
+	}
+
+	if (tournamentName) {
+		calendarEventResultsQuery = calendarEventResultsQuery.where(
+			tournamentNameLikeExpr(tournamentName),
+		);
+		tournamentResultsQuery = tournamentResultsQuery.where(
+			tournamentNameLikeExpr(tournamentName),
 		);
 	}
 

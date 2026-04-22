@@ -159,6 +159,7 @@
 	"results.highlights.explanation": "Sélectionnez les résultats que vous voulez mettre en avant",
 	"results.button.showHighlights": "",
 	"results.button.showAll": "",
+	"results.filter.placeholder": "",
 	"forms.errors.maxWeapons": "Nombre d'armes maximum atteint",
 	"search.info": "",
 	"search.noResults": "Aucun utilisateur correspondant à '{{query}}' n'a été trouvé",

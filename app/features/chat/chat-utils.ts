@@ -3,8 +3,10 @@ import type { ChatMessage } from "./chat-types";
 
 const STAFF_EXTRA_DAYS = 7;
 
+/** Should a chat room be still accessible via chat code. */
 export function chatAccessible(args: {
-	isStaff: boolean;
+	/** Is the user site staff? Allows them to see the chat code for extra days. */
+	isStaff?: boolean;
 	expiresAfterDays: number;
 	comparedTo: Date;
 }): boolean {

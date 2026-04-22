@@ -159,6 +159,7 @@
 	"results.highlights.explanation": "Scegli il risultato che vuoi mettere come highlight",
 	"results.button.showHighlights": "Mostra highlight",
 	"results.button.showAll": "Mostra tutti",
+	"results.filter.placeholder": "",
 	"forms.errors.maxWeapons": "Massimo numero di armi raggiunto",
 	"search.info": "Cerca utenti tramite nome Discord o Splatoon 3",
 	"search.noResults": "Nessun utente trovato per '{{query}}'",

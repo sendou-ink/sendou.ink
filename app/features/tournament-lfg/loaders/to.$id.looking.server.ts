@@ -29,6 +29,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		throw new Response(null, { status: 404 });
 	}
 
+	if (tournament.isInvitational) {
+		throw new Response(null, { status: 404 });
+	}
+
 	if (tournament.isLeagueSignup && !tournament.registrationOpen) {
 		throw new Response(null, { status: 404 });
 	}

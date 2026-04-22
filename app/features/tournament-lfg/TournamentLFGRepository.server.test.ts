@@ -216,6 +216,94 @@ describe("allLikesByTeamId", () => {
 	});
 });
 
+describe("startLooking", () => {
+	beforeEach(async () => {
+		await dbInsertUsers(3);
+	});
+
+	afterEach(() => {
+		dbReset();
+	});
+
+	const createRegisteredTeam = async (
+		tournamentId: number,
+		memberUserIds: number[],
+	) => {
+		const team = await db
+			.insertInto("TournamentTeam")
+			.values({
+				tournamentId,
+				name: "Real Team",
+				inviteCode: `inv-${tournamentId}-${memberUserIds.join("-")}`,
+				isLooking: 0,
+				isPlaceholder: 0,
+			})
+			.returning("id")
+			.executeTakeFirstOrThrow();
+
+		for (const [idx, userId] of memberUserIds.entries()) {
+			await db
+				.insertInto("TournamentTeamMember")
+				.values({
+					tournamentTeamId: team.id,
+					userId,
+					role: idx === 0 ? "OWNER" : "REGULAR",
+				})
+				.execute();
+		}
+
+		return team;
+	};
+
+	test("generates chatCode for a 2+ member team", async () => {
+		const tournament = await createTournament();
+		const team = await createRegisteredTeam(tournament.id, [1, 2]);
+
+		const pickup = await TournamentLFGRepository.startLooking(team.id);
+
+		expect(pickup).not.toBeNull();
+		expect(pickup?.chatCode).toMatch(/.+/);
+		expect(pickup?.memberUserIds.sort()).toEqual([1, 2]);
+
+		const row = await db
+			.selectFrom("TournamentTeam")
+			.select("chatCode")
+			.where("id", "=", team.id)
+			.executeTakeFirstOrThrow();
+		expect(row.chatCode).toBe(pickup?.chatCode);
+	});
+
+	test("returns null when team has only 1 member", async () => {
+		const tournament = await createTournament();
+		const team = await createRegisteredTeam(tournament.id, [1]);
+
+		const pickup = await TournamentLFGRepository.startLooking(team.id);
+
+		expect(pickup).toBeNull();
+
+		const row = await db
+			.selectFrom("TournamentTeam")
+			.select("chatCode")
+			.where("id", "=", team.id)
+			.executeTakeFirstOrThrow();
+		expect(row.chatCode).toBeNull();
+	});
+
+	test("reuses existing chatCode if already set", async () => {
+		const tournament = await createTournament();
+		const team = await createRegisteredTeam(tournament.id, [1, 2]);
+		await db
+			.updateTable("TournamentTeam")
+			.set({ chatCode: "existing-code" })
+			.where("id", "=", team.id)
+			.execute();
+
+		const pickup = await TournamentLFGRepository.startLooking(team.id);
+
+		expect(pickup?.chatCode).toBe("existing-code");
+	});
+});
+
 describe("mergeTeams", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(5);
@@ -296,6 +384,50 @@ describe("mergeTeams", () => {
 		);
 
 		expect(groups).toHaveLength(0);
+	});
+
+	test("survivor gets a chatCode when merged size is 2+", async () => {
+		const tournament = await createTournament();
+		const team1 = await createPlaceholder(tournament.id, 1);
+		const team2 = await createPlaceholder(tournament.id, 2);
+
+		const result = await TournamentLFGRepository.mergeTeams({
+			survivingTeamId: team1.id,
+			otherTeamId: team2.id,
+			maxGroupSize: 4,
+		});
+
+		expect(result.survivor).not.toBeNull();
+		expect(result.survivor?.chatCode).toMatch(/.+/);
+		expect(result.survivor?.memberUserIds.sort()).toEqual([1, 2]);
+		expect(result.removedChatCode).toBeNull();
+
+		const row = await db
+			.selectFrom("TournamentTeam")
+			.select("chatCode")
+			.where("id", "=", team1.id)
+			.executeTakeFirstOrThrow();
+		expect(row.chatCode).toBe(result.survivor?.chatCode);
+	});
+
+	test("returns removedChatCode when other team had a chatCode", async () => {
+		const tournament = await createTournament();
+		const team1 = await createPlaceholder(tournament.id, 1);
+		const team2 = await createPlaceholder(tournament.id, 2);
+
+		await db
+			.updateTable("TournamentTeam")
+			.set({ chatCode: "other-code" })
+			.where("id", "=", team2.id)
+			.execute();
+
+		const result = await TournamentLFGRepository.mergeTeams({
+			survivingTeamId: team1.id,
+			otherTeamId: team2.id,
+			maxGroupSize: 4,
+		});
+
+		expect(result.removedChatCode).toBe("other-code");
 	});
 
 	test("clears likes on surviving team after merge", async () => {

@@ -12,7 +12,6 @@ import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type { RankedModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
-	databaseTimestampNow,
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
@@ -39,7 +38,7 @@ export function SplatoonRotations() {
 	const [activeFilter, setActiveFilter] =
 		React.useState<RotationModeFilter>("ALL");
 
-	const nowUnixLive = useNowUnix();
+	const nowUnixLive = useNowUnix(data.now);
 
 	const allInThePast = data.rotations.every(
 		(rotation) => rotation.endTime <= nowUnixLive,
@@ -47,8 +46,6 @@ export function SplatoonRotations() {
 	if (allInThePast) return null;
 
 	if (allInThePast || data.rotations.length === 0) return null;
-
-	const nowUnix = databaseTimestampNow();
 
 	const rotationsByType = new Map<
 		string,
@@ -63,8 +60,8 @@ export function SplatoonRotations() {
 		if (activeFilter !== "ALL" && rotation.mode !== activeFilter) continue;
 
 		const isCurrent =
-			rotation.startTime <= nowUnix && rotation.endTime > nowUnix;
-		const isNext = rotation.startTime > nowUnix;
+			rotation.startTime <= nowUnixLive && rotation.endTime > nowUnixLive;
+		const isNext = rotation.startTime > nowUnixLive;
 
 		if (!isCurrent && !isNext) continue;
 
@@ -130,12 +127,11 @@ export function SplatoonRotations() {
 	);
 }
 
-function useNowUnix() {
-	const [now, setNow] = React.useState(() =>
-		dateToDatabaseTimestamp(new Date()),
-	);
+function useNowUnix(initialNow: number) {
+	const [now, setNow] = React.useState(initialNow);
 
 	React.useEffect(() => {
+		setNow(dateToDatabaseTimestamp(new Date()));
 		const interval = setInterval(() => {
 			setNow(dateToDatabaseTimestamp(new Date()));
 		}, 60_000);

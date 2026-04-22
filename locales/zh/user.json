@@ -159,6 +159,7 @@
 	"results.highlights.explanation": "选择您想强调的高光成绩",
 	"results.button.showHighlights": "显示高光成绩",
 	"results.button.showAll": "显示全部成绩",
+	"results.filter.placeholder": "",
 	"forms.errors.maxWeapons": "已达到武器数量上限",
 	"search.info": "",
 	"search.noResults": "没有符合 '{{query}}' 的用户",

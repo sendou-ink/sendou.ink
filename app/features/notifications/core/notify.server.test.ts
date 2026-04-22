@@ -251,6 +251,7 @@ describe("notify() - web push notifications", () => {
 		expect(mockSendNotification).toHaveBeenCalledWith(
 			mockSubscription,
 			expect.any(String),
+			{ urgency: "high" },
 		);
 
 		const callArgs = mockSendNotification.mock.calls[0][1];
@@ -306,10 +307,12 @@ describe("notify() - web push notifications", () => {
 		expect(mockSendNotification).toHaveBeenCalledWith(
 			mockSubscription1,
 			expect.any(String),
+			{ urgency: "normal" },
 		);
 		expect(mockSendNotification).toHaveBeenCalledWith(
 			mockSubscription2,
 			expect.any(String),
+			{ urgency: "normal" },
 		);
 	});
 
