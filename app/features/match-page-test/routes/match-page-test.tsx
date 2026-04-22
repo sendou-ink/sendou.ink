@@ -1,7 +1,14 @@
-import { ArrowLeft, Ban } from "lucide-react";
+import { ArrowLeft, Ban, Undo2 } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabs,
+} from "~/components/elements/Tabs";
 import { Main } from "~/components/Main";
+import { MatchActionPickBanTab } from "~/components/match-page/MatchActionPickBanTab";
 import { MatchActionTab } from "~/components/match-page/MatchActionTab";
 import {
 	IconBanner,
@@ -18,12 +25,21 @@ import { MatchTabs } from "~/components/match-page/MatchTabs";
 import { logger } from "~/utils/logger";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 
+type ActionVariant =
+	| "winner"
+	| "counterpick-stage"
+	| "ban-stage"
+	| "ban-stage-only"
+	| "pick-mode"
+	| "ban-mode";
+
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
 };
 
 export default function MatchPageTestRoute() {
 	const { t } = useTranslation(["q"]);
+	const [actionVariant, setActionVariant] = useState<ActionVariant>("winner");
 
 	return (
 		<Main>
@@ -38,6 +54,22 @@ export default function MatchPageTestRoute() {
 				>
 					Round 2.1
 				</MatchPageHeader>
+
+				<SendouTabs
+					selectedKey={actionVariant}
+					onSelectionChange={(key) => setActionVariant(key as ActionVariant)}
+					disappearing={false}
+					padded={false}
+				>
+					<SendouTabList>
+						<SendouTab id="winner">Winner</SendouTab>
+						<SendouTab id="counterpick-stage">Counterpick</SendouTab>
+						<SendouTab id="ban-stage">Ban stage</SendouTab>
+						<SendouTab id="ban-stage-only">Ban stage (any mode)</SendouTab>
+						<SendouTab id="pick-mode">Pick mode</SendouTab>
+						<SendouTab id="ban-mode">Ban mode</SendouTab>
+					</SendouTabList>
+				</SendouTabs>
 
 				<MatchBannerContainer>
 					<MatchBannerTopRow
@@ -239,16 +271,94 @@ export default function MatchPageTestRoute() {
 							},
 						]}
 					/>
-					<MatchActionTab
-						teams={[
-							{ id: 1, name: "Chimera" },
-							{ id: 2, name: "Koopa Clan" },
-						]}
-						ownTeamId={1}
-						stageId={4}
-						mode="SZ"
-						withPoints={true}
-					/>
+					{actionVariant === "winner" ? (
+						<MatchActionTab
+							teams={[
+								{ id: 1, name: "Chimera" },
+								{ id: 2, name: "Koopa Clan" },
+							]}
+							ownTeamId={1}
+							stageId={4}
+							mode="SZ"
+							withPoints={true}
+							actionButtons={
+								<SendouButton
+									variant="minimal-destructive"
+									size="miniscule"
+									icon={<Undo2 size={16} />}
+								>
+									{t("q:match.undoReport")}
+								</SendouButton>
+							}
+						/>
+					) : actionVariant === "counterpick-stage" ? (
+						<MatchActionPickBanTab
+							type="PICK"
+							options={[
+								{ stageId: 1, mode: "SZ", picker: "US" },
+								{ stageId: 2, mode: "SZ", picker: "BOTH" },
+								{ stageId: 3, mode: "SZ", picker: "THEM" },
+								{ stageId: 4, mode: "TC", picker: "US" },
+								{ stageId: 5, mode: "TC", picker: "THEM" },
+								{ stageId: 6, mode: "RM", picker: "BOTH" },
+								{ stageId: 7, mode: "RM", picker: "US" },
+							]}
+							onSubmit={(data) => logger.info("pick submit", data)}
+						/>
+					) : actionVariant === "ban-stage" ? (
+						<MatchActionPickBanTab
+							type="BAN"
+							options={[
+								{ stageId: 1, mode: "SZ", nth: 1 },
+								{ stageId: 2, mode: "SZ", nth: 2 },
+								{ stageId: 4, mode: "TC", nth: 3 },
+								{ stageId: 5, mode: "TC", nth: 4 },
+								{ stageId: 6, mode: "RM", nth: 5 },
+								{ stageId: 7, mode: "RM", nth: 6 },
+								{ stageId: 8, mode: "CB", nth: 7 },
+								{ stageId: 9, mode: "CB", nth: 8 },
+							]}
+							onSubmit={(data) => logger.info("ban submit", data)}
+						/>
+					) : actionVariant === "ban-stage-only" ? (
+						<MatchActionPickBanTab
+							type="BAN"
+							options={[
+								{ stageId: 1 },
+								{ stageId: 2 },
+								{ stageId: 3 },
+								{ stageId: 4 },
+								{ stageId: 5 },
+								{ stageId: 6 },
+								{ stageId: 7 },
+								{ stageId: 8 },
+								{ stageId: 9 },
+							]}
+							onSubmit={(data) => logger.info("ban stage-only submit", data)}
+						/>
+					) : actionVariant === "pick-mode" ? (
+						<MatchActionPickBanTab
+							type="PICK"
+							options={[
+								{ mode: "SZ" },
+								{ mode: "TC" },
+								{ mode: "RM" },
+								{ mode: "CB" },
+							]}
+							onSubmit={(data) => logger.info("pick mode submit", data)}
+						/>
+					) : (
+						<MatchActionPickBanTab
+							type="BAN"
+							options={[
+								{ mode: "SZ" },
+								{ mode: "TC" },
+								{ mode: "RM" },
+								{ mode: "CB" },
+							]}
+							onSubmit={(data) => logger.info("ban mode submit", data)}
+						/>
+					)}
 					<MatchResultTab
 						teams={{
 							alpha: { name: "me in japan" },

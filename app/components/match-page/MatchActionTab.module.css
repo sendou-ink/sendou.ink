@@ -4,25 +4,22 @@
 	grid-template-areas:
 		"header header header"
 		"actions actions actions"
-		"alpha stage bravo"
-		".     label ."
+		"selection selection selection"
 		"points-alpha ko points-bravo"
-		". submit .";
+		"submit submit submit";
 	justify-items: center;
 	align-items: center;
-	gap: var(--s-4);
+	gap: var(--s-5);
 	container-type: inline-size;
 
 	@container (max-width: 599px) {
-		grid-template-columns: auto 1fr;
+		grid-template-columns: 1fr;
 		grid-template-areas:
-			"header header"
-			"actions actions"
-			"stage alpha"
-			"stage bravo"
-			"label ."
-			"points points"
-			"submit submit";
+			"header"
+			"actions"
+			"selection"
+			"points"
+			"submit";
 	}
 }
 
@@ -31,6 +28,7 @@
 	font-size: var(--font-md);
 	font-weight: var(--weight-semi);
 	text-align: center;
+	text-box: trim-start cap alphabetic;
 }
 
 .actionButtons {
@@ -41,7 +39,26 @@
 }
 
 .selectionRow {
-	display: contents;
+	grid-area: selection;
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	grid-template-areas:
+		"alpha stage bravo"
+		".     text  .";
+	column-gap: var(--s-4);
+	row-gap: var(--s-1);
+	justify-items: center;
+	align-items: center;
+	width: 100%;
+
+	@container (max-width: 599px) {
+		column-gap: var(--s-2);
+		grid-template-columns: auto 1fr;
+		grid-template-areas:
+			"stage alpha"
+			"stage bravo"
+			"text  .";
+	}
 }
 
 .teamRadioContainer {
@@ -96,14 +113,13 @@
 }
 
 .stageLabel {
-	grid-area: label;
+	grid-area: text;
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
 	font-size: var(--font-3xs);
 	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
-	margin-block-start: -11px;
 }
 
 .pointsRow {
@@ -129,7 +145,6 @@
 	flex-direction: column;
 	align-items: center;
 	gap: var(--s-1);
-	align-self: flex-end;
 }
 
 .pointsBravo {
@@ -139,7 +154,6 @@
 
 .submit {
 	grid-area: submit;
-	margin-block-start: calc(-1 * var(--s-2));
 }
 
 .checkCircle {
