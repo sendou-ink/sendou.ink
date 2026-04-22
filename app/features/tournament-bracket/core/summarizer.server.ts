@@ -18,6 +18,7 @@ import {
 } from "../tournament-bracket-utils";
 import type { Standing } from "./Bracket";
 import type { ParsedBracket } from "./Progression";
+import * as Progression from "./Progression";
 
 export interface TournamentSummary {
 	skills: Omit<
@@ -41,6 +42,7 @@ type TeamsArg = Array<{
 	id: number;
 	members: Array<{ userId: number }>;
 	startingBracketIdx?: number | null;
+	abDivision?: number | null;
 }>;
 
 type Rating = Pick<Tables["Skill"], "mu" | "sigma">;
@@ -574,25 +576,31 @@ function tournamentResults({
 }) {
 	const result: TournamentSummary["tournamentResults"] = [];
 
-	const firstPlaceFinishesCount = finalStandings.filter(
-		(s) => s.placement === 1,
-	).length;
-	const isMultiStartingBracket = firstPlaceFinishesCount > 1;
+	const isMultiStartingBracket =
+		Progression.startingBrackets(progression).length > 1;
+	const isAbDivisionsFinals = Progression.hasAbDivisionsFinals(progression);
 
 	for (const standing of finalStandings) {
 		const team = teams.find((t) => t.id === standing.team.id);
 		invariant(team);
-		const div =
-			// second check should be redundant, but just here in case
-			typeof team.startingBracketIdx === "number" && isMultiStartingBracket
-				? getBracketProgressionLabel(team.startingBracketIdx, progression)
-				: null;
 
-		const divisionParticipantCount =
-			div !== null
-				? teams.filter((t) => t.startingBracketIdx === team.startingBracketIdx)
-						.length
-				: participantCount;
+		let div: string | null = null;
+		let divisionParticipantCount = participantCount;
+
+		if (isAbDivisionsFinals && typeof team.abDivision === "number") {
+			div = team.abDivision === 0 ? "A" : "B";
+			divisionParticipantCount = teams.filter(
+				(t) => t.abDivision === team.abDivision,
+			).length;
+		} else if (
+			isMultiStartingBracket &&
+			typeof team.startingBracketIdx === "number"
+		) {
+			div = getBracketProgressionLabel(team.startingBracketIdx, progression);
+			divisionParticipantCount = teams.filter(
+				(t) => t.startingBracketIdx === team.startingBracketIdx,
+			).length;
+		}
 
 		for (const player of standing.team.members) {
 			result.push({

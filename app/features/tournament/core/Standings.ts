@@ -143,27 +143,64 @@ export function matchesPlayed({
 export function tournamentStandings(
 	tournament: Tournament,
 ): TournamentStandingsResult {
-	const startingBracketIdxs = Progression.startingBrackets(
-		tournament.ctx.settings.bracketProgression,
-	);
+	const progression = tournament.ctx.settings.bracketProgression;
+	const startingBracketIdxs = Progression.startingBrackets(progression);
 
 	if (startingBracketIdxs.length <= 1) {
+		const standings = tournamentStandingsForBracket(tournament, undefined);
+
+		if (Progression.hasAbDivisionsFinals(progression)) {
+			return {
+				type: "multi",
+				standings: [
+					{
+						div: "A",
+						standings: rePlaceStandings(
+							standings.filter((s) => s.team.abDivision === 0),
+						),
+					},
+					{
+						div: "B",
+						standings: rePlaceStandings(
+							standings.filter((s) => s.team.abDivision === 1),
+						),
+					},
+				],
+			};
+		}
+
 		return {
 			type: "single",
-			standings: tournamentStandingsForBracket(tournament, undefined),
+			standings,
 		};
 	}
 
 	return {
 		type: "multi",
 		standings: startingBracketIdxs.map((bracketIdx) => ({
-			div: getBracketProgressionLabel(
-				bracketIdx,
-				tournament.ctx.settings.bracketProgression,
-			),
+			div: getBracketProgressionLabel(bracketIdx, progression),
 			standings: tournamentStandingsForBracket(tournament, bracketIdx),
 		})),
 	};
+}
+
+// xxx: any test for this?
+function rePlaceStandings(standings: Standing[]): Standing[] {
+	let lastOriginalPlacement = 0;
+	let currentPlacement = 0;
+	let teamsEncountered = 0;
+
+	return standings.map((standing) => {
+		teamsEncountered++;
+		if (standing.placement !== lastOriginalPlacement) {
+			lastOriginalPlacement = standing.placement;
+			currentPlacement = teamsEncountered;
+		}
+		return {
+			...standing,
+			placement: currentPlacement,
+		};
+	});
 }
 
 /**
