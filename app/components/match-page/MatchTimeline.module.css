@@ -1,10 +1,10 @@
 .root {
 	display: grid;
-	grid-template-columns: repeat(3, max-content);
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
 	row-gap: var(--s-6);
 	column-gap: var(--s-4);
 	align-items: center;
-	justify-content: center;
+	width: 100%;
 }
 
 .header {
@@ -26,6 +26,11 @@
 	font-weight: var(--weight-bold);
 	font-size: var(--font-md);
 	text-box: trim-start cap alphabetic;
+	overflow-wrap: anywhere;
+}
+
+.headerTeamNameLong {
+	font-size: var(--font-xs);
 }
 
 .headerAvatars {
@@ -46,8 +51,15 @@
 .mapSide {
 	display: grid;
 	grid-template-rows: auto 1fr auto;
-	justify-self: center;
 	align-self: stretch;
+
+	&:first-child {
+		justify-self: end;
+	}
+
+	&:last-child {
+		justify-self: start;
+	}
 }
 
 .mapCenter {

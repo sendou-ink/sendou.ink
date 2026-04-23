@@ -18,6 +18,8 @@ import { ModeImage, StageImage } from "../Image";
 import styles from "./MatchTimeline.module.css";
 import { WeaponPool } from "./WeaponPool";
 
+const LONG_TEAM_NAME_THRESHOLD = 16;
+
 type MatchSide = "ALPHA" | "BRAVO";
 
 export interface TimelineTeam {
@@ -146,7 +148,14 @@ function TimelineHeader({
 	return (
 		<div className={styles.header}>
 			<div className={styles.headerTeam}>
-				<div className={styles.headerTeamName}>{teams.alpha.name}</div>
+				<div
+					className={clsx(styles.headerTeamName, {
+						[styles.headerTeamNameLong]:
+							teams.alpha.name.length > LONG_TEAM_NAME_THRESHOLD,
+					})}
+				>
+					{teams.alpha.name}
+				</div>
 				{initialRosters ? (
 					<div className={styles.headerAvatars}>
 						{initialRosters.alpha.map((user) => (
@@ -159,7 +168,14 @@ function TimelineHeader({
 				{score.alpha}-{score.bravo}
 			</div>
 			<div className={clsx(styles.headerTeam, styles.headerTeamBravo)}>
-				<div className={styles.headerTeamName}>{teams.bravo.name}</div>
+				<div
+					className={clsx(styles.headerTeamName, {
+						[styles.headerTeamNameLong]:
+							teams.bravo.name.length > LONG_TEAM_NAME_THRESHOLD,
+					})}
+				>
+					{teams.bravo.name}
+				</div>
 				{initialRosters ? (
 					<div className={styles.headerAvatars}>
 						{initialRosters.bravo.map((user) => (

@@ -23,6 +23,8 @@ import {
 } from "./MatchTimeline";
 import { WeaponReporter, type WeaponReporterProps } from "./WeaponReporter";
 
+const LONG_TEAM_NAME_THRESHOLD = 16;
+
 interface ActionTabTeam {
 	id: number;
 	name: string;
@@ -300,6 +302,8 @@ function TeamRadioOption({
 }) {
 	const { t } = useTranslation(["q"]);
 
+	const isLongName = team.name.length > LONG_TEAM_NAME_THRESHOLD;
+
 	return (
 		<Radio
 			value={String(team.id)}
@@ -323,7 +327,13 @@ function TeamRadioOption({
 					<span className={styles.teamAvatarInfo}>
 						<Avatar url={team.avatar} identiconInput={team.name} size="xxs" />
 						<span className={styles.teamInfo}>
-							<span className={styles.teamName}>{team.name}</span>
+							<span
+								className={clsx(styles.teamName, {
+									[styles.teamNameLong]: isLongName,
+								})}
+							>
+								{team.name}
+							</span>
 							{hideLabel ? null : (
 								<span
 									className={clsx(styles.teamLabel, {

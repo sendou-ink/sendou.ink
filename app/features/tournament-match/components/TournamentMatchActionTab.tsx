@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { Undo2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
@@ -110,25 +111,24 @@ export function TournamentMatchActionTab({
 				);
 			}}
 			actionButtons={
-				scoreSum > 0 ? (
-					<SendouButton
-						variant="minimal-destructive"
-						size="miniscule"
-						icon={<Undo2 size={16} />}
-						isPending={undoFetcher.state !== "idle"}
-						onPress={() => {
-							undoFetcher.submit(
-								{
-									_action: "UNDO_REPORT_SCORE",
-									position: String(scoreSum - 1),
-								},
-								{ method: "post" },
-							);
-						}}
-					>
-						{t("q:match.undoReport")}
-					</SendouButton>
-				) : null
+				<SendouButton
+					variant="minimal-destructive"
+					size="miniscule"
+					icon={<Undo2 size={16} />}
+					isPending={undoFetcher.state !== "idle"}
+					className={clsx({ invisible: scoreSum === 0 })}
+					onPress={() => {
+						undoFetcher.submit(
+							{
+								_action: "UNDO_REPORT_SCORE",
+								position: String(scoreSum - 1),
+							},
+							{ method: "post" },
+						);
+					}}
+				>
+					{t("q:match.undoReport")}
+				</SendouButton>
 			}
 		/>
 	);

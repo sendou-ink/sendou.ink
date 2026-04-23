@@ -201,6 +201,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-1-5);
+	min-width: 0;
 }
 
 .checkCircleSelected {
@@ -217,11 +218,23 @@
 	display: flex;
 	flex-direction: column;
 	line-height: 1.3;
+	min-width: 0;
 }
 
 .teamName {
 	font-weight: var(--weight-semi);
 	font-size: var(--font-sm);
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.teamNameLong {
+	font-size: var(--font-2xs);
 }
 
 .teamLabel {
