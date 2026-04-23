@@ -104,7 +104,7 @@ export function MatchActionTab({
 					onConfirm={submit}
 				/>
 			) : (
-				<div className={styles.root}>
+				<div className={clsx(styles.root, { [styles.withPoints]: withPoints })}>
 					<div className={styles.title}>{t("q:match.action.selectWinner")}</div>
 					{actionButtons ? (
 						<div className={styles.actionButtons}>{actionButtons}</div>

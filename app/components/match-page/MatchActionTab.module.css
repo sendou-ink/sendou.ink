@@ -5,7 +5,6 @@
 		"header header header"
 		"actions actions actions"
 		"selection selection selection"
-		"points-alpha ko points-bravo"
 		"submit submit submit";
 	justify-items: center;
 	align-items: center;
@@ -14,6 +13,23 @@
 
 	@container (max-width: 599px) {
 		grid-template-columns: 1fr;
+		grid-template-areas:
+			"header"
+			"actions"
+			"selection"
+			"submit";
+	}
+}
+
+.withPoints {
+	grid-template-areas:
+		"header header header"
+		"actions actions actions"
+		"selection selection selection"
+		"points-alpha ko points-bravo"
+		"submit submit submit";
+
+	@container (max-width: 599px) {
 		grid-template-areas:
 			"header"
 			"actions"

@@ -6,7 +6,7 @@
 	background-color: var(--color-bg-higher);
 	border-radius: 0 0 var(--radius-box) var(--radius-box);
 	padding: var(--s-4);
-	margin: var(--s-4) calc(-1 * var(--s-4)) calc(-1 * var(--s-4));
+	margin: var(--s-4) calc(-1 * var(--s-4)) calc(-1 * var(--s-6));
 	container-type: inline-size;
 }
 
@@ -83,7 +83,7 @@
 	background-color: var(--color-bg-higher);
 	border-radius: 0 0 var(--radius-box) var(--radius-box);
 	padding: var(--s-2);
-	margin: 0 calc(-1 * var(--s-4)) calc(-1 * var(--s-4));
+	margin: var(--s-4) calc(-1 * var(--s-4)) calc(-1 * var(--s-6));
 }
 
 .rootExpanded {
@@ -92,8 +92,8 @@
 
 .collapseButton {
 	position: absolute;
-	top: var(--s-1);
-	right: var(--s-2);
+	top: var(--s-2);
+	right: var(--s-3);
 
 	& svg {
 		min-width: 22px;
