@@ -16,6 +16,7 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import { tournamentTeamPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { resolveHostingTeam, resolveRoomPass } from "../tournament-match-utils";
+import { TournamentMatchActionPickBanTab } from "./TournamentMatchActionPickBanTab";
 import { TournamentMatchActionTab } from "./TournamentMatchActionTab";
 import { TournamentMatchPickBanTab } from "./TournamentMatchPickBanTab";
 
@@ -70,6 +71,8 @@ export function TournamentMatchTabs({
 				})
 			: null;
 	const isPickBanStep = turnOfResult !== null && !hasMissingActiveRoster;
+	const hasPickBanSetup =
+		Boolean(data.match.roundMaps?.pickBan) && !!pickBanTeams;
 
 	const tabs = resolveVisibleTabs({
 		matchIsOver: data.matchIsOver,
@@ -78,6 +81,7 @@ export function TournamentMatchTabs({
 		hasCurrentMap: Boolean(currentMap),
 		hasMissingActiveRoster,
 		isPickBanStep,
+		hasPickBanSetup,
 	});
 
 	const userTeamId = tournament.teamMemberOfByUser(user)?.id;
@@ -96,9 +100,12 @@ export function TournamentMatchTabs({
 			) : null}
 			{tabs.includes("join") ? <TournamentMatchJoinTab data={data} /> : null}
 			<TournamentMatchRosterTab data={data} />
+			{tabs.includes("pickBan") && pickBanTeams ? (
+				<TournamentMatchPickBanTab data={data} teams={pickBanTeams} />
+			) : null}
 			{tabs.includes("action") ? (
 				isPickBanStep && pickBanTeams && turnOfResult ? (
-					<TournamentMatchPickBanTab
+					<TournamentMatchActionPickBanTab
 						key={`${turnOfResult.teamId}-${data.pickBanEventCount}`}
 						data={data}
 						teams={pickBanTeams}
@@ -368,6 +375,7 @@ function resolveVisibleTabs({
 	hasCurrentMap,
 	hasMissingActiveRoster,
 	isPickBanStep,
+	hasPickBanSetup,
 }: {
 	matchIsOver: boolean;
 	canReportScore: boolean;
@@ -375,8 +383,9 @@ function resolveVisibleTabs({
 	hasCurrentMap: boolean;
 	hasMissingActiveRoster: boolean;
 	isPickBanStep: boolean;
+	hasPickBanSetup: boolean;
 }) {
-	const tabs: Array<"join" | "rosters" | "action" | "result"> = [];
+	const tabs: Array<"join" | "rosters" | "pickBan" | "action" | "result"> = [];
 
 	if (matchIsOver) {
 		tabs.push("result");
@@ -390,6 +399,9 @@ function resolveVisibleTabs({
 		(canReportScore && hasCurrentMap && !hasMissingActiveRoster)
 	) {
 		tabs.push("action");
+	}
+	if (hasPickBanSetup) {
+		tabs.push("pickBan");
 	}
 
 	return tabs;

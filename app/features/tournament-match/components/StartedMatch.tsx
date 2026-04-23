@@ -58,7 +58,6 @@ import {
 	resolveRoomPass,
 } from "../tournament-match-utils";
 import { MatchActions } from "./MatchActions";
-import { MatchMapInfo } from "./MatchMapInfo";
 import { MatchRosters } from "./MatchRosters";
 import { MatchTimer } from "./MatchTimer";
 
@@ -685,14 +684,10 @@ function StartedMatchTabs({
 	teams: [TournamentDataTeam, TournamentDataTeam];
 	result?: Result;
 }) {
-	const { t } = useTranslation(["tournament"]);
 	const user = useUser();
 	const tournament = useTournament();
 	const data = useLoaderData<typeof loader>();
-	const isCustomFlow = data.match.roundMaps?.pickBan === "CUSTOM";
-	const validTabs = isCustomFlow
-		? ["rosters", "actions", "map-info"]
-		: ["rosters", "actions"];
+	const validTabs = ["rosters", "actions"];
 	const [selectedTabKey, setSelectedTabKey] = useSearchParamState({
 		defaultValue: "rosters",
 		name: "tab",
@@ -732,11 +727,6 @@ function StartedMatchTabs({
 					<SendouTab id="actions" data-testid="actions-tab">
 						{presentational ? "Score" : "Actions"}
 					</SendouTab>
-					{isCustomFlow ? (
-						<SendouTab id="map-info">
-							{t("tournament:match.tab.mapInfo")}
-						</SendouTab>
-					) : null}
 				</SendouTabList>
 
 				<SendouTabPanel id="rosters">
@@ -765,12 +755,6 @@ function StartedMatchTabs({
 						}
 					/>
 				</SendouTabPanel>
-
-				{isCustomFlow ? (
-					<SendouTabPanel id="map-info">
-						<MatchMapInfo teams={[teams[0].id, teams[1].id]} />
-					</SendouTabPanel>
-				) : null}
 			</SendouTabs>
 		</ActionSectionWrapper>
 	);

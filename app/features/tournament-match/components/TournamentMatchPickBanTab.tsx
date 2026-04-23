@@ -1,171 +1,174 @@
+import clsx from "clsx";
 import { useTranslation } from "react-i18next";
-import { useFetcher } from "react-router";
 import { SendouTabPanel } from "~/components/elements/Tabs";
-import {
-	MatchActionPickBanTab,
-	type PickBanMapOption,
-} from "~/components/match-page/MatchActionPickBanTab";
+import { ModeImage, StageImage } from "~/components/Image";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
-import { useUser } from "~/features/auth/core/user";
-import { useTournament } from "~/features/tournament/routes/to.$id";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
-import { modesShort } from "~/modules/in-game-lists/modes";
+import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import styles from "./TournamentMatchPickBanTab.module.css";
 
-type FromIndicator = NonNullable<PickBanMapOption["picker"]>;
+interface EventEntry {
+	stageId: StageId | null;
+	mode: ModeShort | null;
+}
+
+interface TeamBuckets {
+	picks: EventEntry[];
+	bans: EventEntry[];
+}
 
 export function TournamentMatchPickBanTab({
 	data,
 	teams,
-	turnOfResult,
 }: {
 	data: TournamentMatchLoaderData;
 	teams: [TournamentDataTeam, TournamentDataTeam];
-	turnOfResult: PickBan.TurnOfResult;
 }) {
-	const { t } = useTranslation(["q"]);
-	const user = useUser();
-	const tournament = useTournament();
-	const fetcher = useFetcher();
+	const maps = data.match.roundMaps;
+	if (!maps?.pickBan) return null;
 
-	const pickerTeamId = turnOfResult.teamId;
-	const pickingTeam = teams.find((team) => team.id === pickerTeamId)!;
+	const pickBanTeams: [PickBan.PickBanTeam, PickBan.PickBanTeam] = [
+		{ id: teams[0].id, seed: teams[0].seed ?? 0 },
+		{ id: teams[1].id, seed: teams[1].seed ?? 0 },
+	];
 
-	const canPickBan =
-		tournament.isOrganizer(user) ||
-		tournament.ownedTeamByUser(user)?.id === pickerTeamId;
+	const teamOneBuckets: TeamBuckets = { picks: [], bans: [] };
+	const teamTwoBuckets: TeamBuckets = { picks: [], bans: [] };
 
-	// xxx: or show the options at least? so they can follow along
-	if (!canPickBan) {
-		return (
-			<SendouTabPanel id={TAB_KEYS.ACTION}>
-				<div className="text-lighter text-sm text-center">
-					{t("q:match.action.pickBanWaiting", { teamName: pickingTeam.name })}
-				</div>
-			</SendouTabPanel>
-		);
+	for (let i = 0; i < data.pickBanEvents.length; i++) {
+		const event = data.pickBanEvents[i]!;
+		if (event.type === "ROLL") continue;
+
+		const teamId = PickBan.teamOfEvent({
+			eventIndex: i,
+			maps,
+			teams: pickBanTeams,
+			results: data.results,
+		});
+		if (teamId === null) continue;
+
+		const isPick = event.type === "PICK" || event.type === "MODE_PICK";
+		const bucket =
+			teamId === teams[0].id
+				? teamOneBuckets
+				: teamId === teams[1].id
+					? teamTwoBuckets
+					: null;
+		if (!bucket) continue;
+
+		bucket[isPick ? "picks" : "bans"].push({
+			stageId: event.stageId,
+			mode: event.mode,
+		});
 	}
 
-	const pickBanMapPool = PickBan.mapsListWithLegality({
-		toSetMapPool: tournament.ctx.toSetMapPool,
-		maps: data.match.roundMaps,
-		mapList: data.mapList,
-		teams,
-		tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
-		pickerTeamId,
-		results: data.results,
-		pickBanEvents: data.pickBanEvents,
-	});
-
-	const isModeAction =
-		turnOfResult.action === "MODE_PICK" || turnOfResult.action === "MODE_BAN";
-	const sharedActionType: "PICK" | "BAN" =
-		turnOfResult.action === "PICK" || turnOfResult.action === "MODE_PICK"
-			? "PICK"
-			: "BAN";
-
-	const teamMemberOfByUser = tournament.teamMemberOfByUser(user);
-	const isPartOfTheMatch = teams.some(
-		(team) => team.id === teamMemberOfByUser?.id,
-	);
-
-	const resolveFrom = (
-		stageId: StageId,
-		mode: ModeShort,
-	): FromIndicator | undefined => {
-		if (!isPartOfTheMatch) return undefined;
-
-		const teamOneHas = teams[0].mapPool?.some(
-			(map) => map.stageId === stageId && map.mode === mode,
-		);
-		const teamTwoHas = teams[1].mapPool?.some(
-			(map) => map.stageId === stageId && map.mode === mode,
-		);
-
-		if (teamOneHas && teamTwoHas) return "BOTH";
-		if (teamOneHas) {
-			return teams[0].id === teamMemberOfByUser?.id ? "US" : "THEM";
-		}
-		if (teamTwoHas) {
-			return teams[1].id === teamMemberOfByUser?.id ? "US" : "THEM";
-		}
-		return undefined;
-	};
-
-	const options = buildPickBanOptions({
-		pickBanMapPool,
-		mapList: data.mapList,
-		isModeAction,
-		isBan2: data.match.roundMaps?.pickBan === "BAN_2",
-		resolveFrom,
-	});
-
 	return (
-		<MatchActionPickBanTab
-			options={options}
-			type={sharedActionType}
-			isSubmitting={fetcher.state !== "idle"}
-			onSubmit={({ map }) => {
-				fetcher.submit(
-					{
-						_action: "BAN_PICK",
-						mode: map.mode!,
-						...(map.stageId != null ? { stageId: String(map.stageId) } : {}),
-					},
-					{ method: "post" },
-				);
-			}}
-		/>
+		<SendouTabPanel id={TAB_KEYS.PICK_BAN}>
+			<div className={styles.container}>
+				<TeamSection teamName={teams[0].name} buckets={teamOneBuckets} />
+				<TeamSection teamName={teams[1].name} buckets={teamTwoBuckets} />
+			</div>
+		</SendouTabPanel>
 	);
 }
 
-// xxx: or some core function from backend?
-function buildPickBanOptions({
-	pickBanMapPool,
-	mapList,
-	isModeAction,
-	isBan2,
-	resolveFrom,
+function TeamSection({
+	teamName,
+	buckets,
 }: {
-	pickBanMapPool: ReturnType<typeof PickBan.mapsListWithLegality>;
-	mapList: TournamentMatchLoaderData["mapList"];
-	isModeAction: boolean;
-	isBan2: boolean;
-	resolveFrom: (stageId: StageId, mode: ModeShort) => FromIndicator | undefined;
-}): PickBanMapOption[] {
-	const legal = pickBanMapPool.filter((map) => map.isLegal);
+	teamName: string;
+	buckets: TeamBuckets;
+}) {
+	const { t } = useTranslation(["tournament"]);
 
-	if (isModeAction) {
-		const seen = new Set<ModeShort>();
-		const uniqueModes: PickBanMapOption[] = [];
-		for (const { mode } of legal) {
-			if (seen.has(mode)) continue;
-			seen.add(mode);
-			uniqueModes.push({ mode });
-		}
-		return uniqueModes;
+	const hasPicks = buckets.picks.length > 0;
+	const hasBans = buckets.bans.length > 0;
+
+	return (
+		<section className={styles.teamSection}>
+			<h2 className={styles.teamHeading}>{teamName}</h2>
+			{!hasPicks && !hasBans ? (
+				<div className={styles.emptyText}>
+					{t("tournament:match.pickBan.noEvents")}
+				</div>
+			) : (
+				<>
+					{hasPicks ? (
+						<EventGroup
+							heading={t("tournament:match.pickBan.picks")}
+							headingClassName={styles.groupHeadingPicks}
+							entries={buckets.picks}
+						/>
+					) : null}
+					{hasBans ? (
+						<EventGroup
+							heading={t("tournament:match.pickBan.bans")}
+							headingClassName={styles.groupHeadingBans}
+							entries={buckets.bans}
+						/>
+					) : null}
+				</>
+			)}
+		</section>
+	);
+}
+
+function EventGroup({
+	heading,
+	headingClassName,
+	entries,
+}: {
+	heading: string;
+	headingClassName: string;
+	entries: EventEntry[];
+}) {
+	return (
+		<div className={styles.group}>
+			<h3 className={clsx(styles.groupHeading, headingClassName)}>{heading}</h3>
+			<div className={styles.entries}>
+				{entries.map((entry, i) => (
+					<Entry key={i} entry={entry} />
+				))}
+			</div>
+		</div>
+	);
+}
+
+function Entry({ entry }: { entry: EventEntry }) {
+	const { t } = useTranslation(["game-misc"]);
+
+	if (entry.stageId !== null) {
+		return (
+			<div className={styles.mapEntry}>
+				<StageImage
+					stageId={entry.stageId}
+					height={50}
+					width={90}
+					className={styles.stageImage}
+				/>
+				<div className={styles.mapLabel}>
+					{entry.mode ? <ModeImage mode={entry.mode} size={14} /> : null}
+					<span>{shortStageName(t(`game-misc:STAGE_${entry.stageId}`))}</span>
+				</div>
+			</div>
+		);
 	}
 
-	return legal
-		.slice()
-		.sort((a, b) => {
-			const modeDiff = modesShort.indexOf(a.mode) - modesShort.indexOf(b.mode);
-			if (modeDiff !== 0) return modeDiff;
-			return a.stageId - b.stageId;
-		})
-		.map((map) => {
-			const nth = isBan2
-				? (mapList ?? []).findIndex(
-						(m) => m.stageId === map.stageId && m.mode === map.mode,
-					) + 1
-				: undefined;
-			return {
-				stageId: map.stageId,
-				mode: map.mode,
-				picker: resolveFrom(map.stageId, map.mode),
-				...(nth ? { nth } : {}),
-			};
-		});
+	if (entry.mode !== null) {
+		return (
+			<div className={styles.mapEntry}>
+				<div className={styles.modeTile}>
+					<ModeImage mode={entry.mode} size={32} />
+				</div>
+				<div className={styles.mapLabel}>
+					<span>{t(`game-misc:MODE_LONG_${entry.mode}`)}</span>
+				</div>
+			</div>
+		);
+	}
+
+	return null;
 }

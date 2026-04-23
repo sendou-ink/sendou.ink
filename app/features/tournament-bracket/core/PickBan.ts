@@ -288,6 +288,76 @@ export function resolveTeamFromSide({
 	}
 }
 
+/**
+ * Resolves which team is responsible for the pick/ban event at a given index,
+ * across all pick/ban variants (BAN_2, COUNTERPICK, COUNTERPICK_MODE_REPEAT_OK,
+ * CUSTOM). Returns null when the setup is not pick/ban or the team cannot be
+ * determined (e.g. a CUSTOM ROLL step, or insufficient results).
+ */
+// xxx: verify this is even needed, doesn't the pick ban info store the picker id? also the cycleIndex stuff looks like something we might have elsewhere
+export function teamOfEvent({
+	eventIndex,
+	maps,
+	teams,
+	results,
+}: {
+	eventIndex: number;
+	maps: TournamentRoundMaps;
+	teams: [PickBanTeam, PickBanTeam];
+	results: Array<{ winnerTeamId: number }>;
+}): number | null {
+	if (!maps.pickBan) return null;
+
+	switch (maps.pickBan) {
+		case "BAN_2": {
+			// turnOf uses: [secondPicker, firstPicker] = teams, so teams[1] bans
+			// first (event 0), teams[0] second (event 1).
+			if (eventIndex === 0) return teams[1].id;
+			if (eventIndex === 1) return teams[0].id;
+			return null;
+		}
+		case "COUNTERPICK":
+		case "COUNTERPICK_MODE_REPEAT_OK": {
+			// Each counterpick follows a played map; the loser of that map picks.
+			const result = results[eventIndex];
+			if (!result) return null;
+			return teams.find((t) => t.id !== result.winnerTeamId)?.id ?? null;
+		}
+		case "CUSTOM": {
+			const customFlow = maps.customFlow;
+			if (!customFlow) return null;
+
+			const { preSet, postGame } = customFlow;
+			const step =
+				eventIndex < preSet.length
+					? preSet[eventIndex]
+					: postGame.length > 0
+						? postGame[(eventIndex - preSet.length) % postGame.length]
+						: null;
+			if (!step?.side) return null;
+
+			// WINNER/LOSER sides are relative to the latest result at the time
+			// of the event, so slice results to the correct post-game cycle.
+			if (step.side === "WINNER" || step.side === "LOSER") {
+				const cycleIndex = Math.floor(
+					(eventIndex - preSet.length) / postGame.length,
+				);
+				if (!results[cycleIndex]) return null;
+				return resolveTeamFromSide({
+					side: step.side,
+					teams,
+					results: results.slice(0, cycleIndex + 1),
+				});
+			}
+
+			return resolveTeamFromSide({ side: step.side, teams, results });
+		}
+		default: {
+			assertUnreachable(maps.pickBan);
+		}
+	}
+}
+
 export function isLegal({
 	map,
 	...rest

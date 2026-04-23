@@ -1,4 +1,4 @@
-import { DoorOpen, ScrollText, Tally5, Users } from "lucide-react";
+import { DoorOpen, ScrollText, Swords, Tally5, Users } from "lucide-react";
 import type * as React from "react";
 import { useSearchParams } from "react-router";
 import invariant from "~/utils/invariant";
@@ -15,6 +15,7 @@ const TAB_KEY = "tab";
 
 export const TAB_KEYS = {
 	ROSTERS: "rosters",
+	PICK_BAN: "pickBan",
 	ACTION: "action",
 	JOIN: "join",
 	RESULT: "result",
@@ -22,6 +23,7 @@ export const TAB_KEYS = {
 
 const TAB_ICONS: Record<MatchTabsKey, React.ReactNode> = {
 	rosters: <Users />,
+	pickBan: <Swords />, // xxx: use the right icon
 	action: <Tally5 />,
 	join: <DoorOpen />,
 	result: <ScrollText />,
@@ -29,6 +31,7 @@ const TAB_ICONS: Record<MatchTabsKey, React.ReactNode> = {
 
 const TAB_LABELS: Record<MatchTabsKey, string> = {
 	rosters: "Rosters",
+	pickBan: "Pick/Ban",
 	action: "Action",
 	join: "Join",
 	result: "Result",

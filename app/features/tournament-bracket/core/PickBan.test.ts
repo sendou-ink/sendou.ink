@@ -9,6 +9,7 @@ import {
 	type PickBanTeam,
 	resolveCurrentStep,
 	resolveTeamFromSide,
+	teamOfEvent,
 	turnOf,
 	validateCustomFlowSection,
 } from "./PickBan";
@@ -930,5 +931,180 @@ describe("turnOf — COUNTERPICK flow", () => {
 		});
 
 		expect(result).toEqual({ teamId: 100, action: "PICK" });
+	});
+});
+
+describe("teamOfEvent", () => {
+	const teams: [PickBanTeam, PickBanTeam] = [
+		{ id: 100, seed: 2 },
+		{ id: 200, seed: 1 },
+	];
+
+	it("returns null when setup is not pick/ban", () => {
+		const result = teamOfEvent({
+			eventIndex: 0,
+			maps: { count: 3, type: "BEST_OF" },
+			teams,
+			results: [],
+		});
+
+		expect(result).toBeNull();
+	});
+
+	describe("BAN_2", () => {
+		const ban2Maps: TournamentRoundMaps = {
+			count: 3,
+			type: "BEST_OF",
+			pickBan: "BAN_2",
+		};
+
+		it("assigns event 0 to teams[1] (first picker)", () => {
+			expect(
+				teamOfEvent({ eventIndex: 0, maps: ban2Maps, teams, results: [] }),
+			).toBe(200);
+		});
+
+		it("assigns event 1 to teams[0] (second picker)", () => {
+			expect(
+				teamOfEvent({ eventIndex: 1, maps: ban2Maps, teams, results: [] }),
+			).toBe(100);
+		});
+
+		it("returns null for further indices", () => {
+			expect(
+				teamOfEvent({ eventIndex: 2, maps: ban2Maps, teams, results: [] }),
+			).toBeNull();
+		});
+	});
+
+	describe("COUNTERPICK", () => {
+		const cpMaps: TournamentRoundMaps = {
+			count: 5,
+			type: "BEST_OF",
+			pickBan: "COUNTERPICK",
+		};
+
+		it("attributes the counterpick to the loser of the preceding result", () => {
+			const result = teamOfEvent({
+				eventIndex: 0,
+				maps: cpMaps,
+				teams,
+				results: [{ winnerTeamId: 100 }],
+			});
+
+			expect(result).toBe(200);
+		});
+
+		it("also works for COUNTERPICK_MODE_REPEAT_OK", () => {
+			const result = teamOfEvent({
+				eventIndex: 1,
+				maps: { ...cpMaps, pickBan: "COUNTERPICK_MODE_REPEAT_OK" },
+				teams,
+				results: [{ winnerTeamId: 100 }, { winnerTeamId: 200 }],
+			});
+
+			expect(result).toBe(100);
+		});
+
+		it("returns null when no corresponding result exists", () => {
+			const result = teamOfEvent({
+				eventIndex: 0,
+				maps: cpMaps,
+				teams,
+				results: [],
+			});
+
+			expect(result).toBeNull();
+		});
+	});
+
+	describe("CUSTOM", () => {
+		const customMaps: TournamentRoundMaps = {
+			count: 5,
+			type: "BEST_OF",
+			pickBan: "CUSTOM",
+			customFlow: {
+				preSet: [
+					{ action: "BAN", side: "HIGHER_SEED" },
+					{ action: "BAN", side: "LOWER_SEED" },
+				],
+				postGame: [
+					{ action: "BAN", side: "WINNER" },
+					{ action: "PICK", side: "LOSER" },
+				],
+			},
+		};
+
+		it("resolves preSet steps via side (HIGHER_SEED → teams[1])", () => {
+			expect(
+				teamOfEvent({ eventIndex: 0, maps: customMaps, teams, results: [] }),
+			).toBe(200);
+		});
+
+		it("resolves preSet steps via side (LOWER_SEED → teams[0])", () => {
+			expect(
+				teamOfEvent({ eventIndex: 1, maps: customMaps, teams, results: [] }),
+			).toBe(100);
+		});
+
+		it("resolves postGame WINNER using the result of that cycle", () => {
+			const result = teamOfEvent({
+				eventIndex: 2,
+				maps: customMaps,
+				teams,
+				results: [{ winnerTeamId: 100 }],
+			});
+
+			expect(result).toBe(100);
+		});
+
+		it("resolves postGame LOSER using the result of that cycle", () => {
+			const result = teamOfEvent({
+				eventIndex: 3,
+				maps: customMaps,
+				teams,
+				results: [{ winnerTeamId: 100 }],
+			});
+
+			expect(result).toBe(200);
+		});
+
+		it("uses the correct cycle's result across multiple post-game cycles", () => {
+			const result = teamOfEvent({
+				eventIndex: 4,
+				maps: customMaps,
+				teams,
+				results: [{ winnerTeamId: 100 }, { winnerTeamId: 200 }],
+			});
+
+			expect(result).toBe(200);
+		});
+
+		it("returns null when customFlow is missing", () => {
+			const result = teamOfEvent({
+				eventIndex: 0,
+				maps: { count: 3, type: "BEST_OF", pickBan: "CUSTOM" },
+				teams,
+				results: [],
+			});
+
+			expect(result).toBeNull();
+		});
+
+		it("returns null for ROLL steps (no side)", () => {
+			const rollMaps: TournamentRoundMaps = {
+				count: 3,
+				type: "BEST_OF",
+				pickBan: "CUSTOM",
+				customFlow: {
+					preSet: [{ action: "ROLL" }],
+					postGame: [{ action: "PICK", side: "LOSER" }],
+				},
+			};
+
+			expect(
+				teamOfEvent({ eventIndex: 0, maps: rollMaps, teams, results: [] }),
+			).toBeNull();
+		});
 	});
 });

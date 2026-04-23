@@ -18,6 +18,8 @@ import { ModeImage, StageImage } from "../Image";
 import styles from "./MatchTimeline.module.css";
 import { WeaponPool } from "./WeaponPool";
 
+// xxx: timeline also for a set thats still in progress? instead of the separate pick ban tab
+
 const LONG_TEAM_NAME_THRESHOLD = 16;
 
 type MatchSide = "ALPHA" | "BRAVO";
@@ -193,12 +195,16 @@ function TimelineMapRow({ map }: { map: TimelineMap }) {
 	const isHydrated = useHydrated();
 	const { formatTime } = useTimeFormat();
 
+	const alphaPoints = map.points?.[0];
+	const bravoPoints = map.points?.[1];
+
 	return (
 		<div className={styles.mapEvent}>
 			<div className={styles.mapSide}>
 				<SideResult
 					result={map.winner === "ALPHA" ? "WIN" : "LOSS"}
-					points={map.points?.[0]}
+					points={alphaPoints}
+					otherSidePoints={bravoPoints}
 					weapons={map.weapons?.alpha}
 				/>
 			</div>
@@ -223,7 +229,8 @@ function TimelineMapRow({ map }: { map: TimelineMap }) {
 			<div className={styles.mapSide}>
 				<SideResult
 					result={map.winner === "BRAVO" ? "WIN" : "LOSS"}
-					points={map.points?.[1]}
+					points={bravoPoints}
+					otherSidePoints={alphaPoints}
 					weapons={map.weapons?.bravo}
 				/>
 			</div>
@@ -234,10 +241,12 @@ function TimelineMapRow({ map }: { map: TimelineMap }) {
 function SideResult({
 	result,
 	points,
+	otherSidePoints,
 	weapons,
 }: {
 	result: "WIN" | "LOSS";
 	points?: number;
+	otherSidePoints?: number;
 	weapons?: Array<MainWeaponId | null>;
 }) {
 	const { t } = useTranslation(["q"]);
@@ -257,7 +266,7 @@ function SideResult({
 				</span>
 				{points === 100 ? (
 					<span className={styles.resultPoints}>{t("q:match.action.ko")}</span>
-				) : points ? (
+				) : typeof points === "number" && otherSidePoints !== 100 ? (
 					<span className={styles.resultPoints}>
 						{t("q:match.timeline.points", { count: points })}
 					</span>
