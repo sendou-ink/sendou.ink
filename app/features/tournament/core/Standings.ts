@@ -24,6 +24,34 @@ export function flattenStandings(
 		: standingsResult.standings.flatMap((div) => div.standings);
 }
 
+/**
+ * Re-numbers placements in a sorted standings array so that tied placements stay
+ * grouped (e.g. `[1, 1, 3, 3, 5]`) while non-tied positions reflect the true
+ * number of teams above them. Useful after filtering or merging standings where
+ * the original placement numbers no longer match the team count.
+ *
+ * Pass `offset` to shift every placement downwards — used when the returned
+ * standings will be appended below standings from another bracket.
+ */
+export function reNumberPlacements<T extends { placement: number }>(
+	standings: T[],
+	offset = 0,
+): T[] {
+	let lastOriginalPlacement = 0;
+	let currentPlacement = 0;
+
+	return standings.map((standing, index) => {
+		if (standing.placement !== lastOriginalPlacement) {
+			lastOriginalPlacement = standing.placement;
+			currentPlacement = index + 1;
+		}
+		return {
+			...standing,
+			placement: currentPlacement + offset,
+		};
+	});
+}
+
 /** Calculates SPR (Seed Performance Rating) - see https://web.archive.org/web/20250513034545/https://www.pgstats.com/articles/introducing-spr-and-uf */
 export function calculateSPR({
 	standings,
@@ -155,13 +183,13 @@ export function tournamentStandings(
 				standings: [
 					{
 						div: "A",
-						standings: rePlaceStandings(
+						standings: reNumberPlacements(
 							standings.filter((s) => s.team.abDivision === 0),
 						),
 					},
 					{
 						div: "B",
-						standings: rePlaceStandings(
+						standings: reNumberPlacements(
 							standings.filter((s) => s.team.abDivision === 1),
 						),
 					},
@@ -182,25 +210,6 @@ export function tournamentStandings(
 			standings: tournamentStandingsForBracket(tournament, bracketIdx),
 		})),
 	};
-}
-
-// xxx: any test for this?
-function rePlaceStandings(standings: Standing[]): Standing[] {
-	let lastOriginalPlacement = 0;
-	let currentPlacement = 0;
-	let teamsEncountered = 0;
-
-	return standings.map((standing) => {
-		teamsEncountered++;
-		if (standing.placement !== lastOriginalPlacement) {
-			lastOriginalPlacement = standing.placement;
-			currentPlacement = teamsEncountered;
-		}
-		return {
-			...standing,
-			placement: currentPlacement,
-		};
-	});
 }
 
 /**
@@ -278,8 +287,6 @@ function standingsToMergeable<
 	standings: T[];
 	teamsAboveFromAnotherBracketsCount: number;
 }) {
-	const result: T[] = [];
-
 	const filtered = standings.filter(
 		(standing) => !alreadyIncludedTeamIds.has(standing.team.id),
 	);
@@ -287,22 +294,8 @@ function standingsToMergeable<
 	// e.g. if standings start at 3rd place, this must mean there is 2 teams left to finish _this_ bracket
 	const unfinishedTeamsCount = (standings.at(0)?.placement ?? 1) - 1;
 
-	let placement = 1;
-
-	for (const [i, standing] of filtered.entries()) {
-		const placementChanged =
-			i !== 0 && standing.placement !== filtered[i - 1].placement;
-
-		if (placementChanged) {
-			placement = i + 1;
-		}
-
-		result.push({
-			...standing,
-			placement:
-				placement + teamsAboveFromAnotherBracketsCount + unfinishedTeamsCount,
-		});
-	}
-
-	return result;
+	return reNumberPlacements(
+		filtered,
+		teamsAboveFromAnotherBracketsCount + unfinishedTeamsCount,
+	);
 }

@@ -669,10 +669,9 @@ export function isFinals(idx: number, brackets: ParsedBracket[]) {
 
 /** Returns true if the finals bracket of the tournament is an A/B divisions round robin. */
 export function hasAbDivisionsFinals(brackets: ParsedBracket[]): boolean {
-	const finalsIdx = brackets.findIndex((_, idx) => isFinals(idx, brackets));
-	if (finalsIdx === -1) return false;
+	const finals = brackets.find((_, idx) => isFinals(idx, brackets));
+	if (!finals) return false;
 
-	const finals = brackets[finalsIdx];
 	return (
 		finals.type === "round_robin" && finals.settings?.hasAbDivisions === true
 	);

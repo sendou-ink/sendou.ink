@@ -1,5 +1,6 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
+import * as Standings from "~/features/tournament/core/Standings";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -278,22 +279,8 @@ export class RoundRobinBracket extends Bracket {
 			return 0;
 		});
 
-		let lastPlacement = 0;
-		let currentPlacement = 1;
-		let teamsEncountered = 0;
 		return this.standingsWithoutNonParticipants(
-			sorted.map((team) => {
-				if (team.placement !== lastPlacement) {
-					lastPlacement = team.placement;
-					currentPlacement = teamsEncountered + 1;
-				}
-				teamsEncountered++;
-				return {
-					...team,
-					placement: currentPlacement,
-					stats: team.stats,
-				};
-			}),
+			Standings.reNumberPlacements(sorted),
 		);
 	}
 

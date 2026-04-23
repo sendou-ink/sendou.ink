@@ -7,7 +7,7 @@ import {
 import { BracketsManager } from "~/modules/brackets-manager";
 import { InMemoryDatabase } from "~/modules/brackets-memory-db";
 import invariant from "~/utils/invariant";
-import { tournamentStandings } from "./Standings";
+import { reNumberPlacements, tournamentStandings } from "./Standings";
 
 describe("tournamentStandings", () => {
 	it("returns single-division standings for a tournament with one starting bracket", () => {
@@ -73,6 +73,67 @@ describe("tournamentStandings", () => {
 		const [a, b] = result.standings;
 		expect(a.standings.map((s) => s.placement)).toEqual([1, 2]);
 		expect(b.standings.map((s) => s.placement)).toEqual([1, 2]);
+	});
+});
+
+describe("reNumberPlacements", () => {
+	it("keeps already contiguous placements unchanged", () => {
+		const result = reNumberPlacements([
+			{ placement: 1 },
+			{ placement: 2 },
+			{ placement: 3 },
+		]);
+
+		expect(result.map((s) => s.placement)).toEqual([1, 2, 3]);
+	});
+
+	it("groups tied placements and skips numbers to match team count", () => {
+		const result = reNumberPlacements([
+			{ placement: 1 },
+			{ placement: 1 },
+			{ placement: 3 },
+			{ placement: 3 },
+			{ placement: 5 },
+		]);
+
+		expect(result.map((s) => s.placement)).toEqual([1, 1, 3, 3, 5]);
+	});
+
+	it("re-numbers from 1 when the input has been filtered (e.g. top finishers removed)", () => {
+		const result = reNumberPlacements([
+			{ placement: 3 },
+			{ placement: 3 },
+			{ placement: 5 },
+			{ placement: 7 },
+		]);
+
+		expect(result.map((s) => s.placement)).toEqual([1, 1, 3, 4]);
+	});
+
+	it("adds the offset to every placement", () => {
+		const result = reNumberPlacements(
+			[{ placement: 1 }, { placement: 1 }, { placement: 3 }],
+			10,
+		);
+
+		expect(result.map((s) => s.placement)).toEqual([11, 11, 13]);
+	});
+
+	it("preserves non-placement fields on each standing", () => {
+		const result = reNumberPlacements([
+			{ placement: 1, team: { id: 7 }, note: "a" },
+			{ placement: 2, team: { id: 8 }, note: "b" },
+		]);
+
+		expect(result).toEqual([
+			{ placement: 1, team: { id: 7 }, note: "a" },
+			{ placement: 2, team: { id: 8 }, note: "b" },
+		]);
+	});
+
+	it("returns an empty array when given an empty array", () => {
+		expect(reNumberPlacements([])).toEqual([]);
+		expect(reNumberPlacements([], 5)).toEqual([]);
 	});
 });
 
