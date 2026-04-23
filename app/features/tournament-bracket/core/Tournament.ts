@@ -556,6 +556,7 @@ export class Tournament {
 				return {
 					groupCount: Math.ceil(participantsCount / teamsPerGroup),
 					seedOrdering: ["groups.seed_optimized"],
+					hasAbDivisions: selectedSettings?.hasAbDivisions ?? false,
 				};
 			}
 			case "swiss": {
@@ -827,6 +828,7 @@ export class Tournament {
 	/** Can a new sub post be made at this time? */
 	get canAddNewSubPost() {
 		if (!this.lfgEnabled) return false;
+		if (this.isInvitational) return false;
 		if (this.ctx.isFinalized) return false;
 
 		return (

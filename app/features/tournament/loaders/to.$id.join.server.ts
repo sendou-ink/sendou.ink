@@ -1,12 +1,16 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { findByInviteCode } from "../queries/findTeamByInviteCode.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 
-export const loader = ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const url = new URL(request.url);
 	const inviteCode = url.searchParams.get("code");
 
+	const team = inviteCode
+		? await TournamentTeamRepository.findByInviteCode(inviteCode)
+		: null;
+
 	return {
-		teamId: inviteCode ? findByInviteCode(inviteCode)?.id : null,
+		teamId: team?.id ?? null,
 		inviteCode,
 	};
 };

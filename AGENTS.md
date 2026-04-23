@@ -1,10 +1,11 @@
 ## General
 
-- only rarely use comments, prefer descriptive variable and function names (leave existing comments as is)
+- only rarely use comments, prefer descriptive variable and function names (leave existing comments as is).
 - if you encounter an existing TODO comment assume it is there for a reason and do not remove it
 - task is not considered completely until `pnpm run checks` passes
 - normal file structure has constants at the top immediately followed by the main function body of the file. Helpers are used to structure the code and they are at the bottom of the file (main implementation first, at the top of the file)
 - note: any formatting issue (such as tabs vs. spaces) can be resolved by running the `pnpm run biome:fix` command
+- typical way to structure pure logic is into Modules divided by logical domains which are imported with the "* as Module" import and then used like so "Module.foo()". These functions always need JSDoc.
 
 ## Commands
 
@@ -28,7 +29,7 @@
 
 - prefer functional components over class components
 - prefer using hooks over class lifecycle methods
-- do not use `useMemo`, `useCallback` or `useReducer` at all
+- do not use `useMemo`, `useCallback` unless it is to stabilize a `useEffect` dependency array value
 - state management is done via plain `useState` and React Context API
 - avoid using `useEffect`
 - split bigger components into smaller ones
@@ -55,6 +56,7 @@
 - database code should only be written in Repository files
 - down migrations are not needed, only up migrations
 - every database id is of type number
+- if we are working on a branch by default we should add to the migration this branch added instead of creating a brand new one
 - `/app/db/tables.ts` contains all tables and columns available
 - `db.sqlite3` is development database
 - `db-test.sqlite3` is the unit test database (should be blank sans migrations ran)
@@ -64,11 +66,6 @@
 
 - library used for unit testing is Vitest
 - Vitest browser mode can be used to write tests for components
-
-## Testing in Chrome
-
-- some pages need authentication, you should impersonate "Sendou" user which can be done on the /admin page
-- port can be checked from the `.env` file, you can assume dev server is already running
 
 ## i18n
 

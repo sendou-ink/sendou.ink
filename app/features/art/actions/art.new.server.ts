@@ -5,6 +5,7 @@ import { redirect } from "react-router";
 import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { uploadStreamToS3 } from "~/features/img-upload/s3.server";
+import { ALLOWED_IMAGE_EXTENSIONS } from "~/features/img-upload/upload-constants";
 import { notify } from "~/features/notifications/core/notify.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -73,10 +74,14 @@ export const action: ActionFunction = async ({ request }) => {
 				fileUpload.fieldName === "img" ||
 				fileUpload.fieldName === "smallImg"
 			) {
-				const ending = fileUpload.name.split(".").pop();
+				const ending = fileUpload.name.split(".").pop()?.toLowerCase();
 				invariant(
 					ending && ending !== fileUpload.name,
 					`File missing extension: "${fileUpload.name}"`,
+				);
+				invariant(
+					ALLOWED_IMAGE_EXTENSIONS.includes(ending),
+					`Invalid file extension: "${ending}"`,
 				);
 				const newFilename = `${preDecidedFilename}${fileUpload.fieldName === "smallImg" ? "-small" : ""}.${ending}`;
 

@@ -461,6 +461,7 @@
 			height: 100%;
 			border: none;
 			background-color: var(--color-bg-higher);
+			color: var(--color-text-high);
 			white-space: nowrap;
 			margin-right: var(--s-2);
 		}

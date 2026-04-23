@@ -159,6 +159,7 @@
 	"results.highlights.explanation": "בחרו את התוצאות שאתם רוצים להדגיש",
 	"results.button.showHighlights": "",
 	"results.button.showAll": "",
+	"results.filter.placeholder": "",
 	"forms.errors.maxWeapons": "הגעה לכמות מקסימלית של מספר נשקים",
 	"search.info": "",
 	"search.noResults": "לא נמצאו משתמשים התואמים '{{query}}'",

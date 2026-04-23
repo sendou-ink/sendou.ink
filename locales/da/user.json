@@ -159,6 +159,7 @@
 	"results.highlights.explanation": "Vælg de resultater, som du vil fremhæve",
 	"results.button.showHighlights": "Vis højdepunkter",
 	"results.button.showAll": "Vis alt",
+	"results.filter.placeholder": "",
 	"forms.errors.maxWeapons": "Maks antal våben nået",
 	"search.info": "",
 	"search.noResults": "Søgningen ’{{query}}’ fandt ingen brugere",

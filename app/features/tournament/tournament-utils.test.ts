@@ -23,7 +23,10 @@ const createTeam = (
 	id,
 	seed: options.seed ?? null,
 	members: { length: options.members ?? 4 },
-	avgSeedingSkillOrdinal: options.avgSeedingSkillOrdinal ?? 100,
+	avgSeedingSkillOrdinal:
+		options.avgSeedingSkillOrdinal === undefined
+			? 100
+			: options.avgSeedingSkillOrdinal,
 	createdAt: options.createdAt ?? id,
 	startingBracketIdx: options.startingBracketIdx ?? null,
 });
@@ -146,7 +149,7 @@ describe("compareTeamsForOrdering", () => {
 
 		it("places team with skill before team without skill", () => {
 			const withSkill = createTeam(1, { avgSeedingSkillOrdinal: 100 });
-			const withoutSkill = createTeam(2);
+			const withoutSkill = createTeam(2, { avgSeedingSkillOrdinal: null });
 
 			const result = compareTeamsForOrdering(
 				withSkill,
@@ -155,6 +158,21 @@ describe("compareTeamsForOrdering", () => {
 			);
 
 			expect(result).toBeLessThan(0);
+		});
+
+		it("places rated team before unrated team even when unrated was created earlier", () => {
+			const rated = createTeam(1, {
+				avgSeedingSkillOrdinal: 100,
+				createdAt: 200,
+			});
+			const unrated = createTeam(2, {
+				avgSeedingSkillOrdinal: null,
+				createdAt: 100,
+			});
+
+			const sorted = sortTeamsBySeeding([unrated, rated], MIN_MEMBERS);
+
+			expect(sorted.map((t) => t.id)).toEqual([1, 2]);
 		});
 	});
 

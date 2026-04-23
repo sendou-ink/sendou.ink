@@ -50,10 +50,12 @@ sendou.ink/
 │   ├── modules/ -- "node_modules but part of the app"
 │   ├── styles/ -- Global .css files
 │   ├── utils/ -- Helper functions grouped by domain used by many features
-│   ├── entry.client.tsx -- Client entry point (Remix concept)
-│   ├── entry.server.tsx -- Server entry point (Remix concept)
+│   ├── entry.client.tsx -- Client entry point (React Router concept)
+│   ├── entry.server.tsx -- Server entry point (React Router concept)
+│   ├── form/ -- Form helpers shared across features
 │   ├── root.tsx -- Basic HTML structure, React context providers & root data loader
-│   └── routes.ts -- Route manifest
+│   ├── routes.ts -- Route manifest
+│   └── routines/ -- Cron job definitions (see "Routines" below)
 ├── content/ -- Markdown files containing articles
 ├── docs/ -- Documentation to developers and users
 ├── e2e/ -- Playwright tests
@@ -72,12 +74,12 @@ You should aim to colocate code that "changes together" as much as possible. Fea
 
 ### Feature folder files & folders
 
-- **actions/**: Remix actions per route
+- **actions/**: React Router actions per route
 - **components/**: React components
 - **core/**: "Core logic" meaning modules (see below) or other logic that is not typically rendering components or calling database
 - **queries/**: (deprecated) Database queries, should use repository instead
-- **loaders/**: Remix loaders per route
-- **routes/**: Remix actions per route
+- **loaders/**: React Router loaders per route
+- **routes/**: React Router route files (re-export the action/loader & default export the route component)
 - **FeatureRepository.server.ts**: Database queries & mappers
 - **feature-constants.ts**: Constant values
 - **feature-hooks**: React hooks
@@ -177,13 +179,13 @@ Check `database-relations.md` for more information about the database relations.
 
 ### State management
 
-We are not using a state management library such as Redux. Instead use React Context for the few global state needed and Remix's data loading hooks to share the state loaded from server. See also "Search params" section below.
+We are not using a state management library such as Redux. Instead use React Context for the few global state needed and React Router's data loading hooks to share the state loaded from server. See also "Search params" section below.
 
 ### Search params
 
 Often it's convenient to store state in search params. This allows for nice features like users to deep link to the view they are seeing. You have two options to achieve this:
 
-1) Use Remix's built-in solution. Use this if data loaders should rerun once search params are changed.
+1) Use React Router's built-in solution. Use this if data loaders should rerun once search params are changed.
 2) `useSearchParamState` hook. Use this if it is not needed.
 
 ### Routines
@@ -192,7 +194,7 @@ Cron jobs to perform actions on the server at certain intervals. To add a new on
 
 ### Real time
 
-Webhooks via Skalop service (see logic in the Chat module). In short an action file can send an update via the `ChatSystemMessage` module:
+Webhooks via the Skalop service (see logic in the Chat module). In short an action file can send an update via the `ChatSystemMessage` module:
 
 ```ts
 ChatSystemMessage.send([
@@ -204,19 +206,22 @@ ChatSystemMessage.send([
 ]);
 ```
 
-which then can be listed to in a React component via the `useChat` hook:
+#### Global chat
 
-```tsx
-const chatRooms = React.useMemo(
-    () => [
-        { code: `tournament__${tournament.id}`, label: "Tournament" },
-    ],
-    [tournament.ctx.id],
-);
-useChat({
-    rooms: chatRooms,
-    connected: !tournament.ctx.isFinalized,
-});
+There is a single `ChatProvider` mounted near the root that owns the WebSocket connection for the whole app.
+
+Two things drive which rooms the provider cares about:
+
+1) **Server-managed participant rooms.** Rooms where the user is a `participantUserId` in the room metadata are pushed to the client by Skalop automatically on connect (and via `ROOM_JOINED` / `ROOM_REMOVED` events). These are the rooms that show up in the chat list regardless of which page the user is on (e.g. a SendouQ group chat, a tournament match chat).
+2) **Route-exposed `chatCode`.** A loader can expose a `chatCode` (string or `string[]`) in its returned data. The provider reads this out of `useMatches()` and subscribes to that room for the duration of the route being active — used for rooms the user is viewing but not necessarily a participant of (e.g. a tournament match chat viewed by a TO).
+
+Example loader:
+
+```ts
+return {
+    // ...other loader data
+    chatCode: match.chatCode,
+};
 ```
 
 ### Notifications

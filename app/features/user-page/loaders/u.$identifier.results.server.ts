@@ -1,9 +1,13 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
+import { getUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfFalsy, parseSafeSearchParams } from "~/utils/remix.server";
-import { RESULTS_PER_PAGE } from "../user-page-constants";
+import {
+	HIGHLIGHTS_RESULTS_MAX,
+	RESULTS_PER_PAGE,
+} from "../user-page-constants";
 import { userResultsPageSearchParamsSchema } from "../user-page-schemas";
 
 export type UserResultsLoaderData = SerializeFrom<typeof loader>;
@@ -34,15 +38,23 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	}
 
 	const page = parsedSearchParams.success ? parsedSearchParams.data.page : 1;
+	const tournamentName =
+		!isChoosingHighlights && getUser() && parsedSearchParams.success
+			? parsedSearchParams.data.tournament
+			: undefined;
 
 	const [results, totalCount] = await Promise.all([
 		UserRepository.findResultsByUserId(userId, {
 			showHighlightsOnly,
+			tournamentName,
 			...(isChoosingHighlights
-				? {}
+				? { limit: HIGHLIGHTS_RESULTS_MAX }
 				: { limit: RESULTS_PER_PAGE, offset: (page - 1) * RESULTS_PER_PAGE }),
 		}),
-		UserRepository.countResultsByUserId(userId, { showHighlightsOnly }),
+		UserRepository.countResultsByUserId(userId, {
+			showHighlightsOnly,
+			tournamentName,
+		}),
 	]);
 
 	const maxPage = Math.ceil(totalCount / RESULTS_PER_PAGE);
@@ -72,6 +84,6 @@ function redirectIfPageOutOfBounds({
 
 	const url = new URL(request.url);
 	const searchParams = new URLSearchParams(url.searchParams);
-	searchParams.set("page", String(maxPage));
+	searchParams.set("page", String(Math.max(maxPage, 1)));
 	throw redirect(`${url.pathname}?${searchParams.toString()}`);
 }

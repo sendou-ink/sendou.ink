@@ -33,6 +33,7 @@
 	display: grid;
 	gap: var(--s-1-5);
 	grid-template-columns: max-content minmax(0, max-content);
+	align-items: center;
 }
 
 .teamWithRosterMemberInactive {
@@ -91,6 +92,7 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	display: block;
+	padding-block: 1px;
 }
 
 .teamMemberNameRole {

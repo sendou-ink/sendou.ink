@@ -761,6 +761,8 @@ export interface TournamentStageSettings {
 	thirdPlaceMatch?: boolean;
 	// RR
 	teamsPerGroup?: number;
+	/** (RR only) When true, teams are split into A and B divisions and matches only pair A-vs-B. Only valid on starting brackets. */
+	hasAbDivisions?: boolean;
 	// SWISS
 	groupCount?: number;
 	// SWISS
@@ -831,6 +833,8 @@ export interface TournamentTeam {
 	isPlaceholder: Generated<DBBoolean>;
 	lfgNote: string | null;
 	chatCode: Generated<string | null>;
+	/** A/B division assignment for bipartite round robin brackets. `0` = A, `1` = B, `null` = unassigned. */
+	abDivision: number | null;
 }
 
 export interface TournamentTeamCheckIn {

@@ -9,11 +9,15 @@ import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { randomTeamName } from "~/utils/team-name";
 
 export function startLooking(teamId: number) {
-	return db
-		.updateTable("TournamentTeam")
-		.set({ isLooking: 1 })
-		.where("id", "=", teamId)
-		.execute();
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("TournamentTeam")
+			.set({ isLooking: 1 })
+			.where("id", "=", teamId)
+			.execute();
+
+		return ensurePickupChatCode(teamId, trx);
+	});
 }
 
 type CreatePlaceholderTeamArgs = {
@@ -167,6 +171,12 @@ export function mergeTeams({
 	maxGroupSize: number;
 }) {
 	return db.transaction().execute(async (trx) => {
+		const otherTeam = await trx
+			.selectFrom("TournamentTeam")
+			.select("chatCode")
+			.where("id", "=", otherTeamId)
+			.executeTakeFirst();
+
 		const otherMembers = await trx
 			.selectFrom("TournamentTeamMember")
 			.select(["TournamentTeamMember.userId", "TournamentTeamMember.role"])
@@ -207,6 +217,13 @@ export function mergeTeams({
 			})
 			.where("id", "=", survivingTeamId)
 			.execute();
+
+		const survivor = await ensurePickupChatCode(survivingTeamId, trx);
+
+		return {
+			survivor,
+			removedChatCode: otherTeam?.chatCode ?? null,
+		};
 	});
 }
 
@@ -408,4 +425,45 @@ async function getMemberCount(
 		.execute();
 
 	return members.length;
+}
+
+export type PickupChatTeam = {
+	chatCode: string;
+	name: string;
+	memberUserIds: number[];
+};
+
+async function ensurePickupChatCode(
+	teamId: number,
+	trx: Transaction<DB>,
+): Promise<PickupChatTeam | null> {
+	const team = await trx
+		.selectFrom("TournamentTeam")
+		.select(["name", "chatCode"])
+		.where("id", "=", teamId)
+		.executeTakeFirstOrThrow();
+
+	const members = await trx
+		.selectFrom("TournamentTeamMember")
+		.select("userId")
+		.where("tournamentTeamId", "=", teamId)
+		.execute();
+
+	if (members.length < 2) return null;
+
+	let chatCode = team.chatCode;
+	if (!chatCode) {
+		chatCode = shortNanoid();
+		await trx
+			.updateTable("TournamentTeam")
+			.set({ chatCode })
+			.where("id", "=", teamId)
+			.execute();
+	}
+
+	return {
+		chatCode,
+		name: team.name,
+		memberUserIds: members.map((m) => m.userId),
+	};
 }

@@ -199,6 +199,7 @@ export const adminTabActionSchema = z.union([
 export const userResultsPageSearchParamsSchema = z.object({
 	all: z.stringbool().catch(false),
 	page: z.coerce.number().min(1).max(1_000).catch(1),
+	tournament: z.string().trim().min(1).max(100).optional().catch(undefined),
 });
 
 const widgetSettingsSchemas = allWidgetsFlat().map((widget) => {

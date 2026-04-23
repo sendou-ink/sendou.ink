@@ -3,6 +3,7 @@ import type { TFunction } from "i18next";
 import { Search } from "lucide-react";
 import * as React from "react";
 import {
+	Button,
 	Dialog,
 	DialogTrigger,
 	ListBox,
@@ -136,15 +137,11 @@ export function GlobalSearch() {
 
 	return (
 		<DialogTrigger isOpen={isOpen} onOpenChange={handleOpenChange}>
-			<button
-				type="button"
-				className={styles.searchButton}
-				onClick={() => setIsOpen(true)}
-			>
+			<Button className={styles.searchButton}>
 				<Search className={styles.searchIcon} />
 				<span className={styles.searchPlaceholder}>{t("common:search")}</span>
 				<kbd className={styles.searchKbd}>{isMac ? "Cmd+K" : "Ctrl+K"}</kbd>
-			</button>
+			</Button>
 			<ModalOverlay className={styles.overlay} isDismissable>
 				<Modal className={styles.modal}>
 					<Dialog className={styles.dialog} aria-label={t("common:search")}>
@@ -224,7 +221,7 @@ function GlobalSearchContent({
 	useDebounce(
 		() => {
 			if (searchType === "weapons") return;
-			if (!query) return;
+			if (query.length < 3) return;
 			fetcher.load(
 				`/search?q=${encodeURIComponent(query)}&type=${searchType}&limit=10`,
 			);
@@ -233,11 +230,13 @@ function GlobalSearchContent({
 		[query, searchType],
 	);
 
-	const results = fetcher.data?.results ?? [];
-	const hasQuery = query.length > 0;
+	const hasQuery = query.length >= 3;
+	const fetchedType = fetcher.data?.type ?? null;
+	const results =
+		hasQuery && fetchedType === searchType ? (fetcher.data?.results ?? []) : [];
 
 	const weaponResults =
-		searchType === "weapons" ? filterWeaponResults(query, t) : [];
+		searchType === "weapons" && hasQuery ? filterWeaponResults(query, t) : [];
 
 	const recentWeapons: SelectedWeapon[] =
 		searchType === "weapons"
@@ -277,7 +276,7 @@ function GlobalSearchContent({
 
 	const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
-		const separatorMatch = value.match(/^([a-zA-Z]+)\.(?=[a-zA-Z ]) ?/);
+		const separatorMatch = value.match(/^([a-zA-Z]+)\.$/);
 
 		if (separatorMatch) {
 			const typedPrefix = separatorMatch[1];
@@ -287,7 +286,7 @@ function GlobalSearchContent({
 			if (matchedType) {
 				setSearchType(matchedType);
 				setSelectedWeapon(null);
-				setQuery(value.slice(separatorMatch[0].length));
+				setQuery("");
 				return;
 			}
 		}

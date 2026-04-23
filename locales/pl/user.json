@@ -159,6 +159,7 @@
 	"results.highlights.explanation": "Wybierz wyniki, które chcesz wyróżnić",
 	"results.button.showHighlights": "",
 	"results.button.showAll": "",
+	"results.filter.placeholder": "",
 	"forms.errors.maxWeapons": "Maksymalna ilość broni osiągnięta",
 	"search.info": "",
 	"search.noResults": "Nie znaleziono użytkownika o nazwie '{{query}}'",

@@ -150,6 +150,7 @@ export async function findById(id: number) {
 						"TournamentTeam.createdAt",
 						"TournamentTeam.activeRosterUserIds",
 						"TournamentTeam.startingBracketIdx",
+						"TournamentTeam.abDivision",
 						concatUserSubmittedImagePrefix(
 							innerEb.ref("UserSubmittedImage.url"),
 						).as("pickupAvatarUrl"),
@@ -464,6 +465,7 @@ export function forShowcase() {
 			"Tournament.id",
 			"Tournament.settings",
 			"Tournament.tier",
+			"Tournament.isFinalized",
 			"CalendarEvent.authorId",
 			"CalendarEvent.name",
 			"CalendarEvent.organizationId",

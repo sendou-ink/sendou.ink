@@ -9,6 +9,7 @@ import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamR
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { matchPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
@@ -18,8 +19,8 @@ import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { tournamentMatchPage } from "~/utils/urls";
 import { executeRoll } from "../core/executeRoll.server";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
-import { findMatchById } from "../queries/findMatchById.server";
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
+import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
 import { matchEndedEarly } from "../tournament-match-utils";
 
 export type TournamentMatchLoaderData = SerializeFrom<typeof loader>;
@@ -35,7 +36,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		user: undefined,
 	});
 
-	const match = notFoundIfFalsy(findMatchById(matchId));
+	const match = notFoundIfFalsy(
+		await TournamentMatchRepository.findMatchById(matchId),
+	);
 
 	const isBye = !match.opponentOne || !match.opponentTwo;
 	if (isBye) {
@@ -144,10 +147,26 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	if (
 		match.chatCode &&
 		!matchIsOver &&
-		match.opponentOne &&
-		match.opponentTwo
+		match.opponentOne?.id &&
+		match.opponentTwo?.id
 	) {
-		const playerIds = match.players.map((p) => p.id);
+		// only add global chat for active roster (or all if not yet set i.e. first match)
+		// if roster changed mid-set the subs can still see the chat on the match page
+		const teamAlpha = tournament.teamById(match.opponentOne.id)!;
+		const teamAlphaActiveRoster =
+			tournamentTeamToActiveRosterUserIds(
+				teamAlpha,
+				tournament.minMembersPerTeam,
+			) ?? teamAlpha.members.map((m) => m.userId);
+		const teamBravo = tournament.teamById(match.opponentTwo.id)!;
+		const teamBravoActiveRoster =
+			tournamentTeamToActiveRosterUserIds(
+				teamBravo,
+				tournament.minMembersPerTeam,
+			) ?? teamBravo.members.map((m) => m.userId);
+
+		const playerIds = [...teamAlphaActiveRoster, ...teamBravoActiveRoster];
+
 		const matchContext = tournament.matchContextNamesById(matchId);
 
 		ChatSystemMessage.setMetadata({
@@ -165,14 +184,15 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		tournament.isOrganizerOrStreamer(user) ||
 		match.players.some((p) => p.id === user?.id);
 
-	const isStaff = user?.roles.includes("STAFF") ?? false;
-	const chatCodeExpired = tournament.ctx.isFinalized
-		? true
-		: !chatAccessible({
-				isStaff,
-				expiresAfterDays: 90,
-				comparedTo: tournament.ctx.startTime,
-			});
+	const isSiteStaff = user?.roles.includes("STAFF") ?? false;
+	const isTournamentStaff = tournament.isOrganizer(user);
+	const chatCodeExpired =
+		tournament.ctx.isFinalized && !isSiteStaff && !isTournamentStaff
+			? true
+			: !chatAccessible({
+					expiresAfterDays: tournament.isLeagueDivision ? 30 : 7,
+					comparedTo: tournament.ctx.startTime,
+				});
 
 	const visibleChatCode =
 		shouldSeeChat && !chatCodeExpired ? match.chatCode : undefined;

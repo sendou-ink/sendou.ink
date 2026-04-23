@@ -427,6 +427,55 @@ describe("validatedSources - other rules", () => {
 		expect(Array.isArray(result)).toBe(true);
 	});
 
+	it("flags TOO_MANY_PLACEMENTS on A/B divisions when placement exceeds per-division size", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {
+					hasAbDivisions: true,
+					teamsPerGroup: 6,
+				},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1,2,3,4",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("TOO_MANY_PLACEMENTS");
+		expect((error as any).bracketIdx).toEqual(1);
+	});
+
+	it("accepts A/B divisions placements up to per-division size", () => {
+		const result = getValidatedBrackets([
+			{
+				settings: {
+					hasAbDivisions: true,
+					teamsPerGroup: 6,
+				},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1,2,3",
+					},
+				],
+			},
+		]);
+
+		expect(Array.isArray(result)).toBe(true);
+	});
+
 	it("handles DUPLICATE_BRACKET_NAME", () => {
 		const error = getValidatedBrackets([
 			{
@@ -587,6 +636,165 @@ describe("validatedSources - other rules", () => {
 		]);
 
 		// Should be valid (no error returned)
+		expect(Array.isArray(result)).toBe(true);
+	});
+
+	it("accepts A/B divisions on a round robin starting bracket with even teamsPerGroup", () => {
+		const result = getValidatedBrackets([
+			{
+				settings: {
+					hasAbDivisions: true,
+					teamsPerGroup: 6,
+				},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+				],
+			},
+		]);
+
+		expect(Array.isArray(result)).toBe(true);
+	});
+
+	it("handles AB_DIVISIONS_NOT_ROUND_ROBIN", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {
+					hasAbDivisions: true,
+				},
+				type: "swiss",
+				name: "Swiss",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				name: "Finals",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("AB_DIVISIONS_NOT_ROUND_ROBIN");
+		expect((error as any).bracketIdx).toEqual(0);
+	});
+
+	it("handles AB_DIVISIONS_NOT_STARTING", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {},
+				type: "round_robin",
+				name: "Group stage",
+			},
+			{
+				settings: {
+					hasAbDivisions: true,
+					teamsPerGroup: 4,
+				},
+				type: "round_robin",
+				name: "Second RR",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+				],
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				name: "Finals",
+				sources: [
+					{
+						bracketId: "1",
+						placements: "1-2",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("AB_DIVISIONS_NOT_STARTING");
+		expect((error as any).bracketIdx).toEqual(1);
+	});
+
+	it("handles AB_DIVISIONS_ODD_TEAMS_PER_GROUP", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {
+					hasAbDivisions: true,
+					teamsPerGroup: 5,
+				},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("AB_DIVISIONS_ODD_TEAMS_PER_GROUP");
+		expect((error as any).bracketIdx).toEqual(0);
+	});
+
+	it("accepts A/B divisions when teamsPerGroup is unset (default is even)", () => {
+		const result = getValidatedBrackets([
+			{
+				settings: {
+					hasAbDivisions: true,
+				},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+				],
+			},
+		]);
+
+		expect(Array.isArray(result)).toBe(true);
+	});
+
+	it("does not apply A/B validation when hasAbDivisions is absent", () => {
+		const result = getValidatedBrackets([
+			{
+				settings: {
+					teamsPerGroup: 5,
+				},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+				],
+			},
+		]);
+
 		expect(Array.isArray(result)).toBe(true);
 	});
 });

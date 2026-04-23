@@ -126,6 +126,11 @@
 	overflow-x: auto;
 }
 
+.resultsFilterInput {
+	width: 12rem;
+	max-width: 100%;
+}
+
 .resultsTableHighlights {
 	border: var(--s-2) solid var(--color-bg-high);
 	padding-inline: 0 !important;

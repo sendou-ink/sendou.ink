@@ -159,6 +159,7 @@
 	"results.highlights.explanation": "Escolha os resultados que você quer destacar",
 	"results.button.showHighlights": "",
 	"results.button.showAll": "",
+	"results.filter.placeholder": "",
 	"forms.errors.maxWeapons": "Número máximo de armas no perfil atingido.",
 	"search.info": "",
 	"search.noResults": "Nenhum usuário encontrado com o termo '{{query}}'",

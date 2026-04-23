@@ -318,14 +318,56 @@ function TournamentFormatBracketSelector({
 							id="teamsPerGroup"
 							disabled={bracket.disabled}
 						>
-							<option value="3">3</option>
-							<option value="4">4</option>
-							<option value="5">5</option>
-							<option value="6">6</option>
+							{(bracket.settings.hasAbDivisions
+								? TOURNAMENT.RR_AB_DIVISIONS_TEAMS_PER_GROUP_OPTIONS
+								: TOURNAMENT.RR_TEAMS_PER_GROUP_OPTIONS
+							).map((n) => (
+								<option key={n} value={n}>
+									{n}
+								</option>
+							))}
 						</select>
 						<FormMessage type="info">
 							Participants are distributed equally, so groups may have fewer
 							than selected
+						</FormMessage>
+					</div>
+				) : null}
+
+				{bracket.type === "round_robin" && !bracket.sources ? (
+					<div>
+						<Label htmlFor={createId("abDivisions")}>A/B divisions</Label>
+						<SendouSwitch
+							id={createId("abDivisions")}
+							isSelected={Boolean(bracket.settings.hasAbDivisions)}
+							onChange={(isSelected) => {
+								const currentTeamsPerGroup =
+									bracket.settings.teamsPerGroup ??
+									TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
+
+								const maxWithoutAb = Math.max(
+									...TOURNAMENT.RR_TEAMS_PER_GROUP_OPTIONS,
+								);
+
+								let nextTeamsPerGroup = currentTeamsPerGroup;
+								if (isSelected && currentTeamsPerGroup % 2 !== 0) {
+									nextTeamsPerGroup = currentTeamsPerGroup + 1;
+								} else if (!isSelected && currentTeamsPerGroup > maxWithoutAb) {
+									nextTeamsPerGroup = maxWithoutAb;
+								}
+
+								updateBracket({
+									settings: {
+										...bracket.settings,
+										hasAbDivisions: isSelected,
+										teamsPerGroup: nextTeamsPerGroup,
+									},
+								});
+							}}
+							isDisabled={bracket.disabled}
+						/>
+						<FormMessage type="info">
+							Teams split into A and B pools; every A plays every B once
 						</FormMessage>
 					</div>
 				) : null}

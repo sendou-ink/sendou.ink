@@ -7,6 +7,7 @@ import type { Round } from "~/modules/brackets-model";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { fillWithNullTillPowerOfTwo } from "../../tournament-bracket-utils";
+import * as AbDivisions from "../AbDivisions";
 import { getTournamentManager } from "../brackets-manager";
 import * as Progression from "../Progression";
 import type { OptionalIdObject, Tournament } from "../Tournament";
@@ -294,6 +295,16 @@ export abstract class Bracket {
 		const virtualTournamentId = 1;
 
 		if (teams.length >= TOURNAMENT.ENOUGH_TEAMS_TO_START) {
+			const settings = this.tournament.bracketManagerSettings(
+				this.settings,
+				this.type,
+				teams.length,
+			);
+			const abDivisions =
+				this.type === "round_robin" && this.settings?.hasAbDivisions === true
+					? this.abDivisionsForPreview(teams, settings.groupCount)
+					: undefined;
+
 			manager.create({
 				tournamentId: virtualTournamentId,
 				name: "Virtual",
@@ -302,15 +313,56 @@ export abstract class Bracket {
 					this.type === "round_robin"
 						? teams
 						: fillWithNullTillPowerOfTwo(teams),
-				settings: this.tournament.bracketManagerSettings(
-					this.settings,
-					this.type,
-					teams.length,
-				),
+				settings: abDivisions
+					? settings
+					: {
+							...settings,
+							hasAbDivisions: false,
+						},
+				abDivisions,
 			});
 		}
 
 		return manager.get.tournamentData(virtualTournamentId);
+	}
+
+	private abDivisionsForPreview(
+		teams: number[],
+		groupCount: number | undefined,
+	): (0 | 1)[] | undefined {
+		if (!groupCount) return undefined;
+
+		const assignments = teams.map((teamId) => {
+			const team = this.tournament.teamById(teamId);
+			return team?.abDivision ?? null;
+		});
+
+		const allAssigned = assignments.every(
+			(value) => value === 0 || value === 1,
+		);
+		if (
+			allAssigned &&
+			AbDivisions.validate({
+				abDivisionsBySeedOrder: assignments,
+				groupCount,
+			}).isOk()
+		) {
+			return assignments as (0 | 1)[];
+		}
+
+		const fakeAssignments: (0 | 1)[] = teams.map((_, index) =>
+			index % 2 === 0 ? 0 : 1,
+		);
+		if (
+			AbDivisions.validate({
+				abDivisionsBySeedOrder: fakeAssignments,
+				groupCount,
+			}).isOk()
+		) {
+			return fakeAssignments;
+		}
+
+		return undefined;
 	}
 
 	get isUnderground() {

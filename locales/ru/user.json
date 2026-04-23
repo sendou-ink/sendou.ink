@@ -159,6 +159,7 @@
 	"results.highlights.explanation": "Выберите ваш избранный результат",
 	"results.button.showHighlights": "Показать избранные",
 	"results.button.showAll": "Показать все",
+	"results.filter.placeholder": "",
 	"forms.errors.maxWeapons": "Достигнут максимум",
 	"search.info": "Поиск пользователей по имени Discord или Splatoon 3",
 	"search.noResults": "По запросу '{{query}}' пользователь не найден",

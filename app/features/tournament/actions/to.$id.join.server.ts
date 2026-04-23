@@ -2,6 +2,7 @@ import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
@@ -16,11 +17,8 @@ import {
 } from "~/utils/remix.server";
 import { tournamentPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
-import { findByInviteCode } from "../queries/findTeamByInviteCode.server";
-import { joinTeam } from "../queries/joinLeaveTeam.server";
 import { validateCanJoinTeam } from "../tournament-utils";
 import {
-	inGameNameIfNeeded,
 	requireNotBannedByOrganization,
 	requireSendouQParticipationIfNeeded,
 } from "../tournament-utils.server";
@@ -35,7 +33,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const inviteCode = url.searchParams.get("code");
 	invariant(inviteCode, "code is missing");
 
-	const leanTeam = notFoundIfFalsy(findByInviteCode(inviteCode));
+	const leanTeam = notFoundIfFalsy(
+		await TournamentTeamRepository.findByInviteCode(inviteCode),
+	);
 
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
@@ -88,7 +88,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			: "LEAVE";
 
 	await TournamentLFGRepository.leaveLfg({ userId: user.id, tournamentId });
-	joinTeam({
+	await TournamentTeamRepository.join({
 		userId: user.id,
 		newTeamId: teamToJoin.id,
 		previousTeamId: previousTeam?.id,
@@ -99,11 +99,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 			previousTeam &&
 			previousTeam.members.length <= tournament.minMembersPerTeam,
 		whatToDoWithPreviousTeam,
-		tournamentId,
-		inGameName: await inGameNameIfNeeded({
-			tournament,
-			userId: user.id,
-		}),
 	});
 
 	ShowcaseTournaments.addToCached({

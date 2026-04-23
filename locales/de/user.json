@@ -159,6 +159,7 @@
 	"results.highlights.explanation": "Wähle Ergebnisse, die du hervorheben möchtest",
 	"results.button.showHighlights": "",
 	"results.button.showAll": "",
+	"results.filter.placeholder": "",
 	"forms.errors.maxWeapons": "Maximale Zahl an Waffen erreicht",
 	"search.info": "",
 	"search.noResults": "Keine Nutzer gefunden, die '{{query}}' entsprechen",

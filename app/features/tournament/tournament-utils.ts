@@ -312,10 +312,16 @@ export function compareTeamsForOrdering(
 		return 1;
 	}
 
+	if (a.avgSeedingSkillOrdinal !== null && b.avgSeedingSkillOrdinal === null) {
+		return -1;
+	}
+	if (a.avgSeedingSkillOrdinal === null && b.avgSeedingSkillOrdinal !== null) {
+		return 1;
+	}
 	if (
-		a.avgSeedingSkillOrdinal !== b.avgSeedingSkillOrdinal &&
 		a.avgSeedingSkillOrdinal !== null &&
-		b.avgSeedingSkillOrdinal !== null
+		b.avgSeedingSkillOrdinal !== null &&
+		a.avgSeedingSkillOrdinal !== b.avgSeedingSkillOrdinal
 	) {
 		return b.avgSeedingSkillOrdinal - a.avgSeedingSkillOrdinal;
 	}

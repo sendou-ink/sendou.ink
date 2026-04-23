@@ -159,6 +159,7 @@
 	"results.highlights.explanation": "戦績として選択したい結果を選ぶ",
 	"results.button.showHighlights": "ハイライトを表示",
 	"results.button.showAll": "全て表示",
+	"results.filter.placeholder": "",
 	"forms.errors.maxWeapons": "最大ブキ数を超えました",
 	"search.info": "",
 	"search.noResults": "該当ユーザーが見つかりません '{{query}}'",
