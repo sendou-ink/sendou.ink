@@ -17,7 +17,12 @@ import type { TierName } from "~/features/mmr/mmr-constants";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
-import { navIconUrl, tierImageUrl, userPage } from "~/utils/urls";
+import {
+	navIconUrl,
+	preferenceEmojiUrl,
+	tierImageUrl,
+	userPage,
+} from "~/utils/urls";
 import { SendouTabPanel } from "../elements/Tabs";
 import styles from "./MatchRosterTab.module.css";
 import { TAB_KEYS } from "./MatchTabs";
@@ -28,6 +33,7 @@ type RosterTabMember = CommonUser & {
 	plusTier?: number | null;
 	weaponPool?: Array<MainWeaponId>;
 	friendCode?: string | null;
+	privateNote?: { sentiment: "POSITIVE" | "NEUTRAL" | "NEGATIVE" } | null;
 };
 
 interface RosterTabTeam {
@@ -422,9 +428,11 @@ function RosterMemberLink({
 	member: RosterTabMember;
 	className?: string;
 }) {
-	const { t } = useTranslation(["friends"]);
+	const { t } = useTranslation(["friends", "q"]);
 
-	if (!member.friendCode) {
+	const showNoteItem = member.privateNote !== undefined;
+
+	if (!member.friendCode && !showNoteItem) {
 		return (
 			<Link to={userPage(member)} className={className}>
 				<Avatar user={member} size="xxs" />
@@ -443,12 +451,39 @@ function RosterMemberLink({
 			}
 		>
 			<SendouMenuSection
-				headerText={`SW-${member.friendCode}`}
+				headerText={member.friendCode ? `SW-${member.friendCode}` : undefined}
 				headerClassName={styles.friendCodeHeader}
 			>
 				<SendouMenuItem href={userPage(member)} icon={<User />}>
 					{t("friends:friendsList.viewUserPage")}
 				</SendouMenuItem>
+				{showNoteItem ? (
+					<SendouMenuItem
+						href={`?note=${member.id}`}
+						icon={
+							member.privateNote ? (
+								<img
+									src={preferenceEmojiUrl(
+										member.privateNote.sentiment === "POSITIVE"
+											? "PREFER"
+											: member.privateNote.sentiment === "NEGATIVE"
+												? "AVOID"
+												: undefined,
+									)}
+									alt=""
+									width={18}
+									height={18}
+								/>
+							) : (
+								<Edit />
+							)
+						}
+					>
+						{member.privateNote
+							? t("q:looking.groups.editNote")
+							: t("q:looking.groups.addNote")}
+					</SendouMenuItem>
+				) : null}
 			</SendouMenuSection>
 		</SendouMenu>
 	);

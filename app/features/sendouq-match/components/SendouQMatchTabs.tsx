@@ -1,6 +1,6 @@
 import { differenceInMinutes } from "date-fns";
 import { useTranslation } from "react-i18next";
-import { useFetcher } from "react-router";
+import { useFetcher, useNavigate, useSearchParams } from "react-router";
 import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
@@ -11,7 +11,8 @@ import { DISPLAY_VOTE_RESULT_SECONDS } from "~/features/sendouq/q-constants";
 import { resolveRoomPass } from "~/features/tournament-match/tournament-match-utils";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { SENDOUQ_LOOKING_PAGE, teamPage } from "~/utils/urls";
+import { safeNumberParse } from "~/utils/number";
+import { SENDOUQ_LOOKING_PAGE, sendouQMatchPage, teamPage } from "~/utils/urls";
 import {
 	resolveTimelineMaps,
 	resolveTimelineSpChanges,
@@ -20,12 +21,15 @@ import {
 import * as SendouQMatch from "../core/SendouQMatch";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 import { resolveGroupMemberOf } from "../q-match-utils";
+import { AddPrivateNoteDialog } from "./AddPrivateNoteDialog";
 import { SendouQMatchActionTab } from "./SendouQMatchActionTab";
 
 export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 	const user = useUser();
 	const isStaff = useHasRole("STAFF");
 	const confirmFetcher = useFetcher();
+	const [searchParams] = useSearchParams();
+	const navigate = useNavigate();
 	const { t } = useTranslation(["q"]);
 
 	const currentMap = data.match.currentMap;
@@ -106,78 +110,100 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 		? allMembers.find((m) => m.id === activeRoomLink.userId)?.username
 		: undefined;
 
+	const ownGroup =
+		userSide === "ALPHA"
+			? data.match.groupAlpha
+			: userSide === "BRAVO"
+				? data.match.groupBravo
+				: null;
+	const addingNoteFor = ownGroup?.members.find(
+		(m) => m.id === safeNumberParse(searchParams.get("note")),
+	);
+
 	return (
-		<MatchTabs tabs={tabs}>
-			{isLocked ? (
-				<MatchResultTab
-					teams={resolveTimelineTeams(data.match)}
-					score={{ alpha: alphaWins, bravo: bravoWins }}
-					maps={resolveTimelineMaps(data.match, data.reportedWeapons)}
-					spChanges={resolveTimelineSpChanges(data.match)}
-				>
-					{data.match.cancelRequestedByUserId ? (
-						<p className="text-lighter text-xxs text-center mt-4">
-							{t("q:match.canceled.detail", {
-								requester: resolveCancelRequesterUsername(data.match),
-								accepter: resolveCancelAccepterUsername(data.match),
-							})}
-						</p>
-					) : null}
-				</MatchResultTab>
-			) : null}
-			{!isLocked && isParticipant ? (
-				<MatchJoinTab
-					joinLink={activeRoomLink?.url}
-					hostedBy={hostedByUsername}
-					isStale={isStale}
-					staleMinutesAgo={staleMinutesAgo}
-					refreshedAt={
-						validRoomLink
-							? databaseTimestampToDate(validRoomLink.refreshedAt)
-							: undefined
-					}
-					onConfirmRoom={() => {
-						confirmFetcher.submit(
-							{ _action: "CONFIRM_ROOM" },
-							{ method: "post" },
-						);
-					}}
-					isConfirming={confirmFetcher.state !== "idle"}
-					pool={`SQ${String(data.match.id).at(-1)}`}
-					pass={resolveRoomPass(data.match.id)}
-					showNoSplatnetAlert={data.anyUserPrefersNoSplatnet}
-				/>
-			) : null}
-			<MatchRosterTab
-				minMembersPerTeam={4}
-				canEditSubbedOut={[false, false]}
-				teams={[
-					{
-						team: mapRosterTeam(data.match.groupAlpha.team),
-						defaultName: t("q:match.groupAlpha"),
-						members: mapRosterMembers(data.match.groupAlpha.members),
-						tier: data.match.groupAlpha.tier ?? undefined,
-					},
-					{
-						team: mapRosterTeam(data.match.groupBravo.team),
-						defaultName: t("q:match.groupBravo"),
-						members: mapRosterMembers(data.match.groupBravo.members),
-						tier: data.match.groupBravo.tier ?? undefined,
-					},
-				]}
+		<>
+			<AddPrivateNoteDialog
+				aboutUser={addingNoteFor}
+				close={() => navigate(sendouQMatchPage(data.match.id))}
 			/>
-			{showActionTab ? (
-				<SendouQMatchActionTab
-					data={data}
-					currentMap={currentMap ?? undefined}
-					ownTeamId={ownTeamId}
-					reportedCount={
-						data.match.mapList.filter((m) => m.winnerGroupId !== null).length
-					}
-					viewerSide={userSide}
+			<MatchTabs tabs={tabs}>
+				{isLocked ? (
+					<MatchResultTab
+						teams={resolveTimelineTeams(data.match)}
+						score={{ alpha: alphaWins, bravo: bravoWins }}
+						maps={resolveTimelineMaps(data.match, data.reportedWeapons)}
+						spChanges={resolveTimelineSpChanges(data.match)}
+					>
+						{data.match.cancelRequestedByUserId ? (
+							<p className="text-lighter text-xxs text-center mt-4">
+								{t("q:match.canceled.detail", {
+									requester: resolveCancelRequesterUsername(data.match),
+									accepter: resolveCancelAccepterUsername(data.match),
+								})}
+							</p>
+						) : null}
+					</MatchResultTab>
+				) : null}
+				{!isLocked && isParticipant ? (
+					<MatchJoinTab
+						joinLink={activeRoomLink?.url}
+						hostedBy={hostedByUsername}
+						isStale={isStale}
+						staleMinutesAgo={staleMinutesAgo}
+						refreshedAt={
+							validRoomLink
+								? databaseTimestampToDate(validRoomLink.refreshedAt)
+								: undefined
+						}
+						onConfirmRoom={() => {
+							confirmFetcher.submit(
+								{ _action: "CONFIRM_ROOM" },
+								{ method: "post" },
+							);
+						}}
+						isConfirming={confirmFetcher.state !== "idle"}
+						pool={`SQ${String(data.match.id).at(-1)}`}
+						pass={resolveRoomPass(data.match.id)}
+						showNoSplatnetAlert={data.anyUserPrefersNoSplatnet}
+					/>
+				) : null}
+				<MatchRosterTab
+					minMembersPerTeam={4}
+					canEditSubbedOut={[false, false]}
+					teams={[
+						{
+							team: mapRosterTeam(data.match.groupAlpha.team),
+							defaultName: t("q:match.groupAlpha"),
+							members: mapRosterMembers(data.match.groupAlpha.members, {
+								viewerId: user?.id,
+								isOwnTeam: userSide === "ALPHA",
+							}),
+							tier: data.match.groupAlpha.tier ?? undefined,
+						},
+						{
+							team: mapRosterTeam(data.match.groupBravo.team),
+							defaultName: t("q:match.groupBravo"),
+							members: mapRosterMembers(data.match.groupBravo.members, {
+								viewerId: user?.id,
+								isOwnTeam: userSide === "BRAVO",
+							}),
+							tier: data.match.groupBravo.tier ?? undefined,
+						},
+					]}
 				/>
-			) : null}
-		</MatchTabs>
+				{showActionTab ? (
+					<SendouQMatchActionTab
+						data={data}
+						currentMap={currentMap ?? undefined}
+						ownTeamId={ownTeamId}
+						reportedCount={
+							data.match.mapList.filter((m) => m.winnerGroupId !== null).length
+						}
+						viewerSide={userSide}
+					/>
+				) : null}
+			</MatchTabs>
+		</>
 	);
 }
 
@@ -199,7 +225,10 @@ function resolveCancelAccepterUsername(match: MatchData) {
 	);
 }
 
-function mapRosterMembers(members: MatchData["groupAlpha"]["members"]) {
+function mapRosterMembers(
+	members: MatchData["groupAlpha"]["members"],
+	{ viewerId, isOwnTeam }: { viewerId?: number; isOwnTeam: boolean },
+) {
 	return members.map((member) => ({
 		...member,
 		tier:
@@ -209,6 +238,10 @@ function mapRosterMembers(members: MatchData["groupAlpha"]["members"]) {
 		plusTier: member.plusTier ?? undefined,
 		weaponPool: member.weapons?.map((w) => w.weaponSplId),
 		friendCode: member.friendCode,
+		privateNote:
+			viewerId !== undefined && isOwnTeam && member.id !== viewerId
+				? (member.privateNote ?? null)
+				: undefined,
 	}));
 }
 
