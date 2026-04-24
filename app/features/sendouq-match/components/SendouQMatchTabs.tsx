@@ -10,7 +10,7 @@ import { useUser } from "~/features/auth/core/user";
 import { DISPLAY_VOTE_RESULT_SECONDS } from "~/features/sendouq/q-constants";
 import { resolveRoomPass } from "~/features/tournament-match/tournament-match-utils";
 import { useHasRole } from "~/modules/permissions/hooks";
-import { databaseTimestampToDate } from "~/utils/dates";
+import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { safeNumberParse } from "~/utils/number";
 import { SENDOUQ_LOOKING_PAGE, sendouQMatchPage, teamPage } from "~/utils/urls";
 import {
@@ -20,7 +20,6 @@ import {
 } from "../core/match-timeline";
 import * as SendouQMatch from "../core/SendouQMatch";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
-import { resolveGroupMemberOf } from "../q-match-utils";
 import { AddPrivateNoteDialog } from "./AddPrivateNoteDialog";
 import { SendouQMatchActionTab } from "./SendouQMatchActionTab";
 
@@ -34,7 +33,7 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 
 	const currentMap = data.match.currentMap;
 
-	const userSide = resolveGroupMemberOf({
+	const userSide = SendouQMatch.resolveGroupMemberOf({
 		groupAlpha: data.match.groupAlpha,
 		groupBravo: data.match.groupBravo,
 		userId: user?.id,
@@ -62,10 +61,10 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 		return <Redirect to={SENDOUQ_LOOKING_PAGE} />;
 	}
 
-	const now = Math.floor(Date.now() / 1000);
 	const lockedVoteVisible =
 		data.match.confirmedAt !== null &&
-		now < data.match.confirmedAt + DISPLAY_VOTE_RESULT_SECONDS;
+		databaseTimestampNow() <
+			data.match.confirmedAt + DISPLAY_VOTE_RESULT_SECONDS;
 
 	const matchInProgress = !isLocked && !awaitingConfirmation && currentMap;
 
@@ -129,7 +128,7 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 			<MatchTabs tabs={tabs}>
 				{isLocked ? (
 					<MatchResultTab
-						teams={resolveTimelineTeams(data.match)}
+						teams={resolveTimelineTeams(data.match, t)}
 						score={{ alpha: alphaWins, bravo: bravoWins }}
 						maps={resolveTimelineMaps(data.match, data.reportedWeapons)}
 						spChanges={resolveTimelineSpChanges(data.match)}

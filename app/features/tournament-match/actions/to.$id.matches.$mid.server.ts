@@ -716,9 +716,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 				manager.update.match({
 					id: match.id,
 					opponent1: {
+						score: match.opponentOne?.score,
 						result: winnerTeamId === match.opponentOne!.id ? "win" : "loss",
 					},
 					opponent2: {
+						score: match.opponentTwo?.score,
 						result: winnerTeamId === match.opponentTwo!.id ? "win" : "loss",
 					},
 				});

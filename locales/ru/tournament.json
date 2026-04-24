@@ -117,6 +117,8 @@
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (Играть все {{bestOf}})",
 	"match.activeRosterMissing.header": "",
 	"match.activeRosterMissing.subtitle": "",
+	"match.leagueLocked.header": "",
+	"match.leagueLocked.subtitle": "",
 	"match.action.undoLastScore": "Отменить последний результат",
 	"match.action.reopenMatch": "Открыть матч заново",
 	"match.action.endSet": "",

@@ -7,6 +7,7 @@ import { MatchTabs } from "~/components/match-page/MatchTabs";
 import type { TimelineMap } from "~/components/match-page/MatchTimeline";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import {
 	groupNumberToLetters,
@@ -18,6 +19,7 @@ import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.s
 import { resolveHostingTeam, resolveRoomPass } from "../tournament-match-utils";
 import { TournamentMatchActionPickBanTab } from "./TournamentMatchActionPickBanTab";
 import { TournamentMatchActionTab } from "./TournamentMatchActionTab";
+import { TournamentMatchAdminTab } from "./TournamentMatchAdminTab";
 import { TournamentMatchPickBanTab } from "./TournamentMatchPickBanTab";
 
 export function TournamentMatchTabs({
@@ -74,6 +76,11 @@ export function TournamentMatchTabs({
 	const hasPickBanSetup =
 		Boolean(data.match.roundMaps?.pickBan) && !!pickBanTeams;
 
+	const isAdminEligible =
+		tournament.isOrganizerOrStreamer(user) && !tournament.ctx.isFinalized;
+
+	const leagueRoundLocked = isLeagueRoundLocked(tournament, data.match.roundId);
+
 	const tabs = resolveVisibleTabs({
 		matchIsOver: data.matchIsOver,
 		canReportScore,
@@ -82,6 +89,8 @@ export function TournamentMatchTabs({
 		hasMissingActiveRoster,
 		isPickBanStep,
 		hasPickBanSetup,
+		isAdminEligible,
+		leagueRoundLocked,
 	});
 
 	const userTeamId = tournament.teamMemberOfByUser(user)?.id;
@@ -119,6 +128,7 @@ export function TournamentMatchTabs({
 					/>
 				) : null
 			) : null}
+			{tabs.includes("admin") ? <TournamentMatchAdminTab data={data} /> : null}
 		</MatchTabs>
 	);
 }
@@ -376,6 +386,8 @@ function resolveVisibleTabs({
 	hasMissingActiveRoster,
 	isPickBanStep,
 	hasPickBanSetup,
+	isAdminEligible,
+	leagueRoundLocked,
 }: {
 	matchIsOver: boolean;
 	canReportScore: boolean;
@@ -384,24 +396,32 @@ function resolveVisibleTabs({
 	hasMissingActiveRoster: boolean;
 	isPickBanStep: boolean;
 	hasPickBanSetup: boolean;
+	isAdminEligible: boolean;
+	leagueRoundLocked: boolean;
 }) {
-	const tabs: Array<"join" | "rosters" | "pickBan" | "action" | "result"> = [];
+	const tabs: Array<
+		"join" | "rosters" | "pickBan" | "action" | "result" | "admin"
+	> = [];
 
 	if (matchIsOver) {
 		tabs.push("result");
 	}
-	if (!matchIsOver && isParticipant) {
+	if (!matchIsOver && isParticipant && !leagueRoundLocked) {
 		tabs.push("join");
 	}
 	tabs.push("rosters");
 	if (
-		isPickBanStep ||
-		(canReportScore && hasCurrentMap && !hasMissingActiveRoster)
+		!leagueRoundLocked &&
+		(isPickBanStep ||
+			(canReportScore && hasCurrentMap && !hasMissingActiveRoster))
 	) {
 		tabs.push("action");
 	}
 	if (hasPickBanSetup) {
 		tabs.push("pickBan");
+	}
+	if (isAdminEligible) {
+		tabs.push("admin");
 	}
 
 	return tabs;

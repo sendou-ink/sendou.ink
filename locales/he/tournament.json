@@ -115,6 +115,8 @@
 	"match.score.playAll": "",
 	"match.activeRosterMissing.header": "",
 	"match.activeRosterMissing.subtitle": "",
+	"match.leagueLocked.header": "",
+	"match.leagueLocked.subtitle": "",
 	"match.action.undoLastScore": "בטלו את התוצאה האחרונה",
 	"match.action.reopenMatch": "פתיחה מחדש של הקרב",
 	"match.action.endSet": "",

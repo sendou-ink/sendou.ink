@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import type {
 	TimelineMap,
 	TimelineSpChanges,
@@ -8,14 +9,27 @@ type MatchData = SendouQMatchLoaderData["match"];
 
 // xxx: unit test this file
 
-export function resolveTimelineTeams(match: MatchData) {
+/**
+ * Resolves display names for the two groups in a match, falling back to the
+ * translated "Group Alpha"/"Group Bravo" labels when a group is not associated
+ * with a registered team.
+ */
+export function resolveGroupNames(match: MatchData, t: TFunction<["q"]>) {
+	return {
+		alpha: match.groupAlpha.team?.name ?? t("q:match.groupAlpha"),
+		bravo: match.groupBravo.team?.name ?? t("q:match.groupBravo"),
+	};
+}
+
+export function resolveTimelineTeams(match: MatchData, t: TFunction<["q"]>) {
+	const names = resolveGroupNames(match, t);
 	return {
 		alpha: {
-			name: match.groupAlpha.team?.name ?? "Group Alpha", // xxx: should be in the loader?
+			name: names.alpha,
 			avatar: match.groupAlpha.team?.avatarUrl ?? undefined,
 		},
 		bravo: {
-			name: match.groupBravo.team?.name ?? "Group Bravo",
+			name: names.bravo,
 			avatar: match.groupBravo.team?.avatarUrl ?? undefined,
 		},
 	};

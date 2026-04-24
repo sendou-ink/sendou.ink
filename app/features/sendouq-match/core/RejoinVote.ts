@@ -1,5 +1,6 @@
 import type { SQMatch } from "~/features/sendouq/core/SendouQ.server";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
+import * as SendouQMatch from "./SendouQMatch";
 
 export interface RejoinVote {
 	userId: number;
@@ -46,13 +47,17 @@ export function extractOwnGroupVotesFromSendouqMatch(
 	match: Pick<SQMatch, "groupAlpha" | "groupBravo">,
 	userId: number,
 ): RejoinVote[] | null {
-	const ownGroup = match.groupAlpha.members.some(
-		(member) => member.id === userId,
-	)
-		? match.groupAlpha
-		: match.groupBravo.members.some((member) => member.id === userId)
-			? match.groupBravo
-			: null;
+	const ownSide = SendouQMatch.resolveGroupMemberOf({
+		groupAlpha: match.groupAlpha,
+		groupBravo: match.groupBravo,
+		userId,
+	});
+	const ownGroup =
+		ownSide === "ALPHA"
+			? match.groupAlpha
+			: ownSide === "BRAVO"
+				? match.groupBravo
+				: null;
 
 	if (!ownGroup) return null;
 

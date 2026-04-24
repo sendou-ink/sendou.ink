@@ -113,6 +113,8 @@
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (Play all {{bestOf}})",
 	"match.activeRosterMissing.header": "",
 	"match.activeRosterMissing.subtitle": "",
+	"match.leagueLocked.header": "",
+	"match.leagueLocked.subtitle": "",
 	"match.action.undoLastScore": "Letztes Ergebnis widerrufen",
 	"match.action.reopenMatch": "Match erneut öffnen",
 	"match.action.endSet": "",

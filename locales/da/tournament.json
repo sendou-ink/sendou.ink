@@ -113,6 +113,8 @@
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (Spil alle runder {{bestOf}})",
 	"match.activeRosterMissing.header": "",
 	"match.activeRosterMissing.subtitle": "",
+	"match.leagueLocked.header": "",
+	"match.leagueLocked.subtitle": "",
 	"match.action.undoLastScore": "Annuller sidste score",
 	"match.action.reopenMatch": "Genåbn kamp",
 	"match.action.endSet": "",

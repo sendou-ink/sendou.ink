@@ -1,5 +1,5 @@
 import { differenceInMinutes } from "date-fns";
-import { Check, Users, X } from "lucide-react";
+import { Check, Lock, Users, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
 	IconBanner,
@@ -10,6 +10,10 @@ import {
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import {
+	isLeagueRoundLocked,
+	resolveLeagueRoundStartDate,
+} from "~/features/tournament/tournament-utils";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
@@ -36,6 +40,11 @@ export function TournamentMatchBanner({
 		tournament,
 	);
 
+	const leagueRoundLocked = isLeagueRoundLocked(tournament, data.match.roundId);
+	const leagueRoundStartDate = leagueRoundLocked
+		? resolveLeagueRoundStartDate(tournament, data.match.roundId)
+		: null;
+
 	const pickBanBanner = resolvePickBanBanner(data, tournament, t);
 
 	const activeRosterByTeamId = (tournamentTeamId: number) => {
@@ -53,7 +62,19 @@ export function TournamentMatchBanner({
 	return (
 		<MatchBannerContainer>
 			<TournamentMatchBannerTopRow data={data} />
-			{teamsMissingActiveRoster.length > 0 ? (
+			{leagueRoundLocked ? (
+				<IconBanner
+					icon={<Lock size={32} />}
+					header={t("tournament:match.leagueLocked.header")}
+					subtitle={
+						leagueRoundStartDate
+							? t("tournament:match.leagueLocked.subtitle", {
+									date: leagueRoundStartDate.toLocaleDateString(),
+								})
+							: undefined
+					}
+				/>
+			) : teamsMissingActiveRoster.length > 0 ? (
 				<IconBanner
 					icon={<Users size={32} />}
 					header={t("tournament:match.activeRosterMissing.header")}

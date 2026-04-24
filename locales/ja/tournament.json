@@ -109,6 +109,8 @@
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (全てプレイする {{bestOf}})",
 	"match.activeRosterMissing.header": "",
 	"match.activeRosterMissing.subtitle": "",
+	"match.leagueLocked.header": "",
+	"match.leagueLocked.subtitle": "",
 	"match.action.undoLastScore": "最後のスコアをやりなおす",
 	"match.action.reopenMatch": "対戦を再度開く",
 	"match.action.endSet": "",

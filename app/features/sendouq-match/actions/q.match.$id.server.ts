@@ -27,6 +27,7 @@ import {
 import { assertUnreachable } from "~/utils/types";
 import { sendouQMatchPage } from "~/utils/urls";
 import * as RejoinVote from "../core/RejoinVote";
+import * as SendouQMatch from "../core/SendouQMatch";
 import { matchSchema, qMatchPageParamsSchema } from "../q-match-schemas";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -42,10 +43,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	switch (data._action) {
 		case "REPORT_SCORE": {
-			const unmappedMatch = notFoundIfFalsy(
-				await SQMatchRepository.findById(matchId),
-			);
-			const match = SendouQ.mapMatch(unmappedMatch, user);
+			const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
 
 			const members = [
 				...match.groupAlpha.members,
@@ -154,13 +152,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		case "CAST_CONTINUE_VOTE": {
 			const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
 
-			// xxx: some SendouQMatch module util
-			const viewerSide: "ALPHA" | "BRAVO" | null =
-				match.groupAlpha.members.some((m) => m.id === user.id)
-					? "ALPHA"
-					: match.groupBravo.members.some((m) => m.id === user.id)
-						? "BRAVO"
-						: null;
+			const viewerSide = SendouQMatch.resolveGroupMemberOf({
+				groupAlpha: match.groupAlpha,
+				groupBravo: match.groupBravo,
+				userId: user.id,
+			});
 			errorToastIfFalsy(viewerSide, "Not a participant");
 
 			const viewerGroup =

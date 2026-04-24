@@ -16,6 +16,7 @@ import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
 import { ModeImage, StageImage } from "../Image";
 import styles from "./MatchTimeline.module.css";
+import { type InferredSubstitution, inferSubstitutions } from "./utils";
 import { WeaponPool } from "./WeaponPool";
 
 // xxx: timeline also for a set thats still in progress? instead of the separate pick ban tab
@@ -71,7 +72,6 @@ export interface MatchTimelineProps {
 	compact?: boolean;
 }
 
-// xxx: need to show Pick/Bans somewhere, on tab?
 export function MatchTimeline({
 	teams,
 	score,
@@ -87,7 +87,7 @@ export function MatchTimeline({
 				: maps.map((map, i) => {
 						const previousMap = maps[i - 1];
 						const substitutions = previousMap
-							? inferSubstitutions(previousMap, map)
+							? inferSubstitutions(previousMap.rosters, map.rosters)
 							: [];
 
 						return (
@@ -104,40 +104,6 @@ export function MatchTimeline({
 			) : null}
 		</div>
 	);
-}
-
-interface InferredSubstitution {
-	side: MatchSide;
-	playerOut: CommonUser;
-	playerIn: CommonUser;
-}
-
-// xxx: unit test
-function inferSubstitutions(
-	previousMap: TimelineMap,
-	currentMap: TimelineMap,
-): InferredSubstitution[] {
-	const result: InferredSubstitution[] = [];
-
-	for (const side of ["alpha", "bravo"] as const) {
-		const prevIds = new Set(previousMap.rosters[side].map((u) => u.id));
-		const currIds = new Set(currentMap.rosters[side].map((u) => u.id));
-
-		const out = previousMap.rosters[side].filter((u) => !currIds.has(u.id));
-		const inn = currentMap.rosters[side].filter((u) => !prevIds.has(u.id));
-
-		for (let i = 0; i < Math.max(out.length, inn.length); i++) {
-			if (out[i] && inn[i]) {
-				result.push({
-					side: side === "alpha" ? "ALPHA" : "BRAVO",
-					playerOut: out[i],
-					playerIn: inn[i],
-				});
-			}
-		}
-	}
-
-	return result;
 }
 
 function TimelineHeader({

@@ -19,6 +19,7 @@ import { useAutoRerender } from "~/hooks/useAutoRerender";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
+import { resolveGroupNames } from "../core/match-timeline";
 import * as SendouQMatch from "../core/SendouQMatch";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 
@@ -26,13 +27,16 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 	const { t } = useTranslation(["q"]);
 
 	const cancelRequested = Boolean(data.match.cancelRequestedByUserId);
-	const cancelRequesterIsAlpha = data.match.groupAlpha.members.some(
-		(m) => m.id === data.match.cancelRequestedByUserId,
-	);
+	const cancelRequesterSide = SendouQMatch.resolveGroupMemberOf({
+		groupAlpha: data.match.groupAlpha,
+		groupBravo: data.match.groupBravo,
+		userId: data.match.cancelRequestedByUserId,
+	});
+	const groupNames = resolveGroupNames(data.match, t);
 	const cancelRequesterName = cancelRequested
-		? cancelRequesterIsAlpha
-			? (data.match.groupAlpha.team?.name ?? "Group Alpha")
-			: (data.match.groupBravo.team?.name ?? "Group Bravo")
+		? cancelRequesterSide === "ALPHA"
+			? groupNames.alpha
+			: groupNames.bravo
 		: undefined;
 
 	const bottomRow = (

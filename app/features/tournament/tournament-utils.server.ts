@@ -96,9 +96,11 @@ export function endDroppedTeamMatches({
 			{
 				id: match.id,
 				opponent1: {
+					score: match.opponent1.score,
 					result: winnerTeamId === match.opponent1.id ? "win" : "loss",
 				},
 				opponent2: {
+					score: match.opponent2.score,
 					result: winnerTeamId === match.opponent2.id ? "win" : "loss",
 				},
 			},

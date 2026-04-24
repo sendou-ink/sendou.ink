@@ -211,6 +211,7 @@
 	"match.rematch.prompt": "",
 	"match.rematch.vote.yes": "",
 	"match.rematch.vote.no": "",
+	"match.rematch.vote.noConfirm": "",
 	"match.rematch.declined": "",
 	"match.rematch.fizzled": "",
 	"match.rematch.waitingCaptain": "",

@@ -23,7 +23,6 @@ import {
 } from "~/features/plus-voting/core";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
-import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { calculateMatchSkills } from "~/features/sendouq-match/core/skills.server";
 import {
@@ -3033,9 +3032,7 @@ async function playedMatches() {
 			["ALPHA", "BRAVO", "ALPHA", "BRAVO", "BRAVO", "BRAVO"],
 		]) as ("ALPHA" | "BRAVO")[];
 		const winner = winnersArrayToWinner(winners);
-		const finishedMatch = SendouQ.mapMatch(
-			(await SQMatchRepository.findById(match.id))!,
-		);
+		const finishedMatch = (await SQMatchRepository.findById(match.id))!;
 
 		const { newSkills, differences } = calculateMatchSkills({
 			groupMatchId: match.id,

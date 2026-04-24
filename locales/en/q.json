@@ -211,6 +211,7 @@
 	"match.rematch.prompt": "Continue queueing with the group of {{count}}?",
 	"match.rematch.vote.yes": "Yes, continue",
 	"match.rematch.vote.no": "No, I'm done",
+	"match.rematch.vote.noConfirm": "Vote no? You can't change your vote afterwards.",
 	"match.rematch.declined": "You declined to continue",
 	"match.rematch.fizzled": "Nobody wanted to continue",
 	"match.rematch.waitingCaptain": "Waiting for the captain to choose whether to re-queue",

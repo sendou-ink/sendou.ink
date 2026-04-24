@@ -47,6 +47,7 @@
 - one file containing React code should have a matching CSS module file e.g. `Component.tsx` should have a file with the same root name i.e. `Component.module.css`
 - clsx library is used for conditional class names
 - prefer using [CSS variables](./app/styles/vars.css) for theming
+- for any CSS variable used, make sure it is defined either locally or in the `vars.css` file
 - for simple styling, prefer [utility classes](./app/styles/utils.css) over creating a new class
 - use CSS nesting with the `&` selector to group related selectors (pseudo-classes, pseudo-elements, child selectors, attribute selectors) under their parent instead of repeating the parent selector
 

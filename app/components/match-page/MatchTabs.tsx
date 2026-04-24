@@ -1,4 +1,4 @@
-import { DoorOpen, ScrollText, Swords, Tally5, Users } from "lucide-react";
+import { DoorOpen, Key, ScrollText, Swords, Tally5, Users } from "lucide-react";
 import type * as React from "react";
 import { useSearchParams } from "react-router";
 import invariant from "~/utils/invariant";
@@ -19,6 +19,7 @@ export const TAB_KEYS = {
 	ACTION: "action",
 	JOIN: "join",
 	RESULT: "result",
+	ADMIN: "admin",
 } as const;
 
 const TAB_ICONS: Record<MatchTabsKey, React.ReactNode> = {
@@ -27,6 +28,7 @@ const TAB_ICONS: Record<MatchTabsKey, React.ReactNode> = {
 	action: <Tally5 />,
 	join: <DoorOpen />,
 	result: <ScrollText />,
+	admin: <Key />,
 };
 
 const TAB_LABELS: Record<MatchTabsKey, string> = {
@@ -35,6 +37,7 @@ const TAB_LABELS: Record<MatchTabsKey, string> = {
 	action: "Action",
 	join: "Join",
 	result: "Result",
+	admin: "Admin",
 };
 
 export function MatchTabs({ children, tabs }: MatchTabsProps) {
@@ -49,7 +52,13 @@ export function MatchTabs({ children, tabs }: MatchTabsProps) {
 			<SendouTabs
 				selectedKey={currentTab}
 				onSelectionChange={(key) =>
-					setSearchParams({ [TAB_KEY]: key as string })
+					setSearchParams(
+						{ [TAB_KEY]: key as string },
+						{
+							preventScrollReset: true,
+							unstable_defaultShouldRevalidate: false,
+						},
+					)
 				}
 				disappearing={false}
 			>

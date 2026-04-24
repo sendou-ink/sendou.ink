@@ -7,6 +7,7 @@ import { defaultOrdinal } from "~/features/mmr/mmr-utils";
 import { type TieredSkill, userSkills } from "~/features/mmr/tiered.server";
 import type * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
+import * as SendouQMatch from "~/features/sendouq-match/core/SendouQMatch";
 import type * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
@@ -43,7 +44,6 @@ export type SQOwnGroup = SerializeFrom<
 export type SQMatch = SerializeFrom<ReturnType<SendouQClass["mapMatch"]>>;
 export type SQMatchGroup = SQMatch["groupAlpha"] | SQMatch["groupBravo"];
 export type SQGroupMember = NonNullable<SQGroup["members"]>[number];
-export type SQMatchGroupMember = SQMatchGroup["members"][number];
 
 const FALLBACK_TIER = { isPlus: false, name: "IRON" } as const;
 const SECONDS_TILL_STALE =
@@ -155,7 +155,6 @@ class SendouQClass {
 		return this.groups.find((group) => group.inviteCode === inviteCode);
 	}
 
-	// xxx: only needed stuff here
 	/**
 	 * Maps a database match to a format with appropriate censoring based on user permissions.
 	 * Includes private notes for team members and censors sensitive data for non-participants.
@@ -169,14 +168,14 @@ class SendouQClass {
 		/** Array of private user notes to include */
 		notes: DBPrivateNoteRow[] = [],
 	) {
-		const isTeamAlphaMember = match.groupAlpha.members.some(
-			(m) => m.id === user?.id,
-		);
-		const isTeamBravoMember = match.groupBravo.members.some(
-			(m) => m.id === user?.id,
-		);
-		const isMatchInsider =
-			isTeamAlphaMember || isTeamBravoMember || user?.roles.includes("STAFF");
+		const viewerSide = SendouQMatch.resolveGroupMemberOf({
+			groupAlpha: match.groupAlpha,
+			groupBravo: match.groupBravo,
+			userId: user?.id,
+		});
+		const isTeamAlphaMember = viewerSide === "ALPHA";
+		const isTeamBravoMember = viewerSide === "BRAVO";
+		const isMatchInsider = viewerSide !== null || user?.roles.includes("STAFF");
 		const happenedInLastMonth = isWithinInterval(
 			databaseTimestampToDate(match.createdAt),
 			{
@@ -191,14 +190,10 @@ class SendouQClass {
 		) => {
 			return {
 				...group,
-				isReplay: false,
-				tierRange: null as TierRange | null,
 				chatCode: isTeamMember ? group.chatCode : undefined,
 				noScreen: this.#groupNoScreen(group),
 				tier: match.memento?.groups[group.id]?.tier,
 				skillDifference: match.memento?.groups[group.id]?.skillDifference,
-				modePreferences: this.#groupModePreferences(group),
-				usersRole: null as Tables["GroupMember"]["role"] | null,
 				matchmade: Boolean(group.matchmade),
 				members: group.members.map((member) => {
 					return {
@@ -207,7 +202,6 @@ class SendouQClass {
 						privateNote: null as DBPrivateNoteRow | null,
 						skillDifference: match.memento?.users[member.id]?.skillDifference,
 						noScreen: undefined,
-						languages: member.languages?.split(",") || [],
 						isContinuing:
 							typeof member.isContinuing === "number"
 								? Boolean(member.isContinuing)

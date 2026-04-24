@@ -113,6 +113,8 @@
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (Play all {{bestOf}})",
 	"match.activeRosterMissing.header": "Active roster needed",
 	"match.activeRosterMissing.subtitle": "Waiting on {{teams}}",
+	"match.leagueLocked.header": "Waiting for league round to start",
+	"match.leagueLocked.subtitle": "Round playable from {{date}} onwards",
 	"match.action.undoLastScore": "Undo last score",
 	"match.action.reopenMatch": "Reopen match",
 	"match.action.endSet": "End set",

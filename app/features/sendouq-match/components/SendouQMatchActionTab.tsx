@@ -1,6 +1,7 @@
+import type { TFunction } from "i18next";
 import { Ban, Undo2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Link, useFetcher } from "react-router";
+import { useFetcher } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouTabPanel } from "~/components/elements/Tabs";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
@@ -15,19 +16,16 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
-import { SENDOUQ_PAGE } from "~/utils/urls";
 import {
+	resolveGroupNames,
 	resolveMatchScore,
 	resolveTimelineMaps,
 	resolveTimelineTeams,
 } from "../core/match-timeline";
-import * as RejoinVote from "../core/RejoinVote";
 import * as SendouQMatch from "../core/SendouQMatch";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
-import { RematchVotePanel } from "./RematchVotePanel";
+import { MatchmadeRejoinSection, TrustedRejoinSection } from "./RejoinSections";
 import styles from "./SendouQMatchActionTab.module.css";
-
-// xxx: maybe divide Rejoin related components to a different file?
 
 export function SendouQMatchActionTab({
 	data,
@@ -53,14 +51,17 @@ export function SendouQMatchActionTab({
 	const awaitingConfirmation = !data.match.isLocked && isDecisive;
 	const isLocked = data.match.isLocked;
 
-	const cancelRequesterIsAlpha = data.match.groupAlpha.members.some(
-		(m) => m.id === data.match.cancelRequestedByUserId,
-	);
-	const cancelRequestedByGroupId = data.match.cancelRequestedByUserId
-		? cancelRequesterIsAlpha
+	const cancelRequesterSide = SendouQMatch.resolveGroupMemberOf({
+		groupAlpha: data.match.groupAlpha,
+		groupBravo: data.match.groupBravo,
+		userId: data.match.cancelRequestedByUserId,
+	});
+	const cancelRequestedByGroupId =
+		cancelRequesterSide === "ALPHA"
 			? data.match.groupAlpha.id
-			: data.match.groupBravo.id
-		: undefined;
+			: cancelRequesterSide === "BRAVO"
+				? data.match.groupBravo.id
+				: undefined;
 
 	// xxx: system messages for cancel sent, rejected or accepted and by who
 	if (
@@ -182,10 +183,11 @@ function RequeueTab({
 	isStaffOnly: boolean;
 	awaitingConfirmation: boolean;
 }) {
+	const { t } = useTranslation(["q"]);
 	const user = useUser();
 
 	const score = resolveMatchScore(data.match);
-	const teams = resolveTimelineTeams(data.match);
+	const teams = resolveTimelineTeams(data.match, t);
 	const maps = resolveTimelineMaps(data.match, data.reportedWeapons);
 
 	const viewerGroup =
@@ -198,13 +200,11 @@ function RequeueTab({
 	const decidingReportedByUserId = [...data.match.mapList]
 		.reverse()
 		.find((m) => m.winnerGroupId !== null)?.reportedByUserId;
-	const reporterSide: "ALPHA" | "BRAVO" | null = decidingReportedByUserId
-		? data.match.groupAlpha.members.some(
-				(m) => m.id === decidingReportedByUserId,
-			)
-			? "ALPHA"
-			: "BRAVO"
-		: null;
+	const reporterSide = SendouQMatch.resolveGroupMemberOf({
+		groupAlpha: data.match.groupAlpha,
+		groupBravo: data.match.groupBravo,
+		userId: decidingReportedByUserId,
+	});
 	const isOnReporterTeam = awaitingConfirmation && reporterSide === viewerSide;
 	const isOnConfirmerTeam =
 		awaitingConfirmation &&
@@ -366,116 +366,6 @@ function ReporterUndoSection() {
 	);
 }
 
-function MatchmadeRejoinSection({
-	data,
-	viewerGroup,
-	viewerUserId,
-	awaitingConfirmation,
-	isOnReporterTeam,
-}: {
-	data: SendouQMatchLoaderData;
-	viewerGroup: NonNullable<SendouQMatchLoaderData["match"]["groupAlpha"]>;
-	viewerUserId: number;
-	awaitingConfirmation: boolean;
-	isOnReporterTeam: boolean;
-}) {
-	const voteFetcher = useFetcher();
-
-	const votes = RejoinVote.extractOwnGroupVotesFromSendouqMatch(
-		data.match,
-		viewerUserId,
-	);
-
-	if (!votes) return null;
-
-	if (RejoinVote.userContinueStatus(votes, viewerUserId) === false) {
-		return <DeclinedSection />;
-	}
-
-	// During awaiting confirmation, only reporter team can cascade.
-	if (awaitingConfirmation && !isOnReporterTeam) return null;
-
-	return (
-		<RematchVotePanel
-			members={viewerGroup.members.map((m) => ({
-				id: m.id,
-				username: m.username,
-				discordId: m.discordId,
-				discordAvatar: m.discordAvatar,
-				customUrl: m.customUrl,
-			}))}
-			votes={votes}
-			viewerUserId={viewerUserId}
-			isPending={voteFetcher.state !== "idle"}
-			onVote={(isContinuing) => {
-				voteFetcher.submit(
-					{
-						_action: "CAST_CONTINUE_VOTE",
-						isContinuing: String(Number(isContinuing)),
-					},
-					{ method: "post" },
-				);
-			}}
-		/>
-	);
-}
-
-function TrustedRejoinSection({
-	viewerGroup,
-	viewerUserId,
-}: {
-	viewerGroup: NonNullable<SendouQMatchLoaderData["match"]["groupAlpha"]>;
-	viewerUserId: number;
-}) {
-	const { t } = useTranslation(["q"]);
-	const viewerRole = viewerGroup.members.find(
-		(m) => m.id === viewerUserId,
-	)?.role;
-	const lookAgainFetcher = useFetcher();
-
-	if (viewerRole === "OWNER") {
-		return (
-			<div className="stack md items-center">
-				<SendouButton
-					variant="primary"
-					isPending={lookAgainFetcher.state !== "idle"}
-					onPress={() => {
-						lookAgainFetcher.submit(
-							{
-								_action: "LOOK_AGAIN",
-								previousGroupId: String(viewerGroup.id),
-							},
-							{ method: "post" },
-						);
-					}}
-				>
-					{t("q:match.actions.lookAgain")}
-				</SendouButton>
-			</div>
-		);
-	}
-
-	return (
-		<p className="text-lighter text-sm text-center">
-			{t("q:match.rematch.waitingCaptain")}
-		</p>
-	);
-}
-
-function DeclinedSection() {
-	const { t } = useTranslation(["q"]);
-	return (
-		<div className="stack md items-center">
-			<p className="text-lighter text-sm text-center">
-				{t("q:match.rematch.declined")}
-			</p>
-			<Link to={SENDOUQ_PAGE} className="text-sm">
-				{t("q:match.rematch.rejoinQueue")}
-			</Link>
-		</div>
-	);
-}
-
 function InProgressTab({
 	data,
 	currentMap,
@@ -521,6 +411,7 @@ function InProgressTab({
 					...buildSendouQSetEndingData({
 						match: data.match,
 						scores,
+						t,
 					}),
 					setEndingTeamIds,
 				}
@@ -538,12 +429,14 @@ function InProgressTab({
 				.map((w) => w.weaponSplId)
 		: [];
 
+	const groupNames = resolveGroupNames(data.match, t);
+
 	return (
 		<MatchActionTab
 			key={reportedCount}
 			teams={[
-				{ id: data.match.groupAlpha.id, name: "Group Alpha" },
-				{ id: data.match.groupBravo.id, name: "Group Bravo" },
+				{ id: data.match.groupAlpha.id, name: groupNames.alpha },
+				{ id: data.match.groupBravo.id, name: groupNames.bravo },
 			]}
 			ownTeamId={ownTeamId}
 			stageId={currentMap.stageId}
@@ -645,9 +538,11 @@ function InProgressTab({
 function buildSendouQSetEndingData({
 	match,
 	scores,
+	t,
 }: {
 	match: SendouQMatchLoaderData["match"];
 	scores: [number, number];
+	t: TFunction<["q"]>;
 }) {
 	const completedMaps = match.mapList.filter((m) => m.winnerGroupId !== null);
 
@@ -665,20 +560,8 @@ function buildSendouQSetEndingData({
 		},
 	}));
 
-	const alphaTeam = match.groupAlpha.team;
-	const bravoTeam = match.groupBravo.team;
-
 	return {
-		teams: {
-			alpha: {
-				name: alphaTeam?.name ?? "Group Alpha",
-				avatar: alphaTeam?.avatarUrl ?? undefined,
-			},
-			bravo: {
-				name: bravoTeam?.name ?? "Group Bravo",
-				avatar: bravoTeam?.avatarUrl ?? undefined,
-			},
-		},
+		teams: resolveTimelineTeams(match, t),
 		score: { alpha: scores[0], bravo: scores[1] },
 		maps: previousMaps,
 		currentRosters: {

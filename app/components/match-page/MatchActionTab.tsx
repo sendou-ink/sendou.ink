@@ -111,7 +111,7 @@ export function MatchActionTab({
 					) : null}
 
 					<RadioGroup
-						value={winnerId !== null ? String(winnerId) : undefined}
+						value={winnerId !== null ? String(winnerId) : null}
 						onChange={(value) => {
 							const selectedId = Number(value);
 							setWinnerId(selectedId);

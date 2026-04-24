@@ -113,6 +113,8 @@
 	"match.score.playAll": "",
 	"match.activeRosterMissing.header": "",
 	"match.activeRosterMissing.subtitle": "",
+	"match.leagueLocked.header": "",
+	"match.leagueLocked.subtitle": "",
 	"match.action.undoLastScore": "",
 	"match.action.reopenMatch": "",
 	"match.action.endSet": "",

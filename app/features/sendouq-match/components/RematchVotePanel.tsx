@@ -1,7 +1,9 @@
 import { Check, Clock, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import type { FetcherWithComponents } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import * as RejoinVote from "../core/RejoinVote";
 import styles from "./RematchVotePanel.module.css";
 
@@ -17,20 +19,18 @@ type RematchVotePanelProps = {
 	members: RematchVoteMember[];
 	votes: RejoinVote.RejoinVote[];
 	viewerUserId: number;
-	isPending: boolean;
-	onVote: (isContinuing: boolean) => void;
+	fetcher: FetcherWithComponents<any>;
 };
-
-// xxx: if Voting no, form with confirm with a warning they cant later change their mind?
 
 export function RematchVotePanel({
 	members,
 	votes,
 	viewerUserId,
-	isPending,
-	onVote,
+	fetcher,
 }: RematchVotePanelProps) {
 	const { t } = useTranslation(["q"]);
+
+	const isPending = fetcher.state !== "idle";
 
 	const currentRoundSize = RejoinVote.currentUserIds(
 		votes,
@@ -56,14 +56,23 @@ export function RematchVotePanel({
 			</ul>
 			{RejoinVote.userContinueStatus(votes, viewerUserId) === false ? null : (
 				<div className={styles.buttons}>
-					<SendouButton
-						variant="outlined"
-						size="small"
-						isDisabled={isPending}
-						onPress={() => onVote(false)}
+					<FormWithConfirm
+						fields={[
+							["_action", "CAST_CONTINUE_VOTE"],
+							["isContinuing", "0"],
+						]}
+						dialogHeading={t("q:match.rematch.vote.noConfirm")}
+						submitButtonText={t("q:match.rematch.vote.no")}
+						fetcher={fetcher}
 					>
-						{t("q:match.rematch.vote.no")}
-					</SendouButton>
+						<SendouButton
+							variant="outlined"
+							size="small"
+							isDisabled={isPending}
+						>
+							{t("q:match.rematch.vote.no")}
+						</SendouButton>
+					</FormWithConfirm>
 					<SendouButton
 						variant="primary"
 						size="small"
@@ -71,7 +80,15 @@ export function RematchVotePanel({
 							isPending ||
 							RejoinVote.userContinueStatus(votes, viewerUserId) === true
 						}
-						onPress={() => onVote(true)}
+						onPress={() =>
+							fetcher.submit(
+								{
+									_action: "CAST_CONTINUE_VOTE",
+									isContinuing: "1",
+								},
+								{ method: "post" },
+							)
+						}
 					>
 						{t("q:match.rematch.vote.yes")}
 					</SendouButton>

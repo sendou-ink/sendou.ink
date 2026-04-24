@@ -115,6 +115,8 @@
 	"match.score.playAll": "",
 	"match.activeRosterMissing.header": "",
 	"match.activeRosterMissing.subtitle": "",
+	"match.leagueLocked.header": "",
+	"match.leagueLocked.subtitle": "",
 	"match.action.undoLastScore": "Annuler le dernier score",
 	"match.action.reopenMatch": "Rouvrir le match",
 	"match.action.endSet": "",
