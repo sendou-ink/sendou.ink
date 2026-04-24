@@ -51,7 +51,7 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 	const { alphaWins, bravoWins, isDecisive } = SendouQMatch.score(data.match);
 	const awaitingConfirmation = !data.match.isLocked && isDecisive;
 	const isLocked = data.match.isLocked;
-	const isCanceled = data.match.cancelAcceptedByUserId != null;
+	const isCanceled = data.match.isCanceled;
 
 	const isParticipant = Boolean(userSide);
 	const migrated = data.migratedToGroupId != null && isParticipant;

@@ -51,6 +51,12 @@ export async function findById(id: number) {
 					.select("Skill.id")
 					.where("Skill.groupMatchId", "=", id),
 			).as("isLocked"),
+			exists(
+				selectFrom("Skill")
+					.select("Skill.id")
+					.where("Skill.groupMatchId", "=", id)
+					.where("Skill.season", "=", -1),
+			).as("isCanceled"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("GroupMatchMap")

@@ -215,21 +215,37 @@ class SendouQClass {
 			};
 		};
 
+		const alphaCensored = matchGroupCensorer(
+			match.groupAlpha,
+			isTeamAlphaMember,
+		);
+		const bravoCensored = matchGroupCensorer(
+			match.groupBravo,
+			isTeamBravoMember,
+		);
+
 		const reportedMapsCount = match.mapList.filter(
 			(map) => map.winnerGroupId,
 		).length;
-		const currentMap = match.mapList.at(reportedMapsCount);
+		const currentMapRaw = match.mapList.at(reportedMapsCount);
+		const currentMap = currentMapRaw
+			? {
+					...currentMapRaw,
+					voters: this.#currentMapVoters({
+						currentMap: currentMapRaw,
+						groupAlpha: alphaCensored,
+						groupBravo: bravoCensored,
+						pools: match.memento?.pools,
+					}),
+				}
+			: undefined;
 
 		return {
 			...match,
 			chatCode: isMatchInsider ? match.chatCode : undefined,
 			currentMap,
-			groupAlpha: this.#getAddMemberPrivateNoteMapper(notes)(
-				matchGroupCensorer(match.groupAlpha, isTeamAlphaMember),
-			),
-			groupBravo: this.#getAddMemberPrivateNoteMapper(notes)(
-				matchGroupCensorer(match.groupBravo, isTeamBravoMember),
-			),
+			groupAlpha: this.#getAddMemberPrivateNoteMapper(notes)(alphaCensored),
+			groupBravo: this.#getAddMemberPrivateNoteMapper(notes)(bravoCensored),
 		};
 	}
 
@@ -526,6 +542,58 @@ class SendouQClass {
 
 	#groupIsFull(group: { members: unknown[] }) {
 		return group.members.length === FULL_GROUP_SIZE;
+	}
+
+	#currentMapVoters({
+		currentMap,
+		groupAlpha,
+		groupBravo,
+		pools,
+	}: {
+		currentMap: DBMatch["mapList"][number];
+		groupAlpha: {
+			id: number;
+			members: Array<{
+				id: number;
+				username: string;
+				discordId: string;
+				discordAvatar: string | null;
+			}>;
+		};
+		groupBravo: {
+			id: number;
+			members: Array<{
+				id: number;
+				username: string;
+				discordId: string;
+				discordAvatar: string | null;
+			}>;
+		};
+		pools: ParsedMemento["pools"] | undefined;
+	}) {
+		if (!pools) return [];
+
+		const pickerGroups = [groupAlpha, groupBravo].filter(
+			(g) => currentMap.source === "BOTH" || String(g.id) === currentMap.source,
+		);
+		if (pickerGroups.length === 0) return [];
+
+		return pickerGroups.flatMap((pickerGroup) =>
+			pools.flatMap(({ userId, pool }) => {
+				const member = pickerGroup.members.find((m) => m.id === userId);
+				if (!member) return [];
+				const modePool = pool.find((p) => p.mode === currentMap.mode);
+				if (!modePool?.stages.includes(currentMap.stageId)) return [];
+				return [
+					{
+						id: member.id,
+						username: member.username,
+						discordId: member.discordId,
+						discordAvatar: member.discordAvatar,
+					},
+				];
+			}),
+		);
 	}
 
 	#groupTier(

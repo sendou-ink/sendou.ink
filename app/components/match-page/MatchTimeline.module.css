@@ -182,6 +182,7 @@
 	row-gap: var(--s-1-5);
 	column-gap: var(--s-2);
 	align-items: center;
+	justify-content: start;
 
 	&:first-child {
 		justify-content: end;

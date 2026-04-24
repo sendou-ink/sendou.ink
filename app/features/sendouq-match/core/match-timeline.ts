@@ -7,8 +7,6 @@ import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 
 type MatchData = SendouQMatchLoaderData["match"];
 
-// xxx: unit test this file
-
 /**
  * Resolves display names for the two groups in a match, falling back to the
  * translated "Group Alpha"/"Group Bravo" labels when a group is not associated

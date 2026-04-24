@@ -14,7 +14,6 @@ import { useTimeFormat } from "~/hooks/useTimeFormat";
 import sideNavStyles from "../SideNav.module.css";
 import styles from "./ChatSidebar.module.css";
 
-// xxx: pending msg stuck, make issue (check how room metadata expiring is handled)
 export function ChatSidebar({ onClose }: { onClose?: () => void }) {
 	const chatContext = useChatContext();
 

@@ -1,5 +1,5 @@
 .root {
-	--banner-height: 175px;
+	--banner-height: 140px;
 
 	display: flex;
 	flex-direction: column;

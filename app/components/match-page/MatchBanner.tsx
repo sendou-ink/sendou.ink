@@ -23,7 +23,6 @@ interface MatchBannerProps {
 	children: React.ReactNode;
 }
 
-// xxx: "I'd play around with the object fit for the backgrounds a bit so the top/bottom of the stage images align with the top and bottom of the container so it doesnt look that zoomed in"
 export function MatchBanner({
 	stageId,
 	mode,

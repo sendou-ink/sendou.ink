@@ -13,10 +13,8 @@ import {
 import bannerStyles from "~/components/match-page/MatchBanner.module.css";
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
-import type { ParsedMemento } from "~/db/tables";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { resolveGroupNames } from "../core/match-timeline";
@@ -61,8 +59,6 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 		!data.match.isLocked && SendouQMatch.score(data.match).isDecisive;
 
 	if (data.match.isLocked || awaitingConfirmation) {
-		const isCanceled = data.match.isLocked && cancelRequested;
-
 		const playedStageIds = data.match.mapList
 			.filter((m) => m.winnerGroupId !== null)
 			.map((m) => m.stageId);
@@ -73,7 +69,7 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 					data={data}
 					awaitingConfirmation={awaitingConfirmation}
 				/>
-				{isCanceled ? (
+				{data.match.isCanceled ? (
 					<IconBanner icon={<Ban size={32} />} header={t("q:match.canceled")} />
 				) : (
 					<MultiMatchBanner stageIds={playedStageIds} />
@@ -105,7 +101,7 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 						!data.match.groupAlpha.noScreen && !data.match.groupBravo.noScreen
 					}
 				>
-					<CurrentMapVotesBadge data={data} currentMap={currentMap} />
+					<CurrentMapVotesBadge voters={currentMap.voters} />
 				</MatchBanner>
 			)}
 			{bottomRow}
@@ -165,33 +161,19 @@ function SendouQMatchBannerTopRow({
 }
 
 function CurrentMapVotesBadge({
-	data,
-	currentMap,
+	voters,
 }: {
-	data: SendouQMatchLoaderData;
-	currentMap: { mode: ModeShort; stageId: StageId; source: string };
+	voters: NonNullable<SendouQMatchLoaderData["match"]["currentMap"]>["voters"];
 }) {
 	const { t } = useTranslation(["q"]);
 
-	const voterIds = currentMapVoterIds({
-		currentMap,
-		groupAlpha: data.match.groupAlpha,
-		groupBravo: data.match.groupBravo,
-		pools: data.match.memento?.pools,
-	});
-
-	if (voterIds.length === 0) return null;
-
-	const userIdToUser = (userId: number) =>
-		[...data.match.groupAlpha.members, ...data.match.groupBravo.members].find(
-			(m) => m.id === userId,
-		);
+	if (voters.length === 0) return null;
 
 	return (
 		<SendouPopover
 			trigger={
 				<SendouButton variant="minimal" className={bannerStyles.infoBadge}>
-					{voterIds.length} <Vote />
+					{voters.length} <Vote />
 				</SendouButton>
 			}
 		>
@@ -199,48 +181,13 @@ function CurrentMapVotesBadge({
 				<div className="text-sm text-lighter font-semi-bold">
 					{t("q:match.mapVoters.header")}
 				</div>
-				{voterIds.map((userId) => {
-					const user = userIdToUser(userId);
-					return (
-						<div key={userId} className="stack sm horizontal items-center xs">
-							<Avatar user={user} size="xxs" />
-							{user?.username}
-						</div>
-					);
-				})}
+				{voters.map((voter) => (
+					<div key={voter.id} className="stack sm horizontal items-center xs">
+						<Avatar user={voter} size="xxs" />
+						{voter.username}
+					</div>
+				))}
 			</div>
 		</SendouPopover>
 	);
-}
-
-// xxx: probably can be made cleaner -> more work in the loader
-function currentMapVoterIds({
-	currentMap,
-	groupAlpha,
-	groupBravo,
-	pools,
-}: {
-	currentMap: { mode: ModeShort; stageId: StageId; source: string };
-	groupAlpha: { id: number; members: Array<{ id: number }> };
-	groupBravo: { id: number; members: Array<{ id: number }> };
-	pools: ParsedMemento["pools"] | undefined;
-}): number[] {
-	if (!pools) return [];
-
-	const pickerGroups = [groupAlpha, groupBravo].filter(
-		(g) => currentMap.source === "BOTH" || String(g.id) === currentMap.source,
-	);
-	if (pickerGroups.length === 0) return [];
-
-	const result: number[] = [];
-	for (const pickerGroup of pickerGroups) {
-		for (const { userId, pool } of pools) {
-			if (!pickerGroup.members.some((m) => m.id === userId)) continue;
-			const modePool = pool.find((p) => p.mode === currentMap.mode);
-			if (modePool?.stages.includes(currentMap.stageId)) {
-				result.push(userId);
-			}
-		}
-	}
-	return result;
 }

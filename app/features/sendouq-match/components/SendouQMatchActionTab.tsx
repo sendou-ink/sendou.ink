@@ -44,8 +44,7 @@ export function SendouQMatchActionTab({
 	if (!user) return null;
 
 	const isStaffOnly = ownTeamId == null;
-	const isCanceled = data.match.cancelAcceptedByUserId != null;
-	if (isCanceled) return null;
+	if (data.match.isCanceled) return null;
 
 	const { isDecisive } = SendouQMatch.score(data.match);
 	const awaitingConfirmation = !data.match.isLocked && isDecisive;

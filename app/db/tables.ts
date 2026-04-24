@@ -310,7 +310,6 @@ export interface GroupMatch {
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
 	memento: JSONColumnTypeNullable<ParsedMemento>;
-	// xxx: how to backfill?
 	cancelRequestedByUserId: number | null;
 	cancelAcceptedByUserId: number | null;
 }
