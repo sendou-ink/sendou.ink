@@ -6,6 +6,7 @@ import { chatAccessible } from "~/features/chat/chat-utils";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { Status } from "~/modules/brackets-model";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
@@ -148,7 +149,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		match.chatCode &&
 		!matchIsOver &&
 		match.opponentOne?.id &&
-		match.opponentTwo?.id
+		match.opponentTwo?.id &&
+		match.status > Status.Locked
 	) {
 		// only add global chat for active roster (or all if not yet set i.e. first match)
 		// if roster changed mid-set the subs can still see the chat on the match page
@@ -180,7 +182,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		});
 	}
 
-	const shouldSeeChat =
+	const hasPermsToSeeChat =
 		tournament.isOrganizerOrStreamer(user) ||
 		match.players.some((p) => p.id === user?.id);
 
@@ -195,10 +197,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				});
 
 	const visibleChatCode =
-		shouldSeeChat && !chatCodeExpired ? match.chatCode : undefined;
+		hasPermsToSeeChat && !chatCodeExpired ? match.chatCode : undefined;
 
 	return {
-		match: shouldSeeChat ? match : { ...match, chatCode: undefined },
+		match: hasPermsToSeeChat ? match : { ...match, chatCode: undefined },
 		results,
 		mapList,
 		matchIsOver,
