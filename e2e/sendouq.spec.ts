@@ -257,6 +257,9 @@ test.describe("SendouQ", () => {
 		await navigate({ page, url: SENDOUQ_LOOKING_PAGE });
 
 		const groupCards = page.getByTestId("sendouq-group-card");
+		// TEAM_MAP_PREFS seeds exactly two groups (admin's + NZAP's); wait for
+		// both to render before clicking so we don't race the loader
+		await expect(groupCards).toHaveCount(2);
 		const count = await groupCards.count();
 		for (let i = 1; i < count; i++) {
 			const groupCard = groupCards.nth(i);
@@ -264,6 +267,11 @@ test.describe("SendouQ", () => {
 				.locator('button[type="submit"]')
 				.first();
 			await challengeButton.click();
+			// fetcher form submit is async; wait for the button to flip to "Undo"
+			// so the LIKE is persisted before we switch users
+			await expect(
+				groupCard.getByRole("button", { name: "Undo" }),
+			).toBeVisible();
 		}
 
 		await impersonate(page, NZAP_TEST_ID);
