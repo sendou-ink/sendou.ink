@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 // To run this script you need from https://github.com/Leanny/leanny.github.io
 // 1) WeaponInfoMain.json inside dicts
 // 2) WeaponInfoSub.json inside dicts
@@ -18,10 +16,13 @@ import type {
 	SubWeaponParams,
 	WeaponKit,
 } from "~/features/build-analyzer/analyzer-types";
+import type {
+	MainWeaponId,
+	SpecialWeaponId,
+	SubWeaponId,
+} from "~/modules/in-game-lists/types";
 import {
-	type SpecialWeaponId,
 	SQUID_BEAKON_ID,
-	type SubWeaponId,
 	subWeaponIds,
 	weaponIdToBaseWeaponId,
 } from "~/modules/in-game-lists/weapon-ids";
@@ -109,7 +110,8 @@ async function main() {
 		if (specialWeaponShouldBeSkipped(specialWeapon)) continue;
 
 		const rawParams = loadWeaponParamsObject(specialWeapon);
-		const params = parametersToSpecialWeaponResult(rawParams);
+		const params: Record<string, any> =
+			parametersToSpecialWeaponResult(rawParams);
 
 		// Super Chumps has two distinct splash damage values (near/far)
 		// that should be labeled separately in the analyzer
@@ -179,7 +181,7 @@ function splitIntoBaseStatsAndKits(
 	> = {};
 
 	for (const [idStr, params] of Object.entries(allParams)) {
-		const id = Number(idStr);
+		const id = Number(idStr) as MainWeaponId;
 		const baseId = weaponIdToBaseWeaponId(id);
 		if (!weaponGroups[baseId]) weaponGroups[baseId] = [];
 		weaponGroups[baseId].push({ id, params });
@@ -497,11 +499,11 @@ function parametersToMainWeaponResult(
 	const resolveMin = (
 		valueOne: number | null | undefined,
 		valueTwo: number | null | undefined,
-	) => {
+	): number | undefined => {
 		if (typeof valueOne !== "number" && typeof valueTwo !== "number")
 			return undefined;
 
-		if (typeof valueOne !== "number") return valueTwo;
+		if (typeof valueOne !== "number") return valueTwo as number;
 		if (typeof valueTwo !== "number") return valueOne;
 
 		return Math.min(valueOne, valueTwo);
@@ -510,11 +512,11 @@ function parametersToMainWeaponResult(
 	const resolveMax = (
 		valueOne: number | null | undefined,
 		valueTwo: number | null | undefined,
-	) => {
+	): number | undefined => {
 		if (typeof valueOne !== "number" && typeof valueTwo !== "number")
 			return undefined;
 
-		if (typeof valueOne !== "number") return valueTwo;
+		if (typeof valueOne !== "number") return valueTwo as number;
 		if (typeof valueTwo !== "number") return valueOne;
 
 		return Math.max(valueOne, valueTwo);
