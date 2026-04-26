@@ -1,3 +1,13 @@
+.container {
+	position: relative;
+}
+
+.tierPill {
+	position: absolute;
+	top: var(--s-1);
+	right: var(--s-1);
+}
+
 .trophy {
 	width: 100% !important;
 	height: auto !important;

@@ -68,6 +68,8 @@ export default function TrophiesPage() {
 										<Trophy
 											className={styles.trophy}
 											model={trophy.model}
+											tier={trophy.tier}
+											tentativeTier={trophy.tentativeTier}
 											preview
 										/>
 									</NavLink>

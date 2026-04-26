@@ -2,6 +2,7 @@ import { clsx } from "clsx";
 import { Ban } from "lucide-react";
 import { PicoCAD2Context, PicoCAD2Viewer } from "picocad2-web";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { TierPill } from "~/components/TierPill";
 import { decompressTrophyModel } from "../trophies-utils";
 import style from "./Trophy.module.css";
 
@@ -37,10 +38,14 @@ export function Trophy({
 	model,
 	className,
 	preview,
+	tier,
+	tentativeTier,
 }: {
 	model: string;
 	className?: string;
 	preview?: boolean;
+	tier?: number | null;
+	tentativeTier?: number | null;
 }) {
 	const context = useContext(TrophyCtx);
 	const viewerRef = useRef<PicoCAD2Viewer | null>(null);
@@ -91,20 +96,36 @@ export function Trophy({
 		});
 	};
 
+	const tierPill = tier ? (
+		<div className={style.tierPill}>
+			<TierPill tier={tier} />
+		</div>
+	) : tentativeTier ? (
+		<div className={style.tierPill}>
+			<TierPill tier={tentativeTier} isTentative />
+		</div>
+	) : null;
+
 	if (error) {
 		return (
-			<div className={clsx(style.trophy, style.error, className)}>
-				<Ban size={48} />
+			<div className={clsx(style.container, className)}>
+				<div className={clsx(style.trophy, style.error)}>
+					<Ban size={48} />
+				</div>
+				{tierPill}
 			</div>
 		);
 	}
 
 	return (
-		<canvas
-			ref={canvasRef}
-			className={clsx(style.trophy, className, {
-				[style.interactive]: !preview,
-			})}
-		/>
+		<div className={clsx(style.container, className)}>
+			<canvas
+				ref={canvasRef}
+				className={clsx(style.trophy, {
+					[style.interactive]: !preview,
+				})}
+			/>
+			{tierPill}
+		</div>
 	);
 }

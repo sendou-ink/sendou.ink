@@ -723,6 +723,8 @@ function TrophyGrid({
 							<Trophy
 								model={trophy.model}
 								className={styles.trophyGridItem}
+								tier={trophy.tier}
+								tentativeTier={trophy.tentativeTier}
 								preview
 							/>
 						</NavLink>

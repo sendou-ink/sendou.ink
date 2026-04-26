@@ -14,8 +14,69 @@ import {
 import { getTentativeTier } from "../tournament-organization/core/tentativeTiers.server";
 import { TROPHY_APPROVALS_REQUIRED } from "./trophies-constants";
 
+type TrophyRecentTournament = {
+	tier: number | null;
+	name: string;
+	organizationId: number | null;
+	startTime: number | null;
+};
+
 export async function all() {
-	return db.selectFrom("Trophy").select(["id", "name", "model"]).execute();
+	const rows = await db
+		.selectFrom("Trophy")
+		.select((eb) => ["id", "name", "model", withRecentTournament(eb)])
+		.execute();
+
+	return rows.map(addEffectiveTier);
+}
+
+const withRecentTournament = (eb: ExpressionBuilder<DB, "Trophy">) =>
+	jsonObjectFrom(
+		eb
+			.selectFrom("CalendarEvent")
+			.innerJoin("Tournament", "Tournament.id", "CalendarEvent.tournamentId")
+			.select((eb2) => [
+				"Tournament.tier",
+				"CalendarEvent.name",
+				"CalendarEvent.organizationId",
+				eb2
+					.selectFrom("CalendarEventDate")
+					.select((eb3) => eb3.fn.min<number>("startTime").as("startTime"))
+					.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id")
+					.as("startTime"),
+			])
+			.whereRef("CalendarEvent.trophyId", "=", "Trophy.id")
+			.orderBy(
+				(eb2) =>
+					eb2
+						.selectFrom("CalendarEventDate")
+						.select((eb3) => eb3.fn.min<number>("startTime").as("startTime"))
+						.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id"),
+				"desc",
+			)
+			.limit(1),
+	).as("recentTournament");
+
+function addEffectiveTier<
+	T extends { recentTournament: TrophyRecentTournament | null },
+>({ recentTournament, ...rest }: T) {
+	if (!recentTournament) {
+		return { ...rest, tier: null, tentativeTier: null };
+	}
+
+	const isPastEvent =
+		recentTournament.startTime !== null &&
+		databaseTimestampToDate(recentTournament.startTime) <
+			sub(new Date(), { days: 1 });
+
+	const tentativeTier =
+		recentTournament.tier === null &&
+		recentTournament.organizationId !== null &&
+		!isPastEvent
+			? getTentativeTier(recentTournament.organizationId, recentTournament.name)
+			: null;
+
+	return { ...rest, tier: recentTournament.tier, tentativeTier };
 }
 
 const withCreator = (eb: ExpressionBuilder<DB, "Trophy">) => {
@@ -61,11 +122,13 @@ const withOwners = (eb: ExpressionBuilder<DB, "Trophy">) => {
 };
 
 export async function findByOrganizationId(organizationId: number) {
-	return db
+	const rows = await db
 		.selectFrom("Trophy")
-		.select(["id", "name", "model"])
+		.select((eb) => ["id", "name", "model", withRecentTournament(eb)])
 		.where("organizationId", "=", organizationId)
 		.execute();
+
+	return rows.map(addEffectiveTier);
 }
 
 export async function findByOrganizationIds(organizationIds: number[]) {

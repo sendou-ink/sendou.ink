@@ -1627,6 +1627,14 @@ function calendarEventWithToTools(
 		DEPTHS: [9, 10],
 		LUTI: [],
 	}[event];
+	const tier = {
+		PICNIC: 3,
+		ITZ: null,
+		PP: null,
+		SOS: null,
+		DEPTHS: null,
+		LUTI: null,
+	}[event];
 
 	const settings: Tables["Tournament"]["settings"] =
 		event === "DEPTHS"
@@ -1777,11 +1785,13 @@ function calendarEventWithToTools(
       insert into "Tournament" (
         "id",
         "mapPickingStyle",
-        "settings"
+        "settings",
+        "tier"
       ) values (
         $id,
         $mapPickingStyle,
-        $settings
+        $settings,
+        $tier
       ) returning *
       `,
 		)
@@ -1794,6 +1804,7 @@ function calendarEventWithToTools(
 					: event === "ITZ"
 						? "AUTO_SZ"
 						: "AUTO_ALL",
+			tier,
 		});
 
 	sql
