@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -63,8 +61,8 @@ async function main() {
 				continue;
 			}
 
-			const weapon: any = weapons.find(
-				(weapon: any) =>
+			const weapon = (weapons as Array<{ __RowId: string; Id: number }>).find(
+				(weapon) =>
 					file.includes(`${weapon.__RowId}.`) ||
 					file.includes(`${weapon.__RowId}_`),
 			);
