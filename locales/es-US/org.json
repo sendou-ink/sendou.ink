@@ -21,6 +21,7 @@
 	"edit.form.series.seriesName.title": "Nombre de la serie",
 	"edit.form.series.showLeaderboard.title": "Mostrar tablas de posición",
 	"edit.form.badges.title": "Insignias",
+	"edit.form.rewards.title": "",
 	"edit.form.errors.noUnadmin": "No se puede eliminar como admin",
 	"banned.title": "",
 	"banned.empty": "",

@@ -202,6 +202,7 @@ function InfoTabs() {
 		data.organization.socials && data.organization.socials.length > 0;
 	const hasBadges = data.organization.badges.length > 0;
 	const hasTrophies = data.trophies.length > 0;
+	const hasRewards = hasBadges || hasTrophies;
 
 	return (
 		<div>
@@ -214,18 +215,11 @@ function InfoTabs() {
 						{t("org:edit.form.members.title")}
 					</SendouTab>
 					<SendouTab
-						id="badges"
-						isDisabled={!hasBadges}
-						icon={<Image path={navIconUrl("badges")} alt="" width={16} />}
-					>
-						{t("org:edit.form.badges.title")}
-					</SendouTab>
-					<SendouTab
-						id="trophies"
-						isDisabled={!hasTrophies}
+						id="rewards"
+						isDisabled={!hasRewards}
 						icon={<Image path={navIconUrl("trophies")} alt="" width={16} />}
 					>
-						{t("trophies:title")}
+						{t("org:edit.form.rewards.title")}
 					</SendouTab>
 					{canBanPlayers && data.bannedUsers ? (
 						<SendouTab
@@ -248,11 +242,11 @@ function InfoTabs() {
 				<SendouTabPanel id="members">
 					<MembersList />
 				</SendouTabPanel>
-				<SendouTabPanel id="badges">
-					<BadgeDisplay badges={data.organization.badges} />
-				</SendouTabPanel>
-				<SendouTabPanel id="trophies">
-					<TrophyGrid trophies={data.trophies} />
+				<SendouTabPanel id="rewards">
+					<RewardsPanel
+						badges={data.organization.badges}
+						trophies={data.trophies}
+					/>
 				</SendouTabPanel>
 				{data.bannedUsers ? (
 					<SendouTabPanel id="banned-users">
@@ -265,6 +259,37 @@ function InfoTabs() {
 					</SendouTabPanel>
 				) : null}
 			</SendouTabs>
+		</div>
+	);
+}
+
+function RewardsPanel({
+	badges,
+	trophies,
+}: {
+	badges: SerializeFrom<typeof loader>["organization"]["badges"];
+	trophies: SerializeFrom<typeof loader>["trophies"];
+}) {
+	const { t } = useTranslation(["org", "trophies"]);
+
+	return (
+		<div className="stack sm">
+			{trophies.length > 0 ? (
+				<>
+					<Divider className="mt-2" smallText>
+						{t("trophies:title")}
+					</Divider>
+					<TrophyGrid trophies={trophies} />
+				</>
+			) : null}
+			{badges.length > 0 ? (
+				<>
+					<Divider className="mt-2" smallText>
+						{t("org:edit.form.badges.title")}
+					</Divider>
+					<BadgeDisplay badges={badges} />
+				</>
+			) : null}
 		</div>
 	);
 }
