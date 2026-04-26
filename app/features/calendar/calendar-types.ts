@@ -46,13 +46,13 @@ export interface ShowcaseCalendarEvent extends CommonEvent {
 	hidden: boolean;
 	isFinalized: boolean;
 	minMembersPerTeam: number;
-	firstPlacer: {
+	firstPlacers: Array<{
 		teamName: string;
 		logoUrl: string | null;
 		members: (CommonUser & { country: Tables["User"]["country"] })[];
 		notShownMembersCount: number;
 		div: string | null;
-	} | null;
+	}>;
 	hasVods?: boolean;
 }
 
