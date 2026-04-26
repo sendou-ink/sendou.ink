@@ -1,3 +1,15 @@
+:root {
+	--tier-bg-1: hsl(45, 100%, 30%);
+	--tier-bg-2: hsl(280, 60%, 35%);
+	--tier-bg-3: hsl(280, 50%, 40%);
+	--tier-bg-4: hsl(210, 60%, 35%);
+	--tier-bg-5: hsl(210, 50%, 40%);
+	--tier-bg-6: hsl(140, 45%, 32%);
+	--tier-bg-7: hsl(140, 35%, 38%);
+	--tier-bg-8: hsl(0, 0%, 35%);
+	--tier-bg-9: hsl(0, 0%, 40%);
+}
+
 .pill {
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
@@ -11,46 +23,46 @@
 }
 
 .tierX {
-	background-color: hsl(45, 100%, 30%);
+	background-color: var(--tier-bg-1);
 	color: hsl(45, 100%, 90%);
 }
 
 .tierSPlus {
-	background-color: hsl(280, 60%, 35%);
+	background-color: var(--tier-bg-2);
 	color: hsl(280, 80%, 90%);
 }
 
 .tierS {
-	background-color: hsl(280, 50%, 40%);
+	background-color: var(--tier-bg-3);
 	color: hsl(280, 70%, 92%);
 }
 
 .tierAPlus {
-	background-color: hsl(210, 60%, 35%);
+	background-color: var(--tier-bg-4);
 	color: hsl(210, 80%, 90%);
 }
 
 .tierA {
-	background-color: hsl(210, 50%, 40%);
+	background-color: var(--tier-bg-5);
 	color: hsl(210, 70%, 92%);
 }
 
 .tierBPlus {
-	background-color: hsl(140, 45%, 32%);
+	background-color: var(--tier-bg-6);
 	color: hsl(140, 60%, 90%);
 }
 
 .tierB {
-	background-color: hsl(140, 35%, 38%);
+	background-color: var(--tier-bg-7);
 	color: hsl(140, 50%, 92%);
 }
 
 .tierCPlus {
-	background-color: hsl(0, 0%, 35%);
+	background-color: var(--tier-bg-8);
 	color: hsl(0, 0%, 90%);
 }
 
 .tierC {
-	background-color: hsl(0, 0%, 40%);
+	background-color: var(--tier-bg-9);
 	color: hsl(0, 0%, 92%);
 }

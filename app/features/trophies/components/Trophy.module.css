@@ -4,8 +4,12 @@
 
 .tierPill {
 	position: absolute;
-	top: var(--s-1);
-	right: var(--s-1);
+	top: -1px;
+	right: -1px;
+
+	> * {
+		border-radius: 0 var(--radius-field) 0 var(--radius-field);
+	}
 }
 
 .trophy {

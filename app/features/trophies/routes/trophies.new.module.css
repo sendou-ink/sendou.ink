@@ -6,7 +6,7 @@
 
 .trophyPreview {
 	border: var(--border-style);
-	border-radius: var(--radius-box);
+	border-radius: var(--radius-field);
 	background-color: var(--color-bg-high);
 	margin-top: var(--s-4);
 }

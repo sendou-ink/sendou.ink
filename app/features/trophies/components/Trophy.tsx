@@ -96,6 +96,13 @@ export function Trophy({
 		});
 	};
 
+	const effectiveTier = tier ?? tentativeTier ?? null;
+	const containerStyle = effectiveTier
+		? ({
+				"--tier-bg": `var(--tier-bg-${effectiveTier})`,
+			} as React.CSSProperties)
+		: undefined;
+
 	const tierPill = tier ? (
 		<div className={style.tierPill}>
 			<TierPill tier={tier} />
@@ -108,7 +115,7 @@ export function Trophy({
 
 	if (error) {
 		return (
-			<div className={clsx(style.container, className)}>
+			<div className={clsx(style.container, className)} style={containerStyle}>
 				<div className={clsx(style.trophy, style.error)}>
 					<Ban size={48} />
 				</div>
@@ -118,7 +125,7 @@ export function Trophy({
 	}
 
 	return (
-		<div className={clsx(style.container, className)}>
+		<div className={clsx(style.container, className)} style={containerStyle}>
 			<canvas
 				ref={canvasRef}
 				className={clsx(style.trophy, {

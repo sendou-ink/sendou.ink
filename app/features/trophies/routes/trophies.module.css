@@ -18,8 +18,8 @@
 }
 
 .trophy {
-	border: var(--border-style);
-	border-radius: var(--radius-box);
+	border: var(--border-width) solid var(--tier-bg);
+	border-radius: var(--radius-field);
 	background-color: var(--color-bg-high);
 }
 
