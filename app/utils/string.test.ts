@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { pathnameFromPotentialURL, truncateBySentence } from "./strings";
+import {
+	pathnameFromPotentialURL,
+	removeMarkdown,
+	truncateBySentence,
+} from "./strings";
 
 describe("pathnameFromPotentialURL()", () => {
 	test("Resolves path name from valid URL", () => {
@@ -42,5 +46,32 @@ describe("truncateBySentence()", () => {
 	test("Handles text with multiple newline characters", () => {
 		const text = "First line\nSecond line\nThird line";
 		expect(truncateBySentence(text, 20)).toBe("First line");
+	});
+});
+
+describe("removeMarkdown()", () => {
+	test("Decodes &nbsp; entities and collapses runs", () => {
+		const text = "&nbsp;&nbsp;&nbsp;&nbsp; Global Gauntlet is an event";
+		expect(removeMarkdown(text)).toBe("Global Gauntlet is an event");
+	});
+
+	test("Decodes common named HTML entities", () => {
+		expect(removeMarkdown("Tom &amp; Jerry &lt;3 &quot;hi&quot;")).toBe(
+			'Tom & Jerry <3 "hi"',
+		);
+	});
+
+	test("Decodes numeric HTML entities", () => {
+		expect(removeMarkdown("caf&#233; &#x26; tea")).toBe("café & tea");
+	});
+
+	test("Leaves unknown named entities untouched", () => {
+		expect(removeMarkdown("AT&amp;T &fakeentity; rules")).toBe(
+			"AT&T &fakeentity; rules",
+		);
+	});
+
+	test("Strips HTML tags and markdown emphasis", () => {
+		expect(removeMarkdown("<p>Hello **world**!</p>")).toBe("Hello world!");
 	});
 });
