@@ -1467,6 +1467,14 @@
 		"displayName": "Weapon Lockdown Special Edition",
 		"authorDiscordId": "338806780446638082"
 	},
+	"wellstringcustom": {
+		"displayName": "Wellstring Propoganda: Low Cut",
+		"authorDiscordId": "338806780446638082"
+	},
+	"wellstringregular": {
+		"displayName": "Wellstring Propoganda: Top Cut",
+		"authorDiscordId": "338806780446638082"
+	},
 	"whitecat": {
 		"displayName": "White Cat Achievement",
 		"authorDiscordId": "631246535560265749"
