@@ -1205,8 +1205,13 @@ function trophyOwners() {
 	).map((u) => u.id) as number[];
 
 	const insertTrophyOwnerStm = sql.prepare(
-		`insert into "TrophyOwner" ("trophyId", "userId", "tournamentId") values ($trophyId, $userId, $tournamentId)`,
+		`insert into "TrophyOwner" ("trophyId", "userId", "tournamentId", "tier") values ($trophyId, $userId, $tournamentId, $tier)`,
 	);
+
+	const randomTier = () =>
+		faker.helpers.maybe(() => faker.number.int({ min: 1, max: 9 }), {
+			probability: 0.85,
+		}) ?? null;
 
 	const usedCombinations = new Set<string>();
 	const insertOwner = (
@@ -1217,7 +1222,12 @@ function trophyOwners() {
 		const key = `${trophyId}-${userId}-${tournamentId}`;
 		if (usedCombinations.has(key)) return;
 		usedCombinations.add(key);
-		insertTrophyOwnerStm.run({ trophyId, userId, tournamentId });
+		insertTrophyOwnerStm.run({
+			trophyId,
+			userId,
+			tournamentId,
+			tier: randomTier(),
+		});
 	};
 
 	for (const trophyId of trophyIds) {

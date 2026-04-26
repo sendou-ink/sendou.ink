@@ -149,11 +149,13 @@ const addTrophyOwnersStm = sql.prepare(/* sql */ `
   insert into "TrophyOwner" (
     "trophyId",
     "userId",
-    "tournamentId"
+    "tournamentId",
+    "tier"
   ) values (
     @trophyId,
     @userId,
-    @tournamentId
+    @tournamentId,
+    (select "tier" from "Tournament" where "id" = @tournamentId)
   ) on conflict("tournamentId", "userId", "trophyId") do nothing
 `);
 

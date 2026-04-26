@@ -22,6 +22,7 @@ export function up(db) {
         "trophyId" integer not null,
         "userId" integer not null,
         "tournamentId" integer not null,
+        "tier" integer,
         foreign key ("trophyId") references "Trophy"("id") on delete cascade,
         foreign key ("userId") references "User"("id") on delete cascade,
         foreign key ("tournamentId") references "Tournament"("id") on delete cascade

@@ -162,6 +162,7 @@ export interface TrophyOwner {
 	trophyId: number;
 	userId: number;
 	tournamentId: number;
+	tier: number | null;
 }
 
 export interface PendingTrophy {
