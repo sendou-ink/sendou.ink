@@ -1,6 +1,7 @@
 import { sub } from "date-fns";
 import type { ExpressionBuilder } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import {
@@ -27,7 +28,7 @@ export async function all() {
 		.select((eb) => ["id", "name", "model", withRecentTournament(eb)])
 		.execute();
 
-	return rows.map(addEffectiveTier);
+	return sortByEffectiveTier(rows.map(addEffectiveTier));
 }
 
 const withRecentTournament = (eb: ExpressionBuilder<DB, "Trophy">) =>
@@ -79,6 +80,16 @@ function addEffectiveTier<
 	return { ...rest, tier: recentTournament.tier, tentativeTier };
 }
 
+function sortByEffectiveTier<
+	T extends { id: number; tier: number | null; tentativeTier: number | null },
+>(rows: T[]) {
+	return R.sortBy(
+		rows,
+		(row) => row.tier ?? row.tentativeTier ?? Number.MAX_SAFE_INTEGER,
+		(row) => row.id,
+	);
+}
+
 const withCreator = (eb: ExpressionBuilder<DB, "Trophy">) => {
 	return jsonObjectFrom(
 		eb
@@ -128,7 +139,7 @@ export async function findByOrganizationId(organizationId: number) {
 		.where("organizationId", "=", organizationId)
 		.execute();
 
-	return rows.map(addEffectiveTier);
+	return sortByEffectiveTier(rows.map(addEffectiveTier));
 }
 
 export async function findByOrganizationIds(organizationIds: number[]) {
