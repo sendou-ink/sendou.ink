@@ -1,7 +1,7 @@
 // this file offers database functions specifically for the crud.server.ts file
 
 import { sql } from "~/db/sql";
-import type { Tables, TournamentRoundMaps } from "~/db/tables";
+import type { Tables } from "~/db/tables";
 import type {
 	Group as GroupType,
 	Match as MatchType,
@@ -243,20 +243,17 @@ export class Round {
 	stageId: Tables["TournamentRound"]["stageId"];
 	groupId: Tables["TournamentRound"]["groupId"];
 	number: Tables["TournamentRound"]["number"];
-	maps: Pick<TournamentRoundMaps, "count" | "type">;
 
 	constructor(
 		id: Tables["TournamentRound"]["id"] | undefined,
 		stageId: Tables["TournamentRound"]["stageId"],
 		groupId: Tables["TournamentRound"]["groupId"],
 		number: Tables["TournamentRound"]["number"],
-		maps: Pick<TournamentRoundMaps, "count" | "type">,
 	) {
 		this.id = id;
 		this.stageId = stageId;
 		this.groupId = groupId;
 		this.number = number;
-		this.maps = maps;
 	}
 
 	insert() {
@@ -389,9 +386,6 @@ export class Match {
 		groupId: Tables["TournamentMatch"]["groupId"],
 		roundId: Tables["TournamentMatch"]["roundId"],
 		number: Tables["TournamentMatch"]["number"],
-		_unknown1: null,
-		_unknown2: null,
-		_unknown3: null,
 		opponentOne: string,
 		opponentTwo: string,
 	) {
