@@ -99,5 +99,12 @@ export function Trophy({
 		);
 	}
 
-	return <canvas ref={canvasRef} className={clsx(style.trophy, className)} />;
+	return (
+		<canvas
+			ref={canvasRef}
+			className={clsx(style.trophy, className, {
+				[style.interactive]: !preview,
+			})}
+		/>
+	);
 }

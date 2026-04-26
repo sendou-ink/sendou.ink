@@ -10,6 +10,14 @@
 	}
 }
 
+.interactive {
+	cursor: grab;
+
+	&:active {
+		cursor: grabbing;
+	}
+}
+
 .error {
 	color: var(--color-text-high);
 	display: flex;
