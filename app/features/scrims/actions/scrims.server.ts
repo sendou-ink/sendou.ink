@@ -11,7 +11,6 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import {
 	databaseTimestampToDate,
-	databaseTimestampToJavascriptTimestamp,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
 import { ConcurrentModificationError } from "~/utils/errors";
@@ -157,18 +156,24 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				});
 			}
 
+			const postTeamName = Scrim.sideDisplayName(post);
+			const requestTeamName = Scrim.sideDisplayName(request);
+
 			notify({
-				userIds: [
-					...post.users.map((m) => m.id),
-					...request.users.map((m) => m.id),
-				],
+				userIds: post.users.map((m) => m.id),
 				defaultSeenUserIds: [user.id],
 				notification: {
 					type: "SCRIM_SCHEDULED",
-					meta: {
-						id: post.id,
-						at: databaseTimestampToJavascriptTimestamp(request.at ?? post.at),
-					},
+					meta: { id: post.id, opponentTeamName: requestTeamName },
+				},
+			});
+
+			notify({
+				userIds: request.users.map((m) => m.id),
+				defaultSeenUserIds: [user.id],
+				notification: {
+					type: "SCRIM_SCHEDULED",
+					meta: { id: post.id, opponentTeamName: postTeamName },
 				},
 			});
 

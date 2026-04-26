@@ -4,7 +4,6 @@ import { Link } from "react-router";
 import { Image } from "~/components/Image";
 import type { LoaderNotification } from "~/components/layout/NotificationPopover";
 import {
-	mapMetaForTranslation,
 	notificationLink,
 	notificationNavIcon,
 } from "~/features/notifications/notifications-utils";
@@ -23,7 +22,7 @@ export function NotificationItem({
 	notification: LoaderNotification;
 	onClose?: () => void;
 }) {
-	const { t, i18n } = useTranslation(["common"]);
+	const { t } = useTranslation(["common"]);
 
 	return (
 		<Link
@@ -36,10 +35,7 @@ export function NotificationItem({
 				{!notification.seen ? <div className={styles.unseenDot} /> : null}
 			</NotificationImage>
 			<div className={styles.itemHeader}>
-				{t(
-					`common:notifications.text.${notification.type}`,
-					mapMetaForTranslation(notification, i18n.language),
-				)}
+				{t(`common:notifications.text.${notification.type}`, notification.meta)}
 			</div>
 			<div className={styles.timestamp}>
 				{formatDistance(
