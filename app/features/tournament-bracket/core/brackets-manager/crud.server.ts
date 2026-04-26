@@ -1,8 +1,16 @@
 // @ts-nocheck TODO
 
+import type {
+	CrudInterface,
+	DataTypes,
+	OmitId,
+	Table,
+} from "~/modules/brackets-manager/types";
 import { Group, Match, Round, Stage } from "./crud-db.server";
 
-export class SqlDatabase {
+export class SqlDatabase implements CrudInterface {
+	insert<T extends Table>(table: T, value: OmitId<DataTypes[T]>): number;
+	insert<T extends Table>(table: T, values: OmitId<DataTypes[T]>[]): boolean;
 	insert(table, arg) {
 		switch (table) {
 			case "participant":
@@ -55,6 +63,12 @@ export class SqlDatabase {
 		}
 	}
 
+	select<T extends Table>(table: T): Array<DataTypes[T]> | null;
+	select<T extends Table>(table: T, id: number): DataTypes[T] | null;
+	select<T extends Table>(
+		table: T,
+		filter: Partial<DataTypes[T]>,
+	): Array<DataTypes[T]> | null;
 	select(table, arg) {
 		switch (table) {
 			case "participant":
@@ -194,6 +208,12 @@ export class SqlDatabase {
 		return null;
 	}
 
+	update<T extends Table>(table: T, id: number, value: DataTypes[T]): boolean;
+	update<T extends Table>(
+		table: T,
+		filter: Partial<DataTypes[T]>,
+		value: Partial<DataTypes[T]>,
+	): boolean;
 	update(table, query, update) {
 		switch (table) {
 			case "stage":
@@ -264,6 +284,8 @@ export class SqlDatabase {
 		return false;
 	}
 
+	delete<T extends Table>(table: T): boolean;
+	delete<T extends Table>(table: T, filter: Partial<DataTypes[T]>): boolean;
 	delete(_table, _filter) {
 		throw new Error("not implemented");
 		// switch (table) {
