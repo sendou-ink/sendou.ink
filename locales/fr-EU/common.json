@@ -81,7 +81,7 @@
 	"notifications.title.SCRIM_NEW_REQUEST": "Nouvelle Demande De Scrim",
 	"notifications.text.SCRIM_NEW_REQUEST": "{{fromUsername}} vous demande de scrim",
 	"notifications.title.SCRIM_SCHEDULED": "Scrim Programmé",
-	"notifications.text.SCRIM_SCHEDULED": "Nouveau scrim programmé à {{timeString}}",
+	"notifications.text.SCRIM_SCHEDULED": "",
 	"notifications.title.SCRIM_CANCELED": "",
 	"notifications.text.SCRIM_CANCELED": "",
 	"notifications.title.SCRIM_STARTING_SOON": "",

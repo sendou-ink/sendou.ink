@@ -1,5 +1,10 @@
-import type { Rating, Team } from "node_modules/openskill/dist/types";
-import { rate as openskillRate, ordinal, rating } from "openskill";
+import {
+	rate as openskillRate,
+	ordinal,
+	type Rating,
+	rating,
+	type Team,
+} from "openskill";
 import invariant from "~/utils/invariant";
 import type { TierName } from "./mmr-constants";
 import { TIERS } from "./mmr-constants";

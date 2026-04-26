@@ -6,11 +6,13 @@ import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { mySlugify } from "~/utils/urls";
 import * as BuildRepository from "../BuildRepository.server";
 import {
-	BUILDS_PAGE_BATCH_SIZE,
 	BUILDS_PAGE_MAX_BUILDS,
 	FILTER_SEARCH_PARAM_KEY,
 } from "../builds-constants";
-import { buildFiltersSearchParams } from "../builds-schemas.server";
+import {
+	buildFiltersSearchParams,
+	buildsLimitSearchParam,
+} from "../builds-schemas.server";
 import { filterBuilds } from "../core/filter.server";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -25,10 +27,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	}
 
 	const url = new URL(request.url);
-	const limit = Math.min(
-		Number(url.searchParams.get("limit") ?? BUILDS_PAGE_BATCH_SIZE),
-		BUILDS_PAGE_MAX_BUILDS,
-	);
+	const limit = buildsLimitSearchParam.parse(url.searchParams.get("limit"));
 
 	const weaponName = t(`weapons:MAIN_${weaponId}`);
 

@@ -16,8 +16,10 @@ import {
 	concatUserSubmittedImagePrefix,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
+import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
 import type { Unpacked } from "~/utils/types";
 import { FULL_GROUP_SIZE } from "../sendouq/q-constants";
+import { SendouQError } from "../sendouq/q-utils.server";
 import * as SQGroupRepository from "../sendouq/SQGroupRepository.server";
 import { MATCHES_PER_SEASONS_PAGE } from "../user-page/user-page-constants";
 import { compareMatchToReportedScores } from "./core/match.server";
@@ -410,7 +412,15 @@ export function create({
 				memento: JSON.stringify(memento),
 			})
 			.returningAll()
-			.executeTakeFirstOrThrow();
+			.executeTakeFirstOrThrow()
+			.catch((error) => {
+				// race: another manager matched one of the two groups first, tripping the
+				// unique constraint on GroupMatch.alphaGroupId / bravoGroupId
+				if (errorIsSqliteUniqueConstraintFailure(error)) {
+					throw new SendouQError("Group is already in a match");
+				}
+				throw error;
+			});
 
 		await trx
 			.insertInto("GroupMatchMap")

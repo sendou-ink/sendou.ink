@@ -81,7 +81,7 @@
 	"notifications.title.SCRIM_NEW_REQUEST": "Новый Скрим Запрос",
 	"notifications.text.SCRIM_NEW_REQUEST": "{{fromUsername}} запросил скрим",
 	"notifications.title.SCRIM_SCHEDULED": "Скрим Запланирован",
-	"notifications.text.SCRIM_SCHEDULED": "Новый скрим запланирован на {{timeString}}",
+	"notifications.text.SCRIM_SCHEDULED": "",
 	"notifications.title.SCRIM_CANCELED": "",
 	"notifications.text.SCRIM_CANCELED": "",
 	"notifications.title.SCRIM_STARTING_SOON": "",

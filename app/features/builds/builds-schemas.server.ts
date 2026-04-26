@@ -1,7 +1,11 @@
 import { z } from "zod";
 import { MAX_AP } from "~/features/build-analyzer/analyzer-constants";
 import { ability, modeShort, safeJSONParse } from "~/utils/zod";
-import { MAX_BUILD_FILTERS } from "./builds-constants";
+import {
+	BUILDS_PAGE_BATCH_SIZE,
+	BUILDS_PAGE_MAX_BUILDS,
+	MAX_BUILD_FILTERS,
+} from "./builds-constants";
 
 const abilityFilterSchema = z.object({
 	type: z.literal("ability"),
@@ -37,3 +41,10 @@ export const buildFiltersSearchParams = z.preprocess(
 export type BuildFiltersFromSearchParams = NonNullable<
 	z.infer<typeof buildFiltersSearchParams>
 >;
+
+export const buildsLimitSearchParam = z.coerce
+	.number()
+	.int()
+	.positive()
+	.catch(BUILDS_PAGE_BATCH_SIZE)
+	.transform((value) => Math.min(value, BUILDS_PAGE_MAX_BUILDS));

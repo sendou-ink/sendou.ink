@@ -141,6 +141,10 @@ export async function setMetadata(args: SetMetadataArgs) {
 		args.participantUserIds,
 	);
 
+	logger.debug(
+		`Setting chat room metadata for ${args.chatCode} (participants: ${participantsKey})`,
+	);
+
 	return void fetch(process.env.SKALOP_SYSTEM_MESSAGE_URL, {
 		method: "POST",
 		body: JSON.stringify({

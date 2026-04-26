@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import invariant from "~/utils/invariant";
 import type { Tables } from "../../../db/tables";
 import type { AllMatchResult } from "../queries/allMatchResultsByTournamentId.server";
+import type { ParsedBracket } from "./Progression";
 import { tournamentSummary } from "./summarizer.server";
 import type { TournamentDataTeam } from "./Tournament.server";
 
@@ -65,6 +66,7 @@ describe("tournamentSummary()", () => {
 		seedingSkillCountsFor,
 		withMemberInTwoTeams = false,
 		teamsWithStartingBrackets,
+		teamsWithAbDivisions,
 		progression,
 		finalStandings,
 	}: {
@@ -75,13 +77,11 @@ describe("tournamentSummary()", () => {
 			id: number;
 			startingBracketIdx: number | null;
 		}>;
-		progression?: Array<{
-			name: string;
-			type: "single_elimination";
-			settings: Record<string, never>;
-			requiresCheckIn: boolean;
-			sources?: Array<{ bracketIdx: number; placements: number[] }>;
+		teamsWithAbDivisions?: Array<{
+			id: number;
+			abDivision: 0 | 1;
 		}>;
+		progression?: ParsedBracket[];
 		finalStandings?: Array<{
 			placement: number;
 			team: TournamentDataTeam;
@@ -122,17 +122,19 @@ describe("tournamentSummary()", () => {
 			},
 		];
 
-		const teams = teamsWithStartingBrackets
-			? defaultTeams.map((team) => {
-					const startingBracket = teamsWithStartingBrackets.find(
-						(t) => t.id === team.id,
-					);
-					return {
-						...team,
-						startingBracketIdx: startingBracket?.startingBracketIdx ?? null,
-					};
-				})
-			: defaultTeams;
+		const teams = defaultTeams.map((team) => {
+			const startingBracket = teamsWithStartingBrackets?.find(
+				(t) => t.id === team.id,
+			);
+			const abDivisionEntry = teamsWithAbDivisions?.find(
+				(t) => t.id === team.id,
+			);
+			return {
+				...team,
+				startingBracketIdx: startingBracket?.startingBracketIdx ?? null,
+				abDivision: abDivisionEntry?.abDivision ?? null,
+			};
+		});
 
 		return tournamentSummary({
 			finalStandings: finalStandings ?? [
@@ -777,6 +779,102 @@ describe("tournamentSummary()", () => {
 		expect(team2Results.every((r) => r.participantCount === 2)).toBeTruthy();
 		expect(team3Results.every((r) => r.participantCount === 2)).toBeTruthy();
 		expect(team4Results.every((r) => r.participantCount === 2)).toBeTruthy();
+	});
+
+	test("div is set from abDivision when finals is an A/B divisions round robin", () => {
+		const summary = summarize({
+			teamsWithAbDivisions: [
+				{ id: 1, abDivision: 0 },
+				{ id: 2, abDivision: 1 },
+				{ id: 3, abDivision: 0 },
+				{ id: 4, abDivision: 1 },
+			],
+			progression: [
+				{
+					name: "Groups stage",
+					type: "round_robin",
+					settings: { hasAbDivisions: true, teamsPerGroup: 4 },
+					requiresCheckIn: false,
+				},
+			],
+			finalStandings: [
+				{
+					placement: 1,
+					team: createTeam(1, [1, 2, 3, 4]),
+				},
+				{
+					placement: 1,
+					team: createTeam(2, [5, 6, 7, 8]),
+				},
+				{
+					placement: 2,
+					team: createTeam(3, [9, 10, 11, 12]),
+				},
+				{
+					placement: 2,
+					team: createTeam(4, [13, 14, 15, 16]),
+				},
+			],
+		});
+
+		const team1Results = summary.tournamentResults.filter(
+			(r) => r.tournamentTeamId === 1,
+		);
+		const team2Results = summary.tournamentResults.filter(
+			(r) => r.tournamentTeamId === 2,
+		);
+		const team3Results = summary.tournamentResults.filter(
+			(r) => r.tournamentTeamId === 3,
+		);
+		const team4Results = summary.tournamentResults.filter(
+			(r) => r.tournamentTeamId === 4,
+		);
+
+		expect(team1Results.every((r) => r.div === "A")).toBeTruthy();
+		expect(team2Results.every((r) => r.div === "B")).toBeTruthy();
+		expect(team3Results.every((r) => r.div === "A")).toBeTruthy();
+		expect(team4Results.every((r) => r.div === "B")).toBeTruthy();
+	});
+
+	test("participantCount counts teams per abDivision for A/B finals", () => {
+		const summary = summarize({
+			teamsWithAbDivisions: [
+				{ id: 1, abDivision: 0 },
+				{ id: 2, abDivision: 1 },
+				{ id: 3, abDivision: 0 },
+				{ id: 4, abDivision: 1 },
+			],
+			progression: [
+				{
+					name: "Groups stage",
+					type: "round_robin",
+					settings: { hasAbDivisions: true, teamsPerGroup: 4 },
+					requiresCheckIn: false,
+				},
+			],
+			finalStandings: [
+				{
+					placement: 1,
+					team: createTeam(1, [1, 2, 3, 4]),
+				},
+				{
+					placement: 1,
+					team: createTeam(2, [5, 6, 7, 8]),
+				},
+				{
+					placement: 2,
+					team: createTeam(3, [9, 10, 11, 12]),
+				},
+				{
+					placement: 2,
+					team: createTeam(4, [13, 14, 15, 16]),
+				},
+			],
+		});
+
+		for (const result of summary.tournamentResults) {
+			expect(result.participantCount).toBe(2);
+		}
 	});
 
 	test("excludes matches ended early by organizer from calculations", () => {

@@ -56,6 +56,7 @@ Another key objective is to bridge the gap between casual and competitive player
 
 - [Git](https://git-scm.com/)
 - [Node.js v22](https://nodejs.org/en)
+- [pnpm](https://pnpm.io/installation)
 
 Optionally [nvm](https://github.com/nvm-sh/nvm) can be convenient for managing multiple Node.js installs
 
@@ -66,6 +67,7 @@ First verify you have Node.js and git installed:
 ```bash
 node --version
 git --version
+pnpm --version
 ```
 
 You should see something like:
@@ -73,6 +75,7 @@ You should see something like:
 ```
 v22.13.0
 git version 2.39.5 (Apple Git-154)
+10.33.0
 ```
 (if not then go back to "Prerequisites" and install what is missing)
 

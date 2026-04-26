@@ -76,12 +76,35 @@ export function truncateBySentence(value: string, max: number) {
 }
 
 // based on https://github.com/zuchka/remove-markdown
+const NAMED_HTML_ENTITIES: Record<string, string> = {
+	nbsp: " ",
+	amp: "&",
+	lt: "<",
+	gt: ">",
+	quot: '"',
+	apos: "'",
+};
+
 export function removeMarkdown(value: string) {
 	const htmlReplaceRegex = /<[^>]*>/g;
 	return (
 		value
 			// Remove HTML tags
 			.replace(htmlReplaceRegex, "")
+			// Decode named HTML entities (e.g. &nbsp;, &amp;)
+			.replace(/&([a-zA-Z]+);/g, (match, name: string) => {
+				const replacement = NAMED_HTML_ENTITIES[name.toLowerCase()];
+				return replacement ?? match;
+			})
+			// Decode numeric HTML entities (e.g. &#160; or &#xA0;)
+			.replace(/&#(x?[0-9a-fA-F]+);/g, (_, code: string) => {
+				const codePoint = code.startsWith("x")
+					? Number.parseInt(code.slice(1), 16)
+					: Number.parseInt(code, 10);
+				return Number.isFinite(codePoint)
+					? String.fromCodePoint(codePoint)
+					: "";
+			})
 			// Remove setext-style headers
 			.replace(/^[=-]{2,}\s*$/g, "")
 			// Remove footnotes?
@@ -113,5 +136,8 @@ export function removeMarkdown(value: string) {
 			// .replace(/(\S+)\n\s*(\S+)/g, '$1 $2')
 			// Replace strike through
 			.replace(/~(.*?)~/g, "$1")
+			// Collapse runs of whitespace (e.g. from decoded &nbsp; or stripped tags)
+			.replace(/[ \t ]{2,}/g, " ")
+			.trim()
 	);
 }

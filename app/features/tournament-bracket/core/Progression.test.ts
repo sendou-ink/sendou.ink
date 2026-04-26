@@ -274,22 +274,36 @@ const getValidatedBrackets = (
 	);
 
 describe("validatedSources - other rules", () => {
-	it("handles NOT_RESOLVING_WINNER (only round robin)", () => {
-		const error = getValidatedBrackets([
+	it("accepts a single round robin with no follow-ups", () => {
+		const result = getValidatedBrackets([
 			{
 				settings: {},
 				type: "round_robin",
 			},
-		]) as Progression.ValidationError;
+		]);
 
-		expect(error.type).toBe("NOT_RESOLVING_WINNER");
+		expect(Array.isArray(result)).toBe(true);
 	});
 
-	it("handles NOT_RESOLVING_WINNER (ends in round robin)", () => {
-		const error = getValidatedBrackets([
+	it("accepts a single A/B round robin with no follow-ups", () => {
+		const result = getValidatedBrackets([
+			{
+				settings: {
+					hasAbDivisions: true,
+					teamsPerGroup: 6,
+				},
+				type: "round_robin",
+			},
+		]);
+
+		expect(Array.isArray(result)).toBe(true);
+	});
+
+	it("accepts a swiss to round robin progression", () => {
+		const result = getValidatedBrackets([
 			{
 				settings: {},
-				type: "single_elimination",
+				type: "swiss",
 			},
 			{
 				settings: {},
@@ -301,9 +315,30 @@ describe("validatedSources - other rules", () => {
 					},
 				],
 			},
-		]) as Progression.ValidationError;
+		]);
 
-		expect(error.type).toBe("NOT_RESOLVING_WINNER");
+		expect(Array.isArray(result)).toBe(true);
+	});
+
+	it("accepts a round robin to round robin progression", () => {
+		const result = getValidatedBrackets([
+			{
+				settings: {},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "round_robin",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1,2",
+					},
+				],
+			},
+		]);
+
+		expect(Array.isArray(result)).toBe(true);
 	});
 
 	it("handles NOT_RESOLVING_WINNER (swiss with many groups)", () => {

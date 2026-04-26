@@ -405,7 +405,6 @@ function resolvesWinner(brackets: ParsedBracket[]) {
 	const finals = brackets.find((_, idx) => isFinals(idx, brackets));
 
 	if (!finals) return false;
-	if (finals?.type === "round_robin") return false;
 	if (
 		finals.type === "swiss" &&
 		(finals.settings.groupCount ?? TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT) > 1
@@ -666,6 +665,16 @@ export function isFinals(idx: number, brackets: ParsedBracket[]) {
 	invariant(idx < brackets.length, "Bracket index out of bounds");
 
 	return resolveMainBracketProgression(brackets).at(-1) === idx;
+}
+
+/** Returns true if the finals bracket of the tournament is an A/B divisions round robin. */
+export function hasAbDivisionsFinals(brackets: ParsedBracket[]): boolean {
+	const finals = brackets.find((_, idx) => isFinals(idx, brackets));
+	if (!finals) return false;
+
+	return (
+		finals.type === "round_robin" && finals.settings?.hasAbDivisions === true
+	);
 }
 
 /** Given bracketIdx and bracketProgression will resolve if this an "underground bracket".
