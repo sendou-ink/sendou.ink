@@ -489,7 +489,22 @@ function InProgressTab({
 			}
 			actionButtons={
 				<>
-					{isStaffOnly ? null : (
+					{isStaffOnly ? (
+						<FormWithConfirm
+							fields={[["_action", "ADMIN_CANCEL"]]}
+							dialogHeading={t("q:match.adminCancel.confirm")}
+							submitButtonText={t("common:actions.confirm")}
+							fetcher={cancelFetcher}
+						>
+							<SendouButton
+								variant="minimal-destructive"
+								size="miniscule"
+								icon={<Ban size={16} />}
+							>
+								{t("q:match.action.adminCancel")}
+							</SendouButton>
+						</FormWithConfirm>
+					) : (
 						<FormWithConfirm
 							fields={[["_action", "REQUEST_CANCEL"]]}
 							dialogHeading={t("q:match.cancelMatch.confirm")}

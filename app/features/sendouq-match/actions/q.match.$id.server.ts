@@ -345,6 +345,40 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			await refreshSendouQInstance();
 			break;
 		}
+		case "ADMIN_CANCEL": {
+			errorToastIfFalsy(
+				user.roles.includes("STAFF"),
+				"Only mods can admin cancel",
+			);
+
+			const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
+
+			const result = await SQMatchRepository.cancelMatch({
+				matchId,
+				reportedByUserId: user.id,
+				isAdminReport: true,
+			});
+
+			if (result.shouldRefreshCaches) {
+				try {
+					refreshUserSkills(Seasons.currentOrPrevious()!.nth);
+				} catch (error) {
+					logger.warn("Error refreshing user skills", error);
+				}
+				refreshStreamsCache();
+			}
+
+			await refreshSendouQInstance();
+
+			if (match.chatCode) {
+				ChatSystemMessage.send({
+					room: match.chatCode,
+					revalidateOnly: true,
+				});
+			}
+
+			break;
+		}
 		case "REFUSE_CANCEL": {
 			const unmappedMatch = notFoundIfFalsy(
 				await SQMatchRepository.findById(matchId),
