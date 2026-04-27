@@ -13,7 +13,10 @@ import {
 	groupNumberToLetters,
 	tournamentTeamToActiveRosterUserIds,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
-import { databaseTimestampToDate } from "~/utils/dates";
+import {
+	databaseTimestampToDate,
+	databaseTimestampToJavascriptTimestamp,
+} from "~/utils/dates";
 import { tournamentTeamPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { resolveHostingTeam, resolveRoomPass } from "../tournament-match-utils";
@@ -187,7 +190,7 @@ function resolveTimelineMaps(
 		return {
 			stageId: result.stageId,
 			mode: result.mode,
-			timestamp: result.createdAt,
+			timestamp: databaseTimestampToJavascriptTimestamp(result.createdAt),
 			winner:
 				result.winnerTeamId === opponentOneId
 					? ("ALPHA" as const)

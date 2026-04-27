@@ -3,6 +3,7 @@ import type {
 	TimelineMap,
 	TimelineSpChanges,
 } from "~/components/match-page/MatchTimeline";
+import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 
 type MatchData = SendouQMatchLoaderData["match"];
@@ -60,7 +61,7 @@ export function resolveTimelineMaps(
 			return {
 				stageId: map.stageId,
 				mode: map.mode,
-				timestamp: match.createdAt,
+				timestamp: databaseTimestampToJavascriptTimestamp(map.reportedAt!),
 				winner:
 					map.winnerGroupId === match.groupAlpha.id
 						? ("ALPHA" as const)
