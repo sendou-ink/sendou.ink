@@ -81,12 +81,15 @@ export function TournamentMatchTabs({
 
 	const leagueRoundLocked = isLeagueRoundLocked(tournament, data.match.roundId);
 
+	const hasReportedMaps = data.results.length > 0;
+
 	const tabs = resolveVisibleTabs({
 		matchIsOver: data.matchIsOver,
 		canReportScore,
 		isParticipant,
 		hasCurrentMap: Boolean(currentMap),
 		hasMissingActiveRoster,
+		hasReportedMaps,
 		isPickBanStep,
 		hasPickBanSetup,
 		isAdminEligible,
@@ -105,6 +108,7 @@ export function TournamentMatchTabs({
 						bravo: data.match.opponentTwo?.score ?? 0,
 					}}
 					maps={resolveTimelineMaps(data, opponentOneId, opponentTwoId)}
+					isOngoing={!data.matchIsOver && hasReportedMaps}
 				/>
 			) : null}
 			{tabs.includes("join") ? <TournamentMatchJoinTab data={data} /> : null}
@@ -384,6 +388,7 @@ function resolveVisibleTabs({
 	isParticipant,
 	hasCurrentMap,
 	hasMissingActiveRoster,
+	hasReportedMaps,
 	isPickBanStep,
 	hasPickBanSetup,
 	isAdminEligible,
@@ -394,6 +399,7 @@ function resolveVisibleTabs({
 	isParticipant: boolean;
 	hasCurrentMap: boolean;
 	hasMissingActiveRoster: boolean;
+	hasReportedMaps: boolean;
 	isPickBanStep: boolean;
 	hasPickBanSetup: boolean;
 	isAdminEligible: boolean;
@@ -422,6 +428,9 @@ function resolveVisibleTabs({
 	}
 	if (isAdminEligible) {
 		tabs.push("admin");
+	}
+	if (!matchIsOver && hasReportedMaps) {
+		tabs.push("result");
 	}
 
 	return tabs;

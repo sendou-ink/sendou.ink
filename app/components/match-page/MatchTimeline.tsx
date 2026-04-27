@@ -70,6 +70,8 @@ export interface MatchTimelineProps {
 	spChanges?: TimelineSpChanges;
 	/** When true, render only the team + score header (no per-map rows or SP section). */
 	compact?: boolean;
+	/** When true, the match is still in progress; renders a small LIVE label under the score. */
+	isOngoing?: boolean;
 }
 
 export function MatchTimeline({
@@ -78,10 +80,16 @@ export function MatchTimeline({
 	maps,
 	spChanges,
 	compact = false,
+	isOngoing = false,
 }: MatchTimelineProps) {
 	return (
 		<div className={styles.root}>
-			<TimelineHeader teams={teams} score={score} maps={maps} />
+			<TimelineHeader
+				teams={teams}
+				score={score}
+				maps={maps}
+				isOngoing={isOngoing}
+			/>
 			{compact
 				? null
 				: maps.map((map, i) => {
@@ -110,7 +118,9 @@ function TimelineHeader({
 	teams,
 	score,
 	maps,
-}: Pick<MatchTimelineProps, "teams" | "score" | "maps">) {
+	isOngoing,
+}: Pick<MatchTimelineProps, "teams" | "score" | "maps" | "isOngoing">) {
+	const { t } = useTranslation(["q"]);
 	const initialRosters = maps[0]?.rosters;
 
 	return (
@@ -133,7 +143,14 @@ function TimelineHeader({
 				) : null}
 			</div>
 			<div className={styles.headerScore}>
-				{score.alpha}-{score.bravo}
+				<span className={styles.headerScoreValue}>
+					{score.alpha}-{score.bravo}
+				</span>
+				{isOngoing ? (
+					<span className={styles.headerScoreLive}>
+						{t("q:match.timeline.live")}
+					</span>
+				) : null}
 			</div>
 			<div className={clsx(styles.headerTeam, styles.headerTeamBravo)}>
 				<div

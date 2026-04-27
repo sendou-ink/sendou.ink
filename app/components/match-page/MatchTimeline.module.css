@@ -39,9 +39,24 @@
 }
 
 .headerScore {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+}
+
+.headerScoreValue {
 	font-size: var(--font-xl);
 	font-weight: var(--weight-extra);
-	text-align: center;
+	line-height: 1;
+}
+
+.headerScoreLive {
+	margin-top: var(--s-1);
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-bold);
+	letter-spacing: 0.1em;
+	color: var(--color-error);
 }
 
 .mapEvent {

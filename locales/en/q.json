@@ -202,6 +202,7 @@
 	"match.timeline.loss": "Loss",
 	"match.timeline.out": "Out",
 	"match.timeline.in": "In",
+	"match.timeline.live": "LIVE",
 	"match.timeline.points": "{{count}}p",
 	"match.timeline.teamSp": "Team SP",
 	"match.waitingForConfirmation": "Waiting for the other team to confirm the result",

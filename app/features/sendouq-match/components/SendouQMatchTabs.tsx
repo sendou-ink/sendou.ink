@@ -75,6 +75,10 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 			awaitingConfirmation ||
 			(isLocked && lockedVoteVisible));
 
+	const hasReportedMaps = data.match.mapList.some(
+		(m) => m.winnerGroupId !== null,
+	);
+
 	const tabs: Array<"join" | "rosters" | "action" | "result"> = [];
 	if (isLocked) {
 		tabs.push("result", "rosters");
@@ -83,6 +87,7 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 		tabs.push("rosters");
 	}
 	if (showActionTab) tabs.push("action");
+	if (!isLocked && hasReportedMaps) tabs.push("result");
 
 	const allMembers = [
 		...data.match.groupAlpha.members,
@@ -126,12 +131,13 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 				close={() => navigate(sendouQMatchPage(data.match.id))}
 			/>
 			<MatchTabs tabs={tabs}>
-				{isLocked ? (
+				{isLocked || hasReportedMaps ? (
 					<MatchResultTab
 						teams={resolveTimelineTeams(data.match, t)}
 						score={{ alpha: alphaWins, bravo: bravoWins }}
 						maps={resolveTimelineMaps(data.match, data.reportedWeapons)}
 						spChanges={resolveTimelineSpChanges(data.match)}
+						isOngoing={!isLocked && hasReportedMaps}
 					>
 						{data.match.cancelRequestedByUserId ? (
 							<p className="text-lighter text-xxs text-center mt-4">
