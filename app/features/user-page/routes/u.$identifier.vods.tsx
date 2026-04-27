@@ -1,4 +1,5 @@
-import { useLoaderData, useMatches } from "react-router";
+import { useLoaderData, useMatches, useSearchParams } from "react-router";
+import { Pagination } from "~/components/Pagination";
 import { VodListing } from "~/features/vods/components/VodListing";
 import styles from "~/features/vods/routes/vods.module.css";
 import invariant from "~/utils/invariant";
@@ -19,6 +20,14 @@ export default function UserVodsPage() {
 	invariant(parentRoute);
 	const data = useLoaderData<typeof loader>();
 	const layoutData = parentRoute.data as UserPageLoaderData;
+	const [, setSearchParams] = useSearchParams();
+
+	const setPage = (page: number) => {
+		setSearchParams((params) => {
+			params.set("page", String(page));
+			return params;
+		});
+	};
 
 	return (
 		<div className="stack md">
@@ -31,6 +40,15 @@ export default function UserVodsPage() {
 					<VodListing key={vod.id} vod={vod} showUser={false} />
 				))}
 			</div>
+			{data.pagesCount > 1 ? (
+				<Pagination
+					currentPage={data.currentPage}
+					pagesCount={data.pagesCount}
+					nextPage={() => setPage(data.currentPage + 1)}
+					previousPage={() => setPage(data.currentPage - 1)}
+					setPage={setPage}
+				/>
+			) : null}
 		</div>
 	);
 }
