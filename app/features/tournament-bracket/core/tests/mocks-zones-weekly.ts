@@ -291,7 +291,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 		tier: null,
 		tentativeTier: null,
 		discordUrl: "https://discord.gg/A6NW3VCHRh",
-		tags: "REGION,SZ",
+		tags: "REGION",
 		settings: {
 			bracketProgression: [
 				{

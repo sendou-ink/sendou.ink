@@ -63,8 +63,6 @@ const TAGS_TO_OMIT: CalendarEventTag[] = [
 	"SR",
 	"S1",
 	"S2",
-	"SZ",
-	"TW",
 	"ONES",
 	"DUOS",
 	"TRIOS",
