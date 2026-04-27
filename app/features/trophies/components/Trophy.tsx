@@ -31,6 +31,15 @@ export function TrophyContextProvider({
 		};
 	}, []);
 
+	/**
+	 * Children are not rendered until the shared context exists, which happens in `useEffect`.
+	 * If we rendered children before the effect fired, each childs canvas ref
+	 * would see `context === undefined` and fall back to creating its own internal context,
+	 * increasing memory usage and defeating the whole point of sharing.
+	 * Trade-off: one frame of empty space before the grid paints, causing pop-in.
+	 */
+	if (!context) return null;
+
 	return <TrophyCtx.Provider value={context}>{children}</TrophyCtx.Provider>;
 }
 
