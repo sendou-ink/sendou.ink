@@ -1,5 +1,7 @@
 {
 	"title": "Trophies",
+	"lookingForBadges": "Looking for badges?",
+	"viewBadges": "View them here",
 	"details.createdBy": "Created by {{name}}",
 	"details.managedBy": "Managed by {{name}}",
 	"details.organization": "Organization: {{name}}",

@@ -1,6 +1,8 @@
 import { Search } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
+	Link,
 	type MetaFunction,
 	NavLink,
 	Outlet,
@@ -9,7 +11,7 @@ import {
 import { Input } from "~/components/Input";
 import { Main } from "~/components/Main";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { navIconUrl, TROPHIES_PAGE } from "~/utils/urls";
+import { BADGES_PAGE, navIconUrl, TROPHIES_PAGE } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
 import { Trophy, TrophyContextProvider } from "../components/Trophy";
 import { loader } from "../loaders/trophies.server";
@@ -38,6 +40,7 @@ export const meta: MetaFunction = (args) => {
 };
 
 export default function TrophiesPage() {
+	const { t } = useTranslation(["trophies"]);
 	const data = useLoaderData<typeof loader>();
 
 	const [inputValue, setInputValue] = useState("");
@@ -80,6 +83,10 @@ export default function TrophiesPage() {
 						</TrophyContextProvider>
 					</div>
 				</div>
+				<p className={styles.badgesLink}>
+					{t("trophies:lookingForBadges")}{" "}
+					<Link to={BADGES_PAGE}>{t("trophies:viewBadges")}</Link>
+				</p>
 			</div>
 		</Main>
 	);
