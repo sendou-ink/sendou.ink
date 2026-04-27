@@ -5,6 +5,7 @@
 		"**/*.tsx",
 		".react-router/types/**/*"
 	],
+	"exclude": ["scripts/**/*"],
 	"compilerOptions": {
 		"types": ["@react-router/node", "vite/client"],
 		"rootDirs": [".", "./.react-router/types"],
@@ -18,7 +19,6 @@
 		"resolveJsonModule": true,
 		"target": "ES2022",
 		"strict": true,
-		"baseUrl": ".",
 		"paths": {
 			"~/*": ["./app/*"]
 		},

@@ -16,8 +16,10 @@ import {
 	concatUserSubmittedImagePrefix,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
+import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
 import type { Unpacked } from "~/utils/types";
 import { FULL_GROUP_SIZE } from "../sendouq/q-constants";
+import { SendouQError } from "../sendouq/q-utils.server";
 import * as SQGroupRepository from "../sendouq/SQGroupRepository.server";
 import { MATCHES_PER_SEASONS_PAGE } from "../user-page/user-page-constants";
 import { compareMatchToReportedScores } from "./core/match.server";
@@ -438,7 +440,15 @@ export function create({
 				memento: JSON.stringify(memento),
 			})
 			.returningAll()
-			.executeTakeFirstOrThrow();
+			.executeTakeFirstOrThrow()
+			.catch((error) => {
+				// race: another manager matched one of the two groups first, tripping the
+				// unique constraint on GroupMatch.alphaGroupId / bravoGroupId
+				if (errorIsSqliteUniqueConstraintFailure(error)) {
+					throw new SendouQError("Group is already in a match");
+				}
+				throw error;
+			});
 
 		await trx
 			.insertInto("GroupMatchMap")
@@ -790,12 +800,24 @@ export async function reportScore({
 export async function cancelMatch({
 	matchId,
 	reportedByUserId,
+	isAdminReport,
 }: {
 	matchId: number;
 	reportedByUserId: number;
+	isAdminReport?: boolean;
 }): Promise<CancelMatchResult> {
 	const match = await findById(matchId);
 	invariant(match, "Match not found");
+
+	if (isAdminReport) {
+		await db.transaction().execute(async (trx) => {
+			await updateScore({ matchId, reportedByUserId, winners: [] }, trx);
+			await SQGroupRepository.setAsInactive(match.groupAlpha.id, trx);
+			await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
+			await lockMatchWithoutSkillChange(match.id, trx);
+		});
+		return { status: "CANCEL_CONFIRMED", shouldRefreshCaches: true };
+	}
 
 	const members = buildMembers(match);
 	const reporterGroupId = members.find(

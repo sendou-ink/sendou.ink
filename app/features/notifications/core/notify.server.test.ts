@@ -139,7 +139,7 @@ describe("notify()", () => {
 			userIds: [10, 11],
 			notification: {
 				type: "SCRIM_SCHEDULED",
-				meta: { id: 1, at: 123 },
+				meta: { id: 1, opponentTeamName: "Alpha" },
 			},
 		});
 
@@ -147,7 +147,7 @@ describe("notify()", () => {
 			userIds: [10, 11],
 			notification: {
 				type: "SCRIM_CANCELED",
-				meta: { id: 1, at: 123 },
+				meta: { id: 1, opponentTeamName: "Alpha" },
 			},
 		});
 
@@ -346,7 +346,7 @@ describe("notify() - web push notifications", () => {
 		expect(mockSendNotification).not.toHaveBeenCalled();
 	});
 
-	test("formats timestamp for scrim notifications", async () => {
+	test("includes opponent team name for scrim notifications", async () => {
 		const mockSubscription = {
 			endpoint: "https://fcm.googleapis.com/fcm/send/test",
 			keys: {
@@ -367,13 +367,11 @@ describe("notify() - web push notifications", () => {
 
 		mockWebPushEnabled.value = true;
 
-		const testTimestamp = new Date("2024-01-15T15:30:00Z").getTime();
-
 		await notify({
 			userIds: [1],
 			notification: {
 				type: "SCRIM_SCHEDULED",
-				meta: { id: 1, at: testTimestamp },
+				meta: { id: 1, opponentTeamName: "Sendou's pickup" },
 			},
 		});
 
@@ -383,8 +381,6 @@ describe("notify() - web push notifications", () => {
 		const payload = JSON.parse(callArgs);
 
 		expect(payload.title).toBe("Scrim Scheduled");
-		expect(payload.body).toMatch(
-			/New scrim scheduled at \d+\/\d+, \d+:\d+ (AM|PM)/,
-		);
+		expect(payload.body).toBe("New scrim scheduled vs. Sendou's pickup");
 	});
 });

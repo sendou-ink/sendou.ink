@@ -28,7 +28,9 @@
 .tierName {
 	color: var(--color-text-inverse);
 	line-height: 1.2;
-	white-space: nowrap;
+	max-width: 90px;
+	overflow-wrap: break-word;
+	word-wrap: break-word;
 }
 
 .popupContent {

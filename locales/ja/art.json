@@ -7,7 +7,6 @@
 	"filteringByTag": "#{{tag}} で絞り込まれた結果を表示中",
 	"commissionsOpen": "依頼を受付中",
 	"commissionsClosed": "依頼の受付なし",
-	"openCommissionsOnly": "依頼を受付中のアーティストを表示",
 	"gainPerms": "作品をアップロードしたい場合は私たちのディスコードサーバーのヘルプデスクで許可を得てください。アップロードするには作品の作者でないといけません。また、スプラトゥーン関連の作品のみアップロードできます。",
 	"tabs.recentlyUploaded": "",
 	"tabs.showcase": "",

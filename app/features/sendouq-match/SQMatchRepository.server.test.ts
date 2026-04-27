@@ -447,4 +447,36 @@ describe("cancelMatch", () => {
 		expect(result.status).toBe("CANT_CANCEL");
 		expect(result.shouldRefreshCaches).toBe(false);
 	});
+
+	test("admin cancel locks match without applying SP changes", async () => {
+		const alphaGroupId = await createGroup([1, 2, 3, 4]);
+		const bravoGroupId = await createGroup([5, 6, 7, 8]);
+		const match = await createMatch(alphaGroupId, bravoGroupId);
+
+		const adminUserId = 1;
+		const result = await SQMatchRepository.cancelMatch({
+			matchId: match.id,
+			reportedByUserId: adminUserId,
+			isAdminReport: true,
+		});
+
+		expect(result.status).toBe("CANCEL_CONFIRMED");
+		expect(result.shouldRefreshCaches).toBe(true);
+
+		const alphaGroup = await fetchGroup(alphaGroupId);
+		const bravoGroup = await fetchGroup(bravoGroupId);
+		expect(alphaGroup?.status).toBe("INACTIVE");
+		expect(bravoGroup?.status).toBe("INACTIVE");
+
+		const skills = await fetchSkills(match.id);
+		const realSkills = skills.filter((s) => s.season !== -1);
+		expect(realSkills).toHaveLength(0);
+		expect(skills).toHaveLength(1);
+		expect(skills[0].season).toBe(-1);
+
+		const maps = await fetchMapResults(match.id);
+		for (const map of maps) {
+			expect(map.winnerGroupId).toBeNull();
+		}
+	});
 });

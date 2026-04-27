@@ -1,5 +1,4 @@
-import type { Rating } from "node_modules/openskill/dist/types";
-import { ordinal } from "openskill";
+import { ordinal, type Rating } from "openskill";
 import type {
 	GroupSkillDifference,
 	Tables,

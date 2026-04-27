@@ -23,6 +23,7 @@ export const handle: SendouRouteHandle = {
 };
 
 const PROGRAMMERS = [
+	"hfcRed",
 	"DoubleCookies",
 	"ElementUser",
 	"remmycat",
