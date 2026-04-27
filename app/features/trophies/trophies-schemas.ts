@@ -33,6 +33,31 @@ export const createTrophyFormSchema = z.object({
 	}),
 });
 
+export const updateTrophyFormSchema = z.object({
+	_action: stringConstant("UPDATE"),
+	targetTrophyId: customField({ initialValue: null }, id),
+	name: textFieldRequired({
+		label: "labels.trophyName",
+		minLength: TROPHY_NAME_MIN_LENGTH,
+		maxLength: TROPHY_NAME_MAX_LENGTH,
+	}),
+	model: customField(
+		{ initialValue: "" },
+		z.string().trim().min(1).max(TROPHY_MODEL_MAX_LENGTH),
+	),
+	organizationId: customField({ initialValue: null }, id),
+	managerId: customField({ initialValue: null }, id),
+	description: textAreaOptional({
+		label: "labels.trophyDescription",
+		maxLength: TROPHY_DESCRIPTION_MAX_LENGTH,
+	}),
+});
+
+export const trophyFormSchema = z.discriminatedUnion("_action", [
+	createTrophyFormSchema,
+	updateTrophyFormSchema,
+]);
+
 export const pendingTrophyActionSchema = z.union([
 	z.object({
 		_action: _action("DELETE"),

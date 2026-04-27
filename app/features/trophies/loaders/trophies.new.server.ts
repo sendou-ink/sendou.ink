@@ -11,11 +11,14 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 	const user = requireUser();
 	const canReview = canReviewTrophies(user);
 
-	const [rawItems, ownUnreviewedCount] = await Promise.all([
+	const [rawItems, ownUnreviewedCount, editableTrophies] = await Promise.all([
 		canReview
 			? TrophyRepository.allPending()
 			: TrophyRepository.pendingBySubmitter(user.id),
 		TrophyRepository.unreviewedCountBySubmitter(user.id),
+		canReview
+			? TrophyRepository.findAllForEditing()
+			: TrophyRepository.findManagedBy(user.id),
 	]);
 
 	const allItems = canReview ? rawItems : rawItems.map(stripReviewerInfo);
@@ -36,6 +39,7 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 		ownUnreviewedCount,
 		pendingTrophies,
 		reviewedTrophies,
+		editableTrophies,
 	};
 };
 

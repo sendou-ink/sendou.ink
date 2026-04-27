@@ -5,14 +5,75 @@
 }
 
 .trophyPreview {
-	border: var(--border-style);
 	border-radius: var(--radius-field);
 	background-color: var(--color-bg-high);
 	margin-top: var(--s-4);
+
+	&:has(div) {
+		width: 100px;
+		height: auto;
+		aspect-ratio: 1 / 1;
+		border: var(--border-width) solid var(--tier-bg);
+	}
 }
 
 .descriptionTextarea {
 	min-height: 120px;
+}
+
+.updateContainer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.diffHeader {
+	font-size: var(--font-2xs);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.diffGrid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--s-4) var(--s-2);
+	padding: var(--s-2);
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg);
+	font-size: var(--font-xs);
+}
+
+.diffField {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.diffLabel {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.diffValue {
+	overflow-wrap: anywhere;
+}
+
+.diffOld {
+	color: var(--color-text-high);
+	text-decoration: line-through;
+}
+
+.editingBadge {
+	height: var(--selector-size-xs);
+	padding: 0 var(--s-1-5);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-text-accent);
+	color: var(--color-text-inverse);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 }
 
 .pendingList {
@@ -25,7 +86,7 @@
 	display: grid;
 	grid-template-columns: 100px 1fr;
 	gap: var(--s-4);
-	padding: var(--s-3);
+	padding: var(--s-2);
 	border: var(--border-style);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);

@@ -176,6 +176,8 @@ export interface PendingTrophy {
 	declineReason: string | null;
 	declinedAt: number | null;
 	declinedByUserId: number | null;
+	targetTrophyId: number | null;
+	managerId: number | null;
 }
 
 export interface PendingTrophyApproval {

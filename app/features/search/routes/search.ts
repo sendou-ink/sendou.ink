@@ -74,10 +74,16 @@ async function searchByType({
 			}));
 		}
 		case "organizations": {
-			const orgs = await TournamentOrganizationRepository.searchByName({
-				query,
-				limit,
-			});
+			const numericQuery = /^\d+$/.test(query) ? Number(query) : null;
+			const orgs = numericQuery
+				? await TournamentOrganizationRepository.findOneById(numericQuery).then(
+						(o) => (o ? [o] : []),
+					)
+				: await TournamentOrganizationRepository.searchByName({
+						query,
+						limit,
+					});
+
 			return orgs.map((o) => ({
 				type: "organization" as const,
 				id: o.id,

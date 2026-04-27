@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { Clipboard, Trash2 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -11,12 +12,14 @@ import { Alert } from "~/components/Alert";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { OrganizationSearch } from "~/components/elements/OrganizationSearch";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import {
 	SendouTab,
 	SendouTabList,
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
@@ -40,8 +43,15 @@ import {
 	TROPHY_DECLINE_REASON_MAX_LENGTH,
 	TROPHY_PENDING_PER_USER_LIMIT,
 } from "../trophies-constants";
-import { createTrophyFormSchema } from "../trophies-schemas";
-import { compressTrophyModel, useProgressiveRender } from "../trophies-utils";
+import {
+	createTrophyFormSchema,
+	updateTrophyFormSchema,
+} from "../trophies-schemas";
+import {
+	compressTrophyModel,
+	decompressTrophyModel,
+	useProgressiveRender,
+} from "../trophies-utils";
 import styles from "./trophies.new.module.css";
 
 export { action, loader };
@@ -73,6 +83,12 @@ export default function NewTrophyPage() {
 			<SendouTabs>
 				<SendouTabList>
 					<SendouTab id="upload">{t("trophies:new.tabs.upload")}</SendouTab>
+					<SendouTab
+						id="update"
+						isDisabled={data.editableTrophies.length === 0}
+					>
+						{t("trophies:new.tabs.update")}
+					</SendouTab>
 					<SendouTab id="pending" number={data.pendingTrophies.length}>
 						{t("trophies:new.tabs.pending")}
 					</SendouTab>
@@ -87,6 +103,17 @@ export default function NewTrophyPage() {
 						</Alert>
 					) : (
 						<NewTrophyForm key={data.ownUnreviewedCount} />
+					)}
+				</SendouTabPanel>
+				<SendouTabPanel id="update">
+					{data.ownUnreviewedCount >= TROPHY_PENDING_PER_USER_LIMIT ? (
+						<Alert variation="WARNING">
+							{t("trophies:new.form.limitReached", {
+								limit: TROPHY_PENDING_PER_USER_LIMIT,
+							})}
+						</Alert>
+					) : (
+						<UpdateTrophyTab key={data.ownUnreviewedCount} />
 					)}
 				</SendouTabPanel>
 				<SendouTabPanel id="pending">
@@ -129,6 +156,122 @@ function NewTrophyForm() {
 				</>
 			)}
 		</SendouForm>
+	);
+}
+
+function UpdateTrophyTab() {
+	const { t } = useTranslation(["trophies"]);
+	const data = useLoaderData<typeof loader>();
+	const [selectedId, setSelectedId] = React.useState<number | null>(null);
+
+	const selectedTrophy = data.editableTrophies.find((t) => t.id === selectedId);
+
+	return (
+		<div className={styles.updateContainer}>
+			<SendouSelect
+				label={t("trophies:new.update.selectLabel")}
+				items={data.editableTrophies}
+				search={{ placeholder: t("trophies:new.update.searchPlaceholder") }}
+				selectedKey={selectedId}
+				onSelectionChange={(key) => setSelectedId(key as number)}
+			>
+				{(trophy) => (
+					<SendouSelectItem
+						key={trophy.id}
+						id={trophy.id}
+						textValue={trophy.name}
+					>
+						{trophy.name}
+					</SendouSelectItem>
+				)}
+			</SendouSelect>
+			{selectedTrophy ? (
+				<UpdateTrophyForm key={selectedTrophy.id} trophy={selectedTrophy} />
+			) : null}
+		</div>
+	);
+}
+
+function UpdateTrophyForm({
+	trophy,
+}: {
+	trophy: NewTrophyLoaderData["editableTrophies"][number];
+}) {
+	const decompressedModel = React.useMemo(
+		() => decompressTrophyModel(trophy.model),
+		[trophy.model],
+	);
+
+	return (
+		<SendouForm
+			schema={updateTrophyFormSchema}
+			defaultValues={{
+				targetTrophyId: trophy.id,
+				name: trophy.name,
+				model: decompressedModel,
+				organizationId: trophy.organizationId,
+				managerId: trophy.managerId,
+				description: "",
+			}}
+		>
+			{({ names, FormField }) => (
+				<>
+					<FormField name={names.name} />
+					<FormField name={names.organizationId}>
+						{({ error, value, onChange }: CustomFieldRenderProps) => (
+							<OrganizationField
+								error={error}
+								value={value as number | null}
+								onChange={onChange}
+							/>
+						)}
+					</FormField>
+					<FormField name={names.managerId}>
+						{({ error, value, onChange }: CustomFieldRenderProps) => (
+							<ManagerField
+								error={error}
+								value={value as number | null}
+								onChange={onChange}
+							/>
+						)}
+					</FormField>
+					<FormField name={names.model}>
+						{({ name, error, value, onChange }: CustomFieldRenderProps) => (
+							<ModelField
+								name={name}
+								error={error}
+								value={value as string}
+								onChange={onChange}
+							/>
+						)}
+					</FormField>
+					<FormField name={names.description} />
+				</>
+			)}
+		</SendouForm>
+	);
+}
+
+function ManagerField({
+	error,
+	value,
+	onChange,
+}: {
+	error?: string;
+	value: number | null;
+	onChange: (value: number | null) => void;
+}) {
+	const { t } = useTranslation(["forms"]);
+
+	return (
+		<div>
+			<Label required>{t("forms:labels.trophyManager")}</Label>
+			<UserSearch
+				initialUserId={value ?? undefined}
+				onChange={(user) => onChange(user?.id ?? null)}
+			/>
+			{error ? <FormMessage type="error">{error}</FormMessage> : null}
+		</div>
 	);
 }
 
@@ -188,6 +331,7 @@ function ModelField({
 						model={previewModel}
 						className={styles.trophyPreview}
 						preview
+						tier={1}
 					/>
 					<Trophy model={previewModel} className={styles.trophyPreview} />
 				</>
@@ -311,12 +455,20 @@ function TrophyListRow({
 			</SendouDialog>
 			<div className={styles.pendingMain}>
 				<div className={styles.pendingHeader}>
+					{pending.target ? (
+						<span className={styles.editingBadge}>
+							{t("trophies:new.update.editing")}
+						</span>
+					) : null}
 					<span className={styles.pendingName}>{pending.name}</span>
 					<span className={styles.pendingMeta}>
 						{pending.submitterUsername}
 						{pending.organizationName ? ` • ${pending.organizationName}` : ""}
 					</span>
 				</div>
+				{pending.target ? (
+					<PendingTrophyDiff pending={pending} target={pending.target} />
+				) : null}
 				{pending.description ? (
 					<div className={styles.pendingDescription}>{pending.description}</div>
 				) : null}
@@ -351,7 +503,6 @@ function TrophyListRow({
 					{canReview && !isReviewed ? (
 						<>
 							<SendouButton
-								variant="outlined"
 								size="small"
 								onPress={handleApprove}
 								isDisabled={fetcher.state !== "idle" || alreadyApproved}
@@ -458,5 +609,77 @@ function DeclineButton({ pendingTrophyId }: { pendingTrophyId: number }) {
 				</SendouDialog>
 			) : null}
 		</>
+	);
+}
+
+function PendingTrophyDiff({
+	pending,
+	target,
+}: {
+	pending: NewTrophyLoaderData["pendingTrophies"][number];
+	target: NonNullable<NewTrophyLoaderData["pendingTrophies"][number]["target"]>;
+}) {
+	const { t } = useTranslation(["trophies", "forms"]);
+
+	const newManagerId = pending.managerId ?? pending.submitterUserId;
+	const newManagerName =
+		pending.manager?.username ?? pending.submitterUsername ?? "?";
+
+	const fields: Array<{
+		label: string;
+		oldValue: React.ReactNode;
+		newValue: React.ReactNode;
+		changed: boolean;
+	}> = [
+		{
+			label: t("forms:labels.trophyName"),
+			oldValue: target.name,
+			newValue: pending.name,
+			changed: target.name !== pending.name,
+		},
+		{
+			label: t("forms:labels.trophyOrganization"),
+			oldValue: target.organizationName ?? "—",
+			newValue: pending.organizationName ?? "—",
+			changed: target.organizationId !== pending.organizationId,
+		},
+		{
+			label: t("forms:labels.trophyManager"),
+			oldValue: target.managerUsername ?? "—",
+			newValue: newManagerName,
+			changed: target.managerId !== newManagerId,
+		},
+		{
+			label: t("forms:labels.trophyModel"),
+			oldValue: "-----",
+			newValue: "-----",
+			changed:
+				decompressTrophyModel(target.model) !==
+				decompressTrophyModel(pending.model),
+		},
+	];
+
+	const changedFields = fields.filter((field) => field.changed);
+	if (changedFields.length === 0) return null;
+
+	return (
+		<div className={styles.diffGrid}>
+			<div className={styles.diffHeader}>{t("trophies:new.update.before")}</div>
+			<div className={styles.diffHeader}>{t("trophies:new.update.after")}</div>
+			{changedFields.map((field) => (
+				<React.Fragment key={field.label}>
+					<div className={styles.diffField}>
+						<span className={styles.diffLabel}>{field.label}</span>
+						<span className={clsx(styles.diffValue, styles.diffOld)}>
+							{field.oldValue}
+						</span>
+					</div>
+					<div className={styles.diffField}>
+						<span className={styles.diffLabel}>{field.label}</span>
+						<span className={styles.diffValue}>{field.newValue}</span>
+					</div>
+				</React.Fragment>
+			))}
+		</div>
 	);
 }

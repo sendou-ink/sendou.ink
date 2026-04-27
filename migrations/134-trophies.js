@@ -47,9 +47,13 @@ export function up(db) {
         "declineReason" text,
         "declinedAt" integer,
         "declinedByUserId" integer,
+        "targetTrophyId" integer,
+        "managerId" integer,
         foreign key ("organizationId") references "TournamentOrganization"("id") on delete set null,
         foreign key ("submitterUserId") references "User"("id") on delete cascade,
-        foreign key ("declinedByUserId") references "User"("id") on delete set null
+        foreign key ("declinedByUserId") references "User"("id") on delete set null,
+        foreign key ("targetTrophyId") references "Trophy"("id") on delete cascade,
+        foreign key ("managerId") references "User"("id") on delete set null
       ) strict
     `,
 		).run();

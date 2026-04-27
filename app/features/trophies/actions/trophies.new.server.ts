@@ -10,10 +10,14 @@ import {
 	TROPHY_PENDING_PER_USER_LIMIT,
 } from "../trophies-constants";
 import {
-	createTrophyFormSchema,
 	pendingTrophyActionSchema,
+	trophyFormSchema,
 } from "../trophies-schemas";
-import { canReviewTrophies, compressTrophyModel } from "../trophies-utils";
+import {
+	canEditTrophy,
+	canReviewTrophies,
+	compressTrophyModel,
+} from "../trophies-utils";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
@@ -23,34 +27,64 @@ export const action: ActionFunction = async ({ request }) => {
 	if (isJson) {
 		const result = await parseFormData({
 			request,
-			schema: createTrophyFormSchema,
+			schema: trophyFormSchema,
 		});
 
 		if (!result.success) {
 			return { fieldErrors: result.fieldErrors };
 		}
 
-		const [pendingCount, nameExists] = await Promise.all([
-			TrophyRepository.unreviewedCountBySubmitter(user.id),
-			TrophyRepository.existsByName(result.data.name),
-		]);
+		const data = result.data;
 
+		const pendingCount = await TrophyRepository.unreviewedCountBySubmitter(
+			user.id,
+		);
 		errorToastIfFalsy(
 			pendingCount < TROPHY_PENDING_PER_USER_LIMIT,
 			"Pending trophy limit reached",
 		);
 
+		if (data._action === "UPDATE") {
+			const trophy = await TrophyRepository.findById(data.targetTrophyId);
+			errorToastIfFalsy(trophy, "Trophy not found");
+			errorToastIfFalsy(
+				canEditTrophy(user, { managerId: trophy.manager?.id ?? null }),
+				"Not allowed",
+			);
+
+			const nameExists = await TrophyRepository.existsByName({
+				name: data.name,
+				excludeTrophyId: data.targetTrophyId,
+			});
+			if (nameExists) {
+				return { fieldErrors: { name: "forms:errors.trophyNameTaken" } };
+			}
+
+			await TrophyRepository.createPending({
+				name: data.name,
+				model: compressTrophyModel(data.model),
+				description: data.description ?? "",
+				organizationId: data.organizationId,
+				submitterUserId: user.id,
+				targetTrophyId: data.targetTrophyId,
+				managerId: data.managerId,
+			});
+
+			return null;
+		}
+
+		const nameExists = await TrophyRepository.existsByName({
+			name: data.name,
+		});
 		if (nameExists) {
-			return {
-				fieldErrors: { name: "forms:errors.trophyNameTaken" },
-			};
+			return { fieldErrors: { name: "forms:errors.trophyNameTaken" } };
 		}
 
 		await TrophyRepository.createPending({
-			name: result.data.name,
-			model: compressTrophyModel(result.data.model),
-			description: result.data.description ?? "",
-			organizationId: result.data.organizationId,
+			name: data.name,
+			model: compressTrophyModel(data.model),
+			description: data.description ?? "",
+			organizationId: data.organizationId,
 			submitterUserId: user.id,
 		});
 

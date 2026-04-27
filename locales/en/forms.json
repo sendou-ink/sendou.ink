@@ -3,6 +3,7 @@
 	"labels.trophyName": "Name",
 	"labels.trophyModel": "3D model state",
 	"labels.trophyOrganization": "Organization",
+	"labels.trophyManager": "Manager",
 	"labels.trophyDescription": "Description",
 	"labels.name": "Name",
 	"labels.bio": "Bio",
