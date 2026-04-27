@@ -177,6 +177,39 @@
 	font-size: var(--font-xs);
 }
 
+.pickIcon {
+	color: var(--color-success);
+}
+
+.banIcon {
+	color: var(--color-error);
+}
+
+.pickBanGroup {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1-5);
+	justify-content: flex-end;
+
+	&.pickBanGroupBravo {
+		justify-content: flex-start;
+	}
+}
+
+.pickBanStageImage {
+	border-radius: var(--radius-box);
+}
+
+.pickBanModeTile {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 56px;
+	height: 32px;
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-box);
+}
+
 .spSection {
 	grid-column: 1 / -1;
 	display: grid;

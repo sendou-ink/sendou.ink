@@ -225,6 +225,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			type: e.type,
 			stageId: e.stageId,
 			mode: e.mode,
+			createdAt: e.createdAt,
 		})),
 	};
 };

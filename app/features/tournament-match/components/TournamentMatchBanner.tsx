@@ -1,5 +1,5 @@
 import { differenceInMinutes } from "date-fns";
-import { Check, Lock, Users, X } from "lucide-react";
+import { Lock, MousePointerClick, Users, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
 	IconBanner,
@@ -16,6 +16,8 @@ import {
 } from "~/features/tournament/tournament-utils";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { useAutoRerender } from "~/hooks/useAutoRerender";
+import { databaseTimestampToDate } from "~/utils/dates";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 
 export function TournamentMatchBanner({
@@ -135,7 +137,8 @@ function TournamentMatchBannerTopRow({
 }: {
 	data: TournamentMatchLoaderData;
 }) {
-	const currentTime = new Date();
+	const tournament = useTournament();
+	const currentTime = useAutoRerender("ten seconds");
 
 	if (
 		!data.match.startedAt ||
@@ -144,7 +147,16 @@ function TournamentMatchBannerTopRow({
 	)
 		return null;
 
-	const totalMinutes = differenceInMinutes(currentTime, data.match.startedAt);
+	const totalMinutes = differenceInMinutes(
+		currentTime,
+		databaseTimestampToDate(data.match.startedAt),
+	);
+
+	const currentMinutes = resolveCurrentMinutes({
+		data,
+		tournament,
+		currentTime,
+	});
 
 	return (
 		<MatchBannerTopRow
@@ -161,12 +173,59 @@ function TournamentMatchBannerTopRow({
 				data.matchIsOver
 					? undefined
 					: {
-							// xxx: current
-							currentMinutes: 3,
+							currentMinutes,
 							totalMinutes,
 						}
 			}
 		/>
+	);
+}
+
+function resolveCurrentMinutes({
+	data,
+	tournament,
+	currentTime,
+}: {
+	data: TournamentMatchLoaderData;
+	tournament: ReturnType<typeof useTournament>;
+	currentTime: Date;
+}): number {
+	const opponentOneId = data.match.opponentOne?.id;
+	const opponentTwoId = data.match.opponentTwo?.id;
+	if (!opponentOneId || !opponentTwoId) return 0;
+	if (!data.match.roundMaps?.pickBan) return 0;
+
+	const teamOne = tournament.teamById(opponentOneId);
+	const teamTwo = tournament.teamById(opponentTwoId);
+	if (!teamOne || !teamTwo) return 0;
+
+	const teams: [PickBan.PickBanTeam, PickBan.PickBanTeam] = [
+		{ id: teamOne.id, seed: teamOne.seed },
+		{ id: teamTwo.id, seed: teamTwo.seed },
+	];
+
+	const currentTurn = PickBan.turnOf({
+		results: data.results,
+		maps: data.match.roundMaps,
+		teams,
+		mapList: data.mapList,
+		pickBanEventCount: data.pickBanEventCount,
+	});
+	if (!currentTurn) return 0;
+
+	const sessionStart = PickBan.currentTurnSessionStartedAt({
+		currentTurn,
+		events: data.pickBanEvents,
+		results: data.results,
+		matchStartedAt: data.match.startedAt,
+		maps: data.match.roundMaps,
+		teams,
+	});
+	if (sessionStart == null) return 0;
+
+	return Math.max(
+		0,
+		differenceInMinutes(currentTime, databaseTimestampToDate(sessionStart)),
 	);
 }
 
@@ -232,8 +291,7 @@ function resolvePickBanBanner(
 		turnOfResult.action === "BAN" || turnOfResult.action === "MODE_BAN";
 
 	return {
-		// xxx: better icons, e.g. the "Pick" icon we use elsewhere too
-		icon: isBan ? <X size={32} /> : <Check size={32} />,
+		icon: isBan ? <X size={32} /> : <MousePointerClick size={32} />,
 		header,
 		subtitle: t("tournament:pickBan.waitingFor", {
 			teamName: pickingTeam.name,

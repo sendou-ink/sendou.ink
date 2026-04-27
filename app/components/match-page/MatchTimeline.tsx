@@ -1,5 +1,12 @@
 import clsx from "clsx";
-import { ArrowRight, RefreshCcw, TrendingUp, Users } from "lucide-react";
+import {
+	ArrowRight,
+	MousePointerClick,
+	RefreshCcw,
+	TrendingUp,
+	Users,
+	X,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { GroupSkillDifference, UserSkillDifference } from "~/db/tables";
 import { useHydrated } from "~/hooks/useHydrated";
@@ -18,8 +25,6 @@ import { ModeImage, StageImage } from "../Image";
 import styles from "./MatchTimeline.module.css";
 import { type InferredSubstitution, inferSubstitutions } from "./utils";
 import { WeaponPool } from "./WeaponPool";
-
-// xxx: timeline also for a set thats still in progress? instead of the separate pick ban tab
 
 const LONG_TEAM_NAME_THRESHOLD = 16;
 
@@ -45,6 +50,8 @@ export interface TimelineMap {
 	};
 	/** Optional point values [alpha, bravo] */
 	points?: [number, number];
+	/** Side that picked this map (counterpick / postGame map PICK). Renders a click indicator next to that side's WIN/LOSS label. */
+	pickedBy?: MatchSide;
 }
 
 interface TimelineSpMember {
@@ -63,6 +70,14 @@ export interface TimelineSpChanges {
 	};
 }
 
+export interface TimelinePickBanEvent {
+	/** "PICK" covers MODE_PICK (and the rare trailing-bucket map PICK); "BAN" covers map and mode bans. */
+	kind: "PICK" | "BAN";
+	/** Consecutive events of the same kind get merged into one row, regardless of side. */
+	alphaEntries: Array<{ stageId?: StageId; mode?: ModeShort }>;
+	bravoEntries: Array<{ stageId?: StageId; mode?: ModeShort }>;
+}
+
 export interface MatchTimelineProps {
 	teams: { alpha: TimelineTeam; bravo: TimelineTeam };
 	score: { alpha: number; bravo: number };
@@ -72,6 +87,13 @@ export interface MatchTimelineProps {
 	compact?: boolean;
 	/** When true, the match is still in progress; renders a small LIVE label under the score. */
 	isOngoing?: boolean;
+	/**
+	 * Pick/ban events keyed by the slot they precede. Length = `maps.length + 1`.
+	 * Bucket `i` renders above map row `i`; the trailing bucket renders after the
+	 * last map row (covers events made after the latest result, or the
+	 * pick/ban-only state with no maps reported yet).
+	 */
+	pickBanRowsBySlot?: TimelinePickBanEvent[][];
 }
 
 export function MatchTimeline({
@@ -81,6 +103,7 @@ export function MatchTimeline({
 	spChanges,
 	compact = false,
 	isOngoing = false,
+	pickBanRowsBySlot,
 }: MatchTimelineProps) {
 	return (
 		<div className={styles.root}>
@@ -97,9 +120,13 @@ export function MatchTimeline({
 						const substitutions = previousMap
 							? inferSubstitutions(previousMap.rosters, map.rosters)
 							: [];
+						const pickBanRows = pickBanRowsBySlot?.[i] ?? [];
 
 						return (
 							<div key={i} className="contents">
+								{pickBanRows.map((event, j) => (
+									<TimelinePickBanRow key={`pb-${j}`} event={event} />
+								))}
 								{substitutions.map((sub, j) => (
 									<TimelineSubstitutionRow key={j} substitution={sub} />
 								))}
@@ -107,6 +134,11 @@ export function MatchTimeline({
 							</div>
 						);
 					})}
+			{!compact && pickBanRowsBySlot
+				? (pickBanRowsBySlot[maps.length] ?? []).map((event, j) => (
+						<TimelinePickBanRow key={`pb-trailing-${j}`} event={event} />
+					))
+				: null}
 			{!compact && spChanges ? (
 				<TimelineSpSection spChanges={spChanges} />
 			) : null}
@@ -189,6 +221,7 @@ function TimelineMapRow({ map }: { map: TimelineMap }) {
 					points={alphaPoints}
 					otherSidePoints={bravoPoints}
 					weapons={map.weapons?.alpha}
+					isPicked={map.pickedBy === "ALPHA"}
 				/>
 			</div>
 			<div className={styles.mapCenter}>
@@ -215,6 +248,7 @@ function TimelineMapRow({ map }: { map: TimelineMap }) {
 					points={bravoPoints}
 					otherSidePoints={alphaPoints}
 					weapons={map.weapons?.bravo}
+					isPicked={map.pickedBy === "BRAVO"}
 				/>
 			</div>
 		</div>
@@ -226,17 +260,26 @@ function SideResult({
 	points,
 	otherSidePoints,
 	weapons,
+	isPicked,
 }: {
 	result: "WIN" | "LOSS";
 	points?: number;
 	otherSidePoints?: number;
 	weapons?: Array<MainWeaponId | null>;
+	isPicked?: boolean;
 }) {
 	const { t } = useTranslation(["q"]);
 
 	return (
 		<div className={styles.sideResult}>
 			<div className={styles.resultHeader}>
+				{isPicked ? (
+					<MousePointerClick
+						size={14}
+						className={result === "WIN" ? "text-success" : "text-error"}
+						aria-label={t("q:match.timeline.picked")}
+					/>
+				) : null}
 				<span
 					className={clsx(
 						styles.resultLabel,
@@ -276,6 +319,78 @@ function TimelineEventRow({
 			<div>{bravoContent}</div>
 		</div>
 	);
+}
+
+function TimelinePickBanRow({ event }: { event: TimelinePickBanEvent }) {
+	const isPick = event.kind === "PICK";
+	const icon = isPick ? (
+		<MousePointerClick
+			size={32}
+			className={clsx(styles.eventIcon, styles.pickIcon)}
+		/>
+	) : (
+		<X size={32} className={clsx(styles.eventIcon, styles.banIcon)} />
+	);
+
+	return (
+		<TimelineEventRow
+			icon={icon}
+			alphaContent={
+				event.alphaEntries.length > 0 ? (
+					<PickBanGroup entries={event.alphaEntries} side="ALPHA" />
+				) : null
+			}
+			bravoContent={
+				event.bravoEntries.length > 0 ? (
+					<PickBanGroup entries={event.bravoEntries} side="BRAVO" />
+				) : null
+			}
+		/>
+	);
+}
+
+function PickBanGroup({
+	entries,
+	side,
+}: {
+	entries: Array<{ stageId?: StageId; mode?: ModeShort }>;
+	side: MatchSide;
+}) {
+	return (
+		<div
+			className={clsx(styles.pickBanGroup, {
+				[styles.pickBanGroupBravo]: side === "BRAVO",
+			})}
+		>
+			{entries.map((entry, i) => (
+				<PickBanEntry key={i} entry={entry} />
+			))}
+		</div>
+	);
+}
+
+function PickBanEntry({
+	entry,
+}: {
+	entry: { stageId?: StageId; mode?: ModeShort };
+}) {
+	if (entry.stageId !== undefined) {
+		return (
+			<StageImage
+				stageId={entry.stageId}
+				width={56}
+				className={styles.pickBanStageImage}
+			/>
+		);
+	}
+	if (entry.mode !== undefined) {
+		return (
+			<div className={styles.pickBanModeTile}>
+				<ModeImage mode={entry.mode} size={24} />
+			</div>
+		);
+	}
+	return null;
 }
 
 function TimelineSubstitutionRow({

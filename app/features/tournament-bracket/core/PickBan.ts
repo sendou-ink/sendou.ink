@@ -358,6 +358,63 @@ export function teamOfEvent({
 	}
 }
 
+type TimelineItem =
+	| { kind: "event"; index: number; createdAt: number }
+	| { kind: "result"; createdAt: number };
+
+/**
+ * Resolves the timestamp at which the currently responsible team's pick/ban
+ * session started. The session begins when responsibility transitions to that
+ * team and continues across multiple consecutive actions by the same team.
+ * A game result always ends the prior session, so a team that becomes
+ * responsible after a result starts a fresh session at the result's timestamp.
+ *
+ * Returns `null` when there is no current pick/ban turn or `matchStartedAt` is
+ * not available. When no transitions exist yet, returns `matchStartedAt`.
+ */
+export function currentTurnSessionStartedAt({
+	currentTurn,
+	events,
+	results,
+	matchStartedAt,
+	maps,
+	teams,
+}: {
+	currentTurn: TurnOfResult | null;
+	events: Array<{ createdAt: number }>;
+	results: Array<{ createdAt: number; winnerTeamId: number }>;
+	matchStartedAt: number | null;
+	maps: TournamentRoundMaps;
+	teams: [PickBanTeam, PickBanTeam];
+}): number | null {
+	if (!currentTurn || matchStartedAt == null) return null;
+
+	const timeline: TimelineItem[] = [];
+	for (let i = 0; i < events.length; i++) {
+		timeline.push({ kind: "event", index: i, createdAt: events[i]!.createdAt });
+	}
+	for (const result of results) {
+		timeline.push({ kind: "result", createdAt: result.createdAt });
+	}
+	timeline.sort((a, b) => a.createdAt - b.createdAt);
+
+	for (let i = timeline.length - 1; i >= 0; i--) {
+		const item = timeline[i]!;
+		if (item.kind === "event") {
+			const teamMadeIt = teamOfEvent({
+				eventIndex: item.index,
+				maps,
+				teams,
+				results,
+			});
+			if (teamMadeIt === currentTurn.teamId) continue;
+		}
+		return item.createdAt;
+	}
+
+	return matchStartedAt;
+}
+
 export function isLegal({
 	map,
 	...rest

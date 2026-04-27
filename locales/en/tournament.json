@@ -191,8 +191,5 @@
 	"pickBan.banMap": "Ban a map",
 	"pickBan.pickMode": "Pick a mode",
 	"pickBan.banMode": "Ban a mode",
-	"pickBan.waitingFor": "Waiting for {{teamName}}",
-	"match.pickBan.picks": "Picks",
-	"match.pickBan.bans": "Bans",
-	"match.pickBan.noEvents": "No picks or bans"
+	"pickBan.waitingFor": "Waiting for {{teamName}}"
 }

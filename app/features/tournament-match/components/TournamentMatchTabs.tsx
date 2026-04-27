@@ -4,7 +4,10 @@ import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs } from "~/components/match-page/MatchTabs";
-import type { TimelineMap } from "~/components/match-page/MatchTimeline";
+import type {
+	TimelineMap,
+	TimelinePickBanEvent,
+} from "~/components/match-page/MatchTimeline";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
@@ -23,7 +26,6 @@ import { resolveHostingTeam, resolveRoomPass } from "../tournament-match-utils";
 import { TournamentMatchActionPickBanTab } from "./TournamentMatchActionPickBanTab";
 import { TournamentMatchActionTab } from "./TournamentMatchActionTab";
 import { TournamentMatchAdminTab } from "./TournamentMatchAdminTab";
-import { TournamentMatchPickBanTab } from "./TournamentMatchPickBanTab";
 
 export function TournamentMatchTabs({
 	data,
@@ -76,8 +78,6 @@ export function TournamentMatchTabs({
 				})
 			: null;
 	const isPickBanStep = turnOfResult !== null && !hasMissingActiveRoster;
-	const hasPickBanSetup =
-		Boolean(data.match.roundMaps?.pickBan) && !!pickBanTeams;
 
 	const isAdminEligible =
 		tournament.isOrganizerOrStreamer(user) && !tournament.ctx.isFinalized;
@@ -85,6 +85,7 @@ export function TournamentMatchTabs({
 	const leagueRoundLocked = isLeagueRoundLocked(tournament, data.match.roundId);
 
 	const hasReportedMaps = data.results.length > 0;
+	const hasPickBanEvents = data.pickBanEventCount > 0;
 
 	const tabs = resolveVisibleTabs({
 		matchIsOver: data.matchIsOver,
@@ -93,13 +94,24 @@ export function TournamentMatchTabs({
 		hasCurrentMap: Boolean(currentMap),
 		hasMissingActiveRoster,
 		hasReportedMaps,
+		hasPickBanEvents,
 		isPickBanStep,
-		hasPickBanSetup,
 		isAdminEligible,
 		leagueRoundLocked,
 	});
 
 	const userTeamId = tournament.teamMemberOfByUser(user)?.id;
+
+	const pickBanData = resolveTimelinePickBanData(
+		data,
+		opponentOneId,
+		pickBanTeams,
+	);
+	const timelineMaps = resolveTimelineMaps(
+		data,
+		opponentOneId,
+		opponentTwoId,
+	).map((m, i) => ({ ...m, pickedBy: pickBanData?.pickedBySlot.get(i) }));
 
 	return (
 		<MatchTabs tabs={tabs}>
@@ -110,15 +122,13 @@ export function TournamentMatchTabs({
 						alpha: data.match.opponentOne?.score ?? 0,
 						bravo: data.match.opponentTwo?.score ?? 0,
 					}}
-					maps={resolveTimelineMaps(data, opponentOneId, opponentTwoId)}
+					maps={timelineMaps}
+					pickBanRowsBySlot={pickBanData?.rowsBySlot}
 					isOngoing={!data.matchIsOver && hasReportedMaps}
 				/>
 			) : null}
 			{tabs.includes("join") ? <TournamentMatchJoinTab data={data} /> : null}
 			<TournamentMatchRosterTab data={data} />
-			{tabs.includes("pickBan") && pickBanTeams ? (
-				<TournamentMatchPickBanTab data={data} teams={pickBanTeams} />
-			) : null}
 			{tabs.includes("action") ? (
 				isPickBanStep && pickBanTeams && turnOfResult ? (
 					<TournamentMatchActionPickBanTab
@@ -207,6 +217,113 @@ function resolveTimelineMaps(
 				: undefined,
 		};
 	});
+}
+
+function resolveTimelinePickBanData(
+	data: TournamentMatchLoaderData,
+	opponentOneId: number,
+	pickBanTeams:
+		| [
+				ReturnType<ReturnType<typeof useTournament>["teamById"]>,
+				ReturnType<ReturnType<typeof useTournament>["teamById"]>,
+		  ]
+		| undefined,
+):
+	| {
+			rowsBySlot: TimelinePickBanEvent[][];
+			pickedBySlot: Map<number, "ALPHA" | "BRAVO">;
+	  }
+	| undefined {
+	const maps = data.match.roundMaps;
+	if (!maps?.pickBan || !pickBanTeams?.[0] || !pickBanTeams[1]) {
+		return undefined;
+	}
+
+	const pickBanTeamsLite: [PickBan.PickBanTeam, PickBan.PickBanTeam] = [
+		{ id: pickBanTeams[0].id, seed: pickBanTeams[0].seed ?? 0 },
+		{ id: pickBanTeams[1].id, seed: pickBanTeams[1].seed ?? 0 },
+	];
+
+	const rowsBySlot: TimelinePickBanEvent[][] = Array.from(
+		{ length: data.results.length + 1 },
+		() => [],
+	);
+	const pickedBySlot = new Map<number, "ALPHA" | "BRAVO">();
+
+	for (let i = 0; i < data.pickBanEvents.length; i++) {
+		const event = data.pickBanEvents[i]!;
+		if (event.type === "ROLL") continue;
+
+		const teamId = PickBan.teamOfEvent({
+			eventIndex: i,
+			maps,
+			teams: pickBanTeamsLite,
+			results: data.results,
+		});
+		if (teamId === null) continue;
+
+		const slot = slotOfEvent({ eventIndex: i, maps });
+		const side: "ALPHA" | "BRAVO" =
+			teamId === opponentOneId ? "ALPHA" : "BRAVO";
+
+		const isMapPick = event.type === "PICK" && event.stageId !== null;
+		if (isMapPick && slot < data.results.length) {
+			pickedBySlot.set(slot, side);
+			continue;
+		}
+
+		const isPick = event.type === "PICK" || event.type === "MODE_PICK";
+		const kind: "PICK" | "BAN" = isPick ? "PICK" : "BAN";
+		const bucketIndex = Math.min(slot, rowsBySlot.length - 1);
+		const bucket = rowsBySlot[bucketIndex]!;
+		const last = bucket[bucket.length - 1];
+		const entry = {
+			stageId: event.stageId ?? undefined,
+			mode: event.mode ?? undefined,
+		};
+
+		if (last && last.kind === kind) {
+			(side === "ALPHA" ? last.alphaEntries : last.bravoEntries).push(entry);
+		} else {
+			bucket.push({
+				kind,
+				alphaEntries: side === "ALPHA" ? [entry] : [],
+				bravoEntries: side === "BRAVO" ? [entry] : [],
+			});
+		}
+	}
+
+	return { rowsBySlot, pickedBySlot };
+}
+
+function slotOfEvent({
+	eventIndex,
+	maps,
+}: {
+	eventIndex: number;
+	maps: NonNullable<TournamentMatchLoaderData["match"]["roundMaps"]>;
+}): number {
+	switch (maps.pickBan) {
+		case "BAN_2":
+			return 0;
+		case "COUNTERPICK":
+		case "COUNTERPICK_MODE_REPEAT_OK":
+			return eventIndex + 1;
+		case "CUSTOM": {
+			const customFlow = maps.customFlow;
+			if (!customFlow) return 0;
+			const preSetLength = customFlow.preSet.length;
+			const postGameLength = customFlow.postGame.length;
+			if (eventIndex < preSetLength) return 0;
+			if (postGameLength === 0) return 0;
+			const cycleIndex = Math.floor(
+				(eventIndex - preSetLength) / postGameLength,
+			);
+			return cycleIndex + 1;
+		}
+		default:
+			return 0;
+	}
 }
 
 function TournamentMatchJoinTab({ data }: { data: TournamentMatchLoaderData }) {
@@ -392,8 +509,8 @@ function resolveVisibleTabs({
 	hasCurrentMap,
 	hasMissingActiveRoster,
 	hasReportedMaps,
+	hasPickBanEvents,
 	isPickBanStep,
-	hasPickBanSetup,
 	isAdminEligible,
 	leagueRoundLocked,
 }: {
@@ -403,14 +520,12 @@ function resolveVisibleTabs({
 	hasCurrentMap: boolean;
 	hasMissingActiveRoster: boolean;
 	hasReportedMaps: boolean;
+	hasPickBanEvents: boolean;
 	isPickBanStep: boolean;
-	hasPickBanSetup: boolean;
 	isAdminEligible: boolean;
 	leagueRoundLocked: boolean;
 }) {
-	const tabs: Array<
-		"join" | "rosters" | "pickBan" | "action" | "result" | "admin"
-	> = [];
+	const tabs: Array<"join" | "rosters" | "action" | "result" | "admin"> = [];
 
 	if (matchIsOver) {
 		tabs.push("result");
@@ -426,13 +541,10 @@ function resolveVisibleTabs({
 	) {
 		tabs.push("action");
 	}
-	if (hasPickBanSetup) {
-		tabs.push("pickBan");
-	}
 	if (isAdminEligible) {
 		tabs.push("admin");
 	}
-	if (!matchIsOver && hasReportedMaps) {
+	if (!matchIsOver && (hasReportedMaps || hasPickBanEvents)) {
 		tabs.push("result");
 	}
 

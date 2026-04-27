@@ -44,7 +44,6 @@ export function TournamentMatchActionTab({
 	const count = data.match.roundMaps.count;
 	const countType = data.match.roundMaps.type;
 
-	// xxx: we can do something better here
 	const setEndingTeamIds: number[] = [];
 	if (
 		isSetOverByScore({

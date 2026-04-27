@@ -203,6 +203,7 @@
 	"match.timeline.out": "",
 	"match.timeline.in": "",
 	"match.timeline.live": "",
+	"match.timeline.picked": "",
 	"match.timeline.points": "",
 	"match.timeline.teamSp": "",
 	"match.waitingForConfirmation": "",

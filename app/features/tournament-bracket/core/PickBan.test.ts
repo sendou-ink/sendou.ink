@@ -3,6 +3,7 @@ import type { TournamentRoundMaps } from "~/db/tables";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	CUSTOM_FLOW_VALIDATION_ERRORS,
+	currentTurnSessionStartedAt,
 	isModeLegal,
 	mapsListWithLegality,
 	type PickBanEvent,
@@ -1106,5 +1107,130 @@ describe("teamOfEvent", () => {
 				teamOfEvent({ eventIndex: 0, maps: rollMaps, teams, results: [] }),
 			).toBeNull();
 		});
+	});
+});
+
+describe("currentTurnSessionStartedAt", () => {
+	const teams: [PickBanTeam, PickBanTeam] = [
+		{ id: 100, seed: 2 },
+		{ id: 200, seed: 1 },
+	];
+
+	it("returns null when there is no current turn", () => {
+		const result = currentTurnSessionStartedAt({
+			currentTurn: null,
+			events: [],
+			results: [],
+			matchStartedAt: 1000,
+			maps: { count: 3, type: "BEST_OF", pickBan: "BAN_2" },
+			teams,
+		});
+
+		expect(result).toBeNull();
+	});
+
+	it("returns null when matchStartedAt is null", () => {
+		const result = currentTurnSessionStartedAt({
+			currentTurn: { teamId: 200, action: "BAN" },
+			events: [],
+			results: [],
+			matchStartedAt: null,
+			maps: { count: 3, type: "BEST_OF", pickBan: "BAN_2" },
+			teams,
+		});
+
+		expect(result).toBeNull();
+	});
+
+	it("falls back to matchStartedAt when no events or results exist", () => {
+		const result = currentTurnSessionStartedAt({
+			currentTurn: { teamId: 200, action: "BAN" },
+			events: [],
+			results: [],
+			matchStartedAt: 1000,
+			maps: { count: 3, type: "BEST_OF", pickBan: "BAN_2" },
+			teams,
+		});
+
+		expect(result).toBe(1000);
+	});
+
+	it("BAN_2: second banner's session starts at the first ban's timestamp", () => {
+		const result = currentTurnSessionStartedAt({
+			currentTurn: { teamId: 100, action: "BAN" },
+			events: [{ createdAt: 1500 }],
+			results: [],
+			matchStartedAt: 1000,
+			maps: { count: 3, type: "BEST_OF", pickBan: "BAN_2" },
+			teams,
+		});
+
+		expect(result).toBe(1500);
+	});
+
+	it("COUNTERPICK: loser's session starts when the result is reported", () => {
+		const result = currentTurnSessionStartedAt({
+			currentTurn: { teamId: 200, action: "PICK" },
+			events: [],
+			results: [{ createdAt: 2000, winnerTeamId: 100 }],
+			matchStartedAt: 1000,
+			maps: { count: 5, type: "BEST_OF", pickBan: "COUNTERPICK" },
+			teams,
+		});
+
+		expect(result).toBe(2000);
+	});
+
+	it("CUSTOM: consecutive same-team events share the session start", () => {
+		const customMaps: TournamentRoundMaps = {
+			count: 5,
+			type: "BEST_OF",
+			pickBan: "CUSTOM",
+			customFlow: {
+				preSet: [
+					{ action: "BAN", side: "HIGHER_SEED" },
+					{ action: "BAN", side: "HIGHER_SEED" },
+					{ action: "BAN", side: "LOWER_SEED" },
+				],
+				postGame: [{ action: "PICK", side: "LOSER" }],
+			},
+		};
+
+		const result = currentTurnSessionStartedAt({
+			currentTurn: { teamId: 200, action: "BAN" },
+			events: [{ createdAt: 1500 }],
+			results: [],
+			matchStartedAt: 1000,
+			maps: customMaps,
+			teams,
+		});
+
+		expect(result).toBe(1000);
+	});
+
+	it("CUSTOM: a result restarts the session even when the same team is responsible again", () => {
+		const customMaps: TournamentRoundMaps = {
+			count: 5,
+			type: "BEST_OF",
+			pickBan: "CUSTOM",
+			customFlow: {
+				preSet: [{ action: "BAN", side: "HIGHER_SEED" }],
+				postGame: [
+					{ action: "PICK", side: "LOSER" },
+					{ action: "BAN", side: "LOSER" },
+				],
+			},
+		};
+
+		const result = currentTurnSessionStartedAt({
+			currentTurn: { teamId: 100, action: "BAN" },
+			events: [{ createdAt: 1100 }, { createdAt: 2500 }],
+			results: [{ createdAt: 2000, winnerTeamId: 200 }],
+			matchStartedAt: 1000,
+			maps: customMaps,
+			teams,
+		});
+
+		expect(result).toBe(2000);
 	});
 });

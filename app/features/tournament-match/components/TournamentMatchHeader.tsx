@@ -18,8 +18,7 @@ export function TournamentMatchHeader({
 
 	return (
 		<MatchPageHeader
-			// xxx: fix !
-			subtitle={bracketName!}
+			subtitle={bracketName}
 			topRight={
 				<LinkButton
 					to={tournamentBracketsPage({

@@ -191,8 +191,5 @@
 	"pickBan.banMap": "",
 	"pickBan.pickMode": "",
 	"pickBan.banMode": "",
-	"pickBan.waitingFor": "",
-	"match.pickBan.picks": "",
-	"match.pickBan.bans": "",
-	"match.pickBan.noEvents": ""
+	"pickBan.waitingFor": ""
 }

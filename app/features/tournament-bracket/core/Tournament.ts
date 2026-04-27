@@ -1024,7 +1024,7 @@ export class Tournament {
 		};
 
 		return {
-			bracketName,
+			bracketName: bracketName ?? "Main bracket",
 			roundName,
 			roundNameWithoutMatchIdentifier:
 				roundNameWithoutMatchIdentifier(roundName),
