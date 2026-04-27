@@ -390,6 +390,7 @@
 	"search.type.weapons": "Weapons",
 	"search.noResults": "No results found",
 	"search.hint": "Start typing to search",
+	"search.searching": "Searching...",
 	"dataCredit.lean": "Data credit: Lean",
 	"header.parameter": "Parameter",
 	"weaponArt.title": "Community Art",
