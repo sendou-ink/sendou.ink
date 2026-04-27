@@ -28,7 +28,7 @@ export const createTrophyFormSchema = z.object({
 	),
 	organizationId: customField({ initialValue: null }, id),
 	description: textAreaOptional({
-		label: "labels.trophyDescription",
+		label: "labels.trophyInformation",
 		maxLength: TROPHY_DESCRIPTION_MAX_LENGTH,
 	}),
 });
@@ -48,7 +48,7 @@ export const updateTrophyFormSchema = z.object({
 	organizationId: customField({ initialValue: null }, id),
 	managerId: customField({ initialValue: null }, id),
 	description: textAreaOptional({
-		label: "labels.trophyDescription",
+		label: "labels.trophyInformation",
 		maxLength: TROPHY_DESCRIPTION_MAX_LENGTH,
 	}),
 });
