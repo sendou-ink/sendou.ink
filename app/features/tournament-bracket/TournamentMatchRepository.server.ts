@@ -1,7 +1,17 @@
 import { sql } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
+import { TournamentMatchStatus } from "~/db/tables";
 import type { Unwrapped } from "~/utils/types";
+
+const opponentOneId = sql<number>`"TournamentMatch"."opponentOne" ->> '$.id'`;
+const opponentTwoId = sql<number>`"TournamentMatch"."opponentTwo" ->> '$.id'`;
+const opponentOneScore = sql<
+	number | null
+>`"TournamentMatch"."opponentOne" ->> '$.score'`;
+const opponentTwoScore = sql<
+	number | null
+>`"TournamentMatch"."opponentTwo" ->> '$.score'`;
 
 export type FindMatchById = NonNullable<Unwrapped<typeof findMatchById>>;
 export async function findMatchById(id: number) {
@@ -52,12 +62,12 @@ export async function findMatchById(id: number) {
 							innerEb(
 								"TournamentTeamMember.tournamentTeamId",
 								"=",
-								sql<number>`"TournamentMatch"."opponentOne" ->> '$.id'`,
+								opponentOneId,
 							),
 							innerEb(
 								"TournamentTeamMember.tournamentTeamId",
 								"=",
-								sql<number>`"TournamentMatch"."opponentTwo" ->> '$.id'`,
+								opponentTwoId,
 							),
 						]),
 					),
@@ -110,5 +120,111 @@ export async function userParticipationByTournamentId(tournamentId: number) {
 				.as("matchIds"),
 		])
 		.groupBy("playerMatches.userId")
+		.execute();
+}
+
+export type FindByTournamentTeamIdItem = Unwrapped<
+	typeof findByTournamentTeamId
+>;
+export function findByTournamentTeamId(tournamentTeamId: number) {
+	return db
+		.selectFrom("TournamentMatch")
+		.innerJoin(
+			"TournamentRound",
+			"TournamentRound.id",
+			"TournamentMatch.roundId",
+		)
+		.innerJoin(
+			"TournamentGroup",
+			"TournamentGroup.id",
+			"TournamentMatch.groupId",
+		)
+		.innerJoin("TournamentTeam as otherTeam", (join) =>
+			join.on((eb) =>
+				eb.or([
+					eb.and([
+						eb(opponentOneId, "!=", tournamentTeamId),
+						eb(opponentOneId, "=", eb.ref("otherTeam.id")),
+					]),
+					eb.and([
+						eb(opponentTwoId, "!=", tournamentTeamId),
+						eb(opponentTwoId, "=", eb.ref("otherTeam.id")),
+					]),
+				]),
+			),
+		)
+		.select(({ eb }) => [
+			"TournamentMatch.id as tournamentMatchId",
+			opponentOneScore.as("opponentOneScore"),
+			opponentTwoScore.as("opponentTwoScore"),
+			"otherTeam.name as otherTeamName",
+			"otherTeam.id as otherTeamId",
+			"TournamentRound.number as roundNumber",
+			"TournamentRound.stageId",
+			"TournamentGroup.number as groupNumber",
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentMatchGameResult")
+					.select([
+						"TournamentMatchGameResult.mode",
+						"TournamentMatchGameResult.stageId",
+						"TournamentMatchGameResult.source",
+						sql<number>`"TournamentMatchGameResult"."winnerTeamId" = ${tournamentTeamId}`.as(
+							"wasWinner",
+						),
+					])
+					.whereRef(
+						"TournamentMatchGameResult.matchId",
+						"=",
+						"TournamentMatch.id",
+					)
+					.orderBy("TournamentMatchGameResult.number", "asc"),
+			).as("matches"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("User")
+					.innerJoin(
+						"TournamentMatchGameResultParticipant",
+						"TournamentMatchGameResultParticipant.userId",
+						"User.id",
+					)
+					.innerJoin(
+						"TournamentMatchGameResult",
+						"TournamentMatchGameResult.id",
+						"TournamentMatchGameResultParticipant.matchGameResultId",
+					)
+					.innerJoin("TournamentTeamMember", (join) =>
+						join
+							.onRef("TournamentTeamMember.userId", "=", "User.id")
+							.onRef(
+								"TournamentTeamMember.tournamentTeamId",
+								"=",
+								"otherTeam.id",
+							),
+					)
+					.select([
+						"User.id",
+						"User.username",
+						"User.discordAvatar",
+						"User.discordId",
+						"User.customUrl",
+					])
+					.whereRef(
+						"TournamentMatchGameResult.matchId",
+						"=",
+						"TournamentMatch.id",
+					)
+					.distinct(),
+			).as("players"),
+		])
+		.where((eb) =>
+			eb.or([
+				eb(opponentOneId, "=", tournamentTeamId),
+				eb(opponentTwoId, "=", tournamentTeamId),
+			]),
+		)
+		.where("TournamentMatch.status", ">=", TournamentMatchStatus.Completed)
+		.orderBy("TournamentGroup.number", "asc")
+		.orderBy("TournamentRound.number", "asc")
 		.execute();
 }

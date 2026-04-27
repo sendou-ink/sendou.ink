@@ -57,6 +57,29 @@ export function parseSearchParams<T extends z.ZodTypeAny>({
 	}
 }
 
+/**
+ * If the requested `page` exceeds `pagesCount`, throws a redirect to the last
+ * available page (preserving other search params). `pagesCount` is normalized
+ * to a minimum of 1 so empty result sets stay on page 1.
+ */
+export function redirectIfPageOutOfBounds({
+	request,
+	page,
+	pagesCount,
+}: {
+	request: Request;
+	page: number;
+	pagesCount: number;
+}): void {
+	const safePagesCount = Math.max(1, pagesCount);
+	if (page <= safePagesCount) return;
+
+	const url = new URL(request.url);
+	const searchParams = new URLSearchParams(url.searchParams);
+	searchParams.set("page", String(safePagesCount));
+	throw redirect(`${url.pathname}?${searchParams.toString()}`);
+}
+
 export function parseSafeSearchParams<T extends z.ZodTypeAny>({
 	request,
 	schema,

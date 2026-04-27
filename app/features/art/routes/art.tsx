@@ -68,7 +68,7 @@ export const meta: MetaFunction = (args) => {
 };
 
 export default function ArtPage() {
-	const { t } = useTranslation(["art", "common"]);
+	const { t } = useTranslation(["art", "common", "forms"]);
 	const data = useLoaderData<typeof loader>();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const switchId = React.useId();
@@ -100,7 +100,7 @@ export default function ArtPage() {
 						id={switchId}
 					/>
 					<Label htmlFor={switchId} className="m-auto-0">
-						{t("art:openCommissionsOnly")}
+						{t("forms:labels.profileCommissionsOpen")}
 					</Label>
 				</div>
 				<div

@@ -89,11 +89,11 @@ export function UserResultsTable({
 							<td className="whitespace-nowrap">
 								{formatDate(databaseTimestampToDate(result.startTime), {
 									day: "numeric",
-									month: "short",
-									year: "numeric",
+									month: "numeric",
+									year: "2-digit",
 								})}
 							</td>
-							<td id={nameCellId}>
+							<td id={nameCellId} className="whitespace-nowrap">
 								<div className="stack horizontal xs items-center">
 									{result.eventId ? (
 										<Link to={calendarEventPage(result.eventId)}>
@@ -106,11 +106,12 @@ export function UserResultsTable({
 												<img
 													src={result.logoUrl}
 													alt=""
-													width={18}
-													height={18}
+													width={24}
+													height={24}
 													className="rounded-full"
 												/>
 											) : null}
+											{result.tier ? <TierPill tier={result.tier} /> : null}
 											<Link
 												to={tournamentBracketsPage({
 													tournamentId: result.tournamentId,
@@ -119,7 +120,6 @@ export function UserResultsTable({
 											>
 												{result.eventName}
 											</Link>
-											{result.tier ? <TierPill tier={result.tier} /> : null}
 											{result.div ? (
 												<span className="text-lighter">({result.div})</span>
 											) : null}
@@ -130,7 +130,7 @@ export function UserResultsTable({
 							<td>
 								<ParticipationPill setResults={result.setResults} />
 							</td>
-							<td>
+							<td className="whitespace-nowrap">
 								<div className="stack horizontal md items-center">
 									<SendouPopover
 										trigger={

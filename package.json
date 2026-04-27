@@ -22,6 +22,7 @@
 		"biome:fix": "biome check --error-on-warnings --write .",
 		"biome:fix:unsafe": "biome check --error-on-warnings --write --unsafe .",
 		"typecheck": "react-router typegen && tsc --noEmit",
+		"typecheck:scripts": "tsc --noEmit -p scripts",
 		"test:unit:browser": "cross-env VITE_SITE_DOMAIN=http://localhost:5173 BROWSER_HEADLESS=true vitest --silent=passed-only run",
 		"test:browser:ui": "cross-env VITE_SITE_DOMAIN=http://localhost:5173 vitest --silent=passed-only --project browser",
 		"test:unit:browser:ui": "cross-env VITE_SITE_DOMAIN=http://localhost:5173 vitest --silent=passed-only",
@@ -99,7 +100,7 @@
 		"zod": "4.3.6"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.4.11",
+		"@biomejs/biome": "2.4.13",
 		"@playwright/test": "1.59.1",
 		"@react-router/dev": "7.14.1",
 		"@types/better-sqlite3": "7.6.13",

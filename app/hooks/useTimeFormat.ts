@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import type { UserPreferences } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type { LanguageCode } from "~/modules/i18n/config";
 import { formatDistanceToNow as formatDistanceToNowUtil } from "~/utils/dates";
@@ -10,6 +11,15 @@ const H12_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
 const H24_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
 	hour12: false,
 	hourCycle: "h23" as const,
+};
+
+const DATE_FORMAT_LOCALE: Record<
+	Exclude<NonNullable<UserPreferences["dateFormat"]>, "auto">,
+	string
+> = {
+	MDY: "en-US",
+	DMY: "en-GB",
+	YMD: "sv-SE",
 };
 function getClockFormatOptions(
 	clockFormat: "auto" | "24h" | "12h" | undefined,
@@ -68,11 +78,13 @@ export function useTimeFormat() {
 	const { i18n } = useTranslation();
 	const user = useUser();
 	const clockFormat = user?.preferences?.clockFormat;
+	const dateFormat = user?.preferences?.dateFormat;
 	const clockOptions = getClockFormatOptions(clockFormat, i18n.language);
+	const dateLocale = getDateLocale(dateFormat, i18n.language);
 
 	const formatDateTime = (date: Date, options?: Intl.DateTimeFormatOptions) => {
 		const result = date.toLocaleString(
-			i18n.language,
+			isNumericMonth(options) ? dateLocale : i18n.language,
 			options?.hour
 				? {
 						...options,
@@ -104,7 +116,10 @@ export function useTimeFormat() {
 	};
 
 	const formatDate = (date: Date, options?: Intl.DateTimeFormatOptions) => {
-		return date.toLocaleDateString(i18n.language, options);
+		return date.toLocaleDateString(
+			isNumericMonth(options) ? dateLocale : i18n.language,
+			options,
+		);
 	};
 
 	/** Same as `formatDateTime` but omits minutes when they are zero and AM/PM format is in use */
@@ -164,4 +179,17 @@ export function useTimeFormat() {
 // Example: "09:00" -> "9:00"
 function stripLeadingZeroFromHour(timeString: string) {
 	return timeString.replace(/\b0(\d:\d{2})/g, "$1");
+}
+
+function getDateLocale(
+	dateFormat: UserPreferences["dateFormat"] | undefined,
+	language: string,
+) {
+	if (!dateFormat || dateFormat === "auto") return language;
+	return DATE_FORMAT_LOCALE[dateFormat];
+}
+
+function isNumericMonth(options: Intl.DateTimeFormatOptions | undefined) {
+	if (!options?.month) return false;
+	return options.month === "numeric" || options.month === "2-digit";
 }

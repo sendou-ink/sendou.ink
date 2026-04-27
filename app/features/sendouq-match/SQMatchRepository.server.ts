@@ -777,12 +777,24 @@ export async function reportScore({
 export async function cancelMatch({
 	matchId,
 	reportedByUserId,
+	isAdminReport,
 }: {
 	matchId: number;
 	reportedByUserId: number;
+	isAdminReport?: boolean;
 }): Promise<CancelMatchResult> {
 	const match = await findById(matchId);
 	invariant(match, "Match not found");
+
+	if (isAdminReport) {
+		await db.transaction().execute(async (trx) => {
+			await updateScore({ matchId, reportedByUserId, winners: [] }, trx);
+			await SQGroupRepository.setAsInactive(match.groupAlpha.id, trx);
+			await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
+			await lockMatchWithoutSkillChange(match.id, trx);
+		});
+		return { status: "CANCEL_CONFIRMED", shouldRefreshCaches: true };
+	}
 
 	const members = buildMembers(match);
 	const reporterGroupId = members.find(

@@ -1,9 +1,12 @@
-// @ts-nocheck
-
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { DAMAGE_RECEIVERS } from "~/features/object-damage-calculator/calculator-constants";
+import type {
+	MainWeaponId,
+	SpecialWeaponId,
+	SubWeaponId,
+} from "~/modules/in-game-lists/types";
 import {
 	mainWeaponIds,
 	specialWeaponIds,
@@ -23,6 +26,21 @@ const __dirname = path.dirname(__filename);
 
 const OUTPUT_DIR_PATH = path.join(__dirname, "output");
 
+type DamageReceiver = (typeof DAMAGE_RECEIVERS)[number];
+
+type ResultEntry = {
+	mainWeaponIds: MainWeaponId[];
+	subWeaponIds: SubWeaponId[];
+	specialWeaponIds: SpecialWeaponId[];
+	rates: { target: string; rate: number }[];
+};
+
+type DamageRateCell = {
+	ColumnKey: string;
+	RowKey: string;
+	DamageRate?: number;
+};
+
 const weaponParamsToWeaponIds = (
 	params: typeof weapons | typeof subWeapons | typeof specialWeapons,
 	key: string,
@@ -39,39 +57,48 @@ const weaponParamsToWeaponIds = (
 		.map((weapon) => weapon.Id);
 };
 
-const result = {};
-for (const cell of Object.values(params.CellList)) {
-	if (!DAMAGE_RECEIVERS.includes(cell.ColumnKey)) continue;
+const isDamageReceiver = (key: string): key is DamageReceiver =>
+	(DAMAGE_RECEIVERS as readonly string[]).includes(key);
+
+const result: Record<string, ResultEntry | undefined> = {};
+for (const cell of Object.values(params.CellList) as DamageRateCell[]) {
+	if (!isDamageReceiver(cell.ColumnKey)) continue;
 	if (!cell.DamageRate) continue;
 
 	if (!result[cell.RowKey]) {
 		result[cell.RowKey] = {
 			mainWeaponIds: weaponParamsToWeaponIds(weapons, cell.RowKey).filter(
-				(id) => mainWeaponIds.includes(id),
+				(id): id is MainWeaponId =>
+					(mainWeaponIds as readonly number[]).includes(id),
 			),
 			subWeaponIds: weaponParamsToWeaponIds(subWeapons, cell.RowKey).filter(
-				(id) => subWeaponIds.includes(id),
+				(id): id is SubWeaponId =>
+					(subWeaponIds as readonly number[]).includes(id),
 			),
 			specialWeaponIds: weaponParamsToWeaponIds(
 				specialWeapons,
 				cell.RowKey,
-			).filter((id) => specialWeaponIds.includes(id)),
+			).filter((id): id is SpecialWeaponId =>
+				(specialWeaponIds as readonly number[]).includes(id),
+			),
 			rates: [],
 		};
 	}
 
+	const entry = result[cell.RowKey]!;
+
 	// if it applies to no PvP weapons, we don't care about it
 	if (
-		result[cell.RowKey].mainWeaponIds.length === 0 &&
-		result[cell.RowKey].subWeaponIds.length === 0 &&
-		result[cell.RowKey].specialWeaponIds.length === 0 &&
+		entry.mainWeaponIds.length === 0 &&
+		entry.subWeaponIds.length === 0 &&
+		entry.specialWeaponIds.length === 0 &&
 		cell.RowKey !== "ObjectEffect_Up"
 	) {
 		result[cell.RowKey] = undefined;
 		continue;
 	}
 
-	result[cell.RowKey].rates.push({
+	entry.rates.push({
 		target: cell.ColumnKey,
 		rate: cell.DamageRate,
 	});
@@ -81,7 +108,7 @@ for (const cell of Object.values(params.CellList)) {
 		cell.ColumnKey.includes("BulletUmbrellaCanopyNormal") ||
 		cell.ColumnKey.includes("BulletUmbrellaCanopyWide")
 	) {
-		result[cell.RowKey].rates.push({
+		entry.rates.push({
 			target: `${cell.ColumnKey}_Launched`,
 			rate: cell.DamageRate,
 		});
@@ -89,12 +116,12 @@ for (const cell of Object.values(params.CellList)) {
 
 	// if it has special damage rates for Splat Brella, add the same value for Recycled Brella
 	if (cell.ColumnKey === "BulletUmbrellaCanopyNormal") {
-		result[cell.RowKey].rates.push({
+		entry.rates.push({
 			target: "BulletShelterCanopyFocus",
 			rate: cell.DamageRate,
 		});
 
-		result[cell.RowKey].rates.push({
+		entry.rates.push({
 			target: "BulletShelterCanopyFocus_Launched",
 			rate: cell.DamageRate,
 		});

@@ -32,6 +32,10 @@
 	color: var(--color-text-inverse);
 }
 
+:global(html.light) .tag {
+	color: var(--color-text);
+}
+
 .tagDeleteButton {
 	margin-left: auto;
 
@@ -40,4 +44,8 @@
 		color: var(--color-text-inverse);
 		margin-inline: var(--s-1) 0 !important;
 	}
+}
+
+:global(html.light) .tagDeleteButton > svg {
+	color: var(--color-text);
 }

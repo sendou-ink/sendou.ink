@@ -231,7 +231,10 @@ function GlobalSearchContent({
 	);
 
 	const hasQuery = query.length >= 3;
+	const fetchedQuery = fetcher.data?.query ?? null;
 	const fetchedType = fetcher.data?.type ?? null;
+	const isCurrentFetch =
+		hasQuery && fetchedQuery === query && fetchedType === searchType;
 	const results =
 		hasQuery && fetchedType === searchType ? (fetcher.data?.results ?? []) : [];
 
@@ -388,15 +391,27 @@ function GlobalSearchContent({
 					className={clsx(styles.listBox, "scrollbar")}
 					aria-label={t("common:search")}
 					onAction={handleSelect}
-					renderEmptyState={() =>
-						hasQuery ? (
+					renderEmptyState={() => {
+						if (!hasQuery) {
+							return (
+								<div className={styles.emptyState}>
+									{t("common:search.hint")}
+								</div>
+							);
+						}
+						if (!isCurrentFetch) {
+							return (
+								<div className={styles.emptyState}>
+									{t("common:search.searching")}
+								</div>
+							);
+						}
+						return (
 							<div className={styles.emptyState}>
 								{t("common:search.noResults")}
 							</div>
-						) : (
-							<div className={styles.emptyState}>{t("common:search.hint")}</div>
-						)
-					}
+						);
+					}}
 				>
 					{results.map((result) => (
 						<ListBoxItem

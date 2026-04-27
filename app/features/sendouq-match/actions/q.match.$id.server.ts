@@ -85,7 +85,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				"User is not a member of any group",
 			);
 
-			if (data.adminReport) {
+			const matchIsBeingCanceled = data.winners.length === 0;
+
+			if (data.adminReport && !matchIsBeingCanceled) {
 				await SQMatchRepository.adminReport({
 					matchId,
 					reportedByUserId: user.id,
@@ -112,12 +114,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				break;
 			}
 
-			const matchIsBeingCanceled = data.winners.length === 0;
-
 			if (matchIsBeingCanceled) {
 				const result = await SQMatchRepository.cancelMatch({
 					matchId,
 					reportedByUserId: user.id,
+					isAdminReport: Boolean(data.adminReport),
 				});
 
 				if (result.shouldRefreshCaches) {

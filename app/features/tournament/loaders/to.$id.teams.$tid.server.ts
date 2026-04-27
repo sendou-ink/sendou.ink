@@ -1,8 +1,10 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentMatchRepository from "~/features/tournament-bracket/TournamentMatchRepository.server";
 import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import { parseParams } from "~/utils/remix.server";
 import { tournamentTeamSets, winCounts } from "../core/sets.server";
+import { findRoundsByTournamentId } from "../queries/findRoundsByTournamentId.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id: tournamentId, tid: tournamentTeamId } = parseParams({
@@ -15,7 +17,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		throw new Response(null, { status: 404 });
 	}
 
-	const sets = tournamentTeamSets({ tournamentTeamId, tournamentId });
+	const setHistory =
+		await TournamentMatchRepository.findByTournamentTeamId(tournamentTeamId);
+	const allRounds = findRoundsByTournamentId(tournamentId);
+
+	const sets = tournamentTeamSets({ sets: setHistory, allRounds });
 
 	return {
 		tournamentTeamId,

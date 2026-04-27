@@ -74,9 +74,10 @@ function CategoryMenu({
 	const [isOpen, setIsOpen] = useState(false);
 	const user = useUser();
 	const isStaff = user?.roles.includes("STAFF") ?? false;
+	const showStaffOnly = isStaff || process.env.NODE_ENV === "development";
 
 	const visibleItems = category.items.filter(
-		(item) => !("staffOnly" in item) || isStaff,
+		(item) => !("staffOnly" in item) || showStaffOnly,
 	);
 
 	return (

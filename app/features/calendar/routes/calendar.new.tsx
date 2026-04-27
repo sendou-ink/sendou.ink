@@ -661,7 +661,7 @@ function TagsAdder() {
 
 	const tagsForSelect = CALENDAR_EVENT.TAGS.filter(
 		(tag) => !tags.includes(tag),
-	).filter((tag) => tag !== "SZ" && tag !== "TW"); // TODO: these are now added automatically, remove in migration?
+	);
 
 	return (
 		<div className="stack sm">

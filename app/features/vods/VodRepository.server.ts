@@ -33,6 +33,7 @@ export async function findVods({
 	type,
 	userId,
 	limit = VODS_PAGE_BATCH_SIZE,
+	offset = 0,
 }: {
 	weapon?: MainWeaponId;
 	mode?: ModeShort;
@@ -40,6 +41,7 @@ export async function findVods({
 	type?: Tables["Video"]["type"];
 	userId?: number;
 	limit?: number;
+	offset?: number;
 }) {
 	let query = db
 		.selectFrom("Video")
@@ -49,7 +51,6 @@ export async function findVods({
 			"VideoMatch.id",
 			"VideoMatchPlayer.videoMatchId",
 		)
-		.leftJoin("User", "VideoMatchPlayer.playerUserId", "User.id")
 		.selectAll("Video")
 		.select(({ fn, ref, eb }) => [
 			sql<
@@ -74,7 +75,7 @@ export async function findVods({
 			).as("players"),
 		]);
 	if (userId) {
-		query = query.where("User.id", "=", userId);
+		query = query.where("VideoMatchPlayer.playerUserId", "=", userId);
 	} else {
 		if (type) {
 			query = query.where("Video.type", "=", type);
@@ -90,14 +91,14 @@ export async function findVods({
 		query = query.where(
 			"VideoMatchPlayer.weaponSplId",
 			"in",
-			// TODO: temporary fix until we have a proper search params parsing in place
-			weaponIdToArrayWithAlts(Number(weapon) as MainWeaponId),
+			weaponIdToArrayWithAlts(weapon),
 		);
 	}
 	const result = await query
 		.groupBy("Video.id")
 		.orderBy("Video.youtubeDate", "desc")
 		.limit(limit)
+		.offset(offset)
 		.execute();
 
 	const vods = result.map((value) => {
@@ -108,6 +109,53 @@ export async function findVods({
 		};
 	});
 	return vods;
+}
+
+export async function countVods({
+	weapon,
+	mode,
+	stageId,
+	type,
+	userId,
+}: {
+	weapon?: MainWeaponId;
+	mode?: ModeShort;
+	stageId?: StageId;
+	type?: Tables["Video"]["type"];
+	userId?: number;
+}) {
+	let query = db
+		.selectFrom("Video")
+		.leftJoin("VideoMatch", "VideoMatch.videoId", "Video.id")
+		.leftJoin(
+			"VideoMatchPlayer",
+			"VideoMatch.id",
+			"VideoMatchPlayer.videoMatchId",
+		)
+		.select(({ fn }) => fn.count<number>("Video.id").distinct().as("count"));
+	if (userId) {
+		query = query.where("VideoMatchPlayer.playerUserId", "=", userId);
+	} else {
+		if (type) {
+			query = query.where("Video.type", "=", type);
+		}
+		if (mode) {
+			query = query.where("VideoMatch.mode", "=", mode);
+		}
+		if (stageId) {
+			query = query.where("VideoMatch.stageId", "=", stageId);
+		}
+	}
+	if (weapon) {
+		query = query.where(
+			"VideoMatchPlayer.weaponSplId",
+			"in",
+			weaponIdToArrayWithAlts(weapon),
+		);
+	}
+
+	const result = await query.executeTakeFirstOrThrow();
+	return result.count;
 }
 
 export async function findVodById(id: Tables["Video"]["id"]) {

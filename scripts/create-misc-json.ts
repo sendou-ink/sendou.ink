@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,6 +9,9 @@ import {
 	loadLangDicts,
 	translationJsonFolderName,
 } from "./utils";
+
+type LangDicts = Awaited<ReturnType<typeof loadLangDicts>>;
+type LangDict = LangDicts[number][1];
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -176,7 +177,9 @@ async function main() {
 			invariant(internalName, `Missing internal name for ${ability}`);
 
 			const translation = decodeURIComponent(
-				langDict["CommonMsg/Gear/GearPowerName"][internalName],
+				(langDict["CommonMsg/Gear/GearPowerName"] as Record<string, string>)[
+					internalName
+				],
 			);
 
 			translationsMap[`ABILITY_${ability}`] = translation;
@@ -216,7 +219,7 @@ async function main() {
 	generateBadgeData(langDicts);
 }
 
-function generateBadgeData(langDicts) {
+function generateBadgeData(langDicts: LangDicts) {
 	const badgeFiles = fs
 		.readdirSync(BADGE_DIR)
 		.filter((f) => f.endsWith(".png"));
@@ -271,9 +274,12 @@ function generateBadgeData(langDicts) {
 	fs.writeFileSync(path.join(OUTPUT_DIR, "game-badge-ids.ts"), tsContent);
 }
 
-function buildBadgeTranslations(badgeIds, langDict) {
-	const badgeMsg = langDict["CommonMsg/Badge/BadgeMsg"];
-	const translationsMap = {};
+function buildBadgeTranslations(badgeIds: string[], langDict: LangDict) {
+	const badgeMsg = langDict["CommonMsg/Badge/BadgeMsg"] as Record<
+		string,
+		string
+	>;
+	const translationsMap: Record<string, string> = {};
 
 	for (const id of badgeIds) {
 		if (badgeMsg[id] && !badgeMsg[id].includes("[group=")) {
@@ -306,7 +312,9 @@ function buildBadgeTranslations(badgeIds, langDict) {
 			continue;
 		}
 
-		const lookupValue = langDict[rule.lookupDict]?.[variantName];
+		const lookupValue = (
+			langDict as unknown as Record<string, Record<string, string> | undefined>
+		)[rule.lookupDict]?.[variantName];
 		if (!lookupValue) {
 			translationsMap[id] = id;
 			continue;
@@ -321,7 +329,10 @@ function buildBadgeTranslations(badgeIds, langDict) {
 	return translationsMap;
 }
 
-function writeBadgeJson(folder, translationsMap) {
+function writeBadgeJson(
+	folder: string,
+	translationsMap: Record<string, string>,
+) {
 	fs.writeFileSync(
 		path.join(__dirname, "..", "locales", folder, "game-badges.json"),
 		`${JSON.stringify(translationsMap, null, 2)}\n`,
