@@ -1,14 +1,11 @@
 import type { Tables } from "~/db/tables";
+import type { FindByTournamentTeamIdItem } from "~/features/tournament-bracket/TournamentMatchRepository.server";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { sourceTypes } from "~/modules/tournament-map-list-generator/constants";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-import { findRoundsByTournamentId } from "../queries/findRoundsByTournamentId.server";
-import {
-	type SetHistoryByTeamIdItem,
-	setHistoryByTeamId,
-} from "../queries/setHistoryByTeamId.server";
+import type { findRoundsByTournamentId } from "../queries/findRoundsByTournamentId.server";
 
 export interface PlayedSet {
 	tournamentMatchId: number;
@@ -78,15 +75,12 @@ export function winCounts(sets: PlayedSet[]) {
 }
 
 export function tournamentTeamSets({
-	tournamentTeamId,
-	tournamentId,
+	sets,
+	allRounds,
 }: {
-	tournamentTeamId: number;
-	tournamentId: number;
+	sets: FindByTournamentTeamIdItem[];
+	allRounds: ReturnType<typeof findRoundsByTournamentId>;
 }): PlayedSet[] {
-	const sets = setHistoryByTeamId(tournamentTeamId);
-	const allRounds = findRoundsByTournamentId(tournamentId);
-
 	return sets.map((set) => {
 		const round =
 			allRounds.find((round) => round.stageId === set.stageId) ?? allRounds[0];
@@ -157,7 +151,7 @@ function parseTournamentMaplistSource(source: string): TournamentMaplistSource {
 	return parsed;
 }
 
-function flipScoreIfNeeded(set: SetHistoryByTeamIdItem): [number, number] {
+function flipScoreIfNeeded(set: FindByTournamentTeamIdItem): [number, number] {
 	const score: [number, number] = [
 		set.opponentOneScore ?? 0,
 		set.opponentTwoScore ?? 0,
