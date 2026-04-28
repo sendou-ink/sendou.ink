@@ -1,4 +1,4 @@
-import { gzip, ungzip } from "pako";
+import { deflateRaw, inflateRaw } from "pako";
 import { useEffect, useRef, useState } from "react";
 import type { Role } from "~/modules/permissions/types";
 
@@ -18,7 +18,7 @@ export function canEditTrophy(
 }
 
 export function compressTrophyModel(model: string) {
-	const compressed = gzip(model);
+	const compressed = deflateRaw(model);
 	let binary = "";
 	for (const byte of compressed) {
 		binary += String.fromCharCode(byte);
@@ -29,7 +29,7 @@ export function compressTrophyModel(model: string) {
 export function decompressTrophyModel(modelBase64: string) {
 	const binary = atob(modelBase64);
 	const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
-	return ungzip(bytes, { to: "string" });
+	return inflateRaw(bytes, { to: "string" });
 }
 
 export function useProgressiveRender(total: number, resetKey: string) {

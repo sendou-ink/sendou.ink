@@ -653,9 +653,7 @@ function PendingTrophyDiff({
 			label: t("forms:labels.trophyModel"),
 			oldValue: "-----",
 			newValue: "-----",
-			changed:
-				decompressTrophyModel(target.model) !==
-				decompressTrophyModel(pending.model),
+			changed: target.model !== pending.model,
 		},
 	];
 
