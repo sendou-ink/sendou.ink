@@ -224,6 +224,18 @@ export function findByTournamentTeamId(tournamentTeamId: number) {
 			]),
 		)
 		.where("TournamentMatch.status", ">=", TournamentMatchStatus.Completed)
+		.where((eb) =>
+			eb.exists(
+				eb
+					.selectFrom("TournamentMatchGameResult")
+					.select("TournamentMatchGameResult.id")
+					.whereRef(
+						"TournamentMatchGameResult.matchId",
+						"=",
+						"TournamentMatch.id",
+					),
+			),
+		)
 		.orderBy("TournamentGroup.number", "asc")
 		.orderBy("TournamentRound.number", "asc")
 		.execute();
