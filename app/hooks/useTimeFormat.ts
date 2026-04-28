@@ -83,18 +83,19 @@ export function useTimeFormat() {
 	const dateLocale = getDateLocale(dateFormat, i18n.language);
 
 	const formatDateTime = (date: Date, options?: Intl.DateTimeFormatOptions) => {
+		const adjusted = withYearFirstAdjustment(options, dateFormat);
 		const result = date.toLocaleString(
-			isNumericMonth(options) ? dateLocale : i18n.language,
-			options?.hour
+			isNumericMonth(adjusted) ? dateLocale : i18n.language,
+			adjusted?.hour
 				? {
-						...options,
+						...adjusted,
 						...clockOptions,
 					}
 				: {
-						...options,
+						...adjusted,
 					},
 		);
-		return clockOptions.hourCycle === "h23" && options?.hour
+		return clockOptions.hourCycle === "h23" && adjusted?.hour
 			? stripLeadingZeroFromHour(result)
 			: result;
 	};
@@ -116,9 +117,10 @@ export function useTimeFormat() {
 	};
 
 	const formatDate = (date: Date, options?: Intl.DateTimeFormatOptions) => {
+		const adjusted = withYearFirstAdjustment(options, dateFormat);
 		return date.toLocaleDateString(
-			isNumericMonth(options) ? dateLocale : i18n.language,
-			options,
+			isNumericMonth(adjusted) ? dateLocale : i18n.language,
+			adjusted,
 		);
 	};
 
@@ -192,4 +194,13 @@ function getDateLocale(
 function isNumericMonth(options: Intl.DateTimeFormatOptions | undefined) {
 	if (!options?.month) return false;
 	return options.month === "numeric" || options.month === "2-digit";
+}
+
+function withYearFirstAdjustment(
+	options: Intl.DateTimeFormatOptions | undefined,
+	dateFormat: UserPreferences["dateFormat"] | undefined,
+): Intl.DateTimeFormatOptions | undefined {
+	if (options?.year !== "2-digit") return options;
+	if (dateFormat !== "YMD") return options;
+	return { ...options, year: "numeric" };
 }
