@@ -66,7 +66,6 @@
 		"i18next-http-backend": "3.0.5",
 		"ics": "3.11.0",
 		"isbot": "5.1.38",
-		"jsoncrush": "1.1.8",
 		"kysely": "0.28.16",
 		"lru-cache": "11.3.5",
 		"lucide-react": "1.8.0",

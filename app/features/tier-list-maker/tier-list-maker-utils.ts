@@ -1,3 +1,4 @@
+import { deflateRaw, inflateRaw } from "pako";
 import type { TierListItem, TierListState } from "./tier-list-maker-schemas";
 
 export function tierListItemId(item: TierListItem) {
@@ -25,4 +26,34 @@ export function getNextNthForItem(
 			return currentMax;
 		}, 0) + 1
 	);
+}
+
+export function compress<T>(obj: T) {
+	const bytes = deflateRaw(JSON.stringify(obj), { level: 9 });
+	let binary = "";
+
+	for (const byte of bytes) {
+		binary += String.fromCharCode(byte);
+	}
+
+	return btoa(binary)
+		.replace(/\+/g, "-")
+		.replace(/\//g, "_")
+		.replace(/=+$/, "");
+}
+
+export function decompress<T>(compressed: string) {
+	try {
+		const base64 = compressed.replace(/-/g, "+").replace(/_/g, "/");
+		const json = inflateRaw(
+			Uint8Array.from(atob(base64), (c) => c.charCodeAt(0)),
+			{ to: "string" },
+		);
+
+		if (!json) return null;
+
+		return JSON.parse(json) as T;
+	} catch {
+		return null;
+	}
 }
