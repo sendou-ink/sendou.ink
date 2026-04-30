@@ -124,6 +124,18 @@ export function useTimeFormat() {
 		);
 	};
 
+	const formatDateRange = (
+		from: Date,
+		to: Date,
+		options?: Intl.DateTimeFormatOptions,
+	) => {
+		const adjusted = withYearFirstAdjustment(options, dateFormat);
+		const locale = isNumericMonth(adjusted) ? dateLocale : i18n.language;
+		return new Intl.DateTimeFormat(locale, adjusted)
+			.formatRange(from, to)
+			.replace(/\s*–\s*/g, " – ");
+	};
+
 	/** Same as `formatDateTime` but omits minutes when they are zero and AM/PM format is in use */
 	const formatDateTimeSmartMinutes = (
 		date: Date,
@@ -171,6 +183,7 @@ export function useTimeFormat() {
 		formatDateTime,
 		formatTime,
 		formatDate,
+		formatDateRange,
 		formatDateTimeSmartMinutes,
 		formatDistanceToNow,
 		formatDuration,

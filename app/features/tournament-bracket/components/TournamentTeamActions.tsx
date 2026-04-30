@@ -9,6 +9,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { soundEnabled, soundVolume } from "~/features/chat/chat-utils";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { logger } from "~/utils/logger";
 import {
 	soundPath,
@@ -21,6 +22,7 @@ export function TournamentTeamActions() {
 	const tournament = useTournament();
 	const user = useUser();
 	const fetcher = useFetcher();
+	const { formatTime } = useTimeFormat();
 
 	const status = tournament.teamMemberOfProgressStatus(user);
 
@@ -104,13 +106,13 @@ export function TournamentTeamActions() {
 				) : bracket.startTime && bracket.startTime > new Date() ? (
 					<span className="text-lighter text-xxs" suppressHydrationWarning>
 						open{" "}
-						{sub(bracket.startTime, { hours: 1 }).toLocaleTimeString("en-US", {
+						{formatTime(sub(bracket.startTime, { hours: 1 }), {
 							hour: "numeric",
 							minute: "numeric",
 							weekday: "short",
 						})}{" "}
 						-{" "}
-						{bracket.startTime.toLocaleTimeString("en-US", {
+						{formatTime(bracket.startTime, {
 							hour: "numeric",
 							minute: "numeric",
 						})}

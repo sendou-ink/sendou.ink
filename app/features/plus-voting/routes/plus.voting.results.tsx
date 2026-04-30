@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import { PLUS_SERVER_DISCORD_URL, userPage } from "~/utils/urls";
 
@@ -21,12 +22,22 @@ export const meta: MetaFunction = (args) => {
 
 export default function PlusVotingResultsPage() {
 	const data = useLoaderData<typeof loader>();
+	const { formatDate } = useTimeFormat();
 
 	return (
 		<div className="stack md">
 			<h2 className="text-center">
-				Voting results for {data.lastCompletedVoting.month + 1}/
-				{data.lastCompletedVoting.year}
+				Voting results for{" "}
+				{formatDate(
+					new Date(
+						data.lastCompletedVoting.year,
+						data.lastCompletedVoting.month,
+					),
+					{
+						month: "numeric",
+						year: "numeric",
+					},
+				)}
 			</h2>
 			{data.ownScores && data.ownScores.length > 0 ? (
 				<>

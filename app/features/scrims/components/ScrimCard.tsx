@@ -405,7 +405,7 @@ function ScrimActionButtons({
 											hour: "numeric",
 											minute: "2-digit",
 											day: "numeric",
-											month: "long",
+											month: "numeric",
 										})}
 									</div>
 								</div>

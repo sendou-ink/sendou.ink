@@ -399,7 +399,7 @@ function SeriesHeader({
 						<div className="text-lighter text-italic text-xs">
 							{t("org:events.established.short")}{" "}
 							{formatDate(databaseTimestampToDate(series.established), {
-								month: "long",
+								month: "numeric",
 								year: "numeric",
 							})}
 						</div>

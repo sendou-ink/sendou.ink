@@ -5,8 +5,8 @@ import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import type { SidebarStream } from "~/features/core/streams/streams.server";
 import { useHydrated } from "~/hooks/useHydrated";
-import type { LanguageCode } from "~/modules/i18n/config";
-import { databaseTimestampToDate, formatDistanceToNow } from "~/utils/dates";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
+import { databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl, tournamentRegisterPage } from "~/utils/urls";
 import { Image } from "./Image";
 import { ListLink } from "./SideNav";
@@ -25,14 +25,12 @@ export function StreamListItems({
 	savedTournamentIds?: number[];
 }) {
 	const { t, i18n } = useTranslation(["front"]);
+	const { formatDateTime, formatTime, formatDistanceToNow } = useTimeFormat();
 	const isHydrated = useHydrated();
 
 	const formatRelativeDate = (timestamp: number) => {
 		const date = new Date(timestamp * 1000);
-		const timeStr = date.toLocaleTimeString(i18n.language, {
-			hour: "numeric",
-			minute: "2-digit",
-		});
+		const timeStr = formatTime(date);
 
 		if (isToday(date)) {
 			const rtf = new Intl.RelativeTimeFormat(i18n.language, {
@@ -49,8 +47,8 @@ export function StreamListItems({
 			return `${dayStr.charAt(0).toUpperCase() + dayStr.slice(1)}, ${timeStr}`;
 		}
 
-		return date.toLocaleDateString(i18n.language, {
-			month: "short",
+		return formatDateTime(date, {
+			month: "numeric",
 			day: "numeric",
 			hour: "numeric",
 			minute: "2-digit",
@@ -101,7 +99,6 @@ export function StreamListItems({
 								) : (
 									formatDistanceToNow(startsAtDate, {
 										addSuffix: true,
-										language: i18n.language as LanguageCode,
 									})
 								)
 							}

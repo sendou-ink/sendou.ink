@@ -25,6 +25,7 @@ import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -55,12 +56,9 @@ import { TopRightButtons } from "./TopRightButtons";
 
 const MAX_DESKTOP_FRIENDS = 4;
 
-function useTimeFormat() {
+function useRelativeDayFormat() {
 	const { i18n } = useTranslation();
-
-	const formatTime = (date: Date, options: Intl.DateTimeFormatOptions) => {
-		return date.toLocaleTimeString(i18n.language, options);
-	};
+	const { formatTime, formatDateTime } = useTimeFormat();
 
 	const formatRelativeDay = (daysFromToday: number) => {
 		const rtf = new Intl.RelativeTimeFormat(i18n.language, { numeric: "auto" });
@@ -70,7 +68,7 @@ function useTimeFormat() {
 
 	const formatRelativeDate = (timestamp: number) => {
 		const date = new Date(timestamp * 1000);
-		const timeStr = formatTime(date, { hour: "numeric", minute: "2-digit" });
+		const timeStr = formatTime(date);
 
 		if (isToday(date)) {
 			return `${formatRelativeDay(0)}, ${timeStr}`;
@@ -79,15 +77,15 @@ function useTimeFormat() {
 			return `${formatRelativeDay(1)}, ${timeStr}`;
 		}
 
-		return date.toLocaleDateString(i18n.language, {
-			month: "short",
+		return formatDateTime(date, {
+			month: "numeric",
 			day: "numeric",
 			hour: "numeric",
 			minute: "2-digit",
 		});
 	};
 
-	return { formatTime, formatRelativeDate };
+	return { formatRelativeDate };
 }
 
 function useBreadcrumbData() {
@@ -215,7 +213,7 @@ export function Layout({
 	const setChatSidebarOpen = chatContext?.setChatOpen ?? (() => {});
 
 	const { t } = useTranslation(["front", "common"]);
-	const { formatRelativeDate } = useTimeFormat();
+	const { formatRelativeDate } = useRelativeDayFormat();
 	const isHydrated = useHydrated();
 	const location = useLocation();
 	const headerRef = React.useRef<HTMLElement>(null);

@@ -236,7 +236,7 @@ function DateFilter({
 							{patch} (
 							{formatDate(date, {
 								day: "numeric",
-								month: "long",
+								month: "numeric",
 								year: "numeric",
 							})}
 							)
