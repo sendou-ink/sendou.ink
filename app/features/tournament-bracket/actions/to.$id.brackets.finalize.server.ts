@@ -65,7 +65,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const results = allMatchResultsByTournamentId(tournamentId);
 	invariant(results.length > 0, "No results found");
 
-	const season = Seasons.current(tournament.ctx.startTime)?.nth;
+	const seasonAttributionDate = tournament.isLeagueDivision
+		? new Date()
+		: tournament.ctx.startTime;
+	const season = Seasons.current(seasonAttributionDate)?.nth;
 
 	const seedingSkillCountsFor = tournament.skillCountsFor;
 	const standingsResult = Standings.tournamentStandings(tournament);
