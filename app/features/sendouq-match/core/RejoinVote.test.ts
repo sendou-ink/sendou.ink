@@ -34,6 +34,17 @@ describe("RejoinVote.result()", () => {
 			continuingUserIds: [1, 3],
 		});
 	});
+
+	test("fails when fewer than two members want to continue", () => {
+		expect(
+			RejoinVote.result([
+				{ userId: 1, isContinuing: true },
+				{ userId: 2, isContinuing: false },
+				{ userId: 3, isContinuing: false },
+				{ userId: 4, isContinuing: false },
+			]),
+		).toEqual({ type: "FAILED" });
+	});
 });
 
 describe("RejoinVote.userContinueStatus()", () => {

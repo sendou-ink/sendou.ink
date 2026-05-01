@@ -7,21 +7,29 @@ export interface RejoinVote {
 	isContinuing: boolean;
 }
 
+const MIN_CONTINUING_GROUP_SIZE = 2;
+
 /**
- * Resolves the overall vote state. ONGOING until every member of a full
- * group has cast a vote, then returns the ids of those who chose to continue.
+ * Resolves the overall vote state. ONGOING until every member of a full group
+ * has cast a vote, then RESOLVED with the ids of those who chose to continue,
+ * or FAILED if too few want to continue to form a viable group.
  */
-// xxx: what about FAILED?
 export function result(votes: RejoinVote[]) {
 	if (votes.length !== FULL_GROUP_SIZE) {
 		return { type: "ONGOING" as const };
 	}
 
-	const willContinue = votes.filter((vote) => vote.isContinuing);
+	const continuingUserIds = votes
+		.filter((vote) => vote.isContinuing)
+		.map((vote) => vote.userId);
+
+	if (continuingUserIds.length < MIN_CONTINUING_GROUP_SIZE) {
+		return { type: "FAILED" as const };
+	}
 
 	return {
 		type: "RESOLVED" as const,
-		continuingUserIds: willContinue.map((vote) => vote.userId),
+		continuingUserIds,
 	};
 }
 

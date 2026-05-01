@@ -38,7 +38,9 @@ export function RematchVotePanel({
 		members.map((m) => m.id),
 	).length;
 
-	const voteResolved = RejoinVote.result(votes).type === "RESOLVED";
+	const voteResult = RejoinVote.result(votes);
+	const voteResolved = voteResult.type === "RESOLVED";
+	const voteFailed = voteResult.type === "FAILED";
 	const viewerVotedYes =
 		RejoinVote.userContinueStatus(votes, viewerUserId) === true;
 	const viewerVotedNo =
@@ -47,9 +49,11 @@ export function RematchVotePanel({
 	return (
 		<div className={styles.root}>
 			<div className={styles.prompt}>
-				{voteResolved
-					? t("q:match.rematch.resolved", { count: currentRoundSize })
-					: t("q:match.rematch.prompt", { count: currentRoundSize })}
+				{voteFailed
+					? t("q:match.rematch.fizzled")
+					: voteResolved
+						? t("q:match.rematch.resolved", { count: currentRoundSize })
+						: t("q:match.rematch.prompt", { count: currentRoundSize })}
 			</div>
 			<ul className={styles.list}>
 				{members.map((member) => {
@@ -71,7 +75,7 @@ export function RematchVotePanel({
 						</SendouButton>
 					</Link>
 				</div>
-			) : viewerVotedNo ? null : (
+			) : voteFailed || viewerVotedNo ? null : (
 				<div className={styles.buttons}>
 					<FormWithConfirm
 						fields={[
