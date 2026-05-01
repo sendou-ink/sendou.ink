@@ -37,8 +37,8 @@
 		"sync-weapon-params": "tsx scripts/sync-weapon-params.ts"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "3.1034.0",
-		"@aws-sdk/lib-storage": "3.1034.0",
+		"@aws-sdk/client-s3": "3.1035.0",
+		"@aws-sdk/lib-storage": "3.1035.0",
 		"@date-fns/tz": "1.4.1",
 		"@dnd-kit/core": "6.3.1",
 		"@dnd-kit/modifiers": "9.0.0",
@@ -118,7 +118,7 @@
 		"sql-formatter": "15.7.3",
 		"tsx": "4.21.0",
 		"typescript": "6.0.3",
-		"vite": "8.0.9",
+		"vite": "8.0.10",
 		"vite-node": "6.0.0",
 		"vite-plugin-babel": "1.6.0",
 		"vitest": "4.1.5",
