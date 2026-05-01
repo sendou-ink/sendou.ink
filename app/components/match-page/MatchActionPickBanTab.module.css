@@ -50,6 +50,14 @@
 	grid-area: submit;
 }
 
+.waiting {
+	grid-row: prompt-start / submit-end;
+	margin: 0;
+	font-size: var(--font-sm);
+	color: var(--color-text-lighter);
+	text-align: center;
+}
+
 .modeGroup {
 	display: flex;
 	flex-direction: column;
@@ -115,6 +123,10 @@
 
 	&:active {
 		transform: none;
+	}
+
+	&:disabled {
+		cursor: not-allowed;
 	}
 }
 

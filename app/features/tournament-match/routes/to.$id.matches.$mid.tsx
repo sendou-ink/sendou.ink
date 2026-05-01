@@ -10,7 +10,6 @@ import { loader } from "../loaders/to.$id.matches.$mid.server";
 export { action, loader };
 
 // xxx: can we simplify loader to return values that are closer to what we want to display?
-// xxx: show "counterpick" placeholders in the map progress, now just shows those that have already been picked
 
 export default function TournamentMatchPage() {
 	const data = useLoaderData<typeof loader>();

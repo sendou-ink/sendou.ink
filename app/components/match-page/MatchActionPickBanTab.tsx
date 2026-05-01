@@ -31,6 +31,7 @@ interface MatchActionPickBanTabProps {
 	onSubmit?: (data: PickBanSubmission) => void;
 	isSubmitting?: boolean;
 	weaponReport?: WeaponReporterProps;
+	waitingFor?: string;
 }
 
 export function MatchActionPickBanTab({
@@ -39,9 +40,11 @@ export function MatchActionPickBanTab({
 	onSubmit,
 	isSubmitting,
 	weaponReport,
+	waitingFor,
 }: MatchActionPickBanTabProps) {
 	const { t } = useTranslation(["q", "common", "game-misc"]);
 	const [selected, setSelected] = useState<PickBanMapOption>();
+	const isWaiting = waitingFor !== undefined;
 
 	const hasStage = options.every((option) => option.stageId !== undefined);
 	const hasMode = options.every((option) => option.mode !== undefined);
@@ -91,6 +94,7 @@ export function MatchActionPickBanTab({
 							type={type}
 							selected={selected}
 							onSelect={setSelected}
+							disabled={isWaiting}
 						/>
 					) : layout === "STAGE_ONLY" ? (
 						<StageOnlyGrid
@@ -98,6 +102,7 @@ export function MatchActionPickBanTab({
 							type={type}
 							selected={selected}
 							onSelect={setSelected}
+							disabled={isWaiting}
 						/>
 					) : (
 						<ModeOnlyGrid
@@ -105,38 +110,49 @@ export function MatchActionPickBanTab({
 							type={type}
 							selected={selected}
 							onSelect={setSelected}
+							disabled={isWaiting}
 						/>
 					)}
 				</div>
 
-				<p className={styles.prompt}>
-					{selectedLabel ? (
-						<>
-							<span
-								className={type === "PICK" ? styles.verbPick : styles.verbBan}
-							>
-								{type === "PICK"
-									? t("q:match.action.picking")
-									: t("q:match.action.banning")}
-							</span>{" "}
-							{selectedLabel}
-						</>
-					) : (
-						t("q:match.action.pickBanPrompt")
-					)}
-				</p>
+				{isWaiting ? (
+					<p className={styles.waiting}>
+						{t("q:match.action.pickBanWaiting", { teamName: waitingFor })}
+					</p>
+				) : (
+					<>
+						<p className={styles.prompt}>
+							{selectedLabel ? (
+								<>
+									<span
+										className={
+											type === "PICK" ? styles.verbPick : styles.verbBan
+										}
+									>
+										{type === "PICK"
+											? t("q:match.action.picking")
+											: t("q:match.action.banning")}
+									</span>{" "}
+									{selectedLabel}
+								</>
+							) : (
+								t("q:match.action.pickBanPrompt")
+							)}
+						</p>
 
-				<SendouButton
-					variant="primary"
-					className={styles.submit}
-					isDisabled={!selected || isSubmitting}
-					onPress={() => {
-						if (!selected) return;
-						onSubmit?.({ type, map: selected });
-					}}
-				>
-					{t("common:actions.submit")}
-				</SendouButton>
+						<SendouButton
+							variant="primary"
+							className={styles.submit}
+							isDisabled={!selected || isSubmitting}
+							onPress={() => {
+								if (!selected) return;
+								onSubmit?.({ type, map: selected });
+							}}
+						>
+							{t("common:actions.submit")}
+						</SendouButton>
+					</>
+				)}
 			</div>
 			{weaponReport ? <WeaponReporter {...weaponReport} /> : null}
 		</SendouTabPanel>
@@ -148,11 +164,13 @@ function StageByModeGrid({
 	type,
 	selected,
 	onSelect,
+	disabled,
 }: {
 	options: PickBanMapOption[];
 	type: "PICK" | "BAN";
 	selected?: PickBanMapOption;
 	onSelect: (option: PickBanMapOption) => void;
+	disabled?: boolean;
 }) {
 	const modesInOrder: ModeShort[] = [];
 	const byMode = new Map<ModeShort, PickBanMapOption[]>();
@@ -180,6 +198,7 @@ function StageByModeGrid({
 								type={type}
 								isSelected={isSameOption(option, selected)}
 								onSelect={() => onSelect(option)}
+								disabled={disabled}
 							/>
 						))}
 					</div>
@@ -194,11 +213,13 @@ function StageOnlyGrid({
 	type,
 	selected,
 	onSelect,
+	disabled,
 }: {
 	options: PickBanMapOption[];
 	type: "PICK" | "BAN";
 	selected?: PickBanMapOption;
 	onSelect: (option: PickBanMapOption) => void;
+	disabled?: boolean;
 }) {
 	return (
 		<div className={styles.stageGrid}>
@@ -209,6 +230,7 @@ function StageOnlyGrid({
 					type={type}
 					isSelected={isSameOption(option, selected)}
 					onSelect={() => onSelect(option)}
+					disabled={disabled}
 				/>
 			))}
 		</div>
@@ -220,11 +242,13 @@ function ModeOnlyGrid({
 	type,
 	selected,
 	onSelect,
+	disabled,
 }: {
 	options: PickBanMapOption[];
 	type: "PICK" | "BAN";
 	selected?: PickBanMapOption;
 	onSelect: (option: PickBanMapOption) => void;
+	disabled?: boolean;
 }) {
 	return (
 		<div className={styles.modeGrid}>
@@ -235,6 +259,7 @@ function ModeOnlyGrid({
 					type={type}
 					isSelected={isSameOption(option, selected)}
 					onSelect={() => onSelect(option)}
+					disabled={disabled}
 				/>
 			))}
 		</div>
@@ -247,11 +272,13 @@ function StageTile({
 	type,
 	isSelected,
 	onSelect,
+	disabled,
 }: {
 	option: PickBanMapOption;
 	type: "PICK" | "BAN";
 	isSelected: boolean;
 	onSelect: () => void;
+	disabled?: boolean;
 }) {
 	const { t } = useTranslation(["q", "game-misc"]);
 
@@ -267,6 +294,7 @@ function StageTile({
 						"--map-image-url": `url("${stageImageUrl(option.stageId!)}.avif")`,
 					}}
 					onClick={onSelect}
+					disabled={disabled}
 				/>
 				{isSelected ? (
 					type === "PICK" ? (
@@ -306,11 +334,13 @@ function ModeTile({
 	type,
 	isSelected,
 	onSelect,
+	disabled,
 }: {
 	option: PickBanMapOption;
 	type: "PICK" | "BAN";
 	isSelected: boolean;
 	onSelect: () => void;
+	disabled?: boolean;
 }) {
 	const { t } = useTranslation(["game-misc"]);
 
@@ -323,6 +353,7 @@ function ModeTile({
 						[styles.tileSelected]: isSelected,
 					})}
 					onClick={onSelect}
+					disabled={disabled}
 				>
 					<ModeImage mode={option.mode!} size={48} />
 				</button>

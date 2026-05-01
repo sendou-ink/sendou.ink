@@ -22,6 +22,7 @@ import {
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
+import type { ModeShort } from "~/modules/in-game-lists/types";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
@@ -123,21 +124,7 @@ export function TournamentMatchBanner({
 				</MatchBanner>
 			) : null}
 			<MatchBannerBottomRow
-				games={
-					data.mapList?.map((map, i) => {
-						const result = data.results.at(i);
-						const winner = result
-							? result.winnerTeamId === opponentOne?.id
-								? "ALPHA"
-								: "BRAVO"
-							: undefined;
-
-						return {
-							mode: map.mode,
-							winner,
-						};
-					}) ?? []
-				}
+				games={resolveBannerGames({ data, opponentOneId: opponentOne?.id })}
 				activeRosters={
 					opponentOne?.id && opponentTwo?.id
 						? {
@@ -399,6 +386,43 @@ function resolvePickBanBanner(
 			teamName: pickingTeam.name,
 		}),
 	};
+}
+
+function resolveBannerGames({
+	data,
+	opponentOneId,
+}: {
+	data: TournamentMatchLoaderData;
+	opponentOneId: number | null | undefined;
+}): Array<{ mode: ModeShort | null; winner?: "ALPHA" | "BRAVO" }> {
+	const playedAndScheduled =
+		data.mapList?.map((map, i) => {
+			const result = data.results.at(i);
+			const winner = result
+				? result.winnerTeamId === opponentOneId
+					? ("ALPHA" as const)
+					: ("BRAVO" as const)
+				: undefined;
+
+			return {
+				mode: map.mode as ModeShort | null,
+				winner,
+			};
+		}) ?? [];
+
+	if (data.matchIsOver) return playedAndScheduled;
+
+	const placeholderCount = Math.max(
+		0,
+		data.match.roundMaps.count - playedAndScheduled.length,
+	);
+
+	return [
+		...playedAndScheduled,
+		...Array.from({ length: placeholderCount }, () => ({
+			mode: null,
+		})),
+	];
 }
 
 function resolveTeamsMissingActiveRoster(

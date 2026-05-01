@@ -28,6 +28,16 @@
 	padding: var(--s-1);
 }
 
+.modePlaceholder {
+	background-color: transparent;
+	padding: calc(var(--s-1) - 1px);
+	border: 1px dashed var(--color-bg-higher);
+	color: var(--color-text-low);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
 .modeCount {
 	font-size: var(--font-sm);
 	font-weight: var(--weight-bold);

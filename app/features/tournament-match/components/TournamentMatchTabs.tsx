@@ -55,7 +55,6 @@ export function TournamentMatchTabs({
 		matchId: data.match.id,
 		user,
 	});
-	const isParticipant = data.match.players.some((p) => p.id === user?.id);
 
 	const teamOne = tournament.teamById(opponentOneId);
 	const teamTwo = tournament.teamById(opponentTwoId);
@@ -90,7 +89,7 @@ export function TournamentMatchTabs({
 	const tabs = resolveVisibleTabs({
 		matchIsOver: data.matchIsOver,
 		canReportScore,
-		isParticipant,
+		canJoin: data.canJoin,
 		hasCurrentMap: Boolean(currentMap),
 		hasMissingActiveRoster,
 		hasReportedMaps,
@@ -316,10 +315,13 @@ function slotOfEvent({
 			const postGameLength = customFlow.postGame.length;
 			if (eventIndex < preSetLength) return 0;
 			if (postGameLength === 0) return 0;
-			const cycleIndex = Math.floor(
-				(eventIndex - preSetLength) / postGameLength,
+			return (
+				PickBan.postGameCycleIndex({
+					eventIndex,
+					preSetLength,
+					postGameLength,
+				}) + 1
 			);
-			return cycleIndex + 1;
 		}
 		default:
 			return 0;
@@ -483,7 +485,7 @@ function TournamentMatchRosterTab({
 function resolveVisibleTabs({
 	matchIsOver,
 	canReportScore,
-	isParticipant,
+	canJoin,
 	hasCurrentMap,
 	hasMissingActiveRoster,
 	hasReportedMaps,
@@ -494,7 +496,7 @@ function resolveVisibleTabs({
 }: {
 	matchIsOver: boolean;
 	canReportScore: boolean;
-	isParticipant: boolean;
+	canJoin: boolean;
 	hasCurrentMap: boolean;
 	hasMissingActiveRoster: boolean;
 	hasReportedMaps: boolean;
@@ -508,7 +510,7 @@ function resolveVisibleTabs({
 	if (matchIsOver) {
 		tabs.push("result");
 	}
-	if (!matchIsOver && isParticipant && !leagueRoundLocked) {
+	if (canJoin) {
 		tabs.push("join");
 	}
 	tabs.push("rosters");

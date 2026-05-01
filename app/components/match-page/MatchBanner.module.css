@@ -10,7 +10,6 @@
 .banner {
 	position: relative;
 	display: grid;
-	/** xxx: check space for mobile when it says e.g. Team 2 pick -> just show logo instead? */
 	grid-template-columns: max-content 1fr;
 	grid-template-areas: "map info";
 	background-size: cover;

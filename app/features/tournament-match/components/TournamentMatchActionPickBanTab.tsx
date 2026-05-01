@@ -1,11 +1,8 @@
-import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
-import { SendouTabPanel } from "~/components/elements/Tabs";
 import {
 	MatchActionPickBanTab,
 	type PickBanMapOption,
 } from "~/components/match-page/MatchActionPickBanTab";
-import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
@@ -25,7 +22,6 @@ export function TournamentMatchActionPickBanTab({
 	teams: [TournamentDataTeam, TournamentDataTeam];
 	turnOfResult: PickBan.TurnOfResult;
 }) {
-	const { t } = useTranslation(["q"]);
 	const user = useUser();
 	const tournament = useTournament();
 	const fetcher = useFetcher();
@@ -36,17 +32,6 @@ export function TournamentMatchActionPickBanTab({
 	const canPickBan =
 		tournament.isOrganizer(user) ||
 		tournament.ownedTeamByUser(user)?.id === pickerTeamId;
-
-	// xxx: or show the options at least? so they can follow along
-	if (!canPickBan) {
-		return (
-			<SendouTabPanel id={TAB_KEYS.ACTION}>
-				<div className="text-lighter text-sm text-center">
-					{t("q:match.action.pickBanWaiting", { teamName: pickingTeam.name })}
-				</div>
-			</SendouTabPanel>
-		);
-	}
 
 	const pickBanMapPool = PickBan.mapsListWithLegality({
 		toSetMapPool: tournament.ctx.toSetMapPool,
@@ -107,6 +92,7 @@ export function TournamentMatchActionPickBanTab({
 			options={options}
 			type={sharedActionType}
 			isSubmitting={fetcher.state !== "idle"}
+			waitingFor={canPickBan ? undefined : pickingTeam.name}
 			onSubmit={({ map }) => {
 				fetcher.submit(
 					{

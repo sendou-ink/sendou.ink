@@ -1,3 +1,5 @@
+import clsx from "clsx";
+import { MousePointerClick } from "lucide-react";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 import { Avatar } from "../Avatar";
@@ -5,7 +7,7 @@ import { ModeImage } from "../Image";
 import styles from "./MatchBannerBottomRow.module.css";
 
 interface MatchBannerBottomRowProps {
-	games: Array<{ mode: ModeShort; winner?: "ALPHA" | "BRAVO" }>;
+	games: Array<{ mode: ModeShort | null; winner?: "ALPHA" | "BRAVO" }>;
 	activeRosters: {
 		alpha: CommonUser[] | null;
 		bravo: CommonUser[] | null;
@@ -25,14 +27,17 @@ export function MatchBannerBottomRow({
 }
 
 function ModeProgress({ games }: Pick<MatchBannerBottomRowProps, "games">) {
+	const knownModes = games.flatMap((game) => (game.mode ? [game.mode] : []));
 	const allSameMode =
-		games.length > 1 && games.every((game) => game.mode === games[0].mode);
+		knownModes.length === games.length &&
+		games.length > 1 &&
+		knownModes.every((mode) => mode === knownModes[0]);
 
 	if (allSameMode) {
 		return (
 			<div className={styles.modeProgress}>
 				<div className={styles.mode}>
-					<ModeImage mode={games[0].mode} size={16} />
+					<ModeImage mode={knownModes[0]} size={16} />
 				</div>
 				<div className={styles.modeCount}>×{games.length}</div>
 			</div>
@@ -41,11 +46,17 @@ function ModeProgress({ games }: Pick<MatchBannerBottomRowProps, "games">) {
 
 	return (
 		<div className={styles.modeProgress}>
-			{games.map((game, i) => (
-				<div key={i} className={styles.mode}>
-					<ModeImage mode={game.mode} size={16} />
-				</div>
-			))}
+			{games.map((game, i) =>
+				game.mode ? (
+					<div key={i} className={styles.mode}>
+						<ModeImage mode={game.mode} size={16} />
+					</div>
+				) : (
+					<div key={i} className={clsx(styles.mode, styles.modePlaceholder)}>
+						<MousePointerClick size={16} />
+					</div>
+				),
+			)}
 		</div>
 	);
 }

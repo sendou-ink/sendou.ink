@@ -240,11 +240,12 @@ export function resolveCurrentStep({
 		"resolveCurrentStep: postGame must not be empty",
 	);
 
-	const eventsAfterPreSet = eventCount - preSet.length;
-	const stepInPostGame = eventsAfterPreSet % postGame.length;
-	const completedPostGameCycles = Math.floor(
-		eventsAfterPreSet / postGame.length,
-	);
+	const stepInPostGame = (eventCount - preSet.length) % postGame.length;
+	const completedPostGameCycles = postGameCycleIndex({
+		eventIndex: eventCount,
+		preSetLength: preSet.length,
+		postGameLength: postGame.length,
+	});
 
 	// waiting for game result
 	if (completedPostGameCycles > resultsCount) return null;
@@ -253,6 +254,26 @@ export function resolveCurrentStep({
 	}
 
 	return postGame[stepInPostGame]!;
+}
+
+/**
+ * Returns the 0-based post-game cycle index for an event position. For an
+ * event at `eventIndex`, this is the cycle the event belongs to; for a count
+ * of events done so far, this is how many post-game cycles have been at least
+ * started past the pre-set.
+ *
+ * Caller must ensure `eventIndex >= preSetLength` and `postGameLength > 0`.
+ */
+export function postGameCycleIndex({
+	eventIndex,
+	preSetLength,
+	postGameLength,
+}: {
+	eventIndex: number;
+	preSetLength: number;
+	postGameLength: number;
+}): number {
+	return Math.floor((eventIndex - preSetLength) / postGameLength);
 }
 
 export function resolveTeamFromSide({
@@ -294,7 +315,6 @@ export function resolveTeamFromSide({
  * CUSTOM). Returns null when the setup is not pick/ban or the team cannot be
  * determined (e.g. a CUSTOM ROLL step, or insufficient results).
  */
-// xxx: verify this is even needed, doesn't the pick ban info store the picker id? also the cycleIndex stuff looks like something we might have elsewhere
 export function teamOfEvent({
 	eventIndex,
 	maps,
@@ -339,9 +359,11 @@ export function teamOfEvent({
 			// WINNER/LOSER sides are relative to the latest result at the time
 			// of the event, so slice results to the correct post-game cycle.
 			if (step.side === "WINNER" || step.side === "LOSER") {
-				const cycleIndex = Math.floor(
-					(eventIndex - preSet.length) / postGame.length,
-				);
+				const cycleIndex = postGameCycleIndex({
+					eventIndex,
+					preSetLength: preSet.length,
+					postGameLength: postGame.length,
+				});
 				if (!results[cycleIndex]) return null;
 				return resolveTeamFromSide({
 					side: step.side,
@@ -644,10 +666,14 @@ function currentSectionPickBanEvents({
 
 	if (postGameLength === 0) return [];
 
-	const eventsAfterPreSet = pickBanEvents.length - preSetLength;
 	const currentCycleStart =
 		preSetLength +
-		Math.floor(eventsAfterPreSet / postGameLength) * postGameLength;
+		postGameCycleIndex({
+			eventIndex: pickBanEvents.length,
+			preSetLength,
+			postGameLength,
+		}) *
+			postGameLength;
 
 	return pickBanEvents.slice(currentCycleStart);
 }

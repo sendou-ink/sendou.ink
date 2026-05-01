@@ -6,6 +6,7 @@ import { chatAccessible } from "~/features/chat/chat-utils";
 import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { matchPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
@@ -199,16 +200,21 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const visibleChatCode =
 		hasPermsToSeeChat && !chatCodeExpired ? match.chatCode : undefined;
 
-	// xxx: optimization, can be skipped if user can't join anyway
-	const [roomLinks, anyUserPrefersNoSplatnet] = matchIsOver
-		? ([[], false] as const)
-		: await Promise.all([
+	const isParticipant = match.players.some((p) => p.id === user?.id);
+	const canJoin =
+		!matchIsOver &&
+		isParticipant &&
+		!isLeagueRoundLocked(tournament, match.roundId);
+
+	const [roomLinks, anyUserPrefersNoSplatnet] = canJoin
+		? await Promise.all([
 				RoomLinkRepository.findByUserIds(
 					match.players.map((p) => p.id),
 					3,
 				),
 				UserRepository.anyUserPrefersNoSplatnet(match.players.map((p) => p.id)),
-			]);
+			])
+		: ([[], false] as const);
 
 	return {
 		match: hasPermsToSeeChat ? match : { ...match, chatCode: undefined },
@@ -218,6 +224,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		endedEarly,
 		noScreen,
 		chatCode: visibleChatCode,
+		canJoin,
 		roomLinks,
 		anyUserPrefersNoSplatnet,
 		pickBanEventCount: pickBanEvents.length,
