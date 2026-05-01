@@ -25,6 +25,7 @@ import {
 } from "~/features/tournament/tournament-utils";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { StageId } from "~/modules/in-game-lists/types";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
@@ -79,6 +80,7 @@ export function StartedMatch({
 	type: "EDIT" | "OTHER";
 }) {
 	const { t } = useTranslation(["tournament"]);
+	const { formatDateTime } = useTimeFormat();
 	const isHydrated = useHydrated();
 	const user = useUser();
 	const tournament = useTournament();
@@ -258,7 +260,13 @@ export function StartedMatch({
 					data-testid="report-timestamp"
 				>
 					{isHydrated
-						? databaseTimestampToDate(result.createdAt).toLocaleString()
+						? formatDateTime(databaseTimestampToDate(result.createdAt), {
+								day: "numeric",
+								month: "numeric",
+								year: "numeric",
+								hour: "numeric",
+								minute: "2-digit",
+							})
 						: "t"}
 				</div>
 			) : null}
@@ -284,6 +292,7 @@ function FancyStageBanner({
 	const user = useUser();
 	const data = useLoaderData<TournamentMatchLoaderData>();
 	const { t } = useTranslation(["game-misc", "tournament"]);
+	const { formatDate } = useTimeFormat();
 	const tournament = useTournament();
 
 	const gamesCompleted = data.results.length;
@@ -411,10 +420,14 @@ function FancyStageBanner({
 						</div>
 						<div>
 							Round playable from{" "}
-							{resolveLeagueRoundStartDate(
-								tournament,
-								data.match.roundId,
-							)!.toLocaleDateString()}{" "}
+							{formatDate(
+								resolveLeagueRoundStartDate(tournament, data.match.roundId)!,
+								{
+									day: "numeric",
+									month: "numeric",
+									year: "numeric",
+								},
+							)}{" "}
 							onwards
 						</div>
 					</div>

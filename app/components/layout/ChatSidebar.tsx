@@ -114,7 +114,7 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 									>
 										{resolveDatePlaceholders(room.header, (d) =>
 											formatDateTime(d, {
-												month: "short",
+												month: "numeric",
 												day: "numeric",
 												hour: "numeric",
 												minute: "numeric",
@@ -202,7 +202,7 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 						room?.header ?? t("common:chat.sidebar.title"),
 						(d) =>
 							formatDateTime(d, {
-								month: "short",
+								month: "numeric",
 								day: "numeric",
 								hour: "numeric",
 								minute: "numeric",

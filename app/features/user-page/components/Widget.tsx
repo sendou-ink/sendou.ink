@@ -169,7 +169,7 @@ export function Widget({
 					<BigValue
 						value={formatDate(databaseTimestampToDate(widget.data), {
 							day: "numeric",
-							month: "short",
+							month: "numeric",
 							year: "numeric",
 						})}
 					/>
@@ -417,7 +417,7 @@ function HighlightedResults({
 						<div className={styles.resultDate}>
 							{formatDate(databaseTimestampToDate(result.startTime), {
 								day: "numeric",
-								month: "short",
+								month: "numeric",
 								year: "numeric",
 							})}
 						</div>
@@ -538,6 +538,7 @@ function XRankPeaks({
 }
 
 function TimezoneWidget({ timezone }: { timezone: string }) {
+	const { formatTime, formatDate } = useTimeFormat();
 	const [currentTime, setCurrentTime] = React.useState(() => new Date());
 
 	React.useEffect(() => {
@@ -549,28 +550,23 @@ function TimezoneWidget({ timezone }: { timezone: string }) {
 	}, []);
 
 	try {
-		const formatter = new Intl.DateTimeFormat("en-US", {
-			timeZone: timezone,
-			hour: "numeric",
-			minute: "2-digit",
-			second: "2-digit",
-			hour12: true,
-		});
-
-		const dateFormatter = new Intl.DateTimeFormat("en-US", {
-			timeZone: timezone,
-			weekday: "short",
-			day: "numeric",
-			month: "short",
-		});
-
 		return (
 			<div className="stack sm items-center">
 				<div className={styles.widgetValueMain} suppressHydrationWarning>
-					{formatter.format(currentTime)}
+					{formatTime(currentTime, {
+						timeZone: timezone,
+						hour: "numeric",
+						minute: "2-digit",
+						second: "2-digit",
+					})}
 				</div>
 				<div className={styles.widgetValueFooter} suppressHydrationWarning>
-					{dateFormatter.format(currentTime)}
+					{formatDate(currentTime, {
+						timeZone: timezone,
+						weekday: "short",
+						day: "numeric",
+						month: "numeric",
+					})}
 				</div>
 			</div>
 		);

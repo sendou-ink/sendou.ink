@@ -20,7 +20,7 @@ export function RelativeTime({
 							hour: "numeric",
 							minute: "numeric",
 							day: "numeric",
-							month: "long",
+							month: "numeric",
 							timeZoneName: "short",
 						})
 					: undefined

@@ -2,7 +2,6 @@ import clsx from "clsx";
 import * as React from "react";
 import { type AxisOptions, Chart as ReactChart } from "react-charts";
 import type { TooltipRendererProps } from "react-charts/types/components/TooltipRenderer";
-import { useTranslation } from "react-i18next";
 import { Theme, useTheme } from "~/features/theme/core/provider";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
@@ -23,9 +22,9 @@ export default function Chart({
 	valueSuffix?: string;
 	xAxis: "linear" | "localTime";
 }) {
-	const { i18n } = useTranslation();
 	const theme = useTheme();
 	const isHydrated = useHydrated();
+	const { formatDate } = useTimeFormat();
 
 	const primaryAxis = React.useMemo<
 		AxisOptions<(typeof options)[number]["data"][number]>
@@ -38,7 +37,7 @@ export default function Chart({
 			formatters: {
 				scale: (val: any) => {
 					if (val instanceof Date) {
-						return val.toLocaleDateString(i18n.language, {
+						return formatDate(val, {
 							day: "numeric",
 							month: "numeric",
 						});
@@ -48,7 +47,7 @@ export default function Chart({
 				},
 			},
 		}),
-		[i18n.language, xAxis],
+		[formatDate, xAxis],
 	);
 
 	const secondaryAxes = React.useMemo<
@@ -117,7 +116,7 @@ function ChartTooltip({
 			return formatDate(primaryValue, {
 				weekday: "short",
 				day: "numeric",
-				month: "long",
+				month: "numeric",
 			});
 		}
 

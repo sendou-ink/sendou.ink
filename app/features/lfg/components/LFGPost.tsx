@@ -272,7 +272,7 @@ function PostTime({
 	return (
 		<div className="text-lighter text-xs font-bold">
 			{formatDate(createdAtDate, {
-				month: "long",
+				month: "numeric",
 				day: "numeric",
 			})}{" "}
 			{overDayDifferenceBetween ? (

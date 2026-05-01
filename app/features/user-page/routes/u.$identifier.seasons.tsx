@@ -245,13 +245,13 @@ function SeasonHeader({
 					<>
 						{formatDate(new Date(starts), {
 							day: "numeric",
-							month: "long",
+							month: "numeric",
 							year: isDifferentYears ? "numeric" : undefined,
 						})}{" "}
 						-{" "}
 						{formatDate(new Date(ends), {
 							day: "numeric",
-							month: "long",
+							month: "numeric",
 							year: "numeric",
 						})}
 					</>
@@ -777,7 +777,7 @@ function Results({
 									{isHydrated
 										? formatDate(databaseTimestampToDate(result.createdAt), {
 												weekday: "long",
-												month: "long",
+												month: "numeric",
 												day: "numeric",
 											})
 										: "t"}

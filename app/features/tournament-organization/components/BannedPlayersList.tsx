@@ -82,7 +82,7 @@ export function BannedUsersList({
 									<td className="text-sm text-lighter whitespace-nowrap">
 										{formatDate(databaseTimestampToDate(bannedUser.updatedAt), {
 											day: "numeric",
-											month: "short",
+											month: "numeric",
 											year: "numeric",
 										})}
 									</td>
@@ -92,7 +92,7 @@ export function BannedUsersList({
 													databaseTimestampToDate(bannedUser.expiresAt),
 													{
 														day: "numeric",
-														month: "short",
+														month: "numeric",
 														year: "numeric",
 													},
 												)
