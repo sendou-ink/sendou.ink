@@ -1,9 +1,10 @@
-import { Check, Clock, X } from "lucide-react";
+import { Check, Clock, RotateCcw, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { FetcherWithComponents } from "react-router";
+import { type FetcherWithComponents, Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
+import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import * as RejoinVote from "../core/RejoinVote";
 import styles from "./RematchVotePanel.module.css";
 
@@ -37,10 +38,18 @@ export function RematchVotePanel({
 		members.map((m) => m.id),
 	).length;
 
+	const voteResolved = RejoinVote.result(votes).type === "RESOLVED";
+	const viewerVotedYes =
+		RejoinVote.userContinueStatus(votes, viewerUserId) === true;
+	const viewerVotedNo =
+		RejoinVote.userContinueStatus(votes, viewerUserId) === false;
+
 	return (
 		<div className={styles.root}>
 			<div className={styles.prompt}>
-				{t("q:match.rematch.prompt", { count: currentRoundSize })}
+				{voteResolved
+					? t("q:match.rematch.resolved", { count: currentRoundSize })
+					: t("q:match.rematch.prompt", { count: currentRoundSize })}
 			</div>
 			<ul className={styles.list}>
 				{members.map((member) => {
@@ -54,7 +63,15 @@ export function RematchVotePanel({
 					);
 				})}
 			</ul>
-			{RejoinVote.userContinueStatus(votes, viewerUserId) === false ? null : (
+			{voteResolved && viewerVotedYes ? (
+				<div className={styles.buttons}>
+					<Link to={SENDOUQ_LOOKING_PAGE}>
+						<SendouButton variant="primary" size="small" icon={<RotateCcw />}>
+							{t("q:match.rematch.backToQueue")}
+						</SendouButton>
+					</Link>
+				</div>
+			) : viewerVotedNo ? null : (
 				<div className={styles.buttons}>
 					<FormWithConfirm
 						fields={[
@@ -76,10 +93,7 @@ export function RematchVotePanel({
 					<SendouButton
 						variant="primary"
 						size="small"
-						isDisabled={
-							isPending ||
-							RejoinVote.userContinueStatus(votes, viewerUserId) === true
-						}
+						isDisabled={isPending || viewerVotedYes}
 						onPress={() =>
 							fetcher.submit(
 								{

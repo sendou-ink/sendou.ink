@@ -210,10 +210,14 @@ function RequeueTab({
 		reporterSide !== null &&
 		reporterSide !== viewerSide;
 
+	const showTimeline = !data.match.isLocked;
+
 	return (
 		<SendouTabPanel id={TAB_KEYS.ACTION}>
 			{isStaffOnly || !viewerGroup || !user ? (
-				<MatchTimeline compact teams={teams} score={score} maps={maps} />
+				showTimeline ? (
+					<MatchTimeline compact teams={teams} score={score} maps={maps} />
+				) : null
 			) : (
 				<div className={styles.rematchContent}>
 					{viewerGroup.matchmade ? (
@@ -234,7 +238,9 @@ function RequeueTab({
 					) : null}
 					{isOnReporterTeam ? <hr className={styles.divider} /> : null}
 
-					<MatchTimeline compact teams={teams} score={score} maps={maps} />
+					{showTimeline ? (
+						<MatchTimeline compact teams={teams} score={score} maps={maps} />
+					) : null}
 					{isOnConfirmerTeam ? <ScoreConfirmerSection data={data} /> : null}
 					{isOnReporterTeam ? <ReporterUndoSection /> : null}
 					<WeaponReportSection data={data} viewerUserId={user.id} />

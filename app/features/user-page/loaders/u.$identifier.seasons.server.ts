@@ -91,7 +91,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					: null,
 			weapons:
 				info === "weapons"
-					? await ReportedWeaponRepository.seasonReportedWeaponsByUserId({ season, userId: user.id })
+					? await ReportedWeaponRepository.seasonReportedWeaponsByUserId({
+							season,
+							userId: user.id,
+						})
 					: null,
 			players:
 				info === "enemies" || info === "mates"

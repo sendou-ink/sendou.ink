@@ -266,7 +266,6 @@ function ModeOnlyGrid({
 	);
 }
 
-// xxx: maybe we should just have a shared custom component for stage image + label
 function StageTile({
 	option,
 	type,

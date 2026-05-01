@@ -4,18 +4,17 @@ import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs } from "~/components/match-page/MatchTabs";
-import { Redirect } from "~/components/Redirect";
 import { useUser } from "~/features/auth/core/user";
 import {
 	resolveActiveRoomLink,
 	useConfirmRoom,
 } from "~/features/chat/room-link-utils";
-import { DISPLAY_VOTE_RESULT_SECONDS } from "~/features/sendouq/q-constants";
+import { ACTION_TAB_AFTER_LOCKED_SECONDS } from "~/features/sendouq/q-constants";
 import { resolveRoomPass } from "~/features/tournament-match/tournament-match-utils";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampNow } from "~/utils/dates";
 import { safeNumberParse } from "~/utils/number";
-import { SENDOUQ_LOOKING_PAGE, sendouQMatchPage, teamPage } from "~/utils/urls";
+import { sendouQMatchPage, teamPage } from "~/utils/urls";
 import {
 	resolveTimelineMaps,
 	resolveTimelineSpChanges,
@@ -57,17 +56,11 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 	const isCanceled = data.match.isCanceled;
 
 	const isParticipant = Boolean(userSide);
-	const migrated = data.migratedToGroupId != null && isParticipant;
 
-	// xxx: hmm is this really correct?
-	if (migrated) {
-		return <Redirect to={SENDOUQ_LOOKING_PAGE} />;
-	}
-
-	const lockedVoteVisible =
+	const lockedActionTabVisible =
 		data.match.confirmedAt !== null &&
 		databaseTimestampNow() <
-			data.match.confirmedAt + DISPLAY_VOTE_RESULT_SECONDS;
+			data.match.confirmedAt + ACTION_TAB_AFTER_LOCKED_SECONDS;
 
 	const matchInProgress = !isLocked && !awaitingConfirmation && currentMap;
 
@@ -76,7 +69,7 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 		!isCanceled &&
 		(matchInProgress ||
 			awaitingConfirmation ||
-			(isLocked && lockedVoteVisible));
+			(isLocked && lockedActionTabVisible));
 
 	const hasReportedMaps = data.match.mapList.some(
 		(m) => m.winnerGroupId !== null,
