@@ -86,9 +86,14 @@ export function TournamentMatchTabs({
 	const hasReportedMaps = data.results.length > 0;
 	const hasPickBanEvents = data.pickBanEventCount > 0;
 
+	const isParticipant = data.match.players.some((p) => p.id === user?.id);
+	const canReportWeapons =
+		isParticipant && !tournament.ctx.isFinalized && hasReportedMaps;
+
 	const tabs = resolveVisibleTabs({
 		matchIsOver: data.matchIsOver,
 		canReportScore,
+		canReportWeapons,
 		canJoin: data.canJoin,
 		hasCurrentMap: Boolean(currentMap),
 		hasMissingActiveRoster,
@@ -136,13 +141,13 @@ export function TournamentMatchTabs({
 						teams={pickBanTeams}
 						turnOfResult={turnOfResult}
 					/>
-				) : currentMap ? (
+				) : (
 					<TournamentMatchActionTab
 						data={data}
 						currentMap={currentMap}
 						ownTeamId={userTeamId ?? opponentOneId}
 					/>
-				) : null
+				)
 			) : null}
 			{tabs.includes("admin") ? <TournamentMatchAdminTab data={data} /> : null}
 		</MatchTabs>
@@ -192,9 +197,23 @@ function resolveTimelineMaps(
 				customUrl: u.customUrl,
 			}));
 
-	return data.results.map((result) => {
+	return data.results.map((result, mapIndex) => {
 		const hasPoints =
 			result.opponentOnePoints !== null && result.opponentTwoPoints !== null;
+
+		const alphaRoster = resolveRoster(result.participants, opponentOneId);
+		const bravoRoster = resolveRoster(result.participants, opponentTwoId);
+
+		const weaponFor = (userId: number) =>
+			data.reportedWeapons?.find(
+				(w) => w.mapIndex === mapIndex && w.userId === userId,
+			)?.weaponSplId ?? null;
+
+		const alphaWeapons = alphaRoster.map((u) => weaponFor(u.id));
+		const bravoWeapons = bravoRoster.map((u) => weaponFor(u.id));
+		const hasAnyWeapon =
+			alphaWeapons.some((w) => w !== null) ||
+			bravoWeapons.some((w) => w !== null);
 
 		return {
 			stageId: result.stageId,
@@ -205,9 +224,12 @@ function resolveTimelineMaps(
 					? ("ALPHA" as const)
 					: ("BRAVO" as const),
 			rosters: {
-				alpha: resolveRoster(result.participants, opponentOneId),
-				bravo: resolveRoster(result.participants, opponentTwoId),
+				alpha: alphaRoster,
+				bravo: bravoRoster,
 			},
+			weapons: hasAnyWeapon
+				? { alpha: alphaWeapons, bravo: bravoWeapons }
+				: undefined,
 			points: hasPoints
 				? ([result.opponentOnePoints, result.opponentTwoPoints] as [
 						number,
@@ -485,6 +507,7 @@ function TournamentMatchRosterTab({
 function resolveVisibleTabs({
 	matchIsOver,
 	canReportScore,
+	canReportWeapons,
 	canJoin,
 	hasCurrentMap,
 	hasMissingActiveRoster,
@@ -496,6 +519,7 @@ function resolveVisibleTabs({
 }: {
 	matchIsOver: boolean;
 	canReportScore: boolean;
+	canReportWeapons: boolean;
 	canJoin: boolean;
 	hasCurrentMap: boolean;
 	hasMissingActiveRoster: boolean;
@@ -517,7 +541,8 @@ function resolveVisibleTabs({
 	if (
 		!leagueRoundLocked &&
 		(isPickBanStep ||
-			(canReportScore && hasCurrentMap && !hasMissingActiveRoster))
+			(canReportScore && hasCurrentMap && !hasMissingActiveRoster) ||
+			canReportWeapons)
 	) {
 		tabs.push("action");
 	}

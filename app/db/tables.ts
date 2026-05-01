@@ -453,8 +453,14 @@ export interface PlusVotingResult {
 	passedVoting: DBBoolean;
 }
 
+// xxx: unify SendouQ side to also key on (matchId, mapIndex). Replace
+// groupMatchMapId with groupMatchId, make mapIndex non-null, and have a
+// single CHECK that exactly one of groupMatchId / tournamentMatchId is set.
+// Backfill (groupMatchId, mapIndex) from GroupMatchMap.matchId/index.
 export interface ReportedWeapon {
 	groupMatchMapId: number | null;
+	tournamentMatchId: number | null;
+	mapIndex: number | null;
 	userId: number;
 	weaponSplId: MainWeaponId;
 }

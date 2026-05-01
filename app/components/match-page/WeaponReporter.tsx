@@ -27,6 +27,7 @@ export interface WeaponReporterProps {
 	onSubmit: (weaponSplId: MainWeaponId) => void;
 	onUndo: () => void;
 	isSubmitting?: boolean;
+	standalone?: boolean;
 }
 
 // xxx: on sendouq all weapons report different / component tab..? or not? check usage
@@ -37,6 +38,7 @@ export function WeaponReporter({
 	onSubmit,
 	onUndo,
 	isSubmitting,
+	standalone,
 }: WeaponReporterProps) {
 	const { t } = useTranslation(["q", "game-misc", "common"]);
 	const user = useUser();
@@ -62,7 +64,7 @@ export function WeaponReporter({
 		);
 	};
 
-	if (!isOpen) {
+	if (!isOpen && !standalone) {
 		return (
 			<div className={styles.rootCollapsed}>
 				<SendouButton
@@ -78,15 +80,21 @@ export function WeaponReporter({
 	}
 
 	return (
-		<div className={clsx(styles.root, styles.rootExpanded)}>
-			<SendouButton
-				variant="minimal"
-				size="miniscule"
-				icon={<ChevronUp size={22} />}
-				onPress={() => handleToggle(false)}
-				className={styles.collapseButton}
-				aria-label={t("q:match.actions.reportWeapons")}
-			/>
+		<div
+			className={clsx(styles.root, styles.rootExpanded, {
+				[styles.rootStandalone]: standalone,
+			})}
+		>
+			{standalone ? null : (
+				<SendouButton
+					variant="minimal"
+					size="miniscule"
+					icon={<ChevronUp size={22} />}
+					onPress={() => handleToggle(false)}
+					className={styles.collapseButton}
+					aria-label={t("q:match.actions.reportWeapons")}
+				/>
+			)}
 			{pastReported.length > 0 ? (
 				<div className={styles.pastRow}>
 					{pastReported.map((weaponId, i) => (

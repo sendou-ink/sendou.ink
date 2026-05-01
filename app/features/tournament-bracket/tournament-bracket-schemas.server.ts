@@ -9,6 +9,7 @@ import {
 	numericEnum,
 	safeJSONParse,
 	stageId,
+	weaponSplId,
 } from "~/utils/zod";
 import { TOURNAMENT } from "../tournament/tournament-constants";
 import * as PickBan from "./core/PickBan";
@@ -101,6 +102,15 @@ export const matchSchema = z.union([
 	z.object({
 		_action: _action("END_SET"),
 		winnerTeamId: z.preprocess(nullLiteraltoNull, id.nullable()),
+	}),
+	z.object({
+		_action: _action("REPORT_WEAPON"),
+		weaponSplId,
+		mapIndex: z.coerce.number().int().nonnegative(),
+	}),
+	z.object({
+		_action: _action("UNDO_WEAPON_REPORT"),
+		mapIndex: z.coerce.number().int().nonnegative(),
 	}),
 ]);
 

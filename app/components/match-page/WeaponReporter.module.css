@@ -90,6 +90,12 @@
 	position: relative;
 }
 
+.rootStandalone {
+	margin-block-start: calc(-1 * var(--s-6));
+	min-height: 200px;
+	justify-content: center;
+}
+
 .collapseButton {
 	position: absolute;
 	top: var(--s-2);

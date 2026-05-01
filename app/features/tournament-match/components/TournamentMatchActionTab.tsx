@@ -3,9 +3,21 @@ import { Undo2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouTabPanel } from "~/components/elements/Tabs";
 import { MatchActionTab } from "~/components/match-page/MatchActionTab";
+import { TAB_KEYS } from "~/components/match-page/MatchTabs";
+import {
+	WeaponReporter,
+	type WeaponReporterProps,
+} from "~/components/match-page/WeaponReporter";
+import { useUser } from "~/features/auth/core/user";
+import { useRecentlyReportedWeapons } from "~/features/sendouq/q-hooks";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "~/modules/in-game-lists/types";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import type { CommonUser } from "~/utils/kysely.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
@@ -17,13 +29,27 @@ export function TournamentMatchActionTab({
 	ownTeamId,
 }: {
 	data: TournamentMatchLoaderData;
-	currentMap: { stageId: StageId; mode: ModeShort };
+	currentMap?: { stageId: StageId; mode: ModeShort };
 	ownTeamId: number;
 }) {
 	const { t } = useTranslation(["q"]);
 	const tournament = useTournament();
+	const user = useUser();
 	const reportFetcher = useFetcher();
 	const undoFetcher = useFetcher();
+
+	const weaponReport = useTournamentWeaponReport({
+		data,
+		viewerUserId: user?.id,
+	});
+
+	if (!currentMap) {
+		return (
+			<SendouTabPanel id={TAB_KEYS.ACTION}>
+				{weaponReport ? <WeaponReporter {...weaponReport} standalone /> : null}
+			</SendouTabPanel>
+		);
+	}
 
 	const opponentOneId = data.match.opponentOne!.id!;
 	const opponentTwoId = data.match.opponentTwo!.id!;
@@ -129,8 +155,72 @@ export function TournamentMatchActionTab({
 					{t("q:match.undoReport")}
 				</SendouButton>
 			}
+			weaponReport={weaponReport ?? undefined}
 		/>
 	);
+}
+
+function useTournamentWeaponReport({
+	data,
+	viewerUserId,
+}: {
+	data: TournamentMatchLoaderData;
+	viewerUserId: number | undefined;
+}): WeaponReporterProps | null {
+	const weaponFetcher = useFetcher();
+	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
+		useRecentlyReportedWeapons();
+
+	if (viewerUserId === undefined) return null;
+
+	const isParticipant = data.match.players.some((p) => p.id === viewerUserId);
+	if (!isParticipant) return null;
+
+	const playOrderMaps = (data.mapList ?? []).filter(
+		(m) => !m.bannedByTournamentTeamId,
+	);
+	const reportedCount = data.results.length;
+	const weaponReportMaps = playOrderMaps
+		.slice(0, reportedCount + 1)
+		.map((m) => ({ stageId: m.stageId, mode: m.mode }));
+
+	if (weaponReportMaps.length === 0) return null;
+
+	const pastReported: MainWeaponId[] = data.reportedWeapons
+		? data.reportedWeapons
+				.filter((w) => w.userId === viewerUserId)
+				.map((w) => w.weaponSplId)
+		: [];
+
+	return {
+		maps: weaponReportMaps,
+		pastReported,
+		quickSelectWeaponIds: recentlyReportedWeapons,
+		isSubmitting: weaponFetcher.state !== "idle",
+		onSubmit: (weaponSplId) => {
+			addRecentlyReportedWeapon(weaponSplId);
+			const mapIndex = pastReported.length;
+			weaponFetcher.submit(
+				{
+					_action: "REPORT_WEAPON",
+					weaponSplId: String(weaponSplId),
+					mapIndex: String(mapIndex),
+				},
+				{ method: "post" },
+			);
+		},
+		onUndo: () => {
+			const mapIndex = pastReported.length - 1;
+			if (mapIndex < 0) return;
+			weaponFetcher.submit(
+				{
+					_action: "UNDO_WEAPON_REPORT",
+					mapIndex: String(mapIndex),
+				},
+				{ method: "post" },
+			);
+		},
+	};
 }
 
 function buildSetEndingData({

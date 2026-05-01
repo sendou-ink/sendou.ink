@@ -4,6 +4,7 @@ import { getUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatAccessible } from "~/features/chat/chat-utils";
 import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
+import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
@@ -52,6 +53,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		: [];
 
 	const results = findResultsByMatchId(matchId);
+
+	const reportedWeapons =
+		await ReportedWeaponRepository.findByTournamentMatchId(matchId);
 
 	const matchIsOver =
 		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
@@ -219,6 +223,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	return {
 		match: hasPermsToSeeChat ? match : { ...match, chatCode: undefined },
 		results,
+		reportedWeapons,
 		mapList,
 		matchIsOver,
 		endedEarly,

@@ -135,6 +135,53 @@ export function up(db) {
 			/* sql */ `create index group_match_continue_vote_group_id on "GroupMatchContinueVote"("groupId")`,
 		).run();
 
+		db.prepare(
+			/* sql */ `
+        create table "ReportedWeapon_new" (
+          "groupMatchMapId" integer,
+          "tournamentMatchId" integer,
+          "mapIndex" integer,
+          "weaponSplId" integer not null,
+          "userId" integer not null,
+          foreign key ("groupMatchMapId") references "GroupMatchMap"("id") on delete restrict,
+          foreign key ("tournamentMatchId") references "TournamentMatch"("id") on delete cascade,
+          foreign key ("userId") references "User"("id") on delete restrict,
+          unique("groupMatchMapId", "userId") on conflict rollback,
+          unique("tournamentMatchId", "mapIndex", "userId") on conflict rollback,
+          check (
+            ("groupMatchMapId" is not null and "tournamentMatchId" is null and "mapIndex" is null)
+            or
+            ("groupMatchMapId" is null and "tournamentMatchId" is not null and "mapIndex" is not null)
+          )
+        ) strict
+      `,
+		).run();
+
+		db.prepare(
+			/* sql */ `
+        insert into "ReportedWeapon_new" (
+          "groupMatchMapId", "tournamentMatchId", "mapIndex", "weaponSplId", "userId"
+        )
+        select "groupMatchMapId", null, null, "weaponSplId", "userId"
+        from "ReportedWeapon"
+      `,
+		).run();
+
+		db.prepare(/* sql */ `drop table "ReportedWeapon"`).run();
+		db.prepare(
+			/* sql */ `alter table "ReportedWeapon_new" rename to "ReportedWeapon"`,
+		).run();
+
+		db.prepare(
+			/* sql */ `create index reported_weapon_group_match_map_id on "ReportedWeapon"("groupMatchMapId")`,
+		).run();
+		db.prepare(
+			/* sql */ `create index reported_weapon_tournament_match_id on "ReportedWeapon"("tournamentMatchId")`,
+		).run();
+		db.prepare(
+			/* sql */ `create index reported_weapon_user_id on "ReportedWeapon"("userId")`,
+		).run();
+
 		db.pragma("foreign_key_check");
 	})();
 

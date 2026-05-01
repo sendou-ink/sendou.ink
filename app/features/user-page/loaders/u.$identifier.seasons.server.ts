@@ -4,10 +4,10 @@ import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepos
 import * as SkillRepository from "~/features/mmr/SkillRepository.server";
 import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
 import { seasonMapWinrateByUserId } from "~/features/sendouq/queries/seasonMapWinrateByUserId.server";
-import { seasonReportedWeaponsByUserId } from "~/features/sendouq/queries/seasonReportedWeaponsByUserId.server";
 import { seasonSetWinrateByUserId } from "~/features/sendouq/queries/seasonSetWinrateByUserId.server";
 import { seasonStagesByUserId } from "~/features/sendouq/queries/seasonStagesByUserId.server";
 import { seasonsMatesEnemiesByUserId } from "~/features/sendouq/queries/seasonsMatesEnemiesByUserId.server";
+import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
@@ -91,7 +91,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					: null,
 			weapons:
 				info === "weapons"
-					? seasonReportedWeaponsByUserId({ season, userId: user.id })
+					? await ReportedWeaponRepository.seasonReportedWeaponsByUserId({ season, userId: user.id })
 					: null,
 			players:
 				info === "enemies" || info === "mates"

@@ -3,6 +3,7 @@ import { sql } from "~/db/sql";
 import { TournamentMatchStatus } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.server";
@@ -733,6 +734,37 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
+
+			break;
+		}
+		case "REPORT_WEAPON": {
+			const isMemberOfATeamInTheMatch = match.players.some(
+				(p) => p.id === user.id,
+			);
+			errorToastIfFalsy(isMemberOfATeamInTheMatch, "Unauthorized");
+			errorToastIfFalsy(!tournament.ctx.isFinalized, "Tournament is finalized");
+
+			await ReportedWeaponRepository.upsertOneTournament({
+				tournamentMatchId: matchId,
+				mapIndex: data.mapIndex,
+				userId: user.id,
+				weaponSplId: data.weaponSplId,
+			});
+
+			break;
+		}
+		case "UNDO_WEAPON_REPORT": {
+			const isMemberOfATeamInTheMatch = match.players.some(
+				(p) => p.id === user.id,
+			);
+			errorToastIfFalsy(isMemberOfATeamInTheMatch, "Unauthorized");
+			errorToastIfFalsy(!tournament.ctx.isFinalized, "Tournament is finalized");
+
+			await ReportedWeaponRepository.deleteByUserMapIndexTournament({
+				tournamentMatchId: matchId,
+				userId: user.id,
+				mapIndex: data.mapIndex,
+			});
 
 			break;
 		}
