@@ -48,6 +48,8 @@
 	"pickInfo.team": "Drużyna {{number}} wybiera",
 	"pickInfo.team.specific": "",
 	"pickInfo.team.counterpick": "",
+	"pickInfo.pickedBy": "",
+	"pickInfo.counterpickedBy": "",
 	"pickInfo.tiebreaker": "Tiebreaker",
 	"pickInfo.both": "Oba wybrane",
 	"pickInfo.default": "",

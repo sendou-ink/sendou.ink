@@ -829,6 +829,66 @@ describe("mapsListWithLegality — MODE_PICK restriction survives intervening ev
 	});
 });
 
+describe("mapsListWithLegality — pre-set MODE_BAN persists into postGame", () => {
+	const SZ = "SZ" as ModeShort;
+	const TC = "TC" as ModeShort;
+	const RM = "RM" as ModeShort;
+
+	const toSetMapPool = [
+		{ mode: SZ, stageId: 1 as StageId },
+		{ mode: SZ, stageId: 2 as StageId },
+		{ mode: TC, stageId: 3 as StageId },
+		{ mode: TC, stageId: 4 as StageId },
+		{ mode: RM, stageId: 5 as StageId },
+	];
+
+	const teams = [{ mapPool: [] }, { mapPool: [] }] as unknown as Parameters<
+		typeof mapsListWithLegality
+	>[0]["teams"];
+
+	const customMaps: TournamentRoundMaps = {
+		count: 5,
+		type: "BEST_OF",
+		pickBan: "CUSTOM",
+		customFlow: {
+			preSet: [{ action: "MODE_BAN", side: "HIGHER_SEED" }, { action: "ROLL" }],
+			postGame: [
+				{ action: "BAN", side: "WINNER" },
+				{ action: "PICK", side: "LOSER" },
+			],
+		},
+	};
+
+	it("keeps a mode banned in pre-set unavailable for picks in later postGame cycles", () => {
+		// preSet: HIGHER_SEED bans mode SZ, ROLL lands on TC stage 3
+		// game 1: TC stage 3 played, team 200 wins
+		// postGame cycle 1: WINNER (200) bans stage 4 (TC); LOSER (100) is now at PICK
+		const pickBanEvents: PickBanEvent[] = [
+			{ type: "MODE_BAN", stageId: null, mode: SZ },
+			{ type: "ROLL", stageId: 3 as StageId, mode: TC },
+			{ type: "BAN", stageId: 4 as StageId, mode: TC },
+		];
+
+		const result = mapsListWithLegality({
+			results: [{ mode: TC, stageId: 3 as StageId, winnerTeamId: 200 }],
+			maps: customMaps,
+			mapList: null,
+			teams,
+			pickerTeamId: 100,
+			tieBreakerMapPool: [],
+			toSetMapPool,
+			pickBanEvents,
+		});
+
+		const legalModes = new Set(
+			result.filter((m) => m.isLegal).map((m) => m.mode),
+		);
+
+		expect(legalModes.has(SZ)).toBe(false);
+		expect(legalModes).toEqual(new Set([RM]));
+	});
+});
+
 describe("isModeLegal", () => {
 	const SZ = "SZ" as ModeShort;
 	const TC = "TC" as ModeShort;

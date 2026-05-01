@@ -31,9 +31,6 @@ export const matchSchema = z.union([
 		targetId: id,
 	}),
 	z.object({
-		_action: _action("CONFIRM_ROOM"),
-	}),
-	z.object({
 		_action: _action("UNDO_MATCH_REPORT"),
 	}),
 	z.object({

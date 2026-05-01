@@ -33,8 +33,6 @@ interface MatchActionPickBanTabProps {
 	weaponReport?: WeaponReporterProps;
 }
 
-// xxx: seems to be possible pre-set ban a mode then later after map pick the same mode..?
-
 export function MatchActionPickBanTab({
 	options,
 	type,

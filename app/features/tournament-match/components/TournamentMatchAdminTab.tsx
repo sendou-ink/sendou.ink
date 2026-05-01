@@ -392,21 +392,25 @@ function EditReportedScoreRow({
 	const tournament = useTournament();
 	const fetcher = useFetcher();
 	const [editing, setEditing] = React.useState(false);
+	const previousFetcherStateRef = React.useRef(fetcher.state);
+
+	React.useEffect(() => {
+		if (
+			previousFetcherStateRef.current !== "idle" &&
+			fetcher.state === "idle" &&
+			!(fetcher.data as { error?: unknown } | undefined)?.error
+		) {
+			setEditing(false);
+		}
+		previousFetcherStateRef.current = fetcher.state;
+	}, [fetcher.state, fetcher.data]);
 
 	const winnerName =
 		result.winnerTeamId === teams[0].id ? teams[0].name : teams[1].name;
-	const pointsText = (() => {
-		if (
-			result.opponentOnePoints === null ||
-			result.opponentTwoPoints === null
-		) {
-			return "";
-		}
-		if (result.opponentOnePoints === 100 || result.opponentTwoPoints === 100) {
-			return " (KO)";
-		}
-		return ` (${result.opponentOnePoints}p-${result.opponentTwoPoints}p)`;
-	})();
+	const pointsText =
+		result.opponentOnePoints === 100 || result.opponentTwoPoints === 100
+			? " (KO)"
+			: "";
 
 	if (!editing) {
 		return (
@@ -473,26 +477,20 @@ function EditReportedScoreForm({
 
 	const [checkedPlayers, setCheckedPlayers] =
 		React.useState<[number[], number[]]>(initialRosters);
-	const [points, setPoints] = React.useState<[number, number]>([
-		result.opponentOnePoints ?? 0,
-		result.opponentTwoPoints ?? 0,
-	]);
-
-	const rosterValid = checkedPlayers.every(
-		(team) => team.length === minMembersPerTeam,
+	const [isKO, setIsKO] = React.useState(
+		result.opponentOnePoints === 100 || result.opponentTwoPoints === 100,
 	);
 
-	const pointsValid = (() => {
-		if (!withPoints) return true;
-		if (points[0] === points[1]) return false;
-		if (points[0] === 100 && points[1] !== 0) return false;
-		if (points[1] === 100 && points[0] !== 0) return false;
-		const originalWinnerWasOne =
-			(result.opponentOnePoints ?? 0) > (result.opponentTwoPoints ?? 0);
-		return originalWinnerWasOne ? points[0] > points[1] : points[1] > points[0];
-	})();
+	const team0Won = result.winnerTeamId === teams[0].id;
+	const points: [number, number] = isKO
+		? team0Won
+			? [100, 0]
+			: [0, 100]
+		: [0, 0];
 
-	const formValid = rosterValid && pointsValid;
+	const formValid = checkedPlayers.every(
+		(team) => team.length === minMembersPerTeam,
+	);
 
 	const togglePlayer = (teamIdx: 0 | 1, userId: number) => {
 		setCheckedPlayers((prev) => {
@@ -534,26 +532,6 @@ function EditReportedScoreForm({
 								);
 							})}
 						</div>
-						{withPoints ? (
-							<div className="stack xs mt-2">
-								<Label>Points</Label>
-								<input
-									type="number"
-									min={0}
-									value={points[teamIdx as 0 | 1]}
-									onChange={(e) => {
-										const value = Number(e.target.value);
-										setPoints((prev) => {
-											const next: [number, number] = [prev[0], prev[1]];
-											next[teamIdx as 0 | 1] = Number.isFinite(value)
-												? value
-												: 0;
-											return next;
-										});
-									}}
-								/>
-							</div>
-						) : null}
 					</fieldset>
 				))}
 			</div>
@@ -564,7 +542,17 @@ function EditReportedScoreForm({
 				value={JSON.stringify(checkedPlayers)}
 			/>
 			{withPoints ? (
-				<input type="hidden" name="points" value={JSON.stringify(points)} />
+				<>
+					<input type="hidden" name="points" value={JSON.stringify(points)} />
+					<label className="stack horizontal sm items-center mx-auto">
+						<input
+							type="checkbox"
+							checked={isKO}
+							onChange={(e) => setIsKO(e.target.checked)}
+						/>
+						<span>KO</span>
+					</label>
+				</>
 			) : null}
 			<div className={styles.buttonRow}>
 				<SubmitButton

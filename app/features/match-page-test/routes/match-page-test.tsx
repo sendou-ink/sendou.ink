@@ -91,6 +91,7 @@ export default function MatchPageTestRoute() {
 						subtitle={t("q:match.cancelRequested.subtitle", {
 							teamName: "Chimera",
 						})}
+						screenLegal={false}
 					/>
 					<MatchBannerBottomRow
 						games={[

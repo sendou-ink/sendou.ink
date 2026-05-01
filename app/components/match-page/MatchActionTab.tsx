@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { Check } from "lucide-react";
 import type * as React from "react";
-import { useId, useState } from "react";
+import { useState } from "react";
 import { Radio, RadioGroup } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useWebHaptics } from "web-haptics/react";
@@ -10,10 +10,8 @@ import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";
-import { SendouPopover } from "../elements/Popover";
 import { SendouTabPanel } from "../elements/Tabs";
 import { ModeImage, StageImage } from "../Image";
-import { Label } from "../Label";
 import styles from "./MatchActionTab.module.css";
 import { TAB_KEYS } from "./MatchTabs";
 import {
@@ -64,12 +62,10 @@ export function MatchActionTab({
 	const { t } = useTranslation(["q", "game-misc", "common"]);
 	const [winnerId, setWinnerId] = useState<number | null>(null);
 	const [isKo, setIsKo] = useState(false);
-	const [points, setPoints] = useState<[number, number]>([0, 0]);
 	const [confirming, setConfirming] = useState(false);
 	const { trigger } = useWebHaptics();
 
-	const pointsValid = !withPoints || isKo || points[0] > 0 || points[1] > 0;
-	const canSubmit = winnerId !== null && pointsValid;
+	const canSubmit = winnerId !== null;
 
 	const isOnTeam =
 		ownTeamId != null &&
@@ -82,7 +78,7 @@ export function MatchActionTab({
 				? winnerId === teams[0].id
 					? [100, 0]
 					: [0, 100]
-				: points
+				: [0, 0]
 			: undefined;
 		onSubmit?.({ winnerId, points: submitPoints });
 	};
@@ -98,7 +94,6 @@ export function MatchActionTab({
 					teams={teams}
 					withPoints={withPoints}
 					isKo={isKo}
-					points={points}
 					isSubmitting={isSubmitting}
 					onBack={() => setConfirming(false)}
 					onConfirm={submit}
@@ -159,38 +154,15 @@ export function MatchActionTab({
 					</RadioGroup>
 
 					{withPoints ? (
-						<div className={styles.pointsRow}>
-							<PointsInput
-								value={points[0]}
-								onChange={(value) => setPoints([value, points[1]])}
-								hidden={isKo}
-								className={styles.pointsAlpha}
-							/>
-							<div className={styles.ko}>
-								<label className={styles.koLabel}>
-									<input
-										type="checkbox"
-										checked={isKo}
-										onChange={(e) => setIsKo(e.target.checked)}
-									/>
-									{t("q:match.action.ko")}
-								</label>
-								<SendouPopover
-									trigger={
-										<SendouButton variant="minimal" className={styles.koHelp}>
-											{t("q:match.action.koHelp")}
-										</SendouButton>
-									}
-								>
-									TODO
-								</SendouPopover>
-							</div>
-							<PointsInput
-								value={points[1]}
-								onChange={(value) => setPoints([points[0], value])}
-								hidden={isKo}
-								className={styles.pointsBravo}
-							/>
+						<div className={styles.ko}>
+							<label className={styles.koLabel}>
+								<input
+									type="checkbox"
+									checked={isKo}
+									onChange={(e) => setIsKo(e.target.checked)}
+								/>
+								{t("q:match.action.ko")}
+							</label>
 						</div>
 					) : null}
 
@@ -224,7 +196,6 @@ function SetEndingConfirmation({
 	teams,
 	withPoints,
 	isKo,
-	points,
 	isSubmitting,
 	onBack,
 	onConfirm,
@@ -236,7 +207,6 @@ function SetEndingConfirmation({
 	teams: [ActionTabTeam, ActionTabTeam];
 	withPoints: boolean;
 	isKo: boolean;
-	points: [number, number];
 	isSubmitting?: boolean;
 	onBack: () => void;
 	onConfirm: () => void;
@@ -254,7 +224,7 @@ function SetEndingConfirmation({
 		points: withPoints
 			? isKo
 				? [winnerSide === "ALPHA" ? 100 : 0, winnerSide === "BRAVO" ? 100 : 0]
-				: points
+				: [0, 0]
 			: undefined,
 	};
 
@@ -351,42 +321,5 @@ function TeamRadioOption({
 				</span>
 			)}
 		</Radio>
-	);
-}
-
-function PointsInput({
-	value,
-	onChange,
-	hidden,
-	className,
-}: {
-	value: number;
-	onChange: (value: number) => void;
-	hidden: boolean;
-	className?: string;
-}) {
-	const { t } = useTranslation(["q"]);
-	const [focused, setFocused] = useState(false);
-	const id = useId();
-
-	return (
-		<div className={clsx("stack xs", className, { invisible: hidden })}>
-			<Label htmlFor={id} spaced={false}>
-				{t("q:match.action.points")}
-			</Label>
-			<input
-				className={styles.pointsInput}
-				id={id}
-				type="number"
-				min={0}
-				max={99}
-				value={focused && !value ? "" : String(value)}
-				onChange={(e) => onChange(Number(e.target.value))}
-				onFocus={() => setFocused(true)}
-				onBlur={() => setFocused(false)}
-				pattern="[0-9]*"
-				inputMode="numeric"
-			/>
-		</div>
 	);
 }

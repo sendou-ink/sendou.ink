@@ -2,8 +2,6 @@ import type { Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, DBBoolean } from "~/db/tables";
 
-// xxx: unit test
-
 export async function findForGroups(groupIds: number[]) {
 	if (groupIds.length === 0) return [];
 

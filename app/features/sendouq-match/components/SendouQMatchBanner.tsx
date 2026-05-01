@@ -116,7 +116,7 @@ function SendouQMatchBannerTopRow({
 	data: SendouQMatchLoaderData;
 	awaitingConfirmation: boolean;
 }) {
-	useAutoRerender("ten seconds");
+	const now = useAutoRerender("ten seconds");
 
 	const countScore = (groupId: number) =>
 		data.match.mapList.reduce(
@@ -124,7 +124,6 @@ function SendouQMatchBannerTopRow({
 			0,
 		);
 
-	const now = new Date();
 	const startedAt = databaseTimestampToDate(data.match.createdAt);
 
 	const lastMapReportedAt = data.match.mapList.reduce<number | null>(

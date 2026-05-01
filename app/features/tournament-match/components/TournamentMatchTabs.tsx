@@ -1,4 +1,3 @@
-import { differenceInMinutes } from "date-fns";
 import { useFetcher } from "react-router";
 import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
@@ -9,6 +8,10 @@ import type {
 	TimelinePickBanEvent,
 } from "~/components/match-page/MatchTimeline";
 import { useUser } from "~/features/auth/core/user";
+import {
+	resolveActiveRoomLink,
+	useConfirmRoom,
+} from "~/features/chat/room-link-utils";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
@@ -16,10 +19,7 @@ import {
 	groupNumberToLetters,
 	tournamentTeamToActiveRosterUserIds,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
-import {
-	databaseTimestampToDate,
-	databaseTimestampToJavascriptTimestamp,
-} from "~/utils/dates";
+import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import { tournamentTeamPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { resolveHostingTeam, resolveRoomPass } from "../tournament-match-utils";
@@ -329,7 +329,7 @@ function slotOfEvent({
 function TournamentMatchJoinTab({ data }: { data: TournamentMatchLoaderData }) {
 	const tournament = useTournament();
 	const user = useUser();
-	const confirmFetcher = useFetcher();
+	const { onConfirmRoom, isConfirming } = useConfirmRoom();
 
 	const teamOne = tournament.teamById(data.match.opponentOne!.id!)!;
 	const teamTwo = tournament.teamById(data.match.opponentTwo!.id!)!;
@@ -359,41 +359,19 @@ function TournamentMatchJoinTab({ data }: { data: TournamentMatchLoaderData }) {
 				: undefined,
 	});
 
-	// xxx: maybe some shared util?
-	const freshnessCutoff = data.match.startedAt ?? 0;
-	const validRoomLink = data.roomLinks.find(
-		(rl) => rl.refreshedAt >= freshnessCutoff,
-	);
-	const ownStaleRoomLink = validRoomLink
-		? undefined
-		: data.roomLinks.find((rl) => rl.userId === user?.id);
-	const activeRoomLink = validRoomLink ?? ownStaleRoomLink;
-	const isStale = activeRoomLink ? !validRoomLink : undefined;
-	const staleMinutesAgo = ownStaleRoomLink
-		? differenceInMinutes(
-				new Date(),
-				databaseTimestampToDate(ownStaleRoomLink.refreshedAt),
-			)
-		: 0;
-	const roomLinkUsername = activeRoomLink
-		? data.match.players.find((p) => p.id === activeRoomLink.userId)?.username
-		: undefined;
+	const activeRoomLink = resolveActiveRoomLink({
+		roomLinks: data.roomLinks,
+		freshnessCutoff: data.match.startedAt ?? 0,
+		viewerUserId: user?.id,
+		members: data.match.players,
+	});
 
 	return (
 		<MatchJoinTab
-			joinLink={activeRoomLink?.url}
-			hostedBy={roomLinkUsername ?? hostingTeam.name}
-			isStale={isStale}
-			staleMinutesAgo={staleMinutesAgo}
-			refreshedAt={
-				validRoomLink
-					? databaseTimestampToDate(validRoomLink.refreshedAt)
-					: undefined
-			}
-			onConfirmRoom={() => {
-				confirmFetcher.submit({ _action: "CONFIRM_ROOM" }, { method: "post" });
-			}}
-			isConfirming={confirmFetcher.state !== "idle"}
+			{...activeRoomLink}
+			hostedBy={activeRoomLink.hostedBy ?? hostingTeam.name}
+			onConfirmRoom={onConfirmRoom}
+			isConfirming={isConfirming}
 			pool={`${poolCode.prefix}${poolCode.suffix}`}
 			pass={resolveRoomPass(hostingTeam.id)}
 			showNoSplatnetAlert={data.anyUserPrefersNoSplatnet}

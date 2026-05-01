@@ -1,5 +1,5 @@
 .root {
-	--banner-height: 140px;
+	--banner-height: 175px;
 
 	display: flex;
 	flex-direction: column;
@@ -8,10 +8,11 @@
 }
 
 .banner {
+	position: relative;
 	display: grid;
 	/** xxx: check space for mobile when it says e.g. Team 2 pick -> just show logo instead? */
 	grid-template-columns: max-content 1fr;
-	grid-template-areas: "map info" "notice notice";
+	grid-template-areas: "map info";
 	background-size: cover;
 	background-position: center;
 	background-repeat: no-repeat;
@@ -46,13 +47,14 @@
 }
 
 .notice {
+	position: absolute;
+	bottom: var(--s-2);
+	left: 50%;
+	transform: translateX(-50%);
 	display: flex;
 	gap: var(--s-0-5);
 	align-items: center;
 	color: var(--color-text-high);
-	grid-area: notice;
-	align-self: flex-end;
-	justify-self: center;
 	background-color: var(--color-bg-high);
 	padding: var(--s-0-5) var(--s-1-5);
 	border-radius: var(--radius-field);
@@ -127,6 +129,7 @@
 }
 
 .iconBanner {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -146,4 +149,10 @@
 .iconBannerSubtitle {
 	font-size: var(--font-xs);
 	color: var(--color-text-low);
+}
+
+.iconBannerBottomRight {
+	position: absolute;
+	top: var(--s-2);
+	right: var(--s-2);
 }

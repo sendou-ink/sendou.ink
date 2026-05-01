@@ -2,7 +2,6 @@ import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import {
@@ -250,10 +249,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			});
 
 			throw redirect(sendouQMatchPage(matchId));
-		}
-		case "CONFIRM_ROOM": {
-			await RoomLinkRepository.refreshTimestamp(user.id);
-			break;
 		}
 		case "UNDO_MATCH_REPORT": {
 			const result = await SQMatchRepository.undoMatchReport({

@@ -210,7 +210,7 @@ const clockFormatter = ({
 function Clocks() {
 	const isHydrated = useHydrated();
 	const { t, i18n } = useTranslation(["q"]);
-	useAutoRerender();
+	const now = useAutoRerender();
 
 	return (
 		<div className={styles.clocksContainer}>
@@ -226,7 +226,7 @@ function Clocks() {
 								? weekdayFormatter({
 										timeZone: country.timeZone,
 										locale: i18n.language,
-									}).format(new Date())
+									}).format(now)
 								: // take space
 									"Monday"}
 						</div>
@@ -235,7 +235,7 @@ function Clocks() {
 								? clockFormatter({
 										timeZone: country.timeZone,
 										locale: i18n.language,
-									}).format(new Date())
+									}).format(now)
 								: // take space
 									"0:00 PM"}
 						</div>

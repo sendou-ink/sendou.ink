@@ -41,15 +41,16 @@ const points = z.preprocess(
 				if (!val) return true;
 				const [p1, p2] = val;
 
-				if (p1 === p2) return false;
-				if (p1 === 100 && p2 !== 0) return false;
-				if (p2 === 100 && p1 !== 0) return false;
+				// KO
+				if (p1 === 100 && p2 === 0) return true;
+				if (p2 === 100 && p1 === 0) return true;
+				// ...or no points sent at all (TODO: if we decide that this KO only approach is solid then we can do a proper data model migration)
+				if (p1 === 0 && p2 === 0) return true;
 
-				return true;
+				return false;
 			},
 			{
-				message:
-					"Invalid points. Must not be equal & if one is 100, the other must be 0.",
+				message: "Invalid points. Valid: 100-0, 0-100 or 0-0.",
 			},
 		),
 );
@@ -100,10 +101,6 @@ export const matchSchema = z.union([
 	z.object({
 		_action: _action("END_SET"),
 		winnerTeamId: z.preprocess(nullLiteraltoNull, id.nullable()),
-	}),
-	// xxx: one central API for confirm room?
-	z.object({
-		_action: _action("CONFIRM_ROOM"),
 	}),
 ]);
 

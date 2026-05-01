@@ -3,7 +3,6 @@ import { sql } from "~/db/sql";
 import { TournamentMatchStatus } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.server";
@@ -154,6 +153,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			errorToastIfFalsy(
 				!data.points ||
+					data.points[0] === data.points[1] ||
 					(scoreToIncrement() === 0 && data.points[0] > data.points[1]) ||
 					(scoreToIncrement() === 1 && data.points[1] > data.points[0]),
 				"Points are invalid (winner must have more points than loser)",
@@ -389,15 +389,15 @@ export const action: ActionFunction = async ({ params, request }) => {
 					);
 				}
 
-				if (result.opponentOnePoints! > result.opponentTwoPoints!) {
+				if (data.points[0] === 100) {
 					errorToastIfFalsy(
-						data.points[0] > data.points[1],
-						"Winner must have more points than loser",
+						result.winnerTeamId === match.opponentOne!.id,
+						"KO winner must match the result winner",
 					);
-				} else {
+				} else if (data.points[1] === 100) {
 					errorToastIfFalsy(
-						data.points[0] < data.points[1],
-						"Winner must have more points than loser",
+						result.winnerTeamId === match.opponentTwo!.id,
+						"KO winner must match the result winner",
 					);
 				}
 			}
@@ -734,10 +734,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
 
-			break;
-		}
-		case "CONFIRM_ROOM": {
-			await RoomLinkRepository.refreshTimestamp(user.id);
 			break;
 		}
 		default: {

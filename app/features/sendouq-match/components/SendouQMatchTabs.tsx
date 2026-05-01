@@ -1,16 +1,19 @@
-import { differenceInMinutes } from "date-fns";
 import { useTranslation } from "react-i18next";
-import { useFetcher, useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs } from "~/components/match-page/MatchTabs";
 import { Redirect } from "~/components/Redirect";
 import { useUser } from "~/features/auth/core/user";
+import {
+	resolveActiveRoomLink,
+	useConfirmRoom,
+} from "~/features/chat/room-link-utils";
 import { DISPLAY_VOTE_RESULT_SECONDS } from "~/features/sendouq/q-constants";
 import { resolveRoomPass } from "~/features/tournament-match/tournament-match-utils";
 import { useHasRole } from "~/modules/permissions/hooks";
-import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
+import { databaseTimestampNow } from "~/utils/dates";
 import { safeNumberParse } from "~/utils/number";
 import { SENDOUQ_LOOKING_PAGE, sendouQMatchPage, teamPage } from "~/utils/urls";
 import {
@@ -26,7 +29,7 @@ import { SendouQMatchActionTab } from "./SendouQMatchActionTab";
 export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 	const user = useUser();
 	const isStaff = useHasRole("STAFF");
-	const confirmFetcher = useFetcher();
+	const { onConfirmRoom, isConfirming } = useConfirmRoom();
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const { t } = useTranslation(["q"]);
@@ -94,25 +97,12 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 		...data.match.groupBravo.members,
 	];
 
-	// roomLinks are ordered by refreshedAt asc, so the first valid one is the oldest confirmed room
-	const validRoomLink = data.roomLinks.find(
-		(rl) => rl.refreshedAt >= data.match.createdAt,
-	);
-	const ownStaleRoomLink = validRoomLink
-		? undefined
-		: data.roomLinks.find((rl) => rl.userId === user?.id);
-
-	const activeRoomLink = validRoomLink ?? ownStaleRoomLink;
-	const isStale = activeRoomLink ? !validRoomLink : undefined;
-	const staleMinutesAgo = ownStaleRoomLink
-		? differenceInMinutes(
-				new Date(),
-				databaseTimestampToDate(ownStaleRoomLink.refreshedAt),
-			)
-		: 0;
-	const hostedByUsername = activeRoomLink
-		? allMembers.find((m) => m.id === activeRoomLink.userId)?.username
-		: undefined;
+	const activeRoomLink = resolveActiveRoomLink({
+		roomLinks: data.roomLinks,
+		freshnessCutoff: data.match.createdAt,
+		viewerUserId: user?.id,
+		members: allMembers,
+	});
 
 	const ownGroup =
 		userSide === "ALPHA"
@@ -151,22 +141,9 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 				) : null}
 				{!isLocked && isParticipant ? (
 					<MatchJoinTab
-						joinLink={activeRoomLink?.url}
-						hostedBy={hostedByUsername}
-						isStale={isStale}
-						staleMinutesAgo={staleMinutesAgo}
-						refreshedAt={
-							validRoomLink
-								? databaseTimestampToDate(validRoomLink.refreshedAt)
-								: undefined
-						}
-						onConfirmRoom={() => {
-							confirmFetcher.submit(
-								{ _action: "CONFIRM_ROOM" },
-								{ method: "post" },
-							);
-						}}
-						isConfirming={confirmFetcher.state !== "idle"}
+						{...activeRoomLink}
+						onConfirmRoom={onConfirmRoom}
+						isConfirming={isConfirming}
 						pool={`SQ${String(data.match.id).at(-1)}`}
 						pass={resolveRoomPass(data.match.id)}
 						showNoSplatnetAlert={data.anyUserPrefersNoSplatnet}

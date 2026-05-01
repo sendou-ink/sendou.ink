@@ -71,15 +71,29 @@ interface IconBannerProps {
 	icon: React.ReactNode;
 	header: string;
 	subtitle?: string;
+	screenLegal?: boolean;
+	topRight?: React.ReactNode;
 }
 
-export function IconBanner({ icon, header, subtitle }: IconBannerProps) {
+export function IconBanner({
+	icon,
+	header,
+	subtitle,
+	screenLegal,
+	topRight,
+}: IconBannerProps) {
 	return (
 		<div className={styles.iconBanner}>
 			{icon}
 			<div className={styles.iconBannerHeader}>{header}</div>
 			{subtitle ? (
 				<div className={styles.iconBannerSubtitle}>{subtitle}</div>
+			) : null}
+			{screenLegal !== undefined ? (
+				<ScreenNotice screenLegal={screenLegal} />
+			) : null}
+			{topRight ? (
+				<div className={styles.iconBannerBottomRight}>{topRight}</div>
 			) : null}
 		</div>
 	);

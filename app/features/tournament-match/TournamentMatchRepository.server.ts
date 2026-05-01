@@ -81,6 +81,7 @@ export function findResultById(id: number) {
 			"TournamentMatchGameResult.id",
 			"TournamentMatchGameResult.opponentOnePoints",
 			"TournamentMatchGameResult.opponentTwoPoints",
+			"TournamentMatchGameResult.winnerTeamId",
 		])
 		.where("TournamentMatchGameResult.id", "=", id)
 		.executeTakeFirst();

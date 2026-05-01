@@ -95,6 +95,9 @@
 	border: 2px solid var(--color-border);
 	border-radius: var(--radius-box);
 	padding: var(--s-2);
+	padding-block-end: var(--s-2);
+	padding-inline: var(--s-2);
+	background-color: transparent;
 
 	& legend {
 		padding: 0 var(--s-2);

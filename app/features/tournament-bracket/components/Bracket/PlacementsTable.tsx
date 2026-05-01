@@ -58,6 +58,7 @@ export function PlacementsTable({
 					mapLosses: 0,
 					mapWins: 0,
 					points: 0,
+					koCount: 0,
 					setLosses: 0,
 					setWins: 0,
 					winsAgainstTied: 0,
@@ -232,7 +233,7 @@ function StandingsTable({
 					) : null}
 					{bracket.type === "round_robin" ? (
 						<th>
-							<abbr title="Score summed up">Scr</abbr>
+							<abbr title="Number of maps knocked out">KOs</abbr>
 						</th>
 					) : null}
 					<th>Seed</th>
@@ -361,7 +362,7 @@ function StandingsTable({
 								) : null}
 								{bracket.type === "round_robin" ? (
 									<td>
-										<span>{stats.points}</span>
+										<span>{stats.koCount ?? 0}</span>
 									</td>
 								) : null}
 								<td>{team?.seed}</td>

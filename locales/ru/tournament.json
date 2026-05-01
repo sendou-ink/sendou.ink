@@ -48,6 +48,8 @@
 	"pickInfo.team": "Выбор команды {{number}}",
 	"pickInfo.team.specific": "",
 	"pickInfo.team.counterpick": "",
+	"pickInfo.pickedBy": "",
+	"pickInfo.counterpickedBy": "",
 	"pickInfo.tiebreaker": "Тай-брейк",
 	"pickInfo.both": "Выбрано обеими",
 	"pickInfo.default": "",

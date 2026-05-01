@@ -48,6 +48,8 @@
 	"pickInfo.team": "Equipo {{number}} elige",
 	"pickInfo.team.specific": "{{team}} eligió",
 	"pickInfo.team.counterpick": "{{team}} hizo contraselección",
+	"pickInfo.pickedBy": "",
+	"pickInfo.counterpickedBy": "",
 	"pickInfo.tiebreaker": "Desempate",
 	"pickInfo.both": "Ambos eligieron",
 	"pickInfo.default": "Elección de la comunidad",

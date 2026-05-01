@@ -48,6 +48,8 @@
 	"pickInfo.team": "",
 	"pickInfo.team.specific": "",
 	"pickInfo.team.counterpick": "",
+	"pickInfo.pickedBy": "",
+	"pickInfo.counterpickedBy": "",
 	"pickInfo.tiebreaker": "",
 	"pickInfo.both": "",
 	"pickInfo.default": "",

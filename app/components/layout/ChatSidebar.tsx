@@ -185,7 +185,7 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 				const link = extractRoomLink(contents);
 				if (link) {
 					roomLinkFetcher.submit(
-						{ url: link },
+						{ _action: "UPSERT", url: link },
 						{
 							method: "post",
 							action: "/room",

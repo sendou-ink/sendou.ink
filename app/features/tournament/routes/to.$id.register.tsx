@@ -483,13 +483,6 @@ function RegistrationProgress({
 						canCheckIn={
 							steps.filter((step) => step.status === "incomplete").length === 1
 						}
-						status={
-							tournament.regularCheckInIsOpen
-								? "OPEN"
-								: tournament.regularCheckInHasEnded
-									? "OVER"
-									: "UPCOMING"
-						}
 						startDate={tournament.regularCheckInStartsAt}
 						endDate={tournament.regularCheckInEndsAt}
 						checkedIn={checkedIn}
@@ -510,13 +503,11 @@ function RegistrationProgress({
 }
 
 function CheckIn({
-	status,
 	canCheckIn,
 	startDate,
 	endDate,
 	checkedIn,
 }: {
-	status: "OVER" | "OPEN" | "UPCOMING";
 	canCheckIn: boolean;
 	startDate: Date;
 	endDate: Date;
@@ -527,7 +518,9 @@ function CheckIn({
 	const fetcher = useFetcher();
 	const { formatTime } = useTimeFormat();
 
-	useAutoRerender();
+	const now = useAutoRerender();
+	const status: "OVER" | "OPEN" | "UPCOMING" =
+		now > endDate ? "OVER" : now >= startDate ? "OPEN" : "UPCOMING";
 
 	const checkInStartsString = isHydrated
 		? formatTime(startDate, {

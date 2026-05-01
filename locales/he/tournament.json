@@ -48,6 +48,8 @@
 	"pickInfo.team": "צוות {{number}} בחרו",
 	"pickInfo.team.specific": "{{team}} נבחר",
 	"pickInfo.team.counterpick": "",
+	"pickInfo.pickedBy": "",
+	"pickInfo.counterpickedBy": "",
 	"pickInfo.tiebreaker": "שובר שיוויון",
 	"pickInfo.both": "שניהם בחרו",
 	"pickInfo.default": "",

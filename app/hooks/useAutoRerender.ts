@@ -23,5 +23,3 @@ export function useAutoRerender(every?: "second" | "ten seconds"): Date {
 
 	return now;
 }
-
-// xxx: react compiler thingy: use `now` everywhere this component is used. currently i guess those are not rendering

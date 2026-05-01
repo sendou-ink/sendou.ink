@@ -126,11 +126,13 @@ export default function SendouQStreamsPage() {
 function RelativeStartTime({ startedAt }: { startedAt: Date }) {
 	const { i18n } = useTranslation();
 	const isHydrated = useHydrated();
-	useAutoRerender();
+	const now = useAutoRerender();
 
 	if (!isHydrated) return null;
 
-	const minutesAgo = Math.floor((startedAt.getTime() - Date.now()) / 1000 / 60);
+	const minutesAgo = Math.floor(
+		(startedAt.getTime() - now.getTime()) / 1000 / 60,
+	);
 	const formatter = new Intl.RelativeTimeFormat(i18n.language, {
 		style: "short",
 	});

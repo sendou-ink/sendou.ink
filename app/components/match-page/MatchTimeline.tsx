@@ -219,7 +219,6 @@ function TimelineMapRow({ map }: { map: TimelineMap }) {
 				<SideResult
 					result={map.winner === "ALPHA" ? "WIN" : "LOSS"}
 					points={alphaPoints}
-					otherSidePoints={bravoPoints}
 					weapons={map.weapons?.alpha}
 					isPicked={map.pickedBy === "ALPHA"}
 				/>
@@ -246,7 +245,6 @@ function TimelineMapRow({ map }: { map: TimelineMap }) {
 				<SideResult
 					result={map.winner === "BRAVO" ? "WIN" : "LOSS"}
 					points={bravoPoints}
-					otherSidePoints={alphaPoints}
 					weapons={map.weapons?.bravo}
 					isPicked={map.pickedBy === "BRAVO"}
 				/>
@@ -258,13 +256,11 @@ function TimelineMapRow({ map }: { map: TimelineMap }) {
 function SideResult({
 	result,
 	points,
-	otherSidePoints,
 	weapons,
 	isPicked,
 }: {
 	result: "WIN" | "LOSS";
 	points?: number;
-	otherSidePoints?: number;
 	weapons?: Array<MainWeaponId | null>;
 	isPicked?: boolean;
 }) {
@@ -292,10 +288,6 @@ function SideResult({
 				</span>
 				{points === 100 ? (
 					<span className={styles.resultPoints}>{t("q:match.action.ko")}</span>
-				) : typeof points === "number" && otherSidePoints !== 100 ? (
-					<span className={styles.resultPoints}>
-						{t("q:match.timeline.points", { count: points })}
-					</span>
 				) : null}
 			</div>
 			{weapons ? <WeaponPool weapons={weapons} /> : null}

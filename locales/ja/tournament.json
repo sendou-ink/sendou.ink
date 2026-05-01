@@ -48,6 +48,8 @@
 	"pickInfo.team": "チーム {{number}} の選択",
 	"pickInfo.team.specific": "{{team}} picked",
 	"pickInfo.team.counterpick": "",
+	"pickInfo.pickedBy": "",
+	"pickInfo.counterpickedBy": "",
 	"pickInfo.tiebreaker": "タイブレイカー",
 	"pickInfo.both": "両者選択",
 	"pickInfo.default": "",

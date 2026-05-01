@@ -48,6 +48,8 @@
 	"pickInfo.team": "Hold {{number}} banevalg",
 	"pickInfo.team.specific": "{{team}} valgte",
 	"pickInfo.team.counterpick": "",
+	"pickInfo.pickedBy": "",
+	"pickInfo.counterpickedBy": "",
 	"pickInfo.tiebreaker": "Tiebreak",
 	"pickInfo.both": "begge hold valgte",
 	"pickInfo.default": "",

@@ -45,6 +45,7 @@ export interface Standing {
 		mapWins: number;
 		mapLosses: number;
 		points: number;
+		koCount?: number;
 		winsAgainstTied: number;
 		lossesAgainstTied?: number;
 		opponentSetWinPercentage?: number;

@@ -592,8 +592,9 @@ function unavailableModes({
 	}
 
 	if (maps.pickBan === "CUSTOM") {
+		const events = pickBanEvents ?? [];
 		const currentSectionEvents = currentSectionPickBanEvents({
-			pickBanEvents: pickBanEvents ?? [],
+			pickBanEvents: events,
 			maps,
 		});
 
@@ -604,11 +605,16 @@ function unavailableModes({
 			return new Set(modesIncluded.filter((m) => m !== modePick.mode));
 		}
 
-		const modeBans = currentSectionEvents
+		const preSetLength = maps.customFlow?.preSet.length ?? 0;
+		const preSetModeBans = events
+			.slice(0, preSetLength)
+			.filter((e) => e.type === "MODE_BAN" && e.mode !== null)
+			.map((e) => e.mode!);
+		const currentSectionModeBans = currentSectionEvents
 			.filter((e) => e.type === "MODE_BAN" && e.mode !== null)
 			.map((e) => e.mode!);
 
-		return new Set(modeBans);
+		return new Set([...preSetModeBans, ...currentSectionModeBans]);
 	}
 
 	// COUNTERPICK: can't pick the same mode last won on
