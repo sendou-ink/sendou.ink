@@ -12,7 +12,7 @@ import {
 import {
 	buildFiltersSearchParams,
 	buildsLimitSearchParam,
-} from "../builds-schemas.server";
+} from "../builds-schemas";
 import { filterBuilds } from "../core/filter.server";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
