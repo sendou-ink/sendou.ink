@@ -11,6 +11,7 @@ import {
 	SendouQ,
 } from "~/features/sendouq/core/SendouQ.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
+import { SendouQError } from "~/features/sendouq/q-utils.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
@@ -39,86 +40,132 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		schema: matchSchema,
 	});
 
-	switch (data._action) {
-		case "REPORT_SCORE": {
-			const unmappedMatch = notFoundIfFalsy(
-				await SQMatchRepository.findById(matchId),
-			);
-			const match = SendouQ.mapMatch(unmappedMatch, user);
-
-			if (match.isLocked) {
-				const oldReportedWeapons =
-					(await ReportedWeaponRepository.findByMatchId(matchId)) ?? [];
-				const mergedWeapons = mergeReportedWeapons({
-					oldWeapons: oldReportedWeapons,
-					newWeapons: data.weapons,
-					newReportedMapsCount: data.winners.length,
-				});
-				await ReportedWeaponRepository.replaceByMatchId(
-					matchId,
-					mergedWeapons.map((w) => ({
-						groupMatchMapId: w.groupMatchMapId,
-						userId: w.userId,
-						weaponSplId: w.weaponSplId,
-					})),
+	try {
+		switch (data._action) {
+			case "REPORT_SCORE": {
+				const unmappedMatch = notFoundIfFalsy(
+					await SQMatchRepository.findById(matchId),
 				);
-				return null;
-			}
+				const match = SendouQ.mapMatch(unmappedMatch, user);
 
-			errorToastIfFalsy(
-				!data.adminReport || user.roles.includes("STAFF"),
-				"Only mods can report scores as admin",
-			);
+				if (match.isLocked) {
+					const oldReportedWeapons =
+						(await ReportedWeaponRepository.findByMatchId(matchId)) ?? [];
+					const mergedWeapons = mergeReportedWeapons({
+						oldWeapons: oldReportedWeapons,
+						newWeapons: data.weapons,
+						newReportedMapsCount: data.winners.length,
+					});
+					await ReportedWeaponRepository.replaceByMatchId(
+						matchId,
+						mergedWeapons.map((w) => ({
+							groupMatchMapId: w.groupMatchMapId,
+							userId: w.userId,
+							weaponSplId: w.weaponSplId,
+						})),
+					);
+					return null;
+				}
 
-			const members = [
-				...match.groupAlpha.members.map((m) => ({
-					...m,
-					groupId: match.groupAlpha.id,
-				})),
-				...match.groupBravo.members.map((m) => ({
-					...m,
-					groupId: match.groupBravo.id,
-				})),
-			];
-			invariant(
-				members.some((m) => m.id === user.id) || data.adminReport,
-				"User is not a member of any group",
-			);
+				errorToastIfFalsy(
+					!data.adminReport || user.roles.includes("STAFF"),
+					"Only mods can report scores as admin",
+				);
 
-			const matchIsBeingCanceled = data.winners.length === 0;
+				const members = [
+					...match.groupAlpha.members.map((m) => ({
+						...m,
+						groupId: match.groupAlpha.id,
+					})),
+					...match.groupBravo.members.map((m) => ({
+						...m,
+						groupId: match.groupBravo.id,
+					})),
+				];
+				invariant(
+					members.some((m) => m.id === user.id) || data.adminReport,
+					"User is not a member of any group",
+				);
 
-			if (data.adminReport && !matchIsBeingCanceled) {
-				await SQMatchRepository.adminReport({
+				const matchIsBeingCanceled = data.winners.length === 0;
+
+				if (data.adminReport && !matchIsBeingCanceled) {
+					await SQMatchRepository.adminReport({
+						matchId,
+						reportedByUserId: user.id,
+						winners: data.winners,
+					});
+
+					try {
+						refreshUserSkills(Seasons.currentOrPrevious()!.nth);
+					} catch (error) {
+						logger.warn("Error refreshing user skills", error);
+					}
+					refreshStreamsCache();
+
+					await refreshSendouQInstance();
+
+					if (match.chatCode) {
+						ChatSystemMessage.send({
+							room: match.chatCode,
+							type: "SCORE_CONFIRMED",
+							context: { name: user.username },
+						});
+					}
+
+					break;
+				}
+
+				if (matchIsBeingCanceled) {
+					const result = await SQMatchRepository.cancelMatch({
+						matchId,
+						reportedByUserId: user.id,
+						isAdminReport: Boolean(data.adminReport),
+					});
+
+					if (result.shouldRefreshCaches) {
+						try {
+							refreshUserSkills(Seasons.currentOrPrevious()!.nth);
+						} catch (error) {
+							logger.warn("Error refreshing user skills", error);
+						}
+						refreshStreamsCache();
+					}
+
+					if (result.status === "CANT_CANCEL") {
+						return { error: "cant-cancel" as const };
+					}
+
+					if (result.status === "DUPLICATE") {
+						break;
+					}
+
+					await refreshSendouQInstance();
+
+					if (match.chatCode) {
+						const type: NonNullable<ChatMessage["type"]> =
+							result.status === "CANCEL_CONFIRMED"
+								? "CANCEL_CONFIRMED"
+								: "CANCEL_REPORTED";
+
+						ChatSystemMessage.send({
+							room: match.chatCode,
+							type,
+							context: { name: user.username },
+						});
+					}
+
+					break;
+				}
+
+				const result = await SQMatchRepository.reportScore({
 					matchId,
 					reportedByUserId: user.id,
 					winners: data.winners,
-				});
-
-				try {
-					refreshUserSkills(Seasons.currentOrPrevious()!.nth);
-				} catch (error) {
-					logger.warn("Error refreshing user skills", error);
-				}
-				refreshStreamsCache();
-
-				await refreshSendouQInstance();
-
-				if (match.chatCode) {
-					ChatSystemMessage.send({
-						room: match.chatCode,
-						type: "SCORE_CONFIRMED",
-						context: { name: user.username },
-					});
-				}
-
-				break;
-			}
-
-			if (matchIsBeingCanceled) {
-				const result = await SQMatchRepository.cancelMatch({
-					matchId,
-					reportedByUserId: user.id,
-					isAdminReport: Boolean(data.adminReport),
+					weapons: data.weapons as (ReportedWeapon & {
+						mapIndex: number;
+						groupMatchMapId: number;
+					})[],
 				});
 
 				if (result.shouldRefreshCaches) {
@@ -130,21 +177,19 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					refreshStreamsCache();
 				}
 
-				if (result.status === "CANT_CANCEL") {
-					return { error: "cant-cancel" as const };
+				if (result.status === "DIFFERENT") {
+					return { error: "different" as const };
 				}
 
-				if (result.status === "DUPLICATE") {
-					break;
+				if (result.status !== "DUPLICATE") {
+					await refreshSendouQInstance();
 				}
 
-				await refreshSendouQInstance();
-
-				if (match.chatCode) {
+				if (match.chatCode && result.status !== "DUPLICATE") {
 					const type: NonNullable<ChatMessage["type"]> =
-						result.status === "CANCEL_CONFIRMED"
-							? "CANCEL_CONFIRMED"
-							: "CANCEL_REPORTED";
+						result.status === "CONFIRMED"
+							? "SCORE_CONFIRMED"
+							: "SCORE_REPORTED";
 
 					ChatSystemMessage.send({
 						room: match.chatCode,
@@ -155,123 +200,99 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				break;
 			}
+			case "LOOK_AGAIN": {
+				const season = Seasons.current();
+				errorToastIfFalsy(season, "Season is not active");
 
-			const result = await SQMatchRepository.reportScore({
-				matchId,
-				reportedByUserId: user.id,
-				winners: data.winners,
-				weapons: data.weapons as (ReportedWeapon & {
-					mapIndex: number;
-					groupMatchMapId: number;
-				})[],
-			});
+				const match = notFoundIfFalsy(
+					await SQMatchRepository.findById(matchId),
+				);
+				const previousGroup =
+					match.groupAlpha.id === data.previousGroupId
+						? match.groupAlpha
+						: match.groupBravo.id === data.previousGroupId
+							? match.groupBravo
+							: null;
+				errorToastIfFalsy(
+					previousGroup,
+					"Previous group not found in this match",
+				);
 
-			if (result.shouldRefreshCaches) {
-				try {
-					refreshUserSkills(Seasons.currentOrPrevious()!.nth);
-				} catch (error) {
-					logger.warn("Error refreshing user skills", error);
+				for (const member of previousGroup.members) {
+					const currentGroup = SendouQ.findOwnGroup(member.id);
+					errorToastIfFalsy(!currentGroup, "Member is already in a group");
+					if (member.id === user.id) {
+						errorToastIfFalsy(
+							member.role === "OWNER",
+							"You are not the owner of the group",
+						);
+					}
 				}
-				refreshStreamsCache();
-			}
 
-			if (result.status === "DIFFERENT") {
-				return { error: "different" as const };
-			}
-
-			if (result.status !== "DUPLICATE") {
-				await refreshSendouQInstance();
-			}
-
-			if (match.chatCode && result.status !== "DUPLICATE") {
-				const type: NonNullable<ChatMessage["type"]> =
-					result.status === "CONFIRMED" ? "SCORE_CONFIRMED" : "SCORE_REPORTED";
-
-				ChatSystemMessage.send({
-					room: match.chatCode,
-					type,
-					context: { name: user.username },
+				await SQGroupRepository.createGroupFromPrevious({
+					previousGroupId: data.previousGroupId,
+					members: previousGroup.members.map((m) => ({
+						id: m.id,
+						role: m.role,
+					})),
 				});
+
+				await refreshSendouQInstance();
+
+				throw redirect(SENDOUQ_PREPARING_PAGE);
 			}
+			case "REPORT_WEAPONS": {
+				const match = notFoundIfFalsy(
+					await SQMatchRepository.findById(matchId),
+				);
+				errorToastIfFalsy(match.reportedAt, "Match has not been reported yet");
 
-			break;
-		}
-		case "LOOK_AGAIN": {
-			const season = Seasons.current();
-			errorToastIfFalsy(season, "Season is not active");
+				const oldReportedWeapons =
+					(await ReportedWeaponRepository.findByMatchId(matchId)) ?? [];
 
-			const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
-			const previousGroup =
-				match.groupAlpha.id === data.previousGroupId
-					? match.groupAlpha
-					: match.groupBravo.id === data.previousGroupId
-						? match.groupBravo
-						: null;
-			errorToastIfFalsy(
-				previousGroup,
-				"Previous group not found in this match",
-			);
+				const mergedWeapons = mergeReportedWeapons({
+					oldWeapons: oldReportedWeapons,
+					newWeapons: data.weapons as (ReportedWeapon & {
+						mapIndex: number;
+						groupMatchMapId: number;
+					})[],
+				});
 
-			for (const member of previousGroup.members) {
-				const currentGroup = SendouQ.findOwnGroup(member.id);
-				errorToastIfFalsy(!currentGroup, "Member is already in a group");
-				if (member.id === user.id) {
-					errorToastIfFalsy(
-						member.role === "OWNER",
-						"You are not the owner of the group",
-					);
-				}
+				await ReportedWeaponRepository.replaceByMatchId(
+					matchId,
+					mergedWeapons.map((w) => ({
+						groupMatchMapId: w.groupMatchMapId,
+						userId: w.userId,
+						weaponSplId: w.weaponSplId,
+					})),
+				);
+
+				break;
 			}
+			case "ADD_PRIVATE_USER_NOTE": {
+				await PrivateUserNoteRepository.upsert({
+					authorId: user.id,
+					sentiment: data.sentiment,
+					targetId: data.targetId,
+					text: data.comment,
+				});
 
-			await SQGroupRepository.createGroupFromPrevious({
-				previousGroupId: data.previousGroupId,
-				members: previousGroup.members.map((m) => ({ id: m.id, role: m.role })),
-			});
-
-			await refreshSendouQInstance();
-
-			throw redirect(SENDOUQ_PREPARING_PAGE);
+				throw redirect(sendouQMatchPage(matchId));
+			}
+			default: {
+				assertUnreachable(data);
+			}
 		}
-		case "REPORT_WEAPONS": {
-			const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
-			errorToastIfFalsy(match.reportedAt, "Match has not been reported yet");
 
-			const oldReportedWeapons =
-				(await ReportedWeaponRepository.findByMatchId(matchId)) ?? [];
-
-			const mergedWeapons = mergeReportedWeapons({
-				oldWeapons: oldReportedWeapons,
-				newWeapons: data.weapons as (ReportedWeapon & {
-					mapIndex: number;
-					groupMatchMapId: number;
-				})[],
-			});
-
-			await ReportedWeaponRepository.replaceByMatchId(
-				matchId,
-				mergedWeapons.map((w) => ({
-					groupMatchMapId: w.groupMatchMapId,
-					userId: w.userId,
-					weaponSplId: w.weaponSplId,
-				})),
-			);
-
-			break;
+		return null;
+	} catch (error) {
+		// some errors are expected to happen, for example two requests racing to
+		// create/join a group. return null so loaders re-run and the user sees
+		// the fresh state instead of an error page
+		if (error instanceof SendouQError) {
+			return null;
 		}
-		case "ADD_PRIVATE_USER_NOTE": {
-			await PrivateUserNoteRepository.upsert({
-				authorId: user.id,
-				sentiment: data.sentiment,
-				targetId: data.targetId,
-				text: data.comment,
-			});
 
-			throw redirect(sendouQMatchPage(matchId));
-		}
-		default: {
-			assertUnreachable(data);
-		}
+		throw error;
 	}
-
-	return null;
 };

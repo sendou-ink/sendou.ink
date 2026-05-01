@@ -9,7 +9,7 @@ import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { preparingSchema } from "../q-schemas.server";
-import { setGroupChatMetadata } from "../q-utils.server";
+import { SendouQError, setGroupChatMetadata } from "../q-utils.server";
 
 export type SendouQPreparingAction = typeof action;
 
@@ -31,56 +31,67 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const season = Seasons.current();
 	errorToastIfFalsy(season, "Season is not active");
 
-	switch (data._action) {
-		case "JOIN_QUEUE": {
-			await SQGroupRepository.setPreparingGroupAsActive(ownGroup.id);
+	try {
+		switch (data._action) {
+			case "JOIN_QUEUE": {
+				await SQGroupRepository.setPreparingGroupAsActive(ownGroup.id);
 
-			await refreshSendouQInstance();
+				await refreshSendouQInstance();
 
-			return redirect(SENDOUQ_LOOKING_PAGE);
-		}
-		case "ADD_FRIEND": {
-			const available = await SQGroupRepository.findActiveGroupMembers();
-			if (available.some(({ userId }) => userId === data.id)) {
-				return { error: "taken" } as const;
+				return redirect(SENDOUQ_LOOKING_PAGE);
 			}
+			case "ADD_FRIEND": {
+				const available = await SQGroupRepository.findActiveGroupMembers();
+				if (available.some(({ userId }) => userId === data.id)) {
+					return { error: "taken" } as const;
+				}
 
-			errorToastIfFalsy(
-				(await SQGroupRepository.friendsAndTeammates(user.id)).friends.some(
-					(friendUser) => friendUser.id === data.id,
-				),
-				"Not a friend",
-			);
+				errorToastIfFalsy(
+					(await SQGroupRepository.friendsAndTeammates(user.id)).friends.some(
+						(friendUser) => friendUser.id === data.id,
+					),
+					"Not a friend",
+				);
 
-			await SQGroupRepository.addMember(ownGroup.id, {
-				userId: data.id,
-				role: "MANAGER",
-			});
-
-			await refreshSendouQInstance();
-
-			const updatedGroup = SendouQ.findOwnGroup(user.id);
-			if (updatedGroup?.chatCode) {
-				setGroupChatMetadata({
-					chatCode: updatedGroup.chatCode,
-					members: updatedGroup.members,
+				await SQGroupRepository.addMember(ownGroup.id, {
+					userId: data.id,
+					role: "MANAGER",
 				});
-			}
 
-			notify({
-				userIds: [data.id],
-				notification: {
-					type: "SQ_ADDED_TO_GROUP",
-					meta: {
-						adderUsername: user.username,
+				await refreshSendouQInstance();
+
+				const updatedGroup = SendouQ.findOwnGroup(user.id);
+				if (updatedGroup?.chatCode) {
+					setGroupChatMetadata({
+						chatCode: updatedGroup.chatCode,
+						members: updatedGroup.members,
+					});
+				}
+
+				notify({
+					userIds: [data.id],
+					notification: {
+						type: "SQ_ADDED_TO_GROUP",
+						meta: {
+							adderUsername: user.username,
+						},
 					},
-				},
-			});
+				});
 
+				return null;
+			}
+			default: {
+				assertUnreachable(data);
+			}
+		}
+	} catch (error) {
+		// some errors are expected to happen, for example two requests racing to
+		// create/join a group. return null so loaders re-run and the user sees
+		// the fresh state instead of an error page
+		if (error instanceof SendouQError) {
 			return null;
 		}
-		default: {
-			assertUnreachable(data);
-		}
+
+		throw error;
 	}
 };

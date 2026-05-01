@@ -17,7 +17,7 @@ import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
 import { frontPageSchema } from "../q-schemas.server";
 import { userCanJoinQueueAt } from "../q-utils";
-import { setGroupChatMetadata } from "../q-utils.server";
+import { SendouQError, setGroupChatMetadata } from "../q-utils.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
@@ -26,91 +26,104 @@ export const action: ActionFunction = async ({ request }) => {
 		schema: frontPageSchema,
 	});
 
-	switch (data._action) {
-		case "JOIN_QUEUE": {
-			await validateCanJoinQ(user);
+	try {
+		switch (data._action) {
+			case "JOIN_QUEUE": {
+				await validateCanJoinQ(user);
 
-			await SQGroupRepository.createGroup({
-				status: data.direct === "true" ? "ACTIVE" : "PREPARING",
-				userId: user.id,
-			});
-
-			await refreshSendouQInstance();
-
-			return redirect(
-				data.direct === "true" ? SENDOUQ_LOOKING_PAGE : SENDOUQ_PREPARING_PAGE,
-			);
-		}
-		case "JOIN_TEAM": {
-			await validateCanJoinQ(user);
-
-			const code = new URL(request.url).searchParams.get(
-				JOIN_CODE_SEARCH_PARAM_KEY,
-			);
-
-			const groupInvitedTo =
-				code && user ? SendouQ.findGroupByInviteCode(code) : undefined;
-			errorToastIfFalsy(
-				groupInvitedTo,
-				"Invite code doesn't match any active team",
-			);
-
-			await SQGroupRepository.addMember(groupInvitedTo.id, {
-				userId: user.id,
-				role: "MANAGER",
-			});
-
-			await refreshSendouQInstance();
-
-			const joinedGroup = SendouQ.findOwnGroup(user.id);
-			if (joinedGroup?.chatCode) {
-				setGroupChatMetadata({
-					chatCode: joinedGroup.chatCode,
-					members: joinedGroup.members,
-				});
-			}
-
-			return redirect(
-				groupInvitedTo.status === "PREPARING"
-					? SENDOUQ_PREPARING_PAGE
-					: SENDOUQ_LOOKING_PAGE,
-			);
-		}
-		case "ADD_FRIEND_CODE": {
-			errorToastIfFalsy(
-				!(await UserRepository.currentFriendCodeByUserId(user.id)),
-				"Friend code already set",
-			);
-
-			const isTakenFriendCode = (
-				await UserRepository.allCurrentFriendCodes()
-			).has(data.friendCode);
-
-			await UserRepository.insertFriendCode({
-				userId: user.id,
-				friendCode: data.friendCode,
-				submitterUserId: user.id,
-			});
-
-			if (isTakenFriendCode) {
-				await AdminRepository.banUser({
+				await SQGroupRepository.createGroup({
+					status: data.direct === "true" ? "ACTIVE" : "PREPARING",
 					userId: user.id,
-					banned: 1,
-					bannedReason:
-						"[automatic ban] This friend code is already in use by some other account. Please contact staff on our Discord helpdesk for resolution including merging accounts.",
-					bannedByUserId: null,
 				});
 
-				await refreshBannedCache();
+				await refreshSendouQInstance();
 
-				throw redirect(SUSPENDED_PAGE);
+				return redirect(
+					data.direct === "true"
+						? SENDOUQ_LOOKING_PAGE
+						: SENDOUQ_PREPARING_PAGE,
+				);
 			}
+			case "JOIN_TEAM": {
+				await validateCanJoinQ(user);
 
+				const code = new URL(request.url).searchParams.get(
+					JOIN_CODE_SEARCH_PARAM_KEY,
+				);
+
+				const groupInvitedTo =
+					code && user ? SendouQ.findGroupByInviteCode(code) : undefined;
+				errorToastIfFalsy(
+					groupInvitedTo,
+					"Invite code doesn't match any active team",
+				);
+
+				await SQGroupRepository.addMember(groupInvitedTo.id, {
+					userId: user.id,
+					role: "MANAGER",
+				});
+
+				await refreshSendouQInstance();
+
+				const joinedGroup = SendouQ.findOwnGroup(user.id);
+				if (joinedGroup?.chatCode) {
+					setGroupChatMetadata({
+						chatCode: joinedGroup.chatCode,
+						members: joinedGroup.members,
+					});
+				}
+
+				return redirect(
+					groupInvitedTo.status === "PREPARING"
+						? SENDOUQ_PREPARING_PAGE
+						: SENDOUQ_LOOKING_PAGE,
+				);
+			}
+			case "ADD_FRIEND_CODE": {
+				errorToastIfFalsy(
+					!(await UserRepository.currentFriendCodeByUserId(user.id)),
+					"Friend code already set",
+				);
+
+				const isTakenFriendCode = (
+					await UserRepository.allCurrentFriendCodes()
+				).has(data.friendCode);
+
+				await UserRepository.insertFriendCode({
+					userId: user.id,
+					friendCode: data.friendCode,
+					submitterUserId: user.id,
+				});
+
+				if (isTakenFriendCode) {
+					await AdminRepository.banUser({
+						userId: user.id,
+						banned: 1,
+						bannedReason:
+							"[automatic ban] This friend code is already in use by some other account. Please contact staff on our Discord helpdesk for resolution including merging accounts.",
+						bannedByUserId: null,
+					});
+
+					await refreshBannedCache();
+
+					throw redirect(SUSPENDED_PAGE);
+				}
+
+				return null;
+			}
+			default: {
+				assertUnreachable(data);
+			}
+		}
+	} catch (error) {
+		// some errors are expected to happen, for example two requests racing to
+		// create/join a group. return null so loaders re-run and the user sees
+		// the fresh state instead of an error page
+		if (error instanceof SendouQError) {
 			return null;
 		}
-		default: {
-			assertUnreachable(data);
-		}
+
+		throw error;
 	}
 };
 
