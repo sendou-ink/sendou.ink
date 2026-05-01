@@ -156,6 +156,7 @@
 	"progression.error.AB_DIVISIONS_NOT_ROUND_ROBIN": "",
 	"progression.error.AB_DIVISIONS_NOT_STARTING": "",
 	"progression.error.AB_DIVISIONS_ODD_TEAMS_PER_GROUP": "",
+	"progression.error.EMPTY_PLACEMENTS_ON_NON_SWISS": "",
 	"lfg.askCaptainToJoinQueue": "",
 	"customFlow.beforeSet": "",
 	"customFlow.afterMap": "",

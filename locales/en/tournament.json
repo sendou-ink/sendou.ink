@@ -156,6 +156,7 @@
 	"progression.error.AB_DIVISIONS_NOT_ROUND_ROBIN": "A/B divisions can only be enabled on round robin brackets",
 	"progression.error.AB_DIVISIONS_NOT_STARTING": "A/B divisions can only be enabled on starting brackets",
 	"progression.error.AB_DIVISIONS_ODD_TEAMS_PER_GROUP": "A/B divisions requires an even number of teams per group",
+	"progression.error.EMPTY_PLACEMENTS_ON_NON_SWISS": "Empty placements are only valid when sourcing from a Swiss bracket with early advance",
 	"lfg.askCaptainToJoinQueue": "Ask your team's captain or a manager to join the queue",
 	"customFlow.beforeSet": "Before set",
 	"customFlow.afterMap": "After map",
