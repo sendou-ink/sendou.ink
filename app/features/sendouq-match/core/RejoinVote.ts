@@ -83,7 +83,6 @@ export function extractOwnGroupVotesFromSendouqMatch(
  * Returns the group member ids that remain after removing anyone who voted
  * against continuing.
  */
-// xxx: or just reuse result?
 export function currentUserIds(
 	votes: RejoinVote[],
 	groupMemberIds: number[],
