@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { MousePointerClick } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 import { Avatar } from "../Avatar";
@@ -74,6 +75,8 @@ function Roster({ users }: { users: CommonUser[] }) {
 function ActiveRosters({
 	activeRosters,
 }: Pick<MatchBannerBottomRowProps, "activeRosters">) {
+	const { t } = useTranslation(["q"]);
+
 	if (!activeRosters?.alpha || !activeRosters.bravo) {
 		return null;
 	}
@@ -81,7 +84,7 @@ function ActiveRosters({
 	return (
 		<div className={styles.activeRosters}>
 			<Roster users={activeRosters.alpha} />
-			<div className={styles.vs}>vs.</div>
+			<div className={styles.vs}>{t("q:match.banner.vs")}</div>
 			<Roster users={activeRosters.bravo} />
 		</div>
 	);

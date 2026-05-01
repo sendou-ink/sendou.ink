@@ -1,5 +1,6 @@
 import { DoorOpen, Key, ScrollText, Tally5, Users } from "lucide-react";
 import type * as React from "react";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
 import invariant from "~/utils/invariant";
 import { SendouTab, SendouTabList, SendouTabs } from "../elements/Tabs";
@@ -29,15 +30,16 @@ const TAB_ICONS: Record<MatchTabsKey, React.ReactNode> = {
 	admin: <Key />,
 };
 
-const TAB_LABELS: Record<MatchTabsKey, string> = {
-	rosters: "Rosters",
-	action: "Action",
-	join: "Join",
-	result: "Result",
-	admin: "Admin",
-};
+const TAB_TRANSLATION_KEYS = {
+	rosters: "q:match.tabs.rosters",
+	action: "q:match.tabs.action",
+	join: "common:actions.join",
+	result: "q:match.tabs.result",
+	admin: "common:pages.admin",
+} as const;
 
 export function MatchTabs({ children, tabs }: MatchTabsProps) {
+	const { t } = useTranslation(["q", "common"]);
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const currentTab =
@@ -62,7 +64,7 @@ export function MatchTabs({ children, tabs }: MatchTabsProps) {
 				<SendouTabList>
 					{tabs.map((tab) => (
 						<SendouTab key={tab} id={tab} icon={TAB_ICONS[tab]}>
-							{TAB_LABELS[tab]}
+							{t(TAB_TRANSLATION_KEYS[tab])}
 						</SendouTab>
 					))}
 				</SendouTabList>

@@ -26,6 +26,8 @@ export function MatchBannerTopRow({ score, time }: MatchBannerTopRowProps) {
 }
 
 function Score({ score }: { score: MatchBannerTopRowProps["score"] }) {
+	const { t } = useTranslation(["q"]);
+
 	return (
 		<div className={styles.values}>
 			<div>
@@ -33,10 +35,10 @@ function Score({ score }: { score: MatchBannerTopRowProps["score"] }) {
 			</div>
 			<div className={styles.sub}>
 				{score.isFinal
-					? "Final"
+					? t("q:match.banner.final")
 					: score.bestOf
-						? `Best of ${score.count}`
-						: `Play all ${score.count}`}
+						? t("q:match.banner.bestOf", { count: score.count })
+						: t("q:match.banner.playAll", { count: score.count })}
 			</div>
 		</div>
 	);

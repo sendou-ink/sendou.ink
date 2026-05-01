@@ -83,11 +83,6 @@ export function TournamentMatchAdminTab({
 	);
 }
 
-const LOCKING_INFO =
-	"You can lock the match to indicate that it should not be started before the cast is ready. Match being locked prevents score reporting and hides the map list till the organizer/streamer unlocks it.";
-const SET_AS_CASTED_INFO =
-	"Select the Twitch account that is currently casting this match. It is then indicated in the bracket view.";
-
 function AdminCastSection({
 	matchIsOngoing,
 	matchId,
@@ -97,6 +92,7 @@ function AdminCastSection({
 	matchId: number;
 	matchStatus: number;
 }) {
+	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 
 	const castTwitchAccounts = tournament.ctx.castTwitchAccounts ?? [];
@@ -117,13 +113,12 @@ function AdminCastSection({
 	return (
 		<section className={styles.castSection}>
 			<div className={styles.castLabelRow}>
-				<Label spaced={false}>Cast</Label>
-				<InfoPopover tiny>{SET_AS_CASTED_INFO}</InfoPopover>
+				<Label spaced={false}>{t("tournament:match.admin.cast")}</Label>
+				<InfoPopover tiny>{t("tournament:match.admin.castInfo")}</InfoPopover>
 			</div>
 			{castTwitchAccounts.length === 0 ? (
 				<p className={styles.castEmptyHint}>
-					Configure streaming channels on the tournament admin page to enable
-					casting.
+					{t("tournament:match.admin.castConfigureHint")}
 				</p>
 			) : (
 				<>
@@ -153,6 +148,7 @@ function CastChannelChipRadio({
 	accounts: string[];
 	currentlyCastedOn: string | null;
 }) {
+	const { t } = useTranslation(["tournament"]);
 	const fetcher = useFetcher();
 	const previousStateRef = React.useRef(fetcher.state);
 
@@ -163,12 +159,15 @@ function CastChannelChipRadio({
 			!(fetcher.data as { error?: unknown } | undefined)?.error
 		) {
 			toastQueue.add(
-				{ message: "Cast channel updated", variant: "success" },
+				{
+					message: t("tournament:match.admin.castChannelUpdated"),
+					variant: "success",
+				},
 				{ timeout: 5000 },
 			);
 		}
 		previousStateRef.current = fetcher.state;
-	}, [fetcher.state, fetcher.data]);
+	}, [fetcher.state, fetcher.data, t]);
 
 	const selectedValue = currentlyCastedOn ?? NOT_CASTED_VALUE;
 
@@ -188,7 +187,7 @@ function CastChannelChipRadio({
 				checked={selectedValue === NOT_CASTED_VALUE}
 				onChange={handleChange}
 			>
-				Not casted
+				{t("tournament:match.admin.notCasted")}
 			</SendouChipRadio>
 			{accounts.map((account) => (
 				<SendouChipRadio
@@ -212,6 +211,8 @@ function LockToggleButton({
 	isLocked: boolean;
 	twitchAccount: string | null;
 }) {
+	const { t } = useTranslation(["tournament"]);
+
 	return (
 		<Form method="post" className={styles.lockRow}>
 			{isLocked ? (
@@ -221,7 +222,7 @@ function LockToggleButton({
 					icon={<LockOpen size={16} />}
 					testId="cast-info-submit-button"
 				>
-					Unlock
+					{t("tournament:match.admin.unlock")}
 				</SubmitButton>
 			) : (
 				<>
@@ -237,11 +238,11 @@ function LockToggleButton({
 						isDisabled={!twitchAccount}
 						testId="cast-info-submit-button"
 					>
-						Lock to be casted
+						{t("tournament:match.admin.lockToBeCasted")}
 					</SubmitButton>
 				</>
 			)}
-			<InfoPopover>{LOCKING_INFO}</InfoPopover>
+			<InfoPopover>{t("tournament:match.admin.lockingInfo")}</InfoPopover>
 		</Form>
 	);
 }
@@ -354,6 +355,7 @@ function EditReportedScoresSection({
 	data: TournamentMatchLoaderData;
 	teams: [TournamentDataTeam, TournamentDataTeam];
 }) {
+	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 
 	const withPoints = tournament.bracketByIdxOrDefault(
@@ -362,7 +364,7 @@ function EditReportedScoresSection({
 
 	return (
 		<div className={styles.editSection}>
-			<Label>Edit reported scores</Label>
+			<Label>{t("tournament:match.admin.editReportedScores")}</Label>
 			<div className={styles.resultList}>
 				{data.results.map((result, index) => (
 					<EditReportedScoreRow
@@ -389,6 +391,7 @@ function EditReportedScoreRow({
 	teams: [TournamentDataTeam, TournamentDataTeam];
 	withPoints: boolean;
 }) {
+	const { t } = useTranslation(["common", "tournament"]);
 	const tournament = useTournament();
 	const fetcher = useFetcher();
 	const [editing, setEditing] = React.useState(false);
@@ -407,18 +410,24 @@ function EditReportedScoreRow({
 
 	const winnerName =
 		result.winnerTeamId === teams[0].id ? teams[0].name : teams[1].name;
-	const pointsText =
-		result.opponentOnePoints === 100 || result.opponentTwoPoints === 100
-			? " (KO)"
-			: "";
+	const isKo =
+		result.opponentOnePoints === 100 || result.opponentTwoPoints === 100;
 
 	if (!editing) {
 		return (
 			<div className={styles.resultRow}>
 				<div>
-					<span className={styles.mapIndex}>Map {index + 1}</span>
+					<span className={styles.mapIndex}>
+						{t("tournament:match.admin.mapNumber", { number: index + 1 })}
+					</span>
 					<span className={styles.winnerName}>
-						{winnerName} won{pointsText}
+						{isKo
+							? t("tournament:match.admin.winnerWonKo", {
+									teamName: winnerName,
+								})
+							: t("tournament:match.admin.winnerWon", {
+									teamName: winnerName,
+								})}
 					</span>
 				</div>
 				<SendouButton
@@ -428,7 +437,7 @@ function EditReportedScoreRow({
 					onPress={() => setEditing(true)}
 					data-testid={`edit-result-${index}-button`}
 				>
-					Edit
+					{t("common:actions.edit")}
 				</SendouButton>
 			</div>
 		);
@@ -464,6 +473,7 @@ function EditReportedScoreForm({
 	onCancel: () => void;
 	index: number;
 }) {
+	const { t } = useTranslation(["common", "q"]);
 	const initialRosters = React.useMemo<[number[], number[]]>(() => {
 		return [
 			result.participants
@@ -550,7 +560,7 @@ function EditReportedScoreForm({
 							checked={isKO}
 							onChange={(e) => setIsKO(e.target.checked)}
 						/>
-						<span>KO</span>
+						<span>{t("q:match.action.ko")}</span>
 					</label>
 				</>
 			) : null}
@@ -562,10 +572,10 @@ function EditReportedScoreForm({
 					isDisabled={!formValid}
 					testId={`save-result-${index}-button`}
 				>
-					Save
+					{t("common:actions.save")}
 				</SubmitButton>
 				<SendouButton variant="destructive" size="small" onPress={onCancel}>
-					Cancel
+					{t("common:actions.cancel")}
 				</SendouButton>
 			</div>
 		</fetcher.Form>

@@ -14,8 +14,6 @@ export const handle: SendouRouteHandle = {
 	i18n: ["q"],
 };
 
-// xxx: translate all & check for unused translations
-
 export default function SendouQMatchPage() {
 	const data = useLoaderData<typeof loader>();
 
