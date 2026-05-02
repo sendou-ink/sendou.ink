@@ -5,7 +5,14 @@ import { sourceTypes } from "~/modules/tournament-map-list-generator/constants";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-import type { findRoundsByTournamentId } from "../queries/findRoundsByTournamentId.server";
+
+export interface AllRoundsItem {
+	stageId: number;
+	stageName: string;
+	stageType: Tables["TournamentStage"]["type"];
+	roundNumber: number;
+	groupNumber: number;
+}
 
 export interface PlayedSet {
 	tournamentMatchId: number;
@@ -79,7 +86,7 @@ export function tournamentTeamSets({
 	allRounds,
 }: {
 	sets: FindByTournamentTeamIdItem[];
-	allRounds: ReturnType<typeof findRoundsByTournamentId>;
+	allRounds: AllRoundsItem[];
 }): PlayedSet[] {
 	return sets.map((set) => {
 		const round =

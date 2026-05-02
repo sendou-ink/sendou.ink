@@ -2,9 +2,13 @@ import type { LoaderFunctionArgs } from "react-router";
 import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentMatchRepository from "~/features/tournament-bracket/TournamentMatchRepository.server";
 import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+import invariant from "~/utils/invariant";
 import { parseParams } from "~/utils/remix.server";
-import { tournamentTeamSets, winCounts } from "../core/sets.server";
-import { findRoundsByTournamentId } from "../queries/findRoundsByTournamentId.server";
+import {
+	type AllRoundsItem,
+	tournamentTeamSets,
+	winCounts,
+} from "../core/sets.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id: tournamentId, tid: tournamentTeamId } = parseParams({
@@ -19,7 +23,19 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const setHistory =
 		await TournamentMatchRepository.findByTournamentTeamId(tournamentTeamId);
-	const allRounds = findRoundsByTournamentId(tournamentId);
+	const allRounds: AllRoundsItem[] = tournament.data.round.map((round) => {
+		const stage = tournament.data.stage.find((s) => s.id === round.stage_id);
+		const group = tournament.data.group.find((g) => g.id === round.group_id);
+		invariant(stage && group, "Stage or group not found for round");
+
+		return {
+			stageId: stage.id,
+			stageName: stage.name,
+			stageType: stage.type,
+			roundNumber: round.number,
+			groupNumber: group.number,
+		};
+	});
 
 	const sets = tournamentTeamSets({ sets: setHistory, allRounds });
 
