@@ -12,8 +12,6 @@ import { userIsBanned } from "../ban/core/banned.server";
 import { FULL_GROUP_SIZE } from "./q-constants";
 import { SendouQError } from "./q-utils.server";
 
-// xxx: add unit tests, remember: "recordImplicitNoVotes via createGroup / addMember"
-
 export async function mapModePreferencesByGroupId(groupId: number) {
 	const group = await db
 		.selectFrom("Group")
