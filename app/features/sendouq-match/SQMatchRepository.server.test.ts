@@ -101,13 +101,8 @@ const fetchSkills = async (matchId: number) => {
 const fetchReportedWeapons = async (matchId: number) => {
 	return db
 		.selectFrom("ReportedWeapon")
-		.innerJoin(
-			"GroupMatchMap",
-			"GroupMatchMap.id",
-			"ReportedWeapon.groupMatchMapId",
-		)
 		.selectAll("ReportedWeapon")
-		.where("GroupMatchMap.matchId", "=", matchId)
+		.where("ReportedWeapon.groupMatchId", "=", matchId)
 		.execute();
 };
 
@@ -266,20 +261,13 @@ describe("reportScore", () => {
 		const bravoGroupId = await createGroup([5, 6, 7, 8]);
 		const match = await createMatch(alphaGroupId, bravoGroupId);
 
-		const groupMatchMaps = await db
-			.selectFrom("GroupMatchMap")
-			.select(["id", "index"])
-			.where("matchId", "=", match.id)
-			.orderBy("index", "asc")
-			.execute();
-
 		const result = await SQMatchRepository.reportScore({
 			matchId: match.id,
 			reportedByUserId: 1,
 			winners: ["ALPHA", "ALPHA", "BRAVO", "ALPHA"],
 			weapons: [
 				{
-					groupMatchMapId: groupMatchMaps[0].id,
+					groupMatchId: match.id,
 					weaponSplId: 40,
 					userId: 1,
 					mapIndex: 0,

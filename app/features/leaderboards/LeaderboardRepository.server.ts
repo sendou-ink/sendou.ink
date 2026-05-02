@@ -410,12 +410,7 @@ export async function seasonPopularUsersWeapon(
 		.with("q1", (db) =>
 			db
 				.selectFrom("ReportedWeapon")
-				.innerJoin(
-					"GroupMatchMap",
-					"ReportedWeapon.groupMatchMapId",
-					"GroupMatchMap.id",
-				)
-				.innerJoin("GroupMatch", "GroupMatchMap.matchId", "GroupMatch.id")
+				.innerJoin("GroupMatch", "ReportedWeapon.groupMatchId", "GroupMatch.id")
 				.select(({ fn }) => [
 					"ReportedWeapon.userId",
 					"ReportedWeapon.weaponSplId",

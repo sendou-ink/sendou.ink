@@ -138,21 +138,17 @@ export function up(db) {
 		db.prepare(
 			/* sql */ `
         create table "ReportedWeapon_new" (
-          "groupMatchMapId" integer,
+          "groupMatchId" integer,
           "tournamentMatchId" integer,
-          "mapIndex" integer,
+          "mapIndex" integer not null,
           "weaponSplId" integer not null,
           "userId" integer not null,
-          foreign key ("groupMatchMapId") references "GroupMatchMap"("id") on delete restrict,
+          foreign key ("groupMatchId") references "GroupMatch"("id") on delete cascade,
           foreign key ("tournamentMatchId") references "TournamentMatch"("id") on delete cascade,
           foreign key ("userId") references "User"("id") on delete restrict,
-          unique("groupMatchMapId", "userId") on conflict rollback,
+          unique("groupMatchId", "mapIndex", "userId") on conflict rollback,
           unique("tournamentMatchId", "mapIndex", "userId") on conflict rollback,
-          check (
-            ("groupMatchMapId" is not null and "tournamentMatchId" is null and "mapIndex" is null)
-            or
-            ("groupMatchMapId" is null and "tournamentMatchId" is not null and "mapIndex" is not null)
-          )
+          check (("groupMatchId" is not null) <> ("tournamentMatchId" is not null))
         ) strict
       `,
 		).run();
@@ -160,10 +156,13 @@ export function up(db) {
 		db.prepare(
 			/* sql */ `
         insert into "ReportedWeapon_new" (
-          "groupMatchMapId", "tournamentMatchId", "mapIndex", "weaponSplId", "userId"
+          "groupMatchId", "tournamentMatchId", "mapIndex", "weaponSplId", "userId"
         )
-        select "groupMatchMapId", null, null, "weaponSplId", "userId"
+        select
+          "GroupMatchMap"."matchId", null, "GroupMatchMap"."index",
+          "ReportedWeapon"."weaponSplId", "ReportedWeapon"."userId"
         from "ReportedWeapon"
+        inner join "GroupMatchMap" on "GroupMatchMap"."id" = "ReportedWeapon"."groupMatchMapId"
       `,
 		).run();
 
@@ -173,7 +172,7 @@ export function up(db) {
 		).run();
 
 		db.prepare(
-			/* sql */ `create index reported_weapon_group_match_map_id on "ReportedWeapon"("groupMatchMapId")`,
+			/* sql */ `create index reported_weapon_group_match_id on "ReportedWeapon"("groupMatchId")`,
 		).run();
 		db.prepare(
 			/* sql */ `create index reported_weapon_tournament_match_id on "ReportedWeapon"("tournamentMatchId")`,

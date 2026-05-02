@@ -19,7 +19,7 @@ export const matchSchema = z.union([
 	z.object({
 		_action: _action("REPORT_WEAPON"),
 		weaponSplId,
-		groupMatchMapId: id,
+		mapIndex: z.coerce.number().int().nonnegative(),
 	}),
 	z.object({
 		_action: _action("ADD_PRIVATE_USER_NOTE"),

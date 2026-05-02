@@ -39,17 +39,18 @@ export function resolveTimelineMaps(
 	reportedWeapons: SendouQMatchLoaderData["reportedWeapons"],
 ): TimelineMap[] {
 	return match.mapList
-		.filter((m) => m.winnerGroupId !== null)
-		.map((map) => {
+		.map((map, mapIndex) => ({ map, mapIndex }))
+		.filter(({ map }) => map.winnerGroupId !== null)
+		.map(({ map, mapIndex }) => {
 			const alphaWeapons = match.groupAlpha.members.map((member) => {
 				const w = reportedWeapons?.find(
-					(rw) => rw.groupMatchMapId === map.id && rw.userId === member.id,
+					(rw) => rw.mapIndex === mapIndex && rw.userId === member.id,
 				);
 				return w ? w.weaponSplId : null;
 			});
 			const bravoWeapons = match.groupBravo.members.map((member) => {
 				const w = reportedWeapons?.find(
-					(rw) => rw.groupMatchMapId === map.id && rw.userId === member.id,
+					(rw) => rw.mapIndex === mapIndex && rw.userId === member.id,
 				);
 				return w ? w.weaponSplId : null;
 			});

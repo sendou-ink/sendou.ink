@@ -3,7 +3,7 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 export type ReportedWeaponForMerging = {
 	weaponSplId?: MainWeaponId;
 	mapIndex: number;
-	groupMatchMapId: number;
+	groupMatchId: number;
 	userId: number;
 };
 type ReportedWeapon = ReportedWeaponForMerging & { weaponSplId: MainWeaponId };
@@ -22,7 +22,8 @@ export function mergeReportedWeapons({
 	for (const oldWeapon of oldWeapons) {
 		const replacement = newWeapons.find(
 			(newWeapon) =>
-				newWeapon.groupMatchMapId === oldWeapon.groupMatchMapId &&
+				newWeapon.groupMatchId === oldWeapon.groupMatchId &&
+				newWeapon.mapIndex === oldWeapon.mapIndex &&
 				newWeapon.userId === oldWeapon.userId,
 		);
 
@@ -38,7 +39,8 @@ export function mergeReportedWeapons({
 		if (
 			!result.some(
 				(oldWeapon) =>
-					newWeapon.groupMatchMapId === oldWeapon.groupMatchMapId &&
+					newWeapon.groupMatchId === oldWeapon.groupMatchId &&
+					newWeapon.mapIndex === oldWeapon.mapIndex &&
 					newWeapon.userId === oldWeapon.userId,
 			)
 		) {

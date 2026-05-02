@@ -222,7 +222,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			);
 
 			await ReportedWeaponRepository.upsertOne({
-				groupMatchMapId: data.groupMatchMapId,
+				groupMatchId: matchId,
+				mapIndex: data.mapIndex,
 				userId: user.id,
 				weaponSplId: data.weaponSplId,
 			});

@@ -280,13 +280,12 @@ function WeaponReportSection({
 			onSubmit={(weaponSplId) => {
 				addRecentlyReportedWeapon(weaponSplId);
 				const mapIndex = pastReported.length;
-				const map = completedMaps[mapIndex];
-				if (!map) return;
+				if (!completedMaps[mapIndex]) return;
 				weaponFetcher.submit(
 					{
 						_action: "REPORT_WEAPON",
 						weaponSplId: String(weaponSplId),
-						groupMatchMapId: String(map.id),
+						mapIndex: String(mapIndex),
 					},
 					{ method: "post" },
 				);
@@ -469,12 +468,11 @@ function InProgressTab({
 							onSubmit: (weaponSplId) => {
 								addRecentlyReportedWeapon(weaponSplId);
 								const mapIndex = weaponPastReported.length;
-								const map = data.match.mapList[mapIndex];
 								weaponFetcher.submit(
 									{
 										_action: "REPORT_WEAPON",
 										weaponSplId: String(weaponSplId),
-										groupMatchMapId: String(map.id),
+										mapIndex: String(mapIndex),
 									},
 									{ method: "post" },
 								);

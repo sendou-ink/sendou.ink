@@ -3079,7 +3079,7 @@ async function playedMatches() {
 		if (faker.number.float(1) > 0.9) continue;
 		const users = [...groupAlphaMembers, ...groupBravoMembers];
 		const mapsWithUsers = users.flatMap((u) =>
-			finishedMatch.mapList.map((m) => ({ map: m, user: u })),
+			finishedMatch.mapList.map((_, mapIndex) => ({ mapIndex, user: u })),
 		);
 
 		await ReportedWeaponRepository.createMany(
@@ -3097,7 +3097,8 @@ async function playedMatches() {
 				};
 
 				return {
-					groupMatchMapId: mu.map.id,
+					groupMatchId: match.id,
+					mapIndex: mu.mapIndex,
 					userId: mu.user,
 					weaponSplId: weapon(),
 				};

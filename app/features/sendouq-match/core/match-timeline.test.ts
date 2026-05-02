@@ -151,7 +151,7 @@ describe("resolveTimelineMaps()", () => {
 					members: [member({ id: 2 })],
 				},
 			}),
-			[{ groupMatchMapId: 1, userId: 1, weaponSplId: 40 }] as never,
+			[{ mapIndex: 0, userId: 1, weaponSplId: 40 }] as never,
 		);
 
 		expect(result[0].weapons).toEqual({

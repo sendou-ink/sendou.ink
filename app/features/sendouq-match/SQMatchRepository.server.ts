@@ -261,9 +261,14 @@ const groupMatchResultsSubQuery = (eb: ExpressionBuilder<DB, "Skill">) => {
 								.selectFrom("ReportedWeapon")
 								.select(["ReportedWeapon.userId", "ReportedWeapon.weaponSplId"])
 								.whereRef(
-									"ReportedWeapon.groupMatchMapId",
+									"ReportedWeapon.groupMatchId",
 									"=",
-									"GroupMatchMap.id",
+									"GroupMatchMap.matchId",
+								)
+								.whereRef(
+									"ReportedWeapon.mapIndex",
+									"=",
+									"GroupMatchMap.index",
 								),
 						).as("weapons"),
 					])
@@ -614,7 +619,7 @@ export type CancelMatchResult =
 	| { status: "DUPLICATE"; shouldRefreshCaches: false };
 
 type WeaponInput = {
-	groupMatchMapId: number;
+	groupMatchId: number;
 	weaponSplId: MainWeaponId;
 	userId: number;
 	mapIndex: number;
@@ -714,7 +719,8 @@ export async function reportScore({
 		newReportedMapsCount: winners.length,
 	});
 	const weaponsForDb = mergedWeapons.map((w) => ({
-		groupMatchMapId: w.groupMatchMapId,
+		groupMatchId: w.groupMatchId,
+		mapIndex: w.mapIndex,
 		userId: w.userId,
 		weaponSplId: w.weaponSplId,
 	}));

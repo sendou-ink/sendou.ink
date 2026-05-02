@@ -15,19 +15,24 @@ export function createMany(
 }
 
 export async function upsertOne({
-	groupMatchMapId,
+	groupMatchId,
+	mapIndex,
 	userId,
 	weaponSplId,
-}: TablesInsertable["ReportedWeapon"] & { groupMatchMapId: number }) {
+}: TablesInsertable["ReportedWeapon"] & {
+	groupMatchId: number;
+	mapIndex: number;
+}) {
 	await db
 		.deleteFrom("ReportedWeapon")
-		.where("groupMatchMapId", "=", groupMatchMapId)
+		.where("groupMatchId", "=", groupMatchId)
+		.where("mapIndex", "=", mapIndex)
 		.where("userId", "=", userId)
 		.execute();
 
 	await db
 		.insertInto("ReportedWeapon")
-		.values({ groupMatchMapId, userId, weaponSplId })
+		.values({ groupMatchId, mapIndex, userId, weaponSplId })
 		.execute();
 }
 
@@ -38,22 +43,10 @@ export async function replaceByMatchId(
 ) {
 	const executor = trx ?? db;
 
-	const groupMatchMaps = await executor
-		.selectFrom("GroupMatchMap")
-		.select("id")
-		.where("matchId", "=", matchId)
+	await executor
+		.deleteFrom("ReportedWeapon")
+		.where("groupMatchId", "=", matchId)
 		.execute();
-
-	if (groupMatchMaps.length > 0) {
-		await executor
-			.deleteFrom("ReportedWeapon")
-			.where(
-				"groupMatchMapId",
-				"in",
-				groupMatchMaps.map((m) => m.id),
-			)
-			.execute();
-	}
 
 	if (weapons.length > 0) {
 		await executor.insertInto("ReportedWeapon").values(weapons).execute();
@@ -69,18 +62,10 @@ export async function deleteByUserMapIndex({
 	userId: number;
 	mapIndex: number;
 }) {
-	const groupMatchMap = await db
-		.selectFrom("GroupMatchMap")
-		.select("id")
-		.where("matchId", "=", matchId)
-		.where("index", "=", mapIndex)
-		.executeTakeFirst();
-
-	if (!groupMatchMap) return;
-
 	await db
 		.deleteFrom("ReportedWeapon")
-		.where("groupMatchMapId", "=", groupMatchMap.id)
+		.where("groupMatchId", "=", matchId)
+		.where("mapIndex", "=", mapIndex)
 		.where("userId", "=", userId)
 		.execute();
 }
@@ -88,21 +73,16 @@ export async function deleteByUserMapIndex({
 export async function findByMatchId(matchId: number) {
 	const rows = await db
 		.selectFrom("ReportedWeapon")
-		.innerJoin(
-			"GroupMatchMap",
-			"GroupMatchMap.id",
-			"ReportedWeapon.groupMatchMapId",
-		)
 		.select([
-			"ReportedWeapon.groupMatchMapId",
+			"ReportedWeapon.groupMatchId",
+			"ReportedWeapon.mapIndex",
 			"ReportedWeapon.weaponSplId",
 			"ReportedWeapon.userId",
-			"GroupMatchMap.index as mapIndex",
 		])
-		.where("GroupMatchMap.matchId", "=", matchId)
-		.orderBy("GroupMatchMap.index", "asc")
+		.where("ReportedWeapon.groupMatchId", "=", matchId)
+		.orderBy("ReportedWeapon.mapIndex", "asc")
 		.orderBy("ReportedWeapon.userId", "asc")
-		.$narrowType<{ groupMatchMapId: NotNull }>()
+		.$narrowType<{ groupMatchId: NotNull }>()
 		.execute();
 
 	if (rows.length === 0) return null;
@@ -186,12 +166,7 @@ export async function seasonReportedWeaponsByUserId({
 
 	const sendouqWeapons = db
 		.selectFrom("ReportedWeapon")
-		.innerJoin(
-			"GroupMatchMap",
-			"GroupMatchMap.id",
-			"ReportedWeapon.groupMatchMapId",
-		)
-		.innerJoin("GroupMatch", "GroupMatch.id", "GroupMatchMap.matchId")
+		.innerJoin("GroupMatch", "GroupMatch.id", "ReportedWeapon.groupMatchId")
 		.select(({ fn }) => [
 			"ReportedWeapon.weaponSplId",
 			fn.countAll<number>().as("count"),

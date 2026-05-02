@@ -129,7 +129,6 @@ export function WeaponReporter({
 						</div>
 						<SendouButton
 							variant="primary"
-							size="small"
 							isDisabled={selectedWeapon === null || isSubmitting}
 							onPress={() => {
 								if (selectedWeapon === null) return;
