@@ -3,6 +3,7 @@ import { ArrowLeft, MessageSquare, X } from "lucide-react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { useCurrentRouteChatCode } from "~/features/chat/ChatProvider";
 import { resolveDatePlaceholders } from "~/features/chat/chat-utils";
 import { Chat } from "~/features/chat/components/Chat";
 import { useChatContext } from "~/features/chat/useChatContext";
@@ -62,8 +63,18 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 	const chatContext = useChatContext()!;
 	const { formatDateTime } = useTimeFormat();
 
-	const nonExpiredRooms = chatContext.rooms
-		.filter((room) => room.expiresAt > Date.now())
+	const rawRouteChatCode = useCurrentRouteChatCode();
+	const routeChatCodes = rawRouteChatCode
+		? Array.isArray(rawRouteChatCode)
+			? rawRouteChatCode
+			: [rawRouteChatCode]
+		: [];
+
+	const visibleRooms = chatContext.rooms
+		.filter(
+			(room) =>
+				room.expiresAt > Date.now() || routeChatCodes.includes(room.chatCode),
+		)
 		.sort((a, b) => {
 			if (a.isObsolete !== b.isObsolete) return a.isObsolete ? 1 : -1;
 			const aRecency = a.lastMessageTimestamp || a.createdAt;
@@ -75,12 +86,12 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 		<div className={styles.sidebar}>
 			<SidebarHeader onClose={onClose} />
 			<div className={styles.roomList}>
-				{nonExpiredRooms.length === 0 ? (
+				{visibleRooms.length === 0 ? (
 					<div className={styles.emptyState}>
 						{t("common:chat.sidebar.noActiveChats")}
 					</div>
 				) : (
-					nonExpiredRooms.map((room) => {
+					visibleRooms.map((room) => {
 						const unread = chatContext.unreadCounts[room.chatCode] ?? 0;
 
 						return (

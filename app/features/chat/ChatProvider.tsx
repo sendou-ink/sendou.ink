@@ -684,7 +684,7 @@ function useChatRouteSync({
 	]);
 }
 
-function useCurrentRouteChatCode(): string | string[] | null {
+export function useCurrentRouteChatCode(): string | string[] | null {
 	const matches = useMatches();
 
 	for (const match of matches) {
