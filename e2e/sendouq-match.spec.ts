@@ -16,8 +16,6 @@ import {
 	waitForPOSTResponse,
 } from "./helpers/playwright";
 
-// xxx: fix failing tests
-
 /**
  * Tests for the SendouQ match page (`/q/match/$id`).
  *
@@ -160,9 +158,7 @@ test.describe("SendouQ match page", () => {
 
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: matchActionUrl(matchId) });
-		await waitForPOSTResponse(page, async () => {
-			await page.getByRole("button", { name: "No, I'm done" }).click();
-		});
+		await voteNo(page);
 
 		await expect(page.getByText("You declined to continue")).toBeVisible();
 		const rejoinLink = page.getByRole("link", { name: "Rejoin queue" });
@@ -187,9 +183,7 @@ test.describe("SendouQ match page", () => {
 
 		await impersonate(page, memberB);
 		await navigate({ page, url: matchActionUrl(matchId) });
-		await waitForPOSTResponse(page, async () => {
-			await page.getByRole("button", { name: "No, I'm done" }).click();
-		});
+		await voteNo(page);
 
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: matchActionUrl(matchId) });
@@ -247,6 +241,13 @@ async function selectMapWinner(page: Page, winner: "ALPHA" | "BRAVO") {
 	// react-aria's Radio renders a hidden input behind a span overlay; click the
 	// wrapping label so the press handler fires and updates winnerId.
 	await page.locator(`label:has(input[aria-label="${teamName}"])`).click();
+}
+
+async function voteNo(page: Page) {
+	await page.getByRole("button", { name: "No, I'm done" }).click();
+	await waitForPOSTResponse(page, async () => {
+		await page.getByTestId("confirm-button").click();
+	});
 }
 
 async function staffSweepAlpha(page: Page, matchId: string) {
