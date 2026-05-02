@@ -886,7 +886,7 @@ function TournamentResult({ result }: { result: SeasonTournamentResult }) {
 					[styles.seasonMatchWithSubSection]: result.spDiff,
 				})}
 			>
-				<div className="stack font-bold items-center text-lg text-center">
+				<div className="stack sm font-bold items-center text-lg text-center">
 					<img
 						src={result.logoUrl}
 						width={36}

@@ -314,6 +314,8 @@
 	display: flex;
 	gap: var(--s-2);
 	flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: center;
 	margin: 0 auto;
 	padding: 0;
 
