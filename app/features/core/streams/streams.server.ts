@@ -49,6 +49,21 @@ export function getLiveTournamentStreams(): SidebarStream[] {
 	return streams;
 }
 
+/** Lowercased Twitch usernames of all members and casters streaming a currently live tournament. */
+export function getLiveTournamentStreamerTwitchNames(): string[] {
+	const names: string[] = [];
+
+	for (const tournament of RunningTournaments.all) {
+		if (tournament.isLeagueDivision) continue;
+
+		for (const stream of tournament.streams) {
+			names.push(stream.twitchUserName.toLowerCase());
+		}
+	}
+
+	return names;
+}
+
 function deriveCurrentRound(tournament: Tournament): string {
 	for (const bracket of tournament.brackets.toReversed()) {
 		if (bracket.preview) continue;
