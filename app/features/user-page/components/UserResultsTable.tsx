@@ -45,8 +45,8 @@ export function UserResultsTable({
 				<tr>
 					{hasHighlightCheckboxes && <th />}
 					<th id={placementHeaderId}>{t("results.placing")}</th>
-					<th>{t("results.date")}</th>
 					<th>{t("results.tournament")}</th>
+					<th>{t("results.date")}</th>
 					<th>{t("results.participation")}</th>
 					<th>{t("results.team")}</th>
 				</tr>
@@ -86,13 +86,6 @@ export function UserResultsTable({
 									</div>
 								</div>
 							</td>
-							<td className="whitespace-nowrap">
-								{formatDate(databaseTimestampToDate(result.startTime), {
-									day: "numeric",
-									month: "numeric",
-									year: "2-digit",
-								})}
-							</td>
 							<td id={nameCellId} className="whitespace-nowrap">
 								<div className="stack horizontal xs items-center">
 									{result.eventId ? (
@@ -126,6 +119,13 @@ export function UserResultsTable({
 										</>
 									) : null}
 								</div>
+							</td>
+							<td className="whitespace-nowrap">
+								{formatDate(databaseTimestampToDate(result.startTime), {
+									day: "numeric",
+									month: "numeric",
+									year: "2-digit",
+								})}
 							</td>
 							<td>
 								<ParticipationPill setResults={result.setResults} />
