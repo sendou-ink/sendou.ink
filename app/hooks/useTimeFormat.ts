@@ -84,9 +84,23 @@ export function useTimeFormat() {
 
 	const formatDateTime = (date: Date, options?: Intl.DateTimeFormatOptions) => {
 		const adjusted = withYearFirstAdjustment(options, dateFormat);
+		const useDateLocale = isNumericMonth(adjusted);
+		const hasTimePart = Boolean(adjusted?.hour);
+
+		// When the user's date-format preference forces a non-language locale (e.g. sv-SE
+		// for YMD), applying it to the full date+time would also pull in that locale's
+		// time conventions — most visibly Swedish "fm"/"em" instead of "AM"/"PM".
+		// Format the date and time portions separately to keep them locale-correct.
+		if (hasTimePart && useDateLocale && dateLocale !== i18n.language) {
+			const { hour, minute, second, timeZoneName, ...dateOptions } = adjusted!;
+			const datePart = date.toLocaleDateString(dateLocale, dateOptions);
+			const timePart = formatTime(date, { hour, minute, second, timeZoneName });
+			return `${datePart}, ${timePart}`;
+		}
+
 		const result = date.toLocaleString(
-			isNumericMonth(adjusted) ? dateLocale : i18n.language,
-			adjusted?.hour
+			useDateLocale ? dateLocale : i18n.language,
+			hasTimePart
 				? {
 						...adjusted,
 						...clockOptions,
@@ -95,7 +109,7 @@ export function useTimeFormat() {
 						...adjusted,
 					},
 		);
-		return clockOptions.hourCycle === "h23" && adjusted?.hour
+		return clockOptions.hourCycle === "h23" && hasTimePart
 			? stripLeadingZeroFromHour(result)
 			: result;
 	};
