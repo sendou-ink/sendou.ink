@@ -107,7 +107,6 @@ export function TournamentMatchActionPickBanTab({
 	);
 }
 
-// xxx: or some core function from backend?
 function buildPickBanOptions({
 	pickBanMapPool,
 	mapList,

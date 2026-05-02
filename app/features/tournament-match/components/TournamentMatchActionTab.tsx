@@ -13,23 +13,18 @@ import {
 import { useUser } from "~/features/auth/core/user";
 import { useRecentlyReportedWeapons } from "~/features/sendouq/q-hooks";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import type {
-	MainWeaponId,
-	ModeShort,
-	StageId,
-} from "~/modules/in-game-lists/types";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import type { CommonUser } from "~/utils/kysely.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import { useMatch } from "../match-page-context";
 import { isSetOverByScore } from "../tournament-match-utils";
 
 export function TournamentMatchActionTab({
 	data,
-	currentMap,
 	ownTeamId,
 }: {
 	data: TournamentMatchLoaderData;
-	currentMap?: { stageId: StageId; mode: ModeShort };
 	ownTeamId: number;
 }) {
 	const { t } = useTranslation(["q"]);
@@ -37,6 +32,12 @@ export function TournamentMatchActionTab({
 	const user = useUser();
 	const reportFetcher = useFetcher();
 	const undoFetcher = useFetcher();
+	const {
+		teams: [teamOne, teamTwo],
+		scores,
+		scoreSum,
+		currentMap,
+	} = useMatch();
 
 	const weaponReport = useTournamentWeaponReport({
 		data,
@@ -51,17 +52,7 @@ export function TournamentMatchActionTab({
 		);
 	}
 
-	const opponentOneId = data.match.opponentOne!.id!;
-	const opponentTwoId = data.match.opponentTwo!.id!;
-
-	const scores: [number, number] = [
-		data.match.opponentOne?.score ?? 0,
-		data.match.opponentTwo?.score ?? 0,
-	];
-	const scoreSum = scores[0] + scores[1];
-
-	const teamOne = tournament.teamById(opponentOneId)!;
-	const teamTwo = tournament.teamById(opponentTwoId)!;
+	if (!teamOne || !teamTwo) return null;
 
 	const withPoints = tournament.bracketByIdxOrDefault(
 		tournament.matchIdToBracketIdx(data.match.id) ?? 0,
@@ -97,7 +88,7 @@ export function TournamentMatchActionTab({
 						teams: [teamOne, teamTwo],
 						scores,
 						results: data.results,
-						opponentOneId,
+						opponentOneId: teamOne.id,
 					}),
 					setEndingTeamIds,
 				}

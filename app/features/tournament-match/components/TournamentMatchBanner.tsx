@@ -20,12 +20,12 @@ import {
 	resolveLeagueRoundStartDate,
 } from "~/features/tournament/tournament-utils";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
-import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import { useMatch } from "../match-page-context";
 
 export function TournamentMatchBanner({
 	data,
@@ -34,20 +34,10 @@ export function TournamentMatchBanner({
 }) {
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
+	const { currentMap, teamsMissingActiveRoster } = useMatch();
 
 	const opponentOne = data.match.opponentOne;
 	const opponentTwo = data.match.opponentTwo;
-
-	const scoreSum = (opponentOne?.score ?? 0) + (opponentTwo?.score ?? 0);
-
-	const currentMap = data.mapList?.filter((m) => !m.bannedByTournamentTeamId)[
-		scoreSum
-	];
-
-	const teamsMissingActiveRoster = resolveTeamsMissingActiveRoster(
-		data,
-		tournament,
-	);
 
 	const leagueRoundLocked = isLeagueRoundLocked(tournament, data.match.roundId);
 	const leagueRoundStartDate = leagueRoundLocked
@@ -145,6 +135,7 @@ function TournamentMatchBannerTopRow({
 }) {
 	const tournament = useTournament();
 	const currentTime = useAutoRerender("ten seconds");
+	const { scores } = useMatch();
 
 	if (
 		!data.match.startedAt ||
@@ -167,8 +158,8 @@ function TournamentMatchBannerTopRow({
 	return (
 		<MatchBannerTopRow
 			score={{
-				alpha: data.match.opponentOne.score ?? 0,
-				bravo: data.match.opponentTwo.score ?? 0,
+				alpha: scores[0],
+				bravo: scores[1],
 				isFinal:
 					data.match.opponentOne?.result === "win" ||
 					data.match.opponentTwo?.result === "win",
@@ -423,25 +414,4 @@ function resolveBannerGames({
 			mode: null,
 		})),
 	];
-}
-
-function resolveTeamsMissingActiveRoster(
-	data: TournamentMatchLoaderData,
-	tournament: ReturnType<typeof useTournament>,
-): string[] {
-	const opponentOneId = data.match.opponentOne?.id;
-	const opponentTwoId = data.match.opponentTwo?.id;
-	if (!opponentOneId || !opponentTwoId) return [];
-
-	return [opponentOneId, opponentTwoId]
-		.map((id) => tournament.teamById(id))
-		.filter((team) => team != null)
-		.filter(
-			(team) =>
-				!tournamentTeamToActiveRosterUserIds(
-					team,
-					tournament.minMembersPerTeam,
-				),
-		)
-		.map((team) => team.name);
 }

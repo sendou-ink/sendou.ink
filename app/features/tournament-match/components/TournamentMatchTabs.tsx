@@ -2,7 +2,7 @@ import { useFetcher } from "react-router";
 import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
-import { MatchTabs } from "~/components/match-page/MatchTabs";
+import { MatchTabs, TAB_KEYS } from "~/components/match-page/MatchTabs";
 import type {
 	TimelineMap,
 	TimelinePickBanEvent,
@@ -13,7 +13,6 @@ import {
 	useConfirmRoom,
 } from "~/features/chat/room-link-utils";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import {
 	groupNumberToLetters,
@@ -22,6 +21,7 @@ import {
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import { tournamentTeamPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import { type MatchPageTeam, useMatch } from "../match-page-context";
 import { resolveHostingTeam, resolveRoomPass } from "../tournament-match-utils";
 import { TournamentMatchActionPickBanTab } from "./TournamentMatchActionPickBanTab";
 import { TournamentMatchActionTab } from "./TournamentMatchActionTab";
@@ -34,75 +34,18 @@ export function TournamentMatchTabs({
 }) {
 	const tournament = useTournament();
 	const user = useUser();
-
-	const opponentOneId = data.match.opponentOne?.id;
-	const opponentTwoId = data.match.opponentTwo?.id;
-	if (!opponentOneId || !opponentTwoId) return null;
-
-	const scoreSum =
-		(data.match.opponentOne?.score ?? 0) + (data.match.opponentTwo?.score ?? 0);
-	const currentMap = data.mapList?.filter((m) => !m.bannedByTournamentTeamId)[
-		scoreSum
-	];
-
-	const teamsMissingActiveRoster = resolveTeamsMissingActiveRoster(
-		data,
-		tournament,
-	);
-	const hasMissingActiveRoster = teamsMissingActiveRoster.length > 0;
-
-	const canReportScore = tournament.canReportScore({
-		matchId: data.match.id,
-		user,
-	});
-
-	const teamOne = tournament.teamById(opponentOneId);
-	const teamTwo = tournament.teamById(opponentTwoId);
-	const pickBanTeams =
-		teamOne && teamTwo
-			? ([teamOne, teamTwo] as [typeof teamOne, typeof teamTwo])
-			: undefined;
-
-	const turnOfResult =
-		pickBanTeams && data.match.roundMaps
-			? PickBan.turnOf({
-					results: data.results,
-					maps: data.match.roundMaps,
-					teams: [
-						{ id: pickBanTeams[0].id, seed: pickBanTeams[0].seed },
-						{ id: pickBanTeams[1].id, seed: pickBanTeams[1].seed },
-					],
-					mapList: data.mapList,
-					pickBanEventCount: data.pickBanEventCount,
-				})
-			: null;
-	const isPickBanStep = turnOfResult !== null && !hasMissingActiveRoster;
-
-	const isAdminEligible =
-		tournament.isOrganizerOrStreamer(user) && !tournament.ctx.isFinalized;
-
-	const leagueRoundLocked = isLeagueRoundLocked(tournament, data.match.roundId);
-
-	const hasReportedMaps = data.results.length > 0;
-	const hasPickBanEvents = data.pickBanEventCount > 0;
-
-	const isParticipant = data.match.players.some((p) => p.id === user?.id);
-	const canReportWeapons =
-		isParticipant && !tournament.ctx.isFinalized && hasReportedMaps;
-
-	const tabs = resolveVisibleTabs({
-		matchIsOver: data.matchIsOver,
-		canReportScore,
-		canReportWeapons,
-		canJoin: data.canJoin,
-		hasCurrentMap: Boolean(currentMap),
-		hasMissingActiveRoster,
-		hasReportedMaps,
-		hasPickBanEvents,
+	const {
+		teams: [teamOne, teamTwo],
+		scores,
+		tabs,
+		turnOfResult,
 		isPickBanStep,
-		isAdminEligible,
-		leagueRoundLocked,
-	});
+	} = useMatch();
+	if (!teamOne || !teamTwo) return null;
+
+	const opponentOneId = teamOne.id;
+	const opponentTwoId = teamTwo.id;
+	const pickBanTeams: [MatchPageTeam, MatchPageTeam] = [teamOne, teamTwo];
 
 	const userTeamId = tournament.teamMemberOfByUser(user)?.id;
 
@@ -119,22 +62,24 @@ export function TournamentMatchTabs({
 
 	return (
 		<MatchTabs tabs={tabs}>
-			{tabs.includes("result") ? (
+			{tabs.includes(TAB_KEYS.RESULT) ? (
 				<MatchResultTab
 					teams={resolveTimelineTeams(opponentOneId, opponentTwoId, tournament)}
 					score={{
-						alpha: data.match.opponentOne?.score ?? 0,
-						bravo: data.match.opponentTwo?.score ?? 0,
+						alpha: scores[0],
+						bravo: scores[1],
 					}}
 					maps={timelineMaps}
 					pickBanRowsBySlot={pickBanData?.rowsBySlot}
-					isOngoing={!data.matchIsOver && hasReportedMaps}
+					isOngoing={!data.matchIsOver && data.results.length > 0}
 				/>
 			) : null}
-			{tabs.includes("join") ? <TournamentMatchJoinTab data={data} /> : null}
+			{tabs.includes(TAB_KEYS.JOIN) ? (
+				<TournamentMatchJoinTab data={data} />
+			) : null}
 			<TournamentMatchRosterTab data={data} />
-			{tabs.includes("action") ? (
-				isPickBanStep && pickBanTeams && turnOfResult ? (
+			{tabs.includes(TAB_KEYS.ACTION) ? (
+				isPickBanStep && turnOfResult ? (
 					<TournamentMatchActionPickBanTab
 						key={`${turnOfResult.teamId}-${data.pickBanEventCount}`}
 						data={data}
@@ -144,12 +89,13 @@ export function TournamentMatchTabs({
 				) : (
 					<TournamentMatchActionTab
 						data={data}
-						currentMap={currentMap}
 						ownTeamId={userTeamId ?? opponentOneId}
 					/>
 				)
 			) : null}
-			{tabs.includes("admin") ? <TournamentMatchAdminTab data={data} /> : null}
+			{tabs.includes(TAB_KEYS.ADMIN) ? (
+				<TournamentMatchAdminTab data={data} />
+			) : null}
 		</MatchTabs>
 	);
 }
@@ -162,6 +108,7 @@ function resolveTimelineTeams(
 	const teamOne = tournament.teamById(opponentOneId);
 	const teamTwo = tournament.teamById(opponentTwoId);
 
+	// xxx: is this correct?
 	return {
 		alpha: {
 			name: teamOne?.name ?? "?",
@@ -354,9 +301,11 @@ function TournamentMatchJoinTab({ data }: { data: TournamentMatchLoaderData }) {
 	const tournament = useTournament();
 	const user = useUser();
 	const { onConfirmRoom, isConfirming } = useConfirmRoom();
+	const {
+		teams: [teamOne, teamTwo],
+	} = useMatch();
+	if (!teamOne || !teamTwo) return null;
 
-	const teamOne = tournament.teamById(data.match.opponentOne!.id!)!;
-	const teamTwo = tournament.teamById(data.match.opponentTwo!.id!)!;
 	const hostingTeam = resolveHostingTeam([teamOne, teamTwo]);
 
 	const hasRoundRobin = tournament.brackets.some(
@@ -411,9 +360,10 @@ function TournamentMatchRosterTab({
 	const tournament = useTournament();
 	const user = useUser();
 	const fetcher = useFetcher();
-
-	const teamOne = tournament.teamById(data.match.opponentOne!.id!)!;
-	const teamTwo = tournament.teamById(data.match.opponentTwo!.id!)!;
+	const {
+		teams: [teamOne, teamTwo],
+	} = useMatch();
+	if (!teamOne || !teamTwo) return null;
 
 	return (
 		<MatchRosterTab
@@ -502,77 +452,4 @@ function TournamentMatchRosterTab({
 			{ method: "post" },
 		);
 	}
-}
-
-function resolveVisibleTabs({
-	matchIsOver,
-	canReportScore,
-	canReportWeapons,
-	canJoin,
-	hasCurrentMap,
-	hasMissingActiveRoster,
-	hasReportedMaps,
-	hasPickBanEvents,
-	isPickBanStep,
-	isAdminEligible,
-	leagueRoundLocked,
-}: {
-	matchIsOver: boolean;
-	canReportScore: boolean;
-	canReportWeapons: boolean;
-	canJoin: boolean;
-	hasCurrentMap: boolean;
-	hasMissingActiveRoster: boolean;
-	hasReportedMaps: boolean;
-	hasPickBanEvents: boolean;
-	isPickBanStep: boolean;
-	isAdminEligible: boolean;
-	leagueRoundLocked: boolean;
-}) {
-	const tabs: Array<"join" | "rosters" | "action" | "result" | "admin"> = [];
-
-	if (matchIsOver) {
-		tabs.push("result");
-	}
-	if (canJoin) {
-		tabs.push("join");
-	}
-	tabs.push("rosters");
-	if (
-		!leagueRoundLocked &&
-		(isPickBanStep ||
-			(canReportScore && hasCurrentMap && !hasMissingActiveRoster) ||
-			canReportWeapons)
-	) {
-		tabs.push("action");
-	}
-	if (isAdminEligible) {
-		tabs.push("admin");
-	}
-	if (!matchIsOver && (hasReportedMaps || hasPickBanEvents)) {
-		tabs.push("result");
-	}
-
-	return tabs;
-}
-
-function resolveTeamsMissingActiveRoster(
-	data: TournamentMatchLoaderData,
-	tournament: ReturnType<typeof useTournament>,
-): string[] {
-	const opponentOneId = data.match.opponentOne?.id;
-	const opponentTwoId = data.match.opponentTwo?.id;
-	if (!opponentOneId || !opponentTwoId) return [];
-
-	return [opponentOneId, opponentTwoId]
-		.map((id) => tournament.teamById(id))
-		.filter((team) => team != null)
-		.filter(
-			(team) =>
-				!tournamentTeamToActiveRosterUserIds(
-					team,
-					tournament.minMembersPerTeam,
-				),
-		)
-		.map((team) => team.name);
 }

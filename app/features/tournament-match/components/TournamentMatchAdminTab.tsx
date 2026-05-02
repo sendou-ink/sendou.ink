@@ -19,6 +19,7 @@ import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import { useMatch } from "../match-page-context";
 import { OrganizerMatchMapListDialog } from "./OrganizerMatchMapListDialog";
 import styles from "./TournamentMatchAdminTab.module.css";
 
@@ -31,19 +32,9 @@ export function TournamentMatchAdminTab({
 }) {
 	const user = useUser();
 	const tournament = useTournament();
-
-	const opponentOneId = data.match.opponentOne?.id;
-	const opponentTwoId = data.match.opponentTwo?.id;
-	const teamOne = opponentOneId
-		? tournament.teamById(opponentOneId)
-		: undefined;
-	const teamTwo = opponentTwoId
-		? tournament.teamById(opponentTwoId)
-		: undefined;
-
-	const scoreOne = data.match.opponentOne?.score ?? 0;
-	const scoreTwo = data.match.opponentTwo?.score ?? 0;
-	const matchIsOngoing = scoreOne > 0 || scoreTwo > 0;
+	const {
+		teams: [teamOne, teamTwo],
+	} = useMatch();
 
 	const isOrganizer = tournament.isOrganizer(user);
 	const canReopen =
@@ -70,7 +61,6 @@ export function TournamentMatchAdminTab({
 				) : null}
 				{castSectionVisible ? (
 					<AdminCastSection
-						matchIsOngoing={matchIsOngoing}
 						matchId={data.match.id}
 						matchStatus={data.match.status}
 					/>
@@ -84,16 +74,17 @@ export function TournamentMatchAdminTab({
 }
 
 function AdminCastSection({
-	matchIsOngoing,
 	matchId,
 	matchStatus,
 }: {
-	matchIsOngoing: boolean;
 	matchId: number;
 	matchStatus: number;
 }) {
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
+	const { scoreSum } = useMatch();
+
+	const isMatchStarted = scoreSum > 0;
 
 	const castTwitchAccounts = tournament.ctx.castTwitchAccounts ?? [];
 	const castedMatchesInfo = tournament.ctx.castedMatchesInfo;
@@ -108,7 +99,7 @@ function AdminCastSection({
 		(matchStatus === TournamentMatchStatus.Locked ||
 			matchStatus === TournamentMatchStatus.Waiting) &&
 		!isLocked;
-	const canUnlock = !matchIsOngoing && isLocked;
+	const canUnlock = !isMatchStarted && isLocked;
 
 	return (
 		<section className={styles.castSection}>

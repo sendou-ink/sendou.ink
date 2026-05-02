@@ -7,6 +7,7 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { nullFilledArray } from "~/utils/arrays";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import { useMatch } from "../match-page-context";
 import { pickInfoText } from "../tournament-match-utils";
 
 export function OrganizerMatchMapListDialog({
@@ -17,14 +18,9 @@ export function OrganizerMatchMapListDialog({
 	const { t } = useTranslation(["game-misc", "tournament"]);
 	const [isOpen, setIsOpen] = React.useState(false);
 	const tournament = useTournament();
-
-	const teamOne = data.match.opponentOne?.id
-		? tournament.teamById(data.match.opponentOne.id)
-		: undefined;
-	const teamTwo = data.match.opponentTwo?.id
-		? tournament.teamById(data.match.opponentTwo.id)
-		: undefined;
-
+	const {
+		teams: [teamOne, teamTwo],
+	} = useMatch();
 	if (!teamOne || !teamTwo) return null;
 
 	const bannedMaps = data.mapList?.filter(
