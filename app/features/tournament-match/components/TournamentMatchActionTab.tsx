@@ -85,6 +85,7 @@ export function TournamentMatchActionTab({
 		setEndingTeamIds.length > 0
 			? {
 					...buildSetEndingData({
+						tournament,
 						teams: [teamOne, teamTwo],
 						scores,
 						results: data.results,
@@ -101,12 +102,12 @@ export function TournamentMatchActionTab({
 				{
 					id: teamOne.id,
 					name: teamOne.name,
-					avatar: teamOne.pickupAvatarUrl ?? undefined,
+					avatar: tournament.tournamentTeamLogoSrc(teamOne) ?? undefined,
 				},
 				{
 					id: teamTwo.id,
 					name: teamTwo.name,
-					avatar: teamTwo.pickupAvatarUrl ?? undefined,
+					avatar: tournament.tournamentTeamLogoSrc(teamTwo) ?? undefined,
 				},
 			]}
 			ownTeamId={ownTeamId}
@@ -215,11 +216,13 @@ function useTournamentWeaponReport({
 }
 
 function buildSetEndingData({
+	tournament,
 	teams,
 	scores,
 	results,
 	opponentOneId,
 }: {
+	tournament: ReturnType<typeof useTournament>;
 	teams: [
 		NonNullable<ReturnType<ReturnType<typeof useTournament>["teamById"]>>,
 		NonNullable<ReturnType<ReturnType<typeof useTournament>["teamById"]>>,
@@ -303,11 +306,11 @@ function buildSetEndingData({
 		teams: {
 			alpha: {
 				name: teamOne.name,
-				avatar: teamOne.pickupAvatarUrl ?? undefined,
+				avatar: tournament.tournamentTeamLogoSrc(teamOne) ?? undefined,
 			},
 			bravo: {
 				name: teamTwo.name,
-				avatar: teamTwo.pickupAvatarUrl ?? undefined,
+				avatar: tournament.tournamentTeamLogoSrc(teamTwo) ?? undefined,
 			},
 		},
 		score: { alpha: scores[0], bravo: scores[1] },

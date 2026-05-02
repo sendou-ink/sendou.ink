@@ -108,15 +108,18 @@ function resolveTimelineTeams(
 	const teamOne = tournament.teamById(opponentOneId);
 	const teamTwo = tournament.teamById(opponentTwoId);
 
-	// xxx: is this correct?
 	return {
 		alpha: {
 			name: teamOne?.name ?? "?",
-			avatar: teamOne?.pickupAvatarUrl ?? undefined,
+			avatar: teamOne
+				? (tournament.tournamentTeamLogoSrc(teamOne) ?? undefined)
+				: undefined,
 		},
 		bravo: {
 			name: teamTwo?.name ?? "?",
-			avatar: teamTwo?.pickupAvatarUrl ?? undefined,
+			avatar: teamTwo
+				? (tournament.tournamentTeamLogoSrc(teamTwo) ?? undefined)
+				: undefined,
 		},
 	};
 }
@@ -402,7 +405,7 @@ function TournamentMatchRosterTab({
 					tournamentId: tournament.ctx.id,
 					tournamentTeamId: team.id,
 				}),
-				avatar: team.pickupAvatarUrl ?? undefined,
+				avatar: tournament.tournamentTeamLogoSrc(team) ?? undefined,
 			},
 			members: team.members.map((m) => ({
 				id: m.userId,
