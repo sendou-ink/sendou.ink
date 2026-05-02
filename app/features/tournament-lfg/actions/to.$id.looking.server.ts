@@ -280,6 +280,23 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			break;
 		}
+		case "DELETE_GROUP": {
+			const tournament = await tournamentFromDBCached({
+				tournamentId,
+				user,
+			});
+			errorToastIfFalsy(
+				tournament.isOrganizer(user),
+				"Only tournament organizers can remove other groups",
+			);
+
+			await TournamentLFGRepository.leaveLfg({
+				userId: data.userId,
+				tournamentId,
+			});
+
+			break;
+		}
 		case "ADD_SUB": {
 			const tournament = await tournamentFromDBCached({
 				tournamentId,
