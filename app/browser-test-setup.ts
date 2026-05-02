@@ -15,5 +15,4 @@ i18next.use(initReactI18next).init({
 	...config,
 	lng: "en",
 	resources,
-	showSupportNotice: false,
 });
