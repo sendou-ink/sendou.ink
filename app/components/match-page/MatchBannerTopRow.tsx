@@ -33,7 +33,10 @@ function Score({ score }: { score: MatchBannerTopRowProps["score"] }) {
 			<div>
 				{score.alpha}-{score.bravo}
 			</div>
-			<div className={styles.sub}>
+			<div
+				className={styles.sub}
+				data-testid={score.isFinal ? "match-final" : undefined}
+			>
 				{score.isFinal
 					? t("q:match.banner.final")
 					: score.bestOf
@@ -73,7 +76,7 @@ function Timer({
 			: minuteFormatter.format(minutes);
 
 	return (
-		<div className={styles.values}>
+		<div className={styles.values} data-testid="match-timer">
 			<time dateTime={dateTime(time.currentMinutes)} className={styles.sub}>
 				{displayValue(time.currentMinutes)}
 			</time>

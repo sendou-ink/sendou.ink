@@ -512,7 +512,7 @@ function EditReportedScoreForm({
 					<fieldset key={team.id} className={styles.teamFieldset}>
 						<legend>{team.name}</legend>
 						<div className="stack sm">
-							{team.members.map((member) => {
+							{team.members.map((member, memberIdx) => {
 								const checked = checkedPlayers[teamIdx as 0 | 1].includes(
 									member.userId,
 								);
@@ -527,6 +527,7 @@ function EditReportedScoreForm({
 											onChange={() =>
 												togglePlayer(teamIdx as 0 | 1, member.userId)
 											}
+											data-testid={`edit-result-player-checkbox-${teamIdx === 0 ? "alpha" : "bravo"}-${memberIdx}`}
 										/>
 										<span>{member.username}</span>
 									</label>

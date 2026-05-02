@@ -2,6 +2,11 @@ import type { Page } from "@playwright/test";
 import { NZAP_TEST_ID, STAFF_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import {
+	SENDOUQ_LOOKING_PAGE,
+	SENDOUQ_PAGE,
+	sendouQMatchPage,
+} from "~/utils/urls";
+import {
 	expect,
 	impersonate,
 	navigate,
@@ -9,12 +14,9 @@ import {
 	selectWeapon,
 	test,
 	waitForPOSTResponse,
-} from "~/utils/playwright";
-import {
-	SENDOUQ_LOOKING_PAGE,
-	SENDOUQ_PAGE,
-	sendouQMatchPage,
-} from "~/utils/urls";
+} from "./helpers/playwright";
+
+// xxx: fix failing tests
 
 /**
  * Tests for the SendouQ match page (`/q/match/$id`).

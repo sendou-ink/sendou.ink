@@ -207,7 +207,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const isParticipant = match.players.some((p) => p.id === user?.id);
 	const canJoin =
 		!matchIsOver &&
-		isParticipant &&
+		(isParticipant || tournament.isOrganizerOrStreamer(user)) &&
 		!isLeagueRoundLocked(tournament, match.roundId);
 
 	const [roomLinks, anyUserPrefersNoSplatnet] = canJoin

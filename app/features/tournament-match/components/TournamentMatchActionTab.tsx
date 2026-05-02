@@ -143,6 +143,7 @@ export function TournamentMatchActionTab({
 							{ method: "post" },
 						);
 					}}
+					testId="undo-score-button"
 				>
 					{t("q:match.undoReport")}
 				</SendouButton>

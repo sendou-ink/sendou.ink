@@ -37,6 +37,7 @@ export function MatchBanner({
 			style={{
 				"--stage-img": `url(${stageBannerImageUrl(stageId)})`,
 			}}
+			data-testid="stage-banner"
 		>
 			<div className={clsx(styles.map, styles.thickText)}>
 				<ModeImage mode={mode} size={24} />
@@ -73,6 +74,7 @@ interface IconBannerProps {
 	subtitle?: string;
 	screenLegal?: boolean;
 	topRight?: React.ReactNode;
+	testId?: string;
 }
 
 export function IconBanner({
@@ -81,9 +83,10 @@ export function IconBanner({
 	subtitle,
 	screenLegal,
 	topRight,
+	testId,
 }: IconBannerProps) {
 	return (
-		<div className={styles.iconBanner}>
+		<div className={styles.iconBanner} data-testid={testId}>
 			{icon}
 			<div className={styles.iconBannerHeader}>{header}</div>
 			{subtitle ? (
@@ -109,7 +112,11 @@ function ScreenNotice({ screenLegal }: { screenLegal: boolean }) {
 	return (
 		<SendouPopover
 			trigger={
-				<SendouButton variant="minimal" className={styles.notice}>
+				<SendouButton
+					variant="minimal"
+					className={styles.notice}
+					testId={screenLegal ? "screen-allowed" : "screen-banned"}
+				>
 					<Icon
 						size={imgSize}
 						className={screenLegal ? styles.legalIcon : styles.illegalIcon}

@@ -86,7 +86,11 @@ export function MatchJoinTab({
 							<InfoWithHeader header={t("q:match.hostedBy")} value={hostedBy} />
 						) : null}
 						<InfoWithHeader header={t("q:match.pool")} value={pool} />
-						<InfoWithHeader header={t("q:match.password.short")} value={pass} />
+						<InfoWithHeader
+							header={t("q:match.password.short")}
+							value={pass}
+							testId="room-pass"
+						/>
 					</div>
 				</div>
 			</div>
@@ -122,11 +126,21 @@ function StaleRoomPrompt({
 	);
 }
 
-function InfoWithHeader({ header, value }: { header: string; value: string }) {
+function InfoWithHeader({
+	header,
+	value,
+	testId,
+}: {
+	header: string;
+	value: string;
+	testId?: string;
+}) {
 	return (
 		<div>
 			<div className={styles.infoHeader}>{header}</div>
-			<div className={styles.infoValue}>{value}</div>
+			<div className={styles.infoValue} data-testid={testId}>
+				{value}
+			</div>
 		</div>
 	);
 }

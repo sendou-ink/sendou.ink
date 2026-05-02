@@ -1,4 +1,5 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { FRIENDS_PAGE } from "~/utils/urls";
 import {
 	expect,
 	impersonate,
@@ -8,8 +9,7 @@ import {
 	submit,
 	test,
 	waitForPOSTResponse,
-} from "~/utils/playwright";
-import { FRIENDS_PAGE } from "~/utils/urls";
+} from "./helpers/playwright";
 
 test.describe("Friends", () => {
 	test("send friend request, accept it, then delete friend", async ({

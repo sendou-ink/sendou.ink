@@ -41,7 +41,16 @@ export function TournamentMatchTabs({
 		turnOfResult,
 		isPickBanStep,
 	} = useMatch();
-	if (!teamOne || !teamTwo) return null;
+
+	// Preview matches (participants TBD) only render the admin tab so organizers
+	// can pre-cast or pre-prepare; everything else needs both teams.
+	if (!teamOne || !teamTwo) {
+		return tabs.includes(TAB_KEYS.ADMIN) ? (
+			<MatchTabs tabs={[TAB_KEYS.ADMIN]}>
+				<TournamentMatchAdminTab data={data} />
+			</MatchTabs>
+		) : null;
+	}
 
 	const opponentOneId = teamOne.id;
 	const opponentTwoId = teamTwo.id;

@@ -134,6 +134,7 @@ export function MatchActionTab({
 							isOwnTeam={teams[0].id === ownTeamId}
 							hideLabel={ownTeamId == null}
 							className={styles.alpha}
+							testId="winner-radio-1"
 						/>
 						<StageImage
 							stageId={stageId}
@@ -150,6 +151,7 @@ export function MatchActionTab({
 							isOwnTeam={teams[1].id === ownTeamId}
 							hideLabel={ownTeamId == null}
 							className={clsx(styles.bravo)}
+							testId="winner-radio-2"
 						/>
 					</RadioGroup>
 
@@ -160,6 +162,7 @@ export function MatchActionTab({
 									type="checkbox"
 									checked={isKo}
 									onChange={(e) => setIsKo(e.target.checked)}
+									data-testid="ko-checkbox"
 								/>
 								{t("q:match.action.ko")}
 							</label>
@@ -178,6 +181,7 @@ export function MatchActionTab({
 							}
 						}}
 						className={styles.submit}
+						testId="report-score-button"
 					>
 						{t("common:actions.submit")}
 					</SendouButton>
@@ -248,6 +252,7 @@ function SetEndingConfirmation({
 					variant="primary"
 					isDisabled={isSubmitting}
 					onPress={onConfirm}
+					testId="confirm-set-end-button"
 				>
 					{t("common:actions.confirm")}
 				</SendouButton>
@@ -264,11 +269,13 @@ function TeamRadioOption({
 	isOwnTeam,
 	hideLabel,
 	className,
+	testId,
 }: {
 	team: ActionTabTeam;
 	isOwnTeam: boolean;
 	hideLabel?: boolean;
 	className?: string;
+	testId?: string;
 }) {
 	const { t } = useTranslation(["q"]);
 
@@ -279,6 +286,7 @@ function TeamRadioOption({
 			value={String(team.id)}
 			aria-label={team.name}
 			className={clsx(styles.teamRadioContainer, className)}
+			data-testid={testId}
 		>
 			{({ isSelected, isFocusVisible }) => (
 				<span

@@ -148,6 +148,7 @@ export function MatchActionPickBanTab({
 								if (!selected) return;
 								onSubmit?.({ type, map: selected });
 							}}
+							testId="pick-ban-submit-button"
 						>
 							{t("common:actions.submit")}
 						</SendouButton>
@@ -294,6 +295,7 @@ function StageTile({
 					}}
 					onClick={onSelect}
 					disabled={disabled}
+					data-testid="pick-ban-button"
 				/>
 				{isSelected ? (
 					type === "PICK" ? (
@@ -353,6 +355,7 @@ function ModeTile({
 					})}
 					onClick={onSelect}
 					disabled={disabled}
+					data-testid="pick-ban-button"
 				>
 					<ModeImage mode={option.mode!} size={48} />
 				</button>

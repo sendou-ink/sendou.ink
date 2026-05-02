@@ -15,6 +15,7 @@ export const handle: SendouRouteHandle = {
 	i18n: ["q"],
 };
 
+// xxx: check page when both teams are not resolved yet
 export default function TournamentMatchPage() {
 	const data = useLoaderData<typeof loader>();
 

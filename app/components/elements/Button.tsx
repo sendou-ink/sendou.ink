@@ -28,6 +28,7 @@ export interface SendouButtonProps
 	shape?: "circle" | "square";
 	icon?: JSX.Element;
 	children?: React.ReactNode;
+	testId?: string;
 }
 
 export function SendouButton({
@@ -37,10 +38,12 @@ export function SendouButton({
 	shape,
 	className,
 	icon,
+	testId,
 	...rest
 }: SendouButtonProps) {
 	return (
 		<ReactAriaButton
+			data-testid={testId}
 			{...rest}
 			className={buttonClassName({ className, variant, size, shape })}
 		>

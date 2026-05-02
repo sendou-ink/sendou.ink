@@ -37,7 +37,10 @@ function ModeProgress({ games }: Pick<MatchBannerBottomRowProps, "games">) {
 	if (allSameMode) {
 		return (
 			<div className={styles.modeProgress}>
-				<div className={styles.mode}>
+				<div
+					className={styles.mode}
+					data-testid={`mode-progress-${knownModes[0]}`}
+				>
 					<ModeImage mode={knownModes[0]} size={16} />
 				</div>
 				<div className={styles.modeCount}>×{games.length}</div>
@@ -49,11 +52,19 @@ function ModeProgress({ games }: Pick<MatchBannerBottomRowProps, "games">) {
 		<div className={styles.modeProgress}>
 			{games.map((game, i) =>
 				game.mode ? (
-					<div key={i} className={styles.mode}>
+					<div
+						key={i}
+						className={styles.mode}
+						data-testid={`mode-progress-${game.mode}`}
+					>
 						<ModeImage mode={game.mode} size={16} />
 					</div>
 				) : (
-					<div key={i} className={clsx(styles.mode, styles.modePlaceholder)}>
+					<div
+						key={i}
+						className={clsx(styles.mode, styles.modePlaceholder)}
+						data-testid="mode-progress-banned"
+					>
 						<MousePointerClick size={16} />
 					</div>
 				),

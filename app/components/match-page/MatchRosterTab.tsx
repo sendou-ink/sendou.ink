@@ -138,13 +138,14 @@ function TeamRoster({
 			{team.members.length > 0 ? (
 				<ul className={styles.rosterMembers}>
 					{isEditing
-						? team.members.map((member) => (
+						? team.members.map((member, index) => (
 								<li key={member.id}>
 									<label className="stack horizontal sm items-center cursor-pointer">
 										<input
 											type="checkbox"
 											checked={selectedMemberIds.includes(member.id)}
 											onChange={() => handleToggleMember(member.id)}
+											data-testid={`player-checkbox-${side}-${index}`}
 										/>
 										<Avatar user={member} size="xxs" />
 										<span>{member.username}</span>
@@ -188,6 +189,7 @@ function TeamRoster({
 								isSubmitting || selectedMemberIds.length !== minMembersPerTeam
 							}
 							onPress={handleSubmit}
+							testId={`save-active-roster-button-${side}`}
 						>
 							{t("common:actions.submit")}
 						</SendouButton>
@@ -210,6 +212,7 @@ function TeamRoster({
 						setSelectedMemberIds(activeMembers.map((m) => m.id));
 						setIsEditing(true);
 					}}
+					testId={`edit-active-roster-button-${side}`}
 				>
 					{t("common:actions.edit")}
 				</SendouButton>

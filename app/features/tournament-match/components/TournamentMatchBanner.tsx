@@ -83,6 +83,7 @@ export function TournamentMatchBanner({
 						teams: teamsMissingActiveRoster.join(" & "),
 					})}
 					screenLegal={screenLegal}
+					testId="active-roster-needed-text"
 				/>
 			) : data.matchIsOver ? (
 				<MultiMatchBanner

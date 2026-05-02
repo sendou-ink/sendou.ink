@@ -82,10 +82,10 @@ pnpm exec playwright show-trace test-results/<test-folder>/trace.zip
 
 ## Test pattern reference
 
-Every test follows this pattern — use these imports from `~/utils/playwright`, NOT raw Playwright APIs:
+Every test follows this pattern — use these imports from `./helpers/playwright`, NOT raw Playwright APIs:
 
 ```typescript
-import { expect, impersonate, navigate, seed, test } from "~/utils/playwright";
+import { expect, impersonate, navigate, seed, test } from "./helpers/playwright";
 
 test.describe("Feature", () => {
   test("does something", async ({ page }) => {
@@ -104,7 +104,7 @@ Key rules:
 - Use `seed(page, variation?)` to reset the database. Available variations: DEFAULT, NO_TOURNAMENT_TEAMS, REG_OPEN, SMALL_SOS, NZAP_IN_TEAM, NO_SCRIMS, NO_SQ_GROUPS
 - Use `impersonate(page, userId?)` to authenticate. Default is admin (ADMIN_ID)
 - Avoid `page.waitForTimeout` — use assertions or `waitFor` patterns instead
-- Import `test` from `~/utils/playwright` (not from `@playwright/test`) — it includes worker port fixtures
+- Import `test` from `./helpers/playwright` (not from `@playwright/test`) — it includes worker port fixtures
 
 ## Environment variables
 
