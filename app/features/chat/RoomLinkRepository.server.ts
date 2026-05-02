@@ -45,3 +45,14 @@ export function refreshTimestamp(userId: number) {
 		.where("userId", "=", userId)
 		.execute();
 }
+
+export function deleteOld() {
+	return db
+		.deleteFrom("RoomLink")
+		.where(
+			"refreshedAt",
+			"<",
+			dateToDatabaseTimestamp(sub(new Date(), { hours: 2 })),
+		)
+		.executeTakeFirst();
+}
