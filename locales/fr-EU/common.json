@@ -322,6 +322,7 @@
 	"chat.systemMsg.scoreConfirmed": "{{name}} a confirmé le score. Le match est maintenant vérrouillé",
 	"chat.systemMsg.cancelReported": "{{name}} a demandé d'annuler le match",
 	"chat.systemMsg.cancelConfirmed": "{{name}} a confirmé l'anunulation du match. Le match est maintenant vérrouillé",
+	"chat.systemMsg.cancelRefused": "",
 	"chat.systemMsg.userLeft": "{{name}} a quitté le groupe",
 	"chat.newMessages": "Nouveau message",
 	"chat.sidebar.title": "",

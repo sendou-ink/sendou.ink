@@ -98,6 +98,9 @@ export function Chat({
 			case "CANCEL_CONFIRMED": {
 				return t("common:chat.systemMsg.cancelConfirmed", { name: name() });
 			}
+			case "CANCEL_REFUSED": {
+				return t("common:chat.systemMsg.cancelRefused", { name: name() });
+			}
 			case "USER_LEFT": {
 				return t("common:chat.systemMsg.userLeft", { name: name() });
 			}

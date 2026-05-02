@@ -62,7 +62,6 @@ export function SendouQMatchActionTab({
 				? data.match.groupBravo.id
 				: undefined;
 
-	// xxx: system messages for cancel sent, rejected or accepted and by who
 	if (
 		!awaitingConfirmation &&
 		!isLocked &&

@@ -316,6 +316,7 @@
 	"chat.systemMsg.scoreConfirmed": "",
 	"chat.systemMsg.cancelReported": "",
 	"chat.systemMsg.cancelConfirmed": "",
+	"chat.systemMsg.cancelRefused": "",
 	"chat.systemMsg.userLeft": "",
 	"chat.newMessages": "",
 	"chat.sidebar.title": "",

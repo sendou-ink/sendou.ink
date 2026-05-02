@@ -303,7 +303,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			if (unmappedMatch.chatCode) {
 				ChatSystemMessage.send({
 					room: unmappedMatch.chatCode,
-					revalidateOnly: true,
+					type: "CANCEL_REPORTED",
+					context: { name: user.username },
 				});
 			}
 
@@ -333,7 +334,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			if (unmappedMatch.chatCode) {
 				ChatSystemMessage.send({
 					room: unmappedMatch.chatCode,
-					revalidateOnly: true,
+					type: "CANCEL_CONFIRMED",
+					context: { name: user.username },
 				});
 			}
 
@@ -397,7 +399,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			if (unmappedMatch.chatCode) {
 				ChatSystemMessage.send({
 					room: unmappedMatch.chatCode,
-					revalidateOnly: true,
+					type: "CANCEL_REFUSED",
+					context: { name: user.username },
 				});
 			}
 

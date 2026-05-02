@@ -323,6 +323,7 @@
 	"chat.systemMsg.scoreConfirmed": "{{name}} подтвердил счёт. Матч теперь закрыт",
 	"chat.systemMsg.cancelReported": "{{name}} запросил отмену матча",
 	"chat.systemMsg.cancelConfirmed": "{{name}} подтвердил отмену матча. Матч теперь закрыт",
+	"chat.systemMsg.cancelRefused": "",
 	"chat.systemMsg.userLeft": "{{name}} покинул группу",
 	"chat.newMessages": "Новые сообщения",
 	"chat.sidebar.title": "",

@@ -320,6 +320,7 @@
 	"chat.systemMsg.scoreConfirmed": "{{name}} confirmed score. Match is now locked",
 	"chat.systemMsg.cancelReported": "{{name}} requested canceling the match",
 	"chat.systemMsg.cancelConfirmed": "{{name}} confirmed canceling the match. Match is now locked",
+	"chat.systemMsg.cancelRefused": "{{name}} refused canceling the match",
 	"chat.systemMsg.userLeft": "{{name}} left the group",
 	"chat.newMessages": "New messages",
 	"chat.sidebar.title": "Chat",
