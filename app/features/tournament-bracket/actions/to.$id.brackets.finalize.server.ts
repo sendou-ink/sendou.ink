@@ -1,3 +1,4 @@
+import { differenceInHours } from "date-fns";
 import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
@@ -65,7 +66,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const results = allMatchResultsByTournamentId(tournamentId);
 	invariant(results.length > 0, "No results found");
 
-	const season = Seasons.current(tournament.ctx.startTime)?.nth;
+	const season = resolveFinalizationSeason(tournament);
 
 	const seedingSkillCountsFor = tournament.skillCountsFor;
 	const standingsResult = Standings.tournamentStandings(tournament);
@@ -74,7 +75,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		teams: tournament.ctx.teams,
 		finalStandings,
 		results,
-		calculateSeasonalStats: tournament.ranked,
+		calculateSeasonalStats: tournament.ranked && typeof season === "number",
 		queryCurrentTeamRating: (identifier) =>
 			queryCurrentTeamRating({ identifier, season: season! }).rating,
 		queryCurrentUserRating: (userId) =>
@@ -115,9 +116,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		await updateSeriesTierHistory(tournament);
 	}
 
-	if (tournament.ranked) {
+	if (tournament.ranked && typeof season === "number") {
 		try {
-			refreshUserSkills(season!);
+			refreshUserSkills(season);
 		} catch (error) {
 			logger.warn("Error refreshing user skills", error);
 		}
@@ -210,4 +211,19 @@ async function updateSeriesTierHistory(tournament: Tournament) {
 	} catch (error) {
 		logger.error("Error updating series tier history", error);
 	}
+}
+
+function resolveFinalizationSeason(tournament: Tournament) {
+	// league divisions might be running for many weeks
+	const attributionDate = tournament.isLeagueDivision
+		? new Date()
+		: tournament.ctx.startTime;
+	const season = Seasons.current(attributionDate);
+	if (!season) return undefined;
+
+	// don't allow changing seasons that have already been closed for a long while
+	// even if you were sluggish with finalizing the tournament
+	if (differenceInHours(new Date(), season.ends) >= 24) return undefined;
+
+	return season.nth;
 }

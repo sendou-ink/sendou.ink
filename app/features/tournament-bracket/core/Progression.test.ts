@@ -832,6 +832,46 @@ describe("validatedSources - other rules", () => {
 
 		expect(Array.isArray(result)).toBe(true);
 	});
+
+	it("handles EMPTY_PLACEMENTS_ON_NON_SWISS (DE source with empty placements)", () => {
+		const error = Progression.bracketsToValidationError([
+			{
+				name: "Bracket 1",
+				type: "double_elimination",
+				settings: {},
+				requiresCheckIn: false,
+			},
+			{
+				name: "Bracket 2",
+				type: "double_elimination",
+				settings: {},
+				requiresCheckIn: false,
+				sources: [{ bracketIdx: 0, placements: [] }],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("EMPTY_PLACEMENTS_ON_NON_SWISS");
+	});
+
+	it("allows empty placements when source is Swiss with advanceThreshold", () => {
+		const result = Progression.bracketsToValidationError([
+			{
+				name: "Swiss",
+				type: "swiss",
+				settings: { advanceThreshold: 3 },
+				requiresCheckIn: false,
+			},
+			{
+				name: "Finals",
+				type: "double_elimination",
+				settings: {},
+				requiresCheckIn: false,
+				sources: [{ bracketIdx: 0, placements: [] }],
+			},
+		]);
+
+		expect(result).toBeNull();
+	});
 });
 
 describe("isFinals", () => {

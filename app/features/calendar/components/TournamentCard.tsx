@@ -47,7 +47,7 @@ export function TournamentCard({
 		}
 
 		return formatDateTimeSmartMinutes(date, {
-			month: "short",
+			month: "numeric",
 			day: "numeric",
 			hour: "numeric",
 			weekday: "short",

@@ -129,7 +129,7 @@ export default function TournamentRegisterPage() {
 											minute: "numeric",
 											hour: "numeric",
 											day: "numeric",
-											month: "long",
+											month: "numeric",
 										}}
 									/>
 								) : null}

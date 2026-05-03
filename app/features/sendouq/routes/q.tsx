@@ -18,6 +18,7 @@ import { useUser } from "~/features/auth/core/user";
 import type * as Seasons from "~/features/mmr/core/Seasons";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -64,6 +65,7 @@ export const meta: MetaFunction = (args) => {
 
 export default function QPage() {
 	const { t } = useTranslation(["q"]);
+	const { formatDateTime } = useTimeFormat();
 	const [dialogOpen, setDialogOpen] = React.useState(true);
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
@@ -132,9 +134,9 @@ export default function QPage() {
 								>
 									As a fresh account please wait before joining the queue. You
 									can join{" "}
-									{queueJoinStatus.toLocaleString("en-US", {
+									{formatDateTime(queueJoinStatus, {
 										day: "numeric",
-										month: "long",
+										month: "numeric",
 										hour: "numeric",
 										minute: "numeric",
 									})}
@@ -184,32 +186,10 @@ const countries = [
 	{ id: 3, countryCode: "FR", timeZone: "Europe/Paris", city: "paris" },
 	{ id: 4, countryCode: "JP", timeZone: "Asia/Tokyo", city: "tokyo" },
 ] as const;
-const weekdayFormatter = ({
-	timeZone,
-	locale,
-}: {
-	timeZone: string;
-	locale: string;
-}) =>
-	new Intl.DateTimeFormat([locale], {
-		timeZone,
-		weekday: "long",
-	});
-const clockFormatter = ({
-	timeZone,
-	locale,
-}: {
-	timeZone: string;
-	locale: string;
-}) =>
-	new Intl.DateTimeFormat([locale], {
-		timeZone,
-		hour: "numeric",
-		minute: "numeric",
-	});
 function Clocks() {
 	const isHydrated = useHydrated();
-	const { t, i18n } = useTranslation(["q"]);
+	const { t } = useTranslation(["q"]);
+	const { formatDate, formatTime } = useTimeFormat();
 	const now = useAutoRerender();
 
 	return (
@@ -223,19 +203,20 @@ function Clocks() {
 						<Flag countryCode={country.countryCode} />
 						<div className={clsx({ invisible: !isHydrated })}>
 							{isHydrated
-								? weekdayFormatter({
+								? formatDate(now, {
 										timeZone: country.timeZone,
-										locale: i18n.language,
-									}).format(now)
+										weekday: "long",
+									})
 								: // take space
 									"Monday"}
 						</div>
 						<div className={clsx({ invisible: !isHydrated })}>
 							{isHydrated
-								? clockFormatter({
+								? formatTime(now, {
 										timeZone: country.timeZone,
-										locale: i18n.language,
-									}).format(now)
+										hour: "numeric",
+										minute: "numeric",
+									})
 								: // take space
 									"0:00 PM"}
 						</div>
@@ -293,15 +274,16 @@ function ActiveSeasonInfo({
 }: {
 	season: SerializeFrom<Seasons.ListItem>;
 }) {
-	const { t, i18n } = useTranslation(["q"]);
+	const { t } = useTranslation(["q"]);
+	const { formatDateTime } = useTimeFormat();
 	const isHydrated = useHydrated();
 
 	const starts = new Date(season.starts);
 	const ends = new Date(season.ends);
 
 	const dateToString = (date: Date) =>
-		date.toLocaleString(i18n.language, {
-			month: "short",
+		formatDateTime(date, {
+			month: "numeric",
 			day: "numeric",
 			hour: "numeric",
 			minute: "numeric",
@@ -401,14 +383,15 @@ function UpcomingSeasonInfo({
 	season: SerializeFrom<Seasons.ListItem>;
 }) {
 	const { t } = useTranslation(["q"]);
+	const { formatDateTime } = useTimeFormat();
 	const isHydrated = useHydrated();
 	if (!isHydrated) return null;
 
 	const starts = new Date(season.starts);
 
 	const dateToString = (date: Date) =>
-		date.toLocaleString("en-US", {
-			month: "long",
+		formatDateTime(date, {
+			month: "numeric",
 			day: "numeric",
 			hour: "numeric",
 		});

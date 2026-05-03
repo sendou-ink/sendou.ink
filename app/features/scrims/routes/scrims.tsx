@@ -216,7 +216,7 @@ function ScrimsDaySection({
 				<h2 className="text-sm">
 					{formatDate(databaseTimestampToDate(posts[0].at), {
 						day: "numeric",
-						month: "long",
+						month: "numeric",
 						weekday: "long",
 					})}
 				</h2>
@@ -342,7 +342,7 @@ function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
 							<h2 className="text-sm">
 								{formatDate(databaseTimestampToDate(posts![0].at), {
 									day: "numeric",
-									month: "long",
+									month: "numeric",
 									weekday: "long",
 								})}
 							</h2>
@@ -411,7 +411,7 @@ function ScrimsDaySeparatedBookedCards({ posts }: { posts: ScrimPost[] }) {
 							<h2 className="text-sm">
 								{formatDate(databaseTimestampToDate(posts![0].at), {
 									day: "numeric",
-									month: "long",
+									month: "numeric",
 									weekday: "long",
 								})}
 							</h2>

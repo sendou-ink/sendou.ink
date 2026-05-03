@@ -28,6 +28,7 @@ import {
 } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -62,6 +63,7 @@ export function BracketMapListDialog({
 	isPreparing?: boolean;
 }) {
 	const { t } = useTranslation(["common"]);
+	const { formatDateTime } = useTimeFormat();
 	const fetcher = useFetcher();
 	const tournament = useTournament();
 	const untrimmedPreparedMaps = useBracketPreparedMaps(bracketIdx);
@@ -364,7 +366,13 @@ export function BracketMapListDialog({
 						>
 							Prepared by{" "}
 							{authorIdToUsername(tournament, preparedMaps.authorId)} @{" "}
-							{databaseTimestampToDate(preparedMaps.createdAt).toLocaleString()}
+							{formatDateTime(databaseTimestampToDate(preparedMaps.createdAt), {
+								day: "numeric",
+								month: "numeric",
+								year: "numeric",
+								hour: "numeric",
+								minute: "2-digit",
+							})}
 						</div>
 					) : null}
 				</div>

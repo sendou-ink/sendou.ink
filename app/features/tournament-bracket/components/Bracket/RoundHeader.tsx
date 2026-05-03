@@ -75,7 +75,7 @@ function LeagueRoundStartDate({ date }: { date: Date }) {
 		<div className={styles.elimRoundHeaderInfos}>
 			<div>
 				{formatDate(date, {
-					month: "short",
+					month: "numeric",
 					day: "numeric",
 				})}{" "}
 				→

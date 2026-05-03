@@ -2,6 +2,7 @@ import { isToday, isTomorrow } from "date-fns";
 import { useTranslation } from "react-i18next";
 import type { SidebarEvent } from "~/features/sidebar/core/sidebar.server";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import styles from "./EventsList.module.css";
 import { Placeholder } from "./Placeholder";
 import { ListLink } from "./SideNav";
@@ -14,6 +15,7 @@ export function EventsList({
 	onClick?: () => void;
 }) {
 	const { t, i18n } = useTranslation(["front"]);
+	const { formatDate, formatTime } = useTimeFormat();
 	const isHydrated = useHydrated();
 
 	if (events.length === 0) {
@@ -48,17 +50,10 @@ export function EventsList({
 			const str = rtf.format(1, "day");
 			return str.charAt(0).toUpperCase() + str.slice(1);
 		}
-		return date.toLocaleDateString(i18n.language, {
+		return formatDate(date, {
 			weekday: "long",
-			month: "short",
+			month: "numeric",
 			day: "numeric",
-		});
-	};
-
-	const formatTime = (date: Date) => {
-		return date.toLocaleTimeString(i18n.language, {
-			hour: "numeric",
-			minute: "2-digit",
 		});
 	};
 

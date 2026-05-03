@@ -288,6 +288,8 @@ export async function upsertWidgets(
 	return db.transaction().execute(async (trx) => {
 		await trx.deleteFrom("UserWidget").where("userId", "=", userId).execute();
 
+		if (widgets.length === 0) return;
+
 		await trx
 			.insertInto("UserWidget")
 			.values(

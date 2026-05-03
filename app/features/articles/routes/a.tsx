@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
 import { Main } from "~/components/Main";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { ARTICLES_MAIN_PAGE, articlePage, navIconUrl } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
@@ -30,6 +31,7 @@ export const meta: MetaFunction = (args) => {
 
 export default function ArticlesMainPage() {
 	const { t, i18n } = useTranslation(["common"]);
+	const { formatDate } = useTimeFormat();
 	const data = useLoaderData<typeof loader>();
 
 	return (
@@ -46,7 +48,14 @@ export default function ArticlesMainPage() {
 									style: "short",
 								}).format(article.authors.map((a) => a.name)),
 							})}{" "}
-							• <time>{article.dateString}</time>
+							•{" "}
+							<time>
+								{formatDate(new Date(article.date), {
+									day: "numeric",
+									month: "numeric",
+									year: "numeric",
+								})}
+							</time>
 						</div>
 					</li>
 				))}

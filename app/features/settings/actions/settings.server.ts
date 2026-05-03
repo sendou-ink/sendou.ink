@@ -72,6 +72,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 			break;
 		}
+		case "UPDATE_DATE_FORMAT": {
+			await UserRepository.updatePreferences(user.id, {
+				dateFormat: data.newValue,
+			});
+			break;
+		}
 		default: {
 			assertUnreachable(data);
 		}

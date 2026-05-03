@@ -25,7 +25,7 @@ export default function SuspendedPage() {
 				<div suppressHydrationWarning>
 					Ends:{" "}
 					{formatDateTime(ends, {
-						month: "long",
+						month: "numeric",
 						day: "numeric",
 						year: "numeric",
 						hour: "numeric",

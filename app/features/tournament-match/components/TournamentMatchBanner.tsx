@@ -21,6 +21,7 @@ import {
 } from "~/features/tournament/tournament-utils";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -33,6 +34,7 @@ export function TournamentMatchBanner({
 	data: TournamentMatchLoaderData;
 }) {
 	const { t } = useTranslation(["tournament"]);
+	const { formatDate } = useTimeFormat();
 	const tournament = useTournament();
 	const { currentMap, teamsMissingActiveRoster } = useMatch();
 
@@ -70,7 +72,11 @@ export function TournamentMatchBanner({
 					subtitle={
 						leagueRoundStartDate
 							? t("tournament:match.leagueLocked.subtitle", {
-									date: leagueRoundStartDate.toLocaleDateString(),
+									date: formatDate(leagueRoundStartDate, {
+										day: "numeric",
+										month: "numeric",
+										year: "numeric",
+									}),
 								})
 							: undefined
 					}

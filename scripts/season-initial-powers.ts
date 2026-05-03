@@ -3,8 +3,8 @@ import { ordinal } from "openskill";
 import { db, sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import { TIERS, type TierName } from "~/features/mmr/mmr-constants";
+import * as SkillRepository from "~/features/mmr/SkillRepository.server";
 import { freshUserSkills } from "~/features/mmr/tiered.server";
-import { addInitialSkill } from "~/features/sendouq/queries/addInitialSkill.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 
@@ -174,18 +174,12 @@ const newSkills = allSkills.map((s) => {
 	};
 });
 
-const allGroupsInactiveStm = sql.prepare(/* sql */ `
-  update
-    "Group"
-  set
-    "status" = 'INACTIVE'
-`);
-sql.transaction(() => {
+await db.transaction().execute(async (trx) => {
 	for (const skill of newSkills) {
-		addInitialSkill(skill);
+		await SkillRepository.addInitialSkill(skill, trx);
 	}
-	allGroupsInactiveStm.run();
-})();
+	await trx.updateTable("Group").set({ status: "INACTIVE" }).execute();
+});
 
 logger.info(
 	`Done adding new skills for season ${nth} (${newSkills.length} added)`,

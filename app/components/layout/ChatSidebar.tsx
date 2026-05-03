@@ -3,6 +3,7 @@ import { ArrowLeft, MessageSquare, X } from "lucide-react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher } from "react-router";
+import { useCurrentRouteChatCode } from "~/features/chat/ChatProvider";
 import {
 	extractRoomLink,
 	isMatchRoomUrl,
@@ -66,8 +67,18 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 	const chatContext = useChatContext()!;
 	const { formatDateTime } = useTimeFormat();
 
-	const nonExpiredRooms = chatContext.rooms
-		.filter((room) => room.expiresAt > Date.now())
+	const rawRouteChatCode = useCurrentRouteChatCode();
+	const routeChatCodes = rawRouteChatCode
+		? Array.isArray(rawRouteChatCode)
+			? rawRouteChatCode
+			: [rawRouteChatCode]
+		: [];
+
+	const visibleRooms = chatContext.rooms
+		.filter(
+			(room) =>
+				room.expiresAt > Date.now() || routeChatCodes.includes(room.chatCode),
+		)
 		.sort((a, b) => {
 			if (a.isObsolete !== b.isObsolete) return a.isObsolete ? 1 : -1;
 			const aRecency = a.lastMessageTimestamp || a.createdAt;
@@ -79,12 +90,12 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 		<div className={styles.sidebar}>
 			<SidebarHeader onClose={onClose} />
 			<div className={styles.roomList}>
-				{nonExpiredRooms.length === 0 ? (
+				{visibleRooms.length === 0 ? (
 					<div className={styles.emptyState}>
 						{t("common:chat.sidebar.noActiveChats")}
 					</div>
 				) : (
-					nonExpiredRooms.map((room) => {
+					visibleRooms.map((room) => {
 						const unread = chatContext.unreadCounts[room.chatCode] ?? 0;
 
 						return (
@@ -118,7 +129,7 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 									>
 										{resolveDatePlaceholders(room.header, (d) =>
 											formatDateTime(d, {
-												month: "short",
+												month: "numeric",
 												day: "numeric",
 												hour: "numeric",
 												minute: "numeric",
@@ -225,7 +236,7 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 						room?.header ?? t("common:chat.sidebar.title"),
 						(d) =>
 							formatDateTime(d, {
-								month: "short",
+								month: "numeric",
 								day: "numeric",
 								hour: "numeric",
 								minute: "numeric",

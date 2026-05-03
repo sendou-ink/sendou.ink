@@ -314,7 +314,7 @@ function GroupMember({
 											hour: "numeric",
 											minute: "numeric",
 											day: "numeric",
-											month: "long",
+											month: "numeric",
 											year: "numeric",
 										},
 									)}

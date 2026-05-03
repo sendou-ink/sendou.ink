@@ -30,6 +30,7 @@ import { action } from "../actions/settings.server";
 import { loader } from "../loaders/settings.server";
 import {
 	clockFormatSchema,
+	dateFormatSchema,
 	disableBuildAbilitySortingSchema,
 	disallowScrimPickupsFromUntrustedSchema,
 	spoilerFreeModeSchema,
@@ -82,6 +83,18 @@ export default function SettingsPage() {
 						schema={clockFormatSchema}
 						defaultValues={{
 							newValue: user.preferences.clockFormat ?? "auto",
+						}}
+						autoSubmit
+						revalidateRoot
+					>
+						{({ FormField }) => <FormField name="newValue" />}
+					</SendouForm>
+				) : null}
+				{user ? (
+					<SendouForm
+						schema={dateFormatSchema}
+						defaultValues={{
+							newValue: user.preferences.dateFormat ?? "auto",
 						}}
 						autoSubmit
 						revalidateRoot

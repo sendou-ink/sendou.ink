@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { format, sub } from "date-fns";
+import { sub } from "date-fns";
 import { ChevronsUpDown, Search, X } from "lucide-react";
 import * as React from "react";
 import {
@@ -21,6 +21,7 @@ import { useDebounce } from "react-use";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouLabel } from "~/components/elements/Label";
 import type { TournamentSearchLoaderData } from "~/features/tournament/routes/to.search";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 
 import selectStyles from "./Select.module.css";
@@ -150,6 +151,7 @@ function TournamentItem({
 		  };
 }) {
 	const { t } = useTranslation(["common"]);
+	const { formatDate } = useTimeFormat();
 
 	if (typeof item.id === "string") {
 		return (
@@ -167,7 +169,11 @@ function TournamentItem({
 
 	const additionalText = () => {
 		const date = databaseTimestampToDate(item.startTime);
-		return format(date, "MMM d, yyyy");
+		return formatDate(date, {
+			day: "numeric",
+			month: "numeric",
+			year: "numeric",
+		});
 	};
 
 	return (
@@ -185,11 +191,9 @@ function TournamentItem({
 			<img src={item.logoUrl} alt="" className={tournamentSearchStyles.logo} />
 			<div className={tournamentSearchStyles.itemTextsContainer}>
 				<span>{item.name}</span>
-				{additionalText() ? (
-					<div className={tournamentSearchStyles.itemAdditionalText}>
-						{additionalText()}
-					</div>
-				) : null}
+				<div className={tournamentSearchStyles.itemAdditionalText}>
+					{additionalText()}
+				</div>
 			</div>
 		</ListBoxItem>
 	);

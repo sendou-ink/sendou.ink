@@ -423,11 +423,17 @@ export function checkIn(
 	return db.transaction().execute(async (trx) => {
 		let query = trx
 			.deleteFrom("TournamentTeamCheckIn")
-			.where("TournamentTeamCheckIn.tournamentTeamId", "=", tournamentTeamId)
-			.where("TournamentTeamCheckIn.isCheckOut", "=", 1);
+			.where("TournamentTeamCheckIn.tournamentTeamId", "=", tournamentTeamId);
 
 		if (typeof bracketIdx === "number") {
 			query = query.where("TournamentTeamCheckIn.bracketIdx", "=", bracketIdx);
+		} else {
+			query = query.where((eb) =>
+				eb.or([
+					eb("TournamentTeamCheckIn.isCheckOut", "=", 1),
+					eb("TournamentTeamCheckIn.bracketIdx", "is", null),
+				]),
+			);
 		}
 
 		await query.execute();

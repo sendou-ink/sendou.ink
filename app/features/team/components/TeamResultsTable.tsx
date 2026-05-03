@@ -47,7 +47,7 @@ export function TeamResultsTable({ results }: TeamResultsTableProps) {
 							<td className="whitespace-nowrap">
 								{formatDate(databaseTimestampToDate(result.startTime), {
 									day: "numeric",
-									month: "short",
+									month: "numeric",
 									year: "numeric",
 								})}
 							</td>
