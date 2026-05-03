@@ -15,7 +15,6 @@ import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/Grou
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.server";
-import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
 	errorToast,
@@ -41,23 +40,21 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		schema: matchSchema,
 	});
 
+	const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
+	const isStaff = user.roles.includes("STAFF");
+	const isParticipant = [
+		...match.groupAlpha.members,
+		...match.groupBravo.members,
+	].some((m) => m.id === user.id);
+	errorToastIfFalsy(
+		isParticipant || isStaff,
+		"Not a participant of this match",
+	);
+
 	try {
 		switch (data._action) {
 			case "REPORT_SCORE": {
-				const match = notFoundIfFalsy(
-					await SQMatchRepository.findById(matchId),
-				);
-
-				const members = [
-					...match.groupAlpha.members,
-					...match.groupBravo.members,
-				];
-				const isParticipant = members.some((m) => m.id === user.id);
-				const isStaffReport = !isParticipant && user.roles.includes("STAFF");
-				errorToastIfFalsy(
-					isParticipant || isStaffReport,
-					"Not allowed to report score",
-				);
+				const isStaffReport = !isParticipant && isStaff;
 
 				const result = await SQMatchRepository.reportMapWinner({
 					matchId,
@@ -107,9 +104,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				const season = Seasons.current();
 				errorToastIfFalsy(season, "Season is not active");
 
-				const match = notFoundIfFalsy(
-					await SQMatchRepository.findById(matchId),
-				);
 				const previousGroup =
 					match.groupAlpha.id === data.previousGroupId
 						? match.groupAlpha
@@ -158,10 +152,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				break;
 			}
 			case "CAST_CONTINUE_VOTE": {
-				const match = notFoundIfFalsy(
-					await SQMatchRepository.findById(matchId),
-				);
-
 				const viewerSide = SendouQMatch.resolveGroupMemberOf({
 					groupAlpha: match.groupAlpha,
 					groupBravo: match.groupBravo,
@@ -223,19 +213,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				break;
 			}
 			case "REPORT_WEAPON": {
-				const match = notFoundIfFalsy(
-					await SQMatchRepository.findById(matchId),
-				);
-
-				const members = [
-					...match.groupAlpha.members,
-					...match.groupBravo.members,
-				];
-				invariant(
-					members.some((m) => m.id === user.id),
-					"User is not a member of any group",
-				);
-
 				await ReportedWeaponRepository.upsertOne({
 					groupMatchId: matchId,
 					mapIndex: data.mapIndex,
@@ -246,8 +223,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				break;
 			}
 			case "UNDO_WEAPON_REPORT": {
-				notFoundIfFalsy(await SQMatchRepository.findById(matchId));
-
 				await ReportedWeaponRepository.deleteByUserMapIndex({
 					matchId,
 					userId: user.id,
@@ -270,7 +245,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				const result = await SQMatchRepository.undoMatchReport({
 					matchId,
 					requestedByUserId: user.id,
-					isStaff: user.roles.includes("STAFF"),
+					isStaff,
 				});
 
 				if (result.status === "NOT_ALLOWED") {
@@ -300,10 +275,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				break;
 			}
 			case "REQUEST_CANCEL": {
-				const unmappedMatch = notFoundIfFalsy(
-					await SQMatchRepository.findById(matchId),
-				);
-
 				const result = await SQMatchRepository.requestCancelMatch({
 					matchId,
 					requestedByUserId: user.id,
@@ -316,9 +287,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					return null;
 				}
 
-				if (unmappedMatch.chatCode) {
+				if (match.chatCode) {
 					ChatSystemMessage.send({
-						room: unmappedMatch.chatCode,
+						room: match.chatCode,
 						type: "CANCEL_REPORTED",
 						context: { name: user.username },
 					});
@@ -328,10 +299,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				break;
 			}
 			case "ACCEPT_CANCEL": {
-				const unmappedMatch = notFoundIfFalsy(
-					await SQMatchRepository.findById(matchId),
-				);
-
 				const result = await SQMatchRepository.acceptCancelMatch({
 					matchId,
 					acceptedByUserId: user.id,
@@ -347,9 +314,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					return errorToast("Cannot accept own cancel request");
 				}
 
-				if (unmappedMatch.chatCode) {
+				if (match.chatCode) {
 					ChatSystemMessage.send({
-						room: unmappedMatch.chatCode,
+						room: match.chatCode,
 						type: "CANCEL_CONFIRMED",
 						context: { name: user.username },
 					});
@@ -359,14 +326,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				break;
 			}
 			case "ADMIN_CANCEL": {
-				errorToastIfFalsy(
-					user.roles.includes("STAFF"),
-					"Only mods can admin cancel",
-				);
-
-				const match = notFoundIfFalsy(
-					await SQMatchRepository.findById(matchId),
-				);
+				errorToastIfFalsy(isStaff, "Only mods can admin cancel");
 
 				const result = await SQMatchRepository.cancelMatch({
 					matchId,
@@ -395,10 +355,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				break;
 			}
 			case "REFUSE_CANCEL": {
-				const unmappedMatch = notFoundIfFalsy(
-					await SQMatchRepository.findById(matchId),
-				);
-
 				const result = await SQMatchRepository.refuseCancelMatch({
 					matchId,
 					refusedByUserId: user.id,
@@ -414,9 +370,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					return errorToast("Cannot refuse own cancel request");
 				}
 
-				if (unmappedMatch.chatCode) {
+				if (match.chatCode) {
 					ChatSystemMessage.send({
-						room: unmappedMatch.chatCode,
+						room: match.chatCode,
 						type: "CANCEL_REFUSED",
 						context: { name: user.username },
 					});
