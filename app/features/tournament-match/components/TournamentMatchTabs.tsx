@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
@@ -42,12 +43,16 @@ export function TournamentMatchTabs({
 		isPickBanStep,
 	} = useMatch();
 
-	// Preview matches (participants TBD) only render the admin tab so organizers
-	// can pre-cast or pre-prepare; everything else needs both teams.
+	// When waiting on team(s) only a subset of tabs can be rendered
 	if (!teamOne || !teamTwo) {
-		return tabs.includes(TAB_KEYS.ADMIN) ? (
-			<MatchTabs tabs={[TAB_KEYS.ADMIN]}>
-				<TournamentMatchAdminTab data={data} />
+		return tabs.length > 0 ? (
+			<MatchTabs tabs={tabs}>
+				{tabs.includes(TAB_KEYS.ROSTERS) ? (
+					<TournamentMatchRosterTab data={data} />
+				) : null}
+				{tabs.includes(TAB_KEYS.ADMIN) ? (
+					<TournamentMatchAdminTab data={data} />
+				) : null}
 			</MatchTabs>
 		) : null;
 	}
@@ -369,28 +374,33 @@ function TournamentMatchRosterTab({
 }: {
 	data: TournamentMatchLoaderData;
 }) {
+	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 	const user = useUser();
 	const fetcher = useFetcher();
 	const {
 		teams: [teamOne, teamTwo],
 	} = useMatch();
-	if (!teamOne || !teamTwo) return null;
+
+	const tbdTeam = { defaultName: t("tournament:match.tbd"), members: [] };
 
 	return (
 		<MatchRosterTab
 			minMembersPerTeam={tournament.minMembersPerTeam}
 			canEditSubbedOut={[
-				canEditSubbedOutForTeam(teamOne),
-				canEditSubbedOutForTeam(teamTwo),
+				teamOne ? canEditSubbedOutForTeam(teamOne) : false,
+				teamTwo ? canEditSubbedOutForTeam(teamTwo) : false,
 			]}
 			defaultIsEditing={[
-				needsActiveRosterSelection(teamOne),
-				needsActiveRosterSelection(teamTwo),
+				teamOne ? needsActiveRosterSelection(teamOne) : false,
+				teamTwo ? needsActiveRosterSelection(teamTwo) : false,
 			]}
 			onSubbedOutChange={handleSubbedOutChange}
 			isSubmitting={fetcher.state !== "idle"}
-			teams={[rosterTeamData(teamOne), rosterTeamData(teamTwo)]}
+			teams={[
+				teamOne ? rosterTeamData(teamOne) : tbdTeam,
+				teamTwo ? rosterTeamData(teamTwo) : tbdTeam,
+			]}
 		/>
 	);
 

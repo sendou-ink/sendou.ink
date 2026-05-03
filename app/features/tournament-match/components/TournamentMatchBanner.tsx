@@ -1,5 +1,5 @@
 import { differenceInMinutes } from "date-fns";
-import { Lock, MousePointerClick, Users, X } from "lucide-react";
+import { Hourglass, Lock, MousePointerClick, Users, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
@@ -40,6 +40,7 @@ export function TournamentMatchBanner({
 
 	const opponentOne = data.match.opponentOne;
 	const opponentTwo = data.match.opponentTwo;
+	const isMissingTeam = !opponentOne?.id || !opponentTwo?.id;
 
 	const leagueRoundLocked = isLeagueRoundLocked(tournament, data.match.roundId);
 	const leagueRoundStartDate = leagueRoundLocked
@@ -80,6 +81,12 @@ export function TournamentMatchBanner({
 								})
 							: undefined
 					}
+				/>
+			) : isMissingTeam ? (
+				<IconBanner
+					icon={<Hourglass size={32} />}
+					header={t("tournament:match.waitingForTeams.header")}
+					subtitle={t("tournament:match.waitingForTeams.subtitle")}
 				/>
 			) : teamsMissingActiveRoster.length > 0 ? (
 				<IconBanner

@@ -207,6 +207,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const isParticipant = match.players.some((p) => p.id === user?.id);
 	const canJoin =
 		!matchIsOver &&
+		match.opponentOne?.id != null &&
+		match.opponentTwo?.id != null &&
 		(isParticipant || tournament.isOrganizerOrStreamer(user)) &&
 		!isLeagueRoundLocked(tournament, match.roundId);
 
