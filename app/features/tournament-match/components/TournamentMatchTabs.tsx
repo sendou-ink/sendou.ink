@@ -433,6 +433,7 @@ function TournamentMatchRosterTab({
 				discordId: m.discordId,
 				discordAvatar: m.discordAvatar,
 				customUrl: m.customUrl,
+				inGameName: m.inGameName,
 			})),
 			subbedOut,
 		};

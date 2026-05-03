@@ -111,6 +111,9 @@ export function up(db) {
 		db.prepare(
 			/* sql */ `create index group_match_created_at on "GroupMatch"("createdAt")`,
 		).run();
+		db.prepare(
+			/* sql */ `create index group_match_confirmed_at on "GroupMatch"("confirmedAt")`,
+		).run();
 
 		db.prepare(
 			/* sql */ `create index group_match_map_reported_at on "GroupMatchMap"("reportedAt")`,

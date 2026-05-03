@@ -117,6 +117,8 @@
 	"match.activeRosterMissing.subtitle": "Waiting on {{teams}}",
 	"match.leagueLocked.header": "Waiting for league round to start",
 	"match.leagueLocked.subtitle": "Round playable from {{date}} onwards",
+	"match.locked.header": "Match locked to be casted",
+	"match.locked.subtitle": "Please wait for staff to unlock",
 	"match.waitingForTeams.header": "Waiting for teams",
 	"match.waitingForTeams.subtitle": "Teams will be resolved from earlier matches",
 	"match.tbd": "TBD",

@@ -19,7 +19,7 @@ export function MatchBannerContainer({
 interface MatchBannerProps {
 	stageId: StageId;
 	mode: ModeShort;
-	screenLegal: boolean;
+	screenLegal?: boolean;
 	children: React.ReactNode;
 }
 
@@ -45,7 +45,9 @@ export function MatchBanner({
 			</div>
 			<div className={clsx(styles.info, styles.thickText)}>{children}</div>
 
-			<ScreenNotice screenLegal={screenLegal} />
+			{screenLegal !== undefined ? (
+				<ScreenNotice screenLegal={screenLegal} />
+			) : null}
 		</div>
 	);
 }

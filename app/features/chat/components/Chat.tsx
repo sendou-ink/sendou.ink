@@ -8,15 +8,10 @@ import { Avatar } from "../../../components/Avatar";
 import { SendouButton } from "../../../components/elements/Button";
 import { SubmitButton } from "../../../components/SubmitButton";
 import { useTimeFormat } from "../../../hooks/useTimeFormat";
-import {
-	MESSAGE_MAX_LENGTH,
-	SPLATNET_ROOM_LINK_PATTERN,
-} from "../chat-constants";
+import { findRoomLinks, MESSAGE_MAX_LENGTH } from "../chat-constants";
 import { useChatAutoScroll } from "../chat-hooks";
 import type { ChatMessage, ChatProps, ChatUser } from "../chat-types";
 import styles from "./Chat.module.css";
-
-const ROOM_LINK_PATTERN = new RegExp(SPLATNET_ROOM_LINK_PATTERN.source, "g");
 
 export interface ChatAdapter {
 	messages: ChatMessage[];
@@ -312,7 +307,7 @@ function SystemMessage({
 }
 
 function MessageContents({ text }: { text: string }) {
-	const matches = [...text.matchAll(ROOM_LINK_PATTERN)];
+	const matches = findRoomLinks(text);
 
 	if (matches.length === 0) return <>{text}</>;
 
@@ -326,15 +321,15 @@ function MessageContents({ text }: { text: string }) {
 		parts.push(
 			<a
 				key={i}
-				href={match[0]}
+				href={match.url}
 				target="_blank"
 				rel="noopener noreferrer"
 				className={styles.roomLink}
 			>
-				{match[0]}
+				{match.url}
 			</a>,
 		);
-		lastIndex = match.index + match[0].length;
+		lastIndex = match.index + match.url.length;
 	}
 
 	if (lastIndex < text.length) {

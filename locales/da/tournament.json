@@ -117,6 +117,8 @@
 	"match.activeRosterMissing.subtitle": "",
 	"match.leagueLocked.header": "",
 	"match.leagueLocked.subtitle": "",
+	"match.locked.header": "",
+	"match.locked.subtitle": "",
 	"match.waitingForTeams.header": "",
 	"match.waitingForTeams.subtitle": "",
 	"match.tbd": "",

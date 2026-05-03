@@ -374,6 +374,18 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Invalid roster length",
 			);
 
+			const teamOne = tournament.teamById(match.opponentOne!.id!)!;
+			const teamTwo = tournament.teamById(match.opponentTwo!.id!)!;
+			errorToastIfFalsy(
+				data.rosters[0].every((userId) =>
+					teamOne.members.some((m) => m.userId === userId),
+				) &&
+					data.rosters[1].every((userId) =>
+						teamTwo.members.some((m) => m.userId === userId),
+					),
+				"Invalid roster",
+			);
+
 			const hadPoints = typeof result.opponentOnePoints === "number";
 			const willHavePoints = typeof data.points?.[0] === "number";
 			errorToastIfFalsy(

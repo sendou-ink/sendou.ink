@@ -1,16 +1,38 @@
 export const MESSAGE_MAX_LENGTH = 200;
 
-export const SPLATNET_ROOM_LINK_PATTERN = /https:\/\/s\.nintendo\.com\/\S+/g;
+const SPLATNET_ROOM_HOST = "s.nintendo.com";
+const SPLATNET_ROOM_PATH_PATTERN = /^\/[A-Za-z0-9/_-]+$/;
+const SPLATNET_ROOM_CANDIDATE_PATTERN = /https:\/\/s\.nintendo\.com\/\S+/g;
 
-const SPLATNET_ROOM_URL_PATTERN = /^https:\/\/s\.nintendo\.com\/\S+$/;
-
-export function extractRoomLink(text: string): string | null {
-	const match = text.match(SPLATNET_ROOM_LINK_PATTERN);
-	return match?.[0] ?? null;
+export function isSplatnetRoomUrl(url: string): boolean {
+	if (!URL.canParse(url)) return false;
+	const parsed = new URL(url);
+	return (
+		parsed.protocol === "https:" &&
+		parsed.hostname === SPLATNET_ROOM_HOST &&
+		parsed.username === "" &&
+		parsed.password === "" &&
+		parsed.port === "" &&
+		parsed.search === "" &&
+		parsed.hash === "" &&
+		SPLATNET_ROOM_PATH_PATTERN.test(parsed.pathname)
+	);
 }
 
-export function isSplatnetRoomUrl(url: string) {
-	return SPLATNET_ROOM_URL_PATTERN.test(url);
+export function findRoomLinks(
+	text: string,
+): Array<{ url: string; index: number }> {
+	const results: Array<{ url: string; index: number }> = [];
+	for (const match of text.matchAll(SPLATNET_ROOM_CANDIDATE_PATTERN)) {
+		if (isSplatnetRoomUrl(match[0])) {
+			results.push({ url: match[0], index: match.index });
+		}
+	}
+	return results;
+}
+
+export function extractRoomLink(text: string): string | null {
+	return findRoomLinks(text)[0]?.url ?? null;
 }
 
 const MATCH_ROOM_URL_PATTERN =

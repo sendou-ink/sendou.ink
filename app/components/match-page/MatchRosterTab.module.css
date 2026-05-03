@@ -1,19 +1,39 @@
 .rosters {
 	display: flex;
-	flex-wrap: wrap;
+	flex-direction: column;
 	gap: var(--s-8);
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
-	flex-direction: column;
+	width: max-content;
+	max-width: 100%;
+	margin-inline: auto;
+}
+
+.rostersDivider {
+	display: none;
 }
 
 @container (width >= 640px) {
 	.rosters {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
-		justify-content: center;
-		max-width: max-content;
+		grid-template-columns: 1fr auto 1fr;
+		gap: var(--s-4);
+		width: auto;
+		max-width: none;
+		margin-inline: 0;
+	}
+
+	.rosterColumn {
 		margin-inline: auto;
+		width: max-content;
+		max-width: 100%;
+	}
+
+	.rostersDivider {
+		display: block;
+		background-color: var(--color-border);
+		width: 1px;
+		align-self: stretch;
 	}
 }
 
@@ -92,6 +112,18 @@
 	align-items: center;
 }
 
+.memberNameStack {
+	display: flex;
+	flex-direction: column;
+	line-height: 1.2;
+}
+
+.memberInGameName {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	font-weight: var(--weight-semi);
+}
+
 .memberMenuTrigger {
 	background: none;
 	border: 0;
@@ -105,6 +137,23 @@
 
 .friendCodeHeader {
 	text-align: center;
+}
+
+.memberMenuHeader {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.memberMenuIgn {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.memberMenuIgnLabel {
+	font-weight: var(--weight-bold);
+	text-transform: uppercase;
+	font-size: var(--font-3xs);
 }
 
 .memberTier {
@@ -169,13 +218,14 @@
 	font-size: var(--font-xs);
 	color: var(--color-text-high);
 	margin-block-end: var(--s-2);
-	margin-inline-start: 12px;
+	text-align: center;
 }
 
 .rosterEditButtons {
 	display: flex;
 	gap: var(--s-2);
 	margin-block-start: var(--s-4);
+	justify-content: center;
 }
 
 .teamOneDot {

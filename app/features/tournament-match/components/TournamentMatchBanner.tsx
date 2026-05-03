@@ -36,7 +36,7 @@ export function TournamentMatchBanner({
 	const { t } = useTranslation(["tournament"]);
 	const { formatDate } = useTimeFormat();
 	const tournament = useTournament();
-	const { currentMap, teamsMissingActiveRoster } = useMatch();
+	const { currentMap, teamsMissingActiveRoster, matchIsLocked } = useMatch();
 
 	const opponentOne = data.match.opponentOne;
 	const opponentTwo = data.match.opponentTwo;
@@ -49,7 +49,11 @@ export function TournamentMatchBanner({
 
 	const pickBanBanner = resolvePickBanBanner(data, tournament, t);
 
-	const screenLegal = !data.noScreen;
+	const screenLegal =
+		tournament.ctx.settings.enableNoScreenToggle &&
+		typeof data.noScreen === "boolean"
+			? !data.noScreen
+			: undefined;
 
 	const activeRosterByTeamId = (tournamentTeamId: number) => {
 		const team = tournament.teamById(tournamentTeamId);
@@ -81,6 +85,13 @@ export function TournamentMatchBanner({
 								})
 							: undefined
 					}
+				/>
+			) : matchIsLocked ? (
+				<IconBanner
+					icon={<Lock size={32} />}
+					header={t("tournament:match.locked.header")}
+					subtitle={t("tournament:match.locked.subtitle")}
+					screenLegal={screenLegal}
 				/>
 			) : isMissingTeam ? (
 				<IconBanner

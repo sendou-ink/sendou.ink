@@ -7,6 +7,7 @@ import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import type { TournamentMatchLoaderData } from "./loaders/to.$id.matches.$mid.server";
+import { matchIsLocked } from "./tournament-match-utils";
 
 export type MatchPageTeam = NonNullable<ReturnType<Tournament["teamById"]>>;
 
@@ -26,6 +27,7 @@ type MatchPageContextValue = {
 	teamsMissingActiveRoster: string[];
 	turnOfResult: ReturnType<typeof PickBan.turnOf>;
 	isPickBanStep: boolean;
+	matchIsLocked: boolean;
 };
 
 const MatchPageContext = React.createContext<MatchPageContextValue | null>(
@@ -85,6 +87,12 @@ export function MatchPageProvider({
 	const isParticipant = data.match.players.some((p) => p.id === user?.id);
 	const hasReportedMaps = data.results.length > 0;
 
+	const lockedForCast = matchIsLocked({
+		tournament,
+		matchId: data.match.id,
+		scores,
+	});
+
 	const tabs = resolveVisibleTabs({
 		matchIsOver: data.matchIsOver,
 		canReportScore: tournament.canReportScore({
@@ -102,6 +110,7 @@ export function MatchPageProvider({
 		isAdminEligible:
 			tournament.isOrganizerOrStreamer(user) && !tournament.ctx.isFinalized,
 		leagueRoundLocked: isLeagueRoundLocked(tournament, data.match.roundId),
+		lockedForCast,
 	});
 
 	return (
@@ -116,6 +125,7 @@ export function MatchPageProvider({
 				teamsMissingActiveRoster,
 				turnOfResult,
 				isPickBanStep,
+				matchIsLocked: lockedForCast,
 			}}
 		>
 			{children}
@@ -143,6 +153,7 @@ function resolveVisibleTabs({
 	isPickBanStep,
 	isAdminEligible,
 	leagueRoundLocked,
+	lockedForCast,
 }: {
 	matchIsOver: boolean;
 	canReportScore: boolean;
@@ -155,6 +166,7 @@ function resolveVisibleTabs({
 	isPickBanStep: boolean;
 	isAdminEligible: boolean;
 	leagueRoundLocked: boolean;
+	lockedForCast: boolean;
 }): MatchTabKey[] {
 	const tabs: MatchTabKey[] = [];
 
@@ -168,7 +180,10 @@ function resolveVisibleTabs({
 	if (
 		!leagueRoundLocked &&
 		(isPickBanStep ||
-			(canReportScore && hasCurrentMap && !hasMissingActiveRoster) ||
+			(canReportScore &&
+				hasCurrentMap &&
+				!hasMissingActiveRoster &&
+				!lockedForCast) ||
 			canReportWeapons)
 	) {
 		tabs.push(TAB_KEYS.ACTION);

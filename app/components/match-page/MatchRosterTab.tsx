@@ -34,6 +34,7 @@ type RosterTabMember = CommonUser & {
 	weaponPool?: Array<MainWeaponId>;
 	friendCode?: string | null;
 	privateNote?: { sentiment: "POSITIVE" | "NEUTRAL" | "NEGATIVE" } | null;
+	inGameName?: string | null;
 };
 
 interface RosterTabTeam {
@@ -79,6 +80,7 @@ export function MatchRosterTab({
 					onSubbedOutChange={onSubbedOutChange}
 					isSubmitting={isSubmitting}
 				/>
+				<div className={styles.rostersDivider} />
 				<TeamRoster
 					team={teams[1]}
 					side="bravo"
@@ -129,7 +131,7 @@ function TeamRoster({
 	const showEditButton = canEditSubbedOut && team.team && !isEditing;
 
 	return (
-		<div className="stack xxs">
+		<div className={clsx("stack xxs", styles.rosterColumn)}>
 			<TeamHeader
 				team={team}
 				side={side}
@@ -194,13 +196,15 @@ function TeamRoster({
 						>
 							{t("common:actions.submit")}
 						</SendouButton>
-						<SendouButton
-							variant="outlined"
-							size="small"
-							onPress={handleCancel}
-						>
-							{t("common:actions.cancel")}
-						</SendouButton>
+						{defaultIsEditing ? null : (
+							<SendouButton
+								variant="outlined"
+								size="small"
+								onPress={handleCancel}
+							>
+								{t("common:actions.cancel")}
+							</SendouButton>
+						)}
 					</div>
 				</div>
 			) : null}
@@ -432,30 +436,62 @@ function RosterMemberLink({
 	member: RosterTabMember;
 	className?: string;
 }) {
-	const { t } = useTranslation(["friends", "q"]);
+	const { t } = useTranslation(["friends", "q", "user"]);
 
 	const showNoteItem = member.privateNote !== undefined;
+	const hasContentBelowName = !!(
+		member.tier ||
+		typeof member.plusTier === "number" ||
+		(member.weaponPool && member.weaponPool.length > 0)
+	);
+	const showIgnInMenu = hasContentBelowName && !!member.inGameName;
+	const showIgnUnderName = !hasContentBelowName && !!member.inGameName;
+	const useMenu = !!member.friendCode || showNoteItem || showIgnInMenu;
 
-	if (!member.friendCode && !showNoteItem) {
+	const nameContent = (
+		<div className={styles.memberNameStack}>
+			<span>{member.username}</span>
+			{showIgnUnderName ? (
+				<span className={styles.memberInGameName}>{member.inGameName}</span>
+			) : null}
+		</div>
+	);
+
+	if (!useMenu) {
 		return (
 			<Link to={userPage(member)} className={className}>
 				<Avatar user={member} size="xxs" />
-				<span>{member.username}</span>
+				{nameContent}
 			</Link>
 		);
 	}
+
+	const headerContent =
+		member.friendCode || showIgnInMenu ? (
+			<div className={styles.memberMenuHeader}>
+				{member.friendCode ? <span>{`SW-${member.friendCode}`}</span> : null}
+				{showIgnInMenu ? (
+					<span className={styles.memberMenuIgn}>
+						<span className={styles.memberMenuIgnLabel}>
+							{t("user:ign.short")}:
+						</span>{" "}
+						{member.inGameName}
+					</span>
+				) : null}
+			</div>
+		) : undefined;
 
 	return (
 		<SendouMenu
 			trigger={
 				<ReactAriaButton className={clsx(className, styles.memberMenuTrigger)}>
 					<Avatar user={member} size="xxs" />
-					<span>{member.username}</span>
+					{nameContent}
 				</ReactAriaButton>
 			}
 		>
 			<SendouMenuSection
-				headerText={member.friendCode ? `SW-${member.friendCode}` : undefined}
+				headerText={headerContent}
 				headerClassName={styles.friendCodeHeader}
 			>
 				<SendouMenuItem href={userPage(member)} icon={<User />}>

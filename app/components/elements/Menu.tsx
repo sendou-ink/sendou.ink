@@ -57,7 +57,7 @@ export function SendouMenuSection({
 	headerClassName,
 }: {
 	children: React.ReactNode;
-	headerText?: string;
+	headerText?: React.ReactNode;
 	headerClassName?: string;
 }) {
 	return (
