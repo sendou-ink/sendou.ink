@@ -27,8 +27,6 @@ import {
  * Member IDs are deterministic from the seed — Sendou's group members are
  * [ADMIN_ID, 95, 96, 97] and NZAP's group members are [NZAP_TEST_ID, 98, 99, 100].
  *
- * xxx: (chat) add join tab / QR code coverage once e2e chat infrastructure
- * supports confirming room links.
  */
 
 const ADMIN_GROUP_OTHER_MEMBER_IDS = [95, 96, 97] as const;

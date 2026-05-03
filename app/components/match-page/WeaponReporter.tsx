@@ -30,7 +30,6 @@ export interface WeaponReporterProps {
 	standalone?: boolean;
 }
 
-// xxx: on sendouq all weapons report different / component tab..? or not? check usage
 export function WeaponReporter({
 	maps,
 	pastReported,
