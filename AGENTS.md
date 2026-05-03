@@ -24,6 +24,7 @@
 - always use named exports
 - Remeda is the utility library of choice
 - date-fns should be used for date related logic
+- do not use `forEach`, prefer `for...of`
 
 ## React
 

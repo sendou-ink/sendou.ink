@@ -465,7 +465,9 @@ function EditReportedScoreForm({
 	index: number;
 }) {
 	const { t } = useTranslation(["common", "q"]);
-	const initialRosters = React.useMemo<[number[], number[]]>(() => {
+	const [checkedPlayers, setCheckedPlayers] = React.useState<
+		[number[], number[]]
+	>(() => {
 		return [
 			result.participants
 				.filter((p) => p.tournamentTeamId === teams[0].id)
@@ -474,10 +476,7 @@ function EditReportedScoreForm({
 				.filter((p) => p.tournamentTeamId === teams[1].id)
 				.map((p) => p.userId),
 		];
-	}, [result, teams]);
-
-	const [checkedPlayers, setCheckedPlayers] =
-		React.useState<[number[], number[]]>(initialRosters);
+	});
 	const [isKO, setIsKO] = React.useState(
 		result.opponentOnePoints === 100 || result.opponentTwoPoints === 100,
 	);

@@ -2,10 +2,12 @@ import type { Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, DBBoolean } from "~/db/tables";
 
-export async function findForGroups(groupIds: number[]) {
+export async function findForGroups(groupIds: number[], trx?: Transaction<DB>) {
 	if (groupIds.length === 0) return [];
 
-	const rows = await db
+	const executor = trx ?? db;
+
+	const rows = await executor
 		.selectFrom("GroupMatchContinueVote")
 		.select([
 			"GroupMatchContinueVote.groupId",

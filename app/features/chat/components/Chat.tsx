@@ -16,6 +16,8 @@ import { useChatAutoScroll } from "../chat-hooks";
 import type { ChatMessage, ChatProps, ChatUser } from "../chat-types";
 import styles from "./Chat.module.css";
 
+const ROOM_LINK_PATTERN = new RegExp(SPLATNET_ROOM_LINK_PATTERN.source, "g");
+
 export interface ChatAdapter {
 	messages: ChatMessage[];
 	send: (contents: string) => void;
@@ -310,16 +312,14 @@ function SystemMessage({
 }
 
 function MessageContents({ text }: { text: string }) {
-	const pattern = new RegExp(SPLATNET_ROOM_LINK_PATTERN.source, "g");
-	const matches = [...text.matchAll(pattern)];
+	const matches = [...text.matchAll(ROOM_LINK_PATTERN)];
 
 	if (matches.length === 0) return <>{text}</>;
 
 	const parts: React.ReactNode[] = [];
 	let lastIndex = 0;
 
-	for (let i = 0; i < matches.length; i++) {
-		const match = matches[i];
+	for (const [i, match] of matches.entries()) {
 		if (match.index > lastIndex) {
 			parts.push(text.slice(lastIndex, match.index));
 		}

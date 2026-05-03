@@ -1,5 +1,10 @@
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 
+/**
+ * Calculates the current map win counts for each group in a SendouQ match and
+ * indicates whether the match has been decided (i.e. one group has reached the
+ * required number of map wins for the configured best-of).
+ */
 export function score(match: {
 	mapList: Array<{ winnerGroupId: number | null }>;
 	groupAlpha: { id: number };

@@ -2,7 +2,6 @@ import { describe, expect, test } from "vitest";
 import {
 	mapCountPlayedInSetWithCertainty,
 	matchEndedEarly,
-	resolveRoomPass,
 } from "./tournament-match-utils";
 
 const mapCountParamsToResult: {
@@ -29,32 +28,6 @@ describe("mapCountPlayedInSetWithCertainty()", () => {
 			);
 		});
 	}
-});
-
-describe("resolveRoomPass", () => {
-	test("returns a 4-digit password", () => {
-		const pass = resolveRoomPass(12345);
-
-		expect(pass).toMatch(/^\d{4}$/);
-	});
-
-	test("returns deterministic password for a given numeric seed", () => {
-		const pass1 = resolveRoomPass(12345);
-		const pass2 = resolveRoomPass(12345);
-		expect(pass1).toBe(pass2);
-	});
-
-	test("returns deterministic password for a given string seed", () => {
-		const pass1 = resolveRoomPass("test-seed");
-		const pass2 = resolveRoomPass("test-seed");
-		expect(pass1).toBe(pass2);
-	});
-
-	test("returns different passwords for different seeds", () => {
-		const pass1 = resolveRoomPass(1);
-		const pass2 = resolveRoomPass(2);
-		expect(pass1).not.toBe(pass2);
-	});
 });
 
 describe("matchEndedEarly", () => {

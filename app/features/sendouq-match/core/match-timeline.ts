@@ -46,13 +46,13 @@ export function resolveTimelineMaps(
 				const w = reportedWeapons?.find(
 					(rw) => rw.mapIndex === mapIndex && rw.userId === member.id,
 				);
-				return w ? w.weaponSplId : null;
+				return w?.weaponSplId ?? null;
 			});
 			const bravoWeapons = match.groupBravo.members.map((member) => {
 				const w = reportedWeapons?.find(
 					(rw) => rw.mapIndex === mapIndex && rw.userId === member.id,
 				);
-				return w ? w.weaponSplId : null;
+				return w?.weaponSplId ?? null;
 			});
 
 			const hasAnyWeapon =
@@ -62,7 +62,9 @@ export function resolveTimelineMaps(
 			return {
 				stageId: map.stageId,
 				mode: map.mode,
-				timestamp: databaseTimestampToJavascriptTimestamp(map.reportedAt!),
+				timestamp: databaseTimestampToJavascriptTimestamp(
+					map.reportedAt ?? match.createdAt,
+				),
 				winner:
 					map.winnerGroupId === match.groupAlpha.id
 						? ("ALPHA" as const)
@@ -118,14 +120,5 @@ export function resolveTimelineSpChanges(
 			members: bravoMembers,
 			skillDifference: match.groupBravo.skillDifference,
 		},
-	};
-}
-
-export function resolveMatchScore(match: MatchData) {
-	return {
-		alpha: match.mapList.filter((m) => m.winnerGroupId === match.groupAlpha.id)
-			.length,
-		bravo: match.mapList.filter((m) => m.winnerGroupId === match.groupBravo.id)
-			.length,
 	};
 }

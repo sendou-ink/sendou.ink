@@ -4,12 +4,12 @@ import { useLoaderData } from "react-router";
 import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs, TAB_KEYS } from "~/components/match-page/MatchTabs";
+import { resolveRoomPass } from "~/components/match-page/utils";
 import { useUser } from "~/features/auth/core/user";
 import {
 	resolveActiveRoomLink,
 	useConfirmRoom,
 } from "~/features/chat/room-link-utils";
-import { resolveRoomPass } from "~/features/tournament-match/tournament-match-utils";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { teamPage } from "~/utils/urls";
 import * as Scrim from "../core/Scrim";

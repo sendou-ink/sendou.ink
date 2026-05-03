@@ -118,11 +118,7 @@ function SendouQMatchBannerTopRow({
 }) {
 	const now = useAutoRerender("ten seconds");
 
-	const countScore = (groupId: number) =>
-		data.match.mapList.reduce(
-			(acc, map) => acc + (map.winnerGroupId === groupId ? 1 : 0),
-			0,
-		);
+	const { alphaWins, bravoWins } = SendouQMatch.score(data.match);
 
 	const startedAt = databaseTimestampToDate(data.match.createdAt);
 
@@ -138,8 +134,8 @@ function SendouQMatchBannerTopRow({
 	return (
 		<MatchBannerTopRow
 			score={{
-				alpha: countScore(data.match.groupAlpha.id),
-				bravo: countScore(data.match.groupBravo.id),
+				alpha: alphaWins,
+				bravo: bravoWins,
 				isFinal: Boolean(data.match.isLocked),
 				count: SENDOUQ_BEST_OF,
 				bestOf: true,

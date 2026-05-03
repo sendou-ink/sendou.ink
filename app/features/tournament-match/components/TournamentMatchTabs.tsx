@@ -8,6 +8,7 @@ import type {
 	TimelineMap,
 	TimelinePickBanEvent,
 } from "~/components/match-page/MatchTimeline";
+import { resolveRoomPass } from "~/components/match-page/utils";
 import { useUser } from "~/features/auth/core/user";
 import {
 	resolveActiveRoomLink,
@@ -23,7 +24,7 @@ import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import { tournamentTeamPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { type MatchPageTeam, useMatch } from "../match-page-context";
-import { resolveHostingTeam, resolveRoomPass } from "../tournament-match-utils";
+import { resolveHostingTeam } from "../tournament-match-utils";
 import { TournamentMatchActionPickBanTab } from "./TournamentMatchActionPickBanTab";
 import { TournamentMatchActionTab } from "./TournamentMatchActionTab";
 import { TournamentMatchAdminTab } from "./TournamentMatchAdminTab";

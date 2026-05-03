@@ -92,5 +92,5 @@ export function currentUserIds(
 }
 
 function droppedUserIds(votes: RejoinVote[]): number[] {
-	return votes.filter((v) => v.isContinuing === false).map((v) => v.userId);
+	return votes.filter((v) => !v.isContinuing).map((v) => v.userId);
 }

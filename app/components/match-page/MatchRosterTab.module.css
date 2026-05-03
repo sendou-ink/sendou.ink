@@ -25,7 +25,7 @@
 
 .rosterMembers {
 	position: relative;
-	padding-left: 34px;
+	padding-inline-start: 34px;
 	list-style: none;
 	display: flex;
 	flex-direction: column;
@@ -35,7 +35,7 @@
 	&::before {
 		content: "";
 		position: absolute;
-		left: 21px;
+		inset-inline-start: 21px;
 		top: -8px;
 		bottom: 0;
 		width: 3px;

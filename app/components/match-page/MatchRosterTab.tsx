@@ -110,12 +110,13 @@ function TeamRoster({
 	onSubbedOutChange?: (teamId: number, subbedOut: number[]) => void;
 	isSubmitting?: boolean;
 }) {
-	const { t } = useTranslation(["common"]);
+	const { t } = useTranslation(["common", "q"]);
 	const [isEditing, setIsEditing] = useState(defaultIsEditing);
 	const [selectedMemberIds, setSelectedMemberIds] = useState<number[]>([]);
 
 	const dotClassName = side === "alpha" ? styles.teamOneDot : styles.teamTwoDot;
-	const label = side === "alpha" ? "Alpha" : "Bravo";
+	const label =
+		side === "alpha" ? t("q:match.sides.alpha") : t("q:match.sides.bravo");
 
 	const subbedOutSet = new Set(team.subbedOut);
 	const activeMembers = team.members.filter(

@@ -6,45 +6,9 @@ import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tour
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { logger } from "~/utils/logger";
-import { seededRandom } from "~/utils/random";
 
 export const tournamentMatchWebsocketRoom = (matchId: number) =>
 	`match__${matchId}`;
-
-const NUM_MAP = {
-	"1": ["1", "2", "4"],
-	"2": ["2", "1", "3", "5"],
-	"3": ["3", "2", "6"],
-	"4": ["4", "1", "5", "7"],
-	"5": ["5", "2", "4", "6", "8"],
-	"6": ["6", "3", "5", "9"],
-	"7": ["7", "4", "8"],
-	"8": ["8", "7", "5", "9", "0"],
-	"9": ["9", "6", "8"],
-	"0": ["0", "8"],
-};
-/**
- * Generates a deterministic 4-digit Splatoon private battle room password based on the provided seed.
- *
- * Given the same seed, this function will always return the same password.
- */
-export function resolveRoomPass(seed: number | string) {
-	let pass = "5";
-	for (let i = 0; i < 3; i++) {
-		const { seededShuffle } = seededRandom(`${seed}-${i}`);
-
-		const key = pass[i] as keyof typeof NUM_MAP;
-		const opts = NUM_MAP[key];
-		const next = seededShuffle(opts)[0];
-		pass += next;
-	}
-
-	// prevent 5555 since many use it as a default pass
-	// making it a bit more common guess
-	if (pass === "5555") return "5800";
-
-	return pass;
-}
 
 export function resolveHostingTeam(
 	teams: [TournamentDataTeam, TournamentDataTeam],
@@ -69,7 +33,7 @@ export function mapCountPlayedInSetWithCertainty({
 	scores: [number, number];
 }) {
 	const maxScore = Math.max(...scores);
-	const scoreSum = scores.reduce((acc, curr) => acc + curr, 0);
+	const scoreSum = R.sum(scores);
 
 	return scoreSum + (Math.ceil(bestOf / 2) - maxScore);
 }
@@ -133,18 +97,13 @@ export function isSetOverByResults({
 	count: number;
 	countType: TournamentRoundMaps["type"];
 }) {
-	const winCounts = new Map<number, number>();
-
-	for (const result of results) {
-		const count = winCounts.get(result.winnerTeamId) ?? 0;
-		winCounts.set(result.winnerTeamId, count + 1);
-	}
+	const winCounts = R.countBy(results, (r) => r.winnerTeamId);
 
 	if (countType === "PLAY_ALL") {
-		return R.sum(Array.from(winCounts.values())) === count;
+		return R.sum(Object.values(winCounts)) === count;
 	}
 
-	const maxWins = Math.max(...Array.from(winCounts.values()));
+	const maxWins = Math.max(...Object.values(winCounts));
 
 	// best of
 	return maxWins >= Math.ceil(count / 2);

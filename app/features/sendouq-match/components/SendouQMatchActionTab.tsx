@@ -8,9 +8,9 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { MatchActionTab } from "~/components/match-page/MatchActionTab";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { MatchTimeline } from "~/components/match-page/MatchTimeline";
+import { useMatchWeaponReport } from "~/components/match-page/useMatchWeaponReport";
 import { WeaponReporter } from "~/components/match-page/WeaponReporter";
 import { useUser } from "~/features/auth/core/user";
-import { useRecentlyReportedWeapons } from "~/features/sendouq/q-hooks";
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -18,7 +18,6 @@ import type {
 } from "~/modules/in-game-lists/types";
 import {
 	resolveGroupNames,
-	resolveMatchScore,
 	resolveTimelineMaps,
 	resolveTimelineTeams,
 } from "../core/match-timeline";
@@ -184,7 +183,8 @@ function RequeueTab({
 	const { t } = useTranslation(["q"]);
 	const user = useUser();
 
-	const score = resolveMatchScore(data.match);
+	const { alphaWins, bravoWins } = SendouQMatch.score(data.match);
+	const score = { alpha: alphaWins, bravo: bravoWins };
 	const teams = resolveTimelineTeams(data.match, t);
 	const maps = resolveTimelineMaps(data.match, data.reportedWeapons);
 
@@ -256,14 +256,9 @@ function WeaponReportSection({
 	data: SendouQMatchLoaderData;
 	viewerUserId: number;
 }) {
-	const weaponFetcher = useFetcher();
-	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
-		useRecentlyReportedWeapons();
-
 	const completedMaps = data.match.mapList.filter(
 		(m) => m.winnerGroupId !== null,
 	);
-	if (completedMaps.length === 0) return null;
 
 	const pastReported: MainWeaponId[] = data.reportedWeapons
 		? data.reportedWeapons
@@ -271,38 +266,14 @@ function WeaponReportSection({
 				.map((w) => w.weaponSplId)
 		: [];
 
-	return (
-		<WeaponReporter
-			maps={completedMaps.map((m) => ({ stageId: m.stageId, mode: m.mode }))}
-			pastReported={pastReported}
-			quickSelectWeaponIds={recentlyReportedWeapons}
-			isSubmitting={weaponFetcher.state !== "idle"}
-			onSubmit={(weaponSplId) => {
-				addRecentlyReportedWeapon(weaponSplId);
-				const mapIndex = pastReported.length;
-				if (!completedMaps[mapIndex]) return;
-				weaponFetcher.submit(
-					{
-						_action: "REPORT_WEAPON",
-						weaponSplId: String(weaponSplId),
-						mapIndex: String(mapIndex),
-					},
-					{ method: "post" },
-				);
-			}}
-			onUndo={() => {
-				const mapIndex = pastReported.length - 1;
-				if (mapIndex < 0) return;
-				weaponFetcher.submit(
-					{
-						_action: "UNDO_WEAPON_REPORT",
-						mapIndex: String(mapIndex),
-					},
-					{ method: "post" },
-				);
-			}}
-		/>
-	);
+	const weaponReport = useMatchWeaponReport({
+		maps: completedMaps.map((m) => ({ stageId: m.stageId, mode: m.mode })),
+		pastReported,
+	});
+
+	if (completedMaps.length === 0) return null;
+
+	return <WeaponReporter {...weaponReport} />;
 }
 
 function ScoreConfirmerSection({ data }: { data: SendouQMatchLoaderData }) {
@@ -386,9 +357,6 @@ function InProgressTab({
 	const fetcher = useFetcher();
 	const undoFetcher = useFetcher();
 	const cancelFetcher = useFetcher();
-	const weaponFetcher = useFetcher();
-	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
-		useRecentlyReportedWeapons();
 
 	const isStaffOnly = ownTeamId == null;
 
@@ -422,15 +390,16 @@ function InProgressTab({
 
 	const scoreIsNotZero = alphaScore > 0 || bravoScore > 0;
 
-	const weaponReportMaps = data.match.mapList
-		.slice(0, reportedCount + 1)
-		.map((m) => ({ stageId: m.stageId, mode: m.mode }));
-
-	const weaponPastReported: MainWeaponId[] = data.reportedWeapons
-		? data.reportedWeapons
-				.filter((w) => w.userId === user.id)
-				.map((w) => w.weaponSplId)
-		: [];
+	const weaponReport = useMatchWeaponReport({
+		maps: data.match.mapList
+			.slice(0, reportedCount + 1)
+			.map((m) => ({ stageId: m.stageId, mode: m.mode })),
+		pastReported: data.reportedWeapons
+			? data.reportedWeapons
+					.filter((w) => w.userId === user.id)
+					.map((w) => w.weaponSplId)
+			: [],
+	});
 
 	const groupNames = resolveGroupNames(data.match, t);
 
@@ -457,39 +426,7 @@ function InProgressTab({
 					{ method: "post" },
 				);
 			}}
-			weaponReport={
-				isStaffOnly
-					? undefined
-					: {
-							maps: weaponReportMaps,
-							pastReported: weaponPastReported,
-							quickSelectWeaponIds: recentlyReportedWeapons,
-							isSubmitting: weaponFetcher.state !== "idle",
-							onSubmit: (weaponSplId) => {
-								addRecentlyReportedWeapon(weaponSplId);
-								const mapIndex = weaponPastReported.length;
-								weaponFetcher.submit(
-									{
-										_action: "REPORT_WEAPON",
-										weaponSplId: String(weaponSplId),
-										mapIndex: String(mapIndex),
-									},
-									{ method: "post" },
-								);
-							},
-							onUndo: () => {
-								const mapIndex = weaponPastReported.length - 1;
-								if (mapIndex < 0) return;
-								weaponFetcher.submit(
-									{
-										_action: "UNDO_WEAPON_REPORT",
-										mapIndex: String(mapIndex),
-									},
-									{ method: "post" },
-								);
-							},
-						}
-			}
+			weaponReport={isStaffOnly ? undefined : weaponReport}
 			actionButtons={
 				<>
 					{isStaffOnly ? (

@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, test } from "vitest";
 import type { CommonUser } from "~/utils/kysely.server";
-import { inferSubstitutions } from "./utils";
+import { inferSubstitutions, resolveRoomPass } from "./utils";
 
 function user(id: number): CommonUser {
 	return {
@@ -111,5 +111,31 @@ describe("inferSubstitutions", () => {
 			{ side: "BRAVO", playerOut: user(3), playerIn: user(1) },
 			{ side: "BRAVO", playerOut: user(4), playerIn: user(2) },
 		]);
+	});
+});
+
+describe("resolveRoomPass", () => {
+	test("returns a 4-digit password", () => {
+		const pass = resolveRoomPass(12345);
+
+		expect(pass).toMatch(/^\d{4}$/);
+	});
+
+	test("returns deterministic password for a given numeric seed", () => {
+		const pass1 = resolveRoomPass(12345);
+		const pass2 = resolveRoomPass(12345);
+		expect(pass1).toBe(pass2);
+	});
+
+	test("returns deterministic password for a given string seed", () => {
+		const pass1 = resolveRoomPass("test-seed");
+		const pass2 = resolveRoomPass("test-seed");
+		expect(pass1).toBe(pass2);
+	});
+
+	test("returns different passwords for different seeds", () => {
+		const pass1 = resolveRoomPass(1);
+		const pass2 = resolveRoomPass(2);
+		expect(pass1).not.toBe(pass2);
 	});
 });

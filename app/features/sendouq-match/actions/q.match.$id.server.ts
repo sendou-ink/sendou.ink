@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
+import { db } from "~/db/sql";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -120,15 +121,15 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					"This group must use the continue vote",
 				);
 
+				const requester = previousGroup.members.find((m) => m.id === user.id);
+				errorToastIfFalsy(
+					requester?.role === "OWNER",
+					"You are not the owner of the group",
+				);
+
 				for (const member of previousGroup.members) {
 					const currentGroup = SendouQ.findOwnGroup(member.id);
 					errorToastIfFalsy(!currentGroup, "Member is already in a group");
-					if (member.id === user.id) {
-						errorToastIfFalsy(
-							member.role === "OWNER",
-							"You are not the owner of the group",
-						);
-					}
 				}
 
 				await SQGroupRepository.createGroupFromPrevious({
@@ -166,39 +167,50 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					"This group uses the trusted rematch flow",
 				);
 
-				if (
-					!RejoinVote.canCastVote(
-						await GroupMatchContinueVoteRepository.findForGroups([
-							viewerGroup.id,
-						]),
-						user.id,
-					)
-				) {
-					return null;
-				}
+				const votingResult = await db.transaction().execute(async (trx) => {
+					const existingVotes =
+						await GroupMatchContinueVoteRepository.findForGroups(
+							[viewerGroup.id],
+							trx,
+						);
 
-				await GroupMatchContinueVoteRepository.cast({
-					groupId: viewerGroup.id,
-					userId: user.id,
-					isContinuing: data.isContinuing,
+					if (!RejoinVote.canCastVote(existingVotes, user.id)) {
+						return null;
+					}
+
+					await GroupMatchContinueVoteRepository.cast(
+						{
+							groupId: viewerGroup.id,
+							userId: user.id,
+							isContinuing: data.isContinuing,
+						},
+						trx,
+					);
+
+					return RejoinVote.result(
+						await GroupMatchContinueVoteRepository.findForGroups(
+							[viewerGroup.id],
+							trx,
+						),
+					);
 				});
 
-				const votingResult = RejoinVote.result(
-					await GroupMatchContinueVoteRepository.findForGroups([
-						viewerGroup.id,
-					]),
-				);
-
-				if (votingResult.type === "RESOLVED") {
+				if (votingResult?.type === "RESOLVED") {
 					const survivors = viewerGroup.members
 						.filter((m) => votingResult.continuingUserIds.includes(m.id))
 						.map((m) => ({ id: m.id, role: m.role }));
 
-					await SQGroupRepository.createGroupFromPrevious({
-						previousGroupId: viewerGroup.id,
-						members: survivors,
-						status: "ACTIVE",
-					});
+					try {
+						await SQGroupRepository.createGroupFromPrevious({
+							previousGroupId: viewerGroup.id,
+							members: survivors,
+							status: "ACTIVE",
+						});
+					} catch (error) {
+						// a concurrent voter may have already created the successor
+						// group; the in-memory queue still needs to be refreshed below
+						if (!(error instanceof SendouQError)) throw error;
+					}
 
 					await refreshSendouQInstance();
 				}

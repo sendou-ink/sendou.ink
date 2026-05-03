@@ -3,7 +3,6 @@ import { describe, expect, test } from "vitest";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 import {
 	resolveGroupNames,
-	resolveMatchScore,
 	resolveTimelineMaps,
 	resolveTimelineSpChanges,
 	resolveTimelineTeams,
@@ -225,22 +224,5 @@ describe("resolveTimelineSpChanges()", () => {
 		);
 
 		expect(result?.alpha.skillDifference).toEqual({ calculated: true });
-	});
-});
-
-describe("resolveMatchScore()", () => {
-	test("counts wins per side and ignores unreported maps", () => {
-		const result = resolveMatchScore(
-			matchWith({
-				mapList: [
-					{ winnerGroupId: ALPHA_ID },
-					{ winnerGroupId: ALPHA_ID },
-					{ winnerGroupId: BRAVO_ID },
-					{ winnerGroupId: null },
-				],
-			}),
-		);
-
-		expect(result).toEqual({ alpha: 2, bravo: 1 });
 	});
 });
