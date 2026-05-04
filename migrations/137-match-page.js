@@ -15,23 +15,7 @@ export function up(db) {
 		).run();
 
 		db.prepare(
-			/* sql */ `alter table "User" add "noSplatnet" integer default 0`,
-		).run();
-
-		db.prepare(
-			/* sql */ `alter table "GroupMatch" add "confirmedAt" integer`,
-		).run();
-
-		db.prepare(
-			/* sql */ `alter table "GroupMatch" add "confirmedByUserId" integer references "User"("id")`,
-		).run();
-
-		db.prepare(
-			/* sql */ `alter table "GroupMatch" add "cancelRequestedByUserId" integer references "User"("id")`,
-		).run();
-
-		db.prepare(
-			/* sql */ `alter table "GroupMatch" add "cancelAcceptedByUserId" integer references "User"("id")`,
+			/* sql */ `alter table "User" add "noSplatnet" integer default 0 not null`,
 		).run();
 
 		db.prepare(
@@ -58,6 +42,7 @@ export function up(db) {
             select "reportedByUserId" from "GroupMatch"
             where "GroupMatch"."id" = "GroupMatchMap"."matchId"
           )
+        where "winnerGroupId" is not null
       `,
 		).run();
 
@@ -85,14 +70,10 @@ export function up(db) {
 		db.prepare(
 			/* sql */ `
         insert into "GroupMatch_new" (
-          "id", "alphaGroupId", "bravoGroupId", "createdAt", "chatCode", "memento",
-          "confirmedAt", "confirmedByUserId",
-          "cancelRequestedByUserId", "cancelAcceptedByUserId"
+          "id", "alphaGroupId", "bravoGroupId", "createdAt", "chatCode", "memento"
         )
         select
-          "id", "alphaGroupId", "bravoGroupId", "createdAt", "chatCode", "memento",
-          "confirmedAt", "confirmedByUserId",
-          "cancelRequestedByUserId", "cancelAcceptedByUserId"
+          "id", "alphaGroupId", "bravoGroupId", "createdAt", "chatCode", "memento"
         from "GroupMatch"
       `,
 		).run();

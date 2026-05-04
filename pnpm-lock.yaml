@@ -180,7 +180,7 @@ importers:
         specifier: 2.4.1
         version: 2.4.1(react@19.2.5)
       web-haptics:
-        specifier: ^0.0.6
+        specifier: 0.0.6
         version: 0.0.6(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       web-push:
         specifier: 3.6.7

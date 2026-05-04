@@ -24,15 +24,7 @@ import {
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
-import { calculateMatchSkills } from "~/features/sendouq-match/core/skills.server";
-import {
-	summarizeMaps,
-	summarizePlayerResults,
-} from "~/features/sendouq-match/core/summarizer.server";
-import * as PlayerStatRepository from "~/features/sendouq-match/PlayerStatRepository.server";
-import { winnersArrayToWinner } from "~/features/sendouq-match/q-match-utils";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
-import * as SkillRepository from "~/features/sendouq-match/SkillRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
@@ -3031,52 +3023,22 @@ async function playedMatches() {
 			["ALPHA", "BRAVO", "BRAVO", "ALPHA", "ALPHA", "ALPHA"],
 			["ALPHA", "BRAVO", "ALPHA", "BRAVO", "BRAVO", "BRAVO"],
 		]) as ("ALPHA" | "BRAVO")[];
-		const winner = winnersArrayToWinner(winners);
-		const finishedMatch = (await SQMatchRepository.findById(match.id))!;
 
-		const { newSkills, differences } = calculateMatchSkills({
-			groupMatchId: match.id,
-			winner: winner === "ALPHA" ? groupAlphaMembers : groupBravoMembers,
-			loser: winner === "ALPHA" ? groupBravoMembers : groupAlphaMembers,
-			loserGroupId: winner === "ALPHA" ? groupBravo : groupAlpha,
-			winnerGroupId: winner === "ALPHA" ? groupAlpha : groupBravo,
-		});
-
-		const members = [
-			...finishedMatch.groupAlpha.members.map((m) => ({
-				...m,
-				groupId: match.alphaGroupId,
-			})),
-			...finishedMatch.groupBravo.members.map((m) => ({
-				...m,
-				groupId: match.bravoGroupId,
-			})),
-		];
-		await SQMatchRepository.updateScore({
-			matchId: match.id,
-			reportedByUserId:
-				faker.number.float(1) > 0.5
-					? groupAlphaMembers[0]
-					: groupBravoMembers[0],
-			winners,
-		});
-		await SkillRepository.createMatchSkills({
-			skills: newSkills,
-			differences,
-			groupMatchId: match.id,
-			oldMatchMemento: { users: {}, groups: {}, pools: [] },
-		});
-		await SQGroupRepository.setAsInactive(groupAlpha);
-		await SQGroupRepository.setAsInactive(groupBravo);
-		await PlayerStatRepository.upsertMapResults(
-			summarizeMaps({ match: finishedMatch, members, winners }),
-		);
-		await PlayerStatRepository.upsertPlayerResults(
-			summarizePlayerResults({ match: finishedMatch, members, winners }),
-		);
+		const reporterUserId =
+			faker.number.float(1) > 0.5 ? groupAlphaMembers[0] : groupBravoMembers[0];
+		for (const [mapIndex, winner] of winners.entries()) {
+			await SQMatchRepository.reportMapWinner({
+				matchId: match.id,
+				winnerId: winner === "ALPHA" ? groupAlpha : groupBravo,
+				reportedByUserId: reporterUserId,
+				reportedCount: mapIndex,
+				isStaffReport: true,
+			});
+		}
 
 		// -> add weapons for 90% of matches
 		if (faker.number.float(1) > 0.9) continue;
+		const finishedMatch = (await SQMatchRepository.findById(match.id))!;
 		const users = [...groupAlphaMembers, ...groupBravoMembers];
 		const mapsWithUsers = users.flatMap((u) =>
 			finishedMatch.mapList.map((_, mapIndex) => ({ mapIndex, user: u })),

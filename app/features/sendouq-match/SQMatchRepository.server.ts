@@ -5,7 +5,6 @@ import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, ParsedMemento } from "~/db/tables";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { mostPopularArrayElement } from "~/utils/arrays";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -23,7 +22,6 @@ import { SendouQError } from "../sendouq/q-utils.server";
 import * as SQGroupRepository from "../sendouq/SQGroupRepository.server";
 import { MATCHES_PER_SEASONS_PAGE } from "../user-page/user-page-constants";
 import { compareMatchToReportedScores } from "./core/match.server";
-import { mergeReportedWeapons } from "./core/reported-weapons.server";
 import * as SendouQMatch from "./core/SendouQMatch";
 import { calculateMatchSkills } from "./core/skills.server";
 import {
@@ -31,7 +29,6 @@ import {
 	summarizePlayerResults,
 } from "./core/summarizer.server";
 import * as PlayerStatRepository from "./PlayerStatRepository.server";
-import { winnersArrayToWinner } from "./q-match-utils";
 import * as ReportedWeaponRepository from "./ReportedWeaponRepository.server";
 import * as SkillRepository from "./SkillRepository.server";
 
@@ -547,46 +544,6 @@ async function validateCreatedMatch(
 	}
 }
 
-export async function updateScore(
-	{
-		matchId,
-		reportedByUserId,
-		winners,
-	}: {
-		matchId: number;
-		reportedByUserId: number;
-		winners: ("ALPHA" | "BRAVO")[];
-	},
-	trx?: Transaction<DB>,
-) {
-	const executor = trx ?? db;
-	const reportedAt = dateToDatabaseTimestamp(new Date());
-
-	const match = await executor
-		.selectFrom("GroupMatch")
-		.select(["alphaGroupId", "bravoGroupId"])
-		.where("id", "=", matchId)
-		.executeTakeFirstOrThrow();
-
-	await executor
-		.updateTable("GroupMatchMap")
-		.set({ winnerGroupId: null, reportedAt, reportedByUserId })
-		.where("matchId", "=", matchId)
-		.execute();
-
-	for (const [index, winner] of winners.entries()) {
-		await executor
-			.updateTable("GroupMatchMap")
-			.set({
-				winnerGroupId:
-					winner === "ALPHA" ? match.alphaGroupId : match.bravoGroupId,
-			})
-			.where("matchId", "=", matchId)
-			.where("index", "=", index)
-			.execute();
-	}
-}
-
 export function lockMatchWithoutSkillChange(
 	groupMatchId: number,
 	trx?: Transaction<DB>,
@@ -606,202 +563,11 @@ export function lockMatchWithoutSkillChange(
 		.execute();
 }
 
-export type ReportScoreResult =
-	| { status: "REPORTED"; shouldRefreshCaches: false }
-	| { status: "CONFIRMED"; shouldRefreshCaches: true }
-	| { status: "DIFFERENT"; shouldRefreshCaches: false }
-	| { status: "DUPLICATE"; shouldRefreshCaches: false };
-
 export type CancelMatchResult =
 	| { status: "CANCEL_REPORTED"; shouldRefreshCaches: false }
 	| { status: "CANCEL_CONFIRMED"; shouldRefreshCaches: true }
 	| { status: "CANT_CANCEL"; shouldRefreshCaches: false }
 	| { status: "DUPLICATE"; shouldRefreshCaches: false };
-
-type WeaponInput = {
-	groupMatchId: number;
-	weaponSplId: MainWeaponId;
-	userId: number;
-	mapIndex: number;
-};
-
-export async function adminReport({
-	matchId,
-	reportedByUserId,
-	winners,
-}: {
-	matchId: number;
-	reportedByUserId: number;
-	winners: ("ALPHA" | "BRAVO")[];
-}): Promise<void> {
-	const match = await findById(matchId);
-	invariant(match, "Match not found");
-
-	const members = buildMembers(match);
-	const winner = winnersArrayToWinner(winners);
-	const winnerGroupId =
-		winner === "ALPHA" ? match.groupAlpha.id : match.groupBravo.id;
-	const loserGroupId =
-		winner === "ALPHA" ? match.groupBravo.id : match.groupAlpha.id;
-
-	const { newSkills, differences } = calculateMatchSkills({
-		groupMatchId: match.id,
-		winner: (match.groupAlpha.id === winnerGroupId
-			? match.groupAlpha
-			: match.groupBravo
-		).members.map((m) => m.id),
-		loser: (match.groupAlpha.id === loserGroupId
-			? match.groupAlpha
-			: match.groupBravo
-		).members.map((m) => m.id),
-		winnerGroupId,
-		loserGroupId,
-	});
-
-	await db.transaction().execute(async (trx) => {
-		await updateScore({ matchId, reportedByUserId, winners }, trx);
-		await SQGroupRepository.setAsInactive(match.groupAlpha.id, trx);
-		await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
-		await PlayerStatRepository.upsertMapResults(
-			summarizeMaps({ match, members, winners }),
-			trx,
-		);
-		await PlayerStatRepository.upsertPlayerResults(
-			summarizePlayerResults({ match, members, winners }),
-			trx,
-		);
-		await SkillRepository.createMatchSkills(
-			{
-				skills: newSkills,
-				differences,
-				groupMatchId: match.id,
-				oldMatchMemento: match.memento,
-			},
-			trx,
-		);
-	});
-}
-
-export async function reportScore({
-	matchId,
-	reportedByUserId,
-	winners,
-	weapons,
-}: {
-	matchId: number;
-	reportedByUserId: number;
-	winners: ("ALPHA" | "BRAVO")[];
-	weapons: WeaponInput[];
-}): Promise<ReportScoreResult> {
-	const match = await findById(matchId);
-	invariant(match, "Match not found");
-
-	const members = buildMembers(match);
-	const reporterGroupId = members.find(
-		(m) => m.id === reportedByUserId,
-	)?.groupId;
-	invariant(reporterGroupId, "Reporter is not a member of any group");
-
-	const previousReporterGroupId = lastReporterGroupId(match, members);
-
-	const compared = compareMatchToReportedScores({
-		match,
-		winners,
-		newReporterGroupId: reporterGroupId,
-		previousReporterGroupId,
-	});
-
-	const oldReportedWeapons =
-		(await ReportedWeaponRepository.findByMatchId(matchId)) ?? [];
-	const mergedWeapons = mergeReportedWeapons({
-		oldWeapons: oldReportedWeapons,
-		newWeapons: weapons,
-		newReportedMapsCount: winners.length,
-	});
-	const weaponsForDb = mergedWeapons.map((w) => ({
-		groupMatchId: w.groupMatchId,
-		mapIndex: w.mapIndex,
-		userId: w.userId,
-		weaponSplId: w.weaponSplId,
-	}));
-
-	if (compared === "DUPLICATE") {
-		await ReportedWeaponRepository.replaceByMatchId(matchId, weaponsForDb);
-		return { status: "DUPLICATE", shouldRefreshCaches: false };
-	}
-
-	if (compared === "DIFFERENT") {
-		await SQGroupRepository.setAsInactive(reporterGroupId);
-		return { status: "DIFFERENT", shouldRefreshCaches: false };
-	}
-
-	if (compared === "FIRST_REPORT") {
-		await db.transaction().execute(async (trx) => {
-			await updateScore({ matchId, reportedByUserId, winners }, trx);
-			await SQGroupRepository.setAsInactive(reporterGroupId, trx);
-			if (weaponsForDb.length > 0) {
-				await ReportedWeaponRepository.createMany(weaponsForDb, trx);
-			}
-		});
-		return { status: "REPORTED", shouldRefreshCaches: false };
-	}
-
-	if (compared === "FIX_PREVIOUS") {
-		await db.transaction().execute(async (trx) => {
-			await updateScore({ matchId, reportedByUserId, winners }, trx);
-			await ReportedWeaponRepository.replaceByMatchId(
-				matchId,
-				weaponsForDb,
-				trx,
-			);
-		});
-		return { status: "REPORTED", shouldRefreshCaches: false };
-	}
-
-	const winner = winnersArrayToWinner(winners);
-	const winnerGroupId =
-		winner === "ALPHA" ? match.groupAlpha.id : match.groupBravo.id;
-	const loserGroupId =
-		winner === "ALPHA" ? match.groupBravo.id : match.groupAlpha.id;
-
-	const { newSkills, differences } = calculateMatchSkills({
-		groupMatchId: match.id,
-		winner: (match.groupAlpha.id === winnerGroupId
-			? match.groupAlpha
-			: match.groupBravo
-		).members.map((m) => m.id),
-		loser: (match.groupAlpha.id === loserGroupId
-			? match.groupAlpha
-			: match.groupBravo
-		).members.map((m) => m.id),
-		winnerGroupId,
-		loserGroupId,
-	});
-
-	await db.transaction().execute(async (trx) => {
-		await SQGroupRepository.setAsInactive(reporterGroupId, trx);
-		await PlayerStatRepository.upsertMapResults(
-			summarizeMaps({ match, members, winners }),
-			trx,
-		);
-		await PlayerStatRepository.upsertPlayerResults(
-			summarizePlayerResults({ match, members, winners }),
-			trx,
-		);
-		await SkillRepository.createMatchSkills(
-			{
-				skills: newSkills,
-				differences,
-				groupMatchId: match.id,
-				oldMatchMemento: match.memento,
-			},
-			trx,
-		);
-		await ReportedWeaponRepository.replaceByMatchId(matchId, weaponsForDb, trx);
-	});
-
-	return { status: "CONFIRMED", shouldRefreshCaches: true };
-}
 
 export async function cancelMatch({
 	matchId,
@@ -817,7 +583,15 @@ export async function cancelMatch({
 
 	if (isAdminReport) {
 		await db.transaction().execute(async (trx) => {
-			await updateScore({ matchId, reportedByUserId, winners: [] }, trx);
+			await trx
+				.updateTable("GroupMatchMap")
+				.set({
+					winnerGroupId: null,
+					reportedAt: dateToDatabaseTimestamp(new Date()),
+					reportedByUserId,
+				})
+				.where("matchId", "=", matchId)
+				.execute();
 			await SQGroupRepository.setAsInactive(match.groupAlpha.id, trx);
 			await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
 			await lockMatchWithoutSkillChange(match.id, trx);
@@ -851,7 +625,15 @@ export async function cancelMatch({
 
 	if (compared === "FIRST_REPORT" || compared === "FIX_PREVIOUS") {
 		await db.transaction().execute(async (trx) => {
-			await updateScore({ matchId, reportedByUserId, winners: [] }, trx);
+			await trx
+				.updateTable("GroupMatchMap")
+				.set({
+					winnerGroupId: null,
+					reportedAt: dateToDatabaseTimestamp(new Date()),
+					reportedByUserId,
+				})
+				.where("matchId", "=", matchId)
+				.execute();
 			await SQGroupRepository.setAsInactive(reporterGroupId, trx);
 			if (compared === "FIX_PREVIOUS") {
 				await ReportedWeaponRepository.replaceByMatchId(matchId, [], trx);
@@ -1313,9 +1095,11 @@ export async function undoMatchReport({
 		return { status: "NOT_ALLOWED" };
 	}
 
-	const decidingMap = [...match.mapList]
-		.reverse()
-		.find((m) => m.winnerGroupId !== null);
+	const decidingMapIndex = match.mapList.findLastIndex(
+		(m) => m.winnerGroupId !== null,
+	);
+	const decidingMap =
+		decidingMapIndex === -1 ? undefined : match.mapList[decidingMapIndex];
 	invariant(decidingMap, "No deciding map found");
 
 	if (!decidingMap.reportedByUserId) {
@@ -1340,6 +1124,11 @@ export async function undoMatchReport({
 			.set({ winnerGroupId: null, reportedAt: null, reportedByUserId: null })
 			.where("id", "=", decidingMap.id)
 			.execute();
+
+		await ReportedWeaponRepository.deleteByMapIndex(
+			{ matchId, mapIndex: decidingMapIndex },
+			trx,
+		);
 
 		await trx
 			.deleteFrom("GroupMatchContinueVote")
@@ -1389,6 +1178,8 @@ export async function undoMapReport({
 			.set({ winnerGroupId: null })
 			.where("id", "=", targetMap.id)
 			.execute();
+
+		await ReportedWeaponRepository.deleteByMapIndex({ matchId, mapIndex }, trx);
 
 		await trx
 			.deleteFrom("GroupMatchContinueVote")

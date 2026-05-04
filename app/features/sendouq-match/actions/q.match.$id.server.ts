@@ -91,12 +91,19 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
-				if (match.chatCode && result.status === "MATCH_FINALIZED") {
-					ChatSystemMessage.send({
-						room: match.chatCode,
-						type: "SCORE_CONFIRMED",
-						context: { name: user.username },
-					});
+				if (match.chatCode) {
+					if (result.status === "MATCH_FINALIZED") {
+						ChatSystemMessage.send({
+							room: match.chatCode,
+							type: "SCORE_CONFIRMED",
+							context: { name: user.username },
+						});
+					} else {
+						ChatSystemMessage.send({
+							room: match.chatCode,
+							revalidateOnly: true,
+						});
+					}
 				}
 
 				break;
@@ -268,6 +275,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				}
 
 				await refreshSendouQInstance();
+
+				if (match.chatCode) {
+					ChatSystemMessage.send({
+						room: match.chatCode,
+						revalidateOnly: true,
+					});
+				}
+
 				break;
 			}
 			case "UNDO_MAP_REPORT": {
@@ -284,6 +299,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				}
 
 				await refreshSendouQInstance();
+
+				if (match.chatCode) {
+					ChatSystemMessage.send({
+						room: match.chatCode,
+						revalidateOnly: true,
+					});
+				}
+
 				break;
 			}
 			case "REQUEST_CANCEL": {

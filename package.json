@@ -94,7 +94,7 @@
 		"remix-i18next": "7.5.0",
 		"slugify": "1.6.9",
 		"swr": "2.4.1",
-		"web-haptics": "^0.0.6",
+		"web-haptics": "0.0.6",
 		"web-push": "3.6.7",
 		"zod": "4.3.6"
 	},

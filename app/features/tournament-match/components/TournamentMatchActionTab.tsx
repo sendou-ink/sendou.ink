@@ -10,7 +10,6 @@ import { useMatchWeaponReport } from "~/components/match-page/useMatchWeaponRepo
 import { WeaponReporter } from "~/components/match-page/WeaponReporter";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import type { CommonUser } from "~/utils/kysely.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
@@ -165,11 +164,11 @@ function useTournamentWeaponReport({
 		.slice(0, reportedCount + 1)
 		.map((m) => ({ stageId: m.stageId, mode: m.mode }));
 
-	const pastReported: MainWeaponId[] =
+	const pastReported =
 		data.reportedWeapons && viewerUserId !== undefined
 			? data.reportedWeapons
 					.filter((w) => w.userId === viewerUserId)
-					.map((w) => w.weaponSplId)
+					.map((w) => ({ mapIndex: w.mapIndex, weaponSplId: w.weaponSplId }))
 			: [];
 
 	const weaponReport = useMatchWeaponReport({

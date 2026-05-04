@@ -23,6 +23,7 @@ interface WeaponReporterMap {
 export interface WeaponReporterProps {
 	maps: WeaponReporterMap[];
 	pastReported: MainWeaponId[];
+	nextMapIndex: number;
 	quickSelectWeaponIds?: MainWeaponId[];
 	onSubmit: (weaponSplId: MainWeaponId) => void;
 	onUndo: () => void;
@@ -33,6 +34,7 @@ export interface WeaponReporterProps {
 export function WeaponReporter({
 	maps,
 	pastReported,
+	nextMapIndex,
 	quickSelectWeaponIds,
 	onSubmit,
 	onUndo,
@@ -49,11 +51,10 @@ export function WeaponReporter({
 		null,
 	);
 
-	const inputTargetIndex = pastReported.length;
-
-	const inputTargetMap = maps[inputTargetIndex];
-	const unreportedCount =
-		maps.length - inputTargetIndex - (inputTargetMap ? 1 : 0);
+	const inputTargetMap = nextMapIndex >= 0 ? maps[nextMapIndex] : undefined;
+	const unreportedCount = inputTargetMap
+		? maps.length - pastReported.length - 1
+		: maps.length - pastReported.length;
 
 	const handleToggle = (newOpen: boolean) => {
 		setIsOpen(newOpen);
@@ -94,6 +95,32 @@ export function WeaponReporter({
 					aria-label={t("q:match.actions.reportWeapons")}
 				/>
 			)}
+			{inputTargetMap ? (
+				<div className={styles.mapRow}>
+					<MapInfo map={inputTargetMap} />
+					<div className={styles.inputRow}>
+						<div className={styles.weaponSelectContainer}>
+							<WeaponSelect
+								label={`${t("q:match.weapon.yourWeapon")} #${nextMapIndex + 1}`}
+								value={selectedWeapon}
+								onChange={setSelectedWeapon}
+								quickSelectWeaponsIds={quickSelectWeaponIds}
+							/>
+						</div>
+						<SendouButton
+							variant="primary"
+							isDisabled={selectedWeapon === null || isSubmitting}
+							onPress={() => {
+								if (selectedWeapon === null) return;
+								onSubmit(selectedWeapon);
+								setSelectedWeapon(null);
+							}}
+						>
+							{t("common:actions.submit")}
+						</SendouButton>
+					</div>
+				</div>
+			) : null}
 			{pastReported.length > 0 ? (
 				<div className={styles.pastRow}>
 					{pastReported.map((weaponId, i) => (
@@ -112,32 +139,6 @@ export function WeaponReporter({
 					>
 						{t("q:match.weapon.undoWeapon")}
 					</SendouButton>
-				</div>
-			) : null}
-			{inputTargetMap ? (
-				<div className={styles.mapRow}>
-					<MapInfo map={inputTargetMap} />
-					<div className={styles.inputRow}>
-						<div className={styles.weaponSelectContainer}>
-							<WeaponSelect
-								label={`${t("q:match.weapon.yourWeapon")} #${inputTargetIndex + 1}`}
-								value={selectedWeapon}
-								onChange={setSelectedWeapon}
-								quickSelectWeaponsIds={quickSelectWeaponIds}
-							/>
-						</div>
-						<SendouButton
-							variant="primary"
-							isDisabled={selectedWeapon === null || isSubmitting}
-							onPress={() => {
-								if (selectedWeapon === null) return;
-								onSubmit(selectedWeapon);
-								setSelectedWeapon(null);
-							}}
-						>
-							{t("common:actions.submit")}
-						</SendouButton>
-					</div>
 				</div>
 			) : null}
 			{unreportedCount > 0 ? (

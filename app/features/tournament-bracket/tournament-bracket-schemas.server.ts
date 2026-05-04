@@ -70,7 +70,7 @@ export const matchSchema = z.union([
 	z.object({
 		_action: _action("BAN_PICK"),
 		stageId: stageId.optional(),
-		mode: modeShort,
+		mode: modeShort.optional(),
 	}),
 	z.object({
 		_action: _action("UNDO_REPORT_SCORE"),

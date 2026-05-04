@@ -457,6 +457,15 @@ export function isModeLegal({
 	return pool.some((m) => m.mode === mode && m.isLegal);
 }
 
+export function isStageLegal({
+	stageId,
+	...rest
+}: MapListWithStatusesArgs & { stageId: StageId }) {
+	const pool = mapsListWithLegality(rest);
+
+	return pool.some((m) => m.stageId === stageId && m.isLegal);
+}
+
 export interface PickBanEvent {
 	type: string;
 	stageId: StageId | null;

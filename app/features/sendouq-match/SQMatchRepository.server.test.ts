@@ -1,21 +1,9 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { dbInsertUsers, dbReset } from "~/utils/Test";
 import * as SQGroupRepository from "../sendouq/SQGroupRepository.server";
 import * as SQMatchRepository from "./SQMatchRepository.server";
-
-const { mockSeasonCurrentOrPrevious } = vi.hoisted(() => ({
-	mockSeasonCurrentOrPrevious: vi.fn(() => ({
-		nth: 1,
-		starts: new Date("2023-01-01"),
-		ends: new Date("2030-12-31"),
-	})),
-}));
-
-vi.mock("~/features/mmr/core/Seasons", () => ({
-	currentOrPrevious: mockSeasonCurrentOrPrevious,
-}));
 
 const createGroup = async (userIds: number[]) => {
 	const groupResult = await SQGroupRepository.createGroup({
@@ -98,84 +86,6 @@ const fetchSkills = async (matchId: number) => {
 		.execute();
 };
 
-const fetchReportedWeapons = async (matchId: number) => {
-	return db
-		.selectFrom("ReportedWeapon")
-		.selectAll("ReportedWeapon")
-		.where("ReportedWeapon.groupMatchId", "=", matchId)
-		.execute();
-};
-
-describe("updateScore", () => {
-	beforeEach(async () => {
-		await dbInsertUsers(8);
-	});
-
-	afterEach(() => {
-		dbReset();
-	});
-
-	test("updates map reportedAt and reportedByUserId", async () => {
-		const alphaGroupId = await createGroup([1, 2, 3, 4]);
-		const bravoGroupId = await createGroup([5, 6, 7, 8]);
-		const match = await createMatch(alphaGroupId, bravoGroupId);
-
-		await SQMatchRepository.updateScore({
-			matchId: match.id,
-			reportedByUserId: 1,
-			winners: ["ALPHA", "ALPHA", "BRAVO", "ALPHA"],
-		});
-
-		const maps = await fetchMapResults(match.id);
-		for (const map of maps) {
-			expect(map.reportedAt).not.toBeNull();
-			expect(map.reportedByUserId).toBe(1);
-		}
-	});
-
-	test("sets winners correctly for each map", async () => {
-		const alphaGroupId = await createGroup([1, 2, 3, 4]);
-		const bravoGroupId = await createGroup([5, 6, 7, 8]);
-		const match = await createMatch(alphaGroupId, bravoGroupId);
-
-		await SQMatchRepository.updateScore({
-			matchId: match.id,
-			reportedByUserId: 1,
-			winners: ["ALPHA", "BRAVO", "ALPHA", "BRAVO"],
-		});
-
-		const maps = await fetchMapResults(match.id);
-		expect(maps[0].winnerGroupId).toBe(alphaGroupId);
-		expect(maps[1].winnerGroupId).toBe(bravoGroupId);
-		expect(maps[2].winnerGroupId).toBe(alphaGroupId);
-		expect(maps[3].winnerGroupId).toBe(bravoGroupId);
-		expect(maps[4].winnerGroupId).toBeNull();
-	});
-
-	test("clears previous winners before setting new ones", async () => {
-		const alphaGroupId = await createGroup([1, 2, 3, 4]);
-		const bravoGroupId = await createGroup([5, 6, 7, 8]);
-		const match = await createMatch(alphaGroupId, bravoGroupId);
-
-		await SQMatchRepository.updateScore({
-			matchId: match.id,
-			reportedByUserId: 1,
-			winners: ["ALPHA", "ALPHA", "ALPHA", "ALPHA"],
-		});
-
-		await SQMatchRepository.updateScore({
-			matchId: match.id,
-			reportedByUserId: 5,
-			winners: ["BRAVO", "BRAVO", "BRAVO", "BRAVO"],
-		});
-
-		const maps = await fetchMapResults(match.id);
-		for (let i = 0; i < 4; i++) {
-			expect(maps[i].winnerGroupId).toBe(bravoGroupId);
-		}
-	});
-});
-
 describe("lockMatchWithoutSkillChange", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(8);
@@ -199,165 +109,6 @@ describe("lockMatchWithoutSkillChange", () => {
 		expect(skills[0].sigma).toBe(-1);
 		expect(skills[0].ordinal).toBe(-1);
 		expect(skills[0].userId).toBeNull();
-	});
-});
-
-describe("adminReport", () => {
-	beforeEach(async () => {
-		await dbInsertUsers(8);
-	});
-
-	afterEach(() => {
-		dbReset();
-	});
-
-	test("sets both groups as inactive", async () => {
-		const alphaGroupId = await createGroup([1, 2, 3, 4]);
-		const bravoGroupId = await createGroup([5, 6, 7, 8]);
-		const match = await createMatch(alphaGroupId, bravoGroupId);
-
-		await SQMatchRepository.adminReport({
-			matchId: match.id,
-			reportedByUserId: 1,
-			winners: ["ALPHA", "ALPHA", "BRAVO", "ALPHA"],
-		});
-
-		const alphaGroup = await fetchGroup(alphaGroupId);
-		const bravoGroup = await fetchGroup(bravoGroupId);
-		expect(alphaGroup?.status).toBe("INACTIVE");
-		expect(bravoGroup?.status).toBe("INACTIVE");
-
-		const maps = await fetchMapResults(match.id);
-		expect(maps[0].reportedAt).not.toBeNull();
-	});
-
-	test("creates skills to lock the match", async () => {
-		const alphaGroupId = await createGroup([1, 2, 3, 4]);
-		const bravoGroupId = await createGroup([5, 6, 7, 8]);
-		const match = await createMatch(alphaGroupId, bravoGroupId);
-
-		await SQMatchRepository.adminReport({
-			matchId: match.id,
-			reportedByUserId: 1,
-			winners: ["ALPHA", "ALPHA", "BRAVO", "ALPHA"],
-		});
-
-		const skills = await fetchSkills(match.id);
-		expect(skills.length).toBeGreaterThan(0);
-	});
-});
-
-describe("reportScore", () => {
-	beforeEach(async () => {
-		await dbInsertUsers(8);
-	});
-
-	afterEach(() => {
-		dbReset();
-	});
-
-	test("first report sets reporter group as inactive", async () => {
-		const alphaGroupId = await createGroup([1, 2, 3, 4]);
-		const bravoGroupId = await createGroup([5, 6, 7, 8]);
-		const match = await createMatch(alphaGroupId, bravoGroupId);
-
-		const result = await SQMatchRepository.reportScore({
-			matchId: match.id,
-			reportedByUserId: 1,
-			winners: ["ALPHA", "ALPHA", "BRAVO", "ALPHA"],
-			weapons: [
-				{
-					groupMatchId: match.id,
-					weaponSplId: 40,
-					userId: 1,
-					mapIndex: 0,
-				},
-			],
-		});
-
-		expect(result.status).toBe("REPORTED");
-		expect(result.shouldRefreshCaches).toBe(false);
-
-		const alphaGroup = await fetchGroup(alphaGroupId);
-		expect(alphaGroup?.status).toBe("INACTIVE");
-
-		const bravoGroup = await fetchGroup(bravoGroupId);
-		expect(bravoGroup?.status).toBe("ACTIVE");
-
-		const weapons = await fetchReportedWeapons(match.id);
-		expect(weapons).toHaveLength(1);
-	});
-
-	test("matching second report confirms score and creates skills", async () => {
-		const alphaGroupId = await createGroup([1, 2, 3, 4]);
-		const bravoGroupId = await createGroup([5, 6, 7, 8]);
-		const match = await createMatch(alphaGroupId, bravoGroupId);
-
-		await SQMatchRepository.reportScore({
-			matchId: match.id,
-			reportedByUserId: 1,
-			winners: ["ALPHA", "ALPHA", "BRAVO", "ALPHA"],
-			weapons: [],
-		});
-
-		const result = await SQMatchRepository.reportScore({
-			matchId: match.id,
-			reportedByUserId: 5,
-			winners: ["ALPHA", "ALPHA", "BRAVO", "ALPHA"],
-			weapons: [],
-		});
-
-		expect(result.status).toBe("CONFIRMED");
-		expect(result.shouldRefreshCaches).toBe(true);
-
-		const skills = await fetchSkills(match.id);
-		expect(skills.length).toBeGreaterThan(0);
-	});
-
-	test("different score returns DIFFERENT status", async () => {
-		const alphaGroupId = await createGroup([1, 2, 3, 4]);
-		const bravoGroupId = await createGroup([5, 6, 7, 8]);
-		const match = await createMatch(alphaGroupId, bravoGroupId);
-
-		await SQMatchRepository.reportScore({
-			matchId: match.id,
-			reportedByUserId: 1,
-			winners: ["ALPHA", "ALPHA", "BRAVO", "ALPHA"],
-			weapons: [],
-		});
-
-		const result = await SQMatchRepository.reportScore({
-			matchId: match.id,
-			reportedByUserId: 5,
-			winners: ["BRAVO", "BRAVO", "BRAVO", "BRAVO"],
-			weapons: [],
-		});
-
-		expect(result.status).toBe("DIFFERENT");
-		expect(result.shouldRefreshCaches).toBe(false);
-	});
-
-	test("duplicate report returns DUPLICATE status", async () => {
-		const alphaGroupId = await createGroup([1, 2, 3, 4]);
-		const bravoGroupId = await createGroup([5, 6, 7, 8]);
-		const match = await createMatch(alphaGroupId, bravoGroupId);
-
-		await SQMatchRepository.reportScore({
-			matchId: match.id,
-			reportedByUserId: 1,
-			winners: ["ALPHA", "ALPHA", "BRAVO", "ALPHA"],
-			weapons: [],
-		});
-
-		const result = await SQMatchRepository.reportScore({
-			matchId: match.id,
-			reportedByUserId: 2,
-			winners: ["ALPHA", "ALPHA", "BRAVO", "ALPHA"],
-			weapons: [],
-		});
-
-		expect(result.status).toBe("DUPLICATE");
-		expect(result.shouldRefreshCaches).toBe(false);
 	});
 });
 
@@ -420,11 +171,11 @@ describe("cancelMatch", () => {
 		const bravoGroupId = await createGroup([5, 6, 7, 8]);
 		const match = await createMatch(alphaGroupId, bravoGroupId);
 
-		await SQMatchRepository.reportScore({
+		await SQMatchRepository.reportMapWinner({
 			matchId: match.id,
+			winnerId: alphaGroupId,
 			reportedByUserId: 1,
-			winners: ["ALPHA", "ALPHA", "BRAVO", "ALPHA"],
-			weapons: [],
+			reportedCount: 0,
 		});
 
 		const result = await SQMatchRepository.cancelMatch({

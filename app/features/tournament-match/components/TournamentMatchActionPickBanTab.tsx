@@ -46,6 +46,8 @@ export function TournamentMatchActionPickBanTab({
 
 	const isModeAction =
 		turnOfResult.action === "MODE_PICK" || turnOfResult.action === "MODE_BAN";
+	const isCustomStageBan =
+		data.match.roundMaps?.pickBan === "CUSTOM" && turnOfResult.action === "BAN";
 	const sharedActionType: "PICK" | "BAN" =
 		turnOfResult.action === "PICK" || turnOfResult.action === "MODE_PICK"
 			? "PICK"
@@ -58,15 +60,15 @@ export function TournamentMatchActionPickBanTab({
 
 	const resolveFrom = (
 		stageId: StageId,
-		mode: ModeShort,
+		mode?: ModeShort,
 	): FromIndicator | undefined => {
 		if (!isPartOfTheMatch) return undefined;
 
 		const teamOneHas = teams[0].mapPool?.some(
-			(map) => map.stageId === stageId && map.mode === mode,
+			(map) => map.stageId === stageId && (!mode || map.mode === mode),
 		);
 		const teamTwoHas = teams[1].mapPool?.some(
-			(map) => map.stageId === stageId && map.mode === mode,
+			(map) => map.stageId === stageId && (!mode || map.mode === mode),
 		);
 
 		if (teamOneHas && teamTwoHas) return "BOTH";
@@ -83,6 +85,7 @@ export function TournamentMatchActionPickBanTab({
 		pickBanMapPool,
 		mapList: data.mapList,
 		isModeAction,
+		isCustomStageBan,
 		isBan2: data.match.roundMaps?.pickBan === "BAN_2",
 		resolveFrom,
 	});
@@ -97,7 +100,7 @@ export function TournamentMatchActionPickBanTab({
 				fetcher.submit(
 					{
 						_action: "BAN_PICK",
-						mode: map.mode!,
+						...(map.mode != null ? { mode: map.mode } : {}),
 						...(map.stageId != null ? { stageId: String(map.stageId) } : {}),
 					},
 					{ method: "post" },
@@ -111,14 +114,19 @@ function buildPickBanOptions({
 	pickBanMapPool,
 	mapList,
 	isModeAction,
+	isCustomStageBan,
 	isBan2,
 	resolveFrom,
 }: {
 	pickBanMapPool: ReturnType<typeof PickBan.mapsListWithLegality>;
 	mapList: TournamentMatchLoaderData["mapList"];
 	isModeAction: boolean;
+	isCustomStageBan: boolean;
 	isBan2: boolean;
-	resolveFrom: (stageId: StageId, mode: ModeShort) => FromIndicator | undefined;
+	resolveFrom: (
+		stageId: StageId,
+		mode?: ModeShort,
+	) => FromIndicator | undefined;
 }): PickBanMapOption[] {
 	const legal = pickBanMapPool.filter((map) => map.isLegal);
 
@@ -131,6 +139,17 @@ function buildPickBanOptions({
 			uniqueModes.push({ mode });
 		}
 		return uniqueModes;
+	}
+
+	if (isCustomStageBan) {
+		const seen = new Set<StageId>();
+		const uniqueStages: PickBanMapOption[] = [];
+		for (const { stageId } of legal) {
+			if (seen.has(stageId)) continue;
+			seen.add(stageId);
+			uniqueStages.push({ stageId, picker: resolveFrom(stageId) });
+		}
+		return uniqueStages.sort((a, b) => a.stageId! - b.stageId!);
 	}
 
 	return legal

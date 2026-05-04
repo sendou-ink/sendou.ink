@@ -70,6 +70,23 @@ export async function deleteByUserMapIndex({
 		.execute();
 }
 
+export async function deleteByMapIndex(
+	{
+		matchId,
+		mapIndex,
+	}: {
+		matchId: number;
+		mapIndex: number;
+	},
+	trx?: Transaction<DB>,
+) {
+	await (trx ?? db)
+		.deleteFrom("ReportedWeapon")
+		.where("groupMatchId", "=", matchId)
+		.where("mapIndex", "=", mapIndex)
+		.execute();
+}
+
 export async function findByMatchId(matchId: number) {
 	const rows = await db
 		.selectFrom("ReportedWeapon")
@@ -126,6 +143,20 @@ export async function deleteByUserMapIndexTournament({
 		.where("tournamentMatchId", "=", tournamentMatchId)
 		.where("mapIndex", "=", mapIndex)
 		.where("userId", "=", userId)
+		.execute();
+}
+
+export async function deleteByMapIndexTournament({
+	tournamentMatchId,
+	mapIndex,
+}: {
+	tournamentMatchId: number;
+	mapIndex: number;
+}) {
+	await db
+		.deleteFrom("ReportedWeapon")
+		.where("tournamentMatchId", "=", tournamentMatchId)
+		.where("mapIndex", "=", mapIndex)
 		.execute();
 }
 

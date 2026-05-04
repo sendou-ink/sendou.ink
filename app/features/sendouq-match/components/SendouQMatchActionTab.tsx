@@ -1,5 +1,5 @@
 import type { TFunction } from "i18next";
-import { Ban, Undo2 } from "lucide-react";
+import { Ban, Check, Undo2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
@@ -11,11 +11,7 @@ import { MatchTimeline } from "~/components/match-page/MatchTimeline";
 import { useMatchWeaponReport } from "~/components/match-page/useMatchWeaponReport";
 import { WeaponReporter } from "~/components/match-page/WeaponReporter";
 import { useUser } from "~/features/auth/core/user";
-import type {
-	MainWeaponId,
-	ModeShort,
-	StageId,
-} from "~/modules/in-game-lists/types";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	resolveGroupNames,
 	resolveTimelineMaps,
@@ -141,6 +137,7 @@ function CancelRespondTab() {
 				<div className={styles.cancelRespondButtons}>
 					<SendouButton
 						variant="outlined"
+						icon={<X />}
 						isDisabled={cancelFetcher.state !== "idle"}
 						onPress={() => {
 							cancelFetcher.submit(
@@ -152,7 +149,8 @@ function CancelRespondTab() {
 						{t("common:actions.refuse")}
 					</SendouButton>
 					<SendouButton
-						variant="primary"
+						variant="outlined"
+						icon={<Check />}
 						isDisabled={cancelFetcher.state !== "idle"}
 						onPress={() => {
 							cancelFetcher.submit(
@@ -260,10 +258,10 @@ function WeaponReportSection({
 		(m) => m.winnerGroupId !== null,
 	);
 
-	const pastReported: MainWeaponId[] = data.reportedWeapons
+	const pastReported = data.reportedWeapons
 		? data.reportedWeapons
 				.filter((w) => w.userId === viewerUserId)
-				.map((w) => w.weaponSplId)
+				.map((w) => ({ mapIndex: w.mapIndex, weaponSplId: w.weaponSplId }))
 		: [];
 
 	const weaponReport = useMatchWeaponReport({
@@ -397,7 +395,7 @@ function InProgressTab({
 		pastReported: data.reportedWeapons
 			? data.reportedWeapons
 					.filter((w) => w.userId === user.id)
-					.map((w) => w.weaponSplId)
+					.map((w) => ({ mapIndex: w.mapIndex, weaponSplId: w.weaponSplId }))
 			: [],
 	});
 

@@ -355,6 +355,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 				}
 			})();
 
+			await ReportedWeaponRepository.deleteByMapIndexTournament({
+				tournamentMatchId: matchId,
+				mapIndex: data.position,
+			});
+
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
 
@@ -487,6 +492,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			const isModeAction =
 				actionType === "MODE_PICK" || actionType === "MODE_BAN";
+			const isCustomStageBan =
+				match.roundMaps.pickBan === "CUSTOM" && actionType === "BAN";
 
 			const pickBanLegalityArgs = {
 				results,
@@ -503,6 +510,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			};
 
 			if (isModeAction) {
+				errorToastIfFalsy(data.mode, "Mode is required for mode actions");
 				errorToastIfFalsy(
 					PickBan.isModeLegal({
 						mode: data.mode,
@@ -510,10 +518,22 @@ export const action: ActionFunction = async ({ params, request }) => {
 					}),
 					"Illegal mode",
 				);
-			} else {
+			} else if (isCustomStageBan) {
 				errorToastIfFalsy(
 					typeof data.stageId === "number",
-					"Stage is required for map actions",
+					"Stage is required for stage ban",
+				);
+				errorToastIfFalsy(
+					PickBan.isStageLegal({
+						stageId: data.stageId,
+						...pickBanLegalityArgs,
+					}),
+					"Illegal stage ban",
+				);
+			} else {
+				errorToastIfFalsy(
+					typeof data.stageId === "number" && data.mode,
+					"Stage and mode are required for map actions",
 				);
 				errorToastIfFalsy(
 					PickBan.isLegal({
@@ -534,7 +554,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				authorId: user.id,
 				matchId: match.id,
 				stageId: isModeAction ? null : data.stageId!,
-				mode: data.mode,
+				mode: isCustomStageBan ? null : (data.mode ?? null),
 				number: currentPickBanEvents.length + 1,
 				type: eventType,
 			});
