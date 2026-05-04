@@ -236,6 +236,14 @@ async function reportMapWinner(page: Page, winner: "ALPHA" | "BRAVO") {
 
 async function selectMapWinner(page: Page, winner: "ALPHA" | "BRAVO") {
 	const teamName = winner === "ALPHA" ? "Group Alpha" : "Group Bravo";
+	// Wait for the action panel to settle before clicking. waitForPOSTResponse
+	// only waits for the POST itself; the loader revalidation that swaps in the
+	// next map's component runs after, so a previous winner can still be
+	// `data-selected="true"` here. Clicking too early hits the about-to-unmount
+	// label and the selection is lost on remount.
+	await expect(
+		page.locator('[data-testid^="winner-radio-"][data-selected="true"]'),
+	).toHaveCount(0);
 	// react-aria's Radio renders a hidden input behind a span overlay; click the
 	// wrapping label so the press handler fires and updates winnerId.
 	await page.locator(`label:has(input[aria-label="${teamName}"])`).click();

@@ -126,6 +126,7 @@ export function MatchActionTab({
 								]);
 							}
 						}}
+						isDisabled={isSubmitting}
 						aria-label={t("q:match.action.selectWinner")}
 						className={styles.selectionRow}
 					>
