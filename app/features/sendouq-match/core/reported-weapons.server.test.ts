@@ -5,7 +5,7 @@ import { mergeReportedWeapons } from "./reported-weapons.server";
 describe("mergeReportedWeapons()", () => {
 	const newWeapons = [
 		{
-			groupMatchMapId: 1,
+			groupMatchId: 1,
 			mapIndex: 0,
 			userId: 1,
 			weaponSplId: 0 as MainWeaponId,
@@ -23,7 +23,7 @@ describe("mergeReportedWeapons()", () => {
 			newWeapons,
 			oldWeapons: [
 				{
-					groupMatchMapId: 1,
+					groupMatchId: 1,
 					mapIndex: 0,
 					userId: 1,
 					weaponSplId: 1 as MainWeaponId,
@@ -39,7 +39,7 @@ describe("mergeReportedWeapons()", () => {
 			newWeapons,
 			oldWeapons: [
 				{
-					groupMatchMapId: 1,
+					groupMatchId: 1,
 					mapIndex: 0,
 					userId: 2,
 					weaponSplId: 0 as MainWeaponId,
@@ -49,7 +49,7 @@ describe("mergeReportedWeapons()", () => {
 
 		expect(result).toEqual([
 			{
-				groupMatchMapId: 1,
+				groupMatchId: 1,
 				mapIndex: 0,
 				userId: 2,
 				weaponSplId: 0 as MainWeaponId,
@@ -63,13 +63,13 @@ describe("mergeReportedWeapons()", () => {
 			newWeapons,
 			oldWeapons: [
 				{
-					groupMatchMapId: 1,
+					groupMatchId: 1,
 					mapIndex: 0,
 					userId: 1,
 					weaponSplId: 1 as MainWeaponId,
 				},
 				{
-					groupMatchMapId: 1,
+					groupMatchId: 1,
 					mapIndex: 0,
 					userId: 2,
 					weaponSplId: 0 as MainWeaponId,
@@ -80,7 +80,7 @@ describe("mergeReportedWeapons()", () => {
 		expect(result).toEqual([
 			...newWeapons,
 			{
-				groupMatchMapId: 1,
+				groupMatchId: 1,
 				mapIndex: 0,
 				userId: 2,
 				weaponSplId: 0 as MainWeaponId,
@@ -93,7 +93,7 @@ describe("mergeReportedWeapons()", () => {
 			newWeapons,
 			oldWeapons: [
 				{
-					groupMatchMapId: 1,
+					groupMatchId: 1,
 					mapIndex: 1,
 					userId: 1,
 					weaponSplId: 0 as MainWeaponId,

@@ -44,6 +44,9 @@ export interface ParticipantResult {
 	/** How many points in total participant scored in total this set. KO = 100 points. Getting KO'd = 0 points. */
 	totalPoints?: number;
 
+	/** How many KO wins (100-0 games) the participant scored in this set. */
+	totalKos?: number;
+
 	/** Tells what is the result of a duel for this participant. */
 	result?: Result;
 }

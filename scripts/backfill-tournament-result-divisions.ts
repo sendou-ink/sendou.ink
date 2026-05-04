@@ -10,7 +10,7 @@ import {
 import * as Standings from "../app/features/tournament/core/Standings";
 import { tournamentSummary } from "../app/features/tournament-bracket/core/summarizer.server";
 import { tournamentFromDB } from "../app/features/tournament-bracket/core/Tournament.server";
-import { allMatchResultsByTournamentId } from "../app/features/tournament-bracket/queries/allMatchResultsByTournamentId.server";
+import { allMatchResultsByTournamentId } from "../app/features/tournament-match/queries/allMatchResultsByTournamentId.server";
 import invariant from "../app/utils/invariant";
 import { logger } from "../app/utils/logger";
 

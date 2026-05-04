@@ -9,6 +9,7 @@
 	"labels.disableBuildAbilitySorting": "",
 	"labels.disallowScrimPickupsFromUntrusted": "",
 	"labels.noScreen": "",
+	"labels.noSplatnet": "",
 	"labels.spoilerFreeMode": "",
 	"bottomTexts.name": "Обратите внимание, что если вы измените название команды, то кто-то другой может забрать себе URL и название для своей команды",
 	"bottomTexts.tag": "",

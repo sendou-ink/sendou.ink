@@ -190,12 +190,11 @@ function Clocks() {
 	const isHydrated = useHydrated();
 	const { t } = useTranslation(["q"]);
 	const { formatDate, formatTime } = useTimeFormat();
-	useAutoRerender();
+	const now = useAutoRerender();
 
 	return (
 		<div className={styles.clocksContainer}>
 			{countries.map((country) => {
-				const now = new Date();
 				return (
 					<div key={country.id} className={styles.clock}>
 						<div className={styles.clockCountry}>

@@ -6,6 +6,11 @@ import {
 	updateIsEstablishedSchema,
 } from "~/features/tournament-organization/tournament-organization-schemas";
 import {
+	TOURNAMENT_NEW_PAGE,
+	tournamentOrganizationPage,
+	tournamentPage,
+} from "~/utils/urls";
+import {
 	expect,
 	impersonate,
 	isNotVisible,
@@ -14,13 +19,8 @@ import {
 	submit,
 	test,
 	waitForPOSTResponse,
-} from "~/utils/playwright";
-import { createFormHelpers } from "~/utils/playwright-form";
-import {
-	TOURNAMENT_NEW_PAGE,
-	tournamentOrganizationPage,
-	tournamentPage,
-} from "~/utils/urls";
+} from "./helpers/playwright";
+import { createFormHelpers } from "./helpers/playwright-form";
 
 const url = tournamentOrganizationPage({
 	organizationSlug: "sendouink",

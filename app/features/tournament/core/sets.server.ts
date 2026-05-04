@@ -1,5 +1,5 @@
 import type { Tables } from "~/db/tables";
-import type { FindByTournamentTeamIdItem } from "~/features/tournament-bracket/TournamentMatchRepository.server";
+import type { FindByTournamentTeamIdItem } from "~/features/tournament-match/TournamentMatchRepository.server";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { sourceTypes } from "~/modules/tournament-map-list-generator/constants";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";

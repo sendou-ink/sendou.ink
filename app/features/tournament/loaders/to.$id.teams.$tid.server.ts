@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
-import * as TournamentMatchRepository from "~/features/tournament-bracket/TournamentMatchRepository.server";
 import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import invariant from "~/utils/invariant";
 import { parseParams } from "~/utils/remix.server";
 import {

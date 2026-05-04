@@ -237,6 +237,8 @@ export interface Group {
 	id: GeneratedAlways<number>;
 	inviteCode: string;
 	latestActionAt: Generated<number>;
+	/** If truthy, group was at least partly made in the matchmaking UI (/q/looking) */
+	matchmade: Generated<DBBoolean>;
 	status: "PREPARING" | "ACTIVE" | "INACTIVE";
 	teamId: number | null;
 }
@@ -259,6 +261,8 @@ export type UserSkillDifference =
 	| {
 			calculated: true;
 			spDiff: number;
+			oldSp?: number;
+			newSp?: number;
 	  }
 	| CalculatingSkill;
 export type GroupSkillDifference =
@@ -301,11 +305,21 @@ export interface GroupMatch {
 	alphaGroupId: number;
 	bravoGroupId: number;
 	chatCode: string | null;
+	confirmedAt: number | null;
+	confirmedByUserId: number | null;
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
 	memento: JSONColumnTypeNullable<ParsedMemento>;
-	reportedAt: number | null;
-	reportedByUserId: number | null;
+	cancelRequestedByUserId: number | null;
+	cancelAcceptedByUserId: number | null;
+}
+
+export interface GroupMatchContinueVote {
+	id: GeneratedAlways<number>;
+	groupId: number;
+	userId: number;
+	isContinuing: DBBoolean;
+	votedAt: Generated<number>;
 }
 
 export interface GroupMatchMap {
@@ -313,6 +327,8 @@ export interface GroupMatchMap {
 	index: number;
 	matchId: number;
 	mode: ModeShort;
+	reportedAt: number | null;
+	reportedByUserId: number | null;
 	source: string;
 	stageId: StageId;
 	winnerGroupId: number | null;
@@ -438,7 +454,9 @@ export interface PlusVotingResult {
 }
 
 export interface ReportedWeapon {
-	groupMatchMapId: number | null;
+	groupMatchId: number | null;
+	tournamentMatchId: number | null;
+	mapIndex: number;
 	userId: number;
 	weaponSplId: MainWeaponId;
 }
@@ -999,6 +1017,7 @@ export interface UserPreferences {
 	newProfileEnabled?: boolean;
 	/** Is spoiler-free mode enabled? Hides recent tournament results and scores until the user chooses to reveal them. */
 	spoilerFreeMode?: boolean;
+	weaponReportDefaultOpen?: boolean;
 }
 
 export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;
@@ -1059,6 +1078,8 @@ export interface User {
 	qWeaponPool: JSONColumnTypeNullable<QWeaponPool[]>;
 	plusSkippedForSeasonNth: number | null;
 	noScreen: Generated<DBBoolean>;
+	/** User doesn't have access to SplatNet 3 to join rooms made by others */
+	noSplatnet: Generated<DBBoolean>;
 	buildSorting: JSONColumnTypeNullable<BuildSort[]>;
 	preferences: JSONColumnTypeNullable<UserPreferences>;
 	/** User creation date. Can be null because we did not always save this. */
@@ -1306,6 +1327,13 @@ export interface NotificationUserSubscription {
 	subscription: JSONColumnType<NotificationSubscription>;
 }
 
+export interface RoomLink {
+	userId: number;
+	url: string;
+	createdAt: Generated<number>;
+	refreshedAt: Generated<number>;
+}
+
 export const SPLATOON_ROTATION_TYPES = ["SERIES", "OPEN", "X"] as const;
 export type SplatoonRotationType = (typeof SPLATOON_ROTATION_TYPES)[number];
 
@@ -1350,6 +1378,7 @@ export interface DB {
 	Group: Group;
 	GroupLike: GroupLike;
 	GroupMatch: GroupMatch;
+	GroupMatchContinueVote: GroupMatchContinueVote;
 	GroupMatchMap: GroupMatchMap;
 	GroupMember: GroupMember;
 	PrivateUserNote: PrivateUserNote;
@@ -1362,6 +1391,7 @@ export interface DB {
 	PlusTier: PlusTier;
 	PlusVote: PlusVote;
 	PlusVotingResult: PlusVotingResult;
+	RoomLink: RoomLink;
 	ReportedWeapon: ReportedWeapon;
 	Skill: Skill;
 	SkillTeamUser: SkillTeamUser;

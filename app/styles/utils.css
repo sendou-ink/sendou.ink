@@ -156,6 +156,10 @@
 		height: 100%;
 	}
 
+	.h-max {
+		height: max-content;
+	}
+
 	.w-full {
 		width: 100%;
 	}
@@ -366,6 +370,10 @@
 
 	.m-0-auto {
 		margin: 0 auto;
+	}
+
+	.line-height-tight {
+		line-height: 1.3;
 	}
 
 	.hidden {

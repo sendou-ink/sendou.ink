@@ -190,11 +190,13 @@ function userSkillDifference({
 	const calculated = matchesCount >= MATCHES_COUNT_NEEDED_FOR_LEADERBOARD;
 
 	if (calculated) {
+		const oldSp = ordinalToSp(ordinal(oldRating));
+		const newSp = ordinalToSp(ordinal(newRating));
 		return {
 			calculated,
-			spDiff: roundToNDecimalPlaces(
-				ordinalToSp(ordinal(newRating)) - ordinalToSp(ordinal(oldRating)),
-			),
+			spDiff: roundToNDecimalPlaces(newSp - oldSp),
+			oldSp,
+			newSp,
 		};
 	}
 

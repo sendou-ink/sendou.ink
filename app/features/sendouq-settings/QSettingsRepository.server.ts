@@ -13,6 +13,7 @@ export async function settingsByUserId(userId: number) {
 			"User.languages",
 			"User.qWeaponPool",
 			"User.noScreen",
+			"User.noSplatnet",
 		])
 		.where("id", "=", userId)
 		.executeTakeFirstOrThrow();
@@ -136,6 +137,22 @@ export function updateNoScreen({
 		.updateTable("User")
 		.set({
 			noScreen,
+		})
+		.where("User.id", "=", userId)
+		.execute();
+}
+
+export function updateNoSplatnet({
+	noSplatnet,
+	userId,
+}: {
+	noSplatnet: number;
+	userId: number;
+}) {
+	return db
+		.updateTable("User")
+		.set({
+			noSplatnet,
 		})
 		.where("User.id", "=", userId)
 		.execute();

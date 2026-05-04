@@ -1,3 +1,4 @@
+import { calendarPage, tournamentBracketsPage } from "~/utils/urls";
 import {
 	expect,
 	impersonate,
@@ -5,8 +6,7 @@ import {
 	seed,
 	submit,
 	test,
-} from "~/utils/playwright";
-import { calendarPage, tournamentBracketsPage } from "~/utils/urls";
+} from "./helpers/playwright";
 
 test.describe("Tournament tiers", () => {
 	test("shows tentative tier before bracket starts and confirmed tier after", async ({

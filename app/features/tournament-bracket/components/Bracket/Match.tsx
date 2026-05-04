@@ -12,6 +12,7 @@ import {
 	useTournament,
 	useTournamentVods,
 } from "~/features/tournament/routes/to.$id";
+import { matchEndedEarly } from "~/features/tournament-match/tournament-match-utils";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { Unpacked } from "~/utils/types";
 import {
@@ -23,7 +24,6 @@ import type { Bracket } from "../../core/Bracket";
 import * as Deadline from "../../core/Deadline";
 import type { TournamentData } from "../../core/Tournament.server";
 import parentStyles from "../../tournament-bracket.module.css";
-import { matchEndedEarly } from "../../tournament-bracket-utils";
 import styles from "./bracket.module.css";
 
 type LineType = "none" | "straight" | "curve-up" | "curve-down";

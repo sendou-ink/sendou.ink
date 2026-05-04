@@ -2,8 +2,12 @@ import clsx from "clsx";
 import { ArrowLeft, MessageSquare, X } from "lucide-react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useFetcher } from "react-router";
 import { useCurrentRouteChatCode } from "~/features/chat/ChatProvider";
+import {
+	extractRoomLink,
+	isMatchRoomUrl,
+} from "~/features/chat/chat-constants";
 import { resolveDatePlaceholders } from "~/features/chat/chat-utils";
 import { Chat } from "~/features/chat/components/Chat";
 import { useChatContext } from "~/features/chat/useChatContext";
@@ -165,6 +169,7 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 		.filter(([code]) => code !== activeRoom)
 		.reduce((sum, [, count]) => sum + count, 0);
 
+	const roomLinkFetcher = useFetcher();
 	const room = chatContext.rooms.find((r) => r.chatCode === activeRoom);
 	const roomExpired = Boolean(room?.expiresAt && room.expiresAt < Date.now());
 	const messages = chatContext.messagesForRoom(activeRoom);
@@ -180,9 +185,27 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 		}
 	}
 
+	const isMatchRoom = room?.url ? isMatchRoomUrl(room.url) : false;
+
 	const chatAdapter = {
 		messages,
-		send: (contents: string) => chatContext.send(activeRoom, contents),
+		send: (contents: string) => {
+			chatContext.send(activeRoom, contents);
+
+			if (isMatchRoom) {
+				const link = extractRoomLink(contents);
+				if (link) {
+					roomLinkFetcher.submit(
+						{ _action: "UPSERT", url: link },
+						{
+							method: "post",
+							action: "/room",
+							encType: "application/json",
+						},
+					);
+				}
+			}
+		},
 		currentRoom: activeRoom,
 		setCurrentRoom: () => {},
 		readyState: chatContext.readyState,

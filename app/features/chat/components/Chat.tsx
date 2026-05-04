@@ -8,7 +8,7 @@ import { Avatar } from "../../../components/Avatar";
 import { SendouButton } from "../../../components/elements/Button";
 import { SubmitButton } from "../../../components/SubmitButton";
 import { useTimeFormat } from "../../../hooks/useTimeFormat";
-import { MESSAGE_MAX_LENGTH } from "../chat-constants";
+import { findRoomLinks, MESSAGE_MAX_LENGTH } from "../chat-constants";
 import { useChatAutoScroll } from "../chat-hooks";
 import type { ChatMessage, ChatProps, ChatUser } from "../chat-types";
 import styles from "./Chat.module.css";
@@ -94,6 +94,9 @@ export function Chat({
 			}
 			case "CANCEL_CONFIRMED": {
 				return t("common:chat.systemMsg.cancelConfirmed", { name: name() });
+			}
+			case "CANCEL_REFUSED": {
+				return t("common:chat.systemMsg.cancelRefused", { name: name() });
 			}
 			case "USER_LEFT": {
 				return t("common:chat.systemMsg.userLeft", { name: name() });
@@ -268,7 +271,9 @@ function Message({
 						[styles.messageContentsPending]: message.pending,
 					})}
 				>
-					{message.contents}
+					{message.contents ? (
+						<MessageContents text={message.contents} />
+					) : null}
 				</div>
 			</div>
 		</li>
@@ -299,6 +304,39 @@ function SystemMessage({
 			</div>
 		</li>
 	);
+}
+
+function MessageContents({ text }: { text: string }) {
+	const matches = findRoomLinks(text);
+
+	if (matches.length === 0) return <>{text}</>;
+
+	const parts: React.ReactNode[] = [];
+	let lastIndex = 0;
+
+	for (const [i, match] of matches.entries()) {
+		if (match.index > lastIndex) {
+			parts.push(text.slice(lastIndex, match.index));
+		}
+		parts.push(
+			<a
+				key={i}
+				href={match.url}
+				target="_blank"
+				rel="noopener noreferrer"
+				className={styles.roomLink}
+			>
+				{match.url}
+			</a>,
+		);
+		lastIndex = match.index + match.url.length;
+	}
+
+	if (lastIndex < text.length) {
+		parts.push(text.slice(lastIndex));
+	}
+
+	return <>{parts}</>;
 }
 
 function MessageTimestamp({ timestamp }: { timestamp: number }) {

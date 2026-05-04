@@ -8,14 +8,12 @@ import {
 	userIdsToIdentifier,
 } from "~/features/mmr/mmr-utils";
 import { getBracketProgressionLabel } from "~/features/tournament/tournament-utils";
+import type { AllMatchResult } from "~/features/tournament-match/queries/allMatchResultsByTournamentId.server";
+import { matchEndedEarly } from "~/features/tournament-match/tournament-match-utils";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import type { Tables, WinLossParticipationArray } from "../../../db/tables";
-import type { AllMatchResult } from "../queries/allMatchResultsByTournamentId.server";
-import {
-	ensureOneStandingPerUser,
-	matchEndedEarly,
-} from "../tournament-bracket-utils";
+import { ensureOneStandingPerUser } from "../tournament-bracket-utils";
 import type { Standing } from "./Bracket";
 import type { ParsedBracket } from "./Progression";
 import * as Progression from "./Progression";
