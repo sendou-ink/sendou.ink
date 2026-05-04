@@ -29,7 +29,7 @@ import { useTournament } from "./to.$id";
 export { loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	const tournamentData = (args.matches[1].data as any)
+	const tournamentData = JSON.parse(args.matches[1].data as any)
 		?.tournament as TournamentData;
 	if (!args.data || !tournamentData) return [];
 

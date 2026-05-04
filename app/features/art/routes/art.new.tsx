@@ -65,7 +65,7 @@ export default function NewArtPage() {
 	const submitButtonDisabled = () => {
 		if (fetcher.state !== "idle") return true;
 
-		return !img && !data.art;
+		return (!img || !smallImg) && !data.art;
 	};
 
 	if (!isArtist) {
@@ -121,7 +121,6 @@ function ImageUpload({
 			<input
 				id={id}
 				type="file"
-				name="img"
 				accept="image/png, image/jpeg, image/jpg, image/webp"
 				onChange={(e) => {
 					const uploadedFile = e.target.files?.[0];

@@ -237,6 +237,7 @@ export function findByTournamentTeamId(tournamentTeamId: number) {
 					),
 			),
 		)
+		.orderBy("TournamentRound.stageId", "asc")
 		.orderBy("TournamentGroup.number", "asc")
 		.orderBy("TournamentRound.number", "asc")
 		.execute();

@@ -130,6 +130,11 @@ export default function TournamentRegisterPage() {
 											hour: "numeric",
 											day: "numeric",
 											month: "numeric",
+											year:
+												tournament.ctx.startTime.getFullYear() !==
+												new Date().getFullYear()
+													? "2-digit"
+													: undefined,
 										}}
 									/>
 								) : null}
