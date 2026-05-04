@@ -521,14 +521,14 @@ function CheckIn({
 	const { t } = useTranslation(["tournament"]);
 	const isHydrated = useHydrated();
 	const fetcher = useFetcher();
-	const { formatTime } = useTimeFormat();
+	const { formatDate } = useTimeFormat();
 
 	const now = useAutoRerender();
 	const status: "OVER" | "OPEN" | "UPCOMING" =
 		now > endDate ? "OVER" : now >= startDate ? "OPEN" : "UPCOMING";
 
 	const checkInStartsString = isHydrated
-		? formatTime(startDate, {
+		? formatDate(startDate, {
 				minute: "numeric",
 				hour: "numeric",
 				day: "2-digit",
@@ -537,7 +537,7 @@ function CheckIn({
 		: "";
 
 	const checkInEndsString = isHydrated
-		? formatTime(endDate, {
+		? formatDate(endDate, {
 				minute: "numeric",
 				hour: "numeric",
 				day: "2-digit",
