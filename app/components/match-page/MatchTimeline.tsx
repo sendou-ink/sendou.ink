@@ -18,6 +18,7 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
+import { roundToNDecimalPlaces } from "~/utils/number";
 import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
@@ -540,7 +541,7 @@ function SpTeamDetail({
 }) {
 	if (skillDifference.calculated) {
 		const { oldSp, newSp } = skillDifference;
-		const diff = newSp - oldSp;
+		const diff = roundToNDecimalPlaces(newSp - oldSp);
 		const isPositive = diff > 0;
 		const arrow = isPositive ? "▲" : "▼";
 
