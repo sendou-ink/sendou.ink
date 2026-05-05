@@ -232,6 +232,20 @@ async function reportMapWinner(page: Page, winner: "ALPHA" | "BRAVO") {
 			.first()
 			.click();
 	});
+	// Wait for the action panel to remount with the new reportedCount.
+	// waitForPOSTResponse only waits for the POST itself, not the loader
+	// revalidation. MatchActionTab is keyed on reportedCount, so it (and the
+	// nested WeaponReporter) unmounts and remounts when the loader returns.
+	// Without this wait, a follow-up click can land on the about-to-unmount
+	// instance — local state set by that click (e.g. WeaponReporter's isOpen)
+	// is then thrown away on remount.
+	await waitForActionPanelMounted(page);
+}
+
+async function waitForActionPanelMounted(page: Page) {
+	await expect(
+		page.locator('[data-testid^="winner-radio-"][data-selected="true"]'),
+	).toHaveCount(0);
 }
 
 async function selectMapWinner(page: Page, winner: "ALPHA" | "BRAVO") {
