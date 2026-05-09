@@ -203,6 +203,10 @@
 		"displayName": "Equalizer (High Side)",
 		"authorDiscordId": "338806780446638082"
 	},
+	"cchip2": {
+		"displayName": "Equalizer (Low Side)",
+		"authorDiscordId": "338806780446638082"
+	},
 	"champions": {
 		"displayName": "Champions Cup",
 		"authorDiscordId": "752582395076673577"
