@@ -6,6 +6,7 @@ vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	setMetadata: vi.fn(),
 }));
 
+import { db } from "~/db/sql";
 import type { adminActionSchema } from "~/features/tournament/tournament-schemas.server";
 import {
 	dbInsertTournament,
@@ -244,6 +245,28 @@ describe("Tournament match page", () => {
 			});
 
 			expect(res).toBe(null);
+		});
+	});
+
+	describe("BYE matches", () => {
+		it("should 404 when accessing a BYE match", async () => {
+			await db
+				.updateTable("TournamentMatch")
+				.set({ opponentTwo: JSON.stringify(null) })
+				.where("id", "=", 1)
+				.execute();
+
+			await expect(loadMatchData()).rejects.toThrow("404");
+		});
+
+		it("should not 404 when an opponent is a TBD placeholder waiting for an earlier match", async () => {
+			await db
+				.updateTable("TournamentMatch")
+				.set({ opponentTwo: JSON.stringify({ id: null }) })
+				.where("id", "=", 1)
+				.execute();
+
+			await expect(loadMatchData()).resolves.toBeDefined();
 		});
 	});
 });
