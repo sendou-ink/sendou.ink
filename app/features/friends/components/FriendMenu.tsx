@@ -11,6 +11,7 @@ import {
 } from "~/components/elements/Menu";
 import { ListButton } from "~/components/SideNav";
 import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { SENDOUQ_LOOKING_PAGE, tournamentSubsPage } from "~/utils/urls";
 
@@ -38,12 +39,17 @@ export function FriendMenu({
 	onNavigate?: () => void;
 }) {
 	const { t } = useTranslation(["common", "friends"]);
+	const { formatDate } = useTimeFormat();
 	const fetcher = useFetcher();
 	const [confirmOpen, setConfirmOpen] = React.useState(false);
 
 	const friendSinceText = friendshipCreatedAt
 		? t("friends:friendsList.friendSince", {
-				date: databaseTimestampToDate(friendshipCreatedAt).toLocaleDateString(),
+				date: formatDate(databaseTimestampToDate(friendshipCreatedAt), {
+					day: "numeric",
+					month: "numeric",
+					year: "numeric",
+				}),
 			})
 		: null;
 

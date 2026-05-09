@@ -1,210 +1,195 @@
-// @ts-nocheck TODO
-
+import type {
+	CrudInterface,
+	DataTypes,
+	OmitId,
+	Table,
+} from "~/modules/brackets-manager/types";
 import { Group, Match, Round, Stage } from "./crud-db.server";
 
-export class SqlDatabase {
-	insert(table, arg) {
+export class SqlDatabase implements CrudInterface {
+	insert<T extends Table>(table: T, value: OmitId<DataTypes[T]>): number;
+	insert<T extends Table>(table: T, values: OmitId<DataTypes[T]>[]): boolean;
+	insert<T extends Table>(
+		table: T,
+		arg: OmitId<DataTypes[T]> | OmitId<DataTypes[T]>[],
+	): number | boolean {
 		switch (table) {
-			case "participant":
-				throw new Error("not implemented");
-			// return Team.insertMissing(arg);
-
 			case "stage": {
+				const value = arg as OmitId<DataTypes["stage"]>;
 				const stage = new Stage(
 					undefined,
-					arg.tournament_id,
-					arg.number,
-					arg.name,
-					arg.type,
-					JSON.stringify(arg.settings),
+					value.tournament_id,
+					value.number,
+					value.name,
+					value.type,
+					JSON.stringify(value.settings),
 				);
-				return stage.insert() && stage.id;
+				stage.insert();
+				return stage.id!;
 			}
 
 			case "group": {
-				const group = new Group(undefined, arg.stage_id, arg.number);
-				return group.insert() && group.id;
+				const value = arg as OmitId<DataTypes["group"]>;
+				const group = new Group(undefined, value.stage_id, value.number);
+				group.insert();
+				return group.id!;
 			}
 
 			case "round": {
+				const value = arg as OmitId<DataTypes["round"]>;
 				const round = new Round(
 					undefined,
-					arg.stage_id,
-					arg.group_id,
-					arg.number,
+					value.stage_id,
+					value.group_id,
+					value.number,
 				);
-				return round.insert() && round.id;
+				round.insert();
+				return round.id!;
 			}
 
 			case "match": {
+				const value = arg as OmitId<DataTypes["match"]>;
 				const match = new Match(
 					undefined,
-					arg.status,
-					arg.stage_id,
-					arg.group_id,
-					arg.round_id,
-					arg.number,
-					null,
-					null,
-					null,
-					JSON.stringify(arg.opponent1),
-					JSON.stringify(arg.opponent2),
+					value.status,
+					value.stage_id,
+					value.group_id,
+					value.round_id,
+					value.number,
+					JSON.stringify(value.opponent1),
+					JSON.stringify(value.opponent2),
 				);
-				return match.insert() && match.id;
+				match.insert();
+				return match.id!;
 			}
 		}
 	}
 
-	select(table, arg) {
+	select<T extends Table>(table: T): Array<DataTypes[T]> | null;
+	select<T extends Table>(table: T, id: number): DataTypes[T] | null;
+	select<T extends Table>(
+		table: T,
+		filter: Partial<DataTypes[T]>,
+	): Array<DataTypes[T]> | null;
+	select<T extends Table>(
+		table: T,
+		arg?: number | Partial<DataTypes[T]>,
+	): DataTypes[T] | Array<DataTypes[T]> | null {
 		switch (table) {
-			case "participant":
+			case "stage": {
 				if (typeof arg === "number") {
-					throw new Error("not implemented");
-					// const team = Team.getById(arg);
-					// return team && convertTeam(team);
+					return Stage.getById(arg) as DataTypes[T];
 				}
 
-				if (arg.tournament_id) {
-					return Team.getByTournamentId(arg.tournament_id);
+				const filter = arg as Partial<DataTypes["stage"]> | undefined;
+				if (filter?.tournament_id) {
+					return Stage.getByTournamentId(filter.tournament_id) as Array<
+						DataTypes[T]
+					>;
 				}
 
 				break;
+			}
 
-			case "stage":
+			case "group": {
 				if (typeof arg === "number") {
-					return Stage.getById(arg);
+					return Group.getById(arg) as DataTypes[T];
 				}
 
-				if (arg.tournament_id && arg.number) {
-					throw new Error("not implemented");
-					// const stage = Stage.getByTournamentAndNumber(
-					// 	arg.tournament_id,
-					// 	arg.number,
-					// );
-					// return stage && [convertStage(stage)];
+				const filter = arg as Partial<DataTypes["group"]> | undefined;
+				if (filter?.stage_id && filter.number) {
+					const group = Group.getByStageAndNumber(
+						filter.stage_id,
+						filter.number,
+					);
+					return group ? ([group] as Array<DataTypes[T]>) : null;
 				}
 
-				if (arg.tournament_id) {
-					return Stage.getByTournamentId(arg.tournament_id);
+				if (filter?.stage_id) {
+					return Group.getByStageId(filter.stage_id) as Array<DataTypes[T]>;
 				}
 
 				break;
+			}
 
-			case "group":
-				if (!arg) {
-					throw new Error("not implemented");
-					// const groups = Group.getAll();
-					// return groups?.map(convertGroup);
-				}
-
+			case "round": {
 				if (typeof arg === "number") {
-					return Group.getById(arg);
+					return Round.getById(arg) as DataTypes[T];
 				}
 
-				if (arg.stage_id && arg.number) {
-					const group = Group.getByStageAndNumber(arg.stage_id, arg.number);
-					return group && [group];
+				const filter = arg as Partial<DataTypes["round"]> | undefined;
+				if (filter?.group_id && filter.number) {
+					const round = Round.getByGroupAndNumber(
+						filter.group_id,
+						filter.number,
+					);
+					return round ? ([round] as Array<DataTypes[T]>) : null;
 				}
 
-				if (arg.stage_id) {
-					return Group.getByStageId(arg.stage_id);
+				if (filter?.group_id) {
+					return Round.getByGroupId(filter.group_id) as Array<DataTypes[T]>;
+				}
+
+				if (filter?.stage_id) {
+					return Round.getByStageId(filter.stage_id) as Array<DataTypes[T]>;
 				}
 
 				break;
+			}
 
-			case "round":
-				if (!arg) {
-					throw new Error("not implemented");
-					// const rounds = Round.getAll();
-					// return rounds?.map(convertRound);
-				}
-
+			case "match": {
 				if (typeof arg === "number") {
-					return Round.getById(arg);
+					return Match.getById(arg) as DataTypes[T];
 				}
 
-				if (arg.group_id && arg.number) {
-					const round = Round.getByGroupAndNumber(arg.group_id, arg.number);
-					return round && [round];
+				const filter = arg as Partial<DataTypes["match"]> | undefined;
+				if (filter?.round_id && filter.number) {
+					const match = Match.getByRoundAndNumber(
+						filter.round_id,
+						filter.number,
+					);
+					return match ? ([match] as Array<DataTypes[T]>) : null;
 				}
 
-				if (arg.group_id) {
-					return Round.getByGroupId(arg.group_id);
+				if (filter?.stage_id) {
+					return Match.getByStageId(filter.stage_id) as Array<DataTypes[T]>;
 				}
 
-				if (arg.stage_id) {
-					return Round.getByStageId(arg.stage_id);
+				if (filter?.round_id) {
+					return Match.getByRoundId(filter.round_id) as Array<DataTypes[T]>;
 				}
 
 				break;
-
-			case "match":
-				if (!arg) {
-					throw new Error("not implemented");
-					// const matches = Match.getAll();
-					// return matches?.map(convertMatch);
-				}
-
-				if (typeof arg === "number") {
-					return Match.getById(arg);
-				}
-
-				if (arg.round_id && arg.number) {
-					const match = Match.getByRoundAndNumber(arg.round_id, arg.number);
-					return match && [match];
-				}
-
-				if (arg.stage_id) {
-					return Match.getByStageId(arg.stage_id);
-				}
-
-				if (arg.group_id) {
-					throw new Error("not implemented");
-					// const matches = Match.getByGroupId(arg.group_id);
-					// return matches?.map(convertMatch);
-				}
-
-				if (arg.round_id) {
-					return Match.getByRoundId(arg.round_id);
-				}
-
-				break;
-			// throw new Error("not implemented");
-			// if (typeof arg === "number") {
-			// 	const game = MatchGame.getById(arg);
-			// 	return game && convertMatchGame(game);
-			// }
-
-			// if (arg.parent_id && arg.number) {
-			// 	const game = MatchGame.getByParentAndNumber(
-			// 		arg.parent_id,
-			// 		arg.number,
-			// 	);
-			// 	return game && [convertMatchGame(game)];
-			// }
-
-			// if (arg.parent_id) {
-			// 	const games = MatchGame.getByParentId(arg.parent_id);
-			// 	return games?.map(convertMatchGame);
-			// }
-
-			// break;
+			}
 		}
 
 		return null;
 	}
 
-	update(table, query, update) {
+	update<T extends Table>(table: T, id: number, value: DataTypes[T]): boolean;
+	update<T extends Table>(
+		table: T,
+		filter: Partial<DataTypes[T]>,
+		value: Partial<DataTypes[T]>,
+	): boolean;
+	update<T extends Table>(
+		table: T,
+		query: number | Partial<DataTypes[T]>,
+		value: DataTypes[T] | Partial<DataTypes[T]>,
+	): boolean {
 		switch (table) {
-			case "stage":
+			case "stage": {
 				if (typeof query === "number") {
+					const update = value as Partial<DataTypes["stage"]>;
 					return Stage.updateSettings(query, JSON.stringify(update.settings));
 				}
 
 				break;
+			}
 
-			case "match":
+			case "match": {
 				if (typeof query === "number") {
+					const update = value as DataTypes["match"];
 					const match = new Match(
 						query,
 						update.status,
@@ -212,95 +197,22 @@ export class SqlDatabase {
 						update.group_id,
 						update.round_id,
 						update.number,
-						null,
-						null,
-						null,
 						JSON.stringify(update.opponent1),
 						JSON.stringify(update.opponent2),
 					);
-
 					return match.update();
 				}
 
 				break;
-			// throw new Error("not implemented");
-			// if (typeof query === "number") {
-			// 	const game = new MatchGame(
-			// 		query,
-			// 		update.stage_id,
-			// 		update.parent_id,
-			// 		update.status,
-			// 		update.number,
-			// 		null,
-			// 		null,
-			// 		null,
-			// 		JSON.stringify(update.opponent1),
-			// 		JSON.stringify(update.opponent2),
-			// 	);
-
-			// 	return game.update();
-			// }
-
-			// if (query.parent_id) {
-			// 	const game = new MatchGame(
-			// 		undefined,
-			// 		update.stage_id,
-			// 		query.parent_id,
-			// 		update.status,
-			// 		update.number,
-			// 		null,
-			// 		null,
-			// 		null,
-			// 		JSON.stringify(update.opponent1),
-			// 		JSON.stringify(update.opponent2),
-			// 	);
-
-			// 	return game.updateByParentId();
-			// }
-
-			// break;
+			}
 		}
 
 		return false;
 	}
 
-	delete(_table, _filter) {
+	delete<T extends Table>(table: T): boolean;
+	delete<T extends Table>(table: T, filter: Partial<DataTypes[T]>): boolean;
+	delete(): boolean {
 		throw new Error("not implemented");
-		// switch (table) {
-		// 	case "stage":
-		// 		return Number.isInteger(filter.id) && Stage.deleteById(filter.id);
-
-		// 	case "group":
-		// 		return (
-		// 			Number.isInteger(filter.stage_id) &&
-		// 			Group.deleteByStageId(filter.stage_id)
-		// 		);
-
-		// 	case "round":
-		// 		return (
-		// 			Number.isInteger(filter.stage_id) &&
-		// 			Round.deleteByStageId(filter.stage_id)
-		// 		);
-
-		// 	case "match":
-		// 		return (
-		// 			Number.isInteger(filter.stage_id) &&
-		// 			Match.deleteByStageId(filter.stage_id)
-		// 		);
-		// 		if (Number.isInteger(filter.stage_id))
-		// 			return MatchGame.deleteByStageId(filter.stage_id);
-		// 		if (
-		// 			Number.isInteger(filter.parent_id) &&
-		// 			Number.isInteger(filter.number)
-		// 		)
-		// 			return MatchGame.deleteByParentAndNumber(
-		// 				filter.parent_id,
-		// 				filter.number,
-		// 			);
-		// 		return false;
-
-		// 	default:
-		// 		return false;
-		// }
 	}
 }

@@ -4,7 +4,7 @@ import { db } from "../app/db/sql";
 import type { Tables } from "../app/db/tables";
 import { calculateIndividualPlayerSkills } from "../app/features/tournament-bracket/core/summarizer.server";
 import { tournamentFromDB } from "../app/features/tournament-bracket/core/Tournament.server";
-import { allMatchResultsByTournamentId } from "../app/features/tournament-bracket/queries/allMatchResultsByTournamentId.server";
+import { allMatchResultsByTournamentId } from "../app/features/tournament-match/queries/allMatchResultsByTournamentId.server";
 import invariant from "../app/utils/invariant";
 import { logger } from "../app/utils/logger";
 

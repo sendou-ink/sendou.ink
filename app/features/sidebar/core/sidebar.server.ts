@@ -6,6 +6,7 @@ import { userIsBanned } from "~/features/ban/core/banned.server";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import {
 	COMBINED_STREAMS_KEY,
+	getLiveTournamentStreamerTwitchNames,
 	getLiveTournamentStreams,
 	type SidebarStream,
 } from "~/features/core/streams/streams.server";
@@ -141,11 +142,12 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 		ShowcaseTournaments.upcomingTournaments(),
 	]);
 
-	const seenUsernames = new Set(
-		sendouQEntries.flatMap((e) =>
+	const seenUsernames = new Set([
+		...getLiveTournamentStreamerTwitchNames(),
+		...sendouQEntries.flatMap((e) =>
 			e.twitchUsernames.map((t) => t.toLowerCase()),
 		),
-	);
+	]);
 
 	const ranked: { stream: SidebarStream; score: number }[] = [];
 

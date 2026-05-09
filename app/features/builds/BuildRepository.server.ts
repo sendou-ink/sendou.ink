@@ -257,9 +257,9 @@ export async function ownerIdById(buildId: number) {
 		.selectFrom("Build")
 		.select("ownerId")
 		.where("id", "=", buildId)
-		.executeTakeFirstOrThrow();
+		.executeTakeFirst();
 
-	return result.ownerId;
+	return result?.ownerId ?? null;
 }
 
 export async function abilityPointAverages(weaponSplId?: MainWeaponId | null) {

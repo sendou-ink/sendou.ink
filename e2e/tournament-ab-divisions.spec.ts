@@ -1,3 +1,4 @@
+import { tournamentBracketsPage } from "~/utils/urls";
 import {
 	expect,
 	impersonate,
@@ -5,8 +6,7 @@ import {
 	seed,
 	submit,
 	test,
-} from "~/utils/playwright";
-import { tournamentBracketsPage } from "~/utils/urls";
+} from "./helpers/playwright";
 
 const AB_RR_TOURNAMENT_ID = 8;
 const TEAMS_PER_DIVISION = 6;

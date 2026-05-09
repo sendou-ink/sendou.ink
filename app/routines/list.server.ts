@@ -1,6 +1,8 @@
 import { CloseExpiredCommissionsRoutine } from "./closeExpiredCommissions";
+import { CloseExpiredContinueVotesRoutine } from "./closeExpiredContinueVotes";
 import { DeleteObsoleteMatchVodsRoutine } from "./deleteObsoleteMatchVods";
 import { DeleteOldNotificationsRoutine } from "./deleteOldNotifications";
+import { DeleteOldRoomLinksRoutine } from "./deleteOldRoomLinks";
 import { DeleteOrphanArtTagsRoutine } from "./deleteOrphanArtTags";
 import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
 import { NotifyPlusServerVotingRoutine } from "./notifyPlusServerVoting";
@@ -26,6 +28,8 @@ export const everyHourAt00 = [
 export const everyHourAt30 = [
 	SetOldGroupsAsInactiveRoutine,
 	UpdatePatreonDataRoutine,
+	CloseExpiredContinueVotesRoutine,
+	DeleteOldRoomLinksRoutine,
 ];
 
 /** List of Routines that should occur daily */

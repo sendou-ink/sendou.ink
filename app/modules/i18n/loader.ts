@@ -27,7 +27,6 @@ export function i18nLoader() {
 				caches: [],
 			},
 			// without this hydration fails in E2E tests
-			initImmediate: false,
-			showSupportNotice: false,
+			initAsync: false,
 		});
 }

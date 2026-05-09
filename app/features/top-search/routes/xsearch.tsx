@@ -4,6 +4,7 @@ import type { MetaFunction } from "react-router";
 import { useLoaderData, useSearchParams } from "react-router";
 import { Main } from "~/components/Main";
 import type { Tables } from "~/db/tables";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
@@ -37,6 +38,7 @@ export const meta: MetaFunction = (args) => {
 export default function XSearchPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const { t } = useTranslation(["common", "game-misc"]);
+	const { formatDate } = useTimeFormat();
 	const data = useLoaderData<typeof loader>();
 
 	const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -60,6 +62,12 @@ export default function XSearchPage() {
 		searchParams.get("mode") ?? "SZ"
 	}-${searchParams.get("region") ?? "WEST"}`;
 
+	const formatMonthYear = (my: MonthYear) =>
+		formatDate(new Date(my.year, my.month - 1), {
+			month: "numeric",
+			year: "numeric",
+		});
+
 	return (
 		<Main halfWidth className="stack lg">
 			<select
@@ -78,8 +86,8 @@ export default function XSearchPage() {
 								key={option.id}
 								value={`${option.span.value.month}-${option.span.value.year}-${option.mode}-${option.region}`}
 							>
-								{option.span.from.month}/{option.span.from.year} -{" "}
-								{option.span.to.month}/{option.span.to.year} /{" "}
+								{formatMonthYear(option.span.from)} -{" "}
+								{formatMonthYear(option.span.to)} /{" "}
 								{t(`game-misc:MODE_SHORT_${option.mode}`)} /{" "}
 								{t(`common:divisions.${option.region}`)}
 							</option>

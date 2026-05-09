@@ -2,7 +2,12 @@ import clsx from "clsx";
 import { ArrowLeft, MessageSquare, X } from "lucide-react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useFetcher } from "react-router";
+import { useCurrentRouteChatCode } from "~/features/chat/ChatProvider";
+import {
+	extractRoomLink,
+	isMatchRoomUrl,
+} from "~/features/chat/chat-constants";
 import { resolveDatePlaceholders } from "~/features/chat/chat-utils";
 import { Chat } from "~/features/chat/components/Chat";
 import { useChatContext } from "~/features/chat/useChatContext";
@@ -62,8 +67,18 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 	const chatContext = useChatContext()!;
 	const { formatDateTime } = useTimeFormat();
 
-	const nonExpiredRooms = chatContext.rooms
-		.filter((room) => room.expiresAt > Date.now())
+	const rawRouteChatCode = useCurrentRouteChatCode();
+	const routeChatCodes = rawRouteChatCode
+		? Array.isArray(rawRouteChatCode)
+			? rawRouteChatCode
+			: [rawRouteChatCode]
+		: [];
+
+	const visibleRooms = chatContext.rooms
+		.filter(
+			(room) =>
+				room.expiresAt > Date.now() || routeChatCodes.includes(room.chatCode),
+		)
 		.sort((a, b) => {
 			if (a.isObsolete !== b.isObsolete) return a.isObsolete ? 1 : -1;
 			const aRecency = a.lastMessageTimestamp || a.createdAt;
@@ -75,12 +90,12 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 		<div className={styles.sidebar}>
 			<SidebarHeader onClose={onClose} />
 			<div className={styles.roomList}>
-				{nonExpiredRooms.length === 0 ? (
+				{visibleRooms.length === 0 ? (
 					<div className={styles.emptyState}>
 						{t("common:chat.sidebar.noActiveChats")}
 					</div>
 				) : (
-					nonExpiredRooms.map((room) => {
+					visibleRooms.map((room) => {
 						const unread = chatContext.unreadCounts[room.chatCode] ?? 0;
 
 						return (
@@ -114,7 +129,7 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 									>
 										{resolveDatePlaceholders(room.header, (d) =>
 											formatDateTime(d, {
-												month: "short",
+												month: "numeric",
 												day: "numeric",
 												hour: "numeric",
 												minute: "numeric",
@@ -154,6 +169,7 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 		.filter(([code]) => code !== activeRoom)
 		.reduce((sum, [, count]) => sum + count, 0);
 
+	const roomLinkFetcher = useFetcher();
 	const room = chatContext.rooms.find((r) => r.chatCode === activeRoom);
 	const roomExpired = Boolean(room?.expiresAt && room.expiresAt < Date.now());
 	const messages = chatContext.messagesForRoom(activeRoom);
@@ -169,9 +185,27 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 		}
 	}
 
+	const isMatchRoom = room?.url ? isMatchRoomUrl(room.url) : false;
+
 	const chatAdapter = {
 		messages,
-		send: (contents: string) => chatContext.send(activeRoom, contents),
+		send: (contents: string) => {
+			chatContext.send(activeRoom, contents);
+
+			if (isMatchRoom) {
+				const link = extractRoomLink(contents);
+				if (link) {
+					roomLinkFetcher.submit(
+						{ _action: "UPSERT", url: link },
+						{
+							method: "post",
+							action: "/room",
+							encType: "application/json",
+						},
+					);
+				}
+			}
+		},
 		currentRoom: activeRoom,
 		setCurrentRoom: () => {},
 		readyState: chatContext.readyState,
@@ -202,7 +236,7 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 						room?.header ?? t("common:chat.sidebar.title"),
 						(d) =>
 							formatDateTime(d, {
-								month: "short",
+								month: "numeric",
 								day: "numeric",
 								hour: "numeric",
 								minute: "numeric",

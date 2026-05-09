@@ -276,7 +276,7 @@ function ChatProviderInner({
 			"system:",
 			isSystemMessage,
 		);
-		if (isSystemMessage) {
+		if (isSystemMessage || messageArr[0].revalidateOnly) {
 			revalidate();
 		}
 
@@ -684,7 +684,7 @@ function useChatRouteSync({
 	]);
 }
 
-function useCurrentRouteChatCode(): string | string[] | null {
+export function useCurrentRouteChatCode(): string | string[] | null {
 	const matches = useMatches();
 
 	for (const match of matches) {

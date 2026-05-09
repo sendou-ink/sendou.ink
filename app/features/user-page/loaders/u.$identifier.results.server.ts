@@ -1,9 +1,12 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { redirect } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
-import { notFoundIfFalsy, parseSafeSearchParams } from "~/utils/remix.server";
+import {
+	notFoundIfFalsy,
+	parseSafeSearchParams,
+	redirectIfPageOutOfBounds,
+} from "~/utils/remix.server";
 import {
 	HIGHLIGHTS_RESULTS_MAX,
 	RESULTS_PER_PAGE,
@@ -57,33 +60,16 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		}),
 	]);
 
-	const maxPage = Math.ceil(totalCount / RESULTS_PER_PAGE);
+	const pagesCount = Math.ceil(totalCount / RESULTS_PER_PAGE);
 
-	redirectIfPageOutOfBounds({ request, page, maxPage });
+	redirectIfPageOutOfBounds({ request, page, pagesCount });
 
 	return {
 		results: {
 			value: results,
 			currentPage: page,
-			pages: maxPage,
+			pages: pagesCount,
 		},
 		hasHighlightedResults,
 	};
 };
-
-function redirectIfPageOutOfBounds({
-	request,
-	page,
-	maxPage,
-}: {
-	request: Request;
-	page: number;
-	maxPage: number;
-}) {
-	if (page <= maxPage || page === 1) return;
-
-	const url = new URL(request.url);
-	const searchParams = new URLSearchParams(url.searchParams);
-	searchParams.set("page", String(Math.max(maxPage, 1)));
-	throw redirect(`${url.pathname}?${searchParams.toString()}`);
-}

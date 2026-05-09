@@ -112,6 +112,11 @@ export type ValidationError =
 	| {
 			type: "AB_DIVISIONS_ODD_TEAMS_PER_GROUP";
 			bracketIdx: number;
+	  }
+	// empty placements is only valid when sourcing from a Swiss bracket with early advance
+	| {
+			type: "EMPTY_PLACEMENTS_ON_NON_SWISS";
+			bracketIdx: number;
 	  };
 
 /** Takes validated brackets and returns them in the format that is ready for user input. */
@@ -285,6 +290,14 @@ export function bracketsToValidationError(
 	if (typeof faultyBracketIdx === "number") {
 		return {
 			type: "SWISS_EARLY_ADVANCE_NO_DESTINATION",
+			bracketIdx: faultyBracketIdx,
+		};
+	}
+
+	faultyBracketIdx = emptyPlacementsOnNonSwiss(brackets);
+	if (typeof faultyBracketIdx === "number") {
+		return {
+			type: "EMPTY_PLACEMENTS_ON_NON_SWISS",
 			bracketIdx: faultyBracketIdx,
 		};
 	}
@@ -638,6 +651,25 @@ function swissEarlyAdvanceWithoutDestination(brackets: ParsedBracket[]) {
 			);
 
 			if (!hasDestination) {
+				return bracketIdx;
+			}
+		}
+	}
+
+	return null;
+}
+
+function emptyPlacementsOnNonSwiss(brackets: ParsedBracket[]) {
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		for (const source of bracket.sources ?? []) {
+			if (source.placements.length > 0) continue;
+
+			const sourceBracket = brackets[source.bracketIdx];
+			const isSwissEarlyAdvance =
+				sourceBracket?.type === "swiss" &&
+				sourceBracket.settings.advanceThreshold;
+
+			if (!isSwissEarlyAdvance) {
 				return bracketIdx;
 			}
 		}

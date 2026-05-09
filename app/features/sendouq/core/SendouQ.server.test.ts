@@ -54,16 +54,16 @@ const createGroup = async (
 const createMatch = async (
 	alphaGroupId: number,
 	bravoGroupId: number,
-	options: { reportedAt?: number } = {},
+	options: { confirmedAt?: number } = {},
 ) => {
-	const { reportedAt = Date.now() } = options;
+	const { confirmedAt = Date.now() } = options;
 
 	await db
 		.insertInto("GroupMatch")
 		.values({
 			alphaGroupId,
 			bravoGroupId,
-			reportedAt,
+			confirmedAt,
 		})
 		.execute();
 };
@@ -378,6 +378,15 @@ describe("SendouQ", () => {
 
 				const group1Id = await createGroup([2, 3, 4, 5]);
 				const group2Id = await createGroup([6, 7, 8, 9]);
+				// Force identical latestActionAt so the sort comparator's
+				// recency tie-breaker stays neutral and the assertion does
+				// not depend on whether the group inserts straddle a
+				// millisecond boundary (which they can on slow CI).
+				await db
+					.updateTable("Group")
+					.set({ latestActionAt: databaseTimestampNow() })
+					.where("id", "in", [group1Id, group2Id])
+					.execute();
 				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);

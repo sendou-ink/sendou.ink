@@ -490,7 +490,9 @@ export function forShowcase() {
 						eb("CalendarEventDate.startTime", ">", databaseTimestampNow()),
 					]),
 				)
-				.select(({ fn }) => [fn.countAll<number>().as("teamsCount")])
+				.select(({ fn }) => [
+					fn.count<number>("TournamentTeam.id").distinct().as("teamsCount"),
+				])
 				.as("teamsCount"),
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonObjectFrom(
@@ -945,6 +947,7 @@ export function pickBanEventsByMatchId(matchId: number) {
 			"TournamentMatchPickBanEvent.stageId",
 			"TournamentMatchPickBanEvent.type",
 			"TournamentMatchPickBanEvent.number",
+			"TournamentMatchPickBanEvent.createdAt",
 		])
 		.where("matchId", "=", matchId)
 		.orderBy("TournamentMatchPickBanEvent.number", "asc")

@@ -1,4 +1,5 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { calendarPage } from "~/utils/urls";
 import {
 	expect,
 	expectIsHydrated,
@@ -7,8 +8,7 @@ import {
 	navigate,
 	seed,
 	test,
-} from "~/utils/playwright";
-import { calendarPage } from "~/utils/urls";
+} from "./helpers/playwright";
 
 const SENDOU_INK_TOURNAMENTS_COUNT = 6;
 

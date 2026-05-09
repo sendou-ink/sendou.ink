@@ -5,6 +5,7 @@ import type {
 	TournamentRoundMaps,
 	WhoSide,
 } from "~/db/tables";
+import { isSetOverByResults } from "~/features/tournament-match/tournament-match-utils";
 import type {
 	ModeShort,
 	ModeWithStage,
@@ -14,7 +15,6 @@ import type { TournamentMapListMap } from "~/modules/tournament-map-list-generat
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
-import { isSetOverByResults } from "../tournament-bracket-utils";
 import type { TournamentDataTeam } from "./Tournament.server";
 
 export const types = [
@@ -240,11 +240,12 @@ export function resolveCurrentStep({
 		"resolveCurrentStep: postGame must not be empty",
 	);
 
-	const eventsAfterPreSet = eventCount - preSet.length;
-	const stepInPostGame = eventsAfterPreSet % postGame.length;
-	const completedPostGameCycles = Math.floor(
-		eventsAfterPreSet / postGame.length,
-	);
+	const stepInPostGame = (eventCount - preSet.length) % postGame.length;
+	const completedPostGameCycles = postGameCycleIndex({
+		eventIndex: eventCount,
+		preSetLength: preSet.length,
+		postGameLength: postGame.length,
+	});
 
 	// waiting for game result
 	if (completedPostGameCycles > resultsCount) return null;
@@ -253,6 +254,26 @@ export function resolveCurrentStep({
 	}
 
 	return postGame[stepInPostGame]!;
+}
+
+/**
+ * Returns the 0-based post-game cycle index for an event position. For an
+ * event at `eventIndex`, this is the cycle the event belongs to; for a count
+ * of events done so far, this is how many post-game cycles have been at least
+ * started past the pre-set.
+ *
+ * Caller must ensure `eventIndex >= preSetLength` and `postGameLength > 0`.
+ */
+export function postGameCycleIndex({
+	eventIndex,
+	preSetLength,
+	postGameLength,
+}: {
+	eventIndex: number;
+	preSetLength: number;
+	postGameLength: number;
+}): number {
+	return Math.floor((eventIndex - preSetLength) / postGameLength);
 }
 
 export function resolveTeamFromSide({
@@ -288,6 +309,134 @@ export function resolveTeamFromSide({
 	}
 }
 
+/**
+ * Resolves which team is responsible for the pick/ban event at a given index,
+ * across all pick/ban variants (BAN_2, COUNTERPICK, COUNTERPICK_MODE_REPEAT_OK,
+ * CUSTOM). Returns null when the setup is not pick/ban or the team cannot be
+ * determined (e.g. a CUSTOM ROLL step, or insufficient results).
+ */
+export function teamOfEvent({
+	eventIndex,
+	maps,
+	teams,
+	results,
+}: {
+	eventIndex: number;
+	maps: TournamentRoundMaps;
+	teams: [PickBanTeam, PickBanTeam];
+	results: Array<{ winnerTeamId: number }>;
+}): number | null {
+	if (!maps.pickBan) return null;
+
+	switch (maps.pickBan) {
+		case "BAN_2": {
+			// turnOf uses: [secondPicker, firstPicker] = teams, so teams[1] bans
+			// first (event 0), teams[0] second (event 1).
+			if (eventIndex === 0) return teams[1].id;
+			if (eventIndex === 1) return teams[0].id;
+			return null;
+		}
+		case "COUNTERPICK":
+		case "COUNTERPICK_MODE_REPEAT_OK": {
+			// Each counterpick follows a played map; the loser of that map picks.
+			const result = results[eventIndex];
+			if (!result) return null;
+			return teams.find((t) => t.id !== result.winnerTeamId)?.id ?? null;
+		}
+		case "CUSTOM": {
+			const customFlow = maps.customFlow;
+			if (!customFlow) return null;
+
+			const { preSet, postGame } = customFlow;
+			const step =
+				eventIndex < preSet.length
+					? preSet[eventIndex]
+					: postGame.length > 0
+						? postGame[(eventIndex - preSet.length) % postGame.length]
+						: null;
+			if (!step?.side) return null;
+
+			// WINNER/LOSER sides are relative to the latest result at the time
+			// of the event, so slice results to the correct post-game cycle.
+			if (step.side === "WINNER" || step.side === "LOSER") {
+				const cycleIndex = postGameCycleIndex({
+					eventIndex,
+					preSetLength: preSet.length,
+					postGameLength: postGame.length,
+				});
+				if (!results[cycleIndex]) return null;
+				return resolveTeamFromSide({
+					side: step.side,
+					teams,
+					results: results.slice(0, cycleIndex + 1),
+				});
+			}
+
+			return resolveTeamFromSide({ side: step.side, teams, results });
+		}
+		default: {
+			assertUnreachable(maps.pickBan);
+		}
+	}
+}
+
+type TimelineItem =
+	| { kind: "event"; index: number; createdAt: number }
+	| { kind: "result"; createdAt: number };
+
+/**
+ * Resolves the timestamp at which the currently responsible team's pick/ban
+ * session started. The session begins when responsibility transitions to that
+ * team and continues across multiple consecutive actions by the same team.
+ * A game result always ends the prior session, so a team that becomes
+ * responsible after a result starts a fresh session at the result's timestamp.
+ *
+ * Returns `null` when there is no current pick/ban turn or `matchStartedAt` is
+ * not available. When no transitions exist yet, returns `matchStartedAt`.
+ */
+export function currentTurnSessionStartedAt({
+	currentTurn,
+	events,
+	results,
+	matchStartedAt,
+	maps,
+	teams,
+}: {
+	currentTurn: TurnOfResult | null;
+	events: Array<{ createdAt: number }>;
+	results: Array<{ createdAt: number; winnerTeamId: number }>;
+	matchStartedAt: number | null;
+	maps: TournamentRoundMaps;
+	teams: [PickBanTeam, PickBanTeam];
+}): number | null {
+	if (!currentTurn || matchStartedAt == null) return null;
+
+	const timeline: TimelineItem[] = [];
+	for (let i = 0; i < events.length; i++) {
+		timeline.push({ kind: "event", index: i, createdAt: events[i]!.createdAt });
+	}
+	for (const result of results) {
+		timeline.push({ kind: "result", createdAt: result.createdAt });
+	}
+	timeline.sort((a, b) => a.createdAt - b.createdAt);
+
+	for (let i = timeline.length - 1; i >= 0; i--) {
+		const item = timeline[i]!;
+		if (item.kind === "event") {
+			const teamMadeIt = teamOfEvent({
+				eventIndex: item.index,
+				maps,
+				teams,
+				results,
+			});
+			if (teamMadeIt === currentTurn.teamId) continue;
+		}
+		return item.createdAt;
+	}
+
+	return matchStartedAt;
+}
+
 export function isLegal({
 	map,
 	...rest
@@ -306,6 +455,15 @@ export function isModeLegal({
 	const pool = mapsListWithLegality(rest);
 
 	return pool.some((m) => m.mode === mode && m.isLegal);
+}
+
+export function isStageLegal({
+	stageId,
+	...rest
+}: MapListWithStatusesArgs & { stageId: StageId }) {
+	const pool = mapsListWithLegality(rest);
+
+	return pool.some((m) => m.stageId === stageId && m.isLegal);
 }
 
 export interface PickBanEvent {
@@ -465,8 +623,9 @@ function unavailableModes({
 	}
 
 	if (maps.pickBan === "CUSTOM") {
+		const events = pickBanEvents ?? [];
 		const currentSectionEvents = currentSectionPickBanEvents({
-			pickBanEvents: pickBanEvents ?? [],
+			pickBanEvents: events,
 			maps,
 		});
 
@@ -477,11 +636,16 @@ function unavailableModes({
 			return new Set(modesIncluded.filter((m) => m !== modePick.mode));
 		}
 
-		const modeBans = currentSectionEvents
+		const preSetLength = maps.customFlow?.preSet.length ?? 0;
+		const preSetModeBans = events
+			.slice(0, preSetLength)
+			.filter((e) => e.type === "MODE_BAN" && e.mode !== null)
+			.map((e) => e.mode!);
+		const currentSectionModeBans = currentSectionEvents
 			.filter((e) => e.type === "MODE_BAN" && e.mode !== null)
 			.map((e) => e.mode!);
 
-		return new Set(modeBans);
+		return new Set([...preSetModeBans, ...currentSectionModeBans]);
 	}
 
 	// COUNTERPICK: can't pick the same mode last won on
@@ -511,10 +675,14 @@ function currentSectionPickBanEvents({
 
 	if (postGameLength === 0) return [];
 
-	const eventsAfterPreSet = pickBanEvents.length - preSetLength;
 	const currentCycleStart =
 		preSetLength +
-		Math.floor(eventsAfterPreSet / postGameLength) * postGameLength;
+		postGameCycleIndex({
+			eventIndex: pickBanEvents.length,
+			preSetLength,
+			postGameLength,
+		}) *
+			postGameLength;
 
 	return pickBanEvents.slice(currentCycleStart);
 }

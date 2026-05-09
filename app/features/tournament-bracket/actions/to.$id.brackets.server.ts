@@ -12,6 +12,7 @@ import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.s
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { roundMapsFromInput } from "~/features/tournament-match/core/mapList.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -25,7 +26,6 @@ import { idObject } from "~/utils/zod";
 import type { PreparedMaps } from "../../../db/tables";
 import * as AbDivisions from "../core/AbDivisions";
 import { getServerTournamentManager } from "../core/brackets-manager/manager.server";
-import { roundMapsFromInput } from "../core/mapList.server";
 import * as PreparedMapsUtils from "../core/PreparedMaps";
 import * as Swiss from "../core/Swiss";
 import type { Tournament } from "../core/Tournament";

@@ -144,17 +144,16 @@ function NavigateButton({
 	daysInterval: ReturnType<typeof daysForCalendar>["shown"];
 	filters?: CalendarLoaderData["filters"];
 }) {
-	const { formatDate } = useTimeFormat();
+	const { formatDateRange } = useTimeFormat();
 	const lowestDate = daysInterval[0];
 	const highestDate = daysInterval[daysInterval.length - 1];
 
-	const dateToString = (
-		day: ReturnType<typeof daysForCalendar>["shown"][number],
-	) =>
-		formatDate(new Date(new Date().getFullYear(), day.month, day.day), {
-			day: "numeric",
-			month: "short",
-		});
+	const year = new Date().getFullYear();
+	const rangeString = formatDateRange(
+		new Date(year, lowestDate.month, lowestDate.day),
+		new Date(year, highestDate.month, highestDate.day),
+		{ day: "numeric", month: "numeric" },
+	);
 
 	return (
 		<Link
@@ -165,9 +164,7 @@ function NavigateButton({
 			{icon}
 			<div>
 				<div>{children}</div>
-				<div className="text-xxs text-lighter">
-					{dateToString(lowestDate)} - {dateToString(highestDate)}
-				</div>
+				<div className={styles.navigateArrowButtonRange}>{rangeString}</div>
 			</div>
 		</Link>
 	);
@@ -264,7 +261,7 @@ function DayHeader(props: { date: number; month: number; year: number }) {
 		>
 			{formatDate(date, {
 				day: "numeric",
-				month: "long",
+				month: "numeric",
 			})}
 			<div className={styles.dayHeaderWeekday}>
 				{formatDate(date, {

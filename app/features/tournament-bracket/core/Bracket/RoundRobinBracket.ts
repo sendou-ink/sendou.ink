@@ -103,6 +103,7 @@ export class RoundRobinBracket extends Bracket {
 				mapLosses: number;
 				winsAgainstTied: number;
 				points: number;
+				koCount: number;
 			}[] = [];
 
 			const updateTeam = ({
@@ -112,6 +113,7 @@ export class RoundRobinBracket extends Bracket {
 				mapWins,
 				mapLosses,
 				points,
+				koCount,
 			}: {
 				teamId: number;
 				setWins: number;
@@ -119,6 +121,7 @@ export class RoundRobinBracket extends Bracket {
 				mapWins: number;
 				mapLosses: number;
 				points: number;
+				koCount: number;
 			}) => {
 				const team = teams.find((team) => team.id === teamId);
 				if (team) {
@@ -127,6 +130,7 @@ export class RoundRobinBracket extends Bracket {
 					team.mapWins += mapWins;
 					team.mapLosses += mapLosses;
 					team.points += points;
+					team.koCount += koCount;
 				} else {
 					teams.push({
 						id: teamId,
@@ -136,6 +140,7 @@ export class RoundRobinBracket extends Bracket {
 						mapLosses,
 						winsAgainstTied: 0,
 						points,
+						koCount,
 					});
 				}
 			};
@@ -180,6 +185,7 @@ export class RoundRobinBracket extends Bracket {
 					mapWins: winner.score ?? 0,
 					mapLosses: loser.score ?? 0,
 					points: winner.totalPoints ?? 0,
+					koCount: winner.totalKos ?? 0,
 				});
 				updateTeam({
 					teamId: loser.id,
@@ -188,6 +194,7 @@ export class RoundRobinBracket extends Bracket {
 					mapWins: loser.score ?? 0,
 					mapLosses: winner.score ?? 0,
 					points: loser.totalPoints ?? 0,
+					koCount: loser.totalKos ?? 0,
 				});
 			}
 
@@ -262,6 +269,7 @@ export class RoundRobinBracket extends Bracket {
 								mapWins: team.mapWins,
 								mapLosses: team.mapLosses,
 								points: team.points,
+								koCount: team.koCount,
 								winsAgainstTied: team.winsAgainstTied,
 							},
 						};

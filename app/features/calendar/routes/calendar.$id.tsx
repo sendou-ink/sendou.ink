@@ -105,7 +105,7 @@ export default function CalendarEventPage() {
 											hour: "numeric",
 											minute: "numeric",
 											day: "numeric",
-											month: "long",
+											month: "numeric",
 											weekday: "long",
 											year: "numeric",
 										})

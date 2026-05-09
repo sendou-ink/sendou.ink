@@ -574,7 +574,7 @@ Run `pnpm run i18n:sync` after adding English translations to initialize other l
 Use `createFormHelpers` for type-safe form interactions:
 
 ```ts
-import { createFormHelpers } from "~/utils/playwright-form";
+import { createFormHelpers } from "./helpers/playwright-form";
 import { myFormSchema } from "~/features/my/my-schemas";
 
 test("fills and submits form", async ({ page }) => {
@@ -628,7 +628,7 @@ import {
   selectStage,
   selectWeapon,
   selectUser,
-} from "~/utils/playwright";
+} from "./helpers/playwright";
 ```
 
 ## Complete Example
@@ -717,9 +717,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 ### E2E Test (`feature.spec.ts`)
 
 ```ts
-import { createFormHelpers } from "~/utils/playwright-form";
+import { createFormHelpers } from "./helpers/playwright-form";
 import { createItemSchema } from "~/features/item/feature-schemas";
-import { test, navigate, impersonate, seed } from "~/utils/playwright";
+import { test, navigate, impersonate, seed } from "./helpers/playwright";
 
 test("creates new item", async ({ page }) => {
   await seed(page);

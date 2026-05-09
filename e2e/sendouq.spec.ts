@@ -1,21 +1,19 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import {
+	SENDOUQ_LOOKING_PAGE,
+	SENDOUQ_PAGE,
+	SENDOUQ_PREPARING_PAGE,
+	sendouQInviteLink,
+} from "~/utils/urls";
+import {
 	expect,
 	impersonate,
 	navigate,
 	seed,
 	submit,
 	test,
-} from "~/utils/playwright";
-import {
-	SENDOUQ_LOOKING_PAGE,
-	SENDOUQ_PAGE,
-	SENDOUQ_PREPARING_PAGE,
-	sendouQInviteLink,
-	sendouQMatchPage,
-	userSeasonsPage,
-} from "~/utils/urls";
+} from "./helpers/playwright";
 
 test.describe("SendouQ", () => {
 	test("Group preparation flow - add friends and users via invite link", async ({
@@ -95,113 +93,6 @@ test.describe("SendouQ", () => {
 		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
 	});
 
-	test("Challenge flow - send challenge, report match, seasons page, quick rejoin with replay", async ({
-		page,
-	}) => {
-		test.slow();
-
-		await seed(page); // DEFAULT seed includes full groups for ADMIN and NZAP
-		await impersonate(page, ADMIN_ID);
-
-		// Send challenge
-		await navigate({ page, url: SENDOUQ_LOOKING_PAGE });
-
-		// Challenge all available groups (we don't know which is NZAP since full groups are censored)
-		const groupCards = page.getByTestId("sendouq-group-card");
-		const count = await groupCards.count();
-		// starting idx 1 to skip own group
-		for (let i = 1; i < count; i++) {
-			const groupCard = groupCards.nth(i);
-			const challengeButton = groupCard
-				.locator('button[type="submit"]')
-				.first();
-			await challengeButton.click();
-		}
-
-		// Accept challenge as NZAP
-		await impersonate(page, NZAP_TEST_ID);
-		await navigate({ page, url: SENDOUQ_LOOKING_PAGE });
-
-		const acceptButton = page
-			.getByRole("button", { name: "Start match" })
-			.first();
-		await expect(acceptButton).toBeVisible();
-		await acceptButton.click();
-
-		await expect(page).toHaveURL(/\/q\/match\/\d+/);
-		const matchId = page.url().split("/match/")[1];
-
-		// Verify both groups visible
-		await expect(page.getByText("Alpha", { exact: true })).toBeVisible();
-		await expect(page.getByText("Bravo", { exact: true })).toBeVisible();
-
-		// Report match score (first team - ADMIN)
-		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: sendouQMatchPage(Number(matchId)) });
-
-		// Report a 4-1 score (ADMIN wins)
-		const winners = ["BRAVO", "ALPHA", "ALPHA", "ALPHA", "ALPHA"];
-		for (let i = 0; i < winners.length; i++) {
-			const side = winners[i].toLowerCase();
-			await page.locator(`#${side}-${i}`).check();
-		}
-
-		// Submit score
-		await submit(page, "submit-score-button");
-
-		// Report same score as NZAP
-		await impersonate(page, NZAP_TEST_ID);
-		await navigate({ page, url: sendouQMatchPage(Number(matchId)) });
-
-		// Report same 4-1 score
-		for (let i = 0; i < winners.length; i++) {
-			const side = winners[i].toLowerCase();
-			await page.locator(`#${side}-${i}`).check();
-		}
-
-		// Submit score and verify match is now locked
-		await submit(page, "submit-score-button");
-		await expect(page.getByText("4 - 1")).toBeVisible();
-
-		// Verify match on seasons page
-		await navigate({
-			page,
-			url: userSeasonsPage({
-				user: { discordId: "123", customUrl: "sendou" },
-			}),
-		});
-		const matchLink = page.locator(`a[href="/q/match/${matchId}"]`);
-		await expect(matchLink).toBeVisible();
-
-		// Quick rejoin and replay indicator
-		// As ADMIN, click "Look again with same group"
-		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: sendouQMatchPage(Number(matchId)) });
-
-		const lookAgainButton = page.getByRole("button", {
-			name: "Look again with same group",
-		});
-
-		await lookAgainButton.click();
-		await page.getByRole("button", { name: "Join the queue" }).click();
-
-		// Verify redirect to looking page
-		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
-
-		// As NZAP, do the same
-		await impersonate(page, NZAP_TEST_ID);
-		await navigate({ page, url: sendouQMatchPage(Number(matchId)) });
-
-		const lookAgainButtonNzap = page.getByRole("button", {
-			name: "Look again with same group",
-		});
-
-		await lookAgainButtonNzap.click();
-		await page.getByRole("button", { name: "Join the queue" }).click();
-
-		await expect(page.getByText("Replay")).toBeVisible();
-	});
-
 	test("Request flow - partial groups morph together", async ({ page }) => {
 		await seed(page, "NO_SQ_GROUPS");
 
@@ -248,40 +139,5 @@ test.describe("SendouQ", () => {
 		await expect(
 			combinedGroup.getByTestId("sendouq-group-card-member"),
 		).toHaveCount(2);
-	});
-
-	test("Team map preferences shown on match page", async ({ page }) => {
-		await seed(page, "TEAM_MAP_PREFS");
-		await impersonate(page, ADMIN_ID);
-
-		await navigate({ page, url: SENDOUQ_LOOKING_PAGE });
-
-		const groupCards = page.getByTestId("sendouq-group-card");
-		const count = await groupCards.count();
-		for (let i = 1; i < count; i++) {
-			const groupCard = groupCards.nth(i);
-			const challengeButton = groupCard
-				.locator('button[type="submit"]')
-				.first();
-			await challengeButton.click();
-		}
-
-		await impersonate(page, NZAP_TEST_ID);
-		await navigate({ page, url: SENDOUQ_LOOKING_PAGE });
-
-		const acceptButton = page
-			.getByRole("button", { name: "Start match" })
-			.first();
-		await expect(acceptButton).toBeVisible();
-		await acceptButton.click();
-
-		await expect(page).toHaveURL(/\/q\/match\/\d+/);
-
-		const popoverButton = page.getByRole("button", { name: /votes/ }).first();
-		await expect(popoverButton).toBeVisible();
-		await popoverButton.click();
-
-		const popover = page.getByRole("dialog");
-		await expect(popover.getByText("Alliance Rogue")).toBeVisible();
 	});
 });

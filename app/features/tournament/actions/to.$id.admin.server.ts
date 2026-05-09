@@ -13,11 +13,9 @@ import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import {
-	tournamentMatchWebsocketRoom,
-	tournamentWebsocketRoom,
-} from "~/features/tournament-bracket/tournament-bracket-utils";
+import { tournamentWebsocketRoom } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
+import { tournamentMatchWebsocketRoom } from "~/features/tournament-match/tournament-match-utils";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";

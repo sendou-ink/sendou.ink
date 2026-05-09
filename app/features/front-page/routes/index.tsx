@@ -71,8 +71,8 @@ function SeasonDates({
 
 	return isHydrated ? (
 		<div className={className}>
-			{formatDate(season.starts, { month: "long", day: "numeric" })} -{" "}
-			{formatDate(season.ends, { month: "long", day: "numeric" })}
+			{formatDate(season.starts, { month: "numeric", day: "numeric" })} -{" "}
+			{formatDate(season.ends, { month: "numeric", day: "numeric" })}
 		</div>
 	) : (
 		<div className={clsx(className, "invisible")}>X</div>

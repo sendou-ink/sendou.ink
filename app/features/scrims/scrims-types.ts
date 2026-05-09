@@ -59,6 +59,7 @@ export interface ScrimPostRequest {
 
 export interface ScrimPostUser extends CommonUser {
 	isOwner: boolean;
+	inGameName: string | null;
 }
 
 interface ScrimPostTeam {

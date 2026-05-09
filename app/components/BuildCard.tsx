@@ -128,7 +128,7 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 							{isHydrated
 								? formatDate(databaseTimestampToDate(updatedAt), {
 										day: "numeric",
-										month: "long",
+										month: "numeric",
 										year: "numeric",
 									})
 								: "t"}

@@ -1,8 +1,14 @@
 import type { Page } from "@playwright/test";
 import { ORG_ADMIN_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { expect, impersonate, navigate, seed, test } from "~/utils/playwright";
 import { tournamentTeamPage } from "~/utils/urls";
+import {
+	expect,
+	impersonate,
+	navigate,
+	seed,
+	test,
+} from "./helpers/playwright";
 
 const ITZ_TOURNAMENT_ID = 2;
 const ITZ_TEAM_ID = 101;

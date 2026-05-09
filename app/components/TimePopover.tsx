@@ -16,7 +16,7 @@ export default function TimePopover({
 		minute: "numeric",
 		hour: "numeric",
 		day: "numeric",
-		month: "long",
+		month: "numeric",
 	},
 	underline = true,
 	className,

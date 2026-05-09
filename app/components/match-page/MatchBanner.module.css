@@ -1,0 +1,157 @@
+.root {
+	--banner-height: 175px;
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+	container-type: inline-size;
+}
+
+.banner {
+	position: relative;
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	grid-template-areas: "map info";
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	width: 100%;
+	height: var(--banner-height);
+	border-radius: var(--radius-box);
+	padding: var(--s-2);
+	background-image:
+		linear-gradient(
+			to top,
+			rgba(255, 255, 255, 0),
+			rgba(255, 255, 255, 0),
+			rgba(0, 0, 0, 0.6)
+		),
+		var(--stage-img);
+	color: var(--color-text);
+
+	:global(html.light) & {
+		color: var(--color-text-inverse);
+	}
+}
+
+.info {
+	grid-area: info;
+	justify-self: flex-end;
+}
+
+.map {
+	grid-area: map;
+	display: flex;
+	gap: var(--s-1);
+}
+
+.notice {
+	position: absolute;
+	bottom: var(--s-2);
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	gap: var(--s-0-5);
+	align-items: center;
+	color: var(--color-text-high);
+	background-color: var(--color-bg-high);
+	padding: var(--s-0-5) var(--s-1-5);
+	border-radius: var(--radius-field);
+	font-size: var(--font-3xs);
+	font-weight: normal;
+	height: auto;
+}
+
+.infoBadge {
+	display: flex;
+	gap: var(--s-1-5);
+	align-items: center;
+	height: auto;
+	color: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+}
+
+.thickText {
+	font-size: var(--font-md);
+	font-weight: var(--weight-semi);
+}
+
+.legalIcon {
+	color: var(--color-success);
+}
+
+.illegalIcon {
+	color: var(--color-error);
+}
+
+.multiBanner {
+	display: flex;
+	padding: 0;
+	overflow: hidden;
+	background-image: none;
+}
+
+.segment {
+	--slant: 13px;
+
+	flex: 1 1 0;
+	min-width: 0;
+	height: 100%;
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-image:
+		linear-gradient(
+			to top,
+			rgba(255, 255, 255, 0),
+			rgba(255, 255, 255, 0),
+			rgba(0, 0, 0, 0.6)
+		),
+		var(--stage-img);
+	clip-path: polygon(
+		var(--slant) 0,
+		100% 0,
+		calc(100% - var(--slant)) 100%,
+		0 100%
+	);
+	margin-inline-start: calc(var(--slant) * -1);
+
+	&:first-child {
+		clip-path: polygon(0 0, 100% 0, calc(100% - var(--slant)) 100%, 0 100%);
+		margin-inline-start: 0;
+	}
+
+	&:last-child {
+		clip-path: polygon(var(--slant) 0, 100% 0, 100% 100%, 0 100%);
+	}
+}
+
+.iconBanner {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-1);
+	width: 100%;
+	height: var(--banner-height);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-higher);
+}
+
+.iconBannerHeader {
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
+}
+
+.iconBannerSubtitle {
+	font-size: var(--font-xs);
+	color: var(--color-text-low);
+}
+
+.iconBannerBottomRight {
+	position: absolute;
+	top: var(--s-2);
+	right: var(--s-2);
+}

@@ -589,6 +589,10 @@ function DownloadParticipants() {
 	}
 
 	function simpleListInSeededOrder() {
+		const hasCheckedInTeams = tournament.ctx.teams.some(
+			(team) => team.checkIns.length > 0,
+		);
+
 		return tournament.ctx.teams
 			.slice()
 			.sort(
@@ -596,7 +600,7 @@ function DownloadParticipants() {
 					(a.seed ?? Number.POSITIVE_INFINITY) -
 					(b.seed ?? Number.POSITIVE_INFINITY),
 			)
-			.filter((team) => team.checkIns.length > 0)
+			.filter((team) => !hasCheckedInTeams || team.checkIns.length > 0)
 			.map((team) => team.name)
 			.join("\n");
 	}

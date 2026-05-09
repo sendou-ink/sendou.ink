@@ -5,6 +5,12 @@ import {
 	spoilerFreeModeSchema,
 } from "~/features/settings/settings-schemas";
 import {
+	CALENDAR_PAGE,
+	SETTINGS_PAGE,
+	tournamentBracketsPage,
+	tournamentResultsPage,
+} from "~/utils/urls";
+import {
 	expect,
 	impersonate,
 	isNotVisible,
@@ -12,14 +18,8 @@ import {
 	seed,
 	test,
 	waitForPOSTResponse,
-} from "~/utils/playwright";
-import { createFormHelpers } from "~/utils/playwright-form";
-import {
-	CALENDAR_PAGE,
-	SETTINGS_PAGE,
-	tournamentBracketsPage,
-	tournamentResultsPage,
-} from "~/utils/urls";
+} from "./helpers/playwright";
+import { createFormHelpers } from "./helpers/playwright-form";
 
 test.describe("Settings", () => {
 	test("updates 'disableBuildAbilitySorting'", async ({ page }) => {

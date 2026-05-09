@@ -10,7 +10,6 @@
 	"filteringByTag": "מראה תוצאות לפי סינון של #{{tag}}",
 	"commissionsOpen": "בקשות פתוחות",
 	"commissionsClosed": "בקשות סגורות",
-	"openCommissionsOnly": "הראה אומנים עם בקשות פתוחות",
 	"gainPerms": "נא לכתוב בערוץ helpdesk בדיסקורד כדי לקבל הרשאות להעלות ציורים. שימו לב שאתם חייבים להיות יוצר הציור ורק אמנות הקשורה ל-Splatoon מותרת..",
 	"tabs.recentlyUploaded": "הועלה לאחרונה",
 	"tabs.showcase": "תצוגה",

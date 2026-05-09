@@ -50,6 +50,19 @@ export function getStartTime(post: ScrimPost): number {
 	return acceptedRequest?.at ?? post.at;
 }
 
+/**
+ * Returns a display name for a scrim side: the team name when set,
+ * otherwise "{ownerUsername}'s pickup".
+ */
+export function sideDisplayName(side: {
+	team: { name: string } | null;
+	users: Array<{ username: string; isOwner: boolean }>;
+}): string {
+	if (side.team) return side.team.name;
+	const owner = side.users.find((u) => u.isOwner) ?? side.users[0];
+	return `${owner.username}'s pickup`;
+}
+
 export function applyFilters(post: ScrimPost, filters: ScrimFilters): boolean {
 	const hasMinFilter = filters.divs?.min !== null;
 	const hasMaxFilter = filters.divs?.max !== null;

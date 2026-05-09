@@ -152,7 +152,11 @@ const baseFindQuery = db
 			eb
 				.selectFrom("ScrimPostUser")
 				.innerJoin("User", "ScrimPostUser.userId", "User.id")
-				.select([...COMMON_USER_FIELDS, "ScrimPostUser.isOwner"])
+				.select([
+					...COMMON_USER_FIELDS,
+					"User.inGameName",
+					"ScrimPostUser.isOwner",
+				])
 				.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id"),
 		).as("users"),
 		jsonArrayFrom(
@@ -181,7 +185,11 @@ const baseFindQuery = db
 						innerEb
 							.selectFrom("ScrimPostRequestUser")
 							.innerJoin("User", "ScrimPostRequestUser.userId", "User.id")
-							.select([...COMMON_USER_FIELDS, "ScrimPostRequestUser.isOwner"])
+							.select([
+								...COMMON_USER_FIELDS,
+								"User.inGameName",
+								"ScrimPostRequestUser.isOwner",
+							])
 							.whereRef(
 								"ScrimPostRequestUser.scrimPostRequestId",
 								"=",

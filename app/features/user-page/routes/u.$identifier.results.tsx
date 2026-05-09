@@ -71,13 +71,13 @@ export default function UserResultsPage() {
 				user={layoutData.user}
 				backTo={userPage(layoutData.user)}
 			/>
-			<div className="stack horizontal justify-between items-center">
+			<div className={styles.resultsHeader}>
 				<h2 className="text-lg">
 					{showAll || !data.hasHighlightedResults
 						? t("results.title")
 						: t("results.highlights")}
 				</h2>
-				<div className="stack horizontal sm items-center">
+				<div className={styles.resultsHeaderActions}>
 					{user ? (
 						<Input
 							className={styles.resultsFilterInput}

@@ -1,5 +1,5 @@
-import { expect, navigate, test } from "~/utils/playwright";
 import { COMP_ANALYZER_URL } from "~/utils/urls";
+import { expect, navigate, test } from "./helpers/playwright";
 
 test.describe("Composition Analyzer", () => {
 	test("weapon selection, removal, and URL persistence", async ({ page }) => {

@@ -7,10 +7,7 @@ import { i18next } from "../../../modules/i18n/i18next.server";
 import { logger } from "../../../utils/logger";
 import * as NotificationRepository from "../NotificationRepository.server";
 import type { Notification } from "../notifications-types";
-import {
-	mapMetaForTranslation,
-	notificationLink,
-} from "../notifications-utils";
+import { notificationLink } from "../notifications-utils";
 import webPush, { webPushEnabled } from "./webPush.server";
 
 const NOTIFICATION_URGENCY: Record<Notification["type"], Urgency> = {
@@ -168,10 +165,12 @@ function pushNotificationOptions(
 ): Parameters<ServiceWorkerRegistration["showNotification"]>[1] & {
 	title: string;
 } {
-	const meta = mapMetaForTranslation(notification, "en-US");
 	return {
 		title: t(`common:notifications.title.${notification.type}`),
-		body: t(`common:notifications.text.${notification.type}`, meta),
+		body: t(
+			`common:notifications.text.${notification.type}`,
+			notification.meta,
+		),
 		icon: notification.pictureUrl ?? "/static-assets/img/app-icon.png",
 		data: { url: notificationLink(notification) },
 	};

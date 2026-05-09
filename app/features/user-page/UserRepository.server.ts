@@ -288,6 +288,8 @@ export async function upsertWidgets(
 	return db.transaction().execute(async (trx) => {
 		await trx.deleteFrom("UserWidget").where("userId", "=", userId).execute();
 
+		if (widgets.length === 0) return;
+
 		await trx
 			.insertInto("UserWidget")
 			.values(
@@ -1270,6 +1272,21 @@ export async function anyUserPrefersNoScreen(
 		.select("User.noScreen")
 		.where("User.id", "in", userIds)
 		.where("User.noScreen", "=", 1)
+		.executeTakeFirst();
+
+	return Boolean(result);
+}
+
+export async function anyUserPrefersNoSplatnet(
+	userIds: number[],
+): Promise<boolean> {
+	if (userIds.length === 0) return false;
+
+	const result = await db
+		.selectFrom("User")
+		.select("User.noSplatnet")
+		.where("User.id", "in", userIds)
+		.where("User.noSplatnet", "=", 1)
 		.executeTakeFirst();
 
 	return Boolean(result);

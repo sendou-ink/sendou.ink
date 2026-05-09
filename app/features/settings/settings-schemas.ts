@@ -19,6 +19,19 @@ export const clockFormatSchema = z.object({
 	}),
 });
 
+export const dateFormatSchema = z.object({
+	_action: stringConstant("UPDATE_DATE_FORMAT"),
+	newValue: select({
+		label: "labels.dateFormat",
+		items: [
+			{ value: "auto", label: "options.dateFormat.auto" },
+			{ value: "MDY", label: "options.dateFormat.MDY" },
+			{ value: "DMY", label: "options.dateFormat.DMY" },
+			{ value: "YMD", label: "options.dateFormat.YMD" },
+		],
+	}),
+});
+
 export const disableBuildAbilitySortingSchema = z.object({
 	_action: stringConstant("UPDATE_DISABLE_BUILD_ABILITY_SORTING"),
 	newValue: toggle({
@@ -51,11 +64,27 @@ export const updateNoScreenSchema = z.object({
 	}),
 });
 
+export const updateNoSplatnetSchema = z.object({
+	_action: stringConstant("UPDATE_NO_SPLATNET"),
+	newValue: toggle({
+		label: "labels.noSplatnet",
+		bottomText: "bottomTexts.noScreen",
+	}),
+});
+
+const weaponReportDefaultOpenSchema = z.object({
+	_action: stringConstant("UPDATE_WEAPON_REPORT_DEFAULT_OPEN"),
+	newValue: z.boolean(),
+});
+
 export const settingsEditSchema = z.union([
 	customThemeSchema,
 	disableBuildAbilitySortingSchema,
 	disallowScrimPickupsFromUntrustedSchema,
 	spoilerFreeModeSchema,
 	updateNoScreenSchema,
+	updateNoSplatnetSchema,
 	clockFormatSchema,
+	weaponReportDefaultOpenSchema,
+	dateFormatSchema,
 ]);

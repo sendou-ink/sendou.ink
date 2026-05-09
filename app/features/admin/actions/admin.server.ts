@@ -39,6 +39,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					errorToast(`Migration failed. Reason: ${errorMessage}`);
 				}
 
+				await refreshBannedCache();
+
 				message = "Account migrated";
 				break;
 			} catch (err) {

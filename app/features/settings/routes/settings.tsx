@@ -30,10 +30,12 @@ import { action } from "../actions/settings.server";
 import { loader } from "../loaders/settings.server";
 import {
 	clockFormatSchema,
+	dateFormatSchema,
 	disableBuildAbilitySortingSchema,
 	disallowScrimPickupsFromUntrustedSchema,
 	spoilerFreeModeSchema,
 	updateNoScreenSchema,
+	updateNoSplatnetSchema,
 } from "../settings-schemas";
 import styles from "./settings.module.css";
 import "./settings.global.css";
@@ -89,6 +91,18 @@ export default function SettingsPage() {
 					</SendouForm>
 				) : null}
 				{user ? (
+					<SendouForm
+						schema={dateFormatSchema}
+						defaultValues={{
+							newValue: user.preferences.dateFormat ?? "auto",
+						}}
+						autoSubmit
+						revalidateRoot
+					>
+						{({ FormField }) => <FormField name="newValue" />}
+					</SendouForm>
+				) : null}
+				{user ? (
 					<>
 						<Divider className={styles.divider} smallText>
 							{t("common:settings.preferences")}
@@ -121,6 +135,16 @@ export default function SettingsPage() {
 								schema={spoilerFreeModeSchema}
 								defaultValues={{
 									newValue: user.preferences.spoilerFreeMode ?? false,
+								}}
+								autoSubmit
+								revalidateRoot
+							>
+								{({ FormField }) => <FormField name="newValue" />}
+							</SendouForm>
+							<SendouForm
+								schema={updateNoSplatnetSchema}
+								defaultValues={{
+									newValue: Boolean(data.noSplatnet),
 								}}
 								autoSubmit
 								revalidateRoot

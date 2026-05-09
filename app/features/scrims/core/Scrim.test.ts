@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import type { ScrimFilters, ScrimPost } from "../scrims-types";
-import { applyFilters, participantIdsListFromAccepted } from "./Scrim";
+import {
+	applyFilters,
+	participantIdsListFromAccepted,
+	sideDisplayName,
+} from "./Scrim";
 
 type MockUser = { id: number };
 type MockRequest = { isAccepted: boolean; users: MockUser[] };
@@ -75,6 +79,27 @@ describe("participantIdsListFromAccepted", () => {
 
 		const result = participantIdsListFromAccepted(post);
 		expect(result).toEqual([]);
+	});
+});
+
+describe("sideDisplayName", () => {
+	it("returns the team name when team is set", () => {
+		const result = sideDisplayName({
+			team: { name: "Team Olive" },
+			users: [{ username: "sendou", isOwner: true }],
+		});
+		expect(result).toBe("Team Olive");
+	});
+
+	it("falls back to {owner}'s pickup when team is null", () => {
+		const result = sideDisplayName({
+			team: null,
+			users: [
+				{ username: "alice", isOwner: false },
+				{ username: "sendou", isOwner: true },
+			],
+		});
+		expect(result).toBe("sendou's pickup");
 	});
 });
 

@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { chatAccessible } from "~/features/chat/chat-utils";
+import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
 import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -28,6 +29,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const participantIds = Scrim.participantIdsListFromAccepted(post);
 
+	const [anyUserPrefersNoScreen, anyUserPrefersNoSplatnet, roomLinks] =
+		await Promise.all([
+			UserRepository.anyUserPrefersNoScreen(participantIds),
+			UserRepository.anyUserPrefersNoSplatnet(participantIds),
+			RoomLinkRepository.findByUserIds(participantIds, 3),
+		]);
+
 	return {
 		post,
 		chatCode:
@@ -39,8 +47,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			})
 				? post.chatCode
 				: undefined,
-		anyUserPrefersNoScreen:
-			await UserRepository.anyUserPrefersNoScreen(participantIds),
+		anyUserPrefersNoScreen,
+		anyUserPrefersNoSplatnet,
+		roomLinks,
 		tournamentMapPool: post.mapsTournament
 			? await resolveTournamentMapPool(post.mapsTournament.id, user)
 			: null,

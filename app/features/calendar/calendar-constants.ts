@@ -28,12 +28,6 @@ export const tags = {
 	QUALIFIER: {
 		color: "#FFC0CB",
 	},
-	SZ: {
-		color: "#F44336",
-	},
-	TW: {
-		color: "#D50000",
-	},
 	ONES: {
 		color: "#FAEC25",
 	},
@@ -97,12 +91,7 @@ export type RegClosesAtOption = (typeof REG_CLOSES_AT_OPTIONS)[number];
 export const DAYS_SHOWN_AT_A_TIME = 4;
 
 /** Tags not shown on the tournament cards */
-export const EXCLUDED_TAGS: Array<CalendarEventTag> = [
-	"CARDS",
-	"SR",
-	"SZ",
-	"TW",
-];
+export const EXCLUDED_TAGS: Array<CalendarEventTag> = ["CARDS", "SR"];
 
 export const CALENDAR_EVENT_RESULT = {
 	MAX_PARTICIPANTS_COUNT: 1000,

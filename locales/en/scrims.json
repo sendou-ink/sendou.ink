@@ -86,9 +86,8 @@
 	"associations.forms.name.title": "Name",
 	"forms.managedByAnyone.title": "Anyone can manage",
 	"forms.managedByAnyone.explanation": "If enabled, all users in this post can accept requests and delete the post, not just the owner.",
-	"alert.canceled": "This scrim was canceled by {{user}}. Reason: {{reason}}",
-	"maps.header": "Maps",
-	"screenBan.header": "Screen",
-	"screenBan.warning": "Ask before playing Splattercolor Screen",
-	"screenBan.allowed": "Nobody in this scrim has indicated they want to avoid Splattercolor Screen"
+	"banner.canceled.header": "Canceled by {{user}}",
+	"banner.canceled.subtitle": "Reason: {{reason}}",
+	"banner.freeForm.header": "Free form practice",
+	"banner.freeForm.subtitle": "Communicate the maplist with the opponents"
 }
