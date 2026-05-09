@@ -98,7 +98,7 @@
 		"swr": "2.4.1",
 		"web-haptics": "0.0.6",
 		"web-push": "3.6.7",
-		"zod": "4.4.1"
+		"zod": "4.4.3"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.13",
