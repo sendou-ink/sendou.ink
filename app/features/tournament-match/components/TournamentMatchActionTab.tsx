@@ -21,7 +21,7 @@ export function TournamentMatchActionTab({
 	ownTeamId,
 }: {
 	data: TournamentMatchLoaderData;
-	ownTeamId: number;
+	ownTeamId: number | null;
 }) {
 	const { t } = useTranslation(["q"]);
 	const tournament = useTournament();

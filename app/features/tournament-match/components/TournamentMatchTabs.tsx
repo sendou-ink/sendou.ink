@@ -62,7 +62,12 @@ export function TournamentMatchTabs({
 	const opponentTwoId = teamTwo.id;
 	const pickBanTeams: [MatchPageTeam, MatchPageTeam] = [teamOne, teamTwo];
 
-	const userTeamId = tournament.teamMemberOfByUser(user)?.id;
+	const userTournamentTeamId = tournament.teamMemberOfByUser(user)?.id;
+	const userTeamId =
+		userTournamentTeamId === opponentOneId ||
+		userTournamentTeamId === opponentTwoId
+			? userTournamentTeamId
+			: null;
 
 	const pickBanData = resolveTimelinePickBanData(
 		data,
@@ -102,10 +107,7 @@ export function TournamentMatchTabs({
 						turnOfResult={turnOfResult}
 					/>
 				) : (
-					<TournamentMatchActionTab
-						data={data}
-						ownTeamId={userTeamId ?? opponentOneId}
-					/>
+					<TournamentMatchActionTab data={data} ownTeamId={userTeamId} />
 				)
 			) : null}
 			{tabs.includes(TAB_KEYS.ADMIN) ? (
