@@ -1,4 +1,5 @@
 allowBuilds:
+  '@sentry/cli': true
   aws-sdk: false
   better-sqlite3: true
   core-js: false
