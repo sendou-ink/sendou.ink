@@ -31,6 +31,7 @@
 	"errors.notAllowedCharacters": "Contiene caracteres no permitidos",
 	"errors.atLeastOneOption": "Debe seleccionarse al menos una opción",
 	"errors.duplicateName": "Ya existe un equipo con ese nombre",
+	"errors.duplicateOrgName": "",
 	"errors.noOnlySpecialCharacters": "El nombre no puede ser solo caracteres especiales",
 	"labels.weaponPool": "Selección de armas",
 	"placeholders.weaponPoolFull": "Selección llena - elimina un arma para añadir más",

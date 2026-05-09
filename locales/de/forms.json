@@ -31,6 +31,7 @@
 	"errors.notAllowedCharacters": "",
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "Es gibt bereits ein Team mit diesem Namen",
+	"errors.duplicateOrgName": "",
 	"errors.noOnlySpecialCharacters": "",
 	"labels.weaponPool": "Waffenpool",
 	"placeholders.weaponPoolFull": "",

@@ -31,6 +31,7 @@
 	"errors.notAllowedCharacters": "",
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "Holdnavnet er taget af et andet hold",
+	"errors.duplicateOrgName": "",
 	"errors.noOnlySpecialCharacters": "",
 	"labels.weaponPool": "Våbenpulje",
 	"placeholders.weaponPoolFull": "",
