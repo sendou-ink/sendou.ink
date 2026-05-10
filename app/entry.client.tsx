@@ -15,7 +15,13 @@ const tracing = Sentry.reactRouterTracingIntegration({
 Sentry.init({
 	dsn: import.meta.env.VITE_SENTRY_DSN,
 	sendDefaultPii: false,
-	integrations: [tracing],
+	integrations: [
+		tracing,
+		Sentry.thirdPartyErrorFilterIntegration({
+			filterKeys: ["sendou-ink"],
+			behaviour: "drop-error-if-contains-third-party-frames",
+		}),
+	],
 	enableLogs: true,
 	tracesSampleRate: 0.1,
 	tracePropagationTargets: [/^\//],

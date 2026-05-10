@@ -46,6 +46,9 @@ export default defineConfig((config) => {
 					project: process.env.SENTRY_PROJECT,
 					authToken: process.env.SENTRY_AUTH_TOKEN,
 					telemetry: false,
+					unstable_sentryVitePluginOptions: {
+						applicationKey: "sendou-ink",
+					},
 				},
 				config,
 			),
