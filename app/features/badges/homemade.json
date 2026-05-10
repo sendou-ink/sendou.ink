@@ -199,6 +199,18 @@
 		"displayName": "Supply Closet (Smudge)",
 		"authorDiscordId": "148874365105078272"
 	},
+	"cchip1": {
+		"displayName": "Equalizer (High Side)",
+		"authorDiscordId": "338806780446638082"
+	},
+	"cchip2": {
+		"displayName": "Equalizer (Low Side)",
+		"authorDiscordId": "338806780446638082"
+	},
+	"cchip3": {
+		"displayName": "Equalizer (Top 3)",
+		"authorDiscordId": "338806780446638082"
+	},
 	"champions": {
 		"displayName": "Champions Cup",
 		"authorDiscordId": "752582395076673577"
