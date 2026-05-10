@@ -31,45 +31,41 @@ type ResultsByMonthYearQueryReturnType = InferResult<
 	ReturnType<typeof resultsByMonthYearQuery>
 >;
 
-export function allPlusTiersFromLatestVoting() {
-	return (
-		db
-			.selectFrom("PlusVotingResult")
-			.select([
-				"PlusVotingResult.votedId",
-				"PlusVotingResult.tier",
-				"PlusVotingResult.score",
-				"PlusVotingResult.wasSuggested",
-			])
-			.where(
-				"PlusVotingResult.year",
-				"=",
-				db
-					.selectFrom("PlusVote")
-					.select("PlusVote.year")
-					.where("PlusVote.validAfter", "<", sql<number>`strftime('%s', 'now')`)
-					.orderBy("PlusVote.year", "desc")
-					.orderBy("PlusVote.month", "desc")
-					.limit(1),
-			)
-			.where(
-				"PlusVotingResult.month",
-				"=",
-				db
-					.selectFrom("PlusVote")
-					.select("PlusVote.month")
-					.where("PlusVote.validAfter", "<", sql<number>`strftime('%s', 'now')`)
-					.orderBy("PlusVote.year", "desc")
-					.orderBy("PlusVote.month", "desc")
-					.limit(1),
-			)
-			.execute()
-			// CLAUDETODO: don't use then, just await (assign the value to intermediate variable)
-			.then((rows) => {
-				const withPassed = PlusVoting.computePassedVoting(rows);
-				return PlusVoting.computeFreshPlusTiers(withPassed);
-			})
-	);
+export async function allPlusTiersFromLatestVoting() {
+	const rows = await db
+		.selectFrom("PlusVotingResult")
+		.select([
+			"PlusVotingResult.votedId",
+			"PlusVotingResult.tier",
+			"PlusVotingResult.score",
+			"PlusVotingResult.wasSuggested",
+		])
+		.where(
+			"PlusVotingResult.year",
+			"=",
+			db
+				.selectFrom("PlusVote")
+				.select("PlusVote.year")
+				.where("PlusVote.validAfter", "<", sql<number>`strftime('%s', 'now')`)
+				.orderBy("PlusVote.year", "desc")
+				.orderBy("PlusVote.month", "desc")
+				.limit(1),
+		)
+		.where(
+			"PlusVotingResult.month",
+			"=",
+			db
+				.selectFrom("PlusVote")
+				.select("PlusVote.month")
+				.where("PlusVote.validAfter", "<", sql<number>`strftime('%s', 'now')`)
+				.orderBy("PlusVote.year", "desc")
+				.orderBy("PlusVote.month", "desc")
+				.limit(1),
+		)
+		.execute();
+
+	const withPassed = PlusVoting.computePassedVoting(rows);
+	return PlusVoting.computeFreshPlusTiers(withPassed);
 }
 
 export type ResultsByMonthYearItem = Unwrapped<typeof resultsByMonthYear>;
