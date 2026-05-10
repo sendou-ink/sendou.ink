@@ -170,6 +170,7 @@
 	"progression.error.SAME_PLACEMENT_TO_MULTIPLE_BRACKETS": "Same placement leads to multiple brackets",
 	"progression.error.GAP_IN_PLACEMENTS": "Gap in placements that advance",
 	"progression.error.TOO_MANY_PLACEMENTS": "Too many placements (more than teams in groups)",
+	"progression.error.PLACEMENT_TOO_HIGH": "Placement is too high (max {{max}})",
 	"progression.error.DUPLICATE_BRACKET_NAME": "Duplicate bracket name",
 	"progression.error.NAME_MISSING": "Bracket name missing",
 	"progression.error.NEGATIVE_PROGRESSION": "Negative progression only possible for double elimination",

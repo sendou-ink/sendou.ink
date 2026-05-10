@@ -68,6 +68,11 @@ export type ValidationError =
 			type: "TOO_MANY_PLACEMENTS";
 			bracketIdx: number;
 	  }
+	// placements above the hard cap are nonsensical and bloat the settings JSON
+	| {
+			type: "PLACEMENT_TOO_HIGH";
+			bracketIdx: number;
+	  }
 	// two brackets can not have the same name
 	| {
 			type: "DUPLICATE_BRACKET_NAME";
@@ -250,6 +255,14 @@ export function bracketsToValidationError(
 	if (typeof faultyBracketIdx === "number") {
 		return {
 			type: "TOO_MANY_PLACEMENTS",
+			bracketIdx: faultyBracketIdx,
+		};
+	}
+
+	faultyBracketIdx = placementTooHigh(brackets);
+	if (typeof faultyBracketIdx === "number") {
+		return {
+			type: "PLACEMENT_TOO_HIGH",
 			bracketIdx: faultyBracketIdx,
 		};
 	}
@@ -534,6 +547,22 @@ function tooManyPlacements(brackets: ParsedBracket[]) {
 				: teamsPerGroup;
 
 			if (source.placements.some((placement) => placement > size)) {
+				return bracketIdx;
+			}
+		}
+	}
+
+	return null;
+}
+
+function placementTooHigh(brackets: ParsedBracket[]) {
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		for (const source of bracket.sources ?? []) {
+			if (
+				source.placements.some(
+					(placement) => placement > TOURNAMENT.PLACEMENT_MAX,
+				)
+			) {
 				return bracketIdx;
 			}
 		}

@@ -172,6 +172,7 @@
 	"progression.error.SAME_PLACEMENT_TO_MULTIPLE_BRACKETS": "La misma clasificación lleva a varios cuadros",
 	"progression.error.GAP_IN_PLACEMENTS": "Hay un hueco en las clasificaciones que avanzan",
 	"progression.error.TOO_MANY_PLACEMENTS": "Demasiadas clasificaciones (más que equipos en grupos)",
+	"progression.error.PLACEMENT_TOO_HIGH": "",
 	"progression.error.DUPLICATE_BRACKET_NAME": "Nombre de cuadro duplicado",
 	"progression.error.NAME_MISSING": "Falta el nombre del cuadro",
 	"progression.error.NEGATIVE_PROGRESSION": "La progresión negativa solo es posible en eliminación doble",

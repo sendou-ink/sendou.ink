@@ -166,6 +166,7 @@
 	"progression.error.SAME_PLACEMENT_TO_MULTIPLE_BRACKETS": "同じ順位はブラケットを多数作ります",
 	"progression.error.GAP_IN_PLACEMENTS": "前に進む順位にギャップがあります",
 	"progression.error.TOO_MANY_PLACEMENTS": "順位がありすぎます。(グループに入っているチームより多いです)",
+	"progression.error.PLACEMENT_TOO_HIGH": "",
 	"progression.error.DUPLICATE_BRACKET_NAME": "ブラケットの名前が重複しています",
 	"progression.error.NAME_MISSING": "ブラケットの名前がありません",
 	"progression.error.NEGATIVE_PROGRESSION": "逆の進行はダブルエリ三ネーションの時のみ可能です",
