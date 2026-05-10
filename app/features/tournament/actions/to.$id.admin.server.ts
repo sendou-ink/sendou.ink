@@ -15,7 +15,7 @@ import {
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentWebsocketRoom } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
-import { tournamentMatchWebsocketRoom } from "~/features/tournament-match/tournament-match-utils";
+import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -405,9 +405,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 			});
 
 			if (endedMatchIds.length > 0) {
+				const endedChatCodes =
+					await TournamentMatchRepository.findChatCodesByMatchIds(
+						endedMatchIds,
+					);
 				ChatSystemMessage.send([
-					...endedMatchIds.map((matchId) => ({
-						room: tournamentMatchWebsocketRoom(matchId),
+					...endedChatCodes.map((room) => ({
+						room,
 						type: "TOURNAMENT_MATCH_UPDATED" as const,
 						revalidateOnly: true as const,
 					})),

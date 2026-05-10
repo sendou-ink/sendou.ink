@@ -105,6 +105,19 @@ export function findResultById(id: number) {
 		.executeTakeFirst();
 }
 
+export async function findChatCodesByMatchIds(ids: number[]) {
+	if (ids.length === 0) return [];
+
+	const rows = await db
+		.selectFrom("TournamentMatch")
+		.select("TournamentMatch.chatCode")
+		.where("TournamentMatch.id", "in", ids)
+		.where("TournamentMatch.chatCode", "is not", null)
+		.execute();
+
+	return rows.map((r) => r.chatCode!);
+}
+
 export async function userParticipationByTournamentId(tournamentId: number) {
 	return db
 		.with("playerMatches", (db) =>

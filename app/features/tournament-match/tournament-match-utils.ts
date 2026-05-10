@@ -7,9 +7,6 @@ import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { logger } from "~/utils/logger";
 
-export const tournamentMatchWebsocketRoom = (matchId: number) =>
-	`match__${matchId}`;
-
 export function resolveHostingTeam(
 	teams: [TournamentDataTeam, TournamentDataTeam],
 ) {
