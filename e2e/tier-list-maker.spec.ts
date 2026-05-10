@@ -1,6 +1,6 @@
 import type { Locator, Page } from "@playwright/test";
-import { expect, navigate, test } from "~/utils/playwright";
 import { TIER_LIST_MAKER_URL } from "~/utils/urls";
+import { expect, navigate, test } from "./helpers/playwright";
 
 test.describe("Tier List Maker", () => {
 	test("toggles work, items can be dragged, and state persists after reload", async ({

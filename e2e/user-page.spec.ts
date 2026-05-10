@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
 import { userEditProfileBaseSchema } from "~/features/user-page/user-page-schemas";
+import { userEditProfilePage, userPage } from "~/utils/urls";
 import {
 	expect,
 	impersonate,
@@ -11,9 +12,8 @@ import {
 	submit,
 	test,
 	waitForPOSTResponse,
-} from "~/utils/playwright";
-import { createFormHelpers } from "~/utils/playwright-form";
-import { userEditProfilePage, userPage } from "~/utils/urls";
+} from "./helpers/playwright";
+import { createFormHelpers } from "./helpers/playwright-form";
 
 const goToEditPage = (page: Page) =>
 	page.getByText("Edit", { exact: true }).click();

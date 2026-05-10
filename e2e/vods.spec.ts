@@ -1,4 +1,5 @@
 import { vodFormBaseSchema } from "~/features/vods/vods-schemas";
+import { newVodPage, VODS_PAGE, vodVideoPage } from "~/utils/urls";
 import {
 	expect,
 	impersonate,
@@ -10,9 +11,8 @@ import {
 	selectWeapon,
 	submit,
 	test,
-} from "~/utils/playwright";
-import { createFormHelpers } from "~/utils/playwright-form";
-import { newVodPage, VODS_PAGE, vodVideoPage } from "~/utils/urls";
+} from "./helpers/playwright";
+import { createFormHelpers } from "./helpers/playwright-form";
 
 const VIDEO_DATE = new Date(2024, 4, 15, 12, 0); // May 15, 2024 at 12:00
 

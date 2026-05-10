@@ -1,0 +1,106 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+}
+
+.castSection {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+	align-items: flex-start;
+}
+
+.castLabelRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+
+	& label {
+		text-box: trim-both cap alphabetic;
+	}
+}
+
+.castEmptyHint {
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+	margin: 0;
+}
+
+.lockRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.buttonRow {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-2);
+	align-items: center;
+	justify-content: center;
+}
+
+.editSection {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.resultList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.resultRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+	padding: var(--s-2) var(--s-3);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-box);
+}
+
+.resultRowEditing {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	padding: var(--s-3);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-box);
+}
+
+.mapIndex {
+	font-weight: var(--weight-semi);
+	margin-right: var(--s-2);
+}
+
+.winnerName {
+	color: var(--color-text-high);
+}
+
+.rosterColumns {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: var(--s-3);
+
+	@media (max-width: 640px) {
+		grid-template-columns: 1fr;
+	}
+}
+
+.teamFieldset {
+	border: 2px solid var(--color-border);
+	border-radius: var(--radius-box);
+	padding: var(--s-2);
+	padding-block-end: var(--s-2);
+	padding-inline: var(--s-2);
+	background-color: transparent;
+
+	& legend {
+		padding: 0 var(--s-2);
+		font-weight: var(--weight-semi);
+	}
+}

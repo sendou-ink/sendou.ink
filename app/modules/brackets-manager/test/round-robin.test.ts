@@ -164,6 +164,98 @@ describe("Create a round-robin stage", () => {
 			}),
 		).toThrow("You must provide a strictly positive group count.");
 	});
+
+	test("creates an A/B divisions round-robin where every A team plays every B team once", () => {
+		const seeding = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+		// alternate A (0) / B (1) so that seed order 1..12 gives A=[1,3,5,7,9,11], B=[2,4,6,8,10,12]
+		const abDivisions = seeding.map((_, i) => (i % 2 === 0 ? 0 : 1));
+
+		manager.create({
+			name: "AB Example",
+			tournamentId: 0,
+			type: "round_robin",
+			seeding,
+			abDivisions: abDivisions as (0 | 1)[],
+			settings: {
+				groupCount: 1,
+				hasAbDivisions: true,
+				seedOrdering: ["groups.seed_optimized"],
+			},
+		});
+
+		expect(storage.select("group")!.length).toBe(1);
+		expect(storage.select("round")!.length).toBe(6);
+		expect(storage.select("match")!.length).toBe(36);
+
+		const divisionAIds = new Set([1, 3, 5, 7, 9, 11]);
+		const divisionBIds = new Set([2, 4, 6, 8, 10, 12]);
+		const pairings = new Set<string>();
+
+		for (const match of storage.select<any>("match")!) {
+			const aId: number = match.opponent1.id;
+			const bId: number = match.opponent2.id;
+
+			expect(divisionAIds.has(aId)).toBe(true);
+			expect(divisionBIds.has(bId)).toBe(true);
+
+			const key = `${aId}-${bId}`;
+			expect(pairings.has(key)).toBe(false);
+			pairings.add(key);
+		}
+
+		expect(pairings.size).toBe(36);
+	});
+
+	test("throws when A/B divisions are requested but abDivisions is missing", () => {
+		expect(() =>
+			manager.create({
+				name: "Missing AB",
+				tournamentId: 0,
+				type: "round_robin",
+				seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+				settings: {
+					groupCount: 1,
+					hasAbDivisions: true,
+				},
+			}),
+		).toThrow("abDivisions must be provided when hasAbDivisions is enabled.");
+	});
+
+	test("creates an A/B divisions round-robin with uneven (±1) divisions and a single group", () => {
+		const seeding = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+		manager.create({
+			name: "Uneven AB",
+			tournamentId: 0,
+			type: "round_robin",
+			seeding,
+			abDivisions: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+			settings: {
+				groupCount: 1,
+				hasAbDivisions: true,
+				seedOrdering: ["groups.seed_optimized"],
+			},
+		});
+
+		expect(storage.select("group")!.length).toBe(1);
+		expect(storage.select("round")!.length).toBe(6);
+		expect(storage.select("match")!.length).toBe(30);
+	});
+
+	test("throws when A/B divisions are uneven with multiple groups", () => {
+		expect(() =>
+			manager.create({
+				name: "Uneven AB multi-group",
+				tournamentId: 0,
+				type: "round_robin",
+				seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+				abDivisions: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+				settings: {
+					groupCount: 2,
+					hasAbDivisions: true,
+				},
+			}),
+		).toThrow("Uneven A/B divisions are only supported with a single group.");
+	});
 });
 
 describe("Update scores in a round-robin stage", () => {

@@ -18,7 +18,10 @@ import {
 import { teamPage, tournamentOrganizationPage } from "~/utils/urls";
 import * as ImageRepository from "../ImageRepository.server";
 import { uploadStreamToS3 } from "../s3.server";
-import { MAX_UNVALIDATED_IMG_COUNT } from "../upload-constants";
+import {
+	ALLOWED_IMAGE_EXTENSIONS,
+	MAX_UNVALIDATED_IMG_COUNT,
+} from "../upload-constants";
 import { requestToImgType } from "../upload-utils";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -44,8 +47,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	const uploadHandler = async (fileUpload: FileUpload) => {
 		if (fileUpload.fieldName === "img") {
-			const [, ending] = fileUpload.name.split(".");
-			invariant(ending);
+			const ending = fileUpload.name.split(".").pop()?.toLowerCase();
+			invariant(ending && ending !== fileUpload.name);
+			invariant(
+				ALLOWED_IMAGE_EXTENSIONS.includes(ending),
+				`Invalid file extension: "${ending}"`,
+			);
 			const newFilename = `img-${Date.now()}.${ending}`;
 
 			const uploadedFileLocation = await uploadStreamToS3(

@@ -55,6 +55,7 @@ import { getThemeSession } from "./features/theme/core/theme-session.server";
 import { useHydrated } from "./hooks/useHydrated";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
 import { i18nCookie, i18next } from "./modules/i18n/i18next.server";
+import { isSupporter } from "./modules/permissions/utils";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { allI18nNamespaces } from "./utils/i18n";
 import { isRevalidation, metaTags, type SerializeFrom } from "./utils/remix";
@@ -125,7 +126,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 						roles: user.roles,
 					}
 				: undefined,
-			customTheme: user?.customTheme,
+			customTheme: isSupporter(user) ? user?.customTheme : undefined,
 			notifications: user
 				? await NotificationRepository.findByUserId(user.id, {
 						limit: NOTIFICATIONS.PEEK_COUNT,
@@ -185,6 +186,15 @@ function Document({
 		>
 			<head>
 				<meta charSet="utf-8" />
+				{import.meta.env.VITE_FUSE_ENABLED &&
+				// check for data so supporters don't see ads on error page
+				data &&
+				!data.user?.roles.includes("MINOR_SUPPORT") ? (
+					<script
+						async
+						src="https://cdn.fuseplatform.net/publift/tags/2/4242/fuse.js"
+					/>
+				) : null}
 				<meta
 					name="viewport"
 					content="initial-scale=1, viewport-fit=cover, user-scalable=no"
@@ -196,15 +206,6 @@ function Document({
 				<meta name="apple-mobile-web-app-capable" content="yes" />
 				<meta name="mobile-web-app-capable" content="yes" />
 				<meta name="theme-color" content="#010115" />
-				{import.meta.env.VITE_FUSE_ENABLED &&
-				// check for data so supporters don't see ads on error page
-				data &&
-				!data.user?.roles.includes("MINOR_SUPPORT") ? (
-					<script
-						async
-						src="https://cdn.fuseplatform.net/publift/tags/2/4242/fuse.js"
-					/>
-				) : null}
 				<Meta />
 				<Links />
 				<ThemeHead />

@@ -12,8 +12,6 @@ const config = {
 		"public/sw-2.js",
 		"ley.config.cjs",
 		"ley-driver.cjs",
-		"vitest.browser.config.ts",
-		"app/browser-test-setup.ts",
 	],
 	compilers: {
 		css: (text: string, path: string) => {

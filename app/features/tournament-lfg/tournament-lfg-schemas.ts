@@ -55,6 +55,10 @@ export const lookingSchema = z.union([
 	z.object({
 		_action: _action("LEAVE_GROUP"),
 	}),
+	z.object({
+		_action: _action("DELETE_GROUP"),
+		userId: id,
+	}),
 	addSubFormSchema,
 	z.object({
 		_action: _action("DELETE_SUB"),

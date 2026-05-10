@@ -1,5 +1,11 @@
-import { expect, impersonate, navigate, seed, test } from "~/utils/playwright";
 import { EVENTS_PAGE } from "~/utils/urls";
+import {
+	expect,
+	impersonate,
+	navigate,
+	seed,
+	test,
+} from "./helpers/playwright";
 
 test.describe("Events", () => {
 	test("filters between tabs and navigates to an event", async ({ page }) => {

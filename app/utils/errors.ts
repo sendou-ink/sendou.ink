@@ -4,3 +4,10 @@ export class LimitReachedError extends Error {
 		this.name = "LimitReachedError";
 	}
 }
+
+export class ConcurrentModificationError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "ConcurrentModificationError";
+	}
+}

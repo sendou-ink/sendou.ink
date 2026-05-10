@@ -7,6 +7,7 @@ import { defaultOrdinal } from "~/features/mmr/mmr-utils";
 import { type TieredSkill, userSkills } from "~/features/mmr/tiered.server";
 import type * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
+import * as SendouQMatch from "~/features/sendouq-match/core/SendouQMatch";
 import type * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
@@ -43,7 +44,6 @@ export type SQOwnGroup = SerializeFrom<
 export type SQMatch = SerializeFrom<ReturnType<SendouQClass["mapMatch"]>>;
 export type SQMatchGroup = SQMatch["groupAlpha"] | SQMatch["groupBravo"];
 export type SQGroupMember = NonNullable<SQGroup["members"]>[number];
-export type SQMatchGroupMember = SQMatchGroup["members"][number];
 
 const FALLBACK_TIER = { isPlus: false, name: "IRON" } as const;
 const SECONDS_TILL_STALE =
@@ -168,14 +168,14 @@ class SendouQClass {
 		/** Array of private user notes to include */
 		notes: DBPrivateNoteRow[] = [],
 	) {
-		const isTeamAlphaMember = match.groupAlpha.members.some(
-			(m) => m.id === user?.id,
-		);
-		const isTeamBravoMember = match.groupBravo.members.some(
-			(m) => m.id === user?.id,
-		);
-		const isMatchInsider =
-			isTeamAlphaMember || isTeamBravoMember || user?.roles.includes("STAFF");
+		const viewerSide = SendouQMatch.resolveGroupMemberOf({
+			groupAlpha: match.groupAlpha,
+			groupBravo: match.groupBravo,
+			userId: user?.id,
+		});
+		const isTeamAlphaMember = viewerSide === "ALPHA";
+		const isTeamBravoMember = viewerSide === "BRAVO";
+		const isMatchInsider = viewerSide !== null || user?.roles.includes("STAFF");
 		const happenedInLastMonth = isWithinInterval(
 			databaseTimestampToDate(match.createdAt),
 			{
@@ -190,14 +190,11 @@ class SendouQClass {
 		) => {
 			return {
 				...group,
-				isReplay: false,
-				tierRange: null as TierRange | null,
 				chatCode: isTeamMember ? group.chatCode : undefined,
 				noScreen: this.#groupNoScreen(group),
 				tier: match.memento?.groups[group.id]?.tier,
 				skillDifference: match.memento?.groups[group.id]?.skillDifference,
-				modePreferences: this.#groupModePreferences(group),
-				usersRole: null as Tables["GroupMember"]["role"] | null,
+				matchmade: Boolean(group.matchmade),
 				members: group.members.map((member) => {
 					return {
 						...member,
@@ -205,7 +202,10 @@ class SendouQClass {
 						privateNote: null as DBPrivateNoteRow | null,
 						skillDifference: match.memento?.users[member.id]?.skillDifference,
 						noScreen: undefined,
-						languages: member.languages?.split(",") || [],
+						isContinuing:
+							typeof member.isContinuing === "number"
+								? Boolean(member.isContinuing)
+								: null,
 						friendCode:
 							isMatchInsider && happenedInLastMonth
 								? member.friendCode
@@ -215,15 +215,37 @@ class SendouQClass {
 			};
 		};
 
+		const alphaCensored = matchGroupCensorer(
+			match.groupAlpha,
+			isTeamAlphaMember,
+		);
+		const bravoCensored = matchGroupCensorer(
+			match.groupBravo,
+			isTeamBravoMember,
+		);
+
+		const reportedMapsCount = match.mapList.filter(
+			(map) => map.winnerGroupId,
+		).length;
+		const currentMapRaw = match.mapList.at(reportedMapsCount);
+		const currentMap = currentMapRaw
+			? {
+					...currentMapRaw,
+					voters: this.#currentMapVoters({
+						currentMap: currentMapRaw,
+						groupAlpha: alphaCensored,
+						groupBravo: bravoCensored,
+						pools: match.memento?.pools,
+					}),
+				}
+			: undefined;
+
 		return {
 			...match,
 			chatCode: isMatchInsider ? match.chatCode : undefined,
-			groupAlpha: this.#getAddMemberPrivateNoteMapper(notes)(
-				matchGroupCensorer(match.groupAlpha, isTeamAlphaMember),
-			),
-			groupBravo: this.#getAddMemberPrivateNoteMapper(notes)(
-				matchGroupCensorer(match.groupBravo, isTeamBravoMember),
-			),
+			currentMap,
+			groupAlpha: this.#getAddMemberPrivateNoteMapper(notes)(alphaCensored),
+			groupBravo: this.#getAddMemberPrivateNoteMapper(notes)(bravoCensored),
 		};
 	}
 
@@ -520,6 +542,58 @@ class SendouQClass {
 
 	#groupIsFull(group: { members: unknown[] }) {
 		return group.members.length === FULL_GROUP_SIZE;
+	}
+
+	#currentMapVoters({
+		currentMap,
+		groupAlpha,
+		groupBravo,
+		pools,
+	}: {
+		currentMap: DBMatch["mapList"][number];
+		groupAlpha: {
+			id: number;
+			members: Array<{
+				id: number;
+				username: string;
+				discordId: string;
+				discordAvatar: string | null;
+			}>;
+		};
+		groupBravo: {
+			id: number;
+			members: Array<{
+				id: number;
+				username: string;
+				discordId: string;
+				discordAvatar: string | null;
+			}>;
+		};
+		pools: ParsedMemento["pools"] | undefined;
+	}) {
+		if (!pools) return [];
+
+		const pickerGroups = [groupAlpha, groupBravo].filter(
+			(g) => currentMap.source === "BOTH" || String(g.id) === currentMap.source,
+		);
+		if (pickerGroups.length === 0) return [];
+
+		return pickerGroups.flatMap((pickerGroup) =>
+			pools.flatMap(({ userId, pool }) => {
+				const member = pickerGroup.members.find((m) => m.id === userId);
+				if (!member) return [];
+				const modePool = pool.find((p) => p.mode === currentMap.mode);
+				if (!modePool?.stages.includes(currentMap.stageId)) return [];
+				return [
+					{
+						id: member.id,
+						username: member.username,
+						discordId: member.discordId,
+						discordAvatar: member.discordAvatar,
+					},
+				];
+			}),
+		);
 	}
 
 	#groupTier(

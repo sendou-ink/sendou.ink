@@ -35,7 +35,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	if (data._action.includes("DELETE")) {
 		errorToastIfFalsy(
-			isTeamOwner({ team, user }),
+			isTeamOwner({ team, user }) || user.roles.includes("ADMIN"),
 			"You are not the team owner",
 		);
 	}
@@ -87,15 +87,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 				return { errors: ["forms:errors.duplicateName"] };
 			}
 
-			const customTheme =
-				canAddCustomizedColors(team) && data.customTheme
-					? clampThemeToGamut(data.customTheme)
-					: null;
-
 			const updatedTeam = await TeamRepository.update({
 				id: team.id,
 				...data,
-				customTheme,
 			});
 
 			throw redirect(teamPage(updatedTeam.customUrl));

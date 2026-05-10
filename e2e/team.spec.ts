@@ -1,6 +1,7 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
 import { createTeamSchema } from "~/features/team/team-schemas";
+import { editTeamPage, teamPage, userPage } from "~/utils/urls";
 import {
 	expect,
 	impersonate,
@@ -10,9 +11,8 @@ import {
 	seed,
 	submit,
 	test,
-} from "~/utils/playwright";
-import { createFormHelpers } from "~/utils/playwright-form";
-import { editTeamPage, teamPage, userPage } from "~/utils/urls";
+} from "./helpers/playwright";
+import { createFormHelpers } from "./helpers/playwright-form";
 
 test.describe("New team creation", () => {
 	test("creates new team", async ({ page }) => {

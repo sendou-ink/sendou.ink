@@ -1,3 +1,4 @@
+import { LFG_PAGE } from "~/utils/urls";
 import {
 	expect,
 	impersonate,
@@ -5,8 +6,7 @@ import {
 	seed,
 	submit,
 	test,
-} from "~/utils/playwright";
-import { LFG_PAGE } from "~/utils/urls";
+} from "./helpers/playwright";
 
 test.describe("LFG", () => {
 	test("adds a new lfg post", async ({ page }) => {

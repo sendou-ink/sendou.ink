@@ -6,6 +6,7 @@ import { userIsBanned } from "~/features/ban/core/banned.server";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import {
 	COMBINED_STREAMS_KEY,
+	getLiveTournamentStreamerTwitchNames,
 	getLiveTournamentStreams,
 	type SidebarStream,
 } from "~/features/core/streams/streams.server";
@@ -37,7 +38,7 @@ export type SidebarEvent = {
 	logoUrl: string | null;
 	startTime: number;
 	type: "tournament" | "scrim";
-	scrimStatus?: "booked" | "looking";
+	scrimStatus?: "booked" | "looking" | "requestPending";
 };
 
 export type SidebarFriend = {
@@ -141,18 +142,22 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 		ShowcaseTournaments.upcomingTournaments(),
 	]);
 
-	const seenUsernames = new Set(
-		sendouQEntries.flatMap((e) =>
+	const seenUsernames = new Set([
+		...getLiveTournamentStreamerTwitchNames(),
+		...sendouQEntries.flatMap((e) =>
 			e.twitchUsernames.map((t) => t.toLowerCase()),
 		),
-	);
+	]);
 
 	const ranked: { stream: SidebarStream; score: number }[] = [];
 
 	for (const stream of tournamentStreams) {
 		ranked.push({
 			stream,
-			score: StreamRanking.tournamentTierToScore(stream.tier),
+			score: StreamRanking.tournamentTierToScore(
+				stream.tier,
+				stream.membersPerTeam,
+			),
 		});
 	}
 
@@ -215,7 +220,8 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 		if (event.startTime < nowTimestamp) continue;
 		if (event.startTime > threeDaysFromNow) continue;
 		if (event.hidden) continue;
-		if ((event.minMembersPerTeam ?? 4) < 4) continue;
+
+		const membersPerTeam = event.minMembersPerTeam ?? 4;
 
 		ranked.push({
 			stream: {
@@ -226,9 +232,13 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 				subtitle: "",
 				startsAt: event.startTime,
 				tier: (event.tier as TournamentTierNumber) ?? null,
+				membersPerTeam,
 				tentativeTier: event.tentativeTier ?? undefined,
 			},
-			score: StreamRanking.upcomingTournamentTierToScore(effectiveTier),
+			score: StreamRanking.upcomingTournamentTierToScore(
+				effectiveTier,
+				membersPerTeam,
+			),
 		});
 	}
 
@@ -381,12 +391,13 @@ export function scrimToSidebarEvent(s: SidebarScrim): SidebarEvent {
 	return {
 		id: s.id,
 		name: s.opponentName ?? "Scrim",
-		url: s.isAccepted
-			? href("/scrims/:id", { id: String(s.id) })
-			: href("/scrims"),
+		url:
+			s.status === "booked"
+				? href("/scrims/:id", { id: String(s.id) })
+				: href("/scrims"),
 		logoUrl: s.opponentAvatarUrl ?? SCRIMS_ICON_URL,
 		startTime: s.at,
 		type: "scrim" as const,
-		scrimStatus: s.isAccepted ? ("booked" as const) : ("looking" as const),
+		scrimStatus: s.status,
 	};
 }

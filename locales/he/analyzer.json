@@ -183,6 +183,7 @@
 	"comp.groupBy.special": "נשק מיוחד",
 	"comp.selectWeapons": "בחר עד ל-{{max}} נשקים",
 	"comp.removeWeapon": "הסר נשק",
+	"comp.reorderWeapon": "",
 	"comp.pickWeapon": "בחר נשק",
 	"comp.showWeaponGrid": "הצג בורר נשק",
 	"comp.hideWeaponGrid": "הסתר בורר נשק",

@@ -21,6 +21,7 @@ export type SidebarStream = {
 	subtitle: string;
 	startsAt: number;
 	tier: TournamentTierNumber | null;
+	membersPerTeam?: number;
 	tentativeTier?: number;
 	peakXp?: number;
 	twitchUsername?: string;
@@ -31,7 +32,7 @@ export function getLiveTournamentStreams(): SidebarStream[] {
 
 	for (const tournament of RunningTournaments.all) {
 		if (tournament.isLeagueDivision) continue;
-		if (tournament.minMembersPerTeam < 4) continue;
+		if (tournament.streams.length === 0) continue;
 
 		streams.push({
 			id: `tournament-${tournament.ctx.id}`,
@@ -41,10 +42,26 @@ export function getLiveTournamentStreams(): SidebarStream[] {
 			subtitle: deriveCurrentRound(tournament),
 			startsAt: dateToDatabaseTimestamp(tournament.ctx.startTime),
 			tier: tournament.ctx.tier,
+			membersPerTeam: tournament.minMembersPerTeam,
 		});
 	}
 
 	return streams;
+}
+
+/** Lowercased Twitch usernames of all members and casters streaming a currently live tournament. */
+export function getLiveTournamentStreamerTwitchNames(): string[] {
+	const names: string[] = [];
+
+	for (const tournament of RunningTournaments.all) {
+		if (tournament.isLeagueDivision) continue;
+
+		for (const stream of tournament.streams) {
+			names.push(stream.twitchUserName.toLowerCase());
+		}
+	}
+
+	return names;
 }
 
 function deriveCurrentRound(tournament: Tournament): string {

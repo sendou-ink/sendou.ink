@@ -1,5 +1,8 @@
 import { CloseExpiredCommissionsRoutine } from "./closeExpiredCommissions";
+import { CloseExpiredContinueVotesRoutine } from "./closeExpiredContinueVotes";
+import { DeleteObsoleteMatchVodsRoutine } from "./deleteObsoleteMatchVods";
 import { DeleteOldNotificationsRoutine } from "./deleteOldNotifications";
+import { DeleteOldRoomLinksRoutine } from "./deleteOldRoomLinks";
 import { DeleteOrphanArtTagsRoutine } from "./deleteOrphanArtTags";
 import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
 import { NotifyPlusServerVotingRoutine } from "./notifyPlusServerVoting";
@@ -8,6 +11,7 @@ import { NotifySeasonStartRoutine } from "./notifySeasonStart";
 import { SetOldGroupsAsInactiveRoutine } from "./setOldGroupsAsInactive";
 import { SyncLiveStreamsRoutine } from "./syncLiveStreams";
 import { SyncSplatoonRotationsRoutine } from "./syncSplatoonRotations";
+import { SyncTournamentVodsRoutine } from "./syncTournamentVods";
 import { UpdatePatreonDataRoutine } from "./updatePatreonData";
 
 /** List of Routines that should occur hourly at XX:00 */
@@ -17,16 +21,20 @@ export const everyHourAt00 = [
 	NotifyCheckInStartRoutine,
 	NotifyScrimStartingSoonRoutine,
 	SyncSplatoonRotationsRoutine,
+	SyncTournamentVodsRoutine,
 ];
 
 /** List of Routines that should occur hourly at XX:30 */
 export const everyHourAt30 = [
 	SetOldGroupsAsInactiveRoutine,
 	UpdatePatreonDataRoutine,
+	CloseExpiredContinueVotesRoutine,
+	DeleteOldRoomLinksRoutine,
 ];
 
 /** List of Routines that should occur daily */
 export const daily = [
+	DeleteObsoleteMatchVodsRoutine,
 	DeleteOldNotificationsRoutine,
 	CloseExpiredCommissionsRoutine,
 	DeleteOrphanArtTagsRoutine,

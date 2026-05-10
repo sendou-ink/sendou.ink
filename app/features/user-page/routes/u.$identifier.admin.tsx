@@ -66,7 +66,7 @@ function AccountInfos() {
 				{data.createdAt
 					? formatDateTime(databaseTimestampToDate(data.createdAt), {
 							year: "numeric",
-							month: "long",
+							month: "numeric",
 							day: "numeric",
 							hour: "2-digit",
 							minute: "2-digit",
@@ -78,7 +78,7 @@ function AccountInfos() {
 			<dd>
 				{formatDateTime(new Date(data.discordAccountCreatedAt), {
 					year: "numeric",
-					month: "long",
+					month: "numeric",
 					day: "numeric",
 					hour: "2-digit",
 					minute: "2-digit",
@@ -131,7 +131,7 @@ function ModNotes() {
 					<p className="font-bold">
 						{formatDateTime(databaseTimestampToDate(note.createdAt), {
 							year: "numeric",
-							month: "long",
+							month: "numeric",
 							day: "numeric",
 							hour: "2-digit",
 							minute: "2-digit",
@@ -197,7 +197,7 @@ function BanLog() {
 					<p className="font-bold">
 						{formatDateTime(databaseTimestampToDate(ban.createdAt), {
 							year: "numeric",
-							month: "long",
+							month: "numeric",
 							day: "numeric",
 							hour: "2-digit",
 							minute: "2-digit",
@@ -215,7 +215,7 @@ function BanLog() {
 							{ban.banned !== 1
 								? formatDateTime(databaseTimestampToDate(ban.banned), {
 										year: "numeric",
-										month: "long",
+										month: "numeric",
 										day: "numeric",
 										hour: "2-digit",
 										minute: "2-digit",
@@ -254,7 +254,7 @@ function FriendCodes() {
 						{index === 0 ? "Current" : "Past"} - Added on{" "}
 						{formatDateTime(databaseTimestampToDate(fc.createdAt), {
 							year: "numeric",
-							month: "long",
+							month: "numeric",
 							day: "numeric",
 							hour: "2-digit",
 							minute: "2-digit",

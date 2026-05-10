@@ -16,6 +16,7 @@ import { groupNumberToLetters } from "../../tournament-bracket-utils";
 import { Match } from "./Match";
 import { PlacementsTable } from "./PlacementsTable";
 import { RoundHeader } from "./RoundHeader";
+import { useBracketSpoilerCensor } from "./useBracketSpoilerCensor";
 
 export function SwissBracket({
 	bracket,
@@ -27,6 +28,7 @@ export function SwissBracket({
 	const user = useUser();
 	const tournament = useTournament();
 	const { bracketExpanded } = useBracketExpanded();
+	const { censored, matchCensorLevel } = useBracketSpoilerCensor();
 
 	const groups = getGroups(bracket);
 	const [selectedGroupId, setSelectedGroupId] = useSearchParamState({
@@ -241,11 +243,17 @@ export function SwissBracket({
 												type="groups"
 												group={selectedGroup.groupName.split(" ")[1]}
 												hideMatchTimer
+												spoilerCensor={matchCensorLevel({
+													bracketType: "swiss",
+													roundNumber: round.number,
+													roundIdx: roundI,
+													matchType: "groups",
+												})}
 											/>
 										);
 									})}
 								</div>
-								{teamWithBye ? (
+								{teamWithBye && !(censored && round.number > 1) ? (
 									<div
 										className="text-xs text-lighter font-semi-bold"
 										data-testid="bye-team"
@@ -257,11 +265,13 @@ export function SwissBracket({
 						);
 					})}
 				</div>
-				<PlacementsTable
-					bracket={bracket}
-					groupId={selectedGroupId}
-					allMatchesFinished={allRoundsFinished()}
-				/>
+				{censored ? null : (
+					<PlacementsTable
+						bracket={bracket}
+						groupId={selectedGroupId}
+						allMatchesFinished={allRoundsFinished()}
+					/>
+				)}
 			</div>
 		</div>
 	);

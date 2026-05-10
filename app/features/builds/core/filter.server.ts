@@ -6,7 +6,7 @@ import type {
 } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { assertUnreachable } from "~/utils/types";
-import type { BuildFiltersFromSearchParams } from "../builds-schemas.server";
+import type { BuildFiltersFromSearchParams } from "../builds-schemas";
 import type {
 	AbilityBuildFilter,
 	DateBuildFilter,
@@ -73,7 +73,7 @@ function matchesAbilityFilter({
 	filter,
 }: {
 	build: PartialBuild;
-	filter: Omit<AbilityBuildFilter, "id">;
+	filter: AbilityBuildFilter;
 }) {
 	if (typeof filter.value === "boolean") {
 		const hasAbility = build.abilities.flat().includes(filter.ability);
@@ -94,7 +94,7 @@ function matchesModeFilter({
 	filter,
 }: {
 	build: PartialBuild;
-	filter: Omit<ModeBuildFilter, "id">;
+	filter: ModeBuildFilter;
 }) {
 	if (!build.modes) return false;
 
@@ -106,7 +106,7 @@ function matchesDateFilter({
 	filter,
 }: {
 	build: PartialBuild;
-	filter: Omit<DateBuildFilter, "id">;
+	filter: DateBuildFilter;
 }) {
 	const date = new Date(filter.date);
 

@@ -25,6 +25,7 @@ import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -43,6 +44,7 @@ import { NotificationDot } from "../NotificationDot";
 import { ListLink, SideNav, SideNavFooter, SideNavHeader } from "../SideNav";
 import sideNavStyles from "../SideNav.module.css";
 import { StreamListItems } from "../StreamListItems";
+import { AuthErrorDialog } from "./AuthErrorDialog";
 import { ChatSidebar } from "./ChatSidebar";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
@@ -54,12 +56,9 @@ import { TopRightButtons } from "./TopRightButtons";
 
 const MAX_DESKTOP_FRIENDS = 4;
 
-function useTimeFormat() {
+function useRelativeDayFormat() {
 	const { i18n } = useTranslation();
-
-	const formatTime = (date: Date, options: Intl.DateTimeFormatOptions) => {
-		return date.toLocaleTimeString(i18n.language, options);
-	};
+	const { formatTime, formatDateTime } = useTimeFormat();
 
 	const formatRelativeDay = (daysFromToday: number) => {
 		const rtf = new Intl.RelativeTimeFormat(i18n.language, { numeric: "auto" });
@@ -69,7 +68,7 @@ function useTimeFormat() {
 
 	const formatRelativeDate = (timestamp: number) => {
 		const date = new Date(timestamp * 1000);
-		const timeStr = formatTime(date, { hour: "numeric", minute: "2-digit" });
+		const timeStr = formatTime(date);
 
 		if (isToday(date)) {
 			return `${formatRelativeDay(0)}, ${timeStr}`;
@@ -78,15 +77,15 @@ function useTimeFormat() {
 			return `${formatRelativeDay(1)}, ${timeStr}`;
 		}
 
-		return date.toLocaleDateString(i18n.language, {
-			month: "short",
+		return formatDateTime(date, {
+			month: "numeric",
 			day: "numeric",
 			hour: "numeric",
 			minute: "2-digit",
 		});
 	};
 
-	return { formatTime, formatRelativeDate };
+	return { formatRelativeDate };
 }
 
 function useBreadcrumbData() {
@@ -214,7 +213,7 @@ export function Layout({
 	const setChatSidebarOpen = chatContext?.setChatOpen ?? (() => {});
 
 	const { t } = useTranslation(["front", "common"]);
-	const { formatRelativeDate } = useTimeFormat();
+	const { formatRelativeDate } = useRelativeDayFormat();
 	const isHydrated = useHydrated();
 	const location = useLocation();
 	const headerRef = React.useRef<HTMLElement>(null);
@@ -291,7 +290,9 @@ export function Layout({
 							? t("front:sideNav.scrimVs", { opponent: event.name })
 							: event.scrimStatus === "looking"
 								? t("front:sideNav.lookingForScrim")
-								: event.name}
+								: event.scrimStatus === "requestPending"
+									? t("front:sideNav.scrimRequestPending")
+									: event.name}
 					</ListLink>
 				))
 			) : (
@@ -384,21 +385,21 @@ export function Layout({
 							</Modal>
 						</ModalOverlay>
 					</DialogTrigger>
-					<DialogTrigger
+					<ModalOverlay
+						className={styles.chatSidebarModalOverlay}
+						isDismissable
 						isOpen={chatSidebarModalOpen}
 						onOpenChange={setChatSidebarModalOpen}
 					>
-						<ModalOverlay
-							className={styles.chatSidebarModalOverlay}
-							isDismissable
-						>
-							<Modal className={styles.chatSidebarModal}>
-								<Dialog className={styles.chatSidebarModalDialog}>
-									<ChatSidebar />
-								</Dialog>
-							</Modal>
-						</ModalOverlay>
-					</DialogTrigger>
+						<Modal className={styles.chatSidebarModal}>
+							<Dialog
+								className={styles.chatSidebarModalDialog}
+								aria-label={t("common:chat.sidebar.title")}
+							>
+								<ChatSidebar />
+							</Dialog>
+						</Modal>
+					</ModalOverlay>
 					<SideNavCollapseButton
 						onToggle={() => setSideNavCollapsed(!sideNavCollapsed)}
 						className={styles.sideNavCollapseButton}
@@ -445,6 +446,7 @@ export function Layout({
 					<ChatSidebar onClose={() => setChatSidebarOpen(false)} />
 				</div>
 			) : null}
+			<AuthErrorDialog />
 		</>
 	);
 }
@@ -540,16 +542,26 @@ function PageIcon({ crumb }: { crumb: Breadcrumb }) {
 	const isExternal = crumb.imgPath.includes(".");
 	const iconClass = clsx(styles.pageIcon, "rounded");
 
-	return isExternal ? (
-		<img src={crumb.imgPath} alt="" className={iconClass} />
-	) : (
-		<Image
-			path={crumb.imgPath}
-			alt=""
-			className={iconClass}
-			width={20}
-			height={20}
-		/>
+	return (
+		<div className={styles.pageIconWrapper}>
+			{isExternal ? (
+				<img
+					src={crumb.imgPath}
+					alt=""
+					className={iconClass}
+					width={28}
+					height={28}
+				/>
+			) : (
+				<Image
+					path={crumb.imgPath}
+					alt=""
+					className={iconClass}
+					width={20}
+					height={20}
+				/>
+			)}
+		</div>
 	);
 }
 

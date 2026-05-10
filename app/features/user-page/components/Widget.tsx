@@ -19,6 +19,7 @@ import type { Tables } from "~/db/tables";
 import { previewUrl } from "~/features/art/art-utils";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { VodListing } from "~/features/vods/components/VodListing";
+import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { usePagination } from "~/hooks/usePagination";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { GameBadgeId } from "~/modules/in-game-lists/game-badge-ids";
@@ -168,9 +169,17 @@ export function Widget({
 					<BigValue
 						value={formatDate(databaseTimestampToDate(widget.data), {
 							day: "numeric",
-							month: "short",
+							month: "numeric",
 							year: "numeric",
 						})}
+					/>
+				);
+			case "join-date":
+				if (!widget.data) return null;
+				return (
+					<BigValue
+						value={`#${widget.data.joinOrder}`}
+						footer={widget.data.isSpl2 ? "SPL2" : undefined}
 					/>
 				);
 			case "timezone":
@@ -408,7 +417,7 @@ function HighlightedResults({
 						<div className={styles.resultDate}>
 							{formatDate(databaseTimestampToDate(result.startTime), {
 								day: "numeric",
-								month: "short",
+								month: "numeric",
 								year: "numeric",
 							})}
 						</div>
@@ -529,6 +538,7 @@ function XRankPeaks({
 }
 
 function TimezoneWidget({ timezone }: { timezone: string }) {
+	const { formatTime, formatDate } = useTimeFormat();
 	const [currentTime, setCurrentTime] = React.useState(() => new Date());
 
 	React.useEffect(() => {
@@ -540,28 +550,23 @@ function TimezoneWidget({ timezone }: { timezone: string }) {
 	}, []);
 
 	try {
-		const formatter = new Intl.DateTimeFormat("en-US", {
-			timeZone: timezone,
-			hour: "numeric",
-			minute: "2-digit",
-			second: "2-digit",
-			hour12: true,
-		});
-
-		const dateFormatter = new Intl.DateTimeFormat("en-US", {
-			timeZone: timezone,
-			weekday: "short",
-			day: "numeric",
-			month: "short",
-		});
-
 		return (
 			<div className="stack sm items-center">
 				<div className={styles.widgetValueMain} suppressHydrationWarning>
-					{formatter.format(currentTime)}
+					{formatTime(currentTime, {
+						timeZone: timezone,
+						hour: "numeric",
+						minute: "2-digit",
+						second: "2-digit",
+					})}
 				</div>
 				<div className={styles.widgetValueFooter} suppressHydrationWarning>
-					{dateFormatter.format(currentTime)}
+					{formatDate(currentTime, {
+						timeZone: timezone,
+						weekday: "short",
+						day: "numeric",
+						month: "numeric",
+					})}
 				</div>
 			</div>
 		);
@@ -874,12 +879,19 @@ function TierListWidget({ searchParams }: { searchParams: string }) {
 }
 
 const FRIENDS_PER_PAGE = 6;
+const FRIENDS_PER_PAGE_MOBILE = 3;
 
 function FriendsWidget({
 	friends,
 }: {
 	friends: Extract<LoadedWidget, { id: "friends" }>["data"];
 }) {
+	const mainContentWidth = useMainContentWidth();
+	const pageSize =
+		mainContentWidth > 0 && mainContentWidth < 720
+			? FRIENDS_PER_PAGE_MOBILE
+			: FRIENDS_PER_PAGE;
+
 	const {
 		itemsToDisplay,
 		currentPage,
@@ -890,7 +902,7 @@ function FriendsWidget({
 		everythingVisible,
 	} = usePagination({
 		items: friends,
-		pageSize: FRIENDS_PER_PAGE,
+		pageSize,
 		scrollToTop: false,
 	});
 

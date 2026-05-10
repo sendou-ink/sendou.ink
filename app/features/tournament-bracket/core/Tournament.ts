@@ -556,6 +556,7 @@ export class Tournament {
 				return {
 					groupCount: Math.ceil(participantsCount / teamsPerGroup),
 					seedOrdering: ["groups.seed_optimized"],
+					hasAbDivisions: selectedSettings?.hasAbDivisions ?? false,
 				};
 			}
 			case "swiss": {
@@ -827,6 +828,7 @@ export class Tournament {
 	/** Can a new sub post be made at this time? */
 	get canAddNewSubPost() {
 		if (!this.lfgEnabled) return false;
+		if (this.isInvitational) return false;
 		if (this.ctx.isFinalized) return false;
 
 		return (
@@ -1022,7 +1024,7 @@ export class Tournament {
 		};
 
 		return {
-			bracketName,
+			bracketName: bracketName ?? "Main bracket",
 			roundName,
 			roundNameWithoutMatchIdentifier:
 				roundNameWithoutMatchIdentifier(roundName),
@@ -1057,7 +1059,7 @@ export class Tournament {
 
 		return this.ctx.teams.find((team) =>
 			team.members.some(
-				(member) => member.userId === user.id && member.isOwner,
+				(member) => member.userId === user.id && member.role === "OWNER",
 			),
 		) as (typeof this.ctx.teams)[number] & { inviteCode: string };
 	}

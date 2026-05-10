@@ -9,9 +9,8 @@ Another key objective is to bridge the gap between casual and competitive player
 <details>
 <summary>Screenshots</summary>
 
-<img src="screenshot-1.png">
-<img src="screenshot-2.png">
-<img src="screenshot-3.png">
+<img src="desktop-bracket.png">
+<img src="mobile-analyzer.png">
 
 </details>
 
@@ -57,6 +56,7 @@ Another key objective is to bridge the gap between casual and competitive player
 
 - [Git](https://git-scm.com/)
 - [Node.js v22](https://nodejs.org/en)
+- [pnpm](https://pnpm.io/installation)
 
 Optionally [nvm](https://github.com/nvm-sh/nvm) can be convenient for managing multiple Node.js installs
 
@@ -67,6 +67,7 @@ First verify you have Node.js and git installed:
 ```bash
 node --version
 git --version
+pnpm --version
 ```
 
 You should see something like:
@@ -74,6 +75,7 @@ You should see something like:
 ```
 v22.13.0
 git version 2.39.5 (Apple Git-154)
+10.33.0
 ```
 (if not then go back to "Prerequisites" and install what is missing)
 
@@ -82,8 +84,8 @@ Then there is a sequence of commands you need to run:
 ```bash
 git clone https://github.com/sendou-ink/sendou.ink.git # Clones repository
 cd sendou.ink # Change to the project's folder
-npm install # Install dependencies
-npm run dev # Setup the development environment and run the project
+pnpm install # Install dependencies
+pnpm dev # Setup the development environment and run the project
 ```
 
 You should then be able to access the application by visiting http://localhost:5173

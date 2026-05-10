@@ -15,7 +15,7 @@ import { IS_E2E_TEST_RUN } from "~/utils/e2e";
  * console.log(Seasons.list[0].starts); // Logs the start date of the first season
  */
 export const list =
-	// when we do npm run setup NODE_ENV is not set -> use test seasons
+	// when we do pnpm run setup NODE_ENV is not set -> use test seasons
 	!process.env.NODE_ENV ||
 	IS_E2E_TEST_RUN ||
 	// this gets checked when the project is running

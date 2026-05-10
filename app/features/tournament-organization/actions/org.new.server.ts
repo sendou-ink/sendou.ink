@@ -1,20 +1,25 @@
 import { type ActionFunction, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import { parseFormData } from "~/form/parse.server";
 import { requireRole } from "~/modules/permissions/guards.server";
-import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
+import { errorToastIfFalsy } from "~/utils/remix.server";
 import { tournamentOrganizationPage } from "~/utils/urls";
 import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
-import { newOrganizationSchema } from "../tournament-organization-schemas";
+import { newOrganizationSchemaServer } from "../tournament-organization-schemas.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
 	requireRole("TOURNAMENT_ADDER");
 
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
-		schema: newOrganizationSchema,
+		schema: newOrganizationSchemaServer,
 	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
 
 	const orgCount =
 		await TournamentOrganizationRepository.countOrganizationsByUserId(user.id);
@@ -25,7 +30,7 @@ export const action: ActionFunction = async ({ request }) => {
 	);
 
 	const org = await TournamentOrganizationRepository.create({
-		name: data.name,
+		name: result.data.name,
 		ownerId: user.id,
 	});
 

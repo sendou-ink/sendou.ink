@@ -29,6 +29,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		throw new Response(null, { status: 404 });
 	}
 
+	if (tournament.isInvitational) {
+		throw new Response(null, { status: 404 });
+	}
+
 	if (tournament.isLeagueSignup && !tournament.registrationOpen) {
 		throw new Response(null, { status: 404 });
 	}
@@ -160,7 +164,7 @@ async function resolveOwnTeam({
 		languages: [],
 		vc: null,
 		pronouns: null,
-		role: m.isOwner ? "OWNER" : m.role === "MANAGER" ? "MANAGER" : "REGULAR",
+		role: m.role,
 		isStayAsSub: false,
 		weapons: null,
 		plusTier: m.plusTier,

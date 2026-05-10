@@ -30,7 +30,7 @@ export function create(this: BracketsManager, stage: InputStage): Stage {
 	return instance.run();
 }
 
-export class Create {
+class Create {
 	private storage: Storage;
 	private stage: InputStage;
 	private readonly seedOrdering: SeedOrdering[];
@@ -100,11 +100,34 @@ export class Create {
 	 * Group count must be given. It will distribute participants in groups and rounds.
 	 */
 	private roundRobin(): Stage {
+		if (this.stage.settings?.hasAbDivisions) return this.abDivisionRoundRobin();
+
 		const groups = this.getRoundRobinGroups();
 		const stage = this.createStage();
 
 		for (let i = 0; i < groups.length; i++)
 			this.createRoundRobinGroup(stage.id, i + 1, groups[i]);
+
+		return stage;
+	}
+
+	/**
+	 * Creates a bipartite (A/B divisions) round-robin stage.
+	 *
+	 * Participants are partitioned into two pools by `abDivisions` (parallel to the seeding).
+	 * Each group receives equal A and B teams, and matches only pair A against B.
+	 */
+	private abDivisionRoundRobin(): Stage {
+		const groups = this.getAbDivisionGroups();
+		const stage = this.createStage();
+
+		for (let i = 0; i < groups.length; i++)
+			this.createAbDivisionRoundRobinGroup(
+				stage.id,
+				i + 1,
+				groups[i].a,
+				groups[i].b,
+			);
 
 		return stage;
 	}
@@ -233,6 +256,33 @@ export class Create {
 			slots,
 			this.stage.settings?.roundRobinMode,
 		);
+
+		for (let i = 0; i < rounds.length; i++)
+			this.createRound(stageId, groupId, i + 1, rounds[0].length, rounds[i]);
+	}
+
+	/**
+	 * Creates a bipartite round-robin group where every A team plays every B team exactly once.
+	 *
+	 * @param stageId ID of the parent stage.
+	 * @param number Number in the stage.
+	 * @param slotsA Slots in division A (ordered by seed).
+	 * @param slotsB Slots in division B (ordered by seed).
+	 */
+	private createAbDivisionRoundRobinGroup(
+		stageId: number,
+		number: number,
+		slotsA: ParticipantSlot[],
+		slotsB: ParticipantSlot[],
+	): void {
+		const groupId = this.insertGroup({
+			stage_id: stageId,
+			number,
+		});
+
+		if (groupId === -1) throw Error("Could not insert the group.");
+
+		const rounds = helpers.makeAbDivisionRoundRobinMatches(slotsA, slotsB);
 
 		for (let i = 0; i < rounds.length; i++)
 			this.createRound(stageId, groupId, i + 1, rounds[0].length, rounds[i]);
@@ -678,6 +728,58 @@ export class Create {
 		const slots = this.getSlots();
 		const ordered = ordering[method](slots, this.stage.settings.groupCount);
 		return helpers.makeGroups(ordered, this.stage.settings.groupCount);
+	}
+
+	/**
+	 * Partitions the seeded slots into A and B pools then distributes them into groups
+	 * such that each group has an equal number of A and B participants.
+	 */
+	private getAbDivisionGroups(): {
+		a: ParticipantSlot[];
+		b: ParticipantSlot[];
+	}[] {
+		if (
+			this.stage.settings?.groupCount === undefined ||
+			!Number.isInteger(this.stage.settings.groupCount)
+		)
+			throw Error("You must specify a group count for round-robin stages.");
+
+		if (this.stage.settings.groupCount <= 0)
+			throw Error("You must provide a strictly positive group count.");
+
+		const abDivisions = this.stage.abDivisions;
+		if (!abDivisions)
+			throw Error(
+				"abDivisions must be provided when hasAbDivisions is enabled.",
+			);
+
+		const slots = this.getSlots();
+
+		if (abDivisions.length !== slots.length)
+			throw Error("abDivisions length must match the seeding length.");
+
+		const divisionA: ParticipantSlot[] = [];
+		const divisionB: ParticipantSlot[] = [];
+
+		for (let i = 0; i < slots.length; i++) {
+			const slot = slots[i];
+			if (slot === null)
+				throw Error("BYEs are not supported with A/B divisions.");
+
+			const division = abDivisions[i];
+			if (division === 0) divisionA.push(slot);
+			else if (division === 1) divisionB.push(slot);
+			else
+				throw Error(
+					`Participant at seed ${i + 1} is missing an A/B division assignment.`,
+				);
+		}
+
+		return helpers.makeAbDivisionGroups(
+			divisionA,
+			divisionB,
+			this.stage.settings.groupCount,
+		);
 	}
 
 	/**

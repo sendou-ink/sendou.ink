@@ -1,6 +1,5 @@
 import type { TierListMakerTier } from "./tier-list-maker-schemas";
 
-export const DEFAULT_TIER_LABEL_WIDTH = 68;
 export const TIER_NAME_MAX_LENGTH = 50;
 
 export const TIER_NAME_FONT_SIZE_BREAKPOINTS = [

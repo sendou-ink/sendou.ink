@@ -25,6 +25,7 @@
 	"sideNav.streams.upcoming": "Upcoming",
 	"sideNav.scrimVs": "vs. {{opponent}}",
 	"sideNav.lookingForScrim": "Looking for scrim",
+	"sideNav.scrimRequestPending": "Request pending",
 	"mobileNav.menu": "Menu",
 	"mobileNav.friends": "Friends",
 	"mobileNav.you": "You",

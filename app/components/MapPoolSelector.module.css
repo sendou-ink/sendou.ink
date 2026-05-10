@@ -1,7 +1,8 @@
 .stageRow {
 	display: flex;
 	width: 100%;
-	align-items: flex-end;
+	align-items: stretch;
+	gap: var(--s-2);
 }
 
 .stageNameRow {
@@ -27,6 +28,8 @@
 
 .stageImage {
 	border-radius: var(--radius-box);
+	height: 100%;
+	object-fit: cover;
 }
 
 .modeButtonsContainer {

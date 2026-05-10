@@ -1,5 +1,6 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
+import * as Standings from "~/features/tournament/core/Standings";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -23,6 +24,13 @@ export class RoundRobinBracket extends Bracket {
 		const relevantMatchesFinished =
 			standings.length === this.participantTournamentTeamIds.length;
 
+		if (this.settings?.hasAbDivisions) {
+			return {
+				relevantMatchesFinished,
+				teams: this.teamsFromPlacementsPerAbDivision(standings, placements),
+			};
+		}
+
 		const uniquePlacements = R.unique(standings.map((s) => s.placement));
 
 		// 1,3,5 -> 1,2,3 e.g.
@@ -36,6 +44,30 @@ export class RoundRobinBracket extends Bracket {
 				.filter((s) => placements.includes(placementNormalized(s.placement)))
 				.map((s) => s.team.id),
 		};
+	}
+
+	private teamsFromPlacementsPerAbDivision(
+		standings: Standing[],
+		placements: number[],
+	): number[] {
+		const groupIds = R.unique(
+			standings
+				.map((s) => s.groupId)
+				.filter((id): id is number => typeof id === "number"),
+		);
+		const teams: number[] = [];
+		for (const groupId of groupIds) {
+			for (const division of [0, 1] as const) {
+				const divisionStandings = standings.filter(
+					(s) => s.groupId === groupId && s.team.abDivision === division,
+				);
+				for (const placement of placements) {
+					const standing = divisionStandings[placement - 1];
+					if (standing) teams.push(standing.team.id);
+				}
+			}
+		}
+		return teams;
 	}
 
 	get standings(): Standing[] {
@@ -71,6 +103,7 @@ export class RoundRobinBracket extends Bracket {
 				mapLosses: number;
 				winsAgainstTied: number;
 				points: number;
+				koCount: number;
 			}[] = [];
 
 			const updateTeam = ({
@@ -80,6 +113,7 @@ export class RoundRobinBracket extends Bracket {
 				mapWins,
 				mapLosses,
 				points,
+				koCount,
 			}: {
 				teamId: number;
 				setWins: number;
@@ -87,6 +121,7 @@ export class RoundRobinBracket extends Bracket {
 				mapWins: number;
 				mapLosses: number;
 				points: number;
+				koCount: number;
 			}) => {
 				const team = teams.find((team) => team.id === teamId);
 				if (team) {
@@ -95,6 +130,7 @@ export class RoundRobinBracket extends Bracket {
 					team.mapWins += mapWins;
 					team.mapLosses += mapLosses;
 					team.points += points;
+					team.koCount += koCount;
 				} else {
 					teams.push({
 						id: teamId,
@@ -104,6 +140,7 @@ export class RoundRobinBracket extends Bracket {
 						mapLosses,
 						winsAgainstTied: 0,
 						points,
+						koCount,
 					});
 				}
 			};
@@ -148,6 +185,7 @@ export class RoundRobinBracket extends Bracket {
 					mapWins: winner.score ?? 0,
 					mapLosses: loser.score ?? 0,
 					points: winner.totalPoints ?? 0,
+					koCount: winner.totalKos ?? 0,
 				});
 				updateTeam({
 					teamId: loser.id,
@@ -156,6 +194,7 @@ export class RoundRobinBracket extends Bracket {
 					mapWins: loser.score ?? 0,
 					mapLosses: winner.score ?? 0,
 					points: loser.totalPoints ?? 0,
+					koCount: loser.totalKos ?? 0,
 				});
 			}
 
@@ -230,6 +269,7 @@ export class RoundRobinBracket extends Bracket {
 								mapWins: team.mapWins,
 								mapLosses: team.mapLosses,
 								points: team.points,
+								koCount: team.koCount,
 								winsAgainstTied: team.winsAgainstTied,
 							},
 						};
@@ -247,22 +287,8 @@ export class RoundRobinBracket extends Bracket {
 			return 0;
 		});
 
-		let lastPlacement = 0;
-		let currentPlacement = 1;
-		let teamsEncountered = 0;
 		return this.standingsWithoutNonParticipants(
-			sorted.map((team) => {
-				if (team.placement !== lastPlacement) {
-					lastPlacement = team.placement;
-					currentPlacement = teamsEncountered + 1;
-				}
-				teamsEncountered++;
-				return {
-					...team,
-					placement: currentPlacement,
-					stats: team.stats,
-				};
-			}),
+			Standings.reNumberPlacements(sorted),
 		);
 	}
 

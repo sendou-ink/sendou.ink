@@ -1,6 +1,7 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { scrimsNewFormSchema } from "~/features/scrims/scrims-schemas";
+import { newScrimPostPage, scrimsPage } from "~/utils/urls";
 import {
 	expect,
 	impersonate,
@@ -9,9 +10,8 @@ import {
 	selectUser,
 	submit,
 	test,
-} from "~/utils/playwright";
-import { createFormHelpers } from "~/utils/playwright-form";
-import { newScrimPostPage, scrimsPage } from "~/utils/urls";
+} from "./helpers/playwright";
+import { createFormHelpers } from "./helpers/playwright-form";
 
 test.describe("Scrims", () => {
 	test("creates a new scrim & deletes it", async ({ page }) => {

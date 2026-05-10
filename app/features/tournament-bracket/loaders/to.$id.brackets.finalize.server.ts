@@ -12,7 +12,7 @@ import * as Standings from "~/features/tournament/core/Standings";
 import { tournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
-import { allMatchResultsByTournamentId } from "~/features/tournament-bracket/queries/allMatchResultsByTournamentId.server";
+import { allMatchResultsByTournamentId } from "~/features/tournament-match/queries/allMatchResultsByTournamentId.server";
 import invariant from "~/utils/invariant";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";

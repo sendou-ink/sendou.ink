@@ -24,9 +24,12 @@ export function Catcher() {
 	const location = useLocation();
 
 	// refresh user data to make sure it's up to date (e.g. cookie might have been removed, let's show the prompt to log back in)
+	const hasRevalidated = React.useRef(false);
 	React.useEffect(() => {
 		if (!isRouteErrorResponse(error) || error.status !== 401) return;
+		if (hasRevalidated.current) return;
 
+		hasRevalidated.current = true;
 		revalidate();
 	}, [revalidate, error]);
 

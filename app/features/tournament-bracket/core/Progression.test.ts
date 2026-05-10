@@ -274,22 +274,36 @@ const getValidatedBrackets = (
 	);
 
 describe("validatedSources - other rules", () => {
-	it("handles NOT_RESOLVING_WINNER (only round robin)", () => {
-		const error = getValidatedBrackets([
+	it("accepts a single round robin with no follow-ups", () => {
+		const result = getValidatedBrackets([
 			{
 				settings: {},
 				type: "round_robin",
 			},
-		]) as Progression.ValidationError;
+		]);
 
-		expect(error.type).toBe("NOT_RESOLVING_WINNER");
+		expect(Array.isArray(result)).toBe(true);
 	});
 
-	it("handles NOT_RESOLVING_WINNER (ends in round robin)", () => {
-		const error = getValidatedBrackets([
+	it("accepts a single A/B round robin with no follow-ups", () => {
+		const result = getValidatedBrackets([
+			{
+				settings: {
+					hasAbDivisions: true,
+					teamsPerGroup: 6,
+				},
+				type: "round_robin",
+			},
+		]);
+
+		expect(Array.isArray(result)).toBe(true);
+	});
+
+	it("accepts a swiss to round robin progression", () => {
+		const result = getValidatedBrackets([
 			{
 				settings: {},
-				type: "single_elimination",
+				type: "swiss",
 			},
 			{
 				settings: {},
@@ -301,9 +315,30 @@ describe("validatedSources - other rules", () => {
 					},
 				],
 			},
-		]) as Progression.ValidationError;
+		]);
 
-		expect(error.type).toBe("NOT_RESOLVING_WINNER");
+		expect(Array.isArray(result)).toBe(true);
+	});
+
+	it("accepts a round robin to round robin progression", () => {
+		const result = getValidatedBrackets([
+			{
+				settings: {},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "round_robin",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1,2",
+					},
+				],
+			},
+		]);
+
+		expect(Array.isArray(result)).toBe(true);
 	});
 
 	it("handles NOT_RESOLVING_WINNER (swiss with many groups)", () => {
@@ -407,6 +442,39 @@ describe("validatedSources - other rules", () => {
 		expect((error as any).bracketIdx).toEqual(1);
 	});
 
+	it("handles PLACEMENT_TOO_HIGH", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: { teamsPerGroup: 200 },
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [{ bracketId: "0", placements: "1-101" }],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("PLACEMENT_TOO_HIGH");
+		expect((error as any).bracketIdx).toEqual(1);
+	});
+
+	it("does not flag PLACEMENT_TOO_HIGH at the max boundary", () => {
+		const result = getValidatedBrackets([
+			{
+				settings: { teamsPerGroup: 200 },
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [{ bracketId: "0", placements: "1-100" }],
+			},
+		]);
+
+		expect(Array.isArray(result)).toBe(true);
+	});
+
 	it("does not flag TOO_MANY_PLACEMENTS when larger round robin has valid high placements", () => {
 		const result = getValidatedBrackets([
 			{
@@ -421,6 +489,55 @@ describe("validatedSources - other rules", () => {
 			{
 				settings: { teamsPerGroup: 4 },
 				type: "round_robin",
+			},
+		]);
+
+		expect(Array.isArray(result)).toBe(true);
+	});
+
+	it("flags TOO_MANY_PLACEMENTS on A/B divisions when placement exceeds per-division size", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {
+					hasAbDivisions: true,
+					teamsPerGroup: 6,
+				},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1,2,3,4",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("TOO_MANY_PLACEMENTS");
+		expect((error as any).bracketIdx).toEqual(1);
+	});
+
+	it("accepts A/B divisions placements up to per-division size", () => {
+		const result = getValidatedBrackets([
+			{
+				settings: {
+					hasAbDivisions: true,
+					teamsPerGroup: 6,
+				},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1,2,3",
+					},
+				],
 			},
 		]);
 
@@ -588,6 +705,205 @@ describe("validatedSources - other rules", () => {
 
 		// Should be valid (no error returned)
 		expect(Array.isArray(result)).toBe(true);
+	});
+
+	it("accepts A/B divisions on a round robin starting bracket with even teamsPerGroup", () => {
+		const result = getValidatedBrackets([
+			{
+				settings: {
+					hasAbDivisions: true,
+					teamsPerGroup: 6,
+				},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+				],
+			},
+		]);
+
+		expect(Array.isArray(result)).toBe(true);
+	});
+
+	it("handles AB_DIVISIONS_NOT_ROUND_ROBIN", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {
+					hasAbDivisions: true,
+				},
+				type: "swiss",
+				name: "Swiss",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				name: "Finals",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("AB_DIVISIONS_NOT_ROUND_ROBIN");
+		expect((error as any).bracketIdx).toEqual(0);
+	});
+
+	it("handles AB_DIVISIONS_NOT_STARTING", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {},
+				type: "round_robin",
+				name: "Group stage",
+			},
+			{
+				settings: {
+					hasAbDivisions: true,
+					teamsPerGroup: 4,
+				},
+				type: "round_robin",
+				name: "Second RR",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+				],
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				name: "Finals",
+				sources: [
+					{
+						bracketId: "1",
+						placements: "1-2",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("AB_DIVISIONS_NOT_STARTING");
+		expect((error as any).bracketIdx).toEqual(1);
+	});
+
+	it("handles AB_DIVISIONS_ODD_TEAMS_PER_GROUP", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {
+					hasAbDivisions: true,
+					teamsPerGroup: 5,
+				},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("AB_DIVISIONS_ODD_TEAMS_PER_GROUP");
+		expect((error as any).bracketIdx).toEqual(0);
+	});
+
+	it("accepts A/B divisions when teamsPerGroup is unset (default is even)", () => {
+		const result = getValidatedBrackets([
+			{
+				settings: {
+					hasAbDivisions: true,
+				},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+				],
+			},
+		]);
+
+		expect(Array.isArray(result)).toBe(true);
+	});
+
+	it("does not apply A/B validation when hasAbDivisions is absent", () => {
+		const result = getValidatedBrackets([
+			{
+				settings: {
+					teamsPerGroup: 5,
+				},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+				],
+			},
+		]);
+
+		expect(Array.isArray(result)).toBe(true);
+	});
+
+	it("handles EMPTY_PLACEMENTS_ON_NON_SWISS (DE source with empty placements)", () => {
+		const error = Progression.bracketsToValidationError([
+			{
+				name: "Bracket 1",
+				type: "double_elimination",
+				settings: {},
+				requiresCheckIn: false,
+			},
+			{
+				name: "Bracket 2",
+				type: "double_elimination",
+				settings: {},
+				requiresCheckIn: false,
+				sources: [{ bracketIdx: 0, placements: [] }],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("EMPTY_PLACEMENTS_ON_NON_SWISS");
+	});
+
+	it("allows empty placements when source is Swiss with advanceThreshold", () => {
+		const result = Progression.bracketsToValidationError([
+			{
+				name: "Swiss",
+				type: "swiss",
+				settings: { advanceThreshold: 3 },
+				requiresCheckIn: false,
+			},
+			{
+				name: "Finals",
+				type: "double_elimination",
+				settings: {},
+				requiresCheckIn: false,
+				sources: [{ bracketIdx: 0, placements: [] }],
+			},
+		]);
+
+		expect(result).toBeNull();
 	});
 });
 

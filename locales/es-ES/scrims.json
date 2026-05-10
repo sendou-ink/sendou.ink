@@ -86,9 +86,8 @@
 	"associations.forms.name.title": "Nombre",
 	"forms.managedByAnyone.title": "Cualquiera puede gestionar",
 	"forms.managedByAnyone.explanation": "Si está activado, todos los usuarios en esta publicación pueden aceptar peticiones y eliminar la publicación, no solo el creador.",
-	"alert.canceled": "Esta scrim fue cancelada por {{user}}. Motivo: {{reason}}",
-	"maps.header": "Mapas",
-	"screenBan.header": "Pantalla",
-	"screenBan.warning": "Pregunta antes de usar la Pantintalla",
-	"screenBan.allowed": "Nadie en este scrim ha indicado que quiera evitar la Pantintalla"
+	"banner.canceled.header": "",
+	"banner.canceled.subtitle": "",
+	"banner.freeForm.header": "",
+	"banner.freeForm.subtitle": ""
 }

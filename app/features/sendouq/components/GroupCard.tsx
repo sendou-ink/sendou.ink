@@ -33,8 +33,6 @@ import {
 import type {
 	SQGroup,
 	SQGroupMember,
-	SQMatchGroup,
-	SQMatchGroupMember,
 	SQOwnGroup,
 } from "../core/SendouQ.server";
 import {
@@ -62,7 +60,7 @@ export function GroupCard({
 	showNote = false,
 	ownGroup,
 }: {
-	group: SQGroup | SQOwnGroup | SQMatchGroup;
+	group: SQGroup | SQOwnGroup;
 	action?: "LIKE" | "UNLIKE" | "GROUP_UP" | "MATCH_UP" | "MATCH_UP_RECHALLENGE";
 	displayOnly?: boolean;
 	hideVc?: SqlBool;
@@ -90,16 +88,12 @@ export function GroupCard({
 
 	const enableKicking = group.usersRole === "OWNER" && !displayOnly;
 
-	// broke after Remix single fetch future flag got toggled on, not sure why this is needed
-	const members: Array<SQGroupMember | SQMatchGroupMember> | undefined =
-		group.members;
-
 	return (
 		<GroupCardContainer groupId={group.id} isOwnGroup={isOwnGroup}>
 			<section className={styles.group} data-testid="sendouq-group-card">
-				{members ? (
+				{group.members ? (
 					<div className="stack md">
-						{members.map((member) => {
+						{group.members.map((member) => {
 							return (
 								<GroupMember
 									member={member}
@@ -273,7 +267,7 @@ function GroupMember({
 	showAddNote,
 	showNote,
 }: {
-	member: SQGroupMember | SQMatchGroupMember;
+	member: SQGroupMember;
 	showActions: boolean;
 	displayOnly?: boolean;
 	hideVc?: SqlBool;
@@ -320,7 +314,7 @@ function GroupMember({
 											hour: "numeric",
 											minute: "numeric",
 											day: "numeric",
-											month: "long",
+											month: "numeric",
 											year: "numeric",
 										},
 									)}
@@ -775,7 +769,7 @@ function TierInfo({ skill }: { skill: TieredSkill | "CALCULATING" }) {
 function VoiceChatInfo({
 	member,
 }: {
-	member: Pick<SQMatchGroupMember, "id" | "vc" | "languages">;
+	member: Pick<SQGroupMember, "id" | "vc" | "languages">;
 }) {
 	const user = useUser();
 	const { t } = useTranslation(["q"]);

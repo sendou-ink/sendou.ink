@@ -1,6 +1,10 @@
+import { Search } from "lucide-react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useMatches, useSearchParams } from "react-router";
+import { useDebounce } from "react-use";
 import { LinkButton } from "~/components/elements/Button";
+import { Input } from "~/components/Input";
 import { Pagination } from "~/components/Pagination";
 import { useUser } from "~/features/auth/core/user";
 import { UserResultsTable } from "~/features/user-page/components/UserResultsTable";
@@ -10,6 +14,7 @@ import { SendouButton } from "../../../components/elements/Button";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.results.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import styles from "../user-page.module.css";
 
 export { loader };
 
@@ -25,6 +30,34 @@ export default function UserResultsPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const showAll = searchParams.get("all") === "true";
 
+	const urlTournamentQuery = searchParams.get("tournament") ?? "";
+	const [tournamentQuery, setTournamentQuery] =
+		React.useState(urlTournamentQuery);
+	const [prevUrlTournamentQuery, setPrevUrlTournamentQuery] =
+		React.useState(urlTournamentQuery);
+
+	if (urlTournamentQuery !== prevUrlTournamentQuery) {
+		setPrevUrlTournamentQuery(urlTournamentQuery);
+		setTournamentQuery(urlTournamentQuery);
+	}
+
+	useDebounce(
+		() => {
+			if (urlTournamentQuery === tournamentQuery) return;
+			setSearchParams((params) => {
+				if (tournamentQuery) {
+					params.set("tournament", tournamentQuery);
+				} else {
+					params.delete("tournament");
+				}
+				params.delete("page");
+				return params;
+			});
+		},
+		300,
+		[tournamentQuery],
+	);
+
 	const setPage = (page: number) => {
 		setSearchParams((params) => {
 			params.set("page", String(page));
@@ -38,21 +71,29 @@ export default function UserResultsPage() {
 				user={layoutData.user}
 				backTo={userPage(layoutData.user)}
 			/>
-			<div className="stack horizontal justify-between items-center">
+			<div className={styles.resultsHeader}>
 				<h2 className="text-lg">
 					{showAll || !data.hasHighlightedResults
 						? t("results.title")
 						: t("results.highlights")}
 				</h2>
-				{user?.id === layoutData.user.id ? (
-					<LinkButton
-						to={userResultsEditHighlightsPage(user)}
-						className="ml-auto"
-						size="small"
-					>
-						{t("results.highlights.choose")}
-					</LinkButton>
-				) : null}
+				<div className={styles.resultsHeaderActions}>
+					{user ? (
+						<Input
+							className={styles.resultsFilterInput}
+							value={tournamentQuery}
+							onChange={(e) => setTournamentQuery(e.target.value)}
+							placeholder={t("results.filter.placeholder")}
+							aria-label={t("results.filter.placeholder")}
+							icon={<Search />}
+						/>
+					) : null}
+					{user?.id === layoutData.user.id ? (
+						<LinkButton to={userResultsEditHighlightsPage(user)} size="small">
+							{t("results.highlights.choose")}
+						</LinkButton>
+					) : null}
+				</div>
 			</div>
 			<UserResultsTable id="user-results-table" results={data.results.value} />
 			{data.results.pages > 1 ? (

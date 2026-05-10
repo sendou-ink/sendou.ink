@@ -513,6 +513,34 @@
 	width: 280px;
 }
 
+.vodGrid {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	gap: var(--s-1) var(--s-2);
+	align-items: center;
+	font-size: var(--font-xs);
+	white-space: nowrap;
+}
+
+.vodGrid a {
+	display: grid;
+	grid-template-columns: subgrid;
+	grid-column: 1 / -1;
+	align-items: center;
+}
+
+.vodUser {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.vodTeamName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	min-width: 0;
+}
+
 .actionSectionWrapper {
 	& [class*="tabPanel"] {
 		background-color: var(--color-bg-high);

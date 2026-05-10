@@ -26,6 +26,10 @@ const devOnlyRoutes =
 					"features/bracket-test/routes/bracket-test.tsx",
 					[index("features/bracket-test/routes/bracket-test.index.tsx")],
 				),
+				route(
+					"/match-page-test",
+					"features/match-page-test/routes/match-page-test.tsx",
+				),
 			] satisfies RouteConfig)
 		: [];
 
@@ -145,7 +149,7 @@ export default [
 		),
 		route(
 			"matches/:mid",
-			"features/tournament-bracket/routes/to.$id.matches.$mid.tsx",
+			"features/tournament-match/routes/to.$id.matches.$mid.tsx",
 		),
 	]),
 	route("luti", "features/tournament/routes/luti.ts"),
@@ -242,6 +246,7 @@ export default [
 
 	route("/admin", "features/admin/routes/admin.tsx"),
 	route("/api/chat-users", "features/chat/routes/api.chat-users.ts"),
+	route("/room", "features/chat/routes/room.ts"),
 	route("/api", "features/api/routes/api.tsx"),
 
 	...prefix("/a", [

@@ -147,6 +147,10 @@
 		"displayName": "Biggest School in the Sea",
 		"authorDiscordId": "629773997822967819"
 	},
+	"bubblyb": {
+		"displayName": "Bubbly's Birthdays",
+		"authorDiscordId": "752582395076673577"
+	},
 	"bucketmeow12": {
 		"displayName": "Token Of Appreciation",
 		"authorDiscordId": "1170249805373657093"
@@ -194,6 +198,18 @@
 	"cc-smudge": {
 		"displayName": "Supply Closet (Smudge)",
 		"authorDiscordId": "148874365105078272"
+	},
+	"cchip1": {
+		"displayName": "Equalizer (High Side)",
+		"authorDiscordId": "338806780446638082"
+	},
+	"cchip2": {
+		"displayName": "Equalizer (Low Side)",
+		"authorDiscordId": "338806780446638082"
+	},
+	"cchip3": {
+		"displayName": "Equalizer (Top 3)",
+		"authorDiscordId": "338806780446638082"
 	},
 	"champions": {
 		"displayName": "Champions Cup",
@@ -334,6 +350,10 @@
 	"dreadnoughtus": {
 		"displayName": "Mesozoic Mayhem: Dreadnoughtus Undefeated",
 		"authorDiscordId": "352207524390240257"
+	},
+	"dreamteam": {
+		"displayName": "Dream Team",
+		"authorDiscordId": "900408802938081350"
 	},
 	"dualin": {
 		"displayName": "Dualin' Horizons",
@@ -759,6 +779,10 @@
 		"displayName": "Minus One Open",
 		"authorDiscordId": "569271521776762896"
 	},
+	"moneycat": {
+		"displayName": "Cats Have 9 Lives",
+		"authorDiscordId": "781999824765452310"
+	},
 	"mrgrizz": {
 		"displayName": "Salmon Workers",
 		"authorDiscordId": "345996252032401408"
@@ -858,6 +882,10 @@
 	"oktofest-silver": {
 		"displayName": "Oktofest LAN (Second)",
 		"authorDiscordId": "751912670403362836"
+	},
+	"oocee": {
+		"displayName": "OCE Open Series",
+		"authorDiscordId": "1170249805373657093"
 	},
 	"order1": {
 		"displayName": "ORDR S1",
@@ -1215,6 +1243,10 @@
 		"displayName": "Squidforce Cup",
 		"authorDiscordId": "1320944066002681876"
 	},
+	"sssge": {
+		"displayName": "Solo Squid Showdown: Golden Edition",
+		"authorDiscordId": "824681527815438337"
+	},
 	"stellatedzone": {
 		"displayName": "Stellated Zone",
 		"authorDiscordId": "309327923129745409"
@@ -1419,6 +1451,10 @@
 		"displayName": "Urchin-Cup",
 		"authorDiscordId": "338806780446638082"
 	},
+	"usagibadge": {
+		"displayName": "Usagi",
+		"authorDiscordId": "1466857444851581040"
+	},
 	"valentines2v2tuesdays": {
 		"displayName": "Valentines 2v2 TUESDAYS",
 		"authorDiscordId": "754368445910614046"
@@ -1451,6 +1487,14 @@
 		"displayName": "Weapon Lockdown Special Edition",
 		"authorDiscordId": "338806780446638082"
 	},
+	"wellstringcustom": {
+		"displayName": "Wellstring Propoganda: Low Cut",
+		"authorDiscordId": "338806780446638082"
+	},
+	"wellstringregular": {
+		"displayName": "Wellstring Propoganda: Top Cut",
+		"authorDiscordId": "338806780446638082"
+	},
 	"whitecat": {
 		"displayName": "White Cat Achievement",
 		"authorDiscordId": "631246535560265749"
@@ -1458,6 +1502,10 @@
 	"wi-wi-wi": {
 		"displayName": "Wi Wi Wi Cat",
 		"authorDiscordId": "530722502603833346"
+	},
+	"wings": {
+		"displayName": "Wings Up!",
+		"authorDiscordId": "752582395076673577"
 	},
 	"wiper": {
 		"displayName": "Squeaky Clean Scrap",
@@ -1478,6 +1526,10 @@
 	"worldrallychampionship": {
 		"displayName": "WRC #0",
 		"authorDiscordId": "683603297839743009"
+	},
+	"wwarning": {
+		"displayName": "Without Warning",
+		"authorDiscordId": "752582395076673577"
 	},
 	"zekkocup": {
 		"displayName": "Zekko Cup",

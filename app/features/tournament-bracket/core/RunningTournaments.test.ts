@@ -13,7 +13,6 @@ const createMember = (userId: number) =>
 		twitch: null,
 		plusTier: null,
 		createdAt: 0,
-		isOwner: 0,
 		inGameName: null,
 		streamTwitch: null,
 		streamViewerCount: null,

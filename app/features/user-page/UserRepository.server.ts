@@ -30,6 +30,7 @@ import { sortBadgesByFavorites } from "./core/badge-sorting.server";
 import { findWidgetById } from "./core/widgets/portfolio";
 import { WIDGET_LOADERS } from "./core/widgets/portfolio-loaders.server";
 import type { LoadedWidget } from "./core/widgets/types";
+import { SPL2_JOIN_ORDER_CUTOFF } from "./user-page-constants";
 
 export const identifierToUserIdQuery = (identifier: string) =>
 	db
@@ -287,6 +288,8 @@ export async function upsertWidgets(
 	return db.transaction().execute(async (trx) => {
 		await trx.deleteFrom("UserWidget").where("userId", "=", userId).execute();
 
+		if (widgets.length === 0) return;
+
 		await trx
 			.insertInto("UserWidget")
 			.values(
@@ -543,13 +546,27 @@ const baseTournamentResultsQuery = (userId: number) =>
 		.innerJoin("Tournament", "Tournament.id", "TournamentResult.tournamentId")
 		.where("TournamentResult.userId", "=", userId);
 
+const escapeLikePattern = (value: string) =>
+	value.replace(/[\\%_]/g, (char) => `\\${char}`);
+
+const tournamentNameLikeExpr = (tournamentName: string) => {
+	const pattern = `%${escapeLikePattern(tournamentName)}%`;
+	return sql<boolean>`${sql.ref("CalendarEvent.name")} like ${pattern} escape '\\'`;
+};
+
 export function findResultsByUserId(
 	userId: number,
 	{
 		showHighlightsOnly = false,
 		limit,
 		offset,
-	}: { showHighlightsOnly?: boolean; limit?: number; offset?: number } = {},
+		tournamentName,
+	}: {
+		showHighlightsOnly?: boolean;
+		limit?: number;
+		offset?: number;
+		tournamentName?: string;
+	} = {},
 ) {
 	let calendarEventResultsQuery = baseCalendarEventResultsQuery(userId).select(
 		({ eb, fn }) => [
@@ -633,6 +650,15 @@ export function findResultsByUserId(
 		);
 	}
 
+	if (tournamentName) {
+		calendarEventResultsQuery = calendarEventResultsQuery.where(
+			tournamentNameLikeExpr(tournamentName),
+		);
+		tournamentResultsQuery = tournamentResultsQuery.where(
+			tournamentNameLikeExpr(tournamentName),
+		);
+	}
+
 	let query = calendarEventResultsQuery
 		.unionAll(tournamentResultsQuery)
 		.orderBy("startTime", "desc")
@@ -651,7 +677,10 @@ export function findResultsByUserId(
 
 export async function countResultsByUserId(
 	userId: number,
-	{ showHighlightsOnly = false }: { showHighlightsOnly?: boolean } = {},
+	{
+		showHighlightsOnly = false,
+		tournamentName,
+	}: { showHighlightsOnly?: boolean; tournamentName?: string } = {},
 ) {
 	let calendarEventResultsQuery = baseCalendarEventResultsQuery(userId).select(
 		({ fn }) => [fn.countAll<number>().as("count")],
@@ -671,6 +700,15 @@ export async function countResultsByUserId(
 			"TournamentResult.isHighlight",
 			"=",
 			1,
+		);
+	}
+
+	if (tournamentName) {
+		calendarEventResultsQuery = calendarEventResultsQuery.where(
+			tournamentNameLikeExpr(tournamentName),
+		);
+		tournamentResultsQuery = tournamentResultsQuery.where(
+			tournamentNameLikeExpr(tournamentName),
 		);
 	}
 
@@ -926,6 +964,21 @@ export async function patronSinceByUserId(userId: number) {
 	)?.patronSince;
 }
 
+export async function joinOrderByUserId(userId: number) {
+	const row = await db
+		.selectFrom("User")
+		.select("User.joinOrder")
+		.where("id", "=", userId)
+		.executeTakeFirst();
+
+	if (!row?.joinOrder) return null;
+
+	return {
+		joinOrder: row.joinOrder,
+		isSpl2: row.joinOrder <= SPL2_JOIN_ORDER_CUTOFF,
+	};
+}
+
 export async function commissionsByUserId(userId: number) {
 	return await db
 		.selectFrom("User")
@@ -958,7 +1011,19 @@ export function upsert(
 ) {
 	return db
 		.insertInto("User")
-		.values({ ...args, createdAt: databaseTimestampNow() })
+		.values((eb) => ({
+			...args,
+			createdAt: databaseTimestampNow(),
+			joinOrder: eb
+				.selectFrom("User")
+				.select(
+					eb(
+						eb.fn.coalesce(eb.fn.max("joinOrder"), eb.val(0)),
+						"+",
+						eb.val(1),
+					).as("nextJoinOrder"),
+				),
+		}))
 		.onConflict((oc) => {
 			return oc.column("discordId").doUpdateSet({
 				...R.omit(args, ["discordId"]),
@@ -1207,6 +1272,21 @@ export async function anyUserPrefersNoScreen(
 		.select("User.noScreen")
 		.where("User.id", "in", userIds)
 		.where("User.noScreen", "=", 1)
+		.executeTakeFirst();
+
+	return Boolean(result);
+}
+
+export async function anyUserPrefersNoSplatnet(
+	userIds: number[],
+): Promise<boolean> {
+	if (userIds.length === 0) return false;
+
+	const result = await db
+		.selectFrom("User")
+		.select("User.noSplatnet")
+		.where("User.id", "in", userIds)
+		.where("User.noSplatnet", "=", 1)
 		.executeTakeFirst();
 
 	return Boolean(result);

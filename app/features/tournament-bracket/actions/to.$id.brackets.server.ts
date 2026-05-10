@@ -10,7 +10,9 @@ import {
 import { createSwissBracketInTransaction } from "~/features/tournament/queries/createSwissBracketInTransaction.server";
 import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { roundMapsFromInput } from "~/features/tournament-match/core/mapList.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -22,8 +24,8 @@ import {
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "~/utils/zod";
 import type { PreparedMaps } from "../../../db/tables";
+import * as AbDivisions from "../core/AbDivisions";
 import { getServerTournamentManager } from "../core/brackets-manager/manager.server";
-import { roundMapsFromInput } from "../core/mapList.server";
 import * as PreparedMapsUtils from "../core/PreparedMaps";
 import * as Swiss from "../core/Swiss";
 import type { Tournament } from "../core/Tournament";
@@ -84,6 +86,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 					})
 				: data.maps;
 
+			const abDivisions =
+				bracket.type === "round_robin" && bracket.settings?.hasAbDivisions
+					? abDivisionsForSeeding(seeding, tournament, groupCount)
+					: undefined;
+
 			errorToastIfFalsy(
 				bracket.type === "round_robin" || bracket.type === "swiss"
 					? bracket.data.round.length / groupCount === maps.length
@@ -111,6 +118,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 										? seeding
 										: fillWithNullTillPowerOfTwo(seeding),
 								settings,
+								abDivisions,
 							});
 
 				updateRoundMaps(
@@ -287,9 +295,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 				`Checking in (bracket try): tournament team id: ${teamMemberOf.id} - user id: ${user.id} - tournament id: ${tournament.ctx.id} - bracket idx: ${data.bracketIdx}`,
 			);
 
-			await TournamentRepository.checkIn({
+			await TournamentTeamRepository.checkIn(teamMemberOf.id, {
 				bracketIdx: data.bracketIdx,
-				tournamentTeamId: teamMemberOf.id,
 			});
 
 			logger.info(
@@ -356,6 +363,23 @@ function errorToastIfFalsyNoFollowUpBrackets(tournament: Tournament) {
 		followUpBrackets.every((b) => b.preview),
 		"Follow-up brackets are already started",
 	);
+}
+
+function abDivisionsForSeeding(
+	seeding: number[],
+	tournament: Tournament,
+	groupCount: number,
+): (0 | 1)[] {
+	const abDivisionsBySeedOrder = seeding.map((teamId) => {
+		const team = tournament.teamById(teamId);
+		errorToastIfFalsy(team, "Team not found when building A/B divisions");
+		return team.abDivision;
+	});
+
+	const result = AbDivisions.validate({ abDivisionsBySeedOrder, groupCount });
+	errorToastIfErr(result);
+
+	return result.value;
 }
 
 function adjustLinkedRounds({

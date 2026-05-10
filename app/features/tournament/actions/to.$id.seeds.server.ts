@@ -68,6 +68,23 @@ export const action: ActionFunction = async ({ request, params }) => {
 			);
 			break;
 		}
+		case "UPDATE_AB_DIVISIONS": {
+			errorToastIfFalsy(
+				tournament.ctx.settings.bracketProgression.some(
+					(bracket) => !bracket.sources && bracket.settings?.hasAbDivisions,
+				),
+				"No starting bracket has A/B divisions enabled",
+			);
+
+			const validTeamIds = new Set(tournament.ctx.teams.map((t) => t.id));
+			errorToastIfFalsy(
+				data.abDivisions.every((t) => validTeamIds.has(t.tournamentTeamId)),
+				"Invalid tournament team id",
+			);
+
+			await TournamentTeamRepository.updateAbDivisions(data.abDivisions);
+			break;
+		}
 	}
 
 	clearTournamentDataCache(tournamentId);

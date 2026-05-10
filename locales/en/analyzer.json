@@ -181,6 +181,7 @@
 	"comp.groupBy.special": "Special weapon",
 	"comp.selectWeapons": "Select up to {{max}} weapons",
 	"comp.removeWeapon": "Remove weapon",
+	"comp.reorderWeapon": "Drag to reorder weapon",
 	"comp.pickWeapon": "Pick a weapon",
 	"comp.showWeaponGrid": "Show weapon selector",
 	"comp.hideWeaponGrid": "Hide weapon selector",

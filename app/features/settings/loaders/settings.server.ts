@@ -8,6 +8,8 @@ export const loader = async () => {
 		noScreen: user
 			? await UserRepository.anyUserPrefersNoScreen([user.id])
 			: null,
-		customTheme: user?.customTheme,
+		noSplatnet: user
+			? await UserRepository.anyUserPrefersNoSplatnet([user.id])
+			: null,
 	};
 };

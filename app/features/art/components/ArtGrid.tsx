@@ -95,7 +95,7 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 		<SendouDialog
 			heading={formatDate(databaseTimestampToDate(art.createdAt), {
 				year: "numeric",
-				month: "long",
+				month: "numeric",
 				day: "numeric",
 			})}
 			onClose={close}

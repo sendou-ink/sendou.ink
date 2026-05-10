@@ -185,6 +185,7 @@
 	"comp.groupBy.special": "",
 	"comp.selectWeapons": "",
 	"comp.removeWeapon": "",
+	"comp.reorderWeapon": "",
 	"comp.pickWeapon": "",
 	"comp.showWeaponGrid": "",
 	"comp.hideWeaponGrid": "",

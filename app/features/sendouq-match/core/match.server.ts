@@ -303,7 +303,7 @@ export function compareMatchToReportedScores({
 	newReporterGroupId,
 	previousReporterGroupId,
 }: {
-	match: Pick<SQMatch, "reportedByUserId" | "mapList"> & {
+	match: Pick<SQMatch, "mapList"> & {
 		groupAlpha: { id: number };
 		groupBravo: { id: number };
 	};
@@ -312,7 +312,9 @@ export function compareMatchToReportedScores({
 	previousReporterGroupId?: number;
 }) {
 	// match has not been reported before
-	if (!match.reportedByUserId) return "FIRST_REPORT";
+	if (!match.mapList.some((m) => m.reportedByUserId !== null)) {
+		return "FIRST_REPORT";
+	}
 
 	const sameGroupReporting = newReporterGroupId === previousReporterGroupId;
 	const differentConstant = sameGroupReporting ? "FIX_PREVIOUS" : "DIFFERENT";
@@ -347,14 +349,19 @@ export function compareMatchToReportedScores({
 	return "SAME";
 }
 
+type GroupPreference = {
+	userId: number;
+	preferences: UserMapModePreferences;
+	teamName?: string | null;
+};
 type CreateMatchMementoArgs = {
 	own: {
 		group: SQUncensoredGroup;
-		preferences: { userId: number; preferences: UserMapModePreferences }[];
+		preferences: GroupPreference[];
 	};
 	their: {
 		group: SQUncensoredGroup;
-		preferences: { userId: number; preferences: UserMapModePreferences }[];
+		preferences: GroupPreference[];
 	};
 	mapList: TournamentMapListMap[];
 };
@@ -440,6 +447,7 @@ function poolsMemento(args: CreateMatchMementoArgs): ParsedMemento["pools"] {
 		return {
 			userId: p.userId,
 			pool,
+			...(p.teamName ? { teamName: p.teamName } : {}),
 		};
 	});
 }

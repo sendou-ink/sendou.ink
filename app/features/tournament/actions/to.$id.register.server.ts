@@ -22,12 +22,6 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "~/utils/zod";
-import { checkIn } from "../queries/checkIn.server";
-import { deleteTeam } from "../queries/deleteTeam.server";
-import deleteTeamMember from "../queries/deleteTeamMember.server";
-import { findOwnTournamentTeam } from "../queries/findOwnTournamentTeam.server";
-import { joinTeam } from "../queries/joinLeaveTeam.server";
-import { upsertCounterpickMaps } from "../queries/upsertCounterpickMaps.server";
 import { TOURNAMENT } from "../tournament-constants";
 import { registerSchema } from "../tournament-schemas.server";
 import {
@@ -35,8 +29,8 @@ import {
 	validateCounterPickMapPool,
 } from "../tournament-utils";
 import {
-	inGameNameIfNeeded,
 	requireNotBannedByOrganization,
+	requireSendouQParticipationIfNeeded,
 } from "../tournament-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
@@ -101,6 +95,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 					tournament,
 					user,
 				});
+				await requireSendouQParticipationIfNeeded({
+					tournament,
+					userId: user.id,
+				});
 
 				errorToastIfFalsy(!tournament.isInvitational, "Event is invite only");
 				errorToastIfFalsy(
@@ -125,10 +123,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 					tournamentId,
 				});
 				await TournamentTeamRepository.create({
-					ownerInGameName: await inGameNameIfNeeded({
-						tournament,
-						userId: user.id,
-					}),
 					team: {
 						name: data.teamName,
 						prefersNotToHost: Number(data.prefersNotToHost),
@@ -160,20 +154,18 @@ export const action: ActionFunction = async ({ request, params }) => {
 			);
 			errorToastIfFalsy(data.userId !== user.id, "Can't kick yourself");
 
-			const detailedOwnTeam = findOwnTournamentTeam({
-				tournamentId,
-				userId: user.id,
-			});
 			// making sure they aren't unfilling one checking in condition i.e. having full roster
 			// and then having members kicked without it affecting the checking in status
 			errorToastIfFalsy(
-				detailedOwnTeam &&
-					(!detailedOwnTeam.checkedInAt ||
-						ownTeam.members.length > tournament.minMembersPerTeam),
+				!ownTeamCheckedIn ||
+					ownTeam.members.length > tournament.minMembersPerTeam,
 				"Can't kick a member after checking in",
 			);
 
-			deleteTeamMember({ tournamentTeamId: ownTeam.id, userId: data.userId });
+			await TournamentTeamRepository.leave({
+				teamId: ownTeam.id,
+				userId: data.userId,
+			});
 
 			ShowcaseTournaments.removeFromCached({
 				tournamentId,
@@ -192,8 +184,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"You cannot leave after checking in",
 			);
 
-			deleteTeamMember({
-				tournamentTeamId: teamMemberOf.id,
+			await TournamentTeamRepository.leave({
+				teamId: teamMemberOf.id,
 				userId: user.id,
 			});
 
@@ -220,7 +212,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Invalid map pool",
 			);
 
-			upsertCounterpickMaps({
+			await TournamentTeamRepository.upsertCounterpickMaps({
 				tournamentTeamId: ownTeam.id,
 				mapPool: new MapPool(data.mapPool),
 			});
@@ -248,7 +240,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				`Can't check-in - ${tournament.checkInConditionsFulfilledByTeamId(teamMemberOf.id).reason}`,
 			);
 
-			checkIn(teamMemberOf.id);
+			await TournamentTeamRepository.checkIn(teamMemberOf.id);
 			logger.info(
 				`Checking in (success): tournament team id: ${teamMemberOf.id} - user id: ${user.id} - tournament id: ${tournamentId}`,
 			);
@@ -279,19 +271,18 @@ export const action: ActionFunction = async ({ request, params }) => {
 				user: { id: data.userId },
 				message: "The user is banned from events hosted by this organization",
 			});
+			await requireSendouQParticipationIfNeeded({
+				tournament,
+				userId: data.userId,
+			});
 
 			await TournamentLFGRepository.leaveLfg({
 				userId: data.userId,
 				tournamentId,
 			});
-			joinTeam({
+			await TournamentTeamRepository.join({
 				userId: data.userId,
 				newTeamId: ownTeam.id,
-				tournamentId,
-				inGameName: await inGameNameIfNeeded({
-					tournament,
-					userId: data.userId,
-				}),
 			});
 
 			await SavedCalendarEventRepository.unsave({
@@ -335,7 +326,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Unregistering from leagues is not possible after registration has closed",
 			);
 
-			deleteTeam(ownTeam.id);
+			await TournamentTeamRepository.del(ownTeam.id);
 
 			for (const member of ownTeam.members) {
 				ShowcaseTournaments.removeFromCached({

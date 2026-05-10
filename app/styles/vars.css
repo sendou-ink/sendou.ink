@@ -230,6 +230,7 @@ html {
 	--s-1: calc(var(--_size-spacing) * 1 * 0.25rem);
 	--s-1-5: calc(var(--_size-spacing) * 1.5 * 0.25rem);
 	--s-2: calc(var(--_size-spacing) * 2 * 0.25rem);
+	--s-2-5: calc(var(--_size-spacing) * 2.5 * 0.25rem);
 	--s-3: calc(var(--_size-spacing) * 3 * 0.25rem);
 	--s-4: calc(var(--_size-spacing) * 4 * 0.25rem);
 	--s-5: calc(var(--_size-spacing) * 5 * 0.25rem);

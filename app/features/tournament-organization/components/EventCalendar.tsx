@@ -132,7 +132,7 @@ function MonthSelector({ month, year }: { month: number; year: number }) {
 			<div>
 				{formatDate(date, {
 					year: "numeric",
-					month: "long",
+					month: "numeric",
 				})}
 			</div>
 			<LinkButton

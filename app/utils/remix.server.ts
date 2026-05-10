@@ -57,6 +57,29 @@ export function parseSearchParams<T extends z.ZodTypeAny>({
 	}
 }
 
+/**
+ * If the requested `page` exceeds `pagesCount`, throws a redirect to the last
+ * available page (preserving other search params). `pagesCount` is normalized
+ * to a minimum of 1 so empty result sets stay on page 1.
+ */
+export function redirectIfPageOutOfBounds({
+	request,
+	page,
+	pagesCount,
+}: {
+	request: Request;
+	page: number;
+	pagesCount: number;
+}): void {
+	const safePagesCount = Math.max(1, pagesCount);
+	if (page <= safePagesCount) return;
+
+	const url = new URL(request.url);
+	const searchParams = new URLSearchParams(url.searchParams);
+	searchParams.set("page", String(safePagesCount));
+	throw redirect(`${url.pathname}?${searchParams.toString()}`);
+}
+
 export function parseSafeSearchParams<T extends z.ZodTypeAny>({
 	request,
 	schema,
@@ -302,7 +325,7 @@ export function privatelyCachedJson<T>(dataValue: T) {
 	});
 }
 
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+const DEFAULT_MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024;
 
 type FileUploadHandler = (
 	fileUpload: FileUpload,
@@ -323,6 +346,11 @@ export async function safeParseMultipartFormData(
 	optionsOrHandler?: ParseFormDataOptions | FileUploadHandler,
 	uploadHandler?: FileUploadHandler,
 ): Promise<FormData> {
+	const maxFileSize =
+		typeof optionsOrHandler === "object" && optionsOrHandler?.maxFileSize
+			? optionsOrHandler.maxFileSize
+			: DEFAULT_MAX_FILE_SIZE_BYTES;
+
 	try {
 		if (typeof optionsOrHandler === "function") {
 			return await parseMultipartFormData(request, optionsOrHandler);
@@ -335,11 +363,12 @@ export async function safeParseMultipartFormData(
 	} catch (err) {
 		if (
 			err instanceof Error &&
-			err.cause instanceof Error &&
-			err.cause.name === "MaxFileSizeExceededError"
+			(err.name === "MaxFileSizeExceededError" ||
+				(err.cause instanceof Error &&
+					err.cause.name === "MaxFileSizeExceededError"))
 		) {
 			throw errorToastRedirect(
-				`File size exceeds maximum allowed size of ${MAX_FILE_SIZE_BYTES / 1024 / 1024}MB`,
+				`File size exceeds maximum allowed size of ${maxFileSize / 1024 / 1024}MB`,
 			);
 		}
 		throw err;

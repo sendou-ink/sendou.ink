@@ -461,6 +461,7 @@
 			height: 100%;
 			border: none;
 			background-color: var(--color-bg-higher);
+			color: var(--color-text-high);
 			white-space: nowrap;
 			margin-right: var(--s-2);
 		}
@@ -615,6 +616,8 @@
 
 .top-leaderboard {
 	min-height: 100px;
+	max-height: 100px;
+	overflow-y: clip;
 	margin-top: 10px;
 	display: grid;
 	place-items: center;

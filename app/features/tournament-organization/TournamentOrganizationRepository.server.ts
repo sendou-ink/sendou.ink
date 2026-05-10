@@ -1,6 +1,6 @@
 import { isFuture } from "date-fns";
 import { sql } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
+import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import {
@@ -223,7 +223,7 @@ const findEventsBaseQuery = (organizationId: number) =>
 			"CalendarEvent.tournamentId",
 			eb.fn.min("CalendarEventDate.startTime").as("startTime"),
 			tournamentLogoWithDefault(eb).as("logoUrl"),
-			jsonObjectFrom(
+			jsonArrayFrom(
 				eb
 					.selectFrom("TournamentResult")
 					.innerJoin(
@@ -239,20 +239,22 @@ const findEventsBaseQuery = (organizationId: number) =>
 						"u2.id",
 					)
 					.select(({ eb: innerEb }) => [
+						"TournamentTeam.id",
 						"TournamentTeam.name",
 						concatUserSubmittedImagePrefix(
 							innerEb.fn.coalesce("u1.url", "u2.url"),
 						).as("avatarUrl"),
 						jsonArrayFrom(
 							innerEb
-								.selectFrom("TournamentTeamMember")
-								.innerJoin("User", "User.id", "TournamentTeamMember.userId")
+								.selectFrom("TournamentResult as WinnerResult")
+								.innerJoin("User", "User.id", "WinnerResult.userId")
 								.select(["User.discordAvatar", "User.discordId"])
 								.whereRef(
-									"TournamentTeamMember.tournamentTeamId",
+									"WinnerResult.tournamentTeamId",
 									"=",
 									"TournamentTeam.id",
 								)
+								.where("WinnerResult.placement", "=", 1)
 								.orderBy("User.id", "asc"),
 						).as("members"),
 					])
@@ -261,12 +263,15 @@ const findEventsBaseQuery = (organizationId: number) =>
 						"=",
 						"CalendarEvent.tournamentId",
 					)
-					.where("TournamentResult.placement", "=", 1),
+					.where("TournamentResult.placement", "=", 1)
+					.groupBy("TournamentTeam.id")
+					.orderBy("TournamentTeam.id", "asc"),
 			).as("tournamentWinners"),
-			jsonObjectFrom(
+			jsonArrayFrom(
 				eb
 					.selectFrom("CalendarEventResultTeam")
 					.select(({ eb: innerEb }) => [
+						"CalendarEventResultTeam.id",
 						"CalendarEventResultTeam.name",
 						sql<null>`null`.as("avatarUrl"),
 						jsonArrayFrom(
@@ -287,7 +292,8 @@ const findEventsBaseQuery = (organizationId: number) =>
 						).as("members"),
 					])
 					.whereRef("CalendarEventResultTeam.eventId", "=", "CalendarEvent.id")
-					.where("CalendarEventResultTeam.placement", "=", 1),
+					.where("CalendarEventResultTeam.placement", "=", 1)
+					.orderBy("CalendarEventResultTeam.id", "asc"),
 			).as("eventWinners"),
 		])
 		.where("CalendarEvent.organizationId", "=", organizationId)

@@ -86,9 +86,8 @@
 	"associations.forms.name.title": "Name",
 	"forms.managedByAnyone.title": "",
 	"forms.managedByAnyone.explanation": "",
-	"alert.canceled": "",
-	"maps.header": "",
-	"screenBan.header": "",
-	"screenBan.warning": "",
-	"screenBan.allowed": ""
+	"banner.canceled.header": "",
+	"banner.canceled.subtitle": "",
+	"banner.freeForm.header": "",
+	"banner.freeForm.subtitle": ""
 }

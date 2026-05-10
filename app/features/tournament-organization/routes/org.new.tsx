@@ -3,10 +3,15 @@ import { Alert } from "~/components/Alert";
 import { Main } from "~/components/Main";
 import { SendouForm } from "~/form/SendouForm";
 import { useHasRole } from "~/modules/permissions/hooks";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import { action } from "../actions/org.new.server";
 import { newOrganizationSchema } from "../tournament-organization-schemas";
 
 export { action };
+
+export const handle: SendouRouteHandle = {
+	i18n: ["org"],
+};
 
 export default function NewOrganizationPage() {
 	const isTournamentAdder = useHasRole("TOURNAMENT_ADDER");

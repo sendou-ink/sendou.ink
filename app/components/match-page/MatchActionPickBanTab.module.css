@@ -1,0 +1,197 @@
+.root {
+	display: grid;
+	grid-template-columns: 1fr;
+	grid-template-areas:
+		"header"
+		"options"
+		"prompt"
+		"submit";
+	justify-items: center;
+	align-items: center;
+	gap: var(--s-6);
+	container-type: inline-size;
+}
+
+.title {
+	grid-area: header;
+	font-size: var(--font-md);
+	font-weight: var(--weight-semi);
+	text-align: center;
+	text-box: trim-start cap alphabetic;
+}
+
+.options {
+	grid-area: options;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+	width: 100%;
+}
+
+.prompt {
+	grid-area: prompt;
+	margin: 0;
+	font-size: var(--font-sm);
+	color: var(--color-text-lighter);
+	text-align: center;
+}
+
+.verbPick {
+	color: var(--color-success);
+	font-weight: var(--weight-semi);
+}
+
+.verbBan {
+	color: var(--color-error);
+	font-weight: var(--weight-semi);
+}
+
+.submit {
+	grid-area: submit;
+}
+
+.waiting {
+	grid-row: prompt-start / submit-end;
+	margin: 0;
+	font-size: var(--font-sm);
+	color: var(--color-text-lighter);
+	text-align: center;
+}
+
+.modeGroup {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.divider {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	text-transform: uppercase;
+	display: flex;
+	gap: var(--s-2);
+
+	&::before,
+	&::after {
+		border-bottom: 2px dotted var(--color-bg-higher);
+	}
+}
+
+.stageGrid {
+	--tile-width: 90px;
+	--tile-height: 50px;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--s-4) var(--s-3);
+}
+
+.modeGrid {
+	--tile-width: 90px;
+	--tile-height: 90px;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--s-4) var(--s-3);
+}
+
+.tileContainer {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	position: relative;
+	width: var(--tile-width);
+	text-align: center;
+}
+
+.tileWrapper {
+	position: relative;
+	width: var(--tile-width);
+	height: var(--tile-height);
+}
+
+.tile {
+	height: var(--tile-height);
+	width: var(--tile-width);
+	border: none;
+	background-color: transparent;
+	transition:
+		filter,
+		opacity 0.2s;
+	border-radius: var(--radius-box);
+	cursor: pointer;
+
+	&:active {
+		transform: none;
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+	}
+}
+
+.stageTile {
+	background-image: var(--map-image-url);
+	background-size: cover;
+}
+
+.modeTile {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--color-bg-higher);
+}
+
+.tileSelected {
+	filter: grayscale(100%);
+	opacity: 0.4;
+}
+
+.tileIcon {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 48px;
+	height: 48px;
+	pointer-events: none;
+}
+
+.tileIconPick {
+	color: var(--color-success);
+}
+
+.tileIconBan {
+	color: var(--color-error);
+}
+
+.tileNumber {
+	position: absolute;
+	background-color: var(--color-text-accent);
+	border-radius: 100%;
+	width: 18px;
+	height: 18px;
+	display: grid;
+	place-items: center;
+	color: var(--color-text-inverse);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	top: -5px;
+	left: 0;
+	pointer-events: none;
+}
+
+.tileFrom {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	text-transform: uppercase;
+	line-height: 1;
+	margin-block-start: var(--s-0-5);
+}
+
+.tileLabel {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	font-weight: var(--weight-semi);
+	margin-block-start: var(--s-1);
+}

@@ -1,22 +1,16 @@
 import { reactRouter } from "@react-router/dev/vite";
+import { sentryReactRouter } from "@sentry/react-router";
 import { defineConfig, loadEnv } from "vite";
 import babel from "vite-plugin-babel";
-import tsconfigPaths from "vite-tsconfig-paths";
-import { configDefaults } from "vitest/config";
 
-export default defineConfig(({ mode }) => {
-	const env = loadEnv(mode, process.cwd(), "");
+export default defineConfig((config) => {
+	const env = loadEnv(config.mode, process.cwd(), "");
 	return {
 		server: {
 			port: Number(env.PORT) || 5173,
 		},
 		ssr: {
 			noExternal: ["react-charts", "react-use"],
-		},
-		esbuild: {
-			supported: {
-				"top-level-await": true, //browsers can handle top-level-await features
-			},
 		},
 		plugins: [
 			{
@@ -46,34 +40,39 @@ export default defineConfig(({ mode }) => {
 					plugins: [["babel-plugin-react-compiler", {}]],
 				},
 			}),
-			tsconfigPaths(),
-		],
-		test: {
-			projects: [
+			sentryReactRouter(
 				{
-					extends: true,
-					test: {
-						name: "unit",
-						include: ["**/*.test.{ts,tsx}"],
-						exclude: [
-							...configDefaults.exclude,
-							"e2e/**",
-							"**/*.browser.test.{ts,tsx}",
-						],
-						setupFiles: ["./app/test-setup.ts"],
+					org: process.env.SENTRY_ORG,
+					project: process.env.SENTRY_PROJECT,
+					authToken: process.env.SENTRY_AUTH_TOKEN,
+					telemetry: false,
+					unstable_sentryVitePluginOptions: {
+						applicationKey: "sendou-ink",
 					},
 				},
-				{
-					extends: "./vitest.browser.config.ts",
-				},
-			],
+				config,
+			),
+		],
+
+		test: {
+			projects: ["./vitest.unit.config.ts", "./vitest.browser.config.ts"],
+		},
+		define: {
+			__GIT_COMMIT__: JSON.stringify(process.env.RENDER_GIT_COMMIT ?? ""),
 		},
 		build: {
-			// this is mostly done so that i18n jsons as defined in ./app/modules/i18n/loader.ts
-			// do not end up in the js bundle as minimized strings
-			// if we decide later that this is a useful optimization in some cases then we can
-			// switch the value to a callback one that checks the file path
-			assetsInlineLimit: 0,
+			assetsInlineLimit: (filePath: string) => {
+				if (/\/locales\/[^/]+\/[^/]+\.json$/.test(filePath)) return false;
+
+				return undefined;
+			},
+			sourcemap: true,
+		},
+		resolve: {
+			tsconfigPaths: true,
+		},
+		optimizeDeps: {
+			exclude: ["@sentry/react-router"],
 		},
 	};
 });

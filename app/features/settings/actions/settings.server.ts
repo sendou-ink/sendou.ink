@@ -40,6 +40,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 			break;
 		}
+		case "UPDATE_SPOILER_FREE_MODE": {
+			await UserRepository.updatePreferences(user.id, {
+				spoilerFreeMode: data.newValue,
+			});
+			break;
+		}
 		case "UPDATE_NO_SCREEN": {
 			await QSettingsRepository.updateNoScreen({
 				userId: user.id,
@@ -47,9 +53,28 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 			break;
 		}
+		case "UPDATE_NO_SPLATNET": {
+			await QSettingsRepository.updateNoSplatnet({
+				userId: user.id,
+				noSplatnet: Number(data.newValue),
+			});
+			break;
+		}
 		case "UPDATE_CLOCK_FORMAT": {
 			await UserRepository.updatePreferences(user.id, {
 				clockFormat: data.newValue,
+			});
+			break;
+		}
+		case "UPDATE_WEAPON_REPORT_DEFAULT_OPEN": {
+			await UserRepository.updatePreferences(user.id, {
+				weaponReportDefaultOpen: data.newValue,
+			});
+			break;
+		}
+		case "UPDATE_DATE_FORMAT": {
+			await UserRepository.updatePreferences(user.id, {
+				dateFormat: data.newValue,
 			});
 			break;
 		}

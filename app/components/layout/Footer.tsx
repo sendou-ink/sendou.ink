@@ -13,6 +13,9 @@ import {
 	SUPPORT_PAGE,
 	userPage,
 } from "~/utils/urls";
+
+declare const __GIT_COMMIT__: string;
+
 import { Image } from "../Image";
 import { DiscordIcon } from "../icons/Discord";
 import { GitHubIcon } from "../icons/GitHub";
@@ -90,6 +93,16 @@ export function Footer() {
 					</a>
 				</p>
 			</div>
+			{__GIT_COMMIT__ ? (
+				<a
+					className={styles.sourceLink}
+					href={`${SENDOU_INK_GITHUB_URL}/commits/${__GIT_COMMIT__}/`}
+					target="_blank"
+					rel="noreferrer"
+				>
+					{t("footer.version")} {__GIT_COMMIT__.slice(0, 10)}
+				</a>
+			) : null}
 		</footer>
 	);
 }

@@ -495,6 +495,8 @@ export const modeImageUrl = (mode: ModeShortWithSpecial) =>
 	`/static-assets/img/modes/${mode}`;
 export const stageImageUrl = (stageId: StageId) =>
 	`/static-assets/img/stages/${stageId}`;
+export const stageBannerImageUrl = (stageId: StageId) =>
+	`/static-assets/img/stage-banners/${stageId}.avif`;
 export const tierImageUrl = (tier: TierName | "CALCULATING") =>
 	`/static-assets/img/tiers/${tier.toLowerCase()}`;
 export const controllerImageUrl = (controller: string) =>
@@ -550,3 +552,10 @@ export const mySlugify = (name: string) => {
 export const isCustomUrl = (value: string) => {
 	return Number.isNaN(Number(value));
 };
+
+export function vodUrl(vod: {
+	platformVideoId: string;
+	timestampSeconds: number;
+}) {
+	return `https://www.twitch.tv/videos/${vod.platformVideoId}?t=${vod.timestampSeconds}s`;
+}

@@ -129,7 +129,12 @@ export default function TournamentRegisterPage() {
 											minute: "numeric",
 											hour: "numeric",
 											day: "numeric",
-											month: "long",
+											month: "numeric",
+											year:
+												tournament.ctx.startTime.getFullYear() !==
+												new Date().getFullYear()
+													? "2-digit"
+													: undefined,
 										}}
 									/>
 								) : null}
@@ -483,13 +488,6 @@ function RegistrationProgress({
 						canCheckIn={
 							steps.filter((step) => step.status === "incomplete").length === 1
 						}
-						status={
-							tournament.regularCheckInIsOpen
-								? "OPEN"
-								: tournament.regularCheckInHasEnded
-									? "OVER"
-									: "UPCOMING"
-						}
 						startDate={tournament.regularCheckInStartsAt}
 						endDate={tournament.regularCheckInEndsAt}
 						checkedIn={checkedIn}
@@ -510,13 +508,11 @@ function RegistrationProgress({
 }
 
 function CheckIn({
-	status,
 	canCheckIn,
 	startDate,
 	endDate,
 	checkedIn,
 }: {
-	status: "OVER" | "OPEN" | "UPCOMING";
 	canCheckIn: boolean;
 	startDate: Date;
 	endDate: Date;
@@ -525,12 +521,14 @@ function CheckIn({
 	const { t } = useTranslation(["tournament"]);
 	const isHydrated = useHydrated();
 	const fetcher = useFetcher();
-	const { formatTime } = useTimeFormat();
+	const { formatDate } = useTimeFormat();
 
-	useAutoRerender();
+	const now = useAutoRerender();
+	const status: "OVER" | "OPEN" | "UPCOMING" =
+		now > endDate ? "OVER" : now >= startDate ? "OPEN" : "UPCOMING";
 
 	const checkInStartsString = isHydrated
-		? formatTime(startDate, {
+		? formatDate(startDate, {
 				minute: "numeric",
 				hour: "numeric",
 				day: "2-digit",
@@ -539,7 +537,7 @@ function CheckIn({
 		: "";
 
 	const checkInEndsString = isHydrated
-		? formatTime(endDate, {
+		? formatDate(endDate, {
 				minute: "numeric",
 				hour: "numeric",
 				day: "2-digit",
@@ -1162,7 +1160,7 @@ function DeleteMember({ members }: { members: TournamentDataTeam["members"] }) {
 			<div className="stack md horizontal">
 				<select name="userId" id={id}>
 					{members
-						.filter((member) => !member.isOwner)
+						.filter((member) => member.role !== "OWNER")
 						.map((member) => (
 							<option key={member.userId} value={member.userId}>
 								{member.username}
@@ -1381,15 +1379,12 @@ function TOPickedMapPoolInfo() {
 		<Section title={t("calendar:forms.mapPool")}>
 			<div>
 				<MapPoolStages mapPool={mapPool} />
-				<LinkButton
-					className="mt-4"
-					to={mapsPageWithMapPool(mapPool)}
-					variant="outlined"
-					size="small"
-				>
-					<Image alt="" path={navIconUrl("maps")} width={22} height={22} />
-					{t("calendar:createMapList")}
-				</LinkButton>
+				<div className="stack items-center mt-4">
+					<LinkButton to={mapsPageWithMapPool(mapPool)} variant="outlined">
+						<Image alt="" path={navIconUrl("maps")} width={22} height={22} />
+						{t("calendar:createMapList")}
+					</LinkButton>
+				</div>
 			</div>
 		</Section>
 	);

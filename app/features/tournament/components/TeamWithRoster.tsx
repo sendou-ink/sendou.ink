@@ -73,10 +73,10 @@ export function TeamWithRoster({
 
 						return (
 							<li key={member.userId} className={styles.teamMemberRow}>
-								{member.isOwner ? (
+								{member.role === "OWNER" ? (
 									<span className={`${styles.teamMemberNameRole}`}>C</span>
 								) : null}
-								{isSub && !member.isOwner ? (
+								{isSub && member.role !== "OWNER" ? (
 									<span
 										className={`${styles.teamMemberNameRole} ${styles.teamMemberNameRoleSub}`}
 									>

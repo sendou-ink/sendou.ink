@@ -23,22 +23,35 @@ import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { Catcher } from "~/components/Catcher";
 import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { Image } from "~/components/Image";
 import { InfoPopover } from "~/components/InfoPopover";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Table } from "~/components/Table";
 import type { SeedingSnapshot } from "~/db/tables";
+import * as AbDivisions from "~/features/tournament-bracket/core/AbDivisions";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import invariant from "~/utils/invariant";
 import { navIconUrl, userResultsPage } from "~/utils/urls";
 import { ordinalToRoundedSp } from "../../mmr/mmr-utils";
 import { action } from "../actions/to.$id.seeds.server";
 import { loader } from "../loaders/to.$id.seeds.server";
+import { TOURNAMENT } from "../tournament-constants";
 import { useTournament } from "./to.$id";
 import styles from "./to.$id.seeds.module.css";
 
 export { action, loader };
+
+const AB_DIVISION_RADIO_OPTIONS = [
+	{ value: "unassigned", label: "Unassigned" },
+	{ value: "0", label: "A" },
+	{ value: "1", label: "B" },
+] as const;
 
 export default function TournamentSeedsPage() {
 	const tournament = useTournament();
@@ -160,6 +173,16 @@ export default function TournamentSeedsPage() {
 						.map((team) => team.startingBracketIdx ?? 0)
 						.join()}
 				/>
+			) : null}
+			{hasAbDivisionsStartingBracket(tournament) ? (
+				<>
+					<AbDivisionsDialog
+						key={tournament.ctx.teams
+							.map((team) => team.abDivision ?? -1)
+							.join()}
+					/>
+					<AbDivisionImbalanceWarning />
+				</>
 			) : null}
 			<ul className={styles.teamsList}>
 				<li className={styles.headerRow}>
@@ -422,6 +445,183 @@ function StartingBracketDialog() {
 						_action="UPDATE_STARTING_BRACKETS"
 						size="big"
 						testId="set-starting-brackets-submit-button"
+					>
+						Save
+					</SubmitButton>
+				</fetcher.Form>
+			</SendouDialog>
+		</div>
+	);
+}
+
+function hasAbDivisionsStartingBracket(tournament: Tournament) {
+	return tournament.ctx.settings.bracketProgression.some(
+		(bracket) => !bracket.sources && bracket.settings?.hasAbDivisions,
+	);
+}
+
+function AbDivisionImbalanceWarning() {
+	const tournament = useTournament();
+
+	const warnings = tournament.ctx.settings.bracketProgression
+		.map((bracket, bracketIdx) => {
+			if (bracket.sources || !bracket.settings?.hasAbDivisions) return null;
+
+			const bracketTeams = tournament.isMultiStartingBracket
+				? tournament.ctx.teams.filter(
+						(team) => (team.startingBracketIdx ?? 0) === bracketIdx,
+					)
+				: tournament.ctx.teams;
+			const checkedInTeams = bracketTeams.filter(
+				(team) => team.checkIns.length > 0,
+			);
+
+			const { a, b } = AbDivisions.countByDivision(checkedInTeams);
+			const diff = Math.abs(a - b);
+
+			const teamsPerGroup =
+				bracket.settings.teamsPerGroup ??
+				TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
+			const groupCount = Math.max(
+				1,
+				Math.ceil(checkedInTeams.length / teamsPerGroup),
+			);
+
+			const tooImbalanced = diff > 1;
+			const unevenWithMultipleGroups = diff === 1 && groupCount > 1;
+			if (!tooImbalanced && !unevenWithMultipleGroups) return null;
+
+			const prefix = tournament.isMultiStartingBracket
+				? `${bracket.name}: `
+				: "";
+			const reason = tooImbalanced
+				? "counts can differ by at most 1 to start bracket"
+				: "uneven A/B is only allowed with a single group";
+
+			return `${prefix}${a} checked-in A teams, ${b} checked-in B teams — ${reason}.`;
+		})
+		.filter((warning): warning is string => warning !== null);
+
+	if (warnings.length === 0) return null;
+
+	return (
+		<Alert variation="WARNING">
+			<div
+				data-testid="ab-divisions-imbalance-warning"
+				className="stack xs text-xs"
+			>
+				{warnings.map((warning) => (
+					<div key={warning}>{warning}</div>
+				))}
+			</div>
+		</Alert>
+	);
+}
+
+type AbDivisionValue = 0 | 1 | null;
+
+function AbDivisionsDialog() {
+	const fetcher = useFetcher();
+	const tournament = useTournament();
+
+	const [isOpen, setIsOpen] = React.useState(false);
+	const [teamAbDivisions, setTeamAbDivisions] = React.useState<
+		{ tournamentTeamId: number; abDivision: AbDivisionValue }[]
+	>(
+		tournament.ctx.teams.map((team) => ({
+			tournamentTeamId: team.id,
+			abDivision:
+				team.abDivision === 0 || team.abDivision === 1 ? team.abDivision : null,
+		})),
+	);
+
+	const counts = AbDivisions.countByDivision(teamAbDivisions);
+
+	return (
+		<div>
+			<SendouButton
+				size="small"
+				onPress={() => setIsOpen(true)}
+				data-testid="set-ab-divisions"
+			>
+				Set A/B divisions
+			</SendouButton>
+			<SendouDialog
+				heading="Setting A/B divisions"
+				isOpen={isOpen}
+				onClose={() => setIsOpen(false)}
+				isFullScreen
+			>
+				<fetcher.Form className="stack lg items-center" method="post">
+					<div className="stack horizontal sm text-xs">
+						<span>A: {counts.a}</span>
+						<span>B: {counts.b}</span>
+						<span>Unassigned: {counts.unassigned}</span>
+					</div>
+					<input type="hidden" name="_action" value="UPDATE_AB_DIVISIONS" />
+					<input
+						type="hidden"
+						name="abDivisions"
+						value={JSON.stringify(teamAbDivisions)}
+					/>
+
+					<Table>
+						<thead>
+							<tr>
+								<th>Team</th>
+								<th>Division</th>
+							</tr>
+						</thead>
+						<tbody>
+							{tournament.ctx.teams.map((team) => {
+								const { abDivision } = teamAbDivisions.find(
+									({ tournamentTeamId }) => tournamentTeamId === team.id,
+								)!;
+
+								return (
+									<tr key={team.id}>
+										<td>{team.name}</td>
+										<td data-testid="ab-division-radio-group">
+											<SendouChipRadioGroup>
+												{AB_DIVISION_RADIO_OPTIONS.map(({ value, label }) => (
+													<SendouChipRadio
+														key={value}
+														name={`ab-division-${team.id}`}
+														value={value}
+														checked={
+															(abDivision === null
+																? "unassigned"
+																: String(abDivision)) === value
+														}
+														onChange={(rawValue) => {
+															const newDivision: AbDivisionValue =
+																rawValue === "unassigned"
+																	? null
+																	: (Number(rawValue) as 0 | 1);
+															setTeamAbDivisions((teamAbDivisions) =>
+																teamAbDivisions.map((t) =>
+																	t.tournamentTeamId === team.id
+																		? { ...t, abDivision: newDivision }
+																		: t,
+																),
+															);
+														}}
+													>
+														{label}
+													</SendouChipRadio>
+												))}
+											</SendouChipRadioGroup>
+										</td>
+									</tr>
+								);
+							})}
+						</tbody>
+					</Table>
+					<SubmitButton
+						state={fetcher.state}
+						_action="UPDATE_AB_DIVISIONS"
+						size="big"
+						testId="set-ab-divisions-submit-button"
 					>
 						Save
 					</SubmitButton>

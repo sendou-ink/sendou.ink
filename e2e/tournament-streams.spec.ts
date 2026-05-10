@@ -1,4 +1,8 @@
-import type { Page } from "@playwright/test";
+import {
+	tournamentAdminPage,
+	tournamentBracketsPage,
+	tournamentStreamsPage,
+} from "~/utils/urls";
 import {
 	expect,
 	impersonate,
@@ -7,49 +11,13 @@ import {
 	startBracket,
 	submit,
 	test,
-} from "~/utils/playwright";
+} from "./helpers/playwright";
 import {
-	tournamentAdminPage,
-	tournamentBracketsPage,
-	tournamentStreamsPage,
-} from "~/utils/urls";
-
-const navigateToMatch = async (page: Page, matchId: number) => {
-	await expect(async () => {
-		await page.locator(`[data-match-id="${matchId}"]`).click();
-		await expect(page.getByTestId("match-header")).toBeVisible();
-	}).toPass();
-};
-
-const selectRosterIfNeeded = async (page: Page, teamIndex: 0 | 1) => {
-	const position = teamIndex === 0 ? "first" : "last";
-	const checkbox = page.getByTestId("player-checkbox-0")[position]();
-
-	if ((await checkbox.count()) > 0 && !(await checkbox.isDisabled())) {
-		await page.getByTestId("player-checkbox-0")[position]().click();
-		await page.getByTestId("player-checkbox-1")[position]().click();
-		await page.getByTestId("player-checkbox-2")[position]().click();
-		await page.getByTestId("player-checkbox-3")[position]().click();
-		await submit(page, `save-active-roster-button-${teamIndex}`);
-		await expect(
-			page.getByTestId("player-checkbox-0")[position](),
-		).toBeDisabled();
-	}
-};
-
-const reportPartialScore = async (page: Page) => {
-	await page.getByTestId("actions-tab").click();
-	await selectRosterIfNeeded(page, 0);
-	await selectRosterIfNeeded(page, 1);
-	await page.getByTestId("winner-radio-1").click();
-	await submit(page, "report-score-button");
-	await expect(page.getByText("1-0")).toBeVisible();
-};
-
-const backToBracket = async (page: Page) => {
-	await page.getByTestId("back-to-bracket-button").click();
-	await expect(page.getByTestId("brackets-viewer")).toBeVisible();
-};
+	backToBracket,
+	goToTab,
+	navigateToMatch,
+	reportResult,
+} from "./helpers/tournament-match";
 
 test.describe("Tournament streams", () => {
 	test("can set cast twitch accounts in admin", async ({ page }) => {
@@ -95,7 +63,8 @@ test.describe("Tournament streams", () => {
 
 		await navigateToMatch(page, matchId);
 		// Report partial score to set startedAt (match becomes "in progress")
-		await reportPartialScore(page);
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 1, setEnds: false });
 		await backToBracket(page);
 
 		// The LIVE button should be visible since team 102 members are streaming
@@ -158,11 +127,12 @@ test.describe("Tournament streams", () => {
 
 		// Navigate to match and start it
 		await navigateToMatch(page, matchId);
-		await reportPartialScore(page);
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 1, setEnds: false });
 
-		// Set match as casted
-		await page.getByTestId("cast-info-select").selectOption("test_cast_stream");
-		await submit(page, "cast-info-submit-button");
+		// Set match as casted via chip radio
+		await goToTab(page, "admin");
+		await page.locator('label[for$="-test_cast_stream"]').click();
 		await backToBracket(page);
 
 		// Verify LIVE button appears (multiple may exist from player streams)

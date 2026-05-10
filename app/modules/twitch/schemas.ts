@@ -30,5 +30,33 @@ export const tokenResponseSchema = z.object({
 	token_type: z.string(),
 });
 
+export const usersSchema = z.object({
+	data: z.array(
+		z.object({
+			id: z.string(),
+			login: z.string(),
+			display_name: z.string(),
+		}),
+	),
+});
+
+export const videosSchema = z.object({
+	data: z.array(
+		z.object({
+			id: z.string(),
+			user_id: z.string(),
+			user_login: z.string(),
+			title: z.string(),
+			created_at: z.string(),
+			duration: z.string(),
+			view_count: z.number(),
+			type: z.string(),
+		}),
+	),
+	pagination: z.object({ cursor: z.string().nullish() }),
+});
+
 export type StreamsResponse = z.infer<typeof streamsSchema>;
 export type RawStream = Unpacked<z.infer<typeof streamsSchema>["data"]>;
+export type UsersResponse = z.infer<typeof usersSchema>;
+export type RawVideo = Unpacked<z.infer<typeof videosSchema>["data"]>;

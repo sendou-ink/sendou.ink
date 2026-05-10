@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { requireNotBannedByOrganization } from "~/features/tournament/tournament-utils.server";
 import {
@@ -16,6 +17,7 @@ import { idObject } from "~/utils/zod";
 import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
 import { lookingSchema } from "../tournament-lfg-schemas";
 import { survivingTeamId } from "../tournament-lfg-utils";
+import { setPickupChatMetadata } from "../tournament-lfg-utils.server";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const user = requireUser();
@@ -61,7 +63,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			if (team) {
 				const member = team.members.find((m) => m.userId === user.id);
-				const canManageTeam = member?.isOwner || member?.role === "MANAGER";
+				const canManageTeam =
+					member?.role === "OWNER" || member?.role === "MANAGER";
 				errorToastIfFalsy(
 					canManageTeam,
 					"Only team owners and managers can join the queue",
@@ -71,7 +74,18 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					team.members.length < tournament.maxMembersPerTeam,
 					"Team is already at max capacity",
 				);
-				await TournamentLFGRepository.startLooking(team.id);
+				const pickup = await TournamentLFGRepository.startLooking(team.id);
+				if (pickup) {
+					setPickupChatMetadata({
+						team: pickup,
+						tournament: {
+							id: tournamentId,
+							name: tournament.ctx.name,
+							logoUrl: tournament.ctx.logoUrl,
+							startTime: tournament.ctx.startTime,
+						},
+					});
+				}
 			} else {
 				await TournamentLFGRepository.createPlaceholderTeam({
 					tournamentId,
@@ -180,11 +194,27 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				user,
 			});
 
-			await TournamentLFGRepository.mergeTeams({
+			const mergeResult = await TournamentLFGRepository.mergeTeams({
 				survivingTeamId: surviving,
 				otherTeamId: otherGroup.id,
 				maxGroupSize: tournament.maxMembersPerTeam,
 			});
+
+			if (mergeResult.removedChatCode) {
+				ChatSystemMessage.removeRoom(mergeResult.removedChatCode);
+			}
+
+			if (mergeResult.survivor) {
+				setPickupChatMetadata({
+					team: mergeResult.survivor,
+					tournament: {
+						id: tournamentId,
+						name: tournament.ctx.name,
+						logoUrl: tournament.ctx.logoUrl,
+						startTime: tournament.ctx.startTime,
+					},
+				});
+			}
 
 			notify({
 				userIds: theirGroup.members.map((m) => m.id),
@@ -245,6 +275,23 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		case "LEAVE_GROUP": {
 			await TournamentLFGRepository.leaveLfg({
 				userId: user.id,
+				tournamentId,
+			});
+
+			break;
+		}
+		case "DELETE_GROUP": {
+			const tournament = await tournamentFromDBCached({
+				tournamentId,
+				user,
+			});
+			errorToastIfFalsy(
+				tournament.isOrganizer(user),
+				"Only tournament organizers can remove other groups",
+			);
+
+			await TournamentLFGRepository.leaveLfg({
+				userId: data.userId,
 				tournamentId,
 			});
 

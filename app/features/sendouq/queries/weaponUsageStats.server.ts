@@ -23,11 +23,13 @@ const stm = sql.prepare(/* sql */ `
     ) as "weaponUserGroupId"
   from "GroupMember"
   left join "Group" on "Group"."id" = "GroupMember"."groupId"
-  inner join "GroupMatch" on 
-    "GroupMatch"."alphaGroupId" = "Group"."id" 
+  inner join "GroupMatch" on
+    "GroupMatch"."alphaGroupId" = "Group"."id"
       or "GroupMatch"."bravoGroupId" = "Group"."id"
   left join "GroupMatchMap" on "GroupMatchMap"."matchId" = "GroupMatch"."id"
-  inner join "ReportedWeapon" on "ReportedWeapon"."groupMatchMapId" = "GroupMatchMap"."id"
+  inner join "ReportedWeapon"
+    on "ReportedWeapon"."groupMatchId" = "GroupMatch"."id"
+      and "ReportedWeapon"."mapIndex" = "GroupMatchMap"."index"
   where
     "GroupMember"."userId" = @userId
     and "GroupMatch"."createdAt" between @starts and @ends

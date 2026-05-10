@@ -1,10 +1,12 @@
 import cachified from "@epic-web/cachified";
+import * as R from "remeda";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import {
 	getBracketProgressionLabel,
 	tournamentIsRanked,
 } from "~/features/tournament/tournament-utils";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import {
@@ -183,16 +185,25 @@ async function cachedTournaments() {
 }
 
 function deleteExtraResults(tournaments: ShowcaseCalendarEvent[]) {
+	const threeDaysAgo = databaseTimestampThreeDaysAgo();
 	const nonResults = tournaments.filter(
-		(tournament) => !tournament.firstPlacer,
+		(tournament) =>
+			tournament.firstPlacers.length === 0 &&
+			!tournament.isFinalized &&
+			tournament.startTime > threeDaysAgo,
 	);
 
 	const rankedResults = tournaments
-		.filter((tournament) => tournament.firstPlacer && tournament.isRanked)
-		.sort((a, b) => b.teamsCount - a.teamsCount);
+		.filter(
+			(tournament) => tournament.firstPlacers.length > 0 && tournament.isRanked,
+		)
+		.sort((a, b) => showcaseScore(b) - showcaseScore(a));
 	const nonRankedResults = tournaments
-		.filter((tournament) => tournament.firstPlacer && !tournament.isRanked)
-		.sort((a, b) => b.teamsCount - a.teamsCount);
+		.filter(
+			(tournament) =>
+				tournament.firstPlacers.length > 0 && !tournament.isRanked,
+		)
+		.sort((a, b) => showcaseScore(b) - showcaseScore(a));
 
 	const rankedResultsToKeep = rankedResults.slice(0, 4);
 	// min 2, max 6 non ranked results
@@ -279,7 +290,7 @@ const MEMBERS_TO_SHOW = 5;
 function mapTournamentFromDB(
 	tournament: TournamentRepository.ForShowcase,
 ): ShowcaseCalendarEvent {
-	const highestDivWinners = resolveHighestDivisionWinners(tournament);
+	const firstPlacers = resolveFirstPlacers(tournament);
 
 	const tentativeTier =
 		tournament.tier === null &&
@@ -312,43 +323,39 @@ function mapTournamentFromDB(
 		tier: tournament.tier ?? null,
 		tentativeTier,
 		hidden: Boolean(tournament.hidden),
+		isFinalized: Boolean(tournament.isFinalized),
 		minMembersPerTeam: tournament.settings.minMembersPerTeam ?? 4,
 		modes: null,
-		firstPlacer:
-			highestDivWinners.length > 0
-				? {
-						teamName: highestDivWinners[0].teamName,
-						logoUrl:
-							highestDivWinners[0].teamLogoUrl ??
-							highestDivWinners[0].pickupAvatarUrl,
-						div: highestDivWinners[0].div,
-						members: highestDivWinners
-							.slice(0, MEMBERS_TO_SHOW)
-							.map((firstPlacer) => ({
-								customUrl: firstPlacer.customUrl,
-								discordAvatar: firstPlacer.discordAvatar,
-								discordId: firstPlacer.discordId,
-								id: firstPlacer.id,
-								username: firstPlacer.username,
-								country: firstPlacer.country,
-							})),
-						notShownMembersCount:
-							highestDivWinners.length > MEMBERS_TO_SHOW
-								? highestDivWinners.length - MEMBERS_TO_SHOW
-								: 0,
-					}
-				: null,
+		hasVods: (tournament.vodCount ?? 0) > 0,
+		firstPlacers,
 	};
 }
 
-function resolveHighestDivisionWinners(
+type FirstPlacerRow = TournamentRepository.ForShowcase["firstPlacers"][number];
+
+function resolveFirstPlacers(
 	tournament: TournamentRepository.ForShowcase,
-) {
+): ShowcaseCalendarEvent["firstPlacers"] {
 	if (tournament.firstPlacers.length === 0) {
 		return [];
 	}
 
-	// not a "many starting brackets" tournament
+	if (
+		Progression.hasAbDivisionsFinals(tournament.settings.bracketProgression)
+	) {
+		const byDiv = R.groupBy(tournament.firstPlacers, (p) => p.div ?? "");
+		return Object.values(byDiv)
+			.map((rows) => buildFirstPlacerEntry(rows, { withMembers: false }))
+			.sort((a, b) => (a.div ?? "").localeCompare(b.div ?? ""));
+	}
+
+	const winnerRows = winnersOfHighestDivision(tournament);
+	return [buildFirstPlacerEntry(winnerRows, { withMembers: true })];
+}
+
+function winnersOfHighestDivision(
+	tournament: TournamentRepository.ForShowcase,
+): FirstPlacerRow[] {
 	if (tournament.firstPlacers.every((p) => p.div === null)) {
 		return tournament.firstPlacers;
 	}
@@ -357,8 +364,6 @@ function resolveHighestDivisionWinners(
 		0,
 		tournament.settings.bracketProgression,
 	);
-
-	// Filter to only include winners from the highest division
 	const highestDivWinners = tournament.firstPlacers.filter(
 		(p) => p.div === highestDivName,
 	);
@@ -366,6 +371,34 @@ function resolveHighestDivisionWinners(
 	return highestDivWinners.length > 0
 		? highestDivWinners
 		: tournament.firstPlacers;
+}
+
+function buildFirstPlacerEntry(
+	rows: FirstPlacerRow[],
+	{ withMembers }: { withMembers: boolean },
+): ShowcaseCalendarEvent["firstPlacers"][number] {
+	const first = rows[0];
+	const members = withMembers
+		? rows.slice(0, MEMBERS_TO_SHOW).map((row) => ({
+				customUrl: row.customUrl,
+				discordAvatar: row.discordAvatar,
+				discordId: row.discordId,
+				id: row.id,
+				username: row.username,
+				country: row.country,
+			}))
+		: [];
+
+	return {
+		teamName: first.teamName,
+		logoUrl: first.teamLogoUrl ?? first.pickupAvatarUrl,
+		div: first.div,
+		members,
+		notShownMembersCount:
+			withMembers && rows.length > MEMBERS_TO_SHOW
+				? rows.length - MEMBERS_TO_SHOW
+				: 0,
+	};
 }
 
 function databaseTimestampWeekFromNow() {
@@ -376,10 +409,28 @@ function databaseTimestampWeekFromNow() {
 	return dateToDatabaseTimestamp(now);
 }
 
+function databaseTimestampThreeDaysAgo() {
+	const now = new Date();
+
+	now.setDate(now.getDate() - 3);
+
+	return dateToDatabaseTimestamp(now);
+}
+
 function databaseTimestampSixHoursAgo() {
 	const now = new Date();
 
 	now.setHours(now.getHours() - 6);
 
 	return dateToDatabaseTimestamp(now);
+}
+
+const TIER_BONUS_PER_STEP = 5;
+function showcaseScore(tournament: ShowcaseCalendarEvent): number {
+	const tierBonus =
+		typeof tournament.tier === "number"
+			? (10 - tournament.tier) * TIER_BONUS_PER_STEP
+			: 0;
+
+	return tournament.teamsCount + tierBonus;
 }

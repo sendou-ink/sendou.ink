@@ -1,5 +1,13 @@
 import { sub } from "date-fns";
-import { Check, Eye, EyeOff, Map as MapIcon, Stamp } from "lucide-react";
+import {
+	Check,
+	Eye,
+	EyeOff,
+	Map as MapIcon,
+	ShieldMinus,
+	ShieldPlus,
+	Stamp,
+} from "lucide-react";
 import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
@@ -29,17 +37,20 @@ import {
 } from "../../tournament/routes/to.$id";
 import { action } from "../actions/to.$id.brackets.server";
 import { Bracket } from "../components/Bracket";
+import { useBracketSpoilerCensor } from "../components/Bracket/useBracketSpoilerCensor";
 import { BracketMapListDialog } from "../components/BracketMapListDialog";
 import { TournamentTeamActions } from "../components/TournamentTeamActions";
+import * as AbDivisions from "../core/AbDivisions";
 import type { Bracket as BracketType } from "../core/Bracket";
 import * as PreparedMaps from "../core/PreparedMaps";
+import type { Tournament } from "../core/Tournament";
 
 export { action };
 
 import styles from "../tournament-bracket.module.css";
 
 export default function TournamentBracketsPage() {
-	const { t } = useTranslation(["tournament"]);
+	const { t } = useTranslation(["common", "tournament"]);
 	const { formatDateTime, formatTime } = useTimeFormat();
 	const visibility = useVisibilityChange();
 	const { revalidate } = useRevalidator();
@@ -83,6 +94,13 @@ export default function TournamentBracketsPage() {
 		tournament.hasStarted &&
 		tournament.autonomousSubs &&
 		teamProgressStatus?.type !== "THANKS_FOR_PLAYING";
+
+	const {
+		censored,
+		canToggle,
+		reveal: revealSpoiler,
+		hide: hideSpoiler,
+	} = useBracketSpoilerCensor();
 
 	const showPrepareMapsButton =
 		tournament.isOrganizer(user) &&
@@ -165,9 +183,23 @@ export default function TournamentBracketsPage() {
 		return null;
 	}
 
+	const abDivisionsStartError = getAbDivisionsStartError(bracket, tournament);
+
 	return (
 		<div>
 			<Outlet context={ctx} />
+			{bracket.preview &&
+			tournament.isOrganizer(user) &&
+			tournament.regularCheckInHasEnded &&
+			abDivisionsStartError ? (
+				<div className="stack items-center mb-4">
+					<Alert variation="WARNING">
+						<div data-testid="ab-divisions-imbalance-alert">
+							{abDivisionsStartError}
+						</div>
+					</Alert>
+				</div>
+			) : null}
 			{bracket.preview &&
 			bracket.enoughTeams &&
 			tournament.isOrganizer(user) &&
@@ -185,7 +217,11 @@ export default function TournamentBracketsPage() {
 								tournament.isDraft ? (
 									<DraftBracketStartPopover />
 								) : (
-									<BracketStarter bracket={bracket} bracketIdx={bracketIdx} />
+									<BracketStarter
+										bracket={bracket}
+										bracketIdx={bracketIdx}
+										isDisabled={Boolean(abDivisionsStartError)}
+									/>
 								)
 							) : null}
 						</Alert>
@@ -221,6 +257,15 @@ export default function TournamentBracketsPage() {
 						{t("tournament:actions.finalize.button")}
 					</LinkButton>
 				) : null}
+				{censored ? (
+					<SendouButton onPress={revealSpoiler} icon={<ShieldMinus />}>
+						{t("common:spoilerFree.showResults")}
+					</SendouButton>
+				) : canToggle ? (
+					<SendouButton onPress={hideSpoiler} icon={<ShieldPlus />}>
+						{t("common:spoilerFree.hideResults")}
+					</SendouButton>
+				) : null}
 				{showPrepareMapsButton ? (
 					// Error Boundary because preparing maps is optional, so no need to make the whole page inaccessible if it fails
 					<ErrorBoundary fallback={null}>
@@ -244,12 +289,41 @@ export default function TournamentBracketsPage() {
 	);
 }
 
+function getAbDivisionsStartError(
+	bracket: BracketType,
+	tournament: Tournament,
+): string | null {
+	if (
+		bracket.type !== "round_robin" ||
+		!bracket.settings?.hasAbDivisions ||
+		!bracket.isStartingBracket ||
+		!bracket.seeding ||
+		bracket.seeding.length === 0
+	) {
+		return null;
+	}
+
+	const groupCount = new Set(bracket.data.round.map((r) => r.group_id)).size;
+	const abDivisionsBySeedOrder = bracket.seeding.map(
+		(teamId) => tournament.teamById(teamId)?.abDivision,
+	);
+
+	const result = AbDivisions.validate({
+		abDivisionsBySeedOrder,
+		groupCount,
+	});
+
+	return result.isErr() ? result.error : null;
+}
+
 function BracketStarter({
 	bracket,
 	bracketIdx,
+	isDisabled,
 }: {
 	bracket: BracketType;
 	bracketIdx: number;
+	isDisabled?: boolean;
 }) {
 	const [dialogOpen, setDialogOpen] = React.useState(false);
 	const isHydrated = useHydrated();
@@ -272,6 +346,7 @@ function BracketStarter({
 				size="small"
 				data-testid="finalize-bracket-button"
 				onPress={() => setDialogOpen(true)}
+				isDisabled={isDisabled}
 			>
 				Start the bracket
 			</SendouButton>

@@ -1,9 +1,9 @@
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData, useSearchParams } from "react-router";
-import { SendouButton } from "~/components/elements/Button";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
+import { Pagination } from "~/components/Pagination";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
@@ -13,7 +13,7 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, VODS_PAGE } from "~/utils/urls";
 import { VodListing } from "../components/VodListing";
 import { loader } from "../loaders/vods.server";
-import { VODS_PAGE_BATCH_SIZE, videoMatchTypes } from "../vods-constants";
+import { videoMatchTypes } from "../vods-constants";
 import styles from "./vods.module.css";
 
 export { loader };
@@ -38,15 +38,23 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 };
 
 export default function VodsSearchPage() {
-	const { t } = useTranslation(["vods", "common"]);
+	const { t } = useTranslation(["vods"]);
 	const data = useLoaderData<typeof loader>();
 	const [, setSearchParams] = useSearchParams();
 
 	const addToSearchParams = (key: string, value: string | number) => {
-		setSearchParams((params) => ({
-			...Object.fromEntries(params.entries()),
-			[key]: String(value),
-		}));
+		setSearchParams((params) => {
+			params.set(key, String(value));
+			params.delete("page");
+			return params;
+		});
+	};
+
+	const setPage = (page: number) => {
+		setSearchParams((params) => {
+			params.set("page", String(page));
+			return params;
+		});
 	};
 
 	return (
@@ -59,17 +67,15 @@ export default function VodsSearchPage() {
 							<VodListing key={vod.id} vod={vod} />
 						))}
 					</div>
-					{data.hasMoreVods && (
-						<SendouButton
-							className="m-0-auto"
-							size="small"
-							onPress={() =>
-								addToSearchParams("limit", data.limit + VODS_PAGE_BATCH_SIZE)
-							}
-						>
-							{t("common:actions.loadMore")}
-						</SendouButton>
-					)}
+					{data.pagesCount > 1 ? (
+						<Pagination
+							currentPage={data.currentPage}
+							pagesCount={data.pagesCount}
+							nextPage={() => setPage(data.currentPage + 1)}
+							previousPage={() => setPage(data.currentPage - 1)}
+							setPage={setPage}
+						/>
+					) : null}
 				</>
 			) : (
 				<div className="text-lg text-lighter">{t("vods:noVods")}</div>

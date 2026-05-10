@@ -106,4 +106,8 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-0-5);
+
+	& img {
+		margin-left: var(--s-1);
+	}
 }

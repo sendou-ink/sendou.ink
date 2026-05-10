@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { _action, modeShort, safeJSONParse, stageId } from "~/utils/zod";
+import { _action, id, modeShort, safeJSONParse, stageId } from "~/utils/zod";
 import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "./q-settings-constants";
 import {
 	updateVoiceChatSchema,
@@ -10,6 +10,10 @@ const preference = z.enum(["AVOID", "PREFER"]).optional();
 export const settingsActionSchema = z.union([
 	z.object({
 		_action: _action("UPDATE_MAP_MODE_PREFERENCES"),
+		teamId: z.preprocess(
+			(val) => (val === "" || val === undefined ? undefined : Number(val)),
+			id.optional(),
+		),
 		mapModePreferences: z.preprocess(
 			safeJSONParse,
 			z

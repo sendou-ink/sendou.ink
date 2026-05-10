@@ -1,3 +1,5 @@
+import { badgePage } from "~/utils/urls";
+import { NZAP_TEST_ID } from "../app/db/seed/constants";
 import {
 	expect,
 	impersonate,
@@ -5,9 +7,7 @@ import {
 	seed,
 	selectUser,
 	test,
-} from "~/utils/playwright";
-import { badgePage } from "~/utils/urls";
-import { NZAP_TEST_ID } from "../app/db/seed/constants";
+} from "./helpers/playwright";
 
 test.describe("Badges", () => {
 	test("adds a badge owner sending a notification", async ({ page }) => {

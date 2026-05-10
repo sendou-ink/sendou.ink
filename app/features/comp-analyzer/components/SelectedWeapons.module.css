@@ -8,6 +8,11 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
+	transition: opacity 0.2s;
+
+	&.isDragging {
+		opacity: 0.5;
+	}
 }
 
 .weaponImageContainer {
@@ -97,6 +102,28 @@
 
 	&:hover {
 		color: var(--color-error);
+	}
+}
+
+.dragHandle {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	background: none;
+	border: none;
+	font-size: var(--font-md);
+	line-height: 1;
+	color: var(--color-text-high);
+	cursor: grab;
+	user-select: none;
+	touch-action: none;
+	flex-shrink: 0;
+
+	&:active {
+		cursor: grabbing;
 	}
 }
 

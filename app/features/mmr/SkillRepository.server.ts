@@ -1,6 +1,37 @@
-import { sql } from "kysely";
+import { sql, type Transaction } from "kysely";
+import { ordinal } from "openskill";
 import { db } from "~/db/sql";
+import type { DB } from "~/db/tables";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "../leaderboards/leaderboards-constants";
+
+export async function addInitialSkill(
+	{
+		mu,
+		sigma,
+		season,
+		userId,
+	}: {
+		mu: number;
+		sigma: number;
+		season: number;
+		userId: number;
+	},
+	trx?: Transaction<DB>,
+) {
+	const executor = trx ?? db;
+
+	await executor
+		.insertInto("Skill")
+		.values({
+			mu,
+			sigma,
+			season,
+			ordinal: ordinal({ mu, sigma }),
+			userId,
+			matchesCount: 0,
+		})
+		.execute();
+}
 
 export async function seasonProgressionByUserId({
 	userId,
@@ -21,7 +52,7 @@ export async function seasonProgressionByUserId({
 		)
 		.select(({ fn }) => [
 			fn.max("Skill.ordinal").as("ordinal"),
-			sql<string>`date(coalesce("GroupMatch"."createdAt", "CalendarEventDate"."startTime"), 'unixepoch')`.as(
+			sql<string>`date(coalesce("Skill"."createdAt", "GroupMatch"."createdAt", "CalendarEventDate"."startTime"), 'unixepoch')`.as(
 				"date",
 			),
 		])

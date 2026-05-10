@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -57,7 +55,13 @@ async function main() {
 			internalName,
 			brand: gear.Brand,
 			translations: langDicts.map(([langCode, translations]) => {
-				const name = translations[categoryKey]?.[internalName];
+				const category = (
+					translations as unknown as Record<
+						string,
+						Record<string, string> | undefined
+					>
+				)[categoryKey];
+				const name = category?.[internalName];
 				invariant(name, `Missing translation for ${internalName}`);
 
 				return {

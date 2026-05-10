@@ -5,10 +5,15 @@ import { ZodError, type z } from "zod";
 import { ARTICLES_FOLDER_PATH } from "../articles-constants";
 import { articleDataSchema } from "../articles-schemas.server";
 
+const RESOLVED_ARTICLES_DIR = path.resolve(ARTICLES_FOLDER_PATH);
+
 export function articleBySlug(slug: string) {
+	const validFiles = fs.globSync("*.md", { cwd: RESOLVED_ARTICLES_DIR });
+	if (!validFiles.includes(`${slug}.md`)) return null;
+
 	try {
 		const rawMarkdown = fs.readFileSync(
-			path.join(ARTICLES_FOLDER_PATH, `${slug}.md`),
+			path.join(RESOLVED_ARTICLES_DIR, `${slug}.md`),
 			"utf8",
 		);
 		const { content, data } = matter(rawMarkdown);
@@ -18,11 +23,6 @@ export function articleBySlug(slug: string) {
 		return {
 			content,
 			date,
-			dateString: date.toLocaleDateString("en-US", {
-				day: "2-digit",
-				month: "long",
-				year: "numeric",
-			}),
 			authors: normalizeAuthors(restParsed.author),
 			title: restParsed.title,
 		};

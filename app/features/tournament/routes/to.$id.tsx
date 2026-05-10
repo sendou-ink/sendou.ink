@@ -213,6 +213,7 @@ export function TournamentLayout() {
 							hasChildTournaments: data.hasChildTournaments,
 							friendCodes: data.friendCodes,
 							preparedMaps: data.preparedMaps,
+							vods: data.vods ?? [],
 						} satisfies TournamentContext
 					}
 				/>
@@ -229,6 +230,7 @@ type TournamentContext = {
 	friendCode?: string;
 	friendCodes?: TournamentLoaderData["friendCodes"];
 	preparedMaps: TournamentLoaderData["preparedMaps"];
+	vods: NonNullable<TournamentLoaderData["vods"]>;
 };
 
 export function useTournament() {
@@ -252,6 +254,10 @@ export function useTournamentFriendCodes() {
 
 export function useTournamentPreparedMaps() {
 	return useOutletContext<TournamentContext>().preparedMaps;
+}
+
+export function useTournamentVods() {
+	return useOutletContext<TournamentContext>().vods;
 }
 
 function useTournamentChatLabels(tournament: Tournament) {

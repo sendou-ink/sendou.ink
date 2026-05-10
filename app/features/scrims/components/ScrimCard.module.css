@@ -87,6 +87,14 @@
 	gap: var(--s-0-5);
 }
 
+.clampedText {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
 .expandButton {
 	background: none;
 	border: none;

@@ -18,10 +18,13 @@ export const USER = {
 	GAME_BADGES_SMALL_MAX: 4,
 };
 
+export const SPL2_JOIN_ORDER_CUTOFF = 13_589;
+
 export const IN_GAME_NAME_REGEXP = /^.{1,10}#[0-9a-z]{4,5}$/u;
 
 export const MATCHES_PER_SEASONS_PAGE = 8;
 export const RESULTS_PER_PAGE = 25;
+export const HIGHLIGHTS_RESULTS_MAX = 500;
 export const DEFAULT_BUILD_SORT = ["WEAPON_POOL", "UPDATED_AT"] as const;
 
 /**

@@ -45,11 +45,6 @@ export type Duel = [ParticipantSlot, ParticipantSlot];
 export type Side = "opponent1" | "opponent2";
 
 /**
- * The cumulated scores of the opponents in a match's child games.
- */
-export type Scores = { opponent1: number; opponent2: number };
-
-/**
  * Positional information about a round.
  */
 export type RoundPositionalInfo = {

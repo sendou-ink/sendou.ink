@@ -8,7 +8,7 @@ import { logger } from "../../../../utils/logger";
 import { tournamentTeamPage } from "../../../../utils/urls";
 import { useUser } from "../../../auth/core/user";
 import { TOURNAMENT } from "../../../tournament/tournament-constants";
-import type { Bracket } from "../../core/Bracket";
+import type { Bracket, Standing } from "../../core/Bracket";
 import * as Progression from "../../core/Progression";
 import * as Swiss from "../../core/Swiss";
 import styles from "./bracket.module.css";
@@ -58,6 +58,7 @@ export function PlacementsTable({
 					mapLosses: 0,
 					mapWins: 0,
 					points: 0,
+					koCount: 0,
 					setLosses: 0,
 					setWins: 0,
 					winsAgainstTied: 0,
@@ -75,9 +76,8 @@ export function PlacementsTable({
 			return a.placement - b.placement;
 		});
 
-	const destinationBracket = (placement: number) => {
+	const destinationBracket = (standing: Standing, placement: number) => {
 		if (bracket.type === "swiss" && bracket.settings?.advanceThreshold) {
-			const standing = standings[placement - 1];
 			const stats = standing.stats;
 			invariant(stats);
 
@@ -125,11 +125,83 @@ export function PlacementsTable({
 		);
 	})();
 
+	if (bracket.settings?.hasAbDivisions) {
+		const aStandings = standings.filter((s) => s.team.abDivision === 0);
+		const bStandings = standings.filter((s) => s.team.abDivision === 1);
+
+		if (aStandings.length === 0 && bStandings.length === 0) {
+			return null;
+		}
+
+		return (
+			<div className="stack lg">
+				{aStandings.length > 0 ? (
+					<StandingsTable
+						bracket={bracket}
+						standings={aStandings}
+						destinationBracket={destinationBracket}
+						possibleDestinationBrackets={possibleDestinationBrackets}
+						canEditDestination={canEditDestination}
+						allMatchesFinished={allMatchesFinished}
+					/>
+				) : null}
+				{bStandings.length > 0 ? (
+					<StandingsTable
+						bracket={bracket}
+						standings={bStandings}
+						destinationBracket={destinationBracket}
+						possibleDestinationBrackets={possibleDestinationBrackets}
+						canEditDestination={canEditDestination}
+						allMatchesFinished={allMatchesFinished}
+					/>
+				) : null}
+			</div>
+		);
+	}
+
+	if (standings.length === 0) {
+		return null;
+	}
+
+	return (
+		<StandingsTable
+			bracket={bracket}
+			standings={standings}
+			destinationBracket={destinationBracket}
+			possibleDestinationBrackets={possibleDestinationBrackets}
+			canEditDestination={canEditDestination}
+			allMatchesFinished={allMatchesFinished}
+		/>
+	);
+}
+
+function StandingsTable({
+	bracket,
+	standings,
+	destinationBracket,
+	possibleDestinationBrackets,
+	canEditDestination,
+	allMatchesFinished,
+}: {
+	bracket: Bracket;
+	standings: Standing[];
+	destinationBracket: (
+		standing: Standing,
+		placement: number,
+	) => Bracket | undefined;
+	possibleDestinationBrackets: Bracket[];
+	canEditDestination: boolean;
+	allMatchesFinished: boolean;
+}) {
 	let qualifiedRowRendered = false;
 	let eliminatedRowRendered = false;
 
 	return (
-		<table className={styles.rrPlacementsTable} cellSpacing={0}>
+		<table
+			className={styles.rrPlacementsTable}
+			cellSpacing={0}
+			data-testid="rr-standings-table"
+		>
 			<thead>
 				<tr>
 					<th>Team</th>
@@ -161,7 +233,7 @@ export function PlacementsTable({
 					) : null}
 					{bracket.type === "round_robin" ? (
 						<th>
-							<abbr title="Score summed up">Scr</abbr>
+							<abbr title="Number of maps knocked out">KOs</abbr>
 						</th>
 					) : null}
 					<th>Seed</th>
@@ -179,7 +251,7 @@ export function PlacementsTable({
 
 					const team = bracket.tournament.teamById(s.team.id);
 
-					const dest = destinationBracket(i + 1);
+					const dest = destinationBracket(s, i + 1);
 
 					const overridenDestination =
 						bracket.tournament.ctx.bracketProgressionOverrides.find(
@@ -290,7 +362,7 @@ export function PlacementsTable({
 								) : null}
 								{bracket.type === "round_robin" ? (
 									<td>
-										<span>{stats.points}</span>
+										<span>{stats.koCount ?? 0}</span>
 									</td>
 								) : null}
 								<td>{team?.seed}</td>
