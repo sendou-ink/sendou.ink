@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { LRUCache } from "lru-cache";
 import * as React from "react";
 import type { Tables } from "~/db/tables";
 import { useHydrated } from "~/hooks/useHydrated";
@@ -18,7 +19,7 @@ const dimensions = {
 	lg: 125,
 } as const;
 
-const identiconCache = new Map<string, string>();
+const identiconCache = new LRUCache<string, string>({ max: 500 });
 
 function hashString(str: string) {
 	let hash = 5381;
