@@ -11,7 +11,7 @@
 		"dev": "cross-env DB_PATH=db.sqlite3 pnpm run migrate up && pnpm run setup && react-router dev --host",
 		"dev:sentry": "NODE_OPTIONS='--import ./instrument.server.mjs' pnpm dev",
 		"dev:prod": "cross-env DB_PATH=db-prod.sqlite3 VITE_PROD_MODE=true react-router dev --host",
-		"start": "NODE_ENV=production NODE_OPTIONS='--import ./instrument.server.mjs' react-router-serve ./build/server/index.js",
+		"start": "pnpm run migrate up && NODE_ENV=production NODE_OPTIONS='--import ./instrument.server.mjs' react-router-serve ./build/server/index.js",
 		"migrate": "ley",
 		"migrate:prod": "cross-env DB_PATH=db-prod.sqlite3 pnpm run migrate up",
 		"check-translation-jsons": "node --experimental-strip-types scripts/check-translation-jsons.ts",
