@@ -5,15 +5,13 @@ import { Link } from "react-router";
 import type { GearType, Tables, UserWithPlusTier } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type { BuildWeaponWithTop500Info } from "~/features/builds/builds-types";
-import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import type {
 	Ability as AbilityType,
 	BuildAbilitiesTuple,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
 import { altWeaponIdToId } from "~/modules/in-game-lists/weapon-ids";
-import { databaseTimestampToDate } from "~/utils/dates";
 import { gearTypeToInitial } from "~/utils/strings";
 import {
 	analyzerPage,
@@ -55,8 +53,12 @@ interface BuildProps {
 export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 	const user = useUser();
 	const { t } = useTranslation(["weapons", "builds", "common", "game-misc"]);
-	const { formatDate } = useTimeFormat();
-	const isHydrated = useHydrated();
+	const { formatter: dateFormatter, className: dateClassName } =
+		useDateTimeFormat({
+			day: "numeric",
+			month: "numeric",
+			year: "numeric",
+		});
 
 	const {
 		id,
@@ -122,16 +124,8 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 								<Lock size={16} /> {t("common:build.private")}
 							</div>
 						) : null}
-						<time
-							className={clsx("whitespace-nowrap", { invisible: !isHydrated })}
-						>
-							{isHydrated
-								? formatDate(databaseTimestampToDate(updatedAt), {
-										day: "numeric",
-										month: "numeric",
-										year: "numeric",
-									})
-								: "t"}
+						<time className={clsx("whitespace-nowrap", dateClassName)}>
+							{dateFormatter.format(updatedAt)}
 						</time>
 					</div>
 				</div>
