@@ -293,6 +293,7 @@ type TournamentCastChannel = {
 };
 
 /** GET /api/tournament/{tournamentId}/streams */
+
 export type GetTournamentStreamsResponse = Array<
 	{
 		platform: "TWITCH";
