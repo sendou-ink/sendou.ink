@@ -183,7 +183,7 @@ function FriendsListSection() {
 							secondary
 							controlled
 							active={filter === value}
-							unstable_defaultShouldRevalidate={false}
+							defaultShouldRevalidate={false}
 						>
 							{viewLabels[value]}
 						</SubNavLink>

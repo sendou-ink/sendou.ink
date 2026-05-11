@@ -134,6 +134,4 @@ export const handleError: HandleErrorFunction = (error, { request }) => {
 	logger.error(error);
 };
 export default Sentry.wrapSentryHandleRequest(handleRequest);
-export const unstable_instrumentations = [
-	Sentry.createSentryServerInstrumentation(),
-];
+export const instrumentations = [Sentry.createSentryServerInstrumentation()];
