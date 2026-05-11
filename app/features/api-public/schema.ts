@@ -273,16 +273,24 @@ export interface GetCastedTournamentMatchesResponse {
 	 */
 	current: Array<{
 		matchId: number;
-		channel: TournamentStreamChannel;
+		channel: TournamentCastChannel;
 	}>;
 	/*
 	 * Matches that are locked to be casted.
 	 */
 	future: Array<{
 		matchId: number;
-		channel: TournamentStreamChannel;
+		channel: TournamentCastChannel;
 	}>;
 }
+
+type TournamentCastChannel = {
+	type: "TWITCH";
+	/**
+	 * @example "iplsplatoon"
+	 */
+	channelId: string;
+};
 
 /** GET /api/tournament/{tournamentId}/streams */
 export type GetTournamentStreamsResponse = Array<
@@ -292,14 +300,6 @@ export type GetTournamentStreamsResponse = Array<
 		viewerCount: number;
 	} & ({ type: "PLAYER"; userId: number } | { type: "CAST" })
 >;
-
-type TournamentStreamChannel = {
-	type: "TWITCH";
-	/**
-	 * @example "iplsplatoon"
-	 */
-	channelId: string;
-};
 
 /** GET /api/tournament-match/{matchId} */
 
