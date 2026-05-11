@@ -100,7 +100,7 @@ export function MatchPageProvider({
 			user,
 		}),
 		canReportWeapons:
-			isParticipant && !tournament.ctx.isFinalized && hasReportedMaps,
+			isParticipant && tournament.weaponReportingOpen && hasReportedMaps,
 		canJoin: data.canJoin,
 		hasCurrentMap: Boolean(currentMap),
 		hasMissingActiveRoster: teamsMissingActiveRoster.length > 0,

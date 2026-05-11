@@ -774,7 +774,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 				(p) => p.id === user.id,
 			);
 			errorToastIfFalsy(isMemberOfATeamInTheMatch, "Unauthorized");
-			errorToastIfFalsy(!tournament.ctx.isFinalized, "Tournament is finalized");
+			errorToastIfFalsy(
+				tournament.weaponReportingOpen,
+				"Weapon reporting is closed",
+			);
 
 			await ReportedWeaponRepository.upsertOneTournament({
 				tournamentMatchId: matchId,
@@ -790,7 +793,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 				(p) => p.id === user.id,
 			);
 			errorToastIfFalsy(isMemberOfATeamInTheMatch, "Unauthorized");
-			errorToastIfFalsy(!tournament.ctx.isFinalized, "Tournament is finalized");
+			errorToastIfFalsy(
+				tournament.weaponReportingOpen,
+				"Weapon reporting is closed",
+			);
 
 			await ReportedWeaponRepository.deleteByUserMapIndexTournament({
 				tournamentMatchId: matchId,
