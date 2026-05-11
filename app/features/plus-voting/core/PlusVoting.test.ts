@@ -94,6 +94,30 @@ describe("computePassedVoting", () => {
 		expect(results.find((r) => r.votedId === 103)?.passedVoting).toBe(0);
 	});
 
+	test("tied users at the slot boundary all pass even if it exceeds the quota", () => {
+		const autoPassers = Array.from({ length: 47 }, (_, i) =>
+			result({ votedId: i + 1, score: 0.3 }),
+		);
+
+		const middleZone = [
+			result({ votedId: 100, score: 0.15 }), // 48
+			result({ votedId: 101, score: 0.1 }), // 49 TIED
+			result({ votedId: 102, score: 0.1 }), // 50 TIED
+			result({ votedId: 103, score: 0.1 }), // 51 TIED
+			result({ votedId: 104, score: 0.1 }), // 52 TIED
+			result({ votedId: 200, score: 0.05 }), // 53
+		];
+
+		const results = computePassedVoting([...autoPassers, ...middleZone]);
+
+		expect(results.find((r) => r.votedId === 100)?.passedVoting).toBe(1);
+		expect(results.find((r) => r.votedId === 101)?.passedVoting).toBe(1);
+		expect(results.find((r) => r.votedId === 102)?.passedVoting).toBe(1);
+		expect(results.find((r) => r.votedId === 103)?.passedVoting).toBe(1);
+		expect(results.find((r) => r.votedId === 104)?.passedVoting).toBe(1);
+		expect(results.find((r) => r.votedId === 200)?.passedVoting).toBe(0);
+	});
+
 	test("different tiers have different quotas", () => {
 		const tier1AutoPassers = Array.from({ length: 49 }, (_, i) =>
 			result({ votedId: i + 1, tier: 1, score: 0.3 }),
