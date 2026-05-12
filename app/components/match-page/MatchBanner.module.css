@@ -48,8 +48,7 @@
 .notice {
 	position: absolute;
 	bottom: var(--s-2);
-	left: 50%;
-	transform: translateX(-50%);
+	right: var(--s-2);
 	display: flex;
 	gap: var(--s-0-5);
 	align-items: center;
@@ -60,6 +59,23 @@
 	font-size: var(--font-3xs);
 	font-weight: normal;
 	height: auto;
+}
+
+.joinBadge {
+	position: absolute;
+	bottom: var(--s-2);
+	left: var(--s-2);
+	display: flex;
+	gap: var(--s-1);
+	align-items: center;
+	color: var(--color-text-high);
+	background-color: var(--color-bg-high);
+	padding: var(--s-0-5) var(--s-1-5);
+	border-radius: var(--radius-field);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	height: 32px;
+	width: 32px;
 }
 
 .infoBadge {

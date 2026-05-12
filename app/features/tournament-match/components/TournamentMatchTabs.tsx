@@ -10,16 +10,10 @@ import type {
 } from "~/components/match-page/MatchTimeline";
 import { resolveRoomPass } from "~/components/match-page/utils";
 import { useUser } from "~/features/auth/core/user";
-import {
-	resolveActiveRoomLink,
-	useConfirmRoom,
-} from "~/features/chat/room-link-utils";
+import { useConfirmRoom } from "~/features/chat/room-link-utils";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
-import {
-	groupNumberToLetters,
-	tournamentTeamToActiveRosterUserIds,
-} from "~/features/tournament-bracket/tournament-bracket-utils";
+import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import { tournamentTeamPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
@@ -318,46 +312,15 @@ function slotOfEvent({
 }
 
 function TournamentMatchJoinTab({ data }: { data: TournamentMatchLoaderData }) {
-	const tournament = useTournament();
-	const user = useUser();
 	const { onConfirmRoom, isConfirming } = useConfirmRoom();
 	const {
 		teams: [teamOne, teamTwo],
+		joinPool,
+		activeRoomLink,
 	} = useMatch();
-	if (!teamOne || !teamTwo) return null;
+	if (!teamOne || !teamTwo || !joinPool || !activeRoomLink) return null;
 
 	const hostingTeam = resolveHostingTeam([teamOne, teamTwo]);
-
-	const hasRoundRobin = tournament.brackets.some(
-		(b) => b.type === "round_robin",
-	);
-	const bracketIdx = tournament.brackets.findIndex((b) =>
-		b.data.match.some((m) => m.id === data.match.id),
-	);
-	const bracket = tournament.brackets[bracketIdx];
-	const bracketMatch = bracket?.data.match.find((m) => m.id === data.match.id);
-	const group = bracket?.data.group.find(
-		(g) => g.id === bracketMatch?.group_id,
-	);
-
-	const poolCode = tournament.resolvePoolCode({
-		hostingTeamId: hostingTeam.id,
-		groupLetters:
-			group && bracket?.type === "round_robin"
-				? groupNumberToLetters(group.number)
-				: undefined,
-		bracketNumber:
-			hasRoundRobin && bracket?.type !== "round_robin"
-				? bracketIdx + 1
-				: undefined,
-	});
-
-	const activeRoomLink = resolveActiveRoomLink({
-		roomLinks: data.roomLinks,
-		freshnessCutoff: data.match.startedAt ?? 0,
-		viewerUserId: user?.id,
-		members: data.match.players,
-	});
 
 	return (
 		<MatchJoinTab
@@ -365,7 +328,7 @@ function TournamentMatchJoinTab({ data }: { data: TournamentMatchLoaderData }) {
 			hostedBy={activeRoomLink.hostedBy ?? hostingTeam.name}
 			onConfirmRoom={onConfirmRoom}
 			isConfirming={isConfirming}
-			pool={`${poolCode.prefix}${poolCode.suffix}`}
+			pool={joinPool}
 			pass={resolveRoomPass(hostingTeam.id)}
 			showNoSplatnetAlert={data.anyUserPrefersNoSplatnet}
 		/>

@@ -38,6 +38,7 @@ export function TournamentMatchActionTab({
 	const weaponReport = useTournamentWeaponReport({
 		data,
 		viewerUserId: user?.id,
+		weaponReportingOpen: tournament.weaponReportingOpen,
 	});
 
 	if (!currentMap) {
@@ -152,9 +153,11 @@ export function TournamentMatchActionTab({
 function useTournamentWeaponReport({
 	data,
 	viewerUserId,
+	weaponReportingOpen,
 }: {
 	data: TournamentMatchLoaderData;
 	viewerUserId: number | undefined;
+	weaponReportingOpen: boolean;
 }) {
 	const playOrderMaps = (data.mapList ?? []).filter(
 		(m) => !m.bannedByTournamentTeamId,
@@ -177,6 +180,7 @@ function useTournamentWeaponReport({
 	});
 
 	if (viewerUserId === undefined) return null;
+	if (!weaponReportingOpen) return null;
 
 	const isParticipant = data.match.players.some((p) => p.id === viewerUserId);
 	if (!isParticipant) return null;

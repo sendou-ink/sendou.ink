@@ -199,7 +199,7 @@ function Dots() {
 		}, 1500);
 
 		return () => {
-			clearTimeout(timeout);
+			clearInterval(timeout);
 		};
 	}, []);
 

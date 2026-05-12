@@ -27,6 +27,9 @@ export const sql = new Database(
 sql.pragma("journal_mode = WAL");
 sql.pragma("foreign_keys = ON");
 sql.pragma("busy_timeout = 5000");
+// see https://sqlite.org/pragma.html#pragma_optimize — recommended for long-lived
+// connections; pair with a periodic `PRAGMA optimize;` (see OptimizeDatabase routine)
+sql.pragma("optimize = 0x10002");
 
 export const db = new Kysely<DB>({
 	dialect: new SqliteDialect({

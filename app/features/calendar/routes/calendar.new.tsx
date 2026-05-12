@@ -977,11 +977,17 @@ function TestToggle() {
 
 function DraftToggle() {
 	const { t } = useTranslation(["calendar"]);
+	const { eventToEdit } = useLoaderData<typeof loader>();
 	const baseEvent = useBaseEvent();
 	const [isDraft, setIsDraft] = React.useState(
 		baseEvent?.tournament?.ctx.settings.isDraft ?? false,
 	);
 	const id = React.useId();
+
+	// once a tournament is published, it can't be flipped back to draft (users may have already saved it)
+	if (eventToEdit && !eventToEdit.tournament?.ctx.settings.isDraft) {
+		return null;
+	}
 
 	return (
 		<div>
