@@ -47,6 +47,7 @@ import {
 	isSetOverByScore,
 	matchEndedEarly,
 	matchIsLocked,
+	tournamentMatchWebsocketRoom,
 } from "../tournament-match-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
@@ -814,23 +815,18 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	// TODO: we could optimize this in the future by including an `authorUserId` field and skip revalidation if the author is the same as the current user
 	if (emitMatchUpdate) {
-		const droppedChatCodes =
-			await TournamentMatchRepository.findChatCodesByMatchIds(
-				endedDroppedMatchIds,
-			);
-		const matchUpdateRooms = [
-			...(match.chatCode ? [match.chatCode] : []),
-			...droppedChatCodes,
-		];
-		if (matchUpdateRooms.length > 0) {
-			ChatSystemMessage.send(
-				matchUpdateRooms.map((room) => ({
-					room,
-					type: "TOURNAMENT_MATCH_UPDATED" as const,
-					revalidateOnly: true as const,
-				})),
-			);
-		}
+		ChatSystemMessage.send([
+			{
+				room: tournamentMatchWebsocketRoom(matchId),
+				type: "TOURNAMENT_MATCH_UPDATED",
+				revalidateOnly: true,
+			},
+			...endedDroppedMatchIds.map((id) => ({
+				room: tournamentMatchWebsocketRoom(id),
+				type: "TOURNAMENT_MATCH_UPDATED" as const,
+				revalidateOnly: true as const,
+			})),
+		]);
 	}
 	if (emitTournamentUpdate) {
 		ChatSystemMessage.send([

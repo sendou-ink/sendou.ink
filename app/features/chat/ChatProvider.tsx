@@ -444,6 +444,14 @@ function ChatProviderInner({
 		ws.current?.send(JSON.stringify({ event: "UNSUBSCRIBE", chatCode }));
 	}, []);
 
+	const subscribeTopic = React.useCallback((topic: string) => {
+		ws.current?.send(JSON.stringify({ event: "SUBSCRIBE_TOPIC", topic }));
+	}, []);
+
+	const unsubscribeTopic = React.useCallback((topic: string) => {
+		ws.current?.send(JSON.stringify({ event: "UNSUBSCRIBE_TOPIC", topic }));
+	}, []);
+
 	const requestHistory = React.useCallback((chatCode: string) => {
 		ws.current?.send(JSON.stringify({ event: "CHAT_HISTORY", chatCode }));
 	}, []);
@@ -508,6 +516,8 @@ function ChatProviderInner({
 			send,
 			subscribe,
 			unsubscribe,
+			subscribeTopic,
+			unsubscribeTopic,
 			requestHistory,
 			markAsRead,
 			unreadCounts,
@@ -529,6 +539,8 @@ function ChatProviderInner({
 			send,
 			subscribe,
 			unsubscribe,
+			subscribeTopic,
+			unsubscribeTopic,
 			requestHistory,
 			markAsRead,
 			unreadCounts,
