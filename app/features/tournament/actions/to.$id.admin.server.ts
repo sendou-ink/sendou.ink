@@ -410,11 +410,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 						room: tournamentMatchWebsocketRoom(matchId),
 						type: "TOURNAMENT_MATCH_UPDATED" as const,
 						revalidateOnly: true as const,
+						authorUserId: user.id,
 					})),
 					{
 						room: tournamentWebsocketRoom(tournament.ctx.id),
 						type: "TOURNAMENT_UPDATED" as const,
 						revalidateOnly: true as const,
+						authorUserId: user.id,
 					},
 				]);
 			}

@@ -277,7 +277,11 @@ function ChatProviderInner({
 			isSystemMessage,
 		);
 		if (isSystemMessage || messageArr[0].revalidateOnly) {
-			revalidate();
+			// The actor that triggered this revalidate is the current user — their
+			// own form submission already reran loaders, so skip the duplicate fetch.
+			const isOwnRevalidate =
+				messageArr[0].revalidateOnly && messageArr[0].authorUserId === userId;
+			if (!isOwnRevalidate) revalidate();
 		}
 
 		const sound = messageTypeToSound(messageArr[0].type);
