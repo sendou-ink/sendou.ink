@@ -42,6 +42,8 @@ export interface ChatContextValue {
 	send: (chatCode: string, contents: string) => void;
 	subscribe: (chatCode: string) => void;
 	unsubscribe: (chatCode: string) => void;
+	subscribeTopic: (topic: string) => void;
+	unsubscribeTopic: (topic: string) => void;
 	requestHistory: (chatCode: string) => void;
 	markAsRead: (chatCode: string) => void;
 	unreadCounts: Record<string, number>;
