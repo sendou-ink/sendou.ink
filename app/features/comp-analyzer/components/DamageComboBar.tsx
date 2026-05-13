@@ -260,8 +260,13 @@ interface DamageComboListProps {
 export function DamageComboList({ weaponIds }: DamageComboListProps) {
 	const { t } = useTranslation(["analyzer"]);
 	const [excludedKeys, setExcludedKeys] = useState<ExcludedDamageKey[]>([]);
-	const [targetResAp, setTargetResAp] = useTargetResAp();
-	const [targetSubDefenseAp, setTargetSubDefenseAp] = useTargetSubDefenseAp();
+	const [initialTargetResAp, commitTargetResAp] = useTargetResAp();
+	const [initialTargetSubDefenseAp, commitTargetSubDefenseAp] =
+		useTargetSubDefenseAp();
+	const [targetResAp, setTargetResAp] = useState(initialTargetResAp);
+	const [targetSubDefenseAp, setTargetSubDefenseAp] = useState(
+		initialTargetSubDefenseAp,
+	);
 	const [isCollapsed, setIsCollapsed] = useState(false);
 
 	const allDamageKeys = getAllDamageKeys(weaponIds, targetSubDefenseAp);
@@ -327,6 +332,9 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 							max={MAX_AP}
 							value={targetSubDefenseAp}
 							onChange={(e) => setTargetSubDefenseAp(Number(e.target.value))}
+							onPointerUp={() => commitTargetSubDefenseAp(targetSubDefenseAp)}
+							onKeyUp={() => commitTargetSubDefenseAp(targetSubDefenseAp)}
+							onBlur={() => commitTargetSubDefenseAp(targetSubDefenseAp)}
 							className={styles.resSlider}
 						/>
 						<span className={styles.resSliderValue}>
@@ -342,6 +350,9 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 							max={MAX_AP}
 							value={targetResAp}
 							onChange={(e) => setTargetResAp(Number(e.target.value))}
+							onPointerUp={() => commitTargetResAp(targetResAp)}
+							onKeyUp={() => commitTargetResAp(targetResAp)}
+							onBlur={() => commitTargetResAp(targetResAp)}
 							className={styles.resSlider}
 						/>
 						<span className={styles.resSliderValue}>{targetResAp} AP</span>
