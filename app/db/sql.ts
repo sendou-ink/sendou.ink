@@ -1,4 +1,5 @@
 import { styleText } from "node:util";
+import * as Sentry from "@sentry/react-router";
 import Database from "better-sqlite3";
 import {
 	Kysely,
@@ -35,9 +36,29 @@ export const db = new Kysely<DB>({
 	dialect: new SqliteDialect({
 		database: sql,
 	}),
-	log: LOG_LEVEL === "trunc" || LOG_LEVEL === "full" ? logQuery : logError,
+	log,
 	plugins: [new ParseJSONResultsPlugin()],
 });
+
+function log(event: LogEvent) {
+	if (event.level === "query") {
+		// Backdated span so the query nests under the active loader/action span
+		// in Sentry's waterfall. `onlyIfParent: true` skips emission when there's
+		// no active trace (e.g. cron routines), avoiding orphan root spans.
+		Sentry.startInactiveSpan({
+			name: event.query.sql,
+			op: "db.sql.query",
+			startTime: new Date(Date.now() - event.queryDurationMillis),
+			onlyIfParent: true,
+		}).end();
+	}
+
+	if (LOG_LEVEL === "trunc" || LOG_LEVEL === "full") {
+		logQuery(event);
+	} else {
+		logError(event);
+	}
+}
 
 function logQuery(event: LogEvent) {
 	const isSelectQuery = Boolean((event.query.query as any).from?.froms);
