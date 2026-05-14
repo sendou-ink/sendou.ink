@@ -214,14 +214,14 @@ export async function findProfileByIdentifier(
 					.selectFrom("BadgeOwner")
 					.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
 					.select(({ fn }) => [
-						fn.count<number>("BadgeOwner.badgeId").as("count"),
+						fn.sum<number>("BadgeOwner.count").as("count"),
 						"Badge.id",
 						"Badge.displayName",
 						"Badge.code",
 						"Badge.hue",
 					])
 					.whereRef("BadgeOwner.userId", "=", "User.id")
-					.groupBy(["BadgeOwner.badgeId", "BadgeOwner.userId"]),
+					.groupBy("BadgeOwner.badgeId"),
 			).as("badges"),
 			jsonArrayFrom(
 				eb

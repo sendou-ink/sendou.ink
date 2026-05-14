@@ -145,8 +145,7 @@ export interface BadgeManager {
 export type BadgeOwner = {
 	badgeId: number;
 	userId: number;
-	/** Which tournament the badge is from, if null was added manually by a badge manager as opposed to once a tournament was finalized. */
-	tournamentId: number | null;
+	count: number;
 };
 
 export interface Build {
@@ -594,7 +593,10 @@ export interface SavedCalendarEvent {
 export interface TournamentBadgeOwner {
 	badgeId: number;
 	userId: number;
+	/** Which tournament the badge is from, if null was added manually by a badge manager as opposed to once a tournament was finalized. */
 	tournamentId: number | null;
+	/** How many times this badge was awarded to this user from this source. Tournament rows are always 1; manual grants aggregate repeat awards here. */
+	count: Generated<number>;
 }
 
 /** A group is a logical structure used to group multiple rounds together.

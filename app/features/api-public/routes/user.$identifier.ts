@@ -49,9 +49,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 						.select(({ fn }) => [
 							"Badge.displayName",
 							"Badge.code",
-							fn.count<number>("BadgeOwner.badgeId").as("count"),
+							fn.sum<number>("BadgeOwner.count").as("count"),
 						])
-						.groupBy(["BadgeOwner.badgeId", "BadgeOwner.userId"])
+						.groupBy("BadgeOwner.badgeId")
 						.whereRef("BadgeOwner.userId", "=", "User.id"),
 				).as("badges"),
 				"SplatoonPlayer.peakXp",

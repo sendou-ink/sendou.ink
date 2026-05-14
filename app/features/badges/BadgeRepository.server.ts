@@ -42,7 +42,7 @@ const withOwners = (eb: ExpressionBuilder<DB, "Badge">) => {
 			.selectFrom("BadgeOwner")
 			.innerJoin("User", "BadgeOwner.userId", "User.id")
 			.select(({ fn }) => [
-				fn.count<number>("BadgeOwner.badgeId").as("count"),
+				fn.sum<number>("BadgeOwner.count").as("count"),
 				"User.id",
 				"User.discordId",
 				"User.username",
@@ -117,7 +117,7 @@ export async function findByOwnerUserId(userId: number) {
 		.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
 		.innerJoin("User", "User.id", "BadgeOwner.userId")
 		.select(({ fn }) => [
-			fn.count<number>("BadgeOwner.badgeId").as("count"),
+			fn.sum<number>("BadgeOwner.count").as("count"),
 			"Badge.id",
 			"Badge.displayName",
 			"Badge.code",
@@ -126,7 +126,7 @@ export async function findByOwnerUserId(userId: number) {
 			"User.patronTier",
 		])
 		.where("BadgeOwner.userId", "=", userId)
-		.groupBy(["BadgeOwner.badgeId", "BadgeOwner.userId"])
+		.groupBy("BadgeOwner.badgeId")
 		.execute();
 
 	if (rows.length === 0) return [];
@@ -192,12 +192,18 @@ export function replaceOwners({
 			.execute();
 
 		if (ownerIds.length > 0) {
+			const counts = new Map<number, number>();
+			for (const userId of ownerIds) {
+				counts.set(userId, (counts.get(userId) ?? 0) + 1);
+			}
+
 			await trx
 				.insertInto("TournamentBadgeOwner")
 				.values(
-					ownerIds.map((userId) => ({
+					Array.from(counts, ([userId, count]) => ({
 						badgeId,
 						userId,
+						count,
 					})),
 				)
 				.execute();
