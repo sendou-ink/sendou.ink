@@ -5,7 +5,7 @@ const SPLATNET_ROOM_PATH_PATTERN = /^\/[A-Za-z0-9/_-]+$/;
 const SPLATNET_ROOM_CANDIDATE_PATTERN = /https:\/\/s\.nintendo\.com\/\S+/g;
 
 export function isSplatnetRoomUrl(url: string): boolean {
-	if (!URL.canParse(url)) return false;
+	if (!canParseUrl(url)) return false;
 	const parsed = new URL(url);
 	return (
 		parsed.protocol === "https:" &&
@@ -39,8 +39,17 @@ const MATCH_ROOM_URL_PATTERN =
 	/^\/q\/match\/\d+$|^\/to\/\d+\/matches\/\d+$|^\/scrims\/\d+$/;
 
 export function isMatchRoomUrl(url: string) {
-	const pathname = URL.canParse(url) ? new URL(url).pathname : url;
+	const pathname = canParseUrl(url) ? new URL(url).pathname : url;
 	return MATCH_ROOM_URL_PATTERN.test(pathname);
+}
+
+function canParseUrl(url: string): boolean {
+	try {
+		new URL(url);
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 function isAllowedSplatnetSearch(params: URLSearchParams): boolean {
