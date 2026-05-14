@@ -24,6 +24,8 @@ export function useDateTimeFormat(options: Intl.DateTimeFormatOptions) {
 
 	return {
 		formatter: isLoaded ? realFormatter : SSR_FORMATTER,
-		className: isLoaded ? "reserve-one-lb" : "reserve-one-lb hidden",
+		className: isLoaded
+			? "block reserve-one-lb"
+			: "block reserve-one-lb invisible",
 	};
 }

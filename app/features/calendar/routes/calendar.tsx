@@ -19,6 +19,7 @@ import {
 } from "~/components/elements/Button";
 import { SendouCalendar } from "~/components/elements/Calendar";
 import { SendouPopover } from "~/components/elements/Popover";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
@@ -247,8 +248,6 @@ function DayEventsColumn({
 }
 
 function DayHeader(props: { date: number; month: number; year: number }) {
-	const { formatDate } = useTimeFormat();
-
 	const date = new Date(props.year, props.month, props.date);
 	const isToday = date.toDateString() === new Date().toDateString();
 
@@ -259,14 +258,20 @@ function DayHeader(props: { date: number; month: number; year: number }) {
 			})}
 			data-testid={isToday ? "today-header" : undefined}
 		>
-			{formatDate(date, {
-				day: "numeric",
-				month: "numeric",
-			})}
+			<LocaleTime
+				date={date}
+				options={{
+					day: "numeric",
+					month: "long",
+				}}
+			/>
 			<div className={styles.dayHeaderWeekday}>
-				{formatDate(date, {
-					weekday: "long",
-				})}
+				<LocaleTime
+					date={date}
+					options={{
+						weekday: "long",
+					}}
+				/>
 			</div>
 		</div>
 	);

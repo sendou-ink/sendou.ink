@@ -12,6 +12,7 @@ import { BskyIcon } from "~/components/icons/Bsky";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { TwitchIcon } from "~/components/icons/Twitch";
 import { YouTubeIcon } from "~/components/icons/YouTube";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Markdown } from "~/components/Markdown";
 import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
@@ -373,8 +374,6 @@ function HighlightedResults({
 }: {
 	results: Extract<LoadedWidget, { id: "highlighted-results" }>["data"];
 }) {
-	const { formatDate } = useTimeFormat();
-
 	return (
 		<div className={styles.highlightedResults}>
 			{results.map((result, i) => (
@@ -414,13 +413,15 @@ function HighlightedResults({
 								</div>
 							) : null}
 						</div>
-						<div className={styles.resultDate}>
-							{formatDate(databaseTimestampToDate(result.startTime), {
+						<LocaleTime
+							date={result.startTime}
+							options={{
 								day: "numeric",
 								month: "numeric",
 								year: "numeric",
-							})}
-						</div>
+							}}
+							className={styles.resultDate}
+						/>
 					</div>
 				</div>
 			))}
