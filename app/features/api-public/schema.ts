@@ -292,6 +292,16 @@ type TournamentCastChannel = {
 	channelId: string;
 };
 
+/** GET /api/tournament/{tournamentId}/streams */
+
+export type GetTournamentStreamsResponse = Array<
+	{
+		platform: "TWITCH";
+		channelId: string;
+		viewerCount: number;
+	} & ({ type: "PLAYER"; userId: number } | { type: "CAST" })
+>;
+
 /** GET /api/tournament-match/{matchId} */
 
 export interface GetTournamentMatchResponse {
