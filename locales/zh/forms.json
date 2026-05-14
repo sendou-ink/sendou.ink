@@ -31,6 +31,7 @@
 	"errors.notAllowedCharacters": "",
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "该队名已被使用",
+	"errors.duplicateOrgName": "",
 	"errors.noOnlySpecialCharacters": "",
 	"labels.weaponPool": "武器池",
 	"placeholders.weaponPoolFull": "",

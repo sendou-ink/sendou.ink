@@ -73,8 +73,8 @@ export function wrappedAction<T extends z.ZodTypeAny>({
 					request,
 					context: {} as any,
 					params,
-					unstable_pattern: "",
-					unstable_url: new URL(request.url),
+					pattern: "",
+					url: new URL(request.url),
 				});
 
 				return response;
@@ -123,8 +123,8 @@ export function wrappedLoader<T>({
 					request,
 					params,
 					context: {} as any,
-					unstable_pattern: "",
-					unstable_url: new URL(request.url),
+					pattern: "",
+					url: new URL(request.url),
 				});
 
 				return data as T;

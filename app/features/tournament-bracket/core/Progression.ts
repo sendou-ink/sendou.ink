@@ -68,6 +68,11 @@ export type ValidationError =
 			type: "TOO_MANY_PLACEMENTS";
 			bracketIdx: number;
 	  }
+	// placements above the hard cap are nonsensical and bloat the settings JSON
+	| {
+			type: "PLACEMENT_TOO_HIGH";
+			bracketIdx: number;
+	  }
 	// two brackets can not have the same name
 	| {
 			type: "DUPLICATE_BRACKET_NAME";
@@ -250,6 +255,14 @@ export function bracketsToValidationError(
 	if (typeof faultyBracketIdx === "number") {
 		return {
 			type: "TOO_MANY_PLACEMENTS",
+			bracketIdx: faultyBracketIdx,
+		};
+	}
+
+	faultyBracketIdx = placementTooHigh(brackets);
+	if (typeof faultyBracketIdx === "number") {
+		return {
+			type: "PLACEMENT_TOO_HIGH",
 			bracketIdx: faultyBracketIdx,
 		};
 	}
@@ -534,6 +547,22 @@ function tooManyPlacements(brackets: ParsedBracket[]) {
 				: teamsPerGroup;
 
 			if (source.placements.some((placement) => placement > size)) {
+				return bracketIdx;
+			}
+		}
+	}
+
+	return null;
+}
+
+function placementTooHigh(brackets: ParsedBracket[]) {
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		for (const source of bracket.sources ?? []) {
+			if (
+				source.placements.some(
+					(placement) => placement > TOURNAMENT.PLACEMENT_MAX,
+				)
+			) {
 				return bracketIdx;
 			}
 		}
@@ -850,30 +879,49 @@ export function bracketIdxsForStandings(progression: ParsedBracket[]) {
 		},
 	);
 
-	return withoutUnderground.sort((a, b) => {
-		const minSourcedPlacementA = Math.min(
-			...(progression[a].sources?.flatMap((s) => s.placements) ?? [
-				Number.POSITIVE_INFINITY,
-			]),
-		);
-		const minSourcedPlacementB = Math.min(
-			...(progression[b].sources?.flatMap((s) => s.placements) ?? [
-				Number.POSITIVE_INFINITY,
-			]),
-		);
+	const minSourcedPlacements = new Map(
+		withoutUnderground.map((idx) => [
+			idx,
+			minSourcedPlacement(progression, idx),
+		]),
+	);
 
-		if (minSourcedPlacementA === minSourcedPlacementB) {
+	return [...withoutUnderground].sort((a, b) => {
+		const minA = minSourcedPlacements.get(a)!;
+		const minB = minSourcedPlacements.get(b)!;
+
+		if (minA === minB) {
 			return a - b;
 		}
 
-		return minSourcedPlacementA - minSourcedPlacementB;
+		return minA - minB;
 	});
+}
+
+function minSourcedPlacement(
+	progression: ParsedBracket[],
+	bracketIdx: number,
+): number {
+	const sources = progression[bracketIdx].sources;
+	if (!sources || sources.length === 0) return Number.POSITIVE_INFINITY;
+
+	let min = Number.POSITIVE_INFINITY;
+	for (const source of sources) {
+		for (const placement of source.placements) {
+			if (placement < min) min = placement;
+		}
+	}
+	return min;
 }
 
 export function bracketsReachableFrom(
 	bracketIdx: number,
 	progression: ParsedBracket[],
+	visited: Set<number> = new Set(),
 ): number[] {
+	if (visited.has(bracketIdx)) return [];
+	visited.add(bracketIdx);
+
 	const result = [bracketIdx];
 
 	for (const [newBracketIdx, bracket] of progression.entries()) {
@@ -881,7 +929,9 @@ export function bracketsReachableFrom(
 
 		for (const source of bracket.sources) {
 			if (source.bracketIdx === bracketIdx) {
-				result.push(...bracketsReachableFrom(newBracketIdx, progression));
+				result.push(
+					...bracketsReachableFrom(newBracketIdx, progression, visited),
+				);
 			}
 		}
 	}

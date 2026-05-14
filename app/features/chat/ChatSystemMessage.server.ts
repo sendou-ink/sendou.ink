@@ -25,7 +25,7 @@ function logSkalpError(action: string) {
 
 type PartialChatMessage = Pick<
 	ChatMessage,
-	"type" | "context" | "room" | "revalidateOnly"
+	"type" | "context" | "room" | "revalidateOnly" | "authorUserId"
 >;
 interface ChatSystemMessageService {
 	send: (msg: PartialChatMessage | PartialChatMessage[]) => undefined;
@@ -59,6 +59,7 @@ export const send: ChatSystemMessageService["send"] = (partialMsg) => {
 			context: partialMsg.context,
 			type: partialMsg.type,
 			revalidateOnly: partialMsg.revalidateOnly,
+			authorUserId: partialMsg.authorUserId,
 		};
 	});
 

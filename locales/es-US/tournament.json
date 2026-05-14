@@ -172,6 +172,7 @@
 	"progression.error.SAME_PLACEMENT_TO_MULTIPLE_BRACKETS": "",
 	"progression.error.GAP_IN_PLACEMENTS": "",
 	"progression.error.TOO_MANY_PLACEMENTS": "",
+	"progression.error.PLACEMENT_TOO_HIGH": "",
 	"progression.error.DUPLICATE_BRACKET_NAME": "",
 	"progression.error.NAME_MISSING": "",
 	"progression.error.NEGATIVE_PROGRESSION": "",

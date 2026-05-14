@@ -23,6 +23,8 @@ export interface ChatMessage {
 	context?: SystemMessageContext;
 	/** If true, the purpose of this message is just to run the data loaders again meaning the logic related to showing a new chat message is skipped. Defaults to false.  */
 	revalidateOnly?: boolean;
+	/** User id of the actor that triggered this message. Used to skip own-author revalidates so we don't double-fetch loaders right after a form submission. */
+	authorUserId?: number;
 	userId?: number;
 	timestamp: number;
 	room: string;

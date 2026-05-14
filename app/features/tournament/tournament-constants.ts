@@ -11,6 +11,7 @@ export const TOURNAMENT = {
 	MAX_GROUP_SIZE: 6,
 	MAX_BRACKETS_PER_TOURNAMENT: 10,
 	BRACKET_NAME_MAX_LENGTH: 32,
+	PLACEMENT_MAX: 100,
 	// just a fallback, normally this should be set by user explicitly
 	RR_DEFAULT_TEAM_COUNT_PER_GROUP: 4,
 	RR_TEAMS_PER_GROUP_OPTIONS: [3, 4, 5, 6],

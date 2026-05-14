@@ -31,6 +31,7 @@
 	"errors.notAllowedCharacters": "",
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "",
+	"errors.duplicateOrgName": "",
 	"errors.noOnlySpecialCharacters": "",
 	"labels.weaponPool": "",
 	"placeholders.weaponPoolFull": "",

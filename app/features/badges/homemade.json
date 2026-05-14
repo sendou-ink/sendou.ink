@@ -199,6 +199,18 @@
 		"displayName": "Supply Closet (Smudge)",
 		"authorDiscordId": "148874365105078272"
 	},
+	"cchip1": {
+		"displayName": "Equalizer (High Side)",
+		"authorDiscordId": "338806780446638082"
+	},
+	"cchip2": {
+		"displayName": "Equalizer (Low Side)",
+		"authorDiscordId": "338806780446638082"
+	},
+	"cchip3": {
+		"displayName": "Equalizer (Top 3)",
+		"authorDiscordId": "338806780446638082"
+	},
 	"champions": {
 		"displayName": "Champions Cup",
 		"authorDiscordId": "752582395076673577"
@@ -902,6 +914,10 @@
 	"peashooter": {
 		"displayName": "Peashooter Achievement",
 		"authorDiscordId": "789943264370884708"
+	},
+	"peppercat": {
+		"displayName": "Cats Have 7 Lives",
+		"authorDiscordId": "781999824765452310"
 	},
 	"pinchzachsbank": {
 		"displayName": "Pinch Zach's Bank",

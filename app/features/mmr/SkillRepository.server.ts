@@ -52,7 +52,7 @@ export async function seasonProgressionByUserId({
 		)
 		.select(({ fn }) => [
 			fn.max("Skill.ordinal").as("ordinal"),
-			sql<string>`date(coalesce("GroupMatch"."createdAt", "CalendarEventDate"."startTime"), 'unixepoch')`.as(
+			sql<string>`date(coalesce("Skill"."createdAt", "GroupMatch"."createdAt", "CalendarEventDate"."startTime"), 'unixepoch')`.as(
 				"date",
 			),
 		])

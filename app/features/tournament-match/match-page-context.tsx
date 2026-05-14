@@ -1,13 +1,19 @@
 import * as React from "react";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { useUser } from "~/features/auth/core/user";
+import { resolveActiveRoomLink } from "~/features/chat/room-link-utils";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
+import {
+	groupNumberToLetters,
+	tournamentTeamToActiveRosterUserIds,
+} from "~/features/tournament-bracket/tournament-bracket-utils";
 import type { TournamentMatchLoaderData } from "./loaders/to.$id.matches.$mid.server";
-import { matchIsLocked } from "./tournament-match-utils";
+import { matchIsLocked, resolveHostingTeam } from "./tournament-match-utils";
+
+type ActiveRoomLink = ReturnType<typeof resolveActiveRoomLink>;
 
 export type MatchPageTeam = NonNullable<ReturnType<Tournament["teamById"]>>;
 
@@ -28,6 +34,8 @@ type MatchPageContextValue = {
 	turnOfResult: ReturnType<typeof PickBan.turnOf>;
 	isPickBanStep: boolean;
 	matchIsLocked: boolean;
+	joinPool: string | null;
+	activeRoomLink: ActiveRoomLink | null;
 };
 
 const MatchPageContext = React.createContext<MatchPageContextValue | null>(
@@ -93,6 +101,17 @@ export function MatchPageProvider({
 		scores,
 	});
 
+	const joinPool = resolveJoinPool({ tournament, data, teams });
+
+	const activeRoomLink = data.canJoin
+		? resolveActiveRoomLink({
+				roomLinks: data.roomLinks,
+				freshnessCutoff: data.match.startedAt ?? 0,
+				viewerUserId: user?.id,
+				members: data.match.players,
+			})
+		: null;
+
 	const tabs = resolveVisibleTabs({
 		matchIsOver: data.matchIsOver,
 		canReportScore: tournament.canReportScore({
@@ -100,7 +119,7 @@ export function MatchPageProvider({
 			user,
 		}),
 		canReportWeapons:
-			isParticipant && !tournament.ctx.isFinalized && hasReportedMaps,
+			isParticipant && tournament.weaponReportingOpen && hasReportedMaps,
 		canJoin: data.canJoin,
 		hasCurrentMap: Boolean(currentMap),
 		hasMissingActiveRoster: teamsMissingActiveRoster.length > 0,
@@ -126,6 +145,8 @@ export function MatchPageProvider({
 				turnOfResult,
 				isPickBanStep,
 				matchIsLocked: lockedForCast,
+				joinPool,
+				activeRoomLink,
 			}}
 		>
 			{children}
@@ -168,15 +189,11 @@ function resolveVisibleTabs({
 	leagueRoundLocked: boolean;
 	lockedForCast: boolean;
 }): MatchTabKey[] {
-	const tabs: MatchTabKey[] = [];
+	const tabs: MatchTabKey[] = [TAB_KEYS.ROSTERS];
 
-	if (matchIsOver) {
-		tabs.push(TAB_KEYS.RESULT);
-	}
 	if (canJoin) {
 		tabs.push(TAB_KEYS.JOIN);
 	}
-	tabs.push(TAB_KEYS.ROSTERS);
 	if (
 		!leagueRoundLocked &&
 		(isPickBanStep ||
@@ -191,11 +208,54 @@ function resolveVisibleTabs({
 	if (isAdminEligible) {
 		tabs.push(TAB_KEYS.ADMIN);
 	}
-	if (!matchIsOver && (hasReportedMaps || hasPickBanEvents)) {
+	if (matchIsOver || hasReportedMaps || hasPickBanEvents) {
 		tabs.push(TAB_KEYS.RESULT);
 	}
 
 	return tabs;
+}
+
+function resolveJoinPool({
+	tournament,
+	data,
+	teams,
+}: {
+	tournament: ReturnType<typeof useTournament>;
+	data: TournamentMatchLoaderData;
+	teams: [MatchPageTeam | null, MatchPageTeam | null];
+}): string | null {
+	if (!data.canJoin) return null;
+
+	const [teamOne, teamTwo] = teams;
+	if (!teamOne || !teamTwo) return null;
+
+	const hostingTeam = resolveHostingTeam([teamOne, teamTwo]);
+
+	const hasRoundRobin = tournament.brackets.some(
+		(b) => b.type === "round_robin",
+	);
+	const bracketIdx = tournament.brackets.findIndex((b) =>
+		b.data.match.some((m) => m.id === data.match.id),
+	);
+	const bracket = tournament.brackets[bracketIdx];
+	const bracketMatch = bracket?.data.match.find((m) => m.id === data.match.id);
+	const group = bracket?.data.group.find(
+		(g) => g.id === bracketMatch?.group_id,
+	);
+
+	const poolCode = tournament.resolvePoolCode({
+		hostingTeamId: hostingTeam.id,
+		groupLetters:
+			group && bracket?.type === "round_robin"
+				? groupNumberToLetters(group.number)
+				: undefined,
+		bracketNumber:
+			hasRoundRobin && bracket?.type !== "round_robin"
+				? bracketIdx + 1
+				: undefined,
+	});
+
+	return `${poolCode.prefix}${poolCode.suffix}`;
 }
 
 function resolveTeamsMissingActiveRoster(

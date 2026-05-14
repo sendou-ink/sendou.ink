@@ -17,7 +17,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	});
 
 	const tournament = await tournamentDataCached({ tournamentId });
-	if (!tournament?.ctx.teams.some((t) => t.id === tournamentTeamId)) {
+	const team = tournament?.ctx.teams.find((t) => t.id === tournamentTeamId);
+	const tournamentHasStarted = (tournament?.data.stage.length ?? 0) > 0;
+	if (!team || (tournamentHasStarted && team.checkIns.length === 0)) {
 		throw new Response(null, { status: 404 });
 	}
 

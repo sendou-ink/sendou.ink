@@ -442,6 +442,39 @@ describe("validatedSources - other rules", () => {
 		expect((error as any).bracketIdx).toEqual(1);
 	});
 
+	it("handles PLACEMENT_TOO_HIGH", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: { teamsPerGroup: 200 },
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [{ bracketId: "0", placements: "1-101" }],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("PLACEMENT_TOO_HIGH");
+		expect((error as any).bracketIdx).toEqual(1);
+	});
+
+	it("does not flag PLACEMENT_TOO_HIGH at the max boundary", () => {
+		const result = getValidatedBrackets([
+			{
+				settings: { teamsPerGroup: 200 },
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [{ bracketId: "0", placements: "1-100" }],
+			},
+		]);
+
+		expect(Array.isArray(result)).toBe(true);
+	});
+
 	it("does not flag TOO_MANY_PLACEMENTS when larger round robin has valid high placements", () => {
 		const result = getValidatedBrackets([
 			{

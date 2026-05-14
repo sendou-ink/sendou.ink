@@ -7,6 +7,14 @@ import {
 
 describe("isSplatnetRoomUrl", () => {
 	test("accepts canonical SplatNet share path", () => {
+		expect(
+			isSplatnetRoomUrl(
+				"https://s.nintendo.com/av5ja-lp1/znca/game/4834290508791808?p=%2Froom_creator%2Finvitation%2F1f14e24b-3c9e-6352-8a80-b7993ffad0d0",
+			),
+		).toBe(true);
+	});
+
+	test("accepts canonical SplatNet share path (no query params)", () => {
 		expect(isSplatnetRoomUrl("https://s.nintendo.com/av5ja-lp1/abc123")).toBe(
 			true,
 		);

@@ -138,6 +138,11 @@ export const action: ActionFunction = async ({ request }) => {
 			);
 
 			errorToastIfFalsy(tournament.isAdmin(user), "Not authorized");
+
+			// once published, a tournament can't be flipped back to draft
+			if (!tournament.isDraft) {
+				commonArgs.isDraft = false;
+			}
 		} else {
 			// editing regular calendar event
 			errorToastIfFalsy(

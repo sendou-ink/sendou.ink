@@ -535,41 +535,52 @@ function EventInfo({
 					</time>
 				</div>
 			</Link>
-			{event.tournamentWinners || event.eventWinners ? (
-				<EventWinners winner={event.tournamentWinners ?? event.eventWinners!} />
-			) : null}
+			<EventWinners
+				tournamentWinners={event.tournamentWinners}
+				eventWinners={event.eventWinners}
+			/>
 		</div>
 	);
 }
 
 function EventWinners({
-	winner,
+	tournamentWinners,
+	eventWinners,
 }: {
-	winner: NonNullable<
-		| SerializeFrom<typeof loader>["events"][number]["tournamentWinners"]
-		| SerializeFrom<typeof loader>["events"][number]["eventWinners"]
-	>;
+	tournamentWinners: SerializeFrom<
+		typeof loader
+	>["events"][number]["tournamentWinners"];
+	eventWinners: SerializeFrom<typeof loader>["events"][number]["eventWinners"];
 }) {
+	const winners =
+		tournamentWinners.length > 0 ? tournamentWinners : eventWinners;
+
+	if (winners.length === 0) return null;
+
 	return (
-		<div className="stack xs">
-			<div className="stack horizontal sm items-center font-semi-bold">
-				<Placement placement={1} size={24} />
-				{winner.avatarUrl ? (
-					<img
-						src={winner.avatarUrl}
-						alt=""
-						width={24}
-						height={24}
-						className="rounded-full"
-					/>
-				) : null}
-				{winner.name}
-			</div>
-			<div className="stack xs horizontal">
-				{winner.members.map((member) => (
-					<Avatar key={member.discordId} user={member} size="xxs" />
-				))}
-			</div>
+		<div className="stack md">
+			{winners.map((winner) => (
+				<div key={winner.id} className="stack xs">
+					<div className="stack horizontal sm items-center font-semi-bold">
+						<Placement placement={1} size={24} />
+						{winner.avatarUrl ? (
+							<img
+								src={winner.avatarUrl}
+								alt=""
+								width={24}
+								height={24}
+								className="rounded-full"
+							/>
+						) : null}
+						{winner.name}
+					</div>
+					<div className="stack xs horizontal">
+						{winner.members.map((member) => (
+							<Avatar key={member.discordId} user={member} size="xxs" />
+						))}
+					</div>
+				</div>
+			))}
 		</div>
 	);
 }

@@ -13,6 +13,8 @@ import {
 import bannerStyles from "~/components/match-page/MatchBanner.module.css";
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
+import { useUser } from "~/features/auth/core/user";
+import { resolveActiveRoomLink } from "~/features/chat/room-link-utils";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -23,6 +25,7 @@ import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 
 export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 	const { t } = useTranslation(["q"]);
+	const user = useUser();
 
 	const cancelRequested = Boolean(data.match.cancelRequestedByUserId);
 	const cancelRequesterSide = SendouQMatch.resolveGroupMemberOf({
@@ -82,6 +85,18 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 	const currentMap = data.match.currentMap;
 	invariant(currentMap);
 
+	const joinPool = `SQ${String(data.match.id).at(-1)}`;
+	const activeRoomLink = resolveActiveRoomLink({
+		roomLinks: data.roomLinks,
+		freshnessCutoff: data.match.createdAt,
+		viewerUserId: user?.id,
+		members: [
+			...data.match.groupAlpha.members,
+			...data.match.groupBravo.members,
+		],
+	});
+	const joinViaQr = Boolean(activeRoomLink.joinLink) && !activeRoomLink.isStale;
+
 	return (
 		<MatchBannerContainer>
 			<SendouQMatchBannerTopRow data={data} awaitingConfirmation={false} />
@@ -92,6 +107,8 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 					subtitle={t("q:match.cancelRequested.subtitle", {
 						teamName: cancelRequesterName,
 					})}
+					joinPool={joinPool}
+					joinViaQr={joinViaQr}
 				/>
 			) : (
 				<MatchBanner
@@ -100,6 +117,8 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 					screenLegal={
 						!data.match.groupAlpha.noScreen && !data.match.groupBravo.noScreen
 					}
+					joinPool={joinPool}
+					joinViaQr={joinViaQr}
 				>
 					<CurrentMapVotesBadge voters={currentMap.voters} />
 				</MatchBanner>

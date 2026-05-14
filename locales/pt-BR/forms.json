@@ -31,6 +31,7 @@
 	"errors.notAllowedCharacters": "",
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "Já existe um time com esse nome",
+	"errors.duplicateOrgName": "",
 	"errors.noOnlySpecialCharacters": "",
 	"labels.weaponPool": "Seleção de armas",
 	"placeholders.weaponPoolFull": "",

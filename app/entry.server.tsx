@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/react-router";
 import "@formatjs/intl-durationformat/polyfill.js";
 import { PassThrough } from "node:stream";
 import { createReadableStreamFromReadable } from "@react-router/node";
@@ -6,7 +7,11 @@ import { isbot } from "isbot";
 import cron from "node-cron";
 import { renderToPipeableStream } from "react-dom/server";
 import { I18nextProvider, initReactI18next } from "react-i18next";
-import { type EntryContext, ServerRouter } from "react-router";
+import {
+	type EntryContext,
+	type HandleErrorFunction,
+	ServerRouter,
+} from "react-router";
 import { config } from "~/modules/i18n/config"; // your i18n configuration file
 import { i18next } from "~/modules/i18n/i18next.server";
 import { resources } from "./modules/i18n/resources.server";
@@ -21,7 +26,7 @@ import { logger } from "./utils/logger";
 // Reject/cancel all pending promises after 5 seconds
 export const streamTimeout = 5000;
 
-export default async function handleRequest(
+async function handleRequest(
 	request: Request,
 	responseStatusCode: number,
 	responseHeaders: Headers,
@@ -64,7 +69,7 @@ export default async function handleRequest(
 						}),
 					);
 
-					pipe(body);
+					pipe(Sentry.getMetaTagTransformer(body));
 				},
 				onShellError(error: unknown) {
 					reject(error);
@@ -122,6 +127,11 @@ process.on("unhandledRejection", (reason: string, p: Promise<any>) => {
 });
 
 // wrapper so we get request id shown in the server logs
-export function handleError(error: unknown) {
+export const handleError: HandleErrorFunction = (error, { request }) => {
+	if (!request.signal.aborted) {
+		Sentry.captureException(error);
+	}
 	logger.error(error);
-}
+};
+export default Sentry.wrapSentryHandleRequest(handleRequest);
+export const instrumentations = [Sentry.createSentryServerInstrumentation()];

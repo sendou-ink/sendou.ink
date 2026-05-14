@@ -636,7 +636,10 @@ function ErrorMessage({ error }: { error: Progression.ValidationError }) {
 			{bracketIdxsArr ? (
 				<> (Bracket {bracketIdxsArr.map((idx) => `#${idx + 1}`).join(", ")})</>
 			) : null}
-			: {t(`tournament:progression.error.${error.type}`)}
+			:{" "}
+			{t(`tournament:progression.error.${error.type}`, {
+				max: TOURNAMENT.PLACEMENT_MAX,
+			})}
 		</FormMessage>
 	);
 }

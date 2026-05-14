@@ -10,6 +10,7 @@ import {
 import {
 	modesIncluded,
 	sortTeamsBySeeding,
+	tournamentInWeaponReportingWindow,
 	tournamentIsRanked,
 } from "~/features/tournament/tournament-utils";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
@@ -893,6 +894,16 @@ export class Tournament {
 		if (this.isInvitational) return false;
 
 		return this.registrationClosesAt > new Date();
+	}
+
+	/** Can participants submit/undo their own weapon reports right now?
+	 * Always open while the tournament is running; once finalized it stays open only for tournaments
+	 * whose startTime is inside the current-season-plus-adjacent-off-season window. */
+	get weaponReportingOpen() {
+		if (!this.ctx.isFinalized) return true;
+		return tournamentInWeaponReportingWindow({
+			tournamentStartTime: this.ctx.startTime,
+		});
 	}
 
 	/**

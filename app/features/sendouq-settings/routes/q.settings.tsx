@@ -458,7 +458,7 @@ function SoundCheckboxes() {
 	};
 
 	return (
-		<div className="ml-2-5">
+		<div className="stack sm ml-2-5">
 			{sounds.map((sound) => (
 				<div key={sound.code}>
 					<label className="stack horizontal xs items-center">
@@ -498,7 +498,7 @@ function SoundSlider() {
 	};
 
 	return (
-		<div className="stack horizontal xs items-center ml-2-5">
+		<div className="stack horizontal xs items-center ml-2-5 mt-6">
 			<Volume2 className={styles.volumeSliderIcon} />
 			<input
 				className={styles.volumeSliderInput}

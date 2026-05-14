@@ -133,7 +133,7 @@ export function MatchActionTab({
 						<TeamRadioOption
 							team={teams[0]}
 							isOwnTeam={teams[0].id === ownTeamId}
-							hideLabel={ownTeamId == null}
+							hideLabel={ownTeamId === null}
 							className={styles.alpha}
 							testId="winner-radio-1"
 						/>

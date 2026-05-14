@@ -24,6 +24,7 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { useUser } from "~/features/auth/core/user";
+import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
@@ -44,6 +45,7 @@ import * as AbDivisions from "../core/AbDivisions";
 import type { Bracket as BracketType } from "../core/Bracket";
 import * as PreparedMaps from "../core/PreparedMaps";
 import type { Tournament } from "../core/Tournament";
+import { tournamentWebsocketRoom } from "../tournament-bracket-utils";
 
 export { action };
 
@@ -79,6 +81,11 @@ export default function TournamentBracketsPage() {
 	const bracket = React.useMemo(
 		() => tournament.bracketByIdxOrDefault(bracketIdx),
 		[tournament, bracketIdx],
+	);
+
+	useWebsocketRevalidation(
+		tournamentWebsocketRoom(tournament.ctx.id),
+		!tournament.ctx.isFinalized,
 	);
 
 	React.useEffect(() => {

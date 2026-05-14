@@ -8,6 +8,7 @@ import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
 import { NotifyPlusServerVotingRoutine } from "./notifyPlusServerVoting";
 import { NotifyScrimStartingSoonRoutine } from "./notifyScrimStartingSoon";
 import { NotifySeasonStartRoutine } from "./notifySeasonStart";
+import { OptimizeDatabaseRoutine } from "./optimizeDatabase";
 import { SetOldGroupsAsInactiveRoutine } from "./setOldGroupsAsInactive";
 import { SyncLiveStreamsRoutine } from "./syncLiveStreams";
 import { SyncSplatoonRotationsRoutine } from "./syncSplatoonRotations";
@@ -38,6 +39,7 @@ export const daily = [
 	DeleteOldNotificationsRoutine,
 	CloseExpiredCommissionsRoutine,
 	DeleteOrphanArtTagsRoutine,
+	OptimizeDatabaseRoutine,
 ];
 
 /** List of Routines that should occur every 2 minutes */

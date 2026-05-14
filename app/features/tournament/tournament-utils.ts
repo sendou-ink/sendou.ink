@@ -159,6 +159,31 @@ export function tournamentIsRanked({
 	return isSetAsRanked ?? true;
 }
 
+/**
+ * Whether a tournament's startTime falls inside the active weapon-reporting window
+ * for late (post-finalization) reporting.
+ *
+ * - In-season: window is `(previousSeason.ends, now]` — current season plus the off-season immediately before it.
+ * - Off-season: window is `[previousSeason.starts, now]` — previous full season plus the current off-season.
+ */
+export function tournamentInWeaponReportingWindow({
+	tournamentStartTime,
+	now = new Date(),
+}: {
+	tournamentStartTime: Date;
+	now?: Date;
+}) {
+	const previousSeason = Seasons.previous(now);
+	if (!previousSeason) return true;
+
+	const currentSeason = Seasons.current(now);
+	const windowStart = currentSeason
+		? previousSeason.ends
+		: previousSeason.starts;
+
+	return tournamentStartTime > windowStart;
+}
+
 export function resolveLeagueRoundStartDate(
 	tournament: TournamentClass,
 	roundId: number,
