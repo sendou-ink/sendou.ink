@@ -10,14 +10,13 @@ import { BSKYLikeIcon } from "~/components/icons/BSKYLike";
 import { BSKYReplyIcon } from "~/components/icons/BSKYReply";
 import { BSKYRepostIcon } from "~/components/icons/BSKYRepost";
 import { ExternalIcon } from "~/components/icons/External";
+import { LocaleTime } from "~/components/LocaleTime";
 import { navItems } from "~/components/layout/nav-items";
 import { Main } from "~/components/Main";
 import { TournamentCard } from "~/features/calendar/components/TournamentCard";
 import { SplatoonRotations } from "~/features/front-page/components/SplatoonRotations";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import styles from "~/styles/front.module.css";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -59,6 +58,7 @@ function useSeasonData() {
 	return { season, isInFuture, isShowingPreviousSeason };
 }
 
+// xxx: range
 function SeasonDates({
 	season,
 	className,
@@ -66,16 +66,20 @@ function SeasonDates({
 	season: ReturnType<typeof useSeasonData>["season"];
 	className: string;
 }) {
-	const isHydrated = useHydrated();
-	const { formatDate } = useTimeFormat();
-
-	return isHydrated ? (
+	return (
 		<div className={className}>
-			{formatDate(season.starts, { month: "numeric", day: "numeric" })} -{" "}
-			{formatDate(season.ends, { month: "numeric", day: "numeric" })}
+			<LocaleTime
+				date={season.starts}
+				options={{ month: "numeric", day: "numeric" }}
+				inline
+			/>{" "}
+			-{" "}
+			<LocaleTime
+				date={season.ends}
+				options={{ month: "numeric", day: "numeric" }}
+				inline
+			/>
 		</div>
-	) : (
-		<div className={clsx(className, "invisible")}>X</div>
 	);
 }
 

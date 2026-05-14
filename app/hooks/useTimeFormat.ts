@@ -41,28 +41,15 @@ function getClockFormatOptions(
 }
 
 /**
- * Hook for formatting dates, times, durations, and relative times
+ * Hook for formatting date ranges, durations, and relative times
  * according to user preferences and locale.
  * Respects the user's clock format preference (12h/24h) and current language.
  *
+ * For formatting a single date or time, prefer `LocaleTime` (for JSX) or
+ * `useDateTimeFormat` (for non-JSX contexts).
+ *
  * @example
- * const { formatDateTime, formatTime, formatDate, formatDuration, formatRelativeTime } = useTimeFormat();
- *
- * // Format full date and time
- * formatDateTime(new Date('2025-01-15T14:30:00'));
- * // => "1/15/2025, 2:30 PM" (12h) or "1/15/2025, 14:30" (24h)
- *
- * // Format time only
- * formatTime(new Date('2025-01-15T14:30:00'));
- * // => "2:30 PM" (12h) or "14:30" (24h)
- *
- * // Format date only
- * formatDate(new Date('2025-01-15'));
- * // => "1/15/2025"
- *
- * // Custom options
- * formatDateTime(new Date(), { dateStyle: 'full', timeStyle: 'short' });
- * // => "Wednesday, January 15, 2025 at 2:30 PM"
+ * const { formatDuration, formatRelativeTime } = useTimeFormat();
  *
  * // Format a duration (hours + minutes)
  * formatDuration(1, 30);
@@ -130,14 +117,6 @@ export function useTimeFormat() {
 			: result;
 	};
 
-	const formatDate = (date: Date, options?: Intl.DateTimeFormatOptions) => {
-		const adjusted = withYearFirstAdjustment(options, dateFormat);
-		return date.toLocaleDateString(
-			isNumericMonth(adjusted) ? dateLocale : i18n.language,
-			adjusted,
-		);
-	};
-
 	const formatDateRange = (
 		from: Date,
 		to: Date,
@@ -194,9 +173,6 @@ export function useTimeFormat() {
 	};
 
 	return {
-		formatDateTime,
-		formatTime,
-		formatDate,
 		formatDateRange,
 		formatDateTimeSmartMinutes,
 		formatDistanceToNow,

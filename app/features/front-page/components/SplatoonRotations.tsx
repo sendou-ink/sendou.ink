@@ -8,6 +8,7 @@ import {
 	SendouChipRadioGroup,
 } from "~/components/elements/ChipRadio";
 import { ModeImage, StageImage } from "~/components/Image";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type { RankedModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -180,7 +181,7 @@ function RotationCard({
 	now: Date;
 }) {
 	const { t } = useTranslation(["front", "game-misc"]);
-	const { formatTime, formatDuration, formatRelativeTime } = useTimeFormat();
+	const { formatDuration, formatRelativeTime } = useTimeFormat();
 	const remaining = timeRemaining(
 		now,
 		databaseTimestampToDate(current?.startTime ?? 0),
@@ -228,7 +229,6 @@ function RotationCard({
 						<NextLabel
 							startTime={databaseTimestampToDate(next.startTime)}
 							startsIn={nextStartsIn}
-							formatTime={formatTime}
 							formatRelativeTime={formatRelativeTime}
 						/>
 					</span>
@@ -255,7 +255,6 @@ function RotationCard({
 							<NextLabel
 								startTime={databaseTimestampToDate(shownNext.startTime)}
 								startsIn={shownNextStartsIn}
-								formatTime={formatTime}
 								formatRelativeTime={formatRelativeTime}
 								compact
 							/>
@@ -273,17 +272,19 @@ function RotationCard({
 function NextLabel({
 	startTime,
 	startsIn,
-	formatTime,
 	formatRelativeTime,
 	compact,
 }: {
 	startTime: Date;
 	startsIn: { hours: number; minutes: number };
-	formatTime: (date: Date) => string;
 	formatRelativeTime: (hours: number, minutes: number) => string;
 	compact?: boolean;
 }) {
 	const { t } = useTranslation(["front"]);
+	const { formatter: timeFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+	});
 
 	const withinTwoHours = startsIn.hours * 60 + startsIn.minutes <= 120;
 
@@ -291,12 +292,12 @@ function NextLabel({
 		if (withinTwoHours) {
 			return formatRelativeTime(startsIn.hours, startsIn.minutes);
 		}
-		return formatTime(startTime);
+		return timeFormatter.format(startTime);
 	}
 
 	if (withinTwoHours) {
 		return `${t("front:rotations.nextLabel")} (${formatRelativeTime(startsIn.hours, startsIn.minutes)})`;
 	}
 
-	return `${t("front:rotations.nextLabel")} (${formatTime(startTime)})`;
+	return `${t("front:rotations.nextLabel")} (${timeFormatter.format(startTime)})`;
 }

@@ -6,11 +6,16 @@ interface LocaleTimeProps {
 	date: Date | number;
 	options: Intl.DateTimeFormatOptions;
 	className?: string;
+	inline?: boolean;
 }
 
-export function LocaleTime({ date, options, className }: LocaleTimeProps) {
-	const { formatter, className: formatterClassName } =
-		useDateTimeFormat(options);
+export function LocaleTime({
+	date,
+	options,
+	className,
+	inline,
+}: LocaleTimeProps) {
+	const { formatter, isLoaded } = useDateTimeFormat(options);
 
 	const dateObject =
 		typeof date === "number" ? databaseTimestampToDate(date) : date;
@@ -18,7 +23,14 @@ export function LocaleTime({ date, options, className }: LocaleTimeProps) {
 	return (
 		<time
 			dateTime={dateObject.toISOString()}
-			className={clsx(formatterClassName, className)}
+			className={clsx(
+				"reserve-one-lb",
+				{
+					block: !inline,
+					invisible: !isLoaded,
+				},
+				className,
+			)}
 		>
 			{formatter.format(dateObject)}
 		</time>

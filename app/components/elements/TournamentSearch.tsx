@@ -21,8 +21,7 @@ import { useDebounce } from "react-use";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouLabel } from "~/components/elements/Label";
 import type { TournamentSearchLoaderData } from "~/features/tournament/routes/to.search";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
-import { databaseTimestampToDate } from "~/utils/dates";
+import { LocaleTime } from "../LocaleTime";
 
 import selectStyles from "./Select.module.css";
 import tournamentSearchStyles from "./TournamentSearch.module.css";
@@ -151,7 +150,6 @@ function TournamentItem({
 		  };
 }) {
 	const { t } = useTranslation(["common"]);
-	const { formatDate } = useTimeFormat();
 
 	if (typeof item.id === "string") {
 		return (
@@ -166,15 +164,6 @@ function TournamentItem({
 			</ListBoxItem>
 		);
 	}
-
-	const additionalText = () => {
-		const date = databaseTimestampToDate(item.startTime);
-		return formatDate(date, {
-			day: "numeric",
-			month: "numeric",
-			year: "numeric",
-		});
-	};
 
 	return (
 		<ListBoxItem
@@ -191,9 +180,15 @@ function TournamentItem({
 			<img src={item.logoUrl} alt="" className={tournamentSearchStyles.logo} />
 			<div className={tournamentSearchStyles.itemTextsContainer}>
 				<span>{item.name}</span>
-				<div className={tournamentSearchStyles.itemAdditionalText}>
-					{additionalText()}
-				</div>
+				<LocaleTime
+					date={item.startTime}
+					options={{
+						day: "numeric",
+						month: "numeric",
+						year: "numeric",
+					}}
+					className={tournamentSearchStyles.itemAdditionalText}
+				/>
 			</div>
 		</ListBoxItem>
 	);

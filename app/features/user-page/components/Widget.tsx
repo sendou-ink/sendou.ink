@@ -20,16 +20,15 @@ import type { Tables } from "~/db/tables";
 import { previewUrl } from "~/features/art/art-utils";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { VodListing } from "~/features/vods/components/VodListing";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { usePagination } from "~/hooks/usePagination";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { GameBadgeId } from "~/modules/in-game-lists/game-badge-ids";
 import type {
 	MainWeaponId,
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
-import { databaseTimestampToDate } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import type { SerializeFrom } from "~/utils/remix";
 import { assertUnreachable } from "~/utils/types";
@@ -63,7 +62,11 @@ export function Widget({
 	user: Pick<Tables["User"], "discordId" | "customUrl">;
 }) {
 	const { t } = useTranslation(["user", "badges", "team", "org", "lfg"]);
-	const { formatDate } = useTimeFormat();
+	const { formatter: patronSinceFormatter } = useDateTimeFormat({
+		day: "numeric",
+		month: "numeric",
+		year: "numeric",
+	});
 
 	const content = () => {
 		switch (widget.id) {
@@ -167,13 +170,7 @@ export function Widget({
 			case "patron-since":
 				if (!widget.data) return null;
 				return (
-					<BigValue
-						value={formatDate(databaseTimestampToDate(widget.data), {
-							day: "numeric",
-							month: "numeric",
-							year: "numeric",
-						})}
-					/>
+					<BigValue value={patronSinceFormatter.format(widget.data) ?? ""} />
 				);
 			case "join-date":
 				if (!widget.data) return null;
@@ -538,8 +535,8 @@ function XRankPeaks({
 	);
 }
 
+// xxx: use autoRender hook here
 function TimezoneWidget({ timezone }: { timezone: string }) {
-	const { formatTime, formatDate } = useTimeFormat();
 	const [currentTime, setCurrentTime] = React.useState(() => new Date());
 
 	React.useEffect(() => {
@@ -553,22 +550,26 @@ function TimezoneWidget({ timezone }: { timezone: string }) {
 	try {
 		return (
 			<div className="stack sm items-center">
-				<div className={styles.widgetValueMain} suppressHydrationWarning>
-					{formatTime(currentTime, {
+				<LocaleTime
+					date={currentTime}
+					options={{
 						timeZone: timezone,
 						hour: "numeric",
 						minute: "2-digit",
 						second: "2-digit",
-					})}
-				</div>
-				<div className={styles.widgetValueFooter} suppressHydrationWarning>
-					{formatDate(currentTime, {
+					}}
+					className={styles.widgetValueMain}
+				/>
+				<LocaleTime
+					date={currentTime}
+					options={{
 						timeZone: timezone,
 						weekday: "short",
 						day: "numeric",
 						month: "numeric",
-					})}
-				</div>
+					}}
+					className={styles.widgetValueFooter}
+				/>
 			</div>
 		);
 	} catch {

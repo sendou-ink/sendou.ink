@@ -23,6 +23,7 @@ import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { dayMonthYearToDateValue } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
@@ -277,6 +278,7 @@ function DayHeader(props: { date: number; month: number; year: number }) {
 	);
 }
 
+// xxx: range
 function ClockHeader({
 	date,
 	toDate,
@@ -292,7 +294,10 @@ function ClockHeader({
 	hiddenShown: boolean;
 	className?: string;
 }) {
-	const { formatTime } = useTimeFormat();
+	const { formatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+	});
 
 	const isInThePast = (toDate ?? date).getTime() < Date.now();
 
@@ -304,8 +309,8 @@ function ClockHeader({
 						"text-lighter italic": isInThePast,
 					})}
 				>
-					{formatTime(date)}
-					{toDate ? ` - ${formatTime(toDate)}` : ""}
+					{formatter.format(date)}
+					{toDate ? ` - ${formatter.format(toDate)}` : ""}
 				</span>
 				{hiddenEventsCount > 0 ? (
 					<SendouButton

@@ -24,8 +24,8 @@ import { Link, useFetcher, useLocation, useMatches } from "react-router";
 import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -58,7 +58,16 @@ const MAX_DESKTOP_FRIENDS = 4;
 
 function useRelativeDayFormat() {
 	const { i18n } = useTranslation();
-	const { formatTime, formatDateTime } = useTimeFormat();
+	const { formatter: timeFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+	});
+	const { formatter: dateTimeFormatter } = useDateTimeFormat({
+		month: "numeric",
+		day: "numeric",
+		hour: "numeric",
+		minute: "numeric",
+	});
 
 	const formatRelativeDay = (daysFromToday: number) => {
 		const rtf = new Intl.RelativeTimeFormat(i18n.language, { numeric: "auto" });
@@ -68,7 +77,7 @@ function useRelativeDayFormat() {
 
 	const formatRelativeDate = (timestamp: number) => {
 		const date = new Date(timestamp * 1000);
-		const timeStr = formatTime(date);
+		const timeStr = timeFormatter.format(date);
 
 		if (isToday(date)) {
 			return `${formatRelativeDay(0)}, ${timeStr}`;
@@ -77,12 +86,7 @@ function useRelativeDayFormat() {
 			return `${formatRelativeDay(1)}, ${timeStr}`;
 		}
 
-		return formatDateTime(date, {
-			month: "numeric",
-			day: "numeric",
-			hour: "numeric",
-			minute: "2-digit",
-		});
+		return dateTimeFormatter.format(date);
 	};
 
 	return { formatRelativeDate };

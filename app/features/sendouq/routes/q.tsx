@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { User, Users } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -11,14 +10,14 @@ import { Flag } from "~/components/Flag";
 import { FormMessage } from "~/components/FormMessage";
 import { FriendCodePopover } from "~/components/FriendCodePopover";
 import { Image } from "~/components/Image";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type * as Seasons from "~/features/mmr/core/Seasons";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
-import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -65,7 +64,6 @@ export const meta: MetaFunction = (args) => {
 
 export default function QPage() {
 	const { t } = useTranslation(["q"]);
-	const { formatDateTime } = useTimeFormat();
 	const [dialogOpen, setDialogOpen] = React.useState(true);
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
@@ -128,18 +126,19 @@ export default function QPage() {
 								</SubmitButton>
 							</div>
 							{queueJoinStatus instanceof Date ? (
-								<div
-									className="text-lighter text-xs text-center text-warning"
-									suppressHydrationWarning
-								>
+								<div className="text-lighter text-xs text-center text-warning">
 									As a fresh account please wait before joining the queue. You
-									can join{" "}
-									{formatDateTime(queueJoinStatus, {
-										day: "numeric",
-										month: "numeric",
-										hour: "numeric",
-										minute: "numeric",
-									})}
+									can join at{" "}
+									<LocaleTime
+										date={queueJoinStatus}
+										options={{
+											day: "numeric",
+											month: "numeric",
+											hour: "numeric",
+											minute: "numeric",
+										}}
+										inline
+									/>
 								</div>
 							) : (
 								<PreviewQueueButton />
@@ -187,9 +186,7 @@ const countries = [
 	{ id: 4, countryCode: "JP", timeZone: "Asia/Tokyo", city: "tokyo" },
 ] as const;
 function Clocks() {
-	const isHydrated = useHydrated();
 	const { t } = useTranslation(["q"]);
-	const { formatDate, formatTime } = useTimeFormat();
 	const now = useAutoRerender();
 
 	return (
@@ -201,25 +198,21 @@ function Clocks() {
 							{t(`q:front.cities.${country.city}`)}
 						</div>
 						<Flag countryCode={country.countryCode} />
-						<div className={clsx({ invisible: !isHydrated })}>
-							{isHydrated
-								? formatDate(now, {
-										timeZone: country.timeZone,
-										weekday: "long",
-									})
-								: // take space
-									"Monday"}
-						</div>
-						<div className={clsx({ invisible: !isHydrated })}>
-							{isHydrated
-								? formatTime(now, {
-										timeZone: country.timeZone,
-										hour: "numeric",
-										minute: "numeric",
-									})
-								: // take space
-									"0:00 PM"}
-						</div>
+						<LocaleTime
+							date={now}
+							options={{
+								timeZone: country.timeZone,
+								weekday: "long",
+							}}
+						/>
+						<LocaleTime
+							date={now}
+							options={{
+								timeZone: country.timeZone,
+								hour: "numeric",
+								minute: "numeric",
+							}}
+						/>
 					</div>
 				);
 			})}
@@ -269,38 +262,33 @@ function JoinTeamDialog({
 	);
 }
 
+// xxx: range
 function ActiveSeasonInfo({
 	season,
 }: {
 	season: SerializeFrom<Seasons.ListItem>;
 }) {
 	const { t } = useTranslation(["q"]);
-	const { formatDateTime } = useTimeFormat();
-	const isHydrated = useHydrated();
 
-	const starts = new Date(season.starts);
-	const ends = new Date(season.ends);
-
-	const dateToString = (date: Date) =>
-		formatDateTime(date, {
-			month: "numeric",
-			day: "numeric",
-			hour: "numeric",
-			minute: "numeric",
-		});
+	const dateOptions: Intl.DateTimeFormatOptions = {
+		month: "numeric",
+		day: "numeric",
+		hour: "numeric",
+		minute: "numeric",
+	};
 
 	return (
-		<div
-			className={clsx("text-lighter text-xs text-center", {
-				invisible: !isHydrated,
-			})}
-		>
+		<div className="text-lighter text-xs text-center">
 			{t("q:front.seasonOpen", { nth: season.nth })}{" "}
-			{isHydrated ? (
-				<b>
-					{dateToString(starts)} - {dateToString(ends)}
-				</b>
-			) : null}
+			<b>
+				<LocaleTime
+					date={new Date(season.starts)}
+					options={dateOptions}
+					inline
+				/>{" "}
+				-{" "}
+				<LocaleTime date={new Date(season.ends)} options={dateOptions} inline />
+			</b>
 		</div>
 	);
 }
@@ -383,18 +371,11 @@ function UpcomingSeasonInfo({
 	season: SerializeFrom<Seasons.ListItem>;
 }) {
 	const { t } = useTranslation(["q"]);
-	const { formatDateTime } = useTimeFormat();
-	const isHydrated = useHydrated();
-	if (!isHydrated) return null;
-
-	const starts = new Date(season.starts);
-
-	const dateToString = (date: Date) =>
-		formatDateTime(date, {
-			month: "numeric",
-			day: "numeric",
-			hour: "numeric",
-		});
+	const { formatter } = useDateTimeFormat({
+		month: "numeric",
+		day: "numeric",
+		hour: "numeric",
+	});
 
 	return (
 		<div className="font-semi-bold text-center text-sm">
@@ -402,7 +383,7 @@ function UpcomingSeasonInfo({
 			<br />
 			{t("q:front.upcomingSeason.date", {
 				nth: season.nth,
-				date: dateToString(starts),
+				date: formatter.format(new Date(season.starts)) ?? "",
 			})}
 		</div>
 	);

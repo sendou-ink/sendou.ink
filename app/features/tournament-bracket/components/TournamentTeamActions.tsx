@@ -9,7 +9,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { soundEnabled, soundVolume } from "~/features/chat/chat-utils";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { logger } from "~/utils/logger";
 import {
 	soundPath,
@@ -22,7 +22,15 @@ export function TournamentTeamActions() {
 	const tournament = useTournament();
 	const user = useUser();
 	const fetcher = useFetcher();
-	const { formatTime } = useTimeFormat();
+	const { formatter: checkInOpenFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+		weekday: "short",
+	});
+	const { formatter: checkInStartFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+	});
 
 	const status = tournament.teamMemberOfProgressStatus(user);
 
@@ -104,18 +112,13 @@ export function TournamentTeamActions() {
 						</SubmitButton>
 					</fetcher.Form>
 				) : bracket.startTime && bracket.startTime > new Date() ? (
-					<span className="text-lighter text-xxs" suppressHydrationWarning>
+					// xxx: range
+					<span className="text-lighter text-xxs">
 						open{" "}
-						{formatTime(sub(bracket.startTime, { hours: 1 }), {
-							hour: "numeric",
-							minute: "numeric",
-							weekday: "short",
-						})}{" "}
-						-{" "}
-						{formatTime(bracket.startTime, {
-							hour: "numeric",
-							minute: "numeric",
-						})}
+						{checkInOpenFormatter.format(
+							sub(bracket.startTime, { hours: 1 }),
+						) ?? ""}{" "}
+						- {checkInStartFormatter.format(bracket.startTime) ?? ""}
 					</span>
 				) : bracket.startTime && bracket.startTime < new Date() ? (
 					<span className="text-warning">over</span>

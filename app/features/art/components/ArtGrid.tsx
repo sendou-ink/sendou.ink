@@ -8,6 +8,7 @@ import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Pagination } from "~/components/Pagination";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
 import { usePagination } from "~/hooks/usePagination";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
@@ -89,15 +90,15 @@ export function ArtGrid({
 
 function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 	const [imageLoaded, setImageLoaded] = React.useState(false);
-	const { formatDate } = useTimeFormat();
+	const { formatter } = useDateTimeFormat({
+		year: "numeric",
+		month: "numeric",
+		day: "numeric",
+	});
 
 	return (
 		<SendouDialog
-			heading={formatDate(databaseTimestampToDate(art.createdAt), {
-				year: "numeric",
-				month: "numeric",
-				day: "numeric",
-			})}
+			heading={formatter.format(databaseTimestampToDate(art.createdAt)) ?? ""}
 			onClose={close}
 			isFullScreen
 		>

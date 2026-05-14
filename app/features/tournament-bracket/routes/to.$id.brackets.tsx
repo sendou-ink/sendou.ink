@@ -26,9 +26,9 @@ import {
 import { useUser } from "~/features/auth/core/user";
 import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useVisibilityChange } from "~/hooks/useVisibilityChange";
 import { SENDOU_INK_BASE_URL, tournamentJoinPage } from "~/utils/urls";
 import {
@@ -53,7 +53,6 @@ import styles from "../tournament-bracket.module.css";
 
 export default function TournamentBracketsPage() {
 	const { t } = useTranslation(["common", "tournament"]);
-	const { formatDateTime, formatTime } = useTimeFormat();
 	const visibility = useVisibilityChange();
 	const { revalidate } = useRevalidator();
 	const user = useUser();
@@ -287,8 +286,6 @@ export default function TournamentBracketsPage() {
 						bracketIdx={currentBracketIdx}
 						waitingForTeamsText={waitingForTeamsText}
 						teamsSourceText={teamsSourceText}
-						formatDateTime={formatDateTime}
-						formatTime={formatTime}
 					/>
 				)}
 			</BracketTabs>
@@ -550,16 +547,22 @@ function BracketTabContent({
 	bracketIdx,
 	waitingForTeamsText,
 	teamsSourceText,
-	formatDateTime,
-	formatTime,
 }: {
 	bracket: BracketType;
 	bracketIdx: number;
 	waitingForTeamsText: () => string;
 	teamsSourceText: () => string | null;
-	formatDateTime: (date: Date, options?: Intl.DateTimeFormatOptions) => string;
-	formatTime: (date: Date) => string;
 }) {
+	const { formatter: dateTimeFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+		weekday: "long",
+	});
+	const { formatter: timeFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+	});
+
 	return (
 		<>
 			{bracket.enoughTeams ? (
@@ -578,14 +581,13 @@ function BracketTabContent({
 						<div className="text-center text-sm font-semi-bold text-lighter mt-2 text-warning">
 							Bracket requires check-in{" "}
 							{bracket.startTime ? (
-								<span suppressHydrationWarning>
+								// xxx: range
+								<span>
 									(open{" "}
-									{formatDateTime(sub(bracket.startTime, { hours: 1 }), {
-										hour: "numeric",
-										minute: "numeric",
-										weekday: "long",
-									})}{" "}
-									- {formatTime(bracket.startTime)})
+									{dateTimeFormatter.format(
+										sub(bracket.startTime, { hours: 1 }),
+									)}{" "}
+									- {timeFormatter.format(bracket.startTime)})
 								</span>
 							) : null}
 						</div>
