@@ -15,7 +15,6 @@ import {
 	concatUserSubmittedImagePrefix,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
-import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
 import type { Unpacked } from "~/utils/types";
 import { FULL_GROUP_SIZE } from "../sendouq/q-constants";
 import { SendouQError } from "../sendouq/q-utils.server";
@@ -433,6 +432,21 @@ export function create({
 	memento: ParsedMemento;
 }) {
 	return db.transaction().execute(async (trx) => {
+		const existingMatch = await trx
+			.selectFrom("GroupMatch")
+			.select(["id"])
+			.where((eb) =>
+				eb.or([
+					eb("alphaGroupId", "in", [alphaGroupId, bravoGroupId]),
+					eb("bravoGroupId", "in", [alphaGroupId, bravoGroupId]),
+				]),
+			)
+			.executeTakeFirst();
+
+		if (existingMatch) {
+			throw new SendouQError("Can't leave group when already in a match");
+		}
+
 		const match = await trx
 			.insertInto("GroupMatch")
 			.values({
@@ -442,15 +456,7 @@ export function create({
 				memento: JSON.stringify(memento),
 			})
 			.returningAll()
-			.executeTakeFirstOrThrow()
-			.catch((error) => {
-				// race: another manager matched one of the two groups first, tripping the
-				// unique constraint on GroupMatch.alphaGroupId / bravoGroupId
-				if (errorIsSqliteUniqueConstraintFailure(error)) {
-					throw new SendouQError("Group is already in a match");
-				}
-				throw error;
-			});
+			.executeTakeFirstOrThrow();
 
 		await trx
 			.insertInto("GroupMatchMap")

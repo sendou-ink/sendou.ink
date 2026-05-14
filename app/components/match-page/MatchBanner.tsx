@@ -1,6 +1,7 @@
 import clsx from "clsx";
-import { Check, X } from "lucide-react";
+import { Check, QrCode, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -20,6 +21,8 @@ interface MatchBannerProps {
 	stageId: StageId;
 	mode: ModeShort;
 	screenLegal?: boolean;
+	joinPool?: string | null;
+	joinViaQr?: boolean;
 	children: React.ReactNode;
 }
 
@@ -27,6 +30,8 @@ export function MatchBanner({
 	stageId,
 	mode,
 	screenLegal,
+	joinPool,
+	joinViaQr,
 	children,
 }: MatchBannerProps) {
 	const { t } = useTranslation(["game-misc"]);
@@ -45,6 +50,7 @@ export function MatchBanner({
 			</div>
 			<div className={clsx(styles.info, styles.thickText)}>{children}</div>
 
+			{joinPool ? <JoinPoolBadge pool={joinPool} viaQr={joinViaQr} /> : null}
 			{screenLegal !== undefined ? (
 				<ScreenNotice screenLegal={screenLegal} />
 			) : null}
@@ -75,6 +81,8 @@ interface IconBannerProps {
 	header: string;
 	subtitle?: string;
 	screenLegal?: boolean;
+	joinPool?: string | null;
+	joinViaQr?: boolean;
 	topRight?: React.ReactNode;
 	testId?: string;
 }
@@ -84,6 +92,8 @@ export function IconBanner({
 	header,
 	subtitle,
 	screenLegal,
+	joinPool,
+	joinViaQr,
 	topRight,
 	testId,
 }: IconBannerProps) {
@@ -94,6 +104,7 @@ export function IconBanner({
 			{subtitle ? (
 				<div className={styles.iconBannerSubtitle}>{subtitle}</div>
 			) : null}
+			{joinPool ? <JoinPoolBadge pool={joinPool} viaQr={joinViaQr} /> : null}
 			{screenLegal !== undefined ? (
 				<ScreenNotice screenLegal={screenLegal} />
 			) : null}
@@ -101,6 +112,31 @@ export function IconBanner({
 				<div className={styles.iconBannerBottomRight}>{topRight}</div>
 			) : null}
 		</div>
+	);
+}
+
+function JoinPoolBadge({ pool, viaQr }: { pool: string; viaQr?: boolean }) {
+	const { t } = useTranslation(["q"]);
+	const [, setSearchParams] = useSearchParams();
+
+	return (
+		<SendouButton
+			variant="minimal"
+			className={styles.joinBadge}
+			onPress={() =>
+				setSearchParams(
+					{ tab: "join" },
+					{
+						preventScrollReset: true,
+						defaultShouldRevalidate: false,
+					},
+				)
+			}
+			aria-label={t("q:match.pool")}
+			testId="join-pool-badge"
+		>
+			{viaQr ? <QrCode size={18} /> : pool}
+		</SendouButton>
 	);
 }
 

@@ -57,6 +57,7 @@ export const action: ActionFunction = async ({ request }) => {
 						room: targetChatCode,
 						type: "LIKE_RECEIVED",
 						revalidateOnly: true,
+						authorUserId: user.id,
 					});
 				}
 
@@ -78,6 +79,7 @@ export const action: ActionFunction = async ({ request }) => {
 						room: targetChatCode,
 						type: "LIKE_RECEIVED",
 						revalidateOnly: true,
+						authorUserId: user.id,
 					});
 				}
 				break;
@@ -201,11 +203,13 @@ export const action: ActionFunction = async ({ request }) => {
 							room: ownGroup.chatCode,
 							type: "MATCH_STARTED",
 							revalidateOnly: true,
+							authorUserId: user.id,
 						},
 						{
 							room: theirGroup.chatCode,
 							type: "MATCH_STARTED",
 							revalidateOnly: true,
+							authorUserId: user.id,
 						},
 					]);
 				}

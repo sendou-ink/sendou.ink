@@ -417,7 +417,10 @@ export function rechallenge({
 		.execute();
 }
 
-export async function friendsAndTeammates(userId: number) {
+export async function friendsAndTeammates(
+	userId: number,
+	{ requireFriendCode = true }: { requireFriendCode?: boolean } = {},
+) {
 	const teams = await db
 		.selectFrom("TeamMemberWithSecondary")
 		.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
@@ -428,7 +431,9 @@ export async function friendsAndTeammates(userId: number) {
 	const rows = await db
 		.selectFrom("TeamMemberWithSecondary")
 		.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
-		.innerJoin("UserFriendCode", "UserFriendCode.userId", "User.id")
+		.$if(requireFriendCode, (qb) =>
+			qb.innerJoin("UserFriendCode", "UserFriendCode.userId", "User.id"),
+		)
 		.select([
 			...COMMON_USER_FIELDS,
 			"User.inGameName",
@@ -456,7 +461,9 @@ export async function friendsAndTeammates(userId: number) {
 						]),
 					),
 				)
-				.innerJoin("UserFriendCode", "UserFriendCode.userId", "User.id")
+				.$if(requireFriendCode, (qb) =>
+					qb.innerJoin("UserFriendCode", "UserFriendCode.userId", "User.id"),
+				)
 				.select([
 					...COMMON_USER_FIELDS,
 					"User.inGameName",

@@ -41,6 +41,7 @@ export const action: ActionFunction = async ({ request }) => {
 					ChatSystemMessage.send({
 						room: chatCodeToRevalidate,
 						revalidateOnly: true,
+						authorUserId: user.id,
 					});
 				}
 
@@ -78,6 +79,7 @@ export const action: ActionFunction = async ({ request }) => {
 					ChatSystemMessage.send({
 						room: chatCodeToRevalidate,
 						revalidateOnly: true,
+						authorUserId: user.id,
 					});
 				}
 

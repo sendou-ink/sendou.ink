@@ -14,9 +14,8 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { teamPage } from "~/utils/urls";
 import * as Scrim from "../core/Scrim";
 import type { loader } from "../loaders/scrims.$id.server";
+import { SCRIM } from "../scrims-constants";
 import type { ScrimPost } from "../scrims-types";
-
-const SCRIM_ROOM_LINK_FRESHNESS_MINUTES = 30;
 
 export function ScrimMatchTabs() {
 	const { t } = useTranslation(["q"]);
@@ -30,14 +29,14 @@ export function ScrimMatchTabs() {
 	const activeRoomLink = resolveActiveRoomLink({
 		roomLinks: data.roomLinks,
 		freshnessCutoff: dateToDatabaseTimestamp(
-			sub(new Date(), { minutes: SCRIM_ROOM_LINK_FRESHNESS_MINUTES }),
+			sub(new Date(), { minutes: SCRIM.ROOM_LINK_FRESHNESS_MINUTES }),
 		),
 		viewerUserId: user?.id,
 		members: allMembers,
 	});
 
 	return (
-		<MatchTabs tabs={[TAB_KEYS.JOIN, TAB_KEYS.ROSTERS]}>
+		<MatchTabs tabs={[TAB_KEYS.ROSTERS, TAB_KEYS.JOIN]}>
 			<MatchJoinTab
 				{...activeRoomLink}
 				onConfirmRoom={onConfirmRoom}

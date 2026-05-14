@@ -36,7 +36,15 @@ export function TournamentMatchBanner({
 	const { t } = useTranslation(["tournament"]);
 	const { formatDate } = useTimeFormat();
 	const tournament = useTournament();
-	const { currentMap, teamsMissingActiveRoster, matchIsLocked } = useMatch();
+	const {
+		currentMap,
+		teamsMissingActiveRoster,
+		matchIsLocked,
+		joinPool,
+		activeRoomLink,
+	} = useMatch();
+	const joinViaQr =
+		Boolean(activeRoomLink?.joinLink) && !activeRoomLink?.isStale;
 
 	const opponentOne = data.match.opponentOne;
 	const opponentTwo = data.match.opponentTwo;
@@ -107,6 +115,8 @@ export function TournamentMatchBanner({
 						teams: teamsMissingActiveRoster.join(" & "),
 					})}
 					screenLegal={screenLegal}
+					joinPool={joinPool}
+					joinViaQr={joinViaQr}
 					testId="active-roster-needed-text"
 				/>
 			) : data.matchIsOver ? (
@@ -119,12 +129,16 @@ export function TournamentMatchBanner({
 					header={pickBanBanner.header}
 					subtitle={pickBanBanner.subtitle}
 					screenLegal={screenLegal}
+					joinPool={joinPool}
+					joinViaQr={joinViaQr}
 				/>
 			) : currentMap ? (
 				<MatchBanner
 					stageId={currentMap.stageId}
 					mode={currentMap.mode}
 					screenLegal={screenLegal}
+					joinPool={joinPool}
+					joinViaQr={joinViaQr}
 				>
 					<CurrentMapPickInfo
 						source={currentMap.source}

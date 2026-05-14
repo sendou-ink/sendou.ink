@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CastedMatchesInfo } from "~/db/tables";
+import * as Seasons from "../mmr/core/Seasons";
 import type { ParsedBracket } from "../tournament-bracket/core/Progression";
 import {
 	compareTeamsForOrdering,
@@ -7,6 +8,7 @@ import {
 	getBracketProgressionLabel,
 	sortTeamsBySeeding,
 	type TeamForOrdering,
+	tournamentInWeaponReportingWindow,
 	updatedCastedMatchesInfo,
 } from "./tournament-utils";
 
@@ -640,5 +642,45 @@ describe("updatedCastedMatchesInfo", () => {
 				{ twitchAccount: "streamer_a", matchId: 1, timestamp: 500 },
 			]);
 		});
+	});
+});
+
+describe("tournamentInWeaponReportingWindow", () => {
+	const anchorSeason = Seasons.list[2]!;
+	const previousSeason = Seasons.list[1]!;
+
+	const dateInside = (range: { starts: Date; ends: Date }) =>
+		new Date((range.starts.getTime() + range.ends.getTime()) / 2);
+
+	const inSeasonNow = dateInside(anchorSeason);
+	const offSeasonNow = new Date(
+		(previousSeason.ends.getTime() + anchorSeason.starts.getTime()) / 2,
+	);
+
+	it("allows tournaments started in the off-season before current season (in-season)", () => {
+		expect(
+			tournamentInWeaponReportingWindow({
+				tournamentStartTime: offSeasonNow,
+				now: inSeasonNow,
+			}),
+		).toBe(true);
+	});
+
+	it("rejects tournaments started before the previous season ended (in-season)", () => {
+		expect(
+			tournamentInWeaponReportingWindow({
+				tournamentStartTime: dateInside(previousSeason),
+				now: inSeasonNow,
+			}),
+		).toBe(false);
+	});
+
+	it("allows tournaments started during the previous season (off-season)", () => {
+		expect(
+			tournamentInWeaponReportingWindow({
+				tournamentStartTime: dateInside(previousSeason),
+				now: offSeasonNow,
+			}),
+		).toBe(true);
 	});
 });

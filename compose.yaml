@@ -25,6 +25,7 @@ services:
 
   skalop:
     image: ghcr.io/sendou-ink/skalop:latest
+    pull_policy: always
     ports:
       - "5900:5900"
     environment:

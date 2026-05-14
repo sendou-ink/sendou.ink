@@ -31,13 +31,17 @@ export function computePassedVoting(
 			.sort((a, b) => b.score - a.score);
 
 		const remainingSlots = Math.max(0, criteria.quota - autoPassers.length);
+		const lastPassingScore = middleZone[remainingSlots - 1]?.score;
 
 		return [
 			...autoPassers.map((r) => ({ ...r, passedVoting: 1 as number })),
 			...autoFailers.map((r) => ({ ...r, passedVoting: 0 as number })),
 			...middleZone.map((r, i) => ({
 				...r,
-				passedVoting: i < remainingSlots ? (1 as number) : (0 as number),
+				passedVoting:
+					i < remainingSlots || r.score === lastPassingScore
+						? (1 as number)
+						: (0 as number),
 			})),
 		];
 	});

@@ -11,6 +11,7 @@ import {
 	seed,
 	submit,
 	test,
+	waitForPOSTResponse,
 } from "./helpers/playwright";
 import { createFormHelpers } from "./helpers/playwright-form";
 
@@ -163,7 +164,9 @@ test.describe("Team page", () => {
 
 		await page.getByTestId("manage-roster-button").click();
 
-		await page.getByLabel("Editor").first().click({ force: true });
+		await waitForPOSTResponse(page, async () => {
+			await page.getByLabel("Editor").first().click({ force: true });
+		});
 
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({ page, url: editTeamPage("alliance-rogue") });

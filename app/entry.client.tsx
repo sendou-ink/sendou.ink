@@ -62,7 +62,7 @@ i18nLoader()
 			document,
 			<I18nextProvider i18n={i18next}>
 				<HydratedRouter
-					unstable_instrumentations={[tracing.clientInstrumentation]}
+					instrumentations={[tracing.clientInstrumentation]}
 					onError={(error) => {
 						if (error && error instanceof Error) {
 							Sentry.captureException(error);
