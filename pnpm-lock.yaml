@@ -87,8 +87,8 @@ importers:
         specifier: 8.2.1
         version: 8.2.1
       i18next-http-backend:
-        specifier: 3.0.6
-        version: 3.0.6
+        specifier: 4.0.0
+        version: 4.0.0
       ics:
         specifier: 3.12.0
         version: 3.12.0
@@ -2961,9 +2961,6 @@ packages:
     engines: {node: '>=20'}
     hasBin: true
 
-  cross-fetch@4.1.0:
-    resolution: {integrity: sha512-uKm5PU+MHTootlWEY+mZ4vvXoCn4fLQxT9dSc1sXVMSFkINTJVN8cAQROpwcKm8bJ/c7rgZVIBWzH5T78sNZZw==}
-
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
@@ -3399,8 +3396,9 @@ packages:
   i18next-browser-languagedetector@8.2.1:
     resolution: {integrity: sha512-bZg8+4bdmaOiApD7N7BPT9W8MLZG+nPTOFlLiJiT8uzKXFjhxw4v2ierCXOwB5sFDMtuA5G4kgYZ0AznZxQ/cw==}
 
-  i18next-http-backend@3.0.6:
-    resolution: {integrity: sha512-mBOqy8993jtqAoj6XaI1XeC/8/9v6EPS+681ziegrPvTB0DoaCY7PpTS0SpY56qLMoS4OI1TZEM2Zf59zNh05w==}
+  i18next-http-backend@4.0.0:
+    resolution: {integrity: sha512-EgSjO3Q1G6f2Q5oy7u9mmxuesE0oSfzAD97NFBjC8EmkK4guBSYLljM0Fng3DarMWIIkU70jfo4+mUzmyVISTA==}
+    engines: {node: '>=18'}
 
   i18next-locales-sync@2.1.1:
     resolution: {integrity: sha512-NC/Zw0kKT+VULSh6zzDSxvqDUS9BHY6tk2cj93qQ/yaNuKc3hg4VlJFDeuaxdovY1/LobcdQCAc6g1U03qe2SQ==}
@@ -7991,12 +7989,6 @@ snapshots:
       '@epic-web/invariant': 1.0.0
       cross-spawn: 7.0.6
 
-  cross-fetch@4.1.0:
-    dependencies:
-      node-fetch: 2.7.0
-    transitivePeerDependencies:
-      - encoding
-
   cross-spawn@7.0.6:
     dependencies:
       path-key: 3.1.1
@@ -8435,11 +8427,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.2
 
-  i18next-http-backend@3.0.6:
-    dependencies:
-      cross-fetch: 4.1.0
-    transitivePeerDependencies:
-      - encoding
+  i18next-http-backend@4.0.0: {}
 
   i18next-locales-sync@2.1.1:
     dependencies:
