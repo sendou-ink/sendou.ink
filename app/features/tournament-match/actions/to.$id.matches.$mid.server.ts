@@ -24,6 +24,7 @@ import {
 	tournamentWebsocketRoom,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -784,6 +785,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				mapIndex: data.mapIndex,
 				userId: user.id,
 				weaponSplId: data.weaponSplId,
+				createdAt: dateToDatabaseTimestamp(tournament.ctx.startTime),
 			});
 
 			break;

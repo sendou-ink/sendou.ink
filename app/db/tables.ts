@@ -452,6 +452,7 @@ export interface ReportedWeapon {
 	mapIndex: number;
 	userId: number;
 	weaponSplId: MainWeaponId;
+	createdAt: Generated<number>;
 }
 
 export interface Skill {

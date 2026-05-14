@@ -112,9 +112,11 @@ export async function upsertOneTournament({
 	mapIndex,
 	userId,
 	weaponSplId,
+	createdAt,
 }: TablesInsertable["ReportedWeapon"] & {
 	tournamentMatchId: number;
 	mapIndex: number;
+	createdAt: number;
 }) {
 	await db
 		.deleteFrom("ReportedWeapon")
@@ -125,7 +127,7 @@ export async function upsertOneTournament({
 
 	await db
 		.insertInto("ReportedWeapon")
-		.values({ tournamentMatchId, mapIndex, userId, weaponSplId })
+		.values({ tournamentMatchId, mapIndex, userId, weaponSplId, createdAt })
 		.execute();
 }
 
@@ -197,14 +199,14 @@ export async function seasonReportedWeaponsByUserId({
 
 	const sendouqWeapons = db
 		.selectFrom("ReportedWeapon")
-		.innerJoin("GroupMatch", "GroupMatch.id", "ReportedWeapon.groupMatchId")
 		.select(({ fn }) => [
 			"ReportedWeapon.weaponSplId",
 			fn.countAll<number>().as("count"),
 		])
 		.where("ReportedWeapon.userId", "=", userId)
-		.where("GroupMatch.createdAt", ">=", startsTs)
-		.where("GroupMatch.createdAt", "<=", endsTs)
+		.where("ReportedWeapon.groupMatchId", "is not", null)
+		.where("ReportedWeapon.createdAt", ">=", startsTs)
+		.where("ReportedWeapon.createdAt", "<=", endsTs)
 		.groupBy("ReportedWeapon.weaponSplId");
 
 	const tournamentWeapons = db
@@ -220,27 +222,14 @@ export async function seasonReportedWeaponsByUserId({
 			"TournamentMatch.stageId",
 		)
 		.innerJoin("Tournament", "Tournament.id", "TournamentStage.tournamentId")
-		.innerJoin("CalendarEvent", "CalendarEvent.tournamentId", "Tournament.id")
-		.innerJoin(
-			(eb) =>
-				eb
-					.selectFrom("CalendarEventDate")
-					.select(({ fn }) => [
-						"CalendarEventDate.eventId",
-						fn.min("CalendarEventDate.startTime").as("startTime"),
-					])
-					.groupBy("CalendarEventDate.eventId")
-					.as("EventStartTime"),
-			(join) => join.onRef("EventStartTime.eventId", "=", "CalendarEvent.id"),
-		)
 		.select(({ fn }) => [
 			"ReportedWeapon.weaponSplId",
 			fn.countAll<number>().as("count"),
 		])
 		.where("ReportedWeapon.userId", "=", userId)
 		.where("Tournament.isFinalized", "=", 1)
-		.where("EventStartTime.startTime", ">=", startsTs)
-		.where("EventStartTime.startTime", "<=", endsTs)
+		.where("ReportedWeapon.createdAt", ">=", startsTs)
+		.where("ReportedWeapon.createdAt", "<=", endsTs)
 		.groupBy("ReportedWeapon.weaponSplId");
 
 	const rows = await db
