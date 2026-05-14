@@ -39,6 +39,7 @@ export async function findMatchById(id: number) {
 			"Tournament.mapPickingStyle",
 			"TournamentRound.id as roundId",
 			"TournamentRound.maps as roundMaps",
+			"Tournament.id as tournamentId",
 			jsonArrayFrom(
 				eb
 					.selectFrom("TournamentTeamMember")

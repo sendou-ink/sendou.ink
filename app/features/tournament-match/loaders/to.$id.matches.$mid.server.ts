@@ -43,6 +43,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		await TournamentMatchRepository.findMatchById(matchId),
 	);
 
+	if (match.tournamentId !== tournamentId) {
+		throw new Response(null, { status: 404 });
+	}
+
 	const isBye = !match.opponentOne || !match.opponentTwo;
 	if (isBye) {
 		throw new Response(null, { status: 404 });
