@@ -13,8 +13,8 @@ import { LocaleTime } from "~/components/LocaleTime";
 import { useUser } from "~/features/auth/core/user";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
+import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { lfgNewPostPage, navIconUrl, userPage } from "~/utils/urls";
@@ -263,7 +263,7 @@ function PostTime({
 	updatedAt: number;
 }) {
 	const { t } = useTranslation(["lfg"]);
-	const { formatDistanceToNow } = useTimeFormat();
+	const formatDistanceToNow = useFormatDistanceToNow();
 
 	const createdAtDate = databaseTimestampToDate(createdAt);
 	const updatedAtDate = databaseTimestampToDate(updatedAt);

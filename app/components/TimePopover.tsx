@@ -5,7 +5,6 @@ import { useRef, useState } from "react";
 import { Dialog, Popover } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { SendouButton } from "./elements/Button";
 import popoverStyles from "./elements/Popover.module.css";
 import { LocaleTime } from "./LocaleTime";
@@ -29,8 +28,6 @@ export default function TimePopover({
 	className?: string;
 	footerText?: string;
 }) {
-	const { formatDateTimeSmartMinutes } = useTimeFormat();
-
 	const [open, setOpen] = useState(false);
 
 	const triggerRef = useRef(null);
@@ -64,7 +61,7 @@ export default function TimePopover({
 					setOpen(true);
 				}}
 			>
-				{formatDateTimeSmartMinutes(time, options)}
+				<LocaleTime date={time} options={options} inline />
 			</button>
 			<Popover
 				isOpen={open}

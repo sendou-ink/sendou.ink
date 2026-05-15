@@ -5,8 +5,8 @@ import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import type { SidebarStream } from "~/features/core/streams/streams.server";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl, tournamentRegisterPage } from "~/utils/urls";
 import { Image } from "./Image";
@@ -26,7 +26,7 @@ export function StreamListItems({
 	savedTournamentIds?: number[];
 }) {
 	const { t, i18n } = useTranslation(["front"]);
-	const { formatDistanceToNow } = useTimeFormat();
+	const formatDistanceToNow = useFormatDistanceToNow();
 	const { formatter: timeFormatter } = useDateTimeFormat({
 		hour: "numeric",
 		minute: "numeric",

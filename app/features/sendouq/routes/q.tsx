@@ -11,6 +11,7 @@ import { FormMessage } from "~/components/FormMessage";
 import { FriendCodePopover } from "~/components/FriendCodePopover";
 import { Image } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
+import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { Tables } from "~/db/tables";
@@ -262,7 +263,6 @@ function JoinTeamDialog({
 	);
 }
 
-// xxx: range
 function ActiveSeasonInfo({
 	season,
 }: {
@@ -281,13 +281,12 @@ function ActiveSeasonInfo({
 		<div className="text-lighter text-xs text-center">
 			{t("q:front.seasonOpen", { nth: season.nth })}{" "}
 			<b>
-				<LocaleTime
-					date={new Date(season.starts)}
+				<LocaleTimeRange
+					from={new Date(season.starts)}
+					to={new Date(season.ends)}
 					options={dateOptions}
 					inline
-				/>{" "}
-				-{" "}
-				<LocaleTime date={new Date(season.ends)} options={dateOptions} inline />
+				/>
 			</b>
 		</div>
 	);

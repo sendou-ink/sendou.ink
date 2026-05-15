@@ -23,10 +23,10 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { useUser } from "~/features/auth/core/user";
 import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { useVisibilityChange } from "~/hooks/useVisibilityChange";
@@ -553,16 +553,6 @@ function BracketTabContent({
 	waitingForTeamsText: () => string;
 	teamsSourceText: () => string | null;
 }) {
-	const { formatter: dateTimeFormatter } = useDateTimeFormat({
-		hour: "numeric",
-		minute: "numeric",
-		weekday: "long",
-	});
-	const { formatter: timeFormatter } = useDateTimeFormat({
-		hour: "numeric",
-		minute: "numeric",
-	});
-
 	return (
 		<>
 			{bracket.enoughTeams ? (
@@ -581,13 +571,19 @@ function BracketTabContent({
 						<div className="text-center text-sm font-semi-bold text-lighter mt-2 text-warning">
 							Bracket requires check-in{" "}
 							{bracket.startTime ? (
-								// xxx: range
 								<span>
 									(open{" "}
-									{dateTimeFormatter.format(
-										sub(bracket.startTime, { hours: 1 }),
-									)}{" "}
-									- {timeFormatter.format(bracket.startTime)})
+									<LocaleTimeRange
+										from={sub(bracket.startTime, { hours: 1 })}
+										to={bracket.startTime}
+										options={{
+											hour: "numeric",
+											minute: "numeric",
+											weekday: "long",
+										}}
+										inline
+									/>
+									)
 								</span>
 							) : null}
 						</div>

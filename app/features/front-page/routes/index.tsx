@@ -10,7 +10,7 @@ import { BSKYLikeIcon } from "~/components/icons/BSKYLike";
 import { BSKYReplyIcon } from "~/components/icons/BSKYReply";
 import { BSKYRepostIcon } from "~/components/icons/BSKYRepost";
 import { ExternalIcon } from "~/components/icons/External";
-import { LocaleTime } from "~/components/LocaleTime";
+import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { navItems } from "~/components/layout/nav-items";
 import { Main } from "~/components/Main";
 import { TournamentCard } from "~/features/calendar/components/TournamentCard";
@@ -58,7 +58,6 @@ function useSeasonData() {
 	return { season, isInFuture, isShowingPreviousSeason };
 }
 
-// xxx: range
 function SeasonDates({
 	season,
 	className,
@@ -68,14 +67,9 @@ function SeasonDates({
 }) {
 	return (
 		<div className={className}>
-			<LocaleTime
-				date={season.starts}
-				options={{ month: "numeric", day: "numeric" }}
-				inline
-			/>{" "}
-			-{" "}
-			<LocaleTime
-				date={season.ends}
+			<LocaleTimeRange
+				from={season.starts}
+				to={season.ends}
 				options={{ month: "numeric", day: "numeric" }}
 				inline
 			/>
@@ -220,11 +214,7 @@ function ResultHighlights() {
 					</h2>
 					<div className={styles.tournamentCardsSpacer}>
 						{data.tournaments.results.map((tournament) => (
-							<TournamentCard
-								key={tournament.id}
-								tournament={tournament}
-								withRelativeTime
-							/>
+							<TournamentCard key={tournament.id} tournament={tournament} />
 						))}
 					</div>
 				</div>

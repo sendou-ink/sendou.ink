@@ -31,6 +31,7 @@ import {
 	WeaponImage,
 } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
+import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { mainStyles } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
 import { SubNav, SubNavLink } from "~/components/SubNav";
@@ -196,7 +197,6 @@ export default function UserSeasonsPage() {
 	);
 }
 
-// xxx: range
 function SeasonHeader({
 	seasonViewed,
 	seasonsParticipatedIn,
@@ -208,9 +208,6 @@ function SeasonHeader({
 	const { starts, ends } = Seasons.nthToDateRange(seasonViewed);
 	const navigate = useNavigate();
 	const options = useSeasonSelectOptions();
-
-	const isDifferentYears =
-		new Date(starts).getFullYear() !== new Date(ends).getFullYear();
 
 	return (
 		<div>
@@ -235,18 +232,9 @@ function SeasonHeader({
 				)}
 			</SendouSelect>
 			<div className="text-sm text-lighter mt-2">
-				<LocaleTime
-					date={new Date(starts)}
-					options={{
-						day: "numeric",
-						month: "numeric",
-						year: isDifferentYears ? "numeric" : undefined,
-					}}
-					inline
-				/>{" "}
-				-{" "}
-				<LocaleTime
-					date={new Date(ends)}
+				<LocaleTimeRange
+					from={new Date(starts)}
+					to={new Date(ends)}
 					options={{
 						day: "numeric",
 						month: "numeric",
