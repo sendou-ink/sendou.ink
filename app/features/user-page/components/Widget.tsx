@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import { Link2 as LinkIcon } from "lucide-react";
-import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
@@ -21,6 +20,7 @@ import { previewUrl } from "~/features/art/art-utils";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { VodListing } from "~/features/vods/components/VodListing";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { usePagination } from "~/hooks/usePagination";
 import type { GameBadgeId } from "~/modules/in-game-lists/game-badge-ids";
@@ -535,17 +535,8 @@ function XRankPeaks({
 	);
 }
 
-// xxx: use autoRender hook here
 function TimezoneWidget({ timezone }: { timezone: string }) {
-	const [currentTime, setCurrentTime] = React.useState(() => new Date());
-
-	React.useEffect(() => {
-		const interval = setInterval(() => {
-			setCurrentTime(new Date());
-		}, 1000);
-
-		return () => clearInterval(interval);
-	}, []);
+	const currentTime = useAutoRerender("second");
 
 	try {
 		return (
