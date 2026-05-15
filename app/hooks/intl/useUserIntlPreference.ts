@@ -18,7 +18,9 @@ export function useUserIntlPreference() {
 	const browserLanguages = hydrated ? navigator.languages : [];
 
 	// does the user want to use their browser language even if the site is in another language?
-	const language = browserLanguages.find((lang) => compareLanguages(lang, i18n.language)) ?? i18n.language;
+	const language =
+		browserLanguages.find((lang) => compareLanguages(lang, i18n.language)) ??
+		i18n.language;
 
 	return {
 		language,
