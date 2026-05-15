@@ -3,10 +3,13 @@ import type { UserPreferences } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { useHydrated } from "../useHydrated";
 
-// xxx: from user preference
-const prefersBrowserLanguage = false;
-
-// xxx: jsdoc
+/**
+ * Resolves the language and hour cycle to use when formatting dates and times
+ * for the current user. Prefers a browser language sharing a base tag with the
+ * active i18n language (e.g. `en-GB` over site `en`) for regional formatting.
+ * `isLoaded` is `false` until hydration; gate locale-dependent output on it to
+ * avoid hydration mismatches.
+ */
 export function useUserIntlPreference() {
 	const { i18n } = useTranslation();
 	const user = useUser();
@@ -15,13 +18,10 @@ export function useUserIntlPreference() {
 	const browserLanguages = hydrated ? navigator.languages : [];
 
 	// does the user want to use their browser language even if the site is in another language?
-	const language = prefersBrowserLanguage
-		? browserLanguages.at(0)
-		: // allow for e.g. en-GB browser language to be used when the site is in en
-			browserLanguages.find((lang) => compareLanguages(lang, i18n.language));
+	const language = browserLanguages.find((lang) => compareLanguages(lang, i18n.language)) ?? i18n.language;
 
 	return {
-		language: language ?? i18n.language,
+		language,
 		hourCycle: resolveHourCycle(user?.preferences?.clockFormat),
 		isLoaded: hydrated,
 	};
