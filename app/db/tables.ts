@@ -20,6 +20,7 @@ import type { StoredWidget } from "~/features/user-page/core/widgets/types";
 import type { ParticipantResult } from "~/modules/brackets-model";
 import type {
 	Ability,
+	BuildAbilitiesTuple,
 	MainWeaponId,
 	ModeShort,
 	StageId,
@@ -159,28 +160,36 @@ export interface Build {
 	shoesGearSplId: number | null;
 	title: string;
 	updatedAt: Generated<number>;
+	/** 3x4 ability tuple (head/clothes/shoes × main + 3 subs). */
+	abilities: JSONColumnTypeNullable<BuildAbilitiesTuple>;
+	/** Serialized ability+AP combo (e.g. `SSU_30,ISS_10`) used to group identical builds for the popular builds view. */
+	abilitiesSignature: string | null;
 }
 
 export type GearType = "HEAD" | "CLOTHES" | "SHOES";
 
-export interface BuildAbility {
-	ability: Ability;
-	buildId: number;
-	gearType: GearType;
-	slotIndex: number;
-	/** 10 if main ability, 3 if sub */
-	abilityPoints: GeneratedAlways<number>;
-}
-
 export interface BuildWeapon {
 	buildId: number;
 	weaponSplId: MainWeaponId;
-	/** Has the owner of this build reached top 500 of X Rank with this weapon? Denormalized for performance reasons. */
-	isTop500: Generated<DBBoolean>;
-	/** Plus tier or 4 if none. Denormalized for performance reasons. */
-	tier: Generated<number>;
-	/** Last time the build was updated. Denormalized for performance reasons. */
+	/** Mirror of `Build.updatedAt`. Denormalized so the `(weaponSplId, sortValue, updatedAt, buildId)` covering index serves the builds-by-weapon list. */
 	updatedAt: Generated<number>;
+	/** Per-weapon sort priority: `plusTier * 2 + (this weapon is top500 ? 0 : 1)` for public builds, NULL for private. */
+	sortValue: number | null;
+}
+
+/** Per-build ability point sums across all gear slots. Used to compute global `abilityPointAverages`. */
+export interface BuildAbilitySum {
+	buildId: number;
+	ability: Ability;
+	abilityPoints: number;
+}
+
+/** Per-weapon, per-build ability point sums. Used to compute per-weapon `abilityPointAverages`. One row per weapon × build × ability with non-zero AP. */
+export interface BuildWeaponAbility {
+	weaponSplId: MainWeaponId;
+	buildId: number;
+	ability: Ability;
+	abilityPoints: number;
 }
 
 export type CalendarEventTag = keyof typeof tags;
@@ -1364,8 +1373,9 @@ export interface DB {
 	BanLog: BanLog;
 	ModNote: ModNote;
 	Build: Build;
-	BuildAbility: BuildAbility;
+	BuildAbilitySum: BuildAbilitySum;
 	BuildWeapon: BuildWeapon;
+	BuildWeaponAbility: BuildWeaponAbility;
 	CalendarEvent: CalendarEvent;
 	CalendarEventBadge: CalendarEventBadge;
 	CalendarEventDate: CalendarEventDate;

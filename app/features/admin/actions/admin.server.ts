@@ -60,7 +60,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				await plusTiersFromVotingAndLeaderboard(),
 			);
 
-			await BuildRepository.recalculateAllTiers();
+			await BuildRepository.recalculateAllSortValues();
 
 			message = "Plus tiers refreshed";
 			break;
