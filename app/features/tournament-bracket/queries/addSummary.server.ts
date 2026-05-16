@@ -6,7 +6,12 @@ import type { TournamentBadgeReceivers } from "~/features/tournament-bracket/tou
 import { databaseTimestampNow } from "~/utils/dates";
 import type { TournamentSummary } from "../core/summarizer.server";
 
-const addSkillStm = sql.prepare(/* sql */ `
+// Split into two statements so each WHERE references exactly one indexed column.
+// A combined `where "userId" = @userId or "identifier" = @identifier` query
+// triggers a stat4-driven misestimate when one bound parameter is NULL — the
+// planner treats NULL as a frequent indexed value (~900K rows for
+// Skill.identifier) and picks a pathological MULTI-INDEX OR execution.
+const addUserSkillStm = sql.prepare(/* sql */ `
   insert into "Skill" (
     "tournamentId",
     "mu",
@@ -24,8 +29,33 @@ const addSkillStm = sql.prepare(/* sql */ `
     @sigma,
     @ordinal,
     @userId,
+    null,
+    @matchesCount + coalesce((select max("matchesCount") from "Skill" where "userId" = @userId), 0),
+    @season,
+    @createdAt
+  ) returning *
+`);
+
+const addTeamSkillStm = sql.prepare(/* sql */ `
+  insert into "Skill" (
+    "tournamentId",
+    "mu",
+    "sigma",
+    "ordinal",
+    "userId",
+    "identifier",
+    "matchesCount",
+    "season",
+    "createdAt"
+  )
+  values (
+    @tournamentId,
+    @mu,
+    @sigma,
+    @ordinal,
+    null,
     @identifier,
-    @matchesCount + coalesce((select max("matchesCount") from "Skill" where "userId" = @userId or "identifier" = @identifier group by "userId", "identifier"), 0),
+    @matchesCount + coalesce((select max("matchesCount") from "Skill" where "identifier" = @identifier), 0),
     @season,
     @createdAt
   ) returning *
@@ -161,17 +191,29 @@ export const addSummary = sql.transaction(
 		badgeReceivers?: TournamentBadgeReceivers;
 	}) => {
 		for (const skill of summary.skills) {
-			const insertedSkill = addSkillStm.get({
-				tournamentId,
-				mu: skill.mu,
-				sigma: skill.sigma,
-				ordinal: ordinal(skill),
-				userId: skill.userId ?? null,
-				identifier: skill.identifier ?? null,
-				matchesCount: skill.matchesCount,
-				season: season ?? null,
-				createdAt: databaseTimestampNow(),
-			}) as Tables["Skill"];
+			const insertedSkill = (
+				skill.userId
+					? addUserSkillStm.get({
+							tournamentId,
+							mu: skill.mu,
+							sigma: skill.sigma,
+							ordinal: ordinal(skill),
+							userId: skill.userId,
+							matchesCount: skill.matchesCount,
+							season: season ?? null,
+							createdAt: databaseTimestampNow(),
+						})
+					: addTeamSkillStm.get({
+							tournamentId,
+							mu: skill.mu,
+							sigma: skill.sigma,
+							ordinal: ordinal(skill),
+							identifier: skill.identifier,
+							matchesCount: skill.matchesCount,
+							season: season ?? null,
+							createdAt: databaseTimestampNow(),
+						})
+			) as Tables["Skill"];
 
 			if (insertedSkill.identifier) {
 				for (const userId of identifierToUserIds(insertedSkill.identifier)) {
