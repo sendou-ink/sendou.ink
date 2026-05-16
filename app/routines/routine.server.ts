@@ -1,6 +1,8 @@
 import * as Sentry from "@sentry/react-router";
 import { logger } from "../utils/logger";
 
+const SENTRY_ENABLED = import.meta.env.VITE_SENTRY_ENABLED === "true";
+
 export class Routine {
 	private name;
 	private func;
@@ -18,25 +20,25 @@ export class Routine {
 
 	async run() {
 		logger.info(`Running routine: ${this.name}`);
-		await Sentry.startSpan(
-			{
-				name: this.name,
-				op: "cron",
-			},
-			async () => {
-				const startTime = performance.now();
-				try {
-					await this.func();
-				} catch (error) {
-					logger.error(`Error running routine ${this.name}: ${error}`);
+		const work = async () => {
+			const startTime = performance.now();
+			try {
+				await this.func();
+			} catch (error) {
+				logger.error(`Error running routine ${this.name}: ${error}`);
+				if (SENTRY_ENABLED) {
 					Sentry.captureException(error);
-					return;
 				}
-				const endTime = performance.now();
-				logger.info(
-					`Routine ${this.name} completed in ${endTime - startTime}ms`,
-				);
-			},
-		);
+				return;
+			}
+			const endTime = performance.now();
+			logger.info(`Routine ${this.name} completed in ${endTime - startTime}ms`);
+		};
+
+		if (SENTRY_ENABLED) {
+			await Sentry.startSpan({ name: this.name, op: "cron" }, work);
+		} else {
+			await work();
+		}
 	}
 }
