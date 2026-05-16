@@ -30,7 +30,7 @@ const addUserSkillStm = sql.prepare(/* sql */ `
     @ordinal,
     @userId,
     null,
-    @matchesCount + coalesce((select max("matchesCount") from "Skill" where "userId" = @userId), 0),
+    @matchesCount + coalesce((select max("matchesCount") from "Skill" where "userId" = @userId and "season" = @season), 0),
     @season,
     @createdAt
   ) returning *
@@ -55,7 +55,7 @@ const addTeamSkillStm = sql.prepare(/* sql */ `
     @ordinal,
     null,
     @identifier,
-    @matchesCount + coalesce((select max("matchesCount") from "Skill" where "identifier" = @identifier), 0),
+    @matchesCount + coalesce((select max("matchesCount") from "Skill" where "identifier" = @identifier and "season" = @season), 0),
     @season,
     @createdAt
   ) returning *
