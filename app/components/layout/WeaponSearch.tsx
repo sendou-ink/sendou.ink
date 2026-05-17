@@ -17,7 +17,7 @@ import { Image } from "~/components/Image";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { filterWeapon } from "~/modules/in-game-lists/utils";
 import {
-	altWeaponIdToId,
+	canonicalWeaponSplId,
 	mainWeaponIds,
 } from "~/modules/in-game-lists/weapon-ids";
 import {
@@ -67,11 +67,9 @@ export function filterWeaponResults(
 
 		if (isMatch) {
 			const englishName = t(`weapons:MAIN_${id}`, { lng: "en" });
-			const baseId = altWeaponIdToId.get(id);
-			const slugName =
-				baseId !== undefined
-					? t(`weapons:MAIN_${baseId}`, { lng: "en" })
-					: englishName;
+			const slugName = t(`weapons:MAIN_${canonicalWeaponSplId(id)}`, {
+				lng: "en",
+			});
 			matches.push({
 				id,
 				name: weaponName,

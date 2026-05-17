@@ -9,7 +9,7 @@ import type {
 	MainWeaponId,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import { altWeaponIdToId } from "~/modules/in-game-lists/weapon-ids";
+import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { LimitReachedError } from "~/utils/errors";
 import invariant from "~/utils/invariant";
@@ -20,11 +20,6 @@ import { sortAbilities } from "./core/ability-sorting.server";
 // xxx: do we really not have any constants for these?
 const MAIN_SLOT_AP = 10;
 const SUB_SLOT_AP = 3;
-
-/** Folds alt-skin weapon ids to their base (e.g. Hero Shot Replica → Splattershot). */
-function canonicalWeaponSplId(weaponSplId: MainWeaponId): MainWeaponId {
-	return altWeaponIdToId.get(weaponSplId) ?? weaponSplId;
-}
 
 export async function allByUserId(
 	userId: number,

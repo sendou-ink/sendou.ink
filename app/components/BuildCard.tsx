@@ -12,7 +12,7 @@ import type {
 	BuildAbilitiesTuple,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import { altWeaponIdToId } from "~/modules/in-game-lists/weapon-ids";
+import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { gearTypeToInitial } from "~/utils/strings";
 import {
@@ -234,8 +234,7 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 }
 
 function RoundWeaponImage({ weapon }: { weapon: BuildWeaponWithTop500Info }) {
-	const normalizedWeaponSplId =
-		altWeaponIdToId.get(weapon.weaponSplId) ?? weapon.weaponSplId;
+	const normalizedWeaponSplId = canonicalWeaponSplId(weapon.weaponSplId);
 
 	const { t } = useTranslation(["weapons"]);
 	const slug = mySlugify(
