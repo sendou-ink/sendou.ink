@@ -77,10 +77,31 @@ export function up(db) {
 			`,
 		).run();
 
+		// `weaponSplId` here is the *canonical* weapon (alt skins folded into
+		// their base) so a build that lists multiple alt skins of the same
+		// weapon only contributes its ability points once. `insert or ignore`
+		// handles the dedup against the unique(weaponSplId, buildId, ability).
 		db.prepare(
 			/* sql */ `
-				insert into "BuildWeaponAbility" ("weaponSplId", "buildId", "ability", "abilityPoints")
-				select "bw"."weaponSplId", "bs"."buildId", "bs"."ability", "bs"."abilityPoints"
+				insert or ignore into "BuildWeaponAbility" ("weaponSplId", "buildId", "ability", "abilityPoints")
+				select
+					case "bw"."weaponSplId"
+						when 45 then 40
+						when 47 then 40
+						when 46 then 41
+						when 205 then 200
+						when 1015 then 1010
+						when 1115 then 1110
+						when 2015 then 2010
+						when 3005 then 3000
+						when 4015 then 4010
+						when 5015 then 5010
+						when 6005 then 6000
+						when 7015 then 7010
+						when 8005 then 8000
+						else "bw"."weaponSplId"
+					end,
+					"bs"."buildId", "bs"."ability", "bs"."abilityPoints"
 				from "BuildAbilitySum" as "bs"
 				inner join "BuildWeapon" as "bw" on "bw"."buildId" = "bs"."buildId"
 			`,
@@ -163,10 +184,39 @@ export function up(db) {
 			/* sql */ `drop index "build_weapon_weapon_spl_id_build_id"`,
 		).run();
 
+		// Canonicalize weaponSplId: alt skins collapse to their base weapon so
+		// the builds-by-weapon and popular/stats queries can filter with a
+		// single `= ?` against the covering index instead of an IN-list across
+		// alt skins.
+		db.prepare(
+			/* sql */ `alter table "BuildWeapon" add column "canonicalWeaponSplId" integer`,
+		).run();
+
+		db.prepare(
+			/* sql */ `
+				update "BuildWeapon" set "canonicalWeaponSplId" = case "weaponSplId"
+					when 45 then 40
+					when 47 then 40
+					when 46 then 41
+					when 205 then 200
+					when 1015 then 1010
+					when 1115 then 1110
+					when 2015 then 2010
+					when 3005 then 3000
+					when 4015 then 4010
+					when 5015 then 5010
+					when 6005 then 6000
+					when 7015 then 7010
+					when 8005 then 8000
+					else "weaponSplId"
+				end
+			`,
+		).run();
+
 		// `updatedAt desc` matches the query's ORDER BY direction so the index
 		// also covers the secondary sort — no temp B-tree.
 		db.prepare(
-			/* sql */ `create index build_weapon_lookup on "BuildWeapon"("weaponSplId", "sortValue", "updatedAt" desc, "buildId")`,
+			/* sql */ `create index build_weapon_lookup on "BuildWeapon"("canonicalWeaponSplId", "sortValue", "updatedAt" desc, "buildId")`,
 		).run();
 
 		// Drop dead schema: `BuildAbility` is fully replaced by `Build.abilities`

@@ -1,6 +1,5 @@
 import { type NotNull, sql, type Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
-import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { BuildWeapon, DB, TablesInsertable } from "~/db/tables";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -10,7 +9,7 @@ import type {
 	MainWeaponId,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
+import { altWeaponIdToId } from "~/modules/in-game-lists/weapon-ids";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { LimitReachedError } from "~/utils/errors";
 import invariant from "~/utils/invariant";
@@ -21,6 +20,11 @@ import { sortAbilities } from "./core/ability-sorting.server";
 // xxx: do we really not have any constants for these?
 const MAIN_SLOT_AP = 10;
 const SUB_SLOT_AP = 3;
+
+/** Folds alt-skin weapon ids to their base (e.g. Hero Shot Replica → Splattershot). */
+function canonicalWeaponSplId(weaponSplId: MainWeaponId): MainWeaponId {
+	return altWeaponIdToId.get(weaponSplId) ?? weaponSplId;
+}
 
 export async function allByUserId(
 	userId: number,
@@ -186,6 +190,9 @@ export async function abilityPointAverages(weaponSplId?: MainWeaponId | null) {
 	// Sum tables only contain rows for public builds,
 	// so the queries below need no private filter and no `Build` join.
 	if (typeof weaponSplId === "number") {
+		// BuildWeaponAbility's weaponSplId is canonical (alt skins folded into
+		// their base, see write path + migration backfill), so a single `= ?`
+		// against the covering index gives the full picture.
 		return db
 			.selectFrom("BuildWeaponAbility")
 			.select(({ fn }) => [
@@ -194,7 +201,11 @@ export async function abilityPointAverages(weaponSplId?: MainWeaponId | null) {
 					.sum<number>("BuildWeaponAbility.abilityPoints")
 					.as("abilityPointsSum"),
 			])
-			.where("BuildWeaponAbility.weaponSplId", "=", weaponSplId)
+			.where(
+				"BuildWeaponAbility.weaponSplId",
+				"=",
+				canonicalWeaponSplId(weaponSplId),
+			)
 			.groupBy("BuildWeaponAbility.ability")
 			.execute();
 	}
@@ -219,7 +230,11 @@ export async function popularAbilitiesByWeaponId(weaponSplId: MainWeaponId) {
 			"Build.abilitiesSignature",
 			fn.count<number>("Build.ownerId").distinct().as("count"),
 		])
-		.where("BuildWeapon.weaponSplId", "=", weaponSplId)
+		.where(
+			"BuildWeapon.canonicalWeaponSplId",
+			"=",
+			canonicalWeaponSplId(weaponSplId),
+		)
 		.where("Build.private", "=", 0)
 		.where("Build.abilitiesSignature", "is not", null)
 		.groupBy("Build.abilitiesSignature")
@@ -239,97 +254,84 @@ export type PopularBuildsRow = Awaited<
 	ReturnType<typeof popularAbilitiesByWeaponId>
 >[number];
 
-// xxx: can we simplify this without losing speed?
 export async function allByWeaponId(
 	weaponId: MainWeaponId,
 	options: { limit: number; sortAbilities?: boolean },
 ) {
 	const { limit, sortAbilities: shouldSortAbilities = false } = options;
-	const weaponIds = weaponIdToArrayWithAlts(weaponId);
 
-	// Step 1 — per alt-skin covering-index scan to pick the top candidates.
-	// Returns only (buildId, sortValue, updatedAt); the index serves it without
-	// touching Build at all, so each scan is ~0.1ms regardless of how many
-	// matches the weapon has.
-	const candidatesByAlt = await Promise.all(
-		weaponIds.map((id) =>
-			db
-				.selectFrom("BuildWeapon")
-				.select([
-					"BuildWeapon.buildId",
-					"BuildWeapon.sortValue",
-					"BuildWeapon.updatedAt",
+	// `ordered` CTE — two nesting levels:
+	//   1. Inner `bounded`: covering-index scan capped at `limit * 3` (max 3
+	//      alt skins per canonical weapon). Bounding here keeps the scan
+	//      streaming; without it, GROUP BY would force SQLite to materialize
+	//      the full matching set for popular weapons.
+	//   2. Outer: GROUP BY buildId to dedup alt-skin rows down to one per
+	//      build, ordered + limited for the final hydrate.
+	// `updatedAt` is in the group key because it's a mirror of `Build.updatedAt`
+	// (set identically on every BuildWeapon row for a buildId at insert time),
+	// so (buildId, updatedAt) is 1:1 and no aggregate is needed for it.
+	const rows = await db
+		.with("ordered", (qb) =>
+			qb
+				.selectFrom((eb) =>
+					eb
+						.selectFrom("BuildWeapon")
+						.select([
+							"BuildWeapon.buildId",
+							"BuildWeapon.sortValue",
+							"BuildWeapon.updatedAt",
+						])
+						.where(
+							"BuildWeapon.canonicalWeaponSplId",
+							"=",
+							canonicalWeaponSplId(weaponId),
+						)
+						.where("BuildWeapon.sortValue", "is not", null)
+						.orderBy("BuildWeapon.sortValue", "asc")
+						.orderBy("BuildWeapon.updatedAt", "desc")
+						.limit(limit * 3)
+						.as("bounded"),
+				)
+				.select((eb) => [
+					"bounded.buildId",
+					eb.fn.min("bounded.sortValue").as("sortValue"),
+					"bounded.updatedAt",
 				])
-				.where("BuildWeapon.weaponSplId", "=", id)
-				.where("BuildWeapon.sortValue", "is not", null)
-				.orderBy("BuildWeapon.sortValue", "asc")
-				.orderBy("BuildWeapon.updatedAt", "desc")
-				.limit(limit)
-				.execute(),
-		),
-	);
+				.groupBy(["bounded.buildId", "bounded.updatedAt"])
+				.orderBy("sortValue", "asc")
+				.orderBy("bounded.updatedAt", "desc")
+				.limit(limit),
+		)
+		.selectFrom("ordered")
+		.innerJoin("Build", "Build.id", "ordered.buildId")
+		.innerJoin("User", "User.id", "Build.ownerId")
+		.leftJoin("PlusTier", "PlusTier.userId", "Build.ownerId")
+		.select(({ eb }) => [
+			"Build.id",
+			"Build.title",
+			"Build.description",
+			"Build.modes",
+			"Build.headGearSplId",
+			"Build.clothesGearSplId",
+			"Build.shoesGearSplId",
+			"Build.updatedAt",
+			"Build.private",
+			"Build.abilities",
+			"PlusTier.tier as plusTier",
+			commonUserJsonObject(eb).as("owner"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("BuildWeapon as bw_inner")
+					.select(["bw_inner.weaponSplId", "bw_inner.sortValue"])
+					.orderBy("bw_inner.weaponSplId", "asc")
+					.whereRef("bw_inner.buildId", "=", "Build.id"),
+			).as("weapons"),
+		])
+		.orderBy("ordered.sortValue", "asc")
+		.orderBy("ordered.updatedAt", "desc")
+		.execute();
 
-	const orderedBuildIds = R.pipe(
-		candidatesByAlt.flat(),
-		R.sortBy(
-			(row) => row.sortValue ?? Number.MAX_SAFE_INTEGER,
-			[(row) => row.updatedAt, "desc"],
-		),
-		R.uniqueBy((row) => row.buildId),
-		R.take(limit),
-	).map((row) => row.buildId);
-
-	if (orderedBuildIds.length === 0) return [];
-
-	// Step 2 — batch-fetch the limited slice. Two queries instead of `limit ×
-	// alt-count` correlated subqueries.
-	const [buildRows, weaponRows] = await Promise.all([
-		db
-			.selectFrom("Build")
-			.innerJoin("User", "User.id", "Build.ownerId")
-			.leftJoin("PlusTier", "PlusTier.userId", "Build.ownerId")
-			.select(({ eb }) => [
-				"Build.id",
-				"Build.title",
-				"Build.description",
-				"Build.modes",
-				"Build.headGearSplId",
-				"Build.clothesGearSplId",
-				"Build.shoesGearSplId",
-				"Build.updatedAt",
-				"Build.private",
-				"Build.abilities",
-				"PlusTier.tier as plusTier",
-				commonUserJsonObject(eb).as("owner"),
-			])
-			.where("Build.id", "in", orderedBuildIds)
-			.execute(),
-		// xxx: why not json array from?
-		db
-			.selectFrom("BuildWeapon")
-			.select([
-				"BuildWeapon.buildId",
-				"BuildWeapon.weaponSplId",
-				"BuildWeapon.sortValue",
-			])
-			.where("BuildWeapon.buildId", "in", orderedBuildIds)
-			.orderBy("BuildWeapon.weaponSplId", "asc")
-			.execute(),
-	]);
-
-	const buildById = new Map(buildRows.map((row) => [row.id, row]));
-	const weaponsByBuildId = R.groupBy(weaponRows, (w) => w.buildId);
-
-	return orderedBuildIds.flatMap((id) => {
-		const row = buildById.get(id);
-		if (!row) return [];
-		return [
-			buildRowToResult(
-				{ ...row, weapons: weaponsByBuildId[id] ?? [] },
-				shouldSortAbilities,
-			),
-		];
-	});
+	return rows.map((row) => buildRowToResult(row, shouldSortAbilities));
 }
 
 /** Recomputes `BuildWeapon.sortValue` for every (build, weapon) from scratch
@@ -518,6 +520,7 @@ async function insertBuildChildrenInTrx({
 			args.weaponSplIds.map((weaponSplId) => ({
 				buildId,
 				weaponSplId,
+				canonicalWeaponSplId: canonicalWeaponSplId(weaponSplId),
 				sortValue: computed.sortValueByWeaponSplId.get(weaponSplId) ?? null,
 				updatedAt,
 			})),
@@ -540,17 +543,29 @@ async function insertBuildChildrenInTrx({
 		)
 		.execute();
 
-	await trx
-		.insertInto("BuildWeaponAbility")
-		.values(
-			args.weaponSplIds.flatMap((weaponSplId) =>
-				computed.abilitySums.map(([ability, abilityPoints]) => ({
-					weaponSplId,
-					buildId,
-					ability,
-					abilityPoints,
-				})),
-			),
-		)
-		.execute();
+	// Dedup by (canonical weapon, ability): a build that lists e.g. both Splattershot
+	// and Hero Shot Replica only contributes one BuildWeaponAbility row per
+	// ability — required by the unique(weaponSplId, buildId, ability) constraint.
+	const seen = new Set<string>();
+	const weaponAbilityRows: TablesInsertable["BuildWeaponAbility"][] = [];
+	for (const weaponSplId of args.weaponSplIds) {
+		const canonical = canonicalWeaponSplId(weaponSplId);
+		for (const [ability, abilityPoints] of computed.abilitySums) {
+			const key = `${canonical}:${ability}`;
+			if (seen.has(key)) continue;
+			seen.add(key);
+			weaponAbilityRows.push({
+				weaponSplId: canonical,
+				buildId,
+				ability,
+				abilityPoints,
+			});
+		}
+	}
+	if (weaponAbilityRows.length > 0) {
+		await trx
+			.insertInto("BuildWeaponAbility")
+			.values(weaponAbilityRows)
+			.execute();
+	}
 }

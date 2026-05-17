@@ -171,7 +171,9 @@ export type GearType = "HEAD" | "CLOTHES" | "SHOES";
 export interface BuildWeapon {
 	buildId: number;
 	weaponSplId: MainWeaponId;
-	/** Mirror of `Build.updatedAt`. Denormalized so the `(weaponSplId, sortValue, updatedAt, buildId)` covering index serves the builds-by-weapon list. */
+	/** Alt skins collapse to their base weapon (e.g. Hero Shot Replica `45` → Splattershot `40`). Indexed for the builds-by-weapon, popular, and stats queries so they can filter `= ?` against a covering index instead of `IN (alt skins…)`. */
+	canonicalWeaponSplId: MainWeaponId;
+	/** Mirror of `Build.updatedAt`. Denormalized so the `(canonicalWeaponSplId, sortValue, updatedAt, buildId)` covering index serves the builds-by-weapon list. */
 	updatedAt: Generated<number>;
 	/** Per-weapon sort priority: `plusTier * 2 + (this weapon is top500 ? 0 : 1)` for public builds, NULL for private. */
 	sortValue: number | null;
