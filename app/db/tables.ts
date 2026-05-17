@@ -186,9 +186,9 @@ export interface BuildAbilitySum {
 	abilityPoints: number;
 }
 
-/** Per-weapon, per-build ability point sums. Used to compute per-weapon `abilityPointAverages`. One row per weapon × build × ability with non-zero AP. */
+/** Per-weapon, per-build ability point sums. Used to compute per-weapon `abilityPointAverages`. One row per canonical weapon × build × ability with non-zero AP. */
 export interface BuildWeaponAbility {
-	weaponSplId: MainWeaponId;
+	canonicalWeaponSplId: MainWeaponId;
 	buildId: number;
 	ability: Ability;
 	abilityPoints: number;

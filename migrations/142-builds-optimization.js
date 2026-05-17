@@ -23,12 +23,12 @@ export function up(db) {
 		db.prepare(
 			/* sql */ `
 				create table "BuildWeaponAbility" (
-					"weaponSplId" integer not null,
+					"canonicalWeaponSplId" integer not null,
 					"buildId" integer not null,
 					"ability" text not null,
 					"abilityPoints" integer not null,
 					foreign key ("buildId") references "Build"("id") on delete cascade,
-					unique("weaponSplId", "buildId", "ability") on conflict rollback
+					unique("canonicalWeaponSplId", "buildId", "ability") on conflict rollback
 				) strict
 			`,
 		).run();
@@ -77,13 +77,13 @@ export function up(db) {
 			`,
 		).run();
 
-		// `weaponSplId` here is the *canonical* weapon (alt skins folded into
-		// their base) so a build that lists multiple alt skins of the same
-		// weapon only contributes its ability points once. `insert or ignore`
-		// handles the dedup against the unique(weaponSplId, buildId, ability).
+		// Alt skins are folded into their base weapon so a build that lists
+		// multiple alt skins of the same weapon only contributes its ability
+		// points once. `insert or ignore` handles the dedup against the
+		// unique(canonicalWeaponSplId, buildId, ability).
 		db.prepare(
 			/* sql */ `
-				insert or ignore into "BuildWeaponAbility" ("weaponSplId", "buildId", "ability", "abilityPoints")
+				insert or ignore into "BuildWeaponAbility" ("canonicalWeaponSplId", "buildId", "ability", "abilityPoints")
 				select
 					case "bw"."weaponSplId"
 						when 45 then 40
@@ -126,7 +126,7 @@ export function up(db) {
 		).run();
 
 		db.prepare(
-			/* sql */ `create index build_weapon_ability_weapon_ability_ap on "BuildWeaponAbility"("weaponSplId", "ability", "abilityPoints")`,
+			/* sql */ `create index build_weapon_ability_weapon_ability_ap on "BuildWeaponAbility"("canonicalWeaponSplId", "ability", "abilityPoints")`,
 		).run();
 
 		db.prepare(

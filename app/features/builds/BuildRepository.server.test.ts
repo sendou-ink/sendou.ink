@@ -102,7 +102,7 @@ const buildAbilitySumsByBuildId = (buildId: number) =>
 const buildWeaponAbilitiesByBuildId = (buildId: number) =>
 	db
 		.selectFrom("BuildWeaponAbility")
-		.select(["weaponSplId", "ability", "abilityPoints"])
+		.select(["canonicalWeaponSplId", "ability", "abilityPoints"])
 		.where("buildId", "=", buildId)
 		.execute();
 
@@ -165,12 +165,12 @@ describe("BuildRepository.create — computeBuildData", () => {
 			const rows = await buildWeaponAbilitiesByBuildId(await onlyBuildId());
 			expect(rows).toHaveLength(4);
 			expect(rows).toContainEqual({
-				weaponSplId: SPLATTERSHOT,
+				canonicalWeaponSplId: SPLATTERSHOT,
 				ability: "ISM",
 				abilityPoints: 38,
 			});
 			expect(rows).toContainEqual({
-				weaponSplId: SPLATTERSHOT_NOUVEAU,
+				canonicalWeaponSplId: SPLATTERSHOT_NOUVEAU,
 				ability: "ISS",
 				abilityPoints: 19,
 			});
@@ -182,7 +182,7 @@ describe("BuildRepository.create — computeBuildData", () => {
 			);
 
 			const rows = await buildWeaponAbilitiesByBuildId(await onlyBuildId());
-			const weaponIds = new Set(rows.map((r) => r.weaponSplId));
+			const weaponIds = new Set(rows.map((r) => r.canonicalWeaponSplId));
 			expect(weaponIds).toEqual(new Set([SPLATTERSHOT]));
 		});
 

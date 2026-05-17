@@ -183,9 +183,6 @@ export async function abilityPointAverages(weaponSplId?: MainWeaponId | null) {
 	// Sum tables only contain rows for public builds,
 	// so the queries below need no private filter and no `Build` join.
 	if (typeof weaponSplId === "number") {
-		// BuildWeaponAbility's weaponSplId is canonical (alt skins folded into
-		// their base, see write path + migration backfill), so a single `= ?`
-		// against the covering index gives the full picture.
 		return db
 			.selectFrom("BuildWeaponAbility")
 			.select(({ fn }) => [
@@ -195,7 +192,7 @@ export async function abilityPointAverages(weaponSplId?: MainWeaponId | null) {
 					.as("abilityPointsSum"),
 			])
 			.where(
-				"BuildWeaponAbility.weaponSplId",
+				"BuildWeaponAbility.canonicalWeaponSplId",
 				"=",
 				canonicalWeaponSplId(weaponSplId),
 			)
@@ -532,7 +529,7 @@ async function insertBuildChildrenInTrx({
 	const weaponAbilityRows: TablesInsertable["BuildWeaponAbility"][] =
 		args.weaponSplIds.flatMap((weaponSplId) =>
 			computed.abilitySums.map(([ability, abilityPoints]) => ({
-				weaponSplId: canonicalWeaponSplId(weaponSplId),
+				canonicalWeaponSplId: canonicalWeaponSplId(weaponSplId),
 				buildId,
 				ability,
 				abilityPoints,
