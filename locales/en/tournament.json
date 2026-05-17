@@ -115,6 +115,8 @@
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (Play all {{bestOf}})",
 	"match.activeRosterMissing.header": "Active roster needed",
 	"match.activeRosterMissing.subtitle": "Waiting on {{teams}}",
+	"match.droppedOut.header": "Team dropped out",
+	"match.droppedOut.subtitle": "{{team}} forfeited the match",
 	"match.leagueLocked.header": "Waiting for league round to start",
 	"match.leagueLocked.subtitle": "Round playable from {{date}} onwards",
 	"match.locked.header": "Match locked to be casted",

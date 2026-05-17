@@ -993,6 +993,17 @@ describe("turnOf — COUNTERPICK flow", () => {
 
 		expect(result).toEqual({ teamId: 100, action: "PICK" });
 	});
+
+	it("returns null when match was completed without per-game results (drop-out)", () => {
+		const result = turnOf({
+			results: [],
+			maps: cpMaps,
+			teams,
+			mapList: [],
+		});
+
+		expect(result).toBeNull();
+	});
 });
 
 describe("teamOfEvent", () => {

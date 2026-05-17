@@ -111,6 +111,8 @@
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (全部 {{bestOf}} 场)",
 	"match.activeRosterMissing.header": "",
 	"match.activeRosterMissing.subtitle": "",
+	"match.droppedOut.header": "",
+	"match.droppedOut.subtitle": "",
 	"match.leagueLocked.header": "",
 	"match.leagueLocked.subtitle": "",
 	"match.locked.header": "",
