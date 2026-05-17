@@ -77,7 +77,6 @@ interface CreateArgs {
 	private: TablesInsertable["Build"]["private"];
 }
 
-// xxx: some tests for the computeBuildData stuff would be nice
 export async function create(args: CreateArgs) {
 	return db.transaction().execute(async (trx) => {
 		const computed = await computeBuildData(trx, args);
@@ -180,7 +179,6 @@ export async function ownerIdById(buildId: number) {
 	return result?.ownerId ?? null;
 }
 
-// xxx: or should we use SQLite AVG()?
 export async function abilityPointAverages(weaponSplId?: MainWeaponId | null) {
 	// Sum tables only contain rows for public builds,
 	// so the queries below need no private filter and no `Build` join.
@@ -518,7 +516,7 @@ async function insertBuildChildrenInTrx({
 			})),
 		)
 		.execute();
-		
+
 	const weaponAbilityRows: TablesInsertable["BuildWeaponAbility"][] =
 		args.weaponSplIds.flatMap((weaponSplId) =>
 			computed.abilitySums.map(([ability, abilityPoints]) => ({
