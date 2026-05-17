@@ -212,9 +212,14 @@ function RequeueTab({
 	return (
 		<SendouTabPanel id={TAB_KEYS.ACTION}>
 			{isStaffOnly || !viewerGroup || !user ? (
-				showTimeline ? (
-					<MatchTimeline compact teams={teams} score={score} maps={maps} />
-				) : null
+				<div className={styles.rematchContent}>
+					{showTimeline ? (
+						<MatchTimeline compact teams={teams} score={score} maps={maps} />
+					) : null}
+					{isStaffOnly && awaitingConfirmation ? (
+						<ScoreConfirmerSection data={data} />
+					) : null}
+				</div>
 			) : (
 				<div className={styles.rematchContent}>
 					{viewerGroup.matchmade ? (

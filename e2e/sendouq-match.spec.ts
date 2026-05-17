@@ -98,6 +98,40 @@ test.describe("SendouQ match page", () => {
 		await expect(page.getByText(/4\s*-\s*0/).first()).toBeVisible();
 	});
 
+	test("Staff score confirm: confirms participant's 4-0 set-ender locks match", async ({
+		page,
+	}) => {
+		const matchId = await seedMatchAndGetId(page);
+
+		for (let i = 0; i < 3; i++) {
+			await reportMapWinner(page, "ALPHA");
+		}
+		// 4th ALPHA win triggers the set-ending confirmation dialog
+		await selectMapWinner(page, "ALPHA");
+		await page
+			.getByRole("button", { name: "Submit", exact: true })
+			.first()
+			.click();
+		await waitForPOSTResponse(page, async () => {
+			await page.getByRole("button", { name: "Confirm", exact: true }).click();
+		});
+
+		await impersonate(page, STAFF_TEST_ID);
+		await navigate({ page, url: matchActionUrl(matchId) });
+		await waitForPOSTResponse(page, async () => {
+			await page.getByRole("button", { name: "Confirm score" }).click();
+		});
+
+		await expect(page.getByText(/4\s*-\s*0/).first()).toBeVisible();
+
+		// Match is locked; NZAP's team now sees the rejoin button
+		await impersonate(page, NZAP_TEST_ID);
+		await navigate({ page, url: matchActionUrl(matchId) });
+		await expect(
+			page.getByRole("button", { name: "Look again with same group" }),
+		).toBeVisible();
+	});
+
 	test("Cancel flow: request, refused, re-request, accepted locks match", async ({
 		page,
 	}) => {

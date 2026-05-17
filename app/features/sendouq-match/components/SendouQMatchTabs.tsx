@@ -65,7 +65,8 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 	const matchInProgress = !isLocked && !awaitingConfirmation && currentMap;
 
 	const showActionTab =
-		(isParticipant || (isStaffOnly && Boolean(matchInProgress))) &&
+		(isParticipant ||
+			(isStaffOnly && (Boolean(matchInProgress) || awaitingConfirmation))) &&
 		!isCanceled &&
 		(matchInProgress ||
 			awaitingConfirmation ||
