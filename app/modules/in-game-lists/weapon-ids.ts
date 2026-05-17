@@ -90,7 +90,7 @@ const weaponIdToAltId = new Map<MainWeaponId, MainWeaponId | MainWeaponId[]>([
 	[7010, 7015],
 	[8000, 8005],
 ]);
-export const altWeaponIdToId = new Map<MainWeaponId, MainWeaponId>([
+const altWeaponIdToId = new Map<MainWeaponId, MainWeaponId>([
 	[45, 40],
 	[47, 40],
 	[46, 41],

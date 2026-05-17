@@ -14,12 +14,12 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { LimitReachedError } from "~/utils/errors";
 import invariant from "~/utils/invariant";
 import { commonUserJsonObject } from "~/utils/kysely.server";
+import {
+	MAIN_SLOT_AP,
+	SUB_SLOT_AP,
+} from "../build-analyzer/analyzer-constants";
 import { BUILD } from "./builds-constants";
 import { sortAbilities } from "./core/ability-sorting.server";
-
-// xxx: do we really not have any constants for these?
-const MAIN_SLOT_AP = 10;
-const SUB_SLOT_AP = 3;
 
 export async function allByUserId(
 	userId: number,
