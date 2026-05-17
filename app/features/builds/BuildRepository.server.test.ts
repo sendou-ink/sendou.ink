@@ -269,6 +269,29 @@ describe("BuildRepository.create — computeBuildData", () => {
 		});
 	});
 
+	test("allByWeaponId.weapons[].isTop500 matches the sortValue formula", async () => {
+		const playerId = await insertSplatoonPlayer(OWNER_ID, "owner-spl-id");
+		await insertXRankPlacement(playerId, SPLATTERSHOT, 1);
+
+		await BuildRepository.create(
+			baseArgs({ weaponSplIds: [SPLATTERSHOT, SPLATTERSHOT_NOUVEAU] }),
+		);
+
+		const [build] = await BuildRepository.allByWeaponId(SPLATTERSHOT, {
+			limit: 10,
+		});
+
+		const splattershot = build.weapons.find(
+			(w) => w.weaponSplId === SPLATTERSHOT,
+		);
+		const nouveau = build.weapons.find(
+			(w) => w.weaponSplId === SPLATTERSHOT_NOUVEAU,
+		);
+
+		expect(splattershot?.isTop500).toBe(1);
+		expect(nouveau?.isTop500).toBe(0);
+	});
+
 	test("a multi-weapon build is returned by allByWeaponId for each of its weapons", async () => {
 		await BuildRepository.create(
 			baseArgs({
@@ -290,5 +313,69 @@ describe("BuildRepository.create — computeBuildData", () => {
 		expect(splattershotBuilds[0].title).toBe("Multi-weapon Build");
 		expect(nouveauBuilds).toHaveLength(1);
 		expect(nouveauBuilds[0].id).toBe(splattershotBuilds[0].id);
+	});
+});
+
+describe("BuildRepository.popularAbilitiesByWeaponId", () => {
+	// All SS: each gear sums to 10 (main) + 3*3 (subs) = 19, total 57.
+	const SS_ABILITIES: BuildAbilitiesTuple = [
+		["SS", "SS", "SS", "SS"],
+		["SS", "SS", "SS", "SS"],
+		["SS", "SS", "SS", "SS"],
+	];
+
+	beforeEach(async () => {
+		await dbInsertUsers(2);
+	});
+
+	afterEach(() => {
+		dbReset();
+	});
+
+	test("counts each user at most once across signature buckets", async () => {
+		// Each user has two Splattershot builds with different signatures.
+		// Without per-user dedup, both users would inflate both buckets and
+		// the total count across rows would be 4 instead of <=2.
+		await BuildRepository.create(baseArgs({ ownerId: 1 }));
+		await BuildRepository.create(
+			baseArgs({ ownerId: 1, abilities: SS_ABILITIES }),
+		);
+		await BuildRepository.create(baseArgs({ ownerId: 2 }));
+		await BuildRepository.create(
+			baseArgs({ ownerId: 2, abilities: SS_ABILITIES }),
+		);
+
+		const rows = await BuildRepository.popularAbilitiesByWeaponId(SPLATTERSHOT);
+		const totalCount = rows.reduce((acc, row) => acc + row.count, 0);
+
+		expect(totalCount).toBeLessThanOrEqual(2);
+		expect(rows.every((row) => row.count <= 2)).toBe(true);
+	});
+
+	test("only counts public builds", async () => {
+		await BuildRepository.create(baseArgs({ ownerId: 1 }));
+		await BuildRepository.create(baseArgs({ ownerId: 2, private: 1 }));
+
+		const rows = await BuildRepository.popularAbilitiesByWeaponId(SPLATTERSHOT);
+
+		// only one user with a public build → filtered by HAVING count > 1
+		expect(rows).toHaveLength(0);
+	});
+
+	test("folds alt skins via canonicalWeaponSplId", async () => {
+		await BuildRepository.create(baseArgs({ ownerId: 1 }));
+		await BuildRepository.create(
+			baseArgs({ ownerId: 2, weaponSplIds: [HERO_SHOT_REPLICA] }),
+		);
+
+		const rows = await BuildRepository.popularAbilitiesByWeaponId(SPLATTERSHOT);
+
+		expect(rows).toEqual([
+			{ abilitiesSignature: EXPECTED_SIGNATURE, count: 2 },
+		]);
+		// the alt-skin id alone should also resolve to the same canonical bucket
+		const altRows =
+			await BuildRepository.popularAbilitiesByWeaponId(HERO_SHOT_REPLICA);
+		expect(altRows).toEqual(rows);
 	});
 });

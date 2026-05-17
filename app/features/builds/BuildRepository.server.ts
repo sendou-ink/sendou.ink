@@ -214,26 +214,38 @@ export async function abilityPointAverages(weaponSplId?: MainWeaponId | null) {
 }
 
 export async function popularAbilitiesByWeaponId(weaponSplId: MainWeaponId) {
-	// `count` is distinct users, not distinct build rows — otherwise one user
-	// with many copies of the same build would dominate the list.
+	// One signature per user — otherwise a user with several builds for the
+	// same weapon (e.g. three different Slosher loadouts) would inflate three
+	// different signature buckets. The CTE picks each user's most recently
+	// updated public build for the weapon via SQLite's MAX() + bare columns
+	// rule (https://www.sqlite.org/lang_select.html#bareagg).
 	return db
-		.selectFrom("Build")
-		.innerJoin("BuildWeapon", "BuildWeapon.buildId", "Build.id")
-		.select(({ fn }) => [
-			"Build.abilitiesSignature",
-			fn.count<number>("Build.ownerId").distinct().as("count"),
-		])
-		.where(
-			"BuildWeapon.canonicalWeaponSplId",
-			"=",
-			canonicalWeaponSplId(weaponSplId),
+		.with("UserSignature", (cte) =>
+			cte
+				.selectFrom("Build")
+				.innerJoin("BuildWeapon", "BuildWeapon.buildId", "Build.id")
+				.select(({ fn }) => [
+					"Build.abilitiesSignature",
+					fn.max("Build.updatedAt").as("latestUpdatedAt"),
+				])
+				.where(
+					"BuildWeapon.canonicalWeaponSplId",
+					"=",
+					canonicalWeaponSplId(weaponSplId),
+				)
+				.where("Build.private", "=", 0)
+				.where("Build.abilitiesSignature", "is not", null)
+				.groupBy("Build.ownerId"),
 		)
-		.where("Build.private", "=", 0)
-		.where("Build.abilitiesSignature", "is not", null)
-		.groupBy("Build.abilitiesSignature")
-		.having((eb) => eb(eb.fn.count("Build.ownerId").distinct(), ">", 1))
+		.selectFrom("UserSignature")
+		.select(({ fn }) => [
+			"UserSignature.abilitiesSignature",
+			fn.count<number>("UserSignature.abilitiesSignature").as("count"),
+		])
+		.groupBy("UserSignature.abilitiesSignature")
+		.having((eb) => eb(eb.fn.count("UserSignature.abilitiesSignature"), ">", 1))
 		.orderBy("count", "desc")
-		.orderBy("Build.abilitiesSignature", "asc")
+		.orderBy("UserSignature.abilitiesSignature", "asc")
 		.limit(25)
 		.$narrowType<{ abilitiesSignature: NotNull }>()
 		.execute();
