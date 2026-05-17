@@ -56,7 +56,7 @@ async function main() {
 	addPlacements(placements);
 	await XRankPlacementRepository.refreshAllPeakXp();
 	await BadgeRepository.syncXPBadges();
-	await BuildRepository.recalculateAllTop500();
+	await BuildRepository.recalculateAllSortValues();
 	logger.info(`done reading in ${placements.length} placements`);
 }
 

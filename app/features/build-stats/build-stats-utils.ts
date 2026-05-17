@@ -1,4 +1,3 @@
-import * as R from "remeda";
 import { abilities } from "~/modules/in-game-lists/abilities";
 import type { Ability } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
@@ -6,8 +5,8 @@ import { roundToNDecimalPlaces } from "~/utils/number";
 import { MAX_AP } from "../build-analyzer/analyzer-constants";
 import { isStackableAbility } from "../build-analyzer/core/utils";
 import type {
-	AbilitiesByWeapon,
 	AverageAbilityPointsResult,
+	PopularBuildsRow,
 } from "../builds/BuildRepository.server";
 
 const toBuildsCount = (counts: AverageAbilityPointsResult[]) =>
@@ -97,65 +96,23 @@ export function abilityPointCountsToAverages({
 
 // ---
 
-type AbilityCountsMap = Map<Ability, number>;
-
-const POPULAR_BUILDS_TO_SHOW = 25;
-
-export function popularBuilds(builds: Array<AbilitiesByWeapon>) {
-	const serializedToShow = R.pipe(
-		builds,
-		R.countBy((build) => serializeAbilityCountsMap(sumUpAbilities(build))),
-		R.entries(),
-		R.sortBy([([, count]) => count, "desc"]),
-		R.filter(([, count]) => count > 1),
-		R.take(POPULAR_BUILDS_TO_SHOW),
-	);
-
-	return serializedToShowToResultType(serializedToShow);
-}
-
-function sumUpAbilities(build: AbilitiesByWeapon) {
-	const result: AbilityCountsMap = new Map();
-	for (const { ability, abilityPoints } of build.abilities) {
-		result.set(ability, (result.get(ability) ?? 0) + abilityPoints);
-	}
-
-	return result;
-}
-
-function serializeAbilityCountsMap(abilityCountsMap: AbilityCountsMap) {
-	return Array.from(abilityCountsMap.entries())
-		.sort((a, b) => {
-			if (a[1] === b[1]) {
-				return a[0].localeCompare(b[0]);
-			}
-
-			return b[1] - a[1];
-		})
-		.map(([ability, count]) => `${ability}_${count}`)
-		.join(",");
-}
-
-function serializedToShowToResultType(serializedToShow: [string, number][]) {
+export function popularBuilds(rows: Array<PopularBuildsRow>) {
 	let previousCount: number;
-	return serializedToShow.map(([serialized, count]) => {
-		const abilities = serialized.split(",").map((serializedAbility) => {
-			const [ability, count] = serializedAbility.split("_");
+	return rows.map(({ abilitiesSignature, count }) => {
+		const abilities = abilitiesSignature.split(",").map((serializedAbility) => {
+			const [ability, points] = serializedAbility.split("_");
 			invariant(ability, "ability is not defined");
-			invariant(count, "count is not defined");
+			invariant(points, "count is not defined");
 			return {
 				ability: ability as Ability,
 				count: isStackableAbility(ability as Ability)
-					? Number(count)
+					? Number(points)
 					: undefined,
 			};
 		});
 
-		if (previousCount === count) {
-			return { abilities, count: null, id: serialized };
-		}
-
+		const displayCount = previousCount === count ? null : count;
 		previousCount = count;
-		return { abilities, count, id: serialized };
+		return { abilities, count: displayCount, id: abilitiesSignature };
 	});
 }

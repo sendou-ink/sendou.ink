@@ -90,7 +90,7 @@ const weaponIdToAltId = new Map<MainWeaponId, MainWeaponId | MainWeaponId[]>([
 	[7010, 7015],
 	[8000, 8005],
 ]);
-export const altWeaponIdToId = new Map<MainWeaponId, MainWeaponId>([
+const altWeaponIdToId = new Map<MainWeaponId, MainWeaponId>([
 	[45, 40],
 	[47, 40],
 	[46, 41],
@@ -105,6 +105,29 @@ export const altWeaponIdToId = new Map<MainWeaponId, MainWeaponId>([
 	[7015, 7010],
 	[8005, 8000],
 ]);
+
+/**
+ * Folds an alt-skin weapon id to its base id, leaving non-alt ids untouched.
+ *
+ * Unlike {@link weaponIdToBaseWeaponId}, alt kits are preserved (e.g. Tentatek
+ * Splattershot stays 41) — only cosmetic alt skins collapse to their base.
+ *
+ * Mirrors the `BuildWeapon.canonicalWeaponSplId` column so TypeScript callers
+ * and SQL queries agree on what a weapon's canonical id is.
+ *
+ * @example
+ * // Splattershot — base weapon, returned unchanged
+ * canonicalWeaponSplId(40); // -> 40
+ *
+ * // Tentatek Splattershot — alt kit, returned unchanged
+ * canonicalWeaponSplId(41); // -> 41
+ *
+ * // Hero Shot Replica — alt skin, folded to Splattershot
+ * canonicalWeaponSplId(45); // -> 40
+ */
+export function canonicalWeaponSplId(weaponSplId: MainWeaponId): MainWeaponId {
+	return altWeaponIdToId.get(weaponSplId) ?? weaponSplId;
+}
 
 /**
  * Converts a given weapon ID to an array containing the weapon ID and its alternate IDs. For example if you enter the ID 40 (Splattershot) it will return [40, 45, 47] (Splattershot, Hero Shot Replica, Order Shot Replica)

@@ -102,6 +102,8 @@ interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
 	disableFavorites?: boolean;
 	/** Allow duplicate weapon IDs in the pool */
 	allowDuplicates?: boolean;
+	/** Treat alt-skin variants of an already-picked weapon as duplicates (e.g. picking Splattershot also disables Hero Shot Replica) */
+	disableAltSkinDuplicates?: boolean;
 }
 
 interface FormFieldMapPool<T extends string> extends FormFieldBase<T> {

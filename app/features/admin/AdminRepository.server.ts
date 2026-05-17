@@ -240,7 +240,8 @@ export async function linkUserAndPlayer({
 		.execute();
 
 	await BadgeRepository.syncXPBadges();
-	await BuildRepository.recalculateAllTop500();
+
+	await BuildRepository.recalculateAllSortValues(userId);
 }
 
 export function forcePatron(args: {

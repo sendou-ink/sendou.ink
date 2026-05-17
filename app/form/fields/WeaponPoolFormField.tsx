@@ -22,6 +22,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { WeaponImage } from "~/components/Image";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
 import type { FormFieldProps } from "../types";
 import { FormFieldWrapper } from "./FormFieldWrapper";
 
@@ -45,6 +46,7 @@ export function WeaponPoolFormField({
 	maxCount,
 	disableSorting,
 	disableFavorites,
+	disableAltSkinDuplicates,
 	value,
 	onChange,
 	onBlur,
@@ -60,7 +62,9 @@ export function WeaponPoolFormField({
 		}),
 	);
 
-	const disabledWeaponIds = value.map((weapon) => weapon.id);
+	const disabledWeaponIds = disableAltSkinDuplicates
+		? value.flatMap((weapon) => weaponIdToArrayWithAlts(weapon.id))
+		: value.map((weapon) => weapon.id);
 
 	const handleSelect = (weaponId: MainWeaponId) => {
 		const newWeapon = {
