@@ -213,6 +213,28 @@ export function up(db) {
 			`,
 		).run();
 
+		// Collapse alt-skin duplicates within a build down to one row per
+		// canonical weapon. Prefer the base weapon (weaponSplId = canonical),
+		// falling back to the lowest weaponSplId when only alts are present.
+		db.prepare(
+			/* sql */ `
+				delete from "BuildWeapon" where rowid in (
+					select rowid from (
+						select rowid,
+							row_number() over (
+								partition by "buildId", "canonicalWeaponSplId"
+								order by ("weaponSplId" = "canonicalWeaponSplId") desc, "weaponSplId" asc
+							) as rn
+						from "BuildWeapon"
+					) where rn > 1
+				)
+			`,
+		).run();
+
+		db.prepare(
+			/* sql */ `create unique index build_weapon_canonical_unique on "BuildWeapon"("buildId", "canonicalWeaponSplId")`,
+		).run();
+
 		// `updatedAt desc` matches the query's ORDER BY direction so the index
 		// also covers the secondary sort — no temp B-tree.
 		db.prepare(
