@@ -296,8 +296,9 @@ export async function allByWeaponId(
 }
 
 /** Recomputes `BuildWeapon.sortValue` for every (build, weapon) from scratch
- * (plus tier + per-weapon top500). */
-export async function recalculateAllSortValues() {
+ * (plus tier + per-weapon top500). When `userId` is provided, only the builds
+ * owned by that user are recomputed. */
+export async function recalculateAllSortValues(userId?: number) {
 	await db.transaction().execute(async (trx) => {
 		// Pass 1: tier*2 + 1 for public, NULL for private.
 		await trx
@@ -315,6 +316,17 @@ export async function recalculateAllSortValues() {
 					where "b"."id" = "BuildWeapon"."buildId"
 				)`,
 			})
+			.$if(userId !== undefined, (qb) =>
+				qb.where((eb) =>
+					eb.exists(
+						eb
+							.selectFrom("Build as b")
+							.select("b.id")
+							.whereRef("b.id", "=", "BuildWeapon.buildId")
+							.where("b.ownerId", "=", userId!),
+					),
+				),
+			)
 			.execute();
 
 		// Pass 2: subtract 1 where this specific weapon is top500 for the owner.
@@ -335,7 +347,10 @@ export async function recalculateAllSortValues() {
 								.onRef("xrp.weaponSplId", "=", "BuildWeapon.weaponSplId"),
 						)
 						.select("b.id")
-						.whereRef("b.id", "=", "BuildWeapon.buildId"),
+						.whereRef("b.id", "=", "BuildWeapon.buildId")
+						.$if(userId !== undefined, (qb) =>
+							qb.where("b.ownerId", "=", userId!),
+						),
 				),
 			)
 			.execute();

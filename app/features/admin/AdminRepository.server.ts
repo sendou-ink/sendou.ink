@@ -241,8 +241,7 @@ export async function linkUserAndPlayer({
 
 	await BadgeRepository.syncXPBadges();
 
-	// xxx: optimize, have a function to optionally provide userId which only calcs them for the user
-	await BuildRepository.recalculateAllSortValues();
+	await BuildRepository.recalculateAllSortValues(userId);
 }
 
 export function forcePatron(args: {
