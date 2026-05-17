@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { Link as LinkIcon, Lock, LogOut, SquarePen, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
@@ -15,6 +14,7 @@ import {
 } from "~/components/elements/Tabs";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image } from "~/components/Image";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
@@ -23,8 +23,6 @@ import { useUser } from "~/features/auth/core/user";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { BannedUsersList } from "~/features/tournament-organization/components/BannedPlayersList";
 import { SendouForm } from "~/form/SendouForm";
-import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
@@ -374,7 +372,6 @@ function SeriesHeader({
 	series: NonNullable<SerializeFrom<typeof loader>["series"]>;
 }) {
 	const { t } = useTranslation(["org"]);
-	const { formatDate } = useTimeFormat();
 
 	return (
 		<div className="stack md">
@@ -398,10 +395,11 @@ function SeriesHeader({
 					{series.established ? (
 						<div className="text-lighter text-italic text-xs">
 							{t("org:events.established.short")}{" "}
-							{formatDate(databaseTimestampToDate(series.established), {
-								month: "numeric",
-								year: "numeric",
-							})}
+							<LocaleTime
+								date={series.established}
+								options={{ month: "numeric", year: "numeric" }}
+								inline
+							/>
 						</div>
 					) : null}
 				</div>
@@ -502,9 +500,6 @@ function EventInfo({
 	event: SerializeFrom<typeof loader>["events"][number];
 	showYear?: boolean;
 }) {
-	const { formatDateTime } = useTimeFormat();
-	const isHydrated = useHydrated();
-
 	return (
 		<div className="stack sm">
 			<Link
@@ -520,19 +515,17 @@ function EventInfo({
 				) : null}
 				<div>
 					<div>{event.name}</div>
-					<time
-						className={clsx(styles.eventInfoTime, { invisible: !isHydrated })}
-					>
-						{isHydrated
-							? formatDateTime(databaseTimestampToDate(event.startTime), {
-									day: "numeric",
-									month: "numeric",
-									hour: "numeric",
-									minute: "numeric",
-									year: showYear ? "numeric" : undefined,
-								})
-							: "X"}
-					</time>
+					<LocaleTime
+						date={event.startTime}
+						options={{
+							day: "numeric",
+							month: "numeric",
+							hour: "numeric",
+							minute: "numeric",
+							year: showYear ? "numeric" : undefined,
+						}}
+						className={styles.eventInfoTime}
+					/>
 				</div>
 			</Link>
 			<EventWinners

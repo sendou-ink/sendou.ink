@@ -10,6 +10,7 @@ import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
+import { LocaleTime } from "~/components/LocaleTime";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { ParsedMemento } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
@@ -17,10 +18,8 @@ import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/le
 import { ordinalToRoundedSp } from "~/features/mmr/mmr-utils";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { languagesUnified } from "~/modules/i18n/config";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
-import { databaseTimestampToDate } from "~/utils/dates";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import {
 	navIconUrl,
@@ -279,7 +278,6 @@ function GroupMember({
 }) {
 	const { t } = useTranslation(["q", "user"]);
 	const user = useUser();
-	const { formatDateTime } = useTimeFormat();
 
 	return (
 		<div className="stack xxs" data-testid="sendouq-group-card-member">
@@ -307,18 +305,17 @@ function GroupMember({
 									{ "mt-2": member.privateNote.text },
 								)}
 							>
-								<div className="text-xxs text-lighter">
-									{formatDateTime(
-										databaseTimestampToDate(member.privateNote.updatedAt),
-										{
-											hour: "numeric",
-											minute: "numeric",
-											day: "numeric",
-											month: "numeric",
-											year: "numeric",
-										},
-									)}
-								</div>
+								<LocaleTime
+									date={member.privateNote.updatedAt}
+									options={{
+										hour: "numeric",
+										minute: "numeric",
+										day: "numeric",
+										month: "numeric",
+										year: "numeric",
+									}}
+									className="text-xxs text-lighter"
+								/>
 								<DeletePrivateNoteForm
 									name={member.username}
 									targetId={member.id}

@@ -4,8 +4,9 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import type { SidebarStream } from "~/features/core/streams/streams.server";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl, tournamentRegisterPage } from "~/utils/urls";
 import { Image } from "./Image";
@@ -25,12 +26,22 @@ export function StreamListItems({
 	savedTournamentIds?: number[];
 }) {
 	const { t, i18n } = useTranslation(["front"]);
-	const { formatDateTime, formatTime, formatDistanceToNow } = useTimeFormat();
+	const formatDistanceToNow = useFormatDistanceToNow();
+	const { formatter: timeFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+	});
+	const { formatter: dateTimeFormatter } = useDateTimeFormat({
+		month: "numeric",
+		day: "numeric",
+		hour: "numeric",
+		minute: "numeric",
+	});
 	const isHydrated = useHydrated();
 
 	const formatRelativeDate = (timestamp: number) => {
 		const date = new Date(timestamp * 1000);
-		const timeStr = formatTime(date);
+		const timeStr = timeFormatter.format(date);
 
 		if (isToday(date)) {
 			const rtf = new Intl.RelativeTimeFormat(i18n.language, {
@@ -47,12 +58,7 @@ export function StreamListItems({
 			return `${dayStr.charAt(0).toUpperCase() + dayStr.slice(1)}, ${timeStr}`;
 		}
 
-		return formatDateTime(date, {
-			month: "numeric",
-			day: "numeric",
-			hour: "numeric",
-			minute: "2-digit",
-		});
+		return dateTimeFormatter.format(date);
 	};
 
 	return (

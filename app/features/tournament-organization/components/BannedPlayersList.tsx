@@ -6,10 +6,10 @@ import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Table } from "~/components/Table";
 import { BanUserModal } from "~/features/tournament-organization/components/BanUserModal";
 import type { OrganizationPageLoaderData } from "~/features/tournament-organization/loaders/org.$slug.server";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { userPage } from "~/utils/urls";
 import styles from "../components/BannedPlayersList.module.css";
@@ -22,7 +22,6 @@ export function BannedUsersList({
 	bannedUsers: NonNullable<OrganizationPageLoaderData["bannedUsers"]>;
 }) {
 	const { t } = useTranslation(["org"]);
-	const { formatDate } = useTimeFormat();
 
 	const bannedUsersKey = (bannedUsers ?? [])
 		.map((u) => [u.id, u.privateNote].join("-"))
@@ -80,23 +79,28 @@ export function BannedUsersList({
 										<BanNote note={bannedUser.privateNote} />
 									</td>
 									<td className="text-sm text-lighter whitespace-nowrap">
-										{formatDate(databaseTimestampToDate(bannedUser.updatedAt), {
-											day: "numeric",
-											month: "numeric",
-											year: "numeric",
-										})}
+										<LocaleTime
+											date={bannedUser.updatedAt}
+											options={{
+												day: "numeric",
+												month: "numeric",
+												year: "numeric",
+											}}
+										/>
 									</td>
 									<td className="text-sm text-lighter whitespace-nowrap">
-										{bannedUser.expiresAt
-											? formatDate(
-													databaseTimestampToDate(bannedUser.expiresAt),
-													{
-														day: "numeric",
-														month: "numeric",
-														year: "numeric",
-													},
-												)
-											: t("org:banned.permanent")}
+										{bannedUser.expiresAt ? (
+											<LocaleTime
+												date={bannedUser.expiresAt}
+												options={{
+													day: "numeric",
+													month: "numeric",
+													year: "numeric",
+												}}
+											/>
+										) : (
+											t("org:banned.permanent")
+										)}
 									</td>
 									<td className={styles.actionsCell}>
 										<FormWithConfirm

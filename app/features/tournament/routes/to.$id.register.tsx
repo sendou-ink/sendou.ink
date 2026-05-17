@@ -45,10 +45,10 @@ import { imgTypeToDimensions } from "~/features/img-upload/upload-constants";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { ModeMapPoolPicker } from "~/features/sendouq-settings/components/ModeMapPoolPicker";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -398,8 +398,12 @@ function RegistrationProgress({
 }) {
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
-	const isHydrated = useHydrated();
-	const { formatDate } = useTimeFormat();
+	const { formatter: registrationClosesFormatter } = useDateTimeFormat({
+		minute: "numeric",
+		hour: "numeric",
+		day: "numeric",
+		month: "numeric",
+	});
 
 	const completedIfTruthy = (condition: unknown) =>
 		condition ? "completed" : "incomplete";
@@ -439,19 +443,12 @@ function RegistrationProgress({
 		tournament.registrationClosesAt.getTime() !==
 		tournament.ctx.startTime.getTime();
 
-	const registrationClosesAtString = isHydrated
-		? formatDate(
-				tournament.isLeagueSignup
-					? tournament.ctx.startTime
-					: tournament.registrationClosesAt,
-				{
-					minute: "numeric",
-					hour: "numeric",
-					day: "2-digit",
-					month: "2-digit",
-				},
-			)
-		: "";
+	const registrationClosesAtString =
+		registrationClosesFormatter.format(
+			tournament.isLeagueSignup
+				? tournament.ctx.startTime
+				: tournament.registrationClosesAt,
+		) ?? "";
 
 	return (
 		<div>
@@ -521,29 +518,19 @@ function CheckIn({
 	const { t } = useTranslation(["tournament"]);
 	const isHydrated = useHydrated();
 	const fetcher = useFetcher();
-	const { formatDate } = useTimeFormat();
+	const { formatter: checkInFormatter } = useDateTimeFormat({
+		minute: "numeric",
+		hour: "numeric",
+		day: "2-digit",
+		month: "2-digit",
+	});
 
 	const now = useAutoRerender();
 	const status: "OVER" | "OPEN" | "UPCOMING" =
 		now > endDate ? "OVER" : now >= startDate ? "OPEN" : "UPCOMING";
 
-	const checkInStartsString = isHydrated
-		? formatDate(startDate, {
-				minute: "numeric",
-				hour: "numeric",
-				day: "2-digit",
-				month: "2-digit",
-			})
-		: "";
-
-	const checkInEndsString = isHydrated
-		? formatDate(endDate, {
-				minute: "numeric",
-				hour: "numeric",
-				day: "2-digit",
-				month: "2-digit",
-			})
-		: "";
+	const checkInStartsString = checkInFormatter.format(startDate) ?? "";
+	const checkInEndsString = checkInFormatter.format(endDate) ?? "";
 
 	if (status === "UPCOMING") {
 		return (

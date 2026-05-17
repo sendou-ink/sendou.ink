@@ -20,6 +20,7 @@ import { ModeImage, StageImage } from "~/components/Image";
 import { InfoPopover } from "~/components/InfoPopover";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
+import { LocaleTime } from "~/components/LocaleTime";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { CustomPickBanFlow, TournamentRoundMaps } from "~/db/tables";
 import {
@@ -28,12 +29,10 @@ import {
 } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { nullFilledArray } from "~/utils/arrays";
-import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
 import { calendarEditPage } from "~/utils/urls";
@@ -63,7 +62,6 @@ export function BracketMapListDialog({
 	isPreparing?: boolean;
 }) {
 	const { t } = useTranslation(["common"]);
-	const { formatDateTime } = useTimeFormat();
 	const fetcher = useFetcher();
 	const tournament = useTournament();
 	const untrimmedPreparedMaps = useBracketPreparedMaps(bracketIdx);
@@ -360,19 +358,20 @@ export function BracketMapListDialog({
 				) : null}
 				<div>
 					{preparedMaps ? (
-						<div
-							className="text-xs text-center text-lighter"
-							suppressHydrationWarning
-						>
+						<div className="text-xs text-center text-lighter">
 							Prepared by{" "}
 							{authorIdToUsername(tournament, preparedMaps.authorId)} @{" "}
-							{formatDateTime(databaseTimestampToDate(preparedMaps.createdAt), {
-								day: "numeric",
-								month: "numeric",
-								year: "numeric",
-								hour: "numeric",
-								minute: "2-digit",
-							})}
+							<LocaleTime
+								date={preparedMaps.createdAt}
+								options={{
+									day: "numeric",
+									month: "numeric",
+									year: "numeric",
+									hour: "numeric",
+									minute: "2-digit",
+								}}
+								inline
+							/>
 						</div>
 					) : null}
 				</div>

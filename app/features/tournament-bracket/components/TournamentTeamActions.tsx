@@ -5,11 +5,11 @@ import * as React from "react";
 import { useFetcher } from "react-router";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { soundEnabled, soundVolume } from "~/features/chat/chat-utils";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { logger } from "~/utils/logger";
 import {
 	soundPath,
@@ -22,7 +22,6 @@ export function TournamentTeamActions() {
 	const tournament = useTournament();
 	const user = useUser();
 	const fetcher = useFetcher();
-	const { formatTime } = useTimeFormat();
 
 	const status = tournament.teamMemberOfProgressStatus(user);
 
@@ -104,18 +103,18 @@ export function TournamentTeamActions() {
 						</SubmitButton>
 					</fetcher.Form>
 				) : bracket.startTime && bracket.startTime > new Date() ? (
-					<span className="text-lighter text-xxs" suppressHydrationWarning>
+					<span className="text-lighter text-xxs">
 						open{" "}
-						{formatTime(sub(bracket.startTime, { hours: 1 }), {
-							hour: "numeric",
-							minute: "numeric",
-							weekday: "short",
-						})}{" "}
-						-{" "}
-						{formatTime(bracket.startTime, {
-							hour: "numeric",
-							minute: "numeric",
-						})}
+						<LocaleTimeRange
+							from={sub(bracket.startTime, { hours: 1 })}
+							to={bracket.startTime}
+							options={{
+								hour: "numeric",
+								minute: "numeric",
+								weekday: "short",
+							}}
+							inline
+						/>
 					</span>
 				) : bracket.startTime && bracket.startTime < new Date() ? (
 					<span className="text-warning">over</span>

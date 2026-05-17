@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Avatar } from "../../../components/Avatar";
 import { SendouButton } from "../../../components/elements/Button";
 import { SubmitButton } from "../../../components/SubmitButton";
-import { useTimeFormat } from "../../../hooks/useTimeFormat";
+import { useDateTimeFormat } from "../../../hooks/intl/useDateTimeFormat";
 import { findRoomLinks, MESSAGE_MAX_LENGTH } from "../chat-constants";
 import { useChatAutoScroll } from "../chat-hooks";
 import type { ChatMessage, ChatProps, ChatUser } from "../chat-types";
@@ -340,19 +340,23 @@ function MessageContents({ text }: { text: string }) {
 }
 
 function MessageTimestamp({ timestamp }: { timestamp: number }) {
-	const { formatDateTime, formatTime } = useTimeFormat();
+	const { formatter: dateTimeFormatter } = useDateTimeFormat({
+		day: "numeric",
+		month: "numeric",
+		hour: "numeric",
+		minute: "numeric",
+	});
+	const { formatter: timeFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+	});
 	const moreThanDayAgo = sub(new Date(), { days: 1 }) > new Date(timestamp);
 
 	return (
 		<time className={styles.messageTime}>
 			{moreThanDayAgo
-				? formatDateTime(new Date(timestamp), {
-						day: "numeric",
-						month: "numeric",
-						hour: "numeric",
-						minute: "numeric",
-					})
-				: formatTime(new Date(timestamp))}
+				? dateTimeFormatter.format(new Date(timestamp))
+				: timeFormatter.format(new Date(timestamp))}
 		</time>
 	);
 }

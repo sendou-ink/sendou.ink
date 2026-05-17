@@ -8,9 +8,9 @@ import { Flag } from "~/components/Flag";
 import { Image, ModeImage } from "~/components/Image";
 import { TierPill } from "~/components/TierPill";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
+import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSpoilerFree } from "~/hooks/useSpoilerFree";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl } from "~/utils/urls";
 import type { CalendarEvent, ShowcaseCalendarEvent } from "../calendar-types";
@@ -20,39 +20,21 @@ import styles from "./TournamentCard.module.css";
 export function TournamentCard({
 	tournament,
 	className,
-	withRelativeTime = false,
 }: {
 	tournament: CalendarEvent | ShowcaseCalendarEvent;
 	className?: string;
-	withRelativeTime?: boolean;
 }) {
 	const isHydrated = useHydrated();
-	const { formatDateTimeSmartMinutes, formatDistanceToNow } = useTimeFormat();
+	const formatDistanceToNow = useFormatDistanceToNow();
 	const { isCensored, reveal } = useSpoilerFree();
 
 	const isShowcase = tournament.type === "showcase";
 	const isCalendar = tournament.type === "calendar";
 	const isHostedOnSendouInk = typeof tournament.isRanked === "boolean";
 
-	const time = () => {
-		if (!isShowcase) return null;
-		if (!isHydrated) return "Placeholder";
-
-		const date = databaseTimestampToDate(tournament.startTime);
-
-		if (withRelativeTime) {
-			return formatDistanceToNow(date, {
-				addSuffix: true,
-			});
-		}
-
-		return formatDateTimeSmartMinutes(date, {
-			month: "numeric",
-			day: "numeric",
-			hour: "numeric",
-			weekday: "short",
-		});
-	};
+	const startDate = isShowcase
+		? databaseTimestampToDate(tournament.startTime)
+		: null;
 
 	return (
 		<div
@@ -101,16 +83,16 @@ export function TournamentCard({
 						<TierPill tier={tournament.tentativeTier} isTentative />
 					) : null}
 				</div>
-				{isShowcase ? (
+				{startDate ? (
 					<time
 						className={clsx(styles.time, {
 							invisible: !isHydrated,
 						})}
-						dateTime={databaseTimestampToDate(
-							tournament.startTime,
-						).toISOString()}
+						dateTime={startDate.toISOString()}
 					>
-						{time()}
+						{isHydrated
+							? formatDistanceToNow(startDate, { addSuffix: true })
+							: "Placeholder"}
 					</time>
 				) : null}
 				{isCalendar ? (

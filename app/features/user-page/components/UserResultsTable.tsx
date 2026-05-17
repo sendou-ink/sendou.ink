@@ -4,11 +4,10 @@ import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
 import { TierPill } from "~/components/TierPill";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
-import { databaseTimestampToDate } from "~/utils/dates";
 import {
 	calendarEventPage,
 	tournamentBracketsPage,
@@ -35,7 +34,6 @@ export function UserResultsTable({
 	hasHighlightCheckboxes,
 }: UserResultsTableProps) {
 	const { t } = useTranslation("user");
-	const { formatDate } = useTimeFormat();
 
 	const placementHeaderId = `${id}-th-placement`;
 
@@ -121,11 +119,14 @@ export function UserResultsTable({
 								</div>
 							</td>
 							<td className="whitespace-nowrap">
-								{formatDate(databaseTimestampToDate(result.startTime), {
-									day: "numeric",
-									month: "numeric",
-									year: "2-digit",
-								})}
+								<LocaleTime
+									date={result.startTime}
+									options={{
+										day: "numeric",
+										month: "numeric",
+										year: "2-digit",
+									}}
+								/>
 							</td>
 							<td>
 								<ParticipationPill setResults={result.setResults} />

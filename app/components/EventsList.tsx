@@ -1,8 +1,8 @@
 import { isToday, isTomorrow } from "date-fns";
 import { useTranslation } from "react-i18next";
 import type { SidebarEvent } from "~/features/sidebar/core/sidebar.server";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import styles from "./EventsList.module.css";
 import { Placeholder } from "./Placeholder";
 import { ListLink } from "./SideNav";
@@ -15,7 +15,15 @@ export function EventsList({
 	onClick?: () => void;
 }) {
 	const { t, i18n } = useTranslation(["front"]);
-	const { formatDate, formatTime } = useTimeFormat();
+	const { formatter: dateFormatter } = useDateTimeFormat({
+		weekday: "long",
+		month: "numeric",
+		day: "numeric",
+	});
+	const { formatter: timeFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "2-digit",
+	});
 	const isHydrated = useHydrated();
 
 	if (events.length === 0) {
@@ -50,11 +58,7 @@ export function EventsList({
 			const str = rtf.format(1, "day");
 			return str.charAt(0).toUpperCase() + str.slice(1);
 		}
-		return formatDate(date, {
-			weekday: "long",
-			month: "numeric",
-			day: "numeric",
-		});
+		return dateFormatter.format(date);
 	};
 
 	const groupedEvents = events.reduce<Record<string, typeof events>>(
@@ -85,7 +89,7 @@ export function EventsList({
 								key={`${event.type}-${event.id}`}
 								to={event.url}
 								imageUrl={event.logoUrl ?? undefined}
-								subtitle={formatTime(new Date(event.startTime * 1000))}
+								subtitle={timeFormatter.format(event.startTime)}
 								onClick={onClick}
 							>
 								{event.scrimStatus === "booked"

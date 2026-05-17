@@ -8,14 +8,12 @@ import { LinkButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, WeaponImage } from "~/components/Image";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { YouTubeEmbed } from "~/components/YouTubeEmbed";
 import { useUser } from "~/features/auth/core/user";
-import { useHydrated } from "~/hooks/useHydrated";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
-import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
@@ -80,12 +78,10 @@ export default function VodPage() {
 		defaultValue: 0,
 		revive: Number,
 	});
-	const isHydrated = useHydrated();
 	const [autoplay, setAutoplay] = React.useState(false);
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common", "vods"]);
 	const user = useUser();
-	const { formatDate } = useTimeFormat();
 
 	return (
 		<Main className="stack lg">
@@ -100,19 +96,15 @@ export default function VodPage() {
 				<div className="stack horizontal justify-between">
 					<div className="stack horizontal sm items-center">
 						<PovUser pov={data.vod.pov} />
-						<time
-							className={clsx("text-lighter text-xs", {
-								invisible: !isHydrated,
-							})}
-						>
-							{isHydrated
-								? formatDate(databaseTimestampToDate(data.vod.youtubeDate), {
-										day: "numeric",
-										month: "numeric",
-										year: "numeric",
-									})
-								: "t"}
-						</time>
+						<LocaleTime
+							date={data.vod.youtubeDate}
+							options={{
+								day: "numeric",
+								month: "numeric",
+								year: "numeric",
+							}}
+							className="text-lighter text-xs"
+						/>
 					</div>
 
 					{canEditVideo({

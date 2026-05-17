@@ -8,10 +8,11 @@ import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Pagination } from "~/components/Pagination";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
 import { usePagination } from "~/hooks/usePagination";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { artPage, newArtPage, userArtPage, userPage } from "~/utils/urls";
 import { ResponsiveMasonry } from "../../../modules/responsive-masonry/components/ResponsiveMasonry";
@@ -89,15 +90,15 @@ export function ArtGrid({
 
 function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 	const [imageLoaded, setImageLoaded] = React.useState(false);
-	const { formatDate } = useTimeFormat();
+	const { formatter } = useDateTimeFormat({
+		year: "numeric",
+		month: "numeric",
+		day: "numeric",
+	});
 
 	return (
 		<SendouDialog
-			heading={formatDate(databaseTimestampToDate(art.createdAt), {
-				year: "numeric",
-				month: "numeric",
-				day: "numeric",
-			})}
+			heading={formatter.format(databaseTimestampToDate(art.createdAt)) ?? ""}
 			onClose={close}
 			isFullScreen
 		>
@@ -168,7 +169,7 @@ function ImagePreview({
 }) {
 	const [imageLoaded, setImageLoaded] = React.useState(false);
 	const { t } = useTranslation(["common", "art"]);
-	const { formatDistanceToNow } = useTimeFormat();
+	const formatDistanceToNow = useFormatDistanceToNow();
 
 	const img = (
 		// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration

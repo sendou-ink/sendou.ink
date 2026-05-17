@@ -380,8 +380,16 @@
 		display: none;
 	}
 
+	.block {
+		display: block;
+	}
+
 	.invisible {
 		visibility: hidden;
+	}
+
+	.reserve-one-lb {
+		min-height: 1lh;
 	}
 
 	.whitespace-pre-wrap {

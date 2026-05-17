@@ -1,10 +1,10 @@
 import clsx from "clsx";
 import { differenceInMinutes } from "date-fns";
 import * as React from "react";
+import { LocaleTime } from "~/components/LocaleTime";
 import type { TournamentRoundMaps } from "~/db/tables";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { Unpacked } from "~/utils/types";
 import * as Deadline from "../../core/Deadline";
@@ -69,15 +69,17 @@ export function RoundHeader({
 }
 
 function LeagueRoundStartDate({ date }: { date: Date }) {
-	const { formatDate } = useTimeFormat();
-
 	return (
 		<div className={styles.elimRoundHeaderInfos}>
 			<div>
-				{formatDate(date, {
-					month: "numeric",
-					day: "numeric",
-				})}{" "}
+				<LocaleTime
+					date={date}
+					options={{
+						month: "numeric",
+						day: "numeric",
+					}}
+					inline
+				/>{" "}
 				→
 			</div>
 		</div>
