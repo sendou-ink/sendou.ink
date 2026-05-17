@@ -8,24 +8,30 @@ import { i18nLoader } from "./modules/i18n/loader";
 import { logger } from "./utils/logger";
 import { getSessionId } from "./utils/session-id";
 
-const tracing = Sentry.reactRouterTracingIntegration({
-	useInstrumentationAPI: true,
-});
+const SENTRY_ENABLED = import.meta.env.VITE_SENTRY_ENABLED === "true";
 
-Sentry.init({
-	dsn: import.meta.env.VITE_SENTRY_DSN,
-	sendDefaultPii: false,
-	integrations: [
-		tracing,
-		Sentry.thirdPartyErrorFilterIntegration({
-			filterKeys: ["sendou-ink"],
-			behaviour: "drop-error-if-contains-third-party-frames",
-		}),
-	],
-	enableLogs: true,
-	tracesSampleRate: 0.1,
-	tracePropagationTargets: [/^\//],
-});
+const tracing = SENTRY_ENABLED
+	? Sentry.reactRouterTracingIntegration({
+			useInstrumentationAPI: true,
+		})
+	: null;
+
+if (SENTRY_ENABLED) {
+	Sentry.init({
+		dsn: import.meta.env.VITE_SENTRY_DSN,
+		sendDefaultPii: false,
+		integrations: [
+			tracing!,
+			Sentry.thirdPartyErrorFilterIntegration({
+				filterKeys: ["sendou-ink"],
+				behaviour: "drop-error-if-contains-third-party-frames",
+			}),
+		],
+		enableLogs: true,
+		tracesSampleRate: 0.1,
+		tracePropagationTargets: [/^\//],
+	});
+}
 
 const originalFetch = window.fetch;
 window.fetch = (input, init) => {
@@ -62,9 +68,9 @@ i18nLoader()
 			document,
 			<I18nextProvider i18n={i18next}>
 				<HydratedRouter
-					instrumentations={[tracing.clientInstrumentation]}
+					instrumentations={tracing ? [tracing.clientInstrumentation] : []}
 					onError={(error) => {
-						if (error && error instanceof Error) {
+						if (SENTRY_ENABLED && error && error instanceof Error) {
 							Sentry.captureException(error);
 						}
 					}}

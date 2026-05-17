@@ -19,10 +19,11 @@ import {
 } from "~/components/elements/Button";
 import { SendouCalendar } from "~/components/elements/Calendar";
 import { SendouPopover } from "~/components/elements/Popover";
+import { LocaleTime } from "~/components/LocaleTime";
+import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { Main } from "~/components/Main";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { dayMonthYearToDateValue } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -144,16 +145,10 @@ function NavigateButton({
 	daysInterval: ReturnType<typeof daysForCalendar>["shown"];
 	filters?: CalendarLoaderData["filters"];
 }) {
-	const { formatDateRange } = useTimeFormat();
 	const lowestDate = daysInterval[0];
 	const highestDate = daysInterval[daysInterval.length - 1];
 
 	const year = new Date().getFullYear();
-	const rangeString = formatDateRange(
-		new Date(year, lowestDate.month, lowestDate.day),
-		new Date(year, highestDate.month, highestDate.day),
-		{ day: "numeric", month: "numeric" },
-	);
 
 	return (
 		<Link
@@ -164,7 +159,12 @@ function NavigateButton({
 			{icon}
 			<div>
 				<div>{children}</div>
-				<div className={styles.navigateArrowButtonRange}>{rangeString}</div>
+				<LocaleTimeRange
+					from={new Date(year, lowestDate.month, lowestDate.day)}
+					to={new Date(year, highestDate.month, highestDate.day)}
+					options={{ day: "numeric", month: "numeric" }}
+					className={styles.navigateArrowButtonRange}
+				/>
 			</div>
 		</Link>
 	);
@@ -247,8 +247,6 @@ function DayEventsColumn({
 }
 
 function DayHeader(props: { date: number; month: number; year: number }) {
-	const { formatDate } = useTimeFormat();
-
 	const date = new Date(props.year, props.month, props.date);
 	const isToday = date.toDateString() === new Date().toDateString();
 
@@ -259,14 +257,20 @@ function DayHeader(props: { date: number; month: number; year: number }) {
 			})}
 			data-testid={isToday ? "today-header" : undefined}
 		>
-			{formatDate(date, {
-				day: "numeric",
-				month: "numeric",
-			})}
+			<LocaleTime
+				date={date}
+				options={{
+					day: "numeric",
+					month: "long",
+				}}
+			/>
 			<div className={styles.dayHeaderWeekday}>
-				{formatDate(date, {
-					weekday: "long",
-				})}
+				<LocaleTime
+					date={date}
+					options={{
+						weekday: "long",
+					}}
+				/>
 			</div>
 		</div>
 	);
@@ -287,21 +291,33 @@ function ClockHeader({
 	hiddenShown: boolean;
 	className?: string;
 }) {
-	const { formatTime } = useTimeFormat();
-
 	const isInThePast = (toDate ?? date).getTime() < Date.now();
+	const timeOptions: Intl.DateTimeFormatOptions = {
+		hour: "numeric",
+		minute: "numeric",
+	};
 
 	return (
 		<div className={clsx(className, styles.clockHeader)}>
 			<div className="stack horizontal justify-between">
-				<span
-					className={clsx({
-						"text-lighter italic": isInThePast,
-					})}
-				>
-					{formatTime(date)}
-					{toDate ? ` - ${formatTime(toDate)}` : ""}
-				</span>
+				{toDate ? (
+					<LocaleTimeRange
+						from={date}
+						to={toDate}
+						options={timeOptions}
+						className={clsx({
+							"text-lighter italic": isInThePast,
+						})}
+					/>
+				) : (
+					<LocaleTime
+						className={clsx({
+							"text-lighter italic": isInThePast,
+						})}
+						date={date}
+						options={timeOptions}
+					/>
+				)}
 				{hiddenEventsCount > 0 ? (
 					<SendouButton
 						icon={hiddenShown ? <Eye /> : <EyeOff />}

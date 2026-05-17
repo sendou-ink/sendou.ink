@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { differenceInSeconds } from "date-fns";
+import { differenceInMinutes, differenceInSeconds } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
@@ -8,7 +8,8 @@ import {
 	SendouChipRadioGroup,
 } from "~/components/elements/ChipRadio";
 import { ModeImage, StageImage } from "~/components/Image";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type { RankedModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
@@ -31,6 +32,8 @@ const ROTATION_TYPE_LABELS: Record<string, string> = {
 type RotationFromLoader = FrontPageLoaderData["rotations"][number];
 
 const TYPE_ORDER = ["X", "SERIES", "OPEN"];
+
+const RELATIVE_TIME_CUTOFF_MINUTES = 120;
 
 export function SplatoonRotations() {
 	const { t } = useTranslation(["front"]);
@@ -141,29 +144,15 @@ function useNowUnix(initialNow: number) {
 	return now;
 }
 
-function timeRemaining(now: Date, start: Date, end: Date) {
+function rotationProgress(now: Date, start: Date, end: Date) {
 	const remainingSeconds = differenceInSeconds(end, now);
 	if (remainingSeconds <= 0) return null;
 
 	const totalSeconds = differenceInSeconds(end, start);
 	const elapsedSeconds = differenceInSeconds(now, start);
-	const progress =
-		totalSeconds > 0
-			? Math.min(1, Math.max(0, elapsedSeconds / totalSeconds))
-			: 0;
-
-	const hours = Math.floor(remainingSeconds / 3600);
-	const minutes = Math.floor((remainingSeconds % 3600) / 60);
-	return { hours, minutes, progress };
-}
-
-function timeUntil(now: Date, start: Date) {
-	const diffSeconds = differenceInSeconds(start, now);
-	if (diffSeconds <= 0) return null;
-
-	const hours = Math.floor(diffSeconds / 3600);
-	const minutes = Math.floor((diffSeconds % 3600) / 60);
-	return { hours, minutes };
+	return totalSeconds > 0
+		? Math.min(1, Math.max(0, elapsedSeconds / totalSeconds))
+		: 0;
 }
 
 function RotationCard({
@@ -180,23 +169,16 @@ function RotationCard({
 	now: Date;
 }) {
 	const { t } = useTranslation(["front", "game-misc"]);
-	const { formatTime, formatDuration, formatRelativeTime } = useTimeFormat();
-	const remaining = timeRemaining(
-		now,
-		databaseTimestampToDate(current?.startTime ?? 0),
-		databaseTimestampToDate(current?.endTime ?? 0),
-	);
+	const formatDistanceToNow = useFormatDistanceToNow();
+	const progress = current
+		? rotationProgress(
+				now,
+				databaseTimestampToDate(current.startTime),
+				databaseTimestampToDate(current.endTime),
+			)
+		: null;
 	const displayRotation = current ?? next;
-	const nextStartsIn = timeUntil(
-		now,
-		databaseTimestampToDate(next?.startTime ?? 0),
-	);
-	const nextAfterStartsIn = timeUntil(
-		now,
-		databaseTimestampToDate(nextAfter?.startTime ?? 0),
-	);
 	const shownNext = current ? next : nextAfter;
-	const shownNextStartsIn = current ? nextStartsIn : nextAfterStartsIn;
 
 	if (!displayRotation) return null;
 
@@ -206,18 +188,18 @@ function RotationCard({
 				<ModeImage mode={displayRotation.mode as RankedModeShort} width={20} />
 				{t(`front:${ROTATION_TYPE_LABELS[type]}` as any)}
 			</div>
-			{current && remaining ? (
+			{current && progress !== null ? (
 				<div className={styles.rotationCardProgress}>
 					<div
 						className={styles.rotationCardProgressBar}
-						style={{ width: `${remaining.progress * 100}%` }}
+						style={{ width: `${progress * 100}%` }}
 					/>
 					<span className={styles.rotationCardProgressText}>
-						{formatDuration(remaining.hours, remaining.minutes)}
+						{formatDistanceToNow(current.endTime)}
 					</span>
 				</div>
 			) : null}
-			{!current && next && nextStartsIn ? (
+			{!current && next ? (
 				<div
 					className={clsx(
 						styles.rotationCardProgress,
@@ -227,9 +209,7 @@ function RotationCard({
 					<span className={styles.rotationCardProgressText}>
 						<NextLabel
 							startTime={databaseTimestampToDate(next.startTime)}
-							startsIn={nextStartsIn}
-							formatTime={formatTime}
-							formatRelativeTime={formatRelativeTime}
+							now={now}
 						/>
 					</span>
 				</div>
@@ -251,15 +231,13 @@ function RotationCard({
 					<div className={styles.rotationCardNextInfo}>
 						{current && shownNext.startTime === current.endTime ? (
 							t("front:rotations.nextLabel")
-						) : shownNextStartsIn ? (
+						) : (
 							<NextLabel
 								startTime={databaseTimestampToDate(shownNext.startTime)}
-								startsIn={shownNextStartsIn}
-								formatTime={formatTime}
-								formatRelativeTime={formatRelativeTime}
+								now={now}
 								compact
 							/>
-						) : null}
+						)}
 						<ModeImage mode={shownNext.mode as RankedModeShort} width={16} />{" "}
 						{shortStageName(t(`game-misc:STAGE_${shownNext.stageId1}` as any))},{" "}
 						{shortStageName(t(`game-misc:STAGE_${shownNext.stageId2}` as any))}
@@ -272,31 +250,28 @@ function RotationCard({
 
 function NextLabel({
 	startTime,
-	startsIn,
-	formatTime,
-	formatRelativeTime,
+	now,
 	compact,
 }: {
 	startTime: Date;
-	startsIn: { hours: number; minutes: number };
-	formatTime: (date: Date) => string;
-	formatRelativeTime: (hours: number, minutes: number) => string;
+	now: Date;
 	compact?: boolean;
 }) {
 	const { t } = useTranslation(["front"]);
+	const { formatter: timeFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+	});
+	const formatDistanceToNow = useFormatDistanceToNow();
 
-	const withinTwoHours = startsIn.hours * 60 + startsIn.minutes <= 120;
+	const minutesUntilStart = differenceInMinutes(startTime, now);
+	if (minutesUntilStart <= 0) return null;
 
-	if (compact) {
-		if (withinTwoHours) {
-			return formatRelativeTime(startsIn.hours, startsIn.minutes);
-		}
-		return formatTime(startTime);
-	}
+	const withinCutoff = minutesUntilStart <= RELATIVE_TIME_CUTOFF_MINUTES;
+	const relativeText = withinCutoff
+		? formatDistanceToNow(startTime, { addSuffix: true })
+		: timeFormatter.format(startTime);
 
-	if (withinTwoHours) {
-		return `${t("front:rotations.nextLabel")} (${formatRelativeTime(startsIn.hours, startsIn.minutes)})`;
-	}
-
-	return `${t("front:rotations.nextLabel")} (${formatTime(startTime)})`;
+	if (compact) return relativeText;
+	return `${t("front:rotations.nextLabel")} (${relativeText})`;
 }

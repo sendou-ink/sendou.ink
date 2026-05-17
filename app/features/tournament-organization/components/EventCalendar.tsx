@@ -1,9 +1,9 @@
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { LinkButton } from "~/components/elements/Button";
+import { LocaleTime } from "~/components/LocaleTime";
 import type { MonthYear } from "~/features/plus-voting/core";
 import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate, nullPaddedDatesOfMonth } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import type { loader } from "../loaders/org.$slug.server";
@@ -111,7 +111,6 @@ const monthYearSearchParams = ({ month, year }: MonthYear) =>
 	]).toString();
 function MonthSelector({ month, year }: { month: number; year: number }) {
 	const date = new Date(Date.UTC(year, month, 15));
-	const { formatDate } = useTimeFormat();
 
 	return (
 		<div className={styles.calendarMonthSelector}>
@@ -130,10 +129,13 @@ function MonthSelector({ month, year }: { month: number; year: number }) {
 				{"<"}
 			</LinkButton>
 			<div>
-				{formatDate(date, {
-					year: "numeric",
-					month: "numeric",
-				})}
+				<LocaleTime
+					date={date}
+					options={{
+						year: "numeric",
+						month: "numeric",
+					}}
+				/>
 			</div>
 			<LinkButton
 				variant="minimal"

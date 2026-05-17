@@ -8,9 +8,8 @@ import {
 	X,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { LocaleTime } from "~/components/LocaleTime";
 import type { GroupSkillDifference, UserSkillDifference } from "~/db/tables";
-import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type {
 	MainWeaponId,
@@ -208,8 +207,6 @@ function TimelineHeader({
 
 function TimelineMapRow({ map }: { map: TimelineMap }) {
 	const { t } = useTranslation(["game-misc"]);
-	const isHydrated = useHydrated();
-	const { formatTime } = useTimeFormat();
 
 	const alphaPoints = map.points?.[0];
 	const bravoPoints = map.points?.[1];
@@ -225,13 +222,11 @@ function TimelineMapRow({ map }: { map: TimelineMap }) {
 				/>
 			</div>
 			<div className={styles.mapCenter}>
-				<time className={styles.mapTimestamp}>
-					{isHydrated ? (
-						formatTime(new Date(map.timestamp))
-					) : (
-						<div className="invisible">X</div>
-					)}
-				</time>
+				<LocaleTime
+					date={new Date(map.timestamp)}
+					options={{ hour: "numeric", minute: "numeric" }}
+					className={styles.mapTimestamp}
+				/>
 				<StageImage
 					stageId={map.stageId}
 					width={80}

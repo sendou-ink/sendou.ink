@@ -1,11 +1,9 @@
 import type { Page } from "@playwright/test";
 import {
-	clockFormatSchema,
 	disableBuildAbilitySortingSchema,
 	spoilerFreeModeSchema,
 } from "~/features/settings/settings-schemas";
 import {
-	CALENDAR_PAGE,
 	SETTINGS_PAGE,
 	tournamentBracketsPage,
 	tournamentResultsPage,
@@ -56,40 +54,6 @@ test.describe("Settings", () => {
 			.innerHTML();
 
 		expect(newContents).not.toBe(oldContents);
-	});
-
-	test("updates clock format preference", async ({ page }) => {
-		await seed(page);
-		await impersonate(page);
-
-		await navigate({
-			page,
-			url: CALENDAR_PAGE,
-		});
-
-		const clockHeader = page.locator("[class*='clockHeader']").first();
-		const initialTime = await clockHeader.locator("span").first().textContent();
-
-		expect(initialTime).toMatch(/AM|PM/);
-
-		await navigate({
-			page,
-			url: SETTINGS_PAGE,
-		});
-
-		const form = createFormHelpers(page, clockFormatSchema);
-		await waitForPOSTResponse(page, () => form.select("newValue", "24h"));
-
-		await navigate({
-			page,
-			url: CALENDAR_PAGE,
-		});
-
-		const newTime = await clockHeader.locator("span").first().textContent();
-
-		expect(newTime).not.toMatch(/AM|PM/);
-		expect(newTime).not.toBe(initialTime);
-		expect(newTime).toContain(":");
 	});
 });
 

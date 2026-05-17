@@ -52,6 +52,7 @@ import {
 	useTheme,
 } from "./features/theme/core/provider";
 import { getThemeSession } from "./features/theme/core/theme-session.server";
+import { useUserIntlPreference } from "./hooks/intl/useUserIntlPreference";
 import { useHydrated } from "./hooks/useHydrated";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
 import { i18nCookie, i18next } from "./modules/i18n/i18next.server";
@@ -153,6 +154,7 @@ function Document({
 }) {
 	const { htmlThemeClass } = useTheme();
 	const { i18n } = useTranslation();
+	const { language } = useUserIntlPreference();
 	const navigate = useNavigate();
 	const locale = data?.locale ?? DEFAULT_LANGUAGE;
 	const customThemeStyle = useCustomThemeVars();
@@ -217,7 +219,7 @@ function Document({
 				{IS_E2E_TEST_RUN && <HydrationTestIndicator />}
 				<React.StrictMode>
 					<RouterProvider navigate={navigate} useHref={useHref}>
-						<I18nProvider locale={i18n.language}>
+						<I18nProvider locale={language}>
 							<SendouToastRegion />
 							<MyFuse data={data} />
 							<ChatProvider user={data?.user}>

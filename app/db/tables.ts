@@ -1012,15 +1012,6 @@ export interface UserPreferences {
 	 * "12h" = 12 hour format (e.g. 2:00 PM)
 	 * */
 	clockFormat?: "24h" | "12h" | "auto";
-	/**
-	 * What numeric date format the user prefers?
-	 *
-	 * "auto" = use the format the active language defaults to (default value)
-	 * "MDY" = month/day/year (e.g. 4/27/2026)
-	 * "DMY" = day/month/year (e.g. 27/04/2026)
-	 * "YMD" = ISO year-month-day (e.g. 2026-04-27)
-	 * */
-	dateFormat?: "auto" | "MDY" | "DMY" | "YMD";
 	/** Is the new widget based user page enabled? (Supporter early preview) */
 	newProfileEnabled?: boolean;
 	/** Is spoiler-free mode enabled? Hides recent tournament results and scores until the user chooses to reveal them. */
