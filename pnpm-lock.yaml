@@ -99,8 +99,8 @@ importers:
         specifier: 1.1.8
         version: 1.1.8
       kysely:
-        specifier: 0.28.17
-        version: 0.28.17
+        specifier: 0.29.0
+        version: 0.29.0
       lru-cache:
         specifier: 11.3.6
         version: 11.3.6
@@ -241,8 +241,8 @@ importers:
         specifier: 2.1.1
         version: 2.1.1
       knip:
-        specifier: 6.12.1
-        version: 6.12.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
+        specifier: 6.12.2
+        version: 6.12.2(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
       ley:
         specifier: 0.8.1
         version: 0.8.1
@@ -3528,14 +3528,14 @@ packages:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
 
-  knip@6.12.1:
-    resolution: {integrity: sha512-9JRZB1mENe8xNMpP4jJRiFXkRVBHTWzD7YtiLywkO7aKXCefbvI+hA0YDl7H7dPvJt7gcVolgxKgABJQ31NL3w==}
+  knip@6.12.2:
+    resolution: {integrity: sha512-RcZpT1sVziKZgDk1F0hAcp+bq71VJAF8vg1Y9ZLXc1+UXQaMm1rjiUqpJQTIj+lqwmiBQT19/u7ikgazs23cvA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
-  kysely@0.28.17:
-    resolution: {integrity: sha512-nbD8lB9EB3wNdMhOCdx5Li8DxnLbvKByylRLcJ1h+4SkrowVeECAyZlyiKMThF7xFdRz0jSQ2MoJr+wXux2y0Q==}
-    engines: {node: '>=20.0.0'}
+  kysely@0.29.0:
+    resolution: {integrity: sha512-LrQfPUeTW7MXbMvT62moEMnpMTuj9TO3lqjCeLKjM975PJ4Alrl/43f2tlDX7xOsNptKgH4LSNGwIbXwEkLg4g==}
+    engines: {node: '>=22.0.0'}
 
   ley@0.8.1:
     resolution: {integrity: sha512-8Nd5uzie4PxiEJcQNv5YL1IQCMzye/0sE8VPB4KczJkyd44NfDyK/7Vbmp9eHYt+dJ4hxaXy+gF4DORSxYGArg==}
@@ -8456,7 +8456,7 @@ snapshots:
 
   kleur@4.1.5: {}
 
-  knip@6.12.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0):
+  knip@6.12.2(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0):
     dependencies:
       fdir: 6.5.0(picomatch@4.0.4)
       formatly: 0.3.0
@@ -8476,7 +8476,7 @@ snapshots:
       - '@emnapi/core'
       - '@emnapi/runtime'
 
-  kysely@0.28.17: {}
+  kysely@0.29.0: {}
 
   ley@0.8.1:
     dependencies:
