@@ -108,13 +108,16 @@ function SeasonBanner() {
 }
 
 function SeasonCard() {
-	const { t } = useTranslation(["front"]);
+	const { t } = useTranslation(["front", "common"]);
 	const { season, isInFuture, isShowingPreviousSeason } = useSeasonData();
 
 	if (isShowingPreviousSeason) return null;
 
 	return (
-		<>
+		<div className={styles.seasonCardDesktopOnly}>
+			<h2 className={styles.resultHighlightsTitle}>
+				{t("common:pages.sendouq")}
+			</h2>
 			<Link to={SENDOUQ_PAGE} className={styles.seasonCard}>
 				<div className={styles.seasonCardHeader}>
 					{t("front:sq.season", { nth: season.nth })}
@@ -130,7 +133,7 @@ function SeasonCard() {
 				<Image path={navIconUrl("sendouq")} size={16} alt="" />
 				{isInFuture ? t("front:sq.prepare") : t("front:sq.participate")}
 			</Link>
-		</>
+		</div>
 	);
 }
 
@@ -171,12 +174,7 @@ function ResultHighlights() {
 					"overflow-x-auto scrollbar",
 				)}
 			>
-				<div className={styles.seasonCardDesktopOnly}>
-					<h2 className={styles.resultHighlightsTitle}>
-						{t("common:pages.sendouq")}
-					</h2>
-					<SeasonCard />
-				</div>
+				<SeasonCard />
 				<div className="stack sm text-center">
 					<h2 className={styles.resultHighlightsTitle}>
 						{t("front:leaderboards.topPlayers")}
