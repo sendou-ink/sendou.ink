@@ -104,6 +104,7 @@ export const COUNTRY_CODES = [
 	"ER",
 	"ES",
 	"ET",
+	"EU",
 	"FI",
 	"FJ",
 	"FK",
