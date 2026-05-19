@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import {
-	type Key,
 	Tab,
 	TabList,
 	type TabListProps,
@@ -71,17 +70,11 @@ export function SendouTabs({
 		? "horizontal"
 		: orientation;
 	const isVertical = effectiveOrientation === "vertical";
-	const handleSelectionChange = isVertical
-		? (key: Key) => {
-				window.scrollTo({ top: 0, behavior: "smooth" });
-				onSelectionChange?.(key);
-			}
-		: onSelectionChange;
 
 	return (
 		<Tabs
 			orientation={effectiveOrientation}
-			onSelectionChange={handleSelectionChange}
+			onSelectionChange={onSelectionChange}
 			className={clsx(className, {
 				[styles.padded]: padded,
 				[styles.disappearing]: disappearing,

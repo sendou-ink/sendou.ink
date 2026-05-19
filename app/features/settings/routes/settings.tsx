@@ -50,9 +50,6 @@ export const meta: MetaFunction = (args) => {
 	});
 };
 
-// xxx: not working well for mobile
-// xxx: inconsistent widths, SendouForm width for some and for others 100%
-
 export default function SettingsPage() {
 	const user = useUser();
 	const { t } = useTranslation(["common", "settings"]);
@@ -69,9 +66,7 @@ export default function SettingsPage() {
 		} else {
 			next.set("tab", slug);
 		}
-		// xxx: the scrollTo(0, 0) in Tabs is not needed?
 		setSearchParams(next, {
-			preventScrollReset: true,
 			defaultShouldRevalidate: false,
 		});
 	};
