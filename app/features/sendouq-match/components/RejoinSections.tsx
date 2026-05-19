@@ -106,3 +106,12 @@ function DeclinedSection() {
 		</div>
 	);
 }
+
+export function OffSeasonRejoinSection() {
+	const { t } = useTranslation(["q"]);
+	return (
+		<p className="text-lighter text-sm text-center">
+			{t("q:match.rematch.offSeason")}
+		</p>
+	);
+}

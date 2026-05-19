@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import { chatAccessible } from "~/features/chat/chat-utils";
 import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
@@ -45,6 +46,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		roomLinks,
 		anyUserPrefersNoSplatnet,
 		reportedWeapons,
+		isOffSeason: Seasons.current() === null,
 		chatCode: (() => {
 			const isStaff = user?.roles.includes("STAFF") ?? false;
 			const isParticipant = user && matchUsers.includes(user.id);

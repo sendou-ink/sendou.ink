@@ -162,6 +162,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				break;
 			}
 			case "CAST_CONTINUE_VOTE": {
+				errorToastIfFalsy(Seasons.current(), "Season is not active");
+
 				const viewerSide = SendouQMatch.resolveGroupMemberOf({
 					groupAlpha: match.groupAlpha,
 					groupBravo: match.groupBravo,

@@ -219,6 +219,7 @@
 	"match.rematch.waitingCaptain": "Waiting for the captain to choose whether to re-queue",
 	"match.rematch.rejoinQueue": "Rejoin queue",
 	"match.rematch.backToQueue": "Back to queue",
+	"match.rematch.offSeason": "Season has ended. The queue will reopen when the next season starts.",
 	"match.banner.final": "Final",
 	"match.banner.bestOf": "Best of {{count}}",
 	"match.banner.playAll": "Play all {{count}}",
