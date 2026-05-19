@@ -96,6 +96,7 @@ export default function SettingsPage() {
 				</div>
 				<SendouTabs
 					orientation="vertical"
+					horizontalBelow={720}
 					selectedKey={activeTab}
 					onSelectionChange={handleSelectionChange}
 				>

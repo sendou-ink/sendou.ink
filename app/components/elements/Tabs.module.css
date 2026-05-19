@@ -144,35 +144,3 @@
 		padding-block-start: 0;
 	}
 }
-
-/** xxx: to container query */
-@media (max-width: 720px) {
-	.vertical {
-		grid-template-columns: 1fr;
-
-		& .tabListContainer {
-			position: static;
-		}
-
-		& .tabList {
-			flex-direction: row;
-			border-inline-end: none;
-			border-bottom: 2px solid var(--color-border);
-		}
-
-		& .tabContainer {
-			margin-inline-end: 0;
-			margin-bottom: -2px;
-
-			&[data-selected] .tabButton {
-				border-inline-end-color: transparent;
-				border-bottom-color: var(--color-text-accent);
-			}
-		}
-
-		& .tabButton {
-			border-inline-end: none;
-			border-bottom: 2px solid transparent;
-		}
-	}
-}
