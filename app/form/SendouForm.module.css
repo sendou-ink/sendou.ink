@@ -5,6 +5,11 @@
 	width: 100%;
 	max-width: 24rem;
 	margin: 0 auto;
+
+	&.fullWidth {
+		margin: 0;
+		max-width: none;
+	}
 }
 
 .title {

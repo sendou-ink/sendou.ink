@@ -22,6 +22,7 @@ export function LocaleTab() {
 					}}
 					autoSubmit
 					revalidateRoot
+					fullWidth
 				>
 					{({ FormField }) => <FormField name="newValue" />}
 				</SendouForm>
@@ -34,6 +35,7 @@ export function LocaleTab() {
 					}}
 					autoSubmit
 					revalidateRoot
+					fullWidth
 				>
 					{({ FormField }) => <FormField name="newValue" />}
 				</SendouForm>

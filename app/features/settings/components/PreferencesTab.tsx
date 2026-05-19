@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { FormMessage } from "~/components/FormMessage";
@@ -19,7 +20,8 @@ export function PreferencesTab() {
 	return (
 		<div className="stack md">
 			<PushNotificationsEnabler />
-			<div className="mt-6 stack md">
+			<Divider className="my-2" />
+			<div className="stack md">
 				<SendouForm
 					schema={disableBuildAbilitySortingSchema}
 					defaultValues={{
@@ -27,6 +29,7 @@ export function PreferencesTab() {
 					}}
 					autoSubmit
 					revalidateRoot
+					fullWidth
 				>
 					{({ FormField }) => <FormField name="newValue" />}
 				</SendouForm>
@@ -38,6 +41,7 @@ export function PreferencesTab() {
 					}}
 					autoSubmit
 					revalidateRoot
+					fullWidth
 				>
 					{({ FormField }) => <FormField name="newValue" />}
 				</SendouForm>
@@ -48,6 +52,7 @@ export function PreferencesTab() {
 					}}
 					autoSubmit
 					revalidateRoot
+					fullWidth
 				>
 					{({ FormField }) => <FormField name="newValue" />}
 				</SendouForm>
