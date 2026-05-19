@@ -70,7 +70,10 @@ export default function SettingsPage() {
 			next.set("tab", slug);
 		}
 		// xxx: the scrollTo(0, 0) in Tabs is not needed?
-		setSearchParams(next, { preventScrollReset: true });
+		setSearchParams(next, {
+			preventScrollReset: true,
+			defaultShouldRevalidate: false,
+		});
 	};
 
 	return (

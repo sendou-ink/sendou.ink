@@ -15,7 +15,6 @@ export function MatchProfileTab() {
 	const data = useLoaderData<typeof loader>();
 	const qSettings = data.qSettings;
 
-	// xxx: check if this is correct
 	if (!qSettings) return null;
 
 	return (
@@ -29,8 +28,8 @@ export function MatchProfileTab() {
 				})),
 				vc: qSettings.vc ?? "NO",
 				languages: qSettings.languages ?? [],
-				noScreen: Boolean(data.noScreen),
-				noSplatnet: Boolean(data.noSplatnet),
+				noScreen: Boolean(qSettings.noScreen),
+				noSplatnet: Boolean(qSettings.noSplatnet),
 			}}
 			revalidateRoot
 		>

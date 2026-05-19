@@ -6,8 +6,6 @@ import { SendouForm } from "~/form/SendouForm";
 import { languages } from "~/modules/i18n/config";
 import { clockFormatSchema, dateFormatSchema } from "../settings-schemas";
 
-// xxx: all select not 100%
-
 export function LocaleTab() {
 	const user = useUser();
 
