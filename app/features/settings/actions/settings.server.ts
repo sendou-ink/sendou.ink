@@ -65,30 +65,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UPDATE_MATCH_PROFILE": {
-			// xxx: collapse to one Repository call
-			await Promise.all([
-				QSettingsRepository.updateUserMapModePreferences({
-					mapModePreferences: data.mapModePreferences,
-					userId: user.id,
-				}),
-				QSettingsRepository.updateVoiceChat({
-					userId: user.id,
-					vc: data.vc,
-					languages: data.languages,
-				}),
-				QSettingsRepository.updateSendouQWeaponPool({
-					userId: user.id,
-					weaponPool: data.weaponPool,
-				}),
-				QSettingsRepository.updateNoScreen({
-					userId: user.id,
-					noScreen: Number(data.noScreen),
-				}),
-				QSettingsRepository.updateNoSplatnet({
-					userId: user.id,
-					noSplatnet: Number(data.noSplatnet),
-				}),
-			]);
+			await QSettingsRepository.updateMatchProfile({
+				userId: user.id,
+				mapModePreferences: data.mapModePreferences,
+				vc: data.vc,
+				languages: data.languages,
+				weaponPool: data.weaponPool,
+				noScreen: Number(data.noScreen),
+				noSplatnet: Number(data.noSplatnet),
+			});
 			break;
 		}
 		default: {

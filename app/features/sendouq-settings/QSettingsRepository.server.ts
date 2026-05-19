@@ -26,12 +26,37 @@ export async function settingsByUserId(userId: number) {
 	};
 }
 
-export async function updateUserMapModePreferences({
+export function updateVoiceChat(args: {
+	userId: number;
+	vc: Tables["User"]["vc"];
+	languages: string[];
+}) {
+	return db
+		.updateTable("User")
+		.set({
+			vc: args.vc,
+			languages: args.languages.length > 0 ? args.languages.join(",") : null,
+		})
+		.where("User.id", "=", args.userId)
+		.execute();
+}
+
+export async function updateMatchProfile({
 	userId,
 	mapModePreferences,
+	vc,
+	languages,
+	weaponPool,
+	noScreen,
+	noSplatnet,
 }: {
 	userId: number;
 	mapModePreferences: UserMapModePreferences;
+	vc: Tables["User"]["vc"];
+	languages: string[];
+	weaponPool: WeaponPoolItem[];
+	noScreen: number;
+	noSplatnet: number;
 }) {
 	const currentPreferences = (
 		await db
@@ -53,76 +78,21 @@ export async function updateUserMapModePreferences({
 				...mapModePreferences,
 				pool: mergedPool,
 			}),
-		})
-		.where("id", "=", userId)
-		.execute();
-}
-
-export function updateVoiceChat(args: {
-	userId: number;
-	vc: Tables["User"]["vc"];
-	languages: string[];
-}) {
-	return db
-		.updateTable("User")
-		.set({
-			vc: args.vc,
-			languages: args.languages.length > 0 ? args.languages.join(",") : null,
-		})
-		.where("User.id", "=", args.userId)
-		.execute();
-}
-
-export function updateSendouQWeaponPool(args: {
-	userId: number;
-	weaponPool: WeaponPoolItem[];
-}) {
-	return db
-		.updateTable("User")
-		.set({
+			vc,
+			languages: languages.length > 0 ? languages.join(",") : null,
 			qWeaponPool:
-				args.weaponPool.length > 0
+				weaponPool.length > 0
 					? JSON.stringify(
-							args.weaponPool.map((wpn) => ({
+							weaponPool.map((wpn) => ({
 								weaponSplId: wpn.id,
 								isFavorite: Number(wpn.isFavorite),
 							})),
 						)
 					: null,
-		})
-		.where("User.id", "=", args.userId)
-		.execute();
-}
-
-export function updateNoScreen({
-	noScreen,
-	userId,
-}: {
-	noScreen: number;
-	userId: number;
-}) {
-	return db
-		.updateTable("User")
-		.set({
 			noScreen,
-		})
-		.where("User.id", "=", userId)
-		.execute();
-}
-
-export function updateNoSplatnet({
-	noSplatnet,
-	userId,
-}: {
-	noSplatnet: number;
-	userId: number;
-}) {
-	return db
-		.updateTable("User")
-		.set({
 			noSplatnet,
 		})
-		.where("User.id", "=", userId)
+		.where("id", "=", userId)
 		.execute();
 }
 
