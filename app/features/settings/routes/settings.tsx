@@ -28,11 +28,8 @@ import { PreferencesTab } from "../components/PreferencesTab";
 import { SoundsTab } from "../components/SoundsTab";
 import { ThemeTab } from "../components/ThemeTab";
 import { loader } from "../loaders/settings.server";
-import {
-	defaultTab,
-	resolveActiveTab,
-	type SettingsTabSlug,
-} from "../settings-tabs";
+import type { SettingsTabSlug } from "../settings-constants";
+import { defaultTab, resolveActiveTab } from "../settings-utils";
 import "./settings.global.css";
 
 export { action, loader };

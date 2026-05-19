@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
-import { resolveActiveTab } from "../settings-tabs";
+import { resolveActiveTab } from "../settings-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = getUser();
