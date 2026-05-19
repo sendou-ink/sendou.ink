@@ -112,7 +112,7 @@ export const LINKS_PAGE = "/links";
 export const SENDOUQ_PAGE = "/q";
 export const SENDOUQ_RULES_PAGE = "/q/rules";
 export const SENDOUQ_INFO_PAGE = "/q/info";
-export const SENDOUQ_SETTINGS_PAGE = "/q/settings";
+export const SENDOUQ_SETTINGS_PAGE = "/settings?tab=match-profile";
 export const SENDOUQ_PREPARING_PAGE = "/q/preparing";
 export const SENDOUQ_LOOKING_PAGE = "/q/looking";
 export const SENDOUQ_LOOKING_PREVIEW_PAGE = "/q/looking?preview=true";

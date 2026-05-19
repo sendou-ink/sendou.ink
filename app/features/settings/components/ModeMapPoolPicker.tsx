@@ -4,11 +4,11 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Divider } from "~/components/Divider";
 import { ModeImage } from "~/components/Image";
+import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import { shortStageName, stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { nullFilledArray } from "~/utils/arrays";
 import { stageImageUrl } from "~/utils/urls";
-import { BANNED_MAPS } from "../banned-maps";
 import styles from "./ModeMapPoolPicker.module.css";
 
 export function ModeMapPoolPicker({

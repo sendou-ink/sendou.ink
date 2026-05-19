@@ -14,7 +14,7 @@ export function PreferenceRadioGroup({
 	onPreferenceChange: (preference: Preference & "NEUTRAL") => void;
 	"aria-label": string;
 }) {
-	const { t } = useTranslation(["q"]);
+	const { t } = useTranslation(["settings"]);
 
 	return (
 		<RadioGroup
@@ -40,7 +40,7 @@ export function PreferenceRadioGroup({
 							width={18}
 							alt="Avoid emoji"
 						/>
-						{t("q:settings.maps.avoid")}
+						{t("settings:matchProfile.maps.avoid")}
 					</span>
 				)}
 			</Radio>
@@ -58,7 +58,7 @@ export function PreferenceRadioGroup({
 							width={18}
 							alt="Neutral emoji"
 						/>
-						{t("q:settings.maps.neutral")}
+						{t("settings:matchProfile.maps.neutral")}
 					</span>
 				)}
 			</Radio>
@@ -76,7 +76,7 @@ export function PreferenceRadioGroup({
 							width={18}
 							alt="Prefer emoji"
 						/>
-						{t("q:settings.maps.prefer")}
+						{t("settings:matchProfile.maps.prefer")}
 					</span>
 				)}
 			</Radio>

@@ -6,13 +6,13 @@ import { isSupporter } from "~/modules/permissions/utils";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
 import { errorToast, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { settingsEditSchema } from "../settings-schemas";
+import { settingsActionSchema } from "../settings-schemas.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
-		schema: settingsEditSchema,
+		schema: settingsActionSchema,
 	});
 
 	switch (data._action) {
@@ -46,20 +46,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 			break;
 		}
-		case "UPDATE_NO_SCREEN": {
-			await QSettingsRepository.updateNoScreen({
-				userId: user.id,
-				noScreen: Number(data.newValue),
-			});
-			break;
-		}
-		case "UPDATE_NO_SPLATNET": {
-			await QSettingsRepository.updateNoSplatnet({
-				userId: user.id,
-				noSplatnet: Number(data.newValue),
-			});
-			break;
-		}
 		case "UPDATE_CLOCK_FORMAT": {
 			await UserRepository.updatePreferences(user.id, {
 				clockFormat: data.newValue,
@@ -78,12 +64,37 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 			break;
 		}
+		case "UPDATE_MATCH_PROFILE": {
+			// xxx: collapse to one Repository call
+			await Promise.all([
+				QSettingsRepository.updateUserMapModePreferences({
+					mapModePreferences: data.mapModePreferences,
+					userId: user.id,
+				}),
+				QSettingsRepository.updateVoiceChat({
+					userId: user.id,
+					vc: data.vc,
+					languages: data.languages,
+				}),
+				QSettingsRepository.updateSendouQWeaponPool({
+					userId: user.id,
+					weaponPool: data.weaponPool,
+				}),
+				QSettingsRepository.updateNoScreen({
+					userId: user.id,
+					noScreen: Number(data.noScreen),
+				}),
+				QSettingsRepository.updateNoSplatnet({
+					userId: user.id,
+					noSplatnet: Number(data.noSplatnet),
+				}),
+			]);
+			break;
+		}
 		default: {
 			assertUnreachable(data);
 		}
 	}
 
-	// TODO: removed temporarily, restore when we have better toasts
-	// (current problem is that when you update no screen from /q/settings, you get redirected to /settings)
-	// return successToast("Settings updated");
+	return null;
 };

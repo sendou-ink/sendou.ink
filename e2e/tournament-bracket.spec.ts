@@ -1,6 +1,6 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
-import { updateNoScreenSchema } from "~/features/settings/settings-schemas";
+import { updateMatchProfileSchema } from "~/features/settings/match-profile-schemas";
 import {
 	NOTIFICATIONS_URL,
 	SETTINGS_PAGE,
@@ -828,8 +828,9 @@ test.describe("Tournament bracket", () => {
 			url: SETTINGS_PAGE,
 		});
 
-		const form = createFormHelpers(page, updateNoScreenSchema);
-		await form.check("newValue");
+		const form = createFormHelpers(page, updateMatchProfileSchema);
+		await form.check("noScreen");
+		await waitForPOSTResponse(page, () => form.submit());
 
 		await navigate({
 			page,

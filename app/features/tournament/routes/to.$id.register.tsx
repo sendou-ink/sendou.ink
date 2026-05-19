@@ -43,7 +43,7 @@ import TimePopover from "~/components/TimePopover";
 import { useUser } from "~/features/auth/core/user";
 import { imgTypeToDimensions } from "~/features/img-upload/upload-constants";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import { ModeMapPoolPicker } from "~/features/sendouq-settings/components/ModeMapPoolPicker";
+import { ModeMapPoolPicker } from "~/features/settings/components/ModeMapPoolPicker";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useHydrated } from "~/hooks/useHydrated";

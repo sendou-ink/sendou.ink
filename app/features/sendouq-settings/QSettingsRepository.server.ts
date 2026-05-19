@@ -58,38 +58,6 @@ export async function updateUserMapModePreferences({
 		.execute();
 }
 
-export async function updateTeamMapModePreferences({
-	teamId,
-	mapModePreferences,
-}: {
-	teamId: number;
-	mapModePreferences: UserMapModePreferences;
-}) {
-	const currentPreferences = (
-		await db
-			.selectFrom("AllTeam")
-			.select("mapModePreferences")
-			.where("id", "=", teamId)
-			.executeTakeFirstOrThrow()
-	).mapModePreferences;
-
-	const mergedPool = mergeExcludedModePreferences(
-		mapModePreferences.pool,
-		currentPreferences?.pool,
-	);
-
-	return db
-		.updateTable("AllTeam")
-		.set({
-			mapModePreferences: JSON.stringify({
-				...mapModePreferences,
-				pool: mergedPool,
-			}),
-		})
-		.where("id", "=", teamId)
-		.execute();
-}
-
 export function updateVoiceChat(args: {
 	userId: number;
 	vc: Tables["User"]["vc"];

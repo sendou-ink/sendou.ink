@@ -38,7 +38,7 @@ test.describe("Settings", () => {
 
 		await navigate({
 			page,
-			url: SETTINGS_PAGE,
+			url: `${SETTINGS_PAGE}?tab=preferences`,
 		});
 
 		const form = createFormHelpers(page, disableBuildAbilitySortingSchema);
@@ -74,7 +74,7 @@ test.describe("Settings", () => {
 
 		await navigate({
 			page,
-			url: SETTINGS_PAGE,
+			url: `${SETTINGS_PAGE}?tab=locale`,
 		});
 
 		const form = createFormHelpers(page, clockFormatSchema);
@@ -94,7 +94,7 @@ test.describe("Settings", () => {
 });
 
 const enableSpoilerFreeMode = async (page: Page) => {
-	await navigate({ page, url: SETTINGS_PAGE });
+	await navigate({ page, url: `${SETTINGS_PAGE}?tab=preferences` });
 	const form = createFormHelpers(page, spoilerFreeModeSchema);
 	await waitForPOSTResponse(page, () => form.check("newValue"));
 };

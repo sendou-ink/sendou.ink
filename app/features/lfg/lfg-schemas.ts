@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { LANGUAGE_OPTIONS } from "~/features/sendouq-settings/q-settings-schemas";
+import { LANGUAGE_OPTIONS } from "~/features/settings/match-profile-schemas";
 import {
 	checkboxGroup,
 	idConstantOptional,

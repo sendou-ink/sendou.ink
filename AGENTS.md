@@ -51,6 +51,7 @@
 - for any CSS variable used, make sure it is defined either locally or in the `vars.css` file
 - for simple styling, prefer [utility classes](./app/styles/utils.css) over creating a new class
 - use CSS nesting with the `&` selector to group related selectors (pseudo-classes, pseudo-elements, child selectors, attribute selectors) under their parent instead of repeating the parent selector
+- prefer container queries over media queries
 
 ## SQL
 
@@ -75,6 +76,7 @@
 - some a11y labels or text that should not normally be encountered by user (example given, error message by server) can be english
 - before adding a new translation, check that one doesn't already exist you can reuse (particularly in the common.json)
 - add only English translation and use `pnpm run i18n:sync` to initialize other jsons with empty string ready for translators
+- when using namespace e.g. `const { t } = useTranslation("settings"]);` it needs to be defined in the `handle` for that route e.g. `export const handle: SendouRouteHandle = { i18n: ["settings"], ... }`
 
 ## Commit messages
 

@@ -56,22 +56,6 @@ export const spoilerFreeModeSchema = z.object({
 	}),
 });
 
-export const updateNoScreenSchema = z.object({
-	_action: stringConstant("UPDATE_NO_SCREEN"),
-	newValue: toggle({
-		label: "labels.noScreen",
-		bottomText: "bottomTexts.noScreen",
-	}),
-});
-
-export const updateNoSplatnetSchema = z.object({
-	_action: stringConstant("UPDATE_NO_SPLATNET"),
-	newValue: toggle({
-		label: "labels.noSplatnet",
-		bottomText: "bottomTexts.noScreen",
-	}),
-});
-
 const weaponReportDefaultOpenSchema = z.object({
 	_action: stringConstant("UPDATE_WEAPON_REPORT_DEFAULT_OPEN"),
 	newValue: z.boolean(),
@@ -82,8 +66,6 @@ export const settingsEditSchema = z.union([
 	disableBuildAbilitySortingSchema,
 	disallowScrimPickupsFromUntrustedSchema,
 	spoilerFreeModeSchema,
-	updateNoScreenSchema,
-	updateNoSplatnetSchema,
 	clockFormatSchema,
 	weaponReportDefaultOpenSchema,
 	dateFormatSchema,
