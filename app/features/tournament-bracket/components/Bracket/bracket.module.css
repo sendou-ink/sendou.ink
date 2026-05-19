@@ -267,6 +267,12 @@ a.match:hover {
 		padding-inline: var(--s-2);
 	}
 
+	& td a.destinationLink {
+		color: inherit;
+		font-style: inherit;
+		padding-inline: var(--s-2);
+	}
+
 	& tbody tr:nth-child(odd) {
 		background-color: var(--color-bg-high);
 	}

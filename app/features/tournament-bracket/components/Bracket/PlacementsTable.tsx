@@ -5,7 +5,10 @@ import { Link, useFetcher } from "react-router";
 import invariant from "~/utils/invariant";
 import { SendouButton } from "../../../../components/elements/Button";
 import { logger } from "../../../../utils/logger";
-import { tournamentTeamPage } from "../../../../utils/urls";
+import {
+	tournamentBracketsPage,
+	tournamentTeamPage,
+} from "../../../../utils/urls";
 import { useUser } from "../../../auth/core/user";
 import { TOURNAMENT } from "../../../tournament/tournament-constants";
 import type { Bracket, Standing } from "../../core/Bracket";
@@ -485,7 +488,16 @@ function EditableDestination({
 				overridenDestination &&
 				overridenDestination.idx !== destination?.idx ? (
 				<td className="text-theme font-bold">
-					<span>→ {overridenDestination.name}</span>
+					<Link
+						to={tournamentBracketsPage({
+							tournamentId: source.tournament.ctx.id,
+							bracketIdx: overridenDestination.idx,
+						})}
+						className={styles.destinationLink}
+						defaultShouldRevalidate={false}
+					>
+						→ {overridenDestination.name}
+					</Link>
 				</td>
 			) : destination && overridenDestination !== null ? (
 				<td
@@ -493,7 +505,16 @@ function EditableDestination({
 						"italic text-lighter": !allMatchesFinished,
 					})}
 				>
-					<span>→ {destination.name}</span>
+					<Link
+						to={tournamentBracketsPage({
+							tournamentId: source.tournament.ctx.id,
+							bracketIdx: destination.idx,
+						})}
+						className={styles.destinationLink}
+						defaultShouldRevalidate={false}
+					>
+						→ {destination.name}
+					</Link>
 				</td>
 			) : (
 				<td />
