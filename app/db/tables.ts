@@ -964,7 +964,7 @@ export interface UserMapModePreferences {
 	}>;
 }
 
-export interface QWeaponPool {
+export interface WeaponPoolEntry {
 	weaponSplId: MainWeaponId;
 	isFavorite: number;
 }
@@ -1069,7 +1069,7 @@ export interface User {
 	vc: Generated<"YES" | "NO" | "LISTEN_ONLY">;
 	youtubeId: string | null;
 	mapModePreferences: JSONColumnTypeNullable<UserMapModePreferences>;
-	qWeaponPool: JSONColumnTypeNullable<QWeaponPool[]>;
+	weaponPool: JSONColumnTypeNullable<WeaponPoolEntry[]>;
 	plusSkippedForSeasonNth: number | null;
 	noScreen: Generated<DBBoolean>;
 	/** User doesn't have access to SplatNet 3 to join rooms made by others */

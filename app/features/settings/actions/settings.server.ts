@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
+import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isSupporter } from "~/modules/permissions/utils";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
@@ -65,7 +65,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UPDATE_MATCH_PROFILE": {
-			await QSettingsRepository.updateMatchProfile({
+			await MatchProfileRepository.updateMatchProfile({
 				userId: user.id,
 				mapModePreferences: data.mapModePreferences,
 				vc: data.vc,

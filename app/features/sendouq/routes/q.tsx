@@ -25,12 +25,12 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	LEADERBOARDS_PAGE,
 	LOG_IN_URL,
+	MATCH_PROFILE_PAGE,
 	navIconUrl,
 	SENDOUQ_INFO_PAGE,
 	SENDOUQ_LOOKING_PREVIEW_PAGE,
 	SENDOUQ_PAGE,
 	SENDOUQ_RULES_PAGE,
-	SENDOUQ_SETTINGS_PAGE,
 	SENDOUQ_STREAMS_PAGE,
 	userSeasonsPage,
 } from "~/utils/urls";
@@ -320,7 +320,7 @@ function QLinks() {
 			{user ? (
 				<QLink
 					navIcon="settings"
-					url={SENDOUQ_SETTINGS_PAGE}
+					url={MATCH_PROFILE_PAGE}
 					title={t("q:front.nav.settings.title")}
 					subText={t("q:front.nav.settings.description")}
 				/>

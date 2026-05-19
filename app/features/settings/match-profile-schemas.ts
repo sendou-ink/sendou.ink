@@ -12,8 +12,8 @@ import { languagesUnified } from "~/modules/i18n/config";
 import { modeShort, stageId } from "~/utils/zod";
 import {
 	AMOUNT_OF_MAPS_IN_POOL_PER_MODE,
-	SENDOUQ_WEAPON_POOL_MAX_SIZE,
-} from "../sendouq-settings/q-settings-constants";
+	MATCH_PROFILE_WEAPON_POOL_MAX_SIZE,
+} from "../match-profile/match-profile-constants";
 
 export const LANGUAGE_OPTIONS = languagesUnified.map((lang) => ({
 	label: () => lang.name,
@@ -49,7 +49,7 @@ export const updateMatchProfileSchema = z.object({
 	),
 	weaponPool: weaponPool({
 		label: "labels.weaponPool",
-		maxCount: SENDOUQ_WEAPON_POOL_MAX_SIZE,
+		maxCount: MATCH_PROFILE_WEAPON_POOL_MAX_SIZE,
 	}),
 	vc: radioGroup({
 		label: "labels.voiceChat",

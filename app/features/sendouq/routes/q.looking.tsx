@@ -24,10 +24,10 @@ import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
+	MATCH_PROFILE_PAGE,
 	navIconUrl,
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PAGE,
-	SENDOUQ_SETTINGS_PAGE,
 	SENDOUQ_STREAMS_PAGE,
 } from "~/utils/urls";
 import { action } from "../actions/q.looking.server";
@@ -170,7 +170,7 @@ function InfoText() {
 		>
 			<div className="stack sm horizontal">
 				<LinkButton
-					to={SENDOUQ_SETTINGS_PAGE}
+					to={MATCH_PROFILE_PAGE}
 					size="small"
 					variant="outlined"
 					className="stack horizontal xs"

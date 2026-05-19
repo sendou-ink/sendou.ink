@@ -1,8 +1,8 @@
 import { useLoaderData } from "react-router";
 import { ModeImage } from "~/components/Image";
 import type { Preference, UserMapModePreferences } from "~/db/tables";
-import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
-import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/sendouq-settings/q-settings-constants";
+import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
+import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/match-profile/match-profile-constants";
 import { SendouForm } from "~/form/SendouForm";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -13,23 +13,23 @@ import { PreferenceRadioGroup } from "./PreferenceRadioGroup";
 
 export function MatchProfileTab() {
 	const data = useLoaderData<typeof loader>();
-	const qSettings = data.qSettings;
+	const matchProfile = data.matchProfile;
 
-	if (!qSettings) return null;
+	if (!matchProfile) return null;
 
 	return (
 		<SendouForm
 			schema={updateMatchProfileSchema}
 			defaultValues={{
-				mapModePreferences: preferencesFromRaw(qSettings.mapModePreferences),
-				weaponPool: (qSettings.qWeaponPool ?? []).map((w) => ({
+				mapModePreferences: preferencesFromRaw(matchProfile.mapModePreferences),
+				weaponPool: (matchProfile.weaponPool ?? []).map((w) => ({
 					id: w.weaponSplId,
 					isFavorite: Boolean(w.isFavorite),
 				})),
-				vc: qSettings.vc ?? "NO",
-				languages: qSettings.languages ?? [],
-				noScreen: Boolean(qSettings.noScreen),
-				noSplatnet: Boolean(qSettings.noSplatnet),
+				vc: matchProfile.vc ?? "NO",
+				languages: matchProfile.languages ?? [],
+				noScreen: Boolean(matchProfile.noScreen),
+				noSplatnet: Boolean(matchProfile.noSplatnet),
 			}}
 			revalidateRoot
 		>
