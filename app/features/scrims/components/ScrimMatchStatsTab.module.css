@@ -1,0 +1,43 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.toggleRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.sectionTitle {
+	font-weight: var(--bold);
+	margin-bottom: var(--s-2);
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.table th,
+.table td {
+	padding: var(--s-1) var(--s-2);
+	text-align: left;
+}
+
+.table th {
+	color: var(--text-lighter);
+	font-weight: var(--bold);
+	font-size: var(--fonts-sm);
+	border-bottom: 1px solid var(--border);
+}
+
+.cellRight {
+	text-align: right;
+}
+
+.empty {
+	color: var(--text-lighter);
+	font-style: italic;
+}

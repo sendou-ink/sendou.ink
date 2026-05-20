@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import { SCRIM_TRACKING_AUTO_LOCK_HOURS } from "../scrims-constants";
 import type { ScrimFilters, ScrimPost } from "../scrims-types";
 import {
 	applyFilters,
+	isTrackingLocked,
 	participantIdsListFromAccepted,
 	sideDisplayName,
+	sideOfUser,
 } from "./Scrim";
 
 type MockUser = { id: number };
@@ -127,6 +130,8 @@ describe("applyFilters", () => {
 			mapsTournament: null,
 			permissions: { MANAGE_REQUESTS: [], CANCEL: [], DELETE_POST: [] },
 			team: null,
+			trackingEnabledAt: null,
+			trackingLockedAt: null,
 		};
 	}
 
@@ -459,5 +464,87 @@ describe("applyFilters", () => {
 
 			expect(applyFilters(post, filters)).toBe(false);
 		});
+	});
+});
+
+describe("sideOfUser", () => {
+	it("returns ALPHA for users in the post's users list", () => {
+		const post = createPost(
+			[{ id: 1 }],
+			[{ isAccepted: true, users: [{ id: 2 }] }],
+		);
+		expect(sideOfUser(post, 1)).toBe("ALPHA");
+	});
+
+	it("returns BRAVO for users in the accepted request's users list", () => {
+		const post = createPost(
+			[{ id: 1 }],
+			[{ isAccepted: true, users: [{ id: 2 }] }],
+		);
+		expect(sideOfUser(post, 2)).toBe("BRAVO");
+	});
+
+	it("returns null for non-participants", () => {
+		const post = createPost(
+			[{ id: 1 }],
+			[{ isAccepted: true, users: [{ id: 2 }] }],
+		);
+		expect(sideOfUser(post, 99)).toBeNull();
+	});
+
+	it("ignores users only in non-accepted requests", () => {
+		const post = createPost(
+			[{ id: 1 }],
+			[{ isAccepted: false, users: [{ id: 2 }] }],
+		);
+		expect(sideOfUser(post, 2)).toBeNull();
+	});
+});
+
+describe("isTrackingLocked", () => {
+	const ONE_HOUR_MS = 60 * 60 * 1000;
+	const lockWindowMs = SCRIM_TRACKING_AUTO_LOCK_HOURS * ONE_HOUR_MS;
+
+	function postWith(
+		trackingEnabledAt: number | null,
+		trackingLockedAt: number | null = null,
+	): ScrimPost {
+		return {
+			trackingEnabledAt,
+			trackingLockedAt,
+		} as unknown as ScrimPost;
+	}
+
+	it("returns true when trackingLockedAt is set", () => {
+		expect(isTrackingLocked(postWith(100, 200), [], Date.now())).toBe(true);
+	});
+
+	it("returns false when tracking not enabled", () => {
+		expect(isTrackingLocked(postWith(null), [], Date.now())).toBe(false);
+	});
+
+	it("returns false just inside the auto-lock window", () => {
+		const now = 1_000_000_000;
+		const enabledSeconds = (now - (lockWindowMs - ONE_HOUR_MS)) / 1000;
+		expect(isTrackingLocked(postWith(enabledSeconds), [], now)).toBe(false);
+	});
+
+	it("returns true just past the auto-lock window", () => {
+		const now = 1_000_000_000;
+		const enabledSeconds = (now - (lockWindowMs + ONE_HOUR_MS)) / 1000;
+		expect(isTrackingLocked(postWith(enabledSeconds), [], now)).toBe(true);
+	});
+
+	it("uses the most recent reported map as the reference point", () => {
+		const now = 1_000_000_000;
+		const enabledSeconds = (now - lockWindowMs * 2) / 1000;
+		const recentMapSeconds = (now - ONE_HOUR_MS) / 1000;
+		expect(
+			isTrackingLocked(
+				postWith(enabledSeconds),
+				[{ reportedAt: recentMapSeconds }],
+				now,
+			),
+		).toBe(false);
 	});
 });

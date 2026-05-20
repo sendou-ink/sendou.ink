@@ -1255,8 +1255,36 @@ export interface ScrimPost {
 	maps: "SZ" | "ALL" | "RANKED" | null;
 	/** If set, specifies the maps of a tournament to play */
 	mapsTournamentId: number | null;
+	// xxx: I don't think these two are needed. trackingEnabledAt is inferred when ScrimMapList is set. trackingLockedAt is inferred from last map reportedAt
+	/** When map-by-map tracking was enabled on this scrim post (null when not enabled) */
+	trackingEnabledAt: number | null;
+	/** When map-by-map tracking was locked (no further mutations allowed) */
+	trackingLockedAt: number | null;
 	createdAt: GeneratedAlways<number>;
 	updatedAt: Generated<number>;
+}
+
+export interface ScrimMapList {
+	id: GeneratedAlways<number>;
+	scrimPostId: number;
+	side: "ALPHA" | "BRAVO";
+	source: "TOURNAMENT" | "POOL";
+	tournamentId: number | null;
+	serializedPool: string | null;
+	updatedAt: number;
+}
+
+export interface ScrimMap {
+	id: GeneratedAlways<number>;
+	scrimPostId: number;
+	index: number;
+	mode: ModeShort;
+	stageId: StageId;
+	winnerSide: "ALPHA" | "BRAVO" | null;
+	reportedAt: number | null;
+	reportedByUserId: number | null;
+	// xxx: replayOfIndex can be inferred?
+	replayOfIndex: number | null;
 }
 
 export interface ScrimPostUser {
@@ -1442,6 +1470,8 @@ export interface DB {
 	ScrimPostUser: ScrimPostUser;
 	ScrimPostRequest: ScrimPostRequest;
 	ScrimPostRequestUser: ScrimPostRequestUser;
+	ScrimMapList: ScrimMapList;
+	ScrimMap: ScrimMap;
 	Association: Association;
 	AssociationMember: AssociationMember;
 	Notification: Notification;

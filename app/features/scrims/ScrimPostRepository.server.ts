@@ -136,6 +136,8 @@ const baseFindQuery = db
 		"ScrimPost.canceledByUserId",
 		"ScrimPost.cancelReason",
 		"ScrimPost.isScheduledForFuture",
+		"ScrimPost.trackingEnabledAt",
+		"ScrimPost.trackingLockedAt",
 		jsonBuildObject({
 			name: eb.ref("Team.name"),
 			customUrl: eb.ref("Team.customUrl"),
@@ -310,6 +312,8 @@ const mapDBRowToScrimPost = (
 		},
 		managedByAnyone: Boolean(row.managedByAnyone),
 		canceled,
+		trackingEnabledAt: row.trackingEnabledAt,
+		trackingLockedAt: row.trackingLockedAt,
 	};
 
 	if (!Scrim.isAccepted(result)) {

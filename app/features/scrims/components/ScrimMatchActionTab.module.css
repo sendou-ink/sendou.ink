@@ -1,0 +1,55 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+	align-items: stretch;
+}
+
+.intro {
+	text-align: center;
+	color: var(--text-lighter);
+	max-width: 36rem;
+	margin-inline: auto;
+}
+
+.locked {
+	padding: var(--s-3);
+	border-radius: var(--rounded);
+	background: var(--bg-lighter);
+	color: var(--text-lighter);
+	text-align: center;
+}
+
+.aux {
+	display: flex;
+	gap: var(--s-2);
+	justify-content: center;
+	flex-wrap: wrap;
+}
+
+.mapListsSummary {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.mapListRow {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	padding: var(--s-2);
+	border-radius: var(--rounded);
+	background: var(--bg-lighter);
+}
+
+.mapListRowHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-weight: var(--bold);
+}
+
+.mapListRowMissing {
+	font-style: italic;
+	color: var(--text-lighter);
+}

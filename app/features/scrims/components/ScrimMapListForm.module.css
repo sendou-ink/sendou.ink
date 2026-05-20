@@ -1,0 +1,39 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	padding: var(--s-3);
+	border-radius: var(--rounded);
+	background: var(--bg-lighter);
+}
+
+.sourceRow {
+	display: flex;
+	gap: var(--s-3);
+}
+
+.sourceOption {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.input {
+	width: 100%;
+	padding: var(--s-2);
+	border-radius: var(--rounded);
+	border: 1px solid var(--border);
+	background: var(--bg-input);
+	color: var(--text);
+}
+
+.actions {
+	display: flex;
+	gap: var(--s-2);
+	justify-content: flex-end;
+}
+
+.error {
+	color: var(--theme-error);
+	font-size: var(--fonts-sm);
+}

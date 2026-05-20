@@ -1,7 +1,10 @@
 import type { ActionFunctionArgs } from "react-router";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import {
+	errorToast,
 	errorToastIfFalsy,
 	notFoundIfFalsy,
 	parseParams,
@@ -9,17 +12,28 @@ import {
 } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
 import { databaseTimestampToDate } from "../../../utils/dates";
-import { errorToast } from "../../../utils/remix.server";
 import { requireUser } from "../../auth/core/user.server";
 import * as Scrim from "../core/Scrim";
+import * as ScrimMapByMap from "../core/ScrimMapByMap";
+import * as ScrimMapByMapRepository from "../ScrimMapByMapRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
-import { cancelScrimSchema } from "../scrims-schemas";
+import {
+	cancelScrimSchema,
+	scrimMapByMapActionSchema,
+} from "../scrims-schemas";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const { id } = parseParams({ params, schema: idObject });
 	const post = notFoundIfFalsy(await ScrimPostRepository.findById(id));
 
 	const user = requireUser();
+
+	const formData = await request.clone().formData();
+	// xxx: this is weird, convert to switch...case at action function elvel following similar pattern to elsewhere on the codebase
+	if (formData.get("_action")) {
+		return handleMapByMapAction({ post, user, request });
+	}
+
 	const data = await parseRequestPayload({
 		request,
 		schema: cancelScrimSchema,
@@ -65,3 +79,148 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	return null;
 };
+
+async function handleMapByMapAction({
+	post,
+	user,
+	request,
+}: {
+	post: NonNullable<Awaited<ReturnType<typeof ScrimPostRepository.findById>>>;
+	user: ReturnType<typeof requireUser>;
+	request: Request;
+}) {
+	const data = await parseRequestPayload({
+		request,
+		schema: scrimMapByMapActionSchema,
+	});
+
+	const viewerSide = Scrim.sideOfUser(post, user.id);
+	errorToastIfFalsy(viewerSide, "You are not a participant in this scrim");
+
+	const broadcastRevalidate = () => {
+		if (!post.chatCode) return;
+		ChatSystemMessage.send({
+			room: post.chatCode,
+			revalidateOnly: true,
+			authorUserId: user.id,
+		});
+	};
+
+	if (data._action === "ENABLE_TRACKING") {
+		await ScrimMapByMapRepository.enableTracking(post.id);
+		broadcastRevalidate();
+		return null;
+	}
+
+	errorToastIfFalsy(Scrim.isTrackingEnabled(post), "Tracking is not enabled");
+
+	const maps = await ScrimMapByMapRepository.findMapsByScrimPostId(post.id);
+
+	if (Scrim.isTrackingLocked(post, maps)) {
+		await ScrimMapByMapRepository.lockTracking(post.id);
+		errorToast("Tracking is locked");
+	}
+
+	switch (data._action) {
+		case "SUBMIT_MAP_LIST": {
+			await ScrimMapByMapRepository.upsertMapList({
+				scrimPostId: post.id,
+				side: viewerSide!,
+				source: data.source,
+				tournamentId: data.tournamentId ?? null,
+				serializedPool: data.serializedPool ?? null,
+			});
+			break;
+		}
+		case "REMOVE_MAP_LIST": {
+			await ScrimMapByMapRepository.deleteMapList(post.id, viewerSide!);
+			break;
+		}
+		// xxx: maybe extract this?
+		case "GENERATE_NEXT_MAP": {
+			const currentMap = maps.find((m) => m.reportedAt === null);
+			errorToastIfFalsy(!currentMap, "A map is already being played");
+
+			const mapLists = await ScrimMapByMapRepository.findMapListsByScrimPostId(
+				post.id,
+			);
+			errorToastIfFalsy(mapLists.length > 0, "No map list submitted yet");
+
+			const tournamentPools = new Map<
+				number,
+				Awaited<ReturnType<typeof resolveTournamentPool>>
+			>();
+			for (const list of mapLists) {
+				if (list.source !== "TOURNAMENT" || !list.tournamentId) continue;
+				if (tournamentPools.has(list.tournamentId)) continue;
+				tournamentPools.set(
+					list.tournamentId,
+					await resolveTournamentPool(list.tournamentId, user),
+				);
+			}
+
+			const pool = ScrimMapByMap.unionPool(mapLists, tournamentPools);
+			errorToastIfFalsy(!pool.isEmpty(), "Map pool is empty");
+
+			const next = ScrimMapByMap.generateNextMap({
+				pool,
+				history: maps.map((m) => ({ mode: m.mode, stageId: m.stageId })),
+			});
+
+			await ScrimMapByMapRepository.insertMap({
+				scrimPostId: post.id,
+				// xxx: instead of passing as arg, generate inline in DB code
+				index: Scrim.nextMapIndex(maps),
+				mode: next.mode,
+				stageId: next.stageId,
+			});
+			break;
+		}
+		case "REPORT_MAP": {
+			const target = maps.find((m) => m.id === data.mapId);
+			errorToastIfFalsy(target, "Map not found");
+			errorToastIfFalsy(target!.reportedAt === null, "Map already reported");
+
+			await ScrimMapByMapRepository.reportMapWinner({
+				mapId: data.mapId,
+				winnerSide: data.winnerSide,
+				reportedByUserId: user.id,
+			});
+			break;
+		}
+		case "UNDO_MAP": {
+			const latest = Scrim.lastReportedMap(maps);
+			errorToastIfFalsy(ScrimMapByMap.canUndo(latest, maps), "Nothing to undo");
+
+			await ScrimMapByMapRepository.undoMostRecentMap(post.id);
+			break;
+		}
+		case "REPLAY_MAP": {
+			const latest = Scrim.lastReportedMap(maps);
+			errorToastIfFalsy(latest, "No map to replay");
+
+			const currentMap = maps.find((m) => m.reportedAt === null);
+			errorToastIfFalsy(!currentMap, "A map is already being played");
+
+			await ScrimMapByMapRepository.insertMap({
+				scrimPostId: post.id,
+				index: Scrim.nextMapIndex(maps),
+				mode: latest!.mode,
+				stageId: latest!.stageId,
+				replayOfIndex: latest!.index,
+			});
+			break;
+		}
+	}
+
+	broadcastRevalidate();
+	return null;
+}
+
+async function resolveTournamentPool(
+	tournamentId: number,
+	user: ReturnType<typeof requireUser>,
+) {
+	const data = await tournamentDataCached({ tournamentId, user });
+	return data.ctx.toSetMapPool;
+}

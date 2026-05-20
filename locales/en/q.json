@@ -227,6 +227,7 @@
 	"match.tabs.rosters": "Rosters",
 	"match.tabs.action": "Action",
 	"match.tabs.result": "Result",
+	"match.tabs.stats": "Stats",
 	"preparing.joinQ": "Join the queue",
 	"tiers.currentCriteria": "Current criteria",
 	"tiers.info.p1": "For example, Leviathan is the top 5% of players. Diamond is the 85th percentile etc.",

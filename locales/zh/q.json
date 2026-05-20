@@ -227,6 +227,7 @@
 	"match.tabs.rosters": "",
 	"match.tabs.action": "",
 	"match.tabs.result": "",
+	"match.tabs.stats": "",
 	"preparing.joinQ": "开始匹配",
 	"tiers.currentCriteria": "当前规则",
 	"tiers.info.p1": "比如说，Leviathan是前5%的玩家，Diamond是前15%的玩家。",

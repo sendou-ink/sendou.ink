@@ -4,6 +4,8 @@ import type { LUTI_DIVS } from "./scrims-constants";
 
 export type LutiDiv = (typeof LUTI_DIVS)[number];
 
+export type ScrimSide = "ALPHA" | "BRAVO";
+
 export interface ScrimPost {
 	id: number;
 	at: number;
@@ -42,6 +44,11 @@ export interface ScrimPost {
 		byUser: ScrimPostUser;
 		reason: string;
 	} | null;
+	// xxx: if inferred, do they need to be here?
+	/** When map-by-map tracking was enabled on this scrim. Null when not enabled. */
+	trackingEnabledAt: number | null;
+	/** When map-by-map tracking was locked. Null when not locked. */
+	trackingLockedAt: number | null;
 }
 
 export interface ScrimPostRequest {

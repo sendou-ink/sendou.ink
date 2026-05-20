@@ -174,6 +174,60 @@ export const scrimsActionSchema = z.union([
 	persistScrimFiltersSchema,
 ]);
 
+const enableTrackingSchema = z.object({
+	_action: _action("ENABLE_TRACKING"),
+});
+
+// xxx: can we use discriminated union?
+const submitMapListSchema = z
+	.object({
+		_action: _action("SUBMIT_MAP_LIST"),
+		source: z.enum(["TOURNAMENT", "POOL"]),
+		tournamentId: z.preprocess(falsyToNull, id.nullable()).optional(),
+		serializedPool: z.preprocess(falsyToNull, z.string().nullable()).optional(),
+	})
+	.refine(
+		(value) =>
+			(value.source === "TOURNAMENT" &&
+				value.tournamentId &&
+				!value.serializedPool) ||
+			(value.source === "POOL" && value.serializedPool && !value.tournamentId),
+		{ message: "exactly one of tournamentId / serializedPool required" },
+	);
+
+const removeMapListSchema = z.object({
+	_action: _action("REMOVE_MAP_LIST"),
+});
+
+// xxx: should not be needed to
+const generateNextMapSchema = z.object({
+	_action: _action("GENERATE_NEXT_MAP"),
+});
+
+const reportMapSchema = z.object({
+	_action: _action("REPORT_MAP"),
+	mapId: id,
+	winnerSide: z.enum(["ALPHA", "BRAVO"]),
+});
+
+const undoMapSchema = z.object({
+	_action: _action("UNDO_MAP"),
+});
+
+const replayMapSchema = z.object({
+	_action: _action("REPLAY_MAP"),
+});
+
+export const scrimMapByMapActionSchema = z.union([
+	enableTrackingSchema,
+	submitMapListSchema,
+	removeMapListSchema,
+	generateNextMapSchema,
+	reportMapSchema,
+	undoMapSchema,
+	replayMapSchema,
+]);
+
 const MAX_SCRIM_POST_TEXT_LENGTH = 500;
 
 export const RANGE_END_OPTIONS = [

@@ -16,6 +16,9 @@ import * as Scrim from "../core/Scrim";
 import type { loader } from "../loaders/scrims.$id.server";
 import { SCRIM } from "../scrims-constants";
 import type { ScrimPost } from "../scrims-types";
+import { ScrimMatchActionTab } from "./ScrimMatchActionTab";
+import { ScrimMatchResultTab } from "./ScrimMatchResultTab";
+import { ScrimMatchStatsTab } from "./ScrimMatchStatsTab";
 
 export function ScrimMatchTabs() {
 	const { t } = useTranslation(["q"]);
@@ -35,8 +38,10 @@ export function ScrimMatchTabs() {
 		members: allMembers,
 	});
 
+	const tabs = resolveTabs(data);
+
 	return (
-		<MatchTabs tabs={[TAB_KEYS.ROSTERS, TAB_KEYS.JOIN]}>
+		<MatchTabs tabs={tabs}>
 			<MatchJoinTab
 				{...activeRoomLink}
 				onConfirmRoom={onConfirmRoom}
@@ -60,8 +65,32 @@ export function ScrimMatchTabs() {
 					},
 				]}
 			/>
+			<ScrimMatchActionTab />
+			<ScrimMatchResultTab />
+			<ScrimMatchStatsTab />
 		</MatchTabs>
 	);
+}
+
+function resolveTabs(data: ReturnType<typeof useLoaderData<typeof loader>>) {
+	const tabs: Array<(typeof TAB_KEYS)[keyof typeof TAB_KEYS]> = [
+		TAB_KEYS.ROSTERS,
+		TAB_KEYS.JOIN,
+		TAB_KEYS.ACTION,
+	];
+
+	if (data.mapByMap && data.mapByMap.maps.length > 0) {
+		tabs.push(TAB_KEYS.RESULT);
+	}
+
+	if (
+		data.mapByMap?.maps.some((m) => m.reportedAt !== null) &&
+		data.mapByMap.viewerSide !== null
+	) {
+		tabs.push(TAB_KEYS.STATS);
+	}
+
+	return tabs;
 }
 
 function mapTeam(team: ScrimPost["team"]) {
