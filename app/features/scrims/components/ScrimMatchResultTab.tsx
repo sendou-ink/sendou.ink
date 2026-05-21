@@ -1,20 +1,26 @@
-import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { SendouTabPanel } from "~/components/elements/Tabs";
-import { ModeImage, StageImage } from "~/components/Image";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
+import {
+	MatchTimeline,
+	type TimelineMap,
+} from "~/components/match-page/MatchTimeline";
+import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
+import * as Scrim from "../core/Scrim";
 import type { loader } from "../loaders/scrims.$id.server";
-import styles from "./ScrimMatchResultTab.module.css";
-
-// xxx: why not using Timeline?
 
 export function ScrimMatchResultTab() {
-	const { t } = useTranslation(["scrims", "game-misc", "q"]);
+	const { t } = useTranslation(["scrims", "q"]);
 	const data = useLoaderData<typeof loader>();
-	const maps = data.mapByMap?.maps ?? [];
 
-	if (maps.length === 0) {
+	const acceptedRequest = data.post.requests.find((r) => r.isAccepted);
+	const maps = data.mapByMap?.maps ?? [];
+	const reportedMaps = maps.filter(
+		(m) => m.winnerSide !== null && m.reportedAt !== null,
+	);
+
+	if (!acceptedRequest || reportedMaps.length === 0) {
 		return (
 			<SendouTabPanel id={TAB_KEYS.RESULT}>
 				<div>{t("scrims:mapByMap.result.empty")}</div>
@@ -22,45 +28,39 @@ export function ScrimMatchResultTab() {
 		);
 	}
 
+	const teams = {
+		alpha: {
+			name: data.post.team
+				? Scrim.sideDisplayName(data.post)
+				: t("q:match.groupAlpha"),
+			avatar: data.post.team?.avatarUrl ?? undefined,
+		},
+		bravo: {
+			name: acceptedRequest.team
+				? Scrim.sideDisplayName(acceptedRequest)
+				: t("q:match.groupBravo"),
+			avatar: acceptedRequest.team?.avatarUrl ?? undefined,
+		},
+	};
+
+	const rosters = {
+		alpha: data.post.users,
+		bravo: acceptedRequest.users,
+	};
+
+	const timelineMaps: TimelineMap[] = reportedMaps.map((map) => ({
+		stageId: map.stageId,
+		mode: map.mode,
+		timestamp: databaseTimestampToJavascriptTimestamp(map.reportedAt!),
+		winner: map.winnerSide === "ALPHA" ? "ALPHA" : "BRAVO",
+		rosters,
+	}));
+
+	const isOngoing = data.mapByMap?.currentMap != null;
+
 	return (
 		<SendouTabPanel id={TAB_KEYS.RESULT}>
-			<div className={styles.root} data-testid="scrim-result-timeline">
-				{maps.map((map) => (
-					<div
-						key={map.id}
-						className={styles.row}
-						data-testid={`result-row-${map.index}`}
-					>
-						<span className={styles.idx}>{map.index + 1}</span>
-						<StageImage stageId={map.stageId} width={72} />
-						<div className={styles.modeStage}>
-							<div className={styles.modeStageHeader}>
-								<ModeImage mode={map.mode} width={20} />
-								<span>{t(`game-misc:STAGE_${map.stageId}` as const)}</span>
-							</div>
-							{map.replayOfIndex !== null ? (
-								<span className={styles.replayTag}>
-									{t("scrims:mapByMap.result.replayTag", {
-										index: map.replayOfIndex + 1,
-									})}
-								</span>
-							) : null}
-						</div>
-						{map.winnerSide ? (
-							<span
-								className={clsx(styles.winner, {
-									[styles.winnerAlpha]: map.winnerSide === "ALPHA",
-									[styles.winnerBravo]: map.winnerSide === "BRAVO",
-								})}
-							>
-								{map.winnerSide === "ALPHA"
-									? t("q:match.sides.alpha")
-									: t("q:match.sides.bravo")}
-							</span>
-						) : null}
-					</div>
-				))}
-			</div>
+			<MatchTimeline teams={teams} maps={timelineMaps} isOngoing={isOngoing} />
 		</SendouTabPanel>
 	);
 }

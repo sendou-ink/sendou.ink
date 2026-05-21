@@ -30,6 +30,7 @@ interface ActionTabTeam {
 }
 
 interface SetEndingData extends MatchTimelineProps {
+	score: { alpha: number; bravo: number };
 	currentRosters: { alpha: CommonUser[]; bravo: CommonUser[] };
 	setEndingTeamIds: number[];
 }

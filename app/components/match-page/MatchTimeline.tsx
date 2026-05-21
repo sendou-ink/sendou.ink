@@ -80,7 +80,7 @@ export interface TimelinePickBanEvent {
 
 export interface MatchTimelineProps {
 	teams: { alpha: TimelineTeam; bravo: TimelineTeam };
-	score: { alpha: number; bravo: number };
+	score?: { alpha: number; bravo: number };
 	maps: TimelineMap[];
 	spChanges?: TimelineSpChanges;
 	/** When true, render only the team + score header (no per-map rows or SP section). */
@@ -175,9 +175,11 @@ function TimelineHeader({
 				) : null}
 			</div>
 			<div className={styles.headerScore}>
-				<span className={styles.headerScoreValue}>
-					{score.alpha}-{score.bravo}
-				</span>
+				{score ? (
+					<span className={styles.headerScoreValue}>
+						{score.alpha}-{score.bravo}
+					</span>
+				) : null}
 				{isOngoing ? (
 					<span className={styles.headerScoreLive}>
 						{t("q:match.timeline.live")}
