@@ -143,32 +143,29 @@ export function sideOfUser(post: ScrimPost, userId: number): ScrimSide | null {
 	return null;
 }
 
-// xxx: useless helper
-/** Returns true when map-by-map tracking has been enabled on the post. */
-export function isTrackingEnabled(post: ScrimPost): boolean {
-	return post.trackingEnabledAt !== null;
-}
-
 /**
- * Returns true when map-by-map tracking is locked, either because it was
- * explicitly locked or because the auto-lock window has elapsed since the last
- * activity (`trackingEnabledAt` or the most recent reported map).
+ * Returns true when map-by-map tracking is locked: the auto-lock window has
+ * elapsed since the last activity (most recent reported map, falling back to
+ * the most recently updated submitted map list). Returns false when no map
+ * list has been submitted yet (tracking is not active).
  */
 export function isTrackingLocked(
-	post: ScrimPost,
 	maps: Pick<Tables["ScrimMap"], "reportedAt">[] = [],
+	mapLists: Pick<Tables["ScrimMapList"], "updatedAt">[] = [],
 	now: number = Date.now(),
 ): boolean {
-	if (post.trackingLockedAt !== null) return true;
-	if (post.trackingEnabledAt === null) return false;
-
 	const lastReportedAt = maps.reduce<number | null>((acc, m) => {
 		if (m.reportedAt === null) return acc;
 		return acc === null || m.reportedAt > acc ? m.reportedAt : acc;
 	}, null);
 
-	// xxx: use date-fns
-	const referenceSeconds = lastReportedAt ?? post.trackingEnabledAt;
+	const lastListUpdatedAt = mapLists.reduce<number | null>((acc, l) => {
+		return acc === null || l.updatedAt > acc ? l.updatedAt : acc;
+	}, null);
+
+	const referenceSeconds = lastReportedAt ?? lastListUpdatedAt;
+	if (referenceSeconds === null) return false;
+
 	const elapsedHours = (now - referenceSeconds * 1000) / (60 * 60 * 1000);
 
 	return elapsedHours > SCRIM_TRACKING_AUTO_LOCK_HOURS;

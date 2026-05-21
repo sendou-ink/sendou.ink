@@ -1,3 +1,5 @@
+import clsx from "clsx";
+import { Repeat, Undo2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
@@ -21,7 +23,6 @@ export function ScrimMatchActionTab() {
 
 	const viewerSide = user ? Scrim.sideOfUser(data.post, user.id) : null;
 
-	if (!data.mapByMap) return <EnableTrackingSection />;
 	if (data.mapByMap.locked) return <LockedSection />;
 	if (!viewerSide) return <NotParticipantSection />;
 
@@ -31,34 +32,10 @@ export function ScrimMatchActionTab() {
 	}
 
 	if (!data.mapByMap.currentMap) {
-		return <GenerateNextMapSection viewerSide={viewerSide} />;
+		return <NoCurrentMapSection viewerSide={viewerSide} />;
 	}
 
 	return <ReportMapSection viewerSide={viewerSide} />;
-}
-
-function EnableTrackingSection() {
-	const { t } = useTranslation(["scrims"]);
-	const fetcher = useFetcher();
-
-	return (
-		<SendouTabPanel id={TAB_KEYS.ACTION}>
-			<div className={styles.root}>
-				<p className={styles.intro}>
-					{t("scrims:mapByMap.enable.explanation")}
-				</p>
-				<SendouButton
-					testId="enable-tracking-button"
-					isDisabled={fetcher.state !== "idle"}
-					onPress={() => {
-						fetcher.submit({ _action: "ENABLE_TRACKING" }, { method: "post" });
-					}}
-				>
-					{t("scrims:mapByMap.enable.button")}
-				</SendouButton>
-			</div>
-		</SendouTabPanel>
-	);
 }
 
 function LockedSection() {
@@ -94,25 +71,12 @@ function SubmitFirstListSection({ viewerSide }: { viewerSide: ScrimSide }) {
 	);
 }
 
-function GenerateNextMapSection({ viewerSide }: { viewerSide: ScrimSide }) {
+function NoCurrentMapSection({ viewerSide }: { viewerSide: ScrimSide }) {
 	const { t } = useTranslation(["scrims"]);
-	const fetcher = useFetcher();
 	return (
 		<SendouTabPanel id={TAB_KEYS.ACTION}>
 			<div className={styles.root}>
-				<SendouButton
-					testId="reveal-next-map-button"
-					isDisabled={fetcher.state !== "idle"}
-					onPress={() => {
-						fetcher.submit(
-							{ _action: "GENERATE_NEXT_MAP" },
-							{ method: "post" },
-						);
-					}}
-				>
-					{t("scrims:mapByMap.revealNextMap")}
-				</SendouButton>
-				<ReplayAndUndoButtons />
+				<p className={styles.intro}>{t("scrims:mapByMap.noCurrentMap")}</p>
 				<MapListsSummary viewerSide={viewerSide} />
 			</div>
 		</SendouTabPanel>
@@ -137,6 +101,7 @@ function ReportMapSection({ viewerSide }: { viewerSide: ScrimSide }) {
 
 	return (
 		<MatchActionTab
+			key={map.id}
 			teams={[
 				{ id: ALPHA_TEAM_ID, name: alphaName },
 				{ id: BRAVO_TEAM_ID, name: bravoName },
@@ -164,43 +129,43 @@ function ReportMapSection({ viewerSide }: { viewerSide: ScrimSide }) {
 function ReplayAndUndoButtons() {
 	const { t } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof loader>();
-	const fetcher = useFetcher();
+	const undoFetcher = useFetcher();
+	const replayFetcher = useFetcher();
 
-	const latest = Scrim.lastReportedMap(data.mapByMap?.maps ?? []);
-	const undoAllowed = ScrimMapByMap.canUndo(latest, data.mapByMap?.maps ?? []);
-	const replayAllowed = latest && !data.mapByMap?.currentMap;
-
-	if (!undoAllowed && !replayAllowed) return null;
+	const maps = data.mapByMap?.maps ?? [];
+	const latest = Scrim.lastReportedMap(maps);
+	const undoAllowed = ScrimMapByMap.canUndo(latest, maps);
+	const replayAllowed = Boolean(latest && data.mapByMap?.currentMap);
 
 	return (
-		<div className={styles.aux}>
-			{undoAllowed ? (
-				<SendouButton
-					testId="undo-map-button"
-					variant="outlined"
-					size="small"
-					isDisabled={fetcher.state !== "idle"}
-					onPress={() => {
-						fetcher.submit({ _action: "UNDO_MAP" }, { method: "post" });
-					}}
-				>
-					{t("scrims:mapByMap.undo")}
-				</SendouButton>
-			) : null}
-			{replayAllowed ? (
-				<SendouButton
-					testId="replay-map-button"
-					variant="outlined"
-					size="small"
-					isDisabled={fetcher.state !== "idle"}
-					onPress={() => {
-						fetcher.submit({ _action: "REPLAY_MAP" }, { method: "post" });
-					}}
-				>
-					{t("scrims:mapByMap.replay")}
-				</SendouButton>
-			) : null}
-		</div>
+		<>
+			<SendouButton
+				testId="undo-map-button"
+				variant="minimal-destructive"
+				size="miniscule"
+				icon={<Undo2 size={16} />}
+				isPending={undoFetcher.state !== "idle"}
+				className={clsx({ invisible: !undoAllowed })}
+				onPress={() => {
+					undoFetcher.submit({ _action: "UNDO_MAP" }, { method: "post" });
+				}}
+			>
+				{t("scrims:mapByMap.undo")}
+			</SendouButton>
+			<SendouButton
+				testId="replay-map-button"
+				variant="minimal"
+				size="miniscule"
+				icon={<Repeat size={16} />}
+				isPending={replayFetcher.state !== "idle"}
+				className={clsx({ invisible: !replayAllowed })}
+				onPress={() => {
+					replayFetcher.submit({ _action: "REPLAY_MAP" }, { method: "post" });
+				}}
+			>
+				{t("scrims:mapByMap.replay")}
+			</SendouButton>
+		</>
 	);
 }
 

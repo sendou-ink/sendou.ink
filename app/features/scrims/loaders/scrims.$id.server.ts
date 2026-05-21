@@ -38,9 +38,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			RoomLinkRepository.findByUserIds(participantIds, 3),
 		]);
 
-	const mapByMap = Scrim.isTrackingEnabled(post)
-		? await resolveMapByMap({ post, user })
-		: null;
+	const mapByMap = await resolveMapByMap({ post, user });
 
 	return {
 		post,
@@ -102,7 +100,7 @@ async function resolveMapByMap({
 			: null;
 	const currentMap = maps.find((m) => m.reportedAt === null) ?? null;
 	const viewerSide = Scrim.sideOfUser(post, user.id);
-	const locked = Scrim.isTrackingLocked(post, maps);
+	const locked = Scrim.isTrackingLocked(maps, mapLists);
 
 	return {
 		mapLists,

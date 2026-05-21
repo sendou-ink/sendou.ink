@@ -106,18 +106,12 @@ async function handleMapByMapAction({
 		});
 	};
 
-	if (data._action === "ENABLE_TRACKING") {
-		await ScrimMapByMapRepository.enableTracking(post.id);
-		broadcastRevalidate();
-		return null;
-	}
+	const [maps, mapLists] = await Promise.all([
+		ScrimMapByMapRepository.findMapsByScrimPostId(post.id),
+		ScrimMapByMapRepository.findMapListsByScrimPostId(post.id),
+	]);
 
-	errorToastIfFalsy(Scrim.isTrackingEnabled(post), "Tracking is not enabled");
-
-	const maps = await ScrimMapByMapRepository.findMapsByScrimPostId(post.id);
-
-	if (Scrim.isTrackingLocked(post, maps)) {
-		await ScrimMapByMapRepository.lockTracking(post.id);
+	if (Scrim.isTrackingLocked(maps, mapLists)) {
 		errorToast("Tracking is locked");
 	}
 
@@ -130,50 +124,14 @@ async function handleMapByMapAction({
 				tournamentId: data.tournamentId ?? null,
 				serializedPool: data.serializedPool ?? null,
 			});
+
+			if (maps.length === 0) {
+				await tryGenerateAndInsertNextMap({ post, user, maps });
+			}
 			break;
 		}
 		case "REMOVE_MAP_LIST": {
 			await ScrimMapByMapRepository.deleteMapList(post.id, viewerSide!);
-			break;
-		}
-		// xxx: maybe extract this?
-		case "GENERATE_NEXT_MAP": {
-			const currentMap = maps.find((m) => m.reportedAt === null);
-			errorToastIfFalsy(!currentMap, "A map is already being played");
-
-			const mapLists = await ScrimMapByMapRepository.findMapListsByScrimPostId(
-				post.id,
-			);
-			errorToastIfFalsy(mapLists.length > 0, "No map list submitted yet");
-
-			const tournamentPools = new Map<
-				number,
-				Awaited<ReturnType<typeof resolveTournamentPool>>
-			>();
-			for (const list of mapLists) {
-				if (list.source !== "TOURNAMENT" || !list.tournamentId) continue;
-				if (tournamentPools.has(list.tournamentId)) continue;
-				tournamentPools.set(
-					list.tournamentId,
-					await resolveTournamentPool(list.tournamentId, user),
-				);
-			}
-
-			const pool = ScrimMapByMap.unionPool(mapLists, tournamentPools);
-			errorToastIfFalsy(!pool.isEmpty(), "Map pool is empty");
-
-			const next = ScrimMapByMap.generateNextMap({
-				pool,
-				history: maps.map((m) => ({ mode: m.mode, stageId: m.stageId })),
-			});
-
-			await ScrimMapByMapRepository.insertMap({
-				scrimPostId: post.id,
-				// xxx: instead of passing as arg, generate inline in DB code
-				index: Scrim.nextMapIndex(maps),
-				mode: next.mode,
-				stageId: next.stageId,
-			});
 			break;
 		}
 		case "REPORT_MAP": {
@@ -186,6 +144,13 @@ async function handleMapByMapAction({
 				winnerSide: data.winnerSide,
 				reportedByUserId: user.id,
 			});
+
+			const reportedMaps = maps.map((m) =>
+				m.id === data.mapId
+					? { ...m, winnerSide: data.winnerSide, reportedAt: 1 }
+					: m,
+			);
+			await tryGenerateAndInsertNextMap({ post, user, maps: reportedMaps });
 			break;
 		}
 		case "UNDO_MAP": {
@@ -200,11 +165,10 @@ async function handleMapByMapAction({
 			errorToastIfFalsy(latest, "No map to replay");
 
 			const currentMap = maps.find((m) => m.reportedAt === null);
-			errorToastIfFalsy(!currentMap, "A map is already being played");
+			errorToastIfFalsy(currentMap, "No current map to replace");
 
-			await ScrimMapByMapRepository.insertMap({
+			await ScrimMapByMapRepository.replaceCurrentMapAsReplay({
 				scrimPostId: post.id,
-				index: Scrim.nextMapIndex(maps),
 				mode: latest!.mode,
 				stageId: latest!.stageId,
 				replayOfIndex: latest!.index,
@@ -223,4 +187,50 @@ async function resolveTournamentPool(
 ) {
 	const data = await tournamentDataCached({ tournamentId, user });
 	return data.ctx.toSetMapPool;
+}
+
+// xxx: should this be in inside repository?
+async function tryGenerateAndInsertNextMap({
+	post,
+	user,
+	maps,
+}: {
+	post: NonNullable<Awaited<ReturnType<typeof ScrimPostRepository.findById>>>;
+	user: ReturnType<typeof requireUser>;
+	maps: Awaited<
+		ReturnType<typeof ScrimMapByMapRepository.findMapsByScrimPostId>
+	>;
+}) {
+	const mapLists = await ScrimMapByMapRepository.findMapListsByScrimPostId(
+		post.id,
+	);
+	if (mapLists.length === 0) return;
+
+	const tournamentPools = new Map<
+		number,
+		Awaited<ReturnType<typeof resolveTournamentPool>>
+	>();
+	for (const list of mapLists) {
+		if (list.source !== "TOURNAMENT" || !list.tournamentId) continue;
+		if (tournamentPools.has(list.tournamentId)) continue;
+		tournamentPools.set(
+			list.tournamentId,
+			await resolveTournamentPool(list.tournamentId, user),
+		);
+	}
+
+	const pool = ScrimMapByMap.unionPool(mapLists, tournamentPools);
+	if (pool.isEmpty()) return;
+
+	const next = ScrimMapByMap.generateNextMap({
+		pool,
+		history: maps.map((m) => ({ mode: m.mode, stageId: m.stageId })),
+	});
+
+	await ScrimMapByMapRepository.insertMap({
+		scrimPostId: post.id,
+		index: Scrim.nextMapIndex(maps),
+		mode: next.mode,
+		stageId: next.stageId,
+	});
 }

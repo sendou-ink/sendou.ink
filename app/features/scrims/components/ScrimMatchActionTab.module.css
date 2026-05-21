@@ -20,13 +20,6 @@
 	text-align: center;
 }
 
-.aux {
-	display: flex;
-	gap: var(--s-2);
-	justify-content: center;
-	flex-wrap: wrap;
-}
-
 .mapListsSummary {
 	display: flex;
 	flex-direction: column;

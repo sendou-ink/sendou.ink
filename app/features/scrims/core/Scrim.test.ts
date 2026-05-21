@@ -130,8 +130,6 @@ describe("applyFilters", () => {
 			mapsTournament: null,
 			permissions: { MANAGE_REQUESTS: [], CANCEL: [], DELETE_POST: [] },
 			team: null,
-			trackingEnabledAt: null,
-			trackingLockedAt: null,
 		};
 	}
 
@@ -505,44 +503,43 @@ describe("isTrackingLocked", () => {
 	const ONE_HOUR_MS = 60 * 60 * 1000;
 	const lockWindowMs = SCRIM_TRACKING_AUTO_LOCK_HOURS * ONE_HOUR_MS;
 
-	function postWith(
-		trackingEnabledAt: number | null,
-		trackingLockedAt: number | null = null,
-	): ScrimPost {
-		return {
-			trackingEnabledAt,
-			trackingLockedAt,
-		} as unknown as ScrimPost;
-	}
-
-	it("returns true when trackingLockedAt is set", () => {
-		expect(isTrackingLocked(postWith(100, 200), [], Date.now())).toBe(true);
+	it("returns false when no map list submitted yet", () => {
+		expect(isTrackingLocked([], [], Date.now())).toBe(false);
 	});
 
-	it("returns false when tracking not enabled", () => {
-		expect(isTrackingLocked(postWith(null), [], Date.now())).toBe(false);
-	});
-
-	it("returns false just inside the auto-lock window", () => {
+	it("returns false just inside the auto-lock window from list submission", () => {
 		const now = 1_000_000_000;
-		const enabledSeconds = (now - (lockWindowMs - ONE_HOUR_MS)) / 1000;
-		expect(isTrackingLocked(postWith(enabledSeconds), [], now)).toBe(false);
+		const updatedAt = (now - (lockWindowMs - ONE_HOUR_MS)) / 1000;
+		expect(isTrackingLocked([], [{ updatedAt }], now)).toBe(false);
 	});
 
-	it("returns true just past the auto-lock window", () => {
+	it("returns true just past the auto-lock window from list submission", () => {
 		const now = 1_000_000_000;
-		const enabledSeconds = (now - (lockWindowMs + ONE_HOUR_MS)) / 1000;
-		expect(isTrackingLocked(postWith(enabledSeconds), [], now)).toBe(true);
+		const updatedAt = (now - (lockWindowMs + ONE_HOUR_MS)) / 1000;
+		expect(isTrackingLocked([], [{ updatedAt }], now)).toBe(true);
 	});
 
 	it("uses the most recent reported map as the reference point", () => {
 		const now = 1_000_000_000;
-		const enabledSeconds = (now - lockWindowMs * 2) / 1000;
+		const oldUpdatedAt = (now - lockWindowMs * 2) / 1000;
 		const recentMapSeconds = (now - ONE_HOUR_MS) / 1000;
 		expect(
 			isTrackingLocked(
-				postWith(enabledSeconds),
 				[{ reportedAt: recentMapSeconds }],
+				[{ updatedAt: oldUpdatedAt }],
+				now,
+			),
+		).toBe(false);
+	});
+
+	it("uses the most recent list update when there are no reported maps", () => {
+		const now = 1_000_000_000;
+		const oldUpdatedAt = (now - lockWindowMs * 2) / 1000;
+		const recentUpdatedAt = (now - ONE_HOUR_MS) / 1000;
+		expect(
+			isTrackingLocked(
+				[],
+				[{ updatedAt: oldUpdatedAt }, { updatedAt: recentUpdatedAt }],
 				now,
 			),
 		).toBe(false);

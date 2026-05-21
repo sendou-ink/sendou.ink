@@ -283,9 +283,8 @@ test.describe("Scrims", () => {
 
 		const scrimUrl = page.url();
 
-		// ADMIN enables tracking from the Action tab
+		// ADMIN opens the Action tab — the map list form is shown immediately
 		await page.getByRole("tab", { name: "Action" }).click();
-		await submit(page, "enable-tracking-button");
 		await expect(page.getByTestId("scrim-map-list-form")).toBeVisible();
 
 		// ADMIN submits a tournament-based map list (Swim or Sink)
@@ -301,39 +300,36 @@ test.describe("Scrims", () => {
 			"Tournament",
 		);
 
-		// NZAP submits a pool-URL-based map list
+		// NZAP submits a pool-URL-based map list — the first map is generated
+		// immediately and the report UI is shown
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({ page, url: scrimUrl });
 		await page.getByRole("tab", { name: "Action" }).click();
 		await page.getByTestId("source-radio-pool").click();
 		await page.getByTestId("pool-input").fill(TEST_POOL_SERIALIZED);
 		await submit(page, "submit-map-list-button");
-		await expect(page.getByTestId("reveal-next-map-button")).toBeVisible();
+		await expect(page.getByTestId("report-score-button")).toBeVisible();
 		await expect(page.getByTestId("map-list-row-BRAVO")).toContainText("Pool");
 
-		// Map 1: reveal → ALPHA wins
-		await submit(page, "reveal-next-map-button");
+		// Map 1: ALPHA wins → next map auto-generated
 		await reportScrimMapWinner(page, "ALPHA");
-		await expect(page.getByTestId("reveal-next-map-button")).toBeVisible();
+		await expect(page.getByTestId("report-score-button")).toBeVisible();
 
-		// Map 2: reveal → BRAVO wins
-		await submit(page, "reveal-next-map-button");
+		// Map 2: BRAVO wins → next map auto-generated
 		await reportScrimMapWinner(page, "BRAVO");
-		await expect(page.getByTestId("reveal-next-map-button")).toBeVisible();
+		await expect(page.getByTestId("report-score-button")).toBeVisible();
 
-		// Map 3: reveal → ALPHA wins → undo
-		await submit(page, "reveal-next-map-button");
+		// Map 3: ALPHA wins → undo (un-reports map 3, deletes auto-gen map 4)
 		await reportScrimMapWinner(page, "ALPHA");
 		await expect(page.getByTestId("undo-map-button")).toBeVisible();
 		await submit(page, "undo-map-button");
-		// After undo, the third map row is gone — only two reported maps remain
-		await expect(page.getByTestId("result-row-2")).toHaveCount(0);
+		await expect(page.getByTestId("report-score-button")).toBeVisible();
 
-		// Reveal a fresh map 3 and report BRAVO wins
-		await submit(page, "reveal-next-map-button");
+		// Re-report map 3 as BRAVO wins → next map auto-generated
 		await reportScrimMapWinner(page, "BRAVO");
 
-		// Replay last map: inserts an unreported duplicate, then report ALPHA wins
+		// Replay last map: replaces the current generated map with a copy of
+		// the previous reported one, then report ALPHA wins
 		await expect(page.getByTestId("replay-map-button")).toBeVisible();
 		await submit(page, "replay-map-button");
 		await reportScrimMapWinner(page, "ALPHA");

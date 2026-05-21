@@ -147,6 +147,16 @@ describe("ScrimMapByMap.canUndo", () => {
 	it("returns false when given undefined", () => {
 		expect(canUndo(undefined, [])).toBe(false);
 	});
+
+	it("returns true when an unreported next map exists after the latest reported", () => {
+		const history = [
+			makeMap({ index: 0, reportedAt: 100 }),
+			makeMap({ index: 1, reportedAt: 200 }),
+			makeMap({ index: 2, reportedAt: null }),
+		];
+
+		expect(canUndo(history[1], history)).toBe(true);
+	});
 });
 
 describe("ScrimMapByMap.stats", () => {

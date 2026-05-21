@@ -174,10 +174,6 @@ export const scrimsActionSchema = z.union([
 	persistScrimFiltersSchema,
 ]);
 
-const enableTrackingSchema = z.object({
-	_action: _action("ENABLE_TRACKING"),
-});
-
 // xxx: can we use discriminated union?
 const submitMapListSchema = z
 	.object({
@@ -199,11 +195,6 @@ const removeMapListSchema = z.object({
 	_action: _action("REMOVE_MAP_LIST"),
 });
 
-// xxx: should not be needed to
-const generateNextMapSchema = z.object({
-	_action: _action("GENERATE_NEXT_MAP"),
-});
-
 const reportMapSchema = z.object({
 	_action: _action("REPORT_MAP"),
 	mapId: id,
@@ -219,10 +210,8 @@ const replayMapSchema = z.object({
 });
 
 export const scrimMapByMapActionSchema = z.union([
-	enableTrackingSchema,
 	submitMapListSchema,
 	removeMapListSchema,
-	generateNextMapSchema,
 	reportMapSchema,
 	undoMapSchema,
 	replayMapSchema,

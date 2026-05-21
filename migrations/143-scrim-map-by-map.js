@@ -1,14 +1,6 @@
 export function up(db) {
 	db.transaction(() => {
 		db.prepare(
-			/* sql */ `alter table "ScrimPost" add column "trackingEnabledAt" integer`,
-		).run();
-
-		db.prepare(
-			/* sql */ `alter table "ScrimPost" add column "trackingLockedAt" integer`,
-		).run();
-
-		db.prepare(
 			/* sql */ `
 				create table "ScrimMapList" (
 					"id" integer primary key autoincrement,

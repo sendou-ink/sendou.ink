@@ -1255,11 +1255,6 @@ export interface ScrimPost {
 	maps: "SZ" | "ALL" | "RANKED" | null;
 	/** If set, specifies the maps of a tournament to play */
 	mapsTournamentId: number | null;
-	// xxx: I don't think these two are needed. trackingEnabledAt is inferred when ScrimMapList is set. trackingLockedAt is inferred from last map reportedAt
-	/** When map-by-map tracking was enabled on this scrim post (null when not enabled) */
-	trackingEnabledAt: number | null;
-	/** When map-by-map tracking was locked (no further mutations allowed) */
-	trackingLockedAt: number | null;
 	createdAt: GeneratedAlways<number>;
 	updatedAt: Generated<number>;
 }

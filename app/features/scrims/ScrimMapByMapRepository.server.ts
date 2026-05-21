@@ -6,30 +6,6 @@ import type { ScrimSide } from "./scrims-types";
 
 // xxx: rename to ScrimMapRepository?
 
-/**
- * Enables map-by-map tracking on a scrim post. Idempotent: existing
- * `trackingEnabledAt` is preserved when called multiple times.
- */
-export async function enableTracking(scrimPostId: number): Promise<void> {
-	await db
-		.updateTable("ScrimPost")
-		.set({ trackingEnabledAt: databaseTimestampNow() })
-		.where("id", "=", scrimPostId)
-		.where("trackingEnabledAt", "is", null)
-		.execute();
-}
-
-// xxx: this functionality not needed
-/** Marks tracking as explicitly locked. Sets `trackingLockedAt` if null. */
-export async function lockTracking(scrimPostId: number): Promise<void> {
-	await db
-		.updateTable("ScrimPost")
-		.set({ trackingLockedAt: databaseTimestampNow() })
-		.where("id", "=", scrimPostId)
-		.where("trackingLockedAt", "is", null)
-		.execute();
-}
-
 // xxx: TablesInsertable
 interface UpsertMapListArgs {
 	scrimPostId: number;
@@ -141,15 +117,20 @@ export async function reportMapWinner(
 		.execute();
 }
 
-// xxx: to avoid double undo, should also have index submitted
 /**
- * Deletes the most recently reported map row for the scrim. Caller is
- * responsible for verifying the `canUndo` invariant; this method only enforces
- * "highest index that has been reported".
+ * Reverses the most recent report: deletes the currently unreported map (the
+ * auto-generated next slot, if any) and clears the winner/reportedAt fields on
+ * the most recently reported map so it can be played again.
  */
 export async function undoMostRecentMap(scrimPostId: number): Promise<void> {
 	await db.transaction().execute(async (trx) => {
-		const latest = await trx
+		await trx
+			.deleteFrom("ScrimMap")
+			.where("scrimPostId", "=", scrimPostId)
+			.where("reportedAt", "is", null)
+			.execute();
+
+		const latestReported = await trx
 			.selectFrom("ScrimMap")
 			.select("id")
 			.where("scrimPostId", "=", scrimPostId)
@@ -158,10 +139,45 @@ export async function undoMostRecentMap(scrimPostId: number): Promise<void> {
 			.limit(1)
 			.executeTakeFirst();
 
-		if (!latest) return;
+		if (!latestReported) return;
 
-		await trx.deleteFrom("ScrimMap").where("id", "=", latest.id).execute();
+		await trx
+			.updateTable("ScrimMap")
+			.set({
+				reportedAt: null,
+				winnerSide: null,
+				reportedByUserId: null,
+			})
+			.where("id", "=", latestReported.id)
+			.execute();
 	});
+}
+
+interface ReplaceCurrentMapAsReplayArgs {
+	scrimPostId: number;
+	mode: ModeShort;
+	stageId: StageId;
+	replayOfIndex: number;
+}
+
+/**
+ * Replaces the currently unreported map for the scrim with a replay of the
+ * given source map (same mode/stage, marked as `replayOfIndex`). The current
+ * map's index is preserved.
+ */
+export async function replaceCurrentMapAsReplay(
+	args: ReplaceCurrentMapAsReplayArgs,
+): Promise<void> {
+	await db
+		.updateTable("ScrimMap")
+		.set({
+			mode: args.mode,
+			stageId: args.stageId,
+			replayOfIndex: args.replayOfIndex,
+		})
+		.where("scrimPostId", "=", args.scrimPostId)
+		.where("reportedAt", "is", null)
+		.execute();
 }
 
 /** Returns the scrim's maps ordered by index ascending. */
