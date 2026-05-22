@@ -107,6 +107,26 @@ describe("ScrimMapByMap.generateNextMap", () => {
 		}
 	});
 
+	it("advances from the last played mode when a mode was replayed", () => {
+		const pool = new MapPool({
+			SZ: [stagesObj.SCORCH_GORGE, stagesObj.MAKOMART],
+			TC: [stagesObj.HAMMERHEAD_BRIDGE],
+			RM: [stagesObj.WAHOO_WORLD],
+			CB: [stagesObj.EELTAIL_ALLEY],
+			TW: [],
+		});
+
+		const next = generateNextMap({
+			pool,
+			history: [
+				{ mode: "SZ", stageId: stagesObj.SCORCH_GORGE },
+				{ mode: "SZ", stageId: stagesObj.MAKOMART },
+			],
+		});
+
+		expect(next.mode).toBe("TC");
+	});
+
 	it("can still generate when only one stage is available", () => {
 		const pool = new MapPool({
 			SZ: [stagesObj.SCORCH_GORGE],

@@ -8,7 +8,7 @@ import { SendouForm } from "~/form/SendouForm";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { loader } from "../loaders/scrims.$id.server";
-import { cancelScrimSchema } from "../scrims-schemas";
+import { cancelScrimFormSchema } from "../scrims-schemas";
 
 export function ScrimMatchHeader() {
 	const { t } = useTranslation(["common", "scrims"]);
@@ -61,7 +61,7 @@ export function ScrimMatchHeader() {
 function CancelScrimForm() {
 	return (
 		<SendouForm
-			schema={cancelScrimSchema}
+			schema={cancelScrimFormSchema}
 			submitButtonTestId="cancel-scrim-submit"
 		>
 			{({ FormField }) => <FormField name="reason" />}

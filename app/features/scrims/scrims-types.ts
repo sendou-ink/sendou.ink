@@ -35,6 +35,7 @@ export interface ScrimPost {
 		MANAGE_REQUESTS: number[];
 		DELETE_POST: number[];
 		CANCEL: number[];
+		MANAGE_TRACKING: number[];
 	};
 	managedByAnyone: boolean;
 	/** When the post was made was it scheduled for a future time slot (as opposed to looking now) */

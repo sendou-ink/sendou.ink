@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { scrimsNewFormSchema } from "~/features/scrims/scrims-schemas";
-import { newScrimPostPage, scrimsPage } from "~/utils/urls";
+import { newScrimPostPage, scrimPage, scrimsPage } from "~/utils/urls";
 import {
 	expect,
 	impersonate,
@@ -247,43 +247,13 @@ test.describe("Scrims", () => {
 	test("map-by-map: lists, report, undo, replay, change list, stats", async ({
 		page,
 	}) => {
-		await seed(page, "NO_SCRIMS");
+		await seed(page);
 
-		// ADMIN creates a scrim scheduled in the future
-		await impersonate(page, ADMIN_ID);
-
-		// xxx: just navigate to /scrims/1 straight
-		await navigate({ page, url: newScrimPostPage() });
-
-		const form = createFormHelpers(page, scrimsNewFormSchema);
-		const tomorrow = new Date();
-		tomorrow.setDate(tomorrow.getDate() + 1);
-		tomorrow.setHours(18, 0, 0, 0);
-		await form.setDateTime("at", tomorrow);
-		await submit(page);
-
-		// NZAP requests the scrim
-		await impersonate(page, NZAP_TEST_ID);
-		await navigate({ page, url: scrimsPage() });
-		await page.getByTestId("available-scrims-tab").click();
-		await page.getByTestId("request-scrim-button").first().click();
-		await selectUser({ labelName: "User 2", page, userName: "5" });
-		await selectUser({ labelName: "User 3", page, userName: "6" });
-		await selectUser({ labelName: "User 4", page, userName: "7" });
-		await submit(page);
-
-		// ADMIN accepts and opens the scrim page
-		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: scrimsPage() });
-		await page.getByTestId("confirm-modal-trigger-button").click();
-		await submit(page, "confirm-button");
-		await page.getByTestId("booked-scrims-tab").click();
-		await page.getByRole("link", { name: "Contact" }).click();
-		await page.waitForURL(/\/scrims\/\d+/);
-
-		const scrimUrl = page.url();
+		const scrimUrl = scrimPage(1);
 
 		// ADMIN opens the Action tab — the map list form is shown immediately
+		await impersonate(page, ADMIN_ID);
+		await navigate({ page, url: scrimUrl });
 		await page.getByRole("tab", { name: "Action" }).click();
 		await expect(page.getByTestId("scrim-map-list-form")).toBeVisible();
 

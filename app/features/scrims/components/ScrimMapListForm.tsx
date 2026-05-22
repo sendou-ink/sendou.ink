@@ -1,11 +1,10 @@
-// xxx: use * as React syntax
-import { useState } from "react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { TournamentSearch } from "~/components/elements/TournamentSearch";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { ScrimSide } from "../scrims-types";
+import { parseMapPoolInput } from "../scrims-utils";
 import styles from "./ScrimMapListForm.module.css";
 
 interface Props {
@@ -15,10 +14,10 @@ interface Props {
 export function ScrimMapListForm(_: Props) {
 	const { t } = useTranslation(["scrims", "common"]);
 	const fetcher = useFetcher();
-	const [source, setSource] = useState<"TOURNAMENT" | "POOL">("POOL");
-	const [tournamentId, setTournamentId] = useState<number | null>(null);
-	const [poolInput, setPoolInput] = useState("");
-	const [error, setError] = useState<string | null>(null);
+	const [source, setSource] = React.useState<"TOURNAMENT" | "POOL">("POOL");
+	const [tournamentId, setTournamentId] = React.useState<number | null>(null);
+	const [poolInput, setPoolInput] = React.useState("");
+	const [error, setError] = React.useState<string | null>(null);
 
 	const onSubmit = () => {
 		setError(null);
@@ -39,19 +38,8 @@ export function ScrimMapListForm(_: Props) {
 			return;
 		}
 
-		const serialized = extractSerializedPool(poolInput);
-		if (!serialized) {
-			setError(t("scrims:mapByMap.form.poolInvalid"));
-			return;
-		}
-
-		try {
-			const pool = new MapPool(serialized);
-			if (pool.isEmpty()) {
-				setError(t("scrims:mapByMap.form.poolInvalid"));
-				return;
-			}
-		} catch {
+		const pool = parseMapPoolInput(poolInput);
+		if (!pool) {
 			setError(t("scrims:mapByMap.form.poolInvalid"));
 			return;
 		}
@@ -60,7 +48,7 @@ export function ScrimMapListForm(_: Props) {
 			{
 				_action: "SUBMIT_MAP_LIST",
 				source: "POOL",
-				serializedPool: serialized,
+				serializedPool: pool.serialized,
 			},
 			{ method: "post" },
 		);
@@ -124,27 +112,4 @@ export function ScrimMapListForm(_: Props) {
 			</div>
 		</div>
 	);
-}
-
-// xxx: unit tested function, extract
-function extractSerializedPool(input: string): string | null {
-	const trimmed = input.trim();
-	if (!trimmed) return null;
-
-	if (trimmed.includes("://")) {
-		try {
-			const url = new URL(trimmed);
-			return url.searchParams.get("pool");
-		} catch {
-			return null;
-		}
-	}
-
-	if (trimmed.includes("pool=")) {
-		const start = trimmed.indexOf("pool=") + "pool=".length;
-		const next = trimmed.indexOf("&", start);
-		return trimmed.slice(start, next === -1 ? undefined : next);
-	}
-
-	return trimmed;
 }

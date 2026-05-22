@@ -1,77 +1,13 @@
 import { db } from "~/db/sql";
-import type { Tables } from "~/db/tables";
+import type { TablesInsertable } from "~/db/tables";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { databaseTimestampNow } from "~/utils/dates";
-import type { ScrimSide } from "./scrims-types";
-
-// xxx: rename to ScrimMapRepository?
-
-// xxx: TablesInsertable
-interface UpsertMapListArgs {
-	scrimPostId: number;
-	side: ScrimSide;
-	source: "TOURNAMENT" | "POOL";
-	tournamentId?: number | null;
-	serializedPool?: string | null;
-}
-
-/**
- * Inserts a map list row for the given side, replacing any existing row for
- * the same `(scrimPostId, side)` pair.
- */
-export async function upsertMapList(args: UpsertMapListArgs): Promise<void> {
-	const now = databaseTimestampNow();
-
-	await db
-		.insertInto("ScrimMapList")
-		.values({
-			scrimPostId: args.scrimPostId,
-			side: args.side,
-			source: args.source,
-			tournamentId: args.tournamentId ?? null,
-			serializedPool: args.serializedPool ?? null,
-			updatedAt: now,
-		})
-		.onConflict((oc) =>
-			oc.columns(["scrimPostId", "side"]).doUpdateSet({
-				source: args.source,
-				tournamentId: args.tournamentId ?? null,
-				serializedPool: args.serializedPool ?? null,
-				updatedAt: now,
-			}),
-		)
-		.execute();
-}
-
-/** Deletes a side's map list, if one exists. */
-export async function deleteMapList(
-	scrimPostId: number,
-	side: ScrimSide,
-): Promise<void> {
-	await db
-		.deleteFrom("ScrimMapList")
-		.where("scrimPostId", "=", scrimPostId)
-		.where("side", "=", side)
-		.execute();
-}
-
-/** Returns all submitted map lists for the scrim. */
-export function findMapListsByScrimPostId(
-	scrimPostId: number,
-): Promise<Tables["ScrimMapList"][]> {
-	return db
-		.selectFrom("ScrimMapList")
-		.selectAll()
-		.where("scrimPostId", "=", scrimPostId)
-		.execute();
-}
 
 interface InsertMapArgs {
 	scrimPostId: number;
 	index: number;
 	mode: ModeShort;
 	stageId: StageId;
-	replayOfIndex?: number | null;
 }
 
 /**
@@ -86,7 +22,6 @@ export async function insertMap(args: InsertMapArgs): Promise<number> {
 			index: args.index,
 			mode: args.mode,
 			stageId: args.stageId,
-			replayOfIndex: args.replayOfIndex ?? null,
 		})
 		.returning("id")
 		.executeTakeFirstOrThrow();
@@ -94,11 +29,12 @@ export async function insertMap(args: InsertMapArgs): Promise<number> {
 	return inserted.id;
 }
 
-// xxx: TablesInsertable
 interface ReportMapWinnerArgs {
 	mapId: number;
-	winnerSide: ScrimSide;
-	reportedByUserId: number;
+	winnerSide: NonNullable<TablesInsertable["ScrimMap"]["winnerSide"]>;
+	reportedByUserId: NonNullable<
+		TablesInsertable["ScrimMap"]["reportedByUserId"]
+	>;
 }
 
 /** Marks an existing map as reported with the given winner side. */
@@ -157,13 +93,11 @@ interface ReplaceCurrentMapAsReplayArgs {
 	scrimPostId: number;
 	mode: ModeShort;
 	stageId: StageId;
-	replayOfIndex: number;
 }
 
 /**
  * Replaces the currently unreported map for the scrim with a replay of the
- * given source map (same mode/stage, marked as `replayOfIndex`). The current
- * map's index is preserved.
+ * given source map (same mode/stage). The current map's index is preserved.
  */
 export async function replaceCurrentMapAsReplay(
 	args: ReplaceCurrentMapAsReplayArgs,
@@ -173,7 +107,6 @@ export async function replaceCurrentMapAsReplay(
 		.set({
 			mode: args.mode,
 			stageId: args.stageId,
-			replayOfIndex: args.replayOfIndex,
 		})
 		.where("scrimPostId", "=", args.scrimPostId)
 		.where("reportedAt", "is", null)
@@ -181,12 +114,10 @@ export async function replaceCurrentMapAsReplay(
 }
 
 /** Returns the scrim's maps ordered by index ascending. */
-export function findMapsByScrimPostId(
-	scrimPostId: number,
-): Promise<Tables["ScrimMap"][]> {
+export function findMapsByScrimPostId(scrimPostId: number) {
 	return db
 		.selectFrom("ScrimMap")
-		.selectAll()
+		.select(["id", "index", "mode", "stageId", "winnerSide", "reportedAt"])
 		.where("scrimPostId", "=", scrimPostId)
 		.orderBy("index", "asc")
 		.execute();

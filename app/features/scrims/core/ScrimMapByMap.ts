@@ -21,6 +21,25 @@ type ScrimMapRow = Pick<
 >;
 
 /**
+ * Resolves a single map list row to a concrete MapPool. Returns null when the
+ * row references a tournament that wasn't pre-resolved, or a POOL row with no
+ * serialized pool.
+ */
+// xxx: data model should be simpler
+export function resolveList(
+	list: ScrimMapListRow,
+	tournamentPools: Map<number, DbMapPoolList> = new Map(),
+): MapPool | null {
+	if (list.source === "TOURNAMENT") {
+		if (!list.tournamentId) return null;
+		const tournamentList = tournamentPools.get(list.tournamentId);
+		return tournamentList ? new MapPool(tournamentList) : null;
+	}
+	if (!list.serializedPool) return null;
+	return new MapPool(list.serializedPool);
+}
+
+/**
  * Merges the submitted map lists into a single deduplicated MapPool. Tournament
  * pools are resolved by the caller and passed in via `tournamentPools` keyed by
  * the tournament id.
@@ -63,9 +82,8 @@ export function unionPool(
 }
 
 /**
- * Generates the next single map for the scrim by replaying the past map history
- * through the underlying generator so the resulting map respects its
- * anti-repeat and mode-ordering behavior.
+ * Generates the next single map for the scrim, keeping the pool's mode order
+ * stable across calls and avoiding already-played `(mode, stage)` pairs.
  */
 export function generateNextMap(args: {
 	pool: MapPool;
@@ -75,23 +93,9 @@ export function generateNextMap(args: {
 		throw new Error("Cannot generate map from empty pool");
 	}
 
-	const initialWeights = new Map<string, number>();
-	if (args.history.length > 0) {
-		for (const pair of args.pool.stageModePairs) {
-			initialWeights.set(MapList.modeStageKey(pair.mode, pair.stageId), 0);
-		}
-		for (const played of args.history) {
-			initialWeights.set(
-				MapList.modeStageKey(played.mode, played.stageId),
-				-1000, // xxx: why -1000?
-			);
-		}
-	}
-
-	const generator = MapList.generate({
+	const generator = MapList.resume({
 		mapPool: args.pool,
-		initialWeights: initialWeights.size > 0 ? initialWeights : undefined,
-		skipEnsureMinimumCandidates: true,
+		history: args.history,
 	});
 
 	generator.next();

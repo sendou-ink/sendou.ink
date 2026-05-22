@@ -28,7 +28,6 @@ export function up(db) {
 					"winnerSide" text check ("winnerSide" in ('ALPHA','BRAVO')),
 					"reportedAt" integer,
 					"reportedByUserId" integer,
-					"replayOfIndex" integer,
 					foreign key ("scrimPostId") references "ScrimPost"("id") on delete cascade,
 					foreign key ("reportedByUserId") references "User"("id"),
 					unique("scrimPostId", "index") on conflict rollback

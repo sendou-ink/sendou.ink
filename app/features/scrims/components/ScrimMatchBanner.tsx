@@ -5,6 +5,7 @@ import { Link, useLoaderData } from "react-router";
 import { Image } from "~/components/Image";
 import {
 	IconBanner,
+	MatchBanner,
 	MatchBannerContainer,
 } from "~/components/match-page/MatchBanner";
 import { useUser } from "~/features/auth/core/user";
@@ -54,6 +55,23 @@ export function ScrimMatchBanner() {
 		members: [...data.post.users, ...acceptedRequest.users],
 	});
 	const joinViaQr = Boolean(activeRoomLink.joinLink) && !activeRoomLink.isStale;
+	const joinPool = Scrim.resolvePoolCode(data.post.id);
+
+	const currentMap = data.mapByMap.currentMap;
+
+	if (currentMap) {
+		return (
+			<MatchBannerContainer>
+				<MatchBanner
+					stageId={currentMap.stageId}
+					mode={currentMap.mode}
+					screenLegal={screenLegal}
+					joinPool={joinPool}
+					joinViaQr={joinViaQr}
+				/>
+			</MatchBannerContainer>
+		);
+	}
 
 	return (
 		<MatchBannerContainer>
@@ -62,7 +80,7 @@ export function ScrimMatchBanner() {
 				header={t("scrims:banner.freeForm.header")}
 				subtitle={t("scrims:banner.freeForm.subtitle")}
 				screenLegal={screenLegal}
-				joinPool={Scrim.resolvePoolCode(data.post.id)}
+				joinPool={joinPool}
 				joinViaQr={joinViaQr}
 				topRight={
 					hasMaps ? (

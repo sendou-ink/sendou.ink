@@ -113,7 +113,11 @@
 	"mapByMap.stats.byMode": "",
 	"mapByMap.stats.byStage": "",
 	"mapByMap.stats.byStageMode": "",
+	"mapByMap.stats.view.MODE": "",
+	"mapByMap.stats.view.STAGE": "",
+	"mapByMap.stats.view.BOTH": "",
 	"mapByMap.stats.col.label": "",
 	"mapByMap.stats.col.wins": "",
-	"mapByMap.stats.col.losses": ""
+	"mapByMap.stats.col.losses": "",
+	"mapByMap.stats.col.winPct": ""
 }

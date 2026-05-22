@@ -113,7 +113,11 @@
 	"mapByMap.stats.byMode": "By mode",
 	"mapByMap.stats.byStage": "By stage",
 	"mapByMap.stats.byStageMode": "By stage & mode",
+	"mapByMap.stats.view.MODE": "Mode",
+	"mapByMap.stats.view.STAGE": "Stage",
+	"mapByMap.stats.view.BOTH": "Stage & Mode",
 	"mapByMap.stats.col.label": "Map",
 	"mapByMap.stats.col.wins": "Wins",
-	"mapByMap.stats.col.losses": "Losses"
+	"mapByMap.stats.col.losses": "Losses",
+	"mapByMap.stats.col.winPct": "Win %"
 }

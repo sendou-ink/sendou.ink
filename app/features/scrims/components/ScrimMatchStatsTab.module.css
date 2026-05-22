@@ -4,15 +4,18 @@
 	gap: var(--s-4);
 }
 
+.controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-3);
+}
+
 .toggleRow {
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
-}
-
-.sectionTitle {
-	font-weight: var(--bold);
-	margin-bottom: var(--s-2);
+	font-size: var(--font-sm);
 }
 
 .table {
@@ -27,17 +30,37 @@
 }
 
 .table th {
-	color: var(--text-lighter);
-	font-weight: var(--bold);
-	font-size: var(--fonts-sm);
-	border-bottom: 1px solid var(--border);
+	color: var(--color-text-high);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-sm);
+	border-bottom: var(--border-style);
 }
 
-.cellRight {
+.table tbody tr {
+	border-bottom: var(--border-style);
+
+	&:last-child {
+		border-bottom: none;
+	}
+}
+
+.cellNum {
+	width: 4rem;
 	text-align: right;
+	font-variant-numeric: tabular-nums;
 }
 
 .empty {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-style: italic;
+}
+
+.stageModeLabel {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.stageImage {
+	border-radius: var(--radius-field);
 }

@@ -11,7 +11,8 @@ import {
 } from "../../auth/core/user.server";
 import * as Scrim from "../core/Scrim";
 import * as ScrimMapByMap from "../core/ScrimMapByMap";
-import * as ScrimMapByMapRepository from "../ScrimMapByMapRepository.server";
+import * as ScrimMapListRepository from "../ScrimMapListRepository.server";
+import * as ScrimMapRepository from "../ScrimMapRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
@@ -77,10 +78,9 @@ async function resolveMapByMap({
 	post: NonNullable<Awaited<ReturnType<typeof ScrimPostRepository.findById>>>;
 	user: AuthenticatedUser;
 }) {
-	// xxx: can we collapse to one query?
 	const [mapLists, maps] = await Promise.all([
-		ScrimMapByMapRepository.findMapListsByScrimPostId(post.id),
-		ScrimMapByMapRepository.findMapsByScrimPostId(post.id),
+		ScrimMapListRepository.findMapListsByScrimPostId(post.id),
+		ScrimMapRepository.findMapsByScrimPostId(post.id),
 	]);
 
 	const tournamentPools = new Map<
@@ -102,6 +102,13 @@ async function resolveMapByMap({
 	const viewerSide = Scrim.sideOfUser(post, user.id);
 	const locked = Scrim.isTrackingLocked(maps, mapLists);
 
+	const ownList = viewerSide
+		? mapLists.find((l) => l.side === viewerSide)
+		: undefined;
+	const ownPool = ownList
+		? ScrimMapByMap.resolveList(ownList, tournamentPools)
+		: null;
+
 	return {
 		mapLists,
 		maps,
@@ -109,5 +116,6 @@ async function resolveMapByMap({
 		viewerSide,
 		locked,
 		pool: pool ? pool.serialized : null,
+		ownPool: ownPool ? ownPool.serialized : null,
 	};
 }

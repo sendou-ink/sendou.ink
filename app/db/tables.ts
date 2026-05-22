@@ -1278,8 +1278,6 @@ export interface ScrimMap {
 	winnerSide: "ALPHA" | "BRAVO" | null;
 	reportedAt: number | null;
 	reportedByUserId: number | null;
-	// xxx: replayOfIndex can be inferred?
-	replayOfIndex: number | null;
 }
 
 export interface ScrimPostUser {

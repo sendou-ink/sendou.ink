@@ -128,7 +128,12 @@ describe("applyFilters", () => {
 			isScheduledForFuture: false,
 			managedByAnyone: false,
 			mapsTournament: null,
-			permissions: { MANAGE_REQUESTS: [], CANCEL: [], DELETE_POST: [] },
+			permissions: {
+				MANAGE_REQUESTS: [],
+				CANCEL: [],
+				DELETE_POST: [],
+				MANAGE_TRACKING: [],
+			},
 			team: null,
 		};
 	}

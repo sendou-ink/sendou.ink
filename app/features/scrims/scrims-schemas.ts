@@ -71,7 +71,8 @@ const cancelRequestSchema = z.object({
 	scrimPostRequestId: id,
 });
 
-export const cancelScrimSchema = z.object({
+export const cancelScrimFormSchema = z.object({
+	_action: stringConstant("CANCEL_SCRIM"),
 	reason: textAreaRequired({
 		label: "labels.scrimCancelReason",
 		bottomText: "bottomTexts.scrimCancelReasonHelp",
@@ -209,7 +210,8 @@ const replayMapSchema = z.object({
 	_action: _action("REPLAY_MAP"),
 });
 
-export const scrimMapByMapActionSchema = z.union([
+export const scrimIdActionSchema = z.union([
+	cancelScrimFormSchema,
 	submitMapListSchema,
 	removeMapListSchema,
 	reportMapSchema,

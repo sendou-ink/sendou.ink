@@ -599,3 +599,129 @@ describe("MapList.generate() with initialWeights", () => {
 		expect(maps[0].stageId).toBe(1);
 	});
 });
+
+describe("MapList.resume()", () => {
+	const POOL = new MapPool({
+		TW: [],
+		SZ: [1, 2, 3],
+		TC: [4, 5, 6],
+		RM: [7, 8, 9],
+		CB: [10, 11, 12],
+	});
+
+	function nextMap(
+		history: Array<{ mode: "SZ" | "TC" | "RM" | "CB"; stageId: StageId }>,
+	) {
+		const gen = MapList.resume({ mapPool: POOL, history });
+		gen.next();
+		const result = gen.next({ amount: 1 }).value;
+		return result![0];
+	}
+
+	it("starts with the pool's first mode when history is empty", () => {
+		for (let i = 0; i < 20; i++) {
+			expect(nextMap([]).mode).toBe("SZ");
+		}
+	});
+
+	it("rotates through modes in pool order across history length", () => {
+		expect(nextMap([{ mode: "SZ", stageId: 1 }]).mode).toBe("TC");
+		expect(
+			nextMap([
+				{ mode: "SZ", stageId: 1 },
+				{ mode: "TC", stageId: 4 },
+			]).mode,
+		).toBe("RM");
+		expect(
+			nextMap([
+				{ mode: "SZ", stageId: 1 },
+				{ mode: "TC", stageId: 4 },
+				{ mode: "RM", stageId: 7 },
+			]).mode,
+		).toBe("CB");
+	});
+
+	it("wraps the mode order back to the start after a full rotation", () => {
+		const history = [
+			{ mode: "SZ", stageId: 1 },
+			{ mode: "TC", stageId: 4 },
+			{ mode: "RM", stageId: 7 },
+			{ mode: "CB", stageId: 10 },
+		] as const;
+		expect(nextMap([...history]).mode).toBe("SZ");
+	});
+
+	it("avoids already-played (mode, stage) pairs", () => {
+		const history = [
+			{ mode: "SZ", stageId: 1 },
+			{ mode: "TC", stageId: 4 },
+			{ mode: "RM", stageId: 7 },
+			{ mode: "CB", stageId: 10 },
+		] as const;
+
+		for (let i = 0; i < 30; i++) {
+			const next = nextMap([...history]);
+			expect(next.mode).toBe("SZ");
+			expect(next.stageId).not.toBe(1);
+		}
+	});
+
+	it("rotates only through modes present in the pool", () => {
+		const threeModePool = new MapPool({
+			TW: [],
+			SZ: [1, 2, 3],
+			TC: [4, 5, 6],
+			RM: [7, 8, 9],
+			CB: [],
+		});
+
+		const pickMode = (
+			history: Array<{ mode: "SZ" | "TC" | "RM"; stageId: StageId }>,
+		) => {
+			const gen = MapList.resume({ mapPool: threeModePool, history });
+			gen.next();
+			return gen.next({ amount: 1 }).value![0].mode;
+		};
+
+		expect(pickMode([])).toBe("SZ");
+		expect(pickMode([{ mode: "SZ", stageId: 1 }])).toBe("TC");
+		expect(
+			pickMode([
+				{ mode: "SZ", stageId: 1 },
+				{ mode: "TC", stageId: 4 },
+			]),
+		).toBe("RM");
+		expect(
+			pickMode([
+				{ mode: "SZ", stageId: 1 },
+				{ mode: "TC", stageId: 4 },
+				{ mode: "RM", stageId: 7 },
+			]),
+		).toBe("SZ");
+	});
+
+	it("exclusion is keyed on (mode, stage), not stage alone", () => {
+		const sharedPool = new MapPool({
+			TW: [],
+			SZ: [1, 2],
+			TC: [1, 2],
+			RM: [],
+			CB: [],
+		});
+
+		const seenForTC = new Set<StageId>();
+		for (let i = 0; i < 50; i++) {
+			const gen = MapList.resume({
+				mapPool: sharedPool,
+				history: [{ mode: "SZ", stageId: 1 }],
+			});
+			gen.next();
+			const next = gen.next({ amount: 1 }).value![0];
+			expect(next.mode).toBe("TC");
+			seenForTC.add(next.stageId);
+		}
+
+		expect(seenForTC.has(1)).toBe(true);
+		expect(seenForTC.has(2)).toBe(true);
+	});
+});

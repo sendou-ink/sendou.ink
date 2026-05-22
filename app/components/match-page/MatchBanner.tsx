@@ -23,7 +23,7 @@ interface MatchBannerProps {
 	screenLegal?: boolean;
 	joinPool?: string | null;
 	joinViaQr?: boolean;
-	children: React.ReactNode;
+	children?: React.ReactNode;
 }
 
 export function MatchBanner({

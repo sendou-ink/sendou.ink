@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { formatFlexTimeDisplay, generateTimeOptions } from "./scrims-utils";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import {
+	formatFlexTimeDisplay,
+	generateTimeOptions,
+	parseMapPoolInput,
+} from "./scrims-utils";
 
 describe("generateTimeOptions", () => {
 	it("includes both start and end times", () => {
@@ -231,5 +236,76 @@ describe("formatFlexTimeDisplay", () => {
 		const result = formatFlexTimeDisplay(start, end);
 
 		expect(result).toBe("+1h 1m");
+	});
+});
+
+describe("parseMapPoolInput", () => {
+	const VALID_POOL = "tw:3330000;sz:3a14000;tc:2c98000;rm:2bc0000;cb:39c0000";
+
+	it("returns null for empty string", () => {
+		expect(parseMapPoolInput("")).toBeNull();
+	});
+
+	it("returns null for whitespace-only string", () => {
+		expect(parseMapPoolInput("   \t\n  ")).toBeNull();
+	});
+
+	it("returns null when the parsed pool is empty", () => {
+		expect(parseMapPoolInput("not-a-valid-pool")).toBeNull();
+	});
+
+	it("returns a MapPool for a bare serialized pool", () => {
+		const result = parseMapPoolInput(VALID_POOL);
+
+		expect(result).toBeInstanceOf(MapPool);
+		expect(result?.serialized).toBe(VALID_POOL);
+	});
+
+	it("trims whitespace around a bare serialized pool", () => {
+		const result = parseMapPoolInput(`  ${VALID_POOL}  `);
+
+		expect(result?.serialized).toBe(VALID_POOL);
+	});
+
+	it("extracts the pool param from a full URL", () => {
+		const result = parseMapPoolInput(
+			`https://sendou.ink/maps?pool=${VALID_POOL}`,
+		);
+
+		expect(result?.serialized).toBe(VALID_POOL);
+	});
+
+	it("returns null for a URL without a pool param", () => {
+		expect(parseMapPoolInput("https://sendou.ink/maps?other=1")).toBeNull();
+	});
+
+	it("ignores other URL params when extracting pool", () => {
+		const result = parseMapPoolInput(
+			`https://sendou.ink/maps?foo=bar&pool=${VALID_POOL}&baz=qux`,
+		);
+
+		expect(result?.serialized).toBe(VALID_POOL);
+	});
+
+	it("returns null for a malformed URL with ://", () => {
+		expect(parseMapPoolInput("not a url://")).toBeNull();
+	});
+
+	it("parses the pool value from a query-string fragment", () => {
+		expect(parseMapPoolInput(`pool=${VALID_POOL}`)?.serialized).toBe(
+			VALID_POOL,
+		);
+	});
+
+	it("stops at the next & in a query-string fragment", () => {
+		expect(parseMapPoolInput(`pool=${VALID_POOL}&other=1`)?.serialized).toBe(
+			VALID_POOL,
+		);
+	});
+
+	it("preserves leading params before pool= in a query-string fragment", () => {
+		expect(parseMapPoolInput(`foo=bar&pool=${VALID_POOL}`)?.serialized).toBe(
+			VALID_POOL,
+		);
 	});
 });
