@@ -197,9 +197,8 @@ function MapListsSummary({ viewerSide }: { viewerSide: ScrimSide }) {
 						</div>
 						{list ? (
 							<MapListDisplay
-								source={list.source}
-								tournamentId={list.tournamentId}
-								serializedPool={list.serializedPool}
+								tournament={list.tournament}
+								mapCount={list.mapList.length}
 							/>
 						) : (
 							<span className={styles.mapListRowMissing}>
@@ -232,29 +231,19 @@ function ReplaceOwnListLink() {
 }
 
 function MapListDisplay({
-	source,
-	tournamentId,
-	serializedPool,
+	tournament,
+	mapCount,
 }: {
-	source: "TOURNAMENT" | "POOL";
-	tournamentId: number | null;
-	serializedPool: string | null;
+	tournament: { id: number; name: string } | undefined;
+	mapCount: number;
 }) {
 	const { t } = useTranslation(["scrims"]);
-	if (source === "TOURNAMENT") {
+	if (tournament) {
 		return (
 			<span>
-				{t("scrims:mapByMap.tournamentList", {
-					id: tournamentId ?? "?",
-				})}
+				{t("scrims:mapByMap.tournamentList", { name: tournament.name })}
 			</span>
 		);
 	}
-	return (
-		<span>
-			{t("scrims:mapByMap.poolList", {
-				pool: serializedPool?.slice(0, 32) ?? "",
-			})}
-		</span>
-	);
+	return <span>{t("scrims:mapByMap.poolList", { count: mapCount })}</span>;
 }

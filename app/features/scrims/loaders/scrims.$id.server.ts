@@ -83,21 +83,7 @@ async function resolveMapByMap({
 		ScrimMapRepository.findMapsByScrimPostId(post.id),
 	]);
 
-	const tournamentPools = new Map<
-		number,
-		Awaited<ReturnType<typeof resolveTournamentMapPool>>
-	>();
-	for (const list of mapLists) {
-		if (list.source !== "TOURNAMENT" || !list.tournamentId) continue;
-		if (tournamentPools.has(list.tournamentId)) continue;
-		const pool = await resolveTournamentMapPool(list.tournamentId, user);
-		tournamentPools.set(list.tournamentId, pool);
-	}
-
-	const pool =
-		mapLists.length > 0
-			? ScrimMapByMap.unionPool(mapLists, tournamentPools)
-			: null;
+	const pool = mapLists.length > 0 ? ScrimMapByMap.unionPool(mapLists) : null;
 	const currentMap = maps.find((m) => m.reportedAt === null) ?? null;
 	const viewerSide = Scrim.sideOfUser(post, user.id);
 	const locked = Scrim.isTrackingLocked(maps, mapLists);
@@ -105,9 +91,6 @@ async function resolveMapByMap({
 	const ownList = viewerSide
 		? mapLists.find((l) => l.side === viewerSide)
 		: undefined;
-	const ownPool = ownList
-		? ScrimMapByMap.resolveList(ownList, tournamentPools)
-		: null;
 
 	return {
 		mapLists,
@@ -115,7 +98,7 @@ async function resolveMapByMap({
 		currentMap,
 		viewerSide,
 		locked,
-		pool: pool ? pool.serialized : null,
-		ownPool: ownPool ? ownPool.serialized : null,
+		pool: pool ? pool.stageModePairs : null,
+		ownPool: ownList?.mapList ?? null,
 	};
 }

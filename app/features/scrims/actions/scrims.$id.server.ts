@@ -1,7 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
-import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import {
 	errorToast,
@@ -87,7 +86,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			});
 
 			if (maps.length === 0) {
-				await tryGenerateAndInsertNextMap({ post, user, maps });
+				await tryGenerateAndInsertNextMap({ post, maps });
 			}
 
 			broadcastRevalidate({ post, user });
@@ -119,7 +118,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					? { ...m, winnerSide: data.winnerSide, reportedAt: 1 }
 					: m,
 			);
-			await tryGenerateAndInsertNextMap({ post, user, maps: reportedMaps });
+			await tryGenerateAndInsertNextMap({ post, maps: reportedMaps });
 
 			broadcastRevalidate({ post, user });
 			break;
@@ -197,22 +196,12 @@ function broadcastRevalidate({
 	});
 }
 
-async function resolveTournamentPool(
-	tournamentId: number,
-	user: ReturnType<typeof requireUser>,
-) {
-	const data = await tournamentDataCached({ tournamentId, user });
-	return data.ctx.toSetMapPool;
-}
-
 // xxx: should this be in inside repository? and inside trx
 async function tryGenerateAndInsertNextMap({
 	post,
-	user,
 	maps,
 }: {
 	post: NonNullable<Awaited<ReturnType<typeof ScrimPostRepository.findById>>>;
-	user: ReturnType<typeof requireUser>;
 	maps: Awaited<ReturnType<typeof ScrimMapRepository.findMapsByScrimPostId>>;
 }) {
 	const mapLists = await ScrimMapListRepository.findMapListsByScrimPostId(
@@ -220,20 +209,7 @@ async function tryGenerateAndInsertNextMap({
 	);
 	if (mapLists.length === 0) return;
 
-	const tournamentPools = new Map<
-		number,
-		Awaited<ReturnType<typeof resolveTournamentPool>>
-	>();
-	for (const list of mapLists) {
-		if (list.source !== "TOURNAMENT" || !list.tournamentId) continue;
-		if (tournamentPools.has(list.tournamentId)) continue;
-		tournamentPools.set(
-			list.tournamentId,
-			await resolveTournamentPool(list.tournamentId, user),
-		);
-	}
-
-	const pool = ScrimMapByMap.unionPool(mapLists, tournamentPools);
+	const pool = ScrimMapByMap.unionPool(mapLists);
 	if (pool.isEmpty()) return;
 
 	const next = ScrimMapByMap.generateNextMap({

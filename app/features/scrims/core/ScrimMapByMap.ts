@@ -2,18 +2,14 @@
 
 import type { Tables } from "~/db/tables";
 import * as MapList from "~/features/map-list-generator/core/MapList";
-import {
-	type DbMapPoolList,
-	MapPool,
-} from "~/features/map-list-generator/core/map-pool";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { MapPoolObject } from "~/features/map-list-generator/core/map-pool-serializer/types";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 
-type ScrimMapListRow = Pick<
-	Tables["ScrimMapList"],
-	"side" | "source" | "tournamentId" | "serializedPool"
->;
+type ResolvedMapListRow = {
+	mapList: Array<{ mode: ModeShort; stageId: StageId }>;
+};
 
 type ScrimMapRow = Pick<
 	Tables["ScrimMap"],
@@ -21,33 +17,9 @@ type ScrimMapRow = Pick<
 >;
 
 /**
- * Resolves a single map list row to a concrete MapPool. Returns null when the
- * row references a tournament that wasn't pre-resolved, or a POOL row with no
- * serialized pool.
+ * Merges the submitted map lists into a single deduplicated MapPool.
  */
-// xxx: data model should be simpler
-export function resolveList(
-	list: ScrimMapListRow,
-	tournamentPools: Map<number, DbMapPoolList> = new Map(),
-): MapPool | null {
-	if (list.source === "TOURNAMENT") {
-		if (!list.tournamentId) return null;
-		const tournamentList = tournamentPools.get(list.tournamentId);
-		return tournamentList ? new MapPool(tournamentList) : null;
-	}
-	if (!list.serializedPool) return null;
-	return new MapPool(list.serializedPool);
-}
-
-/**
- * Merges the submitted map lists into a single deduplicated MapPool. Tournament
- * pools are resolved by the caller and passed in via `tournamentPools` keyed by
- * the tournament id.
- */
-export function unionPool(
-	lists: ScrimMapListRow[],
-	tournamentPools: Map<number, DbMapPoolList> = new Map(),
-): MapPool {
+export function unionPool(lists: ResolvedMapListRow[]): MapPool {
 	const merged: MapPoolObject = {
 		TW: [],
 		SZ: [],
@@ -61,20 +33,8 @@ export function unionPool(
 	};
 
 	for (const list of lists) {
-		if (list.source === "TOURNAMENT") {
-			const tournamentList = list.tournamentId
-				? tournamentPools.get(list.tournamentId)
-				: undefined;
-			if (!tournamentList) continue;
-			for (const { mode, stageId } of tournamentList) {
-				addPair(mode, stageId);
-			}
-		} else {
-			if (!list.serializedPool) continue;
-			const pool = new MapPool(list.serializedPool);
-			for (const { mode, stageId } of pool.stageModePairs) {
-				addPair(mode, stageId);
-			}
+		for (const { mode, stageId } of list.mapList) {
+			addPair(mode, stageId);
 		}
 	}
 

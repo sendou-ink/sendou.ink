@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Tables } from "~/db/tables";
-import {
-	type DbMapPoolList,
-	MapPool,
-} from "~/features/map-list-generator/core/map-pool";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { stagesObj } from "~/modules/in-game-lists/stage-ids";
 import type { StageId } from "~/modules/in-game-lists/types";
 import { canUndo, generateNextMap, stats, unionPool } from "./ScrimMapByMap";
@@ -24,34 +21,19 @@ function makeMap(overrides: Partial<MapRow> & { index: number }): MapRow {
 }
 
 describe("ScrimMapByMap.unionPool", () => {
-	it("deduplicates stage-mode pairs across multiple POOL lists", () => {
-		const aPool = new MapPool({
-			SZ: [stagesObj.SCORCH_GORGE, stagesObj.EELTAIL_ALLEY],
-			TC: [],
-			CB: [],
-			RM: [],
-			TW: [],
-		}).serialized;
-		const bPool = new MapPool({
-			SZ: [stagesObj.EELTAIL_ALLEY, stagesObj.MAKOMART],
-			TC: [],
-			CB: [],
-			RM: [],
-			TW: [],
-		}).serialized;
-
+	it("deduplicates stage-mode pairs across multiple lists", () => {
 		const pool = unionPool([
 			{
-				side: "ALPHA",
-				source: "POOL",
-				tournamentId: null,
-				serializedPool: aPool,
+				mapList: [
+					{ mode: "SZ", stageId: stagesObj.SCORCH_GORGE as StageId },
+					{ mode: "SZ", stageId: stagesObj.EELTAIL_ALLEY as StageId },
+				],
 			},
 			{
-				side: "BRAVO",
-				source: "POOL",
-				tournamentId: null,
-				serializedPool: bPool,
+				mapList: [
+					{ mode: "SZ", stageId: stagesObj.EELTAIL_ALLEY as StageId },
+					{ mode: "SZ", stageId: stagesObj.MAKOMART as StageId },
+				],
 			},
 		]);
 
@@ -64,24 +46,15 @@ describe("ScrimMapByMap.unionPool", () => {
 		);
 	});
 
-	it("resolves tournament pools via the provided map", () => {
-		const tournamentPools = new Map<number, DbMapPoolList>();
-		tournamentPools.set(7, [
-			{ mode: "SZ", stageId: stagesObj.HAMMERHEAD_BRIDGE as StageId },
-			{ mode: "TC", stageId: stagesObj.MAKOMART as StageId },
+	it("merges entries across modes", () => {
+		const pool = unionPool([
+			{
+				mapList: [
+					{ mode: "SZ", stageId: stagesObj.HAMMERHEAD_BRIDGE as StageId },
+					{ mode: "TC", stageId: stagesObj.MAKOMART as StageId },
+				],
+			},
 		]);
-
-		const pool = unionPool(
-			[
-				{
-					side: "ALPHA",
-					source: "TOURNAMENT",
-					tournamentId: 7,
-					serializedPool: null,
-				},
-			],
-			tournamentPools,
-		);
 
 		expect(pool.parsed.SZ).toEqual([stagesObj.HAMMERHEAD_BRIDGE]);
 		expect(pool.parsed.TC).toEqual([stagesObj.MAKOMART]);
