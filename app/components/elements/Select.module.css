@@ -108,6 +108,8 @@
 	font-weight: var(--weight-semi);
 	letter-spacing: 0.5px;
 	flex: 1;
+	min-width: 0;
+	padding-inline-end: calc(18px + var(--s-2));
 
 	&::-webkit-search-cancel-button {
 		display: none;
