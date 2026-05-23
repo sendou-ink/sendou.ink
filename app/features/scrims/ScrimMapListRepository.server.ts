@@ -15,7 +15,9 @@ type SubmitMapListArgs = Omit<TablesInsertable["ScrimMapList"], "updatedAt">;
  * the same `(scrimPostId, side)` pair, and (atomically) generates and inserts
  * the next map for the scrim if no unreported map is currently waiting.
  */
-export async function submitMapListAndGenerateIfNeeded(args: SubmitMapListArgs): Promise<void> {
+export async function submitMapListAndGenerateIfNeeded(
+	args: SubmitMapListArgs,
+): Promise<void> {
 	const now = databaseTimestampNow();
 
 	await db.transaction().execute(async (trx) => {

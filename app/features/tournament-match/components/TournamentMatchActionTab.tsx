@@ -145,7 +145,9 @@ export function TournamentMatchActionTab({
 					{t("q:match.undoReport")}
 				</SendouButton>
 			}
-			weaponReport={weaponReport ?? undefined}
+			secondaryAction={
+				weaponReport ? <WeaponReporter {...weaponReport} /> : null
+			}
 		/>
 	);
 }

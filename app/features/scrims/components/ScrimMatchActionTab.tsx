@@ -11,7 +11,7 @@ import * as Scrim from "../core/Scrim";
 import * as ScrimMapByMap from "../core/ScrimMapByMap";
 import type { loader } from "../loaders/scrims.$id.server";
 import type { ScrimSide } from "../scrims-types";
-import { ScrimMapListForm } from "./ScrimMapListForm";
+import { ScrimMapListManager } from "./ScrimMapListManager";
 import styles from "./ScrimMatchActionTab.module.css";
 
 const ALPHA_TEAM_ID = 1;
@@ -26,13 +26,12 @@ export function ScrimMatchActionTab() {
 	if (data.mapByMap.locked) return <LockedSection />;
 	if (!viewerSide) return <NotParticipantSection />;
 
-	const ownList = data.mapByMap.mapLists.find((l) => l.side === viewerSide);
-	if (!ownList) {
-		return <SubmitFirstListSection viewerSide={viewerSide} />;
-	}
-
 	if (!data.mapByMap.currentMap) {
-		return <NoCurrentMapSection viewerSide={viewerSide} />;
+		return (
+			<SendouTabPanel id={TAB_KEYS.ACTION}>
+				<ScrimMapListManager viewerSide={viewerSide} standalone />
+			</SendouTabPanel>
+		);
 	}
 
 	return <ReportMapSection viewerSide={viewerSide} />;
@@ -53,31 +52,6 @@ function NotParticipantSection() {
 		<SendouTabPanel id={TAB_KEYS.ACTION}>
 			<div className={styles.locked}>
 				{t("scrims:mapByMap.nonParticipantNotice")}
-			</div>
-		</SendouTabPanel>
-	);
-}
-
-function SubmitFirstListSection({ viewerSide }: { viewerSide: ScrimSide }) {
-	const { t } = useTranslation(["scrims"]);
-	return (
-		<SendouTabPanel id={TAB_KEYS.ACTION}>
-			<div className={styles.root}>
-				<p className={styles.intro}>{t("scrims:mapByMap.submitList.intro")}</p>
-				<ScrimMapListForm viewerSide={viewerSide} />
-				<MapListsSummary viewerSide={viewerSide} />
-			</div>
-		</SendouTabPanel>
-	);
-}
-
-function NoCurrentMapSection({ viewerSide }: { viewerSide: ScrimSide }) {
-	const { t } = useTranslation(["scrims"]);
-	return (
-		<SendouTabPanel id={TAB_KEYS.ACTION}>
-			<div className={styles.root}>
-				<p className={styles.intro}>{t("scrims:mapByMap.noCurrentMap")}</p>
-				<MapListsSummary viewerSide={viewerSide} />
 			</div>
 		</SendouTabPanel>
 	);
@@ -122,6 +96,7 @@ function ReportMapSection({ viewerSide }: { viewerSide: ScrimSide }) {
 				);
 			}}
 			actionButtons={<ReplayAndUndoButtons />}
+			secondaryAction={<ScrimMapListManager viewerSide={viewerSide} />}
 		/>
 	);
 }
@@ -167,83 +142,4 @@ function ReplayAndUndoButtons() {
 			</SendouButton>
 		</>
 	);
-}
-
-function MapListsSummary({ viewerSide }: { viewerSide: ScrimSide }) {
-	const { t } = useTranslation(["scrims", "q"]);
-	const data = useLoaderData<typeof loader>();
-	const lists = data.mapByMap?.mapLists ?? [];
-
-	const sides: ScrimSide[] = ["ALPHA", "BRAVO"];
-
-	return (
-		<div className={styles.mapListsSummary}>
-			{sides.map((side) => {
-				const list = lists.find((l) => l.side === side);
-				const isOwn = side === viewerSide;
-				return (
-					<div
-						key={side}
-						className={styles.mapListRow}
-						data-testid={`map-list-row-${side}`}
-					>
-						<div className={styles.mapListRowHeader}>
-							<span>
-								{side === "ALPHA"
-									? t("q:match.sides.alpha")
-									: t("q:match.sides.bravo")}
-							</span>
-							{isOwn && list ? <ReplaceOwnListLink /> : null}
-						</div>
-						{list ? (
-							<MapListDisplay
-								tournament={list.tournament}
-								mapCount={list.mapList.length}
-							/>
-						) : (
-							<span className={styles.mapListRowMissing}>
-								{t("scrims:mapByMap.noListYet")}
-							</span>
-						)}
-					</div>
-				);
-			})}
-		</div>
-	);
-}
-
-function ReplaceOwnListLink() {
-	const { t } = useTranslation(["scrims"]);
-	const fetcher = useFetcher();
-	return (
-		<SendouButton
-			testId="remove-list-button"
-			variant="minimal-destructive"
-			size="miniscule"
-			isDisabled={fetcher.state !== "idle"}
-			onPress={() => {
-				fetcher.submit({ _action: "REMOVE_MAP_LIST" }, { method: "post" });
-			}}
-		>
-			{t("scrims:mapByMap.removeList")}
-		</SendouButton>
-	);
-}
-
-function MapListDisplay({
-	tournament,
-	mapCount,
-}: {
-	tournament: { id: number; name: string } | undefined;
-	mapCount: number;
-}) {
-	const { t } = useTranslation(["scrims"]);
-	if (tournament) {
-		return (
-			<span>
-				{t("scrims:mapByMap.tournamentList", { name: tournament.name })}
-			</span>
-		);
-	}
-	return <span>{t("scrims:mapByMap.poolList", { count: mapCount })}</span>;
 }

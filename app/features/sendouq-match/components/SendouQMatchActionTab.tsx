@@ -435,7 +435,9 @@ function InProgressTab({
 					{ method: "post" },
 				);
 			}}
-			weaponReport={isStaffOnly ? undefined : weaponReport}
+			secondaryAction={
+				isStaffOnly ? null : <WeaponReporter {...weaponReport} />
+			}
 			actionButtons={
 				<>
 					{isStaffOnly ? (

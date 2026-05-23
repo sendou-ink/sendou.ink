@@ -20,7 +20,6 @@ export const handle: SendouRouteHandle = {
 };
 
 // xxx: Top right maps link icon maybe out of place now?
-// xxx: action tab weird, can only report score once submitted map. instead make map in the "optional" section as we have weapon report in?
 export default function ScrimPage() {
 	return (
 		<Main>

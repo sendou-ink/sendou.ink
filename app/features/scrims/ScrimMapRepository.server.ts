@@ -21,7 +21,9 @@ interface ReportMapArgs {
  * (atomically) generates and inserts the next map for the scrim if no
  * unreported map is currently waiting.
  */
-export async function reportMapAndGenerateNext(args: ReportMapArgs): Promise<void> {
+export async function reportMapAndGenerateNext(
+	args: ReportMapArgs,
+): Promise<void> {
 	await db.transaction().execute(async (trx) => {
 		await trx
 			.updateTable("ScrimMap")

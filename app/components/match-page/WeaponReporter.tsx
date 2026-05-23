@@ -1,5 +1,4 @@
-import clsx from "clsx";
-import { ChevronUp, Crosshair } from "lucide-react";
+import { Crosshair } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
@@ -13,6 +12,7 @@ import { abilityImageUrl, SETTINGS_PAGE } from "~/utils/urls";
 import { SendouButton } from "../elements/Button";
 import { Image, StageImage, WeaponImage } from "../Image";
 import { WeaponSelect } from "../WeaponSelect";
+import { SecondaryAction } from "./SecondaryAction";
 import styles from "./WeaponReporter.module.css";
 
 interface WeaponReporterMap {
@@ -64,37 +64,14 @@ export function WeaponReporter({
 		);
 	};
 
-	if (!isOpen && !standalone) {
-		return (
-			<div className={styles.rootCollapsed}>
-				<SendouButton
-					variant="minimal"
-					size="small"
-					icon={<Crosshair size={16} />}
-					onPress={() => handleToggle(true)}
-				>
-					{t("q:match.actions.reportWeapons")}
-				</SendouButton>
-			</div>
-		);
-	}
-
 	return (
-		<div
-			className={clsx(styles.root, styles.rootExpanded, {
-				[styles.rootStandalone]: standalone,
-			})}
+		<SecondaryAction
+			isOpen={isOpen}
+			onOpenChange={handleToggle}
+			collapsedLabel={t("q:match.actions.reportWeapons")}
+			collapsedIcon={<Crosshair size={16} />}
+			standalone={standalone}
 		>
-			{standalone ? null : (
-				<SendouButton
-					variant="minimal"
-					size="miniscule"
-					icon={<ChevronUp size={22} />}
-					onPress={() => handleToggle(false)}
-					className={styles.collapseButton}
-					aria-label={t("q:match.actions.reportWeapons")}
-				/>
-			)}
 			{inputTargetMap ? (
 				<div className={styles.mapRow}>
 					<MapInfo map={inputTargetMap} />
@@ -153,7 +130,7 @@ export function WeaponReporter({
 					))}
 				</div>
 			) : null}
-		</div>
+		</SecondaryAction>
 	);
 }
 
