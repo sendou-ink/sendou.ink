@@ -124,7 +124,7 @@ test.describe("User page", () => {
 				(el) => el.style.getPropertyValue("--_base-h") !== "",
 			);
 
-		await navigate({ page, url: "/settings" });
+		await navigate({ page, url: "/settings?tab=theme" });
 
 		// initially no custom theme
 		await expect(hasCustomTheme()).resolves.toBe(false);

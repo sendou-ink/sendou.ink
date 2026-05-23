@@ -1,4 +1,4 @@
-import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
+import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { StageId } from "~/modules/in-game-lists/types";
 import {

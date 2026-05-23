@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { db } from "~/db/sql";
-import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
+import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";

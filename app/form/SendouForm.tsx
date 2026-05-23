@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import * as React from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -63,6 +64,12 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	autoApply?: boolean;
 	revalidateRoot?: boolean;
 	className?: string;
+	/**
+	 * When true, opts out of the default centered, max-width layout so the form
+	 * expands to fill its parent container. Use when embedding a form inside a
+	 * layout that already controls width/alignment.
+	 */
+	fullWidth?: boolean;
 	onApply?: (values: z.infer<z.ZodObject<T>>) => void;
 	secondarySubmit?: React.ReactNode;
 };
@@ -89,6 +96,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 	autoApply,
 	revalidateRoot,
 	className,
+	fullWidth,
 	onApply,
 	secondarySubmit,
 }: SendouFormProps<T>) {
@@ -388,15 +396,18 @@ export function SendouForm<T extends z.ZodRawShape>({
 		</>
 	);
 
+	const resolvedClassName =
+		className ?? clsx(styles.form, { [styles.fullWidth]: fullWidth });
+
 	return (
 		<FormContext.Provider value={contextValue as FormContextValue}>
 			{autoApply && onApply ? (
-				<div className={className ?? styles.form}>{formContent}</div>
+				<div className={resolvedClassName}>{formContent}</div>
 			) : (
 				<form
 					method={method}
 					action={action}
-					className={className ?? styles.form}
+					className={resolvedClassName}
 					onSubmit={handleSubmit}
 				>
 					{formContent}

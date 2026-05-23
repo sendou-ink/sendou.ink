@@ -11,8 +11,8 @@ import type {
 } from "../../db/tables";
 import { assertUnreachable } from "../../utils/types";
 import { MapPool } from "../map-list-generator/core/map-pool";
+import { BANNED_MAPS } from "../match-profile/banned-maps";
 import * as Seasons from "../mmr/core/Seasons";
-import { BANNED_MAPS } from "../sendouq-settings/banned-maps";
 import type { ParsedBracket } from "../tournament-bracket/core/Progression";
 import * as Progression from "../tournament-bracket/core/Progression";
 import type { Tournament as TournamentClass } from "../tournament-bracket/core/Tournament";

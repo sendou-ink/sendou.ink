@@ -144,7 +144,7 @@ function groupWithTeamAndMembers(
 							"User.vc",
 							"User.languages",
 							"User.noScreen",
-							"User.qWeaponPool as weapons",
+							"User.weaponPool as weapons",
 							"User.mapModePreferences",
 							"PlusTier.tier as plusTier",
 							"GroupMatchContinueVote.isContinuing",
