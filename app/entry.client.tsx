@@ -6,6 +6,7 @@ import { I18nextProvider } from "react-i18next";
 import { HydratedRouter } from "react-router/dom";
 import { i18nLoader } from "./modules/i18n/loader";
 import { logger } from "./utils/logger";
+import { ensurePushSubscription } from "./utils/push-subscription";
 import { getSessionId } from "./utils/session-id";
 
 const SENTRY_ENABLED = import.meta.env.VITE_SENTRY_ENABLED === "true";
@@ -57,8 +58,17 @@ window.fetch = (input, init) => {
 
 if ("serviceWorker" in navigator) {
 	window.addEventListener("load", () => {
-		// we will register it after the page complete the load
-		void navigator.serviceWorker.register("/sw-2.js");
+		void navigator.serviceWorker.register("/sw-2.js").then((registration) => {
+			if (
+				"Notification" in window &&
+				"PushManager" in window &&
+				Notification.permission === "granted" &&
+				!sessionStorage.getItem("push-renewed")
+			) {
+				sessionStorage.setItem("push-renewed", "1");
+				void ensurePushSubscription(registration).catch(logger.error);
+			}
+		});
 	});
 }
 

@@ -1,3 +1,7 @@
+self.addEventListener("activate", (event) => {
+	event.waitUntil(clients.claim());
+});
+
 self.addEventListener("fetch", () => {
 	return;
 });

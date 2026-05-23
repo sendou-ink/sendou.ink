@@ -1,4 +1,5 @@
 import { sub } from "date-fns";
+import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { NotificationSubscription, TablesInsertable } from "~/db/tables";
 import { dateToDatabaseTimestamp } from "../../utils/dates";
@@ -98,13 +99,25 @@ export function addSubscription(args: {
 	userId: number;
 	subscription: NotificationSubscription;
 }) {
-	return db
-		.insertInto("NotificationUserSubscription")
-		.values({
-			userId: args.userId,
-			subscription: JSON.stringify(args.subscription),
-		})
-		.execute();
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.deleteFrom("NotificationUserSubscription")
+			.where("userId", "=", args.userId)
+			.where(
+				sql`json_extract("subscription", '$.endpoint')`,
+				"=",
+				args.subscription.endpoint,
+			)
+			.execute();
+
+		await trx
+			.insertInto("NotificationUserSubscription")
+			.values({
+				userId: args.userId,
+				subscription: JSON.stringify(args.subscription),
+			})
+			.execute();
+	});
 }
 
 export function subscriptionsByUserIds(userIds: number[]) {
