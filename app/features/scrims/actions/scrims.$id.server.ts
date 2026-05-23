@@ -75,19 +75,15 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "SUBMIT_MAP_LIST": {
-			const { viewerSide, maps } = await loadMapByMapContext({ post, user });
+			const { viewerSide } = await loadMapByMapContext({ post, user });
 
-			await ScrimMapListRepository.upsertMapList({
+			await ScrimMapListRepository.submitMapListAndGenerateIfNeeded({
 				scrimPostId: post.id,
 				side: viewerSide,
 				source: data.source,
 				tournamentId: data.tournamentId ?? null,
 				serializedPool: data.serializedPool ?? null,
 			});
-
-			if (maps.length === 0) {
-				await tryGenerateAndInsertNextMap({ post, maps });
-			}
 
 			broadcastRevalidate({ post, user });
 			break;
@@ -107,18 +103,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			errorToastIfFalsy(target, "Map not found");
 			errorToastIfFalsy(target!.reportedAt === null, "Map already reported");
 
-			await ScrimMapRepository.reportMapWinner({
+			await ScrimMapRepository.reportMapAndGenerateNext({
+				scrimPostId: post.id,
 				mapId: data.mapId,
 				winnerSide: data.winnerSide,
 				reportedByUserId: user.id,
 			});
-
-			const reportedMaps = maps.map((m) =>
-				m.id === data.mapId
-					? { ...m, winnerSide: data.winnerSide, reportedAt: 1 }
-					: m,
-			);
-			await tryGenerateAndInsertNextMap({ post, maps: reportedMaps });
 
 			broadcastRevalidate({ post, user });
 			break;
@@ -193,34 +183,5 @@ function broadcastRevalidate({
 		room: post.chatCode,
 		revalidateOnly: true,
 		authorUserId: user.id,
-	});
-}
-
-// xxx: should this be in inside repository? and inside trx
-async function tryGenerateAndInsertNextMap({
-	post,
-	maps,
-}: {
-	post: NonNullable<Awaited<ReturnType<typeof ScrimPostRepository.findById>>>;
-	maps: Awaited<ReturnType<typeof ScrimMapRepository.findMapsByScrimPostId>>;
-}) {
-	const mapLists = await ScrimMapListRepository.findMapListsByScrimPostId(
-		post.id,
-	);
-	if (mapLists.length === 0) return;
-
-	const pool = ScrimMapByMap.unionPool(mapLists);
-	if (pool.isEmpty()) return;
-
-	const next = ScrimMapByMap.generateNextMap({
-		pool,
-		history: maps.map((m) => ({ mode: m.mode, stageId: m.stageId })),
-	});
-
-	await ScrimMapRepository.insertMap({
-		scrimPostId: post.id,
-		index: Scrim.nextMapIndex(maps),
-		mode: next.mode,
-		stageId: next.stageId,
 	});
 }

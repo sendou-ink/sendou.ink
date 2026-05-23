@@ -1,39 +1,49 @@
+import type { Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type { TablesInsertable } from "~/db/tables";
+import type { DB, TablesInsertable } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { databaseTimestampNow } from "~/utils/dates";
+import * as ScrimMapRepository from "./ScrimMapRepository.server";
 import type { ScrimSide } from "./scrims-types";
 
-type UpsertMapListArgs = Omit<TablesInsertable["ScrimMapList"], "updatedAt">;
+type SubmitMapListArgs = Omit<TablesInsertable["ScrimMapList"], "updatedAt">;
 
 /**
  * Inserts a map list row for the given side, replacing any existing row for
- * the same `(scrimPostId, side)` pair.
+ * the same `(scrimPostId, side)` pair, and (atomically) generates and inserts
+ * the next map for the scrim if no unreported map is currently waiting.
  */
-export async function upsertMapList(args: UpsertMapListArgs): Promise<void> {
+export async function submitMapListAndGenerateIfNeeded(args: SubmitMapListArgs): Promise<void> {
 	const now = databaseTimestampNow();
 
-	await db
-		.insertInto("ScrimMapList")
-		.values({
-			scrimPostId: args.scrimPostId,
-			side: args.side,
-			source: args.source,
-			tournamentId: args.tournamentId ?? null,
-			serializedPool: args.serializedPool ?? null,
-			updatedAt: now,
-		})
-		.onConflict((oc) =>
-			oc.columns(["scrimPostId", "side"]).doUpdateSet({
+	await db.transaction().execute(async (trx) => {
+		await trx
+			.insertInto("ScrimMapList")
+			.values({
+				scrimPostId: args.scrimPostId,
+				side: args.side,
 				source: args.source,
 				tournamentId: args.tournamentId ?? null,
 				serializedPool: args.serializedPool ?? null,
 				updatedAt: now,
-			}),
-		)
-		.execute();
+			})
+			.onConflict((oc) =>
+				oc.columns(["scrimPostId", "side"]).doUpdateSet({
+					source: args.source,
+					tournamentId: args.tournamentId ?? null,
+					serializedPool: args.serializedPool ?? null,
+					updatedAt: now,
+				}),
+			)
+			.execute();
+
+		await ScrimMapRepository.tryGenerateAndInsertNextMapInTrx(
+			trx,
+			args.scrimPostId,
+		);
+	});
 }
 
 /** Deletes a side's map list, if one exists. */
@@ -58,12 +68,14 @@ export type ResolvedScrimMapList = {
 /**
  * Returns all submitted map lists for the scrim with the pool resolved into
  * concrete `(mode, stageId)` pairs. Tournament-sourced rows additionally carry
- * the tournament's id and name for display.
+ * the tournament's id and name for display. Pass a transaction as `executor`
+ * to read within an existing transaction.
  */
 export async function findMapListsByScrimPostId(
 	scrimPostId: number,
+	executor: typeof db | Transaction<DB> = db,
 ): Promise<ResolvedScrimMapList[]> {
-	const rows = await db
+	const rows = await executor
 		.selectFrom("ScrimMapList")
 		.leftJoin(
 			"CalendarEvent",

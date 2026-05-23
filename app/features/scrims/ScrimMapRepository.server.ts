@@ -1,35 +1,14 @@
+import type { Transaction } from "kysely";
 import { db } from "~/db/sql";
-import type { TablesInsertable } from "~/db/tables";
+import type { DB, TablesInsertable } from "~/db/tables";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { databaseTimestampNow } from "~/utils/dates";
+import * as Scrim from "./core/Scrim";
+import * as ScrimMapByMap from "./core/ScrimMapByMap";
+import * as ScrimMapListRepository from "./ScrimMapListRepository.server";
 
-interface InsertMapArgs {
+interface ReportMapArgs {
 	scrimPostId: number;
-	index: number;
-	mode: ModeShort;
-	stageId: StageId;
-}
-
-/**
- * Inserts a new map row representing the next unreported slot. Returns the
- * inserted map's id.
- */
-export async function insertMap(args: InsertMapArgs): Promise<number> {
-	const inserted = await db
-		.insertInto("ScrimMap")
-		.values({
-			scrimPostId: args.scrimPostId,
-			index: args.index,
-			mode: args.mode,
-			stageId: args.stageId,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	return inserted.id;
-}
-
-interface ReportMapWinnerArgs {
 	mapId: number;
 	winnerSide: NonNullable<TablesInsertable["ScrimMap"]["winnerSide"]>;
 	reportedByUserId: NonNullable<
@@ -37,20 +16,26 @@ interface ReportMapWinnerArgs {
 	>;
 }
 
-/** Marks an existing map as reported with the given winner side. */
-export async function reportMapWinner(
-	args: ReportMapWinnerArgs,
-): Promise<void> {
-	await db
-		.updateTable("ScrimMap")
-		.set({
-			winnerSide: args.winnerSide,
-			reportedAt: databaseTimestampNow(),
-			reportedByUserId: args.reportedByUserId,
-		})
-		.where("id", "=", args.mapId)
-		.where("reportedAt", "is", null)
-		.execute();
+/**
+ * Marks an existing map as reported with the given winner side, and
+ * (atomically) generates and inserts the next map for the scrim if no
+ * unreported map is currently waiting.
+ */
+export async function reportMapAndGenerateNext(args: ReportMapArgs): Promise<void> {
+	await db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("ScrimMap")
+			.set({
+				winnerSide: args.winnerSide,
+				reportedAt: databaseTimestampNow(),
+				reportedByUserId: args.reportedByUserId,
+			})
+			.where("id", "=", args.mapId)
+			.where("reportedAt", "is", null)
+			.execute();
+
+		await tryGenerateAndInsertNextMapInTrx(trx, args.scrimPostId);
+	});
 }
 
 /**
@@ -120,5 +105,49 @@ export function findMapsByScrimPostId(scrimPostId: number) {
 		.select(["id", "index", "mode", "stageId", "winnerSide", "reportedAt"])
 		.where("scrimPostId", "=", scrimPostId)
 		.orderBy("index", "asc")
+		.execute();
+}
+
+/**
+ * If a pool can be derived from the submitted map lists and no unreported map
+ * is currently waiting, generates and inserts the next map. Runs entirely
+ * within the caller's transaction so the read of the existing maps and the
+ * insert see a consistent snapshot and no two concurrent report/submit actions
+ * can insert a "next" map at the same index.
+ */
+export async function tryGenerateAndInsertNextMapInTrx(
+	trx: Transaction<DB>,
+	scrimPostId: number,
+): Promise<void> {
+	const mapLists = await ScrimMapListRepository.findMapListsByScrimPostId(
+		scrimPostId,
+		trx,
+	);
+	if (mapLists.length === 0) return;
+
+	const pool = ScrimMapByMap.unionPool(mapLists);
+	if (pool.isEmpty()) return;
+
+	const maps = await trx
+		.selectFrom("ScrimMap")
+		.select(["index", "mode", "stageId", "reportedAt"])
+		.where("scrimPostId", "=", scrimPostId)
+		.execute();
+
+	if (maps.some((m) => m.reportedAt === null)) return;
+
+	const next = ScrimMapByMap.generateNextMap({
+		pool,
+		history: maps.map((m) => ({ mode: m.mode, stageId: m.stageId })),
+	});
+
+	await trx
+		.insertInto("ScrimMap")
+		.values({
+			scrimPostId,
+			index: Scrim.nextMapIndex(maps),
+			mode: next.mode,
+			stageId: next.stageId,
+		})
 		.execute();
 }
