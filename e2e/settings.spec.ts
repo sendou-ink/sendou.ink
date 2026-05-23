@@ -67,8 +67,10 @@ test.describe("Settings", () => {
 			url: CALENDAR_PAGE,
 		});
 
-		const clockHeader = page.locator("[class*='clockHeader']").first();
-		const initialTime = await clockHeader.locator("span").first().textContent();
+		const clockTime = page
+			.locator("[class*='clockHeader'] [class*='reserve-one-lb']")
+			.first();
+		const initialTime = await clockTime.textContent();
 
 		expect(initialTime).toMatch(/AM|PM/);
 
@@ -85,7 +87,7 @@ test.describe("Settings", () => {
 			url: CALENDAR_PAGE,
 		});
 
-		const newTime = await clockHeader.locator("span").first().textContent();
+		const newTime = await clockTime.textContent();
 
 		expect(newTime).not.toMatch(/AM|PM/);
 		expect(newTime).not.toBe(initialTime);
