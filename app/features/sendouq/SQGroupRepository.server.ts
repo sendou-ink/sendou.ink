@@ -61,7 +61,7 @@ export async function findCurrentGroups() {
 		vc: Tables["User"]["vc"];
 		role: Tables["GroupMember"]["role"];
 		note: Tables["GroupMember"]["note"];
-		weapons: Tables["User"]["qWeaponPool"];
+		weapons: Tables["User"]["weaponPool"];
 		plusTier: Tables["PlusTier"]["tier"] | null;
 	};
 
@@ -99,7 +99,7 @@ export async function findCurrentGroups() {
 						noScreen: eb.ref("User.noScreen"),
 						role: eb.ref("GroupMember.role"),
 						note: eb.ref("GroupMember.note"),
-						weapons: eb.ref("User.qWeaponPool"),
+						weapons: eb.ref("User.weaponPool"),
 						languages: eb.ref("User.languages"),
 						plusTier: eb.ref("PlusTier.tier"),
 						vc: eb.ref("User.vc"),

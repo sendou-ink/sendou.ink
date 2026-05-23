@@ -1,9 +1,11 @@
 import type { Page } from "@playwright/test";
 import {
+	clockFormatSchema,
 	disableBuildAbilitySortingSchema,
 	spoilerFreeModeSchema,
 } from "~/features/settings/settings-schemas";
 import {
+	CALENDAR_PAGE,
 	SETTINGS_PAGE,
 	tournamentBracketsPage,
 	tournamentResultsPage,
@@ -36,7 +38,7 @@ test.describe("Settings", () => {
 
 		await navigate({
 			page,
-			url: SETTINGS_PAGE,
+			url: `${SETTINGS_PAGE}?tab=preferences`,
 		});
 
 		const form = createFormHelpers(page, disableBuildAbilitySortingSchema);
@@ -55,10 +57,46 @@ test.describe("Settings", () => {
 
 		expect(newContents).not.toBe(oldContents);
 	});
+
+	test("updates clock format preference", async ({ page }) => {
+		await seed(page);
+		await impersonate(page);
+
+		await navigate({
+			page,
+			url: CALENDAR_PAGE,
+		});
+
+		const clockTime = page
+			.locator("[class*='clockHeader'] [class*='reserve-one-lb']")
+			.first();
+		const initialTime = await clockTime.textContent();
+
+		expect(initialTime).toMatch(/AM|PM/);
+
+		await navigate({
+			page,
+			url: `${SETTINGS_PAGE}?tab=locale`,
+		});
+
+		const form = createFormHelpers(page, clockFormatSchema);
+		await waitForPOSTResponse(page, () => form.select("newValue", "24h"));
+
+		await navigate({
+			page,
+			url: CALENDAR_PAGE,
+		});
+
+		const newTime = await clockTime.textContent();
+
+		expect(newTime).not.toMatch(/AM|PM/);
+		expect(newTime).not.toBe(initialTime);
+		expect(newTime).toContain(":");
+	});
 });
 
 const enableSpoilerFreeMode = async (page: Page) => {
-	await navigate({ page, url: SETTINGS_PAGE });
+	await navigate({ page, url: `${SETTINGS_PAGE}?tab=preferences` });
 	const form = createFormHelpers(page, spoilerFreeModeSchema);
 	await waitForPOSTResponse(page, () => form.check("newValue"));
 };

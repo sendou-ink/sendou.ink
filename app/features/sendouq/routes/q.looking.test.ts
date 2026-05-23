@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
 import type { UserMapModePreferences } from "~/db/tables";
-import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
+import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import invariant from "~/utils/invariant";
 import { dbInsertUsers, dbReset, wrappedAction } from "~/utils/Test";

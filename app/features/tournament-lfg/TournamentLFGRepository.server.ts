@@ -66,7 +66,7 @@ type TournamentLFGMemberObject = {
 	pronouns: Tables["User"]["pronouns"];
 	role: Tables["TournamentTeamMember"]["role"];
 	isStayAsSub: Tables["TournamentTeamMember"]["isStayAsSub"];
-	weapons: Tables["User"]["qWeaponPool"];
+	weapons: Tables["User"]["weaponPool"];
 	plusTier: Tables["PlusTier"]["tier"] | null;
 };
 
@@ -106,7 +106,7 @@ export async function findLookingTeamsByTournamentId(tournamentId: number) {
 						pronouns: eb.ref("User.pronouns"),
 						role: eb.ref("TournamentTeamMember.role"),
 						isStayAsSub: eb.ref("TournamentTeamMember.isStayAsSub"),
-						weapons: eb.ref("User.qWeaponPool"),
+						weapons: eb.ref("User.weaponPool"),
 						plusTier: eb.ref("PlusTier.tier"),
 					}),
 				])
@@ -145,7 +145,7 @@ export async function findSubGroups(tournamentId: number) {
 						pronouns: eb.ref("User.pronouns"),
 						role: eb.ref("TournamentTeamMember.role"),
 						isStayAsSub: eb.ref("TournamentTeamMember.isStayAsSub"),
-						weapons: eb.ref("User.qWeaponPool"),
+						weapons: eb.ref("User.weaponPool"),
 						plusTier: eb.ref("PlusTier.tier"),
 					}),
 				])

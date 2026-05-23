@@ -1,3 +1,0 @@
-export const SENDOUQ_WEAPON_POOL_MAX_SIZE = 4;
-
-export const AMOUNT_OF_MAPS_IN_POOL_PER_MODE = 7;

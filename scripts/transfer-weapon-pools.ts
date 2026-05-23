@@ -36,7 +36,7 @@ async function main() {
 		await db
 			.updateTable("User")
 			.set({
-				qWeaponPool: JSON.stringify(weaponPoolIds),
+				weaponPool: JSON.stringify(weaponPoolIds),
 			})
 			.where("User.id", "=", Number(userId))
 			.execute();

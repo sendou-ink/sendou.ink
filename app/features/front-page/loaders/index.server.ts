@@ -4,8 +4,8 @@ import { getUser } from "~/features/auth/core/user.server";
 import * as Changelog from "~/features/front-page/core/Changelog.server";
 import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
+import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
 import * as SplatoonRotationRepository from "~/features/splatoon-rotations/SplatoonRotationRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { databaseTimestampNow } from "~/utils/dates";
@@ -33,8 +33,8 @@ export const loader = async () => {
 			cachedLeaderboards(),
 			SplatoonRotationRepository.findAll(),
 			user
-				? QSettingsRepository.settingsByUserId(user.id).then(
-						(s) => s.qWeaponPool ?? null,
+				? MatchProfileRepository.settingsByUserId(user.id).then(
+						(s) => s.weaponPool ?? null,
 					)
 				: Promise.resolve(null),
 		]);

@@ -9,9 +9,9 @@ import { metaTags } from "~/utils/remix";
 import {
 	CALENDAR_PAGE,
 	FAQ_PAGE,
+	MATCH_PROFILE_PAGE,
 	navIconUrl,
 	SENDOUQ_RULES_PAGE,
-	SENDOUQ_SETTINGS_PAGE,
 	TIERS_PAGE,
 } from "~/utils/urls";
 import styles from "./q.info.module.css";
@@ -180,7 +180,7 @@ function BeforeJoining() {
 			<p>
 				Optional - if you don&apos;t have a preference then skip this step and
 				other players in the lobby get to choose. On the{" "}
-				<Link to={SENDOUQ_SETTINGS_PAGE}>settings page</Link> first select your
+				<Link to={MATCH_PROFILE_PAGE}>settings page</Link> first select your
 				preference of each of the five modes. Avoid means you&apos;d rather not
 				play the mode. Neutral means you don&apos;t have strong feelings either
 				way. Prefer means you like this mode over neutral modes. These choices

@@ -4,3 +4,6 @@ allowBuilds:
   better-sqlite3: true
   core-js: false
   esbuild: true
+patchedDependencies:
+  '@react-router/serve@7.15.0': patches/@react-router__serve@7.15.0.patch
+  kysely@0.29.0: patches/kysely@0.29.0.patch

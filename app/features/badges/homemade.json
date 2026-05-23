@@ -1135,6 +1135,10 @@
 		"displayName": "Abandon Ship",
 		"authorDiscordId": "528851510222782474"
 	},
+	"shootingstar": {
+		"displayName": "shooting star",
+		"authorDiscordId": "755245884807053462"
+	},
 	"shrimpoftheday": {
 		"displayName": "Shrimp of the Day",
 		"authorDiscordId": "309327923129745409"
@@ -1238,6 +1242,10 @@
 	"splattershotproforge": {
 		"displayName": "MIDLINES ONLY: FORGE",
 		"authorDiscordId": "336683473714544641"
+	},
+	"splattingthesecond": {
+		"displayName": "splatting, the second",
+		"authorDiscordId": "755245884807053462"
 	},
 	"squidmoreaside": {
 		"displayName": "Mount Squidmore A-Side",

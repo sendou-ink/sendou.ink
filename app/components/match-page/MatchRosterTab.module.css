@@ -43,6 +43,17 @@
 	align-items: center;
 }
 
+.teamHeaderText {
+	min-width: 0;
+}
+
+.teamNameHeading {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 320px;
+}
+
 .rosterMembers {
 	position: relative;
 	padding-inline-start: 34px;

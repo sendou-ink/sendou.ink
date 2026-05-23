@@ -16,6 +16,7 @@ import lfgDa from "../../../locales/da/lfg.json";
 import orgDa from "../../../locales/da/org.json";
 import qDa from "../../../locales/da/q.json";
 import scrimsDa from "../../../locales/da/scrims.json";
+import settingsDa from "../../../locales/da/settings.json";
 import teamDa from "../../../locales/da/team.json";
 import tierListMakerDa from "../../../locales/da/tier-list-maker.json";
 import tournamentDa from "../../../locales/da/tournament.json";
@@ -40,6 +41,7 @@ import lfgDe from "../../../locales/de/lfg.json";
 import orgDe from "../../../locales/de/org.json";
 import qDe from "../../../locales/de/q.json";
 import scrimsDe from "../../../locales/de/scrims.json";
+import settingsDe from "../../../locales/de/settings.json";
 import teamDe from "../../../locales/de/team.json";
 import tierListMakerDe from "../../../locales/de/tier-list-maker.json";
 import tournamentDe from "../../../locales/de/tournament.json";
@@ -64,6 +66,7 @@ import lfg from "../../../locales/en/lfg.json";
 import org from "../../../locales/en/org.json";
 import q from "../../../locales/en/q.json";
 import scrimsEn from "../../../locales/en/scrims.json";
+import settings from "../../../locales/en/settings.json";
 import team from "../../../locales/en/team.json";
 import tierListMaker from "../../../locales/en/tier-list-maker.json";
 import tournament from "../../../locales/en/tournament.json";
@@ -88,6 +91,7 @@ import lfgEsEs from "../../../locales/es-ES/lfg.json";
 import orgEsEs from "../../../locales/es-ES/org.json";
 import qEsEs from "../../../locales/es-ES/q.json";
 import scrimsEsEs from "../../../locales/es-ES/scrims.json";
+import settingsEsEs from "../../../locales/es-ES/settings.json";
 import teamEsEs from "../../../locales/es-ES/team.json";
 import tierListMakerEsEs from "../../../locales/es-ES/tier-list-maker.json";
 import tournamentEsEs from "../../../locales/es-ES/tournament.json";
@@ -112,6 +116,7 @@ import lfgEsUs from "../../../locales/es-US/lfg.json";
 import orgEsUs from "../../../locales/es-US/org.json";
 import qEsUs from "../../../locales/es-US/q.json";
 import scrimsEsUs from "../../../locales/es-US/scrims.json";
+import settingsEsUs from "../../../locales/es-US/settings.json";
 import teamEsUs from "../../../locales/es-US/team.json";
 import tierListMakerEsUs from "../../../locales/es-US/tier-list-maker.json";
 import tournamentEsUs from "../../../locales/es-US/tournament.json";
@@ -136,6 +141,7 @@ import lfgFrCa from "../../../locales/fr-CA/lfg.json";
 import orgFrCa from "../../../locales/fr-CA/org.json";
 import qFrCa from "../../../locales/fr-CA/q.json";
 import scrimsFrCa from "../../../locales/fr-CA/scrims.json";
+import settingsFrCa from "../../../locales/fr-CA/settings.json";
 import teamFrCa from "../../../locales/fr-CA/team.json";
 import tierListMakerFrCa from "../../../locales/fr-CA/tier-list-maker.json";
 import tournamentFrCa from "../../../locales/fr-CA/tournament.json";
@@ -160,6 +166,7 @@ import lfgFrEu from "../../../locales/fr-EU/lfg.json";
 import orgFrEu from "../../../locales/fr-EU/org.json";
 import qFrEu from "../../../locales/fr-EU/q.json";
 import scrimsFrEu from "../../../locales/fr-EU/scrims.json";
+import settingsFrEu from "../../../locales/fr-EU/settings.json";
 import teamFrEu from "../../../locales/fr-EU/team.json";
 import tierListMakerFrEu from "../../../locales/fr-EU/tier-list-maker.json";
 import tournamentFrEu from "../../../locales/fr-EU/tournament.json";
@@ -184,6 +191,7 @@ import lfgHe from "../../../locales/he/lfg.json";
 import orgHe from "../../../locales/he/org.json";
 import qHe from "../../../locales/he/q.json";
 import scrimsHe from "../../../locales/he/scrims.json";
+import settingsHe from "../../../locales/he/settings.json";
 import teamHe from "../../../locales/he/team.json";
 import tierListMakerHe from "../../../locales/he/tier-list-maker.json";
 import tournamentHe from "../../../locales/he/tournament.json";
@@ -208,6 +216,7 @@ import lfgIt from "../../../locales/it/lfg.json";
 import orgIt from "../../../locales/it/org.json";
 import qIt from "../../../locales/it/q.json";
 import scrimsIt from "../../../locales/it/scrims.json";
+import settingsIt from "../../../locales/it/settings.json";
 import teamIt from "../../../locales/it/team.json";
 import tierListMakerIt from "../../../locales/it/tier-list-maker.json";
 import tournamentIt from "../../../locales/it/tournament.json";
@@ -232,6 +241,7 @@ import lfgJa from "../../../locales/ja/lfg.json";
 import orgJa from "../../../locales/ja/org.json";
 import qJa from "../../../locales/ja/q.json";
 import scrimsJa from "../../../locales/ja/scrims.json";
+import settingsJa from "../../../locales/ja/settings.json";
 import teamJa from "../../../locales/ja/team.json";
 import tierListMakerJa from "../../../locales/ja/tier-list-maker.json";
 import tournamentJa from "../../../locales/ja/tournament.json";
@@ -256,6 +266,7 @@ import lfgKo from "../../../locales/ko/lfg.json";
 import orgKo from "../../../locales/ko/org.json";
 import qKo from "../../../locales/ko/q.json";
 import scrimsKo from "../../../locales/ko/scrims.json";
+import settingsKo from "../../../locales/ko/settings.json";
 import teamKo from "../../../locales/ko/team.json";
 import tierListMakerKo from "../../../locales/ko/tier-list-maker.json";
 import tournamentKo from "../../../locales/ko/tournament.json";
@@ -280,6 +291,7 @@ import lfgNl from "../../../locales/nl/lfg.json";
 import orgNl from "../../../locales/nl/org.json";
 import qNl from "../../../locales/nl/q.json";
 import scrimsNl from "../../../locales/nl/scrims.json";
+import settingsNl from "../../../locales/nl/settings.json";
 import teamNl from "../../../locales/nl/team.json";
 import tierListMakerNl from "../../../locales/nl/tier-list-maker.json";
 import tournamentNl from "../../../locales/nl/tournament.json";
@@ -304,6 +316,7 @@ import lfgPl from "../../../locales/pl/lfg.json";
 import orgPl from "../../../locales/pl/org.json";
 import qPl from "../../../locales/pl/q.json";
 import scrimsPl from "../../../locales/pl/scrims.json";
+import settingsPl from "../../../locales/pl/settings.json";
 import teamPl from "../../../locales/pl/team.json";
 import tierListMakerPl from "../../../locales/pl/tier-list-maker.json";
 import tournamentPl from "../../../locales/pl/tournament.json";
@@ -328,6 +341,7 @@ import lfgPtBr from "../../../locales/pt-BR/lfg.json";
 import orgPtBr from "../../../locales/pt-BR/org.json";
 import qPtBr from "../../../locales/pt-BR/q.json";
 import scrimsPtBr from "../../../locales/pt-BR/scrims.json";
+import settingsPtBr from "../../../locales/pt-BR/settings.json";
 import teamPtBr from "../../../locales/pt-BR/team.json";
 import tierListMakerPtBr from "../../../locales/pt-BR/tier-list-maker.json";
 import tournamentPtBr from "../../../locales/pt-BR/tournament.json";
@@ -352,6 +366,7 @@ import lfgRu from "../../../locales/ru/lfg.json";
 import orgRu from "../../../locales/ru/org.json";
 import qRu from "../../../locales/ru/q.json";
 import scrimsRu from "../../../locales/ru/scrims.json";
+import settingsRu from "../../../locales/ru/settings.json";
 import teamRu from "../../../locales/ru/team.json";
 import tierListMakerRu from "../../../locales/ru/tier-list-maker.json";
 import tournamentRu from "../../../locales/ru/tournament.json";
@@ -376,6 +391,7 @@ import lfgZh from "../../../locales/zh/lfg.json";
 import orgZh from "../../../locales/zh/org.json";
 import qZh from "../../../locales/zh/q.json";
 import scrimsZh from "../../../locales/zh/scrims.json";
+import settingsZh from "../../../locales/zh/settings.json";
 import teamZh from "../../../locales/zh/team.json";
 import tierListMakerZh from "../../../locales/zh/tier-list-maker.json";
 import tournamentZh from "../../../locales/zh/tournament.json";
@@ -391,6 +407,7 @@ export const resources = {
 		friends: friendsEsUs,
 		weapons: weaponsEsUs,
 		scrims: scrimsEsUs,
+		settings: settingsEsUs,
 		common: commonEsUs,
 		"game-badges": gameBadgesEsUs,
 		"game-misc": gameMiscEsUs,
@@ -417,6 +434,7 @@ export const resources = {
 		friends: friends,
 		weapons: weapons,
 		scrims: scrimsEn,
+		settings: settings,
 		common: common,
 		"game-badges": gameBadges,
 		"game-misc": gameMisc,
@@ -443,6 +461,7 @@ export const resources = {
 		friends: friendsKo,
 		weapons: weaponsKo,
 		scrims: scrimsKo,
+		settings: settingsKo,
 		common: commonKo,
 		"game-badges": gameBadgesKo,
 		"game-misc": gameMiscKo,
@@ -469,6 +488,7 @@ export const resources = {
 		friends: friendsDe,
 		weapons: weaponsDe,
 		scrims: scrimsDe,
+		settings: settingsDe,
 		common: commonDe,
 		"game-badges": gameBadgesDe,
 		"game-misc": gameMiscDe,
@@ -495,6 +515,7 @@ export const resources = {
 		friends: friendsNl,
 		weapons: weaponsNl,
 		scrims: scrimsNl,
+		settings: settingsNl,
 		common: commonNl,
 		"game-badges": gameBadgesNl,
 		"game-misc": gameMiscNl,
@@ -521,6 +542,7 @@ export const resources = {
 		friends: friendsPtBr,
 		weapons: weaponsPtBr,
 		scrims: scrimsPtBr,
+		settings: settingsPtBr,
 		common: commonPtBr,
 		"game-badges": gameBadgesPtBr,
 		"game-misc": gameMiscPtBr,
@@ -547,6 +569,7 @@ export const resources = {
 		friends: friendsZh,
 		weapons: weaponsZh,
 		scrims: scrimsZh,
+		settings: settingsZh,
 		common: commonZh,
 		"game-badges": gameBadgesZh,
 		"game-misc": gameMiscZh,
@@ -573,6 +596,7 @@ export const resources = {
 		friends: friendsFrCa,
 		weapons: weaponsFrCa,
 		scrims: scrimsFrCa,
+		settings: settingsFrCa,
 		common: commonFrCa,
 		"game-badges": gameBadgesFrCa,
 		"game-misc": gameMiscFrCa,
@@ -599,6 +623,7 @@ export const resources = {
 		friends: friendsRu,
 		weapons: weaponsRu,
 		scrims: scrimsRu,
+		settings: settingsRu,
 		common: commonRu,
 		"game-badges": gameBadgesRu,
 		"game-misc": gameMiscRu,
@@ -625,6 +650,7 @@ export const resources = {
 		friends: friendsIt,
 		weapons: weaponsIt,
 		scrims: scrimsIt,
+		settings: settingsIt,
 		common: commonIt,
 		"game-badges": gameBadgesIt,
 		"game-misc": gameMiscIt,
@@ -651,6 +677,7 @@ export const resources = {
 		friends: friendsJa,
 		weapons: weaponsJa,
 		scrims: scrimsJa,
+		settings: settingsJa,
 		common: commonJa,
 		"game-badges": gameBadgesJa,
 		"game-misc": gameMiscJa,
@@ -677,6 +704,7 @@ export const resources = {
 		friends: friendsDa,
 		weapons: weaponsDa,
 		scrims: scrimsDa,
+		settings: settingsDa,
 		common: commonDa,
 		"game-badges": gameBadgesDa,
 		"game-misc": gameMiscDa,
@@ -703,6 +731,7 @@ export const resources = {
 		friends: friendsEsEs,
 		weapons: weaponsEsEs,
 		scrims: scrimsEsEs,
+		settings: settingsEsEs,
 		common: commonEsEs,
 		"game-badges": gameBadgesEsEs,
 		"game-misc": gameMiscEsEs,
@@ -729,6 +758,7 @@ export const resources = {
 		friends: friendsHe,
 		weapons: weaponsHe,
 		scrims: scrimsHe,
+		settings: settingsHe,
 		common: commonHe,
 		"game-badges": gameBadgesHe,
 		"game-misc": gameMiscHe,
@@ -755,6 +785,7 @@ export const resources = {
 		friends: friendsFrEu,
 		weapons: weaponsFrEu,
 		scrims: scrimsFrEu,
+		settings: settingsFrEu,
 		common: commonFrEu,
 		"game-badges": gameBadgesFrEu,
 		"game-misc": gameMiscFrEu,
@@ -781,6 +812,7 @@ export const resources = {
 		friends: friendsPl,
 		weapons: weaponsPl,
 		scrims: scrimsPl,
+		settings: settingsPl,
 		common: commonPl,
 		"game-badges": gameBadgesPl,
 		"game-misc": gameMiscPl,

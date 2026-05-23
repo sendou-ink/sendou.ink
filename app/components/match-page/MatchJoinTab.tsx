@@ -83,7 +83,11 @@ export function MatchJoinTab({
 					)}
 					<div className={styles.joinInfo}>
 						{hostedBy ? (
-							<InfoWithHeader header={t("q:match.hostedBy")} value={hostedBy} />
+							<InfoWithHeader
+								header={t("q:match.hostedBy")}
+								value={hostedBy}
+								truncate
+							/>
 						) : null}
 						<InfoWithHeader header={t("q:match.pool")} value={pool} />
 						<InfoWithHeader
@@ -130,15 +134,23 @@ function InfoWithHeader({
 	header,
 	value,
 	testId,
+	truncate,
 }: {
 	header: string;
 	value: string;
 	testId?: string;
+	truncate?: boolean;
 }) {
 	return (
 		<div>
 			<div className={styles.infoHeader}>{header}</div>
-			<div className={styles.infoValue} data-testid={testId}>
+			<div
+				className={clsx(styles.infoValue, {
+					[styles.infoValueTruncate]: truncate,
+				})}
+				data-testid={testId}
+				title={truncate ? value : undefined}
+			>
 				{value}
 			</div>
 		</div>

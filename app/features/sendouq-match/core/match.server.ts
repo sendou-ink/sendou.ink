@@ -2,6 +2,10 @@ import * as R from "remeda";
 import type { ParsedMemento, UserMapModePreferences } from "~/db/tables";
 import * as MapList from "~/features/map-list-generator/core/MapList";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import {
+	BANNED_MAPS,
+	SENDOUQ_MAP_POOL,
+} from "~/features/match-profile/banned-maps";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills } from "~/features/mmr/tiered.server";
 import { getDefaultMapWeights } from "~/features/sendouq/core/default-maps.server";
@@ -10,10 +14,6 @@ import type {
 	SQUncensoredGroup,
 } from "~/features/sendouq/core/SendouQ.server";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
-import {
-	BANNED_MAPS,
-	SENDOUQ_MAP_POOL,
-} from "~/features/sendouq-settings/banned-maps";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, ModeWithStage } from "~/modules/in-game-lists/types";
 import type {
