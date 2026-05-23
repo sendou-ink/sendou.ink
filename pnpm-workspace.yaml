@@ -4,3 +4,5 @@ allowBuilds:
   better-sqlite3: true
   core-js: false
   esbuild: true
+patchedDependencies:
+  kysely@0.29.0: patches/kysely@0.29.0.patch

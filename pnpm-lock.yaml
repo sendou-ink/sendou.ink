@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  kysely@0.29.0: 6f395b25414c1ef852485fa3a03d2d521816064697d8c4bff337e2b24d19daa6
+
 importers:
 
   .:
@@ -100,7 +103,7 @@ importers:
         version: 1.1.8
       kysely:
         specifier: 0.29.0
-        version: 0.29.0
+        version: 0.29.0(patch_hash=6f395b25414c1ef852485fa3a03d2d521816064697d8c4bff337e2b24d19daa6)
       lru-cache:
         specifier: 11.3.6
         version: 11.3.6
@@ -8476,7 +8479,7 @@ snapshots:
       - '@emnapi/core'
       - '@emnapi/runtime'
 
-  kysely@0.29.0: {}
+  kysely@0.29.0(patch_hash=6f395b25414c1ef852485fa3a03d2d521816064697d8c4bff337e2b24d19daa6): {}
 
   ley@0.8.1:
     dependencies:
