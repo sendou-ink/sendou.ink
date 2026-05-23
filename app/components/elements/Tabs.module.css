@@ -97,8 +97,8 @@
 
 .vertical {
 	display: grid;
-	grid-template-columns: minmax(180px, max-content) 1fr;
-	gap: var(--s-4);
+	grid-template-columns: max-content 1fr;
+	gap: var(--s-8);
 	align-items: start;
 
 	& .tabListContainer {
@@ -134,6 +134,7 @@
 		text-align: start;
 		flex: none;
 		padding: var(--s-2) var(--s-3);
+		padding-inline-end: var(--s-6);
 	}
 
 	& .tabPanel {

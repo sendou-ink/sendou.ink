@@ -97,13 +97,13 @@ export default function SettingsPage() {
 				>
 					<SendouTabList aria-label={t("common:pages.settings")}>
 						{user ? (
-							<SendouTab id="preferences" icon={<SlidersHorizontal />}>
-								{t("settings:tabs.preferences")}
+							<SendouTab id="match-profile" icon={<MapIcon />}>
+								{t("settings:tabs.matchProfile")}
 							</SendouTab>
 						) : null}
 						{user ? (
-							<SendouTab id="match-profile" icon={<MapIcon />}>
-								{t("settings:tabs.matchProfile")}
+							<SendouTab id="preferences" icon={<SlidersHorizontal />}>
+								{t("settings:tabs.preferences")}
 							</SendouTab>
 						) : null}
 						<SendouTab id="locale" icon={<Globe />}>
