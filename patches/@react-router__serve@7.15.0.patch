@@ -1,0 +1,12 @@
+diff --git a/dist/cli.js b/dist/cli.js
+index 08277520abadf36c3da03e50afc08919d316d5b2..55d9a1cf1f0220a96acd9f330b5668b03e4b6ddc 100644
+--- a/dist/cli.js
++++ b/dist/cli.js
+@@ -127,7 +127,6 @@ async function run() {
+   );
+   app.use(build.publicPath, import_express2.default.static(build.assetsBuildDirectory));
+   app.use(import_express2.default.static("public", { maxAge: "1h" }));
+-  app.use((0, import_morgan.default)("tiny"));
+   if (build.fetch) {
+     app.all("*", (0, import_node_fetch_server.createRequestListener)(build.fetch));
+   } else {

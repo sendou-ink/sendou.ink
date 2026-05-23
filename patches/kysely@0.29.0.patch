@@ -1,0 +1,12 @@
+diff --git a/dist/plugin/parse-json-results/parse-json-results-plugin.js b/dist/plugin/parse-json-results/parse-json-results-plugin.js
+index f5d150373a5e36034044b6ba4e5840a7f7a3e725..7700d5ca3888c6ab8c8fad8494ba9dced24e258a 100644
+--- a/dist/plugin/parse-json-results/parse-json-results-plugin.js
++++ b/dist/plugin/parse-json-results/parse-json-results-plugin.js
+@@ -114,7 +114,6 @@ function parseString(str, jsonPath, options) {
+             throw error;
+         }
+         // built-in naive heuristic should keep going despite errors given there might be false positives in detection.
+-        console.error(error);
+         return str;
+     }
+ }

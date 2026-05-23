@@ -140,9 +140,26 @@ export function impersonate(page: Page, userId = ADMIN_ID) {
 }
 
 export async function submit(page: Page, testId?: string) {
-	return waitForPOSTResponse(page, async () => {
-		await page.getByTestId(testId ?? "submit-button").click();
-	});
+	const postPromise = page.waitForResponse(
+		(res) => res.request().method() === "POST",
+	);
+	await page.getByTestId(testId ?? "submit-button").click();
+	const postRes = await postPromise;
+
+	// Remix returns 202 from action endpoints when the action threw/returned a
+	// redirect. The fetcher then drives a client-side navigation and, once
+	// that completes, fires a partial revalidation GET against the route data.
+	// If we return before that revalidation fires, a subsequent Link click can
+	// be aborted mid-flight by the queued revalidation (ERR_ABORTED on the new
+	// route's .data fetch), leaving the test on the old page.
+	if (postRes.status() === 202) {
+		await page.waitForResponse(
+			(res) =>
+				res.request().method() === "GET" &&
+				res.url().includes(".data") &&
+				!/__(?:success|error)=/.test(res.url()),
+		);
+	}
 }
 
 export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {

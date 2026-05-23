@@ -4,6 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@react-router/serve@7.15.0': 38a61caab4f8dc67c82ecfb17507d5a650ea7b632b4e58a369c0aa4583611c87
+  kysely@0.29.0: 6f395b25414c1ef852485fa3a03d2d521816064697d8c4bff337e2b24d19daa6
+
 importers:
 
   .:
@@ -46,7 +50,7 @@ importers:
         version: 7.15.0(react-router@7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@6.0.3)
       '@react-router/serve':
         specifier: 7.15.0
-        version: 7.15.0(react-router@7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@6.0.3)
+        version: 7.15.0(patch_hash=38a61caab4f8dc67c82ecfb17507d5a650ea7b632b4e58a369c0aa4583611c87)(react-router@7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@6.0.3)
       '@remix-run/form-data-parser':
         specifier: 0.17.0
         version: 0.17.0
@@ -100,7 +104,7 @@ importers:
         version: 1.1.8
       kysely:
         specifier: 0.29.0
-        version: 0.29.0
+        version: 0.29.0(patch_hash=6f395b25414c1ef852485fa3a03d2d521816064697d8c4bff337e2b24d19daa6)
       lru-cache:
         specifier: 11.3.6
         version: 11.3.6
@@ -200,7 +204,7 @@ importers:
         version: 1.59.1
       '@react-router/dev':
         specifier: 7.15.0
-        version: 7.15.0(@react-router/serve@7.15.0(react-router@7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@6.0.3))(@types/node@25.6.2)(jiti@2.7.0)(lightningcss@1.32.0)(react-router@7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(tsx@4.21.0)(typescript@6.0.3)(vite@8.0.11(@types/node@25.6.2)(esbuild@0.27.4)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))(yaml@2.9.0)
+        version: 7.15.0(@react-router/serve@7.15.0(patch_hash=38a61caab4f8dc67c82ecfb17507d5a650ea7b632b4e58a369c0aa4583611c87)(react-router@7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@6.0.3))(@types/node@25.6.2)(jiti@2.7.0)(lightningcss@1.32.0)(react-router@7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(tsx@4.21.0)(typescript@6.0.3)(vite@8.0.11(@types/node@25.6.2)(esbuild@0.27.4)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))(yaml@2.9.0)
       '@types/better-sqlite3':
         specifier: 7.6.13
         version: 7.6.13
@@ -6557,7 +6561,7 @@ snapshots:
 
   '@radix-ui/rect@1.1.1': {}
 
-  '@react-router/dev@7.15.0(@react-router/serve@7.15.0(react-router@7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@6.0.3))(@types/node@25.6.2)(jiti@2.7.0)(lightningcss@1.32.0)(react-router@7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(tsx@4.21.0)(typescript@6.0.3)(vite@8.0.11(@types/node@25.6.2)(esbuild@0.27.4)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))(yaml@2.9.0)':
+  '@react-router/dev@7.15.0(@react-router/serve@7.15.0(patch_hash=38a61caab4f8dc67c82ecfb17507d5a650ea7b632b4e58a369c0aa4583611c87)(react-router@7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@6.0.3))(@types/node@25.6.2)(jiti@2.7.0)(lightningcss@1.32.0)(react-router@7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(tsx@4.21.0)(typescript@6.0.3)(vite@8.0.11(@types/node@25.6.2)(esbuild@0.27.4)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))(yaml@2.9.0)':
     dependencies:
       '@babel/core': 7.29.0
       '@babel/generator': 7.29.1
@@ -6590,7 +6594,7 @@ snapshots:
       vite: 8.0.11(@types/node@25.6.2)(esbuild@0.27.4)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0)
       vite-node: 3.2.4(@types/node@25.6.2)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.9.0)
     optionalDependencies:
-      '@react-router/serve': 7.15.0(react-router@7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@6.0.3)
+      '@react-router/serve': 7.15.0(patch_hash=38a61caab4f8dc67c82ecfb17507d5a650ea7b632b4e58a369c0aa4583611c87)(react-router@7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@6.0.3)
       typescript: 6.0.3
     transitivePeerDependencies:
       - '@types/node'
@@ -6622,7 +6626,7 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
-  '@react-router/serve@7.15.0(react-router@7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@6.0.3)':
+  '@react-router/serve@7.15.0(patch_hash=38a61caab4f8dc67c82ecfb17507d5a650ea7b632b4e58a369c0aa4583611c87)(react-router@7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@6.0.3)':
     dependencies:
       '@mjackson/node-fetch-server': 0.2.0
       '@react-router/express': 7.15.0(express@4.22.1)(react-router@7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@6.0.3)
@@ -8476,7 +8480,7 @@ snapshots:
       - '@emnapi/core'
       - '@emnapi/runtime'
 
-  kysely@0.29.0: {}
+  kysely@0.29.0(patch_hash=6f395b25414c1ef852485fa3a03d2d521816064697d8c4bff337e2b24d19daa6): {}
 
   ley@0.8.1:
     dependencies:
