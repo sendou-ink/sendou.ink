@@ -115,6 +115,8 @@
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (Spil alle runder {{bestOf}})",
 	"match.activeRosterMissing.header": "",
 	"match.activeRosterMissing.subtitle": "",
+	"match.droppedOut.header": "",
+	"match.droppedOut.subtitle": "",
 	"match.leagueLocked.header": "",
 	"match.leagueLocked.subtitle": "",
 	"match.locked.header": "",

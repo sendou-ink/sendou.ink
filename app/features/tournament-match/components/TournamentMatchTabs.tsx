@@ -401,6 +401,7 @@ function TournamentMatchRosterTab({
 				inGameName: m.inGameName,
 			})),
 			subbedOut,
+			seed: team.seed,
 		};
 	}
 

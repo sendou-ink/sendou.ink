@@ -4,7 +4,7 @@ import { Divider } from "~/components/Divider";
 import { SendouDialog } from "~/components/elements/Dialog";
 import type { CustomFieldRenderProps } from "~/form";
 import { SendouForm } from "~/form/SendouForm";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { nullFilledArray } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { loader as scrimsLoader } from "../loaders/scrims.server";
@@ -23,7 +23,10 @@ export function ScrimRequestModal({
 }) {
 	const { t, i18n } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof scrimsLoader>();
-	const { formatTime } = useTimeFormat();
+	const { formatter: timeFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+	});
 
 	const timeOptions = post.rangeEnd
 		? generateTimeOptions(
@@ -31,7 +34,7 @@ export function ScrimRequestModal({
 				databaseTimestampToDate(post.rangeEnd),
 			).map((timestamp) => ({
 				value: String(timestamp),
-				label: formatTime(new Date(timestamp)),
+				label: timeFormatter.format(new Date(timestamp)) ?? "",
 			}))
 		: [];
 

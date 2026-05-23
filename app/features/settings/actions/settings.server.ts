@@ -58,12 +58,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 			break;
 		}
-		case "UPDATE_DATE_FORMAT": {
-			await UserRepository.updatePreferences(user.id, {
-				dateFormat: data.newValue,
-			});
-			break;
-		}
 		case "UPDATE_MATCH_PROFILE": {
 			await MatchProfileRepository.updateMatchProfile({
 				userId: user.id,

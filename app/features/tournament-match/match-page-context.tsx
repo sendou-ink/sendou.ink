@@ -77,7 +77,7 @@ export function MatchPageProvider({
 	);
 
 	const turnOfResult =
-		teamOne && teamTwo && data.match.roundMaps
+		teamOne && teamTwo && data.match.roundMaps && !data.matchIsOver
 			? PickBan.turnOf({
 					results: data.results,
 					maps: data.match.roundMaps,
@@ -113,7 +113,6 @@ export function MatchPageProvider({
 		: null;
 
 	const tabs = resolveVisibleTabs({
-		matchIsOver: data.matchIsOver,
 		canReportScore: tournament.canReportScore({
 			matchId: data.match.id,
 			user,
@@ -163,7 +162,6 @@ export function useMatch() {
 }
 
 function resolveVisibleTabs({
-	matchIsOver,
 	canReportScore,
 	canReportWeapons,
 	canJoin,
@@ -176,7 +174,6 @@ function resolveVisibleTabs({
 	leagueRoundLocked,
 	lockedForCast,
 }: {
-	matchIsOver: boolean;
 	canReportScore: boolean;
 	canReportWeapons: boolean;
 	canJoin: boolean;
@@ -208,7 +205,9 @@ function resolveVisibleTabs({
 	if (isAdminEligible) {
 		tabs.push(TAB_KEYS.ADMIN);
 	}
-	if (matchIsOver || hasReportedMaps || hasPickBanEvents) {
+	// matchIsOver with no reports nor pick/ban events = drop-out / forfeit;
+	// no results to show
+	if (hasReportedMaps || hasPickBanEvents) {
 		tabs.push(TAB_KEYS.RESULT);
 	}
 

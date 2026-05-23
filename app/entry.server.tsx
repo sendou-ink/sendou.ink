@@ -26,6 +26,8 @@ import { logger } from "./utils/logger";
 // Reject/cancel all pending promises after 5 seconds
 export const streamTimeout = 5000;
 
+const SENTRY_ENABLED = import.meta.env.VITE_SENTRY_ENABLED === "true";
+
 async function handleRequest(
 	request: Request,
 	responseStatusCode: number,
@@ -69,7 +71,7 @@ async function handleRequest(
 						}),
 					);
 
-					pipe(Sentry.getMetaTagTransformer(body));
+					pipe(SENTRY_ENABLED ? Sentry.getMetaTagTransformer(body) : body);
 				},
 				onShellError(error: unknown) {
 					reject(error);
@@ -128,10 +130,14 @@ process.on("unhandledRejection", (reason: string, p: Promise<any>) => {
 
 // wrapper so we get request id shown in the server logs
 export const handleError: HandleErrorFunction = (error, { request }) => {
-	if (!request.signal.aborted) {
+	if (SENTRY_ENABLED && !request.signal.aborted) {
 		Sentry.captureException(error);
 	}
 	logger.error(error);
 };
-export default Sentry.wrapSentryHandleRequest(handleRequest);
-export const instrumentations = [Sentry.createSentryServerInstrumentation()];
+export default SENTRY_ENABLED
+	? Sentry.wrapSentryHandleRequest(handleRequest)
+	: handleRequest;
+export const instrumentations = SENTRY_ENABLED
+	? [Sentry.createSentryServerInstrumentation()]
+	: [];

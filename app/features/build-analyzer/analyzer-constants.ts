@@ -106,3 +106,6 @@ export const RAINMAKER_SPEED_PENALTY_MODIFIER = 0.8;
 export const UNKNOWN_SHORT = "U";
 
 export const MAX_AP = 57;
+
+export const MAIN_SLOT_AP = 10;
+export const SUB_SLOT_AP = 3;

@@ -20,7 +20,11 @@ import {
 } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import type { Unpacked } from "~/utils/types";
-import { UNKNOWN_SHORT } from "../analyzer-constants";
+import {
+	MAIN_SLOT_AP,
+	SUB_SLOT_AP,
+	UNKNOWN_SHORT,
+} from "../analyzer-constants";
 import type {
 	AbilityPoints,
 	AnalyzedBuild,
@@ -60,7 +64,7 @@ export function buildToAbilityPoints(build: BuildAbilitiesTupleWithUnknown) {
 				continue;
 			}
 
-			const aps = i === 0 ? 10 : 3;
+			const aps = i === 0 ? MAIN_SLOT_AP : SUB_SLOT_AP;
 			const apsDoubled = aps * (abilityDoublerActive ? 2 : 1);
 			const newAp = (result.get(ability) ?? 0) + apsDoubled;
 

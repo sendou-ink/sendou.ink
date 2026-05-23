@@ -11,7 +11,7 @@ import {
 import { resolveDatePlaceholders } from "~/features/chat/chat-utils";
 import { Chat } from "~/features/chat/components/Chat";
 import { useChatContext } from "~/features/chat/useChatContext";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import sideNavStyles from "../SideNav.module.css";
 import styles from "./ChatSidebar.module.css";
 
@@ -65,7 +65,16 @@ function LoadingState({ onClose }: { onClose?: () => void }) {
 function RoomList({ onClose }: { onClose?: () => void }) {
 	const { t } = useTranslation(["common"]);
 	const chatContext = useChatContext()!;
-	const { formatDateTime } = useTimeFormat();
+	const { formatter: headerFormatter } = useDateTimeFormat({
+		month: "numeric",
+		day: "numeric",
+		hour: "numeric",
+		minute: "numeric",
+	});
+	const { formatter: timestampFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+	});
 
 	const rawRouteChatCode = useCurrentRouteChatCode();
 	const routeChatCodes = rawRouteChatCode
@@ -127,13 +136,9 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 											room.isObsolete ? "line-through" : null,
 										)}
 									>
-										{resolveDatePlaceholders(room.header, (d) =>
-											formatDateTime(d, {
-												month: "numeric",
-												day: "numeric",
-												hour: "numeric",
-												minute: "numeric",
-											}),
+										{resolveDatePlaceholders(
+											room.header,
+											(d) => headerFormatter.format(d) ?? "",
 										)}
 									</span>
 									<span className={sideNavStyles.listLinkSubtitle}>
@@ -144,10 +149,9 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 									<span className={styles.unreadBadge}>{unread}</span>
 								) : room.lastMessageTimestamp > 0 ? (
 									<span className={styles.roomTimestamp}>
-										{formatDateTime(new Date(room.lastMessageTimestamp), {
-											hour: "numeric",
-											minute: "numeric",
-										})}
+										{timestampFormatter.format(
+											new Date(room.lastMessageTimestamp),
+										)}
 									</span>
 								) : null}
 							</Button>
@@ -163,7 +167,12 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 	const { t } = useTranslation(["common"]);
 	const chatContext = useChatContext()!;
 	const activeRoom = chatContext.activeRoom!;
-	const { formatDateTime } = useTimeFormat();
+	const { formatter: headerFormatter } = useDateTimeFormat({
+		month: "numeric",
+		day: "numeric",
+		hour: "numeric",
+		minute: "numeric",
+	});
 
 	const otherRoomsUnreadCount = Object.entries(chatContext.unreadCounts)
 		.filter(([code]) => code !== activeRoom)
@@ -234,13 +243,7 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 				>
 					{resolveDatePlaceholders(
 						room?.header ?? t("common:chat.sidebar.title"),
-						(d) =>
-							formatDateTime(d, {
-								month: "numeric",
-								day: "numeric",
-								hour: "numeric",
-								minute: "numeric",
-							}),
+						(d) => headerFormatter.format(d) ?? "",
 					)}
 				</span>
 				{room?.subtitle ? (

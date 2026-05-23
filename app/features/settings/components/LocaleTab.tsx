@@ -4,7 +4,7 @@ import { useUser } from "~/features/auth/core/user";
 import { SelectFormField } from "~/form/fields/SelectFormField";
 import { SendouForm } from "~/form/SendouForm";
 import { languages } from "~/modules/i18n/config";
-import { clockFormatSchema, dateFormatSchema } from "../settings-schemas";
+import { clockFormatSchema } from "../settings-schemas";
 
 export function LocaleTab() {
 	const user = useUser();
@@ -17,19 +17,6 @@ export function LocaleTab() {
 					schema={clockFormatSchema}
 					defaultValues={{
 						newValue: user.preferences.clockFormat ?? "auto",
-					}}
-					autoSubmit
-					revalidateRoot
-					fullWidth
-				>
-					{({ FormField }) => <FormField name="newValue" />}
-				</SendouForm>
-			) : null}
-			{user ? (
-				<SendouForm
-					schema={dateFormatSchema}
-					defaultValues={{
-						newValue: user.preferences.dateFormat ?? "auto",
 					}}
 					autoSubmit
 					revalidateRoot

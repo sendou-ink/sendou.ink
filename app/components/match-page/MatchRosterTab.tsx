@@ -49,6 +49,7 @@ interface RosterTabTeam {
 	/** Sub user ids i.e. those who are not the current active roster */
 	subbedOut?: Array<number>;
 	tier?: { name: TierName; isPlus: boolean };
+	seed?: number | null;
 }
 
 interface MatchRosterTabProps {
@@ -263,6 +264,26 @@ function TeamHeader({
 	const tierText = team.tier
 		? `${team.tier.name.toLowerCase()}${team.tier.isPlus ? "+" : ""}`
 		: undefined;
+	const seedText = typeof team.seed === "number" ? `#${team.seed}` : undefined;
+
+	const meta = (
+		<div className="stack xs horizontal items-center text-lighter">
+			<div className={dotClassName} />
+			{label}
+			{tierText ? (
+				<>
+					<span>•</span>
+					<span className="text-capitalize">{tierText}</span>
+				</>
+			) : null}
+			{seedText ? (
+				<>
+					<span>•</span>
+					<span>{seedText}</span>
+				</>
+			) : null}
+		</div>
+	);
 
 	if (team.team) {
 		return (
@@ -272,18 +293,22 @@ function TeamHeader({
 					identiconInput={team.team.name}
 					size="sm"
 				/>
-				<div className="stack justify-center line-height-tight">
-					<h2 className="text-main-forced font-bold">{team.team.name}</h2>
-					<div className="stack xs horizontal items-center text-lighter">
-						<div className={dotClassName} />
-						{label}
-						{tierText ? (
-							<>
-								<span>•</span>
-								<span className="text-capitalize">{tierText}</span>
-							</>
-						) : null}
-					</div>
+				<div
+					className={clsx(
+						"stack justify-center line-height-tight",
+						styles.teamHeaderText,
+					)}
+				>
+					<h2
+						className={clsx(
+							"text-main-forced font-bold",
+							styles.teamNameHeading,
+						)}
+						title={team.team.name}
+					>
+						{team.team.name}
+					</h2>
+					{meta}
 				</div>
 			</Link>
 		);
@@ -294,18 +319,19 @@ function TeamHeader({
 	return (
 		<div className="stack horizontal sm">
 			<div className={styles.teamAvatar} data-side={side} />
-			<div className="stack justify-center line-height-tight">
-				<h2 className="text-main-forced font-bold">{team.defaultName}</h2>
-				<div className="stack xs horizontal items-center text-lighter">
-					<div className={dotClassName} />
-					{label}
-					{tierText ? (
-						<>
-							<span>•</span>
-							<span className="text-capitalize">{tierText}</span>
-						</>
-					) : null}
-				</div>
+			<div
+				className={clsx(
+					"stack justify-center line-height-tight",
+					styles.teamHeaderText,
+				)}
+			>
+				<h2
+					className={clsx("text-main-forced font-bold", styles.teamNameHeading)}
+					title={team.defaultName}
+				>
+					{team.defaultName}
+				</h2>
+				{meta}
 			</div>
 		</div>
 	);

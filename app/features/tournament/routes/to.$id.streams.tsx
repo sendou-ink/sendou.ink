@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Redirect } from "~/components/Redirect";
 import { tournamentRegisterPage } from "~/utils/urls";
 import { TournamentStream } from "../components/TournamentStream";
+import styles from "../tournament.module.css";
 import { useTournament } from "./to.$id";
 
 export default function TournamentStreamsPage() {
@@ -22,7 +23,7 @@ export default function TournamentStreamsPage() {
 
 	// TODO: link to user page, later tournament team page?
 	return (
-		<div className="stack horizontal lg flex-wrap justify-center">
+		<div className={styles.streamsGrid}>
 			{tournament.streams.map((stream) => (
 				<TournamentStream key={stream.twitchUserName} stream={stream} />
 			))}

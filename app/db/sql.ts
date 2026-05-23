@@ -17,6 +17,8 @@ const LOG_LEVEL = (["trunc", "full", "none"] as const).find(
 	(val) => val === process.env.SQL_LOG,
 );
 
+const SENTRY_ENABLED = import.meta.env.VITE_SENTRY_ENABLED === "true";
+
 const migratedEmptyDb = new Database("db-test.sqlite3").serialize();
 
 invariant(process.env.DB_PATH, "DB_PATH env variable must be set");
@@ -41,7 +43,7 @@ export const db = new Kysely<DB>({
 });
 
 function log(event: LogEvent) {
-	if (event.level === "query") {
+	if (SENTRY_ENABLED && event.level === "query") {
 		// Backdated span so the query nests under the active loader/action span
 		// in Sentry's waterfall. `onlyIfParent: true` skips emission when there's
 		// no active trace (e.g. cron routines), avoiding orphan root spans.

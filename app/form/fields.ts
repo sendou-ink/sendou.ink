@@ -1,5 +1,6 @@
 import * as R from "remeda";
 import { z } from "zod";
+import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
 import {
 	date,
 	falsyToNull,
@@ -559,6 +560,14 @@ export function weaponPool(
 	if (!args.allowDuplicates) {
 		schema = schema.refine(
 			(val) => val.length === R.uniqueBy(val, (item) => item.id).length,
+		);
+	}
+
+	if (args.disableAltSkinDuplicates) {
+		schema = schema.refine(
+			(val) =>
+				val.length ===
+				R.uniqueBy(val, (item) => canonicalWeaponSplId(item.id)).length,
 		);
 	}
 

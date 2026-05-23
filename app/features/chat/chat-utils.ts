@@ -25,10 +25,10 @@ export function datePlaceholder(date: Date): string {
 
 export function resolveDatePlaceholders(
 	text: string,
-	formatDateTime: (date: Date) => string,
+	format: (date: Date) => string,
 ): string {
 	return text.replace(DATE_PLACEHOLDER_PATTERN, (_match, ts) =>
-		formatDateTime(new Date(Number(ts))),
+		format(new Date(Number(ts))),
 	);
 }
 

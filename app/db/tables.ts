@@ -20,6 +20,7 @@ import type { StoredWidget } from "~/features/user-page/core/widgets/types";
 import type { ParticipantResult } from "~/modules/brackets-model";
 import type {
 	Ability,
+	BuildAbilitiesTuple,
 	MainWeaponId,
 	ModeShort,
 	StageId,
@@ -145,8 +146,7 @@ export interface BadgeManager {
 export type BadgeOwner = {
 	badgeId: number;
 	userId: number;
-	/** Which tournament the badge is from, if null was added manually by a badge manager as opposed to once a tournament was finalized. */
-	tournamentId: number | null;
+	count: number;
 };
 
 export interface Build {
@@ -160,28 +160,38 @@ export interface Build {
 	shoesGearSplId: number | null;
 	title: string;
 	updatedAt: Generated<number>;
+	/** 3x4 ability tuple (head/clothes/shoes × main + 3 subs). */
+	abilities: JSONColumnTypeNullable<BuildAbilitiesTuple>;
+	/** Serialized ability+AP combo (e.g. `SSU_30,ISS_10`) used to group identical builds for the popular builds view. */
+	abilitiesSignature: string | null;
 }
 
 export type GearType = "HEAD" | "CLOTHES" | "SHOES";
 
-export interface BuildAbility {
-	ability: Ability;
-	buildId: number;
-	gearType: GearType;
-	slotIndex: number;
-	/** 10 if main ability, 3 if sub */
-	abilityPoints: GeneratedAlways<number>;
-}
-
 export interface BuildWeapon {
 	buildId: number;
 	weaponSplId: MainWeaponId;
-	/** Has the owner of this build reached top 500 of X Rank with this weapon? Denormalized for performance reasons. */
-	isTop500: Generated<DBBoolean>;
-	/** Plus tier or 4 if none. Denormalized for performance reasons. */
-	tier: Generated<number>;
-	/** Last time the build was updated. Denormalized for performance reasons. */
+	/** Alt skins collapse to their base weapon (e.g. Hero Shot Replica `45` → Splattershot `40`). Indexed for the builds-by-weapon, popular, and stats queries so they can filter `= ?` against a covering index instead of `IN (alt skins…)`. */
+	canonicalWeaponSplId: MainWeaponId;
+	/** Mirror of `Build.updatedAt`. Denormalized so the `(canonicalWeaponSplId, sortValue, updatedAt, buildId)` covering index serves the builds-by-weapon list. */
 	updatedAt: Generated<number>;
+	/** Per-weapon sort priority: `plusTier * 2 + (this weapon is top500 ? 0 : 1)` for public builds, NULL for private. */
+	sortValue: number | null;
+}
+
+/** Per-build ability point sums across all gear slots. Used to compute global `abilityPointAverages`. */
+export interface BuildAbilitySum {
+	buildId: number;
+	ability: Ability;
+	abilityPoints: number;
+}
+
+/** Per-weapon, per-build ability point sums. Used to compute per-weapon `abilityPointAverages`. One row per canonical weapon × build × ability with non-zero AP. */
+export interface BuildWeaponAbility {
+	canonicalWeaponSplId: MainWeaponId;
+	buildId: number;
+	ability: Ability;
+	abilityPoints: number;
 }
 
 export type CalendarEventTag = keyof typeof tags;
@@ -453,6 +463,7 @@ export interface ReportedWeapon {
 	mapIndex: number;
 	userId: number;
 	weaponSplId: MainWeaponId;
+	createdAt: Generated<number>;
 }
 
 export interface Skill {
@@ -594,7 +605,10 @@ export interface SavedCalendarEvent {
 export interface TournamentBadgeOwner {
 	badgeId: number;
 	userId: number;
+	/** Which tournament the badge is from, if null was added manually by a badge manager as opposed to once a tournament was finalized. */
 	tournamentId: number | null;
+	/** How many times this badge was awarded to this user from this source. Tournament rows are always 1; manual grants aggregate repeat awards here. */
+	count: Generated<number>;
 }
 
 /** A group is a logical structure used to group multiple rounds together.
@@ -998,15 +1012,6 @@ export interface UserPreferences {
 	 * "12h" = 12 hour format (e.g. 2:00 PM)
 	 * */
 	clockFormat?: "24h" | "12h" | "auto";
-	/**
-	 * What numeric date format the user prefers?
-	 *
-	 * "auto" = use the format the active language defaults to (default value)
-	 * "MDY" = month/day/year (e.g. 4/27/2026)
-	 * "DMY" = day/month/year (e.g. 27/04/2026)
-	 * "YMD" = ISO year-month-day (e.g. 2026-04-27)
-	 * */
-	dateFormat?: "auto" | "MDY" | "DMY" | "YMD";
 	/** Is the new widget based user page enabled? (Supporter early preview) */
 	newProfileEnabled?: boolean;
 	/** Is spoiler-free mode enabled? Hides recent tournament results and scores until the user chooses to reveal them. */
@@ -1361,8 +1366,9 @@ export interface DB {
 	BanLog: BanLog;
 	ModNote: ModNote;
 	Build: Build;
-	BuildAbility: BuildAbility;
+	BuildAbilitySum: BuildAbilitySum;
 	BuildWeapon: BuildWeapon;
+	BuildWeaponAbility: BuildWeaponAbility;
 	CalendarEvent: CalendarEvent;
 	CalendarEventBadge: CalendarEventBadge;
 	CalendarEventDate: CalendarEventDate;

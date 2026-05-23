@@ -302,6 +302,7 @@ export const newBuildBaseSchema = z.object({
 		maxCount: 5,
 		disableSorting: true,
 		disableFavorites: true,
+		disableAltSkinDuplicates: true,
 	}),
 	head: customField({ initialValue: null }, headGearIdSchema),
 	clothes: customField({ initialValue: null }, clothesGearIdSchema),

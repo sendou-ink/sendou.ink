@@ -5,7 +5,10 @@ import { Link, useFetcher } from "react-router";
 import invariant from "~/utils/invariant";
 import { SendouButton } from "../../../../components/elements/Button";
 import { logger } from "../../../../utils/logger";
-import { tournamentTeamPage } from "../../../../utils/urls";
+import {
+	tournamentBracketsPage,
+	tournamentTeamPage,
+} from "../../../../utils/urls";
 import { useUser } from "../../../auth/core/user";
 import { TOURNAMENT } from "../../../tournament/tournament-constants";
 import type { Bracket, Standing } from "../../core/Bracket";
@@ -321,9 +324,11 @@ function StandingsTable({
 											tournamentId: bracket.tournament.ctx.id,
 											tournamentTeamId: s.team.id,
 										})}
+										className={styles.teamNameLink}
+										title={s.team.name}
 									>
-										{s.team.name}{" "}
-									</Link>
+										{s.team.name}
+									</Link>{" "}
 									{s.team.droppedOut ? (
 										<span className="text-warning text-xxxs font-bold">
 											Drop-out
@@ -485,7 +490,16 @@ function EditableDestination({
 				overridenDestination &&
 				overridenDestination.idx !== destination?.idx ? (
 				<td className="text-theme font-bold">
-					<span>→ {overridenDestination.name}</span>
+					<Link
+						to={tournamentBracketsPage({
+							tournamentId: source.tournament.ctx.id,
+							bracketIdx: overridenDestination.idx,
+						})}
+						className={styles.destinationLink}
+						defaultShouldRevalidate={false}
+					>
+						→ {overridenDestination.name}
+					</Link>
 				</td>
 			) : destination && overridenDestination !== null ? (
 				<td
@@ -493,7 +507,16 @@ function EditableDestination({
 						"italic text-lighter": !allMatchesFinished,
 					})}
 				>
-					<span>→ {destination.name}</span>
+					<Link
+						to={tournamentBracketsPage({
+							tournamentId: source.tournament.ctx.id,
+							bracketIdx: destination.idx,
+						})}
+						className={styles.destinationLink}
+						defaultShouldRevalidate={false}
+					>
+						→ {destination.name}
+					</Link>
 				</td>
 			) : (
 				<td />

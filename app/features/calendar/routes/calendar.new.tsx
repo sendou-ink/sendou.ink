@@ -22,8 +22,8 @@ import { SubmitButton } from "~/components/SubmitButton";
 import type { CalendarEventTag, Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
 import {
@@ -137,7 +137,10 @@ export default function CalendarNewEventPage() {
 function TemplateTournamentForm() {
 	const { recentTournaments } = useLoaderData<typeof loader>();
 	const [eventId, setEventId] = React.useState("");
-	const { formatDate } = useTimeFormat();
+	const { formatter } = useDateTimeFormat({
+		month: "numeric",
+		day: "numeric",
+	});
 
 	if (!recentTournaments) return null;
 
@@ -153,13 +156,8 @@ function TemplateTournamentForm() {
 					>
 						<option value="">Select a template</option>
 						{recentTournaments.map((event) => (
-							<option key={event.id} value={event.id} suppressHydrationWarning>
-								{event.name} (
-								{formatDate(databaseTimestampToDate(event.startTime), {
-									month: "numeric",
-									day: "numeric",
-								})}
-								)
+							<option key={event.id} value={event.id}>
+								{event.name} ({formatter.format(event.startTime) ?? ""})
 							</option>
 						))}
 					</select>

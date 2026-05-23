@@ -5,15 +5,12 @@ import { Link } from "react-router";
 import type { GearType, Tables, UserWithPlusTier } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type { BuildWeaponWithTop500Info } from "~/features/builds/builds-types";
-import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type {
 	Ability as AbilityType,
 	BuildAbilitiesTuple,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import { altWeaponIdToId } from "~/modules/in-game-lists/weapon-ids";
-import { databaseTimestampToDate } from "~/utils/dates";
+import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
 import { gearTypeToInitial } from "~/utils/strings";
 import {
 	analyzerPage,
@@ -31,6 +28,7 @@ import { LinkButton, SendouButton } from "./elements/Button";
 import { SendouPopover } from "./elements/Popover";
 import { FormWithConfirm } from "./FormWithConfirm";
 import { Image } from "./Image";
+import { LocaleTime } from "./LocaleTime";
 
 interface BuildProps {
 	build: Pick<
@@ -55,8 +53,6 @@ interface BuildProps {
 export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 	const user = useUser();
 	const { t } = useTranslation(["weapons", "builds", "common", "game-misc"]);
-	const { formatDate } = useTimeFormat();
-	const isHydrated = useHydrated();
 
 	const {
 		id,
@@ -122,17 +118,15 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 								<Lock size={16} /> {t("common:build.private")}
 							</div>
 						) : null}
-						<time
-							className={clsx("whitespace-nowrap", { invisible: !isHydrated })}
-						>
-							{isHydrated
-								? formatDate(databaseTimestampToDate(updatedAt), {
-										day: "numeric",
-										month: "numeric",
-										year: "numeric",
-									})
-								: "t"}
-						</time>
+						<LocaleTime
+							date={updatedAt}
+							options={{
+								day: "numeric",
+								month: "numeric",
+								year: "numeric",
+							}}
+							className="whitespace-nowrap"
+						/>
 					</div>
 				</div>
 			</div>
@@ -234,8 +228,7 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 }
 
 function RoundWeaponImage({ weapon }: { weapon: BuildWeaponWithTop500Info }) {
-	const normalizedWeaponSplId =
-		altWeaponIdToId.get(weapon.weaponSplId) ?? weapon.weaponSplId;
+	const normalizedWeaponSplId = canonicalWeaponSplId(weapon.weaponSplId);
 
 	const { t } = useTranslation(["weapons"]);
 	const slug = mySlugify(

@@ -166,13 +166,16 @@ function ResultsTable({ standings }: { standings: Standing[] }) {
 									})}
 									className={styles.standingsTeamName}
 									data-testid="result-team-name"
+									title={standing.team.name}
 								>
 									<Avatar
 										size="xs"
 										url={teamLogoSrc}
 										identiconInput={standing.team.name}
-									/>{" "}
-									{standing.team.name}
+									/>
+									<span className={styles.standingsTeamNameText}>
+										{standing.team.name}
+									</span>
 								</Link>
 							</td>
 							<td>

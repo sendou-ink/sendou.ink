@@ -37,6 +37,7 @@
 - one file can have many components
 - all texts should be provided translations via the i18next library's `useTranslations` hook's `t` function
 - instead of `&&` operator for conditional rendering, use the ternary operator
+- for localized user-readable time strings use `<LocaleTime />`, `<LocaleTimeRange>` or `useFormatDistanceToNow`. If needed use `useDateTimeFormat` directly. NEVER use e.g. `toLocaleString` directly as it does not include users' language selection.
 
 ## Remix/React Router
 

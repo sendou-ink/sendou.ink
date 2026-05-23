@@ -19,7 +19,11 @@ import {
 } from "../core/match-timeline";
 import * as SendouQMatch from "../core/SendouQMatch";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
-import { MatchmadeRejoinSection, TrustedRejoinSection } from "./RejoinSections";
+import {
+	MatchmadeRejoinSection,
+	OffSeasonRejoinSection,
+	TrustedRejoinSection,
+} from "./RejoinSections";
 import styles from "./SendouQMatchActionTab.module.css";
 
 export function SendouQMatchActionTab({
@@ -212,12 +216,18 @@ function RequeueTab({
 	return (
 		<SendouTabPanel id={TAB_KEYS.ACTION}>
 			{isStaffOnly || !viewerGroup || !user ? (
-				showTimeline ? (
-					<MatchTimeline compact teams={teams} score={score} maps={maps} />
-				) : null
+				<div className={styles.rematchContent}>
+					{showTimeline ? (
+						<MatchTimeline compact teams={teams} score={score} maps={maps} />
+					) : null}
+					{isStaffOnly && awaitingConfirmation ? (
+						<ScoreConfirmerSection data={data} />
+					) : null}
+				</div>
 			) : (
 				<div className={styles.rematchContent}>
-					{viewerGroup.matchmade ? (
+					{data.isOffSeason ? <OffSeasonRejoinSection /> : null}
+					{!data.isOffSeason && viewerGroup.matchmade ? (
 						<MatchmadeRejoinSection
 							data={data}
 							viewerGroup={viewerGroup}
@@ -226,7 +236,8 @@ function RequeueTab({
 							isOnReporterTeam={isOnReporterTeam}
 						/>
 					) : null}
-					{!viewerGroup.matchmade &&
+					{!data.isOffSeason &&
+					!viewerGroup.matchmade &&
 					(!awaitingConfirmation || isOnReporterTeam) ? (
 						<TrustedRejoinSection
 							viewerGroup={viewerGroup}

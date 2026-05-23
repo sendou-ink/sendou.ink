@@ -826,14 +826,13 @@ export async function reportMapWinner({
 
 	// Confirmation flow: score is already decisive (first team reported the set-ending map)
 	if (scoreAlreadyDecisive) {
-		// Staff sees the Undo view in awaiting state and cannot reach this path via the UI
-		if (isStaffReport) return { status: "STALE" };
 		return handleMatchConfirmation({
 			match,
 			winnerId,
 			reportedByUserId,
 			existingAlphaWins,
 			mapsToWin,
+			isStaffReport,
 		});
 	}
 
@@ -906,18 +905,16 @@ async function handleMatchConfirmation({
 	reportedByUserId,
 	existingAlphaWins,
 	mapsToWin,
+	isStaffReport,
 }: {
 	match: NonNullable<Awaited<ReturnType<typeof findById>>>;
 	winnerId: number;
 	reportedByUserId: number;
 	existingAlphaWins: number;
 	mapsToWin: number;
+	isStaffReport?: boolean;
 }): Promise<ReportMapWinnerResult> {
 	const members = buildMembers(match);
-	const reporterGroupId = members.find(
-		(m) => m.id === reportedByUserId,
-	)?.groupId;
-	invariant(reporterGroupId, "Reporter is not a member of any group");
 
 	// Find the deciding map (last map with a winner)
 	const decidingMap = match.mapList
@@ -929,15 +926,28 @@ async function handleMatchConfirmation({
 		? members.find((m) => m.id === decidingMap.reportedByUserId)?.groupId
 		: undefined;
 
-	// Same team re-reporting
-	if (reporterGroupId === originalReporterGroupId) {
-		return { status: "STALE" };
-	}
+	// Staff confirms on behalf of the non-reporting team; their group is the one
+	// still ACTIVE and needs to be deactivated when the match finalizes.
+	const groupToDeactivate = isStaffReport
+		? originalReporterGroupId === match.groupAlpha.id
+			? match.groupBravo.id
+			: match.groupAlpha.id
+		: members.find((m) => m.id === reportedByUserId)?.groupId;
+	invariant(groupToDeactivate, "Reporter is not a member of any group");
 
-	// Other team reports a different winner for the deciding map
-	if (winnerId !== decidingMap.winnerGroupId) {
-		await SQGroupRepository.setAsInactive(reporterGroupId);
-		return { status: "SCORE_DISAGREEMENT" };
+	if (!isStaffReport) {
+		// Same team re-reporting
+		if (groupToDeactivate === originalReporterGroupId) {
+			return { status: "STALE" };
+		}
+
+		// Other team reports a different winner for the deciding map
+		if (winnerId !== decidingMap.winnerGroupId) {
+			await SQGroupRepository.setAsInactive(groupToDeactivate);
+			return { status: "SCORE_DISAGREEMENT" };
+		}
+	} else if (winnerId !== decidingMap.winnerGroupId) {
+		return { status: "STALE" };
 	}
 
 	// Other team confirms the score — finalize
@@ -957,7 +967,8 @@ async function handleMatchConfirmation({
 		winnerGroupId,
 		loserGroupId,
 		confirmedByUserId: reportedByUserId,
-		preFinalize: (trx) => SQGroupRepository.setAsInactive(reporterGroupId, trx),
+		preFinalize: (trx) =>
+			SQGroupRepository.setAsInactive(groupToDeactivate, trx),
 	});
 
 	return { status: "MATCH_FINALIZED" };

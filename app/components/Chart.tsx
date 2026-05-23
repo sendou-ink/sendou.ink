@@ -3,8 +3,8 @@ import * as React from "react";
 import { type AxisOptions, Chart as ReactChart } from "react-charts";
 import type { TooltipRendererProps } from "react-charts/types/components/TooltipRenderer";
 import { Theme, useTheme } from "~/features/theme/core/provider";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import styles from "./Chart.module.css";
 
 export default function Chart({
@@ -24,7 +24,10 @@ export default function Chart({
 }) {
 	const theme = useTheme();
 	const isHydrated = useHydrated();
-	const { formatDate } = useTimeFormat();
+	const { formatter: scaleFormatter } = useDateTimeFormat({
+		day: "numeric",
+		month: "numeric",
+	});
 
 	const primaryAxis = React.useMemo<
 		AxisOptions<(typeof options)[number]["data"][number]>
@@ -37,17 +40,14 @@ export default function Chart({
 			formatters: {
 				scale: (val: any) => {
 					if (val instanceof Date) {
-						return formatDate(val, {
-							day: "numeric",
-							month: "numeric",
-						});
+						return scaleFormatter.format(val);
 					}
 
 					return val;
 				},
 			},
 		}),
-		[formatDate, xAxis],
+		[scaleFormatter, xAxis],
 	);
 
 	const secondaryAxes = React.useMemo<
@@ -105,7 +105,11 @@ function ChartTooltip({
 	headerSuffix = "",
 	valueSuffix = "",
 }: ChartTooltipProps) {
-	const { formatDate } = useTimeFormat();
+	const { formatter: headerFormatter } = useDateTimeFormat({
+		weekday: "short",
+		day: "numeric",
+		month: "numeric",
+	});
 	const dataPoints = focusedDatum?.interactiveGroup ?? [];
 
 	const header = () => {
@@ -113,11 +117,7 @@ function ChartTooltip({
 		if (!primaryValue) return null;
 
 		if (primaryValue instanceof Date) {
-			return formatDate(primaryValue, {
-				weekday: "short",
-				day: "numeric",
-				month: "numeric",
-			});
+			return headerFormatter.format(primaryValue);
 		}
 
 		return primaryValue;

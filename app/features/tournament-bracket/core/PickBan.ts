@@ -83,6 +83,8 @@ export function turnOf({
 			if (!mapList) return null;
 			// there exists an unplayed map
 			if (mapList.length > results.length) return null;
+			// match was completed without per-game results (e.g. drop-out)
+			if (results.length === 0) return null;
 
 			if (
 				isSetOverByResults({ count: maps.count, results, countType: maps.type })

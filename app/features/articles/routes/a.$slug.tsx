@@ -1,9 +1,9 @@
 import * as React from "react";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { Markdown } from "~/components/Markdown";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -53,20 +53,20 @@ export const meta: MetaFunction = (args) => {
 
 export default function ArticlePage() {
 	const data = useLoaderData<typeof loader>();
-	const { formatDate } = useTimeFormat();
 	return (
 		<Main>
 			<article className="article">
 				<h1>{data.title}</h1>
 				<div className="text-sm text-lighter">
 					by <Author /> •{" "}
-					<time>
-						{formatDate(new Date(data.date), {
+					<LocaleTime
+						date={new Date(data.date)}
+						options={{
 							day: "numeric",
 							month: "numeric",
 							year: "numeric",
-						})}
-					</time>
+						}}
+					/>
 				</div>
 				<Markdown>
 					{contentWithoutLeadingTitle(data.content, data.title)}

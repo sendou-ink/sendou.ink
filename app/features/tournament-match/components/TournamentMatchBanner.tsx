@@ -1,5 +1,12 @@
 import { differenceInMinutes } from "date-fns";
-import { Hourglass, Lock, MousePointerClick, Users, X } from "lucide-react";
+import {
+	Flag,
+	Hourglass,
+	Lock,
+	MousePointerClick,
+	Users,
+	X,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
@@ -20,8 +27,8 @@ import {
 	resolveLeagueRoundStartDate,
 } from "~/features/tournament/tournament-utils";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -34,7 +41,11 @@ export function TournamentMatchBanner({
 	data: TournamentMatchLoaderData;
 }) {
 	const { t } = useTranslation(["tournament"]);
-	const { formatDate } = useTimeFormat();
+	const { formatter: leagueRoundDateFormatter } = useDateTimeFormat({
+		day: "numeric",
+		month: "numeric",
+		year: "numeric",
+	});
 	const tournament = useTournament();
 	const {
 		currentMap,
@@ -49,6 +60,11 @@ export function TournamentMatchBanner({
 	const opponentOne = data.match.opponentOne;
 	const opponentTwo = data.match.opponentTwo;
 	const isMissingTeam = !opponentOne?.id || !opponentTwo?.id;
+
+	const droppedOutTeamName = resolveDroppedOutTeamName({
+		data,
+		tournament,
+	});
 
 	const leagueRoundLocked = isLeagueRoundLocked(tournament, data.match.roundId);
 	const leagueRoundStartDate = leagueRoundLocked
@@ -85,11 +101,8 @@ export function TournamentMatchBanner({
 					subtitle={
 						leagueRoundStartDate
 							? t("tournament:match.leagueLocked.subtitle", {
-									date: formatDate(leagueRoundStartDate, {
-										day: "numeric",
-										month: "numeric",
-										year: "numeric",
-									}),
+									date:
+										leagueRoundDateFormatter.format(leagueRoundStartDate) ?? "",
 								})
 							: undefined
 					}
@@ -120,9 +133,19 @@ export function TournamentMatchBanner({
 					testId="active-roster-needed-text"
 				/>
 			) : data.matchIsOver ? (
-				<MultiMatchBanner
-					stageIds={data.results.map((result) => result.stageId)}
-				/>
+				droppedOutTeamName ? (
+					<IconBanner
+						icon={<Flag size={32} />}
+						header={t("tournament:match.droppedOut.header")}
+						subtitle={t("tournament:match.droppedOut.subtitle", {
+							team: droppedOutTeamName,
+						})}
+					/>
+				) : (
+					<MultiMatchBanner
+						stageIds={data.results.map((result) => result.stageId)}
+					/>
+				)
 			) : pickBanBanner ? (
 				<IconBanner
 					icon={pickBanBanner.icon}
@@ -309,6 +332,8 @@ function resolveCurrentMinutes({
 	tournament: ReturnType<typeof useTournament>;
 	currentTime: Date;
 }): number {
+	if (data.matchIsOver) return 0;
+
 	const opponentOneId = data.match.opponentOne?.id;
 	const opponentTwoId = data.match.opponentTwo?.id;
 	if (!opponentOneId || !opponentTwoId) return 0;
@@ -416,6 +441,26 @@ function resolvePickBanBanner(
 			teamName: pickingTeam.name,
 		}),
 	};
+}
+
+function resolveDroppedOutTeamName({
+	data,
+	tournament,
+}: {
+	data: TournamentMatchLoaderData;
+	tournament: ReturnType<typeof useTournament>;
+}): string | null {
+	if (!data.matchIsOver || data.results.length > 0) return null;
+
+	const droppedOutId =
+		data.match.opponentOne?.result === "loss"
+			? data.match.opponentOne.id
+			: data.match.opponentTwo?.result === "loss"
+				? data.match.opponentTwo.id
+				: null;
+	if (!droppedOutId) return null;
+
+	return tournament.teamById(droppedOutId)?.name ?? null;
 }
 
 function resolveBannerGames({

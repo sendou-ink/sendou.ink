@@ -77,68 +77,41 @@ describe("abilityPointCountsToAverages", () => {
 });
 
 describe("popularBuilds", () => {
-	test("calculates popular build", () => {
-		const builds = popularBuilds([
-			...new Array(10).fill(null).map(() => ({
-				abilities: [{ ability: "QR" as const, abilityPoints: 57 }],
-			})),
-			{
-				abilities: [{ ability: "BRU" as const, abilityPoints: 57 }],
-			},
-		]);
+	test("expands a single signature into ability rows", () => {
+		const builds = popularBuilds([{ abilitiesSignature: "QR_57", count: 10 }]);
 
 		expect(builds.length).toBe(1);
 		expect(builds[0].count).toBe(10);
 		expect(builds[0].abilities[0].ability).toBe("QR");
 	});
 
-	test("calculates second most popular build (sorted by count)", () => {
+	test("preserves the SQL-provided order across signatures", () => {
 		const builds = popularBuilds([
-			...new Array(10).fill(null).map(() => ({
-				abilities: [{ ability: "QR" as const, abilityPoints: 57 }],
-			})),
-			...new Array(3).fill(null).map(() => ({
-				abilities: [{ ability: "SS" as const, abilityPoints: 57 }],
-			})),
-			...new Array(5).fill(null).map(() => ({
-				abilities: [{ ability: "SSU" as const, abilityPoints: 57 }],
-			})),
+			{ abilitiesSignature: "QR_57", count: 10 },
+			{ abilitiesSignature: "SSU_57", count: 5 },
+			{ abilitiesSignature: "SS_57", count: 3 },
 		]);
 
 		expect(builds.length).toBe(3);
 		expect(builds[1].abilities[0].ability).toBe("SSU");
 	});
 
-	test("sums up abilities", () => {
+	test("hides repeated count when consecutive rows share a count", () => {
 		const builds = popularBuilds([
-			{ abilities: [{ ability: "QR" as const, abilityPoints: 57 }] },
-			{
-				abilities: [
-					{ ability: "QR" as const, abilityPoints: 10 },
-					{ ability: "QR" as const, abilityPoints: 47 },
-				],
-			},
+			{ abilitiesSignature: "QR_57", count: 4 },
+			{ abilitiesSignature: "SSU_57", count: 4 },
 		]);
 
-		expect(builds.length).toBe(1);
+		expect(builds[0].count).toBe(4);
+		expect(builds[1].count).toBeNull();
 	});
 
-	test("sorts abilities", () => {
+	test("preserves the order of abilities within a signature", () => {
 		const builds = popularBuilds([
-			{
-				abilities: [
-					{ ability: "QR" as const, abilityPoints: 10 },
-					{ ability: "SS" as const, abilityPoints: 47 },
-				],
-			},
-			{
-				abilities: [
-					{ ability: "QR" as const, abilityPoints: 10 },
-					{ ability: "SS" as const, abilityPoints: 47 },
-				],
-			},
+			{ abilitiesSignature: "SS_47,QR_10", count: 2 },
 		]);
 
+		expect(builds[0].abilities[0].ability).toBe("SS");
 		expect(builds[0].abilities[1].ability).toBe("QR");
 	});
 });
