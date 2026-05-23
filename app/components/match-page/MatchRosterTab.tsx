@@ -293,8 +293,21 @@ function TeamHeader({
 					identiconInput={team.team.name}
 					size="sm"
 				/>
-				<div className="stack justify-center line-height-tight">
-					<h2 className="text-main-forced font-bold">{team.team.name}</h2>
+				<div
+					className={clsx(
+						"stack justify-center line-height-tight",
+						styles.teamHeaderText,
+					)}
+				>
+					<h2
+						className={clsx(
+							"text-main-forced font-bold",
+							styles.teamNameHeading,
+						)}
+						title={team.team.name}
+					>
+						{team.team.name}
+					</h2>
 					{meta}
 				</div>
 			</Link>
@@ -306,8 +319,18 @@ function TeamHeader({
 	return (
 		<div className="stack horizontal sm">
 			<div className={styles.teamAvatar} data-side={side} />
-			<div className="stack justify-center line-height-tight">
-				<h2 className="text-main-forced font-bold">{team.defaultName}</h2>
+			<div
+				className={clsx(
+					"stack justify-center line-height-tight",
+					styles.teamHeaderText,
+				)}
+			>
+				<h2
+					className={clsx("text-main-forced font-bold", styles.teamNameHeading)}
+					title={team.defaultName}
+				>
+					{team.defaultName}
+				</h2>
 				{meta}
 			</div>
 		</div>

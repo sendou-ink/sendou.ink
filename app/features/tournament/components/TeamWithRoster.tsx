@@ -49,11 +49,14 @@ export function TeamWithRoster({
 							to={teamPageUrl}
 							className={styles.teamWithRosterTeamName}
 							data-testid="team-name"
+							title={team.name}
 						>
 							{team.name}
 						</Link>
 					) : (
-						<span className={styles.teamWithRosterTeamName}>{team.name}</span>
+						<span className={styles.teamWithRosterTeamName} title={team.name}>
+							{team.name}
+						</span>
 					)}
 				</div>
 				<ul className={styles.teamWithRosterMembers}>

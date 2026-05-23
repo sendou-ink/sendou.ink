@@ -1,8 +1,10 @@
 .joinContent {
 	display: grid;
 	grid-template-areas: "time x" "qr join";
+	grid-template-columns: auto minmax(0, max-content);
 	gap: var(--s-1) var(--s-4);
 	justify-content: center;
+	max-width: 100%;
 }
 
 .joinInfo {
@@ -10,6 +12,7 @@
 	flex-direction: column;
 	grid-area: join;
 	gap: var(--s-2);
+	min-width: 0;
 }
 
 .infoHeader {
@@ -23,6 +26,13 @@
 	font-size: var(--font-lg);
 	font-weight: var(--weight-semi);
 	letter-spacing: 1px;
+}
+
+.infoValueTruncate {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 400px;
 }
 
 .qrCodeContainer {

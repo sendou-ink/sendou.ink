@@ -273,6 +273,15 @@ a.match:hover {
 		padding-inline: var(--s-2);
 	}
 
+	& td a.teamNameLink {
+		display: inline-block;
+		max-width: 240px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		vertical-align: middle;
+	}
+
 	& tbody tr:nth-child(odd) {
 		background-color: var(--color-bg-high);
 	}

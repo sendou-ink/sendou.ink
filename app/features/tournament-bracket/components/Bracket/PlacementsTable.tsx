@@ -324,9 +324,11 @@ function StandingsTable({
 											tournamentId: bracket.tournament.ctx.id,
 											tournamentTeamId: s.team.id,
 										})}
+										className={styles.teamNameLink}
+										title={s.team.name}
 									>
-										{s.team.name}{" "}
-									</Link>
+										{s.team.name}
+									</Link>{" "}
 									{s.team.droppedOut ? (
 										<span className="text-warning text-xxxs font-bold">
 											Drop-out
