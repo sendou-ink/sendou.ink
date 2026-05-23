@@ -707,6 +707,24 @@ export function userSearchOptional(
 	});
 }
 
+export function tournamentSearchOptional(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "tournament-search" }>,
+			"type" | "initialValue" | "required"
+		>
+	>,
+) {
+	return z.preprocess(falsyToNull, id.nullable()).register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "tournament-search",
+		initialValue: null,
+		required: false,
+	});
+}
+
 export function badges(
 	args: WithTypedTranslationKeys<
 		Omit<Extract<FormField, { type: "badges" }>, "type" | "initialValue">

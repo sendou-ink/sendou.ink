@@ -17,6 +17,7 @@ import { StageSelectFormField } from "./fields/StageSelectFormField";
 import { SwitchFormField } from "./fields/SwitchFormField";
 import { TextareaFormField } from "./fields/TextareaFormField";
 import { TimeRangeFormField } from "./fields/TimeRangeFormField";
+import { TournamentSearchFormField } from "./fields/TournamentSearchFormField";
 import { UserSearchFormField } from "./fields/UserSearchFormField";
 import {
 	WeaponPoolFormField,
@@ -363,6 +364,17 @@ export function FormField({
 	if (formField.type === "user-search") {
 		return (
 			<UserSearchFormField
+				{...commonProps}
+				{...formField}
+				value={value as number | null}
+				onChange={handleChange as (v: number | null) => void}
+			/>
+		);
+	}
+
+	if (formField.type === "tournament-search") {
+		return (
+			<TournamentSearchFormField
 				{...commonProps}
 				{...formField}
 				value={value as number | null}

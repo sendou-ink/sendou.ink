@@ -1,7 +1,10 @@
 import type { Page } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { scrimsNewFormSchema } from "~/features/scrims/scrims-schemas";
+import {
+	scrimsNewFormSchema,
+	submitMapListFormSchema,
+} from "~/features/scrims/scrims-schemas";
 import { newScrimPostPage, scrimPage, scrimsPage } from "~/utils/urls";
 import {
 	expect,
@@ -251,6 +254,10 @@ test.describe("Scrims", () => {
 
 		const scrimUrl = scrimPage(1);
 
+		const mapListForm = createFormHelpers(page, submitMapListFormSchema, {
+			submitTestId: "submit-map-list-button",
+		});
+
 		// ADMIN opens the Action tab — the map list form is shown immediately
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: scrimUrl });
@@ -258,14 +265,16 @@ test.describe("Scrims", () => {
 		await expect(page.getByTestId("scrim-map-list-form")).toBeVisible();
 
 		// ADMIN submits a tournament-based map list (Swim or Sink)
-		await page.getByTestId("source-radio-tournament").click();
+		await page
+			.getByLabel(mapListForm.getItemLabel("source", "TOURNAMENT"))
+			.click();
 		await page.getByRole("button", { name: /Tournament search/i }).click();
 		await page.getByTestId("tournament-search-input").fill("Swim or Sink");
 		await expect(
 			page.getByTestId("tournament-search-item").first(),
 		).toBeVisible();
 		await page.getByTestId("tournament-search-item").first().click();
-		await submit(page, "submit-map-list-button");
+		await waitForPOSTResponse(page, () => mapListForm.submit());
 		await expect(page.getByTestId("map-list-row-ALPHA")).toContainText(
 			"Tournament",
 		);
@@ -275,9 +284,9 @@ test.describe("Scrims", () => {
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({ page, url: scrimUrl });
 		await page.getByRole("tab", { name: "Action" }).click();
-		await page.getByTestId("source-radio-pool").click();
-		await page.getByTestId("pool-input").fill(TEST_POOL_SERIALIZED);
-		await submit(page, "submit-map-list-button");
+		await page.getByLabel(mapListForm.getItemLabel("source", "POOL")).click();
+		await mapListForm.fill("serializedPool", TEST_POOL_SERIALIZED);
+		await waitForPOSTResponse(page, () => mapListForm.submit());
 		await expect(page.getByTestId("report-score-button")).toBeVisible();
 		await expect(page.getByTestId("map-list-row-BRAVO")).toContainText("Pool");
 
@@ -319,9 +328,9 @@ test.describe("Scrims", () => {
 		await expect(page.getByTestId("scrim-map-list-form")).toBeVisible();
 
 		// Re-submit ALPHA's list, this time as a pool URL
-		await page.getByTestId("source-radio-pool").click();
-		await page.getByTestId("pool-input").fill(TEST_POOL_SERIALIZED);
-		await submit(page, "submit-map-list-button");
+		await page.getByLabel(mapListForm.getItemLabel("source", "POOL")).click();
+		await mapListForm.fill("serializedPool", TEST_POOL_SERIALIZED);
+		await waitForPOSTResponse(page, () => mapListForm.submit());
 		await expect(page.getByTestId("map-list-row-ALPHA")).toContainText("Pool");
 
 		// Verify stats tab reflects the played maps

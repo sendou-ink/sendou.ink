@@ -4,13 +4,19 @@
 	gap: var(--s-4);
 	align-items: stretch;
 	width: 100%;
+	container-type: inline-size;
 }
 
 .intro {
 	text-align: center;
 	color: var(--color-text-high);
-	max-width: 36rem;
+	max-width: 32rem;
+	font-size: var(--font-xs);
 	margin-inline: auto;
+
+	@container (max-width: 599px) {
+		max-width: 18rem;
+	}
 }
 
 .mapListsSummary {

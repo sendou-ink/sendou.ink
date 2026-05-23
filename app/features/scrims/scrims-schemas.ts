@@ -5,14 +5,17 @@ import {
 	datetimeRequired,
 	dualSelectOptional,
 	idConstant,
+	radioGroup,
 	select,
 	selectDynamicOptional,
 	selectOptional,
 	stringConstant,
 	textAreaOptional,
 	textAreaRequired,
+	textFieldOptional,
 	timeRangeOptional,
 	toggle,
+	tournamentSearchOptional,
 } from "~/form/fields";
 import {
 	_action,
@@ -26,6 +29,7 @@ import {
 } from "~/utils/zod";
 import { associationIdentifierSchema } from "../associations/associations-schemas";
 import { LUTI_DIVS, SCRIM } from "./scrims-constants";
+import { parseMapPoolInput } from "./scrims-utils";
 
 const deletePostSchema = z.object({
 	_action: _action("DELETE_POST"),
@@ -175,22 +179,45 @@ export const scrimsActionSchema = z.union([
 	persistScrimFiltersSchema,
 ]);
 
-// xxx: can we use discriminated union?
-const submitMapListSchema = z
+export const submitMapListFormSchema = z
 	.object({
-		_action: _action("SUBMIT_MAP_LIST"),
-		source: z.enum(["TOURNAMENT", "POOL"]),
-		tournamentId: z.preprocess(falsyToNull, id.nullable()).optional(),
-		serializedPool: z.preprocess(falsyToNull, z.string().nullable()).optional(),
+		_action: stringConstant("SUBMIT_MAP_LIST"),
+		source: radioGroup({
+			label: "labels.scrimMapSource",
+			items: [
+				{ label: "options.scrimMapSource.POOL", value: "POOL" },
+				{ label: "options.scrimMapSource.TOURNAMENT", value: "TOURNAMENT" },
+			],
+		}),
+		serializedPool: textFieldOptional({
+			label: "labels.scrimMapPool",
+			bottomText: "bottomTexts.scrimMapPool",
+			maxLength: 500,
+			validate: {
+				func: (val) => parseMapPoolInput(val) !== null,
+				message: "forms:errors.invalidMapPool",
+			},
+		}),
+		tournamentId: tournamentSearchOptional({
+			label: "labels.scrimMapsTournament",
+		}),
 	})
-	.refine(
-		(value) =>
-			(value.source === "TOURNAMENT" &&
-				value.tournamentId &&
-				!value.serializedPool) ||
-			(value.source === "POOL" && value.serializedPool && !value.tournamentId),
-		{ message: "exactly one of tournamentId / serializedPool required" },
-	);
+	.superRefine((data, ctx) => {
+		if (data.source === "POOL" && !data.serializedPool) {
+			ctx.addIssue({
+				path: ["serializedPool"],
+				message: "forms:errors.invalidMapPool",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+		if (data.source === "TOURNAMENT" && !data.tournamentId) {
+			ctx.addIssue({
+				path: ["tournamentId"],
+				message: "forms:errors.scrimTournamentRequired",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+	});
 
 const removeMapListSchema = z.object({
 	_action: _action("REMOVE_MAP_LIST"),
@@ -212,7 +239,7 @@ const replayMapSchema = z.object({
 
 export const scrimIdActionSchema = z.union([
 	cancelScrimFormSchema,
-	submitMapListSchema,
+	submitMapListFormSchema,
 	removeMapListSchema,
 	reportMapSchema,
 	undoMapSchema,

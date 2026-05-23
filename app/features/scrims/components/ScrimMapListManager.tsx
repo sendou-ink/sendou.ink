@@ -1,4 +1,4 @@
-import { Map, Trash2 } from "lucide-react";
+import { Map as MapIcon, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
@@ -26,7 +26,7 @@ export function ScrimMapListManager({ viewerSide, standalone }: Props) {
 			isOpen={isOpen}
 			onOpenChange={setIsOpen}
 			collapsedLabel={t("scrims:mapByMap.manageMapLists")}
-			collapsedIcon={<Map size={16} />}
+			collapsedIcon={<MapIcon size={16} />}
 			standalone={standalone}
 		>
 			<div className={styles.root}>
@@ -35,7 +35,7 @@ export function ScrimMapListManager({ viewerSide, standalone }: Props) {
 						<p className={styles.intro}>
 							{t("scrims:mapByMap.submitList.intro")}
 						</p>
-						<ScrimMapListForm viewerSide={viewerSide} />
+						<ScrimMapListForm />
 					</>
 				)}
 				<MapListsSummary viewerSide={viewerSide} />

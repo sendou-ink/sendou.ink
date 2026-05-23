@@ -139,6 +139,10 @@ interface FormFieldUserSearch<T extends string> extends FormFieldBase<T> {
 	required: boolean;
 }
 
+interface FormFieldTournamentSearch<T extends string> extends FormFieldBase<T> {
+	required: boolean;
+}
+
 interface FormFieldBadges<T extends string> extends FormFieldBase<T> {
 	maxCount?: number;
 }
@@ -178,6 +182,7 @@ export type FormField<V extends string = string> =
 	| FormFieldTimeRange<"time-range">
 	| FormFieldFieldset<"fieldset", z.ZodRawShape>
 	| FormFieldUserSearch<"user-search">
+	| FormFieldTournamentSearch<"tournament-search">
 	| FormFieldBadges<"badges">
 	| FormFieldStageSelect<"stage-select">
 	| FormFieldWeaponSelect<"weapon-select">;

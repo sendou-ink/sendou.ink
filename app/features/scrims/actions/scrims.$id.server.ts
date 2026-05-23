@@ -19,6 +19,7 @@ import * as ScrimMapListRepository from "../ScrimMapListRepository.server";
 import * as ScrimMapRepository from "../ScrimMapRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { scrimIdActionSchema } from "../scrims-schemas";
+import { parseMapPoolInput } from "../scrims-utils";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const { id } = parseParams({ params, schema: idObject });
@@ -77,12 +78,22 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		case "SUBMIT_MAP_LIST": {
 			const { viewerSide } = await loadMapByMapContext({ post, user });
 
+			const serializedPool =
+				data.source === "POOL"
+					? (parseMapPoolInput(data.serializedPool!)?.serialized ?? null)
+					: null;
+
+			errorToastIfFalsy(
+				data.source !== "POOL" || serializedPool,
+				"Invalid map pool",
+			);
+
 			await ScrimMapListRepository.submitMapListAndGenerateIfNeeded({
 				scrimPostId: post.id,
 				side: viewerSide,
 				source: data.source,
 				tournamentId: data.tournamentId ?? null,
-				serializedPool: data.serializedPool ?? null,
+				serializedPool,
 			});
 
 			broadcastRevalidate({ post, user });
