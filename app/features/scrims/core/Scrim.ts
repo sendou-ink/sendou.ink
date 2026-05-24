@@ -154,16 +154,14 @@ export function isTrackingLocked(
 	mapLists: Pick<Tables["ScrimMapList"], "updatedAt">[] = [],
 	now: number = Date.now(),
 ): boolean {
-	const lastReportedAt = maps.reduce<number | null>((acc, m) => {
-		if (m.reportedAt === null) return acc;
-		return acc === null || m.reportedAt > acc ? m.reportedAt : acc;
-	}, null);
+	const latestReported = R.firstBy(
+		maps.filter((m) => m.reportedAt !== null),
+		[(m) => m.reportedAt!, "desc"],
+	);
+	const latestList = R.firstBy(mapLists, [(l) => l.updatedAt, "desc"]);
 
-	const lastListUpdatedAt = mapLists.reduce<number | null>((acc, l) => {
-		return acc === null || l.updatedAt > acc ? l.updatedAt : acc;
-	}, null);
-
-	const referenceSeconds = lastReportedAt ?? lastListUpdatedAt;
+	const referenceSeconds =
+		latestReported?.reportedAt ?? latestList?.updatedAt ?? null;
 	if (referenceSeconds === null) return false;
 
 	const elapsedHours = (now - referenceSeconds * 1000) / (60 * 60 * 1000);
@@ -178,8 +176,8 @@ export function isTrackingLocked(
 export function nextMapIndex(
 	maps: Pick<Tables["ScrimMap"], "index">[],
 ): number {
-	if (maps.length === 0) return 0;
-	return Math.max(...maps.map((m) => m.index)) + 1;
+	const latest = R.firstBy(maps, [(m) => m.index, "desc"]);
+	return latest ? latest.index + 1 : 0;
 }
 
 /**
@@ -189,10 +187,8 @@ export function nextMapIndex(
 export function lastReportedMap<
 	T extends Pick<Tables["ScrimMap"], "index" | "reportedAt">,
 >(maps: T[]): T | undefined {
-	let latest: T | undefined;
-	for (const map of maps) {
-		if (map.reportedAt === null) continue;
-		if (!latest || map.index > latest.index) latest = map;
-	}
-	return latest;
+	return R.firstBy(
+		maps.filter((m) => m.reportedAt !== null),
+		[(m) => m.index, "desc"],
+	);
 }

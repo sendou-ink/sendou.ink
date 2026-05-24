@@ -18,23 +18,27 @@ type ScrimMapRow = Pick<
  * Merges the submitted map lists into a single deduplicated MapPool.
  */
 export function unionPool(lists: ResolvedMapListRow[]): MapPool {
-	const merged: MapPoolObject = {
-		TW: [],
-		SZ: [],
-		TC: [],
-		RM: [],
-		CB: [],
-	};
-
-	const addPair = (mode: ModeShort, stageId: StageId) => {
-		if (!merged[mode].includes(stageId)) merged[mode].push(stageId);
+	const buckets: Record<ModeShort, Set<StageId>> = {
+		TW: new Set(),
+		SZ: new Set(),
+		TC: new Set(),
+		RM: new Set(),
+		CB: new Set(),
 	};
 
 	for (const list of lists) {
 		for (const { mode, stageId } of list.mapList) {
-			addPair(mode, stageId);
+			buckets[mode].add(stageId);
 		}
 	}
+
+	const merged: MapPoolObject = {
+		TW: [...buckets.TW],
+		SZ: [...buckets.SZ],
+		TC: [...buckets.TC],
+		RM: [...buckets.RM],
+		CB: [...buckets.CB],
+	};
 
 	return new MapPool(merged);
 }

@@ -1,7 +1,7 @@
 .locked {
 	padding: var(--s-3);
-	border-radius: var(--rounded);
-	background: var(--bg-lighter);
-	color: var(--text-lighter);
+	border-radius: var(--radius-box);
+	background: var(--color-bg-high);
+	color: var(--color-text-high);
 	text-align: center;
 }

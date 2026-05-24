@@ -28,8 +28,8 @@
 
 .collapseButton {
 	position: absolute;
-	top: var(--s-2);
-	right: var(--s-3);
+	inset-block-start: var(--s-2);
+	inset-inline-end: var(--s-3);
 
 	& svg {
 		min-width: 22px;
