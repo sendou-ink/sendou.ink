@@ -558,6 +558,7 @@ export class Tournament {
 					groupCount: Math.ceil(participantsCount / teamsPerGroup),
 					seedOrdering: ["groups.seed_optimized"],
 					hasAbDivisions: selectedSettings?.hasAbDivisions ?? false,
+					...(this.isLeagueDivision ? { independentRounds: true } : {}),
 				};
 			}
 			case "swiss": {

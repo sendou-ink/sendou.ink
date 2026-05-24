@@ -111,6 +111,16 @@ export interface StageSettings {
 	manualOrdering?: number[][];
 
 	/**
+	 * Whether matches in a round-robin stage are playable independently of each other.
+	 *
+	 * - If `false` (default), only round 1 matches start `Ready`; later rounds start
+	 *   `Locked` and unlock as both opponents complete the previous round.
+	 * - If `true`, every match with two opponents starts `Ready` (used by league
+	 *   formats where weeks are scheduled independently and may be played out of order).
+	 */
+	independentRounds?: boolean;
+
+	/**
 	 * Optional final between semi-final losers.
 	 */
 	consolationFinal?: boolean;
