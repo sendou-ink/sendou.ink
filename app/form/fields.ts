@@ -21,6 +21,7 @@ import type {
 	FormFieldFieldset,
 	FormFieldInputGroup,
 	FormFieldItems,
+	FormFieldItemsWithImage,
 	FormFieldSelect,
 	FormsTranslationKey,
 	SelectOption,
@@ -427,6 +428,24 @@ export function radioGroup<V extends string>(
 		type: "radio-group",
 		initialValue: args.items[0].value,
 	});
+}
+
+export function radioGroupDynamic(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "radio-group-dynamic" }>,
+			"type" | "initialValue"
+		>
+	>,
+) {
+	return z.string().register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "radio-group-dynamic",
+		initialValue: null,
+	}) as unknown as z.ZodType<string> &
+		FieldWithOptions<FormFieldItemsWithImage<string>>;
 }
 
 type DateTimeArgs = WithTypedTranslationKeys<

@@ -1,6 +1,0 @@
-.form {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-3);
-	width: 100%;
-}

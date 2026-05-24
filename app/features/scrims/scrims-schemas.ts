@@ -5,7 +5,7 @@ import {
 	datetimeRequired,
 	dualSelectOptional,
 	idConstant,
-	radioGroup,
+	radioGroupDynamic,
 	select,
 	selectDynamicOptional,
 	selectOptional,
@@ -182,12 +182,8 @@ export const scrimsActionSchema = z.union([
 export const submitMapListFormSchema = z
 	.object({
 		_action: stringConstant("SUBMIT_MAP_LIST"),
-		source: radioGroup({
+		source: radioGroupDynamic({
 			label: "labels.scrimMapSource",
-			items: [
-				{ label: "options.scrimMapSource.POOL", value: "POOL" },
-				{ label: "options.scrimMapSource.TOURNAMENT", value: "TOURNAMENT" },
-			],
 		}),
 		serializedPool: textFieldOptional({
 			label: "labels.scrimMapPool",
@@ -203,6 +199,13 @@ export const submitMapListFormSchema = z
 		}),
 	})
 	.superRefine((data, ctx) => {
+		if (!["POOL", "TOURNAMENT", "FROM_POST"].includes(data.source)) {
+			ctx.addIssue({
+				path: ["source"],
+				message: "forms:errors.required",
+				code: z.ZodIssueCode.custom,
+			});
+		}
 		if (data.source === "POOL" && !data.serializedPool) {
 			ctx.addIssue({
 				path: ["serializedPool"],

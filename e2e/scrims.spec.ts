@@ -264,27 +264,24 @@ test.describe("Scrims", () => {
 		await page.getByRole("tab", { name: "Action" }).click();
 		await expect(page.getByTestId("scrim-map-list-form")).toBeVisible();
 
-		// ADMIN submits a tournament-based map list (Swim or Sink)
-		await page
-			.getByLabel(mapListForm.getItemLabel("source", "TOURNAMENT"))
-			.click();
-		await page.getByRole("button", { name: /Tournament search/i }).click();
-		await page.getByTestId("tournament-search-input").fill("Swim or Sink");
-		await expect(
-			page.getByTestId("tournament-search-item").first(),
-		).toBeVisible();
-		await page.getByTestId("tournament-search-item").first().click();
+		// ADMIN submits a map list — the post's tournament (Swim or Sink) is the
+		// default source for the scrim author's team, so they can submit without
+		// running the tournament search. A first map is generated immediately
+		// so the page transitions to the report UI with the map-list manager
+		// collapsed.
 		await waitForPOSTResponse(page, () => mapListForm.submit());
+		await expect(page.getByTestId("report-score-button")).toBeVisible();
+		await page.getByRole("button", { name: /Manage map lists/i }).click();
 		await expect(page.getByTestId("map-list-row-ALPHA")).toContainText(
-			"Tournament",
+			"Swim or Sink",
 		);
 
-		// NZAP submits a pool-URL-based map list — the first map is generated
-		// immediately and the report UI is shown
+		// NZAP submits a pool-URL-based map list. They have no list yet so the
+		// map-list manager is already expanded on mount.
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({ page, url: scrimUrl });
 		await page.getByRole("tab", { name: "Action" }).click();
-		await page.getByLabel(mapListForm.getItemLabel("source", "POOL")).click();
+		await page.getByLabel("Pool URL").click();
 		await mapListForm.fill("serializedPool", TEST_POOL_SERIALIZED);
 		await waitForPOSTResponse(page, () => mapListForm.submit());
 		await expect(page.getByTestId("report-score-button")).toBeVisible();
@@ -317,18 +314,18 @@ test.describe("Scrims", () => {
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: scrimUrl });
 		await page.getByRole("tab", { name: "Action" }).click();
+		await page.getByRole("button", { name: /Manage map lists/i }).click();
 
-		// Remove ALPHA's tournament list
-		await waitForPOSTResponse(page, async () => {
-			await page
-				.getByTestId("map-list-row-ALPHA")
-				.getByTestId("remove-list-button")
-				.click();
-		});
+		// Remove ALPHA's tournament list (trash icon opens a confirm dialog)
+		await page
+			.getByTestId("map-list-row-ALPHA")
+			.getByLabel(/Remove list/i)
+			.click();
+		await waitForPOSTResponse(page, () => submit(page, "confirm-button"));
 		await expect(page.getByTestId("scrim-map-list-form")).toBeVisible();
 
 		// Re-submit ALPHA's list, this time as a pool URL
-		await page.getByLabel(mapListForm.getItemLabel("source", "POOL")).click();
+		await page.getByLabel("Pool URL").click();
 		await mapListForm.fill("serializedPool", TEST_POOL_SERIALIZED);
 		await waitForPOSTResponse(page, () => mapListForm.submit());
 		await expect(page.getByTestId("map-list-row-ALPHA")).toContainText("Pool");

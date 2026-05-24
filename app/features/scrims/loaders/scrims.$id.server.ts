@@ -1,7 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { chatAccessible } from "~/features/chat/chat-utils";
 import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
-import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { notFoundIfFalsy } from "../../../utils/remix.server";
@@ -55,21 +54,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		anyUserPrefersNoScreen,
 		anyUserPrefersNoSplatnet,
 		roomLinks,
-		tournamentMapPool: post.mapsTournament
-			? await resolveTournamentMapPool(post.mapsTournament.id, user)
-			: null,
 		mapByMap,
 	};
 };
-
-async function resolveTournamentMapPool(
-	tournamentId: number,
-	user: AuthenticatedUser,
-) {
-	const data = await tournamentDataCached({ tournamentId, user });
-
-	return data.ctx.toSetMapPool;
-}
 
 async function resolveMapByMap({
 	post,

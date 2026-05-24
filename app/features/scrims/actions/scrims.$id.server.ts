@@ -78,6 +78,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		case "SUBMIT_MAP_LIST": {
 			const { viewerSide } = await loadMapByMapContext({ post, user });
 
+			if (data.source === "FROM_POST") {
+				errorToastIfFalsy(post.mapsTournament, "Post has no tournament to use");
+			}
+
 			const serializedPool =
 				data.source === "POOL"
 					? (parseMapPoolInput(data.serializedPool!)?.serialized ?? null)
@@ -88,11 +92,17 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				"Invalid map pool",
 			);
 
+			const resolvedSource: "POOL" | "TOURNAMENT" =
+				data.source === "POOL" ? "POOL" : "TOURNAMENT";
+
 			await ScrimMapListRepository.submitMapListAndGenerateIfNeeded({
 				scrimPostId: post.id,
 				side: viewerSide,
-				source: data.source,
-				tournamentId: data.tournamentId ?? null,
+				source: resolvedSource,
+				tournamentId:
+					data.source === "FROM_POST"
+						? post.mapsTournament!.id
+						: (data.tournamentId ?? null),
 				serializedPool,
 			});
 

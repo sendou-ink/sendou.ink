@@ -1,5 +1,3 @@
-// xxx: probably just merge with Scrim
-
 import type { Tables } from "~/db/tables";
 import * as MapList from "~/features/map-list-generator/core/MapList";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";

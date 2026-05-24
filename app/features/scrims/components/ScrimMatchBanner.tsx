@@ -1,8 +1,7 @@
 import { sub } from "date-fns";
 import { Ban, Swords } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Link, useLoaderData } from "react-router";
-import { Image } from "~/components/Image";
+import { useLoaderData } from "react-router";
 import {
 	IconBanner,
 	MatchBanner,
@@ -10,15 +9,10 @@ import {
 } from "~/components/match-page/MatchBanner";
 import { useUser } from "~/features/auth/core/user";
 import { resolveActiveRoomLink } from "~/features/chat/room-link-utils";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { logger } from "~/utils/logger";
-import type { SerializeFrom } from "~/utils/remix";
-import { mapsPageWithMapPool, navIconUrl } from "~/utils/urls";
 import * as Scrim from "../core/Scrim";
 import type { loader } from "../loaders/scrims.$id.server";
 import { SCRIM } from "../scrims-constants";
-import type { ScrimPost } from "../scrims-types";
 
 export function ScrimMatchBanner() {
 	const { t } = useTranslation(["scrims"]);
@@ -42,8 +36,6 @@ export function ScrimMatchBanner() {
 			</MatchBannerContainer>
 		);
 	}
-
-	const hasMaps = data.post.maps || data.tournamentMapPool;
 
 	const acceptedRequest = data.post.requests[0];
 	const activeRoomLink = resolveActiveRoomLink({
@@ -82,43 +74,7 @@ export function ScrimMatchBanner() {
 				screenLegal={screenLegal}
 				joinPool={joinPool}
 				joinViaQr={joinViaQr}
-				topRight={
-					hasMaps ? (
-						<MapsLink
-							maps={data.post.maps}
-							tournamentMapPool={data.tournamentMapPool}
-						/>
-					) : undefined
-				}
 			/>
 		</MatchBannerContainer>
-	);
-}
-
-function MapsLink({
-	maps,
-	tournamentMapPool,
-}: Pick<ScrimPost, "maps"> &
-	Pick<SerializeFrom<typeof loader>, "tournamentMapPool">) {
-	const mapPool = () => {
-		if (tournamentMapPool) return new MapPool(tournamentMapPool);
-
-		if (maps === "SZ") return MapPool.SZ;
-		if (maps === "RANKED") return MapPool.ANARCHY;
-		if (maps === "ALL") return MapPool.ALL;
-
-		logger.info(`Unknown scrim maps value: ${maps}`);
-		return MapPool.ALL;
-	};
-
-	return (
-		<Link to={mapsPageWithMapPool(mapPool())}>
-			<Image
-				path={navIconUrl("maps")}
-				width={32}
-				height={32}
-				alt="Generate maplist"
-			/>
-		</Link>
 	);
 }

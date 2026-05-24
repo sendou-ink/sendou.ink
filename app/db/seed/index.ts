@@ -3206,7 +3206,7 @@ async function scrimPosts() {
 			.concat({ userId: ADMIN_ID, isOwner: 1 }),
 		managedByAnyone: true,
 		maps: null,
-		mapsTournamentId: null,
+		mapsTournamentId: 4,
 	});
 	await ScrimPostRepository.insertRequest({
 		scrimPostId: adminVsNzapPostId,

@@ -29,6 +29,7 @@ import type {
 	ArrayItemRenderContext,
 	BadgeOption,
 	CustomFieldRenderProps,
+	FormFieldItemsWithImage,
 	FormField as FormFieldType,
 	SelectOption,
 } from "./types";
@@ -219,6 +220,22 @@ export function FormField({
 			<RadioGroupFormField
 				{...commonProps}
 				{...formField}
+				value={value as string}
+				onChange={handleChange as (v: string) => void}
+			/>
+		);
+	}
+
+	if (formField.type === "radio-group-dynamic") {
+		if (!options) {
+			throw new Error("Dynamic radio group form field requires options prop");
+		}
+		const radioItems = options as FormFieldItemsWithImage<string>;
+		return (
+			<RadioGroupFormField
+				{...commonProps}
+				{...formField}
+				items={radioItems}
 				value={value as string}
 				onChange={handleChange as (v: string) => void}
 			/>

@@ -152,6 +152,11 @@ interface FormFieldSelectDynamic<T extends string> extends FormFieldBase<T> {
 	searchable?: boolean;
 }
 
+interface FormFieldRadioGroupDynamic<T extends string>
+	extends FormFieldBase<T> {
+	minLength?: number;
+}
+
 interface FormFieldStageSelect<T extends string> extends FormFieldBase<T> {
 	required: boolean;
 }
@@ -169,6 +174,7 @@ export type FormField<V extends string = string> =
 	| FormFieldSelectDynamic<"select-dynamic">
 	| FormFieldDualSelect<"dual-select", V>
 	| FormFieldInputGroup<"radio-group", V>
+	| FormFieldRadioGroupDynamic<"radio-group-dynamic">
 	| FormFieldInputGroup<"checkbox-group", V>
 	| FormFieldDatetime<"datetime">
 	| FormFieldDatetime<"date">

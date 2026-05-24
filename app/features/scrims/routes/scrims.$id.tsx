@@ -19,7 +19,6 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-// xxx: Top right maps link icon maybe out of place now?
 export default function ScrimPage() {
 	return (
 		<Main>
