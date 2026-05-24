@@ -116,6 +116,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	let emitMatchUpdate = false;
 	let emitTournamentUpdate = false;
+	let setIsOver = false;
 	let endedDroppedMatchIds: number[] = [];
 
 	switch (data._action) {
@@ -245,6 +246,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
+			setIsOver = setOver;
 
 			break;
 		}
@@ -767,6 +769,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
+			setIsOver = true;
 
 			break;
 		}
@@ -814,6 +817,12 @@ export const action: ActionFunction = async ({ params, request }) => {
 	}
 
 	clearTournamentDataCache(tournamentId);
+
+	// update RunningTournaments to make sure sidebar is not showing stale matches at the end
+	// of the tournament in case the TO is not finalizing the tournament right away
+	if (setIsOver) {
+		await tournamentFromDB({ tournamentId, user });
+	}
 
 	if (emitMatchUpdate) {
 		ChatSystemMessage.send([
