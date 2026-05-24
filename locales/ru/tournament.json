@@ -105,6 +105,7 @@
 	"team.placement.footer": "",
 	"bracket.waiting": "Сетка будет показана как только {{count}} команд зарегистрируется",
 	"bracket.waiting.checkin": "Сетка будет показана как только {{count}} команд пройдут чек-ин",
+	"bracket.waiting.advanced": "",
 	"bracket.wip": "Данная сетка является предварительной и может быть изменена.",
 	"bracket.progress.thanksForPlaying": "Спасибо за участие в {{eventName}}!",
 	"bracket.progress.match": "Текущий противник: {{opponent}}",

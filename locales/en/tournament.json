@@ -101,6 +101,7 @@
 	"team.placement.footer": "Overall/Bracket",
 	"bracket.waiting": "Bracket will be shown here when at least {{count}} teams have registered",
 	"bracket.waiting.checkin": "Bracket will be shown here when at least {{count}} teams have checked in",
+	"bracket.waiting.advanced": "Bracket will be shown here when at least {{count}} teams have advanced",
 	"bracket.wip": "This bracket is a preview and subject to change",
 	"bracket.progress.thanksForPlaying": "Thanks for playing in {{eventName}}!",
 	"bracket.progress.match": "Current opponent: {{opponent}}",

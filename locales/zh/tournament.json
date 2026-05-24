@@ -97,6 +97,7 @@
 	"team.placement.footer": "",
 	"bracket.waiting": "至少 {{count}} 支队伍报名后，对战表将显示在这里",
 	"bracket.waiting.checkin": "对战表会在至少 {{count}} 支队伍签到后显示",
+	"bracket.waiting.advanced": "",
 	"bracket.wip": "此对战表为可调整的预览",
 	"bracket.progress.thanksForPlaying": "感谢您参与 {{eventName}}！",
 	"bracket.progress.match": "当前对手: {{opponent}}",

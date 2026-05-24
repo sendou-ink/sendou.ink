@@ -97,6 +97,7 @@
 	"team.placement.footer": "",
 	"bracket.waiting": "ブラケットは、少なくとも {{count}} チームが登録した時点で表示されます",
 	"bracket.waiting.checkin": "ブラケットは最低{{count}}チームがチェックインしてから表示されるよ",
+	"bracket.waiting.advanced": "",
 	"bracket.wip": "このブラケットはまだプレビューで、変更される可能性があります",
 	"bracket.progress.thanksForPlaying": "{{eventName}} への参加ありがとうございます!",
 	"bracket.progress.match": "現在の対戦者: {{opponent}}",

@@ -103,6 +103,7 @@
 	"team.placement.footer": "General/Cuadro",
 	"bracket.waiting": "Cuadro se muestra aquí cuando al menos {{count}} equipos sean registrados",
 	"bracket.waiting.checkin": "Cuadro se muestra aquí cuando al menos {{count}} equipos se hagan check-in",
+	"bracket.waiting.advanced": "",
 	"bracket.wip": "Este cuadro es temporal y puede cambiar",
 	"bracket.progress.thanksForPlaying": "¡Gracias por participar en {{eventName}}!",
 	"bracket.progress.match": "Oponente actual: {{opponent}}",

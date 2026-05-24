@@ -103,6 +103,7 @@
 	"team.placement.footer": "",
 	"bracket.waiting": "O bracket será mostrado aqui quando ao menos {{count}} times estiverem registrados",
 	"bracket.waiting.checkin": "O bracket será mostrado aqui quando pelo menos {{count}} times tiverem feito o check-in",
+	"bracket.waiting.advanced": "",
 	"bracket.wip": "Esse bracket é uma prévia e poderá mudar",
 	"bracket.progress.thanksForPlaying": "Obrigado por participar do(a) {{eventName}}!",
 	"bracket.progress.match": "Oponente atual: {{opponent}}",

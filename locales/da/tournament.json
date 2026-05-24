@@ -101,6 +101,7 @@
 	"team.placement.footer": "",
 	"bracket.waiting": "Her vil turneringsplanen blive vist, så snart{{count}} hold har registreret sig",
 	"bracket.waiting.checkin": "Her vil turneringsplanen blive vist, så snart{{count}} hold er tjekket ind",
+	"bracket.waiting.advanced": "",
 	"bracket.wip": "Denne turneringsplan er en forhåndsvisning og kan blive ændret",
 	"bracket.progress.thanksForPlaying": "Tak fordi du deltog i {{eventName}}!",
 	"bracket.progress.match": "Nuværende modstander: {{opponent}}",

@@ -103,6 +103,7 @@
 	"team.placement.footer": "",
 	"bracket.waiting": "מערכים יופיעו כאן כאשר לפחות {{count}} צוותים נרשמו",
 	"bracket.waiting.checkin": "",
+	"bracket.waiting.advanced": "",
 	"bracket.wip": "מערך זה הוא תצוגה מקדימה ונתון לשינויים",
 	"bracket.progress.thanksForPlaying": "תודה ששיחקתם ב-{{eventName}}!",
 	"bracket.progress.match": "יריב נוכחי: {{opponent}}",

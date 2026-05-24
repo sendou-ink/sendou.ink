@@ -114,8 +114,18 @@ export default function TournamentBracketsPage() {
 		bracket.preview &&
 		isHydrated;
 
-	const waitingForTeamsText = () => {
-		if (bracketIdx > 0 || tournament.regularCheckInStartInThePast) {
+	const waitingForTeamsText = (bracket: BracketType, bracketIdx: number) => {
+		if (bracketIdx > 0) {
+			return bracket.requiresCheckIn
+				? t("tournament:bracket.waiting.checkin", {
+						count: TOURNAMENT.ENOUGH_TEAMS_TO_START,
+					})
+				: t("tournament:bracket.waiting.advanced", {
+						count: TOURNAMENT.ENOUGH_TEAMS_TO_START,
+					});
+		}
+
+		if (tournament.regularCheckInStartInThePast) {
 			return t("tournament:bracket.waiting.checkin", {
 				count: TOURNAMENT.ENOUGH_TEAMS_TO_START,
 			});
@@ -550,7 +560,7 @@ function BracketTabContent({
 }: {
 	bracket: BracketType;
 	bracketIdx: number;
-	waitingForTeamsText: () => string;
+	waitingForTeamsText: (bracket: BracketType, bracketIdx: number) => string;
 	teamsSourceText: () => string | null;
 }) {
 	return (
@@ -560,7 +570,7 @@ function BracketTabContent({
 			) : (
 				<div>
 					<div className="text-center text-lg font-semi-bold text-lighter mt-6">
-						{waitingForTeamsText()}
+						{waitingForTeamsText(bracket, bracketIdx)}
 					</div>
 					{bracket.sources ? (
 						<div className="text-center text-sm font-semi-bold text-lighter mt-2">
