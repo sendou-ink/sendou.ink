@@ -86,7 +86,7 @@ export function ScrimMatchTabs() {
 					},
 				}}
 				maps={resolveTimelineMaps(data, acceptedRequest)}
-				isOngoing={data.mapByMap?.currentMap !== null}
+				isOngoing={!data.mapByMap?.locked && data.mapByMap?.currentMap !== null}
 			/>
 			<ScrimMatchStatsTab />
 		</MatchTabs>
@@ -97,8 +97,11 @@ function resolveTabs(data: ReturnType<typeof useLoaderData<typeof loader>>) {
 	const tabs: Array<(typeof TAB_KEYS)[keyof typeof TAB_KEYS]> = [
 		TAB_KEYS.ROSTERS,
 		TAB_KEYS.JOIN,
-		TAB_KEYS.ACTION,
 	];
+
+	if (!data.mapByMap?.locked) {
+		tabs.push(TAB_KEYS.ACTION);
+	}
 
 	if (data.mapByMap && data.mapByMap.maps.length > 0) {
 		tabs.push(TAB_KEYS.RESULT);

@@ -23,7 +23,7 @@ export function ScrimMatchActionTab() {
 
 	const viewerSide = user ? Scrim.sideOfUser(data.post, user.id) : null;
 
-	if (data.mapByMap.locked) return <LockedSection />;
+	if (data.mapByMap.locked) return null;
 	if (!viewerSide) return <NotParticipantSection />;
 
 	if (!data.mapByMap.currentMap) {
@@ -35,15 +35,6 @@ export function ScrimMatchActionTab() {
 	}
 
 	return <ReportMapSection viewerSide={viewerSide} />;
-}
-
-function LockedSection() {
-	const { t } = useTranslation(["scrims"]);
-	return (
-		<SendouTabPanel id={TAB_KEYS.ACTION}>
-			<div className={styles.locked}>{t("scrims:mapByMap.locked")}</div>
-		</SendouTabPanel>
-	);
 }
 
 function NotParticipantSection() {

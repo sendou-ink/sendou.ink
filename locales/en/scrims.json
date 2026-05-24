@@ -91,7 +91,6 @@
 	"banner.canceled.subtitle": "Reason: {{reason}}",
 	"banner.freeForm.header": "Free form practice",
 	"banner.freeForm.subtitle": "Communicate the maplist with the opponents",
-	"mapByMap.locked": "Map tracking is locked. No further changes can be made.",
 	"mapByMap.nonParticipantNotice": "Only participants can manage map tracking.",
 	"mapByMap.submitList.intro": "Map-by-map tracking is optional — submit a map list to start drawing maps and reporting results for this scrim.",
 	"mapByMap.noCurrentMap": "Waiting for the next map to be generated.",
