@@ -9,6 +9,7 @@ import { SendouSwitch } from "~/components/elements/Switch";
 import { SendouTabPanel } from "~/components/elements/Tabs";
 import { ModeImage, StageImage } from "~/components/Image";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
+import { Table } from "~/components/Table";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import * as ScrimMapByMap from "../core/ScrimMapByMap";
@@ -175,7 +176,7 @@ function StatsTable({
 		});
 
 	return (
-		<table className={styles.table}>
+		<Table>
 			<thead>
 				<tr>
 					<th>{t("scrims:mapByMap.stats.col.label")}</th>
@@ -193,13 +194,13 @@ function StatsTable({
 			<tbody>
 				{sortedRows.map((row) => (
 					<tr key={row.key}>
-						<td>{row.label}</td>
+						<td className={styles.labelCell}>{row.label}</td>
 						<td className={styles.cellNum}>{row.wins}</td>
 						<td className={styles.cellNum}>{row.losses}</td>
 						<td className={styles.cellNum}>{Math.round(row.winRate * 100)}%</td>
 					</tr>
 				))}
 			</tbody>
-		</table>
+		</Table>
 	);
 }

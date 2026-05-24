@@ -8,6 +8,7 @@
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
+	justify-content: space-between;
 	gap: var(--s-3);
 }
 
@@ -18,30 +19,8 @@
 	font-size: var(--font-sm);
 }
 
-.table {
-	width: 100%;
-	border-collapse: collapse;
-}
-
-.table th,
-.table td {
-	padding: var(--s-1) var(--s-2);
-	text-align: left;
-}
-
-.table th {
-	color: var(--color-text-high);
-	font-weight: var(--weight-bold);
-	font-size: var(--font-sm);
-	border-bottom: var(--border-style);
-}
-
-.table tbody tr {
-	border-bottom: var(--border-style);
-
-	&:last-child {
-		border-bottom: none;
-	}
+.labelCell {
+	white-space: nowrap;
 }
 
 .cellNum {
@@ -59,6 +38,10 @@
 	display: inline-flex;
 	align-items: center;
 	gap: var(--s-2);
+
+	& > * {
+		flex-shrink: 0;
+	}
 }
 
 .stageImage {
