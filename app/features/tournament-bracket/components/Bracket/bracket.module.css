@@ -273,6 +273,10 @@ a.match:hover {
 		padding-inline: var(--s-2);
 	}
 
+	& td button {
+		height: auto;
+	}
+
 	& td a.teamNameLink {
 		display: inline-block;
 		max-width: 240px;
