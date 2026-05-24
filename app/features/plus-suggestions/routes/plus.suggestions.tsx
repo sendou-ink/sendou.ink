@@ -59,7 +59,7 @@ export default function PlusSuggestionsPage() {
 	const tierVisible = searchParamsToLegalTier(searchParams);
 
 	const handleTierChange = (tier: string) => {
-		setSearchParams({ tier });
+		setSearchParams({ tier }, { replace: true });
 	};
 
 	const visibleSuggestions = data.suggestions.filter(

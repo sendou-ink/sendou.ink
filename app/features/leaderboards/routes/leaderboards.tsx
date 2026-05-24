@@ -108,10 +108,13 @@ export default function LeaderboardsPage() {
 				value={selectValue()}
 				onChange={(e) => {
 					const [type, season] = e.target.value.split(";");
-					setSearchParams({
-						[TYPE_SEARCH_PARAM_KEY]: type,
-						[SEASON_SEARCH_PARAM_KEY]: season,
-					});
+					setSearchParams(
+						{
+							[TYPE_SEARCH_PARAM_KEY]: type,
+							[SEASON_SEARCH_PARAM_KEY]: season,
+						},
+						{ replace: true },
+					);
 				}}
 			>
 				{Seasons.allStarted().map((season) => {

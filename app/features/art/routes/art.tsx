@@ -112,10 +112,16 @@ export default function ArtPage() {
 						key={filteredTag}
 						tags={data.allTags}
 						onSelectionChange={(tagName) => {
-							setSearchParams((prev) => {
-								prev.set(FILTERED_TAG_KEY_SEARCH_PARAM_KEY, tagName as string);
-								return prev;
-							});
+							setSearchParams(
+								(prev) => {
+									prev.set(
+										FILTERED_TAG_KEY_SEARCH_PARAM_KEY,
+										tagName as string,
+									);
+									return prev;
+								},
+								{ replace: true },
+							);
 						}}
 					/>
 				</div>
@@ -128,10 +134,13 @@ export default function ArtPage() {
 						variant="minimal-destructive"
 						icon={<X />}
 						onPress={() => {
-							setSearchParams((prev) => {
-								prev.delete(FILTERED_TAG_KEY_SEARCH_PARAM_KEY);
-								return prev;
-							});
+							setSearchParams(
+								(prev) => {
+									prev.delete(FILTERED_TAG_KEY_SEARCH_PARAM_KEY);
+									return prev;
+								},
+								{ replace: true },
+							);
 						}}
 						data-testid="clear-filter-button"
 					>
@@ -142,13 +151,16 @@ export default function ArtPage() {
 			<SendouTabs
 				selectedKey={selectedTab}
 				onSelectionChange={(key) => {
-					setSearchParams((prev) => {
-						prev.set(TAB_KEY, key as string);
-						if (key === TABS.RECENTLY_UPLOADED) {
-							prev.delete(FILTERED_TAG_KEY_SEARCH_PARAM_KEY);
-						}
-						return prev;
-					});
+					setSearchParams(
+						(prev) => {
+							prev.set(TAB_KEY, key as string);
+							if (key === TABS.RECENTLY_UPLOADED) {
+								prev.delete(FILTERED_TAG_KEY_SEARCH_PARAM_KEY);
+							}
+							return prev;
+						},
+						{ replace: true },
+					);
 				}}
 			>
 				<SendouTabList>

@@ -68,6 +68,7 @@ export default function SettingsPage() {
 		}
 		setSearchParams(next, {
 			defaultShouldRevalidate: false,
+			replace: true,
 		});
 	};
 

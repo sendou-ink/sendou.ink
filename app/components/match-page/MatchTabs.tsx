@@ -56,6 +56,7 @@ export function MatchTabs({ children, tabs }: MatchTabsProps) {
 						{
 							preventScrollReset: true,
 							defaultShouldRevalidate: false,
+							replace: true,
 						},
 					)
 				}
