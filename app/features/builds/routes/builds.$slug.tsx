@@ -71,6 +71,10 @@ export function buildFiltersMeaningfullyChanged(
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	if (isRevalidation(args)) return true;
 
+	if (args.currentParams.slug !== args.nextParams.slug) {
+		return true;
+	}
+
 	if (
 		args.currentUrl.searchParams.get("limit") !==
 		args.nextUrl.searchParams.get("limit")
