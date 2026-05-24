@@ -90,8 +90,6 @@ import {
 } from "./constants";
 import placements from "./placements.json";
 
-// xxx: lets clear room metadata in skalop and make sure every chatCode setting route (scrim) sets metadata
-
 const SENDOUQ_DEFAULT_MAPS: Record<
 	ModeShort,
 	[StageId, StageId, StageId, StageId, StageId, StageId, StageId]
