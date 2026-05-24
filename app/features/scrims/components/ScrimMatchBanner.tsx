@@ -7,9 +7,14 @@ import {
 	MatchBanner,
 	MatchBannerContainer,
 } from "~/components/match-page/MatchBanner";
+import { MatchBannerScheduledTime } from "~/components/match-page/MatchBannerScheduledTime";
+import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
 import { useUser } from "~/features/auth/core/user";
 import { resolveActiveRoomLink } from "~/features/chat/room-link-utils";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import * as Scrim from "../core/Scrim";
 import type { loader } from "../loaders/scrims.$id.server";
 import { SCRIM } from "../scrims-constants";
@@ -21,9 +26,12 @@ export function ScrimMatchBanner() {
 
 	const screenLegal = !data.anyUserPrefersNoScreen;
 
+	const topRow = <ScrimMatchBannerTopRow />;
+
 	if (data.post.canceled) {
 		return (
 			<MatchBannerContainer>
+				{topRow}
 				<IconBanner
 					icon={<Ban size={32} />}
 					header={t("scrims:banner.canceled.header", {
@@ -54,6 +62,7 @@ export function ScrimMatchBanner() {
 	if (currentMap) {
 		return (
 			<MatchBannerContainer>
+				{topRow}
 				<MatchBanner
 					stageId={currentMap.stageId}
 					mode={currentMap.mode}
@@ -67,6 +76,7 @@ export function ScrimMatchBanner() {
 
 	return (
 		<MatchBannerContainer>
+			{topRow}
 			<IconBanner
 				icon={<Swords size={32} />}
 				header={t("scrims:banner.freeForm.header")}
@@ -76,5 +86,20 @@ export function ScrimMatchBanner() {
 				joinViaQr={joinViaQr}
 			/>
 		</MatchBannerContainer>
+	);
+}
+
+function ScrimMatchBannerTopRow() {
+	const data = useLoaderData<typeof loader>();
+
+	const acceptedRequest = data.post.requests.find((r) => r.isAccepted);
+	const scheduledAt = databaseTimestampToDate(
+		acceptedRequest?.at ?? data.post.at,
+	);
+
+	return (
+		<MatchBannerTopRow>
+			<MatchBannerScheduledTime time={scheduledAt} />
+		</MatchBannerTopRow>
 	);
 }

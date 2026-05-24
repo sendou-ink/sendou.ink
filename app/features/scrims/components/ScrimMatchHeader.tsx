@@ -3,10 +3,10 @@ import { useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { MatchPageHeader } from "~/components/match-page/MatchPageHeader";
-import TimePopover from "~/components/TimePopover";
 import { SendouForm } from "~/form/SendouForm";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
+import * as Scrim from "../core/Scrim";
 import type { loader } from "../loaders/scrims.$id.server";
 import { cancelScrimFormSchema } from "../scrims-schemas";
 
@@ -16,12 +16,19 @@ export function ScrimMatchHeader() {
 
 	const allowedToCancel = useHasPermission(data.post, "CANCEL");
 	const isCanceled = Boolean(data.post.canceled);
-	const acceptedRequest = data.post.requests.find((r) => r.isAccepted);
-	const scrimTime = acceptedRequest?.at ?? data.post.at;
 	const canCancel =
 		allowedToCancel &&
 		!isCanceled &&
 		databaseTimestampToDate(data.post.at) > new Date();
+
+	const acceptedRequest = data.post.requests.find((r) => r.isAccepted);
+	const viewerSide = data.mapByMap.viewerSide;
+	const opponentSide =
+		viewerSide === "ALPHA"
+			? acceptedRequest
+			: viewerSide === "BRAVO"
+				? data.post
+				: acceptedRequest;
 
 	return (
 		<MatchPageHeader
@@ -42,18 +49,11 @@ export function ScrimMatchHeader() {
 				) : undefined
 			}
 		>
-			<TimePopover
-				time={databaseTimestampToDate(scrimTime)}
-				options={{
-					weekday: "short",
-					year: "numeric",
-					month: "numeric",
-					day: "numeric",
-					hour: "numeric",
-					minute: "numeric",
-				}}
-				className="text-left"
-			/>
+			{opponentSide
+				? t("scrims:page.vs", {
+						opponent: Scrim.sideDisplayName(opponentSide),
+					})
+				: null}
 		</MatchPageHeader>
 	);
 }

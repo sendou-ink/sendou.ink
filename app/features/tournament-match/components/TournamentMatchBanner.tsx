@@ -19,6 +19,8 @@ import {
 } from "~/components/match-page/MatchBanner";
 import bannerStyles from "~/components/match-page/MatchBanner.module.css";
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
+import { MatchBannerStartedAt } from "~/components/match-page/MatchBannerStartedAt";
+import { MatchBannerTimer } from "~/components/match-page/MatchBannerTimer";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
 import type { TournamentRoundMaps } from "~/db/tables";
 import { useTournament } from "~/features/tournament/routes/to.$id";
@@ -206,10 +208,8 @@ function TournamentMatchBannerTopRow({
 	)
 		return null;
 
-	const totalMinutes = differenceInMinutes(
-		currentTime,
-		databaseTimestampToDate(data.match.startedAt),
-	);
+	const startedAt = databaseTimestampToDate(data.match.startedAt);
+	const totalMinutes = differenceInMinutes(currentTime, startedAt);
 
 	const currentMinutes = resolveCurrentMinutes({
 		data,
@@ -228,15 +228,13 @@ function TournamentMatchBannerTopRow({
 				count: data.match.roundMaps.count,
 				bestOf: data.match.roundMaps.type === "BEST_OF",
 			}}
-			time={
-				data.matchIsOver
-					? undefined
-					: {
-							currentMinutes,
-							totalMinutes,
-						}
-			}
-		/>
+		>
+			{data.matchIsOver ? (
+				<MatchBannerStartedAt time={startedAt} />
+			) : (
+				<MatchBannerTimer time={{ currentMinutes, totalMinutes }} />
+			)}
+		</MatchBannerTopRow>
 	);
 }
 

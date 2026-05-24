@@ -15,6 +15,7 @@ import {
 	MatchBannerContainer,
 } from "~/components/match-page/MatchBanner";
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
+import { MatchBannerTimer } from "~/components/match-page/MatchBannerTimer";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
 import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchPage } from "~/components/match-page/MatchPage";
@@ -80,11 +81,14 @@ export default function MatchPageTestRoute() {
 							count: 5,
 							bestOf: true,
 						}}
-						time={{
-							currentMinutes: 3,
-							totalMinutes: 1,
-						}}
-					/>
+					>
+						<MatchBannerTimer
+							time={{
+								currentMinutes: 3,
+								totalMinutes: 1,
+							}}
+						/>
+					</MatchBannerTopRow>
 					<IconBanner
 						icon={<Ban size={32} />}
 						header={t("q:match.cancelRequested")}

@@ -72,6 +72,7 @@
 	"forms.maps.tournament": "Torneo...",
 	"forms.mapsTournament.title": "Torneo",
 	"page.scheduledScrim": "Scrim programado",
+	"page.vs": "",
 	"associations.title": "Asociaciones",
 	"associations.explanation": "Crea una asociación para buscar en un grupo más pequeño (por ejemplo, con los oponentes habituales de tus prácticas o la división LUTI).",
 	"associations.join.title": "¿Unirse a la asociación {{name}}?",

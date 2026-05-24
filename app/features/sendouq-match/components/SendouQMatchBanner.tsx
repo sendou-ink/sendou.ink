@@ -12,6 +12,8 @@ import {
 } from "~/components/match-page/MatchBanner";
 import bannerStyles from "~/components/match-page/MatchBanner.module.css";
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
+import { MatchBannerStartedAt } from "~/components/match-page/MatchBannerStartedAt";
+import { MatchBannerTimer } from "~/components/match-page/MatchBannerTimer";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
 import { useUser } from "~/features/auth/core/user";
 import { resolveActiveRoomLink } from "~/features/chat/room-link-utils";
@@ -159,18 +161,18 @@ function SendouQMatchBannerTopRow({
 				count: SENDOUQ_BEST_OF,
 				bestOf: true,
 			}}
-			time={
-				data.match.isLocked || awaitingConfirmation
-					? undefined
-					: {
-							currentMinutes: Math.max(
-								0,
-								differenceInMinutes(now, lastReportAt),
-							),
-							totalMinutes: Math.max(0, differenceInMinutes(now, startedAt)),
-						}
-			}
-		/>
+		>
+			{data.match.isLocked || awaitingConfirmation ? (
+				<MatchBannerStartedAt time={startedAt} />
+			) : (
+				<MatchBannerTimer
+					time={{
+						currentMinutes: Math.max(0, differenceInMinutes(now, lastReportAt)),
+						totalMinutes: Math.max(0, differenceInMinutes(now, startedAt)),
+					}}
+				/>
+			)}
+		</MatchBannerTopRow>
 	);
 }
 
