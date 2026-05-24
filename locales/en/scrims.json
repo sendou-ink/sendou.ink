@@ -102,7 +102,6 @@
 	"mapByMap.noListYet": "Not submitted yet",
 	"mapByMap.manageMapLists": "Manage map lists",
 	"mapByMap.poolList": "Pool ({{count}} maps)",
-	"mapByMap.result.empty": "No maps played yet",
 	"mapByMap.result.replayTag": "Replay of map {{index}}",
 	"mapByMap.stats.empty": "No reported maps yet",
 	"mapByMap.stats.restrictToPool": "Restrict to my submitted pool",
