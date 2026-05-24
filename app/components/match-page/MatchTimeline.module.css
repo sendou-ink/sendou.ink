@@ -150,6 +150,22 @@
 	padding: var(--s-1);
 }
 
+.explainerTrigger {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: auto;
+	width: auto;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+	border-radius: var(--radius-full);
+	cursor: pointer;
+}
+
 .subDetail {
 	display: grid;
 	grid-template-columns: max-content 1fr;

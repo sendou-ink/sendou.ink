@@ -266,10 +266,14 @@ function SideResult({
 		<div className={styles.sideResult}>
 			<div className={styles.resultHeader}>
 				{isPicked ? (
-					<MousePointerClick
-						size={14}
-						className={result === "WIN" ? "text-success" : "text-error"}
-						aria-label={t("q:match.timeline.picked")}
+					<ExplainerIcon
+						icon={
+							<MousePointerClick
+								size={14}
+								className={result === "WIN" ? "text-success" : "text-error"}
+							/>
+						}
+						description={t("q:match.timeline.explainer.picked")}
 					/>
 				) : null}
 				<span
@@ -309,7 +313,32 @@ function TimelineEventRow({
 	);
 }
 
+function ExplainerIcon({
+	icon,
+	description,
+}: {
+	icon: React.ReactNode;
+	description: string;
+}) {
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton
+					variant="minimal"
+					className={styles.explainerTrigger}
+					aria-label={description}
+				>
+					{icon}
+				</SendouButton>
+			}
+		>
+			{description}
+		</SendouPopover>
+	);
+}
+
 function TimelinePickBanRow({ event }: { event: TimelinePickBanEvent }) {
+	const { t } = useTranslation(["q"]);
 	const isPick = event.kind === "PICK";
 	const icon = isPick ? (
 		<MousePointerClick
@@ -319,10 +348,13 @@ function TimelinePickBanRow({ event }: { event: TimelinePickBanEvent }) {
 	) : (
 		<X size={32} className={clsx(styles.eventIcon, styles.banIcon)} />
 	);
+	const description = isPick
+		? t("q:match.timeline.explainer.pick")
+		: t("q:match.timeline.explainer.ban");
 
 	return (
 		<TimelineEventRow
-			icon={icon}
+			icon={<ExplainerIcon icon={icon} description={description} />}
 			alphaContent={
 				event.alphaEntries.length > 0 ? (
 					<PickBanGroup entries={event.alphaEntries} side="ALPHA" />
@@ -386,9 +418,15 @@ function TimelineSubstitutionRow({
 }: {
 	substitution: InferredSubstitution;
 }) {
+	const { t } = useTranslation(["q"]);
 	return (
 		<TimelineEventRow
-			icon={<RefreshCcw size={32} className={styles.eventIcon} />}
+			icon={
+				<ExplainerIcon
+					icon={<RefreshCcw size={32} className={styles.eventIcon} />}
+					description={t("q:match.timeline.explainer.substitution")}
+				/>
+			}
 			alphaContent={
 				substitution.side === "ALPHA" ? (
 					<SubstitutionDetail substitution={substitution} />
@@ -431,6 +469,7 @@ function SubstitutionDetail({
 }
 
 function TimelineSpSection({ spChanges }: { spChanges: TimelineSpChanges }) {
+	const { t } = useTranslation(["q"]);
 	const alphaMembersWithDiff = spChanges.alpha.members.filter(
 		(m) => !m.skillDifference.calculated || m.skillDifference.spDiff !== 0,
 	);
@@ -462,7 +501,10 @@ function TimelineSpSection({ spChanges }: { spChanges: TimelineSpChanges }) {
 				) : null}
 			</div>
 			<div className={styles.spIcon}>
-				<TrendingUp size={32} className={styles.eventIcon} />
+				<ExplainerIcon
+					icon={<TrendingUp size={32} className={styles.eventIcon} />}
+					description={t("q:match.timeline.explainer.spChange")}
+				/>
 			</div>
 			<div className={styles.spColumn}>
 				{bravoMembersWithDiff.map((m) => (
