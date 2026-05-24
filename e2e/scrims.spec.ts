@@ -241,10 +241,8 @@ test.describe("Scrims", () => {
 		await page.getByTestId("booked-scrims-tab").click();
 		await page.getByRole("link", { name: "Contact" }).click();
 
-		await page.getByAltText("Generate maplist").click();
-
-		// on /maps page
-		await expect(page.getByText("Create map list")).toBeVisible();
+		await page.getByRole("tab", { name: "Action" }).click();
+		await expect(page.getByTestId("scrim-map-list-form")).toBeVisible();
 	});
 
 	test("map-by-map: lists, report, undo, replay, change list, stats", async ({
@@ -335,13 +333,20 @@ test.describe("Scrims", () => {
 		await expect(page.getByTestId("scrim-stats-root")).toBeVisible();
 
 		// Four reported maps total (Alpha 2 / Bravo 2 from ADMIN's POV).
-		// Sum of wins+losses across byMode rows should equal 4.
-		const winCells = await page
-			.getByTestId("stats-section-byMode")
+		// Switch to "Mode" view so each row groups by mode, and disable the
+		// pool restriction so maps outside ADMIN's resubmitted pool still count.
+		// Sum of wins+losses across rows should equal 4.
+		await page
+			.getByTestId("scrim-stats-root")
+			.getByText("Mode", { exact: true })
+			.click();
+		await page.getByRole("switch").click({ force: true });
+
+		const statsRoot = page.getByTestId("scrim-stats-root");
+		const winCells = await statsRoot
 			.locator("tbody tr td:nth-child(2)")
 			.allInnerTexts();
-		const lossCells = await page
-			.getByTestId("stats-section-byMode")
+		const lossCells = await statsRoot
 			.locator("tbody tr td:nth-child(3)")
 			.allInnerTexts();
 		const total =
