@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 import type { FormFieldProps } from "../types";
 import { ariaAttributes } from "../utils";
 import { FormFieldWrapper } from "./FormFieldWrapper";
@@ -14,6 +15,7 @@ export function InputFormField({
 	label,
 	bottomText,
 	leftAddon,
+	placeholder,
 	maxLength,
 	error,
 	onBlur,
@@ -24,6 +26,11 @@ export function InputFormField({
 	onChange,
 }: InputFormFieldProps) {
 	const id = React.useId();
+	const { t } = useTranslation(["forms"]);
+
+	const translatedPlaceholder = placeholder?.includes(":")
+		? t(placeholder as never)
+		: placeholder;
 
 	return (
 		<FormFieldWrapper
@@ -45,6 +52,7 @@ export function InputFormField({
 					onBlur={() => onBlur?.()}
 					maxLength={maxLength}
 					disabled={disabled}
+					placeholder={translatedPlaceholder}
 					{...ariaAttributes({
 						id,
 						bottomText,

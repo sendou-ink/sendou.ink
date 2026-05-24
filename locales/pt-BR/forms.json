@@ -61,7 +61,7 @@
 	"labels.scrimMapSource": "",
 	"labels.scrimMapPool": "",
 	"labels.scrimMapsTournament": "",
-	"bottomTexts.scrimMapPool": "",
+	"placeholders.scrimMapPool": "",
 	"options.scrimMapSource.POOL": "",
 	"options.scrimMapSource.TOURNAMENT": "",
 	"options.scrimFlexibility.notFlexible": "",

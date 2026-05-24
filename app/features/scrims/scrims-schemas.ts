@@ -189,7 +189,7 @@ export const submitMapListFormSchema = z
 		}),
 		serializedPool: textFieldOptional({
 			label: "labels.scrimMapPool",
-			bottomText: "bottomTexts.scrimMapPool",
+			placeholder: "placeholders.scrimMapPool",
 			maxLength: 500,
 			validate: {
 				func: (val) => parseMapPoolInput(val) !== null,

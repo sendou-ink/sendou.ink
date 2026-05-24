@@ -23,6 +23,7 @@ interface FormFieldText<T extends string> extends FormFieldBase<T> {
 	maxLength: number;
 	toLowerCase?: boolean;
 	leftAddon?: string;
+	placeholder?: string;
 	required: boolean;
 	inputType?: "text" | "number";
 	regExp?: {

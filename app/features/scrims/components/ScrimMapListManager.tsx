@@ -30,14 +30,7 @@ export function ScrimMapListManager({ viewerSide, standalone }: Props) {
 			standalone={standalone}
 		>
 			<div className={styles.root}>
-				{ownList ? null : (
-					<>
-						<p className={styles.intro}>
-							{t("scrims:mapByMap.submitList.intro")}
-						</p>
-						<ScrimMapListForm />
-					</>
-				)}
+				{ownList ? null : <ScrimMapListForm />}
 				<MapListsSummary viewerSide={viewerSide} />
 			</div>
 		</SecondaryAction>

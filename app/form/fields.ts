@@ -33,9 +33,13 @@ export type RequiresDefault<T extends z.ZodType> = T & {
 	_requiresDefault: true;
 };
 
-type WithTypedTranslationKeys<T> = Omit<T, "label" | "bottomText"> & {
+type WithTypedTranslationKeys<T> = Omit<
+	T,
+	"label" | "bottomText" | "placeholder"
+> & {
 	label?: FormsTranslationKey;
 	bottomText?: FormsTranslationKey;
+	placeholder?: FormsTranslationKey;
 };
 
 type WithTypedItemLabels<T, V extends string> = Omit<T, "items"> & {
@@ -103,6 +107,7 @@ export function textFieldOptional(
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
+		placeholder: prefixKey(args.placeholder),
 		required: false,
 		type: "text-field",
 		initialValue: "",
@@ -126,6 +131,7 @@ export function textFieldRequired(
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
+		placeholder: prefixKey(args.placeholder),
 		required: true,
 		type: "text-field",
 		initialValue: "",

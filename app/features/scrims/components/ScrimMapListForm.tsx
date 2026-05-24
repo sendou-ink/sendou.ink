@@ -8,6 +8,7 @@ import { submitMapListFormSchema } from "../scrims-schemas";
 type SourceValue = "POOL" | "TOURNAMENT" | "FROM_POST";
 
 export function ScrimMapListForm() {
+	const { t } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof loader>();
 	const postTournament = data.post.mapsTournament;
 	const isPostAuthorSide = data.mapByMap.viewerSide === "ALPHA";
@@ -17,6 +18,7 @@ export function ScrimMapListForm() {
 	return (
 		<div data-testid="scrim-map-list-form">
 			<SendouForm
+				title={t("scrims:mapByMap.submitListHeading")}
 				schema={submitMapListFormSchema}
 				submitButtonTestId="submit-map-list-button"
 				fullWidth
