@@ -382,7 +382,7 @@ function EditReportedScoreRow({
 	teams: [TournamentDataTeam, TournamentDataTeam];
 	withPoints: boolean;
 }) {
-	const { t } = useTranslation(["common", "tournament"]);
+	const { t } = useTranslation(["common", "game-misc", "tournament"]);
 	const tournament = useTournament();
 	const fetcher = useFetcher();
 	const [editing, setEditing] = React.useState(false);
@@ -399,8 +399,6 @@ function EditReportedScoreRow({
 		previousFetcherStateRef.current = fetcher.state;
 	}, [fetcher.state, fetcher.data]);
 
-	const winnerName =
-		result.winnerTeamId === teams[0].id ? teams[0].name : teams[1].name;
 	const isKo =
 		result.opponentOnePoints === 100 || result.opponentTwoPoints === 100;
 
@@ -412,13 +410,9 @@ function EditReportedScoreRow({
 						{t("tournament:match.admin.mapNumber", { number: index + 1 })}
 					</span>
 					<span className={styles.winnerName}>
-						{isKo
-							? t("tournament:match.admin.winnerWonKo", {
-									teamName: winnerName,
-								})
-							: t("tournament:match.admin.winnerWon", {
-									teamName: winnerName,
-								})}
+						{t(`game-misc:MODE_SHORT_${result.mode}`)}{" "}
+						{t(`game-misc:STAGE_${result.stageId}`)}
+						{isKo ? ` ${t("tournament:match.admin.koSuffix")}` : null}
 					</span>
 				</div>
 				<SendouButton
