@@ -33,6 +33,10 @@
 	word-wrap: break-word;
 }
 
+:global(html.light) .tierName {
+	color: var(--color-text);
+}
+
 .popupContent {
 	display: flex;
 	flex-direction: column;
