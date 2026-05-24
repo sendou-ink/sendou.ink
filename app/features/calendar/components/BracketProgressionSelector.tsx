@@ -577,40 +577,47 @@ function SourcesSelector({
 	const inputBracket = brackets.find((b) => b.id === source?.bracketId);
 
 	return (
-		<div className="stack horizontal sm items-end">
-			<div>
-				<Label htmlFor={createId("bracket")}>Bracket</Label>
-				<select
-					id={createId("bracket")}
-					value={source?.bracketId ?? brackets[0].id}
-					onChange={(e) =>
-						onChange({ placements: "", ...source, bracketId: e.target.value })
-					}
-				>
-					{brackets.map((bracket) => (
-						<option key={bracket.id} value={bracket.id}>
-							{bracket.name}
-						</option>
-					))}
-				</select>
+		<div>
+			<div className="stack horizontal sm items-end">
+				<div>
+					<Label htmlFor={createId("bracket")}>Bracket</Label>
+					<select
+						id={createId("bracket")}
+						value={source?.bracketId ?? brackets[0].id}
+						onChange={(e) =>
+							onChange({ placements: "", ...source, bracketId: e.target.value })
+						}
+					>
+						{brackets.map((bracket) => (
+							<option key={bracket.id} value={bracket.id}>
+								{bracket.name}
+							</option>
+						))}
+					</select>
+				</div>
+				{!inputBracket?.settings.advanceThreshold ? (
+					<div>
+						<Label htmlFor={createId("placements")}>Placements</Label>
+						<Input
+							id={createId("placements")}
+							placeholder="1,2,3"
+							value={source?.placements ?? ""}
+							testId="placements-input"
+							onChange={(e) =>
+								onChange({
+									bracketId: brackets[0].id,
+									...source,
+									placements: e.target.value,
+								})
+							}
+						/>
+					</div>
+				) : null}
 			</div>
 			{!inputBracket?.settings.advanceThreshold ? (
-				<div>
-					<Label htmlFor={createId("placements")}>Placements</Label>
-					<Input
-						id={createId("placements")}
-						placeholder="1,2,3"
-						value={source?.placements ?? ""}
-						testId="placements-input"
-						onChange={(e) =>
-							onChange({
-								bracketId: brackets[0].id,
-								...source,
-								placements: e.target.value,
-							})
-						}
-					/>
-				</div>
+				<FormMessage type="info">
+					Use N+ for Nth place and every placement after
+				</FormMessage>
 			) : null}
 		</div>
 	);

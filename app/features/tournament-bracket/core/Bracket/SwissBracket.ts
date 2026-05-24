@@ -18,9 +18,11 @@ export class SwissBracket extends Bracket {
 	source({
 		placements,
 		advanceThreshold,
+		rest,
 	}: {
 		placements: number[];
 		advanceThreshold?: number;
+		rest?: boolean;
 	}): {
 		relevantMatchesFinished: boolean;
 		teams: number[];
@@ -84,10 +86,14 @@ export class SwissBracket extends Bracket {
 			return uniquePlacements.indexOf(p) + 1;
 		};
 
+		const maxExplicit = Math.max(...placements);
+		const matchesPlacement = (p: number) =>
+			placements.includes(p) || (rest === true && p >= maxExplicit);
+
 		return {
 			relevantMatchesFinished,
 			teams: standings
-				.filter((s) => placements.includes(placementNormalized(s.placement)))
+				.filter((s) => matchesPlacement(placementNormalized(s.placement)))
 				.map((s) => s.team.id),
 		};
 	}

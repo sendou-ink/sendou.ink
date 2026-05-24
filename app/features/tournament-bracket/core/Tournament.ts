@@ -229,6 +229,7 @@ export class Tournament {
 				sourceBracket.source({
 					placements: source.placements,
 					advanceThreshold: sourceBracket.settings?.advanceThreshold,
+					rest: source.rest,
 				});
 			if (!relevantMatchesFinished) {
 				allRelevantMatchesFinished = false;

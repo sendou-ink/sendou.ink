@@ -12,6 +12,8 @@ export interface DBSource {
 	bracketIdx: number;
 	/** Team placements that join this bracket. E.g. [1, 2] would mean top 1 & 2 teams. [-1] would mean the last placing teams. Can be empty array for Swiss brackets with early advance. */
 	placements: number[];
+	/** When true, the highest value in `placements` is treated as "and every placement after that". Set by the "N+" rest syntax. Only valid with positive placements. */
+	rest?: boolean;
 }
 
 export interface EditableSource {
@@ -142,14 +144,14 @@ export function validatedBracketsToInputFormat(
 				bracketId: String(source.bracketIdx),
 				placements:
 					source.placements.length > 0
-						? placementsToString(source.placements)
+						? placementsToString(source.placements, source.rest)
 						: "",
 			})),
 		};
 	});
 }
 
-function placementsToString(placements: number[]): string {
+function placementsToString(placements: number[], rest = false): string {
 	if (placements.length === 0) return "";
 
 	placements.sort((a, b) => a - b);
@@ -159,28 +161,30 @@ function placementsToString(placements: number[]): string {
 		return placements.join(",");
 	}
 
-	const ranges: string[] = [];
-	let start = placements[0];
-	let end = placements[0];
+	const highest = placements[placements.length - 1];
+	const allButHighest = rest ? placements.slice(0, -1) : placements;
 
-	for (let i = 1; i < placements.length; i++) {
-		if (placements[i] === end + 1) {
-			end = placements[i];
-		} else {
-			if (start === end) {
-				ranges.push(`${start}`);
+	const ranges: string[] = [];
+
+	if (allButHighest.length > 0) {
+		let start = allButHighest[0];
+		let end = allButHighest[0];
+
+		for (let i = 1; i < allButHighest.length; i++) {
+			if (allButHighest[i] === end + 1) {
+				end = allButHighest[i];
 			} else {
-				ranges.push(`${start}-${end}`);
+				ranges.push(start === end ? `${start}` : `${start}-${end}`);
+				start = allButHighest[i];
+				end = allButHighest[i];
 			}
-			start = placements[i];
-			end = placements[i];
 		}
+
+		ranges.push(start === end ? `${start}` : `${start}-${end}`);
 	}
 
-	if (start === end) {
-		ranges.push(String(start));
-	} else {
-		ranges.push(`${start}-${end}`);
+	if (rest) {
+		ranges.push(`${highest}+`);
 	}
 
 	return ranges.join(",");
@@ -353,27 +357,28 @@ function toOutputBracketFormat(brackets: InputBracket[]): ParsedBracket[] {
 				? dateToDatabaseTimestamp(bracket.startTime)
 				: undefined,
 			sources: bracket.sources?.map((source) => {
-				const placements = parsePlacements(source.placements);
+				const parsed = parsePlacements(source.placements);
 				const sourceBracketIdx = brackets.findIndex(
 					(b) => b.id === source.bracketId,
 				);
 				const sourceBracket = brackets[sourceBracketIdx];
 
 				// Allow empty placements only for Swiss brackets with early advance
-				if (placements && placements.length === 0) {
+				if (parsed && parsed.placements.length === 0) {
 					const isSwissWithEarlyAdvance =
 						sourceBracket?.type === "swiss" &&
 						sourceBracket?.settings?.advanceThreshold;
 					if (!isSwissWithEarlyAdvance) {
 						throw { badBracketIdx: bracketIdx };
 					}
-				} else if (placements === null) {
+				} else if (parsed === null) {
 					throw { badBracketIdx: bracketIdx };
 				}
 
 				return {
 					bracketIdx: sourceBracketIdx,
-					placements: placements ?? [],
+					placements: parsed?.placements ?? [],
+					...(parsed?.rest ? { rest: true as const } : {}),
 				};
 			}),
 		};
@@ -391,22 +396,39 @@ function toOutputBracketFormat(brackets: InputBracket[]): ParsedBracket[] {
 	return result;
 }
 
-function parsePlacements(placements: string) {
-	// Handle empty string case
+function parsePlacements(
+	placements: string,
+): { placements: number[]; rest: boolean } | null {
 	if (placements.trim() === "") {
-		return [];
+		return { placements: [], rest: false };
 	}
 
-	const parts = placements.split(",");
+	const parts = placements.split(",").map((p) => p.trim());
 
 	const result: number[] = [];
+	let rest = false;
 
-	for (let part of parts) {
-		part = part.trim();
+	for (let i = 0; i < parts.length; i++) {
+		const part = parts[i];
+		const isLast = i === parts.length - 1;
 
 		const isNegative = part.match(/^-\d+$/);
 		if (isNegative) {
 			result.push(Number(part));
+			continue;
+		}
+
+		const restMatch = part.match(/^(\d+)(?:-(\d+))?\+$/);
+		if (restMatch) {
+			if (!isLast || part === "0+") return null;
+			rest = true;
+
+			const start = Number(restMatch[1]);
+			const end = restMatch[2] ? Number(restMatch[2]) : start;
+			if (end < start) return null;
+			for (let n = start; n <= end; n++) {
+				result.push(n);
+			}
 			continue;
 		}
 
@@ -416,15 +438,15 @@ function parsePlacements(placements: string) {
 		if (part.includes("-")) {
 			const [start, end] = part.split("-").map(Number);
 
-			for (let i = start; i <= end; i++) {
-				result.push(i);
+			for (let n = start; n <= end; n++) {
+				result.push(n);
 			}
 		} else {
 			result.push(Number(part));
 		}
 	}
 
-	return result;
+	return { placements: result, rest };
 }
 
 function resolvesWinner(brackets: ParsedBracket[]) {
@@ -443,6 +465,11 @@ function resolvesWinner(brackets: ParsedBracket[]) {
 
 function samePlacementToMultipleBrackets(brackets: ParsedBracket[]) {
 	const map = new Map<string, number[]>();
+	// per source bracketIdx: list of { destinationBracketIdx, restFromPlacement }
+	const restSources = new Map<
+		number,
+		{ destinationBracketIdx: number; restFromPlacement: number }[]
+	>();
 
 	for (const [bracketIdx, bracket] of brackets.entries()) {
 		if (!bracket.sources) continue;
@@ -457,18 +484,60 @@ function samePlacementToMultipleBrackets(brackets: ParsedBracket[]) {
 
 				map.get(id)!.push(bracketIdx);
 			}
+
+			if (source.rest && source.placements.length > 0) {
+				const positives = source.placements.filter((p) => p > 0);
+				if (positives.length === 0) continue;
+				const restFromPlacement = Math.max(...positives);
+
+				if (!restSources.has(source.bracketIdx)) {
+					restSources.set(source.bracketIdx, []);
+				}
+				restSources.get(source.bracketIdx)!.push({
+					destinationBracketIdx: bracketIdx,
+					restFromPlacement,
+				});
+			}
 		}
 	}
 
-	const result: number[] = [];
+	const result = new Set<number>();
 
 	for (const [_, bracketIdxs] of map) {
 		if (bracketIdxs.length > 1) {
-			result.push(...bracketIdxs);
+			for (const idx of bracketIdxs) result.add(idx);
 		}
 	}
 
-	return result.length ? result : null;
+	for (const [sourceBracketIdx, restList] of restSources) {
+		// multiple "rest" sources from same bracket = conflict
+		if (restList.length > 1) {
+			for (const { destinationBracketIdx } of restList) {
+				result.add(destinationBracketIdx);
+			}
+		}
+
+		// any other source that claims a placement >= restFromPlacement = conflict
+		const restEntry = restList[0];
+		if (!restEntry) continue;
+		for (const [otherBracketIdx, otherBracket] of brackets.entries()) {
+			if (!otherBracket.sources) continue;
+			for (const otherSource of otherBracket.sources) {
+				if (otherSource.bracketIdx !== sourceBracketIdx) continue;
+				if (otherBracketIdx === restEntry.destinationBracketIdx) continue;
+				if (
+					otherSource.placements.some(
+						(p) => p > 0 && p >= restEntry.restFromPlacement,
+					)
+				) {
+					result.add(otherBracketIdx);
+					result.add(restEntry.destinationBracketIdx);
+				}
+			}
+		}
+	}
+
+	return result.size > 0 ? [...result] : null;
 }
 
 function duplicateNames(brackets: ParsedBracket[]) {
@@ -973,12 +1042,22 @@ export function destinationByPlacement({
 	);
 
 	const destination = destinations.find((destinationBracketIdx) =>
-		progression[destinationBracketIdx].sources?.some((source) =>
-			source.placements.includes(placement),
+		progression[destinationBracketIdx].sources?.some(
+			(source) =>
+				source.bracketIdx === sourceBracketIdx &&
+				sourceClaimsPlacement(source, placement),
 		),
 	);
 
 	return destination ?? null;
+}
+
+function sourceClaimsPlacement(source: DBSource, placement: number): boolean {
+	if (source.placements.includes(placement)) return true;
+	if (source.rest && source.placements.length > 0 && placement > 0) {
+		return placement >= Math.max(...source.placements);
+	}
+	return false;
 }
 
 export function startingBrackets(progression: ParsedBracket[]): number[] {

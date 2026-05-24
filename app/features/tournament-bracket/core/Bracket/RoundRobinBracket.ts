@@ -12,7 +12,7 @@ export class RoundRobinBracket extends Bracket {
 		return true;
 	}
 
-	source({ placements }: { placements: number[] }): {
+	source({ placements, rest }: { placements: number[]; rest?: boolean }): {
 		relevantMatchesFinished: boolean;
 		teams: number[];
 	} {
@@ -24,10 +24,18 @@ export class RoundRobinBracket extends Bracket {
 		const relevantMatchesFinished =
 			standings.length === this.participantTournamentTeamIds.length;
 
+		const maxExplicit = Math.max(...placements);
+		const matchesPlacement = (p: number) =>
+			placements.includes(p) || (rest === true && p >= maxExplicit);
+
 		if (this.settings?.hasAbDivisions) {
 			return {
 				relevantMatchesFinished,
-				teams: this.teamsFromPlacementsPerAbDivision(standings, placements),
+				teams: this.teamsFromPlacementsPerAbDivision(
+					standings,
+					placements,
+					rest === true,
+				),
 			};
 		}
 
@@ -41,7 +49,7 @@ export class RoundRobinBracket extends Bracket {
 		return {
 			relevantMatchesFinished,
 			teams: standings
-				.filter((s) => placements.includes(placementNormalized(s.placement)))
+				.filter((s) => matchesPlacement(placementNormalized(s.placement)))
 				.map((s) => s.team.id),
 		};
 	}
@@ -49,19 +57,28 @@ export class RoundRobinBracket extends Bracket {
 	private teamsFromPlacementsPerAbDivision(
 		standings: Standing[],
 		placements: number[],
+		rest: boolean,
 	): number[] {
 		const groupIds = R.unique(
 			standings
 				.map((s) => s.groupId)
 				.filter((id): id is number => typeof id === "number"),
 		);
+		const maxExplicit = Math.max(...placements);
 		const teams: number[] = [];
 		for (const groupId of groupIds) {
 			for (const division of [0, 1] as const) {
 				const divisionStandings = standings.filter(
 					(s) => s.groupId === groupId && s.team.abDivision === division,
 				);
-				for (const placement of placements) {
+				const maxPlacement = rest ? divisionStandings.length : maxExplicit;
+				for (let placement = 1; placement <= maxPlacement; placement++) {
+					if (
+						!placements.includes(placement) &&
+						!(rest && placement >= maxExplicit)
+					) {
+						continue;
+					}
 					const standing = divisionStandings[placement - 1];
 					if (standing) teams.push(standing.team.id);
 				}
