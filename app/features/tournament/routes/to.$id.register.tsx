@@ -259,21 +259,7 @@ function TournamentRegisterInfoTabs() {
 							{isRegularMemberOfATeam ? (
 								<div className="stack md items-center">
 									<Alert>{t("tournament:pre.inATeam")}</Alert>
-									{teamMemberOf && teamMemberOf.checkIns.length === 0 ? (
-										<FormWithConfirm
-											dialogHeading={`Leave "${tournament.teamMemberOfByUser(user)?.name}"?`}
-											fields={[["_action", "LEAVE_TEAM"]]}
-											submitButtonText="Leave"
-										>
-											<SendouButton
-												className="small-text"
-												variant="minimal-destructive"
-												type="submit"
-											>
-												Leave the team
-											</SendouButton>
-										</FormWithConfirm>
-									) : null}
+									<LeaveTeamControl />
 								</div>
 							) : showAddIGNAlert ? (
 								<div>
@@ -306,6 +292,49 @@ function TournamentRegisterInfoTabs() {
 				) : null}
 			</SendouTabs>
 		</div>
+	);
+}
+
+function LeaveTeamControl() {
+	const user = useUser();
+	const tournament = useTournament();
+
+	const teamMemberOf = tournament.teamMemberOfByUser(user);
+	if (!teamMemberOf) return null;
+
+	const checkedIn = teamMemberOf.checkIns.length > 0;
+	const cannotLeave = checkedIn || !tournament.registrationOpen;
+
+	if (cannotLeave) {
+		return (
+			<SendouPopover
+				trigger={
+					<SendouButton className="small-text" variant="minimal-destructive">
+						Leave the team
+					</SendouButton>
+				}
+			>
+				{checkedIn
+					? "Your team has checked in. Contact the TO to leave the team."
+					: "Registration has closed. Contact the TO to leave the team."}
+			</SendouPopover>
+		);
+	}
+
+	return (
+		<FormWithConfirm
+			dialogHeading={`Leave "${teamMemberOf.name}"?`}
+			fields={[["_action", "LEAVE_TEAM"]]}
+			submitButtonText="Leave"
+		>
+			<SendouButton
+				className="small-text"
+				variant="minimal-destructive"
+				type="submit"
+			>
+				Leave the team
+			</SendouButton>
+		</FormWithConfirm>
 	);
 }
 

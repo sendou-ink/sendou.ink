@@ -183,6 +183,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 				teamMemberOf.checkIns.length === 0,
 				"You cannot leave after checking in",
 			);
+			errorToastIfFalsy(
+				tournament.registrationOpen,
+				"Registration has closed, contact the TO to leave the team",
+			);
 
 			await TournamentTeamRepository.leave({
 				teamId: teamMemberOf.id,
