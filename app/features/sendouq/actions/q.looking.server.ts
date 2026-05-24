@@ -261,14 +261,16 @@ export const action: ActionFunction = async ({ request }) => {
 
 				await refreshSendouQInstance();
 
-				const targetChatCode = SendouQ.findUncensoredGroupById(
-					currentGroup.id,
-				)?.chatCode;
-				if (targetChatCode) {
+				const remainingGroup = SendouQ.findUncensoredGroupById(currentGroup.id);
+				if (remainingGroup?.chatCode) {
 					ChatSystemMessage.send({
-						room: targetChatCode,
+						room: remainingGroup.chatCode,
 						type: "USER_LEFT",
 						context: { name: user.username },
+					});
+					setGroupChatMetadata({
+						chatCode: remainingGroup.chatCode,
+						members: remainingGroup.members,
 					});
 				}
 
@@ -281,6 +283,14 @@ export const action: ActionFunction = async ({ request }) => {
 				await SQGroupRepository.leaveGroup(data.userId);
 
 				await refreshSendouQInstance();
+
+				const remainingGroup = SendouQ.findUncensoredGroupById(currentGroup.id);
+				if (remainingGroup?.chatCode) {
+					setGroupChatMetadata({
+						chatCode: remainingGroup.chatCode,
+						members: remainingGroup.members,
+					});
+				}
 
 				break;
 			}
