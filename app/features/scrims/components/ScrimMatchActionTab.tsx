@@ -1,5 +1,4 @@
-import clsx from "clsx";
-import { Repeat, Undo2 } from "lucide-react";
+import { MapPin, Repeat, Undo2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
@@ -11,6 +10,7 @@ import * as Scrim from "../core/Scrim";
 import * as ScrimMapByMap from "../core/ScrimMapByMap";
 import type { loader } from "../loaders/scrims.$id.server";
 import type { ScrimSide } from "../scrims-types";
+import { PickMapDialog } from "./PickMapDialog";
 import { ScrimMapListManager } from "./ScrimMapListManager";
 import styles from "./ScrimMatchActionTab.module.css";
 
@@ -95,22 +95,23 @@ function ReportMapSection({ viewerSide }: { viewerSide: ScrimSide }) {
 					{ method: "post" },
 				);
 			}}
-			actionButtons={<ReplayAndUndoButtons />}
+			actionButtons={<MapActionButtons />}
 			secondaryAction={<ScrimMapListManager viewerSide={viewerSide} />}
 		/>
 	);
 }
 
-function ReplayAndUndoButtons() {
+function MapActionButtons() {
 	const { t } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof loader>();
 	const undoFetcher = useFetcher();
 	const replayFetcher = useFetcher();
 
 	const maps = data.mapByMap?.maps ?? [];
+	const currentMap = data.mapByMap?.currentMap;
 	const latest = Scrim.lastReportedMap(maps);
 	const undoAllowed = ScrimMapByMap.canUndo(latest, maps);
-	const replayAllowed = Boolean(latest && data.mapByMap?.currentMap);
+	const replayAllowed = Boolean(latest && currentMap);
 
 	return (
 		<>
@@ -120,7 +121,7 @@ function ReplayAndUndoButtons() {
 				size="miniscule"
 				icon={<Undo2 size={16} />}
 				isPending={undoFetcher.state !== "idle"}
-				className={clsx({ invisible: !undoAllowed })}
+				isDisabled={!undoAllowed}
 				onPress={() => {
 					undoFetcher.submit({ _action: "UNDO_MAP" }, { method: "post" });
 				}}
@@ -133,13 +134,31 @@ function ReplayAndUndoButtons() {
 				size="miniscule"
 				icon={<Repeat size={16} />}
 				isPending={replayFetcher.state !== "idle"}
-				className={clsx({ invisible: !replayAllowed })}
+				isDisabled={!replayAllowed}
 				onPress={() => {
 					replayFetcher.submit({ _action: "REPLAY_MAP" }, { method: "post" });
 				}}
 			>
 				{t("scrims:mapByMap.replay")}
 			</SendouButton>
+			<PickMapDialog
+				key={
+					currentMap
+						? `${currentMap.id}-${currentMap.mode}-${currentMap.stageId}`
+						: "no-map"
+				}
+				heading={t("scrims:mapByMap.pickDialog.heading")}
+				trigger={
+					<SendouButton
+						testId="pick-map-button"
+						variant="minimal"
+						size="miniscule"
+						icon={<MapPin size={16} />}
+					>
+						{t("scrims:mapByMap.pick")}
+					</SendouButton>
+				}
+			/>
 		</>
 	);
 }

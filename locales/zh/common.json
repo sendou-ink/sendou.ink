@@ -316,6 +316,8 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} 确认取消对战，本次对战已锁定",
 	"chat.systemMsg.cancelRefused": "",
 	"chat.systemMsg.userLeft": "{{name}} 离开了小队",
+	"chat.systemMsg.mapReplayed": "",
+	"chat.systemMsg.mapPicked": "",
 	"chat.newMessages": "新消息",
 	"chat.sidebar.title": "",
 	"chat.sidebar.noActiveChats": "",

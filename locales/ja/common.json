@@ -316,6 +316,8 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} が試合キャンセルを承認しました。試合がロックされました。",
 	"chat.systemMsg.cancelRefused": "",
 	"chat.systemMsg.userLeft": "{{name}} がグループから出ました",
+	"chat.systemMsg.mapReplayed": "",
+	"chat.systemMsg.mapPicked": "",
 	"chat.newMessages": "新着メッセージ",
 	"chat.sidebar.title": "",
 	"chat.sidebar.noActiveChats": "",

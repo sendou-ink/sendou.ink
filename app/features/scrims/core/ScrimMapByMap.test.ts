@@ -100,6 +100,46 @@ describe("ScrimMapByMap.generateNextMap", () => {
 		expect(next.mode).toBe("TC");
 	});
 
+	it("advances mode rotation after a manual pick inside the pool", () => {
+		const pool = new MapPool({
+			SZ: [stagesObj.SCORCH_GORGE, stagesObj.MAKOMART],
+			TC: [stagesObj.HAMMERHEAD_BRIDGE],
+			RM: [stagesObj.WAHOO_WORLD],
+			CB: [stagesObj.EELTAIL_ALLEY],
+			TW: [],
+		});
+
+		const next = generateNextMap({
+			pool,
+			history: [
+				{ mode: "SZ", stageId: stagesObj.SCORCH_GORGE },
+				{ mode: "RM", stageId: stagesObj.WAHOO_WORLD },
+			],
+		});
+
+		expect(next.mode).toBe("CB");
+	});
+
+	it("falls back to the pool's first mode after a manual pick outside the pool's modes", () => {
+		const pool = new MapPool({
+			SZ: [stagesObj.SCORCH_GORGE, stagesObj.MAKOMART],
+			TC: [stagesObj.HAMMERHEAD_BRIDGE],
+			RM: [],
+			CB: [],
+			TW: [],
+		});
+
+		const next = generateNextMap({
+			pool,
+			history: [
+				{ mode: "SZ", stageId: stagesObj.SCORCH_GORGE },
+				{ mode: "TW", stageId: stagesObj.WAHOO_WORLD },
+			],
+		});
+
+		expect(next.mode).toBe("SZ");
+	});
+
 	it("can still generate when only one stage is available", () => {
 		const pool = new MapPool({
 			SZ: [stagesObj.SCORCH_GORGE],

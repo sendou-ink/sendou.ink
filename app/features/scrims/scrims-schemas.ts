@@ -9,6 +9,7 @@ import {
 	select,
 	selectDynamicOptional,
 	selectOptional,
+	stageSelect,
 	stringConstant,
 	textAreaOptional,
 	textAreaRequired,
@@ -17,6 +18,7 @@ import {
 	toggle,
 	tournamentSearchOptional,
 } from "~/form/fields";
+import { modesShort } from "~/modules/in-game-lists/modes";
 import {
 	_action,
 	date,
@@ -240,6 +242,18 @@ const replayMapSchema = z.object({
 	_action: _action("REPLAY_MAP"),
 });
 
+export const pickMapFormSchema = z.object({
+	_action: stringConstant("PICK_MAP"),
+	mode: select({
+		label: "labels.vodMode",
+		items: modesShort.map((m) => ({
+			label: `modes.${m}` as const,
+			value: m,
+		})),
+	}),
+	stageId: stageSelect({ label: "labels.vodStage" }),
+});
+
 export const scrimIdActionSchema = z.union([
 	cancelScrimFormSchema,
 	submitMapListFormSchema,
@@ -247,6 +261,7 @@ export const scrimIdActionSchema = z.union([
 	reportMapSchema,
 	undoMapSchema,
 	replayMapSchema,
+	pickMapFormSchema,
 ]);
 
 const MAX_SCRIM_POST_TEXT_LENGTH = 500;

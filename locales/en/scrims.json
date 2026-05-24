@@ -97,6 +97,8 @@
 	"mapByMap.noCurrentMap": "Waiting for the next map to be generated.",
 	"mapByMap.undo": "Undo",
 	"mapByMap.replay": "Replay",
+	"mapByMap.pick": "Pick",
+	"mapByMap.pickDialog.heading": "Pick map",
 	"mapByMap.removeList": "Remove list",
 	"mapByMap.removeListConfirm": "Remove your map list?",
 	"mapByMap.noListYet": "Not submitted yet",

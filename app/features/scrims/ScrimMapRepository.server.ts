@@ -76,18 +76,19 @@ export async function undoMostRecentMap(scrimPostId: number): Promise<void> {
 	});
 }
 
-interface ReplaceCurrentMapAsReplayArgs {
+interface ReplaceCurrentMapArgs {
 	scrimPostId: number;
 	mode: ModeShort;
 	stageId: StageId;
 }
 
 /**
- * Replaces the currently unreported map for the scrim with a replay of the
- * given source map (same mode/stage). The current map's index is preserved.
+ * Replaces the currently unreported map for the scrim with the given
+ * mode/stage. Used by both the "replay previous map" and "pick a map" actions.
+ * The current map's index is preserved.
  */
-export async function replaceCurrentMapAsReplay(
-	args: ReplaceCurrentMapAsReplayArgs,
+export async function replaceCurrentMap(
+	args: ReplaceCurrentMapArgs,
 ): Promise<void> {
 	await db
 		.updateTable("ScrimMap")

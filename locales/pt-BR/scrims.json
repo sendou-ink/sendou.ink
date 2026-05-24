@@ -97,6 +97,8 @@
 	"mapByMap.noCurrentMap": "",
 	"mapByMap.undo": "",
 	"mapByMap.replay": "",
+	"mapByMap.pick": "",
+	"mapByMap.pickDialog.heading": "",
 	"mapByMap.removeList": "",
 	"mapByMap.removeListConfirm": "",
 	"mapByMap.noListYet": "",

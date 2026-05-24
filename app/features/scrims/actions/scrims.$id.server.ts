@@ -154,13 +154,28 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			const currentMap = maps.find((m) => m.reportedAt === null);
 			errorToastIfFalsy(currentMap, "No current map to replace");
 
-			await ScrimMapRepository.replaceCurrentMapAsReplay({
+			await ScrimMapRepository.replaceCurrentMap({
 				scrimPostId: post.id,
 				mode: latest!.mode,
 				stageId: latest!.stageId,
 			});
 
-			broadcastRevalidate({ post, user });
+			broadcastMapChange({ post, type: "MAP_REPLAYED", user });
+			break;
+		}
+		case "PICK_MAP": {
+			const { maps } = await loadMapByMapContext({ post, user });
+
+			const currentMap = maps.find((m) => m.reportedAt === null);
+			errorToastIfFalsy(currentMap, "No current map to replace");
+
+			await ScrimMapRepository.replaceCurrentMap({
+				scrimPostId: post.id,
+				mode: data.mode,
+				stageId: data.stageId,
+			});
+
+			broadcastMapChange({ post, type: "MAP_PICKED", user });
 			break;
 		}
 		default: {
@@ -204,5 +219,22 @@ function broadcastRevalidate({
 		room: post.chatCode,
 		revalidateOnly: true,
 		authorUserId: user.id,
+	});
+}
+
+function broadcastMapChange({
+	post,
+	type,
+	user,
+}: {
+	post: NonNullable<Awaited<ReturnType<typeof ScrimPostRepository.findById>>>;
+	type: "MAP_REPLAYED" | "MAP_PICKED";
+	user: ReturnType<typeof requireUser>;
+}) {
+	if (!post.chatCode) return;
+	ChatSystemMessage.send({
+		room: post.chatCode,
+		type,
+		context: { name: user.username },
 	});
 }
