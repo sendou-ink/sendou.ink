@@ -24,14 +24,16 @@ export function TournamentSearchFormField({
 
 	return (
 		<div className={styles.root}>
-			<TournamentSearch
-				initialTournamentId={value ?? undefined}
-				onChange={(tournament) => onChange(tournament?.id ?? null)}
-				onBlur={() => onBlur?.()}
-				label={translatedLabel}
-				isRequired={required}
-			/>
-			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
+			<div className="stack xs">
+				<TournamentSearch
+					initialTournamentId={value ?? undefined}
+					onChange={(tournament) => onChange(tournament?.id ?? null)}
+					onBlur={() => onBlur?.()}
+					label={translatedLabel}
+					isRequired={required}
+				/>
+				<FormFieldMessages name={name} error={error} bottomText={bottomText} />
+			</div>
 		</div>
 	);
 }

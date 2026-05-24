@@ -91,6 +91,7 @@ export const TournamentSearch = React.forwardRef(function TournamentSearch<
 			placeholder=""
 			selectedKey={selectedKey}
 			onSelectionChange={onSelectionChange as (key: Key | null) => void}
+			className={selectStyles.select}
 			aria-label="Tournament search"
 			{...rest}
 		>

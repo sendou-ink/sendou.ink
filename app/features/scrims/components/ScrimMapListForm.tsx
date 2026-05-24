@@ -1,7 +1,6 @@
 import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { submitMapListFormSchema } from "../scrims-schemas";
-import styles from "./ScrimMapListForm.module.css";
 
 export function ScrimMapListForm() {
 	return (
@@ -9,7 +8,7 @@ export function ScrimMapListForm() {
 			<SendouForm
 				schema={submitMapListFormSchema}
 				submitButtonTestId="submit-map-list-button"
-				className={styles.form}
+				fullWidth
 			>
 				{() => (
 					<>
