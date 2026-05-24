@@ -171,6 +171,150 @@ describe("round robin standings", () => {
 	});
 });
 
+describe("round robin standings - dropped out teams", () => {
+	const droppedOutTournament = ({
+		skipMatchups = [],
+		forfeitMatchups = [],
+	}: {
+		skipMatchups?: string[];
+		forfeitMatchups?: string[];
+	} = {}) => {
+		const storage = new InMemoryDatabase();
+		const manager = new BracketsManager(storage);
+
+		manager.create({
+			name: "RR",
+			tournamentId: 1,
+			type: "round_robin",
+			seeding: [1, 2, 3, 4],
+			settings: {
+				groupCount: 1,
+				seedOrdering: ["groups.seed_optimized"],
+			},
+		});
+
+		const setResult = (
+			matchId: number,
+			winnerId: number,
+			winnerScore: number,
+			loserScore: number,
+		) => {
+			const match = storage.select<any>("match", matchId);
+			invariant(match, `match ${matchId} not found`);
+			const winnerIsOpp1 = match.opponent1.id === winnerId;
+			manager.update.match({
+				id: match.id,
+				opponent1: winnerIsOpp1
+					? { score: winnerScore, result: "win" }
+					: { score: loserScore },
+				opponent2: winnerIsOpp1
+					? { score: loserScore }
+					: { score: winnerScore, result: "win" },
+			});
+		};
+
+		// Mimics endDroppedTeamMatches: sets a winner via result only, with no
+		// score recorded on either side (the match was never actually played).
+		const forfeitMatch = (matchId: number, winnerId: number) => {
+			const match = storage.select<any>("match", matchId);
+			invariant(match, `match ${matchId} not found`);
+			manager.update.match({
+				id: match.id,
+				opponent1: {
+					result: match.opponent1.id === winnerId ? "win" : "loss",
+				},
+				opponent2: {
+					result: match.opponent2.id === winnerId ? "win" : "loss",
+				},
+			});
+		};
+
+		// Team 1 beat everyone, team 2 beat 3 and 4, team 3 beat 4.
+		const winnerByMatchup: Record<string, number> = {
+			"1-2": 1,
+			"1-3": 1,
+			"1-4": 1,
+			"2-3": 2,
+			"2-4": 2,
+			"3-4": 3,
+		};
+		for (const match of storage.select<any>("match")!) {
+			const a = match.opponent1.id as number;
+			const b = match.opponent2.id as number;
+			const key = a < b ? `${a}-${b}` : `${b}-${a}`;
+			if (skipMatchups.includes(key)) continue;
+			const winnerId = winnerByMatchup[key];
+			invariant(winnerId, `unexpected matchup ${key}`);
+			if (forfeitMatchups.includes(key)) {
+				forfeitMatch(match.id, winnerId);
+			} else {
+				setResult(match.id, winnerId, 2, 0);
+			}
+		}
+
+		const data = manager.get.tournamentData(1);
+
+		return testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "round_robin",
+							name: "RR",
+							requiresCheckIn: false,
+							settings: {},
+						},
+					],
+				},
+				teams: [
+					tournamentCtxTeam(1, { seed: 1 }),
+					tournamentCtxTeam(2, { seed: 2 }),
+					tournamentCtxTeam(3, { seed: 3 }),
+					tournamentCtxTeam(4, { seed: 4, droppedOut: 1 }),
+				],
+			},
+			data,
+		});
+	};
+
+	it("should not credit wins against a team that dropped out before completing all of their matches", () => {
+		// Team 4 dropped out before playing their match against team 3.
+		const tournament = droppedOutTournament({ skipMatchups: ["3-4"] });
+		const standings = tournament.bracketByIdx(0)!.currentStandings(true);
+
+		const team1Standing = standings.find((s) => s.team.id === 1);
+		const team2Standing = standings.find((s) => s.team.id === 2);
+		const team3Standing = standings.find((s) => s.team.id === 3);
+
+		expect(team1Standing?.stats?.setWins).toBe(2);
+		expect(team1Standing?.stats?.setLosses).toBe(0);
+
+		expect(team2Standing?.stats?.setWins).toBe(1);
+		expect(team2Standing?.stats?.setLosses).toBe(1);
+
+		expect(team3Standing?.stats?.setWins).toBe(0);
+		expect(team3Standing?.stats?.setLosses).toBe(2);
+	});
+
+	it("should still count matches against a team that dropped out only after all of their matches were reported", () => {
+		const tournament = droppedOutTournament();
+		const standings = tournament.bracketByIdx(0)!.standings;
+
+		const team1Standing = standings.find((s) => s.team.id === 1);
+		const team2Standing = standings.find((s) => s.team.id === 2);
+		const team3Standing = standings.find((s) => s.team.id === 3);
+
+		expect(team1Standing?.stats?.setWins).toBe(3);
+		expect(team1Standing?.stats?.setLosses).toBe(0);
+
+		expect(team2Standing?.stats?.setWins).toBe(2);
+		expect(team2Standing?.stats?.setLosses).toBe(1);
+
+		expect(team3Standing?.stats?.setWins).toBe(1);
+		expect(team3Standing?.stats?.setLosses).toBe(2);
+	});
+});
+
 describe("round robin A/B divisions standings", () => {
 	const abDivisionsTournament = () => {
 		const storage = new InMemoryDatabase();

@@ -95,6 +95,23 @@ export class RoundRobinBracket extends Bracket {
 
 			if (!groupIsFinished && !includeUnfinishedGroups) continue;
 
+			const droppedOutWithIncompleteMatches = new Set<number>();
+			for (const team of this.tournament.ctx.teams) {
+				if (!team.droppedOut) continue;
+				const teamMatches = matches.filter(
+					(m) => m.opponent1?.id === team.id || m.opponent2?.id === team.id,
+				);
+				if (teamMatches.length === 0) continue;
+				const allPlayed = teamMatches.every(
+					(m) =>
+						m.opponent1 === null ||
+						m.opponent2 === null ||
+						typeof m.opponent1?.score === "number" ||
+						typeof m.opponent2?.score === "number",
+				);
+				if (!allPlayed) droppedOutWithIncompleteMatches.add(team.id);
+			}
+
 			const teams: {
 				id: number;
 				setWins: number;
@@ -149,6 +166,17 @@ export class RoundRobinBracket extends Bracket {
 				if (
 					match.opponent1?.result !== "win" &&
 					match.opponent2?.result !== "win"
+				) {
+					continue;
+				}
+
+				const opp1Id = match.opponent1?.id;
+				const opp2Id = match.opponent2?.id;
+				if (
+					(typeof opp1Id === "number" &&
+						droppedOutWithIncompleteMatches.has(opp1Id)) ||
+					(typeof opp2Id === "number" &&
+						droppedOutWithIncompleteMatches.has(opp2Id))
 				) {
 					continue;
 				}
