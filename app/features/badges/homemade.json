@@ -1227,6 +1227,10 @@
 		"displayName": "Splat Legacy LAN",
 		"authorDiscordId": "342369454719631361"
 	},
+	"splatoon2legacy": {
+		"displayName": "Splatoon 2 Legacy",
+		"authorDiscordId": "534502084134043648"
+	},
 	"splatoonolympics": {
 		"displayName": "Splatoon Olympics",
 		"authorDiscordId": "338702451156844545"
