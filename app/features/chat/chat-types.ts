@@ -11,7 +11,9 @@ export type SystemMessageType =
 	| "CANCEL_CONFIRMED"
 	| "CANCEL_REFUSED"
 	| "TOURNAMENT_UPDATED"
-	| "TOURNAMENT_MATCH_UPDATED";
+	| "TOURNAMENT_MATCH_UPDATED"
+	| "MAP_REPLAYED"
+	| "MAP_PICKED";
 
 export type SystemMessageContext = {
 	name: string;

@@ -5,15 +5,20 @@ import {
 	datetimeRequired,
 	dualSelectOptional,
 	idConstant,
+	radioGroupDynamic,
 	select,
 	selectDynamicOptional,
 	selectOptional,
+	stageSelect,
 	stringConstant,
 	textAreaOptional,
 	textAreaRequired,
+	textFieldOptional,
 	timeRangeOptional,
 	toggle,
+	tournamentSearchOptional,
 } from "~/form/fields";
+import { modesShort } from "~/modules/in-game-lists/modes";
 import {
 	_action,
 	date,
@@ -26,6 +31,7 @@ import {
 } from "~/utils/zod";
 import { associationIdentifierSchema } from "../associations/associations-schemas";
 import { LUTI_DIVS, SCRIM } from "./scrims-constants";
+import { parseMapPoolInput } from "./scrims-utils";
 
 const deletePostSchema = z.object({
 	_action: _action("DELETE_POST"),
@@ -71,7 +77,8 @@ const cancelRequestSchema = z.object({
 	scrimPostRequestId: id,
 });
 
-export const cancelScrimSchema = z.object({
+export const cancelScrimFormSchema = z.object({
+	_action: stringConstant("CANCEL_SCRIM"),
 	reason: textAreaRequired({
 		label: "labels.scrimCancelReason",
 		bottomText: "bottomTexts.scrimCancelReasonHelp",
@@ -172,6 +179,89 @@ export const scrimsActionSchema = z.union([
 	acceptRequestSchema,
 	cancelRequestSchema,
 	persistScrimFiltersSchema,
+]);
+
+export const submitMapListFormSchema = z
+	.object({
+		_action: stringConstant("SUBMIT_MAP_LIST"),
+		source: radioGroupDynamic({
+			label: "labels.scrimMapSource",
+		}),
+		serializedPool: textFieldOptional({
+			label: "labels.scrimMapPool",
+			placeholder: "placeholders.scrimMapPool",
+			maxLength: 500,
+			validate: {
+				func: (val) => parseMapPoolInput(val) !== null,
+				message: "forms:errors.invalidMapPool",
+			},
+		}),
+		tournamentId: tournamentSearchOptional({
+			label: "labels.scrimMapsTournament",
+		}),
+	})
+	.superRefine((data, ctx) => {
+		if (!["POOL", "TOURNAMENT", "FROM_POST"].includes(data.source)) {
+			ctx.addIssue({
+				path: ["source"],
+				message: "forms:errors.required",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+		if (data.source === "POOL" && !data.serializedPool) {
+			ctx.addIssue({
+				path: ["serializedPool"],
+				message: "forms:errors.invalidMapPool",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+		if (data.source === "TOURNAMENT" && !data.tournamentId) {
+			ctx.addIssue({
+				path: ["tournamentId"],
+				message: "forms:errors.scrimTournamentRequired",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+	});
+
+const removeMapListSchema = z.object({
+	_action: _action("REMOVE_MAP_LIST"),
+});
+
+const reportMapSchema = z.object({
+	_action: _action("REPORT_MAP"),
+	mapId: id,
+	winnerSide: z.enum(["ALPHA", "BRAVO"]),
+});
+
+const undoMapSchema = z.object({
+	_action: _action("UNDO_MAP"),
+});
+
+const replayMapSchema = z.object({
+	_action: _action("REPLAY_MAP"),
+});
+
+export const pickMapFormSchema = z.object({
+	_action: stringConstant("PICK_MAP"),
+	mode: select({
+		label: "labels.vodMode",
+		items: modesShort.map((m) => ({
+			label: `modes.${m}` as const,
+			value: m,
+		})),
+	}),
+	stageId: stageSelect({ label: "labels.vodStage" }),
+});
+
+export const scrimIdActionSchema = z.union([
+	cancelScrimFormSchema,
+	submitMapListFormSchema,
+	removeMapListSchema,
+	reportMapSchema,
+	undoMapSchema,
+	replayMapSchema,
+	pickMapFormSchema,
 ]);
 
 const MAX_SCRIM_POST_TEXT_LENGTH = 500;

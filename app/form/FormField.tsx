@@ -17,6 +17,7 @@ import { StageSelectFormField } from "./fields/StageSelectFormField";
 import { SwitchFormField } from "./fields/SwitchFormField";
 import { TextareaFormField } from "./fields/TextareaFormField";
 import { TimeRangeFormField } from "./fields/TimeRangeFormField";
+import { TournamentSearchFormField } from "./fields/TournamentSearchFormField";
 import { UserSearchFormField } from "./fields/UserSearchFormField";
 import {
 	WeaponPoolFormField,
@@ -28,6 +29,7 @@ import type {
 	ArrayItemRenderContext,
 	BadgeOption,
 	CustomFieldRenderProps,
+	FormFieldItemsWithImage,
 	FormField as FormFieldType,
 	SelectOption,
 } from "./types";
@@ -224,6 +226,22 @@ export function FormField({
 		);
 	}
 
+	if (formField.type === "radio-group-dynamic") {
+		if (!options) {
+			throw new Error("Dynamic radio group form field requires options prop");
+		}
+		const radioItems = options as FormFieldItemsWithImage<string>;
+		return (
+			<RadioGroupFormField
+				{...commonProps}
+				{...formField}
+				items={radioItems}
+				value={value as string}
+				onChange={handleChange as (v: string) => void}
+			/>
+		);
+	}
+
 	if (formField.type === "checkbox-group") {
 		return (
 			<CheckboxGroupFormField
@@ -363,6 +381,17 @@ export function FormField({
 	if (formField.type === "user-search") {
 		return (
 			<UserSearchFormField
+				{...commonProps}
+				{...formField}
+				value={value as number | null}
+				onChange={handleChange as (v: number | null) => void}
+			/>
+		);
+	}
+
+	if (formField.type === "tournament-search") {
+		return (
+			<TournamentSearchFormField
 				{...commonProps}
 				{...formField}
 				value={value as number | null}

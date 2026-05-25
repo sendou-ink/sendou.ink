@@ -322,6 +322,8 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} confirmou o cancelamento da partida. A partida foi trancada",
 	"chat.systemMsg.cancelRefused": "",
 	"chat.systemMsg.userLeft": "{{name}} deixou o grupo",
+	"chat.systemMsg.mapReplayed": "",
+	"chat.systemMsg.mapPicked": "",
 	"chat.newMessages": "",
 	"chat.sidebar.title": "",
 	"chat.sidebar.noActiveChats": "",

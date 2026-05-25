@@ -24,14 +24,16 @@ export function UserSearchFormField({
 
 	return (
 		<div className={styles.root}>
-			<UserSearch
-				initialUserId={value ?? undefined}
-				onChange={(user) => onChange(user?.id ?? null)}
-				onBlur={() => onBlur?.()}
-				label={translatedLabel}
-				isRequired={required}
-			/>
-			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
+			<div className="stack xs">
+				<UserSearch
+					initialUserId={value ?? undefined}
+					onChange={(user) => onChange(user?.id ?? null)}
+					onBlur={() => onBlur?.()}
+					label={translatedLabel}
+					isRequired={required}
+				/>
+				<FormFieldMessages name={name} error={error} bottomText={bottomText} />
+			</div>
 		</div>
 	);
 }

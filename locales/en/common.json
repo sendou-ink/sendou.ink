@@ -320,6 +320,8 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} confirmed canceling the match. Match is now locked",
 	"chat.systemMsg.cancelRefused": "{{name}} refused canceling the match",
 	"chat.systemMsg.userLeft": "{{name}} left the group",
+	"chat.systemMsg.mapReplayed": "{{name}} replayed the previous map",
+	"chat.systemMsg.mapPicked": "{{name}} picked a map",
 	"chat.newMessages": "New messages",
 	"chat.sidebar.title": "Chat",
 	"chat.sidebar.noActiveChats": "No active chats",

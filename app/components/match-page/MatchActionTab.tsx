@@ -19,7 +19,6 @@ import {
 	type MatchTimelineProps,
 	type TimelineMap,
 } from "./MatchTimeline";
-import { WeaponReporter, type WeaponReporterProps } from "./WeaponReporter";
 
 const LONG_TEAM_NAME_THRESHOLD = 16;
 
@@ -30,6 +29,7 @@ interface ActionTabTeam {
 }
 
 interface SetEndingData extends MatchTimelineProps {
+	score: { alpha: number; bravo: number };
 	currentRosters: { alpha: CommonUser[]; bravo: CommonUser[] };
 	setEndingTeamIds: number[];
 }
@@ -44,7 +44,7 @@ interface MatchActionTabProps {
 	isSubmitting?: boolean;
 	setEnding?: SetEndingData;
 	actionButtons?: React.ReactNode;
-	weaponReport?: WeaponReporterProps;
+	secondaryAction?: React.ReactNode;
 }
 
 export function MatchActionTab({
@@ -57,7 +57,7 @@ export function MatchActionTab({
 	isSubmitting,
 	setEnding,
 	actionButtons,
-	weaponReport,
+	secondaryAction,
 }: MatchActionTabProps) {
 	const { t } = useTranslation(["q", "game-misc", "common"]);
 	const [winnerId, setWinnerId] = useState<number | null>(null);
@@ -188,7 +188,7 @@ export function MatchActionTab({
 					</SendouButton>
 				</div>
 			)}
-			{weaponReport ? <WeaponReporter {...weaponReport} /> : null}
+			{secondaryAction}
 		</SendouTabPanel>
 	);
 }

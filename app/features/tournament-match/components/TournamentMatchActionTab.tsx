@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { Undo2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
@@ -130,7 +129,7 @@ export function TournamentMatchActionTab({
 					size="miniscule"
 					icon={<Undo2 size={16} />}
 					isPending={undoFetcher.state !== "idle"}
-					className={clsx({ invisible: scoreSum === 0 })}
+					isDisabled={scoreSum === 0}
 					onPress={() => {
 						undoFetcher.submit(
 							{
@@ -145,7 +144,9 @@ export function TournamentMatchActionTab({
 					{t("q:match.undoReport")}
 				</SendouButton>
 			}
-			weaponReport={weaponReport ?? undefined}
+			secondaryAction={
+				weaponReport ? <WeaponReporter {...weaponReport} /> : null
+			}
 		/>
 	);
 }

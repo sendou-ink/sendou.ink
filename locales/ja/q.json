@@ -207,6 +207,7 @@
 	"match.tabs.rosters": "",
 	"match.tabs.action": "",
 	"match.tabs.result": "",
+	"match.tabs.stats": "",
 	"preparing.joinQ": "列に入る",
 	"tiers.currentCriteria": "現在の基準",
 	"tiers.info.p1": "例として、Leviathanはプレイヤーの上位5%、Diamondは上位15%",

@@ -23,6 +23,7 @@ interface FormFieldText<T extends string> extends FormFieldBase<T> {
 	maxLength: number;
 	toLowerCase?: boolean;
 	leftAddon?: string;
+	placeholder?: string;
 	required: boolean;
 	inputType?: "text" | "number";
 	regExp?: {
@@ -139,6 +140,10 @@ interface FormFieldUserSearch<T extends string> extends FormFieldBase<T> {
 	required: boolean;
 }
 
+interface FormFieldTournamentSearch<T extends string> extends FormFieldBase<T> {
+	required: boolean;
+}
+
 interface FormFieldBadges<T extends string> extends FormFieldBase<T> {
 	maxCount?: number;
 }
@@ -146,6 +151,11 @@ interface FormFieldBadges<T extends string> extends FormFieldBase<T> {
 interface FormFieldSelectDynamic<T extends string> extends FormFieldBase<T> {
 	clearable: boolean;
 	searchable?: boolean;
+}
+
+interface FormFieldRadioGroupDynamic<T extends string>
+	extends FormFieldBase<T> {
+	minLength?: number;
 }
 
 interface FormFieldStageSelect<T extends string> extends FormFieldBase<T> {
@@ -165,6 +175,7 @@ export type FormField<V extends string = string> =
 	| FormFieldSelectDynamic<"select-dynamic">
 	| FormFieldDualSelect<"dual-select", V>
 	| FormFieldInputGroup<"radio-group", V>
+	| FormFieldRadioGroupDynamic<"radio-group-dynamic">
 	| FormFieldInputGroup<"checkbox-group", V>
 	| FormFieldDatetime<"datetime">
 	| FormFieldDatetime<"date">
@@ -178,6 +189,7 @@ export type FormField<V extends string = string> =
 	| FormFieldTimeRange<"time-range">
 	| FormFieldFieldset<"fieldset", z.ZodRawShape>
 	| FormFieldUserSearch<"user-search">
+	| FormFieldTournamentSearch<"tournament-search">
 	| FormFieldBadges<"badges">
 	| FormFieldStageSelect<"stage-select">
 	| FormFieldWeaponSelect<"weapon-select">;

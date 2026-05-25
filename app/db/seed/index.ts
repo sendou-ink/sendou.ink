@@ -3188,7 +3188,34 @@ async function scrimPosts() {
 		return result;
 	};
 
-	for (let i = 0; i < 20; i++) {
+	// Deterministic post 1: admin (Sendou) vs N-ZAP. The e2e map-by-map test
+	// navigates straight to /scrims/1 and relies on this being an accepted
+	// scrim with admin on the ALPHA side and N-ZAP on the BRAVO side.
+	const adminVsNzapAt = date(true);
+	const adminVsNzapPostId = await ScrimPostRepository.insert({
+		at: adminVsNzapAt,
+		rangeEnd: null,
+		isScheduledForFuture: true,
+		teamId: null,
+		text: null,
+		visibility: null,
+		users: users()
+			.map((u) => ({ ...u, isOwner: 0 }))
+			.concat({ userId: ADMIN_ID, isOwner: 1 }),
+		managedByAnyone: true,
+		maps: null,
+		mapsTournamentId: 4,
+	});
+	await ScrimPostRepository.insertRequest({
+		scrimPostId: adminVsNzapPostId,
+		users: users()
+			.map((u) => ({ ...u, isOwner: 0 }))
+			.concat({ userId: NZAP_TEST_ID, isOwner: 1 }),
+		message: null,
+	});
+	await ScrimPostRepository.acceptRequest(1);
+
+	for (let i = 0; i < 19; i++) {
 		const divs = divRange();
 		const atTime = date();
 		const hasRangeEnd = Math.random() > 0.5;
@@ -3258,7 +3285,9 @@ async function scrimPostRequests() {
 		.where("TeamMember.teamId", "=", 1)
 		.execute();
 
-	for (const id of [1, 5, 12, 14, 19]) {
+	// Post 1 is already accepted (admin-vs-nzap, seeded in scrimPosts()), so it
+	// is excluded here.
+	for (const id of [5, 12, 14, 19]) {
 		await ScrimPostRepository.insertRequest({
 			scrimPostId: id,
 			users: allianceRogueMembers.map((member) => ({
@@ -3272,8 +3301,6 @@ async function scrimPostRequests() {
 					: null,
 		});
 	}
-
-	await ScrimPostRepository.acceptRequest(3);
 }
 
 async function associations() {

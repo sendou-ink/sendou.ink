@@ -1,5 +1,6 @@
 import { differenceInMinutes } from "date-fns";
 import * as R from "remeda";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { databaseTimestampToDate } from "~/utils/dates";
 import * as Scrim from "./core/Scrim";
 import type { LutiDiv, ScrimPost } from "./scrims-types";
@@ -87,6 +88,19 @@ export function generateTimeOptions(startDate: Date, endDate: Date): number[] {
 	return Array.from(timestamps).sort((a, b) => a - b);
 }
 
+export function parseMapPoolInput(input: string): MapPool | null {
+	const serialized = extractSerializedPool(input);
+	if (!serialized) return null;
+
+	try {
+		const pool = new MapPool(serialized);
+		if (pool.isEmpty()) return null;
+		return pool;
+	} catch {
+		return null;
+	}
+}
+
 export function formatFlexTimeDisplay(
 	startTimestamp: number,
 	endTimestamp: number,
@@ -109,4 +123,24 @@ export function formatFlexTimeDisplay(
 	}
 
 	return null;
+}
+
+function extractSerializedPool(input: string): string | null {
+	const trimmed = input.trim();
+	if (!trimmed) return null;
+
+	if (trimmed.includes("://")) {
+		try {
+			const url = new URL(trimmed);
+			return url.searchParams.get("pool");
+		} catch {
+			return null;
+		}
+	}
+
+	if (trimmed.includes("pool=")) {
+		return new URLSearchParams(trimmed).get("pool");
+	}
+
+	return trimmed;
 }

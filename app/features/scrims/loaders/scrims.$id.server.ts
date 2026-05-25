@@ -1,7 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { chatAccessible } from "~/features/chat/chat-utils";
 import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
-import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { notFoundIfFalsy } from "../../../utils/remix.server";
@@ -10,6 +9,9 @@ import {
 	requireUser,
 } from "../../auth/core/user.server";
 import * as Scrim from "../core/Scrim";
+import * as ScrimMapByMap from "../core/ScrimMapByMap";
+import * as ScrimMapListRepository from "../ScrimMapListRepository.server";
+import * as ScrimMapRepository from "../ScrimMapRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
@@ -36,6 +38,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			RoomLinkRepository.findByUserIds(participantIds, 3),
 		]);
 
+	const mapByMap = await resolveMapByMap({ post, user });
+
 	return {
 		post,
 		chatCode:
@@ -50,17 +54,38 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		anyUserPrefersNoScreen,
 		anyUserPrefersNoSplatnet,
 		roomLinks,
-		tournamentMapPool: post.mapsTournament
-			? await resolveTournamentMapPool(post.mapsTournament.id, user)
-			: null,
+		mapByMap,
 	};
 };
 
-async function resolveTournamentMapPool(
-	tournamentId: number,
-	user: AuthenticatedUser,
-) {
-	const data = await tournamentDataCached({ tournamentId, user });
+async function resolveMapByMap({
+	post,
+	user,
+}: {
+	post: NonNullable<Awaited<ReturnType<typeof ScrimPostRepository.findById>>>;
+	user: AuthenticatedUser;
+}) {
+	const [mapLists, maps] = await Promise.all([
+		ScrimMapListRepository.findMapListsByScrimPostId(post.id),
+		ScrimMapRepository.findMapsByScrimPostId(post.id),
+	]);
 
-	return data.ctx.toSetMapPool;
+	const pool = mapLists.length > 0 ? ScrimMapByMap.unionPool(mapLists) : null;
+	const currentMap = maps.find((m) => m.reportedAt === null) ?? null;
+	const viewerSide = Scrim.sideOfUser(post, user.id);
+	const locked = Scrim.isTrackingLocked(maps, mapLists);
+
+	const ownList = viewerSide
+		? mapLists.find((l) => l.side === viewerSide)
+		: undefined;
+
+	return {
+		mapLists,
+		maps,
+		currentMap,
+		viewerSide,
+		locked,
+		pool: pool ? pool.stageModePairs : null,
+		ownPool: ownList?.mapList ?? null,
+	};
 }

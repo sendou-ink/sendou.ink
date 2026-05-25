@@ -322,6 +322,8 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} a confirmé l'anunulation du match. Le match est maintenant vérrouillé",
 	"chat.systemMsg.cancelRefused": "",
 	"chat.systemMsg.userLeft": "{{name}} a quitté le groupe",
+	"chat.systemMsg.mapReplayed": "",
+	"chat.systemMsg.mapPicked": "",
 	"chat.newMessages": "Nouveau message",
 	"chat.sidebar.title": "",
 	"chat.sidebar.noActiveChats": "",

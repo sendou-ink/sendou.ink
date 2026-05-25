@@ -1,9 +1,10 @@
 import { format, isWeekend } from "date-fns";
 import * as R from "remeda";
+import type { Tables } from "~/db/tables";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { logger } from "~/utils/logger";
-import { LUTI_DIVS } from "../scrims-constants";
-import type { ScrimFilters, ScrimPost } from "../scrims-types";
+import { LUTI_DIVS, SCRIM_TRACKING_AUTO_LOCK_HOURS } from "../scrims-constants";
+import type { ScrimFilters, ScrimPost, ScrimSide } from "../scrims-types";
 
 /** Returns true if the original poster has accepted any of the requests. */
 export function isAccepted(post: ScrimPost) {
@@ -124,4 +125,70 @@ export function defaultFilters(): ScrimFilters {
 
 export function filtersAreDefault(filters: ScrimFilters): boolean {
 	return R.isShallowEqual(filters, defaultFilters());
+}
+
+/**
+ * Returns the side ("ALPHA" or "BRAVO") the user belongs to in the scrim, or
+ * null when the user is not part of the accepted pairing.
+ *
+ * The post's own users list is treated as the ALPHA side; the accepted
+ * request's users list is treated as the BRAVO side.
+ */
+export function sideOfUser(post: ScrimPost, userId: number): ScrimSide | null {
+	if (post.users.some((u) => u.id === userId)) return "ALPHA";
+
+	const acceptedRequest = post.requests.find((r) => r.isAccepted);
+	if (acceptedRequest?.users.some((u) => u.id === userId)) return "BRAVO";
+
+	return null;
+}
+
+/**
+ * Returns true when map-by-map tracking is locked: the auto-lock window has
+ * elapsed since the last activity (most recent reported map, falling back to
+ * the most recently updated submitted map list). Returns false when no map
+ * list has been submitted yet (tracking is not active).
+ */
+export function isTrackingLocked(
+	maps: Pick<Tables["ScrimMap"], "reportedAt">[] = [],
+	mapLists: Pick<Tables["ScrimMapList"], "updatedAt">[] = [],
+	now: number = Date.now(),
+): boolean {
+	const latestReported = R.firstBy(
+		maps.filter((m) => m.reportedAt !== null),
+		[(m) => m.reportedAt!, "desc"],
+	);
+	const latestList = R.firstBy(mapLists, [(l) => l.updatedAt, "desc"]);
+
+	const referenceSeconds =
+		latestReported?.reportedAt ?? latestList?.updatedAt ?? null;
+	if (referenceSeconds === null) return false;
+
+	const elapsedHours = (now - referenceSeconds * 1000) / (60 * 60 * 1000);
+
+	return elapsedHours > SCRIM_TRACKING_AUTO_LOCK_HOURS;
+}
+
+/**
+ * Returns the next 0-based map index to be inserted given a list of existing
+ * maps. Existing maps need not be in any particular order.
+ */
+export function nextMapIndex(
+	maps: Pick<Tables["ScrimMap"], "index">[],
+): number {
+	const latest = R.firstBy(maps, [(m) => m.index, "desc"]);
+	return latest ? latest.index + 1 : 0;
+}
+
+/**
+ * Returns the most recently reported map (by `index`), or undefined if no map
+ * has been reported yet.
+ */
+export function lastReportedMap<
+	T extends Pick<Tables["ScrimMap"], "index" | "reportedAt">,
+>(maps: T[]): T | undefined {
+	return R.firstBy(
+		maps.filter((m) => m.reportedAt !== null),
+		[(m) => m.index, "desc"],
+	);
 }

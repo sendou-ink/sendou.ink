@@ -207,6 +207,7 @@
 	"match.tabs.rosters": "",
 	"match.tabs.action": "",
 	"match.tabs.result": "",
+	"match.tabs.stats": "",
 	"preparing.joinQ": "Присоединиться к очереди",
 	"tiers.currentCriteria": "Текущие критерии",
 	"tiers.info.p1": "Например, Leviathan - топ 5% игроков, Diamond - 85 процентиль и т.д.",

@@ -21,3 +21,5 @@ export const SCRIM = {
 	MAX_TIME_RANGE_MS: 3 * 60 * 60 * 1000, // 3 hours
 	ROOM_LINK_FRESHNESS_MINUTES: 30,
 };
+
+export const SCRIM_TRACKING_AUTO_LOCK_HOURS = 4;

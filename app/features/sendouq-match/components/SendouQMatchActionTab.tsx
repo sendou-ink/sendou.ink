@@ -435,7 +435,9 @@ function InProgressTab({
 					{ method: "post" },
 				);
 			}}
-			weaponReport={isStaffOnly ? undefined : weaponReport}
+			secondaryAction={
+				isStaffOnly ? null : <WeaponReporter {...weaponReport} />
+			}
 			actionButtons={
 				<>
 					{isStaffOnly ? (
@@ -469,29 +471,28 @@ function InProgressTab({
 							</SendouButton>
 						</FormWithConfirm>
 					)}
-					{scoreIsNotZero ? (
-						<SendouButton
-							variant="minimal-destructive"
-							size="miniscule"
-							icon={<Undo2 size={16} />}
-							isPending={undoFetcher.state !== "idle"}
-							onPress={() => {
-								const mapIndex = data.match.mapList.findLastIndex(
-									(m) => m.winnerGroupId !== null,
-								);
-								if (mapIndex < 0) return;
-								undoFetcher.submit(
-									{
-										_action: "UNDO_MAP_REPORT",
-										mapIndex: String(mapIndex),
-									},
-									{ method: "post" },
-								);
-							}}
-						>
-							{t("q:match.undoReport")}
-						</SendouButton>
-					) : null}
+					<SendouButton
+						variant="minimal-destructive"
+						size="miniscule"
+						icon={<Undo2 size={16} />}
+						isPending={undoFetcher.state !== "idle"}
+						isDisabled={!scoreIsNotZero}
+						onPress={() => {
+							const mapIndex = data.match.mapList.findLastIndex(
+								(m) => m.winnerGroupId !== null,
+							);
+							if (mapIndex < 0) return;
+							undoFetcher.submit(
+								{
+									_action: "UNDO_MAP_REPORT",
+									mapIndex: String(mapIndex),
+								},
+								{ method: "post" },
+							);
+						}}
+					>
+						{t("q:match.undoReport")}
+					</SendouButton>
 				</>
 			}
 		/>

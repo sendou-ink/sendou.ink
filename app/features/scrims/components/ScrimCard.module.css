@@ -78,6 +78,10 @@
 	font-size: var(--font-xs);
 }
 
+.tournamentPopoverTrigger {
+	height: auto;
+}
+
 .textContent {
 	padding-inline: var(--s-4);
 	padding-bottom: var(--s-3);

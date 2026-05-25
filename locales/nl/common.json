@@ -320,6 +320,8 @@
 	"chat.systemMsg.cancelConfirmed": "",
 	"chat.systemMsg.cancelRefused": "",
 	"chat.systemMsg.userLeft": "",
+	"chat.systemMsg.mapReplayed": "",
+	"chat.systemMsg.mapPicked": "",
 	"chat.newMessages": "",
 	"chat.sidebar.title": "",
 	"chat.sidebar.noActiveChats": "",

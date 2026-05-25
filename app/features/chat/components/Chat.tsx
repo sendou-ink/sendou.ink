@@ -101,6 +101,12 @@ export function Chat({
 			case "USER_LEFT": {
 				return t("common:chat.systemMsg.userLeft", { name: name() });
 			}
+			case "MAP_REPLAYED": {
+				return t("common:chat.systemMsg.mapReplayed", { name: name() });
+			}
+			case "MAP_PICKED": {
+				return t("common:chat.systemMsg.mapPicked", { name: name() });
+			}
 			default: {
 				return null;
 			}

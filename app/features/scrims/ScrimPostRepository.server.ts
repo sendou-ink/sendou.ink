@@ -307,6 +307,11 @@ const mapDBRowToScrimPost = (
 			MANAGE_REQUESTS: managerIds,
 			DELETE_POST: managerIds,
 			CANCEL: managerIds.concat(requests.at(0)?.users.map((u) => u.id) ?? []),
+			MANAGE_TRACKING: someRequestIsAccepted
+				? users
+						.map((u) => u.id)
+						.concat(requests[0]?.users.map((u) => u.id) ?? [])
+				: [],
 		},
 		managedByAnyone: Boolean(row.managedByAnyone),
 		canceled,

@@ -322,6 +322,8 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} ha confermato la cancellazione del match. Il match è ora bloccato",
 	"chat.systemMsg.cancelRefused": "",
 	"chat.systemMsg.userLeft": "{{name}} ha lasciato il gruppo",
+	"chat.systemMsg.mapReplayed": "",
+	"chat.systemMsg.mapPicked": "",
 	"chat.newMessages": "Nuovi messaggi",
 	"chat.sidebar.title": "",
 	"chat.sidebar.noActiveChats": "",

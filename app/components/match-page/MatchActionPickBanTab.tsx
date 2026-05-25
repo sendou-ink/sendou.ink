@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { Check, X } from "lucide-react";
+import type * as React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
@@ -11,7 +12,6 @@ import { SendouTabPanel } from "../elements/Tabs";
 import { ModeImage } from "../Image";
 import styles from "./MatchActionPickBanTab.module.css";
 import { TAB_KEYS } from "./MatchTabs";
-import { WeaponReporter, type WeaponReporterProps } from "./WeaponReporter";
 
 export interface PickBanMapOption {
 	stageId?: StageId;
@@ -30,7 +30,7 @@ interface MatchActionPickBanTabProps {
 	type: "PICK" | "BAN";
 	onSubmit?: (data: PickBanSubmission) => void;
 	isSubmitting?: boolean;
-	weaponReport?: WeaponReporterProps;
+	secondaryAction?: React.ReactNode;
 	waitingFor?: string;
 }
 
@@ -39,7 +39,7 @@ export function MatchActionPickBanTab({
 	type,
 	onSubmit,
 	isSubmitting,
-	weaponReport,
+	secondaryAction,
 	waitingFor,
 }: MatchActionPickBanTabProps) {
 	const { t } = useTranslation(["q", "common", "game-misc"]);
@@ -155,7 +155,7 @@ export function MatchActionPickBanTab({
 					</>
 				)}
 			</div>
-			{weaponReport ? <WeaponReporter {...weaponReport} /> : null}
+			{secondaryAction}
 		</SendouTabPanel>
 	);
 }

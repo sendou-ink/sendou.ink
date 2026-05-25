@@ -21,6 +21,7 @@ import type {
 	FormFieldFieldset,
 	FormFieldInputGroup,
 	FormFieldItems,
+	FormFieldItemsWithImage,
 	FormFieldSelect,
 	FormsTranslationKey,
 	SelectOption,
@@ -32,9 +33,13 @@ export type RequiresDefault<T extends z.ZodType> = T & {
 	_requiresDefault: true;
 };
 
-type WithTypedTranslationKeys<T> = Omit<T, "label" | "bottomText"> & {
+type WithTypedTranslationKeys<T> = Omit<
+	T,
+	"label" | "bottomText" | "placeholder"
+> & {
 	label?: FormsTranslationKey;
 	bottomText?: FormsTranslationKey;
+	placeholder?: FormsTranslationKey;
 };
 
 type WithTypedItemLabels<T, V extends string> = Omit<T, "items"> & {
@@ -102,6 +107,7 @@ export function textFieldOptional(
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
+		placeholder: prefixKey(args.placeholder),
 		required: false,
 		type: "text-field",
 		initialValue: "",
@@ -125,6 +131,7 @@ export function textFieldRequired(
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
+		placeholder: prefixKey(args.placeholder),
 		required: true,
 		type: "text-field",
 		initialValue: "",
@@ -429,6 +436,24 @@ export function radioGroup<V extends string>(
 	});
 }
 
+export function radioGroupDynamic(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "radio-group-dynamic" }>,
+			"type" | "initialValue"
+		>
+	>,
+) {
+	return z.string().register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "radio-group-dynamic",
+		initialValue: null,
+	}) as unknown as z.ZodType<string> &
+		FieldWithOptions<FormFieldItemsWithImage<string>>;
+}
+
 type DateTimeArgs = WithTypedTranslationKeys<
 	Omit<FormFieldDatetime<"datetime">, "type" | "initialValue" | "required">
 > & {
@@ -702,6 +727,24 @@ export function userSearchOptional(
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
 		type: "user-search",
+		initialValue: null,
+		required: false,
+	});
+}
+
+export function tournamentSearchOptional(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "tournament-search" }>,
+			"type" | "initialValue" | "required"
+		>
+	>,
+) {
+	return z.preprocess(falsyToNull, id.nullable()).register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "tournament-search",
 		initialValue: null,
 		required: false,
 	});

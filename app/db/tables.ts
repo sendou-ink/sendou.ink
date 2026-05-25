@@ -1259,6 +1259,27 @@ export interface ScrimPost {
 	updatedAt: Generated<number>;
 }
 
+export interface ScrimMapList {
+	id: GeneratedAlways<number>;
+	scrimPostId: number;
+	side: "ALPHA" | "BRAVO";
+	source: "TOURNAMENT" | "POOL";
+	tournamentId: number | null;
+	serializedPool: string | null;
+	updatedAt: number;
+}
+
+export interface ScrimMap {
+	id: GeneratedAlways<number>;
+	scrimPostId: number;
+	index: number;
+	mode: ModeShort;
+	stageId: StageId;
+	winnerSide: "ALPHA" | "BRAVO" | null;
+	reportedAt: number | null;
+	reportedByUserId: number | null;
+}
+
 export interface ScrimPostUser {
 	scrimPostId: number;
 	userId: number;
@@ -1442,6 +1463,8 @@ export interface DB {
 	ScrimPostUser: ScrimPostUser;
 	ScrimPostRequest: ScrimPostRequest;
 	ScrimPostRequestUser: ScrimPostRequestUser;
+	ScrimMapList: ScrimMapList;
+	ScrimMap: ScrimMap;
 	Association: Association;
 	AssociationMember: AssociationMember;
 	Notification: Notification;
