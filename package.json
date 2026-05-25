@@ -38,8 +38,8 @@
 		"sync-weapon-params": "tsx scripts/sync-weapon-params.ts"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "3.1047.0",
-		"@aws-sdk/lib-storage": "3.1047.0",
+		"@aws-sdk/client-s3": "3.1048.0",
+		"@aws-sdk/lib-storage": "3.1048.0",
 		"@date-fns/tz": "1.4.1",
 		"@dnd-kit/core": "6.3.1",
 		"@dnd-kit/modifiers": "9.0.0",
@@ -117,10 +117,10 @@
 		"cross-env": "10.1.0",
 		"dotenv": "17.4.2",
 		"i18next-locales-sync": "2.1.1",
-		"knip": "6.13.1",
+		"knip": "6.14.1",
 		"ley": "0.8.1",
 		"sql-formatter": "15.7.4",
-		"tsx": "4.22.0",
+		"tsx": "4.22.1",
 		"typescript": "6.0.3",
 		"vite": "8.0.13",
 		"vite-node": "6.0.0",
