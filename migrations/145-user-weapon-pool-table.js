@@ -37,6 +37,20 @@ export function up(db) {
 			`,
 		).run();
 
+		db.prepare(
+			/* sql */ `
+				insert into "TenStarWeapon" ("userId", "weaponSplId")
+				select distinct sp."userId", xrp."weaponSplId"
+				from "XRankPlacement" xrp
+				inner join "SplatoonPlayer" sp on sp."id" = xrp."playerId"
+				where sp."userId" is not null
+				and (
+					xrp."region" = 'JPN'
+					or (xrp."region" = 'WEST' and xrp."rank" <= 100)
+				)
+			`,
+		).run();
+
 		db.pragma("foreign_key_check");
 	})();
 }

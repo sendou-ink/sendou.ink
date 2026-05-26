@@ -3,6 +3,7 @@ import { db, sql } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
+import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 
@@ -242,6 +243,7 @@ export async function linkUserAndPlayer({
 	await BadgeRepository.syncXPBadges();
 
 	await BuildRepository.recalculateAllSortValues(userId);
+	await XRankPlacementRepository.refreshTenStarWeapons(userId);
 }
 
 export function forcePatron(args: {
