@@ -464,7 +464,13 @@ function WeaponPool() {
 						<WeaponImage
 							testId={`${weapon.weaponSplId}-${i + 1}`}
 							weaponSplId={weapon.weaponSplId}
-							variant={weapon.isFavorite ? "badge-5-star" : "badge"}
+							variant={
+								weapon.isFavorite && weapon.isTenStar
+									? "badge-10-star"
+									: weapon.isFavorite
+										? "badge-5-star"
+										: "badge"
+							}
 							width={38}
 							height={38}
 						/>

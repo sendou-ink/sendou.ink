@@ -16,10 +16,7 @@ const createUser = async (discordId: string) => {
 	return result.id;
 };
 
-const createSplatoonPlayer = async (
-	splId: string,
-	userId?: number | null,
-) => {
+const createSplatoonPlayer = async (splId: string, userId?: number | null) => {
 	const result = await db
 		.insertInto("SplatoonPlayer")
 		.values({ splId, userId: userId ?? null })
@@ -130,10 +127,7 @@ describe("refreshTenStarWeapons", () => {
 
 		await XRankPlacementRepository.refreshTenStarWeapons();
 
-		const rows = await db
-			.selectFrom("TenStarWeapon")
-			.selectAll()
-			.execute();
+		const rows = await db.selectFrom("TenStarWeapon").selectAll().execute();
 
 		expect(rows).toHaveLength(1);
 		expect(rows[0].userId).toBe(userId);
@@ -154,10 +148,7 @@ describe("refreshTenStarWeapons", () => {
 
 		await XRankPlacementRepository.refreshTenStarWeapons();
 
-		const rows = await db
-			.selectFrom("TenStarWeapon")
-			.selectAll()
-			.execute();
+		const rows = await db.selectFrom("TenStarWeapon").selectAll().execute();
 
 		expect(rows).toHaveLength(1);
 		expect(rows[0].weaponSplId).toBe(40);
@@ -177,10 +168,7 @@ describe("refreshTenStarWeapons", () => {
 
 		await XRankPlacementRepository.refreshTenStarWeapons();
 
-		const rows = await db
-			.selectFrom("TenStarWeapon")
-			.selectAll()
-			.execute();
+		const rows = await db.selectFrom("TenStarWeapon").selectAll().execute();
 
 		expect(rows).toHaveLength(0);
 	});
@@ -198,10 +186,7 @@ describe("refreshTenStarWeapons", () => {
 
 		await XRankPlacementRepository.refreshTenStarWeapons();
 
-		const rows = await db
-			.selectFrom("TenStarWeapon")
-			.selectAll()
-			.execute();
+		const rows = await db.selectFrom("TenStarWeapon").selectAll().execute();
 
 		expect(rows).toHaveLength(0);
 	});
@@ -227,10 +212,7 @@ describe("refreshTenStarWeapons", () => {
 
 		await XRankPlacementRepository.refreshTenStarWeapons();
 
-		const rows = await db
-			.selectFrom("TenStarWeapon")
-			.selectAll()
-			.execute();
+		const rows = await db.selectFrom("TenStarWeapon").selectAll().execute();
 
 		expect(rows).toHaveLength(1);
 	});

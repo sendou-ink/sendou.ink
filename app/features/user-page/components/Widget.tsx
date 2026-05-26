@@ -615,10 +615,15 @@ function Builds({
 	);
 }
 
+// xxx: for widget 10 star not working
 function WeaponPool({
 	weapons,
 }: {
-	weapons: Array<{ id: MainWeaponId; isFavorite: boolean }>;
+	weapons: Array<{
+		id: MainWeaponId;
+		isFavorite: boolean;
+		isTenStar?: boolean;
+	}>;
 }) {
 	return (
 		<div className="stack horizontal sm justify-center flex-wrap">
@@ -627,7 +632,14 @@ function WeaponPool({
 					<div key={weapon.id} className="u__weapon">
 						<WeaponImage
 							weaponSplId={weapon.id}
-							variant={weapon.isFavorite ? "badge-5-star" : "badge"}
+							// xxx: eliminate this copypaste?
+							variant={
+								weapon.isFavorite && weapon.isTenStar
+									? "badge-10-star"
+									: weapon.isFavorite
+										? "badge-5-star"
+										: "badge"
+							}
 							width={38}
 							height={38}
 						/>

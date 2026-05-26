@@ -13,6 +13,7 @@ import {
 	modeImageUrl,
 	outlinedFiveStarMainWeaponImageUrl,
 	outlinedMainWeaponImageUrl,
+	outlinedTenStarMainWeaponImageUrl,
 	specialWeaponImageUrl,
 	stageImageUrl,
 	subWeaponImageUrl,
@@ -77,7 +78,7 @@ export function Image({
 
 type WeaponImageProps = {
 	weaponSplId: MainWeaponId;
-	variant: "badge" | "badge-5-star" | "build";
+	variant: "badge" | "badge-5-star" | "badge-10-star" | "build";
 } & Omit<ImageProps, "path" | "alt">;
 
 export function WeaponImage({
@@ -100,7 +101,9 @@ export function WeaponImage({
 					? outlinedMainWeaponImageUrl(weaponSplId)
 					: variant === "badge-5-star"
 						? outlinedFiveStarMainWeaponImageUrl(weaponSplId)
-						: mainWeaponImageUrl(weaponSplId)
+						: variant === "badge-10-star"
+							? outlinedTenStarMainWeaponImageUrl(weaponSplId)
+							: mainWeaponImageUrl(weaponSplId)
 			}
 		/>
 	);

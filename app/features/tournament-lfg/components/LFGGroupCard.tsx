@@ -34,7 +34,11 @@ export type LFGGroupMember = {
 	pronouns: Pronouns | null;
 	role: "OWNER" | "MANAGER" | "REGULAR";
 	isStayAsSub: boolean;
-	weapons: Array<{ weaponSplId: MainWeaponId; isFavorite: boolean }> | null;
+	weapons: Array<{
+		weaponSplId: MainWeaponId;
+		isFavorite: boolean;
+		isTenStar: boolean;
+	}> | null;
 	plusTier: number | null;
 };
 
@@ -229,7 +233,13 @@ function LFGGroupMemberRow({
 							<WeaponImage
 								key={weapon.weaponSplId}
 								weaponSplId={weapon.weaponSplId}
-								variant={weapon.isFavorite ? "badge-5-star" : "badge"}
+								variant={
+									weapon.isFavorite && weapon.isTenStar
+										? "badge-10-star"
+										: weapon.isFavorite
+											? "badge-5-star"
+											: "badge"
+								}
 								size={26}
 							/>
 						))}

@@ -21,6 +21,7 @@ import {
 	concatUserSubmittedImagePrefix,
 	tournamentLogoOrNull,
 	userChatNameHue,
+	userProfileWeapons,
 } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 import { safeNumberParse } from "~/utils/number";
@@ -181,13 +182,7 @@ export async function findProfileByIdentifier(
 			"User.patronTier",
 			"PlusTier.tier as plusTier",
 			"User.pronouns",
-			jsonArrayFrom(
-				eb
-					.selectFrom("UserWeapon")
-					.select(["UserWeapon.weaponSplId", "UserWeapon.isFavorite"])
-					.whereRef("UserWeapon.userId", "=", "User.id")
-					.orderBy("UserWeapon.order", "asc"),
-			).as("weapons"),
+			userProfileWeapons(eb).as("weapons"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TeamMemberWithSecondary")

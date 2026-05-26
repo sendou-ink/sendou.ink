@@ -399,7 +399,13 @@ function GroupMember({
 								<WeaponImage
 									key={weapon.weaponSplId}
 									weaponSplId={weapon.weaponSplId}
-									variant={weapon.isFavorite ? "badge-5-star" : "badge"}
+									variant={
+										weapon.isFavorite && weapon.isTenStar
+											? "badge-10-star"
+											: weapon.isFavorite
+												? "badge-5-star"
+												: "badge"
+									}
 									size={26}
 								/>
 							);

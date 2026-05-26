@@ -44,7 +44,12 @@ const DIR_PATH_4 = path.join(
 );
 
 async function main() {
-	for (const [i, dir] of [DIR_PATH_1, DIR_PATH_2, DIR_PATH_3, DIR_PATH_4].entries()) {
+	for (const [i, dir] of [
+		DIR_PATH_1,
+		DIR_PATH_2,
+		DIR_PATH_3,
+		DIR_PATH_4,
+	].entries()) {
 		const files = await fs.promises.readdir(dir);
 
 		for (const file of files) {

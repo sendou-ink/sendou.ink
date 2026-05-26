@@ -48,6 +48,7 @@ import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import { stagesObj as s, stageIds } from "~/modules/in-game-lists/stage-ids";
 import type {
 	AbilityType,
+	MainWeaponId,
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
@@ -72,12 +73,7 @@ import {
 	SEED_TEAM_IMAGES,
 	SEED_TOURNAMENT_IMAGES,
 } from "../../../scripts/seed-art-urls";
-import type {
-	ParsedMemento,
-	Tables,
-	UserMapModePreferences,
-	WeaponPoolEntry,
-} from "../tables";
+import type { ParsedMemento, Tables, UserMapModePreferences } from "../tables";
 import {
 	ADMIN_TEST_AVATAR,
 	AMOUNT_OF_CALENDAR_EVENTS,
@@ -955,16 +951,14 @@ async function userMatchProfileWeaponPool() {
 			.shuffle(mainWeaponIds)
 			.slice(0, faker.helpers.arrayElement([1, 2, 3, 4]));
 
-		const weaponPool: Array<WeaponPoolEntry> = weapons.map((weaponSplId) => ({
+		const weaponPool = weapons.map((weaponSplId, i) => ({
+			userId: id,
+			sortOrder: i,
 			weaponSplId,
 			isFavorite: faker.number.float(1) > 0.7 ? 1 : 0,
 		}));
 
-		await db
-			.updateTable("User")
-			.set({ weaponPool: JSON.stringify(weaponPool) })
-			.where("User.id", "=", id)
-			.execute();
+		await db.insertInto("UserWeaponPool").values(weaponPool).execute();
 	}
 }
 
@@ -2695,15 +2689,23 @@ async function groups(variation?: SeedVariation | null) {
 			nzapGroupMemberIds[2],
 		].filter((id): id is number => typeof id === "number");
 		for (const userId of guaranteedWeaponPoolUserIds) {
-			const weapons: WeaponPoolEntry[] = [
-				{ weaponSplId: 0, isFavorite: 1 },
-				{ weaponSplId: 2000, isFavorite: 0 },
-				{ weaponSplId: 4000, isFavorite: 0 },
-			];
+			const weapons: Array<{ weaponSplId: MainWeaponId; isFavorite: number }> =
+				[
+					{ weaponSplId: 0, isFavorite: 1 },
+					{ weaponSplId: 2000, isFavorite: 0 },
+					{ weaponSplId: 4000, isFavorite: 0 },
+				];
 			await db
-				.updateTable("User")
-				.set({ weaponPool: JSON.stringify(weapons) })
-				.where("User.id", "=", userId)
+				.insertInto("UserWeaponPool")
+				.values(
+					weapons.map((w, i) => ({
+						userId,
+						sortOrder: i,
+						weaponSplId: w.weaponSplId,
+						isFavorite: w.isFavorite,
+					})),
+				)
+				.onConflict((oc) => oc.doNothing())
 				.execute();
 		}
 
