@@ -700,16 +700,15 @@ describe("MapList.resume()", () => {
 		).toBe("SZ");
 	});
 
-	it("exclusion is keyed on (mode, stage), not stage alone", () => {
+	it("avoids the just-played stage when alternatives exist, even across modes", () => {
 		const sharedPool = new MapPool({
 			TW: [],
-			SZ: [1, 2],
-			TC: [1, 2],
+			SZ: [1, 2, 3, 4, 5],
+			TC: [1, 2, 3, 4, 5],
 			RM: [],
 			CB: [],
 		});
 
-		const seenForTC = new Set<StageId>();
 		for (let i = 0; i < 50; i++) {
 			const gen = MapList.resume({
 				mapPool: sharedPool,
@@ -718,10 +717,10 @@ describe("MapList.resume()", () => {
 			gen.next();
 			const next = gen.next({ amount: 1 }).value![0];
 			expect(next.mode).toBe("TC");
-			seenForTC.add(next.stageId);
+			expect(
+				next.stageId,
+				"same stage picked back-to-back across modes",
+			).not.toBe(1);
 		}
-
-		expect(seenForTC.has(1)).toBe(true);
-		expect(seenForTC.has(2)).toBe(true);
 	});
 });

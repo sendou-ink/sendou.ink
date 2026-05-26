@@ -54,6 +54,8 @@ export function* generate(args: {
 	skipEnsureMinimumCandidates?: boolean;
 	/** Fixed mode order — when set, skips the random `modeOrders` shuffle and uses only this order. Intended for `resume`. */
 	modeOrder?: ModeShort[];
+	/** Initial weights for stages (mode-agnostic). Used by `resume` to carry over stage-level penalties from history. */
+	initialStageWeights?: Map<StageId, number>;
 }): Generator<Array<ModeWithStage>, Array<ModeWithStage>, GenerateNext> {
 	if (args.mapPool.isEmpty()) {
 		while (true) yield [];
@@ -65,6 +67,7 @@ export function* generate(args: {
 		modes,
 		args.mapPool.parsed,
 		args.initialWeights,
+		args.initialStageWeights,
 	);
 	const orderedModes = args.modeOrder ? [args.modeOrder] : modeOrders(modes);
 	let currentOrderIndex = 0;
@@ -164,13 +167,28 @@ export function resume(args: {
 		initialWeights.set(modeStageKey(pair.mode, pair.stageId), 0);
 	}
 	for (const { mode, stageId } of args.history) {
-		initialWeights.set(modeStageKey(mode, stageId), -1000);
+		initialWeights.set(modeStageKey(mode, stageId), -100);
+	}
+
+	const STAGE_PENALTY = -20;
+	const initialStageWeights = new Map<StageId, number>();
+	for (const pair of args.mapPool.stageModePairs) {
+		if (!initialStageWeights.has(pair.stageId)) {
+			initialStageWeights.set(pair.stageId, 0);
+		}
+	}
+	for (const { stageId } of args.history) {
+		for (const [key, value] of initialStageWeights.entries()) {
+			initialStageWeights.set(key, value + 1);
+		}
+		initialStageWeights.set(stageId, STAGE_PENALTY);
 	}
 
 	return generate({
 		mapPool: args.mapPool,
 		modeOrder,
 		initialWeights: initialWeights.size > 0 ? initialWeights : undefined,
+		initialStageWeights,
 		skipEnsureMinimumCandidates: true,
 	});
 }
@@ -179,6 +197,7 @@ function initializeWeights(
 	modes: ModeShort[],
 	mapPool: ReadonlyMapPoolObject,
 	initialWeights?: Map<string, number>,
+	initialStageWeights?: Map<StageId, number>,
 ) {
 	const stageWeights = new Map<StageId, number>();
 	const stageModeWeights = new Map<string, number>();
@@ -188,7 +207,7 @@ function initializeWeights(
 	for (const mode of modes) {
 		const stageIds = mapPool[mode];
 		for (const stageId of stageIds) {
-			stageWeights.set(stageId, 0);
+			stageWeights.set(stageId, initialStageWeights?.get(stageId) ?? 0);
 			const key = modeStageKey(mode, stageId);
 			const initialWeight =
 				initialWeights?.get(key) ?? (hasInitialWeights ? -1000 : 0);
