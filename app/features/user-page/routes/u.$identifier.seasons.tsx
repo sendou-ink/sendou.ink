@@ -150,6 +150,7 @@ export default function UserSeasonsPage() {
 							secondary
 							controlled
 							active={data.info.currentTab === "weapons"}
+							preventScrollReset
 						>
 							{t("user:seasons.tabs.weapons")}
 						</SubNavLink>
@@ -158,6 +159,7 @@ export default function UserSeasonsPage() {
 							secondary
 							controlled
 							active={data.info.currentTab === "stages"}
+							preventScrollReset
 						>
 							{t("user:seasons.tabs.stages")}
 						</SubNavLink>
@@ -166,6 +168,7 @@ export default function UserSeasonsPage() {
 							secondary
 							controlled
 							active={data.info.currentTab === "mates"}
+							preventScrollReset
 						>
 							{t("user:seasons.tabs.teammates")}
 						</SubNavLink>
@@ -174,6 +177,7 @@ export default function UserSeasonsPage() {
 							secondary
 							controlled
 							active={data.info.currentTab === "enemies"}
+							preventScrollReset
 						>
 							{t("user:seasons.tabs.opponents")}
 						</SubNavLink>
