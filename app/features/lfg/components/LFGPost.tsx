@@ -241,19 +241,8 @@ function PostUserHeader({
 			</div>
 			{includeWeapons ? (
 				<div className="stack horizontal sm">
-					{author.weaponPool.map(({ weaponSplId, isFavorite, isTenStar }) => (
-						<WeaponImage
-							key={weaponSplId}
-							weaponSplId={weaponSplId}
-							size={32}
-							variant={
-								isFavorite && isTenStar
-									? "badge-10-star"
-									: isFavorite
-										? "badge-5-star"
-										: "badge"
-							}
-						/>
+					{author.weaponPool.map((weapon) => (
+						<WeaponImage key={weapon.weaponSplId} weapon={weapon} size={32} />
 					))}
 				</div>
 			) : null}

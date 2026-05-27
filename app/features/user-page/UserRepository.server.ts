@@ -1335,3 +1335,24 @@ export function findIdsByTwitchUsernames(twitchUsernames: string[]) {
 		.where("User.twitch", "in", twitchUsernames)
 		.execute();
 }
+
+/** Returns weapon pool entries with ten-star status for the given user. */
+export function weaponPoolByUserId(userId: number) {
+	return db
+		.selectFrom("UserWeaponPool")
+		.leftJoin("TenStarWeapon", (join) =>
+			join
+				.onRef("TenStarWeapon.userId", "=", "UserWeaponPool.userId")
+				.onRef("TenStarWeapon.weaponSplId", "=", "UserWeaponPool.weaponSplId"),
+		)
+		.select([
+			"UserWeaponPool.weaponSplId",
+			"UserWeaponPool.isFavorite",
+			sql<number>`case when "TenStarWeapon"."weaponSplId" is not null then 1 else 0 end`.as(
+				"isTenStar",
+			),
+		])
+		.where("UserWeaponPool.userId", "=", userId)
+		.orderBy("UserWeaponPool.sortOrder", "asc")
+		.execute();
+}

@@ -230,18 +230,7 @@ function LFGGroupMemberRow({
 				{member.weapons && member.weapons.length > 0 ? (
 					<div className={styles.extraInfo}>
 						{member.weapons.map((weapon) => (
-							<WeaponImage
-								key={weapon.weaponSplId}
-								weaponSplId={weapon.weaponSplId}
-								variant={
-									weapon.isFavorite && weapon.isTenStar
-										? "badge-10-star"
-										: weapon.isFavorite
-											? "badge-5-star"
-											: "badge"
-								}
-								size={26}
-							/>
+							<WeaponImage key={weapon.weaponSplId} weapon={weapon} size={26} />
 						))}
 					</div>
 				) : null}

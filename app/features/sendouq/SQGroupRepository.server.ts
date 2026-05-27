@@ -6,11 +6,7 @@ import type { DB, Tables, UserMapModePreferences } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
-import {
-	COMMON_USER_FIELDS,
-	matchProfileWeapons,
-	type WeaponWithTenStar,
-} from "~/utils/kysely.server";
+import { COMMON_USER_FIELDS, matchProfileWeapons } from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { userIsBanned } from "../ban/core/banned.server";
 import { FULL_GROUP_SIZE } from "./q-constants";
@@ -65,7 +61,11 @@ export async function findCurrentGroups() {
 		vc: Tables["User"]["vc"];
 		role: Tables["GroupMember"]["role"];
 		note: Tables["GroupMember"]["note"];
-		weapons: WeaponWithTenStar[] | null;
+		weapons:
+			| (Pick<Tables["UserWeaponPool"], "weaponSplId" | "isFavorite"> & {
+					isTenStar: number;
+			  })[]
+			| null;
 		plusTier: Tables["PlusTier"]["tier"] | null;
 	};
 

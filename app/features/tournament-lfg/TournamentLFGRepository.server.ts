@@ -7,7 +7,6 @@ import invariant from "~/utils/invariant";
 import {
 	concatUserSubmittedImagePrefix,
 	matchProfileWeapons,
-	type WeaponWithTenStar,
 } from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { randomTeamName } from "~/utils/team-name";
@@ -70,7 +69,11 @@ type TournamentLFGMemberObject = {
 	pronouns: Tables["User"]["pronouns"];
 	role: Tables["TournamentTeamMember"]["role"];
 	isStayAsSub: Tables["TournamentTeamMember"]["isStayAsSub"];
-	weapons: WeaponWithTenStar[] | null;
+	weapons:
+		| (Pick<Tables["UserWeaponPool"], "weaponSplId" | "isFavorite"> & {
+				isTenStar: number;
+		  })[]
+		| null;
 	plusTier: Tables["PlusTier"]["tier"] | null;
 };
 

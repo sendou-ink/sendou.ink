@@ -76,19 +76,38 @@ export function Image({
 	);
 }
 
-type WeaponImageProps = {
+type WeaponWithStars = {
 	weaponSplId: MainWeaponId;
-	variant: "badge" | "badge-5-star" | "badge-10-star" | "build";
+	isFavorite?: boolean | number;
+	isTenStar?: boolean | number;
+};
+
+type WeaponImageProps = (
+	| { weaponSplId: MainWeaponId; weapon?: never }
+	| { weapon: WeaponWithStars; weaponSplId?: never }
+) & {
+	variant?: "badge" | "badge-5-star" | "badge-10-star" | "build";
 } & Omit<ImageProps, "path" | "alt">;
 
+function resolveWeaponBadgeVariant(weapon: WeaponWithStars) {
+	if (weapon.isFavorite && weapon.isTenStar) return "badge-10-star" as const;
+	if (weapon.isFavorite) return "badge-5-star" as const;
+	return "badge" as const;
+}
+
 export function WeaponImage({
-	weaponSplId,
-	variant,
+	weaponSplId: weaponSplIdProp,
+	weapon,
+	variant: variantProp,
 	testId,
 	title,
 	...rest
 }: WeaponImageProps) {
 	const { t } = useTranslation(["weapons"]);
+
+	const weaponSplId = weapon?.weaponSplId ?? weaponSplIdProp!;
+	const variant =
+		variantProp ?? (weapon ? resolveWeaponBadgeVariant(weapon) : "badge");
 
 	return (
 		<Image

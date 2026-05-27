@@ -7,7 +7,6 @@ import {
 } from "kysely";
 import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
 import type { DB, Tables } from "~/db/tables";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { IS_E2E_TEST_RUN } from "./e2e";
 
 export const COMMON_USER_FIELDS = [

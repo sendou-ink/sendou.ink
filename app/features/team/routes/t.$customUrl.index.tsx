@@ -197,17 +197,10 @@ function MemberRow({
 					{member.username}
 				</Link>
 				<div className="stack horizontal md">
-					{member.weapons.map(({ weaponSplId, isFavorite, isTenStar }) => (
+					{member.weapons.map((weapon) => (
 						<WeaponImage
-							key={weaponSplId}
-							variant={
-								isFavorite && isTenStar
-									? "badge-10-star"
-									: isFavorite
-										? "badge-5-star"
-										: "badge"
-							}
-							weaponSplId={weaponSplId}
+							key={weapon.weaponSplId}
+							weapon={weapon}
 							width={48}
 							height={48}
 						/>
@@ -234,17 +227,10 @@ function MobileMemberCard({
 				</Link>
 				{member.weapons.length > 0 ? (
 					<div className="stack horizontal md">
-						{member.weapons.map(({ weaponSplId, isFavorite, isTenStar }) => (
+						{member.weapons.map((weapon) => (
 							<WeaponImage
-								key={weaponSplId}
-								variant={
-									isFavorite && isTenStar
-										? "badge-10-star"
-										: isFavorite
-											? "badge-5-star"
-											: "badge"
-								}
-								weaponSplId={weaponSplId}
+								key={weapon.weaponSplId}
+								weapon={weapon}
 								width={32}
 								height={32}
 							/>
