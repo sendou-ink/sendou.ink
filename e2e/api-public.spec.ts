@@ -14,6 +14,21 @@ const ITZ_TOURNAMENT_ID = 2;
 const ITZ_TEAM_ID = 101;
 const USER_NOT_ON_ITZ_TEAM = 100;
 
+async function generateReadToken(page: Page): Promise<string> {
+	await navigate({ page, url: "/api" });
+
+	await page.locator("form").first().getByRole("button").click();
+	await page.waitForURL("/api");
+
+	await page
+		.getByRole("button", { name: /reveal/i })
+		.first()
+		.click();
+	const token = await page.locator("input[readonly]").inputValue();
+
+	return token;
+}
+
 async function generateWriteToken(page: Page): Promise<string> {
 	await navigate({ page, url: "/api" });
 
@@ -96,6 +111,29 @@ test.describe("Public API", () => {
 		const data = await response.json();
 		expect(data.id).toBe(ADMIN_ID);
 		expect(data.name).toBe("Sendou");
+	});
+
+	test("returns active SendouQ match for user", async ({ page }) => {
+		await seed(page, "IN_SQ_MATCH");
+		await impersonate(page);
+
+		const token = await generateReadToken(page);
+
+		const response = await page.request.fetch(
+			`/api/user/${ADMIN_ID}/active-match`,
+			{
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			},
+		);
+
+		expect(response.status()).toBe(200);
+		const data = await response.json();
+		expect(data.matchId).toEqual(expect.any(Number));
+		expect(data.lobby).toBe("sendouq");
+		expect(data.tournamentId).toBeNull();
+		expect(data.bracketIdx).toBeNull();
 	});
 });
 

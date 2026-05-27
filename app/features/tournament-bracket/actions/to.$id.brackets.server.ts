@@ -205,6 +205,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 				});
 			}
 
+			// update RunningTournaments
+			await tournamentFromDB({ tournamentId, user });
+
 			emitTournamentUpdate = true;
 
 			break;

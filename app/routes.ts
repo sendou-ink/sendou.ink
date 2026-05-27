@@ -293,6 +293,10 @@ export default [
 				"features/api-public/routes/user.$identifier.ids.ts",
 			),
 			route(
+				"/user/:userId/active-match",
+				"features/api-public/routes/user.$userId.active-match.ts",
+			),
+			route(
 				"/calendar/:year/:week",
 				"features/api-public/routes/calendar.$year.$week.ts",
 			),
