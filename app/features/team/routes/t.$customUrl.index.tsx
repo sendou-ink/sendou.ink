@@ -73,7 +73,7 @@ function ActionButtons() {
 			{isTeamMember({ user, team }) && !isMainTeam ? (
 				<ChangeMainTeamButton />
 			) : null}
-			{isTeamMember({ user, team }) ? (
+			{isTeamMember({ user, team }) && team.members.length > 1 ? (
 				<FormWithConfirm
 					dialogHeading={`${t(
 						isTeamOwner({ user, team })
