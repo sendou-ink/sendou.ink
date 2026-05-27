@@ -135,7 +135,7 @@ export function Catcher() {
 					<pre>
 						Session ID: {getSessionId()}
 						{error.data
-							? `\n${JSON.stringify(JSON.parse(error.data), null, 2)}`
+							? `\n${typeof error.data === "string" ? error.data : JSON.stringify(error.data, null, 2)}`
 							: null}
 					</pre>
 				</Main>
