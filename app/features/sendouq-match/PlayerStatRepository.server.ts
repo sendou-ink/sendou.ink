@@ -1,6 +1,8 @@
-import type { Transaction } from "kysely";
+import { sql, type Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import { commonUserJsonObject } from "~/utils/kysely.server";
 
 export function upsertMapResults(
 	results: Pick<
@@ -22,6 +24,113 @@ export function upsertMapResults(
 				losses: eb("MapResult.losses", "+", eb.ref("excluded.losses")),
 			})),
 		)
+		.execute();
+}
+
+/** Aggregated map win/loss record for a user in a given season. */
+export async function seasonMapWinrateByUserId({
+	userId,
+	season,
+}: {
+	userId: number;
+	season: number;
+}): Promise<{ wins: number; losses: number }> {
+	const row = await db
+		.selectFrom("MapResult")
+		.select(({ fn }) => [
+			fn.sum<number>("wins").as("wins"),
+			fn.sum<number>("losses").as("losses"),
+		])
+		.where("userId", "=", userId)
+		.where("season", "=", season)
+		.groupBy("userId")
+		.executeTakeFirst();
+
+	return row ?? { wins: 0, losses: 0 };
+}
+
+/** Aggregated set win/loss record for a user in a given season. */
+export async function seasonSetWinrateByUserId({
+	userId,
+	season,
+}: {
+	userId: number;
+	season: number;
+}): Promise<{ wins: number; losses: number }> {
+	const row = await db
+		.selectFrom("PlayerResult")
+		.select([
+			sql<number>`sum("setWins") / 4`.as("wins"),
+			sql<number>`sum("setLosses") / 4`.as("losses"),
+		])
+		.where("ownerUserId", "=", userId)
+		.where("season", "=", season)
+		.where("type", "=", "ENEMY")
+		.groupBy("ownerUserId")
+		.executeTakeFirst();
+
+	return row ?? { wins: 0, losses: 0 };
+}
+
+/** Per-stage per-mode win/loss breakdown for a user in a given season. */
+export async function seasonStagesByUserId({
+	userId,
+	season,
+}: {
+	userId: number;
+	season: number;
+}) {
+	const rows = await db
+		.selectFrom("MapResult")
+		.select(["wins", "losses", "stageId", "mode"])
+		.where("userId", "=", userId)
+		.where("season", "=", season)
+		.execute();
+
+	return rows.reduce(
+		(acc, cur) => {
+			if (!acc[cur.stageId]) acc[cur.stageId] = {};
+
+			acc[cur.stageId]![cur.mode] = {
+				wins: cur.wins,
+				losses: cur.losses,
+			};
+
+			return acc;
+		},
+		{} as Partial<
+			Record<
+				StageId,
+				Partial<Record<ModeShort, { wins: number; losses: number }>>
+			>
+		>,
+	);
+}
+
+/** Mates or enemies for a user in a given season, ordered by most maps played together. */
+export async function seasonMatesEnemiesByUserId({
+	userId,
+	season,
+	type,
+}: {
+	userId: number;
+	season: number;
+	type: Tables["PlayerResult"]["type"];
+}) {
+	return db
+		.selectFrom("PlayerResult")
+		.leftJoin("User", "User.id", "PlayerResult.otherUserId")
+		.select((eb) => [
+			"mapWins",
+			"mapLosses",
+			"setWins",
+			"setLosses",
+			commonUserJsonObject(eb).as("user"),
+		])
+		.where("ownerUserId", "=", userId)
+		.where("season", "=", season)
+		.where("type", "=", type)
+		.orderBy(({ eb }) => eb("mapWins", "+", eb.ref("mapLosses")), "desc")
 		.execute();
 }
 
