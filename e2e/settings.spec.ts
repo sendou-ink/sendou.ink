@@ -42,7 +42,6 @@ test.describe("Settings", () => {
 		});
 
 		const form = createFormHelpers(page, disableBuildAbilitySortingSchema);
-		await form.check("newValue");
 		await waitForPOSTResponse(page, () => form.check("newValue"));
 
 		await navigate({
