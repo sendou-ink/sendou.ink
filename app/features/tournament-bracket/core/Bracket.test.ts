@@ -313,6 +313,46 @@ describe("round robin standings - dropped out teams", () => {
 		expect(team3Standing?.stats?.setWins).toBe(1);
 		expect(team3Standing?.stats?.setLosses).toBe(2);
 	});
+
+	it("should not credit wins against a team that dropped out before completing all of their matches (forfeit-closed)", () => {
+		// Production scenario: team 4 dropped before playing 3-4, then admin's
+		// drop action ran endDroppedTeamMatches which closed 3-4 with a result
+		// (team 3 marked winner) but no score on either side. Wins against team
+		// 4 should still be excluded from tiebreakers — same intent as the
+		// skipMatchups variant above, but matching the real production shape.
+		const tournament = droppedOutTournament({ forfeitMatchups: ["3-4"] });
+		const standings = tournament.bracketByIdx(0)!.currentStandings(true);
+
+		const team1Standing = standings.find((s) => s.team.id === 1);
+		const team2Standing = standings.find((s) => s.team.id === 2);
+		const team3Standing = standings.find((s) => s.team.id === 3);
+
+		expect(team1Standing?.stats?.setWins).toBe(2);
+		expect(team1Standing?.stats?.setLosses).toBe(0);
+
+		expect(team2Standing?.stats?.setWins).toBe(1);
+		expect(team2Standing?.stats?.setLosses).toBe(1);
+
+		expect(team3Standing?.stats?.setWins).toBe(0);
+		expect(team3Standing?.stats?.setLosses).toBe(2);
+	});
+
+	it("should report relevantMatchesFinished=true when a dropped team's remaining matches were forfeited (no score)", () => {
+		const tournament = droppedOutTournament({ forfeitMatchups: ["3-4"] });
+
+		const { relevantMatchesFinished } = tournament
+			.bracketByIdx(0)!
+			.source({ placements: [1] });
+
+		expect(relevantMatchesFinished).toBe(true);
+	});
+
+	it("includes a fully-forfeited dropped team in standings", () => {
+		const tournament = droppedOutTournament({ forfeitMatchups: ["3-4"] });
+		const standings = tournament.bracketByIdx(0)!.standings;
+
+		expect(standings.map((s) => s.team.id)).toContain(4);
+	});
 });
 
 describe("round robin A/B divisions standings", () => {

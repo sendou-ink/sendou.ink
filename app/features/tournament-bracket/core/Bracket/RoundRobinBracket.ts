@@ -266,6 +266,20 @@ export class RoundRobinBracket extends Bracket {
 				}
 			}
 
+			// Seed dropped teams here (after wins-against-tied) so forfeit matches don't credit opponents while still keeping them in standings.
+			for (const teamId of droppedOutWithIncompleteMatches) {
+				teams.push({
+					id: teamId,
+					setWins: 0,
+					setLosses: 0,
+					mapWins: 0,
+					mapLosses: 0,
+					winsAgainstTied: 0,
+					points: 0,
+					koCount: 0,
+				});
+			}
+
 			const droppedOutTeams = this.tournament.ctx.teams
 				.filter((t) => t.droppedOut)
 				.map((t) => t.id);
