@@ -103,7 +103,7 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 							className={clsx(styles.elimRoundMatchesContainer, {
 								[styles.elimRoundMatchesContainerTopBye]:
 									!atLeastOneColumnHidden &&
-									props.type === "winners" &&
+									(props.type === "winners" || props.type === "single") &&
 									(!props.bracket.data.match[0].opponent1 ||
 										!props.bracket.data.match[0].opponent2),
 							})}
