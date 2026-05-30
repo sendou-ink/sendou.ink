@@ -133,8 +133,14 @@
 		border-inline-end: 2px solid transparent;
 		text-align: start;
 		flex: none;
+		width: 100%;
 		padding: var(--s-2) var(--s-3);
 		padding-inline-end: var(--s-6);
+	}
+
+	& .tabNumber {
+		margin-inline-start: auto;
+		padding-inline-start: var(--s-3);
 	}
 
 	& .tabPanel {

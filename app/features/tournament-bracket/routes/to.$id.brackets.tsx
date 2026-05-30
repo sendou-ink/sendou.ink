@@ -178,22 +178,8 @@ export default function TournamentBracketsPage() {
 		return null;
 	};
 
-	const totalTeamsAvailableForTheBracket = () => {
-		if (bracket.sources) {
-			return (
-				(bracket.teamsPendingCheckIn ?? []).length +
-				bracket.participantTournamentTeamIds.length
-			);
-		}
-
-		if (!tournament.isMultiStartingBracket) {
-			return tournament.ctx.teams.length;
-		}
-
-		return tournament.ctx.teams.filter(
-			(team) => (team.startingBracketIdx ?? 0) === bracketIdx,
-		).length;
-	};
+	const totalTeamsAvailableForTheBracket = () =>
+		eligibleTeamCountForBracket(tournament, bracket, bracketIdx);
 
 	if (tournament.isLeagueSignup) {
 		return null;
@@ -301,6 +287,37 @@ export default function TournamentBracketsPage() {
 			</BracketTabs>
 		</div>
 	);
+}
+
+function eligibleTeamCountForBracket(
+	tournament: Tournament,
+	bracket: BracketType,
+	bracketIdx: number,
+) {
+	if (bracket.sources) {
+		return (
+			(bracket.teamsPendingCheckIn ?? []).length +
+			bracket.participantTournamentTeamIds.length
+		);
+	}
+
+	if (!tournament.isMultiStartingBracket) {
+		return tournament.ctx.teams.length;
+	}
+
+	return tournament.ctx.teams.filter(
+		(team) => (team.startingBracketIdx ?? 0) === bracketIdx,
+	).length;
+}
+
+function bracketTabTeamCount(
+	tournament: Tournament,
+	bracket: BracketType,
+	bracketIdx: number,
+) {
+	return bracket.preview
+		? eligibleTeamCountForBracket(tournament, bracket, bracketIdx)
+		: bracket.participantTournamentTeamIds.length;
 }
 
 function getAbDivisionsStartError(
@@ -533,12 +550,22 @@ function BracketTabs({
 
 	return (
 		<SendouTabs
+			orientation="vertical"
+			horizontalBelow={720}
 			selectedKey={String(bracketIdx)}
 			onSelectionChange={(key) => setBracketIdx(Number(key))}
 		>
 			<SendouTabList>
 				{visibleBrackets.map((bracket, i) => (
-					<SendouTab key={bracket.name} id={String(i)}>
+					<SendouTab
+						key={bracket.name}
+						id={String(i)}
+						number={bracketTabTeamCount(
+							tournament,
+							tournament.bracketByIdxOrDefault(i),
+							i,
+						)}
+					>
 						{bracketNameForTab(bracket.name)}
 					</SendouTab>
 				))}

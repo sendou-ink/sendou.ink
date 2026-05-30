@@ -31,6 +31,7 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	max-width: 14ch;
+	margin: 0 auto;
 }
 
 .identitySubtext {
