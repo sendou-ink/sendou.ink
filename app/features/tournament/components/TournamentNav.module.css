@@ -57,6 +57,7 @@
 }
 
 .itemsWrapper {
+	position: relative;
 	flex: 1;
 	min-width: 0;
 	overflow: hidden;
@@ -117,6 +118,10 @@
 }
 
 .hamburger {
+	position: absolute;
+	right: 0;
+	top: 50%;
+	transform: translateY(-50%);
 	flex-shrink: 0;
 }
 

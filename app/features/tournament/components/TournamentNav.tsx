@@ -115,36 +115,36 @@ export function TournamentNav({
 						</li>
 					))}
 				</ul>
-			</div>
 
-			{overflowItems.length > 0 ? (
-				<SendouPopover
-					placement="bottom end"
-					isOpen={overflowOpen}
-					onOpenChange={setOverflowOpen}
-					trigger={
-						<SendouButton
-							variant="minimal"
-							size="big"
-							icon={<Menu />}
-							aria-label={t("tournament:nav.moreItems")}
-							className={styles.hamburger}
-						/>
-					}
-				>
-					<ul className={styles.overflowList}>
-						{overflowItems.map((item) => (
-							<li key={item.key}>
-								<NavItemLink
-									item={item}
-									overflow
-									onNavigate={() => setOverflowOpen(false)}
-								/>
-							</li>
-						))}
-					</ul>
-				</SendouPopover>
-			) : null}
+				{overflowItems.length > 0 ? (
+					<SendouPopover
+						placement="bottom end"
+						isOpen={overflowOpen}
+						onOpenChange={setOverflowOpen}
+						trigger={
+							<SendouButton
+								variant="minimal"
+								size="big"
+								icon={<Menu />}
+								aria-label={t("tournament:nav.moreItems")}
+								className={styles.hamburger}
+							/>
+						}
+					>
+						<ul className={styles.overflowList}>
+							{overflowItems.map((item) => (
+								<li key={item.key}>
+									<NavItemLink
+										item={item}
+										overflow
+										onNavigate={() => setOverflowOpen(false)}
+									/>
+								</li>
+							))}
+						</ul>
+					</SendouPopover>
+				) : null}
+			</div>
 		</nav>
 	);
 }
@@ -312,7 +312,10 @@ function NavItemLink({
 	);
 }
 
-const ITEM_GAP = 4;
+// horizontal space reserved on the right for the overflow hamburger: its big icon
+// box (var(--button-icon-big) = 28px) plus breathing room before the last item.
+// The hamburger is positioned absolutely so it never shrinks the measured container.
+const HAMBURGER_WIDTH = 36;
 
 function useNavOverflow(totalItems: number) {
 	const containerRef = React.useRef<HTMLDivElement>(null);
@@ -327,14 +330,24 @@ function useNavOverflow(totalItems: number) {
 		const slots = Array.from(list.children) as HTMLElement[];
 
 		const computeVisible = () => {
-			const containerWidth = container.clientWidth;
+			const containerWidth = container.getBoundingClientRect().width;
+			const listLeft = list.getBoundingClientRect().left;
+			// actual rendered right edge of each slot relative to the list start,
+			// so the real flex gaps are accounted for without re-deriving them
+			const rightEdges = slots.map(
+				(slot) => slot.getBoundingClientRect().right - listLeft,
+			);
 
-			let used = 0;
+			const totalWidth = rightEdges.at(-1) ?? 0;
+			if (totalWidth <= containerWidth) {
+				setVisibleCount(slots.length);
+				return;
+			}
+
+			const available = containerWidth - HAMBURGER_WIDTH;
 			let count = 0;
-			for (const slot of slots) {
-				const width = slot.scrollWidth + (count === 0 ? 0 : ITEM_GAP);
-				if (used + width <= containerWidth) {
-					used += width;
+			for (const rightEdge of rightEdges) {
+				if (rightEdge <= available) {
 					count++;
 				} else {
 					break;
