@@ -11,7 +11,7 @@ import { LocaleTime } from "./LocaleTime";
 import styles from "./TimePopover.module.css";
 
 export default function TimePopover({
-	time,
+	date,
 	options = {
 		minute: "numeric",
 		hour: "numeric",
@@ -22,7 +22,7 @@ export default function TimePopover({
 	className,
 	footerText,
 }: {
-	time: Date;
+	date: Date;
 	options?: Intl.DateTimeFormatOptions;
 	underline?: boolean;
 	className?: string;
@@ -61,7 +61,7 @@ export default function TimePopover({
 					setOpen(true);
 				}}
 			>
-				<LocaleTime date={time} options={options} inline />
+				<LocaleTime date={date} options={options} inline />
 			</button>
 			<Popover
 				isOpen={open}
@@ -73,7 +73,7 @@ export default function TimePopover({
 					<div className="stack sm">
 						<div className="text-center">
 							<LocaleTime
-								date={time}
+								date={date}
 								options={{
 									timeZoneName: "long",
 									hour: "numeric",
@@ -84,7 +84,7 @@ export default function TimePopover({
 						<SendouButton
 							size="miniscule"
 							variant="minimal"
-							onPress={() => copyToClipboard(`<t:${time.valueOf() / 1000}:F>`)}
+							onPress={() => copyToClipboard(`<t:${date.valueOf() / 1000}:F>`)}
 							icon={copySuccess ? <Check /> : <Clipboard />}
 						>
 							{t("common:actions.copyTimestampForDiscord")}

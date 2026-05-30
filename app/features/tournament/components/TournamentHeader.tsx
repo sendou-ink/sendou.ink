@@ -6,7 +6,7 @@ import { Avatar } from "~/components/Avatar";
 import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { DiscordIcon } from "~/components/icons/Discord";
-import { LocaleTime } from "~/components/LocaleTime";
+import TimePopover from "~/components/TimePopover";
 import { useUser } from "~/features/auth/core/user";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -35,7 +35,6 @@ export function TournamentHeader({ tournament }: { tournament: Tournament }) {
 		(date) => date.getTime(),
 	);
 
-	// xxx: for dates use the popover version
 	return (
 		<header className={styles.header}>
 			<div className={styles.identity}>
@@ -56,7 +55,7 @@ export function TournamentHeader({ tournament }: { tournament: Tournament }) {
 			</div>
 			<div className={styles.dates}>
 				{startTimes.map((date) => (
-					<LocaleTime
+					<TimePopover
 						key={date.getTime()}
 						date={date}
 						options={{
