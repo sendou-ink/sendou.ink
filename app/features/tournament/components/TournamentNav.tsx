@@ -2,7 +2,6 @@ import clsx from "clsx";
 import {
 	ClipboardCheck,
 	LayoutGrid,
-	ListOrdered,
 	Medal,
 	Menu,
 	ScrollText,
@@ -39,7 +38,6 @@ type NavItemKey =
 	| "results"
 	| "rules"
 	| "lfg"
-	| "seeds"
 	| "admin";
 
 interface NavItem {
@@ -60,7 +58,6 @@ const PRIORITY_ORDER: NavItemKey[] = [
 	"divisions",
 	"streams",
 	"rules",
-	"seeds",
 	"admin",
 ];
 
@@ -250,19 +247,6 @@ function useNavItems({
 				: t("tournament:nav.subs"),
 			to: "looking",
 			icon: <UserPlus />,
-		};
-	}
-
-	const showSeeds =
-		tournament.isOrganizer(user) &&
-		!tournament.hasStarted &&
-		!tournament.isLeagueSignup;
-	if (showSeeds) {
-		items.seeds = {
-			key: "seeds",
-			label: t("tournament:nav.seeds"),
-			to: "seeds",
-			icon: <ListOrdered />,
 		};
 	}
 

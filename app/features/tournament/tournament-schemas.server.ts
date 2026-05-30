@@ -60,37 +60,6 @@ export const registerSchema = z.union([
 	}),
 ]);
 
-export const seedsActionSchema = z.union([
-	z.object({
-		_action: _action("UPDATE_SEEDS"),
-		seeds: z.preprocess(safeJSONParse, z.array(id)),
-	}),
-	z.object({
-		_action: _action("UPDATE_STARTING_BRACKETS"),
-		startingBrackets: z.preprocess(
-			safeJSONParse,
-			z.array(
-				z.object({
-					tournamentTeamId: id,
-					startingBracketIdx: bracketIdx,
-				}),
-			),
-		),
-	}),
-	z.object({
-		_action: _action("UPDATE_AB_DIVISIONS"),
-		abDivisions: z.preprocess(
-			safeJSONParse,
-			z.array(
-				z.object({
-					tournamentTeamId: id,
-					abDivision: z.union([z.literal(0), z.literal(1), z.null()]),
-				}),
-			),
-		),
-	}),
-]);
-
 export const tournamentSearchSearchParamsSchema = z.object({
 	q: z.string().max(100),
 	limit: z.coerce.number().int().min(1).max(25).catch(25),
@@ -191,5 +160,33 @@ export const adminActionSchema = z.union([
 	}),
 	z.object({
 		_action: _action("REOPEN_TOURNAMENT"),
+	}),
+	z.object({
+		_action: _action("UPDATE_SEEDS"),
+		seeds: z.preprocess(safeJSONParse, z.array(id)),
+	}),
+	z.object({
+		_action: _action("UPDATE_STARTING_BRACKETS"),
+		startingBrackets: z.preprocess(
+			safeJSONParse,
+			z.array(
+				z.object({
+					tournamentTeamId: id,
+					startingBracketIdx: bracketIdx,
+				}),
+			),
+		),
+	}),
+	z.object({
+		_action: _action("UPDATE_AB_DIVISIONS"),
+		abDivisions: z.preprocess(
+			safeJSONParse,
+			z.array(
+				z.object({
+					tournamentTeamId: id,
+					abDivision: z.union([z.literal(0), z.literal(1), z.null()]),
+				}),
+			),
+		),
 	}),
 ]);

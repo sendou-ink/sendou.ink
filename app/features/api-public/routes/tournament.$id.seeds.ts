@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import { z } from "zod";
-import { action as seedsAction } from "~/features/tournament/actions/to.$id.seeds.server";
+import { action as adminAction } from "~/features/tournament/actions/to.$id.admin.server";
 import { parseBody, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import { wrapActionForApi } from "../api-action-wrapper.server";
@@ -32,7 +32,7 @@ export const action = async (args: ActionFunctionArgs) => {
 		}),
 	});
 
-	return wrapActionForApi(seedsAction, {
+	return wrapActionForApi(adminAction, {
 		...args,
 		params: { id: String(tournamentId) },
 		request: internalRequest,

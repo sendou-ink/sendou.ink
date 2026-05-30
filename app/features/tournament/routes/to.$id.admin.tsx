@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { Trash, Trophy, Tv, UserCog, Users } from "lucide-react";
+import { ListOrdered, Trash, Trophy, Tv, UserCog, Users } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
@@ -37,12 +37,13 @@ import {
 	tournamentPage,
 } from "~/utils/urls";
 import { BracketProgressionSelector } from "../../calendar/components/BracketProgressionSelector";
+import { TournamentSeeds } from "../components/TournamentSeeds";
 import { useTournament } from "./to.$id";
 import adminStyles from "./to.$id.admin.module.css";
 
 export { action } from "../actions/to.$id.admin.server";
 
-type AdminTab = "teams" | "staff" | "stream" | "brackets";
+type AdminTab = "teams" | "seeds" | "staff" | "stream" | "brackets";
 
 export default function TournamentAdminPage() {
 	const { t } = useTranslation(["tournament", "calendar"]);
@@ -68,12 +69,15 @@ export default function TournamentAdminPage() {
 	const showStaffTab = tournament.isAdmin(user);
 	const showBracketsTab =
 		!tournament.isLeagueSignup || showEditBrackets || showReopen;
+	const showSeedsTab = !tournament.hasStarted && !tournament.isLeagueSignup;
 
 	const isVisibleTab = (tab: string): tab is AdminTab => {
 		switch (tab) {
 			case "teams":
 			case "stream":
 				return true;
+			case "seeds":
+				return showSeedsTab;
 			case "staff":
 				return showStaffTab;
 			case "brackets":
@@ -138,6 +142,11 @@ export default function TournamentAdminPage() {
 					<SendouTab id="teams" icon={<Users />}>
 						{t("tournament:admin.tab.teams")}
 					</SendouTab>
+					{showSeedsTab ? (
+						<SendouTab id="seeds" icon={<ListOrdered />}>
+							{t("tournament:admin.tab.seeds")}
+						</SendouTab>
+					) : null}
 					{showStaffTab ? (
 						<SendouTab id="staff" icon={<UserCog />}>
 							{t("tournament:admin.tab.staff")}
@@ -157,6 +166,11 @@ export default function TournamentAdminPage() {
 					<Divider smallText>Participant list download</Divider>
 					<DownloadParticipants />
 				</SendouTabPanel>
+				{showSeedsTab ? (
+					<SendouTabPanel id="seeds">
+						<TournamentSeeds />
+					</SendouTabPanel>
+				) : null}
 				{showStaffTab ? (
 					<SendouTabPanel id="staff">
 						<Staff />

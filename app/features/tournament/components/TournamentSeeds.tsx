@@ -21,7 +21,6 @@ import * as React from "react";
 import { Link, useFetcher, useNavigation } from "react-router";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
-import { Catcher } from "~/components/Catcher";
 import { SendouButton } from "~/components/elements/Button";
 import {
 	SendouChipRadio,
@@ -39,13 +38,9 @@ import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tour
 import invariant from "~/utils/invariant";
 import { navIconUrl, userResultsPage } from "~/utils/urls";
 import { ordinalToRoundedSp } from "../../mmr/mmr-utils";
-import { action } from "../actions/to.$id.seeds.server";
-import { loader } from "../loaders/to.$id.seeds.server";
+import { useTournament } from "../routes/to.$id";
 import { TOURNAMENT } from "../tournament-constants";
-import { useTournament } from "./to.$id";
-import styles from "./to.$id.seeds.module.css";
-
-export { action, loader };
+import styles from "./TournamentSeeds.module.css";
 
 const AB_DIVISION_RADIO_OPTIONS = [
 	{ value: "unassigned", label: "Unassigned" },
@@ -53,7 +48,7 @@ const AB_DIVISION_RADIO_OPTIONS = [
 	{ value: "1", label: "B" },
 ] as const;
 
-export default function TournamentSeedsPage() {
+export function TournamentSeeds() {
 	const tournament = useTournament();
 	const navigation = useNavigation();
 	const [teamOrder, setTeamOrder] = React.useState(
@@ -849,5 +844,3 @@ function computeRemovedPlayers(
 	}
 	return result;
 }
-
-export const ErrorBoundary = Catcher;

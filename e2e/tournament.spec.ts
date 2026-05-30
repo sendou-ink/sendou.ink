@@ -256,7 +256,7 @@ test.describe("Tournament", () => {
 
 		await navigate({
 			page,
-			url: `${tournamentPage(1)}/seeds`,
+			url: `${tournamentPage(1)}/admin?tab=seeds`,
 		});
 
 		await page.getByTestId("seed-team-1-handle").hover();
