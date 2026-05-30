@@ -114,6 +114,7 @@ export const artSchema = z.object({
 export const linksSchema = z.object({
 	links: array({
 		label: "labels.urls",
+		min: 1,
 		max: 10,
 		field: textFieldRequired({
 			maxLength: 150,

@@ -15,7 +15,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Search as SearchIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
@@ -29,6 +29,7 @@ import {
 	defaultStoredWidget,
 	findWidgetById,
 } from "~/features/user-page/core/widgets/portfolio";
+import { getWidgetFormSchema } from "~/features/user-page/core/widgets/widget-form-schemas";
 import { USER } from "~/features/user-page/user-page-constants";
 import { useHydrated } from "~/hooks/useHydrated";
 import { action } from "../actions/u.$identifier.edit-widgets.server";
@@ -48,6 +49,9 @@ export default function EditWidgetsPage() {
 		Array<Tables["UserWidget"]["widget"]>
 	>(data.currentWidgets);
 	const [expandedWidgetId, setExpandedWidgetId] = useState<string | null>(null);
+	const [pendingScrollWidgetId, setPendingScrollWidgetId] = useState<
+		string | null
+	>(null);
 
 	const mainWidgets = selectedWidgets.filter((w) => {
 		const def = findWidgetById(w.id);
@@ -112,12 +116,20 @@ export default function EditWidgetsPage() {
 
 	const removeWidget = (widgetId: string) => {
 		setSelectedWidgets(selectedWidgets.filter((w) => w.id !== widgetId));
-		if (expandedWidgetId === widgetId) {
-			setExpandedWidgetId(null);
-		}
+		setExpandedWidgetId((prev) => (prev === widgetId ? null : prev));
 	};
 
 	const handleSubmit = () => {
+		const invalidWidgetIds = computeInvalidWidgetIds(selectedWidgets);
+		const firstInvalid = selectedWidgets.find((w) =>
+			invalidWidgetIds.has(w.id),
+		);
+		if (firstInvalid) {
+			setExpandedWidgetId(firstInvalid.id);
+			setPendingScrollWidgetId(firstInvalid.id);
+			return;
+		}
+
 		fetcher.submit(
 			{ widgets: selectedWidgets } as unknown as Record<string, string>,
 			{ method: "post", encType: "application/json" },
@@ -131,8 +143,18 @@ export default function EditWidgetsPage() {
 	};
 
 	const toggleExpanded = (widgetId: string) => {
-		setExpandedWidgetId(expandedWidgetId === widgetId ? null : widgetId);
+		setExpandedWidgetId((prev) => (prev === widgetId ? null : widgetId));
 	};
+
+	useEffect(() => {
+		if (!pendingScrollWidgetId) return;
+		if (expandedWidgetId !== pendingScrollWidgetId) return;
+		const panel = document.querySelector<HTMLDivElement>(
+			`[data-widget-settings="${pendingScrollWidgetId}"]`,
+		);
+		scrollToFirstWidgetError(panel);
+		setPendingScrollWidgetId(null);
+	}, [pendingScrollWidgetId, expandedWidgetId]);
 
 	if (!isHydrated) {
 		return <Placeholder />;
@@ -444,7 +466,7 @@ function DraggableWidgetItem({
 			</div>
 
 			{isExpanded && hasSettings ? (
-				<div className={styles.widgetSettings}>
+				<div data-widget-settings={widget.id} className={styles.widgetSettings}>
 					<WidgetSettingsForm
 						widget={widget}
 						onSettingsChange={onSettingsChange}
@@ -462,4 +484,23 @@ const WIDGET_DESCRIPTION_PARAMS: Record<string, Record<string, unknown>> = {
 
 function widgetDescriptionParams(widgetId: string) {
 	return WIDGET_DESCRIPTION_PARAMS[widgetId];
+}
+
+function scrollToFirstWidgetError(container: HTMLDivElement | null) {
+	const target = container?.querySelector<HTMLElement>('[id$="-error"]');
+	target?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function computeInvalidWidgetIds(
+	widgets: Array<Tables["UserWidget"]["widget"]>,
+): Set<string> {
+	const invalid = new Set<string>();
+	for (const widget of widgets) {
+		const schema = getWidgetFormSchema(widget.id);
+		if (!schema) continue;
+		if (!schema.safeParse(widget.settings ?? {}).success) {
+			invalid.add(widget.id);
+		}
+	}
+	return invalid;
 }
