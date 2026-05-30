@@ -53,10 +53,10 @@ interface NavItem {
 
 const PRIORITY_ORDER: NavItemKey[] = [
 	"register",
-	"lfg",
 	"brackets",
-	"results",
 	"teams",
+	"results",
+	"lfg",
 	"divisions",
 	"streams",
 	"rules",
@@ -171,7 +171,7 @@ function useNavItems({
 		};
 	}
 
-	const showBrackets = tournament.hasStarted && !tournament.isLeagueSignup;
+	const showBrackets = !tournament.isLeagueSignup;
 	if (showBrackets) {
 		items.brackets = {
 			key: "brackets",

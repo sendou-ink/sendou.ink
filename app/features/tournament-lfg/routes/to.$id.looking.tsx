@@ -234,6 +234,7 @@ function SubsView({
 }: {
 	data: Extract<LookingLoaderData, { mode: "subs" }>;
 }) {
+	const { t } = useTranslation(["tournament"]);
 	const user = useUser();
 	const tournament = useTournament();
 
@@ -247,9 +248,13 @@ function SubsView({
 			!isOnTeam ? (
 				<AddSubForm />
 			) : null}
-			{data.subs.map((sub) => (
-				<SubCard key={sub.userId} sub={sub} />
-			))}
+			{data.subs.length > 0 ? (
+				data.subs.map((sub) => <SubCard key={sub.userId} sub={sub} />)
+			) : (
+				<div className="text-center text-lg font-semi-bold text-lighter">
+					{t("tournament:subs.noPosts")}
+				</div>
+			)}
 		</div>
 	);
 }

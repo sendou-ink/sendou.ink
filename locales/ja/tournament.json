@@ -168,6 +168,7 @@
 	"subs.listenOnlyVC": "聞き専門",
 	"subs.editPost": "サブを編集する",
 	"subs.addPost": "サブとして参加する",
+	"subs.noPosts": "",
 	"subs.vc.header": "通話できますか?",
 	"subs.weapons.prefer.header": "使用したいブキ",
 	"subs.weapons.ok.header": "使用できるブキ",
