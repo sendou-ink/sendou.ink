@@ -24,8 +24,6 @@ export const handle: SendouRouteHandle = {
 	i18n: ["tournament"],
 };
 
-// xxx: align round outlined buttons and fact card
-
 export default function TournamentInfoPage() {
 	const tournament = useTournament();
 	const data = useLoaderData<typeof loader>();

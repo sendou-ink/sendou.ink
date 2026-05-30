@@ -46,7 +46,6 @@
 	flex-wrap: wrap;
 }
 
-/** xxx: divider gone and horizontal stack at the same time */
 @media (max-width: 480px) {
 	.wrapper {
 		grid-template-columns: auto;
