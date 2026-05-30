@@ -31,6 +31,7 @@ test.describe("Tournament streams", () => {
 			url: tournamentAdminPage(tournamentId),
 		});
 
+		await page.getByRole("tab", { name: "Stream" }).click();
 		await page
 			.getByLabel("Twitch accounts")
 			.fill("test_cast_stream,another_cast");
@@ -46,6 +47,7 @@ test.describe("Tournament streams", () => {
 			url: tournamentAdminPage(tournamentId),
 		});
 
+		await page.getByRole("tab", { name: "Stream" }).click();
 		await expect(page.getByLabel("Twitch accounts")).toHaveValue(
 			"test_cast_stream,another_cast",
 		);
@@ -114,6 +116,7 @@ test.describe("Tournament streams", () => {
 			page,
 			url: tournamentAdminPage(tournamentId),
 		});
+		await page.getByRole("tab", { name: "Stream" }).click();
 		await page.getByLabel("Twitch accounts").fill("test_cast_stream");
 		await submit(page, "save-cast-twitch-accounts-button");
 

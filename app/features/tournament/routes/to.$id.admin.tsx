@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { Trash } from "lucide-react";
+import { Trash, Trophy, Tv, UserCog, Users } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
@@ -7,6 +7,12 @@ import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "~/components/elements/Tabs";
 import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
@@ -20,6 +26,7 @@ import { useUser } from "~/features/auth/core/user";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { TournamentData } from "~/features/tournament-bracket/core/Tournament.server";
 import { USER } from "~/features/user-page/user-page-constants";
+import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
@@ -35,8 +42,10 @@ import adminStyles from "./to.$id.admin.module.css";
 
 export { action } from "../actions/to.$id.admin.server";
 
+type AdminTab = "teams" | "staff" | "stream" | "brackets";
+
 export default function TournamentAdminPage() {
-	const { t } = useTranslation(["calendar"]);
+	const { t } = useTranslation(["tournament", "calendar"]);
 	const tournament = useTournament();
 	const [editingProgression, setEditingProgression] = React.useState(false);
 
@@ -46,6 +55,39 @@ export default function TournamentAdminPage() {
 	React.useEffect(() => {
 		setEditingProgression(false);
 	}, [tournament]);
+
+	const showReopen = Boolean(
+		DANGEROUS_CAN_ACCESS_DEV_CONTROLS &&
+			tournament.ctx.isFinalized &&
+			tournament.isAdmin(user),
+	);
+	const showEditBrackets =
+		tournament.isAdmin(user) &&
+		tournament.hasStarted &&
+		!tournament.ctx.isFinalized;
+	const showStaffTab = tournament.isAdmin(user);
+	const showBracketsTab =
+		!tournament.isLeagueSignup || showEditBrackets || showReopen;
+
+	const isVisibleTab = (tab: string): tab is AdminTab => {
+		switch (tab) {
+			case "teams":
+			case "stream":
+				return true;
+			case "staff":
+				return showStaffTab;
+			case "brackets":
+				return showBracketsTab;
+			default:
+				return false;
+		}
+	};
+
+	const [tab, setTab] = useSearchParamState<AdminTab>({
+		defaultValue: "teams",
+		name: "tab",
+		revive: (value) => (isVisibleTab(value) ? value : null),
+	});
 
 	if (
 		!tournament.isOrganizer(user) ||
@@ -86,51 +128,77 @@ export default function TournamentAdminPage() {
 					) : null}
 				</div>
 			) : null}
-			{tournament.isAdmin(user) &&
-			tournament.hasStarted &&
-			!tournament.ctx.isFinalized ? (
-				<div className="stack horizontal justify-end">
-					<SendouButton
-						onPress={() => setEditingProgression(true)}
-						size="small"
-						variant="outlined"
-						data-testid="edit-event-info-button"
-					>
-						Edit brackets
-					</SendouButton>
-					{editingProgression ? (
-						<BracketProgressionEditDialog
-							close={() => setEditingProgression(false)}
-						/>
+			<SendouTabs
+				orientation="vertical"
+				horizontalBelow={720}
+				selectedKey={tab}
+				onSelectionChange={(key) => setTab(key as AdminTab)}
+			>
+				<SendouTabList>
+					<SendouTab id="teams" icon={<Users />}>
+						{t("tournament:admin.tab.teams")}
+					</SendouTab>
+					{showStaffTab ? (
+						<SendouTab id="staff" icon={<UserCog />}>
+							{t("tournament:admin.tab.staff")}
+						</SendouTab>
 					) : null}
-				</div>
-			) : null}
-			<Divider smallText>Team actions</Divider>
-			<TeamActions />
-			{tournament.isAdmin(user) ? (
-				<>
-					<Divider smallText>Staff</Divider>
-					<Staff />
-				</>
-			) : null}
-			<Divider smallText>Cast Twitch Accounts</Divider>
-			<CastTwitchAccounts />
-			<Divider smallText>Participant list download</Divider>
-			<DownloadParticipants />
-			{!tournament.isLeagueSignup ? (
-				<>
-					<Divider smallText>Bracket reset</Divider>
-					<BracketReset />
-				</>
-			) : null}
-			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS &&
-			tournament.ctx.isFinalized &&
-			tournament.isAdmin(user) ? (
-				<>
-					<Divider smallText>Reopen tournament (dev only)</Divider>
-					<ReopenTournament />
-				</>
-			) : null}
+					<SendouTab id="stream" icon={<Tv />}>
+						{t("tournament:admin.tab.stream")}
+					</SendouTab>
+					{showBracketsTab ? (
+						<SendouTab id="brackets" icon={<Trophy />}>
+							{t("tournament:admin.tab.brackets")}
+						</SendouTab>
+					) : null}
+				</SendouTabList>
+				<SendouTabPanel id="teams" className="stack lg">
+					<TeamActions />
+					<Divider smallText>Participant list download</Divider>
+					<DownloadParticipants />
+				</SendouTabPanel>
+				{showStaffTab ? (
+					<SendouTabPanel id="staff">
+						<Staff />
+					</SendouTabPanel>
+				) : null}
+				<SendouTabPanel id="stream">
+					<CastTwitchAccounts />
+				</SendouTabPanel>
+				{showBracketsTab ? (
+					<SendouTabPanel id="brackets" className="stack lg">
+						{showEditBrackets ? (
+							<div className="stack horizontal justify-end">
+								<SendouButton
+									onPress={() => setEditingProgression(true)}
+									size="small"
+									variant="outlined"
+									data-testid="edit-event-info-button"
+								>
+									Edit brackets
+								</SendouButton>
+								{editingProgression ? (
+									<BracketProgressionEditDialog
+										close={() => setEditingProgression(false)}
+									/>
+								) : null}
+							</div>
+						) : null}
+						{!tournament.isLeagueSignup ? (
+							<>
+								<Divider smallText>Bracket reset</Divider>
+								<BracketReset />
+							</>
+						) : null}
+						{showReopen ? (
+							<>
+								<Divider smallText>Reopen tournament (dev only)</Divider>
+								<ReopenTournament />
+							</>
+						) : null}
+					</SendouTabPanel>
+				) : null}
+			</SendouTabs>
 		</div>
 	);
 }

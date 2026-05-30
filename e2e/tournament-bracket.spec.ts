@@ -376,6 +376,7 @@ test.describe("Tournament bracket", () => {
 			await submit(page);
 		}
 
+		await page.getByRole("tab", { name: "Brackets" }).click();
 		await page.getByTestId("edit-event-info-button").click();
 		for (let i = 0; i < 3; i++) {
 			await page.getByTestId("delete-bracket-button").last().click();
@@ -436,6 +437,7 @@ test.describe("Tournament bracket", () => {
 			url: tournamentAdminPage(tournamentId),
 		});
 
+		await page.getByRole("tab", { name: "Brackets" }).click();
 		await page.getByTestId("edit-event-info-button").click();
 		await page.getByTestId("delete-bracket-button").last().click();
 		await page.getByTestId("placements-input").last().fill("3,4");
@@ -498,6 +500,7 @@ test.describe("Tournament bracket", () => {
 			url: tournamentAdminPage(tournamentId),
 		});
 
+		await page.getByRole("tab", { name: "Brackets" }).click();
 		await page.getByTestId("edit-event-info-button").click();
 		await page.getByTestId("delete-bracket-button").last().click();
 
@@ -596,6 +599,7 @@ test.describe("Tournament bracket", () => {
 			url: tournamentAdminPage(tournamentId),
 		});
 
+		await page.getByRole("tab", { name: "Brackets" }).click();
 		await page.getByTestId("edit-event-info-button").click();
 
 		await page.getByRole("button", { name: "Clear" }).click();
@@ -738,6 +742,7 @@ test.describe("Tournament bracket", () => {
 			await submit(page);
 		}
 
+		await page.getByRole("tab", { name: "Stream" }).click();
 		await page.getByLabel("Twitch accounts").fill("test");
 		await submit(page, "save-cast-twitch-accounts-button");
 
@@ -802,11 +807,13 @@ test.describe("Tournament bracket", () => {
 		await reportResult(page, { mapsToReport: 2 });
 
 		await page.getByTestId("admin-tab").click();
+		await page.getByRole("tab", { name: "Brackets" }).click();
 		await page
 			.getByLabel('Type bracket name ("Main bracket") to confirm')
 			.fill("Main bracket");
 		await submit(page, "reset-bracket-button");
 
+		await page.getByRole("tab", { name: "Teams" }).click();
 		await page.getByLabel("Action").selectOption("CHECK_IN");
 		await page.getByLabel("Team", { exact: true }).selectOption("1");
 		await submit(page);

@@ -31,6 +31,7 @@ test.describe("Tournament staff", () => {
 			url: tournamentAdminPage(TOURNAMENT_ID),
 		});
 
+		await page.getByRole("tab", { name: "Staff" }).click();
 		await selectUser({
 			page,
 			userName: "N-ZAP",
@@ -65,6 +66,7 @@ test.describe("Tournament staff", () => {
 			url: tournamentAdminPage(TOURNAMENT_ID),
 		});
 
+		await page.getByRole("tab", { name: "Staff" }).click();
 		await selectUser({
 			page,
 			userName: "N-ZAP",
@@ -83,7 +85,7 @@ test.describe("Tournament staff", () => {
 		await isNotVisible(page.getByTestId("add-staff-button"));
 
 		await page.getByLabel("Action").selectOption("CHECK_IN");
-		await page.getByLabel("Team").selectOption("101");
+		await page.getByLabel("Team", { exact: true }).selectOption("101");
 		await submit(page);
 
 		await navigate({
@@ -118,6 +120,7 @@ test.describe("Tournament staff", () => {
 			url: tournamentAdminPage(TOURNAMENT_ID),
 		});
 
+		await page.getByRole("tab", { name: "Staff" }).click();
 		await selectUser({
 			page,
 			userName: "N-ZAP",
