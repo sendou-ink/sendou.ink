@@ -67,7 +67,7 @@
 	margin: 0;
 	padding: 0;
 	display: flex;
-	gap: 4px;
+	gap: var(--s-0-5);
 	flex-wrap: nowrap;
 	white-space: nowrap;
 }
@@ -88,6 +88,7 @@
 	font-weight: var(--weight-semi);
 	text-decoration: none;
 	cursor: pointer;
+	min-width: max-content;
 
 	&:hover {
 		background-color: var(--color-bg-high);
@@ -103,6 +104,7 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	flex-shrink: 0;
 }
 
 .icon > svg {

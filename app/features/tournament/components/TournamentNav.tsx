@@ -55,18 +55,14 @@ const PRIORITY_ORDER: NavItemKey[] = [
 	"register",
 	"lfg",
 	"brackets",
+	"results",
 	"teams",
 	"divisions",
 	"streams",
-	"results",
 	"rules",
 	"seeds",
 	"admin",
 ];
-
-// xxx: icons shrinking
-// xxx: sticky for desktop
-// xxx: close popover when changing page
 
 export function TournamentNav({
 	tournament,
@@ -80,6 +76,7 @@ export function TournamentNav({
 	const { visibleCount, containerRef, measureRef } = useNavOverflow(
 		navItems.length,
 	);
+	const [overflowOpen, setOverflowOpen] = React.useState(false);
 
 	const overflowItems = navItems.slice(visibleCount);
 
@@ -123,9 +120,12 @@ export function TournamentNav({
 			{overflowItems.length > 0 ? (
 				<SendouPopover
 					placement="bottom end"
+					isOpen={overflowOpen}
+					onOpenChange={setOverflowOpen}
 					trigger={
 						<SendouButton
 							variant="minimal"
+							size="big"
 							icon={<Menu />}
 							aria-label={t("tournament:nav.moreItems")}
 							className={styles.hamburger}
@@ -135,7 +135,11 @@ export function TournamentNav({
 					<ul className={styles.overflowList}>
 						{overflowItems.map((item) => (
 							<li key={item.key}>
-								<NavItemLink item={item} overflow />
+								<NavItemLink
+									item={item}
+									overflow
+									onNavigate={() => setOverflowOpen(false)}
+								/>
 							</li>
 						))}
 					</ul>
@@ -281,9 +285,11 @@ function useNavItems({
 function NavItemLink({
 	item,
 	overflow = false,
+	onNavigate,
 }: {
 	item: NavItem;
 	overflow?: boolean;
+	onNavigate?: () => void;
 }) {
 	return (
 		<NavLink
@@ -295,6 +301,7 @@ function NavItemLink({
 					[styles.linkActive]: isActive,
 				})
 			}
+			onClick={onNavigate}
 			data-testid={item.testId}
 		>
 			<span className={styles.icon} aria-hidden="true">
