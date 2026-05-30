@@ -74,8 +74,8 @@
 
 .seasonBannerImg {
 	position: absolute;
-	width: 83px;
-	right: 6px;
+	width: 109px;
+	right: -5px;
 	bottom: 0;
 }
 
@@ -206,9 +206,9 @@
 
 .seasonCardImg {
 	position: absolute;
-	width: 140px;
+	width: 175px;
 	bottom: 0;
-	right: 16px;
+	right: 10px;
 }
 
 .seasonCardButton {
