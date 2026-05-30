@@ -374,6 +374,7 @@ function UpcomingSeasonInfo({
 		month: "numeric",
 		day: "numeric",
 		hour: "numeric",
+		minute: "numeric",
 	});
 
 	return (
