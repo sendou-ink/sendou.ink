@@ -271,6 +271,10 @@ function GlobalSearchContent({
 		setSelectedWeapon(null);
 	};
 
+	const handleSearchTypeClick = () => {
+		inputRef.current?.focus();
+	};
+
 	const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
 		const separatorMatch = value.match(/^([a-zA-Z]+)\.$/);
@@ -354,6 +358,7 @@ function GlobalSearchContent({
 							key={type}
 							value={type}
 							className={styles.searchTypeRadioWrapper}
+							onClick={handleSearchTypeClick}
 						>
 							{({ isSelected, isHovered, isFocusVisible }) => (
 								<span
