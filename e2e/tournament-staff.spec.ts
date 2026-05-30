@@ -57,7 +57,7 @@ test.describe("Tournament staff", () => {
 		});
 
 		// check that got redirected since has no access
-		await page.waitForURL("**/register");
+		await page.waitForURL("**/info");
 
 		await impersonate(page, ADMIN_ID);
 		await navigate({

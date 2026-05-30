@@ -12,6 +12,7 @@ import {
 	userResultsPage,
 } from "~/utils/urls";
 import {
+	clickNavTab,
 	expect,
 	impersonate,
 	isNotVisible,
@@ -464,7 +465,7 @@ test.describe("Tournament bracket", () => {
 		await navigateToMatch(page, 7);
 		await expect(page.getByTestId("back-to-bracket-button")).toBeVisible();
 
-		await page.getByTestId("admin-tab").click();
+		await clickNavTab(page, "admin-tab");
 		await page.getByLabel("Action").selectOption("ADD_MEMBER");
 		await page.getByLabel("Team", { exact: true }).selectOption("303"); // a team in the Mako bracket
 		await selectUser({

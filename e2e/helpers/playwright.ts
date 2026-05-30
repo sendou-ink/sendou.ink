@@ -178,6 +178,18 @@ export function modalClickConfirmButton(page: Page) {
 	return submit(page, "confirm-button");
 }
 
+/**
+ * Clicks a tournament nav tab by its testId, opening the overflow ("More") menu
+ * first when the tab has collapsed into it on the current viewport.
+ */
+export async function clickNavTab(page: Page, testId: string) {
+	const visibleTab = page.locator(`[data-testid="${testId}"]:visible`);
+	if ((await visibleTab.count()) === 0) {
+		await page.getByRole("button", { name: "More" }).click();
+	}
+	await visibleTab.click();
+}
+
 export const startBracket = async (page: Page, tournamentId = 2) => {
 	await seed(page);
 	await impersonate(page);
