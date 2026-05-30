@@ -140,7 +140,7 @@ test.describe("Tournament Organization", () => {
 		});
 
 		// Try to create a team
-		await page.getByRole("tab", { name: "Register" }).click();
+		await page.getByTestId("register-cta").click();
 
 		// Fill in team details
 		await page.getByLabel("Team name").fill("Banned Team");
@@ -164,7 +164,7 @@ test.describe("Tournament Organization", () => {
 			page,
 			url: tournamentPage(1),
 		});
-		await page.getByRole("tab", { name: "Register" }).click();
+		await page.getByTestId("register-cta").click();
 
 		// Try to create a team again
 		await expect(page.getByText(/Teams \(\d+\)/)).toBeVisible();

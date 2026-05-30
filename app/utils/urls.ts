@@ -313,8 +313,12 @@ export const tournamentTeamPage = ({
 	tournamentId: number;
 	tournamentTeamId: number;
 }) => `/to/${tournamentId}/teams/${tournamentTeamId}`;
+export const tournamentInfoPage = (tournamentId: number) =>
+	`/to/${tournamentId}/info`;
 export const tournamentRegisterPage = (tournamentId: number) =>
 	`/to/${tournamentId}/register`;
+export const tournamentRulesPage = (tournamentId: number) =>
+	`/to/${tournamentId}/rules`;
 export const tournamentAdminPage = (tournamentId: number) =>
 	`/to/${tournamentId}/admin`;
 export const tournamentBracketsPage = ({

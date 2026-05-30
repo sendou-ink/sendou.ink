@@ -1,45 +1,21 @@
 import clsx from "clsx";
 import Compressor from "compressorjs";
-import {
-	AlertCircle,
-	Bookmark,
-	BookmarkCheck,
-	Check,
-	Clock,
-	Share2,
-	Trash,
-	User,
-	X,
-} from "lucide-react";
+import { AlertCircle, Check, Trash, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Form, Link, useFetcher, useLoaderData } from "react-router";
+import { Form, useFetcher, useLoaderData } from "react-router";
 import { useCopyToClipboard } from "react-use";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
-import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
-import {
-	SendouTab,
-	SendouTabList,
-	SendouTabPanel,
-	SendouTabs,
-} from "~/components/elements/Tabs";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { FriendCodePopover } from "~/components/FriendCodePopover";
-import { Image, ModeImage } from "~/components/Image";
 import { Input } from "~/components/Input";
-import { DiscordIcon } from "~/components/icons/Discord";
 import { Label } from "~/components/Label";
 import { containerClassName } from "~/components/Main";
-import { MapPoolStages } from "~/components/MapPoolSelector";
-import { Markdown } from "~/components/Markdown";
-import { Section } from "~/components/Section";
 import { SubmitButton } from "~/components/SubmitButton";
-import { TierPill } from "~/components/TierPill";
-import TimePopover from "~/components/TimePopover";
 import { useUser } from "~/features/auth/core/user";
 import { imgTypeToDimensions } from "~/features/img-upload/upload-constants";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
@@ -48,21 +24,14 @@ import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tour
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useHydrated } from "~/hooks/useHydrated";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
-import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
+import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
 	LOG_IN_URL,
-	mapsPageWithMapPool,
-	navIconUrl,
 	SENDOU_INK_BASE_URL,
 	tournamentJoinPage,
-	tournamentOrganizationPage,
-	tournamentPage,
-	tournamentSubsPage,
 	userEditProfilePage,
-	userPage,
 } from "~/utils/urls";
 import { action } from "../actions/to.$id.register.server";
 import type { TournamentRegisterPageLoader } from "../loaders/to.$id.register.server";
@@ -78,101 +47,6 @@ import { useTournament } from "./to.$id";
 export { action, loader };
 
 export default function TournamentRegisterPage() {
-	const isHydrated = useHydrated();
-	const tournament = useTournament();
-
-	return (
-		<div className={clsx("stack lg", containerClassName("normal"))}>
-			<div className={styles.logoContainer}>
-				<img
-					src={tournament.ctx.logoUrl}
-					alt=""
-					className={styles.logo}
-					width={124}
-					height={124}
-				/>
-				<div>
-					<div className={styles.title}>{tournament.ctx.name}</div>
-					<div>
-						{tournament.ctx.organization ? (
-							<Link
-								to={tournamentOrganizationPage({
-									organizationSlug: tournament.ctx.organization.slug,
-									tournamentName: tournament.ctx.name,
-								})}
-								className="stack horizontal sm items-center text-xs text-main-forced"
-							>
-								<Avatar
-									url={tournament.ctx.organization.logoUrl ?? undefined}
-									size="xxs"
-								/>
-								{tournament.ctx.organization.name}
-							</Link>
-						) : (
-							<Link
-								to={userPage(tournament.ctx.author)}
-								className="stack horizontal xs items-center text-lighter"
-							>
-								<User className={styles.infoIcon} />{" "}
-								{tournament.ctx.author.username}
-							</Link>
-						)}
-					</div>
-					{!tournament.isLeagueSignup ? (
-						<div className={clsx(styles.by, "mt-2")}>
-							<div className="stack horizontal xs items-center">
-								<Clock className={styles.infoIcon} />{" "}
-								{isHydrated ? (
-									<TimePopover
-										time={tournament.ctx.startTime}
-										options={{
-											minute: "numeric",
-											hour: "numeric",
-											day: "numeric",
-											month: "numeric",
-											year:
-												tournament.ctx.startTime.getFullYear() !==
-												new Date().getFullYear()
-													? "2-digit"
-													: undefined,
-										}}
-									/>
-								) : null}
-							</div>
-						</div>
-					) : null}
-					<div className="stack horizontal sm mt-1">
-						{tournament.ranked ? (
-							<div className={clsx(styles.badge, styles.badgeRanked)}>
-								Ranked
-							</div>
-						) : (
-							<div className={clsx(styles.badge, styles.badgeUnranked)}>
-								Unranked
-							</div>
-						)}
-						{tournament.ctx.tier ? (
-							<TierPill tier={tournament.ctx.tier} />
-						) : tournament.ctx.tentativeTier && !tournament.hasStarted ? (
-							<TierPill tier={tournament.ctx.tentativeTier} isTentative />
-						) : null}
-						<div className={clsx(styles.badge, styles.badgeModes)}>
-							{tournament.modesIncluded.map((mode) => (
-								<ModeImage key={mode} mode={mode} size={16} />
-							))}
-						</div>
-					</div>
-				</div>
-			</div>
-			<TournamentRegisterInfoTabs />
-		</div>
-	);
-}
-
-const TABS = ["description", "rules", "register"] as const;
-type RegisterPageTab = (typeof TABS)[number];
-
-function TournamentRegisterInfoTabs() {
 	const user = useUser();
 	const tournament = useTournament();
 	const { t } = useTranslation(["tournament"]);
@@ -181,18 +55,6 @@ function TournamentRegisterInfoTabs() {
 	const teamOwned = tournament.ownedTeamByUser(user);
 	const isRegularMemberOfATeam = teamMemberOf && !teamOwned;
 
-	const defaultTab = (): RegisterPageTab => {
-		if (tournament.hasStarted || !teamOwned) return "description";
-
-		return "register";
-	};
-	const [tabKey, setTabKey] = useSearchParamState({
-		defaultValue: defaultTab(),
-		name: "tab",
-		revive: (val) =>
-			TABS.includes(val as RegisterPageTab) ? (val as RegisterPageTab) : null,
-	});
-
 	const showAddIGNAlert =
 		tournament.ctx.settings.requireInGameNames &&
 		!teamOwned &&
@@ -200,97 +62,26 @@ function TournamentRegisterInfoTabs() {
 		!user?.inGameName;
 
 	return (
-		<div>
-			<SendouTabs
-				selectedKey={tabKey}
-				onSelectionChange={(key) => setTabKey(key as RegisterPageTab)}
-			>
-				<SendouTabList sticky>
-					<SendouTab id="description">Description</SendouTab>
-					{tournament.ctx.rules ? (
-						<SendouTab id="rules">Rules</SendouTab>
-					) : null}
-					{!tournament.hasStarted ? (
-						<SendouTab id="register" data-testid="register-tab">
-							Register
-						</SendouTab>
-					) : null}
-				</SendouTabList>
-
-				<SendouTabPanel id="description">
-					<div className="stack lg">
-						<div className="stack horizontal sm">
-							{tournament.ctx.discordUrl ? (
-								<div className="w-max">
-									<LinkButton
-										to={tournament.ctx.discordUrl}
-										variant="outlined"
-										size="small"
-										isExternal
-										icon={<DiscordIcon />}
-									>
-										Join the Discord
-									</LinkButton>
-								</div>
-							) : null}
-							<SaveTournamentButton />
-							<ShareTournamentButton />
+		<div className={clsx("stack lg", containerClassName("normal"))}>
+			{isRegularMemberOfATeam ? (
+				<div className="stack md items-center">
+					<Alert>{t("tournament:pre.inATeam")}</Alert>
+					<LeaveTeamControl />
+				</div>
+			) : showAddIGNAlert ? (
+				<div>
+					<Alert variation="WARNING">
+						<div className="stack horizontal sm items-center flex-wrap justify-center text-center">
+							This tournament requires you to have an in-game name set{" "}
+							<LinkButton to={userEditProfilePage(user)} size="small">
+								Edit profile
+							</LinkButton>
 						</div>
-
-						<div className={styles.infoDescription}>
-							<Markdown>{tournament.ctx.description ?? ""}</Markdown>
-						</div>
-						<TOPickedMapPoolInfo />
-						<TiebreakerMapPoolInfo />
-					</div>
-				</SendouTabPanel>
-
-				{tournament.ctx.rules ? (
-					<SendouTabPanel id="rules">
-						<div className={styles.infoDescription}>
-							<Markdown>{tournament.ctx.rules ?? ""}</Markdown>
-						</div>
-					</SendouTabPanel>
-				) : null}
-
-				{!tournament.hasStarted ? (
-					<SendouTabPanel id="register">
-						<div className="stack lg">
-							{isRegularMemberOfATeam ? (
-								<div className="stack md items-center">
-									<Alert>{t("tournament:pre.inATeam")}</Alert>
-									<LeaveTeamControl />
-								</div>
-							) : showAddIGNAlert ? (
-								<div>
-									<Alert variation="WARNING">
-										<div className="stack horizontal sm items-center flex-wrap justify-center text-center">
-											This tournament requires you to have an in-game name set{" "}
-											<LinkButton to={userEditProfilePage(user)} size="small">
-												Edit profile
-											</LinkButton>
-										</div>
-									</Alert>
-								</div>
-							) : (
-								<RegistrationForms />
-							)}
-							{user &&
-							!tournament.teamMemberOfByUser(user) &&
-							tournament.canAddNewSubPost &&
-							!showAddIGNAlert &&
-							!tournament.hasStarted ? (
-								<Link
-									to={tournamentSubsPage(tournament.ctx.id)}
-									className="text-xs text-center"
-								>
-									{t("tournament:pre.sub.prompt")}
-								</Link>
-							) : null}
-						</div>
-					</SendouTabPanel>
-				) : null}
-			</SendouTabs>
+					</Alert>
+				</div>
+			) : (
+				<RegistrationForms />
+			)}
 		</div>
 	);
 }
@@ -653,7 +444,6 @@ function TeamInfo({
 		const formData = new FormData(ref.current!);
 
 		if (uploadedAvatar) {
-			// replace with the compressed version
 			formData.delete("img");
 			formData.append("img", uploadedAvatar, uploadedAvatar.name);
 		}
@@ -870,7 +660,6 @@ function TournamentLogoUpload({
 					width: logoDimensions.width,
 					maxHeight: logoDimensions.height,
 					maxWidth: logoDimensions.width,
-					// 0.5MB
 					convertSize: 500_000,
 					resize: "cover",
 					success(result) {
@@ -1305,123 +1094,6 @@ function MapPoolValidationStatusMessage({
 					maxStageRepeat: TOURNAMENT.COUNTERPICK_MAX_STAGE_REPEAT,
 				})}
 			</Alert>
-		</div>
-	);
-}
-
-function SaveTournamentButton() {
-	const { t } = useTranslation(["common"]);
-	const user = useUser();
-	const tournament = useTournament();
-	const data = useLoaderData<TournamentRegisterPageLoader>();
-	const fetcher = useFetcher();
-
-	const teamMemberOf = tournament.teamMemberOfByUser(user);
-	if (!user || tournament.hasStarted || teamMemberOf) return null;
-
-	const isSaved =
-		fetcher.formData?.get("_action") === "SAVE_TOURNAMENT"
-			? true
-			: fetcher.formData?.get("_action") === "UNSAVE_TOURNAMENT"
-				? false
-				: (data?.isSaved ?? false);
-
-	return (
-		<fetcher.Form method="post">
-			<input
-				type="hidden"
-				name="_action"
-				value={isSaved ? "UNSAVE_TOURNAMENT" : "SAVE_TOURNAMENT"}
-			/>
-			<SendouButton
-				type="submit"
-				variant="outlined"
-				size="small"
-				icon={isSaved ? <BookmarkCheck /> : <Bookmark />}
-			>
-				{isSaved ? t("common:actions.unsave") : t("common:actions.save")}
-			</SendouButton>
-		</fetcher.Form>
-	);
-}
-
-function ShareTournamentButton() {
-	const { t } = useTranslation(["common"]);
-	const tournament = useTournament();
-
-	const url = `${SENDOU_INK_BASE_URL}${tournamentPage(tournament.ctx.id)}`;
-
-	const handleShare = () => {
-		navigator.share({ url });
-	};
-
-	if (
-		typeof navigator !== "undefined" &&
-		typeof navigator.share === "function"
-	) {
-		return (
-			<SendouButton
-				variant="outlined"
-				size="small"
-				icon={<Share2 />}
-				onPress={handleShare}
-			>
-				{t("common:actions.share")}
-			</SendouButton>
-		);
-	}
-
-	return (
-		<CopyToClipboardPopover
-			url={url}
-			trigger={
-				<SendouButton variant="outlined" size="small" icon={<Share2 />}>
-					{t("common:actions.share")}
-				</SendouButton>
-			}
-		/>
-	);
-}
-
-function TOPickedMapPoolInfo() {
-	const { t } = useTranslation(["calendar"]);
-	const tournament = useTournament();
-
-	if (tournament.ctx.toSetMapPool.length === 0) return null;
-
-	const mapPool = new MapPool(tournament.ctx.toSetMapPool);
-
-	return (
-		<Section title={t("calendar:forms.mapPool")}>
-			<div>
-				<MapPoolStages mapPool={mapPool} />
-				<div className="stack items-center mt-4">
-					<LinkButton to={mapsPageWithMapPool(mapPool)} variant="outlined">
-						<Image alt="" path={navIconUrl("maps")} width={22} height={22} />
-						{t("calendar:createMapList")}
-					</LinkButton>
-				</div>
-			</div>
-		</Section>
-	);
-}
-
-function TiebreakerMapPoolInfo() {
-	const { t } = useTranslation(["game-misc"]);
-	const tournament = useTournament();
-
-	if (tournament.ctx.tieBreakerMapPool.length === 0) return null;
-
-	return (
-		<div className="text-sm text-lighter text-semi-bold">
-			Tiebreaker map pool:{" "}
-			{tournament.ctx.tieBreakerMapPool
-				.sort((a, b) => modesShort.indexOf(a.mode) - modesShort.indexOf(b.mode))
-				.map(
-					(map) =>
-						`${t(`game-misc:MODE_SHORT_${map.mode}`)} ${t(`game-misc:STAGE_${map.stageId}`)}`,
-				)
-				.join(", ")}
 		</div>
 	);
 }

@@ -524,7 +524,7 @@
 
 .standingsDivider {
 	width: 5px;
-	background-color: var(--color-bg-high);
+	background-color: var(--color-border-high);
 	border-radius: var(--radius-box);
 }
 

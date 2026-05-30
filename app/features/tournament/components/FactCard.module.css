@@ -1,0 +1,59 @@
+.wrapper {
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	align-items: stretch;
+	gap: var(--s-8);
+	width: fit-content;
+	max-width: 100%;
+	margin-inline: auto;
+}
+
+.column {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.divider {
+	min-width: 2px;
+	background-color: var(--color-border-high);
+	border-radius: var(--radius-full);
+	flex-shrink: 0;
+}
+
+.card {
+	display: grid;
+	grid-template-columns: minmax(0, 6rem) minmax(0, max-content);
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.label {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	text-transform: uppercase;
+}
+
+.value {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+}
+
+/** xxx: divider gone and horizontal stack at the same time */
+@media (max-width: 480px) {
+	.wrapper {
+		grid-template-columns: auto;
+		gap: var(--s-3);
+	}
+
+	.divider {
+		display: none;
+	}
+}

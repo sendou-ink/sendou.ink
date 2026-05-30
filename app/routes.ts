@@ -120,7 +120,9 @@ export default [
 	route("/to/search", "features/tournament/routes/to.search.ts"),
 	route("/to/:id", "features/tournament/routes/to.$id.tsx", [
 		index("features/tournament/routes/to.$id.index.ts"),
+		route("info", "features/tournament/routes/to.$id.info.tsx"),
 		route("register", "features/tournament/routes/to.$id.register.tsx"),
+		route("rules", "features/tournament/routes/to.$id.rules.tsx"),
 		route("teams", "features/tournament/routes/to.$id.teams.tsx"),
 		route("teams/:tid", "features/tournament/routes/to.$id.teams.$tid.tsx"),
 		route("join", "features/tournament/routes/to.$id.join.tsx"),

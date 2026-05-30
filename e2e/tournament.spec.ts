@@ -4,6 +4,7 @@ import type { StageId } from "~/modules/in-game-lists/types";
 import {
 	tournamentBracketsPage,
 	tournamentPage,
+	tournamentRegisterPage,
 	tournamentTeamsPage,
 } from "~/utils/urls";
 import {
@@ -67,7 +68,7 @@ test.describe("Tournament", () => {
 			url: tournamentPage(1),
 		});
 
-		await page.getByRole("tab", { name: "Register" }).click();
+		await page.getByTestId("register-cta").click();
 
 		await page.getByLabel("Pick-up name").fill("Chimera");
 		await page.getByTestId("save-team-button").click();
@@ -106,7 +107,10 @@ test.describe("Tournament", () => {
 
 		await isNotVisible(page.getByText("Chimera"));
 
-		await page.getByTestId("register-tab").click();
+		await navigate({
+			page,
+			url: tournamentRegisterPage(3),
+		});
 		await submit(page, "check-in-button");
 
 		await page.getByTestId("brackets-tab").click();

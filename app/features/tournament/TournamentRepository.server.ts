@@ -93,6 +93,16 @@ export async function findById(id: number) {
 									"TournamentOrganization.id",
 								),
 						).as("members"),
+						jsonArrayFrom(
+							innerEb
+								.selectFrom("TournamentOrganizationSeries")
+								.select("TournamentOrganizationSeries.name")
+								.whereRef(
+									"TournamentOrganizationSeries.organizationId",
+									"=",
+									"TournamentOrganization.id",
+								),
+						).as("series"),
 					])
 					.whereRef(
 						"TournamentOrganization.id",
