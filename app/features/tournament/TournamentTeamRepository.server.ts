@@ -8,6 +8,7 @@ import { flatZip } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
+import * as TournamentAuditLogRepository from "./TournamentAuditLogRepository.server";
 
 export function setActiveRoster({
 	teamId,
@@ -111,11 +112,15 @@ export function create({
 	team,
 	avatarFileName,
 	userId,
+	actorUserId,
 	tournamentId,
 }: {
 	team: Pick<Tables["TournamentTeam"], "name" | "prefersNotToHost" | "teamId">;
 	avatarFileName?: string;
+	/** The user who becomes the team owner. */
 	userId: number;
+	/** The user performing the registration (differs from `userId` when an organizer registers a team for someone). */
+	actorUserId: number;
 	tournamentId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
@@ -151,6 +156,13 @@ export function create({
 				inGameName,
 			})
 			.execute();
+
+		await TournamentAuditLogRepository.insert(trx, {
+			type: "TEAM_REGISTERED",
+			actorUserId,
+			tournamentTeamId: tournamentTeam.id,
+			subjectUserId: userId,
+		});
 
 		return tournamentTeam;
 	});
@@ -317,6 +329,11 @@ export function update({
 			})
 			.where("TournamentTeam.id", "=", team.id)
 			.execute();
+
+		await TournamentAuditLogRepository.updateTeamHistoryName(trx, {
+			tournamentTeamId: team.id,
+			name: team.name,
+		});
 	});
 }
 
@@ -416,9 +433,9 @@ export function updateAbDivisions(
  */
 export function checkIn(
 	tournamentTeamId: number,
-	options?: { bracketIdx: number },
+	options: { actorUserId: number; bracketIdx?: number },
 ) {
-	const bracketIdx = options?.bracketIdx ?? null;
+	const bracketIdx = options.bracketIdx ?? null;
 
 	return db.transaction().execute(async (trx) => {
 		let query = trx
@@ -446,15 +463,24 @@ export function checkIn(
 				bracketIdx,
 			})
 			.execute();
+
+		await TournamentAuditLogRepository.insert(trx, {
+			type: "TEAM_CHECKED_IN",
+			actorUserId: options.actorUserId,
+			tournamentTeamId,
+			metadata: typeof bracketIdx === "number" ? { bracketIdx } : null,
+		});
 	});
 }
 
 export function checkOut({
 	tournamentTeamId,
 	bracketIdx,
+	actorUserId,
 }: {
 	tournamentTeamId: number;
 	bracketIdx: number | null;
+	actorUserId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
 		let query = trx
@@ -478,6 +504,13 @@ export function checkOut({
 				})
 				.execute();
 		}
+
+		await TournamentAuditLogRepository.insert(trx, {
+			type: "TEAM_CHECKED_OUT",
+			actorUserId,
+			tournamentTeamId,
+			metadata: typeof bracketIdx === "number" ? { bracketIdx } : null,
+		});
 	});
 }
 
@@ -488,21 +521,30 @@ export function updateName({
 	tournamentTeamId: number;
 	name: string;
 }) {
-	return db
-		.updateTable("TournamentTeam")
-		.set({
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("TournamentTeam")
+			.set({
+				name,
+			})
+			.where("id", "=", tournamentTeamId)
+			.execute();
+
+		await TournamentAuditLogRepository.updateTeamHistoryName(trx, {
+			tournamentTeamId,
 			name,
-		})
-		.where("id", "=", tournamentTeamId)
-		.execute();
+		});
+	});
 }
 
 export function dropOut({
 	tournamentTeamId,
 	previewBracketIdxs,
+	actorUserId,
 }: {
 	tournamentTeamId: number;
 	previewBracketIdxs: number[];
+	actorUserId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
 		await trx
@@ -518,17 +560,34 @@ export function dropOut({
 			})
 			.where("id", "=", tournamentTeamId)
 			.execute();
+
+		await TournamentAuditLogRepository.insert(trx, {
+			type: "TEAM_DROPPED_OUT",
+			actorUserId,
+			tournamentTeamId,
+		});
 	});
 }
 
-export function undoDropOut(tournamentTeamId: number) {
-	return db
-		.updateTable("TournamentTeam")
-		.set({
-			droppedOut: 0,
-		})
-		.where("id", "=", tournamentTeamId)
-		.execute();
+export function undoDropOut(
+	tournamentTeamId: number,
+	{ actorUserId }: { actorUserId: number },
+) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("TournamentTeam")
+			.set({
+				droppedOut: 0,
+			})
+			.where("id", "=", tournamentTeamId)
+			.execute();
+
+		await TournamentAuditLogRepository.insert(trx, {
+			type: "TEAM_DROP_OUT_UNDONE",
+			actorUserId,
+			tournamentTeamId,
+		});
+	});
 }
 
 export function join({
@@ -536,21 +595,36 @@ export function join({
 	whatToDoWithPreviousTeam,
 	newTeamId,
 	userId,
+	actorUserId,
 	checkOutTeam = false,
 }: {
 	previousTeamId?: number;
 	whatToDoWithPreviousTeam?: "LEAVE" | "DELETE";
 	newTeamId: number;
+	/** The user joining the team. */
 	userId: number;
+	/** The user performing the action (differs from `userId` when an owner or organizer adds someone). */
+	actorUserId: number;
 	checkOutTeam?: boolean;
 }) {
 	return db.transaction().execute(async (trx) => {
 		if (whatToDoWithPreviousTeam === "DELETE") {
+			await TournamentAuditLogRepository.insert(trx, {
+				type: "TEAM_UNREGISTERED",
+				actorUserId,
+				tournamentTeamId: previousTeamId!,
+			});
 			await trx
 				.deleteFrom("TournamentTeam")
 				.where("TournamentTeam.id", "=", previousTeamId!)
 				.execute();
 		} else if (whatToDoWithPreviousTeam === "LEAVE") {
+			await TournamentAuditLogRepository.insert(trx, {
+				type: "MEMBER_REMOVED",
+				actorUserId,
+				tournamentTeamId: previousTeamId!,
+				subjectUserId: userId,
+			});
 			await trx
 				.deleteFrom("TournamentTeamMember")
 				.where("TournamentTeamMember.tournamentTeamId", "=", previousTeamId!)
@@ -587,11 +661,27 @@ export function join({
 				inGameName,
 			})
 			.execute();
+
+		await TournamentAuditLogRepository.insert(trx, {
+			type: "MEMBER_ADDED",
+			actorUserId,
+			tournamentTeamId: newTeamId,
+			subjectUserId: userId,
+		});
 	});
 }
 
-export function del(tournamentTeamId: number) {
+export function del(
+	tournamentTeamId: number,
+	{ actorUserId }: { actorUserId: number },
+) {
 	return db.transaction().execute(async (trx) => {
+		await TournamentAuditLogRepository.insert(trx, {
+			type: "TEAM_UNREGISTERED",
+			actorUserId,
+			tournamentTeamId,
+		});
+
 		await trx
 			.deleteFrom("MapPoolMap")
 			.where("MapPoolMap.tournamentTeamId", "=", tournamentTeamId)
@@ -604,12 +694,31 @@ export function del(tournamentTeamId: number) {
 	});
 }
 
-export function leave({ teamId, userId }: { teamId: number; userId: number }) {
-	return db
-		.deleteFrom("TournamentTeamMember")
-		.where("TournamentTeamMember.tournamentTeamId", "=", teamId)
-		.where("TournamentTeamMember.userId", "=", userId)
-		.execute();
+export function leave({
+	teamId,
+	userId,
+	actorUserId,
+}: {
+	teamId: number;
+	/** The member leaving the team. */
+	userId: number;
+	/** The user performing the action (differs from `userId` when an owner or organizer removes someone). */
+	actorUserId: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		await TournamentAuditLogRepository.insert(trx, {
+			type: "MEMBER_REMOVED",
+			actorUserId,
+			tournamentTeamId: teamId,
+			subjectUserId: userId,
+		});
+
+		await trx
+			.deleteFrom("TournamentTeamMember")
+			.where("TournamentTeamMember.tournamentTeamId", "=", teamId)
+			.where("TournamentTeamMember.userId", "=", userId)
+			.execute();
+	});
 }
 
 export function transferOwnership(

@@ -299,6 +299,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			);
 
 			await TournamentTeamRepository.checkIn(teamMemberOf.id, {
+				actorUserId: user.id,
 				bracketIdx: data.bracketIdx,
 			});
 

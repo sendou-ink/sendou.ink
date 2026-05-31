@@ -107,6 +107,7 @@ async function main() {
 				teamId: entry.team?.id ?? null,
 			},
 			userId: owner.id,
+			actorUserId: owner.id,
 			tournamentId,
 		});
 
@@ -114,6 +115,7 @@ async function main() {
 			await TournamentTeamRepository.join({
 				newTeamId: tournamentTeam.id,
 				userId: member.id,
+				actorUserId: member.id,
 			});
 		}
 

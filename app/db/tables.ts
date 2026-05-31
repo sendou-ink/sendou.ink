@@ -866,6 +866,43 @@ export interface TournamentTeamMember {
 	isLooking: Generated<DBBoolean>;
 }
 
+/** Stable shadow of a tournament team's identity that survives the team's hard-deletion, so the audit log can still resolve its name. */
+export interface TournamentTeamHistory {
+	// xxx: maybe we need soft delete instead. it's possible the same id gets reused... alternative TournamentTeamHistory has its own tournamentTeamId that TournamentAuditLog refers to (also keep tournamentTeamId)
+	/** Mirrors the original `TournamentTeam.id`. Not a live foreign key so it is not cascade-deleted with the team. */
+	tournamentTeamId: number;
+	tournamentId: number;
+	name: string;
+}
+
+export const TOURNAMENT_AUDIT_LOG_TYPES = [
+	"MEMBER_ADDED",
+	"MEMBER_REMOVED",
+	"TEAM_REGISTERED",
+	"TEAM_UNREGISTERED",
+	"TEAM_CHECKED_IN",
+	"TEAM_CHECKED_OUT",
+	"TEAM_DROPPED_OUT",
+	"TEAM_DROP_OUT_UNDONE",
+] as const;
+
+export interface TournamentAuditLog {
+	id: GeneratedAlways<number>;
+	tournamentId: number;
+	type: (typeof TOURNAMENT_AUDIT_LOG_TYPES)[number];
+	/** The user who performed the action. */
+	actorUserId: number;
+	/** The affected member, for member-level events. `null` for team-level events. */
+	subjectUserId: number | null;
+	tournamentTeamId: number | null;
+	metadata: JSONColumnTypeNullable<TournamentAuditLogMetadata>;
+	createdAt: number;
+}
+
+export interface TournamentAuditLogMetadata {
+	bracketIdx?: number;
+}
+
 export interface TournamentOrganization {
 	id: GeneratedAlways<number>;
 	name: string;
@@ -1436,6 +1473,8 @@ export interface DB {
 	TournamentTeam: TournamentTeam;
 	TournamentTeamCheckIn: TournamentTeamCheckIn;
 	TournamentTeamMember: TournamentTeamMember;
+	TournamentTeamHistory: TournamentTeamHistory;
+	TournamentAuditLog: TournamentAuditLog;
 	TournamentOrganization: TournamentOrganization;
 	TournamentOrganizationMember: TournamentOrganizationMember;
 	TournamentOrganizationBadge: TournamentOrganizationBadge;

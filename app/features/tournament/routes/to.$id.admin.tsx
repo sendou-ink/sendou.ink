@@ -1,5 +1,13 @@
 import clsx from "clsx";
-import { ListOrdered, Trash, Trophy, Tv, UserCog, Users } from "lucide-react";
+import {
+	History,
+	ListOrdered,
+	Trash,
+	Trophy,
+	Tv,
+	UserCog,
+	Users,
+} from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
@@ -37,13 +45,15 @@ import {
 	tournamentPage,
 } from "~/utils/urls";
 import { BracketProgressionSelector } from "../../calendar/components/BracketProgressionSelector";
+import { TournamentAdminAuditLog } from "../components/TournamentAdminAuditLog";
 import { TournamentSeeds } from "../components/TournamentSeeds";
 import { useTournament } from "./to.$id";
 import adminStyles from "./to.$id.admin.module.css";
 
 export { action } from "../actions/to.$id.admin.server";
+export { loader } from "../loaders/to.$id.admin.server";
 
-type AdminTab = "teams" | "seeds" | "staff" | "stream" | "brackets";
+type AdminTab = "teams" | "seeds" | "staff" | "stream" | "brackets" | "audit";
 
 export default function TournamentAdminPage() {
 	const { t } = useTranslation(["tournament", "calendar"]);
@@ -75,6 +85,7 @@ export default function TournamentAdminPage() {
 		switch (tab) {
 			case "teams":
 			case "stream":
+			case "audit":
 				return true;
 			case "seeds":
 				return showSeedsTab;
@@ -160,6 +171,9 @@ export default function TournamentAdminPage() {
 							{t("tournament:admin.tab.brackets")}
 						</SendouTab>
 					) : null}
+					<SendouTab id="audit" icon={<History />}>
+						{t("tournament:admin.tab.audit")}
+					</SendouTab>
 				</SendouTabList>
 				<SendouTabPanel id="teams" className="stack lg">
 					<TeamActions />
@@ -212,6 +226,9 @@ export default function TournamentAdminPage() {
 						) : null}
 					</SendouTabPanel>
 				) : null}
+				<SendouTabPanel id="audit">
+					<TournamentAdminAuditLog />
+				</SendouTabPanel>
 			</SendouTabs>
 		</div>
 	);

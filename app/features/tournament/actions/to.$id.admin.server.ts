@@ -76,6 +76,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 					teamId: null,
 				},
 				userId: data.userId,
+				actorUserId: user.id,
 				tournamentId,
 			});
 			await TournamentLFGRepository.leaveLfg({
@@ -141,11 +142,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 			invariant(bracket, "Invalid bracket idx");
 			errorToastIfFalsy(bracket.preview, "Bracket has been started");
 
-			await TournamentTeamRepository.checkIn(
-				data.teamId,
+			await TournamentTeamRepository.checkIn(data.teamId, {
+				actorUserId: user.id,
 				// no sources = regular check in
-				bracket.sources ? { bracketIdx: data.bracketIdx } : undefined,
-			);
+				bracketIdx: bracket.sources ? data.bracketIdx : undefined,
+			});
 
 			message = "Checked team in";
 			break;
@@ -165,6 +166,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			await TournamentTeamRepository.checkOut({
 				tournamentTeamId: data.teamId,
+				actorUserId: user.id,
 				// no sources = regular check in
 				bracketIdx: !bracket.sources ? null : data.bracketIdx,
 			});
@@ -206,6 +208,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			await TournamentTeamRepository.leave({
 				userId: data.memberId,
 				teamId: team.id,
+				actorUserId: user.id,
 			});
 
 			ShowcaseTournaments.removeFromCached({
@@ -256,6 +259,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			});
 			await TournamentTeamRepository.join({
 				userId: data.userId,
+				actorUserId: user.id,
 				newTeamId: team.id,
 				previousTeamId: previousTeam?.id,
 				// this team is not checked in & tournament started, so we can simply delete it
@@ -300,7 +304,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			errorToastIfFalsy(team, "Invalid team id");
 			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
 
-			await TournamentTeamRepository.del(team.id);
+			await TournamentTeamRepository.del(team.id, { actorUserId: user.id });
 
 			for (const member of team.members) {
 				ShowcaseTournaments.removeFromCached({
@@ -399,6 +403,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			await TournamentTeamRepository.dropOut({
 				tournamentTeamId: data.teamId,
+				actorUserId: user.id,
 				previewBracketIdxs: tournament.brackets.flatMap((b, idx) =>
 					b.preview ? idx : [],
 				),
@@ -427,7 +432,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 		case "UNDO_DROP_TEAM_OUT": {
 			validateIsTournamentOrganizer();
 
-			await TournamentTeamRepository.undoDropOut(data.teamId);
+			await TournamentTeamRepository.undoDropOut(data.teamId, {
+				actorUserId: user.id,
+			});
 
 			message = "Team drop out undone";
 			break;

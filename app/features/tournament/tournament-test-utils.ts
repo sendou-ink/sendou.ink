@@ -62,6 +62,7 @@ export async function dbInsertTournamentTeam({
 			teamId: null,
 		},
 		userId: ownerId,
+		actorUserId: ownerId,
 		tournamentId,
 	});
 
@@ -70,11 +71,14 @@ export async function dbInsertTournamentTeam({
 
 		await TournamentTeamRepository.join({
 			userId: memberId,
+			actorUserId: memberId,
 			newTeamId: tournamentTeam.id,
 		});
 	}
 
-	await TournamentTeamRepository.checkIn(tournamentTeam.id);
+	await TournamentTeamRepository.checkIn(tournamentTeam.id, {
+		actorUserId: ownerId,
+	});
 }
 
 /**

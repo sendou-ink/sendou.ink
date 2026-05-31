@@ -129,6 +129,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 						teamId: data.teamId ?? null,
 					},
 					userId: user.id,
+					actorUserId: user.id,
 					tournamentId,
 					avatarFileName,
 				});
@@ -165,6 +166,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			await TournamentTeamRepository.leave({
 				teamId: ownTeam.id,
 				userId: data.userId,
+				actorUserId: user.id,
 			});
 
 			ShowcaseTournaments.removeFromCached({
@@ -191,6 +193,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			await TournamentTeamRepository.leave({
 				teamId: teamMemberOf.id,
 				userId: user.id,
+				actorUserId: user.id,
 			});
 
 			ShowcaseTournaments.removeFromCached({
@@ -244,7 +247,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 				`Can't check-in - ${tournament.checkInConditionsFulfilledByTeamId(teamMemberOf.id).reason}`,
 			);
 
-			await TournamentTeamRepository.checkIn(teamMemberOf.id);
+			await TournamentTeamRepository.checkIn(teamMemberOf.id, {
+				actorUserId: user.id,
+			});
 			logger.info(
 				`Checking in (success): tournament team id: ${teamMemberOf.id} - user id: ${user.id} - tournament id: ${tournamentId}`,
 			);
@@ -286,6 +291,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			});
 			await TournamentTeamRepository.join({
 				userId: data.userId,
+				actorUserId: user.id,
 				newTeamId: ownTeam.id,
 			});
 
@@ -330,7 +336,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Unregistering from leagues is not possible after registration has closed",
 			);
 
-			await TournamentTeamRepository.del(ownTeam.id);
+			await TournamentTeamRepository.del(ownTeam.id, {
+				actorUserId: user.id,
+			});
 
 			for (const member of ownTeam.members) {
 				ShowcaseTournaments.removeFromCached({
