@@ -119,24 +119,37 @@ export async function expectIsHydrated(page: Page) {
 }
 
 export async function seed(page: Page, variation?: SeedVariation) {
+	return retryPost(page, "seed", "/seed", {
+		form: { variation: variation ?? "DEFAULT", source: "e2e" },
+	});
+}
+
+export function impersonate(page: Page, userId = ADMIN_ID) {
+	return retryPost(page, "impersonate", `/auth/impersonate?id=${userId}`);
+}
+
+/**
+ * Direct (non-browser) POST that retries on transient network failures such as
+ * "socket hang up", which the dev server can produce intermittently under load.
+ * Only safe for idempotent endpoints.
+ */
+async function retryPost(
+	page: Page,
+	name: string,
+	url: string,
+	options?: Parameters<Page["request"]["post"]>[1],
+) {
 	const MAX_ATTEMPTS = 3;
 
 	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
 		try {
-			return await page.request.post("/seed", {
-				form: { variation: variation ?? "DEFAULT", source: "e2e" },
-				timeout: 7_500,
-			});
+			return await page.request.post(url, { timeout: 7_500, ...options });
 		} catch (error) {
 			if (attempt === MAX_ATTEMPTS) throw error;
 		}
 	}
 
-	throw new Error("seed: unreachable");
-}
-
-export function impersonate(page: Page, userId = ADMIN_ID) {
-	return page.request.post(`/auth/impersonate?id=${userId}`);
+	throw new Error(`${name}: unreachable`);
 }
 
 export async function submit(page: Page, testId?: string) {
