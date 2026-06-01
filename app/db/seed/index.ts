@@ -943,8 +943,12 @@ async function userMapModePreferences() {
 }
 
 async function userMatchProfileWeaponPool() {
-	for (let id = 1; id < 500; id++) {
-		if (id === 2) continue; // no weapons for N-ZAP
+	const users = sql.prepare('SELECT id FROM "User" LIMIT 500').all() as {
+		id: number;
+	}[];
+
+	for (const { id } of users) {
+		if (id === NZAP_TEST_ID) continue; // no weapons for N-ZAP
 		if (faker.number.float(1) < 0.2) continue; // 80% have weapons
 
 		const weapons = faker.helpers
