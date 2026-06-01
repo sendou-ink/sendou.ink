@@ -64,7 +64,7 @@ export function TeamWithRoster({
 						const friendCode = friendCodes?.[member.userId];
 						const isSub =
 							databaseTimestampToDate(member.createdAt) >
-							tournament.ctx.startTime;
+							tournament.registrationClosesAt;
 
 						const name = () => {
 							if (!tournament.ctx.settings.requireInGameNames) {
