@@ -11,6 +11,7 @@ import {
 	COMMON_USER_FIELDS,
 	concatUserSubmittedImagePrefix,
 	tournamentLogoOrNull,
+	userProfileWeapons,
 } from "~/utils/kysely.server";
 import { mySlugify } from "~/utils/urls";
 
@@ -125,12 +126,7 @@ export function findByCustomUrl(
 						"TeamMemberWithSecondary.isMainTeam",
 						"User.country",
 						"User.patronTier",
-						jsonArrayFrom(
-							innerEb
-								.selectFrom("UserWeapon")
-								.select(["UserWeapon.weaponSplId", "UserWeapon.isFavorite"])
-								.whereRef("UserWeapon.userId", "=", "User.id"),
-						).as("weapons"),
+						userProfileWeapons(innerEb).as("weapons"),
 					])
 					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id"),
 			).as("members"),

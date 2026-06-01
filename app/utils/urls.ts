@@ -478,6 +478,9 @@ export const outlinedMainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
 export const outlinedFiveStarMainWeaponImageUrl = (
 	mainWeaponSplId: MainWeaponId,
 ) => `/static-assets/img/main-weapons-outlined-2/${mainWeaponSplId}`;
+export const outlinedTenStarMainWeaponImageUrl = (
+	mainWeaponSplId: MainWeaponId,
+) => `/static-assets/img/main-weapons-outlined-3/${mainWeaponSplId}`;
 export const subWeaponImageUrl = (subWeaponSplId: SubWeaponId) =>
 	`/static-assets/img/sub-weapons/${subWeaponSplId}`;
 export const specialWeaponImageUrl = (specialWeaponSplId: SpecialWeaponId) =>

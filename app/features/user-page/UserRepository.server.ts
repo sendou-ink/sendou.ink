@@ -21,6 +21,7 @@ import {
 	concatUserSubmittedImagePrefix,
 	tournamentLogoOrNull,
 	userChatNameHue,
+	userProfileWeapons,
 } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 import { safeNumberParse } from "~/utils/number";
@@ -181,13 +182,7 @@ export async function findProfileByIdentifier(
 			"User.patronTier",
 			"PlusTier.tier as plusTier",
 			"User.pronouns",
-			jsonArrayFrom(
-				eb
-					.selectFrom("UserWeapon")
-					.select(["UserWeapon.weaponSplId", "UserWeapon.isFavorite"])
-					.whereRef("UserWeapon.userId", "=", "User.id")
-					.orderBy("UserWeapon.order", "asc"),
-			).as("weapons"),
+			userProfileWeapons(eb).as("weapons"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TeamMemberWithSecondary")
@@ -1338,5 +1333,26 @@ export function findIdsByTwitchUsernames(twitchUsernames: string[]) {
 		.selectFrom("User")
 		.select(["User.id", "User.twitch"])
 		.where("User.twitch", "in", twitchUsernames)
+		.execute();
+}
+
+/** Returns weapon pool entries with ten-star status for the given user. */
+export function weaponPoolByUserId(userId: number) {
+	return db
+		.selectFrom("UserWeaponPool")
+		.leftJoin("TenStarWeapon", (join) =>
+			join
+				.onRef("TenStarWeapon.userId", "=", "UserWeaponPool.userId")
+				.onRef("TenStarWeapon.weaponSplId", "=", "UserWeaponPool.weaponSplId"),
+		)
+		.select([
+			"UserWeaponPool.weaponSplId",
+			"UserWeaponPool.isFavorite",
+			sql<number>`case when "TenStarWeapon"."weaponSplId" is not null then 1 else 0 end`.as(
+				"isTenStar",
+			),
+		])
+		.where("UserWeaponPool.userId", "=", userId)
+		.orderBy("UserWeaponPool.sortOrder", "asc")
 		.execute();
 }

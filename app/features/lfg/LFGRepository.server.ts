@@ -7,6 +7,7 @@ import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import {
 	COMMON_USER_FIELDS,
 	concatUserSubmittedImagePrefix,
+	userProfileWeapons,
 } from "~/utils/kysely.server";
 import { LFG } from "./lfg-constants";
 
@@ -34,13 +35,7 @@ export async function posts(user?: { id: number; plusTier: number | null }) {
 						"User.languages",
 						"User.country",
 						"PlusTier.tier as plusTier",
-						jsonArrayFrom(
-							innerEb
-								.selectFrom("UserWeapon")
-								.whereRef("UserWeapon.userId", "=", "User.id")
-								.orderBy("UserWeapon.order", "asc")
-								.select(["UserWeapon.weaponSplId", "UserWeapon.isFavorite"]),
-						).as("weaponPool"),
+						userProfileWeapons(innerEb).as("weaponPool"),
 					])
 					.whereRef("User.id", "=", "LFGPost.authorId"),
 			).as("author"),
@@ -68,16 +63,7 @@ export async function posts(user?: { id: number; plusTier: number | null }) {
 									"User.languages",
 									"User.country",
 									"PlusTier.tier as plusTier",
-									jsonArrayFrom(
-										innestEb
-											.selectFrom("UserWeapon")
-											.whereRef("UserWeapon.userId", "=", "User.id")
-											.orderBy("UserWeapon.order", "asc")
-											.select([
-												"UserWeapon.weaponSplId",
-												"UserWeapon.isFavorite",
-											]),
-									).as("weaponPool"),
+									userProfileWeapons(innestEb).as("weaponPool"),
 								])
 								.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id"),
 						).as("members"),

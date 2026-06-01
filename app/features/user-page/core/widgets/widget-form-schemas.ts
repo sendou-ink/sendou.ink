@@ -10,7 +10,6 @@ import {
 	stageSelect,
 	textAreaRequired,
 	textFieldRequired,
-	weaponPool,
 	weaponSelect,
 } from "~/form/fields";
 import type { SelectOption } from "~/form/types";
@@ -78,13 +77,6 @@ export const peakXpUnverifiedSchema = z.object({
 export const peakXpWeaponSchema = z.object({
 	weaponSplId: weaponSelect({
 		label: "labels.weapon" as never,
-	}),
-});
-
-export const weaponPoolSchema = z.object({
-	weapons: weaponPool({
-		label: "labels.weaponPool",
-		maxCount: USER.WEAPON_POOL_MAX_SIZE,
 	}),
 });
 
@@ -157,7 +149,6 @@ const WIDGET_FORM_SCHEMAS: Record<string, z.ZodObject<z.ZodRawShape>> = {
 	"favorite-stage": favoriteStageSchema,
 	"peak-xp-unverified": peakXpUnverifiedSchema,
 	"peak-xp-weapon": peakXpWeaponSchema,
-	"weapon-pool": weaponPoolSchema,
 	sens: sensSchema,
 	art: artSchema,
 	links: linksSchema,

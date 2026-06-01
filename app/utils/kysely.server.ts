@@ -5,7 +5,7 @@ import {
 	expressionBuilder,
 	sql,
 } from "kysely";
-import { jsonBuildObject } from "kysely/helpers/sqlite";
+import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
 import type { DB, Tables } from "~/db/tables";
 import { IS_E2E_TEST_RUN } from "./e2e";
 
@@ -116,3 +116,49 @@ export function concatUserSubmittedImagePrefix<T extends string | null>(
 export type JSONColumnTypeNullable<
 	SelectType extends object | string | number | null,
 > = ColumnType<SelectType | null, string | null, string | null>;
+
+const TEN_STAR_CASE = sql<number>`case when "TenStarWeapon"."weaponSplId" is not null then 1 else 0 end`;
+
+/** Match profile weapons (from UserWeaponPool) with TenStarWeapon join. Correlates on "User"."id". */
+export function matchProfileWeapons(eb: ExpressionBuilder<DB, any>) {
+	return jsonArrayFrom(
+		eb
+			.selectFrom("UserWeaponPool")
+			.leftJoin("TenStarWeapon", (join) =>
+				join
+					.onRef("TenStarWeapon.userId", "=", "UserWeaponPool.userId")
+					.onRef(
+						"TenStarWeapon.weaponSplId",
+						"=",
+						"UserWeaponPool.weaponSplId",
+					),
+			)
+			.select([
+				"UserWeaponPool.weaponSplId",
+				"UserWeaponPool.isFavorite",
+				TEN_STAR_CASE.as("isTenStar"),
+			])
+			.whereRef("UserWeaponPool.userId", "=", "User.id")
+			.orderBy("UserWeaponPool.sortOrder", "asc"),
+	);
+}
+
+/** User profile weapons (from UserWeapon) with TenStarWeapon join. Correlates on "User"."id". */
+export function userProfileWeapons(eb: ExpressionBuilder<DB, any>) {
+	return jsonArrayFrom(
+		eb
+			.selectFrom("UserWeapon")
+			.leftJoin("TenStarWeapon", (join) =>
+				join
+					.onRef("TenStarWeapon.userId", "=", "UserWeapon.userId")
+					.onRef("TenStarWeapon.weaponSplId", "=", "UserWeapon.weaponSplId"),
+			)
+			.select([
+				"UserWeapon.weaponSplId",
+				"UserWeapon.isFavorite",
+				TEN_STAR_CASE.as("isTenStar"),
+			])
+			.whereRef("UserWeapon.userId", "=", "User.id")
+			.orderBy("UserWeapon.order", "asc"),
+	);
+}

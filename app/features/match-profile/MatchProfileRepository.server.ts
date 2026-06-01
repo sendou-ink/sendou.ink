@@ -3,17 +3,18 @@ import type { Tables, UserMapModePreferences } from "~/db/tables";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { modesShort } from "~/modules/in-game-lists/modes";
+import { matchProfileWeapons } from "~/utils/kysely.server";
 
 export async function settingsByUserId(userId: number) {
 	const preferences = await db
 		.selectFrom("User")
-		.select([
+		.select(({ eb }) => [
 			"User.mapModePreferences",
 			"User.vc",
 			"User.languages",
-			"User.weaponPool",
 			"User.noScreen",
 			"User.noSplatnet",
+			matchProfileWeapons(eb).as("weaponPool"),
 		])
 		.where("id", "=", userId)
 		.executeTakeFirstOrThrow();
@@ -71,29 +72,41 @@ export async function updateMatchProfile({
 		currentPreferences?.pool,
 	);
 
-	return db
-		.updateTable("User")
-		.set({
-			mapModePreferences: JSON.stringify({
-				...mapModePreferences,
-				pool: mergedPool,
-			}),
-			vc,
-			languages: languages.length > 0 ? languages.join(",") : null,
-			weaponPool:
-				weaponPool.length > 0
-					? JSON.stringify(
-							weaponPool.map((wpn) => ({
-								weaponSplId: wpn.id,
-								isFavorite: Number(wpn.isFavorite),
-							})),
-						)
-					: null,
-			noScreen,
-			noSplatnet,
-		})
-		.where("id", "=", userId)
-		.execute();
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.deleteFrom("UserWeaponPool")
+			.where("userId", "=", userId)
+			.execute();
+
+		if (weaponPool.length > 0) {
+			await trx
+				.insertInto("UserWeaponPool")
+				.values(
+					weaponPool.map((wpn, i) => ({
+						userId,
+						sortOrder: i,
+						weaponSplId: wpn.id,
+						isFavorite: Number(wpn.isFavorite),
+					})),
+				)
+				.execute();
+		}
+
+		await trx
+			.updateTable("User")
+			.set({
+				mapModePreferences: JSON.stringify({
+					...mapModePreferences,
+					pool: mergedPool,
+				}),
+				vc,
+				languages: languages.length > 0 ? languages.join(",") : null,
+				noScreen,
+				noSplatnet,
+			})
+			.where("id", "=", userId)
+			.execute();
+	});
 }
 
 /**

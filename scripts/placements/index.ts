@@ -57,6 +57,7 @@ async function main() {
 	await XRankPlacementRepository.refreshAllPeakXp();
 	await BadgeRepository.syncXPBadges();
 	await BuildRepository.recalculateAllSortValues();
+	await XRankPlacementRepository.refreshTenStarWeapons();
 	logger.info(`done reading in ${placements.length} placements`);
 }
 

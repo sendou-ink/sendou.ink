@@ -49,10 +49,7 @@ function WidgetSettingsFormInner({
 		onSettingsChange(widget.id, values);
 	};
 
-	const defaultValues = transformSettingsForForm(
-		widget.id,
-		widget.settings ?? {},
-	);
+	const defaultValues = widget.settings ?? {};
 
 	return (
 		<SendouForm
@@ -87,8 +84,6 @@ function WidgetFormFields({ widgetId }: { widgetId: string }) {
 			);
 		case "peak-xp-weapon":
 			return <FormField name="weaponSplId" />;
-		case "weapon-pool":
-			return <FormField name="weapons" />;
 		case "sens":
 			return <SensFields />;
 		case "art":
@@ -128,27 +123,6 @@ function WidgetFormFields({ widgetId }: { widgetId: string }) {
 		default:
 			return null;
 	}
-}
-
-function transformSettingsForForm(
-	widgetId: string,
-	settings: Record<string, unknown>,
-): Record<string, unknown> {
-	if (widgetId === "weapon-pool" && settings.weapons) {
-		const weapons = settings.weapons as Array<{
-			weaponSplId?: number;
-			id?: number;
-			isFavorite: number | boolean;
-		}>;
-		return {
-			...settings,
-			weapons: weapons.map((w) => ({
-				id: w.id ?? w.weaponSplId,
-				isFavorite: w.isFavorite === 1 || w.isFavorite === true,
-			})),
-		};
-	}
-	return settings;
 }
 
 const SENS_OPTIONS = [
