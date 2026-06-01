@@ -9,7 +9,6 @@ export const AUDIT_LOG_PAGE_SIZE = 30;
 
 type TournamentAuditLogType = Tables["TournamentAuditLog"]["type"];
 
-// xxx: can we use TablesInsertable + Pick
 interface InsertArgs {
 	type: TournamentAuditLogType;
 	/** The user who performed the action. */
@@ -27,7 +26,7 @@ interface InsertArgs {
  * `TournamentTeamHistory` row exists for the team, so the event remains readable
  * even after the team is hard-deleted.
  */
-export async function insert(trx: Transaction<DB>, args: InsertArgs) { // xxx: audit codebase, trx as second arg?
+export async function insert(trx: Transaction<DB>, args: InsertArgs) {
 	await trx
 		.insertInto("TournamentTeamHistory")
 		.columns(["tournamentTeamId", "tournamentId", "name"])

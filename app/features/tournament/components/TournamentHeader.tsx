@@ -35,6 +35,8 @@ export function TournamentHeader({ tournament }: { tournament: Tournament }) {
 		(date) => date.getTime(),
 	);
 
+	const currentYear = new Date().getFullYear();
+
 	return (
 		<header className={styles.header}>
 			<div className={styles.identity}>
@@ -62,6 +64,8 @@ export function TournamentHeader({ tournament }: { tournament: Tournament }) {
 							weekday: "long",
 							day: "numeric",
 							month: "long",
+							year:
+								date.getFullYear() !== currentYear ? "numeric" : undefined,
 							hour: "numeric",
 							minute: "numeric",
 						}}
