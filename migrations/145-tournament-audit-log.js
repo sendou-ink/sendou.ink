@@ -11,24 +11,12 @@ export function up(db) {
 			`,
 		).run();
 
-		// xxx: no enum check, we will keep it dynamic
 		db.prepare(
 			/* sql */ `
 				create table "TournamentAuditLog" (
 					"id" integer primary key autoincrement,
 					"tournamentId" integer not null,
-					"type" text not null check (
-						"type" in (
-							'MEMBER_ADDED',
-							'MEMBER_REMOVED',
-							'TEAM_REGISTERED',
-							'TEAM_UNREGISTERED',
-							'TEAM_CHECKED_IN',
-							'TEAM_CHECKED_OUT',
-							'TEAM_DROPPED_OUT',
-							'TEAM_DROP_OUT_UNDONE'
-						)
-					),
+					"type" text not null,
 					"actorUserId" integer not null,
 					"subjectUserId" integer,
 					"tournamentTeamId" integer,
@@ -42,9 +30,12 @@ export function up(db) {
 			`,
 		).run();
 
-		// xxx: which indexes are the best?
 		db.prepare(
 			/* sql */ `create index tournament_audit_log_tournament_id_created_at_idx on "TournamentAuditLog"("tournamentId", "createdAt")`,
+		).run();
+
+		db.prepare(
+			/* sql */ `create index tournament_team_history_tournament_id_idx on "TournamentTeamHistory"("tournamentId")`,
 		).run();
 
 		db.pragma("foreign_key_check");

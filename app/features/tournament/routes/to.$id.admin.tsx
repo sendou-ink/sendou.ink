@@ -29,6 +29,7 @@ type AdminTab = "teams" | "seeds" | "staff" | "stream" | "brackets" | "audit";
 
 // xxx: side nav not sticky
 // xxx: maybe edit event info, delete event & reset bracket in one tab?
+// xxx: vertical has padding but horizontal not, decide on one (now off align on this page)
 
 export default function TournamentAdminLayout() {
 	const { t } = useTranslation(["tournament", "calendar"]);
