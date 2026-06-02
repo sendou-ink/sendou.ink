@@ -64,8 +64,7 @@ export function TournamentHeader({ tournament }: { tournament: Tournament }) {
 							weekday: "long",
 							day: "numeric",
 							month: "long",
-							year:
-								date.getFullYear() !== currentYear ? "numeric" : undefined,
+							year: date.getFullYear() !== currentYear ? "numeric" : undefined,
 							hour: "numeric",
 							minute: "numeric",
 						}}

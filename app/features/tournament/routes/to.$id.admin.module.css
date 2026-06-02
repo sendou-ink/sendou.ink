@@ -1,3 +1,14 @@
-.actionForm > :global(.flex-same-size) {
-	min-width: 10rem;
+.layout {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: var(--s-8);
+	align-items: start;
+}
+
+.stacked {
+	grid-template-columns: 1fr;
+}
+
+.panel {
+	min-width: 0;
 }

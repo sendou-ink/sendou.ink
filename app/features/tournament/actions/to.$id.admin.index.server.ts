@@ -1,6 +1,5 @@
 import type { ActionFunction } from "react-router";
 import * as R from "remeda";
-import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
@@ -8,7 +7,6 @@ import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournam
 import { notify } from "~/features/notifications/core/notify.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { getServerTournamentManager } from "~/features/tournament-bracket/core/brackets-manager/manager.server";
-import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
@@ -28,15 +26,14 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "../../../utils/zod";
-import * as TournamentRepository from "../TournamentRepository.server";
-import { adminActionSchema } from "../tournament-schemas.server";
+import { adminTeamsActionSchema } from "../tournament-schemas.server";
 import { endDroppedTeamMatches } from "../tournament-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
-		schema: adminActionSchema,
+		schema: adminTeamsActionSchema,
 	});
 
 	const { id: tournamentId } = parseParams({
@@ -45,8 +42,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 	});
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
-	const validateIsTournamentAdmin = () =>
-		errorToastIfFalsy(tournament.isAdmin(user), "Unauthorized");
 	const validateIsTournamentOrganizer = () =>
 		errorToastIfFalsy(tournament.isOrganizer(user), "Unauthorized");
 
@@ -323,58 +318,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			break;
 		}
-		case "ADD_STAFF": {
-			validateIsTournamentAdmin();
-
-			errorToastIfFalsy(
-				tournament.ctx.staff.every((staff) => staff.id !== data.userId),
-				"User is already a staff member",
-			);
-
-			await TournamentRepository.addStaff({
-				role: data.role,
-				tournamentId: tournament.ctx.id,
-				userId: data.userId,
-			});
-
-			if (data.role === "ORGANIZER") {
-				ShowcaseTournaments.addToCached({
-					tournamentId,
-					type: "organizer",
-					userId: data.userId,
-				});
-			}
-
-			message = "Staff member added";
-			break;
-		}
-		case "REMOVE_STAFF": {
-			validateIsTournamentAdmin();
-
-			await TournamentRepository.removeStaff({
-				tournamentId: tournament.ctx.id,
-				userId: data.userId,
-			});
-
-			ShowcaseTournaments.removeFromCached({
-				tournamentId,
-				type: "organizer",
-				userId: data.userId,
-			});
-
-			message = "Staff member removed";
-			break;
-		}
-		case "UPDATE_CAST_TWITCH_ACCOUNTS": {
-			validateIsTournamentOrganizer();
-			await TournamentRepository.updateCastTwitchAccounts({
-				tournamentId: tournament.ctx.id,
-				castTwitchAccounts: data.castTwitchAccounts,
-			});
-
-			message = "Cast account updated";
-			break;
-		}
 		case "DROP_TEAM_OUT": {
 			validateIsTournamentOrganizer();
 			const droppingTeam = tournament.teamById(data.teamId);
@@ -439,32 +382,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 			message = "Team drop out undone";
 			break;
 		}
-		case "RESET_BRACKET": {
-			validateIsTournamentOrganizer();
-			errorToastIfFalsy(!tournament.ctx.isFinalized, "Tournament is finalized");
-
-			const bracketToResetIdx = tournament.brackets.findIndex(
-				(b) => b.id === data.stageId,
-			);
-			const bracketToReset = tournament.brackets[bracketToResetIdx];
-			errorToastIfFalsy(bracketToReset, "Invalid bracket id");
-			errorToastIfFalsy(!bracketToReset.preview, "Bracket has not started");
-
-			const inProgressBrackets = tournament.brackets.filter((b) => !b.preview);
-			errorToastIfFalsy(
-				inProgressBrackets.every(
-					(b) =>
-						!b.sources ||
-						b.sources.every((s) => s.bracketIdx !== bracketToResetIdx),
-				),
-				"Some bracket that sources teams from this bracket has started",
-			);
-
-			await TournamentRepository.resetBracket(data.stageId);
-
-			message = "Bracket reset";
-			break;
-		}
 		case "UPDATE_IN_GAME_NAME": {
 			validateIsTournamentOrganizer();
 
@@ -487,113 +404,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 			await TournamentTeamRepository.deleteLogo(data.teamId);
 
 			message = "Logo deleted";
-			break;
-		}
-		case "UPDATE_TOURNAMENT_PROGRESSION": {
-			validateIsTournamentOrganizer();
-			errorToastIfFalsy(!tournament.ctx.isFinalized, "Tournament is finalized");
-
-			errorToastIfFalsy(
-				Progression.changedBracketProgression(
-					tournament.ctx.settings.bracketProgression,
-					data.bracketProgression,
-				).every(
-					(changedBracketIdx) =>
-						tournament.bracketByIdx(changedBracketIdx)?.preview,
-				),
-				"Can't change started brackets",
-			);
-
-			await TournamentRepository.updateProgression({
-				tournamentId: tournament.ctx.id,
-				bracketProgression: data.bracketProgression,
-			});
-
-			message = "Tournament progression updated";
-			break;
-		}
-		case "REOPEN_TOURNAMENT": {
-			validateIsTournamentAdmin();
-			errorToastIfFalsy(
-				DANGEROUS_CAN_ACCESS_DEV_CONTROLS,
-				"Only available in development",
-			);
-			errorToastIfFalsy(
-				tournament.ctx.isFinalized,
-				"Tournament is not finalized",
-			);
-
-			await TournamentRepository.reopenTournament(tournamentId);
-
-			message = "Tournament reopened";
-			break;
-		}
-		case "UPDATE_SEEDS": {
-			validateIsTournamentOrganizer();
-			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
-
-			const teamsWithMembers = tournament.ctx.teams
-				.filter((t) => data.seeds.includes(t.id))
-				.map((team) => ({
-					teamId: team.id,
-					members: team.members.map((m) => ({
-						userId: m.userId,
-						username: m.username,
-					})),
-				}));
-
-			await TournamentRepository.updateTeamSeeds({
-				tournamentId,
-				teamIds: data.seeds,
-				teamsWithMembers,
-			});
-
-			message = "Seeds saved successfully";
-			break;
-		}
-		case "UPDATE_STARTING_BRACKETS": {
-			validateIsTournamentOrganizer();
-			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
-
-			const validBracketIdxs =
-				tournament.ctx.settings.bracketProgression.flatMap(
-					(bracket, bracketIdx) => (!bracket.sources ? [bracketIdx] : []),
-				);
-
-			errorToastIfFalsy(
-				data.startingBrackets.every((t) =>
-					validBracketIdxs.includes(t.startingBracketIdx),
-				),
-				"Invalid starting bracket idx",
-			);
-
-			await TournamentTeamRepository.updateStartingBrackets(
-				data.startingBrackets,
-			);
-
-			message = "Starting brackets updated";
-			break;
-		}
-		case "UPDATE_AB_DIVISIONS": {
-			validateIsTournamentOrganizer();
-			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
-
-			errorToastIfFalsy(
-				tournament.ctx.settings.bracketProgression.some(
-					(bracket) => !bracket.sources && bracket.settings?.hasAbDivisions,
-				),
-				"No starting bracket has A/B divisions enabled",
-			);
-
-			const validTeamIds = new Set(tournament.ctx.teams.map((t) => t.id));
-			errorToastIfFalsy(
-				data.abDivisions.every((t) => validTeamIds.has(t.tournamentTeamId)),
-				"Invalid tournament team id",
-			);
-
-			await TournamentTeamRepository.updateAbDivisions(data.abDivisions);
-
-			message = "A/B divisions updated";
 			break;
 		}
 		default: {

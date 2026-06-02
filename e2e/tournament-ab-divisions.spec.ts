@@ -22,7 +22,7 @@ test.describe("Tournament A/B divisions", () => {
 
 		await navigate({
 			page,
-			url: `/to/${AB_RR_TOURNAMENT_ID}/admin?tab=seeds`,
+			url: `/to/${AB_RR_TOURNAMENT_ID}/admin/seeds`,
 		});
 
 		await page.getByTestId("set-ab-divisions").click();

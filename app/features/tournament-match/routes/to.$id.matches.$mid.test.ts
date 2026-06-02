@@ -7,7 +7,7 @@ vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 }));
 
 import { db } from "~/db/sql";
-import type { adminActionSchema } from "~/features/tournament/tournament-schemas.server";
+import type { adminTeamsActionSchema } from "~/features/tournament/tournament-schemas.server";
 import {
 	dbInsertTournament,
 	dbInsertTournamentTeam,
@@ -22,14 +22,14 @@ import {
 	wrappedAction,
 	wrappedLoader,
 } from "~/utils/Test";
-import { action as adminAction } from "../../tournament/routes/to.$id.admin";
+import { action as adminAction } from "../../tournament/actions/to.$id.admin.index.server";
 import { action, loader } from "./to.$id.matches.$mid";
 
 const tournamentMatchAction = wrappedAction<typeof matchSchema>({
 	action,
 	isJsonSubmission: true,
 });
-const tournamentAdminAction = wrappedAction<typeof adminActionSchema>({
+const tournamentAdminAction = wrappedAction<typeof adminTeamsActionSchema>({
 	action: adminAction,
 	isJsonSubmission: true,
 });

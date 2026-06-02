@@ -259,6 +259,7 @@ function useNavItems({
 			label: t("tournament:nav.admin"),
 			to: "admin",
 			icon: <Settings />,
+			end: false,
 			testId: "admin-tab",
 		};
 	}

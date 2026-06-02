@@ -30,6 +30,11 @@ export function unauthorizedIfFalsy<T>(value: T | null | undefined): T {
 	return value;
 }
 
+/** Throws a HTTP 403 (Forbidden) response, ending execution of the loader/action early */
+export function forbidden() {
+	throw new Response(null, { status: 403 });
+}
+
 export function badRequestIfFalsy<T>(value: T | null | undefined): T {
 	if (!value) {
 		throw new Response(null, { status: 400 });

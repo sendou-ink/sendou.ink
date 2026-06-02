@@ -38,9 +38,11 @@ import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tour
 import invariant from "~/utils/invariant";
 import { navIconUrl, userResultsPage } from "~/utils/urls";
 import { ordinalToRoundedSp } from "../../mmr/mmr-utils";
-import { useTournament } from "../routes/to.$id";
 import { TOURNAMENT } from "../tournament-constants";
-import styles from "./TournamentSeeds.module.css";
+import { useTournament } from "./to.$id";
+import styles from "./to.$id.admin.seeds.module.css";
+
+export { action } from "../actions/to.$id.admin.seeds.server";
 
 const AB_DIVISION_RADIO_OPTIONS = [
 	{ value: "unassigned", label: "Unassigned" },
@@ -48,7 +50,7 @@ const AB_DIVISION_RADIO_OPTIONS = [
 	{ value: "1", label: "B" },
 ] as const;
 
-export function TournamentSeeds() {
+export default function TournamentAdminSeedsPage() {
 	const tournament = useTournament();
 	const navigation = useNavigation();
 	const [teamOrder, setTeamOrder] = React.useState(

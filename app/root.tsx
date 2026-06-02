@@ -262,7 +262,7 @@ function useTriggerToasts() {
 			);
 		}
 
-		navigate({ search: "" }, { replace: true });
+		navigate({ search: "" }, { replace: true, defaultShouldRevalidate: false });
 	}, [error, success, navigate]);
 }
 

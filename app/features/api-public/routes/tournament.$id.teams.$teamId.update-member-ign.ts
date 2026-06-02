@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import { z } from "zod";
-import { action as adminAction } from "~/features/tournament/actions/to.$id.admin.server";
+import { action as adminAction } from "~/features/tournament/actions/to.$id.admin.index.server";
 import { IN_GAME_NAME_REGEXP } from "~/features/user-page/user-page-constants";
 import { parseBody, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";

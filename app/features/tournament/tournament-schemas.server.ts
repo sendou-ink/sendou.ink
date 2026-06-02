@@ -66,7 +66,7 @@ export const tournamentSearchSearchParamsSchema = z.object({
 	minStartTime: z.coerce.date().optional().catch(undefined),
 });
 
-export const adminActionSchema = z.union([
+export const adminTeamsActionSchema = z.union([
 	z.object({
 		_action: _action("CHANGE_TEAM_OWNER"),
 		teamId: id,
@@ -107,15 +107,6 @@ export const adminActionSchema = z.union([
 		teamName,
 	}),
 	z.object({
-		_action: _action("ADD_STAFF"),
-		userId: id,
-		role: z.enum(["ORGANIZER", "STREAMER"]),
-	}),
-	z.object({
-		_action: _action("REMOVE_STAFF"),
-		userId: id,
-	}),
-	z.object({
 		_action: _action("DROP_TEAM_OUT"),
 		teamId: id,
 	}),
@@ -128,23 +119,6 @@ export const adminActionSchema = z.union([
 		teamId: id,
 	}),
 	z.object({
-		_action: _action("UPDATE_CAST_TWITCH_ACCOUNTS"),
-		castTwitchAccounts: z.preprocess(
-			(val) =>
-				typeof val === "string"
-					? val
-							.split(",")
-							.map((account) => account.trim())
-							.map((account) => account.toLowerCase())
-					: val,
-			z.array(z.string()),
-		),
-	}),
-	z.object({
-		_action: _action("RESET_BRACKET"),
-		stageId: id,
-	}),
-	z.object({
 		_action: _action("UPDATE_IN_GAME_NAME"),
 		inGameNameText: z
 			.string()
@@ -154,6 +128,39 @@ export const adminActionSchema = z.union([
 			.refine((val) => /^[0-9a-z]{4,5}$/.test(val)),
 		memberId: id,
 	}),
+]);
+
+export const adminStaffActionSchema = z.union([
+	z.object({
+		_action: _action("ADD_STAFF"),
+		userId: id,
+		role: z.enum(["ORGANIZER", "STREAMER"]),
+	}),
+	z.object({
+		_action: _action("REMOVE_STAFF"),
+		userId: id,
+	}),
+]);
+
+export const adminStreamActionSchema = z.object({
+	_action: _action("UPDATE_CAST_TWITCH_ACCOUNTS"),
+	castTwitchAccounts: z.preprocess(
+		(val) =>
+			typeof val === "string"
+				? val
+						.split(",")
+						.map((account) => account.trim())
+						.map((account) => account.toLowerCase())
+				: val,
+		z.array(z.string()),
+	),
+});
+
+export const adminBracketsActionSchema = z.union([
+	z.object({
+		_action: _action("RESET_BRACKET"),
+		stageId: id,
+	}),
 	z.object({
 		_action: _action("UPDATE_TOURNAMENT_PROGRESSION"),
 		bracketProgression: bracketProgressionSchema,
@@ -161,6 +168,9 @@ export const adminActionSchema = z.union([
 	z.object({
 		_action: _action("REOPEN_TOURNAMENT"),
 	}),
+]);
+
+export const adminSeedsActionSchema = z.union([
 	z.object({
 		_action: _action("UPDATE_SEEDS"),
 		seeds: z.preprocess(safeJSONParse, z.array(id)),

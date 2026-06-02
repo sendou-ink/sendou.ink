@@ -8,9 +8,11 @@ import { Table } from "~/components/Table";
 import { TOURNAMENT_AUDIT_LOG_TYPES } from "~/db/tables";
 import type { CommonUser } from "~/utils/kysely.server";
 import { tournamentTeamPage, userPage } from "~/utils/urls";
-import type { TournamentAdminPageLoader } from "../loaders/to.$id.admin.server";
+import type { TournamentAdminAuditLoader } from "../loaders/to.$id.admin.audit.server";
 import { useTournament } from "../routes/to.$id";
-import styles from "./TournamentAdminAuditLog.module.css";
+import styles from "./to.$id.admin.audit.module.css";
+
+export { loader } from "../loaders/to.$id.admin.audit.server";
 
 const WHEN_FORMAT_OPTIONS = {
 	day: "numeric",
@@ -20,11 +22,9 @@ const WHEN_FORMAT_OPTIONS = {
 	minute: "numeric",
 } as const;
 
-// xxx: data not loaded before full page refresh
-
-export function TournamentAdminAuditLog() {
+export default function TournamentAdminAuditLog() {
 	const { t } = useTranslation(["tournament"]);
-	const data = useLoaderData<TournamentAdminPageLoader>();
+	const data = useLoaderData<TournamentAdminAuditLoader>();
 	const [, setSearchParams] = useSearchParams();
 
 	const auditLog = data?.auditLog;
@@ -79,7 +79,7 @@ export function TournamentAdminAuditLog() {
 
 type AuditLogEvent = NonNullable<
 	NonNullable<
-		ReturnType<typeof useLoaderData<TournamentAdminPageLoader>>
+		ReturnType<typeof useLoaderData<TournamentAdminAuditLoader>>
 	>["auditLog"]
 >["events"][number];
 
