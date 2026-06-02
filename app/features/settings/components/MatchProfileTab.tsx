@@ -89,11 +89,7 @@ function MapModePreferencesField({
 		if (preference !== "NEUTRAL") {
 			newModePreferences.push({ mode, preference });
 		}
-		const newPool =
-			preference === "AVOID"
-				? value.pool.filter((p) => p.mode !== mode)
-				: value.pool;
-		onChange({ modes: newModePreferences, pool: newPool });
+		onChange({ modes: newModePreferences, pool: value.pool });
 	};
 
 	const handlePoolChange = (mode: ModeShort, stages: StageId[]) => {

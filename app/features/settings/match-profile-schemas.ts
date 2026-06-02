@@ -22,7 +22,7 @@ export const LANGUAGE_OPTIONS = languagesUnified.map((lang) => ({
 
 const preferenceSchema = z.enum(["AVOID", "PREFER"]).optional();
 
-const mapModePreferencesValueSchema = z
+export const mapModePreferencesValueSchema = z
 	.object({
 		modes: z.array(z.object({ mode: modeShort, preference: preferenceSchema })),
 		pool: z.array(
@@ -32,14 +32,16 @@ const mapModePreferencesValueSchema = z
 			}),
 		),
 	})
-	.refine(
-		(val) =>
-			val.pool.every((pool) => {
-				const mp = val.modes.find((m) => m.mode === pool.mode);
-				return mp?.preference !== "AVOID";
-			}),
-		"Can't have map pool for a mode that was avoided",
-	);
+	// Pools for avoided modes are kept in the client form state so they can be
+	// restored if the user later un-avoids the mode, but they must not be
+	// persisted as active pools. Strip them out before the value reaches the action.
+	.transform((val) => ({
+		...val,
+		pool: val.pool.filter((pool) => {
+			const mp = val.modes.find((m) => m.mode === pool.mode);
+			return mp?.preference !== "AVOID";
+		}),
+	}));
 
 export const updateMatchProfileSchema = z.object({
 	_action: stringConstant("UPDATE_MATCH_PROFILE"),
