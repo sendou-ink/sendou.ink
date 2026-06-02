@@ -27,7 +27,6 @@ const HORIZONTAL_TABS_BELOW = 720;
 
 type AdminTab = "teams" | "seeds" | "staff" | "stream" | "brackets" | "audit";
 
-// xxx: side nav not sticky
 // xxx: maybe edit event info, delete event & reset bracket in one tab?
 // xxx: vertical has padding but horizontal not, decide on one (now off align on this page)
 
@@ -102,6 +101,7 @@ export default function TournamentAdminLayout() {
 				className={clsx(styles.layout, { [styles.stacked]: horizontalTabs })}
 			>
 				<SendouTabs
+					className={styles.sideNav}
 					orientation={horizontalTabs ? "horizontal" : "vertical"}
 					selectedKey={currentTab}
 				>

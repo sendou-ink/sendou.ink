@@ -9,6 +9,16 @@
 	grid-template-columns: 1fr;
 }
 
+.sideNav {
+	position: sticky;
+	top: var(--layout-sticky-top);
+}
+
+.stacked .sideNav {
+	position: static;
+	top: auto;
+}
+
 .panel {
 	min-width: 0;
 }
