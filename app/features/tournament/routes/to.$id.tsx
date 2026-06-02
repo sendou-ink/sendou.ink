@@ -14,7 +14,7 @@ import { useHydrated } from "~/hooks/useHydrated";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { removeMarkdown } from "~/utils/strings";
 import { tournamentPage } from "~/utils/urls";
-import { metaTags } from "../../../utils/remix";
+import { isRevalidation, metaTags } from "../../../utils/remix";
 import { TournamentNav } from "../components/TournamentNav";
 
 import { loader, type TournamentLoaderData } from "../loaders/to.$id.server";
@@ -22,14 +22,13 @@ import { loader, type TournamentLoaderData } from "../loaders/to.$id.server";
 export { loader };
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
-	const navigatedToMatchPage =
-		typeof args.nextParams.mid === "string" &&
-		args.formMethod !== "POST" &&
-		args.currentParams.mid !== args.nextParams.mid;
+	if (isRevalidation(args)) return args.defaultShouldRevalidate;
+	if (args.formMethod === "POST") return args.defaultShouldRevalidate;
+	if (args.currentParams.id !== args.nextParams.id) {
+		return args.defaultShouldRevalidate;
+	}
 
-	if (navigatedToMatchPage) return false;
-
-	return args.defaultShouldRevalidate;
+	return false;
 };
 
 export const meta: MetaFunction = (args) => {
