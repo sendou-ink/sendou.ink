@@ -501,7 +501,7 @@ export const stageImageUrl = (stageId: StageId) =>
 export const stageBannerImageUrl = (stageId: StageId) =>
 	`/static-assets/img/stage-banners/${stageId}.avif`;
 export const tierImageUrl = (tier: TierName | "CALCULATING") =>
-	`/static-assets/img/tiers/${tier.toLowerCase()}`;
+	`/static-assets/img/tiers/${tier === "CALCULATING" ? "unranked" : tier.toLowerCase()}`;
 export const controllerImageUrl = (controller: string) =>
 	`/static-assets/img/controllers/${controller}.avif`;
 export const preferenceEmojiUrl = (preference?: Preference) => {
