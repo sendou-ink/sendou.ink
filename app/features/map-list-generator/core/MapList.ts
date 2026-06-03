@@ -52,7 +52,7 @@ export function* generate(args: {
 	initialWeights?: Map<string, number>;
 	/** Skip the ensureMinimumCandidates check that inflates weights to ensure half the pool is available. Useful when initial weights already define the desired selection. */
 	skipEnsureMinimumCandidates?: boolean;
-	/** Fixed mode order — when set, skips the random `modeOrders` shuffle and uses only this order. Intended for `resume`. */
+	/** Fixed mode order — when set, skips the random shuffle and uses only this order. Intended for `resume`. */
 	modeOrder?: ModeShort[];
 	/** Initial weights for stages (mode-agnostic). Used by `resume` to carry over stage-level penalties from history. */
 	initialStageWeights?: Map<StageId, number>;
@@ -69,8 +69,8 @@ export function* generate(args: {
 		args.initialWeights,
 		args.initialStageWeights,
 	);
-	const orderedModes = args.modeOrder ? [args.modeOrder] : modeOrders(modes);
-	let currentOrderIndex = 0;
+	const modeOrder = args.modeOrder ?? R.shuffle(modes);
+	let modePosition = 0;
 
 	const firstArgs = yield [];
 	let amount = firstArgs.amount;
@@ -81,15 +81,12 @@ export function* generate(args: {
 	while (true) {
 		const result: ModeWithStage[] = [];
 
-		let currentModeOrder =
-			orderedModes[currentOrderIndex % orderedModes.length];
-		if (pattern) {
-			currentModeOrder = modifyModeOrderByPattern(
-				currentModeOrder,
-				pattern,
-				amount,
-			);
-		}
+		const currentModeOrder = pattern
+			? modifyModeOrderByPattern(modeOrder, pattern, amount, modePosition)
+			: Array.from(
+					{ length: amount },
+					(_, i) => modeOrder[(modePosition + i) % modeOrder.length],
+				);
 
 		if (!args.skipEnsureMinimumCandidates) {
 			ensureMinimumCandidates({
@@ -131,7 +128,7 @@ export function* generate(args: {
 			stageModeWeights.set(modeStageKey(mode, stageId), stageModeWeightPenalty);
 		}
 
-		currentOrderIndex++;
+		modePosition += amount;
 		const nextArgs = yield result;
 		amount = nextArgs.amount;
 		pattern = nextArgs.pattern
@@ -310,35 +307,11 @@ function ensureMinimumCandidates({
 	}
 }
 
-const MAX_MODE_ORDERS_ITERATIONS = 100;
-
-function modeOrders(modes: ModeShort[]) {
-	if (modes.length === 1) return [[modes[0]]] as ModeShort[][];
-
-	const result: ModeShort[][] = [];
-
-	const shuffledModes = R.shuffle(modes);
-
-	for (let i = 0; i < MAX_MODE_ORDERS_ITERATIONS; i++) {
-		const startingMode = shuffledModes[i % shuffledModes.length];
-		const rest = R.shuffle(shuffledModes.filter((m) => m !== startingMode));
-
-		const candidate = [startingMode, ...rest];
-
-		if (!result.some((r) => R.isShallowEqual(r, candidate))) {
-			result.push(candidate);
-		}
-
-		if (result.length === 10) break;
-	}
-
-	return result;
-}
-
 function modifyModeOrderByPattern(
 	modeOrder: ModeShort[],
 	pattern: MaplistPattern,
 	amount: number,
+	offset: number,
 ) {
 	const filteredModes = modeOrder.filter(
 		(mode) => !pattern.pattern.includes(mode),
@@ -346,7 +319,7 @@ function modifyModeOrderByPattern(
 	const modesToUse = filteredModes.length > 0 ? filteredModes : modeOrder;
 	const result: ModeShort[] = Array.from(
 		{ length: amount },
-		(_, i) => modesToUse[i % modesToUse.length],
+		(_, i) => modesToUse[(offset + i) % modesToUse.length],
 	);
 
 	const expandedPattern = Array.from(

@@ -286,28 +286,43 @@ describe("MapList.generate()", () => {
 			expect(stagesSeen.size).toBeGreaterThan(1);
 		});
 
-		it("rotates the mode order", () => {
+		it("cycles a single mode order continuously across sets", () => {
+			// 5 modes, Bo3 sets -> the order keeps rolling without resetting
 			const gen = initGenerator();
-			const first = gen.next({ amount: 5 }).value;
-			const second = gen.next({ amount: 5 }).value;
+			const first = gen.next({ amount: 3 }).value!.map((m) => m.mode);
+			const second = gen.next({ amount: 3 }).value!.map((m) => m.mode);
 
-			const firstModes = first!.map((m) => m.mode);
-			const secondModes = second!.map((m) => m.mode);
-
-			expect(firstModes).not.toEqual(secondModes);
+			// set 2 continues where set 1 left off (positions 3, 4, 0)
+			expect(second[2]).toBe(first[0]);
 		});
 
-		it("starts with a different mode each time modes are rotated", () => {
-			for (let i = 0; i < 10; i++) {
-				const gen = initGenerator();
-				const first = gen.next({ amount: 5 }).value;
-				const second = gen.next({ amount: 5 }).value;
+		it("uses the same mode order when a set spans the whole rotation", () => {
+			// 5 modes, Bo5 sets -> each set is exactly one full rotation
+			const gen = initGenerator();
+			const first = gen.next({ amount: 5 }).value!.map((m) => m.mode);
+			const second = gen.next({ amount: 5 }).value!.map((m) => m.mode);
 
-				const firstModes = first!.map((m) => m.mode);
-				const secondModes = second!.map((m) => m.mode);
+			expect(second).toEqual(first);
+		});
 
-				expect(firstModes[0]).not.toEqual(secondModes[0]);
+		it("keeps cycling other modes across sets when a must-include pattern is set", () => {
+			// A single generator drives every bracket round. With a `[SZ]`
+			// must-include pattern the non-SZ slots should keep advancing through
+			// the mode order across rounds instead of replaying the order's prefix
+			// every set, otherwise modes in the order's tail (here RM) are starved.
+			const gen = MapList.generate({
+				mapPool: ALL_MODES_TEST_MAP_POOL,
+				modeOrder: ["SZ", "TC", "CB", "RM", "TW"],
+			});
+			gen.next();
+
+			const modesSeen: string[] = [];
+			for (let round = 0; round < 4; round++) {
+				const maps = gen.next({ amount: 3, pattern: "[SZ]" }).value;
+				modesSeen.push(...maps.map((m) => m.mode));
 			}
+
+			expect(modesSeen).toContain("RM");
 		});
 
 		it("replenishes the stage id pool with different order", () => {
