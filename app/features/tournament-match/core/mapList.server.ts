@@ -3,8 +3,6 @@ import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { mapPickingStyleToModes } from "~/features/tournament/tournament-utils";
 import type { Bracket } from "~/features/tournament-bracket/core/Bracket";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
-import { findMapPoolByTeamId } from "~/features/tournament-bracket/queries/findMapPoolByTeamId.server";
-import { findTieBreakerMapPoolByTournamentId } from "~/features/tournament-bracket/queries/findTieBreakerMapPoolByTournamentId.server";
 import type { Round } from "~/modules/brackets-model";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { generateBalancedMapList } from "~/modules/tournament-map-list-generator/balanced-map-list";
@@ -23,7 +21,11 @@ interface ResolveCurrentMapListArgs {
 	mapPickingStyle: Tables["Tournament"]["mapPickingStyle"];
 	matchId: number;
 	teams: [teamOneId: number, teamTwoId: number];
+	mapPoolByTeamId: (
+		teamId: number,
+	) => Array<{ mode: ModeShort; stageId: StageId }>;
 	maps: TournamentRoundMaps;
+	tieBreakerMapPool: Array<{ mode: ModeShort; stageId: StageId }>;
 	pickBanEvents: Array<{
 		mode: ModeShort | null;
 		stageId: StageId | null;
@@ -155,9 +157,7 @@ function resolveFreshTeamPickedMapList(
 	},
 ) {
 	const tieBreakerMapPool =
-		args.mapPickingStyle === "AUTO_ALL"
-			? findTieBreakerMapPoolByTournamentId(args.tournamentId)
-			: [];
+		args.mapPickingStyle === "AUTO_ALL" ? args.tieBreakerMapPool : [];
 
 	const pickBanCount = (pickBan: PickBan.Type, count: number) => {
 		switch (pickBan) {
@@ -189,11 +189,11 @@ function resolveFreshTeamPickedMapList(
 			teams: [
 				{
 					id: args.teams[0],
-					maps: new MapPool(findMapPoolByTeamId(args.teams[0])),
+					maps: new MapPool(args.mapPoolByTeamId(args.teams[0])),
 				},
 				{
 					id: args.teams[1],
-					maps: new MapPool(findMapPoolByTeamId(args.teams[1])),
+					maps: new MapPool(args.mapPoolByTeamId(args.teams[1])),
 				},
 			],
 			recentlyPlayedMaps: args.recentlyPlayedMaps,
@@ -209,11 +209,11 @@ function resolveFreshTeamPickedMapList(
 			teams: [
 				{
 					id: args.teams[0],
-					maps: new MapPool(findMapPoolByTeamId(args.teams[0])),
+					maps: new MapPool(args.mapPoolByTeamId(args.teams[0])),
 				},
 				{
 					id: args.teams[1],
-					maps: new MapPool(findMapPoolByTeamId(args.teams[1])),
+					maps: new MapPool(args.mapPoolByTeamId(args.teams[1])),
 				},
 			],
 			recentlyPlayedMaps: args.recentlyPlayedMaps,

@@ -22,7 +22,6 @@ import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { tournamentMatchPage } from "~/utils/urls";
 import { executeRoll } from "../core/executeRoll.server";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
-import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
 import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
 import { matchEndedEarly } from "../tournament-match-utils";
 
@@ -56,7 +55,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		? await TournamentRepository.pickBanEventsByMatchId(match.id)
 		: [];
 
-	const results = findResultsByMatchId(matchId);
+	const results = await TournamentMatchRepository.findResultsByMatchId(matchId);
 
 	const reportedWeapons =
 		await ReportedWeaponRepository.findByTournamentMatchId(matchId);
@@ -124,8 +123,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 						tournamentId,
 						matchId,
 						teams: [match.opponentOne.id, match.opponentTwo.id],
+						mapPoolByTeamId: (teamId) =>
+							tournament.teamById(teamId)?.mapPool ?? [],
 						mapPickingStyle: match.mapPickingStyle,
 						maps: match.roundMaps,
+						tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
 						pickBanEvents,
 						recentlyPlayedMaps:
 							match.mapPickingStyle !== "TO"

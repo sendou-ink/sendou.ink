@@ -10,7 +10,7 @@ import {
 import * as Standings from "../app/features/tournament/core/Standings";
 import { tournamentSummary } from "../app/features/tournament-bracket/core/summarizer.server";
 import { tournamentFromDB } from "../app/features/tournament-bracket/core/Tournament.server";
-import { allMatchResultsByTournamentId } from "../app/features/tournament-match/queries/allMatchResultsByTournamentId.server";
+import * as TournamentMatchRepository from "../app/features/tournament-match/TournamentMatchRepository.server";
 import invariant from "../app/utils/invariant";
 import { logger } from "../app/utils/logger";
 
@@ -51,7 +51,8 @@ async function main() {
 				.where("tournamentId", "=", tournamentId)
 				.execute();
 
-			const results = allMatchResultsByTournamentId(tournamentId);
+			const results =
+				await TournamentMatchRepository.allResultsByTournamentId(tournamentId);
 			invariant(results.length > 0, "No results found");
 
 			const season = Seasons.current(tournament.ctx.startTime)?.nth;
