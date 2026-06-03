@@ -1,6 +1,7 @@
 import { sub } from "date-fns";
 import { type Insertable, type NotNull, sql, type Transaction } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
+import { ordinal } from "openskill";
 import { db } from "~/db/sql";
 import type {
 	CastedMatchesInfo,
@@ -9,12 +10,16 @@ import type {
 	Tables,
 	TournamentSettings,
 } from "~/db/tables";
+import { identifierToUserIds } from "~/features/mmr/mmr-utils";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import type { TournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
+import type { TournamentBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import { Status } from "~/modules/brackets-model";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
+import invariant from "~/utils/invariant";
 import {
 	COMMON_USER_FIELDS,
 	concatUserSubmittedImagePrefix,
@@ -1007,6 +1012,217 @@ export function reopenTournament(tournamentId: number) {
 			.where("tournamentId", "=", tournamentId)
 			.execute();
 	});
+}
+
+/**
+ * Finalizes a tournament, recording the full summary: skills, seeding skills,
+ * map/player result deltas, badge owners and placements. Use
+ * {@link finalizeWithoutSummary} for test tournaments that should be marked as
+ * finalized without recording any stats.
+ */
+export function finalize({
+	tournamentId,
+	summary,
+	season,
+	badgeReceivers = [],
+}: {
+	tournamentId: number;
+	summary: TournamentSummary;
+	season?: number;
+	badgeReceivers?: TournamentBadgeReceivers;
+}) {
+	const seasonValue = season ?? null;
+
+	return db.transaction().execute(async (trx) => {
+		for (const skill of summary.skills) {
+			invariant(seasonValue !== null, "Season missing for skill");
+			// A skill row keys on either userId (solo) or identifier (team), never
+			// both. The matchesCount subquery filters by whichever is present so it
+			// references exactly one indexed column — a combined
+			// `where "userId" = ? or "identifier" = ?` triggers a stat4-driven
+			// misestimate when one parameter is NULL (the planner treats NULL as a
+			// frequent indexed value, ~900K rows for Skill.identifier) and picks a
+			// pathological MULTI-INDEX OR plan.
+			const insertedSkill = await trx
+				.insertInto("Skill")
+				.values((eb) => ({
+					tournamentId,
+					mu: skill.mu,
+					sigma: skill.sigma,
+					ordinal: ordinal(skill),
+					userId: skill.userId,
+					identifier: skill.identifier,
+					matchesCount: eb(
+						eb.val(skill.matchesCount),
+						"+",
+						eb
+							.selectFrom("Skill")
+							.select((e2) =>
+								e2.fn
+									.coalesce(e2.fn.max("matchesCount"), e2.val(0))
+									.as("matchesCount"),
+							)
+							.$if(skill.userId !== null, (qb) =>
+								qb.where("userId", "=", skill.userId),
+							)
+							.$if(skill.identifier !== null, (qb) =>
+								qb.where("identifier", "=", skill.identifier),
+							)
+							.where("season", "=", seasonValue),
+					),
+					season: seasonValue,
+					createdAt: databaseTimestampNow(),
+				}))
+				.returningAll()
+				.executeTakeFirstOrThrow();
+
+			if (insertedSkill.identifier) {
+				for (const userId of identifierToUserIds(insertedSkill.identifier)) {
+					await trx
+						.insertInto("SkillTeamUser")
+						.values({ skillId: insertedSkill.id, userId })
+						.onConflict((oc) => oc.columns(["skillId", "userId"]).doNothing())
+						.execute();
+				}
+			}
+		}
+
+		// SeedingSkill has `on conflict replace` set in its migration
+		if (summary.seedingSkills.length > 0) {
+			await trx
+				.insertInto("SeedingSkill")
+				.values(
+					summary.seedingSkills.map((seedingSkill) => ({
+						type: seedingSkill.type,
+						mu: seedingSkill.mu,
+						sigma: seedingSkill.sigma,
+						ordinal: seedingSkill.ordinal,
+						userId: seedingSkill.userId,
+					})),
+				)
+				.execute();
+		}
+
+		for (const mapResultDelta of summary.mapResultDeltas) {
+			invariant(seasonValue !== null, "Season missing for map result");
+			await trx
+				.insertInto("MapResult")
+				.values({
+					mode: mapResultDelta.mode,
+					stageId: mapResultDelta.stageId,
+					userId: mapResultDelta.userId,
+					wins: mapResultDelta.wins,
+					losses: mapResultDelta.losses,
+					season: seasonValue,
+				})
+				.onConflict((oc) =>
+					oc
+						.columns(["userId", "stageId", "mode", "season"])
+						.doUpdateSet((eb) => ({
+							wins: eb("MapResult.wins", "+", eb.ref("excluded.wins")),
+							losses: eb("MapResult.losses", "+", eb.ref("excluded.losses")),
+						})),
+				)
+				.execute();
+		}
+
+		for (const playerResultDelta of summary.playerResultDeltas) {
+			invariant(seasonValue !== null, "Season missing for player result");
+			await trx
+				.insertInto("PlayerResult")
+				.values({
+					ownerUserId: playerResultDelta.ownerUserId,
+					otherUserId: playerResultDelta.otherUserId,
+					mapWins: playerResultDelta.mapWins,
+					mapLosses: playerResultDelta.mapLosses,
+					setWins: playerResultDelta.setWins,
+					setLosses: playerResultDelta.setLosses,
+					type: playerResultDelta.type,
+					season: seasonValue,
+				})
+				.onConflict((oc) =>
+					oc
+						.columns(["ownerUserId", "otherUserId", "type", "season"])
+						.doUpdateSet((eb) => ({
+							mapWins: eb(
+								"PlayerResult.mapWins",
+								"+",
+								eb.ref("excluded.mapWins"),
+							),
+							mapLosses: eb(
+								"PlayerResult.mapLosses",
+								"+",
+								eb.ref("excluded.mapLosses"),
+							),
+							setWins: eb(
+								"PlayerResult.setWins",
+								"+",
+								eb.ref("excluded.setWins"),
+							),
+							setLosses: eb(
+								"PlayerResult.setLosses",
+								"+",
+								eb.ref("excluded.setLosses"),
+							),
+						})),
+				)
+				.execute();
+		}
+
+		const badgeOwners = badgeReceivers.flatMap((badgeReceiver) =>
+			badgeReceiver.userIds.map((userId) => ({
+				tournamentId,
+				badgeId: badgeReceiver.badgeId,
+				userId,
+			})),
+		);
+		if (badgeOwners.length > 0) {
+			await trx
+				.insertInto("TournamentBadgeOwner")
+				.values(badgeOwners)
+				.execute();
+		}
+
+		for (const tournamentResult of summary.tournamentResults) {
+			const setResults = summary.setResults.get(tournamentResult.userId);
+
+			if (setResults?.every((result) => !result)) {
+				continue;
+			}
+
+			await trx
+				.insertInto("TournamentResult")
+				.values({
+					tournamentId,
+					userId: tournamentResult.userId,
+					placement: tournamentResult.placement,
+					participantCount: tournamentResult.participantCount,
+					tournamentTeamId: tournamentResult.tournamentTeamId,
+					setResults: JSON.stringify(setResults ?? []),
+					spDiff: summary.spDiffs?.get(tournamentResult.userId) ?? null,
+					div: tournamentResult.div,
+				})
+				.execute();
+		}
+
+		await trx
+			.updateTable("Tournament")
+			.set({ isFinalized: 1 })
+			.where("id", "=", tournamentId)
+			.execute();
+	});
+}
+
+/**
+ * Marks a tournament as finalized without recording any summary stats. Used for
+ * test tournaments. See {@link finalize} for the normal path.
+ */
+export function finalizeWithoutSummary(tournamentId: number) {
+	return db
+		.updateTable("Tournament")
+		.set({ isFinalized: 1 })
+		.where("id", "=", tournamentId)
+		.execute();
 }
 
 export type TournamentRepositoryInsertableMatch = Omit<

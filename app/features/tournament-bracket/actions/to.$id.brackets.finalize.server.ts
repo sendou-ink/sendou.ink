@@ -14,6 +14,7 @@ import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as Standings from "~/features/tournament/core/Standings";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { tournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
@@ -21,15 +22,11 @@ import {
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import {
-	addSummary,
-	finalizeTournament,
-} from "~/features/tournament-bracket/queries/addSummary.server";
-import {
 	finalizeTournamentActionSchema,
 	type TournamentBadgeReceivers,
 } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import { validateBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-utils";
-import { allMatchResultsByTournamentId } from "~/features/tournament-match/queries/allMatchResultsByTournamentId.server";
+import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { refreshTentativeTiersCache } from "~/features/tournament-organization/core/tentativeTiers.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import invariant from "~/utils/invariant";
@@ -63,7 +60,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		: true;
 	if (!badgeOwnersValid) errorToast("New badge owners invalid");
 
-	const results = allMatchResultsByTournamentId(tournamentId);
+	const results =
+		await TournamentMatchRepository.allResultsByTournamentId(tournamentId);
 	invariant(results.length > 0, "No results found");
 
 	const season = resolveFinalizationSeason(tournament);
@@ -97,7 +95,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const tournamentSummaryString = `Tournament id: ${tournamentId}, mapResultDeltas.lenght: ${summary.mapResultDeltas.length}, playerResultDeltas.length ${summary.playerResultDeltas.length}, tournamentResults.length ${summary.tournamentResults.length}, skills.length ${summary.skills.length}, seedingSkills.length ${summary.seedingSkills.length}`;
 	if (!tournament.isTest) {
 		logger.info(`Inserting tournament summary. ${tournamentSummaryString}`);
-		addSummary({
+		await TournamentRepository.finalize({
 			tournamentId,
 			summary,
 			season,
@@ -107,7 +105,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		logger.info(
 			`Did not insert tournament summary. ${tournamentSummaryString}`,
 		);
-		finalizeTournament(tournamentId);
+		await TournamentRepository.finalizeWithoutSummary(tournamentId);
 	}
 
 	await SavedCalendarEventRepository.deleteByTournamentId(tournamentId);

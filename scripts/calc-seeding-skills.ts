@@ -4,7 +4,7 @@ import { db } from "../app/db/sql";
 import type { Tables } from "../app/db/tables";
 import { calculateIndividualPlayerSkills } from "../app/features/tournament-bracket/core/summarizer.server";
 import { tournamentFromDB } from "../app/features/tournament-bracket/core/Tournament.server";
-import { allMatchResultsByTournamentId } from "../app/features/tournament-match/queries/allMatchResultsByTournamentId.server";
+import * as TournamentMatchRepository from "../app/features/tournament-match/TournamentMatchRepository.server";
 import invariant from "../app/utils/invariant";
 import { logger } from "../app/utils/logger";
 
@@ -17,7 +17,9 @@ async function main() {
 
 		for await (const tournament of tournaments(type)) {
 			count++;
-			const results = allMatchResultsByTournamentId(tournament.ctx.id);
+			const results = await TournamentMatchRepository.allResultsByTournamentId(
+				tournament.ctx.id,
+			);
 			invariant(results.length > 0, "No results found");
 
 			const skills = calculateIndividualPlayerSkills({

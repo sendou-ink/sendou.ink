@@ -73,6 +73,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			.executeTakeFirst(),
 	);
 
+	const tournament = await tournamentFromDBCached({
+		tournamentId: match.tournamentId,
+		user: undefined,
+	});
+
 	const parseSource = (
 		rawSource: string,
 	): NonNullable<GetTournamentMatchResponse["mapList"]>[number]["source"] => {
@@ -118,8 +123,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			tournamentId: match.tournamentId,
 			matchId: id,
 			teams: [match.opponentOne.id, match.opponentTwo.id],
+			mapPoolByTeamId: (teamId) => tournament.teamById(teamId)?.mapPool ?? [],
 			mapPickingStyle: match.mapPickingStyle,
 			maps: match.maps,
+			tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
 			pickBanEvents,
 			recentlyPlayedMaps:
 				match.mapPickingStyle !== "TO"
@@ -147,12 +154,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		});
 	};
 
-	const { bracketName, roundNameWithoutMatchIdentifier } = (
-		await tournamentFromDBCached({
-			tournamentId: match.tournamentId,
-			user: undefined,
-		})
-	).matchContextNamesById(id);
+	const { bracketName, roundNameWithoutMatchIdentifier } =
+		tournament.matchContextNamesById(id);
 
 	const result: GetTournamentMatchResponse = {
 		teamOne: match.opponentOne.id

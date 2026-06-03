@@ -2,7 +2,7 @@ import type { ExpressionBuilder, FunctionModule, NotNull } from "kysely";
 import { sql } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
-import { db, sql as dbDirect } from "~/db/sql";
+import { db } from "~/db/sql";
 import type {
 	BuildSort,
 	CustomTheme,
@@ -1231,31 +1231,34 @@ export function updatePatronData(users: UpdatePatronDataArgs) {
 	});
 }
 
-// TODO: use Kysely
-const updateByDiscordIdStm = dbDirect.prepare(/* sql */ `
-  update
-    "User"
-  set
-    "discordAvatar" = @discordAvatar,
-    "discordName" = coalesce(@discordName, "discordName"),
-    "discordUniqueName" = coalesce(@discordUniqueName, "discordUniqueName")
-  where
-    "discordId" = @discordId
-`);
-export const updateMany = dbDirect.transaction(
-	(
-		argsArr: Array<
-			Pick<
-				Tables["User"],
-				"discordAvatar" | "discordName" | "discordUniqueName" | "discordId"
-			>
-		>,
-	) => {
+export function updateMany(
+	argsArr: Array<
+		Pick<
+			Tables["User"],
+			"discordAvatar" | "discordName" | "discordUniqueName" | "discordId"
+		>
+	>,
+) {
+	return db.transaction().execute(async (trx) => {
 		for (const updateArgs of argsArr) {
-			updateByDiscordIdStm.run(updateArgs);
+			await trx
+				.updateTable("User")
+				.set((eb) => ({
+					discordAvatar: updateArgs.discordAvatar,
+					discordName: eb.fn.coalesce(
+						eb.val(updateArgs.discordName),
+						"User.discordName",
+					),
+					discordUniqueName: eb.fn.coalesce(
+						eb.val(updateArgs.discordUniqueName),
+						"User.discordUniqueName",
+					),
+				}))
+				.where("User.discordId", "=", updateArgs.discordId)
+				.execute();
 		}
-	},
-);
+	});
+}
 
 export async function anyUserPrefersNoScreen(
 	userIds: number[],

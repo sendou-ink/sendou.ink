@@ -1,6 +1,6 @@
 import { ordinal, rating } from "openskill";
 import { describe, expect, test } from "vitest";
-import type { AllMatchResult } from "~/features/tournament-match/queries/allMatchResultsByTournamentId.server";
+import type { AllMatchResult } from "~/features/tournament-match/TournamentMatchRepository.server";
 import invariant from "~/utils/invariant";
 import type { Tables } from "../../../db/tables";
 import type * as Progression from "./Progression";

@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
 import { dbInsertUsers, dbReset } from "~/utils/Test";
-import type { TournamentSummary } from "../core/summarizer.server";
-import { addSummary } from "./addSummary.server";
+import type { TournamentSummary } from "../tournament-bracket/core/summarizer.server";
+import * as TournamentRepository from "./TournamentRepository.server";
 
 const createTournament = () =>
 	db
@@ -71,7 +71,7 @@ const insertPriorTeamSkill = (args: {
 		})
 		.execute();
 
-describe("addSummary", () => {
+describe("TournamentRepository.finalize", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(2);
 	});
@@ -84,7 +84,7 @@ describe("addSummary", () => {
 
 		const { id: tournamentId } = await createTournament();
 
-		addSummary({
+		await TournamentRepository.finalize({
 			tournamentId,
 			season: 1,
 			summary: emptySummary([
@@ -117,7 +117,7 @@ describe("addSummary", () => {
 
 		const { id: tournamentId } = await createTournament();
 
-		addSummary({
+		await TournamentRepository.finalize({
 			tournamentId,
 			season: 1,
 			summary: emptySummary([
@@ -147,7 +147,7 @@ describe("addSummary", () => {
 		const { id: tournamentId } = await createTournament();
 		const { id: tournamentTeamId } = await createTeam(tournamentId);
 
-		addSummary({
+		await TournamentRepository.finalize({
 			tournamentId,
 			season: undefined,
 			summary: {
@@ -193,7 +193,7 @@ describe("addSummary", () => {
 
 	test("matchesCount accumulates across tournaments within the same season", async () => {
 		const { id: firstTournamentId } = await createTournament();
-		addSummary({
+		await TournamentRepository.finalize({
 			tournamentId: firstTournamentId,
 			season: 1,
 			summary: emptySummary([
@@ -208,7 +208,7 @@ describe("addSummary", () => {
 		});
 
 		const { id: secondTournamentId } = await createTournament();
-		addSummary({
+		await TournamentRepository.finalize({
 			tournamentId: secondTournamentId,
 			season: 1,
 			summary: emptySummary([

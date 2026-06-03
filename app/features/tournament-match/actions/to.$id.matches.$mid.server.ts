@@ -39,7 +39,6 @@ import { resolveMapList } from "../core/mapList.server";
 import { deleteMatchPickBanEvents } from "../queries/deleteMatchPickBanEvents.server";
 import { deleteParticipantsByMatchGameResultId } from "../queries/deleteParticipantsByMatchGameResultId.server";
 import { deleteTournamentMatchGameResultById } from "../queries/deleteTournamentMatchGameResultById.server";
-import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
 import { insertTournamentMatchGameResult } from "../queries/insertTournamentMatchGameResult.server";
 import { insertTournamentMatchGameResultParticipant } from "../queries/insertTournamentMatchGameResultParticipant.server";
 import { updateMatchGameResultPoints } from "../queries/updateMatchGameResultPoints.server";
@@ -99,8 +98,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 					tournamentId,
 					matchId,
 					teams: [match.opponentOne.id, match.opponentTwo.id],
+					mapPoolByTeamId: (teamId) =>
+						tournament.teamById(teamId)?.mapPool ?? [],
 					mapPickingStyle: match.mapPickingStyle,
 					maps: match.roundMaps,
+					tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
 					pickBanEvents,
 					recentlyPlayedMaps:
 						match.mapPickingStyle !== "TO"
@@ -286,7 +288,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 				return null;
 			}
 
-			const results = findResultsByMatchId(matchId);
+			const results =
+				await TournamentMatchRepository.findResultsByMatchId(matchId);
 			const lastResult = results[results.length - 1];
 			invariant(lastResult, "Last result is missing");
 
@@ -456,7 +459,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "BAN_PICK": {
-			const results = findResultsByMatchId(matchId);
+			const results =
+				await TournamentMatchRepository.findResultsByMatchId(matchId);
 
 			const teamOne = match.opponentOne?.id
 				? tournament.teamById(match.opponentOne.id)
@@ -594,7 +598,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Match can't be reopened, bracket has progressed",
 			);
 
-			const results = findResultsByMatchId(matchId);
+			const results =
+				await TournamentMatchRepository.findResultsByMatchId(matchId);
 			const lastResult = results[results.length - 1];
 
 			const endedEarly = matchEndedEarly({
