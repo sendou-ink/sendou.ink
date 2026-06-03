@@ -188,6 +188,8 @@
 	"forms.userSearch.noResults": "Aucun utilisateur trouvé",
 	"forms.tournamentSearch.placeholder": "",
 	"forms.tournamentSearch.noResults": "",
+	"forms.teamSearch.placeholder": "",
+	"forms.teamSearch.noResults": "",
 	"forms.weaponSearch.placeholder": "",
 	"forms.weaponSearch.search.placeholder": "",
 	"forms.weaponSearch.quickSelect": "",

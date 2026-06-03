@@ -5,6 +5,7 @@ import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { getServerTournamentManager } from "~/features/tournament-bracket/core/brackets-manager/manager.server";
 import {
@@ -22,7 +23,6 @@ import {
 	errorToastIfFalsy,
 	parseParams,
 	parseRequestPayload,
-	successToast,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "../../../utils/zod";
@@ -45,7 +45,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const validateIsTournamentOrganizer = () =>
 		errorToastIfFalsy(tournament.isOrganizer(user), "Unauthorized");
 
-	let message: string;
 	switch (data._action) {
 		case "ADD_TEAM": {
 			validateIsTournamentOrganizer();
@@ -86,7 +85,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				newTeamCount: tournament.ctx.teams.length + 1,
 			});
 
-			message = "Team added";
 			break;
 		}
 		case "CHANGE_TEAM_OWNER": {
@@ -103,7 +101,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				newCaptainId: data.memberId,
 			});
 
-			message = "Team owner changed";
 			break;
 		}
 		case "CHANGE_TEAM_NAME": {
@@ -116,7 +113,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				name: data.teamName,
 			});
 
-			message = "Team name changed";
 			break;
 		}
 		case "CHECK_IN": {
@@ -143,7 +139,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				bracketIdx: bracket.sources ? data.bracketIdx : undefined,
 			});
 
-			message = "Checked team in";
 			break;
 		}
 		case "CHECK_OUT": {
@@ -169,7 +164,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				`Checked out: tournament team id: ${data.teamId} - user id: ${user.id} - tournament id: ${tournamentId} - bracket idx: ${data.bracketIdx}`,
 			);
 
-			message = "Checked team out";
 			break;
 		}
 		case "REMOVE_MEMBER": {
@@ -212,7 +206,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.memberId,
 			});
 
-			message = "Member removed";
 			break;
 		}
 		case "ADD_MEMBER": {
@@ -290,7 +283,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				});
 			}
 
-			message = "Member added";
 			break;
 		}
 		case "DELETE_TEAM": {
@@ -314,62 +306,25 @@ export const action: ActionFunction = async ({ request, params }) => {
 				});
 			}
 
-			message = "Team deleted from tournament";
-
 			break;
 		}
 		case "DROP_TEAM_OUT": {
 			validateIsTournamentOrganizer();
-			const droppingTeam = tournament.teamById(data.teamId);
-			errorToastIfFalsy(droppingTeam, "Invalid team id");
+			errorToastIfFalsy(tournament.teamById(data.teamId), "Invalid team id");
 
-			// Set active roster only for teams with subs (can't infer which players played)
-			// Teams without subs have their roster trivially inferred in summarizer
-			const hasSubs =
-				droppingTeam.members.length > tournament.minMembersPerTeam;
-			if (hasSubs && !droppingTeam.activeRosterUserIds) {
-				const randomRoster = R.sample(
-					droppingTeam.members.map((m) => m.userId),
-					tournament.minMembersPerTeam,
-				);
-				await TournamentTeamRepository.setActiveRoster({
-					teamId: data.teamId,
-					activeRosterUserIds: randomRoster,
-				});
-			}
-
-			const endedMatchIds = endDroppedTeamMatches({
+			const endedMatchIds = await dropTeamOut({
 				tournament,
 				manager: getServerTournamentManager(),
-				droppedTeamId: data.teamId,
-			});
-
-			await TournamentTeamRepository.dropOut({
-				tournamentTeamId: data.teamId,
+				teamId: data.teamId,
 				actorUserId: user.id,
-				previewBracketIdxs: tournament.brackets.flatMap((b, idx) =>
-					b.preview ? idx : [],
-				),
 			});
 
-			if (endedMatchIds.length > 0) {
-				ChatSystemMessage.send([
-					...endedMatchIds.map((matchId) => ({
-						room: tournamentMatchWebsocketRoom(matchId),
-						type: "TOURNAMENT_MATCH_UPDATED" as const,
-						revalidateOnly: true as const,
-						authorUserId: user.id,
-					})),
-					{
-						room: tournamentWebsocketRoom(tournament.ctx.id),
-						type: "TOURNAMENT_UPDATED" as const,
-						revalidateOnly: true as const,
-						authorUserId: user.id,
-					},
-				]);
-			}
+			sendDroppedMatchChatMessages({
+				tournamentId: tournament.ctx.id,
+				endedMatchIds,
+				authorUserId: user.id,
+			});
 
-			message = "Team dropped out";
 			break;
 		}
 		case "UNDO_DROP_TEAM_OUT": {
@@ -379,7 +334,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				actorUserId: user.id,
 			});
 
-			message = "Team drop out undone";
 			break;
 		}
 		case "UPDATE_IN_GAME_NAME": {
@@ -395,7 +349,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				tournamentTeamId: teamMemberOf.id,
 			});
 
-			message = "Player in-game name updated";
 			break;
 		}
 		case "DELETE_LOGO": {
@@ -403,7 +356,208 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			await TournamentTeamRepository.deleteLogo(data.teamId);
 
-			message = "Logo deleted";
+			break;
+		}
+		// xxx: simplify, some stuff should go to schema etc.
+		case "UPSERT_REGISTRATION": {
+			validateIsTournamentOrganizer();
+
+			const submittedMembers = data.members;
+			const ownerUserId = Number(data.ownerId);
+			const owner = submittedMembers.find(
+				(member) => member.userId === ownerUserId,
+			);
+			errorToastIfFalsy(owner, "Team must have exactly one owner");
+			errorToastIfFalsy(
+				submittedMembers.length ===
+					new Set(submittedMembers.map((member) => member.userId)).size,
+				"The same player can't be added twice",
+			);
+
+			const linkedTeamId = data.linkedTeam ? data.teamId : null;
+			const name = linkedTeamId
+				? (await TeamRepository.findById(linkedTeamId))?.name
+				: data.pickUpName;
+			errorToastIfFalsy(name, "Team must have a name");
+
+			errorToastIfFalsy(
+				tournament.ctx.teams.every(
+					(t) => t.id === data.tournamentTeamId || t.name !== name,
+				),
+				"Team name taken",
+			);
+			errorToastIfFalsy(
+				submittedMembers.length <= tournament.maxMembersPerTeam,
+				"Too many members on the roster",
+			);
+
+			const memberUsers = await Promise.all(
+				submittedMembers.map((member) =>
+					UserRepository.findLeanById(member.userId),
+				),
+			);
+			for (const memberUser of memberUsers) {
+				errorToastIfFalsy(memberUser, "Invalid user id");
+				errorToastIfFalsy(
+					memberUser.friendCode,
+					"A selected player has no friend code set",
+				);
+				errorToastIfFalsy(
+					!tournament.ctx.settings.requireInGameNames || memberUser.inGameName,
+					"A selected player has no in-game name set",
+				);
+			}
+
+			if (typeof data.tournamentTeamId !== "number") {
+				for (const member of submittedMembers) {
+					errorToastIfFalsy(
+						!tournament.teamMemberOfByUser({ id: member.userId }),
+						"A selected player is already on a team",
+					);
+					errorToastIfFalsy(
+						!userIsBanned(member.userId),
+						"A selected player is currently banned from sendou.ink",
+					);
+				}
+
+				const created = await TournamentTeamRepository.create({
+					team: { name, prefersNotToHost: 0, teamId: linkedTeamId },
+					userId: owner.userId,
+					additionalMemberUserIds: submittedMembers
+						.filter((member) => member.userId !== ownerUserId)
+						.map((member) => member.userId),
+					actorUserId: user.id,
+					tournamentId,
+				});
+
+				for (const member of submittedMembers) {
+					if (member.inGameName) {
+						await TournamentTeamRepository.updateMemberInGameName({
+							userId: member.userId,
+							inGameName: member.inGameName,
+							tournamentTeamId: created.id,
+						});
+					}
+				}
+
+				for (const member of submittedMembers) {
+					await TournamentLFGRepository.leaveLfg({
+						userId: member.userId,
+						tournamentId,
+					});
+				}
+
+				ShowcaseTournaments.addToCached({
+					tournamentId,
+					type: "participant",
+					userId: owner.userId,
+					newTeamCount: tournament.ctx.teams.length + 1,
+				});
+				for (const member of submittedMembers) {
+					if (member.userId === ownerUserId) continue;
+					ShowcaseTournaments.addToCached({
+						tournamentId,
+						type: "participant",
+						userId: member.userId,
+					});
+				}
+			} else {
+				const team = tournament.teamById(data.tournamentTeamId);
+				errorToastIfFalsy(team, "Invalid team id");
+
+				const currentMemberIds = team.members.map((member) => member.userId);
+				const submittedMemberIds = submittedMembers.map(
+					(member) => member.userId,
+				);
+				const membersToAdd = submittedMemberIds.filter(
+					(memberId) => !currentMemberIds.includes(memberId),
+				);
+				const membersToRemove = currentMemberIds.filter(
+					(memberId) => !submittedMemberIds.includes(memberId),
+				);
+
+				for (const addId of membersToAdd) {
+					const previousTeam = tournament.teamMemberOfByUser({ id: addId });
+					errorToastIfFalsy(
+						!previousTeam || previousTeam.id === team.id,
+						"A selected player is already on another team",
+					);
+					errorToastIfFalsy(
+						!userIsBanned(addId),
+						"A selected player is currently banned from sendou.ink",
+					);
+				}
+
+				for (const removeId of membersToRemove) {
+					errorToastIfFalsy(
+						!tournament.hasStarted ||
+							!tournament
+								.participatedPlayersByTeamId(team.id)
+								.some((p) => p.userId === removeId),
+						"Cannot remove player that has participated in the tournament",
+					);
+				}
+
+				errorToastIfFalsy(
+					team.checkIns.length === 0 ||
+						submittedMembers.length >= tournament.minMembersPerTeam,
+					"Checked in team can't go below the minimum roster size",
+				);
+
+				const currentOwner = team.members.find(
+					(member) => member.role === "OWNER",
+				);
+				invariant(currentOwner, "Team has no owner");
+				const ownerChange =
+					currentOwner.userId !== owner.userId
+						? { oldOwnerId: currentOwner.userId, newOwnerId: owner.userId }
+						: null;
+
+				const inGameNameUpdates = submittedMembers.flatMap((member) => {
+					if (!member.inGameName) return [];
+					const current = team.members.find((m) => m.userId === member.userId);
+					if (current && current.inGameName === member.inGameName) return [];
+					return [{ userId: member.userId, inGameName: member.inGameName }];
+				});
+
+				const clearActiveRoster = (team.activeRosterUserIds ?? []).some(
+					(memberId) => membersToRemove.includes(memberId),
+				);
+
+				await TournamentTeamRepository.upsertRegistration({
+					tournamentTeamId: team.id,
+					tournamentId,
+					actorUserId: user.id,
+					name,
+					teamId: linkedTeamId,
+					clearAvatar: data.linkedTeam,
+					ownerChange,
+					membersToAdd,
+					membersToRemove,
+					inGameNameUpdates,
+					clearActiveRoster,
+				});
+
+				for (const addId of membersToAdd) {
+					await TournamentLFGRepository.leaveLfg({
+						userId: addId,
+						tournamentId,
+					});
+					ShowcaseTournaments.addToCached({
+						tournamentId,
+						type: "participant",
+						userId: addId,
+					});
+				}
+				for (const removeId of membersToRemove) {
+					ShowcaseTournaments.removeFromCached({
+						tournamentId,
+						type: "participant",
+						userId: removeId,
+					});
+				}
+			}
+
 			break;
 		}
 		default: {
@@ -413,5 +567,83 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	clearTournamentDataCache(tournamentId);
 
-	return successToast(message);
+	return null;
 };
+
+/**
+ * Drops a single team out: assigns a random active roster for teams with subs,
+ * ends their in-progress matches and marks the team dropped out. Returns the ids
+ * of matches that were ended so the caller can broadcast a single batch of chat
+ * messages.
+ */
+async function dropTeamOut({
+	tournament,
+	manager,
+	teamId,
+	actorUserId,
+}: {
+	tournament: Awaited<ReturnType<typeof tournamentFromDB>>;
+	manager: ReturnType<typeof getServerTournamentManager>;
+	teamId: number;
+	actorUserId: number;
+}) {
+	const droppingTeam = tournament.teamById(teamId);
+	invariant(droppingTeam, "Invalid team id");
+
+	// Set active roster only for teams with subs (can't infer which players played)
+	// Teams without subs have their roster trivially inferred in summarizer
+	const hasSubs = droppingTeam.members.length > tournament.minMembersPerTeam;
+	if (hasSubs && !droppingTeam.activeRosterUserIds) {
+		const randomRoster = R.sample(
+			droppingTeam.members.map((m) => m.userId),
+			tournament.minMembersPerTeam,
+		);
+		await TournamentTeamRepository.setActiveRoster({
+			teamId,
+			activeRosterUserIds: randomRoster,
+		});
+	}
+
+	const endedMatchIds = endDroppedTeamMatches({
+		tournament,
+		manager,
+		droppedTeamId: teamId,
+	});
+
+	await TournamentTeamRepository.dropOut({
+		tournamentTeamId: teamId,
+		actorUserId,
+		previewBracketIdxs: tournament.brackets.flatMap((b, idx) =>
+			b.preview ? idx : [],
+		),
+	});
+
+	return endedMatchIds;
+}
+
+function sendDroppedMatchChatMessages({
+	tournamentId,
+	endedMatchIds,
+	authorUserId,
+}: {
+	tournamentId: number;
+	endedMatchIds: number[];
+	authorUserId: number;
+}) {
+	if (endedMatchIds.length === 0) return;
+
+	ChatSystemMessage.send([
+		...endedMatchIds.map((matchId) => ({
+			room: tournamentMatchWebsocketRoom(matchId),
+			type: "TOURNAMENT_MATCH_UPDATED" as const,
+			revalidateOnly: true as const,
+			authorUserId,
+		})),
+		{
+			room: tournamentWebsocketRoom(tournamentId),
+			type: "TOURNAMENT_UPDATED" as const,
+			revalidateOnly: true as const,
+			authorUserId,
+		},
+	]);
+}

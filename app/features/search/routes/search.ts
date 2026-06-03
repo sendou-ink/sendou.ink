@@ -68,9 +68,12 @@ async function searchByType({
 			const teams = await TeamRepository.searchByName({ query, limit });
 			return teams.map((t) => ({
 				type: "team" as const,
+				id: t.id,
 				name: t.name,
 				avatarUrl: t.avatarUrl,
 				customUrl: t.customUrl,
+				// xxx: not sure where to do the filter but we actually want to avoid prefilling non-player roles
+				members: t.members,
 			}));
 		}
 		case "organizations": {

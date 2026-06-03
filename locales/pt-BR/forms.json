@@ -172,7 +172,7 @@
 	"options.tag.S2": "",
 	"options.tag.SR": "",
 	"options.tag.CARDS": "",
-	"labels.banUserPlayer": "",
+	"labels.player": "",
 	"labels.banUserNote": "",
 	"bottomTexts.banUserNoteHelp": "",
 	"labels.banUserExpiresAt": "",
@@ -200,7 +200,7 @@
 	"errors.plusCannotSuggest": "",
 	"labels.profileCustomName": "",
 	"labels.profileCustomUrl": "URL personalizado",
-	"labels.profileInGameName": "Nome no jogo",
+	"labels.inGameName": "Nome no jogo",
 	"labels.profileBattlefy": "",
 	"labels.profileMotionSens": "Sensibilidade do Controle de Movimento (Giroscópio)",
 	"labels.profileStickSens": "Sensibilidade do Analógico Direito",
@@ -234,5 +234,12 @@
 	"labels.visibility": "",
 	"labels.note": "",
 	"labels.stayAsSub": "",
-	"bottomTexts.stayAsSub": ""
+	"bottomTexts.stayAsSub": "",
+	"labels.regLinkedTeam": "",
+	"labels.regTeamName": "",
+	"labels.regTeam": "",
+	"labels.regCaptain": "",
+	"errors.regLinkedTeamRequired": "",
+	"errors.regTeamNameRequired": "",
+	"errors.regOwnerMustBeMember": ""
 }

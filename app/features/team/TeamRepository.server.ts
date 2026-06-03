@@ -48,16 +48,33 @@ export function searchByName({
 		.selectFrom("Team")
 		.leftJoin("UserSubmittedImage", "UserSubmittedImage.id", "Team.avatarImgId")
 		.select(({ eb }) => [
+			"Team.id",
 			"Team.customUrl",
 			"Team.name",
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"avatarUrl",
 			),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TeamMemberWithSecondary")
+					.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
+					.select(["User.id", "User.username"])
+					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id")
+					.orderBy("TeamMemberWithSecondary.isOwner", "desc"),
+			).as("members"),
 		])
 		.where("Team.name", "like", `%${query}%`)
 		.orderBy("Team.name", "asc")
 		.limit(limit)
 		.execute();
+}
+
+export function findById(teamId: number) {
+	return db
+		.selectFrom("AllTeam")
+		.select(["AllTeam.id", "AllTeam.name"])
+		.where("AllTeam.id", "=", teamId)
+		.executeTakeFirst();
 }
 
 export function findAllMemberOfByUserId(userId: number) {

@@ -146,7 +146,7 @@ export const formFieldsShowcaseSchema = z.object({
 		label: "labels.vodWeapon",
 	}),
 	user: userSearchOptional({
-		label: "labels.banUserPlayer",
+		label: "labels.player",
 	}),
 
 	// Custom field

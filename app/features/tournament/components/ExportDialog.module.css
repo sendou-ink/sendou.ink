@@ -1,0 +1,11 @@
+.fieldGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	gap: var(--s-2);
+}
+
+.fieldLabel {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}

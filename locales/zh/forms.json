@@ -172,7 +172,7 @@
 	"options.tag.S2": "",
 	"options.tag.SR": "",
 	"options.tag.CARDS": "",
-	"labels.banUserPlayer": "",
+	"labels.player": "",
 	"labels.banUserNote": "",
 	"bottomTexts.banUserNoteHelp": "",
 	"labels.banUserExpiresAt": "",
@@ -200,7 +200,7 @@
 	"errors.plusCannotSuggest": "",
 	"labels.profileCustomName": "自定义昵称",
 	"labels.profileCustomUrl": "自定义URL",
-	"labels.profileInGameName": "游戏ID",
+	"labels.inGameName": "游戏ID",
 	"labels.profileBattlefy": "Battlefy用户名",
 	"labels.profileMotionSens": "体感感度",
 	"labels.profileStickSens": "摇杆感度",
@@ -234,5 +234,12 @@
 	"labels.visibility": "",
 	"labels.note": "",
 	"labels.stayAsSub": "",
-	"bottomTexts.stayAsSub": ""
+	"bottomTexts.stayAsSub": "",
+	"labels.regLinkedTeam": "",
+	"labels.regTeamName": "",
+	"labels.regTeam": "",
+	"labels.regCaptain": "",
+	"errors.regLinkedTeamRequired": "",
+	"errors.regTeamNameRequired": "",
+	"errors.regOwnerMustBeMember": ""
 }

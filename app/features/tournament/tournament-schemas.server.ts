@@ -13,6 +13,7 @@ import { bracketProgressionSchema } from "../calendar/calendar-schemas";
 import { bracketIdx } from "../tournament-bracket/tournament-bracket-schemas.server";
 import { USER } from "../user-page/user-page-constants";
 import { TOURNAMENT } from "./tournament-constants";
+import { adminRegistrationFormSchema } from "./tournament-registration-schemas";
 
 const teamName = safeStringSchema({
 	max: TOURNAMENT.TEAM_NAME_MAX_LENGTH,
@@ -128,6 +129,7 @@ export const adminTeamsActionSchema = z.union([
 			.refine((val) => /^[0-9a-z]{4,5}$/.test(val)),
 		memberId: id,
 	}),
+	adminRegistrationFormSchema,
 ]);
 
 export const adminStaffActionSchema = z.union([

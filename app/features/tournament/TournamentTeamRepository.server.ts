@@ -112,6 +112,7 @@ export function create({
 	team,
 	avatarFileName,
 	userId,
+	additionalMemberUserIds = [],
 	actorUserId,
 	tournamentId,
 }: {
@@ -119,6 +120,8 @@ export function create({
 	avatarFileName?: string;
 	/** The user who becomes the team owner. */
 	userId: number;
+	/** Non-owner members to add to the team on creation. */
+	additionalMemberUserIds?: number[];
 	/** The user performing the registration (differs from `userId` when an organizer registers a team for someone). */
 	actorUserId: number;
 	tournamentId: number;
@@ -164,7 +167,145 @@ export function create({
 			subjectUserId: userId,
 		});
 
+		for (const memberUserId of additionalMemberUserIds) {
+			const memberInGameName = await resolveInGameName(
+				trx,
+				tournamentId,
+				memberUserId,
+			);
+
+			await trx
+				.insertInto("TournamentTeamMember")
+				.values({
+					tournamentTeamId: tournamentTeam.id,
+					userId: memberUserId,
+					inGameName: memberInGameName,
+				})
+				.execute();
+
+			await TournamentAuditLogRepository.insert(trx, {
+				type: "MEMBER_ADDED",
+				actorUserId,
+				tournamentTeamId: tournamentTeam.id,
+				subjectUserId: memberUserId,
+			});
+		}
+
 		return tournamentTeam;
+	});
+}
+
+// xxx: simplify
+/**
+ * Applies a full-state edit to an existing registration in a single transaction:
+ * team name, linked sendou.ink team, owner transfer, member adds/removes and
+ * in-game name updates. The caller is responsible for validating the derived ops
+ * and for any side effects (cache updates, notifications) outside the transaction.
+ */
+export function upsertRegistration({
+	tournamentTeamId,
+	tournamentId,
+	actorUserId,
+	name,
+	teamId,
+	clearAvatar,
+	ownerChange,
+	membersToAdd,
+	membersToRemove,
+	inGameNameUpdates,
+	clearActiveRoster,
+}: {
+	tournamentTeamId: number;
+	tournamentId: number; // xxx: redundant, can we inferred from tournamentTeamId
+	actorUserId: number;
+	name: string;
+	/** Linked sendou.ink team id, or null for a pickup team. */
+	teamId: number | null;
+	/** Whether to clear the uploaded pickup avatar (true when linking a team). */
+	clearAvatar: boolean; // xxx: allow changing avatar
+	ownerChange: { oldOwnerId: number; newOwnerId: number } | null;
+	membersToAdd: number[];
+	membersToRemove: number[];
+	inGameNameUpdates: Array<{ userId: number; inGameName: string }>;
+	clearActiveRoster: boolean;
+}) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("TournamentTeam")
+			.set({
+				name,
+				teamId,
+				...(clearAvatar ? { avatarImgId: null } : {}),
+				...(clearActiveRoster ? { activeRosterUserIds: null } : {}),
+			})
+			.where("TournamentTeam.id", "=", tournamentTeamId)
+			.execute();
+
+		await TournamentAuditLogRepository.updateTeamHistoryName(trx, {
+			tournamentTeamId,
+			name,
+		});
+
+		for (const userId of membersToRemove) {
+			await TournamentAuditLogRepository.insert(trx, {
+				type: "MEMBER_REMOVED",
+				actorUserId,
+				tournamentTeamId,
+				subjectUserId: userId,
+			});
+
+			await trx
+				.deleteFrom("TournamentTeamMember")
+				.where("TournamentTeamMember.tournamentTeamId", "=", tournamentTeamId)
+				.where("TournamentTeamMember.userId", "=", userId)
+				.execute();
+		}
+
+		for (const userId of membersToAdd) {
+			const inGameName = await resolveInGameName(trx, tournamentId, userId);
+
+			await trx
+				.insertInto("TournamentTeamMember")
+				.values({
+					tournamentTeamId,
+					userId,
+					inGameName,
+				})
+				.execute();
+
+			await TournamentAuditLogRepository.insert(trx, {
+				type: "MEMBER_ADDED",
+				actorUserId,
+				tournamentTeamId,
+				subjectUserId: userId,
+			});
+		}
+
+		// after adds so a newly added member can be designated owner
+		if (ownerChange) {
+			await trx
+				.updateTable("TournamentTeamMember")
+				.set({ role: "REGULAR" })
+				.where("TournamentTeamMember.tournamentTeamId", "=", tournamentTeamId)
+				.where("TournamentTeamMember.userId", "=", ownerChange.oldOwnerId)
+				.execute();
+
+			await trx
+				.updateTable("TournamentTeamMember")
+				.set({ role: "OWNER" })
+				.where("TournamentTeamMember.tournamentTeamId", "=", tournamentTeamId)
+				.where("TournamentTeamMember.userId", "=", ownerChange.newOwnerId)
+				.execute();
+		}
+
+		for (const { userId, inGameName } of inGameNameUpdates) {
+			await trx
+				.updateTable("TournamentTeamMember")
+				.set({ inGameName })
+				.where("TournamentTeamMember.tournamentTeamId", "=", tournamentTeamId)
+				.where("TournamentTeamMember.userId", "=", userId)
+				.execute();
+		}
 	});
 }
 

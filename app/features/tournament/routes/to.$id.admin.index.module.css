@@ -1,3 +1,60 @@
-.actionForm > :global(.flex-same-size) {
-	min-width: 10rem;
+.searchInput {
+	flex: 1;
+	/** xxx: overflow on mobile */
+	min-width: 12rem;
+	max-width: 22rem;
+}
+
+.sortHeader {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	background: none;
+	border: none;
+	padding: 0;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	text-transform: inherit;
+}
+
+.sortIcon {
+	width: 0.85rem;
+	height: 0.85rem;
+}
+
+.teamName {
+	font-weight: var(--weight-semi);
+	white-space: nowrap;
+	max-width: 10rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.droppedOut {
+	opacity: 0.6;
+}
+
+.checkInMarks {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-0-5);
+}
+
+.checkInMark {
+	width: 1rem;
+	height: 1rem;
+	color: var(--color-success);
+}
+
+.checkInCross {
+	width: 1rem;
+	height: 1rem;
+	color: var(--color-error);
+}
+
+.noResults {
+	text-align: center;
+	color: var(--color-text-lighter);
+	padding-block: var(--s-6);
 }

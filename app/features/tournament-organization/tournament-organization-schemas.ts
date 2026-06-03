@@ -86,7 +86,7 @@ export const organizationEditFormSchema = z.object({
 
 export const banUserActionSchema = z.object({
 	_action: stringConstant("BAN_USER"),
-	userId: userSearch({ label: "labels.banUserPlayer" }),
+	userId: userSearch({ label: "labels.player" }),
 	privateNote: textAreaOptional({
 		label: "labels.banUserNote",
 		bottomText: "bottomTexts.banUserNoteHelp",

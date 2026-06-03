@@ -1,6 +1,14 @@
 import type { z } from "zod";
+import type { TeamSearchResult } from "~/components/elements/TeamSearch";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import type forms from "../../locales/en/forms.json";
+
+// xxx: adding TeamSearchFieldProps like this seems hacky?
+/** Extra props forwarded to the `team-search` field (roster prefill + edit display). */
+export type TeamSearchFieldProps = {
+	onTeamSelected?: (team: TeamSearchResult | null) => void;
+	initialTeam?: { id: number; name: string; avatarUrl?: string | null };
+};
 
 export type FormsTranslationKey = keyof typeof forms;
 
@@ -144,6 +152,10 @@ interface FormFieldTournamentSearch<T extends string> extends FormFieldBase<T> {
 	required: boolean;
 }
 
+interface FormFieldTeamSearch<T extends string> extends FormFieldBase<T> {
+	required: boolean;
+}
+
 interface FormFieldBadges<T extends string> extends FormFieldBase<T> {
 	maxCount?: number;
 }
@@ -190,6 +202,7 @@ export type FormField<V extends string = string> =
 	| FormFieldFieldset<"fieldset", z.ZodRawShape>
 	| FormFieldUserSearch<"user-search">
 	| FormFieldTournamentSearch<"tournament-search">
+	| FormFieldTeamSearch<"team-search">
 	| FormFieldBadges<"badges">
 	| FormFieldStageSelect<"stage-select">
 	| FormFieldWeaponSelect<"weapon-select">;
@@ -262,9 +275,10 @@ export type TypedFormFieldProps<
 	children?:
 		| ((props: FormFieldChildrenProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
-} & (TSchema[TName] extends FieldWithOptions<infer TOptions>
-	? { options: TOptions }
-	: { options?: never });
+} & TeamSearchFieldProps &
+	(TSchema[TName] extends FieldWithOptions<infer TOptions>
+		? { options: TOptions }
+		: { options?: never });
 
 /** Nested path pattern for array/object traversal */
 type NestedPath = `${string}.${string}` | `${string}[${string}`;
@@ -279,7 +293,7 @@ export type FlexibleFormFieldProps = {
 		| ((props: FormFieldChildrenProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
 	options?: unknown;
-};
+} & TeamSearchFieldProps;
 
 /** Typed FormField component type for a specific schema */
 export type TypedFormFieldComponent<TSchema extends z.ZodRawShape> = {

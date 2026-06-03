@@ -15,6 +15,7 @@ import {
 import { SelectFormField } from "./fields/SelectFormField";
 import { StageSelectFormField } from "./fields/StageSelectFormField";
 import { SwitchFormField } from "./fields/SwitchFormField";
+import { TeamSearchFormField } from "./fields/TeamSearchFormField";
 import { TextareaFormField } from "./fields/TextareaFormField";
 import { TimeRangeFormField } from "./fields/TimeRangeFormField";
 import { TournamentSearchFormField } from "./fields/TournamentSearchFormField";
@@ -32,6 +33,7 @@ import type {
 	FormFieldItemsWithImage,
 	FormField as FormFieldType,
 	SelectOption,
+	TeamSearchFieldProps,
 } from "./types";
 import {
 	getNestedSchema,
@@ -42,7 +44,7 @@ import {
 
 export type { CustomFieldRenderProps };
 
-interface FormFieldProps {
+interface FormFieldProps extends TeamSearchFieldProps {
 	name: string;
 	label?: string;
 	disabled?: boolean;
@@ -63,6 +65,8 @@ export function FormField({
 	field,
 	children,
 	options,
+	onTeamSelected,
+	initialTeam,
 }: FormFieldProps) {
 	const context = useOptionalFormFieldContext();
 
@@ -396,6 +400,18 @@ export function FormField({
 				{...formField}
 				value={value as number | null}
 				onChange={handleChange as (v: number | null) => void}
+			/>
+		);
+	}
+
+	if (formField.type === "team-search") {
+		return (
+			<TeamSearchFormField
+				{...commonProps}
+				{...formField}
+				onChange={handleChange as (v: number | null) => void}
+				onTeamSelected={onTeamSelected}
+				initialTeam={initialTeam}
 			/>
 		);
 	}

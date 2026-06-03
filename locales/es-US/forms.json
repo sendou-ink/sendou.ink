@@ -172,7 +172,7 @@
 	"options.tag.S2": "",
 	"options.tag.SR": "",
 	"options.tag.CARDS": "",
-	"labels.banUserPlayer": "",
+	"labels.player": "",
 	"labels.banUserNote": "",
 	"bottomTexts.banUserNoteHelp": "",
 	"labels.banUserExpiresAt": "",
@@ -200,7 +200,7 @@
 	"errors.plusCannotSuggest": "",
 	"labels.profileCustomName": "Nombre personalizado",
 	"labels.profileCustomUrl": "Enlace personalizado",
-	"labels.profileInGameName": "Nombre en el juego",
+	"labels.inGameName": "Nombre en el juego",
 	"labels.profileBattlefy": "Nombre de cuenta de Battlefy",
 	"labels.profileMotionSens": "Sens del giroscopio",
 	"labels.profileStickSens": "Sens de palanca",
@@ -234,5 +234,12 @@
 	"labels.visibility": "",
 	"labels.note": "",
 	"labels.stayAsSub": "",
-	"bottomTexts.stayAsSub": ""
+	"bottomTexts.stayAsSub": "",
+	"labels.regLinkedTeam": "",
+	"labels.regTeamName": "",
+	"labels.regTeam": "",
+	"labels.regCaptain": "",
+	"errors.regLinkedTeamRequired": "",
+	"errors.regTeamNameRequired": "",
+	"errors.regOwnerMustBeMember": ""
 }

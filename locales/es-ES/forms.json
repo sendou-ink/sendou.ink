@@ -172,7 +172,7 @@
 	"options.tag.S2": "Splatoon 2",
 	"options.tag.SR": "Salmon Run",
 	"options.tag.CARDS": "Batallón de cartas",
-	"labels.banUserPlayer": "Jugador",
+	"labels.player": "Jugador",
 	"labels.banUserNote": "Nota privada",
 	"bottomTexts.banUserNoteHelp": "Esta nota solo es visible para los administradores de la organización.",
 	"labels.banUserExpiresAt": "Fecha de expiración del baneo",
@@ -200,7 +200,7 @@
 	"errors.plusCannotSuggest": "",
 	"labels.profileCustomName": "",
 	"labels.profileCustomUrl": "Enlace personalizado",
-	"labels.profileInGameName": "Nombre en el juego",
+	"labels.inGameName": "Nombre en el juego",
 	"labels.profileBattlefy": "",
 	"labels.profileMotionSens": "Sens del giroscopio",
 	"labels.profileStickSens": "Sens de palanca",
@@ -234,5 +234,12 @@
 	"labels.visibility": "",
 	"labels.note": "",
 	"labels.stayAsSub": "",
-	"bottomTexts.stayAsSub": ""
+	"bottomTexts.stayAsSub": "",
+	"labels.regLinkedTeam": "",
+	"labels.regTeamName": "",
+	"labels.regTeam": "",
+	"labels.regCaptain": "",
+	"errors.regLinkedTeamRequired": "",
+	"errors.regTeamNameRequired": "",
+	"errors.regOwnerMustBeMember": ""
 }

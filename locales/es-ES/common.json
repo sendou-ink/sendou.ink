@@ -188,6 +188,8 @@
 	"forms.userSearch.noResults": "Ningún usuario que coincida con tu búsqueda",
 	"forms.tournamentSearch.placeholder": "Buscar torneos por nombre...",
 	"forms.tournamentSearch.noResults": "Ningún torneo que coincida con tu búsqueda",
+	"forms.teamSearch.placeholder": "",
+	"forms.teamSearch.noResults": "",
 	"forms.weaponSearch.placeholder": "Selecciona un arma",
 	"forms.weaponSearch.search.placeholder": "Buscar arma...",
 	"forms.weaponSearch.quickSelect": "Recientes",
