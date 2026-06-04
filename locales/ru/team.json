@@ -1,8 +1,11 @@
 {
 	"newTeam.header": "Создать новую команду",
+	"editTeam.header": "",
 	"teamSearch.placeholder": "Поиск игрока или команды...",
 	"actionButtons.leaveTeam": "Покинуть команду",
 	"actionButtons.makeMainTeam": "Сделать главной командой",
+	"actionButtons.mainTeam": "",
+	"actionButtons.teamActions": "",
 	"leaveTeam.header": "Вы точно хотите покинуть {{teamName}}?",
 	"leaveTeam.header.newOwner": "Вы точно хотите покинуть {{teamName}}? Новым владельцем будет {{newOwner}}",
 	"actionButtons.leaveTeam.confirm": "Покинуть",

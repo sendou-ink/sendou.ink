@@ -9,13 +9,9 @@ import {
 } from "~/utils/Test";
 import { action as _teamPageAction } from "../actions/t.$customUrl.index.server";
 import { action as teamIndexPageAction } from "../actions/t.new.server";
-import { action as _editTeamAction } from "../routes/t.$customUrl.edit";
 import * as TeamRepository from "../TeamRepository.server";
 import type { createTeamSchema } from "../team-schemas";
-import type {
-	editTeamSchema,
-	teamProfilePageActionSchema,
-} from "../team-schemas.server";
+import type { teamProfilePageActionSchema } from "../team-schemas.server";
 
 const createTeamAction = wrappedAction<typeof createTeamSchema>({
 	action: teamIndexPageAction,
@@ -23,10 +19,6 @@ const createTeamAction = wrappedAction<typeof createTeamSchema>({
 });
 const teamPageAction = wrappedAction<typeof teamProfilePageActionSchema>({
 	action: _teamPageAction,
-	isJsonSubmission: true,
-});
-const editTeamAction = wrappedAction<typeof editTeamSchema>({
-	action: _editTeamAction,
 	isJsonSubmission: true,
 });
 
@@ -94,7 +86,7 @@ describe("Secondary teams", () => {
 		await createTeamAction({ name: "Team 1" }, { user: "regular" });
 		await createTeamAction({ name: "Team 2" }, { user: "regular" });
 
-		await editTeamAction(
+		await teamPageAction(
 			{
 				_action: "DELETE_TEAM",
 			},
@@ -108,6 +100,26 @@ describe("Secondary teams", () => {
 
 		expect(team!.name).toBe("Team 2");
 		expect(secondaryTeams).toHaveLength(0);
+	});
+
+	it("only the team owner (or admin) can delete a team", async () => {
+		await createTeamAction({ name: "Team 1" }, { user: "admin" });
+
+		await TeamRepository.addNewTeamMember({
+			userId: REGULAR_USER_TEST_ID,
+			teamId: 1,
+			maxTeamsAllowed: 2,
+		});
+
+		const response = await teamPageAction(
+			{ _action: "DELETE_TEAM" },
+			{ user: "regular", params: { customUrl: "team-1" } },
+		);
+
+		assertResponseErrored(response);
+
+		const team = await TeamRepository.findByCustomUrl("team-1");
+		expect(team).toBeTruthy();
 	});
 
 	it("when leaving the main team, the secondary team becomes main", async () => {
@@ -176,96 +188,5 @@ describe("Secondary teams", () => {
 
 		const { secondaryTeams } = await loadTeams();
 		expect(secondaryTeams).toHaveLength(2);
-	});
-
-	const createTeamWithImage = async (imageType: "avatar" | "banner") => {
-		await createTeamAction({ name: "Team 1" }, { user: "regular" });
-
-		const imageId = await db
-			.insertInto("UnvalidatedUserSubmittedImage")
-			.values({
-				url: `https://example.com/test-${imageType}.jpg`,
-				submitterUserId: REGULAR_USER_TEST_ID,
-			})
-			.returning("id")
-			.executeTakeFirstOrThrow();
-
-		const imageField = imageType === "avatar" ? "avatarImgId" : "bannerImgId";
-		await db
-			.updateTable("AllTeam")
-			.set({ [imageField]: imageId.id })
-			.where("customUrl", "=", "team-1")
-			.execute();
-
-		return imageId.id;
-	};
-
-	it("deletes team avatar", async () => {
-		const imageId = await createTeamWithImage("avatar");
-
-		await editTeamAction(
-			{ _action: "DELETE_AVATAR" },
-			{ user: "regular", params: { customUrl: "team-1" } },
-		);
-
-		const team = await db
-			.selectFrom("Team")
-			.select("avatarImgId")
-			.where("customUrl", "=", "team-1")
-			.executeTakeFirst();
-
-		expect(team?.avatarImgId).toBeNull();
-
-		const image = await db
-			.selectFrom("UnvalidatedUserSubmittedImage")
-			.select("id")
-			.where("id", "=", imageId)
-			.executeTakeFirst();
-
-		expect(image).toBeUndefined();
-	});
-
-	it("deletes team banner", async () => {
-		const imageId = await createTeamWithImage("banner");
-
-		await editTeamAction(
-			{ _action: "DELETE_BANNER" },
-			{ user: "regular", params: { customUrl: "team-1" } },
-		);
-
-		const team = await db
-			.selectFrom("Team")
-			.select("bannerImgId")
-			.where("customUrl", "=", "team-1")
-			.executeTakeFirst();
-
-		expect(team?.bannerImgId).toBeNull();
-
-		const image = await db
-			.selectFrom("UnvalidatedUserSubmittedImage")
-			.select("id")
-			.where("id", "=", imageId)
-			.executeTakeFirst();
-
-		expect(image).toBeUndefined();
-	});
-
-	it("only team owner can delete images", async () => {
-		await createTeamWithImage("avatar");
-
-		await db
-			.insertInto("User")
-			.values({
-				discordName: "otheruser",
-				discordId: "999",
-			})
-			.execute();
-
-		const response = await editTeamAction(
-			{ _action: "DELETE_AVATAR" },
-			{ user: "regular", params: { customUrl: "team-1" } },
-		);
-
-		expect(response.status).toBe(302);
 	});
 });

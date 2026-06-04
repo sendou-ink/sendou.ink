@@ -2,6 +2,8 @@
 	"submit": "Fremlæg",
 	"labels.name": "Navn",
 	"labels.bio": "Biografi",
+	"labels.logo": "",
+	"labels.banner": "",
 	"labels.tag": "",
 	"labels.teamBsky": "",
 	"labels.clockFormat": "",

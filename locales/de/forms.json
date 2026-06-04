@@ -2,6 +2,8 @@
 	"submit": "Senden",
 	"labels.name": "Name",
 	"labels.bio": "Über mich",
+	"labels.logo": "",
+	"labels.banner": "",
 	"labels.tag": "",
 	"labels.teamBsky": "",
 	"labels.clockFormat": "",

@@ -2,6 +2,8 @@
 	"submit": "送信",
 	"labels.name": "名前",
 	"labels.bio": "自己紹介",
+	"labels.logo": "",
+	"labels.banner": "",
 	"labels.tag": "",
 	"labels.teamBsky": "チームの Bluesky",
 	"labels.clockFormat": "",

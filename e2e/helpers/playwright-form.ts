@@ -66,6 +66,7 @@ type FormFieldHelpers<T extends z.ZodRawShape> = {
 	) => Promise<void>;
 	setDateTime: (name: keyof Inferred<T>, date: Date) => Promise<void>;
 	setDate: (name: keyof Inferred<T>, date: Date) => Promise<void>;
+	setImage: (name: keyof Inferred<T>, filePath: string) => Promise<void>;
 	submit: () => Promise<void>;
 	getLabel: <K extends keyof Inferred<T>>(name: K) => string;
 	getItemLabel: (name: keyof Inferred<T>, itemValue: string) => string;
@@ -249,6 +250,11 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 			await fillSpinbutton("year", date.getFullYear().toString());
 			await fillSpinbutton("month", (date.getMonth() + 1).toString());
 			await fillSpinbutton("day", date.getDate().toString());
+		},
+
+		async setImage(name, filePath) {
+			const label = getLabel(String(name));
+			await page.getByLabel(label).setInputFiles(filePath);
 		},
 
 		async submit() {
