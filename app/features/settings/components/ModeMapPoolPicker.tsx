@@ -17,12 +17,17 @@ export function ModeMapPoolPicker({
 	pool,
 	tiebreaker,
 	onChange,
+	modeTabs,
+	onModeChange,
 }: {
 	mode: ModeShort;
 	amountToPick: number;
 	pool: StageId[];
 	tiebreaker?: StageId;
 	onChange: (stages: StageId[]) => void;
+	/** When provided, the divider becomes a tab switcher between these modes. */
+	modeTabs?: ModeShort[];
+	onModeChange?: (mode: ModeShort) => void;
 }) {
 	const [wigglingStageId, setWigglingStageId] = React.useState<StageId | null>(
 		null,
@@ -77,7 +82,30 @@ export function ModeMapPoolPicker({
 				})}
 			</div>
 			<Divider className={styles.divider}>
-				<ModeImage mode={mode} size={32} />
+				{modeTabs && onModeChange ? (
+					<div className={styles.modeTabs}>
+						{modeTabs.map((tabMode) => {
+							const active = tabMode === mode;
+
+							return (
+								<button
+									key={tabMode}
+									type="button"
+									className={clsx(styles.modeTab, {
+										[styles.modeTabActive]: active,
+									})}
+									onClick={() => onModeChange(tabMode)}
+									aria-pressed={active}
+									data-testid={`map-pool-mode-tab-${tabMode}`}
+								>
+									<ModeImage mode={tabMode} size={24} />
+								</button>
+							);
+						})}
+					</div>
+				) : (
+					<ModeImage mode={mode} size={32} />
+				)}
 			</Divider>
 			<div className="stack sm horizontal flex-wrap justify-center mt-1">
 				{stageIds.map((stageId) => {

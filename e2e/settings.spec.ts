@@ -116,6 +116,9 @@ const setModePreference = (
 const mapButton = (page: Page, mode: string, stageId: number) =>
 	page.getByTestId(`map-pool-${mode}-${stageId}`);
 
+const selectModeTab = (page: Page, mode: string) =>
+	page.getByTestId(`map-pool-mode-tab-${mode}`).click();
+
 const SELECTED_MAP_CLASS = /mapButtonGreyedOut/;
 
 // The seeded user already has random map pools, so empty the mode's pool to get
@@ -141,6 +144,7 @@ test.describe("Match profile map preferences", () => {
 		await navigate({ page, url: SETTINGS_PAGE });
 
 		await setModePreference(page, "SZ", "Prefer");
+		await selectModeTab(page, "SZ");
 		await clearMapPool(page, "SZ");
 		await mapButton(page, "SZ", 1).click();
 		await expect(mapButton(page, "SZ", 1)).toHaveClass(SELECTED_MAP_CLASS);
@@ -150,6 +154,7 @@ test.describe("Match profile map preferences", () => {
 		await isNotVisible(mapButton(page, "SZ", 1));
 
 		await setModePreference(page, "SZ", "Prefer");
+		await selectModeTab(page, "SZ");
 		await expect(mapButton(page, "SZ", 1)).toHaveClass(SELECTED_MAP_CLASS);
 	});
 
@@ -162,9 +167,11 @@ test.describe("Match profile map preferences", () => {
 
 		// Save a map pool for both SZ and TC (stage 2 is not banned in TC).
 		await setModePreference(page, "SZ", "Prefer");
+		await selectModeTab(page, "SZ");
 		await clearMapPool(page, "SZ");
 		await mapButton(page, "SZ", 1).click();
 		await setModePreference(page, "TC", "Prefer");
+		await selectModeTab(page, "TC");
 		await clearMapPool(page, "TC");
 		await mapButton(page, "TC", 2).click();
 		await submit(page);
