@@ -51,6 +51,8 @@
 
 .comment {
 	white-space: pre-wrap;
+	overflow-wrap: break-word;
+	min-width: 0;
 }
 
 .commentButton {
