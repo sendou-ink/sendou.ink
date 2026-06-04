@@ -7,6 +7,10 @@
 	font-weight: var(--weight-semi);
 }
 
+:global(html.light) .badges {
+	color: var(--color-text-inverse);
+}
+
 .dayLabel {
 	margin: 0;
 }
