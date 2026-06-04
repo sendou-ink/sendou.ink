@@ -1,28 +1,12 @@
 import clsx from "clsx";
-import { ChevronsUpDown, Search, X } from "lucide-react";
 import * as React from "react";
-import {
-	Autocomplete,
-	Button,
-	Input,
-	type Key,
-	ListBox,
-	ListBoxItem,
-	Popover,
-	SearchField,
-	Select,
-	type SelectProps,
-	SelectValue,
-} from "react-aria-components";
-import { useTranslation } from "react-i18next";
-import { useFetcher } from "react-router";
-import { useDebounce } from "react-use";
-import { SendouBottomTexts } from "~/components/elements/BottomTexts";
-import { SendouLabel } from "~/components/elements/Label";
+import { ListBoxItem, type SelectProps } from "react-aria-components";
 import type { SearchLoaderData } from "~/features/search/routes/search";
-
+import { SearchSelect } from "./SearchSelect";
+import searchSelectStyles from "./SearchSelect.module.css";
 import selectStyles from "./Select.module.css";
 import teamSearchStyles from "./TeamSearch.module.css";
+import { useEntitySearch } from "./useEntitySearch";
 
 export type TeamSearchResult = Extract<
 	NonNullable<SearchLoaderData>["results"][number],
@@ -40,7 +24,6 @@ interface TeamSearchProps<T extends object>
 	onChange?: (team: TeamSearchResult | null) => void;
 }
 
-// xxx: can we abstract TournamentSearch, UserSearch and this?
 export const TeamSearch = React.forwardRef(function TeamSearch<
 	T extends object,
 >(
@@ -55,123 +38,49 @@ export const TeamSearch = React.forwardRef(function TeamSearch<
 	}: TeamSearchProps<T>,
 	ref?: React.Ref<HTMLButtonElement>,
 ) {
-	const [selectedKey, setSelectedKey] = React.useState<number | null>(
-		initialTeam?.id ?? null,
-	);
-	const list = useTeamSearch(setSelectedKey);
-
-	const onSelectionChange = (teamId: number) => {
-		setSelectedKey(teamId);
-		const team = list.items.find(
-			(team) => typeof team.id === "number" && team.id === teamId,
-		);
-		if (team && typeof team.id === "number") {
-			onChange?.(team as TeamSearchResult);
-		}
-	};
-
-	// clear if selected team is not in the new filtered items
-	React.useEffect(() => {
-		if (
-			selectedKey &&
-			selectedKey !== initialTeam?.id &&
-			!list.items.some(
-				(team) => typeof team.id === "number" && team.id === selectedKey,
-			)
-		) {
-			setSelectedKey(null);
-			onChange?.(null);
-		}
-	}, [list.items, selectedKey, onChange, initialTeam?.id]);
+	const search = useEntitySearch<TeamSearchResult>({
+		buildUrl: (query) => `/search?q=${query}&type=teams&limit=6`,
+		parseResults: parseTeamResults,
+		initialItem: initialTeam as TeamSearchResult | undefined,
+		initialSelectedId: initialTeam?.id,
+		onChange,
+	});
 
 	return (
-		<Select
-			name={name}
-			placeholder=""
-			selectedKey={selectedKey}
-			onSelectionChange={onSelectionChange as (key: Key | null) => void}
-			className={selectStyles.select}
-			aria-label="Team search"
+		<SearchSelect
 			{...rest}
-		>
-			{label ? (
-				<SendouLabel required={rest.isRequired}>{label}</SendouLabel>
-			) : null}
-			<Button className={selectStyles.button} ref={ref}>
-				<SelectValue className={teamSearchStyles.selectValue} />
-				<span aria-hidden="true">
-					<ChevronsUpDown className={selectStyles.icon} />
-				</span>
-			</Button>
-			<SendouBottomTexts bottomText={bottomText} errorText={errorText} />
-			<Popover className={clsx(selectStyles.popover, teamSearchStyles.popover)}>
-				<Autocomplete
-					inputValue={list.filterText}
-					onInputChange={list.setFilterText}
-				>
-					<SearchField
-						aria-label="Search"
-						autoFocus
-						className={selectStyles.searchField}
-					>
-						<Search aria-hidden className={selectStyles.icon} />
-						<Input
-							className={selectStyles.searchInput}
-							data-testid="team-search-input"
-						/>
-						<Button className={selectStyles.searchClearButton}>
-							<X className={selectStyles.icon} />
-						</Button>
-					</SearchField>
-					<ListBox
-						items={[
-							...(initialTeam ? [initialTeam as TeamSearchResult] : []),
-							...list.items.filter((team) => team.id !== initialTeam?.id),
-						].filter((team) => team !== undefined)}
-						className={selectStyles.listBox}
-					>
-						{(item) => <TeamItem item={item as TeamSearchResult} />}
-					</ListBox>
-				</Autocomplete>
-			</Popover>
-		</Select>
+			name={name}
+			label={label}
+			bottomText={bottomText}
+			errorText={errorText}
+			ariaLabel="Team search"
+			inputTestId="team-search-input"
+			i18nKey="teamSearch"
+			search={search}
+			buttonRef={ref}
+			renderItem={(item) => <TeamItem item={item} />}
+		/>
 	);
 });
 
-function TeamItem({
-	item,
-}: {
-	item:
-		| TeamSearchResult
-		| {
-				id: "NO_RESULTS";
-		  }
-		| {
-				id: "PLACEHOLDER";
-		  };
-}) {
-	const { t } = useTranslation(["common"]);
+function parseTeamResults(
+	data: unknown,
+	query: string,
+): TeamSearchResult[] | null {
+	const searchData = data as SearchLoaderData;
+	if (!searchData || searchData.query !== query) return null;
+	return searchData.results.filter(
+		(result): result is TeamSearchResult => result.type === "team",
+	);
+}
 
-	if (typeof item.id === "string") {
-		return (
-			<ListBoxItem
-				textValue="PLACEHOLDER"
-				isDisabled
-				className={teamSearchStyles.placeholder}
-			>
-				{item.id === "PLACEHOLDER"
-					? t("common:forms.teamSearch.placeholder")
-					: t("common:forms.teamSearch.noResults")}
-			</ListBoxItem>
-		);
-	}
-
+function TeamItem({ item }: { item: TeamSearchResult }) {
 	return (
 		<ListBoxItem
 			id={item.id}
 			textValue={item.name}
 			className={({ isFocused, isSelected }) =>
-				clsx(teamSearchStyles.item, {
+				clsx(searchSelectStyles.item, {
 					[selectStyles.itemFocused]: isFocused,
 					[selectStyles.itemSelected]: isSelected,
 				})
@@ -179,49 +88,13 @@ function TeamItem({
 			data-testid="team-search-item"
 		>
 			{item.avatarUrl ? (
-				<img src={item.avatarUrl} alt="" className={teamSearchStyles.logo} />
+				<img src={item.avatarUrl} alt="" className={searchSelectStyles.logo} />
 			) : (
 				<div className={teamSearchStyles.logoPlaceholder} />
 			)}
-			<div className={teamSearchStyles.itemTextsContainer}>
+			<div className={searchSelectStyles.itemTextsContainer}>
 				<span>{item.name}</span>
 			</div>
 		</ListBoxItem>
 	);
-}
-
-function useTeamSearch(setSelectedKey: (teamId: number | null) => void) {
-	const [filterText, setFilterText] = React.useState("");
-
-	const queryFetcher = useFetcher<SearchLoaderData>();
-
-	useDebounce(
-		() => {
-			if (!filterText) return;
-			queryFetcher.load(`/search?q=${filterText}&type=teams&limit=6`);
-			setSelectedKey(null);
-		},
-		500,
-		[filterText],
-	);
-
-	const items = () => {
-		if (queryFetcher.data && queryFetcher.data.query === filterText) {
-			const teamResults = queryFetcher.data.results.filter(
-				(r): r is TeamSearchResult => r.type === "team",
-			);
-			if (teamResults.length === 0) {
-				return [{ id: "NO_RESULTS" as const }];
-			}
-			return teamResults;
-		}
-
-		return [{ id: "PLACEHOLDER" as const }];
-	};
-
-	return {
-		filterText,
-		setFilterText,
-		items: items(),
-	};
 }

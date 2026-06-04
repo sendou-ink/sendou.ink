@@ -3,13 +3,6 @@ import type { TeamSearchResult } from "~/components/elements/TeamSearch";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import type forms from "../../locales/en/forms.json";
 
-// xxx: adding TeamSearchFieldProps like this seems hacky?
-/** Extra props forwarded to the `team-search` field (roster prefill + edit display). */
-export type TeamSearchFieldProps = {
-	onTeamSelected?: (team: TeamSearchResult | null) => void;
-	initialTeam?: { id: number; name: string; avatarUrl?: string | null };
-};
-
 export type FormsTranslationKey = keyof typeof forms;
 
 interface FormFieldBase<T extends string> {
@@ -275,10 +268,9 @@ export type TypedFormFieldProps<
 	children?:
 		| ((props: FormFieldChildrenProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
-} & TeamSearchFieldProps &
-	(TSchema[TName] extends FieldWithOptions<infer TOptions>
-		? { options: TOptions }
-		: { options?: never });
+} & (TSchema[TName] extends FieldWithOptions<infer TOptions>
+	? { options: TOptions }
+	: { options?: never });
 
 /** Nested path pattern for array/object traversal */
 type NestedPath = `${string}.${string}` | `${string}[${string}`;
@@ -293,7 +285,7 @@ export type FlexibleFormFieldProps = {
 		| ((props: FormFieldChildrenProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
 	options?: unknown;
-} & TeamSearchFieldProps;
+};
 
 /** Typed FormField component type for a specific schema */
 export type TypedFormFieldComponent<TSchema extends z.ZodRawShape> = {
@@ -301,4 +293,18 @@ export type TypedFormFieldComponent<TSchema extends z.ZodRawShape> = {
 		props: TypedFormFieldProps<TSchema, TName>,
 	): React.ReactNode;
 	(props: FlexibleFormFieldProps): React.ReactNode;
+};
+
+/**
+ * Runtime config consumed only by the `team-search` field. Passed via the
+ * `options` prop (the same channel `badges`/`select-dynamic` use), so it stays
+ * scoped to this field type instead of polluting every `FormField`.
+ *
+ * `initialTeam` carries the selected team's display data (name, avatar) for the
+ * edit/prefill case — that metadata is not part of the stored form value (a
+ * plain team id), so it cannot come from `defaultValues`.
+ */
+export type TeamSearchFieldOptions = {
+	onTeamSelected?: (team: TeamSearchResult | null) => void;
+	initialTeam?: { id: number; name: string; avatarUrl?: string | null };
 };

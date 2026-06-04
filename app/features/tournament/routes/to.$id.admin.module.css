@@ -12,6 +12,7 @@
 .sideNav {
 	position: sticky;
 	top: var(--layout-sticky-top);
+	min-width: 0;
 }
 
 .stacked .sideNav {

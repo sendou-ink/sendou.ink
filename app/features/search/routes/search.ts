@@ -72,7 +72,6 @@ async function searchByType({
 				name: t.name,
 				avatarUrl: t.avatarUrl,
 				customUrl: t.customUrl,
-				// xxx: not sure where to do the filter but we actually want to avoid prefilling non-player roles
 				members: t.members,
 			}));
 		}

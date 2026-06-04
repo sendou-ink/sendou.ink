@@ -18,6 +18,15 @@
 
 .itemTextsContainer {
 	line-height: 1.1;
+	font-size: var(--font-sm);
+
+	& span {
+		max-width: 175px;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		overflow: hidden;
+		display: block;
+	}
 }
 
 .selectValue {
@@ -52,4 +61,11 @@ button:disabled .selectValue {
 
 button .itemAdditionalText {
 	display: none;
+}
+
+.logo {
+	width: 24px;
+	height: 24px;
+	border-radius: var(--radius-field);
+	object-fit: cover;
 }

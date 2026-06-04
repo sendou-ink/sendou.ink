@@ -3,6 +3,7 @@ import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { CustomTheme, DB, Tables } from "~/db/tables";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
+import { NON_PLAYER_TEAM_ROLES } from "~/features/team/team-constants";
 import { subsOfResult } from "~/features/team/team-utils";
 import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
@@ -60,6 +61,16 @@ export function searchByName({
 					.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
 					.select(["User.id", "User.username"])
 					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id")
+					.where((eb2) =>
+						eb2.or([
+							eb2("TeamMemberWithSecondary.role", "is", null),
+							eb2(
+								"TeamMemberWithSecondary.role",
+								"not in",
+								NON_PLAYER_TEAM_ROLES,
+							),
+						]),
+					)
 					.orderBy("TeamMemberWithSecondary.isOwner", "desc"),
 			).as("members"),
 		])

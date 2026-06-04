@@ -33,7 +33,7 @@ import type {
 	FormFieldItemsWithImage,
 	FormField as FormFieldType,
 	SelectOption,
-	TeamSearchFieldProps,
+	TeamSearchFieldOptions,
 } from "./types";
 import {
 	getNestedSchema,
@@ -44,7 +44,7 @@ import {
 
 export type { CustomFieldRenderProps };
 
-interface FormFieldProps extends TeamSearchFieldProps {
+interface FormFieldProps {
 	name: string;
 	label?: string;
 	disabled?: boolean;
@@ -65,8 +65,6 @@ export function FormField({
 	field,
 	children,
 	options,
-	onTeamSelected,
-	initialTeam,
 }: FormFieldProps) {
 	const context = useOptionalFormFieldContext();
 
@@ -405,13 +403,14 @@ export function FormField({
 	}
 
 	if (formField.type === "team-search") {
+		const teamOptions = options as TeamSearchFieldOptions | undefined;
 		return (
 			<TeamSearchFormField
 				{...commonProps}
 				{...formField}
 				onChange={handleChange as (v: number | null) => void}
-				onTeamSelected={onTeamSelected}
-				initialTeam={initialTeam}
+				onTeamSelected={teamOptions?.onTeamSelected}
+				initialTeam={teamOptions?.initialTeam}
 			/>
 		);
 	}

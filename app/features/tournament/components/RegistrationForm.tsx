@@ -4,7 +4,11 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
-import type { ArrayItemRenderContext, SelectOption } from "~/form/types";
+import type {
+	ArrayItemRenderContext,
+	SelectOption,
+	TeamSearchFieldOptions,
+} from "~/form/types";
 import { useTournament } from "../routes/to.$id";
 import {
 	type AdminRegistrationFormValues,
@@ -90,41 +94,40 @@ function RegistrationFields({ team }: { team?: TournamentDataTeam }) {
 			{linkedTeam ? (
 				<FormField
 					name="teamId"
-					// xxx: why not from defaultValues?
-					initialTeam={
-						team?.team
-							? {
-									id: team.team.id,
-									name: team.name,
-									avatarUrl: team.team.logoUrl,
-								}
-							: undefined
+					options={
+						{
+							initialTeam: team?.team
+								? {
+										id: team.team.id,
+										name: team.name,
+										avatarUrl: team.team.logoUrl,
+									}
+								: undefined,
+							onTeamSelected: (selected) => {
+								if (!selected) return;
+								setUsernames((prev) => {
+									const next = { ...prev };
+									for (const member of selected.members) {
+										next[member.id] = member.username;
+									}
+									return next;
+								});
+								setValue(
+									"members",
+									selected.members.map((member) => ({
+										userId: member.id,
+										inGameName: null,
+									})),
+								);
+								setValue("ownerId", String(selected.members[0]?.id ?? ""));
+							},
+						} satisfies TeamSearchFieldOptions
 					}
-					// xxx: or some common "watch" API?
-					onTeamSelected={(selected) => {
-						if (!selected) return;
-						setUsernames((prev) => {
-							const next = { ...prev };
-							for (const member of selected.members) {
-								next[member.id] = member.username;
-							}
-							return next;
-						});
-						setValue(
-							"members",
-							selected.members.map((member) => ({
-								userId: member.id,
-								inGameName: null,
-							})),
-						);
-						setValue("ownerId", String(selected.members[0]?.id ?? ""));
-					}}
 				/>
 			) : (
 				<FormField name="pickUpName" />
 			)}
 			<FormField name="members">
-				{/** xxx: do we really need the render props format? */}
 				{({ itemName }: ArrayItemRenderContext) => (
 					<div className="stack sm">
 						<FormField name={`${itemName}.userId`} />

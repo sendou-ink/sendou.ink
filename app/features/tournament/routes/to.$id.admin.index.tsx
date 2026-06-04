@@ -1,7 +1,5 @@
 import clsx from "clsx";
 import {
-	ArrowDown,
-	ArrowUp,
 	Check,
 	Download,
 	LogIn,
@@ -21,6 +19,10 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Input } from "~/components/Input";
+import {
+	SortableTableHeader,
+	type SortState,
+} from "~/components/SortableTableHeader";
 import { Table } from "~/components/Table";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import { teamPage } from "~/utils/urls";
@@ -32,8 +34,7 @@ import styles from "./to.$id.admin.index.module.css";
 
 export { action } from "../actions/to.$id.admin.index.server";
 
-type SortKey = "seed" | "name" | "checkIn";
-type SortState = { key: SortKey; dir: "asc" | "desc" };
+type SortKey = "name" | "checkIn";
 
 type DialogState =
 	| { type: "add" }
@@ -41,16 +42,11 @@ type DialogState =
 	| { type: "export" }
 	| null;
 
-// xxx: for sorting, if you click twice should clear sort instead of just toggling. also add to part of the components and to /components
-
 export default function TournamentAdminTeamsPage() {
 	const tournament = useTournament();
 
 	const [search, setSearch] = React.useState("");
-	const [sort, setSort] = React.useState<SortState>({
-		key: "seed",
-		dir: "asc",
-	});
+	const [sort, setSort] = React.useState<SortState<SortKey>>(null);
 	const [dialog, setDialog] = React.useState<DialogState>(null);
 
 	const maxRosterSize = Math.max(
@@ -63,28 +59,13 @@ export default function TournamentAdminTeamsPage() {
 	);
 	const sortedTeams = sortTeams(filteredTeams, sort);
 
-	const toggleSort = (key: SortKey) =>
-		setSort((prev) =>
-			prev.key === key
-				? { key, dir: prev.dir === "asc" ? "desc" : "asc" }
-				: { key, dir: "asc" },
-		);
-
 	const editingTeam =
 		dialog?.type === "edit" ? tournament.teamById(dialog.teamId) : undefined;
 
 	return (
 		<div className="stack md">
-			<div className="stack horizontal sm justify-between items-center flex-wrap">
-				<Input
-					className={styles.searchInput}
-					value={search}
-					onChange={(e) => setSearch(e.target.value)}
-					aria-label="Search teams"
-					placeholder="Search teams"
-					icon={<Search aria-hidden />}
-				/>
-				<div className="stack horizontal sm">
+			<div className={styles.toolbar}>
+				<div className={styles.toolbarActions}>
 					<SendouButton
 						size="small"
 						variant="outlined"
@@ -101,23 +82,31 @@ export default function TournamentAdminTeamsPage() {
 						Add new team
 					</SendouButton>
 				</div>
+				<Input
+					className={styles.searchInput}
+					value={search}
+					onChange={(e) => setSearch(e.target.value)}
+					aria-label="Search teams"
+					placeholder="Search teams"
+					icon={<Search aria-hidden />}
+				/>
 			</div>
 
 			<Table>
 				<thead>
 					<tr>
-						<SortableHeader
+						<SortableTableHeader
 							label="Team"
-							active={sort.key === "name"}
-							dir={sort.dir}
-							onClick={() => toggleSort("name")}
+							sortKey="name"
+							sort={sort}
+							onChange={setSort}
 						/>
 						<th>Actions</th>
-						<SortableHeader
+						<SortableTableHeader
 							label="Check-in"
-							active={sort.key === "checkIn"}
-							dir={sort.dir}
-							onClick={() => toggleSort("checkIn")}
+							sortKey="checkIn"
+							sort={sort}
+							onChange={setSort}
 						/>
 						{Array.from({ length: maxRosterSize }).map((_, i) => (
 							<th key={`player-${i}`}>Player {i + 1}</th>
@@ -156,33 +145,6 @@ export default function TournamentAdminTeamsPage() {
 				<ExportDialog close={() => setDialog(null)} />
 			) : null}
 		</div>
-	);
-}
-
-function SortableHeader({
-	label,
-	active,
-	dir,
-	onClick,
-}: {
-	label: string;
-	active: boolean;
-	dir: "asc" | "desc";
-	onClick: () => void;
-}) {
-	return (
-		<th>
-			<button type="button" className={styles.sortHeader} onClick={onClick}>
-				{label}
-				{active ? (
-					dir === "asc" ? (
-						<ArrowUp className={styles.sortIcon} />
-					) : (
-						<ArrowDown className={styles.sortIcon} />
-					)
-				) : null}
-			</button>
-		</th>
 	);
 }
 
@@ -375,12 +337,11 @@ function TeamRowMenu({
 	);
 }
 
-// xxx: sort by when joined as secondary
 function sortedMembers(team: TournamentDataTeam) {
 	return [...team.members].sort((a, b) => {
-		if (a.role === "OWNER") return -1;
-		if (b.role === "OWNER") return 1;
-		return 0;
+		if (a.role === "OWNER" && b.role !== "OWNER") return -1;
+		if (b.role === "OWNER" && a.role !== "OWNER") return 1;
+		return a.createdAt - b.createdAt;
 	});
 }
 
@@ -455,21 +416,21 @@ function teamMatchesQuery(team: TournamentDataTeam, search: string) {
 	return false;
 }
 
-function sortTeams(teams: TournamentDataTeam[], sort: SortState) {
-	const sorted = [...teams].sort((a, b) => {
-		switch (sort.key) {
-			case "name":
-				return a.name.localeCompare(b.name);
-			case "checkIn":
-				return activeCheckInCount(a) - activeCheckInCount(b);
-			default: {
-				const aSeed = a.seed ?? Number.POSITIVE_INFINITY;
-				const bSeed = b.seed ?? Number.POSITIVE_INFINITY;
-				if (aSeed !== bSeed) return aSeed - bSeed;
-				return a.createdAt - b.createdAt;
-			}
-		}
+function sortTeams(teams: TournamentDataTeam[], sort: SortState<SortKey>) {
+	const bySeed = [...teams].sort((a, b) => {
+		const aSeed = a.seed ?? Number.POSITIVE_INFINITY;
+		const bSeed = b.seed ?? Number.POSITIVE_INFINITY;
+		if (aSeed !== bSeed) return aSeed - bSeed;
+		return a.createdAt - b.createdAt;
 	});
+
+	if (!sort) return bySeed;
+
+	const sorted = bySeed.sort((a, b) =>
+		sort.key === "name"
+			? a.name.localeCompare(b.name)
+			: activeCheckInCount(a) - activeCheckInCount(b),
+	);
 
 	return sort.dir === "asc" ? sorted : sorted.reverse();
 }

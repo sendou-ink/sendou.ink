@@ -11,6 +11,7 @@ import { formRegistry } from "./fields";
 import styles from "./SendouForm.module.css";
 import type { FormField, TypedFormFieldComponent } from "./types";
 import {
+	buildFieldPath,
 	errorMessageId,
 	getNestedValue,
 	setNestedValue,
@@ -415,19 +416,6 @@ export function SendouForm<T extends z.ZodRawShape>({
 			)}
 		</FormContext.Provider>
 	);
-}
-
-function buildFieldPath(path: PropertyKey[]): string | null {
-	if (path.length === 0) return null;
-
-	return path
-		.map((segment, index) => {
-			if (typeof segment === "number") return `[${segment}]`;
-			if (typeof segment === "symbol") return null;
-			return index === 0 ? segment : `.${segment}`;
-		})
-		.filter((part) => part !== null)
-		.join("");
 }
 
 function buildInitialValues<T extends z.ZodRawShape>(

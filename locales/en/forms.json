@@ -241,5 +241,12 @@
 	"labels.regCaptain": "Captain",
 	"errors.regLinkedTeamRequired": "Select a team",
 	"errors.regTeamNameRequired": "Team name is required",
-	"errors.regOwnerMustBeMember": "The captain must be one of the players"
+	"errors.regOwnerMustBeMember": "The captain must be one of the players",
+	"errors.regTeamNameTaken": "This team name is already taken",
+	"errors.regTooManyMembers": "Too many players on the roster",
+	"errors.regMemberInvalid": "Invalid player",
+	"errors.regMemberNoFriendCode": "This player has no friend code set",
+	"errors.regMemberNoInGameName": "This player has no in-game name set",
+	"errors.regMemberBanned": "This player is currently banned from sendou.ink",
+	"errors.regMemberOnAnotherTeam": "This player is already on another team"
 }

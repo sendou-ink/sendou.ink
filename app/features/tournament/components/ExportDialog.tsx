@@ -2,6 +2,7 @@ import * as React from "react";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import * as CSV from "~/modules/csv";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { teamPage, userPage } from "~/utils/urls";
 import { useTournament } from "../routes/to.$id";
@@ -9,10 +10,28 @@ import styles from "./ExportDialog.module.css";
 
 const BASE_URL = "https://sendou.ink";
 
-// xxx: uppercase constants?
-type ExportFormat = "list" | "csv";
-type ExportStatus = "all" | "checkedIn" | "notCheckedIn";
-type ExportSort = "name" | "seed" | "registration";
+const EXPORT_FORMATS = ["list", "csv"] as const;
+const EXPORT_STATUSES = ["all", "checkedIn", "notCheckedIn"] as const;
+const EXPORT_SORTS = ["name", "seed", "registration"] as const;
+
+type ExportFormat = (typeof EXPORT_FORMATS)[number];
+type ExportStatus = (typeof EXPORT_STATUSES)[number];
+type ExportSort = (typeof EXPORT_SORTS)[number];
+
+const FORMAT_LABELS: Record<ExportFormat, string> = {
+	list: "List",
+	csv: "CSV",
+};
+const STATUS_LABELS: Record<ExportStatus, string> = {
+	all: "All teams",
+	checkedIn: "Checked in only",
+	notCheckedIn: "Not checked in",
+};
+const SORT_LABELS: Record<ExportSort, string> = {
+	name: "Name",
+	seed: "Seed",
+	registration: "Registration time",
+};
 
 const TEAM_FIELDS = [
 	"teamName",
@@ -32,15 +51,15 @@ type ExportField =
 	| (typeof MEMBER_FIELDS)[number];
 
 const FIELD_LABELS: Record<ExportField, string> = {
-	teamName: "Team name",
+	teamName: "Team",
 	seed: "Seed",
 	registeredAt: "Registration time",
-	checkInStatus: "Check-in status",
+	checkInStatus: "Check-in",
 	teamPageUrl: "Team page URL",
-	memberUsername: "Member username",
-	memberInGameName: "Member in-game name",
-	memberDiscord: "Member Discord mention",
-	memberProfileUrl: "Member profile URL",
+	memberUsername: "Username",
+	memberInGameName: "In-game name",
+	memberDiscord: "Discord mention",
+	memberProfileUrl: "Profile URL",
 };
 
 const DEFAULT_FIELDS: ExportField[] = [
@@ -97,6 +116,7 @@ export function ExportDialog({ close }: { close: () => void }) {
 		handleDownload({
 			filename: `participants.${format === "csv" ? "csv" : "txt"}`,
 			content,
+			format,
 		});
 		close();
 	};
@@ -107,11 +127,11 @@ export function ExportDialog({ close }: { close: () => void }) {
 				<RadioRow
 					label="Format"
 					value={format}
-					onChange={(value) => setFormat(value as ExportFormat)}
-					options={[
-						{ value: "list", label: "List" },
-						{ value: "csv", label: "CSV" },
-					]}
+					onChange={setFormat}
+					options={EXPORT_FORMATS.map((value) => ({
+						value,
+						label: FORMAT_LABELS[value],
+					}))}
 				/>
 
 				<div className="stack sm">
@@ -150,32 +170,21 @@ export function ExportDialog({ close }: { close: () => void }) {
 				<RadioRow
 					label="Status"
 					value={status}
-					onChange={(value) => setStatus(value as ExportStatus)}
-					options={[
-						{ value: "all", label: "All teams" },
-						{
-							value: "checkedIn",
-							label: "Checked in only",
-						},
-						{
-							value: "notCheckedIn",
-							label: "Not checked in",
-						},
-					]}
+					onChange={setStatus}
+					options={EXPORT_STATUSES.map((value) => ({
+						value,
+						label: STATUS_LABELS[value],
+					}))}
 				/>
 
 				<RadioRow
 					label="Sort by"
 					value={sort}
-					onChange={(value) => setSort(value as ExportSort)}
-					options={[
-						{ value: "name", label: "Name" },
-						{ value: "seed", label: "Seed" },
-						{
-							value: "registration",
-							label: "Registration time",
-						},
-					]}
+					onChange={setSort}
+					options={EXPORT_SORTS.map((value) => ({
+						value,
+						label: SORT_LABELS[value],
+					}))}
 				/>
 
 				<SendouButton onPress={onDownload} className="mx-auto">
@@ -186,16 +195,16 @@ export function ExportDialog({ close }: { close: () => void }) {
 	);
 }
 
-function RadioRow({
+function RadioRow<T extends string>({
 	label,
 	value,
 	onChange,
 	options,
 }: {
 	label: string;
-	value: string;
-	onChange: (value: string) => void;
-	options: Array<{ value: string; label: string }>;
+	value: T;
+	onChange: (value: T) => void;
+	options: ReadonlyArray<{ value: T; label: string }>;
 }) {
 	const groupName = React.useId();
 
@@ -338,26 +347,26 @@ function buildContent({
 		const maxRoster = Math.max(0, ...teams.map((team) => team.members.length));
 
 		const header = [
-			...teamFields,
+			...teamFields.map((field) => FIELD_LABELS[field]),
 			...Array.from({ length: maxRoster }).flatMap((_, i) =>
-				memberFields.map((field) => `Member ${i + 1} ${field}`),
+				memberFields.map((field) => `Player ${i + 1} ${FIELD_LABELS[field]}`),
 			),
-		].join(",");
+		];
 
 		const rows = teams.map((team) => {
 			const teamValues = teamFields.map((field) =>
-				csvCell(teamFieldValue(team, field, labelOpts)),
+				teamFieldValue(team, field, labelOpts),
 			);
 			const memberValues = Array.from({ length: maxRoster }).flatMap((_, i) => {
 				const member = team.members[i];
 				return memberFields.map((field) =>
-					member ? csvCell(memberFieldValue(member, field)) : "",
+					member ? memberFieldValue(member, field) : "",
 				);
 			});
-			return [...teamValues, ...memberValues].join(",");
+			return [...teamValues, ...memberValues];
 		});
 
-		return [header, ...rows].join("\n");
+		return CSV.serialize([header, ...rows]);
 	}
 
 	// list: members grouped under each team (omitted when no member fields chosen,
@@ -383,23 +392,20 @@ function buildContent({
 	return entries.join(hasMemberFields ? "\n\n" : "\n");
 }
 
-// xxx: make more robust
-function csvCell(value: string) {
-	if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-		return `"${value.replace(/"/g, '""')}"`;
-	}
-	return value;
-}
-
 function handleDownload({
 	content,
 	filename,
+	format,
 }: {
 	content: string;
 	filename: string;
+	format: ExportFormat;
 }) {
+	const isCsv = format === "csv";
 	const element = document.createElement("a");
-	const file = new Blob([content], { type: "text/plain" });
+	const file = new Blob(isCsv ? [CSV.BOM, content] : [content], {
+		type: isCsv ? "text/csv;charset=utf-8" : "text/plain;charset=utf-8",
+	});
 	element.href = URL.createObjectURL(file);
 	element.download = filename;
 	document.body.appendChild(element);

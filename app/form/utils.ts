@@ -4,6 +4,23 @@ function infoMessageId(fieldId: string) {
 	return `${fieldId}-info`;
 }
 
+/**
+ * Builds a form field name (e.g. `members[0].userId`) from a Zod issue path so
+ * that server- and client-side validation errors key fields identically.
+ */
+export function buildFieldPath(path: PropertyKey[]): string | null {
+	if (path.length === 0) return null;
+
+	return path
+		.map((segment, index) => {
+			if (typeof segment === "number") return `[${segment}]`;
+			if (typeof segment === "symbol") return null;
+			return index === 0 ? segment : `.${segment}`;
+		})
+		.filter((part) => part !== null)
+		.join("");
+}
+
 export function getNestedValue(
 	obj: Record<string, unknown>,
 	path: string,

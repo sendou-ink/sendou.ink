@@ -241,5 +241,12 @@
 	"labels.regCaptain": "",
 	"errors.regLinkedTeamRequired": "",
 	"errors.regTeamNameRequired": "",
-	"errors.regOwnerMustBeMember": ""
+	"errors.regOwnerMustBeMember": "",
+	"errors.regTeamNameTaken": "",
+	"errors.regTooManyMembers": "",
+	"errors.regMemberInvalid": "",
+	"errors.regMemberNoFriendCode": "",
+	"errors.regMemberNoInGameName": "",
+	"errors.regMemberBanned": "",
+	"errors.regMemberOnAnotherTeam": ""
 }

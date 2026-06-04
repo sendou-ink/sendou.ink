@@ -1,26 +1,35 @@
+.toolbar {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	row-gap: var(--s-4);
+}
+
+.toolbarActions {
+	display: flex;
+	gap: var(--s-2);
+	justify-content: flex-end;
+}
+
 .searchInput {
-	flex: 1;
-	/** xxx: overflow on mobile */
-	min-width: 12rem;
-	max-width: 22rem;
+	width: 100%;
 }
 
-.sortHeader {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--s-1);
-	background: none;
-	border: none;
-	padding: 0;
-	font: inherit;
-	color: inherit;
-	cursor: pointer;
-	text-transform: inherit;
-}
+@container (min-width: 32rem) {
+	.toolbar {
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+	}
 
-.sortIcon {
-	width: 0.85rem;
-	height: 0.85rem;
+	.toolbarActions {
+		order: 1;
+	}
+
+	.searchInput {
+		flex: 1;
+		max-width: 22rem;
+	}
 }
 
 .teamName {

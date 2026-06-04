@@ -1,10 +1,10 @@
 import { TeamSearch } from "~/components/elements/TeamSearch";
-import type { FormFieldProps, TeamSearchFieldProps } from "../types";
+import type { FormFieldProps, TeamSearchFieldOptions } from "../types";
 import { FormFieldMessages, useTranslatedTexts } from "./FormFieldWrapper";
 import styles from "./UserSearchFormField.module.css";
 
 type TeamSearchFormFieldProps = FormFieldProps<"team-search"> &
-	TeamSearchFieldProps & {
+	TeamSearchFieldOptions & {
 		onChange: (value: number | null) => void;
 	};
 
