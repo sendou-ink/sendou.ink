@@ -125,7 +125,12 @@ export function FormField({
 	const handleChange = React.useCallback(
 		(newValue: unknown) => {
 			context?.setValue(name, newValue);
-			if (hasSubmitted && context) {
+			context?.clearServerError(name);
+			if (
+				hasSubmitted &&
+				context &&
+				!isArrayAppend(context.values, name, newValue)
+			) {
 				const updatedValues = isNestedPath
 					? setNestedValue(context.values, name, newValue)
 					: { ...context.values, [name]: newValue };
@@ -456,6 +461,17 @@ export function FormField({
 	return (
 		<div>Unsupported form field type: {(formField as FormFieldType).type}</div>
 	);
+}
+
+function isArrayAppend(
+	values: Record<string, unknown>,
+	name: string,
+	newValue: unknown,
+): boolean {
+	if (!Array.isArray(newValue)) return false;
+	const isNestedPath = name.includes(".") || name.includes("[");
+	const prevValue = isNestedPath ? getNestedValue(values, name) : values[name];
+	return Array.isArray(prevValue) && newValue.length > prevValue.length;
 }
 
 function computeFieldsetInitialValue(

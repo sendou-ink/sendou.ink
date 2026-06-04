@@ -6,6 +6,7 @@
 - normal file structure has constants at the top immediately followed by the main function body of the file. Helpers are used to structure the code and they are at the bottom of the file (main implementation first, at the top of the file)
 - note: any formatting issue (such as tabs vs. spaces) can be resolved by running the `pnpm run biome:fix` command
 - typical way to structure pure logic is into Modules divided by logical domains which are imported with the "* as Module" import and then used like so "Module.foo()". These functions always need JSDoc.
+- non-exported functions typically do not need JSDoc or at least it can be kept short
 
 ## Commands
 

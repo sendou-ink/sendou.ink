@@ -52,6 +52,7 @@ export function RegistrationFormDialog({
 			<SendouForm
 				schema={adminRegistrationFormSchema}
 				defaultValues={defaultValues}
+				onSuccess={close}
 			>
 				<RegistrationFields team={team} />
 			</SendouForm>

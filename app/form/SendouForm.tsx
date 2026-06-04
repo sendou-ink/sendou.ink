@@ -32,6 +32,7 @@ export interface FormContextValue<T extends z.ZodRawShape = z.ZodRawShape> {
 	clientErrors: Partial<Record<string, string>>;
 	hasSubmitted: boolean;
 	setClientError: (name: string, error: string | undefined) => void;
+	clearServerError: (name: string) => void;
 	onFieldChange?: (name: string, newValue: unknown) => void;
 	values: Record<string, unknown>;
 	setValue: (name: string, value: unknown) => void;
@@ -72,6 +73,8 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	 */
 	fullWidth?: boolean;
 	onApply?: (values: z.infer<z.ZodObject<T>>) => void;
+	/** Called after a server submission completes without field errors. */
+	onSuccess?: () => void;
 	secondarySubmit?: React.ReactNode;
 };
 
@@ -99,6 +102,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 	className,
 	fullWidth,
 	onApply,
+	onSuccess,
 	secondarySubmit,
 }: SendouFormProps<T>) {
 	const { t } = useTranslation(["forms"]);
@@ -115,6 +119,8 @@ export function SendouForm<T extends z.ZodRawShape>({
 	const initialValues = buildInitialValues(schema, defaultValues);
 	const [values, setValues] =
 		React.useState<Record<string, unknown>>(initialValues);
+
+	const pendingSubmit = React.useRef(false);
 
 	const location = useLocation();
 	const locationKey = `${location.pathname}${location.search}`;
@@ -164,6 +170,17 @@ export function SendouForm<T extends z.ZodRawShape>({
 		firstErrorElement?.scrollIntoView({ behavior: "smooth", block: "center" });
 	}, [fetcher.data, t]);
 
+	React.useEffect(() => {
+		if (!onSuccess) return;
+		if (fetcher.state !== "idle") return;
+		if (!pendingSubmit.current) return;
+
+		pendingSubmit.current = false;
+		if (fetcher.data?.fieldErrors) return;
+
+		onSuccess();
+	}, [fetcher.state, fetcher.data, onSuccess]);
+
 	const serverErrors = visibleServerErrors as Partial<
 		Record<keyof z.infer<z.ZodObject<T>>, string>
 	>;
@@ -176,6 +193,27 @@ export function SendouForm<T extends z.ZodRawShape>({
 				return next;
 			}
 			return { ...prev, [name]: error };
+		});
+	};
+
+	// Server errors are keyed by positional path (e.g. `members[2].userId`). When
+	// the user edits a field, the server's verdict for that field — and for any
+	// nested descendants when an array/object changes — is stale, so drop it.
+	// Without this, removing an array item and re-adding one at the same index
+	// would resurrect the previous item's server error.
+	const clearServerError = (name: string) => {
+		setVisibleServerErrors((prev) => {
+			const isStale = (key: string) =>
+				key === name ||
+				key.startsWith(`${name}.`) ||
+				key.startsWith(`${name}[`);
+			if (!Object.keys(prev).some(isStale)) return prev;
+
+			const next: Partial<Record<string, string>> = {};
+			for (const [key, value] of Object.entries(prev)) {
+				if (!isStale(key)) next[key] = value;
+			}
+			return next;
 		});
 	};
 
@@ -244,6 +282,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 		if (onApply) {
 			onApply(values as z.infer<z.ZodObject<T>>);
 		} else {
+			pendingSubmit.current = true;
 			fetcher.submit(addRevalidateRoot(values) as Record<string, string>, {
 				method,
 				action,
@@ -317,6 +356,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 			onApply(values as z.infer<z.ZodObject<T>>);
 		}
 
+		pendingSubmit.current = true;
 		fetcher.submit(
 			addRevalidateRoot(valuesToSubmit) as Record<string, string>,
 			{
@@ -334,6 +374,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 		clientErrors,
 		hasSubmitted,
 		setClientError,
+		clearServerError,
 		onFieldChange,
 		revalidateAll,
 		values,

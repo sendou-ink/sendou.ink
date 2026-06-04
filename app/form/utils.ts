@@ -1,4 +1,6 @@
 import type { z } from "zod";
+import { formRegistry } from "./fields";
+import type { FormField } from "./types";
 
 function infoMessageId(fieldId: string) {
 	return `${fieldId}-info`;
@@ -163,12 +165,26 @@ export function validateField(
 	const result = fieldSchema.safeParse(value);
 	if (result.success) return undefined;
 
-	const issue = result.error.issues[0];
+	// `array`/`fieldset` fields render each child as its own FormField with its
+	// own error slot, so a nested issue (e.g. an empty member inside a `members`
+	// array) belongs to that child — attributing it to the parent would surface
+	// the wrong message at the wrong field. Other composite fields (e.g. a custom
+	// tuple) render as a single control, so their nested issues belong to them.
+	const registry = formRegistry as {
+		get(schema: z.ZodType): FormField | undefined;
+	};
+	const fieldMeta = registry.get(fieldSchema);
+	const childrenRenderOwnErrors =
+		fieldMeta?.type === "array" || fieldMeta?.type === "fieldset";
+	const issue = childrenRenderOwnErrors
+		? result.error.issues.find((i) => i.path.length === 0)
+		: result.error.issues[0];
 	if (!issue) return undefined;
 
+	const valueIsEmpty = value === null || value === undefined || value === "";
 	if (
-		issue.code === "invalid_type" &&
-		(value === null || value === undefined || value === "")
+		valueIsEmpty &&
+		(issue.code === "invalid_type" || issue.code === "too_small")
 	) {
 		return "forms:errors.required";
 	}
