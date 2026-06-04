@@ -2,6 +2,8 @@
 	"submit": "Submit",
 	"labels.name": "Name",
 	"labels.bio": "Bio",
+	"labels.logo": "Logo",
+	"labels.banner": "Banner",
 	"labels.tag": "Tag",
 	"labels.teamBsky": "Team Bluesky",
 	"labels.clockFormat": "Clock format",

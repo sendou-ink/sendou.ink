@@ -3,15 +3,10 @@ import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import { db } from "~/db/sql";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
-import {
-	assertResponseErrored,
-	dbInsertUsers,
-	dbReset,
-	wrappedAction,
-} from "~/utils/Test";
+import { dbInsertUsers, dbReset, wrappedAction } from "~/utils/Test";
 import { action as teamIndexPageAction } from "../actions/t.new.server";
 import type { createTeamSchema } from "../team-schemas";
-import type { editTeamSchema } from "../team-schemas.server";
+import type { editTeamActionSchema } from "../team-schemas.server";
 import { action as _editTeamProfileAction } from "./t.$customUrl.edit.server";
 
 const createTeamAction = wrappedAction<typeof createTeamSchema>({
@@ -19,7 +14,7 @@ const createTeamAction = wrappedAction<typeof createTeamSchema>({
 	isJsonSubmission: true,
 });
 
-const editTeamProfileAction = wrappedAction<typeof editTeamSchema>({
+const editTeamProfileAction = wrappedAction<typeof editTeamActionSchema>({
 	action: _editTeamProfileAction,
 	isJsonSubmission: true,
 });
@@ -30,6 +25,8 @@ const DEFAULT_EDIT_FIELDS = {
 	bio: "",
 	bsky: "",
 	tag: "",
+	logo: null,
+	banner: null,
 } as const;
 
 const VALID_CUSTOM_THEME = {
@@ -122,7 +119,7 @@ describe("team page editing", () => {
 			{ user: "regular", params: { customUrl: "team-1" } },
 		);
 
-		assertResponseErrored(response);
+		expect(response.fieldErrors["newValue.baseHue"]).toBeTruthy();
 	});
 
 	it("preserves an existing custom theme when editing the team profile", async () => {
@@ -146,5 +143,66 @@ describe("team page editing", () => {
 		const team = await TeamRepository.findByCustomUrl("team-1");
 		expect(team?.customTheme).toEqual(expectedStoredTheme());
 		expect(team?.bio).toBe("Updated bio");
+	});
+
+	const addTeamAvatar = async () => {
+		const image = await db
+			.insertInto("UnvalidatedUserSubmittedImage")
+			.values({
+				url: "https://example.com/test-avatar.jpg",
+				submitterUserId: REGULAR_USER_TEST_ID,
+			})
+			.returning("id")
+			.executeTakeFirstOrThrow();
+
+		await db
+			.updateTable("AllTeam")
+			.set({ avatarImgId: image.id })
+			.where("customUrl", "=", "team-1")
+			.execute();
+
+		return image.id;
+	};
+
+	const imageExists = async (id: number) =>
+		Boolean(
+			await db
+				.selectFrom("UnvalidatedUserSubmittedImage")
+				.select("id")
+				.where("id", "=", id)
+				.executeTakeFirst(),
+		);
+
+	it("deletes the submitted image row when an image is removed while editing", async () => {
+		const imageId = await addTeamAvatar();
+
+		await editTeamProfileAction(
+			{ ...DEFAULT_EDIT_FIELDS },
+			{ user: "regular", params: { customUrl: "team-1" } },
+		);
+
+		const team = await TeamRepository.findByCustomUrl("team-1");
+		expect(team?.avatarImgId).toBeNull();
+		expect(await imageExists(imageId)).toBe(false);
+	});
+
+	it("keeps the submitted image row when an existing image is unchanged", async () => {
+		const imageId = await addTeamAvatar();
+
+		await editTeamProfileAction(
+			{
+				...DEFAULT_EDIT_FIELDS,
+				logo: {
+					type: "EXISTING",
+					imgId: imageId,
+					url: "https://example.com/test-avatar.jpg",
+				},
+			},
+			{ user: "regular", params: { customUrl: "team-1" } },
+		);
+
+		const team = await TeamRepository.findByCustomUrl("team-1");
+		expect(team?.avatarImgId).toBe(imageId);
+		expect(await imageExists(imageId)).toBe(true);
 	});
 });

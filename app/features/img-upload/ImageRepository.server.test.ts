@@ -397,6 +397,49 @@ describe("countUnvalidatedBySubmitterUserId", () => {
 	});
 });
 
+describe("countAllUnvalidatedBySubmitterUserId", () => {
+	beforeEach(async () => {
+		imageCounter = 0;
+		await dbInsertUsers(3);
+	});
+
+	afterEach(() => {
+		dbReset();
+	});
+
+	test("counts unvalidated images not associated with any entity", async () => {
+		await createImage({ submitterUserId: 1 });
+		await createImage({ submitterUserId: 1 });
+
+		const count = await ImageRepository.countAllUnvalidatedBySubmitterUserId(1);
+
+		expect(count).toBe(2);
+	});
+
+	test("does not count validated images", async () => {
+		await createImage({ submitterUserId: 1, validatedAt: Date.now() });
+
+		const count = await ImageRepository.countAllUnvalidatedBySubmitterUserId(1);
+
+		expect(count).toBe(0);
+	});
+
+	test("does not count images from other submitters", async () => {
+		await createImage({ submitterUserId: 1 });
+		await createImage({ submitterUserId: 2 });
+
+		const count = await ImageRepository.countAllUnvalidatedBySubmitterUserId(1);
+
+		expect(count).toBe(1);
+	});
+
+	test("returns 0 when user has no unvalidated images", async () => {
+		const count = await ImageRepository.countAllUnvalidatedBySubmitterUserId(1);
+
+		expect(count).toBe(0);
+	});
+});
+
 describe("validateImage", () => {
 	beforeEach(async () => {
 		imageCounter = 0;

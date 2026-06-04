@@ -1,13 +1,13 @@
-import { SquarePen, Star, Users } from "lucide-react";
+import { LogOut, Menu, SquarePen, Star, Trash2, Users } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useMatches } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
+import { SendouDialog } from "~/components/elements/Dialog";
+import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { WeaponImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
-import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import type { TeamLoaderData } from "~/features/team/loaders/t.$customUrl.server";
 import { useHasRole } from "~/modules/permissions/hooks";
@@ -64,38 +64,8 @@ function ActionButtons() {
 		return null;
 	}
 
-	const isMainTeam = team.members.find(
-		(member) => user?.id === member.id && member.isMainTeam,
-	);
-
 	return (
 		<div className={styles.actionButtons}>
-			{isTeamMember({ user, team }) && !isMainTeam ? (
-				<ChangeMainTeamButton />
-			) : null}
-			{isTeamMember({ user, team }) && team.members.length > 1 ? (
-				<FormWithConfirm
-					dialogHeading={`${t(
-						isTeamOwner({ user, team })
-							? "team:leaveTeam.header.newOwner"
-							: "team:leaveTeam.header",
-						{
-							teamName: team.name,
-							newOwner: resolveNewOwner(team.members)?.username,
-						},
-					)}`}
-					submitButtonText={t("team:actionButtons.leaveTeam.confirm")}
-					fields={[["_action", "LEAVE_TEAM"]]}
-				>
-					<SendouButton
-						size="small"
-						variant="destructive"
-						data-testid="leave-team-button"
-					>
-						{t("team:actionButtons.leaveTeam")}
-					</SendouButton>
-				</FormWithConfirm>
-			) : null}
 			{isTeamManager({ user, team }) || isAdmin ? (
 				<LinkButton
 					size="small"
@@ -120,26 +90,152 @@ function ActionButtons() {
 					{t("team:actionButtons.editTeam")}
 				</LinkButton>
 			) : null}
+			<TeamActionsMenu team={team} />
 		</div>
 	);
 }
 
-function ChangeMainTeamButton() {
-	const { t } = useTranslation(["team"]);
+function TeamActionsMenu({ team }: { team: TeamLoaderData["team"] }) {
+	const { t } = useTranslation(["common", "team"]);
+	const user = useUser();
+	const isAdmin = useHasRole("ADMIN");
 	const fetcher = useFetcher();
+	const [confirming, setConfirming] = React.useState<"LEAVE" | "DELETE" | null>(
+		null,
+	);
+
+	const isMainTeam = team.members.some(
+		(member) => user?.id === member.id && member.isMainTeam,
+	);
+	const showMainTeamIndicator = isTeamMember({ user, team }) && isMainTeam;
+	const canMakeMainTeam = isTeamMember({ user, team }) && !isMainTeam;
+	const canLeaveTeam = isTeamMember({ user, team }) && team.members.length > 1;
+	const canDeleteTeam = isTeamOwner({ user, team }) || isAdmin;
+
+	if (
+		!showMainTeamIndicator &&
+		!canMakeMainTeam &&
+		!canLeaveTeam &&
+		!canDeleteTeam
+	) {
+		return null;
+	}
+
+	const submitAction = (action: string) => {
+		fetcher.submit({ _action: action }, { method: "post" });
+		setConfirming(null);
+	};
 
 	return (
-		<fetcher.Form method="post">
-			<SubmitButton
-				_action="MAKE_MAIN_TEAM"
-				size="small"
-				variant="outlined"
-				icon={<Star />}
-				testId="make-main-team-button"
+		<>
+			<SendouMenu
+				trigger={
+					<SendouButton
+						size="small"
+						variant="outlined"
+						icon={<Menu />}
+						aria-label={t("team:actionButtons.teamActions")}
+						testId="team-actions-menu-button"
+					/>
+				}
 			>
-				{t("team:actionButtons.makeMainTeam")}
-			</SubmitButton>
-		</fetcher.Form>
+				{showMainTeamIndicator ? (
+					<SendouMenuItem
+						icon={<Star />}
+						isActive
+						isDisabled
+						data-testid="main-team-indicator"
+					>
+						{t("team:actionButtons.mainTeam")}
+					</SendouMenuItem>
+				) : null}
+				{canMakeMainTeam ? (
+					<SendouMenuItem
+						icon={<Star />}
+						onAction={() => submitAction("MAKE_MAIN_TEAM")}
+						data-testid="make-main-team-button"
+					>
+						{t("team:actionButtons.makeMainTeam")}
+					</SendouMenuItem>
+				) : null}
+				{canLeaveTeam ? (
+					<SendouMenuItem
+						icon={<LogOut />}
+						onAction={() => setConfirming("LEAVE")}
+						data-testid="leave-team-button"
+					>
+						{t("team:actionButtons.leaveTeam")}
+					</SendouMenuItem>
+				) : null}
+				{canDeleteTeam ? (
+					<SendouMenuItem
+						icon={<Trash2 />}
+						isDestructive
+						onAction={() => setConfirming("DELETE")}
+						data-testid="delete-team-button"
+					>
+						{t("team:actionButtons.deleteTeam")}
+					</SendouMenuItem>
+				) : null}
+			</SendouMenu>
+			<SendouDialog
+				isOpen={confirming === "LEAVE"}
+				onClose={() => setConfirming(null)}
+				onOpenChange={() => setConfirming(null)}
+				isDismissable
+			>
+				<ConfirmActionContent
+					heading={t(
+						isTeamOwner({ user, team })
+							? "team:leaveTeam.header.newOwner"
+							: "team:leaveTeam.header",
+						{
+							teamName: team.name,
+							newOwner: resolveNewOwner(team.members)?.username,
+						},
+					)}
+					buttonText={t("team:actionButtons.leaveTeam.confirm")}
+					onConfirm={() => submitAction("LEAVE_TEAM")}
+				/>
+			</SendouDialog>
+			<SendouDialog
+				isOpen={confirming === "DELETE"}
+				onClose={() => setConfirming(null)}
+				onOpenChange={() => setConfirming(null)}
+				isDismissable
+			>
+				<ConfirmActionContent
+					heading={t("team:deleteTeam.header", { teamName: team.name })}
+					buttonText={t("common:actions.delete")}
+					onConfirm={() => submitAction("DELETE_TEAM")}
+				/>
+			</SendouDialog>
+		</>
+	);
+}
+
+function ConfirmActionContent({
+	heading,
+	buttonText,
+	onConfirm,
+}: {
+	heading: string;
+	buttonText: string;
+	onConfirm: () => void;
+}) {
+	return (
+		<div className="stack md">
+			<h2 className="text-md text-center">{heading}</h2>
+			<div className="stack horizontal md justify-center mt-2">
+				<SendouButton
+					variant="destructive"
+					onPress={onConfirm}
+					data-testid="confirm-button"
+				>
+					{buttonText}
+				</SendouButton>
+			</div>
+		</div>
 	);
 }
 

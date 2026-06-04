@@ -1,8 +1,11 @@
 {
 	"newTeam.header": "新しいチームを作成する",
+	"editTeam.header": "",
 	"teamSearch.placeholder": "チーム・プレイヤーを検索...",
 	"actionButtons.leaveTeam": "チームを抜ける",
 	"actionButtons.makeMainTeam": "新しいメインチームを作る",
+	"actionButtons.mainTeam": "",
+	"actionButtons.teamActions": "",
 	"leaveTeam.header": "",
 	"leaveTeam.header.newOwner": "",
 	"actionButtons.leaveTeam.confirm": "チームを抜ける",

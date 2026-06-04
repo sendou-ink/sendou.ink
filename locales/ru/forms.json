@@ -2,6 +2,8 @@
 	"submit": "Опубликовать",
 	"labels.name": "Название",
 	"labels.bio": "Описание",
+	"labels.logo": "",
+	"labels.banner": "",
 	"labels.tag": "",
 	"labels.teamBsky": "Bluesky команды",
 	"labels.clockFormat": "",

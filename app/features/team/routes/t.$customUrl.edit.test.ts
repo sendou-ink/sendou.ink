@@ -1,27 +1,25 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-	assertResponseErrored,
-	dbInsertUsers,
-	dbReset,
-	wrappedAction,
-} from "~/utils/Test";
+import { dbInsertUsers, dbReset, wrappedAction } from "~/utils/Test";
 import { action as teamIndexPageAction } from "../actions/t.new.server";
 import { action as _editTeamAction } from "../routes/t.$customUrl.edit";
-import type { createTeamSchema } from "../team-schemas";
-import type { editTeamSchema } from "../team-schemas.server";
+import type { createTeamSchema, editTeamFormSchema } from "../team-schemas";
 
 const createTeamAction = wrappedAction<typeof createTeamSchema>({
 	action: teamIndexPageAction,
 	isJsonSubmission: true,
 });
 
-const editTeamAction = wrappedAction<typeof editTeamSchema>({
+const editTeamAction = wrappedAction<typeof editTeamFormSchema>({
 	action: _editTeamAction,
 	isJsonSubmission: true,
 });
 
 const DEFAULT_FIELDS = {
+	tag: null,
+	bsky: null,
 	bio: null,
+	logo: null,
+	banner: null,
 } as any;
 
 describe("team creation", () => {
@@ -45,13 +43,13 @@ describe("team creation", () => {
 			{ user: "regular", params: { customUrl: "team-1" } },
 		);
 
-		expect(res.errors[0]).toBe("forms:errors.duplicateName");
+		expect(res.fieldErrors.name).toBe("forms:errors.duplicateName");
 	});
 
 	it("prevents editing team name to only special characters", async () => {
 		await createTeamAction({ name: "Team 1" }, { user: "regular" });
 
-		const response = await editTeamAction(
+		const res = await editTeamAction(
 			{
 				_action: "EDIT",
 				name: "𝓢𝓲𝓵",
@@ -60,6 +58,6 @@ describe("team creation", () => {
 			{ user: "regular", params: { customUrl: "team-1" } },
 		);
 
-		assertResponseErrored(response);
+		expect(res.fieldErrors.name).toBe("forms:errors.noOnlySpecialCharacters");
 	});
 });

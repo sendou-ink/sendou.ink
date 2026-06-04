@@ -1,8 +1,11 @@
 {
 	"newTeam.header": "Criando um novo time",
+	"editTeam.header": "",
 	"teamSearch.placeholder": "Pesquisar por um time ou jogador...",
 	"actionButtons.leaveTeam": "Sair do Time",
 	"actionButtons.makeMainTeam": "",
+	"actionButtons.mainTeam": "",
+	"actionButtons.teamActions": "",
 	"leaveTeam.header": "",
 	"leaveTeam.header.newOwner": "",
 	"actionButtons.leaveTeam.confirm": "Sair",

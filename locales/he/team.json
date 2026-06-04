@@ -1,8 +1,11 @@
 {
 	"newTeam.header": "יצירת צוות חדש",
+	"editTeam.header": "",
 	"teamSearch.placeholder": "חיפוש צוות או שחקן...",
 	"actionButtons.leaveTeam": "לעזוב צוות",
 	"actionButtons.makeMainTeam": "",
+	"actionButtons.mainTeam": "",
+	"actionButtons.teamActions": "",
 	"leaveTeam.header": "",
 	"leaveTeam.header.newOwner": "",
 	"actionButtons.leaveTeam.confirm": "לעזוב",

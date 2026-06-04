@@ -11,6 +11,7 @@ import {
 	timeString,
 	weaponSplId,
 } from "~/utils/zod";
+import { imageValue } from "./image-field";
 import type {
 	BadgeOption,
 	FieldWithOptions,
@@ -77,6 +78,20 @@ function prefixItems<V extends string>(
 		...item,
 		label: typeof item.label === "string" ? `forms:${item.label}` : item.label,
 	}));
+}
+
+export function image(args: {
+	label: FormsTranslationKey;
+	dimensions?: "logo" | "thick-banner" | { width: number; height: number };
+}) {
+	// clone so each field gets its own registry entry (the shared `imageValue`
+	// instance would otherwise have its metadata overwritten by later fields)
+	return imageValue.clone().register(formRegistry, {
+		label: prefixKey(args.label),
+		dimensions: args.dimensions ?? "logo",
+		type: "image",
+		initialValue: null,
+	});
 }
 
 export function customField<T extends z.ZodType>(

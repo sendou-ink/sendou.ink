@@ -2147,6 +2147,16 @@ function FormFieldsSection({ id }: { id: string }) {
 							<FormField name="user" />
 						</ComponentRow>
 
+						<Divider smallText>Image Fields</Divider>
+
+						<ComponentRow label="image (logo, default)">
+							<FormField name="logo" />
+						</ComponentRow>
+
+						<ComponentRow label="image (thick-banner)">
+							<FormField name="banner" />
+						</ComponentRow>
+
 						<Divider smallText>Custom Field</Divider>
 
 						<ComponentRow label="customField">
