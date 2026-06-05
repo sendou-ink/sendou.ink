@@ -16,6 +16,7 @@ import {
 	isNotVisible,
 	navigate,
 	seed,
+	submit,
 	test,
 	waitForPOSTResponse,
 } from "./helpers/playwright";
@@ -91,6 +92,103 @@ test.describe("Settings", () => {
 		expect(newTime).not.toMatch(/AM|PM/);
 		expect(newTime).not.toBe(initialTime);
 		expect(newTime).toContain(":");
+	});
+});
+
+const AVOIDED_MODE_POOL_ERROR =
+	"Can't have map pool for a mode that was avoided";
+
+const setModePreference = (
+	page: Page,
+	mode: string,
+	preference: "Avoid" | "Neutral" | "Prefer",
+) => {
+	const name =
+		preference === "Neutral"
+			? "Neutral towards the mode"
+			: `${preference} the mode`;
+	return page
+		.getByRole("radiogroup", { name: `Select preference towards ${mode}` })
+		.getByRole("radio", { name })
+		.click({ force: true });
+};
+
+const mapButton = (page: Page, mode: string, stageId: number) =>
+	page.getByTestId(`map-pool-${mode}-${stageId}`);
+
+const selectModeTab = (page: Page, mode: string) =>
+	page.getByTestId(`map-pool-mode-tab-${mode}`).click();
+
+const SELECTED_MAP_CLASS = /mapButtonGreyedOut/;
+
+// The seeded user already has random map pools, so empty the mode's pool to get
+// a known starting state. Only currently selected (greyed, non-banned) stages
+// are clickable to deselect.
+const clearMapPool = async (page: Page, mode: string) => {
+	const picked = page.locator(
+		`[data-testid^="map-pool-${mode}-"][class*="mapButtonGreyedOut"]:not([disabled])`,
+	);
+	for (let count = await picked.count(); count > 0; count--) {
+		// the selected-state check icon overlays the button and intercepts clicks
+		await picked.first().click({ force: true });
+		await expect(picked).toHaveCount(count - 1);
+	}
+};
+
+test.describe("Match profile map preferences", () => {
+	test("retains map selection when toggling a mode prefer -> avoid -> prefer", async ({
+		page,
+	}) => {
+		await seed(page);
+		await impersonate(page);
+		await navigate({ page, url: SETTINGS_PAGE });
+
+		await setModePreference(page, "SZ", "Prefer");
+		await selectModeTab(page, "SZ");
+		await clearMapPool(page, "SZ");
+		await mapButton(page, "SZ", 1).click();
+		await expect(mapButton(page, "SZ", 1)).toHaveClass(SELECTED_MAP_CLASS);
+
+		// avoiding hides the picker, but the selection should be remembered
+		await setModePreference(page, "SZ", "Avoid");
+		await isNotVisible(mapButton(page, "SZ", 1));
+
+		await setModePreference(page, "SZ", "Prefer");
+		await selectModeTab(page, "SZ");
+		await expect(mapButton(page, "SZ", 1)).toHaveClass(SELECTED_MAP_CLASS);
+	});
+
+	test("can save 'zones only' after a now-avoided mode previously had a map pool", async ({
+		page,
+	}) => {
+		await seed(page);
+		await impersonate(page);
+		await navigate({ page, url: SETTINGS_PAGE });
+
+		// Save a map pool for both SZ and TC (stage 2 is not banned in TC).
+		await setModePreference(page, "SZ", "Prefer");
+		await selectModeTab(page, "SZ");
+		await clearMapPool(page, "SZ");
+		await mapButton(page, "SZ", 1).click();
+		await setModePreference(page, "TC", "Prefer");
+		await selectModeTab(page, "TC");
+		await clearMapPool(page, "TC");
+		await mapButton(page, "TC", 2).click();
+		await submit(page);
+
+		// Switch to "zones only" by avoiding every mode except SZ, then save.
+		await setModePreference(page, "TW", "Avoid");
+		await setModePreference(page, "TC", "Avoid");
+		await setModePreference(page, "RM", "Avoid");
+		await setModePreference(page, "CB", "Avoid");
+		await submit(page);
+
+		// Reload so the form loads the persisted preferences. The previously saved
+		// TC pool must not resurface as an invalid "pool for an avoided mode".
+		await navigate({ page, url: SETTINGS_PAGE });
+
+		await submit(page);
+		await isNotVisible(page.getByText(AVOIDED_MODE_POOL_ERROR));
 	});
 });
 

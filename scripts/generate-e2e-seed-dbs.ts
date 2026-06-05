@@ -39,6 +39,14 @@ async function generatePreSeededDatabases() {
 		// biome-ignore lint/suspicious/noConsole: CLI script output
 		console.log(`Generating ${variation}...`);
 
+		// remove stale WAL/SHM sidecars so a fresh copy isn't paired with a leftover
+		// WAL from a previously crashed run (which reads as "database disk image is malformed")
+		for (const sidecar of [`${outputPath}-wal`, `${outputPath}-shm`]) {
+			if (fs.existsSync(sidecar)) {
+				fs.unlinkSync(sidecar);
+			}
+		}
+
 		fs.copyFileSync(baseDbPath, outputPath);
 
 		execSync(

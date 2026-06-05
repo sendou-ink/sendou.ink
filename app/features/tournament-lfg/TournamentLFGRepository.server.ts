@@ -4,7 +4,10 @@ import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
-import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
+import {
+	concatUserSubmittedImagePrefix,
+	matchProfileWeapons,
+} from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { randomTeamName } from "~/utils/team-name";
 
@@ -66,7 +69,11 @@ type TournamentLFGMemberObject = {
 	pronouns: Tables["User"]["pronouns"];
 	role: Tables["TournamentTeamMember"]["role"];
 	isStayAsSub: Tables["TournamentTeamMember"]["isStayAsSub"];
-	weapons: Tables["User"]["weaponPool"];
+	weapons:
+		| (Pick<Tables["UserWeaponPool"], "weaponSplId" | "isFavorite"> & {
+				isTenStar: number;
+		  })[]
+		| null;
 	plusTier: Tables["PlusTier"]["tier"] | null;
 };
 
@@ -106,7 +113,7 @@ export async function findLookingTeamsByTournamentId(tournamentId: number) {
 						pronouns: eb.ref("User.pronouns"),
 						role: eb.ref("TournamentTeamMember.role"),
 						isStayAsSub: eb.ref("TournamentTeamMember.isStayAsSub"),
-						weapons: eb.ref("User.weaponPool"),
+						weapons: matchProfileWeapons(eb),
 						plusTier: eb.ref("PlusTier.tier"),
 					}),
 				])
@@ -145,7 +152,7 @@ export async function findSubGroups(tournamentId: number) {
 						pronouns: eb.ref("User.pronouns"),
 						role: eb.ref("TournamentTeamMember.role"),
 						isStayAsSub: eb.ref("TournamentTeamMember.isStayAsSub"),
-						weapons: eb.ref("User.weaponPool"),
+						weapons: matchProfileWeapons(eb),
 						plusTier: eb.ref("PlusTier.tier"),
 					}),
 				])

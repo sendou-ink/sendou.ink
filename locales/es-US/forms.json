@@ -2,6 +2,8 @@
 	"submit": "Finalizar",
 	"labels.name": "Nombre",
 	"labels.bio": "Biografía",
+	"labels.logo": "",
+	"labels.banner": "",
 	"labels.tag": "",
 	"labels.teamBsky": "",
 	"labels.clockFormat": "",

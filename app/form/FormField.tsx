@@ -7,6 +7,7 @@ import { BadgesFormField } from "./fields/BadgesFormField";
 import { DatetimeFormField } from "./fields/DatetimeFormField";
 import { DualSelectFormField } from "./fields/DualSelectFormField";
 import { FieldsetFormField } from "./fields/FieldsetFormField";
+import { ImageFormField } from "./fields/ImageFormField";
 import { InputFormField } from "./fields/InputFormField";
 import {
 	CheckboxGroupFormField,
@@ -25,6 +26,7 @@ import {
 	type WeaponPoolItem,
 } from "./fields/WeaponPoolFormField";
 import { WeaponSelectFormField } from "./fields/WeaponSelectFormField";
+import type { ImageFieldValue } from "./image-field";
 import { useOptionalFormFieldContext } from "./SendouForm";
 import type {
 	ArrayItemRenderContext,
@@ -292,6 +294,17 @@ export function FormField({
 				{...formField}
 				value={value as WeaponPoolItem[]}
 				onChange={handleChange as (v: WeaponPoolItem[]) => void}
+			/>
+		);
+	}
+
+	if (formField.type === "image") {
+		return (
+			<ImageFormField
+				{...commonProps}
+				{...formField}
+				value={value as ImageFieldValue}
+				onChange={handleChange as (v: ImageFieldValue) => void}
 			/>
 		);
 	}

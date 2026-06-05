@@ -463,8 +463,7 @@ function WeaponPool() {
 					<div key={weapon.weaponSplId} className={styles.weapon}>
 						<WeaponImage
 							testId={`${weapon.weaponSplId}-${i + 1}`}
-							weaponSplId={weapon.weaponSplId}
-							variant={weapon.isFavorite ? "badge-5-star" : "badge"}
+							weapon={weapon}
 							width={38}
 							height={38}
 						/>

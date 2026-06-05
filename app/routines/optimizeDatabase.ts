@@ -1,9 +1,10 @@
-import { sql } from "../db/sql";
+import { CompiledQuery } from "kysely";
+import { db } from "../db/sql";
 import { Routine } from "./routine.server";
 
 export const OptimizeDatabaseRoutine = new Routine({
 	name: "OptimizeDatabase",
 	func: async () => {
-		sql.pragma("optimize");
+		await db.executeQuery(CompiledQuery.raw("PRAGMA optimize"));
 	},
 });

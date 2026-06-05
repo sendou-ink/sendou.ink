@@ -2,8 +2,13 @@ import type { NotNull, Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, TablesInsertable } from "~/db/tables";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { assertUnreachable } from "~/utils/types";
 
 export function createMany(
 	weapons: TablesInsertable["ReportedWeapon"][],
@@ -243,4 +248,139 @@ export async function seasonReportedWeaponsByUserId({
 		.execute();
 
 	return rows;
+}
+
+export interface WeaponUsageStat {
+	type: "SELF" | "MATE" | "ENEMY";
+	weaponSplId: MainWeaponId;
+	count: number;
+	wins: number;
+	losses: number;
+}
+
+/**
+ * Reports how often a user and the mates/enemies they played against used each
+ * weapon on a given stage and mode during a season, along with win/loss counts.
+ */
+export async function weaponUsageStats({
+	userId,
+	mode,
+	stageId,
+	season,
+}: {
+	userId: number;
+	mode: ModeShort;
+	stageId: StageId;
+	season: number;
+}): Promise<WeaponUsageStat[]> {
+	const { starts, ends } = Seasons.nthToDateRange(season);
+
+	const rows = await db
+		.selectFrom("GroupMember")
+		.leftJoin("Group", "Group.id", "GroupMember.groupId")
+		.innerJoin("GroupMatch", (join) =>
+			join.on((eb) =>
+				eb.or([
+					eb("GroupMatch.alphaGroupId", "=", eb.ref("Group.id")),
+					eb("GroupMatch.bravoGroupId", "=", eb.ref("Group.id")),
+				]),
+			),
+		)
+		.leftJoin("GroupMatchMap", "GroupMatchMap.matchId", "GroupMatch.id")
+		.innerJoin("ReportedWeapon", (join) =>
+			join
+				.onRef("ReportedWeapon.groupMatchId", "=", "GroupMatch.id")
+				.onRef("ReportedWeapon.mapIndex", "=", "GroupMatchMap.index"),
+		)
+		.select((eb) => [
+			"ReportedWeapon.weaponSplId",
+			"ReportedWeapon.userId as weaponUserId",
+			"GroupMatchMap.winnerGroupId",
+			"GroupMember.groupId as ownerGroupId",
+			eb
+				.selectFrom("GroupMember as weaponGroupMember")
+				.select("weaponGroupMember.groupId")
+				.where((weaponEb) =>
+					weaponEb.or([
+						weaponEb.and([
+							weaponEb(
+								"weaponGroupMember.userId",
+								"=",
+								eb.ref("ReportedWeapon.userId"),
+							),
+							weaponEb(
+								"weaponGroupMember.groupId",
+								"=",
+								eb.ref("GroupMatch.alphaGroupId"),
+							),
+						]),
+						weaponEb(
+							"weaponGroupMember.groupId",
+							"=",
+							eb.ref("GroupMatch.bravoGroupId"),
+						),
+					]),
+				)
+				.as("weaponUserGroupId"),
+		])
+		.where("GroupMember.userId", "=", userId)
+		.where("GroupMatch.createdAt", ">=", dateToDatabaseTimestamp(starts))
+		.where("GroupMatch.createdAt", "<=", dateToDatabaseTimestamp(ends))
+		.where("GroupMatchMap.mode", "=", mode)
+		.where("GroupMatchMap.stageId", "=", stageId)
+		.where("GroupMatchMap.winnerGroupId", "is not", null)
+		.execute();
+
+	const result: WeaponUsageStat[] = [];
+
+	const addDelta = (
+		stat: Omit<WeaponUsageStat, "count" | "wins" | "losses"> & { won: boolean },
+	) => {
+		const existing = result.find(
+			(s) => s.weaponSplId === stat.weaponSplId && s.type === stat.type,
+		);
+
+		if (existing) {
+			existing.count += 1;
+			if (stat.won) {
+				existing.wins += 1;
+			} else {
+				existing.losses += 1;
+			}
+		} else {
+			result.push({
+				...stat,
+				count: 1,
+				wins: stat.won ? 1 : 0,
+				losses: stat.won ? 0 : 1,
+			});
+		}
+	};
+
+	for (const row of rows) {
+		const type =
+			row.weaponUserId === userId
+				? "SELF"
+				: row.weaponUserGroupId === row.ownerGroupId
+					? "MATE"
+					: "ENEMY";
+
+		const won = () => {
+			const targetWon = row.winnerGroupId === row.ownerGroupId;
+
+			if (type === "SELF") return targetWon;
+			if (type === "MATE") return targetWon;
+			if (type === "ENEMY") return !targetWon;
+
+			assertUnreachable(type);
+		};
+
+		addDelta({
+			type,
+			weaponSplId: row.weaponSplId,
+			won: won(),
+		});
+	}
+
+	return result.sort((a, b) => b.count - a.count);
 }

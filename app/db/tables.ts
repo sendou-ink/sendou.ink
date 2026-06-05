@@ -1150,6 +1150,18 @@ export interface UserWeapon {
 	weaponSplId: MainWeaponId;
 }
 
+export interface UserWeaponPool {
+	userId: number;
+	sortOrder: number;
+	weaponSplId: MainWeaponId;
+	isFavorite: Generated<DBBoolean>;
+}
+
+export interface TenStarWeapon {
+	userId: number;
+	weaponSplId: MainWeaponId;
+}
+
 export interface UserFriendCode {
 	friendCode: string;
 	userId: number;
@@ -1492,6 +1504,8 @@ export interface DB {
 	UserResultHighlight: UserResultHighlight;
 	UserSubmittedImage: UserSubmittedImage;
 	UserWeapon: UserWeapon;
+	UserWeaponPool: UserWeaponPool;
+	TenStarWeapon: TenStarWeapon;
 	UserFriendCode: UserFriendCode;
 	UserWidget: UserWidget;
 	Video: Video;

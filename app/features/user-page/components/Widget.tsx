@@ -225,15 +225,8 @@ export function Widget({
 					<Builds builds={widget.data} />
 				);
 			case "weapon-pool":
-				return widget.data.weapons.length === 0 ? null : (
-					<WeaponPool
-						weapons={
-							widget.data.weapons as Array<{
-								id: MainWeaponId;
-								isFavorite: boolean;
-							}>
-						}
-					/>
+				return widget.data.length === 0 ? null : (
+					<WeaponPool weapons={widget.data} />
 				);
 			case "sens":
 				return <SensWidget data={widget.data} />;
@@ -618,19 +611,18 @@ function Builds({
 function WeaponPool({
 	weapons,
 }: {
-	weapons: Array<{ id: MainWeaponId; isFavorite: boolean }>;
+	weapons: Array<{
+		weaponSplId: MainWeaponId;
+		isFavorite: number;
+		isTenStar: number;
+	}>;
 }) {
 	return (
 		<div className="stack horizontal sm justify-center flex-wrap">
 			{weapons.map((weapon) => {
 				return (
-					<div key={weapon.id} className="u__weapon">
-						<WeaponImage
-							weaponSplId={weapon.id}
-							variant={weapon.isFavorite ? "badge-5-star" : "badge"}
-							width={38}
-							height={38}
-						/>
+					<div key={weapon.weaponSplId} className="u__weapon">
+						<WeaponImage weapon={weapon} width={38} height={38} />
 					</div>
 				);
 			})}

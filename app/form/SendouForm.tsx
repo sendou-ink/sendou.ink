@@ -108,15 +108,15 @@ export function SendouForm<T extends z.ZodRawShape>({
 	const { t } = useTranslation(["forms"]);
 	const fetcher = useFetcher<{ fieldErrors?: Record<string, string> }>();
 	const [hasSubmitted, setHasSubmitted] = React.useState(false);
+	const initialValues = buildInitialValues(schema, defaultValues);
 	const [clientErrors, setClientErrors] = React.useState<
 		Partial<Record<string, string>>
-	>({});
+	>(() => (autoApply ? computeInitialErrors(schema, initialValues) : {}));
 	const [visibleServerErrors, setVisibleServerErrors] = React.useState<
 		Partial<Record<string, string>>
 	>(fetcher.data?.fieldErrors ?? {});
 	const [fallbackError, setFallbackError] = React.useState<string | null>(null);
 
-	const initialValues = buildInitialValues(schema, defaultValues);
 	const [values, setValues] =
 		React.useState<Record<string, unknown>>(initialValues);
 
@@ -319,7 +319,11 @@ export function SendouForm<T extends z.ZodRawShape>({
 	const onFieldChange =
 		autoSubmit || autoApply
 			? (changedName: string, changedValue: unknown) => {
-					const updatedValues = { ...values, [changedName]: changedValue };
+					const isNestedPath =
+						changedName.includes(".") || changedName.includes("[");
+					const updatedValues = isNestedPath
+						? setNestedValue(values, changedName, changedValue)
+						: { ...values, [changedName]: changedValue };
 
 					const newErrors: Record<string, string> = {};
 					for (const key of Object.keys(schema.shape)) {
@@ -329,14 +333,12 @@ export function SendouForm<T extends z.ZodRawShape>({
 						}
 					}
 
-					if (Object.keys(newErrors).length > 0) {
-						setClientErrors(newErrors);
-						return;
-					}
+					setClientErrors(newErrors);
+					const hasFieldErrors = Object.keys(newErrors).length > 0;
 
 					if (autoApply && onApply) {
 						onApply(updatedValues as z.infer<z.ZodObject<T>>);
-					} else if (autoSubmit) {
+					} else if (autoSubmit && !hasFieldErrors) {
 						fetcher.submit(
 							addRevalidateRoot(updatedValues) as Record<string, string>,
 							{
@@ -457,6 +459,18 @@ export function SendouForm<T extends z.ZodRawShape>({
 			)}
 		</FormContext.Provider>
 	);
+}
+
+function computeInitialErrors<T extends z.ZodRawShape>(
+	schema: z.ZodObject<T>,
+	values: Record<string, unknown>,
+): Partial<Record<string, string>> {
+	const errors: Record<string, string> = {};
+	for (const key of Object.keys(schema.shape)) {
+		const error = validateField(schema, key, values[key]);
+		if (error) errors[key] = error;
+	}
+	return errors;
 }
 
 function buildInitialValues<T extends z.ZodRawShape>(

@@ -482,6 +482,9 @@ export const outlinedMainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
 export const outlinedFiveStarMainWeaponImageUrl = (
 	mainWeaponSplId: MainWeaponId,
 ) => `/static-assets/img/main-weapons-outlined-2/${mainWeaponSplId}`;
+export const outlinedTenStarMainWeaponImageUrl = (
+	mainWeaponSplId: MainWeaponId,
+) => `/static-assets/img/main-weapons-outlined-3/${mainWeaponSplId}`;
 export const subWeaponImageUrl = (subWeaponSplId: SubWeaponId) =>
 	`/static-assets/img/sub-weapons/${subWeaponSplId}`;
 export const specialWeaponImageUrl = (specialWeaponSplId: SpecialWeaponId) =>
@@ -502,7 +505,7 @@ export const stageImageUrl = (stageId: StageId) =>
 export const stageBannerImageUrl = (stageId: StageId) =>
 	`/static-assets/img/stage-banners/${stageId}.avif`;
 export const tierImageUrl = (tier: TierName | "CALCULATING") =>
-	`/static-assets/img/tiers/${tier.toLowerCase()}`;
+	`/static-assets/img/tiers/${tier === "CALCULATING" ? "unranked" : tier.toLowerCase()}`;
 export const controllerImageUrl = (controller: string) =>
 	`/static-assets/img/controllers/${controller}.avif`;
 export const preferenceEmojiUrl = (preference?: Preference) => {

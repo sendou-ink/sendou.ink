@@ -8,7 +8,7 @@ import {
 	userIdsToIdentifier,
 } from "~/features/mmr/mmr-utils";
 import { getBracketProgressionLabel } from "~/features/tournament/tournament-utils";
-import type { AllMatchResult } from "~/features/tournament-match/queries/allMatchResultsByTournamentId.server";
+import type { AllMatchResult } from "~/features/tournament-match/TournamentMatchRepository.server";
 import { matchEndedEarly } from "~/features/tournament-match/tournament-match-utils";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";

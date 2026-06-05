@@ -6,7 +6,7 @@ import type { ModeWithStage } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { seededRandom } from "~/utils/random";
 import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
-import type { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
+import type { findResultsByMatchId } from "../TournamentMatchRepository.server";
 
 export async function executeRoll({
 	matchId,
@@ -22,7 +22,7 @@ export async function executeRoll({
 	pickBanEvents: Awaited<
 		ReturnType<typeof TournamentRepository.pickBanEventsByMatchId>
 	>;
-	results: ReturnType<typeof findResultsByMatchId>;
+	results: Awaited<ReturnType<typeof findResultsByMatchId>>;
 	tournamentId: number;
 	teams: [TournamentDataTeam, TournamentDataTeam];
 	tieBreakerMapPool: ModeWithStage[];

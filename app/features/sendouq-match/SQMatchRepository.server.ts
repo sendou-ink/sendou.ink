@@ -13,6 +13,7 @@ import invariant from "~/utils/invariant";
 import {
 	COMMON_USER_FIELDS,
 	concatUserSubmittedImagePrefix,
+	matchProfileWeapons,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import type { Unpacked } from "~/utils/types";
@@ -144,7 +145,7 @@ function groupWithTeamAndMembers(
 							"User.vc",
 							"User.languages",
 							"User.noScreen",
-							"User.weaponPool as weapons",
+							matchProfileWeapons(arrayEb).as("weapons"),
 							"User.mapModePreferences",
 							"PlusTier.tier as plusTier",
 							"GroupMatchContinueVote.isContinuing",

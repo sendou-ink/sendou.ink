@@ -1,21 +1,14 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import { parseFormDataWithImages } from "~/form/parse.server";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
-import {
-	errorToastIfFalsy,
-	notFoundIfFalsy,
-	parseRequestPayload,
-} from "~/utils/remix.server";
+import { errorToastIfFalsy, notFoundIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { mySlugify, teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
-import { editTeamSchema, teamParamsSchema } from "../team-schemas.server";
-import {
-	canAddCustomizedColors,
-	isTeamManager,
-	isTeamOwner,
-} from "../team-utils";
+import { editTeamActionSchema, teamParamsSchema } from "../team-schemas.server";
+import { canAddCustomizedColors, isTeamManager } from "../team-utils";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
@@ -28,17 +21,16 @@ export const action: ActionFunction = async ({ request, params }) => {
 		"You are not a team manager",
 	);
 
-	const data = await parseRequestPayload({
+	const result = await parseFormDataWithImages({
 		request,
-		schema: editTeamSchema,
+		schema: editTeamActionSchema,
 	});
 
-	if (data._action.includes("DELETE")) {
-		errorToastIfFalsy(
-			isTeamOwner({ team, user }) || user.roles.includes("ADMIN"),
-			"You are not the team owner",
-		);
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
 	}
+
+	const data = result.data;
 
 	switch (data._action) {
 		case "UPDATE_CUSTOM_THEME": {
@@ -47,49 +39,32 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Team does not have custom theme access",
 			);
 
-			const customTheme = data.newValue
-				? clampThemeToGamut(data.newValue)
-				: null;
-
 			await TeamRepository.updateCustomTheme({
 				id: team.id,
-				customTheme,
+				customTheme: data.newValue ? clampThemeToGamut(data.newValue) : null,
 			});
 
 			return { ok: true };
 		}
-		case "DELETE_TEAM": {
-			await TeamRepository.del(team.id);
-			throw redirect("/");
-		}
-		case "DELETE_AVATAR": {
-			await TeamRepository.removeTeamImage(team.id, "avatar");
-			throw redirect(teamPage(team.customUrl));
-		}
-		case "DELETE_BANNER": {
-			await TeamRepository.removeTeamImage(team.id, "banner");
-			throw redirect(teamPage(team.customUrl));
-		}
 		case "EDIT": {
 			const newCustomUrl = mySlugify(data.name);
-
-			errorToastIfFalsy(
-				newCustomUrl.length > 0,
-				"Team name can't be only special characters",
-			);
-
 			const teams = await TeamRepository.findAllUndisbanded();
 			const duplicateTeam = teams.find(
 				(t) => t.customUrl === newCustomUrl && t.customUrl !== team.customUrl,
 			);
 
 			if (duplicateTeam) {
-				return { errors: ["forms:errors.duplicateName"] };
+				return { fieldErrors: { name: "forms:errors.duplicateName" } };
 			}
 
 			const updatedTeam = await TeamRepository.update({
 				id: team.id,
-				...data,
+				name: data.name,
+				bio: data.bio,
+				bsky: data.bsky,
+				tag: data.tag,
+				avatarImgId: data.logo,
+				bannerImgId: data.banner,
 			});
 
 			throw redirect(teamPage(updatedTeam.customUrl));

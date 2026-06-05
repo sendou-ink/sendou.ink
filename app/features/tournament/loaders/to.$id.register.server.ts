@@ -4,7 +4,6 @@ import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server"
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
-import { findMapPoolByTeamId } from "~/features/tournament-bracket/queries/findMapPoolByTeamId.server";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
 
@@ -33,7 +32,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	}
 
 	return {
-		mapPool: findMapPoolByTeamId(ownTeam.id),
+		mapPool: ownTeam.mapPool,
 		friendPlayers: await SQGroupRepository.friendsAndTeammates(user.id),
 		teams: await TeamRepository.findAllMemberOfByUserId(user.id),
 		isSaved: false,

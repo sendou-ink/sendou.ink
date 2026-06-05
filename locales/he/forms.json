@@ -2,6 +2,8 @@
 	"submit": "שליחה",
 	"labels.name": "שם",
 	"labels.bio": "ביו",
+	"labels.logo": "",
+	"labels.banner": "",
 	"labels.tag": "",
 	"labels.teamBsky": "",
 	"labels.clockFormat": "",

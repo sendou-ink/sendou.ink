@@ -2,6 +2,8 @@
 	"submit": "Invia",
 	"labels.name": "Nome",
 	"labels.bio": "Biografia",
+	"labels.logo": "",
+	"labels.banner": "",
 	"labels.tag": "",
 	"labels.teamBsky": "Bluesky del team",
 	"labels.clockFormat": "",

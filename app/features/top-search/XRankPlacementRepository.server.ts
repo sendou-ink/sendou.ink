@@ -140,3 +140,46 @@ export async function refreshAllPeakXp() {
 		}))
 		.execute();
 }
+
+const MIN_RANK_WEST = 100;
+
+export async function refreshTenStarWeapons(userId?: number) {
+	await db.transaction().execute(async (trx) => {
+		await trx
+			.deleteFrom("TenStarWeapon")
+			.$if(userId !== undefined, (qb) => qb.where("userId", "=", userId!))
+			.execute();
+
+		await trx
+			.insertInto("TenStarWeapon")
+			.columns(["userId", "weaponSplId"])
+			.expression(
+				trx
+					.selectFrom("XRankPlacement")
+					.innerJoin(
+						"SplatoonPlayer",
+						"XRankPlacement.playerId",
+						"SplatoonPlayer.id",
+					)
+					.select([
+						sql<number>`"SplatoonPlayer"."userId"`.as("userId"),
+						"XRankPlacement.weaponSplId",
+					])
+					.distinct()
+					.where("SplatoonPlayer.userId", "is not", null)
+					.$if(userId !== undefined, (qb) =>
+						qb.where("SplatoonPlayer.userId", "=", userId!),
+					)
+					.where((eb) =>
+						eb.or([
+							eb("XRankPlacement.region", "=", "JPN"),
+							eb.and([
+								eb("XRankPlacement.region", "=", "WEST"),
+								eb("XRankPlacement.rank", "<=", MIN_RANK_WEST),
+							]),
+						]),
+					),
+			)
+			.execute();
+	});
+}

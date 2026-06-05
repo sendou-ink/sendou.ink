@@ -6,6 +6,7 @@ import {
 	datetimeRequired,
 	dayMonthYearRequired,
 	dualSelectOptional,
+	image,
 	numberFieldOptional,
 	radioGroup,
 	select,
@@ -147,6 +148,15 @@ export const formFieldsShowcaseSchema = z.object({
 	}),
 	user: userSearchOptional({
 		label: "labels.player",
+	}),
+
+	// Image fields
+	logo: image({
+		label: "labels.logo",
+	}),
+	banner: image({
+		label: "labels.banner",
+		dimensions: "thick-banner",
 	}),
 
 	// Custom field

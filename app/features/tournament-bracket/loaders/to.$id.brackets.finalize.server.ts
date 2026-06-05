@@ -12,7 +12,7 @@ import * as Standings from "~/features/tournament/core/Standings";
 import { tournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
-import { allMatchResultsByTournamentId } from "~/features/tournament-match/queries/allMatchResultsByTournamentId.server";
+import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import invariant from "~/utils/invariant";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
@@ -57,7 +57,9 @@ async function standingsWithSetParticipation(tournament: Tournament) {
 	const standingsResult = Standings.tournamentStandings(tournament);
 	const finalStandings = Standings.flattenStandings(standingsResult);
 
-	const results = allMatchResultsByTournamentId(tournament.ctx.id);
+	const results = await TournamentMatchRepository.allResultsByTournamentId(
+		tournament.ctx.id,
+	);
 	invariant(results.length > 0, "No results found");
 
 	const season = Seasons.current(tournament.ctx.startTime)?.nth;

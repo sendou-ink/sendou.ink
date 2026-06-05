@@ -2,6 +2,8 @@
 	"submit": "제출",
 	"labels.name": "이름",
 	"labels.bio": "소개",
+	"labels.logo": "",
+	"labels.banner": "",
 	"labels.tag": "",
 	"labels.teamBsky": "",
 	"labels.clockFormat": "",

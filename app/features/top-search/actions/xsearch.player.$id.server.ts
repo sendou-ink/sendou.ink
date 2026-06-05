@@ -36,6 +36,7 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 	await XRankPlacementRepository.unlinkPlayerByUserId(user.id);
 
 	await BadgeRepository.syncXPBadges();
+	await XRankPlacementRepository.refreshTenStarWeapons(user.id);
 
 	return successToast("Unlink successful");
 };

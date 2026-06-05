@@ -1,4 +1,6 @@
+import type { Transaction } from "kysely";
 import { db } from "~/db/sql";
+import type { DB, TablesInsertable } from "~/db/tables";
 import { databaseTimestampNow } from "~/utils/dates";
 import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
 import { IMAGES_TO_VALIDATE_AT_ONCE } from "./upload-constants";
@@ -121,6 +123,21 @@ export async function countUnvalidatedBySubmitterUserId(userId: number) {
 	return result.count;
 }
 
+/**
+ * Counts every unvalidated image submitted by a user, regardless of whether it is yet associated
+ * with an entity. Unlike {@link countUnvalidatedBySubmitterUserId} (team-joined), this also counts
+ * not-yet-connected orphans, so it can gate the SendouForm `image()` upload path.
+ */
+export async function countAllUnvalidatedBySubmitterUserId(userId: number) {
+	const result = await db
+		.selectFrom("UnvalidatedUserSubmittedImage")
+		.select(({ fn }) => fn.countAll<number>().as("count"))
+		.where("validatedAt", "is", null)
+		.where("submitterUserId", "=", userId)
+		.executeTakeFirstOrThrow();
+	return result.count;
+}
+
 /** Marks an image as validated by setting the current timestamp */
 export function validateImage(id: number) {
 	return db
@@ -128,6 +145,20 @@ export function validateImage(id: number) {
 		.set({ validatedAt: databaseTimestampNow() })
 		.where("id", "=", id)
 		.execute();
+}
+
+/**
+ * Inserts an unvalidated image row without associating it with any owner. Returns the inserted row.
+ */
+export function insert(
+	args: TablesInsertable["UnvalidatedUserSubmittedImage"],
+	trx: Transaction<DB> | typeof db = db,
+) {
+	return trx
+		.insertInto("UnvalidatedUserSubmittedImage")
+		.values(args)
+		.returningAll()
+		.executeTakeFirstOrThrow();
 }
 
 /** Creates a new image and associates it with a team or organization */
@@ -147,11 +178,7 @@ export function addNewImage({
 	type: ImageUploadType;
 }) {
 	return db.transaction().execute(async (trx) => {
-		const img = await trx
-			.insertInto("UnvalidatedUserSubmittedImage")
-			.values({ submitterUserId, url, validatedAt })
-			.returningAll()
-			.executeTakeFirstOrThrow();
+		const img = await insert({ submitterUserId, url, validatedAt }, trx);
 
 		if (type === "team-pfp" && teamId) {
 			await trx

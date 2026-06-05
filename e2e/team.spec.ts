@@ -1,6 +1,9 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
-import { createTeamSchema } from "~/features/team/team-schemas";
+import {
+	createTeamSchema,
+	editTeamFormSchema,
+} from "~/features/team/team-schemas";
 import { editTeamPage, teamPage, userPage } from "~/utils/urls";
 import {
 	expect,
@@ -42,16 +45,15 @@ test.describe("Team page", () => {
 
 		await page.getByTestId("edit-team-button").click();
 
-		await page.getByTestId("name-input").clear();
-		await page.getByTestId("name-input").fill("Better Alliance Rogue");
+		const form = createFormHelpers(page, editTeamFormSchema, {
+			submitTestId: "edit-team-submit-button",
+		});
 
-		await page.getByLabel("Team Bluesky").clear();
-		await page.getByLabel("Team Bluesky").fill("BetterAllianceRogue");
+		await form.fill("name", "Better Alliance Rogue");
+		await form.fill("bsky", "BetterAllianceRogue");
+		await form.fill("bio", "shorter bio");
 
-		await page.getByTestId("bio-textarea").clear();
-		await page.getByTestId("bio-textarea").fill("shorter bio");
-
-		await submit(page, "edit-team-submit-button");
+		await form.submit();
 
 		await expect(page).toHaveURL(/better-alliance-rogue/);
 		await page.getByText("shorter bio").isVisible();
@@ -86,10 +88,9 @@ test.describe("Team page", () => {
 	test("deletes team", async ({ page }) => {
 		await seed(page);
 		await impersonate(page, ADMIN_ID);
-
 		await navigate({ page, url: teamPage("alliance-rogue") });
 
-		await page.getByTestId("edit-team-button").click();
+		await page.getByTestId("team-actions-menu-button").click();
 		await page.getByTestId("delete-team-button").click();
 		await modalClickConfirmButton(page);
 
@@ -115,13 +116,15 @@ test.describe("Team page", () => {
 		await navigate({ page, url: newInviteLink });
 		await submit(page);
 
+		await page.getByTestId("team-actions-menu-button").click();
 		await page.getByTestId("leave-team-button").click();
 		await modalClickConfirmButton(page);
 
 		await navigate({ page, url: newInviteLink });
 		await submit(page);
 
-		await page.getByTestId("leave-team-button").isVisible();
+		await page.getByTestId("team-actions-menu-button").click();
+		await expect(page.getByTestId("leave-team-button")).toBeVisible();
 	});
 
 	test("joins a secondary team, makes main team & leaves making the seconary team the main one", async ({
@@ -137,7 +140,8 @@ test.describe("Team page", () => {
 		await navigate({ page, url: inviteLink });
 		await submit(page);
 
-		await submit(page, "make-main-team-button");
+		await page.getByTestId("team-actions-menu-button").click();
+		await page.getByTestId("make-main-team-button").click();
 
 		await navigate({ page, url: userPage({ discordId: ADMIN_DISCORD_ID }) });
 
@@ -146,6 +150,8 @@ test.describe("Team page", () => {
 
 		await page.getByTestId("main-team-link").click();
 
+		await page.getByTestId("team-actions-menu-button").click();
+		await expect(page.getByTestId("main-team-indicator")).toBeVisible();
 		await page.getByTestId("leave-team-button").click();
 		await modalClickConfirmButton(page);
 
@@ -171,19 +177,23 @@ test.describe("Team page", () => {
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({ page, url: editTeamPage("alliance-rogue") });
 
-		await page.getByTestId("bio-textarea").clear();
-		await page.getByTestId("bio-textarea").fill("from editor");
-		await submit(page, "edit-team-submit-button");
+		const editorForm = createFormHelpers(page, editTeamFormSchema, {
+			submitTestId: "edit-team-submit-button",
+		});
+		await editorForm.fill("bio", "from editor");
+		await editorForm.submit();
 
 		await expect(page).toHaveURL(/alliance-rogue/);
 		await page.getByText("from editor").isVisible();
 
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: teamPage("alliance-rogue") });
+		await page.getByTestId("team-actions-menu-button").click();
 		await page.getByTestId("leave-team-button").click();
 		await page.getByText("New owner will be N-ZAP").isVisible();
 		await modalClickConfirmButton(page);
 
+		await page.getByTestId("team-actions-menu-button").click();
 		await isNotVisible(page.getByTestId("leave-team-button"));
 	});
 });

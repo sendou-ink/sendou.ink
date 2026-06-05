@@ -1,8 +1,11 @@
 {
 	"newTeam.header": "创建一支新队伍",
+	"editTeam.header": "",
 	"teamSearch.placeholder": "搜索队伍或玩家...",
 	"actionButtons.leaveTeam": "退出队伍",
 	"actionButtons.makeMainTeam": "",
+	"actionButtons.mainTeam": "",
+	"actionButtons.teamActions": "",
 	"leaveTeam.header": "",
 	"leaveTeam.header.newOwner": "",
 	"actionButtons.leaveTeam.confirm": "退出",

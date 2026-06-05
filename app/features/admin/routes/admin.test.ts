@@ -417,7 +417,9 @@ describe("Account migration", () => {
 		const newUser = await UserRepository.findProfileByIdentifier("1");
 
 		expect(oldUser).toBeNull();
-		expect(newUser?.weapons).toEqual([{ weaponSplId: 1, isFavorite: 1 }]);
+		expect(newUser?.weapons).toEqual([
+			{ weaponSplId: 1, isFavorite: 1, isTenStar: 0 },
+		]);
 	});
 
 	it("deletes builds from the new user when migrating", async () => {

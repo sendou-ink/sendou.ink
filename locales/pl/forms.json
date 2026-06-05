@@ -2,6 +2,8 @@
 	"submit": "Złóż",
 	"labels.name": "Imię",
 	"labels.bio": "Opis",
+	"labels.logo": "",
+	"labels.banner": "",
 	"labels.tag": "",
 	"labels.teamBsky": "",
 	"labels.clockFormat": "",

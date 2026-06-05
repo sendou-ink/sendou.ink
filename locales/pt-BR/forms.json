@@ -2,6 +2,8 @@
 	"submit": "Enviar",
 	"labels.name": "Nome",
 	"labels.bio": "Bio",
+	"labels.logo": "",
+	"labels.banner": "",
 	"labels.tag": "",
 	"labels.teamBsky": "",
 	"labels.clockFormat": "",

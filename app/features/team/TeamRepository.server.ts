@@ -12,6 +12,7 @@ import {
 	COMMON_USER_FIELDS,
 	concatUserSubmittedImagePrefix,
 	tournamentLogoOrNull,
+	userProfileWeapons,
 } from "~/utils/kysely.server";
 import { mySlugify } from "~/utils/urls";
 
@@ -139,6 +140,8 @@ export function findByCustomUrl(
 			"Team.tag",
 			"Team.customUrl",
 			"Team.customTheme",
+			"Team.avatarImgId",
+			"Team.bannerImgId",
 			concatUserSubmittedImagePrefix(eb.ref("AvatarImage.url")).as("avatarUrl"),
 			concatUserSubmittedImagePrefix(eb.ref("BannerImage.url")).as("bannerUrl"),
 			jsonArrayFrom(
@@ -153,12 +156,7 @@ export function findByCustomUrl(
 						"TeamMemberWithSecondary.isMainTeam",
 						"User.country",
 						"User.patronTier",
-						jsonArrayFrom(
-							innerEb
-								.selectFrom("UserWeapon")
-								.select(["UserWeapon.weaponSplId", "UserWeapon.isFavorite"])
-								.whereRef("UserWeapon.userId", "=", "User.id"),
-						).as("weapons"),
+						userProfileWeapons(innerEb).as("weapons"),
 					])
 					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id"),
 			).as("members"),
@@ -341,23 +339,53 @@ export async function update({
 	bio,
 	bsky,
 	tag,
-}: Pick<Insertable<Tables["Team"]>, "id" | "name" | "bio" | "bsky" | "tag">) {
+	avatarImgId,
+	bannerImgId,
+}: Pick<
+	Insertable<Tables["Team"]>,
+	"id" | "name" | "bio" | "bsky" | "tag" | "avatarImgId" | "bannerImgId"
+>) {
 	const customUrl = mySlugify(name);
 
-	const team = await db
-		.updateTable("AllTeam")
-		.set({
-			name,
-			customUrl,
-			bio,
-			bsky,
-			tag,
-		})
-		.where("id", "=", id)
-		.returningAll()
-		.executeTakeFirstOrThrow();
+	return db.transaction().execute(async (trx) => {
+		const current = await trx
+			.selectFrom("Team")
+			.select(["avatarImgId", "bannerImgId"])
+			.where("id", "=", id)
+			.executeTakeFirst();
 
-	return team;
+		// images that got removed or replaced are no longer referenced by anything,
+		// so their submitted image rows are cleaned up
+		const orphanedImageIds: number[] = [];
+		if (current?.avatarImgId && current.avatarImgId !== avatarImgId) {
+			orphanedImageIds.push(current.avatarImgId);
+		}
+		if (current?.bannerImgId && current.bannerImgId !== bannerImgId) {
+			orphanedImageIds.push(current.bannerImgId);
+		}
+
+		if (orphanedImageIds.length > 0) {
+			await trx
+				.deleteFrom("UnvalidatedUserSubmittedImage")
+				.where("id", "in", orphanedImageIds)
+				.execute();
+		}
+
+		return trx
+			.updateTable("AllTeam")
+			.set({
+				name,
+				customUrl,
+				bio,
+				bsky,
+				tag,
+				avatarImgId,
+				bannerImgId,
+			})
+			.where("id", "=", id)
+			.returningAll()
+			.executeTakeFirstOrThrow();
+	});
 }
 
 export async function updateCustomTheme({
@@ -448,37 +476,6 @@ export function del(teamId: number) {
 			.updateTable("AllTeam")
 			.set({
 				deletedAt: databaseTimestampNow(),
-			})
-			.where("id", "=", teamId)
-			.execute();
-	});
-}
-
-export function removeTeamImage(
-	teamId: number,
-	imageType: "avatar" | "banner",
-) {
-	const imageIdField = imageType === "avatar" ? "avatarImgId" : "bannerImgId";
-
-	return db.transaction().execute(async (trx) => {
-		const team = await trx
-			.selectFrom("Team")
-			.select(imageIdField)
-			.where("id", "=", teamId)
-			.executeTakeFirst();
-
-		const imageId = team?.[imageIdField];
-		if (imageId) {
-			await trx
-				.deleteFrom("UnvalidatedUserSubmittedImage")
-				.where("id", "=", imageId)
-				.execute();
-		}
-
-		await trx
-			.updateTable("AllTeam")
-			.set({
-				[imageIdField]: null,
 			})
 			.where("id", "=", teamId)
 			.execute();
