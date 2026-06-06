@@ -13,12 +13,7 @@ import {
 	X,
 } from "lucide-react";
 import * as React from "react";
-import {
-	Outlet,
-	useFetcher,
-	useNavigate,
-	useOutletContext,
-} from "react-router";
+import { Outlet, useFetcher, useOutletContext } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
@@ -45,7 +40,6 @@ type SortKey = "name" | "checkIn";
 
 export default function TournamentAdminTeamsPage() {
 	const tournament = useTournament();
-	const navigate = useNavigate();
 	const outletContext = useOutletContext();
 
 	const [search, setSearch] = React.useState("");
@@ -119,15 +113,10 @@ export default function TournamentAdminTeamsPage() {
 							key={team.id}
 							team={team}
 							maxRosterSize={maxRosterSize}
-							// xxx: better to make it a proper link
-							onEdit={() =>
-								navigate(
-									tournamentAdminRegistrationEditPage(
-										tournament.ctx.id,
-										team.id,
-									),
-								)
-							}
+							editPage={tournamentAdminRegistrationEditPage(
+								tournament.ctx.id,
+								team.id,
+							)}
 						/>
 					))}
 					{sortedTeams.length === 0 ? (
@@ -150,11 +139,11 @@ export default function TournamentAdminTeamsPage() {
 function TeamRow({
 	team,
 	maxRosterSize,
-	onEdit,
+	editPage,
 }: {
 	team: TournamentDataTeam;
 	maxRosterSize: number;
-	onEdit: () => void;
+	editPage: string;
 }) {
 	const tournament = useTournament();
 
@@ -179,7 +168,7 @@ function TeamRow({
 				</div>
 			</td>
 			<td>
-				<TeamRowMenu team={team} onEdit={onEdit} />
+				<TeamRowMenu team={team} editPage={editPage} />
 			</td>
 			<td>
 				<CheckInCell team={team} />
@@ -227,10 +216,10 @@ function CheckInCell({ team }: { team: TournamentDataTeam }) {
 
 function TeamRowMenu({
 	team,
-	onEdit,
+	editPage,
 }: {
 	team: TournamentDataTeam;
-	onEdit: () => void;
+	editPage: string;
 }) {
 	const tournament = useTournament();
 	const fetcher = useFetcher();
@@ -246,10 +235,10 @@ function TeamRowMenu({
 
 	return (
 		<div className="stack horizontal xs items-center">
-			<SendouButton
+			<LinkButton
 				size="miniscule"
 				icon={<Pencil />}
-				onPress={onEdit}
+				to={editPage}
 				aria-label="Edit registration"
 			/>
 			<SendouMenu
