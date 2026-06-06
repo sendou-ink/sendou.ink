@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router";
+import { useParams } from "react-router";
 import { SendouDialog } from "~/components/elements/Dialog";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import { FormField } from "~/form/FormField";
@@ -25,7 +25,6 @@ type RosterMemberValue = {
 };
 
 export default function TournamentAdminRegistrationPage() {
-	const navigate = useNavigate();
 	const tournament = useTournament();
 	const { tid } = useParams();
 
@@ -68,8 +67,6 @@ export default function TournamentAdminRegistrationPage() {
 			<SendouForm
 				schema={adminRegistrationFormSchema}
 				defaultValues={defaultValues}
-				// xxx: not needed, we can just redirect from action (probably onSuccess also becomes unnecessary)
-				onSuccess={() => navigate(adminPage)}
 			>
 				<RegistrationFields team={team} />
 			</SendouForm>

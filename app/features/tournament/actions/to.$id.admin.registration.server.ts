@@ -1,4 +1,4 @@
-import type { ActionFunction } from "react-router";
+import { type ActionFunction, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { imageFieldValueToImgId } from "~/features/img-upload/image-field.server";
@@ -16,6 +16,7 @@ import {
 	formDataToObject,
 	parseParams,
 } from "~/utils/remix.server";
+import { tournamentAdminPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
 import { adminRegistrationFormSchemaServer } from "../tournament-registration-schemas.server";
 
@@ -142,5 +143,5 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	clearTournamentDataCache(tournamentId);
 
-	return null;
+	return redirect(tournamentAdminPage(tournamentId));
 };

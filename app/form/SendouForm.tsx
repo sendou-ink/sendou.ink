@@ -73,8 +73,6 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	 */
 	fullWidth?: boolean;
 	onApply?: (values: z.infer<z.ZodObject<T>>) => void;
-	/** Called after a server submission completes without field errors. */
-	onSuccess?: () => void;
 	secondarySubmit?: React.ReactNode;
 };
 
@@ -102,7 +100,6 @@ export function SendouForm<T extends z.ZodRawShape>({
 	className,
 	fullWidth,
 	onApply,
-	onSuccess,
 	secondarySubmit,
 }: SendouFormProps<T>) {
 	const { t } = useTranslation(["forms"]);
@@ -119,8 +116,6 @@ export function SendouForm<T extends z.ZodRawShape>({
 
 	const [values, setValues] =
 		React.useState<Record<string, unknown>>(initialValues);
-
-	const pendingSubmit = React.useRef(false);
 
 	const location = useLocation();
 	const locationKey = `${location.pathname}${location.search}`;
@@ -169,17 +164,6 @@ export function SendouForm<T extends z.ZodRawShape>({
 		);
 		firstErrorElement?.scrollIntoView({ behavior: "smooth", block: "center" });
 	}, [fetcher.data, t]);
-
-	React.useEffect(() => {
-		if (!onSuccess) return;
-		if (fetcher.state !== "idle") return;
-		if (!pendingSubmit.current) return;
-
-		pendingSubmit.current = false;
-		if (fetcher.data?.fieldErrors) return;
-
-		onSuccess();
-	}, [fetcher.state, fetcher.data, onSuccess]);
 
 	const serverErrors = visibleServerErrors as Partial<
 		Record<keyof z.infer<z.ZodObject<T>>, string>
@@ -282,7 +266,6 @@ export function SendouForm<T extends z.ZodRawShape>({
 		if (onApply) {
 			onApply(values as z.infer<z.ZodObject<T>>);
 		} else {
-			pendingSubmit.current = true;
 			fetcher.submit(addRevalidateRoot(values) as Record<string, string>, {
 				method,
 				action,
@@ -358,7 +341,6 @@ export function SendouForm<T extends z.ZodRawShape>({
 			onApply(values as z.infer<z.ZodObject<T>>);
 		}
 
-		pendingSubmit.current = true;
 		fetcher.submit(
 			addRevalidateRoot(valuesToSubmit) as Record<string, string>,
 			{
