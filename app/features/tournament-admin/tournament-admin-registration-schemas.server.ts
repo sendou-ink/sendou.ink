@@ -126,9 +126,12 @@ export function adminRegistrationFormSchemaServer({
 				});
 			}
 
-			// xxx: check how adding member to another team logic used to work
 			const previousTeam = tournament.teamMemberOfByUser({ id: member.userId });
-			if (previousTeam && previousTeam.id !== team?.id) {
+			if (
+				previousTeam &&
+				previousTeam.id !== team?.id &&
+				!tournament.hasStarted
+			) {
 				ctx.addIssue({
 					code: z.ZodIssueCode.custom,
 					message: "forms:errors.regMemberOnAnotherTeam",
