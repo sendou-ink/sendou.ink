@@ -8,8 +8,8 @@ import { FormMessage } from "~/components/FormMessage";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
+import { useTournament } from "~/features/tournament/routes/to.$id";
 import type { TournamentData } from "~/features/tournament-bracket/core/Tournament.server";
-import { useTournament } from "./to.$id";
 
 export { action } from "../actions/to.$id.admin.staff.server";
 

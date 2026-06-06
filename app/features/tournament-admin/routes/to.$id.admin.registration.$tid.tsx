@@ -2,6 +2,7 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { useTournament } from "~/features/tournament/routes/to.$id";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
@@ -14,8 +15,7 @@ import { tournamentAdminPage } from "~/utils/urls";
 import {
 	type AdminRegistrationFormValues,
 	adminRegistrationFormSchema,
-} from "../tournament-registration-schemas";
-import { useTournament } from "./to.$id";
+} from "../tournament-admin-registration-schemas";
 
 export { action } from "../actions/to.$id.admin.registration.server";
 

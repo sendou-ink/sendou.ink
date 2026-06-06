@@ -8,9 +8,9 @@ import { Input } from "~/components/Input";
 import { SubmitButton } from "~/components/SubmitButton";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { useUser } from "~/features/auth/core/user";
+import { useTournament } from "~/features/tournament/routes/to.$id";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { BracketProgressionSelector } from "../../calendar/components/BracketProgressionSelector";
-import { useTournament } from "./to.$id";
 
 export { action } from "../actions/to.$id.admin.brackets.server";
 

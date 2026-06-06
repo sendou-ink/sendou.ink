@@ -18,7 +18,7 @@ import {
 } from "~/utils/remix.server";
 import { tournamentAdminPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
-import { adminRegistrationFormSchemaServer } from "../tournament-registration-schemas.server";
+import { adminRegistrationFormSchemaServer } from "../tournament-admin-registration-schemas.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();

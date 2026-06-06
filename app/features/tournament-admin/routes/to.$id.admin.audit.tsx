@@ -6,10 +6,10 @@ import { LocaleTime } from "~/components/LocaleTime";
 import { Pagination } from "~/components/Pagination";
 import { Table } from "~/components/Table";
 import { TOURNAMENT_AUDIT_LOG_TYPES } from "~/db/tables";
+import { useTournament } from "~/features/tournament/routes/to.$id";
 import type { CommonUser } from "~/utils/kysely.server";
 import { tournamentTeamPage, userPage } from "~/utils/urls";
 import type { TournamentAdminAuditLoader } from "../loaders/to.$id.admin.audit.server";
-import { useTournament } from "../routes/to.$id";
 import styles from "./to.$id.admin.audit.module.css";
 
 export { loader } from "../loaders/to.$id.admin.audit.server";

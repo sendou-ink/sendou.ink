@@ -126,19 +126,25 @@ export default [
 		route("teams", "features/tournament/routes/to.$id.teams.tsx"),
 		route("teams/:tid", "features/tournament/routes/to.$id.teams.$tid.tsx"),
 		route("join", "features/tournament/routes/to.$id.join.tsx"),
-		route("admin", "features/tournament/routes/to.$id.admin.tsx", [
-			layout("features/tournament/routes/to.$id.admin.index.tsx", [
-				index("features/tournament/routes/to.$id.admin._index.tsx"),
+		route("admin", "features/tournament-admin/routes/to.$id.admin.tsx", [
+			layout("features/tournament-admin/routes/to.$id.admin.index.tsx", [
+				index("features/tournament-admin/routes/to.$id.admin._index.tsx"),
 				route(
 					"registration/:tid?",
-					"features/tournament/routes/to.$id.admin.registration.$tid.tsx",
+					"features/tournament-admin/routes/to.$id.admin.registration.$tid.tsx",
 				),
 			]),
-			route("seeds", "features/tournament/routes/to.$id.admin.seeds.tsx"),
-			route("staff", "features/tournament/routes/to.$id.admin.staff.tsx"),
-			route("stream", "features/tournament/routes/to.$id.admin.stream.tsx"),
-			route("brackets", "features/tournament/routes/to.$id.admin.brackets.tsx"),
-			route("audit", "features/tournament/routes/to.$id.admin.audit.tsx"),
+			route("seeds", "features/tournament-admin/routes/to.$id.admin.seeds.tsx"),
+			route("staff", "features/tournament-admin/routes/to.$id.admin.staff.tsx"),
+			route(
+				"stream",
+				"features/tournament-admin/routes/to.$id.admin.stream.tsx",
+			),
+			route(
+				"brackets",
+				"features/tournament-admin/routes/to.$id.admin.brackets.tsx",
+			),
+			route("audit", "features/tournament-admin/routes/to.$id.admin.audit.tsx"),
 		]),
 		route("results", "features/tournament/routes/to.$id.results.tsx"),
 		route("streams", "features/tournament/routes/to.$id.streams.tsx"),

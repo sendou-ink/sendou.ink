@@ -29,6 +29,7 @@ import {
 	type SortState,
 } from "~/components/SortableTableHeader";
 import { Table } from "~/components/Table";
+import { useTournament } from "~/features/tournament/routes/to.$id";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	teamPage,
@@ -37,7 +38,6 @@ import {
 } from "~/utils/urls";
 import { queryToUserIdentifier } from "~/utils/users";
 import { ExportDialog } from "../components/ExportDialog";
-import { useTournament } from "./to.$id";
 
 import styles from "./to.$id.admin.index.module.css";
 

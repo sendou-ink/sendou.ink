@@ -1,5 +1,6 @@
 import type { ActionFunction } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
@@ -13,8 +14,7 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "../../../utils/zod";
-import * as TournamentRepository from "../TournamentRepository.server";
-import { adminSeedsActionSchema } from "../tournament-schemas.server";
+import { adminSeedsActionSchema } from "../tournament-admin-schemas.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();

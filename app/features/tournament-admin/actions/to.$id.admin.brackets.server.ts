@@ -1,6 +1,7 @@
 import type { ActionFunction } from "react-router";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	clearTournamentDataCache,
@@ -14,8 +15,7 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "../../../utils/zod";
-import * as TournamentRepository from "../TournamentRepository.server";
-import { adminBracketsActionSchema } from "../tournament-schemas.server";
+import { adminBracketsActionSchema } from "../tournament-admin-schemas.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();

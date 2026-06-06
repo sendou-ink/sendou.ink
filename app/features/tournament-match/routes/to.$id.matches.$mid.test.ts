@@ -7,12 +7,13 @@ vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 }));
 
 import { db } from "~/db/sql";
-import type { adminTeamsActionSchema } from "~/features/tournament/tournament-schemas.server";
 import {
 	dbInsertTournament,
 	dbInsertTournamentTeam,
 	dbStartTournament,
 } from "~/features/tournament/tournament-test-utils";
+import { action as adminAction } from "~/features/tournament-admin/actions/to.$id.admin.index.server";
+import type { adminTeamsActionSchema } from "~/features/tournament-admin/tournament-admin-schemas.server";
 import type { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import type { SerializeFrom } from "~/utils/remix";
 import {
@@ -22,7 +23,6 @@ import {
 	wrappedAction,
 	wrappedLoader,
 } from "~/utils/Test";
-import { action as adminAction } from "../../tournament/actions/to.$id.admin.index.server";
 import { action, loader } from "./to.$id.matches.$mid";
 
 const tournamentMatchAction = wrappedAction<typeof matchSchema>({

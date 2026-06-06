@@ -3,7 +3,7 @@ import { useFetcher } from "react-router";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
-import { useTournament } from "./to.$id";
+import { useTournament } from "~/features/tournament/routes/to.$id";
 
 export { action } from "../actions/to.$id.admin.stream.server";
 

@@ -13,6 +13,7 @@ import { containerClassName } from "~/components/Main";
 import { Redirect } from "~/components/Redirect";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { useUser } from "~/features/auth/core/user";
+import { useTournament } from "~/features/tournament/routes/to.$id";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import {
 	calendarEventPage,
@@ -20,7 +21,6 @@ import {
 	tournamentEditPage,
 	tournamentPage,
 } from "~/utils/urls";
-import { useTournament } from "./to.$id";
 import styles from "./to.$id.admin.module.css";
 
 export { action } from "../actions/to.$id.admin.index.server";

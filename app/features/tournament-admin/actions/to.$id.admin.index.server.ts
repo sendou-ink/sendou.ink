@@ -6,6 +6,7 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.server";
 import { getServerTournamentManager } from "~/features/tournament-bracket/core/brackets-manager/manager.server";
 import {
 	clearTournamentDataCache,
@@ -25,8 +26,7 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "../../../utils/zod";
-import { adminTeamsActionSchema } from "../tournament-schemas.server";
-import { endDroppedTeamMatches } from "../tournament-utils.server";
+import { adminTeamsActionSchema } from "../tournament-admin-schemas.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();

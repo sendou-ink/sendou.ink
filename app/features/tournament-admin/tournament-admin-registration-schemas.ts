@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import {
 	array,
 	fieldset,
@@ -13,9 +14,6 @@ import {
 } from "~/form/fields";
 import { TEAM } from "../team/team-constants";
 import { IN_GAME_NAME_REGEXP } from "../user-page/user-page-constants";
-import { TOURNAMENT } from "./tournament-constants";
-
-// xxx: separate tournament-admin to its own feature folder
 
 /** Combined in-game name e.g. `Sendou#1234` is at most 10 + `#` + 5 characters. */
 const IN_GAME_NAME_MAX_LENGTH = 16;

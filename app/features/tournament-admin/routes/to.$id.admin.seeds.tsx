@@ -32,14 +32,14 @@ import { InfoPopover } from "~/components/InfoPopover";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Table } from "~/components/Table";
 import type { SeedingSnapshot } from "~/db/tables";
+import { useTournament } from "~/features/tournament/routes/to.$id";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as AbDivisions from "~/features/tournament-bracket/core/AbDivisions";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import invariant from "~/utils/invariant";
 import { navIconUrl, userResultsPage } from "~/utils/urls";
 import { ordinalToRoundedSp } from "../../mmr/mmr-utils";
-import { TOURNAMENT } from "../tournament-constants";
-import { useTournament } from "./to.$id";
 import styles from "./to.$id.admin.seeds.module.css";
 
 export { action } from "../actions/to.$id.admin.seeds.server";

@@ -3,7 +3,7 @@ import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { adminRegistrationFormSchema } from "./tournament-registration-schemas";
+import { adminRegistrationFormSchema } from "./tournament-admin-registration-schemas";
 
 /**
  * Extends the client {@link adminRegistrationFormSchema} with server-only,

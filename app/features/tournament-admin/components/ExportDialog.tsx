@@ -1,11 +1,11 @@
 import * as React from "react";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { useTournament } from "~/features/tournament/routes/to.$id";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import * as CSV from "~/modules/csv";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { teamPage, userPage } from "~/utils/urls";
-import { useTournament } from "../routes/to.$id";
 import styles from "./ExportDialog.module.css";
 
 const BASE_URL = "https://sendou.ink";
