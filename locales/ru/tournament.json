@@ -115,6 +115,8 @@
 	"admin.actions.DELETE_LOGO": "Удалить логотип",
 	"staff.role.ORGANIZER": "организатор",
 	"staff.role.STREAMER": "стример",
+	"staff.author": "",
+	"staff.organization": "",
 	"actions.addSub": "Добавить запасного",
 	"actions.shareLink": "Ссылка приглашения в команду: {{inviteLink}}",
 	"actions.sub.prompt_one": "Вы ещё можете добавить {{count}} запасного",

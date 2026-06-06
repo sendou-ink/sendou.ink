@@ -114,6 +114,8 @@
 	"admin.actions.DELETE_LOGO": "Supprimer le logo",
 	"staff.role.ORGANIZER": "organisateur",
 	"staff.role.STREAMER": "streamer",
+	"staff.author": "",
+	"staff.organization": "",
 	"actions.addSub": "Ajouter remplaçant",
 	"actions.shareLink": "Partagez votre lien d'invitation pour ajouter des membres: {{inviteLink}}",
 	"actions.sub.prompt_one": "Vous pouvez encore ajouter {{count}} remplaçant à votre liste",

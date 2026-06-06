@@ -113,6 +113,8 @@
 	"admin.actions.DELETE_LOGO": "Slet logo",
 	"staff.role.ORGANIZER": "arrangør",
 	"staff.role.STREAMER": "udsender (streamer)",
+	"staff.author": "",
+	"staff.organization": "",
 	"actions.addSub": "tilføj Suppleant",
 	"actions.shareLink": "Del invitationslinket for at tilføje medlemmer: {{inviteLink}}",
 	"actions.sub.prompt_one": "Du kan stadigvæk tilføje {{count}} Suppleant til din holdliste",

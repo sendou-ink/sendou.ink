@@ -1,116 +1,104 @@
-import { Trash } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useFetcher } from "react-router";
 import { Avatar } from "~/components/Avatar";
-import { SendouButton } from "~/components/elements/Button";
-import { UserSearch } from "~/components/elements/UserSearch";
-import { FormMessage } from "~/components/FormMessage";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { Label } from "~/components/Label";
-import { SubmitButton } from "~/components/SubmitButton";
+import type { Tables } from "~/db/tables";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import type { TournamentData } from "~/features/tournament-bracket/core/Tournament.server";
+import { SendouForm } from "~/form/SendouForm";
+import { adminStaffFormSchema } from "../tournament-admin-staff-schemas";
 
 export { action } from "../actions/to.$id.admin.staff.server";
 
+// xxx: Author/From Org <-> Added looks a bit confusing now
 export default function TournamentAdminStaffPage() {
 	const tournament = useTournament();
 
+	const staff = tournament.ctx.staff.filter(
+		(staffer) => staffer.id !== tournament.ctx.author.id,
+	);
+
 	return (
-		<div className="stack lg">
-			{/* Key so inputs are cleared after staff is added */}
-			<StaffAdder key={tournament.ctx.staff.length} />
-			<StaffList />
-		</div>
+		<SendouForm
+			schema={adminStaffFormSchema}
+			fullWidth
+			defaultValues={{
+				staff: staff.map((staffer) => ({
+					userId: staffer.id,
+					role: staffer.role,
+				})),
+			}}
+		>
+			{({ FormField }) => (
+				<>
+					<ImplicitStaffRows />
+					<FormField name="staff" />
+				</>
+			)}
+		</SendouForm>
 	);
 }
 
-function StaffAdder() {
-	const fetcher = useFetcher();
+// xxx: one place for this constant? we also have this in the schema file
+const ORGANIZATION_STAFF_ROLES = ["ADMIN", "ORGANIZER", "STREAMER"];
 
-	return (
-		<fetcher.Form method="post" className="stack sm">
-			<div className="stack horizontal sm flex-wrap items-start">
-				<div className="flex-same-size">
-					<UserSearch name="userId" label="New staffer" isRequired />
-				</div>
-				<div className="stack horizontal sm items-end flex-same-size">
-					<div className="w-full">
-						<Label htmlFor="staff-role">Role</Label>
-						<select name="role" id="staff-role" className="w-full">
-							<option value="ORGANIZER">Organizer</option>
-							<option value="STREAMER">Streamer</option>
-						</select>
-					</div>
-					<SubmitButton
-						state={fetcher.state}
-						_action="ADD_STAFF"
-						testId="add-staff-button"
-					>
-						Add
-					</SubmitButton>
-				</div>
-			</div>
-			<FormMessage type="info">
-				Organizer has same permissions as you expect adding/removing staff,
-				editing calendar event info and deleting the tournament. Streamer can
-				only talk in chats and see room password/pool.
-			</FormMessage>
-		</fetcher.Form>
-	);
-}
-
-function StaffList() {
+/**
+ * Users who already have staff permissions implicitly (the tournament author
+ * and organization staff) shown for info only - they can't be edited or removed.
+ */
+function ImplicitStaffRows() {
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
+	const author = tournament.ctx.author;
+
+	const organizationStaff = (tournament.ctx.organization?.members ?? []).filter(
+		(member) =>
+			member.userId !== author.id &&
+			ORGANIZATION_STAFF_ROLES.includes(member.role),
+	);
 
 	return (
-		<div className="stack md">
-			{tournament.ctx.staff.map((staff) => (
-				<div
-					key={staff.id}
-					className="stack horizontal sm items-center"
-					data-testid={`staff-id-${staff.id}`}
-				>
-					<Avatar size="xs" user={staff} />{" "}
-					<div className="mr-4">
-						<div>{staff.username}</div>
-						<div className="text-lighter text-xs text-capitalize">
-							{t(`tournament:staff.role.${staff.role}`)}
-						</div>
-					</div>
-					<RemoveStaffButton staff={staff} />
-				</div>
-			))}
+		<div className="stack sm">
+			<StaffInfoRow
+				user={author}
+				testId="staff-author"
+				roleText={`${t("tournament:staff.role.ORGANIZER")} (${t(
+					"tournament:staff.author",
+				)})`}
+			/>
+			{organizationStaff.map((member) => {
+				const roleKey = member.role === "STREAMER" ? "STREAMER" : "ORGANIZER";
+
+				return (
+					<StaffInfoRow
+						key={member.userId}
+						user={member}
+						roleText={`${t(`tournament:staff.role.${roleKey}`)} (${t(
+							"tournament:staff.organization",
+						)})`}
+					/>
+				);
+			})}
 		</div>
 	);
 }
 
-function RemoveStaffButton({
-	staff,
+function StaffInfoRow({
+	user,
+	roleText,
+	testId,
 }: {
-	staff: TournamentData["ctx"]["staff"][number];
+	user: Pick<Tables["User"], "id" | "username" | "discordId" | "discordAvatar">;
+	roleText: string;
+	testId?: string;
 }) {
-	const { t } = useTranslation(["tournament"]);
-
 	return (
-		<FormWithConfirm
-			dialogHeading={`Remove ${staff.username} as ${t(
-				`tournament:staff.role.${staff.role}`,
-			)}?`}
-			fields={[
-				["userId", staff.id],
-				["_action", "REMOVE_STAFF"],
-			]}
-			submitButtonText="Remove"
+		<div
+			className="stack horizontal sm items-center text-lighter"
+			data-testid={testId}
 		>
-			<SendouButton
-				variant="minimal-destructive"
-				size="small"
-				data-testid="remove-staff-button"
-			>
-				<Trash className="small-icon" />
-			</SendouButton>
-		</FormWithConfirm>
+			<Avatar size="xs" user={user} />
+			<div>
+				<div>{user.username}</div>
+				<div className="text-xs text-capitalize">{roleText}</div>
+			</div>
+		</div>
 	);
 }

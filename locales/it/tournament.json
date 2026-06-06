@@ -114,6 +114,8 @@
 	"admin.actions.DELETE_LOGO": "Elimina logo",
 	"staff.role.ORGANIZER": "organizzatore",
 	"staff.role.STREAMER": "streamer",
+	"staff.author": "",
+	"staff.organization": "",
 	"actions.addSub": "Aggiungi sub",
 	"actions.shareLink": "Condividi il tuo link d'invito per aggiungere membri: {{inviteLink}}",
 	"actions.sub.prompt_one": "Puoi ancora aggiungere {{count}} sub al tuo roster",

@@ -113,6 +113,8 @@
 	"admin.actions.DELETE_LOGO": "Delete logo",
 	"staff.role.ORGANIZER": "organizer",
 	"staff.role.STREAMER": "streamer",
+	"staff.author": "author",
+	"staff.organization": "organization",
 	"actions.addSub": "Add sub",
 	"actions.shareLink": "Share your invite link to add members: {{inviteLink}}",
 	"actions.sub.prompt_other": "You can still add {{count}} subs to your roster",

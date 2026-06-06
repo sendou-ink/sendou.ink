@@ -113,6 +113,8 @@
 	"admin.actions.DELETE_LOGO": "Logo löschen",
 	"staff.role.ORGANIZER": "Organisator",
 	"staff.role.STREAMER": "Streamer",
+	"staff.author": "",
+	"staff.organization": "",
 	"actions.addSub": "Ersatzspieler hinzufügen",
 	"actions.shareLink": "Teile deinen Invite-Link, um Mitglieder hinzuzufügen: {{inviteLink}}",
 	"actions.sub.prompt_one": "Du kannst noch {{count}} Ersatzspieler zu deinem Roster hinzufügen",

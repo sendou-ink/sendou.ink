@@ -759,37 +759,35 @@ export function overrideTeamBracketProgression({
 		.execute();
 }
 
-export function addStaff({
+export function setStaff({
 	tournamentId,
-	userId,
-	role,
+	staff,
 }: {
 	tournamentId: number;
-	userId: number;
-	role: Tables["TournamentStaff"]["role"];
+	staff: Array<{
+		userId: number;
+		role: Tables["TournamentStaff"]["role"];
+	}>;
 }) {
-	return db
-		.insertInto("TournamentStaff")
-		.values({
-			tournamentId,
-			userId,
-			role,
-		})
-		.execute();
-}
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.deleteFrom("TournamentStaff")
+			.where("tournamentId", "=", tournamentId)
+			.execute();
 
-export function removeStaff({
-	tournamentId,
-	userId,
-}: {
-	tournamentId: number;
-	userId: number;
-}) {
-	return db
-		.deleteFrom("TournamentStaff")
-		.where("tournamentId", "=", tournamentId)
-		.where("userId", "=", userId)
-		.execute();
+		if (staff.length > 0) {
+			await trx
+				.insertInto("TournamentStaff")
+				.values(
+					staff.map((staffer) => ({
+						tournamentId,
+						userId: staffer.userId,
+						role: staffer.role,
+					})),
+				)
+				.execute();
+		}
+	});
 }
 
 interface UpsertPreparedMapsArgs {

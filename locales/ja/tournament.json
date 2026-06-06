@@ -111,6 +111,8 @@
 	"admin.actions.DELETE_LOGO": "ロゴを削除する",
 	"staff.role.ORGANIZER": "主催者",
 	"staff.role.STREAMER": "配信者",
+	"staff.author": "",
+	"staff.organization": "",
 	"actions.addSub": "サブを追加",
 	"actions.shareLink": "メンバー招待リンクをシェアする: {{inviteLink}}",
 	"actions.sub.prompt_zero": "メンバーが上限に達しているので、これ以上サブを追加することができません",

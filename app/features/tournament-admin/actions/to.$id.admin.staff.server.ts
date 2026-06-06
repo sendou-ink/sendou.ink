@@ -6,22 +6,16 @@ import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import { parseFormData } from "~/form/parse.server";
 import {
 	errorToastIfFalsy,
 	parseParams,
-	parseRequestPayload,
-	successToast,
 } from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
 import { idObject } from "../../../utils/zod";
-import { adminStaffActionSchema } from "../tournament-admin-schemas.server";
+import { adminStaffFormSchemaServer } from "../tournament-admin-schemas.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
-	const data = await parseRequestPayload({
-		request,
-		schema: adminStaffActionSchema,
-	});
 
 	const { id: tournamentId } = parseParams({
 		params,
@@ -29,59 +23,52 @@ export const action: ActionFunction = async ({ request, params }) => {
 	});
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
-	const validateIsTournamentAdmin = () =>
-		errorToastIfFalsy(tournament.isAdmin(user), "Unauthorized");
+	errorToastIfFalsy(tournament.isAdmin(user), "Unauthorized");
 
-	let message: string;
-	switch (data._action) {
-		case "ADD_STAFF": {
-			validateIsTournamentAdmin();
+	const result = await parseFormData({
+		request,
+		schema: adminStaffFormSchemaServer({ tournament }),
+	});
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+	const submittedStaff = result.data.staff;
 
-			errorToastIfFalsy(
-				tournament.ctx.staff.every((staff) => staff.id !== data.userId),
-				"User is already a staff member",
-			);
+	const currentOrganizerIds = tournament.ctx.staff
+		.filter((staffer) => staffer.role === "ORGANIZER")
+		.map((staffer) => staffer.id);
+	const submittedOrganizerIds = submittedStaff
+		.filter((staffer) => staffer.role === "ORGANIZER")
+		.map((staffer) => staffer.userId);
 
-			await TournamentRepository.addStaff({
-				role: data.role,
-				tournamentId: tournament.ctx.id,
-				userId: data.userId,
-			});
+	await TournamentRepository.setStaff({
+		tournamentId,
+		staff: submittedStaff.map((staffer) => ({
+			userId: staffer.userId,
+			role: staffer.role,
+		})),
+	});
 
-			if (data.role === "ORGANIZER") {
-				ShowcaseTournaments.addToCached({
-					tournamentId,
-					type: "organizer",
-					userId: data.userId,
-				});
-			}
-
-			message = "Staff member added";
-			break;
-		}
-		case "REMOVE_STAFF": {
-			validateIsTournamentAdmin();
-
-			await TournamentRepository.removeStaff({
-				tournamentId: tournament.ctx.id,
-				userId: data.userId,
-			});
-
-			ShowcaseTournaments.removeFromCached({
-				tournamentId,
-				type: "organizer",
-				userId: data.userId,
-			});
-
-			message = "Staff member removed";
-			break;
-		}
-		default: {
-			assertUnreachable(data);
-		}
+	for (const userId of submittedOrganizerIds.filter(
+		(id) => !currentOrganizerIds.includes(id),
+	)) {
+		ShowcaseTournaments.addToCached({
+			tournamentId,
+			type: "organizer",
+			userId,
+		});
+	}
+	for (const userId of currentOrganizerIds.filter(
+		(id) => !submittedOrganizerIds.includes(id),
+	)) {
+		ShowcaseTournaments.removeFromCached({
+			tournamentId,
+			type: "organizer",
+			userId,
+		});
 	}
 
 	clearTournamentDataCache(tournamentId);
 
-	return successToast(message);
+	return null;
 };
