@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
+import { tournamentTeamNameTaken } from "~/features/tournament/tournament-utils.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { adminRegistrationFormSchema } from "./tournament-admin-registration-schemas";
@@ -22,12 +23,14 @@ export function adminRegistrationFormSchemaServer({
 				? (await TeamRepository.findById(data.teamId))?.name
 				: undefined
 			: data.pickUpName;
-		const nameTaken =
+		if (
 			name != null &&
-			!tournament.ctx.teams.every(
-				(team) => team.id === data.tournamentTeamId || team.name !== name,
-			);
-		if (nameTaken) {
+			tournamentTeamNameTaken({
+				tournament,
+				name,
+				exceptTournamentTeamId: data.tournamentTeamId ?? undefined,
+			})
+		) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
 				message: "forms:errors.regTeamNameTaken",

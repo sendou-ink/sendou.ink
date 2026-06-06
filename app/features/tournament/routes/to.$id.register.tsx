@@ -1,9 +1,8 @@
 import clsx from "clsx";
-import Compressor from "compressorjs";
-import { AlertCircle, Check, Trash, X } from "lucide-react";
+import { AlertCircle, Check, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Form, useFetcher, useLoaderData } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { useCopyToClipboard } from "react-use";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
@@ -12,21 +11,20 @@ import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { FriendCodePopover } from "~/components/FriendCodePopover";
-import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { containerClassName } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
-import { imgTypeToDimensions } from "~/features/img-upload/upload-constants";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { ModeMapPoolPicker } from "~/features/settings/components/ModeMapPoolPicker";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import { FormField } from "~/form/FormField";
+import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useHydrated } from "~/hooks/useHydrated";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import invariant from "~/utils/invariant";
-import { logger } from "~/utils/logger";
 import {
 	LOG_IN_URL,
 	SENDOU_INK_BASE_URL,
@@ -38,6 +36,10 @@ import type { TournamentRegisterPageLoader } from "../loaders/to.$id.register.se
 import { loader } from "../loaders/to.$id.register.server";
 import styles from "../tournament.module.css";
 import { TOURNAMENT } from "../tournament-constants";
+import {
+	type RegisterTeamFormValues,
+	registerTeamFormSchema,
+} from "../tournament-register-schemas";
 import {
 	type CounterPickValidationStatus,
 	validateCounterPickMapPool,
@@ -416,69 +418,24 @@ function TeamInfo({
 	ownTeam?: TournamentDataTeam | null;
 	canUnregister: boolean;
 }) {
-	const data = useLoaderData<TournamentRegisterPageLoader>();
 	const { t } = useTranslation(["tournament", "common"]);
-	const fetcher = useFetcher();
 	const tournament = useTournament();
-	const [teamName, setTeamName] = React.useState(ownTeam?.name ?? "");
-	const user = useUser();
-	const ref = React.useRef<HTMLFormElement>(null);
-	const [signUpWithTeamId, setSignUpWithTeamId] = React.useState(
-		() => tournament.ownedTeamByUser(user)?.team?.id ?? null,
-	);
-	const [uploadedAvatar, setUploadedAvatar] = React.useState<File | null>(null);
 
-	const handleSignUpWithTeamChange = (teamId: number | null) => {
-		if (!teamId) {
-			setSignUpWithTeamId(null);
-		} else {
-			setSignUpWithTeamId(teamId);
-			const teamName = data?.teams.find((team) => team.id === teamId)?.name;
-			invariant(teamName, "team name should exist");
-
-			setTeamName(teamName);
-		}
+	const defaultValues: Partial<RegisterTeamFormValues> = {
+		teamId: ownTeam?.team ? String(ownTeam.team.id) : null,
+		pickUpName: ownTeam?.team ? null : (ownTeam?.name ?? ""),
+		logo:
+			!ownTeam?.team &&
+			ownTeam?.pickupAvatarUrl &&
+			typeof ownTeam?.avatarImgId === "number"
+				? {
+						type: "EXISTING",
+						imgId: ownTeam.avatarImgId,
+						url: ownTeam.pickupAvatarUrl,
+					}
+				: null,
+		prefersNotToHost: Boolean(ownTeam?.prefersNotToHost),
 	};
-
-	const handleSubmit = () => {
-		const formData = new FormData(ref.current!);
-
-		if (uploadedAvatar) {
-			formData.delete("img");
-			formData.append("img", uploadedAvatar, uploadedAvatar.name);
-		}
-
-		fetcher.submit(formData, {
-			encType: uploadedAvatar ? "multipart/form-data" : undefined,
-			method: "post",
-		});
-	};
-
-	const submitButtonDisabled = () => {
-		if (fetcher.state !== "idle") return true;
-
-		return false;
-	};
-
-	const avatarUrl = (() => {
-		if (signUpWithTeamId) {
-			const teamToSignUpWith = data?.teams.find(
-				(team) => team.id === signUpWithTeamId,
-			);
-			return teamToSignUpWith?.logoUrl;
-		}
-		if (uploadedAvatar) return URL.createObjectURL(uploadedAvatar);
-
-		return ownTeam?.pickupAvatarUrl;
-	})();
-
-	const canEditAvatar =
-		tournament.registrationOpen &&
-		!signUpWithTeamId &&
-		uploadedAvatar &&
-		!ownTeam?.pickupAvatarUrl;
-
-	const canDeleteAvatar = ownTeam?.pickupAvatarUrl;
 
 	return (
 		<div>
@@ -520,160 +477,55 @@ function TeamInfo({
 				) : null}
 			</div>
 			<section className={styles.section}>
-				<Form method="post" className="stack md items-center" ref={ref}>
-					<input type="hidden" name="_action" value="UPSERT_TEAM" />
-					{signUpWithTeamId ? (
-						<input type="hidden" name="teamId" value={signUpWithTeamId} />
-					) : null}
-					<div className="stack sm-plus items-center">
-						{data && data.teams.length > 0 && tournament.registrationOpen ? (
-							<div className={styles.sectionInputContainer}>
-								<Label htmlFor="signingUpAs">Team signing up as</Label>
-								<select
-									id="signingUpAs"
-									value={signUpWithTeamId ?? ""}
-									onChange={(e) => {
-										if (e.target.value === "") {
-											handleSignUpWithTeamChange(null);
-										} else {
-											handleSignUpWithTeamChange(Number(e.target.value));
-										}
-									}}
-								>
-									<option value="">Sign up with pick-up</option>
-									{data.teams.map((team) => {
-										return (
-											<option key={team.id} value={team.id}>
-												{team.name}
-											</option>
-										);
-									})}
-								</select>
-							</div>
-						) : null}
-
-						{!signUpWithTeamId ? (
-							<div className={styles.sectionInputContainer}>
-								<Label htmlFor="teamName">
-									{data && data.teams.length > 0
-										? "Pick-up name"
-										: t("tournament:pre.steps.name")}
-								</Label>
-								<Input
-									name="teamName"
-									id="teamName"
-									required
-									maxLength={TOURNAMENT.TEAM_NAME_MAX_LENGTH}
-									value={teamName}
-									onChange={(e) => setTeamName(e.target.value)}
-									readOnly={
-										!tournament.registrationOpen || Boolean(signUpWithTeamId)
-									}
-								/>
-							</div>
-						) : (
-							<input type="hidden" name="teamName" value={teamName} />
-						)}
-						{tournament.registrationOpen || avatarUrl ? (
-							<div className={styles.sectionInputContainer}>
-								<Label htmlFor="logo">Logo</Label>
-								{avatarUrl ? (
-									<div className="stack horizontal md items-center">
-										<Avatar size="xsm" url={avatarUrl} />
-										{canEditAvatar ? (
-											<SendouButton
-												variant="minimal"
-												size="small"
-												onPress={() => setUploadedAvatar(null)}
-											>
-												{t("common:actions.edit")}
-											</SendouButton>
-										) : null}
-										{canDeleteAvatar ? (
-											<FormWithConfirm
-												dialogHeading="Delete team logo?"
-												fields={[["_action", "DELETE_LOGO"]]}
-											>
-												<SendouButton
-													variant="minimal-destructive"
-													size="small"
-													type="submit"
-												>
-													<Trash className="small-icon" />
-												</SendouButton>
-											</FormWithConfirm>
-										) : null}
-									</div>
-								) : (
-									<TournamentLogoUpload onChange={setUploadedAvatar} />
-								)}
-							</div>
-						) : null}
-						<div className="stack sm">
-							<div className="text-lighter text-sm stack horizontal sm items-center">
-								<input
-									id="no-host"
-									type="checkbox"
-									name="prefersNotToHost"
-									defaultChecked={Boolean(ownTeam?.prefersNotToHost)}
-								/>
-								<label htmlFor="no-host" className="mb-0">
-									{t("tournament:pre.info.noHost")}
-								</label>
-							</div>
-						</div>
-					</div>
-					<SendouButton
-						data-testid="save-team-button"
-						isDisabled={submitButtonDisabled()}
-						onPress={handleSubmit}
-					>
-						{t("common:actions.save")}
-					</SendouButton>
-				</Form>
+				<SendouForm
+					schema={registerTeamFormSchema}
+					defaultValues={defaultValues}
+					className="stack md items-center"
+					submitButtonText={t("common:actions.save")}
+					submitButtonTestId="save-team-button"
+				>
+					<RegisterTeamFields />
+				</SendouForm>
 			</section>
 		</div>
 	);
 }
 
-const logoDimensions = imgTypeToDimensions["team-pfp"];
-function TournamentLogoUpload({
-	onChange,
-}: {
-	onChange: (file: File | null) => void;
-}) {
-	return (
-		<input
-			id="img-field"
-			type="file"
-			name="img"
-			accept="image/png, image/jpeg, image/webp"
-			onChange={(e) => {
-				const uploadedFile = e.target.files?.[0];
-				if (!uploadedFile) {
-					onChange(null);
-					return;
-				}
+function RegisterTeamFields() {
+	const data = useLoaderData<TournamentRegisterPageLoader>();
+	const tournament = useTournament();
+	const { values } = useFormFieldContext();
 
-				new Compressor(uploadedFile, {
-					height: logoDimensions.height,
-					width: logoDimensions.width,
-					maxHeight: logoDimensions.height,
-					maxWidth: logoDimensions.width,
-					convertSize: 500_000,
-					resize: "cover",
-					success(result) {
-						const file = new File([result], "img.webp", {
-							type: "image/webp",
-						});
-						onChange(file);
-					},
-					error(err) {
-						logger.error(err.message);
-					},
-				});
-			}}
-		/>
+	const isLinked = Boolean(values.teamId);
+
+	const teamOptions = (data?.teams ?? []).map((team) => ({
+		value: String(team.id),
+		label: team.name,
+	}));
+	const showTeamSelect = teamOptions.length > 0 && tournament.registrationOpen;
+
+	return (
+		<>
+			{showTeamSelect ? (
+				<div className={styles.sectionInputContainer}>
+					<FormField name="teamId" options={teamOptions} />
+				</div>
+			) : null}
+			{!isLinked ? (
+				<>
+					<div className={styles.sectionInputContainer}>
+						<FormField
+							name="pickUpName"
+							disabled={!tournament.registrationOpen}
+						/>
+					</div>
+					<div className={styles.sectionInputContainer}>
+						<FormField name="logo" />
+					</div>
+				</>
+			) : null}
+			<FormField name="prefersNotToHost" />
+		</>
 	);
 }
 

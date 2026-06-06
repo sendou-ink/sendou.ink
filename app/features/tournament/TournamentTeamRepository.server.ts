@@ -110,14 +110,14 @@ export async function updateMemberInGameNameForNonStarted({
 
 export function create({
 	team,
-	avatarFileName,
+	avatarImgId = null,
 	userId,
 	additionalMemberUserIds = [],
 	actorUserId,
 	tournamentId,
 }: {
 	team: Pick<Tables["TournamentTeam"], "name" | "prefersNotToHost" | "teamId">;
-	avatarFileName?: string;
+	avatarImgId?: number | null;
 	/** The user who becomes the team owner. */
 	userId: number;
 	/** Non-owner members to add to the team on creation. */
@@ -127,14 +127,6 @@ export function create({
 	tournamentId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
-		const avatarImgId = avatarFileName
-			? await createSubmittedImageInTrx({
-					trx,
-					avatarFileName,
-					userId,
-				})
-			: null;
-
 		const tournamentTeam = await trx
 			.insertInto("TournamentTeam")
 			.values({
@@ -473,30 +465,16 @@ export function copyFromAnotherTournament({
 
 export function update({
 	team,
-	avatarFileName,
-	userId,
+	avatarImgId,
 }: {
 	team: Pick<
 		Tables["TournamentTeam"],
 		"id" | "name" | "prefersNotToHost" | "teamId"
 	>;
-	avatarFileName?: string;
-	userId: number;
+	/** Resolved logo image id. `null` clears the pickup avatar (e.g. when switching to a linked team). */
+	avatarImgId: number | null;
 }) {
 	return db.transaction().execute(async (trx) => {
-		const avatarImgId = avatarFileName
-			? await createSubmittedImageInTrx({
-					trx,
-					avatarFileName,
-					userId,
-				})
-			: team.teamId
-				? // clear pickup avatar when switching to team signup, as team logo will be used
-					null
-				: // don't overwrite the existing avatarImgId even if no new avatar is provided
-					// delete is a separate functionality
-					undefined;
-
 		await trx
 			.updateTable("TournamentTeam")
 			.set({
@@ -513,38 +491,6 @@ export function update({
 			name: team.name,
 		});
 	});
-}
-
-async function createSubmittedImageInTrx({
-	trx,
-	avatarFileName,
-	userId,
-}: {
-	trx: Transaction<DB>;
-	avatarFileName: string;
-	userId: number;
-}) {
-	const result = await trx
-		.insertInto("UnvalidatedUserSubmittedImage")
-		.values({
-			url: avatarFileName,
-			// in the context of tournament teams images are treated as globally "validated"
-			// instead the TO takes responsibility for removing inappropriate images
-			validatedAt: databaseTimestampNow(),
-			submitterUserId: userId,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	return result.id;
-}
-
-export function deleteLogo(tournamentTeamId: number) {
-	return db
-		.updateTable("TournamentTeam")
-		.set({ avatarImgId: null })
-		.where("TournamentTeam.id", "=", tournamentTeamId)
-		.execute();
 }
 
 export function updateStartingBrackets(
