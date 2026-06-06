@@ -21,6 +21,7 @@ export function ImageFormField({
 	name,
 	label,
 	dimensions,
+	autoValidate,
 	error,
 	value,
 	onChange,
@@ -65,7 +66,15 @@ export function ImageFormField({
 		(typeof dimensions === "object" && dimensions.width > dimensions.height);
 
 	return (
-		<FormFieldWrapper id={id} name={name} label={label} error={error}>
+		<FormFieldWrapper
+			id={id}
+			name={name}
+			label={label}
+			error={error}
+			bottomText={
+				autoValidate ? undefined : "forms:bottomTexts.imageModeration"
+			}
+		>
 			<div className="stack sm items-start">
 				{previewUrl ? (
 					<img

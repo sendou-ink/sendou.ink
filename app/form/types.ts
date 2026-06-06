@@ -118,6 +118,8 @@ interface FormFieldMapPool<T extends string> extends FormFieldBase<T> {
 interface FormFieldImage<T extends string>
 	extends Omit<FormFieldBase<T>, "bottomText"> {
 	dimensions?: ImageFieldDimensions;
+	/** Validate uploaded images immediately, bypassing the moderator queue (e.g. trusted org logos). */
+	autoValidate?: boolean;
 }
 
 export interface FormFieldArray<T extends string, S extends z.ZodType>

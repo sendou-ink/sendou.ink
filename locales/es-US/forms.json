@@ -12,6 +12,7 @@
 	"labels.noScreen": "",
 	"labels.noSplatnet": "",
 	"labels.spoilerFreeMode": "",
+	"bottomTexts.imageModeration": "",
 	"bottomTexts.name": "Nota que si cambias el nombre de tu equipo, el nombre y la URL estarán libres para que otro equipo los tome",
 	"bottomTexts.tag": "",
 	"bottomTexts.disableBuildAbilitySorting": "",

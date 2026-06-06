@@ -16,7 +16,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const result = await parseFormDataWithImages({
 		request,
 		schema: organizationEditFormSchema,
-		autoValidate: true,
 	});
 
 	if (!result.success) {

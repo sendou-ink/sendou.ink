@@ -1,4 +1,4 @@
-import type { Insertable, Transaction } from "kysely";
+import { type Insertable, sql, type Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { CustomTheme, DB, Tables } from "~/db/tables";
@@ -90,17 +90,20 @@ export type findByCustomUrl = NonNullable<
 
 export function findByCustomUrl(
 	customUrl: string,
-	{ includeInviteCode = false } = {},
+	{ includeInviteCode = false, includeUnvalidatedImages = false } = {},
 ) {
+	// join the unvalidated table (instead of the validated-only `UserSubmittedImage` view) so the
+	// edit page can preview images still pending moderation; for everyone else the url is gated on
+	// `validatedAt` so pending images stay hidden
 	return db
 		.selectFrom("Team")
 		.leftJoin(
-			"UserSubmittedImage as AvatarImage",
+			"UnvalidatedUserSubmittedImage as AvatarImage",
 			"AvatarImage.id",
 			"Team.avatarImgId",
 		)
 		.leftJoin(
-			"UserSubmittedImage as BannerImage",
+			"UnvalidatedUserSubmittedImage as BannerImage",
 			"BannerImage.id",
 			"Team.bannerImgId",
 		)
@@ -114,8 +117,24 @@ export function findByCustomUrl(
 			"Team.customTheme",
 			"Team.avatarImgId",
 			"Team.bannerImgId",
-			concatUserSubmittedImagePrefix(eb.ref("AvatarImage.url")).as("avatarUrl"),
-			concatUserSubmittedImagePrefix(eb.ref("BannerImage.url")).as("bannerUrl"),
+			concatUserSubmittedImagePrefix(
+				includeUnvalidatedImages
+					? eb.ref("AvatarImage.url")
+					: eb.fn<string | null>("iif", [
+							eb("AvatarImage.validatedAt", "is not", null),
+							eb.ref("AvatarImage.url"),
+							sql`null`,
+						]),
+			).as("avatarUrl"),
+			concatUserSubmittedImagePrefix(
+				includeUnvalidatedImages
+					? eb.ref("BannerImage.url")
+					: eb.fn<string | null>("iif", [
+							eb("BannerImage.validatedAt", "is not", null),
+							eb.ref("BannerImage.url"),
+							sql`null`,
+						]),
+			).as("bannerUrl"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TeamMemberWithSecondary")

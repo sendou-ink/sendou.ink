@@ -83,12 +83,14 @@ function prefixItems<V extends string>(
 export function image(args: {
 	label: FormsTranslationKey;
 	dimensions?: "logo" | "thick-banner" | { width: number; height: number };
+	autoValidate?: boolean;
 }) {
 	// clone so each field gets its own registry entry (the shared `imageValue`
 	// instance would otherwise have its metadata overwritten by later fields)
 	return imageValue.clone().register(formRegistry, {
 		label: prefixKey(args.label),
 		dimensions: args.dimensions ?? "logo",
+		autoValidate: args.autoValidate ?? false,
 		type: "image",
 		initialValue: null,
 	});

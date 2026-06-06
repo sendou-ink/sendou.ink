@@ -58,12 +58,9 @@ type ResolvedImages<T> = T extends unknown
 export async function parseFormDataWithImages<T extends z.ZodTypeAny>({
 	request,
 	schema,
-	autoValidate = false,
 }: {
 	request: Request;
 	schema: T;
-	/** Validate uploaded images immediately, bypassing the moderator queue (e.g. trusted org logos). */
-	autoValidate?: boolean;
 }): Promise<ParseResult<ResolvedImages<z.infer<T>>>> {
 	const result = await parseFormData({ request, schema });
 	if (!result.success) return result;
@@ -71,7 +68,7 @@ export async function parseFormDataWithImages<T extends z.ZodTypeAny>({
 	const user = requireUser();
 	const data = { ...(result.data as Record<string, unknown>) };
 
-	for (const key of imageFieldKeys(schema)) {
+	for (const { key, autoValidate } of imageFields(schema)) {
 		if (key in data) {
 			data[key] = await imageFieldValueToImgId({
 				value: data[key] as ImageFieldValue,
@@ -84,8 +81,13 @@ export async function parseFormDataWithImages<T extends z.ZodTypeAny>({
 	return { success: true, data: data as ResolvedImages<z.infer<T>> };
 }
 
-/** Collects the keys of every `image()` field across a schema object or union of objects. */
-function imageFieldKeys(schema: z.ZodTypeAny): string[] {
+/**
+ * Collects every `image()` field across a schema object or union of objects, along with each
+ * field's `autoValidate` flag (whether its uploads bypass the moderator queue).
+ */
+function imageFields(
+	schema: z.ZodTypeAny,
+): Array<{ key: string; autoValidate: boolean }> {
 	const objects =
 		schema instanceof z.ZodUnion
 			? (schema.options as z.ZodObject<z.ZodRawShape>[])
@@ -93,13 +95,15 @@ function imageFieldKeys(schema: z.ZodTypeAny): string[] {
 				? [schema]
 				: [];
 
-	const keys = new Set<string>();
+	const fields = new Map<string, boolean>();
 	for (const object of objects) {
 		for (const [key, fieldSchema] of Object.entries(object.shape)) {
 			const meta = formRegistry.get(fieldSchema);
-			if (meta?.type === "image") keys.add(key);
+			if (meta?.type === "image") {
+				fields.set(key, meta.autoValidate ?? false);
+			}
 		}
 	}
 
-	return [...keys];
+	return [...fields].map(([key, autoValidate]) => ({ key, autoValidate }));
 }
