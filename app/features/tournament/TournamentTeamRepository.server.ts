@@ -219,7 +219,7 @@ export function upsertRegistration({
 }: {
 	/** Present when editing an existing team, omitted when creating a new one. */
 	tournamentTeamId?: number;
-	tournamentId: number; // xxx: redundant, can we inferred from tournamentTeamId
+	tournamentId: number;
 	actorUserId: number;
 	name: string;
 	/** Linked sendou.ink team id, or null for a pickup team. */
