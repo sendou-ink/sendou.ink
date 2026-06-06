@@ -174,8 +174,6 @@
 	"maps.validation.INCLUDES_TIEBREAKER": "タイブレーカ(引き分けの場合)のステージを決めることができません。",
 	"maps.validation.VALID": "登録できるマップリストです!",
 	"results": "結果",
-	"results.placeSuffix_two": "位",
-	"results.placeSuffix_few": "位",
 	"forms.name": "名前",
 	"forms.description": "説明",
 	"forms.errors.title": "以下のエラーの修正が必要です",

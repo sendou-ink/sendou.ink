@@ -174,8 +174,6 @@
 	"maps.validation.INCLUDES_TIEBREAKER": "",
 	"maps.validation.VALID": "Map pool ok!",
 	"results": "결과",
-	"results.placeSuffix_two": "^등",
-	"results.placeSuffix_few": "^등",
 	"forms.name": "이름",
 	"forms.description": "설명",
 	"forms.errors.title": "다음 문제들을 해결해야 합니다",

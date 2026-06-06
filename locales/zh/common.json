@@ -174,8 +174,6 @@
 	"maps.validation.INCLUDES_TIEBREAKER": "无法选择决胜局地图",
 	"maps.validation.VALID": "地图池已完成！",
 	"results": "成绩",
-	"results.placeSuffix_two": "^nd",
-	"results.placeSuffix_few": "^rd",
 	"forms.name": "名称",
 	"forms.description": "简介",
 	"forms.errors.title": "以下错误需要修正",
