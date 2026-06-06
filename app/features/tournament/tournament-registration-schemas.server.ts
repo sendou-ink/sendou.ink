@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { userIsBanned } from "~/features/ban/core/banned.server";
+import * as TeamRepository from "~/features/team/TeamRepository.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { adminRegistrationFormSchema } from "./tournament-registration-schemas";
@@ -12,16 +13,20 @@ import { adminRegistrationFormSchema } from "./tournament-registration-schemas";
  */
 export function adminRegistrationFormSchemaServer({
 	tournament,
-	name,
 }: {
 	tournament: Tournament;
-	/** Resolved team name (typed pickup name, or the linked team's name). */
-	name: string;
 }) {
 	return adminRegistrationFormSchema.superRefine(async (data, ctx) => {
-		const nameTaken = !tournament.ctx.teams.every(
-			(team) => team.id === data.tournamentTeamId || team.name !== name,
-		);
+		const name = data.linkedTeam
+			? typeof data.teamId === "number"
+				? (await TeamRepository.findById(data.teamId))?.name
+				: undefined
+			: data.pickUpName;
+		const nameTaken =
+			name != null &&
+			!tournament.ctx.teams.every(
+				(team) => team.id === data.tournamentTeamId || team.name !== name,
+			);
 		if (nameTaken) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,

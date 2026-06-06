@@ -3,6 +3,7 @@ import {
 	array,
 	fieldset,
 	idConstantOptional,
+	image,
 	selectDynamic,
 	stringConstant,
 	teamSearchOptional,
@@ -44,6 +45,8 @@ export const adminRegistrationFormSchema = z
 			label: "labels.regTeamName",
 			maxLength: TOURNAMENT.TEAM_NAME_MAX_LENGTH,
 		}),
+		/** Pickup team logo. Linked teams source their logo from the sendou.ink team instead. */
+		logo: image({ label: "labels.logo" }),
 		teamId: teamSearchOptional({ label: "labels.regTeam" }),
 		/** `String(userId)` of the roster member that is the team owner/captain. */
 		ownerId: selectDynamic({ label: "labels.regCaptain" }),

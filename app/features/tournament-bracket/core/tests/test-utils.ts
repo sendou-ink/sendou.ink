@@ -20,6 +20,7 @@ export const tournamentCtxTeam = (
 		mapPool: [],
 		members: [],
 		activeRosterUserIds: [],
+		avatarImgId: null,
 		pickupAvatarUrl: null,
 		name: `Team ${teamId}`,
 		prefersNotToHost: 0,

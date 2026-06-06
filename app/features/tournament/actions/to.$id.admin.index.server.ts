@@ -5,7 +5,6 @@ import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
-import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { getServerTournamentManager } from "~/features/tournament-bracket/core/brackets-manager/manager.server";
 import {
@@ -16,7 +15,6 @@ import { tournamentWebsocketRoom } from "~/features/tournament-bracket/tournamen
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { tournamentMatchWebsocketRoom } from "~/features/tournament-match/tournament-match-utils";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { fieldErrorsFromZodError } from "~/form/parse.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -27,7 +25,6 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "../../../utils/zod";
-import { adminRegistrationFormSchemaServer } from "../tournament-registration-schemas.server";
 import { adminTeamsActionSchema } from "../tournament-schemas.server";
 import { endDroppedTeamMatches } from "../tournament-utils.server";
 
@@ -48,78 +45,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 		errorToastIfFalsy(tournament.isOrganizer(user), "Unauthorized");
 
 	switch (data._action) {
-		// xxx: remove for UPSERT_REGISTRATION
-		case "ADD_TEAM": {
-			validateIsTournamentOrganizer();
-			errorToastIfFalsy(
-				tournament.ctx.teams.every((t) => t.name !== data.teamName),
-				"Team name taken",
-			);
-			errorToastIfFalsy(
-				!tournament.teamMemberOfByUser({ id: data.userId }),
-				"User already on a team",
-			);
-			const addTeamUser = await UserRepository.findLeanById(data.userId);
-			errorToastIfFalsy(addTeamUser?.friendCode, "User has no friend code set");
-			errorToastIfFalsy(
-				!tournament.ctx.settings.requireInGameNames || addTeamUser?.inGameName,
-				"User has no in-game name set",
-			);
-
-			await TournamentTeamRepository.create({
-				team: {
-					name: data.teamName,
-					prefersNotToHost: 0,
-					teamId: null,
-				},
-				userId: data.userId,
-				actorUserId: user.id,
-				tournamentId,
-			});
-			await TournamentLFGRepository.leaveLfg({
-				userId: data.userId,
-				tournamentId,
-			});
-
-			ShowcaseTournaments.addToCached({
-				tournamentId,
-				type: "participant",
-				userId: data.userId,
-				newTeamCount: tournament.ctx.teams.length + 1,
-			});
-
-			break;
-		}
-		// xxx: remove for UPSERT_REGISTRATION
-		case "CHANGE_TEAM_OWNER": {
-			validateIsTournamentOrganizer();
-			const team = tournament.teamById(data.teamId);
-			errorToastIfFalsy(team, "Invalid team id");
-			const oldCaptain = team.members.find((m) => m.role === "OWNER");
-			invariant(oldCaptain, "Team has no captain");
-			const newCaptain = team.members.find((m) => m.userId === data.memberId);
-			errorToastIfFalsy(newCaptain, "Invalid member id");
-
-			await TournamentTeamRepository.transferOwnership(data.teamId, {
-				oldCaptainId: oldCaptain.userId,
-				newCaptainId: data.memberId,
-			});
-
-			break;
-		}
-		// xxx: remove for UPSERT_REGISTRATION
-		case "CHANGE_TEAM_NAME": {
-			validateIsTournamentOrganizer();
-			const team = tournament.teamById(data.teamId);
-			errorToastIfFalsy(team, "Invalid team id");
-
-			await TournamentTeamRepository.updateName({
-				tournamentTeamId: data.teamId,
-				name: data.teamName,
-			});
-
-			break;
-		}
 		case "CHECK_IN": {
 			validateIsTournamentOrganizer();
 			const team = tournament.teamById(data.teamId);
@@ -171,7 +96,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			break;
 		}
-		// xxx: remove for UPSERT_REGISTRATION
+		// xxx: only kept for the public API - migrate it to UPSERT_REGISTRATION and remove
 		case "REMOVE_MEMBER": {
 			validateIsTournamentOrganizer();
 			const team = tournament.teamById(data.teamId);
@@ -214,7 +139,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			break;
 		}
-		// xxx: remove for UPSERT_REGISTRATION
+		// xxx: only kept for the public API - migrate it to UPSERT_REGISTRATION and remove
 		case "ADD_MEMBER": {
 			validateIsTournamentOrganizer();
 			const team = tournament.teamById(data.teamId);
@@ -343,7 +268,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			break;
 		}
-		// xxx: remove for UPSERT_REGISTRATION
+		// xxx: only kept for the public API - migrate it to UPSERT_REGISTRATION and remove
 		case "UPDATE_IN_GAME_NAME": {
 			validateIsTournamentOrganizer();
 
@@ -356,124 +281,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				inGameName: `${data.inGameNameText}#${data.inGameNameDiscriminator}`,
 				tournamentTeamId: teamMemberOf.id,
 			});
-
-			break;
-		}
-		// xxx: remove for UPSERT_REGISTRATION
-		case "DELETE_LOGO": {
-			validateIsTournamentOrganizer();
-
-			await TournamentTeamRepository.deleteLogo(data.teamId);
-
-			break;
-		}
-		case "UPSERT_REGISTRATION": {
-			validateIsTournamentOrganizer();
-
-			const submittedMembers = data.members;
-			const ownerUserId = Number(data.ownerId);
-
-			const linkedTeamId = data.linkedTeam ? data.teamId : null;
-			const name = linkedTeamId
-				? (await TeamRepository.findById(linkedTeamId))!.name
-				: data.pickUpName!;
-
-			const validation = await adminRegistrationFormSchemaServer({
-				tournament,
-				name,
-			}).safeParseAsync(data);
-			if (!validation.success) {
-				// xxx: a bit jank we need to call this
-				return { fieldErrors: fieldErrorsFromZodError(validation.error) };
-			}
-
-			let team: NonNullable<ReturnType<typeof tournament.teamById>> | undefined;
-			if (typeof data.tournamentTeamId === "number") {
-				team = tournament.teamById(data.tournamentTeamId);
-			}
-
-			const currentMemberIds =
-				team?.members.map((member) => member.userId) ?? [];
-			const submittedMemberIds = submittedMembers.map(
-				(member) => member.userId,
-			);
-			const membersToAdd = submittedMemberIds.filter(
-				(memberId) => !currentMemberIds.includes(memberId),
-			);
-			const membersToRemove = currentMemberIds.filter(
-				(memberId) => !submittedMemberIds.includes(memberId),
-			);
-
-			// xxx: put these to schema
-			if (team) {
-				for (const removeId of membersToRemove) {
-					errorToastIfFalsy(
-						!tournament.hasStarted ||
-							!tournament
-								.participatedPlayersByTeamId(team.id)
-								.some((p) => p.userId === removeId),
-						"Cannot remove player that has participated in the tournament",
-					);
-				}
-
-				errorToastIfFalsy(
-					team.checkIns.length === 0 ||
-						submittedMembers.length >= tournament.minMembersPerTeam,
-					"Checked in team can't go below the minimum roster size",
-				);
-			}
-
-			const ownerChange = (() => {
-				if (!team) return null;
-				const currentOwner = team.members.find((m) => m.role === "OWNER");
-				invariant(currentOwner, "Team has no owner");
-				return currentOwner.userId !== ownerUserId
-					? { oldOwnerId: currentOwner.userId, newOwnerId: ownerUserId }
-					: null;
-			})();
-
-			const inGameNameUpdates = submittedMembers.flatMap((member) => {
-				if (!member.inGameName) return [];
-				const current = team?.members.find((m) => m.userId === member.userId);
-				if (current && current.inGameName === member.inGameName) return [];
-				return [{ userId: member.userId, inGameName: member.inGameName }];
-			});
-
-			await TournamentTeamRepository.upsertRegistration({
-				tournamentTeamId: team?.id,
-				tournamentId,
-				actorUserId: user.id,
-				name,
-				teamId: linkedTeamId,
-				ownerUserId,
-				ownerChange,
-				membersToAdd,
-				membersToRemove,
-				inGameNameUpdates,
-			});
-
-			for (const addId of membersToAdd) {
-				await TournamentLFGRepository.leaveLfg({
-					userId: addId,
-					tournamentId,
-				});
-				ShowcaseTournaments.addToCached({
-					tournamentId,
-					type: "participant",
-					userId: addId,
-					newTeamCount:
-						!team && addId === ownerUserId
-							? tournament.ctx.teams.length + 1
-							: undefined,
-				});
-			}
-			for (const removeId of membersToRemove) {
-				ShowcaseTournaments.removeFromCached({
-					tournamentId,
-					type: "participant",
-					userId: removeId,
-				});
-			}
 
 			break;
 		}

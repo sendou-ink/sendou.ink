@@ -13,7 +13,6 @@ import { bracketProgressionSchema } from "../calendar/calendar-schemas";
 import { bracketIdx } from "../tournament-bracket/tournament-bracket-schemas.server";
 import { USER } from "../user-page/user-page-constants";
 import { TOURNAMENT } from "./tournament-constants";
-import { adminRegistrationFormSchema } from "./tournament-registration-schemas";
 
 const teamName = safeStringSchema({
 	max: TOURNAMENT.TEAM_NAME_MAX_LENGTH,
@@ -69,16 +68,6 @@ export const tournamentSearchSearchParamsSchema = z.object({
 
 export const adminTeamsActionSchema = z.union([
 	z.object({
-		_action: _action("CHANGE_TEAM_OWNER"),
-		teamId: id,
-		memberId: id,
-	}),
-	z.object({
-		_action: _action("CHANGE_TEAM_NAME"),
-		teamId: id,
-		teamName,
-	}),
-	z.object({
 		_action: _action("CHECK_IN"),
 		teamId: id,
 		bracketIdx,
@@ -103,20 +92,11 @@ export const adminTeamsActionSchema = z.union([
 		teamId: id,
 	}),
 	z.object({
-		_action: _action("ADD_TEAM"),
-		userId: id,
-		teamName,
-	}),
-	z.object({
 		_action: _action("DROP_TEAM_OUT"),
 		teamId: id,
 	}),
 	z.object({
 		_action: _action("UNDO_DROP_TEAM_OUT"),
-		teamId: id,
-	}),
-	z.object({
-		_action: _action("DELETE_LOGO"),
 		teamId: id,
 	}),
 	z.object({
@@ -129,7 +109,6 @@ export const adminTeamsActionSchema = z.union([
 			.refine((val) => /^[0-9a-z]{4,5}$/.test(val)),
 		memberId: id,
 	}),
-	adminRegistrationFormSchema,
 ]);
 
 export const adminStaffActionSchema = z.union([

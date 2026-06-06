@@ -13,9 +13,14 @@ import {
 	X,
 } from "lucide-react";
 import * as React from "react";
-import { useFetcher } from "react-router";
+import {
+	Outlet,
+	useFetcher,
+	useNavigate,
+	useOutletContext,
+} from "react-router";
 import { Avatar } from "~/components/Avatar";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Input } from "~/components/Input";
@@ -25,29 +30,27 @@ import {
 } from "~/components/SortableTableHeader";
 import { Table } from "~/components/Table";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
-import { teamPage } from "~/utils/urls";
+import {
+	teamPage,
+	tournamentAdminRegistrationEditPage,
+	tournamentAdminRegistrationPage,
+} from "~/utils/urls";
 import { queryToUserIdentifier } from "~/utils/users";
 import { ExportDialog } from "../components/ExportDialog";
-import { RegistrationFormDialog } from "../components/RegistrationForm";
 import { useTournament } from "./to.$id";
-import styles from "./to.$id.admin.index.module.css";
 
-export { action } from "../actions/to.$id.admin.index.server";
+import styles from "./to.$id.admin.index.module.css";
 
 type SortKey = "name" | "checkIn";
 
-type DialogState =
-	| { type: "add" }
-	| { type: "edit"; teamId: number }
-	| { type: "export" }
-	| null;
-
 export default function TournamentAdminTeamsPage() {
 	const tournament = useTournament();
+	const navigate = useNavigate();
+	const outletContext = useOutletContext();
 
 	const [search, setSearch] = React.useState("");
 	const [sort, setSort] = React.useState<SortState<SortKey>>(null);
-	const [dialog, setDialog] = React.useState<DialogState>(null);
+	const [exportOpen, setExportOpen] = React.useState(false);
 
 	const maxRosterSize = Math.max(
 		1,
@@ -59,9 +62,6 @@ export default function TournamentAdminTeamsPage() {
 	);
 	const sortedTeams = sortTeams(filteredTeams, sort);
 
-	const editingTeam =
-		dialog?.type === "edit" ? tournament.teamById(dialog.teamId) : undefined;
-
 	return (
 		<div className="stack md">
 			<div className={styles.toolbar}>
@@ -70,17 +70,17 @@ export default function TournamentAdminTeamsPage() {
 						size="small"
 						variant="outlined"
 						icon={<Download />}
-						onPress={() => setDialog({ type: "export" })}
+						onPress={() => setExportOpen(true)}
 					>
 						Export
 					</SendouButton>
-					<SendouButton
+					<LinkButton
 						size="small"
 						icon={<Plus />}
-						onPress={() => setDialog({ type: "add" })}
+						to={tournamentAdminRegistrationPage(tournament.ctx.id)}
 					>
 						Add new team
-					</SendouButton>
+					</LinkButton>
 				</div>
 				<Input
 					className={styles.searchInput}
@@ -119,7 +119,15 @@ export default function TournamentAdminTeamsPage() {
 							key={team.id}
 							team={team}
 							maxRosterSize={maxRosterSize}
-							onEdit={() => setDialog({ type: "edit", teamId: team.id })}
+							// xxx: better to make it a proper link
+							onEdit={() =>
+								navigate(
+									tournamentAdminRegistrationEditPage(
+										tournament.ctx.id,
+										team.id,
+									),
+								)
+							}
 						/>
 					))}
 					{sortedTeams.length === 0 ? (
@@ -132,18 +140,9 @@ export default function TournamentAdminTeamsPage() {
 				</tbody>
 			</Table>
 
-			{dialog?.type === "add" ? (
-				<RegistrationFormDialog close={() => setDialog(null)} />
-			) : null}
-			{dialog?.type === "edit" && editingTeam ? (
-				<RegistrationFormDialog
-					team={editingTeam}
-					close={() => setDialog(null)}
-				/>
-			) : null}
-			{dialog?.type === "export" ? (
-				<ExportDialog close={() => setDialog(null)} />
-			) : null}
+			{exportOpen ? <ExportDialog close={() => setExportOpen(false)} /> : null}
+
+			<Outlet context={outletContext} />
 		</div>
 	);
 }

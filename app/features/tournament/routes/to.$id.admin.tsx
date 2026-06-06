@@ -23,6 +23,8 @@ import {
 import { useTournament } from "./to.$id";
 import styles from "./to.$id.admin.module.css";
 
+export { action } from "../actions/to.$id.admin.index.server";
+
 const HORIZONTAL_TABS_BELOW = 720;
 
 type AdminTab = "teams" | "seeds" | "staff" | "stream" | "brackets" | "audit";

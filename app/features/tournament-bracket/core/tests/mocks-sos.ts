@@ -2369,6 +2369,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730771673,
 				activeRosterUserIds: [8852, 34724, 9403, 27222],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -2510,6 +2511,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730931681,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -2619,6 +2621,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730864603,
 				activeRosterUserIds: [22344, 1038, 1059, 10200],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -2744,6 +2747,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730932511,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-gYdQMQEToU9InodFy5P0z-1730936760761.webp",
 				members: [
 					{
@@ -2853,6 +2857,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730922495,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-EwC2mgMiWfx54bSWSPhr3-1730922495444.webp",
 				members: [
 					{
@@ -2962,6 +2967,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730788095,
 				activeRosterUserIds: [7807, 11815, 5001, 7216],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -3108,6 +3114,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730774561,
 				activeRosterUserIds: [3657, 5227, 25622, 25053],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -3238,6 +3245,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730935243,
 				activeRosterUserIds: [73, 8760, 1548, 163],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -3368,6 +3376,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730851309,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -3482,6 +3491,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730870818,
 				activeRosterUserIds: [22614, 11244, 3181, 11495],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -3607,6 +3617,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730872875,
 				activeRosterUserIds: [21487, 28391, 23292, 13854],
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-b-J9byWINvtDmLv24gzeJ-1730872875114.webp",
 				members: [
 					{
@@ -3732,6 +3743,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730934390,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -3841,6 +3853,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730925172,
 				activeRosterUserIds: [863, 34414, 27917, 15278],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -3971,6 +3984,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730526186,
 				activeRosterUserIds: [1736, 986, 25464, 2300],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -4117,6 +4131,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730940438,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-nETHLw8QQ0_AzfiPsuBwQ-1730940553743.webp",
 				members: [
 					{
@@ -4184,6 +4199,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730912708,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-bXW8Qb1mvrgvqCr0J-cq7-1730912708301.webp",
 				members: [
 					{
@@ -4293,6 +4309,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730936919,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-_wB0IydnUgDBkskX8eq35-1730936919244.webp",
 				members: [
 					{
@@ -4402,6 +4419,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730937337,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-jdoLt7-S9ClBnQNRtqOze-1730937337828.webp",
 				members: [
 					{
@@ -4511,6 +4529,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730769135,
 				activeRosterUserIds: [33116, 34014, 44751, 22756],
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-ItBKhtBOvsxcD9yMJDrsP-1730769135503.webp",
 				members: [
 					{
@@ -4657,6 +4676,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730836875,
 				activeRosterUserIds: [1616, 17310, 34657, 22409],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -4787,6 +4807,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730844165,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -4901,6 +4922,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730926359,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-p3UgTkOwvFWBT2Cxvuhuq-1730926358900.webp",
 				members: [
 					{
@@ -5010,6 +5032,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730928135,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -5119,6 +5142,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730880730,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -5223,6 +5247,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730939363,
 				activeRosterUserIds: [21205, 1953, 32885, 2888],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -5353,6 +5378,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730838132,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -5467,6 +5493,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730917380,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -5523,6 +5550,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730832667,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -5632,6 +5660,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730853887,
 				activeRosterUserIds: [29120, 35225, 8587, 27440],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -5762,6 +5791,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730928986,
 				activeRosterUserIds: [26103, 31395, 33402, 31195],
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-tEtTINjP6iHk01HpA1rQ2-1730928986789.webp",
 				members: [
 					{
@@ -5887,6 +5917,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730775625,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -6001,6 +6032,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730605037,
 				activeRosterUserIds: [24514, 5187, 29823, 22744],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -6131,6 +6163,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730862741,
 				activeRosterUserIds: [5584, 30612, 13671, 36898],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -6261,6 +6294,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730840221,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -6365,6 +6399,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730770163,
 				activeRosterUserIds: [25469, 3513, 26820, 30122],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -6511,6 +6546,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730753582,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -6599,6 +6635,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730929508,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -6713,6 +6750,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730918770,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -6796,6 +6834,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730851475,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -6905,6 +6944,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730726309,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7009,6 +7049,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730840643,
 				activeRosterUserIds: [41797, 29855, 34594, 26801],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7134,6 +7175,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730827259,
 				activeRosterUserIds: [25218, 26988, 26989, 12610],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7264,6 +7306,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730863477,
 				activeRosterUserIds: [37341, 30266, 22699, 39363],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7410,6 +7453,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730907528,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-CsXMAg2pGXBRBfZeRBBqa-1730907542690.webp",
 				members: [
 					{
@@ -7519,6 +7563,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730932702,
 				activeRosterUserIds: [45980, 45163, 32203, 46101],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7644,6 +7689,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730832003,
 				activeRosterUserIds: [40505, 29011, 23082, 33067],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7774,6 +7820,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730938507,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7883,6 +7930,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730739211,
 				activeRosterUserIds: [23712, 8080, 7994, 20990],
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-PntW-hxfVpRHVnxBML2g2-1730739211607.webp",
 				members: [
 					{
@@ -8024,6 +8072,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730857328,
 				activeRosterUserIds: [29531, 3275, 35169, 7008],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -8154,6 +8203,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730591675,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -8242,6 +8292,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730859986,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-wYiwNATx-T8R_RztGHumf-1730859986110.webp",
 				members: [
 					{
@@ -8351,6 +8402,7 @@ export const SWIM_OR_SINK_167 = (
 				inviteCode: null,
 				createdAt: 1730703689,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{

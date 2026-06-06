@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 import { SendouDialog } from "~/components/elements/Dialog";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import { FormField } from "~/form/FormField";
@@ -9,6 +10,7 @@ import type {
 	SelectOption,
 	TeamSearchFieldOptions,
 } from "~/form/types";
+import { tournamentAdminPage } from "~/utils/urls";
 import { useTournament } from "../routes/to.$id";
 import {
 	type AdminRegistrationFormValues,
@@ -22,12 +24,14 @@ type RosterMemberValue = {
 
 export function RegistrationFormDialog({
 	team,
-	close,
 }: {
 	/** The team being edited, or undefined when adding a new team. */
 	team?: TournamentDataTeam;
-	close: () => void;
 }) {
+	const navigate = useNavigate();
+	const tournament = useTournament();
+	const adminPage = tournamentAdminPage(tournament.ctx.id);
+
 	const owner = team?.members.find((member) => member.role === "OWNER");
 
 	const defaultValues: Partial<AdminRegistrationFormValues> | undefined = team
@@ -35,6 +39,16 @@ export function RegistrationFormDialog({
 				tournamentTeamId: team.id,
 				linkedTeam: Boolean(team.team),
 				pickUpName: team.team ? null : team.name,
+				logo:
+					!team.team &&
+					team.pickupAvatarUrl &&
+					typeof team.avatarImgId === "number"
+						? {
+								type: "EXISTING",
+								imgId: team.avatarImgId,
+								url: team.pickupAvatarUrl,
+							}
+						: null,
 				teamId: team.team?.id ?? null,
 				ownerId: owner ? String(owner.userId) : "",
 				members: team.members.map((member) => ({
@@ -47,12 +61,13 @@ export function RegistrationFormDialog({
 	return (
 		<SendouDialog
 			heading={team ? "Edit registration" : "Add new team"}
-			onClose={close}
+			onCloseTo={adminPage}
 		>
 			<SendouForm
 				schema={adminRegistrationFormSchema}
 				defaultValues={defaultValues}
-				onSuccess={close}
+				// xxx: not needed, we can just redirect from action (probably onSuccess also becomes unnecessary)
+				onSuccess={() => navigate(adminPage)}
 			>
 				<RegistrationFields team={team} />
 			</SendouForm>
@@ -126,7 +141,10 @@ function RegistrationFields({ team }: { team?: TournamentDataTeam }) {
 					}
 				/>
 			) : (
-				<FormField name="pickUpName" />
+				<>
+					<FormField name="pickUpName" />
+					<FormField name="logo" />
+				</>
 			)}
 			<FormField name="members">
 				{({ itemName }: ArrayItemRenderContext) => (

@@ -210,6 +210,7 @@ export function upsertRegistration({
 	actorUserId,
 	name,
 	teamId,
+	avatarImgId,
 	ownerUserId,
 	ownerChange,
 	membersToAdd,
@@ -223,6 +224,8 @@ export function upsertRegistration({
 	name: string;
 	/** Linked sendou.ink team id, or null for a pickup team. */
 	teamId: number | null;
+	/** Resolved pickup team logo image id (null for none / linked teams). */
+	avatarImgId: number | null;
 	/** Roster owner/captain. Assigned the OWNER role when creating a new team. */
 	ownerUserId: number;
 	/** Owner transfer for an existing team (null when unchanged or when creating). */
@@ -244,6 +247,7 @@ export function upsertRegistration({
 							inviteCode: shortNanoid(),
 							prefersNotToHost: 0,
 							teamId,
+							avatarImgId,
 						})
 						.returning("id")
 						.executeTakeFirstOrThrow()
@@ -265,9 +269,7 @@ export function upsertRegistration({
 				.set({
 					name,
 					teamId,
-					// linking a team sources its logo, so any pickup avatar is cleared
-					// xxx: allow changing avatar
-					...(teamId !== null ? { avatarImgId: null } : {}),
+					avatarImgId,
 					...(clearActiveRoster ? { activeRosterUserIds: null } : {}),
 				})
 				.where("TournamentTeam.id", "=", id)
@@ -690,29 +692,6 @@ export function checkOut({
 	});
 }
 
-export function updateName({
-	tournamentTeamId,
-	name,
-}: {
-	tournamentTeamId: number;
-	name: string;
-}) {
-	return db.transaction().execute(async (trx) => {
-		await trx
-			.updateTable("TournamentTeam")
-			.set({
-				name,
-			})
-			.where("id", "=", tournamentTeamId)
-			.execute();
-
-		await TournamentAuditLogRepository.updateTeamHistoryName(trx, {
-			tournamentTeamId,
-			name,
-		});
-	});
-}
-
 export function dropOut({
 	tournamentTeamId,
 	previewBracketIdxs,
@@ -893,30 +872,6 @@ export function leave({
 			.deleteFrom("TournamentTeamMember")
 			.where("TournamentTeamMember.tournamentTeamId", "=", teamId)
 			.where("TournamentTeamMember.userId", "=", userId)
-			.execute();
-	});
-}
-
-export function transferOwnership(
-	tournamentTeamId: number,
-	{
-		oldCaptainId,
-		newCaptainId,
-	}: { oldCaptainId: number; newCaptainId: number },
-) {
-	return db.transaction().execute(async (trx) => {
-		await trx
-			.updateTable("TournamentTeamMember")
-			.set({ role: "REGULAR" })
-			.where("TournamentTeamMember.tournamentTeamId", "=", tournamentTeamId)
-			.where("TournamentTeamMember.userId", "=", oldCaptainId)
-			.execute();
-
-		await trx
-			.updateTable("TournamentTeamMember")
-			.set({ role: "OWNER" })
-			.where("TournamentTeamMember.tournamentTeamId", "=", tournamentTeamId)
-			.where("TournamentTeamMember.userId", "=", newCaptainId)
 			.execute();
 	});
 }

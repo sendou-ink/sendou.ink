@@ -390,6 +390,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				activeRosterUserIds: [5662, 2899, 6114, 30176],
 				startingBracketIdx: null,
 				abDivision: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -500,6 +501,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				activeRosterUserIds: null,
 				startingBracketIdx: null,
 				abDivision: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-rZYQMu8ELjiFkeiAVGJUt-1734424882431.webp",
 				members: [
 					{
@@ -589,6 +591,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				activeRosterUserIds: null,
 				startingBracketIdx: null,
 				abDivision: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -678,6 +681,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				activeRosterUserIds: [37632, 13590, 10757, 33047],
 				startingBracketIdx: null,
 				abDivision: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -788,6 +792,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				activeRosterUserIds: [11780, 46006, 43518, 33483],
 				startingBracketIdx: null,
 				abDivision: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-FOfFcEbo2OJxIJIJxNJqu-1734608907317.webp",
 				members: [
 					{
@@ -909,6 +914,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				activeRosterUserIds: [46467, 46813, 33491, 43662],
 				startingBracketIdx: null,
 				abDivision: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-y79k_HOVmjv4KfhTjuSqh-1734398099266.webp",
 				members: [
 					{
@@ -1019,6 +1025,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				activeRosterUserIds: null,
 				startingBracketIdx: null,
 				abDivision: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-IGXFtjFMa_dxQqAe2dqIR-1734598652684.webp",
 				members: [
 					{
