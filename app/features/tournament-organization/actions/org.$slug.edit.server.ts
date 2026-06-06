@@ -2,7 +2,7 @@ import { type ActionFunctionArgs, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
-import { parseFormData } from "~/form/parse.server";
+import { parseFormDataWithImages } from "~/form/parse.server";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { actionError } from "~/utils/remix.server";
@@ -13,7 +13,7 @@ import { organizationFromParams } from "../tournament-organization-utils.server"
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const user = requireUser();
-	const result = await parseFormData({
+	const result = await parseFormDataWithImages({
 		request,
 		schema: organizationEditFormSchema,
 	});
@@ -48,6 +48,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		name: data.name,
 		description: data.description,
 		socials: socials.length > 0 ? socials : null,
+		avatarImgId: data.logo,
 		members: data.members,
 		series: data.series,
 		badges: data.badges,

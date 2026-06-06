@@ -1,3 +1,4 @@
+import type { LanguageCode } from "~/modules/i18n/config";
 import type { Namespace } from "~/modules/i18n/resources.server";
 import { logger } from "./logger";
 import { assertType } from "./types";
@@ -75,4 +76,57 @@ export function countryCodeToTranslatedName({
 		);
 		return countryCode; // fallback to the code itself if display name fails
 	}
+}
+
+/**
+ * Ordinal placement suffixes per language, keyed by the CLDR ordinal plural
+ * category given by `Intl.PluralRules(language, { type: "ordinal" })`. A leading
+ * `^` marks a suffix that should render as superscript. Languages without a
+ * written ordinal suffix use explicit `null` – rendering no suffix is preferred
+ * over borrowing the English one.
+ */
+const ORDINAL_SUFFIXES: Record<
+	LanguageCode,
+	Partial<Record<Intl.LDMLPluralRule, string>> | null
+> = {
+	da: null,
+	he: null,
+	nl: null,
+	en: { one: "^st", two: "^nd", few: "^rd", other: "^th" },
+	"es-ES": { other: "º" },
+	"es-US": { other: "^o" },
+	"fr-CA": { one: "^er", other: "^ème" },
+	"fr-EU": { one: "^er", other: "^ème" },
+	de: { other: "^." },
+	it: { many: "^o", other: "^o" },
+	ja: { other: "位" },
+	ko: { other: "^등" },
+	pl: { other: "^." },
+	"pt-BR": { other: "^º" },
+	ru: { other: "^ое" },
+	zh: { other: "名" },
+};
+
+const pluralRulesCache = new Map<string, Intl.PluralRules>();
+
+/**
+ * Returns the localized ordinal suffix for a placement number in the given
+ * language (e.g. `"^st"` for `1` in English). A leading `^` marks a suffix the
+ * caller should render as superscript. Returns an empty string for languages
+ * without a written ordinal suffix.
+ */
+export function ordinalSuffix(placement: number, language: string): string {
+	const category = ordinalPluralRules(language).select(placement);
+
+	return ORDINAL_SUFFIXES[language as LanguageCode]?.[category] ?? "";
+}
+
+function ordinalPluralRules(language: string): Intl.PluralRules {
+	let rules = pluralRulesCache.get(language);
+	if (!rules) {
+		rules = new Intl.PluralRules(language, { type: "ordinal" });
+		pluralRulesCache.set(language, rules);
+	}
+
+	return rules;
 }

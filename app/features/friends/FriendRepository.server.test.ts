@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
 import * as FriendRepository from "./FriendRepository.server";
 
 const createFriendRequest = async ({
@@ -330,10 +330,9 @@ describe("deleteFriendship", () => {
 			userTwoId: 2,
 		});
 
-		await FriendRepository.deleteFriendship({
-			id: friendship!.id,
-			userId: 1,
-		});
+		await withUserId(1, () =>
+			FriendRepository.deleteOwnFriendshipById(friendship!.id),
+		);
 
 		const result = await FriendRepository.findFriendship({
 			userOneId: 1,
@@ -350,10 +349,9 @@ describe("deleteFriendship", () => {
 			userTwoId: 2,
 		});
 
-		await FriendRepository.deleteFriendship({
-			id: friendship!.id,
-			userId: 3,
-		});
+		await withUserId(3, () =>
+			FriendRepository.deleteOwnFriendshipById(friendship!.id),
+		);
 
 		const result = await FriendRepository.findFriendship({
 			userOneId: 1,

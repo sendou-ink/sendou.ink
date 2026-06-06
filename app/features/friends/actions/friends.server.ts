@@ -53,10 +53,7 @@ export const action: ActionFunction = async ({ request }) => {
 			break;
 		}
 		case "DELETE_FRIEND": {
-			await FriendRepository.deleteFriendship({
-				id: result.data.friendshipId,
-				userId: user.id,
-			});
+			await FriendRepository.deleteOwnFriendshipById(result.data.friendshipId);
 
 			break;
 		}

@@ -23,7 +23,7 @@ type DBGroupRow = Awaited<
 	ReturnType<typeof SQGroupRepository.findCurrentGroups>
 >[number];
 type DBPrivateNoteRow = Awaited<
-	ReturnType<typeof PrivateUserNoteRepository.byAuthorUserId>
+	ReturnType<typeof PrivateUserNoteRepository.ownNotes>
 >[number];
 type DBRecentlyFinishedMatchRow = Awaited<
 	ReturnType<typeof SQGroupRepository.findRecentlyFinishedMatches>

@@ -35,6 +35,17 @@ export const imageValue = z
 
 export type ImageFieldValue = z.infer<typeof imageValue>;
 
+/**
+ * Builds an `EXISTING` {@link ImageFieldValue} for an edit form's default values, or `null`
+ * when either the id or preview url is missing.
+ */
+export function existingImage(
+	imgId: number | null | undefined,
+	url: string | null | undefined,
+): ImageFieldValue {
+	return imgId && url ? { type: "EXISTING", imgId, url } : null;
+}
+
 export type ImageFieldDimensions =
 	| "logo"
 	| "thick-banner"

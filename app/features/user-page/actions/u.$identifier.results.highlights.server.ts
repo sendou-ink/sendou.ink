@@ -24,8 +24,7 @@ export const action: ActionFunction = async ({ request }) => {
 		data[HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME],
 	).map((id) => Number.parseInt(id, 10));
 
-	await UserRepository.updateResultHighlights({
-		userId: user.id,
+	await UserRepository.updateOwnResultHighlights({
 		resultTeamIds,
 		resultTournamentTeamIds,
 	});

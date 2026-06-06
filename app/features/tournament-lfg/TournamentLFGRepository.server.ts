@@ -2,6 +2,7 @@ import type { Transaction } from "kysely";
 import { jsonBuildObject } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
@@ -328,20 +329,18 @@ export function updateMemberRole({
 		.execute();
 }
 
-export function updateStayAsSub({
+export function updateOwnStayAsSub({
 	teamId,
-	userId,
 	value,
 }: {
 	teamId: number;
-	userId: number;
 	value: boolean;
 }) {
 	return db
 		.updateTable("TournamentTeamMember")
 		.set({ isStayAsSub: value ? 1 : 0 })
 		.where("tournamentTeamId", "=", teamId)
-		.where("userId", "=", userId)
+		.where("userId", "=", actorId())
 		.execute();
 }
 

@@ -17,6 +17,21 @@ export function requireUser(): AuthenticatedUser {
 	return user;
 }
 
+/** Id of the acting user, from request context. Throws an Error if there is no
+ *  authenticated user (e.g. called outside a request) — repositories rely on a
+ *  bouncer having already enforced auth, so absence here is a bug, not a 401. */
+export function actorId(): number {
+	const id = actorIdOrNull();
+	if (id === null) throw new Error("No acting user in context");
+	return id;
+}
+
+/** Id of the acting user, or null when unauthenticated. Use for reads that
+ *  also serve anonymous visitors, where the actor only scopes the result. */
+export function actorIdOrNull(): number | null {
+	return getUser()?.id ?? null;
+}
+
 export async function isImpersonating(request: Request) {
 	const session = await authSessionStorage.getSession(
 		request.headers.get("Cookie"),

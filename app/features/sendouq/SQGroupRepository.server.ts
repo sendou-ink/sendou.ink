@@ -3,6 +3,7 @@ import { type NotNull, sql, type Transaction } from "kysely";
 import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables, UserMapModePreferences } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
@@ -741,13 +742,11 @@ export function refreshGroup(groupId: number, trx?: Transaction<DB>) {
 		.execute();
 }
 
-export function updateMemberNote({
+export function updateOwnMemberNote({
 	groupId,
-	userId,
 	value,
 }: {
 	groupId: number;
-	userId: number;
 	value: string | null;
 }) {
 	return db.transaction().execute(async (trx) => {
@@ -755,7 +754,7 @@ export function updateMemberNote({
 			.updateTable("GroupMember")
 			.set({ note: value })
 			.where("groupId", "=", groupId)
-			.where("userId", "=", userId)
+			.where("userId", "=", actorId())
 			.execute();
 
 		await refreshGroup(groupId, trx);

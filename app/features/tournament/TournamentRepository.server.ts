@@ -10,6 +10,7 @@ import type {
 	Tables,
 	TournamentSettings,
 } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import { identifierToUserIds } from "~/features/mmr/mmr-utils";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { TournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
@@ -793,7 +794,7 @@ export function removeStaff({
 
 interface UpsertPreparedMapsArgs {
 	tournamentId: number;
-	maps: Omit<PreparedMaps, "createdAt">;
+	maps: Omit<PreparedMaps, "createdAt" | "authorId">;
 	bracketIdx: number;
 }
 
@@ -813,7 +814,11 @@ export function upsertPreparedMaps({
 			tournament.preparedMaps ??
 			nullFilledArray(tournament.settings.bracketProgression.length);
 
-		preparedMaps[bracketIdx] = { ...maps, createdAt: databaseTimestampNow() };
+		preparedMaps[bracketIdx] = {
+			...maps,
+			authorId: actorId(),
+			createdAt: databaseTimestampNow(),
+		};
 
 		await trx
 			.updateTable("Tournament")

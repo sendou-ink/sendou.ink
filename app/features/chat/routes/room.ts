@@ -1,6 +1,5 @@
 import type { ActionFunctionArgs } from "react-router";
 import { z } from "zod";
-import { requireUser } from "~/features/auth/core/user.server";
 import { parseRequestPayload } from "~/utils/remix.server";
 import { isSplatnetRoomUrl } from "../chat-constants";
 import * as RoomLinkRepository from "../RoomLinkRepository.server";
@@ -16,7 +15,6 @@ const roomLinkSchema = z.discriminatedUnion("_action", [
 ]);
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: roomLinkSchema,
@@ -24,11 +22,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	switch (data._action) {
 		case "UPSERT": {
-			await RoomLinkRepository.upsert({ userId: user.id, url: data.url });
+			await RoomLinkRepository.upsertOwn(data.url);
 			break;
 		}
 		case "CONFIRM": {
-			await RoomLinkRepository.refreshTimestamp(user.id);
+			await RoomLinkRepository.refreshOwnTimestamp();
 			break;
 		}
 	}

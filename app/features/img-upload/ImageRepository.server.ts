@@ -4,7 +4,6 @@ import type { DB, TablesInsertable } from "~/db/tables";
 import { databaseTimestampNow } from "~/utils/dates";
 import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
 import { IMAGES_TO_VALIDATE_AT_ONCE } from "./upload-constants";
-import type { ImageUploadType } from "./upload-types";
 
 /** Finds an unvalidated image by ID with associated calendar event data */
 export function findById(id: number) {
@@ -96,39 +95,11 @@ export function unvalidatedImages() {
 		.execute();
 }
 
-/** Counts unvalidated team images submitted by a specific user */
-export async function countUnvalidatedBySubmitterUserId(userId: number) {
-	const result = await db
-		.selectFrom("UnvalidatedUserSubmittedImage")
-		.innerJoin("Team", (join) =>
-			join.on((eb) =>
-				eb.or([
-					eb(
-						"UnvalidatedUserSubmittedImage.id",
-						"=",
-						eb.ref("Team.avatarImgId"),
-					),
-					eb(
-						"UnvalidatedUserSubmittedImage.id",
-						"=",
-						eb.ref("Team.bannerImgId"),
-					),
-				]),
-			),
-		)
-		.select(({ fn }) => fn.countAll<number>().as("count"))
-		.where("UnvalidatedUserSubmittedImage.validatedAt", "is", null)
-		.where("UnvalidatedUserSubmittedImage.submitterUserId", "=", userId)
-		.executeTakeFirstOrThrow();
-	return result.count;
-}
-
 /**
- * Counts every unvalidated image submitted by a user, regardless of whether it is yet associated
- * with an entity. Unlike {@link countUnvalidatedBySubmitterUserId} (team-joined), this also counts
- * not-yet-connected orphans, so it can gate the SendouForm `image()` upload path.
+ * Counts every unvalidated image submitted by a user, including not-yet-connected orphans, so it
+ * can gate the SendouForm `image()` upload path.
  */
-export async function countAllUnvalidatedBySubmitterUserId(userId: number) {
+export async function countUnvalidatedBySubmitterUserId(userId: number) {
 	const result = await db
 		.selectFrom("UnvalidatedUserSubmittedImage")
 		.select(({ fn }) => fn.countAll<number>().as("count"))
@@ -159,47 +130,4 @@ export function insert(
 		.values(args)
 		.returningAll()
 		.executeTakeFirstOrThrow();
-}
-
-/** Creates a new image and associates it with a team or organization */
-export function addNewImage({
-	submitterUserId,
-	url,
-	validatedAt,
-	teamId,
-	organizationId,
-	type,
-}: {
-	submitterUserId: number;
-	url: string;
-	validatedAt: number | null;
-	teamId?: number;
-	organizationId?: number;
-	type: ImageUploadType;
-}) {
-	return db.transaction().execute(async (trx) => {
-		const img = await insert({ submitterUserId, url, validatedAt }, trx);
-
-		if (type === "team-pfp" && teamId) {
-			await trx
-				.updateTable("AllTeam")
-				.set({ avatarImgId: img.id })
-				.where("id", "=", teamId)
-				.execute();
-		} else if (type === "team-banner" && teamId) {
-			await trx
-				.updateTable("AllTeam")
-				.set({ bannerImgId: img.id })
-				.where("id", "=", teamId)
-				.execute();
-		} else if (type === "org-pfp" && organizationId) {
-			await trx
-				.updateTable("TournamentOrganization")
-				.set({ avatarImgId: img.id })
-				.where("id", "=", organizationId)
-				.execute();
-		}
-
-		return img;
-	});
 }

@@ -2,6 +2,7 @@ import type { Transaction } from "kysely";
 import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { flatZip } from "~/utils/arrays";
@@ -80,15 +81,11 @@ export async function updateMemberInGameName({
  *
  * @returns A promise that resolves to an array of tournament IDs where the user's in-game name was updated.
  */
-export async function updateMemberInGameNameForNonStarted({
-	userId,
-	inGameName,
-}: {
-	/** The ID of the user whose in-game name is to be updated. */
-	userId: number;
-	/** The new in-game name to be set for the user. */
-	inGameName: string;
-}): Promise<number[]> {
+export async function updateOwnMemberInGameNameForNonStarted(
+	/** The new in-game name to be set for the acting user. */
+	inGameName: string,
+): Promise<number[]> {
+	const userId = actorId();
 	const tournamentTeams = await regOpenTournamentTeamsByJoinedUserId(userId);
 
 	await db

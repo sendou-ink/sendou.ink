@@ -12,6 +12,7 @@
 	"labels.noScreen": "[Accessibility] Avoid Splattercolor Screen",
 	"labels.noSplatnet": "No SplatNet access",
 	"labels.spoilerFreeMode": "Spoiler-free mode",
+	"bottomTexts.imageModeration": "Unless you're a Supporter, newly uploaded images are shown publicly only after a moderator has checked them.",
 	"bottomTexts.name": "Note that if you change your team's name then someone else can claim the name and URL for their team",
 	"bottomTexts.tag": "Typically used before in-game name to indicate membership of a team (e.g. [TAG] PlayerName)",
 	"bottomTexts.disableBuildAbilitySorting": "Outside of your profile page, build abilities are sorted so that same abilities are next to each other. This setting allows you to see the abilities in the order they were authored everywhere.",

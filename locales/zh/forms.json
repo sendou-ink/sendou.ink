@@ -12,6 +12,7 @@
 	"labels.noScreen": "",
 	"labels.noSplatnet": "",
 	"labels.spoilerFreeMode": "",
+	"bottomTexts.imageModeration": "",
 	"bottomTexts.name": "请注意，如果您更改了队名，那么其他人便可以使用之前的队名和URL了。",
 	"bottomTexts.tag": "",
 	"bottomTexts.disableBuildAbilitySorting": "",

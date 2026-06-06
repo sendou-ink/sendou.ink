@@ -11,6 +11,7 @@ import type {
 	TablesInsertable,
 	UserPreferences,
 } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import { userRoles } from "~/modules/permissions/mapper.server";
 import { isSupporter } from "~/modules/permissions/utils";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
@@ -1043,23 +1044,20 @@ type UpdateProfileArgs = Pick<
 	| "commissionText"
 	| "commissionsOpen"
 > & {
-	userId: number;
 	weapons: Pick<TablesInsertable["UserWeapon"], "weaponSplId" | "isFavorite">[];
 	favoriteBadgeIds?: number[] | null;
 };
-export function updateProfile(args: UpdateProfileArgs) {
+export function updateOwnProfile(args: UpdateProfileArgs) {
+	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
-		await trx
-			.deleteFrom("UserWeapon")
-			.where("userId", "=", args.userId)
-			.execute();
+		await trx.deleteFrom("UserWeapon").where("userId", "=", userId).execute();
 
 		if (args.weapons.length > 0) {
 			await trx
 				.insertInto("UserWeapon")
 				.values(
 					args.weapons.map((weapon, i) => ({
-						userId: args.userId,
+						userId,
 						weaponSplId: weapon.weaponSplId,
 						isFavorite: weapon.isFavorite,
 						order: i + 1,
@@ -1089,26 +1087,24 @@ export function updateProfile(args: UpdateProfileArgs) {
 				commissionsOpenedAt:
 					args.commissionsOpen === 1 ? databaseTimestampNow() : null,
 			})
-			.where("id", "=", args.userId)
+			.where("id", "=", userId)
 			.returning(["User.id", "User.customUrl", "User.discordId"])
 			.executeTakeFirstOrThrow();
 	});
 }
 
-export function updateCustomTheme(userId: number, css: CustomTheme | null) {
+export function updateOwnCustomTheme(css: CustomTheme | null) {
 	return db
 		.updateTable("User")
 		.set({
 			customTheme: css ? JSON.stringify(css) : null,
 		})
-		.where("id", "=", userId)
+		.where("id", "=", actorId())
 		.execute();
 }
 
-export function updatePreferences(
-	userId: number,
-	newPreferences: UserPreferences,
-) {
+export function updateOwnPreferences(newPreferences: UserPreferences) {
+	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
 		const current =
 			(
@@ -1135,15 +1131,15 @@ export function updatePreferences(
 }
 
 type UpdateResultHighlightsArgs = {
-	userId: number;
 	resultTeamIds: Array<number>;
 	resultTournamentTeamIds: Array<number>;
 };
-export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
+export function updateOwnResultHighlights(args: UpdateResultHighlightsArgs) {
+	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
 		await trx
 			.deleteFrom("UserResultHighlight")
-			.where("userId", "=", args.userId)
+			.where("userId", "=", userId)
 			.execute();
 
 		if (args.resultTeamIds.length > 0) {
@@ -1151,7 +1147,7 @@ export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
 				.insertInto("UserResultHighlight")
 				.values(
 					args.resultTeamIds.map((teamId) => ({
-						userId: args.userId,
+						userId,
 						teamId,
 					})),
 				)
@@ -1163,7 +1159,7 @@ export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
 			.set({
 				isHighlight: 0,
 			})
-			.where("TournamentResult.userId", "=", args.userId)
+			.where("TournamentResult.userId", "=", userId)
 			.execute();
 
 		if (args.resultTournamentTeamIds.length > 0) {
@@ -1172,7 +1168,7 @@ export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
 				.set({
 					isHighlight: 1,
 				})
-				.where("TournamentResult.userId", "=", args.userId)
+				.where("TournamentResult.userId", "=", userId)
 				.where(
 					"TournamentResult.tournamentTeamId",
 					"in",
@@ -1183,17 +1179,11 @@ export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
 	});
 }
 
-export function updateBuildSorting({
-	userId,
-	buildSorting,
-}: {
-	userId: number;
-	buildSorting: BuildSort[] | null;
-}) {
+export function updateOwnBuildSorting(buildSorting: BuildSort[] | null) {
 	return db
 		.updateTable("User")
 		.set({ buildSorting: buildSorting ? JSON.stringify(buildSorting) : null })
-		.where("id", "=", userId)
+		.where("id", "=", actorId())
 		.execute();
 }
 

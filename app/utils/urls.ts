@@ -444,15 +444,6 @@ export const objectDamageCalculatorPage = (weaponId?: MainWeaponId) =>
 		typeof weaponId === "number" ? `?weapon=${weaponId}` : ""
 	}`;
 
-export const uploadImagePage = (
-	args:
-		| { type: "team-pfp" | "team-banner"; teamCustomUrl: string }
-		| { type: "org-pfp"; slug: string },
-) =>
-	args.type === "org-pfp"
-		? `/upload?type=${args.type}&slug=${args.slug}`
-		: `/upload?type=${args.type}&team=${args.teamCustomUrl}`;
-
 export const vodVideoPage = (videoId: number) => `${VODS_PAGE}/${videoId}`;
 
 export const lfgNewPostPage = (postId?: number) =>

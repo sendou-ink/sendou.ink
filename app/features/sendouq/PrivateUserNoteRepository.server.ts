@@ -1,12 +1,14 @@
 import { db } from "~/db/sql";
 import type { TablesInsertable } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import { databaseTimestampNow } from "~/utils/dates";
 
-export function byAuthorUserId(
-	authorId: number,
-	/** Which users to get notes for, if omitted all notes for author are returned */
+export function ownNotes(
+	/** Which users to get notes for, if omitted all notes for the author are returned */
 	targetUserIds: number[] = [],
 ) {
+	const authorId = actorId();
+
 	let query = db
 		.selectFrom("PrivateUserNote")
 		.select([
@@ -27,11 +29,14 @@ export function byAuthorUserId(
 	return query.execute();
 }
 
-export function upsert(args: TablesInsertable["PrivateUserNote"]) {
+export function upsertOwnNote(
+	args: Omit<TablesInsertable["PrivateUserNote"], "authorId">,
+) {
+	const authorId = actorId();
 	return db
 		.insertInto("PrivateUserNote")
 		.values({
-			authorId: args.authorId,
+			authorId,
 			targetId: args.targetId,
 			sentiment: args.sentiment,
 			text: args.text,
@@ -46,16 +51,10 @@ export function upsert(args: TablesInsertable["PrivateUserNote"]) {
 		.execute();
 }
 
-export function del({
-	authorId,
-	targetId,
-}: {
-	authorId: number;
-	targetId: number;
-}) {
+export function deleteOwnNoteById(targetId: number) {
 	return db
 		.deleteFrom("PrivateUserNote")
-		.where("authorId", "=", authorId)
+		.where("authorId", "=", actorId())
 		.where("targetId", "=", targetId)
 		.execute();
 }

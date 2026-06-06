@@ -28,7 +28,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	switch (data._action) {
 		case "ADD_MOD_NOTE": {
 			await AdminRepository.addModNote({
-				authorId: loggedInUser.id,
 				userId: user.id,
 				text: data.value,
 			});

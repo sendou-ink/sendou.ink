@@ -302,9 +302,8 @@ export const action: ActionFunction = async ({ request }) => {
 				break;
 			}
 			case "UPDATE_NOTE": {
-				await SQGroupRepository.updateMemberNote({
+				await SQGroupRepository.updateOwnMemberNote({
 					groupId: currentGroup.id,
-					userId: user.id,
 					value: data.value,
 				});
 
@@ -313,10 +312,7 @@ export const action: ActionFunction = async ({ request }) => {
 				break;
 			}
 			case "DELETE_PRIVATE_USER_NOTE": {
-				await PrivateUserNoteRepository.del({
-					authorId: user.id,
-					targetId: data.targetId,
-				});
+				await PrivateUserNoteRepository.deleteOwnNoteById(data.targetId);
 
 				break;
 			}

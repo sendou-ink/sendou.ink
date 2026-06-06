@@ -1,6 +1,7 @@
 import type { NotNull, Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, TablesInsertable } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import type {
 	MainWeaponId,
@@ -19,15 +20,15 @@ export function createMany(
 	return (trx ?? db).insertInto("ReportedWeapon").values(weapons).execute();
 }
 
-export async function upsertOne({
+export async function upsertOwn({
 	groupMatchId,
 	mapIndex,
-	userId,
 	weaponSplId,
-}: TablesInsertable["ReportedWeapon"] & {
+}: Omit<TablesInsertable["ReportedWeapon"], "userId"> & {
 	groupMatchId: number;
 	mapIndex: number;
 }) {
+	const userId = actorId();
 	await db
 		.deleteFrom("ReportedWeapon")
 		.where("groupMatchId", "=", groupMatchId)
@@ -58,20 +59,18 @@ export async function replaceByMatchId(
 	}
 }
 
-export async function deleteByUserMapIndex({
+export async function deleteOwnByMapIndex({
 	matchId,
-	userId,
 	mapIndex,
 }: {
 	matchId: number;
-	userId: number;
 	mapIndex: number;
 }) {
 	await db
 		.deleteFrom("ReportedWeapon")
 		.where("groupMatchId", "=", matchId)
 		.where("mapIndex", "=", mapIndex)
-		.where("userId", "=", userId)
+		.where("userId", "=", actorId())
 		.execute();
 }
 
@@ -112,17 +111,17 @@ export async function findByMatchId(matchId: number) {
 	return rows;
 }
 
-export async function upsertOneTournament({
+export async function upsertOwnTournament({
 	tournamentMatchId,
 	mapIndex,
-	userId,
 	weaponSplId,
 	createdAt,
-}: TablesInsertable["ReportedWeapon"] & {
+}: Omit<TablesInsertable["ReportedWeapon"], "userId"> & {
 	tournamentMatchId: number;
 	mapIndex: number;
 	createdAt: number;
 }) {
+	const userId = actorId();
 	await db
 		.deleteFrom("ReportedWeapon")
 		.where("tournamentMatchId", "=", tournamentMatchId)
@@ -136,20 +135,18 @@ export async function upsertOneTournament({
 		.execute();
 }
 
-export async function deleteByUserMapIndexTournament({
+export async function deleteOwnByMapIndexTournament({
 	tournamentMatchId,
-	userId,
 	mapIndex,
 }: {
 	tournamentMatchId: number;
-	userId: number;
 	mapIndex: number;
 }) {
 	await db
 		.deleteFrom("ReportedWeapon")
 		.where("tournamentMatchId", "=", tournamentMatchId)
 		.where("mapIndex", "=", mapIndex)
-		.where("userId", "=", userId)
+		.where("userId", "=", actorId())
 		.execute();
 }
 

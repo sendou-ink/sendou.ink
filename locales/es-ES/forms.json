@@ -12,6 +12,7 @@
 	"labels.noScreen": "[Accesibilidad] Evitar Pantintalla",
 	"labels.noSplatnet": "",
 	"labels.spoilerFreeMode": "",
+	"bottomTexts.imageModeration": "",
 	"bottomTexts.name": "Nota que si cambias el nombre de tu equipo, el nombre y la URL estarán libres para que otro equipo los tome",
 	"bottomTexts.tag": "Normalmente se usa antes del nombre en el juego para indicar pertenencia a un equipo (ej. [TAG] NombreJugador)",
 	"bottomTexts.disableBuildAbilitySorting": "Fuera de tu perfil, los potenciadores se agrupan. Activa esta opción para verlos siempre en el orden en que los creaste.",

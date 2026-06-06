@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next";
-import { Link, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
 import { Main } from "~/components/Main";
+import { existingImage } from "~/form/image-field";
 import { SendouForm } from "~/form/SendouForm";
-import { uploadImagePage } from "~/utils/urls";
 import { action } from "../actions/org.$slug.edit.server";
 import { loader } from "../loaders/org.$slug.edit.server";
 import { handle, meta } from "../routes/org.$slug";
@@ -21,6 +21,10 @@ export default function TournamentOrganizationEditPage() {
 				schema={organizationEditFormSchema}
 				defaultValues={{
 					name: data.organization.name,
+					logo: existingImage(
+						data.organization.avatarImgId,
+						data.organization.avatarUrl,
+					),
 					description: data.organization.description ?? "",
 					socials: data.organization.socials ?? [],
 					members: data.organization.members.map((member) => ({
@@ -38,17 +42,8 @@ export default function TournamentOrganizationEditPage() {
 			>
 				{({ FormField }) => (
 					<>
-						<Link
-							to={uploadImagePage({
-								type: "org-pfp",
-								slug: data.organization.slug,
-							})}
-							className="text-sm font-bold"
-						>
-							{t("org:edit.form.uploadLogo")}
-						</Link>
-
 						<FormField name="name" />
+						<FormField name="logo" />
 						<FormField name="description" />
 						<FormField name="members" />
 						<FormField name="socials" />

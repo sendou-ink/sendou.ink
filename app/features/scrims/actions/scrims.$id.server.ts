@@ -44,10 +44,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				errorToast("Cannot cancel a scrim that was already scheduled to start");
 			}
 
-			await ScrimPostRepository.cancelScrim(id, {
-				userId: user.id,
-				reason: data.reason,
-			});
+			await ScrimPostRepository.cancelScrim(id, data.reason);
 
 			const acceptedRequest = post.requests.find((r) => r.isAccepted);
 			if (acceptedRequest) {
@@ -128,7 +125,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				scrimPostId: post.id,
 				mapId: data.mapId,
 				winnerSide: data.winnerSide,
-				reportedByUserId: user.id,
 			});
 
 			broadcastRevalidate({ post, user });

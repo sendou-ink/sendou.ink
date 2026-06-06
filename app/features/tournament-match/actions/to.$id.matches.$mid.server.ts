@@ -788,10 +788,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Weapon reporting is closed",
 			);
 
-			await ReportedWeaponRepository.upsertOneTournament({
+			await ReportedWeaponRepository.upsertOwnTournament({
 				tournamentMatchId: matchId,
 				mapIndex: data.mapIndex,
-				userId: user.id,
 				weaponSplId: data.weaponSplId,
 				createdAt: dateToDatabaseTimestamp(tournament.ctx.startTime),
 			});
@@ -808,9 +807,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Weapon reporting is closed",
 			);
 
-			await ReportedWeaponRepository.deleteByUserMapIndexTournament({
+			await ReportedWeaponRepository.deleteOwnByMapIndexTournament({
 				tournamentMatchId: matchId,
-				userId: user.id,
 				mapIndex: data.mapIndex,
 			});
 

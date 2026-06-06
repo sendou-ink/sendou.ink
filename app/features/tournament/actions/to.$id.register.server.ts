@@ -359,10 +359,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Maximum saved tournaments reached",
 			);
 
-			await SavedCalendarEventRepository.save({
-				userId: user.id,
-				tournamentId,
-			});
+			await SavedCalendarEventRepository.saveOwn(tournamentId);
 			break;
 		}
 		case "UNSAVE_TOURNAMENT": {

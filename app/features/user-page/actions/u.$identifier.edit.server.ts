@@ -43,8 +43,7 @@ export const action: ActionFunction = async ({ request }) => {
 		: 1;
 	const limitedBadgeIds = data.favoriteBadgeIds.slice(0, maxBadgeCount);
 
-	const editedUser = await UserRepository.updateProfile({
-		userId: user.id,
+	const editedUser = await UserRepository.updateOwnProfile({
 		country: data.country,
 		bio: data.bio,
 		customUrl: data.customUrl,
@@ -61,17 +60,16 @@ export const action: ActionFunction = async ({ request }) => {
 		commissionText: isArtist ? data.commissionText : null,
 	});
 
-	await UserRepository.updatePreferences(user.id, {
+	await UserRepository.updateOwnPreferences({
 		newProfileEnabled: isSupporter ? data.newProfileEnabled : false,
 	});
 
 	// TODO: to transaction
 	if (data.inGameName) {
 		const tournamentIdsAffected =
-			await TournamentTeamRepository.updateMemberInGameNameForNonStarted({
-				inGameName: data.inGameName,
-				userId: user.id,
-			});
+			await TournamentTeamRepository.updateOwnMemberInGameNameForNonStarted(
+				data.inGameName,
+			);
 
 		for (const tournamentId of tournamentIdsAffected) {
 			clearTournamentDataCache(tournamentId);

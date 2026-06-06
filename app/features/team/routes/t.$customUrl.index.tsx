@@ -131,8 +131,8 @@ function TeamActionsMenu({ team }: { team: TeamLoaderData["team"] }) {
 			<SendouMenu
 				trigger={
 					<SendouButton
-						size="small"
-						variant="outlined"
+						size="big"
+						variant="minimal"
 						icon={<Menu />}
 						aria-label={t("team:actionButtons.teamActions")}
 						testId="team-actions-menu-button"
