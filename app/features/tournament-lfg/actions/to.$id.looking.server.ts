@@ -264,9 +264,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				value: data.note ?? null,
 			});
 
-			await TournamentLFGRepository.updateStayAsSub({
+			await TournamentLFGRepository.updateOwnStayAsSub({
 				teamId: ownGroup.id,
-				userId: user.id,
 				value: data.stayAsSub ?? false,
 			});
 

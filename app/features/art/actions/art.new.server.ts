@@ -113,7 +113,6 @@ export const action: ActionFunction = async ({ request }) => {
 		});
 
 		const addedArt = await ArtRepository.insert({
-			authorId: user.id,
 			description: data.description,
 			url: fileName,
 			validatedAt: user.patronTier ? dateToDatabaseTimestamp(new Date()) : null,

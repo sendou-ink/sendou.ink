@@ -1,6 +1,7 @@
 import type { Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, TablesInsertable } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { databaseTimestampNow } from "~/utils/dates";
 import * as Scrim from "./core/Scrim";
@@ -11,9 +12,6 @@ interface ReportMapArgs {
 	scrimPostId: number;
 	mapId: number;
 	winnerSide: NonNullable<TablesInsertable["ScrimMap"]["winnerSide"]>;
-	reportedByUserId: NonNullable<
-		TablesInsertable["ScrimMap"]["reportedByUserId"]
-	>;
 }
 
 /**
@@ -30,7 +28,7 @@ export async function reportMapAndGenerateNext(
 			.set({
 				winnerSide: args.winnerSide,
 				reportedAt: databaseTimestampNow(),
-				reportedByUserId: args.reportedByUserId,
+				reportedByUserId: actorId(),
 			})
 			.where("id", "=", args.mapId)
 			.where("reportedAt", "is", null)

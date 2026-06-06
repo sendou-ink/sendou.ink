@@ -192,7 +192,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					await GroupMatchContinueVoteRepository.cast(
 						{
 							groupId: viewerGroup.id,
-							userId: user.id,
 							isContinuing: data.isContinuing,
 						},
 						trx,
@@ -237,27 +236,24 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				break;
 			}
 			case "REPORT_WEAPON": {
-				await ReportedWeaponRepository.upsertOne({
+				await ReportedWeaponRepository.upsertOwn({
 					groupMatchId: matchId,
 					mapIndex: data.mapIndex,
-					userId: user.id,
 					weaponSplId: data.weaponSplId,
 				});
 
 				break;
 			}
 			case "UNDO_WEAPON_REPORT": {
-				await ReportedWeaponRepository.deleteByUserMapIndex({
+				await ReportedWeaponRepository.deleteOwnByMapIndex({
 					matchId,
-					userId: user.id,
 					mapIndex: data.mapIndex,
 				});
 
 				break;
 			}
 			case "ADD_PRIVATE_USER_NOTE": {
-				await PrivateUserNoteRepository.upsert({
-					authorId: user.id,
+				await PrivateUserNoteRepository.upsertOwnNote({
 					sentiment: data.sentiment,
 					targetId: data.targetId,
 					text: data.comment,
@@ -372,7 +368,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				const result = await SQMatchRepository.cancelMatch({
 					matchId,
-					reportedByUserId: user.id,
 					isAdminReport: true,
 				});
 

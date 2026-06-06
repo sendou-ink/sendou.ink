@@ -2,6 +2,7 @@ import { type Insertable, sql, type Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { CustomTheme, DB, Tables } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { subsOfResult } from "~/features/team/team-utils";
 import { databaseTimestampNow } from "~/utils/dates";
@@ -395,13 +396,8 @@ export async function updateCustomTheme({
 		.execute();
 }
 
-export function switchMainTeam({
-	userId,
-	teamId,
-}: {
-	userId: number;
-	teamId: number;
-}) {
+export function switchOwnMainTeam(teamId: number) {
+	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
 		const currentTeams = await teamsByMemberUserId(userId, trx);
 
@@ -483,15 +479,14 @@ export function resetInviteCode(teamId: number) {
 		.execute();
 }
 
-export function addNewTeamMember({
-	userId,
+export function joinTeam({
 	teamId,
 	maxTeamsAllowed,
 }: {
-	userId: number;
 	teamId: number;
 	maxTeamsAllowed: number;
 }) {
+	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
 		const teamCount = (await teamsByMemberUserId(userId, trx)).length;
 

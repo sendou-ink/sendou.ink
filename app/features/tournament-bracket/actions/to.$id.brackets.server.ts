@@ -140,7 +140,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 					tournamentId,
 					maps: {
 						maps,
-						authorId: user.id,
 						eliminationTeamCount:
 							bracket.type === "single_elimination" ||
 							bracket.type === "double_elimination"
@@ -239,7 +238,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 								thirdPlaceMatchLinked: data.thirdPlaceMatchLinked,
 							})
 						: data.maps,
-					authorId: user.id,
 					eliminationTeamCount: data.eliminationTeamCount ?? undefined,
 				},
 			});

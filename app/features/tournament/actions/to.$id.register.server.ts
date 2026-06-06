@@ -81,7 +81,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				);
 
 				await TournamentTeamRepository.update({
-					userId: user.id,
 					avatarFileName,
 					team: {
 						id: ownTeam.id,
@@ -361,10 +360,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Maximum saved tournaments reached",
 			);
 
-			await SavedCalendarEventRepository.save({
-				userId: user.id,
-				tournamentId,
-			});
+			await SavedCalendarEventRepository.saveOwn(tournamentId);
 			break;
 		}
 		case "UNSAVE_TOURNAMENT": {

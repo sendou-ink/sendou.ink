@@ -35,10 +35,7 @@ export const action: ActionFunction = async ({ request }) => {
 			break;
 		}
 		case "UPDATE_SORTING": {
-			await UserRepository.updateBuildSorting({
-				userId: user.id,
-				buildSorting: data.buildSorting,
-			});
+			await UserRepository.updateOwnBuildSorting(data.buildSorting);
 
 			break;
 		}

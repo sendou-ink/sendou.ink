@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { databaseTimestampNow } from "~/utils/dates";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
 import * as ArtRepository from "../art/ArtRepository.server";
 import * as CalendarRepository from "../calendar/CalendarRepository.server";
 import * as ImageRepository from "./ImageRepository.server";
@@ -28,14 +28,15 @@ const createArtImage = async ({
 	validatedAt?: number | null;
 }) => {
 	imageCounter++;
-	return ArtRepository.insert({
-		authorId,
-		url: `art-${imageCounter}.png`,
-		validatedAt,
-		description: null,
-		linkedUsers: [],
-		tags: [],
-	});
+	return withUserId(authorId, () =>
+		ArtRepository.insert({
+			url: `art-${imageCounter}.png`,
+			validatedAt,
+			description: null,
+			linkedUsers: [],
+			tags: [],
+		}),
+	);
 };
 
 const createCalendarEvent = async (authorId: number, avatarImgId?: number) => {
@@ -305,14 +306,15 @@ describe("unvalidatedImages", () => {
 	test("fetches unvalidated images with submitter info", async () => {
 		imageCounter++;
 		const filename = `art-${imageCounter}.png`;
-		await ArtRepository.insert({
-			authorId: 1,
-			url: filename,
-			validatedAt: null,
-			description: null,
-			linkedUsers: [],
-			tags: [],
-		});
+		await withUserId(1, () =>
+			ArtRepository.insert({
+				url: filename,
+				validatedAt: null,
+				description: null,
+				linkedUsers: [],
+				tags: [],
+			}),
+		);
 
 		const result = await ImageRepository.unvalidatedImages();
 

@@ -1,5 +1,6 @@
 import { db } from "~/db/sql";
 import type { Tables, UserMapModePreferences } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -42,8 +43,7 @@ export function updateVoiceChat(args: {
 		.execute();
 }
 
-export async function updateMatchProfile({
-	userId,
+export async function updateOwnMatchProfile({
 	mapModePreferences,
 	vc,
 	languages,
@@ -51,7 +51,6 @@ export async function updateMatchProfile({
 	noScreen,
 	noSplatnet,
 }: {
-	userId: number;
 	mapModePreferences: UserMapModePreferences;
 	vc: Tables["User"]["vc"];
 	languages: string[];
@@ -59,6 +58,7 @@ export async function updateMatchProfile({
 	noScreen: number;
 	noSplatnet: number;
 }) {
+	const userId = actorId();
 	const currentPreferences = (
 		await db
 			.selectFrom("User")

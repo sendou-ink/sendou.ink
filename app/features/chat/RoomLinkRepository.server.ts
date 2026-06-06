@@ -1,17 +1,18 @@
 import { sub } from "date-fns";
 import { db } from "~/db/sql";
+import { actorId } from "~/features/auth/core/user.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 
-export function upsert(args: { userId: number; url: string }) {
+export function upsertOwn(url: string) {
 	return db
 		.insertInto("RoomLink")
 		.values({
-			userId: args.userId,
-			url: args.url,
+			userId: actorId(),
+			url,
 		})
 		.onConflict((oc) =>
 			oc.column("userId").doUpdateSet({
-				url: args.url,
+				url,
 				createdAt: databaseTimestampNow(),
 				refreshedAt: databaseTimestampNow(),
 			}),
@@ -38,11 +39,11 @@ export function findByUserIds(userIds: number[], maxAgeHours: number) {
 		.execute();
 }
 
-export function refreshTimestamp(userId: number) {
+export function refreshOwnTimestamp() {
 	return db
 		.updateTable("RoomLink")
 		.set({ refreshedAt: databaseTimestampNow() })
-		.where("userId", "=", userId)
+		.where("userId", "=", actorId())
 		.execute();
 }
 

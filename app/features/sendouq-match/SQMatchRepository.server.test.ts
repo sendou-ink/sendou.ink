@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
 import * as SQGroupRepository from "../sendouq/SQGroupRepository.server";
 import * as SQMatchRepository from "./SQMatchRepository.server";
 
@@ -126,10 +126,11 @@ describe("cancelMatch", () => {
 		const bravoGroupId = await createGroup([5, 6, 7, 8]);
 		const match = await createMatch(alphaGroupId, bravoGroupId);
 
-		const result = await SQMatchRepository.cancelMatch({
-			matchId: match.id,
-			reportedByUserId: 1,
-		});
+		const result = await withUserId(1, () =>
+			SQMatchRepository.cancelMatch({
+				matchId: match.id,
+			}),
+		);
 
 		expect(result.status).toBe("CANCEL_REPORTED");
 		expect(result.shouldRefreshCaches).toBe(false);
@@ -143,15 +144,17 @@ describe("cancelMatch", () => {
 		const bravoGroupId = await createGroup([5, 6, 7, 8]);
 		const match = await createMatch(alphaGroupId, bravoGroupId);
 
-		await SQMatchRepository.cancelMatch({
-			matchId: match.id,
-			reportedByUserId: 1,
-		});
+		await withUserId(1, () =>
+			SQMatchRepository.cancelMatch({
+				matchId: match.id,
+			}),
+		);
 
-		const result = await SQMatchRepository.cancelMatch({
-			matchId: match.id,
-			reportedByUserId: 5,
-		});
+		const result = await withUserId(5, () =>
+			SQMatchRepository.cancelMatch({
+				matchId: match.id,
+			}),
+		);
 
 		expect(result.status).toBe("CANCEL_CONFIRMED");
 		expect(result.shouldRefreshCaches).toBe(true);
@@ -178,10 +181,11 @@ describe("cancelMatch", () => {
 			reportedCount: 0,
 		});
 
-		const result = await SQMatchRepository.cancelMatch({
-			matchId: match.id,
-			reportedByUserId: 5,
-		});
+		const result = await withUserId(5, () =>
+			SQMatchRepository.cancelMatch({
+				matchId: match.id,
+			}),
+		);
 
 		expect(result.status).toBe("CANT_CANCEL");
 		expect(result.shouldRefreshCaches).toBe(false);
@@ -193,11 +197,12 @@ describe("cancelMatch", () => {
 		const match = await createMatch(alphaGroupId, bravoGroupId);
 
 		const adminUserId = 1;
-		const result = await SQMatchRepository.cancelMatch({
-			matchId: match.id,
-			reportedByUserId: adminUserId,
-			isAdminReport: true,
-		});
+		const result = await withUserId(adminUserId, () =>
+			SQMatchRepository.cancelMatch({
+				matchId: match.id,
+				isAdminReport: true,
+			}),
+		);
 
 		expect(result.status).toBe("CANCEL_CONFIRMED");
 		expect(result.shouldRefreshCaches).toBe(true);

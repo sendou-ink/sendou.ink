@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
 import * as GroupMatchContinueVoteRepository from "./GroupMatchContinueVoteRepository.server";
 
 const insertGroup = async () => {
@@ -42,21 +42,24 @@ describe("findForGroups", () => {
 		const groupB = await insertGroup();
 		const groupC = await insertGroup();
 
-		await GroupMatchContinueVoteRepository.cast({
-			groupId: groupA,
-			userId: 1,
-			isContinuing: 1,
-		});
-		await GroupMatchContinueVoteRepository.cast({
-			groupId: groupB,
-			userId: 2,
-			isContinuing: 0,
-		});
-		await GroupMatchContinueVoteRepository.cast({
-			groupId: groupC,
-			userId: 3,
-			isContinuing: 1,
-		});
+		await withUserId(1, () =>
+			GroupMatchContinueVoteRepository.cast({
+				groupId: groupA,
+				isContinuing: 1,
+			}),
+		);
+		await withUserId(2, () =>
+			GroupMatchContinueVoteRepository.cast({
+				groupId: groupB,
+				isContinuing: 0,
+			}),
+		);
+		await withUserId(3, () =>
+			GroupMatchContinueVoteRepository.cast({
+				groupId: groupC,
+				isContinuing: 1,
+			}),
+		);
 
 		const result = await GroupMatchContinueVoteRepository.findForGroups([
 			groupA,
@@ -83,16 +86,18 @@ describe("cast", () => {
 	test("updates existing vote on conflict instead of inserting a duplicate", async () => {
 		const groupId = await insertGroup();
 
-		await GroupMatchContinueVoteRepository.cast({
-			groupId,
-			userId: 1,
-			isContinuing: 1,
-		});
-		await GroupMatchContinueVoteRepository.cast({
-			groupId,
-			userId: 1,
-			isContinuing: 0,
-		});
+		await withUserId(1, () =>
+			GroupMatchContinueVoteRepository.cast({
+				groupId,
+				isContinuing: 1,
+			}),
+		);
+		await withUserId(1, () =>
+			GroupMatchContinueVoteRepository.cast({
+				groupId,
+				isContinuing: 0,
+			}),
+		);
 
 		const votes = await fetchVotes(groupId);
 		expect(votes).toHaveLength(1);
@@ -103,27 +108,31 @@ describe("cast", () => {
 		const groupA = await insertGroup();
 		const groupB = await insertGroup();
 
-		await GroupMatchContinueVoteRepository.cast({
-			groupId: groupA,
-			userId: 1,
-			isContinuing: 1,
-		});
-		await GroupMatchContinueVoteRepository.cast({
-			groupId: groupA,
-			userId: 2,
-			isContinuing: 1,
-		});
-		await GroupMatchContinueVoteRepository.cast({
-			groupId: groupB,
-			userId: 1,
-			isContinuing: 1,
-		});
+		await withUserId(1, () =>
+			GroupMatchContinueVoteRepository.cast({
+				groupId: groupA,
+				isContinuing: 1,
+			}),
+		);
+		await withUserId(2, () =>
+			GroupMatchContinueVoteRepository.cast({
+				groupId: groupA,
+				isContinuing: 1,
+			}),
+		);
+		await withUserId(1, () =>
+			GroupMatchContinueVoteRepository.cast({
+				groupId: groupB,
+				isContinuing: 1,
+			}),
+		);
 
-		await GroupMatchContinueVoteRepository.cast({
-			groupId: groupA,
-			userId: 3,
-			isContinuing: 0,
-		});
+		await withUserId(3, () =>
+			GroupMatchContinueVoteRepository.cast({
+				groupId: groupA,
+				isContinuing: 0,
+			}),
+		);
 
 		const groupAVotes = await fetchVotes(groupA);
 		expect(groupAVotes).toHaveLength(1);

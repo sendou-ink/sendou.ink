@@ -2,6 +2,7 @@ import { sub } from "date-fns";
 import type { Insertable } from "kysely";
 import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
 import type { Tables, TablesInsertable } from "~/db/tables";
+import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { ConcurrentModificationError } from "~/utils/errors";
 import { shortNanoid } from "~/utils/id";
@@ -339,7 +340,8 @@ export async function findById(scrimPostId: number): Promise<ScrimPost | null> {
 	return mapDBRowToScrimPost(row);
 }
 
-export async function findAllRelevant(userId?: number): Promise<ScrimPost[]> {
+export async function findAllRelevant(): Promise<ScrimPost[]> {
+	const userId = actorIdOrNull();
 	const rows = await findMany();
 
 	const mapped = rows
@@ -391,15 +393,12 @@ export function deleteRequest(scrimPostRequestId: number) {
 		.execute();
 }
 
-export async function cancelScrim(
-	id: number,
-	{ userId, reason }: { userId: number; reason: string },
-) {
+export async function cancelScrim(id: number, reason: string) {
 	await db
 		.updateTable("ScrimPost")
 		.set({
 			canceledAt: databaseTimestampNow(),
-			canceledByUserId: userId,
+			canceledByUserId: actorId(),
 			cancelReason: reason,
 		})
 		.where("id", "=", id)

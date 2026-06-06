@@ -38,7 +38,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	switch (data._action) {
 		case "DELETE_POST": {
 			const post = await findPost({
-				userId: user.id,
 				postId: data.scrimPostId,
 			});
 			requirePermission(post, "DELETE_POST");
@@ -54,7 +53,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		}
 		case "NEW_REQUEST": {
 			const post = await findPost({
-				userId: user.id,
 				postId: data.scrimPostId,
 			});
 
@@ -121,7 +119,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		}
 		case "ACCEPT_REQUEST": {
 			const { post, request } = await findRequest({
-				userId: user.id,
 				requestId: data.scrimPostRequestId,
 			});
 			requirePermission(post, "MANAGE_REQUESTS");
@@ -181,7 +178,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		}
 		case "CANCEL_REQUEST": {
 			const { request } = await findRequest({
-				userId: user.id,
 				requestId: data.scrimPostRequestId,
 			});
 			requirePermission(request, "CANCEL");
@@ -196,7 +192,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "PERSIST_SCRIM_FILTERS": {
-			await UserRepository.updatePreferences(user.id, {
+			await UserRepository.updateOwnPreferences({
 				defaultScrimsFilters: data.filters,
 			});
 
@@ -210,14 +206,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	return null;
 };
 
-async function findPost({
-	userId,
-	postId,
-}: {
-	userId: number;
-	postId: number;
-}) {
-	const posts = await ScrimPostRepository.findAllRelevant(userId);
+async function findPost({ postId }: { postId: number }) {
+	const posts = await ScrimPostRepository.findAllRelevant();
 	const post = posts.find((post) => post.id === postId);
 
 	errorToastIfFalsy(post, "Post not found");
@@ -225,14 +215,8 @@ async function findPost({
 	return post;
 }
 
-async function findRequest({
-	userId,
-	requestId,
-}: {
-	userId: number;
-	requestId: number;
-}) {
-	const posts = await ScrimPostRepository.findAllRelevant(userId);
+async function findRequest({ requestId }: { requestId: number }) {
+	const posts = await ScrimPostRepository.findAllRelevant();
 	const post = posts.find((post) =>
 		post.requests.some((request) => request.id === requestId),
 	);

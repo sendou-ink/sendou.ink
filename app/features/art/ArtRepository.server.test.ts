@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
 import * as ArtRepository from "./ArtRepository.server";
 
 let imageCounter = 0;
@@ -7,14 +7,15 @@ let imageCounter = 0;
 const createArt = async ({ authorId }: { authorId: number }) => {
 	imageCounter++;
 
-	const art = await ArtRepository.insert({
-		authorId,
-		url: `https://example.com/image-${authorId}-${imageCounter}.png`,
-		validatedAt: Date.now(),
-		description: null,
-		linkedUsers: [],
-		tags: [],
-	});
+	const art = await withUserId(authorId, () =>
+		ArtRepository.insert({
+			url: `https://example.com/image-${authorId}-${imageCounter}.png`,
+			validatedAt: Date.now(),
+			description: null,
+			linkedUsers: [],
+			tags: [],
+		}),
+	);
 
 	return art.id;
 };
@@ -91,14 +92,19 @@ describe("findAllTags", () => {
 
 	test("returns all art tags", async () => {
 		imageCounter++;
-		await ArtRepository.insert({
-			authorId: 1,
-			url: `https://example.com/image-1-${imageCounter}.png`,
-			validatedAt: Date.now(),
-			description: null,
-			linkedUsers: [],
-			tags: [{ name: "Character" }, { name: "Weapon" }, { name: "Landscape" }],
-		});
+		await withUserId(1, () =>
+			ArtRepository.insert({
+				url: `https://example.com/image-1-${imageCounter}.png`,
+				validatedAt: Date.now(),
+				description: null,
+				linkedUsers: [],
+				tags: [
+					{ name: "Character" },
+					{ name: "Weapon" },
+					{ name: "Landscape" },
+				],
+			}),
+		);
 
 		const result = await ArtRepository.findAllTags();
 
@@ -128,16 +134,17 @@ describe("unlinkUserFromArt", () => {
 	});
 
 	test("removes user link from art", async () => {
-		const art = await ArtRepository.insert({
-			authorId: 1,
-			url: "https://example.com/image-1.png",
-			validatedAt: Date.now(),
-			description: null,
-			linkedUsers: [2],
-			tags: [],
-		});
+		const art = await withUserId(1, () =>
+			ArtRepository.insert({
+				url: "https://example.com/image-1.png",
+				validatedAt: Date.now(),
+				description: null,
+				linkedUsers: [2],
+				tags: [],
+			}),
+		);
 
-		await ArtRepository.unlinkUserFromArt({ userId: 2, artId: art.id });
+		await withUserId(2, () => ArtRepository.unlinkSelfFromArt(art.id));
 
 		const result = await ArtRepository.findArtsByUserId(2, {
 			includeAuthored: false,
@@ -157,23 +164,25 @@ describe("findShowcaseArtsByTag", () => {
 	});
 
 	test("returns arts filtered by tag", async () => {
-		const art1 = await ArtRepository.insert({
-			authorId: 1,
-			url: "https://example.com/image-1.png",
-			validatedAt: Date.now(),
-			description: null,
-			linkedUsers: [],
-			tags: [{ name: "Character" }],
-		});
+		const art1 = await withUserId(1, () =>
+			ArtRepository.insert({
+				url: "https://example.com/image-1.png",
+				validatedAt: Date.now(),
+				description: null,
+				linkedUsers: [],
+				tags: [{ name: "Character" }],
+			}),
+		);
 
-		await ArtRepository.insert({
-			authorId: 2,
-			url: "https://example.com/image-2.png",
-			validatedAt: Date.now(),
-			description: null,
-			linkedUsers: [],
-			tags: [{ name: "Weapon" }],
-		});
+		await withUserId(2, () =>
+			ArtRepository.insert({
+				url: "https://example.com/image-2.png",
+				validatedAt: Date.now(),
+				description: null,
+				linkedUsers: [],
+				tags: [{ name: "Weapon" }],
+			}),
+		);
 
 		const tags = await ArtRepository.findAllTags();
 		const characterTag = tags.find((t) => t.name === "Character");
@@ -187,26 +196,28 @@ describe("findShowcaseArtsByTag", () => {
 	});
 
 	test("shows only one art per artist", async () => {
-		await ArtRepository.insert({
-			authorId: 1,
-			url: "https://example.com/image-1.png",
-			validatedAt: Date.now(),
-			description: null,
-			linkedUsers: [],
-			tags: [{ name: "Character" }],
-		});
+		await withUserId(1, () =>
+			ArtRepository.insert({
+				url: "https://example.com/image-1.png",
+				validatedAt: Date.now(),
+				description: null,
+				linkedUsers: [],
+				tags: [{ name: "Character" }],
+			}),
+		);
 
 		const tags = await ArtRepository.findAllTags();
 		const characterTag = tags.find((t) => t.name === "Character");
 
-		await ArtRepository.insert({
-			authorId: 1,
-			url: "https://example.com/image-2.png",
-			validatedAt: Date.now(),
-			description: null,
-			linkedUsers: [],
-			tags: [{ id: characterTag?.id }],
-		});
+		await withUserId(1, () =>
+			ArtRepository.insert({
+				url: "https://example.com/image-2.png",
+				validatedAt: Date.now(),
+				description: null,
+				linkedUsers: [],
+				tags: [{ id: characterTag?.id }],
+			}),
+		);
 
 		const result = await ArtRepository.findShowcaseArtsByTag(
 			characterTag?.id ?? 0,
@@ -256,14 +267,15 @@ describe("findArtsByUserId", () => {
 	});
 
 	test("returns tagged art", async () => {
-		const art = await ArtRepository.insert({
-			authorId: 1,
-			url: "https://example.com/image-1.png",
-			validatedAt: Date.now(),
-			description: null,
-			linkedUsers: [2],
-			tags: [],
-		});
+		const art = await withUserId(1, () =>
+			ArtRepository.insert({
+				url: "https://example.com/image-1.png",
+				validatedAt: Date.now(),
+				description: null,
+				linkedUsers: [2],
+				tags: [],
+			}),
+		);
 
 		const result = await ArtRepository.findArtsByUserId(2);
 
@@ -314,14 +326,15 @@ describe("deleteOrphanTags", () => {
 	});
 
 	test("deletes tags with no associated art", async () => {
-		const art = await ArtRepository.insert({
-			authorId: 1,
-			url: "https://example.com/image-1.png",
-			validatedAt: Date.now(),
-			description: null,
-			linkedUsers: [],
-			tags: [{ name: "Orphan1" }, { name: "Orphan2" }],
-		});
+		const art = await withUserId(1, () =>
+			ArtRepository.insert({
+				url: "https://example.com/image-1.png",
+				validatedAt: Date.now(),
+				description: null,
+				linkedUsers: [],
+				tags: [{ name: "Orphan1" }, { name: "Orphan2" }],
+			}),
+		);
 
 		await ArtRepository.deleteById(art.id);
 
@@ -333,14 +346,15 @@ describe("deleteOrphanTags", () => {
 	});
 
 	test("does not delete tags that are still linked to art", async () => {
-		await ArtRepository.insert({
-			authorId: 1,
-			url: "https://example.com/image-1.png",
-			validatedAt: Date.now(),
-			description: null,
-			linkedUsers: [],
-			tags: [{ name: "InUse" }],
-		});
+		await withUserId(1, () =>
+			ArtRepository.insert({
+				url: "https://example.com/image-1.png",
+				validatedAt: Date.now(),
+				description: null,
+				linkedUsers: [],
+				tags: [{ name: "InUse" }],
+			}),
+		);
 
 		const deletedCount = await ArtRepository.deleteOrphanTags();
 		expect(deletedCount).toBe(0);
@@ -362,14 +376,15 @@ describe("insert", () => {
 	});
 
 	test("inserts art with all metadata", async () => {
-		const art = await ArtRepository.insert({
-			authorId: 1,
-			url: "https://example.com/image-1.png",
-			validatedAt: Date.now(),
-			description: "Test description",
-			linkedUsers: [2],
-			tags: [{ name: "Character" }],
-		});
+		const art = await withUserId(1, () =>
+			ArtRepository.insert({
+				url: "https://example.com/image-1.png",
+				validatedAt: Date.now(),
+				description: "Test description",
+				linkedUsers: [2],
+				tags: [{ name: "Character" }],
+			}),
+		);
 
 		const result = await ArtRepository.findArtsByUserId(1);
 
@@ -400,14 +415,15 @@ describe("update", () => {
 	});
 
 	test("updates art metadata", async () => {
-		const art = await ArtRepository.insert({
-			authorId: 1,
-			url: "https://example.com/image-1.png",
-			validatedAt: Date.now(),
-			description: "Original",
-			linkedUsers: [2],
-			tags: [{ name: "Character" }],
-		});
+		const art = await withUserId(1, () =>
+			ArtRepository.insert({
+				url: "https://example.com/image-1.png",
+				validatedAt: Date.now(),
+				description: "Original",
+				linkedUsers: [2],
+				tags: [{ name: "Character" }],
+			}),
+		);
 
 		await ArtRepository.update(art.id, {
 			description: "Updated",

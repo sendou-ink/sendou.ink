@@ -31,13 +31,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 		"Invite code is invalid",
 	);
 
-	await TeamRepository.addNewTeamMember({
+	await TeamRepository.joinTeam({
 		maxTeamsAllowed:
 			user.patronTier && user.patronTier >= 2
 				? TEAM.MAX_TEAM_COUNT_PATRON
 				: TEAM.MAX_TEAM_COUNT_NON_PATRON,
 		teamId: team.id,
-		userId: user.id,
 	});
 
 	throw redirect(teamPage(team.customUrl));

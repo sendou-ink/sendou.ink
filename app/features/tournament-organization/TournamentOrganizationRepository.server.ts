@@ -3,6 +3,7 @@ import { sql } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { Tables, TablesInsertable } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import {
 	TIER_HISTORY_LENGTH,
 	type TournamentTierNumber,
@@ -572,17 +573,11 @@ export function update({
 	});
 }
 
-export function removeMember({
-	organizationId,
-	userId,
-}: {
-	organizationId: number;
-	userId: number;
-}) {
+export function removeOwnMembership(organizationId: number) {
 	return db
 		.deleteFrom("TournamentOrganizationMember")
 		.where("organizationId", "=", organizationId)
-		.where("userId", "=", userId)
+		.where("userId", "=", actorId())
 		.execute();
 }
 

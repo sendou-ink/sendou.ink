@@ -48,10 +48,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "MAKE_MAIN_TEAM": {
-			await TeamRepository.switchMainTeam({
-				userId: user.id,
-				teamId: team.id,
-			});
+			await TeamRepository.switchOwnMainTeam(team.id);
 
 			break;
 		}

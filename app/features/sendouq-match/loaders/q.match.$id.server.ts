@@ -31,9 +31,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const [privateNotes, roomLinks, anyUserPrefersNoSplatnet, reportedWeapons] =
 		await Promise.all([
-			user
-				? PrivateUserNoteRepository.byAuthorUserId(user.id, matchUsers)
-				: undefined,
+			user ? PrivateUserNoteRepository.ownNotes(matchUsers) : undefined,
 			RoomLinkRepository.findByUserIds(matchUsers, 3),
 			UserRepository.anyUserPrefersNoSplatnet(matchUsers),
 			ReportedWeaponRepository.findByMatchId(matchId),

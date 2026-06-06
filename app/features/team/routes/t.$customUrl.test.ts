@@ -5,6 +5,7 @@ import {
 	assertResponseErrored,
 	dbInsertUsers,
 	dbReset,
+	withUserId,
 	wrappedAction,
 } from "~/utils/Test";
 import { action as _teamPageAction } from "../actions/t.$customUrl.index.server";
@@ -105,11 +106,12 @@ describe("Secondary teams", () => {
 	it("only the team owner (or admin) can delete a team", async () => {
 		await createTeamAction({ name: "Team 1" }, { user: "admin" });
 
-		await TeamRepository.addNewTeamMember({
-			userId: REGULAR_USER_TEST_ID,
-			teamId: 1,
-			maxTeamsAllowed: 2,
-		});
+		await withUserId(REGULAR_USER_TEST_ID, () =>
+			TeamRepository.joinTeam({
+				teamId: 1,
+				maxTeamsAllowed: 2,
+			}),
+		);
 
 		const response = await teamPageAction(
 			{ _action: "DELETE_TEAM" },
@@ -127,16 +129,18 @@ describe("Secondary teams", () => {
 		await createTeamAction({ name: "Team 1" }, { user: "admin" });
 		await createTeamAction({ name: "Team 2" }, { user: "admin" });
 
-		await TeamRepository.addNewTeamMember({
-			userId: REGULAR_USER_TEST_ID,
-			teamId: 1,
-			maxTeamsAllowed: 2,
-		});
-		await TeamRepository.addNewTeamMember({
-			userId: REGULAR_USER_TEST_ID,
-			teamId: 2,
-			maxTeamsAllowed: 2,
-		});
+		await withUserId(REGULAR_USER_TEST_ID, () =>
+			TeamRepository.joinTeam({
+				teamId: 1,
+				maxTeamsAllowed: 2,
+			}),
+		);
+		await withUserId(REGULAR_USER_TEST_ID, () =>
+			TeamRepository.joinTeam({
+				teamId: 2,
+				maxTeamsAllowed: 2,
+			}),
+		);
 
 		const { team, secondaryTeams } = await loadTeams();
 

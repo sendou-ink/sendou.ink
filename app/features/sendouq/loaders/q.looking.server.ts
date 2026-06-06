@@ -14,8 +14,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		new URL(request.url).searchParams.get("preview") === "true" &&
 		user.roles.includes("SUPPORTER");
 
-	const privateNotes = await PrivateUserNoteRepository.byAuthorUserId(
-		user.id,
+	const privateNotes = await PrivateUserNoteRepository.ownNotes(
 		SendouQ.usersInQueue,
 	);
 
