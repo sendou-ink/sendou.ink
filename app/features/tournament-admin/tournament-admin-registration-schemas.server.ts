@@ -49,6 +49,40 @@ export function adminRegistrationFormSchemaServer({
 				: undefined;
 		const currentMemberIds = team?.members.map((member) => member.userId) ?? [];
 
+		if (team) {
+			const submittedMemberIds = data.members.map((member) => member.userId);
+			const membersToRemove = currentMemberIds.filter(
+				(memberId) => !submittedMemberIds.includes(memberId),
+			);
+
+			if (tournament.hasStarted) {
+				const participatedPlayerIds = tournament
+					.participatedPlayersByTeamId(team.id)
+					.map((player) => player.userId);
+				const removingParticipatedPlayer = membersToRemove.some((memberId) =>
+					participatedPlayerIds.includes(memberId),
+				);
+				if (removingParticipatedPlayer) {
+					ctx.addIssue({
+						code: z.ZodIssueCode.custom,
+						message: "forms:errors.regCannotRemoveParticipatedPlayer",
+						path: ["members"],
+					});
+				}
+			}
+
+			if (
+				team.checkIns.length > 0 &&
+				data.members.length < tournament.minMembersPerTeam
+			) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: "forms:errors.regCheckedInBelowMinRoster",
+					path: ["members"],
+				});
+			}
+		}
+
 		for (const [index, member] of data.members.entries()) {
 			const path = ["members", index, "userId"];
 

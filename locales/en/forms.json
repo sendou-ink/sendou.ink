@@ -250,5 +250,7 @@
 	"errors.regMemberNoFriendCode": "This player has no friend code set",
 	"errors.regMemberNoInGameName": "This player has no in-game name set",
 	"errors.regMemberBanned": "This player is currently banned from sendou.ink",
-	"errors.regMemberOnAnotherTeam": "This player is already on another team"
+	"errors.regMemberOnAnotherTeam": "This player is already on another team",
+	"errors.regCannotRemoveParticipatedPlayer": "Can't remove a player that has participated in the tournament",
+	"errors.regCheckedInBelowMinRoster": "Checked in team can't go below the minimum roster size"
 }

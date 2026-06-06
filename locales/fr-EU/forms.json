@@ -250,5 +250,7 @@
 	"errors.regMemberNoFriendCode": "",
 	"errors.regMemberNoInGameName": "",
 	"errors.regMemberBanned": "",
-	"errors.regMemberOnAnotherTeam": ""
+	"errors.regMemberOnAnotherTeam": "",
+	"errors.regCannotRemoveParticipatedPlayer": "",
+	"errors.regCheckedInBelowMinRoster": ""
 }

@@ -57,25 +57,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 		(memberId) => !submittedMemberIds.includes(memberId),
 	);
 
-	// xxx: put these to schema
-	if (team) {
-		for (const removeId of membersToRemove) {
-			errorToastIfFalsy(
-				!tournament.hasStarted ||
-					!tournament
-						.participatedPlayersByTeamId(team.id)
-						.some((p) => p.userId === removeId),
-				"Cannot remove player that has participated in the tournament",
-			);
-		}
-
-		errorToastIfFalsy(
-			team.checkIns.length === 0 ||
-				submittedMembers.length >= tournament.minMembersPerTeam,
-			"Checked in team can't go below the minimum roster size",
-		);
-	}
-
 	const ownerChange = (() => {
 		if (!team) return null;
 		const currentOwner = team.members.find((m) => m.role === "OWNER");
