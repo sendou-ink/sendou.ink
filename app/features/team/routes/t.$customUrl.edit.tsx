@@ -5,6 +5,7 @@ import { CustomThemeSelector } from "~/components/CustomThemeSelector";
 import { Divider } from "~/components/Divider";
 import { Main, mainStyles } from "~/components/Main";
 import { TeamGoBackButton } from "~/features/team/components/TeamGoBackButton";
+import { existingImage } from "~/form/image-field";
 import { SendouForm } from "~/form/SendouForm";
 import type { ThemeInput } from "~/utils/oklch-gamut";
 import { metaTags } from "~/utils/remix";
@@ -38,22 +39,8 @@ export default function EditTeamPage() {
 						tag: team.tag ?? "",
 						bsky: team.bsky ?? "",
 						bio: team.bio ?? "",
-						logo:
-							team.avatarImgId && team.avatarUrl
-								? {
-										type: "EXISTING",
-										imgId: team.avatarImgId,
-										url: team.avatarUrl,
-									}
-								: null,
-						banner:
-							team.bannerImgId && team.bannerUrl
-								? {
-										type: "EXISTING",
-										imgId: team.bannerImgId,
-										url: team.bannerUrl,
-									}
-								: null,
+						logo: existingImage(team.avatarImgId, team.avatarUrl),
+						banner: existingImage(team.bannerImgId, team.bannerUrl),
 					}}
 					submitButtonText={t("common:actions.submit")}
 					submitButtonTestId="edit-team-submit-button"

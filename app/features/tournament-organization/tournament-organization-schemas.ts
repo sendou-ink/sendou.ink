@@ -6,6 +6,7 @@ import {
 	badges,
 	datetimeOptional,
 	fieldset,
+	image,
 	select,
 	stringConstant,
 	textAreaOptional,
@@ -33,6 +34,7 @@ export const newOrganizationSchema = z.object({
 
 export const organizationEditFormSchema = z.object({
 	name: orgNameField,
+	logo: image({ label: "labels.logo" }),
 	description: textAreaOptional({
 		label: "labels.description",
 		maxLength: TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH,

@@ -58,9 +58,12 @@ type ResolvedImages<T> = T extends unknown
 export async function parseFormDataWithImages<T extends z.ZodTypeAny>({
 	request,
 	schema,
+	autoValidate = false,
 }: {
 	request: Request;
 	schema: T;
+	/** Validate uploaded images immediately, bypassing the moderator queue (e.g. trusted org logos). */
+	autoValidate?: boolean;
 }): Promise<ParseResult<ResolvedImages<z.infer<T>>>> {
 	const result = await parseFormData({ request, schema });
 	if (!result.success) return result;
@@ -73,6 +76,7 @@ export async function parseFormDataWithImages<T extends z.ZodTypeAny>({
 			data[key] = await imageFieldValueToImgId({
 				value: data[key] as ImageFieldValue,
 				user,
+				autoValidate,
 			});
 		}
 	}

@@ -16,22 +16,26 @@ import { MAX_UNVALIDATED_IMG_COUNT } from "./upload-constants";
  * - `null` → `null` (image removed / none)
  * - `EXISTING` → the unchanged `imgId` (no bytes are re-uploaded)
  * - `NEW` → decodes the base64 webp, uploads it to S3 and inserts an unvalidated image row,
- *   auto-validating it for supporters, then returns the new id.
+ *   auto-validating it for supporters (or always when `autoValidate` is set), then returns the
+ *   new id.
  *
  * The consuming action is responsible for writing the returned value to its own FK column.
  */
 export async function imageFieldValueToImgId({
 	value,
 	user,
+	autoValidate = false,
 }: {
 	value: ImageFieldValue;
 	user: AuthenticatedUser;
+	/** Validate the image immediately, bypassing the moderator queue (e.g. trusted org logos). */
+	autoValidate?: boolean;
 }): Promise<number | null> {
 	if (!value) return null;
 	if (value.type === "EXISTING") return value.imgId;
 
 	errorToastIfFalsy(
-		(await ImageRepository.countAllUnvalidatedBySubmitterUserId(user.id)) <
+		(await ImageRepository.countUnvalidatedBySubmitterUserId(user.id)) <
 			MAX_UNVALIDATED_IMG_COUNT,
 		"Too many unvalidated images",
 	);
@@ -45,7 +49,7 @@ export async function imageFieldValueToImgId({
 	invariant(uploadedFileLocation, "Image upload failed");
 	const fileName = basename(uploadedFileLocation);
 
-	const shouldAutoValidate = user.roles.includes("SUPPORTER");
+	const shouldAutoValidate = autoValidate || user.roles.includes("SUPPORTER");
 
 	const img = await ImageRepository.insert({
 		submitterUserId: user.id,

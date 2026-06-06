@@ -65,6 +65,7 @@ export async function findBySlug(slug: string) {
 			"TournamentOrganization.socials",
 			"TournamentOrganization.slug",
 			"TournamentOrganization.isEstablished",
+			"TournamentOrganization.avatarImgId",
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"avatarUrl",
 			),
@@ -411,6 +412,8 @@ interface UpdateArgs
 		Tables["TournamentOrganization"],
 		"id" | "name" | "description" | "socials"
 	> {
+	/** Omit to leave the current logo unchanged; `null` clears it. */
+	avatarImgId?: number | null;
 	members: Array<
 		Pick<
 			Tables["TournamentOrganizationMember"],
@@ -430,11 +433,29 @@ export function update({
 	name,
 	description,
 	socials,
+	avatarImgId,
 	members,
 	series,
 	badges,
 }: UpdateArgs) {
 	return db.transaction().execute(async (trx) => {
+		if (avatarImgId !== undefined) {
+			const current = await trx
+				.selectFrom("TournamentOrganization")
+				.select("avatarImgId")
+				.where("id", "=", id)
+				.executeTakeFirst();
+
+			// the logo got removed or replaced, so the old submitted image row is
+			// no longer referenced by anything and is cleaned up
+			if (current?.avatarImgId && current.avatarImgId !== avatarImgId) {
+				await trx
+					.deleteFrom("UnvalidatedUserSubmittedImage")
+					.where("id", "=", current.avatarImgId)
+					.execute();
+			}
+		}
+
 		const updatedOrg = await trx
 			.updateTable("TournamentOrganization")
 			.set({
@@ -442,6 +463,7 @@ export function update({
 				description,
 				slug: mySlugify(name),
 				socials: socials ? JSON.stringify(socials) : null,
+				...(avatarImgId !== undefined ? { avatarImgId } : {}),
 			})
 			.where("id", "=", id)
 			.returningAll()
