@@ -90,7 +90,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 	await TournamentLFGRepository.leaveLfg({ userId: user.id, tournamentId });
 	await TournamentTeamRepository.join({
 		userId: user.id,
-		actorUserId: user.id,
 		newTeamId: teamToJoin.id,
 		previousTeamId: previousTeam?.id,
 		// making sure they aren't unfilling one checking in condition i.e. having full roster

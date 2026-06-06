@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
 import * as TournamentAuditLogRepository from "./TournamentAuditLogRepository.server";
 
 const createTournament = () =>
@@ -25,16 +25,21 @@ const createTeam = (tournamentId: number, name: string) =>
 		.returning("id")
 		.executeTakeFirstOrThrow();
 
-const insertEvent = (args: {
+const insertEvent = ({
+	actorUserId,
+	...args
+}: {
 	type: Tables["TournamentAuditLog"]["type"];
 	actorUserId: number;
 	tournamentTeamId: number;
 	subjectUserId?: number;
 	metadata?: { bracketIdx?: number };
 }) =>
-	db
-		.transaction()
-		.execute((trx) => TournamentAuditLogRepository.insert(trx, args));
+	withUserId(actorUserId, () =>
+		db
+			.transaction()
+			.execute((trx) => TournamentAuditLogRepository.insert(trx, args)),
+	);
 
 describe("TournamentAuditLogRepository", () => {
 	beforeEach(async () => {

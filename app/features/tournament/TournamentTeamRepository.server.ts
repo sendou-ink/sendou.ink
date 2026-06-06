@@ -110,7 +110,6 @@ export function create({
 	avatarImgId = null,
 	userId,
 	additionalMemberUserIds = [],
-	actorUserId,
 	tournamentId,
 }: {
 	team: Pick<Tables["TournamentTeam"], "name" | "prefersNotToHost" | "teamId">;
@@ -119,8 +118,6 @@ export function create({
 	userId: number;
 	/** Non-owner members to add to the team on creation. */
 	additionalMemberUserIds?: number[];
-	/** The user performing the registration (differs from `userId` when an organizer registers a team for someone). */
-	actorUserId: number;
 	tournamentId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
@@ -151,7 +148,6 @@ export function create({
 
 		await TournamentAuditLogRepository.insert(trx, {
 			type: "TEAM_REGISTERED",
-			actorUserId,
 			tournamentTeamId: tournamentTeam.id,
 			subjectUserId: userId,
 		});
@@ -174,7 +170,6 @@ export function create({
 
 			await TournamentAuditLogRepository.insert(trx, {
 				type: "MEMBER_ADDED",
-				actorUserId,
 				tournamentTeamId: tournamentTeam.id,
 				subjectUserId: memberUserId,
 			});
@@ -196,7 +191,6 @@ export function create({
 export function upsertRegistration({
 	tournamentTeamId,
 	tournamentId,
-	actorUserId,
 	name,
 	teamId,
 	avatarImgId,
@@ -209,7 +203,6 @@ export function upsertRegistration({
 	/** Present when editing an existing team, omitted when creating a new one. */
 	tournamentTeamId?: number;
 	tournamentId: number;
-	actorUserId: number;
 	name: string;
 	/** Linked sendou.ink team id, or null for a pickup team. */
 	teamId: number | null;
@@ -273,7 +266,6 @@ export function upsertRegistration({
 		for (const userId of membersToRemove) {
 			await TournamentAuditLogRepository.insert(trx, {
 				type: "MEMBER_REMOVED",
-				actorUserId,
 				tournamentTeamId: id,
 				subjectUserId: userId,
 			});
@@ -301,7 +293,6 @@ export function upsertRegistration({
 
 			await TournamentAuditLogRepository.insert(trx, {
 				type: isOwner ? "TEAM_REGISTERED" : "MEMBER_ADDED",
-				actorUserId,
 				tournamentTeamId: id,
 				subjectUserId: userId,
 			});
@@ -554,9 +545,9 @@ export function updateAbDivisions(
  */
 export function checkIn(
 	tournamentTeamId: number,
-	options: { actorUserId: number; bracketIdx?: number },
+	options?: { bracketIdx?: number },
 ) {
-	const bracketIdx = options.bracketIdx ?? null;
+	const bracketIdx = options?.bracketIdx ?? null;
 
 	return db.transaction().execute(async (trx) => {
 		let query = trx
@@ -587,7 +578,6 @@ export function checkIn(
 
 		await TournamentAuditLogRepository.insert(trx, {
 			type: "TEAM_CHECKED_IN",
-			actorUserId: options.actorUserId,
 			tournamentTeamId,
 			metadata: typeof bracketIdx === "number" ? { bracketIdx } : null,
 		});
@@ -597,11 +587,9 @@ export function checkIn(
 export function checkOut({
 	tournamentTeamId,
 	bracketIdx,
-	actorUserId,
 }: {
 	tournamentTeamId: number;
 	bracketIdx: number | null;
-	actorUserId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
 		let query = trx
@@ -628,7 +616,6 @@ export function checkOut({
 
 		await TournamentAuditLogRepository.insert(trx, {
 			type: "TEAM_CHECKED_OUT",
-			actorUserId,
 			tournamentTeamId,
 			metadata: typeof bracketIdx === "number" ? { bracketIdx } : null,
 		});
@@ -638,11 +625,9 @@ export function checkOut({
 export function dropOut({
 	tournamentTeamId,
 	previewBracketIdxs,
-	actorUserId,
 }: {
 	tournamentTeamId: number;
 	previewBracketIdxs: number[];
-	actorUserId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
 		await trx
@@ -661,16 +646,12 @@ export function dropOut({
 
 		await TournamentAuditLogRepository.insert(trx, {
 			type: "TEAM_DROPPED_OUT",
-			actorUserId,
 			tournamentTeamId,
 		});
 	});
 }
 
-export function undoDropOut(
-	tournamentTeamId: number,
-	{ actorUserId }: { actorUserId: number },
-) {
+export function undoDropOut(tournamentTeamId: number) {
 	return db.transaction().execute(async (trx) => {
 		await trx
 			.updateTable("TournamentTeam")
@@ -682,7 +663,6 @@ export function undoDropOut(
 
 		await TournamentAuditLogRepository.insert(trx, {
 			type: "TEAM_DROP_OUT_UNDONE",
-			actorUserId,
 			tournamentTeamId,
 		});
 	});
@@ -693,7 +673,6 @@ export function join({
 	whatToDoWithPreviousTeam,
 	newTeamId,
 	userId,
-	actorUserId,
 	checkOutTeam = false,
 }: {
 	previousTeamId?: number;
@@ -701,15 +680,12 @@ export function join({
 	newTeamId: number;
 	/** The user joining the team. */
 	userId: number;
-	/** The user performing the action (differs from `userId` when an owner or organizer adds someone). */
-	actorUserId: number;
 	checkOutTeam?: boolean;
 }) {
 	return db.transaction().execute(async (trx) => {
 		if (whatToDoWithPreviousTeam === "DELETE") {
 			await TournamentAuditLogRepository.insert(trx, {
 				type: "TEAM_UNREGISTERED",
-				actorUserId,
 				tournamentTeamId: previousTeamId!,
 			});
 			await trx
@@ -719,7 +695,6 @@ export function join({
 		} else if (whatToDoWithPreviousTeam === "LEAVE") {
 			await TournamentAuditLogRepository.insert(trx, {
 				type: "MEMBER_REMOVED",
-				actorUserId,
 				tournamentTeamId: previousTeamId!,
 				subjectUserId: userId,
 			});
@@ -762,21 +737,16 @@ export function join({
 
 		await TournamentAuditLogRepository.insert(trx, {
 			type: "MEMBER_ADDED",
-			actorUserId,
 			tournamentTeamId: newTeamId,
 			subjectUserId: userId,
 		});
 	});
 }
 
-export function del(
-	tournamentTeamId: number,
-	{ actorUserId }: { actorUserId: number },
-) {
+export function del(tournamentTeamId: number) {
 	return db.transaction().execute(async (trx) => {
 		await TournamentAuditLogRepository.insert(trx, {
 			type: "TEAM_UNREGISTERED",
-			actorUserId,
 			tournamentTeamId,
 		});
 
@@ -795,18 +765,14 @@ export function del(
 export function leave({
 	teamId,
 	userId,
-	actorUserId,
 }: {
 	teamId: number;
 	/** The member leaving the team. */
 	userId: number;
-	/** The user performing the action (differs from `userId` when an owner or organizer removes someone). */
-	actorUserId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
 		await TournamentAuditLogRepository.insert(trx, {
 			type: "MEMBER_REMOVED",
-			actorUserId,
 			tournamentTeamId: teamId,
 			subjectUserId: userId,
 		});

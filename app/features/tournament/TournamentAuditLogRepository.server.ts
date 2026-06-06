@@ -2,6 +2,7 @@ import type { Transaction } from "kysely";
 import { jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables, TournamentAuditLogMetadata } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 
@@ -11,8 +12,6 @@ type TournamentAuditLogType = Tables["TournamentAuditLog"]["type"];
 
 interface InsertArgs {
 	type: TournamentAuditLogType;
-	/** The user who performed the action. */
-	actorUserId: number;
 	/** The team the event concerns. Its identity is preserved in `TournamentTeamHistory`. */
 	tournamentTeamId: number;
 	/** The affected member, for member-level events. */
@@ -22,9 +21,10 @@ interface InsertArgs {
 
 /**
  * Inserts an audit log event within the caller's transaction (so it commits or
- * rolls back atomically with the mutation it records). Ensures a stable
- * `TournamentTeamHistory` row exists for the team, so the event remains readable
- * even after the team is hard-deleted.
+ * rolls back atomically with the mutation it records). The acting user is resolved
+ * from request context via `actorId()`. Ensures a stable `TournamentTeamHistory`
+ * row exists for the team, so the event remains readable even after the team is
+ * hard-deleted.
  */
 export async function insert(trx: Transaction<DB>, args: InsertArgs) {
 	await trx
@@ -54,7 +54,7 @@ export async function insert(trx: Transaction<DB>, args: InsertArgs) {
 		.values({
 			tournamentId,
 			type: args.type,
-			actorUserId: args.actorUserId,
+			actorUserId: actorId(),
 			subjectUserId: args.subjectUserId ?? null,
 			tournamentTeamId: args.tournamentTeamId,
 			metadata: args.metadata ? JSON.stringify(args.metadata) : null,

@@ -1,6 +1,7 @@
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import invariant from "~/utils/invariant";
+import { withUserId } from "~/utils/Test";
 import { getServerTournamentManager } from "../tournament-bracket/core/brackets-manager/manager.server";
 import { tournamentFromDB } from "../tournament-bracket/core/Tournament.server";
 import { updateRoundMaps } from "./queries/updateRoundMaps.server";
@@ -55,30 +56,32 @@ export async function dbInsertTournamentTeam({
 	/** Id of the tournament to associate the team with. Defaults to 1. */
 	tournamentId?: number;
 }) {
-	const tournamentTeam = await TournamentTeamRepository.create({
-		team: {
-			name: `Test Team ${ownerId}`,
-			prefersNotToHost: 0,
-			teamId: null,
-		},
-		userId: ownerId,
-		actorUserId: ownerId,
-		tournamentId,
-	});
+	const tournamentTeam = await withUserId(ownerId, () =>
+		TournamentTeamRepository.create({
+			team: {
+				name: `Test Team ${ownerId}`,
+				prefersNotToHost: 0,
+				teamId: null,
+			},
+			userId: ownerId,
+			tournamentId,
+		}),
+	);
 
 	for (let i = 1; i < membersCount; i++) {
 		const memberId = ownerId + i;
 
-		await TournamentTeamRepository.join({
-			userId: memberId,
-			actorUserId: memberId,
-			newTeamId: tournamentTeam.id,
-		});
+		await withUserId(memberId, () =>
+			TournamentTeamRepository.join({
+				userId: memberId,
+				newTeamId: tournamentTeam.id,
+			}),
+		);
 	}
 
-	await TournamentTeamRepository.checkIn(tournamentTeam.id, {
-		actorUserId: ownerId,
-	});
+	await withUserId(ownerId, () =>
+		TournamentTeamRepository.checkIn(tournamentTeam.id),
+	);
 }
 
 /**

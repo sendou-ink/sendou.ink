@@ -76,7 +76,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 	await TournamentTeamRepository.upsertRegistration({
 		tournamentTeamId: team?.id,
 		tournamentId,
-		actorUserId: user.id,
 		name,
 		teamId: linkedTeamId,
 		avatarImgId,
