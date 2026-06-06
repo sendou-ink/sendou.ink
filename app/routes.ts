@@ -131,7 +131,7 @@ export default [
 				index("features/tournament/routes/to.$id.admin._index.tsx"),
 				route(
 					"registration/:tid?",
-					"features/tournament/routes/to.$id.admin.registration.tsx",
+					"features/tournament/routes/to.$id.admin.registration.$tid.tsx",
 				),
 			]),
 			route("seeds", "features/tournament/routes/to.$id.admin.seeds.tsx"),
