@@ -14,9 +14,7 @@ export type ParseResult<T> =
  * Maps a {@link z.ZodError} to field-level errors keyed by form field name
  * (e.g. `members[0].userId`), keeping the first error per field.
  */
-export function fieldErrorsFromZodError(
-	error: z.ZodError,
-): Record<string, string> {
+function fieldErrorsFromZodError(error: z.ZodError): Record<string, string> {
 	const fieldErrors: Record<string, string> = {};
 	for (const issue of error.issues) {
 		const path = buildFieldPath(issue.path);

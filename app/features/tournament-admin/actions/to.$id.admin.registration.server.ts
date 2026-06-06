@@ -1,7 +1,6 @@
 import { type ActionFunction, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
-import { imageFieldValueToImgId } from "~/features/img-upload/image-field.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
@@ -9,13 +8,9 @@ import {
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
-import { fieldErrorsFromZodError } from "~/form/parse.server";
+import { parseFormDataWithImages } from "~/form/parse.server";
 import invariant from "~/utils/invariant";
-import {
-	errorToastIfFalsy,
-	formDataToObject,
-	parseParams,
-} from "~/utils/remix.server";
+import { errorToastIfFalsy, parseParams } from "~/utils/remix.server";
 import { tournamentAdminPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
 import { adminRegistrationFormSchemaServer } from "../tournament-admin-registration-schemas.server";
@@ -23,24 +18,19 @@ import { adminRegistrationFormSchemaServer } from "../tournament-admin-registrat
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
 
-	// xxx: just use parseFormData
-	const rawData: unknown =
-		request.headers.get("Content-Type") === "application/json"
-			? await request.json()
-			: formDataToObject(await request.formData());
-
 	const { id: tournamentId } = parseParams({ params, schema: idObject });
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
 	errorToastIfFalsy(tournament.isOrganizer(user), "Unauthorized");
 
-	const validation = await adminRegistrationFormSchemaServer({
-		tournament,
-	}).safeParseAsync(rawData);
-	if (!validation.success) {
-		return { fieldErrors: fieldErrorsFromZodError(validation.error) };
+	const result = await parseFormDataWithImages({
+		request,
+		schema: adminRegistrationFormSchemaServer({ tournament }),
+	});
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
 	}
-	const data = validation.data;
+	const data = result.data;
 
 	const submittedMembers = data.members;
 	const ownerUserId = Number(data.ownerId);
@@ -51,9 +41,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		: data.pickUpName!;
 
 	// linked teams source their logo from the sendou.ink team, so any pickup avatar is cleared
-	const avatarImgId = linkedTeamId
-		? null
-		: await imageFieldValueToImgId({ value: data.logo, user });
+	const avatarImgId = linkedTeamId ? null : data.logo;
 
 	let team: NonNullable<ReturnType<typeof tournament.teamById>> | undefined;
 	if (typeof data.tournamentTeamId === "number") {
