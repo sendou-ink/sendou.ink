@@ -113,7 +113,7 @@ export function removeMarkdown(value: string) {
 			// Remove images
 			.replace(/!\[(.*?)\][[(].*?[\])]/g, "")
 			// Remove inline links
-			.replace(/\[([^\]]*?)\][[(].*?[\])]/g, "$2")
+			.replace(/\[([^\]]*?)\][[(].*?[\])]/g, "$1")
 			// Remove blockquotes
 			.replace(/^(\n)?\s{0,3}>\s?/gm, "$1")
 			// Remove reference-style links?

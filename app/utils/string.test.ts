@@ -74,4 +74,10 @@ describe("removeMarkdown()", () => {
 	test("Strips HTML tags and markdown emphasis", () => {
 		expect(removeMarkdown("<p>Hello **world**!</p>")).toBe("Hello world!");
 	});
+
+	test("Keeps the link text of inline links", () => {
+		expect(
+			removeMarkdown("Check out [the site](https://example.com) today"),
+		).toBe("Check out the site today");
+	});
 });
