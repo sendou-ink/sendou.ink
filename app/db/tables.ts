@@ -818,10 +818,13 @@ export interface TournamentLFGLike {
 	createdAt: Generated<number>;
 }
 
+export const TOURNAMENT_STAFF_ROLES = ["ORGANIZER", "STREAMER"] as const;
+type TournamentStaffRole = (typeof TOURNAMENT_STAFF_ROLES)[number];
+
 export interface TournamentStaff {
 	tournamentId: number;
 	userId: number;
-	role: "ORGANIZER" | "STREAMER";
+	role: TournamentStaffRole;
 }
 
 export interface TournamentTeam {

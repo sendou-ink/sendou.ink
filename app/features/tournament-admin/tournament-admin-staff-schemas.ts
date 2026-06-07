@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TOURNAMENT_STAFF_ROLES } from "~/db/tables";
 import {
 	array,
 	fieldset,
@@ -6,8 +7,6 @@ import {
 	textFieldRequired,
 	userSearch,
 } from "~/form/fields";
-
-const STAFF_ROLES = ["ORGANIZER", "STREAMER"] as const;
 
 export const adminStreamFormSchema = z.object({
 	castTwitchAccounts: array({
@@ -32,7 +31,7 @@ export const adminStaffFormSchema = z
 					userId: userSearch({ label: "labels.user" }),
 					role: select({
 						label: "labels.staffRole",
-						items: STAFF_ROLES.map((role) => ({
+						items: TOURNAMENT_STAFF_ROLES.map((role) => ({
 							value: role,
 							label: `options.staffRole.${role}` as const,
 						})),

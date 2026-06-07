@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import type { Tables } from "~/db/tables";
+import { type Tables, TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { SendouForm } from "~/form/SendouForm";
 import { adminStaffFormSchema } from "../tournament-admin-staff-schemas";
@@ -36,8 +36,9 @@ export default function TournamentAdminStaffPage() {
 	);
 }
 
-// xxx: one place for this constant? we also have this in the schema file
-const ORGANIZATION_STAFF_ROLES = ["ADMIN", "ORGANIZER", "STREAMER"];
+const ORGANIZATION_STAFF_ROLES: ReadonlyArray<
+	Tables["TournamentOrganizationMember"]["role"]
+> = TOURNAMENT_ORGANIZATION_ROLES.filter((role) => role !== "MEMBER");
 
 /**
  * Users who already have staff permissions implicitly (the tournament author
