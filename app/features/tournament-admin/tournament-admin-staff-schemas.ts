@@ -1,7 +1,25 @@
 import { z } from "zod";
-import { array, fieldset, select, userSearch } from "~/form/fields";
+import {
+	array,
+	fieldset,
+	select,
+	textFieldRequired,
+	userSearch,
+} from "~/form/fields";
 
 const STAFF_ROLES = ["ORGANIZER", "STREAMER"] as const;
+
+export const adminStreamFormSchema = z.object({
+	castTwitchAccounts: array({
+		label: "labels.castTwitchAccounts",
+		bottomText: "bottomTexts.castTwitchAccounts",
+		max: 5,
+		field: textFieldRequired({
+			maxLength: 100,
+			placeholder: "placeholders.castTwitchAccounts",
+		}),
+	}),
+});
 
 export const adminStaffFormSchema = z
 	.object({

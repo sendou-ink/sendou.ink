@@ -74,20 +74,6 @@ export const adminTeamsActionSchema = z.union([
 	}),
 ]);
 
-export const adminStreamActionSchema = z.object({
-	_action: _action("UPDATE_CAST_TWITCH_ACCOUNTS"),
-	castTwitchAccounts: z.preprocess(
-		(val) =>
-			typeof val === "string"
-				? val
-						.split(",")
-						.map((account) => account.trim())
-						.map((account) => account.toLowerCase())
-				: val,
-		z.array(z.string()),
-	),
-});
-
 export const adminBracketsActionSchema = z.union([
 	z.object({
 		_action: _action("RESET_BRACKET"),

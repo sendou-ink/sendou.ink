@@ -7,10 +7,7 @@ import {
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { parseFormData } from "~/form/parse.server";
-import {
-	errorToastIfFalsy,
-	parseParams,
-} from "~/utils/remix.server";
+import { errorToastIfFalsy, parseParams } from "~/utils/remix.server";
 import { idObject } from "../../../utils/zod";
 import { adminStaffFormSchemaServer } from "../tournament-admin-schemas.server";
 

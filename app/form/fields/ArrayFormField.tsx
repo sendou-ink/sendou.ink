@@ -36,6 +36,10 @@ export function ArrayFormField({
 		useTranslatedTexts({ label, bottomText, error });
 
 	const count = value.length;
+	// Always render at least one item so an empty array still shows an input
+	// the user can fill, rather than only an "Add" button. The underlying value
+	// stays empty until edited, so submitting an untouched field sends nothing.
+	const visibleCount = Math.max(count, min, 1);
 
 	const handleAdd = () => {
 		const baseValue =
@@ -68,7 +72,7 @@ export function ArrayFormField({
 			{translatedLabel ? (
 				<div className="text-xs font-semi-bold">{translatedLabel}</div>
 			) : null}
-			{Array.from({ length: count }).map((_, idx) =>
+			{Array.from({ length: visibleCount }).map((_, idx) =>
 				isObjectArray ? (
 					<ArrayItemFieldset
 						key={itemKey(idx)}

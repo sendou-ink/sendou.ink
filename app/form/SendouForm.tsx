@@ -434,6 +434,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 					method={method}
 					action={action}
 					className={resolvedClassName}
+					noValidate
 					onSubmit={handleSubmit}
 				>
 					{formContent}

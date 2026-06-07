@@ -887,6 +887,27 @@ describe("SendouForm", () => {
 				.toBeVisible();
 		});
 
+		test("renders one starter item for an empty array", async () => {
+			const schema = z.object({
+				urls: array({
+					label: "labels.urls",
+					min: 0,
+					max: 5,
+					field: textFieldRequired({ maxLength: 100 }),
+				}),
+			});
+
+			const screen = await renderForm(schema);
+
+			const inputs = screen.container.querySelectorAll('input[type="text"]');
+			expect(inputs.length).toBe(1);
+
+			const removeButtons = screen.container.querySelectorAll(
+				'button[aria-label="Remove item"]',
+			);
+			expect(removeButtons.length).toBe(0);
+		});
+
 		test("clicking add creates new item", async () => {
 			const schema = z.object({
 				urls: array({
@@ -900,9 +921,10 @@ describe("SendouForm", () => {
 			const screen = await renderForm(schema);
 
 			await screen.getByRole("button", { name: "Add" }).click();
+			await screen.getByRole("button", { name: "Add" }).click();
 
 			const inputs = screen.container.querySelectorAll('input[type="text"]');
-			expect(inputs.length).toBe(1);
+			expect(inputs.length).toBe(2);
 		});
 
 		test("renders remove button for each item when above minimum", async () => {
@@ -993,6 +1015,30 @@ describe("SendouForm", () => {
 			await expect.element(screen.getByLabelText("Name")).toHaveValue("Alice");
 		});
 
+		test("renders one starter fieldset for an empty array", async () => {
+			const schema = z.object({
+				members: array({
+					label: "labels.members",
+					min: 0,
+					max: 10,
+					field: fieldset({
+						fields: z.object({
+							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+						}),
+					}),
+				}),
+			});
+
+			const screen = await renderForm(schema);
+
+			await expect.element(screen.getByText("#1")).toBeVisible();
+
+			const removeButtons = screen.container.querySelectorAll(
+				'button[aria-label="Remove item"]',
+			);
+			expect(removeButtons.length).toBe(0);
+		});
+
 		test("add button creates new fieldset item", async () => {
 			const schema = z.object({
 				members: array({
@@ -1010,8 +1056,9 @@ describe("SendouForm", () => {
 			const screen = await renderForm(schema);
 
 			await screen.getByRole("button", { name: "Add" }).click();
+			await screen.getByRole("button", { name: "Add" }).click();
 
-			await expect.element(screen.getByText("#1")).toBeVisible();
+			await expect.element(screen.getByText("#2")).toBeVisible();
 		});
 
 		test("remove button removes fieldset item", async () => {

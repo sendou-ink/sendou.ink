@@ -5,22 +5,13 @@ import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import {
-	errorToastIfFalsy,
-	parseParams,
-	parseRequestPayload,
-	successToast,
-} from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
-import { idObject } from "../../../utils/zod";
-import { adminStreamActionSchema } from "../tournament-admin-schemas.server";
+import { parseFormData } from "~/form/parse.server";
+import { errorToastIfFalsy, parseParams } from "~/utils/remix.server";
+import { idObject } from "~/utils/zod";
+import { adminStreamFormSchema } from "../tournament-admin-staff-schemas";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
-	const data = await parseRequestPayload({
-		request,
-		schema: adminStreamActionSchema,
-	});
 
 	const { id: tournamentId } = parseParams({
 		params,
@@ -28,27 +19,22 @@ export const action: ActionFunction = async ({ request, params }) => {
 	});
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
-	const validateIsTournamentOrganizer = () =>
-		errorToastIfFalsy(tournament.isOrganizer(user), "Unauthorized");
+	errorToastIfFalsy(tournament.isOrganizer(user), "Unauthorized");
 
-	let message: string;
-	switch (data._action) {
-		case "UPDATE_CAST_TWITCH_ACCOUNTS": {
-			validateIsTournamentOrganizer();
-			await TournamentRepository.updateCastTwitchAccounts({
-				tournamentId: tournament.ctx.id,
-				castTwitchAccounts: data.castTwitchAccounts,
-			});
-
-			message = "Cast account updated";
-			break;
-		}
-		default: {
-			assertUnreachable(data._action);
-		}
+	const result = await parseFormData({
+		request,
+		schema: adminStreamFormSchema,
+	});
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
 	}
+
+	await TournamentRepository.updateCastTwitchAccounts({
+		tournamentId: tournament.ctx.id,
+		castTwitchAccounts: result.data.castTwitchAccounts,
+	});
 
 	clearTournamentDataCache(tournamentId);
 
-	return successToast(message);
+	return null;
 };

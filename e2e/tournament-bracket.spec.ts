@@ -743,7 +743,8 @@ test.describe("Tournament bracket", () => {
 		}
 
 		await page.getByRole("tab", { name: "Stream" }).click();
-		await page.getByLabel("Twitch accounts").fill("test");
+		await page.getByRole("button", { name: "Add", exact: true }).click();
+		await page.getByPlaceholder("dappleproductions").fill("test");
 		await submit(page, "save-cast-twitch-accounts-button");
 
 		await navigate({

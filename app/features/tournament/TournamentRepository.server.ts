@@ -836,7 +836,11 @@ export function updateCastTwitchAccounts({
 	return db
 		.updateTable("Tournament")
 		.set({
-			castTwitchAccounts: JSON.stringify(castTwitchAccounts),
+			castTwitchAccounts: JSON.stringify(
+				castTwitchAccounts
+					.map((account) => account.trim().toLowerCase())
+					.filter(Boolean),
+			),
 		})
 		.where("id", "=", tournamentId)
 		.execute();
