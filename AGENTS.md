@@ -79,9 +79,10 @@
 - add only English translation and use `pnpm run i18n:sync` to initialize other jsons with empty string ready for translators
 - when using namespace e.g. `const { t } = useTranslation("settings"]);` it needs to be defined in the `handle` for that route e.g. `export const handle: SendouRouteHandle = { i18n: ["settings"], ... }`. Certain namespaces are always included and you don't have to worry about those: "common", "forms", "game-misc", "weapons", "front", "friends"
 
-## Commit messages
+## Commits
 
 - do not mention claude or claude code
+- unless specifically instructed, do not create new branches
 
 ## Pull request
 
