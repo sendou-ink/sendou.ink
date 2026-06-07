@@ -1,4 +1,4 @@
-import { format, isWeekend } from "date-fns";
+import { addHours, format, isAfter, isWeekend } from "date-fns";
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -145,28 +145,27 @@ export function sideOfUser(post: ScrimPost, userId: number): ScrimSide | null {
 
 /**
  * Returns true when map-by-map tracking is locked: the auto-lock window has
- * elapsed since the last activity (most recent reported map, falling back to
- * the most recently updated submitted map list). Returns false when no map
- * list has been submitted yet (tracking is not active).
+ * elapsed since the most recently reported map, falling back to the scrim's
+ * scheduled start time when no map has been reported yet.
  */
 export function isTrackingLocked(
-	maps: Pick<Tables["ScrimMap"], "reportedAt">[] = [],
-	mapLists: Pick<Tables["ScrimMapList"], "updatedAt">[] = [],
-	now: number = Date.now(),
+	maps: Pick<Tables["ScrimMap"], "reportedAt">[],
+	startTime: number,
+	now: Date = new Date(),
 ): boolean {
 	const latestReported = R.firstBy(
 		maps.filter((m) => m.reportedAt !== null),
 		[(m) => m.reportedAt!, "desc"],
 	);
-	const latestList = R.firstBy(mapLists, [(l) => l.updatedAt, "desc"]);
 
-	const referenceSeconds =
-		latestReported?.reportedAt ?? latestList?.updatedAt ?? null;
-	if (referenceSeconds === null) return false;
+	const referenceSeconds = latestReported?.reportedAt ?? startTime;
 
-	const elapsedHours = (now - referenceSeconds * 1000) / (60 * 60 * 1000);
+	const lockedAt = addHours(
+		databaseTimestampToDate(referenceSeconds),
+		SCRIM_TRACKING_AUTO_LOCK_HOURS,
+	);
 
-	return elapsedHours > SCRIM_TRACKING_AUTO_LOCK_HOURS;
+	return isAfter(now, lockedAt);
 }
 
 /**

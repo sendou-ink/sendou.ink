@@ -191,16 +191,13 @@ async function loadMapByMapContext({
 }) {
 	const viewerSide = Scrim.sideOfUser(post, user.id);
 
-	const [maps, mapLists] = await Promise.all([
-		ScrimMapRepository.findMapsByScrimPostId(post.id),
-		ScrimMapListRepository.findMapListsByScrimPostId(post.id),
-	]);
+	const maps = await ScrimMapRepository.findMapsByScrimPostId(post.id);
 
-	if (Scrim.isTrackingLocked(maps, mapLists)) {
+	if (Scrim.isTrackingLocked(maps, Scrim.getStartTime(post))) {
 		errorToast("Tracking is locked");
 	}
 
-	return { viewerSide: viewerSide!, maps, mapLists };
+	return { viewerSide: viewerSide!, maps };
 }
 
 function broadcastRevalidate({

@@ -508,44 +508,33 @@ describe("isTrackingLocked", () => {
 	const ONE_HOUR_MS = 60 * 60 * 1000;
 	const lockWindowMs = SCRIM_TRACKING_AUTO_LOCK_HOURS * ONE_HOUR_MS;
 
-	it("returns false when no map list submitted yet", () => {
-		expect(isTrackingLocked([], [], Date.now())).toBe(false);
+	it("returns false just inside the auto-lock window from the scrim start", () => {
+		const now = 1_000_000_000;
+		const startTime = (now - (lockWindowMs - ONE_HOUR_MS)) / 1000;
+		expect(isTrackingLocked([], startTime, new Date(now))).toBe(false);
 	});
 
-	it("returns false just inside the auto-lock window from list submission", () => {
+	it("returns true just past the auto-lock window from the scrim start", () => {
 		const now = 1_000_000_000;
-		const updatedAt = (now - (lockWindowMs - ONE_HOUR_MS)) / 1000;
-		expect(isTrackingLocked([], [{ updatedAt }], now)).toBe(false);
+		const startTime = (now - (lockWindowMs + ONE_HOUR_MS)) / 1000;
+		expect(isTrackingLocked([], startTime, new Date(now))).toBe(true);
 	});
 
-	it("returns true just past the auto-lock window from list submission", () => {
+	it("does not lock before the scrim has started", () => {
 		const now = 1_000_000_000;
-		const updatedAt = (now - (lockWindowMs + ONE_HOUR_MS)) / 1000;
-		expect(isTrackingLocked([], [{ updatedAt }], now)).toBe(true);
+		const startTime = (now + ONE_HOUR_MS) / 1000;
+		expect(isTrackingLocked([], startTime, new Date(now))).toBe(false);
 	});
 
-	it("uses the most recent reported map as the reference point", () => {
+	it("uses the most recent reported map as the reference point over the scrim start", () => {
 		const now = 1_000_000_000;
-		const oldUpdatedAt = (now - lockWindowMs * 2) / 1000;
+		const oldStartTime = (now - lockWindowMs * 2) / 1000;
 		const recentMapSeconds = (now - ONE_HOUR_MS) / 1000;
 		expect(
 			isTrackingLocked(
 				[{ reportedAt: recentMapSeconds }],
-				[{ updatedAt: oldUpdatedAt }],
-				now,
-			),
-		).toBe(false);
-	});
-
-	it("uses the most recent list update when there are no reported maps", () => {
-		const now = 1_000_000_000;
-		const oldUpdatedAt = (now - lockWindowMs * 2) / 1000;
-		const recentUpdatedAt = (now - ONE_HOUR_MS) / 1000;
-		expect(
-			isTrackingLocked(
-				[],
-				[{ updatedAt: oldUpdatedAt }, { updatedAt: recentUpdatedAt }],
-				now,
+				oldStartTime,
+				new Date(now),
 			),
 		).toBe(false);
 	});
