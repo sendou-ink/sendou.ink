@@ -23,7 +23,6 @@ export const adminStreamFormSchema = z.object({
 export const adminStaffFormSchema = z
 	.object({
 		staff: array({
-			label: "labels.staff",
 			bottomText: "bottomTexts.staffRolesInfo",
 			max: 50,
 			field: fieldset({

@@ -115,6 +115,8 @@
 	"staff.role.STREAMER": "udsender (streamer)",
 	"staff.author": "",
 	"staff.organization": "",
+	"staff.divider.fromOrganization": "",
+	"staff.divider.addedForEvent": "",
 	"actions.addSub": "tilføj Suppleant",
 	"actions.shareLink": "Del invitationslinket for at tilføje medlemmer: {{inviteLink}}",
 	"actions.sub.prompt_one": "Du kan stadigvæk tilføje {{count}} Suppleant til din holdliste",

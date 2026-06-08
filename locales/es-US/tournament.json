@@ -116,6 +116,8 @@
 	"staff.role.STREAMER": "streamer",
 	"staff.author": "",
 	"staff.organization": "",
+	"staff.divider.fromOrganization": "",
+	"staff.divider.addedForEvent": "",
 	"actions.addSub": "Añadir sub",
 	"actions.shareLink": "Comparte enlace de invitación para añadir miembros: {{inviteLink}}",
 	"actions.sub.prompt_one": "Aún puedes añadir {{count}} sub a tu equipo",

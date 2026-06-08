@@ -116,6 +116,8 @@
 	"staff.role.STREAMER": "",
 	"staff.author": "",
 	"staff.organization": "",
+	"staff.divider.fromOrganization": "",
+	"staff.divider.addedForEvent": "",
 	"actions.addSub": "Ajouter remplaçant",
 	"actions.shareLink": "Partagez votre lien d'invitation pour ajouter des membres: {{inviteLink}}",
 	"actions.sub.prompt_one": "Vous pouvez encore ajouter {{count}} remplaçant à votre liste",

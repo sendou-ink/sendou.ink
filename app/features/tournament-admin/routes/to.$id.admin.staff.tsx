@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
+import { Divider } from "~/components/Divider";
 import { type Tables, TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { SendouForm } from "~/form/SendouForm";
@@ -7,8 +8,8 @@ import { adminStaffFormSchema } from "../tournament-admin-staff-schemas";
 
 export { action } from "../actions/to.$id.admin.staff.server";
 
-// xxx: Author/From Org <-> Added looks a bit confusing now
 export default function TournamentAdminStaffPage() {
+	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 
 	const staff = tournament.ctx.staff.filter(
@@ -27,10 +28,15 @@ export default function TournamentAdminStaffPage() {
 			}}
 		>
 			{({ FormField }) => (
-				<>
+				<div className="stack lg">
 					<ImplicitStaffRows />
-					<FormField name="staff" />
-				</>
+					<div className="stack md">
+						<Divider smallText>
+							{t("tournament:staff.divider.addedForEvent")}
+						</Divider>
+						<FormField name="staff" />
+					</div>
+				</div>
 			)}
 		</SendouForm>
 	);
@@ -56,27 +62,32 @@ function ImplicitStaffRows() {
 	);
 
 	return (
-		<div className="stack sm">
-			<StaffInfoRow
-				user={author}
-				testId="staff-author"
-				roleText={`${t("tournament:staff.role.ORGANIZER")} (${t(
-					"tournament:staff.author",
-				)})`}
-			/>
-			{organizationStaff.map((member) => {
-				const roleKey = member.role === "STREAMER" ? "STREAMER" : "ORGANIZER";
+		<div className="stack md">
+			<Divider smallText>
+				{t("tournament:staff.divider.fromOrganization")}
+			</Divider>
+			<div className="stack sm">
+				<StaffInfoRow
+					user={author}
+					testId="staff-author"
+					roleText={`${t("tournament:staff.role.ORGANIZER")} (${t(
+						"tournament:staff.author",
+					)})`}
+				/>
+				{organizationStaff.map((member) => {
+					const roleKey = member.role === "STREAMER" ? "STREAMER" : "ORGANIZER";
 
-				return (
-					<StaffInfoRow
-						key={member.userId}
-						user={member}
-						roleText={`${t(`tournament:staff.role.${roleKey}`)} (${t(
-							"tournament:staff.organization",
-						)})`}
-					/>
-				);
-			})}
+					return (
+						<StaffInfoRow
+							key={member.userId}
+							user={member}
+							roleText={`${t(`tournament:staff.role.${roleKey}`)} (${t(
+								"tournament:staff.organization",
+							)})`}
+						/>
+					);
+				})}
+			</div>
 		</div>
 	);
 }

@@ -920,11 +920,17 @@ describe("SendouForm", () => {
 
 			const screen = await renderForm(schema);
 
+			// Adding from the single empty starter row materializes it and appends a
+			// new one, so one click goes from 1 visible row to 2.
 			await screen.getByRole("button", { name: "Add" }).click();
-			await screen.getByRole("button", { name: "Add" }).click();
+			expect(
+				screen.container.querySelectorAll('input[type="text"]').length,
+			).toBe(2);
 
-			const inputs = screen.container.querySelectorAll('input[type="text"]');
-			expect(inputs.length).toBe(2);
+			await screen.getByRole("button", { name: "Add" }).click();
+			expect(
+				screen.container.querySelectorAll('input[type="text"]').length,
+			).toBe(3);
 		});
 
 		test("renders remove button for each item when above minimum", async () => {
@@ -1033,10 +1039,13 @@ describe("SendouForm", () => {
 
 			await expect.element(screen.getByText("#1")).toBeVisible();
 
+			// The remove button is rendered but hidden (so the header keeps a stable
+			// height) since a single starter row can't be removed.
 			const removeButtons = screen.container.querySelectorAll(
 				'button[aria-label="Remove item"]',
 			);
-			expect(removeButtons.length).toBe(0);
+			expect(removeButtons.length).toBe(1);
+			expect(removeButtons[0].classList.contains("invisible")).toBe(true);
 		});
 
 		test("add button creates new fieldset item", async () => {
@@ -1089,6 +1098,57 @@ describe("SendouForm", () => {
 			const inputs = screen.container.querySelectorAll('input[type="text"]');
 			expect(inputs.length).toBe(1);
 			expect((inputs[0] as HTMLInputElement).value).toBe("Bob");
+		});
+
+		test("removing an added fieldset row returns to a single non-removable row", async () => {
+			// Mirrors the staff form: a select field gives the row a non-empty default
+			// (role), so a freshly added row isn't "blank" yet is still pristine.
+			const schema = z.object({
+				staff: array({
+					label: "labels.members",
+					min: 0,
+					max: 10,
+					field: fieldset({
+						fields: z.object({
+							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+							role: select({
+								label: "labels.staffRole",
+								items: [
+									{ value: "ORGANIZER", label: "options.staffRole.ORGANIZER" },
+									{ value: "STREAMER", label: "options.staffRole.STREAMER" },
+								],
+							}),
+						}),
+					}),
+				}),
+			});
+
+			const screen = await renderForm(schema);
+
+			const removeButtonEls = () =>
+				screen.container.querySelectorAll('button[aria-label="Remove item"]');
+
+			// Single starter row: remove button present but hidden.
+			expect(removeButtonEls().length).toBe(1);
+			expect(removeButtonEls()[0].classList.contains("invisible")).toBe(true);
+
+			await screen.getByRole("button", { name: "Add" }).click();
+
+			// Two rows now, both with visible remove buttons.
+			await expect.element(screen.getByText("#2")).toBeVisible();
+			expect(removeButtonEls().length).toBe(2);
+			for (const button of removeButtonEls()) {
+				expect(button.classList.contains("invisible")).toBe(false);
+			}
+
+			// Removing the second row collapses back to the single starter row with a
+			// hidden remove button - not a lingering blank row that still shows one.
+			await userEvent.click(removeButtonEls()[1]);
+
+			await expect.element(screen.getByText("#1")).toBeVisible();
+			expect(screen.container.querySelectorAll("fieldset").length).toBe(1);
+			expect(removeButtonEls().length).toBe(1);
+			expect(removeButtonEls()[0].classList.contains("invisible")).toBe(true);
 		});
 
 		test("typing in nested fieldset field updates value", async () => {

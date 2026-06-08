@@ -115,6 +115,8 @@
 	"staff.role.STREAMER": "",
 	"staff.author": "",
 	"staff.organization": "",
+	"staff.divider.fromOrganization": "",
+	"staff.divider.addedForEvent": "",
 	"actions.addSub": "",
 	"actions.shareLink": "",
 	"actions.sub.prompt_one": "",
