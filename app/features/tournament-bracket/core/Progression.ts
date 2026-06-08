@@ -590,7 +590,7 @@ function gapInPlacements(brackets: ParsedBracket[]) {
 	return brackets.flatMap((bracket, bracketIdx) => {
 		if (!bracket.sources) return [];
 
-		return bracket.sources.flatMap(
+		return bracket.sources.some(
 			(source) => source.bracketIdx === problematicBracketIdx,
 		)
 			? [bracketIdx]

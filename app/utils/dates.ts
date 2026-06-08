@@ -133,13 +133,34 @@ export function weekNumberToDate({
 }) {
 	const result = new Date(Date.UTC(year, 0, 4));
 
-	result.setDate(
-		result.getDate() - (result.getDay() || 7) + 1 + 7 * (week - 1),
+	result.setUTCDate(
+		result.getUTCDate() - (result.getUTCDay() || 7) + 1 + 7 * (week - 1),
 	);
 	if (position === "end") {
-		result.setDate(result.getDate() + 6);
+		result.setUTCDate(result.getUTCDate() + 6);
 	}
 	return result;
+}
+
+/**
+ * Returns the UTC date range covering an ISO week: the Monday that starts the
+ * week and the Monday that starts the following week (a 7-day span). Uses UTC
+ * date arithmetic so the span is exactly 7×24h regardless of the server's
+ * timezone or any DST transition that falls inside the week.
+ */
+export function weekNumberToDateRange({
+	week,
+	year,
+}: {
+	week: number;
+	year: number;
+}) {
+	const startTime = weekNumberToDate({ week, year });
+
+	const endTime = new Date(startTime);
+	endTime.setUTCDate(endTime.getUTCDate() + 7);
+
+	return { startTime, endTime };
 }
 
 /**
@@ -190,11 +211,16 @@ export function getDateWithHoursOffset(date: Date, hoursOffset: number) {
 
 export function getDateAtNextFullHour(date: Date) {
 	const copiedDate = new Date(date.getTime());
-	if (date.getMinutes() > 0) {
+	if (
+		date.getMinutes() > 0 ||
+		date.getSeconds() > 0 ||
+		date.getMilliseconds() > 0
+	) {
 		copiedDate.setHours(date.getHours() + 1);
 		copiedDate.setMinutes(0);
 	}
 	copiedDate.setSeconds(0);
+	copiedDate.setMilliseconds(0);
 	return copiedDate;
 }
 

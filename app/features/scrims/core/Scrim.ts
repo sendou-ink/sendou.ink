@@ -104,8 +104,19 @@ export function applyFilters(post: ScrimPost, filters: ScrimFilters): boolean {
 		const startTimeString = format(startDate, "HH:mm");
 		const endTimeString = format(endDate, "HH:mm");
 
-		const hasOverlap =
-			startTimeString <= timeFilters.end && endTimeString >= timeFilters.start;
+		// a range that crosses midnight (e.g. 23:00 -> 01:00) is two segments
+		const postSegments =
+			endTimeString < startTimeString
+				? [
+						{ start: startTimeString, end: "24:00" },
+						{ start: "00:00", end: endTimeString },
+					]
+				: [{ start: startTimeString, end: endTimeString }];
+
+		const hasOverlap = postSegments.some(
+			(segment) =>
+				segment.start <= timeFilters.end && segment.end >= timeFilters.start,
+		);
 
 		if (!hasOverlap) {
 			return false;

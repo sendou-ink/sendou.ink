@@ -71,12 +71,12 @@ export function winCounts(sets: PlayedSet[]) {
 		sets: {
 			won: setsWon,
 			total: totalSets,
-			percentage: Math.round((setsWon / totalSets) * 100),
+			percentage: totalSets === 0 ? 0 : Math.round((setsWon / totalSets) * 100),
 		},
 		maps: {
 			won: mapsWon,
 			total: totalMaps,
-			percentage: Math.round((mapsWon / totalMaps) * 100),
+			percentage: totalMaps === 0 ? 0 : Math.round((mapsWon / totalMaps) * 100),
 		},
 	};
 }

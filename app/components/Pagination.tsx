@@ -253,6 +253,11 @@ export function getPageNumbers(
  * last page) to render around the current page. The window is nudged inward by
  * one when the current page is the very first or last page, so the edge view
  * shows a bridging number instead of a lonely jump like "1 2 … 8".
+ *
+ * When exactly one page would be left between the window and the always-shown
+ * first or last page, the window is widened to include it: an ellipsis takes
+ * the same space as a single page number, so "1 … 3" is never better than
+ * "1 2 3".
  */
 function innerPageWindow(
 	currentPage: number,
@@ -262,8 +267,11 @@ function innerPageWindow(
 	const startNudge = currentPage === pagesCount ? 1 : 0;
 	const endNudge = currentPage === 1 ? 1 : 0;
 
-	return {
-		start: Math.max(2, currentPage - radius - startNudge),
-		end: Math.min(pagesCount - 1, currentPage + radius + endNudge),
-	};
+	let start = Math.max(2, currentPage - radius - startNudge);
+	let end = Math.min(pagesCount - 1, currentPage + radius + endNudge);
+
+	if (start === 3) start = 2;
+	if (end === pagesCount - 2) end = pagesCount - 1;
+
+	return { start, end };
 }

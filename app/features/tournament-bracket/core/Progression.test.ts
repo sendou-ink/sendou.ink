@@ -640,6 +640,49 @@ describe("validatedSources - other rules", () => {
 		expect((error as any).bracketIdxs).toEqual([1, 2]);
 	});
 
+	it("only flags GAP_IN_PLACEMENTS brackets sourcing from the problematic bracket", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1",
+					},
+				],
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "3",
+					},
+				],
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "1",
+						placements: "1",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("GAP_IN_PLACEMENTS");
+		// bracket 3 sources from bracket 1, not from the gap in bracket 0
+		expect((error as any).bracketIdxs).toEqual([1, 2]);
+	});
+
 	it("handles TOO_MANY_PLACEMENTS", () => {
 		const error = getValidatedBrackets([
 			{

@@ -181,8 +181,17 @@ export const userArtPage = (
 	user: UserLinkArgs,
 	source?: ArtSource,
 	bigArtId?: number,
-) =>
-	`${userPage(user)}/art${source ? `?source=${source}` : ""}${bigArtId ? `?big=${bigArtId}` : ""}`;
+) => {
+	const params = new URLSearchParams();
+	if (source) {
+		params.set("source", source);
+	}
+	if (typeof bigArtId === "number") {
+		params.set("big", String(bigArtId));
+	}
+
+	return `${userPage(user)}/art${params.size > 0 ? `?${params.toString()}` : ""}`;
+};
 export const newArtPage = (artId?: Tables["Art"]["id"]) =>
 	`${artPage()}/new${artId ? `?art=${artId}` : ""}`;
 export const userNewBuildPage = (

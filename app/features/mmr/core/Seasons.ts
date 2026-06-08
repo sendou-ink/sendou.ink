@@ -167,7 +167,7 @@ export function next(date = new Date()): ListItem | null {
  * @throws {Error} If the season does not exist.
  */
 export function nthToDateRange(nth: number) {
-	const seasonObject = list.at(nth);
+	const seasonObject = list[nth];
 	if (!seasonObject) {
 		throw new Error(`Season ${nth} not found`);
 	}

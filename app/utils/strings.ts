@@ -51,7 +51,7 @@ export function gearTypeToInitial(gearType: GearType) {
 
 export function pathnameFromPotentialURL(maybeUrl: string) {
 	try {
-		return new URL(maybeUrl).pathname.replace("/", "");
+		return new URL(maybeUrl).pathname.replace(/^\/+|\/+$/g, "");
 	} catch {
 		return maybeUrl;
 	}

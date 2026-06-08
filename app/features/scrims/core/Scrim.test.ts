@@ -359,6 +359,20 @@ describe("applyFilters", () => {
 
 			expect(applyFilters(post, filters)).toBe(true);
 		});
+
+		it("returns true when a post time range crossing midnight overlaps the filter", () => {
+			const post = createPostForFilters(
+				new Date("2025-01-15T23:00:00"),
+				new Date("2025-01-16T01:00:00"),
+			);
+			const filters: ScrimFilters = {
+				divs: null,
+				weekdayTimes: { start: "00:00", end: "02:00" },
+				weekendTimes: null,
+			};
+
+			expect(applyFilters(post, filters)).toBe(true);
+		});
 	});
 
 	describe("weekend time filters", () => {

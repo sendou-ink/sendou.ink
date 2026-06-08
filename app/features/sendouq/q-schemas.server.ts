@@ -88,7 +88,7 @@ export const lookingSchema = z.union([
 
 export const weaponUsageSearchParamsSchema = z.object({
 	userId: id,
-	season: z.coerce.number().int(),
+	season: z.coerce.number().int().nonnegative(),
 	stageId,
 	modeShort,
 });

@@ -15,6 +15,12 @@ describe("pathnameFromPotentialURL()", () => {
 	test("Returns string as is if not URL", () => {
 		expect(pathnameFromPotentialURL("sendouc")).toBe("sendouc");
 	});
+
+	test("Strips trailing slash from URL path", () => {
+		expect(pathnameFromPotentialURL("https://discord.gg/FW4dKrY/")).toBe(
+			"FW4dKrY",
+		);
+	});
 });
 
 describe("truncateBySentence()", () => {
