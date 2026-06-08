@@ -3,7 +3,6 @@ import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { _action, id, safeJSONParse } from "~/utils/zod";
 import { bracketProgressionSchema } from "../calendar/calendar-schemas";
 import { bracketIdx } from "../tournament-bracket/tournament-bracket-schemas.server";
-import { USER } from "../user-page/user-page-constants";
 import { adminStaffFormSchema } from "./tournament-admin-staff-schemas";
 
 /**
@@ -41,16 +40,6 @@ export const adminTeamsActionSchema = z.union([
 		bracketIdx,
 	}),
 	z.object({
-		_action: _action("ADD_MEMBER"),
-		teamId: id,
-		userId: id,
-	}),
-	z.object({
-		_action: _action("REMOVE_MEMBER"),
-		teamId: id,
-		memberId: id,
-	}),
-	z.object({
 		_action: _action("DELETE_TEAM"),
 		teamId: id,
 	}),
@@ -61,16 +50,6 @@ export const adminTeamsActionSchema = z.union([
 	z.object({
 		_action: _action("UNDO_DROP_TEAM_OUT"),
 		teamId: id,
-	}),
-	z.object({
-		_action: _action("UPDATE_IN_GAME_NAME"),
-		inGameNameText: z
-			.string()
-			.refine((val) => [...val].length <= USER.IN_GAME_NAME_TEXT_MAX_LENGTH),
-		inGameNameDiscriminator: z
-			.string()
-			.refine((val) => /^[0-9a-z]{4,5}$/.test(val)),
-		memberId: id,
 	}),
 ]);
 

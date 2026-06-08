@@ -109,11 +109,11 @@ function AuditLogRow({ event }: { event: AuditLogEvent }) {
 			</td>
 			<td>
 				{event.team ? (
-					tournament.teamById(event.team.id) ? (
+					tournament.teamById(event.team.tournamentTeamId) ? (
 						<Link
 							to={tournamentTeamPage({
 								tournamentId: tournament.ctx.id,
-								tournamentTeamId: event.team.id,
+								tournamentTeamId: event.team.tournamentTeamId,
 							})}
 						>
 							{event.team.name}

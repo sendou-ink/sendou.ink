@@ -27,40 +27,65 @@ interface InsertArgs {
  * hard-deleted.
  */
 export async function insert(trx: Transaction<DB>, args: InsertArgs) {
-	await trx
-		.insertInto("TournamentTeamHistory")
-		.columns(["tournamentTeamId", "tournamentId", "name"])
-		.expression((eb) =>
-			eb
-				.selectFrom("TournamentTeam")
-				.select([
-					"TournamentTeam.id",
-					"TournamentTeam.tournamentId",
-					"TournamentTeam.name",
-				])
-				.where("TournamentTeam.id", "=", args.tournamentTeamId),
-		)
-		.onConflict((oc) => oc.column("tournamentTeamId").doNothing())
-		.execute();
-
-	const { tournamentId } = await trx
-		.selectFrom("TournamentTeamHistory")
-		.select("TournamentTeamHistory.tournamentId")
-		.where("TournamentTeamHistory.tournamentTeamId", "=", args.tournamentTeamId)
+	const team = await trx
+		.selectFrom("TournamentTeam")
+		.select([
+			"TournamentTeam.tournamentId",
+			"TournamentTeam.name",
+			"TournamentTeam.tournamentTeamHistoryId",
+		])
+		.where("TournamentTeam.id", "=", args.tournamentTeamId)
 		.executeTakeFirstOrThrow();
+
+	const tournamentTeamHistoryId =
+		team.tournamentTeamHistoryId ??
+		(await createTeamHistory(trx, {
+			tournamentTeamId: args.tournamentTeamId,
+			tournamentId: team.tournamentId,
+			name: team.name,
+		}));
 
 	await trx
 		.insertInto("TournamentAuditLog")
 		.values({
-			tournamentId,
+			tournamentId: team.tournamentId,
 			type: args.type,
 			actorUserId: actorId(),
 			subjectUserId: args.subjectUserId ?? null,
-			tournamentTeamId: args.tournamentTeamId,
+			tournamentTeamHistoryId,
 			metadata: args.metadata ? JSON.stringify(args.metadata) : null,
 			createdAt: databaseTimestampNow(),
 		})
 		.execute();
+}
+
+/**
+ * Creates a fresh history row for a team and links it back from the team, so a
+ * `TournamentTeam.id` reused by SQLite after a hard-deletion always gets its own
+ * history row instead of inheriting the deleted team's identity. Returns the new
+ * history id.
+ */
+async function createTeamHistory(
+	trx: Transaction<DB>,
+	{
+		tournamentTeamId,
+		tournamentId,
+		name,
+	}: { tournamentTeamId: number; tournamentId: number; name: string },
+) {
+	const { id } = await trx
+		.insertInto("TournamentTeamHistory")
+		.values({ tournamentTeamId, tournamentId, name })
+		.returning("id")
+		.executeTakeFirstOrThrow();
+
+	await trx
+		.updateTable("TournamentTeam")
+		.set({ tournamentTeamHistoryId: id })
+		.where("TournamentTeam.id", "=", tournamentTeamId)
+		.execute();
+
+	return id;
 }
 
 /**
@@ -75,7 +100,12 @@ export function updateTeamHistoryName(
 	return trx
 		.updateTable("TournamentTeamHistory")
 		.set({ name })
-		.where("TournamentTeamHistory.tournamentTeamId", "=", tournamentTeamId)
+		.where("TournamentTeamHistory.id", "=", (eb) =>
+			eb
+				.selectFrom("TournamentTeam")
+				.select("TournamentTeam.tournamentTeamHistoryId")
+				.where("TournamentTeam.id", "=", tournamentTeamId),
+		)
 		.execute();
 }
 
@@ -87,13 +117,13 @@ export function updateTeamHistoryName(
 export function findByTournamentId({
 	tournamentId,
 	type,
-	tournamentTeamId,
+	tournamentTeamHistoryId,
 	limit,
 	offset,
 }: {
 	tournamentId: number;
 	type?: TournamentAuditLogType;
-	tournamentTeamId?: number;
+	tournamentTeamHistoryId?: number;
 	limit: number;
 	offset: number;
 }) {
@@ -120,13 +150,14 @@ export function findByTournamentId({
 				eb
 					.selectFrom("TournamentTeamHistory")
 					.select([
-						"TournamentTeamHistory.tournamentTeamId as id",
+						"TournamentTeamHistory.id",
+						"TournamentTeamHistory.tournamentTeamId",
 						"TournamentTeamHistory.name",
 					])
 					.whereRef(
-						"TournamentTeamHistory.tournamentTeamId",
+						"TournamentTeamHistory.id",
 						"=",
-						"TournamentAuditLog.tournamentTeamId",
+						"TournamentAuditLog.tournamentTeamHistoryId",
 					),
 			).as("team"),
 		])
@@ -139,11 +170,11 @@ export function findByTournamentId({
 	if (type) {
 		query = query.where("TournamentAuditLog.type", "=", type);
 	}
-	if (typeof tournamentTeamId === "number") {
+	if (typeof tournamentTeamHistoryId === "number") {
 		query = query.where(
-			"TournamentAuditLog.tournamentTeamId",
+			"TournamentAuditLog.tournamentTeamHistoryId",
 			"=",
-			tournamentTeamId,
+			tournamentTeamHistoryId,
 		);
 	}
 
@@ -154,11 +185,11 @@ export function findByTournamentId({
 export async function countByTournamentId({
 	tournamentId,
 	type,
-	tournamentTeamId,
+	tournamentTeamHistoryId,
 }: {
 	tournamentId: number;
 	type?: TournamentAuditLogType;
-	tournamentTeamId?: number;
+	tournamentTeamHistoryId?: number;
 }) {
 	let query = db
 		.selectFrom("TournamentAuditLog")
@@ -168,11 +199,11 @@ export async function countByTournamentId({
 	if (type) {
 		query = query.where("TournamentAuditLog.type", "=", type);
 	}
-	if (typeof tournamentTeamId === "number") {
+	if (typeof tournamentTeamHistoryId === "number") {
 		query = query.where(
-			"TournamentAuditLog.tournamentTeamId",
+			"TournamentAuditLog.tournamentTeamHistoryId",
 			"=",
-			tournamentTeamId,
+			tournamentTeamHistoryId,
 		);
 	}
 
@@ -186,7 +217,8 @@ export function findTeamsByTournamentId(tournamentId: number) {
 	return db
 		.selectFrom("TournamentTeamHistory")
 		.select([
-			"TournamentTeamHistory.tournamentTeamId as id",
+			"TournamentTeamHistory.id",
+			"TournamentTeamHistory.tournamentTeamId",
 			"TournamentTeamHistory.name",
 		])
 		.where("TournamentTeamHistory.tournamentId", "=", tournamentId)

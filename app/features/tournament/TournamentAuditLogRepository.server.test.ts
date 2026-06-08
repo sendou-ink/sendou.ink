@@ -65,7 +65,7 @@ describe("TournamentAuditLogRepository", () => {
 		);
 
 		expect(teams).toHaveLength(1);
-		expect(teams[0].id).toBe(team.id);
+		expect(teams[0].tournamentTeamId).toBe(team.id);
 		expect(teams[0].name).toBe("Team Olive");
 	});
 
@@ -126,6 +126,47 @@ describe("TournamentAuditLogRepository", () => {
 		expect(events[0].team?.name).toBe("Team Olive");
 	});
 
+	test("a reused team id does not collapse two teams into one history", async () => {
+		const tournament = await createTournament();
+		const teamA = await createTeam(tournament.id, "Team A");
+
+		await insertEvent({
+			type: "TEAM_UNREGISTERED",
+			actorUserId: 1,
+			tournamentTeamId: teamA.id,
+		});
+
+		await db
+			.deleteFrom("TournamentTeam")
+			.where("TournamentTeam.id", "=", teamA.id)
+			.execute();
+
+		const teamB = await createTeam(tournament.id, "Team B");
+		// SQLite reuses the highest deleted rowid for the next insert
+		expect(teamB.id).toBe(teamA.id);
+
+		await insertEvent({
+			type: "TEAM_REGISTERED",
+			actorUserId: 1,
+			tournamentTeamId: teamB.id,
+		});
+
+		const teams = await TournamentAuditLogRepository.findTeamsByTournamentId(
+			tournament.id,
+		);
+		expect(teams).toHaveLength(2);
+		expect(teams.map((team) => team.name).sort()).toEqual(["Team A", "Team B"]);
+
+		const events = await TournamentAuditLogRepository.findByTournamentId({
+			tournamentId: tournament.id,
+			limit: 30,
+			offset: 0,
+		});
+		const eventByType = new Map(events.map((event) => [event.type, event]));
+		expect(eventByType.get("TEAM_UNREGISTERED")?.team?.name).toBe("Team A");
+		expect(eventByType.get("TEAM_REGISTERED")?.team?.name).toBe("Team B");
+	});
+
 	test("filters by event type and by team", async () => {
 		const tournament = await createTournament();
 		const teamA = await createTeam(tournament.id, "Team A");
@@ -155,9 +196,16 @@ describe("TournamentAuditLogRepository", () => {
 		});
 		expect(byType).toHaveLength(2);
 
+		const teams = await TournamentAuditLogRepository.findTeamsByTournamentId(
+			tournament.id,
+		);
+		const teamAHistoryId = teams.find(
+			(team) => team.tournamentTeamId === teamA.id,
+		)?.id;
+
 		const byTeam = await TournamentAuditLogRepository.findByTournamentId({
 			tournamentId: tournament.id,
-			tournamentTeamId: teamA.id,
+			tournamentTeamHistoryId: teamAHistoryId,
 			limit: 30,
 			offset: 0,
 		});

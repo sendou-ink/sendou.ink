@@ -1,10 +1,8 @@
 import type { ActionFunction } from "react-router";
 import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
-import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
-import { notify } from "~/features/notifications/core/notify.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.server";
 import { getServerTournamentManager } from "~/features/tournament-bracket/core/brackets-manager/manager.server";
@@ -13,13 +11,10 @@ import {
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentWebsocketRoom } from "~/features/tournament-bracket/tournament-bracket-utils";
-import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { tournamentMatchWebsocketRoom } from "~/features/tournament-match/tournament-match-utils";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
-	badRequestIfFalsy,
 	errorToastIfFalsy,
 	parseParams,
 	parseRequestPayload,
@@ -94,125 +89,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			break;
 		}
-		// xxx: only kept for the public API - migrate it to UPSERT_REGISTRATION and remove
-		case "REMOVE_MEMBER": {
-			validateIsTournamentOrganizer();
-			const team = tournament.teamById(data.teamId);
-			errorToastIfFalsy(team, "Invalid team id");
-			errorToastIfFalsy(
-				team.checkIns.length === 0 ||
-					team.members.length > tournament.minMembersPerTeam,
-				"Can't remove last member from checked in team",
-			);
-			errorToastIfFalsy(
-				team.members.find((m) => m.userId === data.memberId)?.role !== "OWNER",
-				"Cannot remove team owner",
-			);
-			errorToastIfFalsy(
-				!tournament.hasStarted ||
-					!tournament
-						.participatedPlayersByTeamId(data.teamId)
-						.some((p) => p.userId === data.memberId),
-				"Cannot remove player that has participated in the tournament",
-			);
-
-			if (team.activeRosterUserIds?.includes(data.memberId)) {
-				await TournamentTeamRepository.setActiveRoster({
-					teamId: team.id,
-					activeRosterUserIds: null,
-				});
-			}
-
-			await TournamentTeamRepository.leave({
-				userId: data.memberId,
-				teamId: team.id,
-			});
-
-			ShowcaseTournaments.removeFromCached({
-				tournamentId,
-				type: "participant",
-				userId: data.memberId,
-			});
-
-			break;
-		}
-		// xxx: only kept for the public API - migrate it to UPSERT_REGISTRATION and remove
-		case "ADD_MEMBER": {
-			validateIsTournamentOrganizer();
-			const team = tournament.teamById(data.teamId);
-			errorToastIfFalsy(team, "Invalid team id");
-
-			const previousTeam = tournament.teamMemberOfByUser({ id: data.userId });
-
-			errorToastIfFalsy(
-				!previousTeam?.id || previousTeam.id !== team.id,
-				"User is already in this team",
-			);
-
-			errorToastIfFalsy(
-				tournament.hasStarted || !previousTeam,
-				"User is already in a team",
-			);
-
-			errorToastIfFalsy(
-				!userIsBanned(data.userId),
-				"User trying to be added currently has an active ban from sendou.ink",
-			);
-
-			const addMemberUser = await UserRepository.findLeanById(data.userId);
-			errorToastIfFalsy(
-				addMemberUser?.friendCode,
-				"User has no friend code set",
-			);
-			errorToastIfFalsy(
-				!tournament.ctx.settings.requireInGameNames ||
-					addMemberUser?.inGameName,
-				"User has no in-game name set",
-			);
-
-			await TournamentLFGRepository.leaveLfg({
-				userId: data.userId,
-				tournamentId,
-			});
-			await TournamentTeamRepository.join({
-				userId: data.userId,
-				newTeamId: team.id,
-				previousTeamId: previousTeam?.id,
-				// this team is not checked in & tournament started, so we can simply delete it
-				whatToDoWithPreviousTeam:
-					previousTeam &&
-					previousTeam.checkIns.length === 0 &&
-					tournament.hasStarted
-						? "DELETE"
-						: undefined,
-			});
-
-			ShowcaseTournaments.addToCached({
-				tournamentId,
-				type: "participant",
-				userId: data.userId,
-			});
-
-			if (!tournament.isTest && !tournament.isDraft) {
-				notify({
-					userIds: [data.userId],
-					notification: {
-						type: "TO_ADDED_TO_TEAM",
-						pictureUrl:
-							tournament.tournamentTeamLogoSrc(team) ?? tournament.ctx.logoUrl,
-						meta: {
-							adderUsername: user.username,
-							teamName: team.name,
-							tournamentId,
-							tournamentName: tournament.ctx.name,
-							tournamentTeamId: team.id,
-						},
-					},
-				});
-			}
-
-			break;
-		}
 		case "DELETE_TEAM": {
 			validateIsTournamentOrganizer();
 			const team = tournament.teamById(data.teamId);
@@ -258,22 +134,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 			validateIsTournamentOrganizer();
 
 			await TournamentTeamRepository.undoDropOut(data.teamId);
-
-			break;
-		}
-		// xxx: only kept for the public API - migrate it to UPSERT_REGISTRATION and remove
-		case "UPDATE_IN_GAME_NAME": {
-			validateIsTournamentOrganizer();
-
-			const teamMemberOf = badRequestIfFalsy(
-				tournament.teamMemberOfByUser({ id: data.memberId }),
-			);
-
-			await TournamentTeamRepository.updateMemberInGameName({
-				userId: data.memberId,
-				inGameName: `${data.inGameNameText}#${data.inGameNameDiscriminator}`,
-				tournamentTeamId: teamMemberOf.id,
-			});
 
 			break;
 		}

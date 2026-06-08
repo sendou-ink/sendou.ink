@@ -75,7 +75,7 @@ export function SendouTabs({
 		<Tabs
 			orientation={effectiveOrientation}
 			onSelectionChange={onSelectionChange}
-			className={clsx(className, {
+			className={clsx(className, styles.root, {
 				[styles.padded]: padded,
 				[styles.disappearing]: disappearing,
 				[styles.vertical]: isVertical,

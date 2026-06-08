@@ -3,7 +3,8 @@ export function up(db) {
 		db.prepare(
 			/* sql */ `
 				create table "TournamentTeamHistory" (
-					"tournamentTeamId" integer primary key,
+					"id" integer primary key autoincrement,
+					"tournamentTeamId" integer not null,
 					"tournamentId" integer not null,
 					"name" text not null,
 					foreign key ("tournamentId") references "Tournament"("id") on delete cascade
@@ -19,15 +20,19 @@ export function up(db) {
 					"type" text not null,
 					"actorUserId" integer not null,
 					"subjectUserId" integer,
-					"tournamentTeamId" integer,
+					"tournamentTeamHistoryId" integer,
 					"metadata" text,
 					"createdAt" integer not null,
 					foreign key ("tournamentId") references "Tournament"("id") on delete cascade,
 					foreign key ("actorUserId") references "User"("id"),
 					foreign key ("subjectUserId") references "User"("id"),
-					foreign key ("tournamentTeamId") references "TournamentTeamHistory"("tournamentTeamId")
+					foreign key ("tournamentTeamHistoryId") references "TournamentTeamHistory"("id")
 				) strict
 			`,
+		).run();
+
+		db.prepare(
+			/* sql */ `alter table "TournamentTeam" add column "tournamentTeamHistoryId" integer references "TournamentTeamHistory"("id")`,
 		).run();
 
 		db.prepare(

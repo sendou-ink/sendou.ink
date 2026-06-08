@@ -1,25 +1,3 @@
-.layout {
-	display: grid;
-	grid-template-columns: max-content 1fr;
-	gap: var(--s-8);
-	align-items: start;
-}
-
-.stacked {
-	grid-template-columns: 1fr;
-}
-
-.sideNav {
-	position: sticky;
-	top: var(--layout-sticky-top);
-	min-width: 0;
-}
-
-.stacked .sideNav {
-	position: static;
-	top: auto;
-}
-
 .panel {
 	min-width: 0;
 }

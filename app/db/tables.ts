@@ -847,6 +847,8 @@ export interface TournamentTeam {
 	chatCode: Generated<string | null>;
 	/** A/B division assignment for bipartite round robin brackets. `0` = A, `1` = B, `null` = unassigned. */
 	abDivision: number | null;
+	/** The team's {@link TournamentTeamHistory} row, created lazily on its first audited event. */
+	tournamentTeamHistoryId: number | null;
 }
 
 export interface TournamentTeamCheckIn {
@@ -871,8 +873,9 @@ export interface TournamentTeamMember {
 
 /** Stable shadow of a tournament team's identity that survives the team's hard-deletion, so the audit log can still resolve its name. */
 export interface TournamentTeamHistory {
-	// xxx: maybe we need soft delete instead. it's possible the same id gets reused... alternative TournamentTeamHistory has its own tournamentTeamId that TournamentAuditLog refers to (also keep tournamentTeamId)
-	/** Mirrors the original `TournamentTeam.id`. Not a live foreign key so it is not cascade-deleted with the team. */
+	/** Surrogate key. Audit log rows reference this so a reused `TournamentTeam.id` can never collide with an older team's history. */
+	id: GeneratedAlways<number>;
+	/** Mirrors the original `TournamentTeam.id` at creation time. Informational only; not a live or unique foreign key, so it is not cascade-deleted with the team and may repeat across teams that reused an id. */
 	tournamentTeamId: number;
 	tournamentId: number;
 	name: string;
@@ -897,7 +900,8 @@ export interface TournamentAuditLog {
 	actorUserId: number;
 	/** The affected member, for member-level events. `null` for team-level events. */
 	subjectUserId: number | null;
-	tournamentTeamId: number | null;
+	/** References {@link TournamentTeamHistory.id} so the team name stays resolvable after the team is hard-deleted. */
+	tournamentTeamHistoryId: number | null;
 	metadata: JSONColumnTypeNullable<TournamentAuditLogMetadata>;
 	createdAt: number;
 }

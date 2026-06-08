@@ -36,14 +36,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		TournamentAuditLogRepository.findByTournamentId({
 			tournamentId,
 			type: auditType,
-			tournamentTeamId: auditTeam,
+			tournamentTeamHistoryId: auditTeam,
 			limit: AUDIT_LOG_PAGE_SIZE,
 			offset: (page - 1) * AUDIT_LOG_PAGE_SIZE,
 		}),
 		TournamentAuditLogRepository.countByTournamentId({
 			tournamentId,
 			type: auditType,
-			tournamentTeamId: auditTeam,
+			tournamentTeamHistoryId: auditTeam,
 		}),
 		TournamentAuditLogRepository.findTeamsByTournamentId(tournamentId),
 	]);

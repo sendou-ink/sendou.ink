@@ -6,6 +6,7 @@ import { LinkButton, SendouButton } from "~/components/elements/Button";
 import {
 	SendouTab,
 	SendouTabList,
+	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
@@ -14,7 +15,6 @@ import { Redirect } from "~/components/Redirect";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import {
 	calendarEventPage,
 	tournamentAdminPage,
@@ -30,7 +30,6 @@ const HORIZONTAL_TABS_BELOW = 720;
 type AdminTab = "teams" | "seeds" | "staff" | "stream" | "brackets" | "audit";
 
 // xxx: maybe edit event info, delete event & reset bracket in one tab?
-// xxx: vertical has padding but horizontal not, decide on one (now off align on this page)
 
 export default function TournamentAdminLayout() {
 	const { t } = useTranslation(["tournament", "calendar"]);
@@ -38,7 +37,6 @@ export default function TournamentAdminLayout() {
 	const outletContext = useOutletContext();
 	const user = useUser();
 	const location = useLocation();
-	const mainWidth = useMainContentWidth();
 
 	const showReopen = Boolean(
 		DANGEROUS_CAN_ACCESS_DEV_CONTROLS &&
@@ -64,8 +62,6 @@ export default function TournamentAdminLayout() {
 	const adminPage = tournamentAdminPage(tournament.ctx.id);
 	const subPath = location.pathname.slice(adminPage.length).replace(/^\//, "");
 	const currentTab: AdminTab = subPath === "" ? "teams" : (subPath as AdminTab);
-
-	const horizontalTabs = mainWidth > 0 && mainWidth < HORIZONTAL_TABS_BELOW;
 
 	return (
 		<div className={clsx("stack lg", containerClassName("wide"))}>
@@ -99,61 +95,53 @@ export default function TournamentAdminLayout() {
 					) : null}
 				</div>
 			) : null}
-			<div
-				className={clsx(styles.layout, { [styles.stacked]: horizontalTabs })}
+			<SendouTabs
+				orientation="vertical"
+				horizontalBelow={HORIZONTAL_TABS_BELOW}
+				selectedKey={currentTab}
 			>
-				<SendouTabs
-					className={styles.sideNav}
-					orientation={horizontalTabs ? "horizontal" : "vertical"}
-					selectedKey={currentTab}
-				>
-					<SendouTabList>
-						<SendouTab id="teams" href={adminPage} icon={<Users />}>
-							{t("tournament:admin.tab.teams")}
-						</SendouTab>
-						{showSeedsTab ? (
-							<SendouTab
-								id="seeds"
-								href={`${adminPage}/seeds`}
-								icon={<ListOrdered />}
-							>
-								{t("tournament:admin.tab.seeds")}
-							</SendouTab>
-						) : null}
-						{showStaffTab ? (
-							<SendouTab
-								id="staff"
-								href={`${adminPage}/staff`}
-								icon={<UserCog />}
-							>
-								{t("tournament:admin.tab.staff")}
-							</SendouTab>
-						) : null}
-						<SendouTab id="stream" href={`${adminPage}/stream`} icon={<Tv />}>
-							{t("tournament:admin.tab.stream")}
-						</SendouTab>
-						{showBracketsTab ? (
-							<SendouTab
-								id="brackets"
-								href={`${adminPage}/brackets`}
-								icon={<Trophy />}
-							>
-								{t("tournament:admin.tab.brackets")}
-							</SendouTab>
-						) : null}
+				<SendouTabList>
+					<SendouTab id="teams" href={adminPage} icon={<Users />}>
+						{t("tournament:admin.tab.teams")}
+					</SendouTab>
+					{showSeedsTab ? (
 						<SendouTab
-							id="audit"
-							href={`${adminPage}/audit`}
-							icon={<History />}
+							id="seeds"
+							href={`${adminPage}/seeds`}
+							icon={<ListOrdered />}
 						>
-							{t("tournament:admin.tab.audit")}
+							{t("tournament:admin.tab.seeds")}
 						</SendouTab>
-					</SendouTabList>
-				</SendouTabs>
-				<div className={styles.panel}>
+					) : null}
+					{showStaffTab ? (
+						<SendouTab
+							id="staff"
+							href={`${adminPage}/staff`}
+							icon={<UserCog />}
+						>
+							{t("tournament:admin.tab.staff")}
+						</SendouTab>
+					) : null}
+					<SendouTab id="stream" href={`${adminPage}/stream`} icon={<Tv />}>
+						{t("tournament:admin.tab.stream")}
+					</SendouTab>
+					{showBracketsTab ? (
+						<SendouTab
+							id="brackets"
+							href={`${adminPage}/brackets`}
+							icon={<Trophy />}
+						>
+							{t("tournament:admin.tab.brackets")}
+						</SendouTab>
+					) : null}
+					<SendouTab id="audit" href={`${adminPage}/audit`} icon={<History />}>
+						{t("tournament:admin.tab.audit")}
+					</SendouTab>
+				</SendouTabList>
+				<SendouTabPanel id={currentTab} className={styles.panel}>
 					<Outlet context={outletContext} />
-				</div>
-			</div>
+				</SendouTabPanel>
+			</SendouTabs>
 		</div>
 	);
 }
