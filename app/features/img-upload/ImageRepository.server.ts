@@ -96,15 +96,14 @@ export function unvalidatedImages() {
 }
 
 /**
- * Counts every unvalidated image submitted by a user, including not-yet-connected orphans, so it
- * can gate the SendouForm `image()` upload path.
+ * Counts unvalidated images submitted by a user that are connected to a team, art, or calendar
+ * event (i.e. excluding not-yet-connected orphans), so it can gate the SendouForm `image()` upload
+ * path.
  */
 export async function countUnvalidatedBySubmitterUserId(userId: number) {
-	const result = await db
-		.selectFrom("UnvalidatedUserSubmittedImage")
+	const result = await unvalidatedImagesBaseQuery
 		.select(({ fn }) => fn.countAll<number>().as("count"))
-		.where("validatedAt", "is", null)
-		.where("submitterUserId", "=", userId)
+		.where("UnvalidatedUserSubmittedImage.submitterUserId", "=", userId)
 		.executeTakeFirstOrThrow();
 	return result.count;
 }

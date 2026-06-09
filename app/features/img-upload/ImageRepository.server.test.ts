@@ -228,17 +228,25 @@ describe("countUnvalidatedBySubmitterUserId", () => {
 		dbReset();
 	});
 
-	test("counts unvalidated images by submitter", async () => {
-		await createImage({ submitterUserId: 1 });
-		await createImage({ submitterUserId: 1 });
+	test("counts unvalidated images connected to art by submitter", async () => {
+		await createArtImage({ authorId: 1 });
+		await createArtImage({ authorId: 1 });
 
 		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(1);
 
 		expect(count).toBe(2);
 	});
 
+	test("does not count orphan images not connected to anything", async () => {
+		await createImage({ submitterUserId: 1 });
+
+		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(1);
+
+		expect(count).toBe(0);
+	});
+
 	test("does not count validated images", async () => {
-		await createImage({ submitterUserId: 1, validatedAt: Date.now() });
+		await createArtImage({ authorId: 1, validatedAt: Date.now() });
 
 		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(1);
 
@@ -246,8 +254,8 @@ describe("countUnvalidatedBySubmitterUserId", () => {
 	});
 
 	test("does not count images from other submitters", async () => {
-		await createImage({ submitterUserId: 1 });
-		await createImage({ submitterUserId: 2 });
+		await createArtImage({ authorId: 1 });
+		await createArtImage({ authorId: 2 });
 
 		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(1);
 
