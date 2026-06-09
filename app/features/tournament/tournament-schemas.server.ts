@@ -49,4 +49,5 @@ export const tournamentSearchSearchParamsSchema = z.object({
 	q: z.string().max(100),
 	limit: z.coerce.number().int().min(1).max(25).catch(25),
 	minStartTime: z.coerce.date().optional().catch(undefined),
+	maxStartTime: z.coerce.date().optional().catch(undefined),
 });

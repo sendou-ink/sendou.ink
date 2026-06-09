@@ -10,6 +10,7 @@ import {
 	teamSearchOptional,
 	textFieldOptional,
 	toggle,
+	tournamentSearchOptional,
 	userSearch,
 } from "~/form/fields";
 import { TEAM } from "../team/team-constants";
@@ -93,3 +94,30 @@ export const adminRegistrationFormSchema = z
 export type AdminRegistrationFormValues = z.input<
 	typeof adminRegistrationFormSchema
 >;
+
+/**
+ * Modal form used to import an existing team's roster from another tournament
+ * into the {@link adminRegistrationFormSchema} when adding a new team. Validated
+ * client-side only — submitting prefills the registration form rather than
+ * hitting the server.
+ */
+export const importTeamFormSchema = z
+	.object({
+		sourceTournamentId: tournamentSearchOptional({
+			label: "labels.regImportSourceTournament",
+		}),
+		sourceTournamentTeamId: selectDynamic({
+			label: "labels.regTeam",
+		}),
+	})
+	.superRefine((data, ctx) => {
+		if (typeof data.sourceTournamentId !== "number") {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: "forms:errors.regImportTournamentRequired",
+				path: ["sourceTournamentId"],
+			});
+		}
+	});
+
+export type ImportTeamFormValues = z.input<typeof importTeamFormSchema>;

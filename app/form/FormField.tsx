@@ -36,6 +36,7 @@ import type {
 	FormField as FormFieldType,
 	SelectOption,
 	TeamSearchFieldOptions,
+	TournamentSearchFieldOptions,
 } from "./types";
 import {
 	fieldsetDefaults,
@@ -411,12 +412,16 @@ export function FormField({
 	}
 
 	if (formField.type === "tournament-search") {
+		const tournamentOptions = options as
+			| TournamentSearchFieldOptions
+			| undefined;
 		return (
 			<TournamentSearchFormField
 				{...commonProps}
 				{...formField}
 				value={value as number | null}
 				onChange={handleChange as (v: number | null) => void}
+				pastOnly={tournamentOptions?.pastOnly}
 			/>
 		);
 	}

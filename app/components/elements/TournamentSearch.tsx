@@ -20,6 +20,12 @@ interface TournamentSearchProps<T extends object>
 	bottomText?: string;
 	errorText?: string;
 	initialTournamentId?: number;
+	/**
+	 * Restrict results to tournaments that have already started (finished/past)
+	 * instead of the default recent + upcoming window. Useful e.g. for importing
+	 * data from a previous tournament.
+	 */
+	pastOnly?: boolean;
 	onChange?: (tournament: TournamentSearchItem | null) => void;
 }
 
@@ -32,6 +38,7 @@ export const TournamentSearch = React.forwardRef(function TournamentSearch<
 		bottomText,
 		errorText,
 		initialTournamentId,
+		pastOnly,
 		onChange,
 		...rest
 	}: TournamentSearchProps<T>,
@@ -39,7 +46,9 @@ export const TournamentSearch = React.forwardRef(function TournamentSearch<
 ) {
 	const search = useEntitySearch<TournamentSearchItem>({
 		buildUrl: (query) =>
-			`/to/search?q=${query}&limit=6&minStartTime=${sub(new Date(), { days: 7 }).toISOString()}`,
+			pastOnly
+				? `/to/search?q=${query}&limit=6&maxStartTime=${new Date().toISOString()}`
+				: `/to/search?q=${query}&limit=6&minStartTime=${sub(new Date(), { days: 7 }).toISOString()}`,
 		parseResults: parseTournamentResults,
 		initialSelectedId: initialTournamentId,
 		onChange,

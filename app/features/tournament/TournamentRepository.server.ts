@@ -1290,10 +1290,12 @@ export async function searchByName({
 	query,
 	limit,
 	minStartTime,
+	maxStartTime,
 }: {
 	query: string;
 	limit: number;
 	minStartTime?: Date;
+	maxStartTime?: Date;
 }) {
 	let sqlQuery = db
 		.selectFrom("Tournament")
@@ -1319,6 +1321,14 @@ export async function searchByName({
 			"CalendarEventDate.startTime",
 			">=",
 			dateToDatabaseTimestamp(minStartTime),
+		);
+	}
+
+	if (maxStartTime) {
+		sqlQuery = sqlQuery.where(
+			"CalendarEventDate.startTime",
+			"<=",
+			dateToDatabaseTimestamp(maxStartTime),
 		);
 	}
 

@@ -123,7 +123,7 @@ export default function TournamentAdminTeamsPage() {
 					{sortedTeams.length === 0 ? (
 						<tr>
 							<td colSpan={maxRosterSize + 3} className={styles.noResults}>
-								No teams found
+								No registrations yet
 							</td>
 						</tr>
 					) : null}

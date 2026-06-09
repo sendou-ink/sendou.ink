@@ -133,6 +133,10 @@ export default [
 					"features/tournament-admin/routes/to.$id.admin.registration.$tid.tsx",
 				),
 			]),
+			route(
+				"import-teams",
+				"features/tournament-admin/routes/to.$id.admin.import-teams.ts",
+			),
 			route("seeds", "features/tournament-admin/routes/to.$id.admin.seeds.tsx"),
 			route("staff", "features/tournament-admin/routes/to.$id.admin.staff.tsx"),
 			route(

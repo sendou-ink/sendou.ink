@@ -327,6 +327,14 @@ export const tournamentAdminRegistrationEditPage = (
 	tournamentId: number,
 	tournamentTeamId: number,
 ) => `${tournamentAdminRegistrationPage(tournamentId)}/${tournamentTeamId}`;
+export const tournamentAdminImportTeamsPage = ({
+	tournamentId,
+	fromTournamentId,
+}: {
+	tournamentId: number;
+	fromTournamentId: number;
+}) =>
+	`${tournamentAdminPage(tournamentId)}/import-teams?fromTournamentId=${fromTournamentId}`;
 export const tournamentBracketsPage = ({
 	tournamentId,
 	bracketIdx,

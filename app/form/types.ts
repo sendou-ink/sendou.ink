@@ -311,3 +311,12 @@ export type TeamSearchFieldOptions = {
 	onTeamSelected?: (team: TeamSearchResult | null) => void;
 	initialTeam?: { id: number; name: string; avatarUrl?: string | null };
 };
+
+/**
+ * Runtime config consumed only by the `tournament-search` field, passed via the
+ * `options` prop (the same channel `team-search` uses).
+ */
+export type TournamentSearchFieldOptions = {
+	/** Restrict results to tournaments that have already started (finished/past). */
+	pastOnly?: boolean;
+};

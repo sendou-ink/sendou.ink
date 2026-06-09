@@ -27,6 +27,7 @@ import type {
 	FormsTranslationKey,
 	SelectOption,
 	TeamSearchFieldOptions,
+	TournamentSearchFieldOptions,
 } from "./types";
 
 export const formRegistry = z.registry<FormField>();
@@ -765,7 +766,8 @@ export function tournamentSearchOptional(
 		type: "tournament-search",
 		initialValue: null,
 		required: false,
-	});
+	}) as unknown as z.ZodType<number | null> &
+		FieldWithOptions<TournamentSearchFieldOptions>;
 }
 
 export function teamSearchOptional(
