@@ -34,11 +34,15 @@ export async function imageFieldValueToImgId({
 	if (!value) return null;
 	if (value.type === "EXISTING") return value.imgId;
 
-	errorToastIfFalsy(
-		(await ImageRepository.countUnvalidatedBySubmitterUserId(user.id)) <
-			MAX_UNVALIDATED_IMG_COUNT,
-		"Too many unvalidated images",
-	);
+	const shouldAutoValidate = autoValidate || user.roles.includes("SUPPORTER");
+
+	if (!shouldAutoValidate) {
+		errorToastIfFalsy(
+			(await ImageRepository.countUnvalidatedBySubmitterUserId(user.id)) <
+				MAX_UNVALIDATED_IMG_COUNT,
+			"Too many unvalidated images",
+		);
+	}
 
 	const buffer = dataUrlToWebpBuffer(value.dataUrl);
 
@@ -48,8 +52,6 @@ export async function imageFieldValueToImgId({
 	);
 	invariant(uploadedFileLocation, "Image upload failed");
 	const fileName = basename(uploadedFileLocation);
-
-	const shouldAutoValidate = autoValidate || user.roles.includes("SUPPORTER");
 
 	const img = await ImageRepository.insert({
 		submitterUserId: user.id,
