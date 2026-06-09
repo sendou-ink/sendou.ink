@@ -17,7 +17,11 @@ export function queryToUserIdentifier(
 			return { customUrl: identifier };
 		}
 
-		return { discordId: identifier };
+		if (identifier.length >= DISCORD_ID_MIN_LENGTH) {
+			return { discordId: identifier };
+		}
+
+		return { id: Number(identifier) };
 	}
 
 	// = it's numeric

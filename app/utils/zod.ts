@@ -32,8 +32,9 @@ export const nonEmptyString = z.string().trim().min(1, {
 
 export const dbBoolean = z.coerce.number().min(0).max(1).int();
 
-const hexCodeRegex = /^#(?:[0-9a-fA-F]{3}){1,2}[0-9]{0,2}$/; // https://stackoverflow.com/a/1636354
-export const hexCode = z.string().regex(hexCodeRegex);
+// matches #RGB and #RRGGBB only (no alpha) https://stackoverflow.com/a/1636354
+const hexCodeWithoutAlphaRegex = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
+export const hexCodeWithoutAlpha = z.string().regex(hexCodeWithoutAlphaRegex);
 
 export const THEME_INPUT_LIMITS = {
 	BASE_HUE_MIN: 0,
@@ -295,7 +296,7 @@ const EMPTY_CHARACTERS = [
 ];
 const EMPTY_CHARACTERS_REGEX = new RegExp(EMPTY_CHARACTERS.join("|"), "g");
 
-const zalgoRe = /%CC%/g;
+const zalgoRe = /%CC%/;
 export const hasZalgo = (txt: string) => zalgoRe.test(encodeURIComponent(txt));
 
 /** Non-empty string that has the given length (max and optionally min). Prevents z͎͗ͣḁ̵̑l̉̃ͦg̐̓̒o͓̔ͥ text as well as filters out characters that have no width. */

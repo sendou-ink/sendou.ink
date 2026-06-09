@@ -230,6 +230,35 @@ describe("validatedSources - PLACEMENTS_PARSE_ERROR", () => {
 		expect(error.type).toBe("PLACEMENTS_PARSE_ERROR");
 	});
 
+	it("parsing fails with a reversed placement range", () => {
+		const error = Progression.validatedBrackets([
+			{
+				id: "1",
+				name: "Swiss Bracket",
+				type: "swiss",
+				settings: {
+					advanceThreshold: 3,
+				},
+				requiresCheckIn: false,
+			},
+			{
+				id: "2",
+				name: "Final Bracket",
+				type: "single_elimination",
+				settings: {},
+				requiresCheckIn: false,
+				sources: [
+					{
+						bracketId: "1",
+						placements: "3-1",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("PLACEMENTS_PARSE_ERROR");
+	});
+
 	it("parsing fails with empty string placements for Swiss brackets without early advance", () => {
 		const error = Progression.validatedBrackets([
 			{

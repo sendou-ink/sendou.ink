@@ -119,15 +119,18 @@ function switchSubRowsIfBetter(
 	abilities: BuildAbilitiesTuple,
 ): BuildAbilitiesTuple {
 	const desiredMoves: [source: number, target: number][] = [];
+	const rowsInvolvedInMove = new Set<number>();
 
 	for (const [i, row] of abilities.entries()) {
+		if (rowsInvolvedInMove.has(i)) continue;
+
 		const [m, s1] = row;
 
 		// already in a good place
 		if (m === s1) continue;
 
 		for (const [j, row2] of abilities.entries()) {
-			if (i === j) continue;
+			if (i === j || rowsInvolvedInMove.has(j)) continue;
 
 			const [m2, s21] = row2;
 
@@ -136,8 +139,10 @@ function switchSubRowsIfBetter(
 				continue;
 			}
 
-			if (m2 === s1 && !desiredMoves.some(([, target]) => target === j)) {
+			if (m2 === s1) {
 				desiredMoves.push([i, j]);
+				rowsInvolvedInMove.add(i);
+				rowsInvolvedInMove.add(j);
 				break;
 			}
 		}
