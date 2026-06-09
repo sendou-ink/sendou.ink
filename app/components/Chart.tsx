@@ -1,17 +1,40 @@
 import clsx from "clsx";
 import * as React from "react";
-import { type AxisOptions, Chart as ReactChart } from "react-charts";
-import type { TooltipRendererProps } from "react-charts/types/components/TooltipRenderer";
-import { Theme, useTheme } from "~/features/theme/core/provider";
-import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { Line } from "react-chartjs-2";
+
+// import { type AxisOptions, Chart as ReactChart } from "react-charts";
+// import type { TooltipRendererProps } from "react-charts/types/components/TooltipRenderer";
+// import { useTheme } from "~/features/theme/core/provider";
+// import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+
 import { useHydrated } from "~/hooks/useHydrated";
 import styles from "./Chart.module.css";
+import { useRef } from "react";
+
+import {
+	type Chart as ChartType,
+	Chart as ChartJS,
+	CategoryScale,
+	LinearScale,
+	TimeScale,
+	PointElement,
+	LineElement,
+	Tooltip,
+} from "chart.js";
+import "chartjs-adapter-date-fns";
+
+ChartJS.register(
+	CategoryScale,
+	LinearScale,
+	TimeScale,
+	PointElement,
+	LineElement,
+	Tooltip,
+);
 
 export default function Chart({
 	options,
 	containerClassName,
-	headerSuffix,
-	valueSuffix,
 	xAxis,
 }: {
 	options: [
@@ -22,44 +45,24 @@ export default function Chart({
 	valueSuffix?: string;
 	xAxis: "linear" | "localTime";
 }) {
-	const theme = useTheme();
 	const isHydrated = useHydrated();
-	const { formatter: scaleFormatter } = useDateTimeFormat({
-		day: "numeric",
-		month: "numeric",
-	});
 
-	const primaryAxis = React.useMemo<
-		AxisOptions<(typeof options)[number]["data"][number]>
-	>(
-		// @ts-expect-error - some weirdness here but maybe not worth fixing as the whole library needs to be replaced (it is unmaintained/deprecated)
-		() => ({
-			getValue: (datum) => datum.primary,
-			scaleType: xAxis,
-			shouldNice: false,
-			formatters: {
-				scale: (val: any) => {
-					if (val instanceof Date) {
-						return scaleFormatter.format(val);
-					}
+	// Ref to the Chart.js instance, allows proper cleanup between renders to prevent "Canvas is already in use" errors
+	const chartRef = useRef<ChartType<"line"> | null>(null);
 
-					return val;
-				},
-			},
-		}),
-		[scaleFormatter, xAxis],
-	);
+	// Give each chart a unique id
+	const chartId = React.useId();
 
-	const secondaryAxes = React.useMemo<
-		AxisOptions<(typeof options)[number]["data"][number]>[]
-	>(
-		() => [
-			{
-				getValue: (datum) => datum.secondary,
-			},
-		],
-		[],
-	);
+	const chartData = React.useMemo(() => ({
+		labels: options[0].data.map((d) => d.primary),
+		datasets: options.map((series) => ({
+			label: series.label,
+			data: series.data.map((d) => d.secondary),
+			borderColor: "var(--color-text-accent)",
+			backgroundColor: "transparent",
+			tension: 0.3,
+		})),
+	}), [options]);
 
 	if (!isHydrated) {
 		return <div className={clsx(styles.container, containerClassName)} />;
@@ -67,91 +70,25 @@ export default function Chart({
 
 	return (
 		<div className={clsx(styles.container, containerClassName)}>
-			<ReactChart
+			<Line
+				ref={chartRef}
+				id={chartId}
+				data={chartData}
 				options={{
-					data: options,
-					tooltip: {
-						render: (props) => (
-							<ChartTooltip
-								{...props}
-								headerSuffix={headerSuffix}
-								valueSuffix={valueSuffix}
-							/>
-						),
+					scales: {
+						x: {
+							type: xAxis === "localTime" ? "time" : "linear",
+							time: {
+								tooltipFormat: "EEE d/M",
+								displayFormats: { day: "d/M" },
+							},
+						},
 					},
-					primaryCursor: false,
-					secondaryCursor: false,
-					primaryAxis,
-					secondaryAxes,
-					dark: theme.htmlThemeClass === Theme.DARK,
-					defaultColors: [
-						"var(--color-text-accent)",
-						"var(--color-accent)",
-						"var(--color-info)",
-					],
+					plugins: {
+						tooltip: { enabled: true }, // replace with custom later
+					},
 				}}
 			/>
-		</div>
-	);
-}
-
-interface ChartTooltipProps extends TooltipRendererProps<any> {
-	headerSuffix?: string;
-	valueSuffix?: string;
-}
-
-function ChartTooltip({
-	focusedDatum,
-	headerSuffix = "",
-	valueSuffix = "",
-}: ChartTooltipProps) {
-	const { formatter: headerFormatter } = useDateTimeFormat({
-		weekday: "short",
-		day: "numeric",
-		month: "numeric",
-	});
-	const dataPoints = focusedDatum?.interactiveGroup ?? [];
-
-	const header = () => {
-		const primaryValue = dataPoints[0]?.primaryValue;
-		if (!primaryValue) return null;
-
-		if (primaryValue instanceof Date) {
-			return headerFormatter.format(primaryValue);
-		}
-
-		return primaryValue;
-	};
-
-	return (
-		<div className={styles.tooltip}>
-			<h3 className="text-center text-md">
-				{header()}
-				{headerSuffix}
-			</h3>
-			{dataPoints.map((dataPoint, index) => {
-				const color = dataPoint.style?.fill ?? "var(--color-accent)";
-
-				return (
-					<div key={index} className="stack horizontal items-center sm">
-						<div
-							className={clsx(styles.dot, {
-								[styles.dotFocused]:
-									focusedDatum?.seriesId === dataPoint.seriesId,
-							})}
-							style={{
-								"--dot-color": color,
-								"--dot-color-outline": color.replace(")", "-transparent)"),
-							}}
-						/>
-						<div>{dataPoint.originalSeries.label}</div>
-						<div className={styles.tooltipValue}>
-							{dataPoint.secondaryValue}
-							{valueSuffix}
-						</div>
-					</div>
-				);
-			})}
 		</div>
 	);
 }
