@@ -31,6 +31,7 @@
 	"pre.footer": "参加登録はトーナメント開始前であればいつでも変更できます",
 	"pre.logIn": "ログインして登録する",
 	"pre.inATeam": "あなたはこのイベントでチームに参加しています",
+	"pre.registrationClosed": "",
 	"pre.checkIn.range": "チェックインは {{start}} から {{finish}} までのあいだ受け付けています",
 	"pre.checkIn.over": "チェックインは終了しました",
 	"pre.checkIn.cant": "チェックインするための入力を完了してください",

@@ -22,6 +22,7 @@ import {
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "../../../utils/zod";
 import { adminTeamsActionSchema } from "../tournament-admin-schemas.server";
+import { requireTournamentOrganizer } from "../tournament-admin-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
@@ -36,12 +37,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 	});
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
-	const validateIsTournamentOrganizer = () =>
-		errorToastIfFalsy(tournament.isOrganizer(user), "Unauthorized");
-
 	switch (data._action) {
 		case "CHECK_IN": {
-			validateIsTournamentOrganizer();
+			requireTournamentOrganizer(tournament, user);
 			const team = tournament.teamById(data.teamId);
 			errorToastIfFalsy(team, "Invalid team id");
 			errorToastIfFalsy(
@@ -66,7 +64,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "CHECK_OUT": {
-			validateIsTournamentOrganizer();
+			requireTournamentOrganizer(tournament, user);
 			const team = tournament.teamById(data.teamId);
 			errorToastIfFalsy(team, "Invalid team id");
 			errorToastIfFalsy(
@@ -90,7 +88,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "DELETE_TEAM": {
-			validateIsTournamentOrganizer();
+			requireTournamentOrganizer(tournament, user);
 			const team = tournament.teamById(data.teamId);
 			errorToastIfFalsy(team, "Invalid team id");
 			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
@@ -113,7 +111,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "DROP_TEAM_OUT": {
-			validateIsTournamentOrganizer();
+			requireTournamentOrganizer(tournament, user);
 			errorToastIfFalsy(tournament.teamById(data.teamId), "Invalid team id");
 
 			const endedMatchIds = await dropTeamOut({
@@ -131,7 +129,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "UNDO_DROP_TEAM_OUT": {
-			validateIsTournamentOrganizer();
+			requireTournamentOrganizer(tournament, user);
 
 			await TournamentTeamRepository.undoDropOut(data.teamId);
 

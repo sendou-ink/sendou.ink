@@ -31,6 +31,7 @@
 	"pre.footer": "הרשמה ניתנת לשינוי עד שהטורניר מתחיל",
 	"pre.logIn": "התחבר כדי להירשם",
 	"pre.inATeam": "הנך בצוות לאירוע",
+	"pre.registrationClosed": "",
 	"pre.checkIn.range": "צ'ק-אין פתוח בין {{start}} ל-{{finish}}",
 	"pre.checkIn.over": "צ'ק-אין נגמר",
 	"pre.checkIn.cant": "השלימו את השלבים הקודמים לפני צ'ק-אין",

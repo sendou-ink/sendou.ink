@@ -31,6 +31,7 @@
 	"pre.footer": "O registro pode ser livremente alterado antes do torneio começar",
 	"pre.logIn": "Faça o login para registrar",
 	"pre.inATeam": "Você está em um time para este evento",
+	"pre.registrationClosed": "",
 	"pre.checkIn.range": "O check-in está aberto entre {{start}} e {{finish}}",
 	"pre.checkIn.over": "O check-in acabou",
 	"pre.checkIn.cant": "Complete os passos anteriores antes de fazer o check-in",

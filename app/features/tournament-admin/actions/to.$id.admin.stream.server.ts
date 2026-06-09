@@ -6,9 +6,10 @@ import {
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { parseFormData } from "~/form/parse.server";
-import { errorToastIfFalsy, parseParams } from "~/utils/remix.server";
+import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
 import { adminStreamFormSchema } from "../tournament-admin-staff-schemas";
+import { requireTournamentOrganizer } from "../tournament-admin-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
@@ -19,7 +20,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 	});
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
-	errorToastIfFalsy(tournament.isOrganizer(user), "Unauthorized");
+	requireTournamentOrganizer(tournament, user);
 
 	const result = await parseFormData({
 		request,

@@ -325,7 +325,7 @@ function TeamRowMenu({
 }
 
 function sortedMembers(team: TournamentDataTeam) {
-	return [...team.members].sort((a, b) => {
+	return team.members.toSorted((a, b) => {
 		if (a.role === "OWNER" && b.role !== "OWNER") return -1;
 		if (b.role === "OWNER" && a.role !== "OWNER") return 1;
 		return a.createdAt - b.createdAt;
@@ -404,7 +404,7 @@ function teamMatchesQuery(team: TournamentDataTeam, search: string) {
 }
 
 function sortTeams(teams: TournamentDataTeam[], sort: SortState<SortKey>) {
-	const bySeed = [...teams].sort((a, b) => {
+	const bySeed = teams.toSorted((a, b) => {
 		const aSeed = a.seed ?? Number.POSITIVE_INFINITY;
 		const bSeed = b.seed ?? Number.POSITIVE_INFINITY;
 		if (aSeed !== bSeed) return aSeed - bSeed;
@@ -413,7 +413,7 @@ function sortTeams(teams: TournamentDataTeam[], sort: SortState<SortKey>) {
 
 	if (!sort) return bySeed;
 
-	const sorted = bySeed.sort((a, b) =>
+	const sorted = bySeed.toSorted((a, b) =>
 		sort.key === "name"
 			? a.name.localeCompare(b.name)
 			: activeCheckInCount(a) - activeCheckInCount(b),

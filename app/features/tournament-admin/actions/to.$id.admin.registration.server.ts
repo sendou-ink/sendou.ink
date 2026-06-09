@@ -10,10 +10,11 @@ import {
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import invariant from "~/utils/invariant";
-import { errorToastIfFalsy, parseParams } from "~/utils/remix.server";
+import { parseParams } from "~/utils/remix.server";
 import { tournamentAdminPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
 import { adminRegistrationFormSchemaServer } from "../tournament-admin-registration-schemas.server";
+import { requireTournamentOrganizer } from "../tournament-admin-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
@@ -21,7 +22,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const { id: tournamentId } = parseParams({ params, schema: idObject });
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
-	errorToastIfFalsy(tournament.isOrganizer(user), "Unauthorized");
+	requireTournamentOrganizer(tournament, user);
 
 	const result = await parseFormDataWithImages({
 		request,
@@ -95,10 +96,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 			tournamentId,
 			type: "participant",
 			userId: addId,
-			newTeamCount:
-				!team && addId === ownerUserId
-					? tournament.ctx.teams.length + 1
-					: undefined,
 		});
 	}
 	for (const removeId of membersToRemove) {
@@ -106,6 +103,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 			tournamentId,
 			type: "participant",
 			userId: removeId,
+		});
+	}
+
+	if (!team) {
+		ShowcaseTournaments.updateCachedTournamentTeamCount({
+			tournamentId,
+			newTeamCount: tournament.ctx.teams.length + 1,
 		});
 	}
 

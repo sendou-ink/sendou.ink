@@ -1,3 +1,7 @@
+.container {
+	container-type: inline-size;
+}
+
 .wrapper {
 	display: grid;
 	grid-template-columns: 1fr auto 1fr;
@@ -46,7 +50,7 @@
 	flex-wrap: wrap;
 }
 
-@media (max-width: 480px) {
+@container (max-width: 480px) {
 	.wrapper {
 		grid-template-columns: auto;
 		gap: var(--s-3);

@@ -120,8 +120,7 @@ export const usersListForPost = async ({
 	errorToastIfFalsy(team, "User is not a member of this team");
 
 	const filteredMembers = team.members.filter(
-		(member) =>
-			member.role == null || !NON_PLAYER_TEAM_ROLES.includes(member.role),
+		(member) => !member.role || !NON_PLAYER_TEAM_ROLES.includes(member.role),
 	);
 
 	// handle case when all users are from excluded roles

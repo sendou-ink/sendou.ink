@@ -31,6 +31,7 @@
 	"pre.footer": "L'iscrizione può essere cambiata liberamente prima del torneo",
 	"pre.logIn": "Accedi per iscriverti",
 	"pre.inATeam": "Sei in un team per questo evento",
+	"pre.registrationClosed": "",
 	"pre.checkIn.range": "Il Check-in è aperto tra {{start}} e {{finish}}",
 	"pre.checkIn.over": "Il Check-in è chiuso",
 	"pre.checkIn.cant": "Completa i passaggi precedenti prima di fare il Check-in",

@@ -15,6 +15,7 @@ import {
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "../../../utils/zod";
 import { adminSeedsActionSchema } from "../tournament-admin-schemas.server";
+import { requireTournamentOrganizer } from "../tournament-admin-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
@@ -29,13 +30,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 	});
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
-	const validateIsTournamentOrganizer = () =>
-		errorToastIfFalsy(tournament.isOrganizer(user), "Unauthorized");
-
 	let message: string;
 	switch (data._action) {
 		case "UPDATE_SEEDS": {
-			validateIsTournamentOrganizer();
+			requireTournamentOrganizer(tournament, user);
 			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
 
 			const teamsWithMembers = tournament.ctx.teams
@@ -58,7 +56,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "UPDATE_STARTING_BRACKETS": {
-			validateIsTournamentOrganizer();
+			requireTournamentOrganizer(tournament, user);
 			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
 
 			const validBracketIdxs =
@@ -81,7 +79,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "UPDATE_AB_DIVISIONS": {
-			validateIsTournamentOrganizer();
+			requireTournamentOrganizer(tournament, user);
 			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
 
 			errorToastIfFalsy(

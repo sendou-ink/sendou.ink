@@ -56,6 +56,8 @@ export default function TournamentRegisterPage() {
 	const teamMemberOf = tournament.teamMemberOfByUser(user);
 	const teamOwned = tournament.ownedTeamByUser(user);
 	const isRegularMemberOfATeam = teamMemberOf && !teamOwned;
+	const registrationClosedForNonParticipant =
+		!tournament.registrationOpen && !teamMemberOf;
 
 	const showAddIGNAlert =
 		tournament.ctx.settings.requireInGameNames &&
@@ -70,6 +72,8 @@ export default function TournamentRegisterPage() {
 					<Alert>{t("tournament:pre.inATeam")}</Alert>
 					<LeaveTeamControl />
 				</div>
+			) : registrationClosedForNonParticipant ? (
+				<Alert>{t("tournament:pre.registrationClosed")}</Alert>
 			) : showAddIGNAlert ? (
 				<div>
 					<Alert variation="WARNING">

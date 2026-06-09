@@ -11,22 +11,24 @@ export function FactCardGrid({ facts }: { facts: FactCardItem[] }) {
 	const rightFacts = facts.filter((_, i) => i % 2 === 1);
 
 	return (
-		<div className={styles.wrapper}>
-			<div className={styles.column}>
-				{leftFacts.map((fact) => (
-					<Card key={fact.label} {...fact} />
-				))}
+		<div className={styles.container}>
+			<div className={styles.wrapper}>
+				<div className={styles.column}>
+					{leftFacts.map((fact) => (
+						<Card key={fact.label} {...fact} />
+					))}
+				</div>
+				{rightFacts.length > 0 ? (
+					<>
+						<div className={styles.divider} aria-hidden="true" />
+						<div className={styles.column}>
+							{rightFacts.map((fact) => (
+								<Card key={fact.label} {...fact} />
+							))}
+						</div>
+					</>
+				) : null}
 			</div>
-			{rightFacts.length > 0 ? (
-				<>
-					<div className={styles.divider} aria-hidden="true" />
-					<div className={styles.column}>
-						{rightFacts.map((fact) => (
-							<Card key={fact.label} {...fact} />
-						))}
-					</div>
-				</>
-			) : null}
 		</div>
 	);
 }

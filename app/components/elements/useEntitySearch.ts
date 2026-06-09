@@ -80,6 +80,7 @@ export function useEntitySearch<TItem extends { id: number }>({
 	// clear the selection when its item is no longer among the results
 	const realItemIdsKey = realItems.map((item) => item.id).join(",");
 	React.useEffect(() => {
+		if (!realItemIdsKey) return;
 		const ids = realItemIdsKey.split(",").map(Number);
 		if (
 			selectedKey &&

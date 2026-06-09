@@ -16,6 +16,10 @@ import {
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "../../../utils/zod";
 import { adminBracketsActionSchema } from "../tournament-admin-schemas.server";
+import {
+	requireTournamentAdmin,
+	requireTournamentOrganizer,
+} from "../tournament-admin-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
@@ -30,15 +34,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 	});
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
-	const validateIsTournamentAdmin = () =>
-		errorToastIfFalsy(tournament.isAdmin(user), "Unauthorized");
-	const validateIsTournamentOrganizer = () =>
-		errorToastIfFalsy(tournament.isOrganizer(user), "Unauthorized");
-
 	let message: string;
 	switch (data._action) {
 		case "RESET_BRACKET": {
-			validateIsTournamentOrganizer();
+			requireTournamentOrganizer(tournament, user);
 			errorToastIfFalsy(!tournament.ctx.isFinalized, "Tournament is finalized");
 
 			const bracketToResetIdx = tournament.brackets.findIndex(
@@ -64,7 +63,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "UPDATE_TOURNAMENT_PROGRESSION": {
-			validateIsTournamentOrganizer();
+			requireTournamentOrganizer(tournament, user);
 			errorToastIfFalsy(!tournament.ctx.isFinalized, "Tournament is finalized");
 
 			errorToastIfFalsy(
@@ -87,7 +86,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "REOPEN_TOURNAMENT": {
-			validateIsTournamentAdmin();
+			requireTournamentAdmin(tournament, user);
 			errorToastIfFalsy(
 				DANGEROUS_CAN_ACCESS_DEV_CONTROLS,
 				"Only available in development",
