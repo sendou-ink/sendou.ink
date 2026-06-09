@@ -53,20 +53,28 @@ export default function Chart({
 	// Give each chart a unique id
 	const chartId = React.useId();
 
+	if (!isHydrated) {
+		return <div className={clsx(styles.container, containerClassName)} />;
+	}
+
+	// Get the line colors to be different
+	const colors = ["--color-text-accent", "--color-accent", "--color-info"].map(
+		(v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim()
+	);
+
 	const chartData = React.useMemo(() => ({
 		labels: options[0].data.map((d) => d.primary),
-		datasets: options.map((series) => ({
+		datasets: options.map((series, i) => ({
 			label: series.label,
 			data: series.data.map((d) => d.secondary),
-			borderColor: "var(--color-text-accent)",
+			borderColor: colors[i % colors.length],
+			pointRadius: 0,
+			pointHoverRadius: 4,
+			hitRadius: 10,
 			backgroundColor: "transparent",
 			tension: 0.3,
 		})),
 	}), [options]);
-
-	if (!isHydrated) {
-		return <div className={clsx(styles.container, containerClassName)} />;
-	}
 
 	return (
 		<div className={clsx(styles.container, containerClassName)}>
@@ -77,15 +85,19 @@ export default function Chart({
 				options={{
 					scales: {
 						x: {
+							grid: { color: "rgba(255,255,255,0.1)" },
 							type: xAxis === "localTime" ? "time" : "linear",
 							time: {
 								tooltipFormat: "EEE d/M",
 								displayFormats: { day: "d/M" },
 							},
 						},
+						y: {
+							grid: { color: "rgba(255,255,255,0.1)" },
+						},
 					},
 					plugins: {
-						tooltip: { enabled: true }, // replace with custom later
+						tooltip: { enabled: true }, // replace with custom tooltip later
 					},
 				}}
 			/>
