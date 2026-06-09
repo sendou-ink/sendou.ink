@@ -1175,6 +1175,56 @@ describe("SendouForm", () => {
 			await expect.element(input).toHaveValue("New Name");
 		});
 
+		test("editing a starter row commits its select default on submit", async () => {
+			// Regression: editing one field of the empty-array starter row must seed the
+			// item's other fieldset defaults (e.g. a required select's first option),
+			// rather than leaving them only displayed as a fallback and failing
+			// validation on submit.
+			const onApply = vi.fn();
+			const schema = z.object({
+				staff: array({
+					label: "labels.members",
+					min: 0,
+					max: 10,
+					field: fieldset({
+						fields: z.object({
+							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+							role: select({
+								label: "labels.staffRole",
+								items: [
+									{ value: "ORGANIZER", label: "options.staffRole.ORGANIZER" },
+									{ value: "STREAMER", label: "options.staffRole.STREAMER" },
+								],
+							}),
+						}),
+					}),
+				}),
+			});
+
+			const router = createMemoryRouter(
+				[
+					{
+						path: "/",
+						element: (
+							<SendouForm schema={schema} onApply={onApply}>
+								{({ names }) => <FormField name={names.staff} />}
+							</SendouForm>
+						),
+					},
+				],
+				{ initialEntries: ["/"] },
+			);
+
+			const screen = await render(<RouterProvider router={router} />);
+
+			await userEvent.type(screen.getByLabelText("Name").element(), "Alice");
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply).toHaveBeenCalledWith({
+				staff: [{ name: "Alice", role: "ORGANIZER" }],
+			});
+		});
+
 		test("shows error on specific nested field within array item", async () => {
 			const schema = z.object({
 				series: array({

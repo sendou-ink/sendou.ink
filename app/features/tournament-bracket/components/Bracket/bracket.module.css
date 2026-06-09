@@ -12,13 +12,52 @@
 .scrollingBracket {
 	padding: var(--s-4) var(--s-6);
 	max-width: 100%;
-	max-height: min(1000px, 70vh);
+	max-height: min(1200px, 82dvh);
 	-ms-overflow-style: none;
 	scrollbar-width: none;
 	border: var(--border-style);
 	border-radius: var(--radius-box);
 	overflow: scroll;
 	user-select: none;
+
+	/* Inside a breakout wrapper (see `mainBreakout`) grow only as wide as the
+	   bracket actually needs: never narrower than the normal page width, never
+	   wider than the content area (then it scrolls), centered either way.
+	   Height fills down to the bottom of the viewport using the top offset
+	   published by JS (`--bracket-fill-top`), floored so it never collapses. */
+	:global([data-main-breakout]) & {
+		width: fit-content;
+		min-width: min(72rem, 100%);
+		margin-inline: auto;
+		max-height: max(
+			300px,
+			calc(100dvh - var(--bracket-fill-top, 30dvh) - var(--s-6))
+		);
+
+		/* The mobile bottom nav is fixed below 600px; keep clear of it. */
+		@media screen and (max-width: 599.98px) {
+			max-height: max(
+				300px,
+				calc(
+					100dvh -
+					var(--bracket-fill-top, 30dvh) -
+					var(--layout-nav-height) -
+					env(safe-area-inset-bottom) -
+					var(--s-3)
+				)
+			);
+		}
+	}
+}
+
+/* Lets the bracket size against the full content area instead of the page
+   width. cqw resolves to <main>, which spans the content area in breakout
+   mode (its own padding keeps the bracket off the edges). */
+.breakoutWrapper {
+	:global([data-main-breakout]) & {
+		width: 100cqw;
+		margin-inline: calc(50% - 50cqw);
+	}
 }
 
 .matchHeader {

@@ -117,6 +117,7 @@
 	"staff.organization": "",
 	"staff.divider.fromOrganization": "",
 	"staff.divider.addedForEvent": "",
+	"staff.editOrganization": "",
 	"actions.addSub": "Ersatzspieler hinzufügen",
 	"actions.shareLink": "Teile deinen Invite-Link, um Mitglieder hinzuzufügen: {{inviteLink}}",
 	"actions.sub.prompt_one": "Du kannst noch {{count}} Ersatzspieler zu deinem Roster hinzufügen",

@@ -118,6 +118,7 @@
 	"staff.organization": "",
 	"staff.divider.fromOrganization": "",
 	"staff.divider.addedForEvent": "",
+	"staff.editOrganization": "",
 	"actions.addSub": "Aggiungi sub",
 	"actions.shareLink": "Condividi il tuo link d'invito per aggiungere membri: {{inviteLink}}",
 	"actions.sub.prompt_one": "Puoi ancora aggiungere {{count}} sub al tuo roster",

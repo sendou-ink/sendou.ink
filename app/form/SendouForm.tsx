@@ -14,6 +14,7 @@ import {
 	buildFieldPath,
 	errorMessageId,
 	getNestedValue,
+	seedArrayItemDefaults,
 	setNestedValue,
 	validateField,
 } from "./utils";
@@ -74,6 +75,12 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	fullWidth?: boolean;
 	onApply?: (values: z.infer<z.ZodObject<T>>) => void;
 	secondarySubmit?: React.ReactNode;
+	/**
+	 * Called once after a server submission completes successfully (the action
+	 * returned without field errors). Useful for collapsing an inline edit form
+	 * back to a read-only view.
+	 */
+	onSuccess?: () => void;
 };
 
 type SendouFormProps<T extends z.ZodRawShape> = BaseFormProps<T> &
@@ -101,6 +108,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 	fullWidth,
 	onApply,
 	secondarySubmit,
+	onSuccess,
 }: SendouFormProps<T>) {
 	const { t } = useTranslation(["forms"]);
 	const fetcher = useFetcher<{ fieldErrors?: Record<string, string> }>();
@@ -165,6 +173,18 @@ export function SendouForm<T extends z.ZodRawShape>({
 		firstErrorElement?.scrollIntoView({ behavior: "smooth", block: "center" });
 	}, [fetcher.data, t]);
 
+	const previousFetcherStateRef = React.useRef(fetcher.state);
+	React.useEffect(() => {
+		if (
+			previousFetcherStateRef.current !== "idle" &&
+			fetcher.state === "idle" &&
+			!fetcher.data?.fieldErrors
+		) {
+			onSuccess?.();
+		}
+		previousFetcherStateRef.current = fetcher.state;
+	}, [fetcher.state, fetcher.data, onSuccess]);
+
 	const serverErrors = visibleServerErrors as Partial<
 		Record<keyof z.infer<z.ZodObject<T>>, string>
 	>;
@@ -203,7 +223,13 @@ export function SendouForm<T extends z.ZodRawShape>({
 
 	const setValue = (name: string, newValue: unknown) => {
 		if (name.includes(".") || name.includes("[")) {
-			setValues((prev) => setNestedValue(prev, name, newValue));
+			setValues((prev) =>
+				setNestedValue(
+					seedArrayItemDefaults(schema, prev, name),
+					name,
+					newValue,
+				),
+			);
 		} else {
 			setValues((prev) => ({ ...prev, [name]: newValue }));
 		}

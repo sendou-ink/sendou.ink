@@ -1,5 +1,13 @@
 import clsx from "clsx";
-import { History, ListOrdered, Trophy, Tv, UserCog, Users } from "lucide-react";
+import {
+	History,
+	ListOrdered,
+	SquarePen,
+	Trophy,
+	Tv,
+	UserCog,
+	Users,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Outlet, useLocation, useOutletContext } from "react-router";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -28,8 +36,6 @@ export { action } from "../actions/to.$id.admin.index.server";
 const HORIZONTAL_TABS_BELOW = 720;
 
 type AdminTab = "teams" | "seeds" | "staff" | "stream" | "brackets" | "audit";
-
-// xxx: maybe edit event info, delete event & reset bracket in one tab?
 
 export default function TournamentAdminLayout() {
 	const { t } = useTranslation(["tournament", "calendar"]);
@@ -61,7 +67,10 @@ export default function TournamentAdminLayout() {
 
 	const adminPage = tournamentAdminPage(tournament.ctx.id);
 	const subPath = location.pathname.slice(adminPage.length).replace(/^\//, "");
-	const currentTab: AdminTab = subPath === "" ? "teams" : (subPath as AdminTab);
+	const currentTab: AdminTab =
+		subPath === "" || subPath.startsWith("registration")
+			? "teams"
+			: (subPath as AdminTab);
 
 	return (
 		<div className={clsx("stack lg", containerClassName("wide"))}>
@@ -71,6 +80,7 @@ export default function TournamentAdminLayout() {
 						to={tournamentEditPage(tournament.ctx.eventId)}
 						size="small"
 						variant="outlined"
+						icon={<SquarePen />}
 						testId="edit-event-info-button"
 					>
 						Edit event info

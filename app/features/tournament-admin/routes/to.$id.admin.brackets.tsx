@@ -1,8 +1,6 @@
 import * as React from "react";
 import { useFetcher } from "react-router";
 import { Divider } from "~/components/Divider";
-import { SendouButton } from "~/components/elements/Button";
-import { SendouDialog } from "~/components/elements/Dialog";
 import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
 import { SubmitButton } from "~/components/SubmitButton";
@@ -17,12 +15,6 @@ export { action } from "../actions/to.$id.admin.brackets.server";
 export default function TournamentAdminBracketsPage() {
 	const tournament = useTournament();
 	const user = useUser();
-	const [editingProgression, setEditingProgression] = React.useState(false);
-
-	// biome-ignore lint/correctness/useExhaustiveDependencies: we want to close the dialog after the progression was updated
-	React.useEffect(() => {
-		setEditingProgression(false);
-	}, [tournament]);
 
 	const showReopen = Boolean(
 		DANGEROUS_CAN_ACCESS_DEV_CONTROLS &&
@@ -37,21 +29,10 @@ export default function TournamentAdminBracketsPage() {
 	return (
 		<div className="stack lg">
 			{showEditBrackets ? (
-				<div className="stack horizontal justify-end">
-					<SendouButton
-						onPress={() => setEditingProgression(true)}
-						size="small"
-						variant="outlined"
-						data-testid="edit-event-info-button"
-					>
-						Edit brackets
-					</SendouButton>
-					{editingProgression ? (
-						<BracketProgressionEditDialog
-							close={() => setEditingProgression(false)}
-						/>
-					) : null}
-				</div>
+				<>
+					<Divider smallText>Edit brackets</Divider>
+					<BracketProgressionEdit />
+				</>
 			) : null}
 			{!tournament.isLeagueSignup ? (
 				<>
@@ -135,7 +116,7 @@ function BracketReset() {
 	);
 }
 
-function BracketProgressionEditDialog({ close }: { close: () => void }) {
+function BracketProgressionEdit() {
 	const tournament = useTournament();
 	const fetcher = useFetcher();
 	const [bracketProgressionErrored, setBracketProgressionErrored] =
@@ -146,33 +127,27 @@ function BracketProgressionEditDialog({ close }: { close: () => void }) {
 		.map((bracket) => bracket.idx);
 
 	return (
-		<SendouDialog
-			isFullScreen
-			onClose={close}
-			heading="Editing bracket progression"
-		>
-			<fetcher.Form method="post">
-				<BracketProgressionSelector
-					initialBrackets={Progression.validatedBracketsToInputFormat(
-						tournament.ctx.settings.bracketProgression,
-					).map((bracket, idx) => ({
-						...bracket,
-						disabled: disabledBracketIdxs.includes(idx),
-					}))}
-					isInvitationalTournament={tournament.isInvitational}
-					setErrored={setBracketProgressionErrored}
-					isTournamentInProgress
-				/>
-				<div className="stack md horizontal justify-center mt-6">
-					<SubmitButton
-						_action="UPDATE_TOURNAMENT_PROGRESSION"
-						isDisabled={bracketProgressionErrored}
-					>
-						Save changes
-					</SubmitButton>
-				</div>
-			</fetcher.Form>
-		</SendouDialog>
+		<fetcher.Form method="post">
+			<BracketProgressionSelector
+				initialBrackets={Progression.validatedBracketsToInputFormat(
+					tournament.ctx.settings.bracketProgression,
+				).map((bracket, idx) => ({
+					...bracket,
+					disabled: disabledBracketIdxs.includes(idx),
+				}))}
+				isInvitationalTournament={tournament.isInvitational}
+				setErrored={setBracketProgressionErrored}
+				isTournamentInProgress
+			/>
+			<div className="stack md horizontal justify-center mt-6">
+				<SubmitButton
+					_action="UPDATE_TOURNAMENT_PROGRESSION"
+					isDisabled={bracketProgressionErrored}
+				>
+					Save changes
+				</SubmitButton>
+			</div>
+		</fetcher.Form>
 	);
 }
 

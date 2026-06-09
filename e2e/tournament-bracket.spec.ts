@@ -377,7 +377,6 @@ test.describe("Tournament bracket", () => {
 		}
 
 		await page.getByRole("tab", { name: "Brackets" }).click();
-		await page.getByTestId("edit-event-info-button").click();
 		for (let i = 0; i < 3; i++) {
 			await page.getByTestId("delete-bracket-button").last().click();
 		}
@@ -438,7 +437,6 @@ test.describe("Tournament bracket", () => {
 		});
 
 		await page.getByRole("tab", { name: "Brackets" }).click();
-		await page.getByTestId("edit-event-info-button").click();
 		await page.getByTestId("delete-bracket-button").last().click();
 		await page.getByTestId("placements-input").last().fill("3,4");
 
@@ -501,7 +499,6 @@ test.describe("Tournament bracket", () => {
 		});
 
 		await page.getByRole("tab", { name: "Brackets" }).click();
-		await page.getByTestId("edit-event-info-button").click();
 		await page.getByTestId("delete-bracket-button").last().click();
 
 		for (const toggle of await page
@@ -600,7 +597,6 @@ test.describe("Tournament bracket", () => {
 		});
 
 		await page.getByRole("tab", { name: "Brackets" }).click();
-		await page.getByTestId("edit-event-info-button").click();
 
 		await page.getByRole("button", { name: "Clear" }).click();
 		await page.getByLabel("Template").selectOption("preset:CB");

@@ -31,6 +31,7 @@ import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { useVisibilityChange } from "~/hooks/useVisibilityChange";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import { SENDOU_INK_BASE_URL, tournamentJoinPage } from "~/utils/urls";
 import {
 	useBracketExpanded,
@@ -49,6 +50,10 @@ import type { Tournament } from "../core/Tournament";
 import { tournamentWebsocketRoom } from "../tournament-bracket-utils";
 
 export { action };
+
+export const handle: SendouRouteHandle = {
+	mainBreakout: true,
+};
 
 import styles from "../tournament-bracket.module.css";
 
@@ -490,8 +495,6 @@ function BracketTabs({
 
 	return (
 		<SendouTabs
-			orientation="vertical"
-			horizontalBelow={720}
 			selectedKey={String(bracketIdx)}
 			onSelectionChange={(key) => setBracketIdx(Number(key))}
 		>

@@ -115,6 +115,7 @@
 	"staff.organization": "",
 	"staff.divider.fromOrganization": "",
 	"staff.divider.addedForEvent": "",
+	"staff.editOrganization": "",
 	"actions.addSub": "添加替补",
 	"actions.shareLink": "分享您的邀请链接以添加成员: {{inviteLink}}",
 	"actions.sub.prompt_zero": "您的阵容已满，无法再添加替补",

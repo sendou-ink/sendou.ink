@@ -38,6 +38,7 @@ import type {
 	TeamSearchFieldOptions,
 } from "./types";
 import {
+	fieldsetDefaults,
 	getNestedSchema,
 	getNestedValue,
 	setNestedValue,
@@ -341,7 +342,7 @@ export function FormField({
 		const hasCustomRender = typeof children === "function";
 		const itemInitialValue =
 			isObjectArray && innerFieldMeta
-				? computeFieldsetInitialValue(innerFieldMeta)
+				? fieldsetDefaults(innerFieldMeta)
 				: innerFieldMeta?.initialValue;
 
 		return (
@@ -485,24 +486,4 @@ function isArrayAppend(
 	const isNestedPath = name.includes(".") || name.includes("[");
 	const prevValue = isNestedPath ? getNestedValue(values, name) : values[name];
 	return Array.isArray(prevValue) && newValue.length > prevValue.length;
-}
-
-function computeFieldsetInitialValue(
-	fieldsetMeta: FormFieldType,
-): Record<string, unknown> {
-	if (fieldsetMeta.type !== "fieldset") return {};
-
-	const shape = fieldsetMeta.fields.shape as Record<string, z.ZodType>;
-	const result: Record<string, unknown> = {};
-
-	for (const [key, fieldSchema] of Object.entries(shape)) {
-		const fieldMeta = formRegistry.get(fieldSchema) as
-			| FormFieldType
-			| undefined;
-		if (fieldMeta) {
-			result[key] = fieldMeta.initialValue;
-		}
-	}
-
-	return result;
 }

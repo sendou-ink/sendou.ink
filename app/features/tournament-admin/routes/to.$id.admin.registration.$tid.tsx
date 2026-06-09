@@ -1,7 +1,8 @@
+import { ArrowLeft } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
-import { SendouDialog } from "~/components/elements/Dialog";
+import { LinkButton } from "~/components/elements/Button";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import { FormField } from "~/form/FormField";
@@ -25,6 +26,7 @@ type RosterMemberValue = {
 };
 
 export default function TournamentAdminRegistrationPage() {
+	const { t } = useTranslation(["common"]);
 	const tournament = useTournament();
 	const { tid } = useParams();
 
@@ -60,17 +62,24 @@ export default function TournamentAdminRegistrationPage() {
 		: undefined;
 
 	return (
-		<SendouDialog
-			heading={team ? "Edit registration" : "Add new team"}
-			onCloseTo={adminPage}
-		>
+		<div className="stack md">
+			<LinkButton
+				to={adminPage}
+				variant="outlined"
+				size="small"
+				icon={<ArrowLeft />}
+				className="mr-auto"
+			>
+				{t("common:actions.back")}
+			</LinkButton>
 			<SendouForm
 				schema={adminRegistrationFormSchema}
+				title={team ? "Edit registration" : "Add new team"}
 				defaultValues={defaultValues}
 			>
 				<RegistrationFields team={team} />
 			</SendouForm>
-		</SendouDialog>
+		</div>
 	);
 }
 

@@ -118,6 +118,7 @@
 	"staff.organization": "",
 	"staff.divider.fromOrganization": "",
 	"staff.divider.addedForEvent": "",
+	"staff.editOrganization": "",
 	"actions.addSub": "Adicionar substituto(a)",
 	"actions.shareLink": "Compartilhe seu link de convite para adicionar membros: {{inviteLink}}",
 	"actions.sub.prompt_one": "Você ainda pode adicionar {{count}} substituto(a) à sua lista",

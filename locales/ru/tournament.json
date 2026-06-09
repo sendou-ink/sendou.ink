@@ -119,6 +119,7 @@
 	"staff.organization": "",
 	"staff.divider.fromOrganization": "",
 	"staff.divider.addedForEvent": "",
+	"staff.editOrganization": "",
 	"actions.addSub": "Добавить запасного",
 	"actions.shareLink": "Ссылка приглашения в команду: {{inviteLink}}",
 	"actions.sub.prompt_one": "Вы ещё можете добавить {{count}} запасного",

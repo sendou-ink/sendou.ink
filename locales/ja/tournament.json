@@ -115,6 +115,7 @@
 	"staff.organization": "",
 	"staff.divider.fromOrganization": "",
 	"staff.divider.addedForEvent": "",
+	"staff.editOrganization": "",
 	"actions.addSub": "サブを追加",
 	"actions.shareLink": "メンバー招待リンクをシェアする: {{inviteLink}}",
 	"actions.sub.prompt_zero": "メンバーが上限に達しているので、これ以上サブを追加することができません",

@@ -117,6 +117,7 @@
 	"staff.organization": "",
 	"staff.divider.fromOrganization": "",
 	"staff.divider.addedForEvent": "",
+	"staff.editOrganization": "",
 	"actions.addSub": "tilføj Suppleant",
 	"actions.shareLink": "Del invitationslinket for at tilføje medlemmer: {{inviteLink}}",
 	"actions.sub.prompt_one": "Du kan stadigvæk tilføje {{count}} Suppleant til din holdliste",

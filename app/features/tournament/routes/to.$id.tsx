@@ -4,9 +4,10 @@ import {
 	Outlet,
 	type ShouldRevalidateFunction,
 	useLoaderData,
+	useMatches,
 	useOutletContext,
 } from "react-router";
-import { Main } from "~/components/Main";
+import { containerClassName, Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
@@ -101,6 +102,7 @@ export function TournamentLayout() {
 		[data],
 	);
 	const [bracketExpanded, setBracketExpanded] = React.useState(true);
+	const mainBreakout = useActiveRouteMainBreakout();
 
 	useTournamentChatLabels(tournament);
 
@@ -112,8 +114,8 @@ export function TournamentLayout() {
 			window.tourney = tournament;
 		}, [tournament]);
 	}
-	return (
-		<Main bigger>
+	const content = (
+		<>
 			<TournamentNav
 				tournament={tournament}
 				hasChildTournaments={data.hasChildTournaments}
@@ -133,7 +135,25 @@ export function TournamentLayout() {
 					}
 				/>
 			</TournamentContext.Provider>
+		</>
+	);
+
+	return (
+		<Main bigger breakoutContainer={mainBreakout}>
+			{mainBreakout ? (
+				<div className={containerClassName("wide")}>{content}</div>
+			) : (
+				content
+			)}
 		</Main>
+	);
+}
+
+function useActiveRouteMainBreakout(): boolean {
+	const matches = useMatches();
+
+	return matches.some(
+		(match) => (match.handle as SendouRouteHandle | undefined)?.mainBreakout,
 	);
 }
 

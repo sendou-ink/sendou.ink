@@ -118,6 +118,7 @@
 	"staff.organization": "",
 	"staff.divider.fromOrganization": "",
 	"staff.divider.addedForEvent": "",
+	"staff.editOrganization": "",
 	"actions.addSub": "הוסיפו ממלא מקום",
 	"actions.shareLink": "שתפו קישור הזמנה להוספת חברי צוות: {{inviteLink}}",
 	"actions.sub.prompt_one": "אתם עדיין יכולים להוסיף {{count}} ממלא מקום לצוות שלכם",

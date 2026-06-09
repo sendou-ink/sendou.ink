@@ -16,11 +16,17 @@ import { goToTab } from "./helpers/tournament-match";
 
 const TOURNAMENT_ID = 2;
 
-const nzapStaffRow = 'fieldset:has(button:has-text("N-ZAP"))';
+const nzapStaffRow = (page: Page) => page.getByTestId("staff-row-N-ZAP");
 
-// The staff form stays on the same page after saving (successToast redirects to
-// the same URL), so we only wait for the POST and let web-first assertions wait
-// for the revalidated DOM rather than for a distinct revalidation request.
+// The "For this event" staff section is read-only by default and reveals the
+// form only after clicking "Edit", collapsing back once the save succeeds.
+async function editStaff(page: Page) {
+	await page.getByTestId("edit-staff-button").click();
+}
+
+// The staff form collapses back to the read-only view after saving, so we only
+// wait for the POST and let web-first assertions wait for the revalidated DOM
+// rather than for a distinct revalidation request.
 async function saveStaff(page: Page) {
 	const postPromise = page.waitForResponse(
 		(res) => res.request().method() === "POST",
@@ -30,7 +36,9 @@ async function saveStaff(page: Page) {
 }
 
 async function addStaffer(page: Page, role?: string) {
-	await page.getByRole("button", { name: "Add", exact: true }).click();
+	await editStaff(page);
+	// The empty staff array already renders one placeholder row to fill in, so we
+	// select into it directly rather than adding another row.
 	await selectUser({
 		page,
 		userName: "N-ZAP",
@@ -59,12 +67,13 @@ test.describe("Tournament staff", () => {
 
 		await addStaffer(page);
 
-		await expect(page.locator(nzapStaffRow)).toBeVisible();
+		await expect(nzapStaffRow(page)).toBeVisible();
 
+		await editStaff(page);
 		await page.getByRole("button", { name: "Remove item" }).click();
 		await saveStaff(page);
 
-		await isNotVisible(page.locator(nzapStaffRow));
+		await isNotVisible(nzapStaffRow(page));
 	});
 
 	test("gives organizer role which allows another user to TO", async ({
@@ -129,9 +138,7 @@ test.describe("Tournament staff", () => {
 		await page.getByRole("tab", { name: "Staff" }).click();
 		await addStaffer(page, "STREAMER");
 
-		await expect(
-			page.locator(nzapStaffRow).getByLabel("Role", { exact: true }),
-		).toHaveValue("STREAMER");
+		await expect(nzapStaffRow(page)).toContainText("streamer");
 
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({

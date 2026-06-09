@@ -318,6 +318,15 @@ export type SendouRouteHandle = {
 
 	/** The name of a navItem that is active on this route. See nav-items.ts */
 	navItemName?: (typeof navItems)[number]["name"];
+
+	/**
+	 * When `true`, the shared `<Main>` rendered by a parent layout (e.g. the
+	 * tournament layout) fills the whole content area instead of the page
+	 * max-width, while the page content stays centered at the normal width.
+	 * Lets a descendant (e.g. the bracket) break out and grow wider than the
+	 * page when it needs to.
+	 */
+	mainBreakout?: boolean;
 };
 
 /** Caches the loader response with "private" Cache-Control meaning that CDN won't cache the response.

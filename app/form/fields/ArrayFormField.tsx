@@ -148,6 +148,7 @@ export function ArrayFormField({
 			) : null}
 			<SendouButton
 				size="small"
+				variant="outlined"
 				icon={<Plus />}
 				onPress={handleAdd}
 				isDisabled={count >= max}

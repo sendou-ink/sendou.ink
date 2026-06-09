@@ -1,15 +1,19 @@
+import { SquarePen } from "lucide-react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { type Tables, TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { SendouForm } from "~/form/SendouForm";
+import { tournamentOrganizationEditPage } from "~/utils/urls";
 import { adminStaffFormSchema } from "../tournament-admin-staff-schemas";
 
 export { action } from "../actions/to.$id.admin.staff.server";
 
 export default function TournamentAdminStaffPage() {
-	const { t } = useTranslation(["tournament"]);
+	const [isEditing, setIsEditing] = React.useState(false);
 	const tournament = useTournament();
 
 	const staff = tournament.ctx.staff.filter(
@@ -17,9 +21,49 @@ export default function TournamentAdminStaffPage() {
 	);
 
 	return (
+		<div className="stack lg">
+			<ImplicitStaffRows />
+			{isEditing ? (
+				<AddedForEventForm
+					staff={staff}
+					onSuccess={() => setIsEditing(false)}
+					onCancel={() => setIsEditing(false)}
+				/>
+			) : (
+				<AddedForEventRows staff={staff} onEdit={() => setIsEditing(true)} />
+			)}
+		</div>
+	);
+}
+
+type EventStaff = Array<
+	Pick<Tables["User"], "id" | "username" | "discordId" | "discordAvatar"> & {
+		role: Tables["TournamentStaff"]["role"];
+	}
+>;
+
+function AddedForEventForm({
+	staff,
+	onSuccess,
+	onCancel,
+}: {
+	staff: EventStaff;
+	onSuccess: () => void;
+	onCancel: () => void;
+}) {
+	const { t } = useTranslation(["common"]);
+
+	return (
 		<SendouForm
 			schema={adminStaffFormSchema}
 			fullWidth
+			submitButtonText={t("common:actions.save")}
+			onSuccess={onSuccess}
+			secondarySubmit={
+				<SendouButton variant="destructive" onPress={onCancel}>
+					{t("common:actions.cancel")}
+				</SendouButton>
+			}
 			defaultValues={{
 				staff: staff.map((staffer) => ({
 					userId: staffer.id,
@@ -28,17 +72,59 @@ export default function TournamentAdminStaffPage() {
 			}}
 		>
 			{({ FormField }) => (
-				<div className="stack lg">
-					<ImplicitStaffRows />
-					<div className="stack md">
-						<Divider smallText>
-							{t("tournament:staff.divider.addedForEvent")}
-						</Divider>
-						<FormField name="staff" />
-					</div>
-				</div>
+				<AddedForEventSection>
+					<FormField name="staff" />
+				</AddedForEventSection>
 			)}
 		</SendouForm>
+	);
+}
+
+function AddedForEventRows({
+	staff,
+	onEdit,
+}: {
+	staff: EventStaff;
+	onEdit: () => void;
+}) {
+	const { t } = useTranslation(["common", "tournament"]);
+
+	return (
+		<AddedForEventSection>
+			{staff.length > 0 ? (
+				<div className="stack sm">
+					{staff.map((staffer) => (
+						<StaffInfoRow
+							key={staffer.id}
+							user={staffer}
+							testId={`staff-row-${staffer.username}`}
+							roleText={t(`tournament:staff.role.${staffer.role}`)}
+						/>
+					))}
+				</div>
+			) : null}
+			<SendouButton
+				icon={<SquarePen />}
+				variant="outlined"
+				size="small"
+				onPress={onEdit}
+				className="m-0-auto"
+				data-testid="edit-staff-button"
+			>
+				{t("common:actions.edit")}
+			</SendouButton>
+		</AddedForEventSection>
+	);
+}
+
+function AddedForEventSection({ children }: { children: React.ReactNode }) {
+	const { t } = useTranslation(["tournament"]);
+
+	return (
+		<div className="stack md">
+			<Divider smallText>{t("tournament:staff.divider.addedForEvent")}</Divider>
+			{children}
+		</div>
 	);
 }
 
@@ -54,8 +140,9 @@ function ImplicitStaffRows() {
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 	const author = tournament.ctx.author;
+	const organization = tournament.ctx.organization;
 
-	const organizationStaff = (tournament.ctx.organization?.members ?? []).filter(
+	const organizationStaff = (organization?.members ?? []).filter(
 		(member) =>
 			member.userId !== author.id &&
 			ORGANIZATION_STAFF_ROLES.includes(member.role),
@@ -88,6 +175,18 @@ function ImplicitStaffRows() {
 					);
 				})}
 			</div>
+			{organization ? (
+				<LinkButton
+					to={tournamentOrganizationEditPage(organization.slug)}
+					icon={<SquarePen />}
+					variant="outlined"
+					size="small"
+					className="m-0-auto"
+					testId="edit-org-button"
+				>
+					{t("tournament:staff.editOrganization")}
+				</LinkButton>
+			) : null}
 		</div>
 	);
 }

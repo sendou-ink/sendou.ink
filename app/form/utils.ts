@@ -94,6 +94,64 @@ export function setNestedValue(
 	};
 }
 
+// Casting away the registry's deep generic signature avoids "Type instantiation
+// is excessively deep" errors when looking up field metadata by schema.
+const typedRegistry = formRegistry as {
+	get(schema: z.ZodType): FormField | undefined;
+};
+
+/**
+ * The default value object for a `fieldset` field, built from each sub-field's
+ * own `initialValue` (e.g. a `select`'s first option). Returns `{}` for
+ * non-fieldset fields.
+ */
+export function fieldsetDefaults(
+	fieldsetMeta: FormField,
+): Record<string, unknown> {
+	if (fieldsetMeta.type !== "fieldset") return {};
+
+	const shape = fieldsetMeta.fields.shape as Record<string, z.ZodType>;
+	const result: Record<string, unknown> = {};
+	for (const [key, fieldSchema] of Object.entries(shape)) {
+		const fieldMeta = typedRegistry.get(fieldSchema);
+		if (fieldMeta) result[key] = fieldMeta.initialValue;
+	}
+	return result;
+}
+
+/**
+ * When a leaf field inside an array-of-fieldset item is edited (e.g.
+ * `staff[0].userId`), the enclosing item is created on demand. Without this the
+ * item would only contain the touched field, dropping defaults that were merely
+ * shown as a fallback (e.g. a required `select`'s first option) and failing
+ * validation on submit. This seeds the item with its fieldset defaults, keeping
+ * any values it already has. Untouched items are never created, so this doesn't
+ * affect submitting a pristine form.
+ */
+export function seedArrayItemDefaults(
+	schema: z.ZodObject<z.ZodRawShape>,
+	values: Record<string, unknown>,
+	name: string,
+): Record<string, unknown> {
+	const lastBracket = name.lastIndexOf("]");
+	// No enclosing array item (`-1`) or the leaf is the array element itself
+	// (path ends in `]`, i.e. a primitive array) — nothing to seed.
+	if (lastBracket === -1 || lastBracket === name.length - 1) return values;
+
+	const itemPath = name.slice(0, lastBracket + 1);
+	const itemSchema = getNestedSchema(schema, itemPath);
+	if (!itemSchema) return values;
+
+	const itemMeta = typedRegistry.get(itemSchema);
+	if (itemMeta?.type !== "fieldset") return values;
+
+	const existing = getNestedValue(values, itemPath) as
+		| Record<string, unknown>
+		| undefined;
+	const merged = { ...fieldsetDefaults(itemMeta), ...(existing ?? {}) };
+	return setNestedValue(values, itemPath, merged);
+}
+
 export function getNestedSchema(
 	schema: z.ZodObject<z.ZodRawShape>,
 	path: string,
@@ -170,10 +228,7 @@ export function validateField(
 	// array) belongs to that child — attributing it to the parent would surface
 	// the wrong message at the wrong field. Other composite fields (e.g. a custom
 	// tuple) render as a single control, so their nested issues belong to them.
-	const registry = formRegistry as {
-		get(schema: z.ZodType): FormField | undefined;
-	};
-	const fieldMeta = registry.get(fieldSchema);
+	const fieldMeta = typedRegistry.get(fieldSchema);
 	const childrenRenderOwnErrors =
 		fieldMeta?.type === "array" || fieldMeta?.type === "fieldset";
 	const issue = childrenRenderOwnErrors
