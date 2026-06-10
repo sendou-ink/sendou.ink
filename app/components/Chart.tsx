@@ -34,7 +34,7 @@ export default function Chart({
 	xAxis,
 }: {
 	options: [
-		{ label: string; data: Array<{ primary: Date; secondary: number }> },
+		{ label: React.ReactNode; data: Array<{ primary: Date | number; secondary: number }> },
 	];
 	containerClassName?: string;
 	headerSuffix?: string;
@@ -49,6 +49,13 @@ export default function Chart({
 	// Give each chart a unique id
 	const chartId = React.useId();
 
+	const [tooltipData, setTooltipData] = React.useState<{
+		x: number;
+		y: number;
+		items: Array<{ label: React.ReactNode; value: number | null; color: string }>;
+		header: string;
+	} | null>(null);
+
 	if (!isHydrated) {
 		return <div className={clsx(styles.container, containerClassName)} />;
 	}
@@ -61,7 +68,7 @@ export default function Chart({
 	const chartData = React.useMemo(() => ({
 		labels: options[0].data.map((d) => d.primary),
 		datasets: options.map((series, i) => ({
-			label: series.label,
+			label: String(i),
 			data: series.data.map((d) => d.secondary),
 			borderColor: colors[i % colors.length],
 			pointRadius: 0,
@@ -73,7 +80,7 @@ export default function Chart({
 	}), [options]);
 
 	return (
-		<div className={clsx(styles.container, containerClassName)}>
+		<div className={clsx(styles.container, containerClassName)} style={{ position: "relative" }}>
 			<Line
 				ref={chartRef}
 				id={chartId}
@@ -95,20 +102,53 @@ export default function Chart({
 					},
 					plugins: {
 						tooltip: {
-							callbacks: {
-								title: (items) => {
-									const x = items[0].parsed.x;
-									if (x == null) return "";
-									return `${x}${headerSuffix ?? ""}`;
-								},
-								label: (item) => {
-									return `${item.dataset.label}: ${item.parsed.y}${valueSuffix ?? ""}`;
-								},
+							enabled: false,
+							external: ({ tooltip }) => {
+								if (tooltip.opacity === 0) {
+									setTooltipData(null);
+									return;
+								}
+								const items = tooltip.dataPoints.map((dp) => ({
+									label: options[dp.datasetIndex].label,
+									value: dp.parsed.y,
+									color: colors[dp.datasetIndex % colors.length],
+								}));
+								setTooltipData({
+									x: tooltip.caretX,
+									y: tooltip.caretY,
+									header: `${tooltip.dataPoints[0].parsed.x}${headerSuffix ?? ""}`,
+									items,
+								});
 							},
 						},
 					},
 				}}
 			/>
+			{tooltipData && (
+				<div
+					className={styles.tooltip}
+					style={{
+						position: "absolute",
+						left: tooltipData.x,
+						top: tooltipData.y,
+						pointerEvents: "none",
+					}}
+				>
+					<h3 className="text-center text-md">{tooltipData.header}</h3>
+					{tooltipData.items.map((item, i) => (
+						<div key={i} className="stack horizontal items-center sm">
+							<div
+								className={styles.dot}
+								style={{ "--dot-color": item.color } as React.CSSProperties}
+							/>
+							<div>{item.label}</div>
+							<div className={styles.tooltipValue}>
+								{item.value}{valueSuffix}
+							</div>
+						</div>
+					))}
+				</div>
+			)}
 		</div>
 	);
 }

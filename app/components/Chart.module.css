@@ -15,19 +15,13 @@
 	flex-direction: column;
 	gap: var(--s-1);
 }
-
 .tooltipValue {
 	margin-inline-start: auto;
 	min-width: 40px;
 }
-
 .dot {
-	/* background-color: var(--dot-color); */
+	background-color: var(--dot-color);
 	border-radius: 100%;
 	width: 12px;
 	height: 12px;
-}
-
-.dotFocused {
-	/* outline: 3px solid var(--dot-color-outline); */
 }
