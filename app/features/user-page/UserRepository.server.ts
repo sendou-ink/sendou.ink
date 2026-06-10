@@ -812,6 +812,11 @@ export async function search({
 
 	const includeExactMatches = query.length > 1;
 
+	// the trigram index needs at least 3 characters and can't replicate
+	// LIKE wildcard semantics, those queries fall back to scanning User
+	const canUseSearchIndex =
+		query.length >= 3 && !query.includes("%") && !query.includes("_");
+
 	let dbQuery = db
 		.selectFrom("User")
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
@@ -823,6 +828,16 @@ export async function search({
 					: fuzzyConditions(eb),
 			),
 		);
+
+	if (canUseSearchIndex) {
+		// UserSearch match prefilters candidates via the trigram index (it
+		// matches a superset of the LIKE conditions, which stay above as the
+		// source of truth so results are identical to the fallback path)
+		const ftsPhrase = `"${query.replaceAll('"', '""')}"`;
+		dbQuery = dbQuery
+			.innerJoin("UserSearch", "UserSearch.rowid", "User.id")
+			.where(sql<boolean>`"UserSearch" match ${ftsPhrase}`);
+	}
 
 	if (includeExactMatches) {
 		dbQuery = dbQuery.orderBy(
@@ -837,19 +852,23 @@ export async function search({
 		);
 	}
 
-	return dbQuery
-		.orderBy(
-			(eb) =>
-				eb
-					.case()
-					.when("PlusTier.tier", "is", null)
-					.then(4)
-					.else(eb.ref("PlusTier.tier"))
-					.end(),
-			"asc",
-		)
-		.limit(limit)
-		.execute();
+	return (
+		dbQuery
+			.orderBy(
+				(eb) =>
+					eb
+						.case()
+						.when("PlusTier.tier", "is", null)
+						.then(4)
+						.else(eb.ref("PlusTier.tier"))
+						.end(),
+				"asc",
+			)
+			// deterministic order for ties so both query paths return the same rows
+			.orderBy("User.id", "asc")
+			.limit(limit)
+			.execute()
+	);
 }
 
 export function searchExact(args: {

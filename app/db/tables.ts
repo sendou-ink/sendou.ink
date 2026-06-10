@@ -1105,6 +1105,17 @@ export interface UserSubmittedImage {
 	validatedAt: number | null;
 }
 
+/** FTS5 trigram index over User's searchable columns (external content table,
+ * kept in sync with triggers). Only meant for reading: filter with
+ * `match` and join `rowid` to `User.id`. */
+export interface UserSearch {
+	rowid: GeneratedAlways<number>;
+	username: GeneratedAlways<string | null>;
+	inGameName: GeneratedAlways<string | null>;
+	discordUniqueName: GeneratedAlways<string | null>;
+	customUrl: GeneratedAlways<string | null>;
+}
+
 export interface UserWeapon {
 	createdAt: Generated<number>;
 	isFavorite: Generated<DBBoolean>;
@@ -1462,6 +1473,7 @@ export interface DB {
 	UnvalidatedUserSubmittedImage: UnvalidatedUserSubmittedImage;
 	UnvalidatedVideo: UnvalidatedVideo;
 	User: User;
+	UserSearch: UserSearch;
 	UserResultHighlight: UserResultHighlight;
 	UserSubmittedImage: UserSubmittedImage;
 	UserWeapon: UserWeapon;
