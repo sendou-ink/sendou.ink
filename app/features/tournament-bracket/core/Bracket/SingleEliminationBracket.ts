@@ -142,17 +142,14 @@ export class SingleEliminationBracket extends Bracket {
 					: undefined;
 
 		const resultWithThirdPlaceTiebroken = result
-			.map((standing) => {
-				if (
-					standing.placement === 3 &&
-					thirdPlaceMatchWinner?.id !== standing.team.id
-				) {
-					return {
-						...standing,
-						placement: 4,
-					};
+			.flatMap((standing) => {
+				if (standing.placement !== 3 || !thirdPlaceMatch) return [standing];
+				// semifinal losers have not finished their run before the third place match is played
+				if (!thirdPlaceMatchWinner) return [];
+				if (thirdPlaceMatchWinner.id !== standing.team.id) {
+					return [{ ...standing, placement: 4 }];
 				}
-				return standing;
+				return [standing];
 			})
 			.sort((a, b) => a.placement - b.placement);
 
