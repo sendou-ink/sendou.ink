@@ -17,6 +17,7 @@ import { useFetcher } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
+import { SendouPopover } from "~/components/elements/Popover";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Input } from "~/components/Input";
 import {
@@ -25,6 +26,7 @@ import {
 } from "~/components/SortableTableHeader";
 import { Table } from "~/components/Table";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	teamPage,
@@ -196,20 +198,51 @@ function TeamRow({
 function CheckInCell({ team }: { team: TournamentDataTeam }) {
 	const tournament = useTournament();
 
-	const labels = activeCheckInLabels(team, (key) =>
-		key === null ? "Tournament" : (tournament.brackets[key]?.name ?? `#${key}`),
-	);
-
-	if (labels.length === 0) {
-		return <X className={styles.checkInCross} aria-label="Not checked in" />;
-	}
+	const scopes = checkInScopes(tournament, team);
 
 	return (
-		<span className={styles.checkInMarks} title={labels.join(", ")}>
-			{labels.map((label) => (
-				<Check key={label} className={styles.checkInMark} aria-label={label} />
-			))}
-		</span>
+		<SendouPopover
+			placement="bottom start"
+			trigger={
+				<SendouButton
+					variant="minimal"
+					className={styles.checkInTrigger}
+					aria-label="Check-in status"
+				>
+					{scopes.map((scope) =>
+						scope.checkedIn ? (
+							<Check
+								key={scope.label}
+								className={styles.checkInMark}
+								aria-label={`${scope.label}: checked in`}
+							/>
+						) : (
+							<X
+								key={scope.label}
+								className={styles.checkInCross}
+								aria-label={`${scope.label}: not checked in`}
+							/>
+						),
+					)}
+				</SendouButton>
+			}
+		>
+			<ul className={styles.checkInScopes}>
+				{scopes.map((scope) => (
+					<li key={scope.label} className={styles.checkInScope}>
+						{scope.checkedIn ? (
+							<Check className={styles.checkInMark} aria-hidden />
+						) : (
+							<X className={styles.checkInCross} aria-hidden />
+						)}
+						<span className={styles.checkInScopeLabel}>{scope.label}</span>
+						<span className={styles.checkInScopeStatus}>
+							{scope.checkedIn ? "Checked in" : "Not checked in"}
+						</span>
+					</li>
+				))}
+			</ul>
+		</SendouPopover>
 	);
 }
 
@@ -231,6 +264,10 @@ function TeamRowMenu({
 
 	const checkInOpen = tournament.regularCheckInStartInThePast;
 	const checkedIn = isTournamentCheckedIn(team);
+	const bracketsRequiringCheckIn = checkInBracketsForTeam(tournament, team);
+	const eventLabelSuffix = tournament.brackets.some(isCheckInBracket)
+		? " (event)"
+		: "";
 
 	return (
 		<div className="stack horizontal xs items-center">
@@ -258,7 +295,7 @@ function TeamRowMenu({
 								submit({ _action: "CHECK_OUT", teamId: team.id, bracketIdx: 0 })
 							}
 						>
-							Check out
+							{`Check out${eventLabelSuffix}`}
 						</SendouMenuItem>
 					) : (
 						<SendouMenuItem
@@ -267,10 +304,47 @@ function TeamRowMenu({
 								submit({ _action: "CHECK_IN", teamId: team.id, bracketIdx: 0 })
 							}
 						>
-							Check in
+							{`Check in${eventLabelSuffix}`}
 						</SendouMenuItem>
 					)
 				) : null}
+				{team.checkIns.length > 0
+					? bracketsRequiringCheckIn.map((bracket) => {
+							if (!bracket.preview) return null;
+
+							const bracketCheckedIn = isBracketCheckedIn(team, bracket.idx);
+
+							return bracketCheckedIn ? (
+								<SendouMenuItem
+									key={bracket.idx}
+									icon={<LogOut />}
+									onAction={() =>
+										submit({
+											_action: "CHECK_OUT",
+											teamId: team.id,
+											bracketIdx: bracket.idx,
+										})
+									}
+								>
+									{`Check out (${bracket.name})`}
+								</SendouMenuItem>
+							) : (
+								<SendouMenuItem
+									key={bracket.idx}
+									icon={<LogIn />}
+									onAction={() =>
+										submit({
+											_action: "CHECK_IN",
+											teamId: team.id,
+											bracketIdx: bracket.idx,
+										})
+									}
+								>
+									{`Check in (${bracket.name})`}
+								</SendouMenuItem>
+							);
+						})
+					: null}
 				{tournament.hasStarted ? (
 					team.droppedOut ? (
 						<SendouMenuItem
@@ -340,6 +414,49 @@ function isTournamentCheckedIn(team: TournamentDataTeam) {
 		tournamentLevel.some((checkIn) => !checkIn.isCheckOut) &&
 		!tournamentLevel.some((checkIn) => checkIn.isCheckOut)
 	);
+}
+
+function isBracketCheckedIn(team: TournamentDataTeam, bracketIdx: number) {
+	return team.checkIns.some(
+		(checkIn) => checkIn.bracketIdx === bracketIdx && !checkIn.isCheckOut,
+	);
+}
+
+/** Does this bracket have its own opt-in check-in (besides the event check-in)? */
+function isCheckInBracket(bracket: Tournament["brackets"][number]) {
+	return bracket.requiresCheckIn;
+}
+
+/** Is the team going to play (or pending check-in) in this bracket? */
+function isTeamInBracket(
+	bracket: Tournament["brackets"][number],
+	teamId: number,
+) {
+	return Boolean(
+		bracket.seeding?.includes(teamId) ||
+			bracket.teamsPendingCheckIn?.includes(teamId),
+	);
+}
+
+/** Check-in brackets the given team is a participant of. */
+function checkInBracketsForTeam(
+	tournament: Tournament,
+	team: TournamentDataTeam,
+) {
+	return tournament.brackets.filter(
+		(bracket) => isCheckInBracket(bracket) && isTeamInBracket(bracket, team.id),
+	);
+}
+
+/** The event and the team's check-in brackets paired with its status in each. */
+function checkInScopes(tournament: Tournament, team: TournamentDataTeam) {
+	return [
+		{ label: "Event", checkedIn: isTournamentCheckedIn(team) },
+		...checkInBracketsForTeam(tournament, team).map((bracket) => ({
+			label: bracket.name,
+			checkedIn: isBracketCheckedIn(team, bracket.idx),
+		})),
+	];
 }
 
 function activeCheckInLabels(

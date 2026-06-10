@@ -44,10 +44,11 @@
 	opacity: 0.6;
 }
 
-.checkInMarks {
+.checkInTrigger {
 	display: inline-flex;
 	align-items: center;
 	gap: var(--s-0-5);
+	padding: var(--s-1);
 }
 
 .checkInMark {
@@ -60,6 +61,32 @@
 	width: 1rem;
 	height: 1rem;
 	color: var(--color-error);
+}
+
+.checkInScopes {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.checkInScope {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-xs);
+}
+
+.checkInScopeLabel {
+	font-weight: var(--weight-semi);
+}
+
+.checkInScopeStatus {
+	color: var(--color-text-high);
+	font-weight: var(--weight-body);
 }
 
 .noResults {
