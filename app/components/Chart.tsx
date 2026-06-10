@@ -49,6 +49,7 @@ export default function Chart({
 	// Give each chart a unique id
 	const chartId = React.useId();
 
+	// Get the tooltip data
 	const [tooltipData, setTooltipData] = React.useState<{
 		x: number;
 		y: number;
@@ -72,8 +73,8 @@ export default function Chart({
 			data: series.data.map((d) => d.secondary),
 			borderColor: colors[i % colors.length],
 			pointRadius: 0,
-			pointHoverRadius: 4,
-			hitRadius: 10,
+			pointHoverRadius: 6,
+			hitRadius: 40,
 			backgroundColor: "transparent",
 			tension: 0.3,
 		})),
