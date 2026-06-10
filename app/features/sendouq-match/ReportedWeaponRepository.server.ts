@@ -274,15 +274,9 @@ export async function weaponUsageStats({
 
 	const rows = await db
 		.selectFrom("GroupMember")
-		.leftJoin("Group", "Group.id", "GroupMember.groupId")
-		.innerJoin("GroupMatch", (join) =>
-			join.on((eb) =>
-				eb.or([
-					eb("GroupMatch.alphaGroupId", "=", eb.ref("Group.id")),
-					eb("GroupMatch.bravoGroupId", "=", eb.ref("Group.id")),
-				]),
-			),
-		)
+		// cross join pins the join order so SQLite starts from the user's own
+		// groups instead of scanning every GroupMatch in the season's date range
+		.crossJoin("GroupMatch")
 		.leftJoin("GroupMatchMap", "GroupMatchMap.matchId", "GroupMatch.id")
 		.innerJoin("ReportedWeapon", (join) =>
 			join
@@ -321,6 +315,12 @@ export async function weaponUsageStats({
 				.as("weaponUserGroupId"),
 		])
 		.where("GroupMember.userId", "=", userId)
+		.where((eb) =>
+			eb.or([
+				eb("GroupMatch.alphaGroupId", "=", eb.ref("GroupMember.groupId")),
+				eb("GroupMatch.bravoGroupId", "=", eb.ref("GroupMember.groupId")),
+			]),
+		)
 		.where("GroupMatch.createdAt", ">=", dateToDatabaseTimestamp(starts))
 		.where("GroupMatch.createdAt", "<=", dateToDatabaseTimestamp(ends))
 		.where("GroupMatchMap.mode", "=", mode)

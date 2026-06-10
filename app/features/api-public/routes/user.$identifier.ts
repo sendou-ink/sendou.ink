@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { safeNumberParse } from "~/utils/number";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
@@ -42,18 +43,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 						.whereRef("UserWeapon.userId", "=", "User.id")
 						.orderBy("UserWeapon.order", "asc"),
 				).as("weapons"),
-				jsonArrayFrom(
-					eb
-						.selectFrom("BadgeOwner")
-						.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
-						.select(({ fn }) => [
-							"Badge.displayName",
-							"Badge.code",
-							fn.sum<number>("BadgeOwner.count").as("count"),
-						])
-						.groupBy("BadgeOwner.badgeId")
-						.whereRef("BadgeOwner.userId", "=", "User.id"),
-				).as("badges"),
 				"SplatoonPlayer.peakXp",
 				jsonArrayFrom(
 					eb
@@ -77,6 +66,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			})
 			.executeTakeFirst(),
 	);
+
+	const badges = await UserRepository.ownedBadgesByUserId(user.id);
 
 	const season = Seasons.currentOrPrevious(new Date())!.nth;
 
@@ -113,7 +104,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			name: t(`weapons:MAIN_${weapon.weaponSplId}`),
 			isFiveStar: Boolean(weapon.isFavorite),
 		})),
-		badges: user.badges.map((badge) => ({
+		badges: badges.map((badge) => ({
 			name: badge.displayName,
 			count: badge.count,
 			gifUrl: `https://sendou.ink/static-assets/badges/${badge.code}.gif`,
