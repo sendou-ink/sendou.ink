@@ -83,6 +83,7 @@ export default function Chart({
 				id={chartId}
 				data={chartData}
 				options={{
+					maintainAspectRatio: true,
 					scales: {
 						x: {
 							grid: { color: "rgba(255,255,255,0.1)" },

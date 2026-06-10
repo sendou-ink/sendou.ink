@@ -1,5 +1,4 @@
 .container {
-	height: var(--chart-height, 175px);
 	width: var(--chart-width);
 	background-color: var(--chart-bg, var(--color-bg-high));
 	border-radius: var(--radius-box);
