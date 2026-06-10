@@ -86,4 +86,18 @@ describe("removeMarkdown()", () => {
 			removeMarkdown("Check out [the site](https://example.com) today"),
 		).toBe("Check out the site today");
 	});
+
+	test("Keeps non-header # characters", () => {
+		expect(removeMarkdown("Showdown #1 starts now")).toBe(
+			"Showdown #1 starts now",
+		);
+	});
+
+	test("Leaves space-flanked asterisks intact instead of mangling them", () => {
+		expect(removeMarkdown("** bold text **")).toBe("** bold text **");
+	});
+
+	test("Strips emphasis with inner spaces", () => {
+		expect(removeMarkdown("*a b c*")).toBe("a b c");
+	});
 });

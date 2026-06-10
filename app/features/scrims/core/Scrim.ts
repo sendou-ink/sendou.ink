@@ -104,18 +104,18 @@ export function applyFilters(post: ScrimPost, filters: ScrimFilters): boolean {
 		const startTimeString = format(startDate, "HH:mm");
 		const endTimeString = format(endDate, "HH:mm");
 
-		// a range that crosses midnight (e.g. 23:00 -> 01:00) is two segments
-		const postSegments =
-			endTimeString < startTimeString
-				? [
-						{ start: startTimeString, end: "24:00" },
-						{ start: "00:00", end: endTimeString },
-					]
-				: [{ start: startTimeString, end: endTimeString }];
+		const postSegments = timeRangeToSegments(startTimeString, endTimeString);
+		const filterSegments = timeRangeToSegments(
+			timeFilters.start,
+			timeFilters.end,
+		);
 
-		const hasOverlap = postSegments.some(
-			(segment) =>
-				segment.start <= timeFilters.end && segment.end >= timeFilters.start,
+		const hasOverlap = postSegments.some((postSegment) =>
+			filterSegments.some(
+				(filterSegment) =>
+					postSegment.start <= filterSegment.end &&
+					postSegment.end >= filterSegment.start,
+			),
 		);
 
 		if (!hasOverlap) {
@@ -202,4 +202,14 @@ export function lastReportedMap<
 		maps.filter((m) => m.reportedAt !== null),
 		[(m) => m.index, "desc"],
 	);
+}
+
+/** Splits a "HH:mm" time range into segments, breaking a range that crosses midnight (e.g. 23:00 -> 01:00) into two. */
+function timeRangeToSegments(start: string, end: string) {
+	return end < start
+		? [
+				{ start, end: "24:00" },
+				{ start: "00:00", end },
+			]
+		: [{ start, end }];
 }

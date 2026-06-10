@@ -239,7 +239,7 @@ export const leaderboardsPage = (args: {
 	type?: "USER" | "TEAM";
 }) => {
 	const params = new URLSearchParams();
-	if (args.season) {
+	if (typeof args.season === "number") {
 		params.set("season", String(args.season));
 	}
 	if (args.type) {
@@ -378,8 +378,14 @@ export const tournamentOrganizationPage = ({
 }: {
 	organizationSlug: string;
 	tournamentName?: string;
-}) =>
-	`/org/${organizationSlug}${tournamentName ? `?source=${decodeURIComponent(tournamentName)}` : ""}`;
+}) => {
+	const params = new URLSearchParams();
+	if (tournamentName) {
+		params.set("source", tournamentName);
+	}
+
+	return `/org/${organizationSlug}${params.size > 0 ? `?${params.toString()}` : ""}`;
+};
 export const tournamentOrganizationEditPage = (organizationSlug: string) =>
 	`${tournamentOrganizationPage({ organizationSlug })}/edit`;
 

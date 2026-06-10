@@ -437,6 +437,7 @@ function parsePlacements(
 
 		if (part.includes("-")) {
 			const [start, end] = part.split("-").map(Number);
+			if (end < start) return null;
 
 			for (let n = start; n <= end; n++) {
 				result.push(n);
