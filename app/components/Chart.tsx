@@ -1,12 +1,6 @@
 import clsx from "clsx";
 import * as React from "react";
 import { Line } from "react-chartjs-2";
-
-// import { type AxisOptions, Chart as ReactChart } from "react-charts";
-// import type { TooltipRendererProps } from "react-charts/types/components/TooltipRenderer";
-// import { useTheme } from "~/features/theme/core/provider";
-// import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
-
 import { useHydrated } from "~/hooks/useHydrated";
 import styles from "./Chart.module.css";
 import { useRef } from "react";
@@ -35,6 +29,8 @@ ChartJS.register(
 export default function Chart({
 	options,
 	containerClassName,
+	headerSuffix,
+	valueSuffix,
 	xAxis,
 }: {
 	options: [
@@ -98,7 +94,18 @@ export default function Chart({
 						},
 					},
 					plugins: {
-						tooltip: { enabled: true }, // replace with custom tooltip later
+						tooltip: {
+							callbacks: {
+								title: (items) => {
+									const x = items[0].parsed.x;
+									if (x == null) return "";
+									return `${x}${headerSuffix ?? ""}`;
+								},
+								label: (item) => {
+									return `${item.dataset.label}: ${item.parsed.y}${valueSuffix ?? ""}`;
+								},
+							},
+						},
 					},
 				}}
 			/>
