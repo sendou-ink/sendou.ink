@@ -59,7 +59,7 @@ const regOpenTournamentTeamsByJoinedUserId = (userId: number) =>
 		)
 		.execute();
 
-export async function updateMemberInGameName({
+export function updateMemberInGameName({
 	userId,
 	inGameName,
 	tournamentTeamId,
@@ -68,12 +68,21 @@ export async function updateMemberInGameName({
 	inGameName: string;
 	tournamentTeamId: number;
 }) {
-	return db
-		.updateTable("TournamentTeamMember")
-		.set({ inGameName })
-		.where("TournamentTeamMember.userId", "=", userId)
-		.where("TournamentTeamMember.tournamentTeamId", "=", tournamentTeamId)
-		.execute();
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("TournamentTeamMember")
+			.set({ inGameName })
+			.where("TournamentTeamMember.userId", "=", userId)
+			.where("TournamentTeamMember.tournamentTeamId", "=", tournamentTeamId)
+			.execute();
+
+		await TournamentAuditLogRepository.insert(trx, {
+			type: "UPDATE_IN_GAME_NAME",
+			tournamentTeamId,
+			subjectUserId: userId,
+			metadata: { inGameName },
+		});
+	});
 }
 
 /**
@@ -322,6 +331,13 @@ export function upsertRegistration({
 				.where("TournamentTeamMember.tournamentTeamId", "=", id)
 				.where("TournamentTeamMember.userId", "=", userId)
 				.execute();
+
+			await TournamentAuditLogRepository.insert(trx, {
+				type: "UPDATE_IN_GAME_NAME",
+				tournamentTeamId: id,
+				subjectUserId: userId,
+				metadata: { inGameName },
+			});
 		}
 	});
 }

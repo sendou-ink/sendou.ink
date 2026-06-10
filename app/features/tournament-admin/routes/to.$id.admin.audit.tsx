@@ -87,10 +87,10 @@ function AuditLogRow({ event }: { event: AuditLogEvent }) {
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 
-	const bracketName =
+	const detail =
 		typeof event.metadata?.bracketIdx === "number"
 			? tournament.brackets[event.metadata.bracketIdx]?.name
-			: undefined;
+			: event.metadata?.inGameName;
 
 	return (
 		<tr>
@@ -103,9 +103,7 @@ function AuditLogRow({ event }: { event: AuditLogEvent }) {
 			</td>
 			<td>
 				{t(`tournament:admin.audit.event.${event.type}`)}
-				{bracketName ? (
-					<div className="text-lighter text-xs">{bracketName}</div>
-				) : null}
+				{detail ? <div className="text-lighter text-xs">{detail}</div> : null}
 			</td>
 			<td>
 				{event.team ? (

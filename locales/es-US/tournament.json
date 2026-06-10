@@ -101,6 +101,7 @@
 	"admin.audit.event.TEAM_CHECKED_OUT": "",
 	"admin.audit.event.TEAM_DROPPED_OUT": "",
 	"admin.audit.event.TEAM_DROP_OUT_UNDONE": "",
+	"admin.audit.event.UPDATE_IN_GAME_NAME": "",
 	"admin.actions.CHANGE_TEAM_OWNER": "Cambiar capitán",
 	"admin.actions.CHANGE_TEAM_NAME": "Cambiar nombre de equipo",
 	"admin.actions.CHECK_IN": "Check in",

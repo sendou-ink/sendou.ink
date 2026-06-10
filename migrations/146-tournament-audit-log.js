@@ -40,6 +40,10 @@ export function up(db) {
 		).run();
 
 		db.prepare(
+			/* sql */ `create index tournament_audit_log_tournament_id_team_history_id_type_created_at_idx on "TournamentAuditLog"("tournamentId", "tournamentTeamHistoryId", "type", "createdAt")`,
+		).run();
+
+		db.prepare(
 			/* sql */ `create index tournament_team_history_tournament_id_idx on "TournamentTeamHistory"("tournamentId")`,
 		).run();
 

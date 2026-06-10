@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import type { TournamentStage } from "~/db/tables";
 import type { ParsedBracket } from "../../tournament-bracket/core/Progression";
 
@@ -26,10 +27,10 @@ export function splitTournamentName(
 	const trimmedName = tournamentName.trim();
 	const nameLower = trimmedName.toLowerCase();
 
-	const matchingSeries = series
-		.filter((s) => nameLower.startsWith(s.name.toLowerCase()))
-		.sort((a, b) => b.name.length - a.name.length)
-		.at(0);
+	const matchingSeries = R.firstBy(
+		series.filter((s) => nameLower.startsWith(s.name.toLowerCase())),
+		[(s) => s.name.length, "desc"],
+	);
 
 	if (!matchingSeries) return { name: trimmedName };
 

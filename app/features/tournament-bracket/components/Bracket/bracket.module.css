@@ -13,7 +13,6 @@
 	padding: var(--s-4) var(--s-6);
 	max-width: 100%;
 	max-height: min(1200px, 82dvh);
-	-ms-overflow-style: none;
 	scrollbar-width: none;
 	border: var(--border-style);
 	border-radius: var(--radius-box);

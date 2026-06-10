@@ -1,5 +1,9 @@
 import * as React from "react";
 import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
@@ -211,19 +215,19 @@ function RadioRow<T extends string>({
 	return (
 		<div className="stack sm">
 			<div className="text-sm font-bold">{label}</div>
-			<div className="stack horizontal md flex-wrap">
+			<SendouChipRadioGroup>
 				{options.map((option) => (
-					<label key={option.value} className={styles.fieldLabel}>
-						<input
-							type="radio"
-							name={groupName}
-							checked={value === option.value}
-							onChange={() => onChange(option.value)}
-						/>
+					<SendouChipRadio
+						key={option.value}
+						name={groupName}
+						value={option.value}
+						checked={value === option.value}
+						onChange={(value) => onChange(value as T)}
+					>
 						{option.label}
-					</label>
+					</SendouChipRadio>
 				))}
-			</div>
+			</SendouChipRadioGroup>
 		</div>
 	);
 }

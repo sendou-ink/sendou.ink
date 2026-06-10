@@ -890,6 +890,7 @@ export const TOURNAMENT_AUDIT_LOG_TYPES = [
 	"TEAM_CHECKED_OUT",
 	"TEAM_DROPPED_OUT",
 	"TEAM_DROP_OUT_UNDONE",
+	"UPDATE_IN_GAME_NAME",
 ] as const;
 
 export interface TournamentAuditLog {
@@ -908,6 +909,8 @@ export interface TournamentAuditLog {
 
 export interface TournamentAuditLogMetadata {
 	bracketIdx?: number;
+	/** The new in-game name, for `UPDATE_IN_GAME_NAME` events. */
+	inGameName?: string;
 }
 
 export interface TournamentOrganization {

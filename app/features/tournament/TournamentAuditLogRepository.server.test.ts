@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
-import type { Tables } from "~/db/tables";
+import type { Tables, TournamentAuditLogMetadata } from "~/db/tables";
 import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
 import * as TournamentAuditLogRepository from "./TournamentAuditLogRepository.server";
 
@@ -33,7 +33,7 @@ const insertEvent = ({
 	actorUserId: number;
 	tournamentTeamId: number;
 	subjectUserId?: number;
-	metadata?: { bracketIdx?: number };
+	metadata?: TournamentAuditLogMetadata;
 }) =>
 	withUserId(actorUserId, () =>
 		db
@@ -263,6 +263,29 @@ describe("TournamentAuditLogRepository", () => {
 		});
 
 		expect(events[0].metadata?.bracketIdx).toBe(2);
+	});
+
+	test("stores and reads back the in-game name for name change events", async () => {
+		const tournament = await createTournament();
+		const team = await createTeam(tournament.id, "Team Olive");
+
+		await insertEvent({
+			type: "UPDATE_IN_GAME_NAME",
+			actorUserId: 1,
+			tournamentTeamId: team.id,
+			subjectUserId: 2,
+			metadata: { inGameName: "New IGN#1234" },
+		});
+
+		const events = await TournamentAuditLogRepository.findByTournamentId({
+			tournamentId: tournament.id,
+			limit: 30,
+			offset: 0,
+		});
+
+		expect(events[0].type).toBe("UPDATE_IN_GAME_NAME");
+		expect(events[0].subject?.id).toBe(2);
+		expect(events[0].metadata?.inGameName).toBe("New IGN#1234");
 	});
 
 	test("updateTeamHistoryName keeps the preserved name current", async () => {

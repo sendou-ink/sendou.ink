@@ -1,6 +1,7 @@
 import { type ActionFunction, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
+import { notify } from "~/features/notifications/core/notify.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
@@ -103,6 +104,29 @@ export const action: ActionFunction = async ({ request, params }) => {
 			tournamentId,
 			type: "participant",
 			userId: removeId,
+		});
+	}
+
+	if (
+		team &&
+		membersToAdd.length > 0 &&
+		!tournament.isTest &&
+		!tournament.isDraft
+	) {
+		notify({
+			userIds: membersToAdd,
+			notification: {
+				type: "TO_ADDED_TO_TEAM",
+				pictureUrl:
+					tournament.tournamentTeamLogoSrc(team) ?? tournament.ctx.logoUrl,
+				meta: {
+					adderUsername: user.username,
+					teamName: name,
+					tournamentId,
+					tournamentName: tournament.ctx.name,
+					tournamentTeamId: team.id,
+				},
+			},
 		});
 	}
 

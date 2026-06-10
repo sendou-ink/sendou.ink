@@ -98,6 +98,7 @@
 	"admin.audit.event.TEAM_CHECKED_OUT": "",
 	"admin.audit.event.TEAM_DROPPED_OUT": "",
 	"admin.audit.event.TEAM_DROP_OUT_UNDONE": "",
+	"admin.audit.event.UPDATE_IN_GAME_NAME": "",
 	"admin.actions.CHANGE_TEAM_OWNER": "变更队长",
 	"admin.actions.CHANGE_TEAM_NAME": "变更队名",
 	"admin.actions.CHECK_IN": "登入",
