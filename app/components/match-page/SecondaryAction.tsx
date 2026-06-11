@@ -1,9 +1,9 @@
 import clsx from "clsx";
 import { ChevronUp } from "lucide-react";
-import * as React from "react";
+import type * as React from "react";
+import type { JSX } from "react";
 import { SendouButton } from "../elements/Button";
 import styles from "./SecondaryAction.module.css";
-import { JSX } from "react";
 
 interface SecondaryActionProps {
 	isOpen: boolean;
