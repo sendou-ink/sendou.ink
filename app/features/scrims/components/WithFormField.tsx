@@ -56,7 +56,7 @@ export function WithFormField({
 
 	const handleUserChange = React.useCallback(
 		(selectedUser: { id: number } | null, index: number) => {
-			if (!fromValue || fromValue.mode !== "PICKUP") return;
+			if (fromValue?.mode !== "PICKUP") return;
 
 			onChange({
 				mode: "PICKUP",

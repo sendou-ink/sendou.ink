@@ -37,7 +37,7 @@ export async function executeRoll({
 		resultsCount: results.length,
 	});
 
-	if (!step || step.action !== "ROLL") return false;
+	if (step?.action !== "ROLL") return false;
 
 	const toSetMapPool =
 		await TournamentRepository.findTOSetMapPoolById(tournamentId);
