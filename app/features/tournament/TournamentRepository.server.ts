@@ -58,6 +58,15 @@ export async function findById(id: number) {
 			"Tournament.mapPickingStyle",
 			sql<boolean>`"Tournament"."rules" is not null`.as("hasRules"),
 			"Tournament.parentTournamentId",
+			eb
+				.selectFrom("CalendarEvent as ParentCalendarEvent")
+				.select("ParentCalendarEvent.name")
+				.whereRef(
+					"ParentCalendarEvent.tournamentId",
+					"=",
+					"Tournament.parentTournamentId",
+				)
+				.as("parentTournamentName"),
 			"Tournament.tier",
 			"CalendarEvent.name",
 			"CalendarEventDate.startTime",

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { CastedMatchesInfo } from "~/db/tables";
 import * as Seasons from "../mmr/core/Seasons";
 import type { ParsedBracket } from "../tournament-bracket/core/Progression";
+import { testTournament } from "../tournament-bracket/core/tests/test-utils";
 import {
 	bracketProgressionLabel,
 	compareTeamsForOrdering,
@@ -11,6 +12,7 @@ import {
 	splitTournamentName,
 	type TeamForOrdering,
 	tournamentInWeaponReportingWindow,
+	tournamentNameParts,
 	updatedCastedMatchesInfo,
 } from "./tournament-utils";
 
@@ -752,6 +754,44 @@ describe("splitTournamentName", () => {
 		).toEqual({
 			name: "In The Zone Masters",
 			subtext: "5",
+		});
+	});
+});
+
+describe("tournamentNameParts", () => {
+	it("uses the parent tournament name and division subtext for a league division", () => {
+		const tournament = testTournament({
+			ctx: {
+				name: "LUTI: Season 17 - Division 1",
+				parentTournamentId: 1,
+				parentTournamentName: "LUTI: Season 17",
+			},
+		});
+
+		expect(tournamentNameParts(tournament)).toEqual({
+			name: "LUTI: Season 17",
+			subtext: "Division 1",
+		});
+	});
+
+	it("falls back to the organization series when not a league division", () => {
+		const tournament = testTournament({
+			ctx: {
+				name: "In The Zone 54",
+				organization: {
+					id: 1,
+					name: "Sendou's Tournaments",
+					slug: "sendou",
+					logoUrl: null,
+					members: [],
+					series: [{ name: "In The Zone" }],
+				},
+			},
+		});
+
+		expect(tournamentNameParts(tournament)).toEqual({
+			name: "In The Zone",
+			subtext: "54",
 		});
 	});
 });

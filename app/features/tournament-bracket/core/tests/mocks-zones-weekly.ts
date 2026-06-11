@@ -323,6 +323,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 		mapPickingStyle: "TO",
 		hasRules: true,
 		parentTournamentId: null,
+		parentTournamentName: null,
 		name: "Zones Weekly 38",
 		startTime: 1734685200,
 		isFinalized: 0,

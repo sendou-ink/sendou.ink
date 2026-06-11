@@ -67,6 +67,7 @@ export const testTournament = ({
 			tier: null,
 			tentativeTier: null,
 			parentTournamentId: null,
+			parentTournamentName: null,
 			hasRules: false,
 			logoUrl: "/test.avif",
 			discordUrl: null,

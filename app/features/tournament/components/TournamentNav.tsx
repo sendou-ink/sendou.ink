@@ -26,7 +26,7 @@ import {
 	tournamentInfoPage,
 	tournamentRulesPage,
 } from "~/utils/urls";
-import { splitTournamentName } from "../tournament-utils";
+import { tournamentNameParts } from "../tournament-utils";
 import styles from "./TournamentNav.module.css";
 
 type NavItemKey =
@@ -77,10 +77,7 @@ export function TournamentNav({
 
 	const overflowItems = navItems.slice(visibleCount);
 
-	const { name, subtext } = splitTournamentName(
-		tournament.ctx.name,
-		tournament.ctx.organization?.series ?? [],
-	);
+	const { name, subtext } = tournamentNameParts(tournament);
 
 	const homeHref = tournament.isLeagueDivision
 		? tournamentInfoPage(tournament.ctx.parentTournamentId!)

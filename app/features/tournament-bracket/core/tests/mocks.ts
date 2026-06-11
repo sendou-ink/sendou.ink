@@ -1399,6 +1399,7 @@ export const PADDLING_POOL_257 = () =>
 			tier: null,
 			tentativeTier: null,
 			parentTournamentId: null,
+			parentTournamentName: null,
 			tags: null,
 			eventId: 1352,
 			bracketProgressionOverrides: [],
@@ -8068,6 +8069,7 @@ export const PADDLING_POOL_255 = () =>
 			tier: null,
 			tentativeTier: null,
 			parentTournamentId: null,
+			parentTournamentName: null,
 			tags: null,
 			eventId: 1286,
 			bracketProgressionOverrides: [],
@@ -15074,6 +15076,7 @@ export const IN_THE_ZONE_32 = ({
 		ctx: {
 			id: 11,
 			parentTournamentId: null,
+			parentTournamentName: null,
 			organization: null,
 			tier: null,
 			tentativeTier: null,

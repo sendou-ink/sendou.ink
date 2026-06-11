@@ -16,14 +16,11 @@ import {
 	tournamentPage,
 	userPage,
 } from "~/utils/urls";
-import { splitTournamentName } from "../tournament-utils";
+import { tournamentNameParts } from "../tournament-utils";
 import styles from "./TournamentHeader.module.css";
 
 export function TournamentHeader({ tournament }: { tournament: Tournament }) {
-	const { name, subtext } = splitTournamentName(
-		tournament.ctx.name,
-		tournament.ctx.organization?.series ?? [],
-	);
+	const { name, subtext } = tournamentNameParts(tournament);
 
 	const startTimes = R.uniqueBy(
 		[

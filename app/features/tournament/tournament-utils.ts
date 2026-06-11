@@ -464,6 +464,31 @@ export function splitTournamentName(
 	return { name: matchingSeries.name, subtext };
 }
 
+/**
+ * Resolves the display name and subtext for a tournament's identity.
+ *
+ * For a league division the parent tournament name is used as the base name and
+ * the division name (e.g. `"Division 1"`) becomes the subtext. For all other
+ * tournaments the split is based on the organization's tournament series.
+ *
+ * @see {@link splitTournamentName}
+ */
+export function tournamentNameParts(tournament: TournamentClass): {
+	name: string;
+	subtext?: string;
+} {
+	if (tournament.isLeagueDivision && tournament.ctx.parentTournamentName) {
+		return splitTournamentName(tournament.ctx.name, [
+			{ name: tournament.ctx.parentTournamentName },
+		]);
+	}
+
+	return splitTournamentName(
+		tournament.ctx.name,
+		tournament.ctx.organization?.series ?? [],
+	);
+}
+
 const STAGE_TYPE_TO_SHORT_CODE: Record<
 	Tables["TournamentStage"]["type"],
 	string
