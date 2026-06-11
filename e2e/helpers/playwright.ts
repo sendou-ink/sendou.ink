@@ -176,17 +176,17 @@ export async function submit(page: Page, testId?: string) {
 
 	// Remix returns 202 from action endpoints when the action threw/returned a
 	// redirect. The fetcher then drives a client-side navigation and, once
-	// that completes, fires a partial revalidation GET against the route data.
-	// If we return before that revalidation fires, a subsequent Link click can
-	// be aborted mid-flight by the queued revalidation (ERR_ABORTED on the new
-	// route's .data fetch), leaving the test on the old page.
+	// that completes, fires a GET against the new route's data. If we return
+	// before that GET fires, a subsequent Link click can be aborted mid-flight
+	// by the queued navigation (ERR_ABORTED on the new route's .data fetch),
+	// leaving the test on the old page.
 	if (postRes.status() === 202) {
 		await page.waitForResponse(
-			(res) =>
-				res.request().method() === "GET" &&
-				res.url().includes(".data") &&
-				!/__(?:success|error)=/.test(res.url()),
+			(res) => res.request().method() === "GET" && res.url().includes(".data"),
 		);
+		// Toast flash params are stripped right after via a replace navigation
+		// (without revalidation); wait for it so it can't abort a later click.
+		await expect(page).not.toHaveURL(/__(?:success|error)=/);
 	}
 }
 

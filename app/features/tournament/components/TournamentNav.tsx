@@ -26,7 +26,7 @@ import {
 	tournamentInfoPage,
 	tournamentRulesPage,
 } from "~/utils/urls";
-import { splitTournamentName } from "../core/Tournament";
+import { splitTournamentName } from "../tournament-utils";
 import styles from "./TournamentNav.module.css";
 
 type NavItemKey =

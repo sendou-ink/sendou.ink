@@ -18,8 +18,8 @@ import {
 	TournamentHeader,
 	TournamentHeaderActions,
 } from "../components/TournamentHeader";
-import { bracketProgressionLabel } from "../core/Tournament";
 import { loader } from "../loaders/to.$id.info.server";
+import { bracketProgressionLabel } from "../tournament-utils";
 import { useTournament } from "./to.$id";
 import styles from "./to.$id.info.module.css";
 

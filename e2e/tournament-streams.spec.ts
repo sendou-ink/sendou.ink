@@ -32,7 +32,7 @@ test.describe("Tournament streams", () => {
 		});
 
 		await page.getByRole("tab", { name: "Stream" }).click();
-		await page.getByRole("button", { name: "Add", exact: true }).click();
+		// an empty array field already renders one placeholder input
 		await page
 			.getByPlaceholder("dappleproductions")
 			.nth(0)
@@ -127,7 +127,7 @@ test.describe("Tournament streams", () => {
 			url: tournamentAdminPage(tournamentId),
 		});
 		await page.getByRole("tab", { name: "Stream" }).click();
-		await page.getByRole("button", { name: "Add", exact: true }).click();
+		// an empty array field already renders one placeholder input
 		await page.getByPlaceholder("dappleproductions").fill("test_cast_stream");
 		await submit(page, "save-cast-twitch-accounts-button");
 

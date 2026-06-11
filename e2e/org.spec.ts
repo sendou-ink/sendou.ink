@@ -143,7 +143,7 @@ test.describe("Tournament Organization", () => {
 		await page.getByTestId("register-cta").click();
 
 		// Fill in team details
-		await page.getByLabel("Team name").fill("Banned Team");
+		await page.getByLabel("Pick-up name").fill("Banned Team");
 		await waitForPOSTResponse(page, () =>
 			page.getByTestId("save-team-button").click(),
 		);
@@ -171,7 +171,7 @@ test.describe("Tournament Organization", () => {
 
 		const teamCountBefore = await page.getByText(/Teams \(\d+\)/).textContent();
 
-		await page.getByLabel("Team name").fill("Unbanned Team");
+		await page.getByLabel("Pick-up name").fill("Unbanned Team");
 		await page.getByTestId("save-team-button").click();
 
 		const countBefore = Number(teamCountBefore?.match(/\d+/)?.[0] ?? 0);
