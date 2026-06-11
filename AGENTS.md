@@ -6,6 +6,7 @@
 - normal file structure has constants at the top immediately followed by the main function body of the file. Helpers are used to structure the code and they are at the bottom of the file (main implementation first, at the top of the file)
 - note: any formatting issue (such as tabs vs. spaces) can be resolved by running the `pnpm run biome:fix` command
 - typical way to structure pure logic is into Modules divided by logical domains which are imported with the "* as Module" import and then used like so "Module.foo()". These functions always need JSDoc.
+- non-exported functions typically do not need JSDoc or at least it can be kept short
 
 ## Commands
 
@@ -78,6 +79,7 @@
 - before adding a new translation, check that one doesn't already exist you can reuse (particularly in the common.json)
 - add only English translation and use `pnpm run i18n:sync` to initialize other jsons with empty string ready for translators
 - when using namespace e.g. `const { t } = useTranslation("settings"]);` it needs to be defined in the `handle` for that route e.g. `export const handle: SendouRouteHandle = { i18n: ["settings"], ... }`. Certain namespaces are always included and you don't have to worry about those: "common", "forms", "game-misc", "weapons", "front", "friends"
+- if changing translation key names make sure to port over any already translated values for non-english languages if the english language is unchanged
 
 ## Commits
 

@@ -23,3 +23,7 @@ export const TEAM_MEMBER_ROLES = [
 	"COACH",
 	"CHEERLEADER",
 ] as const;
+
+/** Roles that are not part of a team's active competitive lineup. Excluded when sourcing a roster (e.g. prefilling tournament registration or a scrim post). */
+export const NON_PLAYER_TEAM_ROLES: readonly (typeof TEAM_MEMBER_ROLES)[number][] =
+	["CHEERLEADER", "COACH", "SUB"];

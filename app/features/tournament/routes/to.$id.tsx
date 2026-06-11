@@ -1,42 +1,34 @@
 import * as React from "react";
-import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import {
 	Outlet,
 	type ShouldRevalidateFunction,
 	useLoaderData,
+	useMatches,
 	useOutletContext,
 } from "react-router";
-import { Main } from "~/components/Main";
+import { containerClassName, Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
-import { SubNav, SubNavLink } from "~/components/SubNav";
-import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
-import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { useHydrated } from "~/hooks/useHydrated";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { removeMarkdown } from "~/utils/strings";
-import {
-	tournamentDivisionsPage,
-	tournamentPage,
-	tournamentRegisterPage,
-} from "~/utils/urls";
-import { metaTags } from "../../../utils/remix";
+import { tournamentPage } from "~/utils/urls";
+import { isRevalidation, metaTags } from "../../../utils/remix";
+import { TournamentNav } from "../components/TournamentNav";
 
 import { loader, type TournamentLoaderData } from "../loaders/to.$id.server";
 
 export { loader };
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
-	const navigatedToMatchPage =
-		typeof args.nextParams.mid === "string" &&
-		args.formMethod !== "POST" &&
-		args.currentParams.mid !== args.nextParams.mid;
+	if (isRevalidation(args)) return args.defaultShouldRevalidate;
+	if (args.formMethod === "POST") return args.defaultShouldRevalidate;
+	if (args.currentParams.id !== args.nextParams.id) {
+		return args.defaultShouldRevalidate;
+	}
 
-	if (navigatedToMatchPage) return false;
-
-	return args.defaultShouldRevalidate;
+	return false;
 };
 
 export const meta: MetaFunction = (args) => {
@@ -48,9 +40,6 @@ export const meta: MetaFunction = (args) => {
 
 	return metaTags({
 		title: data.tournament.ctx.name,
-		description: data.tournament.ctx.description
-			? removeMarkdown(data.tournament.ctx.description)
-			: undefined,
 		image: {
 			url: data.tournament.ctx.logoUrl,
 			dimensions: { width: 124, height: 124 },
@@ -99,8 +88,6 @@ export default function TournamentLayoutShell() {
 }
 
 export function TournamentLayout() {
-	const { t } = useTranslation(["tournament"]);
-	const user = useUser();
 	const rawData = useLoaderData<typeof loader>();
 	const data = React.useMemo(
 		() => JSON.parse(rawData) as TournamentLoaderData,
@@ -111,6 +98,7 @@ export function TournamentLayout() {
 		[data],
 	);
 	const [bracketExpanded, setBracketExpanded] = React.useState(true);
+	const mainBreakout = useActiveRouteMainBreakout();
 
 	useTournamentChatLabels(tournament);
 
@@ -122,87 +110,12 @@ export function TournamentLayout() {
 			window.tourney = tournament;
 		}, [tournament]);
 	}
-	return (
-		<Main bigger>
-			<SubNav>
-				<SubNavLink
-					to={tournamentRegisterPage(
-						tournament.isLeagueDivision
-							? tournament.ctx.parentTournamentId!
-							: tournament.ctx.id,
-					)}
-					data-testid="register-tab"
-					prefetch="intent"
-				>
-					{tournament.hasStarted || tournament.isLeagueDivision
-						? "Info"
-						: t("tournament:tabs.register")}
-				</SubNavLink>
-				{!tournament.isLeagueSignup ? (
-					<SubNavLink
-						to="brackets"
-						data-testid="brackets-tab"
-						prefetch="render"
-					>
-						{t("tournament:tabs.brackets")}
-					</SubNavLink>
-				) : null}
-				{tournament.isLeagueSignup || tournament.isLeagueDivision ? (
-					<SubNavLink
-						to={tournamentDivisionsPage(
-							tournament.ctx.parentTournamentId ?? tournament.ctx.id,
-						)}
-					>
-						Divisions
-					</SubNavLink>
-				) : null}
-				{!(tournament.isLeagueSignup && data.hasChildTournaments) ? (
-					<SubNavLink
-						to="teams"
-						end={false}
-						prefetch="render"
-						data-testid="teams-tab"
-					>
-						{t("tournament:tabs.teams", {
-							count: tournament.ctx.teams.length,
-						})}
-					</SubNavLink>
-				) : null}
-				{!tournament.isInvitational &&
-				!tournament.everyBracketOver &&
-				!(tournament.isLeagueSignup && !tournament.registrationOpen) &&
-				tournament.lfgEnabled ? (
-					<SubNavLink to="looking">
-						{tournament.registrationOpen
-							? t("tournament:tabs.looking")
-							: t("tournament:tabs.subs")}
-					</SubNavLink>
-				) : null}
-				{tournament.hasStarted && !tournament.everyBracketOver ? (
-					<SubNavLink to="streams">
-						{t("tournament:tabs.streams", {
-							count: tournament.streams.length,
-						})}
-					</SubNavLink>
-				) : null}
-				{tournament.hasStarted ? (
-					<SubNavLink to="results" data-testid="results-tab">
-						{t("tournament:tabs.results")}
-					</SubNavLink>
-				) : null}
-				{tournament.isOrganizer(user) &&
-					!tournament.hasStarted &&
-					!tournament.isLeagueSignup && (
-						<SubNavLink to="seeds">{t("tournament:tabs.seeds")}</SubNavLink>
-					)}
-				{tournament.isOrganizer(user) &&
-					(!tournament.ctx.isFinalized ||
-						DANGEROUS_CAN_ACCESS_DEV_CONTROLS) && (
-						<SubNavLink to="admin" data-testid="admin-tab">
-							{t("tournament:tabs.admin")}
-						</SubNavLink>
-					)}
-			</SubNav>
+	const content = (
+		<>
+			<TournamentNav
+				tournament={tournament}
+				hasChildTournaments={data.hasChildTournaments}
+			/>
 			<TournamentContext.Provider value={tournament}>
 				<Outlet
 					context={
@@ -218,7 +131,25 @@ export function TournamentLayout() {
 					}
 				/>
 			</TournamentContext.Provider>
+		</>
+	);
+
+	return (
+		<Main bigger breakoutContainer={mainBreakout}>
+			{mainBreakout ? (
+				<div className={containerClassName("wide")}>{content}</div>
+			) : (
+				content
+			)}
 		</Main>
+	);
+}
+
+function useActiveRouteMainBreakout(): boolean {
+	const matches = useMatches();
+
+	return matches.some(
+		(match) => (match.handle as SendouRouteHandle | undefined)?.mainBreakout,
 	);
 }
 

@@ -262,7 +262,7 @@ function ScrimStartTimeDisplay({
 
 	const timeDisplay = (
 		<TimePopover
-			time={startTime}
+			date={startTime}
 			options={{
 				hour: "numeric",
 				minute: "numeric",

@@ -21,7 +21,6 @@ import * as React from "react";
 import { Link, useFetcher, useNavigation } from "react-router";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
-import { Catcher } from "~/components/Catcher";
 import { SendouButton } from "~/components/elements/Button";
 import {
 	SendouChipRadio,
@@ -33,19 +32,17 @@ import { InfoPopover } from "~/components/InfoPopover";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Table } from "~/components/Table";
 import type { SeedingSnapshot } from "~/db/tables";
+import { useTournament } from "~/features/tournament/routes/to.$id";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as AbDivisions from "~/features/tournament-bracket/core/AbDivisions";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import invariant from "~/utils/invariant";
 import { navIconUrl, userResultsPage } from "~/utils/urls";
 import { ordinalToRoundedSp } from "../../mmr/mmr-utils";
-import { action } from "../actions/to.$id.seeds.server";
-import { loader } from "../loaders/to.$id.seeds.server";
-import { TOURNAMENT } from "../tournament-constants";
-import { useTournament } from "./to.$id";
-import styles from "./to.$id.seeds.module.css";
+import styles from "./to.$id.admin.seeds.module.css";
 
-export { action, loader };
+export { action } from "../actions/to.$id.admin.seeds.server";
 
 const AB_DIVISION_RADIO_OPTIONS = [
 	{ value: "unassigned", label: "Unassigned" },
@@ -53,7 +50,7 @@ const AB_DIVISION_RADIO_OPTIONS = [
 	{ value: "1", label: "B" },
 ] as const;
 
-export default function TournamentSeedsPage() {
+export default function TournamentAdminSeedsPage() {
 	const tournament = useTournament();
 	const navigation = useNavigation();
 	const [teamOrder, setTeamOrder] = React.useState(
@@ -726,9 +723,7 @@ function RowContents({
 			</div>
 			<div className={styles.nameArea}>
 				<div className={styles.teamNameContainer}>
-					<span className={styles.teamName}>
-						{team.checkIns.length > 0 ? "✅ " : "❌ "} {team.name}
-					</span>
+					<span className={styles.teamName}>{team.name}</span>
 					{isNewTeam ? <span className={styles.newBadge}>NEW</span> : null}
 				</div>
 			</div>
@@ -849,5 +844,3 @@ function computeRemovedPlayers(
 	}
 	return result;
 }
-
-export const ErrorBoundary = Catcher;

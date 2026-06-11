@@ -67,15 +67,22 @@
 	}
 }
 
-.padded {
-	& .tabPanel {
-		padding-block-start: var(--s-4);
-	}
+.root {
+	--tabs-gap: var(--s-6);
+}
+
+.root:not(.vertical) {
+	display: flex;
+	flex-direction: column;
+}
+
+.padded:not(.vertical) {
+	gap: var(--tabs-gap);
 }
 
 .disappearing {
-	&:has(.tabList > div:only-child).padded .tabPanel {
-		padding-top: 0;
+	&:has(.tabList > div:only-child) {
+		gap: 0;
 	}
 
 	& .tabList:has(> div:only-child) {
@@ -98,7 +105,7 @@
 .vertical {
 	display: grid;
 	grid-template-columns: max-content 1fr;
-	gap: var(--s-8);
+	gap: var(--tabs-gap);
 	align-items: start;
 
 	& .tabListContainer {
@@ -133,15 +140,17 @@
 		border-inline-end: 2px solid transparent;
 		text-align: start;
 		flex: none;
+		width: 100%;
 		padding: var(--s-2) var(--s-3);
 		padding-inline-end: var(--s-6);
 	}
 
-	& .tabPanel {
-		min-width: 0;
+	& .tabNumber {
+		margin-inline-start: auto;
+		padding-inline-start: var(--s-3);
 	}
 
-	&.padded .tabPanel {
-		padding-block-start: 0;
+	& .tabPanel {
+		min-width: 0;
 	}
 }

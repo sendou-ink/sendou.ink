@@ -13,13 +13,9 @@ import {
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { parseFormDataWithImages } from "~/form/parse.server";
 import { logger } from "~/utils/logger";
-import {
-	errorToastIfFalsy,
-	parseFormData,
-	parseParams,
-	uploadImageIfSubmitted,
-} from "~/utils/remix.server";
+import { errorToastIfFalsy, parseParams } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "~/utils/zod";
 import { TOURNAMENT } from "../tournament-constants";
@@ -35,58 +31,64 @@ import {
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
-	const { avatarFileName, formData } = await uploadImageIfSubmitted({
-		request,
-		fileNamePrefix: "pickup-logo",
-	});
-	const data = await parseFormData({
-		formData,
-		schema: registerSchema,
-	});
-
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,
 	});
+
 	const tournament = await tournamentFromDB({ tournamentId, user });
+	const ownTeam = tournament.ownedTeamByUser(user);
+
+	const result = await parseFormDataWithImages({
+		request,
+		schema: registerSchema({ tournament, ownTeamId: ownTeam?.id }),
+	});
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+	const data = result.data;
 
 	errorToastIfFalsy(
 		!tournament.hasStarted,
 		"Tournament has started, cannot make edits to registration",
 	);
 
-	const ownTeam = tournament.ownedTeamByUser(user);
 	const ownTeamCheckedIn = Boolean(ownTeam && ownTeam.checkIns.length > 0);
 
 	switch (data._action) {
 		case "UPSERT_TEAM": {
+			const linkedTeamId = data.teamId ? Number(data.teamId) : null;
+
 			errorToastIfFalsy(
-				!data.teamId ||
+				!linkedTeamId ||
 					(await TeamRepository.findAllMemberOfByUserId(user.id)).some(
-						(team) => team.id === data.teamId,
+						(team) => team.id === linkedTeamId,
 					),
 				"Team id does not match any of the teams you are in",
 			);
 
+			// linked teams source their name and logo from the sendou.ink team
+			const name = (
+				linkedTeamId
+					? (await TeamRepository.findById(linkedTeamId))?.name
+					: data.pickUpName
+			)!;
+
+			const avatarImgId = linkedTeamId ? null : data.logo;
+
 			if (ownTeam) {
 				errorToastIfFalsy(
-					tournament.registrationOpen || data.teamName === ownTeam.name,
+					tournament.registrationOpen || name === ownTeam.name,
 					"Can't change team name after registration has closed",
-				);
-				errorToastIfFalsy(
-					!tournament.ctx.teams.some(
-						(team) => team.name === data.teamName && team.id !== ownTeam.id,
-					),
-					"Team name already taken for this tournament",
 				);
 
 				await TournamentTeamRepository.update({
-					avatarFileName,
+					avatarImgId,
 					team: {
 						id: ownTeam.id,
-						name: data.teamName,
+						name,
 						prefersNotToHost: Number(data.prefersNotToHost),
-						teamId: data.teamId ?? null,
+						teamId: linkedTeamId,
 					},
 				});
 			} else {
@@ -112,10 +114,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 					tournament.registrationOpen,
 					"Registration is closed",
 				);
-				errorToastIfFalsy(
-					!tournament.ctx.teams.some((team) => team.name === data.teamName),
-					"Team name already taken for this tournament",
-				);
 
 				await TournamentLFGRepository.leaveLfg({
 					userId: user.id,
@@ -123,13 +121,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 				});
 				await TournamentTeamRepository.create({
 					team: {
-						name: data.teamName,
+						name,
 						prefersNotToHost: Number(data.prefersNotToHost),
-						teamId: data.teamId ?? null,
+						teamId: linkedTeamId,
 					},
 					userId: user.id,
 					tournamentId,
-					avatarFileName,
+					avatarImgId,
 				});
 				await SavedCalendarEventRepository.unsave({
 					userId: user.id,
@@ -343,13 +341,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 					newTeamCount: tournament.ctx.teams.length - 1,
 				});
 			}
-
-			break;
-		}
-		case "DELETE_LOGO": {
-			errorToastIfFalsy(ownTeam, "You are not registered to this tournament");
-
-			await TournamentTeamRepository.deleteLogo(ownTeam.id);
 
 			break;
 		}

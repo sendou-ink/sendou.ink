@@ -26,6 +26,8 @@ import type {
 	FormFieldSelect,
 	FormsTranslationKey,
 	SelectOption,
+	TeamSearchFieldOptions,
+	TournamentSearchFieldOptions,
 } from "./types";
 
 export const formRegistry = z.registry<FormField>();
@@ -764,7 +766,27 @@ export function tournamentSearchOptional(
 		type: "tournament-search",
 		initialValue: null,
 		required: false,
-	});
+	}) as unknown as z.ZodType<number | null> &
+		FieldWithOptions<TournamentSearchFieldOptions>;
+}
+
+export function teamSearchOptional(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "team-search" }>,
+			"type" | "initialValue" | "required"
+		>
+	>,
+) {
+	return z.preprocess(falsyToNull, id.nullable()).register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "team-search",
+		initialValue: null,
+		required: false,
+	}) as unknown as z.ZodType<number | null> &
+		FieldWithOptions<TeamSearchFieldOptions>;
 }
 
 export function badges(

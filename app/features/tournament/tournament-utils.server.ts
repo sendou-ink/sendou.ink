@@ -28,6 +28,28 @@ export async function requireNotBannedByOrganization({
 	}
 }
 
+/**
+ * Whether the given team name is already used by another team in the tournament.
+ * Single source of truth for the uniqueness rule shared by the player registration
+ * ({@link registerTeamFormSchemaServer}) and admin registration
+ * ({@link adminRegistrationFormSchemaServer}) forms.
+ *
+ * @param exceptTournamentTeamId - the team being edited, excluded from the comparison
+ */
+export function tournamentTeamNameTaken({
+	tournament,
+	name,
+	exceptTournamentTeamId,
+}: {
+	tournament: Tournament;
+	name: string;
+	exceptTournamentTeamId?: number;
+}) {
+	return tournament.ctx.teams.some(
+		(team) => team.name === name && team.id !== exceptTournamentTeamId,
+	);
+}
+
 export async function requireSendouQParticipationIfNeeded({
 	tournament,
 	userId,

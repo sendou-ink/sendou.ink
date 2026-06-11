@@ -1,5 +1,7 @@
 import type { ActionFunction } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
@@ -10,28 +12,30 @@ import {
 	parseRequestPayload,
 	successToast,
 } from "~/utils/remix.server";
-import { idObject } from "~/utils/zod";
-import * as TournamentRepository from "../TournamentRepository.server";
-import * as TournamentTeamRepository from "../TournamentTeamRepository.server";
-import { seedsActionSchema } from "../tournament-schemas.server";
+import { assertUnreachable } from "~/utils/types";
+import { idObject } from "../../../utils/zod";
+import { adminSeedsActionSchema } from "../tournament-admin-schemas.server";
+import { requireTournamentOrganizer } from "../tournament-admin-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
-		schema: seedsActionSchema,
+		schema: adminSeedsActionSchema,
 	});
-	const user = requireUser();
+
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,
 	});
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
-	errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
-	errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
-
+	let message: string;
 	switch (data._action) {
 		case "UPDATE_SEEDS": {
+			requireTournamentOrganizer(tournament, user);
+			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
+
 			const teamsWithMembers = tournament.ctx.teams
 				.filter((t) => data.seeds.includes(t.id))
 				.map((team) => ({
@@ -47,10 +51,14 @@ export const action: ActionFunction = async ({ request, params }) => {
 				teamIds: data.seeds,
 				teamsWithMembers,
 			});
-			clearTournamentDataCache(tournamentId);
-			return successToast("Seeds saved successfully");
+
+			message = "Seeds saved successfully";
+			break;
 		}
 		case "UPDATE_STARTING_BRACKETS": {
+			requireTournamentOrganizer(tournament, user);
+			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
+
 			const validBracketIdxs =
 				tournament.ctx.settings.bracketProgression.flatMap(
 					(bracket, bracketIdx) => (!bracket.sources ? [bracketIdx] : []),
@@ -66,9 +74,14 @@ export const action: ActionFunction = async ({ request, params }) => {
 			await TournamentTeamRepository.updateStartingBrackets(
 				data.startingBrackets,
 			);
+
+			message = "Starting brackets updated";
 			break;
 		}
 		case "UPDATE_AB_DIVISIONS": {
+			requireTournamentOrganizer(tournament, user);
+			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
+
 			errorToastIfFalsy(
 				tournament.ctx.settings.bracketProgression.some(
 					(bracket) => !bracket.sources && bracket.settings?.hasAbDivisions,
@@ -83,11 +96,16 @@ export const action: ActionFunction = async ({ request, params }) => {
 			);
 
 			await TournamentTeamRepository.updateAbDivisions(data.abDivisions);
+
+			message = "A/B divisions updated";
 			break;
+		}
+		default: {
+			assertUnreachable(data);
 		}
 	}
 
 	clearTournamentDataCache(tournamentId);
 
-	return null;
+	return successToast(message);
 };

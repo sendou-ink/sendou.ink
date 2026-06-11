@@ -58,6 +58,7 @@ describe("tournamentSummary()", () => {
 		team: null,
 		seed: 1,
 		activeRosterUserIds: [],
+		avatarImgId: null,
 		pickupAvatarUrl: null,
 	});
 

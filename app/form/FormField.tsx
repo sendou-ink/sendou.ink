@@ -16,6 +16,7 @@ import {
 import { SelectFormField } from "./fields/SelectFormField";
 import { StageSelectFormField } from "./fields/StageSelectFormField";
 import { SwitchFormField } from "./fields/SwitchFormField";
+import { TeamSearchFormField } from "./fields/TeamSearchFormField";
 import { TextareaFormField } from "./fields/TextareaFormField";
 import { TimeRangeFormField } from "./fields/TimeRangeFormField";
 import { TournamentSearchFormField } from "./fields/TournamentSearchFormField";
@@ -34,8 +35,11 @@ import type {
 	FormFieldItemsWithImage,
 	FormField as FormFieldType,
 	SelectOption,
+	TeamSearchFieldOptions,
+	TournamentSearchFieldOptions,
 } from "./types";
 import {
+	fieldsetDefaults,
 	getNestedSchema,
 	getNestedValue,
 	setNestedValue,
@@ -125,7 +129,12 @@ export function FormField({
 	const handleChange = React.useCallback(
 		(newValue: unknown) => {
 			context?.setValue(name, newValue);
-			if (hasSubmitted && context) {
+			context?.clearServerError(name);
+			if (
+				hasSubmitted &&
+				context &&
+				!isArrayAppend(context.values, name, newValue)
+			) {
 				const updatedValues = isNestedPath
 					? setNestedValue(context.values, name, newValue)
 					: { ...context.values, [name]: newValue };
@@ -334,7 +343,7 @@ export function FormField({
 		const hasCustomRender = typeof children === "function";
 		const itemInitialValue =
 			isObjectArray && innerFieldMeta
-				? computeFieldsetInitialValue(innerFieldMeta)
+				? fieldsetDefaults(innerFieldMeta)
 				: innerFieldMeta?.initialValue;
 
 		return (
@@ -403,12 +412,29 @@ export function FormField({
 	}
 
 	if (formField.type === "tournament-search") {
+		const tournamentOptions = options as
+			| TournamentSearchFieldOptions
+			| undefined;
 		return (
 			<TournamentSearchFormField
 				{...commonProps}
 				{...formField}
 				value={value as number | null}
 				onChange={handleChange as (v: number | null) => void}
+				pastOnly={tournamentOptions?.pastOnly}
+			/>
+		);
+	}
+
+	if (formField.type === "team-search") {
+		const teamOptions = options as TeamSearchFieldOptions | undefined;
+		return (
+			<TeamSearchFormField
+				{...commonProps}
+				{...formField}
+				onChange={handleChange as (v: number | null) => void}
+				onTeamSelected={teamOptions?.onTeamSelected}
+				initialTeam={teamOptions?.initialTeam}
 			/>
 		);
 	}
@@ -456,22 +482,13 @@ export function FormField({
 	);
 }
 
-function computeFieldsetInitialValue(
-	fieldsetMeta: FormFieldType,
-): Record<string, unknown> {
-	if (fieldsetMeta.type !== "fieldset") return {};
-
-	const shape = fieldsetMeta.fields.shape as Record<string, z.ZodType>;
-	const result: Record<string, unknown> = {};
-
-	for (const [key, fieldSchema] of Object.entries(shape)) {
-		const fieldMeta = formRegistry.get(fieldSchema) as
-			| FormFieldType
-			| undefined;
-		if (fieldMeta) {
-			result[key] = fieldMeta.initialValue;
-		}
-	}
-
-	return result;
+function isArrayAppend(
+	values: Record<string, unknown>,
+	name: string,
+	newValue: unknown,
+): boolean {
+	if (!Array.isArray(newValue)) return false;
+	const isNestedPath = name.includes(".") || name.includes("[");
+	const prevValue = isNestedPath ? getNestedValue(values, name) : values[name];
+	return Array.isArray(prevValue) && newValue.length > prevValue.length;
 }

@@ -71,6 +71,7 @@ export function MatchTabs({ children, tabs }: MatchTabsProps) {
 					)
 				}
 				disappearing={false}
+				padded={false}
 			>
 				<SendouTabList>
 					{tabs.map((tab) => (

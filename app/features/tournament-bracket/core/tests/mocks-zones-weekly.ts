@@ -321,12 +321,9 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 		castedMatchesInfo: null,
 		seedingSnapshot: null,
 		mapPickingStyle: "TO",
-		rules:
-			"For the complete and up to date rules see #rules and #announcements in the discord.\n\n**Tournament Proceedings**\nContact your opponent through tournament match page. If issues occur, a TO may direct you to a captain’s chat in the discord.\n\n**Map Counterpicks**\nThe loser of each match chooses the next map in the round. A team may not choose a map that has already been played in the set.\n\n**Disconnections**\nEach team can replay once per set when a disconnection occurs on their side if both of the following apply: \n- the disconnection occurs before 2:30 on the match timer.\n- the objective counter of the team without the disconnect is above 40.\nIf a disconnection occurs before 30 seconds into the match then a free replay is given. Please avoid replaying when these conditions aren’t met (i.e. gentlemen’s replay) so to keep the tournament running on time.\n\n**Other Rules**\n- Use of the private battle quit feature for malicious purposes will result in disqualification.\n- Penalties may be issued to teams that are not in the match lobby within 10 minutes of round start.\n\n**Player Restrictions**\nEach team is allowed up to 6 players. Players of the following group are not allowed to participate without specific exemption from Puma\n- Non-OCE players\n- Oceanink banned players\n\n-- Tournament Organisers reserve the right to make last minute changes to the rules —",
+		hasRules: true,
 		parentTournamentId: null,
 		name: "Zones Weekly 38",
-		description:
-			"A short and sweet, weekly zones only tournament for the OCE and SEA region. Format is 4 rounds of Bo5 Swiss with counterpicks.\n\nJoin the discord for more info.",
 		startTime: 1734685200,
 		isFinalized: 0,
 		organization: null,
@@ -390,6 +387,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				activeRosterUserIds: [5662, 2899, 6114, 30176],
 				startingBracketIdx: null,
 				abDivision: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -500,6 +498,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				activeRosterUserIds: null,
 				startingBracketIdx: null,
 				abDivision: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-rZYQMu8ELjiFkeiAVGJUt-1734424882431.webp",
 				members: [
 					{
@@ -589,6 +588,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				activeRosterUserIds: null,
 				startingBracketIdx: null,
 				abDivision: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -678,6 +678,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				activeRosterUserIds: [37632, 13590, 10757, 33047],
 				startingBracketIdx: null,
 				abDivision: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -788,6 +789,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				activeRosterUserIds: [11780, 46006, 43518, 33483],
 				startingBracketIdx: null,
 				abDivision: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-FOfFcEbo2OJxIJIJxNJqu-1734608907317.webp",
 				members: [
 					{
@@ -909,6 +911,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				activeRosterUserIds: [46467, 46813, 33491, 43662],
 				startingBracketIdx: null,
 				abDivision: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-y79k_HOVmjv4KfhTjuSqh-1734398099266.webp",
 				members: [
 					{
@@ -1019,6 +1022,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				activeRosterUserIds: null,
 				startingBracketIdx: null,
 				abDivision: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-IGXFtjFMa_dxQqAe2dqIR-1734598652684.webp",
 				members: [
 					{

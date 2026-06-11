@@ -6,8 +6,9 @@ vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	setMetadata: vi.fn(),
 }));
 
+import type { z } from "zod";
 import { db } from "~/db/sql";
-import type { adminActionSchema } from "~/features/tournament/tournament-schemas.server";
+import { action as removeMemberApiAction } from "~/features/api-public/routes/tournament.$id.teams.$teamId.remove-member";
 import {
 	dbInsertTournament,
 	dbInsertTournamentTeam,
@@ -22,15 +23,16 @@ import {
 	wrappedAction,
 	wrappedLoader,
 } from "~/utils/Test";
-import { action as adminAction } from "../../tournament/routes/to.$id.admin";
 import { action, loader } from "./to.$id.matches.$mid";
 
 const tournamentMatchAction = wrappedAction<typeof matchSchema>({
 	action,
 	isJsonSubmission: true,
 });
-const tournamentAdminAction = wrappedAction<typeof adminActionSchema>({
-	action: adminAction,
+const removeMemberApiActionWrapped = wrappedAction<
+	z.ZodType<{ userId: number }>
+>({
+	action: removeMemberApiAction,
 	isJsonSubmission: true,
 });
 
@@ -78,13 +80,9 @@ const removeMemberAction = ({
 	userId: number;
 	teamId: number;
 }) =>
-	tournamentAdminAction(
-		{
-			_action: "REMOVE_MEMBER",
-			memberId: userId,
-			teamId,
-		},
-		{ user: "admin", params: { id: "1" } },
+	removeMemberApiActionWrapped(
+		{ userId },
+		{ user: "admin", params: { id: "1", teamId: String(teamId) } },
 	);
 
 describe("Tournament match page", () => {

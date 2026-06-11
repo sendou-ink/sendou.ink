@@ -99,6 +99,21 @@ export async function selectUser({
 	await page.keyboard.press("Enter");
 }
 
+export async function selectTournament({
+	page,
+	query,
+}: {
+	page: Page;
+	query: string;
+}) {
+	const item = page.getByTestId("tournament-search-item");
+
+	await page.getByRole("button", { name: /Tournament search/i }).click();
+	await page.getByTestId("tournament-search-input").fill(query);
+	await expect(item.first()).toBeVisible();
+	await item.first().click();
+}
+
 /** page.goto that waits for the page to be hydrated before proceeding */
 export async function navigate({ page, url }: { page: Page; url: string }) {
 	// Rewrite absolute URLs with localhost to use the worker's baseURL
@@ -161,17 +176,17 @@ export async function submit(page: Page, testId?: string) {
 
 	// Remix returns 202 from action endpoints when the action threw/returned a
 	// redirect. The fetcher then drives a client-side navigation and, once
-	// that completes, fires a partial revalidation GET against the route data.
-	// If we return before that revalidation fires, a subsequent Link click can
-	// be aborted mid-flight by the queued revalidation (ERR_ABORTED on the new
-	// route's .data fetch), leaving the test on the old page.
+	// that completes, fires a GET against the new route's data. If we return
+	// before that GET fires, a subsequent Link click can be aborted mid-flight
+	// by the queued navigation (ERR_ABORTED on the new route's .data fetch),
+	// leaving the test on the old page.
 	if (postRes.status() === 202) {
 		await page.waitForResponse(
-			(res) =>
-				res.request().method() === "GET" &&
-				res.url().includes(".data") &&
-				!/__(?:success|error)=/.test(res.url()),
+			(res) => res.request().method() === "GET" && res.url().includes(".data"),
 		);
+		// Toast flash params are stripped right after via a replace navigation
+		// (without revalidation); wait for it so it can't abort a later click.
+		await expect(page).not.toHaveURL(/__(?:success|error)=/);
 	}
 }
 
@@ -189,6 +204,18 @@ export function isNotVisible(locator: Locator) {
 
 export function modalClickConfirmButton(page: Page) {
 	return submit(page, "confirm-button");
+}
+
+/**
+ * Clicks a tournament nav tab by its testId, opening the overflow ("More") menu
+ * first when the tab has collapsed into it on the current viewport.
+ */
+export async function clickNavTab(page: Page, testId: string) {
+	const visibleTab = page.locator(`[data-testid="${testId}"]:visible`);
+	if ((await visibleTab.count()) === 0) {
+		await page.getByRole("button", { name: "More" }).click();
+	}
+	await visibleTab.click();
 }
 
 export const startBracket = async (page: Page, tournamentId = 2) => {

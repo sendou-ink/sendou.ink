@@ -11,8 +11,10 @@ import { formRegistry } from "./fields";
 import styles from "./SendouForm.module.css";
 import type { FormField, TypedFormFieldComponent } from "./types";
 import {
+	buildFieldPath,
 	errorMessageId,
 	getNestedValue,
+	seedArrayItemDefaults,
 	setNestedValue,
 	validateField,
 } from "./utils";
@@ -31,6 +33,7 @@ export interface FormContextValue<T extends z.ZodRawShape = z.ZodRawShape> {
 	clientErrors: Partial<Record<string, string>>;
 	hasSubmitted: boolean;
 	setClientError: (name: string, error: string | undefined) => void;
+	clearServerError: (name: string) => void;
 	onFieldChange?: (name: string, newValue: unknown) => void;
 	values: Record<string, unknown>;
 	setValue: (name: string, value: unknown) => void;
@@ -72,6 +75,12 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	fullWidth?: boolean;
 	onApply?: (values: z.infer<z.ZodObject<T>>) => void;
 	secondarySubmit?: React.ReactNode;
+	/**
+	 * Called once after a server submission completes successfully (the action
+	 * returned without field errors). Useful for collapsing an inline edit form
+	 * back to a read-only view.
+	 */
+	onSuccess?: () => void;
 };
 
 type SendouFormProps<T extends z.ZodRawShape> = BaseFormProps<T> &
@@ -99,6 +108,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 	fullWidth,
 	onApply,
 	secondarySubmit,
+	onSuccess,
 }: SendouFormProps<T>) {
 	const { t } = useTranslation(["forms"]);
 	const fetcher = useFetcher<{ fieldErrors?: Record<string, string> }>();
@@ -163,6 +173,18 @@ export function SendouForm<T extends z.ZodRawShape>({
 		firstErrorElement?.scrollIntoView({ behavior: "smooth", block: "center" });
 	}, [fetcher.data, t]);
 
+	const previousFetcherStateRef = React.useRef(fetcher.state);
+	React.useEffect(() => {
+		if (
+			previousFetcherStateRef.current !== "idle" &&
+			fetcher.state === "idle" &&
+			!fetcher.data?.fieldErrors
+		) {
+			onSuccess?.();
+		}
+		previousFetcherStateRef.current = fetcher.state;
+	}, [fetcher.state, fetcher.data, onSuccess]);
+
 	const serverErrors = visibleServerErrors as Partial<
 		Record<keyof z.infer<z.ZodObject<T>>, string>
 	>;
@@ -178,9 +200,36 @@ export function SendouForm<T extends z.ZodRawShape>({
 		});
 	};
 
+	// Server errors are keyed by positional path (e.g. `members[2].userId`). When
+	// the user edits a field, the server's verdict for that field — and for any
+	// nested descendants when an array/object changes — is stale, so drop it.
+	// Without this, removing an array item and re-adding one at the same index
+	// would resurrect the previous item's server error.
+	const clearServerError = (name: string) => {
+		setVisibleServerErrors((prev) => {
+			const isStale = (key: string) =>
+				key === name ||
+				key.startsWith(`${name}.`) ||
+				key.startsWith(`${name}[`);
+			if (!Object.keys(prev).some(isStale)) return prev;
+
+			const next: Partial<Record<string, string>> = {};
+			for (const [key, value] of Object.entries(prev)) {
+				if (!isStale(key)) next[key] = value;
+			}
+			return next;
+		});
+	};
+
 	const setValue = (name: string, newValue: unknown) => {
 		if (name.includes(".") || name.includes("[")) {
-			setValues((prev) => setNestedValue(prev, name, newValue));
+			setValues((prev) =>
+				setNestedValue(
+					seedArrayItemDefaults(schema, prev, name),
+					name,
+					newValue,
+				),
+			);
 		} else {
 			setValues((prev) => ({ ...prev, [name]: newValue }));
 		}
@@ -335,6 +384,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 		clientErrors,
 		hasSubmitted,
 		setClientError,
+		clearServerError,
 		onFieldChange,
 		revalidateAll,
 		values,
@@ -410,6 +460,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 					method={method}
 					action={action}
 					className={resolvedClassName}
+					noValidate
 					onSubmit={handleSubmit}
 				>
 					{formContent}
@@ -417,19 +468,6 @@ export function SendouForm<T extends z.ZodRawShape>({
 			)}
 		</FormContext.Provider>
 	);
-}
-
-function buildFieldPath(path: PropertyKey[]): string | null {
-	if (path.length === 0) return null;
-
-	return path
-		.map((segment, index) => {
-			if (typeof segment === "number") return `[${segment}]`;
-			if (typeof segment === "symbol") return null;
-			return index === 0 ? segment : `.${segment}`;
-		})
-		.filter((part) => part !== null)
-		.join("");
 }
 
 function computeInitialErrors<T extends z.ZodRawShape>(

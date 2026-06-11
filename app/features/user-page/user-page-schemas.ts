@@ -82,7 +82,7 @@ export const userEditProfileBaseSchema = z.object({
 		},
 	}),
 	inGameName: textFieldOptional({
-		label: "labels.profileInGameName",
+		label: "labels.inGameName",
 		bottomText: "bottomTexts.profileInGameName",
 		maxLength:
 			USER.IN_GAME_NAME_TEXT_MAX_LENGTH +
