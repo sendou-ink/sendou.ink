@@ -17,7 +17,7 @@
 	justify-content: space-around;
 	align-items: center;
 	height: calc(var(--layout-nav-height) + env(safe-area-inset-bottom));
-	background-color: var(--color-bg);
+	background-color: var(--color-bg-nav);
 	border-top: 1.5px solid var(--color-border);
 	padding: 0 var(--s-4);
 	padding-bottom: env(safe-area-inset-bottom);
