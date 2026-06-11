@@ -3,6 +3,7 @@ import { CloseExpiredContinueVotesRoutine } from "./closeExpiredContinueVotes";
 import { DeleteObsoleteMatchVodsRoutine } from "./deleteObsoleteMatchVods";
 import { DeleteOldNotificationsRoutine } from "./deleteOldNotifications";
 import { DeleteOldRoomLinksRoutine } from "./deleteOldRoomLinks";
+import { DeleteOldTournamentAuditLogsRoutine } from "./deleteOldTournamentAuditLogs";
 import { DeleteOrphanArtTagsRoutine } from "./deleteOrphanArtTags";
 import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
 import { NotifyPlusServerVotingRoutine } from "./notifyPlusServerVoting";
@@ -37,6 +38,7 @@ export const everyHourAt30 = [
 export const daily = [
 	DeleteObsoleteMatchVodsRoutine,
 	DeleteOldNotificationsRoutine,
+	DeleteOldTournamentAuditLogsRoutine,
 	CloseExpiredCommissionsRoutine,
 	DeleteOrphanArtTagsRoutine,
 	OptimizeDatabaseRoutine,

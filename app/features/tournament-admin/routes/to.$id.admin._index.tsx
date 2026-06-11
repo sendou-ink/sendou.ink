@@ -152,7 +152,10 @@ function TeamRow({
 	const logoSrc = tournament.tournamentTeamLogoSrc(team);
 
 	return (
-		<tr className={clsx({ [styles.droppedOut]: team.droppedOut })}>
+		<tr
+			className={clsx({ [styles.droppedOut]: team.droppedOut })}
+			data-testid="team-row"
+		>
 			<td>
 				<div className="stack horizontal sm items-center">
 					<Avatar size="xxs" url={logoSrc} identiconInput={team.name} />
@@ -160,11 +163,14 @@ function TeamRow({
 						<a
 							href={teamPage(team.team.customUrl ?? "")}
 							className={styles.teamName}
+							data-testid="team-name"
 						>
 							{team.name}
 						</a>
 					) : (
-						<span className={styles.teamName}>{team.name}</span>
+						<span className={styles.teamName} data-testid="team-name">
+							{team.name}
+						</span>
 					)}
 				</div>
 			</td>

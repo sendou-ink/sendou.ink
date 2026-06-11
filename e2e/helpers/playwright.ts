@@ -99,6 +99,21 @@ export async function selectUser({
 	await page.keyboard.press("Enter");
 }
 
+export async function selectTournament({
+	page,
+	query,
+}: {
+	page: Page;
+	query: string;
+}) {
+	const item = page.getByTestId("tournament-search-item");
+
+	await page.getByRole("button", { name: /Tournament search/i }).click();
+	await page.getByTestId("tournament-search-input").fill(query);
+	await expect(item.first()).toBeVisible();
+	await item.first().click();
+}
+
 /** page.goto that waits for the page to be hydrated before proceeding */
 export async function navigate({ page, url }: { page: Page; url: string }) {
 	// Rewrite absolute URLs with localhost to use the worker's baseURL

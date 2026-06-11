@@ -1,9 +1,10 @@
+import { sub } from "date-fns";
 import type { Transaction } from "kysely";
 import { jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables, TournamentAuditLogMetadata } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
-import { databaseTimestampNow } from "~/utils/dates";
+import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 
 export const AUDIT_LOG_PAGE_SIZE = 30;
@@ -210,6 +211,18 @@ export async function countByTournamentId({
 	const result = await query.executeTakeFirstOrThrow();
 
 	return result.count;
+}
+
+/** Deletes audit log events older than three months. */
+export function deleteOld() {
+	return db
+		.deleteFrom("TournamentAuditLog")
+		.where(
+			"createdAt",
+			"<",
+			dateToDatabaseTimestamp(sub(new Date(), { months: 3 })),
+		)
+		.executeTakeFirst();
 }
 
 /** Returns every team (including deleted ones) that has appeared in the tournament's audit log, for the team filter dropdown. */
