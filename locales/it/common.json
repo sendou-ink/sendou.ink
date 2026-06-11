@@ -126,6 +126,7 @@
 	"actions.copyTimestampForDiscord": "",
 	"actions.create": "Crea",
 	"actions.close": "Chiudi",
+	"actions.dismiss": "",
 	"actions.cancel": "Cancella",
 	"actions.loading": "Caricamento in corso...",
 	"actions.clear": "Svuota",

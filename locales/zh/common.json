@@ -126,6 +126,7 @@
 	"actions.copyTimestampForDiscord": "",
 	"actions.create": "创建",
 	"actions.close": "关闭",
+	"actions.dismiss": "",
 	"actions.cancel": "取消",
 	"actions.loading": "加载中...",
 	"actions.clear": "清除",

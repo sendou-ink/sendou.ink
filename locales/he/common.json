@@ -126,6 +126,7 @@
 	"actions.copyTimestampForDiscord": "",
 	"actions.create": "יצירה",
 	"actions.close": "סגירה",
+	"actions.dismiss": "",
 	"actions.cancel": "ביטול",
 	"actions.loading": "טוען...",
 	"actions.clear": "ניקוי",

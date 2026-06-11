@@ -126,6 +126,7 @@
 	"actions.copyTimestampForDiscord": "",
 	"actions.create": "Criar",
 	"actions.close": "Fechar",
+	"actions.dismiss": "",
 	"actions.cancel": "Cancelar",
 	"actions.loading": "Carregando...",
 	"actions.clear": "Limpar",

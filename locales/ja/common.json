@@ -126,6 +126,7 @@
 	"actions.copyTimestampForDiscord": "",
 	"actions.create": "作成",
 	"actions.close": "閉じる",
+	"actions.dismiss": "",
 	"actions.cancel": "キャンセル",
 	"actions.loading": "Loading...",
 	"actions.clear": "クリア",

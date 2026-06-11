@@ -126,6 +126,7 @@
 	"actions.copyTimestampForDiscord": "",
 	"actions.create": "Créer",
 	"actions.close": "Fermer",
+	"actions.dismiss": "",
 	"actions.cancel": "Annuler le match",
 	"actions.loading": "Chargement...",
 	"actions.clear": "Effacer",

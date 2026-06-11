@@ -126,6 +126,7 @@
 	"actions.copyTimestampForDiscord": "Copiar timestamp para Discord",
 	"actions.create": "Crear",
 	"actions.close": "Cerrar",
+	"actions.dismiss": "",
 	"actions.cancel": "Cancelar",
 	"actions.loading": "Cargando...",
 	"actions.clear": "Limpiar",

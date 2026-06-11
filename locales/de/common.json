@@ -126,6 +126,7 @@
 	"actions.copyTimestampForDiscord": "Discord-Zeitstempel kopieren",
 	"actions.create": "Erstellen",
 	"actions.close": "Schließen",
+	"actions.dismiss": "",
 	"actions.cancel": "Abbrechen",
 	"actions.loading": "Lädt...",
 	"actions.clear": "Leeren",
