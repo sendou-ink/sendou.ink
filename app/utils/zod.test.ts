@@ -97,6 +97,16 @@ describe("actuallyNonEmptyStringOrNull", () => {
 		expect(actuallyNonEmptyStringOrNull("\uFEFF")).toBeNull();
 		expect(actuallyNonEmptyStringOrNull("\u2060")).toBeNull();
 	});
+
+	it("returns null for a string with only soft hyphens", () => {
+		expect(actuallyNonEmptyStringOrNull("\u00AD")).toBeNull();
+		expect(actuallyNonEmptyStringOrNull("\u00AD\u00AD\u00AD")).toBeNull();
+	});
+
+	it("returns null for a string with only braille blanks", () => {
+		expect(actuallyNonEmptyStringOrNull("\u2800")).toBeNull();
+		expect(actuallyNonEmptyStringOrNull("\u2800\u2800\u2800\u2800")).toBeNull();
+	});
 });
 
 describe("hexCodeWithoutAlpha", () => {
