@@ -26,6 +26,8 @@ import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useLayoutSize } from "~/hooks/useMainContentWidth";
+import { useVisualViewportHeight } from "~/hooks/useVisualViewportHeight";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -213,8 +215,15 @@ export function Layout({
 	const [sideNavModalOpen, setSideNavModalOpen] = React.useState(false);
 	const [chatSidebarModalOpen, setChatSidebarModalOpen] = React.useState(false);
 
+	const layoutSize = useLayoutSize();
+	useVisualViewportHeight();
 	const chatSidebarOpen = chatContext?.chatOpen ?? false;
 	const setChatSidebarOpen = chatContext?.setChatOpen ?? (() => {});
+
+	const setChatSidebarModalOpenAndSync = (open: boolean) => {
+		setChatSidebarModalOpen(open);
+		setChatSidebarOpen(open);
+	};
 
 	const { t } = useTranslation(["front", "common"]);
 	const { formatRelativeDate } = useRelativeDayFormat();
@@ -393,7 +402,7 @@ export function Layout({
 						className={styles.chatSidebarModalOverlay}
 						isDismissable
 						isOpen={chatSidebarModalOpen}
-						onOpenChange={setChatSidebarModalOpen}
+						onOpenChange={setChatSidebarModalOpenAndSync}
 					>
 						<Modal className={styles.chatSidebarModal}>
 							<Dialog
@@ -424,7 +433,7 @@ export function Layout({
 						}
 						onChatModalToggle={
 							data?.user
-								? () => setChatSidebarModalOpen((prev) => !prev)
+								? () => setChatSidebarModalOpenAndSync(!chatSidebarModalOpen)
 								: undefined
 						}
 						chatUnreadCount={chatContext?.totalUnreadCount}
@@ -440,7 +449,7 @@ export function Layout({
 				{children}
 				<Footer />
 			</div>
-			{chatSidebarOpen ? (
+			{chatSidebarOpen && layoutSize === "desktop" ? (
 				<div
 					className={clsx(
 						styles.chatSidebar,
