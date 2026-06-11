@@ -23,6 +23,7 @@ export async function cachedFullUserLeaderboard(season: number) {
 		key: `user-leaderboard-season-${season}`,
 		cache,
 		ttl: ttl(IN_MILLISECONDS.HALF_HOUR),
+		staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
 		async getFreshValue() {
 			const leaderboard = await LeaderboardRepository.userSPLeaderboard(season);
 			const withTiers = addTiers(leaderboard, season);

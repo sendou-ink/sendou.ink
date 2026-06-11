@@ -55,6 +55,7 @@ export function PlacementsTable({
 												: TAKOROKA_BRAND_ID,
 										)}
 										width={24}
+										height={24}
 									/>
 								</div>
 
@@ -63,6 +64,7 @@ export function PlacementsTable({
 										alt={t(`game-misc:MODE_LONG_${placement.mode}`)}
 										path={modeImageUrl(placement.mode)}
 										width={24}
+										height={24}
 									/>
 								</div>
 							</>

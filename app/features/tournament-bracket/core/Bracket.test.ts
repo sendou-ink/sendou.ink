@@ -475,3 +475,101 @@ describe("round robin A/B divisions standings", () => {
 		expect(teams).toEqual([1, 2]);
 	});
 });
+
+describe("single elimination standings - third place match", () => {
+	const singleEliminationTournament = ({
+		thirdPlaceMatchReported,
+	}: {
+		thirdPlaceMatchReported: boolean;
+	}) => {
+		const storage = new InMemoryDatabase();
+		const manager = new BracketsManager(storage);
+
+		manager.create({
+			name: "SE",
+			tournamentId: 1,
+			type: "single_elimination",
+			seeding: [1, 2, 3, 4],
+			settings: { consolationFinal: true },
+		});
+
+		const reportLowerTeamIdAsWinner = (matchId: number) => {
+			manager.update.match({
+				id: matchId,
+				opponent1: { score: 2, result: "win" },
+				opponent2: { score: 0 },
+			});
+		};
+
+		const semifinals = storage
+			.select<any>("match")!
+			.filter((match) => match.opponent1?.id && match.opponent2?.id);
+		invariant(semifinals.length === 2, "Expected two semifinal matches");
+
+		const semifinalLoserIds: number[] = [];
+		for (const match of semifinals) {
+			semifinalLoserIds.push(match.opponent2.id);
+			reportLowerTeamIdAsWinner(match.id);
+		}
+
+		let thirdPlaceWinnerId: number | undefined;
+		let thirdPlaceLoserId: number | undefined;
+		if (thirdPlaceMatchReported) {
+			const thirdPlaceGroupId = Math.max(
+				...storage.select<any>("group")!.map((group) => group.id),
+			);
+			const thirdPlaceMatch = storage
+				.select<any>("match")!
+				.find((match) => match.group_id === thirdPlaceGroupId);
+			invariant(thirdPlaceMatch, "Third place match not found");
+			thirdPlaceWinnerId = thirdPlaceMatch.opponent1.id;
+			thirdPlaceLoserId = thirdPlaceMatch.opponent2.id;
+			reportLowerTeamIdAsWinner(thirdPlaceMatch.id);
+		}
+
+		const tournament = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "single_elimination",
+							name: "SE",
+							requiresCheckIn: false,
+							settings: {},
+							sources: [],
+						},
+					],
+				},
+			},
+			data: manager.get.tournamentData(1),
+		});
+
+		return { tournament, thirdPlaceWinnerId, thirdPlaceLoserId };
+	};
+
+	it("excludes semifinal losers from standings before the third place match concludes", () => {
+		const { tournament } = singleEliminationTournament({
+			thirdPlaceMatchReported: false,
+		});
+
+		const standings = tournament.bracketByIdx(0)!.standings;
+
+		expect(standings).toHaveLength(0);
+	});
+
+	it("places third place match winner 3rd and loser 4th once it is played", () => {
+		const { tournament, thirdPlaceWinnerId, thirdPlaceLoserId } =
+			singleEliminationTournament({
+				thirdPlaceMatchReported: true,
+			});
+
+		const standings = tournament.bracketByIdx(0)!.standings;
+
+		expect(
+			standings.find((s) => s.team.id === thirdPlaceWinnerId)?.placement,
+		).toBe(3);
+		expect(
+			standings.find((s) => s.team.id === thirdPlaceLoserId)?.placement,
+		).toBe(4);
+	});
+});

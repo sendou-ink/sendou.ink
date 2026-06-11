@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	actuallyNonEmptyStringOrNull,
 	hasZalgo,
+	hexCodeWithoutAlpha,
 	normalizeFriendCode,
 	timeString,
 } from "./zod";
@@ -43,6 +44,13 @@ describe("hasZalgo", () => {
 
 	it("accepts japanese characters", () => {
 		expect(hasZalgo("こんにちは")).toBe(false);
+	});
+
+	it("returns a stable result when called repeatedly with the same input", () => {
+		const withCombiningMark = "á"; // "á" as base letter + single combining accent
+
+		expect(hasZalgo(withCombiningMark)).toBe(true);
+		expect(hasZalgo(withCombiningMark)).toBe(true);
 	});
 });
 
@@ -88,6 +96,38 @@ describe("actuallyNonEmptyStringOrNull", () => {
 		expect(actuallyNonEmptyStringOrNull("\u1160")).toBeNull();
 		expect(actuallyNonEmptyStringOrNull("\uFEFF")).toBeNull();
 		expect(actuallyNonEmptyStringOrNull("\u2060")).toBeNull();
+	});
+
+	it("returns null for a string with only soft hyphens", () => {
+		expect(actuallyNonEmptyStringOrNull("\u00AD")).toBeNull();
+		expect(actuallyNonEmptyStringOrNull("\u00AD\u00AD\u00AD")).toBeNull();
+	});
+
+	it("returns null for a string with only braille blanks", () => {
+		expect(actuallyNonEmptyStringOrNull("\u2800")).toBeNull();
+		expect(actuallyNonEmptyStringOrNull("\u2800\u2800\u2800\u2800")).toBeNull();
+	});
+});
+
+describe("hexCodeWithoutAlpha", () => {
+	it("accepts valid 3 and 6 digit hex colors", () => {
+		expect(hexCodeWithoutAlpha.safeParse("#fff").success).toBe(true);
+		expect(hexCodeWithoutAlpha.safeParse("#FFF").success).toBe(true);
+		expect(hexCodeWithoutAlpha.safeParse("#abc").success).toBe(true);
+		expect(hexCodeWithoutAlpha.safeParse("#ffffff").success).toBe(true);
+		expect(hexCodeWithoutAlpha.safeParse("#a1b2c3").success).toBe(true);
+	});
+
+	it("rejects strings that are not valid hex colors", () => {
+		expect(hexCodeWithoutAlpha.safeParse("#fff99").success).toBe(false);
+		expect(hexCodeWithoutAlpha.safeParse("#abc12").success).toBe(false);
+		expect(hexCodeWithoutAlpha.safeParse("#12345").success).toBe(false);
+		expect(hexCodeWithoutAlpha.safeParse("#ffffff99").success).toBe(false);
+	});
+
+	it("rejects alpha (4 and 8 digit) hex colors", () => {
+		expect(hexCodeWithoutAlpha.safeParse("#ffff").success).toBe(false);
+		expect(hexCodeWithoutAlpha.safeParse("#ffffffff").success).toBe(false);
 	});
 });
 

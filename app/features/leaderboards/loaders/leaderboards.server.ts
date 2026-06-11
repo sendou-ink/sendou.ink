@@ -54,6 +54,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 					key: `team-leaderboard-season-${season}-${type}`,
 					cache,
 					ttl: ttl(IN_MILLISECONDS.HALF_HOUR),
+					staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
 					async getFreshValue() {
 						return LeaderboardRepository.teamLeaderboardBySeason({
 							season,

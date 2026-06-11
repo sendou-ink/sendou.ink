@@ -167,7 +167,7 @@ export function next(date = new Date()): ListItem | null {
  * @throws {Error} If the season does not exist.
  */
 export function nthToDateRange(nth: number) {
-	const seasonObject = list.at(nth);
+	const seasonObject = list[nth];
 	if (!seasonObject) {
 		throw new Error(`Season ${nth} not found`);
 	}
@@ -181,7 +181,7 @@ export function nthToDateRange(nth: number) {
 /**
  * Retrieves a list of season numbers that have started based on the provided date (defaults to now).
  *
- * @returns An array of season numbers in asceding order. If no seasons have started, returns an array containing only `[0]`.
+ * @returns An array of season numbers in descending order (newest first). If no seasons have started, returns an array containing only `[0]`.
  */
 export function allStarted(date = new Date()) {
 	const startedSeasons = list.filter((s) => date >= s.starts);

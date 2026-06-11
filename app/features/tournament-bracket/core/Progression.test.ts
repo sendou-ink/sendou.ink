@@ -230,6 +230,35 @@ describe("validatedSources - PLACEMENTS_PARSE_ERROR", () => {
 		expect(error.type).toBe("PLACEMENTS_PARSE_ERROR");
 	});
 
+	it("parsing fails with a reversed placement range", () => {
+		const error = Progression.validatedBrackets([
+			{
+				id: "1",
+				name: "Swiss Bracket",
+				type: "swiss",
+				settings: {
+					advanceThreshold: 3,
+				},
+				requiresCheckIn: false,
+			},
+			{
+				id: "2",
+				name: "Final Bracket",
+				type: "single_elimination",
+				settings: {},
+				requiresCheckIn: false,
+				sources: [
+					{
+						bracketId: "1",
+						placements: "3-1",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("PLACEMENTS_PARSE_ERROR");
+	});
+
 	it("parsing fails with empty string placements for Swiss brackets without early advance", () => {
 		const error = Progression.validatedBrackets([
 			{
@@ -637,6 +666,49 @@ describe("validatedSources - other rules", () => {
 		]) as Progression.ValidationError;
 
 		expect(error.type).toBe("GAP_IN_PLACEMENTS");
+		expect((error as any).bracketIdxs).toEqual([1, 2]);
+	});
+
+	it("only flags GAP_IN_PLACEMENTS brackets sourcing from the problematic bracket", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1",
+					},
+				],
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "3",
+					},
+				],
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "1",
+						placements: "1",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("GAP_IN_PLACEMENTS");
+		// bracket 3 sources from bracket 1, not from the gap in bracket 0
 		expect((error as any).bracketIdxs).toEqual([1, 2]);
 	});
 

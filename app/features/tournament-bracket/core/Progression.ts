@@ -437,6 +437,7 @@ function parsePlacements(
 
 		if (part.includes("-")) {
 			const [start, end] = part.split("-").map(Number);
+			if (end < start) return null;
 
 			for (let n = start; n <= end; n++) {
 				result.push(n);
@@ -590,7 +591,7 @@ function gapInPlacements(brackets: ParsedBracket[]) {
 	return brackets.flatMap((bracket, bracketIdx) => {
 		if (!bracket.sources) return [];
 
-		return bracket.sources.flatMap(
+		return bracket.sources.some(
 			(source) => source.bracketIdx === problematicBracketIdx,
 		)
 			? [bracketIdx]

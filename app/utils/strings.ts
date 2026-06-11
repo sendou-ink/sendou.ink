@@ -51,7 +51,7 @@ export function gearTypeToInitial(gearType: GearType) {
 
 export function pathnameFromPotentialURL(maybeUrl: string) {
 	try {
-		return new URL(maybeUrl).pathname.replace("/", "");
+		return new URL(maybeUrl).pathname.replace(/^\/+|\/+$/g, "");
 	} catch {
 		return maybeUrl;
 	}
@@ -113,15 +113,15 @@ export function removeMarkdown(value: string) {
 			// Remove images
 			.replace(/!\[(.*?)\][[(].*?[\])]/g, "")
 			// Remove inline links
-			.replace(/\[([^\]]*?)\][[(].*?[\])]/g, "$2")
+			.replace(/\[([^\]]*?)\][[(].*?[\])]/g, "$1")
 			// Remove blockquotes
 			.replace(/^(\n)?\s{0,3}>\s?/gm, "$1")
 			// Remove reference-style links?
 			.replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/g, "")
 			// Remove headers
-			.replaceAll("#", "")
+			.replace(/^\s{0,3}#{1,6}\s*/gm, "")
 			// Remove * emphasis
-			.replace(/([*]+)(\S)(.*?\S)??\1/g, "$2$3")
+			.replace(/(\*+)([^\s*])(.*?[^\s*])??\1/g, "$2$3")
 			// Remove _ emphasis. Unlike *, _ emphasis gets rendered only if
 			//   1. Either there is a whitespace character before opening _ and after closing _.
 			//   2. Or _ is at the start/end of the string.

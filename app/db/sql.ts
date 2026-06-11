@@ -28,8 +28,18 @@ export const sql = new Database(
 );
 
 sql.pragma("journal_mode = WAL");
+// The synchronous=NORMAL setting provides the best balance between performance and safety for most applications running in WAL mode.
+// You lose durability across power lose with synchronous NORMAL in WAL mode, but that is not important for most applications.
+// Transactions are still atomic, consistent, and isolated, which are the most important characteristics in most use cases.
+// Source: https://sqlite.org/pragma.html
+sql.pragma("synchronous = NORMAL");
 sql.pragma("foreign_keys = ON");
 sql.pragma("busy_timeout = 5000");
+// 64MB page cache (default is 2MB)
+sql.pragma("cache_size = -65536");
+// lets reads come straight from the OS page cache without read() syscalls
+// Source: https://sqlite.org/mmap.html
+sql.pragma("mmap_size = 3221225472");
 // see https://sqlite.org/pragma.html#pragma_optimize — recommended for long-lived
 // connections; pair with a periodic `PRAGMA optimize;` (see OptimizeDatabase routine)
 sql.pragma("optimize = 0x10002");

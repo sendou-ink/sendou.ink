@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { assertType } from "~/utils/types";
 import {
-	hexCode,
+	hexCodeWithoutAlpha,
 	modeShort,
 	specialWeaponId,
 	stageId,
@@ -57,7 +57,7 @@ export type TierListItem = z.infer<typeof tierListItemSchema>;
 const tierSchema = z.object({
 	id: z.string(),
 	name: z.string(),
-	color: hexCode,
+	color: hexCodeWithoutAlpha,
 });
 
 export type TierListMakerTier = z.infer<typeof tierSchema>;

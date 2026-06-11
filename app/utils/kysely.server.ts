@@ -94,8 +94,7 @@ export function tournamentLogoWithDefault(
 					"UnvalidatedUserSubmittedImage.id",
 				)
 				.$asScalar(),
-			sql.lit(`${import.meta.env.VITE_TOURNAMENT_DEFAULT_LOGO}
-  `),
+			sql.lit(`${import.meta.env.VITE_TOURNAMENT_DEFAULT_LOGO}`),
 		),
 	);
 }

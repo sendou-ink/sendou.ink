@@ -187,22 +187,24 @@ type PageItem = {
 	mobileOnly?: boolean;
 };
 
-function getPageNumbers(currentPage: number, pagesCount: number): PageItem[] {
+export function getPageNumbers(
+	currentPage: number,
+	pagesCount: number,
+): PageItem[] {
 	if (pagesCount <= 5) {
 		return Array.from({ length: pagesCount }, (_, i) => ({ value: i + 1 }));
 	}
 
-	if (pagesCount <= 9) {
-		return Array.from({ length: pagesCount }, (_, i) => ({
-			value: i + 1,
-			desktopOnly: i >= 2 && i < pagesCount - 2,
-		}));
-	}
+	const showAllOnDesktop = pagesCount <= 9;
 
-	const mobileStart = Math.max(2, currentPage - 1);
-	const mobileEnd = Math.min(pagesCount - 1, currentPage + 1);
-	const desktopStart = Math.max(2, currentPage - 2);
-	const desktopEnd = Math.min(pagesCount - 1, currentPage + 2);
+	const { start: mobileStart, end: mobileEnd } = innerPageWindow(
+		currentPage,
+		pagesCount,
+		1,
+	);
+	const { start: desktopStart, end: desktopEnd } = showAllOnDesktop
+		? { start: 2, end: pagesCount - 1 }
+		: innerPageWindow(currentPage, pagesCount, 2);
 
 	const isMobileVisible = (page: number) =>
 		page >= mobileStart && page <= mobileEnd;
@@ -244,4 +246,32 @@ function getPageNumbers(currentPage: number, pagesCount: number): PageItem[] {
 	pages.push({ value: pagesCount });
 
 	return pages;
+}
+
+/**
+ * Inclusive range of inner page numbers (excluding the always-shown first and
+ * last page) to render around the current page. The window is nudged inward by
+ * one when the current page is the very first or last page, so the edge view
+ * shows a bridging number instead of a lonely jump like "1 2 … 8".
+ *
+ * When exactly one page would be left between the window and the always-shown
+ * first or last page, the window is widened to include it: an ellipsis takes
+ * the same space as a single page number, so "1 … 3" is never better than
+ * "1 2 3".
+ */
+function innerPageWindow(
+	currentPage: number,
+	pagesCount: number,
+	radius: number,
+): { start: number; end: number } {
+	const startNudge = currentPage === pagesCount ? 1 : 0;
+	const endNudge = currentPage === 1 ? 1 : 0;
+
+	let start = Math.max(2, currentPage - radius - startNudge);
+	let end = Math.min(pagesCount - 1, currentPage + radius + endNudge);
+
+	if (start === 3) start = 2;
+	if (end === pagesCount - 2) end = pagesCount - 1;
+
+	return { start, end };
 }

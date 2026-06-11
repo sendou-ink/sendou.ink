@@ -116,9 +116,20 @@ function restoreFromPreSeeded(sourcePath: string) {
 	sql.exec(`ATTACH DATABASE '${sourcePath}' AS source`);
 
 	try {
+		// virtual tables and their shadow tables (e.g. UserSearch_data) can not be
+		// written to directly; the fts index stays in sync via the User triggers
+		// when its source rows are deleted and re-inserted below
 		const tables = sql
 			.prepare(
-				"SELECT name FROM source.sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+				`SELECT name FROM source.sqlite_master
+				WHERE type='table'
+				AND name NOT LIKE 'sqlite_%'
+				AND sql NOT LIKE 'CREATE VIRTUAL TABLE%'
+				AND NOT EXISTS (
+					SELECT 1 FROM source.sqlite_master AS vt
+					WHERE vt.sql LIKE 'CREATE VIRTUAL TABLE%'
+					AND source.sqlite_master.name LIKE vt.name || '_%'
+				)`,
 			)
 			.all() as Array<{ name: string }>;
 

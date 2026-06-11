@@ -15,6 +15,12 @@ describe("pathnameFromPotentialURL()", () => {
 	test("Returns string as is if not URL", () => {
 		expect(pathnameFromPotentialURL("sendouc")).toBe("sendouc");
 	});
+
+	test("Strips trailing slash from URL path", () => {
+		expect(pathnameFromPotentialURL("https://discord.gg/FW4dKrY/")).toBe(
+			"FW4dKrY",
+		);
+	});
 });
 
 describe("truncateBySentence()", () => {
@@ -73,5 +79,25 @@ describe("removeMarkdown()", () => {
 
 	test("Strips HTML tags and markdown emphasis", () => {
 		expect(removeMarkdown("<p>Hello **world**!</p>")).toBe("Hello world!");
+	});
+
+	test("Keeps the link text of inline links", () => {
+		expect(
+			removeMarkdown("Check out [the site](https://example.com) today"),
+		).toBe("Check out the site today");
+	});
+
+	test("Keeps non-header # characters", () => {
+		expect(removeMarkdown("Showdown #1 starts now")).toBe(
+			"Showdown #1 starts now",
+		);
+	});
+
+	test("Leaves space-flanked asterisks intact instead of mangling them", () => {
+		expect(removeMarkdown("** bold text **")).toBe("** bold text **");
+	});
+
+	test("Strips emphasis with inner spaces", () => {
+		expect(removeMarkdown("*a b c*")).toBe("a b c");
 	});
 });

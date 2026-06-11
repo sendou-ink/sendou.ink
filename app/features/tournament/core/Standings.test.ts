@@ -7,7 +7,11 @@ import {
 import { BracketsManager } from "~/modules/brackets-manager";
 import { InMemoryDatabase } from "~/modules/brackets-memory-db";
 import invariant from "~/utils/invariant";
-import { reNumberPlacements, tournamentStandings } from "./Standings";
+import {
+	matchesPlayed,
+	reNumberPlacements,
+	tournamentStandings,
+} from "./Standings";
 
 describe("tournamentStandings", () => {
 	it("returns single-division standings for a tournament with one starting bracket", () => {
@@ -136,6 +140,78 @@ describe("reNumberPlacements", () => {
 		expect(reNumberPlacements([], 5)).toEqual([]);
 	});
 });
+
+describe("matchesPlayed", () => {
+	it("tags each match with the bracket index it was actually played in", () => {
+		const tournament = roundRobinToSingleEliminationTournament();
+
+		const matches = matchesPlayed({ tournament, teamId: 1 });
+
+		// team 1 plays 3 round robin matches (bracket idx 0)
+		// and 1 single elimination match (bracket idx 1)
+		const roundRobinMatches = matches.filter((m) => m.bracketIdx === 0);
+		const singleEliminationMatches = matches.filter((m) => m.bracketIdx === 1);
+
+		expect(roundRobinMatches).toHaveLength(3);
+		expect(singleEliminationMatches).toHaveLength(1);
+	});
+});
+
+function roundRobinToSingleEliminationTournament() {
+	const storage = new InMemoryDatabase();
+	const manager = new BracketsManager(storage);
+
+	manager.create({
+		name: "Main Bracket",
+		tournamentId: 1,
+		type: "round_robin",
+		seeding: [1, 2, 3, 4],
+		settings: { groupCount: 1, seedOrdering: ["groups.seed_optimized"] },
+	});
+	manager.create({
+		name: "B1",
+		tournamentId: 1,
+		type: "single_elimination",
+		seeding: [1, 2],
+		settings: { seedOrdering: ["natural"] },
+	});
+
+	// play every match across both brackets, lower id always wins
+	while (true) {
+		const pending = storage
+			.select<any>("match")!
+			.find(
+				(m) =>
+					typeof m.opponent1?.id === "number" &&
+					typeof m.opponent2?.id === "number" &&
+					m.opponent1.result !== "win" &&
+					m.opponent2.result !== "win",
+			);
+		if (!pending) break;
+
+		const winnerIsOpp1 = pending.opponent1.id < pending.opponent2.id;
+		manager.update.match({
+			id: pending.id,
+			opponent1: winnerIsOpp1 ? { score: 2, result: "win" } : { score: 0 },
+			opponent2: winnerIsOpp1 ? { score: 0 } : { score: 2, result: "win" },
+		});
+	}
+
+	return testTournament({
+		ctx: {
+			settings: {
+				bracketProgression: progressions.roundRobinToSingleElimination,
+			},
+			teams: [
+				tournamentCtxTeam(1, { startingBracketIdx: 0, seed: 1 }),
+				tournamentCtxTeam(2, { startingBracketIdx: 0, seed: 2 }),
+				tournamentCtxTeam(3, { startingBracketIdx: 0, seed: 3 }),
+				tournamentCtxTeam(4, { startingBracketIdx: 0, seed: 4 }),
+			],
+		},
+		data: manager.get.tournamentData(1),
+	});
+}
 
 function singleEliminationTournament() {
 	const storage = new InMemoryDatabase();

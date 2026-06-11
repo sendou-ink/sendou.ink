@@ -325,6 +325,56 @@ describe("MapList.generate()", () => {
 			expect(modesSeen).toContain("RM");
 		});
 
+		it("keeps cycling other modes across sets when a positional pattern is set", () => {
+			// With a `*SZ*` pattern and Bo3 sets the two ANY slots are filled from
+			// the non-SZ modes (TC, RM, CB). Because the cycle offset advances by the
+			// full set size (3) instead of the slots actually consumed, every round
+			// resolves the ANY slots to the same modes and the remaining mode (here
+			// RM) never appears in the whole bracket.
+			const gen = MapList.generate({
+				mapPool: new MapPool({
+					TW: [],
+					SZ: [4, 5, 6],
+					TC: [7, 8, 9],
+					RM: [10, 11, 12],
+					CB: [13, 14, 15],
+				}),
+				modeOrder: ["SZ", "TC", "RM", "CB"],
+			});
+			gen.next();
+
+			const modesSeen = new Set<string>();
+			for (let round = 0; round < 10; round++) {
+				const maps = gen.next({ amount: 3, pattern: "*SZ*" }).value;
+				for (const map of maps) {
+					modesSeen.add(map.mode);
+				}
+			}
+
+			expect([...modesSeen].sort()).toEqual(["CB", "RM", "SZ", "TC"]);
+		});
+
+		it("advances the cycle by the ANY slots consumed when a positional pattern is set", () => {
+			const gen = MapList.generate({
+				mapPool: new MapPool({
+					TW: [],
+					SZ: [4, 5, 6],
+					TC: [7, 8, 9],
+					RM: [10, 11, 12],
+					CB: [13, 14, 15],
+				}),
+				modeOrder: ["SZ", "TC", "RM", "CB"],
+			});
+			gen.next();
+
+			const nextModes = () =>
+				gen.next({ amount: 3, pattern: "*SZ*" }).value.map((m) => m.mode);
+
+			expect(nextModes()).toEqual(["TC", "SZ", "RM"]);
+			expect(nextModes()).toEqual(["CB", "SZ", "TC"]);
+			expect(nextModes()).toEqual(["RM", "SZ", "CB"]);
+		});
+
 		it("replenishes the stage id pool with different order", () => {
 			const gen = initGenerator(
 				new MapPool({
