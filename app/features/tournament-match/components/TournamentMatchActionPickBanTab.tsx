@@ -10,6 +10,8 @@ import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tour
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import { useMatch } from "../match-page-context";
+import { UndoReportButton } from "./TournamentMatchActionTab";
 
 type FromIndicator = NonNullable<PickBanMapOption["picker"]>;
 
@@ -25,6 +27,7 @@ export function TournamentMatchActionPickBanTab({
 	const user = useUser();
 	const tournament = useTournament();
 	const fetcher = useFetcher();
+	const { scoreSum } = useMatch();
 
 	const pickerTeamId = turnOfResult.teamId;
 	const pickingTeam = teams.find((team) => team.id === pickerTeamId)!;
@@ -96,6 +99,7 @@ export function TournamentMatchActionPickBanTab({
 			type={sharedActionType}
 			isSubmitting={fetcher.state !== "idle"}
 			waitingFor={canPickBan ? undefined : pickingTeam.name}
+			actionButtons={<UndoReportButton scoreSum={scoreSum} />}
 			onSubmit={({ map }) => {
 				fetcher.submit(
 					{

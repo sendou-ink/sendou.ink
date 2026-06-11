@@ -8,7 +8,7 @@ import { ModeImage } from "../Image";
 import styles from "./MatchBannerBottomRow.module.css";
 
 interface MatchBannerBottomRowProps {
-	games: Array<{ mode: ModeShort | null; winner?: "ALPHA" | "BRAVO" }>;
+	games: Array<{ mode: ModeShort | null }>;
 	activeRosters: {
 		alpha: CommonUser[] | null;
 		bravo: CommonUser[] | null;

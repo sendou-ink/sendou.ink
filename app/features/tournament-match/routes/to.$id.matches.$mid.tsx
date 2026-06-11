@@ -2,6 +2,7 @@ import { useLoaderData } from "react-router";
 import { containerClassName } from "~/components/Main";
 import { MatchPage } from "~/components/match-page/MatchPage";
 import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
+import { useTournament } from "~/features/tournament/routes/to.$id";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { action } from "../actions/to.$id.matches.$mid.server";
 import { TournamentMatchBanner } from "../components/TournamentMatchBanner";
@@ -19,10 +20,11 @@ export const handle: SendouRouteHandle = {
 
 export default function TournamentMatchPage() {
 	const data = useLoaderData<typeof loader>();
+	const tournament = useTournament();
 
 	useWebsocketRevalidation(
 		tournamentMatchWebsocketRoom(data.match.id),
-		!data.matchIsOver,
+		!tournament.ctx.isFinalized,
 	);
 
 	return (

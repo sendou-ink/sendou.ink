@@ -588,6 +588,10 @@ export async function cancelMatch({
 	const match = await findById(matchId);
 	invariant(match, "Match not found");
 
+	if (match.isLocked) {
+		return { status: "CANT_CANCEL", shouldRefreshCaches: false };
+	}
+
 	if (isAdminReport) {
 		await db.transaction().execute(async (trx) => {
 			await trx
@@ -1070,6 +1074,7 @@ async function finalizeMatch({
 			.set({
 				confirmedAt: dateToDatabaseTimestamp(new Date()),
 				confirmedByUserId,
+				cancelRequestedByUserId: null,
 			})
 			.where("id", "=", match.id)
 			.execute();

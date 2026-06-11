@@ -22,11 +22,9 @@ export function TournamentMatchActionTab({
 	data: TournamentMatchLoaderData;
 	ownTeamId: number | null;
 }) {
-	const { t } = useTranslation(["q"]);
 	const tournament = useTournament();
 	const user = useUser();
 	const reportFetcher = useFetcher();
-	const undoFetcher = useFetcher();
 	const {
 		teams: [teamOne, teamTwo],
 		scores,
@@ -40,9 +38,12 @@ export function TournamentMatchActionTab({
 		weaponReportingOpen: tournament.weaponReportingOpen,
 	});
 
+	// during pick/ban there is no current map to report, but a wrongly reported
+	// score from a previous game can still be undone
 	if (!currentMap) {
 		return (
 			<SendouTabPanel id={TAB_KEYS.ACTION}>
+				{scoreSum > 0 ? <UndoReportButton scoreSum={scoreSum} /> : null}
 				{weaponReport ? <WeaponReporter {...weaponReport} standalone /> : null}
 			</SendouTabPanel>
 		);
@@ -123,31 +124,38 @@ export function TournamentMatchActionTab({
 					{ method: "post" },
 				);
 			}}
-			actionButtons={
-				<SendouButton
-					variant="minimal-destructive"
-					size="miniscule"
-					icon={<Undo2 size={16} />}
-					isPending={undoFetcher.state !== "idle"}
-					isDisabled={scoreSum === 0}
-					onPress={() => {
-						undoFetcher.submit(
-							{
-								_action: "UNDO_REPORT_SCORE",
-								position: String(scoreSum - 1),
-							},
-							{ method: "post" },
-						);
-					}}
-					testId="undo-score-button"
-				>
-					{t("q:match.undoReport")}
-				</SendouButton>
-			}
+			actionButtons={<UndoReportButton scoreSum={scoreSum} />}
 			secondaryAction={
 				weaponReport ? <WeaponReporter {...weaponReport} /> : null
 			}
 		/>
+	);
+}
+
+export function UndoReportButton({ scoreSum }: { scoreSum: number }) {
+	const { t } = useTranslation(["q"]);
+	const undoFetcher = useFetcher();
+
+	return (
+		<SendouButton
+			variant="minimal-destructive"
+			size="miniscule"
+			icon={<Undo2 size={16} />}
+			isPending={undoFetcher.state !== "idle"}
+			isDisabled={scoreSum === 0}
+			onPress={() => {
+				undoFetcher.submit(
+					{
+						_action: "UNDO_REPORT_SCORE",
+						position: String(scoreSum - 1),
+					},
+					{ method: "post" },
+				);
+			}}
+			testId="undo-score-button"
+		>
+			{t("q:match.undoReport")}
+		</SendouButton>
 	);
 }
 

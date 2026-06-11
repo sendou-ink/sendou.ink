@@ -3,12 +3,13 @@
 	grid-template-columns: 1fr;
 	grid-template-areas:
 		"header"
+		"actions"
 		"options"
 		"prompt"
 		"submit";
 	justify-items: center;
 	align-items: center;
-	gap: var(--s-6);
+	gap: var(--s-5);
 	container-type: inline-size;
 }
 
@@ -18,6 +19,13 @@
 	font-weight: var(--weight-semi);
 	text-align: center;
 	text-box: trim-start cap alphabetic;
+}
+
+.actionButtons {
+	grid-area: actions;
+	display: flex;
+	gap: var(--s-6);
+	margin-block-start: calc(-1 * var(--s-4));
 }
 
 .options {
@@ -32,7 +40,7 @@
 	grid-area: prompt;
 	margin: 0;
 	font-size: var(--font-sm);
-	color: var(--color-text-lighter);
+	color: var(--color-text-high);
 	text-align: center;
 }
 
@@ -54,7 +62,7 @@
 	grid-row: prompt-start / submit-end;
 	margin: 0;
 	font-size: var(--font-sm);
-	color: var(--color-text-lighter);
+	color: var(--color-text-high);
 	text-align: center;
 }
 
@@ -116,7 +124,7 @@
 	border: none;
 	background-color: transparent;
 	transition:
-		filter,
+		filter 0.2s,
 		opacity 0.2s;
 	border-radius: var(--radius-box);
 	cursor: pointer;

@@ -32,7 +32,7 @@
 	background-color: transparent;
 	padding: calc(var(--s-1) - 1px);
 	border: 1px dashed var(--color-bg-higher);
-	color: var(--color-text-low);
+	color: var(--color-text-high);
 	display: flex;
 	align-items: center;
 	justify-content: center;

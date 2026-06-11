@@ -106,6 +106,7 @@ export function findResultById(id: number) {
 		.selectFrom("TournamentMatchGameResult")
 		.select([
 			"TournamentMatchGameResult.id",
+			"TournamentMatchGameResult.matchId",
 			"TournamentMatchGameResult.opponentOnePoints",
 			"TournamentMatchGameResult.opponentTwoPoints",
 			"TournamentMatchGameResult.winnerTeamId",

@@ -17,6 +17,8 @@ type MatchTabsKey = (typeof TAB_KEYS)[keyof typeof TAB_KEYS];
 interface MatchTabsProps {
 	children: React.ReactNode;
 	tabs: Array<MatchTabsKey>;
+	/** Tabs that should show a warning-colored alert icon to draw attention. */
+	alertTabs?: Array<MatchTabsKey>;
 }
 
 const TAB_KEY = "tab";
@@ -48,7 +50,7 @@ const TAB_TRANSLATION_KEYS = {
 	admin: "common:pages.admin",
 } as const;
 
-export function MatchTabs({ children, tabs }: MatchTabsProps) {
+export function MatchTabs({ children, tabs, alertTabs }: MatchTabsProps) {
 	const { t } = useTranslation(["q", "common"]);
 	const [searchParams, setSearchParams] = useSearchParams();
 
@@ -75,7 +77,12 @@ export function MatchTabs({ children, tabs }: MatchTabsProps) {
 			>
 				<SendouTabList>
 					{tabs.map((tab) => (
-						<SendouTab key={tab} id={tab} icon={TAB_ICONS[tab]}>
+						<SendouTab
+							key={tab}
+							id={tab}
+							icon={TAB_ICONS[tab]}
+							alert={alertTabs?.includes(tab)}
+						>
 							{t(TAB_TRANSLATION_KEYS[tab])}
 						</SendouTab>
 					))}

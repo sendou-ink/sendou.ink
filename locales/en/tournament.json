@@ -162,6 +162,8 @@
 	"match.activeRosterMissing.subtitle": "Waiting on {{teams}}",
 	"match.droppedOut.header": "Team dropped out",
 	"match.droppedOut.subtitle": "{{team}} forfeited the match",
+	"match.endedEarly.header": "Match ended early",
+	"match.endedEarly.subtitle": "Staff ended the match before it was decided",
 	"match.leagueLocked.header": "Waiting for league round to start",
 	"match.leagueLocked.subtitle": "Round playable from {{date}} onwards",
 	"match.locked.header": "Match locked to be casted",

@@ -162,6 +162,8 @@
 	"match.activeRosterMissing.subtitle": "",
 	"match.droppedOut.header": "",
 	"match.droppedOut.subtitle": "",
+	"match.endedEarly.header": "",
+	"match.endedEarly.subtitle": "",
 	"match.leagueLocked.header": "",
 	"match.leagueLocked.subtitle": "",
 	"match.locked.header": "",

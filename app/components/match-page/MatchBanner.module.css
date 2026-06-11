@@ -163,7 +163,7 @@
 
 .iconBannerSubtitle {
 	font-size: var(--font-xs);
-	color: var(--color-text-low);
+	color: var(--color-text-high);
 }
 
 .iconBannerBottomRight {

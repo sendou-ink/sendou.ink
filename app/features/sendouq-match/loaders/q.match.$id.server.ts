@@ -29,10 +29,14 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		...matchUnmapped.groupBravo.members,
 	].map((m) => m.id);
 
+	const isStaff = user?.roles.includes("STAFF") ?? false;
+	const isParticipant = Boolean(user && matchUsers.includes(user.id));
+	const canSeeRoomLinks = isStaff || isParticipant;
+
 	const [privateNotes, roomLinks, anyUserPrefersNoSplatnet, reportedWeapons] =
 		await Promise.all([
 			user ? PrivateUserNoteRepository.ownNotes(matchUsers) : undefined,
-			RoomLinkRepository.findByUserIds(matchUsers, 3),
+			canSeeRoomLinks ? RoomLinkRepository.findByUserIds(matchUsers, 3) : [],
 			UserRepository.anyUserPrefersNoSplatnet(matchUsers),
 			ReportedWeaponRepository.findByMatchId(matchId),
 		]);
@@ -46,9 +50,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		reportedWeapons,
 		isOffSeason: Seasons.current() === null,
 		chatCode: (() => {
-			const isStaff = user?.roles.includes("STAFF") ?? false;
-			const isParticipant = user && matchUsers.includes(user.id);
-
 			if (!(isStaff || isParticipant)) return null;
 
 			const accessible = chatAccessible({

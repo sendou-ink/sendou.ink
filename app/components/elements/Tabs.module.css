@@ -95,6 +95,12 @@
 	margin-inline-start: var(--s-2);
 }
 
+.tabAlert {
+	margin-inline-start: var(--s-1);
+	margin-inline-end: 0 !important;
+	color: var(--color-warning);
+}
+
 .sticky {
 	position: sticky;
 	top: 47px;

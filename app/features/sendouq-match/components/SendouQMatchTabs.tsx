@@ -76,10 +76,28 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 		(m) => m.winnerGroupId !== null,
 	);
 
+	const decidingReportedByUserId = [...data.match.mapList]
+		.reverse()
+		.find((m) => m.winnerGroupId !== null)?.reportedByUserId;
+	const reporterSide = SendouQMatch.resolveGroupMemberOf({
+		groupAlpha: data.match.groupAlpha,
+		groupBravo: data.match.groupBravo,
+		userId: decidingReportedByUserId,
+	});
+	const viewerMustConfirmScore =
+		awaitingConfirmation &&
+		isParticipant &&
+		reporterSide !== null &&
+		reporterSide !== userSide;
+
 	const tabs: Array<"join" | "rosters" | "action" | "result"> = ["rosters"];
 	if (!isLocked && isParticipant) tabs.push("join");
 	if (showActionTab) tabs.push("action");
 	if (isLocked || hasReportedMaps) tabs.push("result");
+
+	const alertTabs: Array<"action"> | undefined = viewerMustConfirmScore
+		? ["action"]
+		: undefined;
 
 	const allMembers = [
 		...data.match.groupAlpha.members,
@@ -109,7 +127,7 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 				aboutUser={addingNoteFor}
 				close={() => navigate(sendouQMatchPage(data.match.id))}
 			/>
-			<MatchTabs tabs={tabs}>
+			<MatchTabs tabs={tabs} alertTabs={alertTabs}>
 				{isLocked || hasReportedMaps ? (
 					<MatchResultTab
 						teams={resolveTimelineTeams(data.match, t)}
