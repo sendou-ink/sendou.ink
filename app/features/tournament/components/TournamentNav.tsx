@@ -225,7 +225,7 @@ function useNavItems({
 		};
 	}
 
-	if (tournament.ctx.rules) {
+	if (tournament.hasRulesPage) {
 		items.rules = {
 			key: "rules",
 			label: t("tournament:nav.rules"),

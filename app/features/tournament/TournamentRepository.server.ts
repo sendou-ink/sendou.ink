@@ -56,11 +56,10 @@ export async function findById(id: number) {
 			"Tournament.castTwitchAccounts",
 			"Tournament.castedMatchesInfo",
 			"Tournament.mapPickingStyle",
-			"Tournament.rules",
+			sql<boolean>`"Tournament"."rules" is not null`.as("hasRules"),
 			"Tournament.parentTournamentId",
 			"Tournament.tier",
 			"CalendarEvent.name",
-			"CalendarEvent.description",
 			"CalendarEventDate.startTime",
 			"Tournament.isFinalized",
 			"Tournament.seedingSnapshot",
@@ -332,6 +331,34 @@ export async function findById(id: number) {
 		})),
 		participatedUsers: result.participatedUsers.map((user) => user.userId),
 	};
+}
+
+/**
+ * Loads a tournament's rules markdown. Kept out of {@link findById} since it can
+ * be large and is only needed on the tournament's rules page.
+ */
+export async function findRulesById(tournamentId: number) {
+	const row = await db
+		.selectFrom("Tournament")
+		.select("Tournament.rules")
+		.where("Tournament.id", "=", tournamentId)
+		.executeTakeFirst();
+
+	return row?.rules ?? null;
+}
+
+/**
+ * Loads a tournament's description markdown. Kept out of {@link findById} since it
+ * can be large and is only needed on the tournament's info page.
+ */
+export async function findDescriptionById(tournamentId: number) {
+	const row = await db
+		.selectFrom("CalendarEvent")
+		.select("CalendarEvent.description")
+		.where("CalendarEvent.tournamentId", "=", tournamentId)
+		.executeTakeFirst();
+
+	return row?.description ?? null;
 }
 
 export async function hasChildTournaments(parentTournamentId: number) {

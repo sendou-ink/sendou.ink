@@ -4,6 +4,7 @@ import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { tournamentData } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
@@ -28,7 +29,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 		if (!event) return;
 
-		if (!event?.tournamentId) return { ...event, tournament: null };
+		if (!event?.tournamentId)
+			return { ...event, tournament: null, rules: null };
 
 		return {
 			...event,
@@ -36,6 +38,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				tournamentId: event.tournamentId,
 				user,
 			}),
+			rules: await TournamentRepository.findRulesById(event.tournamentId),
 		};
 	};
 

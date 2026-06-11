@@ -2018,11 +2018,8 @@ export const SWIM_OR_SINK_167 = (
 		},
 		seedingSnapshot: null,
 		mapPickingStyle: "TO",
-		rules:
-			"Here are our rules in a Google Doc!\n\nhttps://docs.google.com/document/d/1Q92U2lKmm337Xi0RpHSFS3RYdSw9Ivn8BC-Be0-J3r8/",
+		hasRules: true,
 		name: "Swim or Sink 167",
-		description:
-			"IPL's weekly open-level tournament! // No entry limit! // Every team makes a bracket!",
 		startTime: 1730941200,
 		organization: {
 			id: 3,

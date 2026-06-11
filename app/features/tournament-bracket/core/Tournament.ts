@@ -631,6 +631,15 @@ export class Tournament {
 		return modesIncluded(this.ctx.mapPickingStyle, this.ctx.toSetMapPool);
 	}
 
+	/** Should the rules page (and its nav item) be shown. True if there are rules or any map pool to show. */
+	get hasRulesPage() {
+		return (
+			this.ctx.hasRules ||
+			this.ctx.toSetMapPool.length > 0 ||
+			this.ctx.tieBreakerMapPool.length > 0
+		);
+	}
+
 	/** Tournament teams logo image path, either from the team or the pickup avatar uploaded specifically for this tournament */
 	tournamentTeamLogoSrc(team: TournamentDataTeam) {
 		return team.team?.logoUrl ?? team.pickupAvatarUrl;

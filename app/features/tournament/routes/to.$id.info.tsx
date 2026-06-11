@@ -1,12 +1,17 @@
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import { ModeImage } from "~/components/Image";
 import { containerClassName } from "~/components/Main";
 import { Markdown } from "~/components/Markdown";
 import { TierPill } from "~/components/TierPill";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import type { TournamentData } from "~/features/tournament-bracket/core/Tournament.server";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import { removeMarkdown } from "~/utils/strings";
+import { tournamentPage } from "~/utils/urls";
 import { FactCardGrid, type FactCardItem } from "../components/FactCard";
 import { RegistrationActions } from "../components/RegistrationActions";
 import {
@@ -19,6 +24,26 @@ import { useTournament } from "./to.$id";
 import styles from "./to.$id.info.module.css";
 
 export { loader };
+
+export const meta: MetaFunction<typeof loader> = (args) => {
+	const tournamentData = JSON.parse(args.matches[1].data as any)?.tournament as
+		| TournamentData
+		| undefined;
+	if (!tournamentData) return [];
+
+	return metaTags({
+		title: tournamentData.ctx.name,
+		description: args.data?.description
+			? removeMarkdown(args.data.description)
+			: undefined,
+		image: {
+			url: tournamentData.ctx.logoUrl,
+			dimensions: { width: 124, height: 124 },
+		},
+		location: args.location,
+		url: tournamentPage(tournamentData.ctx.id),
+	});
+};
 
 export const handle: SendouRouteHandle = {
 	i18n: ["tournament"],
@@ -40,9 +65,9 @@ export default function TournamentInfoPage() {
 				/>
 			</div>
 			<RegistrationActions tournament={tournament} />
-			{tournament.ctx.description ? (
+			{data.description ? (
 				<section className={styles.description}>
-					<Markdown>{tournament.ctx.description}</Markdown>
+					<Markdown>{data.description}</Markdown>
 				</section>
 			) : null}
 		</div>

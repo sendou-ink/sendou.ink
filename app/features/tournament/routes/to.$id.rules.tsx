@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
+import { useLoaderData } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
 import { Image } from "~/components/Image";
 import { containerClassName } from "~/components/Main";
@@ -10,21 +11,24 @@ import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { mapsPageWithMapPool, navIconUrl } from "~/utils/urls";
+import { loader } from "../loaders/to.$id.rules.server";
 import { useTournament } from "./to.$id";
 import styles from "./to.$id.info.module.css";
+
+export { loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["tournament", "calendar", "game-misc"],
 };
 
 export default function TournamentRulesPage() {
-	const tournament = useTournament();
+	const { rules } = useLoaderData<typeof loader>();
 
 	return (
 		<div className={clsx("stack lg", containerClassName("normal"))}>
-			{tournament.ctx.rules ? (
+			{rules ? (
 				<section className={styles.description}>
-					<Markdown>{tournament.ctx.rules}</Markdown>
+					<Markdown>{rules}</Markdown>
 				</section>
 			) : null}
 			<CounterPickMapPool />

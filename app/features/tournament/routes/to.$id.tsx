@@ -13,7 +13,6 @@ import { useChatContext } from "~/features/chat/useChatContext";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { useHydrated } from "~/hooks/useHydrated";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { removeMarkdown } from "~/utils/strings";
 import { tournamentPage } from "~/utils/urls";
 import { isRevalidation, metaTags } from "../../../utils/remix";
 import { TournamentNav } from "../components/TournamentNav";
@@ -41,9 +40,6 @@ export const meta: MetaFunction = (args) => {
 
 	return metaTags({
 		title: data.tournament.ctx.name,
-		description: data.tournament.ctx.description
-			? removeMarkdown(data.tournament.ctx.description)
-			: undefined,
 		image: {
 			url: data.tournament.ctx.logoUrl,
 			dimensions: { width: 124, height: 124 },
