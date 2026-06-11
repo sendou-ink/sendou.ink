@@ -36,7 +36,9 @@ const withManagers = (eb: ExpressionBuilder<DB, "Badge">) => {
 	).as("managers");
 };
 
-const withOwners = (eb: ExpressionBuilder<DB, "Badge">) => {
+// takes badgeId as a constant instead of correlating to "Badge"."id" so that
+// SQLite can push the predicate down into both arms of the BadgeOwner view
+const withOwners = (eb: ExpressionBuilder<DB, "Badge">, badgeId: number) => {
 	return jsonArrayFrom(
 		eb
 			.selectFrom("BadgeOwner")
@@ -47,7 +49,7 @@ const withOwners = (eb: ExpressionBuilder<DB, "Badge">) => {
 				"User.discordId",
 				"User.username",
 			])
-			.whereRef("BadgeOwner.badgeId", "=", "Badge.id")
+			.where("BadgeOwner.badgeId", "=", badgeId)
 			.groupBy("User.id")
 			.orderBy("count", "desc"),
 	).as("owners");
@@ -79,7 +81,7 @@ export async function findById(badgeId: number) {
 			"Badge.hue",
 			withAuthor(eb),
 			withManagers(eb),
-			withOwners(eb),
+			withOwners(eb, badgeId),
 		])
 		.where("id", "=", badgeId)
 		.executeTakeFirst();

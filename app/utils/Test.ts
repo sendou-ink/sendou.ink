@@ -208,9 +208,20 @@ async function authHeader(
  * });
  */
 export const dbReset = () => {
+	// virtual tables and their shadow tables (e.g. UserSearch_data) can not be
+	// deleted from directly; the fts index stays in sync via the User triggers
 	const tables = sql
 		.prepare(
-			"SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'migrations';",
+			`SELECT name FROM sqlite_master
+			WHERE type='table'
+			AND name NOT LIKE 'sqlite_%'
+			AND name NOT LIKE 'migrations'
+			AND sql NOT LIKE 'CREATE VIRTUAL TABLE%'
+			AND NOT EXISTS (
+				SELECT 1 FROM sqlite_master AS vt
+				WHERE vt.sql LIKE 'CREATE VIRTUAL TABLE%'
+				AND sqlite_master.name LIKE vt.name || '_%'
+			);`,
 		)
 		.all() as { name: string }[];
 

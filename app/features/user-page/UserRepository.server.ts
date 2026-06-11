@@ -16,7 +16,6 @@ import { userRoles } from "~/modules/permissions/mapper.server";
 import { isSupporter } from "~/modules/permissions/utils";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-import type { CommonUser } from "~/utils/kysely.server";
 import {
 	COMMON_USER_FIELDS,
 	concatUserSubmittedImagePrefix,
@@ -207,20 +206,6 @@ export async function findProfileByIdentifier(
 			).as("teams"),
 			jsonArrayFrom(
 				eb
-					.selectFrom("BadgeOwner")
-					.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
-					.select(({ fn }) => [
-						fn.sum<number>("BadgeOwner.count").as("count"),
-						"Badge.id",
-						"Badge.displayName",
-						"Badge.code",
-						"Badge.hue",
-					])
-					.whereRef("BadgeOwner.userId", "=", "User.id")
-					.groupBy("BadgeOwner.badgeId"),
-			).as("badges"),
-			jsonArrayFrom(
-				eb
 					.selectFrom("SplatoonPlayer")
 					.innerJoin(
 						"XRankPlacement",
@@ -243,17 +228,45 @@ export async function findProfileByIdentifier(
 		return null;
 	}
 
+	// queried separately with a constant userId instead of correlating to
+	// "User"."id" so that SQLite can push the predicate down into both arms
+	// of the BadgeOwner view
+	const badges = await ownedBadgesByUserId(row.id);
+
 	return {
 		...row,
 		team: row.teams.find((t) => t.isMainTeam),
 		secondaryTeams: row.teams.filter((t) => !t.isMainTeam),
 		teams: undefined,
-		...sortBadgesByFavorites(row),
+		...sortBadgesByFavorites({ ...row, badges }),
 		discordUniqueName:
 			forceShowDiscordUniqueName || row.showDiscordUniqueName
 				? row.discordUniqueName
 				: null,
 	};
+}
+
+/**
+ * Badges owned by the user (tournament wins + patreon supporter badges).
+ *
+ * Kept as its own query taking a constant userId on purpose: correlating
+ * to an outer "User"."id" would prevent SQLite from pushing the predicate
+ * down into both arms of the BadgeOwner view, materializing the full view.
+ */
+export function ownedBadgesByUserId(userId: number) {
+	return db
+		.selectFrom("BadgeOwner")
+		.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
+		.select(({ fn }) => [
+			fn.sum<number>("BadgeOwner.count").as("count"),
+			"Badge.id",
+			"Badge.displayName",
+			"Badge.code",
+			"Badge.hue",
+		])
+		.where("BadgeOwner.userId", "=", userId)
+		.groupBy("BadgeOwner.badgeId")
+		.execute();
 }
 
 export async function widgetsEnabledByIdentifier(identifier: string) {
@@ -781,26 +794,66 @@ export async function search({
 	query: string;
 	limit: number;
 }) {
-	let exactMatches: Array<
-		CommonUser & {
-			inGameName: string | null;
-			plusTier: number | null;
-			discordUniqueName: string | null;
-		}
-	> = [];
-	if (query.length > 1) {
-		exactMatches = await db
-			.selectFrom("User")
-			.leftJoin("PlusTier", "PlusTier.userId", "User.id")
-			.select(searchSelectedFields)
-			.where((eb) =>
-				eb.or([
-					eb("User.username", "like", query),
-					eb("User.inGameName", "like", query),
-					eb("User.discordUniqueName", "like", query),
-					eb("User.customUrl", "like", query),
-				]),
-			)
+	// single scan over User with exact matches ranked first instead of two
+	// separate scans (exact pass + fuzzy pass excluding exact ids)
+	const exactConditions = (eb: ExpressionBuilder<DB, "User">) => [
+		eb("User.username", "like", query),
+		eb("User.inGameName", "like", query),
+		eb("User.discordUniqueName", "like", query),
+		eb("User.customUrl", "like", query),
+	];
+
+	const fuzzyQuery = `%${query}%`;
+	const fuzzyConditions = (eb: ExpressionBuilder<DB, "User">) => [
+		eb("User.username", "like", fuzzyQuery),
+		eb("User.inGameName", "like", fuzzyQuery),
+		eb("User.discordUniqueName", "like", fuzzyQuery),
+	];
+
+	const includeExactMatches = query.length > 1;
+
+	// the trigram index needs at least 3 characters and can't replicate
+	// LIKE wildcard semantics, those queries fall back to scanning User
+	const canUseSearchIndex =
+		query.length >= 3 && !query.includes("%") && !query.includes("_");
+
+	let dbQuery = db
+		.selectFrom("User")
+		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
+		.select(searchSelectedFields)
+		.where((eb) =>
+			eb.or(
+				includeExactMatches
+					? [...fuzzyConditions(eb), ...exactConditions(eb)]
+					: fuzzyConditions(eb),
+			),
+		);
+
+	if (canUseSearchIndex) {
+		// UserSearch match prefilters candidates via the trigram index (it
+		// matches a superset of the LIKE conditions, which stay above as the
+		// source of truth so results are identical to the fallback path)
+		const ftsPhrase = `"${query.replaceAll('"', '""')}"`;
+		dbQuery = dbQuery
+			.innerJoin("UserSearch", "UserSearch.rowid", "User.id")
+			.where(sql<boolean>`"UserSearch" match ${ftsPhrase}`);
+	}
+
+	if (includeExactMatches) {
+		dbQuery = dbQuery.orderBy(
+			(eb) =>
+				eb
+					.case()
+					.when(eb.or(exactConditions(eb)))
+					.then(0)
+					.else(1)
+					.end(),
+			"asc",
+		);
+	}
+
+	return (
+		dbQuery
 			.orderBy(
 				(eb) =>
 					eb
@@ -811,42 +864,11 @@ export async function search({
 						.end(),
 				"asc",
 			)
+			// deterministic order for ties so both query paths return the same rows
+			.orderBy("User.id", "asc")
 			.limit(limit)
-			.execute();
-	}
-
-	const fuzzyQuery = `%${query}%`;
-	const fuzzyMatches = await db
-		.selectFrom("User")
-		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
-		.select(searchSelectedFields)
-		.where((eb) =>
-			eb
-				.or([
-					eb("User.username", "like", fuzzyQuery),
-					eb("User.inGameName", "like", fuzzyQuery),
-					eb("User.discordUniqueName", "like", fuzzyQuery),
-				])
-				.and(
-					"User.id",
-					"not in",
-					exactMatches.map((match) => match.id),
-				),
-		)
-		.orderBy(
-			(eb) =>
-				eb
-					.case()
-					.when("PlusTier.tier", "is", null)
-					.then(4)
-					.else(eb.ref("PlusTier.tier"))
-					.end(),
-			"asc",
-		)
-		.limit(limit - exactMatches.length)
-		.execute();
-
-	return [...exactMatches, ...fuzzyMatches];
+			.execute()
+	);
 }
 
 export function searchExact(args: {

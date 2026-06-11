@@ -282,12 +282,14 @@ export function safeJSONParse(value: unknown): unknown {
 }
 
 const EMPTY_CHARACTERS = [
+	"\u00AD",
 	"\u200B",
 	"\u200C",
 	"\u200D",
 	"\u200E",
 	"\u200F",
 	"󠀠",
+	"\u2800",
 	"\u3164",
 	"\u115F",
 	"\u1160",

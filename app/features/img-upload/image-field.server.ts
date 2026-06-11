@@ -15,7 +15,7 @@ import { MAX_UNVALIDATED_IMG_COUNT } from "./upload-constants";
  *
  * - `null` → `null` (image removed / none)
  * - `EXISTING` → the unchanged `imgId` (no bytes are re-uploaded)
- * - `NEW` → decodes the base64 webp, uploads it to S3 and inserts an unvalidated image row,
+ * - `NEW` → decodes the base64 image, uploads it to S3 and inserts an unvalidated image row,
  *   auto-validating it for supporters (or always when `autoValidate` is set), then returns the
  *   new id.
  *
@@ -44,11 +44,11 @@ export async function imageFieldValueToImgId({
 		);
 	}
 
-	const buffer = dataUrlToWebpBuffer(value.dataUrl);
+	const { buffer, extension } = dataUrlToImageBuffer(value.dataUrl);
 
 	const uploadedFileLocation = await uploadStreamToS3(
 		Readable.from(buffer),
-		`img-${Date.now()}-${shortNanoid()}.webp`,
+		`img-${Date.now()}-${shortNanoid()}.${extension}`,
 	);
 	invariant(uploadedFileLocation, "Image upload failed");
 	const fileName = basename(uploadedFileLocation);
@@ -64,20 +64,36 @@ export async function imageFieldValueToImgId({
 	return img.id;
 }
 
-function dataUrlToWebpBuffer(dataUrl: string) {
+function dataUrlToImageBuffer(dataUrl: string) {
 	const base64 = dataUrl.slice(dataUrl.indexOf(",") + 1);
 	const buffer = Buffer.from(base64, "base64");
 
-	invariant(isWebp(buffer), "Submitted image is not a valid webp");
+	const extension = imageExtensionFromMagicBytes(buffer);
+	invariant(extension, "Submitted image is not a valid webp or png");
 
-	return buffer;
+	return { buffer, extension };
 }
 
-/** Verifies the buffer's magic bytes match the webp container (`RIFF....WEBP`). */
-function isWebp(buffer: Buffer) {
-	return (
+/**
+ * Resolves the image format from the buffer's magic bytes. The client compresses to webp,
+ * but browsers without canvas webp encoding silently fall back to png.
+ */
+function imageExtensionFromMagicBytes(buffer: Buffer): "webp" | "png" | null {
+	if (
 		buffer.length > 12 &&
 		buffer.toString("ascii", 0, 4) === "RIFF" &&
 		buffer.toString("ascii", 8, 12) === "WEBP"
-	);
+	) {
+		return "webp";
+	}
+
+	if (
+		buffer.length > 8 &&
+		buffer[0] === 0x89 &&
+		buffer.toString("ascii", 1, 4) === "PNG"
+	) {
+		return "png";
+	}
+
+	return null;
 }

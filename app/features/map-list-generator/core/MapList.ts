@@ -81,12 +81,15 @@ export function* generate(args: {
 	while (true) {
 		const result: ModeWithStage[] = [];
 
-		const currentModeOrder = pattern
+		const { currentModeOrder, modesConsumed } = pattern
 			? modifyModeOrderByPattern(modeOrder, pattern, amount, modePosition)
-			: Array.from(
-					{ length: amount },
-					(_, i) => modeOrder[(modePosition + i) % modeOrder.length],
-				);
+			: {
+					currentModeOrder: Array.from(
+						{ length: amount },
+						(_, i) => modeOrder[(modePosition + i) % modeOrder.length],
+					),
+					modesConsumed: amount,
+				};
 
 		if (!args.skipEnsureMinimumCandidates) {
 			ensureMinimumCandidates({
@@ -128,7 +131,7 @@ export function* generate(args: {
 			stageModeWeights.set(modeStageKey(mode, stageId), stageModeWeightPenalty);
 		}
 
-		modePosition += amount;
+		modePosition += modesConsumed;
 		const nextArgs = yield result;
 		amount = nextArgs.amount;
 		pattern = nextArgs.pattern
@@ -317,15 +320,25 @@ function modifyModeOrderByPattern(
 		(mode) => !pattern.pattern.includes(mode),
 	);
 	const modesToUse = filteredModes.length > 0 ? filteredModes : modeOrder;
-	const result: ModeShort[] = Array.from(
-		{ length: amount },
-		(_, i) => modesToUse[(offset + i) % modesToUse.length],
-	);
 
 	const expandedPattern = Array.from(
 		{ length: amount },
 		(_, i) => pattern.pattern[i % pattern.pattern.length],
 	);
+
+	// slots fixed by the pattern don't consume modes from the cycle, otherwise
+	// the same cycle positions would resolve every set and modes get starved
+	const result: ModeShort[] = [];
+	let modesConsumed = 0;
+	for (const part of expandedPattern) {
+		if (part !== undefined && part !== "ANY" && modeOrder.includes(part)) {
+			result.push(part);
+			continue;
+		}
+
+		result.push(modesToUse[(offset + modesConsumed) % modesToUse.length]);
+		modesConsumed++;
+	}
 
 	if (pattern.mustInclude) {
 		for (const { mode, isGuaranteed } of pattern.mustInclude) {
@@ -369,7 +382,7 @@ function modifyModeOrderByPattern(
 	}
 
 	if (pattern.pattern.every((part) => part === "ANY")) {
-		return result;
+		return { currentModeOrder: result, modesConsumed };
 	}
 
 	for (const [idx, mode] of expandedPattern.entries()) {
@@ -380,7 +393,7 @@ function modifyModeOrderByPattern(
 		}
 	}
 
-	return result;
+	return { currentModeOrder: result, modesConsumed };
 }
 
 const validPatternParts = new Set(["*", ...modesShort] as const);
