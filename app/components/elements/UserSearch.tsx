@@ -9,7 +9,7 @@ import searchSelectStyles from "./SearchSelect.module.css";
 import selectStyles from "./Select.module.css";
 import { useEntitySearch } from "./useEntitySearch";
 
-type UserResult = Extract<
+export type UserSearchResult = Extract<
 	NonNullable<SearchLoaderData>["results"][number],
 	{ type: "user" }
 >;
@@ -21,7 +21,7 @@ interface UserSearchProps<T extends object>
 	bottomText?: string;
 	errorText?: string;
 	initialUserId?: number;
-	onChange?: (user: UserResult | null) => void;
+	onChange?: (user: UserSearchResult | null) => void;
 }
 
 export const UserSearch = React.forwardRef(function UserSearch<
@@ -40,7 +40,7 @@ export const UserSearch = React.forwardRef(function UserSearch<
 ) {
 	const initialUser = useInitialUser(initialUserId);
 
-	const search = useEntitySearch<UserResult>({
+	const search = useEntitySearch<UserSearchResult>({
 		buildUrl: (query) => `/search?q=${query}&type=users&limit=6`,
 		parseResults: (data, query) => parseUserResults(data, query, initialUser),
 		initialItem: initialUser,
@@ -69,12 +69,12 @@ export const UserSearch = React.forwardRef(function UserSearch<
 function parseUserResults(
 	data: unknown,
 	query: string,
-	initialUser?: UserResult,
-): UserResult[] | null {
+	initialUser?: UserSearchResult,
+): UserSearchResult[] | null {
 	const searchData = data as SearchLoaderData;
 	if (!searchData || searchData.query !== query) return null;
 	return searchData.results
-		.filter((result): result is UserResult => result.type === "user")
+		.filter((result): result is UserSearchResult => result.type === "user")
 		.filter((user) => user.id !== initialUser?.id);
 }
 
@@ -90,11 +90,11 @@ function useInitialUser(initialUserId?: number) {
 	}, [initialUserId, fetcher]);
 
 	return fetcher.data?.results.find(
-		(result): result is UserResult => result.type === "user",
+		(result): result is UserSearchResult => result.type === "user",
 	);
 }
 
-function UserItem({ item }: { item: UserResult }) {
+function UserItem({ item }: { item: UserSearchResult }) {
 	const additionalText = () => {
 		const plusServer = item.plusTier ? `+${item.plusTier}` : "";
 		const profileUrl = item.customUrl ? `/u/${item.customUrl}` : "";

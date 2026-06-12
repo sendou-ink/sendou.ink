@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import type { TeamSearchResult } from "~/components/elements/TeamSearch";
+import type { UserSearchResult } from "~/components/elements/UserSearch";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import type forms from "../../locales/en/forms.json";
 import type { ImageFieldDimensions } from "./image-field";
@@ -310,6 +311,18 @@ export type TypedFormFieldComponent<TSchema extends z.ZodRawShape> = {
 export type TeamSearchFieldOptions = {
 	onTeamSelected?: (team: TeamSearchResult | null) => void;
 	initialTeam?: { id: number; name: string; avatarUrl?: string | null };
+};
+
+/**
+ * Runtime config consumed only by the `user-search` field, passed via the
+ * `options` prop (the same channel `team-search` uses).
+ *
+ * `onUserSelected` exposes the resolved user (with its username) on selection —
+ * the stored form value is only the user id, so callers that need to display the
+ * picked user's name elsewhere capture it here.
+ */
+export type UserSearchFieldOptions = {
+	onUserSelected?: (user: UserSearchResult | null) => void;
 };
 
 /**

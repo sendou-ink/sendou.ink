@@ -12,6 +12,7 @@ import type {
 	ArrayItemRenderContext,
 	SelectOption,
 	TeamSearchFieldOptions,
+	UserSearchFieldOptions,
 } from "~/form/types";
 import {
 	tournamentAdminImportTeamsPage,
@@ -189,6 +190,17 @@ function RegistrationFields({ team }: { team?: TournamentDataTeam }) {
 			label: usernames[member.userId] ?? `${t("forms:labels.player")} ${i + 1}`,
 		}));
 
+	// the non-clearable Captain <select> always displays a member as selected, so
+	// keep ownerId in sync with it: default to the first member and reset when the
+	// current captain is no longer on the roster (e.g. their row was removed)
+	const ownerOptionsKey = ownerOptions.map((option) => option.value).join(",");
+	// biome-ignore lint/correctness/useExhaustiveDependencies: values/setValue read from closure; resync only when the roster changes
+	React.useEffect(() => {
+		if (ownerOptions.length === 0) return;
+		if (ownerOptions.some((option) => option.value === values.ownerId)) return;
+		setValue("ownerId", ownerOptions[0].value);
+	}, [ownerOptionsKey]);
+
 	return (
 		<>
 			{!team ? (
@@ -243,7 +255,19 @@ function RegistrationFields({ team }: { team?: TournamentDataTeam }) {
 			<FormField name="members">
 				{({ itemName }: ArrayItemRenderContext) => (
 					<div className="stack sm">
-						<FormField name={`${itemName}.userId`} />
+						<FormField
+							name={`${itemName}.userId`}
+							options={
+								{
+									// capture the picked user's name so the Captain dropdown can
+									// label them instead of falling back to "Player N"
+									onUserSelected: (user) => {
+										if (!user) return;
+										setUsernames((prev) => ({ ...prev, [user.id]: user.name }));
+									},
+								} satisfies UserSearchFieldOptions
+							}
+						/>
 						{requireInGameNames ? (
 							<FormField name={`${itemName}.inGameName`} />
 						) : null}

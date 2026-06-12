@@ -37,6 +37,7 @@ import type {
 	SelectOption,
 	TeamSearchFieldOptions,
 	TournamentSearchFieldOptions,
+	UserSearchFieldOptions,
 } from "./types";
 import {
 	fieldsetDefaults,
@@ -401,12 +402,14 @@ export function FormField({
 	}
 
 	if (formField.type === "user-search") {
+		const userOptions = options as UserSearchFieldOptions | undefined;
 		return (
 			<UserSearchFormField
 				{...commonProps}
 				{...formField}
 				value={value as number | null}
 				onChange={handleChange as (v: number | null) => void}
+				onUserSelected={userOptions?.onUserSelected}
 			/>
 		);
 	}
