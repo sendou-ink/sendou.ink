@@ -1,7 +1,6 @@
-import * as Sentry from "@sentry/react-router";
-import "@formatjs/intl-durationformat/polyfill.js";
 import { PassThrough } from "node:stream";
 import { createReadableStreamFromReadable } from "@react-router/node";
+import * as Sentry from "@sentry/react-router";
 import { createInstance } from "i18next";
 import { isbot } from "isbot";
 import cron from "node-cron";
