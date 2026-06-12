@@ -27,7 +27,7 @@ import {
 } from "./fields/WeaponPoolFormField";
 import { WeaponSelectFormField } from "./fields/WeaponSelectFormField";
 import type { ImageFieldValue } from "./image-field";
-import { useOptionalFormFieldContext } from "./SendouForm";
+import { EMPTY_FORM_STORE, useOptionalFormFieldContext } from "./SendouForm";
 import type {
 	ArrayItemRenderContext,
 	BadgeOption,
@@ -43,11 +43,12 @@ import {
 	fieldsetDefaults,
 	getNestedSchema,
 	getNestedValue,
-	setNestedValue,
 	validateField,
 } from "./utils";
 
 export type { CustomFieldRenderProps };
+
+const EMPTY_FORM_VALUES: Record<string, unknown> = {};
 
 interface FormFieldProps {
 	name: string;
@@ -106,14 +107,39 @@ export function FormField({
 	}, [fieldSchema, name, label]);
 
 	const isNestedPath = name.includes(".") || name.includes("[");
-	const value =
-		(isNestedPath
-			? getNestedValue(context?.values ?? {}, name)
-			: context?.values[name]) ?? formField.initialValue;
+	const store = context?.store ?? EMPTY_FORM_STORE;
+
+	const getValue = () =>
+		isNestedPath ? getNestedValue(store.values, name) : store.values[name];
+	const storedValue = React.useSyncExternalStore(
+		store.subscribe,
+		getValue,
+		getValue,
+	);
+	const value = storedValue ?? formField.initialValue;
+
+	const getClientError = () => store.clientErrors[name];
+	const clientError = React.useSyncExternalStore(
+		store.subscribe,
+		getClientError,
+		getClientError,
+	);
+
+	// Only object arrays with a custom render receive the whole-form values, so
+	// every other field type subscribes to a constant and skips re-rendering
+	// when unrelated fields change.
+	const needsAllValues =
+		formField.type === "array" && typeof children === "function";
+	const getAllValues = () =>
+		needsAllValues ? store.values : EMPTY_FORM_VALUES;
+	const formValues = React.useSyncExternalStore(
+		store.subscribe,
+		getAllValues,
+		getAllValues,
+	);
 
 	const serverError =
 		context?.serverErrors[name as keyof typeof context.serverErrors];
-	const clientError = context?.clientErrors[name];
 	const hasSubmitted = context?.hasSubmitted ?? false;
 
 	const runValidation = (val: unknown) => {
@@ -129,21 +155,19 @@ export function FormField({
 
 	const handleChange = React.useCallback(
 		(newValue: unknown) => {
-			context?.setValue(name, newValue);
-			context?.clearServerError(name);
+			if (!context) return;
+			const previousValues = context.store.values;
+			context.setValue(name, newValue);
+			context.clearServerError(name);
 			if (
-				hasSubmitted &&
-				context &&
-				!isArrayAppend(context.values, name, newValue)
+				context.hasSubmitted &&
+				!isArrayAppend(previousValues, name, newValue)
 			) {
-				const updatedValues = isNestedPath
-					? setNestedValue(context.values, name, newValue)
-					: { ...context.values, [name]: newValue };
-				context.revalidateAll(updatedValues);
+				context.revalidateAll(context.store.values);
 			}
-			context?.onFieldChange?.(name, newValue);
+			context.onFieldChange?.(name, newValue);
 		},
-		[context, hasSubmitted, isNestedPath, name],
+		[context, name],
 	);
 
 	const displayedError = serverError ?? clientError;
@@ -382,7 +406,7 @@ export function FormField({
 							index: idx,
 							itemName,
 							values: itemValues,
-							formValues: context?.values ?? {},
+							formValues,
 							setItemField,
 							canRemove: arrayValue.length > (formField.min ?? 0),
 							remove,

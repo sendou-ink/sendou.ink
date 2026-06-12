@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import { type ComponentProps, Profiler } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { userEvent } from "vitest/browser";
@@ -1390,6 +1390,50 @@ describe("SendouForm", () => {
 			// Bug: UserSearch cleanup effect clears userId for shifted items
 			expect(members[2].userId).toBe(40);
 			expect(members[3].userId).toBe(50);
+		});
+	});
+
+	describe("render isolation", () => {
+		test("typing in one field does not re-render sibling fields", async () => {
+			const schema = z.object({
+				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+				bio: textFieldOptional({ label: "labels.bio", maxLength: 100 }),
+			});
+
+			const profilerRenders: Record<string, number> = {};
+			const onRender = (id: string) => {
+				profilerRenders[id] = (profilerRenders[id] ?? 0) + 1;
+			};
+
+			const form = (
+				<SendouForm schema={schema} defaultValues={{}}>
+					{({ FormField: TypedFormField }) => (
+						<>
+							<Profiler id="name" onRender={onRender}>
+								<TypedFormField name="name" />
+							</Profiler>
+							<Profiler id="bio" onRender={onRender}>
+								<TypedFormField name="bio" />
+							</Profiler>
+						</>
+					)}
+				</SendouForm>
+			);
+
+			const router = createMemoryRouter([{ path: "/", element: form }], {
+				initialEntries: ["/"],
+			});
+			const screen = await render(<RouterProvider router={router} />);
+
+			const baselineName = profilerRenders.name ?? 0;
+			const baselineBio = profilerRenders.bio ?? 0;
+			await userEvent.type(screen.getByLabelText("Name").element(), "hello");
+
+			const nameRenders = (profilerRenders.name ?? 0) - baselineName;
+			const bioRenders = (profilerRenders.bio ?? 0) - baselineBio;
+
+			expect(nameRenders).toBeGreaterThanOrEqual(5);
+			expect(bioRenders).toBe(0);
 		});
 	});
 });
