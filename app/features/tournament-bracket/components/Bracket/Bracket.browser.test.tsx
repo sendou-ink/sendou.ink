@@ -219,6 +219,120 @@ function createSingleEliminationData(): TournamentManagerDataSet {
 	};
 }
 
+function createByeHeavySingleEliminationData(): TournamentManagerDataSet {
+	return {
+		stage: [
+			{
+				id: 1,
+				name: "Main Bracket",
+				number: 1,
+				type: "single_elimination",
+				tournament_id: 1,
+				settings: { size: 8 },
+			},
+		],
+		group: [{ id: 1, number: 1, stage_id: 1 }],
+		round: [
+			{
+				id: 1,
+				group_id: 1,
+				number: 1,
+				stage_id: 1,
+				maps: { count: 3, type: "BEST_OF", pickBan: null },
+			},
+			{
+				id: 2,
+				group_id: 1,
+				number: 2,
+				stage_id: 1,
+				maps: { count: 3, type: "BEST_OF", pickBan: null },
+			},
+			{
+				id: 3,
+				group_id: 1,
+				number: 3,
+				stage_id: 1,
+				maps: { count: 5, type: "BEST_OF", pickBan: null },
+			},
+		],
+		match: [
+			// Round 1 - 5 teams in a bracket of 8, only one match is played
+			{
+				id: 1,
+				number: 1,
+				stage_id: 1,
+				group_id: 1,
+				round_id: 1,
+				status: 2,
+				opponent1: { id: 1 },
+				opponent2: null,
+			},
+			{
+				id: 2,
+				number: 2,
+				stage_id: 1,
+				group_id: 1,
+				round_id: 1,
+				status: 3,
+				opponent1: { id: 4, score: 1 },
+				opponent2: { id: 5, score: 1 },
+			},
+			{
+				id: 3,
+				number: 3,
+				stage_id: 1,
+				group_id: 1,
+				round_id: 1,
+				status: 2,
+				opponent1: { id: 2 },
+				opponent2: null,
+			},
+			{
+				id: 4,
+				number: 4,
+				stage_id: 1,
+				group_id: 1,
+				round_id: 1,
+				status: 2,
+				opponent1: { id: 3 },
+				opponent2: null,
+			},
+			// Round 2 - Semis
+			{
+				id: 5,
+				number: 1,
+				stage_id: 1,
+				group_id: 1,
+				round_id: 2,
+				status: 4,
+				opponent1: { id: 1 },
+				opponent2: { id: null },
+			},
+			{
+				id: 6,
+				number: 2,
+				stage_id: 1,
+				group_id: 1,
+				round_id: 2,
+				status: 4,
+				opponent1: { id: 2 },
+				opponent2: { id: 3 },
+			},
+			// Round 3 - Finals
+			{
+				id: 7,
+				number: 1,
+				stage_id: 1,
+				group_id: 1,
+				round_id: 3,
+				status: 4,
+				opponent1: { id: null },
+				opponent2: { id: null },
+			},
+		],
+	};
+}
+
 function createDoubleEliminationData(): TournamentManagerDataSet {
 	return {
 		stage: [
@@ -845,6 +959,44 @@ describe("Single Elimination Bracket", () => {
 		await expect.element(screen.getByText("Round 2")).toBeVisible();
 		await expect.element(screen.getByText("Semis")).toBeVisible();
 		await expect.element(screen.getByText("Finals")).toBeVisible();
+	});
+
+	test("compacts first round when fewer than half of its matches are played", async () => {
+		const data = createByeHeavySingleEliminationData();
+		const bracket = createMockBracket("single_elimination", data);
+
+		const screen = await renderWithRouter(
+			<EliminationBracketSide bracket={bracket} type="single" isExpanded />,
+		);
+
+		// one slot per round 2 match instead of one per potential round 1 match
+		const firstRoundMatchWrappers = screen.container.querySelectorAll(
+			`[data-round-id="1"] .${styles.matchWrapper}`,
+		);
+		expect(firstRoundMatchWrappers.length).toBe(2);
+
+		// played match connects to its destination with a straight line
+		const straightLines = screen.container.querySelectorAll(
+			`[data-round-id="1"] .${styles.matchLineStraight}`,
+		);
+		expect(straightLines.length).toBeGreaterThan(0);
+
+		await expect.element(screen.getByText("Team Delta")).toBeVisible();
+		await expect.element(screen.getByText("Team Epsilon")).toBeVisible();
+	});
+
+	test("does not compact first round when at least half of its matches are played", async () => {
+		const data = createSingleEliminationData();
+		const bracket = createMockBracket("single_elimination", data);
+
+		const screen = await renderWithRouter(
+			<EliminationBracketSide bracket={bracket} type="single" isExpanded />,
+		);
+
+		const firstRoundMatchWrappers = screen.container.querySelectorAll(
+			`[data-round-id="1"] .${styles.matchWrapper}`,
+		);
+		expect(firstRoundMatchWrappers.length).toBe(4);
 	});
 
 	test("shows early round with ongoing match even when isExpanded is false", async () => {

@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import * as R from "remeda";
 import { TOURNAMENT } from "../../../tournament/tournament-constants";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { getRounds } from "../../core/rounds";
@@ -52,6 +53,16 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 		(match) => match.round_id === firstVisibleRound?.id,
 	).length;
 
+	const compactedFirstRoundId = resolveCompactedFirstRoundId({
+		rounds,
+		firstVisibleRoundId: firstVisibleRound?.id,
+		bracketData: props.bracket.data,
+	});
+	const baseRoundMatchCount =
+		compactedFirstRoundId !== null
+			? firstVisibleRoundMatchCount / 2
+			: firstVisibleRoundMatchCount;
+
 	let atLeastOneColumnHidden = false;
 	return (
 		<div
@@ -61,9 +72,17 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 			{rounds.flatMap((round, roundIdx) => {
 				const bestOf = round.maps?.count;
 
-				const matches = props.bracket.data.match.filter(
+				const allRoundMatches = props.bracket.data.match.filter(
 					(match) => match.round_id === round.id,
 				);
+				const matches =
+					round.id === compactedFirstRoundId
+						? R.chunk(allRoundMatches, 2).map(
+								(pair) =>
+									pair.find((match) => match.opponent1 && match.opponent2) ??
+									pair[0],
+							)
+						: allRoundMatches;
 
 				const isLastRound = roundIdx === rounds.length - 1;
 				const nextRound = rounds[roundIdx + 1];
@@ -103,6 +122,7 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 							className={clsx(styles.elimRoundMatchesContainer, {
 								[styles.elimRoundMatchesContainerTopBye]:
 									!atLeastOneColumnHidden &&
+									compactedFirstRoundId === null &&
 									(props.type === "winners" || props.type === "single") &&
 									(!props.bracket.data.match[0].opponent1 ||
 										!props.bracket.data.match[0].opponent2),
@@ -128,8 +148,7 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 									if (matches.length <= 1) return undefined;
 									if (nextRoundMatchCount === matches.length) return undefined;
 
-									const spreadFactor =
-										firstVisibleRoundMatchCount / matches.length;
+									const spreadFactor = baseRoundMatchCount / matches.length;
 									return GAP / 2 + (spreadFactor - 1) * (MATCH_SPACING / 2);
 								})();
 
@@ -180,4 +199,43 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 			})}
 		</div>
 	);
+}
+
+/**
+ * Resolves whether the first round should be rendered compacted, meaning one
+ * slot per second round match instead of two. This is possible when fewer
+ * than half of the potential first round matches are played, as then each
+ * second round match has at most one first round feeder and the played
+ * matches can be laid out right next to their destination with a straight
+ * connector, halving the bracket's height.
+ */
+function resolveCompactedFirstRoundId(args: {
+	rounds: ReturnType<typeof getRounds>;
+	firstVisibleRoundId?: number;
+	bracketData: BracketType["data"];
+}): number | null {
+	const [firstRound, secondRound] = args.rounds;
+	if (!firstRound || !secondRound) return null;
+	if (firstRound.id !== args.firstVisibleRoundId) return null;
+
+	const firstRoundMatches = args.bracketData.match.filter(
+		(match) => match.round_id === firstRound.id,
+	);
+	const secondRoundMatchCount = args.bracketData.match.filter(
+		(match) => match.round_id === secondRound.id,
+	).length;
+	if (firstRoundMatches.length !== secondRoundMatchCount * 2) return null;
+
+	const playedMatchCount = firstRoundMatches.filter(
+		(match) => match.opponent1 && match.opponent2,
+	).length;
+	if (playedMatchCount >= firstRoundMatches.length / 2) return null;
+
+	const everyPairHasAtMostOnePlayedMatch = R.chunk(firstRoundMatches, 2).every(
+		(pair) =>
+			pair.filter((match) => match.opponent1 && match.opponent2).length <= 1,
+	);
+	if (!everyPairHasAtMostOnePlayedMatch) return null;
+
+	return firstRound.id;
 }
