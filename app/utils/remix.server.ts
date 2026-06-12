@@ -68,18 +68,17 @@ export function parseSearchParams<T extends z.ZodTypeAny>({
  * to a minimum of 1 so empty result sets stay on page 1.
  */
 export function redirectIfPageOutOfBounds({
-	request,
+	url,
 	page,
 	pagesCount,
 }: {
-	request: Request;
+	url: URL;
 	page: number;
 	pagesCount: number;
 }): void {
 	const safePagesCount = Math.max(1, pagesCount);
 	if (page <= safePagesCount) return;
 
-	const url = new URL(request.url);
 	const searchParams = new URLSearchParams(url.searchParams);
 	searchParams.set("page", String(safePagesCount));
 	throw redirect(`${url.pathname}?${searchParams.toString()}`);

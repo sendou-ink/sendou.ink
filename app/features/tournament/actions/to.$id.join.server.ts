@@ -23,13 +23,12 @@ import {
 	requireSendouQParticipationIfNeeded,
 } from "../tournament-utils.server";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export const action: ActionFunction = async ({ params, url }) => {
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,
 	});
 	const user = requireUser();
-	const url = new URL(request.url);
 	const inviteCode = url.searchParams.get("code");
 	invariant(inviteCode, "code is missing");
 

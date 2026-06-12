@@ -20,7 +20,7 @@ import { frontPageSchema } from "../q-schemas.server";
 import { userCanJoinQueueAt } from "../q-utils";
 import { SendouQError, setGroupChatMetadata } from "../q-utils.server";
 
-export const action: ActionFunction = async ({ request }) => {
+export const action: ActionFunction = async ({ request, url }) => {
 	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
@@ -56,9 +56,7 @@ export const action: ActionFunction = async ({ request }) => {
 			case "JOIN_TEAM": {
 				await validateCanJoinQ(user);
 
-				const code = new URL(request.url).searchParams.get(
-					JOIN_CODE_SEARCH_PARAM_KEY,
-				);
+				const code = url.searchParams.get(JOIN_CODE_SEARCH_PARAM_KEY);
 
 				const groupInvitedTo =
 					code && user ? SendouQ.findGroupByInviteCode(code) : undefined;

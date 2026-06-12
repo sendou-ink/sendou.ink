@@ -19,7 +19,7 @@ const auditSearchParamsSchema = z.object({
 	auditTeam: z.coerce.number().int().optional().catch(undefined),
 });
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params, url }: LoaderFunctionArgs) => {
 	const user = requireUser();
 
 	const { id: tournamentId } = parseParams({ params, schema: idObject });
@@ -50,7 +50,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 	const pagesCount = Math.max(1, Math.ceil(totalCount / AUDIT_LOG_PAGE_SIZE));
 
-	redirectIfPageOutOfBounds({ request, page, pagesCount });
+	redirectIfPageOutOfBounds({ url, page, pagesCount });
 
 	return {
 		auditLog: {

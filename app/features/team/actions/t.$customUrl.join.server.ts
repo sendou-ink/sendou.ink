@@ -7,7 +7,7 @@ import * as TeamRepository from "../TeamRepository.server";
 import { TEAM } from "../team-constants";
 import { teamParamsSchema } from "../team-schemas.server";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export const action: ActionFunction = async ({ params, url }) => {
 	const user = requireUser();
 	const { customUrl } = teamParamsSchema.parse(params);
 
@@ -17,7 +17,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		}),
 	);
 
-	const inviteCode = new URL(request.url).searchParams.get("code") ?? "";
+	const inviteCode = url.searchParams.get("code") ?? "";
 	const realInviteCode = team.inviteCode!;
 
 	errorToastIfFalsy(

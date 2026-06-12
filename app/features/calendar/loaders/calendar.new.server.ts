@@ -11,11 +11,9 @@ import { requireRole } from "~/modules/permissions/guards.server";
 import { tournamentBracketsPage } from "~/utils/urls";
 import { canEditCalendarEvent } from "../calendar-utils";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = requireUser();
 	requireRole("CALENDAR_EVENT_ADDER");
-
-	const url = new URL(request.url);
 
 	const eventWithTournament = async (key: string) => {
 		const eventId = Number(url.searchParams.get(key));

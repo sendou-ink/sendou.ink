@@ -22,14 +22,10 @@ import {
 	WEAPON_LEADERBOARD_MAX_SIZE,
 } from "../leaderboards-constants";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = getUser();
-	const unvalidatedType = new URL(request.url).searchParams.get(
-		TYPE_SEARCH_PARAM_KEY,
-	);
-	const unvalidatedSeason = new URL(request.url).searchParams.get(
-		SEASON_SEARCH_PARAM_KEY,
-	);
+	const unvalidatedType = url.searchParams.get(TYPE_SEARCH_PARAM_KEY);
+	const unvalidatedSeason = url.searchParams.get(SEASON_SEARCH_PARAM_KEY);
 
 	const type =
 		LEADERBOARD_TYPES.find((type) => type === unvalidatedType) ??

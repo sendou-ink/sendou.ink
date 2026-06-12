@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { redirectIfPageOutOfBounds } from "./remix.server";
 
-const buildRequest = (url: string) => new Request(url);
+const buildUrl = (url: string) => new URL(url);
 
 const captureRedirect = (fn: () => void) => {
 	try {
@@ -17,7 +17,7 @@ describe("redirectIfPageOutOfBounds()", () => {
 	it("does not redirect when page is within bounds", () => {
 		const response = captureRedirect(() =>
 			redirectIfPageOutOfBounds({
-				request: buildRequest("https://sendou.ink/vods?page=2"),
+				url: buildUrl("https://sendou.ink/vods?page=2"),
 				page: 2,
 				pagesCount: 5,
 			}),
@@ -29,7 +29,7 @@ describe("redirectIfPageOutOfBounds()", () => {
 	it("does not redirect when page equals pagesCount", () => {
 		const response = captureRedirect(() =>
 			redirectIfPageOutOfBounds({
-				request: buildRequest("https://sendou.ink/vods?page=5"),
+				url: buildUrl("https://sendou.ink/vods?page=5"),
 				page: 5,
 				pagesCount: 5,
 			}),
@@ -41,7 +41,7 @@ describe("redirectIfPageOutOfBounds()", () => {
 	it("redirects to last page when page exceeds pagesCount", () => {
 		const response = captureRedirect(() =>
 			redirectIfPageOutOfBounds({
-				request: buildRequest("https://sendou.ink/vods?page=99"),
+				url: buildUrl("https://sendou.ink/vods?page=99"),
 				page: 99,
 				pagesCount: 5,
 			}),
@@ -54,7 +54,7 @@ describe("redirectIfPageOutOfBounds()", () => {
 	it("preserves other search params when redirecting", () => {
 		const response = captureRedirect(() =>
 			redirectIfPageOutOfBounds({
-				request: buildRequest(
+				url: buildUrl(
 					"https://sendou.ink/vods?type=TOURNAMENT&page=99&mode=SZ",
 				),
 				page: 99,
@@ -74,7 +74,7 @@ describe("redirectIfPageOutOfBounds()", () => {
 	it("does not redirect on page 1 when pagesCount is 0 (empty results)", () => {
 		const response = captureRedirect(() =>
 			redirectIfPageOutOfBounds({
-				request: buildRequest("https://sendou.ink/vods?page=1"),
+				url: buildUrl("https://sendou.ink/vods?page=1"),
 				page: 1,
 				pagesCount: 0,
 			}),
@@ -86,7 +86,7 @@ describe("redirectIfPageOutOfBounds()", () => {
 	it("redirects to page 1 when pagesCount is 0 and page exceeds 1", () => {
 		const response = captureRedirect(() =>
 			redirectIfPageOutOfBounds({
-				request: buildRequest("https://sendou.ink/vods?page=4"),
+				url: buildUrl("https://sendou.ink/vods?page=4"),
 				page: 4,
 				pagesCount: 0,
 			}),

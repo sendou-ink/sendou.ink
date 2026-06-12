@@ -18,11 +18,11 @@ export type UserSeasonsPageLoaderData = NonNullable<
 	SerializeFrom<typeof loader>
 >;
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	const loggedInUser = getUser();
 	const { identifier } = userParamsSchema.parse(params);
 	const parsedSearchParams = seasonsSearchParamsSchema.safeParse(
-		Object.fromEntries(new URL(request.url).searchParams),
+		Object.fromEntries(url.searchParams),
 	);
 
 	const user = notFoundIfFalsy(
