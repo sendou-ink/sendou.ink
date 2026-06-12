@@ -1,8 +1,8 @@
 import clsx from "clsx";
-import { LRUCache } from "lru-cache";
 import * as React from "react";
 import type { Tables } from "~/db/tables";
 import { useHydrated } from "~/hooks/useHydrated";
+import { LRUCache } from "~/modules/cache";
 import { BLANK_IMAGE_URL, discordAvatarUrl } from "~/utils/urls";
 import styles from "./Avatar.module.css";
 
