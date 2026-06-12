@@ -1,11 +1,10 @@
 // from: https://github.com/remix-run/examples/blob/main/file-and-s3-upload/app/utils/s3.server.ts
 
 import { PassThrough } from "node:stream";
-
+import type { PutObjectCommandInput } from "@aws-sdk/client-s3";
 import { S3 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { writeAsyncIterableToWritable } from "@react-router/node";
-import type AWS from "aws-sdk";
 
 const envVars = () => {
 	const {
@@ -37,7 +36,7 @@ const envVars = () => {
 	};
 };
 
-const uploadStream = ({ Key }: Pick<AWS.S3.Types.PutObjectRequest, "Key">) => {
+const uploadStream = ({ Key }: Pick<PutObjectCommandInput, "Key">) => {
 	const {
 		STORAGE_END_POINT,
 		STORAGE_ACCESS_KEY,
