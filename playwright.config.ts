@@ -38,7 +38,7 @@ const config: PlaywrightTestConfig = {
 
 		trace: "retain-on-failure",
 
-		permissions: ["clipboard-read"],
+		permissions: ["clipboard-read", "clipboard-write"],
 	},
 
 	/* Configure projects for major browsers */

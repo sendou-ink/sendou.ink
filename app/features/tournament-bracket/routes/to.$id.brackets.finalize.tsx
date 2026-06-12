@@ -1,7 +1,6 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useFetcher, useLoaderData } from "react-router";
-import { useLocation } from "react-use";
+import { useFetcher, useLoaderData, useLocation } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Badge } from "~/components/Badge";
 import { Divider } from "~/components/Divider";
@@ -32,7 +31,7 @@ export default function TournamentFinalizePage() {
 	const [badgeReceivers, setBadgeReceivers] =
 		React.useState<TournamentBadgeReceivers>([]);
 
-	const bracketUrl = location.pathname?.replace(/\/finalize$/, "");
+	const bracketUrl = location.pathname.replace(/\/finalize$/, "");
 
 	const tournamentHasBadges = data.badges.length > 0;
 

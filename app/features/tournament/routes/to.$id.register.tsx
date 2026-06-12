@@ -1,9 +1,8 @@
 import clsx from "clsx";
-import { AlertCircle, Check, X } from "lucide-react";
+import { AlertCircle, Check, Clipboard, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
-import { useCopyToClipboard } from "react-use";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
@@ -22,6 +21,7 @@ import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHydrated } from "~/hooks/useHydrated";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import invariant from "~/utils/invariant";
@@ -589,7 +589,7 @@ function FillRoster({
 	const data = useLoaderData<TournamentRegisterPageLoader>();
 	const user = useUser();
 	const tournament = useTournament();
-	const [, copyToClipboard] = useCopyToClipboard();
+	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 	const { t } = useTranslation(["common", "tournament"]);
 
 	const inviteLink = `${SENDOU_INK_BASE_URL}${tournamentJoinPage({
@@ -653,6 +653,7 @@ function FillRoster({
 						<div>
 							<SendouButton
 								size="small"
+								icon={copySuccess ? <Check /> : <Clipboard />}
 								onPress={() => copyToClipboard(inviteLink)}
 								variant="outlined"
 							>

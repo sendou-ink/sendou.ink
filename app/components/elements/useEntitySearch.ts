@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useFetcher } from "react-router";
-import { useDebounce } from "react-use";
+import { useDebounce } from "~/hooks/useDebounce";
 
 /** Sentinel items rendered in place of real results while loading or when empty. */
 export type EntitySearchPlaceholder =

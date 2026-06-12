@@ -1,6 +1,7 @@
 import { sub } from "date-fns";
 import {
 	Check,
+	Clipboard,
 	Eye,
 	EyeOff,
 	Map as MapIcon,
@@ -13,7 +14,6 @@ import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
 import { Outlet, useOutletContext, useRevalidator } from "react-router";
-import { useCopyToClipboard } from "react-use";
 import { Alert } from "~/components/Alert";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -28,6 +28,7 @@ import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { useUser } from "~/features/auth/core/user";
 import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { useVisibilityChange } from "~/hooks/useVisibilityChange";
@@ -407,7 +408,7 @@ function MapPreparer({
 
 function AddSubsPopOver() {
 	const { t } = useTranslation(["common", "tournament"]);
-	const [, copyToClipboard] = useCopyToClipboard();
+	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 	const tournament = useTournament();
 	const user = useUser();
 
@@ -437,6 +438,7 @@ function AddSubsPopOver() {
 					<div className="mt-2 flex justify-center">
 						<SendouButton
 							size="small"
+							icon={copySuccess ? <Check /> : <Clipboard />}
 							onPress={() => copyToClipboard(inviteLink)}
 							variant="minimal"
 							className="tiny"

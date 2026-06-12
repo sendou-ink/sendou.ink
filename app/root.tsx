@@ -27,12 +27,12 @@ import {
 	useRevalidator,
 	useSearchParams,
 } from "react-router";
-import { useDebounce } from "react-use";
 import { useChangeLanguage } from "remix-i18next/react";
 import type { CustomTheme } from "~/db/tables";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import { resolveSidebarData } from "~/features/sidebar/core/sidebar.server";
+import { useDebounce } from "~/hooks/useDebounce";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Route } from "./+types/root";
 import { Catcher } from "./components/Catcher";

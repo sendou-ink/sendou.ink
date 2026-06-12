@@ -1,10 +1,9 @@
 import clsx from "clsx";
 import { Check, Clipboard } from "lucide-react";
-import * as React from "react";
 import { useRef, useState } from "react";
 import { Dialog, Popover } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { useCopyToClipboard } from "react-use";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { SendouButton } from "./elements/Button";
 import popoverStyles from "./elements/Popover.module.css";
 import { LocaleTime } from "./LocaleTime";
@@ -34,17 +33,7 @@ export default function TimePopover({
 
 	const { t } = useTranslation(["common"]);
 
-	const [state, copyToClipboard] = useCopyToClipboard();
-	const [copySuccess, setCopySuccess] = React.useState(false);
-
-	React.useEffect(() => {
-		if (!state.value) return;
-
-		setCopySuccess(true);
-		const timeout = setTimeout(() => setCopySuccess(false), 2000);
-
-		return () => clearTimeout(timeout);
-	}, [state]);
+	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 
 	return (
 		<div>

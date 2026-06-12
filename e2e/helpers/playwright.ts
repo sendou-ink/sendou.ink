@@ -194,11 +194,26 @@ export async function submit(page: Page, testId?: string) {
 }
 
 export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
-	const responsePromise = page.waitForResponse(
-		(res) => res.request().method() === "POST",
-	);
-	await cb();
-	await responsePromise;
+	const MAX_ATTEMPTS = 3;
+	const PER_ATTEMPT_TIMEOUT = 10_000;
+
+	// React Aria buttons fire their handler on press end. Occasionally a click
+	// registers the press start (the button goes `:active`) but the press never
+	// completes into a submit, so no POST fires. Re-issue the action when the
+	// expected POST doesn't arrive within the per-attempt window.
+	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+		const responsePromise = page.waitForResponse(
+			(res) => res.request().method() === "POST",
+			{ timeout: PER_ATTEMPT_TIMEOUT },
+		);
+		await cb();
+		try {
+			await responsePromise;
+			return;
+		} catch (error) {
+			if (attempt === MAX_ATTEMPTS) throw error;
+		}
+	}
 }
 
 export function isNotVisible(locator: Locator) {
