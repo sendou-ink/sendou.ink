@@ -5,6 +5,7 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
@@ -52,6 +53,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 						(friendUser) => friendUser.id === data.id,
 					),
 					"Not a friend",
+				);
+				errorToastIfFalsy(
+					(await UserRepository.findLeanById(data.id))?.friendCode,
+					"User you are trying to add has no friend code set",
 				);
 
 				const { chatCodeToRevalidate } = await SQGroupRepository.addMember(

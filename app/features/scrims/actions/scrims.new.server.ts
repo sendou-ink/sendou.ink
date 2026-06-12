@@ -155,9 +155,7 @@ async function validatePickup(userIds: number[], authorId: number) {
 async function validatePickupFriends(userIds: number[], authorId: number) {
 	const unconsentingUsers: string[] = [];
 
-	const friendsData = await SQGroupRepository.friendsAndTeammates(authorId, {
-		requireFriendCode: false,
-	});
+	const friendsData = await SQGroupRepository.friendsAndTeammates(authorId);
 
 	for (const userId of userIds) {
 		const user = await UserRepository.findLeanById(userId);
