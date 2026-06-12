@@ -797,17 +797,26 @@ describe("tournamentNameParts", () => {
 });
 
 describe("bracketProgressionLabel", () => {
+	const bracket = (
+		bracket: Partial<ParsedBracket> & Pick<ParsedBracket, "type">,
+	): ParsedBracket => ({
+		name: bracket.type,
+		requiresCheckIn: false,
+		settings: {},
+		...bracket,
+	});
+
 	it("returns the short code for a single stage", () => {
-		expect(bracketProgressionLabel([{ type: "single_elimination" }])).toBe(
-			"SE",
-		);
+		expect(
+			bracketProgressionLabel([bracket({ type: "single_elimination" })]),
+		).toBe("SE");
 	});
 
 	it("joins stages with an arrow", () => {
 		expect(
 			bracketProgressionLabel([
-				{ type: "round_robin" },
-				{ type: "single_elimination" },
+				bracket({ type: "round_robin" }),
+				bracket({ type: "single_elimination" }),
 			]),
 		).toBe("RR → SE");
 	});
@@ -815,11 +824,43 @@ describe("bracketProgressionLabel", () => {
 	it("collapses consecutive duplicate stages", () => {
 		expect(
 			bracketProgressionLabel([
-				{ type: "single_elimination" },
-				{ type: "single_elimination" },
-				{ type: "double_elimination" },
+				bracket({ type: "single_elimination" }),
+				bracket({ type: "single_elimination" }),
+				bracket({ type: "double_elimination" }),
 			]),
 		).toBe("SE → DE");
+	});
+
+	it("appends an underground bracket of a new type with a plus and (UG) tag", () => {
+		expect(
+			bracketProgressionLabel([
+				bracket({ type: "double_elimination" }),
+				bracket({
+					type: "single_elimination",
+					sources: [{ bracketIdx: 0, placements: [-1] }],
+				}),
+			]),
+		).toBe("DE + SE (UG)");
+	});
+
+	it("collapses repeated underground brackets of an already-shown type", () => {
+		expect(
+			bracketProgressionLabel([
+				bracket({ type: "round_robin" }),
+				bracket({
+					type: "single_elimination",
+					sources: [{ bracketIdx: 0, placements: [1] }],
+				}),
+				bracket({
+					type: "single_elimination",
+					sources: [{ bracketIdx: 0, placements: [2] }],
+				}),
+				bracket({
+					type: "single_elimination",
+					sources: [{ bracketIdx: 0, placements: [3] }],
+				}),
+			]),
+		).toBe("RR → SE (UG)");
 	});
 
 	it("returns empty string for empty progression", () => {
