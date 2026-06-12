@@ -39,3 +39,7 @@
 .itemInput {
 	flex: 1;
 }
+
+.removeButton {
+	height: var(--field-size);
+}

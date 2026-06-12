@@ -123,7 +123,7 @@ export function ArrayFormField({
 				) : (
 					<div
 						key={itemKey(idx)}
-						className="stack horizontal sm items-center w-full"
+						className="stack horizontal sm items-start w-full"
 					>
 						<div className={styles.itemInput}>
 							{renderItem(idx, `${name}[${idx}]`)}
@@ -135,6 +135,7 @@ export function ArrayFormField({
 								size="small"
 								variant="minimal-destructive"
 								onPress={() => handleRemoveAt(idx)}
+								className={styles.removeButton}
 							/>
 						) : null}
 					</div>
