@@ -1,4 +1,3 @@
-import "dotenv/config";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { logger } from "~/utils/logger";
 

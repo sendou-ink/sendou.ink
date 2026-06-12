@@ -1,5 +1,4 @@
-// usage: pnpm exec tsx ./scripts/unlock-league-matches.ts <parentTournamentId>
-import "dotenv/config";
+// usage: pnpm exec vite-node ./scripts/unlock-league-matches.ts <parentTournamentId>
 import { sql } from "~/db/sql";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";

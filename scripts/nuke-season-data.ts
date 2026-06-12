@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { db } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";

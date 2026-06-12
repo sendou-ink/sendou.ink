@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { sql } from "kysely";
 import { db } from "../app/db/sql";
 import {

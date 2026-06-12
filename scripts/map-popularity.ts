@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { db } from "~/db/sql";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import { modesShort } from "~/modules/in-game-lists/modes";

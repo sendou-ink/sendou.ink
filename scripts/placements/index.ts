@@ -1,5 +1,3 @@
-import "dotenv/config";
-
 import { sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";

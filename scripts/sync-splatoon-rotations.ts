@@ -1,5 +1,4 @@
 /** biome-ignore-all lint/suspicious/noConsole: CLI script */
-import "dotenv/config";
 import * as SplatoonRotationRepository from "~/features/splatoon-rotations/SplatoonRotationRepository.server";
 import { fetchRotations } from "~/features/splatoon-rotations/splatoon-rotations.server";
 

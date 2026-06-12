@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { db } from "~/db/sql";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";

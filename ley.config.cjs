@@ -1,5 +1,10 @@
 const path = require("node:path");
-require("dotenv").config();
+
+try {
+	process.loadEnvFile();
+} catch {
+	// .env is optional; in production DB_PATH comes from the host environment
+}
 
 module.exports = {
 	database: process.env.DB_PATH,

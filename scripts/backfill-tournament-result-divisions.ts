@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { db } from "../app/db/sql";
 import * as Seasons from "../app/features/mmr/core/Seasons";
 import {

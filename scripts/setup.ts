@@ -1,4 +1,3 @@
-import "dotenv/config";
 import fs from "node:fs";
 import { seed } from "~/db/seed";
 import { db } from "~/db/sql";

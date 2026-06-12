@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { userAsyncLocalStorage } from "~/features/auth/core/user-context.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";

@@ -4,12 +4,15 @@ import {
 	type Locator,
 	type Page,
 } from "@playwright/test";
-import dotenv from "dotenv";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
 import { tournamentBracketsPage } from "~/utils/urls";
 
-dotenv.config();
+try {
+	process.loadEnvFile();
+} catch {
+	// .env is optional; in CI env vars come from the host (e2e-tests.yml creates none)
+}
 export const E2E_BASE_PORT = Number(process.env.PORT || 5173) + 500;
 
 type WorkerFixtures = {

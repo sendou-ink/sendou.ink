@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { ordinal, type Rating, rating } from "openskill";
 import { db } from "../app/db/sql";
 import type { Tables } from "../app/db/tables";

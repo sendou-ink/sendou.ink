@@ -1,5 +1,4 @@
-// usage: npx tsx ./scripts/sync-tournament-vods.ts <tournamentId>
-import "dotenv/config";
+// usage: npx vite-node ./scripts/sync-tournament-vods.ts <tournamentId>
 import { processOneTournament } from "~/routines/syncTournamentVods";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
