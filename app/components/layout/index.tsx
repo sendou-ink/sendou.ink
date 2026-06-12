@@ -58,6 +58,13 @@ import { TopRightButtons } from "./TopRightButtons";
 
 const MAX_DESKTOP_FRIENDS = 4;
 
+/** Id of the loading-bar track rendered inside the header. NProgress mounts its
+ * bar into it; the track sits just below the header border, spans only the area
+ * between the sidebars, and clips the bar so it never extends over a sidebar.
+ * Living inside the header makes it follow the header on scroll and in
+ * standalone (PWA) mode where the header grows by the safe-area inset. */
+export const NPROGRESS_ANCHOR_ID = "nprogress-anchor";
+
 function useRelativeDayFormat() {
 	const { i18n } = useTranslation();
 	const { formatter: timeFormatter } = useDateTimeFormat({
@@ -438,6 +445,7 @@ export function Layout({
 						}
 						chatUnreadCount={chatContext?.totalUnreadCount}
 					/>
+					<div id={NPROGRESS_ANCHOR_ID} aria-hidden />
 				</header>
 				{showLeaderboard ? (
 					<FuseZone

@@ -614,6 +614,27 @@
 	}
 }
 
+/* Track that NProgress renders its bar into (see NPROGRESS_ANCHOR_ID). It is a
+ * child of the header positioned just below the header's 1.5px bottom border, so
+ * it follows the header on scroll and in standalone (PWA) mode. It spans only the
+ * header width (the area between the sidebars), and its overflow: hidden clips the
+ * bar — which NProgress slides in from the left — so the bar can never extend over
+ * a sidebar. Unlayered + id selector so it beats NProgress's own unlayered
+ * .nprogress-custom-parent rules (and the @layer-wrapped CSS modules). */
+#nprogress-anchor {
+	position: absolute;
+	top: calc(100% + 1.5px);
+	left: 0;
+	right: 0;
+	height: 2.5px;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+.nprogress-custom-parent #nprogress .bar {
+	height: 100%;
+}
+
 .top-leaderboard {
 	min-height: 100px;
 	max-height: 100px;

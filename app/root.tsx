@@ -38,7 +38,7 @@ import type { Route } from "./+types/root";
 import { Catcher } from "./components/Catcher";
 import { SendouToastRegion, toastQueue } from "./components/elements/Toast";
 import { FusePageInit } from "./components/fuse/Fuse";
-import { Layout } from "./components/layout";
+import { Layout, NPROGRESS_ANCHOR_ID } from "./components/layout";
 import { getUser } from "./features/auth/core/user.server";
 import { userMiddleware } from "./features/auth/core/user-middleware.server";
 import { ChatProvider } from "./features/chat/ChatProvider";
@@ -72,6 +72,11 @@ import "~/styles/common.css";
 import "~/styles/utils.css";
 import "~/styles/flags.css";
 import "nprogress/nprogress.css";
+
+// Anchor the loading bar to the header so it sits between the sidebars. Set at
+// module scope (not in an effect) so the very first navigation's NProgress.start
+// already targets the header instead of briefly rendering over the sidebar.
+NProgress.configure({ parent: `#${NPROGRESS_ANCHOR_ID}` });
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	if (isRevalidation(args)) return true;
@@ -277,7 +282,7 @@ function useLoadingIndicator() {
 				NProgress.done();
 			}
 		},
-		250,
+		150,
 		[transition.state],
 	);
 }
