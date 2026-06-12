@@ -143,7 +143,7 @@ function calculateSkills(args: {
 	return result;
 }
 
-export function calculateIndividualPlayerSkills({
+function calculateIndividualPlayerSkills({
 	results,
 	queryCurrentUserRating,
 }: {
@@ -645,7 +645,7 @@ function spDiffs({
 	return spDiffs;
 }
 
-export function setResults({
+function setResults({
 	results,
 	teams,
 }: {
