@@ -27,12 +27,14 @@ import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
+import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import { useVisualViewportHeight } from "~/hooks/useVisualViewportHeight";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
 import {
 	EVENTS_PAGE,
 	FRIENDS_PAGE,
+	PLANNER_URL,
 	SETTINGS_PAGE,
 	userPage,
 } from "~/utils/urls";
@@ -474,6 +476,7 @@ export function Layout({
 
 function SiteTitle() {
 	const location = useLocation();
+	const prefersReducedMotion = usePrefersReducedMotion();
 	const { breadcrumbs, currentPageText } = useBreadcrumbData();
 
 	const isFrontPage = location.pathname === "/";
@@ -483,9 +486,17 @@ function SiteTitle() {
 		<Flipper
 			flipKey={isFrontPage ? "front" : "other"}
 			className={styles.siteTitleFlipper}
+			decisionData={{ pathname: location.pathname }}
 		>
 			<div className={styles.siteTitle}>
-				<Flipped flipId="site-logo">
+				<Flipped
+					flipId="site-logo"
+					shouldFlip={(prev, current) =>
+						!prefersReducedMotion &&
+						prev?.pathname !== PLANNER_URL &&
+						current?.pathname !== PLANNER_URL
+					}
+				>
 					<Link to="/" className={styles.siteLogo}>
 						<SiteLogoContent />
 					</Link>
