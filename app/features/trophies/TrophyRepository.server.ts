@@ -13,6 +13,7 @@ import {
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import { getTentativeTier } from "../tournament-organization/core/tentativeTiers.server";
+import { sortTrophiesByFavorites } from "../user-page/core/trophy-sorting.server";
 import { TROPHY_APPROVALS_REQUIRED } from "./trophies-constants";
 
 type TrophyRecentTournament = {
@@ -150,6 +151,66 @@ export async function findByOrganizationIds(organizationIds: number[]) {
 		.select(["id", "name", "model", "organizationId"])
 		.where("organizationId", "in", organizationIds)
 		.execute();
+}
+
+async function findOwnedTrophies(userId: number) {
+	const rows = await db
+		.selectFrom("TrophyOwner")
+		.innerJoin("Trophy", "Trophy.id", "TrophyOwner.trophyId")
+		.innerJoin("User", "User.id", "TrophyOwner.userId")
+		.select(({ fn }) => [
+			fn.count<number>("TrophyOwner.trophyId").as("count"),
+			fn.min<number | null>("TrophyOwner.tier").as("tier"),
+			"Trophy.id",
+			"Trophy.name",
+			"Trophy.model",
+			"User.favoriteTrophyIds",
+			"User.hiddenTrophyIds",
+			"User.patronTier",
+		])
+		.where("TrophyOwner.userId", "=", userId)
+		.groupBy(["TrophyOwner.trophyId", "TrophyOwner.userId"])
+		.execute();
+
+	return rows;
+}
+
+export async function findByOwnerUserId(userId: number) {
+	const rows = await findOwnedTrophies(userId);
+
+	if (rows.length === 0) return [];
+
+	const { favoriteTrophyIds, hiddenTrophyIds, patronTier } = rows[0];
+	const hiddenSet = new Set(hiddenTrophyIds ?? []);
+
+	return sortTrophiesByFavorites({
+		favoriteTrophyIds,
+		hiddenTrophyIds,
+		patronTier,
+		trophies: rows
+			.filter((row) => !hiddenSet.has(row.id))
+			.map(
+				({
+					favoriteTrophyIds: _,
+					hiddenTrophyIds: __,
+					patronTier: ___,
+					...trophy
+				}) => trophy,
+			),
+	}).trophies;
+}
+
+export async function findByOwnerUserIdIncludingHidden(userId: number) {
+	const rows = await findOwnedTrophies(userId);
+
+	return rows.map(
+		({
+			favoriteTrophyIds: _,
+			hiddenTrophyIds: __,
+			patronTier: ___,
+			...trophy
+		}) => trophy,
+	);
 }
 
 export async function findById(trophyId: number) {

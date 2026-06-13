@@ -207,6 +207,8 @@
 	"labels.profileStickSens": "R-stick gevoeligheid",
 	"labels.profileCountry": "Land",
 	"labels.profileFavoriteBadges": "",
+	"labels.profileFavoriteTrophies": "",
+	"labels.profileHiddenTrophies": "",
 	"labels.profileShowDiscordUniqueName": "",
 	"labels.profileCommissionsOpen": "",
 	"labels.profileCommissionText": "",

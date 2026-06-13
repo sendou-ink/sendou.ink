@@ -207,6 +207,8 @@
 	"labels.profileStickSens": "Sens de palanca",
 	"labels.profileCountry": "País",
 	"labels.profileFavoriteBadges": "",
+	"labels.profileFavoriteTrophies": "",
+	"labels.profileHiddenTrophies": "",
 	"labels.profileShowDiscordUniqueName": "Mostrar usuario de Discord",
 	"labels.profileCommissionsOpen": "Comisiones abiertas",
 	"labels.profileCommissionText": "Info de comisiones",

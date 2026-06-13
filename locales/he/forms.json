@@ -207,6 +207,8 @@
 	"labels.profileStickSens": "רגישות סטיק ימני",
 	"labels.profileCountry": "מדינה",
 	"labels.profileFavoriteBadges": "",
+	"labels.profileFavoriteTrophies": "",
+	"labels.profileHiddenTrophies": "",
 	"labels.profileShowDiscordUniqueName": "הראה שם משתמש Discord",
 	"labels.profileCommissionsOpen": "בקשות פתוחות",
 	"labels.profileCommissionText": "מידע עבור בקשות",

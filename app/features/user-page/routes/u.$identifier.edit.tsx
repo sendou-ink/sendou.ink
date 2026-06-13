@@ -3,6 +3,7 @@ import { Link, useLoaderData, useMatches } from "react-router";
 import { FormMessage } from "~/components/FormMessage";
 import { FriendCodePopover } from "~/components/FriendCodePopover";
 import { BADGE } from "~/features/badges/badges-constants";
+import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
 import { SendouForm } from "~/form/SendouForm";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useHasRole } from "~/modules/permissions/hooks";
@@ -40,6 +41,13 @@ export default function UserEditPage() {
 		hue: badge.hue,
 	}));
 
+	const trophyOptions = data.ownedTrophies.map((trophy) => ({
+		id: trophy.id,
+		name: trophy.name,
+		model: trophy.model,
+		tier: trophy.tier,
+	}));
+
 	const defaultValues = {
 		customName: data.user.customName ?? "",
 		customUrl: layoutData.user.customUrl ?? "",
@@ -49,6 +57,8 @@ export default function UserEditPage() {
 		battlefy: data.user.battlefy ?? "",
 		country: data.user.country ?? null,
 		favoriteBadgeIds: data.favoriteBadgeIds ?? [],
+		favoriteTrophyIds: data.favoriteTrophyIds ?? [],
+		hiddenTrophyIds: data.hiddenTrophyIds ?? [],
 		weapons: data.user.weapons.map((w) => ({
 			id: w.weaponSplId,
 			isFavorite: Boolean(w.isFavorite),
@@ -85,6 +95,16 @@ export default function UserEditPage() {
 									isSupporter ? BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1 : 1
 								}
 							/>
+						) : null}
+						{isSupporter && data.ownedTrophies.length >= 2 ? (
+							<FormField
+								name="favoriteTrophyIds"
+								options={trophyOptions}
+								maxCount={SMALL_TROPHIES_PER_DISPLAY_PAGE}
+							/>
+						) : null}
+						{data.ownedTrophies.length >= 1 ? (
+							<FormField name="hiddenTrophyIds" options={trophyOptions} />
 						) : null}
 						<FormField name="weapons" />
 						<FormField name="bio" />

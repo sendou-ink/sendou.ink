@@ -207,6 +207,8 @@
 	"labels.profileStickSens": "R-stick sens",
 	"labels.profileCountry": "Kraj",
 	"labels.profileFavoriteBadges": "",
+	"labels.profileFavoriteTrophies": "",
+	"labels.profileHiddenTrophies": "",
 	"labels.profileShowDiscordUniqueName": "",
 	"labels.profileCommissionsOpen": "",
 	"labels.profileCommissionText": "",

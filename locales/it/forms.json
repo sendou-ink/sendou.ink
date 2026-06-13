@@ -207,6 +207,8 @@
 	"labels.profileStickSens": "Sensitività Joystick Dx",
 	"labels.profileCountry": "Paese",
 	"labels.profileFavoriteBadges": "",
+	"labels.profileFavoriteTrophies": "",
+	"labels.profileHiddenTrophies": "",
 	"labels.profileShowDiscordUniqueName": "Mostra username Discord",
 	"labels.profileCommissionsOpen": "Commissioni aperte",
 	"labels.profileCommissionText": "Info sulle commissioni",

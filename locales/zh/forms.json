@@ -207,6 +207,8 @@
 	"labels.profileStickSens": "摇杆感度",
 	"labels.profileCountry": "国家",
 	"labels.profileFavoriteBadges": "",
+	"labels.profileFavoriteTrophies": "",
+	"labels.profileHiddenTrophies": "",
 	"labels.profileShowDiscordUniqueName": "显示Discord用户名",
 	"labels.profileCommissionsOpen": "开放委托",
 	"labels.profileCommissionText": "委托信息",

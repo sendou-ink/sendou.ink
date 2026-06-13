@@ -78,5 +78,13 @@ export function up(db) {
 		db.prepare(
 			/*sql*/ `alter table "CalendarEvent" add column "trophyId" integer references "Trophy"("id") on delete set null`,
 		).run();
+
+		db.prepare(
+			/*sql*/ `alter table "User" add column "favoriteTrophyIds" text`,
+		).run();
+
+		db.prepare(
+			/*sql*/ `alter table "User" add column "hiddenTrophyIds" text`,
+		).run();
 	})();
 }

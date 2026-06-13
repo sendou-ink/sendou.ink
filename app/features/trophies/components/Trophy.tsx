@@ -6,7 +6,11 @@ import { TierPill } from "~/components/TierPill";
 import { decompressTrophyModel } from "../trophies-utils";
 import style from "./Trophy.module.css";
 
-const TrophyCtx = createContext<PicoCAD2Context | undefined>(undefined);
+type TrophyCtxValue =
+	| { context: PicoCAD2Context }
+	| { context: undefined; isLoading: true };
+
+const TrophyCtx = createContext<TrophyCtxValue | undefined>(undefined);
 
 /**
  * Browsers have a limit on the amount of webgl contexts that can be created at once,
@@ -32,15 +36,17 @@ export function TrophyContextProvider({
 	}, []);
 
 	/**
-	 * Children are not rendered until the shared context exists, which happens in `useEffect`.
-	 * If we rendered children before the effect fired, each childs canvas ref
-	 * would see `context === undefined` and fall back to creating its own internal context,
-	 * increasing memory usage and defeating the whole point of sharing.
-	 * Trade-off: one frame of empty space before the grid paints, causing pop-in.
+	 * Children always render so the surrounding layout (placeholders, pagination, etc.)
+	 * doesn't shift when the shared context becomes available. While `context` is undefined
+	 * we publish an `isLoading` value so descendant `Trophy` components render an empty
+	 * spacer instead of falling back to their own internal WebGL context — which would
+	 * defeat the point of sharing and quickly hit the browser's per-page context limit.
 	 */
-	if (!context) return null;
+	const value: TrophyCtxValue = context
+		? { context }
+		: { context: undefined, isLoading: true };
 
-	return <TrophyCtx.Provider value={context}>{children}</TrophyCtx.Provider>;
+	return <TrophyCtx.Provider value={value}>{children}</TrophyCtx.Provider>;
 }
 
 export function Trophy({
@@ -49,14 +55,19 @@ export function Trophy({
 	preview,
 	tier,
 	tentativeTier,
+	disableCameraControls,
 }: {
 	model: string;
 	className?: string;
 	preview?: boolean;
 	tier?: number | null;
 	tentativeTier?: number | null;
+	disableCameraControls?: boolean;
 }) {
-	const context = useContext(TrophyCtx);
+	const ctxValue = useContext(TrophyCtx);
+	const context = ctxValue?.context;
+	const isLoadingSharedContext =
+		ctxValue !== undefined && ctxValue.context === undefined;
 	const viewerRef = useRef<PicoCAD2Viewer | null>(null);
 	const [error, setError] = useState<boolean>(false);
 
@@ -92,6 +103,9 @@ export function Trophy({
 		viewer.cameraMode = "spin";
 		viewer.cameraModeSpeed = 5;
 		viewer.startRenderLoop(false);
+
+		if (disableCameraControls) return;
+
 		viewer.enableCameraControls({
 			spinInertiaFactor: 0.95,
 			pan: false,
@@ -133,12 +147,20 @@ export function Trophy({
 		);
 	}
 
+	if (isLoadingSharedContext) {
+		return (
+			<div className={clsx(style.container, className)}>
+				<div className={style.trophy} />
+			</div>
+		);
+	}
+
 	return (
 		<div className={clsx(style.container, className)} style={containerStyle}>
 			<canvas
 				ref={canvasRef}
 				className={clsx(style.trophy, {
-					[style.interactive]: !preview,
+					[style.interactive]: !preview && !disableCameraControls,
 				})}
 			/>
 			{tierPill}

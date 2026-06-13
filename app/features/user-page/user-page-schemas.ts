@@ -2,6 +2,7 @@ import { z } from "zod";
 import { OBJECT_PRONOUNS, SUBJECT_PRONOUNS } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-constants";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
 import {
 	badges,
 	checkboxGroup,
@@ -15,6 +16,7 @@ import {
 	textFieldOptional,
 	textFieldRequired,
 	toggle,
+	trophies,
 	weaponPool,
 } from "~/form/fields";
 import {
@@ -140,6 +142,13 @@ export const userEditProfileBaseSchema = z.object({
 	favoriteBadgeIds: badges({
 		label: "labels.profileFavoriteBadges",
 		maxCount: BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1,
+	}),
+	favoriteTrophyIds: trophies({
+		label: "labels.profileFavoriteTrophies",
+		maxCount: SMALL_TROPHIES_PER_DISPLAY_PAGE,
+	}),
+	hiddenTrophyIds: trophies({
+		label: "labels.profileHiddenTrophies",
 	}),
 	weapons: weaponPool({
 		label: "labels.weaponPool",

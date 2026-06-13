@@ -207,6 +207,8 @@
 	"labels.profileStickSens": "Sensibilité du stick droit",
 	"labels.profileCountry": "Pays",
 	"labels.profileFavoriteBadges": "",
+	"labels.profileFavoriteTrophies": "",
+	"labels.profileHiddenTrophies": "",
 	"labels.profileShowDiscordUniqueName": "Montrer le pseudo Discord",
 	"labels.profileCommissionsOpen": "Commissions acceptées",
 	"labels.profileCommissionText": "Info pour les commissions",

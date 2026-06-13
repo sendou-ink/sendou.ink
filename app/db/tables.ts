@@ -1074,6 +1074,8 @@ export interface User {
 	discordUniqueName: string | null;
 	/** User's favorite badges they want to show on the front page of the badge display. Index = 0 big badge. */
 	favoriteBadgeIds: ColumnType<number[] | null, string | null, string | null>;
+	favoriteTrophyIds: ColumnType<number[] | null, string | null, string | null>;
+	hiddenTrophyIds: ColumnType<number[] | null, string | null, string | null>;
 	id: GeneratedAlways<number>;
 	inGameName: string | null;
 	isArtist: Generated<DBBoolean | null>;

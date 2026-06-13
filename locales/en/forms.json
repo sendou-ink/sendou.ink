@@ -207,6 +207,8 @@
 	"labels.profileStickSens": "R-stick sens",
 	"labels.profileCountry": "Country",
 	"labels.profileFavoriteBadges": "Favorite badges",
+	"labels.profileFavoriteTrophies": "Favorite trophies",
+	"labels.profileHiddenTrophies": "Hidden trophies",
 	"labels.profileShowDiscordUniqueName": "Show Discord username",
 	"labels.profileCommissionsOpen": "Commissions open",
 	"labels.profileCommissionText": "Commission info",

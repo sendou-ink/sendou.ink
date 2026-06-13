@@ -178,6 +178,8 @@ export async function findProfileByIdentifier(
 			"User.showDiscordUniqueName",
 			"User.discordUniqueName",
 			"User.favoriteBadgeIds",
+			"User.favoriteTrophyIds",
+			"User.hiddenTrophyIds",
 			"User.patronTier",
 			"PlusTier.tier as plusTier",
 			"User.pronouns",
@@ -1049,6 +1051,8 @@ type UpdateProfileArgs = Pick<
 	userId: number;
 	weapons: Pick<TablesInsertable["UserWeapon"], "weaponSplId" | "isFavorite">[];
 	favoriteBadgeIds?: number[] | null;
+	favoriteTrophyIds?: number[] | null;
+	hiddenTrophyIds?: number[] | null;
 };
 export function updateProfile(args: UpdateProfileArgs) {
 	return db.transaction().execute(async (trx) => {
@@ -1085,6 +1089,12 @@ export function updateProfile(args: UpdateProfileArgs) {
 				battlefy: args.battlefy,
 				favoriteBadgeIds: args.favoriteBadgeIds
 					? JSON.stringify(args.favoriteBadgeIds)
+					: null,
+				favoriteTrophyIds: args.favoriteTrophyIds
+					? JSON.stringify(args.favoriteTrophyIds)
+					: null,
+				hiddenTrophyIds: args.hiddenTrophyIds
+					? JSON.stringify(args.hiddenTrophyIds)
 					: null,
 				showDiscordUniqueName: args.showDiscordUniqueName,
 				commissionText: args.commissionText,

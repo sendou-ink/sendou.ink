@@ -207,6 +207,8 @@
 	"labels.profileStickSens": "",
 	"labels.profileCountry": "국가",
 	"labels.profileFavoriteBadges": "",
+	"labels.profileFavoriteTrophies": "",
+	"labels.profileHiddenTrophies": "",
 	"labels.profileShowDiscordUniqueName": "",
 	"labels.profileCommissionsOpen": "",
 	"labels.profileCommissionText": "",

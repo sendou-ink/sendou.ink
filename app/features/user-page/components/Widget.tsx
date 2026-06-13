@@ -18,6 +18,7 @@ import { Placement } from "~/components/Placement";
 import type { Tables } from "~/db/tables";
 import { previewUrl } from "~/features/art/art-utils";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
+import { TrophyDisplay } from "~/features/trophies/components/TrophyDisplay";
 import { VodListing } from "~/features/vods/components/VodListing";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { usePagination } from "~/hooks/usePagination";
@@ -74,6 +75,8 @@ export function Widget({
 						<Markdown>{widget.data.bio}</Markdown>
 					</article>
 				);
+			case "trophies-owned":
+				return <TrophyDisplay trophies={widget.data} />;
 			case "badges-owned":
 				return <BadgeDisplay badges={widget.data} />;
 			case "badges-authored":

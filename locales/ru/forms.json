@@ -207,6 +207,8 @@
 	"labels.profileStickSens": "Чувствительность стика",
 	"labels.profileCountry": "Страна",
 	"labels.profileFavoriteBadges": "",
+	"labels.profileFavoriteTrophies": "",
+	"labels.profileHiddenTrophies": "",
 	"labels.profileShowDiscordUniqueName": "Показать пользовательское имя Discord",
 	"labels.profileCommissionsOpen": "Коммишены открыты",
 	"labels.profileCommissionText": "Информация о коммишенах",

@@ -3,6 +3,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import { BADGE } from "~/features/badges/badges-constants";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
+import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormData } from "~/form/parse.server";
 import { userPage } from "~/utils/urls";
@@ -43,6 +44,13 @@ export const action: ActionFunction = async ({ request }) => {
 		: 1;
 	const limitedBadgeIds = data.favoriteBadgeIds.slice(0, maxBadgeCount);
 
+	const hiddenTrophySet = new Set(data.hiddenTrophyIds);
+	const limitedTrophyIds = isSupporter
+		? data.favoriteTrophyIds
+				.filter((id) => !hiddenTrophySet.has(id))
+				.slice(0, SMALL_TROPHIES_PER_DISPLAY_PAGE)
+		: [];
+
 	const editedUser = await UserRepository.updateProfile({
 		userId: user.id,
 		country: data.country,
@@ -56,6 +64,9 @@ export const action: ActionFunction = async ({ request }) => {
 		battlefy: data.battlefy,
 		weapons,
 		favoriteBadgeIds: limitedBadgeIds.length > 0 ? limitedBadgeIds : null,
+		favoriteTrophyIds: limitedTrophyIds.length > 0 ? limitedTrophyIds : null,
+		hiddenTrophyIds:
+			data.hiddenTrophyIds.length > 0 ? data.hiddenTrophyIds : null,
 		showDiscordUniqueName: data.showDiscordUniqueName ? 1 : 0,
 		commissionsOpen: isArtist && data.commissionsOpen ? 1 : 0,
 		commissionText: isArtist ? data.commissionText : null,

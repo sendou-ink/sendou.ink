@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
+import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 
@@ -20,8 +21,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		await UserRepository.findProfileByIdentifier(params.identifier!),
 	);
 
+	const trophies = await TrophyRepository.findByOwnerUserId(user.id);
+
 	return {
 		type: "old" as const,
 		user,
+		trophies,
 	};
 };

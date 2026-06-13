@@ -207,6 +207,8 @@
 	"labels.profileStickSens": "Styrepindsfølsomhed",
 	"labels.profileCountry": "Land",
 	"labels.profileFavoriteBadges": "",
+	"labels.profileFavoriteTrophies": "",
+	"labels.profileHiddenTrophies": "",
 	"labels.profileShowDiscordUniqueName": "Vis Discord-brugernavn",
 	"labels.profileCommissionsOpen": "Åben for bestillinger",
 	"labels.profileCommissionText": "info om bestilling",

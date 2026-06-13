@@ -23,6 +23,7 @@ import type {
 	FormFieldSelect,
 	FormsTranslationKey,
 	SelectOption,
+	TrophyOption,
 } from "./types";
 
 export const formRegistry = z.registry<FormField>();
@@ -713,6 +714,23 @@ export function badges(
 			type: "badges",
 			initialValue: [],
 		}) as z.ZodArray<typeof id> & FieldWithOptions<BadgeOption[]>;
+}
+
+export function trophies(
+	args: WithTypedTranslationKeys<
+		Omit<Extract<FormField, { type: "trophies" }>, "type" | "initialValue">
+	>,
+) {
+	return z
+		.array(id)
+		.max(args.maxCount ?? 100)
+		.register(formRegistry, {
+			...args,
+			label: prefixKey(args.label),
+			bottomText: prefixKey(args.bottomText),
+			type: "trophies",
+			initialValue: [],
+		}) as z.ZodArray<typeof id> & FieldWithOptions<TrophyOption[]>;
 }
 
 export function stageSelect(

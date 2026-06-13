@@ -17,6 +17,7 @@ import { StageSelectFormField } from "./fields/StageSelectFormField";
 import { SwitchFormField } from "./fields/SwitchFormField";
 import { TextareaFormField } from "./fields/TextareaFormField";
 import { TimeRangeFormField } from "./fields/TimeRangeFormField";
+import { TrophiesFormField } from "./fields/TrophiesFormField";
 import { UserSearchFormField } from "./fields/UserSearchFormField";
 import {
 	WeaponPoolFormField,
@@ -30,6 +31,7 @@ import type {
 	CustomFieldRenderProps,
 	FormField as FormFieldType,
 	SelectOption,
+	TrophyOption,
 } from "./types";
 import {
 	getNestedSchema,
@@ -382,6 +384,22 @@ export function FormField({
 				value={value as number[]}
 				onChange={handleChange as (v: number[]) => void}
 				options={options as BadgeOption[]}
+				{...(maxCount !== undefined ? { maxCount } : {})}
+			/>
+		);
+	}
+
+	if (formField.type === "trophies") {
+		if (!options) {
+			throw new Error("Trophies form field requires options prop");
+		}
+		return (
+			<TrophiesFormField
+				{...commonProps}
+				{...formField}
+				value={value as number[]}
+				onChange={handleChange as (v: number[]) => void}
+				options={options as TrophyOption[]}
 				{...(maxCount !== undefined ? { maxCount } : {})}
 			/>
 		);
