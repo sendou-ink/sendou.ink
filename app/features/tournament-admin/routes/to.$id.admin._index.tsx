@@ -155,6 +155,7 @@ function TeamRow({
 		<tr
 			className={clsx({ [styles.droppedOut]: team.droppedOut })}
 			data-testid="team-row"
+			data-team-id={team.id}
 		>
 			<td>
 				<div className="stack horizontal sm items-center">
