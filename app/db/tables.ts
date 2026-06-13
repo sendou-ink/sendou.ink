@@ -4,7 +4,6 @@ import type {
 	Insertable,
 	JSONColumnType,
 	Selectable,
-	Updateable,
 } from "kysely";
 import type { AssociationVisibility } from "~/features/associations/associations-types";
 import type { tags } from "~/features/calendar/calendar-constants";
@@ -1439,7 +1438,6 @@ export interface SplatoonRotation {
 
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };
 export type TablesInsertable = { [P in keyof DB]: Insertable<DB[P]> };
-export type TablesUpdatable = { [P in keyof DB]: Updateable<DB[P]> };
 
 export interface DB {
 	AllTeam: Team;

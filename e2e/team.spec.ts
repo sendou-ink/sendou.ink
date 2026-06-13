@@ -73,12 +73,19 @@ test.describe("Team page", () => {
 
 		await page.getByTestId("manage-roster-button").click();
 
-		await page.getByTestId("role-select-0").selectOption("SUPPORT");
+		await page
+			.getByTestId("member-row-0")
+			.locator("select")
+			.selectOption("SUPPORT");
 
-		await page.getByTestId("member-row-3").isVisible();
-		await page.getByTestId("kick-button").last().click();
-		await modalClickConfirmButton(page);
+		await expect(page.getByTestId("member-row-3")).toBeVisible();
+		await page
+			.locator("fieldset:has([data-testid='member-row-3'])")
+			.getByRole("button", { name: "Remove item" })
+			.click();
 		await isNotVisible(page.getByTestId("member-row-3"));
+
+		await submit(page);
 
 		await navigate({ page, url: teamPage("alliance-rogue") });
 
@@ -172,9 +179,8 @@ test.describe("Team page", () => {
 
 		await page.getByTestId("manage-roster-button").click();
 
-		await waitForPOSTResponse(page, async () => {
-			await page.getByLabel("Editor").first().click({ force: true });
-		});
+		await page.getByLabel("Editor").first().click({ force: true });
+		await submit(page);
 
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({ page, url: editTeamPage("alliance-rogue") });

@@ -129,6 +129,8 @@ export interface FormFieldArray<T extends string, S extends z.ZodType>
 	min?: number;
 	max: number;
 	field: S;
+	/** When false, the "Add" button is hidden (the array can only be edited/shrunk, not grown). Defaults to true. */
+	addable?: boolean;
 }
 
 interface FormFieldTimeRange<T extends string> extends FormFieldBase<T> {
@@ -269,6 +271,7 @@ export type TypedFormFieldProps<
 	label?: string;
 	disabled?: boolean;
 	maxCount?: number;
+	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
 	children?:
 		| ((props: FormFieldChildrenProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
@@ -285,6 +288,7 @@ export type FlexibleFormFieldProps = {
 	label?: string;
 	disabled?: boolean;
 	maxCount?: number;
+	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
 	children?:
 		| ((props: FormFieldChildrenProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);

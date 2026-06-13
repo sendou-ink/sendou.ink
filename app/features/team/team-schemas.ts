@@ -1,13 +1,18 @@
 import { z } from "zod";
 import {
+	array,
+	fieldset,
+	idConstant,
 	image,
+	selectOptional,
 	stringConstant,
 	textAreaOptional,
 	textFieldOptional,
 	textFieldRequired,
+	toggle,
 } from "~/form/fields";
 import { mySlugify } from "~/utils/urls";
-import { TEAM } from "./team-constants";
+import { TEAM, TEAM_MEMBER_ROLES } from "./team-constants";
 
 const teamNameValidate = {
 	func: (teamName: string) =>
@@ -49,4 +54,25 @@ export const editTeamFormSchema = z.object({
 	}),
 	logo: image({ label: "labels.logo" }),
 	banner: image({ label: "labels.banner", dimensions: "thick-banner" }),
+});
+
+export const updateRosterSchema = z.object({
+	_action: stringConstant("UPDATE_ROSTER"),
+	members: array({
+		max: TEAM.MAX_MEMBER_COUNT,
+		addable: false,
+		field: fieldset({
+			fields: z.object({
+				userId: idConstant(),
+				role: selectOptional({
+					label: "labels.teamMemberRole",
+					items: TEAM_MEMBER_ROLES.map((role) => ({
+						value: role,
+						label: `options.teamMemberRole.${role}` as const,
+					})),
+				}),
+				isManager: toggle({ label: "labels.teamEditor" }),
+			}),
+		}),
+	}),
 });
