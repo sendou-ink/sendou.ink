@@ -55,6 +55,7 @@ export const myFormSchema = z.object({
 | `weaponSelectOptional` | Weapon dropdown | `label` |
 | `userSearch` | User search autocomplete | `label` |
 | `userSearchOptional` | Optional user search | `label` |
+| `image` | Small image upload (avatar / logo / banner) | `label` |
 | `badges` | Badge selection | `label` |
 | `array` | Repeatable field | `field`, `max` |
 | `fieldset` | Nested object fields | `fields` |
@@ -306,6 +307,86 @@ const badgeOptions = badges.map((b) => ({
 }));
 
 <FormField name="displayBadges" options={badgeOptions} />
+```
+
+## Image Field
+
+`image()` is a first-class field for the small "avatar / logo / banner" class of images
+(team pfp, team banner, org pfp, calendar/tournament logo). It reuses the existing S3 upload
+pipeline and the `UnvalidatedUserSubmittedImage` admin-validation / supporter auto-validation
+flow, while keeping `SendouForm`'s single-submit `application/json` model unchanged.
+
+> **Art upload is out of scope.** Art stays on its dedicated multipart route (`/art/new`): it
+> produces two derived assets (full + thumbnail), preserves aspect ratio, keeps the original
+> format, allows up to 5MB, and has its own `Art` table. Any future "large / aspect-preserving
+> / multi-derivative" upload should likewise stay off this field.
+
+### Schema
+
+```ts
+import { image } from "~/form/fields";
+
+export const editTeamSchema = z.object({
+  teamId: idConstant(),
+  logo: image({ label: "labels.logo" }),                                 // logo (default)
+  banner: image({ label: "labels.banner", dimensions: "thick-banner" }),
+  cover: image({ label: "labels.cover", dimensions: { width: 800, height: 300 } }),
+});
+```
+
+`dimensions` is optional, defaulting to `"logo"`. It accepts the `"logo"` / `"thick-banner"`
+presets or explicit `{ width, height }` numbers (passed straight to `compressorjs` with
+`resize: "cover"`).
+
+### Value model
+
+The field value is a small JSON-serializable union (`ImageFieldValue` from `~/form/image-field`):
+
+```ts
+type ImageFieldValue =
+  | null                                              // none / removed
+  | { type: "EXISTING"; imgId: number; url: string }  // loaded, unchanged (url = preview)
+  | { type: "NEW"; dataUrl: string }                  // newly picked, base64 webp
+```
+
+- `initialValue` is `null` (the create case).
+- Edit forms pass an `EXISTING` value via `SendouForm`'s `defaultValues` (`url` is only for
+  preview).
+- The renderer produces a `NEW` value (client-compressed to webp, base64 data URL) **only** when
+  the user picks a file, and `null` when they remove — so removal is owned by the field, with no
+  separate delete action needed. An unchanged `EXISTING` value never re-sends image bytes.
+
+### Server helper
+
+Parse the action with `parseFormDataWithImages` instead of `parseFormData`. It resolves every
+`image()` field in the schema to a stored image id (`number | null`) in place, so the action just
+writes each id to its own FK column:
+
+```ts
+import { parseFormDataWithImages } from "~/form/parse.server";
+
+const result = await parseFormDataWithImages({ request, schema: editTeamSchema });
+if (!result.success) return { fieldErrors: result.fieldErrors };
+
+// result.data.logo / result.data.banner are now `number | null`
+await TeamRepository.update({
+  id: data.teamId,
+  avatarImgId: result.data.logo,
+  bannerImgId: result.data.banner,
+});
+```
+
+Per field it resolves `null → null`, `EXISTING → imgId` (no bytes re-sent), `NEW → upload + insert
+→ new id`. For a `NEW` value it decodes the base64, validates the bytes are a real webp (magic-byte
+check), uploads via `uploadStreamToS3`, and inserts an unvalidated image row (auto-validated for
+supporters). The schema may be a single object or an `_action`-discriminated union. (The underlying
+per-value helper `imageFieldValueToImgId` from `~/features/img-upload/image-field.server` can still
+be called directly if needed.)
+
+### E2E
+
+```ts
+await form.setImage("logo", "e2e/fixtures/logo.png");
 ```
 
 ## Custom Fields
@@ -574,7 +655,7 @@ Run `pnpm run i18n:sync` after adding English translations to initialize other l
 Use `createFormHelpers` for type-safe form interactions:
 
 ```ts
-import { createFormHelpers } from "~/utils/playwright-form";
+import { createFormHelpers } from "./helpers/playwright-form";
 import { myFormSchema } from "~/features/my/my-schemas";
 
 test("fills and submits form", async ({ page }) => {
@@ -601,6 +682,7 @@ test("fills and submits form", async ({ page }) => {
 | `selectUser(name, userName)` | Search and select user |
 | `selectWeapons(name, weaponNames)` | Select weapons in weapon pool |
 | `setDateTime(name, date)` | Set datetime picker |
+| `setImage(name, filePath)` | Upload a file into an image field |
 | `submit()` | Click submit button |
 | `getLabel(name)` | Get translated label for field |
 | `getItemLabel(name, value)` | Get translated label for select item |
@@ -628,7 +710,7 @@ import {
   selectStage,
   selectWeapon,
   selectUser,
-} from "~/utils/playwright";
+} from "./helpers/playwright";
 ```
 
 ## Complete Example
@@ -717,9 +799,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 ### E2E Test (`feature.spec.ts`)
 
 ```ts
-import { createFormHelpers } from "~/utils/playwright-form";
+import { createFormHelpers } from "./helpers/playwright-form";
 import { createItemSchema } from "~/features/item/feature-schemas";
-import { test, navigate, impersonate, seed } from "~/utils/playwright";
+import { test, navigate, impersonate, seed } from "./helpers/playwright";
 
 test("creates new item", async ({ page }) => {
   await seed(page);

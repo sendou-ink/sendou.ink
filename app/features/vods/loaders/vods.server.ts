@@ -7,7 +7,7 @@ import * as VodRepository from "../VodRepository.server";
 import { VODS_PAGE_BATCH_SIZE } from "../vods-constants";
 import { vodsSearchParamsSchema } from "../vods-schemas";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request, url }: LoaderFunctionArgs) => {
 	const { page, ...filters } = parseSearchParams({
 		request,
 		schema: vodsSearchParamsSchema,
@@ -24,7 +24,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	const pagesCount = Math.max(1, Math.ceil(totalCount / VODS_PAGE_BATCH_SIZE));
 
-	redirectIfPageOutOfBounds({ request, page, pagesCount });
+	redirectIfPageOutOfBounds({ url, page, pagesCount });
 
 	return {
 		vods,

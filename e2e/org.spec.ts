@@ -6,6 +6,11 @@ import {
 	updateIsEstablishedSchema,
 } from "~/features/tournament-organization/tournament-organization-schemas";
 import {
+	TOURNAMENT_NEW_PAGE,
+	tournamentOrganizationPage,
+	tournamentPage,
+} from "~/utils/urls";
+import {
 	expect,
 	impersonate,
 	isNotVisible,
@@ -14,13 +19,8 @@ import {
 	submit,
 	test,
 	waitForPOSTResponse,
-} from "~/utils/playwright";
-import { createFormHelpers } from "~/utils/playwright-form";
-import {
-	TOURNAMENT_NEW_PAGE,
-	tournamentOrganizationPage,
-	tournamentPage,
-} from "~/utils/urls";
+} from "./helpers/playwright";
+import { createFormHelpers } from "./helpers/playwright-form";
 
 const url = tournamentOrganizationPage({
 	organizationSlug: "sendouink",
@@ -140,10 +140,10 @@ test.describe("Tournament Organization", () => {
 		});
 
 		// Try to create a team
-		await page.getByRole("tab", { name: "Register" }).click();
+		await page.getByTestId("register-cta").click();
 
 		// Fill in team details
-		await page.getByLabel("Team name").fill("Banned Team");
+		await page.getByLabel("Pick-up name").fill("Banned Team");
 		await waitForPOSTResponse(page, () =>
 			page.getByTestId("save-team-button").click(),
 		);
@@ -164,14 +164,14 @@ test.describe("Tournament Organization", () => {
 			page,
 			url: tournamentPage(1),
 		});
-		await page.getByRole("tab", { name: "Register" }).click();
+		await page.getByTestId("register-cta").click();
 
 		// Try to create a team again
 		await expect(page.getByText(/Teams \(\d+\)/)).toBeVisible();
 
 		const teamCountBefore = await page.getByText(/Teams \(\d+\)/).textContent();
 
-		await page.getByLabel("Team name").fill("Unbanned Team");
+		await page.getByLabel("Pick-up name").fill("Unbanned Team");
 		await page.getByTestId("save-team-button").click();
 
 		const countBefore = Number(teamCountBefore?.match(/\d+/)?.[0] ?? 0);

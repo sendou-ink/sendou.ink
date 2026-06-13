@@ -1,149 +1,40 @@
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
-import { updateNoScreenSchema } from "~/features/settings/settings-schemas";
-import {
-	expect,
-	impersonate,
-	isNotVisible,
-	navigate,
-	seed,
-	selectUser,
-	startBracket,
-	submit,
-	test,
-	waitForPOSTResponse,
-} from "~/utils/playwright";
-import { createFormHelpers } from "~/utils/playwright-form";
+import { updateMatchProfileSchema } from "~/features/settings/match-profile-schemas";
 import {
 	NOTIFICATIONS_URL,
 	SETTINGS_PAGE,
 	tournamentAdminPage,
+	tournamentAdminRegistrationEditPage,
 	tournamentBracketsPage,
 	tournamentMatchPage,
 	tournamentPage,
 	tournamentTeamsPage,
 	userResultsPage,
 } from "~/utils/urls";
-
-const navigateToMatch = async (page: Page, matchId: number) => {
-	await expect(async () => {
-		await page.locator(`[data-match-id="${matchId}"]`).click();
-		await expect(page.getByTestId("match-header")).toBeVisible();
-	}).toPass();
-};
-
-const reportResult = async ({
-	page,
-	amountOfMapsToReport,
-	winner = 1,
-	points,
-}: {
-	page: Page;
-	amountOfMapsToReport: 1 | 2 | 3 | 4;
-	winner?: 1 | 2;
-	points?: [number, number];
-}) => {
-	const confirmCheckbox = page.getByTestId("end-confirmation");
-
-	const fillPointsInput = async () => {
-		if (!points) return;
-		await page.getByTestId("points-input-1").fill(String(points[0]));
-		await page.getByTestId("points-input-2").fill(String(points[1]));
-	};
-
-	await page.getByTestId("actions-tab").click();
-
-	// Auto-detect and set rosters for teams with 5+ players
-	// Check if first team needs roster selection (checkbox exists and is not disabled)
-	const firstTeamCheckbox = page.getByTestId("player-checkbox-0").first();
-	if (
-		(await firstTeamCheckbox.count()) > 0 &&
-		!(await firstTeamCheckbox.isDisabled())
-	) {
-		await page.getByTestId("player-checkbox-0").first().click();
-		await page.getByTestId("player-checkbox-1").first().click();
-		await page.getByTestId("player-checkbox-2").first().click();
-		await page.getByTestId("player-checkbox-3").first().click();
-
-		await submit(page, "save-active-roster-button-0");
-
-		// update went through
-		await expect(page.getByTestId("player-checkbox-0").first()).toBeDisabled();
-	}
-
-	// Check if second team needs roster selection
-	const lastTeamCheckbox = page.getByTestId("player-checkbox-0").last();
-	if (
-		(await lastTeamCheckbox.count()) > 0 &&
-		!(await lastTeamCheckbox.isDisabled())
-	) {
-		await page.getByTestId("player-checkbox-0").last().click();
-		await page.getByTestId("player-checkbox-1").last().click();
-		await page.getByTestId("player-checkbox-2").last().click();
-		await page.getByTestId("player-checkbox-3").last().click();
-
-		await submit(page, "save-active-roster-button-1");
-	}
-
-	await fillPointsInput();
-
-	await page.getByTestId(`winner-radio-${winner}`).click();
-	await submit(page, "report-score-button");
-	await expect(page.getByText(winner === 1 ? "1-0" : "0-1")).toBeVisible();
-
-	if (amountOfMapsToReport >= 2) {
-		await page.getByTestId(`winner-radio-${winner}`).click();
-		await fillPointsInput();
-
-		if (amountOfMapsToReport === 2) {
-			await confirmCheckbox.click();
-			await submit(page, "report-score-button");
-			await expect(page.getByTestId("report-timestamp")).toBeVisible();
-		} else {
-			await submit(page, "report-score-button");
-		}
-	}
-
-	if (amountOfMapsToReport === 3) {
-		await expect(page.getByText("2-0")).toBeVisible();
-
-		await page.getByTestId(`winner-radio-${winner}`).click();
-		await fillPointsInput();
-
-		await confirmCheckbox.click();
-		await submit(page, "report-score-button");
-
-		await expect(page.getByTestId("report-timestamp")).toBeVisible();
-	}
-
-	if (amountOfMapsToReport === 4) {
-		await expect(page.getByText("2-0")).toBeVisible();
-
-		await page.getByTestId(`winner-radio-${winner}`).click();
-		await fillPointsInput();
-		await submit(page, "report-score-button");
-
-		await expect(page.getByText("3-0")).toBeVisible();
-
-		await page.getByTestId(`winner-radio-${winner}`).click();
-
-		await confirmCheckbox.click();
-		await submit(page, "report-score-button");
-
-		await expect(page.getByTestId("report-timestamp")).toBeVisible();
-	}
-};
-
-const backToBracket = async (page: Page) => {
-	await expect(async () => {
-		await page.getByTestId("back-to-bracket-button").click();
-		await expect(page.getByTestId("brackets-viewer")).toBeVisible();
-	}).toPass();
-};
-
-const expectScore = (page: Page, score: [number, number]) =>
-	expect(page.getByText(score.join("-"))).toBeVisible();
+import {
+	clickNavTab,
+	expect,
+	impersonate,
+	isNotVisible,
+	modalClickConfirmButton,
+	navigate,
+	seed,
+	startBracket,
+	submit,
+	test,
+	waitForPOSTResponse,
+} from "./helpers/playwright";
+import { createFormHelpers } from "./helpers/playwright-form";
+import {
+	backToBracket,
+	expectScore,
+	goToTab,
+	navigateToMatch,
+	reportResult,
+	undoLastReport,
+} from "./helpers/tournament-match";
 
 test.describe("Tournament bracket", () => {
 	test("sets active roster as regular member", async ({ page }) => {
@@ -161,35 +52,32 @@ test.describe("Tournament bracket", () => {
 
 		await expect(page.getByTestId("active-roster-needed-text")).toBeVisible();
 
-		await page.getByTestId("actions-tab").click();
-
-		// Team 10 has 5 players; select first 4 for active roster
-		// Team 10 is team 2 (second team in the match), so use last()
-		await page.getByTestId("player-checkbox-0").last().click();
-		await page.getByTestId("player-checkbox-1").last().click();
-		await page.getByTestId("player-checkbox-2").last().click();
-		await page.getByTestId("player-checkbox-3").last().click();
-
-		await submit(page, "save-active-roster-button-1");
+		// Team 10 (5 players) is opponentTwo in match 2 → bravo side.
+		// The roster tab opens in editing mode by default when active roster is missing.
+		await goToTab(page, "rosters");
+		await page.getByTestId("player-checkbox-bravo-0").click();
+		await page.getByTestId("player-checkbox-bravo-1").click();
+		await page.getByTestId("player-checkbox-bravo-2").click();
+		await page.getByTestId("player-checkbox-bravo-3").click();
+		await submit(page, "save-active-roster-button-bravo");
 
 		// did it persist?
 		await navigate({
 			page,
 			url: tournamentMatchPage({ tournamentId, matchId }),
 		});
-		// Only team 10 needed to set roster (team 9 has 4 players)
 		await isNotVisible(page.getByTestId("active-roster-needed-text"));
 
-		await page.getByTestId("actions-tab").click();
-		await page.getByTestId("edit-active-roster-button").click();
-		await page.getByTestId("player-checkbox-3").last().click();
-		await page.getByTestId("player-checkbox-4").last().click();
-		await submit(page, "save-active-roster-button-1");
+		await goToTab(page, "rosters");
+		await page.getByTestId("edit-active-roster-button-bravo").click();
+		// Swap player 3 out for player 4
+		await page.getByTestId("player-checkbox-bravo-3").click();
+		await page.getByTestId("player-checkbox-bravo-4").click();
+		await submit(page, "save-active-roster-button-bravo");
 
-		await expect(page.getByTestId("edit-active-roster-button")).toBeVisible();
 		await expect(
-			page.getByTestId("player-checkbox-3").last(),
-		).not.toBeChecked();
+			page.getByTestId("edit-active-roster-button-bravo"),
+		).toBeVisible();
 	});
 
 	// 1) Report winner of N-ZAP's first match
@@ -212,7 +100,8 @@ test.describe("Tournament bracket", () => {
 
 		// 1)
 		await navigateToMatch(page, 5);
-		await reportResult({ page, amountOfMapsToReport: 2 });
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
 		// 2)
@@ -222,30 +111,32 @@ test.describe("Tournament bracket", () => {
 			url: tournamentBracketsPage({ tournamentId }),
 		});
 		await navigateToMatch(page, 6);
-		await reportResult({ page, amountOfMapsToReport: 2 });
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
 		// 3)
 		await navigateToMatch(page, 18);
-		await reportResult({
-			page,
-			amountOfMapsToReport: 1,
-		});
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 1, setEnds: false });
 		await backToBracket(page);
 
 		// 4)
 		await navigateToMatch(page, 5);
+		await goToTab(page, "admin");
 		await isNotVisible(page.getByTestId("reopen-match-button"));
 		await backToBracket(page);
 
 		// 5)
 		await navigateToMatch(page, 18);
-		await submit(page, "undo-score-button");
+		await goToTab(page, "action");
+		await undoLastReport(page);
 		await expectScore(page, [0, 0]);
 		await backToBracket(page);
 
 		// 6)
 		await navigateToMatch(page, 5);
+		await goToTab(page, "admin");
 		await submit(page, "reopen-match-button");
 		await expectScore(page, [1, 0]);
 
@@ -256,13 +147,10 @@ test.describe("Tournament bracket", () => {
 			url: tournamentBracketsPage({ tournamentId }),
 		});
 		await navigateToMatch(page, 5);
-		await submit(page, "undo-score-button");
+		await goToTab(page, "action");
+		await undoLastReport(page);
 		await expectScore(page, [0, 0]);
-		await reportResult({
-			page,
-			amountOfMapsToReport: 2,
-			winner: 2,
-		});
+		await reportResult(page, { mapsToReport: 2, winner: 2 });
 		await backToBracket(page);
 		await expect(
 			page.locator("[data-round-id='5'] [data-participant-id='102']"),
@@ -315,17 +203,11 @@ test.describe("Tournament bracket", () => {
 
 		await navigate({
 			page,
-			url: tournamentPage(tournamentId),
+			url: tournamentAdminPage(tournamentId),
 		});
 
-		await page.getByTestId("admin-tab").click();
-
-		await page.getByLabel("Action").selectOption("CHECK_OUT");
-
-		for (let id = 103; id < 117; id++) {
-			await page.getByLabel("Team", { exact: true }).selectOption(String(id));
-			await submit(page);
-		}
+		// check out teams 103-116 (rows are sorted by seed)
+		await checkOutTeamRows(page, 2, 15);
 
 		await navigate({
 			page,
@@ -335,11 +217,9 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
 
-		await page.locator('[data-match-id="1"]').click();
-		await reportResult({
-			page,
-			amountOfMapsToReport: 2,
-		});
+		await navigateToMatch(page, 1);
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
 		await page.getByTestId("finalize-tournament-button").click();
@@ -384,17 +264,11 @@ test.describe("Tournament bracket", () => {
 
 		await navigate({
 			page,
-			url: tournamentPage(tournamentId),
+			url: tournamentAdminPage(tournamentId),
 		});
 
-		await page.getByTestId("admin-tab").click();
-
-		await page.getByLabel("Action").selectOption("CHECK_OUT");
-
-		for (let id = 202; id < 210; id++) {
-			await page.getByLabel("Team", { exact: true }).selectOption(String(id));
-			await submit(page);
-		}
+		// check out teams 202-209 (rows are sorted by seed)
+		await checkOutTeamRows(page, 1, 8);
 
 		await navigate({
 			page,
@@ -408,11 +282,8 @@ test.describe("Tournament bracket", () => {
 
 		for (const id of [2, 4, 6, 7, 8, 9, 10, 11, 12]) {
 			await navigateToMatch(page, id);
-			await reportResult({
-				page,
-				amountOfMapsToReport: 2,
-				points: [100, 0],
-			});
+			await goToTab(page, "action");
+			await reportResult(page, { mapsToReport: 2 });
 			await backToBracket(page);
 		}
 
@@ -432,12 +303,13 @@ test.describe("Tournament bracket", () => {
 			url: tournamentAdminPage(tournamentId),
 		});
 
-		await page.getByLabel("Action").selectOption("CHECK_IN");
-		await page.getByLabel("Team", { exact: true }).selectOption("216");
-		await page
-			.getByLabel("Bracket", { exact: true })
-			.selectOption("Underground bracket");
-		await submit(page);
+		// check team 216 in to the underground bracket (after the start only
+		// checked in teams are listed so the row index is not stable)
+		await adminTeamRowAction(
+			page,
+			page.getByTestId("team-row").filter({ hasText: "Protective Wet Floor" }),
+			"Check in (Underground bracket)",
+		);
 
 		await navigate({
 			page,
@@ -447,10 +319,8 @@ test.describe("Tournament bracket", () => {
 		await submit(page, "confirm-finalize-bracket-button");
 
 		await navigateToMatch(page, 13);
-		await reportResult({
-			page,
-			amountOfMapsToReport: 3,
-		});
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 3 });
 
 		await navigate({
 			page,
@@ -460,10 +330,8 @@ test.describe("Tournament bracket", () => {
 		await submit(page, "confirm-finalize-bracket-button");
 		for (const matchId of [14, 15, 16, 17]) {
 			await navigateToMatch(page, matchId);
-			await reportResult({
-				page,
-				amountOfMapsToReport: 3,
-			});
+			await goToTab(page, "action");
+			await reportResult(page, { mapsToReport: 3 });
 
 			await backToBracket(page);
 		}
@@ -471,8 +339,10 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("assign-badges-later-switch").click();
 		await submit(page, "confirm-button");
 
-		// not possible to reopen finals match anymore
+		// after finalizing the tournament, the admin tab disappears so the
+		// reopen action is no longer reachable
 		await navigateToMatch(page, 14);
+		await isNotVisible(page.getByRole("tab", { name: "Admin" }));
 		await isNotVisible(page.getByTestId("reopen-match-button"));
 		await backToBracket(page);
 	});
@@ -491,11 +361,8 @@ test.describe("Tournament bracket", () => {
 			url: tournamentAdminPage(tournamentId),
 		});
 
-		await page.getByLabel("Action").selectOption("CHECK_OUT");
-		for (const teamId of ["303", "304"]) {
-			await page.getByLabel("Team", { exact: true }).selectOption(teamId);
-			await submit(page);
-		}
+		// check out teams 303 & 304 (rows are sorted by seed)
+		await checkOutTeamRows(page, 2, 3);
 
 		await page.getByTestId("edit-event-info-button").click();
 		for (let i = 0; i < 3; i++) {
@@ -504,27 +371,25 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("placements-input").last().fill("1,2");
 		await submit(page);
 
-		await page.getByTestId("brackets-tab").click();
+		await navigate({
+			page,
+			url: tournamentBracketsPage({ tournamentId }),
+		});
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
 
-		await page.locator('[data-match-id="1"]').click();
-		await reportResult({
-			page,
-			amountOfMapsToReport: 2,
-			points: [100, 0],
-		});
+		await navigateToMatch(page, 1);
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
 		await page.getByRole("tab", { name: "Great White" }).click();
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
 
-		await page.locator('[data-match-id="2"]').click();
-		await reportResult({
-			page,
-			amountOfMapsToReport: 3,
-		});
+		await navigateToMatch(page, 2);
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 3 });
 		await backToBracket(page);
 
 		await page.getByTestId("finalize-tournament-button").click();
@@ -568,17 +433,17 @@ test.describe("Tournament bracket", () => {
 
 		await submit(page);
 
-		await page.getByTestId("brackets-tab").click();
+		await navigate({
+			page,
+			url: tournamentBracketsPage({ tournamentId }),
+		});
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
 
 		for (const matchId of [1, 2, 3, 4, 5, 6]) {
-			await page.locator(`[data-match-id="${matchId}"]`).click();
-			await reportResult({
-				page,
-				amountOfMapsToReport: 2,
-				points: [100, 0],
-			});
+			await navigateToMatch(page, matchId);
+			await goToTab(page, "action");
+			await reportResult(page, { mapsToReport: 2 });
 			await backToBracket(page);
 		}
 
@@ -591,17 +456,19 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
 
-		await page.locator('[data-match-id="7"]').click();
+		await navigateToMatch(page, 7);
 		await expect(page.getByTestId("back-to-bracket-button")).toBeVisible();
 
-		await page.getByTestId("admin-tab").click();
-		await page.getByLabel("Action").selectOption("ADD_MEMBER");
-		await page.getByLabel("Team", { exact: true }).selectOption("303"); // a team in the Mako bracket
-		await selectUser({
-			labelName: "User",
-			userName: "Sendou",
+		// add Sendou to team 303 (a team in the Mako bracket)
+		await navigate({
 			page,
+			url: tournamentAdminRegistrationEditPage(tournamentId, 303),
 		});
+		await page.getByRole("button", { name: "Add", exact: true }).click();
+		await page.getByLabel("Player").last().click();
+		await page.getByTestId("user-search-input").fill("Sendou");
+		await expect(page.getByTestId("user-search-item").first()).toBeVisible();
+		await page.keyboard.press("Enter");
 		await submit(page);
 
 		await navigate({
@@ -643,7 +510,10 @@ test.describe("Tournament bracket", () => {
 
 		await submit(page);
 
-		await page.getByText("Seeds").click();
+		await navigate({
+			page,
+			url: `${tournamentAdminPage(tournamentId)}/seeds`,
+		});
 		await page.getByTestId("set-starting-brackets").click();
 
 		for (let i = 0; i < 16; i++) {
@@ -666,7 +536,10 @@ test.describe("Tournament bracket", () => {
 
 		await submit(page, "set-starting-brackets-submit-button");
 
-		await page.getByTestId("brackets-tab").click();
+		await navigate({
+			page,
+			url: tournamentBracketsPage({ tournamentId }),
+		});
 		for (const bracketName of [
 			"Groups stage",
 			"Great White",
@@ -696,25 +569,22 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
 
-		await page.locator('[data-match-id="2"]').click();
-		await reportResult({
-			page,
-			amountOfMapsToReport: 2,
-			points: [100, 0],
-		});
+		await navigateToMatch(page, 2);
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 2 });
 
-		await page.getByTestId("actions-tab").click();
-		await page.getByTestId("revise-button").click();
-		await page.getByTestId("player-checkbox-3").first().click();
-		await page.getByTestId("player-checkbox-4").first().click();
-		await page.getByTestId("points-input-1").fill("99");
-		await submit(page, "save-revise-button");
+		await goToTab(page, "admin");
+		await page.getByTestId("edit-result-0-button").click();
+		// Swap player 3 out for player 4 on the alpha (winner) team
+		await page.getByTestId("edit-result-player-checkbox-alpha-3").click();
+		await page.getByTestId("edit-result-player-checkbox-alpha-4").click();
+		// Toggle KO so we can verify the edit went through (RR collects KO).
+		await page.getByLabel("KO").check();
+		await submit(page, "save-result-0-button");
 
-		await expect(page.getByTestId("revise-button")).toBeVisible();
-		await expect(
-			page.getByTestId("player-checkbox-3").first(),
-		).not.toBeChecked();
-		await expect(page.getByText("99p")).toBeVisible();
+		// Edit returns to read-only view, now showing the KO label
+		await expect(page.getByTestId("edit-result-0-button")).toBeVisible();
+		await expect(page.getByText(/\(KO\)/).first()).toBeVisible();
 	});
 
 	test("changes to picked map pool & best of", async ({ page }) => {
@@ -735,13 +605,18 @@ test.describe("Tournament bracket", () => {
 
 		await submit(page);
 
-		await page.getByTestId("brackets-tab").click();
+		await navigate({
+			page,
+			url: tournamentBracketsPage({ tournamentId }),
+		});
 		await page.getByTestId("finalize-bracket-button").click();
 		await page.getByTestId("increase-map-count-button").first().click();
 		await submit(page, "confirm-finalize-bracket-button");
 
-		await page.locator('[data-match-id="1"]').click();
-		await expect(page.getByTestId("mode-progress-CB")).toHaveCount(5);
+		await navigateToMatch(page, 1);
+		// Bo5 of clam blitz: one mode icon + ×5 count text
+		await expect(page.getByTestId("mode-progress-CB")).toBeVisible();
+		await expect(page.getByText("×5")).toBeVisible();
 	});
 
 	test("reopens round robin match and changes score", async ({ page }) => {
@@ -761,47 +636,36 @@ test.describe("Tournament bracket", () => {
 
 		// needs also to be completed so 9 unlocks
 		await navigateToMatch(page, 7);
-		await reportResult({
-			page,
-			amountOfMapsToReport: 2,
-			points: [100, 0],
-		});
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
 		// set situation where match A is completed and its participants also completed their follow up matches B & C
 		// and then we go back and change the winner of A
 		await navigateToMatch(page, 8);
-		await reportResult({
-			page,
-			amountOfMapsToReport: 2,
-			points: [100, 0],
-		});
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
 		await navigateToMatch(page, 9);
-		await reportResult({
-			page,
-			amountOfMapsToReport: 2,
-			points: [100, 0],
-		});
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
 		await navigateToMatch(page, 10);
-		await reportResult({
-			page,
-			amountOfMapsToReport: 2,
-			points: [100, 0],
-		});
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
 		await navigateToMatch(page, 8);
+		await goToTab(page, "admin");
 		await submit(page, "reopen-match-button");
-		await submit(page, "undo-score-button");
-		await reportResult({
-			page,
-			amountOfMapsToReport: 2,
-			points: [0, 100],
+		await goToTab(page, "action");
+		await undoLastReport(page);
+		await reportResult(page, {
+			mapsToReport: 2,
 			winner: 2,
+			setEnds: true,
 		});
 	});
 
@@ -827,41 +691,33 @@ test.describe("Tournament bracket", () => {
 
 		// Complete R1 matches in group B (matches 7 and 8) to unlock R2 matches
 		await navigateToMatch(page, 7);
-		await reportResult({
-			page,
-			amountOfMapsToReport: 2,
-			points: [100, 0],
-		});
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
 		await navigateToMatch(page, 8);
-		await reportResult({
-			page,
-			amountOfMapsToReport: 2,
-			points: [100, 0],
-		});
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
 		// Match 9 is R2 in group B - should now be unlocked since R1 is complete
 		// Start it but don't complete it
 		await navigateToMatch(page, 9);
-		await reportResult({
-			page,
-			amountOfMapsToReport: 1,
-			points: [100, 0],
-		});
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 1, setEnds: false });
 		await backToBracket(page);
 
 		// Reopen match 7 (R1 match) - simulating a score misreport correction
 		await navigateToMatch(page, 7);
+		await goToTab(page, "admin");
 		await submit(page, "reopen-match-button");
 		await backToBracket(page);
 
 		// Verify the R2 match that was already in progress is still playable
 		// Before the fix, this would become locked and unplayable
 		await navigateToMatch(page, 9);
-		await expect(page.getByText("1-0")).toBeVisible();
-		await page.getByTestId("actions-tab").click();
+		await expectScore(page, [1, 0]);
+		await goToTab(page, "action");
 		await expect(page.getByTestId("winner-radio-1")).toBeVisible();
 	});
 
@@ -875,19 +731,15 @@ test.describe("Tournament bracket", () => {
 
 		await navigate({
 			page,
-			url: tournamentPage(tournamentId),
+			url: tournamentAdminPage(tournamentId),
 		});
 
-		await page.getByTestId("admin-tab").click();
+		// check out teams 103-114 (rows are sorted by seed)
+		await checkOutTeamRows(page, 2, 13);
 
-		await page.getByLabel("Action").selectOption("CHECK_OUT");
-
-		for (let id = 103; id < 115; id++) {
-			await page.getByLabel("Team", { exact: true }).selectOption(String(id));
-			await submit(page);
-		}
-
-		await page.getByLabel("Twitch accounts").fill("test");
+		await page.getByRole("tab", { name: "Stream" }).click();
+		// an empty array field already renders one placeholder input
+		await page.getByPlaceholder("dappleproductions").fill("test");
 		await submit(page, "save-cast-twitch-accounts-button");
 
 		await navigate({
@@ -898,32 +750,35 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
 
-		await page.locator('[data-match-id="1"]').click();
-		await reportResult({
-			page,
-			amountOfMapsToReport: 2,
-		});
+		await navigateToMatch(page, 1);
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
-		await page.locator('[data-match-id="3"]').click();
+		await navigateToMatch(page, 3);
+		await goToTab(page, "admin");
+		// Picking a chip auto-submits the cast channel; lock the match afterwards.
+		await waitForPOSTResponse(page, async () => {
+			await page.locator('label[for$="-test"]').click();
+		});
 		await submit(page, "cast-info-submit-button");
 		await backToBracket(page);
 
-		await page.locator('[data-match-id="2"]').click();
-		await reportResult({
-			page,
-			amountOfMapsToReport: 2,
-		});
+		await navigateToMatch(page, 2);
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
 		await expect(page.getByText("🔒 CAST")).toBeVisible();
-		await page.locator('[data-match-id="3"]').click();
-		await expect(page.getByText("Match locked to be casted")).toBeVisible();
+		await navigateToMatch(page, 3);
+		await goToTab(page, "admin");
+		// Lock state is signalled by the toggle being "Unlock" instead of "Lock"
+		await expect(page.getByRole("button", { name: "Unlock" })).toBeVisible();
 		await submit(page, "cast-info-submit-button");
 		await expect(page.getByTestId("stage-banner")).toBeVisible();
 
-		await page.getByTestId("cast-info-select").selectOption("test");
-		await submit(page, "cast-info-submit-button");
+		// Cast channel "test" persists across unlock; the bracket badge flips
+		// from 🔒 CAST to 🔴 LIVE once the match is unlocked and ongoing.
 		await backToBracket(page);
 		await expect(page.getByText("🔴 LIVE")).toBeVisible();
 	});
@@ -943,21 +798,24 @@ test.describe("Tournament bracket", () => {
 		await submit(page, "confirm-finalize-bracket-button");
 
 		await isNotVisible(page.locator('[data-match-id="1"]'));
-		await page.locator('[data-match-id="2"]').click();
-		await reportResult({
-			page,
-			amountOfMapsToReport: 2,
-		});
+		await navigateToMatch(page, 2);
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 2 });
 
-		await page.getByTestId("admin-tab").click();
+		await clickNavTab(page, "admin-tab");
+		await page.getByRole("tab", { name: "Brackets" }).click();
 		await page
 			.getByLabel('Type bracket name ("Main bracket") to confirm')
 			.fill("Main bracket");
 		await submit(page, "reset-bracket-button");
 
-		await page.getByLabel("Action").selectOption("CHECK_IN");
-		await page.getByLabel("Team", { exact: true }).selectOption("1");
-		await submit(page);
+		await page.getByRole("tab", { name: "Teams" }).click();
+		// check team 1 (seed 1) back in
+		await adminTeamRowAction(
+			page,
+			page.getByTestId("team-row").first(),
+			/^Check in/,
+		);
 
 		await page.getByTestId("brackets-tab").click();
 		await page.getByTestId("finalize-bracket-button").click();
@@ -977,8 +835,9 @@ test.describe("Tournament bracket", () => {
 			url: SETTINGS_PAGE,
 		});
 
-		const form = createFormHelpers(page, updateNoScreenSchema);
-		await form.check("newValue");
+		const form = createFormHelpers(page, updateMatchProfileSchema);
+		await form.check("noScreen");
+		await waitForPOSTResponse(page, () => form.submit());
 
 		await navigate({
 			page,
@@ -988,11 +847,11 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
 
-		await page.locator('[data-match-id="1"]').click();
+		await navigateToMatch(page, 1);
 		await expect(page.getByTestId("screen-banned")).toBeVisible();
 
 		await backToBracket(page);
-		await page.locator('[data-match-id="2"]').click();
+		await navigateToMatch(page, 2);
 		await expect(page.getByTestId("screen-allowed")).toBeVisible();
 	});
 
@@ -1015,12 +874,8 @@ test.describe("Tournament bracket", () => {
 
 		await navigateToMatch(page, 1);
 		await expect(page.getByText("Play all 3")).toBeVisible();
-		await reportResult({
-			page,
-			amountOfMapsToReport: 3,
-			points: [100, 0],
-			winner: 1,
-		});
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 3 });
 	});
 
 	test("swiss tournament with bracket advancing/unadvancing & dropping out a team", async ({
@@ -1043,11 +898,9 @@ test.describe("Tournament bracket", () => {
 
 		// report all group A round 1 scores
 		for (const id of [1, 2, 3, 4]) {
-			await page.locator(`[data-match-id="${id}"]`).click();
-			await reportResult({
-				page,
-				amountOfMapsToReport: 2,
-			});
+			await navigateToMatch(page, id);
+			await goToTab(page, "action");
+			await reportResult(page, { mapsToReport: 2 });
 			await backToBracket(page);
 		}
 
@@ -1060,11 +913,12 @@ test.describe("Tournament bracket", () => {
 		await submit(page, "start-round-button");
 		await expect(page.locator(`[data-match-id="9"]`)).toBeVisible();
 
-		await page.getByTestId("admin-tab").click();
+		await clickNavTab(page, "admin-tab");
 
-		await page.getByLabel("Action").selectOption("DROP_TEAM_OUT");
-		await page.getByLabel("Team", { exact: true }).selectOption("401");
-		await submit(page);
+		// drop out team 401 (seed 1)
+		await page.getByTestId("team-row").nth(0).getByLabel("Actions").click();
+		await page.getByRole("menuitem", { name: "Drop out" }).click();
+		await modalClickConfirmButton(page);
 
 		await navigate({
 			page,
@@ -1171,13 +1025,15 @@ test.describe("Tournament bracket", () => {
 						page,
 						url: tournamentMatchPage({ tournamentId, matchId }),
 					});
-					await page.getByTestId("actions-tab").click();
+					await goToTab(page, "action");
 
 					await page.getByTestId("pick-ban-button").first().click();
-					await submit(page);
+					await submit(page, "pick-ban-submit-button");
 				}
 
-				await expect(page.getByTestId("mode-progress-banned")).toHaveCount(2);
+				// once both teams banned the ban prompt is gone and the actual map
+				// banner takes over.
+				await expect(page.getByTestId("stage-banner")).toBeVisible();
 			}
 
 			await impersonate(page, teamOneCaptainId);
@@ -1187,14 +1043,12 @@ test.describe("Tournament bracket", () => {
 				url: tournamentMatchPage({ tournamentId, matchId }),
 			});
 
-			await page.getByTestId("actions-tab").click();
-			await page.getByTestId("winner-radio-2").click();
-			await page.getByTestId("points-input-2").fill("100");
-			await submit(page, "report-score-button");
+			await goToTab(page, "action");
+			await reportResult(page, { mapsToReport: 1, winner: 2, setEnds: false });
 
 			if (pickBan === "COUNTERPICK") {
 				await page.getByTestId("pick-ban-button").first().click();
-				await submit(page);
+				await submit(page, "pick-ban-submit-button");
 			}
 
 			await impersonate(page, teamTwoCaptainId);
@@ -1204,24 +1058,22 @@ test.describe("Tournament bracket", () => {
 				url: tournamentMatchPage({ tournamentId, matchId }),
 			});
 
-			await page.getByTestId("actions-tab").click();
-			await page.getByTestId("winner-radio-1").click();
-			await page.getByTestId("points-input-1").fill("100");
-			await submit(page, "report-score-button");
+			await goToTab(page, "action");
+			await reportResult(page, { mapsToReport: 1, winner: 1, setEnds: false });
 
 			if (pickBan === "COUNTERPICK") {
 				await page.getByTestId("pick-ban-button").first().click();
-				await submit(page);
+				await submit(page, "pick-ban-submit-button");
 
-				await submit(page, "undo-score-button");
-				await expect(
-					page.getByText("Please select the winner of this map"),
-				).toBeVisible();
-				await page.getByTestId("winner-radio-1").click();
-				await page.getByTestId("points-input-1").fill("100");
-				await submit(page, "report-score-button");
+				await undoLastReport(page);
+				await expect(page.getByText("Select the winner")).toBeVisible();
+				await reportResult(page, {
+					mapsToReport: 1,
+					winner: 1,
+					setEnds: false,
+				});
 				await page.getByTestId("pick-ban-button").last().click();
-				await submit(page);
+				await submit(page, "pick-ban-submit-button");
 				await expect(
 					page.getByText("Counterpick", { exact: true }),
 				).toBeVisible();
@@ -1241,7 +1093,8 @@ test.describe("Tournament bracket", () => {
 
 		await page.clock.install({ time: new Date() });
 
-		await reportResult({ page, amountOfMapsToReport: 1, winner: 1 });
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 1, winner: 1, setEnds: false });
 
 		await expect(page.getByTestId("match-timer")).toBeVisible();
 
@@ -1260,12 +1113,13 @@ test.describe("Tournament bracket", () => {
 
 		await navigateToMatch(page, matchId);
 
-		await page.getByText("End Set").click();
+		await goToTab(page, "admin");
+		await page.getByRole("button", { name: "End set" }).click();
 		await page.getByRole("radio", { name: /Random/ }).check();
 		await submit(page, "end-set-button");
 
-		// Verify match ended early
-		await expect(page.getByText("Match ended early")).toBeVisible();
+		// Match is now finalized (no longer ongoing) → "Final" appears in banner
+		await expect(page.getByTestId("match-final")).toBeVisible();
 	});
 
 	test("dropping team out ends ongoing match early and auto-forfeits losers bracket match", async ({
@@ -1277,7 +1131,8 @@ test.describe("Tournament bracket", () => {
 
 		// 1) Report partial score on match 5 (winners bracket)
 		await navigateToMatch(page, 5);
-		await reportResult({ page, amountOfMapsToReport: 1, winner: 1 });
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 1, winner: 1, setEnds: false });
 		await backToBracket(page);
 
 		// 2) Drop team 102 (one of the teams in match 5) via admin
@@ -1285,22 +1140,23 @@ test.describe("Tournament bracket", () => {
 			page,
 			url: tournamentAdminPage(tournamentId),
 		});
-		await page.getByLabel("Action").selectOption("DROP_TEAM_OUT");
-		await page.getByLabel("Team", { exact: true }).selectOption("102");
-		await submit(page);
+		// drop out team 102 (seed 2)
+		await page.getByTestId("team-row").nth(1).getByLabel("Actions").click();
+		await page.getByRole("menuitem", { name: "Drop out" }).click();
+		await modalClickConfirmButton(page);
 
-		// 3) Verify the ongoing match ended early
+		// 3) Verify the ongoing match ended early (no longer ongoing → "Final")
 		await navigate({
 			page,
 			url: tournamentMatchPage({ tournamentId, matchId: 5 }),
 		});
-		await expect(page.getByText("Match ended early")).toBeVisible();
-		await expect(page.getByText("dropped out of the tournament")).toBeVisible();
+		await expect(page.getByTestId("match-final")).toBeVisible();
 		await backToBracket(page);
 
 		// 4) Complete the adjacent match (match 6) so its loser goes to losers bracket
 		await navigateToMatch(page, 6);
-		await reportResult({ page, amountOfMapsToReport: 2 });
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
 		// 5) The losers bracket match (match 18) should now have teams:
@@ -1308,8 +1164,7 @@ test.describe("Tournament bracket", () => {
 		//    - Loser of match 6
 		//    It should have ended early since team 102 is dropped
 		await navigateToMatch(page, 18);
-		await expect(page.getByText("Match ended early")).toBeVisible();
-		await expect(page.getByText("dropped out of the tournament")).toBeVisible();
+		await expect(page.getByTestId("match-final")).toBeVisible();
 	});
 
 	test("ban/pick CUSTOM flow", async ({ page }) => {
@@ -1378,14 +1233,14 @@ test.describe("Tournament bracket", () => {
 			page,
 			url: tournamentMatchPage({ tournamentId, matchId }),
 		});
-		await page.getByTestId("actions-tab").click();
+		await goToTab(page, "action");
 
 		await page.getByTestId("pick-ban-button").first().click();
-		await submit(page);
+		await submit(page, "pick-ban-submit-button");
 
 		await expect(page.getByText(/Ban a map \(2\/2\)/)).toBeVisible();
 		await page.getByTestId("pick-ban-button").first().click();
-		await submit(page);
+		await submit(page, "pick-ban-submit-button");
 
 		// 3) PreSet: Lower seed bans 2 maps
 		await impersonate(page, lowerSeedCaptainId);
@@ -1393,32 +1248,30 @@ test.describe("Tournament bracket", () => {
 			page,
 			url: tournamentMatchPage({ tournamentId, matchId }),
 		});
-		await page.getByTestId("actions-tab").click();
+		await goToTab(page, "action");
 
 		await page.getByTestId("pick-ban-button").first().click();
-		await submit(page);
+		await submit(page, "pick-ban-submit-button");
 
 		await expect(page.getByText(/Ban a map \(2\/2\)/)).toBeVisible();
 		await page.getByTestId("pick-ban-button").first().click();
-		await submit(page);
+		await submit(page, "pick-ban-submit-button");
 
 		// 4) Roll auto-executed after last ban; report game 1 score
 		await expect(page.getByTestId("stage-banner")).toBeVisible();
-		await page.getByTestId("actions-tab").click();
+		await goToTab(page, "action");
 
-		await page.getByTestId("winner-radio-1").click();
-		await page.getByTestId("points-input-1").fill("100");
-		await submit(page, "report-score-button");
+		await reportResult(page, { mapsToReport: 1, winner: 1, setEnds: false });
 		await expectScore(page, [1, 0]);
 
 		// 5) PostGame: Winner (team 1, captain 33) bans 2 maps
 		await expect(page.getByText(/Ban a map/)).toBeVisible();
 		await page.getByTestId("pick-ban-button").first().click();
-		await submit(page);
+		await submit(page, "pick-ban-submit-button");
 
 		await expect(page.getByText(/Ban a map \(2\/2\)/)).toBeVisible();
 		await page.getByTestId("pick-ban-button").first().click();
-		await submit(page);
+		await submit(page, "pick-ban-submit-button");
 
 		// PostGame: Loser (team 2, captain 29) picks a map
 		await impersonate(page, higherSeedCaptainId);
@@ -1426,26 +1279,47 @@ test.describe("Tournament bracket", () => {
 			page,
 			url: tournamentMatchPage({ tournamentId, matchId }),
 		});
-		await page.getByTestId("actions-tab").click();
+		await goToTab(page, "action");
 
 		await expect(page.getByText(/Pick a map/)).toBeVisible();
 		await page.getByTestId("pick-ban-button").first().click();
-		await submit(page);
+		await submit(page, "pick-ban-submit-button");
 
 		// 6) Undo game 1 score — also deletes postGame pick/ban events
 		await expect(page.getByTestId("stage-banner")).toBeVisible();
-		await submit(page, "undo-score-button");
+		await undoLastReport(page);
 
 		await expectScore(page, [0, 0]);
 		await expect(page.getByTestId("stage-banner")).toBeVisible();
 
 		// 7) Re-report game 1 and verify postGame cycle restarts
-		await page.getByTestId("actions-tab").click();
-		await page.getByTestId("winner-radio-1").click();
-		await page.getByTestId("points-input-1").fill("100");
-		await submit(page, "report-score-button");
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 1, winner: 1, setEnds: false });
 		await expectScore(page, [1, 0]);
 
 		await expect(page.getByText(/Ban a map/)).toBeVisible();
 	});
 });
+
+/** Opens the admin team list row's actions menu and clicks the given menu item, waiting for the resulting POST. */
+async function adminTeamRowAction(
+	page: Page,
+	row: Locator,
+	menuItemName: string | RegExp,
+) {
+	await row.getByLabel("Actions").click();
+	await waitForPOSTResponse(page, () =>
+		page.getByRole("menuitem", { name: menuItemName }).click(),
+	);
+}
+
+/** Checks out the admin team list rows in the given inclusive index range (rows are sorted by seed). */
+async function checkOutTeamRows(page: Page, fromIdx: number, toIdx: number) {
+	for (let i = fromIdx; i <= toIdx; i++) {
+		await adminTeamRowAction(
+			page,
+			page.getByTestId("team-row").nth(i),
+			/^Check out/,
+		);
+	}
+}

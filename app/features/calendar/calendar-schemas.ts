@@ -278,6 +278,7 @@ export const bracketProgressionSchema = z.preprocess(
 						z.object({
 							bracketIdx: z.number(),
 							placements: z.array(z.number()),
+							rest: z.boolean().optional(),
 						}),
 					)
 					.optional(),

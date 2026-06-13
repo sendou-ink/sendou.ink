@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { ARTICLES_MAIN_PAGE, articlePage, navIconUrl } from "~/utils/urls";
@@ -46,7 +47,15 @@ export default function ArticlesMainPage() {
 									style: "short",
 								}).format(article.authors.map((a) => a.name)),
 							})}{" "}
-							• <time>{article.dateString}</time>
+							•{" "}
+							<LocaleTime
+								date={new Date(article.date)}
+								options={{
+									day: "numeric",
+									month: "numeric",
+									year: "numeric",
+								}}
+							/>
 						</div>
 					</li>
 				))}

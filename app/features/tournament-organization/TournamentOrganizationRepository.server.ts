@@ -1,8 +1,9 @@
 import { isFuture } from "date-fns";
 import { sql } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
+import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { Tables, TablesInsertable } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import {
 	TIER_HISTORY_LENGTH,
 	type TournamentTierNumber,
@@ -65,6 +66,7 @@ export async function findBySlug(slug: string) {
 			"TournamentOrganization.socials",
 			"TournamentOrganization.slug",
 			"TournamentOrganization.isEstablished",
+			"TournamentOrganization.avatarImgId",
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"avatarUrl",
 			),
@@ -243,7 +245,7 @@ const findEventsBaseQuery = (organizationId: number) =>
 			"CalendarEvent.tournamentId",
 			eb.fn.min("CalendarEventDate.startTime").as("startTime"),
 			tournamentLogoWithDefault(eb).as("logoUrl"),
-			jsonObjectFrom(
+			jsonArrayFrom(
 				eb
 					.selectFrom("TournamentResult")
 					.innerJoin(
@@ -259,20 +261,22 @@ const findEventsBaseQuery = (organizationId: number) =>
 						"u2.id",
 					)
 					.select(({ eb: innerEb }) => [
+						"TournamentTeam.id",
 						"TournamentTeam.name",
 						concatUserSubmittedImagePrefix(
 							innerEb.fn.coalesce("u1.url", "u2.url"),
 						).as("avatarUrl"),
 						jsonArrayFrom(
 							innerEb
-								.selectFrom("TournamentTeamMember")
-								.innerJoin("User", "User.id", "TournamentTeamMember.userId")
+								.selectFrom("TournamentResult as WinnerResult")
+								.innerJoin("User", "User.id", "WinnerResult.userId")
 								.select(["User.discordAvatar", "User.discordId"])
 								.whereRef(
-									"TournamentTeamMember.tournamentTeamId",
+									"WinnerResult.tournamentTeamId",
 									"=",
 									"TournamentTeam.id",
 								)
+								.where("WinnerResult.placement", "=", 1)
 								.orderBy("User.id", "asc"),
 						).as("members"),
 					])
@@ -281,12 +285,15 @@ const findEventsBaseQuery = (organizationId: number) =>
 						"=",
 						"CalendarEvent.tournamentId",
 					)
-					.where("TournamentResult.placement", "=", 1),
+					.where("TournamentResult.placement", "=", 1)
+					.groupBy("TournamentTeam.id")
+					.orderBy("TournamentTeam.id", "asc"),
 			).as("tournamentWinners"),
-			jsonObjectFrom(
+			jsonArrayFrom(
 				eb
 					.selectFrom("CalendarEventResultTeam")
 					.select(({ eb: innerEb }) => [
+						"CalendarEventResultTeam.id",
 						"CalendarEventResultTeam.name",
 						sql<null>`null`.as("avatarUrl"),
 						jsonArrayFrom(
@@ -307,7 +314,8 @@ const findEventsBaseQuery = (organizationId: number) =>
 						).as("members"),
 					])
 					.whereRef("CalendarEventResultTeam.eventId", "=", "CalendarEvent.id")
-					.where("CalendarEventResultTeam.placement", "=", 1),
+					.where("CalendarEventResultTeam.placement", "=", 1)
+					.orderBy("CalendarEventResultTeam.id", "asc"),
 			).as("eventWinners"),
 		])
 		.where("CalendarEvent.organizationId", "=", organizationId)
@@ -425,6 +433,8 @@ interface UpdateArgs
 		Tables["TournamentOrganization"],
 		"id" | "name" | "description" | "socials"
 	> {
+	/** Omit to leave the current logo unchanged; `null` clears it. */
+	avatarImgId?: number | null;
 	members: Array<
 		Pick<
 			Tables["TournamentOrganizationMember"],
@@ -444,11 +454,29 @@ export function update({
 	name,
 	description,
 	socials,
+	avatarImgId,
 	members,
 	series,
 	badges,
 }: UpdateArgs) {
 	return db.transaction().execute(async (trx) => {
+		if (avatarImgId !== undefined) {
+			const current = await trx
+				.selectFrom("TournamentOrganization")
+				.select("avatarImgId")
+				.where("id", "=", id)
+				.executeTakeFirst();
+
+			// the logo got removed or replaced, so the old submitted image row is
+			// no longer referenced by anything and is cleaned up
+			if (current?.avatarImgId && current.avatarImgId !== avatarImgId) {
+				await trx
+					.deleteFrom("UnvalidatedUserSubmittedImage")
+					.where("id", "=", current.avatarImgId)
+					.execute();
+			}
+		}
+
 		const updatedOrg = await trx
 			.updateTable("TournamentOrganization")
 			.set({
@@ -456,6 +484,7 @@ export function update({
 				description,
 				slug: mySlugify(name),
 				socials: socials ? JSON.stringify(socials) : null,
+				...(avatarImgId !== undefined ? { avatarImgId } : {}),
 			})
 			.where("id", "=", id)
 			.returningAll()
@@ -564,17 +593,11 @@ export function update({
 	});
 }
 
-export function removeMember({
-	organizationId,
-	userId,
-}: {
-	organizationId: number;
-	userId: number;
-}) {
+export function removeOwnMembership(organizationId: number) {
 	return db
 		.deleteFrom("TournamentOrganizationMember")
 		.where("organizationId", "=", organizationId)
-		.where("userId", "=", userId)
+		.where("userId", "=", actorId())
 		.execute();
 }
 

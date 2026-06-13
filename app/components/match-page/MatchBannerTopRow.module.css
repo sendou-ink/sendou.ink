@@ -1,0 +1,15 @@
+.root {
+	display: flex;
+	justify-content: space-between;
+	padding-inline: var(--s-1-5);
+}
+
+.values {
+	display: flex;
+	gap: var(--s-2);
+	font-weight: var(--weight-semi);
+}
+
+.sub {
+	color: var(--color-text-high);
+}

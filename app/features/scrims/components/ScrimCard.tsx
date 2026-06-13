@@ -19,9 +19,10 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { ModeImage } from "~/components/Image";
+import { LocaleTime } from "~/components/LocaleTime";
 import TimePopover from "~/components/TimePopover";
 import { useUser } from "~/features/auth/core/user";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { scrimPage, tournamentRegisterPage, userPage } from "~/utils/urls";
@@ -201,6 +202,7 @@ function ScrimTournamentPopover({
 			trigger={
 				<SendouButton
 					variant="minimal"
+					className={styles.tournamentPopoverTrigger}
 					data-testid="tournament-popover-trigger"
 				>
 					<Avatar
@@ -260,7 +262,7 @@ function ScrimStartTimeDisplay({
 
 	const timeDisplay = (
 		<TimePopover
-			time={startTime}
+			date={startTime}
 			options={{
 				hour: "numeric",
 				minute: "numeric",
@@ -335,7 +337,6 @@ function ScrimActionButtons({
 	post: ScrimPost;
 }) {
 	const { t } = useTranslation(["scrims", "common"]);
-	const { formatDateTime } = useTimeFormat();
 	const user = useUser();
 	const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 	const [isViewRequestModalOpen, setIsViewRequestModalOpen] = useState(false);
@@ -400,14 +401,16 @@ function ScrimActionButtons({
 									<div className="text-sm font-semi-bold mb-1">
 										{t("scrims:requestModal.at.label")}
 									</div>
-									<div className="text-lighter">
-										{formatDateTime(databaseTimestampToDate(userRequest.at), {
+									<LocaleTime
+										date={userRequest.at}
+										options={{
 											hour: "numeric",
 											minute: "2-digit",
 											day: "numeric",
-											month: "long",
-										})}
-									</div>
+											month: "numeric",
+										}}
+										className="text-lighter"
+									/>
 								</div>
 							) : null}
 							<Form method="post">
@@ -474,7 +477,10 @@ export function ScrimRequestCard({
 	showFooter = true,
 }: ScrimRequestCardProps) {
 	const { t } = useTranslation(["scrims", "common"]);
-	const { formatTime } = useTimeFormat();
+	const { formatter: timeFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "2-digit",
+	});
 
 	const owner = request.users.find((user) => user.isOwner) ?? request.users[0];
 	const isPickup = !request.team?.name;
@@ -531,7 +537,7 @@ export function ScrimRequestCard({
 								data-testid="confirm-modal-trigger-button"
 							>
 								{t("scrims:acceptModal.confirmFor", {
-									time: formatTime(confirmedTime),
+									time: timeFormatter.format(confirmedTime) ?? "",
 								})}
 							</SendouButton>
 						</FormWithConfirm>
@@ -540,7 +546,7 @@ export function ScrimRequestCard({
 							trigger={
 								<SendouButton size="small">
 									{t("scrims:acceptModal.confirmFor", {
-										time: formatTime(confirmedTime),
+										time: timeFormatter.format(confirmedTime) ?? "",
 									})}
 								</SendouButton>
 							}

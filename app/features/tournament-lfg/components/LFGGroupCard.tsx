@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { Mic, Star, Volume2, VolumeX } from "lucide-react";
+import { Mic, Star, Trash, Volume2, VolumeX } from "lucide-react";
 import * as React from "react";
 import { Flipped } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
@@ -8,11 +8,13 @@ import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, WeaponImage } from "~/components/Image";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { Pronouns } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { IS_Q_LOOKING_MOBILE_BREAKPOINT } from "~/features/sendouq/q-constants";
+import { useTournament } from "~/features/tournament/routes/to.$id";
 import { SendouForm } from "~/form/SendouForm";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { languagesUnified } from "~/modules/i18n/config";
@@ -32,7 +34,11 @@ export type LFGGroupMember = {
 	pronouns: Pronouns | null;
 	role: "OWNER" | "MANAGER" | "REGULAR";
 	isStayAsSub: boolean;
-	weapons: Array<{ weaponSplId: MainWeaponId; isFavorite: boolean }> | null;
+	weapons: Array<{
+		weaponSplId: MainWeaponId;
+		isFavorite: boolean;
+		isTenStar: boolean;
+	}> | null;
 	plusTier: number | null;
 };
 
@@ -58,6 +64,7 @@ export function LFGGroupCard({
 	const { t } = useTranslation(["common", "q"]);
 	const fetcher = useFetcher();
 	const user = useUser();
+	const tournament = useTournament();
 
 	const isOwnGroup = group.id === ownGroup?.id;
 	const showActions = isOwnGroup && group.usersRole === "OWNER";
@@ -65,6 +72,8 @@ export function LFGGroupCard({
 	const currentMember = user
 		? group.members.find((m) => m.id === user.id)
 		: undefined;
+
+	const showOrganizerDelete = !currentMember && tournament.isOrganizer(user);
 
 	return (
 		<LFGGroupCardContainer groupId={group.id} isOwnGroup={isOwnGroup}>
@@ -118,8 +127,44 @@ export function LFGGroupCard({
 						</SubmitButton>
 					</fetcher.Form>
 				) : null}
+				{showOrganizerDelete ? (
+					<LFGOrganizerGroupRemover group={group} />
+				) : null}
 			</section>
 		</LFGGroupCardContainer>
+	);
+}
+
+function LFGOrganizerGroupRemover({ group }: { group: LFGGroup }) {
+	const { t } = useTranslation(["common", "q"]);
+
+	const targetUserId = (
+		group.members.find((m) => m.role === "OWNER") ?? group.members[0]
+	)?.id;
+
+	if (typeof targetUserId !== "number") return null;
+
+	return (
+		<div className="stack items-center">
+			<FormWithConfirm
+				dialogHeading={t("q:looking.groups.actions.organizerRemove.confirm", {
+					name: group.teamName ?? group.members[0]?.username,
+				})}
+				submitButtonText={t("common:actions.delete")}
+				fields={[
+					["_action", "DELETE_GROUP"],
+					["userId", targetUserId],
+				]}
+			>
+				<SendouButton
+					variant="minimal-destructive"
+					size="small"
+					icon={<Trash />}
+				>
+					{t("common:actions.delete")}
+				</SendouButton>
+			</FormWithConfirm>
+		</div>
 	);
 }
 
@@ -185,12 +230,7 @@ function LFGGroupMemberRow({
 				{member.weapons && member.weapons.length > 0 ? (
 					<div className={styles.extraInfo}>
 						{member.weapons.map((weapon) => (
-							<WeaponImage
-								key={weapon.weaponSplId}
-								weaponSplId={weapon.weaponSplId}
-								variant={weapon.isFavorite ? "badge-5-star" : "badge"}
-								size={26}
-							/>
+							<WeaponImage key={weapon.weaponSplId} weapon={weapon} size={26} />
 						))}
 					</div>
 				) : null}

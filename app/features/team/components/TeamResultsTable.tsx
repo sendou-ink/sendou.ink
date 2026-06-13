@@ -4,12 +4,11 @@ import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
 import { TierPill } from "~/components/TierPill";
 import type { TeamResultsLoaderData } from "~/features/team/loaders/t.$customUrl.results.server";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
-import { databaseTimestampToDate } from "~/utils/dates";
 import { tournamentTeamPage, userPage } from "~/utils/urls";
 
 import styles from "./TeamResultsTable.module.css";
@@ -20,7 +19,6 @@ interface TeamResultsTableProps {
 
 export function TeamResultsTable({ results }: TeamResultsTableProps) {
 	const { t } = useTranslation("user");
-	const { formatDate } = useTimeFormat();
 
 	return (
 		<Table>
@@ -45,11 +43,14 @@ export function TeamResultsTable({ results }: TeamResultsTableProps) {
 								</div>
 							</td>
 							<td className="whitespace-nowrap">
-								{formatDate(databaseTimestampToDate(result.startTime), {
-									day: "numeric",
-									month: "short",
-									year: "numeric",
-								})}
+								<LocaleTime
+									date={result.startTime}
+									options={{
+										day: "numeric",
+										month: "numeric",
+										year: "numeric",
+									}}
+								/>
 							</td>
 							<td>
 								<div className="stack horizontal xs items-center">

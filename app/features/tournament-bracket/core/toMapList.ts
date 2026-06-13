@@ -103,12 +103,23 @@ function getFilteredRounds(
 }
 
 function sortRounds(rounds: Round[], type: Tables["TournamentStage"]["type"]) {
-	return rounds.slice().sort((a, b) => {
+	const groupIds = rounds.map((x) => x.group_id);
+	const minGroupId = Math.min(...groupIds);
+	const maxGroupId = Math.max(...groupIds);
+
+	// winners bracket first, then grands, then losers bracket
+	const doubleEliminationGroupRank = (groupId: number) => {
+		if (groupId === minGroupId) return 0;
+		if (groupId === maxGroupId) return 1;
+		return 2;
+	};
+
+	return rounds.toSorted((a, b) => {
 		if (type === "double_elimination") {
-			// grands last
-			const maxGroupId = Math.max(...rounds.map((x) => x.group_id));
-			if (a.group_id === maxGroupId && b.group_id !== maxGroupId) return 1;
-			if (a.group_id !== maxGroupId && b.group_id === maxGroupId) return -1;
+			const rankDiff =
+				doubleEliminationGroupRank(a.group_id) -
+				doubleEliminationGroupRank(b.group_id);
+			if (rankDiff !== 0) return rankDiff;
 		}
 		if (type === "single_elimination") {
 			// finals and 3rd place match last

@@ -1,6 +1,5 @@
 import type * as React from "react";
-import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 
 export function RelativeTime({
 	children,
@@ -9,24 +8,15 @@ export function RelativeTime({
 	children: React.ReactNode;
 	timestamp: number;
 }) {
-	const isHydrated = useHydrated();
-	const { formatDateTime } = useTimeFormat();
+	const { formatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+		day: "numeric",
+		month: "numeric",
+		timeZoneName: "short",
+	});
 
 	return (
-		<abbr
-			title={
-				isHydrated
-					? formatDateTime(new Date(timestamp), {
-							hour: "numeric",
-							minute: "numeric",
-							day: "numeric",
-							month: "long",
-							timeZoneName: "short",
-						})
-					: undefined
-			}
-		>
-			{children}
-		</abbr>
+		<abbr title={formatter.format(timestamp) ?? undefined}>{children}</abbr>
 	);
 }

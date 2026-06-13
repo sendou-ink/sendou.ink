@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
 import type { Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
+import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";

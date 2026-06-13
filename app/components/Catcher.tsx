@@ -2,10 +2,10 @@ import { RefreshCcw } from "lucide-react";
 import * as React from "react";
 import {
 	isRouteErrorResponse,
+	useLocation,
 	useRevalidator,
 	useRouteError,
 } from "react-router";
-import { useLocation } from "react-use";
 import { useUser } from "~/features/auth/core/user";
 import { getSessionId } from "~/utils/session-id";
 import {
@@ -60,7 +60,7 @@ export function Catcher() {
 		const errorText = (() => {
 			if (!(error instanceof Error)) return;
 
-			return `Session ID: ${sessionId}\nTime: ${new Date().toISOString()}\nURL: ${location.href}\nUser ID: ${user?.id ?? "Not logged in"}\n${error.stack ?? error.message}`;
+			return `Session ID: ${sessionId}\nTime: ${new Date().toISOString()}\nURL: ${location.pathname}${location.search}\nUser ID: ${user?.id ?? "Not logged in"}\n${error.stack ?? error.message}`;
 		})();
 
 		return (
@@ -135,7 +135,7 @@ export function Catcher() {
 					<pre>
 						Session ID: {getSessionId()}
 						{error.data
-							? `\n${JSON.stringify(JSON.parse(error.data), null, 2)}`
+							? `\n${typeof error.data === "string" ? error.data : JSON.stringify(error.data, null, 2)}`
 							: null}
 					</pre>
 				</Main>

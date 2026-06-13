@@ -1,3 +1,4 @@
+import { ANALYZER_URL } from "~/utils/urls";
 import {
 	expect,
 	impersonate,
@@ -6,8 +7,7 @@ import {
 	seed,
 	selectWeapon,
 	test,
-} from "~/utils/playwright";
-import { ANALYZER_URL } from "~/utils/urls";
+} from "./helpers/playwright";
 
 test.describe("Build Analyzer", () => {
 	test("analyzes a build and links to new build page with same abilities", async ({

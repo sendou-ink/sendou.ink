@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 import type { CastedMatchesInfo } from "~/db/tables";
+import * as Seasons from "../mmr/core/Seasons";
 import type { ParsedBracket } from "../tournament-bracket/core/Progression";
+import { testTournament } from "../tournament-bracket/core/tests/test-utils";
 import {
+	bracketProgressionLabel,
 	compareTeamsForOrdering,
 	findTeamInsertPosition,
 	getBracketProgressionLabel,
 	sortTeamsBySeeding,
+	splitTournamentName,
 	type TeamForOrdering,
+	tournamentInWeaponReportingWindow,
+	tournamentNameParts,
 	updatedCastedMatchesInfo,
 } from "./tournament-utils";
 
@@ -640,5 +646,224 @@ describe("updatedCastedMatchesInfo", () => {
 				{ twitchAccount: "streamer_a", matchId: 1, timestamp: 500 },
 			]);
 		});
+	});
+});
+
+describe("tournamentInWeaponReportingWindow", () => {
+	const anchorSeason = Seasons.list[2]!;
+	const previousSeason = Seasons.list[1]!;
+
+	const dateInside = (range: { starts: Date; ends: Date }) =>
+		new Date((range.starts.getTime() + range.ends.getTime()) / 2);
+
+	const inSeasonNow = dateInside(anchorSeason);
+	const offSeasonNow = new Date(
+		(previousSeason.ends.getTime() + anchorSeason.starts.getTime()) / 2,
+	);
+
+	it("allows tournaments started in the off-season before current season (in-season)", () => {
+		expect(
+			tournamentInWeaponReportingWindow({
+				tournamentStartTime: offSeasonNow,
+				now: inSeasonNow,
+			}),
+		).toBe(true);
+	});
+
+	it("rejects tournaments started before the previous season ended (in-season)", () => {
+		expect(
+			tournamentInWeaponReportingWindow({
+				tournamentStartTime: dateInside(previousSeason),
+				now: inSeasonNow,
+			}),
+		).toBe(false);
+	});
+
+	it("allows tournaments started during the previous season (off-season)", () => {
+		expect(
+			tournamentInWeaponReportingWindow({
+				tournamentStartTime: dateInside(previousSeason),
+				now: offSeasonNow,
+			}),
+		).toBe(true);
+	});
+});
+
+describe("splitTournamentName", () => {
+	const series = [{ name: "In The Zone" }, { name: "Low Ink" }];
+
+	it("splits the trailing number subtext after the series name", () => {
+		expect(splitTournamentName("In The Zone 54", series)).toEqual({
+			name: "In The Zone",
+			subtext: "54",
+		});
+	});
+
+	it("splits a non-numeric subtext after the series name", () => {
+		expect(splitTournamentName("Low Ink May 2026", series)).toEqual({
+			name: "Low Ink",
+			subtext: "May 2026",
+		});
+	});
+
+	it("matches the series name case-insensitively", () => {
+		expect(splitTournamentName("in the zone 54", series)).toEqual({
+			name: "In The Zone",
+			subtext: "54",
+		});
+	});
+
+	it("strips separators between the series name and the subtext", () => {
+		expect(splitTournamentName("In The Zone - 54", series)).toEqual({
+			name: "In The Zone",
+			subtext: "54",
+		});
+	});
+
+	it("trims trailing whitespace after the subtext", () => {
+		expect(splitTournamentName("In The Zone 54 ", series)).toEqual({
+			name: "In The Zone",
+			subtext: "54",
+		});
+	});
+
+	it("returns name only when the name does not start with a series name", () => {
+		expect(splitTournamentName("Picnic Weekly", series)).toEqual({
+			name: "Picnic Weekly",
+		});
+	});
+
+	it("returns name only when the name equals the series name", () => {
+		expect(splitTournamentName("In The Zone", series)).toEqual({
+			name: "In The Zone",
+		});
+	});
+
+	it("returns name only when there are no series", () => {
+		expect(splitTournamentName("In The Zone 54", [])).toEqual({
+			name: "In The Zone 54",
+		});
+	});
+
+	it("prefers the longest matching series name", () => {
+		expect(
+			splitTournamentName("In The Zone Masters 5", [
+				{ name: "In The Zone" },
+				{ name: "In The Zone Masters" },
+			]),
+		).toEqual({
+			name: "In The Zone Masters",
+			subtext: "5",
+		});
+	});
+});
+
+describe("tournamentNameParts", () => {
+	it("uses the parent tournament name and division subtext for a league division", () => {
+		const tournament = testTournament({
+			ctx: {
+				name: "LUTI: Season 17 - Division 1",
+				parentTournamentId: 1,
+				parentTournamentName: "LUTI: Season 17",
+			},
+		});
+
+		expect(tournamentNameParts(tournament)).toEqual({
+			name: "LUTI: Season 17",
+			subtext: "Division 1",
+		});
+	});
+
+	it("falls back to the organization series when not a league division", () => {
+		const tournament = testTournament({
+			ctx: {
+				name: "In The Zone 54",
+				organization: {
+					id: 1,
+					name: "Sendou's Tournaments",
+					slug: "sendou",
+					logoUrl: null,
+					members: [],
+					series: [{ name: "In The Zone" }],
+				},
+			},
+		});
+
+		expect(tournamentNameParts(tournament)).toEqual({
+			name: "In The Zone",
+			subtext: "54",
+		});
+	});
+});
+
+describe("bracketProgressionLabel", () => {
+	const bracket = (
+		bracket: Partial<ParsedBracket> & Pick<ParsedBracket, "type">,
+	): ParsedBracket => ({
+		name: bracket.type,
+		requiresCheckIn: false,
+		settings: {},
+		...bracket,
+	});
+
+	it("returns the short code for a single stage", () => {
+		expect(
+			bracketProgressionLabel([bracket({ type: "single_elimination" })]),
+		).toBe("SE");
+	});
+
+	it("joins stages with an arrow", () => {
+		expect(
+			bracketProgressionLabel([
+				bracket({ type: "round_robin" }),
+				bracket({ type: "single_elimination" }),
+			]),
+		).toBe("RR → SE");
+	});
+
+	it("collapses consecutive duplicate stages", () => {
+		expect(
+			bracketProgressionLabel([
+				bracket({ type: "single_elimination" }),
+				bracket({ type: "single_elimination" }),
+				bracket({ type: "double_elimination" }),
+			]),
+		).toBe("SE → DE");
+	});
+
+	it("appends an underground bracket of a new type with a plus and (UG) tag", () => {
+		expect(
+			bracketProgressionLabel([
+				bracket({ type: "double_elimination" }),
+				bracket({
+					type: "single_elimination",
+					sources: [{ bracketIdx: 0, placements: [-1] }],
+				}),
+			]),
+		).toBe("DE + SE (UG)");
+	});
+
+	it("collapses repeated underground brackets of an already-shown type", () => {
+		expect(
+			bracketProgressionLabel([
+				bracket({ type: "round_robin" }),
+				bracket({
+					type: "single_elimination",
+					sources: [{ bracketIdx: 0, placements: [1] }],
+				}),
+				bracket({
+					type: "single_elimination",
+					sources: [{ bracketIdx: 0, placements: [2] }],
+				}),
+				bracket({
+					type: "single_elimination",
+					sources: [{ bracketIdx: 0, placements: [3] }],
+				}),
+			]),
+		).toBe("RR → SE (UG)");
+	});
+
+	it("returns empty string for empty progression", () => {
+		expect(bracketProgressionLabel([])).toBe("");
 	});
 });

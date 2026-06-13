@@ -4,6 +4,8 @@ import type { LUTI_DIVS } from "./scrims-constants";
 
 export type LutiDiv = (typeof LUTI_DIVS)[number];
 
+export type ScrimSide = "ALPHA" | "BRAVO";
+
 export interface ScrimPost {
 	id: number;
 	at: number;
@@ -33,6 +35,7 @@ export interface ScrimPost {
 		MANAGE_REQUESTS: number[];
 		DELETE_POST: number[];
 		CANCEL: number[];
+		MANAGE_TRACKING: number[];
 	};
 	managedByAnyone: boolean;
 	/** When the post was made was it scheduled for a future time slot (as opposed to looking now) */
@@ -59,6 +62,7 @@ export interface ScrimPostRequest {
 
 export interface ScrimPostUser extends CommonUser {
 	isOwner: boolean;
+	inGameName: string | null;
 }
 
 interface ScrimPostTeam {

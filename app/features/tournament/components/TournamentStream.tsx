@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { User } from "lucide-react";
 import { Avatar } from "~/components/Avatar";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
@@ -43,7 +44,12 @@ export function TournamentStream({
 				{user && team ? (
 					<div className={styles.streamUserContainer}>
 						<Avatar size="xxs" user={user} /> {user.username}
-						<span className="text-theme-secondary">{team.name}</span>
+						<span
+							className={clsx("text-theme-secondary", styles.streamTeamName)}
+							title={team.name}
+						>
+							{team.name}
+						</span>
 					</div>
 				) : (
 					<div className={styles.streamUserContainer}>

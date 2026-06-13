@@ -1,7 +1,7 @@
 import { type ChildProcess, execSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import type { FullConfig } from "@playwright/test";
-import { E2E_BASE_PORT } from "~/utils/playwright";
+import { E2E_BASE_PORT } from "./helpers/playwright";
 
 const WORKER_COUNT = Number(process.env.E2E_WORKERS) || 4;
 const DEBUG = process.env.E2E_DEBUG === "true";

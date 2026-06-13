@@ -3,7 +3,6 @@
 // you need at least 150 average monthly active players to be considered established
 // if you drop below 100 you lose it
 
-import "dotenv/config";
 import { db } from "~/db/sql";
 import { logger } from "~/utils/logger";
 

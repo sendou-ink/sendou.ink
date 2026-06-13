@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { Link as LinkIcon, Lock, LogOut, SquarePen, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
@@ -15,6 +14,7 @@ import {
 } from "~/components/elements/Tabs";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image } from "~/components/Image";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
@@ -28,8 +28,6 @@ import {
 } from "~/features/trophies/components/Trophy";
 import { useProgressiveRender } from "~/features/trophies/trophies-utils";
 import { SendouForm } from "~/form/SendouForm";
-import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
@@ -416,7 +414,6 @@ function SeriesHeader({
 	series: NonNullable<SerializeFrom<typeof loader>["series"]>;
 }) {
 	const { t } = useTranslation(["org"]);
-	const { formatDate } = useTimeFormat();
 
 	return (
 		<div className="stack md">
@@ -440,10 +437,11 @@ function SeriesHeader({
 					{series.established ? (
 						<div className="text-lighter text-italic text-xs">
 							{t("org:events.established.short")}{" "}
-							{formatDate(databaseTimestampToDate(series.established), {
-								month: "long",
-								year: "numeric",
-							})}
+							<LocaleTime
+								date={series.established}
+								options={{ month: "numeric", year: "numeric" }}
+								inline
+							/>
 						</div>
 					) : null}
 				</div>
@@ -544,9 +542,6 @@ function EventInfo({
 	event: SerializeFrom<typeof loader>["events"][number];
 	showYear?: boolean;
 }) {
-	const { formatDateTime } = useTimeFormat();
-	const isHydrated = useHydrated();
-
 	return (
 		<div className="stack sm">
 			<Link
@@ -562,56 +557,65 @@ function EventInfo({
 				) : null}
 				<div>
 					<div>{event.name}</div>
-					<time
-						className={clsx(styles.eventInfoTime, { invisible: !isHydrated })}
-					>
-						{isHydrated
-							? formatDateTime(databaseTimestampToDate(event.startTime), {
-									day: "numeric",
-									month: "numeric",
-									hour: "numeric",
-									minute: "numeric",
-									year: showYear ? "numeric" : undefined,
-								})
-							: "X"}
-					</time>
+					<LocaleTime
+						date={event.startTime}
+						options={{
+							day: "numeric",
+							month: "numeric",
+							hour: "numeric",
+							minute: "numeric",
+							year: showYear ? "numeric" : undefined,
+						}}
+						className={styles.eventInfoTime}
+					/>
 				</div>
 			</Link>
-			{event.tournamentWinners || event.eventWinners ? (
-				<EventWinners winner={event.tournamentWinners ?? event.eventWinners!} />
-			) : null}
+			<EventWinners
+				tournamentWinners={event.tournamentWinners}
+				eventWinners={event.eventWinners}
+			/>
 		</div>
 	);
 }
 
 function EventWinners({
-	winner,
+	tournamentWinners,
+	eventWinners,
 }: {
-	winner: NonNullable<
-		| SerializeFrom<typeof loader>["events"][number]["tournamentWinners"]
-		| SerializeFrom<typeof loader>["events"][number]["eventWinners"]
-	>;
+	tournamentWinners: SerializeFrom<
+		typeof loader
+	>["events"][number]["tournamentWinners"];
+	eventWinners: SerializeFrom<typeof loader>["events"][number]["eventWinners"];
 }) {
+	const winners =
+		tournamentWinners.length > 0 ? tournamentWinners : eventWinners;
+
+	if (winners.length === 0) return null;
+
 	return (
-		<div className="stack xs">
-			<div className="stack horizontal sm items-center font-semi-bold">
-				<Placement placement={1} size={24} />
-				{winner.avatarUrl ? (
-					<img
-						src={winner.avatarUrl}
-						alt=""
-						width={24}
-						height={24}
-						className="rounded-full"
-					/>
-				) : null}
-				{winner.name}
-			</div>
-			<div className="stack xs horizontal">
-				{winner.members.map((member) => (
-					<Avatar key={member.discordId} user={member} size="xxs" />
-				))}
-			</div>
+		<div className="stack md">
+			{winners.map((winner) => (
+				<div key={winner.id} className="stack xs">
+					<div className="stack horizontal sm items-center font-semi-bold">
+						<Placement placement={1} size={24} />
+						{winner.avatarUrl ? (
+							<img
+								src={winner.avatarUrl}
+								alt=""
+								width={24}
+								height={24}
+								className="rounded-full"
+							/>
+						) : null}
+						{winner.name}
+					</div>
+					<div className="stack xs horizontal">
+						{winner.members.map((member) => (
+							<Avatar key={member.discordId} user={member} size="xxs" />
+						))}
+					</div>
+				</div>
+			))}
 		</div>
 	);
 }

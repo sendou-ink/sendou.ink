@@ -18,7 +18,6 @@ import { BuildCard } from "~/components/BuildCard";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { Main } from "~/components/Main";
-import { safeJSONParse } from "~/utils/json";
 import { isRevalidation, metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
@@ -37,7 +36,10 @@ import {
 	MAX_BUILD_FILTERS,
 	PATCHES,
 } from "../builds-constants";
-import type { BuildFiltersFromSearchParams } from "../builds-schemas.server";
+import {
+	type BuildFiltersFromSearchParams,
+	buildFiltersSearchParams,
+} from "../builds-schemas";
 import type { AbilityBuildFilter, BuildFilter } from "../builds-types";
 import { FilterSection } from "../components/FilterSection";
 
@@ -69,6 +71,10 @@ export function buildFiltersMeaningfullyChanged(
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	if (isRevalidation(args)) return true;
 
+	if (args.currentParams.slug !== args.nextParams.slug) {
+		return true;
+	}
+
 	if (
 		args.currentUrl.searchParams.get("limit") !==
 		args.nextUrl.searchParams.get("limit")
@@ -94,7 +100,10 @@ function parseFiltersFromSearchParams(
 	const raw = searchParams.get(FILTER_SEARCH_PARAM_KEY);
 	if (!raw) return [];
 
-	return safeJSONParse<BuildFilter[]>(raw, []);
+	const parsed = buildFiltersSearchParams.safeParse(raw);
+	if (!parsed.success || !parsed.data) return [];
+
+	return parsed.data;
 }
 
 function extractMeaningfulFilters(

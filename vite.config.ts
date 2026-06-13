@@ -1,10 +1,10 @@
 import { reactRouter } from "@react-router/dev/vite";
+import { sentryReactRouter } from "@sentry/react-router";
 import { defineConfig, loadEnv } from "vite";
 import babel from "vite-plugin-babel";
-import { configDefaults } from "vitest/config";
 
-export default defineConfig(({ mode }) => {
-	const env = loadEnv(mode, process.cwd(), "");
+export default defineConfig((config) => {
+	const env = loadEnv(config.mode, process.cwd(), "");
 	return {
 		server: {
 			port: Number(env.PORT) || 5173,
@@ -34,32 +34,28 @@ export default defineConfig(({ mode }) => {
 			},
 			reactRouter(),
 			babel({
-				filter: /\.[jt]sx?$/,
+				include: /\.[jt]sx?$/,
 				babelConfig: {
 					presets: ["@babel/preset-typescript"],
 					plugins: [["babel-plugin-react-compiler", {}]],
 				},
 			}),
-		],
-		test: {
-			projects: [
+			sentryReactRouter(
 				{
-					extends: true,
-					test: {
-						name: "unit",
-						include: ["**/*.test.{ts,tsx}"],
-						exclude: [
-							...configDefaults.exclude,
-							"e2e/**",
-							"**/*.browser.test.{ts,tsx}",
-						],
-						setupFiles: ["./app/test-setup.ts"],
+					org: process.env.SENTRY_ORG,
+					project: process.env.SENTRY_PROJECT,
+					authToken: process.env.SENTRY_AUTH_TOKEN,
+					telemetry: false,
+					unstable_sentryVitePluginOptions: {
+						applicationKey: "sendou-ink",
 					},
 				},
-				{
-					extends: "./vitest.browser.config.ts",
-				},
-			],
+				config,
+			),
+		],
+
+		test: {
+			projects: ["./vitest.unit.config.ts", "./vitest.browser.config.ts"],
 		},
 		define: {
 			__GIT_COMMIT__: JSON.stringify(process.env.RENDER_GIT_COMMIT ?? ""),
@@ -74,6 +70,9 @@ export default defineConfig(({ mode }) => {
 		},
 		resolve: {
 			tsconfigPaths: true,
+		},
+		optimizeDeps: {
+			exclude: ["@sentry/react-router"],
 		},
 	};
 });

@@ -27,7 +27,9 @@ export function roundToNDecimalPlaces(num: number, n = 2) {
  */
 export function cutToNDecimalPlaces(num: number, n = 2) {
 	const multiplier = 10 ** n;
-	const truncatedNum = Math.trunc(num * multiplier) / multiplier;
+	// Round away floating point representation error (e.g. 0.29 * 100 = 28.999...) before truncating
+	const scaled = Number((num * multiplier).toFixed(8));
+	const truncatedNum = Math.trunc(scaled) / multiplier;
 	const result = truncatedNum.toFixed(n);
 	return Number(n > 0 ? result.replace(/\.?0+$/, "") : result);
 }

@@ -4,8 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
 import { TierPill } from "~/components/TierPill";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
-import { databaseTimestampToDate } from "~/utils/dates";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { tournamentPage, userPage } from "~/utils/urls";
 import { Trophy } from "../components/Trophy";
 import {
@@ -103,7 +102,11 @@ function TournamentHistoryEntry({
 }: {
 	tournament: TrophyDetailsLoaderData["tournaments"][number];
 }) {
-	const { formatDate } = useTimeFormat();
+	const { formatter } = useDateTimeFormat({
+		day: "numeric",
+		month: "short",
+		year: "numeric",
+	});
 
 	return (
 		<li>
@@ -134,11 +137,7 @@ function TournamentHistoryEntry({
 						</span>
 						{tournament.startTime ? (
 							<span className={styles.tournamentHistoryMetaItem}>
-								{formatDate(databaseTimestampToDate(tournament.startTime), {
-									day: "numeric",
-									month: "short",
-									year: "numeric",
-								})}
+								{formatter.format(tournament.startTime)}
 							</span>
 						) : null}
 					</div>

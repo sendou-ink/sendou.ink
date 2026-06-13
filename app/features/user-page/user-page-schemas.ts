@@ -84,7 +84,7 @@ export const userEditProfileBaseSchema = z.object({
 		},
 	}),
 	inGameName: textFieldOptional({
-		label: "labels.profileInGameName",
+		label: "labels.inGameName",
 		bottomText: "bottomTexts.profileInGameName",
 		maxLength:
 			USER.IN_GAME_NAME_TEXT_MAX_LENGTH +
@@ -311,6 +311,7 @@ export const newBuildBaseSchema = z.object({
 		maxCount: 5,
 		disableSorting: true,
 		disableFavorites: true,
+		disableAltSkinDuplicates: true,
 	}),
 	head: customField({ initialValue: null }, headGearIdSchema),
 	clothes: customField({ initialValue: null }, clothesGearIdSchema),

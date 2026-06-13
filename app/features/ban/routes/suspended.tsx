@@ -1,6 +1,6 @@
 import { useLoaderData } from "react-router";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 
 import { loader } from "../loaders/suspended.server";
@@ -9,7 +9,6 @@ export { loader };
 
 export default function SuspendedPage() {
 	const data = useLoaderData<typeof loader>();
-	const { formatDateTime } = useTimeFormat();
 
 	const ends = (() => {
 		if (!data.banned || data.banned === 1) return null;
@@ -22,15 +21,19 @@ export default function SuspendedPage() {
 			<h2>Account suspended</h2>
 			{data.reason ? <div>Reason: {data.reason}</div> : null}
 			{ends ? (
-				<div suppressHydrationWarning>
+				<div>
 					Ends:{" "}
-					{formatDateTime(ends, {
-						month: "long",
-						day: "numeric",
-						year: "numeric",
-						hour: "numeric",
-						minute: "numeric",
-					})}
+					<LocaleTime
+						date={ends}
+						options={{
+							month: "numeric",
+							day: "numeric",
+							year: "numeric",
+							hour: "numeric",
+							minute: "numeric",
+						}}
+						inline
+					/>
 				</div>
 			) : (
 				<div>

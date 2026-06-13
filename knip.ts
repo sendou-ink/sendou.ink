@@ -4,7 +4,6 @@ const config = {
 		type: true,
 	},
 	tags: ["-lintignore"],
-	ignoreDependencies: ["babel-plugin-react-compiler"],
 	entry: [
 		"app/features/*/routes/**/*.{ts,tsx}",
 		"migrations/**/*.js",
@@ -12,8 +11,6 @@ const config = {
 		"public/sw-2.js",
 		"ley.config.cjs",
 		"ley-driver.cjs",
-		"vitest.browser.config.ts",
-		"app/browser-test-setup.ts",
 	],
 	compilers: {
 		css: (text: string, path: string) => {

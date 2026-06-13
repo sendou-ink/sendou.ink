@@ -9,8 +9,11 @@ export type SystemMessageType =
 	| "SCORE_CONFIRMED"
 	| "CANCEL_REPORTED"
 	| "CANCEL_CONFIRMED"
+	| "CANCEL_REFUSED"
 	| "TOURNAMENT_UPDATED"
-	| "TOURNAMENT_MATCH_UPDATED";
+	| "TOURNAMENT_MATCH_UPDATED"
+	| "MAP_REPLAYED"
+	| "MAP_PICKED";
 
 export type SystemMessageContext = {
 	name: string;
@@ -22,6 +25,8 @@ export interface ChatMessage {
 	context?: SystemMessageContext;
 	/** If true, the purpose of this message is just to run the data loaders again meaning the logic related to showing a new chat message is skipped. Defaults to false.  */
 	revalidateOnly?: boolean;
+	/** User id of the actor that triggered this message. Used to skip own-author revalidates so we don't double-fetch loaders right after a form submission. */
+	authorUserId?: number;
 	userId?: number;
 	timestamp: number;
 	room: string;

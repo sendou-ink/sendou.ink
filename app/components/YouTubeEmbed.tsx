@@ -64,19 +64,6 @@ export function YouTubeEmbed({
 	useEffect(() => {
 		if (!enableApi || !isApiReady || !containerRef.current) return;
 
-		if (playerRef.current) {
-			try {
-				playerRef.current.loadVideoById({ videoId: id, startSeconds: start });
-			} catch {
-				toastQueue.add({
-					message: t("vods:errors.youtubePreviewFailed"),
-					variant: "error",
-				});
-				setHasError(true);
-			}
-			return;
-		}
-
 		try {
 			const player = new window.YT.Player(containerRef.current, {
 				height: "281",
@@ -103,12 +90,18 @@ export function YouTubeEmbed({
 					},
 				},
 			});
+
+			return () => {
+				player.destroy();
+				playerRef.current = null;
+			};
 		} catch {
 			toastQueue.add({
 				message: t("vods:errors.youtubePreviewFailed"),
 				variant: "error",
 			});
 			setHasError(true);
+			return;
 		}
 	}, [enableApi, isApiReady, id, start, autoplay, onPlayerReady, t]);
 

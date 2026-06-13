@@ -6,12 +6,10 @@ import { SendouQ } from "../core/SendouQ.server";
 import { JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
 import { sqRedirectIfNeeded } from "../q-utils.server";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = getUser();
 
-	const code = new URL(request.url).searchParams.get(
-		JOIN_CODE_SEARCH_PARAM_KEY,
-	);
+	const code = url.searchParams.get(JOIN_CODE_SEARCH_PARAM_KEY);
 
 	const ownGroup = user ? SendouQ.findOwnGroup(user.id) : undefined;
 

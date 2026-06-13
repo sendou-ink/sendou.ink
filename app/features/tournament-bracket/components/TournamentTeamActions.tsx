@@ -5,6 +5,7 @@ import * as React from "react";
 import { useFetcher } from "react-router";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { soundEnabled, soundVolume } from "~/features/chat/chat-utils";
@@ -102,18 +103,18 @@ export function TournamentTeamActions() {
 						</SubmitButton>
 					</fetcher.Form>
 				) : bracket.startTime && bracket.startTime > new Date() ? (
-					<span className="text-lighter text-xxs" suppressHydrationWarning>
+					<span className="text-lighter text-xxs">
 						open{" "}
-						{sub(bracket.startTime, { hours: 1 }).toLocaleTimeString("en-US", {
-							hour: "numeric",
-							minute: "numeric",
-							weekday: "short",
-						})}{" "}
-						-{" "}
-						{bracket.startTime.toLocaleTimeString("en-US", {
-							hour: "numeric",
-							minute: "numeric",
-						})}
+						<LocaleTimeRange
+							from={sub(bracket.startTime, { hours: 1 })}
+							to={bracket.startTime}
+							options={{
+								hour: "numeric",
+								minute: "numeric",
+								weekday: "short",
+							}}
+							inline
+						/>
 					</span>
 				) : bracket.startTime && bracket.startTime < new Date() ? (
 					<span className="text-warning">over</span>
@@ -197,7 +198,7 @@ function Dots() {
 		}, 1500);
 
 		return () => {
-			clearTimeout(timeout);
+			clearInterval(timeout);
 		};
 	}, []);
 

@@ -1,0 +1,305 @@
+.root {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+	row-gap: var(--s-6);
+	column-gap: var(--s-4);
+	align-items: center;
+	width: 100%;
+}
+
+.header {
+	display: contents;
+}
+
+.headerTeam {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: var(--s-1-5);
+}
+
+.headerTeamBravo {
+	align-items: flex-start;
+}
+
+.headerTeamName {
+	font-weight: var(--weight-bold);
+	font-size: var(--font-md);
+	text-box: trim-start cap alphabetic;
+	overflow-wrap: anywhere;
+}
+
+.headerTeamNameLong {
+	font-size: var(--font-xs);
+}
+
+.headerAvatars {
+	display: flex;
+	gap: var(--s-1);
+}
+
+.headerScore {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+}
+
+.headerScoreValue {
+	font-size: var(--font-xl);
+	font-weight: var(--weight-extra);
+	line-height: 1;
+}
+
+.headerScoreLive {
+	margin-top: var(--s-1);
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-bold);
+	letter-spacing: 0.1em;
+	color: var(--color-error);
+}
+
+.mapEvent {
+	display: contents;
+}
+
+.mapSide {
+	display: grid;
+	grid-template-rows: auto 1fr auto;
+	align-self: stretch;
+
+	&:first-child {
+		justify-self: end;
+	}
+
+	&:last-child {
+		justify-self: start;
+	}
+}
+
+.mapCenter {
+	display: grid;
+	grid-template-rows: auto 1fr auto;
+	justify-items: center;
+	gap: var(--s-1);
+}
+
+.mapTimestamp {
+	font-size: var(--font-3xs);
+	color: var(--color-text-high);
+	font-weight: var(--weight-semi);
+}
+
+.mapStageImage {
+	border-radius: var(--radius-box);
+}
+
+.mapLabel {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.sideResult {
+	grid-row: 2;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-2-5);
+}
+
+.resultHeader {
+	display: flex;
+	align-items: baseline;
+	gap: var(--s-1);
+}
+
+.resultLabel {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-extra);
+	text-transform: uppercase;
+}
+
+.resultPoints {
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-semi);
+}
+
+.eventRow {
+	display: contents;
+}
+
+.eventAlpha {
+	justify-self: end;
+}
+
+.subCenter {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.eventIcon {
+	color: var(--color-text-high);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-full);
+	padding: var(--s-1);
+}
+
+.explainerTrigger {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: auto;
+	width: auto;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+	border-radius: var(--radius-full);
+	cursor: pointer;
+}
+
+.subDetail {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	align-items: center;
+	row-gap: var(--s-1);
+	column-gap: var(--s-3);
+}
+
+.subLabelOut {
+	color: var(--color-error);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-3xs);
+	text-transform: uppercase;
+}
+
+.subLabelIn {
+	color: var(--color-success);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-3xs);
+	text-transform: uppercase;
+}
+
+.subPlayerName {
+	font-weight: var(--weight-semi);
+	font-size: var(--font-xs);
+}
+
+.pickIcon {
+	color: var(--color-success);
+}
+
+.banIcon {
+	color: var(--color-error);
+}
+
+.pickBanGroup {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1-5);
+	justify-content: flex-end;
+
+	&.pickBanGroupBravo {
+		justify-content: flex-start;
+	}
+}
+
+.pickBanStageImage {
+	border-radius: var(--radius-box);
+}
+
+.pickBanModeTile {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 56px;
+	height: 32px;
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-box);
+}
+
+.spSection {
+	grid-column: 1 / -1;
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	column-gap: var(--s-8);
+	align-items: center;
+}
+
+.spIcon {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.spColumn {
+	display: grid;
+	grid-template-columns: auto auto;
+	row-gap: var(--s-1-5);
+	column-gap: var(--s-2);
+	align-items: center;
+	justify-content: start;
+
+	&:first-child {
+		justify-content: end;
+	}
+}
+
+.spDetail {
+	display: grid;
+	grid-template-columns: subgrid;
+	grid-column: 1 / -1;
+	font-size: var(--font-xs);
+	align-items: center;
+}
+
+.spDetailContent {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.spDeltaTrigger {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	background: transparent;
+	border: none;
+	padding: var(--s-0-5) var(--s-1);
+	border-radius: var(--radius-field);
+	font-size: var(--font-xs);
+	font-weight: inherit;
+	color: inherit;
+	cursor: pointer;
+}
+
+.spRawPopover {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+}
+
+.spCalculatingIcon {
+	font-size: 18px;
+}
+
+.spTeamIcon {
+	width: 24px;
+	height: 24px;
+	border-radius: var(--radius-full);
+	background-color: var(--color-bg-higher);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--color-text-high);
+}

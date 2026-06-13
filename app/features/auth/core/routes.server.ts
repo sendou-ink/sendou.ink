@@ -23,8 +23,7 @@ import type { AuthErrorCode } from "./errors";
 import { authSessionStorage } from "./session.server";
 import { getUser } from "./user.server";
 
-export const callbackLoader: LoaderFunction = async ({ request }) => {
-	const url = new URL(request.url);
+export const callbackLoader: LoaderFunction = async ({ request, url }) => {
 	if (url.searchParams.get("error") === "access_denied") {
 		// The user denied the authentication request
 		// https://www.oauth.com/oauth2-servers/server-side-apps/possible-errors/
@@ -77,7 +76,7 @@ export const logInAction: ActionFunction = async ({ request }) => {
 	return await authenticator.authenticate("discord", request);
 };
 
-export const impersonateAction: ActionFunction = async ({ request }) => {
+export const impersonateAction: ActionFunction = async ({ request, url }) => {
 	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
 		const user = requireUser();
 		if (!user.roles.includes("ADMIN") && !user.roles.includes("DEV")) {
@@ -85,7 +84,6 @@ export const impersonateAction: ActionFunction = async ({ request }) => {
 		}
 
 		if (user.roles.includes("DEV") && !user.roles.includes("ADMIN")) {
-			const url = new URL(request.url);
 			const targetId = Number(url.searchParams.get("id"));
 			if (isAdmin({ id: targetId }) || isStaff({ id: targetId })) {
 				throw new Response("Forbidden", { status: 403 });
@@ -99,7 +97,6 @@ export const impersonateAction: ActionFunction = async ({ request }) => {
 
 	const realUserId = session.get(SESSION_KEY);
 
-	const url = new URL(request.url);
 	const rawId = url.searchParams.get("id");
 
 	const userId = Number(url.searchParams.get("id"));

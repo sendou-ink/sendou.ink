@@ -25,7 +25,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		? user?.preferences?.defaultScrimsFilters
 		: filtersFromSearchParams;
 
-	const posts = (await ScrimPostRepository.findAllRelevant(user?.id))
+	const posts = (await ScrimPostRepository.findAllRelevant())
 		.filter(
 			(post) =>
 				(user && Scrim.isParticipating(post, user.id)) ||

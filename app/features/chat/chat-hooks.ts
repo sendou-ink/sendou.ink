@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useUser } from "../auth/core/user";
 import type { ChatMessage } from "./chat-types";
+import { useChatContext } from "./useChatContext";
 
 // increasing this = scrolling happens even when scrolled more upwards
 const THRESHOLD = 100;
@@ -68,4 +69,26 @@ export function useChatAutoScroll(
 		resetScroller: reset,
 		scrollToBottom,
 	};
+}
+
+/**
+ * Subscribes the page to a Skalop topic over the shared chat WebSocket so that
+ * `revalidateOnly` broadcasts to the topic trigger a data loader revalidation.
+ * Topics are lightweight: no metadata, no participants, no history — purely a
+ * fan-out channel. Pass `connected=false` to opt out (e.g. once a tournament
+ * has been finalized and no further updates are expected).
+ */
+export function useWebsocketRevalidation(topic: string, connected = true) {
+	const chat = useChatContext();
+	const subscribeTopic = chat?.subscribeTopic;
+	const unsubscribeTopic = chat?.unsubscribeTopic;
+	const readyState = chat?.readyState;
+
+	React.useEffect(() => {
+		if (!connected || readyState !== "CONNECTED") return;
+		if (!subscribeTopic || !unsubscribeTopic) return;
+
+		subscribeTopic(topic);
+		return () => unsubscribeTopic(topic);
+	}, [topic, connected, readyState, subscribeTopic, unsubscribeTopic]);
 }

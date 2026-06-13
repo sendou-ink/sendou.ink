@@ -39,6 +39,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					errorToast(`Migration failed. Reason: ${errorMessage}`);
 				}
 
+				await refreshBannedCache();
+
 				message = "Account migrated";
 				break;
 			} catch (err) {
@@ -58,7 +60,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				await plusTiersFromVotingAndLeaderboard(),
 			);
 
-			await BuildRepository.recalculateAllTiers();
+			await BuildRepository.recalculateAllSortValues();
 
 			message = "Plus tiers refreshed";
 			break;

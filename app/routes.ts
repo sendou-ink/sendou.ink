@@ -26,6 +26,10 @@ const devOnlyRoutes =
 					"features/bracket-test/routes/bracket-test.tsx",
 					[index("features/bracket-test/routes/bracket-test.index.tsx")],
 				),
+				route(
+					"/match-page-test",
+					"features/match-page-test/routes/match-page-test.tsx",
+				),
 			] satisfies RouteConfig)
 		: [];
 
@@ -104,7 +108,6 @@ export default [
 
 	route("/maps", "features/map-list-generator/routes/maps.tsx"),
 
-	route("/upload", "features/img-upload/routes/upload.tsx"),
 	route("/upload/admin", "features/img-upload/routes/upload.admin.tsx"),
 
 	route("/plans", "features/map-planner/routes/plans.tsx"),
@@ -121,12 +124,36 @@ export default [
 	route("/to/search", "features/tournament/routes/to.search.ts"),
 	route("/to/:id", "features/tournament/routes/to.$id.tsx", [
 		index("features/tournament/routes/to.$id.index.ts"),
+		route("info", "features/tournament/routes/to.$id.info.tsx"),
 		route("register", "features/tournament/routes/to.$id.register.tsx"),
+		route("rules", "features/tournament/routes/to.$id.rules.tsx"),
 		route("teams", "features/tournament/routes/to.$id.teams.tsx"),
 		route("teams/:tid", "features/tournament/routes/to.$id.teams.$tid.tsx"),
 		route("join", "features/tournament/routes/to.$id.join.tsx"),
-		route("admin", "features/tournament/routes/to.$id.admin.tsx"),
-		route("seeds", "features/tournament/routes/to.$id.seeds.tsx"),
+		route("admin", "features/tournament-admin/routes/to.$id.admin.tsx", [
+			layout("features/tournament-admin/routes/to.$id.admin.index.tsx", [
+				index("features/tournament-admin/routes/to.$id.admin._index.tsx"),
+				route(
+					"registration/:tid?",
+					"features/tournament-admin/routes/to.$id.admin.registration.$tid.tsx",
+				),
+			]),
+			route(
+				"import-teams",
+				"features/tournament-admin/routes/to.$id.admin.import-teams.ts",
+			),
+			route("seeds", "features/tournament-admin/routes/to.$id.admin.seeds.tsx"),
+			route("staff", "features/tournament-admin/routes/to.$id.admin.staff.tsx"),
+			route(
+				"stream",
+				"features/tournament-admin/routes/to.$id.admin.stream.tsx",
+			),
+			route(
+				"brackets",
+				"features/tournament-admin/routes/to.$id.admin.brackets.tsx",
+			),
+			route("audit", "features/tournament-admin/routes/to.$id.admin.audit.tsx"),
+		]),
 		route("results", "features/tournament/routes/to.$id.results.tsx"),
 		route("streams", "features/tournament/routes/to.$id.streams.tsx"),
 
@@ -150,7 +177,7 @@ export default [
 		),
 		route(
 			"matches/:mid",
-			"features/tournament-bracket/routes/to.$id.matches.$mid.tsx",
+			"features/tournament-match/routes/to.$id.matches.$mid.tsx",
 		),
 	]),
 	route("luti", "features/tournament/routes/luti.ts"),
@@ -211,7 +238,7 @@ export default [
 		route("looking", "features/sendouq/routes/q.looking.tsx"),
 		route("preparing", "features/sendouq/routes/q.preparing.tsx"),
 		route("match/:id", "features/sendouq-match/routes/q.match.$id.tsx"),
-		route("settings", "features/sendouq-settings/routes/q.settings.tsx"),
+		route("settings", "features/match-profile/routes/q.settings.tsx"),
 		route("streams", "features/sendouq-streams/routes/q.streams.tsx"),
 	]),
 	route("/play", "features/sendouq/routes/play.ts"),
@@ -247,6 +274,7 @@ export default [
 
 	route("/admin", "features/admin/routes/admin.tsx"),
 	route("/api/chat-users", "features/chat/routes/api.chat-users.ts"),
+	route("/room", "features/chat/routes/room.ts"),
 	route("/api", "features/api/routes/api.tsx"),
 
 	...prefix("/a", [
@@ -291,6 +319,10 @@ export default [
 			route(
 				"/user/:identifier/ids",
 				"features/api-public/routes/user.$identifier.ids.ts",
+			),
+			route(
+				"/user/:userId/active-match",
+				"features/api-public/routes/user.$userId.active-match.ts",
 			),
 			route(
 				"/calendar/:year/:week",
@@ -338,6 +370,10 @@ export default [
 			route(
 				"/tournament/:id/starting-brackets",
 				"features/api-public/routes/tournament.$id.starting-brackets.ts",
+			),
+			route(
+				"/tournament/:id/streams",
+				"features/api-public/routes/tournament.$id.streams.ts",
 			),
 			route(
 				"/tournament/:id/teams/:teamId/add-member",

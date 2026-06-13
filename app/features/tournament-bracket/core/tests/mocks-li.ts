@@ -6834,6 +6834,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 		id: 815,
 		eventId: 2614,
 		parentTournamentId: null,
+		parentTournamentName: null,
 		tier: null,
 		tentativeTier: null,
 		discordUrl: "https://discord.gg/F7RaNUR",
@@ -6915,17 +6916,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 		},
 		seedingSnapshot: null,
 		mapPickingStyle: "TO",
-		rules:
-			"# Important Notices\n\nEach team's captain must be in the Inking Performance Labs Discord. Before registering, join the discord here, and then get the Low Ink role using the Channels & Roles feature.\n\nRegistration for Low Ink closes 17 hours prior to the event starting which is 8 PM ET (day before) (5 PM PT (day before), 1 AM GMT/UTC (day of), 2 AM CET (day of)).\n\nBy registering for the tournament, you agree to and consent to follow all rules in Low Ink, and promise to read all announcements leading up to the event. In compliance with Nintendo tournament guidelines, you also consent that by registering for this tournament, Inkling Performance Labs may use videos, still images, etc. of me and my teammates' gameplay from Inkling Performance Labs events for monetization.\n\nNintendo is not a sponsor of or affiliated with this tournament.\nTerms for participating in and viewing Community Tournaments using Nintendo Games can be found at the following URL: https://en-americas-support.nintendo.com/app/answers/detail/a_id/63454\n\n# Full Rules\n\nLow Ink's full ruleset (which is too large to include here) can be found in our [rules document](https://docs.google.com/document/d/1sMUOeRe8isLuu4Koco_qRvwMa2oV1_1LQZ0Vt3_IBt4/pub). **By registering, you and your team agree to follow all rules in the rules document.**",
+		hasRules: true,
 		name: "Low Ink December 2024",
-		description:
-			"# Low Ink is a Splatoon 3 tournament for newer and lower-level competitive teams.\n\nWe give teams a chance to get into the Splatoon 3 tournament scene and gain valuable competitive experience.\n\n## What makes Low Ink good for newer players?\n• The tournament bans players with tourney results exceeding the skill cap.\n• An easy to follow format on day 1, which guarantees 18 games played with multiple teams.\n• Multiple brackets on Day 2 for the top cut of teams, with placements determined by day 1 performance.\n• Quality live stream and commentary with a focus on introducing competitive Splatoon to newcomers.\n\n## Who can play?\n\nIf this is your first time playing in a Splatoon tournament, you are allowed to play. Low Ink bans players based on results from community-driven tournaments. Solo queue results or in-game anarchy rank is not a factor. Results from other competitive events or participation in other tournaments are not required to play in Low Ink, they only set the skill cap. More information about eligibility is available on the rules page or in the Low Ink FAQ in our [discord server](https://iplabs.ink/discord).\n\n## How to signup and play\n\nSign up on sendou.ink (this page). The site will guide you through the sign-up process. Once signed up, have at least the captain of your team join our discord server to access important announcements alongside other Low Ink channels, get the Low Ink role through the Channels & Roles feature when you join!\n\nDuring the tournament, your matches will appear here on sendou.ink and you can chat with your opponent, and report scores here. Tournament announcements and helpdesk (for contacting staff) is done on our [discord server](https://iplabs.ink/discord).\n\n## Format\n\n### Day 1\n\nThe first day of Low Ink uses the Swiss format. All teams in the tournament will be guaranteed 6 rounds versus other teams. There is no elimination on day 1! You will always get 6 rounds, no matter what your results are. Swiss matches you to against teams with similar win/loss ratios, meaning opponents should get closer to your skill as the day progresses! When day 1 ends, teams progressing to the day 2 elimination brackets will be announced in the li-announcements channel on our [discord server](https://iplabs.ink/discord).\n\n### Day 2\n\nThe second day of Low Ink consists of individual brackets, for the top teams based on day 1 results. Typically, 1st-8th plays in Alpha bracket, 9th-16th in Beta bracket, and 17th-24th in Gamma bracket. Each of these brackets are straight double elimination. Double elimination means each progressing through the bracket and has to lose two matches to be eliminated. The first loss puts a team in 'losers bracket' and a second ends their tournament run.\n\nDay 2 also utilizes counter picking in the map list. Please read the rules for details on how counterpicking works.\n\n*Format is subject to change if > 128 teams register.*",
 		startTime: 1734199200,
 		organization: {
 			id: 3,
 			name: "Inkling Performance Labs",
 			slug: "inkling-performance-labs",
 			logoUrl: "fZrToLQrkqV3UZkdgwp0Q-1722263644749.webp",
+			series: [],
 			members: [
 				{
 					userId: 405,
@@ -7258,6 +7257,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733157607,
 				activeRosterUserIds: [25875, 21063, 11226, 31597],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7368,6 +7368,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733157629,
 				activeRosterUserIds: [14837, 27260, 42704, 9379],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7478,6 +7479,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733161494,
 				activeRosterUserIds: [34424, 31195, 31395, 26103],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7588,6 +7590,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733166918,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7682,6 +7685,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733166213,
 				activeRosterUserIds: [32160, 29267, 25591, 36962],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7787,6 +7791,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733189945,
 				activeRosterUserIds: [12418, 34355, 2319, 7430],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7897,6 +7902,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733244862,
 				activeRosterUserIds: [29425, 31524, 35674, 26285],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -8007,6 +8013,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733282085,
 				activeRosterUserIds: [26747, 27292, 5708, 6309],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -8133,6 +8140,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733291438,
 				activeRosterUserIds: [24459, 40851, 23974, 43608],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -8259,6 +8267,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733439755,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -8353,6 +8362,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733485884,
 				activeRosterUserIds: [30686, 1961, 30685, 22396],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -8479,6 +8489,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733937993,
 				activeRosterUserIds: [12434, 30263, 5861, 24275],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -8605,6 +8616,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733166818,
 				activeRosterUserIds: [32670, 38046, 42638, 34589],
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-Hj-Us_Roj5Ksfv000ceBo-1733166818832.webp",
 				members: [
 					{
@@ -8715,6 +8727,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733167616,
 				activeRosterUserIds: [45102, 26711, 41739, 4533],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -8825,6 +8838,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733201503,
 				activeRosterUserIds: [20807, 31556, 33373, 42703],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -8951,6 +8965,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733218069,
 				activeRosterUserIds: [26509, 7959, 7690, 7958],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -9061,6 +9076,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733319202,
 				activeRosterUserIds: [10714, 21685, 8840, 10028],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -9187,6 +9203,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733471556,
 				activeRosterUserIds: [17532, 30204, 36007, 38896],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -9297,6 +9314,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733501938,
 				activeRosterUserIds: [30495, 43073, 30488, 45295],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -9407,6 +9425,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733622364,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -9495,6 +9514,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733635706,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -9589,6 +9609,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733671856,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -9678,6 +9699,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733810204,
 				activeRosterUserIds: [1959, 17352, 33954, 22403],
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-3KZntw8OZ9LkW4XqZRLS9-1733810204048.webp",
 				members: [
 					{
@@ -9783,6 +9805,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733889961,
 				activeRosterUserIds: [6696, 32107, 33402, 30619],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -9888,6 +9911,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733892132,
 				activeRosterUserIds: [21670, 8993, 8395, 3566],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -9998,6 +10022,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734035170,
 				activeRosterUserIds: [24510, 10670, 22577, 31143],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -10108,6 +10133,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734107844,
 				activeRosterUserIds: [28170, 14309, 17310, 23164],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -10218,6 +10244,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734132225,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-_asHjlVchhJ50PH_mDBtw-1734132224819.webp",
 				members: [
 					{
@@ -10307,6 +10334,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733194304,
 				activeRosterUserIds: [40505, 29011, 23082, 45036],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -10417,6 +10445,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733195091,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -10511,6 +10540,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733364647,
 				activeRosterUserIds: [22801, 31150, 35354, 27747],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -10621,6 +10651,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733374295,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -10715,6 +10746,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733433864,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -10835,6 +10867,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733513814,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -10929,6 +10962,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733602400,
 				activeRosterUserIds: [10826, 4248, 20419, 11180],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -11039,6 +11073,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733753214,
 				activeRosterUserIds: [27903, 28446, 34634, 30728],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -11149,6 +11184,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733914001,
 				activeRosterUserIds: [32909, 10190, 35922, 40304],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -11275,6 +11311,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733966548,
 				activeRosterUserIds: [35617, 37669, 37436, 35811],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -11385,6 +11422,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734032213,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -11479,6 +11517,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734106606,
 				activeRosterUserIds: [37173, 43269, 43623, 16054],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -11589,6 +11628,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734116765,
 				activeRosterUserIds: [25312, 10378, 46771, 26044],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -11715,6 +11755,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734125312,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -11809,6 +11850,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734134382,
 				activeRosterUserIds: [26758, 25689, 42164, 44475],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -11914,6 +11956,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733156802,
 				activeRosterUserIds: [9036, 7434, 3738, 9112],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -12024,6 +12067,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733157391,
 				activeRosterUserIds: [5935, 38204, 3741, 8080],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -12150,6 +12194,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733162274,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -12244,6 +12289,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733367806,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -12338,6 +12384,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733456080,
 				activeRosterUserIds: [10386, 33369, 29617, 22942],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -12448,6 +12495,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733579092,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -12536,6 +12584,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733769667,
 				activeRosterUserIds: [3481, 38022, 41269, 43551],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -12662,6 +12711,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733794148,
 				activeRosterUserIds: [22820, 29636, 27036, 28959],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -12788,6 +12838,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733820540,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-t2-mrQNINFqIoFNYuxbmW-1733820600291.webp",
 				members: [
 					{
@@ -12877,6 +12928,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733825084,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -12971,6 +13023,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733865890,
 				activeRosterUserIds: [15425, 41975, 28938, 8587],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -13081,6 +13134,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733873149,
 				activeRosterUserIds: [40550, 7115, 29674, 30031],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -13207,6 +13261,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733875608,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -13301,6 +13356,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733888417,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-c9a1igcMT4m2otyRdTs_0-1733888672873.webp",
 				members: [
 					{
@@ -13390,6 +13446,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734008857,
 				activeRosterUserIds: [30266, 37341, 22699, 28145],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -13500,6 +13557,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734018352,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -13594,6 +13652,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734019701,
 				activeRosterUserIds: [35421, 33524, 22500, 32802],
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-u4oKxXYjamTXZ1x-bgNFp-1734019701188.webp",
 				members: [
 					{
@@ -13715,6 +13774,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734023441,
 				activeRosterUserIds: [1852, 2898, 25763, 3466],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -13825,6 +13885,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734099744,
 				activeRosterUserIds: [39098, 22624, 28137, 2769],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -13935,6 +13996,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734109256,
 				activeRosterUserIds: [29661, 15158, 35067, 31655],
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-An13SrR78qDNIM2t95ujb-1734109256283.webp",
 				members: [
 					{
@@ -14056,6 +14118,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734125682,
 				activeRosterUserIds: [36575, 30425, 32430, 24290],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -14182,6 +14245,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733515005,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -14276,6 +14340,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733521735,
 				activeRosterUserIds: [44772, 38912, 36853, 42599],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -14386,6 +14451,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733525617,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -14480,6 +14546,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733847805,
 				activeRosterUserIds: [33615, 32015, 45778, 32970],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -14590,6 +14657,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733858126,
 				activeRosterUserIds: [34545, 35567, 41108, 41255],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -14700,6 +14768,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733966096,
 				activeRosterUserIds: [39470, 42874, 32878, 25741],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -14810,6 +14879,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734021147,
 				activeRosterUserIds: [45250, 45174, 6976, 10222],
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-v3boyVjbFsTyMlQylz4Dn-1734021152539.webp",
 				members: [
 					{
@@ -14920,6 +14990,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734040772,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-Jx6JnhFJQjOnM10s_79ld-1734041234919.webp",
 				members: [
 					{
@@ -15014,6 +15085,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734033803,
 				activeRosterUserIds: [27800, 12235, 30044, 29531],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -15124,6 +15196,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734099612,
 				activeRosterUserIds: [24572, 7058, 37641, 33913],
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-RrPQW5kG_K1cvjdU5TKcF-1734099611923.webp",
 				members: [
 					{
@@ -15229,6 +15302,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734113463,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -15323,6 +15397,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734118202,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -15411,6 +15486,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734134334,
 				activeRosterUserIds: [11186, 27611, 25952, 23481],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -15521,6 +15597,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733169181,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -15615,6 +15692,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733247691,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo--fZF6IGlzuuHeotc6Z00p-1733762912138.webp",
 				members: [
 					{
@@ -15709,6 +15787,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733452618,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -15808,6 +15887,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733481710,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -15912,6 +15992,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733508949,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -16006,6 +16087,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733611261,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -16095,6 +16177,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733841846,
 				activeRosterUserIds: [41943, 46289, 45290, 46394],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -16205,6 +16288,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733878153,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -16299,6 +16383,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734135144,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-obQfxdRnJg0CsbrE6OXdl-1734135144301.webp",
 				members: [
 					{

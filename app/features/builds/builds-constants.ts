@@ -8,6 +8,10 @@ type Patch = { patch: string; date: string };
 
 export const PATCHES: Array<Patch> = [
 	{
+		patch: "11.2.0",
+		date: "2026-06-10",
+	},
+	{
 		patch: "11.1.0",
 		date: "2026-03-18",
 	},
@@ -15,10 +19,10 @@ export const PATCHES: Array<Patch> = [
 		patch: "11.0.0",
 		date: "2026-01-29",
 	},
-	{
-		patch: "10.1.0",
-		date: "2025-09-03",
-	},
+	// {
+	// 	patch: "10.1.0",
+	// 	date: "2025-09-03",
+	// },
 	// {
 	// 	patch: "10.0.0",
 	// 	date: "2025-06-12",

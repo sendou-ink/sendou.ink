@@ -2,6 +2,7 @@ import { sub } from "date-fns";
 import type { Insertable } from "kysely";
 import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
 import type { Tables, TablesInsertable } from "~/db/tables";
+import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { ConcurrentModificationError } from "~/utils/errors";
 import { shortNanoid } from "~/utils/id";
@@ -152,7 +153,11 @@ const baseFindQuery = db
 			eb
 				.selectFrom("ScrimPostUser")
 				.innerJoin("User", "ScrimPostUser.userId", "User.id")
-				.select([...COMMON_USER_FIELDS, "ScrimPostUser.isOwner"])
+				.select([
+					...COMMON_USER_FIELDS,
+					"User.inGameName",
+					"ScrimPostUser.isOwner",
+				])
 				.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id"),
 		).as("users"),
 		jsonArrayFrom(
@@ -181,7 +186,11 @@ const baseFindQuery = db
 						innerEb
 							.selectFrom("ScrimPostRequestUser")
 							.innerJoin("User", "ScrimPostRequestUser.userId", "User.id")
-							.select([...COMMON_USER_FIELDS, "ScrimPostRequestUser.isOwner"])
+							.select([
+								...COMMON_USER_FIELDS,
+								"User.inGameName",
+								"ScrimPostRequestUser.isOwner",
+							])
 							.whereRef(
 								"ScrimPostRequestUser.scrimPostRequestId",
 								"=",
@@ -299,6 +308,11 @@ const mapDBRowToScrimPost = (
 			MANAGE_REQUESTS: managerIds,
 			DELETE_POST: managerIds,
 			CANCEL: managerIds.concat(requests.at(0)?.users.map((u) => u.id) ?? []),
+			MANAGE_TRACKING: someRequestIsAccepted
+				? users
+						.map((u) => u.id)
+						.concat(requests[0]?.users.map((u) => u.id) ?? [])
+				: [],
 		},
 		managedByAnyone: Boolean(row.managedByAnyone),
 		canceled,
@@ -326,7 +340,8 @@ export async function findById(scrimPostId: number): Promise<ScrimPost | null> {
 	return mapDBRowToScrimPost(row);
 }
 
-export async function findAllRelevant(userId?: number): Promise<ScrimPost[]> {
+export async function findAllRelevant(): Promise<ScrimPost[]> {
+	const userId = actorIdOrNull();
 	const rows = await findMany();
 
 	const mapped = rows
@@ -378,15 +393,12 @@ export function deleteRequest(scrimPostRequestId: number) {
 		.execute();
 }
 
-export async function cancelScrim(
-	id: number,
-	{ userId, reason }: { userId: number; reason: string },
-) {
+export async function cancelScrim(id: number, reason: string) {
 	await db
 		.updateTable("ScrimPost")
 		.set({
 			canceledAt: databaseTimestampNow(),
-			canceledByUserId: userId,
+			canceledByUserId: actorId(),
 			cancelReason: reason,
 		})
 		.where("id", "=", id)

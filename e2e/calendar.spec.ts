@@ -1,4 +1,6 @@
+import type { Page } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { calendarPage } from "~/utils/urls";
 import {
 	expect,
 	expectIsHydrated,
@@ -7,8 +9,7 @@ import {
 	navigate,
 	seed,
 	test,
-} from "~/utils/playwright";
-import { calendarPage } from "~/utils/urls";
+} from "./helpers/playwright";
 
 const SENDOU_INK_TOURNAMENTS_COUNT = 6;
 
@@ -101,5 +102,44 @@ test.describe("Calendar", () => {
 
 		await page.getByTestId("calendar-navigate-button").nth(1).click();
 		await expect(page.getByTestId("today-header")).toBeVisible();
+	});
+
+	test("renders clock header times in the browser locale", async ({
+		browser,
+		workerBaseURL,
+	}) => {
+		const openWith = async (locale: string) => {
+			const context = await browser.newContext({
+				locale,
+				baseURL: workerBaseURL,
+			});
+			const page = await context.newPage();
+			return { context, page };
+		};
+
+		const ca = await openWith("en-CA");
+		const gb = await openWith("en-GB");
+
+		try {
+			await seed(ca.page);
+
+			await navigate({ page: ca.page, url: calendarPage() });
+			await navigate({ page: gb.page, url: calendarPage() });
+
+			const firstClockText = (page: Page) =>
+				page
+					.locator("[class*='clockHeader'] [class*='reserve-one-lb']")
+					.first();
+
+			const caTime = await firstClockText(ca.page).textContent();
+			const gbTime = await firstClockText(gb.page).textContent();
+
+			expect(caTime).toMatch(/AM|PM|a\.m\.|p\.m\./i);
+			expect(gbTime).not.toMatch(/AM|PM|a\.m\.|p\.m\./i);
+			expect(caTime).not.toBe(gbTime);
+		} finally {
+			await ca.context.close();
+			await gb.context.close();
+		}
 	});
 });

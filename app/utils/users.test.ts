@@ -37,6 +37,12 @@ describe("queryToUserIdentifier()", () => {
 			id: 1,
 		});
 	});
+
+	test("gets id from url", () => {
+		expect(queryToUserIdentifier("https://sendou.ink/u/42")).toEqual({
+			id: 42,
+		});
+	});
 });
 
 describe("userDiscordIdIsAged()", () => {

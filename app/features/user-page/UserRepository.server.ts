@@ -2,7 +2,7 @@ import type { ExpressionBuilder, FunctionModule, NotNull } from "kysely";
 import { sql } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
-import { db, sql as dbDirect } from "~/db/sql";
+import { db } from "~/db/sql";
 import type {
 	BuildSort,
 	CustomTheme,
@@ -11,16 +11,17 @@ import type {
 	TablesInsertable,
 	UserPreferences,
 } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import { userRoles } from "~/modules/permissions/mapper.server";
 import { isSupporter } from "~/modules/permissions/utils";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-import type { CommonUser } from "~/utils/kysely.server";
 import {
 	COMMON_USER_FIELDS,
 	concatUserSubmittedImagePrefix,
 	tournamentLogoOrNull,
 	userChatNameHue,
+	userProfileWeapons,
 } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 import { safeNumberParse } from "~/utils/number";
@@ -183,13 +184,7 @@ export async function findProfileByIdentifier(
 			"User.patronTier",
 			"PlusTier.tier as plusTier",
 			"User.pronouns",
-			jsonArrayFrom(
-				eb
-					.selectFrom("UserWeapon")
-					.select(["UserWeapon.weaponSplId", "UserWeapon.isFavorite"])
-					.whereRef("UserWeapon.userId", "=", "User.id")
-					.orderBy("UserWeapon.order", "asc"),
-			).as("weapons"),
+			userProfileWeapons(eb).as("weapons"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TeamMemberWithSecondary")
@@ -211,20 +206,6 @@ export async function findProfileByIdentifier(
 					])
 					.whereRef("TeamMemberWithSecondary.userId", "=", "User.id"),
 			).as("teams"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("BadgeOwner")
-					.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
-					.select(({ fn }) => [
-						fn.count<number>("BadgeOwner.badgeId").as("count"),
-						"Badge.id",
-						"Badge.displayName",
-						"Badge.code",
-						"Badge.hue",
-					])
-					.whereRef("BadgeOwner.userId", "=", "User.id")
-					.groupBy(["BadgeOwner.badgeId", "BadgeOwner.userId"]),
-			).as("badges"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("SplatoonPlayer")
@@ -249,17 +230,45 @@ export async function findProfileByIdentifier(
 		return null;
 	}
 
+	// queried separately with a constant userId instead of correlating to
+	// "User"."id" so that SQLite can push the predicate down into both arms
+	// of the BadgeOwner view
+	const badges = await ownedBadgesByUserId(row.id);
+
 	return {
 		...row,
 		team: row.teams.find((t) => t.isMainTeam),
 		secondaryTeams: row.teams.filter((t) => !t.isMainTeam),
 		teams: undefined,
-		...sortBadgesByFavorites(row),
+		...sortBadgesByFavorites({ ...row, badges }),
 		discordUniqueName:
 			forceShowDiscordUniqueName || row.showDiscordUniqueName
 				? row.discordUniqueName
 				: null,
 	};
+}
+
+/**
+ * Badges owned by the user (tournament wins + patreon supporter badges).
+ *
+ * Kept as its own query taking a constant userId on purpose: correlating
+ * to an outer "User"."id" would prevent SQLite from pushing the predicate
+ * down into both arms of the BadgeOwner view, materializing the full view.
+ */
+export function ownedBadgesByUserId(userId: number) {
+	return db
+		.selectFrom("BadgeOwner")
+		.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
+		.select(({ fn }) => [
+			fn.sum<number>("BadgeOwner.count").as("count"),
+			"Badge.id",
+			"Badge.displayName",
+			"Badge.code",
+			"Badge.hue",
+		])
+		.where("BadgeOwner.userId", "=", userId)
+		.groupBy("BadgeOwner.badgeId")
+		.execute();
 }
 
 export async function widgetsEnabledByIdentifier(identifier: string) {
@@ -289,6 +298,8 @@ export async function upsertWidgets(
 ) {
 	return db.transaction().execute(async (trx) => {
 		await trx.deleteFrom("UserWidget").where("userId", "=", userId).execute();
+
+		if (widgets.length === 0) return;
 
 		await trx
 			.insertInto("UserWidget")
@@ -785,26 +796,66 @@ export async function search({
 	query: string;
 	limit: number;
 }) {
-	let exactMatches: Array<
-		CommonUser & {
-			inGameName: string | null;
-			plusTier: number | null;
-			discordUniqueName: string | null;
-		}
-	> = [];
-	if (query.length > 1) {
-		exactMatches = await db
-			.selectFrom("User")
-			.leftJoin("PlusTier", "PlusTier.userId", "User.id")
-			.select(searchSelectedFields)
-			.where((eb) =>
-				eb.or([
-					eb("User.username", "like", query),
-					eb("User.inGameName", "like", query),
-					eb("User.discordUniqueName", "like", query),
-					eb("User.customUrl", "like", query),
-				]),
-			)
+	// single scan over User with exact matches ranked first instead of two
+	// separate scans (exact pass + fuzzy pass excluding exact ids)
+	const exactConditions = (eb: ExpressionBuilder<DB, "User">) => [
+		eb("User.username", "like", query),
+		eb("User.inGameName", "like", query),
+		eb("User.discordUniqueName", "like", query),
+		eb("User.customUrl", "like", query),
+	];
+
+	const fuzzyQuery = `%${query}%`;
+	const fuzzyConditions = (eb: ExpressionBuilder<DB, "User">) => [
+		eb("User.username", "like", fuzzyQuery),
+		eb("User.inGameName", "like", fuzzyQuery),
+		eb("User.discordUniqueName", "like", fuzzyQuery),
+	];
+
+	const includeExactMatches = query.length > 1;
+
+	// the trigram index needs at least 3 characters and can't replicate
+	// LIKE wildcard semantics, those queries fall back to scanning User
+	const canUseSearchIndex =
+		query.length >= 3 && !query.includes("%") && !query.includes("_");
+
+	let dbQuery = db
+		.selectFrom("User")
+		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
+		.select(searchSelectedFields)
+		.where((eb) =>
+			eb.or(
+				includeExactMatches
+					? [...fuzzyConditions(eb), ...exactConditions(eb)]
+					: fuzzyConditions(eb),
+			),
+		);
+
+	if (canUseSearchIndex) {
+		// UserSearch match prefilters candidates via the trigram index (it
+		// matches a superset of the LIKE conditions, which stay above as the
+		// source of truth so results are identical to the fallback path)
+		const ftsPhrase = `"${query.replaceAll('"', '""')}"`;
+		dbQuery = dbQuery
+			.innerJoin("UserSearch", "UserSearch.rowid", "User.id")
+			.where(sql<boolean>`"UserSearch" match ${ftsPhrase}`);
+	}
+
+	if (includeExactMatches) {
+		dbQuery = dbQuery.orderBy(
+			(eb) =>
+				eb
+					.case()
+					.when(eb.or(exactConditions(eb)))
+					.then(0)
+					.else(1)
+					.end(),
+			"asc",
+		);
+	}
+
+	return (
+		dbQuery
 			.orderBy(
 				(eb) =>
 					eb
@@ -815,42 +866,11 @@ export async function search({
 						.end(),
 				"asc",
 			)
+			// deterministic order for ties so both query paths return the same rows
+			.orderBy("User.id", "asc")
 			.limit(limit)
-			.execute();
-	}
-
-	const fuzzyQuery = `%${query}%`;
-	const fuzzyMatches = await db
-		.selectFrom("User")
-		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
-		.select(searchSelectedFields)
-		.where((eb) =>
-			eb
-				.or([
-					eb("User.username", "like", fuzzyQuery),
-					eb("User.inGameName", "like", fuzzyQuery),
-					eb("User.discordUniqueName", "like", fuzzyQuery),
-				])
-				.and(
-					"User.id",
-					"not in",
-					exactMatches.map((match) => match.id),
-				),
-		)
-		.orderBy(
-			(eb) =>
-				eb
-					.case()
-					.when("PlusTier.tier", "is", null)
-					.then(4)
-					.else(eb.ref("PlusTier.tier"))
-					.end(),
-			"asc",
-		)
-		.limit(limit - exactMatches.length)
-		.execute();
-
-	return [...exactMatches, ...fuzzyMatches];
+			.execute()
+	);
 }
 
 export function searchExact(args: {
@@ -1048,25 +1068,22 @@ type UpdateProfileArgs = Pick<
 	| "commissionText"
 	| "commissionsOpen"
 > & {
-	userId: number;
 	weapons: Pick<TablesInsertable["UserWeapon"], "weaponSplId" | "isFavorite">[];
 	favoriteBadgeIds?: number[] | null;
 	favoriteTrophyIds?: number[] | null;
 	hiddenTrophyIds?: number[] | null;
 };
-export function updateProfile(args: UpdateProfileArgs) {
+export function updateOwnProfile(args: UpdateProfileArgs) {
+	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
-		await trx
-			.deleteFrom("UserWeapon")
-			.where("userId", "=", args.userId)
-			.execute();
+		await trx.deleteFrom("UserWeapon").where("userId", "=", userId).execute();
 
 		if (args.weapons.length > 0) {
 			await trx
 				.insertInto("UserWeapon")
 				.values(
 					args.weapons.map((weapon, i) => ({
-						userId: args.userId,
+						userId,
 						weaponSplId: weapon.weaponSplId,
 						isFavorite: weapon.isFavorite,
 						order: i + 1,
@@ -1102,26 +1119,24 @@ export function updateProfile(args: UpdateProfileArgs) {
 				commissionsOpenedAt:
 					args.commissionsOpen === 1 ? databaseTimestampNow() : null,
 			})
-			.where("id", "=", args.userId)
+			.where("id", "=", userId)
 			.returning(["User.id", "User.customUrl", "User.discordId"])
 			.executeTakeFirstOrThrow();
 	});
 }
 
-export function updateCustomTheme(userId: number, css: CustomTheme | null) {
+export function updateOwnCustomTheme(css: CustomTheme | null) {
 	return db
 		.updateTable("User")
 		.set({
 			customTheme: css ? JSON.stringify(css) : null,
 		})
-		.where("id", "=", userId)
+		.where("id", "=", actorId())
 		.execute();
 }
 
-export function updatePreferences(
-	userId: number,
-	newPreferences: UserPreferences,
-) {
+export function updateOwnPreferences(newPreferences: UserPreferences) {
+	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
 		const current =
 			(
@@ -1148,15 +1163,15 @@ export function updatePreferences(
 }
 
 type UpdateResultHighlightsArgs = {
-	userId: number;
 	resultTeamIds: Array<number>;
 	resultTournamentTeamIds: Array<number>;
 };
-export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
+export function updateOwnResultHighlights(args: UpdateResultHighlightsArgs) {
+	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
 		await trx
 			.deleteFrom("UserResultHighlight")
-			.where("userId", "=", args.userId)
+			.where("userId", "=", userId)
 			.execute();
 
 		if (args.resultTeamIds.length > 0) {
@@ -1164,7 +1179,7 @@ export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
 				.insertInto("UserResultHighlight")
 				.values(
 					args.resultTeamIds.map((teamId) => ({
-						userId: args.userId,
+						userId,
 						teamId,
 					})),
 				)
@@ -1176,7 +1191,7 @@ export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
 			.set({
 				isHighlight: 0,
 			})
-			.where("TournamentResult.userId", "=", args.userId)
+			.where("TournamentResult.userId", "=", userId)
 			.execute();
 
 		if (args.resultTournamentTeamIds.length > 0) {
@@ -1185,7 +1200,7 @@ export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
 				.set({
 					isHighlight: 1,
 				})
-				.where("TournamentResult.userId", "=", args.userId)
+				.where("TournamentResult.userId", "=", userId)
 				.where(
 					"TournamentResult.tournamentTeamId",
 					"in",
@@ -1196,17 +1211,11 @@ export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
 	});
 }
 
-export function updateBuildSorting({
-	userId,
-	buildSorting,
-}: {
-	userId: number;
-	buildSorting: BuildSort[] | null;
-}) {
+export function updateOwnBuildSorting(buildSorting: BuildSort[] | null) {
 	return db
 		.updateTable("User")
 		.set({ buildSorting: buildSorting ? JSON.stringify(buildSorting) : null })
-		.where("id", "=", userId)
+		.where("id", "=", actorId())
 		.execute();
 }
 
@@ -1244,31 +1253,34 @@ export function updatePatronData(users: UpdatePatronDataArgs) {
 	});
 }
 
-// TODO: use Kysely
-const updateByDiscordIdStm = dbDirect.prepare(/* sql */ `
-  update
-    "User"
-  set
-    "discordAvatar" = @discordAvatar,
-    "discordName" = coalesce(@discordName, "discordName"),
-    "discordUniqueName" = coalesce(@discordUniqueName, "discordUniqueName")
-  where
-    "discordId" = @discordId
-`);
-export const updateMany = dbDirect.transaction(
-	(
-		argsArr: Array<
-			Pick<
-				Tables["User"],
-				"discordAvatar" | "discordName" | "discordUniqueName" | "discordId"
-			>
-		>,
-	) => {
+export function updateMany(
+	argsArr: Array<
+		Pick<
+			Tables["User"],
+			"discordAvatar" | "discordName" | "discordUniqueName" | "discordId"
+		>
+	>,
+) {
+	return db.transaction().execute(async (trx) => {
 		for (const updateArgs of argsArr) {
-			updateByDiscordIdStm.run(updateArgs);
+			await trx
+				.updateTable("User")
+				.set((eb) => ({
+					discordAvatar: updateArgs.discordAvatar,
+					discordName: eb.fn.coalesce(
+						eb.val(updateArgs.discordName),
+						"User.discordName",
+					),
+					discordUniqueName: eb.fn.coalesce(
+						eb.val(updateArgs.discordUniqueName),
+						"User.discordUniqueName",
+					),
+				}))
+				.where("User.discordId", "=", updateArgs.discordId)
+				.execute();
 		}
-	},
-);
+	});
+}
 
 export async function anyUserPrefersNoScreen(
 	userIds: number[],
@@ -1280,6 +1292,21 @@ export async function anyUserPrefersNoScreen(
 		.select("User.noScreen")
 		.where("User.id", "in", userIds)
 		.where("User.noScreen", "=", 1)
+		.executeTakeFirst();
+
+	return Boolean(result);
+}
+
+export async function anyUserPrefersNoSplatnet(
+	userIds: number[],
+): Promise<boolean> {
+	if (userIds.length === 0) return false;
+
+	const result = await db
+		.selectFrom("User")
+		.select("User.noSplatnet")
+		.where("User.id", "in", userIds)
+		.where("User.noSplatnet", "=", 1)
 		.executeTakeFirst();
 
 	return Boolean(result);
@@ -1331,5 +1358,26 @@ export function findIdsByTwitchUsernames(twitchUsernames: string[]) {
 		.selectFrom("User")
 		.select(["User.id", "User.twitch"])
 		.where("User.twitch", "in", twitchUsernames)
+		.execute();
+}
+
+/** Returns weapon pool entries with ten-star status for the given user. */
+export function weaponPoolByUserId(userId: number) {
+	return db
+		.selectFrom("UserWeaponPool")
+		.leftJoin("TenStarWeapon", (join) =>
+			join
+				.onRef("TenStarWeapon.userId", "=", "UserWeaponPool.userId")
+				.onRef("TenStarWeapon.weaponSplId", "=", "UserWeaponPool.weaponSplId"),
+		)
+		.select([
+			"UserWeaponPool.weaponSplId",
+			"UserWeaponPool.isFavorite",
+			sql<number>`case when "TenStarWeapon"."weaponSplId" is not null then 1 else 0 end`.as(
+				"isTenStar",
+			),
+		])
+		.where("UserWeaponPool.userId", "=", userId)
+		.orderBy("UserWeaponPool.sortOrder", "asc")
 		.execute();
 }

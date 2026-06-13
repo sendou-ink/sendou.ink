@@ -1,4 +1,10 @@
-import { expect, impersonate, navigate, seed, test } from "~/utils/playwright";
+import {
+	expect,
+	impersonate,
+	navigate,
+	seed,
+	test,
+} from "./helpers/playwright";
 
 test.describe("Global search", () => {
 	test("searches for users and organizations", async ({ page }) => {

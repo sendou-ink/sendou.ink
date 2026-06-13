@@ -286,28 +286,93 @@ describe("MapList.generate()", () => {
 			expect(stagesSeen.size).toBeGreaterThan(1);
 		});
 
-		it("rotates the mode order", () => {
+		it("cycles a single mode order continuously across sets", () => {
+			// 5 modes, Bo3 sets -> the order keeps rolling without resetting
 			const gen = initGenerator();
-			const first = gen.next({ amount: 5 }).value;
-			const second = gen.next({ amount: 5 }).value;
+			const first = gen.next({ amount: 3 }).value!.map((m) => m.mode);
+			const second = gen.next({ amount: 3 }).value!.map((m) => m.mode);
 
-			const firstModes = first!.map((m) => m.mode);
-			const secondModes = second!.map((m) => m.mode);
-
-			expect(firstModes).not.toEqual(secondModes);
+			// set 2 continues where set 1 left off (positions 3, 4, 0)
+			expect(second[2]).toBe(first[0]);
 		});
 
-		it("starts with a different mode each time modes are rotated", () => {
-			for (let i = 0; i < 10; i++) {
-				const gen = initGenerator();
-				const first = gen.next({ amount: 5 }).value;
-				const second = gen.next({ amount: 5 }).value;
+		it("uses the same mode order when a set spans the whole rotation", () => {
+			// 5 modes, Bo5 sets -> each set is exactly one full rotation
+			const gen = initGenerator();
+			const first = gen.next({ amount: 5 }).value!.map((m) => m.mode);
+			const second = gen.next({ amount: 5 }).value!.map((m) => m.mode);
 
-				const firstModes = first!.map((m) => m.mode);
-				const secondModes = second!.map((m) => m.mode);
+			expect(second).toEqual(first);
+		});
 
-				expect(firstModes[0]).not.toEqual(secondModes[0]);
+		it("keeps cycling other modes across sets when a must-include pattern is set", () => {
+			// A single generator drives every bracket round. With a `[SZ]`
+			// must-include pattern the non-SZ slots should keep advancing through
+			// the mode order across rounds instead of replaying the order's prefix
+			// every set, otherwise modes in the order's tail (here RM) are starved.
+			const gen = MapList.generate({
+				mapPool: ALL_MODES_TEST_MAP_POOL,
+				modeOrder: ["SZ", "TC", "CB", "RM", "TW"],
+			});
+			gen.next();
+
+			const modesSeen: string[] = [];
+			for (let round = 0; round < 4; round++) {
+				const maps = gen.next({ amount: 3, pattern: "[SZ]" }).value;
+				modesSeen.push(...maps.map((m) => m.mode));
 			}
+
+			expect(modesSeen).toContain("RM");
+		});
+
+		it("keeps cycling other modes across sets when a positional pattern is set", () => {
+			// With a `*SZ*` pattern and Bo3 sets the two ANY slots are filled from
+			// the non-SZ modes (TC, RM, CB). Because the cycle offset advances by the
+			// full set size (3) instead of the slots actually consumed, every round
+			// resolves the ANY slots to the same modes and the remaining mode (here
+			// RM) never appears in the whole bracket.
+			const gen = MapList.generate({
+				mapPool: new MapPool({
+					TW: [],
+					SZ: [4, 5, 6],
+					TC: [7, 8, 9],
+					RM: [10, 11, 12],
+					CB: [13, 14, 15],
+				}),
+				modeOrder: ["SZ", "TC", "RM", "CB"],
+			});
+			gen.next();
+
+			const modesSeen = new Set<string>();
+			for (let round = 0; round < 10; round++) {
+				const maps = gen.next({ amount: 3, pattern: "*SZ*" }).value;
+				for (const map of maps) {
+					modesSeen.add(map.mode);
+				}
+			}
+
+			expect([...modesSeen].sort()).toEqual(["CB", "RM", "SZ", "TC"]);
+		});
+
+		it("advances the cycle by the ANY slots consumed when a positional pattern is set", () => {
+			const gen = MapList.generate({
+				mapPool: new MapPool({
+					TW: [],
+					SZ: [4, 5, 6],
+					TC: [7, 8, 9],
+					RM: [10, 11, 12],
+					CB: [13, 14, 15],
+				}),
+				modeOrder: ["SZ", "TC", "RM", "CB"],
+			});
+			gen.next();
+
+			const nextModes = () =>
+				gen.next({ amount: 3, pattern: "*SZ*" }).value.map((m) => m.mode);
+
+			expect(nextModes()).toEqual(["TC", "SZ", "RM"]);
+			expect(nextModes()).toEqual(["CB", "SZ", "TC"]);
+			expect(nextModes()).toEqual(["RM", "SZ", "CB"]);
 		});
 
 		it("replenishes the stage id pool with different order", () => {
@@ -597,5 +662,130 @@ describe("MapList.generate() with initialWeights", () => {
 		const maps = gen.next({ amount: 3 }).value;
 
 		expect(maps[0].stageId).toBe(1);
+	});
+});
+
+describe("MapList.resume()", () => {
+	const POOL = new MapPool({
+		TW: [],
+		SZ: [1, 2, 3],
+		TC: [4, 5, 6],
+		RM: [7, 8, 9],
+		CB: [10, 11, 12],
+	});
+
+	function nextMap(
+		history: Array<{ mode: "SZ" | "TC" | "RM" | "CB"; stageId: StageId }>,
+	) {
+		const gen = MapList.resume({ mapPool: POOL, history });
+		gen.next();
+		const result = gen.next({ amount: 1 }).value;
+		return result![0];
+	}
+
+	it("starts with the pool's first mode when history is empty", () => {
+		for (let i = 0; i < 20; i++) {
+			expect(nextMap([]).mode).toBe("SZ");
+		}
+	});
+
+	it("rotates through modes in pool order across history length", () => {
+		expect(nextMap([{ mode: "SZ", stageId: 1 }]).mode).toBe("TC");
+		expect(
+			nextMap([
+				{ mode: "SZ", stageId: 1 },
+				{ mode: "TC", stageId: 4 },
+			]).mode,
+		).toBe("RM");
+		expect(
+			nextMap([
+				{ mode: "SZ", stageId: 1 },
+				{ mode: "TC", stageId: 4 },
+				{ mode: "RM", stageId: 7 },
+			]).mode,
+		).toBe("CB");
+	});
+
+	it("wraps the mode order back to the start after a full rotation", () => {
+		const history = [
+			{ mode: "SZ", stageId: 1 },
+			{ mode: "TC", stageId: 4 },
+			{ mode: "RM", stageId: 7 },
+			{ mode: "CB", stageId: 10 },
+		] as const;
+		expect(nextMap([...history]).mode).toBe("SZ");
+	});
+
+	it("avoids already-played (mode, stage) pairs", () => {
+		const history = [
+			{ mode: "SZ", stageId: 1 },
+			{ mode: "TC", stageId: 4 },
+			{ mode: "RM", stageId: 7 },
+			{ mode: "CB", stageId: 10 },
+		] as const;
+
+		for (let i = 0; i < 30; i++) {
+			const next = nextMap([...history]);
+			expect(next.mode).toBe("SZ");
+			expect(next.stageId).not.toBe(1);
+		}
+	});
+
+	it("rotates only through modes present in the pool", () => {
+		const threeModePool = new MapPool({
+			TW: [],
+			SZ: [1, 2, 3],
+			TC: [4, 5, 6],
+			RM: [7, 8, 9],
+			CB: [],
+		});
+
+		const pickMode = (
+			history: Array<{ mode: "SZ" | "TC" | "RM"; stageId: StageId }>,
+		) => {
+			const gen = MapList.resume({ mapPool: threeModePool, history });
+			gen.next();
+			return gen.next({ amount: 1 }).value![0].mode;
+		};
+
+		expect(pickMode([])).toBe("SZ");
+		expect(pickMode([{ mode: "SZ", stageId: 1 }])).toBe("TC");
+		expect(
+			pickMode([
+				{ mode: "SZ", stageId: 1 },
+				{ mode: "TC", stageId: 4 },
+			]),
+		).toBe("RM");
+		expect(
+			pickMode([
+				{ mode: "SZ", stageId: 1 },
+				{ mode: "TC", stageId: 4 },
+				{ mode: "RM", stageId: 7 },
+			]),
+		).toBe("SZ");
+	});
+
+	it("avoids the just-played stage when alternatives exist, even across modes", () => {
+		const sharedPool = new MapPool({
+			TW: [],
+			SZ: [1, 2, 3, 4, 5],
+			TC: [1, 2, 3, 4, 5],
+			RM: [],
+			CB: [],
+		});
+
+		for (let i = 0; i < 50; i++) {
+			const gen = MapList.resume({
+				mapPool: sharedPool,
+				history: [{ mode: "SZ", stageId: 1 }],
+			});
+			gen.next();
+			const next = gen.next({ amount: 1 }).value![0];
+			expect(next.mode).toBe("TC");
+			expect(
+				next.stageId,
+				"same stage picked back-to-back across modes",
+			).not.toBe(1);
+		}
 	});
 });

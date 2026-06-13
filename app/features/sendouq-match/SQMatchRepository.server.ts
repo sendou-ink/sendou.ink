@@ -4,8 +4,8 @@ import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, ParsedMemento } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { mostPopularArrayElement } from "~/utils/arrays";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -14,23 +14,22 @@ import invariant from "~/utils/invariant";
 import {
 	COMMON_USER_FIELDS,
 	concatUserSubmittedImagePrefix,
+	matchProfileWeapons,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
-import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
 import type { Unpacked } from "~/utils/types";
 import { FULL_GROUP_SIZE } from "../sendouq/q-constants";
 import { SendouQError } from "../sendouq/q-utils.server";
 import * as SQGroupRepository from "../sendouq/SQGroupRepository.server";
 import { MATCHES_PER_SEASONS_PAGE } from "../user-page/user-page-constants";
 import { compareMatchToReportedScores } from "./core/match.server";
-import { mergeReportedWeapons } from "./core/reported-weapons.server";
+import * as SendouQMatch from "./core/SendouQMatch";
 import { calculateMatchSkills } from "./core/skills.server";
 import {
 	summarizeMaps,
 	summarizePlayerResults,
 } from "./core/summarizer.server";
 import * as PlayerStatRepository from "./PlayerStatRepository.server";
-import { winnersArrayToWinner } from "./q-match-utils";
 import * as ReportedWeaponRepository from "./ReportedWeaponRepository.server";
 import * as SkillRepository from "./SkillRepository.server";
 
@@ -40,15 +39,24 @@ export async function findById(id: number) {
 		.select(({ exists, selectFrom, eb }) => [
 			"GroupMatch.id",
 			"GroupMatch.createdAt",
-			"GroupMatch.reportedAt",
-			"GroupMatch.reportedByUserId",
+			"GroupMatch.confirmedAt",
+			"GroupMatch.confirmedByUserId",
 			"GroupMatch.chatCode",
 			"GroupMatch.memento",
+			"GroupMatch.cancelRequestedByUserId",
+			"GroupMatch.cancelAcceptedByUserId",
+
 			exists(
 				selectFrom("Skill")
 					.select("Skill.id")
 					.where("Skill.groupMatchId", "=", id),
 			).as("isLocked"),
+			exists(
+				selectFrom("Skill")
+					.select("Skill.id")
+					.where("Skill.groupMatchId", "=", id)
+					.where("Skill.season", "=", -1),
+			).as("isCanceled"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("GroupMatchMap")
@@ -58,6 +66,8 @@ export async function findById(id: number) {
 						"GroupMatchMap.stageId",
 						"GroupMatchMap.source",
 						"GroupMatchMap.winnerGroupId",
+						"GroupMatchMap.reportedAt",
+						"GroupMatchMap.reportedByUserId",
 					])
 					.where("GroupMatchMap.matchId", "=", id)
 					.orderBy("GroupMatchMap.index", "asc"),
@@ -90,6 +100,7 @@ function groupWithTeamAndMembers(
 			.select(({ eb }) => [
 				"Group.id",
 				"Group.chatCode",
+				"Group.matchmade",
 				jsonObjectFrom(
 					eb
 						.selectFrom("AllTeam")
@@ -99,6 +110,7 @@ function groupWithTeamAndMembers(
 							"UserSubmittedImage.id",
 						)
 						.select((eb) => [
+							"AllTeam.id",
 							"AllTeam.name",
 							"AllTeam.customUrl",
 							concatUserSubmittedImagePrefix(
@@ -112,6 +124,19 @@ function groupWithTeamAndMembers(
 						.selectFrom("GroupMember")
 						.innerJoin("User", "User.id", "GroupMember.userId")
 						.leftJoin("PlusTier", "User.id", "PlusTier.userId")
+						.leftJoin("GroupMatchContinueVote", (join) =>
+							join
+								.onRef(
+									"GroupMember.userId",
+									"=",
+									"GroupMatchContinueVote.userId",
+								)
+								.onRef(
+									"GroupMember.groupId",
+									"=",
+									"GroupMatchContinueVote.groupId",
+								),
+						)
 						.select((arrayEb) => [
 							...COMMON_USER_FIELDS,
 							"GroupMember.role",
@@ -121,9 +146,10 @@ function groupWithTeamAndMembers(
 							"User.vc",
 							"User.languages",
 							"User.noScreen",
-							"User.qWeaponPool as weapons",
+							matchProfileWeapons(arrayEb).as("weapons"),
 							"User.mapModePreferences",
 							"PlusTier.tier as plusTier",
+							"GroupMatchContinueVote.isContinuing",
 							arrayEb
 								.selectFrom("UserFriendCode")
 								.select("UserFriendCode.friendCode")
@@ -233,9 +259,14 @@ const groupMatchResultsSubQuery = (eb: ExpressionBuilder<DB, "Skill">) => {
 								.selectFrom("ReportedWeapon")
 								.select(["ReportedWeapon.userId", "ReportedWeapon.weaponSplId"])
 								.whereRef(
-									"ReportedWeapon.groupMatchMapId",
+									"ReportedWeapon.groupMatchId",
 									"=",
-									"GroupMatchMap.id",
+									"GroupMatchMap.matchId",
+								)
+								.whereRef(
+									"ReportedWeapon.mapIndex",
+									"=",
+									"GroupMatchMap.index",
 								),
 						).as("weapons"),
 					])
@@ -403,6 +434,21 @@ export function create({
 	memento: ParsedMemento;
 }) {
 	return db.transaction().execute(async (trx) => {
+		const existingMatch = await trx
+			.selectFrom("GroupMatch")
+			.select(["id"])
+			.where((eb) =>
+				eb.or([
+					eb("alphaGroupId", "in", [alphaGroupId, bravoGroupId]),
+					eb("bravoGroupId", "in", [alphaGroupId, bravoGroupId]),
+				]),
+			)
+			.executeTakeFirst();
+
+		if (existingMatch) {
+			throw new SendouQError("Can't leave group when already in a match");
+		}
+
 		const match = await trx
 			.insertInto("GroupMatch")
 			.values({
@@ -412,15 +458,7 @@ export function create({
 				memento: JSON.stringify(memento),
 			})
 			.returningAll()
-			.executeTakeFirstOrThrow()
-			.catch((error) => {
-				// race: another manager matched one of the two groups first, tripping the
-				// unique constraint on GroupMatch.alphaGroupId / bravoGroupId
-				if (errorIsSqliteUniqueConstraintFailure(error)) {
-					throw new SendouQError("Group is already in a match");
-				}
-				throw error;
-			});
+			.executeTakeFirstOrThrow();
 
 		await trx
 			.insertInto("GroupMatchMap")
@@ -514,49 +552,6 @@ async function validateCreatedMatch(
 	}
 }
 
-export async function updateScore(
-	{
-		matchId,
-		reportedByUserId,
-		winners,
-	}: {
-		matchId: number;
-		reportedByUserId: number;
-		winners: ("ALPHA" | "BRAVO")[];
-	},
-	trx?: Transaction<DB>,
-) {
-	const executor = trx ?? db;
-
-	const match = await executor
-		.updateTable("GroupMatch")
-		.set({
-			reportedAt: dateToDatabaseTimestamp(new Date()),
-			reportedByUserId,
-		})
-		.where("id", "=", matchId)
-		.returningAll()
-		.executeTakeFirstOrThrow();
-
-	await executor
-		.updateTable("GroupMatchMap")
-		.set({ winnerGroupId: null })
-		.where("matchId", "=", matchId)
-		.execute();
-
-	for (const [index, winner] of winners.entries()) {
-		await executor
-			.updateTable("GroupMatchMap")
-			.set({
-				winnerGroupId:
-					winner === "ALPHA" ? match.alphaGroupId : match.bravoGroupId,
-			})
-			.where("matchId", "=", matchId)
-			.where("index", "=", index)
-			.execute();
-	}
-}
-
 export function lockMatchWithoutSkillChange(
 	groupMatchId: number,
 	trx?: Transaction<DB>,
@@ -576,219 +571,38 @@ export function lockMatchWithoutSkillChange(
 		.execute();
 }
 
-export type ReportScoreResult =
-	| { status: "REPORTED"; shouldRefreshCaches: false }
-	| { status: "CONFIRMED"; shouldRefreshCaches: true }
-	| { status: "DIFFERENT"; shouldRefreshCaches: false }
-	| { status: "DUPLICATE"; shouldRefreshCaches: false };
-
 export type CancelMatchResult =
 	| { status: "CANCEL_REPORTED"; shouldRefreshCaches: false }
 	| { status: "CANCEL_CONFIRMED"; shouldRefreshCaches: true }
 	| { status: "CANT_CANCEL"; shouldRefreshCaches: false }
 	| { status: "DUPLICATE"; shouldRefreshCaches: false };
 
-type WeaponInput = {
-	groupMatchMapId: number;
-	weaponSplId: MainWeaponId;
-	userId: number;
-	mapIndex: number;
-};
-
-export async function adminReport({
-	matchId,
-	reportedByUserId,
-	winners,
-}: {
-	matchId: number;
-	reportedByUserId: number;
-	winners: ("ALPHA" | "BRAVO")[];
-}): Promise<void> {
-	const match = await findById(matchId);
-	invariant(match, "Match not found");
-
-	const members = buildMembers(match);
-	const winner = winnersArrayToWinner(winners);
-	const winnerGroupId =
-		winner === "ALPHA" ? match.groupAlpha.id : match.groupBravo.id;
-	const loserGroupId =
-		winner === "ALPHA" ? match.groupBravo.id : match.groupAlpha.id;
-
-	const { newSkills, differences } = calculateMatchSkills({
-		groupMatchId: match.id,
-		winner: (match.groupAlpha.id === winnerGroupId
-			? match.groupAlpha
-			: match.groupBravo
-		).members.map((m) => m.id),
-		loser: (match.groupAlpha.id === loserGroupId
-			? match.groupAlpha
-			: match.groupBravo
-		).members.map((m) => m.id),
-		winnerGroupId,
-		loserGroupId,
-	});
-
-	await db.transaction().execute(async (trx) => {
-		await updateScore({ matchId, reportedByUserId, winners }, trx);
-		await SQGroupRepository.setAsInactive(match.groupAlpha.id, trx);
-		await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
-		await PlayerStatRepository.upsertMapResults(
-			summarizeMaps({ match, members, winners }),
-			trx,
-		);
-		await PlayerStatRepository.upsertPlayerResults(
-			summarizePlayerResults({ match, members, winners }),
-			trx,
-		);
-		await SkillRepository.createMatchSkills(
-			{
-				skills: newSkills,
-				differences,
-				groupMatchId: match.id,
-				oldMatchMemento: match.memento,
-			},
-			trx,
-		);
-	});
-}
-
-export async function reportScore({
-	matchId,
-	reportedByUserId,
-	winners,
-	weapons,
-}: {
-	matchId: number;
-	reportedByUserId: number;
-	winners: ("ALPHA" | "BRAVO")[];
-	weapons: WeaponInput[];
-}): Promise<ReportScoreResult> {
-	const match = await findById(matchId);
-	invariant(match, "Match not found");
-
-	const members = buildMembers(match);
-	const reporterGroupId = members.find(
-		(m) => m.id === reportedByUserId,
-	)?.groupId;
-	invariant(reporterGroupId, "Reporter is not a member of any group");
-
-	const previousReporterGroupId = match.reportedByUserId
-		? members.find((m) => m.id === match.reportedByUserId)?.groupId
-		: undefined;
-
-	const compared = compareMatchToReportedScores({
-		match,
-		winners,
-		newReporterGroupId: reporterGroupId,
-		previousReporterGroupId,
-	});
-
-	const oldReportedWeapons =
-		(await ReportedWeaponRepository.findByMatchId(matchId)) ?? [];
-	const mergedWeapons = mergeReportedWeapons({
-		oldWeapons: oldReportedWeapons,
-		newWeapons: weapons,
-		newReportedMapsCount: winners.length,
-	});
-	const weaponsForDb = mergedWeapons.map((w) => ({
-		groupMatchMapId: w.groupMatchMapId,
-		userId: w.userId,
-		weaponSplId: w.weaponSplId,
-	}));
-
-	if (compared === "DUPLICATE") {
-		await ReportedWeaponRepository.replaceByMatchId(matchId, weaponsForDb);
-		return { status: "DUPLICATE", shouldRefreshCaches: false };
-	}
-
-	if (compared === "DIFFERENT") {
-		await SQGroupRepository.setAsInactive(reporterGroupId);
-		return { status: "DIFFERENT", shouldRefreshCaches: false };
-	}
-
-	if (compared === "FIRST_REPORT") {
-		await db.transaction().execute(async (trx) => {
-			await updateScore({ matchId, reportedByUserId, winners }, trx);
-			await SQGroupRepository.setAsInactive(reporterGroupId, trx);
-			if (weaponsForDb.length > 0) {
-				await ReportedWeaponRepository.createMany(weaponsForDb, trx);
-			}
-		});
-		return { status: "REPORTED", shouldRefreshCaches: false };
-	}
-
-	if (compared === "FIX_PREVIOUS") {
-		await db.transaction().execute(async (trx) => {
-			await updateScore({ matchId, reportedByUserId, winners }, trx);
-			await ReportedWeaponRepository.replaceByMatchId(
-				matchId,
-				weaponsForDb,
-				trx,
-			);
-		});
-		return { status: "REPORTED", shouldRefreshCaches: false };
-	}
-
-	const winner = winnersArrayToWinner(winners);
-	const winnerGroupId =
-		winner === "ALPHA" ? match.groupAlpha.id : match.groupBravo.id;
-	const loserGroupId =
-		winner === "ALPHA" ? match.groupBravo.id : match.groupAlpha.id;
-
-	const { newSkills, differences } = calculateMatchSkills({
-		groupMatchId: match.id,
-		winner: (match.groupAlpha.id === winnerGroupId
-			? match.groupAlpha
-			: match.groupBravo
-		).members.map((m) => m.id),
-		loser: (match.groupAlpha.id === loserGroupId
-			? match.groupAlpha
-			: match.groupBravo
-		).members.map((m) => m.id),
-		winnerGroupId,
-		loserGroupId,
-	});
-
-	await db.transaction().execute(async (trx) => {
-		await SQGroupRepository.setAsInactive(reporterGroupId, trx);
-		await PlayerStatRepository.upsertMapResults(
-			summarizeMaps({ match, members, winners }),
-			trx,
-		);
-		await PlayerStatRepository.upsertPlayerResults(
-			summarizePlayerResults({ match, members, winners }),
-			trx,
-		);
-		await SkillRepository.createMatchSkills(
-			{
-				skills: newSkills,
-				differences,
-				groupMatchId: match.id,
-				oldMatchMemento: match.memento,
-			},
-			trx,
-		);
-		await ReportedWeaponRepository.replaceByMatchId(matchId, weaponsForDb, trx);
-	});
-
-	return { status: "CONFIRMED", shouldRefreshCaches: true };
-}
-
 export async function cancelMatch({
 	matchId,
-	reportedByUserId,
 	isAdminReport,
 }: {
 	matchId: number;
-	reportedByUserId: number;
 	isAdminReport?: boolean;
 }): Promise<CancelMatchResult> {
+	const reportedByUserId = actorId();
 	const match = await findById(matchId);
 	invariant(match, "Match not found");
 
+	if (match.isLocked) {
+		return { status: "CANT_CANCEL", shouldRefreshCaches: false };
+	}
+
 	if (isAdminReport) {
 		await db.transaction().execute(async (trx) => {
-			await updateScore({ matchId, reportedByUserId, winners: [] }, trx);
+			await trx
+				.updateTable("GroupMatchMap")
+				.set({
+					winnerGroupId: null,
+					reportedAt: dateToDatabaseTimestamp(new Date()),
+					reportedByUserId,
+				})
+				.where("matchId", "=", matchId)
+				.execute();
 			await SQGroupRepository.setAsInactive(match.groupAlpha.id, trx);
 			await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
 			await lockMatchWithoutSkillChange(match.id, trx);
@@ -802,9 +616,7 @@ export async function cancelMatch({
 	)?.groupId;
 	invariant(reporterGroupId, "Reporter is not a member of any group");
 
-	const previousReporterGroupId = match.reportedByUserId
-		? members.find((m) => m.id === match.reportedByUserId)?.groupId
-		: undefined;
+	const previousReporterGroupId = lastReporterGroupId(match, members);
 
 	const compared = compareMatchToReportedScores({
 		match,
@@ -824,7 +636,15 @@ export async function cancelMatch({
 
 	if (compared === "FIRST_REPORT" || compared === "FIX_PREVIOUS") {
 		await db.transaction().execute(async (trx) => {
-			await updateScore({ matchId, reportedByUserId, winners: [] }, trx);
+			await trx
+				.updateTable("GroupMatchMap")
+				.set({
+					winnerGroupId: null,
+					reportedAt: dateToDatabaseTimestamp(new Date()),
+					reportedByUserId,
+				})
+				.where("matchId", "=", matchId)
+				.execute();
 			await SQGroupRepository.setAsInactive(reporterGroupId, trx);
 			if (compared === "FIX_PREVIOUS") {
 				await ReportedWeaponRepository.replaceByMatchId(matchId, [], trx);
@@ -840,6 +660,562 @@ export async function cancelMatch({
 	return { status: "CANCEL_CONFIRMED", shouldRefreshCaches: true };
 }
 
+export type RequestCancelResult =
+	| { status: "REQUESTED" }
+	| { status: "ALREADY_LOCKED" }
+	| { status: "ALREADY_REQUESTED" };
+
+export async function requestCancelMatch({
+	matchId,
+	requestedByUserId,
+}: {
+	matchId: number;
+	requestedByUserId: number;
+}): Promise<RequestCancelResult> {
+	const match = await findById(matchId);
+	invariant(match, "Match not found");
+
+	if (match.isLocked) {
+		return { status: "ALREADY_LOCKED" };
+	}
+
+	if (match.cancelRequestedByUserId) {
+		return { status: "ALREADY_REQUESTED" };
+	}
+
+	await db
+		.updateTable("GroupMatch")
+		.set({ cancelRequestedByUserId: requestedByUserId })
+		.where("id", "=", matchId)
+		.execute();
+
+	return { status: "REQUESTED" };
+}
+
+export type AcceptCancelResult =
+	| { status: "ACCEPTED" }
+	| { status: "ALREADY_LOCKED" }
+	| { status: "NO_CANCEL_REQUEST" }
+	| { status: "NOT_ALLOWED" };
+
+export async function acceptCancelMatch({
+	matchId,
+	acceptedByUserId,
+}: {
+	matchId: number;
+	acceptedByUserId: number;
+}): Promise<AcceptCancelResult> {
+	const match = await findById(matchId);
+	invariant(match, "Match not found");
+
+	if (match.isLocked) {
+		return { status: "ALREADY_LOCKED" };
+	}
+
+	if (!match.cancelRequestedByUserId) {
+		return { status: "NO_CANCEL_REQUEST" };
+	}
+
+	const members = buildMembers(match);
+	const requesterGroupId = members.find(
+		(m) => m.id === match.cancelRequestedByUserId,
+	)?.groupId;
+	invariant(requesterGroupId, "Requester is not a member of any group");
+
+	const accepterGroupId = members.find(
+		(m) => m.id === acceptedByUserId,
+	)?.groupId;
+	invariant(accepterGroupId, "Accepter is not a member of any group");
+
+	if (accepterGroupId === requesterGroupId) {
+		return { status: "NOT_ALLOWED" };
+	}
+
+	await db.transaction().execute(async (trx) => {
+		await SQGroupRepository.setAsInactive(requesterGroupId, trx);
+		await SQGroupRepository.setAsInactive(accepterGroupId, trx);
+		await lockMatchWithoutSkillChange(match.id, trx);
+		await trx
+			.updateTable("GroupMatch")
+			.set({ cancelAcceptedByUserId: acceptedByUserId })
+			.where("id", "=", matchId)
+			.execute();
+	});
+
+	return { status: "ACCEPTED" };
+}
+
+export type RefuseCancelResult =
+	| { status: "REFUSED" }
+	| { status: "ALREADY_LOCKED" }
+	| { status: "NO_CANCEL_REQUEST" }
+	| { status: "NOT_ALLOWED" };
+
+export async function refuseCancelMatch({
+	matchId,
+	refusedByUserId,
+}: {
+	matchId: number;
+	refusedByUserId: number;
+}): Promise<RefuseCancelResult> {
+	const match = await findById(matchId);
+	invariant(match, "Match not found");
+
+	if (match.isLocked) {
+		return { status: "ALREADY_LOCKED" };
+	}
+
+	if (!match.cancelRequestedByUserId) {
+		return { status: "NO_CANCEL_REQUEST" };
+	}
+
+	const members = buildMembers(match);
+	const requesterGroupId = members.find(
+		(m) => m.id === match.cancelRequestedByUserId,
+	)?.groupId;
+	const refuserGroupId = members.find((m) => m.id === refusedByUserId)?.groupId;
+	invariant(refuserGroupId, "Refuser is not a member of any group");
+
+	if (refuserGroupId === requesterGroupId) {
+		return { status: "NOT_ALLOWED" };
+	}
+
+	await db
+		.updateTable("GroupMatch")
+		.set({ cancelRequestedByUserId: null })
+		.where("id", "=", matchId)
+		.execute();
+
+	return { status: "REFUSED" };
+}
+
+export type ReportMapWinnerResult =
+	| { status: "MAP_REPORTED" }
+	| { status: "MATCH_REPORTED" }
+	| { status: "MATCH_FINALIZED" }
+	| { status: "ALREADY_LOCKED" }
+	| { status: "INVALID_WINNER" }
+	| { status: "SCORE_DISAGREEMENT" }
+	| { status: "STALE" };
+
+export async function reportMapWinner({
+	matchId,
+	winnerId,
+	reportedByUserId,
+	reportedCount,
+	isStaffReport,
+}: {
+	matchId: number;
+	winnerId: number;
+	reportedByUserId: number;
+	reportedCount: number;
+	isStaffReport?: boolean;
+}): Promise<ReportMapWinnerResult> {
+	const match = await findById(matchId);
+	invariant(match, "Match not found");
+
+	if (match.isLocked) {
+		return { status: "ALREADY_LOCKED" };
+	}
+
+	if (winnerId !== match.groupAlpha.id && winnerId !== match.groupBravo.id) {
+		return { status: "INVALID_WINNER" };
+	}
+
+	const {
+		mapsToWin,
+		alphaWins: existingAlphaWins,
+		bravoWins: existingBravoWins,
+		isDecisive: scoreAlreadyDecisive,
+	} = SendouQMatch.score(match);
+
+	// Confirmation flow: score is already decisive (first team reported the set-ending map)
+	if (scoreAlreadyDecisive) {
+		return handleMatchConfirmation({
+			match,
+			winnerId,
+			reportedByUserId,
+			existingAlphaWins,
+			mapsToWin,
+			isStaffReport,
+		});
+	}
+
+	const actualReportedCount = match.mapList.filter(
+		(m) => m.winnerGroupId !== null,
+	).length;
+	if (actualReportedCount !== reportedCount) {
+		return { status: "STALE" };
+	}
+
+	const currentMap = match.mapList.find((m) => m.winnerGroupId === null);
+	invariant(currentMap, "No unreported map found");
+
+	const alphaWins =
+		existingAlphaWins + (winnerId === match.groupAlpha.id ? 1 : 0);
+	const bravoWins =
+		existingBravoWins + (winnerId === match.groupBravo.id ? 1 : 0);
+	const matchIsOver = alphaWins >= mapsToWin || bravoWins >= mapsToWin;
+
+	// Non-final map: report and continue
+	if (!matchIsOver) {
+		await db
+			.updateTable("GroupMatchMap")
+			.set({
+				winnerGroupId: winnerId,
+				reportedAt: dateToDatabaseTimestamp(new Date()),
+				reportedByUserId,
+			})
+			.where("id", "=", currentMap.id)
+			.execute();
+		return { status: "MAP_REPORTED" };
+	}
+
+	// Set-ending map reported by staff: auto-finalize (no awaiting confirmation)
+	if (isStaffReport) {
+		return handleStaffFinalization({
+			match,
+			currentMap,
+			winnerId,
+			reportedByUserId,
+		});
+	}
+
+	// Set-ending map: first report, await confirmation from other team
+	const members = buildMembers(match);
+	const reporterGroupId = members.find(
+		(m) => m.id === reportedByUserId,
+	)?.groupId;
+	invariant(reporterGroupId, "Reporter is not a member of any group");
+
+	await db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("GroupMatchMap")
+			.set({
+				winnerGroupId: winnerId,
+				reportedAt: dateToDatabaseTimestamp(new Date()),
+				reportedByUserId,
+			})
+			.where("id", "=", currentMap.id)
+			.execute();
+		await SQGroupRepository.setAsInactive(reporterGroupId, trx);
+	});
+
+	return { status: "MATCH_REPORTED" };
+}
+
+async function handleMatchConfirmation({
+	match,
+	winnerId,
+	reportedByUserId,
+	existingAlphaWins,
+	mapsToWin,
+	isStaffReport,
+}: {
+	match: NonNullable<Awaited<ReturnType<typeof findById>>>;
+	winnerId: number;
+	reportedByUserId: number;
+	existingAlphaWins: number;
+	mapsToWin: number;
+	isStaffReport?: boolean;
+}): Promise<ReportMapWinnerResult> {
+	const members = buildMembers(match);
+
+	// Find the deciding map (last map with a winner)
+	const decidingMap = match.mapList
+		.toReversed()
+		.find((m) => m.winnerGroupId !== null);
+	invariant(decidingMap, "No deciding map found");
+
+	const originalReporterGroupId = decidingMap.reportedByUserId
+		? members.find((m) => m.id === decidingMap.reportedByUserId)?.groupId
+		: undefined;
+
+	// Staff confirms on behalf of the non-reporting team; their group is the one
+	// still ACTIVE and needs to be deactivated when the match finalizes.
+	const groupToDeactivate = isStaffReport
+		? originalReporterGroupId === match.groupAlpha.id
+			? match.groupBravo.id
+			: match.groupAlpha.id
+		: members.find((m) => m.id === reportedByUserId)?.groupId;
+	invariant(groupToDeactivate, "Reporter is not a member of any group");
+
+	if (!isStaffReport) {
+		// Same team re-reporting
+		if (groupToDeactivate === originalReporterGroupId) {
+			return { status: "STALE" };
+		}
+
+		// Other team reports a different winner for the deciding map
+		if (winnerId !== decidingMap.winnerGroupId) {
+			await SQGroupRepository.setAsInactive(groupToDeactivate);
+			return { status: "SCORE_DISAGREEMENT" };
+		}
+	} else if (winnerId !== decidingMap.winnerGroupId) {
+		return { status: "STALE" };
+	}
+
+	// Other team confirms the score — finalize
+	const winnerGroupId =
+		existingAlphaWins >= mapsToWin ? match.groupAlpha.id : match.groupBravo.id;
+	const loserGroupId =
+		existingAlphaWins >= mapsToWin ? match.groupBravo.id : match.groupAlpha.id;
+
+	const winners: ("ALPHA" | "BRAVO")[] = match.mapList
+		.filter((m) => m.winnerGroupId !== null)
+		.map((m) => (m.winnerGroupId === match.groupAlpha.id ? "ALPHA" : "BRAVO"));
+
+	await finalizeMatch({
+		match,
+		members,
+		winners,
+		winnerGroupId,
+		loserGroupId,
+		confirmedByUserId: reportedByUserId,
+		preFinalize: (trx) =>
+			SQGroupRepository.setAsInactive(groupToDeactivate, trx),
+	});
+
+	return { status: "MATCH_FINALIZED" };
+}
+
+async function handleStaffFinalization({
+	match,
+	currentMap,
+	winnerId,
+	reportedByUserId,
+}: {
+	match: NonNullable<Awaited<ReturnType<typeof findById>>>;
+	currentMap: NonNullable<
+		Awaited<ReturnType<typeof findById>>
+	>["mapList"][number];
+	winnerId: number;
+	reportedByUserId: number;
+}): Promise<ReportMapWinnerResult> {
+	const winnerGroupId = winnerId;
+	const loserGroupId =
+		winnerId === match.groupAlpha.id
+			? match.groupBravo.id
+			: match.groupAlpha.id;
+
+	const members = buildMembers(match);
+
+	const winners: ("ALPHA" | "BRAVO")[] = [
+		...match.mapList
+			.filter((m) => m.winnerGroupId !== null)
+			.map((m) =>
+				m.winnerGroupId === match.groupAlpha.id
+					? ("ALPHA" as const)
+					: ("BRAVO" as const),
+			),
+		winnerId === match.groupAlpha.id ? "ALPHA" : "BRAVO",
+	];
+
+	await finalizeMatch({
+		match,
+		members,
+		winners,
+		winnerGroupId,
+		loserGroupId,
+		confirmedByUserId: reportedByUserId,
+		preFinalize: async (trx) => {
+			await trx
+				.updateTable("GroupMatchMap")
+				.set({
+					winnerGroupId,
+					reportedAt: dateToDatabaseTimestamp(new Date()),
+					reportedByUserId,
+				})
+				.where("id", "=", currentMap.id)
+				.execute();
+			await SQGroupRepository.setAsInactive(match.groupAlpha.id, trx);
+			await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
+		},
+	});
+
+	return { status: "MATCH_FINALIZED" };
+}
+
+async function finalizeMatch({
+	match,
+	members,
+	winners,
+	winnerGroupId,
+	loserGroupId,
+	confirmedByUserId,
+	preFinalize,
+}: {
+	match: NonNullable<Awaited<ReturnType<typeof findById>>>;
+	members: ReturnType<typeof buildMembers>;
+	winners: ("ALPHA" | "BRAVO")[];
+	winnerGroupId: number;
+	loserGroupId: number;
+	confirmedByUserId: number;
+	preFinalize?: (trx: Transaction<DB>) => Promise<unknown>;
+}) {
+	const { newSkills, differences } = calculateMatchSkills({
+		groupMatchId: match.id,
+		winner: (match.groupAlpha.id === winnerGroupId
+			? match.groupAlpha
+			: match.groupBravo
+		).members.map((m) => m.id),
+		loser: (match.groupAlpha.id === loserGroupId
+			? match.groupAlpha
+			: match.groupBravo
+		).members.map((m) => m.id),
+		winnerGroupId,
+		loserGroupId,
+	});
+
+	await db.transaction().execute(async (trx) => {
+		if (preFinalize) await preFinalize(trx);
+		await trx
+			.updateTable("GroupMatch")
+			.set({
+				confirmedAt: dateToDatabaseTimestamp(new Date()),
+				confirmedByUserId,
+				cancelRequestedByUserId: null,
+			})
+			.where("id", "=", match.id)
+			.execute();
+		await PlayerStatRepository.upsertMapResults(
+			summarizeMaps({ match, members, winners }),
+			trx,
+		);
+		await PlayerStatRepository.upsertPlayerResults(
+			summarizePlayerResults({ match, members, winners }),
+			trx,
+		);
+		await SkillRepository.createMatchSkills(
+			{
+				skills: newSkills,
+				differences,
+				groupMatchId: match.id,
+				oldMatchMemento: match.memento,
+			},
+			trx,
+		);
+	});
+}
+
+export async function undoMatchReport({
+	matchId,
+	requestedByUserId,
+	isStaff,
+}: {
+	matchId: number;
+	requestedByUserId: number;
+	isStaff?: boolean;
+}): Promise<{ status: "SUCCESS" | "NOT_ALLOWED" | "ALREADY_LOCKED" }> {
+	const match = await findById(matchId);
+	invariant(match, "Match not found");
+
+	if (match.isLocked) {
+		return { status: "ALREADY_LOCKED" };
+	}
+
+	if (!SendouQMatch.score(match).isDecisive) {
+		return { status: "NOT_ALLOWED" };
+	}
+
+	const decidingMapIndex = match.mapList.findLastIndex(
+		(m) => m.winnerGroupId !== null,
+	);
+	const decidingMap =
+		decidingMapIndex === -1 ? undefined : match.mapList[decidingMapIndex];
+	invariant(decidingMap, "No deciding map found");
+
+	if (!decidingMap.reportedByUserId) {
+		return { status: "NOT_ALLOWED" };
+	}
+
+	const members = buildMembers(match);
+	const requesterGroupId = members.find(
+		(m) => m.id === requestedByUserId,
+	)?.groupId;
+	const reporterGroupId = members.find(
+		(m) => m.id === decidingMap.reportedByUserId,
+	)?.groupId;
+
+	if (!isStaff && requesterGroupId !== reporterGroupId) {
+		return { status: "NOT_ALLOWED" };
+	}
+
+	await db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("GroupMatchMap")
+			.set({ winnerGroupId: null, reportedAt: null, reportedByUserId: null })
+			.where("id", "=", decidingMap.id)
+			.execute();
+
+		await ReportedWeaponRepository.deleteByMapIndex(
+			{ matchId, mapIndex: decidingMapIndex },
+			trx,
+		);
+
+		await trx
+			.deleteFrom("GroupMatchContinueVote")
+			.where("GroupMatchContinueVote.groupId", "in", [
+				match.groupAlpha.id,
+				match.groupBravo.id,
+			])
+			.execute();
+	});
+
+	return { status: "SUCCESS" };
+}
+
+export async function undoMapReport({
+	matchId,
+	mapIndex,
+}: {
+	matchId: number;
+	mapIndex: number;
+}): Promise<{ status: "SUCCESS" | "NOT_ALLOWED" | "ALREADY_LOCKED" }> {
+	const match = await findById(matchId);
+	invariant(match, "Match not found");
+
+	if (match.isLocked) {
+		return { status: "ALREADY_LOCKED" };
+	}
+
+	if (SendouQMatch.score(match).isDecisive) {
+		return { status: "NOT_ALLOWED" };
+	}
+
+	const targetMap = match.mapList[mapIndex];
+	if (!targetMap || targetMap.winnerGroupId === null) {
+		return { status: "NOT_ALLOWED" };
+	}
+
+	const hasLaterReport = match.mapList
+		.slice(mapIndex + 1)
+		.some((m) => m.winnerGroupId !== null);
+	if (hasLaterReport) {
+		return { status: "NOT_ALLOWED" };
+	}
+
+	await db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("GroupMatchMap")
+			.set({ winnerGroupId: null })
+			.where("id", "=", targetMap.id)
+			.execute();
+
+		await ReportedWeaponRepository.deleteByMapIndex({ matchId, mapIndex }, trx);
+
+		await trx
+			.deleteFrom("GroupMatchContinueVote")
+			.where("GroupMatchContinueVote.groupId", "in", [
+				match.groupAlpha.id,
+				match.groupBravo.id,
+			])
+			.execute();
+	});
+
+	return { status: "SUCCESS" };
+}
+
 function buildMembers(
 	match: NonNullable<Awaited<ReturnType<typeof findById>>>,
 ) {
@@ -853,4 +1229,16 @@ function buildMembers(
 			groupId: match.groupBravo.id,
 		})),
 	];
+}
+
+function lastReporterGroupId(
+	match: NonNullable<Awaited<ReturnType<typeof findById>>>,
+	members: ReturnType<typeof buildMembers>,
+) {
+	const lastReportedMap = match.mapList
+		.toReversed()
+		.find((m) => m.reportedByUserId !== null);
+	if (!lastReportedMap?.reportedByUserId) return undefined;
+	return members.find((m) => m.id === lastReportedMap.reportedByUserId)
+		?.groupId;
 }

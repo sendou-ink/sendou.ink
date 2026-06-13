@@ -4,6 +4,7 @@ import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { tournamentData } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
@@ -11,11 +12,9 @@ import { requireRole } from "~/modules/permissions/guards.server";
 import { tournamentBracketsPage } from "~/utils/urls";
 import { canEditCalendarEvent } from "../calendar-utils";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = requireUser();
 	requireRole("CALENDAR_EVENT_ADDER");
-
-	const url = new URL(request.url);
 
 	const eventWithTournament = async (key: string) => {
 		const eventId = Number(url.searchParams.get(key));
@@ -30,7 +29,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 		if (!event) return;
 
-		if (!event?.tournamentId) return { ...event, tournament: null };
+		if (!event?.tournamentId)
+			return { ...event, tournament: null, rules: null };
 
 		return {
 			...event,
@@ -38,6 +38,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				tournamentId: event.tournamentId,
 				user,
 			}),
+			rules: await TournamentRepository.findRulesById(event.tournamentId),
 		};
 	};
 

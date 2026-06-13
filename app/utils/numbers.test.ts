@@ -61,6 +61,16 @@ describe("cutToNDecimalPlaces()", () => {
 		const result = cutToNDecimalPlaces(3.0001, 2);
 		expect(result).toBe(3);
 	});
+
+	test("cutOff preserves a value already at the desired number of decimal places", () => {
+		const result = cutToNDecimalPlaces(0.29, 2);
+		expect(result).toBe(0.29);
+	});
+
+	test("cutOff is not thrown off by floating point representation error", () => {
+		expect(cutToNDecimalPlaces(2.32, 2)).toBe(2.32);
+		expect(cutToNDecimalPlaces(-0.29, 2)).toBe(-0.29);
+	});
 });
 
 describe("averageArray()", () => {

@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
+import { LocaleTime } from "~/components/LocaleTime";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import { PLUS_SERVER_DISCORD_URL, userPage } from "~/utils/urls";
 
@@ -25,8 +26,20 @@ export default function PlusVotingResultsPage() {
 	return (
 		<div className="stack md">
 			<h2 className="text-center">
-				Voting results for {data.lastCompletedVoting.month + 1}/
-				{data.lastCompletedVoting.year}
+				Voting results for{" "}
+				<LocaleTime
+					date={
+						new Date(
+							data.lastCompletedVoting.year,
+							data.lastCompletedVoting.month,
+						)
+					}
+					options={{
+						month: "numeric",
+						year: "numeric",
+					}}
+					inline
+				/>
 			</h2>
 			{data.ownScores && data.ownScores.length > 0 ? (
 				<>
@@ -44,7 +57,7 @@ export default function PlusVotingResultsPage() {
 									? `, your score was ${result.score}% ${
 											result.betterThan
 												? `(better than ${result.betterThan}% others)`
-												: "(at least 60% required to pass)"
+												: ""
 										}`
 									: ""}
 							</li>

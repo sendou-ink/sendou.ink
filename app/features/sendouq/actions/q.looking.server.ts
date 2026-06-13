@@ -57,6 +57,7 @@ export const action: ActionFunction = async ({ request }) => {
 						room: targetChatCode,
 						type: "LIKE_RECEIVED",
 						revalidateOnly: true,
+						authorUserId: user.id,
 					});
 				}
 
@@ -78,6 +79,7 @@ export const action: ActionFunction = async ({ request }) => {
 						room: targetChatCode,
 						type: "LIKE_RECEIVED",
 						revalidateOnly: true,
+						authorUserId: user.id,
 					});
 				}
 				break;
@@ -201,11 +203,13 @@ export const action: ActionFunction = async ({ request }) => {
 							room: ownGroup.chatCode,
 							type: "MATCH_STARTED",
 							revalidateOnly: true,
+							authorUserId: user.id,
 						},
 						{
 							room: theirGroup.chatCode,
 							type: "MATCH_STARTED",
 							revalidateOnly: true,
+							authorUserId: user.id,
 						},
 					]);
 				}
@@ -257,14 +261,16 @@ export const action: ActionFunction = async ({ request }) => {
 
 				await refreshSendouQInstance();
 
-				const targetChatCode = SendouQ.findUncensoredGroupById(
-					currentGroup.id,
-				)?.chatCode;
-				if (targetChatCode) {
+				const remainingGroup = SendouQ.findUncensoredGroupById(currentGroup.id);
+				if (remainingGroup?.chatCode) {
 					ChatSystemMessage.send({
-						room: targetChatCode,
+						room: remainingGroup.chatCode,
 						type: "USER_LEFT",
 						context: { name: user.username },
+					});
+					setGroupChatMetadata({
+						chatCode: remainingGroup.chatCode,
+						members: remainingGroup.members,
 					});
 				}
 
@@ -278,6 +284,14 @@ export const action: ActionFunction = async ({ request }) => {
 
 				await refreshSendouQInstance();
 
+				const remainingGroup = SendouQ.findUncensoredGroupById(currentGroup.id);
+				if (remainingGroup?.chatCode) {
+					setGroupChatMetadata({
+						chatCode: remainingGroup.chatCode,
+						members: remainingGroup.members,
+					});
+				}
+
 				break;
 			}
 			case "REFRESH_GROUP": {
@@ -288,9 +302,8 @@ export const action: ActionFunction = async ({ request }) => {
 				break;
 			}
 			case "UPDATE_NOTE": {
-				await SQGroupRepository.updateMemberNote({
+				await SQGroupRepository.updateOwnMemberNote({
 					groupId: currentGroup.id,
-					userId: user.id,
 					value: data.value,
 				});
 
@@ -299,10 +312,7 @@ export const action: ActionFunction = async ({ request }) => {
 				break;
 			}
 			case "DELETE_PRIVATE_USER_NOTE": {
-				await PrivateUserNoteRepository.del({
-					authorId: user.id,
-					targetId: data.targetId,
-				});
+				await PrivateUserNoteRepository.deleteOwnNoteById(data.targetId);
 
 				break;
 			}

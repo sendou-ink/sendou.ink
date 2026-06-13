@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import { Link2 as LinkIcon } from "lucide-react";
-import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
@@ -12,6 +11,7 @@ import { BskyIcon } from "~/components/icons/Bsky";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { TwitchIcon } from "~/components/icons/Twitch";
 import { YouTubeIcon } from "~/components/icons/YouTube";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Markdown } from "~/components/Markdown";
 import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
@@ -20,16 +20,16 @@ import { previewUrl } from "~/features/art/art-utils";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { TrophyDisplay } from "~/features/trophies/components/TrophyDisplay";
 import { VodListing } from "~/features/vods/components/VodListing";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { usePagination } from "~/hooks/usePagination";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { GameBadgeId } from "~/modules/in-game-lists/game-badge-ids";
 import type {
 	MainWeaponId,
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
-import { databaseTimestampToDate } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import type { SerializeFrom } from "~/utils/remix";
 import { assertUnreachable } from "~/utils/types";
@@ -63,7 +63,11 @@ export function Widget({
 	user: Pick<Tables["User"], "discordId" | "customUrl">;
 }) {
 	const { t } = useTranslation(["user", "badges", "team", "org", "lfg"]);
-	const { formatDate } = useTimeFormat();
+	const { formatter: patronSinceFormatter } = useDateTimeFormat({
+		day: "numeric",
+		month: "numeric",
+		year: "numeric",
+	});
 
 	const content = () => {
 		switch (widget.id) {
@@ -169,13 +173,7 @@ export function Widget({
 			case "patron-since":
 				if (!widget.data) return null;
 				return (
-					<BigValue
-						value={formatDate(databaseTimestampToDate(widget.data), {
-							day: "numeric",
-							month: "short",
-							year: "numeric",
-						})}
-					/>
+					<BigValue value={patronSinceFormatter.format(widget.data) ?? ""} />
 				);
 			case "join-date":
 				if (!widget.data) return null;
@@ -230,15 +228,8 @@ export function Widget({
 					<Builds builds={widget.data} />
 				);
 			case "weapon-pool":
-				return widget.data.weapons.length === 0 ? null : (
-					<WeaponPool
-						weapons={
-							widget.data.weapons as Array<{
-								id: MainWeaponId;
-								isFavorite: boolean;
-							}>
-						}
-					/>
+				return widget.data.length === 0 ? null : (
+					<WeaponPool weapons={widget.data} />
 				);
 			case "sens":
 				return <SensWidget data={widget.data} />;
@@ -376,8 +367,6 @@ function HighlightedResults({
 }: {
 	results: Extract<LoadedWidget, { id: "highlighted-results" }>["data"];
 }) {
-	const { formatDate } = useTimeFormat();
-
 	return (
 		<div className={styles.highlightedResults}>
 			{results.map((result, i) => (
@@ -417,13 +406,15 @@ function HighlightedResults({
 								</div>
 							) : null}
 						</div>
-						<div className={styles.resultDate}>
-							{formatDate(databaseTimestampToDate(result.startTime), {
+						<LocaleTime
+							date={result.startTime}
+							options={{
 								day: "numeric",
-								month: "short",
+								month: "numeric",
 								year: "numeric",
-							})}
-						</div>
+							}}
+							className={styles.resultDate}
+						/>
 					</div>
 				</div>
 			))}
@@ -541,40 +532,31 @@ function XRankPeaks({
 }
 
 function TimezoneWidget({ timezone }: { timezone: string }) {
-	const [currentTime, setCurrentTime] = React.useState(() => new Date());
-
-	React.useEffect(() => {
-		const interval = setInterval(() => {
-			setCurrentTime(new Date());
-		}, 1000);
-
-		return () => clearInterval(interval);
-	}, []);
+	const currentTime = useAutoRerender("second");
 
 	try {
-		const formatter = new Intl.DateTimeFormat("en-US", {
-			timeZone: timezone,
-			hour: "numeric",
-			minute: "2-digit",
-			second: "2-digit",
-			hour12: true,
-		});
-
-		const dateFormatter = new Intl.DateTimeFormat("en-US", {
-			timeZone: timezone,
-			weekday: "short",
-			day: "numeric",
-			month: "short",
-		});
-
 		return (
 			<div className="stack sm items-center">
-				<div className={styles.widgetValueMain} suppressHydrationWarning>
-					{formatter.format(currentTime)}
-				</div>
-				<div className={styles.widgetValueFooter} suppressHydrationWarning>
-					{dateFormatter.format(currentTime)}
-				</div>
+				<LocaleTime
+					date={currentTime}
+					options={{
+						timeZone: timezone,
+						hour: "numeric",
+						minute: "2-digit",
+						second: "2-digit",
+					}}
+					className={styles.widgetValueMain}
+				/>
+				<LocaleTime
+					date={currentTime}
+					options={{
+						timeZone: timezone,
+						weekday: "short",
+						day: "numeric",
+						month: "numeric",
+					}}
+					className={styles.widgetValueFooter}
+				/>
 			</div>
 		);
 	} catch {
@@ -632,19 +614,18 @@ function Builds({
 function WeaponPool({
 	weapons,
 }: {
-	weapons: Array<{ id: MainWeaponId; isFavorite: boolean }>;
+	weapons: Array<{
+		weaponSplId: MainWeaponId;
+		isFavorite: number;
+		isTenStar: number;
+	}>;
 }) {
 	return (
 		<div className="stack horizontal sm justify-center flex-wrap">
 			{weapons.map((weapon) => {
 				return (
-					<div key={weapon.id} className="u__weapon">
-						<WeaponImage
-							weaponSplId={weapon.id}
-							variant={weapon.isFavorite ? "badge-5-star" : "badge"}
-							width={38}
-							height={38}
-						/>
+					<div key={weapon.weaponSplId} className="u__weapon">
+						<WeaponImage weapon={weapon} width={38} height={38} />
 					</div>
 				);
 			})}

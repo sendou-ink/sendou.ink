@@ -9,6 +9,7 @@ import {
 	assertResponseErrored,
 	dbInsertUsers,
 	dbReset,
+	withUserId,
 	wrappedAction,
 } from "~/utils/Test";
 import type { adminActionSchema } from "../actions/admin.server";
@@ -91,12 +92,54 @@ describe("Plus voting", () => {
 		expect(await countPlusTierMembers()).toBe(5);
 	});
 
-	test("60% is the criteria to pass voting", async () => {
+	test("60% or more guarantees pass", async () => {
 		vi.setSystemTime(new Date("2023-12-12T00:00:00.000Z"));
 
 		await dbInsertUsers(10);
 
-		// 50%
+		// 60% - auto-pass
+		await PlusVotingRepository.upsertMany(
+			Array.from({ length: 10 }).map((_, i) => {
+				return voteArgs({
+					authorId: i + 1,
+					score: i < 4 ? -1 : 1,
+					votedId: 1,
+				});
+			}),
+		);
+
+		await adminAction({ _action: "REFRESH" }, { user: "admin" });
+
+		expect(await countPlusTierMembers()).toBe(1);
+	});
+
+	test("40% or less does not pass", async () => {
+		vi.setSystemTime(new Date("2023-12-12T00:00:00.000Z"));
+
+		await dbInsertUsers(10);
+
+		// 40% - auto-fail
+		await PlusVotingRepository.upsertMany(
+			Array.from({ length: 10 }).map((_, i) => {
+				return voteArgs({
+					authorId: i + 1,
+					score: i < 6 ? -1 : 1,
+					votedId: 1,
+				});
+			}),
+		);
+
+		await adminAction({ _action: "REFRESH" }, { user: "admin" });
+
+		expect(await countPlusTierMembers()).toBe(0);
+	});
+
+	test("middle zone (40-60%) passes when quota has room", async () => {
+		vi.setSystemTime(new Date("2023-12-12T00:00:00.000Z"));
+
+		await dbInsertUsers(10);
+
+		// 50% - middle zone, should pass (quota=50 for tier 1)
 		await PlusVotingRepository.upsertMany(
 			Array.from({ length: 10 }).map((_, i) => {
 				return voteArgs({
@@ -106,27 +149,10 @@ describe("Plus voting", () => {
 				});
 			}),
 		);
-		// 60%
-		await PlusVotingRepository.upsertMany(
-			Array.from({ length: 10 }).map((_, i) => {
-				return voteArgs({
-					authorId: i + 1,
-					score: i < 4 ? -1 : 1,
-					votedId: 2,
-				});
-			}),
-		);
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
 
-		const rows = await db
-			.selectFrom("PlusTier")
-			.select(["PlusTier.tier", "PlusTier.userId"])
-			.where("PlusTier.tier", "=", 1)
-			.execute();
-
-		expect(rows.length).toBe(1);
-		expect(rows[0].userId).toBe(2);
+		expect(await countPlusTierMembers()).toBe(1);
 	});
 
 	test("combines leaderboard and voting results (after season over)", async () => {
@@ -355,11 +381,12 @@ describe("Account migration", () => {
 			ownerUserId: 2,
 			isMainTeam: true,
 		});
-		await TeamRepository.addNewTeamMember({
-			teamId: 1,
-			userId: 1,
-			maxTeamsAllowed: 1,
-		});
+		await withUserId(1, () =>
+			TeamRepository.joinTeam({
+				teamId: 1,
+				maxTeamsAllowed: 1,
+			}),
+		);
 		await TeamRepository.handleMemberLeaving({ teamId: 1, userId: 1 });
 
 		for (const userId of [1, 2]) {
@@ -377,14 +404,16 @@ describe("Account migration", () => {
 	});
 
 	it("deletes weapon pool from the new user when migrating (takes weapon pool from the old user)", async () => {
-		await UserRepository.updateProfile({
-			userId: 1,
-			weapons: [{ weaponSplId: 1, isFavorite: 1 }],
-		});
-		await UserRepository.updateProfile({
-			userId: 2,
-			weapons: [{ weaponSplId: 10 }],
-		});
+		await withUserId(1, () =>
+			UserRepository.updateOwnProfile({
+				weapons: [{ weaponSplId: 1, isFavorite: 1 }],
+			}),
+		);
+		await withUserId(2, () =>
+			UserRepository.updateOwnProfile({
+				weapons: [{ weaponSplId: 10 }],
+			}),
+		);
 
 		await migrateUserAction();
 
@@ -392,7 +421,9 @@ describe("Account migration", () => {
 		const newUser = await UserRepository.findProfileByIdentifier("1");
 
 		expect(oldUser).toBeNull();
-		expect(newUser?.weapons).toEqual([{ weaponSplId: 1, isFavorite: 1 }]);
+		expect(newUser?.weapons).toEqual([
+			{ weaponSplId: 1, isFavorite: 1, isTenStar: 0 },
+		]);
 	});
 
 	it("deletes builds from the new user when migrating", async () => {

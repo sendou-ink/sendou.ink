@@ -15,6 +15,7 @@ import lfg from "../../../locales/en/lfg.json";
 import org from "../../../locales/en/org.json";
 import q from "../../../locales/en/q.json";
 import scrims from "../../../locales/en/scrims.json";
+import settings from "../../../locales/en/settings.json";
 import team from "../../../locales/en/team.json";
 import tierListMaker from "../../../locales/en/tier-list-maker.json";
 import tournament from "../../../locales/en/tournament.json";
@@ -41,6 +42,7 @@ export const resources = {
 		org,
 		q,
 		scrims,
+		settings,
 		team,
 		"tier-list-maker": tierListMaker,
 		tournament,

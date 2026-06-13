@@ -45,6 +45,7 @@ export interface Standing {
 		mapWins: number;
 		mapLosses: number;
 		points: number;
+		koCount?: number;
 		winsAgainstTied: number;
 		lossesAgainstTied?: number;
 		opponentSetWinPercentage?: number;
@@ -423,7 +424,11 @@ export abstract class Bracket {
 		return this.teamsPendingCheckIn.includes(team.id);
 	}
 
-	source(_options: { placements: number[]; advanceThreshold?: number }): {
+	source(_options: {
+		placements: number[];
+		advanceThreshold?: number;
+		rest?: boolean;
+	}): {
 		relevantMatchesFinished: boolean;
 		teams: number[];
 	} {

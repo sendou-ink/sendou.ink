@@ -1,12 +1,9 @@
-import type { SQMatchGroup } from "~/features/sendouq/core/SendouQ.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import type * as ReportedWeaponRepository from "../ReportedWeaponRepository.server";
-import type * as SQMatchRepository from "../SQMatchRepository.server";
 
 export type ReportedWeaponForMerging = {
 	weaponSplId?: MainWeaponId;
 	mapIndex: number;
-	groupMatchMapId: number;
+	groupMatchId: number;
 	userId: number;
 };
 type ReportedWeapon = ReportedWeaponForMerging & { weaponSplId: MainWeaponId };
@@ -25,7 +22,8 @@ export function mergeReportedWeapons({
 	for (const oldWeapon of oldWeapons) {
 		const replacement = newWeapons.find(
 			(newWeapon) =>
-				newWeapon.groupMatchMapId === oldWeapon.groupMatchMapId &&
+				newWeapon.groupMatchId === oldWeapon.groupMatchId &&
+				newWeapon.mapIndex === oldWeapon.mapIndex &&
 				newWeapon.userId === oldWeapon.userId,
 		);
 
@@ -41,7 +39,8 @@ export function mergeReportedWeapons({
 		if (
 			!result.some(
 				(oldWeapon) =>
-					newWeapon.groupMatchMapId === oldWeapon.groupMatchMapId &&
+					newWeapon.groupMatchId === oldWeapon.groupMatchId &&
+					newWeapon.mapIndex === oldWeapon.mapIndex &&
 					newWeapon.userId === oldWeapon.userId,
 			)
 		) {
@@ -57,44 +56,4 @@ export function mergeReportedWeapons({
 	return result.flatMap((w) =>
 		typeof w.weaponSplId === "number" ? [w as ReportedWeapon] : [],
 	);
-}
-
-export function reportedWeaponsToArrayOfArrays({
-	reportedWeapons,
-	mapList,
-	groupAlpha,
-	groupBravo,
-}: {
-	reportedWeapons: Awaited<
-		ReturnType<typeof ReportedWeaponRepository.findByMatchId>
-	>;
-	mapList: NonNullable<
-		Awaited<ReturnType<typeof SQMatchRepository.findById>>
-	>["mapList"];
-	groupAlpha: SQMatchGroup;
-	groupBravo: SQMatchGroup;
-}) {
-	if (!reportedWeapons) return null;
-
-	const result: (MainWeaponId | null)[][] = [];
-
-	const allMembers = [...groupAlpha.members, ...groupBravo.members].map(
-		(m) => m.id,
-	);
-
-	for (const map of mapList) {
-		const mapWeapons: (MainWeaponId | null)[] = [];
-
-		for (const userId of allMembers) {
-			const reportedWeapon = reportedWeapons.find(
-				(wpn) => wpn.groupMatchMapId === map.id && wpn.userId === userId,
-			);
-
-			mapWeapons.push(reportedWeapon ? reportedWeapon.weaponSplId : null);
-		}
-
-		result.push(mapWeapons);
-	}
-
-	return result;
 }

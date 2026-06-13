@@ -1,4 +1,5 @@
-import "dotenv/config";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { userAsyncLocalStorage } from "~/features/auth/core/user-context.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -42,6 +43,9 @@ async function main() {
 	const tournament = await loadTournament();
 
 	invariant(!tournament.hasStarted, "Tournament has already started");
+
+	const adminUser = await UserRepository.findLeanById(ADMIN_ID);
+	invariant(adminUser, `Admin user with id ${ADMIN_ID} not found`);
 
 	const season = Seasons.currentOrPrevious();
 	invariant(season, "No current or previous season found");
@@ -100,21 +104,27 @@ async function main() {
 		const teamName = resolvedNames[i];
 		const owner = entry.members[0];
 
-		const tournamentTeam = await TournamentTeamRepository.create({
-			team: {
-				name: teamName,
-				prefersNotToHost: 0,
-				teamId: entry.team?.id ?? null,
-			},
-			userId: owner.id,
-			tournamentId,
-		});
+		const tournamentTeam = await userAsyncLocalStorage.run(
+			{ user: adminUser },
+			() =>
+				TournamentTeamRepository.create({
+					team: {
+						name: teamName,
+						prefersNotToHost: 0,
+						teamId: entry.team?.id ?? null,
+					},
+					userId: owner.id,
+					tournamentId,
+				}),
+		);
 
 		for (const member of entry.members.slice(1)) {
-			await TournamentTeamRepository.join({
-				newTeamId: tournamentTeam.id,
-				userId: member.id,
-			});
+			await userAsyncLocalStorage.run({ user: adminUser }, () =>
+				TournamentTeamRepository.join({
+					newTeamId: tournamentTeam.id,
+					userId: member.id,
+				}),
+			);
 		}
 
 		logger.info(

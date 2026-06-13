@@ -1,5 +1,6 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { associationsPage, scrimsPage } from "~/utils/urls";
 import {
 	expect,
 	impersonate,
@@ -8,8 +9,7 @@ import {
 	seed,
 	submit,
 	test,
-} from "~/utils/playwright";
-import { associationsPage, scrimsPage } from "~/utils/urls";
+} from "./helpers/playwright";
 
 test.describe("Associations", () => {
 	test("creates a new association", async ({ page }) => {

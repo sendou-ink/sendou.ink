@@ -4,9 +4,15 @@ import type { GearType } from "~/db/tables";
 import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
 import { newBuildBaseSchema } from "~/features/user-page/user-page-schemas";
 import invariant from "~/utils/invariant";
-import { expect, impersonate, navigate, seed, test } from "~/utils/playwright";
-import { createFormHelpers } from "~/utils/playwright-form";
 import { BUILDS_PAGE, userBuildsPage, userNewBuildPage } from "~/utils/urls";
+import {
+	expect,
+	impersonate,
+	navigate,
+	seed,
+	test,
+} from "./helpers/playwright";
+import { createFormHelpers } from "./helpers/playwright-form";
 
 test.describe("Builds", () => {
 	test("adds a build", async ({ page }) => {

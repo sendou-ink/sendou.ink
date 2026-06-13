@@ -9,11 +9,12 @@ import { SendouButton } from "~/components/elements/Button";
 import { Flag } from "~/components/Flag";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, TierImage, WeaponImage } from "~/components/Image";
+import { LocaleTime } from "~/components/LocaleTime";
 import { useUser } from "~/features/auth/core/user";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
+import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { lfgNewPostPage, navIconUrl, userPage } from "~/utils/urls";
@@ -240,13 +241,8 @@ function PostUserHeader({
 			</div>
 			{includeWeapons ? (
 				<div className="stack horizontal sm">
-					{author.weaponPool.map(({ weaponSplId, isFavorite }) => (
-						<WeaponImage
-							key={weaponSplId}
-							weaponSplId={weaponSplId}
-							size={32}
-							variant={isFavorite ? "badge-5-star" : "badge"}
-						/>
+					{author.weaponPool.map((weapon) => (
+						<WeaponImage key={weapon.weaponSplId} weapon={weapon} size={32} />
 					))}
 				</div>
 			) : null}
@@ -262,7 +258,7 @@ function PostTime({
 	updatedAt: number;
 }) {
 	const { t } = useTranslation(["lfg"]);
-	const { formatDate, formatDistanceToNow } = useTimeFormat();
+	const formatDistanceToNow = useFormatDistanceToNow();
 
 	const createdAtDate = databaseTimestampToDate(createdAt);
 	const updatedAtDate = databaseTimestampToDate(updatedAt);
@@ -271,10 +267,13 @@ function PostTime({
 
 	return (
 		<div className="text-lighter text-xs font-bold">
-			{formatDate(createdAtDate, {
-				month: "long",
-				day: "numeric",
-			})}{" "}
+			<LocaleTime
+				date={createdAtDate}
+				options={{
+					month: "numeric",
+					day: "numeric",
+				}}
+			/>{" "}
 			{overDayDifferenceBetween ? (
 				<div className="text-xxs">
 					<i>

@@ -15,9 +15,8 @@ const newBuildLoaderParamsSchema = z.object({
 	buildId: z.preprocess(actualNumber, id),
 });
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = requireUser();
-	const url = new URL(request.url);
 
 	const params = newBuildLoaderParamsSchema.safeParse(
 		Object.fromEntries(url.searchParams),

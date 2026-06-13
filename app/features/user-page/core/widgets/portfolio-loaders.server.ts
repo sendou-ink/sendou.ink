@@ -282,6 +282,9 @@ export const WIDGET_LOADERS = {
 	commissions: async (userId: number) => {
 		return UserRepository.commissionsByUserId(userId);
 	},
+	"weapon-pool": async (userId: number) => {
+		return UserRepository.weaponPoolByUserId(userId);
+	},
 	"social-links": async (userId: number) => {
 		return UserRepository.socialLinksByUserId(userId);
 	},

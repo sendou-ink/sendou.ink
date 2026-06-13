@@ -111,6 +111,19 @@ export type GetCalendarWeekResponse = Array<{
 	startTime: string;
 }>;
 
+/** GET /api/user/{userId}/active-match */
+
+export interface GetUsersActiveMatchResponse {
+	/** The user's current match ID or null if none */
+	matchId: number | null;
+	/** What kind of match the user is in right now */
+	lobby: "sendouq" | "tournament" | null;
+	/** The ID of the tournament (null for sendouq or no match) */
+	tournamentId: number | null;
+	/** The bracket index within the tournament (null for sendouq or no match). Can be used with GET /api/tournament/{tournamentId}/brackets/{bracketIdx} */
+	bracketIdx: number | null;
+}
+
 /** GET /api/sendouq/active-match/{userId} */
 
 export interface GetUsersActiveSendouqMatchResponse {
@@ -291,6 +304,16 @@ type TournamentCastChannel = {
 	 */
 	channelId: string;
 };
+
+/** GET /api/tournament/{tournamentId}/streams */
+
+export type GetTournamentStreamsResponse = Array<
+	{
+		platform: "TWITCH";
+		channelId: string;
+		viewerCount: number;
+	} & ({ type: "PLAYER"; userId: number } | { type: "CAST" })
+>;
 
 /** GET /api/tournament-match/{matchId} */
 

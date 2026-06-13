@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { Readable } from "node:stream";

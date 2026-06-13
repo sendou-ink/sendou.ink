@@ -27,18 +27,18 @@ import {
 	useRevalidator,
 	useSearchParams,
 } from "react-router";
-import { useDebounce } from "react-use";
 import { useChangeLanguage } from "remix-i18next/react";
 import type { CustomTheme } from "~/db/tables";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import { resolveSidebarData } from "~/features/sidebar/core/sidebar.server";
+import { useDebounce } from "~/hooks/useDebounce";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Route } from "./+types/root";
 import { Catcher } from "./components/Catcher";
 import { SendouToastRegion, toastQueue } from "./components/elements/Toast";
 import { FusePageInit } from "./components/fuse/Fuse";
-import { Layout } from "./components/layout";
+import { Layout, NPROGRESS_ANCHOR_ID } from "./components/layout";
 import { getUser } from "./features/auth/core/user.server";
 import { userMiddleware } from "./features/auth/core/user-middleware.server";
 import { ChatProvider } from "./features/chat/ChatProvider";
@@ -52,6 +52,7 @@ import {
 	useTheme,
 } from "./features/theme/core/provider";
 import { getThemeSession } from "./features/theme/core/theme-session.server";
+import { useUserIntlPreference } from "./hooks/intl/useUserIntlPreference";
 import { useHydrated } from "./hooks/useHydrated";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
 import { i18nCookie, i18next } from "./modules/i18n/i18next.server";
@@ -71,6 +72,11 @@ import "~/styles/common.css";
 import "~/styles/utils.css";
 import "~/styles/flags.css";
 import "nprogress/nprogress.css";
+
+// Anchor the loading bar to the header so it sits between the sidebars. Set at
+// module scope (not in an effect) so the very first navigation's NProgress.start
+// already targets the header instead of briefly rendering over the sidebar.
+NProgress.configure({ parent: `#${NPROGRESS_ANCHOR_ID}` });
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	if (isRevalidation(args)) return true;
@@ -153,6 +159,7 @@ function Document({
 }) {
 	const { htmlThemeClass } = useTheme();
 	const { i18n } = useTranslation();
+	const { language } = useUserIntlPreference();
 	const navigate = useNavigate();
 	const locale = data?.locale ?? DEFAULT_LANGUAGE;
 	const customThemeStyle = useCustomThemeVars();
@@ -217,7 +224,7 @@ function Document({
 				{IS_E2E_TEST_RUN && <HydrationTestIndicator />}
 				<React.StrictMode>
 					<RouterProvider navigate={navigate} useHref={useHref}>
-						<I18nProvider locale={i18n.language}>
+						<I18nProvider locale={language}>
 							<SendouToastRegion />
 							<MyFuse data={data} />
 							<ChatProvider user={data?.user}>
@@ -260,7 +267,7 @@ function useTriggerToasts() {
 			);
 		}
 
-		navigate({ search: "" }, { replace: true });
+		navigate({ search: "" }, { replace: true, defaultShouldRevalidate: false });
 	}, [error, success, navigate]);
 }
 
@@ -275,7 +282,7 @@ function useLoadingIndicator() {
 				NProgress.done();
 			}
 		},
-		250,
+		150,
 		[transition.state],
 	);
 }

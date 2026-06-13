@@ -1,14 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type {
 	MainWeaponId,
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
+import { dayMonthYearToDatabaseTimestamp } from "~/utils/dates";
+import type { Vod } from "./vods-types";
 import {
 	extractYoutubeIdFromVideoUrl,
 	generateYoutubeTimestamps,
 	hoursMinutesSecondsStringToSeconds,
 	secondsToHoursMinutesSecondString,
+	vodToVideoBeingAdded,
 } from "./vods-utils";
 
 describe("extractYoutubeIdFromVideoUrl", () => {
@@ -192,6 +195,37 @@ describe("generateYoutubeTimestamps", () => {
 		expect(result).toBe(
 			"0:00 Intro\n8:41 Splattershot / Splat Zones Mahi-Mahi Resort\n12:39 Tri-Stringer / Rainmaker Hagglefish Market",
 		);
+	});
+});
+
+describe("vodToVideoBeingAdded", () => {
+	// youtubeDate is stored as noon UTC of the chosen day (see
+	// dayMonthYearToDatabaseTimestamp), so reading the day/month/year back out
+	// must also use UTC. Force a timezone east of UTC+12 where local time has
+	// already rolled over to the next day, making the bug deterministic.
+	const originalTimezone = process.env.TZ;
+	beforeAll(() => {
+		process.env.TZ = "Pacific/Kiritimati";
+	});
+	afterAll(() => {
+		process.env.TZ = originalTimezone;
+	});
+
+	it("round-trips the stored day/month/year regardless of server timezone", () => {
+		const date = { day: 5, month: 0, year: 2024 };
+		const vod: Vod = {
+			id: 1,
+			title: "Test VOD",
+			type: "TOURNAMENT",
+			youtubeId: "dQw4w9WgXcQ",
+			youtubeDate: dayMonthYearToDatabaseTimestamp(date),
+			submitterUserId: 1,
+			matches: [],
+		};
+
+		const result = vodToVideoBeingAdded(vod);
+
+		expect(result.date).toEqual(date);
 	});
 });
 

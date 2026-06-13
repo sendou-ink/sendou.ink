@@ -1,12 +1,12 @@
 import { Check, Clipboard, PencilLine } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useCopyToClipboard } from "react-use";
 import {
 	CUSTOM_THEME_VARS,
 	type CustomTheme,
 	type CustomThemeVar,
 } from "~/db/tables";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import {
 	ACCENT_CHROMA_MULTIPLIERS,
 	BASE_CHROMA_MULTIPLIERS,
@@ -470,19 +470,9 @@ function ThemeShareInput({
 	onImport: (input: ThemeInput) => void;
 }) {
 	const { t } = useTranslation(["common"]);
-	const [state, copyToClipboard] = useCopyToClipboard();
-	const [copySuccess, setCopySuccess] = React.useState(false);
+	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 
 	const themeString = themeInputToString(themeInput);
-
-	React.useEffect(() => {
-		if (!state.value) return;
-
-		setCopySuccess(true);
-		const timeout = setTimeout(() => setCopySuccess(false), 2000);
-
-		return () => clearTimeout(timeout);
-	}, [state]);
 
 	const handlePaste = async () => {
 		const text = await navigator.clipboard.readText();

@@ -23,8 +23,8 @@ import type { CalendarEventTag, Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { Trophy } from "~/features/trophies/components/Trophy";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
 import {
@@ -138,7 +138,10 @@ export default function CalendarNewEventPage() {
 function TemplateTournamentForm() {
 	const { recentTournaments } = useLoaderData<typeof loader>();
 	const [eventId, setEventId] = React.useState("");
-	const { formatDate } = useTimeFormat();
+	const { formatter } = useDateTimeFormat({
+		month: "numeric",
+		day: "numeric",
+	});
 
 	if (!recentTournaments) return null;
 
@@ -154,13 +157,8 @@ function TemplateTournamentForm() {
 					>
 						<option value="">Select a template</option>
 						{recentTournaments.map((event) => (
-							<option key={event.id} value={event.id} suppressHydrationWarning>
-								{event.name} (
-								{formatDate(databaseTimestampToDate(event.startTime), {
-									month: "numeric",
-									day: "numeric",
-								})}
-								)
+							<option key={event.id} value={event.id}>
+								{event.name} ({formatter.format(event.startTime) ?? ""})
 							</option>
 						))}
 					</select>
@@ -449,9 +447,7 @@ function OrganizationSelect({
 
 function RulesTextarea({ supportsMarkdown }: { supportsMarkdown?: boolean }) {
 	const baseEvent = useBaseEvent();
-	const [value, setValue] = React.useState(
-		baseEvent?.tournament?.ctx.rules ?? "",
-	);
+	const [value, setValue] = React.useState(baseEvent?.rules ?? "");
 
 	return (
 		<div>
@@ -1127,11 +1123,17 @@ function TestToggle() {
 
 function DraftToggle() {
 	const { t } = useTranslation(["calendar"]);
+	const { eventToEdit } = useLoaderData<typeof loader>();
 	const baseEvent = useBaseEvent();
 	const [isDraft, setIsDraft] = React.useState(
 		baseEvent?.tournament?.ctx.settings.isDraft ?? false,
 	);
 	const id = React.useId();
+
+	// once a tournament is published, it can't be flipped back to draft (users may have already saved it)
+	if (eventToEdit && !eventToEdit.tournament?.ctx.settings.isDraft) {
+		return null;
+	}
 
 	return (
 		<div>

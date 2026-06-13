@@ -1,3 +1,4 @@
+import { tournamentBracketsPage } from "~/utils/urls";
 import {
 	expect,
 	impersonate,
@@ -5,8 +6,7 @@ import {
 	seed,
 	submit,
 	test,
-} from "~/utils/playwright";
-import { tournamentBracketsPage } from "~/utils/urls";
+} from "./helpers/playwright";
 
 const AB_RR_TOURNAMENT_ID = 8;
 const TEAMS_PER_DIVISION = 6;
@@ -22,7 +22,7 @@ test.describe("Tournament A/B divisions", () => {
 
 		await navigate({
 			page,
-			url: `/to/${AB_RR_TOURNAMENT_ID}/seeds`,
+			url: `/to/${AB_RR_TOURNAMENT_ID}/admin/seeds`,
 		});
 
 		await page.getByTestId("set-ab-divisions").click();

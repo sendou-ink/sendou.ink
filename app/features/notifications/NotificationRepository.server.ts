@@ -1,6 +1,7 @@
 import { sub } from "date-fns";
 import { db } from "~/db/sql";
 import type { NotificationSubscription, TablesInsertable } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import { dateToDatabaseTimestamp } from "../../utils/dates";
 import { NOTIFICATIONS } from "./notifications-contants";
 import type { Notification } from "./notifications-types";
@@ -68,18 +69,12 @@ export function findAllByType<T extends Notification["type"]>(type: T) {
 		.execute() as Promise<Array<Extract<Notification, { type: T }>>>;
 }
 
-export function markAsSeen({
-	notificationIds,
-	userId,
-}: {
-	notificationIds: number[];
-	userId: number;
-}) {
+export function markOwnAsSeen(notificationIds: number[]) {
 	return db
 		.updateTable("NotificationUser")
 		.set("seen", 1)
 		.where("NotificationUser.notificationId", "in", notificationIds)
-		.where("NotificationUser.userId", "=", userId)
+		.where("NotificationUser.userId", "=", actorId())
 		.execute();
 }
 
@@ -94,15 +89,12 @@ export function deleteOld() {
 		.executeTakeFirst();
 }
 
-export function addSubscription(args: {
-	userId: number;
-	subscription: NotificationSubscription;
-}) {
+export function addOwnSubscription(subscription: NotificationSubscription) {
 	return db
 		.insertInto("NotificationUserSubscription")
 		.values({
-			userId: args.userId,
-			subscription: JSON.stringify(args.subscription),
+			userId: actorId(),
+			subscription: JSON.stringify(subscription),
 		})
 		.execute();
 }

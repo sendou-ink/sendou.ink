@@ -1,7 +1,7 @@
 // adapted from https://github.com/cedricdelpoux/react-responsive-masonry
 
 import React from "react";
-import { createBreakpoint } from "react-use";
+import { useWindowSize } from "~/hooks/useWindowSize";
 import Masonry from "./Masonry";
 
 const COLUMN_COUNTS = {
@@ -10,14 +10,20 @@ const COLUMN_COUNTS = {
 	S: 1,
 };
 
-const useBreakpoint = createBreakpoint({ L: 900, M: 750, S: 350 });
+const BREAKPOINTS = {
+	L: 900,
+	M: 750,
+	S: 350,
+} as const;
+
+type Breakpoint = keyof typeof BREAKPOINTS;
 
 const MasonryResponsive = ({
 	children,
 }: {
 	children: React.ReactNode | React.ReactNode[];
 }) => {
-	const breakpoint = useBreakpoint() as "L" | "M" | "S";
+	const breakpoint = useBreakpoint();
 
 	const columnsCount = COLUMN_COUNTS[breakpoint];
 
@@ -38,5 +44,16 @@ export function ResponsiveMasonry({ children }: { children: React.ReactNode }) {
 		<MasonryResponsive>
 			<Masonry gutter="1rem">{children}</Masonry>
 		</MasonryResponsive>
+	);
+}
+
+function useBreakpoint(): Breakpoint {
+	const { width } = useWindowSize();
+
+	const ascending = Object.entries(BREAKPOINTS).sort((a, b) => a[1] - b[1]);
+	return ascending.reduce<Breakpoint>(
+		(current, [name, minWidth]) =>
+			width >= minWidth ? (name as Breakpoint) : current,
+		ascending[0][0] as Breakpoint,
 	);
 }

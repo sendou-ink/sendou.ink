@@ -525,7 +525,7 @@ export function validAdvanceThresholdOptions({
 }) {
 	const result: number[] = [];
 
-	for (let i = 2; i <= Math.min(maxAdvanceThreshold({ roundCount }), 5); i++) {
+	for (let i = 2; i <= maxAdvanceThreshold({ roundCount }); i++) {
 		result.push(i);
 	}
 

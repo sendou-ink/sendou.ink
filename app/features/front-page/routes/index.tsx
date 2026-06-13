@@ -10,14 +10,14 @@ import { BSKYLikeIcon } from "~/components/icons/BSKYLike";
 import { BSKYReplyIcon } from "~/components/icons/BSKYReply";
 import { BSKYRepostIcon } from "~/components/icons/BSKYRepost";
 import { ExternalIcon } from "~/components/icons/External";
+import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { navItems } from "~/components/layout/nav-items";
 import { Main } from "~/components/Main";
 import { TournamentCard } from "~/features/calendar/components/TournamentCard";
+import { PWAInstallBanner } from "~/features/front-page/components/PWAInstallBanner";
 import { SplatoonRotations } from "~/features/front-page/components/SplatoonRotations";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import styles from "~/styles/front.module.css";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -66,16 +66,15 @@ function SeasonDates({
 	season: ReturnType<typeof useSeasonData>["season"];
 	className: string;
 }) {
-	const isHydrated = useHydrated();
-	const { formatDate } = useTimeFormat();
-
-	return isHydrated ? (
+	return (
 		<div className={className}>
-			{formatDate(season.starts, { month: "long", day: "numeric" })} -{" "}
-			{formatDate(season.ends, { month: "long", day: "numeric" })}
+			<LocaleTimeRange
+				from={season.starts}
+				to={season.ends}
+				options={{ month: "numeric", day: "numeric" }}
+				inline
+			/>
 		</div>
-	) : (
-		<div className={clsx(className, "invisible")}>X</div>
 	);
 }
 
@@ -110,13 +109,16 @@ function SeasonBanner() {
 }
 
 function SeasonCard() {
-	const { t } = useTranslation(["front"]);
+	const { t } = useTranslation(["front", "common"]);
 	const { season, isInFuture, isShowingPreviousSeason } = useSeasonData();
 
 	if (isShowingPreviousSeason) return null;
 
 	return (
-		<>
+		<div className={styles.seasonCardDesktopOnly}>
+			<h2 className={styles.resultHighlightsTitle}>
+				{t("common:pages.sendouq")}
+			</h2>
 			<Link to={SENDOUQ_PAGE} className={styles.seasonCard}>
 				<div className={styles.seasonCardHeader}>
 					{t("front:sq.season", { nth: season.nth })}
@@ -132,7 +134,7 @@ function SeasonCard() {
 				<Image path={navIconUrl("sendouq")} size={16} alt="" />
 				{isInFuture ? t("front:sq.prepare") : t("front:sq.participate")}
 			</Link>
-		</>
+		</div>
 	);
 }
 
@@ -173,12 +175,7 @@ function ResultHighlights() {
 					"overflow-x-auto scrollbar",
 				)}
 			>
-				<div className={styles.seasonCardDesktopOnly}>
-					<h2 className={styles.resultHighlightsTitle}>
-						{t("common:pages.sendouq")}
-					</h2>
-					<SeasonCard />
-				</div>
+				<SeasonCard />
 				<div className="stack sm text-center">
 					<h2 className={styles.resultHighlightsTitle}>
 						{t("front:leaderboards.topPlayers")}
@@ -216,11 +213,7 @@ function ResultHighlights() {
 					</h2>
 					<div className={clsx(styles.tournamentCardsSpacer, "scrollbar")}>
 						{data.tournaments.results.map((tournament) => (
-							<TournamentCard
-								key={tournament.id}
-								tournament={tournament}
-								withRelativeTime
-							/>
+							<TournamentCard key={tournament.id} tournament={tournament} />
 						))}
 					</div>
 				</div>
@@ -317,6 +310,7 @@ function DiscoverFeatures() {
 					</Link>
 				))}
 			</nav>
+			<PWAInstallBanner />
 		</div>
 	);
 }

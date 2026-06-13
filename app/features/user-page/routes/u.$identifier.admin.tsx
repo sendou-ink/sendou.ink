@@ -4,11 +4,10 @@ import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
+import { LocaleTime } from "~/components/LocaleTime";
 import { useUser } from "~/features/auth/core/user";
 import { addModNoteSchema } from "~/features/user-page/user-page-schemas";
 import { SendouForm } from "~/form";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
-import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { userPage } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.admin.server";
@@ -57,32 +56,39 @@ export default function UserAdminPage() {
 
 function AccountInfos() {
 	const data = useLoaderData<typeof loader>();
-	const { formatDateTime } = useTimeFormat();
 
 	return (
 		<dl>
 			<dt>User account created at</dt>
 			<dd>
-				{data.createdAt
-					? formatDateTime(databaseTimestampToDate(data.createdAt), {
+				{data.createdAt ? (
+					<LocaleTime
+						date={data.createdAt}
+						options={{
 							year: "numeric",
-							month: "long",
+							month: "numeric",
 							day: "numeric",
 							hour: "2-digit",
 							minute: "2-digit",
-						})
-					: "―"}
+						}}
+					/>
+				) : (
+					"―"
+				)}
 			</dd>
 
 			<dt>Discord account created at</dt>
 			<dd>
-				{formatDateTime(new Date(data.discordAccountCreatedAt), {
-					year: "numeric",
-					month: "long",
-					day: "numeric",
-					hour: "2-digit",
-					minute: "2-digit",
-				})}
+				<LocaleTime
+					date={new Date(data.discordAccountCreatedAt)}
+					options={{
+						year: "numeric",
+						month: "numeric",
+						day: "numeric",
+						hour: "2-digit",
+						minute: "2-digit",
+					}}
+				/>
 			</dd>
 
 			<dt>Discord ID</dt>
@@ -113,7 +119,6 @@ function AccountInfos() {
 function ModNotes() {
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
-	const { formatDateTime } = useTimeFormat();
 
 	if (!data.modNotes || data.modNotes.length === 0) {
 		return (
@@ -128,15 +133,17 @@ function ModNotes() {
 		<div className="stack lg">
 			{data.modNotes.map((note) => (
 				<div key={note.noteId}>
-					<p className="font-bold">
-						{formatDateTime(databaseTimestampToDate(note.createdAt), {
+					<LocaleTime
+						date={note.createdAt}
+						options={{
 							year: "numeric",
-							month: "long",
+							month: "numeric",
 							day: "numeric",
-							hour: "2-digit",
-							minute: "2-digit",
-						})}
-					</p>
+							hour: "numeric",
+							minute: "numeric",
+						}}
+						className="font-bold"
+					/>
 					<p className="ml-2">By: {note.username}</p>
 					<p className="ml-2 whitespace-pre-wrap">Note: {note.text}</p>
 					{note.discordId === user?.discordId ? (
@@ -184,7 +191,6 @@ function NewModNoteDialog() {
 
 function BanLog() {
 	const data = useLoaderData<typeof loader>();
-	const { formatDateTime } = useTimeFormat();
 
 	if (!data.banLogs || data.banLogs.length === 0) {
 		return <p className="text-center text-lighter italic">No bans</p>;
@@ -194,15 +200,17 @@ function BanLog() {
 		<div className="stack lg">
 			{data.banLogs.map((ban) => (
 				<div key={ban.createdAt}>
-					<p className="font-bold">
-						{formatDateTime(databaseTimestampToDate(ban.createdAt), {
+					<LocaleTime
+						date={ban.createdAt}
+						options={{
 							year: "numeric",
-							month: "long",
+							month: "numeric",
 							day: "numeric",
-							hour: "2-digit",
-							minute: "2-digit",
-						})}
-					</p>
+							hour: "numeric",
+							minute: "numeric",
+						}}
+						className="font-bold"
+					/>
 					{ban.banned === 0 ? (
 						<p className="text-success ml-2">Unbanned</p>
 					) : (
@@ -212,15 +220,21 @@ function BanLog() {
 					{typeof ban.banned === "number" && ban.banned !== 0 ? (
 						<p className="ml-2">
 							Banned till:{" "}
-							{ban.banned !== 1
-								? formatDateTime(databaseTimestampToDate(ban.banned), {
+							{ban.banned !== 1 ? (
+								<LocaleTime
+									date={ban.banned}
+									options={{
 										year: "numeric",
-										month: "long",
+										month: "numeric",
 										day: "numeric",
-										hour: "2-digit",
-										minute: "2-digit",
-									})
-								: "No end date set"}
+										hour: "numeric",
+										minute: "numeric",
+									}}
+									inline
+								/>
+							) : (
+								"No end date set"
+							)}
 						</p>
 					) : null}
 					{ban.banned !== 0 ? (
@@ -239,7 +253,6 @@ function BanLog() {
 
 function FriendCodes() {
 	const data = useLoaderData<typeof loader>();
-	const { formatDateTime } = useTimeFormat();
 
 	if (!data.friendCodes || data.friendCodes.length === 0) {
 		return <p className="text-center text-lighter italic">No friend codes</p>;
@@ -252,13 +265,17 @@ function FriendCodes() {
 					<p className="font-bold">{fc.friendCode}</p>
 					<p className="ml-2">
 						{index === 0 ? "Current" : "Past"} - Added on{" "}
-						{formatDateTime(databaseTimestampToDate(fc.createdAt), {
-							year: "numeric",
-							month: "long",
-							day: "numeric",
-							hour: "2-digit",
-							minute: "2-digit",
-						})}
+						<LocaleTime
+							date={fc.createdAt}
+							options={{
+								year: "numeric",
+								month: "numeric",
+								day: "numeric",
+								hour: "numeric",
+								minute: "numeric",
+							}}
+							inline
+						/>
 					</p>
 					<p className="ml-2">Submitted by: {fc.submitterUsername}</p>
 				</div>

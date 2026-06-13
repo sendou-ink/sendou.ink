@@ -1,3 +1,4 @@
+import { differenceInHours } from "date-fns";
 import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
@@ -13,17 +14,13 @@ import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as Standings from "~/features/tournament/core/Standings";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { tournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import {
-	addSummary,
-	finalizeTournament,
-} from "~/features/tournament-bracket/queries/addSummary.server";
-import { allMatchResultsByTournamentId } from "~/features/tournament-bracket/queries/allMatchResultsByTournamentId.server";
 import {
 	finalizeTournamentActionSchema,
 	type TournamentBadgeReceivers,
@@ -33,6 +30,7 @@ import {
 	validateBadgeReceivers,
 	validateTrophyReceiver,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
+import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { refreshTentativeTiersCache } from "~/features/tournament-organization/core/tentativeTiers.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import invariant from "~/utils/invariant";
@@ -76,10 +74,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		: true;
 	if (!badgeOwnersValid) errorToast("New badge owners invalid");
 
-	const results = allMatchResultsByTournamentId(tournamentId);
+	const results =
+		await TournamentMatchRepository.allResultsByTournamentId(tournamentId);
 	invariant(results.length > 0, "No results found");
 
-	const season = Seasons.current(tournament.ctx.startTime)?.nth;
+	const season = resolveFinalizationSeason(tournament);
 
 	const seedingSkillCountsFor = tournament.skillCountsFor;
 	const standingsResult = Standings.tournamentStandings(tournament);
@@ -100,7 +99,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		teams: tournament.ctx.teams,
 		finalStandings,
 		results,
-		calculateSeasonalStats: tournament.ranked,
+		calculateSeasonalStats: tournament.ranked && typeof season === "number",
 		queryCurrentTeamRating: (identifier) =>
 			queryCurrentTeamRating({ identifier, season: season! }).rating,
 		queryCurrentUserRating: (userId) =>
@@ -122,7 +121,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const tournamentSummaryString = `Tournament id: ${tournamentId}, mapResultDeltas.lenght: ${summary.mapResultDeltas.length}, playerResultDeltas.length ${summary.playerResultDeltas.length}, tournamentResults.length ${summary.tournamentResults.length}, skills.length ${summary.skills.length}, seedingSkills.length ${summary.seedingSkills.length}`;
 	if (!tournament.isTest) {
 		logger.info(`Inserting tournament summary. ${tournamentSummaryString}`);
-		addSummary({
+		await TournamentRepository.finalize({
 			tournamentId,
 			summary,
 			season,
@@ -133,7 +132,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		logger.info(
 			`Did not insert tournament summary. ${tournamentSummaryString}`,
 		);
-		finalizeTournament(tournamentId);
+		await TournamentRepository.finalizeWithoutSummary(tournamentId);
 	}
 
 	await SavedCalendarEventRepository.deleteByTournamentId(tournamentId);
@@ -142,9 +141,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		await updateSeriesTierHistory(tournament);
 	}
 
-	if (tournament.ranked) {
+	if (tournament.ranked && typeof season === "number") {
 		try {
-			refreshUserSkills(season!);
+			refreshUserSkills(season);
 		} catch (error) {
 			logger.warn("Error refreshing user skills", error);
 		}
@@ -292,4 +291,19 @@ async function updateSeriesTierHistory(tournament: Tournament) {
 	} catch (error) {
 		logger.error("Error updating series tier history", error);
 	}
+}
+
+function resolveFinalizationSeason(tournament: Tournament) {
+	// league divisions might be running for many weeks
+	const attributionDate = tournament.isLeagueDivision
+		? new Date()
+		: tournament.ctx.startTime;
+	const season = Seasons.current(attributionDate);
+	if (!season) return undefined;
+
+	// don't allow changing seasons that have already been closed for a long while
+	// even if you were sluggish with finalizing the tournament
+	if (differenceInHours(new Date(), season.ends) >= 24) return undefined;
+
+	return season.nth;
 }

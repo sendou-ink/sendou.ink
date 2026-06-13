@@ -11,8 +11,8 @@ import type {
 } from "../../db/tables";
 import { assertUnreachable } from "../../utils/types";
 import { MapPool } from "../map-list-generator/core/map-pool";
+import { BANNED_MAPS } from "../match-profile/banned-maps";
 import * as Seasons from "../mmr/core/Seasons";
-import { BANNED_MAPS } from "../sendouq-settings/banned-maps";
 import type { ParsedBracket } from "../tournament-bracket/core/Progression";
 import * as Progression from "../tournament-bracket/core/Progression";
 import type { Tournament as TournamentClass } from "../tournament-bracket/core/Tournament";
@@ -157,6 +157,31 @@ export function tournamentIsRanked({
 	if (minMembersPerTeam !== 4) return false;
 
 	return isSetAsRanked ?? true;
+}
+
+/**
+ * Whether a tournament's startTime falls inside the active weapon-reporting window
+ * for late (post-finalization) reporting.
+ *
+ * - In-season: window is `(previousSeason.ends, now]` — current season plus the off-season immediately before it.
+ * - Off-season: window is `[previousSeason.starts, now]` — previous full season plus the current off-season.
+ */
+export function tournamentInWeaponReportingWindow({
+	tournamentStartTime,
+	now = new Date(),
+}: {
+	tournamentStartTime: Date;
+	now?: Date;
+}) {
+	const previousSeason = Seasons.previous(now);
+	if (!previousSeason) return true;
+
+	const currentSeason = Seasons.current(now);
+	const windowStart = currentSeason
+		? previousSeason.ends
+		: previousSeason.starts;
+
+	return tournamentStartTime > windowStart;
 }
 
 export function resolveLeagueRoundStartDate(
@@ -395,6 +420,131 @@ export function getBracketProgressionLabel(
 	}
 
 	return prefix;
+}
+
+const LEADING_SEPARATOR_REGEX = /^[\s_-]+/;
+
+/**
+ * Splits a tournament name into its series name and a trailing "subtext"
+ * (e.g. an edition number like `"54"` or a date like `"May 2026"`) based on the
+ * names of the organization's tournament series.
+ *
+ * The longest series name that the tournament name starts with (case-insensitive)
+ * is treated as the base name and whatever follows it becomes the subtext. If the
+ * tournament name does not start with any of the series names, the whole name is
+ * returned with no subtext.
+ *
+ * @example
+ * // series: [{ name: "In The Zone" }]
+ * splitTournamentName("In The Zone 54", series)     // { name: "In The Zone", subtext: "54" }
+ * splitTournamentName("In The Zone Winter", series) // { name: "In The Zone", subtext: "Winter" }
+ * splitTournamentName("Picnic Weekly", series)      // { name: "Picnic Weekly" }
+ */
+export function splitTournamentName(
+	tournamentName: string,
+	series: Array<{ name: string }>,
+): { name: string; subtext?: string } {
+	const trimmedName = tournamentName.trim();
+	const nameLower = trimmedName.toLowerCase();
+
+	const matchingSeries = R.firstBy(
+		series.filter((s) => nameLower.startsWith(s.name.toLowerCase())),
+		[(s) => s.name.length, "desc"],
+	);
+
+	if (!matchingSeries) return { name: trimmedName };
+
+	const subtext = trimmedName
+		.slice(matchingSeries.name.length)
+		.replace(LEADING_SEPARATOR_REGEX, "")
+		.trim();
+
+	if (!subtext) return { name: matchingSeries.name };
+
+	return { name: matchingSeries.name, subtext };
+}
+
+/**
+ * Resolves the display name and subtext for a tournament's identity.
+ *
+ * For a league division the parent tournament name is used as the base name and
+ * the division name (e.g. `"Division 1"`) becomes the subtext. For all other
+ * tournaments the split is based on the organization's tournament series.
+ *
+ * @see {@link splitTournamentName}
+ */
+export function tournamentNameParts(tournament: TournamentClass): {
+	name: string;
+	subtext?: string;
+} {
+	if (tournament.isLeagueDivision && tournament.ctx.parentTournamentName) {
+		return splitTournamentName(tournament.ctx.name, [
+			{ name: tournament.ctx.parentTournamentName },
+		]);
+	}
+
+	return splitTournamentName(
+		tournament.ctx.name,
+		tournament.ctx.organization?.series ?? [],
+	);
+}
+
+const STAGE_TYPE_TO_SHORT_CODE: Record<
+	Tables["TournamentStage"]["type"],
+	string
+> = {
+	single_elimination: "SE",
+	double_elimination: "DE",
+	round_robin: "RR",
+	swiss: "SW",
+};
+
+/**
+ * Builds a compact label describing the bracket progression of a tournament,
+ * derived from `settings.bracketProgression`.
+ *
+ * Each stage type is rendered as a short code (`RR`, `SE`, `DE`, `SW`). Main progression stages are
+ * arrow-separated with consecutive duplicates collapsed (e.g. two single-elimination stages still
+ * render as a single `SE`).
+ *
+ * Underground brackets are not part of the main progression — they give early losers another chance
+ * to play. When present the whole label is tagged `(UG)` once. An underground bracket type that does
+ * not already appear in the main progression is also surfaced with `+ {code}`, while repeated
+ * underground brackets of an already-shown type are collapsed away to keep the label compact.
+ *
+ * @example
+ * // [{type: "round_robin"}, {type: "single_elimination"}, ...underground SE brackets]
+ * bracketProgressionLabel(progression) // "RR → SE (UG)"
+ * // [{type: "double_elimination"}, {type: "single_elimination", sources: [...]}]
+ * bracketProgressionLabel(progression) // "DE + SE (UG)"
+ */
+export function bracketProgressionLabel(progression: ParsedBracket[]): string {
+	if (progression.length === 0) return "";
+
+	const mainCodes: string[] = [];
+	const undergroundCodes: string[] = [];
+	for (let i = 0; i < progression.length; i++) {
+		const code = STAGE_TYPE_TO_SHORT_CODE[progression[i].type];
+		const codes = Progression.isUnderground(i, progression)
+			? undergroundCodes
+			: mainCodes;
+		if (codes.at(-1) !== code) {
+			codes.push(code);
+		}
+	}
+
+	const mainLabel = mainCodes.join(" → ");
+
+	if (undergroundCodes.length === 0) return mainLabel;
+
+	const extraCodes = undergroundCodes.filter(
+		(code) => !mainCodes.includes(code),
+	);
+
+	const label =
+		extraCodes.length > 0 ? [mainLabel, ...extraCodes].join(" + ") : mainLabel;
+
+	return `${label} (UG)`;
 }
 
 /**

@@ -54,14 +54,18 @@ export interface SendouMenuItemProps extends MenuItemProps {
 export function SendouMenuSection({
 	children,
 	headerText,
+	headerClassName,
 }: {
 	children: React.ReactNode;
-	headerText?: string;
+	headerText?: React.ReactNode;
+	headerClassName?: string;
 }) {
 	return (
 		<Section>
 			{headerText ? (
-				<Header className={styles.menuHeader}>{headerText}</Header>
+				<Header className={clsx(styles.menuHeader, headerClassName)}>
+					{headerText}
+				</Header>
 			) : null}
 			{children}
 		</Section>

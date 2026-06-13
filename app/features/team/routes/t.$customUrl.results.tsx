@@ -6,6 +6,10 @@ import { loader } from "../loaders/t.$customUrl.results.server";
 
 export { loader };
 
+export const handle = {
+	i18n: ["user"],
+};
+
 export default function TeamResultsPage() {
 	const data = useLoaderData<typeof loader>();
 

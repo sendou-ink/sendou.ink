@@ -5,7 +5,7 @@ import { Ability } from "~/components/Ability";
 import { SendouButton } from "~/components/elements/Button";
 import { ModeImage } from "~/components/Image";
 import { possibleApValues } from "~/features/build-analyzer/core/utils";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { abilities } from "~/modules/in-game-lists/abilities";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type {
@@ -196,7 +196,11 @@ function DateFilter({
 	onChange: (filter: Partial<DateBuildFilter>) => void;
 }) {
 	const { t } = useTranslation(["builds"]);
-	const { formatDate } = useTimeFormat();
+	const { formatter: patchDateFormatter } = useDateTimeFormat({
+		day: "numeric",
+		month: "numeric",
+		year: "numeric",
+	});
 
 	const selectValue = () =>
 		PATCHES.some(({ date }) => date === filter.date) ? filter.date : "CUSTOM";
@@ -233,13 +237,7 @@ function DateFilter({
 
 					return (
 						<option key={patch} value={dateString}>
-							{patch} (
-							{formatDate(date, {
-								day: "numeric",
-								month: "long",
-								year: "numeric",
-							})}
-							)
+							{patch} ({patchDateFormatter.format(date) ?? ""})
 						</option>
 					);
 				})}

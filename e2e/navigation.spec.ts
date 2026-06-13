@@ -1,4 +1,10 @@
-import { expect, impersonate, navigate, seed, test } from "~/utils/playwright";
+import {
+	expect,
+	impersonate,
+	navigate,
+	seed,
+	test,
+} from "./helpers/playwright";
 
 test.describe("Navigation", () => {
 	test("desktop navigation", async ({ page }) => {

@@ -1,12 +1,16 @@
-import "@formatjs/intl-durationformat/polyfill.js";
 import { PassThrough } from "node:stream";
 import { createReadableStreamFromReadable } from "@react-router/node";
+import * as Sentry from "@sentry/react-router";
 import { createInstance } from "i18next";
 import { isbot } from "isbot";
 import cron from "node-cron";
 import { renderToPipeableStream } from "react-dom/server";
 import { I18nextProvider, initReactI18next } from "react-i18next";
-import { type EntryContext, ServerRouter } from "react-router";
+import {
+	type EntryContext,
+	type HandleErrorFunction,
+	ServerRouter,
+} from "react-router";
 import { config } from "~/modules/i18n/config"; // your i18n configuration file
 import { i18next } from "~/modules/i18n/i18next.server";
 import { resources } from "./modules/i18n/resources.server";
@@ -21,7 +25,9 @@ import { logger } from "./utils/logger";
 // Reject/cancel all pending promises after 5 seconds
 export const streamTimeout = 5000;
 
-export default async function handleRequest(
+const SENTRY_ENABLED = import.meta.env.VITE_SENTRY_ENABLED === "true";
+
+async function handleRequest(
 	request: Request,
 	responseStatusCode: number,
 	responseHeaders: Headers,
@@ -42,7 +48,6 @@ export default async function handleRequest(
 			lng, // The locale we detected above
 			ns, // The namespaces the routes about to render wants to use
 			resources,
-			showSupportNotice: false,
 		});
 
 	return new Promise((resolve, reject) => {
@@ -65,7 +70,7 @@ export default async function handleRequest(
 						}),
 					);
 
-					pipe(body);
+					pipe(SENTRY_ENABLED ? Sentry.getMetaTagTransformer(body) : body);
 				},
 				onShellError(error: unknown) {
 					reject(error);
@@ -123,6 +128,15 @@ process.on("unhandledRejection", (reason: string, p: Promise<any>) => {
 });
 
 // wrapper so we get request id shown in the server logs
-export function handleError(error: unknown) {
+export const handleError: HandleErrorFunction = (error, { request }) => {
+	if (SENTRY_ENABLED && !request.signal.aborted) {
+		Sentry.captureException(error);
+	}
 	logger.error(error);
-}
+};
+export default SENTRY_ENABLED
+	? Sentry.wrapSentryHandleRequest(handleRequest)
+	: handleRequest;
+export const instrumentations = SENTRY_ENABLED
+	? [Sentry.createSentryServerInstrumentation()]
+	: [];

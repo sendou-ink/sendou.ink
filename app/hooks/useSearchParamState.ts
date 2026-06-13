@@ -37,8 +37,19 @@ export function useSearchParamStateEncoder<T>({
 	/** Function to create the string for search params. */
 	encode: (value: T) => string;
 }) {
-	const [initialSearchParams] = useSearchParams();
-	const [state, setState] = React.useState<T>(resolveInitialState());
+	const [searchParams] = useSearchParams();
+	const rawValue = searchParams.get(name);
+
+	const [state, setState] = React.useState<T>(resolveStateFromUrl);
+
+	// Sync state when the URL search param changes externally (e.g. via <Link>
+	// navigation). Internal updates use history.replaceState which bypasses
+	// react-router, so they don't trigger this branch.
+	const previousRawValueRef = React.useRef(rawValue);
+	if (rawValue !== previousRawValueRef.current) {
+		previousRawValueRef.current = rawValue;
+		setState(resolveStateFromUrl());
+	}
 
 	const handleChange = React.useCallback(
 		(newValue: T) => {
@@ -59,12 +70,11 @@ export function useSearchParamStateEncoder<T>({
 
 	return [state, handleChange] as const;
 
-	function resolveInitialState() {
-		const value = initialSearchParams.get(name);
-		if (value === null || value === undefined) {
+	function resolveStateFromUrl() {
+		if (rawValue === null || rawValue === undefined) {
 			return defaultValue;
 		}
 
-		return revive(value) ?? defaultValue;
+		return revive(rawValue) ?? defaultValue;
 	}
 }

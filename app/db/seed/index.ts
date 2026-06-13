@@ -9,9 +9,13 @@ import * as AssociationRepository from "~/features/associations/AssociationRepos
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { tags } from "~/features/calendar/calendar-constants";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
+import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
+import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/match-profile/match-profile-constants";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import type { Notification } from "~/features/notifications/notifications-types";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
@@ -22,21 +26,9 @@ import {
 } from "~/features/plus-voting/core";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
-import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
-import { calculateMatchSkills } from "~/features/sendouq-match/core/skills.server";
-import {
-	summarizeMaps,
-	summarizePlayerResults,
-} from "~/features/sendouq-match/core/summarizer.server";
-import * as PlayerStatRepository from "~/features/sendouq-match/PlayerStatRepository.server";
-import { winnersArrayToWinner } from "~/features/sendouq-match/q-match-utils";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
-import * as SkillRepository from "~/features/sendouq-match/SkillRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
-import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
-import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
-import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/sendouq-settings/q-settings-constants";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
@@ -56,10 +48,14 @@ import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import { stagesObj as s, stageIds } from "~/modules/in-game-lists/stage-ids";
 import type {
 	AbilityType,
+	MainWeaponId,
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
-import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
+import {
+	canonicalWeaponSplId,
+	mainWeaponIds,
+} from "~/modules/in-game-lists/weapon-ids";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { nullFilledArray } from "~/utils/arrays";
 import {
@@ -70,14 +66,14 @@ import {
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import { randomTeamName } from "~/utils/team-name";
-import { mySlugify } from "~/utils/urls";
+import { mySlugify, navIconUrl, sendouQMatchPage } from "~/utils/urls";
 import {
 	getArtFilename,
 	SEED_ART_URLS,
 	SEED_TEAM_IMAGES,
 	SEED_TOURNAMENT_IMAGES,
 } from "../../../scripts/seed-art-urls";
-import type { QWeaponPool, Tables, UserMapModePreferences } from "../tables";
+import type { ParsedMemento, Tables, UserMapModePreferences } from "../tables";
 import {
 	ADMIN_TEST_AVATAR,
 	AMOUNT_OF_CALENDAR_EVENTS,
@@ -85,6 +81,8 @@ import {
 	NZAP_TEST_DISCORD_ID,
 	NZAP_TEST_ID,
 	ORG_ADMIN_TEST_ID,
+	STAFF_TEST_DISCORD_ID,
+	STAFF_TEST_ID,
 } from "./constants";
 import placements from "./placements.json";
 import trophies from "./trophies.json";
@@ -174,13 +172,15 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	makeAdminTournamentOrganizer,
 	nzapUser,
 	users,
+	staffUser,
 	fixAdminId,
+	fixStaffUserId,
 	makeArtists,
 	adminUserWeaponPool,
 	adminUserWidgets,
 	userProfiles,
 	variation === "TEAM_MAP_PREFS" ? undefined : userMapModePreferences,
-	userQWeaponPool,
+	userMatchProfileWeaponPool,
 	seedingSkills,
 	lastMonthsVoting,
 	syncPlusTiers,
@@ -776,6 +776,26 @@ function nzapUser() {
 	});
 }
 
+function staffUser() {
+	return UserRepository.upsert({
+		discordId: STAFF_TEST_DISCORD_ID,
+		discordName: "Panda",
+		twitch: null,
+		youtubeId: null,
+		discordAvatar: null,
+		discordUniqueName: null,
+	});
+}
+
+function fixStaffUserId() {
+	sql.prepare(`delete from user where id = ${STAFF_TEST_ID}`).run();
+	sql
+		.prepare(
+			`update "User" set "id" = ${STAFF_TEST_ID} where "discordId" = '${STAFF_TEST_DISCORD_ID}'`,
+		)
+		.run();
+}
+
 async function users() {
 	const usedNames = new Set<string>();
 	for (let i = 0; i < 500; i++) {
@@ -875,7 +895,7 @@ async function userProfiles() {
 		if (faker.number.float(1) > 0.9) defaultLanguages.push("it");
 		if (faker.number.float(1) > 0.9) defaultLanguages.push("ja");
 
-		await QSettingsRepository.updateVoiceChat({
+		await MatchProfileRepository.updateVoiceChat({
 			languages: defaultLanguages,
 			userId: id,
 			vc:
@@ -929,25 +949,27 @@ async function userMapModePreferences() {
 	}
 }
 
-async function userQWeaponPool() {
-	for (let id = 1; id < 500; id++) {
-		if (id === 2) continue; // no weapons for N-ZAP
+async function userMatchProfileWeaponPool() {
+	const users = sql.prepare('SELECT id FROM "User" LIMIT 500').all() as {
+		id: number;
+	}[];
+
+	for (const { id } of users) {
+		if (id === NZAP_TEST_ID) continue; // no weapons for N-ZAP
 		if (faker.number.float(1) < 0.2) continue; // 80% have weapons
 
 		const weapons = faker.helpers
 			.shuffle(mainWeaponIds)
 			.slice(0, faker.helpers.arrayElement([1, 2, 3, 4]));
 
-		const weaponPool: Array<QWeaponPool> = weapons.map((weaponSplId) => ({
+		const weaponPool = weapons.map((weaponSplId, i) => ({
+			userId: id,
+			sortOrder: i,
 			weaponSplId,
 			isFavorite: faker.number.float(1) > 0.7 ? 1 : 0,
 		}));
 
-		await db
-			.updateTable("User")
-			.set({ qWeaponPool: JSON.stringify(weaponPool) })
-			.where("User.id", "=", id)
-			.execute();
+		await db.insertInto("UserWeaponPool").values(weaponPool).execute();
 	}
 }
 
@@ -1101,14 +1123,15 @@ async function thisMonthsSuggestions() {
 	}
 }
 
-function syncPlusTiers() {
-	sql
-		.prepare(
-			/* sql */ `
-    insert into "PlusTier" ("userId", "tier") select "userId", "tier" from "FreshPlusTier" where "tier" is not null;
-  `,
-		)
-		.run();
+async function syncPlusTiers() {
+	const tiers = await PlusVotingRepository.allPlusTiersFromLatestVoting();
+
+	if (tiers.length === 0) return;
+
+	await db
+		.insertInto("PlusTier")
+		.values(tiers.map(({ userId, plusTier }) => ({ userId, tier: plusTier })))
+		.execute();
 }
 
 function getAvailableBadgeIds() {
@@ -2253,7 +2276,12 @@ const randomAbility = (legalTypes: AbilityType[]) => {
 	return randomOrderAbilities.find((a) => legalTypes.includes(a.type))!.name;
 };
 
-const adminWeaponPool = mainWeaponIds.filter(() => faker.number.float(1) > 0.8);
+const canonicalMainWeaponIds = mainWeaponIds.filter(
+	(id) => canonicalWeaponSplId(id) === id,
+);
+const adminWeaponPool = canonicalMainWeaponIds.filter(
+	() => faker.number.float(1) > 0.8,
+);
 async function adminBuilds() {
 	for (let i = 0; i < 50; i++) {
 		const randomOrderHeadGear = faker.helpers.shuffle(headGearIds.slice());
@@ -2328,7 +2356,7 @@ async function manySplattershotBuilds() {
 		);
 		const randomOrderShoesGear = faker.helpers.shuffle(shoesGearIds.slice());
 		const randomOrderWeaponIds = faker.helpers
-			.shuffle(mainWeaponIds.slice())
+			.shuffle(canonicalMainWeaponIds.slice())
 			.filter((id) => id !== SPLATTERSHOT_ID);
 
 		const ownerId = users.pop()!;
@@ -2800,11 +2828,20 @@ async function groups(variation?: SeedVariation | null) {
 		.filter((id) => id !== ADMIN_ID && id !== NZAP_TEST_ID);
 	users.push(NZAP_TEST_ID);
 
+	let nzapGroupId = 0;
+	let sendouGroupId = 0;
+	const nzapGroupMemberIds: number[] = [];
+	const sendouGroupMemberIds: number[] = [];
+
 	for (let i = 0; i < 25; i++) {
+		const ownerId = users.pop()!;
 		const group = await SQGroupRepository.createGroup({
 			status: "ACTIVE",
-			userId: users.pop()!,
+			userId: ownerId,
 		});
+
+		if (i === 0) nzapGroupMemberIds.push(ownerId);
+		if (i === 1) sendouGroupMemberIds.push(ownerId);
 
 		const amountOfAdditionalMembers = () => {
 			if (SENDOU_IN_FULL_GROUP) {
@@ -2816,6 +2853,7 @@ async function groups(variation?: SeedVariation | null) {
 		};
 
 		for (let j = 0; j < amountOfAdditionalMembers(); j++) {
+			const memberId = users.pop()!;
 			sql
 				.prepare(
 					/* sql */ `
@@ -2825,14 +2863,107 @@ async function groups(variation?: SeedVariation | null) {
 				)
 				.run({
 					groupId: group.id,
-					userId: users.pop()!,
+					userId: memberId,
 					role: "REGULAR",
 				});
+
+			if (i === 0) nzapGroupMemberIds.push(memberId);
+			if (i === 1) sendouGroupMemberIds.push(memberId);
 		}
+
+		if (i === 0) nzapGroupId = group.id;
+		if (i === 1) sendouGroupId = group.id;
 
 		if (i === 0 && SENDOU_IN_FULL_GROUP) {
 			users.push(ADMIN_ID);
 		}
+	}
+
+	if (variation === "IN_SQ_MATCH") {
+		// Sendou's side tests the matchmade cascade vote flow, NZAP's side
+		// tests the trusted one-click flow.
+		sql
+			.prepare(
+				/* sql */ `update "Group" set "matchmade" = @matchmade where "id" = @id`,
+			)
+			.run({ matchmade: 1, id: sendouGroupId });
+		sql
+			.prepare(
+				/* sql */ `update "Group" set "matchmade" = @matchmade where "id" = @id`,
+			)
+			.run({ matchmade: 0, id: nzapGroupId });
+
+		const mapList = randomMapList(sendouGroupId, nzapGroupId);
+		const memento = buildSeedMemento({
+			mapList,
+			alphaGroupId: sendouGroupId,
+			bravoGroupId: nzapGroupId,
+			alphaMemberIds: sendouGroupMemberIds,
+			bravoMemberIds: nzapGroupMemberIds,
+		});
+
+		const createdMatch = await SQMatchRepository.create({
+			alphaGroupId: sendouGroupId,
+			bravoGroupId: nzapGroupId,
+			mapList,
+			memento,
+		});
+
+		const guaranteedWeaponPoolUserIds = [
+			sendouGroupMemberIds[1],
+			sendouGroupMemberIds[2],
+			nzapGroupMemberIds[1],
+			nzapGroupMemberIds[2],
+		].filter((id): id is number => typeof id === "number");
+		for (const userId of guaranteedWeaponPoolUserIds) {
+			const weapons: Array<{ weaponSplId: MainWeaponId; isFavorite: number }> =
+				[
+					{ weaponSplId: 0, isFavorite: 1 },
+					{ weaponSplId: 2000, isFavorite: 0 },
+					{ weaponSplId: 4000, isFavorite: 0 },
+				];
+			await db
+				.insertInto("UserWeaponPool")
+				.values(
+					weapons.map((w, i) => ({
+						userId,
+						sortOrder: i,
+						weaponSplId: w.weaponSplId,
+						isFavorite: w.isFavorite,
+					})),
+				)
+				.onConflict((oc) => oc.doNothing())
+				.execute();
+		}
+
+		if (createdMatch.chatCode) {
+			await ChatSystemMessage.setMetadata({
+				chatCode: createdMatch.chatCode,
+				header: `Match #${createdMatch.id}`,
+				subtitle: "SendouQ",
+				url: sendouQMatchPage(createdMatch.id),
+				imageUrl: `${navIconUrl("sendouq")}.avif`,
+				participantUserIds: [...sendouGroupMemberIds, ...nzapGroupMemberIds],
+				expiresAfter: { hours: 2 },
+			});
+		}
+
+		const thirtyMinutesAgo = dateToDatabaseTimestamp(
+			sub(new Date(), { minutes: 30 }),
+		);
+		sql
+			.prepare(
+				/* sql */ `
+				insert into "RoomLink" ("userId", "url", "createdAt", "refreshedAt")
+				values (@userId, @url, @createdAt, @refreshedAt)
+			`,
+			)
+			.run({
+				userId: ADMIN_ID,
+				url: "https://example.com//private_battle/seed_room_123",
+				createdAt: thirtyMinutesAgo,
+				refreshedAt: thirtyMinutesAgo,
+			});
 	}
 }
 
@@ -2924,6 +3055,108 @@ const randomMapList = (
 
 	return mapList;
 };
+
+function buildSeedMemento({
+	mapList,
+	alphaGroupId,
+	bravoGroupId,
+	alphaMemberIds,
+	bravoMemberIds,
+}: {
+	mapList: TournamentMapListMap[];
+	alphaGroupId: number;
+	bravoGroupId: number;
+	alphaMemberIds: number[];
+	bravoMemberIds: number[];
+}): ParsedMemento {
+	const userPools = new Map<number, Map<ModeShort, Set<StageId>>>();
+
+	const addVote = (userId: number, mode: ModeShort, stageId: StageId) => {
+		let modes = userPools.get(userId);
+		if (!modes) {
+			modes = new Map();
+			userPools.set(userId, modes);
+		}
+		let stages = modes.get(mode);
+		if (!stages) {
+			stages = new Set();
+			modes.set(mode, stages);
+		}
+		stages.add(stageId);
+	};
+
+	for (const map of mapList) {
+		const candidates: number[] =
+			map.source === "BOTH"
+				? [...alphaMemberIds, ...bravoMemberIds]
+				: map.source === alphaGroupId
+					? alphaMemberIds
+					: map.source === bravoGroupId
+						? bravoMemberIds
+						: [];
+
+		if (candidates.length === 0) continue;
+
+		const voterCount = faker.number.int({ min: 1, max: candidates.length });
+		const voters = faker.helpers.arrayElements(candidates, voterCount);
+
+		for (const voterId of voters) {
+			addVote(voterId, map.mode, map.stageId);
+		}
+	}
+
+	const pools: ParsedMemento["pools"] = Array.from(userPools.entries()).map(
+		([userId, modes]) => ({
+			userId,
+			pool: Array.from(modes.entries()).map(([mode, stages]) => ({
+				mode,
+				stages: Array.from(stages),
+			})),
+		}),
+	);
+
+	const tierNames = [
+		"LEVIATHAN",
+		"DIAMOND",
+		"PLATINUM",
+		"GOLD",
+		"SILVER",
+		"BRONZE",
+		"IRON",
+	] as const;
+
+	const users: ParsedMemento["users"] = {};
+	for (const userId of [...alphaMemberIds, ...bravoMemberIds]) {
+		const tierName = faker.helpers.arrayElement(tierNames);
+		users[userId] = {
+			skill: {
+				ordinal: faker.number.float({ min: 1000, max: 3000 }),
+				tier: {
+					name: tierName,
+					isPlus: faker.datatype.boolean(),
+				},
+				approximate: false,
+			},
+		};
+	}
+
+	const groups: ParsedMemento["groups"] = {
+		[alphaGroupId]: {
+			tier: {
+				name: faker.helpers.arrayElement(tierNames),
+				isPlus: faker.datatype.boolean(),
+			},
+		},
+		[bravoGroupId]: {
+			tier: {
+				name: faker.helpers.arrayElement(tierNames),
+				isPlus: faker.datatype.boolean(),
+			},
+		},
+	};
+
+	return { users, groups, pools };
+}
 
 const MATCHES_COUNT = 500;
 
@@ -3028,57 +3261,25 @@ async function playedMatches() {
 			["ALPHA", "BRAVO", "BRAVO", "ALPHA", "ALPHA", "ALPHA"],
 			["ALPHA", "BRAVO", "ALPHA", "BRAVO", "BRAVO", "BRAVO"],
 		]) as ("ALPHA" | "BRAVO")[];
-		const winner = winnersArrayToWinner(winners);
-		const finishedMatch = SendouQ.mapMatch(
-			(await SQMatchRepository.findById(match.id))!,
-		);
 
-		const { newSkills, differences } = calculateMatchSkills({
-			groupMatchId: match.id,
-			winner: winner === "ALPHA" ? groupAlphaMembers : groupBravoMembers,
-			loser: winner === "ALPHA" ? groupBravoMembers : groupAlphaMembers,
-			loserGroupId: winner === "ALPHA" ? groupBravo : groupAlpha,
-			winnerGroupId: winner === "ALPHA" ? groupAlpha : groupBravo,
-		});
-
-		const members = [
-			...finishedMatch.groupAlpha.members.map((m) => ({
-				...m,
-				groupId: match.alphaGroupId,
-			})),
-			...finishedMatch.groupBravo.members.map((m) => ({
-				...m,
-				groupId: match.bravoGroupId,
-			})),
-		];
-		await SQMatchRepository.updateScore({
-			matchId: match.id,
-			reportedByUserId:
-				faker.number.float(1) > 0.5
-					? groupAlphaMembers[0]
-					: groupBravoMembers[0],
-			winners,
-		});
-		await SkillRepository.createMatchSkills({
-			skills: newSkills,
-			differences,
-			groupMatchId: match.id,
-			oldMatchMemento: { users: {}, groups: {}, pools: [] },
-		});
-		await SQGroupRepository.setAsInactive(groupAlpha);
-		await SQGroupRepository.setAsInactive(groupBravo);
-		await PlayerStatRepository.upsertMapResults(
-			summarizeMaps({ match: finishedMatch, members, winners }),
-		);
-		await PlayerStatRepository.upsertPlayerResults(
-			summarizePlayerResults({ match: finishedMatch, members, winners }),
-		);
+		const reporterUserId =
+			faker.number.float(1) > 0.5 ? groupAlphaMembers[0] : groupBravoMembers[0];
+		for (const [mapIndex, winner] of winners.entries()) {
+			await SQMatchRepository.reportMapWinner({
+				matchId: match.id,
+				winnerId: winner === "ALPHA" ? groupAlpha : groupBravo,
+				reportedByUserId: reporterUserId,
+				reportedCount: mapIndex,
+				isStaffReport: true,
+			});
+		}
 
 		// -> add weapons for 90% of matches
 		if (faker.number.float(1) > 0.9) continue;
+		const finishedMatch = (await SQMatchRepository.findById(match.id))!;
 		const users = [...groupAlphaMembers, ...groupBravoMembers];
 		const mapsWithUsers = users.flatMap((u) =>
-			finishedMatch.mapList.map((m) => ({ map: m, user: u })),
+			finishedMatch.mapList.map((_, mapIndex) => ({ mapIndex, user: u })),
 		);
 
 		await ReportedWeaponRepository.createMany(
@@ -3096,7 +3297,8 @@ async function playedMatches() {
 				};
 
 				return {
-					groupMatchMapId: mu.map.id,
+					groupMatchId: match.id,
+					mapIndex: mu.mapIndex,
 					userId: mu.user,
 					weaponSplId: weapon(),
 				};
@@ -3215,7 +3417,34 @@ async function scrimPosts() {
 		return result;
 	};
 
-	for (let i = 0; i < 20; i++) {
+	// Deterministic post 1: admin (Sendou) vs N-ZAP. The e2e map-by-map test
+	// navigates straight to /scrims/1 and relies on this being an accepted
+	// scrim with admin on the ALPHA side and N-ZAP on the BRAVO side.
+	const adminVsNzapAt = date(true);
+	const adminVsNzapPostId = await ScrimPostRepository.insert({
+		at: adminVsNzapAt,
+		rangeEnd: null,
+		isScheduledForFuture: true,
+		teamId: null,
+		text: null,
+		visibility: null,
+		users: users()
+			.map((u) => ({ ...u, isOwner: 0 }))
+			.concat({ userId: ADMIN_ID, isOwner: 1 }),
+		managedByAnyone: true,
+		maps: null,
+		mapsTournamentId: 4,
+	});
+	await ScrimPostRepository.insertRequest({
+		scrimPostId: adminVsNzapPostId,
+		users: users()
+			.map((u) => ({ ...u, isOwner: 0 }))
+			.concat({ userId: NZAP_TEST_ID, isOwner: 1 }),
+		message: null,
+	});
+	await ScrimPostRepository.acceptRequest(1);
+
+	for (let i = 0; i < 19; i++) {
 		const divs = divRange();
 		const atTime = date();
 		const hasRangeEnd = Math.random() > 0.5;
@@ -3285,7 +3514,9 @@ async function scrimPostRequests() {
 		.where("TeamMember.teamId", "=", 1)
 		.execute();
 
-	for (const id of [1, 5, 12, 14, 19]) {
+	// Post 1 is already accepted (admin-vs-nzap, seeded in scrimPosts()), so it
+	// is excluded here.
+	for (const id of [5, 12, 14, 19]) {
 		await ScrimPostRepository.insertRequest({
 			scrimPostId: id,
 			users: allianceRogueMembers.map((member) => ({
@@ -3299,8 +3530,6 @@ async function scrimPostRequests() {
 					: null,
 		});
 	}
-
-	await ScrimPostRepository.acceptRequest(3);
 }
 
 async function associations() {

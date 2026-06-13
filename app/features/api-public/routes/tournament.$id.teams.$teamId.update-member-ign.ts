@@ -1,8 +1,18 @@
 import type { ActionFunctionArgs } from "react-router";
 import { z } from "zod";
-import { action as adminAction } from "~/features/tournament/actions/to.$id.admin.server";
+import { requireUser } from "~/features/auth/core/user.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import {
+	clearTournamentDataCache,
+	tournamentFromDB,
+} from "~/features/tournament-bracket/core/Tournament.server";
 import { IN_GAME_NAME_REGEXP } from "~/features/user-page/user-page-constants";
-import { parseBody, parseParams } from "~/utils/remix.server";
+import {
+	badRequestIfFalsy,
+	errorToastIfFalsy,
+	parseBody,
+	parseParams,
+} from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import { wrapActionForApi } from "../api-action-wrapper.server";
 
@@ -26,24 +36,23 @@ export const action = async (args: ActionFunctionArgs) => {
 		schema: bodySchema,
 	});
 
-	const hashIndex = inGameName.lastIndexOf("#");
-	const inGameNameText = inGameName.slice(0, hashIndex);
-	const inGameNameDiscriminator = inGameName.slice(hashIndex + 1);
+	return wrapActionForApi(async () => {
+		const user = requireUser();
+		const tournament = await tournamentFromDB({ tournamentId, user });
+		errorToastIfFalsy(tournament.isOrganizer(user), "Unauthorized");
 
-	const internalRequest = new Request(args.request.url, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({
-			_action: "UPDATE_IN_GAME_NAME",
-			memberId: userId,
-			inGameNameText,
-			inGameNameDiscriminator,
-		}),
-	});
+		const teamMemberOf = badRequestIfFalsy(
+			tournament.teamMemberOfByUser({ id: userId }),
+		);
 
-	return wrapActionForApi(adminAction, {
-		...args,
-		params: { id: String(tournamentId) },
-		request: internalRequest,
-	});
+		await TournamentTeamRepository.updateMemberInGameName({
+			userId,
+			inGameName,
+			tournamentTeamId: teamMemberOf.id,
+		});
+
+		clearTournamentDataCache(tournamentId);
+
+		return null;
+	}, args);
 };

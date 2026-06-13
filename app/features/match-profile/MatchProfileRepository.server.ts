@@ -1,0 +1,129 @@
+import { db } from "~/db/sql";
+import type { Tables, UserMapModePreferences } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
+import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
+import type { UnifiedLanguageCode } from "~/modules/i18n/config";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import { matchProfileWeapons } from "~/utils/kysely.server";
+
+export async function settingsByUserId(userId: number) {
+	const preferences = await db
+		.selectFrom("User")
+		.select(({ eb }) => [
+			"User.mapModePreferences",
+			"User.vc",
+			"User.languages",
+			"User.noScreen",
+			"User.noSplatnet",
+			matchProfileWeapons(eb).as("weaponPool"),
+		])
+		.where("id", "=", userId)
+		.executeTakeFirstOrThrow();
+
+	return {
+		...preferences,
+		languages: preferences.languages?.split(",") as
+			| UnifiedLanguageCode[]
+			| undefined,
+	};
+}
+
+export function updateVoiceChat(args: {
+	userId: number;
+	vc: Tables["User"]["vc"];
+	languages: string[];
+}) {
+	return db
+		.updateTable("User")
+		.set({
+			vc: args.vc,
+			languages: args.languages.length > 0 ? args.languages.join(",") : null,
+		})
+		.where("User.id", "=", args.userId)
+		.execute();
+}
+
+export async function updateOwnMatchProfile({
+	mapModePreferences,
+	vc,
+	languages,
+	weaponPool,
+	noScreen,
+	noSplatnet,
+}: {
+	mapModePreferences: UserMapModePreferences;
+	vc: Tables["User"]["vc"];
+	languages: string[];
+	weaponPool: WeaponPoolItem[];
+	noScreen: number;
+	noSplatnet: number;
+}) {
+	const userId = actorId();
+	const currentPreferences = (
+		await db
+			.selectFrom("User")
+			.select("mapModePreferences")
+			.where("id", "=", userId)
+			.executeTakeFirstOrThrow()
+	).mapModePreferences;
+
+	const mergedPool = mergeExcludedModePreferences(
+		mapModePreferences.pool,
+		currentPreferences?.pool,
+	);
+
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.deleteFrom("UserWeaponPool")
+			.where("userId", "=", userId)
+			.execute();
+
+		if (weaponPool.length > 0) {
+			await trx
+				.insertInto("UserWeaponPool")
+				.values(
+					weaponPool.map((wpn, i) => ({
+						userId,
+						sortOrder: i,
+						weaponSplId: wpn.id,
+						isFavorite: Number(wpn.isFavorite),
+					})),
+				)
+				.execute();
+		}
+
+		await trx
+			.updateTable("User")
+			.set({
+				mapModePreferences: JSON.stringify({
+					...mapModePreferences,
+					pool: mergedPool,
+				}),
+				vc,
+				languages: languages.length > 0 ? languages.join(",") : null,
+				noScreen,
+				noSplatnet,
+			})
+			.where("id", "=", userId)
+			.execute();
+	});
+}
+
+/**
+ * Preserves existing preferences for modes not included in the new submission.
+ * So if they later want to play this mode again, the system remembers their maps.
+ */
+function mergeExcludedModePreferences(
+	newPool: UserMapModePreferences["pool"],
+	currentPool: UserMapModePreferences["pool"] | undefined,
+) {
+	const modesExcluded = modesShort.filter(
+		(mode) => !newPool.some((mp) => mp.mode === mode),
+	);
+
+	const preservedPreferences = modesExcluded.flatMap(
+		(mode) => currentPool?.filter((mp) => mp.mode === mode) ?? [],
+	);
+
+	return [...newPool, ...preservedPreferences];
+}

@@ -14,7 +14,6 @@ import {
 	sensSchema,
 	tierListSchema,
 	timezoneSchema,
-	weaponPoolSchema,
 	xRankPeaksSchema,
 } from "./widget-form-schemas";
 
@@ -47,12 +46,7 @@ export const ALL_WIDGETS = {
 			schema: favoriteStageSchema,
 			defaultSettings: { stageId: 1 },
 		}),
-		defineWidget({
-			id: "weapon-pool",
-			slot: "main",
-			schema: weaponPoolSchema,
-			defaultSettings: { weapons: [] },
-		}),
+		defineWidget({ id: "weapon-pool", slot: "main" }),
 		defineWidget({ id: "lfg-posts", slot: "main" }),
 		defineWidget({
 			id: "sens",

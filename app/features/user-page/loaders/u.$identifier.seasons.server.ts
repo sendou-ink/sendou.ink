@@ -3,11 +3,8 @@ import { getUser } from "~/features/auth/core/user.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as SkillRepository from "~/features/mmr/SkillRepository.server";
 import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
-import { seasonMapWinrateByUserId } from "~/features/sendouq/queries/seasonMapWinrateByUserId.server";
-import { seasonReportedWeaponsByUserId } from "~/features/sendouq/queries/seasonReportedWeaponsByUserId.server";
-import { seasonSetWinrateByUserId } from "~/features/sendouq/queries/seasonSetWinrateByUserId.server";
-import { seasonStagesByUserId } from "~/features/sendouq/queries/seasonStagesByUserId.server";
-import { seasonsMatesEnemiesByUserId } from "~/features/sendouq/queries/seasonsMatesEnemiesByUserId.server";
+import * as PlayerStatRepository from "~/features/sendouq-match/PlayerStatRepository.server";
+import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
@@ -21,11 +18,11 @@ export type UserSeasonsPageLoaderData = NonNullable<
 	SerializeFrom<typeof loader>
 >;
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	const loggedInUser = getUser();
 	const { identifier } = userParamsSchema.parse(params);
 	const parsedSearchParams = seasonsSearchParamsSchema.safeParse(
-		Object.fromEntries(new URL(request.url).searchParams),
+		Object.fromEntries(url.searchParams),
 	);
 
 	const user = notFoundIfFalsy(
@@ -55,8 +52,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		seasonsParticipatedIn,
 		currentOrdinal: !approximate ? ordinal : undefined,
 		winrates: {
-			maps: seasonMapWinrateByUserId({ season, userId: user.id }),
-			sets: seasonSetWinrateByUserId({ season, userId: user.id }),
+			maps: await PlayerStatRepository.seasonMapWinrateByUserId({
+				season,
+				userId: user.id,
+			}),
+			sets: await PlayerStatRepository.seasonSetWinrateByUserId({
+				season,
+				userId: user.id,
+			}),
 		},
 		skills: await SkillRepository.seasonProgressionByUserId({
 			season,
@@ -87,15 +90,21 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			currentTab: info,
 			stages:
 				info === "stages"
-					? seasonStagesByUserId({ season, userId: user.id })
+					? await PlayerStatRepository.seasonStagesByUserId({
+							season,
+							userId: user.id,
+						})
 					: null,
 			weapons:
 				info === "weapons"
-					? seasonReportedWeaponsByUserId({ season, userId: user.id })
+					? await ReportedWeaponRepository.seasonReportedWeaponsByUserId({
+							season,
+							userId: user.id,
+						})
 					: null,
 			players:
 				info === "enemies" || info === "mates"
-					? seasonsMatesEnemiesByUserId({
+					? await PlayerStatRepository.seasonMatesEnemiesByUserId({
 							season,
 							userId: user.id,
 							type: info === "enemies" ? "ENEMY" : "MATE",

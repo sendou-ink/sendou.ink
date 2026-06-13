@@ -1,18 +1,13 @@
 import { db } from "~/db/sql";
+import { actorId } from "~/features/auth/core/user.server";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 
-export function save({
-	userId,
-	tournamentId,
-}: {
-	userId: number;
-	tournamentId: number;
-}) {
+export function saveOwn(tournamentId: number) {
 	return db
 		.insertInto("SavedCalendarEvent")
 		.values((eb) => ({
-			userId,
+			userId: actorId(),
 			calendarEventId: eb
 				.selectFrom("CalendarEvent")
 				.select("CalendarEvent.id")

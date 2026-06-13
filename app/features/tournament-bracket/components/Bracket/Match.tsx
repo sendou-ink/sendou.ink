@@ -1,7 +1,6 @@
 import clsx from "clsx";
-import { differenceInMinutes } from "date-fns";
 import { Eye } from "lucide-react";
-import * as React from "react";
+import type * as React from "react";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
@@ -12,6 +11,8 @@ import {
 	useTournament,
 	useTournamentVods,
 } from "~/features/tournament/routes/to.$id";
+import { matchEndedEarly } from "~/features/tournament-match/tournament-match-utils";
+import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { Unpacked } from "~/utils/types";
 import {
@@ -23,7 +24,6 @@ import type { Bracket } from "../../core/Bracket";
 import * as Deadline from "../../core/Deadline";
 import type { TournamentData } from "../../core/Tournament.server";
 import parentStyles from "../../tournament-bracket.module.css";
-import { matchEndedEarly } from "../../tournament-bracket-utils";
 import styles from "./bracket.module.css";
 
 type LineType = "none" | "straight" | "curve-up" | "curve-down";
@@ -419,24 +419,13 @@ function MatchVods({ vods }: MatchVodsProps) {
 }
 
 function MatchTimer({ match, bracket }: Pick<MatchProps, "match" | "bracket">) {
-	const [now, setNow] = React.useState(new Date());
 	const tournament = useTournament();
 
-	React.useEffect(() => {
-		const interval = setInterval(() => {
-			setNow(new Date());
-		}, 60000);
-
-		return () => clearInterval(interval);
-	}, []);
-
 	if (tournament.isLeagueDivision) return null;
-
 	if (!match.startedAt) return null;
 
 	const isOver =
 		match.opponent1?.result === "win" || match.opponent2?.result === "win";
-
 	if (isOver) return null;
 
 	const isLocked = tournament.ctx.castedMatchesInfo?.lockedMatches?.some(
@@ -446,17 +435,39 @@ function MatchTimer({ match, bracket }: Pick<MatchProps, "match" | "bracket">) {
 
 	const round = bracket.data.round.find((r) => r.id === match.round_id);
 	const bestOf = round?.maps?.count;
-
 	if (!bestOf) return null;
 
-	const elapsedMinutes = differenceInMinutes(
-		now,
-		databaseTimestampToDate(match.startedAt),
+	return (
+		<MatchTimerInner
+			startedAt={match.startedAt}
+			gamesCompleted={
+				(match.opponent1?.score ?? 0) + (match.opponent2?.score ?? 0)
+			}
+			bestOf={bestOf}
+		/>
+	);
+}
+
+interface MatchTimerInnerProps {
+	startedAt: number;
+	gamesCompleted: number;
+	bestOf: number;
+}
+
+function MatchTimerInner({
+	startedAt,
+	gamesCompleted,
+	bestOf,
+}: MatchTimerInnerProps) {
+	const startedAtDate = databaseTimestampToDate(startedAt);
+	const now = useAutoRerender("minute", { alignTo: startedAtDate });
+
+	const elapsedMinutes = Math.floor(
+		(now.getTime() - startedAtDate.getTime()) / 60_000,
 	);
 	const status = Deadline.matchStatus({
 		elapsedMinutes,
-		gamesCompleted:
-			(match.opponent1?.score ?? 0) + (match.opponent2?.score ?? 0),
+		gamesCompleted,
 		maxGamesCount: bestOf,
 	});
 

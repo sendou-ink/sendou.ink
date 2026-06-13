@@ -89,7 +89,7 @@ import {
 } from "../core/utils";
 import styles from "./analyzer.module.css";
 
-export const CURRENT_PATCH = "11.1";
+export const CURRENT_PATCH = "11.2";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({

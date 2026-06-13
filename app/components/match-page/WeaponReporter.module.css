@@ -1,0 +1,66 @@
+.pastRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.mapRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-4);
+
+	@container (max-width: 479px) {
+		flex-direction: column;
+	}
+}
+
+.mapInfo {
+	display: flex;
+	flex-direction: column;
+	align-self: flex-end;
+	gap: var(--s-2);
+
+	@container (max-width: 479px) {
+		align-self: center;
+	}
+}
+
+.mapLabel {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.stageImage {
+	border-radius: var(--radius-box);
+}
+
+.inputRow {
+	display: flex;
+	align-items: flex-end;
+	gap: var(--s-4);
+
+	@container (max-width: 479px) {
+		width: 100%;
+	}
+}
+
+.weaponSelectContainer {
+	min-width: 200px;
+
+	& button {
+		border: var(--border-style-high);
+	}
+
+	@container (max-width: 479px) {
+		flex: 1;
+	}
+}
+
+.unreportedRow {
+	display: flex;
+	gap: var(--s-1);
+}

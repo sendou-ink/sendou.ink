@@ -11,7 +11,6 @@ export async function mostRecentArticles(count: number) {
 	const articles: Array<
 		Omit<NonNullable<ReturnType<typeof articleBySlug>>, "content"> & {
 			slug: string;
-			dateString: string;
 		}
 	> = [];
 	for (const file of files) {
@@ -25,11 +24,6 @@ export async function mostRecentArticles(count: number) {
 		articles.push({
 			date,
 			slug: file.replace(".md", ""),
-			dateString: date.toLocaleDateString("en-US", {
-				day: "2-digit",
-				month: "long",
-				year: "numeric",
-			}),
 			authors: normalizeAuthors(restParsed.author),
 			title: restParsed.title,
 		});
@@ -37,6 +31,5 @@ export async function mostRecentArticles(count: number) {
 
 	return articles
 		.sort((a, b) => b.date.getTime() - a.date.getTime())
-		.slice(0, count)
-		.map(({ date: _date, ...rest }) => rest);
+		.slice(0, count);
 }

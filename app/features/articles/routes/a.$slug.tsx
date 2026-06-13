@@ -1,6 +1,7 @@
 import * as React from "react";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { Markdown } from "~/components/Markdown";
 import invariant from "~/utils/invariant";
@@ -57,7 +58,15 @@ export default function ArticlePage() {
 			<article className="article">
 				<h1>{data.title}</h1>
 				<div className="text-sm text-lighter">
-					by <Author /> • <time>{data.dateString}</time>
+					by <Author /> •{" "}
+					<LocaleTime
+						date={new Date(data.date)}
+						options={{
+							day: "numeric",
+							month: "numeric",
+							year: "numeric",
+						}}
+					/>
 				</div>
 				<Markdown>
 					{contentWithoutLeadingTitle(data.content, data.title)}

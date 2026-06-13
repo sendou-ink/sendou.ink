@@ -93,6 +93,25 @@ export function SendouSelect<T extends object>({
 		}
 	};
 
+	const listBox = (
+		<Virtualizer layout={ListLayout} layoutOptions={{ rowHeight: 33 }}>
+			<ListBox
+				items={items}
+				className={clsx(styles.listBox, "scrollbar")}
+				renderEmptyState={() => (
+					<div className={styles.noResults}>{t("common:noResults")}</div>
+				)}
+			>
+				{children}
+			</ListBox>
+		</Virtualizer>
+	);
+
+	// The Autocomplete wrapper filters the collection, but its filtering drops
+	// items with a falsy key (e.g. `0`). When there is nothing to filter we skip
+	// it entirely so such items always render.
+	const filterable = !!search || isControlled || !!filter;
+
 	return (
 		<Select
 			{...props}
@@ -109,39 +128,33 @@ export function SendouSelect<T extends object>({
 			{clearable ? <SelectClearButton /> : null}
 			<SendouBottomTexts bottomText={bottomText} errorText={errorText} />
 			<Popover className={clsx(popoverClassName, styles.popover)}>
-				<Autocomplete
-					filter={filter ? filter : isControlled ? undefined : contains}
-					inputValue={searchInputValue}
-					onInputChange={onSearchInputChange}
-				>
-					{search ? (
-						<SearchField
-							aria-label="Search"
-							autoFocus
-							className={styles.searchField}
-						>
-							<Search aria-hidden className={styles.icon} />
-							<Input
-								placeholder={search.placeholder}
-								className={clsx(styles.searchInput, "in-container")}
-							/>
-							<Button className={styles.searchClearButton}>
-								<X className={styles.icon} />
-							</Button>
-						</SearchField>
-					) : null}
-					<Virtualizer layout={ListLayout} layoutOptions={{ rowHeight: 33 }}>
-						<ListBox
-							items={items}
-							className={clsx(styles.listBox, "scrollbar")}
-							renderEmptyState={() => (
-								<div className={styles.noResults}>{t("common:noResults")}</div>
-							)}
-						>
-							{children}
-						</ListBox>
-					</Virtualizer>
-				</Autocomplete>
+				{filterable ? (
+					<Autocomplete
+						filter={filter ? filter : isControlled ? undefined : contains}
+						inputValue={searchInputValue}
+						onInputChange={onSearchInputChange}
+					>
+						{search ? (
+							<SearchField
+								aria-label="Search"
+								autoFocus
+								className={styles.searchField}
+							>
+								<Search aria-hidden className={styles.icon} />
+								<Input
+									placeholder={search.placeholder}
+									className={clsx(styles.searchInput, "in-container")}
+								/>
+								<Button className={styles.searchClearButton}>
+									<X className={styles.icon} />
+								</Button>
+							</SearchField>
+						) : null}
+						{listBox}
+					</Autocomplete>
+				) : (
+					listBox
+				)}
 			</Popover>
 		</Select>
 	);

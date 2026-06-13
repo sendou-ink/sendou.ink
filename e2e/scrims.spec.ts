@@ -1,6 +1,11 @@
+import type { Page } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { scrimsNewFormSchema } from "~/features/scrims/scrims-schemas";
+import {
+	scrimsNewFormSchema,
+	submitMapListFormSchema,
+} from "~/features/scrims/scrims-schemas";
+import { newScrimPostPage, scrimPage, scrimsPage } from "~/utils/urls";
 import {
 	expect,
 	impersonate,
@@ -9,9 +14,11 @@ import {
 	selectUser,
 	submit,
 	test,
-} from "~/utils/playwright";
-import { createFormHelpers } from "~/utils/playwright-form";
-import { newScrimPostPage, scrimsPage } from "~/utils/urls";
+	waitForPOSTResponse,
+} from "./helpers/playwright";
+import { createFormHelpers } from "./helpers/playwright-form";
+
+const TEST_POOL_SERIALIZED = "sz:3a14000;tc:2c98000";
 
 test.describe("Scrims", () => {
 	test("creates a new scrim & deletes it", async ({ page }) => {
@@ -234,9 +241,126 @@ test.describe("Scrims", () => {
 		await page.getByTestId("booked-scrims-tab").click();
 		await page.getByRole("link", { name: "Contact" }).click();
 
-		await page.getByAltText("Generate maplist").click();
+		await page.getByRole("tab", { name: "Action" }).click();
+		await expect(page.getByTestId("scrim-map-list-form")).toBeVisible();
+	});
 
-		// on /maps page
-		await expect(page.getByText("Create map list")).toBeVisible();
+	test("map-by-map: lists, report, undo, replay, change list, stats", async ({
+		page,
+	}) => {
+		await seed(page);
+
+		const scrimUrl = scrimPage(1);
+
+		const mapListForm = createFormHelpers(page, submitMapListFormSchema, {
+			submitTestId: "submit-map-list-button",
+		});
+
+		// ADMIN opens the Action tab — the map list form is shown immediately
+		await impersonate(page, ADMIN_ID);
+		await navigate({ page, url: scrimUrl });
+		await page.getByRole("tab", { name: "Action" }).click();
+		await expect(page.getByTestId("scrim-map-list-form")).toBeVisible();
+
+		// ADMIN submits a map list — the post's tournament (Swim or Sink) is the
+		// default source for the scrim author's team, so they can submit without
+		// running the tournament search. A first map is generated immediately
+		// so the page transitions to the report UI with the map-list manager
+		// collapsed.
+		await waitForPOSTResponse(page, () => mapListForm.submit());
+		await expect(page.getByTestId("report-score-button")).toBeVisible();
+		await page.getByRole("button", { name: /Manage map lists/i }).click();
+		await expect(page.getByTestId("map-list-row-ALPHA")).toContainText(
+			"Swim or Sink",
+		);
+
+		// NZAP submits a pool-URL-based map list. They have no list yet so the
+		// map-list manager is already expanded on mount.
+		await impersonate(page, NZAP_TEST_ID);
+		await navigate({ page, url: scrimUrl });
+		await page.getByRole("tab", { name: "Action" }).click();
+		await page.getByLabel("Pool URL").click();
+		await mapListForm.fill("serializedPool", TEST_POOL_SERIALIZED);
+		await waitForPOSTResponse(page, () => mapListForm.submit());
+		await expect(page.getByTestId("report-score-button")).toBeVisible();
+		await expect(page.getByTestId("map-list-row-BRAVO")).toContainText("Pool");
+
+		// Map 1: ALPHA wins → next map auto-generated
+		await reportScrimMapWinner(page, "ALPHA");
+		await expect(page.getByTestId("report-score-button")).toBeVisible();
+
+		// Map 2: BRAVO wins → next map auto-generated
+		await reportScrimMapWinner(page, "BRAVO");
+		await expect(page.getByTestId("report-score-button")).toBeVisible();
+
+		// Map 3: ALPHA wins → undo (un-reports map 3, deletes auto-gen map 4)
+		await reportScrimMapWinner(page, "ALPHA");
+		await expect(page.getByTestId("undo-map-button")).toBeVisible();
+		await submit(page, "undo-map-button");
+		await expect(page.getByTestId("report-score-button")).toBeVisible();
+
+		// Re-report map 3 as BRAVO wins → next map auto-generated
+		await reportScrimMapWinner(page, "BRAVO");
+
+		// Replay last map: replaces the current generated map with a copy of
+		// the previous reported one, then report ALPHA wins
+		await expect(page.getByTestId("replay-map-button")).toBeVisible();
+		await submit(page, "replay-map-button");
+		await reportScrimMapWinner(page, "ALPHA");
+
+		// Switch back to ADMIN to change their list
+		await impersonate(page, ADMIN_ID);
+		await navigate({ page, url: scrimUrl });
+		await page.getByRole("tab", { name: "Action" }).click();
+		await page.getByRole("button", { name: /Manage map lists/i }).click();
+
+		// Remove ALPHA's tournament list (trash icon opens a confirm dialog)
+		await page
+			.getByTestId("map-list-row-ALPHA")
+			.getByLabel(/Remove list/i)
+			.click();
+		await waitForPOSTResponse(page, () => submit(page, "confirm-button"));
+		await expect(page.getByTestId("scrim-map-list-form")).toBeVisible();
+
+		// Re-submit ALPHA's list, this time as a pool URL
+		await page.getByLabel("Pool URL").click();
+		await mapListForm.fill("serializedPool", TEST_POOL_SERIALIZED);
+		await waitForPOSTResponse(page, () => mapListForm.submit());
+		await expect(page.getByTestId("map-list-row-ALPHA")).toContainText("Pool");
+
+		// Verify stats tab reflects the played maps
+		await page.getByRole("tab", { name: "Stats" }).click();
+		await expect(page.getByTestId("scrim-stats-root")).toBeVisible();
+
+		// Four reported maps total (Alpha 2 / Bravo 2 from ADMIN's POV).
+		// Switch to "Mode" view so each row groups by mode, and disable the
+		// pool restriction so maps outside ADMIN's resubmitted pool still count.
+		// Sum of wins+losses across rows should equal 4.
+		await page
+			.getByTestId("scrim-stats-root")
+			.getByText("Mode", { exact: true })
+			.click();
+		await page.getByRole("switch").click({ force: true });
+
+		const statsRoot = page.getByTestId("scrim-stats-root");
+		const winCells = await statsRoot
+			.locator("tbody tr td:nth-child(2)")
+			.allInnerTexts();
+		const lossCells = await statsRoot
+			.locator("tbody tr td:nth-child(3)")
+			.allInnerTexts();
+		const total =
+			winCells.reduce((acc, v) => acc + Number(v), 0) +
+			lossCells.reduce((acc, v) => acc + Number(v), 0);
+		expect(total).toBe(4);
 	});
 });
+
+async function reportScrimMapWinner(page: Page, winner: "ALPHA" | "BRAVO") {
+	const testId = winner === "ALPHA" ? "winner-radio-1" : "winner-radio-2";
+	await expect(
+		page.locator('[data-testid^="winner-radio-"][data-selected="true"]'),
+	).toHaveCount(0);
+	await page.getByTestId(testId).click();
+	await submit(page, "report-score-button");
+}

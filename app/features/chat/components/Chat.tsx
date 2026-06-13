@@ -7,8 +7,8 @@ import { useTranslation } from "react-i18next";
 import { Avatar } from "../../../components/Avatar";
 import { SendouButton } from "../../../components/elements/Button";
 import { SubmitButton } from "../../../components/SubmitButton";
-import { useTimeFormat } from "../../../hooks/useTimeFormat";
-import { MESSAGE_MAX_LENGTH } from "../chat-constants";
+import { useDateTimeFormat } from "../../../hooks/intl/useDateTimeFormat";
+import { findRoomLinks, MESSAGE_MAX_LENGTH } from "../chat-constants";
 import { useChatAutoScroll } from "../chat-hooks";
 import type { ChatMessage, ChatProps, ChatUser } from "../chat-types";
 import styles from "./Chat.module.css";
@@ -95,8 +95,17 @@ export function Chat({
 			case "CANCEL_CONFIRMED": {
 				return t("common:chat.systemMsg.cancelConfirmed", { name: name() });
 			}
+			case "CANCEL_REFUSED": {
+				return t("common:chat.systemMsg.cancelRefused", { name: name() });
+			}
 			case "USER_LEFT": {
 				return t("common:chat.systemMsg.userLeft", { name: name() });
+			}
+			case "MAP_REPLAYED": {
+				return t("common:chat.systemMsg.mapReplayed", { name: name() });
+			}
+			case "MAP_PICKED": {
+				return t("common:chat.systemMsg.mapPicked", { name: name() });
 			}
 			default: {
 				return null;
@@ -268,7 +277,9 @@ function Message({
 						[styles.messageContentsPending]: message.pending,
 					})}
 				>
-					{message.contents}
+					{message.contents ? (
+						<MessageContents text={message.contents} />
+					) : null}
 				</div>
 			</div>
 		</li>
@@ -301,20 +312,57 @@ function SystemMessage({
 	);
 }
 
+function MessageContents({ text }: { text: string }) {
+	const matches = findRoomLinks(text);
+
+	if (matches.length === 0) return <>{text}</>;
+
+	const parts: React.ReactNode[] = [];
+	let lastIndex = 0;
+
+	for (const [i, match] of matches.entries()) {
+		if (match.index > lastIndex) {
+			parts.push(text.slice(lastIndex, match.index));
+		}
+		parts.push(
+			<a
+				key={i}
+				href={match.url}
+				target="_blank"
+				rel="noopener noreferrer"
+				className={styles.roomLink}
+			>
+				{match.url}
+			</a>,
+		);
+		lastIndex = match.index + match.url.length;
+	}
+
+	if (lastIndex < text.length) {
+		parts.push(text.slice(lastIndex));
+	}
+
+	return <>{parts}</>;
+}
+
 function MessageTimestamp({ timestamp }: { timestamp: number }) {
-	const { formatDateTime, formatTime } = useTimeFormat();
+	const { formatter: dateTimeFormatter } = useDateTimeFormat({
+		day: "numeric",
+		month: "numeric",
+		hour: "numeric",
+		minute: "numeric",
+	});
+	const { formatter: timeFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+	});
 	const moreThanDayAgo = sub(new Date(), { days: 1 }) > new Date(timestamp);
 
 	return (
 		<time className={styles.messageTime}>
 			{moreThanDayAgo
-				? formatDateTime(new Date(timestamp), {
-						day: "numeric",
-						month: "numeric",
-						hour: "numeric",
-						minute: "numeric",
-					})
-				: formatTime(new Date(timestamp))}
+				? dateTimeFormatter.format(new Date(timestamp))
+				: timeFormatter.format(new Date(timestamp))}
 		</time>
 	);
 }

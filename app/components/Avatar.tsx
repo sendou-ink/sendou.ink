@@ -2,6 +2,7 @@ import clsx from "clsx";
 import * as React from "react";
 import type { Tables } from "~/db/tables";
 import { useHydrated } from "~/hooks/useHydrated";
+import { LRUCache } from "~/modules/cache";
 import { BLANK_IMAGE_URL, discordAvatarUrl } from "~/utils/urls";
 import styles from "./Avatar.module.css";
 
@@ -18,7 +19,7 @@ const dimensions = {
 	lg: 125,
 } as const;
 
-const identiconCache = new Map<string, string>();
+const identiconCache = new LRUCache<string, string>({ max: 500 });
 
 function hashString(str: string) {
 	let hash = 5381;

@@ -77,6 +77,9 @@
 	}
 
 	& img {
+		width: 100%;
+		aspect-ratio: 1 / 1;
+		object-fit: cover;
 		border-radius: var(--radius-avatar);
 	}
 }
@@ -123,6 +126,7 @@
 .actionButtons {
 	display: flex;
 	justify-content: center;
+	align-items: center;
 	gap: var(--s-2);
 	flex-wrap: wrap;
 }

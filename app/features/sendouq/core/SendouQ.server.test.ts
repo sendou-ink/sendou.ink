@@ -2,8 +2,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { db } from "~/db/sql";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { dbInsertUsers, dbReset, withUser } from "~/utils/Test";
 import * as SQGroupRepository from "../SQGroupRepository.server";
 import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
 
@@ -54,18 +55,25 @@ const createGroup = async (
 const createMatch = async (
 	alphaGroupId: number,
 	bravoGroupId: number,
-	options: { reportedAt?: number } = {},
+	options: { confirmedAt?: number } = {},
 ) => {
-	const { reportedAt = Date.now() } = options;
+	const { confirmedAt = Date.now() } = options;
 
 	await db
 		.insertInto("GroupMatch")
 		.values({
 			alphaGroupId,
 			bravoGroupId,
-			reportedAt,
+			confirmedAt,
 		})
 		.execute();
+};
+
+const ownNotesOf = async (authorId: number, targetUserIds?: number[]) => {
+	const user = await UserRepository.findLeanById(authorId);
+	return withUser(user!, () =>
+		PrivateUserNoteRepository.ownNotes(targetUserIds),
+	);
 };
 
 const createPrivateNote = async (
@@ -74,12 +82,14 @@ const createPrivateNote = async (
 	sentiment: "POSITIVE" | "NEUTRAL" | "NEGATIVE",
 	text = "test note",
 ) => {
-	await PrivateUserNoteRepository.upsert({
-		authorId,
-		targetId,
-		sentiment,
-		text,
-	});
+	const user = await UserRepository.findLeanById(authorId);
+	await withUser(user!, () =>
+		PrivateUserNoteRepository.upsertOwnNote({
+			targetId,
+			sentiment,
+			text,
+		}),
+	);
 };
 
 const insertSkill = async (userId: number, ordinal: number, season = 1) => {
@@ -263,7 +273,7 @@ describe("SendouQ", () => {
 		test("returns empty array when no groups exist", async () => {
 			await refreshSendouQInstance();
 
-			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+			const notes = await ownNotesOf(1);
 			const groups = SendouQ.previewGroups(1, notes);
 
 			expect(groups).toEqual([]);
@@ -273,7 +283,7 @@ describe("SendouQ", () => {
 			await createGroup([1, 2, 3, 4]);
 			await refreshSendouQInstance();
 
-			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+			const notes = await ownNotesOf(1);
 			const groups = SendouQ.previewGroups(1, notes);
 
 			expect(groups).toHaveLength(1);
@@ -284,7 +294,7 @@ describe("SendouQ", () => {
 			await createGroup([1, 2]);
 			await refreshSendouQInstance();
 
-			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+			const notes = await ownNotesOf(1);
 			const groups = SendouQ.previewGroups(1, notes);
 
 			expect(groups).toHaveLength(1);
@@ -297,7 +307,7 @@ describe("SendouQ", () => {
 			await createPrivateNote(3, 2, "POSITIVE", "Great player");
 			await refreshSendouQInstance();
 
-			const notes = await PrivateUserNoteRepository.byAuthorUserId(3);
+			const notes = await ownNotesOf(3);
 			const groups = SendouQ.previewGroups(3, notes);
 
 			expect(groups).toHaveLength(1);
@@ -311,7 +321,7 @@ describe("SendouQ", () => {
 			await createGroup([3, 4, 5, 6], { inviteCode: "CODE2" });
 			await refreshSendouQInstance();
 
-			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+			const notes = await ownNotesOf(1);
 			const groups = SendouQ.previewGroups(1, notes);
 
 			expect(groups).toHaveLength(2);
@@ -327,7 +337,7 @@ describe("SendouQ", () => {
 			await createGroup([7, 8, 9]);
 			await refreshSendouQInstance();
 
-			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+			const notes = await ownNotesOf(1);
 			const groups = SendouQ.previewGroups(1, notes);
 
 			expect(groups).toHaveLength(3);
@@ -344,7 +354,7 @@ describe("SendouQ", () => {
 			await createGroup([5, 6]);
 			await refreshSendouQInstance();
 
-			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+			const notes = await ownNotesOf(1);
 			const groups = SendouQ.previewGroups(1, notes);
 
 			const fullGroup = groups.find((g) => g.members === undefined);
@@ -378,9 +388,18 @@ describe("SendouQ", () => {
 
 				const group1Id = await createGroup([2, 3, 4, 5]);
 				const group2Id = await createGroup([6, 7, 8, 9]);
+				// Force identical latestActionAt so the sort comparator's
+				// recency tie-breaker stays neutral and the assertion does
+				// not depend on whether the group inserts straddle a
+				// millisecond boundary (which they can on slow CI).
+				await db
+					.updateTable("Group")
+					.set({ latestActionAt: databaseTimestampNow() })
+					.where("id", "in", [group1Id, group2Id])
+					.execute();
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.previewGroups(1, notes);
 
 				expect(groups).toHaveLength(2);
@@ -408,7 +427,7 @@ describe("SendouQ", () => {
 					.execute();
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.previewGroups(1, notes);
 
 				expect(groups).toHaveLength(3);
@@ -429,7 +448,7 @@ describe("SendouQ", () => {
 				const partialGroupId = await createGroup([6]);
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.previewGroups(1, notes);
 
 				expect(groups).toHaveLength(2);
@@ -450,7 +469,7 @@ describe("SendouQ", () => {
 				await createPrivateNote(1, 3, "NEGATIVE");
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.previewGroups(1, notes);
 
 				expect(groups).toHaveLength(3);
@@ -467,7 +486,7 @@ describe("SendouQ", () => {
 				await createGroup([3]);
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.previewGroups(1, notes);
 
 				expect(groups).toHaveLength(2);
@@ -489,7 +508,7 @@ describe("SendouQ", () => {
 				await createGroup([1, 2, 3, 4]);
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(5);
+				const notes = await ownNotesOf(5);
 				const groups = SendouQ.lookingGroups(5, notes);
 
 				expect(groups).toEqual([]);
@@ -507,7 +526,7 @@ describe("SendouQ", () => {
 				await createGroup([4], { status: "ACTIVE" });
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(1);
@@ -523,7 +542,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(1);
@@ -535,7 +554,7 @@ describe("SendouQ", () => {
 				await createGroup([3, 4]);
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(1);
@@ -550,7 +569,7 @@ describe("SendouQ", () => {
 				await createGroup([11, 12, 13, 14]);
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(1);
@@ -565,7 +584,7 @@ describe("SendouQ", () => {
 				await createGroup([10, 11, 12, 13]);
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(1);
@@ -581,7 +600,7 @@ describe("SendouQ", () => {
 				await createGroup([9, 10, 11, 12]);
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(2);
@@ -598,7 +617,7 @@ describe("SendouQ", () => {
 				await createGroup([8, 9, 10, 11]);
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(3);
@@ -636,7 +655,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				const fullGroups = groups.filter((g) => g.members === undefined);
@@ -660,7 +679,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				for (const group of groups) {
@@ -674,7 +693,7 @@ describe("SendouQ", () => {
 				await createGroup([3]);
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				for (const group of groups) {
@@ -699,7 +718,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				const partialGroup = groups.find((g) =>
@@ -723,7 +742,7 @@ describe("SendouQ", () => {
 				await createGroup([5, 6, 7, 8]);
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				const fullGroup = groups.find((g) => g.members === undefined);
@@ -735,7 +754,7 @@ describe("SendouQ", () => {
 				await createGroup([2, 3]);
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				const partialGroup = groups.find((g) => g.members?.length === 2);
@@ -749,7 +768,7 @@ describe("SendouQ", () => {
 				await createGroup([3, 4, 5, 6]);
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				for (const group of groups) {
@@ -781,7 +800,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups[0].members![0].id).toBe(5);
@@ -800,7 +819,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups[groups.length - 1].members![0].id).toBe(5);
@@ -820,7 +839,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups[groups.length - 1].members?.some((m) => m.id === 6)).toBe(
@@ -852,7 +871,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups[0].members![0].id).toBe(4);
@@ -871,7 +890,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups[0].members![0].id).toBe(2);
@@ -895,7 +914,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups.length).toBeGreaterThan(0);
@@ -927,7 +946,7 @@ describe("SendouQ", () => {
 				await createGroup([1]);
 				await refreshSendouQInstance();
 
-				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const notes = await ownNotesOf(1);
 				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups[0].members![0].id).toBe(3);

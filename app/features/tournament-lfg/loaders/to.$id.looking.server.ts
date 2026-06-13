@@ -212,18 +212,25 @@ function transformMembers(
 	});
 }
 
-function parseWeapons(
-	raw: unknown,
-): Array<{ weaponSplId: MainWeaponId; isFavorite: boolean }> | null {
+function parseWeapons(raw: unknown): Array<{
+	weaponSplId: MainWeaponId;
+	isFavorite: boolean;
+	isTenStar: boolean;
+}> | null {
 	if (!raw) return null;
 
 	const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
 	if (!Array.isArray(parsed) || parsed.length === 0) return null;
 
 	return parsed.map(
-		(w: { weaponSplId: MainWeaponId; isFavorite: number | boolean }) => ({
+		(w: {
+			weaponSplId: MainWeaponId;
+			isFavorite: number | boolean;
+			isTenStar: number | boolean;
+		}) => ({
 			weaponSplId: w.weaponSplId,
 			isFavorite: Boolean(w.isFavorite),
+			isTenStar: Boolean(w.isTenStar),
 		}),
 	);
 }

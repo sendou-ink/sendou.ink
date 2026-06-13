@@ -519,6 +519,18 @@ describe("Swiss", () => {
 					2,
 				]);
 			});
+
+			it("includes thresholds up to the calculated maximum for large round counts", () => {
+				const roundCount = 9;
+				const max = Swiss.maxAdvanceThreshold({ roundCount });
+
+				expect(Swiss.validAdvanceThresholdOptions({ roundCount })).toContain(
+					max,
+				);
+				expect(
+					Swiss.isValidAdvanceThreshold({ roundCount, advanceThreshold: max }),
+				).toBe(true);
+			});
 		});
 	});
 });

@@ -1,6 +1,7 @@
 .label {
 	font-size: var(--font-xs);
 	font-weight: var(--weight-bold);
-	margin-block-end: var(--label-margin);
+	margin: 0;
 	display: block;
+	text-box: trim-start cap alphabetic;
 }

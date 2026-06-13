@@ -1,5 +1,3 @@
-import "dotenv/config";
-
 import { sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
@@ -56,7 +54,8 @@ async function main() {
 	addPlacements(placements);
 	await XRankPlacementRepository.refreshAllPeakXp();
 	await BadgeRepository.syncXPBadges();
-	await BuildRepository.recalculateAllTop500();
+	await BuildRepository.recalculateAllSortValues();
+	await XRankPlacementRepository.refreshTenStarWeapons();
 	logger.info(`done reading in ${placements.length} placements`);
 }
 

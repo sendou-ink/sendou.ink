@@ -1,5 +1,5 @@
 // Auto-generated team name data from adj.json and sub.json
-// Regenerate with: pnpm exec tsx scripts/generate-team-names.ts
+// Regenerate with: pnpm exec vite-node scripts/generate-team-names.ts
 
 export const ADJECTIVES = [
 	"Inkless",

@@ -264,9 +264,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				value: data.note ?? null,
 			});
 
-			await TournamentLFGRepository.updateStayAsSub({
+			await TournamentLFGRepository.updateOwnStayAsSub({
 				teamId: ownGroup.id,
-				userId: user.id,
 				value: data.stayAsSub ?? false,
 			});
 
@@ -275,6 +274,23 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		case "LEAVE_GROUP": {
 			await TournamentLFGRepository.leaveLfg({
 				userId: user.id,
+				tournamentId,
+			});
+
+			break;
+		}
+		case "DELETE_GROUP": {
+			const tournament = await tournamentFromDBCached({
+				tournamentId,
+				user,
+			});
+			errorToastIfFalsy(
+				tournament.isOrganizer(user),
+				"Only tournament organizers can remove other groups",
+			);
+
+			await TournamentLFGRepository.leaveLfg({
+				userId: data.userId,
 				tournamentId,
 			});
 

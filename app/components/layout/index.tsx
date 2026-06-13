@@ -24,12 +24,17 @@ import { Link, useFetcher, useLocation, useMatches } from "react-router";
 import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useLayoutSize } from "~/hooks/useMainContentWidth";
+import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
+import { useVisualViewportHeight } from "~/hooks/useVisualViewportHeight";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
 import {
 	EVENTS_PAGE,
 	FRIENDS_PAGE,
+	PLANNER_URL,
 	SETTINGS_PAGE,
 	userPage,
 } from "~/utils/urls";
@@ -55,12 +60,25 @@ import { TopRightButtons } from "./TopRightButtons";
 
 const MAX_DESKTOP_FRIENDS = 4;
 
-function useTimeFormat() {
-	const { i18n } = useTranslation();
+/** Id of the loading-bar track rendered inside the header. NProgress mounts its
+ * bar into it; the track sits just below the header border, spans only the area
+ * between the sidebars, and clips the bar so it never extends over a sidebar.
+ * Living inside the header makes it follow the header on scroll and in
+ * standalone (PWA) mode where the header grows by the safe-area inset. */
+export const NPROGRESS_ANCHOR_ID = "nprogress-anchor";
 
-	const formatTime = (date: Date, options: Intl.DateTimeFormatOptions) => {
-		return date.toLocaleTimeString(i18n.language, options);
-	};
+function useRelativeDayFormat() {
+	const { i18n } = useTranslation();
+	const { formatter: timeFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+	});
+	const { formatter: dateTimeFormatter } = useDateTimeFormat({
+		month: "numeric",
+		day: "numeric",
+		hour: "numeric",
+		minute: "numeric",
+	});
 
 	const formatRelativeDay = (daysFromToday: number) => {
 		const rtf = new Intl.RelativeTimeFormat(i18n.language, { numeric: "auto" });
@@ -70,7 +88,7 @@ function useTimeFormat() {
 
 	const formatRelativeDate = (timestamp: number) => {
 		const date = new Date(timestamp * 1000);
-		const timeStr = formatTime(date, { hour: "numeric", minute: "2-digit" });
+		const timeStr = timeFormatter.format(date);
 
 		if (isToday(date)) {
 			return `${formatRelativeDay(0)}, ${timeStr}`;
@@ -79,15 +97,10 @@ function useTimeFormat() {
 			return `${formatRelativeDay(1)}, ${timeStr}`;
 		}
 
-		return date.toLocaleDateString(i18n.language, {
-			month: "short",
-			day: "numeric",
-			hour: "numeric",
-			minute: "2-digit",
-		});
+		return dateTimeFormatter.format(date);
 	};
 
-	return { formatTime, formatRelativeDate };
+	return { formatRelativeDate };
 }
 
 function useBreadcrumbData() {
@@ -211,11 +224,18 @@ export function Layout({
 	const [sideNavModalOpen, setSideNavModalOpen] = React.useState(false);
 	const [chatSidebarModalOpen, setChatSidebarModalOpen] = React.useState(false);
 
+	const layoutSize = useLayoutSize();
+	useVisualViewportHeight();
 	const chatSidebarOpen = chatContext?.chatOpen ?? false;
 	const setChatSidebarOpen = chatContext?.setChatOpen ?? (() => {});
 
+	const setChatSidebarModalOpenAndSync = (open: boolean) => {
+		setChatSidebarModalOpen(open);
+		setChatSidebarOpen(open);
+	};
+
 	const { t } = useTranslation(["front", "common"]);
-	const { formatRelativeDate } = useTimeFormat();
+	const { formatRelativeDate } = useRelativeDayFormat();
 	const isHydrated = useHydrated();
 	const location = useLocation();
 	const headerRef = React.useRef<HTMLElement>(null);
@@ -391,7 +411,7 @@ export function Layout({
 						className={styles.chatSidebarModalOverlay}
 						isDismissable
 						isOpen={chatSidebarModalOpen}
-						onOpenChange={setChatSidebarModalOpen}
+						onOpenChange={setChatSidebarModalOpenAndSync}
 					>
 						<Modal className={styles.chatSidebarModal}>
 							<Dialog
@@ -422,11 +442,12 @@ export function Layout({
 						}
 						onChatModalToggle={
 							data?.user
-								? () => setChatSidebarModalOpen((prev) => !prev)
+								? () => setChatSidebarModalOpenAndSync(!chatSidebarModalOpen)
 								: undefined
 						}
 						chatUnreadCount={chatContext?.totalUnreadCount}
 					/>
+					<div id={NPROGRESS_ANCHOR_ID} aria-hidden />
 				</header>
 				{showLeaderboard ? (
 					<FuseZone
@@ -438,7 +459,7 @@ export function Layout({
 				{children}
 				<Footer />
 			</div>
-			{chatSidebarOpen ? (
+			{chatSidebarOpen && layoutSize === "desktop" ? (
 				<div
 					className={clsx(
 						styles.chatSidebar,
@@ -455,6 +476,7 @@ export function Layout({
 
 function SiteTitle() {
 	const location = useLocation();
+	const prefersReducedMotion = usePrefersReducedMotion();
 	const { breadcrumbs, currentPageText } = useBreadcrumbData();
 
 	const isFrontPage = location.pathname === "/";
@@ -464,9 +486,17 @@ function SiteTitle() {
 		<Flipper
 			flipKey={isFrontPage ? "front" : "other"}
 			className={styles.siteTitleFlipper}
+			decisionData={{ pathname: location.pathname }}
 		>
 			<div className={styles.siteTitle}>
-				<Flipped flipId="site-logo">
+				<Flipped
+					flipId="site-logo"
+					shouldFlip={(prev, current) =>
+						!prefersReducedMotion &&
+						prev?.pathname !== PLANNER_URL &&
+						current?.pathname !== PLANNER_URL
+					}
+				>
 					<Link to="/" className={styles.siteLogo}>
 						<SiteLogoContent />
 					</Link>

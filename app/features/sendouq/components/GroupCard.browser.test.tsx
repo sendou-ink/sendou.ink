@@ -209,8 +209,8 @@ describe("GroupCard", () => {
 					members: [
 						createMember({
 							weapons: [
-								{ weaponSplId: 40, isFavorite: 1 },
-								{ weaponSplId: 50, isFavorite: 0 },
+								{ weaponSplId: 40, isFavorite: 1, isTenStar: 0 },
+								{ weaponSplId: 50, isFavorite: 0, isTenStar: 0 },
 							],
 						}),
 					],
@@ -421,7 +421,7 @@ describe("GroupCard", () => {
 				group: createGroup({
 					members: [
 						createMember({
-							weapons: [{ weaponSplId: 40, isFavorite: 1 }],
+							weapons: [{ weaponSplId: 40, isFavorite: 1, isTenStar: 0 }],
 						}),
 					],
 				}),

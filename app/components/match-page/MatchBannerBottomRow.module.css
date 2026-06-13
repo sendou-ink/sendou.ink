@@ -1,0 +1,56 @@
+.root {
+	display: flex;
+	justify-content: space-between;
+	padding-inline: var(--s-1-5);
+
+	@container (max-width: 500px) {
+		flex-direction: column-reverse;
+		align-items: center;
+		gap: var(--s-3);
+	}
+}
+
+.activeRosters {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.modeProgress {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.mode {
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-full);
+	padding: var(--s-1);
+}
+
+.modePlaceholder {
+	background-color: transparent;
+	padding: calc(var(--s-1) - 1px);
+	border: 1px dashed var(--color-bg-higher);
+	color: var(--color-text-high);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.modeCount {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+}
+
+.team {
+	display: flex;
+	gap: var(--s-1);
+}
+
+.vs {
+	text-transform: uppercase;
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-high);
+}

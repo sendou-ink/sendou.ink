@@ -10,7 +10,6 @@
 	"events.tabs.events": "活动",
 	"events.tabs.leaderboard": "排行榜",
 	"edit.form.title": "编辑比赛组织",
-	"edit.form.uploadLogo": "上传logo",
 	"edit.form.socialLinks.title": "社交账号",
 	"edit.form.members.title": "成员",
 	"edit.form.members.info": "\"Admin\" 身份能让用户编辑组织信息以及该组织举办的比赛的报名信息。 \"Organizer\" 和 \"Streamer\" 能在比赛里被给予相对应的身份。 \"Member\" 没有特殊权限。",

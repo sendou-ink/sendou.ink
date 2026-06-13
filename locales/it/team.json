@@ -1,8 +1,11 @@
 {
 	"newTeam.header": "Crea una nuova team",
+	"editTeam.header": "",
 	"teamSearch.placeholder": "Cerca un team o un giocatore",
 	"actionButtons.leaveTeam": "Lascia team",
 	"actionButtons.makeMainTeam": "Rendi team principale",
+	"actionButtons.mainTeam": "",
+	"actionButtons.teamActions": "",
 	"leaveTeam.header": "Sei sicuro/a di voler lasciare {{teamName}}?",
 	"leaveTeam.header.newOwner": "Sei sicur/o di voler lasciare {{teamName}}? Il nuovo proprietario sarà {{newOwner}}",
 	"actionButtons.leaveTeam.confirm": "Lascia",

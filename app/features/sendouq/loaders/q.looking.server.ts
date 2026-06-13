@@ -7,15 +7,14 @@ import { SendouQ } from "../core/SendouQ.server";
 import * as PrivateUserNoteRepository from "../PrivateUserNoteRepository.server";
 import { sqRedirectIfNeeded } from "../q-utils.server";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = requireUser();
 
 	const isPreview =
-		new URL(request.url).searchParams.get("preview") === "true" &&
+		url.searchParams.get("preview") === "true" &&
 		user.roles.includes("SUPPORTER");
 
-	const privateNotes = await PrivateUserNoteRepository.byAuthorUserId(
-		user.id,
+	const privateNotes = await PrivateUserNoteRepository.ownNotes(
 		SendouQ.usersInQueue,
 	);
 

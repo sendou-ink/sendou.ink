@@ -30,6 +30,8 @@ import {
 	TierImage,
 	WeaponImage,
 } from "~/components/Image";
+import { LocaleTime } from "~/components/LocaleTime";
+import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { mainStyles } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
 import { SubNav, SubNavLink } from "~/components/SubNav";
@@ -42,8 +44,6 @@ import type {
 	SeasonTournamentResult,
 } from "~/features/sendouq-match/SQMatchRepository.server";
 import { useWeaponUsage } from "~/hooks/swr";
-import { useHydrated } from "~/hooks/useHydrated";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -150,6 +150,7 @@ export default function UserSeasonsPage() {
 							secondary
 							controlled
 							active={data.info.currentTab === "weapons"}
+							preventScrollReset
 						>
 							{t("user:seasons.tabs.weapons")}
 						</SubNavLink>
@@ -158,6 +159,7 @@ export default function UserSeasonsPage() {
 							secondary
 							controlled
 							active={data.info.currentTab === "stages"}
+							preventScrollReset
 						>
 							{t("user:seasons.tabs.stages")}
 						</SubNavLink>
@@ -166,6 +168,7 @@ export default function UserSeasonsPage() {
 							secondary
 							controlled
 							active={data.info.currentTab === "mates"}
+							preventScrollReset
 						>
 							{t("user:seasons.tabs.teammates")}
 						</SubNavLink>
@@ -174,6 +177,7 @@ export default function UserSeasonsPage() {
 							secondary
 							controlled
 							active={data.info.currentTab === "enemies"}
+							preventScrollReset
 						>
 							{t("user:seasons.tabs.opponents")}
 						</SubNavLink>
@@ -205,14 +209,9 @@ function SeasonHeader({
 	seasonsParticipatedIn: number[];
 }) {
 	const { t } = useTranslation(["user"]);
-	const { formatDate } = useTimeFormat();
-	const isHydrated = useHydrated();
 	const { starts, ends } = Seasons.nthToDateRange(seasonViewed);
 	const navigate = useNavigate();
 	const options = useSeasonSelectOptions();
-
-	const isDifferentYears =
-		new Date(starts).getFullYear() !== new Date(ends).getFullYear();
 
 	return (
 		<div>
@@ -236,28 +235,17 @@ function SeasonHeader({
 					</SendouSelectItemSection>
 				)}
 			</SendouSelect>
-			<div
-				className={clsx("text-sm text-lighter mt-2", {
-					invisible: !isHydrated,
-				})}
-			>
-				{isHydrated ? (
-					<>
-						{formatDate(new Date(starts), {
-							day: "numeric",
-							month: "long",
-							year: isDifferentYears ? "numeric" : undefined,
-						})}{" "}
-						-{" "}
-						{formatDate(new Date(ends), {
-							day: "numeric",
-							month: "long",
-							year: "numeric",
-						})}
-					</>
-				) : (
-					"0"
-				)}
+			<div className="text-sm text-lighter mt-2">
+				<LocaleTimeRange
+					from={new Date(starts)}
+					to={new Date(ends)}
+					options={{
+						day: "numeric",
+						month: "numeric",
+						year: "numeric",
+					}}
+					inline
+				/>
 			</div>
 		</div>
 	);
@@ -702,8 +690,6 @@ function CanceledMatchesDialog({
 }: {
 	canceledMatches: NonNullable<UserSeasonsPageLoaderData["canceled"]>;
 }) {
-	const { formatDateTime } = useTimeFormat();
-
 	return (
 		<SendouDialog
 			trigger={
@@ -720,9 +706,16 @@ function CanceledMatchesDialog({
 				{canceledMatches.map((match) => (
 					<div key={match.id}>
 						<Link to={sendouQMatchPage(match.id)}>#{match.id}</Link>
-						<div>
-							{formatDateTime(databaseTimestampToDate(match.createdAt))}
-						</div>
+						<LocaleTime
+							date={match.createdAt}
+							options={{
+								year: "numeric",
+								month: "numeric",
+								day: "numeric",
+								hour: "numeric",
+								minute: "numeric",
+							}}
+						/>
 					</div>
 				))}
 			</div>
@@ -737,8 +730,6 @@ function Results({
 	seasonViewed: number;
 	results: UserSeasonsPageLoaderData["results"];
 }) {
-	const isHydrated = useHydrated();
-	const { formatDate } = useTimeFormat();
 	const [, setSearchParams] = useSearchParams();
 	const ref = React.useRef<HTMLDivElement>(null);
 
@@ -766,22 +757,20 @@ function Results({
 
 						return (
 							<React.Fragment key={result.id}>
-								<div
+								<LocaleTime
+									date={result.createdAt}
+									options={{
+										weekday: "long",
+										month: "numeric",
+										day: "numeric",
+									}}
 									className={clsx(
 										"text-xs font-semi-bold text-theme-secondary",
 										{
-											invisible: !isHydrated || !shouldRenderDateHeader,
+											invisible: !shouldRenderDateHeader,
 										},
 									)}
-								>
-									{isHydrated
-										? formatDate(databaseTimestampToDate(result.createdAt), {
-												weekday: "long",
-												month: "long",
-												day: "numeric",
-											})
-										: "t"}
-								</div>
+								/>
 								{result.type === "GROUP_MATCH" ? (
 									<GroupMatchResult match={result.groupMatch} />
 								) : (
@@ -886,7 +875,7 @@ function TournamentResult({ result }: { result: SeasonTournamentResult }) {
 					[styles.seasonMatchWithSubSection]: result.spDiff,
 				})}
 			>
-				<div className="stack font-bold items-center text-lg text-center">
+				<div className="stack sm font-bold items-center text-lg text-center">
 					<img
 						src={result.logoUrl}
 						width={36}

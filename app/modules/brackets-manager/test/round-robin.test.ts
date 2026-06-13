@@ -368,6 +368,32 @@ describe("Update scores in a round-robin stage", () => {
 		expect(round2Match2After.status).toBe(2); // Ready
 	});
 
+	test("should leave every match Ready when independentRounds is set", () => {
+		storage.reset();
+		manager.create({
+			name: "Independent rounds",
+			tournamentId: 0,
+			type: "round_robin",
+			seeding: [1, 2, 3, 4],
+			settings: { groupCount: 1, independentRounds: true },
+		});
+
+		const matches = storage.select<any>("match")!;
+		for (const match of matches) {
+			expect(match.status).toBe(2);
+		}
+
+		// reporting a round-2 match before round-1 finishes must not throw
+		const round2Match = storage.select<any>("match", 2)!;
+		expect(() =>
+			manager.update.match({
+				id: round2Match.id,
+				opponent1: { score: 16, result: "win" },
+				opponent2: { score: 4 },
+			}),
+		).not.toThrow();
+	});
+
 	test("should unlock next round matches with BYE participants", () => {
 		storage.reset();
 		// Create a round robin with 3 teams (odd number creates rounds where one team doesn't play)

@@ -131,7 +131,7 @@ export function matchesPlayed({
 			)
 			.map((match) => ({
 				...match,
-				bracketIdx: bracketIdxs[bracketIdxs.length - 1 - i],
+				bracketIdx: bracketIdxs[i],
 			})),
 	);
 

@@ -104,10 +104,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				errorToast("Cannot leave as the sole admin of the organization");
 			}
 
-			await TournamentOrganizationRepository.removeMember({
-				organizationId: organization.id,
-				userId: user.id,
-			});
+			await TournamentOrganizationRepository.removeOwnMembership(
+				organization.id,
+			);
 
 			logger.info(
 				`User left organization: organization=${organization.name} (${organization.id}), userId=${user.id}`,

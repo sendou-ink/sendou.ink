@@ -332,7 +332,9 @@ const match_getByStageIdStm = sql.prepare(/*sql*/ `
   select
     "TournamentMatch".*,
     sum("TournamentMatchGameResult"."opponentOnePoints") as "opponentOnePointsTotal",
-    sum("TournamentMatchGameResult"."opponentTwoPoints") as "opponentTwoPointsTotal"
+    sum("TournamentMatchGameResult"."opponentTwoPoints") as "opponentTwoPointsTotal",
+    sum(case when "TournamentMatchGameResult"."opponentOnePoints" = 100 and "TournamentMatchGameResult"."opponentTwoPoints" = 0 then 1 else 0 end) as "opponentOneKosTotal",
+    sum(case when "TournamentMatchGameResult"."opponentTwoPoints" = 100 and "TournamentMatchGameResult"."opponentOnePoints" = 0 then 1 else 0 end) as "opponentTwoKosTotal"
   from "TournamentMatch"
   left join "TournamentMatchGameResult" on "TournamentMatch"."id" = "TournamentMatchGameResult"."matchId"
   where "TournamentMatch"."stageId" = @stageId
@@ -405,6 +407,8 @@ export class Match {
 			opponentTwo: string;
 			opponentOnePointsTotal: number | null;
 			opponentTwoPointsTotal: number | null;
+			opponentOneKosTotal: number | null;
+			opponentTwoKosTotal: number | null;
 			startedAt: number | null;
 		},
 	): MatchType {
@@ -418,6 +422,7 @@ export class Match {
 					: {
 							...JSON.parse(rawMatch.opponentOne),
 							totalPoints: rawMatch.opponentOnePointsTotal ?? undefined,
+							totalKos: rawMatch.opponentOneKosTotal ?? undefined,
 						},
 			opponent2:
 				rawMatch.opponentTwo === "null"
@@ -425,6 +430,7 @@ export class Match {
 					: {
 							...JSON.parse(rawMatch.opponentTwo),
 							totalPoints: rawMatch.opponentTwoPointsTotal ?? undefined,
+							totalKos: rawMatch.opponentTwoKosTotal ?? undefined,
 						},
 			round_id: rawMatch.roundId,
 			stage_id: rawMatch.stageId,

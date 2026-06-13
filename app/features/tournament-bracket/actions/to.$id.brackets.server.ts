@@ -12,6 +12,7 @@ import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.s
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { roundMapsFromInput } from "~/features/tournament-match/core/mapList.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -25,7 +26,6 @@ import { idObject } from "~/utils/zod";
 import type { PreparedMaps } from "../../../db/tables";
 import * as AbDivisions from "../core/AbDivisions";
 import { getServerTournamentManager } from "../core/brackets-manager/manager.server";
-import { roundMapsFromInput } from "../core/mapList.server";
 import * as PreparedMapsUtils from "../core/PreparedMaps";
 import * as Swiss from "../core/Swiss";
 import type { Tournament } from "../core/Tournament";
@@ -140,7 +140,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 					tournamentId,
 					maps: {
 						maps,
-						authorId: user.id,
 						eliminationTeamCount:
 							bracket.type === "single_elimination" ||
 							bracket.type === "double_elimination"
@@ -205,6 +204,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 				});
 			}
 
+			// update RunningTournaments
+			await tournamentFromDB({ tournamentId, user });
+
 			emitTournamentUpdate = true;
 
 			break;
@@ -236,7 +238,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 								thirdPlaceMatchLinked: data.thirdPlaceMatchLinked,
 							})
 						: data.maps,
-					authorId: user.id,
 					eliminationTeamCount: data.eliminationTeamCount ?? undefined,
 				},
 			});
@@ -347,6 +348,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				room: tournamentWebsocketRoom(tournament.ctx.id),
 				type: "TOURNAMENT_UPDATED",
 				revalidateOnly: true,
+				authorUserId: user.id,
 			},
 		]);
 	}

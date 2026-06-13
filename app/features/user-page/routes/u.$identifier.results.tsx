@@ -2,12 +2,12 @@ import { Search } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useMatches, useSearchParams } from "react-router";
-import { useDebounce } from "react-use";
 import { LinkButton } from "~/components/elements/Button";
 import { Input } from "~/components/Input";
 import { Pagination } from "~/components/Pagination";
 import { useUser } from "~/features/auth/core/user";
 import { UserResultsTable } from "~/features/user-page/components/UserResultsTable";
+import { useDebounce } from "~/hooks/useDebounce";
 import invariant from "~/utils/invariant";
 import { userPage, userResultsEditHighlightsPage } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
@@ -71,13 +71,13 @@ export default function UserResultsPage() {
 				user={layoutData.user}
 				backTo={userPage(layoutData.user)}
 			/>
-			<div className="stack horizontal justify-between items-center">
+			<div className={styles.resultsHeader}>
 				<h2 className="text-lg">
 					{showAll || !data.hasHighlightedResults
 						? t("results.title")
 						: t("results.highlights")}
 				</h2>
-				<div className="stack horizontal sm items-center">
+				<div className={styles.resultsHeaderActions}>
 					{user ? (
 						<Input
 							className={styles.resultsFilterInput}

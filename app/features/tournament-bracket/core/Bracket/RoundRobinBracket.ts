@@ -12,7 +12,7 @@ export class RoundRobinBracket extends Bracket {
 		return true;
 	}
 
-	source({ placements }: { placements: number[] }): {
+	source({ placements, rest }: { placements: number[]; rest?: boolean }): {
 		relevantMatchesFinished: boolean;
 		teams: number[];
 	} {
@@ -24,10 +24,18 @@ export class RoundRobinBracket extends Bracket {
 		const relevantMatchesFinished =
 			standings.length === this.participantTournamentTeamIds.length;
 
+		const maxExplicit = Math.max(...placements);
+		const matchesPlacement = (p: number) =>
+			placements.includes(p) || (rest === true && p >= maxExplicit);
+
 		if (this.settings?.hasAbDivisions) {
 			return {
 				relevantMatchesFinished,
-				teams: this.teamsFromPlacementsPerAbDivision(standings, placements),
+				teams: this.teamsFromPlacementsPerAbDivision(
+					standings,
+					placements,
+					rest === true,
+				),
 			};
 		}
 
@@ -41,7 +49,7 @@ export class RoundRobinBracket extends Bracket {
 		return {
 			relevantMatchesFinished,
 			teams: standings
-				.filter((s) => placements.includes(placementNormalized(s.placement)))
+				.filter((s) => matchesPlacement(placementNormalized(s.placement)))
 				.map((s) => s.team.id),
 		};
 	}
@@ -49,19 +57,28 @@ export class RoundRobinBracket extends Bracket {
 	private teamsFromPlacementsPerAbDivision(
 		standings: Standing[],
 		placements: number[],
+		rest: boolean,
 	): number[] {
 		const groupIds = R.unique(
 			standings
 				.map((s) => s.groupId)
 				.filter((id): id is number => typeof id === "number"),
 		);
+		const maxExplicit = Math.max(...placements);
 		const teams: number[] = [];
 		for (const groupId of groupIds) {
 			for (const division of [0, 1] as const) {
 				const divisionStandings = standings.filter(
 					(s) => s.groupId === groupId && s.team.abDivision === division,
 				);
-				for (const placement of placements) {
+				const maxPlacement = rest ? divisionStandings.length : maxExplicit;
+				for (let placement = 1; placement <= maxPlacement; placement++) {
+					if (
+						!placements.includes(placement) &&
+						!(rest && placement >= maxExplicit)
+					) {
+						continue;
+					}
 					const standing = divisionStandings[placement - 1];
 					if (standing) teams.push(standing.team.id);
 				}
@@ -95,6 +112,23 @@ export class RoundRobinBracket extends Bracket {
 
 			if (!groupIsFinished && !includeUnfinishedGroups) continue;
 
+			const droppedOutWithIncompleteMatches = new Set<number>();
+			for (const team of this.tournament.ctx.teams) {
+				if (!team.droppedOut) continue;
+				const teamMatches = matches.filter(
+					(m) => m.opponent1?.id === team.id || m.opponent2?.id === team.id,
+				);
+				if (teamMatches.length === 0) continue;
+				const allPlayed = teamMatches.every(
+					(m) =>
+						m.opponent1 === null ||
+						m.opponent2 === null ||
+						typeof m.opponent1?.score === "number" ||
+						typeof m.opponent2?.score === "number",
+				);
+				if (!allPlayed) droppedOutWithIncompleteMatches.add(team.id);
+			}
+
 			const teams: {
 				id: number;
 				setWins: number;
@@ -103,6 +137,7 @@ export class RoundRobinBracket extends Bracket {
 				mapLosses: number;
 				winsAgainstTied: number;
 				points: number;
+				koCount: number;
 			}[] = [];
 
 			const updateTeam = ({
@@ -112,6 +147,7 @@ export class RoundRobinBracket extends Bracket {
 				mapWins,
 				mapLosses,
 				points,
+				koCount,
 			}: {
 				teamId: number;
 				setWins: number;
@@ -119,6 +155,7 @@ export class RoundRobinBracket extends Bracket {
 				mapWins: number;
 				mapLosses: number;
 				points: number;
+				koCount: number;
 			}) => {
 				const team = teams.find((team) => team.id === teamId);
 				if (team) {
@@ -127,6 +164,7 @@ export class RoundRobinBracket extends Bracket {
 					team.mapWins += mapWins;
 					team.mapLosses += mapLosses;
 					team.points += points;
+					team.koCount += koCount;
 				} else {
 					teams.push({
 						id: teamId,
@@ -136,6 +174,7 @@ export class RoundRobinBracket extends Bracket {
 						mapLosses,
 						winsAgainstTied: 0,
 						points,
+						koCount,
 					});
 				}
 			};
@@ -144,6 +183,17 @@ export class RoundRobinBracket extends Bracket {
 				if (
 					match.opponent1?.result !== "win" &&
 					match.opponent2?.result !== "win"
+				) {
+					continue;
+				}
+
+				const opp1Id = match.opponent1?.id;
+				const opp2Id = match.opponent2?.id;
+				if (
+					(typeof opp1Id === "number" &&
+						droppedOutWithIncompleteMatches.has(opp1Id)) ||
+					(typeof opp2Id === "number" &&
+						droppedOutWithIncompleteMatches.has(opp2Id))
 				) {
 					continue;
 				}
@@ -180,6 +230,7 @@ export class RoundRobinBracket extends Bracket {
 					mapWins: winner.score ?? 0,
 					mapLosses: loser.score ?? 0,
 					points: winner.totalPoints ?? 0,
+					koCount: winner.totalKos ?? 0,
 				});
 				updateTeam({
 					teamId: loser.id,
@@ -188,6 +239,7 @@ export class RoundRobinBracket extends Bracket {
 					mapWins: loser.score ?? 0,
 					mapLosses: winner.score ?? 0,
 					points: loser.totalPoints ?? 0,
+					koCount: loser.totalKos ?? 0,
 				});
 			}
 
@@ -212,6 +264,20 @@ export class RoundRobinBracket extends Bracket {
 						team.winsAgainstTied++;
 					}
 				}
+			}
+
+			// Seed dropped teams here (after wins-against-tied) so forfeit matches don't credit opponents while still keeping them in standings.
+			for (const teamId of droppedOutWithIncompleteMatches) {
+				teams.push({
+					id: teamId,
+					setWins: 0,
+					setLosses: 0,
+					mapWins: 0,
+					mapLosses: 0,
+					winsAgainstTied: 0,
+					points: 0,
+					koCount: 0,
+				});
 			}
 
 			const droppedOutTeams = this.tournament.ctx.teams
@@ -262,6 +328,7 @@ export class RoundRobinBracket extends Bracket {
 								mapWins: team.mapWins,
 								mapLosses: team.mapLosses,
 								points: team.points,
+								koCount: team.koCount,
 								winsAgainstTied: team.winsAgainstTied,
 							},
 						};

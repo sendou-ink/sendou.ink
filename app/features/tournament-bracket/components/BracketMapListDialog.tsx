@@ -8,6 +8,7 @@ import {
 	Unlink,
 } from "lucide-react";
 import * as React from "react";
+import { useFilter } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { type FetcherWithComponents, Link, useFetcher } from "react-router";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -20,6 +21,7 @@ import { ModeImage, StageImage } from "~/components/Image";
 import { InfoPopover } from "~/components/InfoPopover";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
+import { LocaleTime } from "~/components/LocaleTime";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { CustomPickBanFlow, TournamentRoundMaps } from "~/db/tables";
 import {
@@ -32,7 +34,6 @@ import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types"
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { nullFilledArray } from "~/utils/arrays";
-import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
 import { calendarEditPage } from "~/utils/urls";
@@ -358,13 +359,20 @@ export function BracketMapListDialog({
 				) : null}
 				<div>
 					{preparedMaps ? (
-						<div
-							className="text-xs text-center text-lighter"
-							suppressHydrationWarning
-						>
+						<div className="text-xs text-center text-lighter">
 							Prepared by{" "}
 							{authorIdToUsername(tournament, preparedMaps.authorId)} @{" "}
-							{databaseTimestampToDate(preparedMaps.createdAt).toLocaleString()}
+							<LocaleTime
+								date={preparedMaps.createdAt}
+								options={{
+									day: "numeric",
+									month: "numeric",
+									year: "numeric",
+									hour: "numeric",
+									minute: "2-digit",
+								}}
+								inline
+							/>
 						</div>
 					) : null}
 				</div>
@@ -1065,6 +1073,7 @@ function MapListRow({
 	onMapChange: (map: NonNullable<TournamentRoundMaps["list"]>[number]) => void;
 }) {
 	const { t } = useTranslation(["common", "game-misc"]);
+	const { contains } = useFilter({ sensitivity: "base" });
 	const tournament = useTournament();
 
 	const items = modesShort.flatMap((mode) => {
@@ -1111,13 +1120,20 @@ function MapListRow({
 				search={{
 					placeholder: t("common:forms.stageSearch.search.placeholder"),
 				}}
+				filter={(textValue, inputValue) =>
+					mapSearchFilter(textValue, inputValue, contains)
+				}
 				className={styles.mapRowSelect}
 				popoverClassName={styles.mapRowSelectPopover}
 			>
 				{(group) => (
 					<SendouSelectItemSection key={group.key} heading={group.modeLabel}>
 						{group.maps.map((m) => (
-							<SendouSelectItem key={m.id} id={m.id} textValue={m.name}>
+							<SendouSelectItem
+								key={m.id}
+								id={m.id}
+								textValue={`${m.mode} ${m.name}`}
+							>
 								<div className={styles.mapSelectItem}>
 									<ModeImage mode={m.mode} size={20} />
 									<StageImage
@@ -1134,6 +1150,51 @@ function MapListRow({
 			</SendouSelect>
 		</li>
 	);
+}
+
+/**
+ * Filter for the map search input that supports an optional game mode prefix.
+ *
+ * - `"sz"` matches every Splat Zones map
+ * - `"sz crab"` matches Splat Zones maps whose stage name contains "crab"
+ * - input without a recognized mode prefix matches against the stage name as before
+ *
+ * Expects `textValue` to be formatted as `"${modeShort} ${stageName}"`.
+ */
+export function mapSearchFilter(
+	textValue: string,
+	inputValue: string,
+	contains: (string: string, substring: string) => boolean,
+) {
+	const separatorIndex = textValue.indexOf(" ");
+	const mode = textValue.slice(0, separatorIndex);
+	const stageName = textValue.slice(separatorIndex + 1);
+
+	const trimmedInput = inputValue.trim();
+	const firstSpaceIndex = trimmedInput.indexOf(" ");
+	const firstWord =
+		firstSpaceIndex === -1
+			? trimmedInput
+			: trimmedInput.slice(0, firstSpaceIndex);
+
+	const matchedMode = modesShort.find(
+		(m) => m.toLowerCase() === firstWord.toLowerCase(),
+	);
+
+	if (!matchedMode) {
+		return contains(stageName, trimmedInput);
+	}
+
+	if (mode !== matchedMode) return false;
+
+	const restQuery =
+		firstSpaceIndex === -1
+			? ""
+			: trimmedInput.slice(firstSpaceIndex + 1).trim();
+
+	if (restQuery === "") return true;
+
+	return contains(stageName, restQuery);
 }
 
 function MysteryRow({

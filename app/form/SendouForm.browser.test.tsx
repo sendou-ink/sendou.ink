@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import { type ComponentProps, Profiler } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { userEvent } from "vitest/browser";
@@ -887,6 +887,27 @@ describe("SendouForm", () => {
 				.toBeVisible();
 		});
 
+		test("renders one starter item for an empty array", async () => {
+			const schema = z.object({
+				urls: array({
+					label: "labels.urls",
+					min: 0,
+					max: 5,
+					field: textFieldRequired({ maxLength: 100 }),
+				}),
+			});
+
+			const screen = await renderForm(schema);
+
+			const inputs = screen.container.querySelectorAll('input[type="text"]');
+			expect(inputs.length).toBe(1);
+
+			const removeButtons = screen.container.querySelectorAll(
+				'button[aria-label="Remove item"]',
+			);
+			expect(removeButtons.length).toBe(0);
+		});
+
 		test("clicking add creates new item", async () => {
 			const schema = z.object({
 				urls: array({
@@ -899,10 +920,17 @@ describe("SendouForm", () => {
 
 			const screen = await renderForm(schema);
 
+			// Adding from the single empty starter row materializes it and appends a
+			// new one, so one click goes from 1 visible row to 2.
 			await screen.getByRole("button", { name: "Add" }).click();
+			expect(
+				screen.container.querySelectorAll('input[type="text"]').length,
+			).toBe(2);
 
-			const inputs = screen.container.querySelectorAll('input[type="text"]');
-			expect(inputs.length).toBe(1);
+			await screen.getByRole("button", { name: "Add" }).click();
+			expect(
+				screen.container.querySelectorAll('input[type="text"]').length,
+			).toBe(3);
 		});
 
 		test("renders remove button for each item when above minimum", async () => {
@@ -993,6 +1021,33 @@ describe("SendouForm", () => {
 			await expect.element(screen.getByLabelText("Name")).toHaveValue("Alice");
 		});
 
+		test("renders one starter fieldset for an empty array", async () => {
+			const schema = z.object({
+				members: array({
+					label: "labels.members",
+					min: 0,
+					max: 10,
+					field: fieldset({
+						fields: z.object({
+							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+						}),
+					}),
+				}),
+			});
+
+			const screen = await renderForm(schema);
+
+			await expect.element(screen.getByText("#1")).toBeVisible();
+
+			// The remove button is rendered but hidden (so the header keeps a stable
+			// height) since a single starter row can't be removed.
+			const removeButtons = screen.container.querySelectorAll(
+				'button[aria-label="Remove item"]',
+			);
+			expect(removeButtons.length).toBe(1);
+			expect(removeButtons[0].classList.contains("invisible")).toBe(true);
+		});
+
 		test("add button creates new fieldset item", async () => {
 			const schema = z.object({
 				members: array({
@@ -1010,8 +1065,9 @@ describe("SendouForm", () => {
 			const screen = await renderForm(schema);
 
 			await screen.getByRole("button", { name: "Add" }).click();
+			await screen.getByRole("button", { name: "Add" }).click();
 
-			await expect.element(screen.getByText("#1")).toBeVisible();
+			await expect.element(screen.getByText("#2")).toBeVisible();
 		});
 
 		test("remove button removes fieldset item", async () => {
@@ -1044,6 +1100,57 @@ describe("SendouForm", () => {
 			expect((inputs[0] as HTMLInputElement).value).toBe("Bob");
 		});
 
+		test("removing an added fieldset row returns to a single non-removable row", async () => {
+			// Mirrors the staff form: a select field gives the row a non-empty default
+			// (role), so a freshly added row isn't "blank" yet is still pristine.
+			const schema = z.object({
+				staff: array({
+					label: "labels.members",
+					min: 0,
+					max: 10,
+					field: fieldset({
+						fields: z.object({
+							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+							role: select({
+								label: "labels.staffRole",
+								items: [
+									{ value: "ORGANIZER", label: "options.staffRole.ORGANIZER" },
+									{ value: "STREAMER", label: "options.staffRole.STREAMER" },
+								],
+							}),
+						}),
+					}),
+				}),
+			});
+
+			const screen = await renderForm(schema);
+
+			const removeButtonEls = () =>
+				screen.container.querySelectorAll('button[aria-label="Remove item"]');
+
+			// Single starter row: remove button present but hidden.
+			expect(removeButtonEls().length).toBe(1);
+			expect(removeButtonEls()[0].classList.contains("invisible")).toBe(true);
+
+			await screen.getByRole("button", { name: "Add" }).click();
+
+			// Two rows now, both with visible remove buttons.
+			await expect.element(screen.getByText("#2")).toBeVisible();
+			expect(removeButtonEls().length).toBe(2);
+			for (const button of removeButtonEls()) {
+				expect(button.classList.contains("invisible")).toBe(false);
+			}
+
+			// Removing the second row collapses back to the single starter row with a
+			// hidden remove button - not a lingering blank row that still shows one.
+			await userEvent.click(removeButtonEls()[1]);
+
+			await expect.element(screen.getByText("#1")).toBeVisible();
+			expect(screen.container.querySelectorAll("fieldset").length).toBe(1);
+			expect(removeButtonEls().length).toBe(1);
+			expect(removeButtonEls()[0].classList.contains("invisible")).toBe(true);
+		});
+
 		test("typing in nested fieldset field updates value", async () => {
 			const schema = z.object({
 				members: array({
@@ -1066,6 +1173,56 @@ describe("SendouForm", () => {
 			await userEvent.type(input.element(), "New Name");
 
 			await expect.element(input).toHaveValue("New Name");
+		});
+
+		test("editing a starter row commits its select default on submit", async () => {
+			// Regression: editing one field of the empty-array starter row must seed the
+			// item's other fieldset defaults (e.g. a required select's first option),
+			// rather than leaving them only displayed as a fallback and failing
+			// validation on submit.
+			const onApply = vi.fn();
+			const schema = z.object({
+				staff: array({
+					label: "labels.members",
+					min: 0,
+					max: 10,
+					field: fieldset({
+						fields: z.object({
+							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+							role: select({
+								label: "labels.staffRole",
+								items: [
+									{ value: "ORGANIZER", label: "options.staffRole.ORGANIZER" },
+									{ value: "STREAMER", label: "options.staffRole.STREAMER" },
+								],
+							}),
+						}),
+					}),
+				}),
+			});
+
+			const router = createMemoryRouter(
+				[
+					{
+						path: "/",
+						element: (
+							<SendouForm schema={schema} onApply={onApply}>
+								{({ names }) => <FormField name={names.staff} />}
+							</SendouForm>
+						),
+					},
+				],
+				{ initialEntries: ["/"] },
+			);
+
+			const screen = await render(<RouterProvider router={router} />);
+
+			await userEvent.type(screen.getByLabelText("Name").element(), "Alice");
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply).toHaveBeenCalledWith({
+				staff: [{ name: "Alice", role: "ORGANIZER" }],
+			});
 		});
 
 		test("shows error on specific nested field within array item", async () => {
@@ -1233,6 +1390,50 @@ describe("SendouForm", () => {
 			// Bug: UserSearch cleanup effect clears userId for shifted items
 			expect(members[2].userId).toBe(40);
 			expect(members[3].userId).toBe(50);
+		});
+	});
+
+	describe("render isolation", () => {
+		test("typing in one field does not re-render sibling fields", async () => {
+			const schema = z.object({
+				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+				bio: textFieldOptional({ label: "labels.bio", maxLength: 100 }),
+			});
+
+			const profilerRenders: Record<string, number> = {};
+			const onRender = (id: string) => {
+				profilerRenders[id] = (profilerRenders[id] ?? 0) + 1;
+			};
+
+			const form = (
+				<SendouForm schema={schema} defaultValues={{}}>
+					{({ FormField: TypedFormField }) => (
+						<>
+							<Profiler id="name" onRender={onRender}>
+								<TypedFormField name="name" />
+							</Profiler>
+							<Profiler id="bio" onRender={onRender}>
+								<TypedFormField name="bio" />
+							</Profiler>
+						</>
+					)}
+				</SendouForm>
+			);
+
+			const router = createMemoryRouter([{ path: "/", element: form }], {
+				initialEntries: ["/"],
+			});
+			const screen = await render(<RouterProvider router={router} />);
+
+			const baselineName = profilerRenders.name ?? 0;
+			const baselineBio = profilerRenders.bio ?? 0;
+			await userEvent.type(screen.getByLabelText("Name").element(), "hello");
+
+			const nameRenders = (profilerRenders.name ?? 0) - baselineName;
+			const bioRenders = (profilerRenders.bio ?? 0) - baselineBio;
+
+			expect(nameRenders).toBeGreaterThanOrEqual(5);
+			expect(bioRenders).toBe(0);
 		});
 	});
 });

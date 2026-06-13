@@ -1,12 +1,15 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import { chatAccessible } from "~/features/chat/chat-utils";
+import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
-import { reportedWeaponsToArrayOfArrays } from "~/features/sendouq-match/core/reported-weapons.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { databaseTimestampToDate } from "~/utils/dates";
+import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { qMatchPageParamsSchema } from "../q-match-schemas";
 
@@ -16,6 +19,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		params,
 		schema: qMatchPageParamsSchema,
 	}).id;
+
 	const matchUnmapped = notFoundIfFalsy(
 		await SQMatchRepository.findById(matchId),
 	);
@@ -24,31 +28,28 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		...matchUnmapped.groupAlpha.members,
 		...matchUnmapped.groupBravo.members,
 	].map((m) => m.id);
-	const privateNotes = user
-		? await PrivateUserNoteRepository.byAuthorUserId(user.id, matchUsers)
-		: undefined;
+
+	const isStaff = user?.roles.includes("STAFF") ?? false;
+	const isParticipant = Boolean(user && matchUsers.includes(user.id));
+	const canSeeRoomLinks = isStaff || isParticipant;
+
+	const [privateNotes, roomLinks, anyUserPrefersNoSplatnet, reportedWeapons] =
+		await Promise.all([
+			user ? PrivateUserNoteRepository.ownNotes(matchUsers) : undefined,
+			canSeeRoomLinks ? RoomLinkRepository.findByUserIds(matchUsers, 3) : [],
+			UserRepository.anyUserPrefersNoSplatnet(matchUsers),
+			ReportedWeaponRepository.findByMatchId(matchId),
+		]);
 
 	const match = SendouQ.mapMatch(matchUnmapped, user, privateNotes);
 
-	const rawReportedWeapons = match.reportedAt
-		? await ReportedWeaponRepository.findByMatchId(matchId)
-		: null;
-
 	return {
 		match,
-		reportedWeapons: match.reportedAt
-			? reportedWeaponsToArrayOfArrays({
-					groupAlpha: match.groupAlpha,
-					groupBravo: match.groupBravo,
-					mapList: match.mapList,
-					reportedWeapons: rawReportedWeapons,
-				})
-			: null,
-		rawReportedWeapons,
+		roomLinks,
+		anyUserPrefersNoSplatnet,
+		reportedWeapons,
+		isOffSeason: Seasons.current() === null,
 		chatCode: (() => {
-			const isStaff = user?.roles.includes("STAFF") ?? false;
-			const isParticipant = user && matchUsers.includes(user.id);
-
 			if (!(isStaff || isParticipant)) return null;
 
 			const accessible = chatAccessible({
@@ -72,3 +73,5 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		})(),
 	};
 };
+
+export type SendouQMatchLoaderData = SerializeFrom<typeof loader>;

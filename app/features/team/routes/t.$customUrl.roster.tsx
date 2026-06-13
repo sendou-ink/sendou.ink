@@ -1,10 +1,9 @@
 import clsx from "clsx";
-import { Trash } from "lucide-react";
+import { Check, Clipboard, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Form, useFetcher, useLoaderData } from "react-router";
-import { useCopyToClipboard } from "react-use";
 import { Alert } from "~/components/Alert";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -14,6 +13,7 @@ import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { TeamGoBackButton } from "~/features/team/components/TeamGoBackButton";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { metaTags } from "~/utils/remix";
 import { joinTeamPage } from "~/utils/urls";
 import { action } from "../actions/t.$customUrl.roster.server";
@@ -60,7 +60,7 @@ export default function ManageTeamRosterPage() {
 function InviteCodeSection() {
 	const { t } = useTranslation(["common", "team"]);
 	const { team } = useLoaderData<typeof loader>();
-	const [, copyToClipboard] = useCopyToClipboard();
+	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 
 	if (isTeamFull(team)) {
 		return (
@@ -85,6 +85,7 @@ function InviteCodeSection() {
 				<Form method="post" className="stack horizontal md">
 					<SendouButton
 						size="small"
+						icon={copySuccess ? <Check /> : <Clipboard />}
 						onPress={() => copyToClipboard(inviteLink)}
 					>
 						{t("common:actions.copyToClipboard")}

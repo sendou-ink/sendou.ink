@@ -8,6 +8,7 @@
 
 .navigateButtonsContainer {
 	display: flex;
+	flex-wrap: wrap;
 	gap: var(--s-4);
 	width: 100%;
 }
@@ -31,6 +32,9 @@
 
 	&:not(.navigateArrowButton) {
 		justify-content: center;
+		flex-basis: 100%;
+		background-color: var(--color-bg);
+		min-height: 30px;
 	}
 
 	& svg {
@@ -50,7 +54,26 @@
 	}
 }
 
+.navigateArrowButtonRange {
+	font-variant-numeric: tabular-nums;
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+}
+
+@container (width >= 640px) {
+	.navigateArrowButton {
+		min-width: 7.25rem;
+		flex-basis: auto;
+	}
+
+	.navigateButton:not(.navigateArrowButton) {
+		flex-basis: auto;
+	}
+}
+
 .navigateArrowButton {
+	gap: var(--s-1);
+
 	& svg {
 		margin-inline-start: -5px;
 	}

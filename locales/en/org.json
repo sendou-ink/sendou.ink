@@ -10,7 +10,6 @@
 	"events.tabs.events": "Events",
 	"events.tabs.leaderboard": "Leaderboard",
 	"edit.form.title": "Editing tournament organization",
-	"edit.form.uploadLogo": "Upload logo",
 	"edit.form.socialLinks.title": "Social links",
 	"edit.form.members.title": "Members",
 	"edit.form.members.info": "\"Admin\" role lets users edit the organization and any tournament registration hosted by the organization. \"Organizer\" and \"Streamer\" give the corresponding role in tournaments. \"Member\" has no special permissions attached to it.",

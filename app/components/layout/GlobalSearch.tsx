@@ -15,13 +15,13 @@ import {
 } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useSearchParams } from "react-router";
-import { useDebounce } from "react-use";
 import { Avatar } from "~/components/Avatar";
 import { Image } from "~/components/Image";
 import { Input } from "~/components/Input";
 import type { SearchLoaderData } from "~/features/search/routes/search";
+import { useDebounce } from "~/hooks/useDebounce";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { altWeaponIdToId } from "~/modules/in-game-lists/weapon-ids";
+import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
 import {
 	mySlugify,
 	navIconUrl,
@@ -167,11 +167,7 @@ function resolveInitialWeapon(
 	const name = t(`weapons:MAIN_${id}`);
 	if (!name || name === `MAIN_${id}`) return null;
 	const englishName = t(`weapons:MAIN_${id}`, { lng: "en" });
-	const baseId = altWeaponIdToId.get(id);
-	const slugName =
-		baseId !== undefined
-			? t(`weapons:MAIN_${baseId}`, { lng: "en" })
-			: englishName;
+	const slugName = t(`weapons:MAIN_${canonicalWeaponSplId(id)}`, { lng: "en" });
 	return { id, name, englishName, slug: mySlugify(slugName) };
 }
 
@@ -246,11 +242,9 @@ function GlobalSearchContent({
 			? getRecentWeapons().map((id) => {
 					const name = t(`weapons:MAIN_${id}`);
 					const englishName = t(`weapons:MAIN_${id}`, { lng: "en" });
-					const baseId = altWeaponIdToId.get(id);
-					const slugName =
-						baseId !== undefined
-							? t(`weapons:MAIN_${baseId}`, { lng: "en" })
-							: englishName;
+					const slugName = t(`weapons:MAIN_${canonicalWeaponSplId(id)}`, {
+						lng: "en",
+					});
 					return { id, name, englishName, slug: mySlugify(slugName) };
 				})
 			: [];
@@ -275,6 +269,10 @@ function GlobalSearchContent({
 	const handleSearchTypeChange = (value: string) => {
 		setSearchType(value as SearchType);
 		setSelectedWeapon(null);
+	};
+
+	const handleSearchTypeClick = () => {
+		inputRef.current?.focus();
 	};
 
 	const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -360,6 +358,7 @@ function GlobalSearchContent({
 							key={type}
 							value={type}
 							className={styles.searchTypeRadioWrapper}
+							onClick={handleSearchTypeClick}
 						>
 							{({ isSelected, isHovered, isFocusVisible }) => (
 								<span

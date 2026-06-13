@@ -1,11 +1,18 @@
 import type { Tables } from "~/db/tables";
-import type { FindByTournamentTeamIdItem } from "~/features/tournament-bracket/TournamentMatchRepository.server";
+import type { FindByTournamentTeamIdItem } from "~/features/tournament-match/TournamentMatchRepository.server";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { sourceTypes } from "~/modules/tournament-map-list-generator/constants";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-import type { findRoundsByTournamentId } from "../queries/findRoundsByTournamentId.server";
+
+export interface AllRoundsItem {
+	stageId: number;
+	stageName: string;
+	stageType: Tables["TournamentStage"]["type"];
+	roundNumber: number;
+	groupNumber: number;
+}
 
 export interface PlayedSet {
 	tournamentMatchId: number;
@@ -64,12 +71,12 @@ export function winCounts(sets: PlayedSet[]) {
 		sets: {
 			won: setsWon,
 			total: totalSets,
-			percentage: Math.round((setsWon / totalSets) * 100),
+			percentage: totalSets === 0 ? 0 : Math.round((setsWon / totalSets) * 100),
 		},
 		maps: {
 			won: mapsWon,
 			total: totalMaps,
-			percentage: Math.round((mapsWon / totalMaps) * 100),
+			percentage: totalMaps === 0 ? 0 : Math.round((mapsWon / totalMaps) * 100),
 		},
 	};
 }
@@ -79,7 +86,7 @@ export function tournamentTeamSets({
 	allRounds,
 }: {
 	sets: FindByTournamentTeamIdItem[];
-	allRounds: ReturnType<typeof findRoundsByTournamentId>;
+	allRounds: AllRoundsItem[];
 }): PlayedSet[] {
 	return sets.map((set) => {
 		const round =

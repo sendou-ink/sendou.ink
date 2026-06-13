@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { db } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -22,7 +21,7 @@ async function main() {
 		.where("User.discordId", "=", discordId)
 		.executeTakeFirstOrThrow();
 
-	const groupMatchMaps = await db
+	const playedMaps = await db
 		.selectFrom("GroupMember")
 		.innerJoin("Group", "Group.id", "GroupMember.groupId")
 		.innerJoin("GroupMatch", (join) =>
@@ -34,7 +33,7 @@ async function main() {
 			),
 		)
 		.innerJoin("GroupMatchMap", "GroupMatchMap.matchId", "GroupMatch.id")
-		.select("GroupMatchMap.id")
+		.select(["GroupMatchMap.matchId", "GroupMatchMap.index"])
 		.where(
 			"GroupMatch.createdAt",
 			">",
@@ -49,16 +48,28 @@ async function main() {
 		.where("GroupMatchMap.winnerGroupId", "is not", null)
 		.execute();
 
-	const groupMatchMapIds = groupMatchMaps.map((gmm) => gmm.id);
+	if (playedMaps.length === 0) {
+		logger.info(`No reported weapons to delete for user ${discordId}`);
+		return;
+	}
 
 	await db
 		.deleteFrom("ReportedWeapon")
 		.where("userId", "=", user.id)
-		.where("ReportedWeapon.groupMatchMapId", "in", groupMatchMapIds)
+		.where((eb) =>
+			eb.or(
+				playedMaps.map((m) =>
+					eb.and([
+						eb("ReportedWeapon.groupMatchId", "=", m.matchId),
+						eb("ReportedWeapon.mapIndex", "=", m.index),
+					]),
+				),
+			),
+		)
 		.execute();
 
 	logger.info(
-		`Deleted ${groupMatchMapIds.length} reported weapons for user ${discordId}`,
+		`Deleted reported weapons across ${playedMaps.length} maps for user ${discordId}`,
 	);
 }
 

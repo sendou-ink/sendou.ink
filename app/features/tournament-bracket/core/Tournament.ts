@@ -10,6 +10,7 @@ import {
 import {
 	modesIncluded,
 	sortTeamsBySeeding,
+	tournamentInWeaponReportingWindow,
 	tournamentIsRanked,
 } from "~/features/tournament/tournament-utils";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
@@ -228,6 +229,7 @@ export class Tournament {
 				sourceBracket.source({
 					placements: source.placements,
 					advanceThreshold: sourceBracket.settings?.advanceThreshold,
+					rest: source.rest,
 				});
 			if (!relevantMatchesFinished) {
 				allRelevantMatchesFinished = false;
@@ -557,6 +559,7 @@ export class Tournament {
 					groupCount: Math.ceil(participantsCount / teamsPerGroup),
 					seedOrdering: ["groups.seed_optimized"],
 					hasAbDivisions: selectedSettings?.hasAbDivisions ?? false,
+					...(this.isLeagueDivision ? { independentRounds: true } : {}),
 				};
 			}
 			case "swiss": {
@@ -626,6 +629,15 @@ export class Tournament {
 	/** What Splatoon modes are played in this tournament */
 	get modesIncluded(): ModeShort[] {
 		return modesIncluded(this.ctx.mapPickingStyle, this.ctx.toSetMapPool);
+	}
+
+	/** Should the rules page (and its nav item) be shown. True if there are rules or any map pool to show. */
+	get hasRulesPage() {
+		return (
+			this.ctx.hasRules ||
+			this.ctx.toSetMapPool.length > 0 ||
+			this.ctx.tieBreakerMapPool.length > 0
+		);
 	}
 
 	/** Tournament teams logo image path, either from the team or the pickup avatar uploaded specifically for this tournament */
@@ -895,6 +907,16 @@ export class Tournament {
 		return this.registrationClosesAt > new Date();
 	}
 
+	/** Can participants submit/undo their own weapon reports right now?
+	 * Always open while the tournament is running; once finalized it stays open only for tournaments
+	 * whose startTime is inside the current-season-plus-adjacent-off-season window. */
+	get weaponReportingOpen() {
+		if (!this.ctx.isFinalized) return true;
+		return tournamentInWeaponReportingWindow({
+			tournamentStartTime: this.ctx.startTime,
+		});
+	}
+
 	/**
 	 * Does this tournament have autonomous subs feature enabled?
 	 * If enabled, teams can add members to their roster while tournament is in progress without having to request the organizer to do it.
@@ -1024,7 +1046,7 @@ export class Tournament {
 		};
 
 		return {
-			bracketName,
+			bracketName: bracketName ?? "Main bracket",
 			roundName,
 			roundNameWithoutMatchIdentifier:
 				roundNameWithoutMatchIdentifier(roundName),

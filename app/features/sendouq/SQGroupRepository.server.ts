@@ -3,10 +3,11 @@ import { type NotNull, sql, type Transaction } from "kysely";
 import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables, UserMapModePreferences } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { COMMON_USER_FIELDS, matchProfileWeapons } from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { userIsBanned } from "../ban/core/banned.server";
 import { FULL_GROUP_SIZE } from "./q-constants";
@@ -61,7 +62,11 @@ export async function findCurrentGroups() {
 		vc: Tables["User"]["vc"];
 		role: Tables["GroupMember"]["role"];
 		note: Tables["GroupMember"]["note"];
-		weapons: Tables["User"]["qWeaponPool"];
+		weapons:
+			| (Pick<Tables["UserWeaponPool"], "weaponSplId" | "isFavorite"> & {
+					isTenStar: number;
+			  })[]
+			| null;
 		plusTier: Tables["PlusTier"]["tier"] | null;
 	};
 
@@ -99,7 +104,7 @@ export async function findCurrentGroups() {
 						noScreen: eb.ref("User.noScreen"),
 						role: eb.ref("GroupMember.role"),
 						note: eb.ref("GroupMember.note"),
-						weapons: eb.ref("User.qWeaponPool"),
+						weapons: matchProfileWeapons(eb),
 						languages: eb.ref("User.languages"),
 						plusTier: eb.ref("PlusTier.tier"),
 						vc: eb.ref("User.vc"),
@@ -131,7 +136,7 @@ type CreateGroupArgs = {
 	status: Exclude<Tables["Group"]["status"], "INACTIVE">;
 	userId: number;
 };
-export function createGroup(args: CreateGroupArgs) {
+export async function createGroup(args: CreateGroupArgs) {
 	return db.transaction().execute(async (trx) => {
 		const createdGroup = await trx
 			.insertInto("Group")
@@ -156,7 +161,12 @@ export function createGroup(args: CreateGroupArgs) {
 			throw new SendouQError("Group has a member in multiple groups");
 		}
 
-		return createdGroup;
+		const chatCodeToRevalidate = await recordImplicitRejoinNoVote(
+			args.userId,
+			trx,
+		);
+
+		return { id: createdGroup.id, chatCodeToRevalidate };
 	});
 }
 
@@ -166,14 +176,18 @@ type CreateGroupFromPreviousGroupArgs = {
 		id: number;
 		role: Tables["GroupMember"]["role"];
 	}[];
+	status?: Exclude<Tables["Group"]["status"], "INACTIVE">;
 };
 export async function createGroupFromPrevious(
 	args: CreateGroupFromPreviousGroupArgs,
 ) {
+	const status = args.status ?? "PREPARING";
+	const membersWithEnsuredOwner = ensureOwnerRole(args.members);
+
 	return db.transaction().execute(async (trx) => {
 		const createdGroup = await trx
 			.insertInto("Group")
-			.columns(["teamId", "chatCode", "inviteCode", "status"])
+			.columns(["teamId", "chatCode", "inviteCode", "status", "matchmade"])
 			.expression((eb) =>
 				eb
 					.selectFrom("Group")
@@ -181,7 +195,8 @@ export async function createGroupFromPrevious(
 						"Group.teamId",
 						"Group.chatCode",
 						eb.val(shortNanoid()).as("inviteCode"),
-						eb.val("PREPARING").as("status"),
+						eb.val(status).as("status"),
+						"Group.matchmade",
 					])
 					.where("Group.id", "=", args.previousGroupId),
 			)
@@ -191,7 +206,7 @@ export async function createGroupFromPrevious(
 		await trx
 			.insertInto("GroupMember")
 			.values(
-				args.members.map((member) => ({
+				membersWithEnsuredOwner.map((member) => ({
 					groupId: createdGroup.id,
 					userId: member.id,
 					role: member.role,
@@ -207,6 +222,19 @@ export async function createGroupFromPrevious(
 
 		return createdGroup;
 	});
+}
+
+function ensureOwnerRole(
+	members: CreateGroupFromPreviousGroupArgs["members"],
+): CreateGroupFromPreviousGroupArgs["members"] {
+	if (members.some((m) => m.role === "OWNER")) return members;
+
+	const promoteeIndex = members.findIndex((m) => m.role === "MANAGER");
+	const targetIndex = promoteeIndex !== -1 ? promoteeIndex : 0;
+
+	return members.map((m, i) =>
+		i === targetIndex ? { ...m, role: "OWNER" as const } : m,
+	);
 }
 
 function deleteLikesByGroupId(groupId: number, trx: Transaction<DB>) {
@@ -229,10 +257,10 @@ export function morphGroups({
 	otherGroupId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
-		// reset chat code so previous messages are not visible
+		// reset chat code so previous messages are not visible, and mark as matchmade
 		await trx
 			.updateTable("Group")
-			.set({ chatCode: shortNanoid() })
+			.set({ chatCode: shortNanoid(), matchmade: 1 })
 			.where("Group.id", "=", survivingGroupId)
 			.execute();
 
@@ -313,7 +341,7 @@ async function isGroupCorrect(
 	return true;
 }
 
-export function addMember(
+export async function addMember(
 	groupId: number,
 	{
 		userId,
@@ -323,7 +351,7 @@ export function addMember(
 		role?: Tables["GroupMember"]["role"];
 	},
 ) {
-	return db.transaction().execute(async (trx) => {
+	const chatCodeToRevalidate = await db.transaction().execute(async (trx) => {
 		await trx
 			.insertInto("GroupMember")
 			.values({
@@ -340,7 +368,11 @@ export function addMember(
 				"Group has too many members or member in multiple groups",
 			);
 		}
+
+		return recordImplicitRejoinNoVote(userId, trx);
 	});
+
+	return { chatCodeToRevalidate };
 }
 
 export async function allLikesByGroupId(groupId: number) {
@@ -401,7 +433,6 @@ export async function friendsAndTeammates(userId: number) {
 	const rows = await db
 		.selectFrom("TeamMemberWithSecondary")
 		.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
-		.innerJoin("UserFriendCode", "UserFriendCode.userId", "User.id")
 		.select([
 			...COMMON_USER_FIELDS,
 			"User.inGameName",
@@ -429,7 +460,6 @@ export async function friendsAndTeammates(userId: number) {
 						]),
 					),
 				)
-				.innerJoin("UserFriendCode", "UserFriendCode.userId", "User.id")
 				.select([
 					...COMMON_USER_FIELDS,
 					"User.inGameName",
@@ -490,6 +520,66 @@ export async function setOldGroupsAsInactive() {
 			.executeTakeFirst();
 	});
 }
+export async function closeExpiredContinueVotes() {
+	const cutoff = dateToDatabaseTimestamp(sub(new Date(), { hours: 1 }));
+
+	return db.transaction().execute(async (trx) => {
+		const eligibleGroups = await trx
+			.selectFrom("Group")
+			.innerJoin("GroupMatch", (join) =>
+				join.on((eb) =>
+					eb.or([
+						eb("GroupMatch.alphaGroupId", "=", eb.ref("Group.id")),
+						eb("GroupMatch.bravoGroupId", "=", eb.ref("Group.id")),
+					]),
+				),
+			)
+			.innerJoin("GroupMember", "GroupMember.groupId", "Group.id")
+			.leftJoin("GroupMatchContinueVote", (join) =>
+				join
+					.onRef("GroupMatchContinueVote.groupId", "=", "Group.id")
+					.onRef("GroupMatchContinueVote.userId", "=", "GroupMember.userId"),
+			)
+			.select(["Group.id as groupId", "GroupMatch.chatCode as matchChatCode"])
+			.where("Group.matchmade", "=", 1)
+			.where("GroupMatch.confirmedAt", "is not", null)
+			.where("GroupMatch.confirmedAt", "<", cutoff)
+			.where("GroupMatchContinueVote.id", "is", null)
+			.groupBy("Group.id")
+			.execute();
+
+		const chatCodesToRevalidate: string[] = [];
+
+		for (const { groupId, matchChatCode } of eligibleGroups) {
+			const members = await trx
+				.selectFrom("GroupMember")
+				.select("GroupMember.userId")
+				.where("GroupMember.groupId", "=", groupId)
+				.execute();
+
+			await trx
+				.insertInto("GroupMatchContinueVote")
+				.values(
+					members.map((m) => ({
+						groupId,
+						userId: m.userId,
+						isContinuing: 0 as const,
+					})),
+				)
+				.onConflict((oc) =>
+					oc.columns(["groupId", "userId"]).doUpdateSet({ isContinuing: 0 }),
+				)
+				.execute();
+
+			if (matchChatCode) chatCodesToRevalidate.push(matchChatCode);
+		}
+
+		return {
+			chatCodesToRevalidate,
+			numAffectedGroups: eligibleGroups.length,
+		};
+	});
+}
 
 export async function mapModePreferencesBySeasonNth(seasonNth: number) {
 	return db
@@ -523,8 +613,8 @@ export async function findRecentlyFinishedMatches() {
 					.whereRef("GroupMember.groupId", "=", "GroupMatch.bravoGroupId"),
 			).as("groupBravoMemberIds"),
 		])
-		.where("GroupMatch.reportedAt", "is not", null)
-		.where("GroupMatch.reportedAt", ">", dateToDatabaseTimestamp(twoHoursAgo))
+		.where("GroupMatch.confirmedAt", "is not", null)
+		.where("GroupMatch.confirmedAt", ">", dateToDatabaseTimestamp(twoHoursAgo))
 		.execute();
 
 	return rows.map((row) => ({
@@ -643,13 +733,11 @@ export function refreshGroup(groupId: number, trx?: Transaction<DB>) {
 		.execute();
 }
 
-export function updateMemberNote({
+export function updateOwnMemberNote({
 	groupId,
-	userId,
 	value,
 }: {
 	groupId: number;
-	userId: number;
 	value: string | null;
 }) {
 	return db.transaction().execute(async (trx) => {
@@ -657,7 +745,7 @@ export function updateMemberNote({
 			.updateTable("GroupMember")
 			.set({ note: value })
 			.where("groupId", "=", groupId)
-			.where("userId", "=", userId)
+			.where("userId", "=", actorId())
 			.execute();
 
 		await refreshGroup(groupId, trx);
@@ -704,4 +792,52 @@ export function setAsInactive(groupId: number, trx?: Transaction<DB>) {
 		.set({ status: "INACTIVE" })
 		.where("id", "=", groupId)
 		.execute();
+}
+async function recordImplicitRejoinNoVote(
+	userId: number,
+	trx: Transaction<DB>,
+): Promise<string | null> {
+	const candidate = await trx
+		.selectFrom("GroupMember")
+		.innerJoin("Group", "Group.id", "GroupMember.groupId")
+		.innerJoin("GroupMatch", (join) =>
+			join.on((eb) =>
+				eb.or([
+					eb("GroupMatch.alphaGroupId", "=", eb.ref("Group.id")),
+					eb("GroupMatch.bravoGroupId", "=", eb.ref("Group.id")),
+				]),
+			),
+		)
+		.leftJoin("GroupMatchContinueVote", (join) =>
+			join
+				.onRef("GroupMatchContinueVote.groupId", "=", "Group.id")
+				.on("GroupMatchContinueVote.userId", "=", userId),
+		)
+		.select(["Group.id as groupId", "GroupMatch.chatCode as matchChatCode"])
+		.where("GroupMember.userId", "=", userId)
+		.where("Group.matchmade", "=", 1)
+		.where("GroupMatchContinueVote.id", "is", null)
+		.executeTakeFirst();
+
+	if (!candidate) return null;
+
+	await trx
+		.deleteFrom("GroupMatchContinueVote")
+		.where("GroupMatchContinueVote.groupId", "=", candidate.groupId)
+		.where("GroupMatchContinueVote.isContinuing", "=", 1)
+		.execute();
+
+	await trx
+		.insertInto("GroupMatchContinueVote")
+		.values({
+			groupId: candidate.groupId,
+			userId,
+			isContinuing: 0,
+		})
+		.onConflict((oc) =>
+			oc.columns(["groupId", "userId"]).doUpdateSet({ isContinuing: 0 }),
+		)
+		.execute();
+
+	return candidate.matchChatCode;
 }

@@ -6,7 +6,7 @@ import type {
 } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { assertUnreachable } from "~/utils/types";
-import type { BuildFiltersFromSearchParams } from "../builds-schemas.server";
+import type { BuildFiltersFromSearchParams } from "../builds-schemas";
 import type {
 	AbilityBuildFilter,
 	DateBuildFilter,

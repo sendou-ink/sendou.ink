@@ -10,7 +10,6 @@
 	"events.tabs.events": "Eventi",
 	"events.tabs.leaderboard": "Classifica",
 	"edit.form.title": "Modifica organizzazione torneo",
-	"edit.form.uploadLogo": "Carica logo",
 	"edit.form.socialLinks.title": "Link per social",
 	"edit.form.members.title": "Membri",
 	"edit.form.members.info": "Il ruolo \"Amministratore\" permette agli utenti di modificare l'organizzazione e ogni registrazione ai tornei gestiti dall'organizzazione. \"Organizzatore\" e \"Streamer\" possono dare il ruolo corrispondente nei tornei. \"Membro\" non ha nessun permesso speciale.",

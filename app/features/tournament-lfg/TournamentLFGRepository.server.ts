@@ -2,9 +2,13 @@ import type { Transaction } from "kysely";
 import { jsonBuildObject } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
-import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
+import {
+	concatUserSubmittedImagePrefix,
+	matchProfileWeapons,
+} from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { randomTeamName } from "~/utils/team-name";
 
@@ -66,7 +70,11 @@ type TournamentLFGMemberObject = {
 	pronouns: Tables["User"]["pronouns"];
 	role: Tables["TournamentTeamMember"]["role"];
 	isStayAsSub: Tables["TournamentTeamMember"]["isStayAsSub"];
-	weapons: Tables["User"]["qWeaponPool"];
+	weapons:
+		| (Pick<Tables["UserWeaponPool"], "weaponSplId" | "isFavorite"> & {
+				isTenStar: number;
+		  })[]
+		| null;
 	plusTier: Tables["PlusTier"]["tier"] | null;
 };
 
@@ -106,7 +114,7 @@ export async function findLookingTeamsByTournamentId(tournamentId: number) {
 						pronouns: eb.ref("User.pronouns"),
 						role: eb.ref("TournamentTeamMember.role"),
 						isStayAsSub: eb.ref("TournamentTeamMember.isStayAsSub"),
-						weapons: eb.ref("User.qWeaponPool"),
+						weapons: matchProfileWeapons(eb),
 						plusTier: eb.ref("PlusTier.tier"),
 					}),
 				])
@@ -145,7 +153,7 @@ export async function findSubGroups(tournamentId: number) {
 						pronouns: eb.ref("User.pronouns"),
 						role: eb.ref("TournamentTeamMember.role"),
 						isStayAsSub: eb.ref("TournamentTeamMember.isStayAsSub"),
-						weapons: eb.ref("User.qWeaponPool"),
+						weapons: matchProfileWeapons(eb),
 						plusTier: eb.ref("PlusTier.tier"),
 					}),
 				])
@@ -321,20 +329,18 @@ export function updateMemberRole({
 		.execute();
 }
 
-export function updateStayAsSub({
+export function updateOwnStayAsSub({
 	teamId,
-	userId,
 	value,
 }: {
 	teamId: number;
-	userId: number;
 	value: boolean;
 }) {
 	return db
 		.updateTable("TournamentTeamMember")
 		.set({ isStayAsSub: value ? 1 : 0 })
 		.where("tournamentTeamId", "=", teamId)
-		.where("userId", "=", userId)
+		.where("userId", "=", actorId())
 		.execute();
 }
 

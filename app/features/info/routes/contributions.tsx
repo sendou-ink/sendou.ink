@@ -94,7 +94,14 @@ const TRANSLATORS: Array<{
 		language: "ru",
 	},
 	{
-		translators: ["たここ", "ShanglinMo", "gellneko", "zenpk", "chenyenru"],
+		translators: [
+			"たここ",
+			"ShanglinMo",
+			"gellneko",
+			"zenpk",
+			"chenyenru",
+			"Inkorest",
+		],
 		language: "zh",
 	},
 ];

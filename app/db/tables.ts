@@ -20,6 +20,7 @@ import type { StoredWidget } from "~/features/user-page/core/widgets/types";
 import type { ParticipantResult } from "~/modules/brackets-model";
 import type {
 	Ability,
+	BuildAbilitiesTuple,
 	MainWeaponId,
 	ModeShort,
 	StageId,
@@ -145,8 +146,7 @@ export interface BadgeManager {
 export type BadgeOwner = {
 	badgeId: number;
 	userId: number;
-	/** Which tournament the badge is from, if null was added manually by a badge manager as opposed to once a tournament was finalized. */
-	tournamentId: number | null;
+	count: number;
 };
 
 export interface Trophy {
@@ -197,28 +197,38 @@ export interface Build {
 	shoesGearSplId: number | null;
 	title: string;
 	updatedAt: Generated<number>;
+	/** 3x4 ability tuple (head/clothes/shoes × main + 3 subs). */
+	abilities: JSONColumnTypeNullable<BuildAbilitiesTuple>;
+	/** Serialized ability+AP combo (e.g. `SSU_30,ISS_10`) used to group identical builds for the popular builds view. */
+	abilitiesSignature: string | null;
 }
 
 export type GearType = "HEAD" | "CLOTHES" | "SHOES";
 
-export interface BuildAbility {
-	ability: Ability;
-	buildId: number;
-	gearType: GearType;
-	slotIndex: number;
-	/** 10 if main ability, 3 if sub */
-	abilityPoints: GeneratedAlways<number>;
-}
-
 export interface BuildWeapon {
 	buildId: number;
 	weaponSplId: MainWeaponId;
-	/** Has the owner of this build reached top 500 of X Rank with this weapon? Denormalized for performance reasons. */
-	isTop500: Generated<DBBoolean>;
-	/** Plus tier or 4 if none. Denormalized for performance reasons. */
-	tier: Generated<number>;
-	/** Last time the build was updated. Denormalized for performance reasons. */
+	/** Alt skins collapse to their base weapon (e.g. Hero Shot Replica `45` → Splattershot `40`). Indexed for the builds-by-weapon, popular, and stats queries so they can filter `= ?` against a covering index instead of `IN (alt skins…)`. */
+	canonicalWeaponSplId: MainWeaponId;
+	/** Mirror of `Build.updatedAt`. Denormalized so the `(canonicalWeaponSplId, sortValue, updatedAt, buildId)` covering index serves the builds-by-weapon list. */
 	updatedAt: Generated<number>;
+	/** Per-weapon sort priority: `plusTier * 2 + (this weapon is top500 ? 0 : 1)` for public builds, NULL for private. */
+	sortValue: number | null;
+}
+
+/** Per-build ability point sums across all gear slots. Used to compute global `abilityPointAverages`. */
+export interface BuildAbilitySum {
+	buildId: number;
+	ability: Ability;
+	abilityPoints: number;
+}
+
+/** Per-weapon, per-build ability point sums. Used to compute per-weapon `abilityPointAverages`. One row per canonical weapon × build × ability with non-zero AP. */
+export interface BuildWeaponAbility {
+	canonicalWeaponSplId: MainWeaponId;
+	buildId: number;
+	ability: Ability;
+	abilityPoints: number;
 }
 
 export type CalendarEventTag = keyof typeof tags;
@@ -264,17 +274,14 @@ export interface CalendarEventResultTeam {
 	placement: number;
 }
 
-export interface FreshPlusTier {
-	tier: number | null;
-	userId: number;
-}
-
 export interface Group {
 	chatCode: string | null;
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
 	inviteCode: string;
 	latestActionAt: Generated<number>;
+	/** If truthy, group was at least partly made in the matchmaking UI (/q/looking) */
+	matchmade: Generated<DBBoolean>;
 	status: "PREPARING" | "ACTIVE" | "INACTIVE";
 	teamId: number | null;
 }
@@ -297,6 +304,8 @@ export type UserSkillDifference =
 	| {
 			calculated: true;
 			spDiff: number;
+			oldSp?: number;
+			newSp?: number;
 	  }
 	| CalculatingSkill;
 export type GroupSkillDifference =
@@ -339,11 +348,21 @@ export interface GroupMatch {
 	alphaGroupId: number;
 	bravoGroupId: number;
 	chatCode: string | null;
+	confirmedAt: number | null;
+	confirmedByUserId: number | null;
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
 	memento: JSONColumnTypeNullable<ParsedMemento>;
-	reportedAt: number | null;
-	reportedByUserId: number | null;
+	cancelRequestedByUserId: number | null;
+	cancelAcceptedByUserId: number | null;
+}
+
+export interface GroupMatchContinueVote {
+	id: GeneratedAlways<number>;
+	groupId: number;
+	userId: number;
+	isContinuing: DBBoolean;
+	votedAt: Generated<number>;
 }
 
 export interface GroupMatchMap {
@@ -351,6 +370,8 @@ export interface GroupMatchMap {
 	index: number;
 	matchId: number;
 	mode: ModeShort;
+	reportedAt: number | null;
+	reportedByUserId: number | null;
 	source: string;
 	stageId: StageId;
 	winnerGroupId: number | null;
@@ -472,13 +493,15 @@ export interface PlusVotingResult {
 	month: number;
 	year: number;
 	wasSuggested: DBBoolean;
-	passedVoting: DBBoolean;
 }
 
 export interface ReportedWeapon {
-	groupMatchMapId: number | null;
+	groupMatchId: number | null;
+	tournamentMatchId: number | null;
+	mapIndex: number;
 	userId: number;
 	weaponSplId: MainWeaponId;
+	createdAt: Generated<number>;
 }
 
 export interface Skill {
@@ -620,7 +643,10 @@ export interface SavedCalendarEvent {
 export interface TournamentBadgeOwner {
 	badgeId: number;
 	userId: number;
+	/** Which tournament the badge is from, if null was added manually by a badge manager as opposed to once a tournament was finalized. */
 	tournamentId: number | null;
+	/** How many times this badge was awarded to this user from this source. Tournament rows are always 1; manual grants aggregate repeat awards here. */
+	count: Generated<number>;
 }
 
 /** A group is a logical structure used to group multiple rounds together.
@@ -830,10 +856,13 @@ export interface TournamentLFGLike {
 	createdAt: Generated<number>;
 }
 
+export const TOURNAMENT_STAFF_ROLES = ["ORGANIZER", "STREAMER"] as const;
+type TournamentStaffRole = (typeof TOURNAMENT_STAFF_ROLES)[number];
+
 export interface TournamentStaff {
 	tournamentId: number;
 	userId: number;
-	role: "ORGANIZER" | "STREAMER";
+	role: TournamentStaffRole;
 }
 
 export interface TournamentTeam {
@@ -856,6 +885,8 @@ export interface TournamentTeam {
 	chatCode: Generated<string | null>;
 	/** A/B division assignment for bipartite round robin brackets. `0` = A, `1` = B, `null` = unassigned. */
 	abDivision: number | null;
+	/** The team's {@link TournamentTeamHistory} row, created lazily on its first audited event. */
+	tournamentTeamHistoryId: number | null;
 }
 
 export interface TournamentTeamCheckIn {
@@ -876,6 +907,48 @@ export interface TournamentTeamMember {
 	isStayAsSub: Generated<DBBoolean>;
 	// denormalized from TournamentTeam.isLooking
 	isLooking: Generated<DBBoolean>;
+}
+
+/** Stable shadow of a tournament team's identity that survives the team's hard-deletion, so the audit log can still resolve its name. */
+export interface TournamentTeamHistory {
+	/** Surrogate key. Audit log rows reference this so a reused `TournamentTeam.id` can never collide with an older team's history. */
+	id: GeneratedAlways<number>;
+	/** Mirrors the original `TournamentTeam.id` at creation time. Informational only; not a live or unique foreign key, so it is not cascade-deleted with the team and may repeat across teams that reused an id. */
+	tournamentTeamId: number;
+	tournamentId: number;
+	name: string;
+}
+
+export const TOURNAMENT_AUDIT_LOG_TYPES = [
+	"MEMBER_ADDED",
+	"MEMBER_REMOVED",
+	"TEAM_REGISTERED",
+	"TEAM_UNREGISTERED",
+	"TEAM_CHECKED_IN",
+	"TEAM_CHECKED_OUT",
+	"TEAM_DROPPED_OUT",
+	"TEAM_DROP_OUT_UNDONE",
+	"UPDATE_IN_GAME_NAME",
+] as const;
+
+export interface TournamentAuditLog {
+	id: GeneratedAlways<number>;
+	tournamentId: number;
+	type: (typeof TOURNAMENT_AUDIT_LOG_TYPES)[number];
+	/** The user who performed the action. */
+	actorUserId: number;
+	/** The affected member, for member-level events. `null` for team-level events. */
+	subjectUserId: number | null;
+	/** References {@link TournamentTeamHistory.id} so the team name stays resolvable after the team is hard-deleted. */
+	tournamentTeamHistoryId: number | null;
+	metadata: JSONColumnTypeNullable<TournamentAuditLogMetadata>;
+	createdAt: number;
+}
+
+export interface TournamentAuditLogMetadata {
+	bracketIdx?: number;
+	/** The new in-game name, for `UPDATE_IN_GAME_NAME` events. */
+	inGameName?: string;
 }
 
 export interface TournamentOrganization {
@@ -990,7 +1063,7 @@ export interface UserMapModePreferences {
 	}>;
 }
 
-export interface QWeaponPool {
+export interface WeaponPoolEntry {
 	weaponSplId: MainWeaponId;
 	isFavorite: number;
 }
@@ -1024,19 +1097,11 @@ export interface UserPreferences {
 	 * "12h" = 12 hour format (e.g. 2:00 PM)
 	 * */
 	clockFormat?: "24h" | "12h" | "auto";
-	/**
-	 * What numeric date format the user prefers?
-	 *
-	 * "auto" = use the format the active language defaults to (default value)
-	 * "MDY" = month/day/year (e.g. 4/27/2026)
-	 * "DMY" = day/month/year (e.g. 27/04/2026)
-	 * "YMD" = ISO year-month-day (e.g. 2026-04-27)
-	 * */
-	dateFormat?: "auto" | "MDY" | "DMY" | "YMD";
 	/** Is the new widget based user page enabled? (Supporter early preview) */
 	newProfileEnabled?: boolean;
 	/** Is spoiler-free mode enabled? Hides recent tournament results and scores until the user chooses to reveal them. */
 	spoilerFreeMode?: boolean;
+	weaponReportDefaultOpen?: boolean;
 }
 
 export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;
@@ -1096,9 +1161,11 @@ export interface User {
 	vc: Generated<"YES" | "NO" | "LISTEN_ONLY">;
 	youtubeId: string | null;
 	mapModePreferences: JSONColumnTypeNullable<UserMapModePreferences>;
-	qWeaponPool: JSONColumnTypeNullable<QWeaponPool[]>;
+	weaponPool: JSONColumnTypeNullable<WeaponPoolEntry[]>;
 	plusSkippedForSeasonNth: number | null;
 	noScreen: Generated<DBBoolean>;
+	/** User doesn't have access to SplatNet 3 to join rooms made by others */
+	noSplatnet: Generated<DBBoolean>;
 	buildSorting: JSONColumnTypeNullable<BuildSort[]>;
 	preferences: JSONColumnTypeNullable<UserPreferences>;
 	/** User creation date. Can be null because we did not always save this. */
@@ -1125,10 +1192,33 @@ export interface UserSubmittedImage {
 	validatedAt: number | null;
 }
 
+/** FTS5 trigram index over User's searchable columns (external content table,
+ * kept in sync with triggers). Only meant for reading: filter with
+ * `match` and join `rowid` to `User.id`. */
+export interface UserSearch {
+	rowid: GeneratedAlways<number>;
+	username: GeneratedAlways<string | null>;
+	inGameName: GeneratedAlways<string | null>;
+	discordUniqueName: GeneratedAlways<string | null>;
+	customUrl: GeneratedAlways<string | null>;
+}
+
 export interface UserWeapon {
 	createdAt: Generated<number>;
 	isFavorite: Generated<DBBoolean>;
 	order: number;
+	userId: number;
+	weaponSplId: MainWeaponId;
+}
+
+export interface UserWeaponPool {
+	userId: number;
+	sortOrder: number;
+	weaponSplId: MainWeaponId;
+	isFavorite: Generated<DBBoolean>;
+}
+
+export interface TenStarWeapon {
 	userId: number;
 	weaponSplId: MainWeaponId;
 }
@@ -1279,6 +1369,27 @@ export interface ScrimPost {
 	updatedAt: Generated<number>;
 }
 
+export interface ScrimMapList {
+	id: GeneratedAlways<number>;
+	scrimPostId: number;
+	side: "ALPHA" | "BRAVO";
+	source: "TOURNAMENT" | "POOL";
+	tournamentId: number | null;
+	serializedPool: string | null;
+	updatedAt: number;
+}
+
+export interface ScrimMap {
+	id: GeneratedAlways<number>;
+	scrimPostId: number;
+	index: number;
+	mode: ModeShort;
+	stageId: StageId;
+	winnerSide: "ALPHA" | "BRAVO" | null;
+	reportedAt: number | null;
+	reportedByUserId: number | null;
+}
+
 export interface ScrimPostUser {
 	scrimPostId: number;
 	userId: number;
@@ -1346,6 +1457,13 @@ export interface NotificationUserSubscription {
 	subscription: JSONColumnType<NotificationSubscription>;
 }
 
+export interface RoomLink {
+	userId: number;
+	url: string;
+	createdAt: Generated<number>;
+	refreshedAt: Generated<number>;
+}
+
 export const SPLATOON_ROTATION_TYPES = ["SERIES", "OPEN", "X"] as const;
 export type SplatoonRotationType = (typeof SPLATOON_ROTATION_TYPES)[number];
 
@@ -1379,17 +1497,19 @@ export interface DB {
 	BanLog: BanLog;
 	ModNote: ModNote;
 	Build: Build;
-	BuildAbility: BuildAbility;
+	BuildAbilitySum: BuildAbilitySum;
 	BuildWeapon: BuildWeapon;
+	BuildWeaponAbility: BuildWeaponAbility;
 	CalendarEvent: CalendarEvent;
 	CalendarEventBadge: CalendarEventBadge;
 	CalendarEventDate: CalendarEventDate;
 	CalendarEventResultPlayer: CalendarEventResultPlayer;
 	CalendarEventResultTeam: CalendarEventResultTeam;
-	FreshPlusTier: FreshPlusTier;
+
 	Group: Group;
 	GroupLike: GroupLike;
 	GroupMatch: GroupMatch;
+	GroupMatchContinueVote: GroupMatchContinueVote;
 	GroupMatchMap: GroupMatchMap;
 	GroupMember: GroupMember;
 	PrivateUserNote: PrivateUserNote;
@@ -1402,6 +1522,7 @@ export interface DB {
 	PlusTier: PlusTier;
 	PlusVote: PlusVote;
 	PlusVotingResult: PlusVotingResult;
+	RoomLink: RoomLink;
 	ReportedWeapon: ReportedWeapon;
 	Skill: Skill;
 	SkillTeamUser: SkillTeamUser;
@@ -1425,6 +1546,8 @@ export interface DB {
 	TournamentTeam: TournamentTeam;
 	TournamentTeamCheckIn: TournamentTeamCheckIn;
 	TournamentTeamMember: TournamentTeamMember;
+	TournamentTeamHistory: TournamentTeamHistory;
+	TournamentAuditLog: TournamentAuditLog;
 	TournamentOrganization: TournamentOrganization;
 	TournamentOrganizationMember: TournamentOrganizationMember;
 	TournamentOrganizationBadge: TournamentOrganizationBadge;
@@ -1443,9 +1566,12 @@ export interface DB {
 	UnvalidatedUserSubmittedImage: UnvalidatedUserSubmittedImage;
 	UnvalidatedVideo: UnvalidatedVideo;
 	User: User;
+	UserSearch: UserSearch;
 	UserResultHighlight: UserResultHighlight;
 	UserSubmittedImage: UserSubmittedImage;
 	UserWeapon: UserWeapon;
+	UserWeaponPool: UserWeaponPool;
+	TenStarWeapon: TenStarWeapon;
 	UserFriendCode: UserFriendCode;
 	UserWidget: UserWidget;
 	Video: Video;
@@ -1456,6 +1582,8 @@ export interface DB {
 	ScrimPostUser: ScrimPostUser;
 	ScrimPostRequest: ScrimPostRequest;
 	ScrimPostRequestUser: ScrimPostRequestUser;
+	ScrimMapList: ScrimMapList;
+	ScrimMap: ScrimMap;
 	Association: Association;
 	AssociationMember: AssociationMember;
 	Notification: Notification;

@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import { SCRIM_TRACKING_AUTO_LOCK_HOURS } from "../scrims-constants";
 import type { ScrimFilters, ScrimPost } from "../scrims-types";
 import {
 	applyFilters,
+	isTrackingLocked,
 	participantIdsListFromAccepted,
 	sideDisplayName,
+	sideOfUser,
 } from "./Scrim";
 
 type MockUser = { id: number };
@@ -125,7 +128,12 @@ describe("applyFilters", () => {
 			isScheduledForFuture: false,
 			managedByAnyone: false,
 			mapsTournament: null,
-			permissions: { MANAGE_REQUESTS: [], CANCEL: [], DELETE_POST: [] },
+			permissions: {
+				MANAGE_REQUESTS: [],
+				CANCEL: [],
+				DELETE_POST: [],
+				MANAGE_TRACKING: [],
+			},
 			team: null,
 		};
 	}
@@ -351,6 +359,31 @@ describe("applyFilters", () => {
 
 			expect(applyFilters(post, filters)).toBe(true);
 		});
+
+		it("returns true when a post time range crossing midnight overlaps the filter", () => {
+			const post = createPostForFilters(
+				new Date("2025-01-15T23:00:00"),
+				new Date("2025-01-16T01:00:00"),
+			);
+			const filters: ScrimFilters = {
+				divs: null,
+				weekdayTimes: { start: "00:00", end: "02:00" },
+				weekendTimes: null,
+			};
+
+			expect(applyFilters(post, filters)).toBe(true);
+		});
+
+		it("returns true when a filter crossing midnight covers the post time", () => {
+			const post = createPostForFilters(new Date("2025-01-15T21:00:00"));
+			const filters: ScrimFilters = {
+				divs: null,
+				weekdayTimes: { start: "20:00", end: "02:00" },
+				weekendTimes: null,
+			};
+
+			expect(applyFilters(post, filters)).toBe(true);
+		});
 	});
 
 	describe("weekend time filters", () => {
@@ -459,5 +492,86 @@ describe("applyFilters", () => {
 
 			expect(applyFilters(post, filters)).toBe(false);
 		});
+	});
+});
+
+describe("sideOfUser", () => {
+	it("returns ALPHA for users in the post's users list", () => {
+		const post = createPost(
+			[{ id: 1 }],
+			[{ isAccepted: true, users: [{ id: 2 }] }],
+		);
+		expect(sideOfUser(post, 1)).toBe("ALPHA");
+	});
+
+	it("returns BRAVO for users in the accepted request's users list", () => {
+		const post = createPost(
+			[{ id: 1 }],
+			[{ isAccepted: true, users: [{ id: 2 }] }],
+		);
+		expect(sideOfUser(post, 2)).toBe("BRAVO");
+	});
+
+	it("returns null for non-participants", () => {
+		const post = createPost(
+			[{ id: 1 }],
+			[{ isAccepted: true, users: [{ id: 2 }] }],
+		);
+		expect(sideOfUser(post, 99)).toBeNull();
+	});
+
+	it("ignores users only in non-accepted requests", () => {
+		const post = createPost(
+			[{ id: 1 }],
+			[{ isAccepted: false, users: [{ id: 2 }] }],
+		);
+		expect(sideOfUser(post, 2)).toBeNull();
+	});
+});
+
+describe("isTrackingLocked", () => {
+	const ONE_HOUR_MS = 60 * 60 * 1000;
+	const lockWindowMs = SCRIM_TRACKING_AUTO_LOCK_HOURS * ONE_HOUR_MS;
+
+	it("returns false when no map list submitted yet", () => {
+		expect(isTrackingLocked([], [], Date.now())).toBe(false);
+	});
+
+	it("returns false just inside the auto-lock window from list submission", () => {
+		const now = 1_000_000_000;
+		const updatedAt = (now - (lockWindowMs - ONE_HOUR_MS)) / 1000;
+		expect(isTrackingLocked([], [{ updatedAt }], now)).toBe(false);
+	});
+
+	it("returns true just past the auto-lock window from list submission", () => {
+		const now = 1_000_000_000;
+		const updatedAt = (now - (lockWindowMs + ONE_HOUR_MS)) / 1000;
+		expect(isTrackingLocked([], [{ updatedAt }], now)).toBe(true);
+	});
+
+	it("uses the most recent reported map as the reference point", () => {
+		const now = 1_000_000_000;
+		const oldUpdatedAt = (now - lockWindowMs * 2) / 1000;
+		const recentMapSeconds = (now - ONE_HOUR_MS) / 1000;
+		expect(
+			isTrackingLocked(
+				[{ reportedAt: recentMapSeconds }],
+				[{ updatedAt: oldUpdatedAt }],
+				now,
+			),
+		).toBe(false);
+	});
+
+	it("uses the most recent list update when there are no reported maps", () => {
+		const now = 1_000_000_000;
+		const oldUpdatedAt = (now - lockWindowMs * 2) / 1000;
+		const recentUpdatedAt = (now - ONE_HOUR_MS) / 1000;
+		expect(
+			isTrackingLocked(
+				[],
+				[{ updatedAt: oldUpdatedAt }, { updatedAt: recentUpdatedAt }],
+				now,
+			),
+		).toBe(false);
 	});
 });

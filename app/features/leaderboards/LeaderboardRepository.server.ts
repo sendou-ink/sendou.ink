@@ -14,7 +14,6 @@ import {
 	concatUserSubmittedImagePrefix,
 } from "~/utils/kysely.server";
 import { dateToDatabaseTimestamp } from "../../utils/dates";
-import invariant from "../../utils/invariant";
 import * as Seasons from "../mmr/core/Seasons";
 import { ordinalToSp } from "../mmr/mmr-utils";
 import {
@@ -140,44 +139,24 @@ async function filterOutNonSqPlayers(args: {
 }
 
 async function userIdsWithEnoughSqMatchesForTeamLeaderboard(seasonNth: number) {
-	const season = Seasons.nthToDateRange(seasonNth);
-	invariant(season, "Season not found in sqMatchCountByUserId");
-
-	const userIds = await db
-		.selectFrom("GroupMatch")
-		.innerJoin("GroupMember", (join) =>
-			join.on((eb) =>
-				eb.or([
-					eb("GroupMatch.alphaGroupId", "=", eb.ref("GroupMember.groupId")),
-					eb("GroupMatch.bravoGroupId", "=", eb.ref("GroupMember.groupId")),
-				]),
-			),
+	// a Skill row with groupMatchId set exists exactly once per user per
+	// completed (not canceled) SendouQ match of the season
+	const rows = await db
+		.selectFrom("Skill")
+		.select("userId")
+		.where("season", "=", seasonNth)
+		.where("groupMatchId", "is not", null)
+		.where("userId", "is not", null)
+		.groupBy("userId")
+		.having(
+			(eb) => eb.fn.countAll(),
+			">=",
+			MATCHES_COUNT_NEEDED_FOR_LEADERBOARD,
 		)
-		// this join is needed to filter out canceled matches
-		.innerJoin("Skill", (join) =>
-			join
-				.onRef("Skill.groupMatchId", "=", "GroupMatch.id")
-				.onRef("Skill.userId", "=", "GroupMember.userId"),
-		)
-		.select("GroupMember.userId")
-		.where("GroupMatch.createdAt", ">", dateToDatabaseTimestamp(season.starts))
-		.where(
-			"GroupMatch.createdAt",
-			"<",
-			dateToDatabaseTimestamp(add(season.ends, { days: 1 })), // some matches can be finished after the season ends
-		)
+		.$narrowType<{ userId: number }>()
 		.execute();
 
-	const countsMap = new Map<number, number>();
-
-	for (const { userId } of userIds) {
-		const count = countsMap.get(userId) ?? 0;
-		countsMap.set(userId, count + 1);
-	}
-
-	return Array.from(countsMap.entries())
-		.filter(([_userId, count]) => count >= MATCHES_COUNT_NEEDED_FOR_LEADERBOARD)
-		.map(([userId]) => userId);
+	return rows.map((row) => row.userId);
 }
 
 export async function userHasEnoughSqMatches(userId: number) {
@@ -308,34 +287,50 @@ function xpLeaderboardQuery(where?: {
 	mode?: RankedModeShort;
 	weaponSplId?: MainWeaponId;
 }) {
-	let query = db
-		.selectFrom("XRankPlacement")
-		.innerJoin("SplatoonPlayer", "SplatoonPlayer.id", "XRankPlacement.playerId")
+	// aggregating before joining keeps the group-by an index-only scan and the
+	// player/user joins limited to one lookup per player instead of per placement
+	return db
+		.selectFrom((eb) => {
+			let placements = eb
+				.selectFrom("XRankPlacement")
+				.select(({ fn }) => [
+					"XRankPlacement.id as entryId",
+					"XRankPlacement.playerId",
+					"XRankPlacement.weaponSplId",
+					"XRankPlacement.name",
+					fn.max("XRankPlacement.power").as("power"),
+				])
+				.groupBy("XRankPlacement.playerId");
+
+			if (where?.mode) {
+				placements = placements.where("XRankPlacement.mode", "=", where.mode);
+			}
+
+			if (typeof where?.weaponSplId === "number") {
+				placements = placements.where(
+					"XRankPlacement.weaponSplId",
+					"=",
+					where.weaponSplId,
+				);
+			}
+
+			return placements.as("Placement");
+		})
+		.innerJoin("SplatoonPlayer", "SplatoonPlayer.id", "Placement.playerId")
 		.leftJoin("User", "User.id", "SplatoonPlayer.userId")
-		.select(({ fn }) => [
+		.select([
 			...COMMON_USER_FIELDS,
-			"XRankPlacement.id as entryId",
-			"XRankPlacement.playerId",
-			"XRankPlacement.weaponSplId",
-			"XRankPlacement.name",
-			fn.max("XRankPlacement.power").as("power"),
-			sql<number>`rank() over (order by max("XRankPlacement"."power") desc)`.as(
+			"Placement.entryId",
+			"Placement.playerId",
+			"Placement.weaponSplId",
+			"Placement.name",
+			"Placement.power",
+			sql<number>`rank() over (order by "Placement"."power" desc)`.as(
 				"placementRank",
 			),
 		])
-		.groupBy("XRankPlacement.playerId")
-		.orderBy("power", "desc")
+		.orderBy("Placement.power", "desc")
 		.limit(DEFAULT_LEADERBOARD_MAX_SIZE);
-
-	if (where?.mode) {
-		query = query.where("XRankPlacement.mode", "=", where.mode);
-	}
-
-	if (typeof where?.weaponSplId === "number") {
-		query = query.where("XRankPlacement.weaponSplId", "=", where.weaponSplId);
-	}
-
-	return query;
 }
 
 export async function allXPLeaderboard() {
@@ -405,25 +400,54 @@ export async function seasonPopularUsersWeapon(
 	season: number,
 ): Promise<SeasonPopularUsersWeapon> {
 	const { starts, ends } = Seasons.nthToDateRange(season);
+	const startsTs = dateToDatabaseTimestamp(starts);
+	const endsTs = dateToDatabaseTimestamp(ends);
+
+	const sendouqWeapons = db
+		.selectFrom("ReportedWeapon")
+		.innerJoin("GroupMatch", "ReportedWeapon.groupMatchId", "GroupMatch.id")
+		.select(({ fn }) => [
+			"ReportedWeapon.userId",
+			"ReportedWeapon.weaponSplId",
+			fn.countAll<number>().as("count"),
+		])
+		.where("GroupMatch.createdAt", ">=", startsTs)
+		.where("GroupMatch.createdAt", "<=", endsTs)
+		.groupBy(["ReportedWeapon.userId", "ReportedWeapon.weaponSplId"]);
+
+	const tournamentWeapons = db
+		.selectFrom("ReportedWeapon")
+		.innerJoin(
+			"TournamentMatch",
+			"TournamentMatch.id",
+			"ReportedWeapon.tournamentMatchId",
+		)
+		.innerJoin(
+			"TournamentStage",
+			"TournamentStage.id",
+			"TournamentMatch.stageId",
+		)
+		.innerJoin("Tournament", "Tournament.id", "TournamentStage.tournamentId")
+		.select(({ fn }) => [
+			"ReportedWeapon.userId",
+			"ReportedWeapon.weaponSplId",
+			fn.countAll<number>().as("count"),
+		])
+		.where("Tournament.isFinalized", "=", 1)
+		.where("ReportedWeapon.createdAt", ">=", startsTs)
+		.where("ReportedWeapon.createdAt", "<=", endsTs)
+		.groupBy(["ReportedWeapon.userId", "ReportedWeapon.weaponSplId"]);
 
 	const rows = await db
 		.with("q1", (db) =>
 			db
-				.selectFrom("ReportedWeapon")
-				.innerJoin(
-					"GroupMatchMap",
-					"ReportedWeapon.groupMatchMapId",
-					"GroupMatchMap.id",
-				)
-				.innerJoin("GroupMatch", "GroupMatchMap.matchId", "GroupMatch.id")
+				.selectFrom(sendouqWeapons.unionAll(tournamentWeapons).as("merged"))
 				.select(({ fn }) => [
-					"ReportedWeapon.userId",
-					"ReportedWeapon.weaponSplId",
-					fn.countAll<number>().as("count"),
+					"merged.userId",
+					"merged.weaponSplId",
+					fn.sum<number>("merged.count").as("count"),
 				])
-				.where("GroupMatch.createdAt", ">=", dateToDatabaseTimestamp(starts))
-				.where("GroupMatch.createdAt", "<=", dateToDatabaseTimestamp(ends))
-				.groupBy(["ReportedWeapon.userId", "ReportedWeapon.weaponSplId"]),
+				.groupBy(["merged.userId", "merged.weaponSplId"]),
 		)
 		.selectFrom("q1")
 		.select(({ fn }) => [

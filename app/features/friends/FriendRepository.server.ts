@@ -1,6 +1,7 @@
 import { type SelectQueryBuilder, sql } from "kysely";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 
@@ -186,13 +187,8 @@ export async function findFriendRequestBetween({
 		.executeTakeFirst();
 }
 
-export async function deleteFriendship({
-	id,
-	userId,
-}: {
-	id: number;
-	userId: number;
-}) {
+export async function deleteOwnFriendshipById(id: number) {
+	const userId = actorId();
 	return db
 		.deleteFrom("Friendship")
 		.where("Friendship.id", "=", id)

@@ -28,6 +28,7 @@ export interface SendouButtonProps
 	shape?: "circle" | "square";
 	icon?: JSX.Element;
 	children?: React.ReactNode;
+	testId?: string;
 }
 
 export function SendouButton({
@@ -37,10 +38,12 @@ export function SendouButton({
 	shape,
 	className,
 	icon,
+	testId,
 	...rest
 }: SendouButtonProps) {
 	return (
 		<ReactAriaButton
+			data-testid={testId}
 			{...rest}
 			className={buttonClassName({ className, variant, size, shape })}
 		>
@@ -66,6 +69,7 @@ export interface LinkButtonProps {
 	children?: React.ReactNode;
 	onClick?: React.MouseEventHandler<HTMLAnchorElement>;
 	testId?: string;
+	"aria-label"?: string;
 }
 
 export function LinkButton({
@@ -81,6 +85,7 @@ export function LinkButton({
 	children,
 	onClick,
 	testId,
+	"aria-label": ariaLabel,
 }: LinkButtonProps) {
 	if (isExternal) {
 		return (
@@ -91,6 +96,7 @@ export function LinkButton({
 				rel="noreferrer"
 				onClick={onClick}
 				data-testid={testId}
+				aria-label={ariaLabel}
 			>
 				{icon &&
 					React.cloneElement(icon, {
@@ -109,6 +115,7 @@ export function LinkButton({
 			prefetch={prefetch}
 			preventScrollReset={preventScrollReset}
 			onClick={onClick}
+			aria-label={ariaLabel}
 		>
 			{icon &&
 				React.cloneElement(icon, {

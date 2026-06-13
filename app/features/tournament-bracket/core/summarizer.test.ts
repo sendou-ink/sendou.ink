@@ -1,9 +1,9 @@
 import { ordinal, rating } from "openskill";
 import { describe, expect, test } from "vitest";
+import type { AllMatchResult } from "~/features/tournament-match/TournamentMatchRepository.server";
 import invariant from "~/utils/invariant";
 import type { Tables } from "../../../db/tables";
-import type { AllMatchResult } from "../queries/allMatchResultsByTournamentId.server";
-import type { ParsedBracket } from "./Progression";
+import type * as Progression from "./Progression";
 import { tournamentSummary } from "./summarizer.server";
 import type { TournamentDataTeam } from "./Tournament.server";
 
@@ -58,6 +58,7 @@ describe("tournamentSummary()", () => {
 		team: null,
 		seed: 1,
 		activeRosterUserIds: [],
+		avatarImgId: null,
 		pickupAvatarUrl: null,
 	});
 
@@ -81,7 +82,7 @@ describe("tournamentSummary()", () => {
 			id: number;
 			abDivision: 0 | 1;
 		}>;
-		progression?: ParsedBracket[];
+		progression?: Progression.ParsedBracket[];
 		finalStandings?: Array<{
 			placement: number;
 			team: TournamentDataTeam;

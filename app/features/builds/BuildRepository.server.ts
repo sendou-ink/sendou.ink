@@ -1,8 +1,7 @@
-import type { ExpressionBuilder, Transaction } from "kysely";
+import { type NotNull, sql, type Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
-import * as R from "remeda";
 import { db } from "~/db/sql";
-import type { BuildWeapon, DB, Tables, TablesInsertable } from "~/db/tables";
+import type { BuildWeapon, DB, TablesInsertable } from "~/db/tables";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type {
 	Ability,
@@ -10,11 +9,15 @@ import type {
 	MainWeaponId,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
+import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { LimitReachedError } from "~/utils/errors";
 import invariant from "~/utils/invariant";
 import { commonUserJsonObject } from "~/utils/kysely.server";
+import {
+	MAIN_SLOT_AP,
+	SUB_SLOT_AP,
+} from "../build-analyzer/analyzer-constants";
 import { BUILD } from "./builds-constants";
 import { sortAbilities } from "./core/ability-sorting.server";
 
@@ -43,14 +46,14 @@ export async function allByUserId(
 			"Build.shoesGearSplId",
 			"Build.updatedAt",
 			"Build.private",
+			"Build.abilities",
 			jsonArrayFrom(
 				eb
 					.selectFrom("BuildWeapon")
-					.select(["BuildWeapon.weaponSplId", "BuildWeapon.isTop500"])
+					.select(["BuildWeapon.weaponSplId", "BuildWeapon.sortValue"])
 					.orderBy("BuildWeapon.weaponSplId", "asc")
 					.whereRef("BuildWeapon.buildId", "=", "Build.id"),
 			).as("weapons"),
-			withAbilities(eb),
 		])
 		.where("Build.ownerId", "=", userId)
 		.$if(!showPrivate, (qb) => qb.where("Build.private", "=", 0))
@@ -58,35 +61,7 @@ export async function allByUserId(
 		.orderBy("Build.updatedAt", "desc")
 		.execute();
 
-	return rows.map((row) => {
-		const abilities = dbAbilitiesToArrayOfArrays(row.abilities);
-
-		return {
-			...row,
-			abilities: shouldSortAbilities ? sortAbilities(abilities) : abilities,
-		};
-	});
-}
-
-const gearOrder: Array<Tables["BuildAbility"]["gearType"]> = [
-	"HEAD",
-	"CLOTHES",
-	"SHOES",
-];
-function dbAbilitiesToArrayOfArrays(
-	abilities: Array<
-		Pick<Tables["BuildAbility"], "ability" | "gearType" | "slotIndex">
-	>,
-): BuildAbilitiesTuple {
-	const sorted = R.sortBy(
-		abilities,
-		(a) => gearOrder.indexOf(a.gearType),
-		(a) => a.slotIndex,
-	).map((a) => a.ability);
-
-	invariant(sorted.length === 12, "expected 12 abilities");
-
-	return R.chunk(sorted, 4) as BuildAbilitiesTuple;
+	return rows.map((row) => buildRowToResult(row, shouldSortAbilities));
 }
 
 interface CreateArgs {
@@ -102,103 +77,36 @@ interface CreateArgs {
 	private: TablesInsertable["Build"]["private"];
 }
 
-function serializeModes(modes: Array<ModeShort> | null) {
-	if (!modes || modes.length === 0) return null;
-
-	return JSON.stringify(
-		modes.slice().sort((a, b) => modesShort.indexOf(a) - modesShort.indexOf(b)),
-	);
-}
-
-async function createInTrx({
-	args,
-	trx,
-}: {
-	args: CreateArgs;
-	trx: Transaction<DB>;
-}) {
-	const { id: buildId, updatedAt } = await trx
-		.insertInto("Build")
-		.values({
-			ownerId: args.ownerId,
-			title: args.title,
-			description: args.description,
-			modes: serializeModes(args.modes),
-			headGearSplId: args.headGearSplId,
-			clothesGearSplId: args.clothesGearSplId,
-			shoesGearSplId: args.shoesGearSplId,
-			private: args.private,
-		})
-		.returningAll()
-		.executeTakeFirstOrThrow();
-
-	await populateBuildChildrenInTrx({ trx, buildId, updatedAt, args });
-}
-
-async function populateBuildChildrenInTrx({
-	trx,
-	buildId,
-	updatedAt,
-	args,
-}: {
-	trx: Transaction<DB>;
-	buildId: number;
-	updatedAt: number;
-	args: CreateArgs;
-}) {
-	await trx
-		.insertInto("BuildWeapon")
-		.values(
-			args.weaponSplIds.map((weaponSplId) => ({
-				buildId,
-				weaponSplId,
-			})),
-		)
-		.execute();
-
-	await trx
-		.updateTable("BuildWeapon")
-		.set({ isTop500: 1 })
-		.where("buildId", "=", buildId)
-		.where(hasXRankPlacement)
-		.execute();
-
-	const tier =
-		(
-			await trx
-				.selectFrom("PlusTier")
-				.select("tier")
-				.where("userId", "=", args.ownerId)
-				.executeTakeFirst()
-		)?.tier ?? 4;
-
-	await trx
-		.updateTable("BuildWeapon")
-		.set({
-			tier,
-			updatedAt,
-		})
-		.where("buildId", "=", buildId)
-		.execute();
-
-	await trx
-		.insertInto("BuildAbility")
-		.values(
-			args.abilities.flatMap((row, rowI) =>
-				row.map((ability, abilityI) => ({
-					buildId,
-					gearType: rowI === 0 ? "HEAD" : rowI === 1 ? "CLOTHES" : "SHOES",
-					ability,
-					slotIndex: abilityI,
-				})),
-			),
-		)
-		.execute();
-}
-
 export async function create(args: CreateArgs) {
 	return db.transaction().execute(async (trx) => {
-		await createInTrx({ args, trx });
+		const computed = await computeBuildData(trx, args);
+		const updatedAt = dateToDatabaseTimestamp(new Date());
+
+		const { id: buildId } = await trx
+			.insertInto("Build")
+			.values({
+				ownerId: args.ownerId,
+				title: args.title,
+				description: args.description,
+				modes: serializeModes(args.modes),
+				headGearSplId: args.headGearSplId,
+				clothesGearSplId: args.clothesGearSplId,
+				shoesGearSplId: args.shoesGearSplId,
+				private: args.private,
+				abilities: JSON.stringify(args.abilities),
+				abilitiesSignature: computed.abilitiesSignature,
+				updatedAt,
+			})
+			.returning("id")
+			.executeTakeFirstOrThrow();
+
+		await insertBuildChildrenInTrx({
+			trx,
+			buildId,
+			args,
+			computed,
+			updatedAt,
+		});
 
 		const { count } = await trx
 			.selectFrom("Build")
@@ -214,7 +122,10 @@ export async function create(args: CreateArgs) {
 
 export async function update(args: CreateArgs & { id: number }) {
 	return db.transaction().execute(async (trx) => {
-		const { updatedAt } = await trx
+		const computed = await computeBuildData(trx, args);
+		const updatedAt = dateToDatabaseTimestamp(new Date());
+
+		await trx
 			.updateTable("Build")
 			.set({
 				title: args.title,
@@ -224,26 +135,32 @@ export async function update(args: CreateArgs & { id: number }) {
 				clothesGearSplId: args.clothesGearSplId,
 				shoesGearSplId: args.shoesGearSplId,
 				private: args.private,
-				updatedAt: dateToDatabaseTimestamp(new Date()),
+				abilities: JSON.stringify(args.abilities),
+				abilitiesSignature: computed.abilitiesSignature,
+				updatedAt,
 			})
 			.where("id", "=", args.id)
-			.returning("updatedAt")
-			.executeTakeFirstOrThrow();
+			.execute();
 
 		await trx
 			.deleteFrom("BuildWeapon")
 			.where("buildId", "=", args.id)
 			.execute();
 		await trx
-			.deleteFrom("BuildAbility")
+			.deleteFrom("BuildAbilitySum")
+			.where("buildId", "=", args.id)
+			.execute();
+		await trx
+			.deleteFrom("BuildWeaponAbility")
 			.where("buildId", "=", args.id)
 			.execute();
 
-		await populateBuildChildrenInTrx({
+		await insertBuildChildrenInTrx({
 			trx,
 			buildId: args.id,
-			updatedAt,
 			args,
+			computed,
+			updatedAt,
 		});
 	});
 }
@@ -257,59 +174,85 @@ export async function ownerIdById(buildId: number) {
 		.selectFrom("Build")
 		.select("ownerId")
 		.where("id", "=", buildId)
-		.executeTakeFirstOrThrow();
+		.executeTakeFirst();
 
-	return result.ownerId;
+	return result?.ownerId ?? null;
 }
 
 export async function abilityPointAverages(weaponSplId?: MainWeaponId | null) {
+	// Sum tables only contain rows for public builds,
+	// so the queries below need no private filter and no `Build` join.
+	if (typeof weaponSplId === "number") {
+		return db
+			.selectFrom("BuildWeaponAbility")
+			.select(({ fn }) => [
+				"BuildWeaponAbility.ability",
+				fn
+					.sum<number>("BuildWeaponAbility.abilityPoints")
+					.as("abilityPointsSum"),
+			])
+			.where(
+				"BuildWeaponAbility.canonicalWeaponSplId",
+				"=",
+				canonicalWeaponSplId(weaponSplId),
+			)
+			.groupBy("BuildWeaponAbility.ability")
+			.execute();
+	}
+
 	return db
-		.selectFrom("BuildAbility")
+		.selectFrom("BuildAbilitySum")
 		.select(({ fn }) => [
-			"BuildAbility.ability",
-			fn.sum<number>("BuildAbility.abilityPoints").as("abilityPointsSum"),
+			"BuildAbilitySum.ability",
+			fn.sum<number>("BuildAbilitySum.abilityPoints").as("abilityPointsSum"),
 		])
-		.innerJoin("Build", "Build.id", "BuildAbility.buildId")
-		.$if(typeof weaponSplId === "number", (qb) =>
-			qb
-				.innerJoin("BuildWeapon", "BuildAbility.buildId", "BuildWeapon.buildId")
-				.where("BuildWeapon.weaponSplId", "=", weaponSplId!),
-		)
-		.groupBy("BuildAbility.ability")
-		.where("Build.private", "=", 0)
+		.groupBy("BuildAbilitySum.ability")
 		.execute();
 }
 
 export async function popularAbilitiesByWeaponId(weaponSplId: MainWeaponId) {
-	const result = await db
-		.selectFrom("BuildWeapon")
-		.innerJoin("Build", "Build.id", "BuildWeapon.buildId")
-		.select((eb) => [
-			jsonArrayFrom(
-				eb
-					.selectFrom("BuildAbility")
-					.select(["BuildAbility.ability", "BuildAbility.abilityPoints"])
-					.whereRef("BuildAbility.buildId", "=", "BuildWeapon.buildId"),
-			).as("abilities"),
+	// One signature per user — otherwise a user with several builds for the
+	// same weapon (e.g. three different Slosher loadouts) would inflate three
+	// different signature buckets. The CTE picks each user's most recently
+	// updated public build for the weapon via SQLite's MAX() + bare columns
+	// rule (https://www.sqlite.org/lang_select.html#bareagg).
+	return db
+		.with("UserSignature", (cte) =>
+			cte
+				.selectFrom("Build")
+				.innerJoin("BuildWeapon", "BuildWeapon.buildId", "Build.id")
+				.select(({ fn }) => [
+					"Build.abilitiesSignature",
+					fn.max("Build.updatedAt").as("latestUpdatedAt"),
+				])
+				.where(
+					"BuildWeapon.canonicalWeaponSplId",
+					"=",
+					canonicalWeaponSplId(weaponSplId),
+				)
+				.where("Build.private", "=", 0)
+				.where("Build.abilitiesSignature", "is not", null)
+				.groupBy("Build.ownerId"),
+		)
+		.selectFrom("UserSignature")
+		.select(({ fn }) => [
+			"UserSignature.abilitiesSignature",
+			fn.count<number>("UserSignature.abilitiesSignature").as("count"),
 		])
-		.where("BuildWeapon.weaponSplId", "=", weaponSplId)
-		.where("Build.private", "=", 0)
-		.groupBy("Build.ownerId") // consider only one build per user
+		.groupBy("UserSignature.abilitiesSignature")
+		.having((eb) => eb(eb.fn.count("UserSignature.abilitiesSignature"), ">", 1))
+		.orderBy("count", "desc")
+		.orderBy("UserSignature.abilitiesSignature", "asc")
+		.limit(25)
+		.$narrowType<{ abilitiesSignature: NotNull }>()
 		.execute();
-
-	return result as Array<{
-		abilities: Array<{
-			ability: Ability;
-			abilityPoints: number;
-		}>;
-	}>;
 }
 
 export type AverageAbilityPointsResult = Awaited<
 	ReturnType<typeof abilityPointAverages>
 >[number];
 
-export type AbilitiesByWeapon = Awaited<
+export type PopularBuildsRow = Awaited<
 	ReturnType<typeof popularAbilitiesByWeaponId>
 >[number];
 
@@ -318,38 +261,8 @@ export async function allByWeaponId(
 	options: { limit: number; sortAbilities?: boolean },
 ) {
 	const { limit, sortAbilities: shouldSortAbilities = false } = options;
-	const weaponIds = weaponIdToArrayWithAlts(weaponId);
 
-	// For weapons with alts, run separate queries and merge.
-	// This allows each query to use the covering index for ordering,
-	// which is ~6x faster than using IN with multiple values.
-	const allResults = await Promise.all(
-		weaponIds.map((id) => buildsByWeaponIdQuery(id, limit)),
-	);
-
-	const rows = R.pipe(
-		allResults.flat(),
-		R.sortBy(
-			(row) => row.bwTier,
-			[(row) => row.bwIsTop500, "desc"],
-			[(row) => row.bwUpdatedAt, "desc"],
-		),
-		R.uniqueBy((row) => row.id),
-		R.take(limit),
-	);
-
-	return rows.map((row) => {
-		const abilities = dbAbilitiesToArrayOfArrays(row.abilities);
-
-		return {
-			...row,
-			abilities: shouldSortAbilities ? sortAbilities(abilities) : abilities,
-		};
-	});
-}
-
-function buildsByWeaponIdQuery(weaponSplId: MainWeaponId, limit: number) {
-	return db
+	const rows = await db
 		.selectFrom("BuildWeapon")
 		.innerJoin("Build", "Build.id", "BuildWeapon.buildId")
 		.innerJoin("User", "User.id", "Build.ownerId")
@@ -364,99 +277,268 @@ function buildsByWeaponIdQuery(weaponSplId: MainWeaponId, limit: number) {
 			"Build.shoesGearSplId",
 			"Build.updatedAt",
 			"Build.private",
+			"Build.abilities",
 			"PlusTier.tier as plusTier",
-			"BuildWeapon.tier as bwTier",
-			"BuildWeapon.isTop500 as bwIsTop500",
-			"BuildWeapon.updatedAt as bwUpdatedAt",
-			withAbilities(eb),
+			commonUserJsonObject(eb).as("owner"),
 			jsonArrayFrom(
 				eb
-					.selectFrom("BuildWeapon as BuildWeaponInner")
-					.select(["BuildWeaponInner.weaponSplId", "BuildWeaponInner.isTop500"])
-					.orderBy("BuildWeaponInner.weaponSplId", "asc")
-					.whereRef("BuildWeaponInner.buildId", "=", "Build.id"),
+					.selectFrom("BuildWeapon as bw_inner")
+					.select(["bw_inner.weaponSplId", "bw_inner.sortValue"])
+					.orderBy("bw_inner.weaponSplId", "asc")
+					.whereRef("bw_inner.buildId", "=", "Build.id"),
 			).as("weapons"),
-			commonUserJsonObject(eb).as("owner"),
 		])
-		.where("Build.private", "=", 0)
-		.where("BuildWeapon.weaponSplId", "=", weaponSplId)
-		.orderBy("BuildWeapon.tier", "asc")
-		.orderBy("BuildWeapon.isTop500", "desc")
+		.where(
+			"BuildWeapon.canonicalWeaponSplId",
+			"=",
+			canonicalWeaponSplId(weaponId),
+		)
+		.where("BuildWeapon.sortValue", "is not", null)
+		.orderBy("BuildWeapon.sortValue", "asc")
 		.orderBy("BuildWeapon.updatedAt", "desc")
 		.limit(limit)
 		.execute();
+
+	return rows.map((row) => buildRowToResult(row, shouldSortAbilities));
 }
 
-function withAbilities(eb: ExpressionBuilder<DB, "Build">) {
-	return jsonArrayFrom(
-		eb
-			.selectFrom("BuildAbility")
-			.select([
-				"BuildAbility.gearType",
-				"BuildAbility.ability",
-				"BuildAbility.slotIndex",
-			])
-			.whereRef("BuildAbility.buildId", "=", "Build.id"),
-	).as("abilities");
-}
-
-function hasXRankPlacement(eb: ExpressionBuilder<DB, "BuildWeapon">) {
-	return eb.exists(
-		eb
-			.selectFrom("Build")
-			.select("BuildWeapon.buildId")
-			.innerJoin("SplatoonPlayer", "SplatoonPlayer.userId", "Build.ownerId")
-			.innerJoin(
-				"XRankPlacement",
-				"XRankPlacement.playerId",
-				"SplatoonPlayer.id",
-			)
-			.whereRef("Build.id", "=", "BuildWeapon.buildId")
-			.whereRef("XRankPlacement.weaponSplId", "=", "BuildWeapon.weaponSplId"),
-	);
-}
-
-/** Recalculates which build weapons are top 500 based on latest X Rank placements data. */
-export async function recalculateAllTop500() {
+/** Recomputes `BuildWeapon.sortValue` for every (build, weapon) from scratch
+ * (plus tier + per-weapon top500). When `userId` is provided, only the builds
+ * owned by that user are recomputed. */
+export async function recalculateAllSortValues(userId?: number) {
 	await db.transaction().execute(async (trx) => {
-		await trx.updateTable("BuildWeapon").set({ isTop500: 0 }).execute();
-
-		await trx
-			.updateTable("BuildWeapon")
-			.set({ isTop500: 1 })
-			.where(hasXRankPlacement)
-			.execute();
-	});
-}
-
-export async function recalculateAllTiers() {
-	await db.transaction().execute(async (trx) => {
+		// Pass 1: tier*2 + 1 for public, NULL for private.
 		await trx
 			.updateTable("BuildWeapon")
 			.set({
-				tier: 4,
+				sortValue: sql<number | null>`(
+					select case
+						when "b"."private" = 1 then null
+						else coalesce(
+							(select "tier" from "PlusTier" where "userId" = "b"."ownerId"),
+							4
+						) * 2 + 1
+					end
+					from "Build" as "b"
+					where "b"."id" = "BuildWeapon"."buildId"
+				)`,
 			})
+			.$if(userId !== undefined, (qb) =>
+				qb.where((eb) =>
+					eb.exists(
+						eb
+							.selectFrom("Build as b")
+							.select("b.id")
+							.whereRef("b.id", "=", "BuildWeapon.buildId")
+							.where("b.ownerId", "=", userId!),
+					),
+				),
+			)
 			.execute();
 
-		for (const tier of [3, 2, 1]) {
-			const tierMembers = (
-				await trx
-					.selectFrom("PlusTier")
-					.select("userId")
-					.where("tier", "=", tier)
-					.execute()
-			).map((r) => r.userId);
-
-			await trx
-				.updateTable("BuildWeapon")
-				.set({ tier })
-				.where("BuildWeapon.buildId", "in", (eb) =>
+		// Pass 2: subtract 1 where this specific weapon is top500 for the owner.
+		await trx
+			.updateTable("BuildWeapon")
+			.set({
+				sortValue: sql<number>`"BuildWeapon"."sortValue" - 1`,
+			})
+			.where("BuildWeapon.sortValue", "is not", null)
+			.where((eb) =>
+				eb.exists(
 					eb
-						.selectFrom("Build")
-						.select("Build.id")
-						.where("Build.ownerId", "in", tierMembers),
-				)
-				.execute();
-		}
+						.selectFrom("Build as b")
+						.innerJoin("SplatoonPlayer as sp", "sp.userId", "b.ownerId")
+						.innerJoin("XRankPlacement as xrp", (join) =>
+							join
+								.onRef("xrp.playerId", "=", "sp.id")
+								.onRef("xrp.weaponSplId", "=", "BuildWeapon.weaponSplId"),
+						)
+						.select("b.id")
+						.whereRef("b.id", "=", "BuildWeapon.buildId")
+						.$if(userId !== undefined, (qb) =>
+							qb.where("b.ownerId", "=", userId!),
+						),
+				),
+			)
+			.execute();
 	});
+}
+
+// ---
+
+function weaponIsTop500(sortValue: number | null): boolean {
+	return sortValue != null && sortValue % 2 === 0;
+}
+
+interface BuildRowToResultInput {
+	abilities: BuildAbilitiesTuple | null;
+	weapons: Array<{ weaponSplId: MainWeaponId; sortValue: number | null }>;
+}
+
+type BuildRowToResultOutput<T extends BuildRowToResultInput> = Omit<
+	T,
+	"abilities" | "weapons"
+> & {
+	abilities: BuildAbilitiesTuple;
+	weapons: Array<{ weaponSplId: MainWeaponId; isTop500: number }>;
+};
+
+function buildRowToResult<T extends BuildRowToResultInput>(
+	row: T,
+	shouldSortAbilities: boolean,
+): BuildRowToResultOutput<T> {
+	invariant(row.abilities, "expected build abilities to be populated");
+
+	return {
+		...row,
+		abilities: shouldSortAbilities
+			? sortAbilities(row.abilities)
+			: row.abilities,
+		weapons: row.weapons.map((w) => ({
+			weaponSplId: w.weaponSplId,
+			isTop500: weaponIsTop500(w.sortValue) ? 1 : 0,
+		})),
+	};
+}
+
+function serializeModes(modes: Array<ModeShort> | null) {
+	if (!modes || modes.length === 0) return null;
+
+	return JSON.stringify(
+		modes.slice().sort((a, b) => modesShort.indexOf(a) - modesShort.indexOf(b)),
+	);
+}
+
+interface ComputedBuildData {
+	abilitySums: Array<[Ability, number]>;
+	abilitiesSignature: string;
+	sortValueByWeaponSplId: Map<MainWeaponId, number | null>;
+}
+
+async function computeBuildData(
+	trx: Transaction<DB>,
+	args: CreateArgs,
+): Promise<ComputedBuildData> {
+	const abilitySums = computeAbilitySums(args.abilities);
+
+	const tier =
+		(
+			await trx
+				.selectFrom("PlusTier")
+				.select("tier")
+				.where("userId", "=", args.ownerId)
+				.executeTakeFirst()
+		)?.tier ?? 4;
+
+	const top500Weapons = new Set<MainWeaponId>();
+	if (args.weaponSplIds.length > 0) {
+		const rows = await trx
+			.selectFrom("XRankPlacement")
+			.innerJoin(
+				"SplatoonPlayer",
+				"SplatoonPlayer.id",
+				"XRankPlacement.playerId",
+			)
+			.select("XRankPlacement.weaponSplId")
+			.where("SplatoonPlayer.userId", "=", args.ownerId)
+			.where("XRankPlacement.weaponSplId", "in", args.weaponSplIds)
+			.distinct()
+			.execute();
+		for (const r of rows) top500Weapons.add(r.weaponSplId);
+	}
+
+	const sortValueByWeaponSplId = new Map<MainWeaponId, number | null>();
+	for (const weaponSplId of args.weaponSplIds) {
+		sortValueByWeaponSplId.set(
+			weaponSplId,
+			args.private ? null : tier * 2 + (top500Weapons.has(weaponSplId) ? 0 : 1),
+		);
+	}
+
+	return {
+		abilitySums,
+		abilitiesSignature: serializeSignature(abilitySums),
+		sortValueByWeaponSplId,
+	};
+}
+
+function computeAbilitySums(
+	abilities: BuildAbilitiesTuple,
+): Array<[Ability, number]> {
+	const sums = new Map<Ability, number>();
+	for (const row of abilities) {
+		for (let slotIdx = 0; slotIdx < row.length; slotIdx++) {
+			const ability = row[slotIdx];
+			const ap = slotIdx === 0 ? MAIN_SLOT_AP : SUB_SLOT_AP;
+			sums.set(ability, (sums.get(ability) ?? 0) + ap);
+		}
+	}
+	return [...sums.entries()];
+}
+
+function serializeSignature(sums: Array<[Ability, number]>): string {
+	return sums
+		.slice()
+		.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+		.map(([ability, ap]) => `${ability}_${ap}`)
+		.join(",");
+}
+
+async function insertBuildChildrenInTrx({
+	trx,
+	buildId,
+	args,
+	computed,
+	updatedAt,
+}: {
+	trx: Transaction<DB>;
+	buildId: number;
+	args: CreateArgs;
+	computed: ComputedBuildData;
+	updatedAt: number;
+}) {
+	await trx
+		.insertInto("BuildWeapon")
+		.values(
+			args.weaponSplIds.map((weaponSplId) => ({
+				buildId,
+				weaponSplId,
+				canonicalWeaponSplId: canonicalWeaponSplId(weaponSplId),
+				sortValue: computed.sortValueByWeaponSplId.get(weaponSplId) ?? null,
+				updatedAt,
+			})),
+		)
+		.execute();
+
+	// Private builds are excluded from the sum tables so the stats queries can
+	// run as pure covering-index scans. Visibility flips are handled implicitly
+	// by `update`'s delete-then-reinsert.
+	if (args.private) return;
+
+	await trx
+		.insertInto("BuildAbilitySum")
+		.values(
+			computed.abilitySums.map(([ability, abilityPoints]) => ({
+				buildId,
+				ability,
+				abilityPoints,
+			})),
+		)
+		.execute();
+
+	const weaponAbilityRows: TablesInsertable["BuildWeaponAbility"][] =
+		args.weaponSplIds.flatMap((weaponSplId) =>
+			computed.abilitySums.map(([ability, abilityPoints]) => ({
+				canonicalWeaponSplId: canonicalWeaponSplId(weaponSplId),
+				buildId,
+				ability,
+				abilityPoints,
+			})),
+		);
+	if (weaponAbilityRows.length > 0) {
+		await trx
+			.insertInto("BuildWeaponAbility")
+			.values(weaponAbilityRows)
+			.execute();
+	}
 }

@@ -10,6 +10,7 @@
 
 	& > label {
 		margin: 0;
+		text-box: trim-start cap alphabetic;
 	}
 }
 

@@ -5,7 +5,10 @@ import { Link, useFetcher } from "react-router";
 import invariant from "~/utils/invariant";
 import { SendouButton } from "../../../../components/elements/Button";
 import { logger } from "../../../../utils/logger";
-import { tournamentTeamPage } from "../../../../utils/urls";
+import {
+	tournamentBracketsPage,
+	tournamentTeamPage,
+} from "../../../../utils/urls";
 import { useUser } from "../../../auth/core/user";
 import { TOURNAMENT } from "../../../tournament/tournament-constants";
 import type { Bracket, Standing } from "../../core/Bracket";
@@ -58,6 +61,7 @@ export function PlacementsTable({
 					mapLosses: 0,
 					mapWins: 0,
 					points: 0,
+					koCount: 0,
 					setLosses: 0,
 					setWins: 0,
 					winsAgainstTied: 0,
@@ -232,7 +236,7 @@ function StandingsTable({
 					) : null}
 					{bracket.type === "round_robin" ? (
 						<th>
-							<abbr title="Score summed up">Scr</abbr>
+							<abbr title="Number of maps knocked out">KOs</abbr>
 						</th>
 					) : null}
 					<th>Seed</th>
@@ -320,9 +324,11 @@ function StandingsTable({
 											tournamentId: bracket.tournament.ctx.id,
 											tournamentTeamId: s.team.id,
 										})}
+										className={styles.teamNameLink}
+										title={s.team.name}
 									>
-										{s.team.name}{" "}
-									</Link>
+										{s.team.name}
+									</Link>{" "}
 									{s.team.droppedOut ? (
 										<span className="text-warning text-xxxs font-bold">
 											Drop-out
@@ -361,7 +367,7 @@ function StandingsTable({
 								) : null}
 								{bracket.type === "round_robin" ? (
 									<td>
-										<span>{stats.points}</span>
+										<span>{stats.koCount ?? 0}</span>
 									</td>
 								) : null}
 								<td>{team?.seed}</td>
@@ -484,7 +490,16 @@ function EditableDestination({
 				overridenDestination &&
 				overridenDestination.idx !== destination?.idx ? (
 				<td className="text-theme font-bold">
-					<span>→ {overridenDestination.name}</span>
+					<Link
+						to={tournamentBracketsPage({
+							tournamentId: source.tournament.ctx.id,
+							bracketIdx: overridenDestination.idx,
+						})}
+						className={styles.destinationLink}
+						defaultShouldRevalidate={false}
+					>
+						→ {overridenDestination.name}
+					</Link>
 				</td>
 			) : destination && overridenDestination !== null ? (
 				<td
@@ -492,7 +507,16 @@ function EditableDestination({
 						"italic text-lighter": !allMatchesFinished,
 					})}
 				>
-					<span>→ {destination.name}</span>
+					<Link
+						to={tournamentBracketsPage({
+							tournamentId: source.tournament.ctx.id,
+							bracketIdx: destination.idx,
+						})}
+						className={styles.destinationLink}
+						defaultShouldRevalidate={false}
+					>
+						→ {destination.name}
+					</Link>
 				</td>
 			) : (
 				<td />

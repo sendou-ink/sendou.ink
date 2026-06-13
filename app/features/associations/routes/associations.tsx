@@ -2,7 +2,6 @@ import { Check, Clipboard, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Outlet, useFetcher, useLoaderData } from "react-router";
-import { useCopyToClipboard } from "react-use";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
@@ -15,6 +14,7 @@ import {
 	loader,
 } from "~/features/associations/loaders/associations.server";
 import { useUser } from "~/features/auth/core/user";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { associationsPage, userPage } from "~/utils/urls";
@@ -171,19 +171,9 @@ function AssociationInviteCodeActions({
 	inviteCode: string;
 }) {
 	const { t } = useTranslation(["common", "scrims"]);
-	const [state, copyToClipboard] = useCopyToClipboard();
-	const [copySuccess, setCopySuccess] = React.useState(false);
+	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 	const fetcher = useFetcher();
 	const id = React.useId();
-
-	React.useEffect(() => {
-		if (!state.value) return;
-
-		setCopySuccess(true);
-		const timeout = setTimeout(() => setCopySuccess(false), 2000);
-
-		return () => clearTimeout(timeout);
-	}, [state]);
 
 	const inviteLink = `https://sendou.ink${associationsPage(inviteCode)}`;
 

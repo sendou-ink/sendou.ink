@@ -17,17 +17,17 @@ import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
-import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
+	MATCH_PROFILE_PAGE,
 	navIconUrl,
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PAGE,
-	SENDOUQ_SETTINGS_PAGE,
 	SENDOUQ_STREAMS_PAGE,
 } from "~/utils/urls";
 import { action } from "../actions/q.looking.server";
@@ -118,7 +118,10 @@ function InfoText() {
 	const isHydrated = useHydrated();
 	const data = useLoaderData<typeof loader>();
 	const fetcher = useFetcher();
-	const { formatTime } = useTimeFormat();
+	const { formatter: timeFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+	});
 
 	const expiryStatus = data.ownGroup
 		? groupExpiryStatus(data.ownGroup.latestActionAt)
@@ -170,7 +173,7 @@ function InfoText() {
 		>
 			<div className="stack sm horizontal">
 				<LinkButton
-					to={SENDOUQ_SETTINGS_PAGE}
+					to={MATCH_PROFILE_PAGE}
 					size="small"
 					variant="outlined"
 					className="stack horizontal xs"
@@ -183,7 +186,7 @@ function InfoText() {
 			<span className="text-xxs">
 				{isHydrated
 					? t("q:looking.lastUpdatedAt", {
-							time: formatTime(new Date(data.lastUpdated)),
+							time: timeFormatter.format(new Date(data.lastUpdated)) ?? "",
 						})
 					: "Placeholder"}
 			</span>

@@ -4,7 +4,7 @@ import { db } from "~/db/sql";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
-	weekNumberToDate,
+	weekNumberToDateRange,
 } from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";
 import type { GetCalendarWeekResponse } from "../schema";
@@ -35,10 +35,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 };
 
 function fetchEventsOfWeek(args: { week: number; year: number }) {
-	const startTime = weekNumberToDate(args);
-
-	const endTime = new Date(startTime);
-	endTime.setDate(endTime.getDate() + 7);
+	const { startTime, endTime } = weekNumberToDateRange(args);
 
 	return db
 		.selectFrom("CalendarEvent")

@@ -79,6 +79,10 @@
 
 .teamWithRosterTeamName {
 	word-break: break-word;
+	text-wrap: balance;
+	max-width: 250px;
+	display: block;
+	margin-inline-start: auto;
 }
 
 .teamMemberRow {
@@ -113,7 +117,7 @@
 }
 
 .teamMemberNameRoleSub {
-	background-color: var(--color-info);
+	background-color: var(--color-warning-high);
 }
 
 .logoContainer {
@@ -282,6 +286,21 @@
 	min-width: 0;
 }
 
+.streamTeamName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+	max-width: 200px;
+}
+
+.streamsGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, 320px);
+	gap: var(--s-6);
+	justify-content: center;
+}
+
 .streamViewerCount {
 	font-size: var(--font-xs);
 	display: flex;
@@ -291,7 +310,8 @@
 	color: var(--color-text-high);
 
 	& > svg {
-		width: 0.75rem;
+		width: 1rem;
+		min-width: 1rem;
 	}
 }
 
@@ -486,16 +506,25 @@
 
 .standingsTeamName {
 	min-width: 125px;
-	word-break: break-word;
 	display: flex;
 	gap: var(--s-1-5);
 	align-items: center;
 	color: var(--color-text);
 }
 
+.standingsTeamNameText {
+	max-width: 16ch;
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	-webkit-box-orient: vertical;
+	word-break: break-word;
+}
+
 .standingsDivider {
 	width: 5px;
-	background-color: var(--color-bg-high);
+	background-color: var(--color-border-high);
 	border-radius: var(--radius-box);
 }
 
