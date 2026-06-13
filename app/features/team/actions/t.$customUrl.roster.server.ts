@@ -38,10 +38,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 		}
 		case "UPDATE_ROSTER": {
 			const submittedIds = new Set(data.members.map((m) => m.userId));
+			const existingMembersById = new Map(
+				team.members.map((member) => [member.id, member]),
+			);
 
 			for (const member of data.members) {
 				errorToastIfFalsy(
-					team.members.some((m) => m.id === member.userId),
+					existingMembersById.has(member.userId),
 					"Member not found",
 				);
 			}
@@ -58,6 +61,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 				teamId: team.id,
 				members: data.members.map((member) => {
 					const isCustom = member.role === CUSTOM_ROLE_VALUE;
+					const existing = existingMembersById.get(member.userId);
+					const isProtectedMember = Boolean(
+						existing?.isOwner || existing?.id === user.id,
+					);
 
 					return {
 						userId: member.userId,
@@ -68,7 +75,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 						roleType: isCustom
 							? ((member.roleType || null) as MemberRoleType | null)
 							: null,
-						isManager: member.isManager,
+						isManager: isProtectedMember
+							? Boolean(existing?.isManager)
+							: member.isManager,
 					};
 				}),
 				kickedUserIds,
