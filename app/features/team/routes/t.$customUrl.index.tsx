@@ -1,4 +1,13 @@
-import { LogOut, Menu, SquarePen, Star, Trash2, Users } from "lucide-react";
+import {
+	LogOut,
+	Menu,
+	SquarePen,
+	Star,
+	Swords,
+	Trash2,
+	Users,
+	Wrench,
+} from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useMatches } from "react-router";
@@ -6,6 +15,12 @@ import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "~/components/elements/Tabs";
 import { WeaponImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
 import { useUser } from "~/features/auth/core/user";
@@ -17,6 +32,7 @@ import { action } from "../actions/t.$customUrl.index.server";
 import type * as TeamRepository from "../TeamRepository.server";
 import styles from "../team.module.css";
 import {
+	getMemberRoleType,
 	isTeamManager,
 	isTeamMember,
 	isTeamOwner,
@@ -26,9 +42,26 @@ import {
 export { action };
 
 export default function TeamIndexPage() {
+	const { t } = useTranslation(["team"]);
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
 	const layoutData = parentRoute.data as TeamLoaderData;
+
+	const members = layoutData.team.members;
+	const playerMembers = members.filter(
+		(member) => getMemberRoleType(member) !== "OTHER",
+	);
+	const otherMembers = members.filter(
+		(member) => getMemberRoleType(member) === "OTHER",
+	);
+	const showSections = playerMembers.length > 0 && otherMembers.length > 0;
+
+	const renderMember = (member: (typeof members)[number]) => (
+		<React.Fragment key={member.discordId}>
+			<MemberRow member={member} number={members.indexOf(member)} />
+			<MobileMemberCard member={member} />
+		</React.Fragment>
+	);
 
 	return (
 		<div className="stack lg">
@@ -39,14 +72,34 @@ export default function TeamIndexPage() {
 			{layoutData.team.bio ? (
 				<article data-testid="team-bio">{layoutData.team.bio}</article>
 			) : null}
-			<div className="stack lg">
-				{layoutData.team.members.map((member, i) => (
-					<React.Fragment key={member.discordId}>
-						<MemberRow member={member} number={i} />
-						<MobileMemberCard member={member} />
-					</React.Fragment>
-				))}
-			</div>
+			{showSections ? (
+				<SendouTabs>
+					<SendouTabList>
+						<SendouTab
+							id="players"
+							icon={<Swords />}
+							number={playerMembers.length}
+						>
+							{t("team:roster.sections.players")}
+						</SendouTab>
+						<SendouTab
+							id="other"
+							icon={<Wrench />}
+							number={otherMembers.length}
+						>
+							{t("team:roster.sections.other")}
+						</SendouTab>
+					</SendouTabList>
+					<SendouTabPanel id="players">
+						<div className="stack lg">{playerMembers.map(renderMember)}</div>
+					</SendouTabPanel>
+					<SendouTabPanel id="other">
+						<div className="stack lg">{otherMembers.map(renderMember)}</div>
+					</SendouTabPanel>
+				</SendouTabs>
+			) : (
+				<div className="stack lg">{members.map(renderMember)}</div>
+			)}
 		</div>
 	);
 }
@@ -274,7 +327,14 @@ function MemberRow({
 			className={styles.member}
 			data-testid={member.isOwner ? `member-owner-${member.id}` : undefined}
 		>
-			{member.role ? (
+			{member.customRole ? (
+				<span
+					className={styles.memberRole}
+					data-testid={`member-row-role-${number}`}
+				>
+					{member.customRole}
+				</span>
+			) : member.role ? (
 				<span
 					className={styles.memberRole}
 					data-testid={`member-row-role-${number}`}
@@ -334,7 +394,9 @@ function MobileMemberCard({
 					</div>
 				) : null}
 			</div>
-			{member.role ? (
+			{member.customRole ? (
+				<span className={styles.memberRoleMobile}>{member.customRole}</span>
+			) : member.role ? (
 				<span className={styles.memberRoleMobile}>
 					{t(`team:roles.${member.role}`)}
 				</span>

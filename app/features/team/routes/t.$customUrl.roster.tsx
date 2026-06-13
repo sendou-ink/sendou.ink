@@ -17,7 +17,7 @@ import { metaTags } from "~/utils/remix";
 import { joinTeamPage } from "~/utils/urls";
 import { action } from "../actions/t.$customUrl.roster.server";
 import { loader } from "../loaders/t.$customUrl.roster.server";
-import { updateRosterSchema } from "../team-schemas";
+import { CUSTOM_ROLE_VALUE, updateRosterSchema } from "../team-schemas";
 import { isTeamFull } from "../team-utils";
 
 export { action, loader };
@@ -120,7 +120,9 @@ function MemberActions() {
 				defaultValues={{
 					members: team.members.map((member) => ({
 						userId: member.id,
-						role: member.role ?? null,
+						role: member.customRole ? CUSTOM_ROLE_VALUE : (member.role ?? null),
+						customRole: member.customRole ?? null,
+						roleType: member.roleType ?? null,
 						isManager: Boolean(member.isManager),
 					})),
 				}}
@@ -150,6 +152,13 @@ function MemberActions() {
 										{member?.username}
 									</div>
 									<FormField name={`${itemName}.role`} />
+									{(values as { role: string | null }).role ===
+									CUSTOM_ROLE_VALUE ? (
+										<>
+											<FormField name={`${itemName}.customRole`} />
+											<FormField name={`${itemName}.roleType`} />
+										</>
+									) : null}
 									{member && !isProtectedMember(member) ? (
 										<FormField name={`${itemName}.isManager`} />
 									) : null}

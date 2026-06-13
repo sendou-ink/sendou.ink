@@ -49,6 +49,8 @@
 	"roster.teamFull": "",
 	"roster.inviteLink.header": "",
 	"roster.members.header": "",
+	"roster.sections.players": "",
+	"roster.sections.other": "",
 	"validation.SHORT_CODE": "",
 	"validation.TEAM_FULL": "",
 	"validation.INVITE_CODE_WRONG": "",

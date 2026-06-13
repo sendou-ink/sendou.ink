@@ -64,13 +64,19 @@ export function searchByName({
 					.select(["User.id", "User.username"])
 					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id")
 					.where((eb2) =>
-						eb2.or([
-							eb2("TeamMemberWithSecondary.role", "is", null),
-							eb2(
-								"TeamMemberWithSecondary.role",
-								"not in",
-								NON_PLAYER_TEAM_ROLES,
-							),
+						eb2.and([
+							eb2.or([
+								eb2("TeamMemberWithSecondary.role", "is", null),
+								eb2(
+									"TeamMemberWithSecondary.role",
+									"not in",
+									NON_PLAYER_TEAM_ROLES,
+								),
+							]),
+							eb2.or([
+								eb2("TeamMemberWithSecondary.roleType", "is", null),
+								eb2("TeamMemberWithSecondary.roleType", "!=", "OTHER"),
+							]),
 						]),
 					)
 					.orderBy("TeamMemberWithSecondary.isOwner", "desc"),
@@ -171,6 +177,8 @@ export function findByCustomUrl(
 					.select(({ eb: innerEb }) => [
 						...COMMON_USER_FIELDS,
 						"TeamMemberWithSecondary.role",
+						"TeamMemberWithSecondary.customRole",
+						"TeamMemberWithSecondary.roleType",
 						"TeamMemberWithSecondary.isOwner",
 						"TeamMemberWithSecondary.isManager",
 						"TeamMemberWithSecondary.isMainTeam",
@@ -312,7 +320,7 @@ export async function teamsByMemberUserId(
 				eb
 					.selectFrom("TeamMemberWithSecondary as m2")
 					.innerJoin("User", "User.id", "m2.userId")
-					.select([...COMMON_USER_FIELDS, "m2.role"])
+					.select([...COMMON_USER_FIELDS, "m2.role", "m2.roleType"])
 					.whereRef("TeamMemberWithSecondary.teamId", "=", "m2.teamId"),
 			).as("members"),
 		])
@@ -564,6 +572,8 @@ export function updateRoster({
 	members: Array<{
 		userId: number;
 		role: Tables["TeamMember"]["role"];
+		customRole: Tables["TeamMember"]["customRole"];
+		roleType: Tables["TeamMember"]["roleType"];
 		isManager: boolean;
 	}>;
 	kickedUserIds: number[];
@@ -578,6 +588,8 @@ export function updateRoster({
 				.updateTable("AllTeamMember")
 				.set({
 					role: member.role,
+					customRole: member.customRole,
+					roleType: member.roleType,
 					isManager: member.isManager ? 1 : 0,
 				})
 				.where("teamId", "=", teamId)

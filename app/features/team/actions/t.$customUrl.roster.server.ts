@@ -1,11 +1,13 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
+import type { MemberRole, MemberRoleType } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import { parseFormData } from "~/form/parse.server";
 import { errorToastIfFalsy, notFoundIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
+import { CUSTOM_ROLE_VALUE } from "../team-schemas";
 import { manageRosterSchema, teamParamsSchema } from "../team-schemas.server";
 import { isTeamManager } from "../team-utils";
 
@@ -54,11 +56,21 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			await TeamRepository.updateRoster({
 				teamId: team.id,
-				members: data.members.map((member) => ({
-					userId: member.userId,
-					role: member.role || null,
-					isManager: member.isManager,
-				})),
+				members: data.members.map((member) => {
+					const isCustom = member.role === CUSTOM_ROLE_VALUE;
+
+					return {
+						userId: member.userId,
+						role: isCustom
+							? null
+							: ((member.role || null) as MemberRole | null),
+						customRole: isCustom ? member.customRole || null : null,
+						roleType: isCustom
+							? ((member.roleType || null) as MemberRoleType | null)
+							: null,
+						isManager: member.isManager,
+					};
+				}),
 				kickedUserIds,
 			});
 

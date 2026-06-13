@@ -33,6 +33,8 @@ type Generated<T> =
 
 export type MemberRole = (typeof TEAM_MEMBER_ROLES)[number];
 
+export type MemberRoleType = "PLAYER" | "OTHER";
+
 /** In SQLite booleans are presented as 0 (false) and 1 (true) */
 export type DBBoolean = number;
 
@@ -97,6 +99,9 @@ export interface TeamMember {
 	isManager: Generated<number>;
 	leftAt: number | null;
 	role: MemberRole | null;
+	customRole: string | null;
+	/** If customRole is defined, this classifies how the role should be treated */
+	roleType: MemberRoleType | null;
 	teamId: number;
 	userId: number;
 	isMainTeam: DBBoolean;

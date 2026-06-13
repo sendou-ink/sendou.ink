@@ -92,6 +92,27 @@ test.describe("Team page", () => {
 		await expect(page.getByTestId("member-row-role-0")).toHaveText("Support");
 	});
 
+	test("sets a custom role for a member", async ({ page }) => {
+		await seed(page);
+		await impersonate(page, ADMIN_ID);
+		await navigate({ page, url: teamPage("alliance-rogue") });
+
+		await page.getByTestId("manage-roster-button").click();
+
+		const memberRow = page.getByTestId("member-row-1");
+		await memberRow.locator("select").first().selectOption("CUSTOM");
+		await memberRow.getByRole("textbox").fill("Strategist");
+		await memberRow.locator("select").nth(1).selectOption("OTHER");
+
+		await submit(page);
+
+		await navigate({ page, url: teamPage("alliance-rogue") });
+
+		// custom role is classified as "OTHER" so it lives under the "Other" tab
+		await page.getByRole("tab", { name: /Other/ }).click();
+		await expect(page.getByText("Strategist").first()).toBeVisible();
+	});
+
 	test("deletes team", async ({ page }) => {
 		await seed(page);
 		await impersonate(page, ADMIN_ID);
