@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import { ChevronUp } from "lucide-react";
 import type * as React from "react";
-import type { JSX } from "react";
 import { SendouButton } from "../elements/Button";
 import styles from "./SecondaryAction.module.css";
 
@@ -9,7 +8,7 @@ interface SecondaryActionProps {
 	isOpen: boolean;
 	onOpenChange: (open: boolean) => void;
 	collapsedLabel: string;
-	collapsedIcon?: JSX.Element;
+	collapsedIcon?: React.JSX.Element;
 	expandedAriaLabel?: string;
 	standalone?: boolean;
 	children: React.ReactNode;
