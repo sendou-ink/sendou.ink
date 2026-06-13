@@ -13,12 +13,32 @@ type TrophyCtxValue =
 const TrophyCtx = createContext<TrophyCtxValue | undefined>(undefined);
 
 /**
- * Browsers have a limit on the amount of webgl contexts that can be created at once,
- * so when rendering a list of trophies it's better to wrap them in a context provider
- * which will share one context across all trophies.
+ * Shares one PicoCAD2 WebGL context across every `Trophy` rendered inside.
  *
- * If ommitted, each trophy will create its own context internally.
+ * `Trophy` falls back to creating its own internal context when no provider is
+ * used, but browsers cap active WebGL contexts at 16 so any grid bigger than
+ * that, or rapid mounting/unmounting, triggers a warning and broken rendering.
+ *
+ * We use two implementations to stay under the limit:
+ *
+ * 1. One page wide `PicoCAD2Context` singleton.
+ * 	  Creating a new one per mount can stack contexts faster than the browser
+ *    can remove them. Holding one for the page lifetime is cheaper in comparison.
+ *
+ * 2. The provider always renders its children so surrounding layout doesn't shift
+ *    but uses an additional `isLoading` bool while `useState` is still `undefined`
+ *    before the first effect fires. Descendant `Trophy` components read the bool
+ *    and render an empty spacer instead of mounting a canvas that would create
+ *    their own internal context.
  */
+
+let sharedContext: PicoCAD2Context | undefined;
+
+function getSharedTrophyContext() {
+	if (typeof window === "undefined") return undefined;
+	if (!sharedContext) sharedContext = new PicoCAD2Context();
+	return sharedContext;
+}
 
 export function TrophyContextProvider({
 	children,
@@ -28,20 +48,9 @@ export function TrophyContextProvider({
 	const [context, setContext] = useState<PicoCAD2Context | undefined>();
 
 	useEffect(() => {
-		const ctx = new PicoCAD2Context();
-		setContext(ctx);
-		return () => {
-			ctx.dispose();
-		};
+		setContext(getSharedTrophyContext());
 	}, []);
 
-	/**
-	 * Children always render so the surrounding layout (placeholders, pagination, etc.)
-	 * doesn't shift when the shared context becomes available. While `context` is undefined
-	 * we publish an `isLoading` value so descendant `Trophy` components render an empty
-	 * spacer instead of falling back to their own internal WebGL context — which would
-	 * defeat the point of sharing and quickly hit the browser's per-page context limit.
-	 */
 	const value: TrophyCtxValue = context
 		? { context }
 		: { context: undefined, isLoading: true };
