@@ -9,7 +9,7 @@ export function MatchBannerScheduledTime({
 }: MatchBannerScheduledTimeProps) {
 	return (
 		<TimePopover
-			time={time}
+			date={time}
 			options={{
 				weekday: "short",
 				year: "numeric",

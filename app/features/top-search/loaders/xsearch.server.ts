@@ -3,11 +3,10 @@ import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import * as XRankPlacementRepository from "../XRankPlacementRepository.server";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const availableMonthYears = await XRankPlacementRepository.monthYears();
 	const { month: latestMonth, year: latestYear } = availableMonthYears[0];
 
-	const url = new URL(request.url);
 	const mode = (() => {
 		const mode = url.searchParams.get("mode");
 		if (rankedModesShort.includes(mode as any)) {

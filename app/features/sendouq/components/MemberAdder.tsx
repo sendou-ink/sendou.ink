@@ -2,10 +2,10 @@ import { Check, Clipboard, Plus } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
-import { useCopyToClipboard } from "react-use";
 import { SendouButton } from "~/components/elements/Button";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useFriendsForAdding } from "~/hooks/swr";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import {
 	SENDOU_INK_BASE_URL,
 	SENDOUQ_PREPARING_PAGE,
@@ -24,8 +24,7 @@ export function MemberAdder({
 	const [friend, setFriend] = React.useState<number>();
 	const fetcher = useFetcher<SendouQPreparingAction>();
 	const inviteLink = `${SENDOU_INK_BASE_URL}${sendouQInviteLink(inviteCode)}`;
-	const [state, copyToClipboard] = useCopyToClipboard();
-	const [copySuccess, setCopySuccess] = React.useState(false);
+	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 
 	const showMemberAddError = fetcher.data?.error === "taken";
 
@@ -34,15 +33,6 @@ export function MemberAdder({
 	React.useEffect(() => {
 		setFriend(undefined);
 	}, [groupMembersJoined]);
-
-	React.useEffect(() => {
-		if (!state.value) return;
-
-		setCopySuccess(true);
-		const timeout = setTimeout(() => setCopySuccess(false), 2000);
-
-		return () => clearTimeout(timeout);
-	}, [state]);
 
 	return (
 		<div className="stack md flex-wrap justify-center">

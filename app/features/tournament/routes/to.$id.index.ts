@@ -3,7 +3,7 @@ import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tourn
 import { parseParams } from "~/utils/remix.server";
 import {
 	tournamentBracketsPage,
-	tournamentRegisterPage,
+	tournamentInfoPage,
 	tournamentResultsPage,
 } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
@@ -20,7 +20,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	});
 
 	if (!tournament.hasStarted) {
-		return redirect(tournamentRegisterPage(tournamentId));
+		return redirect(tournamentInfoPage(tournamentId));
 	}
 
 	if (!tournament.ctx.isFinalized) {

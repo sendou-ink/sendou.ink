@@ -15,7 +15,7 @@ export const TIER_THRESHOLDS = {
 	C: Number.NEGATIVE_INFINITY,
 } as const;
 
-export const TOP_TEAMS_COUNT = 8;
+const TOP_TEAMS_COUNT = 8;
 export const MIN_TEAMS_FOR_TIERING = 8;
 export const TIER_HISTORY_LENGTH = 5;
 

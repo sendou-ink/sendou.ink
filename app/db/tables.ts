@@ -818,10 +818,13 @@ export interface TournamentLFGLike {
 	createdAt: Generated<number>;
 }
 
+export const TOURNAMENT_STAFF_ROLES = ["ORGANIZER", "STREAMER"] as const;
+type TournamentStaffRole = (typeof TOURNAMENT_STAFF_ROLES)[number];
+
 export interface TournamentStaff {
 	tournamentId: number;
 	userId: number;
-	role: "ORGANIZER" | "STREAMER";
+	role: TournamentStaffRole;
 }
 
 export interface TournamentTeam {
@@ -844,6 +847,8 @@ export interface TournamentTeam {
 	chatCode: Generated<string | null>;
 	/** A/B division assignment for bipartite round robin brackets. `0` = A, `1` = B, `null` = unassigned. */
 	abDivision: number | null;
+	/** The team's {@link TournamentTeamHistory} row, created lazily on its first audited event. */
+	tournamentTeamHistoryId: number | null;
 }
 
 export interface TournamentTeamCheckIn {
@@ -864,6 +869,48 @@ export interface TournamentTeamMember {
 	isStayAsSub: Generated<DBBoolean>;
 	// denormalized from TournamentTeam.isLooking
 	isLooking: Generated<DBBoolean>;
+}
+
+/** Stable shadow of a tournament team's identity that survives the team's hard-deletion, so the audit log can still resolve its name. */
+export interface TournamentTeamHistory {
+	/** Surrogate key. Audit log rows reference this so a reused `TournamentTeam.id` can never collide with an older team's history. */
+	id: GeneratedAlways<number>;
+	/** Mirrors the original `TournamentTeam.id` at creation time. Informational only; not a live or unique foreign key, so it is not cascade-deleted with the team and may repeat across teams that reused an id. */
+	tournamentTeamId: number;
+	tournamentId: number;
+	name: string;
+}
+
+export const TOURNAMENT_AUDIT_LOG_TYPES = [
+	"MEMBER_ADDED",
+	"MEMBER_REMOVED",
+	"TEAM_REGISTERED",
+	"TEAM_UNREGISTERED",
+	"TEAM_CHECKED_IN",
+	"TEAM_CHECKED_OUT",
+	"TEAM_DROPPED_OUT",
+	"TEAM_DROP_OUT_UNDONE",
+	"UPDATE_IN_GAME_NAME",
+] as const;
+
+export interface TournamentAuditLog {
+	id: GeneratedAlways<number>;
+	tournamentId: number;
+	type: (typeof TOURNAMENT_AUDIT_LOG_TYPES)[number];
+	/** The user who performed the action. */
+	actorUserId: number;
+	/** The affected member, for member-level events. `null` for team-level events. */
+	subjectUserId: number | null;
+	/** References {@link TournamentTeamHistory.id} so the team name stays resolvable after the team is hard-deleted. */
+	tournamentTeamHistoryId: number | null;
+	metadata: JSONColumnTypeNullable<TournamentAuditLogMetadata>;
+	createdAt: number;
+}
+
+export interface TournamentAuditLogMetadata {
+	bracketIdx?: number;
+	/** The new in-game name, for `UPDATE_IN_GAME_NAME` events. */
+	inGameName?: string;
 }
 
 export interface TournamentOrganization {
@@ -1459,6 +1506,8 @@ export interface DB {
 	TournamentTeam: TournamentTeam;
 	TournamentTeamCheckIn: TournamentTeamCheckIn;
 	TournamentTeamMember: TournamentTeamMember;
+	TournamentTeamHistory: TournamentTeamHistory;
+	TournamentAuditLog: TournamentAuditLog;
 	TournamentOrganization: TournamentOrganization;
 	TournamentOrganizationMember: TournamentOrganizationMember;
 	TournamentOrganizationBadge: TournamentOrganizationBadge;

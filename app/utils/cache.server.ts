@@ -1,5 +1,5 @@
 import type { CacheEntry } from "@epic-web/cachified";
-import { LRUCache } from "lru-cache";
+import { LRUCache } from "~/modules/cache";
 
 declare global {
 	// This preserves the LRU cache during development

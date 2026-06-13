@@ -31,9 +31,17 @@ test.describe("Tournament streams", () => {
 			url: tournamentAdminPage(tournamentId),
 		});
 
+		await page.getByRole("tab", { name: "Stream" }).click();
+		// an empty array field already renders one placeholder input
 		await page
-			.getByLabel("Twitch accounts")
-			.fill("test_cast_stream,another_cast");
+			.getByPlaceholder("dappleproductions")
+			.nth(0)
+			.fill("test_cast_stream");
+		await page.getByRole("button", { name: "Add", exact: true }).click();
+		await page
+			.getByPlaceholder("dappleproductions")
+			.nth(1)
+			.fill("another_cast");
 		await submit(page, "save-cast-twitch-accounts-button");
 
 		// Verify persistence by navigating away and back
@@ -46,8 +54,12 @@ test.describe("Tournament streams", () => {
 			url: tournamentAdminPage(tournamentId),
 		});
 
-		await expect(page.getByLabel("Twitch accounts")).toHaveValue(
-			"test_cast_stream,another_cast",
+		await page.getByRole("tab", { name: "Stream" }).click();
+		await expect(page.getByPlaceholder("dappleproductions").nth(0)).toHaveValue(
+			"test_cast_stream",
+		);
+		await expect(page.getByPlaceholder("dappleproductions").nth(1)).toHaveValue(
+			"another_cast",
 		);
 	});
 
@@ -114,7 +126,9 @@ test.describe("Tournament streams", () => {
 			page,
 			url: tournamentAdminPage(tournamentId),
 		});
-		await page.getByLabel("Twitch accounts").fill("test_cast_stream");
+		await page.getByRole("tab", { name: "Stream" }).click();
+		// an empty array field already renders one placeholder input
+		await page.getByPlaceholder("dappleproductions").fill("test_cast_stream");
 		await submit(page, "save-cast-twitch-accounts-button");
 
 		// Start bracket

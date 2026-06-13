@@ -479,13 +479,14 @@ function ChatProviderInner({
 	const setChatOpen = React.useCallback(
 		(open: boolean) => {
 			_setChatOpen(open);
-			if (open && activeRoom) {
-				markAsRead(activeRoom);
-			}
+			if (!open) return;
 
-			if (open && rooms.length === 1 && !activeRoom) {
+			if (activeRoom) {
+				markAsRead(activeRoom);
+			} else if (rooms.length === 1) {
 				requestHistory(rooms[0].chatCode);
 				setActiveRoom(rooms[0].chatCode);
+				markAsRead(rooms[0].chatCode);
 			}
 		},
 		[activeRoom, markAsRead, requestHistory, rooms.length, rooms[0]?.chatCode],
@@ -501,9 +502,11 @@ function ChatProviderInner({
 		rooms,
 		userId,
 		isLoading,
+		readyState,
 		activeRoom,
 		setActiveRoom,
 		setChatOpen,
+		markAsRead,
 		subscribe,
 		unsubscribe,
 		setRooms,
@@ -568,9 +571,11 @@ function useChatRouteSync({
 	rooms,
 	userId,
 	isLoading,
+	readyState,
 	activeRoom,
 	setActiveRoom,
 	setChatOpen,
+	markAsRead,
 	subscribe,
 	unsubscribe,
 	setRooms,
@@ -581,9 +586,11 @@ function useChatRouteSync({
 	rooms: RoomInfo[];
 	userId: number;
 	isLoading: boolean;
+	readyState: "CONNECTING" | "CONNECTED" | "CLOSED";
 	activeRoom: string | null;
 	setActiveRoom: (chatCode: string | null) => void;
 	setChatOpen: (open: boolean) => void;
+	markAsRead: (chatCode: string) => void;
 	subscribe: (chatCode: string) => void;
 	unsubscribe: (chatCode: string) => void;
 	setRooms: React.Dispatch<React.SetStateAction<RoomInfo[]>>;
@@ -604,6 +611,31 @@ function useChatRouteSync({
 	const subscribedRoomRef = React.useRef<string[]>([]);
 	const previousRouteChatCodeRef = React.useRef<string[]>([]);
 	const previousPathnameRef = React.useRef<string | null>(null);
+	const hasConnectedRef = React.useRef(false);
+
+	// On reconnect the server sends a fresh initial rooms payload that drops
+	// rooms we joined via SUBSCRIBE as a non-participant, and the previous
+	// socket's subscriptions died with it. Clear the subscription tracking so
+	// the route sync effect below re-subscribes once the new payload arrives,
+	// and refresh history for the open room to fill any gap from the downtime.
+	const onReconnect = React.useEffectEvent(() => {
+		logger.debug("WS reconnected, re-acquiring room subscriptions and history");
+		subscribedRoomRef.current = [];
+		if (activeRoom) {
+			requestHistory(activeRoom);
+		}
+	});
+
+	React.useEffect(() => {
+		if (readyState !== "CONNECTED") return;
+
+		if (!hasConnectedRef.current) {
+			hasConnectedRef.current = true;
+			return;
+		}
+
+		onReconnect();
+	}, [readyState]);
 
 	React.useEffect(() => {
 		if (isLoading) return;
@@ -657,6 +689,7 @@ function useChatRouteSync({
 				}
 				if (layoutSize === "desktop") {
 					setChatOpen(true);
+					markAsRead(chatCodes[0]);
 				}
 			}
 		} else {
@@ -677,6 +710,7 @@ function useChatRouteSync({
 					}
 					if (layoutSize === "desktop") {
 						setChatOpen(true);
+						markAsRead(matchedRoom.chatCode);
 					}
 				}
 			}
@@ -690,6 +724,7 @@ function useChatRouteSync({
 		activeRoom,
 		setActiveRoom,
 		setChatOpen,
+		markAsRead,
 		layoutSize,
 		subscribe,
 		unsubscribe,

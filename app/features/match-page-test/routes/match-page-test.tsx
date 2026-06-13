@@ -98,11 +98,7 @@ export default function MatchPageTestRoute() {
 						screenLegal={false}
 					/>
 					<MatchBannerBottomRow
-						games={[
-							{ mode: "SZ", winner: "ALPHA" },
-							{ mode: "TC", winner: "BRAVO" },
-							{ mode: "RM", winner: "ALPHA" },
-						]}
+						games={[{ mode: "SZ" }, { mode: "TC" }, { mode: "RM" }]}
 						activeRosters={{
 							alpha: [
 								{

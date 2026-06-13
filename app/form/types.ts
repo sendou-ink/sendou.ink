@@ -1,4 +1,6 @@
 import type { z } from "zod";
+import type { TeamSearchResult } from "~/components/elements/TeamSearch";
+import type { UserSearchResult } from "~/components/elements/UserSearch";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import type forms from "../../locales/en/forms.json";
 import type { ImageFieldDimensions } from "./image-field";
@@ -147,6 +149,10 @@ interface FormFieldTournamentSearch<T extends string> extends FormFieldBase<T> {
 	required: boolean;
 }
 
+interface FormFieldTeamSearch<T extends string> extends FormFieldBase<T> {
+	required: boolean;
+}
+
 interface FormFieldBadges<T extends string> extends FormFieldBase<T> {
 	maxCount?: number;
 }
@@ -193,6 +199,7 @@ export type FormField<V extends string = string> =
 	| FormFieldFieldset<"fieldset", z.ZodRawShape>
 	| FormFieldUserSearch<"user-search">
 	| FormFieldTournamentSearch<"tournament-search">
+	| FormFieldTeamSearch<"team-search">
 	| FormFieldBadges<"badges">
 	| FormFieldStageSelect<"stage-select">
 	| FormFieldWeaponSelect<"weapon-select">;
@@ -290,4 +297,39 @@ export type TypedFormFieldComponent<TSchema extends z.ZodRawShape> = {
 		props: TypedFormFieldProps<TSchema, TName>,
 	): React.ReactNode;
 	(props: FlexibleFormFieldProps): React.ReactNode;
+};
+
+/**
+ * Runtime config consumed only by the `team-search` field. Passed via the
+ * `options` prop (the same channel `badges`/`select-dynamic` use), so it stays
+ * scoped to this field type instead of polluting every `FormField`.
+ *
+ * `initialTeam` carries the selected team's display data (name, avatar) for the
+ * edit/prefill case — that metadata is not part of the stored form value (a
+ * plain team id), so it cannot come from `defaultValues`.
+ */
+export type TeamSearchFieldOptions = {
+	onTeamSelected?: (team: TeamSearchResult | null) => void;
+	initialTeam?: { id: number; name: string; avatarUrl?: string | null };
+};
+
+/**
+ * Runtime config consumed only by the `user-search` field, passed via the
+ * `options` prop (the same channel `team-search` uses).
+ *
+ * `onUserSelected` exposes the resolved user (with its username) on selection —
+ * the stored form value is only the user id, so callers that need to display the
+ * picked user's name elsewhere capture it here.
+ */
+export type UserSearchFieldOptions = {
+	onUserSelected?: (user: UserSearchResult | null) => void;
+};
+
+/**
+ * Runtime config consumed only by the `tournament-search` field, passed via the
+ * `options` prop (the same channel `team-search` uses).
+ */
+export type TournamentSearchFieldOptions = {
+	/** Restrict results to tournaments that have already started (finished/past). */
+	pastOnly?: boolean;
 };

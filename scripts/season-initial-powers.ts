@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { ordinal } from "openskill";
 import { db, sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";

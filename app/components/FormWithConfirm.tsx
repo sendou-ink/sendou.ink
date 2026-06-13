@@ -22,32 +22,46 @@ export function FormWithConfirm({
 	submitButtonTestId = "submit-button",
 	submitButtonVariant = "destructive",
 	fetcher: _fetcher,
+	isOpen,
+	onOpenChange,
 }: {
 	fields?: (
 		| [name: string, value: string | number]
 		| readonly [name: string, value: string | number]
 	)[];
-	children: React.ReactElement<ChildProps>;
+	children?: React.ReactElement<ChildProps>;
 	dialogHeading: string;
 	submitButtonText?: string;
 	action?: string;
 	submitButtonTestId?: string;
 	submitButtonVariant?: SendouButtonProps["variant"];
 	fetcher?: FetcherWithComponents<any>;
+	/** Controls the dialog open state. When provided, no child trigger is needed. */
+	isOpen?: boolean;
+	onOpenChange?: (isOpen: boolean) => void;
 }) {
 	const componentsFetcher = useFetcher();
 	const fetcher = _fetcher ?? componentsFetcher;
 
 	const isHydrated = useHydrated();
 	const { t } = useTranslation(["common"]);
-	const [dialogOpen, setDialogOpen] = React.useState(false);
+	const [internalOpen, setInternalOpen] = React.useState(false);
 	const formRef = React.useRef<HTMLFormElement>(null);
 	const id = React.useId();
 
-	const openDialog = React.useCallback(() => setDialogOpen(true), []);
-	const closeDialog = React.useCallback(() => setDialogOpen(false), []);
+	const isControlled = isOpen !== undefined;
+	const dialogOpen = isControlled ? isOpen : internalOpen;
 
-	invariant(React.isValidElement(children));
+	const openDialog = React.useCallback(() => {
+		onOpenChange?.(true);
+		setInternalOpen(true);
+	}, [onOpenChange]);
+	const closeDialog = React.useCallback(() => {
+		onOpenChange?.(false);
+		setInternalOpen(false);
+	}, [onOpenChange]);
+
+	invariant(!children || React.isValidElement(children));
 
 	React.useEffect(() => {
 		if (fetcher.state === "loading") {
@@ -93,10 +107,12 @@ export function FormWithConfirm({
 					</div>
 				</div>
 			</SendouDialog>
-			{React.cloneElement(children, {
-				onPress: openDialog,
-				type: "button",
-			})}
+			{children
+				? React.cloneElement(children, {
+						onPress: openDialog,
+						type: "button",
+					})
+				: null}
 		</>
 	);
 }

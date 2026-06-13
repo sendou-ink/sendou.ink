@@ -1,5 +1,3 @@
-import "dotenv/config";
-
 import { db } from "~/db/sql";
 import homemadeBadges from "~/features/badges/homemade.json";
 import { logger } from "~/utils/logger";

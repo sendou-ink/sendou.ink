@@ -347,7 +347,11 @@ function MemberTierPopover({
 	return (
 		<SendouPopover
 			trigger={
-				<SendouButton variant="minimal" className={styles.tierBadge}>
+				<SendouButton
+					variant="minimal"
+					className={styles.tierBadge}
+					aria-label="Tier"
+				>
 					{tier === "CALCULATING" ? (
 						<Image
 							path={tierImageUrl("CALCULATING")}

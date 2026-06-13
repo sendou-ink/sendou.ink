@@ -19,7 +19,6 @@ export const id = z.coerce.number({ message: "Required" }).int().positive();
 export const idObject = z.object({
 	id,
 });
-export const optionalId = z.coerce.number().int().positive().optional();
 
 export const inviteCode = z.string().length(SHORT_NANOID_LENGTH);
 export const inviteCodeObject = z.object({

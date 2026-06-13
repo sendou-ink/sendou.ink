@@ -46,12 +46,6 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 		<MatchBannerBottomRow
 			games={data.match.mapList.map((map) => ({
 				mode: map.mode,
-				winner:
-					map.winnerGroupId === data.match.groupAlpha.id
-						? "ALPHA"
-						: map.winnerGroupId === data.match.groupBravo.id
-							? "BRAVO"
-							: undefined,
 			}))}
 			activeRosters={{
 				alpha: data.match.groupAlpha.members,
@@ -87,7 +81,15 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 	const currentMap = data.match.currentMap;
 	invariant(currentMap);
 
-	const joinPool = `SQ${String(data.match.id).at(-1)}`;
+	const isParticipant = Boolean(
+		SendouQMatch.resolveGroupMemberOf({
+			groupAlpha: data.match.groupAlpha,
+			groupBravo: data.match.groupBravo,
+			userId: user?.id,
+		}),
+	);
+
+	const joinPool = isParticipant ? `SQ${String(data.match.id).at(-1)}` : null;
 	const activeRoomLink = resolveActiveRoomLink({
 		roomLinks: data.roomLinks,
 		freshnessCutoff: data.match.createdAt,

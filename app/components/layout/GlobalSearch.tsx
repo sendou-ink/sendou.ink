@@ -15,11 +15,11 @@ import {
 } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useSearchParams } from "react-router";
-import { useDebounce } from "react-use";
 import { Avatar } from "~/components/Avatar";
 import { Image } from "~/components/Image";
 import { Input } from "~/components/Input";
 import type { SearchLoaderData } from "~/features/search/routes/search";
+import { useDebounce } from "~/hooks/useDebounce";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
 import {

@@ -68,9 +68,11 @@ async function searchByType({
 			const teams = await TeamRepository.searchByName({ query, limit });
 			return teams.map((t) => ({
 				type: "team" as const,
+				id: t.id,
 				name: t.name,
 				avatarUrl: t.avatarUrl,
 				customUrl: t.customUrl,
+				members: t.members,
 			}));
 		}
 		case "organizations": {

@@ -154,6 +154,7 @@ function ScreenNotice({ screenLegal }: { screenLegal: boolean }) {
 					variant="minimal"
 					className={styles.notice}
 					testId={screenLegal ? "screen-allowed" : "screen-banned"}
+					aria-label={screenLegal ? "Screen allowed" : "Screen banned"}
 				>
 					<Icon
 						size={imgSize}

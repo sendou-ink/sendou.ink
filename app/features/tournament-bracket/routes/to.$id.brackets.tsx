@@ -1,18 +1,19 @@
 import { sub } from "date-fns";
 import {
 	Check,
+	Clipboard,
 	Eye,
 	EyeOff,
 	Map as MapIcon,
 	ShieldMinus,
 	ShieldPlus,
 	Stamp,
+	UserPlus,
 } from "lucide-react";
 import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
 import { Outlet, useOutletContext, useRevalidator } from "react-router";
-import { useCopyToClipboard } from "react-use";
 import { Alert } from "~/components/Alert";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -27,9 +28,11 @@ import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { useUser } from "~/features/auth/core/user";
 import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { useVisibilityChange } from "~/hooks/useVisibilityChange";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import { SENDOU_INK_BASE_URL, tournamentJoinPage } from "~/utils/urls";
 import {
 	useBracketExpanded,
@@ -49,6 +52,10 @@ import { tournamentWebsocketRoom } from "../tournament-bracket-utils";
 
 export { action };
 
+export const handle: SendouRouteHandle = {
+	mainBreakout: true,
+};
+
 import styles from "../tournament-bracket.module.css";
 
 export default function TournamentBracketsPage() {
@@ -57,7 +64,6 @@ export default function TournamentBracketsPage() {
 	const { revalidate } = useRevalidator();
 	const user = useUser();
 	const tournament = useTournament();
-	const isHydrated = useHydrated();
 	const ctx = useOutletContext();
 
 	const defaultBracketIdx = () => {
@@ -108,11 +114,11 @@ export default function TournamentBracketsPage() {
 		hide: hideSpoiler,
 	} = useBracketSpoilerCensor();
 
-	const showPrepareMapsButton =
-		tournament.isOrganizer(user) &&
-		!bracket.canBeStarted &&
-		bracket.preview &&
-		isHydrated;
+	const showTeamActionsRow =
+		(!tournament.isLeagueDivision && Boolean(teamProgressStatus)) ||
+		showAddSubsButton;
+	const showSecondaryActionsRow =
+		tournament.canFinalize(user) || censored || canToggle;
 
 	const waitingForTeamsText = (bracket: BracketType, bracketIdx: number) => {
 		if (bracketIdx > 0) {
@@ -178,117 +184,42 @@ export default function TournamentBracketsPage() {
 		return null;
 	};
 
-	const totalTeamsAvailableForTheBracket = () => {
-		if (bracket.sources) {
-			return (
-				(bracket.teamsPendingCheckIn ?? []).length +
-				bracket.participantTournamentTeamIds.length
-			);
-		}
-
-		if (!tournament.isMultiStartingBracket) {
-			return tournament.ctx.teams.length;
-		}
-
-		return tournament.ctx.teams.filter(
-			(team) => (team.startingBracketIdx ?? 0) === bracketIdx,
-		).length;
-	};
-
 	if (tournament.isLeagueSignup) {
 		return null;
 	}
 
-	const abDivisionsStartError = getAbDivisionsStartError(bracket, tournament);
-
 	return (
 		<div>
 			<Outlet context={ctx} />
-			{bracket.preview &&
-			tournament.isOrganizer(user) &&
-			tournament.regularCheckInHasEnded &&
-			abDivisionsStartError ? (
-				<div className="stack items-center mb-4">
-					<Alert variation="WARNING">
-						<div data-testid="ab-divisions-imbalance-alert">
-							{abDivisionsStartError}
-						</div>
-					</Alert>
+			{showTeamActionsRow ? (
+				<div className="stack horizontal mb-4 sm justify-between items-center">
+					{/** TournamentTeamActions more confusing than helpful for leagues, for example might say "Waiting for match..." when previous match was rescheduled  */}
+					{!tournament.isLeagueDivision ? <TournamentTeamActions /> : null}
+					{showAddSubsButton ? <AddSubsPopOver /> : null}
 				</div>
 			) : null}
-			{bracket.preview &&
-			bracket.enoughTeams &&
-			tournament.isOrganizer(user) &&
-			tournament.regularCheckInStartInThePast ? (
-				<div className="stack items-center mb-4">
-					<div className="stack sm items-center">
-						<Alert
-							variation="INFO"
-							alertClassName={styles.startBracketAlert}
-							textClassName="stack horizontal md items-center"
+			{showSecondaryActionsRow ? (
+				<div className="stack horizontal sm mb-4">
+					{tournament.canFinalize(user) ? (
+						<LinkButton
+							to="finalize"
+							testId="finalize-tournament-button"
+							icon={<Stamp />}
 						>
-							{bracket.participantTournamentTeamIds.length}/
-							{totalTeamsAvailableForTheBracket()} teams checked in
-							{bracket.canBeStarted ? (
-								tournament.isDraft ? (
-									<DraftBracketStartPopover />
-								) : (
-									<BracketStarter
-										bracket={bracket}
-										bracketIdx={bracketIdx}
-										isDisabled={Boolean(abDivisionsStartError)}
-									/>
-								)
-							) : null}
-						</Alert>
-						{!bracket.canBeStarted ? (
-							<div className={styles.miniAlert}>
-								⚠️{" "}
-								{bracket.isStartingBracket
-									? "Tournament start time is in the future"
-									: bracket.startTime && bracket.startTime > new Date()
-										? "Bracket start time is in the future"
-										: "Teams pending from the previous bracket"}{" "}
-								(blocks starting)
-							</div>
-						) : null}
-					</div>
+							{t("tournament:actions.finalize.button")}
+						</LinkButton>
+					) : null}
+					{censored ? (
+						<SendouButton onPress={revealSpoiler} icon={<ShieldMinus />}>
+							{t("common:spoilerFree.showResults")}
+						</SendouButton>
+					) : canToggle ? (
+						<SendouButton onPress={hideSpoiler} icon={<ShieldPlus />}>
+							{t("common:spoilerFree.hideResults")}
+						</SendouButton>
+					) : null}
 				</div>
 			) : null}
-			<div className="stack horizontal mb-4 sm justify-between items-center">
-				{/** TournamentTeamActions more confusing than helpful for leagues, for example might say "Waiting for match..." when previous match was rescheduled  */}
-				{!tournament.isLeagueDivision ? <TournamentTeamActions /> : null}
-				{showAddSubsButton ? <AddSubsPopOver /> : null}
-			</div>
-			<div className="stack horizontal sm mb-4">
-				{bracket.type !== "round_robin" && !bracket.preview ? (
-					<CompactifyButton />
-				) : null}
-				{tournament.canFinalize(user) ? (
-					<LinkButton
-						to="finalize"
-						testId="finalize-tournament-button"
-						icon={<Stamp />}
-					>
-						{t("tournament:actions.finalize.button")}
-					</LinkButton>
-				) : null}
-				{censored ? (
-					<SendouButton onPress={revealSpoiler} icon={<ShieldMinus />}>
-						{t("common:spoilerFree.showResults")}
-					</SendouButton>
-				) : canToggle ? (
-					<SendouButton onPress={hideSpoiler} icon={<ShieldPlus />}>
-						{t("common:spoilerFree.hideResults")}
-					</SendouButton>
-				) : null}
-				{showPrepareMapsButton ? (
-					// Error Boundary because preparing maps is optional, so no need to make the whole page inaccessible if it fails
-					<ErrorBoundary fallback={null}>
-						<MapPreparer bracket={bracket} bracketIdx={bracketIdx} />
-					</ErrorBoundary>
-				) : null}
-			</div>
 			<BracketTabs bracketIdx={bracketIdx} setBracketIdx={setBracketIdx}>
 				{(currentBracket, currentBracketIdx) => (
 					<BracketTabContent
@@ -301,6 +232,37 @@ export default function TournamentBracketsPage() {
 			</BracketTabs>
 		</div>
 	);
+}
+
+function eligibleTeamCountForBracket(
+	tournament: Tournament,
+	bracket: BracketType,
+	bracketIdx: number,
+) {
+	if (bracket.sources) {
+		return (
+			(bracket.teamsPendingCheckIn ?? []).length +
+			bracket.participantTournamentTeamIds.length
+		);
+	}
+
+	if (!tournament.isMultiStartingBracket) {
+		return tournament.ctx.teams.length;
+	}
+
+	return tournament.ctx.teams.filter(
+		(team) => (team.startingBracketIdx ?? 0) === bracketIdx,
+	).length;
+}
+
+function bracketTabTeamCount(
+	tournament: Tournament,
+	bracket: BracketType,
+	bracketIdx: number,
+) {
+	return bracket.preview
+		? eligibleTeamCountForBracket(tournament, bracket, bracketIdx)
+		: bracket.participantTournamentTeamIds.length;
 }
 
 function getAbDivisionsStartError(
@@ -446,7 +408,7 @@ function MapPreparer({
 
 function AddSubsPopOver() {
 	const { t } = useTranslation(["common", "tournament"]);
-	const [, copyToClipboard] = useCopyToClipboard();
+	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 	const tournament = useTournament();
 	const user = useUser();
 
@@ -473,9 +435,10 @@ function AddSubsPopOver() {
 				<>
 					<Divider className="my-2" />
 					<div>{t("tournament:actions.shareLink", { inviteLink })}</div>
-					<div className="my-2 flex justify-center">
+					<div className="mt-2 flex justify-center">
 						<SendouButton
 							size="small"
+							icon={copySuccess ? <Check /> : <Clipboard />}
 							onPress={() => copyToClipboard(inviteLink)}
 							variant="minimal"
 							className="tiny"
@@ -501,6 +464,7 @@ function SubsPopover({ children }: { children: React.ReactNode }) {
 					className="ml-auto"
 					variant="outlined"
 					size="small"
+					icon={<UserPlus />}
 					data-testid="add-sub-button"
 				>
 					{t("tournament:actions.addSub")}
@@ -538,7 +502,15 @@ function BracketTabs({
 		>
 			<SendouTabList>
 				{visibleBrackets.map((bracket, i) => (
-					<SendouTab key={bracket.name} id={String(i)}>
+					<SendouTab
+						key={bracket.name}
+						id={String(i)}
+						number={bracketTabTeamCount(
+							tournament,
+							tournament.bracketByIdxOrDefault(i),
+							i,
+						)}
+					>
 						{bracketNameForTab(bracket.name)}
 					</SendouTab>
 				))}
@@ -565,8 +537,18 @@ function BracketTabContent({
 }) {
 	return (
 		<>
+			<AbDivisionsImbalanceAlert bracket={bracket} />
+			<PrepareMapsButton bracket={bracket} bracketIdx={bracketIdx} />
 			{bracket.enoughTeams ? (
-				<Bracket bracket={bracket} bracketIdx={bracketIdx} />
+				<>
+					{bracket.type !== "round_robin" && !bracket.preview ? (
+						<div className="stack horizontal sm mb-4">
+							<CompactifyButton />
+						</div>
+					) : null}
+					<StartBracketAlert bracket={bracket} bracketIdx={bracketIdx} />
+					<Bracket bracket={bracket} bracketIdx={bracketIdx} />
+				</>
 			) : (
 				<div>
 					<div className="text-center text-lg font-semi-bold text-lighter mt-6">
@@ -601,6 +583,127 @@ function BracketTabContent({
 				</div>
 			)}
 		</>
+	);
+}
+
+function PrepareMapsButton({
+	bracket,
+	bracketIdx,
+}: {
+	bracket: BracketType;
+	bracketIdx: number;
+}) {
+	const tournament = useTournament();
+	const user = useUser();
+	const isHydrated = useHydrated();
+
+	if (
+		!tournament.isOrganizer(user) ||
+		bracket.canBeStarted ||
+		!bracket.preview ||
+		!isHydrated
+	) {
+		return null;
+	}
+
+	return (
+		<div className="stack horizontal sm mb-4">
+			{/* Error Boundary because preparing maps is optional, so no need to make the whole page inaccessible if it fails */}
+			<ErrorBoundary fallback={null}>
+				<MapPreparer bracket={bracket} bracketIdx={bracketIdx} />
+			</ErrorBoundary>
+		</div>
+	);
+}
+
+function AbDivisionsImbalanceAlert({ bracket }: { bracket: BracketType }) {
+	const tournament = useTournament();
+	const user = useUser();
+
+	if (
+		!bracket.preview ||
+		!tournament.isOrganizer(user) ||
+		!tournament.regularCheckInHasEnded
+	) {
+		return null;
+	}
+
+	const abDivisionsStartError = getAbDivisionsStartError(bracket, tournament);
+	if (!abDivisionsStartError) {
+		return null;
+	}
+
+	return (
+		<div className="stack items-center mb-4">
+			<Alert variation="WARNING">
+				<div data-testid="ab-divisions-imbalance-alert">
+					{abDivisionsStartError}
+				</div>
+			</Alert>
+		</div>
+	);
+}
+
+function StartBracketAlert({
+	bracket,
+	bracketIdx,
+}: {
+	bracket: BracketType;
+	bracketIdx: number;
+}) {
+	const tournament = useTournament();
+	const user = useUser();
+
+	if (
+		!bracket.preview ||
+		!tournament.isOrganizer(user) ||
+		!tournament.regularCheckInStartInThePast
+	) {
+		return null;
+	}
+
+	const abDivisionsStartError = getAbDivisionsStartError(bracket, tournament);
+	const totalTeamsAvailableForTheBracket = eligibleTeamCountForBracket(
+		tournament,
+		bracket,
+		bracketIdx,
+	);
+
+	return (
+		<div className="stack items-center mb-4">
+			<div className="stack sm items-center">
+				<Alert
+					variation="INFO"
+					alertClassName={styles.startBracketAlert}
+					textClassName="stack horizontal md items-center"
+				>
+					{bracket.participantTournamentTeamIds.length}/
+					{totalTeamsAvailableForTheBracket} teams checked in
+					{bracket.canBeStarted ? (
+						tournament.isDraft ? (
+							<DraftBracketStartPopover />
+						) : (
+							<BracketStarter
+								bracket={bracket}
+								bracketIdx={bracketIdx}
+								isDisabled={Boolean(abDivisionsStartError)}
+							/>
+						)
+					) : null}
+				</Alert>
+				{!bracket.canBeStarted ? (
+					<div className={styles.miniAlert}>
+						⚠️{" "}
+						{bracket.isStartingBracket
+							? "Tournament start time is in the future"
+							: bracket.startTime && bracket.startTime > new Date()
+								? "Bracket start time is in the future"
+								: "Teams pending from the previous bracket"}{" "}
+						(blocks starting)
+					</div>
+				) : null}
+			</div>
+		</div>
 	);
 }
 

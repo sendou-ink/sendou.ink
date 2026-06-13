@@ -141,7 +141,9 @@ test.describe("Team page", () => {
 		await submit(page);
 
 		await page.getByTestId("team-actions-menu-button").click();
-		await page.getByTestId("make-main-team-button").click();
+		await waitForPOSTResponse(page, async () => {
+			await page.getByTestId("make-main-team-button").click();
+		});
 
 		await navigate({ page, url: userPage({ discordId: ADMIN_DISCORD_ID }) });
 

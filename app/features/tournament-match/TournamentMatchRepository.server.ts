@@ -106,6 +106,7 @@ export function findResultById(id: number) {
 		.selectFrom("TournamentMatchGameResult")
 		.select([
 			"TournamentMatchGameResult.id",
+			"TournamentMatchGameResult.matchId",
 			"TournamentMatchGameResult.opponentOnePoints",
 			"TournamentMatchGameResult.opponentTwoPoints",
 			"TournamentMatchGameResult.winnerTeamId",
@@ -248,7 +249,7 @@ export async function allResultsByTournamentId(
 			).as("maps"),
 		])
 		.where("TournamentStage.tournamentId", "=", tournamentId)
-		.where(opponentOneResult, "is not", null) // xxx: "opponentOneId" is not null/"opponentTwoId" is not null?
+		.where(opponentOneResult, "is not", null)
 		// strictly speaking the order by condition is not accurate, future improvement would be to add order conditions that match the tournament structure
 		.orderBy("TournamentMatch.id", "asc")
 		.execute();

@@ -8,14 +8,14 @@
 	"post.lastActive": "最后活跃",
 	"noPosts": "没有招募信息符合条件",
 	"expiring": "招募信息即将过期。还在招募吗？",
-	"addFilter": "",
+	"addFilter": "添加筛选条件",
 	"filters.Weapon": "武器池",
 	"filters.Type": "招募类型",
 	"filters.Timezone": "时差",
 	"filters.Language": "语言",
-	"filters.PlusTier": "Plus Server等级",
-	"filters.MaxTier": "SendouQ段位上限",
-	"filters.MinTier": "SendouQ段位下限",
+	"filters.PlusTier": "Plus Server 等级",
+	"filters.MaxTier": "SendouQ 段位上限",
+	"filters.MinTier": "SendouQ 段位下限",
 	"filters.suffix": "筛选条件",
 	"filters.orAbove": "或以上",
 	"new.noMorePosts": "您不能再发表更多招募信息了。",
@@ -29,5 +29,5 @@
 	"new.weaponPool.userProfile": "用户主页",
 	"new.languages.header": "语言",
 	"new.languages.placeholder": "选择所有符合的选项",
-	"new.languages.sqSettingsPage": "SendouQ设定页面"
+	"new.languages.sqSettingsPage": "SendouQ 设置页面"
 }

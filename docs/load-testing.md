@@ -100,7 +100,7 @@ db.close();
 Run with:
 
 ```bash
-pnpm exec tsx profile-query.ts
+pnpm exec vite-node profile-query.ts
 ```
 
 ## Step 3: Analyze Query Plans
@@ -246,7 +246,7 @@ console.log(`Rows: ${result.length}`);
 db.close();
 EOF
 
-pnpm exec tsx profile.ts
+pnpm exec vite-node profile.ts
 
 # 3. Clean up
 rm profile.ts

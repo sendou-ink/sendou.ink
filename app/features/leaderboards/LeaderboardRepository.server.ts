@@ -400,20 +400,54 @@ export async function seasonPopularUsersWeapon(
 	season: number,
 ): Promise<SeasonPopularUsersWeapon> {
 	const { starts, ends } = Seasons.nthToDateRange(season);
+	const startsTs = dateToDatabaseTimestamp(starts);
+	const endsTs = dateToDatabaseTimestamp(ends);
+
+	const sendouqWeapons = db
+		.selectFrom("ReportedWeapon")
+		.innerJoin("GroupMatch", "ReportedWeapon.groupMatchId", "GroupMatch.id")
+		.select(({ fn }) => [
+			"ReportedWeapon.userId",
+			"ReportedWeapon.weaponSplId",
+			fn.countAll<number>().as("count"),
+		])
+		.where("GroupMatch.createdAt", ">=", startsTs)
+		.where("GroupMatch.createdAt", "<=", endsTs)
+		.groupBy(["ReportedWeapon.userId", "ReportedWeapon.weaponSplId"]);
+
+	const tournamentWeapons = db
+		.selectFrom("ReportedWeapon")
+		.innerJoin(
+			"TournamentMatch",
+			"TournamentMatch.id",
+			"ReportedWeapon.tournamentMatchId",
+		)
+		.innerJoin(
+			"TournamentStage",
+			"TournamentStage.id",
+			"TournamentMatch.stageId",
+		)
+		.innerJoin("Tournament", "Tournament.id", "TournamentStage.tournamentId")
+		.select(({ fn }) => [
+			"ReportedWeapon.userId",
+			"ReportedWeapon.weaponSplId",
+			fn.countAll<number>().as("count"),
+		])
+		.where("Tournament.isFinalized", "=", 1)
+		.where("ReportedWeapon.createdAt", ">=", startsTs)
+		.where("ReportedWeapon.createdAt", "<=", endsTs)
+		.groupBy(["ReportedWeapon.userId", "ReportedWeapon.weaponSplId"]);
 
 	const rows = await db
 		.with("q1", (db) =>
 			db
-				.selectFrom("ReportedWeapon")
-				.innerJoin("GroupMatch", "ReportedWeapon.groupMatchId", "GroupMatch.id")
+				.selectFrom(sendouqWeapons.unionAll(tournamentWeapons).as("merged"))
 				.select(({ fn }) => [
-					"ReportedWeapon.userId",
-					"ReportedWeapon.weaponSplId",
-					fn.countAll<number>().as("count"),
+					"merged.userId",
+					"merged.weaponSplId",
+					fn.sum<number>("merged.count").as("count"),
 				])
-				.where("GroupMatch.createdAt", ">=", dateToDatabaseTimestamp(starts))
-				.where("GroupMatch.createdAt", "<=", dateToDatabaseTimestamp(ends))
-				.groupBy(["ReportedWeapon.userId", "ReportedWeapon.weaponSplId"]),
+				.groupBy(["merged.userId", "merged.weaponSplId"]),
 		)
 		.selectFrom("q1")
 		.select(({ fn }) => [

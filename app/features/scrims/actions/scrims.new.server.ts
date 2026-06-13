@@ -1,7 +1,6 @@
 import { add } from "date-fns";
 import { type ActionFunctionArgs, redirect } from "react-router";
 import type { z } from "zod";
-import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -13,6 +12,7 @@ import { assertUnreachable } from "~/utils/types";
 import { scrimsPage } from "~/utils/urls";
 import * as SQGroupRepository from "../../sendouq/SQGroupRepository.server";
 import * as TeamRepository from "../../team/TeamRepository.server";
+import { NON_PLAYER_TEAM_ROLES } from "../../team/team-constants";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { LUTI_DIVS, SCRIM } from "../scrims-constants";
 import {
@@ -102,12 +102,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	return redirect(scrimsPage());
 };
 
-const ROLES_TO_EXCLUDE: Tables["TeamMember"]["role"][] = [
-	"CHEERLEADER",
-	"COACH",
-	"SUB",
-];
-
 export const usersListForPost = async ({
 	from,
 	authorId,
@@ -126,7 +120,7 @@ export const usersListForPost = async ({
 	errorToastIfFalsy(team, "User is not a member of this team");
 
 	const filteredMembers = team.members.filter(
-		(member) => !ROLES_TO_EXCLUDE.includes(member.role),
+		(member) => !member.role || !NON_PLAYER_TEAM_ROLES.includes(member.role),
 	);
 
 	// handle case when all users are from excluded roles
@@ -161,9 +155,7 @@ async function validatePickup(userIds: number[], authorId: number) {
 async function validatePickupFriends(userIds: number[], authorId: number) {
 	const unconsentingUsers: string[] = [];
 
-	const friendsData = await SQGroupRepository.friendsAndTeammates(authorId, {
-		requireFriendCode: false,
-	});
+	const friendsData = await SQGroupRepository.friendsAndTeammates(authorId);
 
 	for (const userId of userIds) {
 		const user = await UserRepository.findLeanById(userId);

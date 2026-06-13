@@ -384,9 +384,7 @@ function OrganizationSelect() {
 
 function RulesTextarea({ supportsMarkdown }: { supportsMarkdown?: boolean }) {
 	const baseEvent = useBaseEvent();
-	const [value, setValue] = React.useState(
-		baseEvent?.tournament?.ctx.rules ?? "",
-	);
+	const [value, setValue] = React.useState(baseEvent?.rules ?? "");
 
 	return (
 		<div>

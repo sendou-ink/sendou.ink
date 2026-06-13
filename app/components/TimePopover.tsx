@@ -1,17 +1,16 @@
 import clsx from "clsx";
 import { Check, Clipboard } from "lucide-react";
-import * as React from "react";
 import { useRef, useState } from "react";
 import { Dialog, Popover } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { useCopyToClipboard } from "react-use";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { SendouButton } from "./elements/Button";
 import popoverStyles from "./elements/Popover.module.css";
 import { LocaleTime } from "./LocaleTime";
 import styles from "./TimePopover.module.css";
 
 export default function TimePopover({
-	time,
+	date,
 	options = {
 		minute: "numeric",
 		hour: "numeric",
@@ -22,7 +21,7 @@ export default function TimePopover({
 	className,
 	footerText,
 }: {
-	time: Date;
+	date: Date;
 	options?: Intl.DateTimeFormatOptions;
 	underline?: boolean;
 	className?: string;
@@ -34,17 +33,7 @@ export default function TimePopover({
 
 	const { t } = useTranslation(["common"]);
 
-	const [state, copyToClipboard] = useCopyToClipboard();
-	const [copySuccess, setCopySuccess] = React.useState(false);
-
-	React.useEffect(() => {
-		if (!state.value) return;
-
-		setCopySuccess(true);
-		const timeout = setTimeout(() => setCopySuccess(false), 2000);
-
-		return () => clearTimeout(timeout);
-	}, [state]);
+	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 
 	return (
 		<div>
@@ -61,7 +50,7 @@ export default function TimePopover({
 					setOpen(true);
 				}}
 			>
-				<LocaleTime date={time} options={options} inline />
+				<LocaleTime date={date} options={options} inline />
 			</button>
 			<Popover
 				isOpen={open}
@@ -73,7 +62,7 @@ export default function TimePopover({
 					<div className="stack sm">
 						<div className="text-center">
 							<LocaleTime
-								date={time}
+								date={date}
 								options={{
 									timeZoneName: "long",
 									hour: "numeric",
@@ -84,7 +73,7 @@ export default function TimePopover({
 						<SendouButton
 							size="miniscule"
 							variant="minimal"
-							onPress={() => copyToClipboard(`<t:${time.valueOf() / 1000}:F>`)}
+							onPress={() => copyToClipboard(`<t:${date.valueOf() / 1000}:F>`)}
 							icon={copySuccess ? <Check /> : <Clipboard />}
 						>
 							{t("common:actions.copyTimestampForDiscord")}

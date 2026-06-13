@@ -8,6 +8,7 @@ export const Main = ({
 	classNameOverwrite,
 	halfWidth,
 	bigger,
+	breakoutContainer,
 	style,
 }: {
 	children: React.ReactNode;
@@ -15,6 +16,7 @@ export const Main = ({
 	classNameOverwrite?: string;
 	halfWidth?: boolean;
 	bigger?: boolean;
+	breakoutContainer?: boolean;
 	style?: React.CSSProperties;
 }) => {
 	return (
@@ -34,6 +36,7 @@ export const Main = ({
 							className,
 						)
 			}
+			data-main-breakout={breakoutContainer || undefined}
 			style={style}
 		>
 			{children}

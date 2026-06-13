@@ -4,7 +4,6 @@ const config = {
 		type: true,
 	},
 	tags: ["-lintignore"],
-	ignoreDependencies: ["babel-plugin-react-compiler"],
 	entry: [
 		"app/features/*/routes/**/*.{ts,tsx}",
 		"migrations/**/*.js",

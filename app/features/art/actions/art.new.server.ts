@@ -20,11 +20,11 @@ import { userArtPage } from "~/utils/urls";
 import { NEW_ART_EXISTING_SEARCH_PARAM_KEY } from "../art-constants";
 import { editArtSchema, newArtSchema } from "../art-schemas.server";
 
-export const action: ActionFunction = async ({ request }) => {
+export const action: ActionFunction = async ({ request, url }) => {
 	const user = requireUser();
 	requireRole("ARTIST");
 
-	const searchParams = new URL(request.url).searchParams;
+	const searchParams = url.searchParams;
 	const artIdRaw = searchParams.get(NEW_ART_EXISTING_SEARCH_PARAM_KEY);
 
 	// updating logic
