@@ -4,7 +4,7 @@ import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import { sortBadgesByFavorites } from "~/features/user-page/core/badge-sorting.server";
 import invariant from "~/utils/invariant";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { commonUserSelect } from "~/utils/kysely.server";
 import { SPLATOON_3_XP_BADGE_VALUES } from "./badges-constants";
 import { findSplatoon3XpBadgeValue } from "./badges-utils";
 
@@ -21,7 +21,7 @@ const withAuthor = (eb: ExpressionBuilder<DB, "Badge">) => {
 	return jsonObjectFrom(
 		eb
 			.selectFrom("User")
-			.select(COMMON_USER_FIELDS)
+			.select((eb) => commonUserSelect(eb))
 			.whereRef("User.id", "=", "Badge.authorId"),
 	).as("author");
 };
@@ -31,7 +31,7 @@ const withManagers = (eb: ExpressionBuilder<DB, "Badge">) => {
 		eb
 			.selectFrom("BadgeManager")
 			.innerJoin("User", "BadgeManager.userId", "User.id")
-			.select(["userId", ...COMMON_USER_FIELDS])
+			.select((eb) => ["userId", ...commonUserSelect(eb)])
 			.whereRef("BadgeManager.badgeId", "=", "Badge.id"),
 	).as("managers");
 };

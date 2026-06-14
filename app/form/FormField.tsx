@@ -333,6 +333,7 @@ export function FormField({
 			<ImageFormField
 				{...commonProps}
 				{...formField}
+				disabled={disabled}
 				value={value as ImageFieldValue}
 				onChange={handleChange as (v: ImageFieldValue) => void}
 			/>

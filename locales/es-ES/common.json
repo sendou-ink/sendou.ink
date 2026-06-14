@@ -252,6 +252,8 @@
 	"support.perk.userShortLink": "Enlace corto de perfil",
 	"support.perk.userShortLink.extra": "En lugar de sendou.ink/u/sendou también puedes usar snd.ink/sendou al enlazar a tu perfil de usuario.",
 	"support.perk.customizedColorsUser": "Colores personalizados (perfil)",
+	"support.perk.customAvatar": "",
+	"support.perk.customAvatar.extra": "",
 	"support.perk.favoriteBadges": "Fijar insignias favoritas",
 	"support.perk.favoriteBadges.extra": "Puedes elegir qué insignias aparecen en la página principal de tu perfil y en qué orden.",
 	"support.perk.customizedColorsTeam": "Colores personalizados (equipo)",

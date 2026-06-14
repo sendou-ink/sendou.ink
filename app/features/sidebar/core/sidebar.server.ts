@@ -46,6 +46,7 @@ export type SidebarFriend = {
 	name: string;
 	discordId: string;
 	discordAvatar: string | null;
+	customAvatarUrl: string | null;
 	url: string;
 	subtitle: string;
 	badge: string;
@@ -191,13 +192,15 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 			stream: {
 				id: `xrank-${row.id}`,
 				name: row.username,
-				imageUrl: row.discordAvatar
-					? discordAvatarUrl({
-							discordId: row.discordId,
-							discordAvatar: row.discordAvatar,
-							size: "sm",
-						})
-					: BLANK_IMAGE_URL,
+				imageUrl: row.customAvatarUrl
+					? row.customAvatarUrl
+					: row.discordAvatar
+						? discordAvatarUrl({
+								discordId: row.discordId,
+								discordAvatar: row.discordAvatar,
+								size: "sm",
+							})
+						: BLANK_IMAGE_URL,
 				url: row.twitchUsername
 					? twitchUrl(row.twitchUsername)
 					: userPage({ discordId: row.discordId, customUrl: row.customUrl }),
@@ -365,6 +368,7 @@ function rowToSidebarFriend(
 		name: row.username,
 		discordId: row.discordId,
 		discordAvatar: row.discordAvatar,
+		customAvatarUrl: row.customAvatarUrl,
 		url: userPage({ discordId: row.discordId, customUrl: row.customUrl }),
 		subtitle,
 		badge,

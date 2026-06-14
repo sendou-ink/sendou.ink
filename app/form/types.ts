@@ -117,8 +117,7 @@ interface FormFieldMapPool<T extends string> extends FormFieldBase<T> {
 	disableBannedMaps?: boolean;
 }
 
-interface FormFieldImage<T extends string>
-	extends Omit<FormFieldBase<T>, "bottomText"> {
+interface FormFieldImage<T extends string> extends FormFieldBase<T> {
 	dimensions?: ImageFieldDimensions;
 	/** Validate uploaded images immediately, bypassing the moderator queue (e.g. trusted org logos). */
 	autoValidate?: boolean;

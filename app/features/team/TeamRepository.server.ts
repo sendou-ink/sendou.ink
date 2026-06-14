@@ -10,7 +10,7 @@ import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
-	COMMON_USER_FIELDS,
+	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	tournamentLogoOrNull,
 	userProfileWeapons,
@@ -175,7 +175,7 @@ export function findByCustomUrl(
 					.selectFrom("TeamMemberWithSecondary")
 					.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
 					.select(({ eb: innerEb }) => [
-						...COMMON_USER_FIELDS,
+						...commonUserSelect(innerEb),
 						"TeamMemberWithSecondary.role",
 						"TeamMemberWithSecondary.customRole",
 						"TeamMemberWithSecondary.roleType",
@@ -274,7 +274,7 @@ export async function findResultsById(teamId: number) {
 					)
 					.innerJoin("User", "User.id", "TournamentResult.userId")
 					.whereRef("results2.tournamentId", "=", "results.tournamentId")
-					.select(COMMON_USER_FIELDS),
+					.select((eb) => commonUserSelect(eb)),
 			).as("participants"),
 		])
 		.orderBy("CalendarEventDate.startTime", "desc")
@@ -320,7 +320,7 @@ export async function teamsByMemberUserId(
 				eb
 					.selectFrom("TeamMemberWithSecondary as m2")
 					.innerJoin("User", "User.id", "m2.userId")
-					.select([...COMMON_USER_FIELDS, "m2.role", "m2.roleType"])
+					.select((eb) => [...commonUserSelect(eb), "m2.role", "m2.roleType"])
 					.whereRef("TeamMemberWithSecondary.teamId", "=", "m2.teamId"),
 			).as("members"),
 		])

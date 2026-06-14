@@ -1099,6 +1099,7 @@ export interface User {
 	customTheme: JSONColumnTypeNullable<CustomTheme>;
 	customUrl: string | null;
 	discordAvatar: string | null;
+	customAvatarImgId: number | null;
 	discordId: string;
 	discordName: string;
 	customName: string | null;

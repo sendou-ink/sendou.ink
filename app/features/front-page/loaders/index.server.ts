@@ -83,13 +83,15 @@ function cachedLeaderboards(): Promise<{
 					power: entry.power,
 					name: entry.username,
 					url: userPage(entry),
-					avatarUrl: entry.discordAvatar
-						? discordAvatarUrl({
-								discordAvatar: entry.discordAvatar,
-								discordId: entry.discordId,
-								size: "sm",
-							})
-						: null,
+					avatarUrl: entry.customAvatarUrl
+						? entry.customAvatarUrl
+						: entry.discordAvatar
+							? discordAvatarUrl({
+									discordAvatar: entry.discordAvatar,
+									discordId: entry.discordId,
+									size: "sm",
+								})
+							: null,
 				})),
 				team: team
 					.filter((entry) => entry.team)

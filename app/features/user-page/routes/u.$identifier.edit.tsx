@@ -3,6 +3,7 @@ import { Link, useLoaderData, useMatches } from "react-router";
 import { FormMessage } from "~/components/FormMessage";
 import { FriendCodePopover } from "~/components/FriendCodePopover";
 import { BADGE } from "~/features/badges/badges-constants";
+import { existingImage } from "~/form/image-field";
 import { SendouForm } from "~/form/SendouForm";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useHasRole } from "~/modules/permissions/hooks";
@@ -41,6 +42,10 @@ export default function UserEditPage() {
 	}));
 
 	const defaultValues = {
+		customAvatar: existingImage(
+			data.user.customAvatarImgId,
+			data.user.customAvatarUrl,
+		),
 		customName: data.user.customName ?? "",
 		customUrl: layoutData.user.customUrl ?? "",
 		inGameName: data.user.inGameName ?? "",
@@ -66,12 +71,14 @@ export default function UserEditPage() {
 				schema={userEditProfileBaseSchema}
 				defaultValues={defaultValues}
 				submitButtonText={t("common:actions.save")}
+				revalidateRoot
 			>
 				{({ FormField }) => (
 					<>
 						<FriendCodePopover />
 						<FormField name="customName" />
 						<FormField name="customUrl" />
+						<FormField name="customAvatar" disabled={!isSupporter} />
 						<FormField name="inGameName" />
 						<FormField name="sensitivity" />
 						<FormField name="pronouns" />

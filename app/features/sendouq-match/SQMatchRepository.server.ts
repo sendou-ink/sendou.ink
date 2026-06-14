@@ -12,7 +12,7 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
-	COMMON_USER_FIELDS,
+	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	matchProfileWeapons,
 	tournamentLogoWithDefault,
@@ -138,7 +138,7 @@ function groupWithTeamAndMembers(
 								),
 						)
 						.select((arrayEb) => [
-							...COMMON_USER_FIELDS,
+							...commonUserSelect(arrayEb),
 							"GroupMember.role",
 							"GroupMember.note",
 							"User.inGameName",
@@ -229,7 +229,7 @@ const groupMatchResultsSubQuery = (eb: ExpressionBuilder<DB, "Skill">) => {
 			eb
 				.selectFrom("GroupMember")
 				.innerJoin("User", "GroupMember.userId", "User.id")
-				.select([...COMMON_USER_FIELDS])
+				.select((eb) => commonUserSelect(eb))
 				.whereRef(
 					"GroupMember.groupId",
 					"=",

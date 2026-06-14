@@ -5,7 +5,7 @@ import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import type { MonthYear } from "~/features/plus-voting/core";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { commonUserSelect } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 
 export type FindAllByMonthItem = Unwrapped<typeof findAllByMonth>;
@@ -21,15 +21,15 @@ export async function findAllByMonth(args: MonthYear) {
 			jsonObjectFrom(
 				eb
 					.selectFrom("User")
-					.select(COMMON_USER_FIELDS)
+					.select((eb) => commonUserSelect(eb))
 					.whereRef("PlusSuggestion.authorId", "=", "User.id"),
 			).as("author"),
 			jsonObjectFrom(
 				eb
 					.selectFrom("User")
 					.leftJoin("PlusTier", "PlusSuggestion.suggestedId", "PlusTier.userId")
-					.select([
-						...COMMON_USER_FIELDS,
+					.select((eb) => [
+						...commonUserSelect(eb),
 						"User.bio",
 						"PlusTier.tier as plusTier",
 					])
