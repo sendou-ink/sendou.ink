@@ -1,5 +1,6 @@
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
+	mainWeaponIds,
 	weaponCategories,
 	weaponIdToBaseWeaponId,
 	weaponIdToType,
@@ -9,6 +10,8 @@ import type {
 	ParamValueWithHistory,
 	ParsedWeaponParams,
 } from "../weapon-params-types";
+
+// xxx: check if similar exist elsewhere, convert to utils to * as Module
 
 function parseParamKey(key: string): {
 	baseKey: string;
@@ -141,6 +144,20 @@ export function getCategoryWeaponIds(weaponId: MainWeaponId): MainWeaponId[] {
 
 	const currentWeaponBaseId = weaponIdToBaseWeaponId(weaponId);
 	return [weaponId, ...baseWeapons.filter((id) => id !== currentWeaponBaseId)];
+}
+
+/**
+ * Returns the main weapon ids that are kit siblings of the given weapon, i.e. they share
+ * the same base weapon (e.g. a weapon and its alternate kit) but excluding cosmetic alt
+ * skins. The returned list includes the given weapon itself.
+ */
+export function getWeaponKitSiblingIds(weaponId: MainWeaponId): MainWeaponId[] {
+	const baseId = weaponIdToBaseWeaponId(weaponId);
+	return mainWeaponIds.filter(
+		(id) =>
+			weaponIdToBaseWeaponId(id) === baseId &&
+			weaponIdToType(id) !== "ALT_SKIN",
+	);
 }
 
 export function hasParamHistory(param: ParamValueWithHistory): boolean {

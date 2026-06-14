@@ -6,6 +6,7 @@ import type { SerializeFrom } from "~/utils/remix";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { outlinedMainWeaponImageUrl } from "~/utils/urls";
+import { WeaponKits } from "../components/WeaponKits";
 import { WeaponParamsTable } from "../components/WeaponParamsTable";
 import { loader } from "../loaders/params.$slug.server";
 
@@ -43,6 +44,7 @@ export default function WeaponParamsPage() {
 
 	return (
 		<Main className={styles.container} bigger>
+			<WeaponKits kits={data.kits} />
 			<WeaponParamsTable
 				currentWeaponId={data.weaponId}
 				categoryWeaponIds={data.categoryWeaponIds}

@@ -1,13 +1,17 @@
 import type { LoaderFunctionArgs } from "react-router";
+import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
 import { i18next } from "~/modules/i18n/i18next.server";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	weaponIdToBaseWeaponId,
 	weaponIdToType,
 } from "~/modules/in-game-lists/weapon-ids";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { mySlugify } from "~/utils/urls";
-import { getCategoryWeaponIds, parseWeaponParams } from "../core/weapon-params";
+import {
+	getCategoryWeaponIds,
+	getWeaponKitSiblingIds,
+	parseWeaponParams,
+} from "../core/weapon-params";
 import weaponParamsData from "../data/all-version-weapon-params.json";
 import type { ParsedWeaponParams } from "../weapon-params-types";
 
@@ -24,7 +28,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const weaponName = t(`weapons:MAIN_${weaponId}`);
 	const slug = mySlugify(t(`weapons:MAIN_${weaponId}`, { lng: "en" }));
 
-	const categoryWeaponIds = getCategoryWeaponIds(weaponId as MainWeaponId);
+	const categoryWeaponIds = getCategoryWeaponIds(weaponId);
+
+	const kits = getWeaponKitSiblingIds(weaponId).map((id) => {
+		const { subWeaponId, specialWeaponId } = mainWeaponParams(id);
+		return { weaponId: id, subWeaponId, specialWeaponId };
+	});
 
 	const weaponParams: Record<string, ParsedWeaponParams> = {};
 	for (const id of categoryWeaponIds) {
@@ -49,6 +58,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		weaponName,
 		slug,
 		categoryWeaponIds,
+		kits,
 		weaponParams,
 		versions: weaponParamsData.metadata.versions,
 	};
