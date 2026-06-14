@@ -13,10 +13,10 @@ const OUTPUT_DIR = path.join(
 	"..",
 	"app",
 	"features",
-	"weapons",
+	"params",
 	"data",
 );
-const OUTPUT_FILE = path.join(OUTPUT_DIR, "weapon-params.json");
+const OUTPUT_FILE = path.join(OUTPUT_DIR, "all-version-weapon-params.json");
 
 const WEAPON_TYPES_TO_IGNORE = [
 	"Mission",
