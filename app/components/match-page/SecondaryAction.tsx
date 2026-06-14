@@ -8,7 +8,7 @@ interface SecondaryActionProps {
 	isOpen: boolean;
 	onOpenChange: (open: boolean) => void;
 	collapsedLabel: string;
-	collapsedIcon?: JSX.Element;
+	collapsedIcon?: React.JSX.Element;
 	expandedAriaLabel?: string;
 	standalone?: boolean;
 	children: React.ReactNode;
