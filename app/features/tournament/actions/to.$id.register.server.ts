@@ -18,7 +18,6 @@ import { logger } from "~/utils/logger";
 import { errorToastIfFalsy, parseParams } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "~/utils/zod";
-import { TOURNAMENT } from "../tournament-constants";
 import { registerSchema } from "../tournament-schemas.server";
 import {
 	isOneModeTournamentOf,
@@ -342,23 +341,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				});
 			}
 
-			break;
-		}
-		case "SAVE_TOURNAMENT": {
-			const count = await SavedCalendarEventRepository.countByUserId(user.id);
-			errorToastIfFalsy(
-				count < TOURNAMENT.MAX_SAVED_COUNT,
-				"Maximum saved tournaments reached",
-			);
-
-			await SavedCalendarEventRepository.saveOwn(tournamentId);
-			break;
-		}
-		case "UNSAVE_TOURNAMENT": {
-			await SavedCalendarEventRepository.unsave({
-				userId: user.id,
-				tournamentId,
-			});
 			break;
 		}
 		default: {
