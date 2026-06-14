@@ -4,7 +4,6 @@ import type {
 	Insertable,
 	JSONColumnType,
 	Selectable,
-	Updateable,
 } from "kysely";
 import type { AssociationVisibility } from "~/features/associations/associations-types";
 import type { tags } from "~/features/calendar/calendar-constants";
@@ -33,6 +32,8 @@ type Generated<T> =
 		: ColumnType<T, T | undefined, T>;
 
 export type MemberRole = (typeof TEAM_MEMBER_ROLES)[number];
+
+export type MemberRoleType = "PLAYER" | "OTHER";
 
 /** In SQLite booleans are presented as 0 (false) and 1 (true) */
 export type DBBoolean = number;
@@ -98,6 +99,11 @@ export interface TeamMember {
 	isManager: Generated<number>;
 	leftAt: number | null;
 	role: MemberRole | null;
+	customRole: string | null;
+	/** If customRole is defined, this classifies how the role should be treated */
+	roleType: MemberRoleType | null;
+	/** User-defined ordering of members within a team (ascending) */
+	order: Generated<number>;
 	teamId: number;
 	userId: number;
 	isMainTeam: DBBoolean;
@@ -1064,6 +1070,8 @@ export interface UserPreferences {
 	/** Is spoiler-free mode enabled? Hides recent tournament results and scores until the user chooses to reveal them. */
 	spoilerFreeMode?: boolean;
 	weaponReportDefaultOpen?: boolean;
+	/** Which tab opens first on the match page. Unset = first available tab (Rosters). */
+	defaultMatchPageTab?: "rosters" | "join" | "action";
 }
 
 export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;
@@ -1093,6 +1101,7 @@ export interface User {
 	customTheme: JSONColumnTypeNullable<CustomTheme>;
 	customUrl: string | null;
 	discordAvatar: string | null;
+	customAvatarImgId: number | null;
 	discordId: string;
 	discordName: string;
 	customName: string | null;
@@ -1439,7 +1448,6 @@ export interface SplatoonRotation {
 
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };
 export type TablesInsertable = { [P in keyof DB]: Insertable<DB[P]> };
-export type TablesUpdatable = { [P in keyof DB]: Updateable<DB[P]> };
 
 export interface DB {
 	AllTeam: Team;

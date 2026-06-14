@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { customField, select, stringConstant, toggle } from "~/form/fields";
+import {
+	customField,
+	radioGroup,
+	select,
+	stringConstant,
+	toggle,
+} from "~/form/fields";
 import { themeInputSchema } from "~/utils/zod";
 
 const customThemeSchema = z.object({
@@ -48,6 +54,18 @@ const weaponReportDefaultOpenSchema = z.object({
 	newValue: z.boolean(),
 });
 
+export const defaultMatchPageTabSchema = z.object({
+	_action: stringConstant("UPDATE_DEFAULT_MATCH_PAGE_TAB"),
+	newValue: radioGroup({
+		label: "labels.defaultMatchPageTab",
+		items: [
+			{ value: "rosters", label: "options.defaultMatchPageTab.rosters" },
+			{ value: "join", label: "options.defaultMatchPageTab.join" },
+			{ value: "action", label: "options.defaultMatchPageTab.action" },
+		],
+	}),
+});
+
 export const settingsEditSchema = z.union([
 	customThemeSchema,
 	disableBuildAbilitySortingSchema,
@@ -55,4 +73,5 @@ export const settingsEditSchema = z.union([
 	spoilerFreeModeSchema,
 	clockFormatSchema,
 	weaponReportDefaultOpenSchema,
+	defaultMatchPageTabSchema,
 ]);

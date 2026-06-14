@@ -8,7 +8,7 @@ import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { navIconUrl, tournamentRegisterPage } from "~/utils/urls";
+import { navIconUrl, tournamentInfoPage } from "~/utils/urls";
 import { Image } from "./Image";
 import { ListLink } from "./SideNav";
 import styles from "./StreamListItems.module.css";
@@ -157,7 +157,7 @@ function SaveTournamentStreamButton({
 	return (
 		<fetcher.Form
 			method="post"
-			action={tournamentRegisterPage(tournamentId)}
+			action={tournamentInfoPage(tournamentId)}
 			onClick={(e) => e.stopPropagation()}
 		>
 			<input

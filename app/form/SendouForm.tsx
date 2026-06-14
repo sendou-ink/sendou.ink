@@ -36,6 +36,7 @@ export interface FormContextValue<T extends z.ZodRawShape = z.ZodRawShape> {
 	setClientError: (name: string, error: string | undefined) => void;
 	clearServerError: (name: string) => void;
 	onFieldChange?: (name: string, newValue: unknown) => void;
+	hideRequiredIndicator: boolean;
 	values: Record<string, unknown>;
 	setValue: (name: string, value: unknown) => void;
 	setValueFromPrev: (name: string, updater: (prev: unknown) => unknown) => void;
@@ -97,6 +98,12 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	 * layout that already controls width/alignment.
 	 */
 	fullWidth?: boolean;
+	/**
+	 * When true, fields don't show the red `*` required indicator next to their
+	 * label. Useful on pages where every field is required and the asterisk only
+	 * adds noise (e.g. the settings page).
+	 */
+	hideRequiredIndicator?: boolean;
 	onApply?: (values: z.infer<z.ZodObject<T>>) => void;
 	secondarySubmit?: React.ReactNode;
 	/**
@@ -142,6 +149,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 	revalidateRoot,
 	className,
 	fullWidth,
+	hideRequiredIndicator = false,
 	onApply,
 	secondarySubmit,
 	onSuccess,
@@ -257,6 +265,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 			clearServerError: actions.clearServerError,
 			onFieldChange:
 				autoSubmit || autoApply ? actions.onFieldChange : undefined,
+			hideRequiredIndicator,
 			setValue: actions.setValue,
 			setValueFromPrev: actions.setValueFromPrev,
 			revalidateAll: actions.revalidateAll,
@@ -271,6 +280,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 			hasSubmitted,
 			autoSubmit,
 			autoApply,
+			hideRequiredIndicator,
 			fetcher.state,
 			store,
 			actions,
@@ -662,6 +672,7 @@ export function useFormFieldContext(): FormContextValue {
 		setClientError: context.setClientError,
 		clearServerError: context.clearServerError,
 		onFieldChange: context.onFieldChange,
+		hideRequiredIndicator: context.hideRequiredIndicator,
 		values,
 		setValue: context.setValue,
 		setValueFromPrev: context.setValueFromPrev,

@@ -69,6 +69,7 @@ function IncomingRequestsSection() {
 								user={{
 									discordId: request.sender.discordId,
 									discordAvatar: request.sender.discordAvatar,
+									customAvatarUrl: request.sender.customAvatarUrl,
 								}}
 								size="xxsm"
 							/>
@@ -120,6 +121,7 @@ function PendingRequestsSection() {
 								user={{
 									discordId: request.receiver.discordId,
 									discordAvatar: request.receiver.discordAvatar,
+									customAvatarUrl: request.receiver.customAvatarUrl,
 								}}
 								size="xxsm"
 							/>

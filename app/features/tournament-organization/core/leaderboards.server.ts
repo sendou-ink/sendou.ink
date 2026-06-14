@@ -106,6 +106,7 @@ async function calendarEventPoints(
 				leaderboardInfo.set(player.id, {
 					user: {
 						customUrl: player.customUrl,
+						customAvatarUrl: player.customAvatarUrl,
 						discordAvatar: player.discordAvatar,
 						discordId: player.discordId!,
 						id: player.id,

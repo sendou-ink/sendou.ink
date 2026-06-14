@@ -8,6 +8,7 @@ import {
 	customField,
 	dualSelectOptional,
 	idConstantOptional,
+	image,
 	inGameName,
 	selectDynamicOptional,
 	stringConstant,
@@ -61,6 +62,11 @@ const SENS_ITEMS = [
 }));
 
 export const userEditProfileBaseSchema = z.object({
+	customAvatar: image({
+		label: "labels.profileCustomAvatar",
+		bottomText: "bottomTexts.profileCustomAvatar",
+		autoValidate: true,
+	}),
 	customName: textFieldOptional({
 		label: "labels.profileCustomName",
 		bottomText: "bottomTexts.profileCustomName",

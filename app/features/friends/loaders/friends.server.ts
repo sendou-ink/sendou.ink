@@ -34,6 +34,7 @@ export const loader = async () => {
 				username: friend.username,
 				discordId: friend.discordId,
 				discordAvatar: friend.discordAvatar,
+				customAvatarUrl: friend.customAvatarUrl,
 				url: userPage({
 					discordId: friend.discordId,
 					customUrl: friend.customUrl,
@@ -68,6 +69,7 @@ export const loader = async () => {
 				username: tm.username,
 				discordId: tm.discordId,
 				discordAvatar: tm.discordAvatar,
+				customAvatarUrl: tm.customAvatarUrl,
 				url: userPage({
 					discordId: tm.discordId,
 					customUrl: tm.customUrl,
@@ -94,6 +96,7 @@ export const loader = async () => {
 				username: req.senderUsername,
 				discordId: req.senderDiscordId,
 				discordAvatar: req.senderDiscordAvatar,
+				customAvatarUrl: req.senderCustomAvatarUrl,
 				url: userPage({
 					discordId: req.senderDiscordId,
 					customUrl: req.senderCustomUrl,
@@ -108,6 +111,7 @@ export const loader = async () => {
 				username: req.receiverUsername,
 				discordId: req.receiverDiscordId,
 				discordAvatar: req.receiverDiscordAvatar,
+				customAvatarUrl: req.receiverCustomAvatarUrl,
 				url: userPage({
 					discordId: req.receiverDiscordId,
 					customUrl: req.receiverCustomUrl,

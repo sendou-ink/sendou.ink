@@ -252,6 +252,8 @@
 	"support.perk.userShortLink": "Короткая ссылка на пользовательскую страницу",
 	"support.perk.userShortLink.extra": "Например, вместо sendou.ink/u/sendou вы можете использовать snd.ink/sendou в качестве ссылки на ваш профиль.",
 	"support.perk.customizedColorsUser": "Настройка цветов (страница пользователя)",
+	"support.perk.customAvatar": "",
+	"support.perk.customAvatar.extra": "",
 	"support.perk.favoriteBadges": "Выбор наград на первой странице",
 	"support.perk.favoriteBadges.extra": "Вы можете настроить какие и в каком порядке награды будут на первой странице. Иначе можно настроить только первую награду.",
 	"support.perk.customizedColorsTeam": "Настройка цветов (страница команды)",

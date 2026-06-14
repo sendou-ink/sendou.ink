@@ -121,7 +121,7 @@ function SaveTournamentButton({
 				: isSaved;
 
 	return (
-		<fetcher.Form method="post" action={"./register"}>
+		<fetcher.Form method="post">
 			<input
 				type="hidden"
 				name="_action"

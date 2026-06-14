@@ -122,8 +122,7 @@ interface FormFieldMapPool<T extends string> extends FormFieldBase<T> {
 	disableBannedMaps?: boolean;
 }
 
-interface FormFieldImage<T extends string>
-	extends Omit<FormFieldBase<T>, "bottomText"> {
+interface FormFieldImage<T extends string> extends FormFieldBase<T> {
 	dimensions?: ImageFieldDimensions;
 	/** Validate uploaded images immediately, bypassing the moderator queue (e.g. trusted org logos). */
 	autoValidate?: boolean;
@@ -134,6 +133,10 @@ export interface FormFieldArray<T extends string, S extends z.ZodType>
 	min?: number;
 	max: number;
 	field: S;
+	/** When false, the "Add" button is hidden (the array can only be edited/shrunk, not grown). Defaults to true. */
+	addable?: boolean;
+	/** When true, items (object arrays only) can be reordered via drag-and-drop and the new order is reflected in the value. */
+	sortable?: boolean;
 }
 
 interface FormFieldTimeRange<T extends string> extends FormFieldBase<T> {
@@ -275,6 +278,7 @@ export type TypedFormFieldProps<
 	label?: string;
 	disabled?: boolean;
 	maxCount?: number;
+	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
 	children?:
 		| ((props: FormFieldChildrenProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
@@ -291,6 +295,7 @@ export type FlexibleFormFieldProps = {
 	label?: string;
 	disabled?: boolean;
 	maxCount?: number;
+	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
 	children?:
 		| ((props: FormFieldChildrenProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);

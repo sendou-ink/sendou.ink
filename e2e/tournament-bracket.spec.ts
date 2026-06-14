@@ -303,11 +303,12 @@ test.describe("Tournament bracket", () => {
 			url: tournamentAdminPage(tournamentId),
 		});
 
-		// check team 216 in to the underground bracket (after the start only
-		// checked in teams are listed so the row index is not stable)
+		// check team 216 in to the underground bracket — match on the stable team
+		// id rather than the seeded (faker-generated) team name or the row index,
+		// neither of which is stable after the start
 		await adminTeamRowAction(
 			page,
-			page.getByTestId("team-row").filter({ hasText: "Protective Wet Floor" }),
+			page.locator('[data-testid="team-row"][data-team-id="216"]'),
 			"Check in (Underground bracket)",
 		);
 

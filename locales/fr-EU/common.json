@@ -252,6 +252,8 @@
 	"support.perk.userShortLink": "Lien de la page de l'utilisateur plus court",
 	"support.perk.userShortLink.extra": "Au lieu d'utiliser par exemple sendou.ink/u/sendou, vous pouvez également utiliser snd.ink/sendou lorsque vous créez un lien vers votre profil.",
 	"support.perk.customizedColorsUser": "Personalisation des couleurs (page personnelle)",
+	"support.perk.customAvatar": "",
+	"support.perk.customAvatar.extra": "",
 	"support.perk.favoriteBadges": "Choisissez le badge qui apparaitra en premier sur votre profil",
 	"support.perk.favoriteBadges.extra": "Vous pouvez choisir l'ordre des badges qui vont apparaitre sur la première page de votre profil. Normalement, il est seulement possible de choisir le premier badge.",
 	"support.perk.customizedColorsTeam": "Personalisation des couleurs (page d'équipe)",

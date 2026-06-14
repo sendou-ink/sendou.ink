@@ -14,7 +14,11 @@ import {
 	dayMonthYearToDatabaseTimestamp,
 } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-import { type CommonUser, commonUserJsonObject } from "~/utils/kysely.server";
+import {
+	type CommonUser,
+	commonUserJsonObject,
+	commonUserSelect,
+} from "~/utils/kysely.server";
 import { VODS_PAGE_BATCH_SIZE } from "./vods-constants";
 import type { VideoBeingAdded, Vod } from "./vods-types";
 import {
@@ -65,12 +69,7 @@ export async function findVods({
 			jsonArrayFrom(
 				eb
 					.selectFrom("User")
-					.select([
-						"User.username",
-						"User.discordId",
-						"User.discordAvatar",
-						"User.customUrl",
-					])
+					.select((playerEb) => commonUserSelect(playerEb))
 					.whereRef("User.id", "=", "VideoMatchPlayer.playerUserId"),
 			).as("players"),
 		]);

@@ -156,6 +156,7 @@ function resolveTimelineMaps(
 				discordId: u.discordId,
 				discordAvatar: u.discordAvatar,
 				customUrl: u.customUrl,
+				customAvatarUrl: u.customAvatarUrl,
 			}));
 
 	return data.results.map((result, mapIndex) => {
@@ -398,6 +399,7 @@ function TournamentMatchRosterTab({
 				discordId: m.discordId,
 				discordAvatar: m.discordAvatar,
 				customUrl: m.customUrl,
+				customAvatarUrl: m.customAvatarUrl,
 				inGameName: m.inGameName,
 			})),
 			subbedOut,

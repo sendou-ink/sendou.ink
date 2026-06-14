@@ -88,6 +88,7 @@ function prefixItems<V extends string>(
 
 export function image(args: {
 	label: FormsTranslationKey;
+	bottomText?: FormsTranslationKey;
 	dimensions?: "logo" | "thick-banner" | { width: number; height: number };
 	autoValidate?: boolean;
 }) {
@@ -95,6 +96,7 @@ export function image(args: {
 	// instance would otherwise have its metadata overwritten by later fields)
 	return imageValue.clone().register(formRegistry, {
 		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
 		dimensions: args.dimensions ?? "logo",
 		autoValidate: args.autoValidate ?? false,
 		type: "image",

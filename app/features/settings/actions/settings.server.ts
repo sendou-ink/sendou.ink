@@ -58,6 +58,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 			break;
 		}
+		case "UPDATE_DEFAULT_MATCH_PAGE_TAB": {
+			await UserRepository.updateOwnPreferences({
+				defaultMatchPageTab: data.newValue,
+			});
+			break;
+		}
 		case "UPDATE_MATCH_PROFILE": {
 			await MatchProfileRepository.updateOwnMatchProfile({
 				mapModePreferences: data.mapModePreferences,

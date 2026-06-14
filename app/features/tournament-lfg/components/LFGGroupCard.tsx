@@ -28,6 +28,7 @@ export type LFGGroupMember = {
 	username: string;
 	discordId: string;
 	discordAvatar: string | null;
+	customAvatarUrl: string | null;
 	customUrl: string | null;
 	languages: string[];
 	vc: "YES" | "NO" | "LISTEN_ONLY" | null;

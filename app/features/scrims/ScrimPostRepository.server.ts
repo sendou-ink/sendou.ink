@@ -7,7 +7,7 @@ import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { ConcurrentModificationError } from "~/utils/errors";
 import { shortNanoid } from "~/utils/id";
 import {
-	COMMON_USER_FIELDS,
+	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
@@ -153,8 +153,8 @@ const baseFindQuery = db
 			eb
 				.selectFrom("ScrimPostUser")
 				.innerJoin("User", "ScrimPostUser.userId", "User.id")
-				.select([
-					...COMMON_USER_FIELDS,
+				.select((eb) => [
+					...commonUserSelect(eb),
 					"User.inGameName",
 					"ScrimPostUser.isOwner",
 				])
@@ -186,8 +186,8 @@ const baseFindQuery = db
 						innerEb
 							.selectFrom("ScrimPostRequestUser")
 							.innerJoin("User", "ScrimPostRequestUser.userId", "User.id")
-							.select([
-								...COMMON_USER_FIELDS,
+							.select((eb) => [
+								...commonUserSelect(eb),
 								"User.inGameName",
 								"ScrimPostRequestUser.isOwner",
 							])

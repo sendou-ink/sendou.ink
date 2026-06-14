@@ -9,7 +9,7 @@ import {
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
 import invariant from "~/utils/invariant";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { commonUserSelect } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 import * as PlusVoting from "./core/PlusVoting";
 
@@ -17,8 +17,8 @@ const resultsByMonthYearQuery = (args: MonthYear) =>
 	db
 		.selectFrom("PlusVotingResult")
 		.innerJoin("User", "PlusVotingResult.votedId", "User.id")
-		.select([
-			...COMMON_USER_FIELDS,
+		.select((eb) => [
+			...commonUserSelect(eb),
 			"PlusVotingResult.wasSuggested",
 			"PlusVotingResult.tier",
 			"PlusVotingResult.score",
@@ -136,7 +136,7 @@ export type UsersForVoting = {
 	user: Pick<
 		Tables["User"],
 		"id" | "discordId" | "username" | "discordAvatar" | "bio"
-	>;
+	> & { customAvatarUrl: string | null };
 	suggestion?: PlusSuggestionRepository.FindAllByMonthItem;
 }[];
 
@@ -147,7 +147,7 @@ export async function usersForVoting(loggedInUser: {
 	const members = await db
 		.selectFrom("User")
 		.innerJoin("PlusTier", "PlusTier.userId", "User.id")
-		.select([...COMMON_USER_FIELDS, "User.bio"])
+		.select((eb) => [...commonUserSelect(eb), "User.bio"])
 		.where("PlusTier.tier", "=", loggedInUser.plusTier)
 		.execute();
 
@@ -167,6 +167,7 @@ export async function usersForVoting(loggedInUser: {
 				discordId: member.discordId,
 				username: member.username,
 				discordAvatar: member.discordAvatar,
+				customAvatarUrl: member.customAvatarUrl,
 				bio: member.bio,
 			},
 		});
@@ -179,6 +180,7 @@ export async function usersForVoting(loggedInUser: {
 				discordId: suggestion.suggested.discordId,
 				username: suggestion.suggested.username,
 				discordAvatar: suggestion.suggested.discordAvatar,
+				customAvatarUrl: suggestion.suggested.customAvatarUrl,
 				bio: suggestion.suggested.bio,
 			},
 			suggestion,
