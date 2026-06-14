@@ -61,6 +61,8 @@ interface FormFieldProps {
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
 	/** Field-specific options */
 	options?: unknown;
+	/** For `array` fields: hide the remove button for items where this returns false. */
+	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
 }
 
 export function FormField({
@@ -71,6 +73,7 @@ export function FormField({
 	field,
 	children,
 	options,
+	canRemoveItem,
 }: FormFieldProps) {
 	const context = useOptionalFormFieldContext();
 
@@ -379,6 +382,7 @@ export function FormField({
 				onChange={handleChange as (v: unknown[]) => void}
 				isObjectArray={isObjectArray}
 				itemInitialValue={itemInitialValue}
+				canRemoveItem={canRemoveItem}
 				renderItem={(idx, itemName) => {
 					if (hasCustomRender && isObjectArray) {
 						const arrayValue = value as Record<string, unknown>[];

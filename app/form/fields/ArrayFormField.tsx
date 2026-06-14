@@ -16,6 +16,8 @@ type ArrayFormFieldProps = Omit<FormFieldProps<"array">, "field"> & {
 	isObjectArray?: boolean;
 	sortable?: boolean;
 	itemInitialValue?: unknown;
+	addable?: boolean;
+	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
 };
 
 export function ArrayFormField({
@@ -31,6 +33,8 @@ export function ArrayFormField({
 	isObjectArray,
 	sortable,
 	itemInitialValue,
+	addable = true,
+	canRemoveItem,
 }: ArrayFormFieldProps) {
 	const { t } = useTranslation(["common"]);
 	const { translatedLabel, translatedBottomText, translatedError } =
@@ -89,7 +93,9 @@ export function ArrayFormField({
 	// so it shouldn't offer a remove button (you can't go below one visible row
 	// anyway). A lone edited row stays removable so the only item can be cleared.
 	const canRemoveAt = (index: number) =>
-		count > min && (count > minVisible || !isPristineItem(value[index]));
+		(canRemoveItem ? canRemoveItem(value[index], index) : true) &&
+		count > min &&
+		(count > minVisible || !isPristineItem(value[index]));
 
 	const handleRemoveAt = (index: number) => {
 		const next = value.filter((_, i) => i !== index);
@@ -147,16 +153,18 @@ export function ArrayFormField({
 			{translatedBottomText && !translatedError ? (
 				<FormMessage type="info">{translatedBottomText}</FormMessage>
 			) : null}
-			<SendouButton
-				size="small"
-				variant="outlined"
-				icon={<Plus />}
-				onPress={handleAdd}
-				isDisabled={count >= max}
-				className="m-0-auto"
-			>
-				{t("common:actions.add")}
-			</SendouButton>
+			{addable ? (
+				<SendouButton
+					size="small"
+					variant="outlined"
+					icon={<Plus />}
+					onPress={handleAdd}
+					isDisabled={count >= max}
+					className="m-0-auto"
+				>
+					{t("common:actions.add")}
+				</SendouButton>
+			) : null}
 		</div>
 	);
 }

@@ -1,13 +1,13 @@
 import type { ActionFunction } from "react-router";
+import { redirect } from "react-router";
+import type { MemberRole, MemberRoleType } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
-import {
-	errorToastIfFalsy,
-	notFoundIfFalsy,
-	parseRequestPayload,
-} from "~/utils/remix.server";
+import { parseFormData } from "~/form/parse.server";
+import { errorToastIfFalsy, notFoundIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import * as TeamMemberRepository from "../TeamMemberRepository.server";
+import { teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
+import { CUSTOM_ROLE_VALUE } from "../team-schemas";
 import { manageRosterSchema, teamParamsSchema } from "../team-schemas.server";
 import { isTeamManager } from "../team-utils";
 
@@ -21,66 +21,69 @@ export const action: ActionFunction = async ({ request, params }) => {
 		"Only team manager or owner can manage roster",
 	);
 
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: manageRosterSchema,
 	});
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+	const data = result.data;
 
 	switch (data._action) {
-		case "DELETE_MEMBER": {
-			const member = team.members.find((m) => m.id === data.userId);
-
-			errorToastIfFalsy(member, "Member not found");
-			errorToastIfFalsy(member.id !== user.id, "Can't delete yourself");
-			errorToastIfFalsy(!member.isOwner, "Can't delete owner");
-
-			await TeamRepository.handleMemberLeaving({
-				teamId: team.id,
-				userId: data.userId,
-			});
-			break;
-		}
 		case "RESET_INVITE_LINK": {
 			await TeamRepository.resetInviteCode(team.id);
 
 			break;
 		}
-		case "ADD_MANAGER": {
-			await TeamMemberRepository.update(
-				{ teamId: team.id, userId: data.userId },
-				{
-					isManager: 1,
-				},
+		case "UPDATE_ROSTER": {
+			const submittedIds = new Set(data.members.map((m) => m.userId));
+			const existingMembersById = new Map(
+				team.members.map((member) => [member.id, member]),
 			);
 
-			break;
-		}
-		case "REMOVE_MANAGER": {
-			const member = team.members.find((m) => m.id === data.userId);
-			errorToastIfFalsy(member, "Member not found");
-			errorToastIfFalsy(
-				member.id !== user.id,
-				"Can't remove yourself as manager",
-			);
+			for (const member of data.members) {
+				errorToastIfFalsy(
+					existingMembersById.has(member.userId),
+					"Member not found",
+				);
+			}
 
-			await TeamMemberRepository.update(
-				{ teamId: team.id, userId: data.userId },
-				{
-					isManager: 0,
-				},
-			);
+			const kickedUserIds = team.members
+				.filter((member) => !submittedIds.has(member.id))
+				.map((member) => {
+					errorToastIfFalsy(!member.isOwner, "Can't kick the owner");
+					errorToastIfFalsy(member.id !== user.id, "Can't kick yourself");
+					return member.id;
+				});
 
-			break;
-		}
-		case "UPDATE_MEMBER_ROLE": {
-			await TeamMemberRepository.update(
-				{ teamId: team.id, userId: data.userId },
-				{
-					role: data.role || null,
-				},
-			);
+			await TeamRepository.updateRoster({
+				teamId: team.id,
+				members: data.members.map((member) => {
+					const isCustom = member.role === CUSTOM_ROLE_VALUE;
+					const existing = existingMembersById.get(member.userId);
+					const isProtectedMember = Boolean(
+						existing?.isOwner || existing?.id === user.id,
+					);
 
-			break;
+					return {
+						userId: member.userId,
+						role: isCustom
+							? null
+							: ((member.role || null) as MemberRole | null),
+						customRole: isCustom ? member.customRole || null : null,
+						roleType: isCustom
+							? ((member.roleType || null) as MemberRoleType | null)
+							: null,
+						isManager: isProtectedMember
+							? Boolean(existing?.isManager)
+							: member.isManager,
+					};
+				}),
+				kickedUserIds,
+			});
+
+			return redirect(teamPage(customUrl));
 		}
 		default: {
 			assertUnreachable(data);

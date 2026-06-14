@@ -64,13 +64,19 @@ export function searchByName({
 					.select(["User.id", "User.username"])
 					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id")
 					.where((eb2) =>
-						eb2.or([
-							eb2("TeamMemberWithSecondary.role", "is", null),
-							eb2(
-								"TeamMemberWithSecondary.role",
-								"not in",
-								NON_PLAYER_TEAM_ROLES,
-							),
+						eb2.and([
+							eb2.or([
+								eb2("TeamMemberWithSecondary.role", "is", null),
+								eb2(
+									"TeamMemberWithSecondary.role",
+									"not in",
+									NON_PLAYER_TEAM_ROLES,
+								),
+							]),
+							eb2.or([
+								eb2("TeamMemberWithSecondary.roleType", "is", null),
+								eb2("TeamMemberWithSecondary.roleType", "!=", "OTHER"),
+							]),
 						]),
 					)
 					.orderBy("TeamMemberWithSecondary.isOwner", "desc"),
@@ -171,6 +177,8 @@ export function findByCustomUrl(
 					.select(({ eb: innerEb }) => [
 						...COMMON_USER_FIELDS,
 						"TeamMemberWithSecondary.role",
+						"TeamMemberWithSecondary.customRole",
+						"TeamMemberWithSecondary.roleType",
 						"TeamMemberWithSecondary.isOwner",
 						"TeamMemberWithSecondary.isManager",
 						"TeamMemberWithSecondary.isMainTeam",
@@ -312,7 +320,7 @@ export async function teamsByMemberUserId(
 				eb
 					.selectFrom("TeamMemberWithSecondary as m2")
 					.innerJoin("User", "User.id", "m2.userId")
-					.select([...COMMON_USER_FIELDS, "m2.role"])
+					.select([...COMMON_USER_FIELDS, "m2.role", "m2.roleType"])
 					.whereRef("TeamMemberWithSecondary.teamId", "=", "m2.teamId"),
 			).as("members"),
 		])
@@ -546,50 +554,101 @@ export function handleMemberLeaving({
 	teamId: number;
 	newOwnerUserId?: number;
 }) {
+	return db
+		.transaction()
+		.execute((trx) => memberLeave(trx, { userId, teamId, newOwnerUserId }));
+}
+
+/**
+ * Applies a roster edit in a single transaction: updates each kept member's role
+ * & editor status and removes (kicks) the members in `kickedUserIds`.
+ */
+export function updateRoster({
+	teamId,
+	members,
+	kickedUserIds,
+}: {
+	teamId: number;
+	members: Array<{
+		userId: number;
+		role: Tables["TeamMember"]["role"];
+		customRole: Tables["TeamMember"]["customRole"];
+		roleType: Tables["TeamMember"]["roleType"];
+		isManager: boolean;
+	}>;
+	kickedUserIds: number[];
+}) {
 	return db.transaction().execute(async (trx) => {
-		const currentTeams = await teamsByMemberUserId(userId, trx);
-
-		const teamToLeave = currentTeams.find((team) => team.id === teamId);
-		invariant(teamToLeave, "User is not a member of this team");
-		invariant(
-			!teamToLeave.isOwner || newOwnerUserId,
-			"New owner id must be provided when old is leaving",
-		);
-
-		const wasMainTeam = teamToLeave.isMainTeam;
-		const newMainTeam = currentTeams.find((team) => team.id !== teamId);
-		if (wasMainTeam && newMainTeam) {
-			await trx
-				.updateTable("AllTeamMember")
-				.set({
-					isMainTeam: 1,
-				})
-				.where("userId", "=", userId)
-				.where("teamId", "=", newMainTeam.id)
-				.execute();
+		for (const userId of kickedUserIds) {
+			await memberLeave(trx, { userId, teamId });
 		}
 
-		await trx
-			.updateTable("AllTeamMember")
-			.set({
-				leftAt: databaseTimestampNow(),
-				isMainTeam: 0,
-				isOwner: 0,
-				isManager: 0,
-			})
-			.where("userId", "=", userId)
-			.where("teamId", "=", teamId)
-			.execute();
-		if (newOwnerUserId) {
+		for (const member of members) {
 			await trx
 				.updateTable("AllTeamMember")
 				.set({
-					isOwner: 1,
-					isManager: 0,
+					role: member.role,
+					customRole: member.customRole,
+					roleType: member.roleType,
+					isManager: member.isManager ? 1 : 0,
 				})
-				.where("userId", "=", newOwnerUserId)
 				.where("teamId", "=", teamId)
+				.where("userId", "=", member.userId)
 				.execute();
 		}
 	});
+}
+
+async function memberLeave(
+	trx: Transaction<DB>,
+	{
+		userId,
+		teamId,
+		newOwnerUserId,
+	}: { userId: number; teamId: number; newOwnerUserId?: number },
+) {
+	const currentTeams = await teamsByMemberUserId(userId, trx);
+
+	const teamToLeave = currentTeams.find((team) => team.id === teamId);
+	invariant(teamToLeave, "User is not a member of this team");
+	invariant(
+		!teamToLeave.isOwner || newOwnerUserId,
+		"New owner id must be provided when old is leaving",
+	);
+
+	const wasMainTeam = teamToLeave.isMainTeam;
+	const newMainTeam = currentTeams.find((team) => team.id !== teamId);
+	if (wasMainTeam && newMainTeam) {
+		await trx
+			.updateTable("AllTeamMember")
+			.set({
+				isMainTeam: 1,
+			})
+			.where("userId", "=", userId)
+			.where("teamId", "=", newMainTeam.id)
+			.execute();
+	}
+
+	await trx
+		.updateTable("AllTeamMember")
+		.set({
+			leftAt: databaseTimestampNow(),
+			isMainTeam: 0,
+			isOwner: 0,
+			isManager: 0,
+		})
+		.where("userId", "=", userId)
+		.where("teamId", "=", teamId)
+		.execute();
+	if (newOwnerUserId) {
+		await trx
+			.updateTable("AllTeamMember")
+			.set({
+				isOwner: 1,
+				isManager: 0,
+			})
+			.where("userId", "=", newOwnerUserId)
+			.where("teamId", "=", teamId)
+			.execute();
+	}
 }
