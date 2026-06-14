@@ -8,6 +8,7 @@ import { Label } from "~/components/Label";
 import { useUser } from "~/features/auth/core/user";
 import { SendouForm } from "~/form/SendouForm";
 import {
+	defaultMatchPageTabSchema,
 	disableBuildAbilitySortingSchema,
 	disallowScrimPickupsFromUntrustedSchema,
 	spoilerFreeModeSchema,
@@ -53,6 +54,18 @@ export function PreferencesTab() {
 					autoSubmit
 					revalidateRoot
 					fullWidth
+				>
+					{({ FormField }) => <FormField name="newValue" />}
+				</SendouForm>
+				<SendouForm
+					schema={defaultMatchPageTabSchema}
+					defaultValues={{
+						newValue: user.preferences.defaultMatchPageTab ?? "rosters",
+					}}
+					autoSubmit
+					revalidateRoot
+					fullWidth
+					hideRequiredIndicator
 				>
 					{({ FormField }) => <FormField name="newValue" />}
 				</SendouForm>

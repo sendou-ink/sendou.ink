@@ -1068,6 +1068,8 @@ export interface UserPreferences {
 	/** Is spoiler-free mode enabled? Hides recent tournament results and scores until the user chooses to reveal them. */
 	spoilerFreeMode?: boolean;
 	weaponReportDefaultOpen?: boolean;
+	/** Which tab opens first on the match page. Unset = first available tab (Rosters). */
+	defaultMatchPageTab?: "rosters" | "join" | "action";
 }
 
 export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;
