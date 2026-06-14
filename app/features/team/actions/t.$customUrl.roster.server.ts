@@ -59,7 +59,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			await TeamRepository.updateRoster({
 				teamId: team.id,
-				members: data.members.map((member) => {
+				members: data.members.map((member, index) => {
 					const isCustom = member.role === CUSTOM_ROLE_VALUE;
 					const existing = existingMembersById.get(member.userId);
 					const isProtectedMember = Boolean(
@@ -78,6 +78,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 						isManager: isProtectedMember
 							? Boolean(existing?.isManager)
 							: member.isManager,
+						order: index,
 					};
 				}),
 				kickedUserIds,

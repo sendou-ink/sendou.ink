@@ -1100,6 +1100,69 @@ describe("SendouForm", () => {
 			expect((inputs[0] as HTMLInputElement).value).toBe("Bob");
 		});
 
+		test("sortable array renders move buttons and reorders items", async () => {
+			const schema = z.object({
+				members: array({
+					label: "labels.members",
+					min: 0,
+					max: 10,
+					sortable: true,
+					field: fieldset({
+						fields: z.object({
+							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+						}),
+					}),
+				}),
+			});
+
+			const screen = await renderForm(schema, {
+				defaultValues: { members: [{ name: "Alice" }, { name: "Bob" }] },
+			});
+
+			const moveDownButtons = screen.container.querySelectorAll(
+				'button[aria-label="Move down"]',
+			);
+			expect(moveDownButtons.length).toBe(2);
+
+			// the first item can't move up and the last can't move down
+			const moveUpButtons = screen.container.querySelectorAll(
+				'button[aria-label="Move up"]',
+			);
+			expect((moveUpButtons[0] as HTMLButtonElement).disabled).toBe(true);
+			expect((moveDownButtons[1] as HTMLButtonElement).disabled).toBe(true);
+
+			// move the first item down past the second
+			await userEvent.click(moveDownButtons[0]);
+
+			const inputs = screen.container.querySelectorAll('input[type="text"]');
+			expect((inputs[0] as HTMLInputElement).value).toBe("Bob");
+			expect((inputs[1] as HTMLInputElement).value).toBe("Alice");
+		});
+
+		test("non-sortable array renders no move buttons", async () => {
+			const schema = z.object({
+				members: array({
+					label: "labels.members",
+					min: 0,
+					max: 10,
+					field: fieldset({
+						fields: z.object({
+							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+						}),
+					}),
+				}),
+			});
+
+			const screen = await renderForm(schema, {
+				defaultValues: { members: [{ name: "Alice" }, { name: "Bob" }] },
+			});
+
+			const moveButtons = screen.container.querySelectorAll(
+				'button[aria-label="Move down"], button[aria-label="Move up"]',
+			);
+			expect(moveButtons.length).toBe(0);
+		});
+
 		test("removing an added fieldset row returns to a single non-removable row", async () => {
 			// Mirrors the staff form: a select field gives the row a non-empty default
 			// (role), so a freshly added row isn't "blank" yet is still pristine.

@@ -102,6 +102,8 @@ export interface TeamMember {
 	customRole: string | null;
 	/** If customRole is defined, this classifies how the role should be treated */
 	roleType: MemberRoleType | null;
+	/** User-defined ordering of members within a team (ascending) */
+	order: Generated<number>;
 	teamId: number;
 	userId: number;
 	isMainTeam: DBBoolean;

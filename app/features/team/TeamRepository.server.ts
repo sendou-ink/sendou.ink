@@ -34,7 +34,8 @@ export function findAllUndisbanded() {
 					.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
 					.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 					.select(["User.id", "User.username", "PlusTier.tier as plusTier"])
-					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id"),
+					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id")
+					.orderBy("TeamMemberWithSecondary.order", "asc"),
 			).as("members"),
 		])
 		.execute();
@@ -79,7 +80,7 @@ export function searchByName({
 							]),
 						]),
 					)
-					.orderBy("TeamMemberWithSecondary.isOwner", "desc"),
+					.orderBy("TeamMemberWithSecondary.order", "asc"),
 			).as("members"),
 		])
 		.where("Team.name", "like", `%${query}%`)
@@ -186,7 +187,8 @@ export function findByCustomUrl(
 						"User.patronTier",
 						userProfileWeapons(innerEb).as("weapons"),
 					])
-					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id"),
+					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id")
+					.orderBy("TeamMemberWithSecondary.order", "asc"),
 			).as("members"),
 		])
 		.$if(includeInviteCode, (qb) => qb.select("Team.inviteCode"))
@@ -321,7 +323,8 @@ export async function teamsByMemberUserId(
 					.selectFrom("TeamMemberWithSecondary as m2")
 					.innerJoin("User", "User.id", "m2.userId")
 					.select((eb) => [...commonUserSelect(eb), "m2.role", "m2.roleType"])
-					.whereRef("TeamMemberWithSecondary.teamId", "=", "m2.teamId"),
+					.whereRef("TeamMemberWithSecondary.teamId", "=", "m2.teamId")
+					.orderBy("m2.order", "asc"),
 			).as("members"),
 		])
 		.where("userId", "=", userId)
@@ -532,13 +535,24 @@ export function joinTeam({
 
 		const isMainTeam = Number(teamCount === 0);
 
+		const maxOrder = await trx
+			.selectFrom("AllTeamMember")
+			.select((eb) =>
+				eb.fn.coalesce(eb.fn.max("order"), sql<number>`-1`).as("maxOrder"),
+			)
+			.where("teamId", "=", teamId)
+			.where("leftAt", "is", null)
+			.executeTakeFirst();
+		const order = (maxOrder?.maxOrder ?? -1) + 1;
+
 		await trx
 			.insertInto("AllTeamMember")
-			.values({ userId, teamId, isMainTeam })
+			.values({ userId, teamId, isMainTeam, order })
 			.onConflict((oc) =>
 				oc.columns(["userId", "teamId"]).doUpdateSet({
 					leftAt: null,
 					isMainTeam,
+					order,
 				}),
 			)
 			.execute();
@@ -575,6 +589,7 @@ export function updateRoster({
 		customRole: Tables["TeamMember"]["customRole"];
 		roleType: Tables["TeamMember"]["roleType"];
 		isManager: boolean;
+		order: number;
 	}>;
 	kickedUserIds: number[];
 }) {
@@ -591,6 +606,7 @@ export function updateRoster({
 					customRole: member.customRole,
 					roleType: member.roleType,
 					isManager: member.isManager ? 1 : 0,
+					order: member.order,
 				})
 				.where("teamId", "=", teamId)
 				.where("userId", "=", member.userId)

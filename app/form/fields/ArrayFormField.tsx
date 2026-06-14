@@ -1,4 +1,4 @@
-import { Plus, Trash } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Trash } from "lucide-react";
 import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { isDeepEqual, omit } from "remeda";
@@ -110,43 +110,60 @@ export function ArrayFormField({
 		return ((value[idx] as Record<string, unknown>)?._key as string) ?? idx;
 	};
 
+	// Sorting is only offered for object arrays; primitive arrays are rendered
+	// inline without the fieldset header that carries the reorder controls.
+	const isSortable = Boolean(sortable) && isObjectArray;
+
+	const handleMoveAt = (index: number, direction: 1 | -1) => {
+		const target = index + direction;
+		if (target < 0 || target >= count) return;
+
+		const next = [...value];
+		[next[index], next[target]] = [next[target], next[index]];
+		onChange(next);
+	};
+
 	return (
 		<div className="stack md w-full">
 			{translatedLabel ? (
 				<div className="text-xs font-semi-bold">{translatedLabel}</div>
 			) : null}
-			{Array.from({ length: visibleCount }).map((_, idx) =>
-				isObjectArray ? (
-					<ArrayItemFieldset
-						key={itemKey(idx)}
-						index={idx}
-						canRemove={canRemoveAt(idx)}
-						onRemove={() => handleRemoveAt(idx)}
-						sortable={sortable}
-					>
-						{renderItem(idx, `${name}[${idx}]`)}
-					</ArrayItemFieldset>
-				) : (
-					<div
-						key={itemKey(idx)}
-						className="stack horizontal sm items-start w-full"
-					>
-						<div className={styles.itemInput}>
+			{isObjectArray
+				? Array.from({ length: visibleCount }).map((_, idx) => (
+						<ArrayItemFieldset
+							key={itemKey(idx)}
+							index={idx}
+							canRemove={canRemoveAt(idx)}
+							onRemove={() => handleRemoveAt(idx)}
+							sortable={isSortable}
+							canMoveUp={idx > 0}
+							canMoveDown={idx < count - 1}
+							onMoveUp={() => handleMoveAt(idx, -1)}
+							onMoveDown={() => handleMoveAt(idx, 1)}
+						>
 							{renderItem(idx, `${name}[${idx}]`)}
+						</ArrayItemFieldset>
+					))
+				: Array.from({ length: visibleCount }).map((_, idx) => (
+						<div
+							key={itemKey(idx)}
+							className="stack horizontal sm items-start w-full"
+						>
+							<div className={styles.itemInput}>
+								{renderItem(idx, `${name}[${idx}]`)}
+							</div>
+							{canRemoveAt(idx) ? (
+								<SendouButton
+									icon={<Trash />}
+									aria-label="Remove item"
+									size="small"
+									variant="minimal-destructive"
+									onPress={() => handleRemoveAt(idx)}
+									className={styles.removeButton}
+								/>
+							) : null}
 						</div>
-						{canRemoveAt(idx) ? (
-							<SendouButton
-								icon={<Trash />}
-								aria-label="Remove item"
-								size="small"
-								variant="minimal-destructive"
-								onPress={() => handleRemoveAt(idx)}
-								className={styles.removeButton}
-							/>
-						) : null}
-					</div>
-				),
-			)}
+					))}
 			{translatedError ? (
 				<FormMessage type="error">{translatedError}</FormMessage>
 			) : null}
@@ -175,18 +192,47 @@ function ArrayItemFieldset({
 	canRemove,
 	onRemove,
 	sortable,
+	canMoveUp,
+	canMoveDown,
+	onMoveUp,
+	onMoveDown,
 }: {
 	index: number;
 	children: React.ReactNode;
 	canRemove: boolean;
 	onRemove: () => void;
 	sortable?: boolean;
+	canMoveUp?: boolean;
+	canMoveDown?: boolean;
+	onMoveUp?: () => void;
+	onMoveDown?: () => void;
 }) {
 	return (
 		<fieldset className={styles.card}>
 			<div className={styles.header}>
-				{sortable ? <span className={styles.dragHandle}>☰</span> : null}
 				<legend className={styles.headerLabel}>#{index + 1}</legend>
+				{sortable ? (
+					<>
+						<SendouButton
+							shape="circle"
+							icon={<ChevronDown />}
+							aria-label="Move down"
+							size="small"
+							variant="minimal"
+							onPress={onMoveDown}
+							isDisabled={!canMoveDown}
+						/>
+						<SendouButton
+							shape="circle"
+							icon={<ChevronUp />}
+							aria-label="Move up"
+							size="small"
+							variant="minimal"
+							onPress={onMoveUp}
+							isDisabled={!canMoveUp}
+						/>
+					</>
+				) : null}
 				<SendouButton
 					className={canRemove ? undefined : "invisible"}
 					shape="circle"

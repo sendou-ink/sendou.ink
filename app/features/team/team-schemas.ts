@@ -69,6 +69,7 @@ export const updateRosterSchema = z
 		members: array({
 			max: TEAM.MAX_MEMBER_COUNT,
 			addable: false,
+			sortable: true,
 			field: fieldset({
 				fields: z.object({
 					userId: idConstant(),

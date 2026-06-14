@@ -147,7 +147,10 @@ function MemberActions() {
 									className="stack md-plus"
 									data-testid={`member-row-${index}`}
 								>
-									<div className="stack horizontal sm items-center text-sm font-bold mb-2">
+									<div
+										className="stack horizontal sm items-center text-sm font-bold mb-2"
+										data-testid={`member-row-username-${index}`}
+									>
 										{member ? <Avatar size="xs" user={member} /> : null}
 										{member?.username}
 									</div>

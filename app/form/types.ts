@@ -130,6 +130,8 @@ export interface FormFieldArray<T extends string, S extends z.ZodType>
 	field: S;
 	/** When false, the "Add" button is hidden (the array can only be edited/shrunk, not grown). Defaults to true. */
 	addable?: boolean;
+	/** When true, items (object arrays only) can be reordered via drag-and-drop and the new order is reflected in the value. */
+	sortable?: boolean;
 }
 
 interface FormFieldTimeRange<T extends string> extends FormFieldBase<T> {

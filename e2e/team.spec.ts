@@ -113,6 +113,53 @@ test.describe("Team page", () => {
 		await expect(page.getByText("Strategist").first()).toBeVisible();
 	});
 
+	test("reorders members via move buttons", async ({ page }) => {
+		await seed(page);
+		await impersonate(page, ADMIN_ID);
+		await navigate({ page, url: teamPage("alliance-rogue") });
+
+		await page.getByTestId("manage-roster-button").click();
+
+		const firstName = await page
+			.getByTestId("member-row-username-0")
+			.innerText();
+		const secondName = await page
+			.getByTestId("member-row-username-1")
+			.innerText();
+		expect(firstName).not.toBe(secondName);
+
+		const firstRow = page.locator("fieldset:has([data-testid='member-row-0'])");
+		const lastRow = page.locator("fieldset:has([data-testid='member-row-3'])");
+
+		// the first member can't move up and the last can't move down
+		await expect(
+			firstRow.getByRole("button", { name: "Move up" }),
+		).toBeDisabled();
+		await expect(
+			lastRow.getByRole("button", { name: "Move down" }),
+		).toBeDisabled();
+
+		// move the first member down one slot
+		await firstRow.getByRole("button", { name: "Move down" }).click();
+
+		await expect(page.getByTestId("member-row-username-0")).toHaveText(
+			secondName,
+		);
+		await expect(page.getByTestId("member-row-username-1")).toHaveText(
+			firstName,
+		);
+
+		await submit(page);
+
+		await navigate({ page, url: teamPage("alliance-rogue") });
+		await page.getByTestId("manage-roster-button").click();
+
+		// the new order is persisted
+		await expect(page.getByTestId("member-row-username-0")).toHaveText(
+			secondName,
+		);
+	});
+
 	test("deletes team", async ({ page }) => {
 		await seed(page);
 		await impersonate(page, ADMIN_ID);
