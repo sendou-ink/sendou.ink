@@ -8,6 +8,7 @@ import { DatetimeFormField } from "./fields/DatetimeFormField";
 import { DualSelectFormField } from "./fields/DualSelectFormField";
 import { FieldsetFormField } from "./fields/FieldsetFormField";
 import { ImageFormField } from "./fields/ImageFormField";
+import { InGameNameFormField } from "./fields/InGameNameFormField";
 import { InputFormField } from "./fields/InputFormField";
 import {
 	CheckboxGroupFormField,
@@ -177,6 +178,18 @@ export function FormField({
 	if (formField.type === "text-field") {
 		return (
 			<InputFormField
+				{...commonProps}
+				{...formField}
+				disabled={disabled}
+				value={value as string}
+				onChange={handleChange as (v: string) => void}
+			/>
+		);
+	}
+
+	if (formField.type === "in-game-name") {
+		return (
+			<InGameNameFormField
 				{...commonProps}
 				{...formField}
 				disabled={disabled}

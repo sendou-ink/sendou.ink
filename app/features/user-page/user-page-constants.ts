@@ -1,3 +1,5 @@
+export { IN_GAME_NAME_REGEXP } from "./in-game-name";
+
 export const HIGHLIGHT_CHECKBOX_NAME = "highlightTeamIds";
 export const HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME = "highlightTournamentTeamIds";
 
@@ -7,8 +9,6 @@ export const USER = {
 	CUSTOM_URL_MAX_LENGTH: 32,
 	CUSTOM_NAME_MAX_LENGTH: 32,
 	BATTLEFY_MAX_LENGTH: 32,
-	IN_GAME_NAME_TEXT_MAX_LENGTH: 20,
-	IN_GAME_NAME_DISCRIMINATOR_MAX_LENGTH: 5,
 	WEAPON_POOL_MAX_SIZE: 5,
 	COMMISSION_TEXT_MAX_LENGTH: 1000,
 	MOD_NOTE_MAX_LENGTH: 2000,
@@ -19,8 +19,6 @@ export const USER = {
 };
 
 export const SPL2_JOIN_ORDER_CUTOFF = 13_589;
-
-export const IN_GAME_NAME_REGEXP = /^.{1,10}#[0-9a-z]{4,5}$/u;
 
 export const MATCHES_PER_SEASONS_PAGE = 8;
 export const RESULTS_PER_PAGE = 25;

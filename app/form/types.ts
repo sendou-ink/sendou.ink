@@ -45,6 +45,11 @@ interface FormFieldTextarea<T extends string> extends FormFieldBase<T> {
 	maxLength: number;
 }
 
+interface FormFieldInGameName<T extends string> extends FormFieldBase<T> {
+	maxLength: number;
+	required: boolean;
+}
+
 interface FormFieldItem<V extends string> {
 	label: string | number | ((lang: string) => string);
 	value: V;
@@ -178,6 +183,7 @@ interface FormFieldWeaponSelect<T extends string> extends FormFieldBase<T> {
 export type FormField<V extends string = string> =
 	| FormFieldBase<"custom">
 	| FormFieldText<"text-field">
+	| FormFieldInGameName<"in-game-name">
 	| FormFieldTextarea<"text-area">
 	| FormFieldBase<"switch">
 	| FormFieldSelect<"select", V>

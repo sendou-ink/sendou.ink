@@ -9,8 +9,10 @@ describe("IN_GAME_NAME_REGEXP", () => {
 			"         a#1234",
 			"A#1234",
 			"Player#abcd",
-			"名前テスト1234#ab12c",
-			"☆CR☆Sh𝓔𝓔p!#1234",
+			"テストabc#1234",
+			"☆CR☆Sheep!#1234",
+			"Café#1234",
+			"Ελλαδα#1234",
 		];
 
 		for (const name of validNames) {
@@ -30,6 +32,9 @@ describe("IN_GAME_NAME_REGEXP", () => {
 			"Sendou#ABCD",
 			"12345678901#1234",
 			"𝓔𝓔𝓔𝓔𝓔𝓔𝓔𝓔𝓔𝓔𝓔#1234",
+			"名前テスト1234#ab12c",
+			"☆CR☆Sh𝓔𝓔p!#1234",
+			"日本語#1234",
 		];
 
 		for (const name of invalidNames) {

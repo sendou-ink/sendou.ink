@@ -1,5 +1,9 @@
 import * as R from "remeda";
 import { z } from "zod";
+import {
+	IN_GAME_NAME_MAX_LENGTH,
+	inGameNameIsValid,
+} from "~/features/user-page/in-game-name";
 import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
 import {
 	date,
@@ -195,6 +199,29 @@ function textFieldRefined<T extends z.ZodType<string | null>>(
 	}
 
 	return result as T;
+}
+
+export function inGameName(
+	args: WithTypedTranslationKeys<{
+		label?: FormsTranslationKey;
+		bottomText?: FormsTranslationKey;
+	}>,
+) {
+	const schema = safeNullableStringSchema({
+		max: IN_GAME_NAME_MAX_LENGTH,
+	}).refine((val) => val === null || inGameNameIsValid(val), {
+		message: "forms:errors.profileInGameName",
+	});
+
+	return schema.register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		maxLength: IN_GAME_NAME_MAX_LENGTH,
+		required: false,
+		type: "in-game-name",
+		initialValue: "",
+	});
 }
 
 export function numberField(
