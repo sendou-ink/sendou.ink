@@ -8,6 +8,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
+import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { TeamGoBackButton } from "~/features/team/components/TeamGoBackButton";
 import { SendouForm } from "~/form/SendouForm";
@@ -67,7 +68,7 @@ function InviteCodeSection() {
 		);
 	}
 
-	const inviteLink = `${import.meta.env.VITE_SITE_DOMAIN}${joinTeamPage({
+	const inviteLink = `${Config.siteDomain}${joinTeamPage({
 		customUrl: team.customUrl,
 		inviteCode: team.inviteCode!,
 	})}`;

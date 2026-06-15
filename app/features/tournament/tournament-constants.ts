@@ -1,3 +1,4 @@
+import { Config } from "~/config";
 import { TEAM } from "../team/team-constants";
 
 export const TOURNAMENT = {
@@ -35,8 +36,7 @@ export const TOURNAMENT = {
 } as const;
 
 export const LEAGUES =
-	process.env.NODE_ENV === "development" &&
-	import.meta.env.VITE_PROD_MODE !== "true"
+	process.env.NODE_ENV === "development" && !Config.prodMode
 		? {
 				LUTI: [
 					{

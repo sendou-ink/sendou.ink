@@ -7,6 +7,7 @@ import type { Params, UIMatch } from "react-router";
 import { data, redirect } from "react-router";
 import type { z } from "zod";
 import type { navItems } from "~/components/layout/nav-items";
+import { ServerConfig } from "~/config.server";
 import { uploadStreamToS3 } from "~/features/img-upload/s3.server";
 import invariant from "./invariant";
 import { logger } from "./logger";
@@ -224,8 +225,7 @@ const LOHI_TOKEN_HEADER_NAME = "Lohi-Token";
 
 /** Some endpoints can only be accessed with an auth token. Used by Lohi bot and cron jobs. */
 export function canAccessLohiEndpoint(request: Request) {
-	invariant(process.env.LOHI_TOKEN, "LOHI_TOKEN is required");
-	return request.headers.get(LOHI_TOKEN_HEADER_NAME) === process.env.LOHI_TOKEN;
+	return request.headers.get(LOHI_TOKEN_HEADER_NAME) === ServerConfig.lohiToken;
 }
 
 function errorToastRedirect(message: string) {

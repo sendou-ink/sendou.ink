@@ -1,9 +1,9 @@
 import { add } from "date-fns";
 import { OAuth2Strategy } from "remix-auth-oauth2";
 import { z } from "zod";
-import * as AdminNotifications from "~/features/admin/core/admin-notifications.server";
+import { Config } from "~/config";
+import { ServerConfig } from "~/config.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 
 let discordApiCooldownUntil: number | null = null;
@@ -34,8 +34,6 @@ const discordRateLimitSchema = z.object({
 });
 
 export const DiscordStrategy = () => {
-	const envVars = authEnvVars();
-
 	const jsonIfOk = async (res: Response) => {
 		if (res.status === 429) {
 			const body = discordRateLimitSchema.safeParse(await res.clone().json());
@@ -45,9 +43,6 @@ export const DiscordStrategy = () => {
 			}).getTime();
 			logger.warn(
 				`Discord API rate limited, cooldown for ${retryAfterSeconds}s${body.success ? "" : " (failed to parse retry_after)"}`,
-			);
-			AdminNotifications.send(
-				`Discord API rate limited, cooldown for ${retryAfterSeconds}s`,
 			);
 		}
 
@@ -79,12 +74,12 @@ export const DiscordStrategy = () => {
 
 	return new OAuth2Strategy(
 		{
-			clientId: envVars.DISCORD_CLIENT_ID,
-			clientSecret: envVars.DISCORD_CLIENT_SECRET,
+			clientId: ServerConfig.discord.clientId,
+			clientSecret: ServerConfig.discord.clientSecret,
 
 			authorizationEndpoint: "https://discord.com/api/oauth2/authorize",
 			tokenEndpoint: "https://discord.com/api/oauth2/token",
-			redirectURI: new URL("/auth/callback", envVars.BASE_URL).toString(),
+			redirectURI: new URL("/auth/callback", Config.siteDomain).toString(),
 
 			scopes: ["identify", "connections", "email"],
 		},
@@ -154,25 +149,4 @@ function parseConnections(
 	}
 
 	return result;
-}
-
-function authEnvVars() {
-	if (process.env.NODE_ENV === "production") {
-		invariant(process.env.DISCORD_CLIENT_ID);
-		invariant(process.env.DISCORD_CLIENT_SECRET);
-		invariant(import.meta.env.VITE_SITE_DOMAIN);
-
-		return {
-			DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
-			DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET,
-			BASE_URL: import.meta.env.VITE_SITE_DOMAIN,
-		};
-	}
-
-	// allow running the project in development without setting auth env vars
-	return {
-		DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID ?? "",
-		DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET ?? "",
-		BASE_URL: import.meta.env.VITE_SITE_DOMAIN ?? "",
-	};
 }

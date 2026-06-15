@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { navIconUrl } from "~/utils/urls";
 import { SendouPopover } from "../elements/Popover";
@@ -17,7 +18,7 @@ const NAV_CATEGORIES = [
 			{ name: "lfg", url: "lfg" },
 			{ name: "calendar", url: "calendar" },
 			{ name: "leaderboards", url: "leaderboards" },
-			...(import.meta.env.VITE_SHOW_LUTI_NAV_ITEM === "true"
+			...(Config.showLutiNavItem
 				? [{ name: "luti" as const, url: "luti" as const }]
 				: []),
 		],

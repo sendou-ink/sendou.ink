@@ -13,6 +13,7 @@ import { FriendCodePopover } from "~/components/FriendCodePopover";
 import { Label } from "~/components/Label";
 import { containerClassName } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
+import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { ModeMapPoolPicker } from "~/features/settings/components/ModeMapPoolPicker";
@@ -563,7 +564,7 @@ function GoogleFormsLink() {
 			</h3>
 			<section className={clsx(styles.section, "stack lg items-center")}>
 				<a
-					href={import.meta.env.VITE_LEAGUE_GOOGLE_FORM_URL}
+					href={Config.leagueGoogleFormUrl}
 					className="py-4 font-bold"
 					target="_blank"
 					rel="noopener noreferrer"

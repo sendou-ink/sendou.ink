@@ -14,7 +14,6 @@ import {
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { _action, actualNumber, friendCode } from "~/utils/zod";
-import * as AdminNotifications from "../core/admin-notifications.server";
 import { plusTiersFromVotingAndLeaderboard } from "../core/plus-tier.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -170,14 +169,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			message = "API access granted";
 			break;
 		}
-		case "TEST_ADMIN_NOTIFICATION": {
-			requireRole("ADMIN");
-
-			await AdminNotifications.send("Test notification from admin panel");
-
-			message = "Test notification sent";
-			break;
-		}
 		default: {
 			assertUnreachable(data);
 		}
@@ -239,8 +230,5 @@ export const adminActionSchema = z.union([
 	z.object({
 		_action: _action("API_ACCESS"),
 		user: z.preprocess(actualNumber, z.number().positive()),
-	}),
-	z.object({
-		_action: _action("TEST_ADMIN_NOTIFICATION"),
 	}),
 ]);

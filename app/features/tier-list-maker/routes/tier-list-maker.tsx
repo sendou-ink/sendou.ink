@@ -234,6 +234,7 @@ function TierListMakerContent() {
 						<SendouTab id="stage-mode">
 							{t("tier-list-maker:stageModes")}
 						</SendouTab>
+						<SendouTab id="ability">{t("tier-list-maker:abilities")}</SendouTab>
 					</SendouTabList>
 
 					<SendouTabPanel id="main-weapon">
@@ -298,6 +299,10 @@ function TierListMakerContent() {
 								})}
 							</div>
 						</div>
+					</SendouTabPanel>
+
+					<SendouTabPanel id="ability">
+						<ItemPool />
 					</SendouTabPanel>
 				</SendouTabs>
 
