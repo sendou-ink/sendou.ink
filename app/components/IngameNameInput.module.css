@@ -22,17 +22,18 @@
 .picker {
 	border: var(--border-style);
 	border-radius: var(--radius-field);
-	padding: var(--s-2);
 	background-color: var(--color-bg-high);
-	gap: var(--s-2);
+	gap: var(--s-1);
+	padding-top: var(--s-0-5);
 }
 
 .grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(2.25rem, 1fr));
 	gap: var(--s-1);
-	max-height: 16rem;
+	max-height: 300px;
 	overflow-y: auto;
+	padding: var(--s-2);
 }
 
 .glyph {
