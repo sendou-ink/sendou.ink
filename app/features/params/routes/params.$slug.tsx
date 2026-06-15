@@ -23,7 +23,7 @@ export { loader };
 import styles from "./params.$slug.module.css";
 
 export const handle: SendouRouteHandle = {
-	i18n: ["weapons", "common", "analyzer"],
+	i18n: ["weapons", "common", "analyzer", "params"],
 	breadcrumb: ({ match }) => {
 		const data = match.data as SerializeFrom<typeof loader> | undefined;
 		if (!data) return [];
@@ -51,7 +51,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 
 export default function WeaponParamsPage() {
 	const data = useLoaderData<typeof loader>();
-	const { t } = useTranslation(["common", "weapons"]);
+	const { t } = useTranslation(["common", "weapons", "params"]);
 
 	const [tab, setTab] = useSearchParamState({
 		name: "tab",
@@ -68,11 +68,9 @@ export default function WeaponParamsPage() {
 				className={styles.tabs}
 			>
 				<SendouTabList>
-					<SendouTab id="params">
-						{t("common:weaponParams.tab.params")}
-					</SendouTab>
+					<SendouTab id="params">{t("params:tab.params")}</SendouTab>
 					<SendouTab id="patches" number={data.patchHistory.length}>
-						{t("common:weaponParams.tab.patches")}
+						{t("params:tab.patches")}
 					</SendouTab>
 				</SendouTabList>
 				<SendouTabPanel id="params">
@@ -94,7 +92,7 @@ export default function WeaponParamsPage() {
 				rel="noopener noreferrer"
 				className={styles.dataCredit}
 			>
-				{t("common:dataCredit.lean")}
+				{t("params:dataCredit.lean")}
 			</a>
 		</Main>
 	);

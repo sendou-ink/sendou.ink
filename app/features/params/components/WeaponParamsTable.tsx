@@ -30,7 +30,7 @@ export function WeaponParamsTable({
 	weaponParams,
 	specialPoints,
 }: WeaponParamsTableProps) {
-	const { t } = useTranslation(["weapons", "common", "analyzer"]);
+	const { t } = useTranslation(["weapons", "common", "analyzer", "params"]);
 	const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
 	const paramDefinitions = collectAllParamKeys(weaponParams);
@@ -116,7 +116,7 @@ export function WeaponParamsTable({
 				<thead className={styles.thead}>
 					<tr>
 						<th className={styles.paramHeader}>
-							{t("common:header.parameter")}
+							{t("params:header.parameter")}
 						</th>
 						{visibleWeaponIds.map((weaponId) => {
 							const weaponName = t(`weapons:MAIN_${weaponId}`);

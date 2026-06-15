@@ -16,12 +16,10 @@ const PATCH_DATE_OPTIONS: Intl.DateTimeFormatOptions = {
 };
 
 export function WeaponPatchHistory({ patches }: { patches: WeaponPatch[] }) {
-	const { t } = useTranslation(["common"]);
+	const { t } = useTranslation(["params"]);
 
 	if (patches.length === 0) {
-		return (
-			<div className={styles.empty}>{t("common:weaponParams.noPatches")}</div>
-		);
+		return <div className={styles.empty}>{t("params:noPatches")}</div>;
 	}
 
 	return (
