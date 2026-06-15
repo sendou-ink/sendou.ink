@@ -74,7 +74,8 @@ export default function Chart({
 
 	// Get the line colors from CSS variables
 	const colors = React.useMemo(() => {
-		if (typeof document === "undefined") return { accent: "", base: "", info: "" };
+		if (typeof document === "undefined")
+			return { accent: "", base: "", info: "" };
 		const get = (v: string) =>
 			getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 		return {
@@ -85,7 +86,10 @@ export default function Chart({
 	}, []);
 
 	// Make a color list to use inside ChartData for the borderColor and the external tooltip
-	const colorList = React.useMemo(() => [colors.accent, colors.base, colors.info], [colors]);
+	const colorList = React.useMemo(
+		() => [colors.accent, colors.base, colors.info],
+		[colors],
+	);
 
 	// Get the grid color based on the current theme
 	const gridColor = React.useMemo(() => {
