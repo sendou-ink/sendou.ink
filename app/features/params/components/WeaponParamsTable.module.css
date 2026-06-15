@@ -129,6 +129,12 @@
 	flex: 1;
 }
 
+.paramInfo {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+
 .historyIndicator {
 	display: flex;
 	align-items: center;

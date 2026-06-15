@@ -38,6 +38,12 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 	});
 };
 
+// xxx: allow toggling row by clicking anywhere
+// xxx: path history tab
+// xxx: splatana no params?
+// xxx: tri-stringer no params?
+// xxx: slosher quite empty too
+
 export default function WeaponParamsPage() {
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common", "weapons"]);

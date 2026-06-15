@@ -5,9 +5,11 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { WeaponImage } from "~/components/Image";
+import { InfoPopover } from "~/components/InfoPopover";
 import { useSearchParamStateEncoder } from "~/hooks/useSearchParamState";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mySlugify, weaponParamsPage } from "~/utils/urls";
+import { getParamExplanation } from "../core/param-explanations";
 import {
 	collectAllParamKeys,
 	formatParamValue,
@@ -181,6 +183,7 @@ export function WeaponParamsTable({
 								{filteredParams.map(({ key, fullKey }) => {
 									const isExpanded = expandedRows.has(fullKey);
 									const hasHistory = rowHasHistory(category, key);
+									const explanation = getParamExplanation(category, key);
 
 									return (
 										<tr
@@ -196,6 +199,15 @@ export function WeaponParamsTable({
 												}
 											>
 												<span className={styles.paramNameText}>{key}</span>
+												{explanation ? (
+													// biome-ignore lint/a11y/noStaticElementInteractions: stops the help popover click from toggling the history row
+													<span
+														className={styles.paramInfo}
+														onClick={(e) => e.stopPropagation()}
+													>
+														<InfoPopover tiny>{explanation}</InfoPopover>
+													</span>
+												) : null}
 												{hasHistory ? (
 													<span className={styles.historyIndicator}>
 														{isExpanded ? (
