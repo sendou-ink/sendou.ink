@@ -8,7 +8,6 @@ import {
 	TimeScale,
 	Tooltip,
 } from "chart.js";
-import "chartjs-adapter-date-fns";
 import clsx from "clsx";
 import * as React from "react";
 import { useRef } from "react";
@@ -48,11 +47,7 @@ export default function Chart({
 
 	// Ref to the Chart.js instance, allows proper cleanup between renders to prevent "Canvas is already in use" errors
 	const chartRef = useRef<ChartType<"line"> | null>(null);
-
-	// Give each chart a unique id
 	const chartId = React.useId();
-
-	// Get the tooltip data
 	const [tooltipData, setTooltipData] = React.useState<{
 		x: number;
 		y: number;
@@ -79,11 +74,18 @@ export default function Chart({
 
 	// Get the line colors from CSS variables
 	const colors = React.useMemo(() => {
-		if (typeof document === "undefined") return ["", "", ""];
-		return ["--color-text-accent", "--color-accent", "--color-info"].map((v) =>
-			getComputedStyle(document.documentElement).getPropertyValue(v).trim(),
-		);
+		if (typeof document === "undefined") return { accent: "", base: "", info: "" };
+		const get = (v: string) =>
+			getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+		return {
+			accent: get("--color-text-accent"),
+			base: get("--color-accent"),
+			info: get("--color-info"),
+		};
 	}, []);
+
+	// Make a color list to use inside ChartData for the borderColor and the external tooltip
+	const colorList = React.useMemo(() => [colors.accent, colors.base, colors.info], [colors]);
 
 	// Get the grid color based on the current theme
 	const gridColor = React.useMemo(() => {
@@ -98,14 +100,14 @@ export default function Chart({
 			datasets: options.map((series, i) => ({
 				label: String(i),
 				data: series.data.map((d) => d.secondary),
-				borderColor: colors[i % colors.length],
+				borderColor: colorList[i % colorList.length],
 				pointRadius: 0,
 				pointHoverRadius: 5,
 				hitRadius: 50,
 				backgroundColor: "transparent",
 			})),
 		}),
-		[options, colors],
+		[options, colorList],
 	);
 
 	if (!isHydrated) {
@@ -149,7 +151,7 @@ export default function Chart({
 								const items = tooltip.dataPoints.map((dp) => ({
 									label: options[dp.datasetIndex].label,
 									value: dp.parsed.y,
-									color: colors[dp.datasetIndex % colors.length],
+									color: colorList[dp.datasetIndex % colorList.length],
 								}));
 								setTooltipData({
 									x: tooltip.caretX,
