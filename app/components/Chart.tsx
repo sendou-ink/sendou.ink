@@ -8,6 +8,7 @@ import {
 	TimeScale,
 	Tooltip,
 } from "chart.js";
+import "chartjs-adapter-date-fns";
 import clsx from "clsx";
 import * as React from "react";
 import { useRef } from "react";
