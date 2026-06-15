@@ -70,7 +70,7 @@ const TRANSLATORS: Array<{
 		language: "it",
 	},
 	{
-		translators: ["funyaaa", "taqm", "yutarour"],
+		translators: ["funyaaa", "taqm", "yutarour", "hyonemot"],
 		language: "ja",
 	},
 	{

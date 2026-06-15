@@ -73,16 +73,91 @@ test.describe("Team page", () => {
 
 		await page.getByTestId("manage-roster-button").click();
 
-		await page.getByTestId("role-select-0").selectOption("SUPPORT");
+		await page
+			.getByTestId("member-row-0")
+			.locator("select")
+			.selectOption("SUPPORT");
 
-		await page.getByTestId("member-row-3").isVisible();
-		await page.getByTestId("kick-button").last().click();
-		await modalClickConfirmButton(page);
+		await expect(page.getByTestId("member-row-3")).toBeVisible();
+		await page
+			.locator("fieldset:has([data-testid='member-row-3'])")
+			.getByRole("button", { name: "Remove item" })
+			.click();
 		await isNotVisible(page.getByTestId("member-row-3"));
+
+		await submit(page);
 
 		await navigate({ page, url: teamPage("alliance-rogue") });
 
 		await expect(page.getByTestId("member-row-role-0")).toHaveText("Support");
+	});
+
+	test("sets a custom role for a member", async ({ page }) => {
+		await seed(page);
+		await impersonate(page, ADMIN_ID);
+		await navigate({ page, url: teamPage("alliance-rogue") });
+
+		await page.getByTestId("manage-roster-button").click();
+
+		const memberRow = page.getByTestId("member-row-1");
+		await memberRow.locator("select").first().selectOption("CUSTOM");
+		await memberRow.getByRole("textbox").fill("Strategist");
+		await memberRow.locator("select").nth(1).selectOption("OTHER");
+
+		await submit(page);
+
+		await navigate({ page, url: teamPage("alliance-rogue") });
+
+		// custom role is classified as "OTHER" so it lives under the "Other" tab
+		await page.getByRole("tab", { name: /Other/ }).click();
+		await expect(page.getByText("Strategist").first()).toBeVisible();
+	});
+
+	test("reorders members via move buttons", async ({ page }) => {
+		await seed(page);
+		await impersonate(page, ADMIN_ID);
+		await navigate({ page, url: teamPage("alliance-rogue") });
+
+		await page.getByTestId("manage-roster-button").click();
+
+		const firstName = await page
+			.getByTestId("member-row-username-0")
+			.innerText();
+		const secondName = await page
+			.getByTestId("member-row-username-1")
+			.innerText();
+		expect(firstName).not.toBe(secondName);
+
+		const firstRow = page.locator("fieldset:has([data-testid='member-row-0'])");
+		const lastRow = page.locator("fieldset:has([data-testid='member-row-3'])");
+
+		// the first member can't move up and the last can't move down
+		await expect(
+			firstRow.getByRole("button", { name: "Move up" }),
+		).toBeDisabled();
+		await expect(
+			lastRow.getByRole("button", { name: "Move down" }),
+		).toBeDisabled();
+
+		// move the first member down one slot
+		await firstRow.getByRole("button", { name: "Move down" }).click();
+
+		await expect(page.getByTestId("member-row-username-0")).toHaveText(
+			secondName,
+		);
+		await expect(page.getByTestId("member-row-username-1")).toHaveText(
+			firstName,
+		);
+
+		await submit(page);
+
+		await navigate({ page, url: teamPage("alliance-rogue") });
+		await page.getByTestId("manage-roster-button").click();
+
+		// the new order is persisted
+		await expect(page.getByTestId("member-row-username-0")).toHaveText(
+			secondName,
+		);
 	});
 
 	test("deletes team", async ({ page }) => {
@@ -172,9 +247,8 @@ test.describe("Team page", () => {
 
 		await page.getByTestId("manage-roster-button").click();
 
-		await waitForPOSTResponse(page, async () => {
-			await page.getByLabel("Editor").first().click({ force: true });
-		});
+		await page.getByLabel("Editor").first().click({ force: true });
+		await submit(page);
 
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({ page, url: editTeamPage("alliance-rogue") });

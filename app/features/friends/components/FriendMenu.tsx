@@ -17,6 +17,7 @@ import { SENDOUQ_LOOKING_PAGE, tournamentSubsPage } from "~/utils/urls";
 export function FriendMenu({
 	discordId,
 	discordAvatar,
+	customAvatarUrl,
 	name,
 	subtitle,
 	badge,
@@ -28,6 +29,7 @@ export function FriendMenu({
 }: {
 	discordId: string;
 	discordAvatar: string | null;
+	customAvatarUrl: string | null;
 	name: string;
 	subtitle: string | null;
 	badge: string | null;
@@ -59,7 +61,7 @@ export function FriendMenu({
 			<SendouMenu
 				trigger={
 					<ListButton
-						user={{ discordId, discordAvatar }}
+						user={{ discordId, discordAvatar, customAvatarUrl }}
 						subtitle={subtitle}
 						badge={badge}
 					>

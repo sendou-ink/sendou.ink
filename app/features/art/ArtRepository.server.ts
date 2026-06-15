@@ -3,7 +3,10 @@ import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
-import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
+import {
+	concatUserSubmittedImagePrefix,
+	customAvatarUrl,
+} from "~/utils/kysely.server";
 import { seededRandom } from "~/utils/random";
 import type { ListedArt } from "./art-types";
 
@@ -37,6 +40,7 @@ export async function findShowcaseArts(): Promise<ListedArt[]> {
 			"User.username",
 			"User.discordAvatar",
 			"User.commissionsOpen",
+			customAvatarUrl(eb).as("customAvatarUrl"),
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"url",
 			),
@@ -66,6 +70,7 @@ export async function findShowcaseArts(): Promise<ListedArt[]> {
 			author: {
 				commissionsOpen: a.commissionsOpen,
 				discordAvatar: a.discordAvatar,
+				customAvatarUrl: a.customAvatarUrl,
 				discordId: a.discordId,
 				username: a.username,
 			},
@@ -92,6 +97,7 @@ export async function findShowcaseArtsByTag(
 			"User.username",
 			"User.discordAvatar",
 			"User.commissionsOpen",
+			customAvatarUrl(eb).as("customAvatarUrl"),
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"url",
 			),
@@ -121,6 +127,7 @@ export async function findShowcaseArtsByTag(
 			author: {
 				commissionsOpen: a.commissionsOpen,
 				discordAvatar: a.discordAvatar,
+				customAvatarUrl: a.customAvatarUrl,
 				discordId: a.discordId,
 				username: a.username,
 			},
@@ -140,6 +147,7 @@ export async function findRecentlyUploadedArts(): Promise<ListedArt[]> {
 			"User.username",
 			"User.discordAvatar",
 			"User.commissionsOpen",
+			customAvatarUrl(eb).as("customAvatarUrl"),
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"url",
 			),
@@ -156,6 +164,7 @@ export async function findRecentlyUploadedArts(): Promise<ListedArt[]> {
 		author: {
 			commissionsOpen: a.commissionsOpen,
 			discordAvatar: a.discordAvatar,
+			customAvatarUrl: a.customAvatarUrl,
 			discordId: a.discordId,
 			username: a.username,
 		},
@@ -197,6 +206,7 @@ export async function findArtsByUserId(
 					"User.username",
 					"User.discordAvatar",
 					"User.commissionsOpen",
+					customAvatarUrl(eb).as("customAvatarUrl"),
 					jsonArrayFrom(
 						eb
 							.selectFrom("TaggedArt")
@@ -279,6 +289,7 @@ export async function findArtsByUserId(
 				discordId: row.discordId,
 				username: row.username,
 				discordAvatar: row.discordAvatar,
+				customAvatarUrl: row.customAvatarUrl,
 				commissionsOpen: row.commissionsOpen ?? undefined,
 			},
 		})),

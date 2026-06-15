@@ -10,7 +10,7 @@ import type {
 	RankedModeShort,
 } from "~/modules/in-game-lists/types";
 import {
-	COMMON_USER_FIELDS,
+	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 } from "~/utils/kysely.server";
 import { dateToDatabaseTimestamp } from "../../utils/dates";
@@ -62,7 +62,7 @@ const teamLeaderboardBySeasonQuery = (season: number) =>
 				eb
 					.selectFrom("SkillTeamUser")
 					.innerJoin("User", "SkillTeamUser.userId", "User.id")
-					.select(COMMON_USER_FIELDS)
+					.select((eb) => commonUserSelect(eb))
 					.whereRef("SkillTeamUser.skillId", "=", "Skill.id"),
 			).as("members"),
 			jsonArrayFrom(
@@ -318,8 +318,8 @@ function xpLeaderboardQuery(where?: {
 		})
 		.innerJoin("SplatoonPlayer", "SplatoonPlayer.id", "Placement.playerId")
 		.leftJoin("User", "User.id", "SplatoonPlayer.userId")
-		.select([
-			...COMMON_USER_FIELDS,
+		.select((eb) => [
+			...commonUserSelect(eb),
 			"Placement.entryId",
 			"Placement.playerId",
 			"Placement.weaponSplId",
@@ -369,8 +369,8 @@ export async function userSPLeaderboard(season: number) {
 					.onRef("Latest.userId", "=", "Skill.userId")
 					.onRef("Latest.maxId", "=", "Skill.id"),
 		)
-		.select([
-			...COMMON_USER_FIELDS,
+		.select((eb) => [
+			...commonUserSelect(eb),
 			"Skill.id as entryId",
 			"Skill.ordinal",
 			"User.plusSkippedForSeasonNth",

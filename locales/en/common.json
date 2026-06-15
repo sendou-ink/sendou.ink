@@ -252,6 +252,8 @@
 	"support.perk.userShortLink": "User page short link",
 	"support.perk.userShortLink.extra": "Instead of e.g. sendou.ink/u/sendou you can also use snd.ink/sendou when linking to your user profile.",
 	"support.perk.customizedColorsUser": "Customize colors (user page)",
+	"support.perk.customAvatar": "Custom avatar",
+	"support.perk.customAvatar.extra": "Upload a custom avatar to use instead of your Discord avatar.",
 	"support.perk.favoriteBadges": "Set profile first page badges",
 	"support.perk.favoriteBadges.extra": "You can set which badges appear on the first page and the order. Normally it's only possible to choose the first badge.",
 	"support.perk.customizedColorsTeam": "Customize colors (team page)",

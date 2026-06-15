@@ -252,6 +252,8 @@
 	"support.perk.userShortLink": "Short link per la pagina utente",
 	"support.perk.userShortLink.extra": "Invece di es. sendou.ink/u/sendou puoi anche usare snd.ink/sendou quando linki la tua pagina utente.",
 	"support.perk.customizedColorsUser": "Personalizza colori (pagina utente)",
+	"support.perk.customAvatar": "",
+	"support.perk.customAvatar.extra": "",
 	"support.perk.favoriteBadges": "",
 	"support.perk.favoriteBadges.extra": "",
 	"support.perk.customizedColorsTeam": "Personalizza colori (Pagina team)",

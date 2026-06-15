@@ -1,6 +1,6 @@
 import { db } from "~/db/sql";
 import type { Tables, TablesInsertable } from "~/db/tables";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { commonUserSelect } from "~/utils/kysely.server";
 import * as StreamRanking from "../sidebar/core/StreamRanking";
 
 export function replaceAll(
@@ -40,8 +40,8 @@ export function findXRankStreams() {
 			StreamRanking.minXpForStreamToBeShown(),
 		)
 		.where("LiveStream.twitch", "is not", null)
-		.select([
-			...COMMON_USER_FIELDS,
+		.select((eb) => [
+			...commonUserSelect(eb),
 			"SplatoonPlayer.peakXp",
 			"LiveStream.viewerCount",
 			"LiveStream.thumbnailUrl",

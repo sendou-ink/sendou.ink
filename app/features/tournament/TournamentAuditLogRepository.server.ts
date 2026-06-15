@@ -5,7 +5,7 @@ import { db } from "~/db/sql";
 import type { DB, Tables, TournamentAuditLogMetadata } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { commonUserSelect } from "~/utils/kysely.server";
 
 export const AUDIT_LOG_PAGE_SIZE = 30;
 
@@ -138,13 +138,13 @@ export function findByTournamentId({
 			jsonObjectFrom(
 				eb
 					.selectFrom("User")
-					.select(COMMON_USER_FIELDS)
+					.select((eb) => commonUserSelect(eb))
 					.whereRef("User.id", "=", "TournamentAuditLog.actorUserId"),
 			).as("actor"),
 			jsonObjectFrom(
 				eb
 					.selectFrom("User")
-					.select(COMMON_USER_FIELDS)
+					.select((eb) => commonUserSelect(eb))
 					.whereRef("User.id", "=", "TournamentAuditLog.subjectUserId"),
 			).as("subject"),
 			jsonObjectFrom(

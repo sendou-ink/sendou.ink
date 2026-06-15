@@ -46,7 +46,17 @@ export const handle: SendouRouteHandle = {
 
 		if (!data) return [];
 
-		if (!data.user.discordAvatar) {
+		const imgPath = data.user.customAvatarUrl
+			? data.user.customAvatarUrl
+			: data.user.discordAvatar
+				? discordAvatarUrl({
+						discordId: data.user.discordId,
+						discordAvatar: data.user.discordAvatar,
+						size: "sm",
+					})
+				: null;
+
+		if (!imgPath) {
 			return {
 				text: data.user.username,
 				href: userPage(data.user),
@@ -55,11 +65,7 @@ export const handle: SendouRouteHandle = {
 		}
 
 		return {
-			imgPath: discordAvatarUrl({
-				discordId: data.user.discordId,
-				discordAvatar: data.user.discordAvatar,
-				size: "sm",
-			}),
+			imgPath,
 			href: userPage(data.user),
 			type: "IMAGE",
 			text: data.user.username,

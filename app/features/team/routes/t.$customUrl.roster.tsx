@@ -1,26 +1,23 @@
-import clsx from "clsx";
-import { Check, Clipboard, Trash } from "lucide-react";
-import * as React from "react";
+import { Check, Clipboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Form, useFetcher, useLoaderData } from "react-router";
+import { Form, useLoaderData } from "react-router";
 import { Alert } from "~/components/Alert";
+import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
-import { SendouSwitch } from "~/components/elements/Switch";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { TeamGoBackButton } from "~/features/team/components/TeamGoBackButton";
+import { SendouForm } from "~/form/SendouForm";
+import type { ArrayItemRenderContext } from "~/form/types";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { metaTags } from "~/utils/remix";
 import { joinTeamPage } from "~/utils/urls";
 import { action } from "../actions/t.$customUrl.roster.server";
 import { loader } from "../loaders/t.$customUrl.roster.server";
-import type * as TeamRepository from "../TeamRepository.server";
-import styles from "../team.module.css";
-import { TEAM_MEMBER_ROLES } from "../team-constants";
+import { CUSTOM_ROLE_VALUE, updateRosterSchema } from "../team-schemas";
 import { isTeamFull } from "../team-utils";
 
 export { action, loader };
@@ -36,7 +33,7 @@ export default function ManageTeamRosterPage() {
 	const { t } = useTranslation(["team"]);
 
 	return (
-		<Main className="stack lg">
+		<Main halfWidth className="stack lg">
 			<TeamGoBackButton />
 			<InviteCodeSection />
 			<MemberActions />
@@ -105,129 +102,75 @@ function InviteCodeSection() {
 }
 
 function MemberActions() {
-	const { t } = useTranslation(["team"]);
+	const { t } = useTranslation(["common", "team"]);
 	const { team } = useLoaderData<typeof loader>();
+	const user = useUser();
+
+	const isProtectedMember = (member: { id: number; isOwner: number }) =>
+		Boolean(member.isOwner) || member.id === user!.id;
 
 	return (
 		<div className="stack md">
 			<h2 className="text-lg">{t("team:roster.members.header")}</h2>
 
-			<div className={styles.rosterMembers}>
-				{team.members.map((member, i) => (
-					<MemberRow key={member.id} member={member} number={i} />
-				))}
-			</div>
-		</div>
-	);
-}
-
-const NO_ROLE = "NO_ROLE";
-function MemberRow({
-	member,
-	number,
-}: {
-	member: TeamRepository.findByCustomUrl["members"][number];
-	number: number;
-}) {
-	const { team } = useLoaderData<typeof loader>();
-	const { t } = useTranslation(["team"]);
-	const user = useUser();
-
-	const roleFetcher = useFetcher();
-	const editorFetcher = useFetcher();
-
-	const isSelf = user!.id === member.id;
-	const role = team.members.find((m) => m.id === member.id)?.role ?? NO_ROLE;
-
-	const isThisMemberOwner = Boolean(
-		team.members.find((m) => m.id === member.id)?.isOwner,
-	);
-	const isThisMemberManager = Boolean(
-		team.members.find((m) => m.id === member.id)?.isManager,
-	);
-
-	const editorIsBeingAdded =
-		editorFetcher.formData?.get("_action") === "ADD_MANAGER";
-	const editorIsBeingRemoved =
-		editorFetcher.formData?.get("_action") === "REMOVE_MANAGER";
-
-	return (
-		<React.Fragment key={member.id}>
-			<div className={styles.rosterMember} data-testid={`member-row-${number}`}>
-				{member.username}
-			</div>
-			<div>
-				<select
-					defaultValue={role}
-					onChange={(e) =>
-						roleFetcher.submit(
-							{
-								_action: "UPDATE_MEMBER_ROLE",
-								userId: String(member.id),
-								role: e.target.value === NO_ROLE ? "" : e.target.value,
-							},
-							{ method: "post" },
-						)
-					}
-					disabled={roleFetcher.state !== "idle"}
-					data-testid={`role-select-${number}`}
-				>
-					<option value={NO_ROLE}>No role</option>
-					{TEAM_MEMBER_ROLES.map((role) => {
-						return (
-							<option key={role} value={role}>
-								{t(`team:roles.${role}`)}
-							</option>
-						);
-					})}
-				</select>
-			</div>
-			<div className={clsx({ invisible: isThisMemberOwner || isSelf })}>
-				<SendouSwitch
-					onChange={(isSelected) =>
-						editorFetcher.submit(
-							{
-								_action: isSelected ? "ADD_MANAGER" : "REMOVE_MANAGER",
-								userId: String(member.id),
-							},
-							{ method: "post" },
-						)
-					}
-					isSelected={
-						editorIsBeingAdded
-							? true
-							: editorIsBeingRemoved
-								? false
-								: isThisMemberManager
-					}
-					data-testid="editor-switch"
-				>
-					{t("team:editor.label")}
-				</SendouSwitch>
-			</div>
-			<div className={clsx({ invisible: isThisMemberOwner || isSelf })}>
-				<FormWithConfirm
-					dialogHeading={t("team:kick.header", {
-						teamName: team.name,
-						user: member.username,
-					})}
-					submitButtonText={t("team:actionButtons.kick")}
-					fields={[
-						["_action", "DELETE_MEMBER"],
-						["userId", member.id],
-					]}
-				>
-					<SendouButton
-						size="small"
-						variant="destructive"
-						icon={<Trash />}
-						data-testid={!isSelf ? "kick-button" : undefined}
+			<SendouForm
+				fullWidth
+				schema={updateRosterSchema}
+				submitButtonText={t("common:actions.save")}
+				defaultValues={{
+					members: team.members.map((member) => ({
+						userId: member.id,
+						role: member.customRole ? CUSTOM_ROLE_VALUE : (member.role ?? null),
+						customRole: member.customRole ?? null,
+						roleType: member.roleType ?? null,
+						isManager: Boolean(member.isManager),
+					})),
+				}}
+			>
+				{({ FormField }) => (
+					<FormField
+						name="members"
+						canRemoveItem={(item) => {
+							const member = team.members.find(
+								(m) => m.id === (item as { userId: number }).userId,
+							);
+							return Boolean(member) && !isProtectedMember(member!);
+						}}
 					>
-						{t("team:actionButtons.kick")}
-					</SendouButton>
-				</FormWithConfirm>
-			</div>
-			<hr className={styles.rosterSeparator} />
-		</React.Fragment>
+						{({ index, itemName, values }: ArrayItemRenderContext) => {
+							const member = team.members.find(
+								(m) => m.id === (values as { userId: number }).userId,
+							);
+
+							return (
+								<div
+									className="stack md-plus"
+									data-testid={`member-row-${index}`}
+								>
+									<div
+										className="stack horizontal sm items-center text-sm font-bold mb-2"
+										data-testid={`member-row-username-${index}`}
+									>
+										{member ? <Avatar size="xs" user={member} /> : null}
+										{member?.username}
+									</div>
+									<FormField name={`${itemName}.role`} />
+									{(values as { role: string | null }).role ===
+									CUSTOM_ROLE_VALUE ? (
+										<>
+											<FormField name={`${itemName}.customRole`} />
+											<FormField name={`${itemName}.roleType`} />
+										</>
+									) : null}
+									{member && !isProtectedMember(member) ? (
+										<FormField name={`${itemName}.isManager`} />
+									) : null}
+								</div>
+							);
+						}}
+					</FormField>
+				)}
+			</SendouForm>
+		</div>
 	);
 }

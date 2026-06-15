@@ -33,7 +33,7 @@
 		"check-test-db-migrations": "node --experimental-strip-types scripts/check-test-db-migrations.ts",
 		"checks": "pnpm run biome:fix && pnpm run test:unit:browser && pnpm run check-translation-jsons && pnpm run typecheck && pnpm run knip && pnpm run check-test-db-migrations",
 		"setup": "cross-env DB_PATH=db.sqlite3 vite-node ./scripts/setup.ts",
-		"i18n:sync": "i18next-locales-sync -e true -p en -s da de es-ES es-US fr-CA fr-EU he it ja ko nl pl pt-BR ru zh -l locales && pnpm run biome:fix",
+		"i18n:sync": "node --experimental-strip-types scripts/collapse-single-plural-keys.ts && i18next-locales-sync -e true -p en -s da de es-ES es-US fr-CA fr-EU he it ja ko nl pl pt-BR ru zh -l locales && pnpm run biome:fix",
 		"knip": "knip",
 		"sync-weapon-params": "vite-node scripts/sync-weapon-params.ts"
 	},

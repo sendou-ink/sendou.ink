@@ -51,6 +51,7 @@ describe("tournamentSummary()", () => {
 			streamViewerCount: null,
 			streamThumbnailUrl: null,
 			role: "REGULAR",
+			customAvatarUrl: null,
 		})),
 		name: `Team ${teamId}`,
 		prefersNotToHost: 0,

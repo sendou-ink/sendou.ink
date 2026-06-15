@@ -124,6 +124,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 						discordId: user.discordId,
 						id: user.id,
 						customUrl: user.customUrl,
+						customAvatarUrl: user.customAvatarUrl,
 						inGameName: user.inGameName,
 						friendCode: user.friendCode,
 						preferences: user.preferences ?? {},

@@ -22,8 +22,9 @@ import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
-	COMMON_USER_FIELDS,
+	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	customAvatarUrl,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
@@ -95,10 +96,10 @@ export async function findById(id: number) {
 									"TournamentOrganizationMember.userId",
 									"User.id",
 								)
-								.select([
+								.select((eb) => [
 									"TournamentOrganizationMember.userId",
 									"TournamentOrganizationMember.role",
-									...COMMON_USER_FIELDS,
+									...commonUserSelect(eb),
 									"User.pronouns",
 								])
 								.whereRef(
@@ -128,15 +129,15 @@ export async function findById(id: number) {
 			jsonObjectFrom(
 				eb
 					.selectFrom("User")
-					.select([...COMMON_USER_FIELDS, "User.pronouns"])
+					.select((eb) => [...commonUserSelect(eb), "User.pronouns"])
 					.whereRef("User.id", "=", "CalendarEvent.authorId"),
 			).as("author"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TournamentStaff")
 					.innerJoin("User", "TournamentStaff.userId", "User.id")
-					.select([
-						...COMMON_USER_FIELDS,
+					.select((eb) => [
+						...commonUserSelect(eb),
 						"User.pronouns",
 						"TournamentStaff.role",
 					])
@@ -194,7 +195,7 @@ export async function findById(id: number) {
 								)
 								.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 								.leftJoin("LiveStream", "LiveStream.userId", "User.id")
-								.select([
+								.select((eb) => [
 									"User.id as userId",
 									"User.username",
 									"User.discordId",
@@ -213,6 +214,7 @@ export async function findById(id: number) {
 									"LiveStream.twitch as streamTwitch",
 									"LiveStream.viewerCount as streamViewerCount",
 									"LiveStream.thumbnailUrl as streamThumbnailUrl",
+									customAvatarUrl(eb).as("customAvatarUrl"),
 								])
 								.whereRef(
 									"TournamentTeamMember.tournamentTeamId",
@@ -584,7 +586,7 @@ export function forShowcase() {
 					.whereRef("TournamentResult.tournamentId", "=", "Tournament.id")
 					.where("TournamentResult.placement", "=", 1)
 					.select((eb) => [
-						...COMMON_USER_FIELDS,
+						...commonUserSelect(eb),
 						"User.country",
 						"TournamentResult.div",
 						"TournamentTeam.name as teamName",
@@ -665,7 +667,7 @@ export function topThreeResultsByTournamentId(tournamentId: number) {
 			jsonObjectFrom(
 				eb
 					.selectFrom("User")
-					.select([...COMMON_USER_FIELDS])
+					.select((eb) => commonUserSelect(eb))
 					.whereRef("User.id", "=", "TournamentResult.userId"),
 			).as("user"),
 		])

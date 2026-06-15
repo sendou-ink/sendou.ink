@@ -36,14 +36,17 @@ export function registerSchema({
 		z.object({
 			_action: _action("UNREGISTER"),
 		}),
-		z.object({
-			_action: _action("SAVE_TOURNAMENT"),
-		}),
-		z.object({
-			_action: _action("UNSAVE_TOURNAMENT"),
-		}),
 	]);
 }
+
+export const saveTournamentSchema = z.union([
+	z.object({
+		_action: _action("SAVE_TOURNAMENT"),
+	}),
+	z.object({
+		_action: _action("UNSAVE_TOURNAMENT"),
+	}),
+]);
 
 export const tournamentSearchSearchParamsSchema = z.object({
 	q: z.string().max(100),

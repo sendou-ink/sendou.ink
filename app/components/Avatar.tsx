@@ -110,7 +110,9 @@ export function Avatar({
 	alt = "",
 	...rest
 }: {
-	user?: Pick<Tables["User"], "discordId" | "discordAvatar">;
+	user?: Pick<Tables["User"], "discordId" | "discordAvatar"> & {
+		customAvatarUrl?: string | null;
+	};
 	url?: string | null;
 	identiconInput?: string;
 	className?: string;
@@ -122,21 +124,25 @@ export function Avatar({
 	const isClient = useHydrated();
 
 	const isIdenticon =
-		!url && (!user?.discordAvatar || isErrored || identiconInput);
+		!url &&
+		(!user?.customAvatarUrl || isErrored) &&
+		(!user?.discordAvatar || isErrored || identiconInput);
 
 	const identiconSource = identiconInput ?? user?.discordId ?? "unknown";
 
 	const src = url
 		? url
-		: user?.discordAvatar && !isErrored
-			? discordAvatarUrl({
-					discordAvatar: user.discordAvatar,
-					discordId: user.discordId,
-					size: size === "lg" || size === "xmd" ? "lg" : "sm",
-				})
-			: isClient
-				? generateIdenticon(identiconSource, dimensions[size], 7)
-				: BLANK_IMAGE_URL;
+		: user?.customAvatarUrl && !isErrored
+			? user.customAvatarUrl
+			: user?.discordAvatar && !isErrored
+				? discordAvatarUrl({
+						discordAvatar: user.discordAvatar,
+						discordId: user.discordId,
+						size: size === "lg" || size === "xmd" ? "lg" : "sm",
+					})
+				: isClient
+					? generateIdenticon(identiconSource, dimensions[size], 7)
+					: BLANK_IMAGE_URL;
 
 	return (
 		<div className={clsx(styles.avatarWrapper, className)}>

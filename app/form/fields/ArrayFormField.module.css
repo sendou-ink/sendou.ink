@@ -16,13 +16,6 @@
 	border-radius: var(--header-border-radius) var(--header-border-radius) 0 0;
 }
 
-.dragHandle {
-	width: var(--s-5);
-	height: var(--s-5);
-	cursor: grab;
-	color: var(--color-text-high);
-}
-
 .headerLabel {
 	flex: 1;
 	font-size: var(--font-xs);

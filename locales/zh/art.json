@@ -1,6 +1,4 @@
 {
-	"pendingApproval_one": "您有 {{count}} 张图片等待版主审核",
-	"pendingApproval_other": "您有 {{count}} 张图片等待版主审核",
 	"madeBy": "创作者为",
 	"radios.all": "全部",
 	"radios.madeBy": "该用户为创作者",

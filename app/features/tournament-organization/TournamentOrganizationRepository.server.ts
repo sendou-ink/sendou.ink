@@ -15,8 +15,9 @@ import {
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
 import {
-	COMMON_USER_FIELDS,
+	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	customAvatarUrl,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import { mySlugify } from "~/utils/urls";
@@ -74,10 +75,10 @@ export async function findBySlug(slug: string) {
 				eb
 					.selectFrom("TournamentOrganizationMember")
 					.innerJoin("User", "User.id", "TournamentOrganizationMember.userId")
-					.select([
+					.select((eb) => [
 						"TournamentOrganizationMember.role",
 						"TournamentOrganizationMember.roleDisplayName",
-						...COMMON_USER_FIELDS,
+						...commonUserSelect(eb),
 					])
 					.whereRef(
 						"TournamentOrganizationMember.organizationId",
@@ -250,7 +251,11 @@ const findEventsBaseQuery = (organizationId: number) =>
 							innerEb
 								.selectFrom("TournamentResult as WinnerResult")
 								.innerJoin("User", "User.id", "WinnerResult.userId")
-								.select(["User.discordAvatar", "User.discordId"])
+								.select((winnerEb) => [
+									"User.discordAvatar",
+									"User.discordId",
+									customAvatarUrl(winnerEb).as("customAvatarUrl"),
+								])
 								.whereRef(
 									"WinnerResult.tournamentTeamId",
 									"=",
@@ -284,7 +289,11 @@ const findEventsBaseQuery = (organizationId: number) =>
 									"User.id",
 									"CalendarEventResultPlayer.userId",
 								)
-								.select(["User.discordAvatar", "User.discordId"])
+								.select((playerEb) => [
+									"User.discordAvatar",
+									"User.discordId",
+									customAvatarUrl(playerEb).as("customAvatarUrl"),
+								])
 								.whereRef(
 									"CalendarEventResultPlayer.teamId",
 									"=",
@@ -617,11 +626,11 @@ export function allBannedUsersByOrganizationId(organizationId: number) {
 	return db
 		.selectFrom("TournamentOrganizationBannedUser")
 		.innerJoin("User", "User.id", "TournamentOrganizationBannedUser.userId")
-		.select([
+		.select((eb) => [
 			"TournamentOrganizationBannedUser.privateNote",
 			"TournamentOrganizationBannedUser.updatedAt",
 			"TournamentOrganizationBannedUser.expiresAt",
-			...COMMON_USER_FIELDS,
+			...commonUserSelect(eb),
 		])
 		.where(
 			"TournamentOrganizationBannedUser.organizationId",

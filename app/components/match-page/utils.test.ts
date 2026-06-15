@@ -9,6 +9,7 @@ function user(id: number): CommonUser {
 		discordId: `discord${id}`,
 		discordAvatar: null,
 		customUrl: null,
+		customAvatarUrl: null,
 	};
 }
 

@@ -36,7 +36,7 @@ export interface PlayedSet {
 			Pick<
 				Tables["User"],
 				"id" | "username" | "discordAvatar" | "discordId" | "customUrl"
-			>
+			> & { customAvatarUrl: string | null }
 		>;
 	};
 }

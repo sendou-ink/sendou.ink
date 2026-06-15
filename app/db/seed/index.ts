@@ -2212,13 +2212,14 @@ const detailedTeam = (seedVariation?: SeedVariation | null) => () => {
 		sql
 			.prepare(
 				/*sql*/ `
-      insert into "AllTeamMember" ("teamId", "userId", "role", "isOwner", "leftAt")
+      insert into "AllTeamMember" ("teamId", "userId", "role", "isOwner", "leftAt", "order")
         values (
           1,
           ${userId},
           ${i === 0 ? "'CAPTAIN'" : "'FRONTLINE'"},
           ${i === 0 ? 1 : 0},
-          ${i < 4 ? "null" : "1672587342"}
+          ${i < 4 ? "null" : "1672587342"},
+          ${i}
         )
     `,
 			)
@@ -2290,12 +2291,13 @@ function otherTeams() {
 			sql
 				.prepare(
 					/*sql*/ `
-        insert into "AllTeamMember" ("teamId", "userId", "role", "isOwner")
+        insert into "AllTeamMember" ("teamId", "userId", "role", "isOwner", "order")
           values (
             ${i},
             ${userId},
             ${j === 0 ? "'CAPTAIN'" : "'FRONTLINE'"},
-            ${j === 0 ? 1 : 0}
+            ${j === 0 ? 1 : 0},
+            ${j}
           )
       `,
 				)

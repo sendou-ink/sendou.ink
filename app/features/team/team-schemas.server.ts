@@ -1,9 +1,12 @@
 import { z } from "zod";
 import { mySlugify } from "~/utils/urls";
-import { _action, id, themeInputSchema } from "~/utils/zod";
+import { _action, themeInputSchema } from "~/utils/zod";
 import * as TeamRepository from "./TeamRepository.server";
-import { TEAM_MEMBER_ROLES } from "./team-constants";
-import { createTeamSchema, editTeamFormSchema } from "./team-schemas";
+import {
+	createTeamSchema,
+	editTeamFormSchema,
+	updateRosterSchema,
+} from "./team-schemas";
 
 export const createTeamSchemaServer = z.object({
 	...createTeamSchema.shape,
@@ -47,24 +50,8 @@ export const editTeamActionSchema = z.union([
 ]);
 
 export const manageRosterSchema = z.union([
+	updateRosterSchema,
 	z.object({
 		_action: _action("RESET_INVITE_LINK"),
-	}),
-	z.object({
-		_action: _action("DELETE_MEMBER"),
-		userId: id,
-	}),
-	z.object({
-		_action: _action("ADD_MANAGER"),
-		userId: id,
-	}),
-	z.object({
-		_action: _action("REMOVE_MANAGER"),
-		userId: id,
-	}),
-	z.object({
-		_action: _action("UPDATE_MEMBER_ROLE"),
-		userId: id,
-		role: z.union([z.enum(TEAM_MEMBER_ROLES), z.literal("")]),
 	}),
 ]);

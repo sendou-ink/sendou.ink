@@ -12,7 +12,7 @@ import { assertUnreachable } from "~/utils/types";
 import { scrimsPage } from "~/utils/urls";
 import * as SQGroupRepository from "../../sendouq/SQGroupRepository.server";
 import * as TeamRepository from "../../team/TeamRepository.server";
-import { NON_PLAYER_TEAM_ROLES } from "../../team/team-constants";
+import { getMemberRoleType } from "../../team/team-utils";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { LUTI_DIVS, SCRIM } from "../scrims-constants";
 import {
@@ -120,7 +120,7 @@ export const usersListForPost = async ({
 	errorToastIfFalsy(team, "User is not a member of this team");
 
 	const filteredMembers = team.members.filter(
-		(member) => !member.role || !NON_PLAYER_TEAM_ROLES.includes(member.role),
+		(member) => getMemberRoleType(member) !== "OTHER",
 	);
 
 	// handle case when all users are from excluded roles

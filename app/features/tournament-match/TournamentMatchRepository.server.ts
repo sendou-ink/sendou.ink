@@ -4,6 +4,7 @@ import { db } from "~/db/sql";
 import { TournamentMatchStatus, type TournamentRoundMaps } from "~/db/tables";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
+import { customAvatarUrl } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 
 const opponentOneId = sql<number>`"TournamentMatch"."opponentOne" ->> '$.id'`;
@@ -52,7 +53,7 @@ export async function findMatchById(id: number) {
 				eb
 					.selectFrom("TournamentTeamMember")
 					.innerJoin("User", "User.id", "TournamentTeamMember.userId")
-					.select([
+					.select((eb) => [
 						"User.id",
 						"User.username",
 						"TournamentTeamMember.tournamentTeamId",
@@ -65,6 +66,7 @@ export async function findMatchById(id: number) {
 						"User.customUrl",
 						"User.discordAvatar",
 						"User.pronouns",
+						customAvatarUrl(eb).as("customAvatarUrl"),
 					])
 					.where(({ or, eb: innerEb }) =>
 						or([
@@ -405,12 +407,13 @@ export function findByTournamentTeamId(tournamentTeamId: number) {
 								"otherTeam.id",
 							),
 					)
-					.select([
+					.select((eb) => [
 						"User.id",
 						"User.username",
 						"User.discordAvatar",
 						"User.discordId",
 						"User.customUrl",
+						customAvatarUrl(eb).as("customAvatarUrl"),
 					])
 					.whereRef(
 						"TournamentMatchGameResult.matchId",
