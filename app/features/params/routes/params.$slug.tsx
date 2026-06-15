@@ -38,6 +38,8 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 	});
 };
 
+// xxx: top row = points for special
+
 export default function WeaponParamsPage() {
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common", "weapons"]);

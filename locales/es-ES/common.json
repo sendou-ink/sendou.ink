@@ -150,6 +150,8 @@
 	"actions.back": "Atrás",
 	"actions.viewAll": "",
 	"actions.hide": "Ocultar",
+	"actions.hidden": "",
+	"actions.showAll": "",
 	"actions.settings": "Ajustes",
 	"actions.reveal": "",
 	"noResults": "Sin resultados",

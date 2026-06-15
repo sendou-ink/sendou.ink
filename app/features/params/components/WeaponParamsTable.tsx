@@ -1,9 +1,12 @@
 import clsx from "clsx";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, EyeOff, X } from "lucide-react";
 import { Fragment, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { SendouButton } from "~/components/elements/Button";
 import { WeaponImage } from "~/components/Image";
+import { useSearchParamStateEncoder } from "~/hooks/useSearchParamState";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mySlugify, weaponParamsPage } from "~/utils/urls";
 import {
 	collectAllParamKeys,
@@ -54,6 +57,33 @@ export function WeaponParamsTable({
 		...categoryWeaponIds.filter((id) => id !== currentWeaponId),
 	];
 
+	const [hiddenWeaponIds, setHiddenWeaponIds] = useSearchParamStateEncoder<
+		MainWeaponId[]
+	>({
+		name: "hidden",
+		defaultValue: [],
+		revive: (value) =>
+			value
+				.split(",")
+				.map(Number)
+				.filter(
+					(id) =>
+						!Number.isNaN(id) &&
+						id !== currentWeaponId &&
+						categoryWeaponIds.includes(id as MainWeaponId),
+				) as MainWeaponId[],
+		encode: (ids) => ids.join(","),
+	});
+
+	const hiddenSet = new Set(hiddenWeaponIds);
+	const visibleWeaponIds = sortedWeaponIds.filter((id) => !hiddenSet.has(id));
+
+	const hideWeapon = (weaponId: MainWeaponId) =>
+		setHiddenWeaponIds([...hiddenWeaponIds, weaponId]);
+	const restoreWeapon = (weaponId: MainWeaponId) =>
+		setHiddenWeaponIds(hiddenWeaponIds.filter((id) => id !== weaponId));
+	const showAllWeapons = () => setHiddenWeaponIds([]);
+
 	const currentWeaponHasParam = (category: string, key: string) => {
 		return Boolean(
 			weaponParams[String(currentWeaponId)]?.categories[category]?.[key],
@@ -61,7 +91,7 @@ export function WeaponParamsTable({
 	};
 
 	const rowHasHistory = (category: string, key: string) => {
-		return sortedWeaponIds.some((id) => {
+		return visibleWeaponIds.some((id) => {
 			const param = weaponParams[String(id)]?.categories[category]?.[key];
 			return param && hasParamHistory(param);
 		});
@@ -69,25 +99,27 @@ export function WeaponParamsTable({
 
 	return (
 		<div className={styles.container}>
+			{hiddenWeaponIds.length > 0 ? (
+				<HiddenWeaponsBar
+					hiddenWeaponIds={hiddenWeaponIds}
+					onRestore={restoreWeapon}
+					onShowAll={showAllWeapons}
+				/>
+			) : null}
 			<table className={styles.table}>
 				<thead className={styles.thead}>
 					<tr>
 						<th className={styles.paramHeader}>
 							{t("common:header.parameter")}
 						</th>
-						{sortedWeaponIds.map((weaponId) => {
+						{visibleWeaponIds.map((weaponId) => {
 							const weaponName = t(`weapons:MAIN_${weaponId}`);
 							const slug = mySlugify(
 								t(`weapons:MAIN_${weaponId}`, { lng: "en" }),
 							);
 
 							return (
-								<th
-									key={weaponId}
-									className={clsx(styles.weaponHeader, {
-										[styles.currentWeapon]: weaponId === currentWeaponId,
-									})}
-								>
+								<th key={weaponId} className={clsx(styles.weaponHeader, {})}>
 									<Link
 										to={weaponParamsPage(slug)}
 										className={styles.weaponHeaderContent}
@@ -99,6 +131,18 @@ export function WeaponParamsTable({
 										/>
 										<span className={styles.weaponName}>{weaponName}</span>
 									</Link>
+									{weaponId !== currentWeaponId ? (
+										<SendouButton
+											variant="minimal-destructive"
+											size="miniscule"
+											shape="square"
+											icon={<X />}
+											className={styles.hideButton}
+											onPress={() => hideWeapon(weaponId)}
+											aria-label={t("common:actions.hide")}
+											testId={`hide-weapon-${weaponId}`}
+										/>
+									) : null}
 								</th>
 							);
 						})}
@@ -118,7 +162,7 @@ export function WeaponParamsTable({
 							<Fragment key={category}>
 								<tr>
 									<td
-										colSpan={sortedWeaponIds.length + 1}
+										colSpan={visibleWeaponIds.length + 1}
 										className={styles.categoryHeader}
 									>
 										{category}
@@ -152,7 +196,7 @@ export function WeaponParamsTable({
 													</span>
 												) : null}
 											</td>
-											{sortedWeaponIds.map((weaponId) => (
+											{visibleWeaponIds.map((weaponId) => (
 												<ParamCell
 													key={weaponId}
 													param={
@@ -160,7 +204,6 @@ export function WeaponParamsTable({
 															category
 														]?.[key]
 													}
-													isCurrentWeapon={weaponId === currentWeaponId}
 													isExpanded={isExpanded}
 												/>
 											))}
@@ -176,22 +219,62 @@ export function WeaponParamsTable({
 	);
 }
 
+function HiddenWeaponsBar({
+	hiddenWeaponIds,
+	onRestore,
+	onShowAll,
+}: {
+	hiddenWeaponIds: MainWeaponId[];
+	onRestore: (weaponId: MainWeaponId) => void;
+	onShowAll: () => void;
+}) {
+	const { t } = useTranslation(["weapons", "common"]);
+
+	return (
+		<div className={styles.hiddenBar}>
+			<EyeOff
+				size={16}
+				className={styles.hiddenBarLabel}
+				aria-label="Show all"
+			/>
+			{hiddenWeaponIds.map((weaponId) => (
+				<SendouButton
+					key={weaponId}
+					variant="minimal"
+					size="miniscule"
+					className={styles.hiddenBadge}
+					onPress={() => onRestore(weaponId)}
+					testId={`restore-weapon-${weaponId}`}
+				>
+					<WeaponImage weaponSplId={weaponId} variant="badge" size={20} />
+					<span className={styles.hiddenBadgeName}>
+						{t(`weapons:MAIN_${weaponId}`)}
+					</span>
+					<X size={12} />
+				</SendouButton>
+			))}
+			<SendouButton
+				variant="minimal"
+				size="miniscule"
+				onPress={onShowAll}
+				testId="show-all-weapons"
+			>
+				{t("common:actions.showAll")}
+			</SendouButton>
+		</div>
+	);
+}
+
 function ParamCell({
 	param,
-	isCurrentWeapon,
 	isExpanded,
 }: {
 	param: ParamValueWithHistory | undefined;
-	isCurrentWeapon: boolean;
 	isExpanded: boolean;
 }) {
 	if (!param) {
 		return (
-			<td
-				className={clsx(styles.paramCell, {
-					[styles.currentWeapon]: isCurrentWeapon,
-				})}
-			>
+			<td className={clsx(styles.paramCell)}>
 				<span className={styles.noValue}>—</span>
 			</td>
 		);
@@ -200,11 +283,7 @@ function ParamCell({
 	const showHistory = isExpanded && param.history.length > 0;
 
 	return (
-		<td
-			className={clsx(styles.paramCell, {
-				[styles.currentWeapon]: isCurrentWeapon,
-			})}
-		>
+		<td className={styles.paramCell}>
 			<div className={styles.cellContent}>
 				<span className={styles.currentValue}>
 					{formatParamValue(param.current)}

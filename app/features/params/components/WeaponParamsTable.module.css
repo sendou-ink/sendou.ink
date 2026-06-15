@@ -6,6 +6,43 @@
 	align-self: stretch;
 }
 
+.hiddenBar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-1-5);
+	margin-bottom: var(--s-2);
+	padding: var(--s-1-5) var(--s-2);
+	background-color: var(--color-bg-high);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-box);
+}
+
+.hiddenBarLabel {
+	flex-shrink: 0;
+	color: var(--color-text-high);
+}
+
+.hiddenBadge {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.hiddenBadgeName {
+	font-size: var(--font-2xs);
+	max-width: 90px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.hideButton {
+	position: absolute;
+	top: var(--s-1);
+	right: var(--s-1);
+}
+
 .table {
 	width: 100%;
 	border-collapse: separate;
@@ -43,6 +80,7 @@
 }
 
 .weaponHeader {
+	position: relative;
 	min-width: 90px;
 	padding: var(--s-2);
 	text-align: center;
@@ -63,14 +101,10 @@
 	white-space: nowrap;
 }
 
-.currentWeapon {
-	background-color: var(--color-accent-low);
-}
-
 .categoryHeader {
 	background-color: var(--color-bg-high);
 	font-weight: var(--weight-bold);
-	font-size: var(--font-2xs);
+	font-size: var(--font-xs);
 	letter-spacing: 0.5px;
 	padding: var(--s-1-5) var(--s-2);
 }
@@ -79,7 +113,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
-	font-size: var(--font-2xs);
+	font-size: var(--font-xs);
 	min-width: 180px;
 }
 
@@ -98,11 +132,12 @@
 .historyIndicator {
 	display: flex;
 	align-items: center;
+	flex-shrink: 0;
 	color: var(--color-accent);
 }
 
 .paramCell {
-	font-size: var(--font-2xs);
+	font-size: var(--font-xs);
 	vertical-align: top;
 	min-width: 90px;
 }
@@ -127,7 +162,7 @@
 	border-radius: var(--radius-full);
 	background-color: var(--color-accent-low);
 	color: var(--color-accent);
-	font-size: var(--font-2xs);
+	font-size: var(--font-xs);
 	font-weight: var(--weight-bold);
 }
 
@@ -140,7 +175,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-0-5);
-	font-size: var(--font-2xs);
+	font-size: var(--font-xs);
 	border-top: 1px solid var(--color-border);
 	padding-top: var(--s-1);
 }
