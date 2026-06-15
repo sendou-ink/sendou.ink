@@ -45,7 +45,9 @@ export function SelectFormField<V extends string>({
 		const resolvedLabel =
 			typeof itemLabel === "function"
 				? itemLabel(i18n.language)
-				: typeof itemLabel === "string" && itemLabel.includes(":")
+				: typeof itemLabel === "string" &&
+						itemLabel.includes(":") &&
+						i18n.exists(itemLabel)
 					? t(itemLabel as never)
 					: String(itemLabel);
 
