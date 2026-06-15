@@ -26,12 +26,24 @@ ChartJS.register(
 	Tooltip,
 );
 
+const gridColor = "rgba(255, 255, 255, 0.05)";
+const borderColor = "rgba(255, 255, 255, 0.3)";
+const ticksColor = "rgba(255, 255, 255, 0.6)";
+
+const scaleDefaults = {
+	grid: { color: gridColor },
+	border: { color: borderColor },
+	ticks: { color: ticksColor },
+};
+
 export default function Chart({
 	options,
 	containerClassName,
 	headerSuffix,
 	valueSuffix,
 	xAxis,
+	xTicksLimit,
+	yTicksLimit,
 }: {
 	options: [
 		{
@@ -43,6 +55,8 @@ export default function Chart({
 	headerSuffix?: string;
 	valueSuffix?: string;
 	xAxis: "linear" | "localTime";
+	xTicksLimit?: number;
+	yTicksLimit?: number;
 }) {
 	const isHydrated = useHydrated();
 
@@ -92,12 +106,19 @@ export default function Chart({
 		[colors],
 	);
 
-	// Get the grid color based on the current theme
-	const gridColor = React.useMemo(() => {
-		if (typeof document === "undefined") return "rgba(255,255,255,0.1)";
-		const isDark = document.documentElement.classList.contains("dark");
-		return isDark ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.1)";
-	}, []);
+	const datasetColors = React.useCallback(
+		(i: number) => {
+			const color = colorList[i % colorList.length];
+			return {
+				borderColor: color,
+				pointBackgroundColor: color,
+				pointBorderColor: color,
+				pointHoverBackgroundColor: color,
+				pointHoverBorderColor: color,
+			};
+		},
+		[colorList],
+	);
 
 	const chartData = React.useMemo(
 		() => ({
@@ -105,14 +126,14 @@ export default function Chart({
 			datasets: options.map((series, i) => ({
 				label: String(i),
 				data: series.data.map((d) => d.secondary),
-				borderColor: colorList[i % colorList.length],
+				...datasetColors(i),
 				pointRadius: 0,
 				pointHoverRadius: 5,
 				hitRadius: 50,
 				backgroundColor: "transparent",
 			})),
 		}),
-		[options, colorList],
+		[options, datasetColors],
 	);
 
 	if (!isHydrated) {
@@ -129,20 +150,31 @@ export default function Chart({
 				id={chartId}
 				data={chartData}
 				options={{
-					maintainAspectRatio: true,
+					animation: false,
+					maintainAspectRatio: false,
 					scales: {
 						x: {
-							grid: { color: gridColor },
+							...scaleDefaults,
 							type: xAxis === "localTime" ? "time" : "linear",
 							ticks: {
+								...scaleDefaults.ticks,
+								maxRotation: 0,
+								maxTicksLimit: xTicksLimit,
 								callback: (value) => {
-									const date = new Date(value as number);
-									return scaleFormatter.format(date);
+									if (xAxis === "localTime") {
+										const date = new Date(value as number);
+										return scaleFormatter.format(date);
+									}
+									return value;
 								},
 							},
 						},
 						y: {
-							grid: { color: gridColor },
+							...scaleDefaults,
+							ticks: {
+								...scaleDefaults.ticks,
+								maxTicksLimit: yTicksLimit,
+							},
 						},
 					},
 					plugins: {

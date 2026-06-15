@@ -398,7 +398,14 @@ function PowerChart({
 		];
 	}, [skills]);
 
-	return <Chart options={chartOptions as any} xAxis="localTime" />;
+	return (
+		<Chart
+			xTicksLimit={5}
+			yTicksLimit={5}
+			options={chartOptions as any}
+			xAxis="localTime"
+		/>
+	);
 }
 
 const MIN_DEGREE = 5;
