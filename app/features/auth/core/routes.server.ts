@@ -7,11 +7,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isAdmin, isStaff } from "~/modules/permissions/utils";
 import { logger } from "~/utils/logger";
-import {
-	canAccessLohiEndpoint,
-	errorToastIfFalsy,
-	parseSearchParams,
-} from "~/utils/remix.server";
+import { canAccessLohiEndpoint, parseSearchParams } from "~/utils/remix.server";
 import { ADMIN_PAGE, authErrorUrl } from "~/utils/urls";
 import * as LogInLinkRepository from "../LogInLinkRepository.server";
 import {
@@ -68,11 +64,6 @@ export const logOutAction: ActionFunction = async ({ request }) => {
 };
 
 export const logInAction: ActionFunction = async ({ request }) => {
-	errorToastIfFalsy(
-		process.env.LOGIN_DISABLED !== "true",
-		"Login is temporarily disabled",
-	);
-
 	return await authenticator.authenticate("discord", request);
 };
 

@@ -1,3 +1,4 @@
+import { Config } from "~/config";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 
 /**
@@ -18,11 +19,7 @@ export const list =
 	// when we do pnpm run setup NODE_ENV is not set -> use test seasons
 	!process.env.NODE_ENV ||
 	IS_E2E_TEST_RUN ||
-	// this gets checked when the project is running
-	// import.meta.env is undefined when Playwright bundles test code
-	(process.env.NODE_ENV === "development" &&
-		(typeof import.meta.env === "undefined" ||
-			import.meta.env.VITE_PROD_MODE !== "true"))
+	(process.env.NODE_ENV === "development" && !Config.prodMode)
 		? ([
 				{
 					nth: 0,

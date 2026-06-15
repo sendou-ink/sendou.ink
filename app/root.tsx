@@ -28,6 +28,7 @@ import {
 	useSearchParams,
 } from "react-router";
 import { useChangeLanguage } from "remix-i18next/react";
+import { Config } from "~/config";
 import type { CustomTheme } from "~/db/tables";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
@@ -185,8 +186,7 @@ function Document({
 			className={clsx(htmlThemeClass, "scrollbar")}
 			style={htmlStyle}
 			data-fuse={
-				import.meta.env.VITE_FUSE_ENABLED &&
-				!data?.user?.roles.includes("MINOR_SUPPORT")
+				Config.fuseEnabled && !data?.user?.roles.includes("MINOR_SUPPORT")
 					? "true"
 					: undefined
 			}
@@ -194,7 +194,7 @@ function Document({
 		>
 			<head>
 				<meta charSet="utf-8" />
-				{import.meta.env.VITE_FUSE_ENABLED &&
+				{Config.fuseEnabled &&
 				// check for data so supporters don't see ads on error page
 				data &&
 				!data.user?.roles.includes("MINOR_SUPPORT") ? (

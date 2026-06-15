@@ -1,7 +1,7 @@
 import { cachified } from "@epic-web/cachified";
 import { cache } from "~/utils/cache.server";
 import { tokenResponseSchema } from "./schemas";
-import { getTwitchEnvVars } from "./utils";
+import { getTwitchEnvVars } from "./utils.server";
 
 async function getFreshToken() {
 	const { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } = getTwitchEnvVars();

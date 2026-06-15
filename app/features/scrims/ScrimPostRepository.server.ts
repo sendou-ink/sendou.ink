@@ -437,6 +437,104 @@ export async function findAcceptedScrimsBetweenTwoTimestamps({
 	return rows.map(mapDBRowToScrimPost).filter((post) => Scrim.isAccepted(post));
 }
 
+/**
+ * Finds pending (unaccepted, uncanceled, future) scrim posts and requests
+ * involving any of the given users whose time overlaps [startTime, endTime].
+ * Used to auto-clean conflicting availability when a scrim is scheduled.
+ *
+ * @returns posts (with their member ids, for notifying) and request ids
+ * (deleted silently) that should be removed
+ */
+export async function findPendingOverlapsForUsers({
+	userIds,
+	startTime,
+	endTime,
+	excludePostId,
+}: {
+	userIds: number[];
+	/** window start, database timestamp (seconds) */
+	startTime: number;
+	/** window end, database timestamp (seconds) */
+	endTime: number;
+	excludePostId: number;
+}): Promise<{
+	posts: Array<{ id: number; at: number; memberIds: number[] }>;
+	requestIds: number[];
+}> {
+	if (userIds.length === 0) {
+		return { posts: [], requestIds: [] };
+	}
+
+	const now = dateToDatabaseTimestamp(new Date());
+
+	const rows = await baseFindQuery
+		.where("ScrimPost.canceledAt", "is", null)
+		.where("ScrimPost.at", ">=", now)
+		.where((eb) =>
+			eb.or([
+				eb.exists(
+					eb
+						.selectFrom("ScrimPostUser")
+						.select("ScrimPostUser.scrimPostId")
+						.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id")
+						.where("ScrimPostUser.userId", "in", userIds),
+				),
+				eb.exists(
+					eb
+						.selectFrom("ScrimPostRequest")
+						.innerJoin(
+							"ScrimPostRequestUser",
+							"ScrimPostRequestUser.scrimPostRequestId",
+							"ScrimPostRequest.id",
+						)
+						.select("ScrimPostRequest.scrimPostId")
+						.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
+						.where("ScrimPostRequestUser.userId", "in", userIds),
+				),
+			]),
+		)
+		.execute();
+
+	const userIdSet = new Set(userIds);
+
+	const posts: Array<{ id: number; at: number; memberIds: number[] }> = [];
+	const requestIds: number[] = [];
+
+	for (const post of rows
+		.map(mapDBRowToScrimPost)
+		.filter((post) => !Scrim.isAccepted(post))) {
+		if (post.id === excludePostId) continue;
+
+		const postInvolvesUser = post.users.some((u) => userIdSet.has(u.id));
+		const postIntervalOverlaps =
+			post.at <= endTime && (post.rangeEnd ?? post.at) >= startTime;
+		if (postInvolvesUser && postIntervalOverlaps) {
+			posts.push({
+				id: post.id,
+				at: post.at,
+				memberIds: post.users.map((u) => u.id),
+			});
+		}
+
+		for (const request of post.requests) {
+			if (request.isAccepted) continue;
+			const effectiveAt = request.at ?? post.at;
+			const requestInvolvesUser = request.users.some((u) =>
+				userIdSet.has(u.id),
+			);
+			if (
+				requestInvolvesUser &&
+				effectiveAt >= startTime &&
+				effectiveAt <= endTime
+			) {
+				requestIds.push(request.id);
+			}
+		}
+	}
+
+	return { posts, requestIds };
+}
+
 export type SidebarScrim = {
 	id: number;
 	at: number;

@@ -29,6 +29,7 @@ const NOTIFICATION_URGENCY: Record<Notification["type"], Urgency> = {
 	SCRIM_SCHEDULED: "high",
 	SCRIM_CANCELED: "high",
 	SCRIM_STARTING_SOON: "high",
+	SCRIM_AUTO_DELETED: "normal",
 	COMMISSIONS_CLOSED: "normal",
 	FRIEND_REQUEST_RECEIVED: "normal",
 };

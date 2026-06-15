@@ -6,6 +6,7 @@ import type { SendouButtonProps } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useHydrated } from "~/hooks/useHydrated";
 import invariant from "~/utils/invariant";
+import { FormMessage } from "./FormMessage";
 import { SubmitButton } from "./SubmitButton";
 
 interface ChildProps {
@@ -17,6 +18,7 @@ export function FormWithConfirm({
 	fields,
 	children,
 	dialogHeading,
+	description,
 	submitButtonText,
 	action,
 	submitButtonTestId = "submit-button",
@@ -31,6 +33,8 @@ export function FormWithConfirm({
 	)[];
 	children?: React.ReactElement<ChildProps>;
 	dialogHeading: string;
+	/** Optional explanatory text shown below the heading in the confirm dialog */
+	description?: React.ReactNode;
 	submitButtonText?: string;
 	action?: string;
 	submitButtonTestId?: string;
@@ -96,6 +100,9 @@ export function FormWithConfirm({
 			>
 				<div className="stack md">
 					<h2 className="text-md text-center">{dialogHeading}</h2>
+					{description ? (
+						<FormMessage type="info">{description}</FormMessage>
+					) : null}
 					<div className="stack horizontal md justify-center mt-2">
 						<SubmitButton
 							form={id}

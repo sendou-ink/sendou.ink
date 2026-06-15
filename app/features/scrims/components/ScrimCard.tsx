@@ -524,6 +524,7 @@ export function ScrimRequestCard({
 							dialogHeading={t("scrims:acceptModal.title", {
 								groupName: teamName,
 							})}
+							description={t("scrims:autoCancelInfo")}
 							fields={[
 								["scrimPostRequestId", request.id],
 								["_action", "ACCEPT_REQUEST"],

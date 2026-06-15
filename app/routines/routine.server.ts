@@ -1,7 +1,8 @@
 import * as Sentry from "@sentry/react-router";
+import { Config } from "~/config";
 import { logger } from "../utils/logger";
 
-const SENTRY_ENABLED = import.meta.env.VITE_SENTRY_ENABLED === "true";
+const SENTRY_ENABLED = Config.sentry.enabled;
 
 export class Routine {
 	private name;

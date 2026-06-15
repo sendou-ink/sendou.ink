@@ -108,6 +108,7 @@ export function findAllMemberOfByUserId(userId: number) {
 			"Team.name",
 			"Team.mapModePreferences",
 			"TeamMemberWithSecondary.role",
+			"TeamMemberWithSecondary.customRole",
 			"TeamMemberWithSecondary.isOwner",
 			"TeamMemberWithSecondary.isManager",
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(

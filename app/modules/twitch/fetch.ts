@@ -1,6 +1,6 @@
 import { logger } from "~/utils/logger";
 import { getToken, purgeCachedToken } from "./token";
-import { getTwitchEnvVars } from "./utils";
+import { getTwitchEnvVars } from "./utils.server";
 
 const MAX_RATE_LIMIT_RETRIES = 5;
 const MAX_RATE_LIMIT_WAIT_MS = 60_000;

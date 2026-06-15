@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { assertType } from "~/utils/types";
 import {
+	ability,
 	hexCodeWithoutAlpha,
 	modeShort,
 	specialWeaponId,
@@ -16,6 +17,7 @@ export const tierListItemTypeSchema = z.enum([
 	"stage",
 	"mode",
 	"stage-mode",
+	"ability",
 ]);
 assertType<z.infer<typeof tierListItemTypeSchema>, TierListItem["type"]>();
 
@@ -49,6 +51,11 @@ const tierListItemSchema = z.union([
 		id: z.string(),
 		nth: z.number().optional(),
 		type: z.literal("stage-mode"),
+	}),
+	z.object({
+		id: ability,
+		nth: z.number().optional(),
+		type: z.literal("ability"),
 	}),
 ]);
 
