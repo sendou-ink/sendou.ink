@@ -3084,6 +3084,23 @@ async function playedMatches() {
 			}),
 		);
 	}
+
+	// skills are inserted with createdAt of the current time, but matches are
+	// backdated above. Sync skill createdAt to the match date so the season
+	// progression chart on the user seasons page has data spread across days.
+	sql
+		.prepare(
+			/* sql */ `
+      update "Skill"
+      set "createdAt" = (
+        select "createdAt"
+        from "GroupMatch"
+        where "GroupMatch"."id" = "Skill"."groupMatchId"
+      )
+      where "groupMatchId" is not null
+    `,
+		)
+		.run();
 }
 
 async function friendCodes() {
