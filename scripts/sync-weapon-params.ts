@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { logger } from "~/utils/logger";
 import weapons from "./dicts/WeaponInfoMain.json";
 
@@ -8,6 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PARAMETER_DIR = path.join(__dirname, "dicts", "parameter");
+const MUSH_DIR = path.join(__dirname, "dicts", "mush");
 const OUTPUT_DIR = path.join(
 	__dirname,
 	"..",
@@ -196,6 +198,77 @@ function mergeWithHistory(
 	return result;
 }
 
+// SpecialPoint lives in WeaponInfoMain (kit data), which is not part of the per-version weapon
+// GameParameterTable dump, so it is read per version from the local mush dir.
+function collectSpecialPointsByVersion(
+	sortedVersions: string[],
+): Map<number, Map<string, number>> {
+	const result = new Map<number, Map<string, number>>();
+	const mainWeaponIdSet = new Set<number>(mainWeaponIds);
+
+	for (const version of sortedVersions) {
+		const filePath = path.join(MUSH_DIR, version, "WeaponInfoMain.json");
+		if (!fs.existsSync(filePath)) continue;
+
+		let entries: MainWeapon[];
+		try {
+			entries = JSON.parse(fs.readFileSync(filePath, "utf8"));
+		} catch {
+			logger.warn(`Failed to parse ${filePath}`);
+			continue;
+		}
+
+		for (const weapon of entries) {
+			if (mainWeaponShouldBeSkipped(weapon)) continue;
+			if (!mainWeaponIdSet.has(weapon.Id)) continue;
+			if (typeof weapon.SpecialPoint !== "number") continue;
+
+			if (!result.has(weapon.Id)) {
+				result.set(weapon.Id, new Map());
+			}
+			result.get(weapon.Id)!.set(version, weapon.SpecialPoint);
+		}
+	}
+
+	return result;
+}
+
+function buildSpecialPointsHistory(
+	specialPointsByVersion: Map<number, Map<string, number>>,
+	sortedVersions: string[],
+): Record<
+	string,
+	{ current: number; history: Array<{ version: string; value: number }> }
+> {
+	const result: Record<
+		string,
+		{ current: number; history: Array<{ version: string; value: number }> }
+	> = {};
+
+	for (const [weaponId, byVersion] of specialPointsByVersion) {
+		const presentVersions = sortedVersions.filter((v) => byVersion.has(v));
+		if (presentVersions.length === 0) continue;
+
+		const current = byVersion.get(presentVersions[presentVersions.length - 1])!;
+		const history: Array<{ version: string; value: number }> = [];
+
+		for (let i = 0; i < presentVersions.length - 1; i++) {
+			const value = byVersion.get(presentVersions[i])!;
+			const nextValue = byVersion.get(presentVersions[i + 1])!;
+			if (value !== nextValue) {
+				history.push({
+					version: parseVersionToDisplay(presentVersions[i]),
+					value,
+				});
+			}
+		}
+
+		result[String(weaponId)] = { current, history };
+	}
+
+	return result;
+}
+
 async function main() {
 	logger.info("Starting weapon params sync...");
 
@@ -264,6 +337,11 @@ async function main() {
 		outputWeapons[String(weaponId)] = paramsWithHistory;
 	}
 
+	const specialPoints = buildSpecialPointsHistory(
+		collectSpecialPointsByVersion(sortedVersions),
+		sortedVersions,
+	);
+
 	const output = {
 		metadata: {
 			generatedAt: new Date().toISOString(),
@@ -271,6 +349,7 @@ async function main() {
 			versions: sortedVersions.map(parseVersionToDisplay),
 		},
 		weapons: outputWeapons,
+		specialPoints,
 	};
 
 	if (!fs.existsSync(OUTPUT_DIR)) {

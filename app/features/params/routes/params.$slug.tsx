@@ -15,7 +15,7 @@ export { loader };
 import styles from "./params.$slug.module.css";
 
 export const handle: SendouRouteHandle = {
-	i18n: ["weapons", "common"],
+	i18n: ["weapons", "common", "analyzer"],
 	breadcrumb: ({ match }) => {
 		const data = match.data as SerializeFrom<typeof loader> | undefined;
 		if (!data) return [];
@@ -38,8 +38,6 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 	});
 };
 
-// xxx: top row = points for special
-
 export default function WeaponParamsPage() {
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common", "weapons"]);
@@ -51,6 +49,7 @@ export default function WeaponParamsPage() {
 				currentWeaponId={data.weaponId}
 				categoryWeaponIds={data.categoryWeaponIds}
 				weaponParams={data.weaponParams}
+				specialPoints={data.specialPoints}
 				versions={data.versions}
 			/>
 			<a

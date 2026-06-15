@@ -13,7 +13,10 @@ import {
 	parseWeaponParams,
 } from "../core/weapon-params";
 import weaponParamsData from "../data/all-version-weapon-params.json";
-import type { ParsedWeaponParams } from "../weapon-params-types";
+import type {
+	ParsedWeaponParams,
+	SpecialPointWithHistory,
+} from "../weapon-params-types";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const t = await i18next.getFixedT(request, ["weapons"], {
@@ -53,6 +56,24 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		}
 	}
 
+	const allSpecialPoints = (
+		weaponParamsData as {
+			specialPoints?: Record<
+				string,
+				{ history: Array<{ version: string; value: number }> }
+			>;
+		}
+	).specialPoints;
+
+	const specialPoints: Record<string, SpecialPointWithHistory[]> = {};
+	for (const id of categoryWeaponIds) {
+		specialPoints[String(id)] = getWeaponKitSiblingIds(id).map((kitId) => ({
+			weaponId: kitId,
+			current: mainWeaponParams(kitId).SpecialPoint,
+			history: allSpecialPoints?.[String(kitId)]?.history ?? [],
+		}));
+	}
+
 	return {
 		weaponId,
 		weaponName,
@@ -60,6 +81,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		categoryWeaponIds,
 		kits,
 		weaponParams,
+		specialPoints,
 		versions: weaponParamsData.metadata.versions,
 	};
 };

@@ -26,9 +26,16 @@ export interface ParamDefinition {
 	fullKey: string;
 }
 
+export interface SpecialPointWithHistory {
+	weaponId: MainWeaponId;
+	current: number;
+	history: Array<{ version: string; value: number }>;
+}
+
 export interface WeaponParamsTableProps {
 	currentWeaponId: MainWeaponId;
 	categoryWeaponIds: MainWeaponId[];
 	weaponParams: Record<string, ParsedWeaponParams>;
+	specialPoints: Record<string, SpecialPointWithHistory[]>;
 	versions: string[];
 }

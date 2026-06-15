@@ -15,16 +15,20 @@ import {
 } from "../core/weapon-params";
 import type {
 	ParamValueWithHistory,
+	SpecialPointWithHistory,
 	WeaponParamsTableProps,
 } from "../weapon-params-types";
 import styles from "./WeaponParamsTable.module.css";
+
+const SPECIAL_POINTS_KEY = "__specialPoints__";
 
 export function WeaponParamsTable({
 	currentWeaponId,
 	categoryWeaponIds,
 	weaponParams,
+	specialPoints,
 }: WeaponParamsTableProps) {
-	const { t } = useTranslation(["weapons", "common"]);
+	const { t } = useTranslation(["weapons", "common", "analyzer"]);
 	const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
 	const paramDefinitions = collectAllParamKeys(weaponParams);
@@ -149,6 +153,12 @@ export function WeaponParamsTable({
 					</tr>
 				</thead>
 				<tbody>
+					<SpecialPointsRow
+						visibleWeaponIds={visibleWeaponIds}
+						specialPoints={specialPoints}
+						isExpanded={expandedRows.has(SPECIAL_POINTS_KEY)}
+						onToggle={() => toggleRow(SPECIAL_POINTS_KEY)}
+					/>
 					{Object.entries(paramsByCategory).map(([category, params]) => {
 						const filteredParams = params.filter(({ key }) =>
 							currentWeaponHasParam(category, key),
@@ -262,6 +272,107 @@ function HiddenWeaponsBar({
 				{t("common:actions.showAll")}
 			</SendouButton>
 		</div>
+	);
+}
+
+function SpecialPointsRow({
+	visibleWeaponIds,
+	specialPoints,
+	isExpanded,
+	onToggle,
+}: {
+	visibleWeaponIds: MainWeaponId[];
+	specialPoints: Record<string, SpecialPointWithHistory[]>;
+	isExpanded: boolean;
+	onToggle: () => void;
+}) {
+	const { t } = useTranslation(["analyzer"]);
+
+	const hasHistory = visibleWeaponIds.some((id) =>
+		specialPoints[String(id)]?.some((kit) => kit.history.length > 0),
+	);
+
+	return (
+		<tr className={clsx({ [styles.expandableRow]: hasHistory })}>
+			<td
+				className={styles.paramName}
+				onClick={hasHistory ? onToggle : undefined}
+			>
+				<span className={styles.paramNameText}>
+					{t("analyzer:stat.specialPoints")}
+				</span>
+				{hasHistory ? (
+					<span className={styles.historyIndicator}>
+						{isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+					</span>
+				) : null}
+			</td>
+			{visibleWeaponIds.map((weaponId) => (
+				<SpecialPointCell
+					key={weaponId}
+					kits={specialPoints[String(weaponId)] ?? []}
+					isExpanded={isExpanded}
+				/>
+			))}
+		</tr>
+	);
+}
+
+function SpecialPointCell({
+	kits,
+	isExpanded,
+}: {
+	kits: SpecialPointWithHistory[];
+	isExpanded: boolean;
+}) {
+	const { t } = useTranslation(["analyzer"]);
+	const suffix = t("analyzer:suffix.specialPointsShort");
+
+	if (kits.length === 0) {
+		return (
+			<td className={styles.paramCell}>
+				<span className={styles.noValue}>—</span>
+			</td>
+		);
+	}
+
+	const kitsWithHistory = kits.filter((kit) => kit.history.length > 0);
+	const showHistory = isExpanded && kitsWithHistory.length > 0;
+
+	return (
+		<td className={styles.paramCell}>
+			<div className={styles.cellContent}>
+				<span className={styles.currentValue}>
+					{kits.map((kit) => `${kit.current}${suffix}`).join(" / ")}
+				</span>
+				{kitsWithHistory.length > 0 && !isExpanded ? (
+					<span className={styles.historyBadge}>{kitsWithHistory.length}</span>
+				) : null}
+			</div>
+			{showHistory ? (
+				<div className={styles.specialPointHistory}>
+					{kitsWithHistory.map((kit) => (
+						<div key={kit.weaponId} className={styles.specialPointHistoryKit}>
+							<WeaponImage
+								weaponSplId={kit.weaponId}
+								variant="badge"
+								size={24}
+							/>
+							<div className={styles.specialPointHistoryKitList}>
+								{kit.history.toReversed().map(({ version, value }) => (
+									<div key={version} className={styles.historyItem}>
+										<span className={styles.historyValue}>
+											{`${value}${suffix}`}
+										</span>
+										<span className={styles.historyVersion}>{version}</span>
+									</div>
+								))}
+							</div>
+						</div>
+					))}
+				</div>
+			) : null}
+		</td>
 	);
 }
 

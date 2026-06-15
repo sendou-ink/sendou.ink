@@ -195,3 +195,30 @@
 	color: var(--color-accent);
 	font-weight: var(--weight-semi);
 }
+
+.specialPointHistory {
+	margin-top: var(--s-1);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+	border-top: 1px solid var(--color-border);
+	padding-top: var(--s-1);
+}
+
+.specialPointHistoryKit {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--s-1);
+
+	& > div:first-child {
+		flex-shrink: 0;
+	}
+}
+
+.specialPointHistoryKitList {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: var(--s-0-5);
+	font-size: var(--font-xs);
+}
