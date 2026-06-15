@@ -12,6 +12,7 @@ import {
 	useSearchParamState,
 	useSearchParamStateEncoder,
 } from "~/hooks/useSearchParamState";
+import { abilitiesShort } from "~/modules/in-game-lists/abilities";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import {
@@ -91,7 +92,7 @@ export function useTierList() {
 		const [type, idStr, nth] = String(id).split(":");
 		if (!type || !idStr) return null;
 
-		if (type === "mode" || type === "stage-mode") {
+		if (type === "mode" || type === "stage-mode" || type === "ability") {
 			return {
 				type: type as TierListItem["type"],
 				id: idStr,
@@ -342,6 +343,8 @@ export function useTierList() {
 				return [...stageIds];
 			case "mode":
 				return [...modesShort];
+			case "ability":
+				return [...abilitiesShort];
 			case "stage-mode": {
 				const combinations: string[] = [];
 				for (const stageId of stageIds) {

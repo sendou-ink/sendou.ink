@@ -1,3 +1,4 @@
+import { Ability } from "~/components/Ability";
 import {
 	ModeImage,
 	SpecialWeaponImage,
@@ -43,6 +44,12 @@ export function TierListItemImage({ item }: TierListItemImageProps) {
 			return (
 				<div className={styles.imageWrapper}>
 					<ModeImage mode={item.id} width={48} height={48} />
+				</div>
+			);
+		case "ability":
+			return (
+				<div className={styles.imageWrapper}>
+					<Ability ability={item.id} size="MAIN" />
 				</div>
 			);
 		case "stage-mode": {

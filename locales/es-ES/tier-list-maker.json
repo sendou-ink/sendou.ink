@@ -7,6 +7,7 @@
 	"stages": "Escenarios",
 	"modes": "Modos",
 	"stageModes": "Escenario + Modos",
+	"abilities": "",
 	"dropItems": "Suelta los elementos aquí",
 	"editingTier": "Editando tier",
 	"hideAltKits": "Ocultar kits alternativos",
