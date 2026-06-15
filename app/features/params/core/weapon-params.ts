@@ -27,6 +27,31 @@ function parseParamKey(key: string): {
 	};
 }
 
+function flattenScalarParams(
+	params: Record<string, unknown>,
+	prefix = "",
+): Array<[string, number | string]> {
+	const result: Array<[string, number | string]> = [];
+
+	for (const [key, value] of Object.entries(params)) {
+		const fullKey = prefix ? `${prefix}.${key}` : key;
+
+		if (typeof value === "number" || typeof value === "string") {
+			result.push([fullKey, value]);
+		} else if (
+			typeof value === "object" &&
+			value !== null &&
+			!Array.isArray(value)
+		) {
+			result.push(
+				...flattenScalarParams(value as Record<string, unknown>, fullKey),
+			);
+		}
+	}
+
+	return result;
+}
+
 export function parseWeaponParams(
 	weaponId: MainWeaponId,
 	rawParams: Record<string, Record<string, unknown>>,
@@ -49,11 +74,7 @@ export function parseWeaponParams(
 			{ current: number | string; versions: Map<string, number | string> }
 		> = {};
 
-		for (const [key, value] of Object.entries(categoryParams)) {
-			if (typeof value !== "number" && typeof value !== "string") {
-				continue;
-			}
-
+		for (const [key, value] of flattenScalarParams(categoryParams)) {
 			const { baseKey, version } = parseParamKey(key);
 
 			if (!paramHistory[baseKey]) {
