@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
+import { PATCHES } from "~/features/builds/builds-constants";
 import { i18next } from "~/modules/i18n/i18next.server";
 import {
 	weaponIdToBaseWeaponId,
@@ -8,6 +9,7 @@ import {
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { mySlugify } from "~/utils/urls";
 import {
+	computeWeaponPatchChanges,
 	getCategoryWeaponIds,
 	getWeaponKitSiblingIds,
 	parseWeaponParams,
@@ -16,6 +18,7 @@ import weaponParamsData from "../data/all-version-weapon-params.json";
 import type {
 	ParsedWeaponParams,
 	SpecialPointWithHistory,
+	WeaponPatch,
 } from "../weapon-params-types";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -74,6 +77,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		}));
 	}
 
+	const versions = weaponParamsData.metadata.versions;
+	const patchHistory = buildPatchHistory(
+		weaponParams[String(weaponId)],
+		versions,
+		specialPoints[String(weaponId)] ?? [],
+	);
+
 	return {
 		weaponId,
 		weaponName,
@@ -82,6 +92,31 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		kits,
 		weaponParams,
 		specialPoints,
-		versions: weaponParamsData.metadata.versions,
+		patchHistory,
+		versions,
 	};
 };
+
+function buildPatchHistory(
+	parsed: ParsedWeaponParams | undefined,
+	versions: string[],
+	specialPoints: SpecialPointWithHistory[],
+): WeaponPatch[] {
+	if (!parsed) return [];
+
+	const patchDateByVersion = new Map(PATCHES.map((p) => [p.patch, p.date]));
+	const changesByVersion = computeWeaponPatchChanges(
+		parsed,
+		versions,
+		specialPoints,
+	);
+
+	return versions
+		.filter((version) => changesByVersion.has(version))
+		.map((version) => ({
+			version,
+			date: patchDateByVersion.get(version) ?? null,
+			changes: changesByVersion.get(version)!,
+		}))
+		.reverse();
+}

@@ -3,6 +3,7 @@ import type {
 	SpecialWeaponId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
+import type { ParamChangeKind } from "./core/param-directions";
 
 export interface WeaponKitInfo {
 	weaponId: MainWeaponId;
@@ -30,6 +31,22 @@ export interface SpecialPointWithHistory {
 	weaponId: MainWeaponId;
 	current: number;
 	history: Array<{ version: string; value: number }>;
+}
+
+export interface PatchChange {
+	category: string;
+	key: string;
+	from: number | string;
+	to: number | string;
+	kind: ParamChangeKind;
+	/** The specific kit a special points change belongs to. Only set for special points. */
+	weaponId?: MainWeaponId;
+}
+
+export interface WeaponPatch {
+	version: string;
+	date: string | null;
+	changes: PatchChange[];
 }
 
 export interface WeaponParamsTableProps {

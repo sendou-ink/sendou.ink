@@ -9,7 +9,16 @@ import type {
 	ParamDefinition,
 	ParamValueWithHistory,
 	ParsedWeaponParams,
+	PatchChange,
+	SpecialPointWithHistory,
 } from "../weapon-params-types";
+import { classifyParamChange } from "./param-directions";
+
+/**
+ * Sentinel `category` used for the special points entry in patch change data, since special
+ * points are not a regular weapon parameter. The matching `key` is also this value.
+ */
+export const SPECIAL_POINTS_PARAM_KEY = "__specialPoints__";
 
 // xxx: check if similar exist elsewhere, convert to utils to * as Module
 
@@ -38,11 +47,20 @@ function flattenScalarParams(
 
 		if (typeof value === "number" || typeof value === "string") {
 			result.push([fullKey, value]);
-		} else if (
-			typeof value === "object" &&
-			value !== null &&
-			!Array.isArray(value)
-		) {
+		} else if (Array.isArray(value)) {
+			// Arrays of plain numbers/strings (e.g. SplashSpawnParam.ForceSpawnNearestAddNumArray)
+			// are kept as a joined string so their changes still show up. Arrays of objects are
+			// too structured to represent this way and are skipped.
+			if (
+				value.length > 0 &&
+				value.every((el) => typeof el === "number" || typeof el === "string")
+			) {
+				result.push([
+					fullKey,
+					`[${value.map((el) => formatParamValue(el)).join(", ")}]`,
+				]);
+			}
+		} else if (typeof value === "object" && value !== null) {
 			result.push(
 				...flattenScalarParams(value as Record<string, unknown>, fullKey),
 			);
@@ -183,6 +201,119 @@ export function getWeaponKitSiblingIds(weaponId: MainWeaponId): MainWeaponId[] {
 
 export function hasParamHistory(param: ParamValueWithHistory): boolean {
 	return param.history.length > 0;
+}
+
+function changesFromHistory(
+	history: Array<{ version: string; value: number | string }>,
+	current: number | string,
+	versions: string[],
+	versionIndex: Map<string, number>,
+): Array<{ patchVersion: string; from: number | string; to: number | string }> {
+	const result: Array<{
+		patchVersion: string;
+		from: number | string;
+		to: number | string;
+	}> = [];
+
+	for (let i = 0; i < history.length; i++) {
+		const { version, value: from } = history[i];
+		const to = i < history.length - 1 ? history[i + 1].value : current;
+
+		// A recorded value is the value *before* a change, so the change took effect at the
+		// next tracked game version.
+		const recordedIndex = versionIndex.get(version);
+		if (recordedIndex === undefined) continue;
+		const patchVersion = versions[recordedIndex + 1];
+		if (!patchVersion) continue;
+
+		result.push({ patchVersion, from, to });
+	}
+
+	return result;
+}
+
+/**
+ * Groups every tracked parameter change of a single weapon by the game version (patch) that
+ * introduced it. Optionally folds the weapon's special points history into the same grouping.
+ *
+ * Within each patch the changes are sorted with special points first, then alphabetically by
+ * category and key.
+ */
+export function computeWeaponPatchChanges(
+	parsed: ParsedWeaponParams,
+	versions: string[],
+	specialPoints?: SpecialPointWithHistory[],
+): Map<string, PatchChange[]> {
+	const versionIndex = new Map(versions.map((version, i) => [version, i]));
+	const byVersion = new Map<string, PatchChange[]>();
+
+	const push = (patchVersion: string, change: PatchChange) => {
+		const existing = byVersion.get(patchVersion);
+		if (existing) {
+			existing.push(change);
+		} else {
+			byVersion.set(patchVersion, [change]);
+		}
+	};
+
+	for (const [category, params] of Object.entries(parsed.categories)) {
+		for (const [key, param] of Object.entries(params)) {
+			for (const { patchVersion, from, to } of changesFromHistory(
+				param.history,
+				param.current,
+				versions,
+				versionIndex,
+			)) {
+				push(patchVersion, {
+					category,
+					key,
+					from,
+					to,
+					kind: classifyParamChange(category, key, from, to),
+				});
+			}
+		}
+	}
+
+	for (const kit of specialPoints ?? []) {
+		for (const { patchVersion, from, to } of changesFromHistory(
+			kit.history,
+			kit.current,
+			versions,
+			versionIndex,
+		)) {
+			// Fewer special points needed means the special charges faster.
+			const kind = from === to ? "neutral" : to < from ? "buff" : "nerf";
+			push(patchVersion, {
+				category: SPECIAL_POINTS_PARAM_KEY,
+				key: SPECIAL_POINTS_PARAM_KEY,
+				from,
+				to,
+				kind,
+				weaponId: kit.weaponId,
+			});
+		}
+	}
+
+	for (const changes of byVersion.values()) {
+		changes.sort((a, b) => {
+			const aIsSpecial = a.category === SPECIAL_POINTS_PARAM_KEY;
+			const bIsSpecial = b.category === SPECIAL_POINTS_PARAM_KEY;
+			// Special points first, ordered by kit, then regular params by category and key.
+			if (aIsSpecial || bIsSpecial) {
+				if (aIsSpecial && bIsSpecial) {
+					return (a.weaponId ?? 0) - (b.weaponId ?? 0);
+				}
+				return aIsSpecial ? -1 : 1;
+			}
+			if (a.category !== b.category) {
+				return a.category.localeCompare(b.category);
+			}
+			return a.key.localeCompare(b.key);
+		});
+	}
+
+	return byVersion;
 }
 
 export function formatParamValue(value: number | string): string {
