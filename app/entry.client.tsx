@@ -4,11 +4,12 @@ import i18next from "i18next";
 import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider } from "react-i18next";
 import { HydratedRouter } from "react-router/dom";
+import { Config } from "~/config";
 import { i18nLoader } from "./modules/i18n/loader";
 import { logger } from "./utils/logger";
 import { getSessionId } from "./utils/session-id";
 
-const SENTRY_ENABLED = import.meta.env.VITE_SENTRY_ENABLED === "true";
+const SENTRY_ENABLED = Config.sentry.enabled;
 
 const tracing = SENTRY_ENABLED
 	? Sentry.reactRouterTracingIntegration({
@@ -18,7 +19,7 @@ const tracing = SENTRY_ENABLED
 
 if (SENTRY_ENABLED) {
 	Sentry.init({
-		dsn: import.meta.env.VITE_SENTRY_DSN,
+		dsn: Config.sentry.dsn,
 		sendDefaultPii: false,
 		integrations: [
 			tracing!,

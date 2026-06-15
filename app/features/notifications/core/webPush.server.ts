@@ -1,17 +1,19 @@
 import webPush from "web-push";
+import { Config } from "~/config";
+import { ServerConfig } from "~/config.server";
 import { logger } from "~/utils/logger";
 
 export let webPushEnabled = false;
 
 if (
-	process.env.VAPID_EMAIL &&
-	process.env.VITE_VAPID_PUBLIC_KEY &&
-	process.env.VAPID_PRIVATE_KEY
+	ServerConfig.vapid.email &&
+	Config.vapid.publicKey &&
+	ServerConfig.vapid.privateKey
 ) {
 	webPush.setVapidDetails(
-		process.env.VAPID_EMAIL,
-		process.env.VITE_VAPID_PUBLIC_KEY,
-		process.env.VAPID_PRIVATE_KEY,
+		ServerConfig.vapid.email,
+		Config.vapid.publicKey,
+		ServerConfig.vapid.privateKey,
 	);
 	webPushEnabled = true;
 } else {

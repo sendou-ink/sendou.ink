@@ -1,4 +1,5 @@
 import { sub } from "date-fns";
+import { ServerConfig } from "~/config.server";
 import { clearCombinedStreamsCache } from "~/features/core/streams/streams.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
@@ -120,6 +121,10 @@ export async function tournamentDataCached({
 	user?: { id: number };
 	tournamentId: number;
 }) {
+	if (ServerConfig.disableCache) {
+		return notFoundIfFalsy(await tournamentData({ user, tournamentId }));
+	}
+
 	if (!tournamentDataCache.has(tournamentId)) {
 		tournamentDataCache.set(tournamentId, combinedTournamentData(tournamentId));
 	}

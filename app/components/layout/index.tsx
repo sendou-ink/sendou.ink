@@ -21,6 +21,7 @@ import {
 import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useLocation, useMatches } from "react-router";
+import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
@@ -269,7 +270,7 @@ export function Layout({
 	const isFrontPage = location.pathname === "/";
 
 	const showLeaderboard =
-		import.meta.env.VITE_FUSE_ENABLED &&
+		Config.fuseEnabled &&
 		!data?.user?.roles.includes("MINOR_SUPPORT") &&
 		!location.pathname.includes("plans");
 

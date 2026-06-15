@@ -92,6 +92,14 @@ You should then be able to access the application by visiting http://localhost:5
 
 Use the admin panel at http://localhost:5173/admin to log in (impersonate) as the admin user "Sendou" or as a regular user "N-ZAP" as well as re-seed the database if needed.
 
+#### Environment variables
+
+You don't need a `.env` file to get started. Default values for every environment variable are defined in [`app/config.ts`](./app/config.ts) (client `VITE_*` variables) and [`app/config.server.ts`](./app/config.server.ts) (server variables), and the development defaults are enough to run the app.
+
+To override any of them, create a `.env` file in the project root — see [`.env.example`](./.env.example) for the available variables. Some features (Discord login, image upload, chat) need real values or local services to actually work; without them the app still runs with those features disabled.
+
+In production these variables are read from the host environment, and the ones marked as required will fail fast at startup with a clear error if they are missing.
+
 #### Docker
 
 Optionally, if you want to develop image upload, real-time features or chat, you can use Docker to spin up the Skalop service and Minio for image hosting. You will need [Docker](https://www.docker.com/) up and running and then run the following command:

@@ -13,6 +13,7 @@ import { ExternalIcon } from "~/components/icons/External";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { navItems } from "~/components/layout/nav-items";
 import { Main } from "~/components/Main";
+import { Config } from "~/config";
 import { TournamentCard } from "~/features/calendar/components/TournamentCard";
 import { PWAInstallBanner } from "~/features/front-page/components/PWAInstallBanner";
 import { SplatoonRotations } from "~/features/front-page/components/SplatoonRotations";
@@ -139,7 +140,7 @@ function SeasonCard() {
 }
 
 function LeagueBanner() {
-	const showBannerFor = import.meta.env.VITE_SHOW_BANNER_FOR_SEASON;
+	const showBannerFor = Config.showBannerForSeason;
 	if (!showBannerFor) return null;
 
 	return (

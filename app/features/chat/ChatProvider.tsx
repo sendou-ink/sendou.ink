@@ -7,6 +7,7 @@ import {
 	useMatches,
 	useRevalidator,
 } from "react-router";
+import { Config } from "~/config";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import { logger } from "~/utils/logger";
 import { soundPath } from "~/utils/urls";
@@ -349,7 +350,7 @@ function ChatProviderInner({
 
 	// WebSocket connection
 	React.useEffect(() => {
-		const wsUrl = import.meta.env.VITE_SKALOP_WS_URL;
+		const wsUrl = Config.skalop.wsUrl;
 		if (!wsUrl) {
 			logger.warn("No WS URL provided, ChatProvider not connecting");
 			setReadyState("CLOSED");
