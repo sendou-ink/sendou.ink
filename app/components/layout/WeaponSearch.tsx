@@ -7,6 +7,7 @@ import {
 	Flame,
 	FlaskConical,
 	ImageIcon,
+	SlidersHorizontal,
 	Users,
 	Videotape,
 } from "lucide-react";
@@ -19,6 +20,7 @@ import { filterWeapon } from "~/modules/in-game-lists/utils";
 import {
 	canonicalWeaponSplId,
 	mainWeaponIds,
+	weaponIdToBaseWeaponId,
 } from "~/modules/in-game-lists/weapon-ids";
 import {
 	ANALYZER_URL,
@@ -29,6 +31,7 @@ import {
 	weaponBuildPage,
 	weaponBuildPopularPage,
 	weaponBuildStatsPage,
+	weaponParamsPage,
 } from "~/utils/urls";
 import styles from "./GlobalSearch.module.css";
 
@@ -37,6 +40,7 @@ const WEAPON_DESTINATIONS = [
 	"popular",
 	"stats",
 	"analyzer",
+	"params",
 	"vods",
 	"art",
 	"lfg",
@@ -48,6 +52,7 @@ export interface SelectedWeapon {
 	name: string;
 	englishName: string;
 	slug: string;
+	paramsSlug: string;
 }
 
 export function filterWeaponResults(
@@ -70,11 +75,15 @@ export function filterWeaponResults(
 			const slugName = t(`weapons:MAIN_${canonicalWeaponSplId(id)}`, {
 				lng: "en",
 			});
+			const paramsSlugName = t(`weapons:MAIN_${weaponIdToBaseWeaponId(id)}`, {
+				lng: "en",
+			});
 			matches.push({
 				id,
 				name: weaponName,
 				englishName,
 				slug: mySlugify(slugName),
+				paramsSlug: mySlugify(paramsSlugName),
 			});
 		}
 
@@ -93,6 +102,7 @@ function getWeaponDestinationUrl(
 		popular: weaponBuildPopularPage(weapon.slug),
 		stats: weaponBuildStatsPage(weapon.slug),
 		analyzer: `${ANALYZER_URL}?weapon=${weapon.id}`,
+		params: weaponParamsPage(weapon.paramsSlug),
 		vods: `${VODS_PAGE}?weapon=${weapon.id}`,
 		art: `/art?tab=showcase&tag=${encodeURIComponent(weapon.englishName.toLowerCase())}`,
 		lfg: `${LFG_PAGE}?q=w.${weapon.id}`,
@@ -188,6 +198,18 @@ export function WeaponDestinationMenu({
 						<Calculator size={20} />
 						<span className={styles.resultName}>
 							{t("common:pages.analyzer")}
+						</span>
+					</div>
+				</ListBoxItem>
+				<ListBoxItem
+					id="params"
+					href={getWeaponDestinationUrl("params", selectedWeapon)}
+					className={styles.listBoxItem}
+				>
+					<div className={styles.resultItem}>
+						<SlidersHorizontal size={20} />
+						<span className={styles.resultName}>
+							{t("common:pages.params")}
 						</span>
 					</div>
 				</ListBoxItem>

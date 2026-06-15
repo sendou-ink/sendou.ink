@@ -21,7 +21,10 @@ import { Input } from "~/components/Input";
 import type { SearchLoaderData } from "~/features/search/routes/search";
 import { useDebounce } from "~/hooks/useDebounce";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
+import {
+	canonicalWeaponSplId,
+	weaponIdToBaseWeaponId,
+} from "~/modules/in-game-lists/weapon-ids";
 import {
 	mySlugify,
 	navIconUrl,
@@ -168,7 +171,16 @@ function resolveInitialWeapon(
 	if (!name || name === `MAIN_${id}`) return null;
 	const englishName = t(`weapons:MAIN_${id}`, { lng: "en" });
 	const slugName = t(`weapons:MAIN_${canonicalWeaponSplId(id)}`, { lng: "en" });
-	return { id, name, englishName, slug: mySlugify(slugName) };
+	const paramsSlugName = t(`weapons:MAIN_${weaponIdToBaseWeaponId(id)}`, {
+		lng: "en",
+	});
+	return {
+		id,
+		name,
+		englishName,
+		slug: mySlugify(slugName),
+		paramsSlug: mySlugify(paramsSlugName),
+	};
 }
 
 function GlobalSearchContent({
@@ -245,7 +257,17 @@ function GlobalSearchContent({
 					const slugName = t(`weapons:MAIN_${canonicalWeaponSplId(id)}`, {
 						lng: "en",
 					});
-					return { id, name, englishName, slug: mySlugify(slugName) };
+					const paramsSlugName = t(
+						`weapons:MAIN_${weaponIdToBaseWeaponId(id)}`,
+						{ lng: "en" },
+					);
+					return {
+						id,
+						name,
+						englishName,
+						slug: mySlugify(slugName),
+						paramsSlug: mySlugify(paramsSlugName),
+					};
 				})
 			: [];
 
