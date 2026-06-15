@@ -1,5 +1,3 @@
-export { IN_GAME_NAME_REGEXP } from "./in-game-name";
-
 export const HIGHLIGHT_CHECKBOX_NAME = "highlightTeamIds";
 export const HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME = "highlightTournamentTeamIds";
 
