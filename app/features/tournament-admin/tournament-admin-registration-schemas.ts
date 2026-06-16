@@ -5,6 +5,7 @@ import {
 	fieldset,
 	idConstantOptional,
 	image,
+	inGameName,
 	selectDynamic,
 	stringConstant,
 	teamSearchOptional,
@@ -14,21 +15,12 @@ import {
 	userSearch,
 } from "~/form/fields";
 import { TEAM } from "../team/team-constants";
-import { IN_GAME_NAME_REGEXP } from "../user-page/user-page-constants";
-
-/** Combined in-game name e.g. `Sendou#1234` is at most 10 + `#` + 5 characters. */
-const IN_GAME_NAME_MAX_LENGTH = 16;
 
 const memberFieldset = fieldset({
 	fields: z.object({
 		userId: userSearch({ label: "labels.player" }),
-		inGameName: textFieldOptional({
+		inGameName: inGameName({
 			label: "labels.inGameName",
-			maxLength: IN_GAME_NAME_MAX_LENGTH,
-			regExp: {
-				pattern: IN_GAME_NAME_REGEXP,
-				message: "forms:errors.profileInGameName",
-			},
 		}),
 	}),
 });
