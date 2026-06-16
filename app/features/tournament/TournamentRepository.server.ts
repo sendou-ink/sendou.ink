@@ -467,25 +467,6 @@ export function relatedUsersByTournamentIds(tournamentIds: number[]) {
 			).as("staff"),
 			jsonArrayFrom(
 				eb
-					.selectFrom("TournamentOrganization")
-					.innerJoin(
-						"TournamentOrganizationMember",
-						"TournamentOrganization.id",
-						"TournamentOrganizationMember.organizationId",
-					)
-					.select(["TournamentOrganizationMember.userId"])
-					.whereRef(
-						"TournamentOrganization.id",
-						"=",
-						"CalendarEvent.organizationId",
-					)
-					.where("TournamentOrganizationMember.role", "in", [
-						"ADMIN",
-						"ORGANIZER",
-					]),
-			).as("organizationMembers"),
-			jsonArrayFrom(
-				eb
 					.selectFrom("TournamentTeam")
 					.innerJoin(
 						"TournamentTeamMember",
@@ -499,7 +480,6 @@ export function relatedUsersByTournamentIds(tournamentIds: number[]) {
 		.where("Tournament.id", "in", tournamentIds)
 		.$narrowType<{
 			staff: NotNull;
-			organizationMembers: NotNull;
 			teamMembers: NotNull;
 		}>()
 		.execute();

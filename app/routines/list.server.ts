@@ -1,6 +1,7 @@
 import { CloseExpiredCommissionsRoutine } from "./closeExpiredCommissions";
 import { CloseExpiredContinueVotesRoutine } from "./closeExpiredContinueVotes";
 import { DeleteObsoleteMatchVodsRoutine } from "./deleteObsoleteMatchVods";
+import { DeleteOldExternalStreamsRoutine } from "./deleteOldExternalStreams";
 import { DeleteOldNotificationsRoutine } from "./deleteOldNotifications";
 import { DeleteOldRoomLinksRoutine } from "./deleteOldRoomLinks";
 import { DeleteOldTournamentAuditLogsRoutine } from "./deleteOldTournamentAuditLogs";
@@ -32,6 +33,7 @@ export const everyHourAt30 = [
 	UpdatePatreonDataRoutine,
 	CloseExpiredContinueVotesRoutine,
 	DeleteOldRoomLinksRoutine,
+	DeleteOldExternalStreamsRoutine,
 ];
 
 /** List of Routines that should occur daily */

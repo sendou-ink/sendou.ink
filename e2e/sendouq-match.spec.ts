@@ -293,8 +293,21 @@ async function selectMapWinner(page: Page, winner: "ALPHA" | "BRAVO") {
 		page.locator('[data-testid^="winner-radio-"][data-selected="true"]'),
 	).toHaveCount(0);
 	// react-aria's Radio renders a hidden input behind a span overlay; click the
-	// wrapping label so the press handler fires and updates winnerId.
-	await page.locator(`label:has(input[aria-label="${teamName}"])`).click();
+	// wrapping label so the press handler fires and updates winnerId. The press
+	// occasionally registers a press-start without a press-end (same React Aria
+	// nondeterminism as in waitForPOSTResponse), so the selection silently drops
+	// and Submit stays disabled. Re-issue the click until the radio reports
+	// selected; otherwise the Submit-click retry loop spins on a disabled button.
+	const label = page.locator(`label:has(input[aria-label="${teamName}"])`);
+	const radio = page.locator(
+		`[data-testid^="winner-radio-"]:has(input[aria-label="${teamName}"])`,
+	);
+	await expect(async () => {
+		await label.click();
+		await expect(radio).toHaveAttribute("data-selected", "true", {
+			timeout: 1_000,
+		});
+	}).toPass();
 }
 
 async function voteNo(page: Page) {

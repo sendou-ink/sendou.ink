@@ -9,6 +9,7 @@ import {
 	dualSelectOptional,
 	idConstantOptional,
 	image,
+	inGameName,
 	selectDynamicOptional,
 	stringConstant,
 	textAreaOptional,
@@ -38,7 +39,6 @@ import { allWidgetsFlat, findWidgetById } from "./core/widgets/portfolio";
 import {
 	HIGHLIGHT_CHECKBOX_NAME,
 	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
-	IN_GAME_NAME_REGEXP,
 	USER,
 } from "./user-page-constants";
 
@@ -87,17 +87,9 @@ export const userEditProfileBaseSchema = z.object({
 			message: "forms:errors.profileCustomUrlNumbers",
 		},
 	}),
-	inGameName: textFieldOptional({
+	inGameName: inGameName({
 		label: "labels.inGameName",
 		bottomText: "bottomTexts.profileInGameName",
-		maxLength:
-			USER.IN_GAME_NAME_TEXT_MAX_LENGTH +
-			1 +
-			USER.IN_GAME_NAME_DISCRIMINATOR_MAX_LENGTH,
-		regExp: {
-			pattern: IN_GAME_NAME_REGEXP,
-			message: "forms:errors.profileInGameName",
-		},
 	}),
 	sensitivity: dualSelectOptional({
 		fields: [

@@ -6,16 +6,25 @@ import {
 	tournamentToSidebarEvent,
 } from "~/features/sidebar/core/sidebar.server";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
+import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 
 export type EventsLoaderData = typeof loader;
 
 export const loader = async () => {
 	const user = requireUser();
 
-	const [tournamentsData, scrimsData, savedTournaments] = await Promise.all([
+	const [
+		tournamentsData,
+		scrimsData,
+		savedTournaments,
+		upcomingTournaments,
+		userOrganizations,
+	] = await Promise.all([
 		ShowcaseTournaments.categorizedTournamentsByUserId(user.id),
 		ScrimPostRepository.findUserScrims(user.id),
 		SavedCalendarEventRepository.upcoming(user.id),
+		ShowcaseTournaments.upcomingTournaments(),
+		TournamentOrganizationRepository.findByUserId(user.id),
 	]);
 
 	const registered = tournamentsData.participatingFor
@@ -34,5 +43,16 @@ export const loader = async () => {
 		.map(tournamentToSidebarEvent)
 		.sort((a, b) => a.startTime - b.startTime);
 
-	return { registered, hosting, scrims, saved };
+	const userOrganizationIds = new Set(userOrganizations.map((org) => org.id));
+	const organization = upcomingTournaments
+		.filter(
+			(tournament) =>
+				!tournament.hidden &&
+				tournament.organizationId !== null &&
+				userOrganizationIds.has(tournament.organizationId),
+		)
+		.map(tournamentToSidebarEvent)
+		.sort((a, b) => a.startTime - b.startTime);
+
+	return { registered, hosting, scrims, saved, organization };
 };

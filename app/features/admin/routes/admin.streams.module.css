@@ -1,0 +1,12 @@
+.streamRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.streamAvatar {
+	width: 2.5rem;
+	height: 2.5rem;
+	border-radius: 100%;
+	object-fit: cover;
+}

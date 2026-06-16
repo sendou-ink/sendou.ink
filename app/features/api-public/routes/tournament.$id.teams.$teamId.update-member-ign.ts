@@ -6,7 +6,7 @@ import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import { IN_GAME_NAME_REGEXP } from "~/features/user-page/user-page-constants";
+import { inGameNameIsValid } from "~/features/user-page/in-game-name";
 import {
 	badRequestIfFalsy,
 	errorToastIfFalsy,
@@ -23,7 +23,7 @@ const paramsSchema = z.object({
 
 const bodySchema = z.object({
 	userId: id,
-	inGameName: z.string().regex(IN_GAME_NAME_REGEXP),
+	inGameName: z.string().refine(inGameNameIsValid),
 });
 
 export const action = async (args: ActionFunctionArgs) => {
