@@ -160,8 +160,8 @@ importers:
         specifier: 0.4.7
         version: 0.4.7(react@19.2.7)
       remeda:
-        specifier: 2.37.0
-        version: 2.37.0
+        specifier: 2.38.0
+        version: 2.38.0
       remix-auth:
         specifier: 4.2.0
         version: 4.2.0
@@ -3766,8 +3766,8 @@ packages:
   rematrix@0.2.2:
     resolution: {integrity: sha512-agFFS3RzrLXJl5LY5xg/xYyXvUuVAnkhgKO7RaO9J1Ssth6yvbO+PIiV67V59MB5NCdAK2flvGvNT4mdKVniFA==}
 
-  remeda@2.37.0:
-    resolution: {integrity: sha512-wN6BXWua0t4o7vDamqc27J3VRxnokG9cDezsFN2nOnt2JD/IkJQHTYqM6UvmEctAZETAoviwEFQZJO3kZ4Ohew==}
+  remeda@2.38.0:
+    resolution: {integrity: sha512-yhZjp7dd+L0NWS8gn4caKOHI6ALfbN3/2H5WNBCnFyzPYcG5vOw5b30FVpDFdQ+7Ui62QiCWKubJhG9Y5SqF5A==}
     engines: {node: '>=18.0.0'}
 
   remix-auth-oauth2@3.4.1:
@@ -7900,7 +7900,7 @@ snapshots:
 
   rematrix@0.2.2: {}
 
-  remeda@2.37.0: {}
+  remeda@2.38.0: {}
 
   remix-auth-oauth2@3.4.1(remix-auth@4.2.0):
     dependencies:
