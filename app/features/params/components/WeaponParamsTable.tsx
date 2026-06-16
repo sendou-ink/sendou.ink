@@ -10,6 +10,8 @@ import {
 	WeaponImage,
 } from "~/components/Image";
 import { InfoPopover } from "~/components/InfoPopover";
+import { translateDamageReceiver } from "~/features/object-damage-calculator/calculator-constants";
+import type { DamageReceiver } from "~/features/object-damage-calculator/calculator-types";
 import { useSearchParamStateEncoder } from "~/hooks/useSearchParamState";
 import type {
 	MainWeaponId,
@@ -24,6 +26,7 @@ import {
 	hasParamHistory,
 } from "../core/weapon-params";
 import type {
+	DamageMultiplierWithHistory,
 	ParamValueWithHistory,
 	SpecialPointWithHistory,
 	WeaponParamKind,
@@ -32,6 +35,7 @@ import type {
 import styles from "./WeaponParamsTable.module.css";
 
 const SPECIAL_POINTS_KEY = "__specialPoints__";
+const DAMAGE_RATE_INFO_CATEGORY = "DamageRateInfo";
 
 function WeaponParamImage({
 	kind,
@@ -87,6 +91,7 @@ export function WeaponParamsTable({
 	categoryWeaponIds,
 	weaponParams,
 	specialPoints,
+	damageMultipliers,
 }: WeaponParamsTableProps) {
 	const { t } = useTranslation(["weapons", "common", "analyzer", "params"]);
 	const naming = useWeaponParamNaming(kind);
@@ -293,9 +298,99 @@ export function WeaponParamsTable({
 							</Fragment>
 						);
 					})}
+					{damageMultipliers ? (
+						<DamageRateInfoSection
+							visibleWeaponIds={visibleWeaponIds}
+							currentWeaponId={currentWeaponId}
+							damageMultipliers={damageMultipliers}
+							expandedRows={expandedRows}
+							onToggle={toggleRow}
+						/>
+					) : null}
 				</tbody>
 			</table>
 		</div>
+	);
+}
+
+function DamageRateInfoSection({
+	visibleWeaponIds,
+	currentWeaponId,
+	damageMultipliers,
+	expandedRows,
+	onToggle,
+}: {
+	visibleWeaponIds: number[];
+	currentWeaponId: number;
+	damageMultipliers: Record<string, DamageMultiplierWithHistory[]>;
+	expandedRows: Set<string>;
+	onToggle: (fullKey: string) => void;
+}) {
+	const { t } = useTranslation(["weapons", "analyzer", "game-misc"]);
+
+	const targets = (damageMultipliers[String(currentWeaponId)] ?? []).map(
+		(multiplier) => multiplier.target,
+	);
+
+	if (targets.length === 0) {
+		return null;
+	}
+
+	const multiplierFor = (weaponId: number, target: string) =>
+		damageMultipliers[String(weaponId)]?.find((m) => m.target === target);
+
+	return (
+		<Fragment>
+			<tr>
+				<td
+					colSpan={visibleWeaponIds.length + 1}
+					className={styles.categoryHeader}
+				>
+					{DAMAGE_RATE_INFO_CATEGORY}
+				</td>
+			</tr>
+			{targets.map((target) => {
+				const fullKey = `${DAMAGE_RATE_INFO_CATEGORY}.${target}`;
+				const isExpanded = expandedRows.has(fullKey);
+				const hasHistory = visibleWeaponIds.some(
+					(id) => (multiplierFor(id, target)?.history.length ?? 0) > 0,
+				);
+
+				return (
+					<tr
+						key={fullKey}
+						className={clsx({ [styles.expandableRow]: hasHistory })}
+					>
+						<td
+							className={styles.paramName}
+							onClick={hasHistory ? () => onToggle(fullKey) : undefined}
+						>
+							<div className={styles.paramNameInner}>
+								<span className={styles.paramNameText}>
+									{translateDamageReceiver(t, target as DamageReceiver)}
+								</span>
+								{hasHistory ? (
+									<span className={styles.historyIndicator}>
+										{isExpanded ? (
+											<ChevronUp size={14} />
+										) : (
+											<ChevronDown size={14} />
+										)}
+									</span>
+								) : null}
+							</div>
+						</td>
+						{visibleWeaponIds.map((weaponId) => (
+							<ParamCell
+								key={weaponId}
+								param={multiplierFor(weaponId, target)}
+								isExpanded={isExpanded}
+							/>
+						))}
+					</tr>
+				);
+			})}
+		</Fragment>
 	);
 }
 

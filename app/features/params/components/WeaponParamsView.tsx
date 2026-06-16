@@ -8,6 +8,7 @@ import {
 import { Main } from "~/components/Main";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type {
+	DamageMultiplierWithHistory,
 	ParsedWeaponParams,
 	SpecialPointWithHistory,
 	WeaponKitInfo,
@@ -25,6 +26,7 @@ export function WeaponParamsView({
 	categoryWeaponIds,
 	weaponParams,
 	specialPoints,
+	damageMultipliers,
 	versions,
 	patchHistory,
 	kits,
@@ -34,6 +36,7 @@ export function WeaponParamsView({
 	categoryWeaponIds: number[];
 	weaponParams: Record<string, ParsedWeaponParams>;
 	specialPoints?: Record<string, SpecialPointWithHistory[]>;
+	damageMultipliers?: Record<string, DamageMultiplierWithHistory[]>;
 	versions: string[];
 	patchHistory: WeaponPatch[];
 	kits?: WeaponKitInfo[];
@@ -67,6 +70,7 @@ export function WeaponParamsView({
 						categoryWeaponIds={categoryWeaponIds}
 						weaponParams={weaponParams}
 						specialPoints={specialPoints}
+						damageMultipliers={damageMultipliers}
 						versions={versions}
 					/>
 				</SendouTabPanel>

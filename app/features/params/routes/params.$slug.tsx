@@ -57,6 +57,7 @@ export default function WeaponParamsPage() {
 			categoryWeaponIds={data.categoryWeaponIds}
 			weaponParams={data.weaponParams}
 			specialPoints={data.specialPoints}
+			damageMultipliers={data.damageMultipliers}
 			versions={data.versions}
 			patchHistory={data.patchHistory}
 			kits={data.kits}

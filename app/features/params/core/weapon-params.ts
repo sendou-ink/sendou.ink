@@ -1,4 +1,5 @@
 import { PATCHES } from "~/features/builds/builds-constants";
+import { DAMAGE_RECEIVERS } from "~/features/object-damage-calculator/calculator-constants";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	mainWeaponIds,
@@ -7,11 +8,13 @@ import {
 	weaponIdToType,
 } from "~/modules/in-game-lists/weapon-ids";
 import type {
+	DamageMultiplierWithHistory,
 	ParamDefinition,
 	ParamValueWithHistory,
 	ParsedWeaponParams,
 	PatchChange,
 	SpecialPointWithHistory,
+	WeaponParamKind,
 	WeaponPatch,
 } from "../weapon-params-types";
 import { classifyParamChange } from "./param-directions";
@@ -21,6 +24,12 @@ import { classifyParamChange } from "./param-directions";
  * points are not a regular weapon parameter. The matching `key` is also this value.
  */
 export const SPECIAL_POINTS_PARAM_KEY = "__specialPoints__";
+
+/**
+ * Sentinel `category` used for damage multiplier (damage rate vs objects) entries in patch
+ * change data. The `key` of such a change holds the damage receiver target instead.
+ */
+export const DAMAGE_MULTIPLIER_PARAM_KEY = "__damageMultiplier__";
 
 // xxx: check if similar exist elsewhere, convert to utils to * as Module
 
@@ -205,6 +214,69 @@ export function hasParamHistory(param: ParamValueWithHistory): boolean {
 	return param.history.length > 0;
 }
 
+interface DamageRateHistoryRow {
+	mainWeaponIds: number[];
+	subWeaponIds: number[];
+	specialWeaponIds: number[];
+	targets: DamageMultiplierWithHistory[];
+}
+
+const DAMAGE_RECEIVER_ORDER = new Map(
+	DAMAGE_RECEIVERS.map((receiver, i) => [receiver as string, i]),
+);
+
+/** Whether `candidate` is a better single representative of a target than the `current` pick. */
+function isMoreInformativeMultiplier(
+	candidate: DamageMultiplierWithHistory,
+	current: DamageMultiplierWithHistory,
+): boolean {
+	if (candidate.history.length !== current.history.length) {
+		return candidate.history.length > current.history.length;
+	}
+	return candidate.current > current.current;
+}
+
+/**
+ * Collects the damage multiplier history of every damage rate row that applies to the given
+ * weapon, reduced to a single entry per object target. A weapon can map to several rows (e.g.
+ * different attacks) that share the same target; the most informative one (longest tracked
+ * history, then highest current rate) is kept. Entries are ordered like {@link DAMAGE_RECEIVERS}.
+ */
+export function damageMultipliersForWeapon(
+	rows: Record<string, DamageRateHistoryRow>,
+	weaponId: number,
+	kind: WeaponParamKind,
+): DamageMultiplierWithHistory[] {
+	const applies = (row: DamageRateHistoryRow) => {
+		if (kind === "sub") return row.subWeaponIds.includes(weaponId);
+		if (kind === "special") return row.specialWeaponIds.includes(weaponId);
+		return (
+			row.mainWeaponIds.includes(weaponId) ||
+			row.mainWeaponIds.includes(
+				weaponIdToBaseWeaponId(weaponId as MainWeaponId),
+			)
+		);
+	};
+
+	const byTarget = new Map<string, DamageMultiplierWithHistory>();
+
+	for (const row of Object.values(rows)) {
+		if (!applies(row)) continue;
+		for (const target of row.targets) {
+			const existing = byTarget.get(target.target);
+			if (!existing || isMoreInformativeMultiplier(target, existing)) {
+				byTarget.set(target.target, target);
+			}
+		}
+	}
+
+	return [...byTarget.values()].sort(
+		(a, b) =>
+			(DAMAGE_RECEIVER_ORDER.get(a.target) ?? Number.MAX_SAFE_INTEGER) -
+			(DAMAGE_RECEIVER_ORDER.get(b.target) ?? Number.MAX_SAFE_INTEGER),
+	);
+}
+
 function changesFromHistory(
 	history: Array<{ version: string; value: number | string }>,
 	current: number | string,
@@ -245,6 +317,7 @@ function computeWeaponPatchChanges(
 	parsed: ParsedWeaponParams,
 	versions: string[],
 	specialPoints?: SpecialPointWithHistory[],
+	damageMultipliers?: DamageMultiplierWithHistory[],
 ): Map<string, PatchChange[]> {
 	const versionIndex = new Map(versions.map((version, i) => [version, i]));
 	const byVersion = new Map<string, PatchChange[]>();
@@ -297,17 +370,40 @@ function computeWeaponPatchChanges(
 		}
 	}
 
+	for (const multiplier of damageMultipliers ?? []) {
+		for (const { patchVersion, from, to } of changesFromHistory(
+			multiplier.history,
+			multiplier.current,
+			versions,
+			versionIndex,
+		)) {
+			// A higher damage rate means the weapon deals more damage to the object.
+			const kind = from === to ? "neutral" : to > from ? "buff" : "nerf";
+			push(patchVersion, {
+				category: DAMAGE_MULTIPLIER_PARAM_KEY,
+				key: multiplier.target,
+				from,
+				to,
+				kind,
+			});
+		}
+	}
+
 	for (const changes of byVersion.values()) {
 		changes.sort((a, b) => {
-			const aIsSpecial = a.category === SPECIAL_POINTS_PARAM_KEY;
-			const bIsSpecial = b.category === SPECIAL_POINTS_PARAM_KEY;
-			// Special points first, ordered by kit, then regular params by category and key.
-			if (aIsSpecial || bIsSpecial) {
-				if (aIsSpecial && bIsSpecial) {
-					return (a.weaponId ?? 0) - (b.weaponId ?? 0);
-				}
-				return aIsSpecial ? -1 : 1;
-			}
+			// Special points first (ordered by kit), then damage multipliers, then regular
+			// params by category and key.
+			const rank = (change: PatchChange) =>
+				change.category === SPECIAL_POINTS_PARAM_KEY
+					? 0
+					: change.category === DAMAGE_MULTIPLIER_PARAM_KEY
+						? 1
+						: 2;
+			const aRank = rank(a);
+			const bRank = rank(b);
+			if (aRank !== bRank) return aRank - bRank;
+
+			if (aRank === 0) return (a.weaponId ?? 0) - (b.weaponId ?? 0);
 			if (a.category !== b.category) {
 				return a.category.localeCompare(b.category);
 			}
@@ -327,6 +423,7 @@ export function buildWeaponPatchHistory(
 	parsed: ParsedWeaponParams | undefined,
 	versions: string[],
 	specialPoints: SpecialPointWithHistory[] = [],
+	damageMultipliers: DamageMultiplierWithHistory[] = [],
 ): WeaponPatch[] {
 	if (!parsed) return [];
 
@@ -335,6 +432,7 @@ export function buildWeaponPatchHistory(
 		parsed,
 		versions,
 		specialPoints,
+		damageMultipliers,
 	);
 
 	return versions

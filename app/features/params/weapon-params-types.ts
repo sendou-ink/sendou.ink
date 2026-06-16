@@ -36,6 +36,17 @@ export interface SpecialPointWithHistory {
 	history: Array<{ version: string; value: number }>;
 }
 
+/**
+ * History of a weapon's damage multiplier against a single object (a {@link DAMAGE_RECEIVERS}
+ * target), surfaced only in the patch history. `target` is the receiver key used by the object
+ * damage calculator.
+ */
+export interface DamageMultiplierWithHistory {
+	target: string;
+	current: number;
+	history: Array<{ version: string; value: number }>;
+}
+
 export interface PatchChange {
 	category: string;
 	key: string;
@@ -59,5 +70,7 @@ export interface WeaponParamsTableProps {
 	weaponParams: Record<string, ParsedWeaponParams>;
 	/** Special points are only tracked for main weapons. */
 	specialPoints?: Record<string, SpecialPointWithHistory[]>;
+	/** Damage multipliers (damage rate vs objects), keyed by weapon id. */
+	damageMultipliers?: Record<string, DamageMultiplierWithHistory[]>;
 	versions: string[];
 }

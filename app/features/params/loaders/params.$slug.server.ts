@@ -20,6 +20,7 @@ import {
 import { mySlugify } from "~/utils/urls";
 import {
 	buildWeaponPatchHistory,
+	damageMultipliersForWeapon,
 	getCategoryWeaponIds,
 	getWeaponKitSiblingIds,
 	parseWeaponParams,
@@ -27,7 +28,9 @@ import {
 import specialWeaponParamsData from "../data/all-version-special-params.json";
 import subWeaponParamsData from "../data/all-version-sub-params.json";
 import weaponParamsData from "../data/all-version-weapon-params.json";
+import damageRateHistoryData from "../data/damage-rate-history.json";
 import type {
+	DamageMultiplierWithHistory,
 	ParsedWeaponParams,
 	SpecialPointWithHistory,
 	WeaponParamKind,
@@ -70,6 +73,25 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 	throw new Response(null, { status: 404 });
 };
+
+function damageMultipliersByWeapon(
+	weaponIds: number[],
+	kind: WeaponParamKind,
+): Record<string, DamageMultiplierWithHistory[]> {
+	const rows = damageRateHistoryData.rows as Parameters<
+		typeof damageMultipliersForWeapon
+	>[0];
+
+	const result: Record<string, DamageMultiplierWithHistory[]> = {};
+	for (const id of weaponIds) {
+		const multipliers = damageMultipliersForWeapon(rows, id, kind);
+		if (multipliers.length > 0) {
+			result[String(id)] = multipliers;
+		}
+	}
+
+	return result;
+}
 
 function mainWeaponData(
 	weaponId: MainWeaponId,
@@ -119,11 +141,17 @@ function mainWeaponData(
 		}));
 	}
 
+	const damageMultipliers = damageMultipliersByWeapon(
+		categoryWeaponIds,
+		"main",
+	);
+
 	const versions = weaponParamsData.metadata.versions;
 	const patchHistory = buildWeaponPatchHistory(
 		weaponParams[String(weaponId)],
 		versions,
 		specialPoints[String(weaponId)] ?? [],
+		damageMultipliers[String(weaponId)] ?? [],
 	);
 
 	return {
@@ -135,6 +163,7 @@ function mainWeaponData(
 		kits,
 		weaponParams,
 		specialPoints,
+		damageMultipliers,
 		patchHistory,
 		versions,
 	};
@@ -160,9 +189,13 @@ function subWeaponData(
 		}
 	}
 
+	const damageMultipliers = damageMultipliersByWeapon([...subWeaponIds], "sub");
+
 	const patchHistory = buildWeaponPatchHistory(
 		weaponParams[String(weaponId)],
 		versions,
+		[],
+		damageMultipliers[String(weaponId)] ?? [],
 	);
 
 	return {
@@ -174,6 +207,7 @@ function subWeaponData(
 		kits: undefined,
 		weaponParams,
 		specialPoints: undefined,
+		damageMultipliers,
 		patchHistory,
 		versions,
 	};
@@ -199,9 +233,16 @@ function specialWeaponData(
 		}
 	}
 
+	const damageMultipliers = damageMultipliersByWeapon(
+		[...specialWeaponIds],
+		"special",
+	);
+
 	const patchHistory = buildWeaponPatchHistory(
 		weaponParams[String(weaponId)],
 		versions,
+		[],
+		damageMultipliers[String(weaponId)] ?? [],
 	);
 
 	return {
@@ -213,6 +254,7 @@ function specialWeaponData(
 		kits: undefined,
 		weaponParams,
 		specialPoints: undefined,
+		damageMultipliers,
 		patchHistory,
 		versions,
 	};

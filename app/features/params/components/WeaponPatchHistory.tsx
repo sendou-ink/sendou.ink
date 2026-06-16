@@ -2,7 +2,10 @@ import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
+import { translateDamageReceiver } from "~/features/object-damage-calculator/calculator-constants";
+import type { DamageReceiver } from "~/features/object-damage-calculator/calculator-types";
 import {
+	DAMAGE_MULTIPLIER_PARAM_KEY,
 	formatParamValue,
 	SPECIAL_POINTS_PARAM_KEY,
 } from "../core/weapon-params";
@@ -37,9 +40,9 @@ export function WeaponPatchHistory({ patches }: { patches: WeaponPatch[] }) {
 						) : null}
 					</div>
 					<div className={styles.changes}>
-						{patch.changes.map((change) => (
+						{patch.changes.map((change, i) => (
 							<ChangeBadge
-								key={`${change.category}.${change.key}.${change.weaponId ?? ""}`}
+								key={`${change.category}.${change.key}.${change.weaponId ?? ""}.${i}`}
 								change={change}
 							/>
 						))}
@@ -51,10 +54,16 @@ export function WeaponPatchHistory({ patches }: { patches: WeaponPatch[] }) {
 }
 
 function ChangeBadge({ change }: { change: PatchChange }) {
-	const { t } = useTranslation(["analyzer"]);
+	const { t } = useTranslation(["analyzer", "weapons", "game-misc"]);
 
 	const isSpecialPoints = change.category === SPECIAL_POINTS_PARAM_KEY;
-	const label = isSpecialPoints ? t("analyzer:stat.specialPoints") : change.key;
+	const isDamageMultiplier = change.category === DAMAGE_MULTIPLIER_PARAM_KEY;
+
+	const label = isSpecialPoints
+		? t("analyzer:stat.specialPoints")
+		: isDamageMultiplier
+			? translateDamageReceiver(t, change.key as DamageReceiver)
+			: change.key;
 
 	return (
 		<div
@@ -62,7 +71,11 @@ function ChangeBadge({ change }: { change: PatchChange }) {
 				[styles.buff]: change.kind === "buff",
 				[styles.nerf]: change.kind === "nerf",
 			})}
-			title={isSpecialPoints ? undefined : `${change.category}.${change.key}`}
+			title={
+				isSpecialPoints || isDamageMultiplier
+					? undefined
+					: `${change.category}.${change.key}`
+			}
 		>
 			<span className={styles.changeName}>
 				{isSpecialPoints && change.weaponId ? (
