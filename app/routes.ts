@@ -268,6 +268,7 @@ export default [
 	]),
 
 	route("/admin", "features/admin/routes/admin.tsx"),
+	route("/admin/streams", "features/admin/routes/admin.streams.tsx"),
 	route("/api/chat-users", "features/chat/routes/api.chat-users.ts"),
 	route("/room", "features/chat/routes/room.ts"),
 	route("/api", "features/api/routes/api.tsx"),
