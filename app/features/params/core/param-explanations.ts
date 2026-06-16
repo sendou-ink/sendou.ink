@@ -11,6 +11,8 @@
  * the rest are commented out as placeholders — uncomment one and write its meaning to
  * add a popover for it.
  */
+
+// xxx: remove at least frame, dmg explanations and just add one common one at the bottom. also .Low, .Mid, .High
 const PARAM_EXPLANATIONS: Record<string, string> = {
 	// AdditionMovePlayerParam
 	// "AdditionMovePlayerParam.ZRate": "",
@@ -75,7 +77,8 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "BlastJumpParam.CrossPaintRadius": "",
 	// "BlastJumpParam.KnockBackParam.Accel": "",
 	// "BlastJumpParam.KnockBackParam.Bias": "",
-	// "BlastJumpParam.KnockBackParam.Distance": "",
+	"BlastJumpParam.KnockBackParam.Distance":
+		"Short flight distance shot radius.",
 	// "BlastJumpParam.PaintRadius": "",
 
 	// BlastParam
@@ -93,14 +96,16 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "BlastParam.CrossPaintRadius": "",
 	// "BlastParam.DamageHeightUp": "",
 	// "BlastParam.DamageOffsetY": "",
-	// "BlastParam.DamageRadiusEnd": "",
-	// "BlastParam.DamageValueEnd": "",
+	"BlastParam.DamageRadiusEnd":
+		"Radius the damaging area expands to at its largest.",
+	"BlastParam.DamageValueEnd":
+		"Damage dealt by the effect at its largest extent. Stored ×10 in the game data, so 450 means 45.0 damage.",
 	// "BlastParam.DamageValueStart": "",
 	// "BlastParam.DistanceFar": "",
 	// "BlastParam.DistanceNear": "",
 	// "BlastParam.KnockBackParam.Accel": "",
 	// "BlastParam.KnockBackParam.Bias": "",
-	// "BlastParam.KnockBackParam.Distance": "",
+	"BlastParam.KnockBackParam.Distance": "Shot radius.",
 	// "BlastParam.PaintHeight": "",
 	// "BlastParam.PaintOffsetY": "",
 	// "BlastParam.PaintRadius": "",
@@ -251,7 +256,8 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "BulletAdditionMovePlayerSplashNearestParam.ZRate": "",
 
 	// BulletBlastParam
-	// "BulletBlastParam.DamageOffsetY": "",
+	// "BulletBlastParam.DamageOffsetY":
+	// "",
 	// "BulletBlastParam.KnockBackParam.Accel": "",
 	// "BulletBlastParam.KnockBackParam.Bias": "",
 	// "BulletBlastParam.KnockBackParam.Distance": "",
@@ -275,7 +281,8 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// BulletParam
 	// "BulletParam.CollisionRadiusForField": "",
 	// "BulletParam.CollisionRadiusForPlayer": "",
-	// "BulletParam.DamageValue": "",
+	"BulletParam.DamageValue":
+		"Damage dealt by a short range hit. Stored ×10 in the game data, so 450 means 45.0 damage.",
 	// "BulletParam.HitPoint": "",
 	// "BulletParam.KnockBackLen": "",
 	// "BulletParam.KnockBackParam.Accel": "",
@@ -289,7 +296,8 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "BulletParam.PaintDepthScale": "",
 	// "BulletParam.PaintSpanFrame": "",
 	// "BulletParam.PaintWidthHalf": "",
-	// "BulletParam.StartInvincibleFrame": "",
+	"BulletParam.StartInvincibleFrame":
+		"Duration in frames for the ink fist to start dropping.",
 	// "BulletParam.SuperJumpWaitFrame0": "",
 	// "BulletParam.SuperJumpWaitFrame1": "",
 	// "BulletParam.WaitRiseFrame": "",
@@ -470,20 +478,25 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "DamageJumpParam.ValueMin": "",
 
 	// DamageLapOverParam
-	// "DamageLapOverParam.ReduceEndFrame": "",
+	"DamageLapOverParam.ReduceEndFrame":
+		"Frame by which damage has fully reduced to its minimum value.",
 	// "DamageLapOverParam.ReduceStartFrame": "",
 	// "DamageLapOverParam.ValueMax": "",
 	// "DamageLapOverParam.ValueMin": "",
 
 	// DamageParam
 	// "DamageParam.DirectHitDamage": "",
-	// "DamageParam.ReduceEndFrame": "",
-	// "DamageParam.ReduceStartFrame": "",
-	// "DamageParam.ValueFullCharge": "",
+	"DamageParam.ReduceEndFrame":
+		"Frame by which damage has fully reduced to its minimum value.",
+	"DamageParam.ReduceStartFrame":
+		"Frame at which damage begins reducing from its maximum toward its minimum value.",
+	"DamageParam.ValueFullCharge":
+		"Direct-hit damage at full charge. Stored ×10 in the game data, so 450 means 45.0 damage.",
 	// "DamageParam.ValueFullChargeMax": "",
 	"DamageParam.ValueMax":
 		"Maximum direct-hit damage. Stored ×10 in the game data, so 450 means 45.0 damage.",
-	// "DamageParam.ValueMaxCharge": "",
+	"DamageParam.ValueMaxCharge":
+		"Direct-hit damage at maximum charge. Stored ×10 in the game data, so 450 means 45.0 damage.",
 	"DamageParam.ValueMin":
 		"Minimum direct-hit damage after full damage falloff at range. Stored ×10, so 225 means 22.5 damage.",
 	// "DamageParam.ValueMinCharge": "",
@@ -534,7 +547,8 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 
 	// FridgeParam
 	// "FridgeParam.PowerUpFrame.High": "",
-	// "FridgeParam.PowerUpFrame.Low": "",
+	"FridgeParam.PowerUpFrame.Low":
+		"Duration in frames (60 = 1 second) of the drink's buff with no Special Power Up equipped.",
 	"FridgeParam.PowerUpFrame.Mid":
 		"Duration in frames (60 = 1 second) of the drink's buff with a moderate amount of Special Power Up gear ability equipped.",
 	// "FridgeParam.PutFrame": "",
@@ -571,7 +585,8 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "IceParam.BlastParam.SplashAroundParam.PaintRadius": "",
 	// "IceParam.BlastParam.SplashAroundParam.PitchMax": "",
 	// "IceParam.BlastParam.SplashAroundParam.VelocityMax": "",
-	// "IceParam.BurstFrame": "",
+	"IceParam.BurstFrame":
+		"Time in frames (60 = 1 second) from spawning until this detonates or activates.",
 	// "IceParam.CollisionRadius": "",
 	// "IceParam.FlyingFrame": "",
 	// "IceParam.GroundOffsetY": "",
@@ -617,9 +632,12 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "InhaleParam.PaintSplashSpawnOffset.Z": "",
 	// "InhaleParam.PoisonMistForPlayer.EffectFrame": "",
 	// "InhaleParam.PoisonMistForPlayer.SideStepInkConsumeRate": "",
-	// "InhaleParam.RadiusMax.High": "",
-	// "InhaleParam.RadiusMax.Low": "",
-	// "InhaleParam.RadiusMax.Mid": "",
+	"InhaleParam.RadiusMax.High":
+		"Maximum inhale radius, with a lot of Special Power Up equipped.",
+	"InhaleParam.RadiusMax.Low":
+		"Maximum inhale radius, with no Special Power Up equipped.",
+	"InhaleParam.RadiusMax.Mid":
+		"Maximum inhale radius, with a moderate amount of Special Power Up equipped.",
 	// "InhaleParam.RadiusMin.High": "",
 	// "InhaleParam.RadiusMin.Low": "",
 	// "InhaleParam.RadiusMin.Mid": "",
@@ -672,9 +690,12 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "MoveJumpParam.SpawnSpeed": "",
 
 	// MoveLapOverParam
-	// "MoveLapOverParam.GoStraightStateEndMaxSpeed": "",
-	// "MoveLapOverParam.GoStraightToBrakeStateFrame": "",
-	// "MoveLapOverParam.SpawnSpeed": "",
+	"MoveLapOverParam.GoStraightStateEndMaxSpeed":
+		"Speed the projectile settles to after its initial fast phase, which affects its effective range.",
+	"MoveLapOverParam.GoStraightToBrakeStateFrame":
+		"Time in frames (60 = 1 second) the projectile travels at full speed before it begins to slow down.",
+	"MoveLapOverParam.SpawnSpeed":
+		"Initial travel speed of the projectile the moment it is fired.",
 
 	// MoveParam
 	// "MoveParam.BaseSpeedComeOverRate": "",
@@ -726,7 +747,8 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "MoveParam.DamageSpanFrame": "",
 	// "MoveParam.DamageValueForDamageTag": "",
 	// "MoveParam.DeathTargetApprouchDistance": "",
-	// "MoveParam.DirectDamage": "",
+	"MoveParam.DirectDamage":
+		"Damage dealt by a direct hit. Stored ×10 in the game data, so 450 means 45.0 damage.",
 	// "MoveParam.Distance": "",
 	// "MoveParam.DistanceFullCharge": "",
 	// "MoveParam.DistanceMaxCharge": "",
@@ -754,7 +776,8 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "MoveParam.FreeGravity": "",
 	"MoveParam.GoStraightStateEndMaxSpeed":
 		"Speed a shot settles to after its initial fast phase, which affects its effective range.",
-	// "MoveParam.GoStraightToBrakeStateFrame": "",
+	"MoveParam.GoStraightToBrakeStateFrame":
+		"Time in frames (60 = 1 second) the projectile travels at full speed before it begins to slow down.",
 	// "MoveParam.GroundGravity": "",
 	// "MoveParam.GroundPositionAirResist": "",
 	// "MoveParam.GroundPositionDeg50AirResist": "",
@@ -793,9 +816,12 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "MoveParam.PaintRadiusBias": "",
 	// "MoveParam.PaintRadiusMaxCharge": "",
 	// "MoveParam.PaintRadiusMinCharge": "",
-	// "MoveParam.PeriodFirst.High": "",
-	// "MoveParam.PeriodFirst.Low": "",
-	// "MoveParam.PeriodFirst.Mid": "",
+	"MoveParam.PeriodFirst.High":
+		"How long the sprinkler stays in its fast-output phase, in frames (60 = 1 second), with a lot of Sub Power Up equipped.",
+	"MoveParam.PeriodFirst.Low":
+		"How long the sprinkler stays in its fast-output phase, in frames (60 = 1 second), with no Sub Power Up equipped.",
+	"MoveParam.PeriodFirst.Mid":
+		"How long the sprinkler stays in its fast-output phase, in frames (60 = 1 second), with a moderate amount of Sub Power Up equipped.",
 	// "MoveParam.PeriodSecond.High": "",
 	// "MoveParam.PeriodSecond.Low": "",
 	// "MoveParam.PeriodSecond.Mid": "",
@@ -821,9 +847,12 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "MoveParam.SpawnSpeedYMaxCharge": "",
 	// "MoveParam.SpawnSpeedYWorldMin": "",
 	// "MoveParam.SpawnSpeedZMaxCharge": "",
-	// "MoveParam.SpawnSpeedZSpecUp.High": "",
-	// "MoveParam.SpawnSpeedZSpecUp.Low": "",
-	// "MoveParam.SpawnSpeedZSpecUp.Mid": "",
+	"MoveParam.SpawnSpeedZSpecUp.High":
+		"Forward launch speed (throw distance) with a lot of the relevant Power Up gear ability equipped. High is with a lot of the relevant Power Up gear ability equipped (Special Power Up for specials, Sub Power Up for subs), Low is with none, Mid is in between.",
+	"MoveParam.SpawnSpeedZSpecUp.Low":
+		"Forward launch speed (throw distance) with none of the relevant Power Up gear ability equipped. High is with a lot of the relevant Power Up gear ability equipped (Special Power Up for specials, Sub Power Up for subs), Low is with none, Mid is in between.",
+	"MoveParam.SpawnSpeedZSpecUp.Mid":
+		"Forward launch speed (throw distance) with a moderate amount of the relevant Power Up gear ability equipped. High is with a lot of the relevant Power Up gear ability equipped (Special Power Up for specials, Sub Power Up for subs), Low is with none, Mid is in between.",
 	// "MoveParam.SpoutInkDrawRadius": "",
 	// "MoveParam.SpoutInkPaintRadiusMaxHeight": "",
 	// "MoveParam.SpoutInkPaintRadiusMaxRate": "",
@@ -857,12 +886,9 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "PaintParam.RadiusFullCharge": "",
 	// "PaintParam.RadiusMaxCharge": "",
 	// "PaintParam.RadiusMinCharge": "",
-	"PaintParam.WidthHalfFar":
-		"Half-width of the ink mark a shot leaves when landing at far range.",
-	"PaintParam.WidthHalfMiddle":
-		"Half-width of the ink mark a shot leaves when landing at medium range.",
-	"PaintParam.WidthHalfNear":
-		"Half-width of the ink mark a shot leaves when landing at close range.",
+	// "PaintParam.WidthHalfFar": "",
+	// "PaintParam.WidthHalfMiddle": "",
+	// "PaintParam.WidthHalfNear": "",
 
 	// PipeParam
 	// "PipeParam.DepthRadius": "",
@@ -1033,27 +1059,38 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 
 	// spl__BulletSpGreatBarrierMoveParam
 	// "spl__BulletSpGreatBarrierMoveParam.BarrierParam.CanopyKnockBack": "",
-	// "spl__BulletSpGreatBarrierMoveParam.BarrierParam.DamgeRatio": "",
-	// "spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxFieldHP.High": "",
-	// "spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxFieldHP.Low": "",
-	// "spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxFieldHP.Mid": "",
-	// "spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxHP.High": "",
-	// "spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxHP.Low": "",
-	// "spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxHP.Mid": "",
-	// "spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxRadius": "",
+	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.DamgeRatio":
+		"Multiplier applied to damage taken by the inner device and top section the barrier.",
+	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxFieldHP.High":
+		"Total hit points of the deployed field, with a lot of Special Power Up equipped.",
+	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxFieldHP.Low":
+		"Total hit points of the deployed field, with no Special Power Up equipped.",
+	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxFieldHP.Mid":
+		"Total hit points of the deployed field, with a moderate amount of Special Power Up equipped.",
+	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxHP.High":
+		"Hit points, with a lot of Special Power Up equipped.",
+	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxHP.Low":
+		"Hit points, with no Special Power Up equipped.",
+	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxHP.Mid":
+		"Hit points, with a moderate amount of Special Power Up equipped.",
+	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxRadius":
+		"Maximum radius this expands to.",
 	// "spl__BulletSpGreatBarrierMoveParam.BarrierParam.MinRadius": "",
 	// "spl__BulletSpGreatBarrierMoveParam.BarrierParam.RadiusRatioCurve.Data": "",
 	// "spl__BulletSpGreatBarrierMoveParam.BarrierParam.RadiusRatioCurve.MaxX": "",
 	// "spl__BulletSpGreatBarrierMoveParam.BarrierParam.RadiusRatioCurve.Type": "",
-	// "spl__BulletSpGreatBarrierMoveParam.BarrierParam.TimeDamage": "",
-	// "spl__BulletSpGreatBarrierMoveParam.BarrierParam.TimeDamageOnVLift": "",
+	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.TimeDamage":
+		"How much HP the barrier loses over time while deployed.",
+	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.TimeDamageOnVLift":
+		"How much HP the barrier loses over time while it is on the Tower.",
 	// "spl__BulletSpGreatBarrierMoveParam.BaseParam.PaintRadius": "",
 	// "spl__BulletSpGreatBarrierMoveParam.BaseParam.PaintTexture": "",
 	// "spl__BulletSpGreatBarrierMoveParam.DroneParam.AscendCurve.Data": "",
 	// "spl__BulletSpGreatBarrierMoveParam.DroneParam.AscendCurve.MaxX": "",
 	// "spl__BulletSpGreatBarrierMoveParam.DroneParam.AscendCurve.Type": "",
 	// "spl__BulletSpGreatBarrierMoveParam.DroneParam.AscendFrame": "",
-	// "spl__BulletSpGreatBarrierMoveParam.DroneParam.AscendHeight": "",
+	"spl__BulletSpGreatBarrierMoveParam.DroneParam.AscendHeight":
+		"Height the barrier's drone ascends to before deploying the bubble (affects radius of the barrier).",
 	// "spl__BulletSpGreatBarrierMoveParam.DroneParam.FieldCollisionRadius": "",
 	// "spl__BulletSpGreatBarrierMoveParam.DroneParam.IgnitionFrame": "",
 	// "spl__BulletSpGreatBarrierMoveParam.DroneParam.OverlapFieldDamage": "",
@@ -1067,11 +1104,13 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "spl__BulletSpMicroLaserBitParam.FollowParam.LockonEndFrame": "",
 	// "spl__BulletSpMicroLaserBitParam.LaserParam.AfterLaserWaitFrame": "",
 	// "spl__BulletSpMicroLaserBitParam.LaserParam.FreeMoveRotSpeed": "",
-	// "spl__BulletSpMicroLaserBitParam.LaserParam.LaserDamage": "",
+	"spl__BulletSpMicroLaserBitParam.LaserParam.LaserDamage":
+		"Damage dealt by each laser tick. Stored ×10 in the game data, so 450 means 45.0 damage.",
 	// "spl__BulletSpMicroLaserBitParam.LaserParam.LaserDamageIntervalFrame": "",
 	// "spl__BulletSpMicroLaserBitParam.LaserParam.LaserFrame.High": "",
 	// "spl__BulletSpMicroLaserBitParam.LaserParam.LaserFrame.Low": "",
-	// "spl__BulletSpMicroLaserBitParam.LaserParam.LaserFrame.Mid": "",
+	"spl__BulletSpMicroLaserBitParam.LaserParam.LaserFrame.Mid":
+		"How long the lasers fire, in frames (60 = 1 second), with a moderate amount of Special Power Up equipped.",
 
 	// spl__BulletSpMultiMissileMoveParam
 	// "spl__BulletSpMultiMissileMoveParam.RiseParam.RiseBaseSpeedComeUnderRate": "",
@@ -1164,9 +1203,11 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 
 	// spl__WeaponSaberParam
 	// "spl__WeaponSaberParam.ChargeParam.AirChargeRateByInkEmpty": "",
-	// "spl__WeaponSaberParam.ChargeParam.ChargeFrameFullCharge": "",
+	"spl__WeaponSaberParam.ChargeParam.ChargeFrameFullCharge":
+		"Time in frames (60 = 1 second) needed to reach a full charge.",
 	// "spl__WeaponSaberParam.ChargeParam.ChargeFrameMinCharge": "",
-	// "spl__WeaponSaberParam.ChargeParam.InkConsumeFullCharge": "",
+	"spl__WeaponSaberParam.ChargeParam.InkConsumeFullCharge":
+		"Ink consumed by a fully charged use, as a fraction of the ink tank.",
 	// "spl__WeaponSaberParam.ChargeParam.InkConsumeMinCharge": "",
 	// "spl__WeaponSaberParam.ChargeParam.InkRecoverStop": "",
 	// "spl__WeaponSaberParam.ChargeParam.MoveSpeedFullCharge": "",
@@ -1191,7 +1232,8 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "spl__WeaponSaberParam.SwingParam.ChargeSwingShotSlashFrame": "",
 	// "spl__WeaponSaberParam.SwingParam.ChargeSwingStepShotBulletFrame": "",
 	// "spl__WeaponSaberParam.SwingParam.ChargeSwingStepShotSlashFrame": "",
-	// "spl__WeaponSaberParam.SwingParam.InkConsume": "",
+	"spl__WeaponSaberParam.SwingParam.InkConsume":
+		"Ink consumed per use, as a fraction of the ink tank.",
 	// "spl__WeaponSaberParam.SwingParam.InkRecoverStop": "",
 	// "spl__WeaponSaberParam.SwingParam.InkRecoverStop_ChargeSwing": "",
 	// "spl__WeaponSaberParam.SwingParam.ReserveAcceptFrame": "",
@@ -1213,7 +1255,8 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "spl__WeaponSaberParam.SwingParam.ShotSlashOffset_Vertical.X": "",
 	// "spl__WeaponSaberParam.SwingParam.ShotSlashOffset_Vertical.Y": "",
 	// "spl__WeaponSaberParam.SwingParam.ShotSlashOffset_Vertical.Z": "",
-	// "spl__WeaponSaberParam.SwingParam.SideStepParam.ChargeFrame": "",
+	"spl__WeaponSaberParam.SwingParam.SideStepParam.ChargeFrame":
+		"Time in frames (60 = 1 second) spent charging.",
 	// "spl__WeaponSaberParam.SwingParam.SideStepParam.InkConsume": "",
 	// "spl__WeaponSaberParam.SwingParam.SideStepParam.InkRecoverStop": "",
 	// "spl__WeaponSaberParam.SwingParam.SideStepParam.InputReqAcceptFrame": "",
@@ -1311,9 +1354,12 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "spl__WeaponSpMultiMissilePlayerParam.MoveVelLimitSearching": "",
 
 	// spl__WeaponSpPogoParam
-	// "spl__WeaponSpPogoParam.Rise_Frame": "",
-	// "spl__WeaponSpPogoParam.Rise_NoDamageStartFrame": "",
-	// "spl__WeaponSpPogoParam.SpecialTotalFrame": "",
+	"spl__WeaponSpPogoParam.Rise_Frame":
+		"Time in frames (60 = 1 second) spent rising into the air on activation.",
+	"spl__WeaponSpPogoParam.Rise_NoDamageStartFrame":
+		"Frame during the rise at which you become able to take damage again.",
+	"spl__WeaponSpPogoParam.SpecialTotalFrame":
+		"Total active duration of the special, in frames (60 = 1 second).",
 
 	// spl__WeaponSpUltraShotParam
 	// "spl__WeaponSpUltraShotParam.EjectCartridgeAngularVel.X": "",
@@ -1333,8 +1379,10 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "spl__WeaponSpUltraShotParam.RepeatFrame": "",
 	// "spl__WeaponSpUltraShotParam.ShotDelayFrame": "",
 	// "spl__WeaponSpUltraShotParam.SpecialDurationFrame.High": "",
-	// "spl__WeaponSpUltraShotParam.SpecialDurationFrame.Low": "",
-	// "spl__WeaponSpUltraShotParam.SpecialDurationFrame.Mid": "",
+	"spl__WeaponSpUltraShotParam.SpecialDurationFrame.Low":
+		"How long the special lasts, in frames (60 = 1 second), with no Special Power Up equipped.",
+	"spl__WeaponSpUltraShotParam.SpecialDurationFrame.Mid":
+		"How long the special lasts, in frames (60 = 1 second), with a moderate amount of Special Power Up equipped.",
 	// "spl__WeaponSpUltraShotParam.StartDelayFrame": "",
 
 	// spl__WeaponSpUltraStampParam
@@ -1344,8 +1392,10 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "spl__WeaponSpUltraStampParam.HoldSwingKnockBackParam.Bias": "",
 	// "spl__WeaponSpUltraStampParam.HoldSwingKnockBackParam.Distance": "",
 	// "spl__WeaponSpUltraStampParam.SpecialTotalFrame.High": "",
-	// "spl__WeaponSpUltraStampParam.SpecialTotalFrame.Low": "",
-	// "spl__WeaponSpUltraStampParam.SpecialTotalFrame.Mid": "",
+	"spl__WeaponSpUltraStampParam.SpecialTotalFrame.Low":
+		"Total active duration of the special, in frames (60 = 1 second), with no Special Power Up equipped.",
+	"spl__WeaponSpUltraStampParam.SpecialTotalFrame.Mid":
+		"Total active duration of the special, in frames (60 = 1 second), with a moderate amount of Special Power Up equipped.",
 	// "spl__WeaponSpUltraStampParam.VelLimit_NoPaint": "",
 
 	// spl__WeaponStringerParam
@@ -1360,13 +1410,17 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "spl__WeaponStringerParam.ChargeParam.FreezeFrameMidCharge": "",
 	// "spl__WeaponStringerParam.ChargeParam.FreezeFrameMinCharge": "",
 	// "spl__WeaponStringerParam.ChargeParam.InkConsumeFullCharge": "",
-	// "spl__WeaponStringerParam.ChargeParam.InkConsumeMidCharge": "",
-	// "spl__WeaponStringerParam.ChargeParam.InkConsumeMinCharge": "",
+	"spl__WeaponStringerParam.ChargeParam.InkConsumeMidCharge":
+		"Ink consumed by a mid-charge shot, as a fraction of the ink tank.",
+	"spl__WeaponStringerParam.ChargeParam.InkConsumeMinCharge":
+		"Ink consumed by a minimum-charge shot, as a fraction of the ink tank.",
 	// "spl__WeaponStringerParam.ChargeParam.JumpHeightFullCharge": "",
 	// "spl__WeaponStringerParam.ChargeParam.MoveJumpDownBias": "",
 	// "spl__WeaponStringerParam.ChargeParam.MoveJumpDownStartChargeRate": "",
-	// "spl__WeaponStringerParam.ChargeParam.MoveSpeedFullCharge": "",
-	// "spl__WeaponStringerParam.ChargeParam.PostDelayFrame": "",
+	"spl__WeaponStringerParam.ChargeParam.MoveSpeedFullCharge":
+		"Player movement speed while holding a full charge.",
+	"spl__WeaponStringerParam.ChargeParam.PostDelayFrame":
+		"Delay in frames (60 = 1 second) after firing during which you cannot act.",
 	// "spl__WeaponStringerParam.PlayerParam.BowTiltDegRcvInterpRate": "",
 	// "spl__WeaponStringerParam.ShotGuideParam.GuideDrawFrameFirst": "",
 	// "spl__WeaponStringerParam.ShotGuideParam.GuideDrawFrameSecond": "",
@@ -1374,9 +1428,12 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "spl__WeaponStringerParam.ShotGuideParam.SubArrowGuideDrawFrame": "",
 	// "spl__WeaponStringerParam.ShotGuideParam.TiltGuideLength": "",
 	// "spl__WeaponStringerParam.ShotGuideParam.TiltGuideWidth": "",
-	// "spl__WeaponStringerParam.ShotParam.ArrowAngleMax": "",
-	// "spl__WeaponStringerParam.ShotParam.ArrowAngleMid": "",
-	// "spl__WeaponStringerParam.ShotParam.ArrowAngleMin": "",
+	"spl__WeaponStringerParam.ShotParam.ArrowAngleMax":
+		"Angle between the stringer's arrows at maximum charge.",
+	"spl__WeaponStringerParam.ShotParam.ArrowAngleMid":
+		"Angle between the stringer's arrows at mid charge.",
+	"spl__WeaponStringerParam.ShotParam.ArrowAngleMin":
+		"Angle between the stringer's arrows at minimum charge.",
 	// "spl__WeaponStringerParam.ShotParam.ArrowMargin": "",
 	// "spl__WeaponStringerParam.ShotParam.ArrowNum": "",
 	// "spl__WeaponStringerParam.ShotParam.BowJumpTiltSpeedForward": "",
@@ -1397,13 +1454,10 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "SplashPaintParam.LastSplashRateMaxCharge": "",
 	// "SplashPaintParam.LastSplashRateMinCharge": "",
 	// "SplashPaintParam.RadiusSpawnNearest": "",
-	"SplashPaintParam.WidthHalf":
-		"Half-width of the ink trail painted by a shot's spray droplets.",
-	"SplashPaintParam.WidthHalfFullCharge":
-		"Half-width of the ink trail painted by a fully charged shot's spray droplets.",
+	// "SplashPaintParam.WidthHalf": "",
+	// "SplashPaintParam.WidthHalfFullCharge": "",
 	// "SplashPaintParam.WidthHalfMaxCharge": "",
-	"SplashPaintParam.WidthHalfMinCharge":
-		"Half-width of the ink trail painted by a tap shot's (minimum charge) spray droplets.",
+	// "SplashPaintParam.WidthHalfMinCharge": "",
 	// "SplashPaintParam.WidthHalfNearest": "",
 
 	// SplashSlosherScatterParam
@@ -1490,7 +1544,8 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "SplashWallHitParam.WallDropMoveParam.FallPeriodSecondTargetSpeed": "",
 
 	// SubWeaponSetting
-	// "SubWeaponSetting.SubInkSaveLv": "",
+	"SubWeaponSetting.SubInkSaveLv":
+		"Internal ink-saving tier of the sub weapon. Higher means the sub costs less ink.",
 
 	// SwingBigBlastParam
 	// "SwingBigBlastParam.CrossPaintCheckLength": "",
@@ -1627,10 +1682,12 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "VariableShotParam.Jump_DegSwerve": "",
 	// "VariableShotParam.MoveSpeed": "",
 	// "VariableShotParam.PitchDegBias": "",
-	// "VariableShotParam.PitchDegSwerve": "",
+	"VariableShotParam.PitchDegSwerve":
+		"Random vertical shot spread. Lower is more accurate.",
 	// "VariableShotParam.RepeatFrame": "",
 	// "VariableShotParam.Stand_DegBiasMax": "",
-	// "VariableShotParam.Stand_DegSwerve": "",
+	"VariableShotParam.Stand_DegSwerve":
+		"Random shot spread, while standing still. Lower is more accurate.",
 	// "VariableShotParam.VariableInterpolatedFrame": "",
 
 	// VariableSplashPaintParam
@@ -1725,7 +1782,8 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 
 	// WallParam
 	// "WallParam.ClosingFrame": "",
-	// "WallParam.DamageValue": "",
+	"WallParam.DamageValue":
+		"Damage dealt by a hit. Stored ×10 in the game data, so 450 means 45.0 damage.",
 	// "WallParam.DebugBlockRotateDistance": "",
 	// "WallParam.DebugBlockRotateSpeedMax": "",
 	// "WallParam.DebugBlockRotateSpeedMin": "",
@@ -1783,19 +1841,23 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "WeaponParam.ChargeFrameBlastRate": "",
 	"WeaponParam.ChargeFrameFullCharge":
 		"Frames (60 = 1 second) needed to reach a full charge. Lower means the weapon charges faster.",
-	// "WeaponParam.ChargeFrameMidCharge": "",
+	"WeaponParam.ChargeFrameMidCharge":
+		"Time in frames (60 = 1 second) needed to reach a mid-level charge.",
 	// "WeaponParam.ChargeFrameMinCharge": "",
 	// "WeaponParam.ChargeRateAutoPerFrame.High": "",
 	// "WeaponParam.ChargeRateAutoPerFrame.Low": "",
 	// "WeaponParam.ChargeRateAutoPerFrame.Mid": "",
-	// "WeaponParam.ChargeRateNiceFriend": "",
+	"WeaponParam.ChargeRateNiceFriend":
+		"How much the special's gauge charges from teammates' Booyahs.",
 	// "WeaponParam.ChargeRateNiceSelf": "",
 	// "WeaponParam.ColBullet_OffsetY": "",
 	// "WeaponParam.ColBullet_OffsetZ_Head": "",
 	// "WeaponParam.ColBullet_OffsetZ_Tail": "",
 	// "WeaponParam.ColBullet_Radius": "",
-	// "WeaponParam.Dash_ChargeCancelableFrame": "",
-	// "WeaponParam.Dash_ChargeFrame": "",
+	"WeaponParam.Dash_ChargeCancelableFrame":
+		"Frames into a dash charge after which it can still be canceled.",
+	"WeaponParam.Dash_ChargeFrame":
+		"Time in frames (60 = 1 second) needed to charge a dash attack.",
 	// "WeaponParam.Dash_InvalidFrame": "",
 	// "WeaponParam.Dash_MoveFrame": "",
 	// "WeaponParam.Dash_MoveSpeed_Floor_MaxCharge": "",
@@ -1820,12 +1882,18 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "WeaponParam.InkCapacityRt": "",
 	"WeaponParam.InkConsume":
 		"Ink used per shot, as a fraction of the ink tank (1.0 = the whole tank).",
-	// "WeaponParam.InkConsume_Hook.High": "",
-	// "WeaponParam.InkConsume_Hook.Low": "",
-	// "WeaponParam.InkConsume_Hook.Mid": "",
-	// "WeaponParam.InkConsume_PerSec.High": "",
-	// "WeaponParam.InkConsume_PerSec.Low": "",
-	// "WeaponParam.InkConsume_PerSec.Mid": "",
+	"WeaponParam.InkConsume_Hook.High":
+		"Ink consumed per hook shot, as a fraction of the tank, with a lot of Special Power Up equipped.",
+	"WeaponParam.InkConsume_Hook.Low":
+		"Ink consumed per hook shot, as a fraction of the tank, with no Special Power Up equipped.",
+	"WeaponParam.InkConsume_Hook.Mid":
+		"Ink consumed per hook shot, as a fraction of the tank, with a moderate amount of Special Power Up equipped.",
+	"WeaponParam.InkConsume_PerSec.High":
+		"Ink drained per second while active, as a fraction of the tank, with a lot of Special Power Up equipped.",
+	"WeaponParam.InkConsume_PerSec.Low":
+		"Ink drained per second while active, as a fraction of the tank, with no Special Power Up equipped.",
+	"WeaponParam.InkConsume_PerSec.Mid":
+		"Ink drained per second while active, as a fraction of the tank, with a moderate amount of Special Power Up equipped.",
 	"WeaponParam.InkConsumeFullCharge":
 		"Ink used by a fully charged shot, as a fraction of the ink tank (1.0 = the whole tank).",
 	"WeaponParam.InkConsumeMinCharge":
@@ -1849,7 +1917,8 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "WeaponParam.KnockBackKf_Dash": "",
 	// "WeaponParam.KnockBackKf_Std": "",
 	// "WeaponParam.KnockBackParam.ImpactValue": "",
-	// "WeaponParam.LapOver_DegSwerve": "",
+	"WeaponParam.LapOver_DegSwerve":
+		"Random shot spread, during a roller's vertical flick. Lower is more accurate.",
 	// "WeaponParam.LapOver_RepeatFrame": "",
 	// "WeaponParam.MaxChargeFrame": "",
 	// "WeaponParam.MaxLengthHook": "",
@@ -1857,13 +1926,15 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 		"Firing duration in frames (60 = 1 second) at the first charge level.",
 	"WeaponParam.MaxShootingFrame_Second":
 		"Firing duration in frames (60 = 1 second) at the second/full charge level.",
-	// "WeaponParam.MinLengthHook_Floor": "",
+	"WeaponParam.MinLengthHook_Floor":
+		"Minimum zip distance when hooking onto the floor.",
 	// "WeaponParam.MinLengthHook_Wall": "",
 	// "WeaponParam.MoveAcc": "",
 	// "WeaponParam.MoveAccAttack": "",
 	// "WeaponParam.MoveBrk": "",
 	// "WeaponParam.MoveCancelableFrame": "",
-	// "WeaponParam.MoveFrame": "",
+	"WeaponParam.MoveFrame":
+		"Duration, in frames (60 = 1 second), of the movement.",
 	// "WeaponParam.MoveFrameOmen": "",
 	// "WeaponParam.MoveJumpDownBias": "",
 	// "WeaponParam.MoveJumpDownStartChargeRate": "",
@@ -1950,14 +2021,17 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// WeaponRollParam
 	"WeaponRollParam.DashFrame":
 		"Frames (60 = 1 second) of acceleration before reaching top speed while holding ZR to ink and move forward. Lower means you reach top speed sooner.",
-	// "WeaponRollParam.InkConsumeMaxPerFrame": "",
-	// "WeaponRollParam.InkConsumeMinPerFrame": "",
-	// "WeaponRollParam.InkRecoverStop": "",
+	"WeaponRollParam.InkConsumeMaxPerFrame":
+		"Maximum ink consumed per frame while rolling, as a fraction of the ink tank.",
+	"WeaponRollParam.InkConsumeMinPerFrame":
+		"Minimum ink consumed per frame while rolling, as a fraction of the ink tank.",
+	"WeaponRollParam.InkRecoverStop":
+		"Time in frames (60 = 1 second) after using this before the ink tank starts refilling.",
 	// "WeaponRollParam.SpeedDash": "",
 	// "WeaponRollParam.SpeedDashTurnBreak": "",
 	// "WeaponRollParam.SpeedInkConsumeMax": "",
 	// "WeaponRollParam.SpeedInkConsumeMin": "",
-	// "WeaponRollParam.SpeedNormal": "",
+	"WeaponRollParam.SpeedNormal": "Normal rolling movement speed.",
 	"WeaponRollParam.SwingRepeatFrame":
 		"Interval in frames (60 = 1 second) between continuous swings. Lower means you can swing again sooner.",
 	// "WeaponRollParam.ToPaintFrame": "",
@@ -1983,8 +2057,10 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "WeaponSpChariotParam.ShotGuideCannonFrame": "",
 	// "WeaponSpChariotParam.ShotPitVelLmt": "",
 	// "WeaponSpChariotParam.SpecialTotalFrame.High": "",
-	// "WeaponSpChariotParam.SpecialTotalFrame.Low": "",
-	// "WeaponSpChariotParam.SpecialTotalFrame.Mid": "",
+	"WeaponSpChariotParam.SpecialTotalFrame.Low":
+		"Total active duration of the special, in frames (60 = 1 second), with no Special Power Up equipped.",
+	"WeaponSpChariotParam.SpecialTotalFrame.Mid":
+		"Total active duration of the special, in frames (60 = 1 second), with a moderate amount of Special Power Up equipped.",
 	// "WeaponSpChariotParam.StartDelayFrame_Cannon": "",
 	// "WeaponSpChariotParam.StartDelayFrame_Shooter": "",
 
