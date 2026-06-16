@@ -4,10 +4,18 @@ import { Fragment, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
-import { WeaponImage } from "~/components/Image";
+import {
+	SpecialWeaponImage,
+	SubWeaponImage,
+	WeaponImage,
+} from "~/components/Image";
 import { InfoPopover } from "~/components/InfoPopover";
 import { useSearchParamStateEncoder } from "~/hooks/useSearchParamState";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type {
+	MainWeaponId,
+	SpecialWeaponId,
+	SubWeaponId,
+} from "~/modules/in-game-lists/types";
 import { mySlugify, weaponParamsPage } from "~/utils/urls";
 import { getParamExplanation } from "../core/param-explanations";
 import {
@@ -18,19 +26,70 @@ import {
 import type {
 	ParamValueWithHistory,
 	SpecialPointWithHistory,
+	WeaponParamKind,
 	WeaponParamsTableProps,
 } from "../weapon-params-types";
 import styles from "./WeaponParamsTable.module.css";
 
 const SPECIAL_POINTS_KEY = "__specialPoints__";
 
+function WeaponParamImage({
+	kind,
+	id,
+	size,
+}: {
+	kind: WeaponParamKind;
+	id: number;
+	size: number;
+}) {
+	if (kind === "sub") {
+		return <SubWeaponImage subWeaponId={id as SubWeaponId} size={size} />;
+	}
+	if (kind === "special") {
+		return (
+			<SpecialWeaponImage specialWeaponId={id as SpecialWeaponId} size={size} />
+		);
+	}
+	return (
+		<WeaponImage weaponSplId={id as MainWeaponId} variant="badge" size={size} />
+	);
+}
+
+// The display name and (English) url slug of a weapon, resolved from the right `weapons`
+// translation key for the table's kind. Ids are cast to their specific union so each key is a
+// concrete literal the i18next types recognize.
+function useWeaponParamNaming(kind: WeaponParamKind) {
+	const { t } = useTranslation(["weapons"]);
+
+	const name = (id: number) => {
+		if (kind === "sub") return t(`weapons:SUB_${id as SubWeaponId}`);
+		if (kind === "special") {
+			return t(`weapons:SPECIAL_${id as SpecialWeaponId}`);
+		}
+		return t(`weapons:MAIN_${id as MainWeaponId}`);
+	};
+
+	const slug = (id: number) =>
+		mySlugify(
+			kind === "sub"
+				? t(`weapons:SUB_${id as SubWeaponId}`, { lng: "en" })
+				: kind === "special"
+					? t(`weapons:SPECIAL_${id as SpecialWeaponId}`, { lng: "en" })
+					: t(`weapons:MAIN_${id as MainWeaponId}`, { lng: "en" }),
+		);
+
+	return { name, slug };
+}
+
 export function WeaponParamsTable({
+	kind,
 	currentWeaponId,
 	categoryWeaponIds,
 	weaponParams,
 	specialPoints,
 }: WeaponParamsTableProps) {
 	const { t } = useTranslation(["weapons", "common", "analyzer", "params"]);
+	const naming = useWeaponParamNaming(kind);
 	const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
 	const paramDefinitions = collectAllParamKeys(weaponParams);
@@ -64,7 +123,7 @@ export function WeaponParamsTable({
 	];
 
 	const [hiddenWeaponIds, setHiddenWeaponIds] = useSearchParamStateEncoder<
-		MainWeaponId[]
+		number[]
 	>({
 		name: "hidden",
 		defaultValue: [],
@@ -76,17 +135,17 @@ export function WeaponParamsTable({
 					(id) =>
 						!Number.isNaN(id) &&
 						id !== currentWeaponId &&
-						categoryWeaponIds.includes(id as MainWeaponId),
-				) as MainWeaponId[],
+						categoryWeaponIds.includes(id),
+				),
 		encode: (ids) => ids.join(","),
 	});
 
 	const hiddenSet = new Set(hiddenWeaponIds);
 	const visibleWeaponIds = sortedWeaponIds.filter((id) => !hiddenSet.has(id));
 
-	const hideWeapon = (weaponId: MainWeaponId) =>
+	const hideWeapon = (weaponId: number) =>
 		setHiddenWeaponIds([...hiddenWeaponIds, weaponId]);
-	const restoreWeapon = (weaponId: MainWeaponId) =>
+	const restoreWeapon = (weaponId: number) =>
 		setHiddenWeaponIds(hiddenWeaponIds.filter((id) => id !== weaponId));
 	const showAllWeapons = () => setHiddenWeaponIds([]);
 
@@ -107,6 +166,7 @@ export function WeaponParamsTable({
 		<div className={styles.container}>
 			{hiddenWeaponIds.length > 0 ? (
 				<HiddenWeaponsBar
+					kind={kind}
 					hiddenWeaponIds={hiddenWeaponIds}
 					onRestore={restoreWeapon}
 					onShowAll={showAllWeapons}
@@ -119,10 +179,8 @@ export function WeaponParamsTable({
 							{t("params:header.parameter")}
 						</th>
 						{visibleWeaponIds.map((weaponId) => {
-							const weaponName = t(`weapons:MAIN_${weaponId}`);
-							const slug = mySlugify(
-								t(`weapons:MAIN_${weaponId}`, { lng: "en" }),
-							);
+							const weaponName = naming.name(weaponId);
+							const slug = naming.slug(weaponId);
 
 							return (
 								<th key={weaponId} className={clsx(styles.weaponHeader, {})}>
@@ -130,11 +188,7 @@ export function WeaponParamsTable({
 										to={weaponParamsPage(slug)}
 										className={styles.weaponHeaderContent}
 									>
-										<WeaponImage
-											weaponSplId={weaponId}
-											variant="badge"
-											size={32}
-										/>
+										<WeaponParamImage kind={kind} id={weaponId} size={32} />
 										<span className={styles.weaponName}>{weaponName}</span>
 									</Link>
 									{weaponId !== currentWeaponId ? (
@@ -155,12 +209,14 @@ export function WeaponParamsTable({
 					</tr>
 				</thead>
 				<tbody>
-					<SpecialPointsRow
-						visibleWeaponIds={visibleWeaponIds}
-						specialPoints={specialPoints}
-						isExpanded={expandedRows.has(SPECIAL_POINTS_KEY)}
-						onToggle={() => toggleRow(SPECIAL_POINTS_KEY)}
-					/>
+					{kind === "main" && specialPoints ? (
+						<SpecialPointsRow
+							visibleWeaponIds={visibleWeaponIds}
+							specialPoints={specialPoints}
+							isExpanded={expandedRows.has(SPECIAL_POINTS_KEY)}
+							onToggle={() => toggleRow(SPECIAL_POINTS_KEY)}
+						/>
+					) : null}
 					{Object.entries(paramsByCategory).map(([category, params]) => {
 						const filteredParams = params.filter(({ key }) =>
 							currentWeaponHasParam(category, key),
@@ -242,15 +298,18 @@ export function WeaponParamsTable({
 }
 
 function HiddenWeaponsBar({
+	kind,
 	hiddenWeaponIds,
 	onRestore,
 	onShowAll,
 }: {
-	hiddenWeaponIds: MainWeaponId[];
-	onRestore: (weaponId: MainWeaponId) => void;
+	kind: WeaponParamKind;
+	hiddenWeaponIds: number[];
+	onRestore: (weaponId: number) => void;
 	onShowAll: () => void;
 }) {
 	const { t } = useTranslation(["weapons", "common"]);
+	const naming = useWeaponParamNaming(kind);
 
 	return (
 		<div className={styles.hiddenBar}>
@@ -268,9 +327,9 @@ function HiddenWeaponsBar({
 					onPress={() => onRestore(weaponId)}
 					testId={`restore-weapon-${weaponId}`}
 				>
-					<WeaponImage weaponSplId={weaponId} variant="badge" size={20} />
+					<WeaponParamImage kind={kind} id={weaponId} size={20} />
 					<span className={styles.hiddenBadgeName}>
-						{t(`weapons:MAIN_${weaponId}`)}
+						{naming.name(weaponId)}
 					</span>
 					<X size={12} />
 				</SendouButton>
@@ -293,7 +352,7 @@ function SpecialPointsRow({
 	isExpanded,
 	onToggle,
 }: {
-	visibleWeaponIds: MainWeaponId[];
+	visibleWeaponIds: number[];
 	specialPoints: Record<string, SpecialPointWithHistory[]>;
 	isExpanded: boolean;
 	onToggle: () => void;

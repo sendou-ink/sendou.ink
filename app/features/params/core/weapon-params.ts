@@ -1,3 +1,4 @@
+import { PATCHES } from "~/features/builds/builds-constants";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	mainWeaponIds,
@@ -11,6 +12,7 @@ import type {
 	ParsedWeaponParams,
 	PatchChange,
 	SpecialPointWithHistory,
+	WeaponPatch,
 } from "../weapon-params-types";
 import { classifyParamChange } from "./param-directions";
 
@@ -71,7 +73,7 @@ function flattenScalarParams(
 }
 
 export function parseWeaponParams(
-	weaponId: MainWeaponId,
+	weaponId: number,
 	rawParams: Record<string, Record<string, unknown>>,
 	versions: string[],
 ): ParsedWeaponParams {
@@ -239,7 +241,7 @@ function changesFromHistory(
  * Within each patch the changes are sorted with special points first, then alphabetically by
  * category and key.
  */
-export function computeWeaponPatchChanges(
+function computeWeaponPatchChanges(
 	parsed: ParsedWeaponParams,
 	versions: string[],
 	specialPoints?: SpecialPointWithHistory[],
@@ -314,6 +316,35 @@ export function computeWeaponPatchChanges(
 	}
 
 	return byVersion;
+}
+
+/**
+ * Builds the descending-by-version patch history of a single weapon, attaching each tracked
+ * game version's release date and skipping versions with no tracked balance changes. Special
+ * points changes are only folded in for main weapons (pass their history as `specialPoints`).
+ */
+export function buildWeaponPatchHistory(
+	parsed: ParsedWeaponParams | undefined,
+	versions: string[],
+	specialPoints: SpecialPointWithHistory[] = [],
+): WeaponPatch[] {
+	if (!parsed) return [];
+
+	const patchDateByVersion = new Map(PATCHES.map((p) => [p.patch, p.date]));
+	const changesByVersion = computeWeaponPatchChanges(
+		parsed,
+		versions,
+		specialPoints,
+	);
+
+	return versions
+		.filter((version) => changesByVersion.has(version))
+		.map((version) => ({
+			version,
+			date: patchDateByVersion.get(version) ?? null,
+			changes: changesByVersion.get(version)!,
+		}))
+		.reverse();
 }
 
 export function formatParamValue(value: number | string): string {

@@ -1,9 +1,11 @@
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import {
 	SpecialWeaponImage,
 	SubWeaponImage,
 	WeaponImage,
 } from "~/components/Image";
+import { mySlugify, weaponParamsPage } from "~/utils/urls";
 import type { WeaponKitInfo } from "../weapon-params-types";
 import styles from "./WeaponKits.module.css";
 
@@ -19,11 +21,27 @@ export function WeaponKits({ kits }: { kits: WeaponKitInfo[] }) {
 						{t(`weapons:MAIN_${kit.weaponId}`)}
 					</span>
 					<span className={styles.kitGear}>
-						<SubWeaponImage subWeaponId={kit.subWeaponId} size={22} />
-						<SpecialWeaponImage
-							specialWeaponId={kit.specialWeaponId}
-							size={22}
-						/>
+						<Link
+							to={weaponParamsPage(
+								mySlugify(t(`weapons:SUB_${kit.subWeaponId}`, { lng: "en" })),
+							)}
+							className={styles.gearLink}
+						>
+							<SubWeaponImage subWeaponId={kit.subWeaponId} size={22} />
+						</Link>
+						<Link
+							to={weaponParamsPage(
+								mySlugify(
+									t(`weapons:SPECIAL_${kit.specialWeaponId}`, { lng: "en" }),
+								),
+							)}
+							className={styles.gearLink}
+						>
+							<SpecialWeaponImage
+								specialWeaponId={kit.specialWeaponId}
+								size={22}
+							/>
+						</Link>
 					</span>
 				</li>
 			))}

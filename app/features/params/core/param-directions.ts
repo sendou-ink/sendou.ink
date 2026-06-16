@@ -48,6 +48,11 @@ const PARAM_DIRECTION_RULES: Array<{
 	{ match: "SpawnSpeed", betterWhenHigher: true },
 	{ match: "GoStraightStateEndMaxSpeed", betterWhenHigher: true },
 	{ match: "MaxShootingFrame", betterWhenHigher: true },
+	{ match: "ServeAreaRadius", betterWhenHigher: true },
+	{ match: "PowerUpFrame", betterWhenHigher: true },
+	{ match: ".Low", betterWhenHigher: true },
+	{ match: ".Mid", betterWhenHigher: true },
+	{ match: ".High", betterWhenHigher: true },
 ];
 
 /**

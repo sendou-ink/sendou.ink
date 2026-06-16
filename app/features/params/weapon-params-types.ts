@@ -16,8 +16,11 @@ export interface ParamValueWithHistory {
 	history: Array<{ version: string; value: number | string }>;
 }
 
+/** Which set of weapons a params page compares: main weapons, sub weapons or special weapons. */
+export type WeaponParamKind = "main" | "sub" | "special";
+
 export interface ParsedWeaponParams {
-	weaponId: MainWeaponId;
+	weaponId: number;
 	categories: Record<string, Record<string, ParamValueWithHistory>>;
 }
 
@@ -50,9 +53,11 @@ export interface WeaponPatch {
 }
 
 export interface WeaponParamsTableProps {
-	currentWeaponId: MainWeaponId;
-	categoryWeaponIds: MainWeaponId[];
+	kind: WeaponParamKind;
+	currentWeaponId: number;
+	categoryWeaponIds: number[];
 	weaponParams: Record<string, ParsedWeaponParams>;
-	specialPoints: Record<string, SpecialPointWithHistory[]>;
+	/** Special points are only tracked for main weapons. */
+	specialPoints?: Record<string, SpecialPointWithHistory[]>;
 	versions: string[];
 }

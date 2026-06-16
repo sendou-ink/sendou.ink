@@ -32,3 +32,13 @@
 	gap: var(--s-1);
 	margin-inline-start: var(--s-1);
 }
+
+.gearLink {
+	display: inline-flex;
+	align-items: center;
+	border-radius: var(--radius-rounded);
+
+	&:hover {
+		filter: brightness(1.2);
+	}
+}

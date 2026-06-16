@@ -1,39 +1,81 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
-import { PATCHES } from "~/features/builds/builds-constants";
 import { i18next } from "~/modules/i18n/i18next.server";
+import type {
+	MainWeaponId,
+	SpecialWeaponId,
+	SubWeaponId,
+} from "~/modules/in-game-lists/types";
 import {
+	specialWeaponIds,
+	subWeaponIds,
 	weaponIdToBaseWeaponId,
 	weaponIdToType,
 } from "~/modules/in-game-lists/weapon-ids";
-import { weaponNameSlugToId } from "~/utils/unslugify.server";
+import {
+	specialWeaponNameSlugToId,
+	subWeaponNameSlugToId,
+	weaponNameSlugToId,
+} from "~/utils/unslugify.server";
 import { mySlugify } from "~/utils/urls";
 import {
-	computeWeaponPatchChanges,
+	buildWeaponPatchHistory,
 	getCategoryWeaponIds,
 	getWeaponKitSiblingIds,
 	parseWeaponParams,
 } from "../core/weapon-params";
+import specialWeaponParamsData from "../data/all-version-special-params.json";
+import subWeaponParamsData from "../data/all-version-sub-params.json";
 import weaponParamsData from "../data/all-version-weapon-params.json";
 import type {
 	ParsedWeaponParams,
 	SpecialPointWithHistory,
-	WeaponPatch,
+	WeaponParamKind,
 } from "../weapon-params-types";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const t = await i18next.getFixedT(request, ["weapons"], {
 		lng: "en",
 	});
-	const weaponId = weaponNameSlugToId(params.slug);
 
-	if (typeof weaponId !== "number" || weaponIdToType(weaponId) === "ALT_SKIN") {
-		throw new Response(null, { status: 404 });
+	const mainWeaponId = weaponNameSlugToId(params.slug);
+	if (typeof mainWeaponId === "number") {
+		if (weaponIdToType(mainWeaponId) === "ALT_SKIN") {
+			throw new Response(null, { status: 404 });
+		}
+		return mainWeaponData(
+			mainWeaponId,
+			t(`weapons:MAIN_${mainWeaponId}`),
+			mySlugify(t(`weapons:MAIN_${mainWeaponId}`, { lng: "en" })),
+		);
 	}
 
-	const weaponName = t(`weapons:MAIN_${weaponId}`);
-	const slug = mySlugify(t(`weapons:MAIN_${weaponId}`, { lng: "en" }));
+	const subWeaponId = subWeaponNameSlugToId(params.slug);
+	if (typeof subWeaponId === "number") {
+		return subWeaponData(
+			subWeaponId,
+			t(`weapons:SUB_${subWeaponId}`),
+			mySlugify(t(`weapons:SUB_${subWeaponId}`, { lng: "en" })),
+		);
+	}
 
+	const specialWeaponId = specialWeaponNameSlugToId(params.slug);
+	if (typeof specialWeaponId === "number") {
+		return specialWeaponData(
+			specialWeaponId,
+			t(`weapons:SPECIAL_${specialWeaponId}`),
+			mySlugify(t(`weapons:SPECIAL_${specialWeaponId}`, { lng: "en" })),
+		);
+	}
+
+	throw new Response(null, { status: 404 });
+};
+
+function mainWeaponData(
+	weaponId: MainWeaponId,
+	weaponName: string,
+	slug: string,
+) {
 	const categoryWeaponIds = getCategoryWeaponIds(weaponId);
 
 	const kits = getWeaponKitSiblingIds(weaponId).map((id) => {
@@ -78,13 +120,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	}
 
 	const versions = weaponParamsData.metadata.versions;
-	const patchHistory = buildPatchHistory(
+	const patchHistory = buildWeaponPatchHistory(
 		weaponParams[String(weaponId)],
 		versions,
 		specialPoints[String(weaponId)] ?? [],
 	);
 
 	return {
+		kind: "main" as WeaponParamKind,
 		weaponId,
 		weaponName,
 		slug,
@@ -95,28 +138,82 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		patchHistory,
 		versions,
 	};
-};
+}
 
-function buildPatchHistory(
-	parsed: ParsedWeaponParams | undefined,
-	versions: string[],
-	specialPoints: SpecialPointWithHistory[],
-): WeaponPatch[] {
-	if (!parsed) return [];
+function subWeaponData(
+	weaponId: SubWeaponId,
+	weaponName: string,
+	slug: string,
+) {
+	const versions = subWeaponParamsData.metadata.versions;
 
-	const patchDateByVersion = new Map(PATCHES.map((p) => [p.patch, p.date]));
-	const changesByVersion = computeWeaponPatchChanges(
-		parsed,
+	const weaponParams: Record<string, ParsedWeaponParams> = {};
+	for (const id of subWeaponIds) {
+		const rawParams = (
+			subWeaponParamsData.weapons as Record<
+				string,
+				Record<string, Record<string, unknown>>
+			>
+		)[String(id)];
+		if (rawParams) {
+			weaponParams[String(id)] = parseWeaponParams(id, rawParams, versions);
+		}
+	}
+
+	const patchHistory = buildWeaponPatchHistory(
+		weaponParams[String(weaponId)],
 		versions,
-		specialPoints,
 	);
 
-	return versions
-		.filter((version) => changesByVersion.has(version))
-		.map((version) => ({
-			version,
-			date: patchDateByVersion.get(version) ?? null,
-			changes: changesByVersion.get(version)!,
-		}))
-		.reverse();
+	return {
+		kind: "sub" as WeaponParamKind,
+		weaponId,
+		weaponName,
+		slug,
+		categoryWeaponIds: [...subWeaponIds],
+		kits: undefined,
+		weaponParams,
+		specialPoints: undefined,
+		patchHistory,
+		versions,
+	};
+}
+
+function specialWeaponData(
+	weaponId: SpecialWeaponId,
+	weaponName: string,
+	slug: string,
+) {
+	const versions = specialWeaponParamsData.metadata.versions;
+
+	const weaponParams: Record<string, ParsedWeaponParams> = {};
+	for (const id of specialWeaponIds) {
+		const rawParams = (
+			specialWeaponParamsData.weapons as Record<
+				string,
+				Record<string, Record<string, unknown>>
+			>
+		)[String(id)];
+		if (rawParams) {
+			weaponParams[String(id)] = parseWeaponParams(id, rawParams, versions);
+		}
+	}
+
+	const patchHistory = buildWeaponPatchHistory(
+		weaponParams[String(weaponId)],
+		versions,
+	);
+
+	return {
+		kind: "special" as WeaponParamKind,
+		weaponId,
+		weaponName,
+		slug,
+		categoryWeaponIds: [...specialWeaponIds],
+		kits: undefined,
+		weaponParams,
+		specialPoints: undefined,
+		patchHistory,
+		versions,
+	};
 }
