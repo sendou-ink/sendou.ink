@@ -110,11 +110,15 @@
 }
 
 .paramName {
+	font-size: var(--font-xs);
+	min-width: 180px;
+	vertical-align: top;
+}
+
+.paramNameInner {
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
-	font-size: var(--font-xs);
-	min-width: 180px;
 }
 
 .expandableRow .paramName {

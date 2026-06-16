@@ -254,25 +254,27 @@ export function WeaponParamsTable({
 													hasHistory ? () => toggleRow(fullKey) : undefined
 												}
 											>
-												<span className={styles.paramNameText}>{key}</span>
-												{explanation ? (
-													// biome-ignore lint/a11y/noStaticElementInteractions: stops the help popover click from toggling the history row
-													<span
-														className={styles.paramInfo}
-														onClick={(e) => e.stopPropagation()}
-													>
-														<InfoPopover tiny>{explanation}</InfoPopover>
-													</span>
-												) : null}
-												{hasHistory ? (
-													<span className={styles.historyIndicator}>
-														{isExpanded ? (
-															<ChevronUp size={14} />
-														) : (
-															<ChevronDown size={14} />
-														)}
-													</span>
-												) : null}
+												<div className={styles.paramNameInner}>
+													<span className={styles.paramNameText}>{key}</span>
+													{explanation ? (
+														// biome-ignore lint/a11y/noStaticElementInteractions: stops the help popover click from toggling the history row
+														<span
+															className={styles.paramInfo}
+															onClick={(e) => e.stopPropagation()}
+														>
+															<InfoPopover tiny>{explanation}</InfoPopover>
+														</span>
+													) : null}
+													{hasHistory ? (
+														<span className={styles.historyIndicator}>
+															{isExpanded ? (
+																<ChevronUp size={14} />
+															) : (
+																<ChevronDown size={14} />
+															)}
+														</span>
+													) : null}
+												</div>
 											</td>
 											{visibleWeaponIds.map((weaponId) => (
 												<ParamCell
@@ -369,14 +371,16 @@ function SpecialPointsRow({
 				className={styles.paramName}
 				onClick={hasHistory ? onToggle : undefined}
 			>
-				<span className={styles.paramNameText}>
-					{t("analyzer:stat.specialPoints")}
-				</span>
-				{hasHistory ? (
-					<span className={styles.historyIndicator}>
-						{isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+				<div className={styles.paramNameInner}>
+					<span className={styles.paramNameText}>
+						{t("analyzer:stat.specialPoints")}
 					</span>
-				) : null}
+					{hasHistory ? (
+						<span className={styles.historyIndicator}>
+							{isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+						</span>
+					) : null}
+				</div>
 			</td>
 			{visibleWeaponIds.map((weaponId) => (
 				<SpecialPointCell

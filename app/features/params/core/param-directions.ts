@@ -36,7 +36,7 @@ const PARAM_DIRECTION_RULES: Array<{
 	{ match: "PreDelayFrame", betterWhenHigher: false },
 	{ match: "DashFrame", betterWhenHigher: false },
 	{ match: "NakedFrame", betterWhenHigher: false },
-	{ match: "Dash_ChargeCancelableFrame", betterWhenHigher: false},
+	{ match: "Dash_ChargeCancelableFrame", betterWhenHigher: false },
 
 	// Higher is better: more damage, durability, mobility, paint, range, uptime.
 	{ match: "Damage", betterWhenHigher: true },

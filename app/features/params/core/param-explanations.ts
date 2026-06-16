@@ -1,5 +1,3 @@
-// xxx: make these translateable?
-
 /**
  * Plain-English explanations of raw weapon parameters, keyed by `${category}.${key}`.
  *
