@@ -12,4 +12,5 @@
 .dataCredit {
 	font-size: var(--font-2xs);
 	color: var(--color-text-high);
+	text-decoration: underline;
 }
