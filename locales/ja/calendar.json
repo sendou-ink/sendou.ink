@@ -85,6 +85,7 @@
 	"events.view.hosting": "運営",
 	"events.view.scrims": "対抗戦",
 	"events.view.saved": "保存済み",
+	"events.view.organization": "",
 	"events.empty": "イベントはありません",
 	"events.emptyAll": "イベントはありません",
 	"events.findOnCalendar": "カレンダーからイベントに参加しましょう！"
