@@ -1229,6 +1229,15 @@ export interface TournamentStreamer {
 	twitchAccount: string;
 }
 
+export interface ExternalStream {
+	id: GeneratedAlways<number>;
+	name: string;
+	url: string;
+	avatarImgId: number | null;
+	startTime: number;
+	createdAt: Generated<number>;
+}
+
 export interface TournamentMatchVod {
 	id: GeneratedAlways<number>;
 	matchId: number;
@@ -1473,6 +1482,7 @@ export interface DB {
 	CalendarEventDate: CalendarEventDate;
 	CalendarEventResultPlayer: CalendarEventResultPlayer;
 	CalendarEventResultTeam: CalendarEventResultTeam;
+	ExternalStream: ExternalStream;
 
 	Group: Group;
 	GroupLike: GroupLike;

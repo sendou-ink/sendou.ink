@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { usePatrons } from "~/hooks/swr";
 import {
@@ -27,7 +28,7 @@ export function Footer() {
 	const user = useUser();
 
 	const showPrivacySettings =
-		import.meta.env.VITE_FUSE_ENABLED && !user?.roles.includes("MINOR_SUPPORT");
+		Config.fuseEnabled && !user?.roles.includes("MINOR_SUPPORT");
 
 	const currentYear = new Date().getFullYear();
 

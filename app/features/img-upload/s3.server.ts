@@ -5,61 +5,26 @@ import type { PutObjectCommandInput } from "@aws-sdk/client-s3";
 import { S3 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { writeAsyncIterableToWritable } from "@react-router/node";
-
-const envVars = () => {
-	const {
-		STORAGE_END_POINT,
-		STORAGE_ACCESS_KEY,
-		STORAGE_SECRET,
-		STORAGE_REGION,
-		STORAGE_BUCKET,
-	} = process.env;
-
-	if (
-		!(
-			STORAGE_ACCESS_KEY &&
-			STORAGE_END_POINT &&
-			STORAGE_SECRET &&
-			STORAGE_REGION &&
-			STORAGE_BUCKET
-		)
-	) {
-		throw new Error("Storage is missing required configuration.");
-	}
-
-	return {
-		STORAGE_END_POINT,
-		STORAGE_ACCESS_KEY,
-		STORAGE_SECRET,
-		STORAGE_REGION,
-		STORAGE_BUCKET,
-	};
-};
+import { ServerConfig } from "~/config.server";
 
 const uploadStream = ({ Key }: Pick<PutObjectCommandInput, "Key">) => {
-	const {
-		STORAGE_END_POINT,
-		STORAGE_ACCESS_KEY,
-		STORAGE_SECRET,
-		STORAGE_REGION,
-		STORAGE_BUCKET,
-	} = envVars();
+	const { endpoint, accessKey, secret, region, bucket } = ServerConfig.storage;
 
 	const s3 = new S3({
-		endpoint: STORAGE_END_POINT,
+		endpoint,
 		forcePathStyle: false,
 		credentials: {
-			accessKeyId: STORAGE_ACCESS_KEY,
-			secretAccessKey: STORAGE_SECRET,
+			accessKeyId: accessKey,
+			secretAccessKey: secret,
 		},
-		region: STORAGE_REGION,
+		region,
 	});
 	const pass = new PassThrough();
 	return {
 		writeStream: pass,
 		promise: new Upload({
 			client: s3,
-			params: { Bucket: STORAGE_BUCKET, Key, Body: pass, ACL: "public-read" },
+			params: { Bucket: bucket, Key, Body: pass, ACL: "public-read" },
 		}).done(),
 	};
 };

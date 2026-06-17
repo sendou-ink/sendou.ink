@@ -126,7 +126,6 @@ function AdminActions() {
 	return (
 		<div className="stack lg">
 			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS ? <Seed /> : null}
-			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS ? <TestAdminNotification /> : null}
 			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS || isAdmin || isDev ? (
 				<Impersonate />
 			) : null}
@@ -483,23 +482,6 @@ function Seed() {
 					))}
 				</SendouSelect>
 			</div>
-		</fetcher.Form>
-	);
-}
-
-function TestAdminNotification() {
-	const fetcher = useFetcher();
-
-	return (
-		<fetcher.Form method="post">
-			<h2>Test Admin Notification</h2>
-			<SubmitButton
-				type="submit"
-				_action="TEST_ADMIN_NOTIFICATION"
-				state={fetcher.state}
-			>
-				Send Test
-			</SubmitButton>
 		</fetcher.Form>
 	);
 }

@@ -1,7 +1,7 @@
 import type { Insertable } from "kysely";
 import type { DB } from "~/db/tables";
 import * as TournamentMatchVodRepository from "~/features/tournament-bracket/TournamentMatchVodRepository.server";
-import { hasTwitchEnvVars } from "~/modules/twitch/utils";
+import { hasTwitchEnvVars } from "~/modules/twitch/utils.server";
 import {
 	getArchiveVideos,
 	getUsersByLogin,

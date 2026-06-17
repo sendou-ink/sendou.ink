@@ -85,6 +85,8 @@
 	"notifications.text.SCRIM_CANCELED": "The scrim vs. {{opponentTeamName}} was canceled",
 	"notifications.title.SCRIM_STARTING_SOON": "Scrim Starting Soon",
 	"notifications.text.SCRIM_STARTING_SOON": "Your scrim vs. {{opponentTeamName}} is starting soon",
+	"notifications.title.SCRIM_AUTO_DELETED": "Scrim Post Removed",
+	"notifications.text.SCRIM_AUTO_DELETED": "Your scrim post was automatically removed because you booked a scrim around that time (± 1 hour)",
 	"notifications.title.COMMISSIONS_CLOSED": "Commissions Closed",
 	"notifications.text.COMMISSIONS_CLOSED": "If your commissions are still open, please re-enable them",
 	"notifications.title.FRIEND_REQUEST_RECEIVED": "Friend Request",

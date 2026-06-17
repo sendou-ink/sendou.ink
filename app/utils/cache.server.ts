@@ -1,4 +1,5 @@
 import type { CacheEntry } from "@epic-web/cachified";
+import { ServerConfig } from "~/config.server";
 import { LRUCache } from "~/modules/cache";
 
 declare global {
@@ -11,8 +12,7 @@ export const cache = (global.__lruCache = global.__lruCache
 	? global.__lruCache
 	: new LRUCache<string, CacheEntry<unknown>>({ max: 5000 }));
 
-export const ttl = (ms: number) =>
-	process.env.DISABLE_CACHE === "true" ? 0 : ms;
+export const ttl = (ms: number) => (ServerConfig.disableCache ? 0 : ms);
 
 export function syncCached<T>(key: string, getFreshValue: () => T) {
 	if (cache.has(key)) {

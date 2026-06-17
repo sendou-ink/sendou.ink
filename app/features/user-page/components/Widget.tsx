@@ -92,7 +92,9 @@ export function Widget({
 							url: teamPage(team.customUrl),
 							name: team.name,
 							logoUrl: team.logoUrl,
-							roleDisplayName: team.role ? t(`team:roles.${team.role}`) : null,
+							roleDisplayName:
+								team.customRole ??
+								(team.role ? t(`team:roles.${team.role}`) : null),
 						}))}
 					/>
 				);
