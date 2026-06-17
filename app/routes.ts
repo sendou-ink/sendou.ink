@@ -242,6 +242,8 @@ export default [
 
 	route("/weapon-usage", "features/sendouq/routes/weapon-usage.ts"),
 
+	route("/params/:slug", "features/params/routes/params.$slug.tsx"),
+
 	route("/tiers", "features/sendouq/routes/tiers.tsx"),
 
 	route(

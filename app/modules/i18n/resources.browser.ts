@@ -13,6 +13,7 @@ import gameMisc from "../../../locales/en/game-misc.json";
 import gear from "../../../locales/en/gear.json";
 import lfg from "../../../locales/en/lfg.json";
 import org from "../../../locales/en/org.json";
+import params from "../../../locales/en/params.json";
 import q from "../../../locales/en/q.json";
 import scrims from "../../../locales/en/scrims.json";
 import settings from "../../../locales/en/settings.json";
@@ -40,6 +41,7 @@ export const resources = {
 		gear,
 		lfg,
 		org,
+		params,
 		q,
 		scrims,
 		settings,

@@ -1,9 +1,4 @@
-// To run this script you need from https://github.com/Leanny/leanny.github.io
-// 1) WeaponInfoMain.json inside dicts
-// 2) WeaponInfoSub.json inside dicts
-// 3) WeaponInfoSpecial.json inside dicts
-// 4) SplPlayer.game__GameParameterTable.json inside dicts
-// 5) params (weapon folder) inside dicts
+// To run this script drop the https://github.com/Leanny/splat3 repo into scripts/dicts/splat3
 
 import fs from "node:fs";
 import path from "node:path";
@@ -28,18 +23,24 @@ import {
 } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-import playersParams from "./dicts/SplPlayer.game__GameParameterTable.json";
-import weapons from "./dicts/WeaponInfoMain.json";
-import specialWeapons from "./dicts/WeaponInfoSpecial.json";
-import subWeapons from "./dicts/WeaponInfoSub.json";
 import {
 	LANG_JSONS_TO_CREATE,
 	loadLangDicts,
+	loadSplPlayerParams,
+	loadWeaponInfoMain,
+	loadWeaponInfoSpecial,
+	loadWeaponInfoSub,
 	translationJsonFolderName,
+	weaponParamsDir,
 } from "./utils";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const playersParams = loadSplPlayerParams();
+const weapons = loadWeaponInfoMain();
+const subWeapons = loadWeaponInfoSub();
+const specialWeapons = loadWeaponInfoSpecial();
 
 const CURRENT_SEASON = 9;
 
@@ -1093,7 +1094,7 @@ function loadWeaponParamsObject(
 ) {
 	return JSON.parse(
 		fs.readFileSync(
-			path.join(__dirname, "dicts", "weapon", weaponRowIdToFileName(weapon)),
+			path.join(weaponParamsDir(), weaponRowIdToFileName(weapon)),
 			"utf8",
 		),
 	).GameParameters;

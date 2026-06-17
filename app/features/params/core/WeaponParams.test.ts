@@ -1,0 +1,473 @@
+import { describe, expect, it } from "vitest";
+import {
+	DAMAGE_MULTIPLIER_PARAM_KEY,
+	INCOMING_DAMAGE_MULTIPLIER_PARAM_KEY,
+	SPECIAL_POINTS_PARAM_KEY,
+} from "../weapon-params-constants";
+import type {
+	DamageMultiplierWithHistory,
+	ParsedWeaponParams,
+} from "../weapon-params-types";
+import { classifyParamChange } from "./param-directions";
+import * as WeaponParams from "./WeaponParams";
+
+const VERSIONS = ["1.0.0", "2.0.0", "3.0.0"];
+
+const emptyParsed = (weaponId: number): ParsedWeaponParams => ({
+	weaponId,
+	categories: {},
+});
+
+const row = (overrides: {
+	mainWeaponIds?: number[];
+	subWeaponIds?: number[];
+	specialWeaponIds?: number[];
+	targets: DamageMultiplierWithHistory[];
+}) => ({
+	mainWeaponIds: [],
+	subWeaponIds: [],
+	specialWeaponIds: [],
+	...overrides,
+});
+
+describe("damageMultipliersForWeapon", () => {
+	it("collects only rows applying to the weapon for the given kind", () => {
+		const rows = {
+			a: row({
+				specialWeaponIds: [11],
+				targets: [{ target: "Chariot", current: 2, history: [] }],
+			}),
+			b: row({
+				specialWeaponIds: [12],
+				targets: [{ target: "ShockSonar", current: 2, history: [] }],
+			}),
+		};
+
+		const result = WeaponParams.damageMultipliersForWeapon(rows, 11, "special");
+
+		expect(result.map((m) => m.target)).toEqual(["Chariot"]);
+	});
+
+	it("de-duplicates identical target histories shared across rows", () => {
+		const sharedTarget: DamageMultiplierWithHistory = {
+			target: "GreatBarrier_Barrier",
+			current: 1.4,
+			history: [{ version: "1.0.0", value: 2.8 }],
+		};
+		const rows = {
+			bullet: row({ specialWeaponIds: [10], targets: [sharedTarget] }),
+			bombCore: row({
+				specialWeaponIds: [10],
+				targets: [{ ...sharedTarget }],
+			}),
+		};
+
+		const result = WeaponParams.damageMultipliersForWeapon(rows, 10, "special");
+
+		expect(result).toHaveLength(1);
+	});
+
+	it("merges several rows of the same target into the most informative entry", () => {
+		const rows = {
+			swing: row({
+				specialWeaponIds: [11],
+				targets: [{ target: "Chariot", current: 4.5, history: [] }],
+			}),
+			throwBombCore: row({
+				specialWeaponIds: [11],
+				targets: [
+					{
+						target: "Chariot",
+						current: 3.273,
+						history: [
+							{ version: "2.0.0", value: 2 },
+							{ version: "3.0.0", value: 6 },
+						],
+					},
+				],
+			}),
+		};
+
+		const result = WeaponParams.damageMultipliersForWeapon(rows, 11, "special");
+
+		expect(result).toHaveLength(1);
+		expect(result[0].history).toHaveLength(2);
+		expect(result[0].current).toBe(3.273);
+	});
+
+	it("orders entries like DAMAGE_RECEIVERS", () => {
+		const rows = {
+			a: row({
+				specialWeaponIds: [11],
+				targets: [
+					{ target: "Wsb_Shield", current: 2, history: [] },
+					{ target: "Chariot", current: 3, history: [] },
+				],
+			}),
+		};
+
+		const result = WeaponParams.damageMultipliersForWeapon(rows, 11, "special");
+
+		// Chariot precedes Wsb_Shield in DAMAGE_RECEIVERS
+		expect(result.map((m) => m.target)).toEqual(["Chariot", "Wsb_Shield"]);
+	});
+});
+
+describe("patchHistory damage multipliers", () => {
+	const buildWith = (multiplier: DamageMultiplierWithHistory) =>
+		WeaponParams.patchHistory(emptyParsed(11), VERSIONS, [], [multiplier]);
+
+	it("attributes a change to the version after the recorded one and flags a higher rate as a buff", () => {
+		const patches = buildWith({
+			target: "Wsb_Shield",
+			current: 2.2,
+			history: [{ version: "1.0.0", value: 2 }],
+		});
+
+		expect(patches).toHaveLength(1);
+		expect(patches[0].version).toBe("2.0.0");
+		expect(patches[0].changes).toEqual([
+			{
+				category: DAMAGE_MULTIPLIER_PARAM_KEY,
+				key: "Wsb_Shield",
+				from: 2,
+				to: 2.2,
+				kind: "buff",
+			},
+		]);
+	});
+
+	it("flags a lower rate as a nerf", () => {
+		const patches = buildWith({
+			target: "NiceBall_Armor",
+			current: 1.82,
+			history: [{ version: "2.0.0", value: 2.6 }],
+		});
+
+		expect(patches).toHaveLength(1);
+		expect(patches[0].version).toBe("3.0.0");
+		expect(patches[0].changes[0].kind).toBe("nerf");
+	});
+});
+
+describe("incomingDamageMultipliersForWeapon", () => {
+	it("collects other weapons' rates against the weapon's receiver targets", () => {
+		const rows = {
+			fromSpecial: row({
+				specialWeaponIds: [10],
+				targets: [
+					{
+						target: "GreatBarrier_Barrier",
+						current: 1.4,
+						history: [{ version: "1.0.0", value: 2.8 }],
+					},
+				],
+			}),
+			fromMains: row({
+				mainWeaponIds: [200, 201],
+				targets: [
+					{
+						target: "GreatBarrier_WeakPoint",
+						current: 3,
+						history: [{ version: "2.0.0", value: 2 }],
+					},
+				],
+			}),
+			unrelated: row({
+				mainWeaponIds: [400],
+				targets: [{ target: "Chariot", current: 2, history: [] }],
+			}),
+		};
+
+		// special id 2 is Big Bubbler (GreatBarrier_Barrier + GreatBarrier_WeakPoint)
+		const result = WeaponParams.incomingDamageMultipliersForWeapon(
+			rows,
+			2,
+			"special",
+		);
+
+		expect(result.map((m) => m.target)).toEqual([
+			"GreatBarrier_Barrier",
+			"GreatBarrier_WeakPoint",
+		]);
+		expect(result[1].attackers.mainWeaponIds).toEqual([200, 201]);
+	});
+
+	it("de-duplicates the same attacker group and target across rows", () => {
+		const target = {
+			target: "GreatBarrier_Barrier",
+			current: 1.4,
+			history: [{ version: "1.0.0", value: 2.8 }],
+		};
+		const rows = {
+			bullet: row({ specialWeaponIds: [10], targets: [target] }),
+			bombCore: row({ specialWeaponIds: [10], targets: [{ ...target }] }),
+		};
+
+		const result = WeaponParams.incomingDamageMultipliersForWeapon(
+			rows,
+			2,
+			"special",
+		);
+
+		expect(result).toHaveLength(1);
+	});
+
+	it("returns nothing for a weapon that is not a damageable object", () => {
+		const rows = {
+			a: row({
+				specialWeaponIds: [10],
+				targets: [
+					{
+						target: "GreatBarrier_Barrier",
+						current: 1,
+						history: [{ version: "1.0.0", value: 2 }],
+					},
+				],
+			}),
+		};
+
+		// special id 1 (Trizooka) is not in INCOMING_DAMAGE_RECEIVERS
+		expect(
+			WeaponParams.incomingDamageMultipliersForWeapon(rows, 1, "special"),
+		).toEqual([]);
+	});
+});
+
+describe("patchHistory incoming damage multipliers", () => {
+	it("flags a higher incoming rate as a nerf to the defending weapon and carries the attackers", () => {
+		const patches = WeaponParams.patchHistory(
+			emptyParsed(2),
+			VERSIONS,
+			[],
+			[],
+			[
+				{
+					target: "GreatBarrier_Barrier",
+					attackers: {
+						mainWeaponIds: [200],
+						subWeaponIds: [],
+						specialWeaponIds: [],
+					},
+					current: 2.8,
+					history: [{ version: "1.0.0", value: 1.4 }],
+				},
+			],
+		);
+
+		expect(patches).toHaveLength(1);
+		expect(patches[0].version).toBe("2.0.0");
+		expect(patches[0].changes[0]).toMatchObject({
+			category: INCOMING_DAMAGE_MULTIPLIER_PARAM_KEY,
+			key: "GreatBarrier_Barrier",
+			from: 1.4,
+			to: 2.8,
+			kind: "nerf",
+			attackers: { mainWeaponIds: [200] },
+		});
+	});
+
+	it("flags a lower incoming rate as a buff to the defending weapon", () => {
+		const patches = WeaponParams.patchHistory(
+			emptyParsed(2),
+			VERSIONS,
+			[],
+			[],
+			[
+				{
+					target: "GreatBarrier_Barrier",
+					attackers: {
+						mainWeaponIds: [200],
+						subWeaponIds: [],
+						specialWeaponIds: [],
+					},
+					current: 1.4,
+					history: [{ version: "1.0.0", value: 2.8 }],
+				},
+			],
+		);
+
+		expect(patches[0].changes[0].kind).toBe("buff");
+	});
+});
+
+describe("parse damage falloff curves", () => {
+	it("serializes a DistanceDamage array into a scaled damage @ distance string", () => {
+		const parsed = WeaponParams.parse(
+			0,
+			{
+				BlastParam: {
+					DistanceDamage: [
+						{ Damage: 1800, Distance: 3.6 },
+						{ Damage: 300, Distance: 7 },
+					],
+				},
+			},
+			VERSIONS,
+		);
+
+		expect(parsed.categories.BlastParam.DistanceDamage.current).toBe(
+			"180 @ 3.6, 30 @ 7",
+		);
+	});
+
+	it("flattens nested breakpoint arrays", () => {
+		const parsed = WeaponParams.parse(
+			0,
+			{
+				BlastParam: {
+					DistanceDamage: [
+						[{ Damage: 1800, Distance: 3.6 }],
+						[{ Damage: 300, Distance: 7 }],
+					],
+				},
+			},
+			VERSIONS,
+		);
+
+		expect(parsed.categories.BlastParam.DistanceDamage.current).toBe(
+			"180 @ 3.6, 30 @ 7",
+		);
+	});
+
+	it("tracks per-version history of a damage falloff curve", () => {
+		const parsed = WeaponParams.parse(
+			0,
+			{
+				BlastParam: {
+					DistanceDamage: [{ Damage: 600, Distance: 4 }],
+					"DistanceDamage@2.0.0": [{ Damage: 400, Distance: 4 }],
+				},
+			},
+			VERSIONS,
+		);
+
+		expect(parsed.categories.BlastParam.DistanceDamage.history).toEqual([
+			{ version: "2.0.0", value: "40 @ 4" },
+		]);
+	});
+});
+
+describe("classifyParamChange damage falloff curves", () => {
+	it("flags higher damage as a buff", () => {
+		expect(
+			classifyParamChange("BlastParam", "DistanceDamage", "40 @ 4", "60 @ 4"),
+		).toBe("buff");
+	});
+
+	it("flags lower damage as a nerf", () => {
+		expect(
+			classifyParamChange("BlastParam", "DistanceDamage", "60 @ 4", "40 @ 4"),
+		).toBe("nerf");
+	});
+
+	it("flags longer reach at the same damage as a buff", () => {
+		expect(
+			classifyParamChange(
+				"BlastParam",
+				"DistanceDamage",
+				"70 @ 0.94, 50 @ 3.3",
+				"70 @ 1.01, 50 @ 3.37",
+			),
+		).toBe("buff");
+	});
+
+	it("flags shorter reach at the same damage as a nerf", () => {
+		expect(
+			classifyParamChange(
+				"BlastParam",
+				"DistanceDamage",
+				"70 @ 1.01, 50 @ 3.37",
+				"70 @ 0.975, 50 @ 3.37",
+			),
+		).toBe("nerf");
+	});
+
+	it("is neutral when damage rises but reach shrinks", () => {
+		expect(
+			classifyParamChange("BlastParam", "DistanceDamage", "60 @ 4", "70 @ 3.5"),
+		).toBe("neutral");
+	});
+
+	it("is neutral when the curve gains or loses a breakpoint", () => {
+		expect(
+			classifyParamChange(
+				"BlastParam",
+				"DistanceDamage",
+				"60 @ 4",
+				"60 @ 4, 30 @ 8",
+			),
+		).toBe("neutral");
+	});
+});
+
+describe("kitPatchHistories", () => {
+	const kitHistory = () =>
+		WeaponParams.kitPatchHistories({
+			mainParsed: emptyParsed(11),
+			versions: VERSIONS,
+			kits: [{ weaponId: 11, subWeaponId: 1, specialWeaponId: 2 }],
+			specialPointsByKit: {
+				"11": {
+					weaponId: 11,
+					current: 180,
+					history: [{ version: "1.0.0", value: 200 }],
+				},
+			},
+			mainDamageMultipliers: [
+				{
+					target: "Wsb_Shield",
+					current: 2.2,
+					history: [{ version: "1.0.0", value: 2 }],
+				},
+			],
+			subParams: { "1": emptyParsed(1) },
+			subDamageMultipliers: {
+				"1": [
+					{
+						target: "Chariot",
+						current: 3,
+						history: [{ version: "1.0.0", value: 2 }],
+					},
+				],
+			},
+			subIncomingDamageMultipliers: {},
+			specialParams: { "2": emptyParsed(2) },
+			specialDamageMultipliers: {
+				"2": [
+					{
+						target: "NiceBall_Armor",
+						current: 1.5,
+						history: [{ version: "2.0.0", value: 2 }],
+					},
+				],
+			},
+			specialIncomingDamageMultipliers: {},
+		});
+
+	it("folds the kit's main, sub and special weapon changes into one descending history", () => {
+		const [history] = kitHistory();
+
+		expect(history.weaponId).toBe(11);
+		expect(history.patches.map((patch) => patch.version)).toEqual([
+			"3.0.0",
+			"2.0.0",
+		]);
+	});
+
+	it("tags each change with its source and groups main before sub before special", () => {
+		const [history] = kitHistory();
+
+		const v2 = history.patches.find((patch) => patch.version === "2.0.0")!;
+		// special points + main damage rate (both main), then the sub weapon's damage rate
+		expect(v2.changes.map((change) => change.source)).toEqual([
+			"main",
+			"main",
+			"sub",
+		]);
+		expect(v2.changes[0].category).toBe(SPECIAL_POINTS_PARAM_KEY);
+
+		const v3 = history.patches.find((patch) => patch.version === "3.0.0")!;
+		expect(v3.changes.map((change) => change.source)).toEqual(["special"]);
+	});
+});

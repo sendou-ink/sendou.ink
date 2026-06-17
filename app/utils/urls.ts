@@ -279,6 +279,7 @@ export const weaponBuildStatsPage = (weaponSlug: string) =>
 	`${weaponBuildPage(weaponSlug)}/stats`;
 export const weaponBuildPopularPage = (weaponSlug: string) =>
 	`${weaponBuildPage(weaponSlug)}/popular`;
+export const weaponParamsPage = (weaponSlug: string) => `/params/${weaponSlug}`;
 
 export const calendarPage = (args?: {
 	filters?: CalendarFilters;
