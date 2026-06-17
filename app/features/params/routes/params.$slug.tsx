@@ -38,7 +38,7 @@ export const handle: SendouRouteHandle = {
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.data) return [];
 	return metaTags({
-		title: args.data.weaponName,
+		title: `${args.data.weaponName} parameters`,
 		description: `${args.data.weaponName} parameters with version history compared across ${comparedAcross(args.data.kind)}.`,
 		location: args.location,
 	});
