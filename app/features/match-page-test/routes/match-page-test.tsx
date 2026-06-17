@@ -17,7 +17,6 @@ import {
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
 import { MatchBannerTimer } from "~/components/match-page/MatchBannerTimer";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
-import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchPage } from "~/components/match-page/MatchPage";
 import { MatchPageHeader } from "~/components/match-page/MatchPageHeader";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
@@ -96,6 +95,8 @@ export default function MatchPageTestRoute() {
 							teamName: "Chimera",
 						})}
 						screenLegal={false}
+						joinPool="SQ7"
+						joinPass="8430"
 					/>
 					<MatchBannerBottomRow
 						games={[{ mode: "SZ" }, { mode: "TC" }, { mode: "RM" }]}
@@ -172,13 +173,7 @@ export default function MatchPageTestRoute() {
 					/>
 				</MatchBannerContainer>
 
-				<MatchTabs tabs={["join", "rosters", "action", "result"]}>
-					<MatchJoinTab
-						joinLink="https://app.nintendo.net/private_battle/abc123"
-						pool="SQ7"
-						pass="8430"
-						showNoSplatnetAlert
-					/>
+				<MatchTabs tabs={["rosters", "action", "result"]}>
 					<MatchRosterTab
 						minMembersPerTeam={4}
 						canEditSubbedOut={[true, false]}

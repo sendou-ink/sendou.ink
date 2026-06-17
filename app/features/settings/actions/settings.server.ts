@@ -58,12 +58,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 			break;
 		}
-		case "UPDATE_DEFAULT_MATCH_PAGE_TAB": {
-			await UserRepository.updateOwnPreferences({
-				defaultMatchPageTab: data.newValue,
-			});
-			break;
-		}
 		case "UPDATE_MATCH_PROFILE": {
 			await MatchProfileRepository.updateOwnMatchProfile({
 				mapModePreferences: data.mapModePreferences,
@@ -71,7 +65,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				languages: data.languages,
 				weaponPool: data.weaponPool,
 				noScreen: Number(data.noScreen),
-				noSplatnet: Number(data.noSplatnet),
 			});
 			break;
 		}

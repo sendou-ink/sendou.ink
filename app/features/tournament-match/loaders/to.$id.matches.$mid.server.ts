@@ -3,7 +3,6 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatAccessible } from "~/features/chat/chat-utils";
-import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -218,16 +217,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		(isParticipant || tournament.isOrganizerOrStreamer(user)) &&
 		!isLeagueRoundLocked(tournament, match.roundId);
 
-	const [roomLinks, anyUserPrefersNoSplatnet] = canJoin
-		? await Promise.all([
-				RoomLinkRepository.findByUserIds(
-					match.players.map((p) => p.id),
-					3,
-				),
-				UserRepository.anyUserPrefersNoSplatnet(match.players.map((p) => p.id)),
-			])
-		: ([[], false] as const);
-
 	return {
 		match: hasPermsToSeeChat ? match : { ...match, chatCode: undefined },
 		results,
@@ -238,8 +227,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		noScreen,
 		chatCode: visibleChatCode,
 		canJoin,
-		roomLinks,
-		anyUserPrefersNoSplatnet,
 		pickBanEventCount: pickBanEvents.length,
 		pickBanEvents: pickBanEvents.map((e) => ({
 			type: e.type,

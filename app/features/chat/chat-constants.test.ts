@@ -1,9 +1,5 @@
 import { describe, expect, test } from "vitest";
-import {
-	extractRoomLink,
-	findRoomLinks,
-	isSplatnetRoomUrl,
-} from "./chat-constants";
+import { findRoomLinks, isSplatnetRoomUrl } from "./chat-constants";
 
 describe("isSplatnetRoomUrl", () => {
 	test("accepts canonical SplatNet share path", () => {
@@ -109,17 +105,5 @@ describe("findRoomLinks", () => {
 			{ url: "https://s.nintendo.com/aaa", index: 0 },
 			{ url: "https://s.nintendo.com/bbb", index: 36 },
 		]);
-	});
-});
-
-describe("extractRoomLink", () => {
-	test("returns first valid link", () => {
-		expect(extractRoomLink("hi https://s.nintendo.com/abc see you")).toBe(
-			"https://s.nintendo.com/abc",
-		);
-	});
-
-	test("returns null when no valid link present", () => {
-		expect(extractRoomLink("https://sanintendoacom.evil.tld/abc")).toBeNull();
 	});
 });

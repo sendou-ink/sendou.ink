@@ -1,7 +1,7 @@
 import * as React from "react";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
+import { resolveRoomPass } from "~/components/match-page/utils";
 import { useUser } from "~/features/auth/core/user";
-import { resolveActiveRoomLink } from "~/features/chat/room-link-utils";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
@@ -12,8 +12,6 @@ import {
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import type { TournamentMatchLoaderData } from "./loaders/to.$id.matches.$mid.server";
 import { matchIsLocked, resolveHostingTeam } from "./tournament-match-utils";
-
-type ActiveRoomLink = ReturnType<typeof resolveActiveRoomLink>;
 
 export type MatchPageTeam = NonNullable<ReturnType<Tournament["teamById"]>>;
 
@@ -35,7 +33,7 @@ type MatchPageContextValue = {
 	isPickBanStep: boolean;
 	matchIsLocked: boolean;
 	joinPool: string | null;
-	activeRoomLink: ActiveRoomLink | null;
+	joinPass: string | null;
 };
 
 const MatchPageContext = React.createContext<MatchPageContextValue | null>(
@@ -101,16 +99,7 @@ export function MatchPageProvider({
 		scores,
 	});
 
-	const joinPool = resolveJoinPool({ tournament, data, teams });
-
-	const activeRoomLink = data.canJoin
-		? resolveActiveRoomLink({
-				roomLinks: data.roomLinks,
-				freshnessCutoff: data.match.startedAt ?? 0,
-				viewerUserId: user?.id,
-				members: data.match.players,
-			})
-		: null;
+	const joinInfo = resolveJoinInfo({ tournament, data, teams });
 
 	const tabs = resolveVisibleTabs({
 		canReportScore: tournament.canReportScore({
@@ -119,7 +108,6 @@ export function MatchPageProvider({
 		}),
 		canReportWeapons:
 			isParticipant && tournament.weaponReportingOpen && hasReportedMaps,
-		canJoin: data.canJoin,
 		hasCurrentMap: Boolean(currentMap),
 		hasMissingActiveRoster: teamsMissingActiveRoster.length > 0,
 		hasReportedMaps,
@@ -144,8 +132,8 @@ export function MatchPageProvider({
 				turnOfResult,
 				isPickBanStep,
 				matchIsLocked: lockedForCast,
-				joinPool,
-				activeRoomLink,
+				joinPool: joinInfo?.pool ?? null,
+				joinPass: joinInfo?.pass ?? null,
 			}}
 		>
 			{children}
@@ -164,7 +152,6 @@ export function useMatch() {
 function resolveVisibleTabs({
 	canReportScore,
 	canReportWeapons,
-	canJoin,
 	hasCurrentMap,
 	hasMissingActiveRoster,
 	hasReportedMaps,
@@ -176,7 +163,6 @@ function resolveVisibleTabs({
 }: {
 	canReportScore: boolean;
 	canReportWeapons: boolean;
-	canJoin: boolean;
 	hasCurrentMap: boolean;
 	hasMissingActiveRoster: boolean;
 	hasReportedMaps: boolean;
@@ -188,9 +174,6 @@ function resolveVisibleTabs({
 }): MatchTabKey[] {
 	const tabs: MatchTabKey[] = [TAB_KEYS.ROSTERS];
 
-	if (canJoin) {
-		tabs.push(TAB_KEYS.JOIN);
-	}
 	if (
 		!leagueRoundLocked &&
 		(isPickBanStep ||
@@ -214,7 +197,7 @@ function resolveVisibleTabs({
 	return tabs;
 }
 
-function resolveJoinPool({
+function resolveJoinInfo({
 	tournament,
 	data,
 	teams,
@@ -222,7 +205,7 @@ function resolveJoinPool({
 	tournament: ReturnType<typeof useTournament>;
 	data: TournamentMatchLoaderData;
 	teams: [MatchPageTeam | null, MatchPageTeam | null];
-}): string | null {
+}): { pool: string; pass: string } | null {
 	if (!data.canJoin) return null;
 
 	const [teamOne, teamTwo] = teams;
@@ -254,7 +237,10 @@ function resolveJoinPool({
 				: undefined,
 	});
 
-	return `${poolCode.prefix}${poolCode.suffix}`;
+	return {
+		pool: `${poolCode.prefix}${poolCode.suffix}`,
+		pass: resolveRoomPass(hostingTeam.id),
+	};
 }
 
 function resolveTeamsMissingActiveRoster(

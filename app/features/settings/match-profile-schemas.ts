@@ -65,10 +65,6 @@ export const updateMatchProfileSchema = z.object({
 		label: "labels.languages",
 		items: LANGUAGE_OPTIONS,
 	}),
-	noSplatnet: toggle({
-		label: "labels.noSplatnet",
-		bottomText: "bottomTexts.noScreen",
-	}),
 	noScreen: toggle({
 		label: "labels.noScreen",
 		bottomText: "bottomTexts.noScreen",

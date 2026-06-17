@@ -1,15 +1,7 @@
-import {
-	BarChart3,
-	DoorOpen,
-	Key,
-	ScrollText,
-	Tally5,
-	Users,
-} from "lucide-react";
+import { BarChart3, Key, ScrollText, Tally5, Users } from "lucide-react";
 import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
-import { useUser } from "~/features/auth/core/user";
 import invariant from "~/utils/invariant";
 import { SendouTab, SendouTabList, SendouTabs } from "../elements/Tabs";
 import styles from "./MatchTabs.module.css";
@@ -27,7 +19,6 @@ const TAB_KEY = "tab";
 export const TAB_KEYS = {
 	ROSTERS: "rosters",
 	ACTION: "action",
-	JOIN: "join",
 	RESULT: "result",
 	STATS: "stats",
 	ADMIN: "admin",
@@ -36,7 +27,6 @@ export const TAB_KEYS = {
 const TAB_ICONS: Record<MatchTabsKey, React.ReactNode> = {
 	rosters: <Users />,
 	action: <Tally5 />,
-	join: <DoorOpen />,
 	result: <ScrollText />,
 	stats: <BarChart3 />,
 	admin: <Key />,
@@ -45,7 +35,6 @@ const TAB_ICONS: Record<MatchTabsKey, React.ReactNode> = {
 const TAB_TRANSLATION_KEYS = {
 	rosters: "q:match.tabs.rosters",
 	action: "q:match.tabs.action",
-	join: "common:actions.join",
 	result: "q:match.tabs.result",
 	stats: "q:match.tabs.stats",
 	admin: "common:pages.admin",
@@ -54,12 +43,9 @@ const TAB_TRANSLATION_KEYS = {
 export function MatchTabs({ children, tabs, alertTabs }: MatchTabsProps) {
 	const { t } = useTranslation(["q", "common"]);
 	const [searchParams, setSearchParams] = useSearchParams();
-	const user = useUser();
 
-	const preferredTab = user?.preferences.defaultMatchPageTab;
 	const currentTab =
-		tabs.find((tab) => searchParams.get(TAB_KEY) === tab) ??
-		(preferredTab && tabs.includes(preferredTab) ? preferredTab : tabs.at(0));
+		tabs.find((tab) => searchParams.get(TAB_KEY) === tab) ?? tabs.at(0);
 	invariant(currentTab);
 
 	return (

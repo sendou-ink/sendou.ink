@@ -33,12 +33,11 @@ const TAB_LABELS = {
 	admin: "Admin",
 	result: "Result",
 	rosters: "Rosters",
-	join: "Join",
 } as const;
 
 export const goToTab = async (
 	page: Page,
-	tab: "action" | "admin" | "result" | "rosters" | "join",
+	tab: "action" | "admin" | "result" | "rosters",
 ) => {
 	// When teams have more members than the minimum, the action tab is hidden
 	// until each team's active roster is locked in via the rosters tab. Auto-set
