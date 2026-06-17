@@ -3,8 +3,12 @@ import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { tournamentTeamNameTaken } from "~/features/tournament/tournament-utils.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
+import { inGameNameIsValid } from "~/features/user-page/in-game-name";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { adminRegistrationFormSchema } from "./tournament-admin-registration-schemas";
+import {
+	ADMIN_REGISTRATION_MAX_MEMBERS,
+	adminRegistrationFormSchema,
+} from "./tournament-admin-registration-schemas";
 
 /**
  * Extends the client {@link adminRegistrationFormSchema} with server-only,
@@ -38,7 +42,7 @@ export function adminRegistrationFormSchemaServer({
 			});
 		}
 
-		if (data.members.length > tournament.maxMembersPerTeam) {
+		if (data.members.length > ADMIN_REGISTRATION_MAX_MEMBERS) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
 				message: "forms:errors.regTooManyMembers",
