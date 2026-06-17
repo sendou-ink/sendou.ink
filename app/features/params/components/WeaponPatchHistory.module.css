@@ -85,6 +85,7 @@
 }
 
 .change {
+	height: 2rem;
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
