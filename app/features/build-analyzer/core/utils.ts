@@ -35,8 +35,8 @@ import type {
 	SubWeaponDamage,
 	SubWeaponParams,
 } from "../analyzer-types";
-import { abilityValues as abilityValuesJson } from "./ability-values";
-import { weaponParams as rawWeaponParams } from "./weapon-params";
+import { abilityValues as abilityValuesJson } from "../data/ability-values";
+import { weaponParams as rawWeaponParams } from "../data/weapon-params";
 
 export function weaponParams(): ParamsJson {
 	return rawWeaponParams as unknown as ParamsJson;

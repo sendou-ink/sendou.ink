@@ -5,7 +5,7 @@ import type {
 } from "~/features/build-analyzer/analyzer-types";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { CombineWith, DamageReceiver } from "./calculator-types";
-import type objectDamages from "./core/object-dmg.json";
+import type objectDamages from "./data/object-dmg.json";
 
 export const DAMAGE_RECEIVERS = [
 	"Chariot", // Crab Tank

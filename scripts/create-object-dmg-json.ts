@@ -29,7 +29,15 @@ const weapons = loadWeaponInfoMain();
 const subWeapons = loadWeaponInfoSub();
 const specialWeapons = loadWeaponInfoSpecial();
 
-const OUTPUT_DIR_PATH = path.join(__dirname, "output");
+const OBJECT_DMG_OUTPUT_PATH = path.join(
+	__dirname,
+	"..",
+	"app",
+	"features",
+	"object-damage-calculator",
+	"data",
+	"object-dmg.json",
+);
 const DAMAGE_RATE_CONFIG_FILE_NAME =
 	"spl__DamageRateInfoConfig.pp__CombinationDataTableData.json";
 const HISTORY_OUTPUT_PATH = path.join(
@@ -169,10 +177,7 @@ for (const [rowKey, rates] of damageRatesByRow(params)) {
 	};
 }
 
-fs.writeFileSync(
-	path.join(OUTPUT_DIR_PATH, "object-dmg.json"),
-	JSON.stringify(result, null, 2),
-);
+fs.writeFileSync(OBJECT_DMG_OUTPUT_PATH, JSON.stringify(result, null, 2));
 
 writeDamageRateHistory();
 

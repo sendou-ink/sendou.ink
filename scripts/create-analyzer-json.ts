@@ -158,7 +158,7 @@ async function main() {
 			"app",
 			"features",
 			"build-analyzer",
-			"core",
+			"data",
 			"weapon-params.ts",
 		),
 		weaponParamsTs,
