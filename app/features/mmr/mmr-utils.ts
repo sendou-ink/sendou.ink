@@ -26,7 +26,7 @@ function toTwoDecimals(value: number) {
 export function rate(teams: Team[], secondaryTeams?: [[Rating], [Rating]]) {
 	if (secondaryTeams) return rateConservative(teams, secondaryTeams);
 
-	return openskillRate(teams, { tau: TAU, preventSigmaIncrease: true });
+	return openskillRate(teams, { tau: TAU, limitSigma: true });
 }
 
 // when ranking teams we rate the team against the actual team rating that it played against
@@ -42,7 +42,7 @@ function rateConservative(
 		teams,
 		{
 			tau: TAU,
-			preventSigmaIncrease: true,
+			limitSigma: true,
 		},
 	);
 
@@ -50,7 +50,7 @@ function rateConservative(
 		[secondaryTeams[0], teams[1]],
 		{
 			tau: TAU,
-			preventSigmaIncrease: true,
+			limitSigma: true,
 		},
 	);
 
@@ -58,7 +58,7 @@ function rateConservative(
 		[teams[0], secondaryTeams[1]],
 		{
 			tau: TAU,
-			preventSigmaIncrease: true,
+			limitSigma: true,
 		},
 	);
 
