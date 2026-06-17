@@ -26,16 +26,6 @@ ChartJS.register(
 	Tooltip,
 );
 
-const gridColor = "rgba(255, 255, 255, 0.05)";
-const borderColor = "rgba(255, 255, 255, 0.3)";
-const ticksColor = "rgba(255, 255, 255, 0.6)";
-
-const scaleDefaults = {
-	grid: { color: gridColor },
-	border: { color: borderColor },
-	ticks: { color: ticksColor },
-};
-
 export default function Chart({
 	options,
 	containerClassName,
@@ -87,23 +77,42 @@ export default function Chart({
 		month: "numeric",
 	});
 
-	// Get the line colors from CSS variables
+	// Get the chart colors from CSS variables
 	const colors = React.useMemo(() => {
 		if (typeof document === "undefined")
-			return { accent: "", base: "", info: "" };
+			return {
+				accent: "",
+				base: "",
+				info: "",
+				border: "",
+				borderHigh: "",
+				text: "",
+			};
 		const get = (v: string) =>
 			getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 		return {
 			accent: get("--color-text-accent"),
 			base: get("--color-accent"),
 			info: get("--color-info"),
+			border: get("--color-border"),
+			borderHigh: get("--color-border-high"),
+			text: get("--color-text-high"),
 		};
 	}, []);
+
+	const scaleDefaults = React.useMemo(
+		() => ({
+			grid: { color: colors.border },
+			border: { color: colors.borderHigh },
+			ticks: { color: colors.text },
+		}),
+		[colors.border, colors.text],
+	);
 
 	// Make a color list to use inside ChartData for the borderColor and the external tooltip
 	const colorList = React.useMemo(
 		() => [colors.accent, colors.base, colors.info],
-		[colors],
+		[colors.accent, colors.base, colors.info],
 	);
 
 	const datasetColors = React.useCallback(
