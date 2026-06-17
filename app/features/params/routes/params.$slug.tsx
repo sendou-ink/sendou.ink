@@ -44,8 +44,6 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 	});
 };
 
-// xxx: allow toggling row by clicking anywhere
-
 export default function WeaponParamsPage() {
 	const data = useLoaderData<typeof loader>();
 
