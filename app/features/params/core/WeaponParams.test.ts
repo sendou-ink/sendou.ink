@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	DAMAGE_MULTIPLIER_PARAM_KEY,
+	INCOMING_DAMAGE_MULTIPLIER_PARAM_KEY,
 	SPECIAL_POINTS_PARAM_KEY,
 } from "../weapon-params-constants";
 import type {
@@ -149,6 +150,147 @@ describe("patchHistory damage multipliers", () => {
 	});
 });
 
+describe("incomingDamageMultipliersForWeapon", () => {
+	it("collects other weapons' rates against the weapon's receiver targets", () => {
+		const rows = {
+			fromSpecial: row({
+				specialWeaponIds: [10],
+				targets: [
+					{
+						target: "GreatBarrier_Barrier",
+						current: 1.4,
+						history: [{ version: "1.0.0", value: 2.8 }],
+					},
+				],
+			}),
+			fromMains: row({
+				mainWeaponIds: [200, 201],
+				targets: [
+					{
+						target: "GreatBarrier_WeakPoint",
+						current: 3,
+						history: [{ version: "2.0.0", value: 2 }],
+					},
+				],
+			}),
+			unrelated: row({
+				mainWeaponIds: [400],
+				targets: [{ target: "Chariot", current: 2, history: [] }],
+			}),
+		};
+
+		// special id 2 is Big Bubbler (GreatBarrier_Barrier + GreatBarrier_WeakPoint)
+		const result = WeaponParams.incomingDamageMultipliersForWeapon(
+			rows,
+			2,
+			"special",
+		);
+
+		expect(result.map((m) => m.target)).toEqual([
+			"GreatBarrier_Barrier",
+			"GreatBarrier_WeakPoint",
+		]);
+		expect(result[1].attackers.mainWeaponIds).toEqual([200, 201]);
+	});
+
+	it("de-duplicates the same attacker group and target across rows", () => {
+		const target = {
+			target: "GreatBarrier_Barrier",
+			current: 1.4,
+			history: [{ version: "1.0.0", value: 2.8 }],
+		};
+		const rows = {
+			bullet: row({ specialWeaponIds: [10], targets: [target] }),
+			bombCore: row({ specialWeaponIds: [10], targets: [{ ...target }] }),
+		};
+
+		const result = WeaponParams.incomingDamageMultipliersForWeapon(
+			rows,
+			2,
+			"special",
+		);
+
+		expect(result).toHaveLength(1);
+	});
+
+	it("returns nothing for a weapon that is not a damageable object", () => {
+		const rows = {
+			a: row({
+				specialWeaponIds: [10],
+				targets: [
+					{
+						target: "GreatBarrier_Barrier",
+						current: 1,
+						history: [{ version: "1.0.0", value: 2 }],
+					},
+				],
+			}),
+		};
+
+		// special id 1 (Trizooka) is not in INCOMING_DAMAGE_RECEIVERS
+		expect(
+			WeaponParams.incomingDamageMultipliersForWeapon(rows, 1, "special"),
+		).toEqual([]);
+	});
+});
+
+describe("patchHistory incoming damage multipliers", () => {
+	it("flags a higher incoming rate as a nerf to the defending weapon and carries the attackers", () => {
+		const patches = WeaponParams.patchHistory(
+			emptyParsed(2),
+			VERSIONS,
+			[],
+			[],
+			[
+				{
+					target: "GreatBarrier_Barrier",
+					attackers: {
+						mainWeaponIds: [200],
+						subWeaponIds: [],
+						specialWeaponIds: [],
+					},
+					current: 2.8,
+					history: [{ version: "1.0.0", value: 1.4 }],
+				},
+			],
+		);
+
+		expect(patches).toHaveLength(1);
+		expect(patches[0].version).toBe("2.0.0");
+		expect(patches[0].changes[0]).toMatchObject({
+			category: INCOMING_DAMAGE_MULTIPLIER_PARAM_KEY,
+			key: "GreatBarrier_Barrier",
+			from: 1.4,
+			to: 2.8,
+			kind: "nerf",
+			attackers: { mainWeaponIds: [200] },
+		});
+	});
+
+	it("flags a lower incoming rate as a buff to the defending weapon", () => {
+		const patches = WeaponParams.patchHistory(
+			emptyParsed(2),
+			VERSIONS,
+			[],
+			[],
+			[
+				{
+					target: "GreatBarrier_Barrier",
+					attackers: {
+						mainWeaponIds: [200],
+						subWeaponIds: [],
+						specialWeaponIds: [],
+					},
+					current: 1.4,
+					history: [{ version: "1.0.0", value: 2.8 }],
+				},
+			],
+		);
+
+		expect(patches[0].changes[0].kind).toBe("buff");
+	});
+});
+
 describe("parse damage falloff curves", () => {
 	it("serializes a DistanceDamage array into a scaled damage @ distance string", () => {
 		const parsed = WeaponParams.parse(
@@ -289,6 +431,7 @@ describe("kitPatchHistories", () => {
 					},
 				],
 			},
+			subIncomingDamageMultipliers: {},
 			specialParams: { "2": emptyParsed(2) },
 			specialDamageMultipliers: {
 				"2": [
@@ -299,6 +442,7 @@ describe("kitPatchHistories", () => {
 					},
 				],
 			},
+			specialIncomingDamageMultipliers: {},
 		});
 
 	it("folds the kit's main, sub and special weapon changes into one descending history", () => {

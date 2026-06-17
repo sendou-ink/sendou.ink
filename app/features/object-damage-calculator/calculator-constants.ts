@@ -116,6 +116,22 @@ export function translateDamageReceiver<Ns extends Namespace>(
 	});
 }
 
+/**
+ * The suffix-only localized label of a damage receiver (e.g. "Shield", "Weak Point"), or `null`
+ * when the receiver is a plain weapon/mode name with no suffix. Used to disambiguate the parts of
+ * a multi-part object (e.g. Big Bubbler's shield vs. weak point) without repeating the weapon name.
+ */
+export function damageReceiverSuffix<Ns extends Namespace>(
+	t: TFunction<Ns>,
+	receiver: DamageReceiver,
+): string | null {
+	const config = damageReceiverTranslations[receiver];
+	if ("key" in config) {
+		return null;
+	}
+	return String(t(config.suffixKey as never, { weapon: "" })).trim();
+}
+
 export const damagePriorities: Array<
 	[
 		AnyWeapon["type"],

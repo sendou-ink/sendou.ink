@@ -25,6 +25,7 @@ import weaponParamsData from "../data/all-version-weapon-params.json";
 import damageRateHistoryData from "../data/damage-rate-history.json";
 import type {
 	DamageMultiplierWithHistory,
+	IncomingDamageMultiplierWithHistory,
 	SpecialPointWithHistory,
 	WeaponParamKind,
 } from "../weapon-params-types";
@@ -83,6 +84,29 @@ function damageMultipliersByWeapon(
 	const result: Record<string, DamageMultiplierWithHistory[]> = {};
 	for (const id of weaponIds) {
 		const multipliers = WeaponParams.damageMultipliersForWeapon(rows, id, kind);
+		if (multipliers.length > 0) {
+			result[String(id)] = multipliers;
+		}
+	}
+
+	return result;
+}
+
+function incomingDamageMultipliersByWeapon(
+	weaponIds: number[],
+	kind: "sub" | "special",
+): Record<string, IncomingDamageMultiplierWithHistory[]> {
+	const rows = damageRateHistoryData.rows as Parameters<
+		typeof WeaponParams.incomingDamageMultipliersForWeapon
+	>[0];
+
+	const result: Record<string, IncomingDamageMultiplierWithHistory[]> = {};
+	for (const id of weaponIds) {
+		const multipliers = WeaponParams.incomingDamageMultipliersForWeapon(
+			rows,
+			id,
+			kind,
+		);
 		if (multipliers.length > 0) {
 			result[String(id)] = multipliers;
 		}
@@ -164,8 +188,16 @@ function mainWeaponData(
 			kits.map((kit) => kit.subWeaponId),
 			"sub",
 		),
+		subIncomingDamageMultipliers: incomingDamageMultipliersByWeapon(
+			kits.map((kit) => kit.subWeaponId),
+			"sub",
+		),
 		specialParams,
 		specialDamageMultipliers: damageMultipliersByWeapon(
+			kits.map((kit) => kit.specialWeaponId),
+			"special",
+		),
+		specialIncomingDamageMultipliers: incomingDamageMultipliersByWeapon(
 			kits.map((kit) => kit.specialWeaponId),
 			"special",
 		),
@@ -198,11 +230,17 @@ function subWeaponData(
 
 	const damageMultipliers = damageMultipliersByWeapon([...subWeaponIds], "sub");
 
+	const incomingDamageMultipliers = incomingDamageMultipliersByWeapon(
+		[...subWeaponIds],
+		"sub",
+	);
+
 	const patchHistory = WeaponParams.patchHistory(
 		weaponParams[String(weaponId)],
 		versions,
 		[],
 		damageMultipliers[String(weaponId)] ?? [],
+		incomingDamageMultipliers[String(weaponId)] ?? [],
 	);
 
 	return {
@@ -238,11 +276,17 @@ function specialWeaponData(
 		"special",
 	);
 
+	const incomingDamageMultipliers = incomingDamageMultipliersByWeapon(
+		[...specialWeaponIds],
+		"special",
+	);
+
 	const patchHistory = WeaponParams.patchHistory(
 		weaponParams[String(weaponId)],
 		versions,
 		[],
 		damageMultipliers[String(weaponId)] ?? [],
+		incomingDamageMultipliers[String(weaponId)] ?? [],
 	);
 
 	return {

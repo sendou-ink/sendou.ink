@@ -65,6 +65,29 @@ export interface DamageMultiplierWithHistory {
 	history: Array<{ version: string; value: number }>;
 }
 
+/**
+ * The set of weapons whose damage rate against an object changed together. Carried by an incoming
+ * damage multiplier {@link PatchChange} so the badge can show the attacking weapons' icons.
+ */
+export interface IncomingDamageAttackers {
+	mainWeaponIds: MainWeaponId[];
+	subWeaponIds: SubWeaponId[];
+	specialWeaponIds: SpecialWeaponId[];
+}
+
+/**
+ * History of some attacking weapons' shared damage multiplier against a single object
+ * ({@link DamageMultiplierWithHistory} from the defender's perspective): the page's sub or special
+ * weapon is the object being damaged. `target` is the receiver key used by the object damage
+ * calculator.
+ */
+export interface IncomingDamageMultiplierWithHistory {
+	target: string;
+	attackers: IncomingDamageAttackers;
+	current: number;
+	history: Array<{ version: string; value: number }>;
+}
+
 export interface PatchChange {
 	category: string;
 	key: string;
@@ -78,6 +101,8 @@ export interface PatchChange {
 	 * column's changes under a divider per weapon. Only set for kit patch histories.
 	 */
 	source?: WeaponParamKind;
+	/** The weapons whose rate changed. Only set for incoming damage multiplier changes. */
+	attackers?: IncomingDamageAttackers;
 }
 
 export interface WeaponPatch {

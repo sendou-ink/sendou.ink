@@ -12,7 +12,10 @@ import {
 	WeaponImage,
 } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
-import { translateDamageReceiver } from "~/features/object-damage-calculator/calculator-constants";
+import {
+	damageReceiverSuffix,
+	translateDamageReceiver,
+} from "~/features/object-damage-calculator/calculator-constants";
 import type { DamageReceiver } from "~/features/object-damage-calculator/calculator-types";
 import {
 	useSearchParamState,
@@ -26,9 +29,11 @@ import type {
 import * as WeaponParams from "../core/WeaponParams";
 import {
 	DAMAGE_MULTIPLIER_PARAM_KEY,
+	INCOMING_DAMAGE_MULTIPLIER_PARAM_KEY,
 	SPECIAL_POINTS_PARAM_KEY,
 } from "../weapon-params-constants";
 import type {
+	IncomingDamageAttackers,
 	KitPatchHistory,
 	PatchChange,
 	WeaponPatch,
@@ -273,6 +278,13 @@ function changeKey(change: PatchChange, index: number) {
 function ChangeBadge({ change }: { change: PatchChange }) {
 	const { t } = useTranslation(["analyzer", "weapons", "game-misc"]);
 
+	if (
+		change.category === INCOMING_DAMAGE_MULTIPLIER_PARAM_KEY &&
+		change.attackers
+	) {
+		return <IncomingChangeBadge change={change} attackers={change.attackers} />;
+	}
+
 	const isSpecialPoints = change.category === SPECIAL_POINTS_PARAM_KEY;
 	const isDamageMultiplier = change.category === DAMAGE_MULTIPLIER_PARAM_KEY;
 	// Damage falloff curves serialize to long "damage @ distance" lists that need their own line.
@@ -309,6 +321,64 @@ function ChangeBadge({ change }: { change: PatchChange }) {
 				) : null}
 				{label}
 			</span>
+			<span className={styles.changeValues}>
+				{WeaponParams.formatValue(change.from)}
+				<span className={styles.arrow}>→</span>
+				{WeaponParams.formatValue(change.to)}
+			</span>
+		</div>
+	);
+}
+
+/**
+ * An incoming damage multiplier change: a set of attacking weapons whose shared damage rate against
+ * the page's sub or special weapon changed. Shows the attacking weapons' icons (with a suffix for
+ * multi-part objects, e.g. a Big Bubbler's shield vs. weak point) and the from→to rate.
+ */
+function IncomingChangeBadge({
+	change,
+	attackers,
+}: {
+	change: PatchChange;
+	attackers: IncomingDamageAttackers;
+}) {
+	const { t } = useTranslation(["analyzer", "weapons", "game-misc"]);
+
+	const suffix = damageReceiverSuffix(t, change.key as DamageReceiver);
+
+	return (
+		<div
+			className={clsx(styles.change, styles.incoming, {
+				[styles.buff]: change.kind === "buff",
+				[styles.nerf]: change.kind === "nerf",
+			})}
+			title={translateDamageReceiver(t, change.key as DamageReceiver)}
+		>
+			<div className={styles.attackers}>
+				<span className={styles.attackerIcons}>
+					{attackers.mainWeaponIds.map((id) => (
+						<WeaponImage
+							key={`m-${id}`}
+							weaponSplId={id}
+							variant="badge"
+							size={20}
+						/>
+					))}
+					{attackers.subWeaponIds.map((id) => (
+						<SubWeaponImage key={`s-${id}`} subWeaponId={id} size={20} />
+					))}
+					{attackers.specialWeaponIds.map((id) => (
+						<SpecialWeaponImage
+							key={`x-${id}`}
+							specialWeaponId={id}
+							size={20}
+						/>
+					))}
+				</span>
+				{suffix ? (
+					<span className={styles.attackerSuffix}>{suffix}</span>
+				) : null}
+			</div>
 			<span className={styles.changeValues}>
 				{WeaponParams.formatValue(change.from)}
 				<span className={styles.arrow}>→</span>

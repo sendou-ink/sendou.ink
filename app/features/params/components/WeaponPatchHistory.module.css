@@ -96,7 +96,8 @@
 	border-radius: var(--radius-box);
 	font-size: var(--font-2xs);
 
-	&.wide {
+	&.wide,
+	&.incoming {
 		flex-direction: column;
 		align-items: stretch;
 	}
@@ -142,6 +143,25 @@
 	.change.wide & {
 		flex-wrap: wrap;
 	}
+}
+
+.attackers {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-1) var(--s-2);
+	min-width: 0;
+}
+
+.attackerIcons {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.attackerSuffix {
+	font-weight: var(--weight-semi);
 }
 
 .arrow {

@@ -9,10 +9,14 @@ import {
 } from "~/modules/in-game-lists/weapon-ids";
 import {
 	DAMAGE_MULTIPLIER_PARAM_KEY,
+	INCOMING_DAMAGE_MULTIPLIER_PARAM_KEY,
+	INCOMING_DAMAGE_RECEIVERS,
 	SPECIAL_POINTS_PARAM_KEY,
 } from "../weapon-params-constants";
 import type {
 	DamageMultiplierWithHistory,
+	IncomingDamageAttackers,
+	IncomingDamageMultiplierWithHistory,
 	KitPatchHistory,
 	ParamDefinition,
 	ParamValueWithHistory,
@@ -322,6 +326,12 @@ const DAMAGE_RECEIVER_ORDER = new Map(
 	DAMAGE_RECEIVERS.map((receiver, i) => [receiver as string, i]),
 );
 
+const EMPTY_ATTACKERS: IncomingDamageAttackers = {
+	mainWeaponIds: [],
+	subWeaponIds: [],
+	specialWeaponIds: [],
+};
+
 /** Whether `candidate` is a better single representative of a target than the `current` pick. */
 function isMoreInformativeMultiplier(
 	candidate: DamageMultiplierWithHistory,
@@ -374,6 +384,67 @@ export function damageMultipliersForWeapon(
 	);
 }
 
+/** A stable identifier for a group of attacking weapons, used to de-duplicate incoming entries. */
+function attackerGroupKey(attackers: IncomingDamageAttackers): string {
+	const part = (ids: number[]) => [...ids].sort((a, b) => a - b).join(",");
+	return `m${part(attackers.mainWeaponIds)};s${part(attackers.subWeaponIds)};x${part(attackers.specialWeaponIds)}`;
+}
+
+/**
+ * Collects, for the given sub or special weapon (which must itself be a damageable object), the
+ * history of every *other* weapon's damage multiplier against it. Each entry is one group of
+ * attacking weapons that shared a rate change against one of the weapon's receiver targets; per
+ * (attacker group, target) the most informative entry (longest history, then highest rate) is
+ * kept. Entries are ordered like {@link DAMAGE_RECEIVERS}, then by attacker group.
+ */
+export function incomingDamageMultipliersForWeapon(
+	rows: Record<string, DamageRateHistoryRow>,
+	weaponId: number,
+	kind: "sub" | "special",
+): IncomingDamageMultiplierWithHistory[] {
+	const receiverTargets = INCOMING_DAMAGE_RECEIVERS[kind][weaponId];
+	if (!receiverTargets) return [];
+	const targetSet = new Set<string>(receiverTargets);
+
+	const byKey = new Map<string, IncomingDamageMultiplierWithHistory>();
+
+	for (const row of Object.values(rows)) {
+		const attackers: IncomingDamageAttackers = {
+			mainWeaponIds:
+				row.mainWeaponIds as IncomingDamageAttackers["mainWeaponIds"],
+			subWeaponIds: row.subWeaponIds as IncomingDamageAttackers["subWeaponIds"],
+			specialWeaponIds:
+				row.specialWeaponIds as IncomingDamageAttackers["specialWeaponIds"],
+		};
+		const attackerKey = attackerGroupKey(attackers);
+
+		for (const target of row.targets) {
+			if (!targetSet.has(target.target)) continue;
+
+			const key = `${attackerKey}|${target.target}`;
+			const existing = byKey.get(key);
+			if (!existing || isMoreInformativeMultiplier(target, existing)) {
+				byKey.set(key, {
+					target: target.target,
+					attackers,
+					current: target.current,
+					history: target.history,
+				});
+			}
+		}
+	}
+
+	return [...byKey.values()].sort((a, b) => {
+		const order =
+			(DAMAGE_RECEIVER_ORDER.get(a.target) ?? Number.MAX_SAFE_INTEGER) -
+			(DAMAGE_RECEIVER_ORDER.get(b.target) ?? Number.MAX_SAFE_INTEGER);
+		if (order !== 0) return order;
+		return attackerGroupKey(a.attackers).localeCompare(
+			attackerGroupKey(b.attackers),
+		);
+	});
+}
+
 function changesFromHistory(
 	history: Array<{ version: string; value: number | string }>,
 	current: number | string,
@@ -416,6 +487,7 @@ function computeWeaponPatchChanges(
 	specialPoints?: SpecialPointWithHistory[],
 	damageMultipliers?: DamageMultiplierWithHistory[],
 	source?: WeaponParamKind,
+	incomingDamageMultipliers?: IncomingDamageMultiplierWithHistory[],
 ): Map<string, PatchChange[]> {
 	const versionIndex = new Map(versions.map((version, i) => [version, i]));
 	const byVersion = new Map<string, PatchChange[]>();
@@ -490,21 +562,54 @@ function computeWeaponPatchChanges(
 		}
 	}
 
+	for (const multiplier of incomingDamageMultipliers ?? []) {
+		for (const { patchVersion, from, to } of changesFromHistory(
+			multiplier.history,
+			multiplier.current,
+			versions,
+			versionIndex,
+		)) {
+			// A higher incoming damage rate means the object takes more damage, i.e. a nerf to the
+			// sub or special weapon being defended (the inverse of an outgoing damage multiplier).
+			const kind = from === to ? "neutral" : to > from ? "nerf" : "buff";
+			push(patchVersion, {
+				category: INCOMING_DAMAGE_MULTIPLIER_PARAM_KEY,
+				key: multiplier.target,
+				from,
+				to,
+				kind,
+				source,
+				attackers: multiplier.attackers,
+			});
+		}
+	}
+
 	for (const changes of byVersion.values()) {
 		changes.sort((a, b) => {
-			// Special points first (ordered by kit), then damage multipliers, then regular
-			// params by category and key.
+			// Special points first (ordered by kit), then outgoing damage multipliers, then
+			// incoming damage multipliers, then regular params by category and key.
 			const rank = (change: PatchChange) =>
 				change.category === SPECIAL_POINTS_PARAM_KEY
 					? 0
 					: change.category === DAMAGE_MULTIPLIER_PARAM_KEY
 						? 1
-						: 2;
+						: change.category === INCOMING_DAMAGE_MULTIPLIER_PARAM_KEY
+							? 2
+							: 3;
 			const aRank = rank(a);
 			const bRank = rank(b);
 			if (aRank !== bRank) return aRank - bRank;
 
 			if (aRank === 0) return (a.weaponId ?? 0) - (b.weaponId ?? 0);
+			if (aRank === 2) {
+				const order =
+					(DAMAGE_RECEIVER_ORDER.get(a.key) ?? Number.MAX_SAFE_INTEGER) -
+					(DAMAGE_RECEIVER_ORDER.get(b.key) ?? Number.MAX_SAFE_INTEGER);
+				if (order !== 0) return order;
+				return attackerGroupKey(a.attackers ?? EMPTY_ATTACKERS).localeCompare(
+					attackerGroupKey(b.attackers ?? EMPTY_ATTACKERS),
+				);
+			}
 			if (a.category !== b.category) {
 				return a.category.localeCompare(b.category);
 			}
@@ -547,6 +652,7 @@ export function patchHistory(
 	versions: string[],
 	specialPoints: SpecialPointWithHistory[] = [],
 	damageMultipliers: DamageMultiplierWithHistory[] = [],
+	incomingDamageMultipliers: IncomingDamageMultiplierWithHistory[] = [],
 ): WeaponPatch[] {
 	if (!parsed) return [];
 
@@ -557,6 +663,8 @@ export function patchHistory(
 				versions,
 				specialPoints,
 				damageMultipliers,
+				undefined,
+				incomingDamageMultipliers,
 			),
 		],
 		versions,
@@ -576,8 +684,10 @@ export function kitPatchHistories({
 	mainDamageMultipliers,
 	subParams,
 	subDamageMultipliers,
+	subIncomingDamageMultipliers,
 	specialParams,
 	specialDamageMultipliers,
+	specialIncomingDamageMultipliers,
 }: {
 	mainParsed: ParsedWeaponParams | undefined;
 	versions: string[];
@@ -586,8 +696,16 @@ export function kitPatchHistories({
 	mainDamageMultipliers: DamageMultiplierWithHistory[];
 	subParams: Record<string, ParsedWeaponParams | undefined>;
 	subDamageMultipliers: Record<string, DamageMultiplierWithHistory[]>;
+	subIncomingDamageMultipliers: Record<
+		string,
+		IncomingDamageMultiplierWithHistory[]
+	>;
 	specialParams: Record<string, ParsedWeaponParams | undefined>;
 	specialDamageMultipliers: Record<string, DamageMultiplierWithHistory[]>;
+	specialIncomingDamageMultipliers: Record<
+		string,
+		IncomingDamageMultiplierWithHistory[]
+	>;
 }): KitPatchHistory[] {
 	if (!mainParsed) return [];
 
@@ -603,28 +721,34 @@ export function kitPatchHistories({
 			),
 		];
 
+		const subIncoming =
+			subIncomingDamageMultipliers[String(kit.subWeaponId)] ?? [];
 		const subParsed = subParams[String(kit.subWeaponId)];
-		if (subParsed) {
+		if (subParsed || subIncoming.length > 0) {
 			maps.push(
 				computeWeaponPatchChanges(
-					subParsed,
+					subParsed ?? { weaponId: kit.subWeaponId, categories: {} },
 					versions,
 					[],
 					subDamageMultipliers[String(kit.subWeaponId)] ?? [],
 					"sub",
+					subIncoming,
 				),
 			);
 		}
 
+		const specialIncoming =
+			specialIncomingDamageMultipliers[String(kit.specialWeaponId)] ?? [];
 		const specialParsed = specialParams[String(kit.specialWeaponId)];
-		if (specialParsed) {
+		if (specialParsed || specialIncoming.length > 0) {
 			maps.push(
 				computeWeaponPatchChanges(
-					specialParsed,
+					specialParsed ?? { weaponId: kit.specialWeaponId, categories: {} },
 					versions,
 					[],
 					specialDamageMultipliers[String(kit.specialWeaponId)] ?? [],
 					"special",
+					specialIncoming,
 				),
 			);
 		}
