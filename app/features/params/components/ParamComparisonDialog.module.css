@@ -1,0 +1,54 @@
+.bars {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	min-width: min(420px, 80vw);
+	padding-inline: var(--s-2);
+}
+
+.row {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.weapon {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	width: 130px;
+	flex-shrink: 0;
+}
+
+.name {
+	font-size: var(--font-2xs);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.barTrack {
+	display: flex;
+	align-items: center;
+	flex: 1;
+	min-width: 0;
+}
+
+.barFill {
+	height: 18px;
+	min-width: 2px;
+	border-radius: var(--radius-field);
+	background-color: var(--color-accent);
+}
+
+.barFillCurrent {
+	background-color: var(--color-second);
+}
+
+.value {
+	font-variant-numeric: tabular-nums;
+	font-weight: var(--weight-semi);
+	font-size: var(--font-xs);
+	flex-shrink: 0;
+	width: 52px;
+}

@@ -8,5 +8,7 @@
 	"legend.damage": "Damage values are stored ×10, so a value of 450 means 45.0 damage.",
 	"legend.frames": "Times are measured in frames, where 60 frames = 1 second.",
 	"legend.powerUp": "Low, Mid and High show the same value with none, a moderate amount, and the maximum amount of the relevant Power Up gear ability equipped (Special Power Up for specials, Sub Power Up for subs).",
+	"compare.action": "Compare across weapons",
+	"compare.heading": "{{parameter}} across weapons",
 	"dataCredit.lean": "Data credit: Lean"
 }

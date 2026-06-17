@@ -30,6 +30,13 @@ export interface ParamDefinition {
 	fullKey: string;
 }
 
+/** A single weapon's numeric value for one parameter, used by the cross-weapon comparison chart. */
+export interface ParamComparisonEntry {
+	weaponId: number;
+	value: number;
+	name: string;
+}
+
 export interface SpecialPointWithHistory {
 	weaponId: MainWeaponId;
 	current: number;

@@ -1,5 +1,11 @@
 import clsx from "clsx";
-import { ChevronDown, ChevronUp, EyeOff, X } from "lucide-react";
+import {
+	ChartColumnBig,
+	ChevronDown,
+	ChevronUp,
+	EyeOff,
+	X,
+} from "lucide-react";
 import { Fragment, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
@@ -27,17 +33,19 @@ import {
 } from "../core/weapon-params";
 import type {
 	DamageMultiplierWithHistory,
+	ParamComparisonEntry,
 	ParamValueWithHistory,
 	SpecialPointWithHistory,
 	WeaponParamKind,
 	WeaponParamsTableProps,
 } from "../weapon-params-types";
+import { ParamComparisonDialog } from "./ParamComparisonDialog";
 import styles from "./WeaponParamsTable.module.css";
 
 const SPECIAL_POINTS_KEY = "__specialPoints__";
 const DAMAGE_RATE_INFO_CATEGORY = "DamageRateInfo";
 
-function WeaponParamImage({
+export function WeaponParamImage({
 	kind,
 	id,
 	size,
@@ -96,6 +104,10 @@ export function WeaponParamsTable({
 	const { t } = useTranslation(["weapons", "common", "analyzer", "params"]);
 	const naming = useWeaponParamNaming(kind);
 	const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+	const [comparison, setComparison] = useState<{
+		label: string;
+		entries: ParamComparisonEntry[];
+	} | null>(null);
 
 	const paramDefinitions = collectAllParamKeys(weaponParams);
 
@@ -166,6 +178,23 @@ export function WeaponParamsTable({
 			return param && hasParamHistory(param);
 		});
 	};
+
+	// Bars are only drawn for plain numbers, so string-valued (or array/object) params and hidden
+	// weapons are skipped here. The compare button shows up only when at least two weapons remain.
+	const comparisonEntries = (
+		getValue: (weaponId: number) => number | string | undefined,
+	) =>
+		visibleWeaponIds
+			.map((weaponId) => {
+				const value = getValue(weaponId);
+				return typeof value === "number"
+					? { weaponId, value, name: naming.name(weaponId) }
+					: null;
+			})
+			.filter((entry): entry is ParamComparisonEntry => entry !== null);
+
+	const openComparison = (label: string, entries: ParamComparisonEntry[]) =>
+		setComparison({ label, entries });
 
 	return (
 		<>
@@ -271,6 +300,16 @@ export function WeaponParamsTable({
 																<InfoPopover tiny>{explanation}</InfoPopover>
 															</span>
 														) : null}
+														<ComparisonButton
+															label={key}
+															entries={comparisonEntries(
+																(weaponId) =>
+																	weaponParams[String(weaponId)]?.categories[
+																		category
+																	]?.[key]?.current,
+															)}
+															onCompare={openComparison}
+														/>
 														{hasHistory ? (
 															<span className={styles.historyIndicator}>
 																{isExpanded ? (
@@ -306,13 +345,55 @@ export function WeaponParamsTable({
 								damageMultipliers={damageMultipliers}
 								expandedRows={expandedRows}
 								onToggle={toggleRow}
+								comparisonEntries={comparisonEntries}
+								onCompare={openComparison}
 							/>
 						) : null}
 					</tbody>
 				</table>
 			</div>
 			<ParamsLegend />
+			{comparison ? (
+				<ParamComparisonDialog
+					kind={kind}
+					label={comparison.label}
+					entries={comparison.entries}
+					currentWeaponId={currentWeaponId}
+					onClose={() => setComparison(null)}
+				/>
+			) : null}
 		</>
+	);
+}
+
+function ComparisonButton({
+	label,
+	entries,
+	onCompare,
+}: {
+	label: string;
+	entries: ParamComparisonEntry[];
+	onCompare: (label: string, entries: ParamComparisonEntry[]) => void;
+}) {
+	const { t } = useTranslation(["params"]);
+
+	if (entries.length < 2) {
+		return null;
+	}
+
+	return (
+		// biome-ignore lint/a11y/noStaticElementInteractions: stops the compare button click from toggling the history row
+		<span className={styles.paramInfo} onClick={(e) => e.stopPropagation()}>
+			<SendouButton
+				variant="minimal"
+				size="miniscule"
+				shape="square"
+				icon={<ChartColumnBig />}
+				onPress={() => onCompare(label, entries)}
+				aria-label={t("params:compare.action")}
+				testId="compare-param"
+			/>
+		</span>
 	);
 }
 
@@ -335,12 +416,18 @@ function DamageRateInfoSection({
 	damageMultipliers,
 	expandedRows,
 	onToggle,
+	comparisonEntries,
+	onCompare,
 }: {
 	visibleWeaponIds: number[];
 	currentWeaponId: number;
 	damageMultipliers: Record<string, DamageMultiplierWithHistory[]>;
 	expandedRows: Set<string>;
 	onToggle: (fullKey: string) => void;
+	comparisonEntries: (
+		getValue: (weaponId: number) => number | string | undefined,
+	) => ParamComparisonEntry[];
+	onCompare: (label: string, entries: ParamComparisonEntry[]) => void;
 }) {
 	const { t } = useTranslation(["weapons", "analyzer", "game-misc"]);
 
@@ -371,6 +458,10 @@ function DamageRateInfoSection({
 				const hasHistory = visibleWeaponIds.some(
 					(id) => (multiplierFor(id, target)?.history.length ?? 0) > 0,
 				);
+				const targetLabel = translateDamageReceiver(
+					t,
+					target as DamageReceiver,
+				);
 
 				return (
 					<tr
@@ -382,9 +473,14 @@ function DamageRateInfoSection({
 							onClick={hasHistory ? () => onToggle(fullKey) : undefined}
 						>
 							<div className={styles.paramNameInner}>
-								<span className={styles.paramNameText}>
-									{translateDamageReceiver(t, target as DamageReceiver)}
-								</span>
+								<span className={styles.paramNameText}>{targetLabel}</span>
+								<ComparisonButton
+									label={targetLabel}
+									entries={comparisonEntries(
+										(weaponId) => multiplierFor(weaponId, target)?.current,
+									)}
+									onCompare={onCompare}
+								/>
 								{hasHistory ? (
 									<span className={styles.historyIndicator}>
 										{isExpanded ? (
