@@ -55,12 +55,29 @@ export interface PatchChange {
 	kind: ParamChangeKind;
 	/** The specific kit a special points change belongs to. Only set for special points. */
 	weaponId?: MainWeaponId;
+	/**
+	 * Which weapon of a kit the change belongs to. Used by the per-kit patch history to group a
+	 * column's changes under a divider per weapon. Only set for kit patch histories.
+	 */
+	source?: WeaponParamKind;
 }
 
 export interface WeaponPatch {
 	version: string;
 	date: string | null;
 	changes: PatchChange[];
+}
+
+/**
+ * Patch history of a single main weapon kit, folding the main weapon's changes together with its
+ * sub and special weapon's changes. Each {@link PatchChange} carries a `source` so the changes can
+ * be grouped per weapon within a patch.
+ */
+export interface KitPatchHistory {
+	weaponId: MainWeaponId;
+	subWeaponId: SubWeaponId;
+	specialWeaponId: SpecialWeaponId;
+	patches: WeaponPatch[];
 }
 
 export interface WeaponParamsTableProps {

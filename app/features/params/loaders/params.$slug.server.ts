@@ -19,6 +19,7 @@ import {
 } from "~/utils/unslugify.server";
 import { mySlugify } from "~/utils/urls";
 import {
+	buildKitPatchHistories,
 	buildWeaponPatchHistory,
 	damageMultipliersForWeapon,
 	getCategoryWeaponIds,
@@ -154,6 +155,69 @@ function mainWeaponData(
 		damageMultipliers[String(weaponId)] ?? [],
 	);
 
+	const subParams: Record<string, ParsedWeaponParams> = {};
+	for (const { subWeaponId } of kits) {
+		if (subParams[String(subWeaponId)]) continue;
+		const rawParams = (
+			subWeaponParamsData.weapons as Record<
+				string,
+				Record<string, Record<string, unknown>>
+			>
+		)[String(subWeaponId)];
+		if (rawParams) {
+			subParams[String(subWeaponId)] = parseWeaponParams(
+				subWeaponId,
+				rawParams,
+				subWeaponParamsData.metadata.versions,
+			);
+		}
+	}
+
+	const specialParams: Record<string, ParsedWeaponParams> = {};
+	for (const { specialWeaponId } of kits) {
+		if (specialParams[String(specialWeaponId)]) continue;
+		const rawParams = (
+			specialWeaponParamsData.weapons as Record<
+				string,
+				Record<string, Record<string, unknown>>
+			>
+		)[String(specialWeaponId)];
+		if (rawParams) {
+			specialParams[String(specialWeaponId)] = parseWeaponParams(
+				specialWeaponId,
+				rawParams,
+				specialWeaponParamsData.metadata.versions,
+			);
+		}
+	}
+
+	const specialPointsByKit: Record<string, SpecialPointWithHistory> = {};
+	for (const { weaponId: kitId } of kits) {
+		specialPointsByKit[String(kitId)] = {
+			weaponId: kitId,
+			current: mainWeaponParams(kitId).SpecialPoint,
+			history: allSpecialPoints?.[String(kitId)]?.history ?? [],
+		};
+	}
+
+	const kitPatchHistories = buildKitPatchHistories({
+		mainParsed: weaponParams[String(weaponId)],
+		versions,
+		kits,
+		specialPointsByKit,
+		mainDamageMultipliers: damageMultipliers[String(weaponId)] ?? [],
+		subParams,
+		subDamageMultipliers: damageMultipliersByWeapon(
+			kits.map((kit) => kit.subWeaponId),
+			"sub",
+		),
+		specialParams,
+		specialDamageMultipliers: damageMultipliersByWeapon(
+			kits.map((kit) => kit.specialWeaponId),
+			"special",
+		),
+	});
+
 	return {
 		kind: "main" as WeaponParamKind,
 		weaponId,
@@ -165,6 +229,7 @@ function mainWeaponData(
 		specialPoints,
 		damageMultipliers,
 		patchHistory,
+		kitPatchHistories,
 		versions,
 	};
 }
@@ -209,6 +274,7 @@ function subWeaponData(
 		specialPoints: undefined,
 		damageMultipliers,
 		patchHistory,
+		kitPatchHistories: undefined,
 		versions,
 	};
 }
@@ -256,6 +322,7 @@ function specialWeaponData(
 		specialPoints: undefined,
 		damageMultipliers,
 		patchHistory,
+		kitPatchHistories: undefined,
 		versions,
 	};
 }

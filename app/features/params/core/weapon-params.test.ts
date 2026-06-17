@@ -4,9 +4,11 @@ import type {
 	ParsedWeaponParams,
 } from "../weapon-params-types";
 import {
+	buildKitPatchHistories,
 	buildWeaponPatchHistory,
 	DAMAGE_MULTIPLIER_PARAM_KEY,
 	damageMultipliersForWeapon,
+	SPECIAL_POINTS_PARAM_KEY,
 } from "./weapon-params";
 
 const VERSIONS = ["1.0.0", "2.0.0", "3.0.0"];
@@ -145,5 +147,74 @@ describe("buildWeaponPatchHistory damage multipliers", () => {
 		expect(patches).toHaveLength(1);
 		expect(patches[0].version).toBe("3.0.0");
 		expect(patches[0].changes[0].kind).toBe("nerf");
+	});
+});
+
+describe("buildKitPatchHistories", () => {
+	const kitHistory = () =>
+		buildKitPatchHistories({
+			mainParsed: emptyParsed(11),
+			versions: VERSIONS,
+			kits: [{ weaponId: 11, subWeaponId: 1, specialWeaponId: 2 }],
+			specialPointsByKit: {
+				"11": {
+					weaponId: 11,
+					current: 180,
+					history: [{ version: "1.0.0", value: 200 }],
+				},
+			},
+			mainDamageMultipliers: [
+				{
+					target: "Wsb_Shield",
+					current: 2.2,
+					history: [{ version: "1.0.0", value: 2 }],
+				},
+			],
+			subParams: { "1": emptyParsed(1) },
+			subDamageMultipliers: {
+				"1": [
+					{
+						target: "Chariot",
+						current: 3,
+						history: [{ version: "1.0.0", value: 2 }],
+					},
+				],
+			},
+			specialParams: { "2": emptyParsed(2) },
+			specialDamageMultipliers: {
+				"2": [
+					{
+						target: "NiceBall_Armor",
+						current: 1.5,
+						history: [{ version: "2.0.0", value: 2 }],
+					},
+				],
+			},
+		});
+
+	it("folds the kit's main, sub and special weapon changes into one descending history", () => {
+		const [history] = kitHistory();
+
+		expect(history.weaponId).toBe(11);
+		expect(history.patches.map((patch) => patch.version)).toEqual([
+			"3.0.0",
+			"2.0.0",
+		]);
+	});
+
+	it("tags each change with its source and groups main before sub before special", () => {
+		const [history] = kitHistory();
+
+		const v2 = history.patches.find((patch) => patch.version === "2.0.0")!;
+		// special points + main damage rate (both main), then the sub weapon's damage rate
+		expect(v2.changes.map((change) => change.source)).toEqual([
+			"main",
+			"main",
+			"sub",
+		]);
+		expect(v2.changes[0].category).toBe(SPECIAL_POINTS_PARAM_KEY);
+
+		const v3 = history.patches.find((patch) => patch.version === "3.0.0")!;
+		expect(v3.changes.map((change) => change.source)).toEqual(["special"]);
 	});
 });

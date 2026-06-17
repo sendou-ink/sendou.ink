@@ -2,6 +2,7 @@
 	"tab.params": "Parameters",
 	"tab.patches": "Patch history",
 	"noPatches": "No tracked balance changes for this weapon yet.",
+	"patches.showSubSpecial": "Show sub & special changes",
 	"header.parameter": "Parameter",
 	"dataCredit.lean": "Data credit: Lean"
 }

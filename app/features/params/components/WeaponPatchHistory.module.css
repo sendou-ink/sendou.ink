@@ -1,3 +1,24 @@
+.kitHistory {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	width: 100%;
+	align-self: stretch;
+}
+
+.controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-2) var(--s-4);
+}
+
+.kitChip {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
 .container {
 	display: flex;
 	gap: var(--s-3);
@@ -5,6 +26,25 @@
 	overflow-x: auto;
 	padding-bottom: var(--s-2);
 	align-self: stretch;
+}
+
+.divider {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+
+	&:not(:first-child) {
+		margin-block: var(--s-3);
+	}
+}
+
+.dividerLabel {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .column {

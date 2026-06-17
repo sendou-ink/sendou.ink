@@ -60,6 +60,7 @@ export default function WeaponParamsPage() {
 			damageMultipliers={data.damageMultipliers}
 			versions={data.versions}
 			patchHistory={data.patchHistory}
+			kitPatchHistories={data.kitPatchHistories}
 			kits={data.kits}
 		/>
 	);

@@ -7,8 +7,10 @@ import {
 } from "~/components/elements/Tabs";
 import { Main } from "~/components/Main";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type {
 	DamageMultiplierWithHistory,
+	KitPatchHistory,
 	ParsedWeaponParams,
 	SpecialPointWithHistory,
 	WeaponKitInfo,
@@ -18,7 +20,10 @@ import type {
 import { WeaponKits } from "./WeaponKits";
 import { WeaponParamsTable } from "./WeaponParamsTable";
 import styles from "./WeaponParamsView.module.css";
-import { WeaponPatchHistory } from "./WeaponPatchHistory";
+import {
+	WeaponPatchHistory,
+	WeaponPatchHistoryByKit,
+} from "./WeaponPatchHistory";
 
 export function WeaponParamsView({
 	kind,
@@ -29,6 +34,7 @@ export function WeaponParamsView({
 	damageMultipliers,
 	versions,
 	patchHistory,
+	kitPatchHistories,
 	kits,
 }: {
 	kind: WeaponParamKind;
@@ -39,6 +45,7 @@ export function WeaponParamsView({
 	damageMultipliers?: Record<string, DamageMultiplierWithHistory[]>;
 	versions: string[];
 	patchHistory: WeaponPatch[];
+	kitPatchHistories?: KitPatchHistory[];
 	kits?: WeaponKitInfo[];
 }) {
 	const { t } = useTranslation(["params"]);
@@ -48,6 +55,10 @@ export function WeaponParamsView({
 		defaultValue: "params",
 		revive: (value) => (value === "patches" ? "patches" : "params"),
 	});
+
+	const viewedKitPatchCount =
+		kitPatchHistories?.find((kit) => kit.weaponId === weaponId)?.patches
+			.length ?? patchHistory.length;
 
 	return (
 		<Main className={styles.container} bigger>
@@ -59,7 +70,7 @@ export function WeaponParamsView({
 			>
 				<SendouTabList>
 					<SendouTab id="params">{t("params:tab.params")}</SendouTab>
-					<SendouTab id="patches" number={patchHistory.length}>
+					<SendouTab id="patches" number={viewedKitPatchCount}>
 						{t("params:tab.patches")}
 					</SendouTab>
 				</SendouTabList>
@@ -75,7 +86,14 @@ export function WeaponParamsView({
 					/>
 				</SendouTabPanel>
 				<SendouTabPanel id="patches">
-					<WeaponPatchHistory patches={patchHistory} />
+					{kitPatchHistories && kitPatchHistories.length > 0 ? (
+						<WeaponPatchHistoryByKit
+							kits={kitPatchHistories}
+							defaultWeaponId={weaponId as MainWeaponId}
+						/>
+					) : (
+						<WeaponPatchHistory patches={patchHistory} />
+					)}
 				</SendouTabPanel>
 			</SendouTabs>
 			<a

@@ -9,11 +9,13 @@ import {
 } from "~/modules/in-game-lists/weapon-ids";
 import type {
 	DamageMultiplierWithHistory,
+	KitPatchHistory,
 	ParamDefinition,
 	ParamValueWithHistory,
 	ParsedWeaponParams,
 	PatchChange,
 	SpecialPointWithHistory,
+	WeaponKitInfo,
 	WeaponParamKind,
 	WeaponPatch,
 } from "../weapon-params-types";
@@ -318,6 +320,7 @@ function computeWeaponPatchChanges(
 	versions: string[],
 	specialPoints?: SpecialPointWithHistory[],
 	damageMultipliers?: DamageMultiplierWithHistory[],
+	source?: WeaponParamKind,
 ): Map<string, PatchChange[]> {
 	const versionIndex = new Map(versions.map((version, i) => [version, i]));
 	const byVersion = new Map<string, PatchChange[]>();
@@ -345,6 +348,7 @@ function computeWeaponPatchChanges(
 					from,
 					to,
 					kind: classifyParamChange(category, key, from, to),
+					source,
 				});
 			}
 		}
@@ -366,6 +370,7 @@ function computeWeaponPatchChanges(
 				to,
 				kind,
 				weaponId: kit.weaponId,
+				source,
 			});
 		}
 	}
@@ -385,6 +390,7 @@ function computeWeaponPatchChanges(
 				from,
 				to,
 				kind,
+				source,
 			});
 		}
 	}
@@ -415,6 +421,28 @@ function computeWeaponPatchChanges(
 }
 
 /**
+ * Assembles per-version change maps into the descending-by-version patch history, attaching each
+ * tracked game version's release date and skipping versions with no changes. When several maps are
+ * given (e.g. a kit's main, sub and special weapon changes) their changes are concatenated in the
+ * order the maps are passed, keeping each map's own within-version ordering.
+ */
+function changeMapsToPatches(
+	maps: Array<Map<string, PatchChange[]>>,
+	versions: string[],
+): WeaponPatch[] {
+	const patchDateByVersion = new Map(PATCHES.map((p) => [p.patch, p.date]));
+
+	return versions
+		.map((version) => ({
+			version,
+			date: patchDateByVersion.get(version) ?? null,
+			changes: maps.flatMap((map) => map.get(version) ?? []),
+		}))
+		.filter((patch) => patch.changes.length > 0)
+		.reverse();
+}
+
+/**
  * Builds the descending-by-version patch history of a single weapon, attaching each tracked
  * game version's release date and skipping versions with no tracked balance changes. Special
  * points changes are only folded in for main weapons (pass their history as `specialPoints`).
@@ -427,22 +455,92 @@ export function buildWeaponPatchHistory(
 ): WeaponPatch[] {
 	if (!parsed) return [];
 
-	const patchDateByVersion = new Map(PATCHES.map((p) => [p.patch, p.date]));
-	const changesByVersion = computeWeaponPatchChanges(
-		parsed,
+	return changeMapsToPatches(
+		[
+			computeWeaponPatchChanges(
+				parsed,
+				versions,
+				specialPoints,
+				damageMultipliers,
+			),
+		],
 		versions,
-		specialPoints,
-		damageMultipliers,
 	);
+}
 
-	return versions
-		.filter((version) => changesByVersion.has(version))
-		.map((version) => ({
-			version,
-			date: patchDateByVersion.get(version) ?? null,
-			changes: changesByVersion.get(version)!,
-		}))
-		.reverse();
+/**
+ * Builds a patch history per kit of a main weapon, folding the (shared) main weapon changes
+ * together with the kit's own special points, sub weapon and special weapon changes. Every change
+ * is tagged with its `source` so the patch history can group a column under a divider per weapon.
+ */
+export function buildKitPatchHistories({
+	mainParsed,
+	versions,
+	kits,
+	specialPointsByKit,
+	mainDamageMultipliers,
+	subParams,
+	subDamageMultipliers,
+	specialParams,
+	specialDamageMultipliers,
+}: {
+	mainParsed: ParsedWeaponParams | undefined;
+	versions: string[];
+	kits: WeaponKitInfo[];
+	specialPointsByKit: Record<string, SpecialPointWithHistory>;
+	mainDamageMultipliers: DamageMultiplierWithHistory[];
+	subParams: Record<string, ParsedWeaponParams | undefined>;
+	subDamageMultipliers: Record<string, DamageMultiplierWithHistory[]>;
+	specialParams: Record<string, ParsedWeaponParams | undefined>;
+	specialDamageMultipliers: Record<string, DamageMultiplierWithHistory[]>;
+}): KitPatchHistory[] {
+	if (!mainParsed) return [];
+
+	return kits.map((kit) => {
+		const kitSpecialPoints = specialPointsByKit[String(kit.weaponId)];
+		const maps = [
+			computeWeaponPatchChanges(
+				mainParsed,
+				versions,
+				kitSpecialPoints ? [kitSpecialPoints] : [],
+				mainDamageMultipliers,
+				"main",
+			),
+		];
+
+		const subParsed = subParams[String(kit.subWeaponId)];
+		if (subParsed) {
+			maps.push(
+				computeWeaponPatchChanges(
+					subParsed,
+					versions,
+					[],
+					subDamageMultipliers[String(kit.subWeaponId)] ?? [],
+					"sub",
+				),
+			);
+		}
+
+		const specialParsed = specialParams[String(kit.specialWeaponId)];
+		if (specialParsed) {
+			maps.push(
+				computeWeaponPatchChanges(
+					specialParsed,
+					versions,
+					[],
+					specialDamageMultipliers[String(kit.specialWeaponId)] ?? [],
+					"special",
+				),
+			);
+		}
+
+		return {
+			weaponId: kit.weaponId,
+			subWeaponId: kit.subWeaponId,
+			specialWeaponId: kit.specialWeaponId,
+			patches: changeMapsToPatches(maps, versions),
+		};
+	});
 }
 
 export function formatParamValue(value: number | string): string {
