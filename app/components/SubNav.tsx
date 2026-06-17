@@ -7,14 +7,16 @@ import styles from "./SubNav.module.css";
 export function SubNav({
 	children,
 	secondary,
+	className,
 }: {
 	children: React.ReactNode;
 	secondary?: boolean;
+	className?: string;
 }) {
 	return (
 		<div>
 			<nav
-				className={clsx(styles.container, {
+				className={clsx(styles.container, className, {
 					[styles.secondary]: secondary,
 				})}
 			>

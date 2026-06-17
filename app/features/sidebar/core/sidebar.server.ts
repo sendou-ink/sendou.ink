@@ -2,6 +2,7 @@ import { cachified } from "@epic-web/cachified";
 import { addDays } from "date-fns";
 import { href } from "react-router";
 import * as R from "remeda";
+import * as ExternalStreamRepository from "~/features/admin/ExternalStreamRepository.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import {
@@ -137,11 +138,13 @@ function combinedStreamsCached(): Promise<SidebarStream[]> {
 
 async function combinedStreams(): Promise<SidebarStream[]> {
 	const tournamentStreams = getLiveTournamentStreams();
-	const [sendouQEntries, xRankRows, upcomingTournaments] = await Promise.all([
-		getSendouQSidebarStreams(),
-		LiveStreamRepository.findXRankStreams(),
-		ShowcaseTournaments.upcomingTournaments(),
-	]);
+	const [sendouQEntries, xRankRows, upcomingTournaments, externalStreams] =
+		await Promise.all([
+			getSendouQSidebarStreams(),
+			LiveStreamRepository.findXRankStreams(),
+			ShowcaseTournaments.upcomingTournaments(),
+			ExternalStreamRepository.forSidebar(),
+		]);
 
 	const seenUsernames = new Set([
 		...getLiveTournamentStreamerTwitchNames(),
@@ -151,6 +154,21 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 	]);
 
 	const ranked: { stream: SidebarStream; score: number }[] = [];
+
+	for (const externalStream of externalStreams) {
+		ranked.push({
+			stream: {
+				id: `external-${externalStream.id}`,
+				name: externalStream.name,
+				imageUrl: externalStream.avatarUrl ?? BLANK_IMAGE_URL,
+				url: externalStream.url,
+				subtitle: "",
+				startsAt: externalStream.startTime,
+				tier: null,
+			},
+			score: StreamRanking.EXTERNAL_STREAM_SCORE,
+		});
+	}
 
 	for (const stream of tournamentStreams) {
 		ranked.push({

@@ -6,3 +6,7 @@
 	gap: var(--s-2);
 	margin-block-end: var(--s-2);
 }
+
+.subNav {
+	justify-content: start;
+}
