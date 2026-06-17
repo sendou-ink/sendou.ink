@@ -168,148 +168,164 @@ export function WeaponParamsTable({
 	};
 
 	return (
-		<div className={styles.container}>
-			{hiddenWeaponIds.length > 0 ? (
-				<HiddenWeaponsBar
-					kind={kind}
-					hiddenWeaponIds={hiddenWeaponIds}
-					onRestore={restoreWeapon}
-					onShowAll={showAllWeapons}
-				/>
-			) : null}
-			<table className={styles.table}>
-				<thead className={styles.thead}>
-					<tr>
-						<th className={styles.paramHeader}>
-							{t("params:header.parameter")}
-						</th>
-						{visibleWeaponIds.map((weaponId) => {
-							const weaponName = naming.name(weaponId);
-							const slug = naming.slug(weaponId);
+		<>
+			<div className={styles.container}>
+				{hiddenWeaponIds.length > 0 ? (
+					<HiddenWeaponsBar
+						kind={kind}
+						hiddenWeaponIds={hiddenWeaponIds}
+						onRestore={restoreWeapon}
+						onShowAll={showAllWeapons}
+					/>
+				) : null}
+				<table className={styles.table}>
+					<thead className={styles.thead}>
+						<tr>
+							<th className={styles.paramHeader}>
+								{t("params:header.parameter")}
+							</th>
+							{visibleWeaponIds.map((weaponId) => {
+								const weaponName = naming.name(weaponId);
+								const slug = naming.slug(weaponId);
+
+								return (
+									<th key={weaponId} className={clsx(styles.weaponHeader, {})}>
+										<Link
+											to={weaponParamsPage(slug)}
+											className={styles.weaponHeaderContent}
+										>
+											<WeaponParamImage kind={kind} id={weaponId} size={32} />
+											<span className={styles.weaponName}>{weaponName}</span>
+										</Link>
+										{weaponId !== currentWeaponId ? (
+											<SendouButton
+												variant="minimal-destructive"
+												size="miniscule"
+												shape="square"
+												icon={<X />}
+												className={styles.hideButton}
+												onPress={() => hideWeapon(weaponId)}
+												aria-label={t("common:actions.hide")}
+												testId={`hide-weapon-${weaponId}`}
+											/>
+										) : null}
+									</th>
+								);
+							})}
+						</tr>
+					</thead>
+					<tbody>
+						{kind === "main" && specialPoints ? (
+							<SpecialPointsRow
+								visibleWeaponIds={visibleWeaponIds}
+								specialPoints={specialPoints}
+								isExpanded={expandedRows.has(SPECIAL_POINTS_KEY)}
+								onToggle={() => toggleRow(SPECIAL_POINTS_KEY)}
+							/>
+						) : null}
+						{Object.entries(paramsByCategory).map(([category, params]) => {
+							const filteredParams = params.filter(({ key }) =>
+								currentWeaponHasParam(category, key),
+							);
+
+							if (filteredParams.length === 0) {
+								return null;
+							}
 
 							return (
-								<th key={weaponId} className={clsx(styles.weaponHeader, {})}>
-									<Link
-										to={weaponParamsPage(slug)}
-										className={styles.weaponHeaderContent}
-									>
-										<WeaponParamImage kind={kind} id={weaponId} size={32} />
-										<span className={styles.weaponName}>{weaponName}</span>
-									</Link>
-									{weaponId !== currentWeaponId ? (
-										<SendouButton
-											variant="minimal-destructive"
-											size="miniscule"
-											shape="square"
-											icon={<X />}
-											className={styles.hideButton}
-											onPress={() => hideWeapon(weaponId)}
-											aria-label={t("common:actions.hide")}
-											testId={`hide-weapon-${weaponId}`}
-										/>
-									) : null}
-								</th>
+								<Fragment key={category}>
+									<tr>
+										<td
+											colSpan={visibleWeaponIds.length + 1}
+											className={styles.categoryHeader}
+										>
+											{category}
+										</td>
+									</tr>
+									{filteredParams.map(({ key, fullKey }) => {
+										const isExpanded = expandedRows.has(fullKey);
+										const hasHistory = rowHasHistory(category, key);
+										const explanation = getParamExplanation(category, key);
+
+										return (
+											<tr
+												key={fullKey}
+												className={clsx({
+													[styles.expandableRow]: hasHistory,
+												})}
+											>
+												<td
+													className={styles.paramName}
+													onClick={
+														hasHistory ? () => toggleRow(fullKey) : undefined
+													}
+												>
+													<div className={styles.paramNameInner}>
+														<span className={styles.paramNameText}>{key}</span>
+														{explanation ? (
+															// biome-ignore lint/a11y/noStaticElementInteractions: stops the help popover click from toggling the history row
+															<span
+																className={styles.paramInfo}
+																onClick={(e) => e.stopPropagation()}
+															>
+																<InfoPopover tiny>{explanation}</InfoPopover>
+															</span>
+														) : null}
+														{hasHistory ? (
+															<span className={styles.historyIndicator}>
+																{isExpanded ? (
+																	<ChevronUp size={14} />
+																) : (
+																	<ChevronDown size={14} />
+																)}
+															</span>
+														) : null}
+													</div>
+												</td>
+												{visibleWeaponIds.map((weaponId) => (
+													<ParamCell
+														key={weaponId}
+														param={
+															weaponParams[String(weaponId)]?.categories[
+																category
+															]?.[key]
+														}
+														isExpanded={isExpanded}
+													/>
+												))}
+											</tr>
+										);
+									})}
+								</Fragment>
 							);
 						})}
-					</tr>
-				</thead>
-				<tbody>
-					{kind === "main" && specialPoints ? (
-						<SpecialPointsRow
-							visibleWeaponIds={visibleWeaponIds}
-							specialPoints={specialPoints}
-							isExpanded={expandedRows.has(SPECIAL_POINTS_KEY)}
-							onToggle={() => toggleRow(SPECIAL_POINTS_KEY)}
-						/>
-					) : null}
-					{Object.entries(paramsByCategory).map(([category, params]) => {
-						const filteredParams = params.filter(({ key }) =>
-							currentWeaponHasParam(category, key),
-						);
+						{damageMultipliers ? (
+							<DamageRateInfoSection
+								visibleWeaponIds={visibleWeaponIds}
+								currentWeaponId={currentWeaponId}
+								damageMultipliers={damageMultipliers}
+								expandedRows={expandedRows}
+								onToggle={toggleRow}
+							/>
+						) : null}
+					</tbody>
+				</table>
+			</div>
+			<ParamsLegend />
+		</>
+	);
+}
 
-						if (filteredParams.length === 0) {
-							return null;
-						}
+function ParamsLegend() {
+	const { t } = useTranslation(["params"]);
 
-						return (
-							<Fragment key={category}>
-								<tr>
-									<td
-										colSpan={visibleWeaponIds.length + 1}
-										className={styles.categoryHeader}
-									>
-										{category}
-									</td>
-								</tr>
-								{filteredParams.map(({ key, fullKey }) => {
-									const isExpanded = expandedRows.has(fullKey);
-									const hasHistory = rowHasHistory(category, key);
-									const explanation = getParamExplanation(category, key);
-
-									return (
-										<tr
-											key={fullKey}
-											className={clsx({
-												[styles.expandableRow]: hasHistory,
-											})}
-										>
-											<td
-												className={styles.paramName}
-												onClick={
-													hasHistory ? () => toggleRow(fullKey) : undefined
-												}
-											>
-												<div className={styles.paramNameInner}>
-													<span className={styles.paramNameText}>{key}</span>
-													{explanation ? (
-														// biome-ignore lint/a11y/noStaticElementInteractions: stops the help popover click from toggling the history row
-														<span
-															className={styles.paramInfo}
-															onClick={(e) => e.stopPropagation()}
-														>
-															<InfoPopover tiny>{explanation}</InfoPopover>
-														</span>
-													) : null}
-													{hasHistory ? (
-														<span className={styles.historyIndicator}>
-															{isExpanded ? (
-																<ChevronUp size={14} />
-															) : (
-																<ChevronDown size={14} />
-															)}
-														</span>
-													) : null}
-												</div>
-											</td>
-											{visibleWeaponIds.map((weaponId) => (
-												<ParamCell
-													key={weaponId}
-													param={
-														weaponParams[String(weaponId)]?.categories[
-															category
-														]?.[key]
-													}
-													isExpanded={isExpanded}
-												/>
-											))}
-										</tr>
-									);
-								})}
-							</Fragment>
-						);
-					})}
-					{damageMultipliers ? (
-						<DamageRateInfoSection
-							visibleWeaponIds={visibleWeaponIds}
-							currentWeaponId={currentWeaponId}
-							damageMultipliers={damageMultipliers}
-							expandedRows={expandedRows}
-							onToggle={toggleRow}
-						/>
-					) : null}
-				</tbody>
-			</table>
-		</div>
+	return (
+		<dl className={styles.legend}>
+			<dt className={styles.legendTitle}>{t("params:legend.title")}</dt>
+			<dd className={styles.legendItem}>{t("params:legend.damage")}</dd>
+			<dd className={styles.legendItem}>{t("params:legend.frames")}</dd>
+			<dd className={styles.legendItem}>{t("params:legend.powerUp")}</dd>
+		</dl>
 	);
 }
 

@@ -8,9 +8,15 @@
  * Every parameter the table can display is listed here. Filled-in entries are active;
  * the rest are commented out as placeholders — uncomment one and write its meaning to
  * add a popover for it.
+ *
+ * Conventions are explained once in the table's legend, so individual entries omit them:
+ * - damage values are stored ×10 (450 means 45.0 damage),
+ * - frame values run at 60 frames per second,
+ * - `.Low` / `.Mid` / `.High` are the same stat with none / a moderate amount / the maximum
+ *   amount of the relevant Power Up gear ability equipped (`.Low` is 0 ability points,
+ *   `.High` is the value at the ability-point cap). A single base-key entry (without the
+ *   suffix) covers all three levels — see {@link getParamExplanation}.
  */
-
-// xxx: remove at least frame, dmg explanations and just add one common one at the bottom. also .Low, .Mid, .High
 const PARAM_EXPLANATIONS: Record<string, string> = {
 	// AdditionMovePlayerParam
 	// "AdditionMovePlayerParam.ZRate": "",
@@ -97,7 +103,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	"BlastParam.DamageRadiusEnd":
 		"Radius the damaging area expands to at its largest.",
 	"BlastParam.DamageValueEnd":
-		"Damage dealt by the effect at its largest extent. Stored ×10 in the game data, so 450 means 45.0 damage.",
+		"Damage dealt by the effect at its largest extent.",
 	// "BlastParam.DamageValueStart": "",
 	// "BlastParam.DistanceFar": "",
 	// "BlastParam.DistanceNear": "",
@@ -279,8 +285,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// BulletParam
 	// "BulletParam.CollisionRadiusForField": "",
 	// "BulletParam.CollisionRadiusForPlayer": "",
-	"BulletParam.DamageValue":
-		"Damage dealt by a short range hit. Stored ×10 in the game data, so 450 means 45.0 damage.",
+	"BulletParam.DamageValue": "Damage dealt by a short range hit.",
 	// "BulletParam.HitPoint": "",
 	// "BulletParam.KnockBackLen": "",
 	// "BulletParam.KnockBackParam.Accel": "",
@@ -488,15 +493,12 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 		"Frame by which damage has fully reduced to its minimum value.",
 	"DamageParam.ReduceStartFrame":
 		"Frame at which damage begins reducing from its maximum toward its minimum value.",
-	"DamageParam.ValueFullCharge":
-		"Direct-hit damage at full charge. Stored ×10 in the game data, so 450 means 45.0 damage.",
+	"DamageParam.ValueFullCharge": "Direct-hit damage at full charge.",
 	// "DamageParam.ValueFullChargeMax": "",
-	"DamageParam.ValueMax":
-		"Maximum direct-hit damage. Stored ×10 in the game data, so 450 means 45.0 damage.",
-	"DamageParam.ValueMaxCharge":
-		"Direct-hit damage at maximum charge. Stored ×10 in the game data, so 450 means 45.0 damage.",
+	"DamageParam.ValueMax": "Maximum direct-hit damage.",
+	"DamageParam.ValueMaxCharge": "Direct-hit damage at maximum charge.",
 	"DamageParam.ValueMin":
-		"Minimum direct-hit damage after full damage falloff at range. Stored ×10, so 225 means 22.5 damage.",
+		"Minimum direct-hit damage after full damage falloff at range.",
 	// "DamageParam.ValueMinCharge": "",
 
 	// ExhaleBlastParamMaxCharge
@@ -544,11 +546,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "FootSplashParam.PaintRadius": "",
 
 	// FridgeParam
-	// "FridgeParam.PowerUpFrame.High": "",
-	"FridgeParam.PowerUpFrame.Low":
-		"Duration in frames (60 = 1 second) of the drink's buff with no Special Power Up equipped.",
-	"FridgeParam.PowerUpFrame.Mid":
-		"Duration in frames (60 = 1 second) of the drink's buff with a moderate amount of Special Power Up gear ability equipped.",
+	"FridgeParam.PowerUpFrame": "Duration in frames of the drink's buff.",
 	// "FridgeParam.PutFrame": "",
 	// "FridgeParam.PutFrameOnYagura": "",
 	// "FridgeParam.ServeAreaHeightDown": "",
@@ -584,7 +582,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "IceParam.BlastParam.SplashAroundParam.PitchMax": "",
 	// "IceParam.BlastParam.SplashAroundParam.VelocityMax": "",
 	"IceParam.BurstFrame":
-		"Time in frames (60 = 1 second) from spawning until this detonates or activates.",
+		"Time in frames from spawning until this detonates or activates.",
 	// "IceParam.CollisionRadius": "",
 	// "IceParam.FlyingFrame": "",
 	// "IceParam.GroundOffsetY": "",
@@ -630,12 +628,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "InhaleParam.PaintSplashSpawnOffset.Z": "",
 	// "InhaleParam.PoisonMistForPlayer.EffectFrame": "",
 	// "InhaleParam.PoisonMistForPlayer.SideStepInkConsumeRate": "",
-	"InhaleParam.RadiusMax.High":
-		"Maximum inhale radius, with a lot of Special Power Up equipped.",
-	"InhaleParam.RadiusMax.Low":
-		"Maximum inhale radius, with no Special Power Up equipped.",
-	"InhaleParam.RadiusMax.Mid":
-		"Maximum inhale radius, with a moderate amount of Special Power Up equipped.",
+	"InhaleParam.RadiusMax": "Maximum inhale radius.",
 	// "InhaleParam.RadiusMin.High": "",
 	// "InhaleParam.RadiusMin.Low": "",
 	// "InhaleParam.RadiusMin.Mid": "",
@@ -691,7 +684,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	"MoveLapOverParam.GoStraightStateEndMaxSpeed":
 		"Speed the projectile settles to after its initial fast phase, which affects its effective range.",
 	"MoveLapOverParam.GoStraightToBrakeStateFrame":
-		"Time in frames (60 = 1 second) the projectile travels at full speed before it begins to slow down.",
+		"Time in frames the projectile travels at full speed before it begins to slow down.",
 	"MoveLapOverParam.SpawnSpeed":
 		"Initial travel speed of the projectile the moment it is fired.",
 
@@ -745,8 +738,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "MoveParam.DamageSpanFrame": "",
 	// "MoveParam.DamageValueForDamageTag": "",
 	// "MoveParam.DeathTargetApprouchDistance": "",
-	"MoveParam.DirectDamage":
-		"Damage dealt by a direct hit. Stored ×10 in the game data, so 450 means 45.0 damage.",
+	"MoveParam.DirectDamage": "Damage dealt by a direct hit.",
 	// "MoveParam.Distance": "",
 	// "MoveParam.DistanceFullCharge": "",
 	// "MoveParam.DistanceMaxCharge": "",
@@ -775,7 +767,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	"MoveParam.GoStraightStateEndMaxSpeed":
 		"Speed a shot settles to after its initial fast phase, which affects its effective range.",
 	"MoveParam.GoStraightToBrakeStateFrame":
-		"Time in frames (60 = 1 second) the projectile travels at full speed before it begins to slow down.",
+		"Time in frames the projectile travels at full speed before it begins to slow down.",
 	// "MoveParam.GroundGravity": "",
 	// "MoveParam.GroundPositionAirResist": "",
 	// "MoveParam.GroundPositionDeg50AirResist": "",
@@ -814,12 +806,8 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "MoveParam.PaintRadiusBias": "",
 	// "MoveParam.PaintRadiusMaxCharge": "",
 	// "MoveParam.PaintRadiusMinCharge": "",
-	"MoveParam.PeriodFirst.High":
-		"How long the sprinkler stays in its fast-output phase, in frames (60 = 1 second), with a lot of Sub Power Up equipped.",
-	"MoveParam.PeriodFirst.Low":
-		"How long the sprinkler stays in its fast-output phase, in frames (60 = 1 second), with no Sub Power Up equipped.",
-	"MoveParam.PeriodFirst.Mid":
-		"How long the sprinkler stays in its fast-output phase, in frames (60 = 1 second), with a moderate amount of Sub Power Up equipped.",
+	"MoveParam.PeriodFirst":
+		"How long the sprinkler stays in its fast-output phase, in frames.",
 	// "MoveParam.PeriodSecond.High": "",
 	// "MoveParam.PeriodSecond.Low": "",
 	// "MoveParam.PeriodSecond.Mid": "",
@@ -845,12 +833,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "MoveParam.SpawnSpeedYMaxCharge": "",
 	// "MoveParam.SpawnSpeedYWorldMin": "",
 	// "MoveParam.SpawnSpeedZMaxCharge": "",
-	"MoveParam.SpawnSpeedZSpecUp.High":
-		"Forward launch speed (throw distance) with a lot of the relevant Power Up gear ability equipped. High is with a lot of the relevant Power Up gear ability equipped (Special Power Up for specials, Sub Power Up for subs), Low is with none, Mid is in between.",
-	"MoveParam.SpawnSpeedZSpecUp.Low":
-		"Forward launch speed (throw distance) with none of the relevant Power Up gear ability equipped. High is with a lot of the relevant Power Up gear ability equipped (Special Power Up for specials, Sub Power Up for subs), Low is with none, Mid is in between.",
-	"MoveParam.SpawnSpeedZSpecUp.Mid":
-		"Forward launch speed (throw distance) with a moderate amount of the relevant Power Up gear ability equipped. High is with a lot of the relevant Power Up gear ability equipped (Special Power Up for specials, Sub Power Up for subs), Low is with none, Mid is in between.",
+	"MoveParam.SpawnSpeedZSpecUp": "Forward launch speed (throw distance).",
 	// "MoveParam.SpoutInkDrawRadius": "",
 	// "MoveParam.SpoutInkPaintRadiusMaxHeight": "",
 	// "MoveParam.SpoutInkPaintRadiusMaxRate": "",
@@ -1015,7 +998,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "spl__BulletShelterCanopyParam.CanopyInitSpeed": "",
 	// "spl__BulletShelterCanopyParam.CanopyMoveKnockBackSideStepRate": "",
 	"spl__BulletShelterCanopyParam.CanopyNakedFrame":
-		"Time in frames (60 = 1 second) for a broken canopy to recover.",
+		"Time in frames for a broken canopy to recover.",
 	// "spl__BulletShelterCanopyParam.CanopyPaintRadius": "",
 	// "spl__BulletShelterCanopyParam.CanopySpeedAirAddScaleXZ": "",
 	// "spl__BulletShelterCanopyParam.CanopySpeedGroundAddScale": "",
@@ -1059,18 +1042,9 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "spl__BulletSpGreatBarrierMoveParam.BarrierParam.CanopyKnockBack": "",
 	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.DamgeRatio":
 		"Multiplier applied to damage taken by the inner device and top section the barrier.",
-	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxFieldHP.High":
-		"Total hit points of the deployed field, with a lot of Special Power Up equipped.",
-	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxFieldHP.Low":
-		"Total hit points of the deployed field, with no Special Power Up equipped.",
-	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxFieldHP.Mid":
-		"Total hit points of the deployed field, with a moderate amount of Special Power Up equipped.",
-	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxHP.High":
-		"Hit points, with a lot of Special Power Up equipped.",
-	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxHP.Low":
-		"Hit points, with no Special Power Up equipped.",
-	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxHP.Mid":
-		"Hit points, with a moderate amount of Special Power Up equipped.",
+	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxFieldHP":
+		"Total hit points of the deployed field.",
+	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxHP": "Hit points.",
 	"spl__BulletSpGreatBarrierMoveParam.BarrierParam.MaxRadius":
 		"Maximum radius this expands to.",
 	// "spl__BulletSpGreatBarrierMoveParam.BarrierParam.MinRadius": "",
@@ -1103,12 +1077,12 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "spl__BulletSpMicroLaserBitParam.LaserParam.AfterLaserWaitFrame": "",
 	// "spl__BulletSpMicroLaserBitParam.LaserParam.FreeMoveRotSpeed": "",
 	"spl__BulletSpMicroLaserBitParam.LaserParam.LaserDamage":
-		"Damage dealt by each laser tick. Stored ×10 in the game data, so 450 means 45.0 damage.",
+		"Damage dealt by each laser tick.",
 	// "spl__BulletSpMicroLaserBitParam.LaserParam.LaserDamageIntervalFrame": "",
 	// "spl__BulletSpMicroLaserBitParam.LaserParam.LaserFrame.High": "",
 	// "spl__BulletSpMicroLaserBitParam.LaserParam.LaserFrame.Low": "",
-	"spl__BulletSpMicroLaserBitParam.LaserParam.LaserFrame.Mid":
-		"How long the lasers fire, in frames (60 = 1 second), with a moderate amount of Special Power Up equipped.",
+	"spl__BulletSpMicroLaserBitParam.LaserParam.LaserFrame":
+		"How long the lasers fire, in frames.",
 
 	// spl__BulletSpMultiMissileMoveParam
 	// "spl__BulletSpMultiMissileMoveParam.RiseParam.RiseBaseSpeedComeUnderRate": "",
@@ -1202,7 +1176,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// spl__WeaponSaberParam
 	// "spl__WeaponSaberParam.ChargeParam.AirChargeRateByInkEmpty": "",
 	"spl__WeaponSaberParam.ChargeParam.ChargeFrameFullCharge":
-		"Time in frames (60 = 1 second) needed to reach a full charge.",
+		"Time in frames needed to reach a full charge.",
 	// "spl__WeaponSaberParam.ChargeParam.ChargeFrameMinCharge": "",
 	"spl__WeaponSaberParam.ChargeParam.InkConsumeFullCharge":
 		"Ink consumed by a fully charged use, as a fraction of the ink tank.",
@@ -1254,7 +1228,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "spl__WeaponSaberParam.SwingParam.ShotSlashOffset_Vertical.Y": "",
 	// "spl__WeaponSaberParam.SwingParam.ShotSlashOffset_Vertical.Z": "",
 	"spl__WeaponSaberParam.SwingParam.SideStepParam.ChargeFrame":
-		"Time in frames (60 = 1 second) spent charging.",
+		"Time in frames spent charging.",
 	// "spl__WeaponSaberParam.SwingParam.SideStepParam.InkConsume": "",
 	// "spl__WeaponSaberParam.SwingParam.SideStepParam.InkRecoverStop": "",
 	// "spl__WeaponSaberParam.SwingParam.SideStepParam.InputReqAcceptFrame": "",
@@ -1296,7 +1270,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "spl__WeaponShelterCanopyParam.CanopyDirXZ_RotDeg_L": "",
 	// "spl__WeaponShelterCanopyParam.CanopyDirXZ_RotDegBias": "",
 	"spl__WeaponShelterCanopyParam.CanopyNakedFrame":
-		"Time in frames (60 = 1 second) for a broken canopy to recover.",
+		"Time in frames for a broken canopy to recover.",
 	// "spl__WeaponShelterCanopyParam.CanopyOpenEndBias": "",
 	// "spl__WeaponShelterCanopyParam.CanopyOpenEndOffset": "",
 	// "spl__WeaponShelterCanopyParam.CanopyOpenFrame": "",
@@ -1353,11 +1327,11 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 
 	// spl__WeaponSpPogoParam
 	"spl__WeaponSpPogoParam.Rise_Frame":
-		"Time in frames (60 = 1 second) spent rising into the air on activation.",
+		"Time in frames spent rising into the air on activation.",
 	"spl__WeaponSpPogoParam.Rise_NoDamageStartFrame":
 		"Frame during the rise at which you become able to take damage again.",
 	"spl__WeaponSpPogoParam.SpecialTotalFrame":
-		"Total active duration of the special, in frames (60 = 1 second).",
+		"Total active duration of the special, in frames.",
 
 	// spl__WeaponSpUltraShotParam
 	// "spl__WeaponSpUltraShotParam.EjectCartridgeAngularVel.X": "",
@@ -1377,10 +1351,8 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "spl__WeaponSpUltraShotParam.RepeatFrame": "",
 	// "spl__WeaponSpUltraShotParam.ShotDelayFrame": "",
 	// "spl__WeaponSpUltraShotParam.SpecialDurationFrame.High": "",
-	"spl__WeaponSpUltraShotParam.SpecialDurationFrame.Low":
-		"How long the special lasts, in frames (60 = 1 second), with no Special Power Up equipped.",
-	"spl__WeaponSpUltraShotParam.SpecialDurationFrame.Mid":
-		"How long the special lasts, in frames (60 = 1 second), with a moderate amount of Special Power Up equipped.",
+	"spl__WeaponSpUltraShotParam.SpecialDurationFrame":
+		"How long the special lasts, in frames.",
 	// "spl__WeaponSpUltraShotParam.StartDelayFrame": "",
 
 	// spl__WeaponSpUltraStampParam
@@ -1390,10 +1362,8 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "spl__WeaponSpUltraStampParam.HoldSwingKnockBackParam.Bias": "",
 	// "spl__WeaponSpUltraStampParam.HoldSwingKnockBackParam.Distance": "",
 	// "spl__WeaponSpUltraStampParam.SpecialTotalFrame.High": "",
-	"spl__WeaponSpUltraStampParam.SpecialTotalFrame.Low":
-		"Total active duration of the special, in frames (60 = 1 second), with no Special Power Up equipped.",
-	"spl__WeaponSpUltraStampParam.SpecialTotalFrame.Mid":
-		"Total active duration of the special, in frames (60 = 1 second), with a moderate amount of Special Power Up equipped.",
+	"spl__WeaponSpUltraStampParam.SpecialTotalFrame":
+		"Total active duration of the special, in frames.",
 	// "spl__WeaponSpUltraStampParam.VelLimit_NoPaint": "",
 
 	// spl__WeaponStringerParam
@@ -1418,7 +1388,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	"spl__WeaponStringerParam.ChargeParam.MoveSpeedFullCharge":
 		"Player movement speed while holding a full charge.",
 	"spl__WeaponStringerParam.ChargeParam.PostDelayFrame":
-		"Delay in frames (60 = 1 second) after firing during which you cannot act.",
+		"Delay in frames after firing during which you cannot act.",
 	// "spl__WeaponStringerParam.PlayerParam.BowTiltDegRcvInterpRate": "",
 	// "spl__WeaponStringerParam.ShotGuideParam.GuideDrawFrameFirst": "",
 	// "spl__WeaponStringerParam.ShotGuideParam.GuideDrawFrameSecond": "",
@@ -1780,8 +1750,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 
 	// WallParam
 	// "WallParam.ClosingFrame": "",
-	"WallParam.DamageValue":
-		"Damage dealt by a hit. Stored ×10 in the game data, so 450 means 45.0 damage.",
+	"WallParam.DamageValue": "Damage dealt by a hit.",
 	// "WallParam.DebugBlockRotateDistance": "",
 	// "WallParam.DebugBlockRotateSpeedMax": "",
 	// "WallParam.DebugBlockRotateSpeedMin": "",
@@ -1833,14 +1802,14 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "WeaponParam.BurstAimMoveFrame": "",
 	// "WeaponParam.ChargeFrame": "",
 	"WeaponParam.ChargeFrame_First":
-		"Frames (60 = 1 second) until the first charge level finishes. Lower means it reaches the first level faster.",
+		"Frames until the first charge level finishes. Lower means it reaches the first level faster.",
 	"WeaponParam.ChargeFrame_Second":
-		"Frames (60 = 1 second) until the second, full charge level finishes. Lower means it reaches a full charge faster.",
+		"Frames until the second, full charge level finishes. Lower means it reaches a full charge faster.",
 	// "WeaponParam.ChargeFrameBlastRate": "",
 	"WeaponParam.ChargeFrameFullCharge":
-		"Frames (60 = 1 second) needed to reach a full charge. Lower means the weapon charges faster.",
+		"Frames needed to reach a full charge. Lower means the weapon charges faster.",
 	"WeaponParam.ChargeFrameMidCharge":
-		"Time in frames (60 = 1 second) needed to reach a mid-level charge.",
+		"Time in frames needed to reach a mid-level charge.",
 	// "WeaponParam.ChargeFrameMinCharge": "",
 	// "WeaponParam.ChargeRateAutoPerFrame.High": "",
 	// "WeaponParam.ChargeRateAutoPerFrame.Low": "",
@@ -1855,7 +1824,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	"WeaponParam.Dash_ChargeCancelableFrame":
 		"Frames into a dash charge after which it can still be canceled.",
 	"WeaponParam.Dash_ChargeFrame":
-		"Time in frames (60 = 1 second) needed to charge a dash attack.",
+		"Time in frames needed to charge a dash attack.",
 	// "WeaponParam.Dash_InvalidFrame": "",
 	// "WeaponParam.Dash_MoveFrame": "",
 	// "WeaponParam.Dash_MoveSpeed_Floor_MaxCharge": "",
@@ -1880,25 +1849,17 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "WeaponParam.InkCapacityRt": "",
 	"WeaponParam.InkConsume":
 		"Ink used per shot, as a fraction of the ink tank (1.0 = the whole tank).",
-	"WeaponParam.InkConsume_Hook.High":
-		"Ink consumed per hook shot, as a fraction of the tank, with a lot of Special Power Up equipped.",
-	"WeaponParam.InkConsume_Hook.Low":
-		"Ink consumed per hook shot, as a fraction of the tank, with no Special Power Up equipped.",
-	"WeaponParam.InkConsume_Hook.Mid":
-		"Ink consumed per hook shot, as a fraction of the tank, with a moderate amount of Special Power Up equipped.",
-	"WeaponParam.InkConsume_PerSec.High":
-		"Ink drained per second while active, as a fraction of the tank, with a lot of Special Power Up equipped.",
-	"WeaponParam.InkConsume_PerSec.Low":
-		"Ink drained per second while active, as a fraction of the tank, with no Special Power Up equipped.",
-	"WeaponParam.InkConsume_PerSec.Mid":
-		"Ink drained per second while active, as a fraction of the tank, with a moderate amount of Special Power Up equipped.",
+	"WeaponParam.InkConsume_Hook":
+		"Ink consumed per hook shot, as a fraction of the tank.",
+	"WeaponParam.InkConsume_PerSec":
+		"Ink drained per second while active, as a fraction of the tank.",
 	"WeaponParam.InkConsumeFullCharge":
 		"Ink used by a fully charged shot, as a fraction of the ink tank (1.0 = the whole tank).",
 	"WeaponParam.InkConsumeMinCharge":
 		"Ink used by a tap shot (minimum charge), as a fraction of the ink tank (1.0 = the whole tank).",
 	// "WeaponParam.InkEmptyChargeTimes": "",
 	"WeaponParam.InkRecoverStop":
-		'Frames (60 = 1 second) after firing before the ink tank starts refilling ("white ink"). Higher means a longer wait before ink recovery begins.',
+		'Frames after firing before the ink tank starts refilling ("white ink"). Higher means a longer wait before ink recovery begins.',
 	// "WeaponParam.InkRecoverStopMaxCharge": "",
 	// "WeaponParam.Jump_DegBiasDecreaseStartFrame": "",
 	// "WeaponParam.Jump_DegBiasEndFrame": "",
@@ -1921,9 +1882,9 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "WeaponParam.MaxChargeFrame": "",
 	// "WeaponParam.MaxLengthHook": "",
 	"WeaponParam.MaxShootingFrame_First":
-		"Firing duration in frames (60 = 1 second) at the first charge level.",
+		"Firing duration in frames at the first charge level.",
 	"WeaponParam.MaxShootingFrame_Second":
-		"Firing duration in frames (60 = 1 second) at the second/full charge level.",
+		"Firing duration in frames at the second/full charge level.",
 	"WeaponParam.MinLengthHook_Floor":
 		"Minimum zip distance when hooking onto the floor.",
 	// "WeaponParam.MinLengthHook_Wall": "",
@@ -1931,8 +1892,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "WeaponParam.MoveAccAttack": "",
 	// "WeaponParam.MoveBrk": "",
 	// "WeaponParam.MoveCancelableFrame": "",
-	"WeaponParam.MoveFrame":
-		"Duration, in frames (60 = 1 second), of the movement.",
+	"WeaponParam.MoveFrame": "Duration, in frames, of the movement.",
 	// "WeaponParam.MoveFrameOmen": "",
 	// "WeaponParam.MoveJumpDownBias": "",
 	// "WeaponParam.MoveJumpDownStartChargeRate": "",
@@ -1965,7 +1925,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "WeaponParam.PitchDegSwerve": "",
 	// "WeaponParam.PostDelayFrame": "",
 	"WeaponParam.PostDelayFrame_Blaster":
-		"Frames (60 = 1 second) of restricted movement after firing a blaster shot. Higher means a longer recovery before you can move freely again.",
+		"Frames of restricted movement after firing a blaster shot. Higher means a longer recovery before you can move freely again.",
 	// "WeaponParam.PreBurstEmitFrame": "",
 	// "WeaponParam.PreBurstFrame": "",
 	// "WeaponParam.PreDelayFrame_HumanShot": "",
@@ -1973,7 +1933,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "WeaponParam.PreMoveFrame": "",
 	// "WeaponParam.Radius_DetectPlayer": "",
 	"WeaponParam.RepeatFrame":
-		"Interval in frames (60 = 1 second) between consecutive shots when firing continuously. Lower means a faster fire rate.",
+		"Interval in frames between consecutive shots when firing continuously. Lower means a faster fire rate.",
 	// "WeaponParam.RutPaintRadius": "",
 	// "WeaponParam.ShotDirXZ_RotDegH": "",
 	// "WeaponParam.ShotFailedIntervalFrm": "",
@@ -1983,7 +1943,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "WeaponParam.ShotGuideFrame": "",
 	// "WeaponParam.ShotPitVel": "",
 	"WeaponParam.SpecialReduceFrame":
-		"Frames (60 = 1 second) the special gauge won't recharge after using special. Higher means a longer wait before the special starts recharging.",
+		"Frames the special gauge won't recharge after using special. Higher means a longer wait before the special starts recharging.",
 	// "WeaponParam.SpecialTotalFrame": "",
 	// "WeaponParam.SpecialTotalFrame.High": "",
 	// "WeaponParam.SpecialTotalFrame.Low": "",
@@ -2018,20 +1978,20 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 
 	// WeaponRollParam
 	"WeaponRollParam.DashFrame":
-		"Frames (60 = 1 second) of acceleration before reaching top speed while holding ZR to ink and move forward. Lower means you reach top speed sooner.",
+		"Frames of acceleration before reaching top speed while holding ZR to ink and move forward. Lower means you reach top speed sooner.",
 	"WeaponRollParam.InkConsumeMaxPerFrame":
 		"Maximum ink consumed per frame while rolling, as a fraction of the ink tank.",
 	"WeaponRollParam.InkConsumeMinPerFrame":
 		"Minimum ink consumed per frame while rolling, as a fraction of the ink tank.",
 	"WeaponRollParam.InkRecoverStop":
-		"Time in frames (60 = 1 second) after using this before the ink tank starts refilling.",
+		"Time in frames after using this before the ink tank starts refilling.",
 	// "WeaponRollParam.SpeedDash": "",
 	// "WeaponRollParam.SpeedDashTurnBreak": "",
 	// "WeaponRollParam.SpeedInkConsumeMax": "",
 	// "WeaponRollParam.SpeedInkConsumeMin": "",
 	"WeaponRollParam.SpeedNormal": "Normal rolling movement speed.",
 	"WeaponRollParam.SwingRepeatFrame":
-		"Interval in frames (60 = 1 second) between continuous swings. Lower means you can swing again sooner.",
+		"Interval in frames between continuous swings. Lower means you can swing again sooner.",
 	// "WeaponRollParam.ToPaintFrame": "",
 
 	// WeaponScopeParam
@@ -2055,10 +2015,8 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "WeaponSpChariotParam.ShotGuideCannonFrame": "",
 	// "WeaponSpChariotParam.ShotPitVelLmt": "",
 	// "WeaponSpChariotParam.SpecialTotalFrame.High": "",
-	"WeaponSpChariotParam.SpecialTotalFrame.Low":
-		"Total active duration of the special, in frames (60 = 1 second), with no Special Power Up equipped.",
-	"WeaponSpChariotParam.SpecialTotalFrame.Mid":
-		"Total active duration of the special, in frames (60 = 1 second), with a moderate amount of Special Power Up equipped.",
+	"WeaponSpChariotParam.SpecialTotalFrame":
+		"Total active duration of the special, in frames.",
 	// "WeaponSpChariotParam.StartDelayFrame_Cannon": "",
 	// "WeaponSpChariotParam.StartDelayFrame_Shooter": "",
 
@@ -2068,7 +2026,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	"WeaponSwingParam.InkConsume":
 		"Ink used by one brush swing, as a fraction of the ink tank.",
 	"WeaponSwingParam.InkRecoverStop":
-		'Frames (60 = 1 second) after swinging before the ink tank starts refilling ("white ink"). Higher means a longer wait before ink recovery begins.',
+		'Frames after swinging before the ink tank starts refilling ("white ink"). Higher means a longer wait before ink recovery begins.',
 	// "WeaponSwingParam.SubWeaponSquidDelayFrm": "",
 	// "WeaponSwingParam.SwingFrame": "",
 	// "WeaponSwingParam.SwingMoveSpeed": "",
@@ -2078,7 +2036,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 		"Ink used by one vertical swing, as a fraction of the ink tank.",
 	// "WeaponVerticalSwingParam.InkConsumeRateDepletion": "",
 	"WeaponVerticalSwingParam.InkRecoverStop":
-		'Frames (60 = 1 second) after vertically swinging before the ink tank starts refilling ("white ink"). Higher means a longer wait before ink recovery begins.',
+		'Frames after vertically swinging before the ink tank starts refilling ("white ink"). Higher means a longer wait before ink recovery begins.',
 	// "WeaponVerticalSwingParam.SwingFrame": "",
 	// "WeaponVerticalSwingParam.SwingMoveSpeed": "",
 
@@ -2089,7 +2047,7 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 		"Ink used by one wide horizontal swing, as a fraction of the ink tank.",
 	// "WeaponWideSwingParam.InkConsumeRateDepletion": "",
 	"WeaponWideSwingParam.InkRecoverStop":
-		'Frames (60 = 1 second) after horizontally swinging before the ink tank starts refilling ("white ink"). Higher means a longer wait before ink recovery begins.',
+		'Frames after horizontally swinging before the ink tank starts refilling ("white ink"). Higher means a longer wait before ink recovery begins.',
 	// "WeaponWideSwingParam.SubWeaponSquidDelayFrm": "",
 	// "WeaponWideSwingParam.SwingFrame": "",
 	// "WeaponWideSwingParam.SwingMoveSpeed": "",
@@ -2130,9 +2088,14 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "WideSwingUnitGroupParam.SplashNearestParam.SpawnParam.PaintWidthHalf": "",
 };
 
+const POWER_UP_LEVEL_SUFFIXES = [".Low", ".Mid", ".High"];
+
 /**
  * Returns a plain-English description of what a weapon parameter controls, or
  * `undefined` if no explanation has been recorded for it yet.
+ *
+ * A `.Low` / `.Mid` / `.High` key with no exact entry falls back to its suffix-less base
+ * key, so one entry covers all three Power Up levels (the legend explains what they mean).
  *
  * This is the single source of explanation text, so the underlying store can later be
  * swapped for a translated source without changing call sites.
@@ -2141,5 +2104,12 @@ export function getParamExplanation(
 	category: string,
 	key: string,
 ): string | undefined {
-	return PARAM_EXPLANATIONS[`${category}.${key}`];
+	const fullKey = `${category}.${key}`;
+	const direct = PARAM_EXPLANATIONS[fullKey];
+	if (direct !== undefined) return direct;
+
+	const suffix = POWER_UP_LEVEL_SUFFIXES.find((s) => fullKey.endsWith(s));
+	if (suffix) return PARAM_EXPLANATIONS[fullKey.slice(0, -suffix.length)];
+
+	return undefined;
 }

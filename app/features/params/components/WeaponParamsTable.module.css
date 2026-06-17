@@ -232,3 +232,29 @@
 	gap: var(--s-0-5);
 	font-size: var(--font-xs);
 }
+
+.legend {
+	margin-top: var(--s-3);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.legendTitle {
+	font-weight: var(--weight-bold);
+	color: var(--color-text);
+}
+
+.legendItem {
+	margin: 0;
+	padding-left: var(--s-3);
+	position: relative;
+
+	&::before {
+		content: "•";
+		position: absolute;
+		left: var(--s-1);
+	}
+}
