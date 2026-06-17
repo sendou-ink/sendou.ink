@@ -275,6 +275,9 @@ function ChangeBadge({ change }: { change: PatchChange }) {
 
 	const isSpecialPoints = change.category === SPECIAL_POINTS_PARAM_KEY;
 	const isDamageMultiplier = change.category === DAMAGE_MULTIPLIER_PARAM_KEY;
+	// Damage falloff curves serialize to long "damage @ distance" lists that need their own line.
+	const isWideValue =
+		typeof change.from === "string" && change.from.includes("@");
 
 	const label = isSpecialPoints
 		? t("analyzer:stat.specialPoints")
@@ -287,6 +290,7 @@ function ChangeBadge({ change }: { change: PatchChange }) {
 			className={clsx(styles.change, {
 				[styles.buff]: change.kind === "buff",
 				[styles.nerf]: change.kind === "nerf",
+				[styles.wide]: isWideValue,
 			})}
 			title={
 				isSpecialPoints || isDamageMultiplier

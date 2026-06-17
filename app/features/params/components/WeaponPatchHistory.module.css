@@ -97,6 +97,11 @@
 	font-size: var(--font-2xs);
 }
 
+.change.wide {
+	flex-direction: column;
+	align-items: stretch;
+}
+
 .change.buff {
 	border-color: var(--color-success);
 	background-color: var(--color-success-low);
@@ -118,6 +123,10 @@
 	white-space: nowrap;
 }
 
+.change.wide .changeName {
+	white-space: normal;
+}
+
 .changeIcon {
 	flex-shrink: 0;
 }
@@ -129,6 +138,10 @@
 	flex-shrink: 0;
 	font-weight: var(--weight-semi);
 	font-variant-numeric: tabular-nums;
+}
+
+.change.wide .changeValues {
+	flex-wrap: wrap;
 }
 
 .arrow {

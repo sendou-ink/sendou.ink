@@ -87,11 +87,77 @@ function getParamDirection(category: string, key: string): ParamDirection {
 	return null;
 }
 
+/** Matches a single `"<damage> @ <distance>"` breakpoint of a serialized damage falloff curve. */
+const DAMAGE_BREAKPOINT_PATTERN = /^\s*([\d.]+)\s*@\s*([\d.]+)\s*$/;
+
+/**
+ * Parses a serialized damage falloff curve (see `formatDistanceDamageArray`) back into its
+ * breakpoints. Returns `null` for any other string (enums, primitive-array blobs), which are
+ * treated as non-directional.
+ */
+function parseDamageCurve(
+	value: number | string,
+): Array<{ damage: number; distance: number }> | null {
+	if (typeof value !== "string") {
+		return null;
+	}
+
+	const breakpoints: Array<{ damage: number; distance: number }> = [];
+	for (const part of value.split(",")) {
+		const match = part.match(DAMAGE_BREAKPOINT_PATTERN);
+		if (!match) return null;
+		breakpoints.push({ damage: Number(match[1]), distance: Number(match[2]) });
+	}
+
+	return breakpoints.length > 0 ? breakpoints : null;
+}
+
+/**
+ * Classifies a change between two damage falloff curves by comparing them breakpoint by
+ * breakpoint. Both more damage and more reach (a higher distance at which a damage tier still
+ * applies) count as improvements, so a curve where every change improves is a buff, every change
+ * worsens is a nerf, and a mix (or curves of differing shape) is neutral. Returns `null` when the
+ * values are not both damage curves, so the caller falls back to scalar comparison.
+ */
+function classifyDamageCurveChange(
+	direction: ParamDirection,
+	from: number | string,
+	to: number | string,
+): ParamChangeKind | null {
+	const fromCurve = parseDamageCurve(from);
+	const toCurve = parseDamageCurve(to);
+	if (!fromCurve || !toCurve || fromCurve.length !== toCurve.length) {
+		return null;
+	}
+
+	let improved = false;
+	let worsened = false;
+	for (let i = 0; i < fromCurve.length; i++) {
+		for (const field of ["damage", "distance"] as const) {
+			const before = fromCurve[i][field];
+			const after = toCurve[i][field];
+			if (before === after) continue;
+			const isImprovement =
+				direction === "lower" ? after < before : after > before;
+			if (isImprovement) {
+				improved = true;
+			} else {
+				worsened = true;
+			}
+		}
+	}
+
+	if (improved && !worsened) return "buff";
+	if (worsened && !improved) return "nerf";
+	return "neutral";
+}
+
 /**
  * Classifies a parameter value change between two patches as a buff, a nerf, or neutral.
  *
- * Neutral is returned for non-numeric values, unchanged values, or parameters whose impact
- * direction is unknown (see {@link getParamDirection}).
+ * Damage falloff curves are compared breakpoint by breakpoint (see
+ * {@link classifyDamageCurveChange}). Neutral is returned for other non-numeric values, unchanged
+ * values, or parameters whose impact direction is unknown (see {@link getParamDirection}).
  */
 export function classifyParamChange(
 	category: string,
@@ -99,12 +165,17 @@ export function classifyParamChange(
 	from: number | string,
 	to: number | string,
 ): ParamChangeKind {
-	if (typeof from !== "number" || typeof to !== "number" || from === to) {
+	const direction = getParamDirection(category, key);
+	if (direction === null) {
 		return "neutral";
 	}
 
-	const direction = getParamDirection(category, key);
-	if (direction === null) {
+	const curveChange = classifyDamageCurveChange(direction, from, to);
+	if (curveChange !== null) {
+		return curveChange;
+	}
+
+	if (typeof from !== "number" || typeof to !== "number" || from === to) {
 		return "neutral";
 	}
 

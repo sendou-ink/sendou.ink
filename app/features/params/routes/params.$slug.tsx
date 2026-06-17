@@ -45,7 +45,6 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 };
 
 // xxx: allow toggling row by clicking anywhere
-// xxx: see how Arrays of objects (like DistanceDamage) can be supported
 
 export default function WeaponParamsPage() {
 	const data = useLoaderData<typeof loader>();

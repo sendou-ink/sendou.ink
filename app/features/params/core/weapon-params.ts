@@ -49,6 +49,58 @@ function parseParamKey(key: string): {
 	};
 }
 
+interface DistanceDamageBreakpoint {
+	Damage: number;
+	Distance: number;
+}
+
+function isDistanceDamageBreakpoint(
+	value: unknown,
+): value is DistanceDamageBreakpoint {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		typeof (value as DistanceDamageBreakpoint).Damage === "number" &&
+		typeof (value as DistanceDamageBreakpoint).Distance === "number"
+	);
+}
+
+/**
+ * Whether `value` is a damage falloff curve: an array of {@link DistanceDamageBreakpoint}, with
+ * each entry possibly being a nested array of breakpoints (e.g. fizzy bomb bounces).
+ */
+function isDistanceDamageArray(
+	value: unknown[],
+): value is Array<DistanceDamageBreakpoint | DistanceDamageBreakpoint[]> {
+	return (
+		value.length > 0 &&
+		value.every(
+			(el) =>
+				isDistanceDamageBreakpoint(el) ||
+				(Array.isArray(el) &&
+					el.length > 0 &&
+					el.every(isDistanceDamageBreakpoint)),
+		)
+	);
+}
+
+/**
+ * Serializes a damage falloff curve into a compact `"<damage> @ <distance>"` string (damage
+ * scaled to displayed HP, i.e. divided by 10) so its per-version changes flow through the same
+ * scalar param pipeline as plain values. Nested breakpoint arrays are flattened.
+ */
+function formatDistanceDamageArray(
+	value: Array<DistanceDamageBreakpoint | DistanceDamageBreakpoint[]>,
+): string {
+	return value
+		.flat()
+		.map(
+			(breakpoint) =>
+				`${formatParamValue(breakpoint.Damage / 10)} @ ${formatParamValue(breakpoint.Distance)}`,
+		)
+		.join(", ");
+}
+
 function flattenScalarParams(
 	params: Record<string, unknown>,
 	prefix = "",
@@ -61,10 +113,13 @@ function flattenScalarParams(
 		if (typeof value === "number" || typeof value === "string") {
 			result.push([fullKey, value]);
 		} else if (Array.isArray(value)) {
-			// Arrays of plain numbers/strings (e.g. SplashSpawnParam.ForceSpawnNearestAddNumArray)
-			// are kept as a joined string so their changes still show up. Arrays of objects are
-			// too structured to represent this way and are skipped.
-			if (
+			// Damage falloff curves and arrays of plain numbers/strings (e.g.
+			// SplashSpawnParam.ForceSpawnNearestAddNumArray) are kept as a single joined string so
+			// their per-version changes still show up. Other arrays of objects are too structured
+			// to represent this way and are skipped.
+			if (isDistanceDamageArray(value)) {
+				result.push([fullKey, formatDistanceDamageArray(value)]);
+			} else if (
 				value.length > 0 &&
 				value.every((el) => typeof el === "number" || typeof el === "string")
 			) {

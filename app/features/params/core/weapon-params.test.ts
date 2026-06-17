@@ -3,11 +3,13 @@ import type {
 	DamageMultiplierWithHistory,
 	ParsedWeaponParams,
 } from "../weapon-params-types";
+import { classifyParamChange } from "./param-directions";
 import {
 	buildKitPatchHistories,
 	buildWeaponPatchHistory,
 	DAMAGE_MULTIPLIER_PARAM_KEY,
 	damageMultipliersForWeapon,
+	parseWeaponParams,
 	SPECIAL_POINTS_PARAM_KEY,
 } from "./weapon-params";
 
@@ -147,6 +149,116 @@ describe("buildWeaponPatchHistory damage multipliers", () => {
 		expect(patches).toHaveLength(1);
 		expect(patches[0].version).toBe("3.0.0");
 		expect(patches[0].changes[0].kind).toBe("nerf");
+	});
+});
+
+describe("parseWeaponParams damage falloff curves", () => {
+	it("serializes a DistanceDamage array into a scaled damage @ distance string", () => {
+		const parsed = parseWeaponParams(
+			0,
+			{
+				BlastParam: {
+					DistanceDamage: [
+						{ Damage: 1800, Distance: 3.6 },
+						{ Damage: 300, Distance: 7 },
+					],
+				},
+			},
+			VERSIONS,
+		);
+
+		expect(parsed.categories.BlastParam.DistanceDamage.current).toBe(
+			"180 @ 3.6, 30 @ 7",
+		);
+	});
+
+	it("flattens nested breakpoint arrays", () => {
+		const parsed = parseWeaponParams(
+			0,
+			{
+				BlastParam: {
+					DistanceDamage: [
+						[{ Damage: 1800, Distance: 3.6 }],
+						[{ Damage: 300, Distance: 7 }],
+					],
+				},
+			},
+			VERSIONS,
+		);
+
+		expect(parsed.categories.BlastParam.DistanceDamage.current).toBe(
+			"180 @ 3.6, 30 @ 7",
+		);
+	});
+
+	it("tracks per-version history of a damage falloff curve", () => {
+		const parsed = parseWeaponParams(
+			0,
+			{
+				BlastParam: {
+					DistanceDamage: [{ Damage: 600, Distance: 4 }],
+					"DistanceDamage@2.0.0": [{ Damage: 400, Distance: 4 }],
+				},
+			},
+			VERSIONS,
+		);
+
+		expect(parsed.categories.BlastParam.DistanceDamage.history).toEqual([
+			{ version: "2.0.0", value: "40 @ 4" },
+		]);
+	});
+});
+
+describe("classifyParamChange damage falloff curves", () => {
+	it("flags higher damage as a buff", () => {
+		expect(
+			classifyParamChange("BlastParam", "DistanceDamage", "40 @ 4", "60 @ 4"),
+		).toBe("buff");
+	});
+
+	it("flags lower damage as a nerf", () => {
+		expect(
+			classifyParamChange("BlastParam", "DistanceDamage", "60 @ 4", "40 @ 4"),
+		).toBe("nerf");
+	});
+
+	it("flags longer reach at the same damage as a buff", () => {
+		expect(
+			classifyParamChange(
+				"BlastParam",
+				"DistanceDamage",
+				"70 @ 0.94, 50 @ 3.3",
+				"70 @ 1.01, 50 @ 3.37",
+			),
+		).toBe("buff");
+	});
+
+	it("flags shorter reach at the same damage as a nerf", () => {
+		expect(
+			classifyParamChange(
+				"BlastParam",
+				"DistanceDamage",
+				"70 @ 1.01, 50 @ 3.37",
+				"70 @ 0.975, 50 @ 3.37",
+			),
+		).toBe("nerf");
+	});
+
+	it("is neutral when damage rises but reach shrinks", () => {
+		expect(
+			classifyParamChange("BlastParam", "DistanceDamage", "60 @ 4", "70 @ 3.5"),
+		).toBe("neutral");
+	});
+
+	it("is neutral when the curve gains or loses a breakpoint", () => {
+		expect(
+			classifyParamChange(
+				"BlastParam",
+				"DistanceDamage",
+				"60 @ 4",
+				"60 @ 4, 30 @ 8",
+			),
+		).toBe("neutral");
 	});
 });
 
