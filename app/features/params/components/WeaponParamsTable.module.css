@@ -49,30 +49,32 @@
 	border-spacing: 0;
 	font-size: var(--font-xs);
 	text-align: left;
-}
 
-.table tbody tr:hover {
-	background-color: var(--color-bg-high);
-}
+	& tbody {
+		& tr:hover {
+			background-color: var(--color-bg-high);
+		}
 
-.table tbody td {
-	padding: var(--s-2) var(--s-3);
-	border-bottom: 1px solid var(--color-border);
-}
+		& td {
+			padding: var(--s-2) var(--s-3);
+			border-bottom: 1px solid var(--color-border);
+		}
 
-.table tbody tr:first-child td {
-	border-top: 1px solid var(--color-border);
+		& tr:first-child td {
+			border-top: 1px solid var(--color-border);
+		}
+	}
 }
 
 .thead {
 	position: sticky;
 	top: 0;
 	z-index: 1;
-}
 
-.thead th {
-	padding: var(--s-2);
-	background-color: var(--color-bg);
+	& th {
+		padding: var(--s-2);
+		background-color: var(--color-bg);
+	}
 }
 
 .paramHeader {
@@ -123,10 +125,10 @@
 
 .expandableRow .paramName {
 	cursor: pointer;
-}
 
-.expandableRow .paramName:hover {
-	background-color: var(--color-bg-high);
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
 }
 
 .paramNameText {

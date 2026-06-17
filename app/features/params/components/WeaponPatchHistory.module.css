@@ -95,21 +95,21 @@
 	background-color: var(--color-bg-high);
 	border-radius: var(--radius-box);
 	font-size: var(--font-2xs);
-}
 
-.change.wide {
-	flex-direction: column;
-	align-items: stretch;
-}
+	&.wide {
+		flex-direction: column;
+		align-items: stretch;
+	}
 
-.change.buff {
-	border-color: var(--color-success);
-	background-color: var(--color-success-low);
-}
+	&.buff {
+		border-color: var(--color-success);
+		background-color: var(--color-success-low);
+	}
 
-.change.nerf {
-	border-color: var(--color-error);
-	background-color: var(--color-error-low);
+	&.nerf {
+		border-color: var(--color-error);
+		background-color: var(--color-error-low);
+	}
 }
 
 .changeName {
@@ -121,10 +121,10 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-}
 
-.change.wide .changeName {
-	white-space: normal;
+	.change.wide & {
+		white-space: normal;
+	}
 }
 
 .changeIcon {
@@ -138,10 +138,10 @@
 	flex-shrink: 0;
 	font-weight: var(--weight-semi);
 	font-variant-numeric: tabular-nums;
-}
 
-.change.wide .changeValues {
-	flex-wrap: wrap;
+	.change.wide & {
+		flex-wrap: wrap;
+	}
 }
 
 .arrow {

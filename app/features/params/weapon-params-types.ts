@@ -19,6 +19,17 @@ export interface ParamValueWithHistory {
 /** Which set of weapons a params page compares: main weapons, sub weapons or special weapons. */
 export type WeaponParamKind = "main" | "sub" | "special";
 
+const WEAPON_PARAM_KIND_KEY_PREFIX: Record<WeaponParamKind, string> = {
+	main: "MAIN",
+	sub: "SUB",
+	special: "SPECIAL",
+};
+
+/** The i18next `weapons` namespace key for a weapon of the given {@link WeaponParamKind}. */
+export function weaponTranslationKey(kind: WeaponParamKind, id: number) {
+	return `weapons:${WEAPON_PARAM_KIND_KEY_PREFIX[kind]}_${id}`;
+}
+
 export interface ParsedWeaponParams {
 	weaponId: number;
 	categories: Record<string, Record<string, ParamValueWithHistory>>;

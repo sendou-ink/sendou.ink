@@ -9,6 +9,7 @@ import {
 import { Fragment, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import * as R from "remeda";
 import { SendouButton } from "~/components/elements/Button";
 import {
 	SpecialWeaponImage,
@@ -36,6 +37,7 @@ import type {
 	WeaponParamKind,
 	WeaponParamsTableProps,
 } from "../weapon-params-types";
+import { weaponTranslationKey } from "../weapon-params-types";
 import { ParamComparisonDialog } from "./ParamComparisonDialog";
 import styles from "./WeaponParamsTable.module.css";
 
@@ -64,27 +66,15 @@ export function WeaponParamImage({
 }
 
 // The display name and (English) url slug of a weapon, resolved from the right `weapons`
-// translation key for the table's kind. Ids are cast to their specific union so each key is a
-// concrete literal the i18next types recognize.
+// translation key for the table's kind.
 function useWeaponParamNaming(kind: WeaponParamKind) {
 	const { t } = useTranslation(["weapons"]);
 
-	const name = (id: number) => {
-		if (kind === "sub") return t(`weapons:SUB_${id as SubWeaponId}`);
-		if (kind === "special") {
-			return t(`weapons:SPECIAL_${id as SpecialWeaponId}`);
-		}
-		return t(`weapons:MAIN_${id as MainWeaponId}`);
-	};
+	const name = (id: number): string =>
+		t(weaponTranslationKey(kind, id) as never);
 
 	const slug = (id: number) =>
-		mySlugify(
-			kind === "sub"
-				? t(`weapons:SUB_${id as SubWeaponId}`, { lng: "en" })
-				: kind === "special"
-					? t(`weapons:SPECIAL_${id as SpecialWeaponId}`, { lng: "en" })
-					: t(`weapons:MAIN_${id as MainWeaponId}`, { lng: "en" }),
-		);
+		mySlugify(t(weaponTranslationKey(kind, id) as never, { lng: "en" }));
 
 	return { name, slug };
 }
@@ -107,16 +97,7 @@ export function WeaponParamsTable({
 
 	const paramDefinitions = WeaponParams.allParamKeys(weaponParams);
 
-	const paramsByCategory: Record<
-		string,
-		Array<{ key: string; fullKey: string }>
-	> = {};
-	for (const def of paramDefinitions) {
-		if (!paramsByCategory[def.category]) {
-			paramsByCategory[def.category] = [];
-		}
-		paramsByCategory[def.category].push({ key: def.key, fullKey: def.fullKey });
-	}
+	const paramsByCategory = R.groupBy(paramDefinitions, (def) => def.category);
 
 	const toggleRow = (fullKey: string) => {
 		setExpandedRows((prev) => {
@@ -521,7 +502,7 @@ function HiddenWeaponsBar({
 			<EyeOff
 				size={16}
 				className={styles.hiddenBarLabel}
-				aria-label="Show all"
+				aria-label={t("common:actions.showAll")}
 			/>
 			{hiddenWeaponIds.map((weaponId) => (
 				<SendouButton
@@ -663,7 +644,7 @@ function ParamCell({
 }) {
 	if (!param) {
 		return (
-			<td className={clsx(styles.paramCell)}>
+			<td className={styles.paramCell}>
 				<span className={styles.noValue}>—</span>
 			</td>
 		);

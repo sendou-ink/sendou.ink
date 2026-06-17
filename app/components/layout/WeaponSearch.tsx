@@ -1,5 +1,5 @@
 import { clsx } from "clsx";
-import type { TFunction } from "i18next";
+import type { Namespace, TFunction } from "i18next";
 import {
 	Calculator,
 	ChartColumnBig,
@@ -55,6 +55,28 @@ export interface SelectedWeapon {
 	paramsSlug: string;
 }
 
+/**
+ * Builds the {@link SelectedWeapon} for a main weapon id: its localized name plus the English-derived
+ * url slugs (the build pages slug from the weapon's canonical id, the params page slug from its base
+ * id). The caller's `t` must have the `weapons` namespace available.
+ */
+export function weaponToSelectedWeapon<Ns extends Namespace>(
+	id: MainWeaponId,
+	t: TFunction<Ns>,
+): SelectedWeapon {
+	return {
+		id,
+		name: t(`weapons:MAIN_${id}` as never),
+		englishName: t(`weapons:MAIN_${id}` as never, { lng: "en" }),
+		slug: mySlugify(
+			t(`weapons:MAIN_${canonicalWeaponSplId(id)}` as never, { lng: "en" }),
+		),
+		paramsSlug: mySlugify(
+			t(`weapons:MAIN_${weaponIdToBaseWeaponId(id)}` as never, { lng: "en" }),
+		),
+	};
+}
+
 export function filterWeaponResults(
 	query: string,
 	t: TFunction<["common", "weapons"]>,
@@ -63,28 +85,14 @@ export function filterWeaponResults(
 
 	const matches: SelectedWeapon[] = [];
 	for (const id of mainWeaponIds) {
-		const weaponName = t(`weapons:MAIN_${id}`);
 		const isMatch = filterWeapon({
 			weapon: { type: "MAIN", id },
-			weaponName,
+			weaponName: t(`weapons:MAIN_${id}`),
 			searchTerm: query,
 		});
 
 		if (isMatch) {
-			const englishName = t(`weapons:MAIN_${id}`, { lng: "en" });
-			const slugName = t(`weapons:MAIN_${canonicalWeaponSplId(id)}`, {
-				lng: "en",
-			});
-			const paramsSlugName = t(`weapons:MAIN_${weaponIdToBaseWeaponId(id)}`, {
-				lng: "en",
-			});
-			matches.push({
-				id,
-				name: weaponName,
-				englishName,
-				slug: mySlugify(slugName),
-				paramsSlug: mySlugify(paramsSlugName),
-			});
+			matches.push(weaponToSelectedWeapon(id, t));
 		}
 
 		if (matches.length >= 10) break;

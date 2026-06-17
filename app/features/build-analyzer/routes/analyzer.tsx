@@ -16,6 +16,7 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { Image } from "~/components/Image";
+import { weaponToSelectedWeapon } from "~/components/layout/WeaponSearch";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { Table } from "~/components/Table";
@@ -39,7 +40,6 @@ import {
 	POINT_SENSOR_ID,
 	TORPEDO_ID,
 	TOXIC_MIST_ID,
-	weaponIdToBaseWeaponId,
 } from "~/modules/in-game-lists/weapon-ids";
 import { nullFilledArray } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
@@ -48,7 +48,6 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	ANALYZER_URL,
 	mainWeaponImageUrl,
-	mySlugify,
 	navIconUrl,
 	objectDamageCalculatorPage,
 	specialWeaponImageUrl,
@@ -263,11 +262,7 @@ function BuildAnalyzerPage() {
 						</div>
 						<LinkButton
 							to={weaponParamsPage(
-								mySlugify(
-									t(`weapons:MAIN_${weaponIdToBaseWeaponId(mainWeaponId)}`, {
-										lng: "en",
-									}),
-								),
+								weaponToSelectedWeapon(mainWeaponId, t).paramsSlug,
 							)}
 							variant="minimal"
 							size="small"
