@@ -152,7 +152,7 @@
 	"patch": "游戏版本:",
 	"abilityPoints.short": "AP",
 	"abilityChunks": "所需碎片",
-	"torpedoExplanation": "根据游戏机制，你无法同时使用多个鱼雷。",
+	"torpedoExplanation": "同时只能使用一个鱼雷。",
 	"trackingSubDefExplanation": "定点侦测器、墨汁陷阱和标线器的索敌时间是根据没有携带提升次要武器性能的敌人计算得出。",
 	"damageSubDefExplanation": "洒墨器和斯普拉防护墙未在表内显示，但是它们所造成的伤害也会被减轻次要武器影响的效果降低。",
 	"distanceInline": "距离: {{value}}",
