@@ -3,17 +3,21 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { brandIds } from "~/modules/in-game-lists/brand-ids";
 import invariant from "~/utils/invariant";
-import clothes from "./dicts/GearInfoClothes.json";
-import head from "./dicts/GearInfoHead.json";
-import shoes from "./dicts/GearInfoShoes.json";
 import {
 	LANG_JSONS_TO_CREATE,
+	loadGearInfoClothes,
+	loadGearInfoHead,
+	loadGearInfoShoes,
 	loadLangDicts,
 	translationJsonFolderName,
 } from "./utils";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const clothes = loadGearInfoClothes();
+const head = loadGearInfoHead();
+const shoes = loadGearInfoShoes();
 
 const CURRENT_SEASON = 9;
 const OUTPUT_DIR_PATH = path.join(__dirname, "output");

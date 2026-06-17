@@ -7,15 +7,21 @@ import {
 	subWeaponIds,
 } from "~/modules/in-game-lists/weapon-ids";
 import { logger } from "~/utils/logger";
-import weapons from "./dicts/WeaponInfoMain.json";
-import specialWeapons from "./dicts/WeaponInfoSpecial.json";
-import subWeapons from "./dicts/WeaponInfoSub.json";
+import {
+	loadWeaponInfoMain,
+	loadWeaponInfoSpecial,
+	loadWeaponInfoSub,
+	MUSH_DIR,
+	PARAMETER_DIR,
+} from "./utils";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PARAMETER_DIR = path.join(__dirname, "dicts", "parameter");
-const MUSH_DIR = path.join(__dirname, "dicts", "mush");
+const weapons = loadWeaponInfoMain();
+const subWeapons = loadWeaponInfoSub();
+const specialWeapons = loadWeaponInfoSpecial();
+
 const OUTPUT_DIR = path.join(
 	__dirname,
 	"..",

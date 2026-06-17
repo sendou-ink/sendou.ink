@@ -12,21 +12,24 @@ import {
 	specialWeaponIds,
 	subWeaponIds,
 } from "~/modules/in-game-lists/weapon-ids";
-// 1) WeaponInfoMain.json inside dicts
-// 2) WeaponInfoSub.json inside dicts
-// 3) WeaponInfoSpecial.json inside dicts
-// 4) misc/spl__DamageRateInfoConfig.pp__CombinationDataTableData.json (latest, top-level copy)
-// 5) parameter/<version>/misc/spl__DamageRateInfoConfig.pp__CombinationDataTableData.json (per version)
-import params from "./dicts/spl__DamageRateInfoConfig.pp__CombinationDataTableData.json";
-import weapons from "./dicts/WeaponInfoMain.json";
-import specialWeapons from "./dicts/WeaponInfoSpecial.json";
-import subWeapons from "./dicts/WeaponInfoSub.json";
+// To run this script drop the https://github.com/Leanny/splat3 repo into scripts/dicts/splat3
+import {
+	loadDamageRateInfo,
+	loadWeaponInfoMain,
+	loadWeaponInfoSpecial,
+	loadWeaponInfoSub,
+	PARAMETER_DIR,
+} from "./utils";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const params = loadDamageRateInfo();
+const weapons = loadWeaponInfoMain();
+const subWeapons = loadWeaponInfoSub();
+const specialWeapons = loadWeaponInfoSpecial();
+
 const OUTPUT_DIR_PATH = path.join(__dirname, "output");
-const PARAMETER_DIR = path.join(__dirname, "dicts", "parameter");
 const DAMAGE_RATE_CONFIG_FILE_NAME =
 	"spl__DamageRateInfoConfig.pp__CombinationDataTableData.json";
 const HISTORY_OUTPUT_PATH = path.join(
