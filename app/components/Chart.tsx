@@ -78,26 +78,35 @@ export default function Chart({
 	});
 
 	// Get the chart colors from CSS variables
-	const colors = React.useMemo(() => {
-		if (typeof document === "undefined")
-			return {
-				accent: "",
-				base: "",
-				info: "",
-				border: "",
-				borderHigh: "",
-				text: "",
-			};
-		const get = (v: string) =>
-			getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-		return {
-			accent: get("--color-text-accent"),
-			base: get("--color-accent"),
-			info: get("--color-info"),
-			border: get("--color-border"),
-			borderHigh: get("--color-border-high"),
-			text: get("--color-text-high"),
+	const [colors, setColors] = React.useState({
+		accent: "",
+		base: "",
+		info: "",
+		border: "",
+		borderHigh: "",
+		text: "",
+	});
+
+	React.useEffect(() => {
+		const resolve = () => {
+			const get = (v: string) =>
+				getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+			setColors({
+				accent: get("--color-text-accent"),
+				base: get("--color-accent"),
+				info: get("--color-info"),
+				border: get("--color-border"),
+				borderHigh: get("--color-border-high"),
+				text: get("--color-text-high"),
+			});
 		};
+
+		resolve();
+
+		const root = document.documentElement;
+		const observer = new MutationObserver(resolve);
+		observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+		return () => observer.disconnect();
 	}, []);
 
 	const scaleDefaults = React.useMemo(
@@ -106,7 +115,7 @@ export default function Chart({
 			border: { color: colors.borderHigh },
 			ticks: { color: colors.text },
 		}),
-		[colors.border, colors.text],
+		[colors.border, colors.borderHigh, colors.text],
 	);
 
 	// Make a color list to use inside ChartData for the borderColor and the external tooltip
