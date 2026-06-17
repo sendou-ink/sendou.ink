@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { FlaskConical } from "lucide-react";
+import { FlaskConical, SlidersHorizontal } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
@@ -39,6 +39,7 @@ import {
 	POINT_SENSOR_ID,
 	TORPEDO_ID,
 	TOXIC_MIST_ID,
+	weaponIdToBaseWeaponId,
 } from "~/modules/in-game-lists/weapon-ids";
 import { nullFilledArray } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
@@ -47,13 +48,15 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	ANALYZER_URL,
 	mainWeaponImageUrl,
+	mySlugify,
 	navIconUrl,
 	objectDamageCalculatorPage,
 	specialWeaponImageUrl,
 	subWeaponImageUrl,
 	userNewBuildPage,
+	weaponParamsPage,
 } from "~/utils/urls";
-import { SendouButton } from "../../../components/elements/Button";
+import { LinkButton, SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
 import { metaTags } from "../../../utils/remix";
 import {
@@ -246,7 +249,7 @@ function BuildAnalyzerPage() {
 		<Main>
 			<div className={styles.container}>
 				<div className={styles.leftColumn}>
-					<div className="stack sm items-center w-full">
+					<div className="stack sm items-start w-full">
 						<div className="w-full">
 							<WeaponSelect
 								label={t("analyzer:weaponSelect.label")}
@@ -258,6 +261,20 @@ function BuildAnalyzerPage() {
 								}
 							/>
 						</div>
+						<LinkButton
+							to={weaponParamsPage(
+								mySlugify(
+									t(`weapons:MAIN_${weaponIdToBaseWeaponId(mainWeaponId)}`, {
+										lng: "en",
+									}),
+								),
+							)}
+							variant="minimal"
+							size="small"
+							icon={<SlidersHorizontal />}
+						>
+							{t("analyzer:rawParameters")}
+						</LinkButton>
 					</div>
 					<div className="stack md items-center w-full">
 						<div className="w-full">

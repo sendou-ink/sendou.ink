@@ -1,5 +1,6 @@
 {
 	"weaponSelect.label": "要分析的武器",
+	"rawParameters": "",
 	"attribute.weight": "量级",
 	"attribute.weight.Fast": "轻量级",
 	"attribute.weight.Slow": "重量级",
