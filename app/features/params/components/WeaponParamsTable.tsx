@@ -26,11 +26,8 @@ import type {
 } from "~/modules/in-game-lists/types";
 import { mySlugify, weaponParamsPage } from "~/utils/urls";
 import { getParamExplanation } from "../core/param-explanations";
-import {
-	collectAllParamKeys,
-	formatParamValue,
-	hasParamHistory,
-} from "../core/weapon-params";
+import * as WeaponParams from "../core/WeaponParams";
+import { SPECIAL_POINTS_PARAM_KEY } from "../weapon-params-constants";
 import type {
 	DamageMultiplierWithHistory,
 	ParamComparisonEntry,
@@ -42,7 +39,6 @@ import type {
 import { ParamComparisonDialog } from "./ParamComparisonDialog";
 import styles from "./WeaponParamsTable.module.css";
 
-const SPECIAL_POINTS_KEY = "__specialPoints__";
 const DAMAGE_RATE_INFO_CATEGORY = "DamageRateInfo";
 
 export function WeaponParamImage({
@@ -109,7 +105,7 @@ export function WeaponParamsTable({
 		entries: ParamComparisonEntry[];
 	} | null>(null);
 
-	const paramDefinitions = collectAllParamKeys(weaponParams);
+	const paramDefinitions = WeaponParams.allParamKeys(weaponParams);
 
 	const paramsByCategory: Record<
 		string,
@@ -175,7 +171,7 @@ export function WeaponParamsTable({
 	const rowHasHistory = (category: string, key: string) => {
 		return visibleWeaponIds.some((id) => {
 			const param = weaponParams[String(id)]?.categories[category]?.[key];
-			return param && hasParamHistory(param);
+			return param && WeaponParams.hasHistory(param);
 		});
 	};
 
@@ -248,8 +244,8 @@ export function WeaponParamsTable({
 							<SpecialPointsRow
 								visibleWeaponIds={visibleWeaponIds}
 								specialPoints={specialPoints}
-								isExpanded={expandedRows.has(SPECIAL_POINTS_KEY)}
-								onToggle={() => toggleRow(SPECIAL_POINTS_KEY)}
+								isExpanded={expandedRows.has(SPECIAL_POINTS_PARAM_KEY)}
+								onToggle={() => toggleRow(SPECIAL_POINTS_PARAM_KEY)}
 							/>
 						) : null}
 						{Object.entries(paramsByCategory).map(([category, params]) => {
@@ -679,7 +675,7 @@ function ParamCell({
 		<td className={styles.paramCell}>
 			<div className={styles.cellContent}>
 				<span className={styles.currentValue}>
-					{formatParamValue(param.current)}
+					{WeaponParams.formatValue(param.current)}
 				</span>
 				{param.history.length > 0 && !isExpanded ? (
 					<span className={styles.historyBadge}>{param.history.length}</span>
@@ -690,7 +686,7 @@ function ParamCell({
 					{param.history.toReversed().map(({ version, value }) => (
 						<div key={version} className={styles.historyItem}>
 							<span className={styles.historyValue}>
-								{formatParamValue(value)}
+								{WeaponParams.formatValue(value)}
 							</span>
 							<span className={styles.historyVersion}>{version}</span>
 						</div>

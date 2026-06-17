@@ -7,6 +7,10 @@ import {
 	weaponIdToBaseWeaponId,
 	weaponIdToType,
 } from "~/modules/in-game-lists/weapon-ids";
+import {
+	DAMAGE_MULTIPLIER_PARAM_KEY,
+	SPECIAL_POINTS_PARAM_KEY,
+} from "../weapon-params-constants";
 import type {
 	DamageMultiplierWithHistory,
 	KitPatchHistory,
@@ -22,18 +26,18 @@ import type {
 import { classifyParamChange } from "./param-directions";
 
 /**
- * Sentinel `category` used for the special points entry in patch change data, since special
- * points are not a regular weapon parameter. The matching `key` is also this value.
+ * Shape of the committed `all-version-*-params.json` data files: a map of weapon id to its raw
+ * per-version params, the ordered list of tracked game versions, and (weapons only) special
+ * points history.
  */
-export const SPECIAL_POINTS_PARAM_KEY = "__specialPoints__";
-
-/**
- * Sentinel `category` used for damage multiplier (damage rate vs objects) entries in patch
- * change data. The `key` of such a change holds the damage receiver target instead.
- */
-export const DAMAGE_MULTIPLIER_PARAM_KEY = "__damageMultiplier__";
-
-// xxx: check if similar exist elsewhere, convert to utils to * as Module
+export interface AllVersionParams {
+	metadata: { versions: string[] };
+	weapons: Record<string, Record<string, Record<string, unknown>>>;
+	specialPoints?: Record<
+		string,
+		{ history: Array<{ version: string; value: number }> }
+	>;
+}
 
 function parseParamKey(key: string): {
 	baseKey: string;
@@ -96,7 +100,7 @@ function formatDistanceDamageArray(
 		.flat()
 		.map(
 			(breakpoint) =>
-				`${formatParamValue(breakpoint.Damage / 10)} @ ${formatParamValue(breakpoint.Distance)}`,
+				`${formatValue(breakpoint.Damage / 10)} @ ${formatValue(breakpoint.Distance)}`,
 		)
 		.join(", ");
 }
@@ -125,7 +129,7 @@ function flattenScalarParams(
 			) {
 				result.push([
 					fullKey,
-					`[${value.map((el) => formatParamValue(el)).join(", ")}]`,
+					`[${value.map((el) => formatValue(el)).join(", ")}]`,
 				]);
 			}
 		} else if (typeof value === "object" && value !== null) {
@@ -138,7 +142,11 @@ function flattenScalarParams(
 	return result;
 }
 
-export function parseWeaponParams(
+/**
+ * Parses a single weapon's raw per-version params into the {@link ParsedWeaponParams} shape: each
+ * parameter's current value plus its tracked history, grouped by category.
+ */
+export function parse(
 	weaponId: number,
 	rawParams: Record<string, Record<string, unknown>>,
 	versions: string[],
@@ -201,7 +209,34 @@ export function parseWeaponParams(
 	return { weaponId, categories };
 }
 
-export function collectAllParamKeys(
+/**
+ * Parses the params of every given weapon id from a static all-version params data file, keyed by
+ * weapon id (as a string). Ids with no entry in the data are skipped. `toDataKey` maps a weapon id
+ * to the id its params are stored under — main weapons share params with their base weapon, while
+ * subs and specials use their own id (the default identity mapping).
+ */
+export function parseMany<Id extends number>(
+	ids: readonly Id[],
+	data: AllVersionParams,
+	toDataKey: (id: Id) => number = (id) => id,
+): Record<string, ParsedWeaponParams> {
+	const result: Record<string, ParsedWeaponParams> = {};
+
+	for (const id of ids) {
+		const rawParams = data.weapons[String(toDataKey(id))];
+		if (rawParams) {
+			result[String(id)] = parse(id, rawParams, data.metadata.versions);
+		}
+	}
+
+	return result;
+}
+
+/**
+ * Collects every distinct `${category}.${key}` parameter present across the given weapons, sorted
+ * by category then key, for use as the comparison table's row definitions.
+ */
+export function allParamKeys(
 	weaponParams: Record<string, ParsedWeaponParams>,
 ): ParamDefinition[] {
 	const seenKeys = new Set<string>();
@@ -235,7 +270,11 @@ function getWeaponCategory(weaponId: MainWeaponId) {
 	);
 }
 
-export function getCategoryWeaponIds(weaponId: MainWeaponId): MainWeaponId[] {
+/**
+ * Returns the base main weapon ids of the given weapon's category, used as the columns its params
+ * are compared against. A non-base weapon is kept first, followed by the other base weapons.
+ */
+export function categoryWeaponIds(weaponId: MainWeaponId): MainWeaponId[] {
 	const category = getWeaponCategory(weaponId);
 	if (!category) {
 		return [weaponId];
@@ -258,7 +297,7 @@ export function getCategoryWeaponIds(weaponId: MainWeaponId): MainWeaponId[] {
  * the same base weapon (e.g. a weapon and its alternate kit) but excluding cosmetic alt
  * skins. The returned list includes the given weapon itself.
  */
-export function getWeaponKitSiblingIds(weaponId: MainWeaponId): MainWeaponId[] {
+export function kitSiblingIds(weaponId: MainWeaponId): MainWeaponId[] {
 	const baseId = weaponIdToBaseWeaponId(weaponId);
 	return mainWeaponIds.filter(
 		(id) =>
@@ -267,7 +306,8 @@ export function getWeaponKitSiblingIds(weaponId: MainWeaponId): MainWeaponId[] {
 	);
 }
 
-export function hasParamHistory(param: ParamValueWithHistory): boolean {
+/** Whether the given parameter has any tracked per-version history. */
+export function hasHistory(param: ParamValueWithHistory): boolean {
 	return param.history.length > 0;
 }
 
@@ -502,7 +542,7 @@ function changeMapsToPatches(
  * game version's release date and skipping versions with no tracked balance changes. Special
  * points changes are only folded in for main weapons (pass their history as `specialPoints`).
  */
-export function buildWeaponPatchHistory(
+export function patchHistory(
 	parsed: ParsedWeaponParams | undefined,
 	versions: string[],
 	specialPoints: SpecialPointWithHistory[] = [],
@@ -528,7 +568,7 @@ export function buildWeaponPatchHistory(
  * together with the kit's own special points, sub weapon and special weapon changes. Every change
  * is tagged with its `source` so the patch history can group a column under a divider per weapon.
  */
-export function buildKitPatchHistories({
+export function kitPatchHistories({
 	mainParsed,
 	versions,
 	kits,
@@ -598,7 +638,8 @@ export function buildKitPatchHistories({
 	});
 }
 
-export function formatParamValue(value: number | string): string {
+/** Formats a parameter value for display, trimming trailing zeroes from non-integer numbers. */
+export function formatValue(value: number | string): string {
 	if (typeof value === "number") {
 		if (Number.isInteger(value)) {
 			return String(value);

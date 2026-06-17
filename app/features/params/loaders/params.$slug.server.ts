@@ -18,24 +18,21 @@ import {
 	weaponNameSlugToId,
 } from "~/utils/unslugify.server";
 import { mySlugify } from "~/utils/urls";
-import {
-	buildKitPatchHistories,
-	buildWeaponPatchHistory,
-	damageMultipliersForWeapon,
-	getCategoryWeaponIds,
-	getWeaponKitSiblingIds,
-	parseWeaponParams,
-} from "../core/weapon-params";
+import * as WeaponParams from "../core/WeaponParams";
 import specialWeaponParamsData from "../data/all-version-special-params.json";
 import subWeaponParamsData from "../data/all-version-sub-params.json";
 import weaponParamsData from "../data/all-version-weapon-params.json";
 import damageRateHistoryData from "../data/damage-rate-history.json";
 import type {
 	DamageMultiplierWithHistory,
-	ParsedWeaponParams,
 	SpecialPointWithHistory,
 	WeaponParamKind,
 } from "../weapon-params-types";
+
+const mainParamsData = weaponParamsData as WeaponParams.AllVersionParams;
+const subParamsData = subWeaponParamsData as WeaponParams.AllVersionParams;
+const specialParamsData =
+	specialWeaponParamsData as WeaponParams.AllVersionParams;
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const t = await i18next.getFixedT(request, ["weapons"], {
@@ -80,12 +77,12 @@ function damageMultipliersByWeapon(
 	kind: WeaponParamKind,
 ): Record<string, DamageMultiplierWithHistory[]> {
 	const rows = damageRateHistoryData.rows as Parameters<
-		typeof damageMultipliersForWeapon
+		typeof WeaponParams.damageMultipliersForWeapon
 	>[0];
 
 	const result: Record<string, DamageMultiplierWithHistory[]> = {};
 	for (const id of weaponIds) {
-		const multipliers = damageMultipliersForWeapon(rows, id, kind);
+		const multipliers = WeaponParams.damageMultipliersForWeapon(rows, id, kind);
 		if (multipliers.length > 0) {
 			result[String(id)] = multipliers;
 		}
@@ -99,43 +96,26 @@ function mainWeaponData(
 	weaponName: string,
 	slug: string,
 ) {
-	const categoryWeaponIds = getCategoryWeaponIds(weaponId);
+	const categoryWeaponIds = WeaponParams.categoryWeaponIds(weaponId);
 
-	const kits = getWeaponKitSiblingIds(weaponId).map((id) => {
+	const kits = WeaponParams.kitSiblingIds(weaponId).map((id) => {
 		const { subWeaponId, specialWeaponId } = mainWeaponParams(id);
 		return { weaponId: id, subWeaponId, specialWeaponId };
 	});
 
-	const weaponParams: Record<string, ParsedWeaponParams> = {};
-	for (const id of categoryWeaponIds) {
-		const baseId = weaponIdToBaseWeaponId(id);
-		const rawParams = (
-			weaponParamsData.weapons as Record<
-				string,
-				Record<string, Record<string, unknown>>
-			>
-		)[String(baseId)];
-		if (rawParams) {
-			weaponParams[String(id)] = parseWeaponParams(
-				id,
-				rawParams,
-				weaponParamsData.metadata.versions,
-			);
-		}
-	}
+	const versions = mainParamsData.metadata.versions;
 
-	const allSpecialPoints = (
-		weaponParamsData as {
-			specialPoints?: Record<
-				string,
-				{ history: Array<{ version: string; value: number }> }
-			>;
-		}
-	).specialPoints;
+	const weaponParams = WeaponParams.parseMany(
+		categoryWeaponIds,
+		mainParamsData,
+		weaponIdToBaseWeaponId,
+	);
+
+	const allSpecialPoints = mainParamsData.specialPoints;
 
 	const specialPoints: Record<string, SpecialPointWithHistory[]> = {};
 	for (const id of categoryWeaponIds) {
-		specialPoints[String(id)] = getWeaponKitSiblingIds(id).map((kitId) => ({
+		specialPoints[String(id)] = WeaponParams.kitSiblingIds(id).map((kitId) => ({
 			weaponId: kitId,
 			current: mainWeaponParams(kitId).SpecialPoint,
 			history: allSpecialPoints?.[String(kitId)]?.history ?? [],
@@ -147,49 +127,22 @@ function mainWeaponData(
 		"main",
 	);
 
-	const versions = weaponParamsData.metadata.versions;
-	const patchHistory = buildWeaponPatchHistory(
+	const patchHistory = WeaponParams.patchHistory(
 		weaponParams[String(weaponId)],
 		versions,
 		specialPoints[String(weaponId)] ?? [],
 		damageMultipliers[String(weaponId)] ?? [],
 	);
 
-	const subParams: Record<string, ParsedWeaponParams> = {};
-	for (const { subWeaponId } of kits) {
-		if (subParams[String(subWeaponId)]) continue;
-		const rawParams = (
-			subWeaponParamsData.weapons as Record<
-				string,
-				Record<string, Record<string, unknown>>
-			>
-		)[String(subWeaponId)];
-		if (rawParams) {
-			subParams[String(subWeaponId)] = parseWeaponParams(
-				subWeaponId,
-				rawParams,
-				subWeaponParamsData.metadata.versions,
-			);
-		}
-	}
+	const subParams = WeaponParams.parseMany(
+		kits.map((kit) => kit.subWeaponId),
+		subParamsData,
+	);
 
-	const specialParams: Record<string, ParsedWeaponParams> = {};
-	for (const { specialWeaponId } of kits) {
-		if (specialParams[String(specialWeaponId)]) continue;
-		const rawParams = (
-			specialWeaponParamsData.weapons as Record<
-				string,
-				Record<string, Record<string, unknown>>
-			>
-		)[String(specialWeaponId)];
-		if (rawParams) {
-			specialParams[String(specialWeaponId)] = parseWeaponParams(
-				specialWeaponId,
-				rawParams,
-				specialWeaponParamsData.metadata.versions,
-			);
-		}
-	}
+	const specialParams = WeaponParams.parseMany(
+		kits.map((kit) => kit.specialWeaponId),
+		specialParamsData,
+	);
 
 	const specialPointsByKit: Record<string, SpecialPointWithHistory> = {};
 	for (const { weaponId: kitId } of kits) {
@@ -200,7 +153,7 @@ function mainWeaponData(
 		};
 	}
 
-	const kitPatchHistories = buildKitPatchHistories({
+	const kitPatchHistories = WeaponParams.kitPatchHistories({
 		mainParsed: weaponParams[String(weaponId)],
 		versions,
 		kits,
@@ -239,24 +192,13 @@ function subWeaponData(
 	weaponName: string,
 	slug: string,
 ) {
-	const versions = subWeaponParamsData.metadata.versions;
+	const versions = subParamsData.metadata.versions;
 
-	const weaponParams: Record<string, ParsedWeaponParams> = {};
-	for (const id of subWeaponIds) {
-		const rawParams = (
-			subWeaponParamsData.weapons as Record<
-				string,
-				Record<string, Record<string, unknown>>
-			>
-		)[String(id)];
-		if (rawParams) {
-			weaponParams[String(id)] = parseWeaponParams(id, rawParams, versions);
-		}
-	}
+	const weaponParams = WeaponParams.parseMany(subWeaponIds, subParamsData);
 
 	const damageMultipliers = damageMultipliersByWeapon([...subWeaponIds], "sub");
 
-	const patchHistory = buildWeaponPatchHistory(
+	const patchHistory = WeaponParams.patchHistory(
 		weaponParams[String(weaponId)],
 		versions,
 		[],
@@ -284,27 +226,19 @@ function specialWeaponData(
 	weaponName: string,
 	slug: string,
 ) {
-	const versions = specialWeaponParamsData.metadata.versions;
+	const versions = specialParamsData.metadata.versions;
 
-	const weaponParams: Record<string, ParsedWeaponParams> = {};
-	for (const id of specialWeaponIds) {
-		const rawParams = (
-			specialWeaponParamsData.weapons as Record<
-				string,
-				Record<string, Record<string, unknown>>
-			>
-		)[String(id)];
-		if (rawParams) {
-			weaponParams[String(id)] = parseWeaponParams(id, rawParams, versions);
-		}
-	}
+	const weaponParams = WeaponParams.parseMany(
+		specialWeaponIds,
+		specialParamsData,
+	);
 
 	const damageMultipliers = damageMultipliersByWeapon(
 		[...specialWeaponIds],
 		"special",
 	);
 
-	const patchHistory = buildWeaponPatchHistory(
+	const patchHistory = WeaponParams.patchHistory(
 		weaponParams[String(weaponId)],
 		versions,
 		[],

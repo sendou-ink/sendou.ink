@@ -1,17 +1,14 @@
 import { describe, expect, it } from "vitest";
+import {
+	DAMAGE_MULTIPLIER_PARAM_KEY,
+	SPECIAL_POINTS_PARAM_KEY,
+} from "../weapon-params-constants";
 import type {
 	DamageMultiplierWithHistory,
 	ParsedWeaponParams,
 } from "../weapon-params-types";
 import { classifyParamChange } from "./param-directions";
-import {
-	buildKitPatchHistories,
-	buildWeaponPatchHistory,
-	DAMAGE_MULTIPLIER_PARAM_KEY,
-	damageMultipliersForWeapon,
-	parseWeaponParams,
-	SPECIAL_POINTS_PARAM_KEY,
-} from "./weapon-params";
+import * as WeaponParams from "./WeaponParams";
 
 const VERSIONS = ["1.0.0", "2.0.0", "3.0.0"];
 
@@ -45,7 +42,7 @@ describe("damageMultipliersForWeapon", () => {
 			}),
 		};
 
-		const result = damageMultipliersForWeapon(rows, 11, "special");
+		const result = WeaponParams.damageMultipliersForWeapon(rows, 11, "special");
 
 		expect(result.map((m) => m.target)).toEqual(["Chariot"]);
 	});
@@ -64,7 +61,7 @@ describe("damageMultipliersForWeapon", () => {
 			}),
 		};
 
-		const result = damageMultipliersForWeapon(rows, 10, "special");
+		const result = WeaponParams.damageMultipliersForWeapon(rows, 10, "special");
 
 		expect(result).toHaveLength(1);
 	});
@@ -90,7 +87,7 @@ describe("damageMultipliersForWeapon", () => {
 			}),
 		};
 
-		const result = damageMultipliersForWeapon(rows, 11, "special");
+		const result = WeaponParams.damageMultipliersForWeapon(rows, 11, "special");
 
 		expect(result).toHaveLength(1);
 		expect(result[0].history).toHaveLength(2);
@@ -108,16 +105,16 @@ describe("damageMultipliersForWeapon", () => {
 			}),
 		};
 
-		const result = damageMultipliersForWeapon(rows, 11, "special");
+		const result = WeaponParams.damageMultipliersForWeapon(rows, 11, "special");
 
 		// Chariot precedes Wsb_Shield in DAMAGE_RECEIVERS
 		expect(result.map((m) => m.target)).toEqual(["Chariot", "Wsb_Shield"]);
 	});
 });
 
-describe("buildWeaponPatchHistory damage multipliers", () => {
+describe("patchHistory damage multipliers", () => {
 	const buildWith = (multiplier: DamageMultiplierWithHistory) =>
-		buildWeaponPatchHistory(emptyParsed(11), VERSIONS, [], [multiplier]);
+		WeaponParams.patchHistory(emptyParsed(11), VERSIONS, [], [multiplier]);
 
 	it("attributes a change to the version after the recorded one and flags a higher rate as a buff", () => {
 		const patches = buildWith({
@@ -152,9 +149,9 @@ describe("buildWeaponPatchHistory damage multipliers", () => {
 	});
 });
 
-describe("parseWeaponParams damage falloff curves", () => {
+describe("parse damage falloff curves", () => {
 	it("serializes a DistanceDamage array into a scaled damage @ distance string", () => {
-		const parsed = parseWeaponParams(
+		const parsed = WeaponParams.parse(
 			0,
 			{
 				BlastParam: {
@@ -173,7 +170,7 @@ describe("parseWeaponParams damage falloff curves", () => {
 	});
 
 	it("flattens nested breakpoint arrays", () => {
-		const parsed = parseWeaponParams(
+		const parsed = WeaponParams.parse(
 			0,
 			{
 				BlastParam: {
@@ -192,7 +189,7 @@ describe("parseWeaponParams damage falloff curves", () => {
 	});
 
 	it("tracks per-version history of a damage falloff curve", () => {
-		const parsed = parseWeaponParams(
+		const parsed = WeaponParams.parse(
 			0,
 			{
 				BlastParam: {
@@ -262,9 +259,9 @@ describe("classifyParamChange damage falloff curves", () => {
 	});
 });
 
-describe("buildKitPatchHistories", () => {
+describe("kitPatchHistories", () => {
 	const kitHistory = () =>
-		buildKitPatchHistories({
+		WeaponParams.kitPatchHistories({
 			mainParsed: emptyParsed(11),
 			versions: VERSIONS,
 			kits: [{ weaponId: 11, subWeaponId: 1, specialWeaponId: 2 }],

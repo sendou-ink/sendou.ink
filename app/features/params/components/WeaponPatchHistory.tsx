@@ -23,11 +23,11 @@ import type {
 	SpecialWeaponId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
+import * as WeaponParams from "../core/WeaponParams";
 import {
 	DAMAGE_MULTIPLIER_PARAM_KEY,
-	formatParamValue,
 	SPECIAL_POINTS_PARAM_KEY,
-} from "../core/weapon-params";
+} from "../weapon-params-constants";
 import type {
 	KitPatchHistory,
 	PatchChange,
@@ -310,9 +310,9 @@ function ChangeBadge({ change }: { change: PatchChange }) {
 				{label}
 			</span>
 			<span className={styles.changeValues}>
-				{formatParamValue(change.from)}
+				{WeaponParams.formatValue(change.from)}
 				<span className={styles.arrow}>→</span>
-				{formatParamValue(change.to)}
+				{WeaponParams.formatValue(change.to)}
 			</span>
 		</div>
 	);

@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { formatParamValue } from "../core/weapon-params";
+import * as WeaponParams from "../core/WeaponParams";
 import type {
 	ParamComparisonEntry,
 	WeaponParamKind,
@@ -56,7 +56,7 @@ export function ParamComparisonDialog({
 							/>
 						</div>
 						<span className={styles.value}>
-							{formatParamValue(entry.value)}
+							{WeaponParams.formatValue(entry.value)}
 						</span>
 					</div>
 				))}
