@@ -31,6 +31,7 @@
 	"pre.footer": "在比赛开始前，报名信息可随意改动",
 	"pre.logIn": "登录以报名",
 	"pre.inATeam": "您已经在本次活动的某支队伍里了",
+	"pre.captainOnlyEdit": "",
 	"pre.registrationClosed": "",
 	"pre.checkIn.range": "签到开放时间为 {{start}} 至 {{finish}}",
 	"pre.checkIn.over": "签到已结束",

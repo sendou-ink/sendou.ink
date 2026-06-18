@@ -584,9 +584,6 @@ function SpecialPointCell({
 	kits: SpecialPointWithHistory[];
 	isExpanded: boolean;
 }) {
-	const { t } = useTranslation(["analyzer"]);
-	const suffix = t("analyzer:suffix.specialPointsShort");
-
 	if (kits.length === 0) {
 		return (
 			<td className={styles.paramCell}>
@@ -597,13 +594,25 @@ function SpecialPointCell({
 
 	const kitsWithHistory = kits.filter((kit) => kit.history.length > 0);
 	const showHistory = isExpanded && kitsWithHistory.length > 0;
+	const multiKit = kits.length > 1;
 
 	return (
 		<td className={styles.paramCell}>
 			<div className={styles.cellContent}>
-				<span className={styles.currentValue}>
-					{kits.map((kit) => `${kit.current}${suffix}`).join(" / ")}
-				</span>
+				<div className={styles.specialPointKits}>
+					{kits.map((kit) => (
+						<div key={kit.weaponId} className={styles.specialPointKit}>
+							{multiKit ? (
+								<WeaponImage
+									weaponSplId={kit.weaponId}
+									variant="badge"
+									size={18}
+								/>
+							) : null}
+							<span className={styles.currentValue}>{kit.current}</span>
+						</div>
+					))}
+				</div>
 				{kitsWithHistory.length > 0 && !isExpanded ? (
 					<span className={styles.historyBadge}>{kitsWithHistory.length}</span>
 				) : null}
@@ -612,17 +621,17 @@ function SpecialPointCell({
 				<div className={styles.specialPointHistory}>
 					{kitsWithHistory.map((kit) => (
 						<div key={kit.weaponId} className={styles.specialPointHistoryKit}>
-							<WeaponImage
-								weaponSplId={kit.weaponId}
-								variant="badge"
-								size={24}
-							/>
+							{multiKit ? (
+								<WeaponImage
+									weaponSplId={kit.weaponId}
+									variant="badge"
+									size={16}
+								/>
+							) : null}
 							<div className={styles.specialPointHistoryKitList}>
 								{kit.history.toReversed().map(({ version, value }) => (
 									<div key={version} className={styles.historyItem}>
-										<span className={styles.historyValue}>
-											{`${value}${suffix}`}
-										</span>
+										<span className={styles.historyValue}>{value}</span>
 										<span className={styles.historyVersion}>{version}</span>
 									</div>
 								))}

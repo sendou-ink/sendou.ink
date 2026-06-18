@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
@@ -13,6 +14,7 @@ import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
 import type { FormRenderProps } from "~/form/SendouForm";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
+import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { useRecentlyReportedWeapons } from "~/hooks/useRecentlyReportedWeapons";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
@@ -127,6 +129,7 @@ function YouTubeEmbedWrapper({
 	onPlayerReady: (player: YT.Player) => void;
 }) {
 	const { values } = useFormFieldContext();
+	const floatWidth = useFloatingEmbedWidth();
 	const youtubeUrl = values.youtubeUrl as string | undefined;
 
 	if (!youtubeUrl) return null;
@@ -135,9 +138,52 @@ function YouTubeEmbedWrapper({
 	if (!videoId) return null;
 
 	return (
-		<div className={styles.embedContainer}>
-			<YouTubeEmbed id={videoId} enableApi onPlayerReady={onPlayerReady} />
+		<div
+			className={clsx(styles.embedRail, { [styles.floating]: floatWidth })}
+			style={floatWidth ? { width: floatWidth } : undefined}
+		>
+			<div className={styles.embedContainer}>
+				<YouTubeEmbed id={videoId} enableApi onPlayerReady={onPlayerReady} />
+			</div>
 		</div>
+	);
+}
+
+const EMBED_RAIL_GAP = 24; // mirrors var(--s-6)
+const EMBED_FLOAT_WIDTHS = [400, 320] as const;
+
+/**
+ * Returns the width to float the embed at when the form's left margin can fit
+ * it (widest that fits), or `null` to leave it in flow above the fields.
+ * Measures the form's actual left margin so it accounts for the side nav being
+ * collapsed and the chat sidebar being open, neither of which a media query can
+ * see.
+ */
+function useFloatingEmbedWidth(): number | null {
+	const [leftMargin, setLeftMargin] = useState(0);
+
+	useIsomorphicLayoutEffect(() => {
+		const main = document.querySelector("main");
+		const container = main?.parentElement;
+		if (!main || !container) return;
+
+		const measure = () => {
+			setLeftMargin(
+				main.getBoundingClientRect().left -
+					container.getBoundingClientRect().left,
+			);
+		};
+
+		measure();
+		const observer = new ResizeObserver(measure);
+		observer.observe(container);
+
+		return () => observer.disconnect();
+	}, []);
+
+	return (
+		EMBED_FLOAT_WIDTHS.find((width) => leftMargin >= width + EMBED_RAIL_GAP) ??
+		null
 	);
 }
 

@@ -31,6 +31,7 @@
 	"pre.footer": "Registro puede ser ajustado antes de que empieze el torneo",
 	"pre.logIn": "Ingresa al sitio para registrar",
 	"pre.inATeam": "Estás en un equipo para este evento",
+	"pre.captainOnlyEdit": "",
 	"pre.registrationClosed": "",
 	"pre.checkIn.range": "El check-in está abierto entre {{start}} y {{finish}}",
 	"pre.checkIn.over": "Se acabó check-in",

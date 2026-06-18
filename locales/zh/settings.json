@@ -14,7 +14,7 @@
 	"matchProfile.weaponPool.header": "武器池",
 	"matchProfile.weaponPool.full": "武器池已满",
 	"matchProfile.voiceChat.header": "语音聊天",
-	"matchProfile.voiceChat.canVC.header": "您可以进行语音聊天吗？",
+	"matchProfile.voiceChat.canVC.header": "可以进行语音聊天吗？",
 	"matchProfile.voiceChat.canVC.yes": "是",
 	"matchProfile.voiceChat.canVC.no": "否",
 	"matchProfile.voiceChat.canVC.listenOnly": "仅收听",

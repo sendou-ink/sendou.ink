@@ -504,6 +504,10 @@
 	border-color: var(--color-error);
 }
 
+.standingsRowAlt > td {
+	background-color: var(--color-bg-high);
+}
+
 .standingsTeamName {
 	min-width: 125px;
 	display: flex;

@@ -162,6 +162,19 @@
 
 .currentValue {
 	font-variant-numeric: tabular-nums;
+	font-weight: var(--weight-semi);
+}
+
+.specialPointKits {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.specialPointKit {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
 }
 
 .historyBadge {
@@ -194,18 +207,21 @@
 
 .historyItem {
 	display: flex;
-	justify-content: space-between;
-	gap: var(--s-2);
+	align-items: baseline;
+	gap: var(--s-1-5);
 }
 
 .historyVersion {
 	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-style: italic;
+	white-space: nowrap;
 }
 
 .historyValue {
 	font-variant-numeric: tabular-nums;
-	color: var(--color-accent);
-	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	min-width: 1.75rem;
 }
 
 .specialPointHistory {

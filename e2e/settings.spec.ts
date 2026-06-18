@@ -67,9 +67,7 @@ test.describe("Settings", () => {
 			url: CALENDAR_PAGE,
 		});
 
-		const clockTime = page
-			.locator("[class*='clockHeader'] [class*='reserve-one-lb']")
-			.first();
+		const clockTime = page.getByTestId("clock-header-time").first();
 		const initialTime = await clockTime.textContent();
 
 		expect(initialTime).toMatch(/AM|PM/);

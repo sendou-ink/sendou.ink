@@ -127,9 +127,7 @@ test.describe("Calendar", () => {
 			await navigate({ page: gb.page, url: calendarPage() });
 
 			const firstClockText = (page: Page) =>
-				page
-					.locator("[class*='clockHeader'] [class*='reserve-one-lb']")
-					.first();
+				page.getByTestId("clock-header-time").first();
 
 			const caTime = await firstClockText(ca.page).textContent();
 			const gbTime = await firstClockText(gb.page).textContent();
