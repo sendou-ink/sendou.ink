@@ -17,7 +17,7 @@
 		font-size: var(--font-2xs);
 	}
 
-	& tbody tr:hover {
+	&:not(.noRowHover) tbody tr:hover {
 		background-color: var(--color-bg-high);
 	}
 

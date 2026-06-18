@@ -102,7 +102,7 @@ function ResultsTable({ standings }: { standings: Standing[] }) {
 	let rowDarkerBg = false;
 
 	return (
-		<Table>
+		<Table noRowHover>
 			<thead>
 				<tr>
 					<th>Standing</th>
@@ -151,7 +151,7 @@ function ResultsTable({ standings }: { standings: Standing[] }) {
 					return (
 						<tr
 							key={standing.team.id}
-							className={rowDarkerBg ? "bg-darker-transparent" : undefined}
+							className={rowDarkerBg ? styles.standingsRowAlt : undefined}
 						>
 							<td className="text-md">
 								{typeof placement === "number" ? (
