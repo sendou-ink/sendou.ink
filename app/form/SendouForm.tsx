@@ -37,6 +37,7 @@ export interface FormContextValue<T extends z.ZodRawShape = z.ZodRawShape> {
 	clearServerError: (name: string) => void;
 	onFieldChange?: (name: string, newValue: unknown) => void;
 	hideRequiredIndicator: boolean;
+	readOnly: boolean;
 	values: Record<string, unknown>;
 	setValue: (name: string, value: unknown) => void;
 	setValueFromPrev: (name: string, updater: (prev: unknown) => unknown) => void;
@@ -104,6 +105,11 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	 * adds noise (e.g. the settings page).
 	 */
 	hideRequiredIndicator?: boolean;
+	/**
+	 * When true, renders the form for viewing only: every field is disabled and
+	 * the submit button is hidden.
+	 */
+	readOnly?: boolean;
 	onApply?: (values: z.infer<z.ZodObject<T>>) => void;
 	secondarySubmit?: React.ReactNode;
 	/**
@@ -150,6 +156,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 	className,
 	fullWidth,
 	hideRequiredIndicator = false,
+	readOnly = false,
 	onApply,
 	secondarySubmit,
 	onSuccess,
@@ -266,6 +273,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 			onFieldChange:
 				autoSubmit || autoApply ? actions.onFieldChange : undefined,
 			hideRequiredIndicator,
+			readOnly,
 			setValue: actions.setValue,
 			setValueFromPrev: actions.setValueFromPrev,
 			revalidateAll: actions.revalidateAll,
@@ -281,6 +289,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 			autoSubmit,
 			autoApply,
 			hideRequiredIndicator,
+			readOnly,
 			fetcher.state,
 			store,
 			actions,
@@ -303,7 +312,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 		<>
 			{title ? <h2 className={styles.title}>{title}</h2> : null}
 			<React.Fragment key={locationKey}>{resolvedChildren}</React.Fragment>
-			{autoSubmit || autoApply ? null : (
+			{autoSubmit || autoApply || readOnly ? null : (
 				<div className="mt-4 stack horizontal md mx-auto justify-center items-center">
 					<SubmitButton
 						_action={_action}
@@ -673,6 +682,7 @@ export function useFormFieldContext(): FormContextValue {
 		clearServerError: context.clearServerError,
 		onFieldChange: context.onFieldChange,
 		hideRequiredIndicator: context.hideRequiredIndicator,
+		readOnly: context.readOnly,
 		values,
 		setValue: context.setValue,
 		setValueFromPrev: context.setValueFromPrev,

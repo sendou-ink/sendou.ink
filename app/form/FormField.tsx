@@ -77,6 +77,7 @@ export function FormField({
 	canRemoveItem,
 }: FormFieldProps) {
 	const context = useOptionalFormFieldContext();
+	const isDisabled = disabled ?? context?.readOnly ?? false;
 
 	const fieldSchema = React.useMemo(() => {
 		if (field) return field;
@@ -183,7 +184,7 @@ export function FormField({
 			<InputFormField
 				{...commonProps}
 				{...formField}
-				disabled={disabled}
+				disabled={isDisabled}
 				value={value as string}
 				onChange={handleChange as (v: string) => void}
 			/>
@@ -195,7 +196,7 @@ export function FormField({
 			<InGameNameFormField
 				{...commonProps}
 				{...formField}
-				disabled={disabled}
+				disabled={isDisabled}
 				value={value as string}
 				onChange={handleChange as (v: string) => void}
 			/>
@@ -207,7 +208,7 @@ export function FormField({
 			<SwitchFormField
 				{...commonProps}
 				{...formField}
-				isDisabled={disabled}
+				isDisabled={isDisabled}
 				checked={value as boolean}
 				onChange={handleChange as (v: boolean) => void}
 			/>
@@ -219,7 +220,7 @@ export function FormField({
 			<TextareaFormField
 				{...commonProps}
 				{...formField}
-				disabled={disabled}
+				disabled={isDisabled}
 				value={value as string}
 				onChange={handleChange as (v: string) => void}
 			/>
@@ -346,7 +347,7 @@ export function FormField({
 			<ImageFormField
 				{...commonProps}
 				{...formField}
-				disabled={disabled}
+				disabled={isDisabled}
 				value={value as ImageFieldValue}
 				onChange={handleChange as (v: ImageFieldValue) => void}
 			/>

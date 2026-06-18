@@ -31,6 +31,7 @@
 	"pre.footer": "L'inscription peut être librement modifiée avant le début du tournoi",
 	"pre.logIn": "Connectez-vous pour vous inscrire",
 	"pre.inATeam": "Vous faites partie d'une équipe pour cet événement",
+	"pre.captainOnlyEdit": "",
 	"pre.registrationClosed": "",
 	"pre.checkIn.range": "L'enregistrement est ouvert entre {{start}} et {{finish}}",
 	"pre.checkIn.over": "L'enregistrement est fini",
