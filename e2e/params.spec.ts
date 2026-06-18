@@ -15,7 +15,17 @@ test.describe("Weapon parameters", () => {
 
 		await selectWeapon({ page, name: "Splattershot" });
 
-		await page.getByRole("link", { name: /Raw parameters/ }).click();
+		// Selecting the weapon updates the URL search params asynchronously, which in
+		// turn updates the "Raw parameters" link's href. Wait for the href to reflect the
+		// selection before clicking, otherwise the click can navigate to the stale default.
+		const rawParametersLink = page.getByRole("link", {
+			name: /Raw parameters/,
+		});
+		await expect(rawParametersLink).toHaveAttribute(
+			"href",
+			/\/params\/splattershot/,
+		);
+		await rawParametersLink.click();
 		await expect(page).toHaveURL(/\/params\/splattershot/);
 
 		// Filtering: hide a weapon column. Wait for a sibling column to render after the client-side
