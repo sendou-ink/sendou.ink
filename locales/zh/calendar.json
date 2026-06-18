@@ -1,7 +1,7 @@
 {
 	"inYourTimeZone": "您所在时区的时间:",
 	"day": "第 {{number}} 天",
-	"actions.reportWinners": "填写获胜者",
+	"actions.reportWinners": "汇报获胜者",
 	"actions.delete": "删除赛事",
 	"actions.delete.confirm": "要删除 {{name}} 相关的所有数据吗？",
 	"participatedCount": "参赛队伍数量: {{count}}",
@@ -20,7 +20,7 @@
 	"forms.badges.placeholder": "选择一项徽章奖励",
 	"forms.mapPool": "场地池",
 	"forms.participantCount": "参赛者数量",
-	"forms.reportResultsHeader": "填写 {{eventName}} 的结果",
+	"forms.reportResultsHeader": "汇报 {{eventName}} 的结果",
 	"forms.reportResultsInfo": "您可以自定义要显示的赛事结果。可以选择仅冠军队伍、前三名或其他结果。",
 	"forms.team.add": "添加队伍",
 	"forms.team.remove": "移除队伍",
