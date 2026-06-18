@@ -3,7 +3,6 @@ import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { tournamentTeamNameTaken } from "~/features/tournament/tournament-utils.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import { inGameNameIsValid } from "~/features/user-page/in-game-name";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import {
 	ADMIN_REGISTRATION_MAX_MEMBERS,
