@@ -4,7 +4,6 @@ import {
 	Outlet,
 	type ShouldRevalidateFunction,
 	useLoaderData,
-	useMatches,
 	useOutletContext,
 } from "react-router";
 import { containerClassName, Main } from "~/components/Main";
@@ -98,7 +97,6 @@ export function TournamentLayout() {
 		[data],
 	);
 	const [bracketExpanded, setBracketExpanded] = React.useState(true);
-	const mainBreakout = useActiveRouteMainBreakout();
 
 	useTournamentChatLabels(tournament);
 
@@ -134,22 +132,12 @@ export function TournamentLayout() {
 		</>
 	);
 
+	// Always render within the breakout container so the nav (and content) keep a
+	// consistent width across routes, avoiding a layout shift when switching tabs.
 	return (
-		<Main bigger breakoutContainer={mainBreakout}>
-			{mainBreakout ? (
-				<div className={containerClassName("wide")}>{content}</div>
-			) : (
-				content
-			)}
+		<Main breakoutContainer>
+			<div className={containerClassName("wide")}>{content}</div>
 		</Main>
-	);
-}
-
-function useActiveRouteMainBreakout(): boolean {
-	const matches = useMatches();
-
-	return matches.some(
-		(match) => (match.handle as SendouRouteHandle | undefined)?.mainBreakout,
 	);
 }
 
