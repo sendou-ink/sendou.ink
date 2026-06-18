@@ -13,6 +13,8 @@ interface LocaleTimeRangeProps {
 	className?: string;
 	/** When `true`, renders inline; otherwise the element is displayed as a block. Defaults to block. */
 	inline?: boolean;
+	/** Optional test id forwarded to the rendered element. */
+	"data-testid"?: string;
 }
 
 /**
@@ -29,6 +31,7 @@ export function LocaleTimeRange({
 	options,
 	className,
 	inline,
+	"data-testid": testId,
 }: LocaleTimeRangeProps) {
 	const { formatter, isLoaded } = useDateTimeFormat(options);
 
@@ -38,6 +41,7 @@ export function LocaleTimeRange({
 
 	return (
 		<span
+			data-testid={testId}
 			className={clsx(
 				{
 					block: !inline,

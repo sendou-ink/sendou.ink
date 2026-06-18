@@ -108,7 +108,10 @@ test.describe("Navigation", () => {
 		await expect(
 			mobileMenu.getByRole("link", { name: "SendouQ" }),
 		).not.toBeVisible();
-		const friendsViewAll = page.getByRole("link", { name: /View all/ });
+		const friendsViewAll = page.getByRole("link", {
+			name: "View all",
+			exact: true,
+		});
 		await expect(friendsViewAll).toBeVisible();
 
 		// Switch to You panel via ghost tab (nth(4) = "you")
@@ -124,7 +127,10 @@ test.describe("Navigation", () => {
 			.locator("[class*='ghostTab']:not([class*='ghostTabBar'])")
 			.nth(2)
 			.dispatchEvent("click");
-		const tourneysViewAll = page.getByRole("link", { name: /View all/ });
+		const tourneysViewAll = page.getByRole("link", {
+			name: "View all",
+			exact: true,
+		});
 		await expect(tourneysViewAll).toBeVisible();
 
 		// Close panel via X button

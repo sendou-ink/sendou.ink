@@ -308,6 +308,7 @@ function ClockHeader({
 						className={clsx({
 							"text-lighter italic": isInThePast,
 						})}
+						data-testid="clock-header-time"
 					/>
 				) : (
 					<LocaleTime
@@ -316,6 +317,7 @@ function ClockHeader({
 						})}
 						date={date}
 						options={timeOptions}
+						data-testid="clock-header-time"
 					/>
 				)}
 				{hiddenEventsCount > 0 ? (

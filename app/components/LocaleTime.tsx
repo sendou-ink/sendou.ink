@@ -11,6 +11,8 @@ interface LocaleTimeProps {
 	className?: string;
 	/** When `true`, renders inline; otherwise the element is displayed as a block. Defaults to block. */
 	inline?: boolean;
+	/** Optional test id forwarded to the rendered `<time>` element. */
+	"data-testid"?: string;
 }
 
 /**
@@ -25,6 +27,7 @@ export function LocaleTime({
 	options,
 	className,
 	inline,
+	"data-testid": testId,
 }: LocaleTimeProps) {
 	const { formatter, isLoaded } = useDateTimeFormat(options);
 
@@ -33,6 +36,7 @@ export function LocaleTime({
 
 	return (
 		<time
+			data-testid={testId}
 			dateTime={dateObject.toISOString()}
 			className={clsx(
 				{
