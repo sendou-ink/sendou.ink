@@ -164,10 +164,10 @@ function TeamRoster({
 										member={member}
 										className={styles.memberLink}
 									/>
-									<div className={styles.memberTier}>
-										<MemberTierPopover tier={member.tier} />
-									</div>
-									<div className={styles.memberMetaArea}>
+									<div className={styles.memberSecondRow}>
+										<div className={styles.memberTier}>
+											<MemberTierPopover tier={member.tier} />
+										</div>
 										<MemberMeta
 											plusTier={member.plusTier}
 											weaponPool={member.weaponPool}
