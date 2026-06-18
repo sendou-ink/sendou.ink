@@ -39,7 +39,6 @@ export function LocaleTimeRange({
 	return (
 		<span
 			className={clsx(
-				"reserve-one-lb",
 				{
 					block: !inline,
 					invisible: !isLoaded,

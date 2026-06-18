@@ -35,7 +35,6 @@ export function LocaleTime({
 		<time
 			dateTime={dateObject.toISOString()}
 			className={clsx(
-				"reserve-one-lb",
 				{
 					block: !inline,
 					invisible: !isLoaded,
