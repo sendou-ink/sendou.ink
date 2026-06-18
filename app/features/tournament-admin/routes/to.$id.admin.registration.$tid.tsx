@@ -72,7 +72,9 @@ export default function TournamentAdminRegistrationPage() {
 				ownerId: owner ? String(owner.userId) : "",
 				members: team.members.map((member) => ({
 					userId: member.userId,
-					inGameName: member.inGameName ?? null,
+					inGameName: tournament.ctx.settings.requireInGameNames
+						? (member.inGameName ?? null)
+						: null,
 				})),
 			}
 		: undefined;
