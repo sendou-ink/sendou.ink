@@ -5,7 +5,6 @@ import {
 	fieldset,
 	idConstantOptional,
 	image,
-	inGameName,
 	selectDynamic,
 	stringConstant,
 	teamSearchOptional,
@@ -14,6 +13,7 @@ import {
 	tournamentSearchOptional,
 	userSearch,
 } from "~/form/fields";
+import { IN_GAME_NAME_MAX_LENGTH } from "../user-page/in-game-name";
 /**
  * Roster size cap for organizer-managed registrations. The per-tournament
  * `maxMembersPerTeam` limit intentionally doesn't apply to organizers, so this
@@ -24,8 +24,9 @@ export const ADMIN_REGISTRATION_MAX_MEMBERS = 20;
 const memberFieldset = fieldset({
 	fields: z.object({
 		userId: userSearch({ label: "labels.player" }),
-		inGameName: inGameName({
+		inGameName: textFieldOptional({
 			label: "labels.inGameName",
+			maxLength: IN_GAME_NAME_MAX_LENGTH,
 		}),
 	}),
 });
