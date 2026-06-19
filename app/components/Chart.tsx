@@ -5,10 +5,8 @@ import {
 	LinearScale,
 	LineElement,
 	PointElement,
-	TimeScale,
 	Tooltip,
 } from "chart.js";
-import "chartjs-adapter-date-fns";
 import clsx from "clsx";
 import * as React from "react";
 import { useRef } from "react";
@@ -20,7 +18,6 @@ import styles from "./Chart.module.css";
 ChartJS.register(
 	CategoryScale,
 	LinearScale,
-	TimeScale,
 	PointElement,
 	LineElement,
 	Tooltip,
@@ -34,6 +31,7 @@ export default function Chart({
 	xAxis,
 	xTicksLimit,
 	yTicksLimit,
+	xAbilityLimit,
 }: {
 	options: [
 		{
@@ -47,6 +45,7 @@ export default function Chart({
 	xAxis: "linear" | "localTime";
 	xTicksLimit?: number;
 	yTicksLimit?: number;
+	xAbilityLimit?: number;
 }) {
 	const isHydrated = useHydrated();
 
@@ -140,7 +139,7 @@ export default function Chart({
 
 	const chartData = React.useMemo(
 		() => ({
-			labels: options[0].data.map((d) => d.primary),
+			labels: options[0].data.map((_, i) => i),
 			datasets: options.map((series, i) => ({
 				label: String(i),
 				data: series.data.map((d) => d.secondary),
@@ -173,15 +172,18 @@ export default function Chart({
 					scales: {
 						x: {
 							...scaleDefaults,
-							type: xAxis === "localTime" ? "time" : "linear",
+							max: xAbilityLimit,
+							type: "linear",
 							ticks: {
 								...scaleDefaults.ticks,
 								maxRotation: 0,
 								maxTicksLimit: xTicksLimit,
 								callback: (value) => {
 									if (xAxis === "localTime") {
-										const date = new Date(value as number);
-										return scaleFormatter.format(date);
+										const date = options[0].data[value as number]?.primary;
+										if (date instanceof Date) {
+											return scaleFormatter.format(date);
+										}
 									}
 									return value;
 								},
