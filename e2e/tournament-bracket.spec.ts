@@ -775,6 +775,9 @@ test.describe("Tournament bracket", () => {
 		await goToTab(page, "admin");
 		// Lock state is signalled by the toggle being "Unlock" instead of "Lock"
 		await expect(page.getByRole("button", { name: "Unlock" })).toBeVisible();
+		// A locked match still needs to show the pool & room pass so players can join
+		await expect(page.getByText("Pool", { exact: true })).toBeVisible();
+		await expect(page.getByTestId("room-pass")).toBeVisible();
 		await submit(page, "cast-info-submit-button");
 		await expect(page.getByTestId("stage-banner")).toBeVisible();
 

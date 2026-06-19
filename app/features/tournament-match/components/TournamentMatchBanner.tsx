@@ -134,6 +134,8 @@ export function TournamentMatchBanner({
 					header={t("tournament:match.locked.header")}
 					subtitle={t("tournament:match.locked.subtitle")}
 					screenLegal={screenLegal}
+					joinPool={joinPool}
+					joinPass={joinPass}
 				/>
 			) : isMissingTeam ? (
 				<IconBanner
