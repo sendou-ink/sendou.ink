@@ -457,6 +457,11 @@
 		color: var(--color-text-high);
 		overflow: hidden;
 
+		&:focus-visible {
+			outline: var(--focus-ring);
+			outline-offset: 1px;
+		}
+
 		&::file-selector-button {
 			height: 100%;
 			border: none;
