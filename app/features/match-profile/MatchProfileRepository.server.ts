@@ -14,7 +14,6 @@ export async function settingsByUserId(userId: number) {
 			"User.vc",
 			"User.languages",
 			"User.noScreen",
-			"User.noSplatnet",
 			matchProfileWeapons(eb).as("weaponPool"),
 		])
 		.where("id", "=", userId)
@@ -49,14 +48,12 @@ export async function updateOwnMatchProfile({
 	languages,
 	weaponPool,
 	noScreen,
-	noSplatnet,
 }: {
 	mapModePreferences: UserMapModePreferences;
 	vc: Tables["User"]["vc"];
 	languages: string[];
 	weaponPool: WeaponPoolItem[];
 	noScreen: number;
-	noSplatnet: number;
 }) {
 	const userId = actorId();
 	const currentPreferences = (
@@ -102,7 +99,6 @@ export async function updateOwnMatchProfile({
 				vc,
 				languages: languages.length > 0 ? languages.join(",") : null,
 				noScreen,
-				noSplatnet,
 			})
 			.where("id", "=", userId)
 			.execute();

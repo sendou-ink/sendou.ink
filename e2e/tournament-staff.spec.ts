@@ -12,7 +12,6 @@ import {
 	startBracket,
 	test,
 } from "./helpers/playwright";
-import { goToTab } from "./helpers/tournament-match";
 
 const TOURNAMENT_ID = 2;
 
@@ -145,8 +144,6 @@ test.describe("Tournament staff", () => {
 			page,
 			url: tournamentMatchPage({ tournamentId: TOURNAMENT_ID, matchId: 2 }),
 		});
-
-		await goToTab(page, "join");
 
 		await expect(roomPassSelector).toBeVisible();
 	});

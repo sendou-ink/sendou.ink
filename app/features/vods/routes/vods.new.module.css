@@ -6,20 +6,22 @@
 	margin-block: var(--s-2);
 }
 
-@media (min-width: 1425px) {
-	.embedContainer {
-		position: fixed;
-		left: max(24px, calc((100vw - 800px) / 2 - 320px - 48px));
-		top: 120px;
-		width: 320px;
-		margin-block: 0;
-	}
-}
+/* When the form's left margin can fit the embed (measured in JS so it accounts
+   for the side nav being collapsed and the chat sidebar being open), float it
+   just left of the form. The rail is anchored to the form's own left edge, so
+   the side nav offset cancels out and it never overlaps the nav. Its width is
+   set inline by the same JS. The rail spans the full form height while the
+   embed sticks within it, so it stays in view while scrolling the long form. */
+.embedRail.floating {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: calc(100% + var(--s-6));
 
-@media (min-width: 1700px) {
-	.embedContainer {
-		left: max(24px, calc((100vw - 800px) / 2 - 400px - 48px));
-		width: 400px;
+	& .embedContainer {
+		position: sticky;
+		top: calc(var(--layout-nav-height) + var(--s-4));
+		margin-block: 0;
 	}
 }
 

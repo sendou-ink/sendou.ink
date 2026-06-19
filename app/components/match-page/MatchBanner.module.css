@@ -18,12 +18,15 @@
 	width: 100%;
 	height: var(--banner-height);
 	border-radius: var(--radius-box);
-	padding: var(--s-2);
+	padding: var(--s-2-5);
 	background-image:
 		linear-gradient(
 			to top,
-			rgba(255, 255, 255, 0),
-			rgba(255, 255, 255, 0),
+			rgba(0, 0, 0, 0.6),
+			rgba(0, 0, 0, 0.6),
+			rgba(0, 0, 0, 0.2),
+			rgba(0, 0, 0, 0.2),
+			rgba(0, 0, 0, 0.6),
 			rgba(0, 0, 0, 0.6)
 		),
 		var(--stage-img);
@@ -50,32 +53,39 @@
 	bottom: var(--s-2);
 	right: var(--s-2);
 	display: flex;
-	gap: var(--s-0-5);
+	gap: var(--s-1);
 	align-items: center;
-	color: var(--color-text-high);
-	background-color: var(--color-bg-high);
-	padding: var(--s-0-5) var(--s-1-5);
-	border-radius: var(--radius-field);
-	font-size: var(--font-3xs);
-	font-weight: normal;
+	color: inherit;
+	font-size: inherit;
+	font-weight: inherit;
 	height: auto;
 }
 
-.joinBadge {
+.joinInfo {
 	position: absolute;
 	bottom: var(--s-2);
 	left: var(--s-2);
 	display: flex;
-	gap: var(--s-1);
-	align-items: center;
-	color: var(--color-text-high);
-	background-color: var(--color-bg-high);
-	padding: var(--s-0-5) var(--s-1-5);
-	border-radius: var(--radius-field);
-	font-size: var(--font-2xs);
+	gap: var(--s-4);
+}
+
+.joinInfoItem {
+	display: flex;
+	flex-direction: column;
+	line-height: 1.1;
+}
+
+.joinInfoLabel {
+	text-transform: uppercase;
+	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
-	height: 32px;
-	width: 32px;
+	opacity: 0.7;
+}
+
+.joinInfoValue {
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
+	letter-spacing: 1px;
 }
 
 .infoBadge {
@@ -120,8 +130,11 @@
 	background-image:
 		linear-gradient(
 			to top,
-			rgba(255, 255, 255, 0),
-			rgba(255, 255, 255, 0),
+			rgba(0, 0, 0, 0.6),
+			rgba(0, 0, 0, 0.6),
+			rgba(0, 0, 0, 0.2),
+			rgba(0, 0, 0, 0.2),
+			rgba(0, 0, 0, 0.6),
 			rgba(0, 0, 0, 0.6)
 		),
 		var(--stage-img);
@@ -149,7 +162,8 @@
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	gap: var(--s-1);
+	gap: var(--s-0-5);
+	line-height: 1.2;
 	width: 100%;
 	height: var(--banner-height);
 	border-radius: var(--radius-box);

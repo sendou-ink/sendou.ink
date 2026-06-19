@@ -1070,8 +1070,6 @@ export interface UserPreferences {
 	/** Is spoiler-free mode enabled? Hides recent tournament results and scores until the user chooses to reveal them. */
 	spoilerFreeMode?: boolean;
 	weaponReportDefaultOpen?: boolean;
-	/** Which tab opens first on the match page. Unset = first available tab (Rosters). */
-	defaultMatchPageTab?: "rosters" | "join" | "action";
 }
 
 export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;
@@ -1133,8 +1131,6 @@ export interface User {
 	weaponPool: JSONColumnTypeNullable<WeaponPoolEntry[]>;
 	plusSkippedForSeasonNth: number | null;
 	noScreen: Generated<DBBoolean>;
-	/** User doesn't have access to SplatNet 3 to join rooms made by others */
-	noSplatnet: Generated<DBBoolean>;
 	buildSorting: JSONColumnTypeNullable<BuildSort[]>;
 	preferences: JSONColumnTypeNullable<UserPreferences>;
 	/** User creation date. Can be null because we did not always save this. */
@@ -1435,13 +1431,6 @@ export interface NotificationUserSubscription {
 	subscription: JSONColumnType<NotificationSubscription>;
 }
 
-export interface RoomLink {
-	userId: number;
-	url: string;
-	createdAt: Generated<number>;
-	refreshedAt: Generated<number>;
-}
-
 export const SPLATOON_ROTATION_TYPES = ["SERIES", "OPEN", "X"] as const;
 export type SplatoonRotationType = (typeof SPLATOON_ROTATION_TYPES)[number];
 
@@ -1500,7 +1489,6 @@ export interface DB {
 	PlusTier: PlusTier;
 	PlusVote: PlusVote;
 	PlusVotingResult: PlusVotingResult;
-	RoomLink: RoomLink;
 	ReportedWeapon: ReportedWeapon;
 	Skill: Skill;
 	SkillTeamUser: SkillTeamUser;

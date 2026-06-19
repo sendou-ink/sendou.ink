@@ -40,7 +40,7 @@ import type {
 	SubWeaponParams,
 } from "../analyzer-types";
 import { INK_CONSUME_TYPES } from "../analyzer-types";
-import type { abilityValues as abilityValuesJson } from "./ability-values";
+import type { abilityValues as abilityValuesJson } from "../data/ability-values";
 import {
 	abilityPointsToEffects,
 	abilityValues,

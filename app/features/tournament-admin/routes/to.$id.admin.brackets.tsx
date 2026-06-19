@@ -3,11 +3,13 @@ import { useFetcher } from "react-router";
 import { Divider } from "~/components/Divider";
 import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
+import { Redirect } from "~/components/Redirect";
 import { SubmitButton } from "~/components/SubmitButton";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { tournamentAdminPage } from "~/utils/urls";
 import { BracketProgressionSelector } from "../../calendar/components/BracketProgressionSelector";
 
 export { action } from "../actions/to.$id.admin.brackets.server";
@@ -25,6 +27,10 @@ export default function TournamentAdminBracketsPage() {
 		tournament.isAdmin(user) &&
 		tournament.hasStarted &&
 		!tournament.ctx.isFinalized;
+
+	if (tournament.ctx.isFinalized && !showReopen) {
+		return <Redirect to={tournamentAdminPage(tournament.ctx.id)} />;
+	}
 
 	return (
 		<div className="stack lg">
@@ -119,8 +125,9 @@ function BracketReset() {
 function BracketProgressionEdit() {
 	const tournament = useTournament();
 	const fetcher = useFetcher();
-	const [bracketProgressionErrored, setBracketProgressionErrored] =
-		React.useState(false);
+	const [bracketProgression, setBracketProgression] = React.useState<
+		Progression.ParsedBracket[] | null
+	>(tournament.ctx.settings.bracketProgression);
 
 	const disabledBracketIdxs = tournament.brackets
 		.filter((bracket) => !bracket.preview)
@@ -128,6 +135,13 @@ function BracketProgressionEdit() {
 
 	return (
 		<fetcher.Form method="post">
+			{bracketProgression ? (
+				<input
+					type="hidden"
+					name="bracketProgression"
+					value={JSON.stringify(bracketProgression)}
+				/>
+			) : null}
 			<BracketProgressionSelector
 				initialBrackets={Progression.validatedBracketsToInputFormat(
 					tournament.ctx.settings.bracketProgression,
@@ -136,13 +150,13 @@ function BracketProgressionEdit() {
 					disabled: disabledBracketIdxs.includes(idx),
 				}))}
 				isInvitationalTournament={tournament.isInvitational}
-				setErrored={setBracketProgressionErrored}
+				onChange={setBracketProgression}
 				isTournamentInProgress
 			/>
 			<div className="stack md horizontal justify-center mt-6">
 				<SubmitButton
 					_action="UPDATE_TOURNAMENT_PROGRESSION"
-					isDisabled={bracketProgressionErrored}
+					isDisabled={!bracketProgression}
 				>
 					Save changes
 				</SubmitButton>

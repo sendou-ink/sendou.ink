@@ -3,7 +3,6 @@ import { CloseExpiredContinueVotesRoutine } from "./closeExpiredContinueVotes";
 import { DeleteObsoleteMatchVodsRoutine } from "./deleteObsoleteMatchVods";
 import { DeleteOldExternalStreamsRoutine } from "./deleteOldExternalStreams";
 import { DeleteOldNotificationsRoutine } from "./deleteOldNotifications";
-import { DeleteOldRoomLinksRoutine } from "./deleteOldRoomLinks";
 import { DeleteOldTournamentAuditLogsRoutine } from "./deleteOldTournamentAuditLogs";
 import { DeleteOrphanArtTagsRoutine } from "./deleteOrphanArtTags";
 import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
@@ -32,7 +31,6 @@ export const everyHourAt30 = [
 	SetOldGroupsAsInactiveRoutine,
 	UpdatePatreonDataRoutine,
 	CloseExpiredContinueVotesRoutine,
-	DeleteOldRoomLinksRoutine,
 	DeleteOldExternalStreamsRoutine,
 ];
 

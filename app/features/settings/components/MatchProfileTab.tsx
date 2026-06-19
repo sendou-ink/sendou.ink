@@ -30,7 +30,6 @@ export function MatchProfileTab() {
 				vc: matchProfile.vc ?? "NO",
 				languages: matchProfile.languages ?? [],
 				noScreen: Boolean(matchProfile.noScreen),
-				noSplatnet: Boolean(matchProfile.noSplatnet),
 			}}
 			revalidateRoot
 		>
@@ -50,7 +49,6 @@ export function MatchProfileTab() {
 					<FormField name="weaponPool" />
 					<FormField name="vc" />
 					<FormField name="languages" />
-					<FormField name="noSplatnet" />
 					<FormField name="noScreen" />
 				</>
 			)}

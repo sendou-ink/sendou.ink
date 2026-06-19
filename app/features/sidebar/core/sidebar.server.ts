@@ -63,10 +63,8 @@ const TOURNAMENT_SUB_QUOTA = 2;
 
 export async function resolveSidebarData(userId: number | null) {
 	if (!userId) {
-		const tournamentsData =
-			await ShowcaseTournaments.categorizedTournamentsByUserId(null);
 		return {
-			events: showcaseEventsToSidebarEvents(tournamentsData.showcase),
+			events: [] as SidebarEvent[],
 			friends: [] as SidebarFriend[],
 			streams: await combinedStreamsCached(),
 			savedTournamentIds: [] as number[],
@@ -102,16 +100,9 @@ export async function resolveSidebarData(userId: number | null) {
 
 	const scrimEvents: SidebarEvent[] = scrimsData.map(scrimToSidebarEvent);
 
-	const personalEvents = [
-		...tournamentEvents,
-		...savedEvents,
-		...scrimEvents,
-	].sort((a, b) => a.startTime - b.startTime);
-	const events = (
-		personalEvents.length > 0
-			? personalEvents
-			: showcaseEventsToSidebarEvents(tournamentsData.showcase)
-	).slice(0, MAX_EVENTS_VISIBLE);
+	const events = [...tournamentEvents, ...savedEvents, ...scrimEvents]
+		.sort((a, b) => a.startTime - b.startTime)
+		.slice(0, MAX_EVENTS_VISIBLE);
 
 	const friends = resolveFriends(friendsWithActivity);
 
@@ -361,19 +352,6 @@ function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
 	}
 
 	return result;
-}
-
-function showcaseEventsToSidebarEvents(
-	events: ShowcaseCalendarEvent[],
-): SidebarEvent[] {
-	return events.map((e) => ({
-		id: e.id,
-		name: e.name,
-		url: e.url,
-		logoUrl: e.logoUrl,
-		startTime: e.startTime,
-		type: "tournament" as const,
-	}));
 }
 
 function rowToSidebarFriend(

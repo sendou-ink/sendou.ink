@@ -55,10 +55,8 @@ export function TournamentMatchBanner({
 		teamsMissingActiveRoster,
 		matchIsLocked,
 		joinPool,
-		activeRoomLink,
+		joinPass,
 	} = useMatch();
-	const joinViaQr =
-		Boolean(activeRoomLink?.joinLink) && !activeRoomLink?.isStale;
 
 	const opponentOne = data.match.opponentOne;
 	const opponentTwo = data.match.opponentTwo;
@@ -152,7 +150,7 @@ export function TournamentMatchBanner({
 					})}
 					screenLegal={screenLegal}
 					joinPool={joinPool}
-					joinViaQr={joinViaQr}
+					joinPass={joinPass}
 					testId="active-roster-needed-text"
 				/>
 			) : pickBanBanner ? (
@@ -162,7 +160,7 @@ export function TournamentMatchBanner({
 					subtitle={pickBanBanner.subtitle}
 					screenLegal={screenLegal}
 					joinPool={joinPool}
-					joinViaQr={joinViaQr}
+					joinPass={joinPass}
 				/>
 			) : currentMap ? (
 				<MatchBanner
@@ -170,7 +168,7 @@ export function TournamentMatchBanner({
 					mode={currentMap.mode}
 					screenLegal={screenLegal}
 					joinPool={joinPool}
-					joinViaQr={joinViaQr}
+					joinPass={joinPass}
 				>
 					<CurrentMapPickInfo
 						source={currentMap.source}

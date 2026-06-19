@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { sub } from "date-fns";
 import { SendHorizontal } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import * as React from "react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
@@ -325,15 +326,17 @@ function MessageContents({ text }: { text: string }) {
 			parts.push(text.slice(lastIndex, match.index));
 		}
 		parts.push(
-			<a
-				key={i}
-				href={match.url}
-				target="_blank"
-				rel="noopener noreferrer"
-				className={styles.roomLink}
-			>
-				{match.url}
-			</a>,
+			<span key={i} className={styles.roomLinkBlock}>
+				<QRCodeSVG value={match.url} size={120} className={styles.roomQrCode} />
+				<a
+					href={match.url}
+					target="_blank"
+					rel="noopener noreferrer"
+					className={styles.roomLink}
+				>
+					{match.url}
+				</a>
+			</span>,
 		);
 		lastIndex = match.index + match.url.length;
 	}

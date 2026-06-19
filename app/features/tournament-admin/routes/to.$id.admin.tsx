@@ -54,14 +54,13 @@ export default function TournamentAdminLayout() {
 		tournament.hasStarted &&
 		!tournament.ctx.isFinalized;
 	const showStaffTab = tournament.isAdmin(user);
-	const showBracketsTab =
-		!tournament.isLeagueSignup || showEditBrackets || showReopen;
+	const showBracketsTab = tournament.ctx.isFinalized
+		? showReopen
+		: !tournament.isLeagueSignup || showEditBrackets;
+	const showStreamTab = !tournament.ctx.isFinalized;
 	const showSeedsTab = !tournament.hasStarted && !tournament.isLeagueSignup;
 
-	if (
-		!tournament.isOrganizer(user) ||
-		(tournament.ctx.isFinalized && !DANGEROUS_CAN_ACCESS_DEV_CONTROLS)
-	) {
+	if (!tournament.isOrganizer(user)) {
 		return <Redirect to={tournamentPage(tournament.ctx.id)} />;
 	}
 
@@ -132,9 +131,11 @@ export default function TournamentAdminLayout() {
 							{t("tournament:admin.tab.staff")}
 						</SendouTab>
 					) : null}
-					<SendouTab id="stream" href={`${adminPage}/stream`} icon={<Tv />}>
-						{t("tournament:admin.tab.stream")}
-					</SendouTab>
+					{showStreamTab ? (
+						<SendouTab id="stream" href={`${adminPage}/stream`} icon={<Tv />}>
+							{t("tournament:admin.tab.stream")}
+						</SendouTab>
+					) : null}
 					{showBracketsTab ? (
 						<SendouTab
 							id="brackets"

@@ -1,15 +1,9 @@
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
-import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs } from "~/components/match-page/MatchTabs";
-import { resolveRoomPass } from "~/components/match-page/utils";
 import { useUser } from "~/features/auth/core/user";
-import {
-	resolveActiveRoomLink,
-	useConfirmRoom,
-} from "~/features/chat/room-link-utils";
 import { ACTION_TAB_AFTER_LOCKED_SECONDS } from "~/features/sendouq/q-constants";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampNow } from "~/utils/dates";
@@ -28,7 +22,6 @@ import { SendouQMatchActionTab } from "./SendouQMatchActionTab";
 export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 	const user = useUser();
 	const isStaff = useHasRole("STAFF");
-	const { onConfirmRoom, isConfirming } = useConfirmRoom();
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const { t } = useTranslation(["q"]);
@@ -90,26 +83,13 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 		reporterSide !== null &&
 		reporterSide !== userSide;
 
-	const tabs: Array<"join" | "rosters" | "action" | "result"> = ["rosters"];
-	if (!isLocked && isParticipant) tabs.push("join");
+	const tabs: Array<"rosters" | "action" | "result"> = ["rosters"];
 	if (showActionTab) tabs.push("action");
 	if (isLocked || hasReportedMaps) tabs.push("result");
 
 	const alertTabs: Array<"action"> | undefined = viewerMustConfirmScore
 		? ["action"]
 		: undefined;
-
-	const allMembers = [
-		...data.match.groupAlpha.members,
-		...data.match.groupBravo.members,
-	];
-
-	const activeRoomLink = resolveActiveRoomLink({
-		roomLinks: data.roomLinks,
-		freshnessCutoff: data.match.createdAt,
-		viewerUserId: user?.id,
-		members: allMembers,
-	});
 
 	const ownGroup =
 		userSide === "ALPHA"
@@ -145,16 +125,6 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 							</p>
 						) : null}
 					</MatchResultTab>
-				) : null}
-				{!isLocked && isParticipant ? (
-					<MatchJoinTab
-						{...activeRoomLink}
-						onConfirmRoom={onConfirmRoom}
-						isConfirming={isConfirming}
-						pool={`SQ${String(data.match.id).at(-1)}`}
-						pass={resolveRoomPass(data.match.id)}
-						showNoSplatnetAlert={data.anyUserPrefersNoSplatnet}
-					/>
 				) : null}
 				<MatchRosterTab
 					minMembersPerTeam={4}

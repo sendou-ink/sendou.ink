@@ -14,7 +14,12 @@ import {
 	tournamentSearchOptional,
 	userSearch,
 } from "~/form/fields";
-import { TEAM } from "../team/team-constants";
+/**
+ * Roster size cap for organizer-managed registrations. The per-tournament
+ * `maxMembersPerTeam` limit intentionally doesn't apply to organizers, so this
+ * is just a generous safety ceiling rather than a competitive constraint.
+ */
+export const ADMIN_REGISTRATION_MAX_MEMBERS = 20;
 
 const memberFieldset = fieldset({
 	fields: z.object({
@@ -44,7 +49,7 @@ export const adminRegistrationFormSchema = z
 		members: array({
 			label: "labels.members",
 			min: 1,
-			max: TEAM.MAX_MEMBER_COUNT,
+			max: ADMIN_REGISTRATION_MAX_MEMBERS,
 			field: memberFieldset,
 		}),
 	})

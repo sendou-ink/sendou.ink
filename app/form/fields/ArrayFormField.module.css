@@ -35,4 +35,5 @@
 
 .removeButton {
 	height: var(--field-size);
+	align-self: flex-end;
 }

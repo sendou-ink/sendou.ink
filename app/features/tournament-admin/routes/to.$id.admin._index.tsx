@@ -71,13 +71,15 @@ export default function TournamentAdminTeamsPage() {
 					>
 						Export
 					</SendouButton>
-					<LinkButton
-						size="small"
-						icon={<Plus />}
-						to={tournamentAdminRegistrationPage(tournament.ctx.id)}
-					>
-						Add new team
-					</LinkButton>
+					{!tournament.ctx.isFinalized ? (
+						<LinkButton
+							size="small"
+							icon={<Plus />}
+							to={tournamentAdminRegistrationPage(tournament.ctx.id)}
+						>
+							Add new team
+						</LinkButton>
+					) : null}
 				</div>
 				<Input
 					className={styles.searchInput}
@@ -98,7 +100,7 @@ export default function TournamentAdminTeamsPage() {
 							sort={sort}
 							onChange={setSort}
 						/>
-						<th>Actions</th>
+						{!tournament.ctx.isFinalized ? <th>Actions</th> : null}
 						<SortableTableHeader
 							label="Check-in"
 							sortKey="checkIn"
@@ -124,7 +126,10 @@ export default function TournamentAdminTeamsPage() {
 					))}
 					{sortedTeams.length === 0 ? (
 						<tr>
-							<td colSpan={maxRosterSize + 3} className={styles.noResults}>
+							<td
+								colSpan={maxRosterSize + (tournament.ctx.isFinalized ? 2 : 3)}
+								className={styles.noResults}
+							>
 								No registrations yet
 							</td>
 						</tr>
@@ -175,9 +180,11 @@ function TeamRow({
 					)}
 				</div>
 			</td>
-			<td>
-				<TeamRowMenu team={team} editPage={editPage} />
-			</td>
+			{!tournament.ctx.isFinalized ? (
+				<td>
+					<TeamRowMenu team={team} editPage={editPage} />
+				</td>
+			) : null}
 			<td>
 				<CheckInCell team={team} />
 			</td>

@@ -146,7 +146,7 @@
 }
 
 .listBox {
-	max-height: 300px;
+	max-height: 325px;
 	overflow-y: auto;
 	padding: var(--s-2);
 	outline: none;

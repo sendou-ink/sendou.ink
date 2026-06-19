@@ -388,10 +388,6 @@
 		visibility: hidden;
 	}
 
-	.reserve-one-lb {
-		min-height: 1lh;
-	}
-
 	.whitespace-pre-wrap {
 		white-space: pre-wrap;
 	}
