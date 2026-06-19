@@ -21,7 +21,7 @@
 	"actionButtons.transferOwnership.confirm": "转让",
 	"deleteTeam.header": "您确定要删除队伍 {{teamName}} 吗？",
 	"deleteTeam.profilePicture.header": "您确定要移除该队伍的队徽图片吗？",
-	"deleteTeam.banner.header": "确定要移除该队伍的横幅图片吗？",
+	"deleteTeam.banner.header": "您确定要移除该队伍的横幅图片吗？",
 	"roles.CAPTAIN": "队长",
 	"roles.CO_CAPTAIN": "副队长",
 	"roles.FRONTLINE": "前排",
