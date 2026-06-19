@@ -4,6 +4,7 @@ import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 import type { FetcherWithComponents } from "react-router";
 import { useFetcher, useLocation } from "react-router";
+import { isPlainObject } from "remeda";
 import type { z } from "zod";
 import { FormMessage } from "~/components/FormMessage";
 import { SubmitButton } from "~/components/SubmitButton";
@@ -632,10 +633,12 @@ function buildInitialValues<T extends z.ZodRawShape>(
 		const defaultValue = defaultValues?.[key as keyof typeof defaultValues];
 		if (defaultValue !== undefined) {
 			if (formField?.type === "array" && Array.isArray(defaultValue)) {
+				// only object-array (fieldset) items get a stable `_key`; spreading would
+				// collapse non-plain objects like `Date` into `{}`, so leave those intact
 				result[key] = (defaultValue as unknown[]).map((item) =>
-					typeof item === "object" && item !== null
+					isPlainObject(item)
 						? {
-								...(item as Record<string, unknown>),
+								...item,
 								_key: crypto.randomUUID(),
 							}
 						: item,

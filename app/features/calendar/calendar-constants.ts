@@ -64,7 +64,6 @@ export const CALENDAR_EVENT = {
 	MAX_AMOUNT_OF_DATES: 5,
 	/** Calendar event tag that is persisted in the database */
 	TAGS: Object.keys(tags) as Array<CalendarEventTag>,
-	AVATAR_SIZE: 512,
 };
 
 export const REG_CLOSES_AT_OPTIONS = [

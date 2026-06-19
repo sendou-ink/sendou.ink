@@ -125,8 +125,9 @@ function BracketReset() {
 function BracketProgressionEdit() {
 	const tournament = useTournament();
 	const fetcher = useFetcher();
-	const [bracketProgressionErrored, setBracketProgressionErrored] =
-		React.useState(false);
+	const [bracketProgression, setBracketProgression] = React.useState<
+		Progression.ParsedBracket[] | null
+	>(tournament.ctx.settings.bracketProgression);
 
 	const disabledBracketIdxs = tournament.brackets
 		.filter((bracket) => !bracket.preview)
@@ -134,6 +135,13 @@ function BracketProgressionEdit() {
 
 	return (
 		<fetcher.Form method="post">
+			{bracketProgression ? (
+				<input
+					type="hidden"
+					name="bracketProgression"
+					value={JSON.stringify(bracketProgression)}
+				/>
+			) : null}
 			<BracketProgressionSelector
 				initialBrackets={Progression.validatedBracketsToInputFormat(
 					tournament.ctx.settings.bracketProgression,
@@ -142,13 +150,13 @@ function BracketProgressionEdit() {
 					disabled: disabledBracketIdxs.includes(idx),
 				}))}
 				isInvitationalTournament={tournament.isInvitational}
-				setErrored={setBracketProgressionErrored}
+				onChange={setBracketProgression}
 				isTournamentInProgress
 			/>
 			<div className="stack md horizontal justify-center mt-6">
 				<SubmitButton
 					_action="UPDATE_TOURNAMENT_PROGRESSION"
-					isDisabled={bracketProgressionErrored}
+					isDisabled={!bracketProgression}
 				>
 					Save changes
 				</SubmitButton>

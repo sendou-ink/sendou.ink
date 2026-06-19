@@ -25,7 +25,7 @@ import {
 import { CALENDAR_EVENT, CALENDAR_EVENT_RESULT } from "./calendar-constants";
 import * as CalendarEvent from "./core/CalendarEvent";
 
-export const calendarEventTagSchema = z
+const calendarEventTagSchema = z
 	.string()
 	.refine((val) => CALENDAR_EVENT.TAGS.includes(val as CalendarEventTag));
 

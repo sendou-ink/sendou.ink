@@ -197,18 +197,6 @@ function prefixZero(number: number) {
 	return number < 10 ? `0${number}` : number;
 }
 
-/**
- * Retrieves a new Date object that is offset by several hours.
- *
- * NOTE: it is important that we work with & return a copy of the date here,
- *  otherwise we will just be mutating the original date passed into this function.
- */
-export function getDateWithHoursOffset(date: Date, hoursOffset: number) {
-	const copiedDate = new Date(date.getTime());
-	copiedDate.setHours(date.getHours() + hoursOffset);
-	return copiedDate;
-}
-
 export function getDateAtNextFullHour(date: Date) {
 	const copiedDate = new Date(date.getTime());
 	if (

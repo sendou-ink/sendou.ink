@@ -89,9 +89,7 @@ test.describe("Tournament Organization", () => {
 
 		await page.getByTestId("admin-tab").click();
 		await page.getByTestId("edit-event-info-button").click();
-		await expect(page.getByTestId("calendar-event-name-input")).toHaveValue(
-			"PICNIC #2",
-		);
+		await expect(page.getByLabel(/^Name *\*?$/)).toHaveValue("PICNIC #2");
 	});
 
 	test("banned player cannot join a tournament of that organization", async ({

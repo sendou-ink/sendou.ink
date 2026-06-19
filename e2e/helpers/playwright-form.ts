@@ -92,6 +92,14 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 		return resolveTranslation(metadata.label);
 	};
 
+	// match the whole label (allowing the trailing space and optional required " *" the
+	// Label component always renders) so a short label like "Name" doesn't also pick up
+	// "Bracket's name" or "Require in-game names"
+	const byLabel = (label: string) => {
+		const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		return page.getByLabel(new RegExp(`^${escaped} *\\*?$`, "i"));
+	};
+
 	const getItemLabel = (name: string, itemValue: string): string => {
 		const metadata = getFieldMetadata(name);
 		if (!metadata || !("items" in metadata) || !Array.isArray(metadata.items)) {
@@ -117,12 +125,12 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 
 		async fill(name, value) {
 			const label = getLabel(String(name));
-			await page.getByLabel(label).fill(value);
+			await byLabel(label).fill(value);
 		},
 
 		async check(name) {
 			const label = getLabel(String(name));
-			const locator = page.getByLabel(label);
+			const locator = byLabel(label);
 			const isChecked = await locator.isChecked();
 			if (!isChecked) {
 				await locator.click({ force: true });
@@ -131,7 +139,7 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 
 		async uncheck(name) {
 			const label = getLabel(String(name));
-			const locator = page.getByLabel(label);
+			const locator = byLabel(label);
 			const isChecked = await locator.isChecked();
 			if (isChecked) {
 				await locator.click({ force: true });
@@ -167,7 +175,7 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 
 		async select(name, optionValue) {
 			const label = getLabel(String(name));
-			const locator = page.getByLabel(label);
+			const locator = byLabel(label);
 			const tagName = await locator.evaluate((el) => el.tagName.toLowerCase());
 
 			const metadata = getFieldMetadata(String(name));
