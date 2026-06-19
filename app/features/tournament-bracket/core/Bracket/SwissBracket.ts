@@ -368,7 +368,12 @@ export class SwissBracket extends Bracket {
 						if (a.setLosses < b.setLosses) return -1;
 						if (a.setLosses > b.setLosses) return 1;
 
-						// TIEBREAKER 2) wins against tied - ensure that a team who beat more teams that are tied with them is placed higher
+						// TIEBREAKER 2) losses against tied - a team that lost to fewer of the
+						// teams it is tied with is placed higher. Unlike round robin (which uses
+						// wins against tied), Swiss counts losses because not every tied team has
+						// played each other: rewarding wins would unfairly favor teams who simply
+						// faced more of their tied peers, whereas penalizing head-to-head losses is
+						// schedule-independent. (winsAgainstTied is still tracked for display only.)
 						if (a.lossesAgainstTied > b.lossesAgainstTied) return 1;
 						if (a.lossesAgainstTied < b.lossesAgainstTied) return -1;
 

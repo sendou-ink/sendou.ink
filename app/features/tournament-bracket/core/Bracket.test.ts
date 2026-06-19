@@ -29,6 +29,59 @@ describe("swiss standings - losses against tied", () => {
 		expect(standing.stats?.lossesAgainstTied).toBe(1);
 	});
 
+	it("breaks ties on losses against tied, not wins against tied", () => {
+		const tournament = new Tournament({
+			...LOW_INK_DECEMBER_2024(),
+			simulateBrackets: false,
+		});
+
+		const standings = tournament.bracketByIdx(0)!.currentStandings(false);
+
+		// Both teams finished 4-2 in the same Swiss group. Team 16872 beat MORE of
+		// its tied peers (winsAgainstTied=2) than team 17505 (winsAgainstTied=1),
+		// but Swiss intentionally ranks on losses against tied (not wins), because
+		// not every tied team has played each other. Both lost to zero tied peers,
+		// so the tiebreaker is a draw and the higher opponent set win % wins out —
+		// placing 17505 above 16872 despite 16872's extra win against a tied team.
+		const moreWinsVsTied = standings.find((s) => s.team.id === 16872);
+		const higherOpponentWinPct = standings.find((s) => s.team.id === 17505);
+		invariant(moreWinsVsTied && higherOpponentWinPct, "Standings not found");
+
+		expect(moreWinsVsTied.stats?.winsAgainstTied).toBe(2);
+		expect(higherOpponentWinPct.stats?.winsAgainstTied).toBe(1);
+		expect(moreWinsVsTied.stats?.lossesAgainstTied).toBe(0);
+		expect(higherOpponentWinPct.stats?.lossesAgainstTied).toBe(0);
+
+		expect(higherOpponentWinPct.placement).toBeLessThan(
+			moreWinsVsTied.placement,
+		);
+	});
+
+	it("ranks fewer losses against tied above a higher opponent set win %", () => {
+		const tournament = new Tournament({
+			...LOW_INK_DECEMBER_2024(),
+			simulateBrackets: false,
+		});
+
+		const standings = tournament.bracketByIdx(0)!.currentStandings(false);
+
+		// Both teams finished 4-2 in the same Swiss group. Team 16996 lost to none
+		// of its tied peers while team 17067 lost to one, even though 17067 has the
+		// higher opponent set win %. The losses-against-tied tiebreaker is applied
+		// before opponent win %, so 16996 is placed higher.
+		const noTiedLosses = standings.find((s) => s.team.id === 16996);
+		const oneTiedLoss = standings.find((s) => s.team.id === 17067);
+		invariant(noTiedLosses && oneTiedLoss, "Standings not found");
+
+		expect(noTiedLosses.stats?.lossesAgainstTied).toBe(0);
+		expect(oneTiedLoss.stats?.lossesAgainstTied).toBe(1);
+		expect(oneTiedLoss.stats?.opponentSetWinPercentage).toBeGreaterThan(
+			noTiedLosses.stats!.opponentSetWinPercentage!,
+		);
+
+		expect(noTiedLosses.placement).toBeLessThan(oneTiedLoss.placement);
+	});
+
 	it("should ignore early dropped out teams for standings (losses against tied)", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
