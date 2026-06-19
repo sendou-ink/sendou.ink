@@ -112,6 +112,7 @@ export function adminRegistrationFormSchemaServer({
 
 			if (
 				tournament.ctx.settings.requireInGameNames &&
+				!member.inGameName &&
 				!memberUser.inGameName
 			) {
 				ctx.addIssue({
