@@ -17,8 +17,8 @@ import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
+import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
-import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { metaTags } from "~/utils/remix";
@@ -39,6 +39,8 @@ import { loader } from "../loaders/q.looking.server";
 import {
 	FULL_GROUP_SIZE,
 	IS_Q_LOOKING_MOBILE_BREAKPOINT,
+	SENDOUQ_LOOKING_ROOM,
+	sqGroupWebsocketRoom,
 } from "../q-constants";
 
 export { action, loader };
@@ -79,7 +81,16 @@ function QLookingPage() {
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
 	const [searchParams] = useSearchParams();
-	useAutoRefresh(data.lastUpdated);
+
+	// Pool-shape changes (a group joining/leaving, a morph, a match starting) are
+	// broadcast to this shared room so every looking client revalidates.
+	useWebsocketRevalidation(SENDOUQ_LOOKING_ROOM);
+	// Group-specific updates (e.g. a received like) are pushed to the group's own
+	// dedicated topic.
+	useWebsocketRevalidation(
+		data.ownGroup ? sqGroupWebsocketRoom(data.ownGroup.id) : "",
+		Boolean(data.ownGroup),
+	);
 
 	const wasTryingToJoinAnotherTeam = searchParams.get("joining") === "true";
 

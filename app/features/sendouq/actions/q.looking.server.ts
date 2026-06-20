@@ -16,6 +16,7 @@ import { navIconUrl, SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
 import { groupAfterMorph } from "../core/groups";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import * as PrivateUserNoteRepository from "../PrivateUserNoteRepository.server";
+import { SENDOUQ_LOOKING_ROOM, sqGroupWebsocketRoom } from "../q-constants";
 import { lookingSchema } from "../q-schemas.server";
 import { resolveFutureMatchModes } from "../q-utils";
 import { SendouQError, setGroupChatMetadata } from "../q-utils.server";
@@ -31,6 +32,28 @@ export const action: ActionFunction = async ({ request }) => {
 	});
 	const currentGroup = SendouQ.findOwnGroup(user.id);
 	if (!currentGroup) return null;
+
+	const broadcastLookingUpdate = () =>
+		ChatSystemMessage.send({
+			room: SENDOUQ_LOOKING_ROOM,
+			revalidateOnly: true,
+			authorUserId: user.id,
+		});
+
+	const revalidateGroupTopic = (groupId: number) =>
+		ChatSystemMessage.send({
+			room: sqGroupWebsocketRoom(groupId),
+			revalidateOnly: true,
+			authorUserId: user.id,
+		});
+
+	const notifyLikeReceived = (groupId: number) =>
+		ChatSystemMessage.send({
+			room: sqGroupWebsocketRoom(groupId),
+			type: "LIKE_RECEIVED",
+			revalidateOnly: true,
+			authorUserId: user.id,
+		});
 
 	try {
 		// this throws because there should normally be no way user loses ownership by the action of some other user
@@ -49,17 +72,8 @@ export const action: ActionFunction = async ({ request }) => {
 					targetGroupId: data.targetGroupId,
 				});
 
-				const targetChatCode = SendouQ.findUncensoredGroupById(
-					data.targetGroupId,
-				)?.chatCode;
-				if (targetChatCode) {
-					ChatSystemMessage.send({
-						room: targetChatCode,
-						type: "LIKE_RECEIVED",
-						revalidateOnly: true,
-						authorUserId: user.id,
-					});
-				}
+				notifyLikeReceived(data.targetGroupId);
+				revalidateGroupTopic(currentGroup.id);
 
 				break;
 			}
@@ -71,17 +85,8 @@ export const action: ActionFunction = async ({ request }) => {
 					targetGroupId: data.targetGroupId,
 				});
 
-				const targetChatCode = SendouQ.findUncensoredGroupById(
-					data.targetGroupId,
-				)?.chatCode;
-				if (targetChatCode) {
-					ChatSystemMessage.send({
-						room: targetChatCode,
-						type: "LIKE_RECEIVED",
-						revalidateOnly: true,
-						authorUserId: user.id,
-					});
-				}
+				notifyLikeReceived(data.targetGroupId);
+				revalidateGroupTopic(currentGroup.id);
 				break;
 			}
 			case "UNLIKE": {
@@ -91,6 +96,9 @@ export const action: ActionFunction = async ({ request }) => {
 					likerGroupId: currentGroup.id,
 					targetGroupId: data.targetGroupId,
 				});
+
+				revalidateGroupTopic(data.targetGroupId);
+				revalidateGroupTopic(currentGroup.id);
 
 				break;
 			}
@@ -139,6 +147,8 @@ export const action: ActionFunction = async ({ request }) => {
 						members: survivingGroup.members,
 					});
 				}
+
+				broadcastLookingUpdate();
 
 				break;
 			}
@@ -197,22 +207,23 @@ export const action: ActionFunction = async ({ request }) => {
 					});
 				}
 
-				if (ownGroup.chatCode && theirGroup.chatCode) {
-					ChatSystemMessage.send([
-						{
-							room: ownGroup.chatCode,
-							type: "MATCH_STARTED",
-							revalidateOnly: true,
-							authorUserId: user.id,
-						},
-						{
-							room: theirGroup.chatCode,
-							type: "MATCH_STARTED",
-							revalidateOnly: true,
-							authorUserId: user.id,
-						},
-					]);
-				}
+				// Both groups revalidate (→ redirected to the match by their looking
+				// loader) and play the match sound. Sent to the groups' topics so it
+				// reaches every member reliably, not just live chat participants.
+				ChatSystemMessage.send([
+					{
+						room: sqGroupWebsocketRoom(ownGroup.id),
+						type: "MATCH_STARTED",
+						revalidateOnly: true,
+						authorUserId: user.id,
+					},
+					{
+						room: sqGroupWebsocketRoom(theirGroup.id),
+						type: "MATCH_STARTED",
+						revalidateOnly: true,
+						authorUserId: user.id,
+					},
+				]);
 
 				notify({
 					userIds: [
@@ -228,6 +239,8 @@ export const action: ActionFunction = async ({ request }) => {
 					},
 				});
 
+				broadcastLookingUpdate();
+
 				throw redirect(sendouQMatchPage(createdMatch.id));
 			}
 			case "GIVE_MANAGER": {
@@ -241,6 +254,8 @@ export const action: ActionFunction = async ({ request }) => {
 
 				await refreshSendouQInstance();
 
+				revalidateGroupTopic(currentGroup.id);
+
 				break;
 			}
 			case "REMOVE_MANAGER": {
@@ -253,6 +268,8 @@ export const action: ActionFunction = async ({ request }) => {
 				});
 
 				await refreshSendouQInstance();
+
+				revalidateGroupTopic(currentGroup.id);
 
 				break;
 			}
@@ -274,6 +291,8 @@ export const action: ActionFunction = async ({ request }) => {
 					});
 				}
 
+				broadcastLookingUpdate();
+
 				throw redirect(SENDOUQ_PAGE);
 			}
 			case "KICK_FROM_GROUP": {
@@ -292,12 +311,16 @@ export const action: ActionFunction = async ({ request }) => {
 					});
 				}
 
+				broadcastLookingUpdate();
+
 				break;
 			}
 			case "REFRESH_GROUP": {
 				await SQGroupRepository.refreshGroup(currentGroup.id);
 
 				await refreshSendouQInstance();
+
+				broadcastLookingUpdate();
 
 				break;
 			}
@@ -308,6 +331,8 @@ export const action: ActionFunction = async ({ request }) => {
 				});
 
 				await refreshSendouQInstance();
+
+				broadcastLookingUpdate();
 
 				break;
 			}

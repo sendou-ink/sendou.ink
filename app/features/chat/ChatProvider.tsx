@@ -442,22 +442,27 @@ function ChatProviderInner({
 	);
 
 	const subscribe = React.useCallback((chatCode: string) => {
+		logger.debug("WS SUBSCRIBE:", chatCode);
 		ws.current?.send(JSON.stringify({ event: "SUBSCRIBE", chatCode }));
 	}, []);
 
 	const unsubscribe = React.useCallback((chatCode: string) => {
+		logger.debug("WS UNSUBSCRIBE:", chatCode);
 		ws.current?.send(JSON.stringify({ event: "UNSUBSCRIBE", chatCode }));
 	}, []);
 
 	const subscribeTopic = React.useCallback((topic: string) => {
+		logger.debug("WS SUBSCRIBE_TOPIC:", topic);
 		ws.current?.send(JSON.stringify({ event: "SUBSCRIBE_TOPIC", topic }));
 	}, []);
 
 	const unsubscribeTopic = React.useCallback((topic: string) => {
+		logger.debug("WS UNSUBSCRIBE_TOPIC:", topic);
 		ws.current?.send(JSON.stringify({ event: "UNSUBSCRIBE_TOPIC", topic }));
 	}, []);
 
 	const requestHistory = React.useCallback((chatCode: string) => {
+		logger.debug("WS CHAT_HISTORY:", chatCode);
 		ws.current?.send(JSON.stringify({ event: "CHAT_HISTORY", chatCode }));
 	}, []);
 

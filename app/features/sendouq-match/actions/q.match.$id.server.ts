@@ -10,6 +10,7 @@ import {
 	SendouQ,
 } from "~/features/sendouq/core/SendouQ.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
+import { SENDOUQ_LOOKING_ROOM } from "~/features/sendouq/q-constants";
 import { SendouQError } from "~/features/sendouq/q-utils.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/GroupMatchContinueVoteRepository.server";
@@ -159,6 +160,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					});
 				}
 
+				// The group re-enters the looking pool, so refresh every looking client.
+				ChatSystemMessage.send({
+					room: SENDOUQ_LOOKING_ROOM,
+					revalidateOnly: true,
+					authorUserId: user.id,
+				});
+
 				break;
 			}
 			case "CAST_CONTINUE_VOTE": {
@@ -223,6 +231,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					}
 
 					await refreshSendouQInstance();
+
+					// The continuing group re-enters the looking pool, so refresh
+					// every looking client.
+					ChatSystemMessage.send({
+						room: SENDOUQ_LOOKING_ROOM,
+						revalidateOnly: true,
+						authorUserId: user.id,
+					});
 				}
 
 				if (match.chatCode) {

@@ -18,6 +18,15 @@ export const ACTION_TAB_AFTER_LOCKED_SECONDS = 24 * 60 * 60; // 24 hours
 
 export const JOIN_CODE_SEARCH_PARAM_KEY = "join";
 
+/** Skalop topic that every user on the looking page subscribes to. */
+export const SENDOUQ_LOOKING_ROOM = "sq-looking";
+
+/**
+ * Skalop topic for revalidation messages targeted at a single group (e.g. a
+ * received like)
+ * */
+export const sqGroupWebsocketRoom = (groupId: number) => `sq-group__${groupId}`;
+
 export const USER_SKILLS_CACHE_KEY = "user-skills";
 
 /** Breakpoint (in px) for the main container after which we switch from 3-column layout to tabs */

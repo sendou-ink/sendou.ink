@@ -15,7 +15,11 @@ import {
 	SUSPENDED_PAGE,
 } from "~/utils/urls";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
-import { JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
+import {
+	JOIN_CODE_SEARCH_PARAM_KEY,
+	SENDOUQ_LOOKING_ROOM,
+	sqGroupWebsocketRoom,
+} from "../q-constants";
 import { frontPageSchema } from "../q-schemas.server";
 import { userCanJoinQueueAt } from "../q-utils";
 import {
@@ -55,6 +59,16 @@ export const action: ActionFunction = async ({ request, url }) => {
 				}
 
 				await refreshSendouQInstance();
+
+				// Joining directly creates an ACTIVE group that enters the pool, so
+				// refresh every looking client. (A PREPARING group isn't in the pool.)
+				if (data.direct === "true") {
+					ChatSystemMessage.send({
+						room: SENDOUQ_LOOKING_ROOM,
+						revalidateOnly: true,
+						authorUserId: user.id,
+					});
+				}
 
 				return redirect(
 					data.direct === "true"
@@ -97,6 +111,25 @@ export const action: ActionFunction = async ({ request, url }) => {
 					setGroupChatMetadata({
 						chatCode: joinedGroup.chatCode,
 						members: joinedGroup.members,
+					});
+				}
+
+				if (groupInvitedTo.status === "PREPARING") {
+					// A preparing group isn't in the pool, so notify just its existing
+					// members (on the preparing page) via the group topic.
+					ChatSystemMessage.send({
+						room: sqGroupWebsocketRoom(groupInvitedTo.id),
+						revalidateOnly: true,
+						authorUserId: user.id,
+					});
+				} else {
+					// Joining an active group changes its size/suitability for the whole
+					// pool, so refresh every looking client — which already includes the
+					// group's own existing members.
+					ChatSystemMessage.send({
+						room: SENDOUQ_LOOKING_ROOM,
+						revalidateOnly: true,
+						authorUserId: user.id,
 					});
 				}
 
