@@ -1009,7 +1009,7 @@ function StatChartPopover(props: StatChartProps) {
 				<SendouButton
 					shape="circle"
 					variant="minimal"
-					size="small"
+					size={props.simple ? "miniscule" : "small"}
 					icon={<FlaskConical />}
 				/>
 			}
@@ -1643,19 +1643,21 @@ function DamageTable({
 
 					return (
 						<tr key={val.id}>
-							<td className="stack horizontal xs items-center">
-								{damageIsSubWeaponDamage(val) ? (
-									<Image
-										alt=""
-										path={subWeaponImageUrl(val.subWeaponId)}
-										width={12}
-										height={12}
-									/>
-								) : null}{" "}
-								{t(typeRowName as any)}{" "}
-								{damageIsSubWeaponDamage(val) && val.type === "SPLASH" ? (
-									<>({t("analyzer:damage.SPLASH")})</>
-								) : null}
+							<td>
+								<div className="stack horizontal xs items-center">
+									{damageIsSubWeaponDamage(val) ? (
+										<Image
+											alt=""
+											path={subWeaponImageUrl(val.subWeaponId)}
+											width={12}
+											height={12}
+										/>
+									) : null}{" "}
+									{t(typeRowName as any)}{" "}
+									{damageIsSubWeaponDamage(val) && val.type === "SPLASH" ? (
+										<>({t("analyzer:damage.SPLASH")})</>
+									) : null}
+								</div>
 							</td>
 							{showDistanceColumn && (
 								<td>
@@ -1679,7 +1681,7 @@ function DamageTable({
 								</td>
 							)}
 							{showPopovers ? (
-								<td>
+								<td className={styles.popoverCell}>
 									{renderPopover(val, (val as SubWeaponDamage).subWeaponId) ? (
 										<StatChartPopover
 											mainWeaponId={0}

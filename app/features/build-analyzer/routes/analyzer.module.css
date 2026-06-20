@@ -255,6 +255,12 @@
 	align-items: center;
 }
 
+/* doubled class to outweigh the Table cell padding rule so the popover
+   button does not make these rows taller than the text-only rows */
+.popoverCell.popoverCell {
+	padding-block: 0;
+}
+
 .statPopover {
 	min-width: 360px;
 
