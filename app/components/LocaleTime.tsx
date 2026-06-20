@@ -36,6 +36,10 @@ export function LocaleTime({
 
 	return (
 		<time
+			// Hydration warnings are suppressed because callers may pass a live "now" value (e.g. a clock)
+			// whose server and client render instants differ slightly, which would otherwise mismatch the
+			// `dateTime` attribute. For fixed dates the ISO string is deterministic, so nothing real is masked.
+			suppressHydrationWarning
 			data-testid={testId}
 			dateTime={dateObject.toISOString()}
 			className={clsx(
