@@ -1,12 +1,3 @@
-.identicon {
-	filter: blur(99px);
-	transition: filter 0.3s;
-}
-
-.loaded {
-	filter: blur(0);
-}
-
 .avatarWrapper {
 	flex-shrink: 0;
 	width: fit-content;
