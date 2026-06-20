@@ -18,7 +18,11 @@ import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
 import { frontPageSchema } from "../q-schemas.server";
 import { userCanJoinQueueAt } from "../q-utils";
-import { SendouQError, setGroupChatMetadata } from "../q-utils.server";
+import {
+	SendouQError,
+	setGroupChatMetadata,
+	sqRedirectIfNeeded,
+} from "../q-utils.server";
 
 export const action: ActionFunction = async ({ request, url }) => {
 	const user = requireUser();
@@ -30,6 +34,11 @@ export const action: ActionFunction = async ({ request, url }) => {
 	try {
 		switch (data._action) {
 			case "JOIN_QUEUE": {
+				sqRedirectIfNeeded({
+					ownGroup: SendouQ.findOwnGroup(user.id),
+					currentLocation: "default",
+				});
+
 				await validateCanJoinQ(user);
 
 				const { chatCodeToRevalidate } = await SQGroupRepository.createGroup({

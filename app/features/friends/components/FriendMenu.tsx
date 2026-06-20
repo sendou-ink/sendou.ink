@@ -12,7 +12,7 @@ import {
 import { ListButton } from "~/components/SideNav";
 import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
-import { SENDOUQ_LOOKING_PAGE, tournamentSubsPage } from "~/utils/urls";
+import { SENDOUQ_PAGE, tournamentSubsPage } from "~/utils/urls";
 
 export function FriendMenu({
 	discordId,
@@ -54,7 +54,7 @@ export function FriendMenu({
 			})
 		: null;
 
-	const activityHref = resolveActivityHref({ subtitle, tournamentId });
+	const activity = resolveActivity({ subtitle, tournamentId });
 
 	return (
 		<>
@@ -73,15 +73,27 @@ export function FriendMenu({
 					<SendouMenuItem href={url} icon={<User />} onAction={onNavigate}>
 						{t("friends:friendsList.viewUserPage")}
 					</SendouMenuItem>
-					{activityHref ? (
+					{activity?.type === "sendouq" ? (
 						<SendouMenuItem
-							href={activityHref.url}
+							icon={<Swords />}
+							onAction={() => {
+								fetcher.submit(
+									{ _action: "JOIN_QUEUE", direct: "true" },
+									{ method: "post", action: SENDOUQ_PAGE },
+								);
+								onNavigate?.();
+							}}
+						>
+							{t("friends:friendsList.joinSendouQ")}
+						</SendouMenuItem>
+					) : null}
+					{activity?.type === "tournament" ? (
+						<SendouMenuItem
+							href={activity.url}
 							icon={<Swords />}
 							onAction={onNavigate}
 						>
-							{activityHref.isSendouQ
-								? t("friends:friendsList.joinSendouQ")
-								: t("friends:friendsList.viewTournament")}
+							{t("friends:friendsList.viewTournament")}
 						</SendouMenuItem>
 					) : null}
 					{friendshipId !== undefined ? (
@@ -130,18 +142,21 @@ export function FriendMenu({
 	);
 }
 
-function resolveActivityHref(friend: {
+function resolveActivity(friend: {
 	subtitle: string | null;
 	tournamentId: number | null;
 }) {
 	if (!friend.subtitle) return null;
 
 	if (friend.subtitle === SENDOUQ_ACTIVITY_LABEL) {
-		return { url: SENDOUQ_LOOKING_PAGE, isSendouQ: true };
+		return { type: "sendouq" } as const;
 	}
 
 	if (friend.tournamentId) {
-		return { url: tournamentSubsPage(friend.tournamentId), isSendouQ: false };
+		return {
+			type: "tournament",
+			url: tournamentSubsPage(friend.tournamentId),
+		} as const;
 	}
 
 	return null;
