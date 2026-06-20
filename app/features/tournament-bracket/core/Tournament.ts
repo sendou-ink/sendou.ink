@@ -675,12 +675,17 @@ export class Tournament {
 
 		// for small tournaments there should be no risk that the pool gets full
 		// so to make it more convenient just use same suffix every match
-		const globalSuffix = this.ctx.teams.length <= 20 ? this.ctx.id % 10 : null;
+		// pool numbers are kept in the 1-9 range (0 is not used)
+		const globalSuffix =
+			this.ctx.teams.length <= 20 ? (this.ctx.id % 9) + 1 : null;
 
 		return {
 			prefix,
 			suffix:
-				globalSuffix ?? groupLetters ?? bracketNumber ?? hostingTeamId % 10,
+				globalSuffix ??
+				groupLetters ??
+				bracketNumber ??
+				(hostingTeamId % 9) + 1,
 		};
 	}
 
