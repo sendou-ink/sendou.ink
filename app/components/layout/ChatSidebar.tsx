@@ -170,9 +170,27 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 		minute: "numeric",
 	});
 
-	const otherRoomsUnreadCount = Object.entries(chatContext.unreadCounts)
-		.filter(([code]) => code !== activeRoom)
-		.reduce((sum, [, count]) => sum + count, 0);
+	const rawRouteChatCode = useCurrentRouteChatCode();
+	const routeChatCodes = rawRouteChatCode
+		? Array.isArray(rawRouteChatCode)
+			? rawRouteChatCode
+			: [rawRouteChatCode]
+		: [];
+
+	// Mirror the room list's badge visibility (RoomList): only rooms that are
+	// visible (non-expired or in route) and not obsolete contribute, so the
+	// back-arrow total can't outrun what the list can actually show.
+	const otherRoomsUnreadCount = chatContext.rooms
+		.filter(
+			(room) =>
+				room.chatCode !== activeRoom &&
+				!room.isObsolete &&
+				(room.expiresAt > Date.now() || routeChatCodes.includes(room.chatCode)),
+		)
+		.reduce(
+			(sum, room) => sum + (chatContext.unreadCounts[room.chatCode] ?? 0),
+			0,
+		);
 
 	const room = chatContext.rooms.find((r) => r.chatCode === activeRoom);
 	const roomExpired = Boolean(room?.expiresAt && room.expiresAt < Date.now());

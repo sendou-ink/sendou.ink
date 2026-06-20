@@ -517,6 +517,7 @@ function ChatProviderInner({
 		unsubscribe,
 		setRooms,
 		setMessagesByRoom,
+		setUnreadCounts,
 		requestHistory,
 		messagesByRoom,
 	});
@@ -586,6 +587,7 @@ function useChatRouteSync({
 	unsubscribe,
 	setRooms,
 	setMessagesByRoom,
+	setUnreadCounts,
 	requestHistory,
 	messagesByRoom,
 }: {
@@ -603,6 +605,7 @@ function useChatRouteSync({
 	setMessagesByRoom: React.Dispatch<
 		React.SetStateAction<Record<string, ChatMessage[]>>
 	>;
+	setUnreadCounts: React.Dispatch<React.SetStateAction<Record<string, number>>>;
 	requestHistory: (chatCode: string) => void;
 	messagesByRoom: Record<string, ChatMessage[]>;
 }) {
@@ -657,6 +660,10 @@ function useChatRouteSync({
 			unsubscribe(code);
 			setRooms((prev) => prev.filter((r) => r.chatCode !== code));
 			setMessagesByRoom((prev) => {
+				const { [code]: _, ...rest } = prev;
+				return rest;
+			});
+			setUnreadCounts((prev) => {
 				const { [code]: _, ...rest } = prev;
 				return rest;
 			});
@@ -736,6 +743,7 @@ function useChatRouteSync({
 		unsubscribe,
 		setRooms,
 		setMessagesByRoom,
+		setUnreadCounts,
 		requestHistory,
 		messagesByRoom,
 	]);
