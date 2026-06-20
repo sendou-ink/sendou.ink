@@ -1,5 +1,5 @@
 .container {
-	height: var(--chart-height, 175px);
+	height: var(--chart-height, 200px);
 	width: var(--chart-width);
 	background-color: var(--chart-bg, var(--color-bg-high));
 	border-radius: var(--radius-box);
@@ -27,8 +27,4 @@
 	border-radius: 100%;
 	width: 12px;
 	height: 12px;
-}
-
-.dotFocused {
-	outline: 3px solid var(--dot-color-outline);
 }
