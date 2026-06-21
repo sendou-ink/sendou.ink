@@ -165,6 +165,44 @@
 	}
 }
 
+.friendRequestsBadge {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-inverse);
+	background-color: var(--color-text-accent);
+	min-width: 18px;
+	height: 18px;
+	padding: 0 var(--s-1);
+	border-radius: 9px;
+	display: grid;
+	place-items: center;
+	margin-inline-end: var(--s-1-5);
+	pointer-events: none;
+}
+
+.sideNavCollapseBadge {
+	position: absolute;
+	top: -5px;
+	inset-inline-end: -5px;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-inverse);
+	background-color: var(--color-text-accent);
+	min-width: 16px;
+	height: 16px;
+	padding: 0 var(--s-0-5);
+	border-radius: 8px;
+	display: grid;
+	place-items: center;
+	line-height: 1;
+	pointer-events: none;
+
+	&.sideNavCollapseBadgeLeft {
+		inset-inline-end: auto;
+		inset-inline-start: -5px;
+	}
+}
+
 .sideNavCollapseButtonContainer {
 	display: none;
 	position: relative;

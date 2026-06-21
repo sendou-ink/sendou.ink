@@ -29,6 +29,7 @@ import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
+import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
 import { useVisualViewportHeight } from "~/hooks/useVisualViewportHeight";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
@@ -235,7 +236,7 @@ export function Layout({
 		setChatSidebarOpen(open);
 	};
 
-	const { t } = useTranslation(["front", "common"]);
+	const { t } = useTranslation(["front", "common", "friends"]);
 	const { formatRelativeDate } = useRelativeDayFormat();
 	const isHydrated = useHydrated();
 	const location = useLocation();
@@ -265,6 +266,9 @@ export function Layout({
 	const sidebarData = data?.sidebar;
 	const events = sidebarData?.events ?? [];
 	const friends = sidebarData?.friends ?? [];
+	const unseenFriendRequests = useUnseenFriendRequests(
+		sidebarData?.incomingFriendRequestIds ?? [],
+	);
 	const streams = sidebarData?.streams ?? [];
 
 	const isFrontPage = location.pathname === "/";
@@ -326,10 +330,23 @@ export function Layout({
 				icon={<Users />}
 				action={
 					user ? (
-						<Link to={FRIENDS_PAGE} className={styles.viewAllLink}>
-							{t("common:actions.viewAll")}
-							<ChevronRight size={14} />
-						</Link>
+						<>
+							{unseenFriendRequests > 0 ? (
+								<span
+									className={styles.friendRequestsBadge}
+									role="status"
+									aria-label={t("friends:unseenRequests", {
+										count: unseenFriendRequests,
+									})}
+								>
+									{unseenFriendRequests}
+								</span>
+							) : null}
+							<Link to={FRIENDS_PAGE} className={styles.viewAllLink}>
+								{t("common:actions.viewAll")}
+								<ChevronRight size={14} />
+							</Link>
+						</>
 					) : null
 				}
 			>
@@ -391,6 +408,7 @@ export function Layout({
 						<SideNavCollapseButton
 							className={styles.sideNavModalTrigger}
 							showNotificationDot={!sideNavModalOpen && unseenIds.length > 0}
+							badgeCount={!sideNavModalOpen ? unseenFriendRequests : 0}
 							testId="sidenav-modal-trigger"
 						/>
 						<ModalOverlay className={styles.sideNavModalOverlay} isDismissable>
@@ -427,6 +445,7 @@ export function Layout({
 						onToggle={() => setSideNavCollapsed(!sideNavCollapsed)}
 						className={styles.sideNavCollapseButton}
 						showNotificationDot={sideNavCollapsed && unseenIds.length > 0}
+						badgeCount={sideNavCollapsed ? unseenFriendRequests : 0}
 						testId="sidenav-collapse-button"
 					/>
 					<TopNavMenus />
@@ -545,13 +564,17 @@ function SideNavCollapseButton({
 	onToggle,
 	className,
 	showNotificationDot,
+	badgeCount,
 	testId,
 }: {
 	onToggle?: () => void;
 	className?: string;
 	showNotificationDot?: boolean;
+	badgeCount?: number;
 	testId?: string;
 }) {
+	const { t } = useTranslation(["friends"]);
+
 	return (
 		<div className={styles.sideNavCollapseButtonContainer} data-testid={testId}>
 			<SendouButton
@@ -563,6 +586,17 @@ function SideNavCollapseButton({
 				onPress={onToggle}
 			/>
 			{showNotificationDot ? <NotificationDot /> : null}
+			{badgeCount ? (
+				<span
+					className={clsx(styles.sideNavCollapseBadge, {
+						[styles.sideNavCollapseBadgeLeft]: showNotificationDot,
+					})}
+					role="status"
+					aria-label={t("friends:unseenRequests", { count: badgeCount })}
+				>
+					{badgeCount}
+				</span>
+			) : null}
 		</div>
 	);
 }

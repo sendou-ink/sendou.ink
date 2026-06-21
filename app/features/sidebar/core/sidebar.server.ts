@@ -68,16 +68,23 @@ export async function resolveSidebarData(userId: number | null) {
 			friends: [] as SidebarFriend[],
 			streams: await combinedStreamsCached(),
 			savedTournamentIds: [] as number[],
+			incomingFriendRequestIds: [] as number[],
 		};
 	}
 
-	const [tournamentsData, scrimsData, friendsWithActivity, savedTournaments] =
-		await Promise.all([
-			ShowcaseTournaments.categorizedTournamentsByUserId(userId),
-			ScrimPostRepository.findUserScrims(userId),
-			FriendRepository.findByUserIdWithActivity(userId),
-			SavedCalendarEventRepository.upcoming(userId),
-		]);
+	const [
+		tournamentsData,
+		scrimsData,
+		friendsWithActivity,
+		savedTournaments,
+		incomingFriendRequestIds,
+	] = await Promise.all([
+		ShowcaseTournaments.categorizedTournamentsByUserId(userId),
+		ScrimPostRepository.findUserScrims(userId),
+		FriendRepository.findByUserIdWithActivity(userId),
+		SavedCalendarEventRepository.upcoming(userId),
+		FriendRepository.findPendingReceivedRequestIds(userId),
+	]);
 
 	const seenTournamentIds = new Set<number>();
 	const tournamentEvents: SidebarEvent[] = [
@@ -113,6 +120,7 @@ export async function resolveSidebarData(userId: number | null) {
 		friends,
 		streams: await combinedStreamsCached(),
 		savedTournamentIds,
+		incomingFriendRequestIds,
 	};
 }
 

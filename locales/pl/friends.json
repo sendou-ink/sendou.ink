@@ -15,5 +15,9 @@
 	"view.friends": "",
 	"view.teamMembers": "",
 	"view.all": "",
-	"teamMembers.empty": ""
+	"teamMembers.empty": "",
+	"unseenRequests_one": "",
+	"unseenRequests_few": "",
+	"unseenRequests_many": "",
+	"unseenRequests_other": ""
 }

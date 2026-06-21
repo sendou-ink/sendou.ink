@@ -155,6 +155,8 @@
 }
 
 .sideNavHeaderAction {
+	display: flex;
+	align-items: center;
 	margin-inline-start: auto;
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-normal);

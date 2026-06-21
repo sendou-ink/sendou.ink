@@ -236,6 +236,18 @@ export async function findPendingReceivedRequests(receiverId: number) {
 		.execute();
 }
 
+export async function findPendingReceivedRequestIds(
+	receiverId: number,
+): Promise<number[]> {
+	const rows = await db
+		.selectFrom("FriendRequest")
+		.select("FriendRequest.id")
+		.where("FriendRequest.receiverId", "=", receiverId)
+		.execute();
+
+	return rows.map((row) => row.id);
+}
+
 export async function insertFriendship({
 	userOneId,
 	userTwoId,

@@ -15,5 +15,7 @@
 	"view.friends": "Friends",
 	"view.teamMembers": "Team members",
 	"view.all": "All",
-	"teamMembers.empty": "No team members yet"
+	"teamMembers.empty": "No team members yet",
+	"unseenRequests_one": "{{count}} unseen friend request",
+	"unseenRequests_other": "{{count}} unseen friend requests"
 }

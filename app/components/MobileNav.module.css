@@ -353,6 +353,11 @@
 	place-items: center;
 	pointer-events: none;
 	line-height: 1;
+
+	&.tabBadgeLeft {
+		right: auto;
+		left: -8px;
+	}
 }
 
 .noAnimation {
