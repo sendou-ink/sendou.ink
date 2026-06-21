@@ -107,6 +107,11 @@ describe("actuallyNonEmptyStringOrNull", () => {
 		expect(actuallyNonEmptyStringOrNull("\u2800")).toBeNull();
 		expect(actuallyNonEmptyStringOrNull("\u2800\u2800\u2800\u2800")).toBeNull();
 	});
+
+	it("returns null for a string with only variation selectors", () => {
+		expect(actuallyNonEmptyStringOrNull("\ufe0e")).toBeNull();
+		expect(actuallyNonEmptyStringOrNull("\ufe0e\ufe0e")).toBeNull();
+	});
 });
 
 describe("hexCodeWithoutAlpha", () => {
