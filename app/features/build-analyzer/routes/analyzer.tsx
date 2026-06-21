@@ -158,6 +158,7 @@ function BuildAnalyzerPage() {
 		isComparing: !buildIsEmpty(build) && !buildIsEmpty(build2),
 		mainWeaponId,
 		abilityPoints,
+		abilityPoints2,
 	};
 
 	const mainWeaponCategoryItems = [
@@ -999,6 +1000,8 @@ interface StatChartProps {
 	valueSuffix?: string;
 	mainWeaponId: MainWeaponId;
 	simple?: boolean;
+	/** Marks where the current build(s) sit on the curve: `x` ability points, `y` stat value. */
+	highlight?: Array<{ x: number; y: number }>;
 }
 
 function StatChartPopover(props: StatChartProps) {
@@ -1026,6 +1029,7 @@ function StatChart({
 	valueSuffix,
 	mainWeaponId,
 	subWeaponId,
+	highlight,
 }: StatChartProps) {
 	const { t } = useTranslation(["analyzer"]);
 
@@ -1058,10 +1062,13 @@ function StatChart({
 	return (
 		<Chart
 			options={chartOptions as any}
+			containerClassName={styles.statChartContainer}
 			headerSuffix={t("analyzer:abilityPoints.short")}
 			valueSuffix={valueSuffix}
 			xAxis="linear"
 			xAbilityLimit={57}
+			highlight={highlight}
+			crosshair
 		/>
 	);
 }
@@ -1412,7 +1419,7 @@ function StatCard({
 	suffix,
 	popoverInfo,
 	testId,
-	context: { mainWeaponId, abilityPoints, isComparing },
+	context: { mainWeaponId, abilityPoints, abilityPoints2, isComparing },
 }: {
 	title: string;
 	stat: StatTuple | StatTuple<string> | number | string;
@@ -1422,6 +1429,7 @@ function StatCard({
 	context: {
 		mainWeaponId: MainWeaponId;
 		abilityPoints: AbilityPoints;
+		abilityPoints2: AbilityPoints;
 		isComparing: boolean;
 	};
 }) {
@@ -1461,6 +1469,28 @@ function StatCard({
 	const modifiedBy = React.useMemo(() => {
 		return isStaticValue ? [] : [stat[0].modifiedBy].flat();
 	}, [memoKey]);
+
+	const stackableAbility = modifiedBy.find(isStackableAbility);
+	const highlight = (() => {
+		if (isStaticValue || !stackableAbility || !showBuildValue())
+			return undefined;
+
+		const builds = [
+			[abilityPoints, stat[0].value],
+			...(isComparing ? ([[abilityPoints2, stat[1].value]] as const) : []),
+		] as const;
+
+		const points: Array<{ x: number; y: number }> = [];
+		for (const [ap, value] of builds) {
+			if (typeof value !== "number") continue;
+			points.push({
+				x: Math.min(ap.get(stackableAbility) ?? 0, MAX_AP),
+				y: value,
+			});
+		}
+
+		return points.length > 0 ? points : undefined;
+	})();
 
 	return (
 		<div
@@ -1529,6 +1559,7 @@ function StatCard({
 							title={title}
 							valueSuffix={suffix}
 							mainWeaponId={mainWeaponId}
+							highlight={highlight}
 						/>
 					</>
 				)}

@@ -32,6 +32,8 @@ export default function Chart({
 	xTicksLimit,
 	yTicksLimit,
 	xAbilityLimit,
+	highlight,
+	crosshair = false,
 }: {
 	options: [
 		{
@@ -46,15 +48,23 @@ export default function Chart({
 	xTicksLimit?: number;
 	yTicksLimit?: number;
 	xAbilityLimit?: number;
+	/** Marks current positions on the curve, each at ability point `x` and stat value `y` (e.g. one per build being compared). */
+	highlight?: Array<{ x: number; y: number }>;
+	/** When true, draws dashed guide lines from the hovered point to the x- and y-axes. */
+	crosshair?: boolean;
 }) {
 	const isHydrated = useHydrated();
 
 	// Ref to the Chart.js instance, allows proper cleanup between renders to prevent "Canvas is already in use" errors
 	const chartRef = useRef<ChartType<"line"> | null>(null);
 	const chartId = React.useId();
+	// Chart.js re-fires the external tooltip on every redraw; track the last value to skip redundant state updates
+	const lastTooltipSignature = useRef<string | null>(null);
 	const [tooltipData, setTooltipData] = React.useState<{
 		x: number;
 		y: number;
+		flipX: boolean;
+		flipY: boolean;
 		items: Array<{
 			label: React.ReactNode;
 			value: number | null;
@@ -78,9 +88,11 @@ export default function Chart({
 
 	// Get the chart colors from CSS variables
 	const [colors, setColors] = React.useState({
-		accent: "",
-		base: "",
-		info: "",
+		accentHigh: "",
+		infoHigh: "",
+		secondHigh: "",
+		accentLow: "",
+		secondLow: "",
 		border: "",
 		borderHigh: "",
 		text: "",
@@ -91,9 +103,13 @@ export default function Chart({
 			const get = (v: string) =>
 				getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 			setColors({
-				accent: get("--color-text-accent"),
-				base: get("--color-accent"),
-				info: get("--color-info"),
+				// bright "high" variants for the curve lines so they stay legible on the dark chart
+				accentHigh: get("--color-text-accent"),
+				infoHigh: get("--color-info-high"),
+				secondHigh: get("--color-second-high"),
+				// low variants for the highlight marker fills (paired with a light border)
+				accentLow: get("--color-accent-low"),
+				secondLow: get("--color-second-low"),
 				border: get("--color-border"),
 				borderHigh: get("--color-border-high"),
 				text: get("--color-text-high"),
@@ -119,8 +135,14 @@ export default function Chart({
 
 	// Make a color list to use inside ChartData for the borderColor and the external tooltip
 	const colorList = React.useMemo(
-		() => [colors.accent, colors.base, colors.info],
-		[colors.accent, colors.base, colors.info],
+		() => [colors.accentHigh, colors.infoHigh, colors.secondHigh],
+		[colors.accentHigh, colors.infoHigh, colors.secondHigh],
+	);
+
+	// Distinct accent/secondary pair so the highlight markers (e.g. build 1 vs build 2) stay tellable apart in both themes
+	const markerColors = React.useMemo(
+		() => [colors.accentLow, colors.secondLow],
+		[colors.accentLow, colors.secondLow],
 	);
 
 	const datasetColors = React.useCallback(
@@ -140,17 +162,65 @@ export default function Chart({
 	const chartData = React.useMemo(
 		() => ({
 			labels: options[0].data.map((_, i) => i),
-			datasets: options.map((series, i) => ({
-				label: String(i),
-				data: series.data.map((d) => d.secondary),
-				...datasetColors(i),
-				pointRadius: 0,
-				pointHoverRadius: 5,
-				hitRadius: 50,
-				backgroundColor: "transparent",
-			})),
+			datasets: [
+				...options.map((series, i) => ({
+					label: String(i),
+					data: series.data.map((d) => d.secondary),
+					...datasetColors(i),
+					pointRadius: 0,
+					pointHoverRadius: 5,
+					hitRadius: 50,
+					backgroundColor: "transparent",
+				})),
+				...(highlight ?? []).map((point, i) => ({
+					label: "highlight",
+					data: options[0].data.map((_, j) => (j === point.x ? point.y : null)),
+					borderColor: "transparent",
+					backgroundColor: "transparent",
+					pointBackgroundColor: markerColors[i % markerColors.length],
+					pointBorderColor: colors.text,
+					pointBorderWidth: 2,
+					pointRadius: 5,
+					pointHoverRadius: 5,
+					pointHitRadius: 0,
+					showLine: false,
+					// lower order draws on top, so the marker sits above the curves
+					order: -1,
+				})),
+			],
 		}),
-		[options, datasetColors],
+		[options, datasetColors, highlight, markerColors, colors.text],
+	);
+
+	// Draws dashed guide lines from the hovered point to the y-axis (left) and x-axis (bottom)
+	const crosshairPlugin = React.useMemo(
+		() => ({
+			id: "crosshair",
+			afterDatasetsDraw: (chart: ChartType<"line">) => {
+				const active = chart.tooltip?.getActiveElements() ?? [];
+				if (active.length === 0) return;
+
+				const { ctx, chartArea } = chart;
+				const { x, y } = active[0].element as { x: number; y: number };
+
+				ctx.save();
+				ctx.beginPath();
+				ctx.setLineDash([4, 4]);
+				ctx.lineWidth = 1;
+				ctx.strokeStyle = colors.borderHigh || "#888";
+				ctx.moveTo(chartArea.left, y);
+				ctx.lineTo(x, y);
+				ctx.lineTo(x, chartArea.bottom);
+				ctx.stroke();
+				ctx.restore();
+			},
+		}),
+		[colors.borderHigh],
+	);
+
+	const plugins = React.useMemo(
+		() => (crosshair ? [crosshairPlugin] : []),
+		[crosshair, crosshairPlugin],
 	);
 
 	if (!isHydrated) {
@@ -166,6 +236,7 @@ export default function Chart({
 				ref={chartRef}
 				id={chartId}
 				data={chartData}
+				plugins={plugins}
 				options={{
 					animation: false,
 					maintainAspectRatio: false,
@@ -200,27 +271,48 @@ export default function Chart({
 					plugins: {
 						tooltip: {
 							enabled: false,
-							external: ({ tooltip }) => {
+							external: ({ chart, tooltip }) => {
 								if (tooltip.opacity === 0) {
+									lastTooltipSignature.current = null;
 									setTooltipData(null);
 									return;
 								}
-								const items = tooltip.dataPoints.map((dp) => ({
+								// the highlight marker has no entry in `options` and is non-interactive
+								const dataPoints = tooltip.dataPoints.filter(
+									(dp) => dp.datasetIndex < options.length,
+								);
+								if (dataPoints.length === 0) {
+									lastTooltipSignature.current = null;
+									setTooltipData(null);
+									return;
+								}
+								const x = tooltip.caretX;
+								const y = tooltip.caretY;
+								const items = dataPoints.map((dp) => ({
 									label: options[dp.datasetIndex].label,
 									value: dp.parsed.y,
 									color: colorList[dp.datasetIndex % colorList.length],
 								}));
+								const rawPrimary =
+									options[0].data[dataPoints[0].dataIndex]?.primary;
+								const header =
+									rawPrimary instanceof Date
+										? headerFormatter.format(rawPrimary) + (headerSuffix ?? "")
+										: `${dataPoints[0].parsed.x}${headerSuffix ?? ""}`;
+
+								// skip redundant updates from repeated redraws to avoid an infinite render loop
+								const signature = `${x}|${y}|${header}|${items
+									.map((i) => `${i.value}:${i.color}`)
+									.join(",")}`;
+								if (signature === lastTooltipSignature.current) return;
+								lastTooltipSignature.current = signature;
+
 								setTooltipData({
-									x: tooltip.caretX,
-									y: tooltip.caretY,
-									header: (() => {
-										const raw =
-											options[0].data[tooltip.dataPoints[0].dataIndex]?.primary;
-										if (raw instanceof Date) {
-											return headerFormatter.format(raw) + (headerSuffix ?? "");
-										}
-										return `${tooltip.dataPoints[0].parsed.x}${headerSuffix ?? ""}`;
-									})(),
+									x,
+									y,
+									flipX: x > chart.width / 2,
+									flipY: y > chart.height / 2,
+									header,
 									items,
 								});
 							},
@@ -235,6 +327,9 @@ export default function Chart({
 						position: "absolute",
 						left: tooltipData.x,
 						top: tooltipData.y,
+						transform: `translate(${
+							tooltipData.flipX ? "calc(-100% - 8px)" : "8px"
+						}, ${tooltipData.flipY ? "-100%" : "0"})`,
 						pointerEvents: "none",
 					}}
 				>
