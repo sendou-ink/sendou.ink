@@ -44,7 +44,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				ChatSystemMessage.send({
 					room: SENDOUQ_LOOKING_ROOM,
 					revalidateOnly: true,
-					authorUserId: user.id,
 				});
 
 				return redirect(SENDOUQ_LOOKING_PAGE);
@@ -78,7 +77,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					ChatSystemMessage.send({
 						room: chatCodeToRevalidate,
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				}
 
@@ -95,7 +93,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				ChatSystemMessage.send({
 					room: sqGroupWebsocketRoom(ownGroup.id),
 					revalidateOnly: true,
-					authorUserId: user.id,
 				});
 
 				notify({

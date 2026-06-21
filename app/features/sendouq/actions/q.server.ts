@@ -54,7 +54,6 @@ export const action: ActionFunction = async ({ request, url }) => {
 					ChatSystemMessage.send({
 						room: chatCodeToRevalidate,
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				}
 
@@ -66,7 +65,6 @@ export const action: ActionFunction = async ({ request, url }) => {
 					ChatSystemMessage.send({
 						room: SENDOUQ_LOOKING_ROOM,
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				}
 
@@ -100,7 +98,6 @@ export const action: ActionFunction = async ({ request, url }) => {
 					ChatSystemMessage.send({
 						room: chatCodeToRevalidate,
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				}
 
@@ -120,7 +117,6 @@ export const action: ActionFunction = async ({ request, url }) => {
 					ChatSystemMessage.send({
 						room: sqGroupWebsocketRoom(groupInvitedTo.id),
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				} else {
 					// Joining an active group changes its size/suitability for the whole
@@ -129,7 +125,6 @@ export const action: ActionFunction = async ({ request, url }) => {
 					ChatSystemMessage.send({
 						room: SENDOUQ_LOOKING_ROOM,
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				}
 

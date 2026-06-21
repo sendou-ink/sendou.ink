@@ -882,13 +882,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 				room: tournamentMatchWebsocketRoom(matchId),
 				type: "TOURNAMENT_MATCH_UPDATED",
 				revalidateOnly: true,
-				authorUserId: user.id,
 			},
 			...otherMatchIdsToRevalidate.map((id) => ({
 				room: tournamentMatchWebsocketRoom(id),
 				type: "TOURNAMENT_MATCH_UPDATED" as const,
 				revalidateOnly: true as const,
-				authorUserId: user.id,
 			})),
 		]);
 	}
@@ -898,7 +896,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 				room: tournamentWebsocketRoom(tournament.ctx.id),
 				type: "TOURNAMENT_UPDATED",
 				revalidateOnly: true,
-				authorUserId: user.id,
 			},
 		]);
 	}

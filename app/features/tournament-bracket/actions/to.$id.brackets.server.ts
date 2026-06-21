@@ -348,7 +348,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 				room: tournamentWebsocketRoom(tournament.ctx.id),
 				type: "TOURNAMENT_UPDATED",
 				revalidateOnly: true,
-				authorUserId: user.id,
 			},
 		]);
 	}

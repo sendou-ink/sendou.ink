@@ -123,7 +123,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 			sendDroppedMatchChatMessages({
 				tournamentId: tournament.ctx.id,
 				endedMatchIds,
-				authorUserId: user.id,
 			});
 
 			break;
@@ -196,11 +195,9 @@ async function dropTeamOut({
 function sendDroppedMatchChatMessages({
 	tournamentId,
 	endedMatchIds,
-	authorUserId,
 }: {
 	tournamentId: number;
 	endedMatchIds: number[];
-	authorUserId: number;
 }) {
 	if (endedMatchIds.length === 0) return;
 
@@ -209,13 +206,11 @@ function sendDroppedMatchChatMessages({
 			room: tournamentMatchWebsocketRoom(matchId),
 			type: "TOURNAMENT_MATCH_UPDATED" as const,
 			revalidateOnly: true as const,
-			authorUserId,
 		})),
 		{
 			room: tournamentWebsocketRoom(tournamentId),
 			type: "TOURNAMENT_UPDATED" as const,
 			revalidateOnly: true as const,
-			authorUserId,
 		},
 	]);
 }

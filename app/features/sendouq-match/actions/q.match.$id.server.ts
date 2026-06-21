@@ -103,7 +103,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 						ChatSystemMessage.send({
 							room: match.chatCode,
 							revalidateOnly: true,
-							authorUserId: user.id,
 						});
 					}
 				}
@@ -156,7 +155,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					ChatSystemMessage.send({
 						room: match.chatCode,
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				}
 
@@ -164,7 +162,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				ChatSystemMessage.send({
 					room: SENDOUQ_LOOKING_ROOM,
 					revalidateOnly: true,
-					authorUserId: user.id,
 				});
 
 				break;
@@ -237,7 +234,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					ChatSystemMessage.send({
 						room: SENDOUQ_LOOKING_ROOM,
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				}
 
@@ -245,7 +241,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					ChatSystemMessage.send({
 						room: match.chatCode,
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				}
 
@@ -297,7 +292,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					ChatSystemMessage.send({
 						room: match.chatCode,
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				}
 
@@ -322,7 +316,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					ChatSystemMessage.send({
 						room: match.chatCode,
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				}
 
@@ -402,7 +395,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					ChatSystemMessage.send({
 						room: match.chatCode,
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				}
 
