@@ -267,6 +267,7 @@
 	"inGameName.categories.cyrillic": "Cyrillic",
 	"inGameName.categories.hiragana": "Hiragana",
 	"inGameName.categories.katakana": "Katakana",
+	"inGameName.categories.cjkSymbols": "CJK Symbols",
 	"labels.pronoun": "Pronoun",
 	"bottomTexts.profilePronouns": "This setting is optional! Your pronouns will be displayed on your profile, tournament rosters, SendouQ groups, and text channels.",
 	"errors.profilePronounsBothOrNeither": "Select both pronouns or neither",

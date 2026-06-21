@@ -267,6 +267,7 @@
 	"inGameName.categories.cyrillic": "",
 	"inGameName.categories.hiragana": "",
 	"inGameName.categories.katakana": "",
+	"inGameName.categories.cjkSymbols": "",
 	"labels.pronoun": "",
 	"bottomTexts.profilePronouns": "",
 	"errors.profilePronounsBothOrNeither": "",
