@@ -120,6 +120,7 @@
 	"actions.addNew": "新規追加",
 	"actions.remove": "除外",
 	"actions.delete": "削除",
+	"actions.leave": "",
 	"actions.reset": "リセット",
 	"actions.loadMore": "さらに見る",
 	"actions.showMore": "もっと見せる",

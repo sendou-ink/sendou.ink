@@ -120,6 +120,7 @@
 	"actions.addNew": "Añadir nuevo",
 	"actions.remove": "Quitar",
 	"actions.delete": "Eliminar",
+	"actions.leave": "",
 	"actions.reset": "Restablecer",
 	"actions.loadMore": "Cargar más",
 	"actions.showMore": "Mostrar más",

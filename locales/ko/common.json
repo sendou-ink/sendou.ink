@@ -120,6 +120,7 @@
 	"actions.addNew": "",
 	"actions.remove": "제거",
 	"actions.delete": "삭제",
+	"actions.leave": "",
 	"actions.reset": "초기화",
 	"actions.loadMore": "더 보기",
 	"actions.showMore": "",

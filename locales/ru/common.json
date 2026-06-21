@@ -120,6 +120,7 @@
 	"actions.addNew": "Добавить новое",
 	"actions.remove": "Убрать",
 	"actions.delete": "Удалить",
+	"actions.leave": "",
 	"actions.reset": "Сбросить",
 	"actions.loadMore": "Загрузить ещё",
 	"actions.showMore": "Показать больше",

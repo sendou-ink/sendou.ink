@@ -120,6 +120,7 @@
 	"actions.addNew": "",
 	"actions.remove": "Fjern",
 	"actions.delete": "Slet",
+	"actions.leave": "",
 	"actions.reset": "Nulstil",
 	"actions.loadMore": "Indlæs flere",
 	"actions.showMore": "",

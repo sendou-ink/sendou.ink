@@ -120,6 +120,7 @@
 	"actions.addNew": "添加新内容",
 	"actions.remove": "移除",
 	"actions.delete": "删除",
+	"actions.leave": "",
 	"actions.reset": "重置",
 	"actions.loadMore": "加载更多",
 	"actions.showMore": "显示更多",

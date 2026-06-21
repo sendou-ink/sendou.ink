@@ -69,6 +69,12 @@ export default function QPage() {
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
 	const fetcher = useFetcher();
+	const { formatter: joinTimeFormatter } = useDateTimeFormat({
+		day: "numeric",
+		month: "numeric",
+		hour: "numeric",
+		minute: "numeric",
+	});
 
 	const queueJoinStatus =
 		user && data.friendCode ? userCanJoinQueueAt(user, data.friendCode) : null;
@@ -128,18 +134,9 @@ export default function QPage() {
 							</div>
 							{queueJoinStatus instanceof Date ? (
 								<div className="text-lighter text-xs text-center text-warning">
-									As a fresh account please wait before joining the queue. You
-									can join at{" "}
-									<LocaleTime
-										date={queueJoinStatus}
-										options={{
-											day: "numeric",
-											month: "numeric",
-											hour: "numeric",
-											minute: "numeric",
-										}}
-										inline
-									/>
+									{t("q:front.freshAccountWait", {
+										time: joinTimeFormatter.format(queueJoinStatus) ?? "",
+									})}
 								</div>
 							) : (
 								<PreviewQueueButton />
