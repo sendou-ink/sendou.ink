@@ -222,7 +222,7 @@ function RadioRow<T extends string>({
 	return (
 		<div className="stack sm">
 			<div className="text-sm font-bold">{label}</div>
-			<SendouChipRadioGroup>
+			<SendouChipRadioGroup wrap>
 				{options.map((option) => (
 					<SendouChipRadio
 						key={option.value}
