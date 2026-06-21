@@ -240,7 +240,7 @@
 	"labels.profileBattlefy": "Battlefyアカウント名",
 	"labels.profileMotionSens": "モーション感度",
 	"labels.profileStickSens": "右スティック感度",
-	"labels.profileCountry": "国",
+	"labels.profileCountry": "国/地域",
 	"labels.profileFavoriteBadges": "",
 	"labels.profileShowDiscordUniqueName": "Discord のユーザー名を表示する",
 	"labels.profileCommissionsOpen": "依頼を受付中",
