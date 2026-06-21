@@ -229,15 +229,19 @@ function Groups() {
 
 	const width = useMainContentWidth();
 
-	if (!isHydrated) return null;
+	// width === 0 means the main content hasn't been measured yet; rendering the
+	// Flipper before measurement makes it snapshot the width-0 (mobile) default
+	// layout and then morph every card into the real layout on first navigation
+	if (!isHydrated || width === 0) return null;
 
 	const isMobile = width < IS_Q_LOOKING_MOBILE_BREAKPOINT;
+	const layout = isMobile ? "mobile" : "desktop";
 	const isFullGroup =
 		data.ownGroup && data.ownGroup.members.length === FULL_GROUP_SIZE;
 
 	const invitedGroupsDesktop = (
 		<div className="stack sm">
-			<ColumnHeader>
+			<ColumnHeader isMobile={isMobile}>
 				{t(
 					isFullGroup
 						? "q:looking.columns.challenged"
@@ -256,6 +260,7 @@ function Groups() {
 							action="UNLIKE"
 							showNote
 							ownGroup={data.ownGroup}
+							layout={layout}
 						/>
 					);
 				})}
@@ -264,7 +269,9 @@ function Groups() {
 
 	const ownGroupElement = data.ownGroup ? (
 		<div className="stack sm">
-			<ColumnHeader>{t("q:looking.columns.myGroup")}</ColumnHeader>
+			<ColumnHeader isMobile={isMobile}>
+				{t("q:looking.columns.myGroup")}
+			</ColumnHeader>
 			<GroupCard group={data.ownGroup} showNote ownGroup={data.ownGroup} />
 			{data.ownGroup.inviteCode ? (
 				<MemberAdder
@@ -330,7 +337,9 @@ function Groups() {
 						</SendouTabList>
 						<SendouTabPanel id="groups">
 							<div className="stack sm">
-								<ColumnHeader>{t("q:looking.columns.available")}</ColumnHeader>
+								<ColumnHeader isMobile={isMobile}>
+									{t("q:looking.columns.available")}
+								</ColumnHeader>
 								{(isMobile
 									? data.groups.filter(
 											(group) =>
@@ -353,6 +362,7 @@ function Groups() {
 											}
 											showNote
 											ownGroup={data.ownGroup}
+											layout={layout}
 										/>
 									);
 								})}
@@ -380,6 +390,7 @@ function Groups() {
 											action={action()}
 											showNote
 											ownGroup={data.ownGroup}
+											layout={layout}
 										/>
 									);
 								})}
@@ -390,7 +401,7 @@ function Groups() {
 				</div>
 				{!isMobile ? (
 					<div className="stack sm">
-						<ColumnHeader>
+						<ColumnHeader isMobile={isMobile}>
 							{t(
 								isFullGroup
 									? "q:looking.columns.challenges"
@@ -417,6 +428,7 @@ function Groups() {
 									action={action()}
 									showNote
 									ownGroup={data.ownGroup}
+									layout={layout}
 								/>
 							);
 						})}
@@ -427,11 +439,13 @@ function Groups() {
 	);
 }
 
-function ColumnHeader({ children }: { children: React.ReactNode }) {
-	const width = useMainContentWidth();
-
-	const isMobile = width < IS_Q_LOOKING_MOBILE_BREAKPOINT;
-
+function ColumnHeader({
+	isMobile,
+	children,
+}: {
+	isMobile: boolean;
+	children: React.ReactNode;
+}) {
 	if (isMobile) return null;
 
 	return <div className={styles.header}>{children}</div>;

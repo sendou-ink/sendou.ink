@@ -17,7 +17,6 @@ import { useUser } from "~/features/auth/core/user";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { ordinalToRoundedSp } from "~/features/mmr/mmr-utils";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
-import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { languagesUnified } from "~/modules/i18n/config";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
@@ -34,11 +33,7 @@ import type {
 	SQGroupMember,
 	SQOwnGroup,
 } from "../core/SendouQ.server";
-import {
-	FULL_GROUP_SIZE,
-	IS_Q_LOOKING_MOBILE_BREAKPOINT,
-	SENDOUQ,
-} from "../q-constants";
+import { FULL_GROUP_SIZE, SENDOUQ } from "../q-constants";
 import { resolveFutureMatchModes } from "../q-utils";
 import styles from "./GroupCard.module.css";
 
@@ -58,6 +53,7 @@ export function GroupCard({
 	showAddNote,
 	showNote = false,
 	ownGroup,
+	layout = "desktop",
 }: {
 	group: SQGroup | SQOwnGroup;
 	action?: "LIKE" | "UNLIKE" | "GROUP_UP" | "MATCH_UP" | "MATCH_UP_RECHALLENGE";
@@ -68,6 +64,7 @@ export function GroupCard({
 	showAddNote?: SqlBool;
 	showNote?: boolean;
 	ownGroup?: SQOwnGroup;
+	layout?: "mobile" | "desktop";
 }) {
 	const { t } = useTranslation(["q"]);
 	const user = useUser();
@@ -88,7 +85,11 @@ export function GroupCard({
 	const enableKicking = group.usersRole === "OWNER" && !displayOnly;
 
 	return (
-		<GroupCardContainer groupId={group.id} isOwnGroup={isOwnGroup}>
+		<GroupCardContainer
+			groupId={group.id}
+			isOwnGroup={isOwnGroup}
+			layout={layout}
+		>
 			<section className={styles.group} data-testid="sendouq-group-card">
 				{group.members ? (
 					<div className="stack md">
@@ -240,15 +241,14 @@ export function GroupCard({
 function GroupCardContainer({
 	isOwnGroup,
 	groupId,
+	layout,
 	children,
 }: {
 	isOwnGroup: boolean;
 	groupId: number;
+	layout: "mobile" | "desktop";
 	children: React.ReactNode;
 }) {
-	const width = useMainContentWidth();
-	const layout = width < IS_Q_LOOKING_MOBILE_BREAKPOINT ? "mobile" : "desktop";
-
 	// we don't want it to animate
 	if (isOwnGroup) return <>{children}</>;
 
