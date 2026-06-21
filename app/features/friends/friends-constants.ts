@@ -1,5 +1,6 @@
 export const FRIEND = {
 	MAX_PENDING_REQUESTS: 20,
+	PENDING_REQUEST_EXPIRES_IN_MONTHS: 1,
 } as const;
 
 export const SENDOUQ_ACTIVITY_LABEL = "SendouQ";

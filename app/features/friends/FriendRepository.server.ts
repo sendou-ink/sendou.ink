@@ -1,9 +1,11 @@
+import { sub } from "date-fns";
 import { type SelectQueryBuilder, sql } from "kysely";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { commonUserSelect, customAvatarUrl } from "~/utils/kysely.server";
+import { FRIEND } from "./friends-constants";
 
 export async function findByUserIdWithActivity(userId: number) {
 	const [friendRows, teamMemberRows] = await Promise.all([
@@ -161,6 +163,19 @@ export async function deleteFriendRequest({
 		.where("FriendRequest.id", "=", id)
 		.where("FriendRequest.senderId", "=", senderId)
 		.execute();
+}
+
+export function deleteOldPendingRequests() {
+	return db
+		.deleteFrom("FriendRequest")
+		.where(
+			"FriendRequest.createdAt",
+			"<",
+			dateToDatabaseTimestamp(
+				sub(new Date(), { months: FRIEND.PENDING_REQUEST_EXPIRES_IN_MONTHS }),
+			),
+		)
+		.executeTakeFirst();
 }
 
 export async function findFriendRequestBetween({
