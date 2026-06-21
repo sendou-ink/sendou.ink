@@ -184,7 +184,9 @@ test.describe("SendouQ match page", () => {
 		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
 	});
 
-	test("Rejoin vote: 'no' shows rejoin queue link", async ({ page }) => {
+	test("Rejoin vote: 'no' shows rejoin queue button that rejoins directly", async ({
+		page,
+	}) => {
 		const matchId = await seedMatchAndGetId(page);
 		await staffSweepAlpha(page, matchId);
 
@@ -193,8 +195,8 @@ test.describe("SendouQ match page", () => {
 		await voteNo(page);
 
 		await expect(page.getByText("You declined to continue")).toBeVisible();
-		const rejoinLink = page.getByRole("link", { name: "Rejoin queue" });
-		await expect(rejoinLink).toHaveAttribute("href", SENDOUQ_PAGE);
+		await page.getByRole("button", { name: "Rejoin queue" }).click();
+		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
 	});
 
 	test("Rejoin vote: cascade wipes yes on no, revote completes and rejoins", async ({
