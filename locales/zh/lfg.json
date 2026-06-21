@@ -13,7 +13,7 @@
 	"filters.Type": "招募类型",
 	"filters.Timezone": "时差",
 	"filters.Language": "语言",
-	"filters.PlusTier": "Plus Server 等级",
+	"filters.PlusTier": "Plus Server 级别",
 	"filters.MaxTier": "SendouQ 段位上限",
 	"filters.MinTier": "SendouQ 段位下限",
 	"filters.suffix": "筛选条件",
