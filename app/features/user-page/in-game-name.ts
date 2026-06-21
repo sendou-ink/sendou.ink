@@ -47,6 +47,11 @@ export const IN_GAME_NAME_CHARACTER_CATEGORIES = [
 		label: "inGameName.categories.katakana",
 		characters: range(0x30a1, 0x30fa),
 	},
+	{
+		id: "cjk-symbols",
+		label: "inGameName.categories.cjkSymbols",
+		characters: [..."、。「」〜・ー"],
+	},
 ] as const satisfies ReadonlyArray<{
 	id: string;
 	label: FormsTranslationKey;

@@ -267,6 +267,7 @@
 	"inGameName.categories.cyrillic": "西里尔字母",
 	"inGameName.categories.hiragana": "平假名",
 	"inGameName.categories.katakana": "片假名",
+	"inGameName.categories.cjkSymbols": "",
 	"labels.pronoun": "代词",
 	"bottomTexts.profilePronouns": "此设置是可选的！您的代词将显示在您的个人资料、赛事名册、SendouQ 小组以及文字频道中。",
 	"errors.profilePronounsBothOrNeither": "请同时选择两个代词，或者均不选择",
