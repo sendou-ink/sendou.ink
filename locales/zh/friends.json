@@ -15,5 +15,6 @@
 	"view.friends": "好友",
 	"view.teamMembers": "队伍成员",
 	"view.all": "全部",
-	"teamMembers.empty": "暂无队伍成员"
+	"teamMembers.empty": "暂无队伍成员",
+	"unseenRequests": "有 {{count}} 条未查看的好友请求"
 }
