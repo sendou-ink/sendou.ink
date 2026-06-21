@@ -96,24 +96,31 @@ export function ExportDialog({ close }: { close: () => void }) {
 		});
 
 	const onDownload = () => {
+		const selectedBracket =
+			bracketIdx !== null ? tournament.brackets[bracketIdx] : null;
+		const bracketRequiresOwnCheckIn = Boolean(selectedBracket?.requiresCheckIn);
 		const teams = scopedAndSortedTeams({
 			teams: tournament.ctx.teams,
 			status,
 			sort,
 			bracketIdx,
-			bracketParticipantIds:
-				bracketIdx !== null
-					? new Set(
-							tournament.brackets[bracketIdx]?.participantTournamentTeamIds ??
-								[],
-						)
-					: null,
+			bracketRequiresOwnCheckIn,
+			// A team belongs to a bracket whether or not it has checked in: the
+			// checked-in teams populate the matches, the rest are pending check-in.
+			// Both are scoped out of the export when they don't belong to the bracket.
+			bracketParticipantIds: selectedBracket
+				? new Set([
+						...selectedBracket.participantTournamentTeamIds,
+						...(selectedBracket.teamsPendingCheckIn ?? []),
+					])
+				: null,
 		});
 		const content = buildContent({
 			teams,
 			format,
 			fields,
 			bracketIdx,
+			bracketRequiresOwnCheckIn,
 			checkedInLabel: "Checked in",
 			notCheckedInLabel: "Not checked in",
 		});
@@ -232,27 +239,39 @@ function RadioRow<T extends string>({
 	);
 }
 
-function hasActiveCheckIn(team: TournamentDataTeam, bracketIdx: number | null) {
-	const relevant = team.checkIns.filter(
-		(checkIn) => checkIn.bracketIdx === bracketIdx,
+function hasActiveCheckIn(
+	team: TournamentDataTeam,
+	bracketIdx: number | null,
+	bracketRequiresOwnCheckIn: boolean,
+) {
+	if (bracketIdx !== null && bracketRequiresOwnCheckIn) {
+		return team.checkIns.some(
+			(checkIn) => checkIn.bracketIdx === bracketIdx && !checkIn.isCheckOut,
+		);
+	}
+
+	const eventLevel = team.checkIns.filter(
+		(checkIn) => checkIn.bracketIdx === null,
 	);
 	return (
-		relevant.some((checkIn) => !checkIn.isCheckOut) &&
-		!relevant.some((checkIn) => checkIn.isCheckOut)
+		eventLevel.some((checkIn) => !checkIn.isCheckOut) &&
+		!eventLevel.some((checkIn) => checkIn.isCheckOut)
 	);
 }
 
-function scopedAndSortedTeams({
+export function scopedAndSortedTeams({
 	teams,
 	status,
 	sort,
 	bracketIdx,
+	bracketRequiresOwnCheckIn,
 	bracketParticipantIds,
 }: {
 	teams: TournamentDataTeam[];
 	status: ExportStatus;
 	sort: ExportSort;
 	bracketIdx: number | null;
+	bracketRequiresOwnCheckIn: boolean;
 	bracketParticipantIds: Set<number> | null;
 }) {
 	const filtered = teams.filter((team) => {
@@ -261,9 +280,9 @@ function scopedAndSortedTeams({
 		}
 		switch (status) {
 			case "checkedIn":
-				return hasActiveCheckIn(team, bracketIdx);
+				return hasActiveCheckIn(team, bracketIdx, bracketRequiresOwnCheckIn);
 			case "notCheckedIn":
-				return !hasActiveCheckIn(team, bracketIdx);
+				return !hasActiveCheckIn(team, bracketIdx, bracketRequiresOwnCheckIn);
 			default:
 				return true;
 		}
@@ -292,6 +311,7 @@ function teamFieldValue(
 		checkedInLabel: string;
 		notCheckedInLabel: string;
 		bracketIdx: number | null;
+		bracketRequiresOwnCheckIn: boolean;
 	},
 ) {
 	switch (field) {
@@ -302,7 +322,11 @@ function teamFieldValue(
 		case "registeredAt":
 			return databaseTimestampToDate(team.createdAt).toISOString();
 		case "checkInStatus":
-			return hasActiveCheckIn(team, opts.bracketIdx)
+			return hasActiveCheckIn(
+				team,
+				opts.bracketIdx,
+				opts.bracketRequiresOwnCheckIn,
+			)
 				? opts.checkedInLabel
 				: opts.notCheckedInLabel;
 		case "teamPageUrl":
@@ -333,6 +357,7 @@ function buildContent({
 	format,
 	fields,
 	bracketIdx,
+	bracketRequiresOwnCheckIn,
 	checkedInLabel,
 	notCheckedInLabel,
 }: {
@@ -340,12 +365,18 @@ function buildContent({
 	format: ExportFormat;
 	fields: Set<ExportField>;
 	bracketIdx: number | null;
+	bracketRequiresOwnCheckIn: boolean;
 	checkedInLabel: string;
 	notCheckedInLabel: string;
 }) {
 	const teamFields = TEAM_FIELDS.filter((field) => fields.has(field));
 	const memberFields = MEMBER_FIELDS.filter((field) => fields.has(field));
-	const labelOpts = { checkedInLabel, notCheckedInLabel, bracketIdx };
+	const labelOpts = {
+		checkedInLabel,
+		notCheckedInLabel,
+		bracketIdx,
+		bracketRequiresOwnCheckIn,
+	};
 
 	if (format === "csv") {
 		const maxRoster = Math.max(0, ...teams.map((team) => team.members.length));
