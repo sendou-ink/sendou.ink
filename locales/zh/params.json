@@ -1,14 +1,14 @@
 {
-	"tab.params": "",
-	"tab.patches": "",
-	"noPatches": "",
-	"patches.showSubSpecial": "",
-	"header.parameter": "",
-	"legend.title": "",
-	"legend.damage": "",
-	"legend.frames": "",
-	"legend.powerUp": "",
-	"compare.action": "",
-	"compare.heading": "",
-	"dataCredit.lean": ""
+	"tab.params": "参数",
+	"tab.patches": "版本更新历史",
+	"noPatches": "该武器暂无被记录的平衡性调整。",
+	"patches.showSubSpecial": "显示次要武器与特殊武器的调整",
+	"header.parameter": "参数",
+	"legend.title": "备注",
+	"legend.damage": "伤害值以 10 倍形式存储，因此数值 450 代表 45.0 伤害。",
+	"legend.frames": "时间以帧为单位计算，其中 60 帧 = 1 秒。",
+	"legend.powerUp": "“低、中、高”对应的数值，分别代表装备了 0 个、适量、以及最大数量的强化能力（特殊武器对应“提升特殊武器性能”，次要武器对应“提升次要武器性能”）。",
+	"compare.action": "跨武器对比",
+	"compare.heading": "横向对比各武器的 {{parameter}}",
+	"dataCredit.lean": "数据鸣谢: Lean"
 }
