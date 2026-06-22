@@ -49,11 +49,18 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { Table } from "~/components/Table";
 import { WeaponSelect } from "~/components/WeaponSelect";
+import { UserCard } from "~/features/user-card/components/UserCard";
+import type { UserCardData } from "~/features/user-card/user-card-types";
 import type { CustomFieldRenderProps } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import styles from "../components-showcase.module.css";
 import { formFieldsShowcaseSchema } from "../form-examples-schema";
+
+export const handle: SendouRouteHandle = {
+	i18n: ["user"],
+};
 
 export const SECTIONS = [
 	{ title: "Buttons", id: "buttons", component: ButtonsSection },
@@ -78,6 +85,7 @@ export const SECTIONS = [
 	{ title: "Table", id: "table", component: TableSection },
 	{ title: "Pagination", id: "pagination", component: PaginationSection },
 	{ title: "Avatar", id: "avatar", component: AvatarSection },
+	{ title: "User Card", id: "user-card", component: UserCardSection },
 	{
 		title: "Form Messages",
 		id: "form-messages",
@@ -1559,6 +1567,65 @@ function AvatarSection({ id }: { id: string }) {
 						size="lg"
 						alt="User avatar"
 					/>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+const USER_CARD_MUTUAL_FRIENDS = [
+	"100",
+	"200",
+	"300",
+	"400",
+	"500",
+	"600",
+	"700",
+	"800",
+].map((discordId, i) => ({
+	id: i + 1,
+	username: `Friend ${i + 1}`,
+	discordId,
+	discordAvatar: null,
+	customUrl: null,
+	customAvatarUrl: null,
+}));
+
+const USER_CARD_DATA = {
+	id: 1,
+	username: "Sendou",
+	discordId: "79237403620945920",
+	discordAvatar: null,
+	customUrl: "sendou",
+	customAvatarUrl: null,
+	banner: { type: "STAGE", stageId: 5 },
+	shortBio: "Very show bio goes here maybe max two lines that gets clamped.",
+	customTheme: null,
+	pronouns: { subject: "he", object: "him" },
+	friendCode: "SW-1234-1234-1234",
+	isFriend: false,
+	mutualFriends: USER_CARD_MUTUAL_FRIENDS,
+	privateNote: { text: null, sentiment: "NEUTRAL" },
+	stats: [
+		{
+			type: "XP",
+			values: [{ isVerified: true, div: "TENTATEK", points: 3123 }],
+		},
+		{ type: "DIV", value: "Div 1" },
+		{ type: "PLUS", value: "+1" },
+	],
+} satisfies UserCardData;
+
+function UserCardSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>User Card</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Hover the trigger">
+					<UserCard data={USER_CARD_DATA}>
+						<SendouButton variant="minimal">Sendou</SendouButton>
+					</UserCard>
 				</ComponentRow>
 			</div>
 		</Section>

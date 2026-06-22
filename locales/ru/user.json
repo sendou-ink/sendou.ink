@@ -204,5 +204,9 @@
 	"mutualFriends.count_one": "",
 	"mutualFriends.count_few": "",
 	"mutualFriends.count_many": "",
-	"mutualFriends.count_other": ""
+	"mutualFriends.count_other": "",
+	"card.viewUserPage": "",
+	"card.sendFriendRequest": "",
+	"card.editPrivateNote": "",
+	"card.xp": ""
 }

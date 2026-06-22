@@ -202,5 +202,9 @@
 	"commissions.closed": "",
 	"mutualFriends": "",
 	"mutualFriends.count_one": "",
-	"mutualFriends.count_other": ""
+	"mutualFriends.count_other": "",
+	"card.viewUserPage": "",
+	"card.sendFriendRequest": "",
+	"card.editPrivateNote": "",
+	"card.xp": ""
 }

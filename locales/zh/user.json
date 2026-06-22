@@ -201,5 +201,9 @@
 	"commissions.open": "开放中",
 	"commissions.closed": "暂停",
 	"mutualFriends": "共同好友",
-	"mutualFriends.count": "个共同好友"
+	"mutualFriends.count": "个共同好友",
+	"card.viewUserPage": "",
+	"card.sendFriendRequest": "",
+	"card.editPrivateNote": "",
+	"card.xp": ""
 }

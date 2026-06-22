@@ -3,16 +3,17 @@ import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import type { CommonUser } from "~/utils/kysely.server";
 import { userPage } from "~/utils/urls";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import styles from "./MutualFriends.module.css";
 
 const MAX_VISIBLE_AVATARS = 5;
 
+// xxx: for usercard do we even want popover there? or a different component, lighter data and no popover
 export function MutualFriends({
 	mutualFriends,
 }: {
-	mutualFriends: UserPageLoaderData["mutualFriends"];
+	mutualFriends: Array<CommonUser>;
 }) {
 	const { t } = useTranslation(["user"]);
 

@@ -1,0 +1,108 @@
+.triggerWrapper {
+	display: inline-flex;
+	width: fit-content;
+}
+
+.popover {
+	border: none;
+	background: none;
+}
+
+.card {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	width: 18rem;
+	max-width: calc(100vw - var(--s-4));
+	padding: 0 var(--s-4) var(--s-4);
+	background-color: var(--color-bg);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-box);
+	box-shadow: var(--shadow-md);
+	overflow: hidden;
+}
+
+.banner {
+	height: 6rem;
+	margin-inline: calc(-1 * var(--s-4));
+	background-size: cover;
+	background-position: center;
+	background-color: var(--color-bg-lighter);
+}
+
+.iconButtons {
+	position: absolute;
+	top: var(--s-2);
+	right: var(--s-2);
+	display: flex;
+	gap: var(--s-1);
+}
+
+.identity {
+	display: flex;
+	align-items: flex-end;
+	gap: var(--s-2-5);
+	margin-top: calc(-1 * var(--s-7));
+}
+
+.avatar {
+	border: 3px solid var(--color-bg);
+}
+
+.nameGroup {
+	display: flex;
+	flex-direction: column;
+	padding-bottom: var(--s-1);
+}
+
+.username {
+	font-size: var(--font-lg);
+	font-weight: var(--bold);
+	line-height: 1.1;
+}
+
+.subtitle {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1);
+	font-size: var(--font-xs);
+	color: var(--color-text-lighter);
+}
+
+.friendCode {
+	font-size: var(--font-xs);
+	color: var(--color-text-lighter);
+}
+
+.stats {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-weight: var(--bold);
+}
+
+.stat {
+	white-space: nowrap;
+}
+
+.statDivider {
+	width: 1px;
+	align-self: stretch;
+	background-color: var(--color-border);
+}
+
+.bio {
+	font-size: var(--font-xs);
+	color: var(--color-text-lighter);
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.viewUserPage {
+	margin-top: var(--s-1);
+	align-self: center;
+}

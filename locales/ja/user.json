@@ -200,5 +200,9 @@
 	"builds.sorting.PRIVATE_BUILD": "非公開ビルド",
 	"commissions.open": "",
 	"commissions.closed": "",
-	"mutualFriends": ""
+	"mutualFriends": "",
+	"card.viewUserPage": "",
+	"card.sendFriendRequest": "",
+	"card.editPrivateNote": "",
+	"card.xp": ""
 }

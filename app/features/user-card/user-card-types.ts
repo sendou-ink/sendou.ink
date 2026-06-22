@@ -1,12 +1,13 @@
-import type { CustomTheme, Tables } from "~/db/tables";
+import type { CustomTheme, Pronouns, Tables } from "~/db/tables";
 import type { StageId } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 import type { TieredSkill } from "../mmr/tiered.server";
 
-interface UserCardData extends CommonUser {
+export interface UserCardData extends CommonUser {
 	banner: UserCarBannerData;
 	shortBio: string | null;
 	customTheme: CustomTheme | null;
+	pronouns: Pronouns | null;
 	friendCode: string | null;
 	isFriend: boolean;
 	mutualFriends: Array<CommonUser>;
