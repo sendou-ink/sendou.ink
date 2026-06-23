@@ -406,6 +406,49 @@ export async function findAllEventsBySeries({
 	return events.map(mapEvent);
 }
 
+/**
+ * Counts the distinct players who participated in at least one match of a
+ * tournament hosted by the organization, whose event started within the
+ * `[startTime, endTime]` range. Only players belonging to teams that checked
+ * in (and did not check out) are included.
+ *
+ * `startTime` and `endTime` are database timestamps (seconds).
+ */
+export async function countActiveParticipants({
+	organizationId,
+	startTime,
+	endTime,
+}: {
+	organizationId: number;
+	startTime: number;
+	endTime: number;
+}) {
+	const result = await db
+		.selectFrom("CalendarEvent as ce")
+		.innerJoin("CalendarEventDate as ced", "ced.eventId", "ce.id")
+		.innerJoin("Tournament as t", "t.id", "ce.tournamentId")
+		.innerJoin("TournamentTeam as tt", "tt.tournamentId", "t.id")
+		.innerJoin(
+			"TournamentTeamCheckIn as ttci",
+			"ttci.tournamentTeamId",
+			"tt.id",
+		)
+		.innerJoin(
+			"TournamentMatchGameResultParticipant as tmgrp",
+			"tmgrp.tournamentTeamId",
+			"tt.id",
+		)
+		.select(({ fn }) => fn.count<number>("tmgrp.userId").distinct().as("count"))
+		.where("ce.organizationId", "=", organizationId)
+		.where("ced.startTime", ">=", startTime)
+		.where("ced.startTime", "<", endTime)
+		.where("ttci.checkedInAt", "is not", null)
+		.where("ttci.isCheckOut", "=", 0)
+		.executeTakeFirst();
+
+	return result?.count ?? 0;
+}
+
 interface UpdateArgs
 	extends Pick<
 		Tables["TournamentOrganization"],

@@ -158,6 +158,10 @@ export default [
 	...prefix("/org/:slug", [
 		index("features/tournament-organization/routes/org.$slug.tsx"),
 		route("edit", "features/tournament-organization/routes/org.$slug.edit.tsx"),
+		route(
+			"stats",
+			"features/tournament-organization/routes/org.$slug.stats.tsx",
+		),
 	]),
 
 	route("/faq", "features/info/routes/faq.tsx"),
