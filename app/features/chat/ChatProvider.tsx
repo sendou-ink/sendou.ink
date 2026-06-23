@@ -609,12 +609,7 @@ function useChatRouteSync({
 	requestHistory: (chatCode: string) => void;
 	messagesByRoom: Record<string, ChatMessage[]>;
 }) {
-	const rawChatCode = useCurrentRouteChatCode();
-	const chatCodesKey = rawChatCode
-		? Array.isArray(rawChatCode)
-			? rawChatCode.join(",")
-			: rawChatCode
-		: "";
+	const chatCodesKey = useCurrentRouteChatCodes().join(",");
 	const { pathname } = useLocation();
 	const layoutSize = useLayoutSize();
 	const subscribedRoomRef = React.useRef<string[]>([]);
@@ -749,7 +744,12 @@ function useChatRouteSync({
 	]);
 }
 
-export function useCurrentRouteChatCode(): string | string[] | null {
+/**
+ * Chat codes the current route wants visible. A route may expose several codes
+ * (e.g. a SendouQ match exposes the match chat alongside the group chat) which
+ * are then shown stacked as a single combined view.
+ */
+export function useCurrentRouteChatCodes(): string[] {
 	const matches = useMatches();
 
 	for (const match of matches) {
@@ -757,11 +757,13 @@ export function useCurrentRouteChatCode(): string | string[] | null {
 			| { chatCode?: string | string[] }
 			| undefined;
 		if (matchData?.chatCode) {
-			return matchData.chatCode;
+			return Array.isArray(matchData.chatCode)
+				? matchData.chatCode
+				: [matchData.chatCode];
 		}
 	}
 
-	return null;
+	return [];
 }
 
 function useFetchUnknownChatUsers({
