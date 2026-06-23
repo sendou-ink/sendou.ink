@@ -24,7 +24,21 @@ const SIZE_BONUS = {
 	MAX_BONUS_PER_10_TEAMS: 1.5,
 } as const;
 
-export const TIER_TO_NUMBER = {
+export const TIER_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
+
+export type TournamentTierNumber = (typeof TIER_NUMBERS)[number];
+export type TournamentTier =
+	| "X"
+	| "S+"
+	| "S"
+	| "A+"
+	| "A"
+	| "B+"
+	| "B"
+	| "C+"
+	| "C";
+
+export const TIER_TO_NUMBER: Record<TournamentTier, TournamentTierNumber> = {
 	X: 1,
 	"S+": 2,
 	S: 3,
@@ -34,9 +48,9 @@ export const TIER_TO_NUMBER = {
 	B: 7,
 	"C+": 8,
 	C: 9,
-} as const;
+};
 
-const NUMBER_TO_TIER = {
+const NUMBER_TO_TIER: Record<TournamentTierNumber, TournamentTier> = {
 	1: "X",
 	2: "S+",
 	3: "S",
@@ -46,10 +60,7 @@ const NUMBER_TO_TIER = {
 	7: "B",
 	8: "C+",
 	9: "C",
-} as const;
-
-export type TournamentTier = keyof typeof TIER_TO_NUMBER;
-export type TournamentTierNumber = (typeof TIER_TO_NUMBER)[TournamentTier];
+};
 
 export function calculateAdjustedScore(
 	rawScore: number,
