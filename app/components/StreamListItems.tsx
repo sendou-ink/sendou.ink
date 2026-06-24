@@ -125,6 +125,7 @@ export function StreamListItems({
 									</div>
 								)
 							}
+							badgeVariant={!isUpcoming ? "warning" : undefined}
 							onClick={onClick}
 						>
 							{stream.name}
