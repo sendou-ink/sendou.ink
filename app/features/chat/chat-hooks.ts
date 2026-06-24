@@ -8,7 +8,7 @@ const THRESHOLD = 100;
 
 export function useChatAutoScroll(
 	messages: ChatMessage[],
-	ref: React.RefObject<HTMLOListElement | null>,
+	ref: React.RefObject<HTMLElement | null>,
 ) {
 	const user = useUser();
 	const [firstLoadHandled, setFirstLoadHandled] = React.useState(false);
