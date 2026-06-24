@@ -1601,18 +1601,28 @@ const USER_CARD_DATA = {
 	banner: { type: "STAGE", stageId: 5 },
 	shortBio: "Very show bio goes here maybe max two lines that gets clamped.",
 	customTheme: null,
-	pronouns: { subject: "he", object: "him" },
-	friendCode: "SW-1234-1234-1234",
+	friendCode: null,
 	isFriend: false,
-	mutualFriends: USER_CARD_MUTUAL_FRIENDS,
+	mutualFriends: [],
 	privateNote: { text: null, sentiment: "NEUTRAL" },
 	stats: [
 		{
 			type: "XP",
-			values: [{ isVerified: true, div: "TENTATEK", points: 3123 }],
+			values: [
+				{ isVerified: false, div: "TAKOROKA", points: 3123 },
+				{ isVerified: true, div: "TAKOROKA", points: 2901 },
+			],
+		},
+		{
+			type: "SEASON",
+			top: 59,
+			value: {
+				isPlus: true,
+				name: "LEVIATHAN",
+			},
 		},
 		{ type: "DIV", value: "Div 1" },
-		{ type: "PLUS", value: "+1" },
+		{ type: "PLUS", value: 1 },
 	],
 } satisfies UserCardData;
 

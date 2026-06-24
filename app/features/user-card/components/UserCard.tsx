@@ -1,20 +1,41 @@
-import { NotebookPen, UserPlus } from "lucide-react";
+import clsx from "clsx";
+import { BadgeCheck, NotebookPen, UserPlus } from "lucide-react";
 import * as React from "react";
 import { Popover } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
-import { TierImage } from "~/components/Image";
+import { Image, TierImage } from "~/components/Image";
+import { Placement } from "~/components/Placement";
 import { MutualFriends } from "~/features/user-page/components/MutualFriends";
+import type { BrandId } from "~/modules/in-game-lists/types";
 import { assertUnreachable } from "~/utils/types";
-import { stageBannerImageUrl, userPage } from "~/utils/urls";
-import type { UserCardData } from "../user-card-types";
+import {
+	brandImageUrl,
+	navIconUrl,
+	stageBannerImageUrl,
+	userPage,
+} from "~/utils/urls";
+import type {
+	UserCardData,
+	UserCardStat,
+	XPDivision,
+} from "../user-card-types";
 import styles from "./UserCard.module.css";
 
 // xxx: also secondary action? e.g. "View tournament" from sidebar
 
 const HOVER_OPEN_DELAY_MS = 150;
 const HOVER_CLOSE_DELAY_MS = 200;
+
+const TENTATEK_BRAND_ID: BrandId = "B10";
+
+const STAT_ORDER: Record<UserCardStat["type"], number> = {
+	XP: 0,
+	SEASON: 1,
+	PLUS: 2,
+	DIV: 3,
+};
 
 /**
  * xxx: docs here
@@ -24,7 +45,7 @@ export function UserCard({
 	children,
 }: {
 	data: UserCardData;
-    // xxx: should this be a button or not?
+	// xxx: should this be a button or not?
 	children: React.ReactNode;
 }) {
 	const triggerRef = React.useRef<HTMLSpanElement>(null);
@@ -32,7 +53,7 @@ export function UserCard({
 	const closeTimeout = React.useRef<ReturnType<typeof setTimeout>>(undefined);
 	const [isOpen, setIsOpen] = React.useState(false);
 
-    // xxx: probably not the play
+	// xxx: probably not the play
 	React.useEffect(
 		() => () => {
 			clearTimeout(openTimeout.current);
@@ -115,6 +136,10 @@ function CardContent({
 }) {
 	const { t } = useTranslation(["user"]);
 
+	const stats = data.stats.toSorted(
+		(a, b) => STAT_ORDER[a.type] - STAT_ORDER[b.type],
+	);
+
 	return (
 		<div
 			className={styles.card}
@@ -126,16 +151,14 @@ function CardContent({
 			<div className={styles.iconButtons}>
 				{!data.isFriend ? (
 					<SendouButton
-						variant="outlined"
-						size="small"
+						size="miniscule"
 						shape="circle"
 						icon={<UserPlus />}
 						aria-label={t("user:card.sendFriendRequest")}
 					/>
 				) : null}
 				<SendouButton
-					variant="outlined"
-					size="small"
+					size="miniscule"
 					shape="circle"
 					icon={<NotebookPen />}
 					aria-label={t("user:card.editPrivateNote")}
@@ -148,12 +171,15 @@ function CardContent({
 					<Subtitle data={data} />
 					{data.friendCode ? (
 						<span className={styles.friendCode}>{data.friendCode}</span>
-					) : null}
+					) : (
+						/** reserve space */
+						<span className={styles.friendCode}>{"\u200b"}</span>
+					)}
 				</div>
 			</div>
-			{data.stats.length > 0 ? (
+			{stats.length > 0 ? (
 				<div className={styles.stats}>
-					{data.stats.map((stat, i) => (
+					{stats.map((stat, i) => (
 						<React.Fragment key={stat.type}>
 							{i > 0 ? <span className={styles.statDivider} /> : null}
 							<Stat stat={stat} />
@@ -197,8 +223,8 @@ function Banner({ banner }: { banner: UserCardData["banner"] }) {
 function Subtitle({ data }: { data: UserCardData }) {
 	const parts: Array<string> = [];
 
-	if (data.pronouns) {
-		parts.push(`${data.pronouns.subject}/${data.pronouns.object}`);
+	if (data.customUrl) {
+		parts.push(data.customUrl);
 	}
 
 	if (parts.length === 0) return null;
@@ -219,22 +245,75 @@ function Stat({ stat }: { stat: UserCardData["stats"][number] }) {
 	const { t } = useTranslation(["user"]);
 
 	switch (stat.type) {
-		case "XP":
+		case "XP": {
+			const unverified = stat.values.find((value) => !value.isVerified);
+			const verified = stat.values.find((value) => value.isVerified);
+			const primary = unverified ?? verified;
+			const secondary = unverified ? verified : undefined;
+
 			return (
-				<span className={styles.stat}>
-					{stat.values.map((value) => value.points).join(" / ")}
-					{t("user:card.xp")}
+				<span className={clsx(styles.stat, styles.xpStat)}>
+					{primary ? (
+						<span className={styles.xpPrimary}>
+							{primary.isVerified ? (
+								<BadgeCheck className={styles.xpVerifiedIconLarge} />
+							) : null}
+							<DivImage div={primary.div} />
+							{primary.points}
+							{t("user:card.xp")}
+						</span>
+					) : null}
+					{secondary ? (
+						<span className={styles.xpVerified}>
+							<BadgeCheck className={styles.xpVerifiedIconSmall} />
+							<DivImage div={secondary.div} />
+							{secondary.points}
+							{t("user:card.xp")}
+						</span>
+					) : null}
 				</span>
 			);
+		}
 		case "DIV":
 			return <span className={styles.stat}>{stat.value}</span>;
 		case "PLUS":
-			return <span className={styles.stat}>{stat.value}</span>;
+			return (
+				<span className={clsx(styles.stat, styles.plusStat)}>
+					<Image path={navIconUrl("plus")} alt="+" size={24} />
+					{stat.value}
+				</span>
+			);
 		case "SEASON":
-			return <TierImage tier={stat.value} width={32} />;
+			return (
+				<span className={styles.seasonStat}>
+					<TierImage tier={stat.value} width={32} />
+					{typeof stat.top === "number" ? (
+						<span className={styles.seasonTop}>
+							<Placement
+								placement={stat.top}
+								size={14}
+								showAsSuperscript={false}
+							/>
+						</span>
+					) : null}
+				</span>
+			);
 		default:
 			assertUnreachable(stat);
 	}
+}
+
+function DivImage({ div }: { div: XPDivision }) {
+	if (div !== "TENTATEK") return null;
+
+	return (
+		<Image
+			path={brandImageUrl(TENTATEK_BRAND_ID)}
+			alt={div}
+			width={18}
+			height={18}
+		/>
+	);
 }
 
 function customThemeStyle(
