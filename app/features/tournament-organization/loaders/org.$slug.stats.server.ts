@@ -21,13 +21,19 @@ export async function loader({ params }: LoaderFunctionArgs) {
 		throw new Response("Forbidden", { status: 403 });
 	}
 
-	const finishedMonths = lastFinishedMonths(ESTABLISHED_ORG.MONTHS_CONSIDERED);
+	const fullMonths = recentFullMonths(ESTABLISHED_ORG.MONTHS_CONSIDERED);
 
 	const monthlyCounts = await Promise.all(
-		finishedMonths.map((month) => countParticipants(organization.id, month)),
+		fullMonths.map((month) =>
+			TournamentOrganizationRepository.countActiveParticipants({
+				organizationId: organization.id,
+				startTime: dateToDatabaseTimestamp(month),
+				endTime: dateToDatabaseTimestamp(addMonths(month, 1)),
+			}),
+		),
 	);
 
-	const monthlyStats = finishedMonths.map((month, index) => ({
+	const monthlyStats = fullMonths.map((month, index) => ({
 		month: format(month, MONTH_PARAM_FORMAT),
 		count: monthlyCounts[index],
 	}));
@@ -42,17 +48,9 @@ export async function loader({ params }: LoaderFunctionArgs) {
 	};
 }
 
-function countParticipants(organizationId: number, monthStart: Date) {
-	return TournamentOrganizationRepository.countActiveParticipants({
-		organizationId,
-		startTime: dateToDatabaseTimestamp(monthStart),
-		endTime: dateToDatabaseTimestamp(addMonths(monthStart, 1)),
-	});
-}
-
-/** The `count` most recently finished months
+/** The `count` most recent full months
  * (excluding the current month), most recent first. */
-function lastFinishedMonths(count: number) {
+function recentFullMonths(count: number) {
 	const months: Date[] = [];
 	const thisMonthStart = startOfMonth(new Date());
 
