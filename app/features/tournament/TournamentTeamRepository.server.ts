@@ -685,50 +685,25 @@ export function undoDropOut(tournamentTeamId: number) {
 }
 
 export function join({
-	previousTeamId,
-	whatToDoWithPreviousTeam,
+	previousTeamIdToDelete,
 	newTeamId,
 	userId,
-	checkOutTeam = false,
 }: {
-	previousTeamId?: number;
-	whatToDoWithPreviousTeam?: "LEAVE" | "DELETE";
+	/** Team to delete as the user joins, e.g. a solo team they leave behind. */
+	previousTeamIdToDelete?: number;
 	newTeamId: number;
 	/** The user joining the team. */
 	userId: number;
-	checkOutTeam?: boolean;
 }) {
 	return db.transaction().execute(async (trx) => {
-		if (whatToDoWithPreviousTeam === "DELETE") {
+		if (previousTeamIdToDelete) {
 			await TournamentAuditLogRepository.insert(trx, {
 				type: "TEAM_UNREGISTERED",
-				tournamentTeamId: previousTeamId!,
+				tournamentTeamId: previousTeamIdToDelete,
 			});
 			await trx
 				.deleteFrom("TournamentTeam")
-				.where("TournamentTeam.id", "=", previousTeamId!)
-				.execute();
-		} else if (whatToDoWithPreviousTeam === "LEAVE") {
-			await TournamentAuditLogRepository.insert(trx, {
-				type: "MEMBER_REMOVED",
-				tournamentTeamId: previousTeamId!,
-				subjectUserId: userId,
-			});
-			await trx
-				.deleteFrom("TournamentTeamMember")
-				.where("TournamentTeamMember.tournamentTeamId", "=", previousTeamId!)
-				.where("TournamentTeamMember.userId", "=", userId)
-				.execute();
-		}
-
-		if (checkOutTeam) {
-			invariant(
-				previousTeamId,
-				"previousTeamId is required when checking out team",
-			);
-			await trx
-				.deleteFrom("TournamentTeamCheckIn")
-				.where("TournamentTeamCheckIn.tournamentTeamId", "=", previousTeamId)
+				.where("TournamentTeam.id", "=", previousTeamIdToDelete)
 				.execute();
 		}
 

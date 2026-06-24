@@ -77,13 +77,12 @@ export const action = async (args: ActionFunctionArgs) => {
 		await TournamentTeamRepository.join({
 			userId,
 			newTeamId: team.id,
-			previousTeamId: previousTeam?.id,
 			// this team is not checked in & tournament started, so we can simply delete it
-			whatToDoWithPreviousTeam:
+			previousTeamIdToDelete:
 				previousTeam &&
 				previousTeam.checkIns.length === 0 &&
 				tournament.hasStarted
-					? "DELETE"
+					? previousTeam.id
 					: undefined,
 		});
 
